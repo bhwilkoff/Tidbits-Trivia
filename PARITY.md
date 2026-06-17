@@ -85,7 +85,8 @@ reached is ⏳ with a note, never silence.
 | Bundled offline corpus (10k, never-repeat) | ✅ JSON→IndexedDB | ✅ SQLite | ✅ SQLite | ✅ JSON (in-memory) | One corpus, per-platform reader; Android bundles assets/corpus.json (Room is a later perf step) |
 | Live generation from any Wikipedia topic | ✅ | ✅ | ✅ (fallback) | ✅ | Powers Create + corpus fallback; web hits the API with origin=* (CORS) |
 | Template engine + quality gates | ✅ js/engine.js | ✅ Swift | ✅ (shared Core) | ✅ Kotlin | Four mirrors of `tools/corpus/generate_corpus.py` |
-| Wikidata SPARQL structured questions (the moat) | ✅ | ✅ | ✅ | ✅ | 1,117 verified Qs in the shared corpus (Decision 024); gates 1/2/4/5 by construction |
+| Wikidata structured questions (the moat) | ✅ | ✅ | ✅ | ✅ | ~1,700 verified Qs in the shared corpus (Decision 024); gates 1/2/4/5 by construction |
+| Question TYPE variety (≈17 types) | ✅ | ✅ | ✅ | ✅ | 5 summary shapes + forward/reverse attribute, superlative, chronology ("which came first"), numeric closest-to, classification — all 4-option, so every platform renders them via the shared corpus (Decision 025) |
 | Vandalism/NPOV gates 6/7 + human sampling 9 | 🔮 | 🔮 | 🔮 | 🔮 | Next corpus step (e.g. contested continent-of-country cases) |
 
 ---

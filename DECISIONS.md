@@ -578,3 +578,33 @@ limits: descriptive User-Agent, bounded `LIMIT`, serial queries spaced out,
 honor `Retry-After` on 429 (the service rate-limits aggressively). The live
 runtime path stays summary-based for now; adopting SPARQL there is a later
 step. Regenerate `assets/corpus.json` (web) after any corpus change.
+
+---
+
+## 025 — Question-TYPE diversity lives in the corpus; every type is a 4-option MCQ
+
+**Decision**: New question TYPES (superlative, chronology/"which came first",
+reverse-attribute, numeric "closest-to", classification, plus the five summary
+shapes) are all expressed as **4-option multiple-choice** and generated into
+the shared `corpus.sqlite` / `corpus.json`. The Wikidata generator is
+**dataset-driven**: a few bounded SPARQL queries each pull a rich dataset
+(countries, elements, films, books, people), cached to `tools/corpus/cache/`,
+and MANY question types are generated from each dataset.
+
+**Why**: Keeping every type to the same 4-option shape means **all four client
+platforms render new types with zero code changes** — they just read the
+corpus (a `Question` is a prompt + 4 options + correctIndex). That's how we got
+~17 types onto iOS/tvOS/Web/Android at once. The dataset+cache architecture
+minimizes WDQS calls (the endpoint rate-limits hard, ~1000s `Retry-After`) and
+makes regeneration instant + resumable: re-deriving questions from cached
+datasets needs no network, so fixing a generation bug (e.g. the qid-collision
+that deduped superlative questions to 3) is a one-second re-run.
+
+**How to apply**: add a new type as a generator over an existing cached dataset
+where possible (no new query). qids must key on the full **option set**, not
+just the prompt — fixed-stem types (superlative/chronology) otherwise collide
+under `INSERT OR IGNORE`. Run cache-only by default; use `--fetch` to pull
+un-cached datasets when WDQS is cool. The generator deletes only the `wd:*`
+types it actually produces, so a skipped dataset's questions survive. Non-MCQ
+formats (timeline drag, grouping wall, type-the-answer) would need per-client
+UI and are out of scope until a type earns it.

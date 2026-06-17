@@ -222,3 +222,21 @@ green; iOS renders the new variety on the sim. *Left:* the genuinely-different
 TYPES (superlative, which-came-first, odd-one-out, numeric closest-to,
 on-this-day, connection) need the Wikidata template expansion — that's the
 next push (NOW-feasible set documented in the research).
+
+**2026-06-17 (round 9 — Wikidata question-TYPE expansion)** — *Did:* rewrote
+wikidata.py to be DATASET-driven (a few bounded SPARQL queries → rich datasets
+for countries/elements/films/books/people, cached to tools/corpus/cache/),
+then generate MANY 4-option question TYPES per dataset: forward + reverse
+attribute, superlative ("which is largest by population/area?"), chronology
+("which was established/discovered first?"), numeric closest-to, and
+classification. Because every type is a 4-option MCQ in the shared corpus, all
+four platforms render them with no client changes (Decision 025). *Bugs fixed:*
+qid collision that deduped fixed-stem types (superlative/chronology) down to 3
+each → now keyed on the option set (full counts: supPop 120, supArea 120,
+chronCountry 100, elemChron 80); added dataset caching so regen is instant +
+resumable; targeted DELETE so skipped datasets' questions survive. *WDQS pain:*
+~1000s Retry-After throttling made films/books/people fetches stall for an
+hour → shipped countries+elements types from cache now; bestpic/books/people
+(director/author preserved; chronology/classification still thin) fatten via a
+background `--fetch` when WDQS cools. Corpus 10,704; ~17 Wikidata types + 5
+summary shapes. *Verified:* all four platforms build; new types sampled clean.

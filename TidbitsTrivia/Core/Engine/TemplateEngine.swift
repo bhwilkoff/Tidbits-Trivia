@@ -1,184 +1,252 @@
 import Foundation
 
-/// Turns Wikipedia article summaries into trivia questions. This is the
-/// product's moat: the open API is a firehose of true-but-misleading
-/// facts, so most of the value is in the FILTER, not the fetch
-/// (competitive research §5). The same template shapes are mirrored by
-/// the offline corpus generator (tools/corpus) so live and pre-baked
-/// questions are indistinguishable to the game loop.
+/// Turns Wikipedia article summaries into trivia questions. The product's
+/// moat is the FILTER, not the fetch. v2 rotates among FIVE question shapes
+/// (identify / Jeopardy-inversion / cloze / categorize / one-liner) with a
+/// bank of stems so no single phrasing dominates ("best described" is now a
+/// capped minority), and normalizes distractor surface form so the answer
+/// can't be guessed from how options are written. Mirrors
+/// `tools/corpus/generate_corpus.py` (Decision 019).
 nonisolated struct TemplateEngine: Sendable {
 
-    // MARK: Quality gates (the rulebook — see docs/QUESTION-QUALITY.md)
+    // MARK: Quality gates
 
-    /// A summary usable as a question subject.
     static func isUsable(_ s: WikipediaClient.Summary) -> Bool {
         guard s.type != "disambiguation" else { return false }
         guard let d = s.description, d.count >= 6, d.count <= 90 else { return false }
         guard let e = s.extract, e.count >= 40 else { return false }
-        // Reject meta/list pages — they make ambiguous subjects.
         let lowerTitle = s.title.lowercased()
         if lowerTitle.hasPrefix("list of") || lowerTitle.contains("(disambiguation)") { return false }
+        if (e).lowercased().contains("may refer to") { return false }
         return true
     }
 
-    /// Remove the answer (and parenthetical disambiguators) from any clue
-    /// text so the prompt never leaks its own answer (research §5).
-    static func redact(_ text: String, title: String) -> String {
-        var out = text
-        // Strip "(1932 film)"-style disambiguators that give away dates.
-        let bareTitle = title.replacingOccurrences(of: #"\s*\([^)]*\)"#, with: "", options: .regularExpression)
-        for needle in [title, bareTitle] where !needle.isEmpty {
-            out = out.replacingOccurrences(of: needle, with: "—————", options: .caseInsensitive)
-        }
-        return out
-    }
+    // MARK: Rotating stems (≤ ~1/N share each; categorize a minority)
+
+    static let stems: [String: [String]] = [
+        "identify": [
+            "Which subject does this describe? \u{201C}%@\u{201D}",
+            "Name it — \u{201C}%@\u{201D}",
+            "What is being described here? \u{201C}%@\u{201D}",
+            "Identify the subject: \u{201C}%@\u{201D}",
+            "These clues point to one thing. What is it? \u{201C}%@\u{201D}",
+            "Guess the article: \u{201C}%@\u{201D}",
+        ],
+        "jeopardy": [
+            "%@ — what is it?",
+            "%@ Name the subject.",
+            "%@ What are we describing?",
+        ],
+        "cloze": [
+            "Fill in the blank: \u{201C}%@\u{201D}",
+            "Complete the sentence: \u{201C}%@\u{201D}",
+            "Which name completes this? \u{201C}%@\u{201D}",
+        ],
+        "categorize": [
+            "What kind of thing is %@?",
+            "What is %@ best known as?",
+            "In a few words, what is %@?",
+            "Which description fits %@?",
+        ],
+        "oneliner": [
+            "Which one is \u{201C}%@\u{201D}?",
+            "\u{201C}%@\u{201D} — which subject is that?",
+            "Which subject matches: \u{201C}%@\u{201D}?",
+        ],
+    ]
+    static let shapeRotation = ["identify", "jeopardy", "cloze", "identify", "oneliner",
+                                "jeopardy", "categorize", "cloze", "identify", "jeopardy"]
 
     // MARK: Generation
 
-    /// Build up to `count` questions for a category/topic from a pool of
-    /// summaries. Deterministic given the same pool + seed.
     static func makeQuestions(
-        pool: [WikipediaClient.Summary],
-        categoryID: String,
-        count: Int,
-        seed: UInt64
+        pool: [WikipediaClient.Summary], categoryID: String, count: Int, seed: UInt64
     ) -> [Question] {
         let usable = pool.filter(isUsable)
         guard usable.count >= 4 else { return [] }
         var rng = SeededRNG(seed: seed)
         let subjects = usable.shuffled(using: &rng)
         var questions: [Question] = []
-
+        var gi = 0
         for subject in subjects {
             if questions.count >= count { break }
-            // Alternate the two template shapes for variety.
-            let useDescriptionOf = (questions.count % 2 == 0)
-            let q = useDescriptionOf
-                ? descriptionOfSubject(subject, pool: usable, categoryID: categoryID, rng: &rng)
-                : subjectFromDescription(subject, pool: usable, categoryID: categoryID, rng: &rng)
-            if let q { questions.append(q) }
+            if let q = build(subject, pool: usable, categoryID: categoryID, gi: gi, rng: &rng) {
+                questions.append(q)
+            }
+            gi += 1
         }
         return questions
     }
 
-    // MARK: Template A — "What is <title>?" (options are descriptions)
-
-    private static func descriptionOfSubject(
-        _ s: WikipediaClient.Summary,
-        pool: [WikipediaClient.Summary],
-        categoryID: String,
-        rng: inout SeededRNG
+    private static func build(
+        _ s: WikipediaClient.Summary, pool: [WikipediaClient.Summary],
+        categoryID: String, gi: Int, rng: inout SeededRNG
     ) -> Question? {
-        guard let correct = s.description else { return nil }
-        let distractors = pickDistractors(
-            for: s, pool: pool, value: { $0.description }, exclude: correct, rng: &rng)
-        guard distractors.count == 3 else { return nil }
-        return assemble(
-            subject: s, categoryID: categoryID,
-            prompt: "How is \(displayTitle(s.title)) best described?",
-            correct: capitalizedClue(correct), distractors: distractors.map(capitalizedClue),
-            templateID: "descriptionOf", rng: &rng)
+        let n = shapeRotation.count
+        for off in 0..<n {
+            let shape = shapeRotation[(gi + off) % n]
+            let bank = stems[shape]!
+            let stem = bank[(gi / n) % bank.count]
+            if let (prompt, options, answer) = builder(shape, s, pool, stem, &rng) {
+                var opts = options
+                opts.shuffle(using: &rng)
+                let ci = opts.firstIndex(of: answer) ?? 0
+                return Question(
+                    id: "live:\(shape):\(s.title)".replacingOccurrences(of: " ", with: "_"),
+                    prompt: prompt, options: opts, correctIndex: ci, categoryID: categoryID,
+                    difficulty: difficulty(for: s), explanation: firstSentence(of: s.extract ?? s.description ?? ""),
+                    sourceTitle: s.title, sourceURL: s.pageURL, templateID: shape)
+            }
+        }
+        return nil
     }
 
-    // MARK: Template B — "Which subject matches this clue?" (options are titles)
+    private static func builder(
+        _ shape: String, _ s: WikipediaClient.Summary, _ pool: [WikipediaClient.Summary],
+        _ stem: String, _ rng: inout SeededRNG
+    ) -> (String, [String], String)? {
+        switch shape {
+        case "identify":
+            let clue = redact(cleanClue(firstSentence(of: s.extract ?? s.description ?? "")), title: s.title)
+            guard clue.count >= 25 else { return nil }
+            let ds = titleDistractors(s, pool, &rng); guard ds.count == 3 else { return nil }
+            let ans = displayTitle(s.title)
+            return (String(format: stem, clue), [ans] + ds, ans)
+        case "jeopardy":
+            let sent = cleanClue(firstSentence(of: s.extract ?? ""))
+            guard sent.count >= 25 else { return nil }
+            let bare = displayTitle(s.title)
+            var clue: String
+            if sent.lowercased().hasPrefix(s.title.lowercased()) {
+                clue = "This" + sent.dropFirst(s.title.count)
+            } else if sent.lowercased().hasPrefix(bare.lowercased()) {
+                clue = "This" + sent.dropFirst(bare.count)
+            } else {
+                clue = redact(sent, title: s.title)
+            }
+            clue = capitalize(clue.trimmingCharacters(in: .whitespaces))
+            let ds = titleDistractors(s, pool, &rng); guard ds.count == 3 else { return nil }
+            return (String(format: stem, clue), [bare] + ds, bare)
+        case "cloze":
+            let sent = cleanClue(firstSentence(of: s.extract ?? ""))
+            let bare = displayTitle(s.title)
+            var clozed: String?
+            for needle in [s.title, bare] where !needle.isEmpty && sent.range(of: needle, options: .caseInsensitive) != nil {
+                clozed = sent.replacingOccurrences(of: needle, with: "_____", options: .caseInsensitive)
+                break
+            }
+            guard let cz = clozed, cz.count >= 25 else { return nil }
+            let ds = titleDistractors(s, pool, &rng); guard ds.count == 3 else { return nil }
+            return (String(format: stem, cz), [bare] + ds, bare)
+        case "categorize":
+            guard let correct = s.description else { return nil }
+            let ds = descDistractors(s, pool, &rng); guard ds.count == 3 else { return nil }
+            let ans = capitalize(correct)
+            return (String(format: stem, displayTitle(s.title)), [ans] + ds.map(capitalize), ans)
+        case "oneliner":
+            guard let correct = s.description else { return nil }
+            let ds = titleDistractors(s, pool, &rng); guard ds.count == 3 else { return nil }
+            let ans = displayTitle(s.title)
+            return (String(format: stem, capitalize(correct)), [ans] + ds, ans)
+        default: return nil
+        }
+    }
 
-    private static func subjectFromDescription(
-        _ s: WikipediaClient.Summary,
-        pool: [WikipediaClient.Summary],
-        categoryID: String,
-        rng: inout SeededRNG
-    ) -> Question? {
-        guard let desc = s.description else { return nil }
-        let clue = redact(firstSentence(of: s.extract ?? desc), title: s.title)
-        guard clue.count >= 25 else { return nil }
-        let distractors = pickDistractors(
-            for: s, pool: pool, value: { $0.title }, exclude: s.title, rng: &rng)
-        guard distractors.count == 3 else { return nil }
-        return assemble(
-            subject: s, categoryID: categoryID,
-            prompt: "Which subject is this? \u{201C}\(clue)\u{201D}",
-            correct: displayTitle(s.title), distractors: distractors.map(displayTitle),
-            templateID: "subjectFrom", rng: &rng)
+    // MARK: Distractors (typed siblings; length-normalized for prose)
+
+    private static func rankedSiblings(
+        _ s: WikipediaClient.Summary, _ pool: [WikipediaClient.Summary],
+        value: (WikipediaClient.Summary) -> String?, exclude: String, lengthMatch: Int?
+    ) -> [String] {
+        let subjWords = Set((s.description ?? "").lowercased().split(separator: " ").map(String.init))
+        var seen = Set<String>()
+        let cands = pool.compactMap { c -> (Int, Int, String)? in
+            guard c.title != s.title, let v0 = value(c)?.trimmingCharacters(in: .whitespaces),
+                  !v0.isEmpty, v0.caseInsensitiveCompare(exclude) != .orderedSame,
+                  seen.insert(v0.lowercased()).inserted else { return nil }
+            let words = Set((c.description ?? "").lowercased().split(separator: " ").map(String.init))
+            let overlap = subjWords.intersection(words).count
+            let lenPen = lengthMatch.map { -abs(v0.count - $0) } ?? 0
+            return (overlap, lenPen, v0)
+        }.sorted { ($0.0, $0.1) > ($1.0, $1.1) }
+        return cands.map(\.2)
+    }
+
+    private static func titleDistractors(_ s: WikipediaClient.Summary, _ pool: [WikipediaClient.Summary], _ rng: inout SeededRNG) -> [String] {
+        let ranked = rankedSiblings(s, pool, value: { displayTitle($0.title) }, exclude: displayTitle(s.title), lengthMatch: nil)
+        return Array(Array(ranked.prefix(8)).shuffled(using: &rng).prefix(3))
+    }
+    private static func descDistractors(_ s: WikipediaClient.Summary, _ pool: [WikipediaClient.Summary], _ rng: inout SeededRNG) -> [String] {
+        let ranked = rankedSiblings(s, pool, value: { $0.description }, exclude: s.description ?? "", lengthMatch: (s.description ?? "").count)
+        return Array(Array(ranked.prefix(8)).shuffled(using: &rng).prefix(3))
     }
 
     // MARK: Helpers
 
-    private static func assemble(
-        subject s: WikipediaClient.Summary, categoryID: String,
-        prompt: String, correct: String, distractors: [String],
-        templateID: String, rng: inout SeededRNG
-    ) -> Question {
-        var options = ([correct] + distractors)
-        options.shuffle(using: &rng)
-        let correctIndex = options.firstIndex(of: correct) ?? 0
-        let explanation = (s.extract.map(firstSentence) ?? s.description ?? "")
-        return Question(
-            id: "live:\(templateID):\(s.title)".replacingOccurrences(of: " ", with: "_"),
-            prompt: prompt,
-            options: options,
-            correctIndex: correctIndex,
-            categoryID: categoryID,
-            difficulty: difficulty(for: s),
-            explanation: explanation,
-            sourceTitle: s.title,
-            sourceURL: s.pageURL,
-            templateID: templateID
-        )
-    }
-
-    /// Distractors: distinct, non-empty, and not equal to the answer.
-    /// Prefers candidates that share a word with the subject's
-    /// description so wrong answers stay plausible (research §1.9).
-    private static func pickDistractors(
-        for s: WikipediaClient.Summary,
-        pool: [WikipediaClient.Summary],
-        value: (WikipediaClient.Summary) -> String?,
-        exclude: String,
-        rng: inout SeededRNG
-    ) -> [String] {
-        let subjectWords = Set((s.description ?? "").lowercased().split(separator: " ").map(String.init))
-        let candidates = pool
-            .filter { $0.title != s.title }
-            .compactMap { c -> (String, Int)? in
-                guard let v = value(c)?.trimmingCharacters(in: .whitespacesAndNewlines),
-                      !v.isEmpty, v.caseInsensitiveCompare(exclude) != .orderedSame else { return nil }
-                let words = Set((c.description ?? "").lowercased().split(separator: " ").map(String.init))
-                return (v, subjectWords.intersection(words).count)
+    // Strip parenthetical clutter (foreign scripts, pronunciations, empty
+    // parens, leading ALL-CAPS acronyms that leak the answer). Fixpoint loop
+    // handles nested parens. Mirrors generate_corpus.py clean_clue.
+    private static let groupREs = [
+        try! NSRegularExpression(pattern: #"\s*\(([^()]*)\)"#),     // ( … )
+        try! NSRegularExpression(pattern: #"\s*\[([^\[\]]*)\]"#),   // [ … ]  IPA / CJK glosses
+    ]
+    static func cleanClue(_ text: String) -> String {
+        var out = text, prev = ""
+        while out != prev {
+            prev = out
+            for re in groupREs {
+                let ns = out as NSString
+                var result = ""; var last = 0
+                for m in re.matches(in: out, range: NSRange(location: 0, length: ns.length)) {
+                    result += ns.substring(with: NSRange(location: last, length: m.range.location - last))
+                    let inner = ns.substring(with: m.range(at: 1))
+                    if !shouldDropParen(inner) { result += ns.substring(with: m.range) }
+                    last = m.range.location + m.range.length
+                }
+                result += ns.substring(from: last)
+                out = result
             }
-        // De-dupe by value, prefer higher word-overlap, then shuffle ties.
-        var seen = Set<String>()
-        let ranked = candidates
-            .sorted { $0.1 > $1.1 }
-            .filter { seen.insert($0.0.lowercased()).inserted }
-            .map(\.0)
-        // Take a plausible top slice, then randomize which 3 we use.
-        let slice = Array(ranked.prefix(8)).shuffled(using: &rng)
-        return Array(slice.prefix(3))
-    }
-
-    private static func difficulty(for s: WikipediaClient.Summary) -> Int {
-        // Proxy: longer, richer extracts tend to be more famous → easier.
-        let len = s.extract?.count ?? 0
-        switch len {
-        case 600...: return 2
-        case 300..<600: return 3
-        default: return 4
         }
+        while out.contains("  ") { out = out.replacingOccurrences(of: "  ", with: " ") }
+        return out.replacingOccurrences(of: " ,", with: ",").replacingOccurrences(of: " .", with: ".")
+            .trimmingCharacters(in: .whitespaces)
+    }
+    private static func shouldDropParen(_ inner: String) -> Bool {
+        let t = inner.trimmingCharacters(in: .whitespaces)
+        if t.isEmpty { return true }
+        if t.unicodeScalars.contains(where: { $0.value > 127 }) { return true }
+        let langs = ["romaniz", "pronounc", "ipa", "listen", "lit.", "russian", "greek", "latin",
+                     "arabic", "chinese", "japanese", "hebrew", "hindi", "persian", "german",
+                     "french", "spanish", "italian", "korean", "portuguese", "turkish", "polish", "dutch", "sanskrit"]
+        let lower = t.lowercased()
+        if langs.contains(where: { lower.contains($0) }) { return true }
+        let firstChunk = t.split(separator: ";").first.map(String.init) ?? t
+        let tok = (firstChunk.split(separator: " ").first.map(String.init) ?? "").filter { $0.isLetter }
+        if tok.count >= 2 && tok.count <= 6 && tok == tok.uppercased() && tok != tok.lowercased() { return true }
+        return false
     }
 
+    static func redact(_ text: String, title: String) -> String {
+        var out = text
+        let bareTitle = title.replacingOccurrences(of: #"\s*\([^)]*\)"#, with: "", options: .regularExpression)
+        for needle in [title, bareTitle] where !needle.isEmpty {
+            out = out.replacingOccurrences(of: needle, with: "—————", options: .caseInsensitive)
+        }
+        return out
+    }
+    private static func difficulty(for s: WikipediaClient.Summary) -> Int {
+        let len = s.extract?.count ?? 0
+        return len >= 600 ? 2 : (len >= 300 ? 3 : 4)
+    }
     private static func firstSentence(of text: String) -> String {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        if let range = trimmed.range(of: ". ") {
-            return String(trimmed[..<range.lowerBound]) + "."
-        }
+        if let range = trimmed.range(of: ". ") { return String(trimmed[..<range.lowerBound]) + "." }
         return trimmed
     }
-
     private static func displayTitle(_ t: String) -> String {
         t.replacingOccurrences(of: #"\s*\([^)]*\)"#, with: "", options: .regularExpression)
     }
-
-    private static func capitalizedClue(_ c: String) -> String {
+    private static func capitalize(_ c: String) -> String {
         guard let first = c.first else { return c }
         return first.uppercased() + c.dropFirst()
     }

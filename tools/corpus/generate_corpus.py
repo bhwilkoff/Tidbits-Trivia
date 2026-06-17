@@ -140,6 +140,35 @@ def first_sentence(text):
     m = re.search(r"\.\s", t)
     return (t[:m.start()] + ".") if m else t
 
+_LANG_RE = re.compile(r"\b(romaniz|pronounc|IPA|listen|lit\.|Russian|Greek|Latin|Arabic|"
+                      r"Chinese|Japanese|Hebrew|Hindi|Persian|German|French|Spanish|Italian|"
+                      r"Korean|Portuguese|Turkish|Polish|Dutch|Sanskrit)\b", re.I)
+
+def clean_clue(text):
+    """Strip parenthetical clutter from a displayed clue: foreign scripts,
+    pronunciations/romanizations, empty parens, and short ALL-CAPS acronyms
+    (which leak the answer, e.g. '(CSTO)'). Keeps ordinary parentheticals."""
+    def repl(m):
+        inner = m.group(1).strip()
+        if not inner:
+            return ""
+        if re.search(r"[^\x00-\x7F]", inner):       # non-ASCII (foreign script / IPA)
+            return ""
+        if _LANG_RE.search(inner):                  # translation / pronunciation note
+            return ""
+        parts = inner.split(";")[0].split()
+        tok = re.sub(r"[^A-Za-z]", "", parts[0]) if parts else ""
+        if 2 <= len(tok) <= 6 and tok.isupper():
+            return ""                                # leading acronym, e.g. (CSTO; ...)
+        return m.group(0)
+    out, prev = text, None
+    while out != prev:                               # fixpoint: strip nested groups inside-out
+        prev = out
+        out = re.sub(r"\s*\(([^()]*)\)", repl, out)   # ( … )
+        out = re.sub(r"\s*\[([^\[\]]*)\]", repl, out)  # [ … ]  (IPA, CJK glosses)
+    out = re.sub(r"\s{2,}", " ", out).replace(" ,", ",").replace(" .", ".").strip()
+    return out
+
 def cap(c):
     return c[:1].upper() + c[1:] if c else c
 
@@ -147,63 +176,161 @@ def difficulty(s):
     n = len(s.get("extract") or "")
     return 2 if n >= 600 else (3 if n >= 300 else 4)
 
-def pick_distractors(subject, pool, value_fn, exclude, rng, k=3):
+# --- Distractor pickers (typed siblings; length-normalized for prose) ---
+
+def _ranked_siblings(subject, pool, value_fn, exclude, length_match=None):
+    """Siblings ranked by description word-overlap (same-domain → plausible).
+    If length_match is set, prefer values of similar length (kills the
+    'longest option is the answer' tell)."""
     subj_words = set((subject.get("description") or "").lower().split())
-    ranked = []
-    seen = set()
-    cands = []
+    cands, seen = [], set()
     for c in pool:
         if c["title"] == subject["title"]:
             continue
         v = (value_fn(c) or "").strip()
-        if not v or v.lower() == exclude.lower() or v.lower() in seen:
-            continue
-        words = set((c.get("description") or "").lower().split())
-        overlap = len(subj_words & words)
-        cands.append((overlap, v))
-    cands.sort(key=lambda x: x[0], reverse=True)
-    for _, v in cands:
-        if v.lower() in seen:
+        if not v or v.lower() == (exclude or "").lower() or v.lower() in seen:
             continue
         seen.add(v.lower())
-        ranked.append(v)
-    slice_ = ranked[:8]
-    rng.shuffle(slice_)
-    return slice_[:k]
+        words = set((c.get("description") or "").lower().split())
+        overlap = len(subj_words & words)
+        lenpen = -abs(len(v) - length_match) if length_match is not None else 0
+        cands.append((overlap, lenpen, v))
+    cands.sort(key=lambda x: (x[0], x[1]), reverse=True)
+    return [v for _, _, v in cands]
 
-def make_question(subject, pool, category, idx, rng, use_desc=None):
-    if use_desc is None:
-        use_desc = (idx % 2 == 0)
-    if use_desc:
-        correct = subject.get("description")
-        if not correct:
-            return None
-        ds = pick_distractors(subject, pool, lambda c: c.get("description"), correct, rng)
-        if len(ds) != 3:
-            return None
-        prompt = f"How is {display_title(subject['title'])} best described?"
-        options = [cap(correct)] + [cap(d) for d in ds]
-        template = "descriptionOf"
-        answer = cap(correct)
+def title_distractors(subject, pool, rng, k=3):
+    ranked = _ranked_siblings(subject, pool, lambda c: display_title(c["title"]), display_title(subject["title"]))
+    slice_ = ranked[:8]; rng.shuffle(slice_); return slice_[:k]
+
+def desc_distractors(subject, pool, rng, k=3):
+    correct = subject.get("description") or ""
+    ranked = _ranked_siblings(subject, pool, lambda c: c.get("description"), correct, length_match=len(correct))
+    slice_ = ranked[:8]; rng.shuffle(slice_); return slice_[:k]
+
+# --- Rotating stems (≤~1/N share each; categorize kept a minority) ---
+
+STEMS = {
+    "identify": [
+        'Which subject does this describe? “{clue}”',
+        'Name it — “{clue}”',
+        'What is being described here? “{clue}”',
+        'Identify the subject: “{clue}”',
+        'These clues point to one thing. What is it? “{clue}”',
+        'Guess the article: “{clue}”',
+    ],
+    "jeopardy": [
+        '{clue} — what is it?',
+        '{clue} Name the subject.',
+        '{clue} What are we describing?',
+    ],
+    "cloze": [
+        'Fill in the blank: “{clue}”',
+        'Complete the sentence: “{clue}”',
+        'Which name completes this? “{clue}”',
+    ],
+    "categorize": [
+        'What kind of thing is {title}?',
+        'What is {title} best known as?',
+        'In a few words, what is {title}?',
+        'Which description fits {title}?',
+    ],
+    "oneliner": [
+        'Which one is “{clue}”?',
+        '“{clue}” — which subject is that?',
+        'Which subject matches: “{clue}”?',
+    ],
+}
+# categorize (the old "best described") is 1 of 10 slots → ~10% share.
+SHAPE_ROTATION = ["identify", "jeopardy", "cloze", "identify", "oneliner",
+                  "jeopardy", "categorize", "cloze", "identify", "jeopardy"]
+
+def build_identify(subject, pool, stem, rng):
+    clue = redact(clean_clue(first_sentence(subject.get("extract") or subject.get("description"))), subject["title"])
+    if len(clue) < 25:
+        return None
+    ds = title_distractors(subject, pool, rng)
+    if len(ds) != 3:
+        return None
+    ans = display_title(subject["title"])
+    return stem.format(clue=clue), [ans] + ds, ans
+
+def build_jeopardy(subject, pool, stem, rng):
+    s = clean_clue(first_sentence(subject.get("extract") or ""))
+    if len(s) < 25:
+        return None
+    bare = display_title(subject["title"])
+    if s.lower().startswith(subject["title"].lower()):
+        clue = "This" + s[len(subject["title"]):]
+    elif s.lower().startswith(bare.lower()):
+        clue = "This" + s[len(bare):]
     else:
-        clue = redact(first_sentence(subject.get("extract") or subject.get("description")), subject["title"])
-        if len(clue) < 25:
-            return None
-        ds = pick_distractors(subject, pool, lambda c: c.get("title"), subject["title"], rng)
-        if len(ds) != 3:
-            return None
-        prompt = f"Which subject is this? “{clue}”"
-        options = [display_title(subject["title"])] + [display_title(d) for d in ds]
-        template = "subjectFrom"
-        answer = display_title(subject["title"])
+        clue = redact(s, subject["title"])
+    clue = cap(clue.strip())
+    ds = title_distractors(subject, pool, rng)
+    if len(ds) != 3:
+        return None
+    ans = bare
+    return stem.format(clue=clue), [ans] + ds, ans
 
-    rng.shuffle(options)
-    correct_index = options.index(answer)
-    explanation = first_sentence(subject.get("extract") or "") or (subject.get("description") or "")
-    qid = f"corpus:{template}:{subject['title']}".replace(" ", "_")
-    return (qid, prompt, options[0], options[1], options[2], options[3],
-            correct_index, category, difficulty(subject), explanation,
-            subject["title"], subject.get("url") or "", template)
+def build_cloze(subject, pool, stem, rng):
+    s = clean_clue(first_sentence(subject.get("extract") or ""))
+    bare = display_title(subject["title"])
+    clozed = None
+    for needle in (subject["title"], bare):
+        if needle and needle.lower() in s.lower():
+            clozed = re.sub(re.escape(needle), "_____", s, count=1, flags=re.IGNORECASE)
+            break
+    if not clozed or len(clozed) < 25:
+        return None
+    ds = title_distractors(subject, pool, rng)
+    if len(ds) != 3:
+        return None
+    ans = bare
+    return stem.format(clue=clozed), [ans] + ds, ans
+
+def build_categorize(subject, pool, stem, rng):
+    correct = subject.get("description")
+    if not correct:
+        return None
+    ds = desc_distractors(subject, pool, rng)
+    if len(ds) != 3:
+        return None
+    ans = cap(correct)
+    return stem.format(title=display_title(subject["title"])), [ans] + [cap(d) for d in ds], ans
+
+def build_oneliner(subject, pool, stem, rng):
+    correct = subject.get("description")
+    if not correct:
+        return None
+    ds = title_distractors(subject, pool, rng)
+    if len(ds) != 3:
+        return None
+    ans = display_title(subject["title"])
+    return stem.format(clue=cap(correct)), [ans] + ds, ans
+
+BUILDERS = {"identify": build_identify, "jeopardy": build_jeopardy, "cloze": build_cloze,
+            "categorize": build_categorize, "oneliner": build_oneliner}
+
+def make_question(subject, pool, category, gi, rng):
+    """Pick a shape by seeded round-robin (even distribution, capped stems);
+    fall through to the next shape if this subject can't fill it."""
+    n = len(SHAPE_ROTATION)
+    for off in range(n):
+        shape = SHAPE_ROTATION[(gi + off) % n]
+        stems = STEMS[shape]
+        stem = stems[(gi // n) % len(stems)]
+        built = BUILDERS[shape](subject, pool, stem, rng)
+        if not built:
+            continue
+        prompt, options, answer = built
+        opts = options[:]; rng.shuffle(opts)
+        ci = opts.index(answer)
+        explanation = first_sentence(subject.get("extract") or "") or (subject.get("description") or "")
+        qid = f"corpus:{shape}:{subject['title']}".replace(" ", "_")
+        return (qid, prompt, opts[0], opts[1], opts[2], opts[3],
+                ci, category, difficulty(subject), explanation,
+                subject["title"], subject.get("url") or "", shape)
+    return None
 
 def build_category(category, seeds, per_category):
     print(f"[{category}] searching…")
@@ -218,11 +345,13 @@ def build_category(category, seeds, per_category):
     rng = random.Random(hash(category) & 0xFFFFFFFF)
     rng.shuffle(usable)
     rows, ids = [], set()
-    # Emit BOTH template variants per subject (different ids) to roughly
-    # double yield toward the 10k target without lowering quality gates.
-    for i, subj in enumerate(usable):
-        for use_desc in (True, False):
-            q = make_question(subj, usable, category, i, rng, use_desc=use_desc)
+    # Two questions per subject, each a DIFFERENT shape via the running
+    # rotation counter (gi) — spreads shapes + stems evenly across the corpus.
+    gi = 0
+    for subj in usable:
+        for _ in range(2):
+            q = make_question(subj, usable, category, gi, rng)
+            gi += 1
             if q and q[0] not in ids:
                 ids.add(q[0])
                 rows.append(q)
@@ -253,19 +382,22 @@ def main():
 
     conn = sqlite3.connect(args.out)
     cur = conn.cursor()
-    cur.execute("DROP TABLE IF EXISTS questions")
-    cur.execute("""CREATE TABLE questions(
+    cur.execute("""CREATE TABLE IF NOT EXISTS questions(
         id TEXT PRIMARY KEY, prompt TEXT, option0 TEXT, option1 TEXT,
         option2 TEXT, option3 TEXT, correct_index INTEGER, category_id TEXT,
         difficulty INTEGER, explanation TEXT, source_title TEXT,
         source_url TEXT, template_id TEXT)""")
+    # Replace ONLY the summary-based questions; preserve the Wikidata moat
+    # rows (template_id 'wd:*') so we don't re-hit the rate-limited WDQS.
+    cur.execute("DELETE FROM questions WHERE template_id NOT LIKE 'wd:%'")
     cur.executemany(
         "INSERT OR IGNORE INTO questions VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", deduped)
-    cur.execute("CREATE INDEX idx_category ON questions(category_id)")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_category ON questions(category_id)")
     conn.commit()
     n = cur.execute("SELECT COUNT(*) FROM questions").fetchone()[0]
+    nwd = cur.execute("SELECT COUNT(*) FROM questions WHERE template_id LIKE 'wd:%'").fetchone()[0]
     conn.close()
-    print(f"Wrote {n} questions to {args.out}")
+    print(f"Wrote {len(deduped)} summary questions; corpus now {n} ({nwd} Wikidata preserved).")
 
 if __name__ == "__main__":
     main()

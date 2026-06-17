@@ -18,6 +18,16 @@
 - **Round 2 shipped (2026-06-16)**: local pass-and-play (2–4 players),
   spaced re-asking woven into solo games, haptics, Settings sheet, real
   app icon. All verified on the simulator.
+- **Round 8 shipped (2026-06-17)**: question-diversity overhaul. The corpus
+  was 89% two templates ("best described" = 45%). Now 5 rotating shapes
+  (identify/jeopardy/cloze/categorize/oneliner) × ~19 stems, "best described"
+  eliminated (0), categorize capped to ~9%; tell-free distractors
+  (length-normalized typed siblings) + a `cleanClue` pass that strips foreign
+  scripts/IPA/romanizations/empty-parens/acronym leaks from clues. Mirrored
+  across all four engines (python corpus + Swift/JS/Kotlin). Driven by two
+  research passes (question-type taxonomy + distractor craft) → QUESTION-QUALITY v2.
+  Genuinely-different question TYPES (superlative/chronology/odd-one-out/numeric)
+  via Wikidata expansion are the next step (33-type catalog in research).
 - **Round 7 shipped (2026-06-16)**: Android app (Kotlin + Compose + M3) —
   home/game/results/records/create, lean stack (manual DI + sealed Route +
   BackHandler, in-memory JSON corpus), full engine mirror. Built + verified on
@@ -191,3 +201,24 @@ answer cards + scoring HUD) render correctly; the "System UI isn't responding"
 dialog is the software-GPU emulator, not the app. *Left:* Android records is
 streak+bests (missed-fact review later); Room is a later perf step; iOS still
 builds green. **Four-platform vision complete.**
+
+**2026-06-17 (round 8 — question diversity & tell-free answers)** — *Found:*
+8,889/10,006 corpus questions were just two templates; "How is X best
+described?" was 4,487 (≈45%) and answers were guessable from form. *Did:*
+researched the full trivia question-type taxonomy (quiz-bowl pyramidality,
+Only Connect, Jeopardy, Sporcle, daily-puzzles, assessment items → 33-type
+catalog) and MCQ distractor craft (Haladyna's 31 rules, NBME, KG-distractor
+literature → a "no-tells" checklist). Rewrote the summary path into FIVE
+rotating shapes with a ~19-stem bank and a seeded round-robin that caps
+categorize (old "best described") to ~9% and emits two different shapes per
+subject. Distractors now length-normalize (kills the "longest = answer" tell)
+and stay typed siblings. Added `clean_clue` (fixpoint strip of () and []
+groups: foreign scripts, IPA, romanizations, empty parens, leading acronym
+leaks like "(CSTO)"). Mirrored every change across all four engines
+(generate_corpus.py + TemplateEngine.swift + js/engine.js + Tidbits.kt).
+QUESTION-QUALITY.md got a v2 section. *Result:* corpus 9,945, "best described"
+= 0, clean clues (residual clutter 0.3%). *Verified:* all four platforms build
+green; iOS renders the new variety on the sim. *Left:* the genuinely-different
+TYPES (superlative, which-came-first, odd-one-out, numeric closest-to,
+on-this-day, connection) need the Wikidata template expansion — that's the
+next push (NOW-feasible set documented in the research).

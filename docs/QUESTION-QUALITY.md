@@ -143,3 +143,69 @@ path in the **live** runtime engine (today live is summary-based only).
 5. **Post-game fact recap.** *Shipped* (Results "Tidbits to remember").
 6. **Interleave categories** (desirable difficulty). Mixed Bag does this.
 7. **Connection/deduction question types.** *Phase 2+.*
+
+---
+
+# v2 — Question diversity & tell-free answers (2026-06-17)
+
+Driven by two research passes (question-type taxonomy across quiz-bowl /
+pub-quiz / game-shows / Sporcle / daily-puzzles / assessment item types; and
+MCQ distractor-construction craft from Haladyna's 31 rules + the NBME guide +
+the KG distractor-generation literature). Problem being fixed: 89% of the v1
+corpus was two templates and "How is X best described?" alone was ~45% — a
+tedious cliché — and the correct answer was guessable from its form (it was
+the real, fuller, more-specific description next to mismatched distractors).
+
+## G. The shape system (kills the monotony)
+
+The summary-based path (and all three live engines) now rotate among **five
+question shapes** via a seeded round-robin, each with a **bank of stems**, so
+no single phrasing dominates. The round-robin (`SHAPE_ROTATION`) weights
+**categorize** (the old "best described") to **1 of 10 slots (~10%)**.
+
+| Shape | What it does | Stems | Answer / distractors |
+|---|---|---|---|
+| **identify** | Redacted clue → name the subject | 6 | title / typed-sibling titles |
+| **jeopardy** | "This {thing} …" declarative → name it | 3 | title / sibling titles |
+| **cloze** | First sentence with the subject blanked | 3 | title / sibling titles |
+| **categorize** | Subject → pick its description (capped ~10%) | 4 | description / length-matched sibling descriptions |
+| **oneliner** | Short description → which subject | 3 | title / sibling titles |
+
+~19 stems total; the seeded rotation guarantees an even spread. Two questions
+per subject always use two *different* shapes. The richer question **types**
+(superlative, which-came-first, reverse-attribute, odd-one-out, numeric
+closest-to, on-this-day, connection) come from the Wikidata path — see the
+ranked 33-type catalog in docs/ROADMAP.md → "Question-type backlog".
+
+## H. The no-tells checklist (form must never reveal the answer)
+
+The root tell: writers over-elaborate the key and treat distractors as an
+afterthought. Defenses the option-generator applies:
+
+1. **Length band** — prefer distractors within ~1.3× the key's length
+   (`descDistractors` ranks siblings by length proximity; the "longest option
+   is the answer" tell). 
+2. **Specificity parity** — distinguishing detail belongs in the stem, not the key.
+3. **Typed siblings only** — distractors share the subject's domain (ranked by
+   description word-overlap) so none is the odd-one-out (Haladyna G23).
+4. **No clang** — the answer/title is redacted from any displayed clue (G28b).
+5. **Random position** — options shuffled per question (programmatic shuffle is
+   unbiased; the middle-position tell is a human-authoring artifact).
+6. **Numeric** (Wikidata numeric templates): distractors straddle the true
+   value in multiplicative ratio bands, consistent format — never all on one
+   side, never the exact median (Haladyna G22).
+7. **Self-test**: if you can pick the answer with the stem hidden, the set leaks.
+
+## I. Distractor sourcing by answer type (target state)
+
+- **Entities**: same-P31 siblings ranked by `sitelinks` (fame) + a second
+  shared property; **P1889 "different from"** edges are the best confusables.
+- **Dates**: era-tiered offsets (modern ±1–5, ancient ±10–100), decade-consistent.
+- **Numbers**: multiplicative ratio bands (e.g. 0.55/1.35/1.9×), jittered.
+- **Misconception distractors** (most diagnostic + fun): P1889, "not to be
+  confused with" hatnotes, "list of common misconceptions" — tag provenance.
+
+Difficulty is tuned by **distractor semantic distance band [Δ₁, Δ₂]** (close =
+hard but below the "also-correct" ceiling), not by changing the fact. v2 ships
+the typed-sibling + length-normalization layer; the P1889/embedding-band and
+the numeric/date recipes land with the Wikidata template expansion.

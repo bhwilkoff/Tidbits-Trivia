@@ -207,54 +207,134 @@ object TemplateEngine {
         return out
     }
 
+    // Strip parenthetical clutter (foreign scripts, pronunciations, empty
+    // parens, leading ALL-CAPS acronyms that leak the answer). Fixpoint loop.
+    private val LANG = Regex("(romaniz|pronounc|IPA|listen|lit\\.|Russian|Greek|Latin|Arabic|Chinese|Japanese|Hebrew|Hindi|Persian|German|French|Spanish|Italian|Korean|Portuguese|Turkish|Polish|Dutch|Sanskrit)", RegexOption.IGNORE_CASE)
+    private val PAREN = Regex("\\s*\\(([^()]*)\\)")
+    private val BRACKET = Regex("\\s*\\[([^\\[\\]]*)\\]")
+    private fun dropParen(inner: String): Boolean {
+        val t = inner.trim()
+        if (t.isEmpty()) return true
+        if (t.any { it.code > 127 }) return true
+        if (LANG.containsMatchIn(t)) return true
+        val tok = (t.split(";")[0].trim().split(Regex("\\s+")).firstOrNull() ?: "").filter { it.isLetter() }
+        if (tok.length in 2..6 && tok == tok.uppercase() && tok != tok.lowercase()) return true
+        return false
+    }
+    private fun cleanClue(text: String): String {
+        var out = text; var prev = ""
+        while (out != prev) {
+            prev = out
+            out = PAREN.replace(out) { m -> if (dropParen(m.groupValues[1])) "" else m.value }
+            out = BRACKET.replace(out) { m -> if (dropParen(m.groupValues[1])) "" else m.value }
+        }
+        return out.replace(Regex("\\s{2,}"), " ").replace(" ,", ",").replace(" .", ".").trim()
+    }
+
+    // Rotating stems ("%s" = clue/title); categorize kept a minority.
+    private val STEMS = mapOf(
+        "identify" to listOf("Which subject does this describe? “%s”", "Name it — “%s”", "What is being described here? “%s”", "Identify the subject: “%s”", "These clues point to one thing. What is it? “%s”", "Guess the article: “%s”"),
+        "jeopardy" to listOf("%s — what is it?", "%s Name the subject.", "%s What are we describing?"),
+        "cloze" to listOf("Fill in the blank: “%s”", "Complete the sentence: “%s”", "Which name completes this? “%s”"),
+        "categorize" to listOf("What kind of thing is %s?", "What is %s best known as?", "In a few words, what is %s?", "Which description fits %s?"),
+        "oneliner" to listOf("Which one is “%s”?", "“%s” — which subject is that?", "Which subject matches: “%s”?"),
+    )
+    private val SHAPE_ROTATION = listOf("identify", "jeopardy", "cloze", "identify", "oneliner", "jeopardy", "categorize", "cloze", "identify", "jeopardy")
+
     fun make(pool: List<Wikipedia.Summary>, categoryId: String, count: Int, seed: Long): List<Question> {
         val usableList = pool.filter { usable(it) }
         if (usableList.size < 4) return emptyList()
         val rng = SeededRng(seed)
         val subjects = usableList.shuffledWith(rng)
         val out = mutableListOf<Question>()
+        var gi = 0
+        val n = SHAPE_ROTATION.size
         for (s in subjects) {
             if (out.size >= count) break
-            val useDesc = out.size % 2 == 0
-            val q = if (useDesc) descOf(s, usableList, categoryId, rng) else subjectFrom(s, usableList, categoryId, rng)
-            if (q != null) out.add(q)
+            for (off in 0 until n) {
+                val shape = SHAPE_ROTATION[(gi + off) % n]
+                val bank = STEMS[shape]!!
+                val stem = bank[(gi / n) % bank.size]
+                val built = buildShape(shape, s, usableList, stem, rng)
+                if (built != null) {
+                    val options = built.second.shuffledWith(rng)
+                    out.add(Question(
+                        id = "live:$shape:${s.title}".replace(" ", "_"), prompt = built.first, options = options,
+                        correctIndex = options.indexOf(built.third), categoryId = categoryId, difficulty = 3,
+                        explanation = firstSentence(s.extract ?: s.description ?: ""), sourceTitle = s.title, sourceUrl = s.url ?: "",
+                    ))
+                    break
+                }
+            }
+            gi++
         }
         return out
     }
 
-    private fun pickDistractors(subject: Wikipedia.Summary, pool: List<Wikipedia.Summary>, value: (Wikipedia.Summary) -> String?, exclude: String, rng: SeededRng): List<String> {
+    // Siblings ranked by description word-overlap; lengthMatch (when set)
+    // prefers similar-length values to kill the "longest = answer" tell.
+    private fun rankedSiblings(subject: Wikipedia.Summary, pool: List<Wikipedia.Summary>, value: (Wikipedia.Summary) -> String?, exclude: String, lengthMatch: Int?): List<String> {
         val subjWords = (subject.description ?: "").lowercase().split(" ").toSet()
         val seen = mutableSetOf<String>()
-        val ranked = pool.filter { it.title != subject.title }.mapNotNull { c ->
+        return pool.filter { it.title != subject.title }.mapNotNull { c ->
             val v = value(c)?.trim() ?: return@mapNotNull null
             if (v.isEmpty() || v.equals(exclude, true)) return@mapNotNull null
             val words = (c.description ?: "").lowercase().split(" ").toSet()
-            v to subjWords.intersect(words).size
-        }.sortedByDescending { it.second }.mapNotNull { if (seen.add(it.first.lowercase())) it.first else null }
-        return ranked.take(8).shuffledWith(rng).take(3)
+            val overlap = subjWords.intersect(words).size
+            val lenPen = if (lengthMatch != null) -kotlin.math.abs(v.length - lengthMatch) else 0
+            Triple(v, overlap, lenPen)
+        }.sortedWith(compareByDescending<Triple<String, Int, Int>> { it.second }.thenByDescending { it.third })
+            .mapNotNull { if (seen.add(it.first.lowercase())) it.first else null }
     }
+    private fun titleDistractors(s: Wikipedia.Summary, pool: List<Wikipedia.Summary>, rng: SeededRng) =
+        rankedSiblings(s, pool, { stripParens(it.title) }, stripParens(s.title), null).take(8).shuffledWith(rng).take(3)
+    private fun descDistractors(s: Wikipedia.Summary, pool: List<Wikipedia.Summary>, rng: SeededRng) =
+        rankedSiblings(s, pool, { it.description }, s.description ?: "", (s.description ?: "").length).take(8).shuffledWith(rng).take(3)
 
-    private fun assemble(s: Wikipedia.Summary, categoryId: String, prompt: String, correct: String, distractors: List<String>, template: String, rng: SeededRng): Question {
-        val options = (listOf(correct) + distractors).shuffledWith(rng)
-        return Question(
-            id = "live:$template:${s.title}".replace(" ", "_"), prompt = prompt, options = options,
-            correctIndex = options.indexOf(correct), categoryId = categoryId, difficulty = 3,
-            explanation = firstSentence(s.extract ?: s.description ?: ""), sourceTitle = s.title, sourceUrl = s.url ?: "",
-        )
-    }
-
-    private fun descOf(s: Wikipedia.Summary, pool: List<Wikipedia.Summary>, cat: String, rng: SeededRng): Question? {
-        val correct = s.description ?: return null
-        val ds = pickDistractors(s, pool, { it.description }, correct, rng)
-        if (ds.size != 3) return null
-        return assemble(s, cat, "How is ${stripParens(s.title)} best described?", cap(correct), ds.map { cap(it) }, "descriptionOf", rng)
-    }
-    private fun subjectFrom(s: Wikipedia.Summary, pool: List<Wikipedia.Summary>, cat: String, rng: SeededRng): Question? {
-        val clue = redact(firstSentence(s.extract ?: s.description ?: ""), s.title)
-        if (clue.length < 25) return null
-        val ds = pickDistractors(s, pool, { it.title }, s.title, rng)
-        if (ds.size != 3) return null
-        return assemble(s, cat, "Which subject is this? “$clue”", stripParens(s.title), ds.map { stripParens(it) }, "subjectFrom", rng)
+    // Returns (prompt, options, answer) or null if this subject can't fill the shape.
+    private fun buildShape(shape: String, s: Wikipedia.Summary, pool: List<Wikipedia.Summary>, stem: String, rng: SeededRng): Triple<String, List<String>, String>? {
+        when (shape) {
+            "identify" -> {
+                val clue = redact(cleanClue(firstSentence(s.extract ?: s.description ?: "")), s.title)
+                if (clue.length < 25) return null
+                val ds = titleDistractors(s, pool, rng); if (ds.size != 3) return null
+                val ans = stripParens(s.title); return Triple(stem.format(clue), listOf(ans) + ds, ans)
+            }
+            "jeopardy" -> {
+                val sent = cleanClue(firstSentence(s.extract ?: "")); if (sent.length < 25) return null
+                val bare = stripParens(s.title)
+                var clue = when {
+                    sent.lowercase().startsWith(s.title.lowercase()) -> "This" + sent.substring(s.title.length)
+                    sent.lowercase().startsWith(bare.lowercase()) -> "This" + sent.substring(bare.length)
+                    else -> redact(sent, s.title)
+                }
+                clue = cap(clue.trim())
+                val ds = titleDistractors(s, pool, rng); if (ds.size != 3) return null
+                return Triple(stem.format(clue), listOf(bare) + ds, bare)
+            }
+            "cloze" -> {
+                val sent = cleanClue(firstSentence(s.extract ?: "")); val bare = stripParens(s.title); var clozed: String? = null
+                for (needle in listOf(s.title, bare)) {
+                    if (needle.isNotEmpty() && sent.contains(needle, ignoreCase = true)) {
+                        clozed = sent.replaceFirst(Regex(Regex.escape(needle), RegexOption.IGNORE_CASE), "_____"); break
+                    }
+                }
+                if (clozed == null || clozed.length < 25) return null
+                val ds = titleDistractors(s, pool, rng); if (ds.size != 3) return null
+                return Triple(stem.format(clozed), listOf(bare) + ds, bare)
+            }
+            "categorize" -> {
+                val correct = s.description ?: return null
+                val ds = descDistractors(s, pool, rng); if (ds.size != 3) return null
+                val ans = cap(correct); return Triple(stem.format(stripParens(s.title)), listOf(ans) + ds.map { cap(it) }, ans)
+            }
+            "oneliner" -> {
+                val correct = s.description ?: return null
+                val ds = titleDistractors(s, pool, rng); if (ds.size != 3) return null
+                val ans = stripParens(s.title); return Triple(stem.format(cap(correct)), listOf(ans) + ds, ans)
+            }
+        }
+        return null
     }
 }
 

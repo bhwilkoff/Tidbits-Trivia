@@ -240,3 +240,11 @@ hour → shipped countries+elements types from cache now; bestpic/books/people
 (director/author preserved; chronology/classification still thin) fatten via a
 background `--fetch` when WDQS cools. Corpus 10,704; ~17 Wikidata types + 5
 summary shapes. *Verified:* all four platforms build; new types sampled clean.
+
+**2026-06-17 (round 9b — fattened all types)** — background `--fetch` cached
+the throttled datasets (bestpic/books/people); cache-only regen then filled the
+thin types: occClass 9→733 ("which is a physicist?"), occChron 3→120, filmChron
+3→80, bookChron 3→60. Corpus now **11,679** across **22 distinct types** (5
+summary shapes + 17 Wikidata). All datasets cached → future regen is instant.
+Also fixed the web staleness (network-first + versioned corpus.json + SW v2).
+All four platforms rebuilt green.

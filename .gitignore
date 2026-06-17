@@ -1,0 +1,76 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Xcode
+build/
+DerivedData/
+*.xcuserdata/
+*.xcworkspace/xcuserdata/
+*.moved-aside
+*.pbxuser
+*.perspectivev3
+!default.pbxuser
+!default.perspectivev3
+*.mode1v3
+*.mode2v3
+!default.mode1v3
+!default.mode2v3
+xcshareddata/WorkspaceSettings.xcsettings
+
+# Swift Package Manager
+.build/
+Packages/
+Package.pins
+Package.resolved
+
+# iOS
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# CocoaPods (if ever used)
+Pods/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output
+
+# Node (shouldn't be needed, but just in case)
+node_modules/
+
+# Environment / secrets
+.env
+.env.local
+*.key
+credentials.json
+
+# Android — Gradle wrapper jar is committed via android/.gitignore exception;
+# everything else is generated. Per-module .gitignore in android/ owns the
+# canonical list — duplicate the top entries here so a clone-then-rm-android
+# user doesn't accidentally commit caches.
+android/.gradle/
+android/.idea/
+android/build/
+android/**/build/
+android/local.properties
+# gradle-wrapper.jar IS committed — needed for ./gradlew on first clone
+
+# Android secrets — keystores + Firebase config out of git permanently
+android/keystore/
+*.jks
+*.keystore
+google-services.json
+play-service-account.json
+*.aab
+*.apk
+
+# IntelliJ / Android Studio
+*.iml
+.kotlin/
+
+# Native debug symbols
+native-debug-symbols.zip

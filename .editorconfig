@@ -1,0 +1,37 @@
+# Cross-platform editor settings — overrides editor defaults so
+# spacing stays consistent across web (JS/CSS/HTML), iOS (Swift),
+# and Android (Kotlin/XML). Apply to every contributor regardless
+# of their editor.
+#
+# Reference: https://editorconfig.org/
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+# Swift — Apple convention is 4-space indent.
+[*.{swift}]
+indent_size = 4
+
+# Kotlin — JetBrains convention is 4-space indent.
+[*.{kt,kts}]
+indent_size = 4
+
+# Gradle Groovy + XML — 4-space.
+[*.{xml,gradle}]
+indent_size = 4
+
+# Markdown — never trim trailing whitespace (it's syntactic for
+# line breaks).
+[*.md]
+trim_trailing_whitespace = false
+
+# Makefile / shell — TABs are syntactic in Makefiles.
+[Makefile]
+indent_style = tab

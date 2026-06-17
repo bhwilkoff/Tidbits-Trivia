@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Mirror the brand tokens from Compose Color.kt. XML referenced
+        from themes.xml + adaptive icon background. Keep in sync;
+        Compose uses the Color.kt copy, XML resources use these.
+    -->
+    <color name="brand_primary">#FFFF5C35</color>
+    <color name="brand_background">#FF080810</color>
+    <color name="brand_surface">#FF0D0D1A</color>
+</resources>

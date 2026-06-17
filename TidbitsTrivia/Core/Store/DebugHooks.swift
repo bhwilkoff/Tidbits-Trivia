@@ -38,4 +38,9 @@ enum DebugHooks {
     static var openParty: Bool {
         ProcessInfo.processInfo.environment["TIDBITS_PARTY"] == "1"
     }
+
+    /// TIDBITS_ONBOARD=1 → force the first-run walkthrough (for screenshots).
+    static var forceOnboarding: Bool {
+        ProcessInfo.processInfo.environment["TIDBITS_ONBOARD"] == "1"
+    }
 }

@@ -96,6 +96,8 @@ reached is ⏳ with a note, never silence.
 | Daily streak + missed-fact review | ⏳ | ✅ | ⏳ | ⏳ | Spaced re-asking is data-ready |
 | Compete vs. your past self | ⏳ | ✅ | ⏳ | ⏳ | New-best detection on each game |
 | Share score (NO X/Twitter) | ⏳ Web Share | ✅ ShareLink | ✅ QR | ⏳ Sheet | Decision 022 |
+| Spoiler-free emoji-grid result | ⏳ | ✅ | ⏳ | ⏳ | Wordle-style 🟩🟥; the daily share loop (ROADMAP #1) |
+| First-run onboarding | ⏳ | ✅ | ⏳ | ⏳ | 3-card play/learn/compete walkthrough |
 | Leaderboards | 🔮 Supabase | ⏳ Game Center | ⏳ Game Center | 🔮 Play Games | Apple: GameKit wired, ASC config pending |
 | Achievements | 🔮 | ⏳ Game Center | ⏳ Game Center | 🔮 Play Games | |
 | Local pass-and-play | 🔮 | ✅ | ⏳ | 🔮 | 2–4 players, shared fair question set, hand-off + scoreboard |

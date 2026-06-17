@@ -14,6 +14,7 @@ struct ResultsView: View {
             VStack(spacing: 20) {
                 scoreCard
                 statsRow
+                gridCard
                 if !summary.missed.isEmpty { recap }
                 buttons
             }
@@ -48,6 +49,22 @@ struct ResultsView: View {
             StatBox(value: "\(Int(summary.accuracy * 100))%", label: "Accuracy", tint: Tidbits.Palette.blue)
             StatBox(value: "\(summary.maxStreak)", label: "Best Streak", tint: Tidbits.Palette.coral)
         }
+    }
+
+    /// Spoiler-free Wordle-style grid — the shareable retention loop.
+    private var emojiGrid: String {
+        summary.answered.map { a in
+            a.chosenIndex == nil ? "⬛" : (a.isCorrect ? "🟩" : "🟥")
+        }.joined()
+    }
+
+    private var gridCard: some View {
+        VStack(spacing: 8) {
+            Text(emojiGrid).font(.system(size: 26))
+            Text("Spoiler-free — safe to share").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+        }
+        .frame(maxWidth: .infinity).padding(.vertical, 16)
+        .chunkyCard(fill: Tidbits.Palette.bgDeep).padding(.trailing, Tidbits.Metric.shadowOffset)
     }
 
     private var recap: some View {
@@ -111,7 +128,8 @@ struct ResultsView: View {
 
     private var shareText: String {
         let pct = Int(summary.accuracy * 100)
-        return "🧠 I scored \(summary.score) on Tidbits Trivia (\(summary.mode.title)) — \(summary.correct)/\(summary.total) right, \(pct)%. Trivia from all of Wikipedia. Can you beat it?"
+        let header = summary.mode == .daily ? "🧠 Tidbits Daily — \(QuestionProvider.dayKey())" : "🧠 Tidbits Trivia — \(summary.mode.title)"
+        return "\(header)\n\(emojiGrid)\n\(summary.correct)/\(summary.total) right · \(summary.score) pts · \(pct)%\nTrivia from all of Wikipedia. Can you beat it?"
     }
 }
 

@@ -30,6 +30,7 @@
 		92B4788F3A0CAC7DE68FB848 /* CorpusDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB24F551656B187A42C81D44 /* CorpusDatabase.swift */; };
 		9B22CE4581A58C784D66DDB1 /* GameMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C55D3DCAE5E46980D666B83 /* GameMode.swift */; };
 		9BD52794E3B9893E95300BD5 /* corpus.sqlite in Resources */ = {isa = PBXBuildFile; fileRef = E8F18E88BA37F77E6313144F /* corpus.sqlite */; };
+		9EA492C785F5F4ED0BFB78FF /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BFD0D04EAFA9DBEB25F3A8E /* OnboardingView.swift */; };
 		A196A0BBE89D112E62E0577E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 73D5D7FD07809D194BF90B30 /* Assets.xcassets */; };
 		A690ED15A1D8831CF3E58CB8 /* Player.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3AE68F153F8C298960BFD36 /* Player.swift */; };
 		A7BDC3D377EC8267B055AAB0 /* GameEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F41E5C0BFBB0360DCD3015A /* GameEngine.swift */; };
@@ -42,6 +43,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		0BFD0D04EAFA9DBEB25F3A8E /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		0C18E4CA3BD148F09E1BE077 /* RecordsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordsView.swift; sourceTree = "<group>"; };
 		0EBCE6DDE7254EB4010E1679 /* Scoring.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Scoring.swift; sourceTree = "<group>"; };
 		1BD01942F33620E5D75A8E7D /* DebugHooks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugHooks.swift; sourceTree = "<group>"; };
@@ -75,7 +77,7 @@
 		F18495176F588DF9E5C7907E /* PartyContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PartyContainerView.swift; sourceTree = "<group>"; };
 		F3AE68F153F8C298960BFD36 /* Player.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Player.swift; sourceTree = "<group>"; };
 		FFC46D4CE8D03186C064C759 /* Question.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Question.swift; sourceTree = "<group>"; };
-		"TEMP_EA34D237-BCE4-48E7-A4E1-A6E33AEB61DA" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
+		"TEMP_7E3024D3-F010-496C-A7F9-E782A849FB7E" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -217,6 +219,7 @@
 				7A77D01159167F1BE602ABED /* GameContainerView.swift */,
 				BE92745D6860E623628A0CBC /* GamePlayView.swift */,
 				7AAEF55F4DD8DEA37D200C32 /* HomeView.swift */,
+				0BFD0D04EAFA9DBEB25F3A8E /* OnboardingView.swift */,
 				F18495176F588DF9E5C7907E /* PartyContainerView.swift */,
 				0C18E4CA3BD148F09E1BE077 /* RecordsView.swift */,
 				7C60A815D0EFF35CF18DAB26 /* ResultsView.swift */,
@@ -246,10 +249,10 @@
 			path = TidbitsTrivia;
 			sourceTree = "<group>";
 		};
-		"TEMP_D4145202-9CD4-4110-A716-6B4E94AB937A" /* Tidbits-Trivia */ = {
+		"TEMP_9334E6CB-C4A0-44C8-9976-8327E92D41C6" /* Tidbits-Trivia */ = {
 			isa = PBXGroup;
 			children = (
-				"TEMP_EA34D237-BCE4-48E7-A4E1-A6E33AEB61DA" /* AppVersion.xcconfig */,
+				"TEMP_7E3024D3-F010-496C-A7F9-E782A849FB7E" /* AppVersion.xcconfig */,
 			);
 			path = "Tidbits-Trivia";
 			sourceTree = "<group>";
@@ -341,6 +344,7 @@
 				6CF073BFB022FF600B3B9428 /* GamePlayView.swift in Sources */,
 				7051BF4D2CFDDEB46EC57971 /* Haptics.swift in Sources */,
 				D78451DA6D74E2BA65EB56C8 /* HomeView.swift in Sources */,
+				9EA492C785F5F4ED0BFB78FF /* OnboardingView.swift in Sources */,
 				47EC13554A9F7DAAAC0104A3 /* PartyContainerView.swift in Sources */,
 				A690ED15A1D8831CF3E58CB8 /* Player.swift in Sources */,
 				157E84B3984C8AF6BB3E4900 /* PlayerRecord.swift in Sources */,
@@ -364,7 +368,7 @@
 /* Begin XCBuildConfiguration section */
 		296659EF0549868336801823 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_EA34D237-BCE4-48E7-A4E1-A6E33AEB61DA" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_7E3024D3-F010-496C-A7F9-E782A849FB7E" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -486,7 +490,7 @@
 		};
 		E6F711EEEE2896F84FE9AB98 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_EA34D237-BCE4-48E7-A4E1-A6E33AEB61DA" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_7E3024D3-F010-496C-A7F9-E782A849FB7E" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;

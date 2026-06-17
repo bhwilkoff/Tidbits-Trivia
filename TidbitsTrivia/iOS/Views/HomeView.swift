@@ -7,8 +7,14 @@ struct HomeView: View {
     @State private var launch: LaunchRequest?
     @State private var showParty = false
     @State private var showSettings = false
+    @AppStorage("tidbits.hasOnboarded") private var hasOnboarded = false
 
     private let columns = [GridItem(.flexible(), spacing: 14), GridItem(.flexible(), spacing: 14)]
+
+    private var showOnboarding: Binding<Bool> {
+        Binding(get: { !hasOnboarded || DebugHooks.forceOnboarding },
+                set: { if !$0 { hasOnboarded = true } })
+    }
 
     var body: some View {
         ScrollView {
@@ -35,6 +41,9 @@ struct HomeView: View {
         }
         .fullScreenCover(isPresented: $showParty) { PartyContainerView() }
         .sheet(isPresented: $showSettings) { SettingsView() }
+        .fullScreenCover(isPresented: showOnboarding) {
+            OnboardingView { hasOnboarded = true }
+        }
         .task {
             // Screenshot/CI hooks — no-ops unless the env vars are set.
             if launch == nil, let ap = DebugHooks.autoplay {

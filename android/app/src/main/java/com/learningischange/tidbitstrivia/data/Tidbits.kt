@@ -261,7 +261,7 @@ object TemplateEngine {
                     out.add(Question(
                         id = "live:$shape:${s.title}".replace(" ", "_"), prompt = built.first, options = options,
                         correctIndex = options.indexOf(built.third), categoryId = categoryId, difficulty = 3,
-                        explanation = firstSentence(s.extract ?: s.description ?: ""), sourceTitle = s.title, sourceUrl = s.url ?: "",
+                        explanation = cleanClue(firstSentence(s.extract ?: s.description ?: "")), sourceTitle = s.title, sourceUrl = s.url ?: "",
                     ))
                     break
                 }

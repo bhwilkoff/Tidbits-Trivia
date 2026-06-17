@@ -325,7 +325,7 @@ def make_question(subject, pool, category, gi, rng):
         prompt, options, answer = built
         opts = options[:]; rng.shuffle(opts)
         ci = opts.index(answer)
-        explanation = first_sentence(subject.get("extract") or "") or (subject.get("description") or "")
+        explanation = clean_clue(first_sentence(subject.get("extract") or "")) or (subject.get("description") or "")
         qid = f"corpus:{shape}:{subject['title']}".replace(" ", "_")
         return (qid, prompt, opts[0], opts[1], opts[2], opts[3],
                 ci, category, difficulty(subject), explanation,

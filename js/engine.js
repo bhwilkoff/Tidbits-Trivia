@@ -198,7 +198,7 @@ export function makeQuestions(pool, categoryID, count, seed) {
           id: `live:${shape}:${s.title}`.replace(/ /g, '_'),
           prompt: built.prompt, options, correctIndex: options.indexOf(built.answer),
           categoryID, difficulty: difficulty(s),
-          explanation: firstSentence(s.extract || s.description || ''),
+          explanation: cleanClue(firstSentence(s.extract || s.description || '')),
           sourceTitle: s.title, sourceURL: s.pageURL || null, templateID: shape,
         });
         break;

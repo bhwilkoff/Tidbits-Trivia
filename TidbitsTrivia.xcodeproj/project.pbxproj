@@ -25,6 +25,7 @@
 		5B37FF3AF882A4CAD88CE62D /* GameComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 337562191FABFA21A46484FA /* GameComponents.swift */; };
 		6CF073BFB022FF600B3B9428 /* GamePlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE92745D6860E623628A0CBC /* GamePlayView.swift */; };
 		7051BF4D2CFDDEB46EC57971 /* Haptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDC047AE9E00DBB79A4FD169 /* Haptics.swift */; };
+		7E457DE11CD8D820A503C8EB /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 3C266F600F75F40E459D2276 /* PrivacyInfo.xcprivacy */; };
 		868239CDDF1A55B51710E012 /* Scoring.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EBCE6DDE7254EB4010E1679 /* Scoring.swift */; };
 		87D2A2B94B2CE47C7ADB8348 /* GameView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5C9D9266531ECD27156562D /* GameView_tvOS.swift */; };
 		918AE96520BD2A89643D6E20 /* TriviaCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCB14B0E2B13CCA2DDA250ED /* TriviaCategory.swift */; };
@@ -51,7 +52,9 @@
 		337562191FABFA21A46484FA /* GameComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameComponents.swift; sourceTree = "<group>"; };
 		35F518DED9832731B1294DD3 /* TidbitsTriviaApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TidbitsTriviaApp.swift; sourceTree = "<group>"; };
 		3B2FEBFB29C12A172EADB66F /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		3C266F600F75F40E459D2276 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		3F41E5C0BFBB0360DCD3015A /* GameEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameEngine.swift; sourceTree = "<group>"; };
+		4E7FAFB9A435F25FF322EC97 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		655168DF8FE110D6336394D2 /* WikipediaClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WikipediaClient.swift; sourceTree = "<group>"; };
 		73D5D7FD07809D194BF90B30 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		7633D27702A6874F7D8993DF /* RecordsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordsStore.swift; sourceTree = "<group>"; };
@@ -79,7 +82,7 @@
 		F3AE68F153F8C298960BFD36 /* Player.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Player.swift; sourceTree = "<group>"; };
 		F5C9D9266531ECD27156562D /* GameView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView_tvOS.swift; sourceTree = "<group>"; };
 		FFC46D4CE8D03186C064C759 /* Question.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Question.swift; sourceTree = "<group>"; };
-		"TEMP_CFD3978C-CBFE-462D-BFF1-0432EBDEFF7D" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
+		"TEMP_DF5D1545-E618-421E-8048-2944C8EBB5DF" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -248,14 +251,16 @@
 				B7A5B34D4AC6D6D4D63CF885 /* Resources */,
 				B7FF0BD6F715F7F0F08BD521 /* tvOS */,
 				73D5D7FD07809D194BF90B30 /* Assets.xcassets */,
+				4E7FAFB9A435F25FF322EC97 /* Info.plist */,
+				3C266F600F75F40E459D2276 /* PrivacyInfo.xcprivacy */,
 			);
 			path = TidbitsTrivia;
 			sourceTree = "<group>";
 		};
-		"TEMP_5DE19D4B-FB03-440F-BCD8-694D5E8F112D" /* Tidbits-Trivia */ = {
+		"TEMP_69DBFDD3-FA15-402B-8563-9030D9C2AA57" /* Tidbits-Trivia */ = {
 			isa = PBXGroup;
 			children = (
-				"TEMP_CFD3978C-CBFE-462D-BFF1-0432EBDEFF7D" /* AppVersion.xcconfig */,
+				"TEMP_DF5D1545-E618-421E-8048-2944C8EBB5DF" /* AppVersion.xcconfig */,
 			);
 			path = "Tidbits-Trivia";
 			sourceTree = "<group>";
@@ -321,6 +326,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A196A0BBE89D112E62E0577E /* Assets.xcassets in Resources */,
+				7E457DE11CD8D820A503C8EB /* PrivacyInfo.xcprivacy in Resources */,
 				9BD52794E3B9893E95300BD5 /* corpus.sqlite in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -372,7 +378,7 @@
 /* Begin XCBuildConfiguration section */
 		296659EF0549868336801823 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_CFD3978C-CBFE-462D-BFF1-0432EBDEFF7D" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_DF5D1545-E618-421E-8048-2944C8EBB5DF" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -437,15 +443,9 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGNING_ALLOWED = NO;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = Tidbits;
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_FILE = TidbitsTrivia/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -467,15 +467,9 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGNING_ALLOWED = NO;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = Tidbits;
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_FILE = TidbitsTrivia/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -494,7 +488,7 @@
 		};
 		E6F711EEEE2896F84FE9AB98 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_CFD3978C-CBFE-462D-BFF1-0432EBDEFF7D" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_DF5D1545-E618-421E-8048-2944C8EBB5DF" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;

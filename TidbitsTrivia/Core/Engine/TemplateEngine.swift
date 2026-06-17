@@ -94,7 +94,7 @@ nonisolated struct TemplateEngine: Sendable {
                 return Question(
                     id: "live:\(shape):\(s.title)".replacingOccurrences(of: " ", with: "_"),
                     prompt: prompt, options: opts, correctIndex: ci, categoryID: categoryID,
-                    difficulty: difficulty(for: s), explanation: firstSentence(of: s.extract ?? s.description ?? ""),
+                    difficulty: difficulty(for: s), explanation: cleanClue(firstSentence(of: s.extract ?? s.description ?? "")),
                     sourceTitle: s.title, sourceURL: s.pageURL, templateID: shape)
             }
         }

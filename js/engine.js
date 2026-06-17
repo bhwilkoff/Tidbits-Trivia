@@ -133,7 +133,7 @@ const STEMS = {
   categorize: ['What kind of thing is %s?', 'What is %s best known as?', 'In a few words, what is %s?', 'Which description fits %s?'],
   oneliner: ['Which one is “%s”?', '“%s” — which subject is that?', 'Which subject matches: “%s”?'],
 };
-const SHAPE_ROTATION = ['identify', 'jeopardy', 'cloze', 'identify', 'oneliner', 'jeopardy', 'categorize', 'cloze', 'identify', 'jeopardy'];
+const SHAPE_ROTATION = ['identify', 'cloze', 'jeopardy', 'categorize', 'oneliner', 'cloze', 'identify', 'categorize', 'jeopardy', 'cloze'];
 
 function buildShape(shape, s, pool, stem, rnd) {
   const fmt = (v) => stem.replace('%s', v);
@@ -171,6 +171,8 @@ function buildShape(shape, s, pool, stem, rnd) {
   }
   if (shape === 'oneliner') {
     if (!s.description) return null;
+    // Skip generic descriptions ("American writer") — unanswerable as a clue.
+    if (s.description.split(/\s+/).length < 4 && !/[,(0-9]/.test(s.description)) return null;
     const ds = titleDistractors(s, pool, rnd); if (ds.length !== 3) return null;
     const ans = stripParens(s.title); return { prompt: fmt(cap(s.description)), options: [ans, ...ds], answer: ans };
   }

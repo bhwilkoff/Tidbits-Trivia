@@ -241,8 +241,11 @@ STEMS = {
     ],
 }
 # categorize (the old "best described") is 1 of 10 slots → ~10% share.
-SHAPE_ROTATION = ["identify", "jeopardy", "cloze", "identify", "oneliner",
-                  "jeopardy", "categorize", "cloze", "identify", "jeopardy"]
+# Spread the shapes so no single "name the subject from a clue" feel dominates.
+# identify+jeopardy+oneliner all read as "describe → name it"; cloze + categorize
+# feel distinct, so they get more weight here for variety.
+SHAPE_ROTATION = ["identify", "cloze", "jeopardy", "categorize", "oneliner",
+                  "cloze", "identify", "categorize", "jeopardy", "cloze"]
 
 def build_identify(subject, pool, stem, rng):
     clue = redact(clean_clue(first_sentence(subject.get("extract") or subject.get("description"))), subject["title"])
@@ -301,6 +304,11 @@ def build_categorize(subject, pool, stem, rng):
 def build_oneliner(subject, pool, stem, rng):
     correct = subject.get("description")
     if not correct:
+        return None
+    # The description IS the clue here ("Which one is '<desc>'?"), so a generic
+    # one ("American writer") is unanswerable AND collides across subjects.
+    # Require something specific: 4+ words, or a comma/parenthetical/digit.
+    if len(correct.split()) < 4 and not any(c in correct for c in ",(0123456789"):
         return None
     ds = title_distractors(subject, pool, rng)
     if len(ds) != 3:

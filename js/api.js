@@ -72,6 +72,11 @@ export const Corpus = {
     this.byCategory = {};
     for (const q of this.questions) (this.byCategory[q.categoryID] ||= []).push(q);
     this.loaded = true;
+    // Observability: confirm WHICH corpus is live (open DevTools console). If
+    // this version doesn't match the latest assets/corpus.json, you're on a
+    // stale cache — hard-refresh to pick up the new service worker.
+    this.version = data.version;
+    console.log(`[Tidbits] corpus v${data.version} · ${this.questions.length} questions`);
   },
 
   pull(categoryID, seen, limit) {

@@ -205,13 +205,17 @@ def gen_numeric(rows, label, num, category, stems, tid, unit, explain):
         out.append(assemble(tid, category, prompt, fmt_num(r[num]), ds, explain(r), r[label], r.get("article")))
     return out
 
-def gen_classification(rows, label, klass_key, klass_value, category, stems, tid, other_rows):
-    """'Which of these is a {klass}?' correct ∈ class, distractors ∉ class."""
+def gen_classification(rows, label, klass_key, klass_value, category, stems, tid, other_rows, cap=8):
+    """'Which of these is a {klass}?' correct ∈ class, distractors ∉ class.
+    Capped — this is a low-variety flavor type (fixed stem), so a handful per
+    class is plenty; producing one per person floods the corpus with
+    near-identical prompts."""
     in_class = [r for r in rows if r.get(label) and r.get(klass_key) == klass_value]
     out_class = [r for r in other_rows if r.get(label) and r.get(klass_key) != klass_value]
     if len(in_class) < 1 or len(out_class) < 3: return []
+    RNG.shuffle(in_class)
     out = []
-    for r in in_class:
+    for r in in_class[:cap]:
         ds = [x[label] for x in RNG.sample(out_class, 3)]
         prompt = pick_stem(stems, r[label]).format(k=klass_value)
         out.append(assemble(tid, category, prompt, r[label], ds,
@@ -354,19 +358,19 @@ S = {
     "capitalRev": ["Of which country is {v} the capital?", "{v} is the capital of which country?", "Which country has {v} as its capital?"],
     "currency": ["What is the official currency of {s}?", "Which currency does {s} use?", "{s}'s money is the…?"],
     "continent": ["On which continent is {s}?", "{s} lies on which continent?", "Which continent is {s} part of?"],
-    "supPop": ["Which of these countries is the most populous?", "Which country has the largest population?", "Which of these has the most people?"],
-    "supArea": ["Which of these countries is the largest by area?", "Which country covers the most land?", "Which of these is biggest by area?"],
-    "numPop": ["About how many people live in {s}?", "{s}'s population is closest to…?", "Roughly how populous is {s}?"],
-    "chronCountry": ["Which of these countries came into existence first?", "Which of these is the oldest as a state?", "Which was established earliest?"],
-    "elemSymbol": ["What is the chemical symbol for {s}?", "Which symbol represents {s}?", "{s} is denoted by which symbol?"],
-    "elemNumber": ["What is the atomic number of {s}?", "{s} sits at which atomic number?", "Which atomic number belongs to {s}?"],
-    "elemChron": ["Which of these elements was discovered first?", "Which element has been known longest?", "Which was isolated earliest?"],
-    "director": ["Who directed the Best Picture winner {s}?", "Which director made {s}?", "{s} was directed by whom?"],
-    "filmChron": ["Which of these Best Picture winners was released first?", "Which of these films is the oldest?", "Which came out earliest?"],
-    "author": ["Who wrote the award-winning book {s}?", "Which author wrote {s}?", "{s} was written by whom?"],
-    "bookChron": ["Which of these award-winning books was published first?", "Which of these books is the oldest?", "Which was published earliest?"],
-    "occChron": ["Which of these people was born first?", "Which of these was born earliest?", "Who is the oldest of these?"],
-    "occClass": ["Which of these is a {k}?", "Which of these people was a {k}?", "Which one is a {k}?"],
+    "supPop": ["Which of these countries is the most populous?", "Which country has the largest population?", "Which of these has the most people?", "Of these four countries, which has the most people?", "Which country below has the biggest population?", "Population leader — which of these countries?", "Which of these four is the most populous?", "Most people of the four — which country?"],
+    "supArea": ["Which of these countries is the largest by area?", "Which country covers the most land?", "Which of these is biggest by area?", "Of these four, which country is the largest?", "Which country below has the greatest land area?", "Biggest by area — which of these?", "Which of these four covers the most ground?", "Largest of the four by area?"],
+    "numPop": ["About how many people live in {s}?", "{s}'s population is closest to…?", "Roughly how populous is {s}?", "Around how many people does {s} have?", "{s} has a population closest to which figure?"],
+    "chronCountry": ["Which of these countries came into existence first?", "Which of these is the oldest as a state?", "Which was established earliest?", "Of these four countries, which is oldest?", "Which of these became a state first?", "Earliest-founded of the four?", "Which of these countries has existed longest?", "Which came into being first?"],
+    "elemSymbol": ["What is the chemical symbol for {s}?", "Which symbol represents {s}?", "{s} is denoted by which symbol?", "On the periodic table, {s} is which symbol?", "Which symbol stands for {s}?"],
+    "elemNumber": ["What is the atomic number of {s}?", "{s} sits at which atomic number?", "Which atomic number belongs to {s}?", "{s} has which atomic number?", "Where on the periodic table is {s} (by number)?"],
+    "elemChron": ["Which of these elements was discovered first?", "Which element has been known longest?", "Which was isolated earliest?", "Of these four elements, which was found first?", "Which of these was discovered earliest?", "Earliest-discovered of the four elements?", "Which element here is the oldest known?", "Which of these came to light first?"],
+    "director": ["Who directed the Best Picture winner {s}?", "Which director made {s}?", "{s} was directed by whom?", "Who was behind the camera for {s}?", "{s} was helmed by which director?"],
+    "filmChron": ["Which of these Best Picture winners was released first?", "Which of these films is the oldest?", "Which came out earliest?", "Of these four winners, which is oldest?", "Which of these films premiered first?", "Earliest-released of the four?", "Which Best Picture winner here came first?", "Which of these reached screens earliest?"],
+    "author": ["Who wrote the award-winning book {s}?", "Which author wrote {s}?", "{s} was written by whom?", "Who is the author of {s}?", "{s} came from which writer?"],
+    "bookChron": ["Which of these award-winning books was published first?", "Which of these books is the oldest?", "Which was published earliest?", "Of these four books, which came first?", "Which of these was published earliest?", "Earliest-published of the four?", "Which book here is the oldest?", "Which appeared in print first?"],
+    "occChron": ["Which of these people was born first?", "Which of these was born earliest?", "Who is the oldest of these?", "Of these four, who was born first?", "Which of these people is the eldest?", "Earliest-born of the four?", "Who came into the world first?", "Which of them was born earliest?"],
+    "occClass": ["Which of these is a {k}?", "Which of these people was a {k}?", "Which one is a {k}?", "Of these four, who is the {k}?", "Which of these is best known as a {k}?", "Pick the {k} from these four.", "Which name here belongs to a {k}?", "Who among these is a {k}?"],
 }
 
 def main():
@@ -397,10 +401,10 @@ def main():
         "capitalRev": lambda: gen_reverse(countries, "country", "capital", "geography", S["capitalRev"], "capitalRev", lambda r: f"{r['capital']} is the capital of {r['country']}."),
         "currency": lambda: gen_forward(countries, "country", "currency", "geography", S["currency"], "currency", lambda r: f"{r['country']} uses the {r['currency']}."),
         "continent": lambda: gen_forward(countries, "country", "continent", "geography", S["continent"], "continent", lambda r: f"{r['country']} is on {r['continent']}."),
-        "supPop": lambda: gen_superlative(countries, "country", "pop", "geography", S["supPop"], "supPop", "max", "population", 120),
-        "supArea": lambda: gen_superlative(countries, "country", "area", "geography", S["supArea"], "supArea", "max", "area", 120),
+        "supPop": lambda: gen_superlative(countries, "country", "pop", "geography", S["supPop"], "supPop", "max", "population", 70),
+        "supArea": lambda: gen_superlative(countries, "country", "area", "geography", S["supArea"], "supArea", "max", "area", 70),
         "numPop": lambda: gen_numeric(countries, "country", "pop", "geography", S["numPop"], "numPop", "people", lambda r: f"{r['country']} has about {fmt_num(r['pop'])} people."),
-        "chronCountry": lambda: gen_chronology(countries, "country", "inception", "geography", S["chronCountry"], "chronCountry", "established", 100),
+        "chronCountry": lambda: gen_chronology(countries, "country", "inception", "geography", S["chronCountry"], "chronCountry", "established", 60),
         "elemSymbol": lambda: gen_forward(elements, "element", "symbol", "science", S["elemSymbol"], "elemSymbol", lambda r: f"The symbol for {r['element']} is {r['symbol']}."),
         "elemNumber": lambda: gen_forward([dict(r, numberStr=str(r["number"])) for r in elements], "element", "numberStr", "science", S["elemNumber"], "elemNumber", lambda r: f"{r['element']} has atomic number {r['number']}."),
         "elemChron": lambda: gen_chronology(elements, "element", "discovery", "science", S["elemChron"], "elemChron", "discovered", 80),
@@ -408,7 +412,7 @@ def main():
         "filmChron": lambda: gen_chronology(films, "film", "year", "screen", S["filmChron"], "filmChron", "released", 80),
         "author": lambda: gen_forward(books, "book", "author", "arts", S["author"], "author", lambda r: f"{r['book']} was written by {r['author']}."),
         "bookChron": lambda: gen_chronology(books, "book", "year", "arts", S["bookChron"], "bookChron", "published", 60),
-        "occChron": lambda: gen_chronology(people, "person", "born", "history", S["occChron"], "occChron", "born", 120),
+        "occChron": lambda: gen_chronology(people, "person", "born", "history", S["occChron"], "occChron", "born", 60),
         "occClass": lambda: sum((gen_classification(people, "person", "occupation", occ, "history" if occ in ("physicist","astronomer") else "arts", S["occClass"], "occClass", people) for occ in set(OCCUPATIONS.values())), []),
     }
 

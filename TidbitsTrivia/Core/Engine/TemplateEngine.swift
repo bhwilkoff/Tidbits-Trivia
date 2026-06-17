@@ -54,8 +54,8 @@ nonisolated struct TemplateEngine: Sendable {
             "Which subject matches: \u{201C}%@\u{201D}?",
         ],
     ]
-    static let shapeRotation = ["identify", "jeopardy", "cloze", "identify", "oneliner",
-                                "jeopardy", "categorize", "cloze", "identify", "jeopardy"]
+    static let shapeRotation = ["identify", "cloze", "jeopardy", "categorize", "oneliner",
+                                "cloze", "identify", "categorize", "jeopardy", "cloze"]
 
     // MARK: Generation
 
@@ -145,6 +145,8 @@ nonisolated struct TemplateEngine: Sendable {
             return (String(format: stem, displayTitle(s.title)), [ans] + ds.map(capitalize), ans)
         case "oneliner":
             guard let correct = s.description else { return nil }
+            // Skip generic descriptions ("American writer") — unanswerable as a clue.
+            if correct.split(separator: " ").count < 4 && !correct.contains(where: { ",(0123456789".contains($0) }) { return nil }
             let ds = titleDistractors(s, pool, &rng); guard ds.count == 3 else { return nil }
             let ans = displayTitle(s.title)
             return (String(format: stem, capitalize(correct)), [ans] + ds, ans)

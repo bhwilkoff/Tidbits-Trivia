@@ -17,9 +17,12 @@
   - **Web** — full SP loop, PWA, network-first corpus, canonical share target.
   - **tvOS** — dark-first focus-correct home + game loop + results.
   - **Android** — full SP loop (home/game/results/records/create), Compose/M3.
-- **Corpus**: 11,679 questions, **22 distinct question types** (5 rotating
-  summary shapes + 17 Wikidata structured types; ~2,850 Wikidata-verified).
+- **Corpus**: 10,773 questions, **22 distinct question types** (5 rotating
+  summary shapes + 17 Wikidata structured types; ~1,940 Wikidata-verified).
   Wikidata source datasets cached in `tools/corpus/cache/` → regen is instant.
+  Rebalanced for variety: rotation favors cloze/categorize; fixed-stem Wikidata
+  types capped (occClass 733→24) with 8 stems each; generic oneliners filtered.
+  Web logs `[Tidbits] corpus v… · N questions` on load (stale-cache check).
 - **Platform set**: Web + iOS + iPadOS + tvOS + Android (Decisions 020/021).
 
 ## Next up (see docs/HANDOFF.md §6 for the full backlog)

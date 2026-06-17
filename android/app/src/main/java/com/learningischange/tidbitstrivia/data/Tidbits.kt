@@ -239,7 +239,7 @@ object TemplateEngine {
         "categorize" to listOf("What kind of thing is %s?", "What is %s best known as?", "In a few words, what is %s?", "Which description fits %s?"),
         "oneliner" to listOf("Which one is “%s”?", "“%s” — which subject is that?", "Which subject matches: “%s”?"),
     )
-    private val SHAPE_ROTATION = listOf("identify", "jeopardy", "cloze", "identify", "oneliner", "jeopardy", "categorize", "cloze", "identify", "jeopardy")
+    private val SHAPE_ROTATION = listOf("identify", "cloze", "jeopardy", "categorize", "oneliner", "cloze", "identify", "categorize", "jeopardy", "cloze")
 
     fun make(pool: List<Wikipedia.Summary>, categoryId: String, count: Int, seed: Long): List<Question> {
         val usableList = pool.filter { usable(it) }
@@ -330,6 +330,8 @@ object TemplateEngine {
             }
             "oneliner" -> {
                 val correct = s.description ?: return null
+                // Skip generic descriptions ("American writer") — unanswerable as a clue.
+                if (correct.split(Regex("\\s+")).size < 4 && !correct.any { it in ",(0123456789" }) return null
                 val ds = titleDistractors(s, pool, rng); if (ds.size != 3) return null
                 val ans = stripParens(s.title); return Triple(stem.format(cap(correct)), listOf(ans) + ds, ans)
             }

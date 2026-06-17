@@ -1,131 +1,91 @@
-# Project Scratchpad — [APP NAME]
+# Project Scratchpad — Tidbits Trivia
 
-> Active working notes. When this file exceeds ~150 lines, move
-> completed milestone detail to ARCHIVE.md and keep this lean.
->
-> See `PARITY.md` for the cross-platform feature matrix (single
-> source of truth — don't duplicate rows here).
->
-> The Current State block below is injected at every session start.
-> If it drifts behind the code, fix it FIRST, then work — a stale
-> scratchpad is worse than none.
+> Active working notes. See `PARITY.md` for the cross-platform feature
+> matrix (single source of truth). See `DECISIONS.md` for the why behind
+> architecture. See `docs/QUESTION-QUALITY.md` for the question-engine
+> rulebook and `docs/ROADMAP.md` for the competitive feature plan.
 
 ## Current state
 
-- **Status**: NOT STARTED
-- **Active milestone**: M0
-- **Last session**: —
+- **Status**: iOS v1 single-player loop SHIPPING — playable end to end.
+- **Active milestone**: M1 (iOS single-player core), wrapping up.
+- **Platform set**: Web + iOS + iPadOS + tvOS + Android (Decision 020).
+  tvOS earns its place — living-room trivia is lean-back (Decision 021).
+- **Last session (2026-06-16)**: Built the whole iOS foundation from the
+  starter scaffold. See session log below.
 - **Next actions**:
-  1. Decide the platform set (all four? skip tvOS?) → DECISIONS.md
-  2. Fill in CLAUDE.md project identity sections
-  3. Create the universal Xcode project at repo root (no spaces in
-     name; iPhone + iPad + Apple TV destinations — see apple/README.md)
-  4. Open `android/` in Android Studio, rename `com.example.appname`
-  5. Enable GitHub Pages on main branch (+ `.nojekyll` if serving
-     `/.well-known/`)
-  6. Drop verification files in `/.well-known/` once the
-     `appID` / `package_name` / fingerprints are known
-- **Open questions**: —
+  1. Bump corpus toward 10k (both-template generation; currently ~9k).
+  2. Wire Game Center entitlement + App Store Connect leaderboards.
+  3. Mirror the SP loop to Web (canonical share target) then Android.
+  4. Phase 2: local pass-and-play → Game Center head-to-head → tvOS
+     living-room mode with phone-as-buzzer (Decision 023).
 
----
+## Architecture at a glance
 
-## Milestones
+```
+TidbitsTrivia/                 ← universal Apple target (iOS+tvOS)
+  Core/                        ← platform-agnostic (compiles for every os())
+    Models/      Question, TriviaCategory, GameMode, PlayerRecord (SwiftData)
+    Engine/      TemplateEngine (the moat), Scoring, SeededRNG
+    Data/        CorpusDatabase (bundled SQLite reader), QuestionProvider
+    Networking/  WikipediaClient, APIClient
+    Store/       AppStore (nav), GameEngine (loop state machine), RecordsStore
+    Services/    GameCenterManager
+    Design/      Design.swift (90s sticker design system)
+  iOS/           Views + Components (#if os(iOS))
+  tvOS/          ContentView_tvOS placeholder (Phase 2)
+  Resources/     corpus.sqlite (bundled, ~9k questions)
+tools/corpus/    generate_corpus.py (mirrors TemplateEngine, builds the DB)
+```
 
-### M0 — Project setup
+Two question pipelines, one template engine:
+- **Offline** — `tools/corpus/generate_corpus.py` pre-bakes a quality-gated
+  SQLite corpus shipped in the bundle (never-repeat, offline, fast).
+- **Live** — `WikipediaClient` + `TemplateEngine` generate from any topic
+  at runtime (infinite supply, powers "create a quiz" + corpus fallback).
 
-- [ ] Platform set decided + logged in DECISIONS.md
-- [ ] CLAUDE.md filled in with project identity (app name, what it
-      does, tech-stack specifics, design tokens)
-- [ ] PARITY.md skeleton sections filled in with intended verbs
-- [ ] **Web** — `index.html`, `css/styles.css`, `js/app.js` first
-      render; GitHub Pages enabled
-- [ ] **Apple (universal)** — Xcode project created at repo root
-      (no spaces); iPhone + iPad + Apple TV destinations on ONE
-      target; `apple/` files moved into the Xcode group preserving
-      the Core / iOS / tvOS split; `AppVersion.xcconfig` referenced
-      by both Debug + Release configs; empty shell runs on BOTH the
-      iOS and tvOS simulators
-- [ ] **Android** — `android/` opened in Android Studio; package
-      renamed from `com.example.appname` to your reverse-DNS;
-      `:app:assembleDebug` succeeds; smoke-test on emulator
-- [ ] **CI** — Xcode Cloud workflow (one covers iOS + tvOS) +
-      GH Actions `android-build.yml` populated with GH Secrets
-- [ ] First commit pushed
+## Build & run (iOS)
 
-### M1 — [First user-visible capability]
+```
+xcodegen generate                       # regenerate .xcodeproj after adding files
+DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer \
+  xcodebuild build -scheme TidbitsTrivia \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
+  -derivedDataPath /tmp/tidbits-dd
+```
 
-<!-- One sentence: what can a user DO after this milestone? -->
+Screenshot/CI hooks (no-ops in production):
+- `TIDBITS_AUTOPLAY=classic:science` — launch straight into a game.
+- `TIDBITS_AUTOPILOT=1` — auto-answer to reach reveal/results screens.
 
-Before implementing, run the `learning-orientation-design` skill:
-
-- [ ] Deepens understanding
-- [ ] Invites participation
-- [ ] Supports agency
-- [ ] Clarity over cleverness
-
-**Acceptance criteria** (observable by users, not developers):
-
-- [ ] Web: …
-- [ ] iOS: …
-- [ ] tvOS: …
-- [ ] Android: …
-
-**Parity check**: update PARITY.md row(s) for this capability in
-the same change set. Reject the PR if PARITY.md is silent.
-
-### M2 — [Second user-visible capability]
-
-- Learning-orientation check passed
-- **Acceptance**:
-  - [ ] Web: …
-  - [ ] iOS: …
-  - [ ] tvOS: …
-  - [ ] Android: …
-
----
-
-## When to add a binding design doc
-
-When a platform crosses ~5 views OR you find yourself making
-inconsistent UI choices, create that platform's binding doc —
-`DESIGN.md` (iOS), `tvOS-DESIGN.md`, `WEB-DESIGN.md`,
-`ANDROID-DESIGN.md` — seeded from
-`docs/templates/PLATFORM-DESIGN-template.md`. Invoke
-`binding-design-doc-discipline` for the workflow. Treat as binding
-from the moment it exists.
-
-The sibling docs share a shape: the **principles** are identical;
-the **idioms** they reference diverge per platform. Deliberate
-rule inversions between platforms (tvOS auto-focuses Play; iOS
-never steals focus) are stated explicitly so they don't get
-"harmonized" away.
-
----
-
-## Open questions
-
-<!-- Add questions as they arise; remove when resolved. Don't
-     accumulate — every question should have a path to resolution. -->
-
----
+Rebuild the corpus: `cd tools/corpus && python3 -u generate_corpus.py`.
 
 ## Out of scope (intentionally)
 
-Document explicitly-rejected ideas so future sessions don't
-re-litigate them. "We thought about this and chose not to design it
-now" is far more useful than silently re-arriving at the same answer.
-
-When a request gets declined, write a row. Format:
-`**Idea** — Why declined. Revisit when …` (revisit condition lets
-the entry retire when circumstances change).
-
 | Idea | Why declined | Revisit when |
 |---|---|---|
-| <!-- e.g. Web push notifications | Too-inconsistent UX across browsers; APNs/FCM cover the need on mobile | iOS + Android push ship and a real cross-platform request appears --> | | |
-
----
+| Cash prizes / wagering for money | HQ Trivia's model is mathematically doomed and off-mission | never |
+| Energy / lives / hearts gating | Universal 1-star complaint; contradicts learning mission (Decision 022) | never |
+| Real-time-only live game show | Both real-time-only apps (HQ, QuizUp) died; appointment fatigue | a robust async base exists first |
+| X/Twitter share target | Explicit product requirement | never |
+| Pay-to-restore-streak | Textbook dark pattern (Decision 022) | never |
+| Typed/recall answer mode in v1 | Great differentiator but needs alias/redirect matching; MCQ ships first | corpus + Wikidata alias layer lands |
 
 ## Session log
 
-<!-- Append-only. Format: state found → work done → state left.
-     Keep entries short — one paragraph per session. -->
+**2026-06-16** — *Found:* empty starter scaffold (apple/ placeholders,
+template docs). *Did:* researched the trivia market + quiz/learning theory
+(two agents; reports distilled into docs/ROADMAP.md + docs/QUESTION-QUALITY.md).
+Generated `TidbitsTrivia.xcodeproj` via xcodegen (universal iOS+tvOS,
+MainActor-default concurrency). Built the full Core layer (models, template
+engine + quality gates, bundled-SQLite reader, question provider, game-loop
+engine, scoring, SwiftData records + missed-fact spaced review, Game Center
+bridge). Built the iOS UI: 90s sticker design system, home (daily card +
+modes + category grid), live gameplay with answer states + "learn the fact"
+reveal, results with missed-fact recap + ShareLink, records/stats,
+create-a-quiz-from-any-topic. Wrote `tools/corpus/generate_corpus.py` and
+generated a ~9k quality-gated corpus from Wikipedia. Fixed two real bugs
+caught on-device: Swift-6 actor isolation on the data models, and a
+ModelContainer App-Group trap that crashed launch without the entitlement.
+*Left:* iOS single-player loop playable end to end on the simulator; docs +
+parity matrix written; Web/Android/tvOS rows marked ⏳ with notes.

@@ -1,0 +1,47 @@
+name: TidbitsTrivia
+options:
+  bundleIdPrefix: com.learningischange
+  createIntermediateGroups: true
+  deploymentTarget:
+    iOS: "26.0"
+    tvOS: "26.0"
+  groupSortPosition: top
+configFiles:
+  Debug: AppVersion.xcconfig
+  Release: AppVersion.xcconfig
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    # Approachable concurrency: code is MainActor-isolated by default so
+    # SwiftUI views and @Observable stores need no annotation; networking
+    # and the corpus reader opt out with `nonisolated`. (Xcode 26+.)
+    SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+    SWIFT_APPROACHABLE_CONCURRENCY: YES
+    DEVELOPMENT_TEAM: ""
+    CODE_SIGN_STYLE: Automatic
+targets:
+  TidbitsTrivia:
+    type: application
+    supportedDestinations: [iOS, tvOS]
+    sources:
+      - path: TidbitsTrivia
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.learningischange.tidbitstrivia
+        PRODUCT_NAME: TidbitsTrivia
+        GENERATE_INFOPLIST_FILE: YES
+        CURRENT_PROJECT_VERSION: 1
+        MARKETING_VERSION: "1.0"
+        TARGETED_DEVICE_FAMILY: "1,2,3"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        INFOPLIST_KEY_CFBundleDisplayName: Tidbits
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
+      configs:
+        Debug:
+          CODE_SIGNING_ALLOWED: NO
+        Release:
+          CODE_SIGNING_ALLOWED: NO

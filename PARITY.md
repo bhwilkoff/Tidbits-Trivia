@@ -1,4 +1,4 @@
-# [APP NAME] — Cross-Platform Feature Parity
+# Tidbits Trivia — Cross-Platform Feature Parity
 
 > **Single source of truth** for what's shipping where. Updated in
 > the SAME change set as any user-facing feature.
@@ -43,25 +43,65 @@ When shipping any user-facing feature:
 
 ---
 
+## 0. Platform set
+
+Web + iOS + iPadOS + tvOS + Android (Decision 020). tvOS earns its place
+because living-room trivia is lean-back (Decision 021). iOS is the lead
+platform; everything ships there first, then mirrors. A platform not yet
+reached is ⏳ with a note, never silence.
+
 ## 1. Top-level navigation
 
 | Verb | Web | iOS | tvOS | Android | Notes |
 |---|---|---|---|---|---|
-| <!-- add verbs here as you ship them --> | | | | | |
+| Play (home: daily, modes, categories) | ⏳ | ✅ | ⏳ | ⏳ | iOS: bottom Tab. Web: nav + URL state. tvOS: shelf. Android: NavigationSuiteScaffold |
+| Records (stats, streak, review) | ⏳ | ✅ | ⏳ | ⏳ | |
+| Create (quiz from any topic) | ⏳ | ✅ | 🚫 | ⏳ | tvOS: typing a topic on a Siri Remote is hostile — consume shared links instead |
 
 ---
 
-## 2. Find / explore
+## 2. Core gameplay (single-player)
 
 | Feature | Web | iOS | tvOS | Android | Notes |
 |---|---|---|---|---|---|
+| Classic mode (10 Qs, speed scoring) | ⏳ | ✅ | ⏳ | ⏳ | Same GameEngine loop on every platform |
+| Time Attack (60s) | ⏳ | ✅ | ⏳ | ⏳ | |
+| Survival (until one wrong) | ⏳ | ✅ | ⏳ | ⏳ | |
+| Daily Tidbit (deterministic, streak) | ⏳ | ✅ | ⏳ | ⏳ | Same 7 Qs for everyone per calendar day |
+| 8 categories | ⏳ | ✅ | ⏳ | ⏳ | Mixed/History/Science/Geography/Arts/Film&TV/Music/Sports |
+| Countdown clock + speed bonus | ⏳ | ✅ | ⏳ | ⏳ | Per-question or global per mode |
+| Streak multiplier | ⏳ | ✅ | ⏳ | ⏳ | Capped at 2× (bounded reward) |
+| "Learn the fact" reveal + Wikipedia link | ⏳ | ✅ | ⏳ | ⏳ | The mission-critical screen |
+| Post-game missed-fact recap | ⏳ | ✅ | ⏳ | ⏳ | |
+| Four content states (load/empty/error/offline) | ⏳ | ✅ | ⏳ | ⏳ | |
 
 ---
 
-## 3. [Next verb]
+## 3. Content pipeline (shared data plane — see docs/DATA-CONTRACT.md)
 
 | Feature | Web | iOS | tvOS | Android | Notes |
 |---|---|---|---|---|---|
+| Bundled offline corpus (~9k, never-repeat) | ⏳ IndexedDB | ✅ SQLite | ⏳ SQLite | ⏳ Room | One corpus, per-platform reader |
+| Live generation from any Wikipedia topic | ⏳ | ✅ | 🚫 | ⏳ | Powers Create + corpus fallback |
+| Template engine + quality gates | ⏳ JS | ✅ Swift | ✅ (shared Core) | ⏳ Kotlin | Mirrors `tools/corpus/generate_corpus.py` |
+| Wikidata SPARQL validation layer (the moat) | 🔮 | 🔮 | 🔮 | 🔮 | Top corpus priority (QUESTION-QUALITY gates 2,4,5,6,7) |
+
+---
+
+## 3b. Records, sharing, multiplayer
+
+| Feature | Web | iOS | tvOS | Android | Notes |
+|---|---|---|---|---|---|
+| Personal bests + lifetime stats | ⏳ | ✅ | ⏳ | ⏳ | SwiftData on Apple; IndexedDB/Room elsewhere |
+| Daily streak + missed-fact review | ⏳ | ✅ | ⏳ | ⏳ | Spaced re-asking is data-ready |
+| Compete vs. your past self | ⏳ | ✅ | ⏳ | ⏳ | New-best detection on each game |
+| Share score (NO X/Twitter) | ⏳ Web Share | ✅ ShareLink | ✅ QR | ⏳ Sheet | Decision 022 |
+| Leaderboards | 🔮 Supabase | ⏳ Game Center | ⏳ Game Center | 🔮 Play Games | Apple: GameKit wired, ASC config pending |
+| Achievements | 🔮 | ⏳ Game Center | ⏳ Game Center | 🔮 Play Games | |
+| Local pass-and-play | 🔮 | ⏳ | ⏳ | 🔮 | Phase 2 |
+| Async head-to-head / groups | 🔮 | ⏳ Game Center | ⏳ | 🔮 | Async > real-time for survivability (ROADMAP) |
+| Living-room mode (phone-as-buzzer) | 🔮 controller | n/a | ⏳ host | 🔮 controller | The biggest open market gap (ROADMAP #4) |
+| Cross-platform online | 🔮 | 🔮 | 🔮 | 🔮 | Supabase, after Apple online proves out (Decision 020) |
 
 ---
 

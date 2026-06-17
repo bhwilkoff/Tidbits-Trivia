@@ -442,3 +442,107 @@ diagnostics after a fix; keep env-gated ones.
 <!-- Add new entries below this line. Lead with the rule. Number
      sequentially. Don't rewrite existing entries — append a new
      one that supersedes or amends. -->
+
+## 019 — Two question pipelines, ONE template engine; the validation layer is the product
+
+**Decision**: Questions come from two sources — a pre-baked offline corpus
+(`tools/corpus/generate_corpus.py` → bundled `corpus.sqlite`) and live
+runtime generation (`Core/Engine/TemplateEngine.swift` from the Wikipedia
+API) — but both run the **same template shapes and the same quality gates**.
+Neither client re-implements the pipeline.
+
+**Why**: For a Wikipedia-sourced app the open API is a firehose of
+true-but-misleading facts; the moat is the FILTER, not the fetch (market
+research; Wikitrivia's entire bug list is a free QA report). Pre-baking gives
+offline play, speed, never-repeat, and insulation from mid-game vandalism;
+live gives infinite topics and "create a quiz." If the two pipelines drift,
+the corpus and the live path produce different-quality questions and the gate
+rules rot.
+
+**How to apply**: when you change a gate or template, change it in BOTH
+`TemplateEngine.swift` and `generate_corpus.py` in the same commit, and
+regenerate the corpus. The gate rulebook is `docs/QUESTION-QUALITY.md` —
+quote the rule number you're touching. The Wikidata SPARQL validation layer
+(gates 2/4/5/6/7) is the top corpus priority; until it lands, the engine
+enforces the cheap gates (1/3/8 + answer-leak redaction) and a popularity
+proxy.
+
+---
+
+## 020 — Online is Game Center for Apple now; Supabase cross-platform later
+
+**Decision**: iOS/tvOS online multiplayer, leaderboards, and achievements
+ride **Game Center**. Web/Android online and true cross-platform matchmaking
+are deferred to a **Supabase** layer later. Single-player, records, and
+sharing need no backend and ship first.
+
+**Why**: Game Center gives free, trusted matchmaking + identity + leaderboards
+across the Apple ecosystem with no server to run — the fastest credible path
+to "online" on the lead platform. Standing up real-time cross-platform infra
+in v1 would blow the budget for a feature most players won't touch on day one;
+research shows async > real-time for survivability anyway.
+
+**How to apply**: gate all GameKit behind `GameCenterManager` (every method a
+no-op until authenticated, so the SP build runs with no provisioning profile).
+Leaderboard IDs live in one enum and must match App Store Connect. When
+cross-platform online is scoped, the Supabase schema mirrors the
+already-shipped record/score shapes — additive, not a rewrite.
+
+---
+
+## 021 — tvOS earns its place: living-room trivia is lean-back
+
+**Decision**: Tidbits ships on tvOS. The platform set is Web + iOS + iPadOS +
+tvOS + Android (amends the M0 set under Decision 014).
+
+**Why**: Decision 014 says tvOS earns its place only when content is
+lean-back. Group/party trivia on the big screen is exactly that — and market
+research found **tvOS-first living-room trivia with zero-install
+phone-as-buzzer is essentially uncontested** (TV-brand incumbents abandoned
+local play; Jackbox is comedy-party, not knowledge trivia). It's the single
+biggest open gap, so tvOS is a strategic bet, not a checkbox.
+
+**How to apply**: tvOS is a Phase 2 milestone (the universal target already
+compiles for it via a placeholder). Read `tvos-platform-patterns` before any
+tvOS UI. Create+type-a-topic is 🚫 on tvOS (Siri Remote typing is hostile);
+tvOS consumes shared links and hosts living-room games instead.
+
+---
+
+## 022 — No dark patterns: no energy, no cash prizes, no pay-to-restore, no X/Twitter
+
+**Decision**: Tidbits will never ship energy/lives gating, cash-prize
+economics, paywalls on previously-free features, pay-to-restore-streak,
+manufactured near-misses/FOMO, or compulsion-loop variable rewards. Sharing
+never targets X/Twitter. Streaks have forgiveness; the wrong-answer screen
+teaches, never shames.
+
+**Why**: Every one of these is a documented 1-star driver and the market's
+*universal* complaint (HQ's doomed prizes, Duolingo's 2025 energy revolt,
+Sporcle/Trivia Crack paywall backlash). A clean, fair, ad-light reputation is
+itself a differentiator — and these mechanics directly violate the
+learning-orientation mandate (the tell of a dark pattern: removing it would
+help the user). The X/Twitter exclusion is an explicit product requirement.
+
+**How to apply**: every engagement mechanic passes the learning-orientation
+four-question test AND the "would removing it help the user?" check before it
+ships. Monetization, when it comes, is convenience/cosmetic — never
+content-gating.
+
+---
+
+## 023 — Multiplayer build order is async-first; same-room == remote
+
+**Decision**: Build multiplayer in this order: local pass-and-play → Game
+Center async head-to-head & groups → tvOS living-room (phone-as-buzzer) →
+cross-platform online (Supabase). Same-room and remote use the SAME mechanic.
+
+**Why**: The two real-time-only apps researched (HQ, QuizUp) died;
+async/league apps (Trivia Crack, LearnedLeague) survived — real-time is the
+most fun and the most economically punishing. Jackbox's lesson is that one
+room-code mechanic serving both in-person and remote beats two code paths.
+
+**How to apply**: the per-player loop is already `GameEngine`; multiplayer
+wraps an array of engines or drives a shared one over the network — never a
+parallel loop. A zero-install short room code (web controller) is the join
+target for living-room mode, not a player-side app install.

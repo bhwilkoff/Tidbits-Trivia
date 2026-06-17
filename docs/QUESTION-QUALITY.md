@@ -1,0 +1,129 @@
+# Question-Quality Rulebook
+
+> The binding contract for every question Tidbits generates — offline
+> (`tools/corpus/generate_corpus.py`) or live (`Core/Engine/TemplateEngine.swift`).
+> Both must satisfy these gates. Synthesized from psychometric item-writing
+> research (Haladyna's 31 rules, NBME item-writing guide), professional
+> pub-quiz craft, and the auto-generation literature (Seyler/Yahya/Berberich
+> 2017; Wohlan 2019). **The open Wikipedia API is a firehose of
+> true-but-misleading facts; the product is this filter, not the fetch.**
+
+## The north star
+
+A trivia question is an *engineered information gap* (Loewenstein 1994)
+whose resolution is itself a learning event (Roediger & Karpicke 2006).
+Every mechanic must resolve that gap with substance, never exploit it for
+session time. That single rule is also the app's learning-orientation
+mandate.
+
+## A. Stem rules (the question text)
+
+1. **One focused question**, answerable from the stem alone before the
+   options are seen (NBME "cover-the-options" test).
+2. **Central idea lives in the stem**, not smeared across the options.
+3. **No window dressing** — cut words not needed to answer.
+4. **Word positively.** Avoid NOT/EXCEPT; if unavoidable, emphasize it.
+5. **Low reading load, simple vocabulary** — measure knowledge, not reading speed.
+6. **The answer's surface form must NOT appear in the stem** (no clang clue).
+   → enforced by `redact()`: blanks the title + any parenthetical disambiguator.
+7. **Prefer multiple reasoning pathways** ("guessable"): give enough context
+   that a player can triangulate the answer, not just know-or-don't.
+
+## B. Option rules (answer + distractors)
+
+8. **3–4 options; 3 is psychometrically optimal** (Rodriguez 2005). One
+   correct + 2–3 plausible distractors. We use 4 for familiarity.
+9. **Exactly one defensible correct answer.** Reject anything that admits a
+   second (area vs. population; "director of"). → unique-answer gate.
+10. **Every distractor verified WRONG.** Substituting a distractor must not
+    also validate as true (the single most dangerous auto-generation bug).
+11. **Distractors homogeneous with the answer** — same type/`P31` class,
+    same grammatical form, similar specificity. → `pickDistractors` ranks by
+    shared-description-word overlap to keep them in-domain.
+12. **Option lengths roughly equal** — the key must not be the longest.
+13. **Plausible distractors, ideally from real misconceptions** (diagnostic).
+14. **Numeric/date options**: consistent format, ordered, plausible band, no
+    overlapping ranges, no impossible values.
+15. **No "All of the above."**
+16. **"None of the above" only where objectively verifiable** (we avoid it).
+17. **No specific determiners** (always/never/completely) — they cue the key.
+18. **No vague frequency terms** (often/usually) — break rank-ordering.
+19. **No convergence cues** — distractors must not be permutations that make
+    the key "share the most elements."
+20. **No grammatical cueing** — every option follows from the stem.
+21. **Options not collectively exhaustive** (increase/decrease/no-change).
+22. **Vary the key's position** across the bank. → `options.shuffle(using:)`.
+
+## C. Content & integrity
+
+23. **Important, interesting content; avoid trivial-trivia** — tie facts to
+    significance (popularity floor proxies this).
+24. **No opinion, no trick questions, no "best/most beloved" subjectivity.**
+    *Tricky* (fair lateral thinking) is fine; *trick* (misleading) is not.
+25. **Never penalize the player who knows more.**
+26. **Pin time-varying facts to a date.** Never "the current X"; phrase
+    "As of {year}…" and check Wikidata time qualifiers (`P580/P582/P585`).
+27. **Avoid contested/NPOV topics** (sovereignty, disputed territory,
+    ethnicity/religion of individuals) via a topic blocklist.
+28. **Source verification is cardinal.** Prefer referenced facts; cross-check
+    infobox vs. Wikidata vs. DBpedia; watch reversibility.
+29. **Favor inference over pure recall** — deduction is thinking; recall is
+    regurgitation. This is the learning-orientation mandate in one rule.
+
+## D. The 9-gate verification funnel (cheapest-first, reject early)
+
+The generator is a **candidate funnel, not a publisher.**
+
+1. **Single-answer** — exactly one answer in the source.
+2. **Distractor-correctness** — no distractor also validates as true.
+3. **Distractor type/plausibility** — same coarse type; numerics in band.
+4. **Temporal** — time-varying facts need a date anchor + qualifier check.
+5. **Popularity floor** — answer + anchors clear a pageview threshold
+   (popular subjects are more fun AND far less often vandalized).
+6. **Freshness/vandalism** — referenced statement, non-deprecated rank,
+   sane numeric bounds, not edited in the last N hours, sources agree.
+7. **NPOV/blocklist** — property/topic not contested.
+8. **Phrasing** — no empty slots, no answer leakage, grammatical.
+9. **Human-in-the-loop sampling** — spot-check; route near-boundary
+   difficulty to review. Humans agree with ground-truth difficulty only
+   ~62.5% (Seyler), so never trust auto-difficulty blindly.
+
+### What the v1 engine enforces today
+
+`isUsable` + `redact` + `pickDistractors` implement gates 1, 3, 8 and rule
+6 directly (disambiguation/list rejection, description length bounds, extract
+minimums, answer-leak redaction, homogeneous distractors, key-position
+shuffle). Gates 2, 4, 5, 6, 7, 9 require the **Wikidata + pageviews layer**
+(see DATA-CONTRACT) and land as the corpus pipeline matures — tracked in
+docs/ROADMAP.md. Until then the popularity proxy is "appears in a
+category-seeded search with a usable short description."
+
+## E. Difficulty model (target, not yet shipped)
+
+- **Dual Elo / Glicko-2** = online Rasch/1PL IRT. One rating per *player*
+  (θ) and per *question* (δ) in shared logit units; both co-update from each
+  answer's surprise term `(X − E)`.
+- **Guessing floor**: clamp predicted P(correct) ≥ 1/k (0.25 for 4 options).
+- **Engagement set-point: serve questions at ~60–70% predicted success**,
+  NOT 50% — the flow channel sits just into the challenge side; 50/50 feels
+  punishing.
+- **Cold-start** seeds δ from cheap proxies: Wikipedia pageview obscurity of
+  the answer (log-banded), extract length, category, presence of dates.
+  v1 ships the proxy (`difficulty(for:)`); live co-rating is Phase 2+.
+- **Fixed-round distribution** (Daily, assembled quizzes): 40% easy / 40%
+  medium / 20% hard, easy-bookended so no one leaves with zero.
+
+## F. Learning integration (the wrong-answer screen is the most valuable in the app)
+
+1. **Ask-before-reveal** is the default flow — pretesting + generation +
+   curiosity + retrieval-practice effects, all at once. *Shipped.*
+2. **"Why / learn more" card on every answer**, linking the Wikipedia
+   source. *Shipped* (the reveal card + `MissedFact.explanation`).
+3. **Spaced re-asking of missed facts** (Leitner/SM-2). *Shipped (data):*
+   `MissedFact` records misses + resolves them on later correct answers;
+   weaving them back into games is the next step.
+4. **Hypercorrection on confident errors** — surface confident-wrong
+   corrections prominently. *Phase 2* (needs a confidence signal).
+5. **Post-game fact recap.** *Shipped* (Results "Tidbits to remember").
+6. **Interleave categories** (desirable difficulty). Mixed Bag does this.
+7. **Connection/deduction question types.** *Phase 2+.*

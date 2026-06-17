@@ -1,6 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- FILL IN: app name appears under the launcher icon. Keep short
-         enough to never truncate (e.g. iOS CFBundleDisplayName mirror). -->
-    <string name="app_name">AppName</string>
+    <string name="app_name">Tidbits</string>
 </resources>

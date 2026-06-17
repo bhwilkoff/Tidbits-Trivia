@@ -18,6 +18,11 @@
 - **Round 2 shipped (2026-06-16)**: local pass-and-play (2–4 players),
   spaced re-asking woven into solo games, haptics, Settings sheet, real
   app icon. All verified on the simulator.
+- **Round 7 shipped (2026-06-16)**: Android app (Kotlin + Compose + M3) —
+  home/game/results/records/create, lean stack (manual DI + sealed Route +
+  BackHandler, in-memory JSON corpus), full engine mirror. Built + verified on
+  the Pixel 9 Pro emulator. **All FOUR platforms from the original vision now
+  play: iPhone, Web, Apple TV, Android.**
 - **Round 6 shipped (2026-06-16)**: tvOS app — dark-first focus-correct home
   (daily hero + mode row + category shelf) and the full game loop + results,
   reusing the shared GameEngine. Siri-Remote focus, custom ButtonStyles (never
@@ -166,3 +171,23 @@ question ("In which country is Bad Kissingen?") render with correct focus;
 iOS still builds green after the shared-file changes. *Left:* tvOS has no
 Records browse or Create (by design); pass-and-play/phone-as-buzzer is the next
 tvOS step (Decision 023).
+
+**2026-06-16 (round 7 — Android)** — *Did:* built the Android app on the
+scaffold. Renamed package → com.learningischange.tidbitstrivia; slimmed the
+build to a reliable lean stack (Compose+M3, activity, lifecycle, coroutines,
+serialization, datastore, okhttp, splashscreen) — dropped Hilt/Nav3/Room/Ktor
+per the v1 rule. Wrote data/Tidbits.kt (models, in-memory corpus from bundled
+assets/corpus.json, OkHttp Wikipedia client, TemplateEngine + Scoring +
+SeededRng mirrors with the SAME FNV-1a/SplitMix64 constants, SharedPreferences
+Store), ui/GameState.kt (Compose state-holder game loop), ui/AppRoot.kt
+(sealed Route + BackHandler nav, home/game/results/records/create), theme,
+plain Application (manual DI) + MainActivity (edge-to-edge). *Build fights
+won:* Gradle wrapper 8.13→9.4.1 (AGP 9.2 floor), removed `kotlinOptions` DSL →
+`kotlin { compilerOptions { jvmTarget } }`, compileSdk 36→37 (Compose
+1.12-alpha floor), XML theme parent off the View-Material lib →
+DeviceDefault.Light.NoActionBar. *Verified:* Pixel 9 Pro emulator — home
+(TIDBITS, daily, modes, category grid, bottom nav) + a game (redaction +
+answer cards + scoring HUD) render correctly; the "System UI isn't responding"
+dialog is the software-GPU emulator, not the app. *Left:* Android records is
+streak+bests (missed-fact review later); Room is a later perf step; iOS still
+builds green. **Four-platform vision complete.**

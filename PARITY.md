@@ -54,9 +54,9 @@ reached is ⏳ with a note, never silence.
 
 | Verb | Web | iOS | tvOS | Android | Notes |
 |---|---|---|---|---|---|
-| Play (home: daily, modes, categories) | ✅ | ✅ | ✅ | ⏳ | iOS: bottom Tab. Web: hash-routed tabs + URL state. tvOS: dark-first focus shelf. Android: NavigationSuiteScaffold |
-| Records (stats, streak, review) | ✅ | ✅ | ⏳ | ⏳ | tvOS persists records (Caches store) but has no browse UI yet |
-| Create (quiz from any topic) | ✅ | ✅ | 🚫 | ⏳ | tvOS: typing a topic on a Siri Remote is hostile — consume shared links instead |
+| Play (home: daily, modes, categories) | ✅ | ✅ | ✅ | ✅ | iOS: bottom Tab. Web: hash-routed tabs + URL state. tvOS: dark-first focus shelf. Android: bottom NavigationBar |
+| Records (stats, streak, review) | ✅ | ✅ | ⏳ | ✅ | tvOS persists records (Caches store) but has no browse UI yet; Android via SharedPreferences |
+| Create (quiz from any topic) | ✅ | ✅ | 🚫 | ✅ | tvOS: typing a topic on a Siri Remote is hostile — consume shared links instead |
 
 ---
 
@@ -64,17 +64,17 @@ reached is ⏳ with a note, never silence.
 
 | Feature | Web | iOS | tvOS | Android | Notes |
 |---|---|---|---|---|---|
-| Classic mode (10 Qs, speed scoring) | ✅ | ✅ | ✅ | ⏳ | Same GameEngine loop on every platform |
-| Time Attack (60s) | ✅ | ✅ | ✅ | ⏳ | |
-| Survival (until one wrong) | ✅ | ✅ | ✅ | ⏳ | |
-| Daily Tidbit (deterministic, streak) | ✅ | ✅ | ✅ | ⏳ | Same 7 Qs for everyone per calendar day; web seeds from date |
-| 8 categories | ✅ | ✅ | ✅ | ⏳ | Mixed/History/Science/Geography/Arts/Film&TV/Music/Sports |
-| Countdown clock + speed bonus | ✅ | ✅ | ✅ | ⏳ | Per-question or global per mode |
-| Streak multiplier | ✅ | ✅ | ✅ | ⏳ | Capped at 2× (bounded reward) |
-| "Learn the fact" reveal + Wikipedia link | ✅ | ✅ | ✅ | ⏳ | The mission-critical screen (tvOS shows the fact; no link tap) |
-| Post-game missed-fact recap | ✅ | ✅ | ⏳ | ⏳ | tvOS results shows emoji grid; full recap list ⏳ |
-| Four content states (load/empty/error/offline) | ✅ | ✅ | ✅ | ⏳ | Web: service-worker offline + cached corpus |
-| Emoji-grid result on screen | ✅ | ✅ | ✅ | ⏳ | tvOS results screen |
+| Classic mode (10 Qs, speed scoring) | ✅ | ✅ | ✅ | ✅ | Same loop on every platform (Swift/JS/Kotlin mirrors) |
+| Time Attack (60s) | ✅ | ✅ | ✅ | ✅ | |
+| Survival (until one wrong) | ✅ | ✅ | ✅ | ✅ | |
+| Daily Tidbit (deterministic, streak) | ✅ | ✅ | ✅ | ✅ | Same 7 Qs for everyone per day; same FNV-1a/SplitMix64 seed on all platforms |
+| 8 categories | ✅ | ✅ | ✅ | ✅ | Mixed/History/Science/Geography/Arts/Film&TV/Music/Sports |
+| Countdown clock + speed bonus | ✅ | ✅ | ✅ | ✅ | Per-question or global per mode |
+| Streak multiplier | ✅ | ✅ | ✅ | ✅ | Capped at 2× (bounded reward) |
+| "Learn the fact" reveal + Wikipedia link | ✅ | ✅ | ✅ | ✅ | The mission-critical screen |
+| Post-game missed-fact recap | ✅ | ✅ | ⏳ | ⏳ | tvOS/Android show emoji grid; full recap list ⏳ |
+| Four content states (load/empty/error/offline) | ✅ | ✅ | ✅ | ✅ | Web: service-worker offline; native: bundled corpus |
+| Emoji-grid result on screen | ✅ | ✅ | ✅ | ✅ | + share intent (Android), ShareLink (iOS), Web Share |
 
 ---
 
@@ -82,10 +82,10 @@ reached is ⏳ with a note, never silence.
 
 | Feature | Web | iOS | tvOS | Android | Notes |
 |---|---|---|---|---|---|
-| Bundled offline corpus (10k, never-repeat) | ✅ JSON→IndexedDB | ✅ SQLite | ✅ SQLite | ⏳ Room | One corpus, per-platform reader; tvOS reads the same bundled SQLite via Core |
-| Live generation from any Wikipedia topic | ✅ | ✅ | ✅ (fallback) | ⏳ | Powers Create + corpus fallback; web hits the API with origin=* (CORS) |
-| Template engine + quality gates | ✅ js/engine.js | ✅ Swift | ✅ (shared Core) | ⏳ Kotlin | Mirrors `tools/corpus/generate_corpus.py` |
-| Wikidata SPARQL structured questions (the moat) | ✅ | ✅ | ✅ | ⏳ | 1,117 verified Qs in the shared corpus (Decision 024); gates 1/2/4/5 by construction. Android inherits when built |
+| Bundled offline corpus (10k, never-repeat) | ✅ JSON→IndexedDB | ✅ SQLite | ✅ SQLite | ✅ JSON (in-memory) | One corpus, per-platform reader; Android bundles assets/corpus.json (Room is a later perf step) |
+| Live generation from any Wikipedia topic | ✅ | ✅ | ✅ (fallback) | ✅ | Powers Create + corpus fallback; web hits the API with origin=* (CORS) |
+| Template engine + quality gates | ✅ js/engine.js | ✅ Swift | ✅ (shared Core) | ✅ Kotlin | Four mirrors of `tools/corpus/generate_corpus.py` |
+| Wikidata SPARQL structured questions (the moat) | ✅ | ✅ | ✅ | ✅ | 1,117 verified Qs in the shared corpus (Decision 024); gates 1/2/4/5 by construction |
 | Vandalism/NPOV gates 6/7 + human sampling 9 | 🔮 | 🔮 | 🔮 | 🔮 | Next corpus step (e.g. contested continent-of-country cases) |
 
 ---
@@ -94,10 +94,10 @@ reached is ⏳ with a note, never silence.
 
 | Feature | Web | iOS | tvOS | Android | Notes |
 |---|---|---|---|---|---|
-| Personal bests + lifetime stats | ✅ | ✅ | ⏳ | ⏳ | SwiftData on Apple; localStorage on web |
-| Daily streak + missed-fact review | ✅ | ✅ | ⏳ | ⏳ | Spaced re-asking woven into games on web + iOS |
-| Compete vs. your past self | ✅ | ✅ | ⏳ | ⏳ | New-best detection on each game |
-| Share score (NO X/Twitter) | ✅ Web Share | ✅ ShareLink | ✅ QR | ⏳ Sheet | Decision 022; web has clipboard fallback |
+| Personal bests + lifetime stats | ✅ | ✅ | ⏳ | ✅ | SwiftData (Apple); localStorage (web); SharedPreferences (Android) |
+| Daily streak + missed-fact review | ✅ | ✅ | ⏳ | ✅ streak | Spaced re-asking woven into games on web + iOS; Android has streak (review later) |
+| Compete vs. your past self | ✅ | ✅ | ⏳ | ✅ | New-best detection on each game |
+| Share score (NO X/Twitter) | ✅ Web Share | ✅ ShareLink | ✅ QR | ✅ Intent | Decision 022; web has clipboard fallback |
 | Spoiler-free emoji-grid result | ✅ | ✅ | ⏳ | ⏳ | Wordle-style 🟩🟥; the daily share loop (ROADMAP #1) |
 | First-run onboarding | ⏳ | ✅ | ⏳ | ⏳ | 3-card play/learn/compete walkthrough |
 | Leaderboards | 🔮 Supabase | ⏳ Game Center | ⏳ Game Center | 🔮 Play Games | Apple: GameKit wired, ASC config pending |

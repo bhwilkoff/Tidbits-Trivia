@@ -7,7 +7,7 @@ the DATA-CONTRACT so every reader maps by index.
 
 Usage: python3 export_json.py [--db PATH] [--out PATH]
 """
-import argparse, json, sqlite3
+import argparse, hashlib, json, sqlite3
 
 def main():
     ap = argparse.ArgumentParser()
@@ -26,10 +26,14 @@ def main():
         [r[0], r[1], [r[2], r[3], r[4], r[5]], r[6], r[7], r[8], r[9], r[10], r[11]]
         for r in rows
     ]
-    payload = {"version": 1, "count": len(questions), "questions": questions}
+    # Content version → lets the web client bust its IndexedDB cache when
+    # the corpus changes (otherwise stale questions persist forever).
+    body = json.dumps(questions, ensure_ascii=False, separators=(",", ":"))
+    version = hashlib.md5(body.encode()).hexdigest()[:12]
+    payload = f'{{"version":"{version}","count":{len(questions)},"questions":{body}}}'
     with open(args.out, "w") as f:
-        json.dump(payload, f, ensure_ascii=False, separators=(",", ":"))
-    print(f"wrote {len(questions)} questions to {args.out}")
+        f.write(payload)
+    print(f"wrote {len(questions)} questions (version {version}) to {args.out}")
 
 if __name__ == "__main__":
     main()

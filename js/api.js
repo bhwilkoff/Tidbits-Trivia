@@ -52,13 +52,22 @@ export const Corpus = {
 
   async load() {
     if (this.loaded) return;
-    let data = await idbGet('corpus.v1');
+    // Network-first so corpus updates always propagate; IndexedDB is only an
+    // offline fallback, keyed on the corpus content version (no stale cache).
+    let data;
+    try {
+      const resp = await fetch('assets/corpus.json', { cache: 'no-cache' });
+      if (resp.ok) {
+        data = await resp.json();
+        idbSet('corpus:' + data.version, data);
+        idbSet('corpus:latest', data.version);
+      }
+    } catch (e) { /* offline — fall back to cache */ }
     if (!data) {
-      const resp = await fetch('assets/corpus.json');
-      if (!resp.ok) throw new Error('corpus fetch failed');
-      data = await resp.json();
-      idbSet('corpus.v1', data);
+      const v = await idbGet('corpus:latest');
+      if (v) data = await idbGet('corpus:' + v);
     }
+    if (!data) throw new Error('corpus unavailable');
     this.questions = data.questions.map(rowToQuestion);
     this.byCategory = {};
     for (const q of this.questions) (this.byCategory[q.categoryID] ||= []).push(q);

@@ -25,7 +25,20 @@
   <script type="module" src="js/app.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+      window.addEventListener('load', async () => {
+        try {
+          // updateViaCache:'none' — ALWAYS re-fetch sw.js (the browser otherwise
+          // serves it from HTTP cache up to 24h, so a new worker never installs
+          // and the app stays frozen on a stale corpus). Force an update check,
+          // and reload once when a new worker takes control.
+          const reg = await navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' });
+          reg.update();
+          let reloaded = false;
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (reloaded) return; reloaded = true; location.reload();
+          });
+        } catch (e) { /* no-op */ }
+      });
     }
   </script>
 </body>

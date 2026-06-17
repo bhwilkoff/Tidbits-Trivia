@@ -18,8 +18,14 @@
 - **Round 2 shipped (2026-06-16)**: local pass-and-play (2–4 players),
   spaced re-asking woven into solo games, haptics, Settings sheet, real
   app icon. All verified on the simulator.
+- **Round 5 shipped (2026-06-16)**: Wikidata SPARQL moat — 1,117 structurally-
+  verified questions (capitals, currencies, continents, UNESCO sites, element
+  symbol/number, Best-Picture directors, prize book authors). Corpus now
+  **10,006** (crossed the 10k goal). Verified rendering on iOS; web JSON
+  re-exported.
 - **Next actions**:
-  1. Bump corpus toward 10k (both-template generation; currently ~9k).
+  1. Gates 6/7/9: vandalism/freshness cross-checks, NPOV blocklist (e.g.
+     contested continent-of-country: Cyprus/Russia/Turkey), human sampling.
   2. Wire Game Center entitlement + App Store Connect leaderboards/achievements.
   3. Branded launch screen (fresh launch currently shows the default white one).
   4. Mirror the SP loop to Web (canonical share target) then Android.
@@ -128,3 +134,14 @@ IndexedDB-hang bug (timeout race) surfaced by the headless test. *Left:* web
 SP loop playable; PARITY web column now ✅ for the SP feature set. iOS share
 text still says the placeholder "tidbits.trivia" — point it at the real web
 URL once a domain is chosen. Pass-and-play + onboarding not yet mirrored to web.
+
+**2026-06-16 (round 5 — Wikidata moat)** — *Did:* built `tools/corpus/wikidata.py`,
+a SPARQL generator over bounded domains that derives answers structurally
+(gates 1/2/4/5 hold by construction — a different country's capital is
+definitionally wrong). Added 1,117 verified questions across 8 templates
+(capital/currency/continent/UNESCO/elementSymbol/elementNumber/
+bestPicDirector/bookAuthor); pruned 92 hypothetical-element entries for
+recognizability. Corpus 8,889 → 10,006. Re-exported web JSON; rebuilt + verified
+on iOS ("On which continent is Cyprus?" renders clean). Hardened the generator
+for WDQS 429s (Retry-After, --only, spacing). *Left:* gates 6/7/9 outstanding;
+live runtime path still summary-based (corpus is the moat for now).

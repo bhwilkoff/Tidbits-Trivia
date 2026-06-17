@@ -546,3 +546,35 @@ room-code mechanic serving both in-person and remote beats two code paths.
 wraps an array of engines or drives a shared one over the network — never a
 parallel loop. A zero-install short room code (web controller) is the join
 target for living-room mode, not a player-side app install.
+
+---
+
+## 024 — The quality moat is Wikidata SPARQL, deriving answers structurally
+
+**Decision**: High-confidence questions come from `tools/corpus/wikidata.py`,
+which builds questions from **Wikidata SPARQL** over bounded, recognizable
+domains (capitals P36, currency P38, continent P30, UNESCO-site country P17,
+element symbol/atomic-number P246/P1086, Best-Picture director P57,
+prize-winning book author P50). The answer is derived **structurally** from a
+typed triple, and distractors are typed siblings pulled from the SAME query.
+These coexist in `corpus.sqlite` with the summary-based questions under
+`template_id` `wd:*`.
+
+**Why**: For a Wikipedia-sourced app the moat is the FILTER, not the fetch
+(Decision 019). Summary-text questions are good but can be ambiguous; a
+structured triple makes the question verifiable by construction —
+QUESTION-QUALITY gate 1 (single answer) holds because the property is
+functional, and gate 2 (no distractor is also correct) holds **by design**
+because a different country's capital is *definitionally* not this country's
+capital. Bounded domains (≈200 countries, 118 elements, ≈95 Best-Picture
+winners) are inherently famous, so gate 5 (popularity) is satisfied for free.
+This is the defensible "accurate Wikipedia trivia" wedge no incumbent owns.
+
+**How to apply**: only use **mostly-functional** properties for this path, so
+typed-sibling distractors are guaranteed wrong; for multi-valued properties
+(e.g. co-directors) take one value and accept the small recall cost. Render
+dates at year precision only (never ask "what day" — gate 4). Respect WDQS
+limits: descriptive User-Agent, bounded `LIMIT`, serial queries spaced out,
+honor `Retry-After` on 429 (the service rate-limits aggressively). The live
+runtime path stays summary-based for now; adopting SPARQL there is a later
+step. Regenerate `assets/corpus.json` (web) after any corpus change.

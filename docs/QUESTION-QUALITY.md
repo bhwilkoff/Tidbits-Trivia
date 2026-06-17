@@ -88,15 +88,31 @@ The generator is a **candidate funnel, not a publisher.**
    difficulty to review. Humans agree with ground-truth difficulty only
    ~62.5% (Seyler), so never trust auto-difficulty blindly.
 
-### What the v1 engine enforces today
+### What the engine enforces today
 
-`isUsable` + `redact` + `pickDistractors` implement gates 1, 3, 8 and rule
-6 directly (disambiguation/list rejection, description length bounds, extract
-minimums, answer-leak redaction, homogeneous distractors, key-position
-shuffle). Gates 2, 4, 5, 6, 7, 9 require the **Wikidata + pageviews layer**
-(see DATA-CONTRACT) and land as the corpus pipeline matures — tracked in
-docs/ROADMAP.md. Until then the popularity proxy is "appears in a
-category-seeded search with a usable short description."
+**Two corpus paths, both in `corpus.sqlite`:**
+
+1. **Summary-based** (`template_id` `descriptionOf` / `subjectFrom`) —
+   `isUsable` + `redact` + `pickDistractors` implement gates 1, 3, 8 and rule
+   6 (disambiguation/list rejection, length bounds, answer-leak redaction,
+   homogeneous distractors, key-position shuffle). Popularity proxy: appears
+   in a category-seeded search with a usable short description.
+
+2. **Wikidata structured** (`template_id` `wd:*`, Decision 024) — the moat.
+   `tools/corpus/wikidata.py` derives the answer from a typed SPARQL triple,
+   so gates hold **by construction**:
+   - **Gate 1 (single answer)** — the property is functional (a country has
+     one capital).
+   - **Gate 2 (distractor-correctness)** — distractors are typed siblings
+     from the same query; a different country's capital is *definitionally*
+     wrong for this country.
+   - **Gate 4 (temporal)** — dates rendered at year precision only.
+   - **Gate 5 (popularity)** — bounded domains (≈200 countries, 118 elements,
+     ≈95 Best-Picture winners) are inherently famous.
+
+Still outstanding for both paths: gate 6 (vandalism/freshness cross-checks),
+gate 7 (NPOV blocklist), gate 9 (human sampling), and adopting the structured
+path in the **live** runtime engine (today live is summary-based only).
 
 ## E. Difficulty model (target, not yet shipped)
 

@@ -42,15 +42,25 @@ Index: `idx_category` on `category_id`. Categories:
 `mixed`(virtual, spans all) · `history` · `science` · `geography` · `arts` ·
 `screen` · `music` · `sports`.
 
-## Template shapes (v1)
+## Template shapes
 
+**Summary-based** (`tools/corpus/generate_corpus.py`):
 - **`descriptionOf`** — "How is *Title* best described?" Options are short
-  descriptions; distractors are other subjects' descriptions ranked by
-  word-overlap (homogeneity, gate B11).
+  descriptions; distractors ranked by word-overlap (homogeneity, gate B11).
 - **`subjectFrom`** — "Which subject is this? '*<redacted first sentence>*'"
   Options are titles; the answer's title is blanked from the clue (gate A6).
 
-Both emitted per usable subject → ~2 questions/subject.
+**Wikidata structured** (`tools/corpus/wikidata.py`, `template_id` `wd:*` —
+Decision 024): answers derived from typed SPARQL triples, distractors are
+typed siblings (gates 1/2/4/5 hold by construction):
+- `wd:capital` (P36), `wd:currency` (P38), `wd:continent` (P30),
+  `wd:unescoCountry` (P17) — geography
+- `wd:elementSymbol` (P246), `wd:elementNumber` (P1086, numeric band) — science
+- `wd:bestPicDirector` (P57) — screen
+- `wd:bookAuthor` (P50, prize-winning works) — arts
+
+Re-run: `python3 wikidata.py [--only key1,key2] [--gap SECONDS]`. Honors WDQS
+`Retry-After`; appends with `INSERT OR IGNORE` (idempotent).
 
 ## Consumers
 

@@ -84,7 +84,8 @@ reached is ⏳ with a note, never silence.
 | Bundled offline corpus (~9k, never-repeat) | ✅ JSON→IndexedDB | ✅ SQLite | ⏳ SQLite | ⏳ Room | One corpus, per-platform reader; web via tools/corpus/export_json.py |
 | Live generation from any Wikipedia topic | ✅ | ✅ | 🚫 | ⏳ | Powers Create + corpus fallback; web hits the API with origin=* (CORS) |
 | Template engine + quality gates | ✅ js/engine.js | ✅ Swift | ✅ (shared Core) | ⏳ Kotlin | Mirrors `tools/corpus/generate_corpus.py` |
-| Wikidata SPARQL validation layer (the moat) | 🔮 | 🔮 | 🔮 | 🔮 | Top corpus priority (QUESTION-QUALITY gates 2,4,5,6,7) |
+| Wikidata SPARQL structured questions (the moat) | ✅ | ✅ | ⏳ | ⏳ | 1,117 verified Qs in the shared corpus (Decision 024); gates 1/2/4/5 by construction. tvOS/Android inherit when built |
+| Vandalism/NPOV gates 6/7 + human sampling 9 | 🔮 | 🔮 | 🔮 | 🔮 | Next corpus step (e.g. contested continent-of-country cases) |
 
 ---
 

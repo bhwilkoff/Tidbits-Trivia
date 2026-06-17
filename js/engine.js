@@ -59,10 +59,29 @@ const isUsable = (s) => {
 };
 
 const stripParens = (t) => t.replace(/\s*\([^)]*\)/g, '');
+const ABBREV = new Set('lit e.g i.e approx no vs etc st mt mr mrs ms dr fl ca jr sr col gen gov sen rep prof rev inc ltd co u.s u.k'.split(' '));
 const firstSentence = (t) => {
+  // Paren/abbreviation-aware so 'lit.' / '(…; lit. …)' / middle initials don't
+  // truncate the clue mid-phrase.
   const s = (t || '').trim();
-  const m = s.match(/\.\s/);
-  return m ? s.slice(0, m.index) + '.' : s;
+  let depth = 0;
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    if (ch === '(' || ch === '[') depth++;
+    else if ((ch === ')' || ch === ']') && depth > 0) depth--;
+    else if (ch === '.' && depth === 0 && s[i + 1] === ' ') {
+      const nxt2 = s[i + 2] || '';
+      if (nxt2 === '' || nxt2 === nxt2.toUpperCase() && /[A-Z“”"'‘’]/.test(nxt2)) {
+        let j = i - 1;
+        while (j >= 0 && /[A-Za-z0-9.'\-]/.test(s[j])) j--;
+        const tok = s.slice(j + 1, i);
+        const letters = tok.replace(/[^A-Za-z]/g, '');
+        const isAbbrev = letters && (letters.length <= 1 || ABBREV.has(tok.toLowerCase().replace(/\.+$/, '')));
+        if (!isAbbrev) return s.slice(0, i + 1);
+      }
+    }
+  }
+  return s;
 };
 const cap = (c) => (c ? c[0].toUpperCase() + c.slice(1) : c);
 
@@ -88,11 +107,32 @@ function cleanClue(text) {
   return out.replace(/\s{2,}/g, ' ').replace(' ,', ',').replace(' .', '.').trim();
 }
 
-function redact(text, title) {
-  let out = text;
-  for (const needle of new Set([title, stripParens(title)])) {
-    if (needle) out = out.replace(new RegExp(needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), '—————');
+const FUNCTION_WORDS = new Set('the of and a an in on at to for by with from as or de von van al'.split(' '));
+const COMMON_WORDS = new Set(('empire battle war wars kingdom dynasty republic treaty river mountain mountains lake island islands city town county state states united nation national american english british french german italian spanish russian chinese japanese korean indian european african asian north south east west northern southern eastern western great greater new saint university college school company group band series film movie novel book award club team teams league party system century world people region province district area force army navy air language family order house song album season game games sport sports festival prize federal royal international association federation union organization museum park station bridge building tower palace castle church cathedral temple championship cup first second').split(' '));
+
+function leaks(answer, prompt) {
+  const p = prompt.toLowerCase();
+  for (const t of new Set((answer.toLowerCase().match(/[a-z]{4,}/g) || []).filter((w) => !COMMON_WORDS.has(w)))) {
+    if (p.includes(t)) return true;
   }
+  return false;
+}
+
+function redact(text, title) {
+  const esc = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  let out = text;
+  const bare = stripParens(title).trim();
+  for (const needle of new Set([title, bare])) {
+    if (needle) out = out.replace(new RegExp(esc(needle), 'gi'), '—————');
+  }
+  // Leading proper-noun run (≥2 words) — catches full-name variants.
+  out = out.replace(/^(The |A |An )?((?:[A-Z][\w’'.\-]*)(?:[ \-]+(?:of |the |and |de |von |van |al-)?[A-Z][\w’'.\-]*)+)/, (m, p1) => (p1 || '') + '—————');
+  // Each CONTENT title word wherever it appears.
+  for (const w of bare.split(/[^A-Za-z’'\-]+/)) {
+    if (w.length < 3 || FUNCTION_WORDS.has(w.toLowerCase())) continue;
+    out = out.replace(new RegExp('\\b' + esc(w) + "(?:’s|'s|s|es)?\\b", 'gi'), '—————');
+  }
+  out = out.replace(/—————(?:[\s,’'.\–\-]+(?:of|the|and)?\s*—————)+/gi, '—————').replace(/\s{2,}/g, ' ').trim();
   return out;
 }
 
@@ -195,6 +235,9 @@ export function makeQuestions(pool, categoryID, count, seed) {
       const stem = bank[Math.floor(gi / n) % bank.length];
       const built = buildShape(shape, s, usable, stem, rnd);
       if (built) {
+        // Never ship a redacted question whose answer leaks into the prompt.
+        if (['identify', 'jeopardy', 'cloze'].includes(shape) && leaks(built.answer, built.prompt)) continue;
+        if (built.prompt.length > 320 || /[Ͱ-ϿЀ-ӿ֐-ۿ぀-ヿ一-鿿가-힯∀-⋿⟨-⟯]/.test(built.prompt)) continue;
         const options = shuffle(built.options, rnd);
         out.push({
           id: `live:${shape}:${s.title}`.replace(/ /g, '_'),

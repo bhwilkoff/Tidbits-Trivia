@@ -88,6 +88,11 @@ nonisolated struct TemplateEngine: Sendable {
             let bank = stems[shape]!
             let stem = bank[(gi / n) % bank.count]
             if let (prompt, options, answer) = builder(shape, s, pool, stem, &rng) {
+                // Never ship a redacted question whose answer leaks into the
+                // prompt — fall through to the next shape. (Mirror of the
+                // Python corpus gate.)
+                if ["identify", "jeopardy", "cloze"].contains(shape) && leaks(answer, in: prompt) { continue }
+                if prompt.count > 320 || hasForeignScript(prompt) { continue }
                 var opts = options
                 opts.shuffle(using: &rng)
                 let ci = opts.firstIndex(of: answer) ?? 0
@@ -228,22 +233,80 @@ nonisolated struct TemplateEngine: Sendable {
         return false
     }
 
+    static let functionWords: Set<String> = ["the", "of", "and", "a", "an", "in", "on", "at", "to", "for", "by", "with", "from", "as", "or", "de", "von", "van", "al"]
+    static let commonWords: Set<String> = ["empire", "battle", "war", "wars", "kingdom", "dynasty", "republic", "treaty", "river", "mountain", "mountains", "lake", "island", "islands", "city", "town", "county", "state", "states", "united", "nation", "national", "american", "english", "british", "french", "german", "italian", "spanish", "russian", "chinese", "japanese", "korean", "indian", "european", "african", "asian", "north", "south", "east", "west", "northern", "southern", "eastern", "western", "great", "greater", "new", "saint", "university", "college", "school", "company", "group", "band", "series", "film", "movie", "novel", "book", "award", "club", "team", "teams", "league", "party", "system", "century", "world", "people", "region", "province", "district", "area", "force", "army", "navy", "air", "language", "family", "order", "house", "song", "album", "season", "game", "games", "sport", "sports", "festival", "prize", "federal", "royal", "international", "association", "federation", "union", "organization", "museum", "park", "station", "bridge", "building", "tower", "palace", "castle", "church", "cathedral", "temple", "championship", "cup", "first", "second"]
+
+    static func hasForeignScript(_ s: String) -> Bool {
+        // Non-Latin scripts + math symbols that make a clue unreadable. Accented
+        // Latin (é, ñ) is fine and excluded.
+        s.unicodeScalars.contains { v in
+            let n = v.value
+            return (0x0370...0x06FF).contains(n) || (0x3040...0x9FFF).contains(n)
+                || (0xAC00...0xD7AF).contains(n) || (0x2200...0x22FF).contains(n)
+                || (0x27E8...0x27EF).contains(n)
+        }
+    }
+
+    static func leaks(_ answer: String, in prompt: String) -> Bool {
+        let p = prompt.lowercased()
+        let toks = Set(answer.lowercased().split { !$0.isLetter }.map(String.init).filter { $0.count >= 4 }).subtracting(commonWords)
+        return toks.contains { p.contains($0) }
+    }
+
     static func redact(_ text: String, title: String) -> String {
         var out = text
         let bareTitle = title.replacingOccurrences(of: #"\s*\([^)]*\)"#, with: "", options: .regularExpression)
+            .trimmingCharacters(in: .whitespaces)
+        // 1. Whole-title phrase(s).
         for needle in [title, bareTitle] where !needle.isEmpty {
             out = out.replacingOccurrences(of: needle, with: "—————", options: .caseInsensitive)
         }
+        // 2. Leading proper-noun run (≥2 words) — catches full-name variants.
+        out = out.replacingOccurrences(
+            of: #"^(The |A |An )?((?:[A-Z][\w’'.\-]*)(?:[ \-]+(?:of |the |and |de |von |van |al-)?[A-Z][\w’'.\-]*)+)"#,
+            with: "$1—————", options: .regularExpression)
+        // 3. Each CONTENT title word wherever it appears.
+        for w in bareTitle.split(whereSeparator: { !$0.isLetter && $0 != "'" && $0 != "’" && $0 != "-" }).map(String.init) {
+            if w.count < 3 || functionWords.contains(w.lowercased()) { continue }
+            let pat = #"\b"# + NSRegularExpression.escapedPattern(for: w) + #"(?:’s|'s|s|es)?\b"#
+            out = out.replacingOccurrences(of: pat, with: "—————", options: [.regularExpression, .caseInsensitive])
+        }
+        // 4. Collapse adjacent blanks (with connectors) into one.
+        out = out.replacingOccurrences(of: #"—————(?:[\s,’'.\–\-]+(?:of|the|and)?\s*—————)+"#, with: "—————", options: [.regularExpression, .caseInsensitive])
+        out = out.replacingOccurrences(of: #"\s{2,}"#, with: " ", options: .regularExpression)
+            .trimmingCharacters(in: .whitespaces)
         return out
     }
     private static func difficulty(for s: WikipediaClient.Summary) -> Int {
         let len = s.extract?.count ?? 0
         return len >= 600 ? 2 : (len >= 300 ? 3 : 4)
     }
+    static let abbrev: Set<String> = ["lit", "e.g", "i.e", "approx", "no", "vs", "etc", "st", "mt", "mr", "mrs", "ms", "dr", "fl", "ca", "jr", "sr", "col", "gen", "gov", "sen", "rep", "prof", "rev", "inc", "ltd", "co", "u.s", "u.k"]
+
     private static func firstSentence(of text: String) -> String {
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        if let range = trimmed.range(of: ". ") { return String(trimmed[..<range.lowerBound]) + "." }
-        return trimmed
+        // Paren/abbreviation-aware so 'lit.' / '(…; lit. …)' / middle initials
+        // don't truncate the clue mid-phrase.
+        let t = Array(text.trimmingCharacters(in: .whitespacesAndNewlines))
+        var depth = 0
+        var i = 0
+        while i < t.count {
+            let ch = t[i]
+            if ch == "(" || ch == "[" { depth += 1 }
+            else if (ch == ")" || ch == "]") && depth > 0 { depth -= 1 }
+            else if ch == "." && depth == 0 && i + 1 < t.count && t[i + 1] == " " {
+                let nxt2: Character? = i + 2 < t.count ? t[i + 2] : nil
+                if nxt2 == nil || nxt2!.isUppercase || "“”\"'‘’".contains(nxt2!) {
+                    var j = i - 1
+                    while j >= 0, t[j].isLetter || t[j].isNumber || t[j] == "." || t[j] == "'" || t[j] == "-" { j -= 1 }
+                    let tok = String(t[(j + 1)..<i])
+                    let letters = tok.filter { $0.isLetter }
+                    let isAbbrev = !letters.isEmpty && (letters.count <= 1 || abbrev.contains(tok.lowercased().trimmingCharacters(in: CharacterSet(charactersIn: "."))))
+                    if !isAbbrev { return String(t[0...i]) }
+                }
+            }
+            i += 1
+        }
+        return String(t)
     }
     private static func displayTitle(_ t: String) -> String {
         t.replacingOccurrences(of: #"\s*\([^)]*\)"#, with: "", options: .regularExpression)

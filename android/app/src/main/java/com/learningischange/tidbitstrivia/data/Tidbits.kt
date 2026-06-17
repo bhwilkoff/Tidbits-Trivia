@@ -195,16 +195,58 @@ object TemplateEngine {
         return true
     }
     private fun stripParens(t: String) = t.replace(Regex("\\s*\\([^)]*\\)"), "")
+    private val ABBREV = "lit e.g i.e approx no vs etc st mt mr mrs ms dr fl ca jr sr col gen gov sen rep prof rev inc ltd co u.s u.k".split(" ").toSet()
     private fun firstSentence(t: String): String {
-        val s = t.trim(); val m = Regex("\\.\\s").find(s)
-        return if (m != null) s.substring(0, m.range.first) + "." else s
+        // Paren/abbreviation-aware so 'lit.' / '(…; lit. …)' / middle initials
+        // don't truncate the clue mid-phrase.
+        val s = t.trim()
+        var depth = 0; var i = 0
+        while (i < s.length) {
+            val ch = s[i]
+            if (ch == '(' || ch == '[') depth++
+            else if ((ch == ')' || ch == ']') && depth > 0) depth--
+            else if (ch == '.' && depth == 0 && i + 1 < s.length && s[i + 1] == ' ') {
+                val nxt2 = if (i + 2 < s.length) s[i + 2] else ' '
+                if (i + 2 >= s.length || nxt2.isUpperCase() || nxt2 in "“”\"'‘’") {
+                    var j = i - 1
+                    while (j >= 0 && (s[j].isLetterOrDigit() || s[j] == '.' || s[j] == '\'' || s[j] == '-')) j--
+                    val tok = s.substring(j + 1, i)
+                    val letters = tok.filter { it.isLetter() }
+                    val isAbbrev = letters.isNotEmpty() && (letters.length <= 1 || tok.lowercase().trimEnd('.') in ABBREV)
+                    if (!isAbbrev) return s.substring(0, i + 1)
+                }
+            }
+            i++
+        }
+        return s
     }
     private fun cap(c: String) = if (c.isEmpty()) c else c[0].uppercase() + c.substring(1)
+    private val FUNCTION_WORDS = "the of and a an in on at to for by with from as or de von van al".split(" ").toSet()
+    private val COMMON_WORDS = ("empire battle war wars kingdom dynasty republic treaty river mountain mountains lake island islands city town county state states united nation national american english british french german italian spanish russian chinese japanese korean indian european african asian north south east west northern southern eastern western great greater new saint university college school company group band series film movie novel book award club team teams league party system century world people region province district area force army navy air language family order house song album season game games sport sports festival prize federal royal international association federation union organization museum park station bridge building tower palace castle church cathedral temple championship cup first second").split(" ").toSet()
+
+    private fun leaks(answer: String, prompt: String): Boolean {
+        val p = prompt.lowercase()
+        val toks = Regex("[A-Za-z]{4,}").findAll(answer.lowercase()).map { it.value }.toSet() - COMMON_WORDS
+        return toks.any { p.contains(it) }
+    }
+
     private fun redact(text: String, title: String): String {
         var out = text
-        for (n in setOf(title, stripParens(title))) if (n.isNotEmpty())
+        val bare = stripParens(title).trim()
+        // 1. Whole-title phrase(s).
+        for (n in setOf(title, bare)) if (n.isNotEmpty())
             out = out.replace(Regex(Regex.escape(n), RegexOption.IGNORE_CASE), "—————")
-        return out
+        // 2. Leading proper-noun run (≥2 words) — catches full-name variants.
+        out = Regex("^(The |A |An )?((?:[A-Z][\\w’'.\\-]*)(?:[ \\-]+(?:of |the |and |de |von |van |al-)?[A-Z][\\w’'.\\-]*)+)")
+            .replace(out) { m -> (m.groupValues[1]) + "—————" }
+        // 3. Each CONTENT title word wherever it appears.
+        for (w in bare.split(Regex("[^A-Za-z’'\\-]+"))) {
+            if (w.length < 3 || w.lowercase() in FUNCTION_WORDS) continue
+            out = out.replace(Regex("\\b" + Regex.escape(w) + "(?:’s|'s|s|es)?\\b", RegexOption.IGNORE_CASE), "—————")
+        }
+        // 4. Collapse adjacent blanks.
+        out = Regex("—————(?:[\\s,’'.\\–\\-]+(?:of|the|and)?\\s*—————)+", RegexOption.IGNORE_CASE).replace(out, "—————")
+        return out.replace(Regex("\\s{2,}"), " ").trim()
     }
 
     // Strip parenthetical clutter (foreign scripts, pronunciations, empty
@@ -257,6 +299,10 @@ object TemplateEngine {
                 val stem = bank[(gi / n) % bank.size]
                 val built = buildShape(shape, s, usableList, stem, rng)
                 if (built != null) {
+                    // Never ship a redacted question whose answer leaks into the prompt.
+                    if (shape in setOf("identify", "jeopardy", "cloze") && leaks(built.third, built.first)) continue
+                    if (built.first.length > 320 || built.first.any { val n = it.code
+                            (n in 0x0370..0x06FF) || (n in 0x3040..0x9FFF) || (n in 0xAC00..0xD7AF) || (n in 0x2200..0x22FF) || (n in 0x27E8..0x27EF) }) continue
                     val options = built.second.shuffledWith(rng)
                     out.add(Question(
                         id = "live:$shape:${s.title}".replace(" ", "_"), prompt = built.first, options = options,

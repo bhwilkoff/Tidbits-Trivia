@@ -111,6 +111,12 @@ def fetch_summaries(titles):
 
 # ---- Quality gates + templates (mirror of Swift TemplateEngine) ----
 
+_META_TITLE = re.compile(r"^(lists?|glossary|index|outline|comparison|timeline|catalogues?|"
+                         r"history of|terminology of)\s+of\b|\b(abbreviations|pictograms|terminology)$|"
+                         r"^(forms|types|kinds|positions) of\b|^glossary\b", re.I)
+_META_DESC = re.compile(r"wikimedia (list|disambiguation)|list article|may refer to|disambiguation|"
+                        r"\bglossary\b|topics referred to|index of|set index|lists of", re.I)
+
 def is_usable(s):
     d, e, t = s.get("description"), s.get("extract"), s.get("title", "")
     if not d or not (6 <= len(d) <= 90):
@@ -118,27 +124,109 @@ def is_usable(s):
     if not e or len(e) < 40:
         return False
     lt = t.lower()
-    if lt.startswith("list of") or "(disambiguation)" in lt:
+    # Reject list / glossary / index / disambiguation "subjects" — they make
+    # nonsense quiz items (e.g. "Glossary of terms in the sport of athletics").
+    if _META_TITLE.search(t) or "(disambiguation)" in lt:
         return False
-    if "may refer to" in (e or "").lower():
+    if _META_DESC.search(d) or "may refer to" in (e or "").lower():
+        return False
+    if "\\displaystyle" in e or "{\\" in e or "\\(" in e:   # math / LaTeX article
         return False
     return True
 
+# Non-Latin scripts + math symbols that make a clue unreadable. Accented Latin
+# (é, ñ, ü) is intentionally NOT here — those are fine in names.
+_FOREIGN = re.compile(r"[Ͱ-ϿЀ-ӿ԰-׿؀-ۿ"
+                      r"぀-ヿ㐀-鿿가-힯∀-⋿⟨-⟯〈〉]")
+
+# Common descriptor words that legitimately appear in both a subject name and
+# its clue — NOT a tell on their own. Only NON-common answer words leaking into
+# the prompt count as a leak (see `leaks`).
+COMMON_WORDS = set("""empire battle war wars kingdom dynasty republic treaty river
+    mountain mountains lake island islands city town county state states united nation national
+    american english british french german italian spanish russian chinese japanese korean indian
+    european african asian north south east west northern southern eastern western great greater new
+    saint university college school company group band series film movie novel book award club team
+    teams league party system century world people region province district area force army navy air
+    language family order house song album season game games sport sports festival prize war republic
+    federal royal national international association federation union organization museum park station
+    bridge building tower palace castle church cathedral temple championship cup league first second""".split())
+
+_FUNCTION_WORDS = set("the of and a an in on at to for by with from as or de von van al".split())
+
+def _name_tokens(s):
+    return {w.lower() for w in re.findall(r"[A-Za-z]{4,}", s)}
+
+def leaks(answer, prompt):
+    """True if a DISTINCTIVE answer word survives in the prompt — the
+    answer-in-question tell. Substring match catches plurals/variants
+    (Chola→Cholas)."""
+    p = prompt.lower()
+    for tok in _name_tokens(answer) - COMMON_WORDS:
+        if tok in p:
+            return True
+    return False
+
 def redact(text, title):
-    bare = re.sub(r"\s*\([^)]*\)", "", title)
+    bare = re.sub(r"\s*\([^)]*\)", "", title).strip()
     out = text
+    # 1. Whole-title phrase(s).
     for needle in {title, bare}:
         if needle:
             out = re.sub(re.escape(needle), "—————", out, flags=re.IGNORECASE)
+    # 2. The leading proper-noun run (Wikipedia first sentences name the subject
+    #    first) — catches full-name variants like "Curtis Julian Jones".
+    #    Require ≥2 capitalized words (a single-word subject is already caught
+    #    by the title pass) so we don't blank a leading "In"/"During" on concept
+    #    articles ("In mathematics, …").
+    out = re.sub(r"^(The |A |An )?((?:[A-Z][\w’'.\-]*)(?:[ \-]+(?:of |the |and |de |von |van |al-)?[A-Z][\w’'.\-]*)+)",
+                 lambda m: (m.group(1) or "") + "—————", out)
+    # 3. Every CONTENT title word wherever it appears (aliases, plurals, later
+    #    mentions). Skip function words so the clue stays grammatical.
+    for w in re.findall(r"[A-Za-z][A-Za-z’'\-]{2,}", bare):
+        if w.lower() in _FUNCTION_WORDS:
+            continue
+        out = re.sub(rf"\b{re.escape(w)}(?:’s|'s|s|es)?\b", "—————", out, flags=re.IGNORECASE)
+    # 4. Collapse adjacent blanks (with connectors) into a single token.
+    out = re.sub(r"—————(?:[\s,’'.\–\-]+(?:of|the|and|de|von|van)?\s*—————)+", "—————", out, flags=re.IGNORECASE)
+    out = re.sub(r"\s{2,}", " ", out).strip()
     return out
 
 def display_title(t):
     return re.sub(r"\s*\([^)]*\)", "", t)
 
+_ABBREV = {"lit", "e.g", "i.e", "approx", "no", "vs", "etc", "st", "mt", "mr", "mrs",
+           "ms", "dr", "fl", "ca", "jr", "sr", "col", "gen", "gov", "sen", "rep",
+           "prof", "rev", "inc", "ltd", "co", "u.s", "u.k"}
+
 def first_sentence(text):
+    """First sentence, but NOT splitting inside parentheses/brackets or after a
+    known abbreviation/initial — otherwise 'lit.' or '(大日本帝国; lit. …)' or a
+    middle initial truncates the clue mid-phrase and leaks/garbles it."""
     t = text.strip()
+    depth, i, L = 0, 0, len(t)
+    while i < L:
+        ch = t[i]
+        if ch in "([":
+            depth += 1
+        elif ch in ")]" and depth > 0:
+            depth -= 1
+        elif ch == "." and depth == 0 and i + 1 < L and t[i + 1] == " ":
+            nxt2 = t[i + 2] if i + 2 < L else ""
+            if nxt2 == "" or nxt2.isupper() or nxt2 in "“”\"'‘’":
+                j = i - 1
+                while j >= 0 and (t[j].isalnum() or t[j] in ".'’-"):
+                    j -= 1
+                tok = t[j + 1:i]
+                letters = re.sub(r"[^A-Za-z]", "", tok)
+                if not (letters and (len(letters) <= 1 or tok.lower().rstrip(".") in _ABBREV)):
+                    return t[:i + 1]
+        i += 1
+    # Depth-aware scan found no sentence end — usually an UNBALANCED paren in
+    # the source. Fall back to a plain split so we don't return the whole
+    # multi-paragraph article.
     m = re.search(r"\.\s", t)
-    return (t[:m.start()] + ".") if m else t
+    return (t[:m.start() + 1]) if m else t
 
 _LANG_RE = re.compile(r"\b(romaniz|pronounc|IPA|listen|lit\.|Russian|Greek|Latin|Arabic|"
                       r"Chinese|Japanese|Hebrew|Hindi|Persian|German|French|Spanish|Italian|"
@@ -331,6 +419,13 @@ def make_question(subject, pool, category, gi, rng):
         if not built:
             continue
         prompt, options, answer = built
+        # Hard gates: never ship a question that leaks the answer, still carries
+        # foreign script / math symbols (unreadable), or ballooned from an
+        # unbalanced-paren parse failure. Fall through to the next shape.
+        if shape in ("identify", "jeopardy", "cloze") and leaks(answer, prompt):
+            continue
+        if _FOREIGN.search(prompt) or len(prompt) > 320:
+            continue
         opts = options[:]; rng.shuffle(opts)
         ci = opts.index(answer)
         explanation = clean_clue(first_sentence(subject.get("extract") or "")) or (subject.get("description") or "")
@@ -340,7 +435,8 @@ def make_question(subject, pool, category, gi, rng):
                 subject["title"], subject.get("url") or "", shape)
     return None
 
-def build_category(category, seeds, per_category):
+def build_category(category, seeds, per_category, used_titles=None):
+    used_titles = used_titles if used_titles is not None else set()
     print(f"[{category}] searching…")
     titles = []
     for q in seeds:
@@ -348,7 +444,12 @@ def build_category(category, seeds, per_category):
     titles = list(dict.fromkeys(titles))  # dedupe, keep order
     print(f"[{category}] {len(titles)} candidate titles → fetching summaries")
     summaries = fetch_summaries(titles)
-    usable = [s for s in summaries.values() if is_usable(s)]
+    # Global subject dedup: a subject belongs to ONE category — otherwise the
+    # same person/place shows up under several categories (Austria in both
+    # Geography and History).
+    usable = [s for s in summaries.values() if is_usable(s) and s["title"] not in used_titles]
+    for s in usable:
+        used_titles.add(s["title"])
     print(f"[{category}] {len(usable)} usable subjects")
     rng = random.Random(hash(category) & 0xFFFFFFFF)
     rng.shuffle(usable)
@@ -374,8 +475,9 @@ def main():
     args = ap.parse_args()
 
     all_rows = []
+    used_titles = set()   # each subject lands in exactly one category
     for c, s in CATEGORY_SEEDS.items():
-        all_rows += build_category(c, s, args.per_category)
+        all_rows += build_category(c, s, args.per_category, used_titles)
 
     # De-dup globally by source title to avoid the same subject twice.
     seen_titles, deduped = set(), []

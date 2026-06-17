@@ -32,4 +32,10 @@ enum DebugHooks {
     static var autoCreate: String? {
         ProcessInfo.processInfo.environment["TIDBITS_AUTOCREATE"]
     }
+
+    /// TIDBITS_PARTY=1 → open Pass & Play on launch (combine with AUTOPILOT
+    /// to drive the whole party flow to the scoreboard for screenshots).
+    static var openParty: Bool {
+        ProcessInfo.processInfo.environment["TIDBITS_PARTY"] == "1"
+    }
 }

@@ -13,12 +13,17 @@
   tvOS earns its place — living-room trivia is lean-back (Decision 021).
 - **Last session (2026-06-16)**: Built the whole iOS foundation from the
   starter scaffold. See session log below.
+- **Round 2 shipped (2026-06-16)**: local pass-and-play (2–4 players),
+  spaced re-asking woven into solo games, haptics, Settings sheet, real
+  app icon. All verified on the simulator.
 - **Next actions**:
   1. Bump corpus toward 10k (both-template generation; currently ~9k).
-  2. Wire Game Center entitlement + App Store Connect leaderboards.
-  3. Mirror the SP loop to Web (canonical share target) then Android.
-  4. Phase 2: local pass-and-play → Game Center head-to-head → tvOS
-     living-room mode with phone-as-buzzer (Decision 023).
+  2. Wire Game Center entitlement + App Store Connect leaderboards/achievements.
+  3. Branded launch screen (fresh launch currently shows the default white one).
+  4. Mirror the SP loop to Web (canonical share target) then Android.
+  5. Phase 2 MP continues: Game Center async head-to-head → tvOS living-room
+     mode with phone-as-buzzer (Decision 023).
+  6. Wikidata SPARQL validation layer (the moat — ROADMAP #2).
 
 ## Architecture at a glance
 
@@ -89,3 +94,16 @@ caught on-device: Swift-6 actor isolation on the data models, and a
 ModelContainer App-Group trap that crashed launch without the entitlement.
 *Left:* iOS single-player loop playable end to end on the simulator; docs +
 parity matrix written; Web/Android/tvOS rows marked ⏳ with notes.
+
+**2026-06-16 (round 2)** — *Found:* committed v1 SP foundation. *Did:* shipped
+local pass-and-play multiplayer (2–4 players, shared fair question set,
+hand-off screens, scoreboard — reuses GameEngine per player, Decision 023
+step 1); wove spaced re-asking of due missed facts into solo games
+(GameEngine.weave + RecordsStore.dueReview; skips Daily for fairness); added
+haptics (answer + milestone, Settings-gated); a Settings sheet (haptics
+toggle, reset data, Wikipedia attribution, version); and a real branded app
+icon (CoreGraphics generator in tools/icon). Refactored GamePlayView to take
+an injected engine so solo and party share it. *Verified:* full party flow to
+scoreboard, party setup, home with new Party card + gear, icon compiled into
+the bundle — all on the iPhone 17 Pro sim. *Left:* round-2 features playable;
+launch screen still default white (polish TODO).

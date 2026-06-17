@@ -49,13 +49,14 @@ final class GameEngine {
 
     // MARK: Lifecycle
 
-    func start(mode: GameMode, category: TriviaCategory) async {
+    func start(mode: GameMode, category: TriviaCategory, review: [Question] = []) async {
         self.mode = mode
         self.category = category
         phase = .loading
         triedLoad = true
         reset()
-        let qs = await QuestionProvider.shared.questions(mode: mode, category: category)
+        var qs = await QuestionProvider.shared.questions(mode: mode, category: category)
+        if !review.isEmpty { qs = Self.weave(fresh: qs, review: review) }
         questions = qs
         QuestionProvider.shared.markSeen(qs.map(\.id))
         guard !qs.isEmpty else { phase = .idle; return }
@@ -84,6 +85,20 @@ final class GameEngine {
     private func reset() {
         index = 0; score = 0; streak = 0; maxStreak = 0
         answered = []; lastAnswer = nil; chosenIndex = nil; globalDeadline = nil
+    }
+
+    /// Interleave due review questions among fresh ones (count stays stable;
+    /// interleaving is a desirable difficulty — better than blocking them).
+    private static func weave(fresh: [Question], review: [Question]) -> [Question] {
+        let freshIDs = Set(fresh.map(\.id))
+        let inject = review.filter { !freshIDs.contains($0.id) }.prefix(max(1, fresh.count / 4))
+        guard !inject.isEmpty, fresh.count > inject.count else { return fresh }
+        var result = fresh
+        for (i, q) in inject.enumerated() {
+            let pos = min(result.count - 1, (i + 1) * result.count / (inject.count + 1))
+            result[pos] = q
+        }
+        return result
     }
 
     private func beginQuestion() {
@@ -146,8 +161,10 @@ final class GameEngine {
             maxStreak = max(maxStreak, streak)
             score += Scoring.points(correct: true, secondsTaken: taken,
                                     budget: mode.perQuestionSeconds ?? clockBudget, streak: streak)
+            Haptics.correct()
         } else {
             streak = 0
+            Haptics.wrong()
             if mode == .survival { phase = .reveal; return }   // reveal then end
         }
         phase = .reveal

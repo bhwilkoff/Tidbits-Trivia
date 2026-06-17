@@ -5,6 +5,8 @@ struct HomeView: View {
     @Environment(AppStore.self) private var store
     @State private var selectedMode: GameMode = .classic
     @State private var launch: LaunchRequest?
+    @State private var showParty = false
+    @State private var showSettings = false
 
     private let columns = [GridItem(.flexible(), spacing: 14), GridItem(.flexible(), spacing: 14)]
 
@@ -13,6 +15,7 @@ struct HomeView: View {
             VStack(alignment: .leading, spacing: 22) {
                 header
                 DailyCard { launch = LaunchRequest(mode: .daily, category: .named("mixed")) }
+                PartyCard { showParty = true }
                 modePicker
                 categoriesSection
             }
@@ -21,15 +24,23 @@ struct HomeView: View {
         }
         .background(Tidbits.Palette.bg.ignoresSafeArea())
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar { ToolbarItem(placement: .principal) { Text("").accessibilityHidden(true) } }
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button { showSettings = true } label: { Image(systemName: "gearshape.fill") }
+                    .tint(Tidbits.Palette.ink)
+            }
+        }
         .fullScreenCover(item: $launch) { req in
             GameContainerView(mode: req.mode, category: req.category)
         }
+        .fullScreenCover(isPresented: $showParty) { PartyContainerView() }
+        .sheet(isPresented: $showSettings) { SettingsView() }
         .task {
-            // Screenshot/CI hook — no-op unless TIDBITS_AUTOPLAY is set.
+            // Screenshot/CI hooks — no-ops unless the env vars are set.
             if launch == nil, let ap = DebugHooks.autoplay {
                 launch = LaunchRequest(mode: ap.mode, category: ap.category)
             }
+            if DebugHooks.openParty { showParty = true }
         }
     }
 
@@ -114,6 +125,38 @@ private struct DailyCard: View {
             }
             .padding(18)
             .chunkyCard(fill: Tidbits.Palette.yellow)
+        }
+        .buttonStyle(.plain)
+        .padding(.trailing, Tidbits.Metric.shadowOffset)
+    }
+}
+
+// MARK: - Party card
+
+private struct PartyCard: View {
+    let action: () -> Void
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 14) {
+                Image(systemName: "person.2.fill")
+                    .font(.system(size: 30, weight: .black))
+                    .foregroundStyle(.white)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("PASS & PLAY")
+                        .font(Tidbits.TypeRamp.l2)
+                        .foregroundStyle(.white)
+                    Text("2–4 players, one phone, same questions.")
+                        .font(Tidbits.TypeRamp.l5)
+                        .foregroundStyle(.white.opacity(0.85))
+                        .multilineTextAlignment(.leading)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right.circle.fill")
+                    .font(.system(size: 26, weight: .bold))
+                    .foregroundStyle(.white)
+            }
+            .padding(18)
+            .chunkyCard(fill: Tidbits.Palette.grape)
         }
         .buttonStyle(.plain)
         .padding(.trailing, Tidbits.Metric.shadowOffset)

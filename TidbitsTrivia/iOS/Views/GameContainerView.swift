@@ -24,14 +24,18 @@ struct GameContainerView: View {
             case .idle, .loading:
                 if game.loadFailed { loadError } else { loadingState }
             case .playing, .reveal:
-                GamePlayView(onQuit: close)
+                GamePlayView(game: game, onQuit: close)
             case .finished:
                 ResultsView(summary: game.summary, onPlayAgain: replay, onDone: close)
                     .onAppear(perform: persistIfNeeded)
             }
         }
         .task {
-            if game.phase == .idle { await game.start(mode: mode, category: category) }
+            if game.phase == .idle {
+                // Weave in spaced-review questions (skip Daily — it's fair/fixed).
+                let review = mode == .daily ? [] : RecordsStore.dueReview(in: modelContext)
+                await game.start(mode: mode, category: category, review: review)
+            }
         }
     }
 

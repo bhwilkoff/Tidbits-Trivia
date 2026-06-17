@@ -98,7 +98,10 @@ reached is ⏳ with a note, never silence.
 | Share score (NO X/Twitter) | ⏳ Web Share | ✅ ShareLink | ✅ QR | ⏳ Sheet | Decision 022 |
 | Leaderboards | 🔮 Supabase | ⏳ Game Center | ⏳ Game Center | 🔮 Play Games | Apple: GameKit wired, ASC config pending |
 | Achievements | 🔮 | ⏳ Game Center | ⏳ Game Center | 🔮 Play Games | |
-| Local pass-and-play | 🔮 | ⏳ | ⏳ | 🔮 | Phase 2 |
+| Local pass-and-play | 🔮 | ✅ | ⏳ | 🔮 | 2–4 players, shared fair question set, hand-off + scoreboard |
+| Spaced re-asking of missed facts | ⏳ | ✅ | ⏳ | ⏳ | Due misses woven into solo games (skips Daily); resolve on correct |
+| Haptic feedback | n/a | ✅ | n/a | ⏳ | Correct/wrong/milestone; Settings toggle |
+| Settings (haptics, reset, attribution) | ⏳ | ✅ | ⏳ | ⏳ | Toolbar gear → sheet, not a tab |
 | Async head-to-head / groups | 🔮 | ⏳ Game Center | ⏳ | 🔮 | Async > real-time for survivability (ROADMAP) |
 | Living-room mode (phone-as-buzzer) | 🔮 controller | n/a | ⏳ host | 🔮 controller | The biggest open market gap (ROADMAP #4) |
 | Cross-platform online | 🔮 | 🔮 | 🔮 | 🔮 | Supabase, after Apple online proves out (Decision 020) |

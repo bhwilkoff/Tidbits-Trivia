@@ -6,9 +6,8 @@ import SwiftUI
 /// "learn the fact" reveal that turns every miss (and hit) into a
 /// curiosity door (the learning-orientation mandate).
 struct GamePlayView: View {
+    let game: GameEngine
     let onQuit: () -> Void
-    @Environment(AppStore.self) private var store
-    private var game: GameEngine { store.game }
 
     var body: some View {
         VStack(spacing: 0) {

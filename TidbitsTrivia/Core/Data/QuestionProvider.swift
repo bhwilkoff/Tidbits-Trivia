@@ -53,6 +53,21 @@ final class QuestionProvider {
         return Array(pulled.prefix(need))
     }
 
+    /// A fixed-size question set for a party game — the SAME questions for
+    /// every player (fairness), pulled once and marked seen.
+    func questions(category: TriviaCategory, count: Int) async -> [Question] {
+        var pulled = CorpusDatabase.shared.questions(
+            categoryID: category.id, excluding: seen, limit: count)
+        if pulled.count < count {
+            let topic = category.id == "mixed" ? "popular" : category.name
+            let live = await liveQuestions(topic: topic, category: category, count: count - pulled.count)
+            pulled.append(contentsOf: live)
+        }
+        let set = Array(pulled.prefix(count))
+        markSeen(set.map(\.id))
+        return set
+    }
+
     /// Live generation from any Wikipedia topic — powers "create a quiz on
     /// the fly" and the corpus fallback.
     func liveQuestions(topic: String, category: TriviaCategory, count: Int) async -> [Question] {

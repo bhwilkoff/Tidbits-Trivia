@@ -32,6 +32,18 @@ enum RecordsStore {
         return isNewBest
     }
 
+    /// Questions due for spaced re-asking — unresolved misses, most-missed
+    /// and oldest first (the testing effect: a later re-ask, not same-game).
+    static func dueReview(in context: ModelContext, limit: Int = 2) -> [Question] {
+        var desc = FetchDescriptor<MissedFact>(
+            predicate: #Predicate { !$0.resolved },
+            sortBy: [SortDescriptor(\.missCount, order: .reverse),
+                     SortDescriptor(\.lastSeen, order: .forward)])
+        desc.fetchLimit = limit * 3
+        let facts = (try? context.fetch(desc)) ?? []
+        return Array(facts.compactMap(\.question).prefix(limit))
+    }
+
     static func bestScore(mode: GameMode, categoryID: String, in context: ModelContext) -> Int {
         let modeRaw = mode.rawValue
         var desc = FetchDescriptor<GameRecord>(

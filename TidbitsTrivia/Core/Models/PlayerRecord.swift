@@ -43,6 +43,15 @@ final class MissedFact {
     var lastSeen: Date
     var resolved: Bool   // answered correctly on a later re-ask
 
+    // Enough to rebuild a full MCQ for spaced re-asking (default values so
+    // SwiftData can lightweight-migrate older records).
+    var optionsJoined: String = ""
+    var correctIndex: Int = 0
+    var sourceTitle: String = ""
+    var sourceURLString: String = ""
+    var templateID: String = ""
+    var difficulty: Int = 3
+
     init(question: Question, date: Date = .now) {
         self.questionID = question.id
         self.prompt = question.prompt
@@ -52,6 +61,24 @@ final class MissedFact {
         self.missCount = 1
         self.lastSeen = date
         self.resolved = false
+        self.optionsJoined = question.options.joined(separator: "\u{1}")
+        self.correctIndex = question.correctIndex
+        self.sourceTitle = question.sourceTitle
+        self.sourceURLString = question.sourceURL?.absoluteString ?? ""
+        self.templateID = question.templateID
+        self.difficulty = question.difficulty
+    }
+
+    /// Rebuild the question for a re-ask. Falls back to nil if the stored
+    /// options are missing (older records before this field existed).
+    var question: Question? {
+        let options = optionsJoined.split(separator: "\u{1}").map(String.init)
+        guard options.count == 4 else { return nil }
+        return Question(
+            id: questionID, prompt: prompt, options: options, correctIndex: correctIndex,
+            categoryID: categoryID, difficulty: difficulty, explanation: explanation,
+            sourceTitle: sourceTitle, sourceURL: URL(string: sourceURLString),
+            templateID: templateID)
     }
 }
 

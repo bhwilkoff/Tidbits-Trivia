@@ -68,10 +68,15 @@ gotchas behind each line.
 - [x] **Clean content** — clues AND explanations stripped of IPA / foreign-
       script / romanization clutter.
 - [x] **`privacy.html` + `support.html`** — served by the web app for the URLs.
-- [ ] **Icons**: iOS ✓. Android adaptive icon, tvOS layered "App Icon & Top
-      Shelf" (LANDSCAPE layers — square fails actool only on clean builds) +
-      Top Shelf image, web PWA icons. (ENG — see task list.)
-- [ ] **Store screenshots** generated via env hooks to `branding/screenshots/`.
+- [x] **Icons**: iOS ✓ (AppIcon + LaunchLogo). Android ✓ (adaptive icon —
+      background/foreground/monochrome — + splash). Web ✓ (manifest icon).
+- [ ] **tvOS layered icon + Top Shelf** — REMAINING. Needs a "Brand Assets"
+      imagestack with LANDSCAPE layers (400×240 / 1280×768) + a Top Shelf image
+      (1920×720 / 2320×720). Square layers fail actool only on CLEAN builds —
+      verify from-scratch before archiving. The one hard blocker for tvOS submit.
+- [x] **Store screenshots** (iOS) → `branding/screenshots/`, regenerable via
+      `scripts/screenshots-ios.sh`. Note: capture the 6.9" size on a Pro Max sim
+      for App Store. Android/tvOS sets use the same env-hook approach (pending).
 - [ ] **Web**: confirm `.nojekyll` so `/.well-known/` serves; HTTPS enforced.
 - [ ] **Android manifest audit** — every emitted deep-link host/path declared
       in an intent-filter (matters once App Links ship).

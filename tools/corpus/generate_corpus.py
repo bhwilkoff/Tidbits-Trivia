@@ -132,7 +132,14 @@ def is_usable(s):
         return False
     if "\\displaystyle" in e or "{\\" in e or "\\(" in e:   # math / LaTeX article
         return False
+    if _GENERIC_DESC.search(d):              # too generic to anchor a fair MCQ
+        return False
+    if type_key(s) is None:                  # un-typeable → can't guarantee typed distractors
+        return False
     return True
+
+_GENERIC_DESC = re.compile(r"^\s*(\w+\s+){0,2}(person|human|man|woman|place|thing|object|"
+                           r"name|surname|given name|topics?)\b", re.I)
 
 # Non-Latin scripts + math symbols that make a clue unreadable. Accented Latin
 # (é, ñ, ü) is intentionally NOT here — those are fine in names.
@@ -266,34 +273,98 @@ def difficulty(s):
 
 # --- Distractor pickers (typed siblings; length-normalized for prose) ---
 
-def _ranked_siblings(subject, pool, value_fn, exclude, length_match=None):
-    """Siblings ranked by description word-overlap (same-domain → plausible).
-    If length_match is set, prefer values of similar length (kills the
-    'longest option is the answer' tell)."""
-    subj_words = set((subject.get("description") or "").lower().split())
+# --- Type-matched distractors -------------------------------------------------
+# Distractors MUST be the same TYPE as the answer (genre↔genre, city↔city,
+# actor↔actor). The Wikipedia short description encodes the type; we extract a
+# coarse "type key" (head noun, synonym-folded) and draw distractors only from
+# the subject's own type bucket. If a subject can't be typed or has <3 same-type
+# siblings, we DROP the question — a wrong-type distractor (the old
+# word-overlap behaviour) is the exact tell we are killing.
+_TYPE_LEADING = set("""american english british french german italian spanish russian
+chinese japanese korean indian european african asian north south east west northern
+southern eastern western central ancient modern medieval former national international
+royal imperial classical contemporary professional famous notable major minor large
+small great greater lesser old new young senior junior fictional mythological historical
+traditional popular official public private federal scottish irish welsh dutch swedish
+norwegian danish polish turkish greek roman egyptian persian arab arabic jewish canadian
+australian mexican brazilian argentine chilean austrian swiss belgian portuguese finnish
+hungarian czech romanian indonesian filipino vietnamese thai largest smallest oldest""".split())
+_TYPE_STOP = re.compile(r"\b(in|of|from|for|by|on|at|near|during|between|that|which|who|"
+                        r"known|with|to|and|or|located|based|set)\b", re.I)
+_TYPE_FOLD = {
+    "singer": "musician", "songwriter": "musician", "singer-songwriter": "musician",
+    "rapper": "musician", "guitarist": "musician", "pianist": "musician",
+    "drummer": "musician", "bassist": "musician", "vocalist": "musician",
+    "band": "musician", "duo": "musician", "composer": "musician",
+    "actress": "actor", "filmmaker": "director",
+    "novelist": "writer", "author": "writer", "poet": "writer",
+    "playwright": "writer", "screenwriter": "writer", "essayist": "writer",
+    "journalist": "writer",
+    "physicist": "scientist", "chemist": "scientist", "biologist": "scientist",
+    "mathematician": "scientist", "astronomer": "scientist", "geologist": "scientist",
+    "economist": "scientist", "psychologist": "scientist", "inventor": "scientist",
+    "footballer": "athlete", "player": "athlete", "cyclist": "athlete",
+    "swimmer": "athlete", "boxer": "athlete", "wrestler": "athlete",
+    "sprinter": "athlete", "runner": "athlete", "golfer": "athlete",
+    "village": "settlement", "town": "settlement", "city": "settlement",
+    "municipality": "settlement", "commune": "settlement", "capital": "settlement",
+    "mountain": "peak", "volcano": "peak",
+}
+
+def type_key(subject):
+    """Coarse type bucket from the short description; None if no head noun."""
+    d = re.sub(r"\([^)]*\)", "", subject.get("description") or "")
+    d = d.split(",")[0].strip().rstrip(".").lower()
+    m = _TYPE_STOP.search(d)
+    if m:
+        d = d[:m.start()]
+    toks = re.findall(r"[a-z][a-z\-]+", d)
+    while toks and toks[0] in _TYPE_LEADING:
+        toks = toks[1:]
+    if not toks:
+        return None
+    return _TYPE_FOLD.get(toks[-1], toks[-1])
+
+_TYPE_IDX_CACHE = {}
+def _type_index(pool):
+    idx = _TYPE_IDX_CACHE.get(id(pool))
+    if idx is None:
+        idx = {}
+        for s in pool:
+            k = type_key(s)
+            if k:
+                idx.setdefault(k, []).append(s)
+        _TYPE_IDX_CACHE[id(pool)] = idx
+    return idx
+
+def _typed(subject, pool, rng, value_fn, exclude, length_match=None, k=3):
+    kt = type_key(subject)
+    if not kt:
+        return []
     cands, seen = [], set()
-    for c in pool:
+    excl = (exclude or "").lower()
+    for c in _type_index(pool).get(kt, []):
         if c["title"] == subject["title"]:
             continue
         v = (value_fn(c) or "").strip()
-        if not v or v.lower() == (exclude or "").lower() or v.lower() in seen:
+        if not v or v.lower() == excl or v.lower() in seen:
             continue
         seen.add(v.lower())
-        words = set((c.get("description") or "").lower().split())
-        overlap = len(subj_words & words)
         lenpen = -abs(len(v) - length_match) if length_match is not None else 0
-        cands.append((overlap, lenpen, v))
-    cands.sort(key=lambda x: (x[0], x[1]), reverse=True)
-    return [v for _, _, v in cands]
+        cands.append((lenpen, v))
+    if len(cands) < k:
+        return []
+    cands.sort(key=lambda x: x[0], reverse=True)
+    window = cands[:max(k * 3, 8)]
+    rng.shuffle(window)
+    return [v for _, v in window[:k]]
 
 def title_distractors(subject, pool, rng, k=3):
-    ranked = _ranked_siblings(subject, pool, lambda c: display_title(c["title"]), display_title(subject["title"]))
-    slice_ = ranked[:8]; rng.shuffle(slice_); return slice_[:k]
+    return _typed(subject, pool, rng, lambda c: display_title(c["title"]), display_title(subject["title"]), k=k)
 
 def desc_distractors(subject, pool, rng, k=3):
     correct = subject.get("description") or ""
-    ranked = _ranked_siblings(subject, pool, lambda c: c.get("description"), correct, length_match=len(correct))
-    slice_ = ranked[:8]; rng.shuffle(slice_); return slice_[:k]
+    return _typed(subject, pool, rng, lambda c: c.get("description"), correct, length_match=len(correct), k=k)
 
 # --- Rotating stems (≤~1/N share each; categorize kept a minority) ---
 
@@ -322,18 +393,14 @@ STEMS = {
         'In a few words, what is {title}?',
         'Which description fits {title}?',
     ],
-    "oneliner": [
-        'Which one is “{clue}”?',
-        '“{clue}” — which subject is that?',
-        'Which subject matches: “{clue}”?',
-    ],
 }
-# categorize (the old "best described") is 1 of 10 slots → ~10% share.
-# Spread the shapes so no single "name the subject from a clue" feel dominates.
-# identify+jeopardy+oneliner all read as "describe → name it"; cloze + categorize
-# feel distinct, so they get more weight here for variety.
-SHAPE_ROTATION = ["identify", "cloze", "jeopardy", "categorize", "oneliner",
-                  "cloze", "identify", "categorize", "jeopardy", "cloze"]
+# 'oneliner' DROPPED — it asked "which one is '<description>'?", and the
+# description routinely contained the answer's own words (subject "Comedy
+# horror", desc "genre combining horror and comedy"). It is categorize inverted
+# with no redaction guarantee, so it can't be made non-leaking. Its slots go to
+# the redact-protected shapes.
+SHAPE_ROTATION = ["identify", "cloze", "jeopardy", "categorize", "identify",
+                  "cloze", "jeopardy", "identify", "categorize", "cloze"]
 
 def build_identify(subject, pool, stem, rng):
     clue = redact(clean_clue(first_sentence(subject.get("extract") or subject.get("description"))), subject["title"])
@@ -389,23 +456,8 @@ def build_categorize(subject, pool, stem, rng):
     ans = cap(correct)
     return stem.format(title=display_title(subject["title"])), [ans] + [cap(d) for d in ds], ans
 
-def build_oneliner(subject, pool, stem, rng):
-    correct = subject.get("description")
-    if not correct:
-        return None
-    # The description IS the clue here ("Which one is '<desc>'?"), so a generic
-    # one ("American writer") is unanswerable AND collides across subjects.
-    # Require something specific: 4+ words, or a comma/parenthetical/digit.
-    if len(correct.split()) < 4 and not any(c in correct for c in ",(0123456789"):
-        return None
-    ds = title_distractors(subject, pool, rng)
-    if len(ds) != 3:
-        return None
-    ans = display_title(subject["title"])
-    return stem.format(clue=cap(correct)), [ans] + ds, ans
-
 BUILDERS = {"identify": build_identify, "jeopardy": build_jeopardy, "cloze": build_cloze,
-            "categorize": build_categorize, "oneliner": build_oneliner}
+            "categorize": build_categorize}
 
 def make_question(subject, pool, category, gi, rng):
     """Pick a shape by seeded round-robin (even distribution, capped stems);

@@ -28,3 +28,11 @@ enum DeepLink: Equatable, Sendable {
     case topic(String)
     case category(String)
 }
+
+/// A request to launch a game with a given mode + category. Shared by the
+/// iOS and tvOS home screens (Core has no UI, but this is a plain value).
+nonisolated struct LaunchRequest: Identifiable, Sendable {
+    let mode: GameMode
+    let category: TriviaCategory
+    var id: String { "\(mode.rawValue)-\(category.id)" }
+}

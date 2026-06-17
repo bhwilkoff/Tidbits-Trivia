@@ -18,6 +18,11 @@
 - **Round 2 shipped (2026-06-16)**: local pass-and-play (2–4 players),
   spaced re-asking woven into solo games, haptics, Settings sheet, real
   app icon. All verified on the simulator.
+- **Round 6 shipped (2026-06-16)**: tvOS app — dark-first focus-correct home
+  (daily hero + mode row + category shelf) and the full game loop + results,
+  reusing the shared GameEngine. Siri-Remote focus, custom ButtonStyles (never
+  .plain), Caches-based SwiftData store (Decision 017). Verified on the Apple
+  TV sim. Three platforms now play: iOS, Web, tvOS.
 - **Round 5 shipped (2026-06-16)**: Wikidata SPARQL moat — 1,117 structurally-
   verified questions (capitals, currencies, continents, UNESCO sites, element
   symbol/number, Best-Picture directors, prize book authors). Corpus now
@@ -46,8 +51,8 @@ TidbitsTrivia/                 ← universal Apple target (iOS+tvOS)
     Services/    GameCenterManager
     Design/      Design.swift (90s sticker design system)
   iOS/           Views + Components (#if os(iOS))
-  tvOS/          ContentView_tvOS placeholder (Phase 2)
-  Resources/     corpus.sqlite (bundled, ~9k questions)
+  tvOS/          ContentView_tvOS + GameView_tvOS (dark-first, focus-correct)
+  Resources/     corpus.sqlite (bundled, 10k questions; 1.1k Wikidata-verified)
 tools/corpus/    generate_corpus.py (mirrors TemplateEngine, builds the DB)
 ```
 
@@ -145,3 +150,19 @@ recognizability. Corpus 8,889 → 10,006. Re-exported web JSON; rebuilt + verifi
 on iOS ("On which continent is Cyprus?" renders clean). Hardened the generator
 for WDQS 429s (Retry-After, --only, spacing). *Left:* gates 6/7/9 outstanding;
 live runtime path still summary-based (corpus is the moat for now).
+
+**2026-06-16 (round 6 — tvOS)** — *Did:* built the Apple TV experience on the
+universal target: `tvOS/ContentView_tvOS.swift` (dark-first home — daily hero,
+mode row, category shelf; focusSection per row, defaultFocus on the hero,
+ten-foot type ≥29pt, custom focus-aware ButtonStyles) and `tvOS/GameView_tvOS.swift`
+(TVGameContainer/TVGamePlayView/TVResultsView reusing GameEngine; focusable
+answer cards, auto-focus Next on reveal, emoji-grid results). Moved
+`LaunchRequest` to Core so both homes share it. Fixed the writable-dir trap:
+tvOS persists SwiftData in Caches (Application Support crashes on real hardware
+— Decision 017). *Bugs fixed:* nested `Body` structs in ButtonStyles collided
+with ButtonStyle's own `Body` associated type (renamed to `Inner`) and were too
+`private` for the protocol. *Verified:* Apple TV sim — home + a Wikidata
+question ("In which country is Bad Kissingen?") render with correct focus;
+iOS still builds green after the shared-file changes. *Left:* tvOS has no
+Records browse or Create (by design); pass-and-play/phone-as-buzzer is the next
+tvOS step (Decision 023).

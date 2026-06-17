@@ -26,6 +26,7 @@
 		6CF073BFB022FF600B3B9428 /* GamePlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE92745D6860E623628A0CBC /* GamePlayView.swift */; };
 		7051BF4D2CFDDEB46EC57971 /* Haptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDC047AE9E00DBB79A4FD169 /* Haptics.swift */; };
 		868239CDDF1A55B51710E012 /* Scoring.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EBCE6DDE7254EB4010E1679 /* Scoring.swift */; };
+		87D2A2B94B2CE47C7ADB8348 /* GameView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5C9D9266531ECD27156562D /* GameView_tvOS.swift */; };
 		918AE96520BD2A89643D6E20 /* TriviaCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCB14B0E2B13CCA2DDA250ED /* TriviaCategory.swift */; };
 		92B4788F3A0CAC7DE68FB848 /* CorpusDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB24F551656B187A42C81D44 /* CorpusDatabase.swift */; };
 		9B22CE4581A58C784D66DDB1 /* GameMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C55D3DCAE5E46980D666B83 /* GameMode.swift */; };
@@ -76,8 +77,9 @@
 		EB24F551656B187A42C81D44 /* CorpusDatabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CorpusDatabase.swift; sourceTree = "<group>"; };
 		F18495176F588DF9E5C7907E /* PartyContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PartyContainerView.swift; sourceTree = "<group>"; };
 		F3AE68F153F8C298960BFD36 /* Player.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Player.swift; sourceTree = "<group>"; };
+		F5C9D9266531ECD27156562D /* GameView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView_tvOS.swift; sourceTree = "<group>"; };
 		FFC46D4CE8D03186C064C759 /* Question.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Question.swift; sourceTree = "<group>"; };
-		"TEMP_7E3024D3-F010-496C-A7F9-E782A849FB7E" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
+		"TEMP_CFD3978C-CBFE-462D-BFF1-0432EBDEFF7D" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -173,6 +175,7 @@
 			isa = PBXGroup;
 			children = (
 				C23D07A7744AE72B2935CB2F /* ContentView_tvOS.swift */,
+				F5C9D9266531ECD27156562D /* GameView_tvOS.swift */,
 			);
 			path = tvOS;
 			sourceTree = "<group>";
@@ -249,10 +252,10 @@
 			path = TidbitsTrivia;
 			sourceTree = "<group>";
 		};
-		"TEMP_9334E6CB-C4A0-44C8-9976-8327E92D41C6" /* Tidbits-Trivia */ = {
+		"TEMP_5DE19D4B-FB03-440F-BCD8-694D5E8F112D" /* Tidbits-Trivia */ = {
 			isa = PBXGroup;
 			children = (
-				"TEMP_7E3024D3-F010-496C-A7F9-E782A849FB7E" /* AppVersion.xcconfig */,
+				"TEMP_CFD3978C-CBFE-462D-BFF1-0432EBDEFF7D" /* AppVersion.xcconfig */,
 			);
 			path = "Tidbits-Trivia";
 			sourceTree = "<group>";
@@ -342,6 +345,7 @@
 				A7BDC3D377EC8267B055AAB0 /* GameEngine.swift in Sources */,
 				9B22CE4581A58C784D66DDB1 /* GameMode.swift in Sources */,
 				6CF073BFB022FF600B3B9428 /* GamePlayView.swift in Sources */,
+				87D2A2B94B2CE47C7ADB8348 /* GameView_tvOS.swift in Sources */,
 				7051BF4D2CFDDEB46EC57971 /* Haptics.swift in Sources */,
 				D78451DA6D74E2BA65EB56C8 /* HomeView.swift in Sources */,
 				9EA492C785F5F4ED0BFB78FF /* OnboardingView.swift in Sources */,
@@ -368,7 +372,7 @@
 /* Begin XCBuildConfiguration section */
 		296659EF0549868336801823 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_7E3024D3-F010-496C-A7F9-E782A849FB7E" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_CFD3978C-CBFE-462D-BFF1-0432EBDEFF7D" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -490,7 +494,7 @@
 		};
 		E6F711EEEE2896F84FE9AB98 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_7E3024D3-F010-496C-A7F9-E782A849FB7E" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_CFD3978C-CBFE-462D-BFF1-0432EBDEFF7D" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;

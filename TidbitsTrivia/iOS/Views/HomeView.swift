@@ -102,12 +102,6 @@ struct HomeView: View {
     }
 }
 
-struct LaunchRequest: Identifiable {
-    let mode: GameMode
-    let category: TriviaCategory
-    var id: String { "\(mode.rawValue)-\(category.id)" }
-}
-
 // MARK: - Daily card
 
 private struct DailyCard: View {

@@ -279,9 +279,9 @@ object TemplateEngine {
         "jeopardy" to listOf("%s — what is it?", "%s Name the subject.", "%s What are we describing?"),
         "cloze" to listOf("Fill in the blank: “%s”", "Complete the sentence: “%s”", "Which name completes this? “%s”"),
         "categorize" to listOf("What kind of thing is %s?", "What is %s best known as?", "In a few words, what is %s?", "Which description fits %s?"),
-        "oneliner" to listOf("Which one is “%s”?", "“%s” — which subject is that?", "Which subject matches: “%s”?"),
     )
-    private val SHAPE_ROTATION = listOf("identify", "cloze", "jeopardy", "categorize", "oneliner", "cloze", "identify", "categorize", "jeopardy", "cloze")
+    // 'oneliner' dropped — description-as-clue routinely leaked the answer's words.
+    private val SHAPE_ROTATION = listOf("identify", "cloze", "jeopardy", "categorize", "identify", "cloze", "jeopardy", "identify", "categorize", "cloze")
 
     fun make(pool: List<Wikipedia.Summary>, categoryId: String, count: Int, seed: Long): List<Question> {
         val usableList = pool.filter { usable(it) }
@@ -319,23 +319,41 @@ object TemplateEngine {
 
     // Siblings ranked by description word-overlap; lengthMatch (when set)
     // prefers similar-length values to kill the "longest = answer" tell.
-    private fun rankedSiblings(subject: Wikipedia.Summary, pool: List<Wikipedia.Summary>, value: (Wikipedia.Summary) -> String?, exclude: String, lengthMatch: Int?): List<String> {
-        val subjWords = (subject.description ?: "").lowercase().split(" ").toSet()
+    // Type-matched distractors (mirror of generate_corpus.py): same TYPE as the
+    // answer only; [] (→ drop) when fewer than 3 same-type siblings.
+    private val TYPE_LEADING = "american english british french german italian spanish russian chinese japanese korean indian european african asian north south east west northern southern eastern western central ancient modern medieval former national international royal imperial classical contemporary professional famous notable major minor large small great greater lesser old new young senior junior fictional mythological historical traditional popular official public private federal scottish irish welsh dutch swedish norwegian danish polish turkish greek roman egyptian persian arab arabic jewish canadian australian mexican brazilian argentine chilean austrian swiss belgian portuguese finnish hungarian czech romanian indonesian filipino vietnamese thai largest smallest oldest".split(" ").toSet()
+    private val TYPE_STOP = "in of from for by on at near during between that which who known with to and or located based set".split(" ").toSet()
+    private val TYPE_FOLD = mapOf("singer" to "musician", "songwriter" to "musician", "singer-songwriter" to "musician", "rapper" to "musician", "guitarist" to "musician", "pianist" to "musician", "drummer" to "musician", "bassist" to "musician", "vocalist" to "musician", "band" to "musician", "duo" to "musician", "composer" to "musician", "actress" to "actor", "filmmaker" to "director", "novelist" to "writer", "author" to "writer", "poet" to "writer", "playwright" to "writer", "screenwriter" to "writer", "essayist" to "writer", "journalist" to "writer", "physicist" to "scientist", "chemist" to "scientist", "biologist" to "scientist", "mathematician" to "scientist", "astronomer" to "scientist", "geologist" to "scientist", "economist" to "scientist", "psychologist" to "scientist", "inventor" to "scientist", "footballer" to "athlete", "player" to "athlete", "cyclist" to "athlete", "swimmer" to "athlete", "boxer" to "athlete", "wrestler" to "athlete", "sprinter" to "athlete", "runner" to "athlete", "golfer" to "athlete", "village" to "settlement", "town" to "settlement", "city" to "settlement", "municipality" to "settlement", "commune" to "settlement", "capital" to "settlement", "mountain" to "peak", "volcano" to "peak")
+
+    private fun typeKey(s: Wikipedia.Summary): String? {
+        var d = (s.description ?: "").replace(Regex("\\([^)]*\\)"), "").substringBefore(",").trim().trimEnd('.').lowercase()
+        val toks = mutableListOf<String>()
+        for (w in d.split(Regex("[^a-z\\-]+")).filter { it.isNotEmpty() }) {
+            if (w in TYPE_STOP) break
+            toks.add(w)
+        }
+        while (toks.isNotEmpty() && toks.first() in TYPE_LEADING) toks.removeAt(0)
+        val last = toks.lastOrNull() ?: return null
+        return TYPE_FOLD[last] ?: last
+    }
+
+    private fun typedDistractors(s: Wikipedia.Summary, pool: List<Wikipedia.Summary>, rng: SeededRng, value: (Wikipedia.Summary) -> String?, exclude: String, lengthMatch: Int?): List<String> {
+        val kt = typeKey(s) ?: return emptyList()
         val seen = mutableSetOf<String>()
-        return pool.filter { it.title != subject.title }.mapNotNull { c ->
+        val cands = pool.mapNotNull { c ->
+            if (c.title == s.title || typeKey(c) != kt) return@mapNotNull null
             val v = value(c)?.trim() ?: return@mapNotNull null
-            if (v.isEmpty() || v.equals(exclude, true)) return@mapNotNull null
-            val words = (c.description ?: "").lowercase().split(" ").toSet()
-            val overlap = subjWords.intersect(words).size
+            if (v.isEmpty() || v.equals(exclude, true) || !seen.add(v.lowercase())) return@mapNotNull null
             val lenPen = if (lengthMatch != null) -kotlin.math.abs(v.length - lengthMatch) else 0
-            Triple(v, overlap, lenPen)
-        }.sortedWith(compareByDescending<Triple<String, Int, Int>> { it.second }.thenByDescending { it.third })
-            .mapNotNull { if (seen.add(it.first.lowercase())) it.first else null }
+            Pair(v, lenPen)
+        }.sortedByDescending { it.second }
+        if (cands.size < 3) return emptyList()
+        return cands.take(9).map { it.first }.shuffledWith(rng).take(3)
     }
     private fun titleDistractors(s: Wikipedia.Summary, pool: List<Wikipedia.Summary>, rng: SeededRng) =
-        rankedSiblings(s, pool, { stripParens(it.title) }, stripParens(s.title), null).take(8).shuffledWith(rng).take(3)
+        typedDistractors(s, pool, rng, { stripParens(it.title) }, stripParens(s.title), null)
     private fun descDistractors(s: Wikipedia.Summary, pool: List<Wikipedia.Summary>, rng: SeededRng) =
-        rankedSiblings(s, pool, { it.description }, s.description ?: "", (s.description ?: "").length).take(8).shuffledWith(rng).take(3)
+        typedDistractors(s, pool, rng, { it.description }, s.description ?: "", (s.description ?: "").length)
 
     // Returns (prompt, options, answer) or null if this subject can't fill the shape.
     private fun buildShape(shape: String, s: Wikipedia.Summary, pool: List<Wikipedia.Summary>, stem: String, rng: SeededRng): Triple<String, List<String>, String>? {
@@ -373,13 +391,6 @@ object TemplateEngine {
                 val correct = s.description ?: return null
                 val ds = descDistractors(s, pool, rng); if (ds.size != 3) return null
                 val ans = cap(correct); return Triple(stem.format(stripParens(s.title)), listOf(ans) + ds.map { cap(it) }, ans)
-            }
-            "oneliner" -> {
-                val correct = s.description ?: return null
-                // Skip generic descriptions ("American writer") — unanswerable as a clue.
-                if (correct.split(Regex("\\s+")).size < 4 && !correct.any { it in ",(0123456789" }) return null
-                val ds = titleDistractors(s, pool, rng); if (ds.size != 3) return null
-                val ans = stripParens(s.title); return Triple(stem.format(cap(correct)), listOf(ans) + ds, ans)
             }
         }
         return null

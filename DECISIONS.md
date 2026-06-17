@@ -608,3 +608,31 @@ un-cached datasets when WDQS is cool. The generator deletes only the `wd:*`
 types it actually produces, so a skipped dataset's questions survive. Non-MCQ
 formats (timeline drag, grouping wall, type-the-answer) would need per-client
 UI and are out of scope until a type earns it.
+
+---
+
+## 026 — Distractors are same-TYPE siblings, never word-overlap; oneliner dropped
+
+**Decision**: Multiple-choice distractors are drawn ONLY from subjects sharing
+the answer's `type_key` (a coarse type derived from the Wikipedia short
+description's head noun — actor↔actor, genre↔genre, settlement↔settlement). If a
+subject can't be typed, or has fewer than 3 same-type siblings, the question is
+**dropped** — never widened to a different type. The `oneliner` shape ("which
+one is '<description>'?") is removed entirely.
+
+**Why**: Distractors previously ranked by description WORD-OVERLAP, which
+conflates types — "Cardiff Capital Region" (city region) drew a tidal strait, a
+Djibouti city, and a Welsh park; the one on-type option gave the answer away. A
+wrong-type distractor is the single biggest "the answer is obvious" tell.
+Type-bucketing makes all four options plausibly the same kind of thing. Oneliner
+was 46% answer-in-clue (the description IS the clue and routinely contains the
+answer's words, e.g. subject "Comedy horror" / desc "genre combining horror and
+comedy") and is unfixable since redaction can't run on the description.
+
+**How to apply**: `type_key` + `typed_distractors` live in
+`tools/corpus/generate_corpus.py` and are mirrored in all three live engines
+(`TemplateEngine.swift`, `js/engine.js`, `Tidbits.kt`) — same leading-adjective
+strip, same synonym fold, same drop-on-<3 rule. When adding a question shape,
+its distractors MUST go through `typed_distractors`. Prefer dropping a question
+over shipping a cross-type distractor. The Wikidata path (`wikidata.py`) is
+already typed-by-construction and is the model this extends.

@@ -48,14 +48,10 @@ nonisolated struct TemplateEngine: Sendable {
             "In a few words, what is %@?",
             "Which description fits %@?",
         ],
-        "oneliner": [
-            "Which one is \u{201C}%@\u{201D}?",
-            "\u{201C}%@\u{201D} — which subject is that?",
-            "Which subject matches: \u{201C}%@\u{201D}?",
-        ],
     ]
-    static let shapeRotation = ["identify", "cloze", "jeopardy", "categorize", "oneliner",
-                                "cloze", "identify", "categorize", "jeopardy", "cloze"]
+    // 'oneliner' dropped — description-as-clue routinely leaked the answer's words.
+    static let shapeRotation = ["identify", "cloze", "jeopardy", "categorize", "identify",
+                                "cloze", "jeopardy", "identify", "categorize", "cloze"]
 
     // MARK: Generation
 
@@ -148,44 +144,51 @@ nonisolated struct TemplateEngine: Sendable {
             let ds = descDistractors(s, pool, &rng); guard ds.count == 3 else { return nil }
             let ans = capitalize(correct)
             return (String(format: stem, displayTitle(s.title)), [ans] + ds.map(capitalize), ans)
-        case "oneliner":
-            guard let correct = s.description else { return nil }
-            // Skip generic descriptions ("American writer") — unanswerable as a clue.
-            if correct.split(separator: " ").count < 4 && !correct.contains(where: { ",(0123456789".contains($0) }) { return nil }
-            let ds = titleDistractors(s, pool, &rng); guard ds.count == 3 else { return nil }
-            let ans = displayTitle(s.title)
-            return (String(format: stem, capitalize(correct)), [ans] + ds, ans)
         default: return nil
         }
     }
 
     // MARK: Distractors (typed siblings; length-normalized for prose)
 
-    private static func rankedSiblings(
-        _ s: WikipediaClient.Summary, _ pool: [WikipediaClient.Summary],
-        value: (WikipediaClient.Summary) -> String?, exclude: String, lengthMatch: Int?
-    ) -> [String] {
-        let subjWords = Set((s.description ?? "").lowercased().split(separator: " ").map(String.init))
+    // Type-matched distractors (mirror of generate_corpus.py): same TYPE as the
+    // answer only, derived from the short description's head noun. [] (→ drop)
+    // when fewer than 3 same-type siblings — never widen to a wrong type.
+    static let typeLeading: Set<String> = Set("american english british french german italian spanish russian chinese japanese korean indian european african asian north south east west northern southern eastern western central ancient modern medieval former national international royal imperial classical contemporary professional famous notable major minor large small great greater lesser old new young senior junior fictional mythological historical traditional popular official public private federal scottish irish welsh dutch swedish norwegian danish polish turkish greek roman egyptian persian arab arabic jewish canadian australian mexican brazilian argentine chilean austrian swiss belgian portuguese finnish hungarian czech romanian indonesian filipino vietnamese thai largest smallest oldest".split(separator: " ").map(String.init))
+    static let typeStop: Set<String> = ["in", "of", "from", "for", "by", "on", "at", "near", "during", "between", "that", "which", "who", "known", "with", "to", "and", "or", "located", "based", "set"]
+    static let typeFold: [String: String] = ["singer": "musician", "songwriter": "musician", "singer-songwriter": "musician", "rapper": "musician", "guitarist": "musician", "pianist": "musician", "drummer": "musician", "bassist": "musician", "vocalist": "musician", "band": "musician", "duo": "musician", "composer": "musician", "actress": "actor", "filmmaker": "director", "novelist": "writer", "author": "writer", "poet": "writer", "playwright": "writer", "screenwriter": "writer", "essayist": "writer", "journalist": "writer", "physicist": "scientist", "chemist": "scientist", "biologist": "scientist", "mathematician": "scientist", "astronomer": "scientist", "geologist": "scientist", "economist": "scientist", "psychologist": "scientist", "inventor": "scientist", "footballer": "athlete", "player": "athlete", "cyclist": "athlete", "swimmer": "athlete", "boxer": "athlete", "wrestler": "athlete", "sprinter": "athlete", "runner": "athlete", "golfer": "athlete", "village": "settlement", "town": "settlement", "city": "settlement", "municipality": "settlement", "commune": "settlement", "capital": "settlement", "mountain": "peak", "volcano": "peak"]
+
+    static func typeKey(_ s: WikipediaClient.Summary) -> String? {
+        var d = (s.description ?? "").replacingOccurrences(of: #"\([^)]*\)"#, with: "", options: .regularExpression)
+        d = (d.split(separator: ",").first.map(String.init) ?? d).trimmingCharacters(in: CharacterSet(charactersIn: " .")).lowercased()
+        var toks: [String] = []
+        for w in d.split(whereSeparator: { !$0.isLetter && $0 != "-" }).map(String.init) {
+            if typeStop.contains(w) { break }
+            toks.append(w)
+        }
+        while let f = toks.first, typeLeading.contains(f) { toks.removeFirst() }
+        guard let last = toks.last else { return nil }
+        return typeFold[last] ?? last
+    }
+
+    private static func typedDistractors(_ s: WikipediaClient.Summary, _ pool: [WikipediaClient.Summary], _ rng: inout SeededRNG, value: (WikipediaClient.Summary) -> String?, exclude: String, lengthMatch: Int?) -> [String] {
+        guard let kt = typeKey(s) else { return [] }
         var seen = Set<String>()
-        let cands = pool.compactMap { c -> (Int, Int, String)? in
-            guard c.title != s.title, let v0 = value(c)?.trimmingCharacters(in: .whitespaces),
+        let cands = pool.compactMap { c -> (Int, String)? in
+            guard c.title != s.title, typeKey(c) == kt,
+                  let v0 = value(c)?.trimmingCharacters(in: .whitespaces),
                   !v0.isEmpty, v0.caseInsensitiveCompare(exclude) != .orderedSame,
                   seen.insert(v0.lowercased()).inserted else { return nil }
-            let words = Set((c.description ?? "").lowercased().split(separator: " ").map(String.init))
-            let overlap = subjWords.intersection(words).count
-            let lenPen = lengthMatch.map { -abs(v0.count - $0) } ?? 0
-            return (overlap, lenPen, v0)
-        }.sorted { ($0.0, $0.1) > ($1.0, $1.1) }
-        return cands.map(\.2)
+            return (lengthMatch.map { -abs(v0.count - $0) } ?? 0, v0)
+        }.sorted { $0.0 > $1.0 }
+        guard cands.count >= 3 else { return [] }
+        return Array(Array(cands.prefix(max(9, 8)).map(\.1)).shuffled(using: &rng).prefix(3))
     }
 
     private static func titleDistractors(_ s: WikipediaClient.Summary, _ pool: [WikipediaClient.Summary], _ rng: inout SeededRNG) -> [String] {
-        let ranked = rankedSiblings(s, pool, value: { displayTitle($0.title) }, exclude: displayTitle(s.title), lengthMatch: nil)
-        return Array(Array(ranked.prefix(8)).shuffled(using: &rng).prefix(3))
+        typedDistractors(s, pool, &rng, value: { displayTitle($0.title) }, exclude: displayTitle(s.title), lengthMatch: nil)
     }
     private static func descDistractors(_ s: WikipediaClient.Summary, _ pool: [WikipediaClient.Summary], _ rng: inout SeededRNG) -> [String] {
-        let ranked = rankedSiblings(s, pool, value: { $0.description }, exclude: s.description ?? "", lengthMatch: (s.description ?? "").count)
-        return Array(Array(ranked.prefix(8)).shuffled(using: &rng).prefix(3))
+        typedDistractors(s, pool, &rng, value: { $0.description }, exclude: s.description ?? "", lengthMatch: (s.description ?? "").count)
     }
 
     // MARK: Helpers

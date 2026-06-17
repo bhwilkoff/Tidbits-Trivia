@@ -55,6 +55,8 @@ const isUsable = (s) => {
   const lt = (s.title || '').toLowerCase();
   if (lt.startsWith('list of') || lt.includes('(disambiguation)')) return false;
   if ((e || '').toLowerCase().includes('may refer to')) return false;
+  if (/^\s*(\w+\s+){0,2}(person|human|man|woman|place|thing|object|name|surname|given name|topics?)\b/i.test(d)) return false;
+  if (typeKey(s) === null) return false;   // un-typeable → can't guarantee typed distractors
   return true;
 };
 
@@ -139,26 +141,38 @@ function redact(text, title) {
 // Siblings ranked by description word-overlap (same-domain → plausible).
 // lengthMatch (when set) prefers similar-length values to kill the
 // "longest option is the answer" tell.
-function rankedSiblings(subject, pool, valueFn, exclude, lengthMatch) {
-  const subjWords = new Set((subject.description || '').toLowerCase().split(' '));
-  const seen = new Set();
-  return pool
-    .filter((c) => c.title !== subject.title)
-    .map((c) => {
-      const v = (valueFn(c) || '').trim();
-      if (!v || v.toLowerCase() === (exclude || '').toLowerCase()) return null;
-      const words = new Set((c.description || '').toLowerCase().split(' '));
-      let overlap = 0; subjWords.forEach((w) => { if (words.has(w)) overlap++; });
-      const lenPen = lengthMatch != null ? -Math.abs(v.length - lengthMatch) : 0;
-      return { v, overlap, lenPen };
-    })
-    .filter(Boolean)
-    .sort((a, b) => (b.overlap - a.overlap) || (b.lenPen - a.lenPen))
-    .filter((x) => { const k = x.v.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; })
-    .map((x) => x.v);
+// Type-matched distractors (mirror of generate_corpus.py): distractors MUST be
+// the same TYPE as the answer. Type comes from the Wikipedia short description's
+// head noun (synonym-folded). Draw only from the subject's type; [] (→ drop) if
+// fewer than 3 same-type siblings — never widen to a wrong type.
+const TYPE_LEADING = new Set('american english british french german italian spanish russian chinese japanese korean indian european african asian north south east west northern southern eastern western central ancient modern medieval former national international royal imperial classical contemporary professional famous notable major minor large small great greater lesser old new young senior junior fictional mythological historical traditional popular official public private federal scottish irish welsh dutch swedish norwegian danish polish turkish greek roman egyptian persian arab arabic jewish canadian australian mexican brazilian argentine chilean austrian swiss belgian portuguese finnish hungarian czech romanian indonesian filipino vietnamese thai largest smallest oldest'.split(' '));
+const TYPE_STOP = /\b(in|of|from|for|by|on|at|near|during|between|that|which|who|known|with|to|and|or|located|based|set)\b/i;
+const TYPE_FOLD = { singer: 'musician', songwriter: 'musician', 'singer-songwriter': 'musician', rapper: 'musician', guitarist: 'musician', pianist: 'musician', drummer: 'musician', bassist: 'musician', vocalist: 'musician', band: 'musician', duo: 'musician', composer: 'musician', actress: 'actor', filmmaker: 'director', novelist: 'writer', author: 'writer', poet: 'writer', playwright: 'writer', screenwriter: 'writer', essayist: 'writer', journalist: 'writer', physicist: 'scientist', chemist: 'scientist', biologist: 'scientist', mathematician: 'scientist', astronomer: 'scientist', geologist: 'scientist', economist: 'scientist', psychologist: 'scientist', inventor: 'scientist', footballer: 'athlete', player: 'athlete', cyclist: 'athlete', swimmer: 'athlete', boxer: 'athlete', wrestler: 'athlete', sprinter: 'athlete', runner: 'athlete', golfer: 'athlete', village: 'settlement', town: 'settlement', city: 'settlement', municipality: 'settlement', commune: 'settlement', capital: 'settlement', mountain: 'peak', volcano: 'peak' };
+function typeKey(subject) {
+  let d = (subject.description || '').replace(/\([^)]*\)/g, '').split(',')[0].trim().replace(/\.$/, '').toLowerCase();
+  const m = d.match(TYPE_STOP); if (m) d = d.slice(0, m.index);
+  let toks = d.match(/[a-z][a-z\-]+/g) || [];
+  while (toks.length && TYPE_LEADING.has(toks[0])) toks = toks.slice(1);
+  if (!toks.length) return null;
+  const k = toks[toks.length - 1];
+  return TYPE_FOLD[k] || k;
 }
-const titleDistractors = (s, pool, rnd) => shuffle(rankedSiblings(s, pool, (c) => stripParens(c.title), stripParens(s.title), null).slice(0, 8), rnd).slice(0, 3);
-const descDistractors = (s, pool, rnd) => shuffle(rankedSiblings(s, pool, (c) => c.description, s.description, (s.description || '').length).slice(0, 8), rnd).slice(0, 3);
+function typedDistractors(subject, pool, rnd, valueFn, exclude, lengthMatch) {
+  const kt = typeKey(subject); if (!kt) return [];
+  const excl = (exclude || '').toLowerCase(); const seen = new Set(); const cands = [];
+  for (const c of pool) {
+    if (c.title === subject.title || typeKey(c) !== kt) continue;
+    const v = (valueFn(c) || '').trim();
+    if (!v || v.toLowerCase() === excl || seen.has(v.toLowerCase())) continue;
+    seen.add(v.toLowerCase());
+    cands.push({ v, lenPen: lengthMatch != null ? -Math.abs(v.length - lengthMatch) : 0 });
+  }
+  if (cands.length < 3) return [];
+  cands.sort((a, b) => b.lenPen - a.lenPen);
+  return shuffle(cands.slice(0, Math.max(9, 8)), rnd).slice(0, 3).map((x) => x.v);
+}
+const titleDistractors = (s, pool, rnd) => typedDistractors(s, pool, rnd, (c) => stripParens(c.title), stripParens(s.title), null);
+const descDistractors = (s, pool, rnd) => typedDistractors(s, pool, rnd, (c) => c.description, s.description, (s.description || '').length);
 
 function difficulty(s) {
   const n = (s.extract || '').length;
@@ -171,9 +185,9 @@ const STEMS = {
   jeopardy: ['%s — what is it?', '%s Name the subject.', '%s What are we describing?'],
   cloze: ['Fill in the blank: “%s”', 'Complete the sentence: “%s”', 'Which name completes this? “%s”'],
   categorize: ['What kind of thing is %s?', 'What is %s best known as?', 'In a few words, what is %s?', 'Which description fits %s?'],
-  oneliner: ['Which one is “%s”?', '“%s” — which subject is that?', 'Which subject matches: “%s”?'],
 };
-const SHAPE_ROTATION = ['identify', 'cloze', 'jeopardy', 'categorize', 'oneliner', 'cloze', 'identify', 'categorize', 'jeopardy', 'cloze'];
+// 'oneliner' dropped — description-as-clue routinely leaked the answer's words.
+const SHAPE_ROTATION = ['identify', 'cloze', 'jeopardy', 'categorize', 'identify', 'cloze', 'jeopardy', 'identify', 'categorize', 'cloze'];
 
 function buildShape(shape, s, pool, stem, rnd) {
   const fmt = (v) => stem.replace('%s', v);
@@ -208,13 +222,6 @@ function buildShape(shape, s, pool, stem, rnd) {
     if (!s.description) return null;
     const ds = descDistractors(s, pool, rnd); if (ds.length !== 3) return null;
     const ans = cap(s.description); return { prompt: fmt(stripParens(s.title)), options: [ans, ...ds.map(cap)], answer: ans };
-  }
-  if (shape === 'oneliner') {
-    if (!s.description) return null;
-    // Skip generic descriptions ("American writer") — unanswerable as a clue.
-    if (s.description.split(/\s+/).length < 4 && !/[,(0-9]/.test(s.description)) return null;
-    const ds = titleDistractors(s, pool, rnd); if (ds.length !== 3) return null;
-    const ans = stripParens(s.title); return { prompt: fmt(cap(s.description)), options: [ans, ...ds], answer: ans };
   }
   return null;
 }

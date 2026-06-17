@@ -1,159 +1,322 @@
-/**
- * App — Main Application Logic
- *
- * Architecture: single IIFE wrapping the entire app.
- * Views are <section> elements toggled by showView().
- * Feature modules are nested IIFEs for encapsulation.
- *
- * Conventions:
- *  - $('id') is shorthand for document.getElementById
- *  - All API calls go through API (js/api.js)
- *  - State is plain JS objects/variables (no framework)
- *  - DOM updates use textContent (safe) or innerHTML (only with escHtml)
- *
- * See CLAUDE.md for full conventions and DECISIONS.md for architecture choices.
- */
+// Tidbits — web app shell: router, views, and the game loop. Mirrors the
+// Apple AppStore + GameEngine + views. Vanilla JS, no framework, no build.
 
-// Dark mode — flash-free init (runs before DOM renders)
-(function() {
-  const saved = localStorage.getItem('app_theme');
-  if (saved === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
-})();
+import { Corpus, Wikipedia } from './api.js';
+import { Store, CATEGORIES, catColor, catById, MODES, dayKey } from './store.js';
+import { Scoring } from './engine.js';
 
-(function () {
-  'use strict';
+const $ = (sel, root = document) => root.querySelector(sel);
+const h = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-  /* ---- Helpers ---- */
-  const $ = (id) => document.getElementById(id);
+const app = $('#app');
+let game = null;
 
-  function escHtml(str) {
-    const d = document.createElement('div');
-    d.textContent = str;
-    return d.innerHTML;
-  }
+// ---------------- Router (hash → tab) ----------------
+const TABS = ['play', 'create', 'records'];
+function currentTab() {
+  const t = (location.hash.replace('#/', '') || 'play').split('?')[0];
+  return TABS.includes(t) ? t : 'play';
+}
+window.addEventListener('hashchange', render);
 
-  function showLoading() { /* TODO: show global loading indicator */ }
-  function hideLoading() { /* TODO: hide global loading indicator */ }
+async function boot() {
+  renderLoading('Loading Tidbits…');
+  try { await Corpus.load(); } catch (e) { /* live fallback still works */ }
+  if (!location.hash) location.hash = '#/play';
+  if (location.hash.startsWith('#/daily')) { render(); startGame('daily', catById('mixed')); return; }
+  render();
+}
 
-  /* ---- DOM Refs ---- */
-  const authScreen = $('auth-screen');
-  const appScreen  = $('app-screen');
-  // Add more DOM refs as views are created:
-  // const viewHome = $('view-home');
-  // const navHomeBtn = $('nav-home-btn');
+// ---------------- Top-level render ----------------
+function render() {
+  if (game) return; // game overlay owns the screen
+  const tab = currentTab();
+  app.innerHTML = `
+    ${header(tab)}
+    <main class="main">${tab === 'play' ? viewHome() : tab === 'create' ? viewCreate() : viewRecords()}</main>`;
+  if (tab === 'play') bindHome();
+  if (tab === 'create') bindCreate();
+  document.title = 'Tidbits Trivia';
+}
 
-  /* ---- State ---- */
-  let currentView = 'home';
+function header(tab) {
+  const tabBtn = (id, label, icon) => `<a class="tab ${tab === id ? 'active' : ''}" href="#/${id}">${icon}<span>${label}</span></a>`;
+  return `<header class="topbar">
+    <div class="brand">TIDBITS</div>
+    <nav class="tabs">
+      ${tabBtn('play', 'Play', '▶')}
+      ${tabBtn('create', 'Create', '✦')}
+      ${tabBtn('records', 'Records', '▌▌')}
+    </nav>
+  </header>`;
+}
 
-  /* ================================================================
-     VIEW SYSTEM
-  ================================================================ */
+function renderLoading(msg) {
+  app.innerHTML = `<div class="center-screen"><div class="spinner"></div><p class="muted">${h(msg)}</p></div>`;
+}
 
-  /**
-   * Switch the active view. Hides all views, shows the target.
-   * Updates sidebar nav active state and browser history.
-   *
-   * Wrapped in document.startViewTransition() when supported — gives
-   * us cross-view morphs at zero JS cost (analog to iOS
-   * .matchedTransitionSource + .zoom and Android sharedBounds). Falls
-   * back to instant swap when unsupported (Safari ≤ 18 / Firefox).
-   * The API auto-disables itself under prefers-reduced-motion.
-   *
-   * IntersectionObserver instances inside views MUST pass
-   * `root: document.getElementById('main-content')` since <main> is
-   * the scroll container (body is overflow:hidden flex-column).
-   * Disconnect observers when leaving the view to prevent memory leaks.
-   */
-  function showView(name, fromHistory = false) {
-    if (document.startViewTransition) {
-      document.startViewTransition(() => applyViewSwap(name, fromHistory));
-    } else {
-      applyViewSwap(name, fromHistory);
-    }
-  }
+// ---------------- Home ----------------
+function viewHome() {
+  const cats = CATEGORIES.map((c) => `
+    <button class="cat-card card" data-cat="${c.id}">
+      <span class="cat-icon" style="background:${catColor(c)}">${c.symbol}</span>
+      <span class="cat-name">${h(c.name)}</span>
+      <span class="cat-blurb muted">${h(c.blurb)}</span>
+    </button>`).join('');
+  const modes = ['classic', 'timeAttack', 'survival'].map((m) =>
+    `<button class="chip" data-mode="${m}">${h(MODES[m].title)}</button>`).join('');
+  return `
+    <h1 class="page-title">Trivia from the whole of Wikipedia.</h1>
+    <button class="banner card daily" data-daily><div><div class="banner-title">DAILY TIDBIT</div>
+      <div class="muted">7 questions. Everyone gets the same set. Keep your streak.</div></div><span class="chev">›</span></button>
+    <h2 class="section">Pick a mode</h2>
+    <div class="chips" id="modes">${modes}</div>
+    <h2 class="section">Choose a category</h2>
+    <div class="cat-grid">${cats}</div>`;
+}
 
-  function applyViewSwap(name, fromHistory) {
-    currentView = name;
-
-    // Define your views and nav buttons here:
-    const views = {
-      // home: viewHome,
-    };
-    const navBtns = {
-      // home: navHomeBtn,
-    };
-
-    Object.entries(views).forEach(([n, el]) => {
-      if (el) { el.hidden = n !== name; }
-    });
-
-    Object.entries(navBtns).forEach(([n, btn]) => {
-      if (btn) {
-        btn.classList.toggle('active', n === name);
-        btn.setAttribute('aria-current', n === name ? 'page' : 'false');
-      }
-    });
-
-    // Close mobile sidebar on navigation
-    $('channels-sidebar')?.classList.remove('open');
-
-    if (!fromHistory) {
-      const url = name === 'home' ? '?' : `?view=${name}`;
-      history.pushState({ view: name }, '', url);
-      document.title = name === 'home' ? 'App Name' : `App Name — ${name}`;
-    }
-
-    // Stop/cleanup for views that need it when leaving:
-    // if (name !== 'tv') window.tvStop?.();
-  }
-
-  /* ================================================================
-     AUTH
-  ================================================================ */
-
-  // FILL IN: Your auth flow
-  // Example pattern:
-  // $('auth-form').addEventListener('submit', async (e) => {
-  //   e.preventDefault();
-  //   try {
-  //     const session = await API.login(handle, password);
-  //     localStorage.setItem('session', JSON.stringify(session));
-  //     authScreen.hidden = true;
-  //     appScreen.hidden = false;
-  //     init();
-  //   } catch (err) {
-  //     $('auth-error').textContent = err.message;
-  //     $('auth-error').hidden = false;
-  //   }
-  // });
-
-  /* ================================================================
-     INITIALIZATION
-  ================================================================ */
-
-  async function init() {
-    // Check for saved session
-    // If authenticated: hide auth, show app, load first view
-    // If not: show auth screen
-
-    // URL routing (deep links / bookmarks)
-    const params = new URLSearchParams(window.location.search);
-    const urlView = params.get('view');
-    if (urlView) {
-      showView(urlView, true);
-    } else {
-      showView('home', true);
-    }
-  }
-
-  // Browser back/forward
-  window.addEventListener('popstate', (e) => {
-    const view = e.state?.view || 'home';
-    showView(view, true);
+let selectedMode = 'classic';
+function bindHome() {
+  $('#modes').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-mode]'); if (!b) return;
+    selectedMode = b.dataset.mode;
+    [...$('#modes').children].forEach((c) => c.classList.toggle('on', c.dataset.mode === selectedMode));
   });
+  [...$('#modes').children].forEach((c) => c.classList.toggle('on', c.dataset.mode === selectedMode));
+  $('[data-daily]').addEventListener('click', () => startGame('daily', catById('mixed')));
+  app.querySelectorAll('[data-cat]').forEach((b) =>
+    b.addEventListener('click', () => startGame(selectedMode, catById(b.dataset.cat))));
+}
 
-  /* ================================================================
-     BOOT
-  ================================================================ */
-  init();
-})();
+// ---------------- Create ----------------
+function viewCreate() {
+  const sugg = ['Space exploration', 'Ancient Rome', 'Jazz', 'Volcanoes', 'The Olympics', 'Marie Curie'];
+  return `
+    <h1 class="page-title">Create a quiz</h1>
+    <p class="muted">Pick any subject. We'll pull it straight from Wikipedia and build you a quiz.</p>
+    <div class="card pad">
+      <input id="topic" class="input" placeholder="e.g. The Renaissance" autocomplete="off">
+      <button id="gen" class="btn btn-grape btn-full">Generate Quiz</button>
+      <div id="create-err" class="error" hidden></div>
+    </div>
+    <h2 class="section">Need a spark?</h2>
+    <div class="chips wrap">${sugg.map((s) => `<button class="chip" data-sugg="${h(s)}">${h(s)}</button>`).join('')}</div>`;
+}
+function bindCreate() {
+  const run = async () => {
+    const topic = $('#topic').value.trim();
+    if (topic.length < 2) return;
+    const err = $('#create-err'); err.hidden = true;
+    const btn = $('#gen'); btn.textContent = 'Building your quiz…'; btn.disabled = true;
+    try {
+      const qs = await Wikipedia.generate(topic, 'mixed', 8);
+      if (qs.length >= 3) startGame('classic', catById('mixed'), { custom: qs, label: topic });
+      else { err.textContent = `Couldn't build a good quiz for “${topic}”. Try a broader or more famous subject.`; err.hidden = false; }
+    } catch { err.textContent = 'Network trouble reaching Wikipedia. Try again.'; err.hidden = false; }
+    btn.textContent = 'Generate Quiz'; btn.disabled = false;
+  };
+  $('#gen').addEventListener('click', run);
+  $('#topic').addEventListener('keydown', (e) => { if (e.key === 'Enter') run(); });
+  app.querySelectorAll('[data-sugg]').forEach((b) =>
+    b.addEventListener('click', () => { $('#topic').value = b.dataset.sugg; run(); }));
+}
+
+// ---------------- Records ----------------
+function viewRecords() {
+  const recs = Store.records();
+  if (!recs.length) return `<h1 class="page-title">Records</h1><div class="empty card pad"><p>No games yet.</p><p class="muted">Play a round and your scores, streaks, and facts to review show up here.</p></div>`;
+  const lt = Store.lifetime(), st = Store.streak();
+  const bests = Object.values(MODES).map((m) => ({ m, best: Store.bestScore(m.id) })).filter((x) => x.best > 0);
+  const review = Store.dueReview(8);
+  return `
+    <h1 class="page-title">Records</h1>
+    <div class="banner card daily"><div><div class="muted">DAILY STREAK</div><div class="big">${st.current} days</div></div><div class="muted">best ${st.best} 🔥</div></div>
+    <div class="stat-row">
+      ${statBox(lt.games, 'Games', '#8B5CF6')}${statBox(lt.acc + '%', 'Lifetime acc.', '#2D5BFF')}${statBox(lt.correct, 'Right', '#2FCB8A')}
+    </div>
+    <h2 class="section">Personal bests</h2>
+    ${bests.map((x) => `<div class="card row"><b>${h(x.m.title)}</b><span class="big-sm">${x.best}</span></div>`).join('') || '<p class="muted">Play a mode to set a best.</p>'}
+    ${review.length ? `<h2 class="section">Facts to review</h2><p class="muted">We slip these back into future games.</p>
+      ${review.map((q) => `<div class="card pad"><b>${h(q.prompt)}</b><div class="ans">Answer: ${h(q.options[q.correctIndex])}</div></div>`).join('')}` : ''}`;
+}
+const statBox = (v, l, c) => `<div class="stat card" style="--tint:${c}"><div class="stat-v">${v}</div><div class="stat-l">${l}</div></div>`;
+
+// ---------------- Game engine ----------------
+class Game {
+  constructor(mode, category, opts = {}) {
+    this.mode = MODES[mode]; this.category = category; this.label = opts.label;
+    this.questions = []; this.index = 0; this.score = 0; this.streak = 0; this.maxStreak = 0;
+    this.answered = []; this.chosen = null; this.phase = 'loading';
+    this.remaining = 0; this.timer = null; this.qStart = 0; this.globalDeadline = null;
+    this._custom = opts.custom;
+  }
+  async load() {
+    let qs;
+    if (this._custom) qs = this._custom;
+    else if (this.mode.id === 'daily') qs = Corpus.daily(dayKey(), 7);
+    else {
+      qs = Corpus.pull(this.category.id, Store._seen, this.mode.count);
+      if (qs.length < this.mode.count) {
+        const topic = this.category.id === 'mixed' ? 'popular' : this.category.name;
+        const live = await Wikipedia.generate(topic, this.category.id, this.mode.count - qs.length);
+        qs = qs.concat(live);
+      }
+      qs = this._weave(qs, Store.dueReview(2));
+    }
+    this.questions = (this.mode.count === 99 ? qs : qs.slice(0, this.mode.count));
+    Store.markSeen(this.questions.map((q) => q.id));
+    if (!this.questions.length) { this.phase = 'error'; return; }
+    if (this.mode.globalClock) this.globalDeadline = Date.now() + this.mode.globalClock * 1000;
+    this._begin();
+  }
+  _weave(fresh, review) {
+    const ids = new Set(fresh.map((q) => q.id));
+    const inject = review.filter((q) => !ids.has(q.id)).slice(0, Math.max(1, Math.floor(fresh.length / 4)));
+    if (!inject.length || fresh.length <= inject.length) return fresh;
+    const r = fresh.slice();
+    inject.forEach((q, i) => { r[Math.min(r.length - 1, Math.floor((i + 1) * r.length / (inject.length + 1)))] = q; });
+    return r;
+  }
+  get current() { return this.questions[this.index]; }
+  _begin() {
+    this.chosen = null; this.phase = 'playing'; this.qStart = Date.now();
+    this.budget = this._globalRemaining() ?? this.mode.perQuestion ?? 30;
+    this.remaining = this.budget;
+    clearInterval(this.timer);
+    this.timer = setInterval(() => this._tick(), 100);
+    renderGame();
+  }
+  _globalRemaining() { return this.globalDeadline ? Math.max(0, (this.globalDeadline - Date.now()) / 1000) : null; }
+  _tick() {
+    if (this.phase !== 'playing') return;
+    const g = this._globalRemaining();
+    if (g !== null) { this.remaining = g; if (g <= 0) return this._end(); }
+    else { this.remaining = Math.max(0, this.budget - (Date.now() - this.qStart) / 1000); if (this.remaining <= 0) return this.submit(null); }
+    updateClock();
+  }
+  submit(choice) {
+    if (this.phase !== 'playing') return;
+    clearInterval(this.timer);
+    this.chosen = choice;
+    const q = this.current, taken = (Date.now() - this.qStart) / 1000;
+    const correct = choice === q.correctIndex;
+    this.answered.push({ q, chosen: choice, correct, taken });
+    if (correct) { this.streak++; this.maxStreak = Math.max(this.maxStreak, this.streak); this.score += Scoring.points(true, taken, this.mode.perQuestion ?? this.budget, this.streak); }
+    else { this.streak = 0; }
+    this.phase = 'reveal';
+    renderGame();
+  }
+  advance() {
+    if (this.mode.id === 'survival' && this.answered.length && !this.answered.at(-1).correct) return this._end();
+    if ((this._globalRemaining() ?? 1) <= 0) return this._end();
+    this.index++;
+    if (this.index >= this.questions.length) return this._end();
+    this._begin();
+  }
+  _end() { clearInterval(this.timer); this.phase = 'finished'; this._persist(); renderResults(); }
+  _persist() {
+    const correct = this.answered.filter((a) => a.correct).length;
+    Store.addRecord({ mode: this.mode.id, categoryID: this.category.id, score: this.score, correct, total: this.answered.length, maxStreak: this.maxStreak, date: dayKey() });
+    Store.recordMisses(this.answered);
+  }
+  summary() {
+    const correct = this.answered.filter((a) => a.correct).length;
+    return { correct, total: this.answered.length, score: this.score, maxStreak: this.maxStreak, answered: this.answered, acc: this.answered.length ? Math.round(correct / this.answered.length * 100) : 0 };
+  }
+}
+
+async function startGame(mode, category, opts) {
+  game = new Game(mode, category, opts);
+  renderLoading('Pulling fresh tidbits…');
+  await game.load();
+  if (game.phase === 'error') renderGameError();
+}
+
+function quitGame() { if (game) clearInterval(game.timer); game = null; render(); }
+
+// ---------------- Game render ----------------
+function renderGame() {
+  const q = game.current; if (!q) return;
+  const cat = catById(q.categoryID);
+  const opts = q.options.map((o, i) => {
+    let cls = 'opt';
+    if (game.phase === 'reveal') {
+      if (i === q.correctIndex) cls += ' correct';
+      else if (i === game.chosen) cls += ' wrong';
+      else cls += ' dim';
+    }
+    return `<button class="${cls}" data-opt="${i}" ${game.phase === 'reveal' ? 'disabled' : ''}>${h(o)}</button>`;
+  }).join('');
+  const reveal = game.phase === 'reveal' ? revealCard(q) : '';
+  const progress = (game.mode.id === 'classic' || game.mode.id === 'daily') ? `${game.index + 1} / ${game.questions.length}` : `#${game.index + 1}`;
+  app.innerHTML = `
+    <div class="game">
+      <div class="hud">
+        <button class="x" data-quit>✕</button>
+        <span class="pill streak ${game.streak >= 2 ? 'hot' : ''}">🔥 ${game.streak}</span>
+        <span class="pill score">★ ${game.score}</span>
+      </div>
+      <div class="clockbar"><span id="clk-label">${progress}</span><div class="clock-track"><div id="clk-fill" class="clock-fill"></div></div><span id="clk-secs"></span></div>
+      <div class="qwrap">
+        <div class="card qcard"><div class="qcat" style="color:${catColor(cat)}">${h(cat.name.toUpperCase())}</div><div class="qprompt">${h(q.prompt)}</div></div>
+        <div class="opts">${opts}</div>
+        ${reveal}
+      </div>
+      ${game.phase === 'reveal' ? `<button class="btn btn-ink btn-full" data-next>${isLast() ? 'See Results' : 'Next'}</button>` : ''}
+    </div>`;
+  $('[data-quit]').addEventListener('click', quitGame);
+  if (game.phase === 'playing') app.querySelectorAll('[data-opt]').forEach((b) => b.addEventListener('click', () => game.submit(+b.dataset.opt)));
+  if (game.phase === 'reveal') $('[data-next]').addEventListener('click', () => game.advance());
+  updateClock();
+}
+function isLast() { return (game.mode.id === 'classic' || game.mode.id === 'daily') && game.index + 1 >= game.questions.length; }
+function revealCard(q) {
+  const correct = game.answered.at(-1)?.correct;
+  return `<div class="card reveal"><div class="reveal-h">${correct ? '✅ Nice — you knew it.' : '💡 Now you know.'}</div>
+    <p>${h(q.explanation)}</p>${q.sourceURL ? `<a href="${h(q.sourceURL)}" target="_blank" rel="noopener" class="link">Read ${h(q.sourceTitle)} on Wikipedia ↗</a>` : ''}</div>`;
+}
+function updateClock() {
+  if (!game || game.phase !== 'playing') { const s = $('#clk-secs'); if (s) s.textContent = ''; return; }
+  const frac = Math.max(0, Math.min(1, game.remaining / game.budget));
+  const fill = $('#clk-fill'); if (fill) { fill.style.width = (frac * 100) + '%'; fill.classList.toggle('urgent', game.remaining <= 5); }
+  const secs = $('#clk-secs'); if (secs) secs.textContent = Math.ceil(game.remaining) + 's';
+}
+function renderGameError() {
+  app.innerHTML = `<div class="center-screen"><h2>No questions yet</h2><p class="muted">We couldn't reach Wikipedia and the corpus is empty.</p><button class="btn btn-primary" data-back>Back</button></div>`;
+  $('[data-back]').addEventListener('click', quitGame);
+}
+
+// ---------------- Results ----------------
+function renderResults() {
+  const s = game.summary();
+  const grid = s.answered.map((a) => (a.chosen === null ? '⬛' : a.correct ? '🟩' : '🟥')).join('');
+  const headline = s.acc === 100 ? 'Flawless!' : s.acc >= 80 ? 'Brilliant' : s.acc >= 50 ? 'Nicely done' : 'Good run';
+  const missed = s.answered.filter((a) => !a.correct);
+  app.innerHTML = `
+    <div class="results">
+      <div class="card scorecard" style="--tint:${catColor(game.category)}">
+        <div class="muted">${h(headline.toUpperCase())}</div><div class="huge">${s.score}</div>
+        <div class="muted">${h(game.label || game.mode.title)} · ${h(game.category.name)}</div></div>
+      <div class="stat-row">${statBox(s.correct + '/' + s.total, 'Correct', '#2FCB8A')}${statBox(s.acc + '%', 'Accuracy', '#2D5BFF')}${statBox(s.maxStreak, 'Best streak', '#FF5C5C')}</div>
+      <div class="card pad grid-card"><div class="emoji">${grid}</div><div class="muted">Spoiler-free — safe to share</div></div>
+      ${missed.length ? `<h2 class="section">Tidbits to remember</h2>${missed.map((a) => `<div class="card pad"><b>${h(a.q.prompt)}</b><div class="ans">Answer: ${h(a.q.options[a.q.correctIndex])}</div><p class="muted">${h(a.q.explanation)}</p></div>`).join('')}` : ''}
+      <button class="btn btn-blue btn-full" data-share>Share Score</button>
+      <button class="btn btn-primary btn-full" data-again>Play Again</button>
+      <button class="btn btn-text btn-full" data-done>Done</button>
+    </div>`;
+  $('[data-share]').addEventListener('click', () => shareResult(s, grid));
+  $('[data-again]').addEventListener('click', () => startGame(game.mode.id, game.category, game._custom ? { custom: game._custom, label: game.label } : undefined));
+  $('[data-done]').addEventListener('click', quitGame);
+}
+async function shareResult(s, grid) {
+  const header = game.mode.id === 'daily' ? `🧠 Tidbits Daily — ${dayKey()}` : `🧠 Tidbits Trivia — ${game.mode.title}`;
+  const text = `${header}\n${grid}\n${s.correct}/${s.total} right · ${s.score} pts · ${s.acc}%\nTrivia from all of Wikipedia. Can you beat it?\n${location.origin}${location.pathname}`;
+  try { if (navigator.share) { await navigator.share({ text }); return; } } catch {}
+  try { await navigator.clipboard.writeText(text); toast('Copied to clipboard!'); } catch { toast('Copy failed'); }
+}
+function toast(msg) {
+  const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t);
+  setTimeout(() => t.remove(), 1800);
+}
+
+boot();

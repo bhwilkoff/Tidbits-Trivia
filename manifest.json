@@ -1,9 +1,13 @@
 {
-  "name": "App Name",
-  "short_name": "AppName",
-  "start_url": "/",
+  "name": "Tidbits Trivia",
+  "short_name": "Tidbits",
+  "description": "Trivia from the whole of Wikipedia.",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#FFFFFF",
-  "theme_color": "#0047FF",
-  "icons": []
+  "background_color": "#FBF3E4",
+  "theme_color": "#FBF3E4",
+  "icons": [
+    { "src": "assets/icon.png", "sizes": "1024x1024", "type": "image/png", "purpose": "any" }
+  ]
 }

@@ -7,7 +7,9 @@
 
 ## Current state
 
-- **Status**: iOS v1 single-player loop SHIPPING — playable end to end.
+- **Status**: iOS v1 SHIPPING (solo + daily + create + pass-and-play +
+  records/learning loop). **Web mirror SHIPPING** (same corpus + engine +
+  design; the canonical share-link target).
 - **Active milestone**: M1 (iOS single-player core), wrapping up.
 - **Platform set**: Web + iOS + iPadOS + tvOS + Android (Decision 020).
   tvOS earns its place — living-room trivia is lean-back (Decision 021).
@@ -107,3 +109,22 @@ an injected engine so solo and party share it. *Verified:* full party flow to
 scoreboard, party setup, home with new Party card + gear, icon compiled into
 the bundle — all on the iPhone 17 Pro sim. *Left:* round-2 features playable;
 launch screen still default white (polish TODO).
+
+**2026-06-16 (round 3)** — Added the spoiler-free Wordle-style emoji grid to
+results + share text (ROADMAP #1 retention loop) and a 3-card first-run
+onboarding (play/learn/compete). Verified on the sim.
+
+**2026-06-16 (round 4 — web mirror)** — *Did:* built the vanilla-JS web app
+(no framework, no build): `js/engine.js` (TemplateEngine/Scoring/SeededRNG
+mirror), `js/api.js` (corpus loader — fetch JSON, IndexedDB cache with a
+timeout guard — + Wikipedia client with `origin=*` CORS), `js/store.js`
+(categories/modes + records/streak/missed in localStorage), `js/app.js`
+(hash router + full game loop + all views), rewrote `css/styles.css` (90s
+sticker system, token parity), `index.html`, `manifest.json`, `sw.js`
+(offline shell + cached corpus). Added `tools/corpus/export_json.py` → bundled
+`assets/corpus.json` (8,889 Qs, 4.3MB / 0.7MB gzipped). *Verified:* headless
+Chrome — home + daily game render with design parity; fixed a real
+IndexedDB-hang bug (timeout race) surfaced by the headless test. *Left:* web
+SP loop playable; PARITY web column now ✅ for the SP feature set. iOS share
+text still says the placeholder "tidbits.trivia" — point it at the real web
+URL once a domain is chosen. Pass-and-play + onboarding not yet mirrored to web.

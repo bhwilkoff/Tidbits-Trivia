@@ -87,6 +87,7 @@ reached is ⏳ with a note, never silence.
 | Template engine + quality gates | ✅ js/engine.js | ✅ Swift | ✅ (shared Core) | ✅ Kotlin | Four mirrors of `tools/corpus/generate_corpus.py` |
 | Wikidata structured questions (the moat) | ✅ | ✅ | ✅ | ✅ | ~2,850 verified Qs in the shared corpus (Decision 024); gates 1/2/4/5 by construction |
 | Question TYPE variety (22 types) | ✅ | ✅ | ✅ | ✅ | 5 summary shapes + 17 Wikidata types: forward/reverse attribute, superlative, chronology, numeric closest-to, classification — all 4-option, so every platform renders them via the shared corpus (Decision 025) |
+| Deep article fact-extraction (fact:* types) | ⏳ | ⏳ | ⏳ | ⏳ | Engine built + verified (`tools/corpus/wiki_extract.py`, Decision 027); ships to all 4 on next corpus regen with `--facts-per-category` — build-time only, no client change |
 | Vandalism/NPOV gates 6/7 + human sampling 9 | 🔮 | 🔮 | 🔮 | 🔮 | Next corpus step (e.g. contested continent-of-country cases) |
 
 ---

@@ -110,7 +110,22 @@ The generator is a **candidate funnel, not a publisher.**
    - **Gate 5 (popularity)** — bounded domains (≈200 countries, 118 elements,
      ≈95 Best-Picture winners) are inherently famous.
 
-Still outstanding for both paths: gate 6 (vandalism/freshness cross-checks),
+3. **Deep article fact-extraction** (`template_id` `fact:*`, Decision 027) —
+   `tools/corpus/wiki_extract.py` parses the FULL article (infobox + lead + body)
+   into verifiable fact triples and quizzes the single-valued ones
+   (`fact:birth_year/death_year/directed_by/written_by/composed_by/painted_by/
+   nationality`). Gates hold by construction the same way the Wikidata path does:
+   - **Gate 1/6 (single answer)** — only single-valued relations become forward
+     MCQs; multi-valued/coordinated attributions ("written by X and Y") are dropped.
+   - **Gate 2 (distractor-correctness)** — distractors are category-pooled
+     type-matched siblings (a director never distracts a painter), so each is
+     definitionally wrong for this subject.
+   - **Gate 8 (verification)** — the infobox is the oracle; a prose number that
+     matches the infobox scores high, a mismatch is dropped.
+   The proprietary method (API surface, precision-first pipeline, reject funnel,
+   distractor recipe, sources) lives in the **`wikipedia-fact-extraction` skill**.
+
+Still outstanding for all paths: gate 6 (vandalism/freshness cross-checks),
 gate 7 (NPOV blocklist), gate 9 (human sampling), and adopting the structured
 path in the **live** runtime engine (today live is summary-based only).
 

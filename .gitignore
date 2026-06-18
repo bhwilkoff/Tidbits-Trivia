@@ -59,6 +59,10 @@ android/**/build/
 android/local.properties
 # gradle-wrapper.jar IS committed — needed for ./gradlew on first clone
 
+# Full-article fetch cache (transient, large, regenerable). The small
+# deterministic Wikidata datasets in cache/*.json ARE committed (instant regen).
+tools/corpus/cache/articles/
+
 # Android secrets — keystores + Firebase config out of git permanently
 android/keystore/
 *.jks

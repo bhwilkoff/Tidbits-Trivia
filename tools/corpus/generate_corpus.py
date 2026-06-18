@@ -14,6 +14,7 @@ Usage:
     python3 generate_corpus.py [--out PATH] [--per-category N] [--target N]
 """
 import argparse, json, re, sqlite3, sys, time, urllib.parse, urllib.request, random, threading
+import wiki_extract   # proprietary article fact extractor (see the skill)
 
 API = "https://en.wikipedia.org/w/api.php"
 UA = "TidbitsTrivia/1.0 (learning trivia app; contact ben@learningischange.com)"
@@ -487,7 +488,42 @@ def make_question(subject, pool, category, gi, rng):
                 subject["title"], subject.get("url") or "", shape)
     return None
 
-def build_category(category, seeds, per_category, used_titles=None):
+# --- Fact-based questions (the deep-extraction path; see wiki_extract) -------
+# Augments each category with VERIFIABLE fact MCQs mined from the full article
+# (birth/death year, director/writer/composer/painter, nationality). Distractors
+# are category-pooled type-matched siblings, so they're wrong by construction.
+# Bounded per category to keep the crawl polite; every article is cached.
+
+_FACT_EXPL = {
+    "birth_year": "{s} was born in {a}.", "death_year": "{s} died in {a}.",
+    "directed_by": "{s} was directed by {a}.", "written_by": "{s} was written by {a}.",
+    "composed_by": "{s} was composed by {a}.", "painted_by": "{s} was painted by {a}.",
+    "nationality": "{s} was {a}.",
+}
+
+def build_fact_questions(subjects, category, rng, limit):
+    pool = []
+    for s in subjects[:limit]:
+        art = wiki_extract.fetch_article(s["title"])
+        if art.get("extract"):
+            pool.append((art["title"], wiki_extract.extract_facts(art)))
+    rows = []
+    for m in wiki_extract.build_mcqs(pool, rng, category):
+        opts = m["options"]
+        if len(m["prompt"]) > 320 or _FOREIGN.search(m["prompt"]):
+            continue
+        if any(_FOREIGN.search(o) for o in opts):
+            continue
+        rel, subj = m["relation"], m["subject"]
+        expl = _FACT_EXPL.get(rel, "{s}: {a}.").format(s=display_title(subj), a=m["answer"])
+        qid = f"fact:{rel}:{subj}".replace(" ", "_")
+        rows.append((qid, m["prompt"], opts[0], opts[1], opts[2], opts[3],
+                     m["correct_index"], category, 3, expl,
+                     subj, m.get("source_url") or "", f"fact:{rel}"))
+    print(f"[{category}] {len(rows)} fact questions")
+    return rows
+
+def build_category(category, seeds, per_category, used_titles=None, facts_per_category=0):
     used_titles = used_titles if used_titles is not None else set()
     print(f"[{category}] searching…")
     titles = []
@@ -516,7 +552,10 @@ def build_category(category, seeds, per_category, used_titles=None):
             if q and q[0] not in ids:
                 ids.add(q[0])
                 rows.append(q)
-    print(f"[{category}] {len(rows)} questions")
+    print(f"[{category}] {len(rows)} summary questions")
+    if facts_per_category:
+        frng = random.Random((hash(category) ^ 0x9E3779B9) & 0xFFFFFFFF)
+        rows += build_fact_questions(usable, category, frng, facts_per_category)
     return rows
 
 def main():
@@ -524,12 +563,15 @@ def main():
     ap.add_argument("--out", default="../../TidbitsTrivia/Resources/corpus.sqlite")
     ap.add_argument("--per-category", type=int, default=1600)
     ap.add_argument("--target", type=int, default=10000)
+    ap.add_argument("--facts-per-category", type=int, default=0,
+                    help="full-article fact MCQs per category (0=off; ~150 is a good start). "
+                         "First run crawls full articles (cached); re-runs are instant.")
     args = ap.parse_args()
 
     all_rows = []
     used_titles = set()   # each subject lands in exactly one category
     for c, s in CATEGORY_SEEDS.items():
-        all_rows += build_category(c, s, args.per_category, used_titles)
+        all_rows += build_category(c, s, args.per_category, used_titles, args.facts_per_category)
 
     # De-dup globally by source title to avoid the same subject twice.
     seen_titles, deduped = set(), []
@@ -549,8 +591,8 @@ def main():
         option2 TEXT, option3 TEXT, correct_index INTEGER, category_id TEXT,
         difficulty INTEGER, explanation TEXT, source_title TEXT,
         source_url TEXT, template_id TEXT)""")
-    # Replace ONLY the summary-based questions; preserve the Wikidata moat
-    # rows (template_id 'wd:*') so we don't re-hit the rate-limited WDQS.
+    # Replace the summary AND fact rows (both produced by this run); preserve
+    # the Wikidata moat rows (template_id 'wd:*') so we don't re-hit WDQS.
     cur.execute("DELETE FROM questions WHERE template_id NOT LIKE 'wd:%'")
     cur.executemany(
         "INSERT OR IGNORE INTO questions VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", deduped)

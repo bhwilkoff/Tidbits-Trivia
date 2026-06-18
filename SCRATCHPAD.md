@@ -73,3 +73,19 @@ One-line-per-round; full detail in `ARCHIVE.md`.
   caching fixed (network-first + versioned + SW v2).
 - **2026-06-17** — prepped for first compaction: wrote `docs/HANDOFF.md`,
   archived the detailed log here-fileward, tightened this snapshot.
+- **2026-06-18** — **deep Wikipedia fact-extraction** (push for better Qs).
+  *Found:* summary path only ever parsed short-description + first sentence —
+  every summary Q was "name the thing from its definition." *Did:* 3 research
+  streams (API surface, QG/distractor literature, stdlib fact-extraction) →
+  new vendored skill `wikipedia-fact-extraction` (the proprietary method) →
+  new `tools/corpus/wiki_extract.py` (stdlib: infobox depth-scanner →
+  protect-then-split segmentation → appositive/relation/date triples →
+  coreference-safe stems → infobox-oracle verification → MCQ builder with
+  type-matched distractors) → wired into `generate_corpus.py
+  --facts-per-category N` (default 0). Verified end-to-end on real articles:
+  "Who directed The Godfather? → Coppola" etc., all answers correct,
+  distractors type-matched, the contradictory-multi-creator class gated out.
+  Decision 027; QUESTION-QUALITY §3rd path; PARITY row added. *Left:* engine
+  built+verified but NOT yet shipped to the corpus — next step is the deliberate
+  regen `generate_corpus.py --facts-per-category 150` (crawls 1 full article/
+  subject, cached) + version bump + Android asset re-sync.

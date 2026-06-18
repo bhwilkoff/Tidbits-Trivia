@@ -636,3 +636,44 @@ strip, same synonym fold, same drop-on-<3 rule. When adding a question shape,
 its distractors MUST go through `typed_distractors`. Prefer dropping a question
 over shipping a cross-type distractor. The Wikidata path (`wikidata.py`) is
 already typed-by-construction and is the model this extends.
+
+---
+
+## 027 — Deep article fact-extraction is a third corpus path (proprietary, stdlib)
+
+**Decision**: A new build-time path, `tools/corpus/wiki_extract.py`, parses the
+**full Wikipedia article** (infobox + lead + early body) into verifiable fact
+triples and turns the single-valued ones into 4-option MCQs
+(`fact:birth_year`, `fact:death_year`, `fact:directed_by`, `fact:written_by`,
+`fact:composed_by`, `fact:painted_by`, `fact:nationality`). It runs from
+`generate_corpus.py --facts-per-category N` (default 0 = off), is stdlib-only,
+and caches every article to `cache/articles/`. The method is captured in the
+vendored skill `wikipedia-fact-extraction` (the API surface, the precision-first
+pipeline, the reject funnel, the distractor recipe — synthesized from
+Heilman & Smith 2010, Seyler 2015/2017, Du & Cardie 2018, Susanti 2018, and the
+WikiTrivia / linkeddata-trivia recipes).
+
+**Why**: The summary path only ever saw the short description + first sentence —
+the entire factual surface was one definitional sentence, so every summary
+question was a variant of "name the thing from its definition." The article body
+holds the actual quizzable facts (who directed it, when they were born, what
+nationality). Extracting them is a **build-time** change: clients consume
+`corpus.sqlite` unchanged (the shared-data-plane contract), so all four
+platforms get richer questions with zero client work. Precision is the whole
+game — a wrong "fact" teaches something false — so the pipeline is precision-first:
+the infobox is the verification oracle (a prose `born 1867` that matches the
+infobox scores 0.9+; a mismatch drops the fact), every stage has a drop-exit, and
+**multi-valued / coordinated attributions are dropped** ("Who wrote X?" with two
+authors is ambiguous — the bug that made three contradictory "Who created
+Goodfellas?" questions until the gate was added).
+
+**How to apply**: read the `wikipedia-fact-extraction` skill before changing the
+extractor. Only single-valued relations become forward MCQs (gate 6). Distractors
+are category-pooled type-matched siblings (`_type_bucket` keeps a director from
+distracting a painter) — wrong by construction, same rule as Decision 026.
+Verify by running `python3 wiki_extract.py --mcq "Title" …` and reading the
+printout BEFORE regenerating (observe, don't iterate blind). The full corpus
+regen (`generate_corpus.py --facts-per-category 150`) crawls one full article per
+subject — heavy on first run, instant after (cached); bump the corpus version and
+re-sync the Android asset after. Live engines (`TemplateEngine.swift` etc.) stay
+summary-based — mirror only the *gates*, not the heavy extraction.

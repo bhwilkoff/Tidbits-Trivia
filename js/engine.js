@@ -74,8 +74,9 @@ const firstSentence = (t) => {
     if (ch === '(' || ch === '[') depth++;
     else if ((ch === ')' || ch === ']') && depth > 0) depth--;
     else if (ch === '.' && depth === 0 && s[i + 1] === ' ') {
-      const nxt2 = s[i + 2] || '';
-      if (nxt2 === '' || nxt2 === nxt2.toUpperCase() && /[A-Z“”"'‘’]/.test(nxt2)) {
+      let k = i + 1; while (k < s.length && s[k] === ' ') k++;   // skip a run of spaces
+      const nxt2 = s[k] || '';
+      if (nxt2 === '' || (nxt2 === nxt2.toUpperCase() && /[A-Z“”"'‘’]/.test(nxt2))) {
         let j = i - 1;
         while (j >= 0 && /[A-Za-z0-9.'\-]/.test(s[j])) j--;
         const tok = s.slice(j + 1, i);

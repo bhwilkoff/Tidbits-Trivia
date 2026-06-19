@@ -356,7 +356,9 @@ nonisolated struct TemplateEngine: Sendable {
             if ch == "(" || ch == "[" { depth += 1 }
             else if (ch == ")" || ch == "]") && depth > 0 { depth -= 1 }
             else if ch == "." && depth == 0 && i + 1 < t.count && t[i + 1] == " " {
-                let nxt2: Character? = i + 2 < t.count ? t[i + 2] : nil
+                var k = i + 1                       // skip a run of spaces ("Nigeria.  There")
+                while k < t.count && t[k] == " " { k += 1 }
+                let nxt2: Character? = k < t.count ? t[k] : nil
                 if nxt2 == nil || nxt2!.isUppercase || "“”\"'‘’".contains(nxt2!) {
                     var j = i - 1
                     while j >= 0, t[j].isLetter || t[j].isNumber || t[j] == "." || t[j] == "'" || t[j] == "-" { j -= 1 }

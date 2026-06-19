@@ -242,7 +242,10 @@ def first_sentence(text):
         elif ch in ")]" and depth > 0:
             depth -= 1
         elif ch == "." and depth == 0 and i + 1 < L and t[i + 1] == " ":
-            nxt2 = t[i + 2] if i + 2 < L else ""
+            k = i + 1                       # skip a RUN of spaces ("Nigeria.  There")
+            while k < L and t[k] == " ":
+                k += 1
+            nxt2 = t[k] if k < L else ""
             if nxt2 == "" or nxt2.isupper() or nxt2 in "“”\"'‘’":
                 j = i - 1
                 while j >= 0 and (t[j].isalnum() or t[j] in ".'’-"):

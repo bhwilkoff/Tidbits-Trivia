@@ -208,8 +208,10 @@ object TemplateEngine {
             if (ch == '(' || ch == '[') depth++
             else if ((ch == ')' || ch == ']') && depth > 0) depth--
             else if (ch == '.' && depth == 0 && i + 1 < s.length && s[i + 1] == ' ') {
-                val nxt2 = if (i + 2 < s.length) s[i + 2] else ' '
-                if (i + 2 >= s.length || nxt2.isUpperCase() || nxt2 in "“”\"'‘’") {
+                var k = i + 1                       // skip a run of spaces ("Nigeria.  There")
+                while (k < s.length && s[k] == ' ') k++
+                val nxt2 = if (k < s.length) s[k] else ' '
+                if (k >= s.length || nxt2.isUpperCase() || nxt2 in "“”\"'‘’") {
                     var j = i - 1
                     while (j >= 0 && (s[j].isLetterOrDigit() || s[j] == '.' || s[j] == '\'' || s[j] == '-')) j--
                     val tok = s.substring(j + 1, i)

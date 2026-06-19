@@ -462,25 +462,29 @@ _LEAD = re.compile(
     r"\s*(?:\([^)]*\))?\s+(?:was|is|were|are)\s+(?:a|an|the)\s+(?P<rest>.+)$")
 
 def reframe(sentence, subject):
-    """'NAME (dates) was an American actor known for X' → 'This American actor
-    known for X' — leads with the type, no leading blank, residual name redacted.
-    None when the sentence doesn't open by naming someone (cloze handles those)."""
+    """'NAME (dates) was an American actor known for X' → 'American actor known
+    for X' — the bare descriptive phrase (no leading 'This'/blank), residual name
+    redacted. The STEM supplies the natural framing ('Name this …', 'Which …?',
+    'Who is the …?'). None when the sentence doesn't open by naming someone."""
     m = _LEAD.match(sentence)
     if m:
-        return cap(blank_name("This " + m.group("rest").strip(), subject["title"]))
+        return blank_name(m.group("rest").strip(), subject["title"])
     return None
 
+# The clue is a bare descriptive phrase ("American actor best known for …");
+# the stem supplies natural framing. No "{clue} — what is it?" — that reads
+# strangely for a titled work ("This 2007 novel by Olga Tokarczuk — what is it?").
 STEMS = {
     "describe_person": [
-        "{clue} — who is this?",
-        "{clue}. Name this person.",
-        "{clue}. Who are they?",
-        "{clue} — who is being described?",
+        "This {clue} — who is this?",
+        "Name this {clue}.",
+        "Who is the {clue}?",
+        "Which {clue}?",
     ],
     "describe_thing": [
-        "{clue} — what is this?",
-        "{clue}. Name it.",
-        "{clue} — what is it?",
+        "Name this {clue}.",
+        "Which {clue}?",
+        "Name the {clue}.",
     ],
     "cloze": [
         "Fill in the blank: “{clue}”",

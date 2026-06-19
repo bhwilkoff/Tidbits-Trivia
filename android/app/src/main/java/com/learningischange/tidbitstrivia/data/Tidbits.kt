@@ -279,8 +279,8 @@ object TemplateEngine {
     // who/what. The old robotic framings + the "what kind of thing is X?"
     // categorize shape are gone (no human asks those).
     private val STEMS = mapOf(
-        "describe_person" to listOf("%s — who is this?", "%s. Name this person.", "%s. Who are they?", "%s — who is being described?"),
-        "describe_thing" to listOf("%s — what is this?", "%s. Name it.", "%s — what is it?"),
+        "describe_person" to listOf("This %s — who is this?", "Name this %s.", "Who is the %s?", "Which %s?"),
+        "describe_thing" to listOf("Name this %s.", "Which %s?", "Name the %s."),
         "cloze" to listOf("Fill in the blank: “%s”", "Complete it: “%s”", "Which name completes this? “%s”"),
     )
     private val SHAPE_ROTATION = listOf("describe", "cloze", "describe", "describe", "cloze")
@@ -405,8 +405,9 @@ object TemplateEngine {
         return out.replace(Regex("\\s{2,}"), " ").trim()
     }
     private fun reframe(sentence: String, title: String): String? {
+        // Bare descriptive phrase; the stem supplies the framing.
         val m = LEAD.find(sentence) ?: return null
-        return cap(blankName("This " + m.groupValues[2].trim(), title))
+        return blankName(m.groupValues[2].trim(), title)
     }
 
     // Returns (prompt, options, answer) or null if this subject can't fill the shape.

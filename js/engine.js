@@ -230,13 +230,14 @@ function firstN(text, n) {
 }
 
 function reframe(sentence, s) {
+  // Bare descriptive phrase ("American actor best known for …"); the stem frames it.
   const m = sentence.match(LEAD);
-  return m ? cap(blankName('This ' + m[2].trim(), s.title)) : null;
+  return m ? blankName(m[2].trim(), s.title) : null;
 }
 
 const STEMS = {
-  describe_person: ['%s — who is this?', '%s. Name this person.', '%s. Who are they?', '%s — who is being described?'],
-  describe_thing: ['%s — what is this?', '%s. Name it.', '%s — what is it?'],
+  describe_person: ['This %s — who is this?', 'Name this %s.', 'Who is the %s?', 'Which %s?'],
+  describe_thing: ['Name this %s.', 'Which %s?', 'Name the %s.'],
   cloze: ['Fill in the blank: “%s”', 'Complete it: “%s”', 'Which name completes this? “%s”'],
 };
 const SHAPE_ROTATION = ['describe', 'cloze', 'describe', 'describe', 'cloze'];

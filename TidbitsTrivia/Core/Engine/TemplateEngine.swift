@@ -30,15 +30,15 @@ nonisolated struct TemplateEngine: Sendable {
     // categorize shape are gone (no human asks those).
     static let stems: [String: [String]] = [
         "describe_person": [
-            "%@ — who is this?",
-            "%@. Name this person.",
-            "%@. Who are they?",
-            "%@ — who is being described?",
+            "This %@ — who is this?",
+            "Name this %@.",
+            "Who is the %@?",
+            "Which %@?",
         ],
         "describe_thing": [
-            "%@ — what is this?",
-            "%@. Name it.",
-            "%@ — what is it?",
+            "Name this %@.",
+            "Which %@?",
+            "Name the %@.",
         ],
         "cloze": [
             "Fill in the blank: \u{201C}%@\u{201D}",
@@ -185,10 +185,11 @@ nonisolated struct TemplateEngine: Sendable {
 
     static func reframe(_ sentence: String, title: String) -> String? {
         // Anchor on the LEADING proper-noun run (full birth name differs from title).
+        // Returns the bare descriptive phrase; the stem supplies the framing.
         let ns = sentence as NSString
         guard let m = leadRE.firstMatch(in: sentence, range: NSRange(location: 0, length: ns.length)) else { return nil }
         let rest = ns.substring(with: m.range(at: 2)).trimmingCharacters(in: .whitespaces)
-        return capitalize(blankName("This " + rest, title: title))
+        return blankName(rest, title: title)
     }
 
     // Blank ONLY the subject's name (title + content words) — not the leading

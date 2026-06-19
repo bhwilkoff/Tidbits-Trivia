@@ -182,8 +182,18 @@ question, only about a **recognizable** subject.
 
 | Shape | What it does | Phrasing | Answer / distractors |
 |---|---|---|---|
-| **describe** | Reframe the lead to "This {type} {distinguishing clue}", ask naturally | person → "…who is this?"; thing → "…what is this?" | title / typed-sibling titles |
+| **describe** | Reframe the lead to a **bare descriptive phrase** ("American actor best known for …"); the **stem** supplies natural framing | "Name this …", "Which …?", "Who is the …?", "This … — who is this?" | title / typed-sibling titles |
 | **cloze** | First sentence with the subject's name blanked | "Fill in the blank: …" | title / sibling titles |
+
+The clue carries **no baked-in "This"** and the stem never tacks on "— what is
+it?" — that reads strangely for a titled work ("This 2007 novel by Olga
+Tokarczuk — what is it?" → "Name this 2007 novel by Olga Tokarczuk."). People get
+"Who is the …?" framing, things get "Name this …" / "Which …?".
+
+**Spaced-repetition caveat (client):** the game weaves missed questions back in
+(QUESTION-QUALITY §F3). In a **single-category** game it must filter the review
+pool to that category — otherwise a missed Film & TV question surfaces in an
+Arts & Lit round with the wrong badge (`js/app.js`; mirror to native game loops).
 
 **Two hard gates** (both enforced in all four engines):
 1. **Fame floor** — intro extract ≥ 600 chars (a free notability proxy; obscure

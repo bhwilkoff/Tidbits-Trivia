@@ -8,6 +8,8 @@ build/
 DerivedData/
 *.xcuserdata/
 *.xcworkspace/xcuserdata/
+xcuserdata/
+*.xcuserstate
 *.moved-aside
 *.pbxuser
 *.perspectivev3

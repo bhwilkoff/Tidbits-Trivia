@@ -1,7 +1,9 @@
 {
+  "id": "/",
   "name": "Tidbits Trivia",
   "short_name": "Tidbits",
   "description": "Trivia from the whole of Wikipedia.",
+  "lang": "en",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

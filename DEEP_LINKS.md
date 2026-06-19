@@ -5,6 +5,12 @@ This doc is the contract. Pick the routes ONCE at project start;
 every web view, Apple `View`, and Android `composable(...)` reads
 from the same table.
 
+**Production domain: `https://tidbitstrivia.com`** (GitHub Pages, apex via
+`CNAME`). Custom scheme: `tidbits://`. Today Tidbits emits only the canonical
+site link (shared with every score) and reserves `/item/{id}` for sharable
+question/fact twins; it has **no accounts or OAuth**, so the profile / settings
+/ OAuth rows below are reserved patterns, wired only if those features land.
+
 ## URL shapes
 
 Pick path-prefix scoping (one path per resource type) — Android
@@ -13,18 +19,18 @@ prefix lists, and a flat structure makes the lists short.
 
 | Resource | URL shape | Owner |
 |---|---|---|
-| Public profile | `https://app.example.com/u/{username}` | Web renders; iOS + Android open the in-app view |
-| Single item detail | `https://app.example.com/item/{id}` | All platforms render in-app; web is the landing twin |
-| Settings deep entry | `https://app.example.com/settings/{section}` | All; web routes via `?view=settings&section=...` |
-| OAuth callback | `appname://oauth/callback?...` | Custom scheme only — never HTTPS (provider redirects break otherwise) |
+| Public profile | `https://tidbitstrivia.com/u/{username}` | Web renders; iOS + Android open the in-app view |
+| Single item detail | `https://tidbitstrivia.com/item/{id}` | All platforms render in-app; web is the landing twin |
+| Settings deep entry | `https://tidbitstrivia.com/settings/{section}` | All; web routes via `?view=settings&section=...` |
+| OAuth callback | `tidbits://oauth/callback?...` | Custom scheme only — never HTTPS (provider redirects break otherwise) |
 
 **Add a row to this table BEFORE adding a deep link in code.** New
 routes that aren't documented here become orphans the next time a
 platform adds support — discovery cost compounds.
 
 **The canonical-twin rule**: every custom-scheme link a native app
-emits (`appname://item/x`) has an HTTPS twin
-(`https://app.example.com/item/x`) that the WEB app renders — so a
+emits (`tidbits://item/x`) has an HTTPS twin
+(`https://tidbitstrivia.com/item/x`) that the WEB app renders — so a
 share always lands somewhere meaningful, even for recipients
 without the app. On a static host, a `404.html` forwarder that maps
 `/item/{id}` into the web app's router makes the twins real before
@@ -101,10 +107,10 @@ OAuth providers require a redirect URI. On mobile, that's ALWAYS a
 custom scheme — HTTPS redirects go through the system browser and
 break the back-to-app hop:
 
-- Android: `appname://oauth/callback` in the manifest; Custom Tabs
+- Android: `tidbits://oauth/callback` in the manifest; Custom Tabs
   handles the round trip.
 - iOS: same shape in `Info.plist` `CFBundleURLTypes`.
-- Web: `https://app.example.com/oauth/callback` — no special
+- Web: `https://tidbitstrivia.com/oauth/callback` — no special
   handling.
 - tvOS: avoid OAuth-in-browser entirely (there is no browser) —
   use Sign in with Apple natively, or a device-code flow if a

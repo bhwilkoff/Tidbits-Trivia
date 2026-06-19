@@ -1,0 +1,5 @@
+# Tidbits Trivia — https://tidbitstrivia.com
+User-agent: *
+Allow: /
+
+Sitemap: https://tidbitstrivia.com/sitemap.xml

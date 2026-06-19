@@ -1,8 +1,16 @@
 # /.well-known/ — universal links + app links verification
 
 Place verification files for native-app deep-link binding here.
-Served from your domain root by GitHub Pages (or whichever static
-host you use).
+Served from the domain root (**`https://tidbitstrivia.com/.well-known/…`**) by
+GitHub Pages — apex domain via the repo-root `CNAME`, with `.nojekyll` already
+present so these files aren't dropped.
+
+> **Status:** the AASA / assetlinks files are NOT committed yet — they require
+> the real Apple **TEAMID** + iOS **bundle ID** and the Android **package +
+> Play App Signing SHA-256**, which are finalized at first store submission
+> (see `store-submission-playbook`). Drop the two files in here at that point;
+> the templates below are ready to fill. Tidbits' reserved deep-link path is
+> `/item/*` (see `DEEP_LINKS.md`).
 
 ## iOS — `apple-app-site-association`
 
@@ -17,7 +25,7 @@ Path: `/.well-known/apple-app-site-association`
     "details": [
       {
         "appID": "TEAMID.com.example.appname",
-        "paths": [ "/u/*", "/card/*", "/deck/*" ]
+        "paths": [ "/item/*" ]
       }
     ]
   }

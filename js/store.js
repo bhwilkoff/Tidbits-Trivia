@@ -2,6 +2,15 @@
 // TriviaCategory / GameMode / RecordsStore. Records + streak live in
 // localStorage (the per-ecosystem sync island; sign-in sync is later).
 
+export const SITE_URL = 'https://tidbitstrivia.com';
+
+// Native-app promotion. Set a store URL when that app goes live; until then it
+// renders as "Coming soon" on the home screen. Keep in lockstep with releases.
+export const APP_STORES = [
+  { id: 'ios', label: 'App Store', sub: 'iPhone · iPad · Apple TV', url: null },
+  { id: 'android', label: 'Google Play', sub: 'Android phone & tablet', url: null },
+];
+
 export const POPS = ['#FF5C5C', '#2D5BFF', '#FFC93C', '#2FCB8A', '#8B5CF6', '#FF5DA2'];
 
 export const CATEGORIES = [

@@ -2,7 +2,7 @@
 // Apple AppStore + GameEngine + views. Vanilla JS, no framework, no build.
 
 import { Corpus, Wikipedia } from './api.js';
-import { Store, CATEGORIES, catColor, catById, MODES, dayKey } from './store.js';
+import { Store, CATEGORIES, catColor, catById, MODES, dayKey, APP_STORES } from './store.js';
 import { Scoring } from './engine.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -72,7 +72,22 @@ function viewHome() {
     <h2 class="section">Pick a mode</h2>
     <div class="chips" id="modes">${modes}</div>
     <h2 class="section">Choose a category</h2>
-    <div class="cat-grid">${cats}</div>`;
+    <div class="cat-grid">${cats}</div>
+    ${appsPromo()}`;
+}
+
+// Native-app promotion — appears at the foot of the scrollable home screen.
+// Store links flip on per-platform as each app ships (APP_STORES in store.js).
+function appsPromo() {
+  const card = (s) => s.url
+    ? `<a class="store-btn" href="${s.url}" target="_blank" rel="noopener"><b>${h(s.label)}</b><span class="muted">${h(s.sub)}</span></a>`
+    : `<div class="store-btn soon" aria-disabled="true"><b>${h(s.label)}</b><span class="muted">${h(s.sub)} · soon</span></div>`;
+  return `<section class="apps-promo">
+      <h2 class="section">Get Tidbits everywhere</h2>
+      <p class="muted">Same trivia, native on every screen — play online here anytime.</p>
+      <div class="store-row">${APP_STORES.map(card).join('')}</div>
+      <p class="apps-foot muted"><a href="/support.html">Support</a> · <a href="/privacy.html">Privacy</a> · tidbitstrivia.com</p>
+    </section>`;
 }
 
 let selectedMode = 'classic';

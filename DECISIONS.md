@@ -677,3 +677,32 @@ regen (`generate_corpus.py --facts-per-category 150`) crawls one full article pe
 subject — heavy on first run, instant after (cached); bump the corpus version and
 re-sync the Android asset after. Live engines (`TemplateEngine.swift` etc.) stay
 summary-based — mirror only the *gates*, not the heavy extraction.
+
+---
+
+## 028 — Canonical domain is tidbitstrivia.com (apex, GitHub Pages)
+
+**Decision**: The product's canonical home is **`https://tidbitstrivia.com`** —
+an apex custom domain served by GitHub Pages via the repo-root `CNAME`. All
+public URLs (web app, share links, social previews, deep-link HTTPS twins,
+`/.well-known/` verification) reference this domain. The custom scheme is
+`tidbits://`. Web share text already builds from `location.origin`, so it
+inherits the domain automatically.
+
+**Why**: A custom apex domain is a hard requirement, not branding polish —
+**iOS Universal Links / AASA do not verify from a project-pages subpath**
+(`user.github.io/repo/.well-known/…`), so app↔web deep links are impossible
+without it (see `DEEP_LINKS.md`). It's also the stable share/landing target for
+every native platform and the anchor for app promotion as the native apps ship.
+A stable origin matters for the PWA identity (`manifest.id`) and for
+social-preview caches (OG/Twitter), which key on the URL.
+
+**How to apply**: keep the `CNAME` file at repo root (one line, the apex — do
+not delete; GitHub Pages drops the custom domain if it vanishes). New public
+URLs use `https://tidbitstrivia.com`; never hardcode `*.github.io`. Social meta
+in `index.html` (`og:url`/`og:image`/canonical) and `sitemap.xml`/`robots.txt`
+all point at the domain. The AASA + `assetlinks.json` files are added to
+`/.well-known/` at first store submission (they need the real TEAMID / bundle /
+Play signing fingerprint — see `.well-known/README.md`). Native-app store links
+live in `APP_STORES` (`js/store.js`): null renders "Coming soon" on the home
+screen, a URL flips it live per platform at release.

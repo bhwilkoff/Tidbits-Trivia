@@ -176,7 +176,12 @@ class Game {
         const live = await Wikipedia.generate(topic, this.category.id, this.mode.count - qs.length);
         qs = qs.concat(live);
       }
-      qs = this._weave(qs, Store.dueReview(2));
+      // Spaced-repetition review: in a single-category game, only re-ask misses
+      // from THAT category — otherwise a missed Film & TV question gets woven
+      // into an Arts & Lit round and shows the wrong category badge.
+      let review = Store.dueReview(30);
+      if (this.category.id !== 'mixed') review = review.filter((q) => q.categoryID === this.category.id);
+      qs = this._weave(qs, review.slice(0, 2));
     }
     this.questions = (this.mode.count === 99 ? qs : qs.slice(0, this.mode.count));
     Store.markSeen(this.questions.map((q) => q.id));

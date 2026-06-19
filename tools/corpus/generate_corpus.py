@@ -118,11 +118,17 @@ _META_TITLE = re.compile(r"^(lists?|glossary|index|outline|comparison|timeline|c
 _META_DESC = re.compile(r"wikimedia (list|disambiguation)|list article|may refer to|disambiguation|"
                         r"\bglossary\b|topics referred to|index of|set index|lists of", re.I)
 
+# Fame floor: a subject is only fun to quiz if it's recognizable. The length of
+# the intro extract is a strong, free notability proxy — famous subjects have
+# multi-paragraph intros; obscure stubs ("X is an American actor.") are short.
+# This is the single biggest fix for "nobody has heard of this person" questions.
+_FAME_MIN_EXTRACT = 600
+
 def is_usable(s):
     d, e, t = s.get("description"), s.get("extract"), s.get("title", "")
     if not d or not (6 <= len(d) <= 90):
         return False
-    if not e or len(e) < 40:
+    if not e or len(e) < _FAME_MIN_EXTRACT:
         return False
     lt = t.lower()
     # Reject list / glossary / index / disambiguation "subjects" — they make
@@ -200,6 +206,22 @@ def redact(text, title):
     out = re.sub(r"\s{2,}", " ", out).strip()
     return out
 
+def blank_name(text, title):
+    """Blank ONLY occurrences of the subject's name (title + content words) —
+    NOT the leading-proper-noun-run heuristic redact() uses. For reframed clues
+    that already start 'This {type} …', so we don't blank a legit 'This American'."""
+    bare = re.sub(r"\s*\([^)]*\)", "", title).strip()
+    out = text
+    for needle in dict.fromkeys([title, bare]):
+        if needle:
+            out = re.sub(re.escape(needle), "—————", out, flags=re.IGNORECASE)
+    for w in re.findall(r"[A-Za-z][A-Za-z’'\-]{2,}", bare):
+        if w.lower() in _FUNCTION_WORDS:
+            continue
+        out = re.sub(rf"\b{re.escape(w)}(?:’s|'s|s|es)?\b", "—————", out, flags=re.IGNORECASE)
+    out = re.sub(r"—————(?:[\s,’'.\–\-]+(?:of|the|and|de|von|van)?\s*—————)+", "—————", out, flags=re.IGNORECASE)
+    return re.sub(r"\s{2,}", " ", out).strip()
+
 def display_title(t):
     return re.sub(r"\s*\([^)]*\)", "", t)
 
@@ -230,11 +252,11 @@ def first_sentence(text):
                 if not (letters and (len(letters) <= 1 or tok.lower().rstrip(".") in _ABBREV)):
                     return t[:i + 1]
         i += 1
-    # Depth-aware scan found no sentence end — usually an UNBALANCED paren in
-    # the source. Fall back to a plain split so we don't return the whole
-    # multi-paragraph article.
-    m = re.search(r"\.\s", t)
-    return (t[:m.start() + 1]) if m else t
+    # Scan found no interior sentence break → the text IS a single sentence;
+    # return it whole. (Don't fall back to a naive ". " split — that re-truncates
+    # at the very abbreviations the scan correctly skipped, e.g. "Mrs. Doubtfire".
+    # A pathological unbalanced-paren extract is caught by the downstream length gate.)
+    return t
 
 _LANG_RE = re.compile(r"\b(romaniz|pronounc|IPA|listen|lit\.|Russian|Greek|Latin|Arabic|"
                       r"Chinese|Japanese|Hebrew|Hindi|Persian|German|French|Spanish|Italian|"
@@ -269,8 +291,10 @@ def cap(c):
     return c[:1].upper() + c[1:] if c else c
 
 def difficulty(s):
+    # Above the fame floor (600), a longer intro = more famous = easier. Rescaled
+    # so the easy/medium/hard spread survives the floor instead of collapsing to "easy".
     n = len(s.get("extract") or "")
-    return 2 if n >= 600 else (3 if n >= 300 else 4)
+    return 2 if n >= 2000 else (3 if n >= 1000 else 4)
 
 # --- Distractor pickers (typed siblings; length-normalized for prose) ---
 
@@ -367,45 +391,113 @@ def desc_distractors(subject, pool, rng, k=3):
     correct = subject.get("description") or ""
     return _typed(subject, pool, rng, lambda c: c.get("description"), correct, length_match=len(correct), k=k)
 
-# --- Rotating stems (≤~1/N share each; categorize kept a minority) ---
+# --- "Describe & identify" — the bar-trivia shape ------------------------------
+# A good question LEADS WITH the distinguishing facts and asks a natural
+# "who/what is this?". The old robotic framings ("Which subject does this
+# describe?", "what is it?") and the categorize shape ("What kind of thing is
+# X?") are GONE — no human asks those. Two gates make these feel hand-written:
+#   (1) fame floor (is_usable) — the subject is recognizable, and
+#   (2) richness — the clue carries real distinguishing detail, never the bare
+#       "was an American actor".
+
+# Words that DON'T distinguish a subject — so they don't count toward richness.
+_TYPE_NOUNS = set("""actor actress singer musician composer songwriter rapper band
+writer author poet novelist playwright journalist artist painter sculptor director
+filmmaker producer scientist physicist chemist biologist mathematician astronomer
+economist politician philosopher activist explorer inventor architect dancer
+comedian footballer player athlete cyclist swimmer boxer golfer film movie
+television series show novel book album song single painting sculpture poem play
+opera symphony team club city town country river mountain lake dynasty empire""".split())
+_CLUE_GENERIC = (COMMON_WORDS | set(_TYPE_LEADING) | _TYPE_NOUNS
+                 | set(wiki_extract.NATIONALITIES)
+                 | set("this the a an was is were are best known famous noted also "
+                       "who which that based located near former".split()))
+
+_MONTHS = set("january february march april may june july august september october "
+              "november december".split())
+
+def informative_tokens(clue):
+    """Count distinguishing facts: proper nouns (works, places) + years. Strips
+    parentheticals first — a '(born December 18, 1963)' birth date is NOT a
+    quizzable clue (that's just birthday-guessing), and pronunciations/IPA are
+    noise. So '_____ (born 1963) is an American actor' scores 0 → dropped, while
+    '… known for his role as Tony Soprano in The Sopranos' stays rich."""
+    c = re.sub(r"\([^)]*\)", "", clue)
+    proper = {w.lower() for w in re.findall(r"\b[A-Z][A-Za-z'’\-]{2,}\b", c)
+              if w.lower() not in _CLUE_GENERIC and w.lower() not in _MONTHS}
+    years = set(re.findall(r"\b(?:1\d{3}|20\d{2})\b", c))
+    return len(proper) + len(years)
+
+# Person types ask "who"; everything else asks "what".
+_PERSON_FOLDED = {"actor", "musician", "writer", "scientist", "athlete", "director", "painter"}
+_PERSON_DESC = re.compile(r"\b(actor|actress|singer|musician|composer|songwriter|rapper|"
+                          r"writer|author|poet|novelist|playwright|journalist|artist|painter|"
+                          r"sculptor|director|filmmaker|producer|scientist|physicist|chemist|"
+                          r"biologist|mathematician|astronomer|economist|politician|philosopher|"
+                          r"activist|explorer|inventor|architect|dancer|comedian|footballer|"
+                          r"player|athlete|cyclist|swimmer|boxer|golfer|king|queen|emperor|"
+                          r"president|leader|general|monarch|saint)\b", re.I)
+def is_person(subject):
+    if type_key(subject) in _PERSON_FOLDED:
+        return True
+    if _PERSON_DESC.search(subject.get("description") or ""):
+        return True
+    return bool(re.search(r"\(\s*\d{3,4}\s*[–-]|\bborn\b", subject.get("extract") or ""))
+
+def _first_n(text, n):
+    out, rest = [], (text or "").strip()
+    for _ in range(n):
+        if not rest:
+            break
+        s = first_sentence(rest)
+        out.append(s.strip())
+        rest = rest[len(s):].lstrip()
+    return " ".join(out)
+
+# Anchor on the LEADING proper-noun run, not the article title — Wikipedia opens
+# with the full birth name ("Thomas Jeffrey Hanks"), which differs from the title
+# ("Tom Hanks"). Group 'name' = that run; 'rest' = everything after "was/is a/an".
+_LEAD = re.compile(
+    r"^\s*(?P<name>(?:[A-Z][\w’'.\-]*)(?:[ \-]+(?:of|the|and|de|von|van|al|da|di)?\s*[A-Z][\w’'.\-]*)*)"
+    r"\s*(?:\([^)]*\))?\s+(?:was|is|were|are)\s+(?:a|an|the)\s+(?P<rest>.+)$")
+
+def reframe(sentence, subject):
+    """'NAME (dates) was an American actor known for X' → 'This American actor
+    known for X' — leads with the type, no leading blank, residual name redacted.
+    None when the sentence doesn't open by naming someone (cloze handles those)."""
+    m = _LEAD.match(sentence)
+    if m:
+        return cap(blank_name("This " + m.group("rest").strip(), subject["title"]))
+    return None
 
 STEMS = {
-    "identify": [
-        'Which subject does this describe? “{clue}”',
-        'Name it — “{clue}”',
-        'What is being described here? “{clue}”',
-        'Identify the subject: “{clue}”',
-        'These clues point to one thing. What is it? “{clue}”',
-        'Guess the article: “{clue}”',
+    "describe_person": [
+        "{clue} — who is this?",
+        "{clue}. Name this person.",
+        "{clue}. Who are they?",
+        "{clue} — who is being described?",
     ],
-    "jeopardy": [
-        '{clue} — what is it?',
-        '{clue} Name the subject.',
-        '{clue} What are we describing?',
+    "describe_thing": [
+        "{clue} — what is this?",
+        "{clue}. Name it.",
+        "{clue} — what is it?",
     ],
     "cloze": [
-        'Fill in the blank: “{clue}”',
-        'Complete the sentence: “{clue}”',
-        'Which name completes this? “{clue}”',
-    ],
-    "categorize": [
-        'What kind of thing is {title}?',
-        'What is {title} best known as?',
-        'In a few words, what is {title}?',
-        'Which description fits {title}?',
+        "Fill in the blank: “{clue}”",
+        "Complete it: “{clue}”",
+        "Which name completes this? “{clue}”",
     ],
 }
-# 'oneliner' DROPPED — it asked "which one is '<description>'?", and the
-# description routinely contained the answer's own words (subject "Comedy
-# horror", desc "genre combining horror and comedy"). It is categorize inverted
-# with no redaction guarantee, so it can't be made non-leaking. Its slots go to
-# the redact-protected shapes.
-SHAPE_ROTATION = ["identify", "cloze", "jeopardy", "categorize", "identify",
-                  "cloze", "jeopardy", "identify", "categorize", "cloze"]
+SHAPE_ROTATION = ["describe", "cloze", "describe", "describe", "cloze"]
 
-def build_identify(subject, pool, stem, rng):
-    clue = redact(clean_clue(first_sentence(subject.get("extract") or subject.get("description"))), subject["title"])
-    if len(clue) < 25:
+def build_describe(subject, pool, stem, rng):
+    ext = subject.get("extract") or ""
+    clue = None
+    for nsent in (1, 2):   # escalate to 2 sentences if the first is too thin
+        c = reframe(clean_clue(_first_n(ext, nsent)), subject)
+        if c and len(c) >= 30 and informative_tokens(c) >= 2:
+            clue = c.rstrip(". ").strip(); break
+    if not clue:
         return None
     ds = title_distractors(subject, pool, rng)
     if len(ds) != 3:
@@ -413,71 +505,45 @@ def build_identify(subject, pool, stem, rng):
     ans = display_title(subject["title"])
     return stem.format(clue=clue), [ans] + ds, ans
 
-def build_jeopardy(subject, pool, stem, rng):
-    s = clean_clue(first_sentence(subject.get("extract") or ""))
-    if len(s) < 25:
-        return None
-    bare = display_title(subject["title"])
-    if s.lower().startswith(subject["title"].lower()):
-        clue = "This" + s[len(subject["title"]):]
-    elif s.lower().startswith(bare.lower()):
-        clue = "This" + s[len(bare):]
-    else:
-        clue = redact(s, subject["title"])
-    clue = cap(clue.strip())
-    ds = title_distractors(subject, pool, rng)
-    if len(ds) != 3:
-        return None
-    ans = bare
-    return stem.format(clue=clue), [ans] + ds, ans
-
 def build_cloze(subject, pool, stem, rng):
     s = clean_clue(first_sentence(subject.get("extract") or ""))
     bare = display_title(subject["title"])
     clozed = None
+    # Prefer blanking the title verbatim ("The 62nd Academy Awards were held…");
+    # otherwise blank the leading name run ("Thomas Jeffrey Hanks (born…) is…").
     for needle in (subject["title"], bare):
         if needle and needle.lower() in s.lower():
             clozed = re.sub(re.escape(needle), "_____", s, count=1, flags=re.IGNORECASE)
             break
-    if not clozed or len(clozed) < 25:
+    if not clozed:
+        m = _LEAD.match(s)
+        if m:
+            clozed = s[:m.start("name")] + "_____" + s[m.end("name"):]
+    if not clozed or len(clozed) < 30 or informative_tokens(clozed) < 2:
         return None
     ds = title_distractors(subject, pool, rng)
     if len(ds) != 3:
         return None
-    ans = bare
-    return stem.format(clue=clozed), [ans] + ds, ans
+    return stem.format(clue=clozed), [bare] + ds, bare
 
-def build_categorize(subject, pool, stem, rng):
-    correct = subject.get("description")
-    if not correct:
-        return None
-    ds = desc_distractors(subject, pool, rng)
-    if len(ds) != 3:
-        return None
-    ans = cap(correct)
-    return stem.format(title=display_title(subject["title"])), [ans] + [cap(d) for d in ds], ans
-
-BUILDERS = {"identify": build_identify, "jeopardy": build_jeopardy, "cloze": build_cloze,
-            "categorize": build_categorize}
+BUILDERS = {"describe": build_describe, "cloze": build_cloze}
 
 def make_question(subject, pool, category, gi, rng):
-    """Pick a shape by seeded round-robin (even distribution, capped stems);
-    fall through to the next shape if this subject can't fill it."""
+    """Seeded round-robin over the shapes; fall through if a subject can't fill
+    one. 'describe' picks person/thing phrasing, so we never ask 'what is it?'
+    of a human or 'who is this?' of a film."""
+    person = is_person(subject)
     n = len(SHAPE_ROTATION)
     for off in range(n):
         shape = SHAPE_ROTATION[(gi + off) % n]
-        stems = STEMS[shape]
-        stem = stems[(gi // n) % len(stems)]
+        bank = STEMS["describe_person" if person else "describe_thing"] if shape == "describe" else STEMS[shape]
+        stem = bank[(gi // n) % len(bank)]
         built = BUILDERS[shape](subject, pool, stem, rng)
         if not built:
             continue
         prompt, options, answer = built
-        # Hard gates: never ship a question that leaks the answer, still carries
-        # foreign script / math symbols (unreadable), or ballooned from an
-        # unbalanced-paren parse failure. Fall through to the next shape.
-        if shape in ("identify", "jeopardy", "cloze") and leaks(answer, prompt):
-            continue
-        if _FOREIGN.search(prompt) or len(prompt) > 320:
+        # Hard gates: never leak the answer, carry foreign script/math, or balloon.
+        if leaks(answer, prompt) or _FOREIGN.search(prompt) or len(prompt) > 320:
             continue
         opts = options[:]; rng.shuffle(opts)
         ci = opts.index(answer)
@@ -523,7 +589,8 @@ def build_fact_questions(subjects, category, rng, limit):
     print(f"[{category}] {len(rows)} fact questions")
     return rows
 
-def build_category(category, seeds, per_category, used_titles=None, facts_per_category=0):
+def build_category(category, seeds, per_category, used_titles=None, facts_per_category=0,
+                   facts_only=False):
     used_titles = used_titles if used_titles is not None else set()
     print(f"[{category}] searching…")
     titles = []
@@ -544,15 +611,17 @@ def build_category(category, seeds, per_category, used_titles=None, facts_per_ca
     rows, ids = [], set()
     # Two questions per subject, each a DIFFERENT shape via the running
     # rotation counter (gi) — spreads shapes + stems evenly across the corpus.
-    gi = 0
-    for subj in usable:
-        for _ in range(2):
-            q = make_question(subj, usable, category, gi, rng)
-            gi += 1
-            if q and q[0] not in ids:
-                ids.add(q[0])
-                rows.append(q)
-    print(f"[{category}] {len(rows)} summary questions")
+    # Skipped in facts-only mode (existing summary rows are preserved as-is).
+    if not facts_only:
+        gi = 0
+        for subj in usable:
+            for _ in range(2):
+                q = make_question(subj, usable, category, gi, rng)
+                gi += 1
+                if q and q[0] not in ids:
+                    ids.add(q[0])
+                    rows.append(q)
+        print(f"[{category}] {len(rows)} summary questions")
     if facts_per_category:
         frng = random.Random((hash(category) ^ 0x9E3779B9) & 0xFFFFFFFF)
         rows += build_fact_questions(usable, category, frng, facts_per_category)
@@ -566,12 +635,17 @@ def main():
     ap.add_argument("--facts-per-category", type=int, default=0,
                     help="full-article fact MCQs per category (0=off; ~150 is a good start). "
                          "First run crawls full articles (cached); re-runs are instant.")
+    ap.add_argument("--facts-only", action="store_true",
+                    help="ADD fact questions to the existing corpus without rebuilding "
+                         "summary rows or re-hitting WDQS. Purely additive (INSERT OR IGNORE); "
+                         "preserves the shipped summary/Wikidata rows. Use to ratchet up facts.")
     args = ap.parse_args()
 
     all_rows = []
     used_titles = set()   # each subject lands in exactly one category
     for c, s in CATEGORY_SEEDS.items():
-        all_rows += build_category(c, s, args.per_category, used_titles, args.facts_per_category)
+        all_rows += build_category(c, s, args.per_category, used_titles,
+                                   args.facts_per_category, args.facts_only)
 
     # De-dup globally by source title to avoid the same subject twice.
     seen_titles, deduped = set(), []
@@ -591,17 +665,28 @@ def main():
         option2 TEXT, option3 TEXT, correct_index INTEGER, category_id TEXT,
         difficulty INTEGER, explanation TEXT, source_title TEXT,
         source_url TEXT, template_id TEXT)""")
-    # Replace the summary AND fact rows (both produced by this run); preserve
-    # the Wikidata moat rows (template_id 'wd:*') so we don't re-hit WDQS.
-    cur.execute("DELETE FROM questions WHERE template_id NOT LIKE 'wd:%'")
-    cur.executemany(
-        "INSERT OR IGNORE INTO questions VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", deduped)
+    before = cur.execute("SELECT COUNT(*) FROM questions").fetchone()[0]
+    if args.facts_only:
+        # Purely additive: keep all existing rows, INSERT OR IGNORE only the new
+        # fact questions (deterministic qids → existing ones are skipped).
+        cur.executemany(
+            "INSERT OR IGNORE INTO questions VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", deduped)
+    else:
+        # Replace the summary AND fact rows (both produced by this run); preserve
+        # the Wikidata moat rows (template_id 'wd:*') so we don't re-hit WDQS.
+        cur.execute("DELETE FROM questions WHERE template_id NOT LIKE 'wd:%'")
+        cur.executemany(
+            "INSERT OR IGNORE INTO questions VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", deduped)
     cur.execute("CREATE INDEX IF NOT EXISTS idx_category ON questions(category_id)")
     conn.commit()
     n = cur.execute("SELECT COUNT(*) FROM questions").fetchone()[0]
     nwd = cur.execute("SELECT COUNT(*) FROM questions WHERE template_id LIKE 'wd:%'").fetchone()[0]
+    nfact = cur.execute("SELECT COUNT(*) FROM questions WHERE template_id LIKE 'fact:%'").fetchone()[0]
     conn.close()
-    print(f"Wrote {len(deduped)} summary questions; corpus now {n} ({nwd} Wikidata preserved).")
+    if args.facts_only:
+        print(f"Facts-only: corpus {before} → {n} (+{n - before} added); {nfact} fact, {nwd} Wikidata.")
+    else:
+        print(f"Wrote {len(deduped)} summary+fact questions; corpus now {n} ({nfact} fact, {nwd} Wikidata).")
 
 if __name__ == "__main__":
     main()

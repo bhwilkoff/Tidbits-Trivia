@@ -51,7 +51,9 @@ const isUsable = (s) => {
   if (s.type === 'disambiguation') return false;
   const d = s.description, e = s.extract;
   if (!d || d.length < 6 || d.length > 90) return false;
-  if (!e || e.length < 40) return false;
+  // Fame floor: a long intro is a strong, free notability proxy. Obscure stubs
+  // ("X is an American actor.") are short — and unfun to be quizzed on.
+  if (!e || e.length < 600) return false;
   const lt = (s.title || '').toLowerCase();
   if (lt.startsWith('list of') || lt.includes('(disambiguation)')) return false;
   if ((e || '').toLowerCase().includes('may refer to')) return false;
@@ -175,37 +177,81 @@ const titleDistractors = (s, pool, rnd) => typedDistractors(s, pool, rnd, (c) =>
 const descDistractors = (s, pool, rnd) => typedDistractors(s, pool, rnd, (c) => c.description, s.description, (s.description || '').length);
 
 function difficulty(s) {
+  // Above the fame floor (600), a longer intro = more famous = easier.
   const n = (s.extract || '').length;
-  return n >= 600 ? 2 : n >= 300 ? 3 : 4;
+  return n >= 2000 ? 2 : n >= 1000 ? 3 : 4;
 }
 
-// Rotating stems (%s = clue/title); categorize is a capped minority.
+// --- "Describe & identify" — the bar-trivia shape (mirror of generate_corpus.py)
+// Leads with the distinguishing facts, asks a natural "who/what is this?". The
+// old robotic framings + the "what kind of thing is X?" categorize shape are gone.
+const MONTHS = new Set('january february march april may june july august september october november december'.split(' '));
+const TYPE_NOUNS = new Set('actor actress singer musician composer songwriter rapper band writer author poet novelist playwright journalist artist painter sculptor director filmmaker producer scientist physicist chemist biologist mathematician astronomer economist politician philosopher activist explorer inventor architect dancer comedian footballer player athlete cyclist swimmer boxer golfer film movie television series show novel book album song single painting sculpture poem play opera symphony team club city town country river mountain lake dynasty empire'.split(' '));
+const NATIONALITIES = new Set('polish french american british english german italian russian japanese chinese spanish dutch canadian australian indian brazilian mexican swedish norwegian danish finnish greek roman egyptian persian turkish irish scottish welsh austrian swiss belgian portuguese hungarian czech romanian korean vietnamese thai argentine chilean colombian peruvian israeli iranian iraqi syrian lebanese moroccan nigerian kenyan ethiopian ukrainian serbian croatian bulgarian icelandic'.split(' '));
+const CLUE_GENERIC = new Set([...COMMON_WORDS, ...TYPE_LEADING, ...TYPE_NOUNS, ...NATIONALITIES,
+  ...'this the a an was is were are best known famous noted also who which that based located near former'.split(' ')]);
+
+function informativeTokens(clue) {
+  // Strip parentheticals first — a '(born 1963)' birth date is birthday-guessing,
+  // not a quizzable clue; pronunciations/IPA are noise.
+  const c = clue.replace(/\([^)]*\)/g, '');
+  const proper = new Set((c.match(/\b[A-Z][A-Za-z'’\-]{2,}\b/g) || []).map((w) => w.toLowerCase())
+    .filter((w) => !CLUE_GENERIC.has(w) && !MONTHS.has(w)));
+  const years = new Set(c.match(/\b(?:1\d{3}|20\d{2})\b/g) || []);
+  return proper.size + years.size;
+}
+
+const PERSON_FOLDED = new Set(['actor', 'musician', 'writer', 'scientist', 'athlete', 'director', 'painter']);
+const PERSON_DESC = /\b(actor|actress|singer|musician|composer|songwriter|rapper|writer|author|poet|novelist|playwright|journalist|artist|painter|sculptor|director|filmmaker|producer|scientist|physicist|chemist|biologist|mathematician|astronomer|economist|politician|philosopher|activist|explorer|inventor|architect|dancer|comedian|footballer|player|athlete|cyclist|swimmer|boxer|golfer|king|queen|emperor|president|leader|general|monarch|saint)\b/i;
+function isPerson(s) {
+  if (PERSON_FOLDED.has(typeKey(s))) return true;
+  if (PERSON_DESC.test(s.description || '')) return true;
+  return /\(\s*\d{3,4}\s*[–-]|\bborn\b/.test(s.extract || '');
+}
+
+// Leading proper-noun run (the full birth name, which differs from the title).
+const LEAD = /^\s*((?:[A-Z][\w’'.\-]*)(?:[ \-]+(?:of|the|and|de|von|van|al|da|di)?\s*[A-Z][\w’'.\-]*)*)\s*(?:\([^)]*\))?\s+(?:was|is|were|are)\s+(?:a|an|the)\s+(.+)$/;
+
+function blankName(text, title) {
+  const esc = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  let out = text; const bare = stripParens(title).trim();
+  for (const needle of new Set([title, bare])) if (needle) out = out.replace(new RegExp(esc(needle), 'gi'), '—————');
+  for (const w of bare.split(/[^A-Za-z’'\-]+/)) {
+    if (w.length < 3 || FUNCTION_WORDS.has(w.toLowerCase())) continue;
+    out = out.replace(new RegExp('\\b' + esc(w) + "(?:’s|'s|s|es)?\\b", 'gi'), '—————');
+  }
+  return out.replace(/—————(?:[\s,’'.\–\-]+(?:of|the|and)?\s*—————)+/gi, '—————').replace(/\s{2,}/g, ' ').trim();
+}
+
+function firstN(text, n) {
+  const out = []; let rest = (text || '').trim();
+  for (let k = 0; k < n && rest; k++) { const s = firstSentence(rest); out.push(s.trim()); rest = rest.slice(s.length).trimStart(); }
+  return out.join(' ');
+}
+
+function reframe(sentence, s) {
+  const m = sentence.match(LEAD);
+  return m ? cap(blankName('This ' + m[2].trim(), s.title)) : null;
+}
+
 const STEMS = {
-  identify: ['Which subject does this describe? “%s”', 'Name it — “%s”', 'What is being described here? “%s”', 'Identify the subject: “%s”', 'These clues point to one thing. What is it? “%s”', 'Guess the article: “%s”'],
-  jeopardy: ['%s — what is it?', '%s Name the subject.', '%s What are we describing?'],
-  cloze: ['Fill in the blank: “%s”', 'Complete the sentence: “%s”', 'Which name completes this? “%s”'],
-  categorize: ['What kind of thing is %s?', 'What is %s best known as?', 'In a few words, what is %s?', 'Which description fits %s?'],
+  describe_person: ['%s — who is this?', '%s. Name this person.', '%s. Who are they?', '%s — who is being described?'],
+  describe_thing: ['%s — what is this?', '%s. Name it.', '%s — what is it?'],
+  cloze: ['Fill in the blank: “%s”', 'Complete it: “%s”', 'Which name completes this? “%s”'],
 };
-// 'oneliner' dropped — description-as-clue routinely leaked the answer's words.
-const SHAPE_ROTATION = ['identify', 'cloze', 'jeopardy', 'categorize', 'identify', 'cloze', 'jeopardy', 'identify', 'categorize', 'cloze'];
+const SHAPE_ROTATION = ['describe', 'cloze', 'describe', 'describe', 'cloze'];
 
 function buildShape(shape, s, pool, stem, rnd) {
   const fmt = (v) => stem.replace('%s', v);
-  if (shape === 'identify') {
-    const clue = redact(cleanClue(firstSentence(s.extract || s.description)), s.title);
-    if (clue.length < 25) return null;
+  if (shape === 'describe') {
+    let clue = null;
+    for (const nsent of [1, 2]) {   // escalate to 2 sentences if the first is too thin
+      const c = reframe(cleanClue(firstN(s.extract || '', nsent)), s);
+      if (c && c.length >= 30 && informativeTokens(c) >= 2) { clue = c.replace(/[.\s]+$/, '').trim(); break; }
+    }
+    if (!clue) return null;
     const ds = titleDistractors(s, pool, rnd); if (ds.length !== 3) return null;
     const ans = stripParens(s.title); return { prompt: fmt(clue), options: [ans, ...ds], answer: ans };
-  }
-  if (shape === 'jeopardy') {
-    const sent = cleanClue(firstSentence(s.extract || '')); if (sent.length < 25) return null;
-    const bare = stripParens(s.title); let clue;
-    if (sent.toLowerCase().startsWith(s.title.toLowerCase())) clue = 'This' + sent.slice(s.title.length);
-    else if (sent.toLowerCase().startsWith(bare.toLowerCase())) clue = 'This' + sent.slice(bare.length);
-    else clue = redact(sent, s.title);
-    clue = cap(clue.trim());
-    const ds = titleDistractors(s, pool, rnd); if (ds.length !== 3) return null;
-    return { prompt: fmt(clue), options: [bare, ...ds], answer: bare };
   }
   if (shape === 'cloze') {
     const sent = cleanClue(firstSentence(s.extract || '')); const bare = stripParens(s.title); let clozed = null;
@@ -214,14 +260,10 @@ function buildShape(shape, s, pool, stem, rnd) {
         clozed = sent.replace(new RegExp(needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'), '_____'); break;
       }
     }
-    if (!clozed || clozed.length < 25) return null;
+    if (!clozed) { const m = sent.match(LEAD); if (m) { const i = sent.indexOf(m[1]); clozed = sent.slice(0, i) + '_____' + sent.slice(i + m[1].length); } }
+    if (!clozed || clozed.length < 30 || informativeTokens(clozed) < 2) return null;
     const ds = titleDistractors(s, pool, rnd); if (ds.length !== 3) return null;
     return { prompt: fmt(clozed), options: [bare, ...ds], answer: bare };
-  }
-  if (shape === 'categorize') {
-    if (!s.description) return null;
-    const ds = descDistractors(s, pool, rnd); if (ds.length !== 3) return null;
-    const ans = cap(s.description); return { prompt: fmt(stripParens(s.title)), options: [ans, ...ds.map(cap)], answer: ans };
   }
   return null;
 }
@@ -236,14 +278,15 @@ export function makeQuestions(pool, categoryID, count, seed) {
   const n = SHAPE_ROTATION.length;
   for (const s of subjects) {
     if (out.length >= count) break;
+    const person = isPerson(s);
     for (let off = 0; off < n; off++) {
       const shape = SHAPE_ROTATION[(gi + off) % n];
-      const bank = STEMS[shape];
+      const bank = shape === 'describe' ? (person ? STEMS.describe_person : STEMS.describe_thing) : STEMS[shape];
       const stem = bank[Math.floor(gi / n) % bank.length];
       const built = buildShape(shape, s, usable, stem, rnd);
       if (built) {
-        // Never ship a redacted question whose answer leaks into the prompt.
-        if (['identify', 'jeopardy', 'cloze'].includes(shape) && leaks(built.answer, built.prompt)) continue;
+        // Never ship a question whose answer leaks into the prompt.
+        if (leaks(built.answer, built.prompt)) continue;
         if (built.prompt.length > 320 || /[Ͱ-ϿЀ-ӿ֐-ۿ぀-ヿ一-鿿가-힯∀-⋿⟨-⟯]/.test(built.prompt)) continue;
         const options = shuffle(built.options, rnd);
         out.push({

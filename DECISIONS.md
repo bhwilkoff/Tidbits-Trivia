@@ -706,3 +706,40 @@ all point at the domain. The AASA + `assetlinks.json` files are added to
 Play signing fingerprint — see `.well-known/README.md`). Native-app store links
 live in `APP_STORES` (`js/store.js`): null renders "Coming soon" on the home
 screen, a URL flips it live per platform at release.
+
+---
+
+## 029 — Summary questions are "describe & identify", fame-gated and content-gated
+
+**Decision**: The free-text/summary path produces exactly two shapes — **describe**
+("This Australian actor who won a posthumous Oscar for the Joker in The Dark Knight
+— who is this?") and **cloze** — and nothing else. The old `identify` / `jeopardy`
+/ `categorize` shapes are deleted. Two hard gates apply in all four engines
+(`generate_corpus.py` + the three live mirrors):
+1. **Fame floor** — the intro extract must be ≥ 600 chars (a free notability
+   proxy; obscure stubs are short).
+2. **Richness** — after stripping parenthetical dates, the clue must carry ≥ 2
+   distinguishing tokens (proper nouns / years). A bare "American actor" or a
+   "(born 1963)" birthdate scores 0 and is dropped.
+The `describe` shape anchors on the **leading proper-noun run** (the full birth
+name, which differs from the title — "Thomas Jeffrey Hanks" vs "Tom Hanks"),
+reframes it to "This {type} {distinguishing clause}", and asks **who** (people)
+or **what** (things) — never "what is it?" of a person. `difficulty` rescaled to
+the new floor (≥2000 easy / ≥1000 medium).
+
+**Why**: Real users called the old output out — "————— was an American actor.
+What is it?" with four obscure names, and "What kind of thing is 62nd Academy
+Awards?". Those fail as trivia three ways: the subject is unknown, the clue
+carries no distinguishing fact, and the framing ("what kind of thing", "what is
+it?", "which subject is this?") is something **no human asks**. The goal is a
+question a host would read on bar trivia night: lead with the interesting facts,
+ask a natural question, and only about a recognizable subject. Fewer, better
+beats many, weak — the fame + richness gates intentionally shrink the summary
+count; the fact (Decision 027) and Wikidata (024) paths carry verifiable depth.
+
+**How to apply**: the gates + shapes live in `tools/corpus/generate_corpus.py`
+and are mirrored verbatim in `js/engine.js`, `TemplateEngine.swift`, and
+`Tidbits.kt` (the live "Create a quiz" path) — change all four together. The
+`reframe` anchor must stay on the leading name run, not the title (the full-
+birth-name mismatch silently drops every famous subject otherwise). Drop a
+question rather than ship a thin clue. Verify shape output before regenerating.

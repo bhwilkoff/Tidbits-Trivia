@@ -188,7 +188,9 @@ object TemplateEngine {
     private fun usable(s: Wikipedia.Summary): Boolean {
         val d = s.description; val e = s.extract
         if (d == null || d.length < 6 || d.length > 90) return false
-        if (e == null || e.length < 40) return false
+        // Fame floor: a long intro is a strong, free notability proxy. Obscure
+        // stubs ("X is an American actor.") are short — and unfun to be quizzed on.
+        if (e == null || e.length < 600) return false
         val lt = s.title.lowercase()
         if (lt.startsWith("list of") || lt.contains("(disambiguation)")) return false
         if ((e).lowercase().contains("may refer to")) return false
@@ -273,15 +275,15 @@ object TemplateEngine {
         return out.replace(Regex("\\s{2,}"), " ").replace(" ,", ",").replace(" .", ".").trim()
     }
 
-    // Rotating stems ("%s" = clue/title); categorize kept a minority.
+    // "Describe & identify" — leads with the distinguishing facts, asks a natural
+    // who/what. The old robotic framings + the "what kind of thing is X?"
+    // categorize shape are gone (no human asks those).
     private val STEMS = mapOf(
-        "identify" to listOf("Which subject does this describe? “%s”", "Name it — “%s”", "What is being described here? “%s”", "Identify the subject: “%s”", "These clues point to one thing. What is it? “%s”", "Guess the article: “%s”"),
-        "jeopardy" to listOf("%s — what is it?", "%s Name the subject.", "%s What are we describing?"),
-        "cloze" to listOf("Fill in the blank: “%s”", "Complete the sentence: “%s”", "Which name completes this? “%s”"),
-        "categorize" to listOf("What kind of thing is %s?", "What is %s best known as?", "In a few words, what is %s?", "Which description fits %s?"),
+        "describe_person" to listOf("%s — who is this?", "%s. Name this person.", "%s. Who are they?", "%s — who is being described?"),
+        "describe_thing" to listOf("%s — what is this?", "%s. Name it.", "%s — what is it?"),
+        "cloze" to listOf("Fill in the blank: “%s”", "Complete it: “%s”", "Which name completes this? “%s”"),
     )
-    // 'oneliner' dropped — description-as-clue routinely leaked the answer's words.
-    private val SHAPE_ROTATION = listOf("identify", "cloze", "jeopardy", "categorize", "identify", "cloze", "jeopardy", "identify", "categorize", "cloze")
+    private val SHAPE_ROTATION = listOf("describe", "cloze", "describe", "describe", "cloze")
 
     fun make(pool: List<Wikipedia.Summary>, categoryId: String, count: Int, seed: Long): List<Question> {
         val usableList = pool.filter { usable(it) }
@@ -293,14 +295,15 @@ object TemplateEngine {
         val n = SHAPE_ROTATION.size
         for (s in subjects) {
             if (out.size >= count) break
+            val person = isPerson(s)
             for (off in 0 until n) {
                 val shape = SHAPE_ROTATION[(gi + off) % n]
-                val bank = STEMS[shape]!!
+                val bank = if (shape == "describe") (if (person) STEMS["describe_person"]!! else STEMS["describe_thing"]!!) else STEMS[shape]!!
                 val stem = bank[(gi / n) % bank.size]
                 val built = buildShape(shape, s, usableList, stem, rng)
                 if (built != null) {
-                    // Never ship a redacted question whose answer leaks into the prompt.
-                    if (shape in setOf("identify", "jeopardy", "cloze") && leaks(built.third, built.first)) continue
+                    // Never ship a question whose answer leaks into the prompt.
+                    if (leaks(built.third, built.first)) continue
                     if (built.first.length > 320 || built.first.any { val n = it.code
                             (n in 0x0370..0x06FF) || (n in 0x3040..0x9FFF) || (n in 0xAC00..0xD7AF) || (n in 0x2200..0x22FF) || (n in 0x27E8..0x27EF) }) continue
                     val options = built.second.shuffledWith(rng)
@@ -355,26 +358,71 @@ object TemplateEngine {
     private fun descDistractors(s: Wikipedia.Summary, pool: List<Wikipedia.Summary>, rng: SeededRng) =
         typedDistractors(s, pool, rng, { it.description }, s.description ?: "", (s.description ?: "").length)
 
+    // --- Describe-shape helpers (mirror of generate_corpus.py) ---
+    private val MONTHS = "january february march april may june july august september october november december".split(" ").toSet()
+    private val TYPE_NOUNS = "actor actress singer musician composer songwriter rapper band writer author poet novelist playwright journalist artist painter sculptor director filmmaker producer scientist physicist chemist biologist mathematician astronomer economist politician philosopher activist explorer inventor architect dancer comedian footballer player athlete cyclist swimmer boxer golfer film movie television series show novel book album song single painting sculpture poem play opera symphony team club city town country river mountain lake dynasty empire".split(" ").toSet()
+    private val NATIONALITIES = "polish french american british english german italian russian japanese chinese spanish dutch canadian australian indian brazilian mexican swedish norwegian danish finnish greek roman egyptian persian turkish irish scottish welsh austrian swiss belgian portuguese hungarian czech romanian korean vietnamese thai argentine chilean colombian peruvian israeli iranian iraqi syrian lebanese moroccan nigerian kenyan ethiopian ukrainian serbian croatian bulgarian icelandic".split(" ").toSet()
+    private val CLUE_GENERIC = COMMON_WORDS + TYPE_LEADING + TYPE_NOUNS + NATIONALITIES +
+        "this the a an was is were are best known famous noted also who which that based located near former".split(" ").toSet()
+    private val LEAD = Regex("^\\s*((?:[A-Z][\\w’'.\\-]*)(?:[ \\-]+(?:of|the|and|de|von|van|al|da|di)?\\s*[A-Z][\\w’'.\\-]*)*)\\s*(?:\\([^)]*\\))?\\s+(?:was|is|were|are)\\s+(?:a|an|the)\\s+(.+)$")
+    private val PROPER = Regex("\\b[A-Z][A-Za-z’'\\-]{2,}\\b")
+    private val YEAR_RE = Regex("\\b(?:1\\d{3}|20\\d{2})\\b")
+    private val PERSON_FOLDED = setOf("actor", "musician", "writer", "scientist", "athlete", "director", "painter")
+    private val PERSON_DESC = Regex("\\b(actor|actress|singer|musician|composer|songwriter|rapper|writer|author|poet|novelist|playwright|journalist|artist|painter|sculptor|director|filmmaker|producer|scientist|physicist|chemist|biologist|mathematician|astronomer|economist|politician|philosopher|activist|explorer|inventor|architect|dancer|comedian|footballer|player|athlete|cyclist|swimmer|boxer|golfer|king|queen|emperor|president|leader|general|monarch|saint)\\b", RegexOption.IGNORE_CASE)
+    private val LIFE_OR_BORN = Regex("\\(\\s*\\d{3,4}\\s*[–-]|\\bborn\\b")
+
+    private fun informativeTokens(clue: String): Int {
+        // Strip parentheticals — a "(born 1963)" date is birthday-guessing, not a
+        // quizzable clue; pronunciations/IPA are noise.
+        val c = clue.replace(Regex("\\([^)]*\\)"), "")
+        val proper = PROPER.findAll(c).map { it.value.lowercase() }.filter { it !in CLUE_GENERIC && it !in MONTHS }.toSet()
+        val years = YEAR_RE.findAll(c).map { it.value }.toSet()
+        return proper.size + years.size
+    }
+    private fun isPerson(s: Wikipedia.Summary): Boolean {
+        if (typeKey(s) in PERSON_FOLDED) return true
+        if (PERSON_DESC.containsMatchIn(s.description ?: "")) return true
+        return LIFE_OR_BORN.containsMatchIn(s.extract ?: "")
+    }
+    private fun firstN(text: String, n: Int): String {
+        val parts = mutableListOf<String>(); var rest = text.trim()
+        for (k in 0 until n) {
+            if (rest.isEmpty()) break
+            val sent = firstSentence(rest)
+            parts.add(sent.trim()); rest = rest.substring(sent.length).trim()
+        }
+        return parts.joinToString(" ")
+    }
+    // Blank ONLY the subject's name (not the leading-run heuristic redact uses).
+    private fun blankName(text: String, title: String): String {
+        var out = text; val bare = stripParens(title).trim()
+        for (nd in setOf(title, bare)) if (nd.isNotEmpty()) out = out.replace(Regex(Regex.escape(nd), RegexOption.IGNORE_CASE), "—————")
+        for (w in bare.split(Regex("[^A-Za-z’'\\-]+"))) {
+            if (w.length < 3 || w.lowercase() in FUNCTION_WORDS) continue
+            out = out.replace(Regex("\\b" + Regex.escape(w) + "(?:’s|'s|s|es)?\\b", RegexOption.IGNORE_CASE), "—————")
+        }
+        out = Regex("—————(?:[\\s,’'.\\–\\-]+(?:of|the|and)?\\s*—————)+", RegexOption.IGNORE_CASE).replace(out, "—————")
+        return out.replace(Regex("\\s{2,}"), " ").trim()
+    }
+    private fun reframe(sentence: String, title: String): String? {
+        val m = LEAD.find(sentence) ?: return null
+        return cap(blankName("This " + m.groupValues[2].trim(), title))
+    }
+
     // Returns (prompt, options, answer) or null if this subject can't fill the shape.
     private fun buildShape(shape: String, s: Wikipedia.Summary, pool: List<Wikipedia.Summary>, stem: String, rng: SeededRng): Triple<String, List<String>, String>? {
         when (shape) {
-            "identify" -> {
-                val clue = redact(cleanClue(firstSentence(s.extract ?: s.description ?: "")), s.title)
-                if (clue.length < 25) return null
+            "describe" -> {
+                var clue: String? = null
+                for (nsent in listOf(1, 2)) {   // escalate to 2 sentences if the first is too thin
+                    val c = reframe(cleanClue(firstN(s.extract ?: "", nsent)), s.title)
+                    if (c != null && c.length >= 30 && informativeTokens(c) >= 2) {
+                        clue = c.replace(Regex("[.\\s]+$"), "").trim(); break
+                    }
+                }
+                if (clue == null) return null
                 val ds = titleDistractors(s, pool, rng); if (ds.size != 3) return null
                 val ans = stripParens(s.title); return Triple(stem.format(clue), listOf(ans) + ds, ans)
-            }
-            "jeopardy" -> {
-                val sent = cleanClue(firstSentence(s.extract ?: "")); if (sent.length < 25) return null
-                val bare = stripParens(s.title)
-                var clue = when {
-                    sent.lowercase().startsWith(s.title.lowercase()) -> "This" + sent.substring(s.title.length)
-                    sent.lowercase().startsWith(bare.lowercase()) -> "This" + sent.substring(bare.length)
-                    else -> redact(sent, s.title)
-                }
-                clue = cap(clue.trim())
-                val ds = titleDistractors(s, pool, rng); if (ds.size != 3) return null
-                return Triple(stem.format(clue), listOf(bare) + ds, bare)
             }
             "cloze" -> {
                 val sent = cleanClue(firstSentence(s.extract ?: "")); val bare = stripParens(s.title); var clozed: String? = null
@@ -383,14 +431,13 @@ object TemplateEngine {
                         clozed = sent.replaceFirst(Regex(Regex.escape(needle), RegexOption.IGNORE_CASE), "_____"); break
                     }
                 }
-                if (clozed == null || clozed.length < 25) return null
+                if (clozed == null) {   // full birth name differs from title → blank the leading name run
+                    val m = LEAD.find(sent)
+                    if (m != null) { val r = m.groups[1]!!.range; clozed = sent.substring(0, r.first) + "_____" + sent.substring(r.last + 1) }
+                }
+                if (clozed == null || clozed.length < 30 || informativeTokens(clozed) < 2) return null
                 val ds = titleDistractors(s, pool, rng); if (ds.size != 3) return null
                 return Triple(stem.format(clozed), listOf(bare) + ds, bare)
-            }
-            "categorize" -> {
-                val correct = s.description ?: return null
-                val ds = descDistractors(s, pool, rng); if (ds.size != 3) return null
-                val ans = cap(correct); return Triple(stem.format(stripParens(s.title)), listOf(ans) + ds.map { cap(it) }, ans)
             }
         }
         return null

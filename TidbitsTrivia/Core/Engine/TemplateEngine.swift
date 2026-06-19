@@ -1,12 +1,12 @@
 import Foundation
 
 /// Turns Wikipedia article summaries into trivia questions. The product's
-/// moat is the FILTER, not the fetch. v2 rotates among FIVE question shapes
-/// (identify / Jeopardy-inversion / cloze / categorize / one-liner) with a
-/// bank of stems so no single phrasing dominates ("best described" is now a
-/// capped minority), and normalizes distractor surface form so the answer
-/// can't be guessed from how options are written. Mirrors
-/// `tools/corpus/generate_corpus.py` (Decision 019).
+/// moat is the FILTER, not the fetch. v3 produces natural "describe & identify"
+/// questions — lead with the distinguishing facts, ask a natural who/what — plus
+/// a cloze variety, gated by a fame floor + a richness check so we never ship an
+/// obscure subject or a content-free clue. The old robotic framings and the
+/// "what kind of thing is X?" categorize shape are gone. Mirrors
+/// `tools/corpus/generate_corpus.py` (Decisions 019/029).
 nonisolated struct TemplateEngine: Sendable {
 
     // MARK: Quality gates
@@ -14,7 +14,9 @@ nonisolated struct TemplateEngine: Sendable {
     static func isUsable(_ s: WikipediaClient.Summary) -> Bool {
         guard s.type != "disambiguation" else { return false }
         guard let d = s.description, d.count >= 6, d.count <= 90 else { return false }
-        guard let e = s.extract, e.count >= 40 else { return false }
+        // Fame floor: a long intro is a strong, free notability proxy. Obscure
+        // stubs ("X is an American actor.") are short — and unfun to be quizzed on.
+        guard let e = s.extract, e.count >= 600 else { return false }
         let lowerTitle = s.title.lowercased()
         if lowerTitle.hasPrefix("list of") || lowerTitle.contains("(disambiguation)") { return false }
         if (e).lowercased().contains("may refer to") { return false }
@@ -23,35 +25,28 @@ nonisolated struct TemplateEngine: Sendable {
 
     // MARK: Rotating stems (≤ ~1/N share each; categorize a minority)
 
+    // "Describe & identify" — leads with distinguishing facts, asks a natural
+    // who/what. The old robotic framings + the "what kind of thing is X?"
+    // categorize shape are gone (no human asks those).
     static let stems: [String: [String]] = [
-        "identify": [
-            "Which subject does this describe? \u{201C}%@\u{201D}",
-            "Name it — \u{201C}%@\u{201D}",
-            "What is being described here? \u{201C}%@\u{201D}",
-            "Identify the subject: \u{201C}%@\u{201D}",
-            "These clues point to one thing. What is it? \u{201C}%@\u{201D}",
-            "Guess the article: \u{201C}%@\u{201D}",
+        "describe_person": [
+            "%@ — who is this?",
+            "%@. Name this person.",
+            "%@. Who are they?",
+            "%@ — who is being described?",
         ],
-        "jeopardy": [
+        "describe_thing": [
+            "%@ — what is this?",
+            "%@. Name it.",
             "%@ — what is it?",
-            "%@ Name the subject.",
-            "%@ What are we describing?",
         ],
         "cloze": [
             "Fill in the blank: \u{201C}%@\u{201D}",
-            "Complete the sentence: \u{201C}%@\u{201D}",
+            "Complete it: \u{201C}%@\u{201D}",
             "Which name completes this? \u{201C}%@\u{201D}",
         ],
-        "categorize": [
-            "What kind of thing is %@?",
-            "What is %@ best known as?",
-            "In a few words, what is %@?",
-            "Which description fits %@?",
-        ],
     ]
-    // 'oneliner' dropped — description-as-clue routinely leaked the answer's words.
-    static let shapeRotation = ["identify", "cloze", "jeopardy", "categorize", "identify",
-                                "cloze", "jeopardy", "identify", "categorize", "cloze"]
+    static let shapeRotation = ["describe", "cloze", "describe", "describe", "cloze"]
 
     // MARK: Generation
 
@@ -79,15 +74,14 @@ nonisolated struct TemplateEngine: Sendable {
         categoryID: String, gi: Int, rng: inout SeededRNG
     ) -> Question? {
         let n = shapeRotation.count
+        let person = isPerson(s)
         for off in 0..<n {
             let shape = shapeRotation[(gi + off) % n]
-            let bank = stems[shape]!
+            let bank = shape == "describe" ? (person ? stems["describe_person"]! : stems["describe_thing"]!) : stems[shape]!
             let stem = bank[(gi / n) % bank.count]
             if let (prompt, options, answer) = builder(shape, s, pool, stem, &rng) {
-                // Never ship a redacted question whose answer leaks into the
-                // prompt — fall through to the next shape. (Mirror of the
-                // Python corpus gate.)
-                if ["identify", "jeopardy", "cloze"].contains(shape) && leaks(answer, in: prompt) { continue }
+                // Never ship a question whose answer leaks into the prompt.
+                if leaks(answer, in: prompt) { continue }
                 if prompt.count > 320 || hasForeignScript(prompt) { continue }
                 var opts = options
                 opts.shuffle(using: &rng)
@@ -107,27 +101,20 @@ nonisolated struct TemplateEngine: Sendable {
         _ stem: String, _ rng: inout SeededRNG
     ) -> (String, [String], String)? {
         switch shape {
-        case "identify":
-            let clue = redact(cleanClue(firstSentence(of: s.extract ?? s.description ?? "")), title: s.title)
-            guard clue.count >= 25 else { return nil }
+        case "describe":
+            var clue: String?
+            for nsent in [1, 2] {   // escalate to 2 sentences if the first is too thin
+                if let c = reframe(cleanClue(firstN(s.extract ?? "", nsent)), title: s.title),
+                   c.count >= 30, informativeTokens(c) >= 2 {
+                    clue = c.replacingOccurrences(of: #"[.\s]+$"#, with: "", options: .regularExpression)
+                        .trimmingCharacters(in: .whitespaces)
+                    break
+                }
+            }
+            guard let cl = clue else { return nil }
             let ds = titleDistractors(s, pool, &rng); guard ds.count == 3 else { return nil }
             let ans = displayTitle(s.title)
-            return (String(format: stem, clue), [ans] + ds, ans)
-        case "jeopardy":
-            let sent = cleanClue(firstSentence(of: s.extract ?? ""))
-            guard sent.count >= 25 else { return nil }
-            let bare = displayTitle(s.title)
-            var clue: String
-            if sent.lowercased().hasPrefix(s.title.lowercased()) {
-                clue = "This" + sent.dropFirst(s.title.count)
-            } else if sent.lowercased().hasPrefix(bare.lowercased()) {
-                clue = "This" + sent.dropFirst(bare.count)
-            } else {
-                clue = redact(sent, title: s.title)
-            }
-            clue = capitalize(clue.trimmingCharacters(in: .whitespaces))
-            let ds = titleDistractors(s, pool, &rng); guard ds.count == 3 else { return nil }
-            return (String(format: stem, clue), [bare] + ds, bare)
+            return (String(format: stem, cl), [ans] + ds, ans)
         case "cloze":
             let sent = cleanClue(firstSentence(of: s.extract ?? ""))
             let bare = displayTitle(s.title)
@@ -136,16 +123,90 @@ nonisolated struct TemplateEngine: Sendable {
                 clozed = sent.replacingOccurrences(of: needle, with: "_____", options: .caseInsensitive)
                 break
             }
-            guard let cz = clozed, cz.count >= 25 else { return nil }
+            if clozed == nil {   // full birth name differs from title → blank the leading name run
+                let ns = sent as NSString
+                if let m = leadRE.firstMatch(in: sent, range: NSRange(location: 0, length: ns.length)) {
+                    clozed = ns.replacingCharacters(in: m.range(at: 1), with: "_____")
+                }
+            }
+            guard let cz = clozed, cz.count >= 30, informativeTokens(cz) >= 2 else { return nil }
             let ds = titleDistractors(s, pool, &rng); guard ds.count == 3 else { return nil }
             return (String(format: stem, cz), [bare] + ds, bare)
-        case "categorize":
-            guard let correct = s.description else { return nil }
-            let ds = descDistractors(s, pool, &rng); guard ds.count == 3 else { return nil }
-            let ans = capitalize(correct)
-            return (String(format: stem, displayTitle(s.title)), [ans] + ds.map(capitalize), ans)
         default: return nil
         }
+    }
+
+    // MARK: Describe-shape helpers (mirror of generate_corpus.py)
+
+    static let months: Set<String> = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"]
+    static let typeNouns: Set<String> = Set("actor actress singer musician composer songwriter rapper band writer author poet novelist playwright journalist artist painter sculptor director filmmaker producer scientist physicist chemist biologist mathematician astronomer economist politician philosopher activist explorer inventor architect dancer comedian footballer player athlete cyclist swimmer boxer golfer film movie television series show novel book album song single painting sculpture poem play opera symphony team club city town country river mountain lake dynasty empire".split(separator: " ").map(String.init))
+    static let nationalities: Set<String> = Set("polish french american british english german italian russian japanese chinese spanish dutch canadian australian indian brazilian mexican swedish norwegian danish finnish greek roman egyptian persian turkish irish scottish welsh austrian swiss belgian portuguese hungarian czech romanian korean vietnamese thai argentine chilean colombian peruvian israeli iranian iraqi syrian lebanese moroccan nigerian kenyan ethiopian ukrainian serbian croatian bulgarian icelandic".split(separator: " ").map(String.init))
+    static let clueGeneric: Set<String> = commonWords.union(typeLeading).union(typeNouns).union(nationalities)
+        .union(["this", "the", "a", "an", "was", "is", "were", "are", "best", "known", "famous", "noted", "also", "who", "which", "that", "based", "located", "near", "former"])
+    static let personFolded: Set<String> = ["actor", "musician", "writer", "scientist", "athlete", "director", "painter"]
+    static let personDescRE = try! NSRegularExpression(pattern: #"\b(actor|actress|singer|musician|composer|songwriter|rapper|writer|author|poet|novelist|playwright|journalist|artist|painter|sculptor|director|filmmaker|producer|scientist|physicist|chemist|biologist|mathematician|astronomer|economist|politician|philosopher|activist|explorer|inventor|architect|dancer|comedian|footballer|player|athlete|cyclist|swimmer|boxer|golfer|king|queen|emperor|president|leader|general|monarch|saint)\b"#, options: .caseInsensitive)
+    static let leadRE = try! NSRegularExpression(pattern: #"^\s*((?:[A-Z][\w’'.\-]*)(?:[ \-]+(?:of|the|and|de|von|van|al|da|di)?\s*[A-Z][\w’'.\-]*)*)\s*(?:\([^)]*\))?\s+(?:was|is|were|are)\s+(?:a|an|the)\s+(.+)$"#)
+    static let properRE = try! NSRegularExpression(pattern: #"\b[A-Z][A-Za-z’'\-]{2,}\b"#)
+    static let yearRE = try! NSRegularExpression(pattern: #"\b(?:1\d{3}|20\d{2})\b"#)
+
+    static func informativeTokens(_ clue: String) -> Int {
+        // Strip parentheticals first — a "(born 1963)" date is birthday-guessing,
+        // not a quizzable clue; pronunciations/IPA are noise.
+        let c = clue.replacingOccurrences(of: #"\([^)]*\)"#, with: "", options: .regularExpression)
+        let ns = c as NSString; let full = NSRange(location: 0, length: ns.length)
+        var proper = Set<String>()
+        for m in properRE.matches(in: c, range: full) {
+            let w = ns.substring(with: m.range).lowercased()
+            if !clueGeneric.contains(w) && !months.contains(w) { proper.insert(w) }
+        }
+        var years = Set<String>()
+        for m in yearRE.matches(in: c, range: full) { years.insert(ns.substring(with: m.range)) }
+        return proper.count + years.count
+    }
+
+    static func isPerson(_ s: WikipediaClient.Summary) -> Bool {
+        if let k = typeKey(s), personFolded.contains(k) { return true }
+        let d = s.description ?? ""
+        if personDescRE.firstMatch(in: d, range: NSRange(location: 0, length: (d as NSString).length)) != nil { return true }
+        return (s.extract ?? "").range(of: #"\(\s*\d{3,4}\s*[–-]|\bborn\b"#, options: .regularExpression) != nil
+    }
+
+    static func firstN(_ text: String, _ n: Int) -> String {
+        var parts: [String] = []
+        var rest = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        for _ in 0..<n {
+            if rest.isEmpty { break }
+            let s = firstSentence(of: rest)
+            parts.append(s.trimmingCharacters(in: .whitespaces))
+            rest = String(rest.dropFirst(s.count)).trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        return parts.joined(separator: " ")
+    }
+
+    static func reframe(_ sentence: String, title: String) -> String? {
+        // Anchor on the LEADING proper-noun run (full birth name differs from title).
+        let ns = sentence as NSString
+        guard let m = leadRE.firstMatch(in: sentence, range: NSRange(location: 0, length: ns.length)) else { return nil }
+        let rest = ns.substring(with: m.range(at: 2)).trimmingCharacters(in: .whitespaces)
+        return capitalize(blankName("This " + rest, title: title))
+    }
+
+    // Blank ONLY the subject's name (title + content words) — not the leading
+    // proper-noun-run heuristic redact() uses (we already start "This {type}…").
+    static func blankName(_ text: String, title: String) -> String {
+        var out = text
+        let bare = title.replacingOccurrences(of: #"\s*\([^)]*\)"#, with: "", options: .regularExpression)
+            .trimmingCharacters(in: .whitespaces)
+        for needle in Set([title, bare]) where !needle.isEmpty {
+            out = out.replacingOccurrences(of: needle, with: "—————", options: .caseInsensitive)
+        }
+        for w in bare.split(whereSeparator: { !$0.isLetter && $0 != "'" && $0 != "’" && $0 != "-" }).map(String.init) {
+            if w.count < 3 || functionWords.contains(w.lowercased()) { continue }
+            let pat = #"\b"# + NSRegularExpression.escapedPattern(for: w) + #"(?:’s|'s|s|es)?\b"#
+            out = out.replacingOccurrences(of: pat, with: "—————", options: [.regularExpression, .caseInsensitive])
+        }
+        out = out.replacingOccurrences(of: #"—————(?:[\s,’'.\–\-]+(?:of|the|and)?\s*—————)+"#, with: "—————", options: [.regularExpression, .caseInsensitive])
+        return out.replacingOccurrences(of: #"\s{2,}"#, with: " ", options: .regularExpression).trimmingCharacters(in: .whitespaces)
     }
 
     // MARK: Distractors (typed siblings; length-normalized for prose)
@@ -281,8 +342,9 @@ nonisolated struct TemplateEngine: Sendable {
         return out
     }
     private static func difficulty(for s: WikipediaClient.Summary) -> Int {
+        // Above the fame floor (600), a longer intro = more famous = easier.
         let len = s.extract?.count ?? 0
-        return len >= 600 ? 2 : (len >= 300 ? 3 : 4)
+        return len >= 2000 ? 2 : (len >= 1000 ? 3 : 4)
     }
     static let abbrev: Set<String> = ["lit", "e.g", "i.e", "approx", "no", "vs", "etc", "st", "mt", "mr", "mrs", "ms", "dr", "fl", "ca", "jr", "sr", "col", "gen", "gov", "sen", "rep", "prof", "rev", "inc", "ltd", "co", "u.s", "u.k"]
 

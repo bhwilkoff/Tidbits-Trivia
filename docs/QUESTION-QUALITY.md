@@ -171,26 +171,33 @@ corpus was two templates and "How is X best described?" alone was ~45% — a
 tedious cliché — and the correct answer was guessable from its form (it was
 the real, fuller, more-specific description next to mismatched distractors).
 
-## G. The shape system (kills the monotony)
+## G. The shape system — "describe & identify" only (Decision 029)
 
-The summary-based path (and all three live engines) now rotate among **five
-question shapes** via a seeded round-robin, each with a **bank of stems**, so
-no single phrasing dominates. The round-robin (`SHAPE_ROTATION`) weights
-**categorize** (the old "best described") to **1 of 10 slots (~10%)**.
+The summary path (and all three live engines) produces exactly **two shapes**.
+The old `identify` / `jeopardy` / `categorize` / `oneliner` shapes are deleted —
+real users found them robotic ("————— was an American actor. What is it?",
+"What kind of thing is 62nd Academy Awards?"). The bar is: a question a host
+would read on **trivia night** — lead with the interesting facts, ask a natural
+question, only about a **recognizable** subject.
 
-| Shape | What it does | Stems | Answer / distractors |
+| Shape | What it does | Phrasing | Answer / distractors |
 |---|---|---|---|
-| **identify** | Redacted clue → name the subject | 6 | title / typed-sibling titles |
-| **jeopardy** | "This {thing} …" declarative → name it | 3 | title / sibling titles |
-| **cloze** | First sentence with the subject blanked | 3 | title / sibling titles |
-| **categorize** | Subject → pick its description (capped ~10%) | 4 | description / length-matched sibling descriptions |
-| **oneliner** | Short description → which subject | 3 | title / sibling titles |
+| **describe** | Reframe the lead to "This {type} {distinguishing clue}", ask naturally | person → "…who is this?"; thing → "…what is this?" | title / typed-sibling titles |
+| **cloze** | First sentence with the subject's name blanked | "Fill in the blank: …" | title / sibling titles |
 
-~19 stems total; the seeded rotation guarantees an even spread. Two questions
-per subject always use two *different* shapes. The richer question **types**
-(superlative, which-came-first, reverse-attribute, odd-one-out, numeric
-closest-to, on-this-day, connection) come from the Wikidata path — see the
-ranked 33-type catalog in docs/ROADMAP.md → "Question-type backlog".
+**Two hard gates** (both enforced in all four engines):
+1. **Fame floor** — intro extract ≥ 600 chars (a free notability proxy; obscure
+   stubs are short). Kills "nobody has heard of this person".
+2. **Richness** — after stripping parenthetical dates, the clue must carry ≥ 2
+   distinguishing tokens (proper nouns / years). Kills bare "American actor" and
+   "(born 1963)" birthday-guessing.
+
+`describe` anchors on the **leading proper-noun run** (the full birth name, which
+differs from the title) so famous subjects aren't silently dropped, and is
+**person/thing-aware** so we never ask "what is it?" of a human. The richer
+question **types** (superlative, which-came-first, reverse-attribute, numeric
+closest-to) come from the Wikidata path; verifiable person/work facts (director,
+author, birth year, nationality) come from the fact path (§3rd path).
 
 ## H. The no-tells checklist (form must never reveal the answer)
 

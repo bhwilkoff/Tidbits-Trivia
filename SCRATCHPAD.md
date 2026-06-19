@@ -17,12 +17,14 @@
   - **Web** — full SP loop, PWA, network-first corpus, canonical share target.
   - **tvOS** — dark-first focus-correct home + game loop + results.
   - **Android** — full SP loop (home/game/results/records/create), Compose/M3.
-- **Corpus**: **10,776 questions** = 7,834 summary + **1,000 deep-extraction
-  `fact:*`** (Decision 027, new) + 1,942 Wikidata. **29 distinct question types**
-  (5 summary shapes + 17 Wikidata + 6 fact types: directed/written/composed_by,
-  birth/death_year, nationality). Fact questions mined from the FULL article via
-  `tools/corpus/wiki_extract.py` (infobox + lead), concentrated in the bio /
-  creative-work categories where Wikidata is thin; geography stays Wikidata-led.
+- **Corpus**: **4,743 questions** = 1,657 summary (863 describe + 794 cloze) +
+  1,144 deep-extraction `fact:*` (Decision 027) + 1,942 Wikidata. **Quality over
+  quantity** (Decision 029): summary path reworked into bar-trivia "describe &
+  identify" + cloze, gated by a fame floor (intro ≥600 chars) + a richness check
+  (≥2 distinguishing tokens) — this deliberately cut summary from 7,834 → 1,657,
+  dropping obscure subjects and content-free clues. Old identify/jeopardy/
+  categorize shapes deleted. Fact questions mined from FULL articles via
+  `wiki_extract.py`; geography stays Wikidata-led. All 4 engines mirror the rework.
   Wikidata source datasets cached in `tools/corpus/cache/` → regen is instant.
   Rebalanced for variety; fixed-stem Wikidata types capped (occClass 733→24).
   **Quality gates (drop-on-fail, enforced in the generator AND the 3 live
@@ -100,3 +102,14 @@ One-line-per-round; full detail in `ARCHIVE.md`.
   recovered via deeper search (`--per-category 2600`). *Left:* live engines stay
   summary-based (mirror gates only); ratchet `--facts-per-category` higher
   anytime (warm cache → cheap).
+- **2026-06-19** — **bar-trivia question rework** (user: web questions "awkward",
+  "what kind of thing is…" / "what subject is this" = nobody asks that; want
+  "trivia night" feel). *Found:* summary path shipped obscure subjects + robotic
+  framing. *Did:* reworked all 4 engines (generate_corpus.py + engine.js +
+  TemplateEngine.swift + Tidbits.kt) → deleted identify/jeopardy/categorize;
+  kept **describe** ("This {type} {clue} — who/what is this?", person/thing-aware)
+  + **cloze**; added **fame floor** (extract ≥600) + **richness gate** (≥2
+  distinguishing tokens, date-parens stripped) + leading-name-anchor reframe.
+  Regenerated corpus **10,776 → 4,743** (quality over quantity). Verified: Film &
+  TV samples read naturally, all bad patterns 0, iOS+Android BUILD SUCCEEDED.
+  Decision 029. *Left:* domain migration done earlier today (Decision 028).

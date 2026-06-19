@@ -28,7 +28,7 @@ struct OnboardingView: View {
                         Spacer()
                         Image(systemName: slide.symbol)
                             .font(.system(size: 72, weight: .black))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(slide.color.legibleForeground)
                             .frame(width: 132, height: 132)
                             .background(Circle().fill(slide.color))
                             .overlay(Circle().strokeBorder(Tidbits.Palette.border, lineWidth: 4))

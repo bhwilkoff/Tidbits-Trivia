@@ -62,7 +62,7 @@ struct PartyContainerView: View {
         VStack(spacing: 22) {
             Spacer()
             Image(systemName: "iphone.gen3.radiowaves.left.and.right")
-                .font(.system(size: 54, weight: .bold)).foregroundStyle(players[turn].color)
+                .font(.system(size: 54, weight: .bold)).foregroundStyle(players[turn].color.legibleAccent)
             Text("Pass the phone to").font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.inkSoft)
             Text(players[turn].name)
                 .font(.system(size: 38, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
@@ -70,7 +70,7 @@ struct PartyContainerView: View {
                 .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
             Spacer()
             Button("I'm \(players[turn].name) — Start") { beginTurn() }
-                .buttonStyle(ChunkyButtonStyle(fill: players[turn].color, textColor: .white))
+                .buttonStyle(ChunkyButtonStyle(fill: players[turn].color, textColor: players[turn].color.legibleForeground))
                 .padding(.horizontal, Tidbits.Metric.pad)
                 .padding(.trailing, Tidbits.Metric.shadowOffset)
             Button("Quit") { dismiss() }.tint(Tidbits.Palette.inkSoft).padding(.bottom, 12)
@@ -81,7 +81,7 @@ struct PartyContainerView: View {
         VStack(spacing: 20) {
             Spacer()
             Text("\(players[turn].name) scored").font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.inkSoft)
-            Text("\(lastTurnScore)").font(.system(size: 60, weight: .black, design: .rounded)).foregroundStyle(players[turn].color)
+            Text("\(lastTurnScore)").font(.system(size: 60, weight: .black, design: .rounded)).foregroundStyle(players[turn].color.legibleAccent)
             if turn + 1 < players.count {
                 runningBoard
             }
@@ -178,7 +178,7 @@ private struct PartySetupView: View {
                     ForEach(TriviaCategory.all) { c in Button(c.name) { category = c } }
                 } label: {
                     HStack {
-                        Image(systemName: category.symbol).foregroundStyle(category.color)
+                        Image(systemName: category.symbol).foregroundStyle(category.color.legibleAccent)
                         Text(category.name).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
                         Spacer(); Image(systemName: "chevron.up.chevron.down").foregroundStyle(Tidbits.Palette.inkSoft)
                     }

@@ -178,7 +178,7 @@ private struct ModeChip: View {
                 Image(systemName: mode.symbol).font(.system(size: 15, weight: .bold))
                 Text(mode.title).font(Tidbits.TypeRamp.l3)
             }
-            .foregroundStyle(selected ? .white : Tidbits.Palette.ink)
+            .foregroundStyle(selected ? mode.accent.legibleForeground : Tidbits.Palette.ink)
             .padding(.horizontal, 16).padding(.vertical, 11)
             .background(
                 Capsule().fill(selected ? mode.accent : Tidbits.Palette.surface)
@@ -199,7 +199,7 @@ private struct CategoryCard: View {
             VStack(alignment: .leading, spacing: 10) {
                 Image(systemName: category.symbol)
                     .font(.system(size: 26, weight: .black))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(category.color.legibleForeground)
                     .frame(width: 52, height: 52)
                     .background(Circle().fill(category.color))
                     .overlay(Circle().strokeBorder(Tidbits.Palette.border, lineWidth: 2.5))

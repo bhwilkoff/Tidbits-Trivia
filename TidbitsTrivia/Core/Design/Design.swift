@@ -62,6 +62,23 @@ enum Tidbits {
 // MARK: - Hex init
 
 extension Color {
+    /// The legible text/icon color to lay over THIS color used as a fill.
+    /// White reads on the saturated pops (coral/blue/grape/pink) and ink; the two
+    /// LIGHT pops (yellow, mint) need ink instead — white on them is unreadable.
+    /// One decision, reused everywhere a dynamic pop becomes a background.
+    var legibleForeground: Color {
+        (self == Tidbits.Palette.yellow || self == Tidbits.Palette.mint)
+            ? Tidbits.Palette.ink : .white
+    }
+
+    /// This pop used as ACCENT TEXT on a light surface (e.g. a category label on
+    /// a white card). The saturated pops read fine; yellow & mint are too light
+    /// as text on white, so they fall back to ink.
+    var legibleAccent: Color {
+        (self == Tidbits.Palette.yellow || self == Tidbits.Palette.mint)
+            ? Tidbits.Palette.ink : self
+    }
+
     init(hex: UInt32, alpha: Double = 1) {
         self.init(
             .sRGB,

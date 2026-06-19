@@ -79,7 +79,7 @@ struct RecordsView: View {
                 let best = records.filter { $0.mode == mode }.map(\.score).max()
                 if let best {
                     HStack {
-                        Image(systemName: mode.symbol).foregroundStyle(.white)
+                        Image(systemName: mode.symbol).foregroundStyle(mode.accent.legibleForeground)
                             .frame(width: 38, height: 38)
                             .background(Circle().fill(mode.accent))
                             .overlay(Circle().strokeBorder(Tidbits.Palette.border, lineWidth: 2.5))
@@ -104,7 +104,7 @@ struct RecordsView: View {
             ForEach(toReview.prefix(8), id: \.questionID) { fact in
                 VStack(alignment: .leading, spacing: 4) {
                     Text(fact.prompt).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
-                    Text("Answer: \(fact.correctAnswer)").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.mint)
+                    Text("Answer: \(fact.correctAnswer)").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(14)

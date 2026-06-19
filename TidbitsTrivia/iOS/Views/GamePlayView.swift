@@ -21,6 +21,12 @@ struct GamePlayView: View {
                     }
                     .padding(.horizontal, Tidbits.Metric.pad)
                     .padding(.bottom, 24)
+                    // Stable per-question identity so the prompt AND the four
+                    // option buttons swap as ONE atomic subtree on advance —
+                    // not an in-place diff that mutates the reused buttons a
+                    // frame before/after the prompt (the "text loads after the
+                    // buttons / options don't match the last question" jank).
+                    .id(game.index)
                 }
                 .scrollBounceBehavior(.basedOnSize)
             }

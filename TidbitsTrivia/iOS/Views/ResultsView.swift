@@ -79,7 +79,7 @@ struct ResultsView: View {
                         .foregroundStyle(Tidbits.Palette.ink)
                     Text("Answer: \(miss.question.correctAnswer)")
                         .font(Tidbits.TypeRamp.l5)
-                        .foregroundStyle(Tidbits.Palette.mint)
+                        .foregroundStyle(Tidbits.Palette.inkSoft)
                     if !miss.question.explanation.isEmpty {
                         Text(miss.question.explanation)
                             .font(Tidbits.TypeRamp.l5)

@@ -49,6 +49,11 @@ targets:
       path: TidbitsTrivia/Info.plist
       properties:
         CFBundleDisplayName: Tidbits
+        # Tidbits is a fixed "cream paper" design with NO dark-mode variants, so
+        # force light everywhere — otherwise a dark-mode iPhone inverts default
+        # text to white (white-on-cream) and system surfaces to dark
+        # (dark-on-dark on Records). This is the single biggest legibility fix.
+        UIUserInterfaceStyle: Light
         # Export compliance: Tidbits uses only standard HTTPS (Wikipedia API) —
         # exempt encryption. Declaring this skips the manual compliance question
         # on every TestFlight / App Store build.

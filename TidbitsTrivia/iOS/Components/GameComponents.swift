@@ -9,7 +9,7 @@ struct QuestionCard: View {
         VStack(alignment: .leading, spacing: 12) {
             Text(TriviaCategory.named(question.categoryID).name.uppercased())
                 .font(Tidbits.TypeRamp.l5)
-                .foregroundStyle(TriviaCategory.named(question.categoryID).color)
+                .foregroundStyle(TriviaCategory.named(question.categoryID).color.legibleAccent)
             Text(question.prompt)
                 .font(.system(size: 23, weight: .heavy, design: .rounded))
                 .foregroundStyle(Tidbits.Palette.ink)
@@ -59,8 +59,8 @@ struct AnswerButton: View {
     }
     private var fg: Color {
         switch state {
-        case .correct, .wrong: return .white
-        default:               return Tidbits.Palette.ink
+        case .idle, .dimmed:   return Tidbits.Palette.ink
+        case .correct, .wrong: return fill.legibleForeground   // mint→ink, coral→white
         }
     }
     private var symbol: String? {

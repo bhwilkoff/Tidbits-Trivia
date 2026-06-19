@@ -33,7 +33,11 @@ struct GameContainerView: View {
         .task {
             if game.phase == .idle {
                 // Weave in spaced-review questions (skip Daily — it's fair/fixed).
-                let review = mode == .daily ? [] : RecordsStore.dueReview(in: modelContext)
+                // In a single-category game, only re-ask misses from THAT category —
+                // otherwise a missed Film & TV question surfaces in an Arts & Lit round.
+                var review = mode == .daily ? [] : RecordsStore.dueReview(in: modelContext, limit: 30)
+                if category.id != "mixed" { review = review.filter { $0.categoryID == category.id } }
+                review = Array(review.prefix(2))
                 await game.start(mode: mode, category: category, review: review)
             }
         }

@@ -17,8 +17,12 @@
   - **Web** — full SP loop, PWA, network-first corpus, canonical share target.
   - **tvOS** — dark-first focus-correct home + game loop + results.
   - **Android** — full SP loop (home/game/results/records/create), Compose/M3.
-- **Corpus**: 10,120 questions, **22 distinct question types** (5 rotating
-  summary shapes + 17 Wikidata structured types; ~1,940 Wikidata-verified).
+- **Corpus**: **10,776 questions** = 7,834 summary + **1,000 deep-extraction
+  `fact:*`** (Decision 027, new) + 1,942 Wikidata. **29 distinct question types**
+  (5 summary shapes + 17 Wikidata + 6 fact types: directed/written/composed_by,
+  birth/death_year, nationality). Fact questions mined from the FULL article via
+  `tools/corpus/wiki_extract.py` (infobox + lead), concentrated in the bio /
+  creative-work categories where Wikidata is thin; geography stays Wikidata-led.
   Wikidata source datasets cached in `tools/corpus/cache/` → regen is instant.
   Rebalanced for variety; fixed-stem Wikidata types capped (occClass 733→24).
   **Quality gates (drop-on-fail, enforced in the generator AND the 3 live
@@ -85,7 +89,14 @@ One-line-per-round; full detail in `ARCHIVE.md`.
   --facts-per-category N` (default 0). Verified end-to-end on real articles:
   "Who directed The Godfather? → Coppola" etc., all answers correct,
   distractors type-matched, the contradictory-multi-creator class gated out.
-  Decision 027; QUESTION-QUALITY §3rd path; PARITY row added. *Left:* engine
-  built+verified but NOT yet shipped to the corpus — next step is the deliberate
-  regen `generate_corpus.py --facts-per-category 150` (crawls 1 full article/
-  subject, cached) + version bump + Android asset re-sync.
+  Decision 027; QUESTION-QUALITY §3rd path; PARITY row. *Then SHIPPED:*
+  hardened the extractor v2 (8 cross-domain precision fixes — person-gated
+  born/died/nationality, dual-nationality drop, non-noun-type reject,
+  nationality-as-creator reject, merged-name reject, album-artist
+  misattribution, creators-from-sentence-0-only, infobox-direct facts) and
+  regenerated the full corpus **8,630 → 10,776** (7,834 summary + 1,000 fact +
+  1,942 wd), 0 errors, exported to `corpus.json` + Android asset, all 1,000 fact
+  Qs structurally clean. The earlier summary dip was Wikipedia search variance,
+  recovered via deeper search (`--per-category 2600`). *Left:* live engines stay
+  summary-based (mirror gates only); ratchet `--facts-per-category` higher
+  anytime (warm cache → cheap).

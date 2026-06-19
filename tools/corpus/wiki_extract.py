@@ -238,15 +238,16 @@ def subject_is_title(subject, title):
 def split_type(type_phrase):
     type_phrase = re.sub(r"^(?:a|an|the)\s+", "", type_phrase.strip(), flags=re.I)
     type_phrase = re.sub(r"^\d{3,4}\s+", "", type_phrase)   # leading year (films)
-    toks, nat = type_phrase.split(), None
-    # Strip a run of leading nationality adjectives + connectors
-    # ("Polish and naturalised-French …"); keep the first as the answer.
+    toks, nats = type_phrase.split(), []
+    # Consume the run of leading nationality adjectives + connectors
+    # ("Polish and naturalised-French …"), collecting each nationality.
     while toks:
         head = toks[0].lower().strip("-")
         parts = head.split("-")
-        if head in NATIONALITIES or any(p in NATIONALITIES for p in parts):
-            if nat is None:
-                nat = toks[0]
+        nat_part = head if head in NATIONALITIES else next(
+            (p for p in parts if p in NATIONALITIES), None)
+        if nat_part:
+            nats.append(nat_part.capitalize())
             toks = toks[1:]
         elif head in ("and", "naturalised", "naturalized", "born"):
             toks = toks[1:]
@@ -256,11 +257,23 @@ def split_type(type_phrase):
     occ = re.sub(r"\s+(?:directed|produced|written|composed|painted|designed|"
                  r"released|published|created|made|founded|and)$", "", occ, flags=re.I)
     facts = []
-    if nat:
-        facts.append(("nationality", nat))
-    if occ and 2 <= len(occ) <= 45:
+    # Emit nationality ONLY when there is exactly one — a dual nationality
+    # ("American-British") is ambiguous (the other reads as a valid answer too).
+    if len(nats) == 1:
+        facts.append(("nationality", nats[0]))
+    # Reject non-noun "types" from copula false-matches ("is connected to" →
+    # "connected"; "was the reason" → "reason"). A single participle/adjective or
+    # an abstract filler word is not a thing you can be "best known as".
+    low = occ.lower()
+    bad = low in _NON_TYPE or (len(occ.split()) == 1 and re.search(r"(ed|ing)$", low))
+    if occ and not bad and 2 <= len(occ) <= 45:
         facts.append(("type", occ))
     return facts
+
+_NON_TYPE = {"connected", "reason", "result", "part", "member", "one", "group",
+             "name", "term", "example", "kind", "number", "series", "set", "point",
+             "place", "thing", "form", "way", "case", "type", "matter", "subject",
+             "area", "aspect", "process", "state", "period", "event", "term", "home"}
 
 # ---------------------------------------------------------------------------
 # Stage 3b — Date / number normalization
@@ -315,9 +328,10 @@ _OBJ = (r"(?P<obj>(?:[\"“][^\"”]+[\"”])|"
         r"(?:[A-Z][\w.'’\-]*(?:\s+(?:of|the|de|da|van|von|del|della|di|du|le|la|in)?\s*[A-Z][\w.'’\-]*)*))")
 # "by [the] [Nationality] [role-noun] NAME" — skip the descriptive prefix and
 # bind the actual person. The prefix is optional, so "by Jane Austen" still works.
-_BY_AGENT = (r"(?:(?:the\s+)?(?:[A-Z][a-zé\-]+\s+){0,2}(?:author|writer|novelist|poet|"
+_BY_AGENT = (r"(?:(?:the\s+)?(?:[A-Za-z][a-zé\-]+\s+){0,3}(?:author|writer|novelist|poet|"
              r"playwright|composer|artist|painter|director|sculptor|architect|"
-             r"filmmaker|musician|singer|inventor|scientist|engineer)\s+)?" + _OBJ)
+             r"filmmaker|musician|singer|inventor|scientist|engineer|group|band|"
+             r"duo|trio|quartet|ensemble|orchestra)\s+)?" + _OBJ)
 VERB_PATTERNS = [
     ("won",        re.compile(r"\bwon\s+(?:the\s+)?" + _OBJ + r"(?:\s+in\s+(?P<year>\d{4}))?")),
     ("founded",    re.compile(r"\bfounded\s+(?:the\s+)?" + _OBJ + r"(?:\s+in\s+(?P<year>\d{4}))?")),
@@ -356,6 +370,9 @@ def extract_relations(clause, title):
                 continue
             if subject_is_title(obj, title):   # "X is the capital of X" garbage
                 continue
+            # A bare nationality adjective ("Japanese") is never a creator name.
+            if rel.endswith("_by") and obj.lower() in NATIONALITIES:
+                continue
             # Coordinated creators ("written by X and Y", "X, Y and Z") are
             # ambiguous → drop. A trailing ", who …" relative clause is NOT
             # coordination and must survive.
@@ -365,6 +382,65 @@ def extract_relations(clause, title):
                 continue
             yr = m.groupdict().get("year")
             out.append({"relation": rel, "object": obj, "year": int(yr) if yr else None})
+    return out
+
+# ---------------------------------------------------------------------------
+# Stage 1b — Infobox-direct facts (the structured oracle, highest precision)
+# ---------------------------------------------------------------------------
+# Curated key → relation map. Only SINGLE-VALUED keys: a value that cleaned to a
+# list (multiple directors/authors) is dropped as ambiguous (gate 6). The
+# infobox is ground truth, so these score higher than prose; when prose ALSO
+# found the fact they dedup to one high-confidence fact.
+# NB: 'artist' is deliberately absent — it means painter on an artwork infobox
+# but recording-artist on an album infobox. Prose ("painting by X") handles
+# paintings reliably; this avoids cross-type misattribution.
+_INFOBOX_PERSON = {
+    "director": "directed_by", "author": "written_by",
+    "composer": "composed_by", "writer": "written_by", "novelist": "written_by",
+}
+_INFOBOX_YEAR = {"birth_date": "birth_year", "born": "birth_year",
+                 "death_date": "death_year", "died": "death_year"}
+# Keys that mark a person infobox (broader than just dates — Einstein's infobox
+# has birth_place/death_place but no birth_date).
+_PERSON_INFOBOX_KEYS = {
+    "birth_date", "birth_year", "born", "death_date", "died", "birth_place",
+    "death_place", "occupation", "nationality", "citizenship", "alma_mater",
+    "spouse", "children", "known_for", "education", "parents", "relatives", "party",
+}
+# A clean person name: capitalized words + particles, nothing else (no digits,
+# no parentheticals, no lowercase role words leaking in).
+_PERSON_RE = re.compile(r"^[A-Z][\w.'’\-]*(?:\s+(?:de|da|van|von|del|della|di|du|le|la|the)?\s*[A-Z][\w.'’\-]*)*$")
+
+def _infobox_value(infobox, key):
+    """Return a single scalar value, or None if absent / multi-valued (list)."""
+    v = infobox.get(key)
+    if isinstance(v, list):
+        return None   # multiple values → ambiguous forward question
+    return v
+
+def infobox_facts(infobox, title):
+    out = []
+    for key, rel in _INFOBOX_PERSON.items():
+        v = _infobox_value(infobox, key)
+        if not v:
+            continue
+        name = strip_wiki(str(v)).strip().strip(".,;")
+        # Reject coordination, merged-name artifacts ("KrentzErik" from a
+        # stripped <br> separator), and non-name junk; require a clean name.
+        if re.search(r"\b(?:and|&|,|featuring|with)\b", name) or re.search(r"[a-z][A-Z]", name):
+            continue
+        if not _PERSON_RE.match(name):
+            continue
+        if not (3 <= len(name) <= 60) or subject_is_title(name, title):
+            continue
+        out.append({"relation": rel, "object": name, "year": None, "conf": 0.85})
+    for key, rel in _INFOBOX_YEAR.items():
+        v = _infobox_value(infobox, key)
+        if not v:
+            continue
+        yr = _year(strip_wiki(str(v)))
+        if yr and 0 < yr < 2026:
+            out.append({"relation": rel, "object": str(yr), "year": yr, "conf": 0.92})
     return out
 
 # ---------------------------------------------------------------------------
@@ -401,24 +477,34 @@ def extract_facts(article, max_body_sentences=12):
     # Stage 4 — definitional facts from the FIRST sentence only.
     s0 = lead_sentences[0]
     m = DEF_COPULA.match(s0)
+    nationality_candidate = None
+    # Person signal gates born/died/nationality so an empire's (800–887) is not
+    # quizzed as a lifespan and a film is not given a "nationality". Bios use a
+    # person infobox; some put dates only in the lead paren (so birth_place /
+    # occupation etc. count too, not just birth_date).
+    person_signal = any(k in infobox for k in _PERSON_INFOBOX_KEYS)
     if m and subject_is_title(m.group("subject"), title):
         for rel, val in split_type((m.group("type") or "").strip()):
-            add(rel, val, "string", "exact", 0.85 + (0.05 if rel in infobox else 0))
+            if rel == "nationality":
+                nationality_candidate = val
+            else:
+                add(rel, val, "string", "exact", 0.85)
         paren = m.group("paren") or ""
+        born_explicit = BORN_LABELED.search(paren) or BORN_LABELED.search(s0)
         lr = LIFE_RANGE.search(paren)
-        if lr:
+        if lr and (person_signal or born_explicit):
             by, dy = _year(lr.group("born")), _year(lr.group("died"))
             if by and 0 < by < 2026:
-                conf = 0.9 + (0.05 if _born_matches(infobox, by) else 0)
-                add("birth_year", str(by), "year", "year", conf, year=by)
+                add("birth_year", str(by), "year", "year",
+                    0.9 + (0.05 if _born_matches(infobox, by) else 0), year=by)
             if dy and by and dy > by:
                 add("death_year", str(dy), "year", "year", 0.88, year=dy)
-        else:
-            bl = BORN_LABELED.search(paren) or BORN_LABELED.search(s0)
-            if bl:
-                by = int(bl.group(1))
-                if 0 < by < 2026:
-                    add("birth_year", str(by), "year", "year", 0.85, year=by)
+        elif born_explicit:
+            by = int(born_explicit.group(1))
+            if 0 < by < 2026:
+                add("birth_year", str(by), "year", "year", 0.85, year=by)
+    if nationality_candidate and person_signal:
+        add("nationality", nationality_candidate, "string", "exact", 0.85)
 
     # Stages 5–6 — relations from lead + early body, coref-resolved + gated.
     for idx, raw in enumerate(lead_sentences[:max_body_sentences]):
@@ -429,8 +515,23 @@ def extract_facts(article, max_body_sentences=12):
             if not is_quizzable_stem_relaxed(clause, title):
                 continue
             for tr in extract_relations(clause, title):
+                # Creator attributions (_by) are trusted ONLY from the
+                # definitional first sentence — a body "the cover was painted
+                # by Y" misattributes to the title via coreference.
+                if tr["relation"].endswith("_by") and idx != 0:
+                    continue
                 conf = 0.6 + (0.1 if idx == 0 else 0)
                 add(tr["relation"], tr["object"], "string", "exact", conf, year=tr.get("year"))
+
+    # Stage 1b — infobox-direct facts (structured ground truth). The infobox
+    # WINS: drop prose facts for any relation the infobox covers, so a partial
+    # prose name ("Coppola") never collides with the full infobox name
+    # ("Francis Ford Coppola") and trips the multi-value gate.
+    ib = infobox_facts(infobox, title)
+    ib_rels = {f["relation"] for f in ib}
+    facts[:] = [f for f in facts if f["relation"] not in ib_rels]
+    for f in ib:
+        add(f["relation"], f["object"], "string", "exact", f["conf"], year=f.get("year"))
 
     return _dedup_score_gate(facts, infobox)
 

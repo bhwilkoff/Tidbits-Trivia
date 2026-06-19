@@ -17,7 +17,7 @@
   - **Web** — full SP loop, PWA, network-first corpus, canonical share target.
   - **tvOS** — dark-first focus-correct home + game loop + results.
   - **Android** — full SP loop (home/game/results/records/create), Compose/M3.
-- **Corpus**: **4,743 questions** = 1,657 summary (863 describe + 794 cloze) +
+- **Corpus**: **~4,500 questions** = summary (describe + cloze) +
   1,144 deep-extraction `fact:*` (Decision 027) + 1,942 Wikidata. **Quality over
   quantity** (Decision 029): summary path reworked into bar-trivia "describe &
   identify" + cloze, gated by a fame floor (intro ≥600 chars) + a richness check

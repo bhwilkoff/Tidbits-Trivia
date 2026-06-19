@@ -80,7 +80,8 @@ const firstSentence = (t) => {
         while (j >= 0 && /[A-Za-z0-9.'\-]/.test(s[j])) j--;
         const tok = s.slice(j + 1, i);
         const letters = tok.replace(/[^A-Za-z]/g, '');
-        const isAbbrev = letters && (letters.length <= 1 || ABBREV.has(tok.toLowerCase().replace(/\.+$/, '')));
+        const hasDigit = /[0-9]/.test(tok);   // "1750s" is not an initial → split
+        const isAbbrev = letters && !hasDigit && (letters.length <= 1 || ABBREV.has(tok.toLowerCase().replace(/\.+$/, '')));
         if (!isAbbrev) return s.slice(0, i + 1);
       }
     }

@@ -249,7 +249,10 @@ def first_sentence(text):
                     j -= 1
                 tok = t[j + 1:i]
                 letters = re.sub(r"[^A-Za-z]", "", tok)
-                if not (letters and (len(letters) <= 1 or tok.lower().rstrip(".") in _ABBREV)):
+                has_digit = any(ch.isdigit() for ch in tok)
+                # A digit-bearing token ("1750s") is NOT an initial/abbreviation —
+                # so a decade ending a sentence ("…the 1750s. The style…") splits.
+                if not (letters and not has_digit and (len(letters) <= 1 or tok.lower().rstrip(".") in _ABBREV)):
                     return t[:i + 1]
         i += 1
     # Scan found no interior sentence break → the text IS a single sentence;

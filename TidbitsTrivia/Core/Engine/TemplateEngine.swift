@@ -362,7 +362,8 @@ nonisolated struct TemplateEngine: Sendable {
                     while j >= 0, t[j].isLetter || t[j].isNumber || t[j] == "." || t[j] == "'" || t[j] == "-" { j -= 1 }
                     let tok = String(t[(j + 1)..<i])
                     let letters = tok.filter { $0.isLetter }
-                    let isAbbrev = !letters.isEmpty && (letters.count <= 1 || abbrev.contains(tok.lowercased().trimmingCharacters(in: CharacterSet(charactersIn: "."))))
+                    let hasDigit = tok.contains { $0.isNumber }   // "1750s" is not an initial → split
+                    let isAbbrev = !letters.isEmpty && !hasDigit && (letters.count <= 1 || abbrev.contains(tok.lowercased().trimmingCharacters(in: CharacterSet(charactersIn: "."))))
                     if !isAbbrev { return String(t[0...i]) }
                 }
             }

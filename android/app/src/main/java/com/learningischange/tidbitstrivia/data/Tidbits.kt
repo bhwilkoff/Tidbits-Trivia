@@ -214,7 +214,8 @@ object TemplateEngine {
                     while (j >= 0 && (s[j].isLetterOrDigit() || s[j] == '.' || s[j] == '\'' || s[j] == '-')) j--
                     val tok = s.substring(j + 1, i)
                     val letters = tok.filter { it.isLetter() }
-                    val isAbbrev = letters.isNotEmpty() && (letters.length <= 1 || tok.lowercase().trimEnd('.') in ABBREV)
+                    val hasDigit = tok.any { it.isDigit() }   // "1750s" is not an initial → split
+                    val isAbbrev = letters.isNotEmpty() && !hasDigit && (letters.length <= 1 || tok.lowercase().trimEnd('.') in ABBREV)
                     if (!isAbbrev) return s.substring(0, i + 1)
                 }
             }

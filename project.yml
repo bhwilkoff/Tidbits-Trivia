@@ -42,6 +42,10 @@ targets:
       path: TidbitsTrivia/Info.plist
       properties:
         CFBundleDisplayName: Tidbits
+        # Export compliance: Tidbits uses only standard HTTPS (Wikipedia API) —
+        # exempt encryption. Declaring this skips the manual compliance question
+        # on every TestFlight / App Store build.
+        ITSAppUsesNonExemptEncryption: false
         UILaunchScreen:
           UIColorName: LaunchBackground
           UIImageName: LaunchLogo
@@ -51,7 +55,11 @@ targets:
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
         UISupportedInterfaceOrientations~ipad: [UIInterfaceOrientationPortrait, UIInterfaceOrientationPortraitUpsideDown, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
       configs:
+        # Debug stays unsigned so simulator / CI builds need no team or certs.
         Debug:
           CODE_SIGNING_ALLOWED: NO
+        # Release IS signed — a TestFlight/App Store archive requires it.
+        # Automatic signing (set in base settings) picks the profile once
+        # DEVELOPMENT_TEAM is filled in (see the OWNER checklist).
         Release:
-          CODE_SIGNING_ALLOWED: NO
+          CODE_SIGNING_ALLOWED: YES

@@ -74,6 +74,7 @@
 		BE92745D6860E623628A0CBC /* GamePlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GamePlayView.swift; sourceTree = "<group>"; };
 		C23D07A7744AE72B2935CB2F /* ContentView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView_tvOS.swift; sourceTree = "<group>"; };
 		CDC047AE9E00DBB79A4FD169 /* Haptics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Haptics.swift; sourceTree = "<group>"; };
+		D2BE9E793BFE4E52464B69A2 /* TidbitsTrivia.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TidbitsTrivia.entitlements; sourceTree = "<group>"; };
 		D85FC9EA0ED55C307CC3525F /* PlayerRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerRecord.swift; sourceTree = "<group>"; };
 		E48988FC967EF362B69C2FB5 /* TemplateEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplateEngine.swift; sourceTree = "<group>"; };
 		E8F18E88BA37F77E6313144F /* corpus.sqlite */ = {isa = PBXFileReference; lastKnownFileType = file; path = corpus.sqlite; sourceTree = "<group>"; };
@@ -82,7 +83,7 @@
 		F3AE68F153F8C298960BFD36 /* Player.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Player.swift; sourceTree = "<group>"; };
 		F5C9D9266531ECD27156562D /* GameView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView_tvOS.swift; sourceTree = "<group>"; };
 		FFC46D4CE8D03186C064C759 /* Question.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Question.swift; sourceTree = "<group>"; };
-		"TEMP_F1FA5F5C-C656-49EE-A9E3-86BEC7F42CB1" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
+		"TEMP_6A33113C-7135-405F-9883-49AFBCEBBD06" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -253,14 +254,15 @@
 				73D5D7FD07809D194BF90B30 /* Assets.xcassets */,
 				4E7FAFB9A435F25FF322EC97 /* Info.plist */,
 				3C266F600F75F40E459D2276 /* PrivacyInfo.xcprivacy */,
+				D2BE9E793BFE4E52464B69A2 /* TidbitsTrivia.entitlements */,
 			);
 			path = TidbitsTrivia;
 			sourceTree = "<group>";
 		};
-		"TEMP_2ADD2574-FA9D-4F22-9DCD-E5609688390F" /* Tidbits-Trivia */ = {
+		"TEMP_802857AF-216D-4040-8CBB-CE882D0518E3" /* Tidbits-Trivia */ = {
 			isa = PBXGroup;
 			children = (
-				"TEMP_F1FA5F5C-C656-49EE-A9E3-86BEC7F42CB1" /* AppVersion.xcconfig */,
+				"TEMP_6A33113C-7135-405F-9883-49AFBCEBBD06" /* AppVersion.xcconfig */,
 			);
 			path = "Tidbits-Trivia";
 			sourceTree = "<group>";
@@ -296,7 +298,7 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					DEFDE096B37961267A8BC8DE = {
-						DevelopmentTeam = "";
+						DevelopmentTeam = L2G756LY8N;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -378,7 +380,7 @@
 /* Begin XCBuildConfiguration section */
 		296659EF0549868336801823 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_F1FA5F5C-C656-49EE-A9E3-86BEC7F42CB1" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_6A33113C-7135-405F-9883-49AFBCEBBD06" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -413,7 +415,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = L2G756LY8N;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -443,6 +445,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = TidbitsTrivia/TidbitsTrivia.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = TidbitsTrivia/Info.plist;
@@ -467,6 +470,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = TidbitsTrivia/TidbitsTrivia.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = TidbitsTrivia/Info.plist;
@@ -488,7 +492,7 @@
 		};
 		E6F711EEEE2896F84FE9AB98 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_F1FA5F5C-C656-49EE-A9E3-86BEC7F42CB1" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_6A33113C-7135-405F-9883-49AFBCEBBD06" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -523,7 +527,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = L2G756LY8N;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;

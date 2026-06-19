@@ -102,16 +102,11 @@ nonisolated struct TemplateEngine: Sendable {
     ) -> (String, [String], String)? {
         switch shape {
         case "describe":
-            var clue: String?
-            for nsent in [1, 2] {   // escalate to 2 sentences if the first is too thin
-                if let c = reframe(cleanClue(firstN(s.extract ?? "", nsent)), title: s.title),
-                   c.count >= 30, informativeTokens(c) >= 2 {
-                    clue = c.replacingOccurrences(of: #"[.\s]+$"#, with: "", options: .regularExpression)
-                        .trimmingCharacters(in: .whitespaces)
-                    break
-                }
-            }
-            guard let cl = clue else { return nil }
+            // FIRST sentence only — a 2-sentence clue reads awkwardly under "Name this …?".
+            guard let c = reframe(cleanClue(firstSentence(of: s.extract ?? "")), title: s.title),
+                  c.count >= 30, informativeTokens(c) >= 2 else { return nil }
+            let cl = c.replacingOccurrences(of: #"[.\s]+$"#, with: "", options: .regularExpression)
+                .trimmingCharacters(in: .whitespaces)
             let ds = titleDistractors(s, pool, &rng); guard ds.count == 3 else { return nil }
             let ans = displayTitle(s.title)
             return (String(format: stem, cl), [ans] + ds, ans)
@@ -143,8 +138,9 @@ nonisolated struct TemplateEngine: Sendable {
     static let nationalities: Set<String> = Set("polish french american british english german italian russian japanese chinese spanish dutch canadian australian indian brazilian mexican swedish norwegian danish finnish greek roman egyptian persian turkish irish scottish welsh austrian swiss belgian portuguese hungarian czech romanian korean vietnamese thai argentine chilean colombian peruvian israeli iranian iraqi syrian lebanese moroccan nigerian kenyan ethiopian ukrainian serbian croatian bulgarian icelandic".split(separator: " ").map(String.init))
     static let clueGeneric: Set<String> = commonWords.union(typeLeading).union(typeNouns).union(nationalities)
         .union(["this", "the", "a", "an", "was", "is", "were", "are", "best", "known", "famous", "noted", "also", "who", "which", "that", "based", "located", "near", "former"])
-    static let personFolded: Set<String> = ["actor", "musician", "writer", "scientist", "athlete", "director", "painter"]
-    static let personDescRE = try! NSRegularExpression(pattern: #"\b(actor|actress|singer|musician|composer|songwriter|rapper|writer|author|poet|novelist|playwright|journalist|artist|painter|sculptor|director|filmmaker|producer|scientist|physicist|chemist|biologist|mathematician|astronomer|economist|politician|philosopher|activist|explorer|inventor|architect|dancer|comedian|footballer|player|athlete|cyclist|swimmer|boxer|golfer|king|queen|emperor|president|leader|general|monarch|saint)\b"#, options: .caseInsensitive)
+    // Decided by the type HEAD-NOUN (typeKey), not a loose word match — a novel
+    // "by American author X" must NOT read as a person.
+    static let personTypeKeys: Set<String> = Set("actor actress musician writer scientist athlete director painter singer composer poet novelist author journalist sculptor architect engineer politician philosopher economist historian activist explorer inventor dancer comedian model conductor pianist guitarist rapper businessman entrepreneur king queen emperor empress monarch president general admiral saint pope sultan tsar duke earl baron knight prince princess priest bishop rabbi imam nun monk lawyer diplomat soldier aristocrat theologian".split(separator: " ").map(String.init))
     static let leadRE = try! NSRegularExpression(pattern: #"^\s*((?:[A-Z][\w’'.\-]*)(?:[ \-]+(?:of|the|and|de|von|van|al|da|di)?\s*[A-Z][\w’'.\-]*)*)\s*(?:\([^)]*\))?\s+(?:was|is|were|are)\s+(?:a|an|the)\s+(.+)$"#)
     static let properRE = try! NSRegularExpression(pattern: #"\b[A-Z][A-Za-z’'\-]{2,}\b"#)
     static let yearRE = try! NSRegularExpression(pattern: #"\b(?:1\d{3}|20\d{2})\b"#)
@@ -165,9 +161,9 @@ nonisolated struct TemplateEngine: Sendable {
     }
 
     static func isPerson(_ s: WikipediaClient.Summary) -> Bool {
-        if let k = typeKey(s), personFolded.contains(k) { return true }
-        let d = s.description ?? ""
-        if personDescRE.firstMatch(in: d, range: NSRange(location: 0, length: (d as NSString).length)) != nil { return true }
+        let k = typeKey(s)
+        if let k, personTypeKeys.contains(k) { return true }
+        if k != nil { return false }   // typed as a non-person thing
         return (s.extract ?? "").range(of: #"\(\s*\d{3,4}\s*[–-]|\bborn\b"#, options: .regularExpression) != nil
     }
 

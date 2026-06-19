@@ -367,8 +367,9 @@ object TemplateEngine {
     private val LEAD = Regex("^\\s*((?:[A-Z][\\w’'.\\-]*)(?:[ \\-]+(?:of|the|and|de|von|van|al|da|di)?\\s*[A-Z][\\w’'.\\-]*)*)\\s*(?:\\([^)]*\\))?\\s+(?:was|is|were|are)\\s+(?:a|an|the)\\s+(.+)$")
     private val PROPER = Regex("\\b[A-Z][A-Za-z’'\\-]{2,}\\b")
     private val YEAR_RE = Regex("\\b(?:1\\d{3}|20\\d{2})\\b")
-    private val PERSON_FOLDED = setOf("actor", "musician", "writer", "scientist", "athlete", "director", "painter")
-    private val PERSON_DESC = Regex("\\b(actor|actress|singer|musician|composer|songwriter|rapper|writer|author|poet|novelist|playwright|journalist|artist|painter|sculptor|director|filmmaker|producer|scientist|physicist|chemist|biologist|mathematician|astronomer|economist|politician|philosopher|activist|explorer|inventor|architect|dancer|comedian|footballer|player|athlete|cyclist|swimmer|boxer|golfer|king|queen|emperor|president|leader|general|monarch|saint)\\b", RegexOption.IGNORE_CASE)
+    // Decided by the type HEAD-NOUN (typeKey), not a loose word match — a novel
+    // "by American author X" must NOT read as a person.
+    private val PERSON_TYPEKEYS = "actor actress musician writer scientist athlete director painter singer composer poet novelist author journalist sculptor architect engineer politician philosopher economist historian activist explorer inventor dancer comedian model conductor pianist guitarist rapper businessman entrepreneur king queen emperor empress monarch president general admiral saint pope sultan tsar duke earl baron knight prince princess priest bishop rabbi imam nun monk lawyer diplomat soldier aristocrat theologian".split(" ").toSet()
     private val LIFE_OR_BORN = Regex("\\(\\s*\\d{3,4}\\s*[–-]|\\bborn\\b")
 
     private fun informativeTokens(clue: String): Int {
@@ -380,8 +381,9 @@ object TemplateEngine {
         return proper.size + years.size
     }
     private fun isPerson(s: Wikipedia.Summary): Boolean {
-        if (typeKey(s) in PERSON_FOLDED) return true
-        if (PERSON_DESC.containsMatchIn(s.description ?: "")) return true
+        val k = typeKey(s)
+        if (k in PERSON_TYPEKEYS) return true
+        if (k != null) return false   // typed as a non-person thing
         return LIFE_OR_BORN.containsMatchIn(s.extract ?: "")
     }
     private fun firstN(text: String, n: Int): String {
@@ -414,14 +416,10 @@ object TemplateEngine {
     private fun buildShape(shape: String, s: Wikipedia.Summary, pool: List<Wikipedia.Summary>, stem: String, rng: SeededRng): Triple<String, List<String>, String>? {
         when (shape) {
             "describe" -> {
-                var clue: String? = null
-                for (nsent in listOf(1, 2)) {   // escalate to 2 sentences if the first is too thin
-                    val c = reframe(cleanClue(firstN(s.extract ?: "", nsent)), s.title)
-                    if (c != null && c.length >= 30 && informativeTokens(c) >= 2) {
-                        clue = c.replace(Regex("[.\\s]+$"), "").trim(); break
-                    }
-                }
-                if (clue == null) return null
+                // FIRST sentence only — a 2-sentence clue reads awkwardly under "Name this …?".
+                val c = reframe(cleanClue(firstSentence(s.extract ?: "")), s.title)
+                if (c == null || c.length < 30 || informativeTokens(c) < 2) return null
+                val clue = c.replace(Regex("[.\\s]+$"), "").trim()
                 val ds = titleDistractors(s, pool, rng); if (ds.size != 3) return null
                 val ans = stripParens(s.title); return Triple(stem.format(clue), listOf(ans) + ds, ans)
             }

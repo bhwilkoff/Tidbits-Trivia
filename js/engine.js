@@ -201,11 +201,13 @@ function informativeTokens(clue) {
   return proper.size + years.size;
 }
 
-const PERSON_FOLDED = new Set(['actor', 'musician', 'writer', 'scientist', 'athlete', 'director', 'painter']);
-const PERSON_DESC = /\b(actor|actress|singer|musician|composer|songwriter|rapper|writer|author|poet|novelist|playwright|journalist|artist|painter|sculptor|director|filmmaker|producer|scientist|physicist|chemist|biologist|mathematician|astronomer|economist|politician|philosopher|activist|explorer|inventor|architect|dancer|comedian|footballer|player|athlete|cyclist|swimmer|boxer|golfer|king|queen|emperor|president|leader|general|monarch|saint)\b/i;
+// Decided by the type HEAD-NOUN (typeKey), not a loose word match — a novel
+// "by American author X" must NOT read as a person.
+const PERSON_TYPEKEYS = new Set('actor actress musician writer scientist athlete director painter singer composer poet novelist author journalist sculptor architect engineer politician philosopher economist historian activist explorer inventor dancer comedian model conductor pianist guitarist rapper businessman entrepreneur king queen emperor empress monarch president general admiral saint pope sultan tsar duke earl baron knight prince princess priest bishop rabbi imam nun monk lawyer diplomat soldier aristocrat theologian'.split(' '));
 function isPerson(s) {
-  if (PERSON_FOLDED.has(typeKey(s))) return true;
-  if (PERSON_DESC.test(s.description || '')) return true;
+  const k = typeKey(s);
+  if (PERSON_TYPEKEYS.has(k)) return true;
+  if (k !== null) return false;   // typed as a non-person thing
   return /\(\s*\d{3,4}\s*[–-]|\bborn\b/.test(s.extract || '');
 }
 
@@ -245,12 +247,10 @@ const SHAPE_ROTATION = ['describe', 'cloze', 'describe', 'describe', 'cloze'];
 function buildShape(shape, s, pool, stem, rnd) {
   const fmt = (v) => stem.replace('%s', v);
   if (shape === 'describe') {
-    let clue = null;
-    for (const nsent of [1, 2]) {   // escalate to 2 sentences if the first is too thin
-      const c = reframe(cleanClue(firstN(s.extract || '', nsent)), s);
-      if (c && c.length >= 30 && informativeTokens(c) >= 2) { clue = c.replace(/[.\s]+$/, '').trim(); break; }
-    }
-    if (!clue) return null;
+    // FIRST sentence only — a 2-sentence clue reads awkwardly under "Name this …?".
+    const c = reframe(cleanClue(firstSentence(s.extract || '')), s);
+    if (!c || c.length < 30 || informativeTokens(c) < 2) return null;
+    const clue = c.replace(/[.\s]+$/, '').trim();
     const ds = titleDistractors(s, pool, rnd); if (ds.length !== 3) return null;
     const ans = stripParens(s.title); return { prompt: fmt(clue), options: [ans, ...ds], answer: ans };
   }

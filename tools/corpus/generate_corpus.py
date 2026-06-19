@@ -428,20 +428,24 @@ def informative_tokens(clue):
     years = set(re.findall(r"\b(?:1\d{3}|20\d{2})\b", c))
     return len(proper) + len(years)
 
-# Person types ask "who"; everything else asks "what".
-_PERSON_FOLDED = {"actor", "musician", "writer", "scientist", "athlete", "director", "painter"}
-_PERSON_DESC = re.compile(r"\b(actor|actress|singer|musician|composer|songwriter|rapper|"
-                          r"writer|author|poet|novelist|playwright|journalist|artist|painter|"
-                          r"sculptor|director|filmmaker|producer|scientist|physicist|chemist|"
-                          r"biologist|mathematician|astronomer|economist|politician|philosopher|"
-                          r"activist|explorer|inventor|architect|dancer|comedian|footballer|"
-                          r"player|athlete|cyclist|swimmer|boxer|golfer|king|queen|emperor|"
-                          r"president|leader|general|monarch|saint)\b", re.I)
+# Person types ask "who"; everything else asks "what". Decided by the type
+# HEAD-NOUN (type_key), NOT a loose word match — a novel "by American author X"
+# must NOT read as a person just because its description mentions "author".
+_PERSON_TYPEKEYS = set("""actor actress musician writer scientist athlete director painter
+singer composer poet novelist author journalist sculptor architect engineer
+politician philosopher economist historian activist explorer inventor dancer
+comedian model conductor pianist guitarist rapper businessman entrepreneur
+king queen emperor empress monarch president general admiral saint pope sultan
+tsar duke earl baron knight prince princess priest bishop rabbi imam nun monk
+lawyer diplomat soldier aristocrat theologian""".split())
+
 def is_person(subject):
-    if type_key(subject) in _PERSON_FOLDED:
+    k = type_key(subject)
+    if k in _PERSON_TYPEKEYS:
         return True
-    if _PERSON_DESC.search(subject.get("description") or ""):
-        return True
+    if k is not None:                 # typed as a non-person thing → not a person
+        return False
+    # Untyped: fall back to a life-dates / "born" hint in the lead.
     return bool(re.search(r"\(\s*\d{3,4}\s*[–-]|\bborn\b", subject.get("extract") or ""))
 
 def _first_n(text, n):
@@ -495,14 +499,13 @@ STEMS = {
 SHAPE_ROTATION = ["describe", "cloze", "describe", "describe", "cloze"]
 
 def build_describe(subject, pool, stem, rng):
-    ext = subject.get("extract") or ""
-    clue = None
-    for nsent in (1, 2):   # escalate to 2 sentences if the first is too thin
-        c = reframe(clean_clue(_first_n(ext, nsent)), subject)
-        if c and len(c) >= 30 and informative_tokens(c) >= 2:
-            clue = c.rstrip(". ").strip(); break
-    if not clue:
+    # FIRST sentence only — a 2-sentence clue reads awkwardly under "Name this …?"
+    # / "Which …?" (the question mark dangles after a second sentence). If the
+    # lead sentence is too thin, drop (cloze / fact paths may still cover it).
+    c = reframe(clean_clue(first_sentence(subject.get("extract") or "")), subject)
+    if not c or len(c) < 30 or informative_tokens(c) < 2:
         return None
+    clue = c.rstrip(". ").strip()
     ds = title_distractors(subject, pool, rng)
     if len(ds) != 3:
         return None

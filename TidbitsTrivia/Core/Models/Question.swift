@@ -15,6 +15,7 @@ nonisolated struct Question: Identifiable, Hashable, Codable, Sendable {
     let sourceTitle: String    // Wikipedia article title
     let sourceURL: URL?
     let templateID: String
+    var imageURL: URL? = nil   // Picture ID (Q7): the Commons image to identify
 
     var correctAnswer: String { options[correctIndex] }
 

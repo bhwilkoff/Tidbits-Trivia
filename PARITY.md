@@ -69,6 +69,7 @@ reached is ⏳ with a note, never silence.
 | Survival (until one wrong) | ✅ | ✅ | ✅ | ✅ | |
 | Stake (confidence allocation) | ✅ | ✅ | ✅ | ✅ | 8-Q round; fixed chip budget (Sure×2/Likely×3/Hunch×3), commit before answering; adds-only, never negative — calibration, not gambling (Decision 022). Solo "home version" of LearnedLeague/Pour House (GAME-MODES-RESEARCH M1) |
 | Sweep (fill-the-set, beat-your-best) | ✅ | ✅ | ✅ | ✅ | 12-Q "set"; +1 per correct (count-scored, no speed bonus) with a persistent fill-grid scoreboard (mint hit / coral miss); beat your own best via existing per-mode best-score. Sporcle "sweep the set" home version (SOLO-BACKLOG M2) |
+| Picture ID (identify the image) | ✅ | ✅ | ✅ | ✅ | 10-Q mode off the E1 enrichment (`picture.json`, 816 Qs): a Commons image + "What is this?" + the corpus's 4 vetted options. iOS/tvOS AsyncImage, web `<img>`, Android Coil — each with a load-failure fallback (this mode needs the network; all other modes stay offline). SOLO-BACKLOG Q7 |
 | Daily Tidbit (deterministic, streak) | ✅ | ✅ | ✅ | ✅ | Same 7 Qs for everyone per day; same FNV-1a/SplitMix64 seed on all platforms |
 | 8 categories | ✅ | ✅ | ✅ | ✅ | Mixed/History/Science/Geography/Arts/Film&TV/Music/Sports |
 | Countdown clock + speed bonus | ✅ | ✅ | ✅ | ✅ | Per-question or global per mode |

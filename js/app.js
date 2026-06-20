@@ -1,7 +1,7 @@
 // Tidbits — web app shell: router, views, and the game loop. Mirrors the
 // Apple AppStore + GameEngine + views. Vanilla JS, no framework, no build.
 
-import { Corpus, Wikipedia } from './api.js';
+import { Corpus, Pictures, Wikipedia } from './api.js';
 import { Store, CATEGORIES, catColor, catById, MODES, STAKE_BUDGET, dayKey, APP_STORES } from './store.js';
 import { Scoring } from './engine.js';
 
@@ -63,7 +63,7 @@ function viewHome() {
       <span class="cat-name">${h(c.name)}</span>
       <span class="cat-blurb muted">${h(c.blurb)}</span>
     </button>`).join('');
-  const modes = ['classic', 'timeAttack', 'survival', 'stake', 'sweep'].map((m) =>
+  const modes = ['classic', 'timeAttack', 'survival', 'stake', 'sweep', 'pictureId'].map((m) =>
     `<button class="chip" data-mode="${m}">${h(MODES[m].title)}</button>`).join('');
   return `
     <h1 class="page-title">Trivia from the whole of Wikipedia.</h1>
@@ -218,6 +218,10 @@ class Game {
     let qs;
     if (this._custom) qs = this._custom;
     else if (this.mode.id === 'daily') qs = Corpus.daily(dayKey(), 7);
+    else if (this.mode.id === 'pictureId') {
+      await Pictures.load();
+      qs = Pictures.pull(this.category.id, Store._seen, this.mode.count);
+    }
     else {
       qs = Corpus.pull(this.category.id, Store._seen, this.mode.count);
       if (qs.length < this.mode.count) {
@@ -344,8 +348,9 @@ function renderGame() {
   }).join('');
   const stakeSel = (staking && game.phase === 'playing') ? stakeSelector() : '';
   const sweepGr = game.mode.id === 'sweep' ? sweepGrid() : '';
+  const pic = q.image ? `<div class="card pic-card"><img class="pic-img" src="${h(q.image)}" alt="Identify this" loading="eager" onerror="this.parentNode.classList.add('pic-failed')"><span class="pic-fallback muted">Couldn't load the image</span></div>` : '';
   const reveal = game.phase === 'reveal' ? revealCard(q) : '';
-  const fixedCount = game.mode.id === 'classic' || game.mode.id === 'daily' || staking || game.mode.id === 'sweep';
+  const fixedCount = game.mode.id === 'classic' || game.mode.id === 'daily' || staking || game.mode.id === 'sweep' || game.mode.id === 'pictureId';
   const progress = fixedCount ? `${game.index + 1} / ${game.questions.length}` : `#${game.index + 1}`;
   app.innerHTML = `
     <div class="game">
@@ -356,6 +361,7 @@ function renderGame() {
       </div>
       <div class="clockbar"><span id="clk-label">${progress}</span><div class="clock-track"><div id="clk-fill" class="clock-fill"></div></div><span id="clk-secs"></span></div>
       <div class="qwrap">
+        ${pic}
         <div class="card qcard"><div class="qcat" style="color:${catColor(cat)}">${h(cat.name.toUpperCase())}</div><div class="qprompt">${h(q.prompt)}</div></div>
         ${sweepGr}
         ${stakeSel}
@@ -370,7 +376,7 @@ function renderGame() {
   if (game.phase === 'reveal') $('[data-next]').addEventListener('click', () => game.advance());
   updateClock();
 }
-function isLast() { return (game.mode.id === 'classic' || game.mode.id === 'daily' || game.mode.id === 'stake' || game.mode.id === 'sweep') && game.index + 1 >= game.questions.length; }
+function isLast() { return (game.mode.id === 'classic' || game.mode.id === 'daily' || game.mode.id === 'stake' || game.mode.id === 'sweep' || game.mode.id === 'pictureId') && game.index + 1 >= game.questions.length; }
 // Sweep's persistent fill-grid — one cell per question, filled green (hit) /
 // coral (miss) as you go; the current cell is ringed. The grid is the scoreboard.
 function sweepGrid() {

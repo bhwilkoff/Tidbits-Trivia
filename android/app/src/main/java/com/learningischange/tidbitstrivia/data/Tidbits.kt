@@ -27,6 +27,7 @@ data class Question(
     val explanation: String,
     val sourceTitle: String,
     val sourceUrl: String,
+    val imageUrl: String? = null,   // Picture ID (Q7): Commons image to identify
 )
 
 data class Category(val id: String, val name: String, val icon: String, val colorIndex: Int, val blurb: String) {
@@ -51,6 +52,7 @@ enum class Mode(val title: String, val blurb: String, val perQuestion: Int?, val
     SURVIVAL("Survival", "One wrong answer ends it.", 15, null, 99),
     STAKE("Stake", "Bet your confidence. No risk.", 30, null, 8),
     SWEEP("Sweep", "Fill the set. Beat your best.", 12, null, 12),
+    PICTURE_ID("Picture ID", "Name what you see.", 20, null, 10),
     DAILY("Daily Tidbit", "Everyone's puzzle. Keep your streak.", 30, null, 7),
 }
 
@@ -141,6 +143,44 @@ object Corpus {
 
     fun daily(dayKey: String, count: Int): List<Question> =
         all.shuffledWith(SeededRng(stableSeed(dayKey))).take(count)
+}
+
+// ---- Picture ID source (assets/picture.json — corpus + E1 image enrichment) ----
+
+object Pictures {
+    private var all: List<Question> = emptyList()
+    private var byCat: Map<String, List<Question>> = emptyMap()
+    var loaded = false; private set
+
+    suspend fun load(context: Context) = withContext(Dispatchers.IO) {
+        if (loaded) return@withContext
+        runCatching {
+            val text = context.assets.open("picture.json").bufferedReader().use { it.readText() }
+            val arr = Json.parseToJsonElement(text).jsonObject["questions"]!!.jsonArray
+            all = arr.map { el ->
+                val a = el.jsonArray
+                Question(
+                    id = a[0].jsonPrimitive.content, prompt = a[1].jsonPrimitive.content,
+                    options = a[2].jsonArray.map { it.jsonPrimitive.content },
+                    correctIndex = a[3].jsonPrimitive.content.toInt(),
+                    categoryId = a[4].jsonPrimitive.content,
+                    difficulty = a[5].jsonPrimitive.content.toInt(),
+                    explanation = a[6].jsonPrimitive.content,
+                    sourceTitle = a[7].jsonPrimitive.content,
+                    sourceUrl = a[8].jsonPrimitive.content,
+                    imageUrl = a[9].jsonPrimitive.content,
+                )
+            }
+            byCat = all.groupBy { it.categoryId }
+            loaded = true
+        }
+        Unit
+    }
+
+    fun pull(categoryId: String, seen: Set<String>, limit: Int): List<Question> {
+        val src = if (categoryId == "mixed") all else (byCat[categoryId] ?: emptyList())
+        return src.filter { it.id !in seen }.shuffled().take(limit)
+    }
 }
 
 fun dayKey(): String {

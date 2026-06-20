@@ -80,6 +80,7 @@ struct TVGamePlayView: View {
                 Text(TriviaCategory.named(q.categoryID).name.uppercased())
                     .font(.system(size: 25, weight: .bold, design: .rounded))
                     .foregroundStyle(TriviaCategory.named(q.categoryID).color)
+                if let img = q.imageURL { pictureImage(img) }
                 Text(q.prompt)
                     .font(.system(size: 48, weight: .heavy, design: .rounded))
                     .foregroundStyle(.white)
@@ -158,6 +159,20 @@ struct TVGamePlayView: View {
         .focusSection()
     }
 
+    /// Picture ID image at ten feet — large, `.fit`, async with a fallback.
+    private func pictureImage(_ url: URL) -> some View {
+        AsyncImage(url: url) { phase in
+            switch phase {
+            case .success(let image): image.resizable().aspectRatio(contentMode: .fit)
+            case .failure:
+                Text("Couldn't load the image").font(.system(size: 27, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+            default: ProgressView()
+            }
+        }
+        .frame(maxWidth: 760, maxHeight: 320, alignment: .leading)
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+
     /// Sweep fill-grid at ten feet — one cell per question in the set,
     /// filled mint (hit) / coral (miss), the current cell ringed white.
     private var sweepRow: some View {
@@ -225,7 +240,7 @@ struct TVGamePlayView: View {
         .background(RoundedRectangle(cornerRadius: 22).fill(TVTheme.panel))
     }
     private var isLast: Bool {
-        (game.mode == .classic || game.mode == .daily || game.mode == .stake || game.mode == .sweep) && game.index + 1 >= game.questions.count
+        (game.mode == .classic || game.mode == .daily || game.mode == .stake || game.mode == .sweep || game.mode == .pictureId) && game.index + 1 >= game.questions.count
     }
 }
 

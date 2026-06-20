@@ -28,6 +28,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
+import coil3.compose.AsyncImage
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -52,7 +54,11 @@ fun AppRoot(store: Store) {
     val backStack = remember { mutableStateListOf<Route>(Route.Home) }
     val current = backStack.last()
     var corpusReady by remember { mutableStateOf(Corpus.loaded) }
-    LaunchedEffect(Unit) { if (!Corpus.loaded) runCatching { Corpus.load(context) }; corpusReady = true }
+    LaunchedEffect(Unit) {
+        if (!Corpus.loaded) runCatching { Corpus.load(context) }
+        if (!Pictures.loaded) runCatching { Pictures.load(context) }
+        corpusReady = true
+    }
 
     BackHandler(enabled = backStack.size > 1) { backStack.removeAt(backStack.lastIndex) }
 
@@ -96,7 +102,7 @@ private fun HomeScreen(onPlay: (Mode, Category) -> Unit) {
 
         Text("Pick a mode", fontWeight = FontWeight.Bold, fontSize = 20.sp)
         LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            items(listOf(Mode.CLASSIC, Mode.TIME_ATTACK, Mode.SURVIVAL, Mode.STAKE, Mode.SWEEP), key = { it.name }) { m ->
+            items(listOf(Mode.CLASSIC, Mode.TIME_ATTACK, Mode.SURVIVAL, Mode.STAKE, Mode.SWEEP, Mode.PICTURE_ID), key = { it.name }) { m ->
                 FilterChip(selected = selectedMode == m, onClick = { selectedMode = m }, label = { Text(m.title) })
             }
         }
@@ -159,6 +165,13 @@ private fun PlayingScreen(game: GameState) {
             AssistChip(onClick = {}, label = { Text("★ ${game.score}") })
         }
         Text(Category.byId(q.categoryId).name.uppercase(), color = Pops.at(Category.byId(q.categoryId).colorIndex), fontWeight = FontWeight.Bold, fontSize = 13.sp)
+        q.imageUrl?.let { url ->
+            ChunkyCard(fill = MaterialTheme.colorScheme.surfaceVariant, modifier = Modifier.fillMaxWidth()) {
+                AsyncImage(model = url, contentDescription = "Identify this",
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.fillMaxWidth().heightIn(max = 240.dp).padding(8.dp))
+            }
+        }
         Text(q.prompt, fontWeight = FontWeight.Black, fontSize = 23.sp)
         if (game.mode == Mode.SWEEP) SweepGrid(game)
         if (game.mode == Mode.STAKE && game.phase == GamePhase.PLAYING) StakeSelector(game)

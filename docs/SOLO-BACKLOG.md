@@ -42,7 +42,7 @@ aliases unlocks SEVEN question types. Most `P2` items are gated on it.
 | Q4 | **Ordering / ranking** | Arrange 4–6 items (chronological/size); partial credit by inversion count. Drag on phone/web; insert-via-focus on tvOS. | +meta (E1 orderable attr) | P2 | 🔮 E1 |
 | Q5 | **Matching pairs** | Two columns (country↔capital); link each. Easy to validate (1:1). Study-aligned. | +meta (E1 paired facts) | P2 | 🔮 E1 |
 | Q6 | **Type-the-answer** | Free-text recall + fuzzy/alias matching. Deepest retrieval; web/phone first (tvOS keyboard wall). Also closes `ROADMAP` #9. | +meta (E1 aliases) | P2 | 🔮 E1 |
-| Q7 | **Picture ID** | Identify an image (landmark/flag/art); optional progressive reveal. **Finally plays to tvOS's strengths** (10-ft imagery). | +meta (E1 Commons image) | P2 | 🚧 data ready (`picture.json`, 816 Qs); per-platform image UI next |
+| Q7 | **Picture ID** | A Commons image + "What is this?" + the corpus's 4 vetted options (`picture.json`, 816 Qs). iOS/tvOS AsyncImage, web img, Android Coil, each with a load-failure fallback. | +meta (E1 Commons image) | P2 | ✅ all 4 platforms |
 | Q8 | **List / enumeration** *(Sporcle typed)* | "Name as many X in 60s"; fill-grid. Rich sets + alias coverage; web/phone (tvOS via voice/skip). | Rich | P3 | 🔮 |
 
 ## Functionality / infrastructure

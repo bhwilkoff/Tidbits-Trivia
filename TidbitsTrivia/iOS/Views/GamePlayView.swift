@@ -15,6 +15,7 @@ struct GamePlayView: View {
             if let q = game.current {
                 ScrollView {
                     VStack(spacing: 18) {
+                        if let img = q.imageURL { pictureHeader(img) }
                         QuestionCard(question: q)
                         if game.mode == .sweep { sweepGrid }
                         if game.mode == .stake && game.phase == .playing { stakeSelector }
@@ -125,6 +126,34 @@ struct GamePlayView: View {
         .padding(.trailing, Tidbits.Metric.shadowOffset)
     }
 
+    // MARK: Picture ID header
+
+    /// The image to identify (Picture mode). `.fit` inside a fixed-height frame —
+    /// never fill-in-an-infinite-frame (the layout-blowup gotcha). Async with a
+    /// loading + failure fallback (the image needs the network; the bundled
+    /// corpus stays offline for every other mode).
+    private func pictureHeader(_ url: URL) -> some View {
+        AsyncImage(url: url, transaction: .init(animation: .easeOut(duration: 0.2))) { phase in
+            switch phase {
+            case .success(let image):
+                image.resizable().aspectRatio(contentMode: .fit)
+            case .failure:
+                VStack(spacing: 6) {
+                    Image(systemName: "photo").font(.system(size: 34, weight: .bold))
+                    Text("Couldn't load the image").font(Tidbits.TypeRamp.l5)
+                }.foregroundStyle(Tidbits.Palette.inkSoft).frame(maxWidth: .infinity)
+            default:
+                ProgressView().frame(maxWidth: .infinity)
+            }
+        }
+        .frame(height: 220)
+        .frame(maxWidth: .infinity)
+        .background(Tidbits.Palette.bgDeep)
+        .clipShape(RoundedRectangle(cornerRadius: Tidbits.Metric.radius, style: .continuous))
+        .chunkyCard(fill: Tidbits.Palette.bgDeep)
+        .padding(.trailing, Tidbits.Metric.shadowOffset)
+    }
+
     // MARK: Sweep fill-grid
 
     /// The persistent "set" scoreboard — one cell per question. Filled green
@@ -218,7 +247,7 @@ struct GamePlayView: View {
     }
 
     private var isLast: Bool {
-        (game.mode == .classic || game.mode == .daily || game.mode == .stake || game.mode == .sweep) && game.index + 1 >= game.questions.count
+        (game.mode == .classic || game.mode == .daily || game.mode == .stake || game.mode == .sweep || game.mode == .pictureId) && game.index + 1 >= game.questions.count
     }
 }
 

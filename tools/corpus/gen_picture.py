@@ -13,7 +13,7 @@ main corpus contract is untouched and Picture mode loads its own set.
 
 Usage: python3 gen_picture.py
 """
-import argparse, hashlib, json, re, urllib.parse
+import argparse, hashlib, json, os, re, urllib.parse
 
 
 def norm(s):
@@ -57,17 +57,23 @@ def main():
         if title in seen_titles:           # one picture question per subject
             continue
         seen_titles.add(title)
+        # Same column order as corpus.json (id,prompt,options,correct,cat,diff,
+        # explanation,source_title,source_url) + a 10th element: the image URL.
         out.append([
-            f"picture:{title}", "What is this?", options, correct,
-            q[4], q[5], q[7], q[6], url, ent["image"],
+            q[0].replace("corpus:", "picture:", 1), "What is this?", options, correct,
+            q[4], q[5], q[6], q[7], q[8], ent["image"],
         ])
 
     body = json.dumps(out, ensure_ascii=False, separators=(",", ":"))
     version = hashlib.md5(body.encode()).hexdigest()[:12]
     payload = f'{{"version":"{version}","count":{len(out)},"questions":{body}}}'
-    with open(args.out, "w") as f:
-        f.write(payload)
-    print(f"wrote {len(out)} picture questions (version {version}) to {args.out}")
+    # Web + Android read assets/; iOS/tvOS bundle a Resources/ copy (their corpus
+    # is SQLite, so picture.json rides alongside as the Picture-mode source).
+    res_copy = os.path.join(os.path.dirname(__file__), "..", "..", "TidbitsTrivia", "Resources", "picture.json")
+    for path in (args.out, res_copy):
+        with open(path, "w") as f:
+            f.write(payload)
+    print(f"wrote {len(out)} picture questions (version {version}) to {args.out} + Resources")
     for q in out[:6]:
         print(" ", q[6], "->", q[2][q[3]], "|", q[9][:64])
 

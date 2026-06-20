@@ -17,7 +17,7 @@ android {
         applicationId = "com.learningischange.tidbitstrivia"
         minSdk = 29
         targetSdk = 36
-        versionCode = 2
+        versionCode = 3
         versionName = "1.0"   // lockstep with the iOS marketing version
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
@@ -74,6 +74,8 @@ dependencies {
     implementation(libs.datastore.preferences)
     implementation(libs.okhttp)
     implementation(libs.splashscreen)
+    implementation(libs.coil.compose)         // Picture ID (Q7) image loading
+    implementation(libs.coil.network.okhttp)
 
     testImplementation(libs.junit)
     testImplementation(libs.coroutines.test)

@@ -9,6 +9,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
     case survival    // keep going until one wrong answer
     case stake       // bet a fixed budget of confidence chips per question
     case sweep       // fill a themed set; beat your own best (count-scored)
+    case pictureId   // identify the subject from its image (E1 enrichment)
     case daily       // one fixed daily set, streak-bearing, shareable
 
     var id: String { rawValue }
@@ -20,6 +21,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .survival:   return "Survival"
         case .stake:      return "Stake"
         case .sweep:      return "Sweep"
+        case .pictureId:  return "Picture ID"
         case .daily:      return "Daily Tidbit"
         }
     }
@@ -31,6 +33,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .survival:   return "One wrong answer ends it."
         case .stake:      return "Bet your confidence. No risk."
         case .sweep:      return "Fill the set. Beat your best."
+        case .pictureId:  return "Name what you see."
         case .daily:      return "Everyone's puzzle. Keep your streak."
         }
     }
@@ -42,6 +45,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .survival:   return "heart.fill"
         case .stake:      return "chart.bar.fill"
         case .sweep:      return "square.grid.3x3.fill"
+        case .pictureId:  return "photo.fill"
         case .daily:      return "sun.max.fill"
         }
     }
@@ -53,6 +57,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .survival:   return Tidbits.Palette.grape
         case .stake:      return Tidbits.Palette.mint
         case .sweep:      return Tidbits.Palette.teal
+        case .pictureId:  return Tidbits.Palette.pink
         case .daily:      return Tidbits.Palette.yellow
         }
     }
@@ -65,6 +70,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .survival:   return 15
         case .stake:      return 30    // generous — calibration shouldn't be rushed
         case .sweep:      return 12    // rapid-fire, but a clock that never punishes score
+        case .pictureId:  return 20    // time to look at the image
         case .daily:      return 30
         }
     }
@@ -76,6 +82,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .survival:   return 99    // bounded by a wrong answer
         case .stake:      return 8     // matches the confidence-chip budget
         case .sweep:      return 12    // a "set" to fill — the grid is the scoreboard
+        case .pictureId:  return 10
         case .daily:      return 7
         }
     }

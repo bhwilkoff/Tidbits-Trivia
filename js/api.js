@@ -134,6 +134,14 @@ function rowToMatch(r) {
   };
 }
 
+// Enumeration (Q8) row: [id, prompt, groups([[canonical, alias...]]), cat, seconds, url].
+function rowToEnum(r) {
+  return {
+    id: r[0], prompt: r[1], options: [], correctIndex: 0, templateID: 'enum',
+    enumerate: { groups: r[2] }, categoryID: r[3], difficulty: 3, explanation: '', sourceTitle: '', sourceURL: r[5] || '',
+  };
+}
+
 function makeJsonSet(filename, parseRow = rowToQuestion) {
   return {
     questions: [], byCategory: {}, loaded: false,
@@ -165,6 +173,7 @@ export const Ordering = makeJsonSet('order.json', rowToOrder);
 export const Matching = makeJsonSet('match.json', rowToMatch);
 export const TypeAnswer = makeJsonSet('typeanswer.json', rowToType);
 export const OddOneOut = makeJsonSet('oddoneout.json');   // standard MCQ rows
+export const Enumerate = makeJsonSet('enumerate.json', rowToEnum);   // Q8 list puzzles
 
 // F3 derived-difficulty overlay (Wikipedia pageviews → 1..5 per subject).
 export const Difficulty = {

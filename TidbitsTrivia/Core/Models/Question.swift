@@ -20,6 +20,7 @@ nonisolated struct Question: Identifiable, Hashable, Codable, Sendable {
     var ordering: [String]? = nil     // Ordering (Q4): the items in CORRECT order
     var matching: MatchSpec? = nil    // Matching (Q5): keys ↔ correct values
     var accepted: [String]? = nil     // Type-the-answer (Q6): accepted free-text answers
+    var enumerate: EnumSpec? = nil    // Enumeration (Q8): name as many of a set as you can
 
     var correctAnswer: String {
         if options.indices.contains(correctIndex) { return options[correctIndex] }
@@ -62,6 +63,15 @@ nonisolated struct ClosestSpec: Hashable, Codable, Sendable {
 nonisolated struct MatchSpec: Hashable, Codable, Sendable {
     let keys: [String]
     let values: [String]
+}
+
+/// Enumeration (Q8): a set the player names against a 60s clock. Each group is
+/// one accepted answer — `[canonical, alias, ...]` — so any alias counts but a
+/// group fills only once. The display name is `group.first`.
+nonisolated struct EnumSpec: Hashable, Codable, Sendable {
+    let groups: [[String]]
+    var total: Int { groups.count }
+    var displayNames: [String] { groups.map { $0.first ?? "" } }
 }
 
 /// Whether the player got it right, and how fast — drives speed scoring,

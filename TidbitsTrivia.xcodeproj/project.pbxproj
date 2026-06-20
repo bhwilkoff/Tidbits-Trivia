@@ -44,6 +44,7 @@
 		92B4788F3A0CAC7DE68FB848 /* CorpusDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB24F551656B187A42C81D44 /* CorpusDatabase.swift */; };
 		9B22CE4581A58C784D66DDB1 /* GameMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C55D3DCAE5E46980D666B83 /* GameMode.swift */; };
 		9BD52794E3B9893E95300BD5 /* corpus.sqlite in Resources */ = {isa = PBXBuildFile; fileRef = E8F18E88BA37F77E6313144F /* corpus.sqlite */; };
+		9E05CBE2403049F68DAB9527 /* enumerate.json in Resources */ = {isa = PBXBuildFile; fileRef = EDE7E258003BBD004F3BD314 /* enumerate.json */; };
 		9EA492C785F5F4ED0BFB78FF /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BFD0D04EAFA9DBEB25F3A8E /* OnboardingView.swift */; };
 		A196A0BBE89D112E62E0577E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 73D5D7FD07809D194BF90B30 /* Assets.xcassets */; };
 		A690ED15A1D8831CF3E58CB8 /* Player.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3AE68F153F8C298960BFD36 /* Player.swift */; };
@@ -111,11 +112,12 @@
 		E48988FC967EF362B69C2FB5 /* TemplateEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplateEngine.swift; sourceTree = "<group>"; };
 		E8F18E88BA37F77E6313144F /* corpus.sqlite */ = {isa = PBXFileReference; lastKnownFileType = file; path = corpus.sqlite; sourceTree = "<group>"; };
 		EB24F551656B187A42C81D44 /* CorpusDatabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CorpusDatabase.swift; sourceTree = "<group>"; };
+		EDE7E258003BBD004F3BD314 /* enumerate.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = enumerate.json; sourceTree = "<group>"; };
 		F18495176F588DF9E5C7907E /* PartyContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PartyContainerView.swift; sourceTree = "<group>"; };
 		F3AE68F153F8C298960BFD36 /* Player.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Player.swift; sourceTree = "<group>"; };
 		F5C9D9266531ECD27156562D /* GameView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView_tvOS.swift; sourceTree = "<group>"; };
 		FFC46D4CE8D03186C064C759 /* Question.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Question.swift; sourceTree = "<group>"; };
-		"TEMP_B8CF7E88-E22E-410C-B739-349A4DBB5A54" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
+		"TEMP_4BBAE6D3-AEA3-45CA-AFD4-8F48998380B0" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -208,6 +210,7 @@
 				1241A5F7969CF344FFE75DA6 /* closest.json */,
 				E8F18E88BA37F77E6313144F /* corpus.sqlite */,
 				0C8075B00F30AAE8E925FF05 /* difficulty.json */,
+				EDE7E258003BBD004F3BD314 /* enumerate.json */,
 				6C78FEA628F8D5DC705D414E /* match.json */,
 				DEB3E620FB0E374A393778E4 /* oddoneout.json */,
 				79A5D10D9EBC4D0950DE13CF /* order.json */,
@@ -307,10 +310,10 @@
 			path = TidbitsTrivia;
 			sourceTree = "<group>";
 		};
-		"TEMP_FE2FF6BC-0185-4A3E-A758-BB4D7655E21F" /* Tidbits-Trivia */ = {
+		"TEMP_41A9590D-FC51-45FF-AC28-4AF0266FD221" /* Tidbits-Trivia */ = {
 			isa = PBXGroup;
 			children = (
-				"TEMP_B8CF7E88-E22E-410C-B739-349A4DBB5A54" /* AppVersion.xcconfig */,
+				"TEMP_4BBAE6D3-AEA3-45CA-AFD4-8F48998380B0" /* AppVersion.xcconfig */,
 			);
 			path = "Tidbits-Trivia";
 			sourceTree = "<group>";
@@ -381,6 +384,7 @@
 				11CCA7505B02468A02988A0C /* closest.json in Resources */,
 				9BD52794E3B9893E95300BD5 /* corpus.sqlite in Resources */,
 				476021C7C87B8F571D3D5108 /* difficulty.json in Resources */,
+				9E05CBE2403049F68DAB9527 /* enumerate.json in Resources */,
 				3944456B4B345D9CBBDC9594 /* match.json in Resources */,
 				3DDD98934D198791F4C9C508 /* oddoneout.json in Resources */,
 				DD17E6E2BBC121F9A5B69E32 /* order.json in Resources */,
@@ -444,7 +448,7 @@
 /* Begin XCBuildConfiguration section */
 		296659EF0549868336801823 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_B8CF7E88-E22E-410C-B739-349A4DBB5A54" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_4BBAE6D3-AEA3-45CA-AFD4-8F48998380B0" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -560,7 +564,7 @@
 		};
 		E6F711EEEE2896F84FE9AB98 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_B8CF7E88-E22E-410C-B739-349A4DBB5A54" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_4BBAE6D3-AEA3-45CA-AFD4-8F48998380B0" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;

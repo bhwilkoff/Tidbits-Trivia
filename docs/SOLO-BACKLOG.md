@@ -43,7 +43,7 @@ aliases unlocks SEVEN question types. Most `P2` items are gated on it.
 | Q5 | **Matching pairs** | Link each key to its value from the corpus's 1:1 Wikidata relations (`match.json`, 136 Qs: capital/currency/element-symbol/book-author). Tap key then value; partial credit. tvOS = focusable rows. | Yes (1:1 wd relations) | P2 | ✅ all 4 platforms |
 | Q6 | **Type-the-answer** | Free-text recall (`typeanswer.json`, 997 Qs) matched against an accepted set (answer + E1 aliases; diacritic/punct/case/"the"-insensitive). iOS/web/Android text field; tvOS = recall-then-reveal self-mark (keyboard wall). | +meta (E1 aliases) | P2 | ✅ all 4 platforms |
 | Q7 | **Picture ID** | A Commons image + "What is this?" + the corpus's 4 vetted options (`picture.json`, 816 Qs). iOS/tvOS AsyncImage, web img, Android Coil, each with a load-failure fallback. | +meta (E1 Commons image) | P2 | ✅ all 4 platforms |
-| Q8 | **List / enumeration** *(Sporcle typed)* | "Name as many X in 60s"; fill-grid. Rich sets + alias coverage; web/phone (tvOS via voice/skip). | Rich | P3 | 🔮 |
+| Q8 | **List / enumeration** *(Sporcle typed)* | "Name as many X in 60s" — a 3-puzzle round (`enumerate.json`, 11 puzzles / 243 slots: continent→countries from wd:continent + curated planets/elements/oceans/Great Lakes/continents). Type against a live clock; each unique answer (alias-matched via the type-answer normalizer + E1 aliases) fills a chip; the reveal shows the full set, named vs. missed (testing effect). Curated: historical/defunct states + dupes dropped, awkward canonicals renamed (PRC→China). iOS/web/Android text field; **tvOS** = recall-self-mark (reveal list + count stepper). Replayable drill (ignores the seen-set). | Rich (curated sets) | P3 | ✅ all 4 platforms |
 
 ## Functionality / infrastructure
 
@@ -71,7 +71,9 @@ aliases unlocks SEVEN question types. Most `P2` items are gated on it.
 4. **M5 Closest Call**, **Q3 Odd-one-out**, **Q7 Picture ID** — first fruits of E1.
 5. **M3 The Pie** / **M4 Topic Levels** — long-horizon retention meta-progression.
 6. **Q6 Type-the-answer**, **Q4 Ordering**, **Q5 Matching** — the richer E1 types.
-7. **M6 Link Wall** / **Q8 enumeration** — marquee daily / rich-data bets.
+7. **Q8 enumeration** — ✅ shipped all 4 platforms (2026-06-20): a 3-puzzle
+   "name as many in 60s" round off curated continent/science sets. **M6 Link
+   Wall** — still 🔮 (needs the curation-approach decision; deferred to Ben).
 
 **Parity rule:** every shipped mode/type mirrors across web + iOS + tvOS + Android in
 the same change set (4 engines) and gets a `PARITY.md` row. A mode that's a *scoring/

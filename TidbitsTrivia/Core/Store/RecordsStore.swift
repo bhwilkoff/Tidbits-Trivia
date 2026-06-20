@@ -107,7 +107,7 @@ enum RecordsStore {
 
     private static func recordTelemetry(_ answered: [AnsweredQuestion], mode: GameMode) {
         switch mode {
-        case .closestCall, .ordering, .matching, .typeAnswer: return  // synthetic chosenIndex
+        case .closestCall, .ordering, .matching, .typeAnswer, .enumerate: return  // synthetic chosenIndex
         default: break
         }
         let defaults = UserDefaults.standard

@@ -58,6 +58,12 @@ final class GameEngine {
     // Type-the-answer (Q6): the player's typed input (unused on tvOS, which self-marks).
     var typedText: String = ""
 
+    // Enumeration (Q8): which answer groups have been named this puzzle, and the
+    // canonical names in find-order (for the fill-grid + the recap of misses).
+    private(set) var enumFilled: Set<Int> = []
+    private(set) var enumNamed: [String] = []
+    var enumLastHit: Bool = false   // last submit matched — drives a flash in the UI
+
     // Clocks
     private(set) var remaining: Double = 0      // seconds left on the active clock
     private var clockBudget: Double = 0
@@ -143,6 +149,7 @@ final class GameEngine {
             matchSelectedKey = nil
         }
         if current?.accepted != nil { typedText = "" }
+        if current?.enumerate != nil { enumFilled = []; enumNamed = []; enumLastHit = false; typedText = "" }
         phase = .playing
         questionStart = .now
         clockBudget = mode.perQuestionSeconds ?? (globalRemaining() ?? 30)
@@ -187,6 +194,7 @@ final class GameEngine {
                 case .ordering: submitOrder()
                 case .matching: submitMatch()
                 case .typeAnswer: submitText()
+                case .enumerate: finishEnum()
                 default: submit(nil)
                 }
             }
@@ -356,6 +364,60 @@ final class GameEngine {
         } else {
             streak = 0; Haptics.wrong()
         }
+        phase = .reveal
+    }
+
+    // MARK: Enumeration (Q8)
+
+    /// Submit one typed guess for the current list puzzle. Fills the first
+    /// unfilled group any of whose aliases match; +1 to the score per fill
+    /// (count-scored, like Sweep — the list you fill IS the score). Returns
+    /// whether it matched. Already-found or wrong inputs are no-ops.
+    @discardableResult
+    func submitEnumGuess(_ text: String) -> Bool {
+        guard mode == .enumerate, phase == .playing, let spec = current?.enumerate else { return false }
+        typedText = ""
+        let n = Self.normalizeType(text)
+        guard !n.isEmpty else { enumLastHit = false; return false }
+        for (i, group) in spec.groups.enumerated() where !enumFilled.contains(i) {
+            if group.contains(where: { Self.normalizeType($0) == n }) {
+                enumFilled.insert(i)
+                enumNamed.append(group.first ?? "")
+                score += 1
+                enumLastHit = true
+                Haptics.correct()
+                if enumFilled.count == spec.groups.count { finishEnum() }
+                return true
+            }
+        }
+        enumLastHit = false
+        Haptics.wrong()
+        return false
+    }
+
+    /// tvOS recall-self-mark: the player thinks of names (no keyboard at ten
+    /// feet), then reports how many they could name. Mirrors the type-answer
+    /// fallback — honesty-based, the way flashcards are.
+    func selfMarkEnum(_ count: Int) {
+        guard mode == .enumerate, phase == .playing, let spec = current?.enumerate else { return }
+        let c = Swift.min(Swift.max(0, count), spec.groups.count)
+        enumFilled = Set(0..<c)
+        enumNamed = spec.displayNames.prefix(c).map { $0 }
+        score += c
+        finishEnum()
+    }
+
+    /// Finalize the current puzzle (timeout, all-found, or self-mark) and reveal.
+    func finishEnum() {
+        guard mode == .enumerate, phase == .playing, let q = current, let spec = q.enumerate else { return }
+        ticker?.cancel()
+        let got = enumFilled.count
+        // Synthetic chosenIndex for the emoji grid / records: a "hit" if you
+        // named at least half the set; the real reward is the count (already scored).
+        let hit = got > 0 && got * 2 >= spec.total
+        let answer = AnsweredQuestion(question: q, chosenIndex: hit ? 0 : 1, secondsTaken: clockBudget - remaining)
+        answered.append(answer)
+        lastAnswer = answer
         phase = .reveal
     }
 

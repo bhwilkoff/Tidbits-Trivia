@@ -8,6 +8,7 @@ import SwiftUI
 struct GamePlayView: View {
     let game: GameEngine
     let onQuit: () -> Void
+    @FocusState private var enumFocused: Bool
 
     var body: some View {
         VStack(spacing: 0) {
@@ -19,7 +20,8 @@ struct GamePlayView: View {
                         QuestionCard(question: q)
                         if game.mode == .sweep { sweepGrid }
                         if game.mode == .stake && game.phase == .playing { stakeSelector }
-                        if q.accepted != nil { typeAnswerPanel() }
+                        if let spec = q.enumerate { enumeratePanel(spec) }
+                        else if q.accepted != nil { typeAnswerPanel() }
                         else if let m = q.matching { matchingPanel(m) }
                         else if q.ordering != nil { orderingPanel() }
                         else if let spec = q.closest { closestPanel(spec) }
@@ -52,6 +54,13 @@ struct GamePlayView: View {
                     if game.mode == .ordering { game.submitOrder(); break }
                     if game.mode == .matching { game.submitMatch(); break }
                     if game.mode == .typeAnswer { game.typedText = game.current?.correctAnswer ?? ""; game.submitText(); break }
+                    if game.mode == .enumerate {
+                        let names = game.current?.enumerate?.displayNames ?? []
+                        if game.enumNamed.count < 3, names.indices.contains(game.enumNamed.count) {
+                            game.submitEnumGuess(names[game.enumNamed.count])
+                        } else { game.finishEnum() }
+                        break
+                    }
                     if game.mode == .stake && game.currentStake == 0,
                        let tier = game.stakeTiers.first(where: { $0.remaining > 0 }) { game.setStake(tier.value) }
                     game.submit(0)
@@ -151,6 +160,50 @@ struct GamePlayView: View {
                 Button("Submit") { game.submitText() }
                     .buttonStyle(ChunkyButtonStyle(fill: game.mode.accent, textColor: game.mode.accent.legibleForeground))
                     .disabled(game.typedText.trimmingCharacters(in: .whitespaces).isEmpty)
+            }
+        }
+    }
+
+    // MARK: Enumeration (Q8) — name as many as you can
+
+    private func enumeratePanel(_ spec: EnumSpec) -> some View {
+        let live = game.phase == .playing
+        let cols = [GridItem(.adaptive(minimum: 110), spacing: 8)]
+        return VStack(spacing: 12) {
+            HStack {
+                Text("\(game.enumFilled.count) / \(spec.total)")
+                    .font(Tidbits.TypeRamp.l2.monospacedDigit())
+                    .foregroundStyle(game.mode.accent)
+                Spacer()
+                if live {
+                    Button("Done") { enumFocused = false; game.finishEnum() }
+                        .font(Tidbits.TypeRamp.l5)
+                        .foregroundStyle(Tidbits.Palette.inkSoft)
+                }
+            }
+            if live {
+                TextField("Name one…", text: Binding(get: { game.typedText }, set: { game.typedText = $0 }))
+                    .font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                    .autocorrectionDisabled().textInputAutocapitalization(.words)
+                    .submitLabel(.next).focused($enumFocused)
+                    .onSubmit { game.submitEnumGuess(game.typedText); enumFocused = true }
+                    .padding(14)
+                    .chunkyCard(fill: game.enumLastHit ? game.mode.accent.opacity(0.2) : Tidbits.Palette.surface)
+                    .padding(.trailing, Tidbits.Metric.shadowOffset)
+                    .onAppear { enumFocused = true }
+            }
+            if !game.enumNamed.isEmpty {
+                LazyVGrid(columns: cols, alignment: .leading, spacing: 8) {
+                    ForEach(game.enumNamed, id: \.self) { name in
+                        Text(name)
+                            .font(Tidbits.TypeRamp.l5).lineLimit(1).minimumScaleFactor(0.7)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 8).padding(.horizontal, 6)
+                            .background(RoundedRectangle(cornerRadius: 10).fill(game.mode.accent.opacity(0.18)))
+                            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(game.mode.accent, lineWidth: 2))
+                            .foregroundStyle(Tidbits.Palette.ink)
+                    }
+                }
             }
         }
     }
@@ -391,6 +444,22 @@ struct GamePlayView: View {
                 Text("Answer: \(q.correctAnswer)")
                     .font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
             }
+            if let spec = q.enumerate {
+                let named = Set(game.enumNamed)
+                Text("You named \(game.enumFilled.count) of \(spec.total)")
+                    .font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 110), spacing: 6)], alignment: .leading, spacing: 6) {
+                    ForEach(spec.displayNames, id: \.self) { name in
+                        let got = named.contains(name)
+                        Text(name)
+                            .font(Tidbits.TypeRamp.l5).lineLimit(1).minimumScaleFactor(0.7)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 6).padding(.horizontal, 5)
+                            .background(RoundedRectangle(cornerRadius: 8).fill(got ? Tidbits.Palette.mint.opacity(0.22) : Tidbits.Palette.surface))
+                            .foregroundStyle(got ? Tidbits.Palette.ink : Tidbits.Palette.inkSoft)
+                    }
+                }
+            }
             if !q.explanation.isEmpty {
                 Text(q.explanation)
                     .font(Tidbits.TypeRamp.l4)
@@ -423,7 +492,7 @@ struct GamePlayView: View {
     }
 
     private var isLast: Bool {
-        (game.mode == .classic || game.mode == .daily || game.mode == .stake || game.mode == .sweep || game.mode == .pictureId || game.mode == .thisOrThat || game.mode == .closestCall || game.mode == .ordering || game.mode == .matching || game.mode == .typeAnswer || game.mode == .oddOneOut || game.mode == .ladder) && game.index + 1 >= game.questions.count
+        (game.mode == .classic || game.mode == .daily || game.mode == .stake || game.mode == .sweep || game.mode == .pictureId || game.mode == .thisOrThat || game.mode == .closestCall || game.mode == .ordering || game.mode == .matching || game.mode == .typeAnswer || game.mode == .oddOneOut || game.mode == .ladder || game.mode == .enumerate) && game.index + 1 >= game.questions.count
     }
 }
 

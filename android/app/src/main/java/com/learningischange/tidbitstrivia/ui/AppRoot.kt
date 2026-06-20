@@ -68,6 +68,7 @@ fun AppRoot(store: Store) {
         if (!MatchingSet.loaded) runCatching { MatchingSet.load(context) }
         if (!TypeAnswerSet.loaded) runCatching { TypeAnswerSet.load(context) }
         if (!OddOneOutSet.loaded) runCatching { OddOneOutSet.load(context) }
+        if (!EnumerateSet.loaded) runCatching { EnumerateSet.load(context) }
         if (!Difficulty.loaded) runCatching { Difficulty.load(context) }
         corpusReady = true
     }
@@ -200,6 +201,7 @@ private fun PlayingScreen(game: GameState) {
             Button(onClick = { game.submitText() }, enabled = game.typedText.isNotBlank(), modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = Pops.mint, contentColor = Ink)) { Text("Submit") }
         }
+        q.enumerate?.let { spec -> if (game.phase == GamePhase.PLAYING) EnumeratePanel(game, spec) }
         val answersLocked = game.phase != GamePhase.PLAYING || (game.mode == Mode.STAKE && game.currentStake == 0)
         q.options.forEachIndexed { i, opt -> AnswerButton(opt, game.answerState(i), !answersLocked) { game.submit(i) } }
         if (game.phase == GamePhase.REVEAL) {
@@ -220,6 +222,7 @@ private fun PlayingScreen(game: GameState) {
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                     }
                     if (q.accepted != null) Text("Answer: ${q.answerText}", fontWeight = FontWeight.Bold)
+                    q.enumerate?.let { spec -> EnumerateReveal(game, spec) }
                     if (q.explanation.isNotEmpty()) Text(q.explanation)
                 }
             }
@@ -228,6 +231,60 @@ private fun PlayingScreen(game: GameState) {
             }
         }
         Spacer(Modifier.height(12.dp))
+    }
+}
+
+// Enumeration (Q8): a live counter + text field; each unique correct answer
+// fills a chip. The list you fill IS the score (count-scored, like Sweep).
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun EnumeratePanel(game: GameState, spec: EnumSpec) {
+    var input by remember(game.index) { mutableStateOf("") }
+    val submit = { game.submitEnumGuess(input); input = "" }
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+        Text("${game.enumFilled.size} / ${spec.total}", fontWeight = FontWeight.Black, fontSize = 24.sp,
+            color = Pops.teal, modifier = Modifier.weight(1f))
+        TextButton(onClick = { game.finishEnum() }) { Text("Done") }
+    }
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        OutlinedTextField(
+            value = input, onValueChange = { input = it },
+            placeholder = { Text("Name one…") }, singleLine = true,
+            keyboardActions = KeyboardActions(onDone = { submit() }),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, capitalization = KeyboardCapitalization.Words),
+            modifier = Modifier.weight(1f))
+        Button(onClick = submit, enabled = input.isNotBlank(),
+            colors = ButtonDefaults.buttonColors(containerColor = Pops.teal, contentColor = Ink)) { Text("Add") }
+    }
+    if (game.enumNamed.isNotEmpty()) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            game.enumNamed.forEach { name ->
+                Box(Modifier.background(Pops.teal.copy(alpha = 0.18f), RoundedCornerShape(10.dp))
+                    .border(BorderStroke(2.dp, Pops.teal), RoundedCornerShape(10.dp))
+                    .padding(horizontal = 10.dp, vertical = 6.dp)) {
+                    Text(name, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                }
+            }
+        }
+    }
+}
+
+// Reveal the full set after a list round — named in mint, missed in muted: the
+// testing-effect payload (you see exactly what you couldn't recall).
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun EnumerateReveal(game: GameState, spec: EnumSpec) {
+    val named = game.enumNamed.toSet()
+    Text("You named ${game.enumFilled.size} of ${spec.total}", fontWeight = FontWeight.Bold)
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        spec.displayNames.forEach { name ->
+            val got = name in named
+            Box(Modifier.background(if (got) Pops.mint.copy(alpha = 0.28f) else MaterialTheme.colorScheme.surface, RoundedCornerShape(8.dp))
+                .padding(horizontal = 8.dp, vertical = 5.dp)) {
+                Text(name, fontSize = 13.sp, fontWeight = if (got) FontWeight.SemiBold else FontWeight.Normal,
+                    color = if (got) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+            }
+        }
     }
 }
 

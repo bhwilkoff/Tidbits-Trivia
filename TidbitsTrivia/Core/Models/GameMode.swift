@@ -17,6 +17,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
     case typeAnswer  // free-text recall, alias-matched (E1); tvOS self-marks
     case oddOneOut   // which doesn't belong — plain MCQ, outlier is the answer
     case ladder      // questions climb easy→hard (F3 derived difficulty)
+    case enumerate   // name as many of a set as you can in 60s; tvOS self-marks
     case daily       // one fixed daily set, streak-bearing, shareable
 
     var id: String { rawValue }
@@ -36,6 +37,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .typeAnswer: return "Name It"
         case .oddOneOut:  return "Odd One Out"
         case .ladder:     return "Ladder"
+        case .enumerate:  return "Name as Many"
         case .daily:      return "Daily Tidbit"
         }
     }
@@ -55,6 +57,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .typeAnswer: return "Type the answer."
         case .oddOneOut:  return "Which doesn't belong?"
         case .ladder:     return "Climb from easy to hard."
+        case .enumerate:  return "How many can you name?"
         case .daily:      return "Everyone's puzzle. Keep your streak."
         }
     }
@@ -74,6 +77,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .typeAnswer: return "keyboard"
         case .oddOneOut:  return "questionmark.diamond.fill"
         case .ladder:     return "chart.line.uptrend.xyaxis"
+        case .enumerate:  return "list.bullet.rectangle.fill"
         case .daily:      return "sun.max.fill"
         }
     }
@@ -93,6 +97,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .typeAnswer: return Tidbits.Palette.mint
         case .oddOneOut:  return Tidbits.Palette.grape
         case .ladder:     return Tidbits.Palette.coral
+        case .enumerate:  return Tidbits.Palette.teal
         case .daily:      return Tidbits.Palette.yellow
         }
     }
@@ -113,6 +118,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .typeAnswer: return 25
         case .oddOneOut:  return 20
         case .ladder:     return 20
+        case .enumerate:  return 60    // the whole point: name as many as you can in 60s
         case .daily:      return 30
         }
     }
@@ -132,6 +138,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .typeAnswer: return 8
         case .oddOneOut:  return 8
         case .ladder:     return 10
+        case .enumerate:  return 3     // three list puzzles per round, 60s each
         case .daily:      return 7
         }
     }
@@ -146,4 +153,17 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
     ]
 
     var globalClockSeconds: Double? { self == .timeAttack ? 60 : nil }
+
+    /// Whether spaced-review misses (plain corpus MCQ) may be woven into a
+    /// round. Only the corpus-native MCQ modes qualify — the bundled-set modes
+    /// have their own curated shapes (an estimation slider, a fill-grid, a
+    /// matching board) that a stray corpus MCQ cannot render in, so weaving one
+    /// in surfaces as an off-mode question (e.g. an MCQ inside a "name as many"
+    /// list round).
+    var acceptsReview: Bool {
+        switch self {
+        case .classic, .timeAttack, .survival, .stake, .sweep, .ladder: return true
+        default: return false
+        }
+    }
 }

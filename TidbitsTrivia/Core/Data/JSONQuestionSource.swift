@@ -13,6 +13,7 @@ nonisolated final class JSONQuestionSource: @unchecked Sendable {
     static let matching = JSONQuestionSource(resource: "match")
     static let typeAnswer = JSONQuestionSource(resource: "typeanswer")
     static let oddOneOut = JSONQuestionSource(resource: "oddoneout")
+    static let enumerate = JSONQuestionSource(resource: "enumerate")
 
     private let all: [Question]
 
@@ -40,8 +41,22 @@ nonisolated final class JSONQuestionSource: @unchecked Sendable {
     private static func num(_ v: Any) -> Double? { (v as? NSNumber)?.doubleValue }
 
     private static func parse(_ r: [Any]) -> Question? {
-        guard r.count >= 8, let id = r[0] as? String, let prompt = r[1] as? String else { return nil }
+        guard r.count >= 6, let id = r[0] as? String, let prompt = r[1] as? String else { return nil }
         let template = id.split(separator: ":").first.map(String.init) ?? "json"
+
+        // Enumeration (Q8): [id, prompt, groups([[String]]), cat, seconds, url].
+        // Branch first: only 6 columns, and r[2] is an array-of-arrays.
+        if let groups = r[2] as? [[String]] {
+            guard let cat = r[3] as? String, !groups.isEmpty else { return nil }
+            let url = (r.count > 5) ? (r[5] as? String).flatMap(URL.init(string:)) : nil
+            return Question(
+                id: id, prompt: prompt, options: [], correctIndex: 0,
+                categoryID: cat, difficulty: 3,
+                explanation: "", sourceTitle: "", sourceURL: url,
+                templateID: template, enumerate: EnumSpec(groups: groups))
+        }
+
+        guard r.count >= 8 else { return nil }
 
         // index 2 is an array → MCQ (corpus/picture/thisorthat) or Ordering.
         if let arr2 = r[2] as? [String] {

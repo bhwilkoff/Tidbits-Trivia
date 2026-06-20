@@ -50,8 +50,13 @@ export const MODES = {
   typeAnswer: { id: 'typeAnswer', title: 'Name It', blurb: 'Type the answer.', perQuestion: 25, count: 8, accent: '#2FCB8A' },
   oddOneOut: { id: 'oddOneOut', title: 'Odd One Out', blurb: "Which doesn't belong?", perQuestion: 20, count: 8, accent: '#8B5CF6' },
   ladder: { id: 'ladder', title: 'Ladder', blurb: 'Climb from easy to hard.', perQuestion: 20, count: 10, accent: '#FF5C5C' },
+  enumerate: { id: 'enumerate', title: 'Name as Many', blurb: 'How many can you name?', perQuestion: 60, count: 3, accent: '#13B6C9' },
   daily: { id: 'daily', title: 'Daily Tidbit', blurb: 'Everyone’s puzzle. Keep your streak.', perQuestion: 30, count: 7, accent: '#FFC93C' },
 };
+
+// Modes that may have spaced-review corpus MCQs woven in — only the corpus-native
+// MCQ modes; the bundled-set modes have their own shapes a stray MCQ can't render in.
+export const REVIEW_MODES = new Set(['classic', 'timeAttack', 'survival', 'stake', 'sweep', 'ladder']);
 
 // Stake mode's fixed confidence-chip budget (sum of count == mode.count). Spending
 // more on one question leaves fewer for the rest — that scarcity is what makes it
@@ -144,7 +149,7 @@ export const Store = {
   // network — the invisible foundation a backend later aggregates into the
   // "X% picked this" / Predict-the-Crowd reveal. Modes whose chosen index is
   // synthetic (0/right vs -1/wrong, not a real option pick) are skipped.
-  _telemetrySkip: new Set(['closestCall', 'ordering', 'matching', 'typeAnswer']),
+  _telemetrySkip: new Set(['closestCall', 'ordering', 'matching', 'typeAnswer', 'enumerate']),
   answerTelemetry() { return LS.get('tidbits.answerTelemetry', {}); },
   recordTelemetry(mode, answered) {
     if (this._telemetrySkip.has(mode)) return;

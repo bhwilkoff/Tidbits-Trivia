@@ -54,6 +54,7 @@ data class Question(
     val ordering: List<String>? = null, // Ordering (Q4): items in CORRECT order
     val matching: MatchSpec? = null,  // Matching (Q5): keys ↔ correct values
     val accepted: List<String>? = null, // Type-the-answer (Q6): accepted free-text
+    val enumerate: EnumSpec? = null,  // Enumeration (Q8): name as many of a set as you can
 ) {
     val answerText: String get() = options.getOrNull(correctIndex)
         ?: closest?.formattedAnswer ?: ordering?.joinToString(" → ")
@@ -75,6 +76,13 @@ object TypeMatch {
 }
 
 data class MatchSpec(val keys: List<String>, val values: List<String>)
+
+// Enumeration (Q8): a set named against a 60s clock. Each group is one accepted
+// answer ([canonical, alias, ...]); any alias counts but a group fills once.
+data class EnumSpec(val groups: List<List<String>>) {
+    val total: Int get() = groups.size
+    val displayNames: List<String> get() = groups.map { it.firstOrNull() ?: "" }
+}
 
 data class Category(val id: String, val name: String, val icon: String, val colorIndex: Int, val blurb: String) {
     companion object {
@@ -106,6 +114,7 @@ enum class Mode(val title: String, val blurb: String, val perQuestion: Int?, val
     TYPE_ANSWER("Name It", "Type the answer.", 25, null, 8),
     ODD_ONE_OUT("Odd One Out", "Which doesn't belong?", 20, null, 8),
     LADDER("Ladder", "Climb from easy to hard.", 20, null, 10),
+    ENUMERATE("Name as Many", "How many can you name?", 60, null, 3),
     DAILY("Daily Tidbit", "Everyone's puzzle. Keep your streak.", 30, null, 7),
 }
 
@@ -213,7 +222,17 @@ class JsonQuestionSet(private val asset: String) {
             val arr = Json.parseToJsonElement(text).jsonObject["questions"]!!.jsonArray
             all = arr.map { el ->
                 val a = el.jsonArray
-                if (a[2] is JsonArray && a[3] is JsonArray) {
+                if (a[2] is JsonArray && a[2].jsonArray.isNotEmpty() && a[2].jsonArray[0] is JsonArray) {
+                    // Enumeration (Q8): [id, prompt, groups([[String]]), cat, seconds, url]
+                    Question(
+                        id = a[0].jsonPrimitive.content, prompt = a[1].jsonPrimitive.content,
+                        options = emptyList(), correctIndex = 0,
+                        categoryId = a[3].jsonPrimitive.content, difficulty = 3,
+                        explanation = "", sourceTitle = "",
+                        sourceUrl = if (a.size > 5) a[5].jsonPrimitive.content else "",
+                        enumerate = EnumSpec(a[2].jsonArray.map { g -> g.jsonArray.map { it.jsonPrimitive.content } }),
+                    )
+                } else if (a[2] is JsonArray && a[3] is JsonArray) {
                     val arr3 = a[3].jsonArray
                     val keys = a[2].jsonArray.map { it.jsonPrimitive.content }
                     if (arr3.isNotEmpty() && arr3[0].jsonPrimitive.isString) {
@@ -294,6 +313,7 @@ val OrderingSet = JsonQuestionSet("order.json")
 val MatchingSet = JsonQuestionSet("match.json")
 val TypeAnswerSet = JsonQuestionSet("typeanswer.json")
 val OddOneOutSet = JsonQuestionSet("oddoneout.json")   // standard MCQ rows
+val EnumerateSet = JsonQuestionSet("enumerate.json")   // Q8 list puzzles
 
 // F3 derived-difficulty overlay (Wikipedia pageviews → 1..5 per subject).
 object Difficulty {
@@ -711,7 +731,7 @@ class Store(context: Context) {
     // network — the invisible foundation a backend later aggregates into the
     // "X% picked this" / Predict-the-Crowd reveal. Modes whose chosen index is
     // synthetic (right/wrong, not a real option pick) are skipped.
-    private val telemetrySkip = setOf(Mode.CLOSEST_CALL, Mode.ORDERING, Mode.MATCHING, Mode.TYPE_ANSWER)
+    private val telemetrySkip = setOf(Mode.CLOSEST_CALL, Mode.ORDERING, Mode.MATCHING, Mode.TYPE_ANSWER, Mode.ENUMERATE)
     fun recordTelemetry(mode: Mode, answered: List<Pair<Question, Int?>>) {
         if (mode in telemetrySkip) return
         val map = JSONObject(prefs.getString("answerTelemetry", "{}") ?: "{}")

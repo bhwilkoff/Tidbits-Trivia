@@ -63,6 +63,14 @@ final class QuestionProvider {
             // Odd-one-out is geography-only data; ignore the picked category.
             return JSONQuestionSource.oddOneOut.questions(categoryID: "mixed", excluding: seen, limit: need)
         }
+        if mode == .enumerate {
+            // A few list puzzles per round; curated sets span categories, so don't
+            // filter by the picked category (the set IS the topic). The pool is
+            // small (≈11) and enumeration is a REPLAYABLE recall drill — naming
+            // the countries of Asia again is the point, not a spoiler — so ignore
+            // the seen-set (like Daily) rather than exhaust it after a few rounds.
+            return JSONQuestionSource.enumerate.questions(categoryID: "mixed", excluding: [], limit: need)
+        }
         if mode == .ladder {
             // Pull a pool, sort by the F3 derived difficulty, then span easy→hard.
             var pool = CorpusDatabase.shared.questions(categoryID: "mixed", excluding: seen, limit: 80)

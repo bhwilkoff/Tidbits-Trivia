@@ -209,6 +209,23 @@ body {
 .type-input:focus { outline: none; }
 .type-submit { background: var(--color-mint); color: var(--color-ink); }
 
+/* ---- Enumeration (Q8) ---- */
+.enum-wrap { display: flex; flex-direction: column; gap: 10px; }
+.enum-head { display: flex; align-items: center; justify-content: space-between; }
+.enum-count { font-size: 26px; font-weight: 900; color: var(--color-teal, #13B6C9); font-variant-numeric: tabular-nums; }
+.enum-done { font: inherit; font-weight: 700; cursor: pointer; background: none; border: none; color: var(--color-ink); opacity: 0.7; }
+.enum-wrap .type-wrap { flex-direction: row; }
+.enum-wrap .type-input { flex: 1; }
+.enum-wrap .type-submit { flex: 0 0 auto; align-self: stretch; padding: 0 18px; }
+.type-input.enum-hit { border-color: var(--color-teal, #13B6C9); background: color-mix(in srgb, var(--color-teal, #13B6C9) 16%, var(--color-surface)); }
+.enum-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; }
+.enum-chip { text-align: center; font-weight: 700; font-size: 14px; padding: 8px 6px; border-radius: 10px;
+  background: color-mix(in srgb, var(--color-teal, #13B6C9) 18%, transparent); border: 2px solid var(--color-teal, #13B6C9); color: var(--color-ink); }
+.reveal-grid { margin-top: 8px; }
+.enum-tile { text-align: center; font-weight: 600; font-size: 13px; padding: 7px 5px; border-radius: 8px;
+  background: var(--color-surface); color: var(--color-text-soft, #666); }
+.enum-tile.got { background: color-mix(in srgb, var(--color-mint) 28%, transparent); color: var(--color-ink); }
+
 /* ---- Progress: The Pie + Topic Levels ---- */
 .pie-card { display: flex; align-items: center; gap: 16px; padding: 16px; background: var(--color-bg-deep); margin-bottom: 12px; }
 .pie { position: relative; width: 104px; height: 104px; border-radius: 50%; flex: 0 0 auto;

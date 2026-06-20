@@ -65,13 +65,15 @@ struct TVGameContainer: View {
 
 // MARK: - Gameplay
 
-private enum TVFocus: Hashable { case stake(Int), answer(Int), closestSlider, closestLock, orderRow(Int), orderSubmit, matchKey(Int), matchVal(Int), matchSubmit, typeReveal, typeKnew, typeMissed, next }
+private enum TVFocus: Hashable { case stake(Int), answer(Int), closestSlider, closestLock, orderRow(Int), orderSubmit, matchKey(Int), matchVal(Int), matchSubmit, typeReveal, typeKnew, typeMissed, enumReveal, enumMinus, enumPlus, enumSubmit, next }
 
 struct TVGamePlayView: View {
     let onQuit: () -> Void
     @Environment(AppStore.self) private var store
     @FocusState private var focus: TVFocus?
     @State private var typeRevealed = false
+    @State private var enumRevealed = false
+    @State private var enumSelfCount = 0
     private var game: GameEngine { store.game }
 
     var body: some View {
@@ -88,7 +90,9 @@ struct TVGamePlayView: View {
                     .fixedSize(horizontal: false, vertical: true)
                 if game.mode == .sweep { sweepRow }
                 if game.mode == .stake && game.phase == .playing { stakeRow }
-                if q.accepted != nil {
+                if let spec = q.enumerate {
+                    enumeratePanel(spec)
+                } else if q.accepted != nil {
                     typeAnswerPanel(q)
                 } else if let m = q.matching {
                     matchingPanel(m)
@@ -117,7 +121,7 @@ struct TVGamePlayView: View {
         }
         .padding(90)
         .defaultFocus($focus, .answer(0))
-        .onChange(of: game.index) { typeRevealed = false; focus = firstFocus }
+        .onChange(of: game.index) { typeRevealed = false; enumRevealed = false; enumSelfCount = 0; focus = firstFocus }
         .onChange(of: game.phase) { _, p in
             if p == .reveal { focus = .next } else if p == .playing { focus = firstFocus }
         }
@@ -131,6 +135,7 @@ struct TVGamePlayView: View {
                 try? await Task.sleep(for: .seconds(0.9))
                 switch game.phase {
                 case .playing:
+                    if game.mode == .enumerate { game.selfMarkEnum(3); break }
                     if game.mode == .typeAnswer { game.markTyped(correct: true); break }
                     if game.mode == .matching { game.submitMatch(); break }
                     if game.mode == .ordering { game.submitOrder(); break }
@@ -239,7 +244,49 @@ struct TVGamePlayView: View {
         .onChange(of: typeRevealed) { _, r in if r { focus = .typeKnew } }
     }
 
+    /// Enumeration at ten feet — typing a long list is a keyboard wall, so this
+    /// is recall-then-self-mark: think of as many as you can, reveal the full
+    /// set, then report how many you named (honesty-based, like flashcards).
+    private func enumeratePanel(_ spec: EnumSpec) -> some View {
+        let cols = Array(repeating: GridItem(.flexible(), spacing: 16), count: 4)
+        return VStack(spacing: 26) {
+            if !enumRevealed {
+                Text("Name as many as you can in your head, then reveal the list.")
+                    .font(.system(size: 31, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+                Button("Reveal the List") { enumRevealed = true }
+                    .buttonStyle(TVChipStyle(accent: game.mode.accent, selected: false))
+                    .focused($focus, equals: .enumReveal)
+            } else {
+                LazyVGrid(columns: cols, spacing: 14) {
+                    ForEach(spec.displayNames, id: \.self) { name in
+                        Text(name).font(.system(size: 25, weight: .bold, design: .rounded)).foregroundStyle(.white)
+                            .frame(maxWidth: .infinity).padding(.vertical, 12)
+                            .background(RoundedRectangle(cornerRadius: 12).fill(TVTheme.panel))
+                    }
+                }
+                .frame(maxWidth: 1500)
+                HStack(spacing: 28) {
+                    Button { enumSelfCount = max(0, enumSelfCount - 1) } label: { Image(systemName: "minus") }
+                        .buttonStyle(TVChipStyle(accent: Tidbits.Palette.blue, selected: false))
+                        .focused($focus, equals: .enumMinus)
+                    Text("I named \(enumSelfCount) of \(spec.total)")
+                        .font(.system(size: 33, weight: .black, design: .rounded)).foregroundStyle(.white)
+                        .frame(minWidth: 360)
+                    Button { enumSelfCount = min(spec.total, enumSelfCount + 1) } label: { Image(systemName: "plus") }
+                        .buttonStyle(TVChipStyle(accent: Tidbits.Palette.blue, selected: false))
+                        .focused($focus, equals: .enumPlus)
+                }
+                Button("Submit") { game.selfMarkEnum(enumSelfCount) }
+                    .buttonStyle(TVChipStyle(accent: game.mode.accent, selected: false))
+                    .focused($focus, equals: .enumSubmit)
+            }
+        }
+        .frame(maxWidth: 1500)
+        .onChange(of: enumRevealed) { _, r in if r { focus = .enumPlus } }
+    }
+
     private var firstFocus: TVFocus {
+        if game.current?.enumerate != nil { return .enumReveal }
         if game.current?.accepted != nil { return .typeReveal }
         if game.current?.matching != nil { return .matchKey(0) }
         if game.current?.ordering != nil { return .orderSubmit }
@@ -377,6 +424,21 @@ struct TVGamePlayView: View {
             Text(correct ? "Nice — you knew it." : "Now you know.")
                 .font(.system(size: 33, weight: .heavy, design: .rounded))
                 .foregroundStyle(correct ? Tidbits.Palette.mint : Tidbits.Palette.yellow)
+            if let spec = q.enumerate {
+                Text("You named \(game.enumFilled.count) of \(spec.total)")
+                    .font(.system(size: 31, weight: .heavy, design: .rounded)).foregroundStyle(.white)
+                let named = Set(game.enumNamed)
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 5), spacing: 10) {
+                    ForEach(spec.displayNames, id: \.self) { name in
+                        let got = named.contains(name)
+                        Text(name).font(.system(size: 22, weight: .semibold, design: .rounded))
+                            .foregroundStyle(got ? .white : TVTheme.textSoft)
+                            .frame(maxWidth: .infinity).padding(.vertical, 8)
+                            .background(RoundedRectangle(cornerRadius: 10).fill(got ? Tidbits.Palette.mint.opacity(0.3) : TVTheme.panel))
+                    }
+                }
+                .frame(maxWidth: 1600)
+            }
             if !q.explanation.isEmpty {
                 Text(q.explanation).font(.system(size: 27, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
                     .fixedSize(horizontal: false, vertical: true)
@@ -391,7 +453,7 @@ struct TVGamePlayView: View {
         .background(RoundedRectangle(cornerRadius: 22).fill(TVTheme.panel))
     }
     private var isLast: Bool {
-        (game.mode == .classic || game.mode == .daily || game.mode == .stake || game.mode == .sweep || game.mode == .pictureId || game.mode == .thisOrThat || game.mode == .closestCall || game.mode == .ordering || game.mode == .matching || game.mode == .typeAnswer || game.mode == .oddOneOut || game.mode == .ladder) && game.index + 1 >= game.questions.count
+        (game.mode == .classic || game.mode == .daily || game.mode == .stake || game.mode == .sweep || game.mode == .pictureId || game.mode == .thisOrThat || game.mode == .closestCall || game.mode == .ordering || game.mode == .matching || game.mode == .typeAnswer || game.mode == .oddOneOut || game.mode == .ladder || game.mode == .enumerate) && game.index + 1 >= game.questions.count
     }
 }
 

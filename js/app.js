@@ -1,7 +1,7 @@
 // Tidbits — web app shell: router, views, and the game loop. Mirrors the
 // Apple AppStore + GameEngine + views. Vanilla JS, no framework, no build.
 
-import { Corpus, Pictures, ThisOrThat, ClosestCall, Ordering, Matching, TypeAnswer, OddOneOut, Difficulty, matchesAccepted, Wikipedia } from './api.js';
+import { Corpus, Pictures, ThisOrThat, ClosestCall, Ordering, Matching, TypeAnswer, OddOneOut, Enumerate, Difficulty, matchesAccepted, Wikipedia } from './api.js';
 import { Store, CATEGORIES, catColor, catById, MODES, STAKE_BUDGET, dayKey, APP_STORES } from './store.js';
 import { Scoring } from './engine.js';
 
@@ -246,6 +246,12 @@ class Game {
       await OddOneOut.load();
       qs = OddOneOut.pull('mixed', Store._seen, this.mode.count);
     }
+    else if (this.mode.id === 'enumerate') {
+      // Small pool (~11), and enumeration is a REPLAYABLE recall drill — naming
+      // the countries of Asia again is the point — so ignore the seen-set.
+      await Enumerate.load();
+      qs = Enumerate.pull('mixed', new Set(), this.mode.count);
+    }
     else if (this.mode.id === 'ladder') {
       await Difficulty.load();
       const pool = Corpus.pull('mixed', Store._seen, 80).sort((a, b) => Difficulty.get(a.sourceTitle) - Difficulty.get(b.sourceTitle));
@@ -305,6 +311,7 @@ class Game {
       this.matchValues = v; this.matchAssign = cur.matching.keys.map(() => null); this.matchSelectedKey = null; this.lastMatchPoints = 0;
     }
     if (cur && cur.accepted) this.typedText = '';
+    if (cur && cur.enumerate) { this.enumFilled = new Set(); this.enumNamed = []; this.enumLastHit = false; this.typedText = ''; }
     this.budget = this._globalRemaining() ?? this.mode.perQuestion ?? 30;
     this.remaining = this.budget;
     clearInterval(this.timer);
@@ -316,7 +323,7 @@ class Game {
     if (this.phase !== 'playing') return;
     const g = this._globalRemaining();
     if (g !== null) { this.remaining = g; if (g <= 0) return this._end(); }
-    else { this.remaining = Math.max(0, this.budget - (Date.now() - this.qStart) / 1000); if (this.remaining <= 0) return (this.mode.id === 'closestCall' ? this.submitGuess() : this.mode.id === 'ordering' ? this.submitOrder() : this.mode.id === 'matching' ? this.submitMatch() : this.mode.id === 'typeAnswer' ? this.submitText() : this.submit(null)); }
+    else { this.remaining = Math.max(0, this.budget - (Date.now() - this.qStart) / 1000); if (this.remaining <= 0) return (this.mode.id === 'closestCall' ? this.submitGuess() : this.mode.id === 'ordering' ? this.submitOrder() : this.mode.id === 'matching' ? this.submitMatch() : this.mode.id === 'typeAnswer' ? this.submitText() : this.mode.id === 'enumerate' ? this.finishEnum() : this.submit(null)); }
     updateClock();
   }
   // Type-the-answer (Q6): match typed input against the accepted set.
@@ -329,6 +336,31 @@ class Game {
     this.answered.push({ q, chosen: correct ? q.correctIndex : -1, correct, taken });
     if (correct) { this.streak++; this.maxStreak = Math.max(this.maxStreak, this.streak); this.score += Scoring.points(true, taken, this.mode.perQuestion ?? 25, this.streak); }
     else this.streak = 0;
+    this.phase = 'reveal'; renderGame();
+  }
+  // Enumeration (Q8): type a guess; fill the first unfilled group it matches.
+  // +1 per fill (count-scored, like Sweep). The list you fill IS the score.
+  submitEnumGuess(text) {
+    if (this.phase !== 'playing') return false;
+    const spec = this.current.enumerate; if (!spec) return false;
+    this.typedText = '';
+    const n = (text || '').trim(); if (!n) { this.enumLastHit = false; renderGame(); return false; }
+    for (let i = 0; i < spec.groups.length; i++) {
+      if (this.enumFilled.has(i)) continue;
+      if (matchesAccepted(n, spec.groups[i])) {
+        this.enumFilled.add(i); this.enumNamed.push(spec.groups[i][0]); this.score += 1; this.enumLastHit = true;
+        if (this.enumFilled.size === spec.groups.length) { this.finishEnum(); return true; }
+        renderGame(); return true;
+      }
+    }
+    this.enumLastHit = false; renderGame(); return false;
+  }
+  finishEnum() {
+    if (this.phase !== 'playing') return;
+    const q = this.current, spec = q.enumerate; if (!spec) return;
+    clearInterval(this.timer);
+    const got = this.enumFilled.size, hit = got > 0 && got * 2 >= spec.groups.length;
+    this.answered.push({ q, chosen: hit ? q.correctIndex : -1, correct: hit, taken: this.budget - this.remaining });
     this.phase = 'reveal'; renderGame();
   }
   // Matching (Q5): tap a key to select, tap a value to link; submit scores links.
@@ -478,9 +510,10 @@ function renderGame() {
   const order = q.ordering ? orderingPanel() : '';
   const match = q.matching ? matchingPanel(q.matching) : '';
   const typeP = q.accepted ? typeAnswerPanel() : '';
+  const enumP = q.enumerate ? enumeratePanel(q.enumerate) : '';
   const pic = q.image ? `<div class="card pic-card"><img class="pic-img" src="${h(q.image)}" alt="Identify this" loading="eager" onerror="this.parentNode.classList.add('pic-failed')"><span class="pic-fallback muted">Couldn't load the image</span></div>` : '';
   const reveal = game.phase === 'reveal' ? revealCard(q) : '';
-  const fixedCount = game.mode.id === 'classic' || game.mode.id === 'daily' || staking || game.mode.id === 'sweep' || game.mode.id === 'pictureId' || game.mode.id === 'thisOrThat' || game.mode.id === 'closestCall' || game.mode.id === 'ordering' || game.mode.id === 'matching' || game.mode.id === 'typeAnswer' || game.mode.id === 'oddOneOut' || game.mode.id === 'ladder';
+  const fixedCount = game.mode.id === 'classic' || game.mode.id === 'daily' || staking || game.mode.id === 'sweep' || game.mode.id === 'pictureId' || game.mode.id === 'thisOrThat' || game.mode.id === 'closestCall' || game.mode.id === 'ordering' || game.mode.id === 'matching' || game.mode.id === 'typeAnswer' || game.mode.id === 'oddOneOut' || game.mode.id === 'ladder' || game.mode.id === 'enumerate';
   const progress = fixedCount ? `${game.index + 1} / ${game.questions.length}` : `#${game.index + 1}`;
   app.innerHTML = `
     <div class="game">
@@ -499,6 +532,7 @@ function renderGame() {
         ${order}
         ${match}
         ${typeP}
+        ${enumP}
         <div class="opts">${opts}</div>
         ${reveal}
       </div>
@@ -518,10 +552,24 @@ function renderGame() {
   const ti = $('#type-input');
   if (ti) { ti.addEventListener('input', () => { game.typedText = ti.value; }); ti.addEventListener('keydown', (e) => { if (e.key === 'Enter') game.submitText(); }); if (game.phase === 'playing') ti.focus(); }
   const ts = $('[data-submit-type]'); if (ts) ts.addEventListener('click', () => game.submitText());
+  const ei = $('#enum-input');
+  if (ei) { ei.addEventListener('keydown', (e) => { if (e.key === 'Enter') { game.submitEnumGuess(ei.value); ei.value = ''; ei.focus(); } }); if (game.phase === 'playing') ei.focus(); }
+  const es = $('[data-submit-enum]'); if (es) es.addEventListener('click', () => { const el = $('#enum-input'); game.submitEnumGuess(el ? el.value : ''); if (el) { el.value = ''; el.focus(); } });
+  const ed = $('[data-done-enum]'); if (ed) ed.addEventListener('click', () => game.finishEnum());
   if (game.phase === 'reveal') $('[data-next]').addEventListener('click', () => game.advance());
   updateClock();
 }
-function isLast() { return (game.mode.id === 'classic' || game.mode.id === 'daily' || game.mode.id === 'stake' || game.mode.id === 'sweep' || game.mode.id === 'pictureId' || game.mode.id === 'thisOrThat' || game.mode.id === 'closestCall' || game.mode.id === 'ordering' || game.mode.id === 'matching' || game.mode.id === 'typeAnswer' || game.mode.id === 'oddOneOut' || game.mode.id === 'ladder') && game.index + 1 >= game.questions.length; }
+function isLast() { return (game.mode.id === 'classic' || game.mode.id === 'daily' || game.mode.id === 'stake' || game.mode.id === 'sweep' || game.mode.id === 'pictureId' || game.mode.id === 'thisOrThat' || game.mode.id === 'closestCall' || game.mode.id === 'ordering' || game.mode.id === 'matching' || game.mode.id === 'typeAnswer' || game.mode.id === 'oddOneOut' || game.mode.id === 'ladder' || game.mode.id === 'enumerate') && game.index + 1 >= game.questions.length; }
+// Enumeration (Q8): a count, a text input + Submit + Done, and the named chips.
+function enumeratePanel(spec) {
+  const live = game.phase === 'playing';
+  const chips = (game.enumNamed || []).map((n) => `<span class="enum-chip">${h(n)}</span>`).join('');
+  return `<div class="enum-wrap">
+    <div class="enum-head"><span class="enum-count">${game.enumFilled.size} / ${spec.groups.length}</span>${live ? '<button class="enum-done" data-done-enum>Done</button>' : ''}</div>
+    ${live ? `<div class="type-wrap"><input id="enum-input" class="type-input${game.enumLastHit ? ' enum-hit' : ''}" type="text" placeholder="Name one…" autocomplete="off" autocapitalize="words"><button class="btn type-submit" data-submit-enum>Add</button></div>` : ''}
+    ${chips ? `<div class="enum-grid">${chips}</div>` : ''}
+  </div>`;
+}
 // Type-the-answer (Q6): a text input + Submit.
 function typeAnswerPanel() {
   const live = game.phase === 'playing';
@@ -592,8 +640,14 @@ function revealCard(q) {
   const matchTag = q.matching ? `<span class="stake-earned${game.lastMatchPoints > 0 ? ' hit' : ''}">+${game.lastMatchPoints}</span>` : '';
   const closeLine = q.closest ? `<p class="muted">You said ${closestFmtVal(game.currentGuess, q.closest)} · actual ${closestFmtVal(q.closest.answer, q.closest)} · off by ${Math.abs(Math.round(game.currentGuess - q.closest.answer))}</p>` : '';
   const typeLine = q.accepted ? `<p class="ans">Answer: ${h(q.options[q.correctIndex])}</p>` : '';
+  let enumBlock = '';
+  if (q.enumerate) {
+    const named = new Set(game.enumNamed);
+    const tiles = q.enumerate.groups.map((g) => `<span class="enum-tile${named.has(g[0]) ? ' got' : ''}">${h(g[0])}</span>`).join('');
+    enumBlock = `<p class="ans">You named ${game.enumFilled.size} of ${q.enumerate.groups.length}</p><div class="enum-grid reveal-grid">${tiles}</div>`;
+  }
   return `<div class="card reveal"><div class="reveal-h">${correct ? '✅ Nice — you knew it.' : '💡 Now you know.'}${stakeTag}${closeTag}${orderTag}${matchTag}</div>
-    ${closeLine}${typeLine}<p>${h(q.explanation)}</p>${q.sourceURL ? `<a href="${h(q.sourceURL)}" target="_blank" rel="noopener" class="link">Read ${h(q.sourceTitle)} on Wikipedia ↗</a>` : ''}</div>`;
+    ${closeLine}${typeLine}${enumBlock}${q.explanation ? `<p>${h(q.explanation)}</p>` : ''}${q.sourceURL ? `<a href="${h(q.sourceURL)}" target="_blank" rel="noopener" class="link">Read ${h(q.sourceTitle)} on Wikipedia ↗</a>` : ''}</div>`;
 }
 function updateClock() {
   if (!game || game.phase !== 'playing') { const s = $('#clk-secs'); if (s) s.textContent = ''; return; }

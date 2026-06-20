@@ -87,18 +87,28 @@ def extract(entity):
     # Numerics
     numbers = {}
     for pid, (label, kind) in NUMERIC_PROPS.items():
-        if pid not in claims:
+        claim_list = claims.get(pid)
+        if not claim_list:
             continue
         try:
-            dv = claims[pid][0]["mainsnak"]["datavalue"]["value"]
             if kind == "year":
-                y = year_from_time(dv["time"])
+                y = year_from_time(claim_list[0]["mainsnak"]["datavalue"]["value"]["time"])
                 if y is not None:
                     numbers[label] = {"value": y, "unit": "year"}
             else:
-                amt = float(dv["amount"].lstrip("+"))
-                # whole numbers stay int for clean display
-                numbers[label] = {"value": int(amt) if amt.is_integer() else amt, "unit": kind}
+                # Population (P1082) has many dated claims and Wikidata's first is
+                # often a bogus/partial figure (e.g. Canada -> 44) — take the
+                # LARGEST valid amount, which is the real magnitude. Other
+                # numerics are single-valued, so first == max anyway.
+                amounts = []
+                for c in claim_list:
+                    try:
+                        amounts.append(float(c["mainsnak"]["datavalue"]["value"]["amount"].lstrip("+")))
+                    except Exception:
+                        pass
+                if amounts:
+                    amt = max(amounts)
+                    numbers[label] = {"value": int(amt) if amt.is_integer() else amt, "unit": kind}
         except Exception:
             pass
     if numbers:

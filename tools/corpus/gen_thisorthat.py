@@ -104,11 +104,26 @@ def main():
                "Which came first?",
                lambda a, b: f"{a[1]} ({yr(a[3])}) came before {b[1]} ({yr(b[3])}).")
 
-    # Size comparisons (population P1082 / area P2046) are deferred: population's
-    # first-claim is unreliable (Canada -> 44) and the corpus's area-bearing
-    # entities are mostly sub-km² islands that round to "0 km²". Revisit once
-    # enrich.py picks the best numeric claim. Chronology ("which came first") is
-    # verified clean, so This-or-That ships as a chronology mode for now.
+    # Size comparisons (larger value = index 1). enrich.py now takes the max
+    # population claim (fixed the Canada->44 bug). Magnitude gates keep the pairs
+    # meaningful: skip the 4-person islands / sub-km² rocks, require a clear
+    # margin. Larger of the pair must clear the floor.
+    def ratio_ok(x, y, floor):
+        lo, hi = sorted((abs(x), abs(y)))
+        return lo > 0 and hi >= floor and hi / lo >= SIZE_RATIO
+
+    def num(v):
+        v = abs(v)
+        return f"{int(round(v)):,}" if v >= 10 else f"{round(v, 1)}"
+
+    emit_pairs(gather("population"), "bigger",
+               lambda x, y: ratio_ok(x, y, 5000),
+               "Which has the bigger population?",
+               lambda a, b: f"{b[1]} (~{num(b[3])}) has more people than {a[1]} (~{num(a[3])}).")
+    emit_pairs(gather("area"), "bigger",
+               lambda x, y: ratio_ok(x, y, 50),
+               "Which is bigger by area?",
+               lambda a, b: f"{b[1]} ({num(b[3])} km²) is larger than {a[1]} ({num(a[3])} km²).")
 
     body = json.dumps(out, ensure_ascii=False, separators=(",", ":"))
     version = hashlib.md5(body.encode()).hexdigest()[:12]

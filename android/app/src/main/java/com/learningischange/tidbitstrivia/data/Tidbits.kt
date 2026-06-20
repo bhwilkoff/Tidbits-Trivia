@@ -456,6 +456,19 @@ object TemplateEngine {
     }
 }
 
+// Knowledge-cartography — mirror of Core/Store/ProgressStats.swift.
+data class DomainProgress(
+    val id: String, val correct: Int, val total: Int,
+    val level: Int, val levelProgress: Float, val hasWedge: Boolean,
+)
+object ProgressMath {
+    val domains = listOf("history", "science", "geography", "arts", "screen", "music", "sports")
+    const val WEDGE_CORRECT = 15
+    const val WEDGE_ACCURACY = 0.60
+    fun threshold(level: Int) = 5 * level * (level + 1) / 2
+    fun level(correct: Int): Int { var l = 0; while (threshold(l + 1) <= correct) l++; return l }
+}
+
 // ---- Records / streak / seen / missed (SharedPreferences) ----
 
 class Store(context: Context) {
@@ -492,6 +505,18 @@ class Store(context: Context) {
     fun lifetime(): Triple<Int, Int, Int> {
         val r = records(); val c = r.sumOf { it.correct }; val t = r.sumOf { it.total }
         return Triple(r.size, c, if (t == 0) 0 else c * 100 / t)
+    }
+    // Topic Levels (depth) + The Pie (breadth) — SOLO-BACKLOG M3 + M4
+    // (mirror of Core/Store/ProgressStats.swift).
+    fun progress(): List<DomainProgress> = ProgressMath.domains.map { id ->
+        val mine = records().filter { it.categoryId == id }
+        val correct = mine.sumOf { it.correct }; val total = mine.sumOf { it.total }
+        val acc = if (total == 0) 0.0 else correct.toDouble() / total
+        val level = ProgressMath.level(correct)
+        val lo = ProgressMath.threshold(level); val hi = ProgressMath.threshold(level + 1)
+        DomainProgress(id, correct, total, level,
+            if (hi == lo) 1f else ((correct - lo).toFloat() / (hi - lo)).coerceIn(0f, 1f),
+            correct >= ProgressMath.WEDGE_CORRECT && acc >= ProgressMath.WEDGE_ACCURACY)
     }
     fun streak(): Pair<Int, Int> = (prefs.getInt("streak_cur", 0)) to (prefs.getInt("streak_best", 0))
     private fun bumpStreak() {

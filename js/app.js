@@ -149,12 +149,39 @@ function viewRecords() {
     <div class="stat-row">
       ${statBox(lt.games, 'Games', '#8B5CF6')}${statBox(lt.acc + '%', 'Lifetime acc.', '#2D5BFF')}${statBox(lt.correct, 'Right', '#2FCB8A')}
     </div>
+    ${progressSection()}
     <h2 class="section">Personal bests</h2>
     ${bests.map((x) => `<div class="card row"><b>${h(x.m.title)}</b><span class="big-sm">${x.best}</span></div>`).join('') || '<p class="muted">Play a mode to set a best.</p>'}
     ${review.length ? `<h2 class="section">Facts to review</h2><p class="muted">We slip these back into future games.</p>
       ${review.map((q) => `<div class="card pad"><b>${h(q.prompt)}</b><div class="ans">Answer: ${h(q.options[q.correctIndex])}</div></div>`).join('')}` : ''}`;
 }
 const statBox = (v, l, c) => `<div class="stat card" style="--tint:${c}"><div class="stat-v">${v}</div><div class="stat-l">${l}</div></div>`;
+
+// Topic Levels (depth) + The Pie (breadth) — SOLO-BACKLOG M3 + M4.
+function progressSection() {
+  const ds = Store.progress();
+  const earned = ds.filter((d) => d.hasWedge).length;
+  const seg = 100 / ds.length;
+  const stops = ds.map((d, i) => {
+    const col = d.hasWedge ? catColor(catById(d.id)) : '#e8dcc2';
+    return `${col} ${(i * seg).toFixed(2)}% ${((i + 1) * seg).toFixed(2)}%`;
+  }).join(', ');
+  const blurb = earned === 7
+    ? 'Full pie — every domain mastered. That breadth is yours to keep.'
+    : 'Earn a wedge in each domain by answering its questions well. The pie fills only when you cover them all.';
+  const rows = ds.filter((d) => d.total > 0).map((d) => {
+    const c = catById(d.id), col = catColor(c);
+    return `<div class="card topic-row">
+      <span class="topic-ic" style="background:${col}">${c.symbol}</span>
+      <div class="topic-main">
+        <div class="topic-head"><b>${h(c.name)}</b>${d.hasWedge ? '<span class="wedge">✓</span>' : ''}<span class="lvl" style="background:${col}">Lvl ${d.level}</span></div>
+        <div class="xp-track"><div class="xp-fill" style="width:${Math.max(6, d.levelProgress * 100)}%;background:${col}"></div></div>
+      </div></div>`;
+  }).join('');
+  return `<h2 class="section">Your knowledge</h2>
+    <div class="card pie-card"><div class="pie" style="background:conic-gradient(${stops})"><span class="pie-count">${earned}/7</span></div><p class="muted pie-blurb">${blurb}</p></div>
+    ${rows}`;
+}
 
 // ---------------- Game engine ----------------
 class Game {

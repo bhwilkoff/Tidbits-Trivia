@@ -24,6 +24,16 @@ export const CATEGORIES = [
   { id: 'sports', name: 'Sports', symbol: '🏆', colorIndex: 1, blurb: 'Games and the greats.' },
 ];
 export const catColor = (c) => POPS[c.colorIndex % POPS.length];
+
+// Knowledge-cartography math — mirror of Core/Store/ProgressStats.swift.
+// Seven domains (every category but "mixed"); gentle triangular level curve.
+export const PROGRESS = {
+  domains: ['history', 'science', 'geography', 'arts', 'screen', 'music', 'sports'],
+  wedgeCorrect: 15,
+  wedgeAccuracy: 0.60,
+  threshold: (level) => 5 * level * (level + 1) / 2,
+  level(correct) { let l = 0; while (this.threshold(l + 1) <= correct) l++; return l; },
+};
 export const catById = (id) => CATEGORIES.find((c) => c.id === id) || CATEGORIES[0];
 
 export const MODES = {
@@ -79,6 +89,22 @@ export const Store = {
     const correct = recs.reduce((s, r) => s + r.correct, 0);
     const total = recs.reduce((s, r) => s + r.total, 0);
     return { games: recs.length, correct, total, acc: total ? Math.round((correct / total) * 100) : 0 };
+  },
+  // Topic Levels (depth) + The Pie (breadth) derived from per-game history —
+  // one row per knowledge domain (SOLO-BACKLOG M3 + M4; mirror of ProgressMath).
+  progress() {
+    const recs = this.records();
+    return PROGRESS.domains.map((id) => {
+      const mine = recs.filter((r) => r.categoryID === id);
+      const correct = mine.reduce((s, r) => s + r.correct, 0);
+      const total = mine.reduce((s, r) => s + r.total, 0);
+      const acc = total ? correct / total : 0;
+      const level = PROGRESS.level(correct);
+      const lo = PROGRESS.threshold(level), hi = PROGRESS.threshold(level + 1);
+      return { id, correct, total, acc, level,
+        levelProgress: hi === lo ? 1 : Math.min(1, Math.max(0, (correct - lo) / (hi - lo))),
+        hasWedge: correct >= PROGRESS.wedgeCorrect && acc >= PROGRESS.wedgeAccuracy };
+    });
   },
 
   streak() { return LS.get('tidbits.streak', { current: 0, best: 0, lastDay: '' }); },

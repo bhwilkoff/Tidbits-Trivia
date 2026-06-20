@@ -3,6 +3,7 @@ package com.learningischange.tidbitstrivia.ui
 import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -26,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -306,12 +308,71 @@ private fun RecordsScreen(store: Store) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             StatBox("${life.first}", "Games", Pops.grape); StatBox("${life.third}%", "Lifetime", Pops.blue); StatBox("${life.second}", "Right", Pops.mint)
         }
+        val prog = remember { store.progress() }
+        val earned = prog.count { it.hasWedge }
+        Text("Your knowledge", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+        ChunkyCard(fill = MaterialTheme.colorScheme.surfaceVariant) {
+            Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                Box(contentAlignment = Alignment.Center) {
+                    PieProgress(prog, Modifier.size(104.dp))
+                    Box(Modifier.size(44.dp).background(MaterialTheme.colorScheme.surfaceVariant, CircleShape).border(2.dp, Ink, CircleShape), contentAlignment = Alignment.Center) {
+                        Text("$earned/7", fontWeight = FontWeight.Black, fontSize = 17.sp)
+                    }
+                }
+                Text(if (earned == 7) "Full pie — every domain mastered. That breadth is yours to keep."
+                     else "Earn a wedge in each domain by answering its questions well. The pie fills only when you cover them all.",
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f), modifier = Modifier.weight(1f))
+            }
+        }
+        prog.filter { it.total > 0 }.forEach { TopicRow(it) }
         Text("Personal bests", fontWeight = FontWeight.Bold, fontSize = 20.sp)
         Mode.entries.forEach { m ->
             val b = store.bestScore(m.name)
             if (b > 0) ChunkyCard { Row(Modifier.padding(14.dp).fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) { Text(m.title, fontWeight = FontWeight.Bold); Text("$b", fontWeight = FontWeight.Black, fontSize = 20.sp) } }
         }
         Spacer(Modifier.height(24.dp))
+    }
+}
+
+// The Pie — seven equal wedges, one per domain; earned wedges show their
+// category color, unearned ones are dim (SOLO-BACKLOG M3).
+@Composable
+private fun PieProgress(domains: List<DomainProgress>, modifier: Modifier = Modifier) {
+    val n = domains.size.coerceAtLeast(1)
+    Canvas(modifier) {
+        val sweep = 360f / n
+        domains.forEachIndexed { i, d ->
+            val start = -90f + i * sweep
+            val col = if (d.hasWedge) Pops.at(Category.byId(d.id).colorIndex) else Color(0xFFE8DCC2)
+            drawArc(col, start, sweep, useCenter = true)
+            drawArc(Ink, start, sweep, useCenter = true, style = Stroke(width = 4f))
+        }
+    }
+}
+
+// One domain's depth: icon, name, wedge check, level badge, XP bar (M4).
+@Composable
+private fun TopicRow(d: DomainProgress) {
+    val c = Category.byId(d.id); val col = Pops.at(c.colorIndex)
+    ChunkyCard {
+        Row(Modifier.padding(12.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Box(Modifier.size(36.dp).background(col, CircleShape).border(2.5.dp, Ink, CircleShape), contentAlignment = Alignment.Center) {
+                Text(c.icon, fontSize = 16.sp)
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(c.name, fontWeight = FontWeight.Bold)
+                    if (d.hasWedge) Text("✓", color = Pops.mint, fontWeight = FontWeight.Black)
+                    Spacer(Modifier.weight(1f))
+                    Surface(color = col, shape = RoundedCornerShape(999.dp), border = BorderStroke(2.dp, Ink)) {
+                        Text("Lvl ${d.level}", color = Color.White, fontWeight = FontWeight.Black, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 9.dp, vertical = 2.dp))
+                    }
+                }
+                Box(Modifier.fillMaxWidth().height(12.dp).background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(999.dp)).border(2.dp, Ink, RoundedCornerShape(999.dp))) {
+                    Box(Modifier.fillMaxWidth(d.levelProgress.coerceIn(0.05f, 1f)).fillMaxHeight().background(col, RoundedCornerShape(999.dp)))
+                }
+            }
+        }
     }
 }
 

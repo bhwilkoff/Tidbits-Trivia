@@ -99,6 +99,8 @@ reached is ⏳ with a note, never silence.
 | Feature | Web | iOS | tvOS | Android | Notes |
 |---|---|---|---|---|---|
 | Personal bests + lifetime stats | ✅ | ✅ | ⏳ | ✅ | SwiftData (Apple); localStorage (web); SharedPreferences (Android) |
+| Topic Levels (per-domain XP/level) | ✅ | ✅ | ⏳ | ✅ | QuizUp's best idea: an XP level + bar per knowledge domain, derived from game history (no new persistence). Shared `ProgressMath` (Core) mirrored in store.js/Tidbits.kt. tvOS ⏳ until it gets a Records browse screen (SOLO-BACKLOG M4) |
+| The Pie (breadth wedges) | ✅ | ✅ | ⏳ | ✅ | Trivial-Pursuit pie: a wedge per domain earned at a small mastery bar (≥15 correct, ≥60% acc); completes only when all 7 domains filled — fights corpus bias. Same shared derivation (SOLO-BACKLOG M3) |
 | Daily streak + missed-fact review | ✅ | ✅ | ⏳ | ✅ streak | Spaced re-asking woven into games on web + iOS; Android has streak (review later) |
 | Compete vs. your past self | ✅ | ✅ | ⏳ | ✅ | New-best detection on each game |
 | Share score (NO X/Twitter) | ✅ Web Share | ✅ ShareLink | ✅ QR | ✅ Intent | Decision 022; web has clipboard fallback |

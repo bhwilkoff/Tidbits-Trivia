@@ -19,6 +19,7 @@ struct RecordsView: View {
                 } else {
                     streakCard
                     lifetimeRow
+                    progressSection
                     bestsSection
                     if !toReview.isEmpty { reviewSection }
                 }
@@ -72,6 +73,75 @@ struct RecordsView: View {
         }
     }
 
+    // MARK: Progress — The Pie (breadth) + Topic Levels (depth)
+
+    private var domains: [DomainProgress] {
+        DomainProgress.summarize(records.map { ($0.categoryID, $0.correct, $0.total) })
+    }
+
+    private var progressSection: some View {
+        let ds = domains
+        let earned = DomainProgress.wedgesEarned(ds)
+        return VStack(alignment: .leading, spacing: 12) {
+            Text("Your knowledge").font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
+            HStack(spacing: 16) {
+                ZStack {
+                    PieProgressView(domains: ds).frame(width: 104, height: 104)
+                    VStack(spacing: -2) {
+                        Text("\(earned)/7").font(.system(size: 24, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
+                        Text("domains").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                    }
+                }
+                Text(earned == 7
+                     ? "Full pie — you've mastered every domain. That breadth is yours to keep."
+                     : "Earn a wedge in each domain by answering its questions well. The pie fills only when you cover them all.")
+                    .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(16)
+            .chunkyCard(fill: Tidbits.Palette.bgDeep)
+            .padding(.trailing, Tidbits.Metric.shadowOffset)
+
+            ForEach(ds.filter { $0.total > 0 }) { d in topicRow(d) }
+        }
+    }
+
+    private func topicRow(_ d: DomainProgress) -> some View {
+        let cat = TriviaCategory.named(d.categoryID)
+        return HStack(spacing: 12) {
+            Image(systemName: cat.symbol).foregroundStyle(cat.color.legibleForeground)
+                .frame(width: 36, height: 36)
+                .background(Circle().fill(cat.color))
+                .overlay(Circle().strokeBorder(Tidbits.Palette.border, lineWidth: 2.5))
+            VStack(alignment: .leading, spacing: 5) {
+                HStack {
+                    Text(cat.name).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                    if d.hasWedge {
+                        Image(systemName: "checkmark.seal.fill").font(.system(size: 13, weight: .bold)).foregroundStyle(Tidbits.Palette.mint)
+                    }
+                    Spacer()
+                    Text("Lvl \(d.level)").font(.system(size: 13, weight: .black, design: .rounded))
+                        .foregroundStyle(cat.color.legibleForeground)
+                        .padding(.horizontal, 9).padding(.vertical, 3)
+                        .background(Capsule().fill(cat.color))
+                        .overlay(Capsule().strokeBorder(Tidbits.Palette.border, lineWidth: 2))
+                }
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        Capsule().fill(Tidbits.Palette.bgDeep)
+                        Capsule().fill(cat.color).frame(width: max(6, geo.size.width * d.levelProgress))
+                    }
+                    .overlay(Capsule().strokeBorder(Tidbits.Palette.border, lineWidth: 2))
+                }
+                .frame(height: 12)
+            }
+        }
+        .padding(12)
+        .chunkyCard()
+        .padding(.trailing, Tidbits.Metric.shadowOffset)
+    }
+
     private var bestsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Personal bests").font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
@@ -110,6 +180,31 @@ struct RecordsView: View {
                 .padding(14)
                 .chunkyCard(fill: Tidbits.Palette.bgDeep)
                 .padding(.trailing, Tidbits.Metric.shadowOffset)
+            }
+        }
+    }
+}
+
+/// The Pie — seven equal wedges, one per knowledge domain. An earned wedge
+/// shows its category color; an unearned one is dim. The literal Trivial-Pursuit
+/// "fill the pie" made on-brand (chunky ink outline).
+private struct PieProgressView: View {
+    let domains: [DomainProgress]
+    var body: some View {
+        Canvas { ctx, size in
+            let n = max(1, domains.count)
+            let radius = min(size.width, size.height) / 2 - 2
+            let center = CGPoint(x: size.width / 2, y: size.height / 2)
+            for (i, d) in domains.enumerated() {
+                let start = Angle(degrees: Double(i) / Double(n) * 360 - 90)
+                let end = Angle(degrees: Double(i + 1) / Double(n) * 360 - 90)
+                var slice = Path()
+                slice.move(to: center)
+                slice.addArc(center: center, radius: radius, startAngle: start, endAngle: end, clockwise: false)
+                slice.closeSubpath()
+                let fill = d.hasWedge ? TriviaCategory.named(d.categoryID).color : Tidbits.Palette.surface.opacity(0.5)
+                ctx.fill(slice, with: .color(fill))
+                ctx.stroke(slice, with: .color(Tidbits.Palette.border), lineWidth: 2)
             }
         }
     }

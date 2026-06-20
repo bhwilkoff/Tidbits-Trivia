@@ -2,6 +2,12 @@
 // Do NOT edit MARKETING_VERSION or CURRENT_PROJECT_VERSION via the
 // Xcode identity panel; that creates a per-target override that shadows
 // this file and causes targets to drift apart again.
+//
+// Versioning convention: MARKETING_VERSION is MAJOR.MINOR.PATCH and moves on
+// EVERY ship — bump PATCH for a normal ship, MINOR for a notable feature batch,
+// MAJOR for a milestone. CURRENT_PROJECT_VERSION (the build number) is just a
+// monotonically increasing integer, +1 every ship. Keep the Android
+// versionName in lockstep with MARKETING_VERSION (android/app/build.gradle.kts).
 
-MARKETING_VERSION = 1.0
-CURRENT_PROJECT_VERSION = 6
+MARKETING_VERSION = 1.1.1
+CURRENT_PROJECT_VERSION = 7

@@ -4,6 +4,8 @@ import android.content.Context
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.double
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -17,6 +19,25 @@ import kotlin.math.min
 
 // ---- Domain models (mirror of the Apple Core) ----
 
+// Closest Call (M5): estimate a value on a [min,max] slider; proximity-scored.
+data class ClosestSpec(
+    val answer: Double, val min: Double, val max: Double,
+    val step: Double, val tolerance: Double, val unit: String,
+) {
+    fun points(guess: Double): Int {
+        val err = kotlin.math.abs(guess - answer)
+        return if (err < tolerance) Math.round(50.0 * (1 - err / tolerance)).toInt() else 0
+    }
+    fun isClose(guess: Double) = kotlin.math.abs(guess - answer) <= tolerance / 2
+    val formattedAnswer: String get() = fmt(answer)
+    fun fmt(v: Double): String {
+        val n = v.toLong()
+        if (unit.isEmpty()) return n.toString()   // years: no thousands separator
+        val s = if (kotlin.math.abs(v) >= 1000) "%,d".format(n) else n.toString()
+        return "$s $unit"
+    }
+}
+
 data class Question(
     val id: String,
     val prompt: String,
@@ -28,7 +49,10 @@ data class Question(
     val sourceTitle: String,
     val sourceUrl: String,
     val imageUrl: String? = null,   // Picture ID (Q7): Commons image to identify
-)
+    val closest: ClosestSpec? = null, // Closest Call (M5)
+) {
+    val answerText: String get() = options.getOrNull(correctIndex) ?: closest?.formattedAnswer ?: ""
+}
 
 data class Category(val id: String, val name: String, val icon: String, val colorIndex: Int, val blurb: String) {
     companion object {
@@ -54,6 +78,7 @@ enum class Mode(val title: String, val blurb: String, val perQuestion: Int?, val
     SWEEP("Sweep", "Fill the set. Beat your best.", 12, null, 12),
     PICTURE_ID("Picture ID", "Name what you see.", 20, null, 10),
     THIS_OR_THAT("Which First?", "Which came first?", 12, null, 10),
+    CLOSEST_CALL("Closest Call", "How close can you get?", 25, null, 8),
     DAILY("Daily Tidbit", "Everyone's puzzle. Keep your streak.", 30, null, 7),
 }
 
@@ -161,17 +186,33 @@ class JsonQuestionSet(private val asset: String) {
             val arr = Json.parseToJsonElement(text).jsonObject["questions"]!!.jsonArray
             all = arr.map { el ->
                 val a = el.jsonArray
-                Question(
-                    id = a[0].jsonPrimitive.content, prompt = a[1].jsonPrimitive.content,
-                    options = a[2].jsonArray.map { it.jsonPrimitive.content },
-                    correctIndex = a[3].jsonPrimitive.content.toInt(),
-                    categoryId = a[4].jsonPrimitive.content,
-                    difficulty = a[5].jsonPrimitive.content.toInt(),
-                    explanation = a[6].jsonPrimitive.content,
-                    sourceTitle = a[7].jsonPrimitive.content,
-                    sourceUrl = a[8].jsonPrimitive.content,
-                    imageUrl = if (a.size >= 10) a[9].jsonPrimitive.content else null,
-                )
+                if (a[2] is JsonArray) {
+                    // MCQ (corpus / picture / thisorthat)
+                    Question(
+                        id = a[0].jsonPrimitive.content, prompt = a[1].jsonPrimitive.content,
+                        options = a[2].jsonArray.map { it.jsonPrimitive.content },
+                        correctIndex = a[3].jsonPrimitive.content.toInt(),
+                        categoryId = a[4].jsonPrimitive.content,
+                        difficulty = a[5].jsonPrimitive.content.toInt(),
+                        explanation = a[6].jsonPrimitive.content,
+                        sourceTitle = a[7].jsonPrimitive.content,
+                        sourceUrl = a[8].jsonPrimitive.content,
+                        imageUrl = if (a.size >= 10) a[9].jsonPrimitive.content else null,
+                    )
+                } else {
+                    // Numeric (Closest Call): [id,prompt,answer,min,max,step,tol,unit,cat,expl,title,url]
+                    Question(
+                        id = a[0].jsonPrimitive.content, prompt = a[1].jsonPrimitive.content,
+                        options = emptyList(), correctIndex = 0,
+                        categoryId = a[8].jsonPrimitive.content, difficulty = 3,
+                        explanation = a[9].jsonPrimitive.content,
+                        sourceTitle = a[10].jsonPrimitive.content,
+                        sourceUrl = a[11].jsonPrimitive.content,
+                        closest = ClosestSpec(
+                            a[2].jsonPrimitive.double, a[3].jsonPrimitive.double, a[4].jsonPrimitive.double,
+                            a[5].jsonPrimitive.double, a[6].jsonPrimitive.double, a[7].jsonPrimitive.content),
+                    )
+                }
             }
             byCat = all.groupBy { it.categoryId }
             loaded = true
@@ -187,6 +228,7 @@ class JsonQuestionSet(private val asset: String) {
 
 val Pictures = JsonQuestionSet("picture.json")
 val ThisOrThat = JsonQuestionSet("thisorthat.json")
+val ClosestCall = JsonQuestionSet("closest.json")
 
 fun dayKey(): String {
     val c = Calendar.getInstance()

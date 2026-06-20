@@ -65,7 +65,7 @@ struct TVGameContainer: View {
 
 // MARK: - Gameplay
 
-private enum TVFocus: Hashable { case stake(Int), answer(Int), next }
+private enum TVFocus: Hashable { case stake(Int), answer(Int), closestSlider, closestLock, next }
 
 struct TVGamePlayView: View {
     let onQuit: () -> Void
@@ -87,17 +87,21 @@ struct TVGamePlayView: View {
                     .fixedSize(horizontal: false, vertical: true)
                 if game.mode == .sweep { sweepRow }
                 if game.mode == .stake && game.phase == .playing { stakeRow }
-                HStack(spacing: 28) {
-                    ForEach(Array(q.options.enumerated()), id: \.offset) { idx, opt in
-                        Button { game.submit(idx) } label: {
-                            Text(opt).font(.system(size: 29, weight: .bold, design: .rounded))
-                                .frame(maxWidth: .infinity, minHeight: 120)
-                                .padding(.horizontal, 24)
+                if let spec = q.closest {
+                    closestPanel(spec)
+                } else {
+                    HStack(spacing: 28) {
+                        ForEach(Array(q.options.enumerated()), id: \.offset) { idx, opt in
+                            Button { game.submit(idx) } label: {
+                                Text(opt).font(.system(size: 29, weight: .bold, design: .rounded))
+                                    .frame(maxWidth: .infinity, minHeight: 120)
+                                    .padding(.horizontal, 24)
+                            }
+                            .buttonStyle(TVAnswerStyle(state: state(idx, q)))
+                            .focused($focus, equals: .answer(idx))
+                            // Stake mode: lock the answers until a confidence chip is committed.
+                            .disabled(game.phase == .reveal || (game.mode == .stake && game.currentStake == 0))
                         }
-                        .buttonStyle(TVAnswerStyle(state: state(idx, q)))
-                        .focused($focus, equals: .answer(idx))
-                        // Stake mode: lock the answers until a confidence chip is committed.
-                        .disabled(game.phase == .reveal || (game.mode == .stake && game.currentStake == 0))
                     }
                 }
                 if game.phase == .reveal { reveal(q) }
@@ -120,6 +124,7 @@ struct TVGamePlayView: View {
                 try? await Task.sleep(for: .seconds(0.9))
                 switch game.phase {
                 case .playing:
+                    if game.mode == .closestCall { game.submitGuess(); break }
                     if game.mode == .stake && game.currentStake == 0,
                        let tier = game.stakeTiers.first(where: { $0.remaining > 0 }) { game.setStake(tier.value) }
                     game.submit(0)
@@ -131,9 +136,48 @@ struct TVGamePlayView: View {
     }
 
     private var firstFocus: TVFocus {
-        game.mode == .stake && game.currentStake == 0
+        if game.current?.closest != nil { return .closestSlider }
+        return game.mode == .stake && game.currentStake == 0
             ? .stake(game.stakeTiers.first?.value ?? 0)
             : .answer(0)
+    }
+
+    /// Closest Call at ten feet — tvOS has no Slider (no touch), so estimate with
+    /// focusable ±coarse/±fine stepper buttons. The big number reads across the room.
+    private func closestPanel(_ spec: ClosestSpec) -> some View {
+        let live = game.phase == .playing
+        let fine = max(spec.step, 1)
+        let coarse = max(fine * 10, 10)
+        return VStack(spacing: 26) {
+            Text(closestFmt(game.currentGuess, spec))
+                .font(.system(size: 70, weight: .black, design: .rounded)).foregroundStyle(.white)
+                .contentTransition(.numericText())
+            HStack(spacing: 20) {
+                stepButton(-coarse, "−\(Int(coarse))", live: live).focused($focus, equals: .closestSlider)
+                stepButton(-fine, "−\(Int(fine))", live: live)
+                stepButton(fine, "+\(Int(fine))", live: live)
+                stepButton(coarse, "+\(Int(coarse))", live: live)
+            }
+            if live {
+                Button("Lock In") { game.submitGuess() }
+                    .buttonStyle(TVChipStyle(accent: game.mode.accent, selected: false))
+                    .focused($focus, equals: .closestLock)
+            }
+        }
+        .frame(maxWidth: 1000)
+    }
+
+    private func stepButton(_ delta: Double, _ label: String, live: Bool) -> some View {
+        Button(label) { game.setGuess(game.currentGuess + delta) }
+            .buttonStyle(TVChipStyle(accent: Tidbits.Palette.blue, selected: false))
+            .disabled(!live)
+    }
+
+    private func closestFmt(_ v: Double, _ spec: ClosestSpec) -> String {
+        let n = Int(v.rounded())
+        if spec.unit.isEmpty { return String(n) }
+        let s = abs(n) >= 1000 ? n.formatted(.number.grouping(.automatic)) : String(n)
+        return "\(s) \(spec.unit)"
     }
 
     private var stakeRow: some View {
@@ -240,7 +284,7 @@ struct TVGamePlayView: View {
         .background(RoundedRectangle(cornerRadius: 22).fill(TVTheme.panel))
     }
     private var isLast: Bool {
-        (game.mode == .classic || game.mode == .daily || game.mode == .stake || game.mode == .sweep || game.mode == .pictureId || game.mode == .thisOrThat) && game.index + 1 >= game.questions.count
+        (game.mode == .classic || game.mode == .daily || game.mode == .stake || game.mode == .sweep || game.mode == .pictureId || game.mode == .thisOrThat || game.mode == .closestCall) && game.index + 1 >= game.questions.count
     }
 }
 

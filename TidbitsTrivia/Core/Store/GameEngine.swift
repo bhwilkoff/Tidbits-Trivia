@@ -40,6 +40,10 @@ final class GameEngine {
     // (F1) — "did my Sure chips actually land?" Keyed by chip value.
     private(set) var stakeOutcomes: [Int: StakeOutcome] = [:]
 
+    // Closest Call (M5): the live slider value and the points the last guess earned.
+    private(set) var currentGuess: Double = 0
+    private(set) var lastGuessPoints: Int = 0
+
     // Clocks
     private(set) var remaining: Double = 0      // seconds left on the active clock
     private var clockBudget: Double = 0
@@ -117,6 +121,7 @@ final class GameEngine {
     private func beginQuestion() {
         chosenIndex = nil
         currentStake = 0
+        if let spec = current?.closest { currentGuess = ((spec.min + spec.max) / 2).rounded() }
         phase = .playing
         questionStart = .now
         clockBudget = mode.perQuestionSeconds ?? (globalRemaining() ?? 30)
@@ -155,7 +160,7 @@ final class GameEngine {
         } else {
             let elapsed = Date().timeIntervalSince(questionStart)
             remaining = max(0, clockBudget - elapsed)
-            if remaining <= 0 { submit(nil) }
+            if remaining <= 0 { mode == .closestCall ? submitGuess() : submit(nil) }
         }
     }
 
@@ -174,6 +179,36 @@ final class GameEngine {
     }
 
     var stakeLabel: String { stakeTiers.first { $0.value == currentStake }?.label ?? "" }
+
+    // MARK: Closest Call
+
+    /// Move the estimate slider (Closest Call). Clamped to the question's domain.
+    func setGuess(_ value: Double) {
+        guard mode == .closestCall, phase == .playing, let spec = current?.closest else { return }
+        currentGuess = Swift.min(spec.max, Swift.max(spec.min, value))
+    }
+
+    /// Lock in the estimate — proximity scoring, adds-only (Decision 022).
+    func submitGuess() {
+        guard phase == .playing, let q = current, let spec = q.closest else { return }
+        ticker?.cancel()
+        let pts = spec.points(for: currentGuess)
+        let close = spec.isClose(currentGuess)
+        lastGuessPoints = pts
+        let taken = Date().timeIntervalSince(questionStart)
+        // chosenIndex == correctIndex (0) when close enough, so the emoji grid
+        // and records read it as a hit; the score is the proximity points.
+        let answer = AnsweredQuestion(question: q, chosenIndex: close ? 0 : 1, secondsTaken: taken)
+        answered.append(answer)
+        lastAnswer = answer
+        if close {
+            streak += 1; maxStreak = max(maxStreak, streak); Haptics.correct()
+        } else {
+            streak = 0; Haptics.wrong()
+        }
+        score += pts
+        phase = .reveal
+    }
 
     // MARK: Answering
 

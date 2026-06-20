@@ -19,7 +19,7 @@ struct GamePlayView: View {
                         QuestionCard(question: q)
                         if game.mode == .sweep { sweepGrid }
                         if game.mode == .stake && game.phase == .playing { stakeSelector }
-                        answers(for: q)
+                        if let spec = q.closest { closestPanel(spec) } else { answers(for: q) }
                         if game.phase == .reveal { reveal(for: q) }
                     }
                     .padding(.horizontal, Tidbits.Metric.pad)
@@ -44,6 +44,7 @@ struct GamePlayView: View {
                 try? await Task.sleep(for: .seconds(0.9))
                 switch game.phase {
                 case .playing:
+                    if game.mode == .closestCall { game.submitGuess(); break }
                     if game.mode == .stake && game.currentStake == 0,
                        let tier = game.stakeTiers.first(where: { $0.remaining > 0 }) { game.setStake(tier.value) }
                     game.submit(0)
@@ -122,6 +123,44 @@ struct GamePlayView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
+        .chunkyCard(fill: Tidbits.Palette.bgDeep)
+        .padding(.trailing, Tidbits.Metric.shadowOffset)
+    }
+
+    // MARK: Closest Call slider
+
+    private func closestFmt(_ v: Double, _ spec: ClosestSpec) -> String {
+        let n = Int(v.rounded())
+        // Years (no unit) read without a thousands separator; sized units keep it.
+        if spec.unit.isEmpty { return String(n) }
+        let s = abs(n) >= 1000 ? n.formatted(.number.grouping(.automatic)) : String(n)
+        return "\(s) \(spec.unit)"
+    }
+
+    private func closestPanel(_ spec: ClosestSpec) -> some View {
+        let live = game.phase == .playing
+        return VStack(spacing: 14) {
+            Text(closestFmt(game.currentGuess, spec))
+                .font(.system(size: 42, weight: .black, design: .rounded))
+                .foregroundStyle(Tidbits.Palette.ink)
+                .contentTransition(.numericText())
+            Slider(value: Binding(get: { game.currentGuess }, set: { game.setGuess($0) }),
+                   in: spec.min...spec.max, step: spec.step)
+                .tint(game.mode.accent)
+                .disabled(!live)
+            HStack {
+                Text(closestFmt(spec.min, spec)).font(Tidbits.TypeRamp.l5)
+                Spacer()
+                Text(closestFmt(spec.max, spec)).font(Tidbits.TypeRamp.l5)
+            }
+            .foregroundStyle(Tidbits.Palette.inkSoft)
+            if live {
+                Button("Lock In") { game.submitGuess() }
+                    .buttonStyle(ChunkyButtonStyle(fill: game.mode.accent,
+                                                   textColor: game.mode.accent.legibleForeground))
+            }
+        }
+        .padding(16)
         .chunkyCard(fill: Tidbits.Palette.bgDeep)
         .padding(.trailing, Tidbits.Metric.shadowOffset)
     }
@@ -214,6 +253,19 @@ struct GamePlayView: View {
                         .background(Capsule().fill(correct ? Tidbits.Palette.mint : Tidbits.Palette.surface))
                         .overlay(Capsule().strokeBorder(Tidbits.Palette.border, lineWidth: 2))
                 }
+                if game.mode == .closestCall {
+                    Text("+\(game.lastGuessPoints)")
+                        .font(.system(size: 15, weight: .black, design: .rounded))
+                        .foregroundStyle(game.lastGuessPoints > 0 ? Tidbits.Palette.mint.legibleForeground : Tidbits.Palette.ink)
+                        .padding(.horizontal, 10).padding(.vertical, 5)
+                        .background(Capsule().fill(game.lastGuessPoints > 0 ? Tidbits.Palette.mint : Tidbits.Palette.surface))
+                        .overlay(Capsule().strokeBorder(Tidbits.Palette.border, lineWidth: 2))
+                }
+            }
+            if let spec = q.closest {
+                let off = Int(abs(game.currentGuess - spec.answer).rounded())
+                Text("You said \(closestFmt(game.currentGuess, spec)) · actual \(spec.formattedAnswer) · off by \(off)")
+                    .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
             }
             if !q.explanation.isEmpty {
                 Text(q.explanation)
@@ -247,7 +299,7 @@ struct GamePlayView: View {
     }
 
     private var isLast: Bool {
-        (game.mode == .classic || game.mode == .daily || game.mode == .stake || game.mode == .sweep || game.mode == .pictureId || game.mode == .thisOrThat) && game.index + 1 >= game.questions.count
+        (game.mode == .classic || game.mode == .daily || game.mode == .stake || game.mode == .sweep || game.mode == .pictureId || game.mode == .thisOrThat || game.mode == .closestCall) && game.index + 1 >= game.questions.count
     }
 }
 

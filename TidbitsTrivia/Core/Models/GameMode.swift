@@ -11,6 +11,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
     case sweep       // fill a themed set; beat your own best (count-scored)
     case pictureId   // identify the subject from its image (E1 enrichment)
     case thisOrThat  // binary pick — which came first (E1 chronology)
+    case closestCall // estimate a number on a slider, scored by proximity (E1)
     case daily       // one fixed daily set, streak-bearing, shareable
 
     var id: String { rawValue }
@@ -24,6 +25,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .sweep:      return "Sweep"
         case .pictureId:  return "Picture ID"
         case .thisOrThat: return "Which First?"
+        case .closestCall: return "Closest Call"
         case .daily:      return "Daily Tidbit"
         }
     }
@@ -37,6 +39,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .sweep:      return "Fill the set. Beat your best."
         case .pictureId:  return "Name what you see."
         case .thisOrThat: return "Which came first?"
+        case .closestCall: return "How close can you get?"
         case .daily:      return "Everyone's puzzle. Keep your streak."
         }
     }
@@ -50,6 +53,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .sweep:      return "square.grid.3x3.fill"
         case .pictureId:  return "photo.fill"
         case .thisOrThat: return "arrow.left.arrow.right"
+        case .closestCall: return "target"
         case .daily:      return "sun.max.fill"
         }
     }
@@ -63,6 +67,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .sweep:      return Tidbits.Palette.teal
         case .pictureId:  return Tidbits.Palette.pink
         case .thisOrThat: return Tidbits.Palette.grape
+        case .closestCall: return Tidbits.Palette.yellow
         case .daily:      return Tidbits.Palette.yellow
         }
     }
@@ -77,6 +82,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .sweep:      return 12    // rapid-fire, but a clock that never punishes score
         case .pictureId:  return 20    // time to look at the image
         case .thisOrThat: return 12    // snap binary call
+        case .closestCall: return 25   // estimation deserves a beat of thought
         case .daily:      return 30
         }
     }
@@ -90,6 +96,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .sweep:      return 12    // a "set" to fill — the grid is the scoreboard
         case .pictureId:  return 10
         case .thisOrThat: return 10
+        case .closestCall: return 8
         case .daily:      return 7
         }
     }

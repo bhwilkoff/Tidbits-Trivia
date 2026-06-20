@@ -29,7 +29,7 @@ aliases unlocks SEVEN question types. Most `P2` items are gated on it.
 | M2 | **Sweep** *(Sporcle)* | A 12-Q set as rapid-fire MCQ with a persistent fill-grid (mint hit / coral miss); +1 per correct (count-scored, no speed bonus); beat **your own** best via per-mode best-score; ends on the existing miss-reveal recap. | Yes (sets from categories) | P1 | ✅ all 4 platforms |
 | M3 | **The Pie** *(Trivial Pursuit)* | Earn one wedge per knowledge domain at a small mastery threshold; the pie completes only when **every** domain is filled — fights corpus/interest bias. Durable, never resets. | Yes (meta over records) | P1 | ✅ iOS/web/Android (tvOS ⏳ Records UI) |
 | M4 | **Topic Levels** *(QuizUp)* | XP/levels per knowledge **domain** (the 7 non-mixed categories): a level + bar per domain, gentle triangular curve. Derived from game history, no new persistence. | Yes (category + records) | P2 | ✅ iOS/web/Android (tvOS ⏳ Records UI) |
-| M5 | **Closest Call** *(higher-lower)* | A numeric answer (year/population/elevation); dial a number; scored by **proximity** (accepts partial knowledge). TV-friendly (no keyboard). | +meta (E1 numeric) | P2 | 🔮 E1 |
+| M5 | **Closest Call** *(higher-lower)* | A numeric answer (year / atomic number / elevation); estimate on a slider (tvOS: ±coarse/fine steppers); scored by **proximity**, adds-only (`closest.json`, 1,233 Qs). The first non-MCQ type (Decision 031). | +meta (E1 numeric) | P2 | ✅ all 4 platforms |
 | M6 | **Link Wall** *(NYT Connections)* | 16 fact-tiles → 4 hidden groups by a Wikipedia/Wikidata link; keep "one away"; reveal **shows the link + a cited why**. The marquee daily puzzle. | Rich (curated groups) | P3 | 🔮 |
 
 ## Question / interaction types (solo-renderable in the existing game loop)

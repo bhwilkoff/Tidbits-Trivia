@@ -44,6 +44,7 @@ export const MODES = {
   sweep: { id: 'sweep', title: 'Sweep', blurb: 'Fill the set. Beat your best.', perQuestion: 12, count: 12, accent: '#13B6C9' },
   pictureId: { id: 'pictureId', title: 'Picture ID', blurb: 'Name what you see.', perQuestion: 20, count: 10, accent: '#FF5DA2' },
   thisOrThat: { id: 'thisOrThat', title: 'Which First?', blurb: 'Which came first?', perQuestion: 12, count: 10, accent: '#8B5CF6' },
+  closestCall: { id: 'closestCall', title: 'Closest Call', blurb: 'How close can you get?', perQuestion: 25, count: 8, accent: '#FFC93C' },
   daily: { id: 'daily', title: 'Daily Tidbit', blurb: 'Everyone’s puzzle. Keep your streak.', perQuestion: 30, count: 7, accent: '#FFC93C' },
 };
 

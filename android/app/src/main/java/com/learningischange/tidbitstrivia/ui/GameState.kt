@@ -41,6 +41,9 @@ class GameState(
     val stakeLabel: String get() = stakeTiers.firstOrNull { it.value == currentStake }?.label ?: ""
     // F1 calibration: per-tier [hits, total] for this round.
     private val stakeOutcomes = mutableMapOf<Int, IntArray>()
+    // Closest Call (M5): the live slider value + points the last guess earned.
+    var currentGuess by mutableDoubleStateOf(0.0)
+    var lastGuessPoints by mutableIntStateOf(0)
 
     var questions: List<Question> = emptyList(); private set
     private var budget = 30.0
@@ -50,7 +53,7 @@ class GameState(
 
     val current: Question? get() = questions.getOrNull(index)
     val correctCount: Int get() = answered.count { it.correct }
-    val isLast: Boolean get() = (mode == Mode.CLASSIC || mode == Mode.DAILY || mode == Mode.STAKE || mode == Mode.SWEEP || mode == Mode.PICTURE_ID || mode == Mode.THIS_OR_THAT) && index + 1 >= questions.size
+    val isLast: Boolean get() = (mode == Mode.CLASSIC || mode == Mode.DAILY || mode == Mode.STAKE || mode == Mode.SWEEP || mode == Mode.PICTURE_ID || mode == Mode.THIS_OR_THAT || mode == Mode.CLOSEST_CALL) && index + 1 >= questions.size
     val progressLabel: String get() = if (mode == Mode.TIME_ATTACK || mode == Mode.SURVIVAL) "#${index + 1}" else "${index + 1} / ${questions.size}"
     val clockFraction: Double get() = if (budget <= 0) 0.0 else (remaining / budget).coerceIn(0.0, 1.0)
 
@@ -72,6 +75,7 @@ class GameState(
             mode == Mode.DAILY -> Corpus.daily(dayKey(), 7)
             mode == Mode.PICTURE_ID -> Pictures.pull(category.id, store.seenSet, mode.count)
             mode == Mode.THIS_OR_THAT -> ThisOrThat.pull(category.id, store.seenSet, mode.count)
+            mode == Mode.CLOSEST_CALL -> ClosestCall.pull(category.id, store.seenSet, mode.count)
             else -> loadStandard()
         }
         questions = if (mode.count == 99) qs else qs.take(mode.count)
@@ -114,6 +118,7 @@ class GameState(
     private fun begin() {
         chosen = null
         currentStake = 0
+        current?.closest?.let { currentGuess = Math.round((it.min + it.max) / 2).toDouble() }
         phase = GamePhase.PLAYING
         qStart = now()
         budget = globalRemaining() ?: (mode.perQuestion?.toDouble() ?: 30.0)
@@ -129,7 +134,26 @@ class GameState(
         if (phase != GamePhase.PLAYING) return
         val g = globalRemaining()
         if (g != null) { remaining = g; if (g <= 0) end() }
-        else { remaining = max(0.0, budget - (now() - qStart) / 1000.0); if (remaining <= 0) submit(null) }
+        else { remaining = max(0.0, budget - (now() - qStart) / 1000.0); if (remaining <= 0) { if (mode == Mode.CLOSEST_CALL) submitGuess() else submit(null) } }
+    }
+
+    fun setGuess(v: Double) {
+        val s = current?.closest ?: return
+        if (phase != GamePhase.PLAYING) return
+        currentGuess = v.coerceIn(s.min, s.max)
+    }
+
+    fun submitGuess() {
+        if (phase != GamePhase.PLAYING) return
+        val q = current ?: return; val s = q.closest ?: return
+        val pts = s.points(currentGuess); val close = s.isClose(currentGuess)
+        lastGuessPoints = pts
+        val taken = (now() - qStart) / 1000.0
+        answered.add(Answered(q, if (close) q.correctIndex else -1, close, taken))
+        lastCorrect = close
+        if (close) { streak++; maxStreak = max(maxStreak, streak) } else streak = 0
+        score += pts
+        phase = GamePhase.REVEAL
     }
 
     fun submit(choice: Int?) {

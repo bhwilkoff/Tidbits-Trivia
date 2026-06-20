@@ -58,6 +58,7 @@ fun AppRoot(store: Store) {
         if (!Corpus.loaded) runCatching { Corpus.load(context) }
         if (!Pictures.loaded) runCatching { Pictures.load(context) }
         if (!ThisOrThat.loaded) runCatching { ThisOrThat.load(context) }
+        if (!ClosestCall.loaded) runCatching { ClosestCall.load(context) }
         corpusReady = true
     }
 
@@ -103,7 +104,7 @@ private fun HomeScreen(onPlay: (Mode, Category) -> Unit) {
 
         Text("Pick a mode", fontWeight = FontWeight.Bold, fontSize = 20.sp)
         LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            items(listOf(Mode.CLASSIC, Mode.TIME_ATTACK, Mode.SURVIVAL, Mode.STAKE, Mode.SWEEP, Mode.PICTURE_ID, Mode.THIS_OR_THAT), key = { it.name }) { m ->
+            items(listOf(Mode.CLASSIC, Mode.TIME_ATTACK, Mode.SURVIVAL, Mode.STAKE, Mode.SWEEP, Mode.PICTURE_ID, Mode.THIS_OR_THAT, Mode.CLOSEST_CALL), key = { it.name }) { m ->
                 FilterChip(selected = selectedMode == m, onClick = { selectedMode = m }, label = { Text(m.title) })
             }
         }
@@ -176,6 +177,7 @@ private fun PlayingScreen(game: GameState) {
         Text(q.prompt, fontWeight = FontWeight.Black, fontSize = 23.sp)
         if (game.mode == Mode.SWEEP) SweepGrid(game)
         if (game.mode == Mode.STAKE && game.phase == GamePhase.PLAYING) StakeSelector(game)
+        q.closest?.let { ClosestPanel(game, it) }
         val answersLocked = game.phase != GamePhase.PLAYING || (game.mode == Mode.STAKE && game.currentStake == 0)
         q.options.forEachIndexed { i, opt -> AnswerButton(opt, game.answerState(i), !answersLocked) { game.submit(i) } }
         if (game.phase == GamePhase.REVEAL) {
@@ -187,6 +189,11 @@ private fun PlayingScreen(game: GameState) {
                             val earned = if (game.lastCorrect) "+${game.currentStake}" else "+0"
                             AssistChip(onClick = {}, label = { Text(earned, fontWeight = FontWeight.Black) })
                         }
+                        if (q.closest != null) AssistChip(onClick = {}, label = { Text("+${game.lastGuessPoints}", fontWeight = FontWeight.Black) })
+                    }
+                    q.closest?.let { s ->
+                        Text("You said ${s.fmt(game.currentGuess)} · actual ${s.formattedAnswer} · off by ${Math.abs(Math.round(game.currentGuess - s.answer))}",
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                     }
                     if (q.explanation.isNotEmpty()) Text(q.explanation)
                 }
@@ -224,6 +231,30 @@ private fun SweepGrid(game: GameState) {
                 repeat(perRow - (end - start)) { Spacer(Modifier.weight(1f)) }
             }
             start += perRow
+        }
+    }
+}
+
+// Closest Call (M5): M3 Slider over [min,max] + Lock In; proximity-scored.
+@Composable
+private fun ClosestPanel(game: GameState, spec: ClosestSpec) {
+    val live = game.phase == GamePhase.PLAYING
+    ChunkyCard(fill = MaterialTheme.colorScheme.surfaceVariant, modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(spec.fmt(game.currentGuess), fontWeight = FontWeight.Black, fontSize = 36.sp)
+            Slider(
+                value = game.currentGuess.toFloat(),
+                onValueChange = { game.setGuess(it.toDouble()) },
+                valueRange = spec.min.toFloat()..spec.max.toFloat(),
+                steps = (((spec.max - spec.min) / spec.step).toInt() - 1).coerceIn(0, 1000),
+                enabled = live,
+            )
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(spec.fmt(spec.min), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                Text(spec.fmt(spec.max), fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+            }
+            if (live) Button(onClick = { game.submitGuess() }, modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = Pops.yellow, contentColor = Ink)) { Text("Lock In") }
         }
     }
 }
@@ -293,7 +324,7 @@ private fun ResultsScreen(game: GameState, onPlayAgain: () -> Unit, onDone: () -
                 ChunkyCard(modifier = Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(14.dp).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(a.q.prompt, fontWeight = FontWeight.Bold)
-                        Text(a.q.options[a.q.correctIndex], color = Pops.mint, fontWeight = FontWeight.Black)
+                        Text(a.q.answerText, color = Pops.mint, fontWeight = FontWeight.Black)
                         if (a.q.explanation.isNotEmpty()) Text(a.q.explanation, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
                     }
                 }

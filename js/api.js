@@ -100,7 +100,17 @@ export const Corpus = {
 // Enrichment-built mode sources (E1): a bundled JSON question set, same row
 // shape as the corpus (Picture ID also carries a 10th element, the image URL).
 // One factory so each new mode is a one-liner.
-function makeJsonSet(filename) {
+// Closest Call (M5) numeric row: [id, prompt, answer, min, max, step, tol, unit,
+// category, explanation, title, url] -> a question carrying a `closest` spec.
+function rowToClosest(r) {
+  return {
+    id: r[0], prompt: r[1], options: [], correctIndex: 0, templateID: 'closest',
+    closest: { answer: r[2], min: r[3], max: r[4], step: r[5], tolerance: r[6], unit: r[7] },
+    categoryID: r[8], difficulty: 3, explanation: r[9], sourceTitle: r[10], sourceURL: r[11],
+  };
+}
+
+function makeJsonSet(filename, parseRow = rowToQuestion) {
   return {
     questions: [], byCategory: {}, loaded: false,
     async load() {
@@ -109,7 +119,7 @@ function makeJsonSet(filename) {
         const resp = await fetch('assets/' + filename, { cache: 'no-cache' });
         if (!resp.ok) return;
         const data = await resp.json();
-        this.questions = data.questions.map(rowToQuestion);
+        this.questions = data.questions.map(parseRow);
         this.byCategory = {};
         for (const q of this.questions) (this.byCategory[q.categoryID] ||= []).push(q);
         this.loaded = true;
@@ -126,6 +136,7 @@ function makeJsonSet(filename) {
 }
 export const Pictures = makeJsonSet('picture.json');
 export const ThisOrThat = makeJsonSet('thisorthat.json');
+export const ClosestCall = makeJsonSet('closest.json', rowToClosest);
 
 export const Wikipedia = {
   async search(topic, limit = 35) {

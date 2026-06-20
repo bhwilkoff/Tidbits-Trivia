@@ -1,7 +1,7 @@
 // Tidbits — web app shell: router, views, and the game loop. Mirrors the
 // Apple AppStore + GameEngine + views. Vanilla JS, no framework, no build.
 
-import { Corpus, Pictures, ThisOrThat, Wikipedia } from './api.js';
+import { Corpus, Pictures, ThisOrThat, ClosestCall, Wikipedia } from './api.js';
 import { Store, CATEGORIES, catColor, catById, MODES, STAKE_BUDGET, dayKey, APP_STORES } from './store.js';
 import { Scoring } from './engine.js';
 
@@ -63,7 +63,7 @@ function viewHome() {
       <span class="cat-name">${h(c.name)}</span>
       <span class="cat-blurb muted">${h(c.blurb)}</span>
     </button>`).join('');
-  const modes = ['classic', 'timeAttack', 'survival', 'stake', 'sweep', 'pictureId', 'thisOrThat'].map((m) =>
+  const modes = ['classic', 'timeAttack', 'survival', 'stake', 'sweep', 'pictureId', 'thisOrThat', 'closestCall'].map((m) =>
     `<button class="chip" data-mode="${m}">${h(MODES[m].title)}</button>`).join('');
   return `
     <h1 class="page-title">Trivia from the whole of Wikipedia.</h1>
@@ -226,6 +226,10 @@ class Game {
       await ThisOrThat.load();
       qs = ThisOrThat.pull(this.category.id, Store._seen, this.mode.count);
     }
+    else if (this.mode.id === 'closestCall') {
+      await ClosestCall.load();
+      qs = ClosestCall.pull(this.category.id, Store._seen, this.mode.count);
+    }
     else {
       qs = Corpus.pull(this.category.id, Store._seen, this.mode.count);
       if (qs.length < this.mode.count) {
@@ -266,6 +270,8 @@ class Game {
   get stakeLabel() { return this.stakeTiers.find((t) => t.value === this.currentStake)?.label ?? ''; }
   _begin() {
     this.chosen = null; this.currentStake = 0; this.phase = 'playing'; this.qStart = Date.now();
+    const cur = this.current;
+    if (cur && cur.closest) { this.currentGuess = Math.round((cur.closest.min + cur.closest.max) / 2); this.lastGuessPoints = 0; }
     this.budget = this._globalRemaining() ?? this.mode.perQuestion ?? 30;
     this.remaining = this.budget;
     clearInterval(this.timer);
@@ -277,8 +283,29 @@ class Game {
     if (this.phase !== 'playing') return;
     const g = this._globalRemaining();
     if (g !== null) { this.remaining = g; if (g <= 0) return this._end(); }
-    else { this.remaining = Math.max(0, this.budget - (Date.now() - this.qStart) / 1000); if (this.remaining <= 0) return this.submit(null); }
+    else { this.remaining = Math.max(0, this.budget - (Date.now() - this.qStart) / 1000); if (this.remaining <= 0) return (this.mode.id === 'closestCall' ? this.submitGuess() : this.submit(null)); }
     updateClock();
+  }
+  // Closest Call (M5): move the estimate, and lock it in (proximity, adds-only).
+  setGuess(v) {
+    if (this.mode.id !== 'closestCall' || this.phase !== 'playing') return;
+    const s = this.current.closest;
+    this.currentGuess = Math.min(s.max, Math.max(s.min, v));
+  }
+  submitGuess() {
+    if (this.phase !== 'playing') return;
+    const q = this.current, s = q.closest; if (!s) return;
+    clearInterval(this.timer);
+    const error = Math.abs(this.currentGuess - s.answer);
+    const pts = error < s.tolerance ? Math.round(50 * (1 - error / s.tolerance)) : 0;
+    const close = error <= s.tolerance / 2;
+    this.lastGuessPoints = pts;
+    const taken = (Date.now() - this.qStart) / 1000;
+    this.answered.push({ q, chosen: close ? q.correctIndex : -1, correct: close, taken });
+    if (close) { this.streak++; this.maxStreak = Math.max(this.maxStreak, this.streak); } else this.streak = 0;
+    this.score += pts;
+    this.phase = 'reveal';
+    renderGame();
   }
   submit(choice) {
     if (this.phase !== 'playing') return;
@@ -352,9 +379,10 @@ function renderGame() {
   }).join('');
   const stakeSel = (staking && game.phase === 'playing') ? stakeSelector() : '';
   const sweepGr = game.mode.id === 'sweep' ? sweepGrid() : '';
+  const closest = q.closest ? closestPanel(q.closest) : '';
   const pic = q.image ? `<div class="card pic-card"><img class="pic-img" src="${h(q.image)}" alt="Identify this" loading="eager" onerror="this.parentNode.classList.add('pic-failed')"><span class="pic-fallback muted">Couldn't load the image</span></div>` : '';
   const reveal = game.phase === 'reveal' ? revealCard(q) : '';
-  const fixedCount = game.mode.id === 'classic' || game.mode.id === 'daily' || staking || game.mode.id === 'sweep' || game.mode.id === 'pictureId' || game.mode.id === 'thisOrThat';
+  const fixedCount = game.mode.id === 'classic' || game.mode.id === 'daily' || staking || game.mode.id === 'sweep' || game.mode.id === 'pictureId' || game.mode.id === 'thisOrThat' || game.mode.id === 'closestCall';
   const progress = fixedCount ? `${game.index + 1} / ${game.questions.length}` : `#${game.index + 1}`;
   app.innerHTML = `
     <div class="game">
@@ -369,6 +397,7 @@ function renderGame() {
         <div class="card qcard"><div class="qcat" style="color:${catColor(cat)}">${h(cat.name.toUpperCase())}</div><div class="qprompt">${h(q.prompt)}</div></div>
         ${sweepGr}
         ${stakeSel}
+        ${closest}
         <div class="opts">${opts}</div>
         ${reveal}
       </div>
@@ -377,10 +406,24 @@ function renderGame() {
   $('[data-quit]').addEventListener('click', quitGame);
   if (game.phase === 'playing' && !lockAnswers) app.querySelectorAll('[data-opt]').forEach((b) => b.addEventListener('click', () => game.submit(+b.dataset.opt)));
   app.querySelectorAll('[data-stake]').forEach((b) => b.addEventListener('click', () => game.setStake(+b.dataset.stake)));
+  const slider = $('#closest-slider');
+  if (slider) slider.addEventListener('input', () => { game.setGuess(+slider.value); const v = $('#closest-val'); if (v) v.textContent = closestFmtVal(+slider.value, game.current.closest); });
+  const lock = $('[data-lock]'); if (lock) lock.addEventListener('click', () => game.submitGuess());
   if (game.phase === 'reveal') $('[data-next]').addEventListener('click', () => game.advance());
   updateClock();
 }
-function isLast() { return (game.mode.id === 'classic' || game.mode.id === 'daily' || game.mode.id === 'stake' || game.mode.id === 'sweep' || game.mode.id === 'pictureId' || game.mode.id === 'thisOrThat') && game.index + 1 >= game.questions.length; }
+function isLast() { return (game.mode.id === 'classic' || game.mode.id === 'daily' || game.mode.id === 'stake' || game.mode.id === 'sweep' || game.mode.id === 'pictureId' || game.mode.id === 'thisOrThat' || game.mode.id === 'closestCall') && game.index + 1 >= game.questions.length; }
+function closestFmtVal(v, s) { const n = Math.round(v); if (!s.unit) return String(n); const str = Math.abs(n) >= 1000 ? n.toLocaleString() : String(n); return `${str} ${s.unit}`; }
+// Closest Call (M5): a range slider + Lock In; proximity-scored.
+function closestPanel(s) {
+  const live = game.phase === 'playing';
+  return `<div class="card closest-card">
+    <div class="closest-val" id="closest-val">${closestFmtVal(game.currentGuess, s)}</div>
+    <input type="range" id="closest-slider" min="${s.min}" max="${s.max}" step="${s.step}" value="${game.currentGuess}" ${live ? '' : 'disabled'}>
+    <div class="closest-ends muted"><span>${closestFmtVal(s.min, s)}</span><span>${closestFmtVal(s.max, s)}</span></div>
+    ${live ? '<button class="btn btn-full closest-lock" data-lock>Lock In</button>' : ''}
+  </div>`;
+}
 // Sweep's persistent fill-grid — one cell per question, filled green (hit) /
 // coral (miss) as you go; the current cell is ringed. The grid is the scoreboard.
 function sweepGrid() {
@@ -404,8 +447,10 @@ function stakeSelector() {
 function revealCard(q) {
   const correct = game.answered.at(-1)?.correct;
   const stakeTag = game.mode.id === 'stake' ? `<span class="stake-earned${correct ? ' hit' : ''}">${correct ? '+' + game.currentStake : '+0'}</span>` : '';
-  return `<div class="card reveal"><div class="reveal-h">${correct ? '✅ Nice — you knew it.' : '💡 Now you know.'}${stakeTag}</div>
-    <p>${h(q.explanation)}</p>${q.sourceURL ? `<a href="${h(q.sourceURL)}" target="_blank" rel="noopener" class="link">Read ${h(q.sourceTitle)} on Wikipedia ↗</a>` : ''}</div>`;
+  const closeTag = q.closest ? `<span class="stake-earned${game.lastGuessPoints > 0 ? ' hit' : ''}">+${game.lastGuessPoints}</span>` : '';
+  const closeLine = q.closest ? `<p class="muted">You said ${closestFmtVal(game.currentGuess, q.closest)} · actual ${closestFmtVal(q.closest.answer, q.closest)} · off by ${Math.abs(Math.round(game.currentGuess - q.closest.answer))}</p>` : '';
+  return `<div class="card reveal"><div class="reveal-h">${correct ? '✅ Nice — you knew it.' : '💡 Now you know.'}${stakeTag}${closeTag}</div>
+    ${closeLine}<p>${h(q.explanation)}</p>${q.sourceURL ? `<a href="${h(q.sourceURL)}" target="_blank" rel="noopener" class="link">Read ${h(q.sourceTitle)} on Wikipedia ↗</a>` : ''}</div>`;
 }
 function updateClock() {
   if (!game || game.phase !== 'playing') { const s = $('#clk-secs'); if (s) s.textContent = ''; return; }

@@ -16,12 +16,41 @@ nonisolated struct Question: Identifiable, Hashable, Codable, Sendable {
     let sourceURL: URL?
     let templateID: String
     var imageURL: URL? = nil   // Picture ID (Q7): the Commons image to identify
+    var closest: ClosestSpec? = nil   // Closest Call (M5): numeric estimation
 
-    var correctAnswer: String { options[correctIndex] }
+    var correctAnswer: String {
+        if options.indices.contains(correctIndex) { return options[correctIndex] }
+        return closest?.formattedAnswer ?? ""
+    }
 
     /// Stable share text — never leaks the answer when used pre-reveal.
     func shareTeaser() -> String {
         "🧠 Tidbits Trivia\n\(prompt)\n\nThink you know it? Play at tidbits.trivia"
+    }
+}
+
+/// Closest Call (M5) numeric question: estimate a value on a linear slider over
+/// [min, max]; scored by proximity to `answer` within `tolerance` (adds-only).
+nonisolated struct ClosestSpec: Hashable, Codable, Sendable {
+    let answer: Double
+    let min: Double
+    let max: Double
+    let step: Double
+    let tolerance: Double
+    let unit: String
+
+    /// Points (0…maxPoints) for a guess — full at exact, 0 at/over tolerance.
+    static let maxPoints = 50
+    func points(for guess: Double) -> Int {
+        let error = abs(guess - answer)
+        guard error < tolerance else { return 0 }
+        return Int((Double(Self.maxPoints) * (1 - error / tolerance)).rounded())
+    }
+    /// "Close enough" to count as correct for streaks / the emoji grid.
+    func isClose(_ guess: Double) -> Bool { abs(guess - answer) <= tolerance / 2 }
+    var formattedAnswer: String {
+        let n = answer == answer.rounded() ? String(Int(answer)) : String(answer)
+        return unit.isEmpty ? n : "\(n) \(unit)"
     }
 }
 

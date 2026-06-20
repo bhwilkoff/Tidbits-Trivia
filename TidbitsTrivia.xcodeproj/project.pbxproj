@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		03FB04C17EDA45D30AC911F4 /* QuestionProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B9A918292A8BD08D5EEAFA6 /* QuestionProvider.swift */; };
 		11697E55857894F38D742127 /* ProgressStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A73FA1930578863B642985C /* ProgressStats.swift */; };
+		11CCA7505B02468A02988A0C /* closest.json in Resources */ = {isa = PBXBuildFile; fileRef = 1241A5F7969CF344FFE75DA6 /* closest.json */; };
 		14D9988F7891E91323181BEA /* BuzzerProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75B1B87B261C164A421546D6 /* BuzzerProtocol.swift */; };
 		157E84B3984C8AF6BB3E4900 /* PlayerRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = D85FC9EA0ED55C307CC3525F /* PlayerRecord.swift */; };
 		16F7B6BE37EAC0372AE1AB55 /* SeededRNG.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1C1A6AE174DDC149D5EE7BB /* SeededRNG.swift */; };
@@ -57,6 +58,7 @@
 		0BFD0D04EAFA9DBEB25F3A8E /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		0C18E4CA3BD148F09E1BE077 /* RecordsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordsView.swift; sourceTree = "<group>"; };
 		0EBCE6DDE7254EB4010E1679 /* Scoring.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Scoring.swift; sourceTree = "<group>"; };
+		1241A5F7969CF344FFE75DA6 /* closest.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = closest.json; sourceTree = "<group>"; };
 		1BD01942F33620E5D75A8E7D /* DebugHooks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugHooks.swift; sourceTree = "<group>"; };
 		28A222FFBE5C2A42222CA04F /* BuzzerHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuzzerHost.swift; sourceTree = "<group>"; };
 		337562191FABFA21A46484FA /* GameComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameComponents.swift; sourceTree = "<group>"; };
@@ -101,7 +103,7 @@
 		F3AE68F153F8C298960BFD36 /* Player.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Player.swift; sourceTree = "<group>"; };
 		F5C9D9266531ECD27156562D /* GameView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView_tvOS.swift; sourceTree = "<group>"; };
 		FFC46D4CE8D03186C064C759 /* Question.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Question.swift; sourceTree = "<group>"; };
-		"TEMP_B2EE8036-113F-46BE-A2C9-82FA24ACD93D" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
+		"TEMP_99F0F37F-7D90-47AF-9D59-9A605E738C49" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -190,6 +192,7 @@
 		B7A5B34D4AC6D6D4D63CF885 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				1241A5F7969CF344FFE75DA6 /* closest.json */,
 				E8F18E88BA37F77E6313144F /* corpus.sqlite */,
 				6E8760FF39E12021DC07BE8F /* picture.json */,
 				BADC61A185827BBE0B9857AA /* thisorthat.json */,
@@ -286,10 +289,10 @@
 			path = TidbitsTrivia;
 			sourceTree = "<group>";
 		};
-		"TEMP_692741CC-4472-4F3A-BDF5-5E3154EEB699" /* Tidbits-Trivia */ = {
+		"TEMP_11E99AF8-6EE3-4554-A773-01378561C25D" /* Tidbits-Trivia */ = {
 			isa = PBXGroup;
 			children = (
-				"TEMP_B2EE8036-113F-46BE-A2C9-82FA24ACD93D" /* AppVersion.xcconfig */,
+				"TEMP_99F0F37F-7D90-47AF-9D59-9A605E738C49" /* AppVersion.xcconfig */,
 			);
 			path = "Tidbits-Trivia";
 			sourceTree = "<group>";
@@ -357,6 +360,7 @@
 				A196A0BBE89D112E62E0577E /* Assets.xcassets in Resources */,
 				E6770F1D60EEB51BCEDD54B3 /* LaunchScreen.storyboard in Resources */,
 				7E457DE11CD8D820A503C8EB /* PrivacyInfo.xcprivacy in Resources */,
+				11CCA7505B02468A02988A0C /* closest.json in Resources */,
 				9BD52794E3B9893E95300BD5 /* corpus.sqlite in Resources */,
 				6C6BC38059EF80F78C963AEA /* picture.json in Resources */,
 				92153A2172FBD8BD36DE55C5 /* thisorthat.json in Resources */,
@@ -416,7 +420,7 @@
 /* Begin XCBuildConfiguration section */
 		296659EF0549868336801823 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_B2EE8036-113F-46BE-A2C9-82FA24ACD93D" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_99F0F37F-7D90-47AF-9D59-9A605E738C49" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -532,7 +536,7 @@
 		};
 		E6F711EEEE2896F84FE9AB98 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_B2EE8036-113F-46BE-A2C9-82FA24ACD93D" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_99F0F37F-7D90-47AF-9D59-9A605E738C49" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;

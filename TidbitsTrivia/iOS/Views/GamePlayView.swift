@@ -16,6 +16,7 @@ struct GamePlayView: View {
                 ScrollView {
                     VStack(spacing: 18) {
                         QuestionCard(question: q)
+                        if game.mode == .stake && game.phase == .playing { stakeSelector }
                         answers(for: q)
                         if game.phase == .reveal { reveal(for: q) }
                     }
@@ -40,7 +41,9 @@ struct GamePlayView: View {
             while game.phase != .finished && game.phase != .idle {
                 try? await Task.sleep(for: .seconds(0.9))
                 switch game.phase {
-                case .playing: game.submit(0)
+                case .playing:
+                    if game.mode == .stake && game.currentStake == 0 { game.setStake(game.stakeTiers.first?.value ?? 1) }
+                    game.submit(0)
                 case .reveal:  game.advance()
                 default:       break
                 }
@@ -93,9 +96,31 @@ struct GamePlayView: View {
                     state: answerState(idx: idx, q: q),
                     action: { game.submit(idx) }
                 )
-                .disabled(game.phase != .playing)
+                // Stake mode: you must commit a confidence chip before answering.
+                .disabled(game.phase != .playing || (game.mode == .stake && game.currentStake == 0))
             }
         }
+    }
+
+    // MARK: Stake selector
+
+    private var stakeSelector: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(game.currentStake == 0 ? "How sure are you?" : "Staked: \(game.stakeLabel)")
+                .font(Tidbits.TypeRamp.l5)
+                .foregroundStyle(Tidbits.Palette.inkSoft)
+            HStack(spacing: 10) {
+                ForEach(game.stakeTiers) { tier in
+                    StakeChip(tier: tier,
+                              selected: game.currentStake == tier.value,
+                              action: { game.setStake(tier.value) })
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .chunkyCard(fill: Tidbits.Palette.bgDeep)
+        .padding(.trailing, Tidbits.Metric.shadowOffset)
     }
 
     private func answerState(idx: Int, q: Question) -> AnswerButton.State {
@@ -116,6 +141,15 @@ struct GamePlayView: View {
                 Text(correct ? "Nice — you knew it." : "Now you know.")
                     .font(Tidbits.TypeRamp.l3)
                     .foregroundStyle(Tidbits.Palette.ink)
+                Spacer()
+                if game.mode == .stake {
+                    Text(correct ? "+\(game.currentStake)" : "+0")
+                        .font(.system(size: 15, weight: .black, design: .rounded))
+                        .foregroundStyle(correct ? Tidbits.Palette.mint.legibleForeground : Tidbits.Palette.ink)
+                        .padding(.horizontal, 10).padding(.vertical, 5)
+                        .background(Capsule().fill(correct ? Tidbits.Palette.mint : Tidbits.Palette.surface))
+                        .overlay(Capsule().strokeBorder(Tidbits.Palette.border, lineWidth: 2))
+                }
             }
             if !q.explanation.isEmpty {
                 Text(q.explanation)
@@ -149,7 +183,33 @@ struct GamePlayView: View {
     }
 
     private var isLast: Bool {
-        (game.mode == .classic || game.mode == .daily) && game.index + 1 >= game.questions.count
+        (game.mode == .classic || game.mode == .daily || game.mode == .stake) && game.index + 1 >= game.questions.count
+    }
+}
+
+/// One confidence-chip button in Stake mode. Shows the tier label, its point
+/// value, and how many remain; disabled at zero (unless already selected).
+private struct StakeChip: View {
+    let tier: StakeTier
+    let selected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        let usable = tier.remaining > 0 || selected
+        Button(action: action) {
+            VStack(spacing: 2) {
+                Text(tier.label).font(.system(size: 15, weight: .black, design: .rounded))
+                Text("+\(tier.value) · \(tier.remaining) left").font(.system(size: 11, weight: .bold, design: .rounded))
+            }
+            .foregroundStyle(selected ? Tidbits.Palette.mint.legibleForeground : Tidbits.Palette.ink)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(selected ? Tidbits.Palette.mint : Tidbits.Palette.surface))
+            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Tidbits.Palette.border, lineWidth: 2.5))
+            .opacity(usable ? 1 : 0.4)
+        }
+        .buttonStyle(.plain)
+        .disabled(!usable)
     }
 }
 #endif

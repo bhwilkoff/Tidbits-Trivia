@@ -2,7 +2,7 @@
 // Apple AppStore + GameEngine + views. Vanilla JS, no framework, no build.
 
 import { Corpus, Wikipedia } from './api.js';
-import { Store, CATEGORIES, catColor, catById, MODES, dayKey, APP_STORES } from './store.js';
+import { Store, CATEGORIES, catColor, catById, MODES, STAKE_BUDGET, dayKey, APP_STORES } from './store.js';
 import { Scoring } from './engine.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -63,7 +63,7 @@ function viewHome() {
       <span class="cat-name">${h(c.name)}</span>
       <span class="cat-blurb muted">${h(c.blurb)}</span>
     </button>`).join('');
-  const modes = ['classic', 'timeAttack', 'survival'].map((m) =>
+  const modes = ['classic', 'timeAttack', 'survival', 'stake'].map((m) =>
     `<button class="chip" data-mode="${m}">${h(MODES[m].title)}</button>`).join('');
   return `
     <h1 class="page-title">Trivia from the whole of Wikipedia.</h1>
@@ -164,6 +164,9 @@ class Game {
     this.answered = []; this.chosen = null; this.phase = 'loading';
     this.remaining = 0; this.timer = null; this.qStart = 0; this.globalDeadline = null;
     this._custom = opts.custom;
+    // Stake: the remaining confidence-chip budget + the chip on this question (0 = unset).
+    this.stakeTiers = this.mode.id === 'stake' ? STAKE_BUDGET.map((t) => ({ value: t.value, label: t.label, remaining: t.count })) : [];
+    this.currentStake = 0;
   }
   async load() {
     let qs;
@@ -198,8 +201,17 @@ class Game {
     return r;
   }
   get current() { return this.questions[this.index]; }
+  setStake(value) {
+    if (this.mode.id !== 'stake' || this.phase !== 'playing') return;
+    const tier = this.stakeTiers.find((t) => t.value === value);
+    if (!tier || tier.remaining <= 0) return;
+    if (this.currentStake !== 0) { const prev = this.stakeTiers.find((t) => t.value === this.currentStake); if (prev) prev.remaining++; }
+    tier.remaining--; this.currentStake = value;
+    renderGame();
+  }
+  get stakeLabel() { return this.stakeTiers.find((t) => t.value === this.currentStake)?.label ?? ''; }
   _begin() {
-    this.chosen = null; this.phase = 'playing'; this.qStart = Date.now();
+    this.chosen = null; this.currentStake = 0; this.phase = 'playing'; this.qStart = Date.now();
     this.budget = this._globalRemaining() ?? this.mode.perQuestion ?? 30;
     this.remaining = this.budget;
     clearInterval(this.timer);
@@ -216,13 +228,18 @@ class Game {
   }
   submit(choice) {
     if (this.phase !== 'playing') return;
+    // Stake: a chip must be committed before a manual answer (a timeout, choice === null, still resolves).
+    if (this.mode.id === 'stake' && this.currentStake === 0 && choice !== null) return;
     clearInterval(this.timer);
     this.chosen = choice;
     const q = this.current, taken = (Date.now() - this.qStart) / 1000;
     const correct = choice === q.correctIndex;
     this.answered.push({ q, chosen: choice, correct, taken });
-    if (correct) { this.streak++; this.maxStreak = Math.max(this.maxStreak, this.streak); this.score += Scoring.points(true, taken, this.mode.perQuestion ?? this.budget, this.streak); }
-    else { this.streak = 0; }
+    if (correct) {
+      this.streak++; this.maxStreak = Math.max(this.maxStreak, this.streak);
+      // Stake: the reward IS the chip (no speed/streak — it's calibration). Else speed-aware.
+      this.score += this.mode.id === 'stake' ? this.currentStake : Scoring.points(true, taken, this.mode.perQuestion ?? this.budget, this.streak);
+    } else { this.streak = 0; }
     this.phase = 'reveal';
     renderGame();
   }
@@ -258,6 +275,9 @@ function quitGame() { if (game) clearInterval(game.timer); game = null; render()
 function renderGame() {
   const q = game.current; if (!q) return;
   const cat = catById(q.categoryID);
+  // Stake: answers are locked until a confidence chip is committed.
+  const staking = game.mode.id === 'stake';
+  const lockAnswers = game.phase === 'reveal' || (staking && game.currentStake === 0);
   const opts = q.options.map((o, i) => {
     let cls = 'opt';
     if (game.phase === 'reveal') {
@@ -265,10 +285,11 @@ function renderGame() {
       else if (i === game.chosen) cls += ' wrong';
       else cls += ' dim';
     }
-    return `<button class="${cls}" data-opt="${i}" ${game.phase === 'reveal' ? 'disabled' : ''}>${h(o)}</button>`;
+    return `<button class="${cls}" data-opt="${i}" ${lockAnswers ? 'disabled' : ''}>${h(o)}</button>`;
   }).join('');
+  const stakeSel = (staking && game.phase === 'playing') ? stakeSelector() : '';
   const reveal = game.phase === 'reveal' ? revealCard(q) : '';
-  const progress = (game.mode.id === 'classic' || game.mode.id === 'daily') ? `${game.index + 1} / ${game.questions.length}` : `#${game.index + 1}`;
+  const progress = (game.mode.id === 'classic' || game.mode.id === 'daily' || staking) ? `${game.index + 1} / ${game.questions.length}` : `#${game.index + 1}`;
   app.innerHTML = `
     <div class="game">
       <div class="hud">
@@ -279,20 +300,33 @@ function renderGame() {
       <div class="clockbar"><span id="clk-label">${progress}</span><div class="clock-track"><div id="clk-fill" class="clock-fill"></div></div><span id="clk-secs"></span></div>
       <div class="qwrap">
         <div class="card qcard"><div class="qcat" style="color:${catColor(cat)}">${h(cat.name.toUpperCase())}</div><div class="qprompt">${h(q.prompt)}</div></div>
+        ${stakeSel}
         <div class="opts">${opts}</div>
         ${reveal}
       </div>
       ${game.phase === 'reveal' ? `<button class="btn btn-ink btn-full" data-next>${isLast() ? 'See Results' : 'Next'}</button>` : ''}
     </div>`;
   $('[data-quit]').addEventListener('click', quitGame);
-  if (game.phase === 'playing') app.querySelectorAll('[data-opt]').forEach((b) => b.addEventListener('click', () => game.submit(+b.dataset.opt)));
+  if (game.phase === 'playing' && !lockAnswers) app.querySelectorAll('[data-opt]').forEach((b) => b.addEventListener('click', () => game.submit(+b.dataset.opt)));
+  app.querySelectorAll('[data-stake]').forEach((b) => b.addEventListener('click', () => game.setStake(+b.dataset.stake)));
   if (game.phase === 'reveal') $('[data-next]').addEventListener('click', () => game.advance());
   updateClock();
 }
-function isLast() { return (game.mode.id === 'classic' || game.mode.id === 'daily') && game.index + 1 >= game.questions.length; }
+function isLast() { return (game.mode.id === 'classic' || game.mode.id === 'daily' || game.mode.id === 'stake') && game.index + 1 >= game.questions.length; }
+function stakeSelector() {
+  const head = game.currentStake === 0 ? 'How sure are you?' : `Staked: ${h(game.stakeLabel)}`;
+  const chips = game.stakeTiers.map((t) => {
+    const sel = game.currentStake === t.value ? ' sel' : '';
+    const off = (t.remaining === 0 && game.currentStake !== t.value) ? ' disabled' : '';
+    return `<button class="stake-chip${sel}" data-stake="${t.value}"${off ? ' disabled' : ''}>
+      <span class="stake-label">${h(t.label)}</span><span class="stake-meta">+${t.value} · ${t.remaining} left</span></button>`;
+  }).join('');
+  return `<div class="card stake-card"><div class="stake-head">${head}</div><div class="stake-chips">${chips}</div></div>`;
+}
 function revealCard(q) {
   const correct = game.answered.at(-1)?.correct;
-  return `<div class="card reveal"><div class="reveal-h">${correct ? '✅ Nice — you knew it.' : '💡 Now you know.'}</div>
+  const stakeTag = game.mode.id === 'stake' ? `<span class="stake-earned${correct ? ' hit' : ''}">${correct ? '+' + game.currentStake : '+0'}</span>` : '';
+  return `<div class="card reveal"><div class="reveal-h">${correct ? '✅ Nice — you knew it.' : '💡 Now you know.'}${stakeTag}</div>
     <p>${h(q.explanation)}</p>${q.sourceURL ? `<a href="${h(q.sourceURL)}" target="_blank" rel="noopener" class="link">Read ${h(q.sourceTitle)} on Wikipedia ↗</a>` : ''}</div>`;
 }
 function updateClock() {

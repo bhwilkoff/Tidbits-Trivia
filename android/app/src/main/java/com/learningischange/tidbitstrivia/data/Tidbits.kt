@@ -49,8 +49,17 @@ enum class Mode(val title: String, val blurb: String, val perQuestion: Int?, val
     CLASSIC("Classic", "Ten questions. Speed counts.", 20, null, 10),
     TIME_ATTACK("Time Attack", "How many in 60 seconds?", null, 60, 25),
     SURVIVAL("Survival", "One wrong answer ends it.", 15, null, 99),
+    STAKE("Stake", "Bet your confidence. No risk.", 30, null, 8),
     DAILY("Daily Tidbit", "Everyone's puzzle. Keep your streak.", 30, null, 7),
 }
+
+// Stake mode's fixed confidence-chip budget (sum of count == Mode.STAKE.count).
+// Spending more on one question leaves fewer for the rest — that scarcity is what
+// makes it calibration. Adds-only: a wrong answer earns 0 but the chip is spent.
+data class StakeTier(val value: Int, val label: String, var remaining: Int)
+val STAKE_BUDGET: List<StakeTier> get() = listOf(
+    StakeTier(3, "Sure", 2), StakeTier(2, "Likely", 3), StakeTier(1, "Hunch", 3),
+)
 
 // ---- Deterministic RNG (mirror SeededRNG.swift / engine.js) ----
 

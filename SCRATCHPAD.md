@@ -165,3 +165,24 @@ One-line-per-round; full detail in `ARCHIVE.md`.
   **Couch Co-op** (no-infra same-room), **Predict the Crowd** (needs answer
   telemetry). *Left:* research/proposal only — no modes built yet; awaiting user
   pick of which to ship first (recommend Stake → Couch Co-op).
+- **2026-06-20** — **solo backlog + shipped Stake mode (M1)**. *Did:* wrote
+  `docs/SOLO-BACKLOG.md` (app-alone game modes M1–M6, question types Q1–Q8,
+  functionality F1–F4 + the E1 Wikidata-enrichment unlock, all prioritized w/
+  status). Then built **Stake** end-to-end across all 4 engines: an 8-Q round
+  where you spend a fixed confidence-chip budget (Sure×2/Likely×3/Hunch×3, sum 8)
+  before each answer — commit a chip, then answer; correct = +chip value, wrong =
+  +0; **adds-only, never negative** (the fixed budget forces real calibration
+  without loss-aversion — faithful to LearnedLeague/Pour House, Decision 022).
+  Mirrored: Core `GameMode.swift` (+.stake, `stakeBudget`) + `GameEngine.swift`
+  (stakeTiers/currentStake/setStake + adds-only scoring + answer-gating), iOS
+  `GamePlayView` (chip selector + reveal +N tag), tvOS `GameView_tvOS` (focusable
+  chip row + `.stake` focus case + firstFocus→answers hop), web `store.js`/`app.js`/
+  `styles.css`, Android `Tidbits.kt`/`GameState.kt`/`AppRoot.kt`. *Verified:* iOS+tvOS
+  BUILD SUCCEEDED, Android BUILD SUCCESSFUL, web JS `node --check` clean; tvOS sim
+  live shot shows the chip selector + 30s clock + year distractors working (the
+  shared Core engine, which iOS also uses). A diagnostic pass confirmed the engine
+  (begin idx=0 budget=30 tiers=3, no spurious submit) — earlier "instant reveal"
+  screenshots were stale-framebuffer artifacts, not a bug; DIAG prints removed.
+  PARITY row added; SOLO-BACKLOG M1 → ✅. *Left:* F1 calibration readout in Records
+  is the queued follow-up; next backlog items E1 (Wikidata enrichment) then
+  Q1/M2.

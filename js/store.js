@@ -30,8 +30,18 @@ export const MODES = {
   classic: { id: 'classic', title: 'Classic', blurb: 'Ten questions. Speed counts.', perQuestion: 20, count: 10, accent: '#2D5BFF' },
   timeAttack: { id: 'timeAttack', title: 'Time Attack', blurb: 'How many in 60 seconds?', perQuestion: null, globalClock: 60, count: 25, accent: '#FF5C5C' },
   survival: { id: 'survival', title: 'Survival', blurb: 'One wrong answer ends it.', perQuestion: 15, count: 99, accent: '#8B5CF6' },
+  stake: { id: 'stake', title: 'Stake', blurb: 'Bet your confidence. No risk.', perQuestion: 30, count: 8, accent: '#2FCB8A' },
   daily: { id: 'daily', title: 'Daily Tidbit', blurb: 'Everyone’s puzzle. Keep your streak.', perQuestion: 30, count: 7, accent: '#FFC93C' },
 };
+
+// Stake mode's fixed confidence-chip budget (sum of count == mode.count). Spending
+// more on one question leaves fewer for the rest — that scarcity is what makes it
+// calibration. Adds-only: a wrong answer earns 0 but the chip is spent (Decision 022).
+export const STAKE_BUDGET = [
+  { value: 3, label: 'Sure', count: 2 },
+  { value: 2, label: 'Likely', count: 3 },
+  { value: 1, label: 'Hunch', count: 3 },
+];
 
 export function dayKey(d = new Date()) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;

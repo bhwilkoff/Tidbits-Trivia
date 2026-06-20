@@ -7,6 +7,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
     case classic     // 10 questions, accuracy + speed bonus
     case timeAttack  // as many as you can in 60s
     case survival    // keep going until one wrong answer
+    case stake       // bet a fixed budget of confidence chips per question
     case daily       // one fixed daily set, streak-bearing, shareable
 
     var id: String { rawValue }
@@ -16,6 +17,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .classic:    return "Classic"
         case .timeAttack: return "Time Attack"
         case .survival:   return "Survival"
+        case .stake:      return "Stake"
         case .daily:      return "Daily Tidbit"
         }
     }
@@ -25,6 +27,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .classic:    return "Ten questions. Speed counts."
         case .timeAttack: return "How many in 60 seconds?"
         case .survival:   return "One wrong answer ends it."
+        case .stake:      return "Bet your confidence. No risk."
         case .daily:      return "Everyone's puzzle. Keep your streak."
         }
     }
@@ -34,6 +37,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .classic:    return "list.number"
         case .timeAttack: return "timer"
         case .survival:   return "heart.fill"
+        case .stake:      return "chart.bar.fill"
         case .daily:      return "sun.max.fill"
         }
     }
@@ -43,6 +47,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .classic:    return Tidbits.Palette.blue
         case .timeAttack: return Tidbits.Palette.coral
         case .survival:   return Tidbits.Palette.grape
+        case .stake:      return Tidbits.Palette.mint
         case .daily:      return Tidbits.Palette.yellow
         }
     }
@@ -53,6 +58,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .classic:    return 20
         case .timeAttack: return nil   // global 60s clock
         case .survival:   return 15
+        case .stake:      return 30    // generous — calibration shouldn't be rushed
         case .daily:      return 30
         }
     }
@@ -62,9 +68,19 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .classic:    return 10
         case .timeAttack: return 99    // bounded by the clock
         case .survival:   return 99    // bounded by a wrong answer
+        case .stake:      return 8     // matches the confidence-chip budget
         case .daily:      return 7
         }
     }
+
+    /// Stake mode only: the fixed budget of confidence chips for one round
+    /// (sum of `count` == questionCount). Spending more on one question means
+    /// fewer chips for the rest — that scarcity is what makes it calibration,
+    /// not "stake max on everything." Adds-only: a wrong answer earns 0 but the
+    /// chip is spent; the score can never go negative (Decision 022).
+    static let stakeBudget: [(value: Int, label: String, count: Int)] = [
+        (3, "Sure", 2), (2, "Likely", 3), (1, "Hunch", 3),
+    ]
 
     var globalClockSeconds: Double? { self == .timeAttack ? 60 : nil }
 }

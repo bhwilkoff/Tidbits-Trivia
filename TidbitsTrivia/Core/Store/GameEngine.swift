@@ -32,6 +32,11 @@ final class GameEngine {
     private(set) var lastAnswer: AnsweredQuestion?
     private(set) var chosenIndex: Int?
 
+    // Stake mode: the remaining confidence-chip budget and the chip committed
+    // to the current question (0 = not yet staked). Unused in other modes.
+    private(set) var stakeTiers: [StakeTier] = []
+    private(set) var currentStake: Int = 0
+
     // Clocks
     private(set) var remaining: Double = 0      // seconds left on the active clock
     private var clockBudget: Double = 0
@@ -85,6 +90,10 @@ final class GameEngine {
     private func reset() {
         index = 0; score = 0; streak = 0; maxStreak = 0
         answered = []; lastAnswer = nil; chosenIndex = nil; globalDeadline = nil
+        stakeTiers = mode == .stake
+            ? GameMode.stakeBudget.map { StakeTier(value: $0.value, label: $0.label, remaining: $0.count) }
+            : []
+        currentStake = 0
     }
 
     /// Interleave due review questions among fresh ones (count stays stable;
@@ -103,6 +112,7 @@ final class GameEngine {
 
     private func beginQuestion() {
         chosenIndex = nil
+        currentStake = 0
         phase = .playing
         questionStart = .now
         clockBudget = mode.perQuestionSeconds ?? (globalRemaining() ?? 30)
@@ -145,10 +155,29 @@ final class GameEngine {
         }
     }
 
+    // MARK: Stake
+
+    /// Commit a confidence chip to the current question (Stake mode). Re-pickable
+    /// until the answer is locked — choosing a new tier refunds the previous one.
+    func setStake(_ value: Int) {
+        guard mode == .stake, phase == .playing else { return }
+        guard let i = stakeTiers.firstIndex(where: { $0.value == value }), stakeTiers[i].remaining > 0 else { return }
+        if currentStake != 0, let p = stakeTiers.firstIndex(where: { $0.value == currentStake }) {
+            stakeTiers[p].remaining += 1
+        }
+        stakeTiers[i].remaining -= 1
+        currentStake = value
+    }
+
+    var stakeLabel: String { stakeTiers.first { $0.value == currentStake }?.label ?? "" }
+
     // MARK: Answering
 
     func submit(_ choice: Int?) {
         guard phase == .playing, let q = current else { return }
+        // In Stake mode a chip must be committed before a manual answer counts
+        // (a timeout, choice == nil, still resolves as a miss with no chip spent).
+        if mode == .stake, currentStake == 0, choice != nil { return }
         ticker?.cancel()
         chosenIndex = choice
         let taken = Date().timeIntervalSince(questionStart)
@@ -159,8 +188,12 @@ final class GameEngine {
         if answer.isCorrect {
             streak += 1
             maxStreak = max(maxStreak, streak)
-            score += Scoring.points(correct: true, secondsTaken: taken,
-                                    budget: mode.perQuestionSeconds ?? clockBudget, streak: streak)
+            // Stake: the reward IS the chip you bet (no speed/streak multiplier —
+            // it's calibration, not a race). Other modes: speed-aware scoring.
+            score += mode == .stake
+                ? currentStake
+                : Scoring.points(correct: true, secondsTaken: taken,
+                                 budget: mode.perQuestionSeconds ?? clockBudget, streak: streak)
             Haptics.correct()
         } else {
             streak = 0
@@ -207,6 +240,15 @@ final class GameEngine {
             correct: correct, total: answered.count, maxStreak: maxStreak,
             answered: answered)
     }
+}
+
+/// One confidence tier in Stake mode's budget: a point value, a friendly
+/// label, and how many chips of this tier remain to spend in the round.
+struct StakeTier: Identifiable, Sendable, Hashable {
+    let value: Int
+    let label: String
+    var remaining: Int
+    var id: Int { value }
 }
 
 /// Immutable end-of-game payload — drives the results + recap screens and

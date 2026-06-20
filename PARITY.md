@@ -67,6 +67,7 @@ reached is ⏳ with a note, never silence.
 | Classic mode (10 Qs, speed scoring) | ✅ | ✅ | ✅ | ✅ | Same loop on every platform (Swift/JS/Kotlin mirrors) |
 | Time Attack (60s) | ✅ | ✅ | ✅ | ✅ | |
 | Survival (until one wrong) | ✅ | ✅ | ✅ | ✅ | |
+| Stake (confidence allocation) | ✅ | ✅ | ✅ | ✅ | 8-Q round; fixed chip budget (Sure×2/Likely×3/Hunch×3), commit before answering; adds-only, never negative — calibration, not gambling (Decision 022). Solo "home version" of LearnedLeague/Pour House (GAME-MODES-RESEARCH M1) |
 | Daily Tidbit (deterministic, streak) | ✅ | ✅ | ✅ | ✅ | Same 7 Qs for everyone per day; same FNV-1a/SplitMix64 seed on all platforms |
 | 8 categories | ✅ | ✅ | ✅ | ✅ | Mixed/History/Science/Geography/Arts/Film&TV/Music/Sports |
 | Countdown clock + speed bonus | ✅ | ✅ | ✅ | ✅ | Per-question or global per mode |

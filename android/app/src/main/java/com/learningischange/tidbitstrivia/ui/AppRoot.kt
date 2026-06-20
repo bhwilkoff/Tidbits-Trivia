@@ -93,7 +93,7 @@ private fun HomeScreen(onPlay: (Mode, Category) -> Unit) {
 
         Text("Pick a mode", fontWeight = FontWeight.Bold, fontSize = 20.sp)
         LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            items(listOf(Mode.CLASSIC, Mode.TIME_ATTACK, Mode.SURVIVAL), key = { it.name }) { m ->
+            items(listOf(Mode.CLASSIC, Mode.TIME_ATTACK, Mode.SURVIVAL, Mode.STAKE), key = { it.name }) { m ->
                 FilterChip(selected = selectedMode == m, onClick = { selectedMode = m }, label = { Text(m.title) })
             }
         }
@@ -157,11 +157,19 @@ private fun PlayingScreen(game: GameState) {
         }
         Text(Category.byId(q.categoryId).name.uppercase(), color = Pops.at(Category.byId(q.categoryId).colorIndex), fontWeight = FontWeight.Bold, fontSize = 13.sp)
         Text(q.prompt, fontWeight = FontWeight.Black, fontSize = 23.sp)
-        q.options.forEachIndexed { i, opt -> AnswerButton(opt, game.answerState(i), game.phase == GamePhase.PLAYING) { game.submit(i) } }
+        if (game.mode == Mode.STAKE && game.phase == GamePhase.PLAYING) StakeSelector(game)
+        val answersLocked = game.phase != GamePhase.PLAYING || (game.mode == Mode.STAKE && game.currentStake == 0)
+        q.options.forEachIndexed { i, opt -> AnswerButton(opt, game.answerState(i), !answersLocked) { game.submit(i) } }
         if (game.phase == GamePhase.REVEAL) {
             ChunkyCard(fill = MaterialTheme.colorScheme.surfaceVariant) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(if (game.lastCorrect) "Nice — you knew it." else "Now you know.", fontWeight = FontWeight.Bold, fontSize = 17.sp)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(if (game.lastCorrect) "Nice — you knew it." else "Now you know.", fontWeight = FontWeight.Bold, fontSize = 17.sp, modifier = Modifier.weight(1f))
+                        if (game.mode == Mode.STAKE) {
+                            val earned = if (game.lastCorrect) "+${game.currentStake}" else "+0"
+                            AssistChip(onClick = {}, label = { Text(earned, fontWeight = FontWeight.Black) })
+                        }
+                    }
                     if (q.explanation.isNotEmpty()) Text(q.explanation)
                 }
             }
@@ -170,6 +178,29 @@ private fun PlayingScreen(game: GameState) {
             }
         }
         Spacer(Modifier.height(12.dp))
+    }
+}
+
+@Composable
+private fun StakeSelector(game: GameState) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(if (game.currentStake == 0) "How sure are you?" else "Staked: ${game.stakeLabel}",
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            game.stakeTiers.forEach { tier ->
+                val selected = game.currentStake == tier.value
+                val usable = tier.remaining > 0 || selected
+                Surface(onClick = { game.setStake(tier.value) }, enabled = usable, shape = RoundedCornerShape(12.dp),
+                    color = if (selected) Pops.mint else MaterialTheme.colorScheme.surface,
+                    border = BorderStroke(2.5.dp, Ink),
+                    modifier = Modifier.weight(1f).alpha(if (usable) 1f else 0.4f)) {
+                    Column(Modifier.padding(vertical = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(tier.label, fontWeight = FontWeight.Black, fontSize = 15.sp)
+                        Text("+${tier.value} · ${tier.remaining} left", fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                    }
+                }
+            }
+        }
     }
 }
 

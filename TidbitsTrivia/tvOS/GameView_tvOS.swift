@@ -65,7 +65,7 @@ struct TVGameContainer: View {
 
 // MARK: - Gameplay
 
-private enum TVFocus: Hashable { case answer(Int), next }
+private enum TVFocus: Hashable { case stake(Int), answer(Int), next }
 
 struct TVGamePlayView: View {
     let onQuit: () -> Void
@@ -84,6 +84,7 @@ struct TVGamePlayView: View {
                     .font(.system(size: 48, weight: .heavy, design: .rounded))
                     .foregroundStyle(.white)
                     .fixedSize(horizontal: false, vertical: true)
+                if game.mode == .stake && game.phase == .playing { stakeRow }
                 HStack(spacing: 28) {
                     ForEach(Array(q.options.enumerated()), id: \.offset) { idx, opt in
                         Button { game.submit(idx) } label: {
@@ -93,7 +94,8 @@ struct TVGamePlayView: View {
                         }
                         .buttonStyle(TVAnswerStyle(state: state(idx, q)))
                         .focused($focus, equals: .answer(idx))
-                        .disabled(game.phase == .reveal)
+                        // Stake mode: lock the answers until a confidence chip is committed.
+                        .disabled(game.phase == .reveal || (game.mode == .stake && game.currentStake == 0))
                     }
                 }
                 if game.phase == .reveal { reveal(q) }
@@ -102,21 +104,56 @@ struct TVGamePlayView: View {
         }
         .padding(90)
         .defaultFocus($focus, .answer(0))
-        .onChange(of: game.index) { focus = .answer(0) }
+        .onChange(of: game.index) { focus = firstFocus }
         .onChange(of: game.phase) { _, p in
-            if p == .reveal { focus = .next } else if p == .playing { focus = .answer(0) }
+            if p == .reveal { focus = .next } else if p == .playing { focus = firstFocus }
+        }
+        // Stake: once a chip is committed, hop focus down to the answers.
+        .onChange(of: game.currentStake) { _, s in
+            if game.mode == .stake && s != 0 && game.phase == .playing { focus = .answer(0) }
         }
         .task {
             guard DebugHooks.autopilot else { return }
             while game.phase != .finished && game.phase != .idle {
                 try? await Task.sleep(for: .seconds(0.9))
                 switch game.phase {
-                case .playing: game.submit(0)
+                case .playing:
+                    if game.mode == .stake && game.currentStake == 0 { game.setStake(game.stakeTiers.first?.value ?? 1) }
+                    game.submit(0)
                 case .reveal:  game.advance()
                 default:       break
                 }
             }
         }
+    }
+
+    private var firstFocus: TVFocus {
+        game.mode == .stake && game.currentStake == 0
+            ? .stake(game.stakeTiers.first?.value ?? 0)
+            : .answer(0)
+    }
+
+    private var stakeRow: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(game.currentStake == 0 ? "How sure are you?" : "Staked: \(game.stakeLabel)")
+                .font(.system(size: 27, weight: .bold, design: .rounded))
+                .foregroundStyle(TVTheme.textSoft)
+            HStack(spacing: 24) {
+                ForEach(game.stakeTiers) { tier in
+                    Button { game.setStake(tier.value) } label: {
+                        VStack(spacing: 4) {
+                            Text(tier.label).font(.system(size: 28, weight: .black, design: .rounded))
+                            Text("+\(tier.value) · \(tier.remaining) left").font(.system(size: 20, weight: .bold, design: .rounded))
+                        }
+                        .frame(width: 200, height: 96)
+                    }
+                    .buttonStyle(TVChipStyle(accent: Tidbits.Palette.mint, selected: game.currentStake == tier.value))
+                    .focused($focus, equals: .stake(tier.value))
+                    .disabled(tier.remaining == 0 && game.currentStake != tier.value)
+                }
+            }
+        }
+        .focusSection()
     }
 
     private var hud: some View {
@@ -169,7 +206,7 @@ struct TVGamePlayView: View {
         .background(RoundedRectangle(cornerRadius: 22).fill(TVTheme.panel))
     }
     private var isLast: Bool {
-        (game.mode == .classic || game.mode == .daily) && game.index + 1 >= game.questions.count
+        (game.mode == .classic || game.mode == .daily || game.mode == .stake) && game.index + 1 >= game.questions.count
     }
 }
 

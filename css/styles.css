@@ -136,8 +136,22 @@ body {
 .opt.wrong { background: var(--color-primary); color: #fff; }
 .opt.dim { opacity: .45; }
 .reveal { margin-top: 16px; padding: 16px; background: var(--color-bg-deep); }
-.reveal-h { font-weight: 800; font-size: 18px; margin-bottom: 8px; }
+.reveal-h { font-weight: 800; font-size: 18px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
 .reveal p { font-size: 16px; line-height: 1.4; margin-bottom: 8px; }
+
+/* ---- Stake mode confidence chips ---- */
+.stake-card { margin-bottom: 12px; padding: 14px; background: var(--color-bg-deep); }
+.stake-head { font-weight: 800; font-size: 14px; color: var(--color-ink-soft); margin-bottom: 10px; }
+.stake-chips { display: flex; gap: 10px; }
+.stake-chip { flex: 1; font: inherit; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 12px 6px; border-radius: 12px; background: var(--color-surface); border: 2.5px solid var(--color-border); color: var(--color-ink); }
+.stake-chip.sel { background: var(--color-mint); color: var(--color-ink); }
+.stake-chip:disabled { opacity: .4; cursor: default; }
+.stake-label { font-weight: 900; font-size: 15px; }
+.stake-meta { font-weight: 700; font-size: 11px; }
+.stake-earned { margin-left: auto; font-weight: 900; font-size: 14px; padding: 3px 10px; border-radius: 999px;
+  background: var(--color-surface); border: 2px solid var(--color-border); }
+.stake-earned.hit { background: var(--color-mint); }
 
 /* ---- Results ---- */
 .results { flex: 1; min-height: 0; overflow-y: auto; padding: 20px var(--pad) 40px; }

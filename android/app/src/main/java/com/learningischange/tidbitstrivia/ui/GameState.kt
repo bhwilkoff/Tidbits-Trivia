@@ -35,6 +35,11 @@ class GameState(
     var lastCorrect by mutableStateOf(false)
     val answered = mutableListOf<Answered>()
 
+    // Stake: the remaining confidence-chip budget + the chip on this question (0 = unset).
+    var stakeTiers by mutableStateOf<List<StakeTier>>(emptyList())
+    var currentStake by mutableIntStateOf(0)
+    val stakeLabel: String get() = stakeTiers.firstOrNull { it.value == currentStake }?.label ?: ""
+
     var questions: List<Question> = emptyList(); private set
     private var budget = 30.0
     private var qStart = 0L
@@ -43,7 +48,7 @@ class GameState(
 
     val current: Question? get() = questions.getOrNull(index)
     val correctCount: Int get() = answered.count { it.correct }
-    val isLast: Boolean get() = (mode == Mode.CLASSIC || mode == Mode.DAILY) && index + 1 >= questions.size
+    val isLast: Boolean get() = (mode == Mode.CLASSIC || mode == Mode.DAILY || mode == Mode.STAKE) && index + 1 >= questions.size
     val progressLabel: String get() = if (mode == Mode.TIME_ATTACK || mode == Mode.SURVIVAL) "#${index + 1}" else "${index + 1} / ${questions.size}"
     val clockFraction: Double get() = if (budget <= 0) 0.0 else (remaining / budget).coerceIn(0.0, 1.0)
 
@@ -86,10 +91,25 @@ class GameState(
     private fun reset() {
         index = 0; score = 0; streak = 0; maxStreak = 0; chosen = null
         answered.clear(); globalDeadline = null; recorded = false
+        stakeTiers = if (mode == Mode.STAKE) STAKE_BUDGET else emptyList()
+        currentStake = 0
+    }
+
+    /** Commit a confidence chip to the current question (Stake mode); re-pickable until answered. */
+    fun setStake(value: Int) {
+        if (mode != Mode.STAKE || phase != GamePhase.PLAYING) return
+        val tiers = stakeTiers.map { it.copy() }
+        val tier = tiers.firstOrNull { it.value == value } ?: return
+        if (tier.remaining <= 0) return
+        if (currentStake != 0) tiers.firstOrNull { it.value == currentStake }?.let { it.remaining++ }
+        tier.remaining--
+        stakeTiers = tiers
+        currentStake = value
     }
 
     private fun begin() {
         chosen = null
+        currentStake = 0
         phase = GamePhase.PLAYING
         qStart = now()
         budget = globalRemaining() ?: (mode.perQuestion?.toDouble() ?: 30.0)
@@ -110,6 +130,8 @@ class GameState(
 
     fun submit(choice: Int?) {
         if (phase != GamePhase.PLAYING) return
+        // Stake: a chip must be committed before a manual answer (a timeout, choice == null, still resolves).
+        if (mode == Mode.STAKE && currentStake == 0 && choice != null) return
         val q = current ?: return
         chosen = choice
         val taken = (now() - qStart) / 1000.0
@@ -118,7 +140,9 @@ class GameState(
         lastCorrect = correct
         if (correct) {
             streak++; maxStreak = max(maxStreak, streak)
-            score += Scoring.points(true, taken, mode.perQuestion?.toDouble() ?: budget, streak)
+            // Stake: the reward IS the chip (no speed/streak — calibration). Else speed-aware.
+            score += if (mode == Mode.STAKE) currentStake
+                     else Scoring.points(true, taken, mode.perQuestion?.toDouble() ?: budget, streak)
         } else streak = 0
         phase = GamePhase.REVEAL
     }

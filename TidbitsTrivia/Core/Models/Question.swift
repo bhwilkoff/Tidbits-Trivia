@@ -19,6 +19,7 @@ nonisolated struct Question: Identifiable, Hashable, Codable, Sendable {
     var closest: ClosestSpec? = nil   // Closest Call (M5): numeric estimation
     var ordering: [String]? = nil     // Ordering (Q4): the items in CORRECT order
     var matching: MatchSpec? = nil    // Matching (Q5): keys ↔ correct values
+    var accepted: [String]? = nil     // Type-the-answer (Q6): accepted free-text answers
 
     var correctAnswer: String {
         if options.indices.contains(correctIndex) { return options[correctIndex] }

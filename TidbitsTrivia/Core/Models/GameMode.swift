@@ -14,6 +14,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
     case closestCall // estimate a number on a slider, scored by proximity (E1)
     case ordering    // arrange items chronologically, partial credit (E1)
     case matching    // link each key to its value, partial credit (E1)
+    case typeAnswer  // free-text recall, alias-matched (E1); tvOS self-marks
     case daily       // one fixed daily set, streak-bearing, shareable
 
     var id: String { rawValue }
@@ -30,6 +31,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .closestCall: return "Closest Call"
         case .ordering:   return "In Order"
         case .matching:   return "Match Up"
+        case .typeAnswer: return "Name It"
         case .daily:      return "Daily Tidbit"
         }
     }
@@ -46,6 +48,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .closestCall: return "How close can you get?"
         case .ordering:   return "Arrange them in time."
         case .matching:   return "Link each pair."
+        case .typeAnswer: return "Type the answer."
         case .daily:      return "Everyone's puzzle. Keep your streak."
         }
     }
@@ -62,6 +65,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .closestCall: return "target"
         case .ordering:   return "arrow.up.arrow.down"
         case .matching:   return "link"
+        case .typeAnswer: return "keyboard"
         case .daily:      return "sun.max.fill"
         }
     }
@@ -78,6 +82,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .closestCall: return Tidbits.Palette.yellow
         case .ordering:   return Tidbits.Palette.blue
         case .matching:   return Tidbits.Palette.coral
+        case .typeAnswer: return Tidbits.Palette.mint
         case .daily:      return Tidbits.Palette.yellow
         }
     }
@@ -95,6 +100,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .closestCall: return 25   // estimation deserves a beat of thought
         case .ordering:   return 35    // reordering takes a moment
         case .matching:   return 40    // linking pairs takes thought
+        case .typeAnswer: return 25
         case .daily:      return 30
         }
     }
@@ -111,6 +117,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .closestCall: return 8
         case .ordering:   return 6
         case .matching:   return 6
+        case .typeAnswer: return 8
         case .daily:      return 7
         }
     }

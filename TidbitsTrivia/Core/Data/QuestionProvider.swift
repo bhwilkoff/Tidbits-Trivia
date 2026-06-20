@@ -56,6 +56,9 @@ final class QuestionProvider {
         if mode == .matching {
             return JSONQuestionSource.matching.questions(categoryID: category.id, excluding: seen, limit: need)
         }
+        if mode == .typeAnswer {
+            return JSONQuestionSource.typeAnswer.questions(categoryID: category.id, excluding: seen, limit: need)
+        }
 
         var pulled = CorpusDatabase.shared.questions(
             categoryID: category.id, excluding: seen, limit: need)

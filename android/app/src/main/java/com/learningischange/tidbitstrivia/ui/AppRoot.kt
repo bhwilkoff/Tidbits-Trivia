@@ -28,8 +28,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import coil3.compose.AsyncImage
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -62,6 +66,7 @@ fun AppRoot(store: Store) {
         if (!ClosestCall.loaded) runCatching { ClosestCall.load(context) }
         if (!OrderingSet.loaded) runCatching { OrderingSet.load(context) }
         if (!MatchingSet.loaded) runCatching { MatchingSet.load(context) }
+        if (!TypeAnswerSet.loaded) runCatching { TypeAnswerSet.load(context) }
         corpusReady = true
     }
 
@@ -107,7 +112,7 @@ private fun HomeScreen(onPlay: (Mode, Category) -> Unit) {
 
         Text("Pick a mode", fontWeight = FontWeight.Bold, fontSize = 20.sp)
         LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            items(listOf(Mode.CLASSIC, Mode.TIME_ATTACK, Mode.SURVIVAL, Mode.STAKE, Mode.SWEEP, Mode.PICTURE_ID, Mode.THIS_OR_THAT, Mode.CLOSEST_CALL, Mode.ORDERING, Mode.MATCHING), key = { it.name }) { m ->
+            items(listOf(Mode.CLASSIC, Mode.TIME_ATTACK, Mode.SURVIVAL, Mode.STAKE, Mode.SWEEP, Mode.PICTURE_ID, Mode.THIS_OR_THAT, Mode.CLOSEST_CALL, Mode.ORDERING, Mode.MATCHING, Mode.TYPE_ANSWER), key = { it.name }) { m ->
                 FilterChip(selected = selectedMode == m, onClick = { selectedMode = m }, label = { Text(m.title) })
             }
         }
@@ -183,6 +188,16 @@ private fun PlayingScreen(game: GameState) {
         q.closest?.let { ClosestPanel(game, it) }
         if (q.ordering != null) OrderingPanel(game)
         q.matching?.let { MatchingPanel(game, it) }
+        if (q.accepted != null && game.phase == GamePhase.PLAYING) {
+            OutlinedTextField(
+                value = game.typedText, onValueChange = { game.typedText = it },
+                placeholder = { Text("Type your answer…") }, singleLine = true,
+                keyboardActions = KeyboardActions(onDone = { game.submitText() }),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, capitalization = KeyboardCapitalization.Words),
+                modifier = Modifier.fillMaxWidth())
+            Button(onClick = { game.submitText() }, enabled = game.typedText.isNotBlank(), modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = Pops.mint, contentColor = Ink)) { Text("Submit") }
+        }
         val answersLocked = game.phase != GamePhase.PLAYING || (game.mode == Mode.STAKE && game.currentStake == 0)
         q.options.forEachIndexed { i, opt -> AnswerButton(opt, game.answerState(i), !answersLocked) { game.submit(i) } }
         if (game.phase == GamePhase.REVEAL) {
@@ -202,6 +217,7 @@ private fun PlayingScreen(game: GameState) {
                         Text("You said ${s.fmt(game.currentGuess)} · actual ${s.formattedAnswer} · off by ${Math.abs(Math.round(game.currentGuess - s.answer))}",
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                     }
+                    if (q.accepted != null) Text("Answer: ${q.answerText}", fontWeight = FontWeight.Bold)
                     if (q.explanation.isNotEmpty()) Text(q.explanation)
                 }
             }

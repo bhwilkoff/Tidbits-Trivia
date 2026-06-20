@@ -11,6 +11,7 @@
 		11697E55857894F38D742127 /* ProgressStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A73FA1930578863B642985C /* ProgressStats.swift */; };
 		11CCA7505B02468A02988A0C /* closest.json in Resources */ = {isa = PBXBuildFile; fileRef = 1241A5F7969CF344FFE75DA6 /* closest.json */; };
 		14D9988F7891E91323181BEA /* BuzzerProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75B1B87B261C164A421546D6 /* BuzzerProtocol.swift */; };
+		154A589A9053D9ECF66EE341 /* typeanswer.json in Resources */ = {isa = PBXBuildFile; fileRef = 39FBC9BD13DA4CCB86AC1EF4 /* typeanswer.json */; };
 		157E84B3984C8AF6BB3E4900 /* PlayerRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = D85FC9EA0ED55C307CC3525F /* PlayerRecord.swift */; };
 		16F7B6BE37EAC0372AE1AB55 /* SeededRNG.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1C1A6AE174DDC149D5EE7BB /* SeededRNG.swift */; };
 		24804CB812FA16ED5E34BEF9 /* Design.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB6E2342A764B8401C9516E9 /* Design.swift */; };
@@ -65,6 +66,7 @@
 		28A222FFBE5C2A42222CA04F /* BuzzerHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuzzerHost.swift; sourceTree = "<group>"; };
 		337562191FABFA21A46484FA /* GameComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameComponents.swift; sourceTree = "<group>"; };
 		35F518DED9832731B1294DD3 /* TidbitsTriviaApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TidbitsTriviaApp.swift; sourceTree = "<group>"; };
+		39FBC9BD13DA4CCB86AC1EF4 /* typeanswer.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = typeanswer.json; sourceTree = "<group>"; };
 		3B2FEBFB29C12A172EADB66F /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		3C266F600F75F40E459D2276 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		3F41E5C0BFBB0360DCD3015A /* GameEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameEngine.swift; sourceTree = "<group>"; };
@@ -107,7 +109,7 @@
 		F3AE68F153F8C298960BFD36 /* Player.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Player.swift; sourceTree = "<group>"; };
 		F5C9D9266531ECD27156562D /* GameView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView_tvOS.swift; sourceTree = "<group>"; };
 		FFC46D4CE8D03186C064C759 /* Question.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Question.swift; sourceTree = "<group>"; };
-		"TEMP_DB8DD1FA-0A45-4C47-AF99-641D821C8B94" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
+		"TEMP_873E0F16-C38F-4F9D-AE30-F0AC97F0533F" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -202,6 +204,7 @@
 				79A5D10D9EBC4D0950DE13CF /* order.json */,
 				6E8760FF39E12021DC07BE8F /* picture.json */,
 				BADC61A185827BBE0B9857AA /* thisorthat.json */,
+				39FBC9BD13DA4CCB86AC1EF4 /* typeanswer.json */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -295,10 +298,10 @@
 			path = TidbitsTrivia;
 			sourceTree = "<group>";
 		};
-		"TEMP_C45522A0-D17C-463D-914C-FD33E7CA7D6E" /* Tidbits-Trivia */ = {
+		"TEMP_473E84A9-50E0-4723-9BC6-7ACF0C765181" /* Tidbits-Trivia */ = {
 			isa = PBXGroup;
 			children = (
-				"TEMP_DB8DD1FA-0A45-4C47-AF99-641D821C8B94" /* AppVersion.xcconfig */,
+				"TEMP_873E0F16-C38F-4F9D-AE30-F0AC97F0533F" /* AppVersion.xcconfig */,
 			);
 			path = "Tidbits-Trivia";
 			sourceTree = "<group>";
@@ -372,6 +375,7 @@
 				DD17E6E2BBC121F9A5B69E32 /* order.json in Resources */,
 				6C6BC38059EF80F78C963AEA /* picture.json in Resources */,
 				92153A2172FBD8BD36DE55C5 /* thisorthat.json in Resources */,
+				154A589A9053D9ECF66EE341 /* typeanswer.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -428,7 +432,7 @@
 /* Begin XCBuildConfiguration section */
 		296659EF0549868336801823 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_DB8DD1FA-0A45-4C47-AF99-641D821C8B94" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_873E0F16-C38F-4F9D-AE30-F0AC97F0533F" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -544,7 +548,7 @@
 		};
 		E6F711EEEE2896F84FE9AB98 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_DB8DD1FA-0A45-4C47-AF99-641D821C8B94" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_873E0F16-C38F-4F9D-AE30-F0AC97F0533F" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;

@@ -52,6 +52,8 @@ class GameState(
     var matchAssign by mutableStateOf<List<Int?>>(emptyList())
     var matchSelectedKey by mutableStateOf<Int?>(null)
     var lastMatchPoints by mutableIntStateOf(0)
+    // Type-the-answer (Q6): the typed input.
+    var typedText by mutableStateOf("")
 
     var questions: List<Question> = emptyList(); private set
     private var budget = 30.0
@@ -61,7 +63,7 @@ class GameState(
 
     val current: Question? get() = questions.getOrNull(index)
     val correctCount: Int get() = answered.count { it.correct }
-    val isLast: Boolean get() = (mode == Mode.CLASSIC || mode == Mode.DAILY || mode == Mode.STAKE || mode == Mode.SWEEP || mode == Mode.PICTURE_ID || mode == Mode.THIS_OR_THAT || mode == Mode.CLOSEST_CALL || mode == Mode.ORDERING || mode == Mode.MATCHING) && index + 1 >= questions.size
+    val isLast: Boolean get() = (mode == Mode.CLASSIC || mode == Mode.DAILY || mode == Mode.STAKE || mode == Mode.SWEEP || mode == Mode.PICTURE_ID || mode == Mode.THIS_OR_THAT || mode == Mode.CLOSEST_CALL || mode == Mode.ORDERING || mode == Mode.MATCHING || mode == Mode.TYPE_ANSWER) && index + 1 >= questions.size
     val progressLabel: String get() = if (mode == Mode.TIME_ATTACK || mode == Mode.SURVIVAL) "#${index + 1}" else "${index + 1} / ${questions.size}"
     val clockFraction: Double get() = if (budget <= 0) 0.0 else (remaining / budget).coerceIn(0.0, 1.0)
 
@@ -86,6 +88,7 @@ class GameState(
             mode == Mode.CLOSEST_CALL -> ClosestCall.pull(category.id, store.seenSet, mode.count)
             mode == Mode.ORDERING -> OrderingSet.pull(category.id, store.seenSet, mode.count)
             mode == Mode.MATCHING -> MatchingSet.pull(category.id, store.seenSet, mode.count)
+            mode == Mode.TYPE_ANSWER -> TypeAnswerSet.pull(category.id, store.seenSet, mode.count)
             else -> loadStandard()
         }
         questions = if (mode.count == 99) qs else qs.take(mode.count)
@@ -139,6 +142,7 @@ class GameState(
             matchAssign = List(m.keys.size) { null }
             matchSelectedKey = null
         }
+        if (current?.accepted != null) typedText = ""
         phase = GamePhase.PLAYING
         qStart = now()
         budget = globalRemaining() ?: (mode.perQuestion?.toDouble() ?: 30.0)
@@ -154,7 +158,18 @@ class GameState(
         if (phase != GamePhase.PLAYING) return
         val g = globalRemaining()
         if (g != null) { remaining = g; if (g <= 0) end() }
-        else { remaining = max(0.0, budget - (now() - qStart) / 1000.0); if (remaining <= 0) { when (mode) { Mode.CLOSEST_CALL -> submitGuess(); Mode.ORDERING -> submitOrder(); Mode.MATCHING -> submitMatch(); else -> submit(null) } } }
+        else { remaining = max(0.0, budget - (now() - qStart) / 1000.0); if (remaining <= 0) { when (mode) { Mode.CLOSEST_CALL -> submitGuess(); Mode.ORDERING -> submitOrder(); Mode.MATCHING -> submitMatch(); Mode.TYPE_ANSWER -> submitText(); else -> submit(null) } } }
+    }
+
+    fun submitText() {
+        if (phase != GamePhase.PLAYING) return
+        val q = current ?: return; val acc = q.accepted ?: return
+        val correct = TypeMatch.matches(typedText, acc)
+        val taken = (now() - qStart) / 1000.0
+        answered.add(Answered(q, if (correct) q.correctIndex else -1, correct, taken))
+        lastCorrect = correct
+        if (correct) { streak++; maxStreak = max(maxStreak, streak); score += Scoring.points(true, taken, mode.perQuestion?.toDouble() ?: 25.0, streak) } else streak = 0
+        phase = GamePhase.REVEAL
     }
 
     fun selectMatchKey(i: Int) {

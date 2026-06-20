@@ -1,7 +1,7 @@
 // Tidbits — web app shell: router, views, and the game loop. Mirrors the
 // Apple AppStore + GameEngine + views. Vanilla JS, no framework, no build.
 
-import { Corpus, Pictures, ThisOrThat, ClosestCall, Ordering, Matching, Wikipedia } from './api.js';
+import { Corpus, Pictures, ThisOrThat, ClosestCall, Ordering, Matching, TypeAnswer, matchesAccepted, Wikipedia } from './api.js';
 import { Store, CATEGORIES, catColor, catById, MODES, STAKE_BUDGET, dayKey, APP_STORES } from './store.js';
 import { Scoring } from './engine.js';
 
@@ -63,7 +63,7 @@ function viewHome() {
       <span class="cat-name">${h(c.name)}</span>
       <span class="cat-blurb muted">${h(c.blurb)}</span>
     </button>`).join('');
-  const modes = ['classic', 'timeAttack', 'survival', 'stake', 'sweep', 'pictureId', 'thisOrThat', 'closestCall', 'ordering', 'matching'].map((m) =>
+  const modes = ['classic', 'timeAttack', 'survival', 'stake', 'sweep', 'pictureId', 'thisOrThat', 'closestCall', 'ordering', 'matching', 'typeAnswer'].map((m) =>
     `<button class="chip" data-mode="${m}">${h(MODES[m].title)}</button>`).join('');
   return `
     <h1 class="page-title">Trivia from the whole of Wikipedia.</h1>
@@ -238,6 +238,10 @@ class Game {
       await Matching.load();
       qs = Matching.pull(this.category.id, Store._seen, this.mode.count);
     }
+    else if (this.mode.id === 'typeAnswer') {
+      await TypeAnswer.load();
+      qs = TypeAnswer.pull(this.category.id, Store._seen, this.mode.count);
+    }
     else {
       qs = Corpus.pull(this.category.id, Store._seen, this.mode.count);
       if (qs.length < this.mode.count) {
@@ -290,6 +294,7 @@ class Game {
       for (let k = v.length - 1; k > 0; k--) { const j = Math.floor(Math.random() * (k + 1)); [v[k], v[j]] = [v[j], v[k]]; }
       this.matchValues = v; this.matchAssign = cur.matching.keys.map(() => null); this.matchSelectedKey = null; this.lastMatchPoints = 0;
     }
+    if (cur && cur.accepted) this.typedText = '';
     this.budget = this._globalRemaining() ?? this.mode.perQuestion ?? 30;
     this.remaining = this.budget;
     clearInterval(this.timer);
@@ -301,8 +306,20 @@ class Game {
     if (this.phase !== 'playing') return;
     const g = this._globalRemaining();
     if (g !== null) { this.remaining = g; if (g <= 0) return this._end(); }
-    else { this.remaining = Math.max(0, this.budget - (Date.now() - this.qStart) / 1000); if (this.remaining <= 0) return (this.mode.id === 'closestCall' ? this.submitGuess() : this.mode.id === 'ordering' ? this.submitOrder() : this.mode.id === 'matching' ? this.submitMatch() : this.submit(null)); }
+    else { this.remaining = Math.max(0, this.budget - (Date.now() - this.qStart) / 1000); if (this.remaining <= 0) return (this.mode.id === 'closestCall' ? this.submitGuess() : this.mode.id === 'ordering' ? this.submitOrder() : this.mode.id === 'matching' ? this.submitMatch() : this.mode.id === 'typeAnswer' ? this.submitText() : this.submit(null)); }
     updateClock();
+  }
+  // Type-the-answer (Q6): match typed input against the accepted set.
+  submitText() {
+    if (this.phase !== 'playing') return;
+    const q = this.current, acc = q.accepted; if (!acc) return;
+    clearInterval(this.timer);
+    const correct = matchesAccepted(this.typedText || '', acc);
+    const taken = (Date.now() - this.qStart) / 1000;
+    this.answered.push({ q, chosen: correct ? q.correctIndex : -1, correct, taken });
+    if (correct) { this.streak++; this.maxStreak = Math.max(this.maxStreak, this.streak); this.score += Scoring.points(true, taken, this.mode.perQuestion ?? 25, this.streak); }
+    else this.streak = 0;
+    this.phase = 'reveal'; renderGame();
   }
   // Matching (Q5): tap a key to select, tap a value to link; submit scores links.
   selectMatchKey(i) { if (this.mode.id !== 'matching' || this.phase !== 'playing') return; this.matchSelectedKey = this.matchSelectedKey === i ? null : i; renderGame(); }
@@ -448,9 +465,10 @@ function renderGame() {
   const closest = q.closest ? closestPanel(q.closest) : '';
   const order = q.ordering ? orderingPanel() : '';
   const match = q.matching ? matchingPanel(q.matching) : '';
+  const typeP = q.accepted ? typeAnswerPanel() : '';
   const pic = q.image ? `<div class="card pic-card"><img class="pic-img" src="${h(q.image)}" alt="Identify this" loading="eager" onerror="this.parentNode.classList.add('pic-failed')"><span class="pic-fallback muted">Couldn't load the image</span></div>` : '';
   const reveal = game.phase === 'reveal' ? revealCard(q) : '';
-  const fixedCount = game.mode.id === 'classic' || game.mode.id === 'daily' || staking || game.mode.id === 'sweep' || game.mode.id === 'pictureId' || game.mode.id === 'thisOrThat' || game.mode.id === 'closestCall' || game.mode.id === 'ordering' || game.mode.id === 'matching';
+  const fixedCount = game.mode.id === 'classic' || game.mode.id === 'daily' || staking || game.mode.id === 'sweep' || game.mode.id === 'pictureId' || game.mode.id === 'thisOrThat' || game.mode.id === 'closestCall' || game.mode.id === 'ordering' || game.mode.id === 'matching' || game.mode.id === 'typeAnswer';
   const progress = fixedCount ? `${game.index + 1} / ${game.questions.length}` : `#${game.index + 1}`;
   app.innerHTML = `
     <div class="game">
@@ -468,6 +486,7 @@ function renderGame() {
         ${closest}
         ${order}
         ${match}
+        ${typeP}
         <div class="opts">${opts}</div>
         ${reveal}
       </div>
@@ -484,10 +503,21 @@ function renderGame() {
   app.querySelectorAll('[data-mkey]').forEach((b) => b.addEventListener('click', () => game.selectMatchKey(+b.dataset.mkey)));
   app.querySelectorAll('[data-mval]').forEach((b) => b.addEventListener('click', () => game.assignMatchValue(+b.dataset.mval)));
   const ms = $('[data-submit-match]'); if (ms) ms.addEventListener('click', () => game.submitMatch());
+  const ti = $('#type-input');
+  if (ti) { ti.addEventListener('input', () => { game.typedText = ti.value; }); ti.addEventListener('keydown', (e) => { if (e.key === 'Enter') game.submitText(); }); if (game.phase === 'playing') ti.focus(); }
+  const ts = $('[data-submit-type]'); if (ts) ts.addEventListener('click', () => game.submitText());
   if (game.phase === 'reveal') $('[data-next]').addEventListener('click', () => game.advance());
   updateClock();
 }
-function isLast() { return (game.mode.id === 'classic' || game.mode.id === 'daily' || game.mode.id === 'stake' || game.mode.id === 'sweep' || game.mode.id === 'pictureId' || game.mode.id === 'thisOrThat' || game.mode.id === 'closestCall' || game.mode.id === 'ordering' || game.mode.id === 'matching') && game.index + 1 >= game.questions.length; }
+function isLast() { return (game.mode.id === 'classic' || game.mode.id === 'daily' || game.mode.id === 'stake' || game.mode.id === 'sweep' || game.mode.id === 'pictureId' || game.mode.id === 'thisOrThat' || game.mode.id === 'closestCall' || game.mode.id === 'ordering' || game.mode.id === 'matching' || game.mode.id === 'typeAnswer') && game.index + 1 >= game.questions.length; }
+// Type-the-answer (Q6): a text input + Submit.
+function typeAnswerPanel() {
+  const live = game.phase === 'playing';
+  return `<div class="type-wrap">
+    <input id="type-input" class="type-input" type="text" placeholder="Type your answer…" autocomplete="off" autocapitalize="words" value="${h(game.typedText || '')}" ${live ? '' : 'disabled'}>
+    ${live ? '<button class="btn btn-full type-submit" data-submit-type>Submit</button>' : ''}
+  </div>`;
+}
 // Matching (Q5): key rows (tap to select) + value chips (tap to link) + Submit.
 function matchingPanel(m) {
   const live = game.phase === 'playing';
@@ -549,8 +579,9 @@ function revealCard(q) {
   const orderTag = q.ordering ? `<span class="stake-earned${game.lastOrderPoints > 0 ? ' hit' : ''}">+${game.lastOrderPoints}</span>` : '';
   const matchTag = q.matching ? `<span class="stake-earned${game.lastMatchPoints > 0 ? ' hit' : ''}">+${game.lastMatchPoints}</span>` : '';
   const closeLine = q.closest ? `<p class="muted">You said ${closestFmtVal(game.currentGuess, q.closest)} · actual ${closestFmtVal(q.closest.answer, q.closest)} · off by ${Math.abs(Math.round(game.currentGuess - q.closest.answer))}</p>` : '';
+  const typeLine = q.accepted ? `<p class="ans">Answer: ${h(q.options[q.correctIndex])}</p>` : '';
   return `<div class="card reveal"><div class="reveal-h">${correct ? '✅ Nice — you knew it.' : '💡 Now you know.'}${stakeTag}${closeTag}${orderTag}${matchTag}</div>
-    ${closeLine}<p>${h(q.explanation)}</p>${q.sourceURL ? `<a href="${h(q.sourceURL)}" target="_blank" rel="noopener" class="link">Read ${h(q.sourceTitle)} on Wikipedia ↗</a>` : ''}</div>`;
+    ${closeLine}${typeLine}<p>${h(q.explanation)}</p>${q.sourceURL ? `<a href="${h(q.sourceURL)}" target="_blank" rel="noopener" class="link">Read ${h(q.sourceTitle)} on Wikipedia ↗</a>` : ''}</div>`;
 }
 function updateClock() {
   if (!game || game.phase !== 'playing') { const s = $('#clk-secs'); if (s) s.textContent = ''; return; }

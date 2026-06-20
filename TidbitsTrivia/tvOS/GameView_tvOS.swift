@@ -65,12 +65,13 @@ struct TVGameContainer: View {
 
 // MARK: - Gameplay
 
-private enum TVFocus: Hashable { case stake(Int), answer(Int), closestSlider, closestLock, orderRow(Int), orderSubmit, matchKey(Int), matchVal(Int), matchSubmit, next }
+private enum TVFocus: Hashable { case stake(Int), answer(Int), closestSlider, closestLock, orderRow(Int), orderSubmit, matchKey(Int), matchVal(Int), matchSubmit, typeReveal, typeKnew, typeMissed, next }
 
 struct TVGamePlayView: View {
     let onQuit: () -> Void
     @Environment(AppStore.self) private var store
     @FocusState private var focus: TVFocus?
+    @State private var typeRevealed = false
     private var game: GameEngine { store.game }
 
     var body: some View {
@@ -87,7 +88,9 @@ struct TVGamePlayView: View {
                     .fixedSize(horizontal: false, vertical: true)
                 if game.mode == .sweep { sweepRow }
                 if game.mode == .stake && game.phase == .playing { stakeRow }
-                if let m = q.matching {
+                if q.accepted != nil {
+                    typeAnswerPanel(q)
+                } else if let m = q.matching {
                     matchingPanel(m)
                 } else if q.ordering != nil {
                     orderingPanel()
@@ -114,7 +117,7 @@ struct TVGamePlayView: View {
         }
         .padding(90)
         .defaultFocus($focus, .answer(0))
-        .onChange(of: game.index) { focus = firstFocus }
+        .onChange(of: game.index) { typeRevealed = false; focus = firstFocus }
         .onChange(of: game.phase) { _, p in
             if p == .reveal { focus = .next } else if p == .playing { focus = firstFocus }
         }
@@ -128,6 +131,7 @@ struct TVGamePlayView: View {
                 try? await Task.sleep(for: .seconds(0.9))
                 switch game.phase {
                 case .playing:
+                    if game.mode == .typeAnswer { game.markTyped(correct: true); break }
                     if game.mode == .matching { game.submitMatch(); break }
                     if game.mode == .ordering { game.submitOrder(); break }
                     if game.mode == .closestCall { game.submitGuess(); break }
@@ -207,7 +211,36 @@ struct TVGamePlayView: View {
         .frame(maxWidth: 1300)
     }
 
+    /// Type-the-answer at ten feet — text entry is a keyboard wall on tvOS, so
+    /// this is active recall: think of the answer, reveal it, then self-mark
+    /// honestly (the testing effect without typing).
+    private func typeAnswerPanel(_ q: Question) -> some View {
+        VStack(spacing: 26) {
+            if !typeRevealed {
+                Text("Recall the answer in your head.")
+                    .font(.system(size: 31, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+                Button("Reveal Answer") { typeRevealed = true }
+                    .buttonStyle(TVChipStyle(accent: game.mode.accent, selected: false))
+                    .focused($focus, equals: .typeReveal)
+            } else {
+                Text(q.correctAnswer)
+                    .font(.system(size: 46, weight: .black, design: .rounded)).foregroundStyle(.white)
+                HStack(spacing: 24) {
+                    Button("I knew it") { typeRevealed = false; game.markTyped(correct: true) }
+                        .buttonStyle(TVChipStyle(accent: Tidbits.Palette.mint, selected: false))
+                        .focused($focus, equals: .typeKnew)
+                    Button("Missed it") { typeRevealed = false; game.markTyped(correct: false) }
+                        .buttonStyle(TVChipStyle(accent: Tidbits.Palette.coral, selected: false))
+                        .focused($focus, equals: .typeMissed)
+                }
+            }
+        }
+        .frame(maxWidth: 1100)
+        .onChange(of: typeRevealed) { _, r in if r { focus = .typeKnew } }
+    }
+
     private var firstFocus: TVFocus {
+        if game.current?.accepted != nil { return .typeReveal }
         if game.current?.matching != nil { return .matchKey(0) }
         if game.current?.ordering != nil { return .orderSubmit }
         if game.current?.closest != nil { return .closestSlider }
@@ -358,7 +391,7 @@ struct TVGamePlayView: View {
         .background(RoundedRectangle(cornerRadius: 22).fill(TVTheme.panel))
     }
     private var isLast: Bool {
-        (game.mode == .classic || game.mode == .daily || game.mode == .stake || game.mode == .sweep || game.mode == .pictureId || game.mode == .thisOrThat || game.mode == .closestCall || game.mode == .ordering || game.mode == .matching) && game.index + 1 >= game.questions.count
+        (game.mode == .classic || game.mode == .daily || game.mode == .stake || game.mode == .sweep || game.mode == .pictureId || game.mode == .thisOrThat || game.mode == .closestCall || game.mode == .ordering || game.mode == .matching || game.mode == .typeAnswer) && game.index + 1 >= game.questions.count
     }
 }
 

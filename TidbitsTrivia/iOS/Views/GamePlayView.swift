@@ -19,7 +19,8 @@ struct GamePlayView: View {
                         QuestionCard(question: q)
                         if game.mode == .sweep { sweepGrid }
                         if game.mode == .stake && game.phase == .playing { stakeSelector }
-                        if let m = q.matching { matchingPanel(m) }
+                        if q.accepted != nil { typeAnswerPanel() }
+                        else if let m = q.matching { matchingPanel(m) }
                         else if q.ordering != nil { orderingPanel() }
                         else if let spec = q.closest { closestPanel(spec) }
                         else { answers(for: q) }
@@ -50,6 +51,7 @@ struct GamePlayView: View {
                     if game.mode == .closestCall { game.submitGuess(); break }
                     if game.mode == .ordering { game.submitOrder(); break }
                     if game.mode == .matching { game.submitMatch(); break }
+                    if game.mode == .typeAnswer { game.typedText = game.current?.correctAnswer ?? ""; game.submitText(); break }
                     if game.mode == .stake && game.currentStake == 0,
                        let tier = game.stakeTiers.first(where: { $0.remaining > 0 }) { game.setStake(tier.value) }
                     game.submit(0)
@@ -130,6 +132,27 @@ struct GamePlayView: View {
         .padding(14)
         .chunkyCard(fill: Tidbits.Palette.bgDeep)
         .padding(.trailing, Tidbits.Metric.shadowOffset)
+    }
+
+    // MARK: Type-the-answer
+
+    private func typeAnswerPanel() -> some View {
+        let live = game.phase == .playing
+        return VStack(spacing: 12) {
+            TextField("Type your answer…", text: Binding(get: { game.typedText }, set: { game.typedText = $0 }))
+                .font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                .autocorrectionDisabled().textInputAutocapitalization(.words)
+                .submitLabel(.done).onSubmit { game.submitText() }
+                .padding(14)
+                .chunkyCard(fill: Tidbits.Palette.surface)
+                .padding(.trailing, Tidbits.Metric.shadowOffset)
+                .disabled(!live)
+            if live {
+                Button("Submit") { game.submitText() }
+                    .buttonStyle(ChunkyButtonStyle(fill: game.mode.accent, textColor: game.mode.accent.legibleForeground))
+                    .disabled(game.typedText.trimmingCharacters(in: .whitespaces).isEmpty)
+            }
+        }
     }
 
     // MARK: Matching
@@ -364,6 +387,10 @@ struct GamePlayView: View {
                 Text("You said \(closestFmt(game.currentGuess, spec)) · actual \(spec.formattedAnswer) · off by \(off)")
                     .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
             }
+            if q.accepted != nil {
+                Text("Answer: \(q.correctAnswer)")
+                    .font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+            }
             if !q.explanation.isEmpty {
                 Text(q.explanation)
                     .font(Tidbits.TypeRamp.l4)
@@ -396,7 +423,7 @@ struct GamePlayView: View {
     }
 
     private var isLast: Bool {
-        (game.mode == .classic || game.mode == .daily || game.mode == .stake || game.mode == .sweep || game.mode == .pictureId || game.mode == .thisOrThat || game.mode == .closestCall || game.mode == .ordering || game.mode == .matching) && game.index + 1 >= game.questions.count
+        (game.mode == .classic || game.mode == .daily || game.mode == .stake || game.mode == .sweep || game.mode == .pictureId || game.mode == .thisOrThat || game.mode == .closestCall || game.mode == .ordering || game.mode == .matching || game.mode == .typeAnswer) && game.index + 1 >= game.questions.count
     }
 }
 

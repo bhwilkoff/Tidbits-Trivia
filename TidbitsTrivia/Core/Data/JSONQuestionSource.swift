@@ -11,6 +11,7 @@ nonisolated final class JSONQuestionSource: @unchecked Sendable {
     static let closestCall = JSONQuestionSource(resource: "closest")
     static let ordering = JSONQuestionSource(resource: "order")
     static let matching = JSONQuestionSource(resource: "match")
+    static let typeAnswer = JSONQuestionSource(resource: "typeanswer")
 
     private let all: [Question]
 
@@ -71,6 +72,18 @@ nonisolated final class JSONQuestionSource: @unchecked Sendable {
                 sourceTitle: r[6] as? String ?? "",
                 sourceURL: (r[7] as? String).flatMap(URL.init(string:)),
                 templateID: template, ordering: arr2)
+        }
+
+        // Type-the-answer: [id, prompt, answer(string), accepted(strings), cat, expl, title, url].
+        if let answer = r[2] as? String, let accepted = r[3] as? [String] {
+            guard r.count >= 8, let cat = r[4] as? String else { return nil }
+            return Question(
+                id: id, prompt: prompt, options: [answer], correctIndex: 0,
+                categoryID: cat, difficulty: 3,
+                explanation: r[5] as? String ?? "",
+                sourceTitle: r[6] as? String ?? "",
+                sourceURL: (r[7] as? String).flatMap(URL.init(string:)),
+                templateID: template, accepted: accepted)
         }
 
         // Numeric (Closest Call): [id, prompt, answer, min, max, step, tol, unit,

@@ -55,6 +55,9 @@ final class GameEngine {
     private(set) var matchSelectedKey: Int?
     private(set) var lastMatchPoints: Int = 0
 
+    // Type-the-answer (Q6): the player's typed input (unused on tvOS, which self-marks).
+    var typedText: String = ""
+
     // Clocks
     private(set) var remaining: Double = 0      // seconds left on the active clock
     private var clockBudget: Double = 0
@@ -139,6 +142,7 @@ final class GameEngine {
             matchAssign = Array(repeating: nil, count: m.keys.count)
             matchSelectedKey = nil
         }
+        if current?.accepted != nil { typedText = "" }
         phase = .playing
         questionStart = .now
         clockBudget = mode.perQuestionSeconds ?? (globalRemaining() ?? 30)
@@ -182,6 +186,7 @@ final class GameEngine {
                 case .closestCall: submitGuess()
                 case .ordering: submitOrder()
                 case .matching: submitMatch()
+                case .typeAnswer: submitText()
                 default: submit(nil)
                 }
             }
@@ -319,6 +324,54 @@ final class GameEngine {
         else { streak = 0; Haptics.wrong() }
         score += pts
         phase = .reveal
+    }
+
+    // MARK: Type-the-answer
+
+    /// Submit the typed input (iOS/web/Android) — matched against the accepted set.
+    func submitText() {
+        guard mode == .typeAnswer, let q = current, let acc = q.accepted else { return }
+        resolveTyped(correct: Self.matchesAccepted(typedText, acc))
+    }
+
+    /// tvOS self-mark (text entry is a keyboard wall there): the player recalls,
+    /// reveals, and honestly reports — active recall without typing.
+    func markTyped(correct: Bool) {
+        guard mode == .typeAnswer else { return }
+        resolveTyped(correct: correct)
+    }
+
+    private func resolveTyped(correct: Bool) {
+        guard phase == .playing, let q = current else { return }
+        ticker?.cancel()
+        let taken = Date().timeIntervalSince(questionStart)
+        let answer = AnsweredQuestion(question: q, chosenIndex: correct ? 0 : 1, secondsTaken: taken)
+        answered.append(answer)
+        lastAnswer = answer
+        if correct {
+            streak += 1; maxStreak = max(maxStreak, streak)
+            score += Scoring.points(correct: true, secondsTaken: taken,
+                                    budget: mode.perQuestionSeconds ?? 25, streak: streak)
+            Haptics.correct()
+        } else {
+            streak = 0; Haptics.wrong()
+        }
+        phase = .reveal
+    }
+
+    static func matchesAccepted(_ input: String, _ accepted: [String]) -> Bool {
+        let n = normalizeType(input)
+        guard !n.isEmpty else { return false }
+        return accepted.contains { normalizeType($0) == n }
+    }
+
+    /// Normalize for free-text comparison: fold diacritics, lowercase, keep only
+    /// alphanumerics + spaces, collapse runs, drop a leading "the ".
+    static func normalizeType(_ s: String) -> String {
+        var t = s.folding(options: .diacriticInsensitive, locale: .current).lowercased()
+        t = t.components(separatedBy: CharacterSet.alphanumerics.inverted).filter { !$0.isEmpty }.joined(separator: " ")
+        if t.hasPrefix("the ") { t = String(t.dropFirst(4)) }
+        return t
     }
 
     // MARK: Answering

@@ -118,6 +118,14 @@ function rowToOrder(r) {
   };
 }
 
+// Type-the-answer (Q6) row: [id, prompt, answer, accepted(list), cat, expl, title, url].
+function rowToType(r) {
+  return {
+    id: r[0], prompt: r[1], options: [r[2]], correctIndex: 0, templateID: 'type',
+    accepted: r[3], categoryID: r[4], difficulty: 3, explanation: r[5], sourceTitle: r[6], sourceURL: r[7],
+  };
+}
+
 // Matching (Q5) row: [id, prompt, keys, values(correct, parallel), cat, expl, "", ""].
 function rowToMatch(r) {
   return {
@@ -155,6 +163,19 @@ export const ThisOrThat = makeJsonSet('thisorthat.json');
 export const ClosestCall = makeJsonSet('closest.json', rowToClosest);
 export const Ordering = makeJsonSet('order.json', rowToOrder);
 export const Matching = makeJsonSet('match.json', rowToMatch);
+export const TypeAnswer = makeJsonSet('typeanswer.json', rowToType);
+
+// Free-text normalization (mirror of GameEngine.normalizeType).
+export function normalizeType(s) {
+  let t = (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  t = t.replace(/[^a-z0-9]+/g, ' ').trim();
+  if (t.startsWith('the ')) t = t.slice(4);
+  return t;
+}
+export function matchesAccepted(input, accepted) {
+  const n = normalizeType(input);
+  return !!n && accepted.some((a) => normalizeType(a) === n);
+}
 
 export const Wikipedia = {
   async search(topic, limit = 35) {

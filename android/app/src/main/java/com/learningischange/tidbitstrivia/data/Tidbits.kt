@@ -52,10 +52,25 @@ data class Question(
     val closest: ClosestSpec? = null, // Closest Call (M5)
     val ordering: List<String>? = null, // Ordering (Q4): items in CORRECT order
     val matching: MatchSpec? = null,  // Matching (Q5): keys ↔ correct values
+    val accepted: List<String>? = null, // Type-the-answer (Q6): accepted free-text
 ) {
     val answerText: String get() = options.getOrNull(correctIndex)
         ?: closest?.formattedAnswer ?: ordering?.joinToString(" → ")
         ?: matching?.let { it.keys.zip(it.values).joinToString(" · ") { (k, v) -> "$k → $v" } } ?: ""
+}
+
+object TypeMatch {
+    fun normalize(s: String): String {
+        var t = java.text.Normalizer.normalize(s, java.text.Normalizer.Form.NFD)
+            .replace(Regex("\\p{M}+"), "").lowercase()
+        t = t.replace(Regex("[^a-z0-9]+"), " ").trim()
+        if (t.startsWith("the ")) t = t.substring(4)
+        return t
+    }
+    fun matches(input: String, accepted: List<String>): Boolean {
+        val n = normalize(input)
+        return n.isNotEmpty() && accepted.any { normalize(it) == n }
+    }
 }
 
 data class MatchSpec(val keys: List<String>, val values: List<String>)
@@ -87,6 +102,7 @@ enum class Mode(val title: String, val blurb: String, val perQuestion: Int?, val
     CLOSEST_CALL("Closest Call", "How close can you get?", 25, null, 8),
     ORDERING("In Order", "Arrange them in time.", 35, null, 6),
     MATCHING("Match Up", "Link each pair.", 40, null, 6),
+    TYPE_ANSWER("Name It", "Type the answer.", 25, null, 8),
     DAILY("Daily Tidbit", "Everyone's puzzle. Keep your streak.", 30, null, 7),
 }
 
@@ -230,6 +246,17 @@ class JsonQuestionSet(private val asset: String) {
                         sourceUrl = a[8].jsonPrimitive.content,
                         imageUrl = if (a.size >= 10) a[9].jsonPrimitive.content else null,
                     )
+                } else if (a[2].jsonPrimitive.isString && a[3] is JsonArray) {
+                    // Type-the-answer (Q6): [id, prompt, answer, accepted(strings), cat, expl, title, url]
+                    val answer = a[2].jsonPrimitive.content
+                    Question(
+                        id = a[0].jsonPrimitive.content, prompt = a[1].jsonPrimitive.content,
+                        options = listOf(answer), correctIndex = 0,
+                        categoryId = a[4].jsonPrimitive.content, difficulty = 3,
+                        explanation = a[5].jsonPrimitive.content,
+                        sourceTitle = a[6].jsonPrimitive.content, sourceUrl = a[7].jsonPrimitive.content,
+                        accepted = a[3].jsonArray.map { it.jsonPrimitive.content },
+                    )
                 } else {
                     // Numeric (Closest Call): [id,prompt,answer,min,max,step,tol,unit,cat,expl,title,url]
                     Question(
@@ -262,6 +289,7 @@ val ThisOrThat = JsonQuestionSet("thisorthat.json")
 val ClosestCall = JsonQuestionSet("closest.json")
 val OrderingSet = JsonQuestionSet("order.json")
 val MatchingSet = JsonQuestionSet("match.json")
+val TypeAnswerSet = JsonQuestionSet("typeanswer.json")
 
 fun dayKey(): String {
     val c = Calendar.getInstance()

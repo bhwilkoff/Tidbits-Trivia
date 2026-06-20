@@ -164,6 +164,7 @@ export const ClosestCall = makeJsonSet('closest.json', rowToClosest);
 export const Ordering = makeJsonSet('order.json', rowToOrder);
 export const Matching = makeJsonSet('match.json', rowToMatch);
 export const TypeAnswer = makeJsonSet('typeanswer.json', rowToType);
+export const OddOneOut = makeJsonSet('oddoneout.json');   // standard MCQ rows
 
 // Free-text normalization (mirror of GameEngine.normalizeType).
 export function normalizeType(s) {

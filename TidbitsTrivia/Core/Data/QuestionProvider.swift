@@ -59,6 +59,10 @@ final class QuestionProvider {
         if mode == .typeAnswer {
             return JSONQuestionSource.typeAnswer.questions(categoryID: category.id, excluding: seen, limit: need)
         }
+        if mode == .oddOneOut {
+            // Odd-one-out is geography-only data; ignore the picked category.
+            return JSONQuestionSource.oddOneOut.questions(categoryID: "mixed", excluding: seen, limit: need)
+        }
 
         var pulled = CorpusDatabase.shared.questions(
             categoryID: category.id, excluding: seen, limit: need)

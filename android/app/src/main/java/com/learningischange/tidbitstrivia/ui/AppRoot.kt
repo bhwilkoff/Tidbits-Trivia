@@ -67,6 +67,7 @@ fun AppRoot(store: Store) {
         if (!OrderingSet.loaded) runCatching { OrderingSet.load(context) }
         if (!MatchingSet.loaded) runCatching { MatchingSet.load(context) }
         if (!TypeAnswerSet.loaded) runCatching { TypeAnswerSet.load(context) }
+        if (!OddOneOutSet.loaded) runCatching { OddOneOutSet.load(context) }
         corpusReady = true
     }
 
@@ -112,7 +113,7 @@ private fun HomeScreen(onPlay: (Mode, Category) -> Unit) {
 
         Text("Pick a mode", fontWeight = FontWeight.Bold, fontSize = 20.sp)
         LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            items(listOf(Mode.CLASSIC, Mode.TIME_ATTACK, Mode.SURVIVAL, Mode.STAKE, Mode.SWEEP, Mode.PICTURE_ID, Mode.THIS_OR_THAT, Mode.CLOSEST_CALL, Mode.ORDERING, Mode.MATCHING, Mode.TYPE_ANSWER), key = { it.name }) { m ->
+            items(listOf(Mode.CLASSIC, Mode.TIME_ATTACK, Mode.SURVIVAL, Mode.STAKE, Mode.SWEEP, Mode.PICTURE_ID, Mode.THIS_OR_THAT, Mode.CLOSEST_CALL, Mode.ORDERING, Mode.MATCHING, Mode.TYPE_ANSWER, Mode.ODD_ONE_OUT), key = { it.name }) { m ->
                 FilterChip(selected = selectedMode == m, onClick = { selectedMode = m }, label = { Text(m.title) })
             }
         }

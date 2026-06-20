@@ -103,6 +103,7 @@ enum class Mode(val title: String, val blurb: String, val perQuestion: Int?, val
     ORDERING("In Order", "Arrange them in time.", 35, null, 6),
     MATCHING("Match Up", "Link each pair.", 40, null, 6),
     TYPE_ANSWER("Name It", "Type the answer.", 25, null, 8),
+    ODD_ONE_OUT("Odd One Out", "Which doesn't belong?", 20, null, 8),
     DAILY("Daily Tidbit", "Everyone's puzzle. Keep your streak.", 30, null, 7),
 }
 
@@ -290,6 +291,7 @@ val ClosestCall = JsonQuestionSet("closest.json")
 val OrderingSet = JsonQuestionSet("order.json")
 val MatchingSet = JsonQuestionSet("match.json")
 val TypeAnswerSet = JsonQuestionSet("typeanswer.json")
+val OddOneOutSet = JsonQuestionSet("oddoneout.json")   // standard MCQ rows
 
 fun dayKey(): String {
     val c = Calendar.getInstance()

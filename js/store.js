@@ -48,6 +48,7 @@ export const MODES = {
   ordering: { id: 'ordering', title: 'In Order', blurb: 'Arrange them in time.', perQuestion: 35, count: 6, accent: '#2D5BFF' },
   matching: { id: 'matching', title: 'Match Up', blurb: 'Link each pair.', perQuestion: 40, count: 6, accent: '#FF5C5C' },
   typeAnswer: { id: 'typeAnswer', title: 'Name It', blurb: 'Type the answer.', perQuestion: 25, count: 8, accent: '#2FCB8A' },
+  oddOneOut: { id: 'oddOneOut', title: 'Odd One Out', blurb: "Which doesn't belong?", perQuestion: 20, count: 8, accent: '#8B5CF6' },
   daily: { id: 'daily', title: 'Daily Tidbit', blurb: 'Everyone’s puzzle. Keep your streak.', perQuestion: 30, count: 7, accent: '#FFC93C' },
 };
 

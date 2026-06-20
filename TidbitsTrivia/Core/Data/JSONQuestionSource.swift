@@ -12,6 +12,7 @@ nonisolated final class JSONQuestionSource: @unchecked Sendable {
     static let ordering = JSONQuestionSource(resource: "order")
     static let matching = JSONQuestionSource(resource: "match")
     static let typeAnswer = JSONQuestionSource(resource: "typeanswer")
+    static let oddOneOut = JSONQuestionSource(resource: "oddoneout")
 
     private let all: [Question]
 

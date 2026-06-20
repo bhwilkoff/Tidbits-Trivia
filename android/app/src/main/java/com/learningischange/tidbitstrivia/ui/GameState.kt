@@ -63,7 +63,7 @@ class GameState(
 
     val current: Question? get() = questions.getOrNull(index)
     val correctCount: Int get() = answered.count { it.correct }
-    val isLast: Boolean get() = (mode == Mode.CLASSIC || mode == Mode.DAILY || mode == Mode.STAKE || mode == Mode.SWEEP || mode == Mode.PICTURE_ID || mode == Mode.THIS_OR_THAT || mode == Mode.CLOSEST_CALL || mode == Mode.ORDERING || mode == Mode.MATCHING || mode == Mode.TYPE_ANSWER) && index + 1 >= questions.size
+    val isLast: Boolean get() = (mode == Mode.CLASSIC || mode == Mode.DAILY || mode == Mode.STAKE || mode == Mode.SWEEP || mode == Mode.PICTURE_ID || mode == Mode.THIS_OR_THAT || mode == Mode.CLOSEST_CALL || mode == Mode.ORDERING || mode == Mode.MATCHING || mode == Mode.TYPE_ANSWER || mode == Mode.ODD_ONE_OUT) && index + 1 >= questions.size
     val progressLabel: String get() = if (mode == Mode.TIME_ATTACK || mode == Mode.SURVIVAL) "#${index + 1}" else "${index + 1} / ${questions.size}"
     val clockFraction: Double get() = if (budget <= 0) 0.0 else (remaining / budget).coerceIn(0.0, 1.0)
 
@@ -89,6 +89,7 @@ class GameState(
             mode == Mode.ORDERING -> OrderingSet.pull(category.id, store.seenSet, mode.count)
             mode == Mode.MATCHING -> MatchingSet.pull(category.id, store.seenSet, mode.count)
             mode == Mode.TYPE_ANSWER -> TypeAnswerSet.pull(category.id, store.seenSet, mode.count)
+            mode == Mode.ODD_ONE_OUT -> OddOneOutSet.pull("mixed", store.seenSet, mode.count)
             else -> loadStandard()
         }
         questions = if (mode.count == 99) qs else qs.take(mode.count)

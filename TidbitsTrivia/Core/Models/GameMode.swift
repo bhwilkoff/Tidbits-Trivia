@@ -15,6 +15,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
     case ordering    // arrange items chronologically, partial credit (E1)
     case matching    // link each key to its value, partial credit (E1)
     case typeAnswer  // free-text recall, alias-matched (E1); tvOS self-marks
+    case oddOneOut   // which doesn't belong — plain MCQ, outlier is the answer
     case daily       // one fixed daily set, streak-bearing, shareable
 
     var id: String { rawValue }
@@ -32,6 +33,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .ordering:   return "In Order"
         case .matching:   return "Match Up"
         case .typeAnswer: return "Name It"
+        case .oddOneOut:  return "Odd One Out"
         case .daily:      return "Daily Tidbit"
         }
     }
@@ -49,6 +51,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .ordering:   return "Arrange them in time."
         case .matching:   return "Link each pair."
         case .typeAnswer: return "Type the answer."
+        case .oddOneOut:  return "Which doesn't belong?"
         case .daily:      return "Everyone's puzzle. Keep your streak."
         }
     }
@@ -66,6 +69,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .ordering:   return "arrow.up.arrow.down"
         case .matching:   return "link"
         case .typeAnswer: return "keyboard"
+        case .oddOneOut:  return "questionmark.diamond.fill"
         case .daily:      return "sun.max.fill"
         }
     }
@@ -83,6 +87,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .ordering:   return Tidbits.Palette.blue
         case .matching:   return Tidbits.Palette.coral
         case .typeAnswer: return Tidbits.Palette.mint
+        case .oddOneOut:  return Tidbits.Palette.grape
         case .daily:      return Tidbits.Palette.yellow
         }
     }
@@ -101,6 +106,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .ordering:   return 35    // reordering takes a moment
         case .matching:   return 40    // linking pairs takes thought
         case .typeAnswer: return 25
+        case .oddOneOut:  return 20
         case .daily:      return 30
         }
     }
@@ -118,6 +124,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .ordering:   return 6
         case .matching:   return 6
         case .typeAnswer: return 8
+        case .oddOneOut:  return 8
         case .daily:      return 7
         }
     }

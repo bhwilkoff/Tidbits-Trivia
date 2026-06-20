@@ -405,6 +405,11 @@ final class GameEngine {
             switch mode {
             case .stake: score += currentStake
             case .sweep: score += 1
+            case .ladder:
+                // Climb bonus: harder rungs (F3 derived difficulty) pay more.
+                let d = DifficultyOverlay.shared.difficulty(for: q)
+                score += Scoring.points(correct: true, secondsTaken: taken,
+                                        budget: mode.perQuestionSeconds ?? clockBudget, streak: streak) + (d - 1) * 10
             default:
                 score += Scoring.points(correct: true, secondsTaken: taken,
                                         budget: mode.perQuestionSeconds ?? clockBudget, streak: streak)

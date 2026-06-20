@@ -166,6 +166,16 @@ export const Matching = makeJsonSet('match.json', rowToMatch);
 export const TypeAnswer = makeJsonSet('typeanswer.json', rowToType);
 export const OddOneOut = makeJsonSet('oddoneout.json');   // standard MCQ rows
 
+// F3 derived-difficulty overlay (Wikipedia pageviews → 1..5 per subject).
+export const Difficulty = {
+  map: {}, loaded: false,
+  async load() {
+    if (this.loaded) return;
+    try { const r = await fetch('assets/difficulty.json', { cache: 'no-cache' }); if (!r.ok) return; const d = await r.json(); this.map = d.difficulty || {}; this.loaded = true; } catch (e) { /* default 3 */ }
+  },
+  get(title) { return this.map[(title || '').replace(/ /g, '_')] ?? 3; },
+};
+
 // Free-text normalization (mirror of GameEngine.normalizeType).
 export function normalizeType(s) {
   let t = (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();

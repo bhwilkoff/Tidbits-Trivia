@@ -63,6 +63,13 @@ final class QuestionProvider {
             // Odd-one-out is geography-only data; ignore the picked category.
             return JSONQuestionSource.oddOneOut.questions(categoryID: "mixed", excluding: seen, limit: need)
         }
+        if mode == .ladder {
+            // Pull a pool, sort by the F3 derived difficulty, then span easy→hard.
+            var pool = CorpusDatabase.shared.questions(categoryID: "mixed", excluding: seen, limit: 80)
+            pool.sort { DifficultyOverlay.shared.difficulty(for: $0) < DifficultyOverlay.shared.difficulty(for: $1) }
+            guard pool.count >= need else { return pool }
+            return (0..<need).map { pool[$0 * (pool.count - 1) / max(1, need - 1)] }
+        }
 
         var pulled = CorpusDatabase.shared.questions(
             categoryID: category.id, excluding: seen, limit: need)

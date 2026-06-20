@@ -1,7 +1,7 @@
 // Tidbits — web app shell: router, views, and the game loop. Mirrors the
 // Apple AppStore + GameEngine + views. Vanilla JS, no framework, no build.
 
-import { Corpus, Pictures, ThisOrThat, ClosestCall, Ordering, Matching, TypeAnswer, OddOneOut, matchesAccepted, Wikipedia } from './api.js';
+import { Corpus, Pictures, ThisOrThat, ClosestCall, Ordering, Matching, TypeAnswer, OddOneOut, Difficulty, matchesAccepted, Wikipedia } from './api.js';
 import { Store, CATEGORIES, catColor, catById, MODES, STAKE_BUDGET, dayKey, APP_STORES } from './store.js';
 import { Scoring } from './engine.js';
 
@@ -63,7 +63,7 @@ function viewHome() {
       <span class="cat-name">${h(c.name)}</span>
       <span class="cat-blurb muted">${h(c.blurb)}</span>
     </button>`).join('');
-  const modes = ['classic', 'timeAttack', 'survival', 'stake', 'sweep', 'pictureId', 'thisOrThat', 'closestCall', 'ordering', 'matching', 'typeAnswer', 'oddOneOut'].map((m) =>
+  const modes = ['classic', 'timeAttack', 'survival', 'stake', 'sweep', 'pictureId', 'thisOrThat', 'closestCall', 'ordering', 'matching', 'typeAnswer', 'oddOneOut', 'ladder'].map((m) =>
     `<button class="chip" data-mode="${m}">${h(MODES[m].title)}</button>`).join('');
   return `
     <h1 class="page-title">Trivia from the whole of Wikipedia.</h1>
@@ -246,6 +246,12 @@ class Game {
       await OddOneOut.load();
       qs = OddOneOut.pull('mixed', Store._seen, this.mode.count);
     }
+    else if (this.mode.id === 'ladder') {
+      await Difficulty.load();
+      const pool = Corpus.pull('mixed', Store._seen, 80).sort((a, b) => Difficulty.get(a.sourceTitle) - Difficulty.get(b.sourceTitle));
+      const need = this.mode.count;
+      qs = pool.length >= need ? Array.from({ length: need }, (_, i) => pool[Math.floor(i * (pool.length - 1) / Math.max(1, need - 1))]) : pool;
+    }
     else {
       qs = Corpus.pull(this.category.id, Store._seen, this.mode.count);
       if (qs.length < this.mode.count) {
@@ -414,6 +420,7 @@ class Game {
       // score is the count of the set you filled (no speed bonus). Else speed-aware.
       this.score += this.mode.id === 'stake' ? this.currentStake
         : this.mode.id === 'sweep' ? 1
+        : this.mode.id === 'ladder' ? Scoring.points(true, taken, this.mode.perQuestion ?? this.budget, this.streak) + (Difficulty.get(q.sourceTitle) - 1) * 10
         : Scoring.points(true, taken, this.mode.perQuestion ?? this.budget, this.streak);
     } else { this.streak = 0; }
     this.phase = 'reveal';
@@ -472,7 +479,7 @@ function renderGame() {
   const typeP = q.accepted ? typeAnswerPanel() : '';
   const pic = q.image ? `<div class="card pic-card"><img class="pic-img" src="${h(q.image)}" alt="Identify this" loading="eager" onerror="this.parentNode.classList.add('pic-failed')"><span class="pic-fallback muted">Couldn't load the image</span></div>` : '';
   const reveal = game.phase === 'reveal' ? revealCard(q) : '';
-  const fixedCount = game.mode.id === 'classic' || game.mode.id === 'daily' || staking || game.mode.id === 'sweep' || game.mode.id === 'pictureId' || game.mode.id === 'thisOrThat' || game.mode.id === 'closestCall' || game.mode.id === 'ordering' || game.mode.id === 'matching' || game.mode.id === 'typeAnswer' || game.mode.id === 'oddOneOut';
+  const fixedCount = game.mode.id === 'classic' || game.mode.id === 'daily' || staking || game.mode.id === 'sweep' || game.mode.id === 'pictureId' || game.mode.id === 'thisOrThat' || game.mode.id === 'closestCall' || game.mode.id === 'ordering' || game.mode.id === 'matching' || game.mode.id === 'typeAnswer' || game.mode.id === 'oddOneOut' || game.mode.id === 'ladder';
   const progress = fixedCount ? `${game.index + 1} / ${game.questions.length}` : `#${game.index + 1}`;
   app.innerHTML = `
     <div class="game">
@@ -513,7 +520,7 @@ function renderGame() {
   if (game.phase === 'reveal') $('[data-next]').addEventListener('click', () => game.advance());
   updateClock();
 }
-function isLast() { return (game.mode.id === 'classic' || game.mode.id === 'daily' || game.mode.id === 'stake' || game.mode.id === 'sweep' || game.mode.id === 'pictureId' || game.mode.id === 'thisOrThat' || game.mode.id === 'closestCall' || game.mode.id === 'ordering' || game.mode.id === 'matching' || game.mode.id === 'typeAnswer' || game.mode.id === 'oddOneOut') && game.index + 1 >= game.questions.length; }
+function isLast() { return (game.mode.id === 'classic' || game.mode.id === 'daily' || game.mode.id === 'stake' || game.mode.id === 'sweep' || game.mode.id === 'pictureId' || game.mode.id === 'thisOrThat' || game.mode.id === 'closestCall' || game.mode.id === 'ordering' || game.mode.id === 'matching' || game.mode.id === 'typeAnswer' || game.mode.id === 'oddOneOut' || game.mode.id === 'ladder') && game.index + 1 >= game.questions.length; }
 // Type-the-answer (Q6): a text input + Submit.
 function typeAnswerPanel() {
   const live = game.phase === 'playing';

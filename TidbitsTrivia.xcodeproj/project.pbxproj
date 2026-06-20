@@ -24,6 +24,7 @@
 		396E6A2004F751CA0ADC7CB7 /* ResultsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C60A815D0EFF35CF18DAB26 /* ResultsView.swift */; };
 		3DDD98934D198791F4C9C508 /* oddoneout.json in Resources */ = {isa = PBXBuildFile; fileRef = DEB3E620FB0E374A393778E4 /* oddoneout.json */; };
 		43F36ECB879791F4A899B1AF /* CreateQuizView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96283977862FC546F8219011 /* CreateQuizView.swift */; };
+		476021C7C87B8F571D3D5108 /* difficulty.json in Resources */ = {isa = PBXBuildFile; fileRef = 0C8075B00F30AAE8E925FF05 /* difficulty.json */; };
 		47EC13554A9F7DAAAC0104A3 /* PartyContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F18495176F588DF9E5C7907E /* PartyContainerView.swift */; };
 		4DC91A451AB7826A0104F2F6 /* BuzzerHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28A222FFBE5C2A42222CA04F /* BuzzerHost.swift */; };
 		4F92081B7F2AFB470A7DC5C2 /* RecordsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C18E4CA3BD148F09E1BE077 /* RecordsView.swift */; };
@@ -33,6 +34,7 @@
 		6C6BC38059EF80F78C963AEA /* picture.json in Resources */ = {isa = PBXBuildFile; fileRef = 6E8760FF39E12021DC07BE8F /* picture.json */; };
 		6CF073BFB022FF600B3B9428 /* GamePlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE92745D6860E623628A0CBC /* GamePlayView.swift */; };
 		7051BF4D2CFDDEB46EC57971 /* Haptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDC047AE9E00DBB79A4FD169 /* Haptics.swift */; };
+		78068FB172485742F7C68313 /* DifficultyOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C0424A46E0A825EA0A8EFE2 /* DifficultyOverlay.swift */; };
 		7E457DE11CD8D820A503C8EB /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 3C266F600F75F40E459D2276 /* PrivacyInfo.xcprivacy */; };
 		8173D65E0C01C75F852B1886 /* BuzzerClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = C11F9512791D87E03F2F510A /* BuzzerClient.swift */; };
 		868239CDDF1A55B51710E012 /* Scoring.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EBCE6DDE7254EB4010E1679 /* Scoring.swift */; };
@@ -61,6 +63,7 @@
 /* Begin PBXFileReference section */
 		0BFD0D04EAFA9DBEB25F3A8E /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		0C18E4CA3BD148F09E1BE077 /* RecordsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordsView.swift; sourceTree = "<group>"; };
+		0C8075B00F30AAE8E925FF05 /* difficulty.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = difficulty.json; sourceTree = "<group>"; };
 		0EBCE6DDE7254EB4010E1679 /* Scoring.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Scoring.swift; sourceTree = "<group>"; };
 		1241A5F7969CF344FFE75DA6 /* closest.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = closest.json; sourceTree = "<group>"; };
 		1BD01942F33620E5D75A8E7D /* DebugHooks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugHooks.swift; sourceTree = "<group>"; };
@@ -92,6 +95,7 @@
 		8BAC363A3AF3ACE88A58A9AB /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		8E0122AFA7F2570D4CCDD4BA /* ContentView_iOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView_iOS.swift; sourceTree = "<group>"; };
 		96283977862FC546F8219011 /* CreateQuizView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateQuizView.swift; sourceTree = "<group>"; };
+		9C0424A46E0A825EA0A8EFE2 /* DifficultyOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DifficultyOverlay.swift; sourceTree = "<group>"; };
 		A781EF8AAD2C417EC527EC32 /* BuzzerTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuzzerTransport.swift; sourceTree = "<group>"; };
 		AB6E2342A764B8401C9516E9 /* Design.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Design.swift; sourceTree = "<group>"; };
 		B1C1A6AE174DDC149D5EE7BB /* SeededRNG.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeededRNG.swift; sourceTree = "<group>"; };
@@ -111,7 +115,7 @@
 		F3AE68F153F8C298960BFD36 /* Player.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Player.swift; sourceTree = "<group>"; };
 		F5C9D9266531ECD27156562D /* GameView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView_tvOS.swift; sourceTree = "<group>"; };
 		FFC46D4CE8D03186C064C759 /* Question.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Question.swift; sourceTree = "<group>"; };
-		"TEMP_F450FBE4-5092-43E7-95E5-B58E89FE9044" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
+		"TEMP_B8CF7E88-E22E-410C-B739-349A4DBB5A54" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -141,6 +145,7 @@
 			isa = PBXGroup;
 			children = (
 				EB24F551656B187A42C81D44 /* CorpusDatabase.swift */,
+				9C0424A46E0A825EA0A8EFE2 /* DifficultyOverlay.swift */,
 				5641E998849F8570AF1C8387 /* JSONQuestionSource.swift */,
 				8B9A918292A8BD08D5EEAFA6 /* QuestionProvider.swift */,
 			);
@@ -202,6 +207,7 @@
 			children = (
 				1241A5F7969CF344FFE75DA6 /* closest.json */,
 				E8F18E88BA37F77E6313144F /* corpus.sqlite */,
+				0C8075B00F30AAE8E925FF05 /* difficulty.json */,
 				6C78FEA628F8D5DC705D414E /* match.json */,
 				DEB3E620FB0E374A393778E4 /* oddoneout.json */,
 				79A5D10D9EBC4D0950DE13CF /* order.json */,
@@ -301,10 +307,10 @@
 			path = TidbitsTrivia;
 			sourceTree = "<group>";
 		};
-		"TEMP_EDAE65D4-91EE-485D-8103-CB77C54F4C70" /* Tidbits-Trivia */ = {
+		"TEMP_FE2FF6BC-0185-4A3E-A758-BB4D7655E21F" /* Tidbits-Trivia */ = {
 			isa = PBXGroup;
 			children = (
-				"TEMP_F450FBE4-5092-43E7-95E5-B58E89FE9044" /* AppVersion.xcconfig */,
+				"TEMP_B8CF7E88-E22E-410C-B739-349A4DBB5A54" /* AppVersion.xcconfig */,
 			);
 			path = "Tidbits-Trivia";
 			sourceTree = "<group>";
@@ -374,6 +380,7 @@
 				7E457DE11CD8D820A503C8EB /* PrivacyInfo.xcprivacy in Resources */,
 				11CCA7505B02468A02988A0C /* closest.json in Resources */,
 				9BD52794E3B9893E95300BD5 /* corpus.sqlite in Resources */,
+				476021C7C87B8F571D3D5108 /* difficulty.json in Resources */,
 				3944456B4B345D9CBBDC9594 /* match.json in Resources */,
 				3DDD98934D198791F4C9C508 /* oddoneout.json in Resources */,
 				DD17E6E2BBC121F9A5B69E32 /* order.json in Resources */,
@@ -401,6 +408,7 @@
 				43F36ECB879791F4A899B1AF /* CreateQuizView.swift in Sources */,
 				563B7C1B43D0FCF86A3ACC0A /* DebugHooks.swift in Sources */,
 				24804CB812FA16ED5E34BEF9 /* Design.swift in Sources */,
+				78068FB172485742F7C68313 /* DifficultyOverlay.swift in Sources */,
 				FC6C3246C07842892F682C5D /* GameCenterManager.swift in Sources */,
 				5B37FF3AF882A4CAD88CE62D /* GameComponents.swift in Sources */,
 				2EF467D5E5DB3E3B82354C1D /* GameContainerView.swift in Sources */,
@@ -436,7 +444,7 @@
 /* Begin XCBuildConfiguration section */
 		296659EF0549868336801823 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_F450FBE4-5092-43E7-95E5-B58E89FE9044" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_B8CF7E88-E22E-410C-B739-349A4DBB5A54" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -552,7 +560,7 @@
 		};
 		E6F711EEEE2896F84FE9AB98 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_F450FBE4-5092-43E7-95E5-B58E89FE9044" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_B8CF7E88-E22E-410C-B739-349A4DBB5A54" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;

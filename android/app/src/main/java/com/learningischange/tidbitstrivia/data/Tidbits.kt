@@ -6,6 +6,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.double
+import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -104,6 +105,7 @@ enum class Mode(val title: String, val blurb: String, val perQuestion: Int?, val
     MATCHING("Match Up", "Link each pair.", 40, null, 6),
     TYPE_ANSWER("Name It", "Type the answer.", 25, null, 8),
     ODD_ONE_OUT("Odd One Out", "Which doesn't belong?", 20, null, 8),
+    LADDER("Ladder", "Climb from easy to hard.", 20, null, 10),
     DAILY("Daily Tidbit", "Everyone's puzzle. Keep your streak.", 30, null, 7),
 }
 
@@ -292,6 +294,23 @@ val OrderingSet = JsonQuestionSet("order.json")
 val MatchingSet = JsonQuestionSet("match.json")
 val TypeAnswerSet = JsonQuestionSet("typeanswer.json")
 val OddOneOutSet = JsonQuestionSet("oddoneout.json")   // standard MCQ rows
+
+// F3 derived-difficulty overlay (Wikipedia pageviews → 1..5 per subject).
+object Difficulty {
+    private var map: Map<String, Int> = emptyMap()
+    var loaded = false; private set
+    suspend fun load(context: Context) = withContext(Dispatchers.IO) {
+        if (loaded) return@withContext
+        runCatching {
+            val text = context.assets.open("difficulty.json").bufferedReader().use { it.readText() }
+            val obj = Json.parseToJsonElement(text).jsonObject["difficulty"]!!.jsonObject
+            map = obj.mapValues { it.value.jsonPrimitive.int }
+            loaded = true
+        }
+        Unit
+    }
+    fun get(title: String): Int = map[title.replace(" ", "_")] ?: 3
+}
 
 fun dayKey(): String {
     val c = Calendar.getInstance()

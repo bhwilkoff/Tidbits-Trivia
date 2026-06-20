@@ -51,7 +51,7 @@ aliases unlocks SEVEN question types. Most `P2` items are gated on it.
 |---|---|---|---|---|
 | F1 | **Calibration stats** | From Stake: per-tier accuracy (Sure/Likely/Hunch hit-rate) in Records — the self-knowledge mirror. | P0 | ✅ iOS/web/Android (tvOS ⏳ Records UI) |
 | F2 | **Full missed-fact recap** | Post-game list of every missed Q + answer + cited fact, all 4 platforms (tvOS in a focusable ScrollView; Android in the results scroll). | P1 | ✅ all 4 platforms |
-| F3 | **Derived difficulty rating** | Per-question difficulty (subject obscurity / answer page-view rank), build-time → enables 50:50, escalation, ladder. | P1 | ⏳ |
+| F3 | **Derived difficulty rating** | Wikipedia-pageviews → 1..5 per subject (`tools/corpus/gen_difficulty.py` → `assets/difficulty.json`, even quintiles; popular=1, obscure=5). Additive overlay (corpus untouched). Consumer: the **Ladder** mode (questions climb easy→hard, harder rungs pay a climb bonus) on all 4 platforms; also unblocks future 50:50/adaptive. | P1 | ✅ all 4 platforms |
 | F4 | **Answer-distribution telemetry** | Privacy-respecting per-option counts (local-first; aggregate later) → unlocks **Predict the Crowd** solo + an "X% picked this" reveal. | P2 | ⏳ |
 | E1 | **Wikidata enrichment pass** | ONE additive build-time pass per answer entity: **numeric facts + units, Commons `P18` image, `also known as` aliases**. `tools/corpus/enrich.py` → `assets/enrich.json` (1,591 entities: 1,287 image / 1,187 numbers / 1,204 aliases). Also `gen_picture.py` → `assets/picture.json` (816 Picture ID questions). Unlocks M5, Q3, Q4, Q5, Q6, Q7 + Wits&Wagers. **The highest-leverage corpus work.** | P1 | ✅ data shipped (consumer UIs next) |
 

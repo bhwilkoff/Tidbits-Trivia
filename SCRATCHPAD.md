@@ -7,7 +7,7 @@
 > `docs/ROADMAP.md`, `docs/DATA-CONTRACT.md`. Detailed per-round history is in
 > `ARCHIVE.md`.
 
-## Current state (2026-06-17)
+## Current state (2026-06-19)
 
 - **All four platforms PLAY**, off one shared corpus, all pushed to `main`:
   - **iOS/iPadOS** — full SP (4 modes, 8 categories, learn-reveal), local
@@ -15,7 +15,9 @@
     haptics, Settings, onboarding, app icon, Game Center scaffold (no-op until
     entitlement). Verified iPhone 17 Pro sim.
   - **Web** — full SP loop, PWA, network-first corpus, canonical share target.
-  - **tvOS** — dark-first focus-correct home + game loop + results.
+  - **tvOS** — dark-first focus-correct home + game loop + results. Now
+    store-asset-complete: layered App Icon + Top Shelf brand assets ship, target
+    re-enabled (universal iOS+tvOS), both slices build clean (2026-06-19).
   - **Android** — full SP loop (home/game/results/records/create), Compose/M3.
 - **Corpus**: **~4,500 questions** = summary (describe + cloze) +
   1,144 deep-extraction `fact:*` (Decision 027) + 1,942 Wikidata. **Quality over
@@ -113,3 +115,26 @@ One-line-per-round; full detail in `ARCHIVE.md`.
   Regenerated corpus **10,776 → 4,743** (quality over quantity). Verified: Film &
   TV samples read naturally, all bad patterns 0, iOS+Android BUILD SUCCEEDED.
   Decision 029. *Left:* domain migration done earlier today (Decision 028).
+- **2026-06-19** — **tvOS store-asset unblock + parity verify**. *Found:* the
+  tvOS code (home + game + results) was complete and focus-correct, but the
+  target had been reverted to iOS-only because the tvOS slice had NO layered App
+  Icon and NO Top Shelf image → universal archive failed ITMS-90513
+  (CFBundleIcons.CFBundlePrimaryIcon + TVTopShelfImage). *Did:* new
+  `tools/branding/make_tvos_icon.py` generates the full
+  "App Icon & Top Shelf Image.brandassets" tree from the approved mark — landscape
+  PARALLAX icon (Back = coral+strewn dots, Front = cream tile + Arial-Black T),
+  with BOTH app-icon roles as imagestacks (the 1280×768 App Store role MUST be an
+  imagestack too — a flat imageset crashes actool's
+  `cloneImageStack:toRepresentMarketingVariant:`), plus Top Shelf 1920×720 +
+  Wide 2320×720. Re-enabled tvOS in `project.yml` (supportedDestinations:
+  [iOS, tvOS]); SDK-conditional `ASSETCATALOG_COMPILER_APPICON_NAME` (iOS→AppIcon,
+  tvOS→brand asset); dropped the manual `TARGETED_DEVICE_FAMILY` so it derives
+  from destinations (iOS 1,2 + tvOS 3). *Verified:* actool now injects
+  CFBundleIcons + TVTopShelfPrimaryImage/Wide; clean tvOS build SUCCEEDED; iOS
+  build (generic dest, no iOS-26 runtime locally) SUCCEEDED with icon + version
+  1.0(3) intact; tvOS sim live shots — dark-first home renders + a real Science
+  game ("In what year was David Attenborough born?", typed year distractors)
+  plays end-to-end off the shared corpus. tvOS is now store-asset-complete; a
+  universal archive no longer fails the tvOS slice. *Left:* App Group
+  ModelConfiguration on tvOS (currently Caches store — survives launch, purgeable)
+  + Records/onboarding browse UI remain ⏳ on tvOS (PARITY unchanged, honest).

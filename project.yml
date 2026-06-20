@@ -22,12 +22,12 @@ settings:
 targets:
   TidbitsTrivia:
     type: application
-    # iOS-only for App Store submission until tvOS ships its own assets.
-    # tvOS App Store validation requires a layered App Icon (brandassets) + a
-    # Top Shelf image (TVTopShelfImage) — neither exists yet, so a universal
-    # archive fails with ITMS-90513 on the tvOS slice. The tvOS code stays
-    # (guarded by #if os(tvOS)); re-add `tvOS` here once those assets land.
-    supportedDestinations: [iOS]
+    # Universal iOS + tvOS target (Decision 013). The tvOS slice now ships its
+    # required layered App Icon + Top Shelf via the
+    # "App Icon & Top Shelf Image.brandassets" set (resolves the ITMS-90513
+    # CFBundleIcons / TVTopShelfImage validation errors). Per-platform UI is
+    # guarded by #if os(iOS) / #if os(tvOS).
+    supportedDestinations: [iOS, tvOS]
     sources:
       - path: TidbitsTrivia
     # Game Center capability — the entitlement makes GameCenterManager.authenticate()
@@ -44,8 +44,14 @@ targets:
         # MARKETING_VERSION / CURRENT_PROJECT_VERSION come ONLY from
         # AppVersion.xcconfig (the single source of truth). Target-level copies
         # here would SHADOW the xcconfig — every build silently stayed at 1(1).
-        TARGETED_DEVICE_FAMILY: "1,2"
+        # TARGETED_DEVICE_FAMILY is derived from supportedDestinations
+        # (iOS→1,2 + tvOS→3); setting it here would override tvOS and break it.
+        # iOS uses the flat AppIcon.appiconset; tvOS needs the layered brand
+        # asset (square appiconset is invalid on tvOS), so the icon name is
+        # SDK-conditional.
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        "ASSETCATALOG_COMPILER_APPICON_NAME[sdk=appletvos*]": "App Icon & Top Shelf Image"
+        "ASSETCATALOG_COMPILER_APPICON_NAME[sdk=appletvsimulator*]": "App Icon & Top Shelf Image"
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
     info:
       # Explicit Info.plist (xcodegen fills the standard CFBundle* keys) so we

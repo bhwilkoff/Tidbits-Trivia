@@ -216,3 +216,23 @@ One-line-per-round; full detail in `ARCHIVE.md`.
   wired into a user-facing flow yet. Next slice: two-device pairing test → wire the
   **Buzz Night** game mode (TV stage/scoreboard, phones buzz, wrong-buzz-opens,
   Learn-the-fact reveal). Versions: Apple 1.0(4), Android v2.
+- **2026-06-20** — **backlog blitz (Ben: tackle the whole solo backlog, don't
+  wait)**. Shipped, each verified + committed + pushed across platforms:
+  **M3 The Pie + M4 Topic Levels** (knowledge cartography — a real 7-wedge pie +
+  per-domain XP levels, derived from `GameRecord` history with shared
+  `ProgressMath`; iOS/web/Android, tvOS ⏳ no-Records-UI; iOS sim shot verified).
+  **F1 Stake calibration** (per-tier Sure/Likely/Hunch hit-rate in Records;
+  `CalibrationTally` SwiftData model + localStorage + SharedPreferences; verified
+  via the persisted store: Sure 1/2, Likely 0/3, Hunch 1/3 = the 2/8 round; also
+  fixed autopilot to complete Stake rounds). **F2 full missed-fact recap** on
+  tvOS (focusable ScrollView) + Android (results scroll) — closes the PARITY rows;
+  tvOS sim shot verified. **E1 Wikidata enrichment** (the keystone): new
+  `tools/corpus/enrich.py` → `assets/enrich.json` (1,591 entities: 1,287 image /
+  1,187 numbers / 1,204 aliases) + `gen_picture.py` → `assets/picture.json` (816
+  Picture ID Qs); additive, separate from corpus; sampled-correct + an image URL
+  resolves 200/jpeg; DATA-CONTRACT updated; 100MB raw cache gitignored. *Left:*
+  E1 **consumer UIs** are the next wave — **Picture ID first** (data ready;
+  web/Android are JSON-native, iOS/tvOS need a small picture.json loader since
+  their corpus is SQLite), then Closest Call (M5 numeric dial) + the other
+  E1-gated types; also queued: F3 difficulty, F4 telemetry/Predict-the-Crowd,
+  Couch Co-op, Buzz Night game-mode wiring (on the Bonjour foundation), Link Wall.

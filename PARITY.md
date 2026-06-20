@@ -91,6 +91,7 @@ reached is ⏳ with a note, never silence.
 | Question TYPE variety (29 types) | ✅ | ✅ | ✅ | ✅ | 5 summary shapes + 17 Wikidata + 6 fact types: forward/reverse attribute, superlative, chronology, numeric closest-to, classification, who-directed/wrote/composed, birth/death-year, nationality — all 4-option, rendered via the shared corpus (Decisions 025/027) |
 | Deep article fact-extraction (fact:* types) | ✅ | ✅ | ✅ | ✅ | SHIPPED: 1,000 `fact:*` Qs in the shared corpus (6 types: directed/written/composed_by, birth/death_year, nationality) via `tools/corpus/wiki_extract.py` (Decision 027). Build-time only — all 4 read the corpus unchanged |
 | Vandalism/NPOV gates 6/7 + human sampling 9 | 🔮 | 🔮 | 🔮 | 🔮 | Next corpus step (e.g. contested continent-of-country cases) |
+| E1 Wikidata enrichment (image/numeric/alias) | 🚧 | 🚧 | 🚧 | 🚧 | DATA shipped: `assets/enrich.json` (1,591 entities) + `assets/picture.json` (816 Picture ID Qs) via `tools/corpus/enrich.py`+`gen_picture.py`. Additive, separate from corpus. Consumer modes (Picture ID, Closest Call, …) read it — UI per platform is the next wave (SOLO-BACKLOG E1) |
 
 ---
 

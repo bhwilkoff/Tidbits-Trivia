@@ -42,7 +42,7 @@ aliases unlocks SEVEN question types. Most `P2` items are gated on it.
 | Q4 | **Ordering / ranking** | Arrange 4–6 items (chronological/size); partial credit by inversion count. Drag on phone/web; insert-via-focus on tvOS. | +meta (E1 orderable attr) | P2 | 🔮 E1 |
 | Q5 | **Matching pairs** | Two columns (country↔capital); link each. Easy to validate (1:1). Study-aligned. | +meta (E1 paired facts) | P2 | 🔮 E1 |
 | Q6 | **Type-the-answer** | Free-text recall + fuzzy/alias matching. Deepest retrieval; web/phone first (tvOS keyboard wall). Also closes `ROADMAP` #9. | +meta (E1 aliases) | P2 | 🔮 E1 |
-| Q7 | **Picture ID** | Identify an image (landmark/flag/art); optional progressive reveal. **Finally plays to tvOS's strengths** (10-ft imagery). | +meta (E1 Commons image) | P2 | 🔮 E1 |
+| Q7 | **Picture ID** | Identify an image (landmark/flag/art); optional progressive reveal. **Finally plays to tvOS's strengths** (10-ft imagery). | +meta (E1 Commons image) | P2 | 🚧 data ready (`picture.json`, 816 Qs); per-platform image UI next |
 | Q8 | **List / enumeration** *(Sporcle typed)* | "Name as many X in 60s"; fill-grid. Rich sets + alias coverage; web/phone (tvOS via voice/skip). | Rich | P3 | 🔮 |
 
 ## Functionality / infrastructure
@@ -53,7 +53,7 @@ aliases unlocks SEVEN question types. Most `P2` items are gated on it.
 | F2 | **Full missed-fact recap** | Post-game list of every missed Q + answer + cited fact, all 4 platforms (tvOS in a focusable ScrollView; Android in the results scroll). | P1 | ✅ all 4 platforms |
 | F3 | **Derived difficulty rating** | Per-question difficulty (subject obscurity / answer page-view rank), build-time → enables 50:50, escalation, ladder. | P1 | ⏳ |
 | F4 | **Answer-distribution telemetry** | Privacy-respecting per-option counts (local-first; aggregate later) → unlocks **Predict the Crowd** solo + an "X% picked this" reveal. | P2 | ⏳ |
-| E1 | **Wikidata enrichment pass** | ONE additive build-time pass per answer entity: **numeric facts + units, Commons `P18` image + license, `also known as` aliases**. Unlocks M5, Q3, Q4, Q5, Q6, Q7 + Wits&Wagers. **The highest-leverage corpus work.** | P1 | ⏳ |
+| E1 | **Wikidata enrichment pass** | ONE additive build-time pass per answer entity: **numeric facts + units, Commons `P18` image, `also known as` aliases**. `tools/corpus/enrich.py` → `assets/enrich.json` (1,591 entities: 1,287 image / 1,187 numbers / 1,204 aliases). Also `gen_picture.py` → `assets/picture.json` (816 Picture ID questions). Unlocks M5, Q3, Q4, Q5, Q6, Q7 + Wits&Wagers. **The highest-leverage corpus work.** | P1 | ✅ data shipped (consumer UIs next) |
 
 ---
 
@@ -62,7 +62,10 @@ aliases unlocks SEVEN question types. Most `P2` items are gated on it.
 1. **M1 Stake** — ✅ shipped on web + iOS + tvOS + Android (2026-06-20). **F1
    calibration** (per-tier accuracy readout in Records) is the queued follow-up;
    the in-game chip-spending already delivers calibration practice.
-2. **E1 Wikidata enrichment** — the unlock; do once, gains seven types.
+2. **E1 Wikidata enrichment** — ✅ data shipped (`enrich.json` + `picture.json`).
+   Consumer UIs now unblocked; **Picture ID is the first** (reuses MCQ + an image
+   header; note iOS/tvOS read SQLite so they need a small picture.json loader,
+   web/Android are JSON-native already).
 3. **M2 Sweep** — ✅ shipped on all 4 platforms (2026-06-20). **Q1 This-or-That**
    — corpus-native (real/fake) is the next verb to broaden; bigger/older needs E1.
 4. **M5 Closest Call**, **Q3 Odd-one-out**, **Q7 Picture ID** — first fruits of E1.

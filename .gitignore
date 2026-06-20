@@ -64,6 +64,9 @@ android/local.properties
 # Full-article fetch cache (transient, large, regenerable). The small
 # deterministic Wikidata datasets in cache/*.json ARE committed (instant regen).
 tools/corpus/cache/articles/
+# E1 enrichment raw API cache — 100MB+ of full entity claims; regenerable
+# from enrich.py. The compact result (assets/enrich.json) IS committed.
+tools/corpus/cache/enrich_raw.json
 
 # Android secrets — keystores + Firebase config out of git permanently
 android/keystore/

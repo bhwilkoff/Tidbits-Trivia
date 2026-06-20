@@ -62,6 +62,45 @@ typed siblings (gates 1/2/4/5 hold by construction):
 Re-run: `python3 wikidata.py [--only key1,key2] [--gap SECONDS]`. Honors WDQS
 `Retry-After`; appends with `INSERT OR IGNORE` (idempotent).
 
+## Artifact: `assets/enrich.json` (E1 — additive enrichment)
+
+A build-time Wikidata pass (`tools/corpus/enrich.py`) over the corpus's answer
+entities, emitting per entity (keyed by underscored Wikipedia title):
+
+```
+{ "version": "...", "count": N, "entities": {
+   "Alghero": { "qid": "Q166282",
+     "image": "https://commons.wikimedia.org/wiki/Special:FilePath/<file>?width=800",
+     "numbers": { "population": {"value":43964,"unit":"count"},
+                  "area": {"value":225,"unit":"km2"},
+                  "elevation": {"value":7,"unit":"m"} },
+     "aliases": ["L'Alguer", ...] } } }
+```
+
+Numeric props mined: population (P1082), area (P2046), height (P2048),
+elevation (P2044), inception/birth/death years (P571/P569/P570), atomic number
+(P1086), mass (P2067), diameter (P2386). Image is P18 via Commons `FilePath`
+(redirects to the file; `?width=800` keeps it light — honor the image-fallback +
+attribution policy when displaying). **Additive and separate** — the corpus
+SQLite/JSON are untouched; clients that don't need enrichment ignore it.
+
+Current build: **1,591 entities** (1,287 image · 1,187 numbers · 1,204 aliases)
+from 1,951 distinct answer pages. Raw API responses cached in
+`cache/enrich_raw.json` (gitignored, 100MB+); reruns are incremental.
+
+Unlocks: Picture ID (Q7), Closest Call (M5), Ordering (Q4), This-or-That
+bigger/older (Q1), Type-the-answer (Q6), Matching (Q5), Wits & Wagers.
+
+## Artifact: `assets/picture.json` (Picture ID question set)
+
+`tools/corpus/gen_picture.py` joins the corpus with `enrich.json`: for every
+question whose ANSWER is its source subject AND that subject has an image, it
+emits a Picture ID question — the compact corpus form **plus a 10th element, the
+image URL** — reusing the corpus's already-vetted four options ("What is this?").
+Keying off answer==subject guarantees the image depicts the correct option.
+Current build: **816 picture questions**. Picture mode loads this file; the main
+corpus contract is unchanged.
+
 ## Consumers
 
 | Client | Reader | Local store for records |

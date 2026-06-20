@@ -68,6 +68,7 @@ Screenshot hooks (no-ops in prod): `TIDBITS_AUTOPLAY=mode:category`,
 | X/Twitter share target | Explicit product requirement | never |
 | Pay-to-restore-streak | Textbook dark pattern (Decision 022) | never |
 | Non-MCQ formats (timeline drag, grouping wall) | Need per-client UI; corpus is 4-option-only (Decision 025) | a format earns the custom UI |
+| Couch Co-op (thin same-room co-op) | iOS pass-and-play already delivers same-room multiplayer; a *thin* couch mode just duplicates it, and a *valuable* tvOS team mode (team setup + team scoring + focus flows) is a full marquee feature, not thin — and overlaps the deferred Buzz Night, the genuinely differentiated living-room mode. Evaluated 2026-06-20; skipped as not earning its place. | Buzz Night (phone-as-buzzer) ships and a tvOS team-scoreboard shell exists to build on |
 
 ## Session log
 

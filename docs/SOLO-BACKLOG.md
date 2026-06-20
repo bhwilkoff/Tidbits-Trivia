@@ -36,7 +36,7 @@ aliases unlocks SEVEN question types. Most `P2` items are gated on it.
 
 | ID | Type | What | Corpus | Pri | Status |
 |---|---|---|---|---|---|
-| Q1 | **This-or-That** *(binary speed)* | Two cards, pick one, fast ("Which came first?", "Real or fake?"). Best TV ergonomics (D-pad L/R). | Yes (real/fake) · +meta (bigger/older) | P1 | ⏳ |
+| Q1 | **This-or-That** *(binary speed)* | "Which came first?" between two same-category entities, rendered as a 2-option MCQ (`thisorthat.json`, 613 Qs from E1 chronology; 0 errors). Size/real-fake shapes deferred (population unreliable, real-fake needs statement-gen). | +meta (E1 years) | P1 | ✅ all 4 platforms (chronology) |
 | Q2 | **True/False rapid** | A statement; tap T/F; tight timer; streak. Highest value when false = a **plausible misconception**. | +meta (statement gen) | P2 | 🔮 pipeline |
 | Q3 | **Odd-one-out** | Four cards; three share a hidden property, one doesn't; pick the outlier (+ optionally name the link). **Zero new UI** (reuses MCQ surface). | +meta (E1 set membership) | P2 | 🔮 E1 |
 | Q4 | **Ordering / ranking** | Arrange 4–6 items (chronological/size); partial credit by inversion count. Drag on phone/web; insert-via-focus on tvOS. | +meta (E1 orderable attr) | P2 | 🔮 E1 |

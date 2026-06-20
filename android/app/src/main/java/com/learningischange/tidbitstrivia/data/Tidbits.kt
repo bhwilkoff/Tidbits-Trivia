@@ -53,6 +53,7 @@ enum class Mode(val title: String, val blurb: String, val perQuestion: Int?, val
     STAKE("Stake", "Bet your confidence. No risk.", 30, null, 8),
     SWEEP("Sweep", "Fill the set. Beat your best.", 12, null, 12),
     PICTURE_ID("Picture ID", "Name what you see.", 20, null, 10),
+    THIS_OR_THAT("Which First?", "Which came first?", 12, null, 10),
     DAILY("Daily Tidbit", "Everyone's puzzle. Keep your streak.", 30, null, 7),
 }
 
@@ -145,9 +146,10 @@ object Corpus {
         all.shuffledWith(SeededRng(stableSeed(dayKey))).take(count)
 }
 
-// ---- Picture ID source (assets/picture.json — corpus + E1 image enrichment) ----
+// ---- Enrichment-built mode sources (E1): a bundled JSON question set, same row
+// shape as corpus.json; Picture ID also carries a 10th element (image URL). ----
 
-object Pictures {
+class JsonQuestionSet(private val asset: String) {
     private var all: List<Question> = emptyList()
     private var byCat: Map<String, List<Question>> = emptyMap()
     var loaded = false; private set
@@ -155,7 +157,7 @@ object Pictures {
     suspend fun load(context: Context) = withContext(Dispatchers.IO) {
         if (loaded) return@withContext
         runCatching {
-            val text = context.assets.open("picture.json").bufferedReader().use { it.readText() }
+            val text = context.assets.open(asset).bufferedReader().use { it.readText() }
             val arr = Json.parseToJsonElement(text).jsonObject["questions"]!!.jsonArray
             all = arr.map { el ->
                 val a = el.jsonArray
@@ -168,7 +170,7 @@ object Pictures {
                     explanation = a[6].jsonPrimitive.content,
                     sourceTitle = a[7].jsonPrimitive.content,
                     sourceUrl = a[8].jsonPrimitive.content,
-                    imageUrl = a[9].jsonPrimitive.content,
+                    imageUrl = if (a.size >= 10) a[9].jsonPrimitive.content else null,
                 )
             }
             byCat = all.groupBy { it.categoryId }
@@ -182,6 +184,9 @@ object Pictures {
         return src.filter { it.id !in seen }.shuffled().take(limit)
     }
 }
+
+val Pictures = JsonQuestionSet("picture.json")
+val ThisOrThat = JsonQuestionSet("thisorthat.json")
 
 fun dayKey(): String {
     val c = Calendar.getInstance()

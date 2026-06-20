@@ -247,7 +247,7 @@ struct GamePlayView: View {
     }
 
     private var isLast: Bool {
-        (game.mode == .classic || game.mode == .daily || game.mode == .stake || game.mode == .sweep || game.mode == .pictureId) && game.index + 1 >= game.questions.count
+        (game.mode == .classic || game.mode == .daily || game.mode == .stake || game.mode == .sweep || game.mode == .pictureId || game.mode == .thisOrThat) && game.index + 1 >= game.questions.count
     }
 }
 

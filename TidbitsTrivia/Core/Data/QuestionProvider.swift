@@ -40,10 +40,12 @@ final class QuestionProvider {
     func questions(mode: GameMode, category: TriviaCategory) async -> [Question] {
         let need = min(mode.questionCount, mode == .timeAttack ? 25 : mode.questionCount)
         if mode == .daily { return await dailyQuestions(category: category) }
+        // Enrichment-built modes ride their own bundled JSON source (E1).
         if mode == .pictureId {
-            // Picture ID rides its own enrichment-built source (E1 → picture.json).
-            let pics = PictureCorpus.shared.questions(categoryID: category.id, excluding: seen, limit: need)
-            return pics
+            return JSONQuestionSource.picture.questions(categoryID: category.id, excluding: seen, limit: need)
+        }
+        if mode == .thisOrThat {
+            return JSONQuestionSource.thisOrThat.questions(categoryID: category.id, excluding: seen, limit: need)
         }
 
         var pulled = CorpusDatabase.shared.questions(

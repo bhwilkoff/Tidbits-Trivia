@@ -97,31 +97,35 @@ export const Corpus = {
   get count() { return this.questions.length; },
 };
 
-// Picture ID (Q7) source — assets/picture.json (corpus + E1 image enrichment).
-// Same row shape as the corpus + a 10th element (image URL); loaded lazily the
-// first time Picture mode is played.
-export const Pictures = {
-  questions: [], byCategory: {}, loaded: false,
-  async load() {
-    if (this.loaded) return;
-    try {
-      const resp = await fetch('assets/picture.json', { cache: 'no-cache' });
-      if (!resp.ok) return;
-      const data = await resp.json();
-      this.questions = data.questions.map((r) => { const q = rowToQuestion(r); q.templateID = 'picture'; return q; });
-      this.byCategory = {};
-      for (const q of this.questions) (this.byCategory[q.categoryID] ||= []).push(q);
-      this.loaded = true;
-      console.log(`[Tidbits] picture v${data.version} · ${this.questions.length} questions`);
-    } catch (e) { console.warn('[Tidbits] picture corpus unavailable', e); }
-  },
-  pull(categoryID, seen, limit) {
-    const src = categoryID === 'mixed' ? this.questions : (this.byCategory[categoryID] || []);
-    const a = src.filter((q) => !seen.has(q.id)).slice();
-    for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
-    return a.slice(0, limit);
-  },
-};
+// Enrichment-built mode sources (E1): a bundled JSON question set, same row
+// shape as the corpus (Picture ID also carries a 10th element, the image URL).
+// One factory so each new mode is a one-liner.
+function makeJsonSet(filename) {
+  return {
+    questions: [], byCategory: {}, loaded: false,
+    async load() {
+      if (this.loaded) return;
+      try {
+        const resp = await fetch('assets/' + filename, { cache: 'no-cache' });
+        if (!resp.ok) return;
+        const data = await resp.json();
+        this.questions = data.questions.map(rowToQuestion);
+        this.byCategory = {};
+        for (const q of this.questions) (this.byCategory[q.categoryID] ||= []).push(q);
+        this.loaded = true;
+        console.log(`[Tidbits] ${filename} v${data.version} · ${this.questions.length} questions`);
+      } catch (e) { console.warn('[Tidbits]', filename, 'unavailable', e); }
+    },
+    pull(categoryID, seen, limit) {
+      const src = categoryID === 'mixed' ? this.questions : (this.byCategory[categoryID] || []);
+      const a = src.filter((q) => !seen.has(q.id)).slice();
+      for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+      return a.slice(0, limit);
+    },
+  };
+}
+export const Pictures = makeJsonSet('picture.json');
+export const ThisOrThat = makeJsonSet('thisorthat.json');
 
 export const Wikipedia = {
   async search(topic, limit = 35) {

@@ -57,6 +57,7 @@ fun AppRoot(store: Store) {
     LaunchedEffect(Unit) {
         if (!Corpus.loaded) runCatching { Corpus.load(context) }
         if (!Pictures.loaded) runCatching { Pictures.load(context) }
+        if (!ThisOrThat.loaded) runCatching { ThisOrThat.load(context) }
         corpusReady = true
     }
 
@@ -102,7 +103,7 @@ private fun HomeScreen(onPlay: (Mode, Category) -> Unit) {
 
         Text("Pick a mode", fontWeight = FontWeight.Bold, fontSize = 20.sp)
         LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            items(listOf(Mode.CLASSIC, Mode.TIME_ATTACK, Mode.SURVIVAL, Mode.STAKE, Mode.SWEEP, Mode.PICTURE_ID), key = { it.name }) { m ->
+            items(listOf(Mode.CLASSIC, Mode.TIME_ATTACK, Mode.SURVIVAL, Mode.STAKE, Mode.SWEEP, Mode.PICTURE_ID, Mode.THIS_OR_THAT), key = { it.name }) { m ->
                 FilterChip(selected = selectedMode == m, onClick = { selectedMode = m }, label = { Text(m.title) })
             }
         }

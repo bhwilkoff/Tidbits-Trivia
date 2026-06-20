@@ -271,6 +271,20 @@ private fun ResultsScreen(game: GameState, onPlayAgain: () -> Unit, onDone: () -
             val text = "🧠 Tidbits Trivia — ${game.mode.title}\n$grid\n${game.correctCount}/$total right · ${game.score} pts · $acc%\nTrivia from all of Wikipedia."
             context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, text) }, "Share"))
         }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Pops.blue)) { Text("Share Score") }
+        // F2 — full missed-fact recap: every wrong answer becomes a "now you know" card.
+        val missed = game.answered.filter { !it.correct }
+        if (missed.isNotEmpty()) {
+            Text("Tidbits to remember", fontWeight = FontWeight.Bold, fontSize = 20.sp, modifier = Modifier.fillMaxWidth())
+            missed.forEach { a ->
+                ChunkyCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(14.dp).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(a.q.prompt, fontWeight = FontWeight.Bold)
+                        Text(a.q.options[a.q.correctIndex], color = Pops.mint, fontWeight = FontWeight.Black)
+                        if (a.q.explanation.isNotEmpty()) Text(a.q.explanation, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+                    }
+                }
+            }
+        }
         Button(onClick = onPlayAgain, modifier = Modifier.fillMaxWidth()) { Text("Play Again") }
         TextButton(onClick = onDone) { Text("Done") }
     }

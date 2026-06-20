@@ -271,28 +271,59 @@ struct TVResultsView: View {
     }
 
     var body: some View {
-        VStack(spacing: 30) {
-            Text(headline.uppercased()).font(.system(size: 40, weight: .heavy, design: .rounded)).foregroundStyle(TVTheme.textSoft)
-            Text("\(summary.score)").font(.system(size: 130, weight: .black, design: .rounded)).foregroundStyle(.white)
-            Text("\(summary.mode.title) · \(summary.category.name)").font(.system(size: 31, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
-            HStack(spacing: 60) {
-                stat("\(summary.correct)/\(summary.total)", "Correct")
-                stat("\(Int(summary.accuracy * 100))%", "Accuracy")
-                stat("\(summary.maxStreak)", "Best streak")
+        ScrollView {
+            VStack(spacing: 30) {
+                Text(headline.uppercased()).font(.system(size: 40, weight: .heavy, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+                Text("\(summary.score)").font(.system(size: 110, weight: .black, design: .rounded)).foregroundStyle(.white)
+                Text("\(summary.mode.title) · \(summary.category.name)").font(.system(size: 31, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+                HStack(spacing: 60) {
+                    stat("\(summary.correct)/\(summary.total)", "Correct")
+                    stat("\(Int(summary.accuracy * 100))%", "Accuracy")
+                    stat("\(summary.maxStreak)", "Best streak")
+                }
+                Text(grid).font(.system(size: 40))
+                HStack(spacing: 30) {
+                    Button("Play Again", action: onPlayAgain)
+                        .buttonStyle(TVChipStyle(accent: Tidbits.Palette.coral, selected: false))
+                        .focused($playAgainFocused)
+                    Button("Done", action: onDone)
+                        .buttonStyle(TVChipStyle(accent: Tidbits.Palette.blue, selected: false))
+                }
+                .padding(.top, 8)
+                if !summary.missed.isEmpty { recap }
             }
-            Text(grid).font(.system(size: 40))
-            HStack(spacing: 30) {
-                Button("Play Again", action: onPlayAgain)
-                    .buttonStyle(TVChipStyle(accent: Tidbits.Palette.coral, selected: false))
-                    .focused($playAgainFocused)
-                Button("Done", action: onDone)
-                    .buttonStyle(TVChipStyle(accent: Tidbits.Palette.blue, selected: false))
-            }
-            .padding(.top, 16)
+            .padding(90)
+            .frame(maxWidth: .infinity)
         }
-        .padding(90)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .defaultFocus($playAgainFocused, true)
+    }
+
+    /// F2 — the full missed-fact recap at ten feet: every wrong answer becomes a
+    /// "now you know" card (the learning-orientation mandate, not just an emoji grid).
+    private var recap: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("TIDBITS TO REMEMBER")
+                .font(.system(size: 26, weight: .heavy, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+            ForEach(Array(summary.missed.enumerated()), id: \.offset) { _, a in
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(a.question.prompt)
+                        .font(.system(size: 26, weight: .bold, design: .rounded)).foregroundStyle(.white)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text(a.question.correctAnswer)
+                        .font(.system(size: 24, weight: .heavy, design: .rounded)).foregroundStyle(Tidbits.Palette.mint)
+                    if !a.question.explanation.isEmpty {
+                        Text(a.question.explanation)
+                            .font(.system(size: 22, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(24)
+                .background(RoundedRectangle(cornerRadius: 18).fill(TVTheme.panel))
+            }
+        }
+        .frame(maxWidth: 1500)
+        .padding(.top, 20)
     }
 
     private func stat(_ v: String, _ l: String) -> some View {

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="22154" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
+    <dependencies>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="22131"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <scenes>
+        <scene sceneID="EHf-IW-A2E">
+            <objects>
+                <viewController id="01J-lp-oVM" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="Ze5-6b-2t3">
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="LaunchDots" translatesAutoresizingMaskIntoConstraints="NO" id="dots001">
+                                <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                            </imageView>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="LaunchIcon" translatesAutoresizingMaskIntoConstraints="NO" id="icon001">
+                                <rect key="frame" x="121.5" y="351" width="150" height="150"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="150" id="w001"/>
+                                    <constraint firstAttribute="height" constant="150" id="h001"/>
+                                </constraints>
+                            </imageView>
+                        </subviews>
+                        <color key="backgroundColor" name="LaunchBackground"/>
+                        <constraints>
+                            <constraint firstItem="dots001" firstAttribute="leading" secondItem="Ze5-6b-2t3" secondAttribute="leading" id="c001"/>
+                            <constraint firstItem="dots001" firstAttribute="trailing" secondItem="Ze5-6b-2t3" secondAttribute="trailing" id="c002"/>
+                            <constraint firstItem="dots001" firstAttribute="top" secondItem="Ze5-6b-2t3" secondAttribute="top" id="c003"/>
+                            <constraint firstItem="dots001" firstAttribute="bottom" secondItem="Ze5-6b-2t3" secondAttribute="bottom" id="c004"/>
+                            <constraint firstItem="icon001" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="c005"/>
+                            <constraint firstItem="icon001" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" id="c006"/>
+                        </constraints>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="iYj-Kq-Ed2" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="53" y="375"/>
+        </scene>
+    </scenes>
+    <resources>
+        <image name="LaunchDots" width="440" height="956"/>
+        <image name="LaunchIcon" width="220" height="220"/>
+        <namedColor name="LaunchBackground">
+            <color red="1.0" green="0.45499998331069946" blue="0.43529999256134033" alpha="1.0" colorSpace="custom" customColorSpace="sRGB"/>
+        </namedColor>
+    </resources>
+</document>

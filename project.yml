@@ -52,12 +52,21 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         "ASSETCATALOG_COMPILER_APPICON_NAME[sdk=appletvos*]": "App Icon & Top Shelf Image"
         "ASSETCATALOG_COMPILER_APPICON_NAME[sdk=appletvsimulator*]": "App Icon & Top Shelf Image"
+        # The branded launch storyboard is iOS-only — tvOS rejects an iOS
+        # launchScreen storyboard ("does not support target device type tv")
+        # and launches from its brand asset. Exclude the file from the tvOS
+        # slice so the universal target still builds for tvOS.
+        "EXCLUDED_SOURCE_FILE_NAMES[sdk=appletvos*]": "LaunchScreen.storyboard"
+        "EXCLUDED_SOURCE_FILE_NAMES[sdk=appletvsimulator*]": "LaunchScreen.storyboard"
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
     info:
       # Explicit Info.plist (xcodegen fills the standard CFBundle* keys) so we
-      # can ship a BRANDED launch screen (cream background + centered logo)
-      # instead of the auto-generated white one. UILaunchScreen is iOS-only;
-      # tvOS ignores it and launches from the brand asset.
+      # can ship a BRANDED launch screen via LaunchScreen.storyboard: coral
+      # fills the screen, brand dots are strewn full-bleed (LaunchDots,
+      # aspectFill), and the icon tile is centered (LaunchIcon) — the splash
+      # reads as a zoomed-out app icon. A storyboard (not the minimal
+      # UILaunchScreen dict) is required because that dict can't scatter
+      # full-bleed dots — only a solid color + one centered image.
       path: TidbitsTrivia/Info.plist
       properties:
         CFBundleDisplayName: Tidbits
@@ -75,10 +84,7 @@ targets:
         # exempt encryption. Declaring this skips the manual compliance question
         # on every TestFlight / App Store build.
         ITSAppUsesNonExemptEncryption: false
-        UILaunchScreen:
-          UIColorName: LaunchBackground
-          UIImageName: LaunchLogo
-          UIImageRespectsSafeAreaInsets: true
+        UILaunchStoryboardName: LaunchScreen
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]

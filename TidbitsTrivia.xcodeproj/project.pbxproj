@@ -40,6 +40,7 @@
 		B0A9BD87C5B11C8B3EA379C9 /* Question.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFC46D4CE8D03186C064C759 /* Question.swift */; };
 		CCA8AF2E7F7567E5B153E60F /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B2FEBFB29C12A172EADB66F /* SettingsView.swift */; };
 		D78451DA6D74E2BA65EB56C8 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AAEF55F4DD8DEA37D200C32 /* HomeView.swift */; };
+		E6770F1D60EEB51BCEDD54B3 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8BAC363A3AF3ACE88A58A9AB /* LaunchScreen.storyboard */; };
 		EE8626F023BDE890D701F4B1 /* ContentView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = C23D07A7744AE72B2935CB2F /* ContentView_tvOS.swift */; };
 		FC6C3246C07842892F682C5D /* GameCenterManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89A31C82C50C6EB1DA9AE9A4 /* GameCenterManager.swift */; };
 /* End PBXBuildFile section */
@@ -66,6 +67,7 @@
 		8635E2E7CD914F8DFE8136CC /* TidbitsTrivia.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = TidbitsTrivia.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		89A31C82C50C6EB1DA9AE9A4 /* GameCenterManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameCenterManager.swift; sourceTree = "<group>"; };
 		8B9A918292A8BD08D5EEAFA6 /* QuestionProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuestionProvider.swift; sourceTree = "<group>"; };
+		8BAC363A3AF3ACE88A58A9AB /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		8E0122AFA7F2570D4CCDD4BA /* ContentView_iOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView_iOS.swift; sourceTree = "<group>"; };
 		96283977862FC546F8219011 /* CreateQuizView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateQuizView.swift; sourceTree = "<group>"; };
 		AB6E2342A764B8401C9516E9 /* Design.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Design.swift; sourceTree = "<group>"; };
@@ -83,7 +85,7 @@
 		F3AE68F153F8C298960BFD36 /* Player.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Player.swift; sourceTree = "<group>"; };
 		F5C9D9266531ECD27156562D /* GameView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView_tvOS.swift; sourceTree = "<group>"; };
 		FFC46D4CE8D03186C064C759 /* Question.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Question.swift; sourceTree = "<group>"; };
-		"TEMP_48C75ED2-A089-4FCC-9B4C-C91BC9FF3C2D" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
+		"TEMP_2457850B-982B-4479-9C3E-6AE6F93ECAAD" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -253,16 +255,17 @@
 				B7FF0BD6F715F7F0F08BD521 /* tvOS */,
 				73D5D7FD07809D194BF90B30 /* Assets.xcassets */,
 				4E7FAFB9A435F25FF322EC97 /* Info.plist */,
+				8BAC363A3AF3ACE88A58A9AB /* LaunchScreen.storyboard */,
 				3C266F600F75F40E459D2276 /* PrivacyInfo.xcprivacy */,
 				D2BE9E793BFE4E52464B69A2 /* TidbitsTrivia.entitlements */,
 			);
 			path = TidbitsTrivia;
 			sourceTree = "<group>";
 		};
-		"TEMP_78F2B983-F9A5-45D9-9B7B-84B25B36CB14" /* Tidbits-Trivia */ = {
+		"TEMP_7CF3F18E-ABE3-406B-9019-ECDA85A6E61C" /* Tidbits-Trivia */ = {
 			isa = PBXGroup;
 			children = (
-				"TEMP_48C75ED2-A089-4FCC-9B4C-C91BC9FF3C2D" /* AppVersion.xcconfig */,
+				"TEMP_2457850B-982B-4479-9C3E-6AE6F93ECAAD" /* AppVersion.xcconfig */,
 			);
 			path = "Tidbits-Trivia";
 			sourceTree = "<group>";
@@ -328,6 +331,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A196A0BBE89D112E62E0577E /* Assets.xcassets in Resources */,
+				E6770F1D60EEB51BCEDD54B3 /* LaunchScreen.storyboard in Resources */,
 				7E457DE11CD8D820A503C8EB /* PrivacyInfo.xcprivacy in Resources */,
 				9BD52794E3B9893E95300BD5 /* corpus.sqlite in Resources */,
 			);
@@ -380,7 +384,7 @@
 /* Begin XCBuildConfiguration section */
 		296659EF0549868336801823 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_48C75ED2-A089-4FCC-9B4C-C91BC9FF3C2D" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_2457850B-982B-4479-9C3E-6AE6F93ECAAD" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -449,6 +453,8 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = TidbitsTrivia/TidbitsTrivia.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"EXCLUDED_SOURCE_FILE_NAMES[sdk=appletvos*]" = LaunchScreen.storyboard;
+				"EXCLUDED_SOURCE_FILE_NAMES[sdk=appletvsimulator*]" = LaunchScreen.storyboard;
 				INFOPLIST_FILE = TidbitsTrivia/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -474,6 +480,8 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = TidbitsTrivia/TidbitsTrivia.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"EXCLUDED_SOURCE_FILE_NAMES[sdk=appletvos*]" = LaunchScreen.storyboard;
+				"EXCLUDED_SOURCE_FILE_NAMES[sdk=appletvsimulator*]" = LaunchScreen.storyboard;
 				INFOPLIST_FILE = TidbitsTrivia/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -492,7 +500,7 @@
 		};
 		E6F711EEEE2896F84FE9AB98 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_48C75ED2-A089-4FCC-9B4C-C91BC9FF3C2D" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_2457850B-982B-4479-9C3E-6AE6F93ECAAD" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;

@@ -36,6 +36,9 @@ final class GameEngine {
     // to the current question (0 = not yet staked). Unused in other modes.
     private(set) var stakeTiers: [StakeTier] = []
     private(set) var currentStake: Int = 0
+    // Stake mode: per-tier hits/total this round, for the calibration readout
+    // (F1) — "did my Sure chips actually land?" Keyed by chip value.
+    private(set) var stakeOutcomes: [Int: StakeOutcome] = [:]
 
     // Clocks
     private(set) var remaining: Double = 0      // seconds left on the active clock
@@ -94,6 +97,7 @@ final class GameEngine {
             ? GameMode.stakeBudget.map { StakeTier(value: $0.value, label: $0.label, remaining: $0.count) }
             : []
         currentStake = 0
+        stakeOutcomes = [:]
     }
 
     /// Interleave due review questions among fresh ones (count stays stable;
@@ -185,6 +189,13 @@ final class GameEngine {
         answered.append(answer)
         lastAnswer = answer
 
+        if mode == .stake, currentStake != 0 {
+            var o = stakeOutcomes[currentStake] ?? StakeOutcome(hits: 0, total: 0)
+            o.total += 1
+            if answer.isCorrect { o.hits += 1 }
+            stakeOutcomes[currentStake] = o
+        }
+
         if answer.isCorrect {
             streak += 1
             maxStreak = max(maxStreak, streak)
@@ -243,7 +254,7 @@ final class GameEngine {
         return GameSummary(
             mode: mode, category: category, score: score,
             correct: correct, total: answered.count, maxStreak: maxStreak,
-            answered: answered)
+            answered: answered, stakeOutcomes: stakeOutcomes)
     }
 }
 
@@ -256,6 +267,12 @@ struct StakeTier: Identifiable, Sendable, Hashable {
     var id: Int { value }
 }
 
+/// One confidence tier's outcome in a Stake round (F1 calibration).
+struct StakeOutcome: Sendable, Hashable, Codable {
+    var hits: Int
+    var total: Int
+}
+
 /// Immutable end-of-game payload — drives the results + recap screens and
 /// the record/leaderboard writes.
 struct GameSummary: Sendable {
@@ -266,6 +283,7 @@ struct GameSummary: Sendable {
     let total: Int
     let maxStreak: Int
     let answered: [AnsweredQuestion]
+    var stakeOutcomes: [Int: StakeOutcome] = [:]
 
     var accuracy: Double { total == 0 ? 0 : Double(correct) / Double(total) }
     var missed: [AnsweredQuestion] { answered.filter { !$0.isCorrect } }

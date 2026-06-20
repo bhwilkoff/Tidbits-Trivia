@@ -518,6 +518,25 @@ class Store(context: Context) {
             if (hi == lo) 1f else ((correct - lo).toFloat() / (hi - lo)).coerceIn(0f, 1f),
             correct >= ProgressMath.WEDGE_CORRECT && acc >= ProgressMath.WEDGE_ACCURACY)
     }
+    // F1 calibration: lifetime per-tier (hits,total) across Stake rounds.
+    fun calibration(): Map<Int, Pair<Int, Int>> {
+        val o = JSONObject(prefs.getString("calibration", "{}") ?: "{}")
+        return o.keys().asSequence().associate { k ->
+            val a = o.getJSONArray(k); k.toInt() to (a.getInt(0) to a.getInt(1))
+        }
+    }
+    fun addCalibration(outcomes: Map<Int, Pair<Int, Int>>) {
+        val cur = calibration().toMutableMap()
+        outcomes.forEach { (tier, o) ->
+            if (o.second == 0) return@forEach
+            val ex = cur[tier] ?: (0 to 0)
+            cur[tier] = (ex.first + o.first) to (ex.second + o.second)
+        }
+        val out = JSONObject()
+        cur.forEach { (tier, o) -> out.put(tier.toString(), org.json.JSONArray().put(o.first).put(o.second)) }
+        prefs.edit().putString("calibration", out.toString()).apply()
+    }
+
     fun streak(): Pair<Int, Int> = (prefs.getInt("streak_cur", 0)) to (prefs.getInt("streak_best", 0))
     private fun bumpStreak() {
         val today = dayKey(); if (prefs.getString("streak_day", "") == today) return

@@ -119,7 +119,8 @@ struct TVGamePlayView: View {
                 try? await Task.sleep(for: .seconds(0.9))
                 switch game.phase {
                 case .playing:
-                    if game.mode == .stake && game.currentStake == 0 { game.setStake(game.stakeTiers.first?.value ?? 1) }
+                    if game.mode == .stake && game.currentStake == 0,
+                       let tier = game.stakeTiers.first(where: { $0.remaining > 0 }) { game.setStake(tier.value) }
                     game.submit(0)
                 case .reveal:  game.advance()
                 default:       break

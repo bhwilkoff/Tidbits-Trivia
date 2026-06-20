@@ -325,6 +325,24 @@ private fun RecordsScreen(store: Store) {
             }
         }
         prog.filter { it.total > 0 }.forEach { TopicRow(it) }
+        val calib = remember { store.calibration() }
+        if (calib.values.any { it.second > 0 }) {
+            Text("Your calibration", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+            Text("From Stake rounds: how often each confidence level actually landed. Well-calibrated means your hit-rate climbs with your confidence.",
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+            STAKE_BUDGET.filter { (calib[it.value]?.second ?: 0) > 0 }.forEach { t ->
+                val o = calib[t.value]!!; val pct = o.first * 100 / o.second
+                ChunkyCard {
+                    Row(Modifier.padding(12.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text(t.label, fontWeight = FontWeight.Bold, modifier = Modifier.width(64.dp))
+                        Box(Modifier.weight(1f).height(16.dp).background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(999.dp)).border(2.dp, Ink, RoundedCornerShape(999.dp))) {
+                            Box(Modifier.fillMaxWidth((o.first.toFloat() / o.second).coerceIn(0.05f, 1f)).fillMaxHeight().background(Pops.mint, RoundedCornerShape(999.dp)))
+                        }
+                        Text("${o.first}/${o.second} · $pct%", fontWeight = FontWeight.Black, fontSize = 13.sp)
+                    }
+                }
+            }
+        }
         Text("Personal bests", fontWeight = FontWeight.Bold, fontSize = 20.sp)
         Mode.entries.forEach { m ->
             val b = store.bestScore(m.name)

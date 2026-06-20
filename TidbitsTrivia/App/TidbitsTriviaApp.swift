@@ -38,7 +38,7 @@ struct TidbitsTriviaApp: App {
     /// `groupContainer:` *traps* (not throws) when the App Group entitlement
     /// isn't present, so it can't ship before the entitlement is configured.
     static func makeModelContainer() -> ModelContainer {
-        let schema = Schema([GameRecord.self, MissedFact.self, DailyStreak.self])
+        let schema = Schema([GameRecord.self, MissedFact.self, DailyStreak.self, CalibrationTally.self])
         #if os(tvOS)
         // Application Support is NOT writable on real Apple TV (Decision 017;
         // the simulator is lenient and won't catch it). Persist in Caches,

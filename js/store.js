@@ -107,6 +107,18 @@ export const Store = {
     });
   },
 
+  // F1 calibration: lifetime per-tier {hits,total} across Stake rounds.
+  calibration() { return LS.get('tidbits.calibration', {}); },
+  addCalibration(outcomes) {
+    const c = this.calibration();
+    for (const [tier, o] of Object.entries(outcomes || {})) {
+      if (!o.total) continue;
+      const cur = c[tier] || { hits: 0, total: 0 };
+      cur.hits += o.hits; cur.total += o.total; c[tier] = cur;
+    }
+    LS.set('tidbits.calibration', c);
+  },
+
   streak() { return LS.get('tidbits.streak', { current: 0, best: 0, lastDay: '' }); },
   _bumpStreak() {
     const s = this.streak();
@@ -138,7 +150,7 @@ export const Store = {
     return this.missed().filter((m) => !m.resolved).sort((a, b) => b.missCount - a.missCount).slice(0, limit).map((m) => m.q);
   },
   resetAll() {
-    ['tidbits.records', 'tidbits.streak', 'tidbits.missed', 'tidbits.seen'].forEach((k) => localStorage.removeItem(k));
+    ['tidbits.records', 'tidbits.streak', 'tidbits.missed', 'tidbits.seen', 'tidbits.calibration'].forEach((k) => localStorage.removeItem(k));
     this._seen.clear();
   },
 };

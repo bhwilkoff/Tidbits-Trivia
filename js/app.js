@@ -150,12 +150,30 @@ function viewRecords() {
       ${statBox(lt.games, 'Games', '#8B5CF6')}${statBox(lt.acc + '%', 'Lifetime acc.', '#2D5BFF')}${statBox(lt.correct, 'Right', '#2FCB8A')}
     </div>
     ${progressSection()}
+    ${calibrationSection()}
     <h2 class="section">Personal bests</h2>
     ${bests.map((x) => `<div class="card row"><b>${h(x.m.title)}</b><span class="big-sm">${x.best}</span></div>`).join('') || '<p class="muted">Play a mode to set a best.</p>'}
     ${review.length ? `<h2 class="section">Facts to review</h2><p class="muted">We slip these back into future games.</p>
       ${review.map((q) => `<div class="card pad"><b>${h(q.prompt)}</b><div class="ans">Answer: ${h(q.options[q.correctIndex])}</div></div>`).join('')}` : ''}`;
 }
 const statBox = (v, l, c) => `<div class="stat card" style="--tint:${c}"><div class="stat-v">${v}</div><div class="stat-l">${l}</div></div>`;
+
+// F1 calibration — per-tier hit rate from Stake rounds.
+function calibrationSection() {
+  const c = Store.calibration();
+  const tiers = STAKE_BUDGET.filter((t) => c[t.value] && c[t.value].total > 0);
+  if (!tiers.length) return '';
+  const rows = tiers.map((t) => {
+    const o = c[t.value], pct = Math.round((o.hits / o.total) * 100);
+    return `<div class="card calib-row">
+      <span class="calib-label">${h(t.label)}</span>
+      <div class="xp-track"><div class="xp-fill" style="width:${Math.max(6, (o.hits / o.total) * 100)}%;background:var(--color-mint)"></div></div>
+      <span class="calib-meta">${o.hits}/${o.total} · ${pct}%</span></div>`;
+  }).join('');
+  return `<h2 class="section">Your calibration</h2>
+    <p class="muted">From Stake rounds: how often each confidence level actually landed. Well-calibrated means your hit-rate climbs with your confidence.</p>
+    ${rows}`;
+}
 
 // Topic Levels (depth) + The Pie (breadth) — SOLO-BACKLOG M3 + M4.
 function progressSection() {
@@ -194,6 +212,7 @@ class Game {
     // Stake: the remaining confidence-chip budget + the chip on this question (0 = unset).
     this.stakeTiers = this.mode.id === 'stake' ? STAKE_BUDGET.map((t) => ({ value: t.value, label: t.label, remaining: t.count })) : [];
     this.currentStake = 0;
+    this.stakeOutcomes = {}; // F1 calibration: tierValue -> {hits, total}
   }
   async load() {
     let qs;
@@ -262,6 +281,11 @@ class Game {
     const q = this.current, taken = (Date.now() - this.qStart) / 1000;
     const correct = choice === q.correctIndex;
     this.answered.push({ q, chosen: choice, correct, taken });
+    if (this.mode.id === 'stake' && this.currentStake !== 0) {
+      const o = this.stakeOutcomes[this.currentStake] || { hits: 0, total: 0 };
+      o.total++; if (correct) o.hits++;
+      this.stakeOutcomes[this.currentStake] = o;
+    }
     if (correct) {
       this.streak++; this.maxStreak = Math.max(this.maxStreak, this.streak);
       // Stake: the reward IS the chip (calibration). Sweep: +1 per correct — the
@@ -285,6 +309,7 @@ class Game {
     const correct = this.answered.filter((a) => a.correct).length;
     Store.addRecord({ mode: this.mode.id, categoryID: this.category.id, score: this.score, correct, total: this.answered.length, maxStreak: this.maxStreak, date: dayKey() });
     Store.recordMisses(this.answered);
+    if (this.mode.id === 'stake') Store.addCalibration(this.stakeOutcomes);
   }
   summary() {
     const correct = this.answered.filter((a) => a.correct).length;

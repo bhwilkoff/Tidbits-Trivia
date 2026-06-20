@@ -61,6 +61,7 @@ struct SettingsView: View {
         try? modelContext.delete(model: GameRecord.self)
         try? modelContext.delete(model: MissedFact.self)
         try? modelContext.delete(model: DailyStreak.self)
+        try? modelContext.delete(model: CalibrationTally.self)
         try? modelContext.save()
         QuestionProvider.shared.resetSeen()
     }

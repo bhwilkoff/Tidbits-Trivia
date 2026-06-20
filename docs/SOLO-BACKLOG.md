@@ -49,7 +49,7 @@ aliases unlocks SEVEN question types. Most `P2` items are gated on it.
 
 | ID | Item | What | Pri | Status |
 |---|---|---|---|---|
-| F1 | **Calibration stats** | From Stake: per-tier accuracy ("High 2/2, Med 2/3, Low 1/3") in Records — the self-knowledge mirror. | P0 | ⏳ (with M1) |
+| F1 | **Calibration stats** | From Stake: per-tier accuracy (Sure/Likely/Hunch hit-rate) in Records — the self-knowledge mirror. | P0 | ✅ iOS/web/Android (tvOS ⏳ Records UI) |
 | F2 | **Full missed-fact recap** | Post-game list of every missed Q + the cited fact (today: emoji grid on tvOS/Android; full list ⏳). Closes a `PARITY` row. | P1 | ⏳ |
 | F3 | **Derived difficulty rating** | Per-question difficulty (subject obscurity / answer page-view rank), build-time → enables 50:50, escalation, ladder. | P1 | ⏳ |
 | F4 | **Answer-distribution telemetry** | Privacy-respecting per-option counts (local-first; aggregate later) → unlocks **Predict the Crowd** solo + an "X% picked this" reveal. | P2 | ⏳ |

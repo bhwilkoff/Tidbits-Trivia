@@ -39,6 +39,8 @@ class GameState(
     var stakeTiers by mutableStateOf<List<StakeTier>>(emptyList())
     var currentStake by mutableIntStateOf(0)
     val stakeLabel: String get() = stakeTiers.firstOrNull { it.value == currentStake }?.label ?: ""
+    // F1 calibration: per-tier [hits, total] for this round.
+    private val stakeOutcomes = mutableMapOf<Int, IntArray>()
 
     var questions: List<Question> = emptyList(); private set
     private var budget = 30.0
@@ -138,6 +140,10 @@ class GameState(
         val correct = choice == q.correctIndex
         answered.add(Answered(q, choice, correct, taken))
         lastCorrect = correct
+        if (mode == Mode.STAKE && currentStake != 0) {
+            val o = stakeOutcomes.getOrPut(currentStake) { intArrayOf(0, 0) }
+            o[1]++; if (correct) o[0]++
+        }
         if (correct) {
             streak++; maxStreak = max(maxStreak, streak)
             // Stake: the reward IS the chip (calibration). Sweep: +1 per correct —
@@ -165,6 +171,7 @@ class GameState(
         if (!recorded) {
             recorded = true
             store.addRecord(Store.Rec(mode.name, category.id, score, correctCount, answered.size, maxStreak, dayKey()))
+            if (mode == Mode.STAKE) store.addCalibration(stakeOutcomes.mapValues { it.value[0] to it.value[1] })
         }
     }
 

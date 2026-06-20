@@ -82,6 +82,22 @@ final class MissedFact {
     }
 }
 
+/// Lifetime calibration from Stake rounds (F1) — one row per confidence tier
+/// (3=Sure, 2=Likely, 1=Hunch). The self-knowledge mirror: do my "Sure" chips
+/// actually land? A well-calibrated player's hit-rate rises with the tier.
+@Model
+final class CalibrationTally {
+    var tierValue: Int
+    var hits: Int
+    var total: Int
+
+    init(tierValue: Int, hits: Int = 0, total: Int = 0) {
+        self.tierValue = tierValue
+        self.hits = hits
+        self.total = total
+    }
+}
+
 /// Tracks the Daily streak independent of any single game record.
 @Model
 final class DailyStreak {

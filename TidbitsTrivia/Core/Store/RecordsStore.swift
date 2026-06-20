@@ -27,6 +27,7 @@ enum RecordsStore {
         }
 
         if summary.mode == .daily { bumpDailyStreak(in: context) }
+        if summary.mode == .stake { addCalibration(summary.stakeOutcomes, in: context) }
 
         try? context.save()
         return isNewBest
@@ -70,6 +71,24 @@ enum RecordsStore {
         if let existing = try? context.fetch(desc).first, !existing.resolved {
             existing.resolved = true
             existing.lastSeen = .now
+        }
+    }
+
+    /// Lifetime calibration tallies, highest tier first (Sure, Likely, Hunch).
+    static func calibration(in context: ModelContext) -> [CalibrationTally] {
+        let all = (try? context.fetch(FetchDescriptor<CalibrationTally>())) ?? []
+        return all.sorted { $0.tierValue > $1.tierValue }
+    }
+
+    private static func addCalibration(_ outcomes: [Int: StakeOutcome], in context: ModelContext) {
+        for (tier, outcome) in outcomes where outcome.total > 0 {
+            let desc = FetchDescriptor<CalibrationTally>(predicate: #Predicate { $0.tierValue == tier })
+            if let existing = try? context.fetch(desc).first {
+                existing.hits += outcome.hits
+                existing.total += outcome.total
+            } else {
+                context.insert(CalibrationTally(tierValue: tier, hits: outcome.hits, total: outcome.total))
+            }
         }
     }
 

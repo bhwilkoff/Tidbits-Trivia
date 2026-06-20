@@ -10,6 +10,7 @@ struct RecordsView: View {
     @Query private var streaks: [DailyStreak]
     @Query(filter: #Predicate<MissedFact> { !$0.resolved }, sort: \MissedFact.missCount, order: .reverse)
     private var toReview: [MissedFact]
+    @Query(sort: \CalibrationTally.tierValue, order: .reverse) private var calibration: [CalibrationTally]
 
     var body: some View {
         ScrollView {
@@ -20,6 +21,7 @@ struct RecordsView: View {
                     streakCard
                     lifetimeRow
                     progressSection
+                    if calibration.contains(where: { $0.total > 0 }) { calibrationSection }
                     bestsSection
                     if !toReview.isEmpty { reviewSection }
                 }
@@ -71,6 +73,43 @@ struct RecordsView: View {
             StatBox(value: "\(pct)%", label: "Lifetime Acc.", tint: Tidbits.Palette.blue)
             StatBox(value: "\(totalCorrect)", label: "Right", tint: Tidbits.Palette.mint)
         }
+    }
+
+    // MARK: Calibration (F1) — from Stake rounds
+
+    private var calibrationSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Your calibration").font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
+            Text("From Stake rounds: how often each confidence level actually landed. Well-calibrated means your hit-rate climbs with your confidence.")
+                .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                .fixedSize(horizontal: false, vertical: true)
+            ForEach(calibration.filter { $0.total > 0 }, id: \.tierValue) { tally in
+                let pct = Int((Double(tally.hits) / Double(tally.total) * 100).rounded())
+                HStack(spacing: 12) {
+                    Text(tierLabel(tally.tierValue)).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                        .frame(width: 70, alignment: .leading)
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
+                            Capsule().fill(Tidbits.Palette.surface)
+                            Capsule().fill(Tidbits.Palette.mint).frame(width: max(6, geo.size.width * Double(tally.hits) / Double(tally.total)))
+                        }
+                        .overlay(Capsule().strokeBorder(Tidbits.Palette.border, lineWidth: 2))
+                    }
+                    .frame(height: 16)
+                    Text("\(tally.hits)/\(tally.total) · \(pct)%")
+                        .font(.system(size: 13, weight: .black, design: .rounded).monospacedDigit())
+                        .foregroundStyle(Tidbits.Palette.ink)
+                        .frame(width: 92, alignment: .trailing)
+                }
+                .padding(12)
+                .chunkyCard()
+                .padding(.trailing, Tidbits.Metric.shadowOffset)
+            }
+        }
+    }
+
+    private func tierLabel(_ value: Int) -> String {
+        GameMode.stakeBudget.first { $0.value == value }?.label ?? "+\(value)"
     }
 
     // MARK: Progress — The Pie (breadth) + Topic Levels (depth)

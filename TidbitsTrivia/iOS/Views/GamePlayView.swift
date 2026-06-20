@@ -19,7 +19,9 @@ struct GamePlayView: View {
                         QuestionCard(question: q)
                         if game.mode == .sweep { sweepGrid }
                         if game.mode == .stake && game.phase == .playing { stakeSelector }
-                        if let spec = q.closest { closestPanel(spec) } else { answers(for: q) }
+                        if q.ordering != nil { orderingPanel() }
+                        else if let spec = q.closest { closestPanel(spec) }
+                        else { answers(for: q) }
                         if game.phase == .reveal { reveal(for: q) }
                     }
                     .padding(.horizontal, Tidbits.Metric.pad)
@@ -45,6 +47,7 @@ struct GamePlayView: View {
                 switch game.phase {
                 case .playing:
                     if game.mode == .closestCall { game.submitGuess(); break }
+                    if game.mode == .ordering { game.submitOrder(); break }
                     if game.mode == .stake && game.currentStake == 0,
                        let tier = game.stakeTiers.first(where: { $0.remaining > 0 }) { game.setStake(tier.value) }
                     game.submit(0)
@@ -125,6 +128,38 @@ struct GamePlayView: View {
         .padding(14)
         .chunkyCard(fill: Tidbits.Palette.bgDeep)
         .padding(.trailing, Tidbits.Metric.shadowOffset)
+    }
+
+    // MARK: Ordering
+
+    private func orderingPanel() -> some View {
+        let live = game.phase == .playing
+        return VStack(spacing: 10) {
+            ForEach(Array(game.currentOrder.enumerated()), id: \.element) { idx, item in
+                HStack(spacing: 10) {
+                    Text("\(idx + 1)").font(.system(size: 16, weight: .black, design: .rounded))
+                        .foregroundStyle(Tidbits.Palette.inkSoft).frame(width: 22)
+                    Text(item).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    if live {
+                        Button { game.moveOrderItem(idx, up: true) } label: { Image(systemName: "chevron.up") }
+                            .disabled(idx == 0)
+                        Button { game.moveOrderItem(idx, up: false) } label: { Image(systemName: "chevron.down") }
+                            .disabled(idx == game.currentOrder.count - 1)
+                    }
+                }
+                .font(.system(size: 17, weight: .bold))
+                .foregroundStyle(Tidbits.Palette.ink)
+                .padding(.horizontal, 14).padding(.vertical, 12)
+                .chunkyCard(fill: Tidbits.Palette.surface)
+                .padding(.trailing, Tidbits.Metric.shadowOffset)
+            }
+            if live {
+                Button("Submit Order") { game.submitOrder() }
+                    .buttonStyle(ChunkyButtonStyle(fill: game.mode.accent,
+                                                   textColor: game.mode.accent.legibleForeground))
+            }
+        }
     }
 
     // MARK: Closest Call slider
@@ -261,6 +296,14 @@ struct GamePlayView: View {
                         .background(Capsule().fill(game.lastGuessPoints > 0 ? Tidbits.Palette.mint : Tidbits.Palette.surface))
                         .overlay(Capsule().strokeBorder(Tidbits.Palette.border, lineWidth: 2))
                 }
+                if game.mode == .ordering {
+                    Text("+\(game.lastOrderPoints)")
+                        .font(.system(size: 15, weight: .black, design: .rounded))
+                        .foregroundStyle(game.lastOrderPoints > 0 ? Tidbits.Palette.mint.legibleForeground : Tidbits.Palette.ink)
+                        .padding(.horizontal, 10).padding(.vertical, 5)
+                        .background(Capsule().fill(game.lastOrderPoints > 0 ? Tidbits.Palette.mint : Tidbits.Palette.surface))
+                        .overlay(Capsule().strokeBorder(Tidbits.Palette.border, lineWidth: 2))
+                }
             }
             if let spec = q.closest {
                 let off = Int(abs(game.currentGuess - spec.answer).rounded())
@@ -299,7 +342,7 @@ struct GamePlayView: View {
     }
 
     private var isLast: Bool {
-        (game.mode == .classic || game.mode == .daily || game.mode == .stake || game.mode == .sweep || game.mode == .pictureId || game.mode == .thisOrThat || game.mode == .closestCall) && game.index + 1 >= game.questions.count
+        (game.mode == .classic || game.mode == .daily || game.mode == .stake || game.mode == .sweep || game.mode == .pictureId || game.mode == .thisOrThat || game.mode == .closestCall || game.mode == .ordering) && game.index + 1 >= game.questions.count
     }
 }
 

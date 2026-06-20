@@ -44,6 +44,10 @@ final class GameEngine {
     private(set) var currentGuess: Double = 0
     private(set) var lastGuessPoints: Int = 0
 
+    // Ordering (Q4): the player's working arrangement + points the last order earned.
+    private(set) var currentOrder: [String] = []
+    private(set) var lastOrderPoints: Int = 0
+
     // Clocks
     private(set) var remaining: Double = 0      // seconds left on the active clock
     private var clockBudget: Double = 0
@@ -122,6 +126,7 @@ final class GameEngine {
         chosenIndex = nil
         currentStake = 0
         if let spec = current?.closest { currentGuess = ((spec.min + spec.max) / 2).rounded() }
+        if let order = current?.ordering { currentOrder = Self.shuffledDistinct(order) }
         phase = .playing
         questionStart = .now
         clockBudget = mode.perQuestionSeconds ?? (globalRemaining() ?? 30)
@@ -160,7 +165,13 @@ final class GameEngine {
         } else {
             let elapsed = Date().timeIntervalSince(questionStart)
             remaining = max(0, clockBudget - elapsed)
-            if remaining <= 0 { mode == .closestCall ? submitGuess() : submit(nil) }
+            if remaining <= 0 {
+                switch mode {
+                case .closestCall: submitGuess()
+                case .ordering: submitOrder()
+                default: submit(nil)
+                }
+            }
         }
     }
 
@@ -206,6 +217,49 @@ final class GameEngine {
         } else {
             streak = 0; Haptics.wrong()
         }
+        score += pts
+        phase = .reveal
+    }
+
+    // MARK: Ordering
+
+    /// Shuffle so the start order isn't already correct (a free win otherwise).
+    private static func shuffledDistinct(_ order: [String]) -> [String] {
+        guard order.count > 1 else { return order }
+        var s = order
+        for _ in 0..<6 { s.shuffle(); if s != order { break } }
+        return s
+    }
+
+    /// Move an item up (toward the top) or down in the working arrangement.
+    func moveOrderItem(_ index: Int, up: Bool) {
+        guard mode == .ordering, phase == .playing, currentOrder.indices.contains(index) else { return }
+        let target = up ? index - 1 : index + 1
+        guard currentOrder.indices.contains(target) else { return }
+        currentOrder.swapAt(index, target)
+    }
+
+    /// Lock in the arrangement — partial credit by inversion count (adds-only).
+    func submitOrder() {
+        guard phase == .playing, let q = current, let correct = q.ordering else { return }
+        ticker?.cancel()
+        let rank = Dictionary(uniqueKeysWithValues: correct.enumerated().map { ($0.element, $0.offset) })
+        var inversions = 0
+        for i in 0..<currentOrder.count {
+            for j in (i + 1)..<currentOrder.count {
+                if let a = rank[currentOrder[i]], let b = rank[currentOrder[j]], a > b { inversions += 1 }
+            }
+        }
+        let maxInv = correct.count * (correct.count - 1) / 2
+        let pts = maxInv == 0 ? 0 : Int((Double(40) * (1 - Double(inversions) / Double(maxInv))).rounded())
+        lastOrderPoints = pts
+        let perfect = inversions == 0
+        let taken = Date().timeIntervalSince(questionStart)
+        let answer = AnsweredQuestion(question: q, chosenIndex: perfect ? 0 : 1, secondsTaken: taken)
+        answered.append(answer)
+        lastAnswer = answer
+        if perfect { streak += 1; maxStreak = max(maxStreak, streak); Haptics.correct() }
+        else { streak = 0; Haptics.wrong() }
         score += pts
         phase = .reveal
     }

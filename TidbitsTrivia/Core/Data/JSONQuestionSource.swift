@@ -9,6 +9,7 @@ nonisolated final class JSONQuestionSource: @unchecked Sendable {
     static let picture = JSONQuestionSource(resource: "picture")
     static let thisOrThat = JSONQuestionSource(resource: "thisorthat")
     static let closestCall = JSONQuestionSource(resource: "closest")
+    static let ordering = JSONQuestionSource(resource: "order")
 
     private let all: [Question]
 
@@ -36,21 +37,32 @@ nonisolated final class JSONQuestionSource: @unchecked Sendable {
     private static func num(_ v: Any) -> Double? { (v as? NSNumber)?.doubleValue }
 
     private static func parse(_ r: [Any]) -> Question? {
-        guard r.count >= 9, let id = r[0] as? String, let prompt = r[1] as? String else { return nil }
+        guard r.count >= 8, let id = r[0] as? String, let prompt = r[1] as? String else { return nil }
         let template = id.split(separator: ":").first.map(String.init) ?? "json"
 
-        // MCQ rows (corpus / picture / thisorthat): index 2 is the options array.
-        if let options = r[2] as? [String] {
-            guard options.count >= 2, let correct = r[3] as? Int,
-                  options.indices.contains(correct), let cat = r[4] as? String else { return nil }
-            let image = (r.count >= 10) ? (r[9] as? String).flatMap(URL.init(string:)) : nil
+        // index 2 is an array → MCQ (corpus/picture/thisorthat) or Ordering.
+        if let arr2 = r[2] as? [String] {
+            if let correct = r[3] as? Int {
+                // MCQ
+                guard arr2.count >= 2, arr2.indices.contains(correct), let cat = r[4] as? String else { return nil }
+                let image = (r.count >= 10) ? (r[9] as? String).flatMap(URL.init(string:)) : nil
+                return Question(
+                    id: id, prompt: prompt, options: arr2, correctIndex: correct,
+                    categoryID: cat, difficulty: r[5] as? Int ?? 3,
+                    explanation: r[6] as? String ?? "",
+                    sourceTitle: r[7] as? String ?? "",
+                    sourceURL: (r[8] as? String).flatMap(URL.init(string:)),
+                    templateID: template, imageURL: image)
+            }
+            // Ordering: [id, prompt, names(correct order), years, cat, expl, title, url].
+            guard arr2.count >= 2, r.count >= 8, let cat = r[4] as? String else { return nil }
             return Question(
-                id: id, prompt: prompt, options: options, correctIndex: correct,
-                categoryID: cat, difficulty: r[5] as? Int ?? 3,
-                explanation: r[6] as? String ?? "",
-                sourceTitle: r[7] as? String ?? "",
-                sourceURL: (r[8] as? String).flatMap(URL.init(string:)),
-                templateID: template, imageURL: image)
+                id: id, prompt: prompt, options: arr2, correctIndex: 0,
+                categoryID: cat, difficulty: 3,
+                explanation: r[5] as? String ?? "",
+                sourceTitle: r[6] as? String ?? "",
+                sourceURL: (r[7] as? String).flatMap(URL.init(string:)),
+                templateID: template, ordering: arr2)
         }
 
         // Numeric (Closest Call): [id, prompt, answer, min, max, step, tol, unit,

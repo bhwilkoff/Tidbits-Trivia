@@ -236,6 +236,21 @@ One-line-per-round; full detail in `ARCHIVE.md`.
   their corpus is SQLite), then Closest Call (M5 numeric dial) + the other
   E1-gated types; also queued: F3 difficulty, F4 telemetry/Predict-the-Crowd,
   Couch Co-op, Buzz Night game-mode wiring (on the Bonjour foundation), Link Wall.
+- **2026-06-20** — **E1 consumer modes shipped** (Ben: keep going on the backlog).
+  All 4 platforms, each verified on the iOS sim + 4 builds, versions bumped per
+  the new X.Y.Z convention: **Picture ID (Q7)** 1.1.0→… (816 image Qs, AsyncImage/
+  img/Coil), **This-or-That / "Which First?" (Q1)** (779 Qs: came-first + bigger
+  population/area on the 2-option surface), **population data fix** (enrich.py
+  max-claim; Canada 44→40M), and **Closest Call (M5)** 1.1.4 — the **first
+  non-MCQ type** (numeric estimation, 1,233 Qs: year/atomic/elevation; slider on
+  iOS/web/Android, ±stepper on tvOS since tvOS has no Slider; adds-only proximity;
+  Decision 031). Generic per-platform bundled-JSON loader (detects MCQ vs numeric
+  by row shape) so each new mode is a one-liner. Also fixed the dark-on-dark
+  ChunkyCard tiles (translucent fill bleeding the shadow) + adopted X.Y.Z
+  versioning ([[versioning-convention]]). *Left (E1-gated, templated on the above):*
+  Odd-one-out (Q3, needs P31/P106 enrichment), Matching (Q5, capital/element
+  pairs), Ordering (Q4, year-sort), Type-the-answer (Q6, aliases); non-E1: F3
+  difficulty, F4 telemetry/Predict-the-Crowd, Couch Co-op, Buzz Night, Link Wall.
 - **2026-06-20** — **legibility fix + Picture ID (first E1 consumer)**. Ben flagged
   dark-on-dark Results tiles. *Found:* structural, not text-color — `ChunkyCard`
   draws a near-black "shadow" rect behind the fill; translucent tint fills

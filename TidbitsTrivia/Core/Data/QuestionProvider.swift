@@ -50,6 +50,9 @@ final class QuestionProvider {
         if mode == .closestCall {
             return JSONQuestionSource.closestCall.questions(categoryID: category.id, excluding: seen, limit: need)
         }
+        if mode == .ordering {
+            return JSONQuestionSource.ordering.questions(categoryID: category.id, excluding: seen, limit: need)
+        }
 
         var pulled = CorpusDatabase.shared.questions(
             categoryID: category.id, excluding: seen, limit: need)

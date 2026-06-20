@@ -17,6 +17,7 @@ nonisolated struct Question: Identifiable, Hashable, Codable, Sendable {
     let templateID: String
     var imageURL: URL? = nil   // Picture ID (Q7): the Commons image to identify
     var closest: ClosestSpec? = nil   // Closest Call (M5): numeric estimation
+    var ordering: [String]? = nil     // Ordering (Q4): the items in CORRECT order
 
     var correctAnswer: String {
         if options.indices.contains(correctIndex) { return options[correctIndex] }

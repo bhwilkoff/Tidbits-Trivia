@@ -59,6 +59,7 @@ fun AppRoot(store: Store) {
         if (!Pictures.loaded) runCatching { Pictures.load(context) }
         if (!ThisOrThat.loaded) runCatching { ThisOrThat.load(context) }
         if (!ClosestCall.loaded) runCatching { ClosestCall.load(context) }
+        if (!OrderingSet.loaded) runCatching { OrderingSet.load(context) }
         corpusReady = true
     }
 
@@ -104,7 +105,7 @@ private fun HomeScreen(onPlay: (Mode, Category) -> Unit) {
 
         Text("Pick a mode", fontWeight = FontWeight.Bold, fontSize = 20.sp)
         LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            items(listOf(Mode.CLASSIC, Mode.TIME_ATTACK, Mode.SURVIVAL, Mode.STAKE, Mode.SWEEP, Mode.PICTURE_ID, Mode.THIS_OR_THAT, Mode.CLOSEST_CALL), key = { it.name }) { m ->
+            items(listOf(Mode.CLASSIC, Mode.TIME_ATTACK, Mode.SURVIVAL, Mode.STAKE, Mode.SWEEP, Mode.PICTURE_ID, Mode.THIS_OR_THAT, Mode.CLOSEST_CALL, Mode.ORDERING), key = { it.name }) { m ->
                 FilterChip(selected = selectedMode == m, onClick = { selectedMode = m }, label = { Text(m.title) })
             }
         }
@@ -178,6 +179,7 @@ private fun PlayingScreen(game: GameState) {
         if (game.mode == Mode.SWEEP) SweepGrid(game)
         if (game.mode == Mode.STAKE && game.phase == GamePhase.PLAYING) StakeSelector(game)
         q.closest?.let { ClosestPanel(game, it) }
+        if (q.ordering != null) OrderingPanel(game)
         val answersLocked = game.phase != GamePhase.PLAYING || (game.mode == Mode.STAKE && game.currentStake == 0)
         q.options.forEachIndexed { i, opt -> AnswerButton(opt, game.answerState(i), !answersLocked) { game.submit(i) } }
         if (game.phase == GamePhase.REVEAL) {
@@ -190,6 +192,7 @@ private fun PlayingScreen(game: GameState) {
                             AssistChip(onClick = {}, label = { Text(earned, fontWeight = FontWeight.Black) })
                         }
                         if (q.closest != null) AssistChip(onClick = {}, label = { Text("+${game.lastGuessPoints}", fontWeight = FontWeight.Black) })
+                        if (q.ordering != null) AssistChip(onClick = {}, label = { Text("+${game.lastOrderPoints}", fontWeight = FontWeight.Black) })
                     }
                     q.closest?.let { s ->
                         Text("You said ${s.fmt(game.currentGuess)} · actual ${s.formattedAnswer} · off by ${Math.abs(Math.round(game.currentGuess - s.answer))}",
@@ -232,6 +235,28 @@ private fun SweepGrid(game: GameState) {
             }
             start += perRow
         }
+    }
+}
+
+// Ordering (Q4): rows with up/down + Submit; partial credit by inversions.
+@Composable
+private fun OrderingPanel(game: GameState) {
+    val live = game.phase == GamePhase.PLAYING
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        game.currentOrder.forEachIndexed { i, item ->
+            ChunkyCard(modifier = Modifier.fillMaxWidth()) {
+                Row(Modifier.padding(horizontal = 12.dp, vertical = 10.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("${i + 1}", fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                    Text(item, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                    if (live) {
+                        IconButton(onClick = { game.moveOrderItem(i, true) }, enabled = i != 0) { Text("▲") }
+                        IconButton(onClick = { game.moveOrderItem(i, false) }, enabled = i != game.currentOrder.lastIndex) { Text("▼") }
+                    }
+                }
+            }
+        }
+        if (live) Button(onClick = { game.submitOrder() }, modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = Pops.blue)) { Text("Submit Order") }
     }
 }
 

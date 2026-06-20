@@ -65,7 +65,7 @@ struct TVGameContainer: View {
 
 // MARK: - Gameplay
 
-private enum TVFocus: Hashable { case stake(Int), answer(Int), closestSlider, closestLock, next }
+private enum TVFocus: Hashable { case stake(Int), answer(Int), closestSlider, closestLock, orderRow(Int), orderSubmit, next }
 
 struct TVGamePlayView: View {
     let onQuit: () -> Void
@@ -87,7 +87,9 @@ struct TVGamePlayView: View {
                     .fixedSize(horizontal: false, vertical: true)
                 if game.mode == .sweep { sweepRow }
                 if game.mode == .stake && game.phase == .playing { stakeRow }
-                if let spec = q.closest {
+                if q.ordering != nil {
+                    orderingPanel()
+                } else if let spec = q.closest {
                     closestPanel(spec)
                 } else {
                     HStack(spacing: 28) {
@@ -124,6 +126,7 @@ struct TVGamePlayView: View {
                 try? await Task.sleep(for: .seconds(0.9))
                 switch game.phase {
                 case .playing:
+                    if game.mode == .ordering { game.submitOrder(); break }
                     if game.mode == .closestCall { game.submitGuess(); break }
                     if game.mode == .stake && game.currentStake == 0,
                        let tier = game.stakeTiers.first(where: { $0.remaining > 0 }) { game.setStake(tier.value) }
@@ -135,7 +138,37 @@ struct TVGamePlayView: View {
         }
     }
 
+    /// Ordering at ten feet — focusable per-row ↑/↓ + a Submit button.
+    private func orderingPanel() -> some View {
+        let live = game.phase == .playing
+        return VStack(spacing: 16) {
+            ForEach(Array(game.currentOrder.enumerated()), id: \.element) { idx, item in
+                HStack(spacing: 24) {
+                    Text("\(idx + 1)").font(.system(size: 28, weight: .black, design: .rounded)).foregroundStyle(TVTheme.textSoft).frame(width: 44)
+                    Text(item).font(.system(size: 31, weight: .bold, design: .rounded)).foregroundStyle(.white)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    if live {
+                        Button { game.moveOrderItem(idx, up: true) } label: { Image(systemName: "chevron.up") }
+                            .buttonStyle(TVChipStyle(accent: Tidbits.Palette.blue, selected: false)).disabled(idx == 0)
+                        Button { game.moveOrderItem(idx, up: false) } label: { Image(systemName: "chevron.down") }
+                            .buttonStyle(TVChipStyle(accent: Tidbits.Palette.blue, selected: false)).disabled(idx == game.currentOrder.count - 1)
+                            .focused($focus, equals: .orderRow(idx))
+                    }
+                }
+                .padding(.horizontal, 28).padding(.vertical, 14)
+                .background(RoundedRectangle(cornerRadius: 16).fill(TVTheme.panel))
+            }
+            if live {
+                Button("Submit Order") { game.submitOrder() }
+                    .buttonStyle(TVChipStyle(accent: game.mode.accent, selected: false))
+                    .focused($focus, equals: .orderSubmit)
+            }
+        }
+        .frame(maxWidth: 1100)
+    }
+
     private var firstFocus: TVFocus {
+        if game.current?.ordering != nil { return .orderSubmit }
         if game.current?.closest != nil { return .closestSlider }
         return game.mode == .stake && game.currentStake == 0
             ? .stake(game.stakeTiers.first?.value ?? 0)
@@ -284,7 +317,7 @@ struct TVGamePlayView: View {
         .background(RoundedRectangle(cornerRadius: 22).fill(TVTheme.panel))
     }
     private var isLast: Bool {
-        (game.mode == .classic || game.mode == .daily || game.mode == .stake || game.mode == .sweep || game.mode == .pictureId || game.mode == .thisOrThat || game.mode == .closestCall) && game.index + 1 >= game.questions.count
+        (game.mode == .classic || game.mode == .daily || game.mode == .stake || game.mode == .sweep || game.mode == .pictureId || game.mode == .thisOrThat || game.mode == .closestCall || game.mode == .ordering) && game.index + 1 >= game.questions.count
     }
 }
 

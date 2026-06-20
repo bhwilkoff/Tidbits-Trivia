@@ -68,6 +68,26 @@ Build order: **local pass-and-play → Game Center async head-to-head & groups
 Same-room and remote should be the SAME mechanic (Jackbox's lesson). See
 DECISIONS 023.
 
+## Game modes, interaction methods & bar-trivia formats
+
+**Deep research + the proposed slate of Tidbits "home versions" live in
+`docs/GAME-MODES-RESEARCH.md`** — a full catalog of (A) bar/pub-trivia formats,
+(B) quiz question/interaction types, and (C) phone-as-buzzer / second-screen
+architecture, plus Part D: each proposed mode run through the learning-orientation
+four-question test. Headline findings:
+- **Phone-as-buzzer is phased:** Apple-native local (Network.framework + Bonjour +
+  TLS-PSK; offline, no server, Apple-only same-room) as the MVP → a universal
+  **web-room** (Cloudflare Durable Object; `tidbits.tv/<code>`, any phone browser,
+  same-room *and* remote). tvOS has no web view, so the host is always native; only
+  phones are browsers.
+- **One Wikidata enrichment pass (numeric + Commons image + aliases) unlocks SEVEN
+  formats** (Closest-to, Ordering, This-or-That, Picture ID, Type-the-answer,
+  Matching, Wits & Wagers) — the highest-leverage corpus investment.
+- **Recommended first modes** (all-yes on the test, ride the current corpus):
+  **Stake** (adds-only confidence allocation), **Couch Co-op** (no-infra same-room),
+  **Predict the Crowd** (needs answer-distribution telemetry). Marquee daily:
+  **Link Wall** (a cited-why Connections home version).
+
 ## Anti-patterns we will NOT build (every one is a documented 1-star driver)
 
 Cash-prize-split economics · energy/lives gating (esp. in a paid tier) ·

@@ -7,7 +7,7 @@
 > `docs/ROADMAP.md`, `docs/DATA-CONTRACT.md`. Detailed per-round history is in
 > `ARCHIVE.md`.
 
-## Current state (2026-06-19)
+## Current state (2026-06-20)
 
 - **All four platforms PLAY**, off one shared corpus, all pushed to `main`:
   - **iOS/iPadOS** — full SP (4 modes, 8 categories, learn-reveal), local
@@ -138,3 +138,30 @@ One-line-per-round; full detail in `ARCHIVE.md`.
   universal archive no longer fails the tvOS slice. *Left:* App Group
   ModelConfiguration on tvOS (currently Caches store — survives launch, purgeable)
   + Records/onboarding browse UI remain ⏳ on tvOS (PARITY unchanged, honest).
+- **2026-06-20** — **iOS splash rebuilt** (user: splash should extend the icon —
+  dots around the screen, icon centered, not just a T on flat coral). Replaced the
+  minimal `UILaunchScreen` dict (color + one centered image only) with a real
+  `LaunchScreen.storyboard`: coral view bg + full-bleed `LaunchDots` (transparent,
+  aspectFill) + centered `LaunchIcon` tile (exact shipped-icon proportions). New
+  `tools/branding/make_launch.py`. Storyboard is iOS-only (tvOS rejects it) →
+  `EXCLUDED_SOURCE_FILE_NAMES[sdk=appletv*]`; dangling `UILaunchStoryboardName`
+  ignored by tvOS (verified it still launches). Removed unused LaunchLogo. iOS +
+  tvOS both build clean. (Couldn't live-capture the iOS splash — no iOS-26 sim
+  runtime locally; verified via PIL composite + storyboard compile/link.)
+- **2026-06-20** — **game-modes / phone-as-buzzer / bar-trivia research**
+  (user: research interaction methods + quiz types + deeply document all bar-trivia
+  formats so Tidbits can build learning-first "home versions", solo/same-room/
+  virtual). *Did:* 3 parallel research agents (web-sourced) → synthesized
+  `docs/GAME-MODES-RESEARCH.md`: Part A (bar/pub + digital formats catalog w/
+  innovation hooks), Part B (21 question/interaction types × corpus-fit table),
+  Part C (phone-as-buzzer architecture — Apple-native local vs server web-room,
+  comparison tables, recommendation), Part D (**Tidbits home versions** — each mode
+  run through the learning-orientation 4-question test, grouped solo/same-room/
+  async), Part E (one Wikidata enrichment = numeric+image+aliases → unlocks 7
+  formats), Part F/G (architecture + build order + decisions to log). Pointer added
+  to ROADMAP. **Key calls:** phone-as-buzzer phased (Apple-native local Bonjour/PSK
+  MVP → universal web-room on Cloudflare Durable Object; tvOS has no web view so
+  host stays native); recommended first modes = **Stake** (adds-only confidence),
+  **Couch Co-op** (no-infra same-room), **Predict the Crowd** (needs answer
+  telemetry). *Left:* research/proposal only — no modes built yet; awaiting user
+  pick of which to ship first (recommend Stake → Couch Co-op).

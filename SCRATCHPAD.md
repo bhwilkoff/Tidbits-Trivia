@@ -236,3 +236,20 @@ One-line-per-round; full detail in `ARCHIVE.md`.
   their corpus is SQLite), then Closest Call (M5 numeric dial) + the other
   E1-gated types; also queued: F3 difficulty, F4 telemetry/Predict-the-Crowd,
   Couch Co-op, Buzz Night game-mode wiring (on the Bonjour foundation), Link Wall.
+- **2026-06-20** — **legibility fix + Picture ID (first E1 consumer)**. Ben flagged
+  dark-on-dark Results tiles. *Found:* structural, not text-color — `ChunkyCard`
+  draws a near-black "shadow" rect behind the fill; translucent tint fills
+  (`color.opacity(0.18)`) let it bleed through → dark tiles. *Fix:* opaque cream
+  base under the fill (one change fixes every tinted tile app-wide); verified on
+  sim; memory `[[legibility-check-compositing]]` saved. Then shipped **Picture ID
+  (Q7)** on all 4 platforms — the first E1 consumer: a Commons image + "What is
+  this?" + the corpus's 4 vetted options (`picture.json`, 816 Qs). New
+  `PictureCorpus`/`Pictures` loaders (iOS/tvOS bundle picture.json beside the
+  SQLite corpus; web/Android JSON-native), `Question.imageURL`, AsyncImage
+  (iOS/tvOS, `.fit`-in-fixed-frame) / `<img>` (web) / Coil (Android, wired into
+  build.gradle) each with a load-failure fallback. Needs network (every other
+  mode stays offline). iOS sim shot verified a real Commons image renders.
+  Versions: Apple 1.0(6), Android v3. *Left:* the remaining E1 types now template
+  on Picture ID's bundled-JSON+loader+mode pattern — Closest Call (M5, numeric
+  dial), This-or-That (Q1), Odd-one-out (Q3), Matching (Q5), Ordering (Q4),
+  Type-the-answer (Q6); plus F3/F4, Couch Co-op, Buzz Night, Link Wall.

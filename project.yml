@@ -22,7 +22,12 @@ settings:
 targets:
   TidbitsTrivia:
     type: application
-    supportedDestinations: [iOS, tvOS]
+    # iOS-only for App Store submission until tvOS ships its own assets.
+    # tvOS App Store validation requires a layered App Icon (brandassets) + a
+    # Top Shelf image (TVTopShelfImage) — neither exists yet, so a universal
+    # archive fails with ITMS-90513 on the tvOS slice. The tvOS code stays
+    # (guarded by #if os(tvOS)); re-add `tvOS` here once those assets land.
+    supportedDestinations: [iOS]
     sources:
       - path: TidbitsTrivia
     # Game Center capability — the entitlement makes GameCenterManager.authenticate()
@@ -36,9 +41,10 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.learningischange.tidbitstrivia
         PRODUCT_NAME: TidbitsTrivia
-        CURRENT_PROJECT_VERSION: 1
-        MARKETING_VERSION: "1.0"
-        TARGETED_DEVICE_FAMILY: "1,2,3"
+        # MARKETING_VERSION / CURRENT_PROJECT_VERSION come ONLY from
+        # AppVersion.xcconfig (the single source of truth). Target-level copies
+        # here would SHADOW the xcconfig — every build silently stayed at 1(1).
+        TARGETED_DEVICE_FAMILY: "1,2"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
     info:
@@ -49,6 +55,11 @@ targets:
       path: TidbitsTrivia/Info.plist
       properties:
         CFBundleDisplayName: Tidbits
+        # Bind the Info.plist version keys to the build-setting variables so they
+        # resolve from AppVersion.xcconfig — without this xcodegen wrote literal
+        # "1"/"1.0" into the plist, freezing every build at 1(1).
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
         # Tidbits is a fixed "cream paper" design with NO dark-mode variants, so
         # force light everywhere — otherwise a dark-mode iPhone inverts default
         # text to white (white-on-cream) and system surfaces to dark

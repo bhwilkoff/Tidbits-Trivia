@@ -107,6 +107,16 @@ struct ChunkyCard: ViewModifier {
                 RoundedRectangle(cornerRadius: radius, style: .continuous)
                     .fill(fill)
             )
+            // Opaque base UNDER the fill: a tile may be tinted with a
+            // translucent fill (e.g. category.color.opacity(0.18)); without an
+            // opaque layer here, the near-black offset "shadow" rectangle below
+            // bleeds straight through the tint and the whole tile reads dark
+            // (dark-text-on-dark). Cream base = the tint composites over paper,
+            // exactly as intended, and the shadow stays hidden except its slice.
+            .background(
+                RoundedRectangle(cornerRadius: radius, style: .continuous)
+                    .fill(Tidbits.Palette.bg)
+            )
             .overlay(
                 RoundedRectangle(cornerRadius: radius, style: .continuous)
                     .strokeBorder(Tidbits.Palette.border, lineWidth: Tidbits.Metric.borderWidth)

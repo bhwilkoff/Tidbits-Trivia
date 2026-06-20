@@ -189,11 +189,16 @@ final class GameEngine {
             streak += 1
             maxStreak = max(maxStreak, streak)
             // Stake: the reward IS the chip you bet (no speed/streak multiplier —
-            // it's calibration, not a race). Other modes: speed-aware scoring.
-            score += mode == .stake
-                ? currentStake
-                : Scoring.points(correct: true, secondsTaken: taken,
-                                 budget: mode.perQuestionSeconds ?? clockBudget, streak: streak)
+            // it's calibration, not a race). Sweep: +1 per correct — the score IS
+            // the count of the set you filled, beat-your-own-best (no speed bonus,
+            // so the grid stays an honest tally). Other modes: speed-aware scoring.
+            switch mode {
+            case .stake: score += currentStake
+            case .sweep: score += 1
+            default:
+                score += Scoring.points(correct: true, secondsTaken: taken,
+                                        budget: mode.perQuestionSeconds ?? clockBudget, streak: streak)
+            }
             Haptics.correct()
         } else {
             streak = 0

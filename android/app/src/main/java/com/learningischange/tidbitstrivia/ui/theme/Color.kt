@@ -22,6 +22,7 @@ object Pops {
     val mint = Color(0xFF2FCB8A)
     val grape = Color(0xFF8B5CF6)
     val pink = Color(0xFFFF5DA2)
+    val teal = Color(0xFF13B6C9) // sweep mode accent
     val all = listOf(coral, blue, yellow, mint, grape, pink)
     fun at(i: Int) = all[((i % all.size) + all.size) % all.size]
 }

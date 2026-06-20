@@ -16,6 +16,7 @@ struct GamePlayView: View {
                 ScrollView {
                     VStack(spacing: 18) {
                         QuestionCard(question: q)
+                        if game.mode == .sweep { sweepGrid }
                         if game.mode == .stake && game.phase == .playing { stakeSelector }
                         answers(for: q)
                         if game.phase == .reveal { reveal(for: q) }
@@ -123,6 +124,39 @@ struct GamePlayView: View {
         .padding(.trailing, Tidbits.Metric.shadowOffset)
     }
 
+    // MARK: Sweep fill-grid
+
+    /// The persistent "set" scoreboard — one cell per question. Filled green
+    /// (hit) / coral (miss) as you go, the current cell outlined, the rest dim.
+    /// The grid IS the progress indicator and the reward (Sporcle's 37/45).
+    private var sweepGrid: some View {
+        let cols = Array(repeating: GridItem(.flexible(), spacing: 7), count: 6)
+        return VStack(alignment: .leading, spacing: 8) {
+            Text("Set: \(game.score) / \(game.questions.count)")
+                .font(Tidbits.TypeRamp.l5)
+                .foregroundStyle(Tidbits.Palette.inkSoft)
+            LazyVGrid(columns: cols, spacing: 7) {
+                ForEach(0..<game.questions.count, id: \.self) { i in
+                    let answered = i < game.answered.count
+                    let hit = answered && game.answered[i].isCorrect
+                    let current = i == game.index
+                    RoundedRectangle(cornerRadius: 5, style: .continuous)
+                        .fill(answered ? (hit ? Tidbits.Palette.mint : Tidbits.Palette.coral)
+                                       : Tidbits.Palette.surface)
+                        .frame(height: 16)
+                        .overlay(RoundedRectangle(cornerRadius: 5, style: .continuous)
+                            .strokeBorder(Tidbits.Palette.border,
+                                          lineWidth: current ? 2.5 : 1.5))
+                        .opacity(answered || current ? 1 : 0.45)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .chunkyCard(fill: Tidbits.Palette.bgDeep)
+        .padding(.trailing, Tidbits.Metric.shadowOffset)
+    }
+
     private func answerState(idx: Int, q: Question) -> AnswerButton.State {
         guard game.phase == .reveal else { return .idle }
         if idx == q.correctIndex { return .correct }
@@ -183,7 +217,7 @@ struct GamePlayView: View {
     }
 
     private var isLast: Bool {
-        (game.mode == .classic || game.mode == .daily || game.mode == .stake) && game.index + 1 >= game.questions.count
+        (game.mode == .classic || game.mode == .daily || game.mode == .stake || game.mode == .sweep) && game.index + 1 >= game.questions.count
     }
 }
 

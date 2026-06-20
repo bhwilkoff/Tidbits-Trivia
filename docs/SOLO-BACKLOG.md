@@ -26,7 +26,7 @@ aliases unlocks SEVEN question types. Most `P2` items are gated on it.
 | ID | Mode (ancestor) | What | Corpus | Pri | Status |
 |---|---|---|---|---|---|
 | M1 | **Stake** *(LearnedLeague / Pour House)* | 8-Q round; spend a fixed budget of confidence chips (Sure×2 / Likely×3 / Hunch×3) before each answer; correct = +chip, wrong = +0; **adds-only**, never negative. Score = confidence earned; calibration is the lesson. | **Yes** | P0 | ✅ all 4 platforms |
-| M2 | **Sweep** *(Sporcle)* | A themed set ("all 8 planets") as rapid-fire MCQ with a persistent fill-grid (37/45); beat **your own** best; end on a miss-reveal (each missed item + cited fact). | Yes (sets from categories) | P1 | ⏳ |
+| M2 | **Sweep** *(Sporcle)* | A 12-Q set as rapid-fire MCQ with a persistent fill-grid (mint hit / coral miss); +1 per correct (count-scored, no speed bonus); beat **your own** best via per-mode best-score; ends on the existing miss-reveal recap. | Yes (sets from categories) | P1 | ✅ all 4 platforms |
 | M3 | **The Pie** *(Trivial Pursuit)* | Earn one wedge per knowledge domain at a small mastery threshold; the pie completes only when **every** domain is filled — fights corpus/interest bias. Durable, never resets. | Yes (meta over records) | P1 | ⏳ |
 | M4 | **Topic Levels** *(QuizUp)* | XP/levels tracked **per Wikipedia topic**, not globally — a real map of what you know ("L18 Astronomy, L3 Renaissance Art"). | Yes (topic tags + records) | P2 | ⏳ |
 | M5 | **Closest Call** *(higher-lower)* | A numeric answer (year/population/elevation); dial a number; scored by **proximity** (accepts partial knowledge). TV-friendly (no keyboard). | +meta (E1 numeric) | P2 | 🔮 E1 |
@@ -63,7 +63,8 @@ aliases unlocks SEVEN question types. Most `P2` items are gated on it.
    calibration** (per-tier accuracy readout in Records) is the queued follow-up;
    the in-game chip-spending already delivers calibration practice.
 2. **E1 Wikidata enrichment** — the unlock; do once, gains seven types.
-3. **Q1 This-or-That** + **M2 Sweep** — corpus-native, broaden the verb set.
+3. **M2 Sweep** — ✅ shipped on all 4 platforms (2026-06-20). **Q1 This-or-That**
+   — corpus-native (real/fake) is the next verb to broaden; bigger/older needs E1.
 4. **M5 Closest Call**, **Q3 Odd-one-out**, **Q7 Picture ID** — first fruits of E1.
 5. **M3 The Pie** / **M4 Topic Levels** — long-horizon retention meta-progression.
 6. **Q6 Type-the-answer**, **Q4 Ordering**, **Q5 Matching** — the richer E1 types.

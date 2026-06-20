@@ -84,6 +84,13 @@ targets:
         # exempt encryption. Declaring this skips the manual compliance question
         # on every TestFlight / App Store build.
         ITSAppUsesNonExemptEncryption: false
+        # Phase-1 phone-as-buzzer (Decision 030): the TV advertises and phones
+        # browse a room-code-PSK Bonjour service over the LAN. iOS 14+ shows the
+        # local-network prompt on first use; tvOS needs the same declaration to
+        # publish. Network.framework requires every Bonjour type be declared.
+        NSLocalNetworkUsageDescription: "Tidbits uses your local network so phones in the room can act as buzzers for the TV — no internet required."
+        NSBonjourServices:
+          - "_tidbits-buzz._tcp"
         UILaunchStoryboardName: LaunchScreen
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false

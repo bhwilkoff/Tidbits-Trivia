@@ -68,6 +68,7 @@ reached is ⏳ with a note, never silence.
 | Time Attack (60s) | ✅ | ✅ | ✅ | ✅ | |
 | Survival (until one wrong) | ✅ | ✅ | ✅ | ✅ | |
 | Stake (confidence allocation) | ✅ | ✅ | ✅ | ✅ | 8-Q round; fixed chip budget (Sure×2/Likely×3/Hunch×3), commit before answering; adds-only, never negative — calibration, not gambling (Decision 022). Solo "home version" of LearnedLeague/Pour House (GAME-MODES-RESEARCH M1) |
+| Sweep (fill-the-set, beat-your-best) | ✅ | ✅ | ✅ | ✅ | 12-Q "set"; +1 per correct (count-scored, no speed bonus) with a persistent fill-grid scoreboard (mint hit / coral miss); beat your own best via existing per-mode best-score. Sporcle "sweep the set" home version (SOLO-BACKLOG M2) |
 | Daily Tidbit (deterministic, streak) | ✅ | ✅ | ✅ | ✅ | Same 7 Qs for everyone per day; same FNV-1a/SplitMix64 seed on all platforms |
 | 8 categories | ✅ | ✅ | ✅ | ✅ | Mixed/History/Science/Geography/Arts/Film&TV/Music/Sports |
 | Countdown clock + speed bonus | ✅ | ✅ | ✅ | ✅ | Per-question or global per mode |
@@ -110,7 +111,8 @@ reached is ⏳ with a note, never silence.
 | Haptic feedback | n/a | ✅ | n/a | ⏳ | Correct/wrong/milestone; Settings toggle |
 | Settings (haptics, reset, attribution) | ⏳ | ✅ | ⏳ | ⏳ | Toolbar gear → sheet, not a tab |
 | Async head-to-head / groups | 🔮 | ⏳ Game Center | ⏳ | 🔮 | Async > real-time for survivability (ROADMAP) |
-| Living-room mode (phone-as-buzzer) | 🔮 controller | n/a | ⏳ host | 🔮 controller | The biggest open market gap (ROADMAP #4) |
+| Living-room mode (phone-as-buzzer) | 🔮 controller | 🚧 controller | 🚧 host | 🔮 controller | Phase 1 Apple-native (Bonjour + room-code TLS-PSK) FOUNDATION landed: shared `Core/Networking/Buzzer*` (host=tvOS `NWListener`, client=iOS `NWBrowser`); arbiter fairness offline-proven, both slices build clean. NOT yet two-device-verified, not wired to a game mode (Decision 030). Web/Android = Phase 2 web-room (Cloudflare DO). The biggest open market gap (ROADMAP #4) |
+| Buzz Night (same-room buzz game) | 🔮 | ⏳ | ⏳ host | 🔮 | Rides the Phase-1 buzzer once paired+verified; TV is stage+scoreboard, phones buzz, wrong buzz opens to others, every Q ends on the Learn-the-fact reveal (GAME-MODES-RESEARCH D2). Web/Android via Phase 2 |
 | Cross-platform online | 🔮 | 🔮 | 🔮 | 🔮 | Supabase, after Apple online proves out (Decision 020) |
 
 ---

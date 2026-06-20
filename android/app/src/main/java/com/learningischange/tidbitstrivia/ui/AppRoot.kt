@@ -4,6 +4,7 @@ import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -93,7 +94,7 @@ private fun HomeScreen(onPlay: (Mode, Category) -> Unit) {
 
         Text("Pick a mode", fontWeight = FontWeight.Bold, fontSize = 20.sp)
         LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            items(listOf(Mode.CLASSIC, Mode.TIME_ATTACK, Mode.SURVIVAL, Mode.STAKE), key = { it.name }) { m ->
+            items(listOf(Mode.CLASSIC, Mode.TIME_ATTACK, Mode.SURVIVAL, Mode.STAKE, Mode.SWEEP), key = { it.name }) { m ->
                 FilterChip(selected = selectedMode == m, onClick = { selectedMode = m }, label = { Text(m.title) })
             }
         }
@@ -157,6 +158,7 @@ private fun PlayingScreen(game: GameState) {
         }
         Text(Category.byId(q.categoryId).name.uppercase(), color = Pops.at(Category.byId(q.categoryId).colorIndex), fontWeight = FontWeight.Bold, fontSize = 13.sp)
         Text(q.prompt, fontWeight = FontWeight.Black, fontSize = 23.sp)
+        if (game.mode == Mode.SWEEP) SweepGrid(game)
         if (game.mode == Mode.STAKE && game.phase == GamePhase.PLAYING) StakeSelector(game)
         val answersLocked = game.phase != GamePhase.PLAYING || (game.mode == Mode.STAKE && game.currentStake == 0)
         q.options.forEachIndexed { i, opt -> AnswerButton(opt, game.answerState(i), !answersLocked) { game.submit(i) } }
@@ -178,6 +180,35 @@ private fun PlayingScreen(game: GameState) {
             }
         }
         Spacer(Modifier.height(12.dp))
+    }
+}
+
+// Sweep's persistent fill-grid — one cell per question, filled mint (hit) /
+// coral (miss) as you go; the current cell is ringed. The grid IS the scoreboard.
+@Composable
+private fun SweepGrid(game: GameState) {
+    val n = game.questions.size
+    val perRow = 6
+    Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
+        Text("Set: ${game.score} / $n", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+            fontWeight = FontWeight.Bold, fontSize = 14.sp)
+        var start = 0
+        while (start < n) {
+            Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                val end = minOf(start + perRow, n)
+                for (i in start until end) {
+                    val a = game.answered.getOrNull(i)
+                    val fill = when { a == null -> MaterialTheme.colorScheme.surface; a.correct -> Pops.mint; else -> Pops.coral }
+                    val current = i == game.index
+                    Box(Modifier.weight(1f).height(16.dp)
+                        .alpha(if (a != null || current) 1f else 0.45f)
+                        .background(fill, RoundedCornerShape(5.dp))
+                        .border(BorderStroke(if (current) 2.5.dp else 1.5.dp, Ink), RoundedCornerShape(5.dp)))
+                }
+                repeat(perRow - (end - start)) { Spacer(Modifier.weight(1f)) }
+            }
+            start += perRow
+        }
     }
 }
 

@@ -50,6 +50,7 @@ enum class Mode(val title: String, val blurb: String, val perQuestion: Int?, val
     TIME_ATTACK("Time Attack", "How many in 60 seconds?", null, 60, 25),
     SURVIVAL("Survival", "One wrong answer ends it.", 15, null, 99),
     STAKE("Stake", "Bet your confidence. No risk.", 30, null, 8),
+    SWEEP("Sweep", "Fill the set. Beat your best.", 12, null, 12),
     DAILY("Daily Tidbit", "Everyone's puzzle. Keep your streak.", 30, null, 7),
 }
 

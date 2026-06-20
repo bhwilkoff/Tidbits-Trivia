@@ -31,6 +31,7 @@ export const MODES = {
   timeAttack: { id: 'timeAttack', title: 'Time Attack', blurb: 'How many in 60 seconds?', perQuestion: null, globalClock: 60, count: 25, accent: '#FF5C5C' },
   survival: { id: 'survival', title: 'Survival', blurb: 'One wrong answer ends it.', perQuestion: 15, count: 99, accent: '#8B5CF6' },
   stake: { id: 'stake', title: 'Stake', blurb: 'Bet your confidence. No risk.', perQuestion: 30, count: 8, accent: '#2FCB8A' },
+  sweep: { id: 'sweep', title: 'Sweep', blurb: 'Fill the set. Beat your best.', perQuestion: 12, count: 12, accent: '#13B6C9' },
   daily: { id: 'daily', title: 'Daily Tidbit', blurb: 'Everyone’s puzzle. Keep your streak.', perQuestion: 30, count: 7, accent: '#FFC93C' },
 };
 

@@ -48,7 +48,7 @@ class GameState(
 
     val current: Question? get() = questions.getOrNull(index)
     val correctCount: Int get() = answered.count { it.correct }
-    val isLast: Boolean get() = (mode == Mode.CLASSIC || mode == Mode.DAILY || mode == Mode.STAKE) && index + 1 >= questions.size
+    val isLast: Boolean get() = (mode == Mode.CLASSIC || mode == Mode.DAILY || mode == Mode.STAKE || mode == Mode.SWEEP) && index + 1 >= questions.size
     val progressLabel: String get() = if (mode == Mode.TIME_ATTACK || mode == Mode.SURVIVAL) "#${index + 1}" else "${index + 1} / ${questions.size}"
     val clockFraction: Double get() = if (budget <= 0) 0.0 else (remaining / budget).coerceIn(0.0, 1.0)
 
@@ -140,9 +140,13 @@ class GameState(
         lastCorrect = correct
         if (correct) {
             streak++; maxStreak = max(maxStreak, streak)
-            // Stake: the reward IS the chip (no speed/streak — calibration). Else speed-aware.
-            score += if (mode == Mode.STAKE) currentStake
-                     else Scoring.points(true, taken, mode.perQuestion?.toDouble() ?: budget, streak)
+            // Stake: the reward IS the chip (calibration). Sweep: +1 per correct —
+            // the score is the count of the set you filled (no speed bonus). Else speed-aware.
+            score += when (mode) {
+                Mode.STAKE -> currentStake
+                Mode.SWEEP -> 1
+                else -> Scoring.points(true, taken, mode.perQuestion?.toDouble() ?: budget, streak)
+            }
         } else streak = 0
         phase = GamePhase.REVEAL
     }

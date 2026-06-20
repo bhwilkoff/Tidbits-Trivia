@@ -84,6 +84,7 @@ struct TVGamePlayView: View {
                     .font(.system(size: 48, weight: .heavy, design: .rounded))
                     .foregroundStyle(.white)
                     .fixedSize(horizontal: false, vertical: true)
+                if game.mode == .sweep { sweepRow }
                 if game.mode == .stake && game.phase == .playing { stakeRow }
                 HStack(spacing: 28) {
                     ForEach(Array(q.options.enumerated()), id: \.offset) { idx, opt in
@@ -156,6 +157,23 @@ struct TVGamePlayView: View {
         .focusSection()
     }
 
+    /// Sweep fill-grid at ten feet — one cell per question in the set,
+    /// filled mint (hit) / coral (miss), the current cell ringed white.
+    private var sweepRow: some View {
+        HStack(spacing: 12) {
+            ForEach(0..<game.questions.count, id: \.self) { i in
+                let answered = i < game.answered.count
+                let hit = answered && game.answered[i].isCorrect
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .fill(answered ? (hit ? Tidbits.Palette.mint : Tidbits.Palette.coral)
+                                   : Color.white.opacity(0.12))
+                    .frame(width: 44, height: 18)
+                    .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .strokeBorder(.white.opacity(i == game.index ? 0.9 : 0), lineWidth: 3))
+            }
+        }
+    }
+
     private var hud: some View {
         HStack(spacing: 30) {
             Text(progressLabel).font(.system(size: 27, weight: .bold, design: .rounded).monospacedDigit()).foregroundStyle(TVTheme.textSoft)
@@ -206,7 +224,7 @@ struct TVGamePlayView: View {
         .background(RoundedRectangle(cornerRadius: 22).fill(TVTheme.panel))
     }
     private var isLast: Bool {
-        (game.mode == .classic || game.mode == .daily || game.mode == .stake) && game.index + 1 >= game.questions.count
+        (game.mode == .classic || game.mode == .daily || game.mode == .stake || game.mode == .sweep) && game.index + 1 >= game.questions.count
     }
 }
 

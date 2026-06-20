@@ -8,6 +8,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
     case timeAttack  // as many as you can in 60s
     case survival    // keep going until one wrong answer
     case stake       // bet a fixed budget of confidence chips per question
+    case sweep       // fill a themed set; beat your own best (count-scored)
     case daily       // one fixed daily set, streak-bearing, shareable
 
     var id: String { rawValue }
@@ -18,6 +19,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .timeAttack: return "Time Attack"
         case .survival:   return "Survival"
         case .stake:      return "Stake"
+        case .sweep:      return "Sweep"
         case .daily:      return "Daily Tidbit"
         }
     }
@@ -28,6 +30,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .timeAttack: return "How many in 60 seconds?"
         case .survival:   return "One wrong answer ends it."
         case .stake:      return "Bet your confidence. No risk."
+        case .sweep:      return "Fill the set. Beat your best."
         case .daily:      return "Everyone's puzzle. Keep your streak."
         }
     }
@@ -38,6 +41,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .timeAttack: return "timer"
         case .survival:   return "heart.fill"
         case .stake:      return "chart.bar.fill"
+        case .sweep:      return "square.grid.3x3.fill"
         case .daily:      return "sun.max.fill"
         }
     }
@@ -48,6 +52,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .timeAttack: return Tidbits.Palette.coral
         case .survival:   return Tidbits.Palette.grape
         case .stake:      return Tidbits.Palette.mint
+        case .sweep:      return Tidbits.Palette.teal
         case .daily:      return Tidbits.Palette.yellow
         }
     }
@@ -59,6 +64,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .timeAttack: return nil   // global 60s clock
         case .survival:   return 15
         case .stake:      return 30    // generous — calibration shouldn't be rushed
+        case .sweep:      return 12    // rapid-fire, but a clock that never punishes score
         case .daily:      return 30
         }
     }
@@ -69,6 +75,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .timeAttack: return 99    // bounded by the clock
         case .survival:   return 99    // bounded by a wrong answer
         case .stake:      return 8     // matches the confidence-chip budget
+        case .sweep:      return 12    // a "set" to fill — the grid is the scoreboard
         case .daily:      return 7
         }
     }

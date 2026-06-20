@@ -743,3 +743,48 @@ and are mirrored verbatim in `js/engine.js`, `TemplateEngine.swift`, and
 `reframe` anchor must stay on the leading name run, not the title (the full-
 birth-name mismatch silently drops every famous subject otherwise). Drop a
 question rather than ship a thin clue. Verify shape output before regenerating.
+
+---
+
+## 030 — Phone-as-buzzer transport is phased: Apple-native local (Bonjour/PSK) → web-room
+
+**Decision**: The living-room phone-as-buzzer ships in two phases (extends 023).
+**Phase 1 (foundation landed)** is **Apple-native local**: the Apple TV host
+publishes a Bonjour service (`_tidbits-buzz._tcp`) over `Network.framework`
+(`NWListener`), iPhones discover it with `NWBrowser`/`NWConnection`, and the
+link is secured by a **TLS pre-shared key derived from the room code** shown on
+the TV (`SHA256("tidbits-buzz-v1:" + CODE)`). The host owns the **single
+authoritative `BuzzArbiter`** — it stamps each buzz on its own clock and
+subtracts a per-seat one-way-delay estimate (½ measured RTT) so the truly-first
+finger wins regardless of link speed. **Phase 2 (later)** adds the universal
+**web-room** (Cloudflare Durable Object, `tidbits.tv/<code>`) so any phone
+browser joins, same-room *or* remote; the host picks the transport by
+connectivity. Skipped: MultipeerConnectivity (deprecated, 8-cap), `GKMatch`
+(relayed + sign-in), `GCVirtualController` (touch, not transport).
+
+**Why**: Heed doctrine 023 — async/offline survives, real-time is fragile — so
+the buzzer is **additive, never load-bearing**: solo/pass-and-play stay fully
+offline and must never regress. Phase 1 buys real "phones as buzzers" for the
+common case (everyone Apple, same room) at **zero backend cost, full offline,
+lowest latency, no third-party packages** — exactly Tidbits' identity. The
+**room code → PSK** is the whole security model: a phone that can read the TV's
+code computes the same key and pairs; one that can't, can't. **Never compare
+client timestamps** (unsynchronized, spoofable) — one clock, host-stamped, RTT-
+compensated, targeting sub-100 ms (below "we tapped together" perception). tvOS
+has **no web view**, so the host is always native; only phones are browsers
+(which is why Phase 2's universal cell is the phones, not the TV).
+
+**How to apply**: the wire protocol, room-code/PSK, and the pure `BuzzArbiter`
+live in `Core/Networking/BuzzerProtocol.swift` (no `Network` import → compiles
+for every os() target AND is offline-unit-testable — the arbiter fairness is
+proven by a standalone harness, not a live run). Transport is
+`BuzzerTransport.swift` (shared PSK params + length-prefixed JSON framing) +
+`BuzzerHost.swift` (`#if os(tvOS)`) + `BuzzerClient.swift` (`#if os(iOS)`).
+`Info.plist` declares `NSLocalNetworkUsageDescription` + `NSBonjourServices`.
+**Build-verified is not two-device-verified**: Bonjour discovery, the iOS
+local-network prompt, and the PSK handshake only truly exercise on real
+hardware — wiring this into a "Buzz Night" game mode and the two-device pairing
+test is the next slice, and nothing is wired into a user-facing flow until that
+passes. On tvOS use `receive(minimumIncompleteLength:maximumLength:)` (raw
+receive can fire only on close there). Android's analog is Nearby Connections
+(separate native path); the web/Android universal path is Phase 2's web-room.

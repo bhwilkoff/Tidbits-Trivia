@@ -39,8 +39,9 @@
 ## Next up (see docs/HANDOFF.md §6 for the full backlog)
 
 Big tracks: online multiplayer (Game Center → Supabase), store submission prep
-(iOS + Play), tvOS living-room phone-as-buzzer, more question types (on-this-day
-/ connection / odd-one-out / picture-ID / type-the-answer), adaptive difficulty.
+(iOS + Play), **phone-as-buzzer Phase 1** (foundation landed — needs two-device
+pairing test + Buzz Night game-mode wiring), more question types (Q1 This-or-That
+real/fake is next corpus-native; then E1 enrichment unlocks 7), adaptive difficulty.
 Quick follow-ups: `clean_clue` on explanation text; P31-typed distractors for
 the summary path; quality gates 6/7/9; branded iOS launch screen; web
 pass-and-play + onboarding parity; Android Room; real share domain.
@@ -186,3 +187,32 @@ One-line-per-round; full detail in `ARCHIVE.md`.
   PARITY row added; SOLO-BACKLOG M1 → ✅. *Left:* F1 calibration readout in Records
   is the queued follow-up; next backlog items E1 (Wikidata enrichment) then
   Q1/M2.
+- **2026-06-20** — **M2 Sweep shipped (4 platforms) + phone-as-buzzer Phase-1
+  foundation (Bonjour)**. Ben: keep building game modes/question types AND advance
+  device-to-device; chose **Apple-native Bonjour** for the buzzer when asked.
+  *Did (Sweep, all 4 engines):* new `sweep` mode — 12-Q "set", **+1 per correct**
+  (count-scored, no speed/streak), a **persistent fill-grid** (mint hit / coral
+  miss, current cell ringed) as the scoreboard, beat-your-own-best via existing
+  per-mode best-score, ends on the existing miss-reveal. New teal accent
+  (`#13B6C9`) added to all 4 palettes. Core `GameMode`/`GameEngine`, iOS
+  `GamePlayView` + tvOS `GameView` grids (Apple auto-lists via `allCases`), web
+  `store.js`/`app.js`/`styles.css`, Android `Tidbits.kt`/`GameState.kt`/`AppRoot.kt`
+  (+`SweepGrid`). *Verified:* iOS+tvOS+Android BUILD SUCCEEDED, web `node --check`
+  clean; **iOS sim live shot** shows the grid filling (Set 1/12, mint+coral cells,
+  score=correct-count) — Sweep WORKS, not just compiles. *Did (buzzer foundation,
+  Decision 030):* new `Core/Networking/` — `BuzzerProtocol.swift` (pure: Codable
+  messages + room-code→TLS-PSK via SHA256 + authoritative `BuzzArbiter` with
+  per-seat RTT compensation), `BuzzerTransport.swift` (shared PSK `NWParameters` +
+  length-prefixed JSON framing), `BuzzerHost.swift` (`#if os(tvOS)` `NWListener`
+  + Bonjour `_tidbits-buzz._tcp`), `BuzzerClient.swift` (`#if os(iOS)` `NWBrowser`/
+  `NWConnection`). `Info.plist` gets `NSLocalNetworkUsageDescription` +
+  `NSBonjourServices`. *Verified:* the **arbiter+PSK logic offline-proven** by a
+  standalone `swiftc` harness (RTT-comp picks the true-first buzzer; first-wins;
+  arm/disarm; PSK case-insensitive/distinct/32B; codes avoid ambiguous glyphs);
+  both Apple slices **BUILD SUCCEEDED** with the Network code (TLS-PSK
+  `__DispatchData` bridge, ciphersuite const, `.service` match all compile).
+  *Left (honest):* **NOT two-device-verified** — Bonjour discovery + the iOS
+  local-network prompt + the PSK handshake only exercise on real hardware; nothing
+  wired into a user-facing flow yet. Next slice: two-device pairing test → wire the
+  **Buzz Night** game mode (TV stage/scoreboard, phones buzz, wrong-buzz-opens,
+  Learn-the-fact reveal). Versions: Apple 1.0(4), Android v2.

@@ -27,6 +27,7 @@ enum Tidbits {
         static let mint      = Color(hex: 0x2FCB8A) // correct / go
         static let grape    = Color(hex: 0x8B5CF6) // category accent
         static let pink     = Color(hex: 0xFF5DA2) // category accent
+        static let teal     = Color(hex: 0x13B6C9) // sweep mode accent
 
         static let correct  = mint
         static let wrong    = coral

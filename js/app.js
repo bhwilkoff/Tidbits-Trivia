@@ -63,7 +63,7 @@ function viewHome() {
       <span class="cat-name">${h(c.name)}</span>
       <span class="cat-blurb muted">${h(c.blurb)}</span>
     </button>`).join('');
-  const modes = ['classic', 'timeAttack', 'survival', 'stake'].map((m) =>
+  const modes = ['classic', 'timeAttack', 'survival', 'stake', 'sweep'].map((m) =>
     `<button class="chip" data-mode="${m}">${h(MODES[m].title)}</button>`).join('');
   return `
     <h1 class="page-title">Trivia from the whole of Wikipedia.</h1>
@@ -237,8 +237,11 @@ class Game {
     this.answered.push({ q, chosen: choice, correct, taken });
     if (correct) {
       this.streak++; this.maxStreak = Math.max(this.maxStreak, this.streak);
-      // Stake: the reward IS the chip (no speed/streak — it's calibration). Else speed-aware.
-      this.score += this.mode.id === 'stake' ? this.currentStake : Scoring.points(true, taken, this.mode.perQuestion ?? this.budget, this.streak);
+      // Stake: the reward IS the chip (calibration). Sweep: +1 per correct — the
+      // score is the count of the set you filled (no speed bonus). Else speed-aware.
+      this.score += this.mode.id === 'stake' ? this.currentStake
+        : this.mode.id === 'sweep' ? 1
+        : Scoring.points(true, taken, this.mode.perQuestion ?? this.budget, this.streak);
     } else { this.streak = 0; }
     this.phase = 'reveal';
     renderGame();
@@ -288,8 +291,10 @@ function renderGame() {
     return `<button class="${cls}" data-opt="${i}" ${lockAnswers ? 'disabled' : ''}>${h(o)}</button>`;
   }).join('');
   const stakeSel = (staking && game.phase === 'playing') ? stakeSelector() : '';
+  const sweepGr = game.mode.id === 'sweep' ? sweepGrid() : '';
   const reveal = game.phase === 'reveal' ? revealCard(q) : '';
-  const progress = (game.mode.id === 'classic' || game.mode.id === 'daily' || staking) ? `${game.index + 1} / ${game.questions.length}` : `#${game.index + 1}`;
+  const fixedCount = game.mode.id === 'classic' || game.mode.id === 'daily' || staking || game.mode.id === 'sweep';
+  const progress = fixedCount ? `${game.index + 1} / ${game.questions.length}` : `#${game.index + 1}`;
   app.innerHTML = `
     <div class="game">
       <div class="hud">
@@ -300,6 +305,7 @@ function renderGame() {
       <div class="clockbar"><span id="clk-label">${progress}</span><div class="clock-track"><div id="clk-fill" class="clock-fill"></div></div><span id="clk-secs"></span></div>
       <div class="qwrap">
         <div class="card qcard"><div class="qcat" style="color:${catColor(cat)}">${h(cat.name.toUpperCase())}</div><div class="qprompt">${h(q.prompt)}</div></div>
+        ${sweepGr}
         ${stakeSel}
         <div class="opts">${opts}</div>
         ${reveal}
@@ -312,7 +318,17 @@ function renderGame() {
   if (game.phase === 'reveal') $('[data-next]').addEventListener('click', () => game.advance());
   updateClock();
 }
-function isLast() { return (game.mode.id === 'classic' || game.mode.id === 'daily' || game.mode.id === 'stake') && game.index + 1 >= game.questions.length; }
+function isLast() { return (game.mode.id === 'classic' || game.mode.id === 'daily' || game.mode.id === 'stake' || game.mode.id === 'sweep') && game.index + 1 >= game.questions.length; }
+// Sweep's persistent fill-grid — one cell per question, filled green (hit) /
+// coral (miss) as you go; the current cell is ringed. The grid is the scoreboard.
+function sweepGrid() {
+  const cells = game.questions.map((_, i) => {
+    const a = game.answered[i];
+    const cls = a ? (a.correct ? 'hit' : 'miss') : (i === game.index ? 'now' : '');
+    return `<span class="sweep-cell ${cls}"></span>`;
+  }).join('');
+  return `<div class="card sweep-card"><div class="sweep-head">Set: ${game.score} / ${game.questions.length}</div><div class="sweep-grid">${cells}</div></div>`;
+}
 function stakeSelector() {
   const head = game.currentStake === 0 ? 'How sure are you?' : `Staked: ${h(game.stakeLabel)}`;
   const chips = game.stakeTiers.map((t) => {

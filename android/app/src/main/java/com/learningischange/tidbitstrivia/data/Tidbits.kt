@@ -706,6 +706,32 @@ class Store(context: Context) {
         prefs.edit().putString("calibration", out.toString()).apply()
     }
 
+    // F4 answer-distribution telemetry: local, privacy-respecting per-option
+    // counts keyed by question id ({ qid: [perOptionCount] }). No PII, no
+    // network — the invisible foundation a backend later aggregates into the
+    // "X% picked this" / Predict-the-Crowd reveal. Modes whose chosen index is
+    // synthetic (right/wrong, not a real option pick) are skipped.
+    private val telemetrySkip = setOf(Mode.CLOSEST_CALL, Mode.ORDERING, Mode.MATCHING, Mode.TYPE_ANSWER)
+    fun recordTelemetry(mode: Mode, answered: List<Pair<Question, Int?>>) {
+        if (mode in telemetrySkip) return
+        val map = JSONObject(prefs.getString("answerTelemetry", "{}") ?: "{}")
+        for ((q, chosen) in answered) {
+            val n = q.options.size
+            val c = chosen ?: continue
+            if (n < 2 || c < 0 || c >= n) continue
+            val arr = map.optJSONArray(q.id) ?: org.json.JSONArray().also { for (i in 0 until n) it.put(0) }
+            while (arr.length() < n) arr.put(0)
+            arr.put(c, arr.getInt(c) + 1)
+            map.put(q.id, arr)
+        }
+        if (map.length() > 5000) { prefs.edit().putString("answerTelemetry", "{}").apply(); return }
+        prefs.edit().putString("answerTelemetry", map.toString()).apply()
+    }
+    fun answerDistribution(qid: String): List<Int>? {
+        val arr = JSONObject(prefs.getString("answerTelemetry", "{}") ?: "{}").optJSONArray(qid) ?: return null
+        return (0 until arr.length()).map { arr.getInt(it) }
+    }
+
     fun streak(): Pair<Int, Int> = (prefs.getInt("streak_cur", 0)) to (prefs.getInt("streak_best", 0))
     private fun bumpStreak() {
         val today = dayKey(); if (prefs.getString("streak_day", "") == today) return

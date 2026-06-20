@@ -28,6 +28,7 @@ enum RecordsStore {
 
         if summary.mode == .daily { bumpDailyStreak(in: context) }
         if summary.mode == .stake { addCalibration(summary.stakeOutcomes, in: context) }
+        recordTelemetry(summary.answered, mode: summary.mode)
 
         try? context.save()
         return isNewBest
@@ -90,6 +91,46 @@ enum RecordsStore {
                 context.insert(CalibrationTally(tierValue: tier, hits: outcome.hits, total: outcome.total))
             }
         }
+    }
+
+    // MARK: - Answer-distribution telemetry (F4)
+
+    /// Local, privacy-respecting per-option answer counter. Records which
+    /// option index the player chose for each MCQ question, keyed by question
+    /// id, as `[questionID: [perOptionCount]]` in UserDefaults. No PII, no
+    /// network — this is the invisible foundation a backend later aggregates
+    /// into the "X% picked this" / Predict-the-Crowd reveal. Modes whose
+    /// chosenIndex is synthetic (closest/ordering/matching/type-answer encode
+    /// 0/1 = right/wrong, not a real option pick) are skipped.
+    private static let telemetryKey = "tidbits.answerTelemetry"
+    private static let telemetryCap = 5000  // bound the dict; oldest data is disposable
+
+    private static func recordTelemetry(_ answered: [AnsweredQuestion], mode: GameMode) {
+        switch mode {
+        case .closestCall, .ordering, .matching, .typeAnswer: return  // synthetic chosenIndex
+        default: break
+        }
+        let defaults = UserDefaults.standard
+        var map = (defaults.dictionary(forKey: telemetryKey) as? [String: [Int]]) ?? [:]
+        for a in answered {
+            guard let chosen = a.chosenIndex,
+                  a.question.options.count >= 2,
+                  a.question.options.indices.contains(chosen) else { continue }
+            var counts = map[a.question.id] ?? Array(repeating: 0, count: a.question.options.count)
+            if counts.count < a.question.options.count {
+                counts += Array(repeating: 0, count: a.question.options.count - counts.count)
+            }
+            counts[chosen] += 1
+            map[a.question.id] = counts
+        }
+        if map.count > telemetryCap { map = [:] }  // disposable foundation data; reset rather than evict
+        defaults.set(map, forKey: telemetryKey)
+    }
+
+    /// Per-option local counts for a question (foundation for the future
+    /// crowd reveal). nil until the question has been answered at least once.
+    static func answerDistribution(forQuestion id: String) -> [Int]? {
+        (UserDefaults.standard.dictionary(forKey: telemetryKey) as? [String: [Int]])?[id]
     }
 
     private static func bumpDailyStreak(in context: ModelContext) {

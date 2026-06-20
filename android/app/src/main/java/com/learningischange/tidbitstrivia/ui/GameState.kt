@@ -292,6 +292,7 @@ class GameState(
         if (!recorded) {
             recorded = true
             store.addRecord(Store.Rec(mode.name, category.id, score, correctCount, answered.size, maxStreak, dayKey()))
+            store.recordTelemetry(mode, answered.map { it.q to it.chosen })
             if (mode == Mode.STAKE) store.addCalibration(stakeOutcomes.mapValues { it.value[0] to it.value[1] })
         }
     }

@@ -139,6 +139,30 @@ export const Store = {
     LS.set('tidbits.streak', s);
   },
 
+  // F4 answer-distribution telemetry: local, privacy-respecting per-option
+  // counts keyed by question id ({ qid: [perOptionCount] }). No PII, no
+  // network — the invisible foundation a backend later aggregates into the
+  // "X% picked this" / Predict-the-Crowd reveal. Modes whose chosen index is
+  // synthetic (0/right vs -1/wrong, not a real option pick) are skipped.
+  _telemetrySkip: new Set(['closestCall', 'ordering', 'matching', 'typeAnswer']),
+  answerTelemetry() { return LS.get('tidbits.answerTelemetry', {}); },
+  recordTelemetry(mode, answered) {
+    if (this._telemetrySkip.has(mode)) return;
+    const map = this.answerTelemetry();
+    for (const a of answered) {
+      const opts = a.q && a.q.options;
+      if (!Array.isArray(opts) || opts.length < 2) continue;
+      if (a.chosen == null || a.chosen < 0 || a.chosen >= opts.length) continue;
+      const counts = map[a.q.id] || new Array(opts.length).fill(0);
+      while (counts.length < opts.length) counts.push(0);
+      counts[a.chosen]++;
+      map[a.q.id] = counts;
+    }
+    if (Object.keys(map).length > 5000) { LS.set('tidbits.answerTelemetry', {}); return; }
+    LS.set('tidbits.answerTelemetry', map);
+  },
+  answerDistribution(qid) { return this.answerTelemetry()[qid] || null; },
+
   // Missed facts for spaced review.
   missed() { return LS.get('tidbits.missed', []); },
   recordMisses(answered) {
@@ -158,7 +182,7 @@ export const Store = {
     return this.missed().filter((m) => !m.resolved).sort((a, b) => b.missCount - a.missCount).slice(0, limit).map((m) => m.q);
   },
   resetAll() {
-    ['tidbits.records', 'tidbits.streak', 'tidbits.missed', 'tidbits.seen', 'tidbits.calibration'].forEach((k) => localStorage.removeItem(k));
+    ['tidbits.records', 'tidbits.streak', 'tidbits.missed', 'tidbits.seen', 'tidbits.calibration', 'tidbits.answerTelemetry'].forEach((k) => localStorage.removeItem(k));
     this._seen.clear();
   },
 };

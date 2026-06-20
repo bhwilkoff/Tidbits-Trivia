@@ -438,6 +438,7 @@ class Game {
     const correct = this.answered.filter((a) => a.correct).length;
     Store.addRecord({ mode: this.mode.id, categoryID: this.category.id, score: this.score, correct, total: this.answered.length, maxStreak: this.maxStreak, date: dayKey() });
     Store.recordMisses(this.answered);
+    Store.recordTelemetry(this.mode.id, this.answered);
     if (this.mode.id === 'stake') Store.addCalibration(this.stakeOutcomes);
   }
   summary() {

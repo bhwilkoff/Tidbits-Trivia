@@ -51,10 +51,14 @@ data class Question(
     val imageUrl: String? = null,   // Picture ID (Q7): Commons image to identify
     val closest: ClosestSpec? = null, // Closest Call (M5)
     val ordering: List<String>? = null, // Ordering (Q4): items in CORRECT order
+    val matching: MatchSpec? = null,  // Matching (Q5): keys ↔ correct values
 ) {
     val answerText: String get() = options.getOrNull(correctIndex)
-        ?: closest?.formattedAnswer ?: ordering?.joinToString(" → ") ?: ""
+        ?: closest?.formattedAnswer ?: ordering?.joinToString(" → ")
+        ?: matching?.let { it.keys.zip(it.values).joinToString(" · ") { (k, v) -> "$k → $v" } } ?: ""
 }
+
+data class MatchSpec(val keys: List<String>, val values: List<String>)
 
 data class Category(val id: String, val name: String, val icon: String, val colorIndex: Int, val blurb: String) {
     companion object {
@@ -82,6 +86,7 @@ enum class Mode(val title: String, val blurb: String, val perQuestion: Int?, val
     THIS_OR_THAT("Which First?", "Which came first?", 12, null, 10),
     CLOSEST_CALL("Closest Call", "How close can you get?", 25, null, 8),
     ORDERING("In Order", "Arrange them in time.", 35, null, 6),
+    MATCHING("Match Up", "Link each pair.", 40, null, 6),
     DAILY("Daily Tidbit", "Everyone's puzzle. Keep your streak.", 30, null, 7),
 }
 
@@ -190,16 +195,28 @@ class JsonQuestionSet(private val asset: String) {
             all = arr.map { el ->
                 val a = el.jsonArray
                 if (a[2] is JsonArray && a[3] is JsonArray) {
-                    // Ordering (Q4): [id, prompt, names(correct order), years, cat, expl, title, url]
-                    val names = a[2].jsonArray.map { it.jsonPrimitive.content }
-                    Question(
-                        id = a[0].jsonPrimitive.content, prompt = a[1].jsonPrimitive.content,
-                        options = names, correctIndex = 0,
-                        categoryId = a[4].jsonPrimitive.content, difficulty = 3,
-                        explanation = a[5].jsonPrimitive.content,
-                        sourceTitle = a[6].jsonPrimitive.content, sourceUrl = a[7].jsonPrimitive.content,
-                        ordering = names,
-                    )
+                    val arr3 = a[3].jsonArray
+                    val keys = a[2].jsonArray.map { it.jsonPrimitive.content }
+                    if (arr3.isNotEmpty() && arr3[0].jsonPrimitive.isString) {
+                        // Matching (Q5): [id, prompt, keys, values(strings), cat, expl, "", ""]
+                        Question(
+                            id = a[0].jsonPrimitive.content, prompt = a[1].jsonPrimitive.content,
+                            options = keys, correctIndex = 0,
+                            categoryId = a[4].jsonPrimitive.content, difficulty = 3,
+                            explanation = a[5].jsonPrimitive.content, sourceTitle = "", sourceUrl = "",
+                            matching = MatchSpec(keys, arr3.map { it.jsonPrimitive.content }),
+                        )
+                    } else {
+                        // Ordering (Q4): [id, prompt, names(correct order), years(ints), cat, expl, title, url]
+                        Question(
+                            id = a[0].jsonPrimitive.content, prompt = a[1].jsonPrimitive.content,
+                            options = keys, correctIndex = 0,
+                            categoryId = a[4].jsonPrimitive.content, difficulty = 3,
+                            explanation = a[5].jsonPrimitive.content,
+                            sourceTitle = a[6].jsonPrimitive.content, sourceUrl = a[7].jsonPrimitive.content,
+                            ordering = keys,
+                        )
+                    }
                 } else if (a[2] is JsonArray) {
                     // MCQ (corpus / picture / thisorthat)
                     Question(
@@ -244,6 +261,7 @@ val Pictures = JsonQuestionSet("picture.json")
 val ThisOrThat = JsonQuestionSet("thisorthat.json")
 val ClosestCall = JsonQuestionSet("closest.json")
 val OrderingSet = JsonQuestionSet("order.json")
+val MatchingSet = JsonQuestionSet("match.json")
 
 fun dayKey(): String {
     val c = Calendar.getInstance()

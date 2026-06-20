@@ -19,6 +19,7 @@
 		274F21E30264310543E14DB4 /* TidbitsTriviaApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35F518DED9832731B1294DD3 /* TidbitsTriviaApp.swift */; };
 		287C808C6599E4BF11EC462F /* WikipediaClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 655168DF8FE110D6336394D2 /* WikipediaClient.swift */; };
 		2EF467D5E5DB3E3B82354C1D /* GameContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A77D01159167F1BE602ABED /* GameContainerView.swift */; };
+		3944456B4B345D9CBBDC9594 /* match.json in Resources */ = {isa = PBXBuildFile; fileRef = 6C78FEA628F8D5DC705D414E /* match.json */; };
 		396E6A2004F751CA0ADC7CB7 /* ResultsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C60A815D0EFF35CF18DAB26 /* ResultsView.swift */; };
 		43F36ECB879791F4A899B1AF /* CreateQuizView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96283977862FC546F8219011 /* CreateQuizView.swift */; };
 		47EC13554A9F7DAAAC0104A3 /* PartyContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F18495176F588DF9E5C7907E /* PartyContainerView.swift */; };
@@ -71,6 +72,7 @@
 		5641E998849F8570AF1C8387 /* JSONQuestionSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONQuestionSource.swift; sourceTree = "<group>"; };
 		5A73FA1930578863B642985C /* ProgressStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressStats.swift; sourceTree = "<group>"; };
 		655168DF8FE110D6336394D2 /* WikipediaClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WikipediaClient.swift; sourceTree = "<group>"; };
+		6C78FEA628F8D5DC705D414E /* match.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = match.json; sourceTree = "<group>"; };
 		6E8760FF39E12021DC07BE8F /* picture.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = picture.json; sourceTree = "<group>"; };
 		73D5D7FD07809D194BF90B30 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		75B1B87B261C164A421546D6 /* BuzzerProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuzzerProtocol.swift; sourceTree = "<group>"; };
@@ -105,7 +107,7 @@
 		F3AE68F153F8C298960BFD36 /* Player.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Player.swift; sourceTree = "<group>"; };
 		F5C9D9266531ECD27156562D /* GameView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView_tvOS.swift; sourceTree = "<group>"; };
 		FFC46D4CE8D03186C064C759 /* Question.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Question.swift; sourceTree = "<group>"; };
-		"TEMP_4D5DF77F-2286-4182-9A3D-A75637D5408A" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
+		"TEMP_DB8DD1FA-0A45-4C47-AF99-641D821C8B94" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -196,6 +198,7 @@
 			children = (
 				1241A5F7969CF344FFE75DA6 /* closest.json */,
 				E8F18E88BA37F77E6313144F /* corpus.sqlite */,
+				6C78FEA628F8D5DC705D414E /* match.json */,
 				79A5D10D9EBC4D0950DE13CF /* order.json */,
 				6E8760FF39E12021DC07BE8F /* picture.json */,
 				BADC61A185827BBE0B9857AA /* thisorthat.json */,
@@ -292,10 +295,10 @@
 			path = TidbitsTrivia;
 			sourceTree = "<group>";
 		};
-		"TEMP_22221C6E-8ABA-4BE2-95E3-15313B53E9BA" /* Tidbits-Trivia */ = {
+		"TEMP_C45522A0-D17C-463D-914C-FD33E7CA7D6E" /* Tidbits-Trivia */ = {
 			isa = PBXGroup;
 			children = (
-				"TEMP_4D5DF77F-2286-4182-9A3D-A75637D5408A" /* AppVersion.xcconfig */,
+				"TEMP_DB8DD1FA-0A45-4C47-AF99-641D821C8B94" /* AppVersion.xcconfig */,
 			);
 			path = "Tidbits-Trivia";
 			sourceTree = "<group>";
@@ -365,6 +368,7 @@
 				7E457DE11CD8D820A503C8EB /* PrivacyInfo.xcprivacy in Resources */,
 				11CCA7505B02468A02988A0C /* closest.json in Resources */,
 				9BD52794E3B9893E95300BD5 /* corpus.sqlite in Resources */,
+				3944456B4B345D9CBBDC9594 /* match.json in Resources */,
 				DD17E6E2BBC121F9A5B69E32 /* order.json in Resources */,
 				6C6BC38059EF80F78C963AEA /* picture.json in Resources */,
 				92153A2172FBD8BD36DE55C5 /* thisorthat.json in Resources */,
@@ -424,7 +428,7 @@
 /* Begin XCBuildConfiguration section */
 		296659EF0549868336801823 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_4D5DF77F-2286-4182-9A3D-A75637D5408A" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_DB8DD1FA-0A45-4C47-AF99-641D821C8B94" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -540,7 +544,7 @@
 		};
 		E6F711EEEE2896F84FE9AB98 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_4D5DF77F-2286-4182-9A3D-A75637D5408A" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_DB8DD1FA-0A45-4C47-AF99-641D821C8B94" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;

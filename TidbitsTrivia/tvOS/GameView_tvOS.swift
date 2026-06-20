@@ -65,7 +65,7 @@ struct TVGameContainer: View {
 
 // MARK: - Gameplay
 
-private enum TVFocus: Hashable { case stake(Int), answer(Int), closestSlider, closestLock, orderRow(Int), orderSubmit, next }
+private enum TVFocus: Hashable { case stake(Int), answer(Int), closestSlider, closestLock, orderRow(Int), orderSubmit, matchKey(Int), matchVal(Int), matchSubmit, next }
 
 struct TVGamePlayView: View {
     let onQuit: () -> Void
@@ -87,7 +87,9 @@ struct TVGamePlayView: View {
                     .fixedSize(horizontal: false, vertical: true)
                 if game.mode == .sweep { sweepRow }
                 if game.mode == .stake && game.phase == .playing { stakeRow }
-                if q.ordering != nil {
+                if let m = q.matching {
+                    matchingPanel(m)
+                } else if q.ordering != nil {
                     orderingPanel()
                 } else if let spec = q.closest {
                     closestPanel(spec)
@@ -126,6 +128,7 @@ struct TVGamePlayView: View {
                 try? await Task.sleep(for: .seconds(0.9))
                 switch game.phase {
                 case .playing:
+                    if game.mode == .matching { game.submitMatch(); break }
                     if game.mode == .ordering { game.submitOrder(); break }
                     if game.mode == .closestCall { game.submitGuess(); break }
                     if game.mode == .stake && game.currentStake == 0,
@@ -167,7 +170,45 @@ struct TVGamePlayView: View {
         .frame(maxWidth: 1100)
     }
 
+    /// Matching at ten feet — focusable key rows (select) + value chips (link) + Submit.
+    private func matchingPanel(_ m: MatchSpec) -> some View {
+        let live = game.phase == .playing
+        return VStack(spacing: 18) {
+            ForEach(Array(m.keys.enumerated()), id: \.offset) { i, key in
+                HStack(spacing: 20) {
+                    Button { game.selectMatchKey(i) } label: {
+                        HStack {
+                            Text(key).font(.system(size: 29, weight: .bold, design: .rounded)).foregroundStyle(.white)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            Text(game.matchedValue(forKey: i) ?? "—").font(.system(size: 27, weight: .medium, design: .rounded))
+                                .foregroundStyle(game.matchedValue(forKey: i) != nil ? game.mode.accent : TVTheme.textSoft)
+                        }.frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(TVChipStyle(accent: game.mode.accent, selected: game.matchSelectedKey == i))
+                    .focused($focus, equals: .matchKey(i)).disabled(!live)
+                }
+            }
+            HStack(spacing: 18) {
+                ForEach(Array(game.matchValues.enumerated()), id: \.offset) { j, val in
+                    let used = game.matchAssign.contains(j)
+                    Button { game.assignMatchValue(j) } label: {
+                        Text(val).font(.system(size: 25, weight: .bold, design: .rounded)).frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(TVChipStyle(accent: Tidbits.Palette.blue, selected: false))
+                    .focused($focus, equals: .matchVal(j)).disabled(!live || used).opacity(used ? 0.4 : 1)
+                }
+            }
+            if live {
+                Button("Submit") { game.submitMatch() }
+                    .buttonStyle(TVChipStyle(accent: game.mode.accent, selected: false))
+                    .focused($focus, equals: .matchSubmit)
+            }
+        }
+        .frame(maxWidth: 1300)
+    }
+
     private var firstFocus: TVFocus {
+        if game.current?.matching != nil { return .matchKey(0) }
         if game.current?.ordering != nil { return .orderSubmit }
         if game.current?.closest != nil { return .closestSlider }
         return game.mode == .stake && game.currentStake == 0
@@ -317,7 +358,7 @@ struct TVGamePlayView: View {
         .background(RoundedRectangle(cornerRadius: 22).fill(TVTheme.panel))
     }
     private var isLast: Bool {
-        (game.mode == .classic || game.mode == .daily || game.mode == .stake || game.mode == .sweep || game.mode == .pictureId || game.mode == .thisOrThat || game.mode == .closestCall || game.mode == .ordering) && game.index + 1 >= game.questions.count
+        (game.mode == .classic || game.mode == .daily || game.mode == .stake || game.mode == .sweep || game.mode == .pictureId || game.mode == .thisOrThat || game.mode == .closestCall || game.mode == .ordering || game.mode == .matching) && game.index + 1 >= game.questions.count
     }
 }
 

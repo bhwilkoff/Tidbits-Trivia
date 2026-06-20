@@ -46,6 +46,7 @@ export const MODES = {
   thisOrThat: { id: 'thisOrThat', title: 'Which First?', blurb: 'Which came first?', perQuestion: 12, count: 10, accent: '#8B5CF6' },
   closestCall: { id: 'closestCall', title: 'Closest Call', blurb: 'How close can you get?', perQuestion: 25, count: 8, accent: '#FFC93C' },
   ordering: { id: 'ordering', title: 'In Order', blurb: 'Arrange them in time.', perQuestion: 35, count: 6, accent: '#2D5BFF' },
+  matching: { id: 'matching', title: 'Match Up', blurb: 'Link each pair.', perQuestion: 40, count: 6, accent: '#FF5C5C' },
   daily: { id: 'daily', title: 'Daily Tidbit', blurb: 'Everyone’s puzzle. Keep your streak.', perQuestion: 30, count: 7, accent: '#FFC93C' },
 };
 

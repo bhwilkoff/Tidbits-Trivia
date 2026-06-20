@@ -18,6 +18,7 @@ nonisolated struct Question: Identifiable, Hashable, Codable, Sendable {
     var imageURL: URL? = nil   // Picture ID (Q7): the Commons image to identify
     var closest: ClosestSpec? = nil   // Closest Call (M5): numeric estimation
     var ordering: [String]? = nil     // Ordering (Q4): the items in CORRECT order
+    var matching: MatchSpec? = nil    // Matching (Q5): keys ↔ correct values
 
     var correctAnswer: String {
         if options.indices.contains(correctIndex) { return options[correctIndex] }
@@ -53,6 +54,13 @@ nonisolated struct ClosestSpec: Hashable, Codable, Sendable {
         let n = answer == answer.rounded() ? String(Int(answer)) : String(answer)
         return unit.isEmpty ? n : "\(n) \(unit)"
     }
+}
+
+/// Matching (Q5): link each key to its value. `values[i]` is the correct match
+/// for `keys[i]`; the client shuffles the values for display.
+nonisolated struct MatchSpec: Hashable, Codable, Sendable {
+    let keys: [String]
+    let values: [String]
 }
 
 /// Whether the player got it right, and how fast — drives speed scoring,

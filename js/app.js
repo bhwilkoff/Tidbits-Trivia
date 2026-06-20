@@ -1,7 +1,7 @@
 // Tidbits — web app shell: router, views, and the game loop. Mirrors the
 // Apple AppStore + GameEngine + views. Vanilla JS, no framework, no build.
 
-import { Corpus, Pictures, ThisOrThat, ClosestCall, Ordering, Wikipedia } from './api.js';
+import { Corpus, Pictures, ThisOrThat, ClosestCall, Ordering, Matching, Wikipedia } from './api.js';
 import { Store, CATEGORIES, catColor, catById, MODES, STAKE_BUDGET, dayKey, APP_STORES } from './store.js';
 import { Scoring } from './engine.js';
 
@@ -63,7 +63,7 @@ function viewHome() {
       <span class="cat-name">${h(c.name)}</span>
       <span class="cat-blurb muted">${h(c.blurb)}</span>
     </button>`).join('');
-  const modes = ['classic', 'timeAttack', 'survival', 'stake', 'sweep', 'pictureId', 'thisOrThat', 'closestCall', 'ordering'].map((m) =>
+  const modes = ['classic', 'timeAttack', 'survival', 'stake', 'sweep', 'pictureId', 'thisOrThat', 'closestCall', 'ordering', 'matching'].map((m) =>
     `<button class="chip" data-mode="${m}">${h(MODES[m].title)}</button>`).join('');
   return `
     <h1 class="page-title">Trivia from the whole of Wikipedia.</h1>
@@ -234,6 +234,10 @@ class Game {
       await Ordering.load();
       qs = Ordering.pull(this.category.id, Store._seen, this.mode.count);
     }
+    else if (this.mode.id === 'matching') {
+      await Matching.load();
+      qs = Matching.pull(this.category.id, Store._seen, this.mode.count);
+    }
     else {
       qs = Corpus.pull(this.category.id, Store._seen, this.mode.count);
       if (qs.length < this.mode.count) {
@@ -281,6 +285,11 @@ class Game {
       for (let i = 0; i < 6 && s.join() === cur.ordering.join(); i++) { for (let k = s.length - 1; k > 0; k--) { const j = Math.floor(Math.random() * (k + 1)); [s[k], s[j]] = [s[j], s[k]]; } }
       this.currentOrder = s; this.lastOrderPoints = 0;
     }
+    if (cur && cur.matching) {
+      const v = cur.matching.values.slice();
+      for (let k = v.length - 1; k > 0; k--) { const j = Math.floor(Math.random() * (k + 1)); [v[k], v[j]] = [v[j], v[k]]; }
+      this.matchValues = v; this.matchAssign = cur.matching.keys.map(() => null); this.matchSelectedKey = null; this.lastMatchPoints = 0;
+    }
     this.budget = this._globalRemaining() ?? this.mode.perQuestion ?? 30;
     this.remaining = this.budget;
     clearInterval(this.timer);
@@ -292,8 +301,30 @@ class Game {
     if (this.phase !== 'playing') return;
     const g = this._globalRemaining();
     if (g !== null) { this.remaining = g; if (g <= 0) return this._end(); }
-    else { this.remaining = Math.max(0, this.budget - (Date.now() - this.qStart) / 1000); if (this.remaining <= 0) return (this.mode.id === 'closestCall' ? this.submitGuess() : this.mode.id === 'ordering' ? this.submitOrder() : this.submit(null)); }
+    else { this.remaining = Math.max(0, this.budget - (Date.now() - this.qStart) / 1000); if (this.remaining <= 0) return (this.mode.id === 'closestCall' ? this.submitGuess() : this.mode.id === 'ordering' ? this.submitOrder() : this.mode.id === 'matching' ? this.submitMatch() : this.submit(null)); }
     updateClock();
+  }
+  // Matching (Q5): tap a key to select, tap a value to link; submit scores links.
+  selectMatchKey(i) { if (this.mode.id !== 'matching' || this.phase !== 'playing') return; this.matchSelectedKey = this.matchSelectedKey === i ? null : i; renderGame(); }
+  assignMatchValue(j) {
+    if (this.mode.id !== 'matching' || this.phase !== 'playing' || this.matchSelectedKey == null) return;
+    for (let i = 0; i < this.matchAssign.length; i++) if (this.matchAssign[i] === j) this.matchAssign[i] = null;
+    this.matchAssign[this.matchSelectedKey] = j; this.matchSelectedKey = null; renderGame();
+  }
+  matchedValue(i) { const v = this.matchAssign[i]; return v == null ? null : this.matchValues[v]; }
+  submitMatch() {
+    if (this.phase !== 'playing') return;
+    const q = this.current, m = q.matching; if (!m) return;
+    clearInterval(this.timer);
+    let correct = 0;
+    for (let i = 0; i < m.keys.length; i++) if (this.matchedValue(i) === m.values[i]) correct++;
+    const pts = m.keys.length ? Math.round(40 * correct / m.keys.length) : 0;
+    const perfect = correct === m.keys.length;
+    this.lastMatchPoints = pts;
+    const taken = (Date.now() - this.qStart) / 1000;
+    this.answered.push({ q, chosen: perfect ? q.correctIndex : -1, correct: perfect, taken });
+    if (perfect) { this.streak++; this.maxStreak = Math.max(this.maxStreak, this.streak); } else this.streak = 0;
+    this.score += pts; this.phase = 'reveal'; renderGame();
   }
   // Ordering (Q4): move an item up/down; lock in (partial credit by inversions).
   moveOrderItem(i, up) {
@@ -416,9 +447,10 @@ function renderGame() {
   const sweepGr = game.mode.id === 'sweep' ? sweepGrid() : '';
   const closest = q.closest ? closestPanel(q.closest) : '';
   const order = q.ordering ? orderingPanel() : '';
+  const match = q.matching ? matchingPanel(q.matching) : '';
   const pic = q.image ? `<div class="card pic-card"><img class="pic-img" src="${h(q.image)}" alt="Identify this" loading="eager" onerror="this.parentNode.classList.add('pic-failed')"><span class="pic-fallback muted">Couldn't load the image</span></div>` : '';
   const reveal = game.phase === 'reveal' ? revealCard(q) : '';
-  const fixedCount = game.mode.id === 'classic' || game.mode.id === 'daily' || staking || game.mode.id === 'sweep' || game.mode.id === 'pictureId' || game.mode.id === 'thisOrThat' || game.mode.id === 'closestCall' || game.mode.id === 'ordering';
+  const fixedCount = game.mode.id === 'classic' || game.mode.id === 'daily' || staking || game.mode.id === 'sweep' || game.mode.id === 'pictureId' || game.mode.id === 'thisOrThat' || game.mode.id === 'closestCall' || game.mode.id === 'ordering' || game.mode.id === 'matching';
   const progress = fixedCount ? `${game.index + 1} / ${game.questions.length}` : `#${game.index + 1}`;
   app.innerHTML = `
     <div class="game">
@@ -435,6 +467,7 @@ function renderGame() {
         ${stakeSel}
         ${closest}
         ${order}
+        ${match}
         <div class="opts">${opts}</div>
         ${reveal}
       </div>
@@ -448,10 +481,27 @@ function renderGame() {
   const lock = $('[data-lock]'); if (lock) lock.addEventListener('click', () => game.submitGuess());
   app.querySelectorAll('[data-move]').forEach((b) => b.addEventListener('click', () => game.moveOrderItem(+b.dataset.i, b.dataset.move === 'up')));
   const sub = $('[data-submit-order]'); if (sub) sub.addEventListener('click', () => game.submitOrder());
+  app.querySelectorAll('[data-mkey]').forEach((b) => b.addEventListener('click', () => game.selectMatchKey(+b.dataset.mkey)));
+  app.querySelectorAll('[data-mval]').forEach((b) => b.addEventListener('click', () => game.assignMatchValue(+b.dataset.mval)));
+  const ms = $('[data-submit-match]'); if (ms) ms.addEventListener('click', () => game.submitMatch());
   if (game.phase === 'reveal') $('[data-next]').addEventListener('click', () => game.advance());
   updateClock();
 }
-function isLast() { return (game.mode.id === 'classic' || game.mode.id === 'daily' || game.mode.id === 'stake' || game.mode.id === 'sweep' || game.mode.id === 'pictureId' || game.mode.id === 'thisOrThat' || game.mode.id === 'closestCall' || game.mode.id === 'ordering') && game.index + 1 >= game.questions.length; }
+function isLast() { return (game.mode.id === 'classic' || game.mode.id === 'daily' || game.mode.id === 'stake' || game.mode.id === 'sweep' || game.mode.id === 'pictureId' || game.mode.id === 'thisOrThat' || game.mode.id === 'closestCall' || game.mode.id === 'ordering' || game.mode.id === 'matching') && game.index + 1 >= game.questions.length; }
+// Matching (Q5): key rows (tap to select) + value chips (tap to link) + Submit.
+function matchingPanel(m) {
+  const live = game.phase === 'playing';
+  const keys = m.keys.map((k, i) => {
+    const mv = game.matchedValue(i);
+    const sel = game.matchSelectedKey === i ? ' sel' : '';
+    return `<button class="match-key${sel}" data-mkey="${i}" ${live ? '' : 'disabled'}><span>${h(k)}</span><span class="match-val">${mv ? h(mv) : 'tap a value →'}</span></button>`;
+  }).join('');
+  const vals = game.matchValues.map((v, j) => {
+    const used = game.matchAssign.includes(j);
+    return `<button class="match-chip" data-mval="${j}" ${(!live || used) ? 'disabled' : ''}>${h(v)}</button>`;
+  }).join('');
+  return `<div class="match-wrap"><div class="match-keys">${keys}</div><div class="match-vals">${vals}</div>${live ? '<button class="btn btn-full match-submit" data-submit-match>Submit</button>' : ''}</div>`;
+}
 // Ordering (Q4): rows with up/down + Submit; partial credit by inversions.
 function orderingPanel() {
   const live = game.phase === 'playing';
@@ -497,8 +547,9 @@ function revealCard(q) {
   const stakeTag = game.mode.id === 'stake' ? `<span class="stake-earned${correct ? ' hit' : ''}">${correct ? '+' + game.currentStake : '+0'}</span>` : '';
   const closeTag = q.closest ? `<span class="stake-earned${game.lastGuessPoints > 0 ? ' hit' : ''}">+${game.lastGuessPoints}</span>` : '';
   const orderTag = q.ordering ? `<span class="stake-earned${game.lastOrderPoints > 0 ? ' hit' : ''}">+${game.lastOrderPoints}</span>` : '';
+  const matchTag = q.matching ? `<span class="stake-earned${game.lastMatchPoints > 0 ? ' hit' : ''}">+${game.lastMatchPoints}</span>` : '';
   const closeLine = q.closest ? `<p class="muted">You said ${closestFmtVal(game.currentGuess, q.closest)} · actual ${closestFmtVal(q.closest.answer, q.closest)} · off by ${Math.abs(Math.round(game.currentGuess - q.closest.answer))}</p>` : '';
-  return `<div class="card reveal"><div class="reveal-h">${correct ? '✅ Nice — you knew it.' : '💡 Now you know.'}${stakeTag}${closeTag}${orderTag}</div>
+  return `<div class="card reveal"><div class="reveal-h">${correct ? '✅ Nice — you knew it.' : '💡 Now you know.'}${stakeTag}${closeTag}${orderTag}${matchTag}</div>
     ${closeLine}<p>${h(q.explanation)}</p>${q.sourceURL ? `<a href="${h(q.sourceURL)}" target="_blank" rel="noopener" class="link">Read ${h(q.sourceTitle)} on Wikipedia ↗</a>` : ''}</div>`;
 }
 function updateClock() {

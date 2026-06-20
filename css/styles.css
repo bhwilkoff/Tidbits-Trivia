@@ -187,6 +187,20 @@ body {
 .order-btn:disabled { opacity: .35; cursor: default; }
 .order-submit { background: var(--color-accent); color: #fff; margin-top: 4px; }
 
+/* ---- Matching ---- */
+.match-wrap { display: flex; flex-direction: column; gap: 8px; }
+.match-keys { display: flex; flex-direction: column; gap: 8px; }
+.match-key { font: inherit; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  text-align: left; padding: 12px 14px; border-radius: 12px; background: var(--color-surface);
+  border: 2.5px solid var(--color-border); box-shadow: 3px 3px 0 var(--color-border); font-weight: 700; }
+.match-key.sel { background: #ffe1e1; }
+.match-key .match-val { color: var(--color-ink-soft); font-weight: 700; font-size: 14px; }
+.match-vals { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
+.match-chip { font: inherit; cursor: pointer; padding: 12px 8px; border-radius: 12px; font-weight: 700;
+  background: var(--color-bg-deep); border: 2.5px solid var(--color-border); }
+.match-chip:disabled { opacity: .35; cursor: default; }
+.match-submit { background: var(--color-primary); color: #fff; margin-top: 4px; }
+
 /* ---- Progress: The Pie + Topic Levels ---- */
 .pie-card { display: flex; align-items: center; gap: 16px; padding: 16px; background: var(--color-bg-deep); margin-bottom: 12px; }
 .pie { position: relative; width: 104px; height: 104px; border-radius: 50%; flex: 0 0 auto;

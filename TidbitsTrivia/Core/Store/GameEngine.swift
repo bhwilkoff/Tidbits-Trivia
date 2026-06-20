@@ -48,6 +48,13 @@ final class GameEngine {
     private(set) var currentOrder: [String] = []
     private(set) var lastOrderPoints: Int = 0
 
+    // Matching (Q5): shuffled value column, per-key assignment (value index), the
+    // currently-selected key (tap key then value to link), and points earned.
+    private(set) var matchValues: [String] = []
+    private(set) var matchAssign: [Int?] = []
+    private(set) var matchSelectedKey: Int?
+    private(set) var lastMatchPoints: Int = 0
+
     // Clocks
     private(set) var remaining: Double = 0      // seconds left on the active clock
     private var clockBudget: Double = 0
@@ -127,6 +134,11 @@ final class GameEngine {
         currentStake = 0
         if let spec = current?.closest { currentGuess = ((spec.min + spec.max) / 2).rounded() }
         if let order = current?.ordering { currentOrder = Self.shuffledDistinct(order) }
+        if let m = current?.matching {
+            matchValues = Self.shuffledDistinct(m.values)
+            matchAssign = Array(repeating: nil, count: m.keys.count)
+            matchSelectedKey = nil
+        }
         phase = .playing
         questionStart = .now
         clockBudget = mode.perQuestionSeconds ?? (globalRemaining() ?? 30)
@@ -169,6 +181,7 @@ final class GameEngine {
                 switch mode {
                 case .closestCall: submitGuess()
                 case .ordering: submitOrder()
+                case .matching: submitMatch()
                 default: submit(nil)
                 }
             }
@@ -254,6 +267,50 @@ final class GameEngine {
         let pts = maxInv == 0 ? 0 : Int((Double(40) * (1 - Double(inversions) / Double(maxInv))).rounded())
         lastOrderPoints = pts
         let perfect = inversions == 0
+        let taken = Date().timeIntervalSince(questionStart)
+        let answer = AnsweredQuestion(question: q, chosenIndex: perfect ? 0 : 1, secondsTaken: taken)
+        answered.append(answer)
+        lastAnswer = answer
+        if perfect { streak += 1; maxStreak = max(maxStreak, streak); Haptics.correct() }
+        else { streak = 0; Haptics.wrong() }
+        score += pts
+        phase = .reveal
+    }
+
+    // MARK: Matching
+
+    /// Tap a key (left column) to select it; the next value tap links to it.
+    func selectMatchKey(_ keyIndex: Int) {
+        guard mode == .matching, phase == .playing else { return }
+        matchSelectedKey = (matchSelectedKey == keyIndex) ? nil : keyIndex
+    }
+
+    /// Tap a value (right column) — links it to the selected key (1:1: clears the
+    /// value from any other key, and the key's prior value).
+    func assignMatchValue(_ valueIndex: Int) {
+        guard mode == .matching, phase == .playing, let key = matchSelectedKey,
+              matchAssign.indices.contains(key) else { return }
+        for i in matchAssign.indices where matchAssign[i] == valueIndex { matchAssign[i] = nil }
+        matchAssign[key] = valueIndex
+        matchSelectedKey = nil
+    }
+
+    /// The value currently linked to a key, or nil.
+    func matchedValue(forKey keyIndex: Int) -> String? {
+        guard matchAssign.indices.contains(keyIndex), let v = matchAssign[keyIndex],
+              matchValues.indices.contains(v) else { return nil }
+        return matchValues[v]
+    }
+
+    /// Lock in — partial credit by correct links (adds-only).
+    func submitMatch() {
+        guard phase == .playing, let q = current, let m = q.matching else { return }
+        ticker?.cancel()
+        var correct = 0
+        for (k, key) in m.keys.enumerated() where matchedValue(forKey: k) == m.values[k] { _ = key; correct += 1 }
+        let pts = m.keys.isEmpty ? 0 : Int((Double(40) * Double(correct) / Double(m.keys.count)).rounded())
+        lastMatchPoints = pts
+        let perfect = correct == m.keys.count
         let taken = Date().timeIntervalSince(questionStart)
         let answer = AnsweredQuestion(question: q, chosenIndex: perfect ? 0 : 1, secondsTaken: taken)
         answered.append(answer)

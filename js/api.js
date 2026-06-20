@@ -118,6 +118,14 @@ function rowToOrder(r) {
   };
 }
 
+// Matching (Q5) row: [id, prompt, keys, values(correct, parallel), cat, expl, "", ""].
+function rowToMatch(r) {
+  return {
+    id: r[0], prompt: r[1], options: r[2], correctIndex: 0, templateID: 'match',
+    matching: { keys: r[2], values: r[3] }, categoryID: r[4], difficulty: 3, explanation: r[5], sourceTitle: '', sourceURL: '',
+  };
+}
+
 function makeJsonSet(filename, parseRow = rowToQuestion) {
   return {
     questions: [], byCategory: {}, loaded: false,
@@ -146,6 +154,7 @@ export const Pictures = makeJsonSet('picture.json');
 export const ThisOrThat = makeJsonSet('thisorthat.json');
 export const ClosestCall = makeJsonSet('closest.json', rowToClosest);
 export const Ordering = makeJsonSet('order.json', rowToOrder);
+export const Matching = makeJsonSet('match.json', rowToMatch);
 
 export const Wikipedia = {
   async search(topic, limit = 35) {

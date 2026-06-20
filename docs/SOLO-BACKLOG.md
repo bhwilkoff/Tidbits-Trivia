@@ -40,7 +40,7 @@ aliases unlocks SEVEN question types. Most `P2` items are gated on it.
 | Q2 | **True/False rapid** | A statement; tap T/F; tight timer; streak. Highest value when false = a **plausible misconception**. | +meta (statement gen) | P2 | 🔮 pipeline |
 | Q3 | **Odd-one-out** | Four cards; three share a hidden property, one doesn't; pick the outlier (+ optionally name the link). **Zero new UI** (reuses MCQ surface). | +meta (E1 set membership) | P2 | 🔮 E1 |
 | Q4 | **Ordering / ranking** | Arrange 4 items earliest→latest (`order.json`, 394 Qs); partial credit by inversion count. Uniform ↑/↓ move buttons on every platform incl. tvOS (no drag). | +meta (E1 years) | P2 | ✅ all 4 platforms |
-| Q5 | **Matching pairs** | Two columns (country↔capital); link each. Easy to validate (1:1). Study-aligned. | +meta (E1 paired facts) | P2 | 🔮 E1 |
+| Q5 | **Matching pairs** | Link each key to its value from the corpus's 1:1 Wikidata relations (`match.json`, 136 Qs: capital/currency/element-symbol/book-author). Tap key then value; partial credit. tvOS = focusable rows. | Yes (1:1 wd relations) | P2 | ✅ all 4 platforms |
 | Q6 | **Type-the-answer** | Free-text recall + fuzzy/alias matching. Deepest retrieval; web/phone first (tvOS keyboard wall). Also closes `ROADMAP` #9. | +meta (E1 aliases) | P2 | 🔮 E1 |
 | Q7 | **Picture ID** | A Commons image + "What is this?" + the corpus's 4 vetted options (`picture.json`, 816 Qs). iOS/tvOS AsyncImage, web img, Android Coil, each with a load-failure fallback. | +meta (E1 Commons image) | P2 | ✅ all 4 platforms |
 | Q8 | **List / enumeration** *(Sporcle typed)* | "Name as many X in 60s"; fill-grid. Rich sets + alias coverage; web/phone (tvOS via voice/skip). | Rich | P3 | 🔮 |

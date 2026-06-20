@@ -47,6 +47,11 @@ class GameState(
     // Ordering (Q4): the player's working arrangement + points earned.
     var currentOrder by mutableStateOf<List<String>>(emptyList())
     var lastOrderPoints by mutableIntStateOf(0)
+    // Matching (Q5): shuffled values, per-key assignment, selected key, points.
+    var matchValues by mutableStateOf<List<String>>(emptyList())
+    var matchAssign by mutableStateOf<List<Int?>>(emptyList())
+    var matchSelectedKey by mutableStateOf<Int?>(null)
+    var lastMatchPoints by mutableIntStateOf(0)
 
     var questions: List<Question> = emptyList(); private set
     private var budget = 30.0
@@ -56,7 +61,7 @@ class GameState(
 
     val current: Question? get() = questions.getOrNull(index)
     val correctCount: Int get() = answered.count { it.correct }
-    val isLast: Boolean get() = (mode == Mode.CLASSIC || mode == Mode.DAILY || mode == Mode.STAKE || mode == Mode.SWEEP || mode == Mode.PICTURE_ID || mode == Mode.THIS_OR_THAT || mode == Mode.CLOSEST_CALL || mode == Mode.ORDERING) && index + 1 >= questions.size
+    val isLast: Boolean get() = (mode == Mode.CLASSIC || mode == Mode.DAILY || mode == Mode.STAKE || mode == Mode.SWEEP || mode == Mode.PICTURE_ID || mode == Mode.THIS_OR_THAT || mode == Mode.CLOSEST_CALL || mode == Mode.ORDERING || mode == Mode.MATCHING) && index + 1 >= questions.size
     val progressLabel: String get() = if (mode == Mode.TIME_ATTACK || mode == Mode.SURVIVAL) "#${index + 1}" else "${index + 1} / ${questions.size}"
     val clockFraction: Double get() = if (budget <= 0) 0.0 else (remaining / budget).coerceIn(0.0, 1.0)
 
@@ -80,6 +85,7 @@ class GameState(
             mode == Mode.THIS_OR_THAT -> ThisOrThat.pull(category.id, store.seenSet, mode.count)
             mode == Mode.CLOSEST_CALL -> ClosestCall.pull(category.id, store.seenSet, mode.count)
             mode == Mode.ORDERING -> OrderingSet.pull(category.id, store.seenSet, mode.count)
+            mode == Mode.MATCHING -> MatchingSet.pull(category.id, store.seenSet, mode.count)
             else -> loadStandard()
         }
         questions = if (mode.count == 99) qs else qs.take(mode.count)
@@ -128,6 +134,11 @@ class GameState(
             var tries = 0; while (s == order && tries++ < 6) s = order.shuffled()
             currentOrder = s
         }
+        current?.matching?.let { m ->
+            matchValues = m.values.shuffled()
+            matchAssign = List(m.keys.size) { null }
+            matchSelectedKey = null
+        }
         phase = GamePhase.PLAYING
         qStart = now()
         budget = globalRemaining() ?: (mode.perQuestion?.toDouble() ?: 30.0)
@@ -143,7 +154,34 @@ class GameState(
         if (phase != GamePhase.PLAYING) return
         val g = globalRemaining()
         if (g != null) { remaining = g; if (g <= 0) end() }
-        else { remaining = max(0.0, budget - (now() - qStart) / 1000.0); if (remaining <= 0) { when (mode) { Mode.CLOSEST_CALL -> submitGuess(); Mode.ORDERING -> submitOrder(); else -> submit(null) } } }
+        else { remaining = max(0.0, budget - (now() - qStart) / 1000.0); if (remaining <= 0) { when (mode) { Mode.CLOSEST_CALL -> submitGuess(); Mode.ORDERING -> submitOrder(); Mode.MATCHING -> submitMatch(); else -> submit(null) } } }
+    }
+
+    fun selectMatchKey(i: Int) {
+        if (mode != Mode.MATCHING || phase != GamePhase.PLAYING) return
+        matchSelectedKey = if (matchSelectedKey == i) null else i
+    }
+    fun assignMatchValue(j: Int) {
+        if (mode != Mode.MATCHING || phase != GamePhase.PLAYING) return
+        val key = matchSelectedKey ?: return
+        matchAssign = matchAssign.mapIndexed { i, v -> when { i == key -> j; v == j -> null; else -> v } }
+        matchSelectedKey = null
+    }
+    fun matchedValue(i: Int): String? = matchAssign.getOrNull(i)?.let { matchValues.getOrNull(it) }
+    fun submitMatch() {
+        if (phase != GamePhase.PLAYING) return
+        val q = current ?: return; val m = q.matching ?: return
+        var correct = 0
+        for (i in m.keys.indices) if (matchedValue(i) == m.values[i]) correct++
+        val pts = if (m.keys.isEmpty()) 0 else Math.round(40.0 * correct / m.keys.size).toInt()
+        val perfect = correct == m.keys.size
+        lastMatchPoints = pts
+        val taken = (now() - qStart) / 1000.0
+        answered.add(Answered(q, if (perfect) q.correctIndex else -1, perfect, taken))
+        lastCorrect = perfect
+        if (perfect) { streak++; maxStreak = max(maxStreak, streak) } else streak = 0
+        score += pts
+        phase = GamePhase.REVEAL
     }
 
     fun moveOrderItem(i: Int, up: Boolean) {

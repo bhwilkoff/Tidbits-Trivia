@@ -19,7 +19,8 @@ struct GamePlayView: View {
                         QuestionCard(question: q)
                         if game.mode == .sweep { sweepGrid }
                         if game.mode == .stake && game.phase == .playing { stakeSelector }
-                        if q.ordering != nil { orderingPanel() }
+                        if let m = q.matching { matchingPanel(m) }
+                        else if q.ordering != nil { orderingPanel() }
                         else if let spec = q.closest { closestPanel(spec) }
                         else { answers(for: q) }
                         if game.phase == .reveal { reveal(for: q) }
@@ -48,6 +49,7 @@ struct GamePlayView: View {
                 case .playing:
                     if game.mode == .closestCall { game.submitGuess(); break }
                     if game.mode == .ordering { game.submitOrder(); break }
+                    if game.mode == .matching { game.submitMatch(); break }
                     if game.mode == .stake && game.currentStake == 0,
                        let tier = game.stakeTiers.first(where: { $0.remaining > 0 }) { game.setStake(tier.value) }
                     game.submit(0)
@@ -128,6 +130,50 @@ struct GamePlayView: View {
         .padding(14)
         .chunkyCard(fill: Tidbits.Palette.bgDeep)
         .padding(.trailing, Tidbits.Metric.shadowOffset)
+    }
+
+    // MARK: Matching
+
+    private func matchingPanel(_ m: MatchSpec) -> some View {
+        let live = game.phase == .playing
+        let cols = [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)]
+        return VStack(spacing: 12) {
+            VStack(spacing: 8) {
+                ForEach(Array(m.keys.enumerated()), id: \.offset) { i, key in
+                    let matched = game.matchedValue(forKey: i)
+                    Button { game.selectMatchKey(i) } label: {
+                        HStack {
+                            Text(key).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            Text(matched ?? "tap a value →").font(Tidbits.TypeRamp.l5)
+                                .foregroundStyle(matched != nil ? Tidbits.Palette.ink : Tidbits.Palette.inkSoft)
+                        }
+                        .padding(.horizontal, 14).padding(.vertical, 12)
+                        .chunkyCard(fill: game.matchSelectedKey == i ? game.mode.accent.opacity(0.22) : Tidbits.Palette.surface)
+                        .padding(.trailing, Tidbits.Metric.shadowOffset)
+                    }
+                    .buttonStyle(.plain).disabled(!live)
+                }
+            }
+            LazyVGrid(columns: cols, spacing: 8) {
+                ForEach(Array(game.matchValues.enumerated()), id: \.offset) { j, val in
+                    let used = game.matchAssign.contains(j)
+                    Button { game.assignMatchValue(j) } label: {
+                        Text(val).font(.system(size: 15, weight: .bold))
+                            .frame(maxWidth: .infinity).padding(.vertical, 12)
+                            .foregroundStyle(Tidbits.Palette.ink)
+                            .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Tidbits.Palette.bgDeep))
+                            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Tidbits.Palette.border, lineWidth: 2.5))
+                            .opacity(used ? 0.35 : 1)
+                    }
+                    .buttonStyle(.plain).disabled(!live || used)
+                }
+            }
+            if live {
+                Button("Submit") { game.submitMatch() }
+                    .buttonStyle(ChunkyButtonStyle(fill: game.mode.accent, textColor: game.mode.accent.legibleForeground))
+            }
+        }
     }
 
     // MARK: Ordering
@@ -304,6 +350,14 @@ struct GamePlayView: View {
                         .background(Capsule().fill(game.lastOrderPoints > 0 ? Tidbits.Palette.mint : Tidbits.Palette.surface))
                         .overlay(Capsule().strokeBorder(Tidbits.Palette.border, lineWidth: 2))
                 }
+                if game.mode == .matching {
+                    Text("+\(game.lastMatchPoints)")
+                        .font(.system(size: 15, weight: .black, design: .rounded))
+                        .foregroundStyle(game.lastMatchPoints > 0 ? Tidbits.Palette.mint.legibleForeground : Tidbits.Palette.ink)
+                        .padding(.horizontal, 10).padding(.vertical, 5)
+                        .background(Capsule().fill(game.lastMatchPoints > 0 ? Tidbits.Palette.mint : Tidbits.Palette.surface))
+                        .overlay(Capsule().strokeBorder(Tidbits.Palette.border, lineWidth: 2))
+                }
             }
             if let spec = q.closest {
                 let off = Int(abs(game.currentGuess - spec.answer).rounded())
@@ -342,7 +396,7 @@ struct GamePlayView: View {
     }
 
     private var isLast: Bool {
-        (game.mode == .classic || game.mode == .daily || game.mode == .stake || game.mode == .sweep || game.mode == .pictureId || game.mode == .thisOrThat || game.mode == .closestCall || game.mode == .ordering) && game.index + 1 >= game.questions.count
+        (game.mode == .classic || game.mode == .daily || game.mode == .stake || game.mode == .sweep || game.mode == .pictureId || game.mode == .thisOrThat || game.mode == .closestCall || game.mode == .ordering || game.mode == .matching) && game.index + 1 >= game.questions.count
     }
 }
 

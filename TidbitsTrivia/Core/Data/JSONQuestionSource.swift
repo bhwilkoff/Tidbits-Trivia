@@ -10,6 +10,7 @@ nonisolated final class JSONQuestionSource: @unchecked Sendable {
     static let thisOrThat = JSONQuestionSource(resource: "thisorthat")
     static let closestCall = JSONQuestionSource(resource: "closest")
     static let ordering = JSONQuestionSource(resource: "order")
+    static let matching = JSONQuestionSource(resource: "match")
 
     private let all: [Question]
 
@@ -54,8 +55,15 @@ nonisolated final class JSONQuestionSource: @unchecked Sendable {
                     sourceURL: (r[8] as? String).flatMap(URL.init(string:)),
                     templateID: template, imageURL: image)
             }
-            // Ordering: [id, prompt, names(correct order), years, cat, expl, title, url].
+            // Matching: r[3] is a STRING array (the values). Ordering: r[3] is an INT array (years).
             guard arr2.count >= 2, r.count >= 8, let cat = r[4] as? String else { return nil }
+            if let values = r[3] as? [String] {
+                return Question(
+                    id: id, prompt: prompt, options: arr2, correctIndex: 0,
+                    categoryID: cat, difficulty: 3,
+                    explanation: r[5] as? String ?? "", sourceTitle: "", sourceURL: nil,
+                    templateID: template, matching: MatchSpec(keys: arr2, values: values))
+            }
             return Question(
                 id: id, prompt: prompt, options: arr2, correctIndex: 0,
                 categoryID: cat, difficulty: 3,

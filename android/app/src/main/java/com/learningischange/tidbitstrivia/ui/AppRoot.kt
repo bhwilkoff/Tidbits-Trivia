@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -60,6 +61,7 @@ fun AppRoot(store: Store) {
         if (!ThisOrThat.loaded) runCatching { ThisOrThat.load(context) }
         if (!ClosestCall.loaded) runCatching { ClosestCall.load(context) }
         if (!OrderingSet.loaded) runCatching { OrderingSet.load(context) }
+        if (!MatchingSet.loaded) runCatching { MatchingSet.load(context) }
         corpusReady = true
     }
 
@@ -105,7 +107,7 @@ private fun HomeScreen(onPlay: (Mode, Category) -> Unit) {
 
         Text("Pick a mode", fontWeight = FontWeight.Bold, fontSize = 20.sp)
         LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            items(listOf(Mode.CLASSIC, Mode.TIME_ATTACK, Mode.SURVIVAL, Mode.STAKE, Mode.SWEEP, Mode.PICTURE_ID, Mode.THIS_OR_THAT, Mode.CLOSEST_CALL, Mode.ORDERING), key = { it.name }) { m ->
+            items(listOf(Mode.CLASSIC, Mode.TIME_ATTACK, Mode.SURVIVAL, Mode.STAKE, Mode.SWEEP, Mode.PICTURE_ID, Mode.THIS_OR_THAT, Mode.CLOSEST_CALL, Mode.ORDERING, Mode.MATCHING), key = { it.name }) { m ->
                 FilterChip(selected = selectedMode == m, onClick = { selectedMode = m }, label = { Text(m.title) })
             }
         }
@@ -180,6 +182,7 @@ private fun PlayingScreen(game: GameState) {
         if (game.mode == Mode.STAKE && game.phase == GamePhase.PLAYING) StakeSelector(game)
         q.closest?.let { ClosestPanel(game, it) }
         if (q.ordering != null) OrderingPanel(game)
+        q.matching?.let { MatchingPanel(game, it) }
         val answersLocked = game.phase != GamePhase.PLAYING || (game.mode == Mode.STAKE && game.currentStake == 0)
         q.options.forEachIndexed { i, opt -> AnswerButton(opt, game.answerState(i), !answersLocked) { game.submit(i) } }
         if (game.phase == GamePhase.REVEAL) {
@@ -193,6 +196,7 @@ private fun PlayingScreen(game: GameState) {
                         }
                         if (q.closest != null) AssistChip(onClick = {}, label = { Text("+${game.lastGuessPoints}", fontWeight = FontWeight.Black) })
                         if (q.ordering != null) AssistChip(onClick = {}, label = { Text("+${game.lastOrderPoints}", fontWeight = FontWeight.Black) })
+                        if (q.matching != null) AssistChip(onClick = {}, label = { Text("+${game.lastMatchPoints}", fontWeight = FontWeight.Black) })
                     }
                     q.closest?.let { s ->
                         Text("You said ${s.fmt(game.currentGuess)} · actual ${s.formattedAnswer} · off by ${Math.abs(Math.round(game.currentGuess - s.answer))}",
@@ -235,6 +239,37 @@ private fun SweepGrid(game: GameState) {
             }
             start += perRow
         }
+    }
+}
+
+// Matching (Q5): key rows (tap to select) + value chips (tap to link) + Submit.
+@Composable
+private fun MatchingPanel(game: GameState, m: MatchSpec) {
+    val live = game.phase == GamePhase.PLAYING
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        m.keys.forEachIndexed { i, key ->
+            val selected = game.matchSelectedKey == i
+            Surface(onClick = { game.selectMatchKey(i) }, enabled = live, shape = RoundedCornerShape(12.dp),
+                color = if (selected) Pops.coral.copy(alpha = 0.22f) else MaterialTheme.colorScheme.surface,
+                border = BorderStroke(2.5.dp, Ink), modifier = Modifier.fillMaxWidth()) {
+                Row(Modifier.padding(horizontal = 14.dp, vertical = 12.dp).fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text(key, fontWeight = FontWeight.Bold)
+                    Text(game.matchedValue(i) ?: "tap a value →", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f), fontSize = 14.sp)
+                }
+            }
+        }
+        LazyVerticalGrid(columns = GridCells.Fixed(2), modifier = Modifier.heightIn(max = 260.dp), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            itemsIndexed(game.matchValues) { j, v ->
+                val used = game.matchAssign.contains(j)
+                Surface(onClick = { game.assignMatchValue(j) }, enabled = live && !used, shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant, border = BorderStroke(2.5.dp, Ink),
+                    modifier = Modifier.alpha(if (used) 0.35f else 1f)) {
+                    Text(v, fontWeight = FontWeight.Bold, fontSize = 14.sp, modifier = Modifier.padding(vertical = 12.dp, horizontal = 6.dp).fillMaxWidth(), textAlign = TextAlign.Center)
+                }
+            }
+        }
+        if (live) Button(onClick = { game.submitMatch() }, modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = Pops.coral)) { Text("Submit") }
     }
 }
 

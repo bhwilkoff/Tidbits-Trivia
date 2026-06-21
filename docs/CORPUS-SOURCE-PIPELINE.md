@@ -188,6 +188,21 @@ column-order contract (`DATA-CONTRACT.md`) **do not change**.
   judge's median rose 52.5 → 60 ("solid") on the filtered set. `score_questions.py`
   and `audit_questions.py` are permanent, re-runnable quality gates.
 
+- **Stage 5 — "Consistently delightful" LLM rewrite: BUILT (2026-06-21).** Ben:
+  make questions read like a beloved human quizmaster wrote them (whimsy + learning),
+  the differentiator vs algorithmic generators. A 125-batch parallel **workflow**
+  (`delight-rewrite`) had an LLM rewrite each robotic "Who/What is this — '<dry
+  clue>'?" into a hand-crafted question, **grounded strictly in that article's own
+  summary** (facts only from the provided text → no hallucination), never naming the
+  answer, still answerable with the type-matched options. `apply_delight.py` merges
+  with SAFETY GATES — drops any rewrite that leaks the answer (287) or is malformed
+  (176), keeping the original clue. **4,523 / 4,987 describe questions (91%) are now
+  delightful**; `gen_typeanswer` reuses the prompt so Name It inherits them. (The run
+  spans the usage-limit reset via workflow resume — cached batches return instantly.)
+  e.g. "This Hungarian-born physicist conceived the nuclear chain reaction in 1933,
+  then drafted the letter Einstein signed that launched the Manhattan Project — who
+  was he?" → Leo Szilard.
+
 ## 5. Licensing (must hold)
 
 - **Wikidata (facts spine): CC0** — public domain, no attribution, commercial-safe.

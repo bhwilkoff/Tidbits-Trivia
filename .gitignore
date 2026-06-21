@@ -83,3 +83,8 @@ play-service-account.json
 
 # Native debug symbols
 native-debug-symbols.zip
+
+# Corpus source pipeline (Decision 032) — build-time only, reproducible, not shipped
+tools/corpus/cache/qrank.csv.gz
+tools/corpus/cache/clickstream-*.tsv.gz
+tools/corpus/corpus_source.sqlite

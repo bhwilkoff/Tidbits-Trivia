@@ -96,6 +96,23 @@ column-order contract (`DATA-CONTRACT.md`) **do not change**.
   non-MCQ types (enumerate 11 → hundreds of puzzles) and upgrade distractor
   quality (type-match × confusable × fame-gate).
 
+## 4a. Build log
+
+- **Phase 0 — Selection: BUILT (2026-06-21).** `tools/corpus/sources/build_subjects.py`
+  + `fetch_qrank.py` → `corpus_source.sqlite` table `subject`. The L5 ∩ >C set
+  comes straight from the per-class tracking categories (`Category:<CLASS>-Class
+  level-5 vital articles`, members = article talk pages → strip `Talk:`), so the
+  quality gate is exact and free; titles resolve to QIDs via `prop=pageprops`;
+  Qrank (CC0, cached) joins by QID.
+  **Result: 11,907 subjects (B 9,423 / GA 1,663 / FA 797 / A 24), 99% Qrank-ranked**
+  — vs ~1,956 search-selected articles today (**6×**, and quality+popularity-gated).
+  *Finding:* raw Qrank is trailing-12-month → recency/virality-biased (transient
+  celebrity + adult brands surface at the top). Selection needs an
+  **appropriateness + durability filter** (mission alignment) applied during
+  categorization — gate, don't just rank by, Qrank. Next: Stage B (Wikidata facts
+  + P31 categorization + lead prose for the 11,907 QIDs — targeted fetch, not the
+  43 GB dump, since the curated set is small enough to enrich directly).
+
 ## 5. Licensing (must hold)
 
 - **Wikidata (facts spine): CC0** — public domain, no attribution, commercial-safe.

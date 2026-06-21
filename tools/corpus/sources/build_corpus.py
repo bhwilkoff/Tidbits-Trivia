@@ -86,17 +86,25 @@ def infer_gender(text):
 NAME_STOP = re.compile(r"\b(is|are|was|were|refers|denotes|comprises|consists|served|plays?)\b", re.I)
 
 def clean_lead(s):
-    """Strip pronunciation guides / IPA / native-script names — they phonetically
-    or literally spell the answer ("(OH-klə-HOH-mə)" → Oklahoma; "(Korean: 김수현)"
-    → Kim Soo-hyun). Keep date parentheticals."""
+    """Strip pronunciation guides / IPA / native-script + locale names — they
+    phonetically or literally spell the answer ("(OH-klə-HOH-mə)" → Oklahoma;
+    "(Korean: 김수현)"; "(Sardinian: Casteddu)"). Keep date parentheticals."""
+    # normalize smart punctuation to ASCII FIRST so stripping non-ASCII below
+    # doesn't fuse words ("which—from" → "which from", "l'Arago" stays).
+    s = (s.replace("’", "'").replace("‘", "'").replace("ʼ", "'")
+           .replace("“", '"').replace("”", '"')
+           .replace("—", " - ").replace("–", "-"))
     s = re.sub(r"\[[^\]]*\]", "", s)                                  # IPA brackets
     s = re.sub(r"\b(?:pronunciation|pronounced|romanized|lit\.?)\b[^;)]*", "", s, flags=re.I)
-    s = re.sub(r"\b[A-Za-z]+:\s*[^;)]*[^\x00-\x7f][^;)]*", "", s)     # "Korean: 김수현"
+    # locale / language labels inside the lead parenthetical ("also UK: …",
+    # "Latin: Caralis", "Sardinian: Casteddu") — alt-name spellings of the answer
+    s = re.sub(r"\b(also\s+)?[A-Z][A-Za-z.]*\s*:\s*[^;)]*", "", s)
     s = re.sub(r"[^\x00-\x7f]+", "", s)                               # any remaining non-ASCII
     s = re.sub(r"\b[A-Z]{2,}-[A-Za-zəɛ-]+(?:-[A-Za-zəɛ-]+)*", "", s)  # OH-klə-HOH-mə phonetic
     s = re.sub(r"\(\s*[;,\s]+", "(", s)                              # tidy "( ; born…"
     s = re.sub(r"[;,\s]+\)", ")", s)
     s = re.sub(r"\(\s*\)", "", s)                                     # empty parens
+    s = re.sub(r"\s+([,.;:])", r"\1", s)                             # space before punct
     return re.sub(r"\s{2,}", " ", s).strip()
 
 def make_cloze(title, lead):
@@ -175,7 +183,7 @@ def main():
     # a topic like "Endometriosis". Built over ALL kept subjects (not just the
     # categorized ones), so any clickstream neighbour resolves.
     has_gender = _has_col(con, "subject", "gender")
-    gender_of, occ_of, person, qid_of_title = {}, {}, set(), {}
+    gender_of, occ_of, p31_of, person, qid_of_title = {}, {}, {}, set(), {}
     for qid, title, p31, p106, g in con.execute(
             "SELECT qid, title, p31, p106, " + ("gender" if has_gender else "NULL") + " FROM subject WHERE keep=1"):
         qid_of_title[title] = qid
@@ -184,6 +192,9 @@ def main():
         occ = set((p106 or "").split(",")) - {""}
         if occ:
             occ_of[qid] = occ
+        types = set((p31 or "").split(",")) - {""}
+        if types:
+            p31_of[qid] = types
         if g or occ or (p31 and "Q5" in p31.split(",")):
             person.add(qid)
 
@@ -201,20 +212,33 @@ def main():
         stripped = re.sub(r"\(?\b\d{3,4}\b[-–]?\d{0,4}\)?", "", clue).strip(" ()–-,")
         return len(stripped) < 8
 
+    # Off-mission content gate (family-friendly learning game) — skip subjects
+    # whose own description marks them as adult-industry. Mirrors the appropriateness
+    # gate (Decision 022); applied here so it also drops them from every derived
+    # bundled set (which mine the corpus rows).
+    ADULT = re.compile(r"\b(pornographic|porn(?:\s?star)?|adult (?:film|video|entertainment|model)|"
+                       r"erotic (?:model|actress|actor)|nude model|glamour model)\b", re.I)
+
     out = []
-    made_desc = made_cloze = 0
+    made_desc = made_cloze = skipped_adult = 0
     for cat, members in by_cat.items():
         titles = [m[1] for m in members]               # already qrank-desc
         for idx, (qid, title, qr) in enumerate(members):
             lead, desc = prose.get(qid, ("", ""))
+            if ADULT.search(desc) or ADULT.search(lead):
+                skipped_adult += 1
+                continue
             a_gender = gender_of.get(qid) or infer_gender(desc) or infer_gender(first_sentence(lead) if lead else "")
             a_occ = occ_of.get(qid, set())
+            a_p31 = p31_of.get(qid, set())
 
             a_is_person = qid in person
             def compatible(nb_title, level):
-                # A person's decoys must be people (never "Endometriosis" as a
-                # decoy for an actress) and vice-versa — enforced at EVERY level.
-                # level 2 = +gender +occupation, 1 = +gender, 0 = person-match only.
+                # A decoy must be the same KIND of thing as the answer, so the clue
+                # can't give it away and the set isn't a grab-bag. People: same
+                # person-ness + gender (+occupation). Things: same instance-of
+                # (film↔film, compound↔compound, river↔river — never "Tooth" as a
+                # decoy for a bird genus). level 2 = strict, 1 = looser, 0 = kind only.
                 nq = qid_of_title.get(nb_title)
                 if nq is None:
                     return True
@@ -222,10 +246,14 @@ def main():
                     return False
                 if level == 0:
                     return True
-                if a_gender and gender_of.get(nq) and gender_of[nq] != a_gender:
-                    return False
-                if level == 2 and a_occ and occ_of.get(nq) and not (a_occ & occ_of[nq]):
-                    return False
+                if a_is_person:
+                    if a_gender and gender_of.get(nq) and gender_of[nq] != a_gender:
+                        return False
+                    if level == 2 and a_occ and occ_of.get(nq) and not (a_occ & occ_of[nq]):
+                        return False
+                else:
+                    if a_p31 and p31_of.get(nq) and not (a_p31 & p31_of[nq]):
+                        return False
                 return True
 
             # Build distractors: clickstream-confusable first, then nearest-Qrank;
@@ -377,6 +405,7 @@ def main():
             by_cat_n[r[4]] = by_cat_n.get(r[4], 0) + 1
     print(f"wrote {OUT}")
     print(f"  total rows: {len(out):,}  (describe {made_desc:,} / cloze {made_cloze:,} / relation-MCQ {made_rel:,} / continent {made_cont:,} / elemSymbol-carried {carried:,})")
+    print(f"  skipped (adult-content subjects): {skipped_adult}")
     print(f"  clickstream confusables loaded for {len(confus):,} subjects")
     print(f"  descriptionOf by category: {dict(sorted(by_cat_n.items(), key=lambda x:-x[1]))}")
     con.close()

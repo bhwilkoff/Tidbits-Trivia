@@ -167,6 +167,27 @@ column-order contract (`DATA-CONTRACT.md`) **do not change**.
   Re-audit confirms the drops; all bundled sets regenerated (type-answer mines the
   cleaner clues). Verified on the iOS sim.
 
+- **Stage 4 — Question SCORING + cut: BUILT (2026-06-21).** Ben: rate every
+  question for type-fit, answer quality, and "sounds like a great question a human
+  would write" — and eliminate the robotic/mundane (taxonomic stubs, facts no one
+  would enjoy). `score_questions.py` scores 0–100 = 0.30·RECOG (Qrank percentile)
+  + 0.38·INTEREST (hooky vs dry-classification description) + 0.32·FIT (type-suited
+  + clean distinct options); `--apply` keeps ≥ threshold and propagates (the
+  bundled generators mine the kept corpus). **Validated against a blind LLM judge**
+  on samples (the judge independently trashed the same "genus of X" questions) —
+  which surfaced one real gap the heuristic missed and one the fix introduced:
+  - **Non-person distractors weren't type-matched** (Shrek → Pixar / a war film / a
+    song). Extended the distractor compatibility to **P31 instance-of** for things
+    (film↔film, compound↔compound, river↔river): Shrek → My Neighbor Totoro / The
+    Lion King; Bon Jovi → Van Halen / Guns N' Roses; Mannitol → Sorbitol.
+  - **Adult-industry subjects** slipped the appropriateness gate → a description-
+    based content filter in `build_corpus.py` (family-friendly learning).
+  - Cloze cleanup: normalize smart punctuation first (no "which—from" → "whichfrom"),
+    strip locale/language alt-name labels ("Sardinian: Casteddu", "also UK: …").
+  **Cut 1,696 (13%) + 17 adult subjects → corpus 12,809 → 11,054.** The blind LLM
+  judge's median rose 52.5 → 60 ("solid") on the filtered set. `score_questions.py`
+  and `audit_questions.py` are permanent, re-runnable quality gates.
+
 ## 5. Licensing (must hold)
 
 - **Wikidata (facts spine): CC0** — public domain, no attribution, commercial-safe.

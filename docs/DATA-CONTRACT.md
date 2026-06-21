@@ -17,6 +17,15 @@ exponential backoff on 429/503.
 Rebuild: `cd tools/corpus && python3 -u generate_corpus.py`. Idempotent —
 drops and recreates the table each run.
 
+> **Producer migration (planned, Decision 032).** The live-API seed-search input
+> above is being replaced by a build-time **source pipeline** — dumps + curated
+> derivatives (Vital Articles + Qrank for selection, Wikidata truthy for facts,
+> Kiwix/CirrusSearch for prose, Clickstream for distractors) assembled into an
+> unshipped `corpus_source.sqlite` the generators read. The **consumer contract
+> below is unchanged** — same artifact schemas, same bundled-set pattern, same
+> quality gates; only the producer's raw material changes. Full design:
+> `CORPUS-SOURCE-PIPELINE.md`. Update this section as each phase lands.
+
 ## Artifact: `corpus.sqlite` (bundled in the app, read-only)
 
 Single table `questions`. **Column order is load-bearing** — the iOS reader

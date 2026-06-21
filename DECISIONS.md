@@ -823,3 +823,53 @@ numeric input there is focusable ±coarse/±fine stepper buttons, not a slider.
 Scoring for adds-only modes stays non-negative (Decision 022). Keep the answer-
 display safe when `options` is empty (`correctAnswer` falls back to the numeric
 answer) so the missed-fact recap never indexes an empty array.
+
+---
+
+## 032 — Corpus source: build-time dumps + curated derivatives, not the live API
+
+**Decision**: The question pipeline migrates its **raw material** from live,
+rate-limited Wikipedia/Wikidata APIs over a seed-search slice to **build-time
+source artifacts** — dumps and curated derivatives — assembled into a local,
+unshipped `corpus_source.sqlite` fact store that the existing generators read.
+The approach is **layered and derivative-first**, not "download Wikipedia":
+each job uses the smallest, cleanest artifact that does it —
+**Selection** = Wikipedia Vital Articles L4/L5 resolved to QIDs, ranked/gated by
+**Qrank** (CC0, ~104 MB);
+**Facts** (numbers/dates/relations) = **Wikidata `latest-truthy.nt.bz2`** (CC0),
+optionally pre-scoped with **wdumper**;
+**Prose** = Kiwix `wikipedia_en_top_mini` ZIM (316 MB, proto) → **CirrusSearch
+content** (scale);
+**Distractors** = **Clickstream** confusables × Wikidata P31/P279 type-match ×
+Qrank fame-gate. The full design + verified sources/sizes/licenses live in
+`docs/CORPUS-SOURCE-PIPELINE.md`. The **shipped artifact contract is unchanged**
+(Decisions 016/024/031): same `corpus.sqlite`/`*.json` schemas, same bundled-set
+pattern, same quality gates — only the producer's input changes.
+
+**Why**: The live-API pipeline is capped at the throttle (~5 req/s, `maxlag=5`)
+and selects by **search relevance to ~70 seed terms, not popularity** — so we
+ship 4,540 questions from ~1,956 of Wikipedia's ~6.9M articles (**0.03%**), and
+the new non-MCQ types starve for structured facts behind the same throttle
+(enumerate could only build 11 puzzles). Dumps lift the candidate pool 50–100×,
+rank it by *true* cross-project popularity (Qrank), and supply structured facts
+at scale with no rate limit. The corpus ships offline and tiny (~1.3 MB), so the
+source artifacts are a **one-time build-machine cost, never a client cost** — the
+exact case dumps are built for. **Wikidata is CC0**, which is why the facts spine
+is the truthy dump and not a CC BY-SA derivative (DBpedia/structured-wikipedia):
+the structured answers carry no ShareAlike obligation. Layering keeps three of
+four source layers <500 MB and avoids the 90 GB raw-wikitext dump (parse-
+difficulty 5) entirely — CirrusSearch is the pre-stripped clean version.
+
+**How to apply**: build `tools/corpus/build_source_index.py` (streams the dumps →
+`corpus_source.sqlite`, run ~monthly, NOT shipped) and re-point the generators at
+the local store, deleting their retry/backoff/cache/`maxlag` machinery. Phase it
+smallest-first: **Phase 0** selection (VA+Qrank, <500 MB — proves the breadth/
+ranking lift before any big download); **Phase 1** prose (Kiwix top_mini →
+CirrusSearch); **Phase 2** facts + distractors (Wikidata truthy + clickstream).
+Pin dump dates in a manifest for reproducible rebuilds. Honor licensing: CC0
+facts need no attribution; all Wikipedia **text** is CC BY-SA — keep the in-app
+attribution + web article-twin link. Audit quality-gate pass-rates early: a 100×
+pool means 100× more vandalism/ambiguity/dated-fact candidates reaching the
+gates. Do NOT change the shipped artifact schemas or ship any dump to clients.
+This is a `shared-data-plane-contract` change — update `DATA-CONTRACT.md`'s
+Producer section as each phase lands.

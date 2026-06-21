@@ -203,6 +203,8 @@ object Corpus {
         return src.filter { it.id !in seen }.shuffled().take(limit)
     }
 
+    fun byId(id: String): Question? = all.firstOrNull { it.id == id }
+
     fun daily(dayKey: String, count: Int): List<Question> =
         all.shuffledWith(SeededRng(stableSeed(dayKey))).take(count)
 }
@@ -750,6 +752,29 @@ class Store(context: Context) {
     fun answerDistribution(qid: String): List<Int>? {
         val arr = JSONObject(prefs.getString("answerTelemetry", "{}") ?: "{}").optJSONArray(qid) ?: return null
         return (0 until arr.length()).map { arr.getInt(it) }
+    }
+
+    // Spaced re-asking of missed questions (parity with iOS/web). Default ON;
+    // toggle in Records → Settings. Stores missed corpus question ids -> miss
+    // count; review re-asks them by id via Corpus.byId (so a question removed from
+    // the corpus is simply never re-asked).
+    fun reviewEnabled(): Boolean = prefs.getBoolean("reviewEnabled", true)
+    fun setReviewEnabled(v: Boolean) = prefs.edit().putBoolean("reviewEnabled", v).apply()
+
+    fun recordMisses(results: List<Pair<String, Boolean>>) {
+        val o = JSONObject(prefs.getString("missed", "{}") ?: "{}")
+        for ((id, correct) in results) {
+            if (correct) o.remove(id)               // re-asked-and-correct resolves it
+            else o.put(id, o.optInt(id, 0) + 1)
+        }
+        if (o.length() > 800) { prefs.edit().putString("missed", "{}").apply(); return }
+        prefs.edit().putString("missed", o.toString()).apply()
+    }
+    /** Missed question ids, most-missed first — mapped to Questions via Corpus.byId. */
+    fun dueReview(limit: Int): List<String> {
+        val o = JSONObject(prefs.getString("missed", "{}") ?: "{}")
+        return o.keys().asSequence().map { it to o.getInt(it) }
+            .sortedByDescending { it.second }.take(limit).map { it.first }.toList()
     }
 
     fun streak(): Pair<Int, Int> = (prefs.getInt("streak_cur", 0)) to (prefs.getInt("streak_best", 0))

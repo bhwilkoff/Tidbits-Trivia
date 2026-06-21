@@ -113,7 +113,7 @@ reached is ⏳ with a note, never silence.
 | The Pie (breadth wedges) | ✅ | ✅ | ⏳ | ✅ | Trivial-Pursuit pie: a wedge per domain earned at a small mastery bar (≥15 correct, ≥60% acc); completes only when all 7 domains filled — fights corpus bias. Same shared derivation (SOLO-BACKLOG M3) |
 | Stake calibration readout (F1) | ✅ | ✅ | ⏳ | ✅ | Per-tier hit-rate (Sure/Likely/Hunch) in Records, accumulated across Stake rounds — the self-knowledge mirror. iOS persists via a `CalibrationTally` SwiftData model; web localStorage; Android SharedPreferences. tvOS ⏳ (no Records UI) |
 | Answer-distribution telemetry (F4) | ✅ | ✅ | ✅ | ✅ | Local-first **foundation**: privacy-respecting per-option answer counts keyed by question id (`tidbits.answerTelemetry`), written on every game-end via `RecordsStore.recordTelemetry` (iOS/tvOS, UserDefaults) / `Store.recordTelemetry` (web localStorage, Android SharedPreferences). No PII, no network; synthetic-chosenIndex modes (closest/ordering/matching/type) skipped. Invisible infra — the **Predict the Crowd** "X% picked this" reveal stays 🔮 until a backend aggregates these across players (deferred to Ben). SOLO-BACKLOG F4 |
-| Daily streak + missed-fact review | ✅ | ✅ | ⏳ | ✅ streak | Spaced re-asking woven into games on web + iOS; Android has streak (review later) |
+| Daily streak + missed-fact review | ✅ | ✅ | ✅ | ✅ | Streak on all 4; spaced re-asking of missed questions now woven into games on all 4 (Android by question-id via `Corpus.byId`), each with an opt-out toggle |
 | Compete vs. your past self | ✅ | ✅ | ⏳ | ✅ | New-best detection on each game |
 | Share score (NO X/Twitter) | ✅ Web Share | ✅ ShareLink | ✅ QR | ✅ Intent | Decision 022; web has clipboard fallback |
 | Spoiler-free emoji-grid result | ✅ | ✅ | ⏳ | ⏳ | Wordle-style 🟩🟥; the daily share loop (ROADMAP #1) |
@@ -121,9 +121,9 @@ reached is ⏳ with a note, never silence.
 | Leaderboards | 🔮 Supabase | ⏳ Game Center | ⏳ Game Center | 🔮 Play Games | Apple: GameKit wired, ASC config pending |
 | Achievements | 🔮 | ⏳ Game Center | ⏳ Game Center | 🔮 Play Games | |
 | Local pass-and-play | 🔮 | ✅ | ⏳ | 🔮 | 2–4 players, shared fair question set, hand-off + scoreboard |
-| Spaced re-asking of missed facts | ⏳ | ✅ | ⏳ | ⏳ | Due misses woven into solo games (skips Daily); resolve on correct |
+| Spaced re-asking of missed facts | ✅ | ✅ | ✅ | ✅ | Due misses woven into corpus-MCQ games (skips Daily + non-MCQ modes); resolve on correct. **Opt-out toggle** ("Review questions") on every platform: iOS/tvOS via `GameSettings.reviewKey` @AppStorage (Settings / home toggle), web + Android via a Records→Settings switch. Default ON |
 | Haptic feedback | n/a | ✅ | n/a | ⏳ | Correct/wrong/milestone; Settings toggle |
-| Settings (haptics, reset, attribution) | ⏳ | ✅ | ⏳ | ⏳ | Toolbar gear → sheet, not a tab |
+| Settings (haptics, reset, attribution) | ◑ | ✅ | ◑ | ◑ | iOS: full sheet (haptics/reset/about). web/tvOS/Android: "Review questions" toggle so far (web+Android in Records→Settings, tvOS on the home header); haptics/reset/about still iOS-only |
 | Async head-to-head / groups | 🔮 | ⏳ Game Center | ⏳ | 🔮 | Async > real-time for survivability (ROADMAP) |
 | Living-room mode (phone-as-buzzer) | 🔮 controller | 🚧 controller | 🚧 host | 🔮 controller | Phase 1 Apple-native (Bonjour + room-code TLS-PSK) FOUNDATION landed: shared `Core/Networking/Buzzer*` (host=tvOS `NWListener`, client=iOS `NWBrowser`); arbiter fairness offline-proven, both slices build clean. NOT yet two-device-verified, not wired to a game mode (Decision 030). Web/Android = Phase 2 web-room (Cloudflare DO). The biggest open market gap (ROADMAP #4) |
 | Buzz Night (same-room buzz game) | 🔮 | ⏳ | ⏳ host | 🔮 | Rides the Phase-1 buzzer once paired+verified; TV is stage+scoreboard, phones buzz, wrong buzz opens to others, every Q ends on the Learn-the-fact reveal (GAME-MODES-RESEARCH D2). Web/Android via Phase 2 |

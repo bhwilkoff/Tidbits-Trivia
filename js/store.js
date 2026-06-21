@@ -132,6 +132,10 @@ export const Store = {
     LS.set('tidbits.calibration', c);
   },
 
+  // Gameplay setting: spaced re-asking of missed questions (default on).
+  reviewEnabled() { return LS.get('tidbits.reviewEnabled', true); },
+  setReviewEnabled(v) { LS.set('tidbits.reviewEnabled', !!v); },
+
   streak() { return LS.get('tidbits.streak', { current: 0, best: 0, lastDay: '' }); },
   _bumpStreak() {
     const s = this.streak();

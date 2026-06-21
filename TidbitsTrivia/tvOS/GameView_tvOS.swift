@@ -31,7 +31,8 @@ struct TVGameContainer: View {
         .task {
             if game.phase == .idle {
                 // Single-category game re-asks only same-category misses (no cross-category leak).
-                var review = mode == .daily ? [] : RecordsStore.dueReview(in: modelContext, limit: 30)
+                var review = (mode.acceptsReview && GameSettings.reviewEnabled)
+                    ? RecordsStore.dueReview(in: modelContext, limit: 30) : []
                 if category.id != "mixed" { review = review.filter { $0.categoryID == category.id } }
                 review = Array(review.prefix(2))
                 await game.start(mode: mode, category: category, review: review)

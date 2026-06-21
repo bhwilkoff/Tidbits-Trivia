@@ -36,6 +36,8 @@ function render() {
     <main class="main">${tab === 'play' ? viewHome() : tab === 'create' ? viewCreate() : viewRecords()}</main>`;
   if (tab === 'play') bindHome();
   if (tab === 'create') bindCreate();
+  const rt = document.getElementById('review-toggle');
+  if (rt) rt.addEventListener('change', (e) => Store.setReviewEnabled(e.target.checked));
   document.title = 'Tidbits Trivia';
 }
 
@@ -137,12 +139,18 @@ function bindCreate() {
 }
 
 // ---------------- Records ----------------
+function settingsSection() {
+  const on = Store.reviewEnabled();
+  return `<h2 class="section">Settings</h2>
+    <label class="card row review-toggle"><span><b>Review questions</b><div class="muted">Re-ask questions you've missed, spaced out, so they stick. Off = only new questions.</div></span>
+      <input type="checkbox" id="review-toggle" ${on ? 'checked' : ''}></label>`;
+}
 function viewRecords() {
   const recs = Store.records();
-  if (!recs.length) return `<h1 class="page-title">Records</h1><div class="empty card pad"><p>No games yet.</p><p class="muted">Play a round and your scores, streaks, and facts to review show up here.</p></div>`;
+  if (!recs.length) return `<h1 class="page-title">Records</h1><div class="empty card pad"><p>No games yet.</p><p class="muted">Play a round and your scores, streaks, and facts to review show up here.</p></div>${settingsSection()}`;
   const lt = Store.lifetime(), st = Store.streak();
   const bests = Object.values(MODES).map((m) => ({ m, best: Store.bestScore(m.id) })).filter((x) => x.best > 0);
-  const review = Store.dueReview(8);
+  const review = Store.reviewEnabled() ? Store.dueReview(8) : [];
   return `
     <h1 class="page-title">Records</h1>
     <div class="banner card daily"><div><div class="muted">DAILY STREAK</div><div class="big">${st.current} days</div></div><div class="muted">best ${st.best} 🔥</div></div>
@@ -154,7 +162,8 @@ function viewRecords() {
     <h2 class="section">Personal bests</h2>
     ${bests.map((x) => `<div class="card row"><b>${h(x.m.title)}</b><span class="big-sm">${x.best}</span></div>`).join('') || '<p class="muted">Play a mode to set a best.</p>'}
     ${review.length ? `<h2 class="section">Facts to review</h2><p class="muted">We slip these back into future games.</p>
-      ${review.map((q) => `<div class="card pad"><b>${h(q.prompt)}</b><div class="ans">Answer: ${h(q.options[q.correctIndex])}</div></div>`).join('')}` : ''}`;
+      ${review.map((q) => `<div class="card pad"><b>${h(q.prompt)}</b><div class="ans">Answer: ${h(q.options[q.correctIndex])}</div></div>`).join('')}` : ''}
+    ${settingsSection()}`;
 }
 const statBox = (v, l, c) => `<div class="stat card" style="--tint:${c}"><div class="stat-v">${v}</div><div class="stat-l">${l}</div></div>`;
 
@@ -265,12 +274,14 @@ class Game {
         const live = await Wikipedia.generate(topic, this.category.id, this.mode.count - qs.length);
         qs = qs.concat(live);
       }
-      // Spaced-repetition review: in a single-category game, only re-ask misses
-      // from THAT category — otherwise a missed Film & TV question gets woven
-      // into an Arts & Lit round and shows the wrong category badge.
-      let review = Store.dueReview(30);
-      if (this.category.id !== 'mixed') review = review.filter((q) => q.categoryID === this.category.id);
-      qs = this._weave(qs, review.slice(0, 2));
+      // Spaced-repetition review (opt-out in Records → Settings): in a
+      // single-category game, only re-ask misses from THAT category — otherwise a
+      // missed Film & TV question gets woven into an Arts & Lit round.
+      if (Store.reviewEnabled()) {
+        let review = Store.dueReview(30);
+        if (this.category.id !== 'mixed') review = review.filter((q) => q.categoryID === this.category.id);
+        qs = this._weave(qs, review.slice(0, 2));
+      }
     }
     this.questions = (this.mode.count === 99 ? qs : qs.slice(0, this.mode.count));
     Store.markSeen(this.questions.map((q) => q.id));

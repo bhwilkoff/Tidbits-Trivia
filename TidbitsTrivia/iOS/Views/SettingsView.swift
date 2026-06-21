@@ -9,6 +9,7 @@ struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(GameCenterManager.self) private var gameCenter
     @AppStorage(Haptics.defaultsKey) private var hapticsEnabled = true
+    @AppStorage(GameSettings.reviewKey) private var reviewEnabled = true
     @State private var confirmReset = false
 
     private var version: String {
@@ -22,6 +23,13 @@ struct SettingsView: View {
             Form {
                 Section("Feedback") {
                     Toggle("Haptics", isOn: $hapticsEnabled)
+                }
+                Section {
+                    Toggle("Review questions", isOn: $reviewEnabled)
+                } header: {
+                    Text("Gameplay")
+                } footer: {
+                    Text("Occasionally re-asks questions you've missed, spaced out, so they stick. Turn off to only ever see new questions.")
                 }
                 Section("Game Center") {
                     HStack {

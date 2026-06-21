@@ -118,7 +118,27 @@ class GameState(
             val topic = if (category.id == "mixed") "popular" else category.name
             pulled = pulled + Wikipedia.generate(topic, category.id, mode.count - pulled.size)
         }
+        // Spaced re-asking of missed questions (opt-out in Records → Settings).
+        // loadStandard only serves the corpus-MCQ modes, so weaving is safe here.
+        if (store.reviewEnabled()) {
+            val review = store.dueReview(30).mapNotNull { Corpus.byId(it) }
+                .filter { category.id == "mixed" || it.categoryId == category.id }
+                .take(2)
+            pulled = weave(pulled, review)
+        }
         return pulled
+    }
+
+    /** Interleave due review questions among fresh ones (mirror iOS/web _weave). */
+    private fun weave(fresh: List<Question>, review: List<Question>): List<Question> {
+        val ids = fresh.map { it.id }.toSet()
+        val inject = review.filter { it.id !in ids }.take(maxOf(1, fresh.size / 4))
+        if (inject.isEmpty() || fresh.size <= inject.size) return fresh
+        val r = fresh.toMutableList()
+        inject.forEachIndexed { i, q ->
+            r[minOf(r.size - 1, (i + 1) * r.size / (inject.size + 1))] = q
+        }
+        return r
     }
 
     private fun reset() {
@@ -332,6 +352,7 @@ class GameState(
             recorded = true
             store.addRecord(Store.Rec(mode.name, category.id, score, correctCount, answered.size, maxStreak, dayKey()))
             store.recordTelemetry(mode, answered.map { it.q to it.chosen })
+            store.recordMisses(answered.map { it.q.id to it.correct })   // for spaced review
             if (mode == Mode.STAKE) store.addCalibration(stakeOutcomes.mapValues { it.value[0] to it.value[1] })
         }
     }

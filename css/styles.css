@@ -209,6 +209,10 @@ body {
 .type-input:focus { outline: none; }
 .type-submit { background: var(--color-mint); color: var(--color-ink); }
 
+/* ---- Settings: review toggle ---- */
+.review-toggle { display: flex; align-items: center; justify-content: space-between; gap: 16px; cursor: pointer; }
+.review-toggle input[type="checkbox"] { flex: 0 0 auto; width: 26px; height: 26px; accent-color: var(--color-accent, #0047FF); cursor: pointer; }
+
 /* ---- Enumeration (Q8) ---- */
 .enum-wrap { display: flex; flex-direction: column; gap: 10px; }
 .enum-head { display: flex; align-items: center; justify-content: space-between; }

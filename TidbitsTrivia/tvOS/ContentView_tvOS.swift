@@ -17,6 +17,7 @@ enum TVTheme {
 /// ten-foot presentation is tvOS-specific (Core never imports UI).
 struct ContentView_tvOS: View {
     @Environment(AppStore.self) private var store
+    @AppStorage(GameSettings.reviewKey) private var reviewEnabled = true
     @State private var selectedMode: GameMode = .classic
     @State private var launch: LaunchRequest?
     @FocusState private var dailyFocused: Bool
@@ -47,13 +48,22 @@ struct ContentView_tvOS: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("TIDBITS")
-                .font(.system(size: 76, weight: .black, design: .rounded))
-                .foregroundStyle(TVTheme.text)
-            Text("Trivia from the whole of Wikipedia.")
-                .font(.system(size: 31, weight: .medium, design: .rounded))
-                .foregroundStyle(TVTheme.textSoft)
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("TIDBITS")
+                    .font(.system(size: 76, weight: .black, design: .rounded))
+                    .foregroundStyle(TVTheme.text)
+                Text("Trivia from the whole of Wikipedia.")
+                    .font(.system(size: 31, weight: .medium, design: .rounded))
+                    .foregroundStyle(TVTheme.textSoft)
+            }
+            Spacer()
+            Button { reviewEnabled.toggle() } label: {
+                Label("Review \(reviewEnabled ? "On" : "Off")",
+                      systemImage: reviewEnabled ? "arrow.clockwise.circle.fill" : "circle")
+                    .font(.system(size: 26, weight: .bold, design: .rounded))
+            }
+            .buttonStyle(TVChipStyle(accent: Tidbits.Palette.blue, selected: reviewEnabled))
         }
     }
 

@@ -491,6 +491,7 @@ private fun RecordsScreen(store: Store) {
         Text("Records", fontSize = 30.sp, fontWeight = FontWeight.Black)
         if (records.isEmpty()) {
             ChunkyCard { Column(Modifier.padding(20.dp)) { Text("No games yet", fontWeight = FontWeight.Bold); Text("Play a round and your scores and streaks show up here.", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)) } }
+            ReviewSetting(store)
             return@Column
         }
         ChunkyCard(fill = Pops.yellow) {
@@ -542,7 +543,26 @@ private fun RecordsScreen(store: Store) {
             val b = store.bestScore(m.name)
             if (b > 0) ChunkyCard { Row(Modifier.padding(14.dp).fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) { Text(m.title, fontWeight = FontWeight.Bold); Text("$b", fontWeight = FontWeight.Black, fontSize = 20.sp) } }
         }
+        ReviewSetting(store)
         Spacer(Modifier.height(24.dp))
+    }
+}
+
+// Settings — the Review-questions toggle (parity with iOS/web). Spaced re-asking
+// of missed questions; off = only ever new questions.
+@Composable
+private fun ReviewSetting(store: Store) {
+    var on by remember { mutableStateOf(store.reviewEnabled()) }
+    Text("Settings", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+    ChunkyCard {
+        Row(Modifier.padding(16.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(Modifier.weight(1f)) {
+                Text("Review questions", fontWeight = FontWeight.Bold)
+                Text("Re-ask questions you've missed, spaced out, so they stick. Off = only new questions.",
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f), fontSize = 13.sp)
+            }
+            Switch(checked = on, onCheckedChange = { on = it; store.setReviewEnabled(it) })
+        }
     }
 }
 

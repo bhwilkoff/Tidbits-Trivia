@@ -54,6 +54,9 @@ CAT_NOUN = {"history": "figure or event", "science": "subject", "geography": "pl
 def url_title(title):
     return title.replace(" ", "_")
 
+def _has_col(con, table, col):
+    return any(r[1] == col for r in con.execute(f"PRAGMA table_info({table})").fetchall())
+
 def leaks(answer, text):
     """True if the description gives the answer away (a title word appears in it)."""
     t = text.lower()
@@ -66,21 +69,74 @@ def first_sentence(lead):
     m = re.split(r"(?<=[.!?])\s", lead.strip())
     return m[0] if m else lead
 
+_GENDER_HINT = [
+    (re.compile(r"\b(actress|businesswoman|stateswoman|queen|princess|duchess|empress|"
+                r"woman|she|her|herself|heroine|mother|daughter|sister|nun|widow)\b", re.I), "f"),
+    (re.compile(r"\b(actor|businessman|statesman|king|prince|duke|emperor|"
+                r"\bman\b|\bhe\b|\bhis\b|himself|hero|father|son|brother|monk|widower)\b", re.I), "m"),
+]
+def infer_gender(text):
+    """Fallback gender from a gendered description ('American actress …') when
+    Wikidata P21 is missing — so distractors still can't give it away by gender."""
+    for rx, g in _GENDER_HINT:
+        if rx.search(text or ""):
+            return g
+    return None
+
+NAME_STOP = re.compile(r"\b(is|are|was|were|refers|denotes|comprises|consists|served|plays?)\b", re.I)
+
+def clean_lead(s):
+    """Strip pronunciation guides / IPA / native-script names — they phonetically
+    or literally spell the answer ("(OH-klə-HOH-mə)" → Oklahoma; "(Korean: 김수현)"
+    → Kim Soo-hyun). Keep date parentheticals."""
+    s = re.sub(r"\[[^\]]*\]", "", s)                                  # IPA brackets
+    s = re.sub(r"\b(?:pronunciation|pronounced|romanized|lit\.?)\b[^;)]*", "", s, flags=re.I)
+    s = re.sub(r"\b[A-Za-z]+:\s*[^;)]*[^\x00-\x7f][^;)]*", "", s)     # "Korean: 김수현"
+    s = re.sub(r"[^\x00-\x7f]+", "", s)                               # any remaining non-ASCII
+    s = re.sub(r"\b[A-Z]{2,}-[A-Za-zəɛ-]+(?:-[A-Za-zəɛ-]+)*", "", s)  # OH-klə-HOH-mə phonetic
+    s = re.sub(r"\(\s*[;,\s]+", "(", s)                              # tidy "( ; born…"
+    s = re.sub(r"[;,\s]+\)", ")", s)
+    s = re.sub(r"\(\s*\)", "", s)                                     # empty parens
+    return re.sub(r"\s{2,}", " ", s).strip()
+
 def make_cloze(title, lead):
     """Mask the subject in its own lead sentence → a fill-the-blank MCQ stem.
-    Returns the masked sentence, or None if it can't be masked cleanly."""
-    s = first_sentence(lead or "").strip()
-    if not (25 <= len(s) <= 240):
+    Masks the WHOLE leading name (not just one part — so "Breaking ____" /
+    "____ Lee ____" never happen) AND any later occurrence of the name, then
+    requires real remaining context. Returns the masked sentence or None."""
+    s = clean_lead(first_sentence(lead or "").strip())
+    if not (30 <= len(s) <= 240):
         return None
-    words = [w for w in re.findall(r"[A-Za-z']+", title) if len(w) > 3]
-    if not words:
+    # leading name span: from start to the first " (" or " is/was/are …"
+    cut = len(s)
+    paren = s.find(" (")
+    if paren > 2:
+        cut = min(cut, paren)
+    mv = NAME_STOP.search(s)
+    if mv and mv.start() > 2:
+        cut = min(cut, mv.start())
+    if cut < 3 or cut > 70:
         return None
-    masked, hit = s, False
-    for w in words:
-        new = re.sub(rf"\b{re.escape(w)}\b", "____", masked, flags=re.IGNORECASE)
-        if new != masked:
-            masked, hit = new, True
-    if not hit or leaks(title, masked.replace("____", " ")):
+    if len(s[:cut].split()) > 6:
+        return None
+    # The whole leading name becomes ONE blank (so "Breaking ____" / "____ Lee
+    # ____" can't happen). Then blank only LATER mentions of the CORE name —
+    # parenthetical disambiguators like "(film series)" are stripped, so common
+    # context words ("film", "series") stay.
+    masked = "____ " + s[cut:].lstrip()
+    core = re.sub(r"\s*\([^)]*\)", "", title)
+    for w in re.findall(r"[A-Za-z]{3,}", core):
+        masked = re.sub(rf"\b{re.escape(w)}\b", "____", masked, flags=re.IGNORECASE)
+    masked = re.sub(r"____(?:[\s.\-]+____)+", "____", masked)        # collapse blank runs
+    masked = re.sub(r"\s{2,}", " ", masked).strip()
+    # require real context beyond the blank + dates/punctuation
+    ctx = re.sub(r"____|\(?\b\d{3,4}\b[-–]?\d{0,4}\)?|[(),;:.]", " ", masked)
+    if len(ctx.strip()) < 14:
+        return None
+    # final guard: no core-name token of len ≥ 3 survives unmasked
+    low = masked.lower()
+    if any(re.search(rf"\b{re.escape(w.lower())}\b", low)
+           for w in re.findall(r"[A-Za-z]{3,}", core)):
         return None
     return masked
 
@@ -113,9 +169,25 @@ def main():
     title_of = {s[0]: s[1] for s in subs}
     qr_of = {s[0]: s[3] for s in subs}
 
+    # Per-subject discriminators so distractors MATCH the clue and can't be picked
+    # by elimination: gender (P21), occupation (P106), and person-vs-thing. A
+    # "American actress" clue must have actress distractors — not 3 men, and never
+    # a topic like "Endometriosis". Built over ALL kept subjects (not just the
+    # categorized ones), so any clickstream neighbour resolves.
+    has_gender = _has_col(con, "subject", "gender")
+    gender_of, occ_of, person, qid_of_title = {}, {}, set(), {}
+    for qid, title, p31, p106, g in con.execute(
+            "SELECT qid, title, p31, p106, " + ("gender" if has_gender else "NULL") + " FROM subject WHERE keep=1"):
+        qid_of_title[title] = qid
+        if g:
+            gender_of[qid] = g
+        occ = set((p106 or "").split(",")) - {""}
+        if occ:
+            occ_of[qid] = occ
+        if g or occ or (p31 and "Q5" in p31.split(",")):
+            person.add(qid)
+
     # clickstream confusables (Stage 2): title -> [neighbour subjects], strongest first.
-    # Empirically-confused subjects make the most plausible distractors. Absent
-    # until fetch_clickstream.py has run — fall back to nearest-Qrank then.
     confus = {}
     try:
         for t, nb in con.execute("SELECT title, neighbour FROM related ORDER BY n DESC"):
@@ -123,27 +195,64 @@ def main():
     except sqlite3.OperationalError:
         pass
 
+    def thin(clue):
+        """A clue with no real identifying context once dates are removed —
+        pure guessing (e.g. "1953 film", "(born 1958)")."""
+        stripped = re.sub(r"\(?\b\d{3,4}\b[-–]?\d{0,4}\)?", "", clue).strip(" ()–-,")
+        return len(stripped) < 8
+
     out = []
     made_desc = made_cloze = 0
     for cat, members in by_cat.items():
         titles = [m[1] for m in members]               # already qrank-desc
-        cat_set = set(titles)
         for idx, (qid, title, qr) in enumerate(members):
             lead, desc = prose.get(qid, ("", ""))
-            # Distractors: prefer clickstream-confusable subjects OF THE SAME
-            # category (same type + genuinely confused), then fill with
-            # nearest-Qrank (same fame). Shared by both question shapes.
-            distractors = []
-            for nb in confus.get(title, []):
-                if nb != title and nb in cat_set and nb not in distractors:
-                    distractors.append(nb)
-                if len(distractors) == 3:
-                    break
+            a_gender = gender_of.get(qid) or infer_gender(desc) or infer_gender(first_sentence(lead) if lead else "")
+            a_occ = occ_of.get(qid, set())
+
+            a_is_person = qid in person
+            def compatible(nb_title, level):
+                # A person's decoys must be people (never "Endometriosis" as a
+                # decoy for an actress) and vice-versa — enforced at EVERY level.
+                # level 2 = +gender +occupation, 1 = +gender, 0 = person-match only.
+                nq = qid_of_title.get(nb_title)
+                if nq is None:
+                    return True
+                if (nq in person) != a_is_person:
+                    return False
+                if level == 0:
+                    return True
+                if a_gender and gender_of.get(nq) and gender_of[nq] != a_gender:
+                    return False
+                if level == 2 and a_occ and occ_of.get(nq) and not (a_occ & occ_of[nq]):
+                    return False
+                return True
+
+            # Build distractors: clickstream-confusable first, then nearest-Qrank;
+            # each filtered so the clue can't give the answer away by elimination.
+            # Graduated: gender+occupation → gender-only → anything (gender match is
+            # the LAST thing to relax — that's the Sharon-Stone giveaway).
+            def pick(level):
+                ds = []
+                for nb in confus.get(title, []):
+                    if nb != title and nb not in ds and compatible(nb, level):
+                        ds.append(nb)
+                    if len(ds) == 3:
+                        return ds
+                near = [titles[j] for j in range(max(0, idx - 12), min(len(titles), idx + 13))
+                        if titles[j] != title and titles[j] not in ds]
+                near += [t for t in titles if t != title and t not in ds and t not in near]
+                for nb in near:
+                    if compatible(nb, level):
+                        ds.append(nb)
+                    if len(ds) == 3:
+                        break
+                return ds
+            distractors = pick(2)
             if len(distractors) < 3:
-                near = [titles[j] for j in range(max(0, idx - 4), min(len(titles), idx + 5))
-                        if titles[j] != title and titles[j] not in distractors]
-                near += [t for t in titles if t != title and t not in distractors and t not in near]
-                distractors += near[:3 - len(distractors)]
+                distractors = pick(1)
+            if len(distractors) < 3:
+                distractors = pick(0)
             if len(distractors) < 3:
                 continue
             distractors = distractors[:3]
@@ -157,16 +266,18 @@ def main():
                             difficulty(qr), expl, title,   # q[7] = spaced display title
                             f"https://en.wikipedia.org/wiki/{url_title(title)}"])
 
-            # describe — from the Wikidata short description (fall back to lead sentence)
+            # describe — natural "Who/What is this?" (person vs thing), from the
+            # Wikidata short description (fall back to the lead sentence). Drop
+            # date-only / contentless clues (pure guessing, no knowledge tested).
             clue = (desc or "").strip()
-            if not (clue and len(clue) >= 8 and not leaks(title, clue)):
+            if not (clue and len(clue) >= 10 and not leaks(title, clue) and not thin(clue)):
                 fs = first_sentence(lead) if lead else ""
-                clue = fs if (fs and len(fs) > 25 and not leaks(title, fs)) else ""
-            if clue:
-                emit("describe", f"Which {CAT_NOUN.get(cat, 'subject')} is this: “{clue}”?",
-                     f"{title}: {clue}", "d")
+                clue = fs if (fs and 25 < len(fs) and not leaks(title, fs)) else ""
+            if clue and not thin(clue):
+                lead_word = "Who" if qid in person else "What"
+                emit("describe", f"{lead_word} is this — “{clue}”?", f"{title}: {clue}", "d")
                 made_desc += 1
-            # cloze — mask the subject in its own lead sentence (variety + type-answer source)
+            # cloze — mask the subject in its own lead sentence (variety + recall)
             cz = make_cloze(title, lead) if lead else None
             if cz:
                 emit("cloze", f"Fill in the blank: “{cz}”", f"{title} — {cz}", "c")

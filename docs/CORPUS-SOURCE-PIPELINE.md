@@ -143,6 +143,30 @@ column-order contract (`DATA-CONTRACT.md`) **do not change**.
   *Open follow-ups:* mixed category 39% (cheap via `recategorize.py`); element
   symbols (P246) still carried-forward; partial-name cloze leaks.
 
+- **Stage 3 — Question-quality audit + fixes: BUILT (2026-06-21).** Ben flagged
+  (with TestFlight screenshots) that questions must read as a clever human asker
+  wrote them: give real context (not luck-guessing), be grammatical, and never
+  give the answer away — via wording OR distractors. `audit_questions.py` is the
+  reusable measure (LEAK / CLOZE_PART / THIN / GENDER, with examples). Root-cause
+  fixes in `build_corpus.py` (+ `fetch_attributes.py` for P21 gender):
+  - **Type/gender/person-matched distractors** — the headline fix. A clue like
+    "American actress (born 1958)" must have actress distractors, never 3 men +
+    the answer (Sharon Stone was the only woman). Distractors now must match the
+    answer's gender (P21, or inferred from the description when P21 is missing),
+    occupation (P106), and person-vs-thing — graduated fallback relaxes occupation
+    then gender last. Sharon Stone → Demi Moore / Raquel Welch / Jean Harlow.
+    **GENDER giveaways 974 → 25.**
+  - **Cloze rewrite** — mask the WHOLE leading name as one blank (no "Breaking
+    ____" / "____ Lee ____"), strip pronunciation/IPA/native-script parentheticals
+    that spell the answer ("(OH-klə-HOH-mə)" → Oklahoma; "(Korean: 김수현)"), keep
+    dates as context. **Partial-name leaks 773 → 33.**
+  - **Natural grammar** — "Who is this — '…'?" for people, "What is this — '…'?"
+    for things (was the clunky "Which film, show, or star is this").
+  - **Thin-clue removal** — drop date-only / contentless describe clues (pure
+    guessing). **2 → 0.**
+  Re-audit confirms the drops; all bundled sets regenerated (type-answer mines the
+  cleaner clues). Verified on the iOS sim.
+
 ## 5. Licensing (must hold)
 
 - **Wikidata (facts spine): CC0** — public domain, no attribution, commercial-safe.

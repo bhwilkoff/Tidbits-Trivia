@@ -21,6 +21,8 @@ RELATIONS = {
     "wd:currency:":   ("Match each country to its currency.", "country", "currency"),
     "wd:elemSymbol:": ("Match each element to its symbol.", "element", "symbol"),
     "wd:author:":     ("Match each book to its author.", "book", "author"),
+    "wd:composer:":   ("Match each work to its composer.", "work", "composer"),
+    "wd:director:":   ("Match each film to its director.", "film", "director"),
 }
 PER_RELATION = 60
 

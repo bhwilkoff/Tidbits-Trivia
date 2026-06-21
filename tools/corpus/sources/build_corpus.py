@@ -111,21 +111,42 @@ def main():
     for qid, title, cat, qr in subs:
         by_cat.setdefault(cat, []).append((qid, title, qr))
     title_of = {s[0]: s[1] for s in subs}
+    qr_of = {s[0]: s[3] for s in subs}
+
+    # clickstream confusables (Stage 2): title -> [neighbour subjects], strongest first.
+    # Empirically-confused subjects make the most plausible distractors. Absent
+    # until fetch_clickstream.py has run — fall back to nearest-Qrank then.
+    confus = {}
+    try:
+        for t, nb in con.execute("SELECT title, neighbour FROM related ORDER BY n DESC"):
+            confus.setdefault(t, []).append(nb)
+    except sqlite3.OperationalError:
+        pass
 
     out = []
     made_desc = made_cloze = 0
     for cat, members in by_cat.items():
         titles = [m[1] for m in members]               # already qrank-desc
+        cat_set = set(titles)
         for idx, (qid, title, qr) in enumerate(members):
             lead, desc = prose.get(qid, ("", ""))
-            # 3 nearest-fame same-category distractors (skip self) — shared by both shapes
-            neighbours = [titles[j] for j in range(max(0, idx - 4), min(len(titles), idx + 5))
-                          if titles[j] != title][:6]
-            if len(neighbours) < 3:
-                neighbours = [t for t in titles if t != title][:3]
-            if len(neighbours) < 3:
+            # Distractors: prefer clickstream-confusable subjects OF THE SAME
+            # category (same type + genuinely confused), then fill with
+            # nearest-Qrank (same fame). Shared by both question shapes.
+            distractors = []
+            for nb in confus.get(title, []):
+                if nb != title and nb in cat_set and nb not in distractors:
+                    distractors.append(nb)
+                if len(distractors) == 3:
+                    break
+            if len(distractors) < 3:
+                near = [titles[j] for j in range(max(0, idx - 4), min(len(titles), idx + 5))
+                        if titles[j] != title and titles[j] not in distractors]
+                near += [t for t in titles if t != title and t not in distractors and t not in near]
+                distractors += near[:3 - len(distractors)]
+            if len(distractors) < 3:
                 continue
-            distractors = neighbours[:3]
+            distractors = distractors[:3]
 
             def emit(template, prompt, expl, salt):
                 options = distractors + [title]
@@ -151,6 +172,48 @@ def main():
                 emit("cloze", f"Fill in the blank: “{cz}”", f"{title} — {cz}", "c")
                 made_cloze += 1
 
+    # Relation MCQs — regenerated from the resolved 1:1 relations (Matching source
+    # for gen_match + bonus Classic variety). Each is a real MCQ (correct value +
+    # 3 distractor values drawn from the same relation's value pool).
+    REL_PROMPT = {"capital": ("What is the capital of {k}?", "geography"),
+                  "currency": ("What currency is used in {k}?", "geography"),
+                  "author": ("Who wrote {k}?", "arts"),
+                  "composer": ("Who composed {k}?", "music"),
+                  "director": ("Who directed {k}?", "screen")}
+    rel_rows = con.execute("""SELECT qid, label, target_label FROM relation
+        WHERE target_label IS NOT NULL AND label IN ('capital','currency','author','composer','director')""").fetchall()
+    pools = {}
+    for qid, lbl, tl in rel_rows:
+        pools.setdefault(lbl, []).append(tl)
+    median_qr = sorted(qr_of.values())[len(qr_of) // 2] if qr_of else 0
+    made_rel = 0
+    seen_rel = set()
+    for qid, lbl, tl in rel_rows:
+        key = title_of.get(qid)
+        if not key or not tl or (qid, lbl) in seen_rel:
+            continue
+        seen_rel.add((qid, lbl))
+        pool = pools[lbl]
+        if len(set(pool)) < 4:
+            continue
+        h = int(hashlib.md5((qid + lbl).encode()).hexdigest(), 16)
+        ds, i, step = [], h % len(pool), 1 + (h % 7)
+        guard = 0
+        while len(ds) < 3 and guard < len(pool) * 2:
+            v = pool[i % len(pool)]; i += step; guard += 1
+            if v != tl and v not in ds:
+                ds.append(v)
+        if len(ds) < 3:
+            continue
+        prompt_t, rcat = REL_PROMPT[lbl]
+        opts = ds + [tl]
+        ci = h % 4
+        opts[3], opts[ci] = opts[ci], opts[3]
+        out.append([f"wd:{lbl}:{qid}", prompt_t.format(k=key), opts, ci, rcat,
+                    difficulty(qr_of.get(qid, median_qr)), f"{key} → {tl}", key,
+                    f"https://en.wikipedia.org/wiki/{url_title(key)}"])
+        made_rel += 1
+
     # wd:continent rows (Odd-one-out + Enumerate source)
     all_conts = ["Africa", "Europe", "Asia", "North America", "South America", "Oceania"]
     made_cont = 0
@@ -168,23 +231,24 @@ def main():
                     f"https://en.wikipedia.org/wiki/{url_title(title)}"])
         made_cont += 1
 
-    # Carry forward the existing structured wd:* rows (capital / currency /
-    # elemSymbol / author for Matching, and continent for Odd-one-out / Enumerate)
-    # so those modes don't regress. Matching rows need relation-target label
-    # resolution to regenerate from the new source (next iteration); continent is
-    # unioned with the new wd:continent rows above (gen_oddoneout/enumerate dedupe
-    # by country). Read the OLD corpus.json (restored from git before this run).
-    carried, seen_cont = 0, {r[7] for r in out if r[0].startswith("wd:continent:")}
+    # Carry forward wd:elemSymbol (element → symbol; P246 is a string we don't
+    # fetch yet) AND union the old wd:continent rows with the new ones (the old
+    # corpus covered more countries; gen_oddoneout/enumerate dedupe by country).
+    # Everything else structured (capital/currency/author/composer/director) is now
+    # regenerated above from the resolved relations.
+    carried = 0
+    seen_cont = {r[7] for r in out if r[0].startswith("wd:continent:")}
     if os.path.exists(OUT):
         try:
             old = json.load(open(OUT)).get("questions", [])
             for r in old:
                 rid = r[0] if r else ""
-                if not (isinstance(rid, str) and rid.startswith("wd:")):
+                if not isinstance(rid, str):
                     continue
-                if rid.startswith("wd:continent:") and r[7] in seen_cont:
-                    continue   # already have this country from the new source
-                out.append(r); carried += 1
+                if rid.startswith("wd:elemSymbol:"):
+                    out.append(r); carried += 1
+                elif rid.startswith("wd:continent:") and r[7] not in seen_cont:
+                    out.append(r); carried += 1
         except Exception:
             pass
 
@@ -201,7 +265,8 @@ def main():
         if r[0].startswith("src:describe:"):
             by_cat_n[r[4]] = by_cat_n.get(r[4], 0) + 1
     print(f"wrote {OUT}")
-    print(f"  total rows: {len(out):,}  (describe {made_desc:,} / cloze {made_cloze:,} / wd:continent {made_cont:,} / carried {carried:,})")
+    print(f"  total rows: {len(out):,}  (describe {made_desc:,} / cloze {made_cloze:,} / relation-MCQ {made_rel:,} / continent {made_cont:,} / elemSymbol-carried {carried:,})")
+    print(f"  clickstream confusables loaded for {len(confus):,} subjects")
     print(f"  descriptionOf by category: {dict(sorted(by_cat_n.items(), key=lambda x:-x[1]))}")
     con.close()
 

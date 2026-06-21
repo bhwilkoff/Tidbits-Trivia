@@ -128,9 +128,20 @@ column-order contract (`DATA-CONTRACT.md`) **do not change**.
   same-category/same-fame distractors and Qrank-derived difficulty. **Verified on
   the iOS 26 sim**: Classic renders the new description-MCQs from `corpus.sqlite`;
   question quality sampled clean (non-leaking clues, alias-rich type-answer).
-  *Open follow-ups:* mixed category still 39% (iterate the map further — cheap via
-  `recategorize.py`); Matching rows still carried-forward (need relation-target
-  label resolution to regenerate); clickstream confusable distractors (Stage 2).
+- **Stage 2 — Relation regen + clickstream distractors: BUILT (2026-06-21).**
+  `resolve_relations.py` resolved 5,099/5,122 relation targets to labels, so
+  `build_corpus.py` now **regenerates** the Matching/relation rows from the source
+  (capital/currency/author + new **composer/director** types — Matching 136 → 214,
+  6 types) instead of carrying them forward (only wd:elemSymbol is still carried,
+  pending P246). `fetch_clickstream.py` streamed the 508 MB enwiki clickstream and
+  kept **78,545 subject↔subject confusable edges over 11,128 subjects (94%)** —
+  `build_corpus.py` now draws distractors from these (same-category +
+  empirically-confused) before falling back to nearest-Qrank. **Verified on the
+  iOS sim:** "American actress (born 1971)" → Winona Ryder, decoys Johnny Depp /
+  Keanu Reeves / Stranger Things — genuinely confusable, not random. Main corpus
+  12,782 rows; relation-MCQ 784 added as bonus Classic variety.
+  *Open follow-ups:* mixed category 39% (cheap via `recategorize.py`); element
+  symbols (P246) still carried-forward; partial-name cloze leaks.
 
 ## 5. Licensing (must hold)
 

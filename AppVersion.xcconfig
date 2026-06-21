@@ -9,5 +9,5 @@
 // monotonically increasing integer, +1 every ship. Keep the Android
 // versionName in lockstep with MARKETING_VERSION (android/app/build.gradle.kts).
 
-MARKETING_VERSION = 1.2.1
-CURRENT_PROJECT_VERSION = 17
+MARKETING_VERSION = 1.2.2
+CURRENT_PROJECT_VERSION = 18

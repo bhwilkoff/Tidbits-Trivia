@@ -113,6 +113,25 @@ column-order contract (`DATA-CONTRACT.md`) **do not change**.
   + P31 categorization + lead prose for the 11,907 QIDs — targeted fetch, not the
   43 GB dump, since the curated set is small enough to enrich directly).
 
+- **Stages B–D — Enrichment, Prose, Generate: BUILT (2026-06-21).**
+  `enrich_subjects.py` (Wikidata facts/dates/relations/P18 image/aliases/sitelinks
+  + P31/P106-stored categorization with an appropriateness gate),
+  `fetch_prose.py` (lead + short description, 100% coverage), `recategorize.py`
+  (offline category-map iteration — no re-fetch), then the exporters
+  `build_enrich_json.py` / `build_corpus.py` (+ iOS `corpus.sqlite` mirror +
+  Android copy) / `build_difficulty.py` (Qrank quintiles). The existing nine
+  `gen_*.py` run unchanged on the regenerated `corpus.json` + `enrich.json`.
+  **The lift (old → new):** enrich entities 1,591 → **11,906 (7.5×)**; Picture ID
+  816 → **5,309 (6.5×)**; Type-the-answer 997 → **5,929 (6×)**; difficulty ratings
+  1,951 → **11,906**; Closest Call 1,233 → **2,494 (2×)**; Odd-one-out 67 → 123;
+  Enumerate 243 → 412 answer slots; main corpus 4,540 → **8,046** rows with
+  same-category/same-fame distractors and Qrank-derived difficulty. **Verified on
+  the iOS 26 sim**: Classic renders the new description-MCQs from `corpus.sqlite`;
+  question quality sampled clean (non-leaking clues, alias-rich type-answer).
+  *Open follow-ups:* mixed category still 39% (iterate the map further — cheap via
+  `recategorize.py`); Matching rows still carried-forward (need relation-target
+  label resolution to regenerate); clickstream confusable distractors (Stage 2).
+
 ## 5. Licensing (must hold)
 
 - **Wikidata (facts spine): CC0** — public domain, no attribution, commercial-safe.

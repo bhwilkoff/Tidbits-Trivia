@@ -66,6 +66,24 @@ def first_sentence(lead):
     m = re.split(r"(?<=[.!?])\s", lead.strip())
     return m[0] if m else lead
 
+def make_cloze(title, lead):
+    """Mask the subject in its own lead sentence → a fill-the-blank MCQ stem.
+    Returns the masked sentence, or None if it can't be masked cleanly."""
+    s = first_sentence(lead or "").strip()
+    if not (25 <= len(s) <= 240):
+        return None
+    words = [w for w in re.findall(r"[A-Za-z']+", title) if len(w) > 3]
+    if not words:
+        return None
+    masked, hit = s, False
+    for w in words:
+        new = re.sub(rf"\b{re.escape(w)}\b", "____", masked, flags=re.IGNORECASE)
+        if new != masked:
+            masked, hit = new, True
+    if not hit or leaks(title, masked.replace("____", " ")):
+        return None
+    return masked
+
 
 def main():
     con = sqlite3.connect(DB)
@@ -95,18 +113,12 @@ def main():
     title_of = {s[0]: s[1] for s in subs}
 
     out = []
-    made_desc = 0
+    made_desc = made_cloze = 0
     for cat, members in by_cat.items():
         titles = [m[1] for m in members]               # already qrank-desc
         for idx, (qid, title, qr) in enumerate(members):
             lead, desc = prose.get(qid, ("", ""))
-            clue = (desc or "").strip()
-            if not clue or len(clue) < 8 or leaks(title, clue):
-                if lead and not leaks(title, first_sentence(lead)) and len(first_sentence(lead)) > 25:
-                    clue = first_sentence(lead)
-                else:
-                    continue
-            # 3 nearest-fame same-category distractors (skip self)
+            # 3 nearest-fame same-category distractors (skip self) — shared by both shapes
             neighbours = [titles[j] for j in range(max(0, idx - 4), min(len(titles), idx + 5))
                           if titles[j] != title][:6]
             if len(neighbours) < 3:
@@ -114,17 +126,30 @@ def main():
             if len(neighbours) < 3:
                 continue
             distractors = neighbours[:3]
-            options = distractors + [title]
-            # stable shuffle by id hash so it's deterministic across rebuilds
-            h = int(hashlib.md5((qid + title).encode()).hexdigest(), 16)
-            ci = h % 4
-            options[3], options[ci] = options[ci], options[3]
-            prompt = f"Which {CAT_NOUN.get(cat, 'subject')} is this: “{clue}”?"
-            # template segment "describe" — gen_typeanswer mines describe/cloze rows
-            out.append([f"src:describe:{url_title(title)}", prompt, options, ci, cat,
-                        difficulty(qr), f"{title}: {clue}", title,   # q[7] = spaced display title
-                        f"https://en.wikipedia.org/wiki/{url_title(title)}"])
-            made_desc += 1
+
+            def emit(template, prompt, expl, salt):
+                options = distractors + [title]
+                h = int(hashlib.md5((qid + template + salt).encode()).hexdigest(), 16)
+                ci = h % 4
+                options[3], options[ci] = options[ci], options[3]
+                out.append([f"src:{template}:{url_title(title)}", prompt, options, ci, cat,
+                            difficulty(qr), expl, title,   # q[7] = spaced display title
+                            f"https://en.wikipedia.org/wiki/{url_title(title)}"])
+
+            # describe — from the Wikidata short description (fall back to lead sentence)
+            clue = (desc or "").strip()
+            if not (clue and len(clue) >= 8 and not leaks(title, clue)):
+                fs = first_sentence(lead) if lead else ""
+                clue = fs if (fs and len(fs) > 25 and not leaks(title, fs)) else ""
+            if clue:
+                emit("describe", f"Which {CAT_NOUN.get(cat, 'subject')} is this: “{clue}”?",
+                     f"{title}: {clue}", "d")
+                made_desc += 1
+            # cloze — mask the subject in its own lead sentence (variety + type-answer source)
+            cz = make_cloze(title, lead) if lead else None
+            if cz:
+                emit("cloze", f"Fill in the blank: “{cz}”", f"{title} — {cz}", "c")
+                made_cloze += 1
 
     # wd:continent rows (Odd-one-out + Enumerate source)
     all_conts = ["Africa", "Europe", "Asia", "North America", "South America", "Oceania"]
@@ -176,7 +201,7 @@ def main():
         if r[0].startswith("src:describe:"):
             by_cat_n[r[4]] = by_cat_n.get(r[4], 0) + 1
     print(f"wrote {OUT}")
-    print(f"  total rows: {len(out):,}  (descriptionOf {made_desc:,} / wd:continent {made_cont:,})")
+    print(f"  total rows: {len(out):,}  (describe {made_desc:,} / cloze {made_cloze:,} / wd:continent {made_cont:,} / carried {carried:,})")
     print(f"  descriptionOf by category: {dict(sorted(by_cat_n.items(), key=lambda x:-x[1]))}")
     con.close()
 

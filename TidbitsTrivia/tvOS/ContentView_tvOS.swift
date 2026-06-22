@@ -92,18 +92,26 @@ struct ContentView_tvOS: View {
     private var modeRow: some View {
         VStack(alignment: .leading, spacing: 18) {
             Text("Pick a mode").font(.system(size: 38, weight: .heavy, design: .rounded)).foregroundStyle(TVTheme.text)
-            HStack(spacing: 30) {
-                ForEach(GameMode.allCases.filter { $0 != .daily }) { mode in
-                    Button { selectedMode = mode } label: {
-                        VStack(spacing: 10) {
-                            Image(systemName: mode.symbol).font(.system(size: 34, weight: .black))
-                            Text(mode.title).font(.system(size: 27, weight: .bold, design: .rounded))
+            // MUST scroll horizontally: 14 modes × 240pt overflow the 1920pt
+            // screen, and a bare HStack here (inside a vertical-only ScrollView)
+            // would balloon the whole content width far past the screen — the
+            // entire UI then renders oversized. Same pattern as categoryShelf.
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 30) {
+                    ForEach(GameMode.allCases.filter { $0 != .daily }) { mode in
+                        Button { selectedMode = mode } label: {
+                            VStack(spacing: 10) {
+                                Image(systemName: mode.symbol).font(.system(size: 34, weight: .black))
+                                Text(mode.title).font(.system(size: 27, weight: .bold, design: .rounded))
+                            }
+                            .frame(width: 240, height: 150)
                         }
-                        .frame(width: 240, height: 150)
+                        .buttonStyle(TVChipStyle(accent: mode.accent, selected: selectedMode == mode))
                     }
-                    .buttonStyle(TVChipStyle(accent: mode.accent, selected: selectedMode == mode))
                 }
+                .padding(.vertical, 30)
             }
+            .scrollClipDisabled()
         }
         .focusSection()
     }

@@ -13,7 +13,24 @@ answerable with the existing type-matched options. Pipeline:
 batch files of {id, answer, options, summary} → LLM rewrites → `apply_delight.py`
 (leak-guarded merge) → regenerate `gen_*.py` → build → ship.
 
-## Current state (2026-06-22, ~9am MT)
+## ✅ COMPLETE (2026-06-22, v1.3.2)
+
+The whole-corpus delight pass is DONE. The final 20 expansion batches (187–206)
+were rewritten on **Haiku 4.5** (workflow `wf_acfcac11-26a`, 20 agents, ~137s,
+~645k Haiku tokens — the economical path Ben asked for; no Opus). `apply_delight.py`
+now merges all 464 batch files → **15,318 delightful rewrites applied** (984
+leaked-answer + 902 malformed kept their robotic original via the leak-guard). All
+four platforms build green at 1.3.2 / build 28 / Android v25.
+
+**The Haiku method is proven** — sample rewrites read as hand-written ("Nicknamed
+'The Flying Finn'…", "Its Syriac name means simply 'sword'…"), leak-guard held.
+For ALL future expansion delight, reuse the workflow at
+`workflows/scripts/delight-haiku-mop-up-wf_acfcac11-26a.js` (just repoint the batch
+range), `model:'haiku', effort:'low'`. One Haiku slip seen: a single item emitted
+`{"id": "question": "SKIP"}` (malformed JSON) → repair pattern is in the apply step;
+revalidate out-files with a json.load loop before applying.
+
+## Historical state (pre-completion, 2026-06-22 ~9am MT)
 
 - **Subjects:** 19,921 kept (`corpus_source.sqlite` `subject`): 11,906 Vital-Articles
   (`va_class='B/GA/FA/A'`) + 8,015 top-Qrank expansion (`va_class='qrank'`). Enriched

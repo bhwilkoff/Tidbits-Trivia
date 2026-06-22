@@ -24,7 +24,8 @@ def answer_words(ans):
 
 
 def main():
-    files = glob.glob("/tmp/delight/out_*.json") + glob.glob("/tmp/delight2/out_*.json")
+    files = (glob.glob("/tmp/delight/out_*.json") + glob.glob("/tmp/delight2/out_*.json")
+             + glob.glob("/tmp/delight3/out_*.json"))
     rewrites = {}
     for f in files:
         try:

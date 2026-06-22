@@ -529,30 +529,54 @@ struct TVResultsView: View {
 
     /// F2 — the full missed-fact recap at ten feet: every wrong answer becomes a
     /// "now you know" card (the learning-orientation mandate, not just an emoji grid).
+    /// Each card is FOCUSABLE — tvOS scrolling is focus-driven, so without
+    /// focusable targets below the buttons the ScrollView never reveals these
+    /// cards. Making them focusable lets the viewer arrow down through every
+    /// tidbit (and scrolls the page as they go).
     private var recap: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("TIDBITS TO REMEMBER")
                 .font(.system(size: 26, weight: .heavy, design: .rounded)).foregroundStyle(TVTheme.textSoft)
             ForEach(Array(summary.missed.enumerated()), id: \.offset) { _, a in
+                TVRecapCard(answer: a)
+            }
+        }
+        .frame(maxWidth: 1500)
+        .padding(.top, 20)
+        .focusSection()
+    }
+
+    /// A focusable missed-fact card. `.focusable()` makes it a focus target so
+    /// the results page scrolls down into the recap; the nested `Content` reads
+    /// `\.isFocused` (same pattern as the button styles) to draw a focus ring.
+    private struct TVRecapCard: View {
+        let answer: AnsweredQuestion
+        var body: some View { Content(answer: answer).focusable() }
+
+        private struct Content: View {
+            let answer: AnsweredQuestion
+            @Environment(\.isFocused) private var focused
+            var body: some View {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text(a.question.prompt)
+                    Text(answer.question.prompt)
                         .font(.system(size: 26, weight: .bold, design: .rounded)).foregroundStyle(.white)
                         .fixedSize(horizontal: false, vertical: true)
-                    Text(a.question.correctAnswer)
+                    Text(answer.question.correctAnswer)
                         .font(.system(size: 24, weight: .heavy, design: .rounded)).foregroundStyle(Tidbits.Palette.mint)
-                    if !a.question.explanation.isEmpty {
-                        Text(a.question.explanation)
+                    if !answer.question.explanation.isEmpty {
+                        Text(answer.question.explanation)
                             .font(.system(size: 22, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(24)
-                .background(RoundedRectangle(cornerRadius: 18).fill(TVTheme.panel))
+                .background(RoundedRectangle(cornerRadius: 18).fill(focused ? TVTheme.panel.opacity(1) : TVTheme.panel.opacity(0.7)))
+                .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(.white.opacity(focused ? 0.9 : 0), lineWidth: 4))
+                .scaleEffect(focused ? 1.015 : 1.0)
+                .animation(.easeOut(duration: 0.16), value: focused)
             }
         }
-        .frame(maxWidth: 1500)
-        .padding(.top, 20)
     }
 
     private func stat(_ v: String, _ l: String) -> some View {

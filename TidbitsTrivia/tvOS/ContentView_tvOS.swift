@@ -173,6 +173,13 @@ struct TVChipStyle: ButtonStyle {
         var body: some View {
             configuration.label
                 .foregroundStyle(selected || focused ? .white : TVTheme.textSoft)
+                // Internal padding so a plain-text label ("Play Again", "Done",
+                // "Next", "Submit", "Reveal…") never touches the pill's outline.
+                // Labels that carry their own .frame(…) just gain a little more
+                // breathing room — harmless, and this guarantees no overlap
+                // anywhere TVChipStyle is used.
+                .padding(.horizontal, 30)
+                .padding(.vertical, 16)
                 .background(RoundedRectangle(cornerRadius: 22).fill(selected ? accent : (focused ? accent.opacity(0.85) : TVTheme.panel)))
                 .overlay(RoundedRectangle(cornerRadius: 22).strokeBorder(.white.opacity(focused ? 0.9 : 0), lineWidth: 4))
                 .scaleEffect(focused ? 1.08 : 1.0)

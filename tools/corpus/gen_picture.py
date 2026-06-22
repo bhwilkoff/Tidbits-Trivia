@@ -28,7 +28,7 @@ import argparse, hashlib, json, os, re, urllib.parse
 # rotating phrasing. Order matters: event/work/animal/org are checked before the
 # lifespan-only person signal, because date ranges like "(1914–1924)" appear in
 # event descriptions too and would otherwise be misread as a person's lifespan.
-_OCCUP = re.compile(r'\b(actor|actress|singer|songwriter|musician|player|footballer|politician|writer|author|poet|painter|physicist|scientist|engineer|director|composer|king|queen|emperor|empress|president|prime minister|philosopher|mathematician|general|admiral|artist|rapper|producer|journalist|economist|chemist|biologist|astronaut|cosmonaut|jumper|skier|boxer|driver|cyclist|wrestler|dancer|architect|novelist|playwright|monarch|saint|pope|chef|model|designer|businessman|businesswoman|entrepreneur|activist|theologian|historian|sociologist|psychologist|presenter|broadcaster|coach|swimmer|sprinter|runner|gymnast|golfer|pianist|guitarist|drummer|bandleader|conductor|sculptor|photographer|filmmaker|screenwriter|comedian|magician|explorer|inventor|nobleman|noblewoman|aristocrat|duke|duchess|prince|princess|sultan|caliph|tsar|chancellor|governor|senator|diplomat|spy|officer|soldier|priest|bishop|cardinal|rabbi|imam|ruler|dictator|revolutionary|reformer|suffragist|abolitionist|critic|essayist|linguist|botanist|geologist|astronomer|archaeologist|anthropologist|surgeon|physician|nurse|lawyer|judge|professor|missionary|founding father|figure)\b', re.I)
+_OCCUP = re.compile(r'\b(actor|actress|singer|songwriter|musician|player|footballer|politician|writer|author|poet|painter|physicist|scientist|engineer|director|composer|king|queen|emperor|empress|president|prime minister|philosopher|mathematician|general|admiral|artist|rapper|producer|journalist|economist|chemist|biologist|astronaut|cosmonaut|jumper|skier|boxer|driver|cyclist|wrestler|dancer|architect|novelist|playwright|monarch|saint|pope|chef|model|designer|businessman|businesswoman|entrepreneur|activist|theologian|historian|sociologist|psychologist|presenter|broadcaster|coach|swimmer|sprinter|runner|gymnast|golfer|pianist|guitarist|drummer|bandleader|conductor|sculptor|photographer|filmmaker|screenwriter|comedian|magician|explorer|inventor|nobleman|noblewoman|aristocrat|duke|duchess|prince|princess|sultan|caliph|tsar|chancellor|governor|senator|diplomat|spy|officer|soldier|priest|bishop|cardinal|rabbi|imam|ruler|dictator|revolutionary|reformer|suffragist|abolitionist|critic|essayist|linguist|botanist|geologist|astronomer|archaeologist|anthropologist|surgeon|physician|nurse|lawyer|judge|professor|missionary|founding father|figure|athlete|quarterback|linebacker|cornerback|halfback|fullback|running back|wide receiver|tight end|lineman|goaltender|goalkeeper|midfielder|striker|winger|batsman|bowler|pitcher|catcher|shortstop|outfielder|infielder|sportsman|sportswoman|sportsperson|jockey|rower|fencer|weightlifter|hurdler|decathlete|racer|skater|snowboarder|surfer|climber|referee|umpire|rapper|DJ|violinist|cellist|trumpeter|saxophonist|drummer|astronomer|paleontologist|virologist|geneticist|cardiologist|neurologist|cartoonist|illustrator|animator|voice actor|television host|talk show host|news anchor|televangelist|monk|nun|preacher|rabbi|shaman|warlord|chieftain|consul|viceroy|ambassador|spymaster|admiral|marshal|colonel|captain|lieutenant|sergeant)\b', re.I)
 _LIFESPAN = re.compile(r'\(\s*(?:born\s+)?\d{3,4}\s*[–\-]\s*\d{0,4}\s*\)|\(\s*born\s+\d{4}\s*\)|\bb\.\s*\d{4}\b|\b\d{4}\s*[–\-]\s*\d{4}\b')
 _PLACE = re.compile(r'\b(city|country|capital|town|village|mountain|river|lake|island|islands|region|state|province|county|nation|sea|ocean|desert|peak|volcano|district|municipality|commune|archipelago|territory|kingdom|empire|republic|metropolis|borough|prefecture|canton|valley|harbou?r|fortress|castle|palace|temple|cathedral|university|college|stadium|airport|bridge|tower|park|landmark)\b', re.I)
 _EVENT = re.compile(r'\b(war|battle|siege|revolution|genocide|conquest|treaty|massacre|election|movement|uprising|rebellion|crisis|invasion|campaign|disaster|earthquake|pandemic|epidemic|attack|attacks|bombing|riot|protest|coup|expedition|conflict|civil war|clash|raid|revolt|mutiny|purge|famine|plague)\b', re.I)
@@ -57,17 +57,55 @@ def _strip_dates(s):
 
 
 def _lead_role(desc):
-    return re.split(r',| and | & ', _strip_dates(desc))[0].strip()
+    role = re.split(r',| and | & ', _strip_dates(desc))[0].strip()
+    # Drop filler adjectives so a role stays short enough to inline naturally
+    # ("American former professional football quarterback" -> "American football
+    # quarterback" -> "Who is this American football quarterback?").
+    role = re.sub(r'\b(former|professional|retired|amateur|aspiring|practising|practicing|semi-professional|onetime|one-time)\b', '', role, flags=re.I)
+    return re.sub(r'\s+', ' ', role).strip()
 
 
 def _classify(desc):
+    # Occupation is the STRONGEST person signal and is checked FIRST: a job title
+    # often embeds a work/place/event noun ("video game designer", "film
+    # director", "war photographer", "city planner") and must not be read as the
+    # thing itself. Descriptions of actual works/places almost never contain an
+    # occupation word, so this rarely misfires.
+    if _OCCUP.search(desc): return "person"
     if _WORK.search(desc): return "work"
     if _EVENT.search(desc): return "event"
     if _TAXON.search(desc) or _CREATURE.search(desc): return "animal"
     if _ORG.search(desc): return "org"
-    if _OCCUP.search(desc) or _LIFESPAN.search(desc): return "person"
+    if _LIFESPAN.search(desc): return "person"   # lifespan alone, no occupation word
     if _PLACE.search(desc): return "place"
     return "other"
+
+
+def subject_description(answer, explanation):
+    """Pull a clean one-line description from a corpus explanation, handling BOTH
+    formats the corpus emits:
+      describe rows -> "Answer: Wikidata description"     (clean)
+      cloze rows    -> "Answer — ____ (dates) is an X who ..."  (masked sentence)
+    Returns "" when nothing descriptive can be recovered."""
+    ex = (explanation or "").strip()
+    ans = (answer or "").strip()
+    # describe form: "Name: description"
+    head, sep, tail = ex.partition(":")
+    if sep and head.strip() == ans:
+        body = tail.strip()
+    else:
+        # cloze form: strip a leading "Name — " / "Name - " prefix, then take the
+        # predicate after "is/was a/an/the".
+        for dash in (" — ", " – ", " - "):
+            if ex.startswith(ans + dash):
+                ex = ex[len(ans) + len(dash):]
+                break
+        m = re.search(r'\b(?:is|was|are|were)\s+(?:a|an|the)\s+(.+)', ex)
+        body = m.group(1) if m else ex
+        body = re.split(r'\b(?:who|which|that)\b|[,.;]', body)[0]
+    body = body.replace("____", " ")
+    body = re.sub(r'\([^)]*\)', '', body)          # drop parentheticals/dates
+    return re.sub(r'\s+', ' ', body).strip()
 
 
 def _leaks(answer, stem):
@@ -86,7 +124,10 @@ def picture_stem(answer, description, key):
     kind = _classify(desc)
     if kind == "person":
         role = _lead_role(desc)
-        if role and 1 <= len(role.split()) <= 4 and not _leaks(answer, role):
+        # Inline the role only if it still names an occupation — otherwise filler
+        # stripping can leave a bare nationality ("British"), which would read as
+        # "Who is this British?". Fall back to the generic person stem instead.
+        if role and 1 <= len(role.split()) <= 4 and _OCCUP.search(role) and not _leaks(answer, role):
             return _stable_pick([f"Who is this {role}?", f"Which {role} is pictured here?",
                                  f"Name this {role}.", f"Can you name this {role}?"], key)
         return _stable_pick(["Who is this person?", "Who is this?", "Can you name this person?"], key)
@@ -154,7 +195,7 @@ def main():
             continue
         seen_titles.add(title)
         explanation = q[6] if len(q) > 6 else ""
-        desc = explanation.split(":", 1)[1].strip() if ":" in explanation else ""
+        desc = subject_description(options[correct], explanation)
         stem = picture_stem(options[correct], desc, q[0])
         # Same column order as corpus.json (id,prompt,options,correct,cat,diff,
         # explanation,source_title,source_url) + a 10th element: the image URL.

@@ -43,10 +43,12 @@ def main():
 
     con = sqlite3.connect(DB)
     con.execute("CREATE TABLE IF NOT EXISTS prose (qid TEXT PRIMARY KEY, title TEXT, lead TEXT, description TEXT)")
-    con.execute("DELETE FROM prose")
     con.commit()
 
-    rows = con.execute("SELECT qid, title FROM subject WHERE keep=1 ORDER BY qrank DESC").fetchall()
+    # Incremental: only fetch subjects that don't already have prose (so expansion
+    # waves don't re-fetch the thousands already done).
+    rows = con.execute("""SELECT qid, title FROM subject WHERE keep=1
+        AND qid NOT IN (SELECT qid FROM prose) ORDER BY qrank DESC""").fetchall()
     if args.limit: rows = rows[:args.limit]
     qid_of = {}
     titles = []

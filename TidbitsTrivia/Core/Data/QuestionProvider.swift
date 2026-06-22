@@ -113,6 +113,14 @@ final class QuestionProvider {
             let titles = try await WikipediaClient.shared.search(topic, limit: 35)
             guard !titles.isEmpty else { return [] }
             let summaries = await WikipediaClient.shared.summaries(for: titles)
+            // Apple Intelligence (Foundation Models) writes delightful, grounded
+            // questions on-device when available; otherwise fall back to the
+            // template engine so Create works on every platform/device.
+            if DelightfulQuizGenerator.isAvailable {
+                let ai = await DelightfulQuizGenerator.generate(
+                    topic: topic, summaries: summaries, categoryID: category.id, count: count)
+                if ai.count >= min(count, 3) { return ai }
+            }
             return TemplateEngine.makeQuestions(
                 pool: summaries, categoryID: category.id, count: count, seed: topic.stableSeed)
         } catch {

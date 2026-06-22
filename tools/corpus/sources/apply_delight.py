@@ -24,21 +24,22 @@ def answer_words(ans):
 
 
 def main():
+    files = glob.glob("/tmp/delight/out_*.json") + glob.glob("/tmp/delight2/out_*.json")
     rewrites = {}
-    for f in glob.glob("/tmp/delight/out_*.json"):
+    for f in files:
         try:
             for r in json.load(open(f)):
                 if r.get("id") and r.get("question"):
                     rewrites[r["id"]] = r["question"].strip()
         except Exception as e:
             print("  warn: bad output file", f, e)
-    print(f"collected {len(rewrites):,} rewrites from {len(glob.glob('/tmp/delight/out_*.json'))} batch files")
+    print(f"collected {len(rewrites):,} rewrites from {len(files)} batch files")
 
     data = json.load(open(CORPUS))
     qs = data["questions"]
     applied = leaked = skipped = bad = 0
     for q in qs:
-        if not q[0].startswith("src:describe"):
+        if not (q[0].startswith("src:describe") or q[0].startswith("src:cloze")):
             continue
         nw = rewrites.get(q[0])
         if not nw or nw == "SKIP":
@@ -73,7 +74,7 @@ def main():
     print("\n  SAMPLE delightful questions:")
     shown = 0
     for q in qs:
-        if q[0].startswith("src:describe") and rewrites.get(q[0]) and q[1] == rewrites[q[0]]:
+        if (q[0].startswith("src:describe") or q[0].startswith("src:cloze")) and rewrites.get(q[0]) and q[1] == rewrites[q[0]]:
             print(f"    {q[1]}  ->  {q[2][q[3]]}")
             shown += 1
             if shown >= 6:

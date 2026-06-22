@@ -873,3 +873,37 @@ pool means 100× more vandalism/ambiguity/dated-fact candidates reaching the
 gates. Do NOT change the shipped artifact schemas or ship any dump to clients.
 This is a `shared-data-plane-contract` change — update `DATA-CONTRACT.md`'s
 Producer section as each phase lands.
+
+---
+
+## 033 — Create feature: pre-baked corpus everywhere + Foundation Models on-device on Apple
+
+**Decision**: "Make a quiz on any topic" is served two ways, never by a paid
+cloud LLM. (1) A large **pre-baked delightful corpus** (Decision 032 expansion to
+the top Wikipedia subjects by Qrank) covers what people actually search, so most
+play pulls ready-made questions. (2) For the live/arbitrary tail, **Apple
+Intelligence's Foundation Models framework** generates delightful questions
+**on-device** — `Core/AI/DelightfulQuizGenerator` fetches the topic's Wikipedia
+summary, then an `@Generable` `GeneratedQuestion` is produced by
+`LanguageModelSession`, GROUNDED strictly in that summary (no invented facts),
+leak-guarded, converted to the app `Question`. `QuestionProvider.liveQuestions`
+tries it first and falls back to `TemplateEngine` when unavailable. Free, private,
+offline, first-party framework (fits "Apple frameworks only").
+
+**Why**: delightful questions for an arbitrary live topic need an LLM at request
+time; a backend LLM is a cost + privacy + infra burden. On-device Foundation
+Models (iOS/iPadOS 26 baseline) removes all three. Grounding in the fetched
+summary keeps the compact on-device model accurate — the same safeguard the
+build-time corpus uses. Pre-baking the top searches means the on-device model is
+only ever the long tail, so even non-AI devices get great questions.
+
+**How to apply**: gate the framework with `#if canImport(FoundationModels) &&
+!os(tvOS)` — the framework is in the tvOS SDK but its `@Generable`/`@Guide`
+macros are currently `unavailable in tvOS` (no Apple Intelligence on Apple TV
+hardware yet). When a future Apple TV ships Apple Intelligence, **delete
+`&& !os(tvOS)`** — no other change; the template/corpus fallback runs on tvOS
+until then. Always check `SystemLanguageModel.default.availability` at runtime
+(device eligibility / AI enabled / model downloaded) and fall back to the corpus
++ template. Web/Android have no on-device Apple LLM → corpus + template now; a
+shared backend is a later option only if needed. Keep generation GROUNDED in the
+fetched summary and leak-guard the output (never name the answer).

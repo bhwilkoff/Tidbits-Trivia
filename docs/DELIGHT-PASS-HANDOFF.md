@@ -13,6 +13,20 @@ answerable with the existing type-matched options. Pipeline:
 batch files of {id, answer, options, summary} → LLM rewrites → `apply_delight.py`
 (leak-guarded merge) → regenerate `gen_*.py` → build → ship.
 
+## ✅ MOP-UP COMPLETE (2026-06-23, v1.5.1)
+
+The robotic leftovers the leak-guard had kept (the ~1,887 originals that survived
+the first pass) were re-delighted on Haiku — 25 agents over 1,344 grounded items,
+951 applied, 386 kept robotic (a faithful grounded rewrite would name the answer —
+the answer IS the salient fact), and earlier 543 thin/over-masked ones were dropped.
+**describe/cloze is now 97.6% delightful** with **0 full-answer leaks** in the
+shipped corpus. The sharpened leak-guard (in `scratchpad/apply_delight_now.py`)
+strips disambiguation parentheticals + generic category words + demonyms and uses
+substring match (catches plural/adjective forms). The remaining ~2.4% are
+answerable-but-plain by necessity (any grounded rewrite leaks). Also dropped 66
+pre-existing answer-in-question giveaways ("capital of Sultanate of Mogadishu" →
+Mogadishu) found along the way.
+
 ## ✅ COMPLETE (2026-06-22, v1.3.2)
 
 The whole-corpus delight pass is DONE. The final 20 expansion batches (187–206)

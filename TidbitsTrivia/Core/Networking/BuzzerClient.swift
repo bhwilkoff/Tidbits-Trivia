@@ -37,6 +37,7 @@ final class BuzzerClient {
     private(set) var resultName: String?   // who answered (from the host's result)
     private(set) var resultPoints: Int?    // points they earned
     private(set) var resultChosen: Int?    // the option they picked
+    private(set) var resultTimedOut = false  // a no-winner reveal: clock ran out vs everyone wrong
 
     private var browser: NWBrowser?
     private var connection: NWConnection?
@@ -196,7 +197,7 @@ final class BuzzerClient {
             prompt = m.prompt; options = m.options ?? []
             myAnswer = nil; resultCorrect = nil; resultCorrectIndex = nil
             isAnswering = false; lockedOut = false; winnerSeat = nil
-            buzzedName = nil; resultName = nil; resultPoints = nil; resultChosen = nil
+            buzzedName = nil; resultName = nil; resultPoints = nil; resultChosen = nil; resultTimedOut = false
         case .armed:
             // Re-arm on a brand-new question OR after a wrong answer reopened it.
             // Keep the last result text so the reopen reads "X missed — buzz!".
@@ -209,6 +210,7 @@ final class BuzzerClient {
         case .result:
             resultCorrect = m.correct; resultCorrectIndex = m.correctIndex
             resultName = m.displayName; resultPoints = m.points; resultChosen = m.chosenIndex
+            resultTimedOut = m.timedOut ?? false
             isAnswering = false; buzzedName = nil
             if m.winnerSeat == seat && m.correct == false { lockedOut = true }
         case .locked:  canBuzz = false; isAnswering = false

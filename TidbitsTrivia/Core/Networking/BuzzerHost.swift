@@ -88,12 +88,18 @@ final class BuzzerHost {
 
     // MARK: Round control (called by a future Buzz Night game mode)
 
+    /// The question currently on screen — retained so a phone that drops and
+    /// rejoins MID-QUESTION is caught up (re-sent the question + buzz state)
+    /// instead of sitting on "waiting for the next question".
+    private var activeQuestion: BuzzerMessage?
+
     /// Send the active question (prompt + options) to every phone so the players
     /// read along AND the buzz-winner can answer on their own device. Never
     /// includes the correct index — the host judges the submitted answer.
     func broadcastQuestion(prompt: String, options: [String], index: Int) {
         var m = BuzzerMessage(.question)
         m.prompt = prompt; m.options = options; m.questionIndex = index
+        activeQuestion = m
         broadcast(m)
     }
 
@@ -156,13 +162,15 @@ final class BuzzerHost {
         broadcast(m)
     }
 
-    /// No one answered correctly (timeout / all locked out / host skip) — reveal
-    /// the answer to all phones and close out the question.
-    func revealNoWinner(correctIndex: Int) {
+    /// No one answered correctly — reveal the answer to all phones and close out
+    /// the question. `timedOut` distinguishes "the clock ran out / nobody buzzed"
+    /// from "everyone buzzed and answered wrong" so the phones word it honestly.
+    func revealNoWinner(correctIndex: Int, timedOut: Bool) {
         arbiter.disarm()
         currentWinnerSeat = nil
         pendingAnswerSeat = nil; pendingAnswerIndex = nil
-        var r = BuzzerMessage(.result); r.correct = false; r.correctIndex = correctIndex
+        activeQuestion = nil
+        var r = BuzzerMessage(.result); r.correct = false; r.correctIndex = correctIndex; r.timedOut = timedOut
         broadcast(r)
         broadcast(BuzzerMessage(.locked))
     }
@@ -170,6 +178,21 @@ final class BuzzerHost {
     /// Name for a seat (for the TV's "X buzzed!" banner).
     func name(forSeat seat: Int) -> String {
         players.first { $0.seat == seat }?.name ?? "Player \(seat)"
+    }
+
+    /// Bring a freshly-(re)joined phone up to the live state: re-send the current
+    /// question, then whatever buzz state applies — so resuming mid-question lands
+    /// you right back IN the question, not on a "waiting" screen.
+    private func replayState(to peer: Peer) {
+        guard let q = activeQuestion else { return }
+        BuzzerTransport.send(q, over: peer.connection)
+        if let winner = currentWinnerSeat {
+            var a = BuzzerMessage(.awarded); a.winnerSeat = winner
+            BuzzerTransport.send(a, over: peer.connection)
+        } else if arbiter.armed, let seat = peer.seat, !lockedOut.contains(seat) {
+            var ar = BuzzerMessage(.armed); ar.questionIndex = q.questionIndex
+            BuzzerTransport.send(ar, over: peer.connection)
+        }
     }
 
     // MARK: Connections
@@ -238,6 +261,7 @@ final class BuzzerHost {
             BuzzerTransport.send(welcome, over: peer.connection)
             broadcastRoster()
             ping(peer)
+            replayState(to: peer)   // catch a mid-question (re)join up to the live state
 
         case .buzz:
             // First effective (RTT-compensated) arrival after arm() wins. A seat

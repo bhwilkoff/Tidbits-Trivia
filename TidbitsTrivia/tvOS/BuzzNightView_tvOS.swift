@@ -28,6 +28,7 @@ struct BuzzNightView_tvOS: View {
     @State private var missed: [AnsweredQuestion] = []
     @State private var lastScorerName: String?   // who just scored (celebration)
     @State private var lastScorerPoints = 0
+    @State private var lastTimedOut = false      // a no-winner reveal: clock ran out vs all wrong
     @State private var wrongFeedback: String?    // "Bob said London — reopened!"
     @State private var buzzSecondsLeft = 0
     @State private var questionNonce = 0         // bumps each question (drives the clock)
@@ -71,7 +72,9 @@ struct BuzzNightView_tvOS: View {
                 if Task.isCancelled { return }
                 if phase == .playing { buzzSecondsLeft -= 1 }          // pause while someone's answering
             }
-            if phase == .playing { revealNoOne() }
+            // Out of time with no winner: a true timeout only if nobody ever
+            // locked out by answering wrong (otherwise "everyone got it wrong").
+            if phase == .playing { revealNoOne(timedOut: !host.allLockedOut) }
         }
         .onExitCommand { host.stop(); dismiss() }
     }
@@ -149,7 +152,7 @@ struct BuzzNightView_tvOS: View {
                     statusBanner
                     optionsGrid(q)
                     if phase == .playing {
-                        Button("Nobody's got it — reveal answer") { revealNoOne() }
+                        Button("Nobody's got it — reveal answer") { revealNoOne(timedOut: false) }
                             .buttonStyle(TVChipStyle(accent: Tidbits.Palette.blue, selected: false))
                             .padding(.top, 8)
                     }
@@ -251,7 +254,8 @@ struct BuzzNightView_tvOS: View {
                     Label("\(name) got it!  +\(lastScorerPoints)", systemImage: "party.popper.fill")
                         .font(.system(size: 44, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.mint)
                 } else {
-                    Label("Nobody got that one", systemImage: "clock.badge.xmark.fill")
+                    Label(lastTimedOut ? "Time's up — nobody buzzed in" : "Nobody got it right",
+                          systemImage: lastTimedOut ? "clock.badge.xmark.fill" : "xmark.circle.fill")
                         .font(.system(size: 40, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.yellow)
                 }
                 if let q = current {
@@ -346,13 +350,17 @@ struct BuzzNightView_tvOS: View {
             let said = q.options.indices.contains(chosen) ? q.options[chosen] : "?"
             wrongFeedback = "\(who) said “\(said)” — not it. Buzzers reopen!"
             host.rejectAnswerAndReopen(chosenIndex: chosen)
-            if host.allLockedOut { revealNoOne() } else { phase = .playing }
+            if host.allLockedOut { revealNoOne(timedOut: false) } else { phase = .playing }
         }
     }
 
-    private func revealNoOne() {
+    /// Reveal with no winner. `timedOut`: the clock ran out with nobody buzzing
+    /// (vs everyone answered wrong) — drives honest wording on every device.
+    private func revealNoOne(timedOut: Bool) {
         guard phase != .reveal, let q = current else { return }
-        host.revealNoWinner(correctIndex: q.correctIndex)
+        lastScorerName = nil
+        lastTimedOut = timedOut
+        host.revealNoWinner(correctIndex: q.correctIndex, timedOut: timedOut)
         missed.append(AnsweredQuestion(question: q, chosenIndex: nil, secondsTaken: 0))
         phase = .reveal
     }

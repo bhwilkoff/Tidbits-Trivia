@@ -178,7 +178,9 @@ struct BuzzerJoinView: View {
                 return "\(name) missed — buzzers reopen!"
             }
         }
-        if client.resultCorrectIndex != nil { return "Time's up — nobody got it." }
+        if client.resultCorrectIndex != nil {
+            return client.resultTimedOut ? "Time's up — nobody buzzed in." : "Nobody got it right."
+        }
         if client.isAnswering { return "You got the buzz! Tap your answer above." }
         if client.myAnswer != nil { return "Answer sent — waiting on the host…" }
         if let who = client.buzzedName { return "🔔 \(who) buzzed in…" }

@@ -24,6 +24,7 @@ class GameState(
     private val store: Store,
     private val custom: List<Question>?,
     val label: String?,
+    private val nightRounds: List<Pair<String, Int>>? = null,
 ) {
     var phase by mutableStateOf(GamePhase.LOADING)
     var index by mutableIntStateOf(0)
@@ -67,7 +68,7 @@ class GameState(
 
     val current: Question? get() = questions.getOrNull(index)
     val correctCount: Int get() = answered.count { it.correct }
-    val isLast: Boolean get() = (mode == Mode.CLASSIC || mode == Mode.DAILY || mode == Mode.STAKE || mode == Mode.SWEEP || mode == Mode.PICTURE_ID || mode == Mode.THIS_OR_THAT || mode == Mode.CLOSEST_CALL || mode == Mode.ORDERING || mode == Mode.MATCHING || mode == Mode.TYPE_ANSWER || mode == Mode.ODD_ONE_OUT || mode == Mode.LADDER || mode == Mode.ENUMERATE) && index + 1 >= questions.size
+    val isLast: Boolean get() = mode != Mode.TIME_ATTACK && mode != Mode.SURVIVAL && index + 1 >= questions.size
     val progressLabel: String get() = if (mode == Mode.TIME_ATTACK || mode == Mode.SURVIVAL) "#${index + 1}" else "${index + 1} / ${questions.size}"
     val clockFraction: Double get() = if (budget <= 0) 0.0 else (remaining / budget).coerceIn(0.0, 1.0)
 
@@ -86,6 +87,7 @@ class GameState(
         reset()
         val qs = when {
             custom != null -> custom
+            mode == Mode.BAR_TRIVIA -> loadNight()
             mode == Mode.DAILY -> Corpus.daily(dayKey(), 7)
             mode == Mode.PICTURE_ID -> Pictures.pull(category.id, store.seenSet, mode.count)
             mode == Mode.THIS_OR_THAT -> ThisOrThat.pull(category.id, store.seenSet, mode.count)
@@ -103,7 +105,7 @@ class GameState(
             }
             else -> loadStandard()
         }
-        questions = if (mode.count == 99) qs else qs.take(mode.count)
+        questions = if (mode.count == 99 || mode == Mode.BAR_TRIVIA) qs else qs.take(mode.count)
         store.markSeen(questions.map { it.id })
         if (questions.isEmpty()) { phase = GamePhase.ERROR; return }
         if (mode.globalClock != null) globalDeadline = now() + mode.globalClock * 1000L
@@ -127,6 +129,52 @@ class GameState(
             pulled = weave(pulled, review)
         }
         return pulled
+    }
+
+    /** Trivia Night: build the round-tagged mixed list from the plan's rounds. */
+    private suspend fun loadNight(): List<Question> {
+        val rounds = nightRounds ?: Night.presets[1].rounds
+        val all = mutableListOf<Question>()
+        val picked = mutableSetOf<String>()
+        rounds.forEachIndexed { ri, (kind, count) ->
+            val excl = store.seenSet + picked
+            for (q in sourceType(kind, count, excl)) {
+                all.add(q.copy(roundIndex = ri)); picked.add(q.id)
+            }
+        }
+        return all
+    }
+
+    /** Source `count` questions of one TYPE — same loaders the standard game uses. */
+    private suspend fun sourceType(kind: String, count: Int, seen: Set<String>): List<Question> = when (kind) {
+        "pictureId" -> Pictures.pull(category.id, seen, count)
+        "thisOrThat" -> ThisOrThat.pull(category.id, seen, count)
+        "closestCall" -> ClosestCall.pull(category.id, seen, count)
+        "ordering" -> OrderingSet.pull(category.id, seen, count)
+        "matching" -> MatchingSet.pull(category.id, seen, count)
+        "typeAnswer" -> TypeAnswerSet.pull(category.id, seen, count)
+        "oddOneOut" -> OddOneOutSet.pull("mixed", seen, count)
+        "enumerate" -> EnumerateSet.pull("mixed", emptySet(), count)
+        else -> {
+            var pulled = Corpus.pull(category.id, seen, count)
+            if (pulled.size < count) {
+                val topic = if (category.id == "mixed") "popular" else category.name
+                pulled = pulled + Wikipedia.generate(topic, category.id, count - pulled.size)
+            }
+            pulled.take(count)
+        }
+    }
+
+    // Trivia Night round helpers (for the round banner + end-of-round beat).
+    private val nightMeta: List<Pair<String, String>> get() =
+        (nightRounds ?: Night.presets[1].rounds).map { it.first to (Night.roundTitle[it.first] ?: it.first) }
+    val roundCount: Int get() = if (mode == Mode.BAR_TRIVIA) nightMeta.size else 0
+    val currentRoundNumber: Int get() = (current?.roundIndex ?: 0) + 1
+    val currentRoundTitle: String? get() = current?.roundIndex?.let { nightMeta.getOrNull(it)?.second }
+    val nextRoundTitle: String? get() {
+        val ri = current?.roundIndex ?: return null
+        val nx = questions.getOrNull(index + 1)?.roundIndex ?: return null
+        return if (nx != ri) nightMeta.getOrNull(nx)?.second else null
     }
 
     /** Interleave due review questions among fresh ones (mirror iOS/web _weave). */
@@ -178,7 +226,8 @@ class GameState(
         if (current?.enumerate != null) { enumFilled = emptySet(); enumNamed = emptyList(); enumLastHit = false; typedText = "" }
         phase = GamePhase.PLAYING
         qStart = now()
-        budget = globalRemaining() ?: (mode.perQuestion?.toDouble() ?: 30.0)
+        budget = globalRemaining()
+            ?: if (mode == Mode.BAR_TRIVIA) Night.shapeBudget(current) else (mode.perQuestion?.toDouble() ?: 30.0)
         remaining = budget
     }
 
@@ -191,7 +240,7 @@ class GameState(
         if (phase != GamePhase.PLAYING) return
         val g = globalRemaining()
         if (g != null) { remaining = g; if (g <= 0) end() }
-        else { remaining = max(0.0, budget - (now() - qStart) / 1000.0); if (remaining <= 0) { when (mode) { Mode.CLOSEST_CALL -> submitGuess(); Mode.ORDERING -> submitOrder(); Mode.MATCHING -> submitMatch(); Mode.TYPE_ANSWER -> submitText(); Mode.ENUMERATE -> finishEnum(); else -> submit(null) } } }
+        else { remaining = max(0.0, budget - (now() - qStart) / 1000.0); if (remaining <= 0) { val c = current; when { c?.closest != null -> submitGuess(); c?.ordering != null -> submitOrder(); c?.matching != null -> submitMatch(); c?.accepted != null -> submitText(); c?.enumerate != null -> finishEnum(); else -> submit(null) } } }
     }
 
     fun submitText() {
@@ -238,11 +287,11 @@ class GameState(
     }
 
     fun selectMatchKey(i: Int) {
-        if (mode != Mode.MATCHING || phase != GamePhase.PLAYING) return
+        if (phase != GamePhase.PLAYING || current?.matching == null) return
         matchSelectedKey = if (matchSelectedKey == i) null else i
     }
     fun assignMatchValue(j: Int) {
-        if (mode != Mode.MATCHING || phase != GamePhase.PLAYING) return
+        if (phase != GamePhase.PLAYING || current?.matching == null) return
         val key = matchSelectedKey ?: return
         matchAssign = matchAssign.mapIndexed { i, v -> when { i == key -> j; v == j -> null; else -> v } }
         matchSelectedKey = null
@@ -265,7 +314,7 @@ class GameState(
     }
 
     fun moveOrderItem(i: Int, up: Boolean) {
-        if (mode != Mode.ORDERING || phase != GamePhase.PLAYING) return
+        if (phase != GamePhase.PLAYING || current?.ordering == null) return
         val t = if (up) i - 1 else i + 1
         if (t !in currentOrder.indices) return
         currentOrder = currentOrder.toMutableList().also { java.util.Collections.swap(it, i, t) }

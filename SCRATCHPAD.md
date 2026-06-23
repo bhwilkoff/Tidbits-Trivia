@@ -7,7 +7,7 @@
 > `docs/ROADMAP.md`, `docs/DATA-CONTRACT.md`. Detailed per-round history is in
 > `ARCHIVE.md`.
 
-## Current state (2026-06-20)
+## Current state (2026-06-23)
 
 - **All four platforms PLAY**, off one shared corpus, all pushed to `main`:
   - **iOS/iPadOS** — full SP (4 modes, 8 categories, learn-reveal), local
@@ -269,3 +269,29 @@ One-line-per-round; full detail in `ARCHIVE.md`.
   on Picture ID's bundled-JSON+loader+mode pattern — Closest Call (M5, numeric
   dial), This-or-That (Q1), Odd-one-out (Q3), Matching (Q5), Ordering (Q4),
   Type-the-answer (Q6); plus F3/F4, Couch Co-op, Buzz Night, Link Wall.
+- **2026-06-23** — **tvOS parity completion + Trivia Night (the "bar trivia" mode)
+  + Buzz Night buzzer**. Ben: finish outstanding tvOS parity/feature work
+  (incl. settings/Game Center + iPhone↔TV), AND build a new default mode pulling
+  from every question type, hostable on Apple TV or solo/pass-and-play; chose
+  **tvOS-parity-first**, **wire the buzzer this session**, **configurable night**.
+  Shipped (each verified + pushed): **(1) tvOS Records browse screen**
+  (`RecordsView_tvOS` — streak/lifetime/Pie/Topic-Levels/calibration/bests/review,
+  focus-scrollable) + **tvOS Settings** (`SettingsView_tvOS`, fixed the
+  transparent-bg report) + **Game Center score submission** wired into the shared
+  `RecordsStore` path (iOS+tvOS) — closes 5+ ⏳ PARITY cells; sim-verified.
+  **(2) Trivia Night** = a client meta-mode (`GameMode.barTrivia` + `NightPlan` +
+  `GameEngine.startNight` + `QuestionProvider.nightQuestions`): rounds, each a
+  different question TYPE, run through the engine made **shape-driven** (guards +
+  timeout dispatch + per-shape clock) so mixed shapes play in one run. Presets
+  (Quick/Pub/Works) + category. **All 4 platforms** — iOS/tvOS/web/Android, each
+  with a setup UI + round banner + end-of-round beat, **each live-verified**
+  (tvOS+web+Android sim/headless shots of a real night; iOS built). Web adds
+  shareable `#/night` deep links. **(3) Buzz Night** — wired the Phase-1 Bonjour
+  buzzer to a TV-hosted game: `BuzzerHost` gained per-seat scoring +
+  wrong-buzz-reopen/lockout; tvOS `BuzzNightView_tvOS` (lobby→buzz loop→standings)
+  + iOS `BuzzerJoinView` (join + BUZZ button). Host lobby + in-game UI sim-verified
+  (room code, scoreboard); **the live buzz handshake is the only thing left — a
+  two-device hardware test for Ben** (Decision 030). Versions → Apple 1.4.0(33),
+  Android 1.4.0(28). *Left (next slices):* **pass-and-play team scoring** for the
+  night (the "team vs solo" config dimension — solo ships now); the **2-device
+  Buzz Night hardware test**; Couch Co-op; Link Wall.

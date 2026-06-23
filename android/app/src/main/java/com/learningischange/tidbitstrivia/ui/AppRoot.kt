@@ -50,7 +50,8 @@ sealed interface Route {
     data object Home : Route
     data object Records : Route
     data object Create : Route
-    data class Game(val mode: Mode, val category: Category, val custom: List<Question>? = null, val label: String? = null) : Route
+    data class Game(val mode: Mode, val category: Category, val custom: List<Question>? = null, val label: String? = null, val nightRounds: List<Pair<String, Int>>? = null) : Route
+    data object NightSetup : Route
 }
 
 @Composable
@@ -79,7 +80,14 @@ fun AppRoot(store: Store) {
     Scaffold(bottomBar = { if (showBar) BottomBar(current) { backStack.clear(); backStack.add(it) } }) { pad ->
         Box(Modifier.padding(pad).fillMaxSize()) {
             when (val r = current) {
-                is Route.Home -> HomeScreen { mode, cat -> backStack.add(Route.Game(mode, cat)) }
+                is Route.Home -> HomeScreen(
+                    onPlay = { mode, cat -> backStack.add(Route.Game(mode, cat)) },
+                    onNight = { backStack.add(Route.NightSetup) },
+                )
+                is Route.NightSetup -> NightSetupScreen(
+                    onStart = { rounds, cat, label -> backStack.removeAt(backStack.lastIndex); backStack.add(Route.Game(Mode.BAR_TRIVIA, cat, label = label, nightRounds = rounds)) },
+                    onCancel = { backStack.removeAt(backStack.lastIndex) },
+                )
                 is Route.Records -> RecordsScreen(store)
                 is Route.Create -> CreateScreen { qs, label -> backStack.add(Route.Game(Mode.CLASSIC, Category.byId("mixed"), qs, label)) }
                 is Route.Game -> GameScreen(r, store) { backStack.removeAt(backStack.lastIndex) }
@@ -100,7 +108,7 @@ private fun BottomBar(current: Route, onSelect: (Route) -> Unit) {
 // ---- Home ----
 
 @Composable
-private fun HomeScreen(onPlay: (Mode, Category) -> Unit) {
+private fun HomeScreen(onPlay: (Mode, Category) -> Unit, onNight: () -> Unit) {
     var selectedMode by remember { mutableStateOf(Mode.CLASSIC) }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         Text("TIDBITS", fontSize = 40.sp, fontWeight = FontWeight.Black)
@@ -110,6 +118,13 @@ private fun HomeScreen(onPlay: (Mode, Category) -> Unit) {
             Column(Modifier.padding(18.dp)) {
                 Text("DAILY TIDBIT", fontWeight = FontWeight.Black, fontSize = 20.sp, color = Ink)
                 Text("7 questions. Everyone gets the same set. Keep your streak.", color = Ink.copy(alpha = 0.75f))
+            }
+        }
+
+        ChunkyCard(fill = Pops.coral, onClick = onNight) {
+            Column(Modifier.padding(18.dp)) {
+                Text("TRIVIA NIGHT", fontWeight = FontWeight.Black, fontSize = 20.sp, color = Color.White)
+                Text("Host a night of mixed rounds — every kind of question.", color = Color.White.copy(alpha = 0.85f))
             }
         }
 
@@ -140,12 +155,45 @@ private fun HomeScreen(onPlay: (Mode, Category) -> Unit) {
     }
 }
 
+// ---- Trivia Night setup ----
+
+@Composable
+private fun NightSetupScreen(onStart: (List<Pair<String, Int>>, Category, String) -> Unit, onCancel: () -> Unit) {
+    var preset by remember { mutableStateOf(1) }
+    var cat by remember { mutableStateOf(Category.byId("mixed")) }
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Text("Trivia Night", fontSize = 28.sp, fontWeight = FontWeight.Black)
+        Text("A night of mixed rounds — every kind of question. Each answer ends on a fact to learn.",
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+        Text("Format", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+        Night.presets.forEachIndexed { i, p ->
+            ChunkyCard(fill = if (preset == i) Pops.coral.copy(alpha = 0.16f) else MaterialTheme.colorScheme.surface, onClick = { preset = i }) {
+                Column(Modifier.padding(14.dp)) {
+                    Text(p.name, fontWeight = FontWeight.Black, fontSize = 17.sp)
+                    Text(p.blurb, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                }
+            }
+        }
+        Text("Category", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            items(Category.all, key = { it.id }) { c ->
+                FilterChip(selected = cat.id == c.id, onClick = { cat = c }, label = { Text(c.name) })
+            }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            OutlinedButton(onClick = onCancel) { Text("Cancel") }
+            Button(onClick = { val p = Night.presets[preset]; onStart(p.rounds, cat, p.name) }) { Text("Start the Night") }
+        }
+        Spacer(Modifier.height(24.dp))
+    }
+}
+
 // ---- Game ----
 
 @Composable
 private fun GameScreen(route: Route.Game, store: Store, onDone: () -> Unit) {
     val scope = rememberCoroutineScope()
-    val game = remember { GameState(route.mode, route.category, store, route.custom, route.label) }
+    val game = remember { GameState(route.mode, route.category, store, route.custom, route.label, route.nightRounds) }
     LaunchedEffect(Unit) { game.start() }
     LaunchedEffect(game.index, game.phase) {
         while (game.phase == GamePhase.PLAYING) { delay(100); game.tick() }
@@ -176,6 +224,21 @@ private fun PlayingScreen(game: GameState) {
                 color = if (game.remaining <= 5) Pops.coral else Pops.blue)
             AssistChip(onClick = {}, label = { Text("🔥 ${game.streak}") })
             AssistChip(onClick = {}, label = { Text("★ ${game.score}") })
+        }
+        if (game.mode == Mode.BAR_TRIVIA && game.currentRoundTitle != null) {
+            ChunkyCard(fill = MaterialTheme.colorScheme.surfaceVariant, modifier = Modifier.fillMaxWidth()) {
+                Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text("ROUND ${game.currentRoundNumber} OF ${game.roundCount}", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                        Text(game.currentRoundTitle!!.uppercase(), fontWeight = FontWeight.Black, fontSize = 16.sp)
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                        repeat(game.roundCount) { i ->
+                            Box(Modifier.size(9.dp).background(if (i == game.currentRoundNumber - 1) Pops.coral else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f), CircleShape))
+                        }
+                    }
+                }
+            }
         }
         Text(Category.byId(q.categoryId).name.uppercase(), color = Pops.at(Category.byId(q.categoryId).colorIndex), fontWeight = FontWeight.Bold, fontSize = 13.sp)
         q.imageUrl?.let { url ->
@@ -224,10 +287,13 @@ private fun PlayingScreen(game: GameState) {
                     if (q.accepted != null) Text("Answer: ${q.answerText}", fontWeight = FontWeight.Bold)
                     q.enumerate?.let { spec -> EnumerateReveal(game, spec) }
                     if (q.explanation.isNotEmpty()) Text(q.explanation)
+                    if (game.mode == Mode.BAR_TRIVIA && game.nextRoundTitle != null)
+                        Text("🏁 Round ${game.currentRoundNumber} complete · up next: ${game.nextRoundTitle}",
+                            color = Pops.coral, fontWeight = FontWeight.Bold)
                 }
             }
             Button(onClick = { game.advance() }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Ink)) {
-                Text(if (game.isLast) "See Results" else "Next")
+                Text(if (game.isLast) "See Results" else if (game.nextRoundTitle != null) "Start ${game.nextRoundTitle}" else "Next")
             }
         }
         Spacer(Modifier.height(12.dp))

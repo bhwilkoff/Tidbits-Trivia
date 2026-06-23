@@ -55,6 +55,7 @@ data class Question(
     val matching: MatchSpec? = null,  // Matching (Q5): keys ↔ correct values
     val accepted: List<String>? = null, // Type-the-answer (Q6): accepted free-text
     val enumerate: EnumSpec? = null,  // Enumeration (Q8): name as many of a set as you can
+    val roundIndex: Int? = null,      // Trivia Night: which round this belongs to (set at runtime)
 ) {
     val answerText: String get() = options.getOrNull(correctIndex)
         ?: closest?.formattedAnswer ?: ordering?.joinToString(" → ")
@@ -115,7 +116,37 @@ enum class Mode(val title: String, val blurb: String, val perQuestion: Int?, val
     ODD_ONE_OUT("Odd One Out", "Which doesn't belong?", 20, null, 8),
     LADDER("Ladder", "Climb from easy to hard.", 20, null, 10),
     ENUMERATE("Name as Many", "How many can you name?", 60, null, 3),
+    BAR_TRIVIA("Trivia Night", "Host a night. Every kind of round.", 20, null, 20),
     DAILY("Daily Tidbit", "Everyone's puzzle. Keep your streak.", 30, null, 7),
+}
+
+// Trivia Night ("bar trivia") — a configurable night of themed rounds, each round
+// drawing one question TYPE, so one night pulls from EVERY type. A client meta-mode
+// over the shape-routing game loop (mirror of NightPlan.swift / store.js NIGHT).
+object Night {
+    val kinds = listOf("classic", "pictureId", "thisOrThat", "closestCall", "ordering", "matching", "typeAnswer", "oddOneOut", "enumerate")
+    val roundTitle = mapOf(
+        "classic" to "General Knowledge", "pictureId" to "Picture Round", "thisOrThat" to "Which Came First?",
+        "closestCall" to "Closest Wins", "ordering" to "Put Them In Order", "matching" to "Match-Up",
+        "typeAnswer" to "Name It", "oddOneOut" to "Odd One Out", "enumerate" to "Name As Many",
+    )
+    // Per-question clock by question SHAPE (a night mixes shapes in one run).
+    fun shapeBudget(q: Question?): Double = when {
+        q == null -> 25.0
+        q.enumerate != null -> 60.0
+        q.matching != null -> 40.0
+        q.ordering != null -> 35.0
+        q.closest != null -> 25.0
+        q.accepted != null -> 25.0
+        q.imageUrl != null -> 22.0
+        else -> 20.0
+    }
+    data class Preset(val name: String, val blurb: String, val rounds: List<Pair<String, Int>>)
+    val presets = listOf(
+        Preset("Quick Night", "3 rounds · ~12 questions", listOf("classic" to 5, "pictureId" to 4, "closestCall" to 3)),
+        Preset("Pub Night", "5 rounds · ~22 questions", listOf("classic" to 6, "pictureId" to 4, "thisOrThat" to 4, "closestCall" to 4, "oddOneOut" to 4)),
+        Preset("The Works", "Every question type · ~28", listOf("classic" to 4, "pictureId" to 4, "thisOrThat" to 4, "closestCall" to 4, "ordering" to 4, "matching" to 4, "typeAnswer" to 4, "oddOneOut" to 4, "enumerate" to 2)),
+    )
 }
 
 // Stake mode's fixed confidence-chip budget (sum of count == Mode.STAKE.count).

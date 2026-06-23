@@ -46,6 +46,30 @@ CONTINENT = {  # P30 target QID -> display name
     "Q15": "Africa", "Q46": "Europe", "Q48": "Asia", "Q49": "North America",
     "Q18": "South America", "Q538": "Oceania", "Q55643": "Oceania", "Q51": "Antarctica",
 }
+# P31 types too generic to make a meaningful decoy match — an "organization" or
+# "brand" is shared by TV networks, carmakers, airlines, and kibbutzim alike, so
+# two things that share ONLY one of these are NOT the same kind of thing. Also the
+# "class of X" / "type of X" meta-types. A typed thing's distractors must share a
+# type OUTSIDE this set (see compatible()).
+GENERIC_P31 = {
+    "Q43229",      # organization
+    "Q4830453",    # business
+    "Q891723",     # public company
+    "Q6881511",    # enterprise
+    "Q783794",     # company
+    "Q431289",     # brand
+    "Q155076",     # juridical person
+    "Q167037",     # corporation
+    "Q163740",     # nonprofit organization
+    "Q21980538",   # commercial organization
+    "Q43702",      # federation
+    "Q15911314",   # association
+    "Q79913",      # non-governmental organization
+    "Q98966309",   # classification of human settlements (meta)
+    "Q113145171",  # type of chemical entity (meta)
+    "Q112193867",  # class of disease (meta)
+}
+
 CAT_NOUN = {"history": "figure or event", "science": "subject", "geography": "place",
             "arts": "work or artist", "screen": "film, show, or star", "music": "musician or work",
             "sports": "sports figure", "mixed": "subject"}
@@ -244,15 +268,21 @@ def main():
                     return True
                 if (nq in person) != a_is_person:
                     return False
+                # A typed THING's decoy must share a SPECIFIC (non-generic) type at
+                # EVERY level — never a grab-bag. Generic glue types (organization,
+                # business, brand, "class of X" …) don't count, so a TV network
+                # can't draw a carmaker + an airline as decoys just because all are
+                # "organizations" (the Arte/Toyota/Ryanair bug).
+                if not a_is_person:
+                    a_eff = a_p31 - GENERIC_P31
+                    if a_eff and not (((p31_of.get(nq) or set()) - GENERIC_P31) & a_eff):
+                        return False
                 if level == 0:
                     return True
                 if a_is_person:
                     if a_gender and gender_of.get(nq) and gender_of[nq] != a_gender:
                         return False
                     if level == 2 and a_occ and occ_of.get(nq) and not (a_occ & occ_of[nq]):
-                        return False
-                else:
-                    if a_p31 and p31_of.get(nq) and not (a_p31 & p31_of[nq]):
                         return False
                 return True
 

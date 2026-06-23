@@ -31,7 +31,22 @@ enum RecordsStore {
         recordTelemetry(summary.answered, mode: summary.mode)
 
         try? context.save()
+        submitToGameCenter(summary, in: context)
         return isNewBest
+    }
+
+    /// Push the relevant leaderboard values after a game. No-op until the
+    /// player is Game-Center-authenticated (Decision 020) — so the SP build
+    /// runs with no provisioning profile, and these calls cost nothing until
+    /// the entitlement + App Store Connect leaderboards land.
+    private static func submitToGameCenter(_ summary: GameSummary, in context: ModelContext) {
+        if summary.mode == .classic {
+            GameCenterManager.shared.submit(summary.score, to: GameCenterManager.Leaderboard.classicHigh)
+        }
+        if summary.mode == .daily,
+           let streak = try? context.fetch(FetchDescriptor<DailyStreak>()).first {
+            GameCenterManager.shared.submit(streak.current, to: GameCenterManager.Leaderboard.dailyStreak)
+        }
     }
 
     /// Questions due for spaced re-asking — unresolved misses, most-missed

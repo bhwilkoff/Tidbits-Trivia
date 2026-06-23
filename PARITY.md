@@ -55,7 +55,7 @@ reached is ⏳ with a note, never silence.
 | Verb | Web | iOS | tvOS | Android | Notes |
 |---|---|---|---|---|---|
 | Play (home: daily, modes, categories) | ✅ | ✅ | ✅ | ✅ | iOS: bottom Tab. Web: hash-routed tabs + URL state. tvOS: dark-first focus shelf. Android: bottom NavigationBar |
-| Records (stats, streak, review) | ✅ | ✅ | ⏳ | ✅ | tvOS persists records (Caches store) but has no browse UI yet; Android via SharedPreferences |
+| Records (stats, streak, review) | ✅ | ✅ | ✅ | ✅ | tvOS browse screen (`RecordsView_tvOS`, focus-scrollable dark-first) shipped — streak, lifetime, Pie, Topic Levels, calibration, bests, review; reached from the home header. Android via SharedPreferences |
 | Create (quiz from any topic) | ✅ | ✅ | 🚫 | ✅ | tvOS: typing a topic on a Siri Remote is hostile — consume shared links instead |
 
 ---
@@ -108,22 +108,22 @@ reached is ⏳ with a note, never silence.
 
 | Feature | Web | iOS | tvOS | Android | Notes |
 |---|---|---|---|---|---|
-| Personal bests + lifetime stats | ✅ | ✅ | ⏳ | ✅ | SwiftData (Apple); localStorage (web); SharedPreferences (Android) |
-| Topic Levels (per-domain XP/level) | ✅ | ✅ | ⏳ | ✅ | QuizUp's best idea: an XP level + bar per knowledge domain, derived from game history (no new persistence). Shared `ProgressMath` (Core) mirrored in store.js/Tidbits.kt. tvOS ⏳ until it gets a Records browse screen (SOLO-BACKLOG M4) |
-| The Pie (breadth wedges) | ✅ | ✅ | ⏳ | ✅ | Trivial-Pursuit pie: a wedge per domain earned at a small mastery bar (≥15 correct, ≥60% acc); completes only when all 7 domains filled — fights corpus bias. Same shared derivation (SOLO-BACKLOG M3) |
-| Stake calibration readout (F1) | ✅ | ✅ | ⏳ | ✅ | Per-tier hit-rate (Sure/Likely/Hunch) in Records, accumulated across Stake rounds — the self-knowledge mirror. iOS persists via a `CalibrationTally` SwiftData model; web localStorage; Android SharedPreferences. tvOS ⏳ (no Records UI) |
+| Personal bests + lifetime stats | ✅ | ✅ | ✅ | ✅ | SwiftData (Apple); localStorage (web); SharedPreferences (Android). tvOS shown in `RecordsView_tvOS` |
+| Topic Levels (per-domain XP/level) | ✅ | ✅ | ✅ | ✅ | QuizUp's best idea: an XP level + bar per knowledge domain, derived from game history (no new persistence). Shared `ProgressMath` (Core) mirrored in store.js/Tidbits.kt and now rendered on tvOS (SOLO-BACKLOG M4) |
+| The Pie (breadth wedges) | ✅ | ✅ | ✅ | ✅ | Trivial-Pursuit pie: a wedge per domain earned at a small mastery bar (≥15 correct, ≥60% acc); completes only when all 7 domains filled — fights corpus bias. Same shared derivation; tvOS Canvas pie in `RecordsView_tvOS` (SOLO-BACKLOG M3) |
+| Stake calibration readout (F1) | ✅ | ✅ | ✅ | ✅ | Per-tier hit-rate (Sure/Likely/Hunch) in Records, accumulated across Stake rounds — the self-knowledge mirror. iOS persists via a `CalibrationTally` SwiftData model; web localStorage; Android SharedPreferences; tvOS reads the same model in `RecordsView_tvOS` |
 | Answer-distribution telemetry (F4) | ✅ | ✅ | ✅ | ✅ | Local-first **foundation**: privacy-respecting per-option answer counts keyed by question id (`tidbits.answerTelemetry`), written on every game-end via `RecordsStore.recordTelemetry` (iOS/tvOS, UserDefaults) / `Store.recordTelemetry` (web localStorage, Android SharedPreferences). No PII, no network; synthetic-chosenIndex modes (closest/ordering/matching/type) skipped. Invisible infra — the **Predict the Crowd** "X% picked this" reveal stays 🔮 until a backend aggregates these across players (deferred to Ben). SOLO-BACKLOG F4 |
 | Daily streak + missed-fact review | ✅ | ✅ | ✅ | ✅ | Streak on all 4; spaced re-asking of missed questions now woven into games on all 4 (Android by question-id via `Corpus.byId`), each with an opt-out toggle |
-| Compete vs. your past self | ✅ | ✅ | ⏳ | ✅ | New-best detection on each game |
+| Compete vs. your past self | ✅ | ✅ | ✅ | ✅ | New-best detection on each game; tvOS surfaces personal bests in `RecordsView_tvOS` |
 | Share score (NO X/Twitter) | ✅ Web Share | ✅ ShareLink | ✅ QR | ✅ Intent | Decision 022; web has clipboard fallback |
-| Spoiler-free emoji-grid result | ✅ | ✅ | ⏳ | ⏳ | Wordle-style 🟩🟥; the daily share loop (ROADMAP #1) |
+| Spoiler-free emoji-grid result | ✅ | ✅ | ✅ | ⏳ | Wordle-style 🟩🟥; the daily share loop (ROADMAP #1). tvOS renders it on `TVResultsView` |
 | First-run onboarding | ⏳ | ✅ | ⏳ | ⏳ | 3-card play/learn/compete walkthrough |
-| Leaderboards | 🔮 Supabase | ⏳ Game Center | ⏳ Game Center | 🔮 Play Games | Apple: GameKit wired, ASC config pending |
+| Leaderboards | 🔮 Supabase | ⏳ Game Center | ⏳ Game Center | 🔮 Play Games | Apple: GameKit wired + **score submission now wired** on game-end via shared `RecordsStore` (classic high + daily streak), no-op until authenticated; entitlement + ASC leaderboard config still pending |
 | Achievements | 🔮 | ⏳ Game Center | ⏳ Game Center | 🔮 Play Games | |
 | Local pass-and-play | 🔮 | ✅ | ⏳ | 🔮 | 2–4 players, shared fair question set, hand-off + scoreboard |
-| Spaced re-asking of missed facts | ✅ | ✅ | ✅ | ✅ | Due misses woven into corpus-MCQ games (skips Daily + non-MCQ modes); resolve on correct. **Opt-out toggle** ("Review questions") on every platform: iOS/tvOS via `GameSettings.reviewKey` @AppStorage (Settings / home toggle), web + Android via a Records→Settings switch. Default ON |
+| Spaced re-asking of missed facts | ✅ | ✅ | ✅ | ✅ | Due misses woven into corpus-MCQ games (skips Daily + non-MCQ modes); resolve on correct. **Opt-out toggle** ("Review questions") on every platform: iOS/tvOS via `GameSettings.reviewKey` @AppStorage (both now in their Settings screen), web + Android via a Records→Settings switch. Default ON |
 | Haptic feedback | n/a | ✅ | n/a | ⏳ | Correct/wrong/milestone; Settings toggle |
-| Settings (haptics, reset, attribution) | ◑ | ✅ | ◑ | ◑ | iOS: full sheet (haptics/reset/about). web/tvOS/Android: "Review questions" toggle so far (web+Android in Records→Settings, tvOS on the home header); haptics/reset/about still iOS-only |
+| Settings (haptics, reset, attribution) | ◑ | ✅ | ✅ | ◑ | iOS + tvOS: full Settings (review toggle / reset seen / reset all records / Game Center status / attribution; haptics is n/a on tvOS). tvOS reached from the home header. web/Android: "Review questions" toggle so far (Records→Settings); reset/about still pending there |
 | Async head-to-head / groups | 🔮 | ⏳ Game Center | ⏳ | 🔮 | Async > real-time for survivability (ROADMAP) |
 | Living-room mode (phone-as-buzzer) | 🔮 controller | 🚧 controller | 🚧 host | 🔮 controller | Phase 1 Apple-native (Bonjour + room-code TLS-PSK) FOUNDATION landed: shared `Core/Networking/Buzzer*` (host=tvOS `NWListener`, client=iOS `NWBrowser`); arbiter fairness offline-proven, both slices build clean. NOT yet two-device-verified, not wired to a game mode (Decision 030). Web/Android = Phase 2 web-room (Cloudflare DO). The biggest open market gap (ROADMAP #4) |
 | Buzz Night (same-room buzz game) | 🔮 | ⏳ | ⏳ host | 🔮 | Rides the Phase-1 buzzer once paired+verified; TV is stage+scoreboard, phones buzz, wrong buzz opens to others, every Q ends on the Learn-the-fact reveal (GAME-MODES-RESEARCH D2). Web/Android via Phase 2 |

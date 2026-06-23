@@ -17,9 +17,10 @@ enum TVTheme {
 /// ten-foot presentation is tvOS-specific (Core never imports UI).
 struct ContentView_tvOS: View {
     @Environment(AppStore.self) private var store
-    @AppStorage(GameSettings.reviewKey) private var reviewEnabled = true
     @State private var selectedMode: GameMode = .classic
     @State private var launch: LaunchRequest?
+    @State private var showRecords = false
+    @State private var showSettings = false
     @FocusState private var dailyFocused: Bool
 
     var body: some View {
@@ -40,10 +41,16 @@ struct ContentView_tvOS: View {
         .fullScreenCover(item: $launch) { req in
             TVGameContainer(mode: req.mode, category: req.category)
         }
+        .fullScreenCover(isPresented: $showRecords) { RecordsView_tvOS() }
+        .fullScreenCover(isPresented: $showSettings) { SettingsView_tvOS() }
         .task {
             if launch == nil, let ap = DebugHooks.autoplay {
                 launch = LaunchRequest(mode: ap.mode, category: ap.category)
             }
+            // TIDBITS_TAB=records opens Records straight away (screenshots /
+            // verification — Decision 018). tvOS has no tab bar, so the hook
+            // presents the cover instead.
+            if DebugHooks.initialTab == .records { showRecords = true }
         }
     }
 
@@ -58,12 +65,19 @@ struct ContentView_tvOS: View {
                     .foregroundStyle(TVTheme.textSoft)
             }
             Spacer()
-            Button { reviewEnabled.toggle() } label: {
-                Label("Review \(reviewEnabled ? "On" : "Off")",
-                      systemImage: reviewEnabled ? "arrow.clockwise.circle.fill" : "circle")
-                    .font(.system(size: 26, weight: .bold, design: .rounded))
+            HStack(spacing: 20) {
+                Button { showRecords = true } label: {
+                    Label("Records", systemImage: "chart.bar.fill")
+                        .font(.system(size: 26, weight: .bold, design: .rounded))
+                }
+                .buttonStyle(TVChipStyle(accent: Tidbits.Palette.grape, selected: false))
+                Button { showSettings = true } label: {
+                    Label("Settings", systemImage: "gearshape.fill")
+                        .font(.system(size: 26, weight: .bold, design: .rounded))
+                }
+                .buttonStyle(TVChipStyle(accent: Tidbits.Palette.blue, selected: false))
             }
-            .buttonStyle(TVChipStyle(accent: Tidbits.Palette.blue, selected: reviewEnabled))
+            .focusSection()
         }
     }
 

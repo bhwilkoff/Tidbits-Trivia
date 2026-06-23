@@ -44,6 +44,9 @@ struct BuzzNightView_tvOS: View {
         .onChange(of: host.currentWinnerSeat) { _, w in
             if w != nil, phase == .playing { phase = .buzzed }
         }
+        .onChange(of: host.pendingAnswerSeat) { _, s in
+            if s != nil { judgePhoneAnswer() }
+        }
         .task {
             host.start()
             if DebugHooks.autopilot { await beginGame() }   // screenshot the in-game host
@@ -114,15 +117,15 @@ struct BuzzNightView_tvOS: View {
                     Text(q.prompt).font(.system(size: 46, weight: .heavy, design: .rounded)).foregroundStyle(.white)
                         .fixedSize(horizontal: false, vertical: true)
                     if phase == .buzzed, let seat = host.currentWinnerSeat {
-                        Label("\(host.name(forSeat: seat)) buzzed — tap what they answered", systemImage: "bell.fill")
+                        Label("\(host.name(forSeat: seat)) buzzed — answering on their phone…", systemImage: "bell.fill")
                             .font(.system(size: 29, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.yellow)
                     } else {
-                        Label("Buzzers open", systemImage: "bell.badge.fill")
+                        Label("Buzzers open — first in answers on their phone", systemImage: "bell.badge.fill")
                             .font(.system(size: 27, weight: .bold, design: .rounded)).foregroundStyle(Tidbits.Palette.mint)
                     }
                     optionsGrid(q)
                     if phase == .playing {
-                        Button("No one — reveal answer") { reveal(awardedCorrect: false) }
+                        Button("No one — reveal answer") { revealNoOne() }
                             .buttonStyle(TVChipStyle(accent: Tidbits.Palette.blue, selected: false))
                             .padding(.top, 8)
                     }
@@ -130,29 +133,38 @@ struct BuzzNightView_tvOS: View {
                 Spacer()
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            scoreboard.frame(width: 420)
+            VStack(spacing: 24) {
+                joinChip
+                scoreboard
+            }.frame(width: 420)
         }
         .padding(70)
     }
 
+    /// The room code stays on screen the whole game so a dropped phone can rejoin
+    /// (same name → same seat + score, handled by the host).
+    private var joinChip: some View {
+        VStack(spacing: 4) {
+            Text("JOIN / REJOIN").font(.system(size: 18, weight: .heavy, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+            Text(host.roomCode).font(.system(size: 44, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.coral).kerning(4)
+        }
+        .frame(maxWidth: .infinity).padding(.vertical, 16)
+        .background(RoundedRectangle(cornerRadius: 14).fill(TVTheme.panel))
+    }
+
+    /// Options are DISPLAY-ONLY on the TV now — the buzz-winner answers on their
+    /// phone. The room reads along; lettering matches the phone's buttons.
     private func optionsGrid(_ q: Question) -> some View {
-        // The host taps an option only AFTER a phone has buzzed (in .buzzed).
-        let tappable = phase == .buzzed
-        return LazyVGrid(columns: [GridItem(.flexible(), spacing: 24), GridItem(.flexible(), spacing: 24)], spacing: 24) {
+        LazyVGrid(columns: [GridItem(.flexible(), spacing: 24), GridItem(.flexible(), spacing: 24)], spacing: 24) {
             ForEach(Array(q.options.enumerated()), id: \.offset) { idx, opt in
-                Button { if tappable { tapOption(idx, q) } } label: {
-                    HStack(spacing: 16) {
-                        Text(String(UnicodeScalar(65 + idx)!))
-                            .font(.system(size: 27, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.coral)
-                        Text(opt).font(.system(size: 29, weight: .bold, design: .rounded))
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                    .frame(maxWidth: .infinity, minHeight: 96)
-                    .padding(.horizontal, 24)
+                HStack(spacing: 16) {
+                    Text(String(UnicodeScalar(65 + idx)!))
+                        .font(.system(size: 27, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.coral)
+                    Text(opt).font(.system(size: 29, weight: .bold, design: .rounded)).foregroundStyle(.white)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .buttonStyle(TVAnswerStyle(state: .idle))
-                .disabled(!tappable)
-                .opacity(tappable ? 1 : 0.5)
+                .frame(maxWidth: .infinity, minHeight: 96).padding(.horizontal, 24)
+                .background(RoundedRectangle(cornerRadius: 20).fill(TVTheme.panel))
             }
         }
         .frame(maxWidth: 1100)
@@ -252,25 +264,29 @@ struct BuzzNightView_tvOS: View {
 
     private func startQuestion() {
         phase = .playing
+        if let q = current { host.broadcastQuestion(prompt: q.prompt, options: q.options, index: index) }
         host.beginQuestion(index: index)
     }
 
-    private func tapOption(_ idx: Int, _ q: Question) {
-        if idx == q.correctIndex {
-            host.awardWinner(points: awardPoints)
-            reveal(awardedCorrect: true)
+    /// The buzz-winner answered on THEIR phone; the TV (which holds the question)
+    /// judges it. Correct → award + reveal; wrong → lock them out, buzzing
+    /// re-opens to everyone else.
+    private func judgePhoneAnswer() {
+        guard phase == .buzzed, let q = current, let chosen = host.pendingAnswerIndex else { return }
+        if chosen == q.correctIndex {
+            host.acceptAnswer(points: awardPoints, correctIndex: q.correctIndex)
+            phase = .reveal
         } else {
-            // Wrong call — that seat is locked out, buzzing re-opens to others.
-            host.rejectWinnerAndReopen()
+            missed.append(AnsweredQuestion(question: q, chosenIndex: nil, secondsTaken: 0))
+            host.rejectAnswerAndReopen()
             phase = .playing
         }
     }
 
-    private func reveal(awardedCorrect: Bool) {
-        host.lock()
-        if !awardedCorrect, let q = current {
-            missed.append(AnsweredQuestion(question: q, chosenIndex: nil, secondsTaken: 0))
-        }
+    private func revealNoOne() {
+        guard let q = current else { return }
+        host.revealNoWinner(correctIndex: q.correctIndex)
+        missed.append(AnsweredQuestion(question: q, chosenIndex: nil, secondsTaken: 0))
         phase = .reveal
     }
 

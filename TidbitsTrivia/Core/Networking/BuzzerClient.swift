@@ -22,6 +22,16 @@ final class BuzzerClient {
     private(set) var winnerSeat: Int?
     var displayName = ""
 
+    // The active question (streamed from the TV) so the buzz-winner answers on
+    // their OWN device; every phone reads along.
+    private(set) var prompt: String?
+    private(set) var options: [String] = []
+    private(set) var isAnswering = false   // I won the buzz — my answer buttons are live
+    private(set) var myAnswer: Int?        // the option I tapped
+    private(set) var resultCorrect: Bool?  // judged outcome for the buzz-winner
+    private(set) var resultCorrectIndex: Int?  // revealed answer (highlight it)
+    private(set) var lockedOut = false     // I answered wrong this question — no re-buzz
+
     private var browser: NWBrowser?
     private var connection: NWConnection?
     private let framer = BuzzerFramer()
@@ -53,6 +63,8 @@ final class BuzzerClient {
         connection?.cancel(); connection = nil
         status = .idle; seat = nil; roomName = nil
         players = []; canBuzz = false; winnerSeat = nil
+        prompt = nil; options = []; isAnswering = false; myAnswer = nil
+        resultCorrect = nil; resultCorrectIndex = nil; lockedOut = false
     }
 
     // MARK: Buzz
@@ -62,6 +74,15 @@ final class BuzzerClient {
         var m = BuzzerMessage(.buzz); m.stampMillis = BuzzerTransport.nowMillis()
         BuzzerTransport.send(m, over: c)
         canBuzz = false   // optimistic local lock; the host's `awarded` is truth
+    }
+
+    /// Submit the buzz-winner's chosen option (answer on your own device).
+    func submitAnswer(_ index: Int) {
+        guard isAnswering, let c = connection else { return }
+        var m = BuzzerMessage(.answer); m.chosenIndex = index
+        BuzzerTransport.send(m, over: c)
+        myAnswer = index
+        isAnswering = false   // the host's `result` is the truth
     }
 
     // MARK: Discovery → connection
@@ -119,9 +140,19 @@ final class BuzzerClient {
         switch m.kind {
         case .welcome: seat = m.seat; roomName = m.roomName; status = .joined
         case .roster:  players = m.players ?? players
-        case .armed:   canBuzz = true; winnerSeat = nil
-        case .awarded: winnerSeat = m.winnerSeat; canBuzz = false
-        case .locked:  canBuzz = false
+        case .question:
+            // A new question — render it and clear last round's answer state.
+            prompt = m.prompt; options = m.options ?? []
+            myAnswer = nil; resultCorrect = nil; resultCorrectIndex = nil
+            isAnswering = false; lockedOut = false; winnerSeat = nil
+        case .armed:   canBuzz = !lockedOut; winnerSeat = nil; isAnswering = false
+        case .awarded:
+            winnerSeat = m.winnerSeat; canBuzz = false
+            isAnswering = (m.winnerSeat == seat)   // my turn to answer on-device
+        case .result:
+            resultCorrect = m.correct; resultCorrectIndex = m.correctIndex; isAnswering = false
+            if m.winnerSeat == seat && m.correct == false { lockedOut = true }
+        case .locked:  canBuzz = false; isAnswering = false
         case .ping:
             guard let c = connection else { return }
             var pong = BuzzerMessage(.pong)

@@ -32,12 +32,15 @@ struct BuzzerMessage: Codable, Sendable, Equatable {
         // client → host
         case join          // a phone asks to take a seat (carries displayName)
         case buzz          // a phone buzzes in (carries the client send stamp)
+        case answer        // the buzz-winner's chosen option (carries chosenIndex)
         case pong          // round-trip probe reply (carries the host + client stamps)
         // host → client
         case welcome       // seat granted (carries seat + room display name)
         case roster        // the current player list (carries players)
+        case question      // the active question to render on phones (prompt + options)
         case armed         // buzzing is now open for this question (carries questionIndex)
-        case awarded       // someone won the buzz (carries winnerSeat)
+        case awarded       // someone won the buzz (carries winnerSeat) — they now answer
+        case result        // the winner's answer was judged (carries correct + correctIndex)
         case locked        // buzzing closed; wait for the next question
         case ping          // round-trip probe (carries the host stamp)
         case unknown       // forward-compat: an unrecognized kind
@@ -50,6 +53,12 @@ struct BuzzerMessage: Codable, Sendable, Equatable {
     var questionIndex: Int?
     var winnerSeat: Int?
     var players: [BuzzerPlayer]?
+    // Question streaming (host → phones) + answering (phone → host).
+    var prompt: String?
+    var options: [String]?
+    var chosenIndex: Int?      // the buzz-winner's tapped option (phone → host)
+    var correctIndex: Int?     // revealed with `result` so phones can highlight the answer
+    var correct: Bool?         // whether the winner's answer was right
     /// Monotonic milliseconds from the *sender's* clock — never compared across
     /// machines (clocks are unsynchronized); used only to measure round-trip on
     /// the host so it can RTT-compensate buzz arrival (see BuzzArbiter).
@@ -68,6 +77,11 @@ struct BuzzerMessage: Codable, Sendable, Equatable {
         questionIndex = try c.decodeIfPresent(Int.self, forKey: .questionIndex)
         winnerSeat = try c.decodeIfPresent(Int.self, forKey: .winnerSeat)
         players = try c.decodeIfPresent([BuzzerPlayer].self, forKey: .players)
+        prompt = try c.decodeIfPresent(String.self, forKey: .prompt)
+        options = try c.decodeIfPresent([String].self, forKey: .options)
+        chosenIndex = try c.decodeIfPresent(Int.self, forKey: .chosenIndex)
+        correctIndex = try c.decodeIfPresent(Int.self, forKey: .correctIndex)
+        correct = try c.decodeIfPresent(Bool.self, forKey: .correct)
         stampMillis = try c.decodeIfPresent(Double.self, forKey: .stampMillis)
         hostStampMillis = try c.decodeIfPresent(Double.self, forKey: .hostStampMillis)
     }

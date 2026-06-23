@@ -70,10 +70,10 @@ struct BuzzerJoinView: View {
         }
     }
 
-    // MARK: Buzzer
+    // MARK: Buzzer + on-device answering
 
     private var buzzer: some View {
-        VStack(spacing: 18) {
+        VStack(spacing: 16) {
             HStack {
                 Text(client.roomName ?? "Connected").font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
                 Spacer()
@@ -83,44 +83,82 @@ struct BuzzerJoinView: View {
             }
             .padding(.horizontal, Tidbits.Metric.pad)
 
-            Spacer()
-            buzzButton
-            Text(statusLine).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.inkSoft)
-                .multilineTextAlignment(.center)
-            Spacer()
+            if let prompt = client.prompt {
+                ScrollView {
+                    VStack(spacing: 14) {
+                        Text(prompt).font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(14).chunkyCard(fill: Tidbits.Palette.surface).padding(.trailing, Tidbits.Metric.shadowOffset)
+                        ForEach(Array(client.options.enumerated()), id: \.offset) { i, opt in
+                            answerRow(i, opt)
+                        }
+                        Text(statusLine).font(Tidbits.TypeRamp.l4).foregroundStyle(Tidbits.Palette.inkSoft)
+                            .multilineTextAlignment(.center).padding(.top, 4)
+                    }
+                    .padding(.horizontal, Tidbits.Metric.pad)
+                }
+                if client.canBuzz { buzzButton }
+            } else {
+                Spacer()
+                Image(systemName: "hourglass").font(.system(size: 44, weight: .bold)).foregroundStyle(Tidbits.Palette.inkSoft)
+                Text(client.lockedOut ? "You're out this question — next one's yours." : "Waiting for the next question…")
+                    .font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.inkSoft).multilineTextAlignment(.center)
+                Spacer()
+            }
         }
-        .padding(.bottom, 24)
+        .padding(.bottom, 18)
+    }
+
+    /// An answer option — tappable only when it's your turn (you won the buzz).
+    /// After judging, the correct answer goes green and your wrong pick goes red.
+    private func answerRow(_ i: Int, _ opt: String) -> some View {
+        let letter = String(UnicodeScalar(65 + i)!)
+        return Button { client.submitAnswer(i) } label: {
+            HStack(spacing: 10) {
+                Text(letter).font(.system(size: 17, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.coral)
+                Text(opt).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink).frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(14).chunkyCard(fill: rowFill(i)).padding(.trailing, Tidbits.Metric.shadowOffset)
+        }
+        .buttonStyle(.plain)
+        .disabled(!client.isAnswering)
+        .opacity(client.isAnswering || rowFill(i) != Tidbits.Palette.surface ? 1 : 0.7)
+    }
+
+    private func rowFill(_ i: Int) -> Color {
+        if let ci = client.resultCorrectIndex {                 // judged: reveal the answer
+            if i == ci { return Tidbits.Palette.mint.opacity(0.3) }
+            if i == client.myAnswer && client.resultCorrect == false { return Tidbits.Palette.coral.opacity(0.3) }
+        } else if client.myAnswer == i {                        // sent, awaiting judgement
+            return Tidbits.Palette.yellow.opacity(0.3)
+        }
+        return Tidbits.Palette.surface
     }
 
     private var buzzButton: some View {
         Button { client.buzz() } label: {
-            Text(client.canBuzz ? "BUZZ" : "WAIT")
-                .font(.system(size: 64, weight: .black, design: .rounded))
-                .foregroundStyle(.white)
-                .frame(width: 280, height: 280)
-                .background(Circle().fill(buzzColor))
+            Text("BUZZ")
+                .font(.system(size: 52, weight: .black, design: .rounded)).foregroundStyle(.white)
+                .frame(width: 200, height: 200)
+                .background(Circle().fill(Tidbits.Palette.coral))
                 .overlay(Circle().strokeBorder(Tidbits.Palette.border, lineWidth: 5))
-                .scaleEffect(client.canBuzz ? 1 : 0.92)
-                .animation(.spring(duration: 0.25), value: client.canBuzz)
         }
         .buttonStyle(.plain)
-        .disabled(!client.canBuzz)
         .sensoryFeedback(.impact(weight: .heavy), trigger: client.canBuzz)
     }
 
-    private var buzzColor: Color {
-        if client.iWon { return Tidbits.Palette.mint }
-        if client.winnerSeat != nil { return Tidbits.Palette.inkSoft }
-        return client.canBuzz ? Tidbits.Palette.coral : Tidbits.Palette.inkSoft
-    }
-
     private var statusLine: String {
-        if client.iWon { return "You got the buzz! Call out your answer." }
-        if let w = client.winnerSeat, w != client.seat {
-            return "\(client.players.first { $0.seat == w }?.name ?? "Another player") buzzed first."
+        if client.resultCorrect == true { return "Correct! 🎉" }
+        if client.resultCorrect == false {
+            return client.winnerSeat == client.seat ? "Not quite — buzzers re-open to others." : "That wasn't it."
         }
-        if client.canBuzz { return "Buzzers are open — tap the moment you know it." }
-        return "Wait for the next question…"
+        if client.isAnswering { return "You got the buzz! Tap your answer above." }
+        if client.myAnswer != nil { return "Answer sent — waiting on the host…" }
+        if let w = client.winnerSeat, w != client.seat {
+            return "\(client.players.first { $0.seat == w }?.name ?? "Another player") buzzed first…"
+        }
+        if client.canBuzz { return "Buzzers are open — tap BUZZ the moment you know it." }
+        return "Get ready…"
     }
 }
 #endif

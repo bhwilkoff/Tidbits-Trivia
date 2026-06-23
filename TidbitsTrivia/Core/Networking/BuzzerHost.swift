@@ -19,6 +19,10 @@ final class BuzzerHost {
     private(set) var isListening = false
     private(set) var currentWinnerSeat: Int?
     private(set) var lastError: String?
+    /// The buzz-winner's submitted answer, awaiting the TV's judgement (the TV
+    /// holds the question, so it evaluates correctness). nil until they tap.
+    private(set) var pendingAnswerSeat: Int?
+    private(set) var pendingAnswerIndex: Int?
 
     private final class Peer {
         let connection: NWConnection
@@ -81,10 +85,20 @@ final class BuzzerHost {
 
     // MARK: Round control (called by a future Buzz Night game mode)
 
-    /// Open buzzing for a NEW question: clears the per-question lockout and
-    /// re-measures round-trips for fairness.
+    /// Send the active question (prompt + options) to every phone so the players
+    /// read along AND the buzz-winner can answer on their own device. Never
+    /// includes the correct index — the host judges the submitted answer.
+    func broadcastQuestion(prompt: String, options: [String], index: Int) {
+        var m = BuzzerMessage(.question)
+        m.prompt = prompt; m.options = options; m.questionIndex = index
+        broadcast(m)
+    }
+
+    /// Open buzzing for a NEW question: clears the per-question lockout +
+    /// pending answer and re-measures round-trips for fairness.
     func beginQuestion(index: Int) {
         lockedOut = []
+        pendingAnswerSeat = nil; pendingAnswerIndex = nil
         arm(questionIndex: index)
     }
 
@@ -102,25 +116,42 @@ final class BuzzerHost {
         broadcast(BuzzerMessage(.locked))
     }
 
-    /// The current buzz-winner answered CORRECTLY — award points, close buzzing,
-    /// push the updated scoreboard to every phone.
-    func awardWinner(points: Int) {
+    /// The buzz-winner's phone answer was CORRECT (judged by the TV) — award
+    /// points, reveal the answer to all phones, close buzzing.
+    func acceptAnswer(points: Int, correctIndex: Int) {
         guard let seat = currentWinnerSeat else { return }
         if let i = players.firstIndex(where: { $0.seat == seat }) { players[i].score += points }
         arbiter.disarm()
+        pendingAnswerSeat = nil; pendingAnswerIndex = nil
         broadcastRoster()
+        var r = BuzzerMessage(.result); r.correct = true; r.correctIndex = correctIndex; r.winnerSeat = seat
+        broadcast(r)
         broadcast(BuzzerMessage(.locked))
     }
 
-    /// The current buzz-winner answered WRONG — lock them out of this question
-    /// and re-open buzzing for everyone else (the "wrong buzz opens it" rule).
-    func rejectWinnerAndReopen() {
+    /// The buzz-winner's phone answer was WRONG — tell that phone, lock them out
+    /// of this question, and re-open buzzing for everyone else (the "wrong buzz
+    /// opens it" rule). The correct answer is NOT revealed yet (others can win).
+    func rejectAnswerAndReopen() {
         guard let seat = currentWinnerSeat else { return }
         lockedOut.insert(seat)
+        var r = BuzzerMessage(.result); r.correct = false; r.winnerSeat = seat
+        broadcast(r)
         currentWinnerSeat = nil
+        pendingAnswerSeat = nil; pendingAnswerIndex = nil
         arbiter.arm()
         var m = BuzzerMessage(.armed); m.questionIndex = -1
         broadcast(m)
+    }
+
+    /// No one answered correctly (timeout / host skip) — reveal to all phones.
+    func revealNoWinner(correctIndex: Int) {
+        arbiter.disarm()
+        currentWinnerSeat = nil
+        pendingAnswerSeat = nil; pendingAnswerIndex = nil
+        var r = BuzzerMessage(.result); r.correct = false; r.correctIndex = correctIndex
+        broadcast(r)
+        broadcast(BuzzerMessage(.locked))
     }
 
     /// Name for a seat (for the TV's "X buzzed!" banner).
@@ -161,10 +192,9 @@ final class BuzzerHost {
     private func drop(_ conn: NWConnection) {
         guard let peer = peers.removeValue(forKey: ObjectIdentifier(conn)) else { return }
         conn.cancel()
-        if let seat = peer.seat {
-            players.removeAll { $0.seat == seat }
-            broadcastRoster()
-        }
+        // Keep the player + their score in the roster so a dropped phone can
+        // REJOIN (same name → same seat) and resume where they left off. Only
+        // the peer (socket) binding is freed here.
     }
 
     // MARK: Message handling
@@ -172,10 +202,19 @@ final class BuzzerHost {
     private func handle(_ msg: BuzzerMessage, from peer: Peer) {
         switch msg.kind {
         case .join:
-            let seat = nextSeat; nextSeat += 1
-            peer.seat = seat
             let raw = (msg.displayName ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-            players.append(BuzzerPlayer(seat: seat, name: raw.isEmpty ? "Player \(seat)" : raw))
+            // Rejoin: a phone that dropped and comes back with the SAME name
+            // resumes its existing seat + score (its peer binding was freed on
+            // disconnect, but the player stayed in the roster).
+            let existing = raw.isEmpty ? nil : players.first { $0.name.caseInsensitiveCompare(raw) == .orderedSame }
+            let seat: Int
+            if let existing {
+                seat = existing.seat
+            } else {
+                seat = nextSeat; nextSeat += 1
+                players.append(BuzzerPlayer(seat: seat, name: raw.isEmpty ? "Player \(seat)" : raw))
+            }
+            peer.seat = seat
             var welcome = BuzzerMessage(.welcome)
             welcome.seat = seat; welcome.roomName = "Tidbits \(roomCode)"
             BuzzerTransport.send(welcome, over: peer.connection)
@@ -192,6 +231,12 @@ final class BuzzerHost {
                 var awarded = BuzzerMessage(.awarded); awarded.winnerSeat = winner
                 broadcast(awarded)
             }
+
+        case .answer:
+            // Only the current buzz-winner may answer, once. The TV judges it.
+            guard let seat = peer.seat, seat == currentWinnerSeat, pendingAnswerSeat == nil else { return }
+            pendingAnswerSeat = seat
+            pendingAnswerIndex = msg.chosenIndex
 
         case .pong:
             if let sent = peer.pingSentMillis, let seat = peer.seat {

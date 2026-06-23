@@ -36,6 +36,9 @@ final class BuzzerHost {
     private var arbiter = BuzzArbiter()
     private var nextSeat = 1
     private var peers: [ObjectIdentifier: Peer] = [:]
+    /// deviceID → seat, so a reconnecting device resumes its seat + score
+    /// (name-independent). Survives disconnects (the player stays in the roster).
+    private var seatByDevice: [String: Int] = [:]
     /// Seats that have already buzzed-and-missed THIS question — a wrong buzz
     /// "opens it to others" (research D2), so the misser is locked out until the
     /// next question, but everyone else can still buzz.
@@ -79,7 +82,7 @@ final class BuzzerHost {
     func stop() {
         listener?.cancel(); listener = nil
         for p in peers.values { p.connection.cancel() }
-        peers.removeAll(); players.removeAll()
+        peers.removeAll(); players.removeAll(); seatByDevice.removeAll()
         isListening = false; currentWinnerSeat = nil; nextSeat = 1
     }
 
@@ -203,17 +206,22 @@ final class BuzzerHost {
         switch msg.kind {
         case .join:
             let raw = (msg.displayName ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-            // Rejoin: a phone that dropped and comes back with the SAME name
-            // resumes its existing seat + score (its peer binding was freed on
-            // disconnect, but the player stayed in the roster).
-            let existing = raw.isEmpty ? nil : players.first { $0.name.caseInsensitiveCompare(raw) == .orderedSame }
+            // Rejoin by DEVICE: a phone that dropped and comes back resumes its
+            // existing seat + score regardless of the name typed (the player
+            // stayed in the roster on disconnect). Fall back to a name match for
+            // clients that don't send a deviceID, else take a fresh seat.
+            let device = msg.deviceID
+            let resumed: Int? = device.flatMap { seatByDevice[$0] }
+                ?? (raw.isEmpty ? nil : players.first { $0.name.caseInsensitiveCompare(raw) == .orderedSame }?.seat)
             let seat: Int
-            if let existing {
-                seat = existing.seat
+            if let resumed, players.contains(where: { $0.seat == resumed }) {
+                seat = resumed
+                if !raw.isEmpty, let i = players.firstIndex(where: { $0.seat == seat }) { players[i].name = raw }
             } else {
                 seat = nextSeat; nextSeat += 1
                 players.append(BuzzerPlayer(seat: seat, name: raw.isEmpty ? "Player \(seat)" : raw))
             }
+            if let device { seatByDevice[device] = seat }
             peer.seat = seat
             var welcome = BuzzerMessage(.welcome)
             welcome.seat = seat; welcome.roomName = "Tidbits \(roomCode)"

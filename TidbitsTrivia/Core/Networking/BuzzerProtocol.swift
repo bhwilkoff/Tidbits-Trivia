@@ -48,6 +48,10 @@ struct BuzzerMessage: Codable, Sendable, Equatable {
 
     var kind: Kind
     var displayName: String?
+    /// A stable per-device id the phone generates once and persists. The host
+    /// keys seats by this, so a reconnecting DEVICE resumes its seat + score
+    /// regardless of the name typed (Decision 030 reconnection-by-identity).
+    var deviceID: String?
     var seat: Int?
     var roomName: String?
     var questionIndex: Int?
@@ -72,6 +76,7 @@ struct BuzzerMessage: Codable, Sendable, Equatable {
         // Tolerate a future/unknown kind rather than tearing down the stream.
         self.kind = (try? c.decode(Kind.self, forKey: .kind)) ?? .unknown
         displayName = try c.decodeIfPresent(String.self, forKey: .displayName)
+        deviceID = try c.decodeIfPresent(String.self, forKey: .deviceID)
         seat = try c.decodeIfPresent(Int.self, forKey: .seat)
         roomName = try c.decodeIfPresent(String.self, forKey: .roomName)
         questionIndex = try c.decodeIfPresent(Int.self, forKey: .questionIndex)

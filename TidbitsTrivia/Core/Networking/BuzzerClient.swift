@@ -36,15 +36,41 @@ final class BuzzerClient {
     private var connection: NWConnection?
     private let framer = BuzzerFramer()
     private var code = ""
+    /// Stable per-device id (generated once, persisted) — the host keys seats by
+    /// this so this DEVICE always resumes its seat + score, name aside.
+    private let deviceID = BuzzerClient.loadDeviceID()
+    private var intentionalLeave = false
+    private var reconnectAttempts = 0
+
+    /// The last room this device joined — pre-filled next time so a recognized
+    /// device doesn't have to retype the code (the TV still shows it for new joins).
+    static var lastCode: String { UserDefaults.standard.string(forKey: "tidbits.buzzer.lastCode") ?? "" }
+    static var lastName: String { UserDefaults.standard.string(forKey: "tidbits.buzzer.lastName") ?? "" }
 
     var iWon: Bool { winnerSeat != nil && winnerSeat == seat }
+
+    private static func loadDeviceID() -> String {
+        let key = "tidbits.buzzer.deviceID"
+        if let id = UserDefaults.standard.string(forKey: key) { return id }
+        let id = UUID().uuidString
+        UserDefaults.standard.set(id, forKey: key)
+        return id
+    }
 
     // MARK: Join / leave
 
     func join(code: String, name: String) {
-        leave()
+        intentionalLeave = false
+        reconnectAttempts = 0
         self.code = code.uppercased()
         displayName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        UserDefaults.standard.set(self.code, forKey: "tidbits.buzzer.lastCode")
+        UserDefaults.standard.set(displayName, forKey: "tidbits.buzzer.lastName")
+        startBrowsing()
+    }
+
+    private func startBrowsing() {
+        teardownSockets()
         status = .searching
         let browser = NWBrowser(for: .bonjour(type: Buzzer.serviceType, domain: nil),
                                 using: BuzzerTransport.parameters(code: self.code))
@@ -52,19 +78,36 @@ final class BuzzerClient {
             Task { @MainActor in self?.consider(results) }
         }
         browser.stateUpdateHandler = { [weak self] state in
-            Task { @MainActor in if case .failed(let e) = state { self?.status = .failed("\(e)") } }
+            Task { @MainActor in if case .failed = state { self?.attemptReconnect() } }
         }
         self.browser = browser
         browser.start(queue: .main)
     }
 
+    /// A drop mid-game silently re-discovers the room and rejoins (the host
+    /// restores this device's seat) — no tap, no re-entering the code. Gives up
+    /// only after several tries (the host really went away).
+    private func attemptReconnect() {
+        guard !intentionalLeave, !code.isEmpty, reconnectAttempts < 8 else {
+            if !intentionalLeave { status = .failed("Lost the room — tap to rejoin") }
+            return
+        }
+        reconnectAttempts += 1
+        startBrowsing()
+    }
+
     func leave() {
-        browser?.cancel(); browser = nil
-        connection?.cancel(); connection = nil
+        intentionalLeave = true
+        teardownSockets()
         status = .idle; seat = nil; roomName = nil
         players = []; canBuzz = false; winnerSeat = nil
         prompt = nil; options = []; isAnswering = false; myAnswer = nil
         resultCorrect = nil; resultCorrectIndex = nil; lockedOut = false
+    }
+
+    private func teardownSockets() {
+        browser?.cancel(); browser = nil
+        connection?.cancel(); connection = nil
     }
 
     // MARK: Buzz
@@ -104,9 +147,9 @@ final class BuzzerClient {
         conn.stateUpdateHandler = { [weak self] state in
             Task { @MainActor in
                 switch state {
-                case .ready:         self?.onConnected()
-                case .failed(let e): self?.status = .failed("\(e)")
-                default:             break
+                case .ready:    self?.onConnected()
+                case .failed:   self?.attemptReconnect()
+                default:        break
                 }
             }
         }
@@ -120,6 +163,7 @@ final class BuzzerClient {
         guard let c = connection else { return }
         var join = BuzzerMessage(.join)
         join.displayName = displayName.isEmpty ? nil : displayName
+        join.deviceID = deviceID
         BuzzerTransport.send(join, over: c)
     }
 
@@ -130,7 +174,7 @@ final class BuzzerClient {
                 if let data, !data.isEmpty {
                     for m in self.framer.ingest(data) { self.handle(m) }
                 }
-                if isComplete || error != nil { self.status = .failed("disconnected"); return }
+                if isComplete || error != nil { self.attemptReconnect(); return }
                 self.receive()
             }
         }
@@ -138,7 +182,7 @@ final class BuzzerClient {
 
     private func handle(_ m: BuzzerMessage) {
         switch m.kind {
-        case .welcome: seat = m.seat; roomName = m.roomName; status = .joined
+        case .welcome: seat = m.seat; roomName = m.roomName; status = .joined; reconnectAttempts = 0
         case .roster:  players = m.players ?? players
         case .question:
             // A new question — render it and clear last round's answer state.

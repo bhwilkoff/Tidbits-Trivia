@@ -9,8 +9,10 @@ import SwiftUI
 struct BuzzerJoinView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var client = BuzzerClient()
-    @State private var code = ""
-    @State private var name = ""
+    // Pre-filled from the last room this device joined — a recognized device
+    // just taps Join (no retyping the code); the host restores its seat + score.
+    @State private var code = BuzzerClient.lastCode
+    @State private var name = BuzzerClient.lastName
 
     var body: some View {
         NavigationStack {

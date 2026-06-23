@@ -9,6 +9,7 @@ struct HomeView: View {
     @State private var showSettings = false
     @State private var showNightSetup = false
     @State private var nightLaunch: NightLaunchRequest?
+    @State private var showBuzzerJoin = false
     @AppStorage("tidbits.hasOnboarded") private var hasOnboarded = false
 
     private let columns = [GridItem(.flexible(), spacing: 14), GridItem(.flexible(), spacing: 14)]
@@ -25,6 +26,7 @@ struct HomeView: View {
                 DailyCard { launch = LaunchRequest(mode: .daily, category: .named("mixed")) }
                 TriviaNightCard { showNightSetup = true }
                 PartyCard { showParty = true }
+                JoinTVCard { showBuzzerJoin = true }
                 modePicker
                 categoriesSection
             }
@@ -46,6 +48,7 @@ struct HomeView: View {
             NightContainerView(plan: req.plan, category: req.category)
         }
         .fullScreenCover(isPresented: $showParty) { PartyContainerView() }
+        .sheet(isPresented: $showBuzzerJoin) { BuzzerJoinView() }
         .sheet(isPresented: $showNightSetup) {
             NightSetupView { plan, category in
                 nightLaunch = NightLaunchRequest(plan: plan, category: category)
@@ -171,6 +174,38 @@ private struct PartyCard: View {
             }
             .padding(18)
             .chunkyCard(fill: Tidbits.Palette.grape)
+        }
+        .buttonStyle(.plain)
+        .padding(.trailing, Tidbits.Metric.shadowOffset)
+    }
+}
+
+// MARK: - Join a TV game (buzzer) card
+
+private struct JoinTVCard: View {
+    let action: () -> Void
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 14) {
+                Image(systemName: "iphone.radiowaves.left.and.right")
+                    .font(.system(size: 28, weight: .black))
+                    .foregroundStyle(Tidbits.Palette.teal.legibleForeground)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("JOIN A TV GAME")
+                        .font(Tidbits.TypeRamp.l2)
+                        .foregroundStyle(Tidbits.Palette.teal.legibleForeground)
+                    Text("Buzz in on a Buzz Night running on the Apple TV.")
+                        .font(Tidbits.TypeRamp.l5)
+                        .foregroundStyle(Tidbits.Palette.teal.legibleForeground.opacity(0.85))
+                        .multilineTextAlignment(.leading)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right.circle.fill")
+                    .font(.system(size: 26, weight: .bold))
+                    .foregroundStyle(Tidbits.Palette.teal.legibleForeground)
+            }
+            .padding(18)
+            .chunkyCard(fill: Tidbits.Palette.teal)
         }
         .buttonStyle(.plain)
         .padding(.trailing, Tidbits.Metric.shadowOffset)

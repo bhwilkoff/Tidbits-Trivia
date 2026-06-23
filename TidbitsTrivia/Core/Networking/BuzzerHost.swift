@@ -32,6 +32,17 @@ final class BuzzerHost {
     private var arbiter = BuzzArbiter()
     private var nextSeat = 1
     private var peers: [ObjectIdentifier: Peer] = [:]
+    /// Seats that have already buzzed-and-missed THIS question — a wrong buzz
+    /// "opens it to others" (research D2), so the misser is locked out until the
+    /// next question, but everyone else can still buzz.
+    private var lockedOut: Set<Int> = []
+
+    /// The seat with the most points (nil until someone has scored) — drives the
+    /// running "leader" badge on the TV scoreboard.
+    var leaderSeat: Int? {
+        guard let top = players.max(by: { $0.score < $1.score }), top.score > 0 else { return nil }
+        return top.seat
+    }
 
     // MARK: Lifecycle
 
@@ -70,7 +81,14 @@ final class BuzzerHost {
 
     // MARK: Round control (called by a future Buzz Night game mode)
 
-    /// Open buzzing for a question and re-measure round-trips for fairness.
+    /// Open buzzing for a NEW question: clears the per-question lockout and
+    /// re-measures round-trips for fairness.
+    func beginQuestion(index: Int) {
+        lockedOut = []
+        arm(questionIndex: index)
+    }
+
+    /// Open buzzing and re-measure round-trips for fairness.
     func arm(questionIndex: Int) {
         arbiter.arm(); currentWinnerSeat = nil
         var m = BuzzerMessage(.armed); m.questionIndex = questionIndex
@@ -82,6 +100,32 @@ final class BuzzerHost {
     func lock() {
         arbiter.disarm()
         broadcast(BuzzerMessage(.locked))
+    }
+
+    /// The current buzz-winner answered CORRECTLY — award points, close buzzing,
+    /// push the updated scoreboard to every phone.
+    func awardWinner(points: Int) {
+        guard let seat = currentWinnerSeat else { return }
+        if let i = players.firstIndex(where: { $0.seat == seat }) { players[i].score += points }
+        arbiter.disarm()
+        broadcastRoster()
+        broadcast(BuzzerMessage(.locked))
+    }
+
+    /// The current buzz-winner answered WRONG — lock them out of this question
+    /// and re-open buzzing for everyone else (the "wrong buzz opens it" rule).
+    func rejectWinnerAndReopen() {
+        guard let seat = currentWinnerSeat else { return }
+        lockedOut.insert(seat)
+        currentWinnerSeat = nil
+        arbiter.arm()
+        var m = BuzzerMessage(.armed); m.questionIndex = -1
+        broadcast(m)
+    }
+
+    /// Name for a seat (for the TV's "X buzzed!" banner).
+    func name(forSeat seat: Int) -> String {
+        players.first { $0.seat == seat }?.name ?? "Player \(seat)"
     }
 
     // MARK: Connections
@@ -139,8 +183,9 @@ final class BuzzerHost {
             ping(peer)
 
         case .buzz:
-            // First effective (RTT-compensated) arrival after arm() wins.
-            guard let seat = peer.seat, currentWinnerSeat == nil else { return }
+            // First effective (RTT-compensated) arrival after arm() wins. A seat
+            // that already missed this question is locked out (others can still win).
+            guard let seat = peer.seat, currentWinnerSeat == nil, !lockedOut.contains(seat) else { return }
             if let winner = arbiter.registerBuzz(seat: seat, arrivalMillis: BuzzerTransport.nowMillis()) {
                 currentWinnerSeat = winner
                 arbiter.disarm()

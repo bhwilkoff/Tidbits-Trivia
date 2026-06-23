@@ -20,6 +20,7 @@ struct ContentView_tvOS: View {
     @State private var selectedMode: GameMode = .classic
     @State private var launch: LaunchRequest?
     @State private var nightLaunch: NightLaunchRequest?
+    @State private var buzzLaunch: NightLaunchRequest?
     @State private var showRecords = false
     @State private var showSettings = false
     @State private var showNightSetup = false
@@ -47,10 +48,15 @@ struct ContentView_tvOS: View {
         .fullScreenCover(item: $nightLaunch) { req in
             TVNightContainer(plan: req.plan, category: req.category)
         }
+        .fullScreenCover(item: $buzzLaunch) { req in
+            BuzzNightView_tvOS(plan: req.plan, category: req.category)
+        }
         .fullScreenCover(isPresented: $showNightSetup) {
-            NightSetupView_tvOS { plan, category in
+            NightSetupView_tvOS(onStart: { plan, category in
                 nightLaunch = NightLaunchRequest(plan: plan, category: category)
-            }
+            }, onStartBuzzer: { plan, category in
+                buzzLaunch = NightLaunchRequest(plan: plan, category: category)
+            })
         }
         .fullScreenCover(isPresented: $showRecords) { RecordsView_tvOS() }
         .fullScreenCover(isPresented: $showSettings) { SettingsView_tvOS() }
@@ -68,6 +74,7 @@ struct ContentView_tvOS: View {
             // verification — Decision 018). tvOS has no tab bar, so the hook
             // presents the cover instead.
             if DebugHooks.initialTab == .records { showRecords = true }
+            if DebugHooks.openBuzz { buzzLaunch = NightLaunchRequest(plan: .quick, category: .named("mixed")) }
         }
     }
 

@@ -1,11 +1,11 @@
 #if os(iOS)
 import SwiftUI
 
-/// The phone side of Buzz Night — join the Apple TV's room with the code on
-/// screen, then a single giant BUZZ button (Phase-1 Bonjour client, Decision
-/// 030). The phone only buzzes; the TV is the stage, scoreboard, and the
-/// authoritative "who was first" arbiter. The buzzer is a private input channel
-/// — its whole job is to be fast and unambiguous, so it's one huge target.
+/// The phone side of a TV-hosted Trivia Night — join the Apple TV's room with
+/// the code on screen, read the question, buzz, and (if you're first) answer on
+/// your own device (Phase-1 Bonjour client, Decision 030). Every phone sees the
+/// same live story — who buzzed, who got it, the points, the scoreboard — so it
+/// feels like one game everyone's playing together.
 struct BuzzerJoinView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var client = BuzzerClient()
@@ -24,7 +24,7 @@ struct BuzzerJoinView: View {
                 case .joined:               buzzer
                 }
             }
-            .navigationTitle("Buzz Night")
+            .navigationTitle("Trivia Night")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Close") { client.leave(); dismiss() } } }
         }
@@ -94,8 +94,10 @@ struct BuzzerJoinView: View {
                         ForEach(Array(client.options.enumerated()), id: \.offset) { i, opt in
                             answerRow(i, opt)
                         }
-                        Text(statusLine).font(Tidbits.TypeRamp.l4).foregroundStyle(Tidbits.Palette.inkSoft)
+                        Text(statusLine).font(Tidbits.TypeRamp.l3).foregroundStyle(statusTint)
                             .multilineTextAlignment(.center).padding(.top, 4)
+                            .fixedSize(horizontal: false, vertical: true)
+                        if betweenQuestions { miniScoreboard }   // the leaderboard moment
                     }
                     .padding(.horizontal, Tidbits.Metric.pad)
                 }
@@ -149,18 +151,61 @@ struct BuzzerJoinView: View {
         .sensoryFeedback(.impact(weight: .heavy), trigger: client.canBuzz)
     }
 
+    /// The question has resolved (someone got it, or the answer was revealed) —
+    /// the leaderboard moment before the next question.
+    private var betweenQuestions: Bool { client.resultCorrectIndex != nil }
+
+    private var statusTint: Color {
+        if client.resultCorrect == true { return Tidbits.Palette.mint }
+        if client.resultCorrect == false { return Tidbits.Palette.coral }
+        if client.canBuzz || client.isAnswering { return Tidbits.Palette.ink }
+        return Tidbits.Palette.inkSoft
+    }
+
+    /// One shared story every phone reads — who buzzed, who got it + points, who
+    /// missed and what they said. The buzz-winner sees a personal "You got it!".
     private var statusLine: String {
-        if client.resultCorrect == true { return "Correct! 🎉" }
-        if client.resultCorrect == false {
-            return client.winnerSeat == client.seat ? "Not quite — buzzers re-open to others." : "That wasn't it."
+        let mine = client.winnerSeat == client.seat
+        if let name = client.resultName {
+            if client.resultCorrect == true {
+                let pts = client.resultPoints ?? 0
+                return mine ? "You got it! +\(pts) 🎉" : "\(name) got it! +\(pts)"
+            } else {                                     // a wrong answer reopened it
+                if mine { return "Not quite — buzzers re-open to the others." }
+                if let c = client.resultChosen, client.options.indices.contains(c) {
+                    return "\(name) said “\(client.options[c])” — buzzers reopen!"
+                }
+                return "\(name) missed — buzzers reopen!"
+            }
         }
+        if client.resultCorrectIndex != nil { return "Time's up — nobody got it." }
         if client.isAnswering { return "You got the buzz! Tap your answer above." }
         if client.myAnswer != nil { return "Answer sent — waiting on the host…" }
-        if let w = client.winnerSeat, w != client.seat {
-            return "\(client.players.first { $0.seat == w }?.name ?? "Another player") buzzed first…"
-        }
+        if let who = client.buzzedName { return "🔔 \(who) buzzed in…" }
+        if client.lockedOut { return "You're out this question — next one's yours." }
         if client.canBuzz { return "Buzzers are open — tap BUZZ the moment you know it." }
         return "Get ready…"
+    }
+
+    /// Standings between questions — your row highlighted, the leader crowned.
+    private var miniScoreboard: some View {
+        let sorted = client.players.sorted { $0.score > $1.score }
+        let leader = sorted.first.flatMap { $0.score > 0 ? $0.seat : nil }
+        return VStack(alignment: .leading, spacing: 8) {
+            Text("SCOREBOARD").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+            ForEach(sorted) { p in
+                HStack(spacing: 8) {
+                    if leader == p.seat { Image(systemName: "crown.fill").font(.system(size: 13)).foregroundStyle(Tidbits.Palette.yellow) }
+                    Text(p.name).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                    Spacer()
+                    Text("\(p.score)").font(.system(size: 17, weight: .black, design: .rounded).monospacedDigit()).foregroundStyle(Tidbits.Palette.ink)
+                }
+                .padding(.horizontal, 12).padding(.vertical, 10)
+                .chunkyCard(fill: p.seat == client.seat ? Tidbits.Palette.mint.opacity(0.22) : Tidbits.Palette.surface)
+                .padding(.trailing, Tidbits.Metric.shadowOffset)
+            }
+        }
+        .padding(.top, 8)
     }
 }
 #endif

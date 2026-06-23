@@ -102,7 +102,7 @@ struct NightSetupView_tvOS: View {
                         .buttonStyle(TVChipStyle(accent: Tidbits.Palette.grape, selected: false))
                         .focused($focus, equals: .buzzer)
                     }
-                    Text("Buzz Night turns the TV into the stage and everyone's phone into a buzzer — first correct buzz scores. (Buzzable rounds only.)")
+                    Text("Hosting with phones turns the TV into the stage and everyone's phone into a buzzer — first to buzz answers on their phone, the room celebrates each score. (Buzzable rounds only.)")
                         .font(.system(size: 23, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
                 }
                 .padding(90)

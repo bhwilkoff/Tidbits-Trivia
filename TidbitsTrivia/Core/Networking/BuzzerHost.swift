@@ -119,26 +119,35 @@ final class BuzzerHost {
         broadcast(BuzzerMessage(.locked))
     }
 
+    /// Every connected player has now answered-and-missed this question — so no
+    /// one can buzz. The TV uses this to reveal instead of waiting forever.
+    var allLockedOut: Bool { !players.isEmpty && players.allSatisfy { lockedOut.contains($0.seat) } }
+
     /// The buzz-winner's phone answer was CORRECT (judged by the TV) — award
-    /// points, reveal the answer to all phones, close buzzing.
+    /// points, then tell EVERY device who scored + how many points (so all phones
+    /// celebrate together), reveal the answer, and close buzzing.
     func acceptAnswer(points: Int, correctIndex: Int) {
         guard let seat = currentWinnerSeat else { return }
         if let i = players.firstIndex(where: { $0.seat == seat }) { players[i].score += points }
         arbiter.disarm()
         pendingAnswerSeat = nil; pendingAnswerIndex = nil
         broadcastRoster()
-        var r = BuzzerMessage(.result); r.correct = true; r.correctIndex = correctIndex; r.winnerSeat = seat
+        var r = BuzzerMessage(.result)
+        r.correct = true; r.correctIndex = correctIndex; r.chosenIndex = correctIndex
+        r.winnerSeat = seat; r.points = points; r.displayName = name(forSeat: seat)
         broadcast(r)
         broadcast(BuzzerMessage(.locked))
     }
 
-    /// The buzz-winner's phone answer was WRONG — tell that phone, lock them out
-    /// of this question, and re-open buzzing for everyone else (the "wrong buzz
-    /// opens it" rule). The correct answer is NOT revealed yet (others can win).
-    func rejectAnswerAndReopen() {
+    /// The buzz-winner's phone answer was WRONG — tell EVERY device who missed
+    /// and what they picked, lock that seat out, and re-open buzzing for everyone
+    /// else (the "wrong buzz opens it" rule). The correct answer is NOT revealed
+    /// yet (others can still win).
+    func rejectAnswerAndReopen(chosenIndex: Int?) {
         guard let seat = currentWinnerSeat else { return }
         lockedOut.insert(seat)
-        var r = BuzzerMessage(.result); r.correct = false; r.winnerSeat = seat
+        var r = BuzzerMessage(.result)
+        r.correct = false; r.winnerSeat = seat; r.chosenIndex = chosenIndex; r.displayName = name(forSeat: seat)
         broadcast(r)
         currentWinnerSeat = nil
         pendingAnswerSeat = nil; pendingAnswerIndex = nil
@@ -147,7 +156,8 @@ final class BuzzerHost {
         broadcast(m)
     }
 
-    /// No one answered correctly (timeout / host skip) — reveal to all phones.
+    /// No one answered correctly (timeout / all locked out / host skip) — reveal
+    /// the answer to all phones and close out the question.
     func revealNoWinner(correctIndex: Int) {
         arbiter.disarm()
         currentWinnerSeat = nil

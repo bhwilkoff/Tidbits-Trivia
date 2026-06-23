@@ -31,6 +31,12 @@ final class BuzzerClient {
     private(set) var resultCorrect: Bool?  // judged outcome for the buzz-winner
     private(set) var resultCorrectIndex: Int?  // revealed answer (highlight it)
     private(set) var lockedOut = false     // I answered wrong this question — no re-buzz
+    // Shared-awareness feedback: every phone sees who acted, what they picked,
+    // and the points — so it feels like one game everyone's playing together.
+    private(set) var buzzedName: String?   // who just buzzed in
+    private(set) var resultName: String?   // who answered (from the host's result)
+    private(set) var resultPoints: Int?    // points they earned
+    private(set) var resultChosen: Int?    // the option they picked
 
     private var browser: NWBrowser?
     private var connection: NWConnection?
@@ -103,6 +109,7 @@ final class BuzzerClient {
         players = []; canBuzz = false; winnerSeat = nil
         prompt = nil; options = []; isAnswering = false; myAnswer = nil
         resultCorrect = nil; resultCorrectIndex = nil; lockedOut = false
+        buzzedName = nil; resultName = nil; resultPoints = nil; resultChosen = nil
     }
 
     private func teardownSockets() {
@@ -185,16 +192,24 @@ final class BuzzerClient {
         case .welcome: seat = m.seat; roomName = m.roomName; status = .joined; reconnectAttempts = 0
         case .roster:  players = m.players ?? players
         case .question:
-            // A new question — render it and clear last round's answer state.
+            // A new question — render it and clear last round's state entirely.
             prompt = m.prompt; options = m.options ?? []
             myAnswer = nil; resultCorrect = nil; resultCorrectIndex = nil
             isAnswering = false; lockedOut = false; winnerSeat = nil
-        case .armed:   canBuzz = !lockedOut; winnerSeat = nil; isAnswering = false
+            buzzedName = nil; resultName = nil; resultPoints = nil; resultChosen = nil
+        case .armed:
+            // Re-arm on a brand-new question OR after a wrong answer reopened it.
+            // Keep the last result text so the reopen reads "X missed — buzz!".
+            canBuzz = !lockedOut; winnerSeat = nil; isAnswering = false
         case .awarded:
             winnerSeat = m.winnerSeat; canBuzz = false
             isAnswering = (m.winnerSeat == seat)   // my turn to answer on-device
+            buzzedName = players.first { $0.seat == m.winnerSeat }?.name
+            resultName = nil; resultChosen = nil; resultCorrect = nil  // clear prior feedback
         case .result:
-            resultCorrect = m.correct; resultCorrectIndex = m.correctIndex; isAnswering = false
+            resultCorrect = m.correct; resultCorrectIndex = m.correctIndex
+            resultName = m.displayName; resultPoints = m.points; resultChosen = m.chosenIndex
+            isAnswering = false; buzzedName = nil
             if m.winnerSeat == seat && m.correct == false { lockedOut = true }
         case .locked:  canBuzz = false; isAnswering = false
         case .ping:

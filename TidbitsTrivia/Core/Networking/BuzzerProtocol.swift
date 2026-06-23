@@ -63,6 +63,7 @@ struct BuzzerMessage: Codable, Sendable, Equatable {
     var chosenIndex: Int?      // the buzz-winner's tapped option (phone → host)
     var correctIndex: Int?     // revealed with `result` so phones can highlight the answer
     var correct: Bool?         // whether the winner's answer was right
+    var points: Int?           // points awarded for a correct answer (every device shows it)
     /// Monotonic milliseconds from the *sender's* clock — never compared across
     /// machines (clocks are unsynchronized); used only to measure round-trip on
     /// the host so it can RTT-compensate buzz arrival (see BuzzArbiter).
@@ -87,6 +88,7 @@ struct BuzzerMessage: Codable, Sendable, Equatable {
         chosenIndex = try c.decodeIfPresent(Int.self, forKey: .chosenIndex)
         correctIndex = try c.decodeIfPresent(Int.self, forKey: .correctIndex)
         correct = try c.decodeIfPresent(Bool.self, forKey: .correct)
+        points = try c.decodeIfPresent(Int.self, forKey: .points)
         stampMillis = try c.decodeIfPresent(Double.self, forKey: .stampMillis)
         hostStampMillis = try c.decodeIfPresent(Double.self, forKey: .hostStampMillis)
     }

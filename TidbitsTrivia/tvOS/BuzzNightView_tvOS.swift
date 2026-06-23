@@ -2,16 +2,18 @@
 import SwiftUI
 import SwiftData
 
-/// Buzz Night — the living-room "bar trivia" show. The Apple TV is the stage +
-/// scoreboard; phones are the buzzers (the Phase-1 Bonjour host, Decision 030).
-/// Flow per question: the TV reads it, buzzing opens, the first phone to buzz
-/// (RTT-compensated, host-arbitrated) claims it and calls out an answer; the host
-/// taps the option they said. Right = points; wrong = locked out and buzzing
-/// re-opens to everyone else. Every question ends on the shared Learn-the-fact
-/// reveal — a wrong buzz is a teaching moment, never an elimination (the mission).
+/// Trivia Night hosted on the Apple TV with phones as buzzers (the Phase-1
+/// Bonjour host, Decision 030). The TV is the stage + scoreboard; phones read
+/// the question, buzz, and the first in answers ON THEIR OWN DEVICE. The TV
+/// (which holds the question) judges it and CELEBRATES each outcome so it feels
+/// like a game you're playing with friends: who buzzed, who got it, the points,
+/// and the running scoreboard between questions (Jackbox/Kahoot shared-awareness
+/// + leaderboard-moment patterns). Right = points; wrong = that seat locks out
+/// and buzzing re-opens to everyone else; if everyone misses or the clock runs
+/// out, the answer is revealed and the game moves on (no dead air). Every
+/// question ends on the shared Learn-the-fact reveal.
 ///
-/// Buzzable MCQ rounds only: a phone can buzz but can't drive a slider / ordering
-/// board, so the input-required night rounds are filtered out for this mode.
+/// Buzzable MCQ rounds only: a phone can buzz but can't drive a slider / board.
 struct BuzzNightView_tvOS: View {
     let plan: NightPlan
     let category: TriviaCategory
@@ -24,9 +26,15 @@ struct BuzzNightView_tvOS: View {
     @State private var phase: Phase = .lobby
     @State private var loaded = false
     @State private var missed: [AnsweredQuestion] = []
+    @State private var lastScorerName: String?   // who just scored (celebration)
+    @State private var lastScorerPoints = 0
+    @State private var wrongFeedback: String?    // "Bob said London — reopened!"
+    @State private var buzzSecondsLeft = 0
+    @State private var questionNonce = 0         // bumps each question (drives the clock)
 
     private enum Phase { case lobby, loading, playing, buzzed, reveal, finished }
     private let awardPoints = 10
+    private let buzzBudget = 30
 
     private var current: Question? { questions.indices.contains(index) ? questions[index] : nil }
 
@@ -42,7 +50,7 @@ struct BuzzNightView_tvOS: View {
             }
         }
         .onChange(of: host.currentWinnerSeat) { _, w in
-            if w != nil, phase == .playing { phase = .buzzed }
+            if w != nil, phase == .playing { wrongFeedback = nil; phase = .buzzed }
         }
         .onChange(of: host.pendingAnswerSeat) { _, s in
             if s != nil { judgePhoneAnswer() }
@@ -51,6 +59,20 @@ struct BuzzNightView_tvOS: View {
             host.start()
             if DebugHooks.autopilot { await beginGame() }   // screenshot the in-game host
         }
+        // Per-question buzz clock: when it runs out (or everyone's locked out),
+        // reveal the answer and move on — the game never hangs waiting for a buzz.
+        .task(id: questionNonce) {
+            guard questionNonce > 0 else { return }
+            buzzSecondsLeft = buzzBudget
+            while buzzSecondsLeft > 0 {
+                if phase == .reveal || phase == .finished || phase == .lobby { return }
+                if phase == .playing && host.allLockedOut { break }   // no one left to answer
+                try? await Task.sleep(for: .seconds(1))
+                if Task.isCancelled { return }
+                if phase == .playing { buzzSecondsLeft -= 1 }          // pause while someone's answering
+            }
+            if phase == .playing { revealNoOne() }
+        }
         .onExitCommand { host.stop(); dismiss() }
     }
 
@@ -58,7 +80,7 @@ struct BuzzNightView_tvOS: View {
 
     private var lobby: some View {
         VStack(spacing: 40) {
-            Text("BUZZ NIGHT").font(.system(size: 64, weight: .black, design: .rounded)).foregroundStyle(.white)
+            Text("TRIVIA NIGHT").font(.system(size: 64, weight: .black, design: .rounded)).foregroundStyle(.white)
             VStack(spacing: 12) {
                 Text("Join from your phone").font(.system(size: 31, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
                 Text("Open Tidbits → Join a TV Game → enter")
@@ -105,27 +127,29 @@ struct BuzzNightView_tvOS: View {
 
     private var playing: some View {
         HStack(alignment: .top, spacing: 40) {
-            VStack(alignment: .leading, spacing: 28) {
-                if let round = roundFor(current) {
-                    Text("ROUND \((current?.roundIndex ?? 0) + 1) · \(round.title.uppercased())")
-                        .font(.system(size: 25, weight: .heavy, design: .rounded)).foregroundStyle(Tidbits.Palette.coral)
+            VStack(alignment: .leading, spacing: 24) {
+                HStack(spacing: 20) {
+                    if let round = roundFor(current) {
+                        Text("ROUND \((current?.roundIndex ?? 0) + 1) · \(round.title.uppercased())")
+                            .font(.system(size: 25, weight: .heavy, design: .rounded)).foregroundStyle(Tidbits.Palette.coral)
+                    }
+                    Text("Q\(index + 1)/\(questions.count)")
+                        .font(.system(size: 25, weight: .bold, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+                    Spacer()
+                    if phase == .playing {
+                        Label("\(buzzSecondsLeft)s", systemImage: "timer")
+                            .font(.system(size: 27, weight: .black, design: .rounded).monospacedDigit())
+                            .foregroundStyle(buzzSecondsLeft <= 5 ? Tidbits.Palette.coral : TVTheme.textSoft)
+                    }
                 }
-                Text("Question \(index + 1) of \(questions.count)")
-                    .font(.system(size: 25, weight: .bold, design: .rounded)).foregroundStyle(TVTheme.textSoft)
                 if let q = current {
                     if let img = q.imageURL { buzzImage(img) }
                     Text(q.prompt).font(.system(size: 46, weight: .heavy, design: .rounded)).foregroundStyle(.white)
                         .fixedSize(horizontal: false, vertical: true)
-                    if phase == .buzzed, let seat = host.currentWinnerSeat {
-                        Label("\(host.name(forSeat: seat)) buzzed — answering on their phone…", systemImage: "bell.fill")
-                            .font(.system(size: 29, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.yellow)
-                    } else {
-                        Label("Buzzers open — first in answers on their phone", systemImage: "bell.badge.fill")
-                            .font(.system(size: 27, weight: .bold, design: .rounded)).foregroundStyle(Tidbits.Palette.mint)
-                    }
+                    statusBanner
                     optionsGrid(q)
                     if phase == .playing {
-                        Button("No one — reveal answer") { revealNoOne() }
+                        Button("Nobody's got it — reveal answer") { revealNoOne() }
                             .buttonStyle(TVChipStyle(accent: Tidbits.Palette.blue, selected: false))
                             .padding(.top, 8)
                     }
@@ -141,8 +165,22 @@ struct BuzzNightView_tvOS: View {
         .padding(70)
     }
 
-    /// The room code stays on screen the whole game so a dropped phone can rejoin
-    /// (same name → same seat + score, handled by the host).
+    /// The live activity line — who's buzzed in, or who just missed.
+    @ViewBuilder private var statusBanner: some View {
+        if phase == .buzzed, let seat = host.currentWinnerSeat {
+            Label("\(host.name(forSeat: seat)) buzzed — answering on their phone…", systemImage: "bell.fill")
+                .font(.system(size: 29, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.yellow)
+        } else if let wrong = wrongFeedback {
+            Label(wrong, systemImage: "xmark.circle.fill")
+                .font(.system(size: 27, weight: .bold, design: .rounded)).foregroundStyle(Tidbits.Palette.coral)
+        } else {
+            Label("Buzzers open — first to buzz answers on their phone", systemImage: "bell.badge.fill")
+                .font(.system(size: 27, weight: .bold, design: .rounded)).foregroundStyle(Tidbits.Palette.mint)
+        }
+    }
+
+    /// The room code stays on screen the whole game so a new player can join and
+    /// a dropped phone can rejoin (device-keyed — same seat + score).
     private var joinChip: some View {
         VStack(spacing: 4) {
             Text("JOIN / REJOIN").font(.system(size: 18, weight: .heavy, design: .rounded)).foregroundStyle(TVTheme.textSoft)
@@ -152,8 +190,8 @@ struct BuzzNightView_tvOS: View {
         .background(RoundedRectangle(cornerRadius: 14).fill(TVTheme.panel))
     }
 
-    /// Options are DISPLAY-ONLY on the TV now — the buzz-winner answers on their
-    /// phone. The room reads along; lettering matches the phone's buttons.
+    /// Options are DISPLAY-ONLY on the TV — the buzz-winner answers on their
+    /// phone. Lettering matches the phone's buttons so the room reads along.
     private func optionsGrid(_ q: Question) -> some View {
         LazyVGrid(columns: [GridItem(.flexible(), spacing: 24), GridItem(.flexible(), spacing: 24)], spacing: 24) {
             ForEach(Array(q.options.enumerated()), id: \.offset) { idx, opt in
@@ -171,24 +209,28 @@ struct BuzzNightView_tvOS: View {
     }
 
     private var scoreboard: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 14) {
             Text("SCOREBOARD").font(.system(size: 23, weight: .heavy, design: .rounded)).foregroundStyle(TVTheme.textSoft)
             ForEach(host.players.sorted { $0.score > $1.score }) { p in
-                HStack {
-                    if host.leaderSeat == p.seat {
-                        Image(systemName: "crown.fill").foregroundStyle(Tidbits.Palette.yellow)
-                    }
-                    Text(p.name).font(.system(size: 27, weight: .bold, design: .rounded)).foregroundStyle(.white)
-                    Spacer()
-                    Text("\(p.score)").font(.system(size: 31, weight: .black, design: .rounded).monospacedDigit()).foregroundStyle(.white)
-                }
-                .padding(.horizontal, 20).padding(.vertical, 14)
-                .background(RoundedRectangle(cornerRadius: 14).fill(TVTheme.panel))
+                scoreRow(p, highlight: false)
             }
             if host.players.isEmpty {
                 Text("No phones connected").font(.system(size: 23, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
             }
         }
+    }
+
+    private func scoreRow(_ p: BuzzerPlayer, highlight: Bool) -> some View {
+        HStack {
+            if host.leaderSeat == p.seat {
+                Image(systemName: "crown.fill").foregroundStyle(Tidbits.Palette.yellow)
+            }
+            Text(p.name).font(.system(size: 27, weight: .bold, design: .rounded)).foregroundStyle(.white)
+            Spacer()
+            Text("\(p.score)").font(.system(size: 31, weight: .black, design: .rounded).monospacedDigit()).foregroundStyle(.white)
+        }
+        .padding(.horizontal, 20).padding(.vertical, 14)
+        .background(RoundedRectangle(cornerRadius: 14).fill(highlight ? Tidbits.Palette.mint.opacity(0.3) : TVTheme.panel))
     }
 
     private func buzzImage(_ url: URL) -> some View {
@@ -200,28 +242,47 @@ struct BuzzNightView_tvOS: View {
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
-    // MARK: Reveal
+    // MARK: Reveal (celebrate + between-question scoreboard)
 
     private var revealView: some View {
-        VStack(alignment: .leading, spacing: 24) {
-            if let q = current {
-                Text("Answer").font(.system(size: 27, weight: .bold, design: .rounded)).foregroundStyle(TVTheme.textSoft)
-                Text(q.correctAnswer).font(.system(size: 56, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.mint)
-                if !q.explanation.isEmpty {
-                    Text(q.explanation).font(.system(size: 29, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
-                        .fixedSize(horizontal: false, vertical: true)
+        HStack(alignment: .top, spacing: 40) {
+            VStack(alignment: .leading, spacing: 22) {
+                if let name = lastScorerName {
+                    Label("\(name) got it!  +\(lastScorerPoints)", systemImage: "party.popper.fill")
+                        .font(.system(size: 44, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.mint)
+                } else {
+                    Label("Nobody got that one", systemImage: "clock.badge.xmark.fill")
+                        .font(.system(size: 40, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.yellow)
                 }
+                if let q = current {
+                    Text("Answer").font(.system(size: 25, weight: .bold, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+                    Text(q.correctAnswer).font(.system(size: 52, weight: .black, design: .rounded)).foregroundStyle(.white)
+                    if !q.explanation.isEmpty {
+                        Text(q.explanation).font(.system(size: 27, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                Button(index + 1 >= questions.count ? "Final Standings" : "Next Question") { advance() }
+                    .buttonStyle(TVChipStyle(accent: Tidbits.Palette.coral, selected: false))
+                    .padding(.top, 8)
+                Spacer()
             }
-            Button(index + 1 >= questions.count ? "Final Standings" : "Next Question") { advance() }
-                .buttonStyle(TVChipStyle(accent: Tidbits.Palette.coral, selected: false))
-                .padding(.top, 12)
-            Spacer()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            // The leaderboard moment between questions.
+            VStack(alignment: .leading, spacing: 14) {
+                Text("STANDINGS").font(.system(size: 23, weight: .heavy, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+                ForEach(host.players.sorted { $0.score > $1.score }) { p in
+                    scoreRow(p, highlight: p.name == lastScorerName)
+                }
+                if host.players.isEmpty {
+                    Text("No phones connected").font(.system(size: 23, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+                }
+            }.frame(width: 420)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(90)
+        .padding(70)
     }
 
-    // MARK: Standings
+    // MARK: Standings (final)
 
     private var standings: some View {
         VStack(spacing: 28) {
@@ -263,28 +324,34 @@ struct BuzzNightView_tvOS: View {
     }
 
     private func startQuestion() {
+        wrongFeedback = nil
+        lastScorerName = nil; lastScorerPoints = 0
         phase = .playing
         if let q = current { host.broadcastQuestion(prompt: q.prompt, options: q.options, index: index) }
         host.beginQuestion(index: index)
+        questionNonce += 1   // (re)start the buzz clock
     }
 
-    /// The buzz-winner answered on THEIR phone; the TV (which holds the question)
-    /// judges it. Correct → award + reveal; wrong → lock them out, buzzing
-    /// re-opens to everyone else.
+    /// The buzz-winner answered on THEIR phone; the TV judges it. Correct →
+    /// celebrate + reveal; wrong → lock them out, buzzing re-opens (or, if that
+    /// was the last player, reveal so the game doesn't hang).
     private func judgePhoneAnswer() {
         guard phase == .buzzed, let q = current, let chosen = host.pendingAnswerIndex else { return }
+        let who = host.currentWinnerSeat.map { host.name(forSeat: $0) } ?? "Someone"
         if chosen == q.correctIndex {
+            lastScorerName = who; lastScorerPoints = awardPoints
             host.acceptAnswer(points: awardPoints, correctIndex: q.correctIndex)
             phase = .reveal
         } else {
-            missed.append(AnsweredQuestion(question: q, chosenIndex: nil, secondsTaken: 0))
-            host.rejectAnswerAndReopen()
-            phase = .playing
+            let said = q.options.indices.contains(chosen) ? q.options[chosen] : "?"
+            wrongFeedback = "\(who) said “\(said)” — not it. Buzzers reopen!"
+            host.rejectAnswerAndReopen(chosenIndex: chosen)
+            if host.allLockedOut { revealNoOne() } else { phase = .playing }
         }
     }
 
     private func revealNoOne() {
-        guard let q = current else { return }
+        guard phase != .reveal, let q = current else { return }
         host.revealNoWinner(correctIndex: q.correctIndex)
         missed.append(AnsweredQuestion(question: q, chosenIndex: nil, secondsTaken: 0))
         phase = .reveal
@@ -297,8 +364,8 @@ struct BuzzNightView_tvOS: View {
 
     private func finish() {
         phase = .finished
-        // Record the host's own learning recap (the missed facts) so Buzz Night
-        // still feeds the records loop, even though scoring is per-phone-seat.
+        // Record the host's own learning recap (the missed facts) so a hosted
+        // night still feeds the records loop, even though scoring is per-seat.
         let summary = GameSummary(mode: .barTrivia, category: category, score: 0,
                                   correct: questions.count - missed.count, total: questions.count,
                                   maxStreak: 0, answered: missed)

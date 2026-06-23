@@ -194,7 +194,7 @@ private struct JoinTVCard: View {
                     Text("JOIN A TV GAME")
                         .font(Tidbits.TypeRamp.l2)
                         .foregroundStyle(Tidbits.Palette.teal.legibleForeground)
-                    Text("Buzz in on a Buzz Night running on the Apple TV.")
+                    Text("Buzz in on a Trivia Night running on the Apple TV.")
                         .font(Tidbits.TypeRamp.l5)
                         .foregroundStyle(Tidbits.Palette.teal.legibleForeground.opacity(0.85))
                         .multilineTextAlignment(.leading)

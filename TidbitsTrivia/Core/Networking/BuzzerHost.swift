@@ -145,18 +145,24 @@ final class BuzzerHost {
         broadcast(BuzzerMessage(.locked))
     }
 
-    /// The buzz-winner's phone answer was WRONG — tell EVERY device who missed
-    /// and what they picked, lock that seat out, and re-open buzzing for everyone
-    /// else (the "wrong buzz opens it" rule). The correct answer is NOT revealed
-    /// yet (others can still win).
-    func rejectAnswerAndReopen(chosenIndex: Int?) {
+    /// The buzz-winner answered WRONG — tell every device they MISSED and lock
+    /// that seat out. Deliberately does NOT broadcast which option they picked:
+    /// on a 2-option question that hands over the answer, and eliminations leak
+    /// it once enough are wrong. The caller decides whether to `reopen` buzzing
+    /// or reveal (when the answer is already determined by elimination).
+    func lockOutWinner() {
         guard let seat = currentWinnerSeat else { return }
         lockedOut.insert(seat)
         var r = BuzzerMessage(.result)
-        r.correct = false; r.winnerSeat = seat; r.chosenIndex = chosenIndex; r.displayName = name(forSeat: seat)
+        r.correct = false; r.winnerSeat = seat; r.displayName = name(forSeat: seat)
         broadcast(r)
         currentWinnerSeat = nil
         pendingAnswerSeat = nil; pendingAnswerIndex = nil
+    }
+
+    /// Re-open buzzing to everyone still eligible (a wrong answer that didn't end
+    /// the question — the "wrong buzz opens it" rule).
+    func reopen() {
         arbiter.arm()
         var m = BuzzerMessage(.armed); m.questionIndex = -1
         broadcast(m)

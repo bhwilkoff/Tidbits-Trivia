@@ -193,11 +193,10 @@ struct BuzzerJoinView: View {
                 let pts = client.resultPoints ?? 0
                 return mine ? "You got it! +\(pts) 🎉" : "\(name) got it! +\(pts)"
             } else {                                     // a wrong answer reopened it
-                if mine { return "Not quite — buzzers re-open to the others." }
-                if let c = client.resultChosen, client.options.indices.contains(c) {
-                    return "\(name) said “\(client.options[c])” — buzzers reopen!"
-                }
-                return "\(name) missed — buzzers reopen!"
+                // Never reveal which option was picked — it gives the answer away
+                // (especially on a 2-option), so all players guess uninfluenced.
+                return mine ? "Not quite — buzzers re-open to the others."
+                            : "\(name) buzzed wrong — buzzers reopen!"
             }
         }
         if client.resultCorrectIndex != nil {

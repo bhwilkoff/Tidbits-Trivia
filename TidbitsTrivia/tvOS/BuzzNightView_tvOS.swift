@@ -29,7 +29,8 @@ struct BuzzNightView_tvOS: View {
     @State private var lastScorerName: String?   // who just scored (celebration)
     @State private var lastScorerPoints = 0
     @State private var lastTimedOut = false      // a no-winner reveal: clock ran out vs all wrong
-    @State private var wrongFeedback: String?    // "Bob said London — reopened!"
+    @State private var wrongFeedback: String?    // "Bob missed — reopened!" (never names the option)
+    @State private var wrongCount = 0            // wrong answers on this question (for the move-on rule)
     @State private var buzzSecondsLeft = 0
     @State private var questionNonce = 0         // bumps each question (drives the clock)
 
@@ -328,7 +329,7 @@ struct BuzzNightView_tvOS: View {
     }
 
     private func startQuestion() {
-        wrongFeedback = nil
+        wrongFeedback = nil; wrongCount = 0
         lastScorerName = nil; lastScorerPoints = 0
         phase = .playing
         if let q = current { host.broadcastQuestion(prompt: q.prompt, options: q.options, imageURL: q.imageURL?.absoluteString, index: index) }
@@ -347,10 +348,22 @@ struct BuzzNightView_tvOS: View {
             host.acceptAnswer(points: awardPoints, correctIndex: q.correctIndex)
             phase = .reveal
         } else {
-            let said = q.options.indices.contains(chosen) ? q.options[chosen] : "?"
-            wrongFeedback = "\(who) said “\(said)” — not it. Buzzers reopen!"
-            host.rejectAnswerAndReopen(chosenIndex: chosen)
-            if host.allLockedOut { revealNoOne(timedOut: false) } else { phase = .playing }
+            // Never name the option they picked — on a 2-option that gives the
+            // answer away. Lock them out (without revealing the pick), then either
+            // move on (the answer is determined by elimination) or reopen so the
+            // others can still guess without influence.
+            wrongCount += 1
+            host.lockOutWinner()
+            let n = q.options.count
+            // A 4-option (≥3) question with all-but-one option eliminated has an
+            // obvious answer — just move on. A 2-option keeps going (hidden picks).
+            if (n >= 3 && wrongCount >= n - 1) || host.allLockedOut {
+                revealNoOne(timedOut: false)
+            } else {
+                wrongFeedback = "\(who) buzzed wrong — buzzers reopen!"
+                host.reopen()
+                phase = .playing
+            }
         }
     }
 

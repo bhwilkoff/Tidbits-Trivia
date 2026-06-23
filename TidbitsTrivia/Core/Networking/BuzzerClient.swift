@@ -26,6 +26,7 @@ final class BuzzerClient {
     // their OWN device; every phone reads along.
     private(set) var prompt: String?
     private(set) var options: [String] = []
+    private(set) var imageURL: URL?        // Picture ID rounds: the image to show on this phone
     private(set) var isAnswering = false   // I won the buzz — my answer buttons are live
     private(set) var myAnswer: Int?        // the option I tapped
     private(set) var resultCorrect: Bool?  // judged outcome for the buzz-winner
@@ -108,7 +109,7 @@ final class BuzzerClient {
         teardownSockets()
         status = .idle; seat = nil; roomName = nil
         players = []; canBuzz = false; winnerSeat = nil
-        prompt = nil; options = []; isAnswering = false; myAnswer = nil
+        prompt = nil; options = []; imageURL = nil; isAnswering = false; myAnswer = nil
         resultCorrect = nil; resultCorrectIndex = nil; lockedOut = false
         buzzedName = nil; resultName = nil; resultPoints = nil; resultChosen = nil
     }
@@ -195,6 +196,7 @@ final class BuzzerClient {
         case .question:
             // A new question — render it and clear last round's state entirely.
             prompt = m.prompt; options = m.options ?? []
+            imageURL = m.imageURL.flatMap(URL.init(string:))
             myAnswer = nil; resultCorrect = nil; resultCorrectIndex = nil
             isAnswering = false; lockedOut = false; winnerSeat = nil
             buzzedName = nil; resultName = nil; resultPoints = nil; resultChosen = nil; resultTimedOut = false

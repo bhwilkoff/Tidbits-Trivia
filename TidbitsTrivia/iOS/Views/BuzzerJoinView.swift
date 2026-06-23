@@ -88,6 +88,7 @@ struct BuzzerJoinView: View {
             if let prompt = client.prompt {
                 ScrollView {
                     VStack(spacing: 14) {
+                        if let img = client.imageURL { pictureHeader(img) }
                         Text(prompt).font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(14).chunkyCard(fill: Tidbits.Palette.surface).padding(.trailing, Tidbits.Metric.shadowOffset)
@@ -111,6 +112,27 @@ struct BuzzerJoinView: View {
             }
         }
         .padding(.bottom, 18)
+    }
+
+    /// The image to identify (Picture ID rounds) — `.fit` in a fixed-height
+    /// frame, async with a load fallback (mirrors the Picture ID mode).
+    private func pictureHeader(_ url: URL) -> some View {
+        AsyncImage(url: url, transaction: .init(animation: .easeOut(duration: 0.2))) { phase in
+            switch phase {
+            case .success(let image): image.resizable().aspectRatio(contentMode: .fit)
+            case .failure:
+                VStack(spacing: 6) {
+                    Image(systemName: "photo").font(.system(size: 30, weight: .bold))
+                    Text("Couldn't load the image").font(Tidbits.TypeRamp.l5)
+                }.foregroundStyle(Tidbits.Palette.inkSoft).frame(maxWidth: .infinity)
+            default: ProgressView().frame(maxWidth: .infinity)
+            }
+        }
+        .frame(height: 200).frame(maxWidth: .infinity)
+        .background(Tidbits.Palette.bgDeep)
+        .clipShape(RoundedRectangle(cornerRadius: Tidbits.Metric.radius, style: .continuous))
+        .chunkyCard(fill: Tidbits.Palette.bgDeep)
+        .padding(.trailing, Tidbits.Metric.shadowOffset)
     }
 
     /// An answer option — tappable only when it's your turn (you won the buzz).

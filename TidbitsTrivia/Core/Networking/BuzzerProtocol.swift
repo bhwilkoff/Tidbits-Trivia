@@ -60,6 +60,7 @@ struct BuzzerMessage: Codable, Sendable, Equatable {
     // Question streaming (host → phones) + answering (phone → host).
     var prompt: String?
     var options: [String]?
+    var imageURL: String?      // Picture ID rounds: the image to show on every phone too
     var chosenIndex: Int?      // the buzz-winner's tapped option (phone → host)
     var correctIndex: Int?     // revealed with `result` so phones can highlight the answer
     var correct: Bool?         // whether the winner's answer was right
@@ -86,6 +87,7 @@ struct BuzzerMessage: Codable, Sendable, Equatable {
         players = try c.decodeIfPresent([BuzzerPlayer].self, forKey: .players)
         prompt = try c.decodeIfPresent(String.self, forKey: .prompt)
         options = try c.decodeIfPresent([String].self, forKey: .options)
+        imageURL = try c.decodeIfPresent(String.self, forKey: .imageURL)
         chosenIndex = try c.decodeIfPresent(Int.self, forKey: .chosenIndex)
         correctIndex = try c.decodeIfPresent(Int.self, forKey: .correctIndex)
         correct = try c.decodeIfPresent(Bool.self, forKey: .correct)

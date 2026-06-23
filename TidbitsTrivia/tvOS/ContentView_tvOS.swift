@@ -74,7 +74,12 @@ struct ContentView_tvOS: View {
             // verification — Decision 018). tvOS has no tab bar, so the hook
             // presents the cover instead.
             if DebugHooks.initialTab == .records { showRecords = true }
-            if DebugHooks.openBuzz { buzzLaunch = NightLaunchRequest(plan: .quick, category: .named("mixed")) }
+            if DebugHooks.openBuzz {
+                // Cover every buzzable round type so screenshots exercise each display.
+                let plan = NightPlan(rounds: [NightRound(kind: .pictureId, count: 2), NightRound(kind: .classic, count: 2),
+                                              NightRound(kind: .thisOrThat, count: 2), NightRound(kind: .oddOneOut, count: 2)])
+                buzzLaunch = NightLaunchRequest(plan: plan, category: .named("mixed"))
+            }
         }
     }
 

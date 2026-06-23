@@ -331,7 +331,7 @@ struct BuzzNightView_tvOS: View {
         wrongFeedback = nil
         lastScorerName = nil; lastScorerPoints = 0
         phase = .playing
-        if let q = current { host.broadcastQuestion(prompt: q.prompt, options: q.options, index: index) }
+        if let q = current { host.broadcastQuestion(prompt: q.prompt, options: q.options, imageURL: q.imageURL?.absoluteString, index: index) }
         host.beginQuestion(index: index)
         questionNonce += 1   // (re)start the buzz clock
     }

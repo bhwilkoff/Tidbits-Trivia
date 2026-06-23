@@ -96,9 +96,9 @@ final class BuzzerHost {
     /// Send the active question (prompt + options) to every phone so the players
     /// read along AND the buzz-winner can answer on their own device. Never
     /// includes the correct index — the host judges the submitted answer.
-    func broadcastQuestion(prompt: String, options: [String], index: Int) {
+    func broadcastQuestion(prompt: String, options: [String], imageURL: String?, index: Int) {
         var m = BuzzerMessage(.question)
-        m.prompt = prompt; m.options = options; m.questionIndex = index
+        m.prompt = prompt; m.options = options; m.imageURL = imageURL; m.questionIndex = index
         activeQuestion = m
         broadcast(m)
     }

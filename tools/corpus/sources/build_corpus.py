@@ -319,6 +319,28 @@ def main():
                   "author": ("Who wrote {k}?", "arts"),
                   "composer": ("Who composed {k}?", "music"),
                   "director": ("Who directed {k}?", "screen")}
+    # Scored-media types (P31) where a bare "Who composed The Godfather?" reads as
+    # "who MADE the film" — reword to "Who composed the score for X?". Musical
+    # works (symphonies, songs, operas, musicals) keep the natural "Who composed X?".
+    MEDIA_P31 = {
+        "Q11424",      # film
+        "Q202866",     # animated film
+        "Q24862",      # short film
+        "Q17517379",   # animated short film
+        "Q24856",      # film series
+        "Q13593818",   # film series
+        "Q20650540",   # anime film
+        "Q506240",     # television film
+        "Q5398426",    # television series
+        "Q117467246",  # animated series
+        "Q63952888",   # anime television series
+        "Q1259759",    # miniseries
+        "Q7889",       # video game
+        "Q865493",     # video game series
+        "Q116774927",  # video game compilation
+        "Q112144412",  # online game
+    }
+    p31_of = dict(con.execute("SELECT qid, p31 FROM subject"))
     rel_rows = con.execute("""SELECT qid, label, target_label FROM relation
         WHERE target_label IS NOT NULL AND label IN ('capital','currency','author','composer','director')""").fetchall()
     pools = {}
@@ -345,10 +367,13 @@ def main():
         if len(ds) < 3:
             continue
         prompt_t, rcat = REL_PROMPT[lbl]
+        ptext = prompt_t.format(k=key)
+        if lbl == "composer" and any(x in MEDIA_P31 for x in (p31_of.get(qid) or "").split(",")):
+            ptext = f"Who composed the score for {key}?"
         opts = ds + [tl]
         ci = h % 4
         opts[3], opts[ci] = opts[ci], opts[3]
-        out.append([f"wd:{lbl}:{qid}", prompt_t.format(k=key), opts, ci, rcat,
+        out.append([f"wd:{lbl}:{qid}", ptext, opts, ci, rcat,
                     difficulty(qr_of.get(qid, median_qr)), f"{key} → {tl}", key,
                     f"https://en.wikipedia.org/wiki/{url_title(key)}"])
         made_rel += 1

@@ -19,8 +19,10 @@ struct ContentView_tvOS: View {
     @Environment(AppStore.self) private var store
     @State private var selectedMode: GameMode = .classic
     @State private var launch: LaunchRequest?
+    @State private var nightLaunch: NightLaunchRequest?
     @State private var showRecords = false
     @State private var showSettings = false
+    @State private var showNightSetup = false
     @FocusState private var dailyFocused: Bool
 
     var body: some View {
@@ -30,6 +32,7 @@ struct ContentView_tvOS: View {
                 VStack(alignment: .leading, spacing: 60) {
                     header
                     dailyHero
+                    nightHero
                     modeRow
                     categoryShelf
                 }
@@ -41,17 +44,50 @@ struct ContentView_tvOS: View {
         .fullScreenCover(item: $launch) { req in
             TVGameContainer(mode: req.mode, category: req.category)
         }
+        .fullScreenCover(item: $nightLaunch) { req in
+            TVNightContainer(plan: req.plan, category: req.category)
+        }
+        .fullScreenCover(isPresented: $showNightSetup) {
+            NightSetupView_tvOS { plan, category in
+                nightLaunch = NightLaunchRequest(plan: plan, category: category)
+            }
+        }
         .fullScreenCover(isPresented: $showRecords) { RecordsView_tvOS() }
         .fullScreenCover(isPresented: $showSettings) { SettingsView_tvOS() }
         .task {
-            if launch == nil, let ap = DebugHooks.autoplay {
-                launch = LaunchRequest(mode: ap.mode, category: ap.category)
+            if launch == nil, nightLaunch == nil, let ap = DebugHooks.autoplay {
+                // Trivia Night needs a plan, not a bare category — autoplay it with
+                // a quick preset so screenshots/CI can drive the whole night.
+                if ap.mode == .barTrivia {
+                    nightLaunch = NightLaunchRequest(plan: .quick, category: ap.category)
+                } else {
+                    launch = LaunchRequest(mode: ap.mode, category: ap.category)
+                }
             }
             // TIDBITS_TAB=records opens Records straight away (screenshots /
             // verification — Decision 018). tvOS has no tab bar, so the hook
             // presents the cover instead.
             if DebugHooks.initialTab == .records { showRecords = true }
         }
+    }
+
+    private var nightHero: some View {
+        Button { showNightSetup = true } label: {
+            HStack(spacing: 28) {
+                Image(systemName: "party.popper.fill").font(.system(size: 56, weight: .black))
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("TRIVIA NIGHT").font(.system(size: 40, weight: .black, design: .rounded))
+                    Text("Host a night of mixed rounds — every kind of question.")
+                        .font(.system(size: 29, weight: .medium, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.85))
+                }
+                Spacer()
+            }
+            .foregroundStyle(.white)
+            .padding(40)
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(TVNightHeroStyle())
     }
 
     private var header: some View {
@@ -112,7 +148,7 @@ struct ContentView_tvOS: View {
             // entire UI then renders oversized. Same pattern as categoryShelf.
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 30) {
-                    ForEach(GameMode.allCases.filter { $0 != .daily }) { mode in
+                    ForEach(GameMode.allCases.filter { $0 != .daily && $0 != .barTrivia }) { mode in
                         Button { selectedMode = mode } label: {
                             VStack(spacing: 10) {
                                 Image(systemName: mode.symbol).font(.system(size: 34, weight: .black))
@@ -173,6 +209,24 @@ struct TVHeroStyle: ButtonStyle {
                 .background(RoundedRectangle(cornerRadius: 28).fill(Tidbits.Palette.yellow))
                 .scaleEffect(focused ? 1.04 : 1.0)
                 .shadow(color: .black.opacity(focused ? 0.5 : 0), radius: 24, y: 10)
+                .animation(.easeOut(duration: 0.18), value: focused)
+        }
+    }
+}
+
+/// The Trivia Night hero — coral, white-on-dark, lit on focus (a darker tile so
+/// the white text stays legible, unlike the bright-yellow Daily hero).
+struct TVNightHeroStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View { Inner(configuration: configuration) }
+    struct Inner: View {
+        let configuration: Configuration
+        @Environment(\.isFocused) private var focused
+        var body: some View {
+            configuration.label
+                .background(RoundedRectangle(cornerRadius: 28).fill(Tidbits.Palette.coral.gradient))
+                .overlay(RoundedRectangle(cornerRadius: 28).strokeBorder(.white.opacity(focused ? 0.9 : 0), lineWidth: 5))
+                .scaleEffect(focused ? 1.03 : 1.0)
+                .shadow(color: Tidbits.Palette.coral.opacity(focused ? 0.6 : 0), radius: 30, y: 12)
                 .animation(.easeOut(duration: 0.18), value: focused)
         }
     }

@@ -16,6 +16,7 @@ struct GamePlayView: View {
             if let q = game.current {
                 ScrollView {
                     VStack(spacing: 18) {
+                        if game.mode == .barTrivia, let round = game.currentRound { roundBanner(round) }
                         if let img = q.imageURL { pictureHeader(img) }
                         QuestionCard(question: q)
                         if game.mode == .sweep { sweepGrid }
@@ -50,11 +51,12 @@ struct GamePlayView: View {
                 try? await Task.sleep(for: .seconds(0.9))
                 switch game.phase {
                 case .playing:
-                    if game.mode == .closestCall { game.submitGuess(); break }
-                    if game.mode == .ordering { game.submitOrder(); break }
-                    if game.mode == .matching { game.submitMatch(); break }
-                    if game.mode == .typeAnswer { game.typedText = game.current?.correctAnswer ?? ""; game.submitText(); break }
-                    if game.mode == .enumerate {
+                    // Shape-driven so it also drives a Trivia Night (mixed shapes).
+                    if game.current?.closest != nil { game.submitGuess(); break }
+                    if game.current?.ordering != nil { game.submitOrder(); break }
+                    if game.current?.matching != nil { game.submitMatch(); break }
+                    if game.current?.accepted != nil { game.typedText = game.current?.correctAnswer ?? ""; game.submitText(); break }
+                    if game.current?.enumerate != nil {
                         let names = game.current?.enumerate?.displayNames ?? []
                         if game.enumNamed.count < 3, names.indices.contains(game.enumNamed.count) {
                             game.submitEnumGuess(names[game.enumNamed.count])
@@ -90,7 +92,7 @@ struct GamePlayView: View {
                 ScorePill(score: game.score)
             }
             ClockBar(remaining: game.remaining,
-                     budget: game.mode.perQuestionSeconds ?? game.mode.globalClockSeconds ?? 30,
+                     budget: game.displayClockBudget,
                      tint: game.mode.accent,
                      label: progressLabel)
         }
@@ -104,6 +106,40 @@ struct GamePlayView: View {
         case .timeAttack, .survival: return "#\(game.index + 1)"
         default: return "\(game.index + 1) / \(game.questions.count)"
         }
+    }
+
+    // MARK: Trivia Night round banner
+
+    /// The "ROUND 2 of 5 · PICTURE ROUND" chapter marker — the round is the unit
+    /// of pacing in a real pub quiz; one dot per round, the current one filled.
+    private func roundBanner(_ round: NightRound) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: round.symbol)
+                .font(.system(size: 16, weight: .black))
+                .foregroundStyle(game.mode.accent.legibleForeground)
+                .frame(width: 38, height: 38)
+                .background(Circle().fill(game.mode.accent))
+                .overlay(Circle().strokeBorder(Tidbits.Palette.border, lineWidth: 2.5))
+            VStack(alignment: .leading, spacing: 2) {
+                Text("ROUND \(game.currentRoundNumber) OF \(game.roundCount)")
+                    .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                Text(round.title.uppercased())
+                    .font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+            }
+            Spacer()
+            HStack(spacing: 5) {
+                ForEach(0..<game.roundCount, id: \.self) { i in
+                    Circle()
+                        .fill(i == game.currentRoundNumber - 1 ? game.mode.accent : Tidbits.Palette.surface)
+                        .frame(width: 9, height: 9)
+                        .overlay(Circle().strokeBorder(Tidbits.Palette.border, lineWidth: 1.5))
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .chunkyCard(fill: Tidbits.Palette.bgDeep)
+        .padding(.trailing, Tidbits.Metric.shadowOffset)
     }
 
     // MARK: Answers
@@ -466,6 +502,10 @@ struct GamePlayView: View {
                     .foregroundStyle(Tidbits.Palette.ink.opacity(0.85))
                     .fixedSize(horizontal: false, vertical: true)
             }
+            if game.mode == .barTrivia, let next = game.nextRoundAfterCurrent {
+                Label("Round \(game.currentRoundNumber) complete · up next: \(next.title)", systemImage: "flag.checkered")
+                    .font(Tidbits.TypeRamp.l5).foregroundStyle(game.mode.accent)
+            }
             if let url = q.sourceURL {
                 Link(destination: url) {
                     Label("Read \(q.sourceTitle) on Wikipedia", systemImage: "arrow.up.right.square")
@@ -483,7 +523,8 @@ struct GamePlayView: View {
 
     private var nextBar: some View {
         Button(action: { game.advance() }) {
-            Text(isLast ? "See Results" : "Next")
+            Text(isLast ? "See Results"
+                 : (game.nextRoundAfterCurrent.map { "Start \($0.title)" } ?? "Next"))
         }
         .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.ink, textColor: .white))
         .padding(.horizontal, Tidbits.Metric.pad)
@@ -492,7 +533,7 @@ struct GamePlayView: View {
     }
 
     private var isLast: Bool {
-        (game.mode == .classic || game.mode == .daily || game.mode == .stake || game.mode == .sweep || game.mode == .pictureId || game.mode == .thisOrThat || game.mode == .closestCall || game.mode == .ordering || game.mode == .matching || game.mode == .typeAnswer || game.mode == .oddOneOut || game.mode == .ladder || game.mode == .enumerate) && game.index + 1 >= game.questions.count
+        game.mode != .timeAttack && game.mode != .survival && game.index + 1 >= game.questions.count
     }
 }
 

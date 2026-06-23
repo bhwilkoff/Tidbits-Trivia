@@ -20,6 +20,9 @@ final class GameEngine {
     // Configuration
     private(set) var mode: GameMode = .classic
     private(set) var category: TriviaCategory = .named("mixed")
+    /// Trivia Night plan (bar-trivia mode only) — the rounds being played, so the
+    /// UI can show round headers / end-of-round beats. nil in every other mode.
+    private(set) var nightPlan: NightPlan? = nil
 
     // Live state
     private(set) var phase: Phase = .idle
@@ -79,6 +82,34 @@ final class GameEngine {
     var loadFailed: Bool { phase == .idle && questions.isEmpty && triedLoad }
     private var triedLoad = false
 
+    // MARK: Trivia Night helpers (bar-trivia mode)
+
+    /// The round the current question belongs to (nil outside Trivia Night).
+    var currentRound: NightRound? {
+        guard let plan = nightPlan, let ri = current?.roundIndex,
+              plan.rounds.indices.contains(ri) else { return nil }
+        return plan.rounds[ri]
+    }
+    var currentRoundNumber: Int { (current?.roundIndex ?? 0) + 1 }
+    var roundCount: Int { nightPlan?.rounds.count ?? 0 }
+
+    /// If the current question is the LAST of its round, the round coming next —
+    /// drives the "Round N done · up next: …" end-of-round beat. nil otherwise.
+    var nextRoundAfterCurrent: NightRound? {
+        guard let plan = nightPlan, let ri = current?.roundIndex else { return nil }
+        let nextIdx = index + 1
+        guard questions.indices.contains(nextIdx), let nextRi = questions[nextIdx].roundIndex,
+              nextRi != ri, plan.rounds.indices.contains(nextRi) else { return nil }
+        return plan.rounds[nextRi]
+    }
+
+    /// The clock budget to DISPLAY for the current question — shape-derived for a
+    /// Trivia Night (which mixes shapes), the flat per-mode value otherwise.
+    var displayClockBudget: Double {
+        if mode == .barTrivia { return Self.shapeBudget(current) }
+        return mode.perQuestionSeconds ?? mode.globalClockSeconds ?? 30
+    }
+
     // MARK: Lifecycle
 
     func start(mode: GameMode, category: TriviaCategory, review: [Question] = []) async {
@@ -114,7 +145,25 @@ final class GameEngine {
         beginQuestion()
     }
 
+    /// Start a configurable Trivia Night ("bar trivia") from a pre-built,
+    /// round-tagged mixed question list (see `QuestionProvider.nightQuestions`).
+    /// Runs through the same shape-routing loop as every other mode — a night is
+    /// just a question stream whose shapes change round to round.
+    func startNight(plan: NightPlan, category: TriviaCategory, questions: [Question]) {
+        self.mode = .barTrivia
+        self.category = category
+        phase = .loading
+        triedLoad = true
+        reset()
+        self.nightPlan = plan
+        self.questions = questions
+        QuestionProvider.shared.markSeen(questions.map(\.id))
+        guard !questions.isEmpty else { phase = .idle; return }
+        beginQuestion()
+    }
+
     private func reset() {
+        nightPlan = nil
         index = 0; score = 0; streak = 0; maxStreak = 0
         answered = []; lastAnswer = nil; chosenIndex = nil; globalDeadline = nil
         stakeTiers = mode == .stake
@@ -152,9 +201,26 @@ final class GameEngine {
         if current?.enumerate != nil { enumFilled = []; enumNamed = []; enumLastHit = false; typedText = "" }
         phase = .playing
         questionStart = .now
-        clockBudget = mode.perQuestionSeconds ?? (globalRemaining() ?? 30)
-        remaining = activeBudget()
+        // Trivia Night mixes shapes within one run, so the clock comes from the
+        // current question's SHAPE, not a single per-mode value.
+        clockBudget = mode == .barTrivia
+            ? Self.shapeBudget(current)
+            : (mode.perQuestionSeconds ?? (globalRemaining() ?? 30))
+        remaining = globalRemaining() ?? clockBudget
         startTicker()
+    }
+
+    /// Per-question time budget for a Trivia Night, by the question's shape —
+    /// estimation/ordering/matching/enumeration deserve longer than a snap MCQ.
+    static func shapeBudget(_ q: Question?) -> Double {
+        guard let q else { return 25 }
+        if q.enumerate != nil { return 60 }
+        if q.matching != nil { return 40 }
+        if q.ordering != nil { return 35 }
+        if q.closest != nil { return 25 }
+        if q.accepted != nil { return 25 }
+        if q.imageURL != nil { return 22 }
+        return 20
     }
 
     private func activeBudget() -> Double {
@@ -189,14 +255,15 @@ final class GameEngine {
             let elapsed = Date().timeIntervalSince(questionStart)
             remaining = max(0, clockBudget - elapsed)
             if remaining <= 0 {
-                switch mode {
-                case .closestCall: submitGuess()
-                case .ordering: submitOrder()
-                case .matching: submitMatch()
-                case .typeAnswer: submitText()
-                case .enumerate: finishEnum()
-                default: submit(nil)
-                }
+                // Dispatch the timeout by the question's SHAPE, not the mode, so
+                // a Trivia Night (which mixes shapes) times out each question
+                // correctly. Single-shape modes resolve identically.
+                if current?.closest != nil { submitGuess() }
+                else if current?.ordering != nil { submitOrder() }
+                else if current?.matching != nil { submitMatch() }
+                else if current?.accepted != nil { submitText() }
+                else if current?.enumerate != nil { finishEnum() }
+                else { submit(nil) }
             }
         }
     }
@@ -221,7 +288,7 @@ final class GameEngine {
 
     /// Move the estimate slider (Closest Call). Clamped to the question's domain.
     func setGuess(_ value: Double) {
-        guard mode == .closestCall, phase == .playing, let spec = current?.closest else { return }
+        guard phase == .playing, let spec = current?.closest else { return }
         currentGuess = Swift.min(spec.max, Swift.max(spec.min, value))
     }
 
@@ -259,7 +326,7 @@ final class GameEngine {
 
     /// Move an item up (toward the top) or down in the working arrangement.
     func moveOrderItem(_ index: Int, up: Bool) {
-        guard mode == .ordering, phase == .playing, currentOrder.indices.contains(index) else { return }
+        guard phase == .playing, current?.ordering != nil, currentOrder.indices.contains(index) else { return }
         let target = up ? index - 1 : index + 1
         guard currentOrder.indices.contains(target) else { return }
         currentOrder.swapAt(index, target)
@@ -294,14 +361,14 @@ final class GameEngine {
 
     /// Tap a key (left column) to select it; the next value tap links to it.
     func selectMatchKey(_ keyIndex: Int) {
-        guard mode == .matching, phase == .playing else { return }
+        guard phase == .playing, current?.matching != nil else { return }
         matchSelectedKey = (matchSelectedKey == keyIndex) ? nil : keyIndex
     }
 
     /// Tap a value (right column) — links it to the selected key (1:1: clears the
     /// value from any other key, and the key's prior value).
     func assignMatchValue(_ valueIndex: Int) {
-        guard mode == .matching, phase == .playing, let key = matchSelectedKey,
+        guard phase == .playing, current?.matching != nil, let key = matchSelectedKey,
               matchAssign.indices.contains(key) else { return }
         for i in matchAssign.indices where matchAssign[i] == valueIndex { matchAssign[i] = nil }
         matchAssign[key] = valueIndex
@@ -338,14 +405,14 @@ final class GameEngine {
 
     /// Submit the typed input (iOS/web/Android) — matched against the accepted set.
     func submitText() {
-        guard mode == .typeAnswer, let q = current, let acc = q.accepted else { return }
+        guard let q = current, let acc = q.accepted else { return }
         resolveTyped(correct: Self.matchesAccepted(typedText, acc))
     }
 
     /// tvOS self-mark (text entry is a keyboard wall there): the player recalls,
     /// reveals, and honestly reports — active recall without typing.
     func markTyped(correct: Bool) {
-        guard mode == .typeAnswer else { return }
+        guard current?.accepted != nil else { return }
         resolveTyped(correct: correct)
     }
 
@@ -375,7 +442,7 @@ final class GameEngine {
     /// whether it matched. Already-found or wrong inputs are no-ops.
     @discardableResult
     func submitEnumGuess(_ text: String) -> Bool {
-        guard mode == .enumerate, phase == .playing, let spec = current?.enumerate else { return false }
+        guard phase == .playing, let spec = current?.enumerate else { return false }
         typedText = ""
         let n = Self.normalizeType(text)
         guard !n.isEmpty else { enumLastHit = false; return false }
@@ -399,7 +466,7 @@ final class GameEngine {
     /// feet), then reports how many they could name. Mirrors the type-answer
     /// fallback — honesty-based, the way flashcards are.
     func selfMarkEnum(_ count: Int) {
-        guard mode == .enumerate, phase == .playing, let spec = current?.enumerate else { return }
+        guard phase == .playing, let spec = current?.enumerate else { return }
         let c = Swift.min(Swift.max(0, count), spec.groups.count)
         enumFilled = Set(0..<c)
         enumNamed = spec.displayNames.prefix(c).map { $0 }
@@ -409,7 +476,7 @@ final class GameEngine {
 
     /// Finalize the current puzzle (timeout, all-found, or self-mark) and reveal.
     func finishEnum() {
-        guard mode == .enumerate, phase == .playing, let q = current, let spec = q.enumerate else { return }
+        guard phase == .playing, let q = current, let spec = q.enumerate else { return }
         ticker?.cancel()
         let got = enumFilled.count
         // Synthetic chosenIndex for the emoji grid / records: a "hit" if you

@@ -36,3 +36,11 @@ nonisolated struct LaunchRequest: Identifiable, Sendable {
     let category: TriviaCategory
     var id: String { "\(mode.rawValue)-\(category.id)" }
 }
+
+/// A request to launch a configured Trivia Night — drives a `fullScreenCover(item:)`
+/// from the iOS and tvOS home screens. Shared so both platforms use one shape.
+struct NightLaunchRequest: Identifiable, Sendable {
+    let id = UUID()
+    let plan: NightPlan
+    let category: TriviaCategory
+}

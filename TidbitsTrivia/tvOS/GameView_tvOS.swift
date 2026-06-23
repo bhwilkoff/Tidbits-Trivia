@@ -81,6 +81,7 @@ struct TVGamePlayView: View {
         VStack(alignment: .leading, spacing: 40) {
             hud
             if let q = game.current {
+                if game.mode == .barTrivia, let round = game.currentRound { roundBanner(round) }
                 Text(TriviaCategory.named(q.categoryID).name.uppercased())
                     .font(.system(size: 25, weight: .bold, design: .rounded))
                     .foregroundStyle(TriviaCategory.named(q.categoryID).color)
@@ -136,11 +137,12 @@ struct TVGamePlayView: View {
                 try? await Task.sleep(for: .seconds(0.9))
                 switch game.phase {
                 case .playing:
-                    if game.mode == .enumerate { game.selfMarkEnum(3); break }
-                    if game.mode == .typeAnswer { game.markTyped(correct: true); break }
-                    if game.mode == .matching { game.submitMatch(); break }
-                    if game.mode == .ordering { game.submitOrder(); break }
-                    if game.mode == .closestCall { game.submitGuess(); break }
+                    // Shape-driven so it also drives a Trivia Night (mixed shapes).
+                    if game.current?.enumerate != nil { game.selfMarkEnum(3); break }
+                    if game.current?.accepted != nil { game.markTyped(correct: true); break }
+                    if game.current?.matching != nil { game.submitMatch(); break }
+                    if game.current?.ordering != nil { game.submitOrder(); break }
+                    if game.current?.closest != nil { game.submitGuess(); break }
                     if game.mode == .stake && game.currentStake == 0,
                        let tier = game.stakeTiers.first(where: { $0.remaining > 0 }) { game.setStake(tier.value) }
                     game.submit(0)
@@ -409,8 +411,29 @@ struct TVGamePlayView: View {
         }
     }
     private var clockFraction: Double {
-        let budget = game.mode.perQuestionSeconds ?? game.mode.globalClockSeconds ?? 30
+        let budget = game.displayClockBudget
         return budget <= 0 ? 0 : max(0, min(1, game.remaining / budget))
+    }
+
+    /// Ten-foot Trivia Night chapter marker — "ROUND 2 / 5 · PICTURE ROUND".
+    private func roundBanner(_ round: NightRound) -> some View {
+        HStack(spacing: 20) {
+            Image(systemName: round.symbol).font(.system(size: 30, weight: .black))
+                .foregroundStyle(game.mode.accent)
+            Text("ROUND \(game.currentRoundNumber) / \(game.roundCount)")
+                .font(.system(size: 27, weight: .black, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+            Text(round.title.uppercased())
+                .font(.system(size: 31, weight: .heavy, design: .rounded)).foregroundStyle(.white)
+            Spacer()
+            HStack(spacing: 8) {
+                ForEach(0..<game.roundCount, id: \.self) { i in
+                    Circle().fill(i == game.currentRoundNumber - 1 ? game.mode.accent : Color.white.opacity(0.18))
+                        .frame(width: 16, height: 16)
+                }
+            }
+        }
+        .padding(.horizontal, 28).padding(.vertical, 18)
+        .background(RoundedRectangle(cornerRadius: 18).fill(TVTheme.panel))
     }
     private func state(_ idx: Int, _ q: Question) -> TVAnswerStyle.State {
         guard game.phase == .reveal else { return .idle }
@@ -444,7 +467,11 @@ struct TVGamePlayView: View {
                 Text(q.explanation).font(.system(size: 27, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            Button(isLast ? "See Results" : "Next") { game.advance() }
+            if game.mode == .barTrivia, let next = game.nextRoundAfterCurrent {
+                Label("Round \(game.currentRoundNumber) complete · up next: \(next.title)", systemImage: "flag.checkered")
+                    .font(.system(size: 25, weight: .bold, design: .rounded)).foregroundStyle(game.mode.accent)
+            }
+            Button(isLast ? "See Results" : (game.nextRoundAfterCurrent.map { "Start \($0.title)" } ?? "Next")) { game.advance() }
                 .buttonStyle(TVChipStyle(accent: Tidbits.Palette.blue, selected: false))
                 .focused($focus, equals: .next)
                 .padding(.top, 8)
@@ -454,7 +481,7 @@ struct TVGamePlayView: View {
         .background(RoundedRectangle(cornerRadius: 22).fill(TVTheme.panel))
     }
     private var isLast: Bool {
-        (game.mode == .classic || game.mode == .daily || game.mode == .stake || game.mode == .sweep || game.mode == .pictureId || game.mode == .thisOrThat || game.mode == .closestCall || game.mode == .ordering || game.mode == .matching || game.mode == .typeAnswer || game.mode == .oddOneOut || game.mode == .ladder || game.mode == .enumerate) && game.index + 1 >= game.questions.count
+        game.mode != .timeAttack && game.mode != .survival && game.index + 1 >= game.questions.count
     }
 }
 

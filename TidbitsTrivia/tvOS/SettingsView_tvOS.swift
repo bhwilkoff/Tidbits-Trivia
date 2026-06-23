@@ -21,8 +21,12 @@ struct SettingsView_tvOS: View {
     }
 
     var body: some View {
-        NavigationStack {
-            Form {
+        ZStack {
+            // The Form is transparent in a tvOS fullScreenCover — back it with the
+            // opaque dark-first background so the home screen doesn't bleed through.
+            TVTheme.bg.ignoresSafeArea()
+            NavigationStack {
+                Form {
                 Section {
                     Toggle("Review questions", isOn: $reviewEnabled)
                 } header: {
@@ -47,13 +51,14 @@ struct SettingsView_tvOS: View {
                     Text("Questions from Wikipedia, available under CC BY-SA. Tidbits is a learning game — every question is a door to learn more.")
                         .foregroundStyle(.secondary)
                 }
-            }
-            .navigationTitle("Settings")
-            .confirmationDialog("Reset all records?", isPresented: $confirmReset, titleVisibility: .visible) {
-                Button("Reset Everything", role: .destructive) { resetAll() }
-                Button("Cancel", role: .cancel) {}
-            } message: {
-                Text("This permanently deletes your scores, streaks, and review list.")
+                }
+                .navigationTitle("Settings")
+                .confirmationDialog("Reset all records?", isPresented: $confirmReset, titleVisibility: .visible) {
+                    Button("Reset Everything", role: .destructive) { resetAll() }
+                    Button("Cancel", role: .cancel) {}
+                } message: {
+                    Text("This permanently deletes your scores, streaks, and review list.")
+                }
             }
         }
         .onExitCommand { dismiss() }

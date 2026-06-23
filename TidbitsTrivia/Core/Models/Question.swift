@@ -21,6 +21,7 @@ nonisolated struct Question: Identifiable, Hashable, Codable, Sendable {
     var matching: MatchSpec? = nil    // Matching (Q5): keys ↔ correct values
     var accepted: [String]? = nil     // Type-the-answer (Q6): accepted free-text answers
     var enumerate: EnumSpec? = nil    // Enumeration (Q8): name as many of a set as you can
+    var roundIndex: Int? = nil        // Trivia Night: which round of the night this belongs to (set at runtime)
 
     var correctAnswer: String {
         if options.indices.contains(correctIndex) { return options[correctIndex] }

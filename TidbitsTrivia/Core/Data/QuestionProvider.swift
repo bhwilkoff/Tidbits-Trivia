@@ -91,6 +91,51 @@ final class QuestionProvider {
         return Array(pulled.prefix(need))
     }
 
+    /// Build a Trivia Night ("bar trivia") question stream from a plan: for each
+    /// round, pull `count` questions of that round's TYPE (reusing the same
+    /// per-type sourcing the standard game uses), tag them with the round index,
+    /// and concatenate. The mixed list runs through the shape-routing engine, so
+    /// one night naturally exercises every question type (the whole point).
+    func nightQuestions(plan: NightPlan, category: TriviaCategory) async -> [Question] {
+        var all: [Question] = []
+        var picked = Set<String>()   // avoid intra-night repeats across rounds
+        for (ri, round) in plan.rounds.enumerated() {
+            let qs = await sourced(type: round.kind, category: category,
+                                   count: round.count, excluding: seen.union(picked))
+            for var q in qs {
+                q.roundIndex = ri
+                all.append(q)
+                picked.insert(q.id)
+            }
+        }
+        markSeen(all.map(\.id))
+        return all
+    }
+
+    /// Source `count` questions of one TYPE, the same way `questions(mode:)`
+    /// does per mode — factored out so the night builder reuses it exactly.
+    private func sourced(type: GameMode, category: TriviaCategory, count: Int, excluding: Set<String>) async -> [Question] {
+        switch type {
+        case .pictureId:   return JSONQuestionSource.picture.questions(categoryID: category.id, excluding: excluding, limit: count)
+        case .thisOrThat:  return JSONQuestionSource.thisOrThat.questions(categoryID: category.id, excluding: excluding, limit: count)
+        case .closestCall: return JSONQuestionSource.closestCall.questions(categoryID: category.id, excluding: excluding, limit: count)
+        case .ordering:    return JSONQuestionSource.ordering.questions(categoryID: category.id, excluding: excluding, limit: count)
+        case .matching:    return JSONQuestionSource.matching.questions(categoryID: category.id, excluding: excluding, limit: count)
+        case .typeAnswer:  return JSONQuestionSource.typeAnswer.questions(categoryID: category.id, excluding: excluding, limit: count)
+        case .oddOneOut:   return JSONQuestionSource.oddOneOut.questions(categoryID: "mixed", excluding: excluding, limit: count)
+        case .enumerate:   return JSONQuestionSource.enumerate.questions(categoryID: "mixed", excluding: [], limit: count)
+        default:
+            // General-knowledge MCQ round — corpus first (offline), live top-up if thin.
+            var pulled = CorpusDatabase.shared.questions(categoryID: category.id, excluding: excluding, limit: count)
+            if pulled.count < count {
+                let topic = category.id == "mixed" ? "popular" : category.name
+                let live = await liveQuestions(topic: topic, category: category, count: count - pulled.count)
+                pulled.append(contentsOf: live)
+            }
+            return Array(pulled.prefix(count))
+        }
+    }
+
     /// A fixed-size question set for a party game — the SAME questions for
     /// every player (fairness), pulled once and marked seen.
     func questions(category: TriviaCategory, count: Int) async -> [Question] {

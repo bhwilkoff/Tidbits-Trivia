@@ -7,6 +7,8 @@ struct HomeView: View {
     @State private var launch: LaunchRequest?
     @State private var showParty = false
     @State private var showSettings = false
+    @State private var showNightSetup = false
+    @State private var nightLaunch: NightLaunchRequest?
     @AppStorage("tidbits.hasOnboarded") private var hasOnboarded = false
 
     private let columns = [GridItem(.flexible(), spacing: 14), GridItem(.flexible(), spacing: 14)]
@@ -21,6 +23,7 @@ struct HomeView: View {
             VStack(alignment: .leading, spacing: 22) {
                 header
                 DailyCard { launch = LaunchRequest(mode: .daily, category: .named("mixed")) }
+                TriviaNightCard { showNightSetup = true }
                 PartyCard { showParty = true }
                 modePicker
                 categoriesSection
@@ -39,7 +42,15 @@ struct HomeView: View {
         .fullScreenCover(item: $launch) { req in
             GameContainerView(mode: req.mode, category: req.category)
         }
+        .fullScreenCover(item: $nightLaunch) { req in
+            NightContainerView(plan: req.plan, category: req.category)
+        }
         .fullScreenCover(isPresented: $showParty) { PartyContainerView() }
+        .sheet(isPresented: $showNightSetup) {
+            NightSetupView { plan, category in
+                nightLaunch = NightLaunchRequest(plan: plan, category: category)
+            }
+        }
         .sheet(isPresented: $showSettings) { SettingsView() }
         .fullScreenCover(isPresented: showOnboarding) {
             OnboardingView { hasOnboarded = true }
@@ -74,7 +85,7 @@ struct HomeView: View {
                 .foregroundStyle(Tidbits.Palette.ink)
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
-                    ForEach(GameMode.allCases.filter { $0 != .daily }) { mode in
+                    ForEach(GameMode.allCases.filter { $0 != .daily && $0 != .barTrivia }) { mode in
                         ModeChip(mode: mode, selected: selectedMode == mode) {
                             selectedMode = mode
                         }
@@ -160,6 +171,38 @@ private struct PartyCard: View {
             }
             .padding(18)
             .chunkyCard(fill: Tidbits.Palette.grape)
+        }
+        .buttonStyle(.plain)
+        .padding(.trailing, Tidbits.Metric.shadowOffset)
+    }
+}
+
+// MARK: - Trivia Night card
+
+private struct TriviaNightCard: View {
+    let action: () -> Void
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 14) {
+                Image(systemName: "party.popper.fill")
+                    .font(.system(size: 30, weight: .black))
+                    .foregroundStyle(Tidbits.Palette.coral.legibleForeground)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("TRIVIA NIGHT")
+                        .font(Tidbits.TypeRamp.l2)
+                        .foregroundStyle(Tidbits.Palette.coral.legibleForeground)
+                    Text("Host a night of mixed rounds — every kind of question.")
+                        .font(Tidbits.TypeRamp.l5)
+                        .foregroundStyle(Tidbits.Palette.coral.legibleForeground.opacity(0.85))
+                        .multilineTextAlignment(.leading)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right.circle.fill")
+                    .font(.system(size: 26, weight: .bold))
+                    .foregroundStyle(Tidbits.Palette.coral.legibleForeground)
+            }
+            .padding(18)
+            .chunkyCard(fill: Tidbits.Palette.coral)
         }
         .buttonStyle(.plain)
         .padding(.trailing, Tidbits.Metric.shadowOffset)

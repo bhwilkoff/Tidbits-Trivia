@@ -18,9 +18,26 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
     case oddOneOut   // which doesn't belong — plain MCQ, outlier is the answer
     case ladder      // questions climb easy→hard (F3 derived difficulty)
     case enumerate   // name as many of a set as you can in 60s; tvOS self-marks
+    case barTrivia   // Trivia Night: a configurable multi-round "bar trivia" night
     case daily       // one fixed daily set, streak-bearing, shareable
 
     var id: String { rawValue }
+
+    /// The round title when this mode is used as a Trivia Night round type.
+    var nightRoundTitle: String {
+        switch self {
+        case .classic:    return "General Knowledge"
+        case .pictureId:  return "Picture Round"
+        case .thisOrThat: return "Which Came First?"
+        case .closestCall: return "Closest Wins"
+        case .ordering:   return "Put Them In Order"
+        case .matching:   return "Match-Up"
+        case .typeAnswer: return "Name It"
+        case .oddOneOut:  return "Odd One Out"
+        case .enumerate:  return "Name As Many"
+        default:          return title
+        }
+    }
 
     var title: String {
         switch self {
@@ -38,6 +55,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .oddOneOut:  return "Odd One Out"
         case .ladder:     return "Ladder"
         case .enumerate:  return "Name as Many"
+        case .barTrivia:  return "Trivia Night"
         case .daily:      return "Daily Tidbit"
         }
     }
@@ -58,6 +76,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .oddOneOut:  return "Which doesn't belong?"
         case .ladder:     return "Climb from easy to hard."
         case .enumerate:  return "How many can you name?"
+        case .barTrivia:  return "Host a night. Every kind of round."
         case .daily:      return "Everyone's puzzle. Keep your streak."
         }
     }
@@ -78,6 +97,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .oddOneOut:  return "questionmark.diamond.fill"
         case .ladder:     return "chart.line.uptrend.xyaxis"
         case .enumerate:  return "list.bullet.rectangle.fill"
+        case .barTrivia:  return "party.popper.fill"
         case .daily:      return "sun.max.fill"
         }
     }
@@ -98,6 +118,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .oddOneOut:  return Tidbits.Palette.grape
         case .ladder:     return Tidbits.Palette.coral
         case .enumerate:  return Tidbits.Palette.teal
+        case .barTrivia:  return Tidbits.Palette.coral
         case .daily:      return Tidbits.Palette.yellow
         }
     }
@@ -119,6 +140,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .oddOneOut:  return 20
         case .ladder:     return 20
         case .enumerate:  return 60    // the whole point: name as many as you can in 60s
+        case .barTrivia:  return 20    // nominal — the engine picks a per-round clock by question shape
         case .daily:      return 30
         }
     }
@@ -139,6 +161,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable {
         case .oddOneOut:  return 8
         case .ladder:     return 10
         case .enumerate:  return 3     // three list puzzles per round, 60s each
+        case .barTrivia:  return 20    // nominal — the plan's rounds determine the real count
         case .daily:      return 7
         }
     }

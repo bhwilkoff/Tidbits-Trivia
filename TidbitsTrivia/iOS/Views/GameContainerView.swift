@@ -69,8 +69,7 @@ struct GameContainerView: View {
     private func persistIfNeeded() {
         guard !recorded else { return }
         recorded = true
-        RecordsStore.record(game.summary, in: modelContext)
-        if mode == .classic { GameCenterManager.shared.submit(game.summary.score, to: GameCenterManager.Leaderboard.classicHigh) }
+        RecordsStore.record(game.summary, in: modelContext)   // also submits to Game Center
     }
 
     private func replay() {

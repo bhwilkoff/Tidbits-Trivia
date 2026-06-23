@@ -2,7 +2,7 @@
 // Apple AppStore + GameEngine + views. Vanilla JS, no framework, no build.
 
 import { Corpus, Pictures, ThisOrThat, ClosestCall, Ordering, Matching, TypeAnswer, OddOneOut, Enumerate, Difficulty, matchesAccepted, Wikipedia } from './api.js';
-import { Store, CATEGORIES, catColor, catById, MODES, STAKE_BUDGET, dayKey, APP_STORES } from './store.js';
+import { Store, CATEGORIES, catColor, catById, MODES, NIGHT, STAKE_BUDGET, dayKey, APP_STORES } from './store.js';
 import { Scoring } from './engine.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -24,6 +24,14 @@ async function boot() {
   try { await Corpus.load(); } catch (e) { /* live fallback still works */ }
   if (!location.hash) location.hash = '#/play';
   if (location.hash.startsWith('#/daily')) { render(); startGame('daily', catById('mixed')); return; }
+  // Shareable Trivia Night deep links: #/night (Pub) or #/night/quick|works.
+  if (location.hash.startsWith('#/night')) {
+    render();
+    const key = location.hash.split('/')[2] || 'pub';
+    const idx = { quick: 0, pub: 1, works: 2 }[key] ?? 1;
+    startGame('barTrivia', catById('mixed'), { nightPlan: { rounds: NIGHT.presets[idx].rounds }, label: NIGHT.presets[idx].name });
+    return;
+  }
   render();
 }
 
@@ -71,6 +79,24 @@ function viewHome() {
     <h1 class="page-title">Trivia from the whole of Wikipedia.</h1>
     <button class="banner card daily" data-daily><div><div class="banner-title">DAILY TIDBIT</div>
       <div class="muted">7 questions. Everyone gets the same set. Keep your streak.</div></div><span class="chev">›</span></button>
+    <button class="banner card night-banner-cta" data-night-open><div><div class="banner-title">TRIVIA NIGHT</div>
+      <div class="muted">Host a night of mixed rounds — every kind of question.</div></div><span class="chev">›</span></button>
+    <dialog id="night-dlg" class="night-dlg">
+      <div class="night-form">
+        <h2>Trivia Night</h2>
+        <p class="muted">A night of mixed rounds — every kind of question. Each answer ends on a fact to learn.</p>
+        <div class="night-presets">
+          ${NIGHT.presets.map((p, i) => `<button type="button" class="night-preset${i === 1 ? ' on' : ''}" data-preset="${i}"><b>${h(p.name)}</b><span class="muted">${h(p.blurb)}</span></button>`).join('')}
+        </div>
+        <label class="night-cat-label">Category
+          <select id="night-cat">${CATEGORIES.map((c) => `<option value="${c.id}">${h(c.name)}</option>`).join('')}</select>
+        </label>
+        <div class="night-actions">
+          <button type="button" class="btn" data-night-cancel>Cancel</button>
+          <button type="button" class="btn btn-primary" data-night-start>Start the Night</button>
+        </div>
+      </div>
+    </dialog>
     <h2 class="section">Pick a mode</h2>
     <div class="chips" id="modes">${modes}</div>
     <h2 class="section">Choose a category</h2>
@@ -103,6 +129,22 @@ function bindHome() {
   $('[data-daily]').addEventListener('click', () => startGame('daily', catById('mixed')));
   app.querySelectorAll('[data-cat]').forEach((b) =>
     b.addEventListener('click', () => startGame(selectedMode, catById(b.dataset.cat))));
+
+  // Trivia Night setup dialog (native <dialog showModal> — focus trap + ESC free).
+  let nightPreset = 1;
+  const dlg = $('#night-dlg');
+  $('[data-night-open]').addEventListener('click', () => dlg.showModal());
+  dlg.querySelectorAll('[data-preset]').forEach((b) => b.addEventListener('click', () => {
+    nightPreset = +b.dataset.preset;
+    dlg.querySelectorAll('[data-preset]').forEach((x) => x.classList.toggle('on', x === b));
+  }));
+  $('[data-night-cancel]').addEventListener('click', () => dlg.close());
+  $('[data-night-start]').addEventListener('click', () => {
+    const catId = $('#night-cat').value;
+    const preset = NIGHT.presets[nightPreset];
+    dlg.close();
+    startGame('barTrivia', catById(catId), { nightPlan: { rounds: preset.rounds }, label: preset.name });
+  });
 }
 
 // ---------------- Create ----------------
@@ -218,6 +260,9 @@ class Game {
     this.answered = []; this.chosen = null; this.phase = 'loading';
     this.remaining = 0; this.timer = null; this.qStart = 0; this.globalDeadline = null;
     this._custom = opts.custom;
+    // Trivia Night: the plan's rounds [[kind, count], …] + the per-round meta for banners.
+    this._nightPlan = opts.nightPlan || (mode === 'barTrivia' ? { rounds: NIGHT.presets[1].rounds } : null);
+    this._nightRounds = (this._nightPlan?.rounds || []).map(([kind]) => ({ kind, title: NIGHT.roundTitle[kind] || kind }));
     // Stake: the remaining confidence-chip budget + the chip on this question (0 = unset).
     this.stakeTiers = this.mode.id === 'stake' ? STAKE_BUDGET.map((t) => ({ value: t.value, label: t.label, remaining: t.count })) : [];
     this.currentStake = 0;
@@ -226,6 +271,7 @@ class Game {
   async load() {
     let qs;
     if (this._custom) qs = this._custom;
+    else if (this.mode.id === 'barTrivia') qs = await this._loadNight();
     else if (this.mode.id === 'daily') qs = Corpus.daily(dayKey(), 7);
     else if (this.mode.id === 'pictureId') {
       await Pictures.load();
@@ -283,7 +329,7 @@ class Game {
         qs = this._weave(qs, review.slice(0, 2));
       }
     }
-    this.questions = (this.mode.count === 99 ? qs : qs.slice(0, this.mode.count));
+    this.questions = (this.mode.count === 99 || this.mode.id === 'barTrivia' ? qs : qs.slice(0, this.mode.count));
     Store.markSeen(this.questions.map((q) => q.id));
     if (!this.questions.length) { this.phase = 'error'; return; }
     if (this.mode.globalClock) this.globalDeadline = Date.now() + this.mode.globalClock * 1000;
@@ -296,6 +342,47 @@ class Game {
     const r = fresh.slice();
     inject.forEach((q, i) => { r[Math.min(r.length - 1, Math.floor((i + 1) * r.length / (inject.length + 1)))] = q; });
     return r;
+  }
+  // Trivia Night: build the round-tagged mixed list from the plan's rounds.
+  async _loadNight() {
+    const rounds = this._nightPlan?.rounds || NIGHT.presets[1].rounds;
+    const all = [];
+    const picked = new Set();
+    for (let ri = 0; ri < rounds.length; ri++) {
+      const [kind, count] = rounds[ri];
+      const qs = await this._sourceType(kind, count, new Set([...Store._seen, ...picked]));
+      for (const q of qs) { q.roundIndex = ri; all.push(q); picked.add(q.id); }
+    }
+    return all;
+  }
+  // Source `count` questions of one TYPE — same loaders the standard game uses.
+  async _sourceType(kind, count, seen) {
+    switch (kind) {
+      case 'pictureId':   await Pictures.load();   return Pictures.pull(this.category.id, seen, count);
+      case 'thisOrThat':  await ThisOrThat.load(); return ThisOrThat.pull(this.category.id, seen, count);
+      case 'closestCall': await ClosestCall.load(); return ClosestCall.pull(this.category.id, seen, count);
+      case 'ordering':    await Ordering.load();   return Ordering.pull(this.category.id, seen, count);
+      case 'matching':    await Matching.load();   return Matching.pull(this.category.id, seen, count);
+      case 'typeAnswer':  await TypeAnswer.load();  return TypeAnswer.pull(this.category.id, seen, count);
+      case 'oddOneOut':   await OddOneOut.load();  return OddOneOut.pull('mixed', seen, count);
+      case 'enumerate':   await Enumerate.load();  return Enumerate.pull('mixed', new Set(), count);
+      default: {
+        let qs = Corpus.pull(this.category.id, seen, count);
+        if (qs.length < count) {
+          const topic = this.category.id === 'mixed' ? 'popular' : this.category.name;
+          qs = qs.concat(await Wikipedia.generate(topic, this.category.id, count - qs.length));
+        }
+        return qs.slice(0, count);
+      }
+    }
+  }
+  // Trivia Night round helpers (for the round banner + end-of-round beat).
+  get currentRound() { const ri = this.current?.roundIndex; return ri == null ? null : (this._nightRounds?.[ri] ?? null); }
+  get roundCount() { return this._nightRounds?.length ?? 0; }
+  get nextRound() {
+    const ri = this.current?.roundIndex; if (ri == null) return null;
+    const nx = this.questions[this.index + 1]; if (!nx || nx.roundIndex === ri) return null;
+    return this._nightRounds?.[nx.roundIndex] ?? null;
   }
   get current() { return this.questions[this.index]; }
   setStake(value) {
@@ -323,7 +410,9 @@ class Game {
     }
     if (cur && cur.accepted) this.typedText = '';
     if (cur && cur.enumerate) { this.enumFilled = new Set(); this.enumNamed = []; this.enumLastHit = false; this.typedText = ''; }
-    this.budget = this._globalRemaining() ?? this.mode.perQuestion ?? 30;
+    this.budget = this._globalRemaining()
+      ?? (this.mode.id === 'barTrivia' ? NIGHT.shapeBudget(cur) : this.mode.perQuestion)
+      ?? 30;
     this.remaining = this.budget;
     clearInterval(this.timer);
     this.timer = setInterval(() => this._tick(), 100);
@@ -334,7 +423,7 @@ class Game {
     if (this.phase !== 'playing') return;
     const g = this._globalRemaining();
     if (g !== null) { this.remaining = g; if (g <= 0) return this._end(); }
-    else { this.remaining = Math.max(0, this.budget - (Date.now() - this.qStart) / 1000); if (this.remaining <= 0) return (this.mode.id === 'closestCall' ? this.submitGuess() : this.mode.id === 'ordering' ? this.submitOrder() : this.mode.id === 'matching' ? this.submitMatch() : this.mode.id === 'typeAnswer' ? this.submitText() : this.mode.id === 'enumerate' ? this.finishEnum() : this.submit(null)); }
+    else { this.remaining = Math.max(0, this.budget - (Date.now() - this.qStart) / 1000); if (this.remaining <= 0) { const c = this.current; return (c?.closest ? this.submitGuess() : c?.ordering ? this.submitOrder() : c?.matching ? this.submitMatch() : c?.accepted ? this.submitText() : c?.enumerate ? this.finishEnum() : this.submit(null)); } }
     updateClock();
   }
   // Type-the-answer (Q6): match typed input against the accepted set.
@@ -375,9 +464,9 @@ class Game {
     this.phase = 'reveal'; renderGame();
   }
   // Matching (Q5): tap a key to select, tap a value to link; submit scores links.
-  selectMatchKey(i) { if (this.mode.id !== 'matching' || this.phase !== 'playing') return; this.matchSelectedKey = this.matchSelectedKey === i ? null : i; renderGame(); }
+  selectMatchKey(i) { if (this.phase !== 'playing' || !this.current?.matching) return; this.matchSelectedKey = this.matchSelectedKey === i ? null : i; renderGame(); }
   assignMatchValue(j) {
-    if (this.mode.id !== 'matching' || this.phase !== 'playing' || this.matchSelectedKey == null) return;
+    if (this.phase !== 'playing' || !this.current?.matching || this.matchSelectedKey == null) return;
     for (let i = 0; i < this.matchAssign.length; i++) if (this.matchAssign[i] === j) this.matchAssign[i] = null;
     this.matchAssign[this.matchSelectedKey] = j; this.matchSelectedKey = null; renderGame();
   }
@@ -398,7 +487,7 @@ class Game {
   }
   // Ordering (Q4): move an item up/down; lock in (partial credit by inversions).
   moveOrderItem(i, up) {
-    if (this.mode.id !== 'ordering' || this.phase !== 'playing') return;
+    if (this.phase !== 'playing' || !this.current?.ordering) return;
     const t = up ? i - 1 : i + 1;
     if (t < 0 || t >= this.currentOrder.length) return;
     [this.currentOrder[i], this.currentOrder[t]] = [this.currentOrder[t], this.currentOrder[i]];
@@ -424,7 +513,7 @@ class Game {
   }
   // Closest Call (M5): move the estimate, and lock it in (proximity, adds-only).
   setGuess(v) {
-    if (this.mode.id !== 'closestCall' || this.phase !== 'playing') return;
+    if (this.phase !== 'playing' || !this.current?.closest) return;
     const s = this.current.closest;
     this.currentGuess = Math.min(s.max, Math.max(s.min, v));
   }
@@ -524,7 +613,8 @@ function renderGame() {
   const enumP = q.enumerate ? enumeratePanel(q.enumerate) : '';
   const pic = q.image ? `<div class="card pic-card"><img class="pic-img" src="${h(q.image)}" alt="Identify this" loading="eager" onerror="this.parentNode.classList.add('pic-failed')"><span class="pic-fallback muted">Couldn't load the image</span></div>` : '';
   const reveal = game.phase === 'reveal' ? revealCard(q) : '';
-  const fixedCount = game.mode.id === 'classic' || game.mode.id === 'daily' || staking || game.mode.id === 'sweep' || game.mode.id === 'pictureId' || game.mode.id === 'thisOrThat' || game.mode.id === 'closestCall' || game.mode.id === 'ordering' || game.mode.id === 'matching' || game.mode.id === 'typeAnswer' || game.mode.id === 'oddOneOut' || game.mode.id === 'ladder' || game.mode.id === 'enumerate';
+  const banner = (game.mode.id === 'barTrivia' && game.currentRound) ? nightBanner() : '';
+  const fixedCount = game.mode.id !== 'timeAttack' && game.mode.id !== 'survival';
   const progress = fixedCount ? `${game.index + 1} / ${game.questions.length}` : `#${game.index + 1}`;
   app.innerHTML = `
     <div class="game">
@@ -535,6 +625,7 @@ function renderGame() {
       </div>
       <div class="clockbar"><span id="clk-label">${progress}</span><div class="clock-track"><div id="clk-fill" class="clock-fill"></div></div><span id="clk-secs"></span></div>
       <div class="qwrap">
+        ${banner}
         ${pic}
         <div class="card qcard"><div class="qcat" style="color:${catColor(cat)}">${h(cat.name.toUpperCase())}</div><div class="qprompt">${h(q.prompt)}</div></div>
         ${sweepGr}
@@ -570,7 +661,14 @@ function renderGame() {
   if (game.phase === 'reveal') $('[data-next]').addEventListener('click', () => game.advance());
   updateClock();
 }
-function isLast() { return (game.mode.id === 'classic' || game.mode.id === 'daily' || game.mode.id === 'stake' || game.mode.id === 'sweep' || game.mode.id === 'pictureId' || game.mode.id === 'thisOrThat' || game.mode.id === 'closestCall' || game.mode.id === 'ordering' || game.mode.id === 'matching' || game.mode.id === 'typeAnswer' || game.mode.id === 'oddOneOut' || game.mode.id === 'ladder' || game.mode.id === 'enumerate') && game.index + 1 >= game.questions.length; }
+function isLast() { return game.mode.id !== 'timeAttack' && game.mode.id !== 'survival' && game.index + 1 >= game.questions.length; }
+
+// Trivia Night round banner — "ROUND 2 OF 5 · PICTURE ROUND" with round dots.
+function nightBanner() {
+  const r = game.currentRound, n = game.roundCount, cur = (game.current.roundIndex ?? 0);
+  const dots = Array.from({ length: n }, (_, i) => `<span class="ndot${i === cur ? ' on' : ''}"></span>`).join('');
+  return `<div class="card night-banner"><div class="nb-main"><div class="nb-sub">ROUND ${cur + 1} OF ${n}</div><div class="nb-title">${h(r.title.toUpperCase())}</div></div><div class="ndots">${dots}</div></div>`;
+}
 // Enumeration (Q8): a count, a text input + Submit + Done, and the named chips.
 function enumeratePanel(spec) {
   const live = game.phase === 'playing';
@@ -657,8 +755,9 @@ function revealCard(q) {
     const tiles = q.enumerate.groups.map((g) => `<span class="enum-tile${named.has(g[0]) ? ' got' : ''}">${h(g[0])}</span>`).join('');
     enumBlock = `<p class="ans">You named ${game.enumFilled.size} of ${q.enumerate.groups.length}</p><div class="enum-grid reveal-grid">${tiles}</div>`;
   }
+  const next = (game.mode.id === 'barTrivia' && game.nextRound) ? `<p class="night-next">🏁 Round ${(q.roundIndex ?? 0) + 1} complete · up next: ${h(game.nextRound.title)}</p>` : '';
   return `<div class="card reveal"><div class="reveal-h">${correct ? '✅ Nice — you knew it.' : '💡 Now you know.'}${stakeTag}${closeTag}${orderTag}${matchTag}</div>
-    ${closeLine}${typeLine}${enumBlock}${q.explanation ? `<p>${h(q.explanation)}</p>` : ''}${q.sourceURL ? `<a href="${h(q.sourceURL)}" target="_blank" rel="noopener" class="link">Read ${h(q.sourceTitle)} on Wikipedia ↗</a>` : ''}</div>`;
+    ${closeLine}${typeLine}${enumBlock}${q.explanation ? `<p>${h(q.explanation)}</p>` : ''}${next}${q.sourceURL ? `<a href="${h(q.sourceURL)}" target="_blank" rel="noopener" class="link">Read ${h(q.sourceTitle)} on Wikipedia ↗</a>` : ''}</div>`;
 }
 function updateClock() {
   if (!game || game.phase !== 'playing') { const s = $('#clk-secs'); if (s) s.textContent = ''; return; }

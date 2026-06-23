@@ -51,7 +51,36 @@ export const MODES = {
   oddOneOut: { id: 'oddOneOut', title: 'Odd One Out', blurb: "Which doesn't belong?", perQuestion: 20, count: 8, accent: '#8B5CF6' },
   ladder: { id: 'ladder', title: 'Ladder', blurb: 'Climb from easy to hard.', perQuestion: 20, count: 10, accent: '#FF5C5C' },
   enumerate: { id: 'enumerate', title: 'Name as Many', blurb: 'How many can you name?', perQuestion: 60, count: 3, accent: '#13B6C9' },
+  barTrivia: { id: 'barTrivia', title: 'Trivia Night', blurb: 'Host a night. Every kind of round.', perQuestion: 20, count: 20, accent: '#FF5C5C' },
   daily: { id: 'daily', title: 'Daily Tidbit', blurb: 'Everyone’s puzzle. Keep your streak.', perQuestion: 30, count: 7, accent: '#FFC93C' },
+};
+
+// Trivia Night ("bar trivia") — a configurable night of themed rounds, each
+// round drawing one question TYPE, so one night pulls from EVERY type. A client
+// meta-mode over the shape-routing game loop (mirror of NightPlan.swift).
+export const NIGHT = {
+  kinds: ['classic', 'pictureId', 'thisOrThat', 'closestCall', 'ordering', 'matching', 'typeAnswer', 'oddOneOut', 'enumerate'],
+  roundTitle: {
+    classic: 'General Knowledge', pictureId: 'Picture Round', thisOrThat: 'Which Came First?',
+    closestCall: 'Closest Wins', ordering: 'Put Them In Order', matching: 'Match-Up',
+    typeAnswer: 'Name It', oddOneOut: 'Odd One Out', enumerate: 'Name As Many',
+  },
+  // Per-question clock by question SHAPE (a night mixes shapes in one run).
+  shapeBudget(q) {
+    if (!q) return 25;
+    if (q.enumerate) return 60;
+    if (q.matching) return 40;
+    if (q.ordering) return 35;
+    if (q.closest) return 25;
+    if (q.accepted) return 25;
+    if (q.image || q.imageURL) return 22;
+    return 20;
+  },
+  presets: [
+    { name: 'Quick Night', blurb: '3 rounds · ~12 questions', rounds: [['classic', 5], ['pictureId', 4], ['closestCall', 3]] },
+    { name: 'Pub Night', blurb: '5 rounds · ~22 questions', rounds: [['classic', 6], ['pictureId', 4], ['thisOrThat', 4], ['closestCall', 4], ['oddOneOut', 4]] },
+    { name: 'The Works', blurb: 'Every question type · ~28', rounds: [['classic', 4], ['pictureId', 4], ['thisOrThat', 4], ['closestCall', 4], ['ordering', 4], ['matching', 4], ['typeAnswer', 4], ['oddOneOut', 4], ['enumerate', 2]] },
+  ],
 };
 
 // Modes that may have spaced-review corpus MCQs woven in — only the corpus-native

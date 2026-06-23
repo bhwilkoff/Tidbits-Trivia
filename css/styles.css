@@ -294,3 +294,33 @@ body {
   .cat-grid { grid-template-columns: repeat(3, 1fr); }
 }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+/* ---------------- Trivia Night ---------------- */
+.banner.night-banner-cta { background: var(--color-primary); color: #fff; }
+.banner.night-banner-cta .muted { color: rgba(255,255,255,0.85); }
+.night-banner { display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; background: var(--color-bg-deep); padding: 12px 16px; }
+.night-banner .nb-sub { font-size: 12px; font-weight: 800; color: var(--color-ink-soft); }
+.night-banner .nb-title { font-size: 17px; font-weight: 900; }
+.ndots { display: flex; gap: 6px; }
+.ndot { width: 9px; height: 9px; border-radius: 999px; background: var(--color-surface);
+  border: 1.5px solid var(--color-border); }
+.ndot.on { background: var(--color-primary); }
+.night-next { font-weight: 800; color: var(--color-primary); margin-top: 6px; }
+
+.night-dlg { border: var(--bw) solid var(--color-border); border-radius: var(--radius);
+  background: var(--color-bg); color: var(--color-ink); max-width: 460px; width: 92%;
+  box-shadow: var(--shadow) var(--shadow) 0 var(--color-border); padding: 0; }
+.night-dlg::backdrop { background: rgba(26,23,20,0.45); }
+.night-form { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+.night-form h2 { margin: 0; }
+.night-presets { display: flex; flex-direction: column; gap: 10px; }
+.night-preset { text-align: left; font: inherit; cursor: pointer; padding: 12px 14px;
+  border-radius: 14px; background: var(--color-surface);
+  border: 2.5px solid var(--color-border); display: flex; flex-direction: column; gap: 2px; }
+.night-preset b { font-weight: 900; }
+.night-preset.on { background: color-mix(in srgb, var(--color-primary) 16%, var(--color-surface)); }
+.night-cat-label { font-weight: 800; display: flex; flex-direction: column; gap: 6px; }
+.night-cat-label select { font: inherit; padding: 10px 12px; border-radius: 12px;
+  border: 2.5px solid var(--color-border); background: var(--color-surface); color: var(--color-ink); }
+.night-actions { display: flex; gap: 10px; justify-content: flex-end; }

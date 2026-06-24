@@ -60,6 +60,9 @@ enum RecordsStore {
         }
         let lifetimeCorrect = records.reduce(0) { $0 + $1.correct }
         gc.report(GameCenterManager.Achievement.century, percent: min(100, Double(lifetimeCorrect)))
+        gc.report(GameCenterManager.Achievement.scholar, percent: min(100, Double(lifetimeCorrect) / 1000 * 100))
+        let modesPlayed = Set(records.map(\.modeRaw)).count
+        gc.report(GameCenterManager.Achievement.explorer, percent: min(100, Double(modesPlayed) / 10 * 100))
         if let streak {
             gc.report(GameCenterManager.Achievement.streak7, percent: min(100, Double(streak.current) / 7 * 100))
             gc.report(GameCenterManager.Achievement.streak30, percent: min(100, Double(streak.current) / 30 * 100))

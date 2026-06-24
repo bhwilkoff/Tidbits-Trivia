@@ -3,6 +3,7 @@ import SwiftUI
 
 struct HomeView: View {
     @Environment(AppStore.self) private var store
+    @Environment(GameCenterManager.self) private var gameCenter
     @State private var selectedMode: GameMode = .classic
     @State private var launch: LaunchRequest?
     @State private var showParty = false
@@ -64,6 +65,12 @@ struct HomeView: View {
                 launch = LaunchRequest(mode: ap.mode, category: ap.category)
             }
             if DebugHooks.openParty { showParty = true }
+        }
+        // A friend's Game Center challenge → launch the relevant mode.
+        .onChange(of: gameCenter.pendingChallengeMode) { _, m in
+            if m != nil, let mode = gameCenter.consumePendingChallenge() {
+                launch = LaunchRequest(mode: mode, category: .named("mixed"))
+            }
         }
     }
 

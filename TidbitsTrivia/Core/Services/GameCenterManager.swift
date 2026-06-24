@@ -32,7 +32,22 @@ final class GameCenterManager {
         static let streak30     = "tidbits.ach.streak30"    // 30-day daily streak (progress)
         static let fullPie      = "tidbits.ach.fullpie"     // all 7 knowledge wedges (progress)
         static let sharpshooter = "tidbits.ach.sharp"       // a Stake round where every chip landed
+        static let explorer     = "tidbits.ach.explorer"    // play 10 distinct game modes (progress)
+        static let scholar      = "tidbits.ach.scholar"     // 1,000 lifetime correct (progress)
     }
+
+    // Game Center Challenges (iOS 26): friends challenge each other to beat a
+    // leaderboard score / earn an achievement, async with a deadline. The system
+    // drives the UI once the leaderboards/achievements are flagged "challengeable"
+    // in App Store Connect; the app only routes "play this challenge" into a game.
+    private let challengeListener = ChallengeListener()
+    /// Set when the player taps "Play" on a challenge; the home screen consumes it.
+    private(set) var pendingChallengeMode: GameMode?
+    func consumePendingChallenge() -> GameMode? {
+        defer { pendingChallengeMode = nil }
+        return pendingChallengeMode
+    }
+    fileprivate func routeChallenge(_ mode: GameMode) { pendingChallengeMode = mode }
 
     // MARK: Authentication
 
@@ -50,7 +65,10 @@ final class GameCenterManager {
                 print("[GameCenter] auth: \(error.localizedDescription)")
                 return
             }
-            if self.isAuthenticated { self.configureAccessPoint() }
+            if self.isAuthenticated {
+                self.configureAccessPoint()
+                GKLocalPlayer.local.register(self.challengeListener)   // challenge events
+            }
         }
     }
 
@@ -124,5 +142,15 @@ private final class DashboardDelegate: NSObject, GKGameCenterControllerDelegate 
     static let shared = DashboardDelegate()
     func gameCenterViewControllerDidFinish(_ gameCenterViewController: GKGameCenterViewController) {
         gameCenterViewController.dismiss(animated: true)
+    }
+}
+
+/// Challenge events. Must be an NSObject (GKLocalPlayerListener). When the player
+/// taps "Play" on a challenge from Game Center, route them into a game — score
+/// challenges open Classic (the primary leaderboard mode); the system's own UI
+/// reports completion, so we only need to launch.
+private final class ChallengeListener: NSObject, GKLocalPlayerListener {
+    func player(_ player: GKPlayer, wantsToPlay challenge: GKChallenge) {
+        Task { @MainActor in GameCenterManager.shared.routeChallenge(.classic) }
     }
 }

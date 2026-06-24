@@ -1,89 +1,176 @@
-# Game Center — Setup & Wiring Checklist
+# Game Center — Setup & Wiring (full field reference)
 
-What the app already does in code, and the App Store Connect (ASC) + Xcode steps
-**you** must do so the leaderboards and achievements actually appear. The IDs
-below must match `Core/Services/GameCenterManager.swift` **verbatim**.
+Everything needed to stand up Game Center in App Store Connect (ASC). The code
+side is **done and shipping**; this doc is the owner checklist — every field,
+every ID, and which image goes where. **IDs must match
+`Core/Services/GameCenterManager.swift` verbatim (case-sensitive).**
 
-## What the app already does (code — done)
+All images live in `tools/branding/gamecenter/` (regenerate with
+`tools/branding/make_leaderboard.py` + `make_achievements.py`). Every image is
+**512×512, RGB, no transparency** — exactly Apple's spec.
 
-- **Entitlement**: `com.apple.developer.game-center` (TidbitsTrivia.entitlements).
-- **Authentication** at launch (`GameCenterManager.authenticate()`), and it now
-  **presents the sign-in sheet** GameKit hands back when the player isn't signed
-  in (iOS + tvOS).
-- **Leaderboard submission** on game-end (shared `RecordsStore`):
-  - Classic high score → `tidbits.classic.high`
-  - Daily streak → `tidbits.daily.streak`
-- **Achievement reporting** on game-end (derived from the player's records):
-  - `tidbits.ach.firstgame`, `tidbits.ach.perfect`, `tidbits.ach.century`,
-    `tidbits.ach.streak7`, `tidbits.ach.streak30`, `tidbits.ach.fullpie`,
-    `tidbits.ach.sharp`.
-- **Dashboard**: Settings → "Leaderboards & Achievements" opens the Game Center
-  dashboard; the **access point** badge shows on menus and hides during a game.
+---
 
-All of the above are **safe no-ops until the player authenticates**, which can't
-happen until the steps below are complete in ASC.
+## 0. What the app already does (code — done)
 
-## Step 1 — Xcode capability (once)
+- Entitlement `com.apple.developer.game-center`.
+- Authentication at launch, and it **presents the sign-in sheet** when needed.
+- **Leaderboards** submitted on game-end (classic high + daily streak).
+- **9 achievements** reported from the shared `RecordsStore`.
+- **Dashboard** (Settings → "Leaderboards & Achievements") + **access point**
+  (shown on menus, hidden in a game).
+- **Challenges**: the app registers a challenge listener and, when a player taps
+  "Play" on a challenge, launches Classic. (Enable "challengeable" in ASC — §4.)
 
-Automatic signing usually adds this on first archive, but confirm:
-1. Xcode → target **TidbitsTrivia** → **Signing & Capabilities**.
-2. Ensure **Game Center** is listed (it reads from the entitlement). If not,
-   **+ Capability → Game Center**.
-3. Archive once so Xcode registers the capability on the App ID in the developer
-   portal.
+All safe no-ops until a player authenticates.
 
-## Step 2 — Create the leaderboards in App Store Connect
+---
 
-ASC → your app → **Features → Game Center → Leaderboards → +**. Create two
-**Classic** leaderboards. The **Leaderboard ID** field MUST equal the id exactly.
+## 1. Xcode capability (once)
 
-| Leaderboard ID | Reference name | Score format | Sort | Notes |
+Target **TidbitsTrivia** → **Signing & Capabilities** → confirm **Game Center**
+is listed (reads from the entitlement). Archive once so it registers on the App
+ID. The same config serves **iOS and tvOS** (one App ID, Decision 013).
+
+---
+
+## 2. Leaderboards (×2)
+
+ASC → app → **Features → Game Center → Leaderboards → +**. For each, four screens:
+
+### Screen flow (same for both)
+| Screen | Field | Value |
+|---|---|---|
+| Choose Type | — | **Classic Leaderboard** |
+| Add Leaderboard | Reference Name | (internal — see table) |
+| | **Leaderboard ID** | (exact — see table) |
+| Choose Score Format | Score Format | **Integer (1, 100, 0, -5, 999)** |
+| | Score Range | leave blank |
+| | Score Submission Type | **Best Score** |
+| | Sort Order | **High to Low** ⚠️ (defaults to Low to High — change it) |
+
+### The two leaderboards
+| Reference Name | **Leaderboard ID** | Localization Display Name | Score Format Suffix | Image |
 |---|---|---|---|---|
-| `tidbits.classic.high` | Classic High Score | Integer | High to Low | Best single Classic-mode score |
-| `tidbits.daily.streak` | Daily Streak | Integer | High to Low | Longest current daily streak |
+| Classic High Score | `tidbits.classic.high` | `Classic High Score` | `points` | `leaderboard-classic-high.png` (star) |
+| Daily Streak | `tidbits.daily.streak` | `Longest Daily Streak` | `days` | `leaderboard-daily-streak.png` (bolt) |
 
-For each: add at least one localization (English) with a display name + score
-format suffix (e.g. "points", "days"), and an image (512×512, required by review).
+### Leaderboard Localization (required — at least English)
+After Create, add a localization (**English (U.S.)**):
+| Field | Classic High Score | Daily Streak |
+|---|---|---|
+| Display Name (≤30) | `Classic High Score` | `Longest Daily Streak` |
+| Description (≤120) | `Your best single Classic-mode score.` | `Your longest run of consecutive Daily Tidbits.` |
+| Score Format Suffix (≤15) | `points` | `days` |
+| Score Format | Integer | Integer |
+| Image (512×512) | `leaderboard-classic-high.png` | `leaderboard-daily-streak.png` |
 
-## Step 3 — Create the achievements
+---
 
-ASC → **Features → Game Center → Achievements → +**. The **Achievement ID** MUST
-equal the id exactly. Points across all achievements must total ≤ 1000.
+## 3. Achievements (×9)
 
-| Achievement ID | Title | Description | Points | Hidden |
-|---|---|---|---|---|
-| `tidbits.ach.firstgame` | First Tidbit | Play your first game. | 10 | No |
-| `tidbits.ach.perfect` | Flawless | Finish a round of 7+ questions with 100% accuracy. | 25 | No |
-| `tidbits.ach.century` | Centurion | Answer 100 questions correctly. | 25 | No |
-| `tidbits.ach.streak7` | On a Roll | Keep a 7-day daily streak. | 25 | No |
-| `tidbits.ach.streak30` | Devoted | Keep a 30-day daily streak. | 50 | No |
-| `tidbits.ach.fullpie` | Renaissance | Earn a knowledge wedge in all seven domains. | 50 | No |
-| `tidbits.ach.sharp` | Sharpshooter | Win a Stake round where every confidence chip landed. | 25 | No |
+ASC → **Features → Game Center → Achievements → +**. Per achievement: a create
+step, then an English localization. **Points total = 285** (Apple's cap is 1000).
 
-`century`, `streak7`, `streak30`, and `fullpie` report **partial progress**, so
-they fill gradually; the others unlock at 100%. Each needs an English
-localization (title + both pre/earned descriptions) and a 512×512 image.
+### Create-step fields (per row)
+- **Reference Name** (internal) · **Achievement ID** (exact) · **Point Value**
+- **Hidden**: No (all visible) · **Achievable More Than Once**: No
 
-## Step 4 — Test with a Sandbox account
+| Reference Name | **Achievement ID** | Points | Image |
+|---|---|---|---|
+| First Tidbit | `tidbits.ach.firstgame` | 10 | `ach-firstgame.png` (sparkle) |
+| Flawless | `tidbits.ach.perfect` | 25 | `ach-perfect.png` (check) |
+| Centurion | `tidbits.ach.century` | 25 | `ach-century.png` (diamond) |
+| On a Roll | `tidbits.ach.streak7` | 25 | `ach-streak7.png` (flame) |
+| Devoted | `tidbits.ach.streak30` | 50 | `ach-streak30.png` (crown) |
+| Renaissance | `tidbits.ach.fullpie` | 50 | `ach-fullpie.png` (pie) |
+| Sharpshooter | `tidbits.ach.sharp` | 25 | `ach-sharp.png` (target) |
+| Explorer | `tidbits.ach.explorer` | 25 | `ach-explorer.png` (arrow) |
+| Scholar | `tidbits.ach.scholar` | 50 | `ach-scholar.png` (book) |
 
-1. On the device: **Settings → Game Center** → sign in with a **Sandbox Apple
-   ID** (created in ASC → Users and Access → Sandbox), or use a TestFlight build
-   (TestFlight uses the production Game Center, sandbox for unreleased config).
-2. Launch the app — the Game Center sign-in sheet should appear; the access
-   point badge appears on the home screen.
-3. Play a Classic game and a Daily → open Settings → "Leaderboards &
-   Achievements" → confirm your score posted and "First Tidbit" unlocked.
-4. `GKAchievement.resetAchievements()` / leaderboard score deletion in ASC reset
-   test state.
+### Achievement Localization (English (U.S.), per achievement)
+| ID | Title (≤30) | Pre-earned Description (≤120) | Earned Description (≤120) |
+|---|---|---|---|
+| `tidbits.ach.firstgame` | `First Tidbit` | `Play your first game.` | `You played your first game.` |
+| `tidbits.ach.perfect` | `Flawless` | `Finish a round of 7+ questions with 100% accuracy.` | `A perfect round — every answer right.` |
+| `tidbits.ach.century` | `Centurion` | `Answer 100 questions correctly.` | `100 correct answers and counting.` |
+| `tidbits.ach.streak7` | `On a Roll` | `Keep a 7-day daily streak.` | `Seven days in a row.` |
+| `tidbits.ach.streak30` | `Devoted` | `Keep a 30-day daily streak.` | `Thirty days in a row — devoted.` |
+| `tidbits.ach.fullpie` | `Renaissance` | `Earn a knowledge wedge in all seven domains.` | `A full pie — mastery across every domain.` |
+| `tidbits.ach.sharp` | `Sharpshooter` | `Win a Stake round where every confidence chip lands.` | `Perfectly calibrated — every chip landed.` |
+| `tidbits.ach.explorer` | `Explorer` | `Play ten different game modes.` | `Ten modes explored.` |
+| `tidbits.ach.scholar` | `Scholar` | `Answer 1,000 questions correctly.` | `1,000 correct — a true scholar.` |
 
-## Notes / gotchas
+Each localization also needs the **512×512 image** from the table above.
+`century`, `scholar`, `streak7`, `streak30`, `fullpie`, and `explorer` report
+**partial progress** (they fill gradually); the rest unlock at 100%.
 
-- **Leaderboard/achievement config is per-app and reviewed with the build** — it
-  goes live when the app version is approved. In sandbox/TestFlight it works
-  before release.
-- The **same Game Center config serves iOS AND tvOS** (one App ID, Decision 013)
-  — no separate setup for the TV app.
-- If a score/achievement doesn't appear: the #1 cause is an **ID mismatch**
-  between ASC and `GameCenterManager` — they are case-sensitive and exact.
-- Android has **no Game Center** (it would use Google Play Games later) — these
-  rows are Apple-only in `PARITY.md`.
+---
+
+## 4. Challenges (enable — no extra screens)
+
+Game Center Challenges (iOS 26) let friends challenge each other to beat a
+leaderboard score or earn an achievement, async with a deadline. **The app code
+is done** (it listens for challenge events and launches Classic when a challenge
+is played). To turn it on:
+
+- On each **leaderboard** and **achievement** in ASC, set it as
+  **challengeable / "Enable challenges"** (the toggle in the leaderboard/
+  achievement settings). That's the whole config — Apple's system UI handles
+  creating, sending, and tracking the challenges.
+- No separate "Challenges" section to fill out; it rides the boards/achievements
+  you already created above.
+
+---
+
+## 5. Activities — deferred (not now)
+
+Game Center "play together" **Activities** are a Game-Center-mediated multiplayer
+matchmaking surface. We're **skipping it for launch**: Tidbits' multiplayer is
+the local **Bonjour buzzer** (offline-first) plus a planned **Supabase**
+cross-platform layer (Decision 020/023) — Activities would fork that story and is
+Apple-only (no web/Android reach). Revisit only if a Game-Center-native "find a
+remote opponent" entry point is wanted later. No ASC config, no code.
+
+---
+
+## 6. Test with a Sandbox account
+
+1. Device **Settings → Game Center** → sign in with a **Sandbox Apple ID** (ASC →
+   Users and Access → Sandbox), or use a TestFlight build.
+2. Launch the app — the sign-in sheet appears; the access point badge shows on
+   the home screen.
+3. Play a Classic + a Daily → Settings → "Leaderboards & Achievements" → confirm
+   the score posted and "First Tidbit" unlocked.
+4. Reset test state via leaderboard score deletion in ASC /
+   `GKAchievement.resetAchievements()`.
+
+---
+
+## 7. Image manifest (`tools/branding/gamecenter/`)
+
+| File | Used for | Mark |
+|---|---|---|
+| `leaderboard-classic-high.png` | LB `tidbits.classic.high` | star |
+| `leaderboard-daily-streak.png` | LB `tidbits.daily.streak` | lightning bolt |
+| `ach-firstgame.png` | First Tidbit | sparkle |
+| `ach-perfect.png` | Flawless | check |
+| `ach-century.png` | Centurion | diamond |
+| `ach-streak7.png` | On a Roll | flame |
+| `ach-streak30.png` | Devoted | crown |
+| `ach-fullpie.png` | Renaissance | pie |
+| `ach-sharp.png` | Sharpshooter | target |
+| `ach-explorer.png` | Explorer | arrow |
+| `ach-scholar.png` | Scholar | book |
+
+All are the app icon with the period swapped for the mark — 512×512 RGB, no alpha.
+
+---
+
+## Gotchas
+
+- **#1 failure mode is an ID typo** between ASC and the code — exact, case-sensitive.
+- Leaderboard/achievement config goes live **with the app version's review**;
+  in Sandbox/TestFlight it works before release.
+- Android has **no Game Center** (Google Play Games is the future analog) — these
+  are Apple-only in `PARITY.md`.

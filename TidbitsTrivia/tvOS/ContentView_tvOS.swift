@@ -17,6 +17,7 @@ enum TVTheme {
 /// ten-foot presentation is tvOS-specific (Core never imports UI).
 struct ContentView_tvOS: View {
     @Environment(AppStore.self) private var store
+    @Environment(GameCenterManager.self) private var gameCenter
     @State private var selectedMode: GameMode = .classic
     @State private var launch: LaunchRequest?
     @State private var nightLaunch: NightLaunchRequest?
@@ -74,11 +75,20 @@ struct ContentView_tvOS: View {
             // verification — Decision 018). tvOS has no tab bar, so the hook
             // presents the cover instead.
             if DebugHooks.initialTab == .records { showRecords = true }
+            if launch == nil, let mode = gameCenter.consumePendingChallenge() {
+                launch = LaunchRequest(mode: mode, category: .named("mixed"))
+            }
             if DebugHooks.openBuzz {
                 // Cover every buzzable round type so screenshots exercise each display.
                 let plan = NightPlan(rounds: [NightRound(kind: .pictureId, count: 2), NightRound(kind: .classic, count: 2),
                                               NightRound(kind: .thisOrThat, count: 2), NightRound(kind: .oddOneOut, count: 2)])
                 buzzLaunch = NightLaunchRequest(plan: plan, category: .named("mixed"))
+            }
+        }
+        // A friend's Game Center challenge accepted at runtime → launch the mode.
+        .onChange(of: gameCenter.pendingChallengeMode) { _, m in
+            if m != nil, launch == nil, let mode = gameCenter.consumePendingChallenge() {
+                launch = LaunchRequest(mode: mode, category: .named("mixed"))
             }
         }
     }

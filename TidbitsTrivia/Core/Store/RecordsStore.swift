@@ -35,17 +35,42 @@ enum RecordsStore {
         return isNewBest
     }
 
-    /// Push the relevant leaderboard values after a game. No-op until the
-    /// player is Game-Center-authenticated (Decision 020) — so the SP build
-    /// runs with no provisioning profile, and these calls cost nothing until
-    /// the entitlement + App Store Connect leaderboards land.
+    /// Push the relevant leaderboard values AND achievement progress after a
+    /// game. No-op until the player is Game-Center-authenticated (Decision 020) —
+    /// so the SP build runs with no provisioning profile, and these calls cost
+    /// nothing until the entitlement + App Store Connect config land.
     private static func submitToGameCenter(_ summary: GameSummary, in context: ModelContext) {
+        let gc = GameCenterManager.shared
+        guard gc.isAuthenticated else { return }
+
+        // Leaderboards
         if summary.mode == .classic {
-            GameCenterManager.shared.submit(summary.score, to: GameCenterManager.Leaderboard.classicHigh)
+            gc.submit(summary.score, to: GameCenterManager.Leaderboard.classicHigh)
         }
-        if summary.mode == .daily,
-           let streak = try? context.fetch(FetchDescriptor<DailyStreak>()).first {
-            GameCenterManager.shared.submit(streak.current, to: GameCenterManager.Leaderboard.dailyStreak)
+        let streak = try? context.fetch(FetchDescriptor<DailyStreak>()).first
+        if summary.mode == .daily, let streak {
+            gc.submit(streak.current, to: GameCenterManager.Leaderboard.dailyStreak)
+        }
+
+        // Achievements — derived from the same records the rest of the app uses.
+        let records = (try? context.fetch(FetchDescriptor<GameRecord>())) ?? []
+        if records.count <= 1 { gc.report(GameCenterManager.Achievement.firstGame) }
+        if summary.total >= 7 && summary.accuracy >= 1 {
+            gc.report(GameCenterManager.Achievement.perfectRound)
+        }
+        let lifetimeCorrect = records.reduce(0) { $0 + $1.correct }
+        gc.report(GameCenterManager.Achievement.century, percent: min(100, Double(lifetimeCorrect)))
+        if let streak {
+            gc.report(GameCenterManager.Achievement.streak7, percent: min(100, Double(streak.current) / 7 * 100))
+            gc.report(GameCenterManager.Achievement.streak30, percent: min(100, Double(streak.current) / 30 * 100))
+        }
+        let domains = DomainProgress.summarize(records.map { ($0.categoryID, $0.correct, $0.total) })
+        gc.report(GameCenterManager.Achievement.fullPie,
+                  percent: Double(DomainProgress.wedgesEarned(domains)) / 7 * 100)
+        if summary.mode == .stake {
+            let total = summary.stakeOutcomes.values.reduce(0) { $0 + $1.total }
+            let hits = summary.stakeOutcomes.values.reduce(0) { $0 + $1.hits }
+            if total >= 1 && hits == total { gc.report(GameCenterManager.Achievement.sharpshooter) }
         }
     }
 

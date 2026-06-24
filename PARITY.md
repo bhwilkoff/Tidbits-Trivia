@@ -119,8 +119,8 @@ reached is ⏳ with a note, never silence.
 | Share score (NO X/Twitter) | ✅ Web Share | ✅ ShareLink | ✅ QR | ✅ Intent | Decision 022; web has clipboard fallback |
 | Spoiler-free emoji-grid result | ✅ | ✅ | ✅ | ⏳ | Wordle-style 🟩🟥; the daily share loop (ROADMAP #1). tvOS renders it on `TVResultsView` |
 | First-run onboarding | ⏳ | ✅ | ⏳ | ⏳ | 3-card play/learn/compete walkthrough |
-| Leaderboards | 🔮 Supabase | ⏳ Game Center | ⏳ Game Center | 🔮 Play Games | Apple: GameKit wired + **score submission now wired** on game-end via shared `RecordsStore` (classic high + daily streak), no-op until authenticated; entitlement + ASC leaderboard config still pending |
-| Achievements | 🔮 | ⏳ Game Center | ⏳ Game Center | 🔮 Play Games | |
+| Leaderboards | 🔮 Supabase | 🚧 Game Center | 🚧 Game Center | 🔮 Play Games | Apple **code complete**: auth (now presents the sign-in sheet) + score submission on game-end (classic high + daily streak) + the dashboard (Settings → "Leaderboards & Achievements") + access point. No-op until authenticated; the only thing left is **creating the leaderboards in App Store Connect** with the matching IDs (`docs/GAME-CENTER-SETUP.md`) |
+| Achievements | 🔮 | 🚧 Game Center | 🚧 Game Center | 🔮 Play Games | Apple **code complete**: 7 achievements reported from the shared `RecordsStore` (first game / flawless / centurion / 7- & 30-day streak / full pie / Stake sharpshooter), partial-progress where it makes sense. Pending **ASC achievement creation** with matching IDs (`docs/GAME-CENTER-SETUP.md`) |
 | Local pass-and-play | 🔮 | ✅ | ⏳ | 🔮 | 2–4 players, shared fair question set, hand-off + scoreboard |
 | Spaced re-asking of missed facts | ✅ | ✅ | ✅ | ✅ | Due misses woven into corpus-MCQ games (skips Daily + non-MCQ modes); resolve on correct. **Opt-out toggle** ("Review questions") on every platform: iOS/tvOS via `GameSettings.reviewKey` @AppStorage (both now in their Settings screen), web + Android via a Records→Settings switch. Default ON |
 | Haptic feedback | n/a | ✅ | n/a | ⏳ | Correct/wrong/milestone; Settings toggle |

@@ -78,6 +78,8 @@ struct BuzzNightView_tvOS: View {
             if phase == .playing { revealNoOne(timedOut: !host.allLockedOut) }
         }
         .onExitCommand { host.stop(); dismiss() }
+        .onAppear { GameCenterManager.shared.setAccessPointActive(false) }
+        .onDisappear { GameCenterManager.shared.setAccessPointActive(true) }
     }
 
     // MARK: Lobby

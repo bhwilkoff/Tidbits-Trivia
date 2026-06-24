@@ -122,6 +122,8 @@ struct TVGamePlayView: View {
             Spacer()
         }
         .padding(90)
+        .onAppear { GameCenterManager.shared.setAccessPointActive(false) }
+        .onDisappear { GameCenterManager.shared.setAccessPointActive(true) }
         .defaultFocus($focus, .answer(0))
         .onChange(of: game.index) { typeRevealed = false; enumRevealed = false; enumSelfCount = 0; focus = firstFocus }
         .onChange(of: game.phase) { _, p in

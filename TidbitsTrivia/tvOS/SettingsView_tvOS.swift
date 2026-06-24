@@ -41,6 +41,9 @@ struct SettingsView_tvOS: View {
                         Text(gameCenter.isAuthenticated ? "Signed in" : "Not signed in")
                             .foregroundStyle(.secondary)
                     }
+                    if gameCenter.isAuthenticated {
+                        Button("Leaderboards & Achievements") { gameCenter.showDashboard() }
+                    }
                 }
                 Section("Data") {
                     Button("Reset Seen Questions") { QuestionProvider.shared.resetSeen() }

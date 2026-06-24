@@ -44,6 +44,8 @@ struct GamePlayView: View {
             if game.phase == .reveal { nextBar }
         }
         .background(Tidbits.Palette.bg.ignoresSafeArea())
+        .onAppear { GameCenterManager.shared.setAccessPointActive(false) }
+        .onDisappear { GameCenterManager.shared.setAccessPointActive(true) }
         .task {
             // Screenshot/CI autopilot — no-op unless TIDBITS_AUTOPILOT=1.
             guard DebugHooks.autopilot else { return }

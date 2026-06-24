@@ -7,7 +7,18 @@
 > `docs/ROADMAP.md`, `docs/DATA-CONTRACT.md`. Detailed per-round history is in
 > `ARCHIVE.md`.
 
-## Current state (2026-06-23)
+## Current state (2026-06-24)
+
+**Single biggest open item:** the **TV-hosted Trivia Night (phone-as-buzzer)** is
+built end-to-end and sim-verified to the host UI, but is **NOT two-device
+hardware-verified** — the live Bonjour pairing + answer-on-device + rejoin +
+challenge-launch only exercise on real devices. That hardware test (Ben) is the
+gate. **Game Center is code-complete** (auth/dashboard/access-point/9 achievements/
+2 leaderboards/Challenges) but needs **ASC config** — fully specced in
+`docs/GAME-CENTER-SETUP.md` (owner task; images in `tools/branding/gamecenter/`).
+Versions: Apple 1.5.3 (build 46); Android versionName 1.5.1 (verify before next
+Play upload — the 1.5.2/1.5.3 ships were Apple-only Game Center).
+
 
 - **All four platforms PLAY**, off one shared corpus, all pushed to `main`:
   - **iOS/iPadOS** — full SP (4 modes, 8 categories, learn-reveal), local
@@ -295,3 +306,46 @@ One-line-per-round; full detail in `ARCHIVE.md`.
   Android 1.4.0(28). *Left (next slices):* **pass-and-play team scoring** for the
   night (the "team vs solo" config dimension — solo ships now); the **2-device
   Buzz Night hardware test**; Couch Co-op; Link Wall.
+- **2026-06-24** — **Trivia Night playtest hardening + corpus quality + Game
+  Center completion.** Continuation of the 06-23 night work, driven by Ben's
+  on-device playtest of the TV-hosted buzzer.
+  **(1) Buzzer feedback loop (Decision 030 cont.)** — answer-on-device (buzz
+  winner answers on their OWN phone, no call-out): `BuzzerHost.broadcastQuestion`
+  now ships prompt/options/imageURL; winner gets `isAnswering`, host runs
+  `acceptAnswer` / `rejectAnswerAndReopen`. **Device-based rejoin**: `BuzzerClient`
+  persists a UUID `deviceID` + last code/name (UserDefaults); `BuzzerHost`
+  `seatByDevice` re-seats silently on reconnect (no name re-entry); join code
+  stays on the TV for new players; `attemptReconnect` auto-reconnects. **Richer
+  feedback**: TV celebrates each buzz/score/miss, every phone sees who buzzed/
+  scored/missed + standings (`BuzzerMessage` gained question/answer/result kinds).
+  **No-hang**: all-wrong / no-buzz auto-advances; **don't reveal the wrong pick**
+  (gives away the answer, esp. 2-option) — 4-option after 3 wrong just moves on,
+  2-option hides incorrect options; wording says "Nobody got it right" (not
+  "Time's up") when all wrong. **Resume mid-question** works (`replayState`).
+  Sim-verified to host UI; **still pending: the 2-device hardware test** (live
+  Bonjour pairing/answer/rejoin only exercises on real devices — the gate).
+  **(2) Image questions stream** — Picture ID images now reach phones AND the TV
+  (`imageURL` plumbed through the buzzer); audited every question TYPE renders in
+  TV-hosted night. **(3) Corpus quality** (surgical patches across all 3 artifacts
+  — corpus.json / corpus.sqlite / picture.json, source had drifted to ~23.6k so NO
+  full regen): composer prompts reworded to "Who composed the score for X" for
+  scored media (P31-gated, 965); distractors type-matched via shared specific P31
+  (describe/cloze 1,325 + picture.json 3,945) with a `GENERIC_P31` blocklist
+  (killed the Arte/Toyota/Ryanair off-type decoys); dropped 543 thin/over-masked
+  questions delight couldn't save; **delight pass** (Haiku via Workflow, leak-
+  guarded) → **969 rewritten / ~97.6% delightful, 0 answer-in-question leaks**
+  (~375 robotic remain, leak-guarded — acceptable floor). **(4) Game Center —
+  code-complete** (`GameCenterManager` rewrite): launch auth (presents sign-in
+  VC) + access point (hidden in-game) + dashboard + **2 leaderboards**
+  (`tidbits.classic.high`, `tidbits.daily.streak`) + **9 achievements** (ids in
+  `Achievement` enum; reported from shared `RecordsStore`) + **Challenges** (iOS
+  26 listener → launches Classic). **ASC config is the owner task** — fully
+  specced field-by-field in `docs/GAME-CENTER-SETUP.md`; **11 brand-matched
+  images** (exact app icon, period→mark, 512×512 RGB) in `tools/branding/
+  gamecenter/` via `make_leaderboard.py` + `make_achievements.py`. Both iOS+tvOS
+  BUILD SUCCEEDED. Versions → Apple **1.5.3 (build 46)**; Android versionName
+  **1.5.1** (1.5.2/1.5.3 were Apple-only GC — verify before next Play upload).
+  *Left (next slices, unchanged):* **2-device Buzz Night hardware test** (#1);
+  **ASC Game Center config** (owner, doc ready); **pass-and-play team scoring**
+  for the night; web/Android have no buzzer yet (planned web-room is Phase 2);
+  Couch Co-op; Link Wall.

@@ -10,7 +10,8 @@ struct HomeView: View {
     @State private var showSettings = false
     @State private var showNightSetup = false
     @State private var nightLaunch: NightLaunchRequest?
-    @State private var showBuzzerJoin = false
+    @State private var hostLaunch: NightLaunchRequest?
+    @State private var showJoinNight = false
     @AppStorage("tidbits.hasOnboarded") private var hasOnboarded = false
 
     private let columns = [GridItem(.flexible(), spacing: 14), GridItem(.flexible(), spacing: 14)]
@@ -27,7 +28,7 @@ struct HomeView: View {
                 DailyCard { launch = LaunchRequest(mode: .daily, category: .named("mixed")) }
                 TriviaNightCard { showNightSetup = true }
                 PartyCard { showParty = true }
-                JoinTVCard { showBuzzerJoin = true }
+                JoinNightCard { showJoinNight = true }
                 modePicker
                 categoriesSection
             }
@@ -48,11 +49,20 @@ struct HomeView: View {
         .fullScreenCover(item: $nightLaunch) { req in
             NightContainerView(plan: req.plan, category: req.category)
         }
+        .fullScreenCover(item: $hostLaunch) { req in
+            NightLiveContainer(hosting: req.plan, category: req.category,
+                               engine: store.game, hostName: NightClient.lastName)
+        }
+        .fullScreenCover(isPresented: $showJoinNight) {
+            NightLiveContainer(joining: store.game)
+        }
         .fullScreenCover(isPresented: $showParty) { PartyContainerView() }
-        .sheet(isPresented: $showBuzzerJoin) { BuzzerJoinView() }
         .sheet(isPresented: $showNightSetup) {
-            NightSetupView { plan, category in
-                nightLaunch = NightLaunchRequest(plan: plan, category: category)
+            NightSetupView { plan, category, mode in
+                switch mode {
+                case .solo: nightLaunch = NightLaunchRequest(plan: plan, category: category)
+                case .host: hostLaunch = NightLaunchRequest(plan: plan, category: category)
+                }
             }
         }
         .sheet(isPresented: $showSettings) { SettingsView() }
@@ -187,9 +197,9 @@ private struct PartyCard: View {
     }
 }
 
-// MARK: - Join a TV game (buzzer) card
+// MARK: - Join a Night card
 
-private struct JoinTVCard: View {
+private struct JoinNightCard: View {
     let action: () -> Void
     var body: some View {
         Button(action: action) {
@@ -198,10 +208,10 @@ private struct JoinTVCard: View {
                     .font(.system(size: 28, weight: .black))
                     .foregroundStyle(Tidbits.Palette.teal.legibleForeground)
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("JOIN A TV GAME")
+                    Text("JOIN A NIGHT")
                         .font(Tidbits.TypeRamp.l2)
                         .foregroundStyle(Tidbits.Palette.teal.legibleForeground)
-                    Text("Buzz in on a Trivia Night running on the Apple TV.")
+                    Text("Enter a host's code and play along on your own device.")
                         .font(Tidbits.TypeRamp.l5)
                         .foregroundStyle(Tidbits.Palette.teal.legibleForeground.opacity(0.85))
                         .multilineTextAlignment(.leading)

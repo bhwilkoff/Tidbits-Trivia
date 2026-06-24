@@ -21,7 +21,8 @@ struct ContentView_tvOS: View {
     @State private var selectedMode: GameMode = .classic
     @State private var launch: LaunchRequest?
     @State private var nightLaunch: NightLaunchRequest?
-    @State private var buzzLaunch: NightLaunchRequest?
+    @State private var hostLaunch: NightLaunchRequest?
+    @State private var showJoinNight = false
     @State private var showRecords = false
     @State private var showSettings = false
     @State private var showNightSetup = false
@@ -49,15 +50,20 @@ struct ContentView_tvOS: View {
         .fullScreenCover(item: $nightLaunch) { req in
             TVNightContainer(plan: req.plan, category: req.category)
         }
-        .fullScreenCover(item: $buzzLaunch) { req in
-            BuzzNightView_tvOS(plan: req.plan, category: req.category)
+        .fullScreenCover(item: $hostLaunch) { req in
+            TVNightLiveContainer(hosting: req.plan, category: req.category,
+                                 engine: store.game, hostName: NightClient.lastName)
+        }
+        .fullScreenCover(isPresented: $showJoinNight) {
+            TVNightLiveContainer(joining: store.game)
         }
         .fullScreenCover(isPresented: $showNightSetup) {
-            NightSetupView_tvOS(onStart: { plan, category in
-                nightLaunch = NightLaunchRequest(plan: plan, category: category)
-            }, onStartBuzzer: { plan, category in
-                buzzLaunch = NightLaunchRequest(plan: plan, category: category)
-            })
+            NightSetupView_tvOS { plan, category, mode in
+                switch mode {
+                case .solo: nightLaunch = NightLaunchRequest(plan: plan, category: category)
+                case .host: hostLaunch = NightLaunchRequest(plan: plan, category: category)
+                }
+            }
         }
         .fullScreenCover(isPresented: $showRecords) { RecordsView_tvOS() }
         .fullScreenCover(isPresented: $showSettings) { SettingsView_tvOS() }
@@ -77,12 +83,6 @@ struct ContentView_tvOS: View {
             if DebugHooks.initialTab == .records { showRecords = true }
             if launch == nil, let mode = gameCenter.consumePendingChallenge() {
                 launch = LaunchRequest(mode: mode, category: .named("mixed"))
-            }
-            if DebugHooks.openBuzz {
-                // Cover every buzzable round type so screenshots exercise each display.
-                let plan = NightPlan(rounds: [NightRound(kind: .pictureId, count: 2), NightRound(kind: .classic, count: 2),
-                                              NightRound(kind: .thisOrThat, count: 2), NightRound(kind: .oddOneOut, count: 2)])
-                buzzLaunch = NightLaunchRequest(plan: plan, category: .named("mixed"))
             }
         }
         // A friend's Game Center challenge accepted at runtime → launch the mode.
@@ -124,6 +124,11 @@ struct ContentView_tvOS: View {
             }
             Spacer()
             HStack(spacing: 20) {
+                Button { showJoinNight = true } label: {
+                    Label("Join a Night", systemImage: "iphone.radiowaves.left.and.right")
+                        .font(.system(size: 26, weight: .bold, design: .rounded))
+                }
+                .buttonStyle(TVChipStyle(accent: Tidbits.Palette.teal, selected: false))
                 Button { showRecords = true } label: {
                     Label("Records", systemImage: "chart.bar.fill")
                         .font(.system(size: 26, weight: .bold, design: .rounded))

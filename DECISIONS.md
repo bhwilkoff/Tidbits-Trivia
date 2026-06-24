@@ -907,3 +907,62 @@ until then. Always check `SystemLanguageModel.default.availability` at runtime
 + template. Web/Android have no on-device Apple LLM → corpus + template now; a
 shared backend is a later option only if needed. Keep generation GROUNDED in the
 fetched summary and leak-guard the output (never name the answer).
+
+---
+
+## 034 — Trivia Night is device-agnostic, host-paced, everyone-plays (supersedes the TV-only buzzer)
+
+*Date: 2026-06-24*
+
+There is ONE multiplayer Trivia Night, and **any Apple device can host
+it or join it** — iPhone, iPad, and Apple TV are peers; none is
+special. The format is **host-paced, everyone-plays**: every player
+(the host included) answers on their OWN screen, and the host taps
+**Reveal → Next** to pace the night. The race-to-buzz mechanic and the
+"Buzz Night" name are **retired** — the name is "Trivia Night"
+everywhere, on every device.
+
+**Why:** the TV-only buzzer (Decision 030) made the living-room screen
+load-bearing and turned phones into dumb buzzers — only the fastest
+thumb engaged with each question, and the host couldn't really play.
+Ben's redesign: local multiplayer where everyone plays on their own
+device and the host plays too. With no shared screen to "buzz into,"
+buzzing stops making sense; the natural model is everyone-answers,
+host-reveals. This also passes the learning-orientation test harder
+than buzz-in did — *every* player engages with *every* question and
+gets the reveal, not just whoever buzzed first.
+
+**How to apply:**
+- The whole networking stack is **platform-agnostic Core** (no
+  `#if os` role split): `NightHost` (advertises, owns the roster +
+  standings, paces), `NightClient` (browses, joins, follows), and
+  `LiveNight` (the coordinator that wires the transport to a local
+  `GameEngine`). Hosting runs an `NWListener` on iOS just as on tvOS.
+- **Ship the night once.** The host builds the question list and
+  broadcasts plan + the full `[Question]` in one `.night` message;
+  every device runs its OWN `GameEngine` over the identical list. The
+  engine is deterministic given the list, so no per-device divergence.
+- **Each device scores itself; the host trusts the self-report.** A
+  joiner reports its running total + correctness per question; the host
+  aggregates. For a friendly living-room game this is the right
+  tradeoff — no server, no judge, no anti-cheat.
+- **Host-paced reveal is a `GameEngine` mode, not a UI hack.**
+  `startNight(…, hostPaced: true)` makes the engine HOLD each reveal
+  (`awaitingReveal`) behind a "waiting for the host" beat and never
+  auto-advance; `releaseReveal()` / `goToQuestion()` / `advance()` are
+  driven by the host's `reveal` / `begin` / `finished` signals. A
+  device that never answered is force-submitted as a miss on reveal so
+  everyone reveals together. Solo / pass-and-play pass `hostPaced:
+  false` and are unchanged.
+- **The play view is shared.** `GamePlayView` / `TVGamePlayView` take
+  an optional `live: LiveNight?` — nil = solo (untouched); non-nil adds
+  the host's Reveal/Next controls (host) or holds the reveal + shows
+  "waiting" (joiner), plus the live standings at each reveal.
+- Device-based silent rejoin (stable per-device id → same seat + score)
+  and mid-night catch-up (host replays night + current question) carry
+  over from Decision 030.
+- **Still Apple-only, still hardware-gated.** The Bonjour discovery +
+  local-network prompt + PSK handshake only exercise on real devices —
+  a two-device test is the gate before this is "done". Web/Android
+  networked play is the Phase-2 web-room (different transport); their
+  multiplayer today is pass-and-play on one device.

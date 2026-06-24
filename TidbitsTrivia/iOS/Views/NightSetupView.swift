@@ -7,12 +7,13 @@ import SwiftUI
 /// one tap (clarity over cleverness — the learning-orientation check); the per-round
 /// controls are there when a host wants to curate. Returns the assembled `NightPlan`.
 struct NightSetupView: View {
-    let onStart: (NightPlan, TriviaCategory) -> Void
+    let onStart: (NightPlan, TriviaCategory, NightStartMode) -> Void
     @Environment(\.dismiss) private var dismiss
 
     @State private var rounds: [NightRound] = NightPlan.pub.rounds
     @State private var category: TriviaCategory = .named("mixed")
     @State private var presetName: String = "Pub Night"
+    @State private var startMode: NightStartMode = .solo
 
     private var plan: NightPlan { NightPlan(rounds: rounds.filter { $0.count > 0 }) }
 
@@ -21,6 +22,7 @@ struct NightSetupView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
                     intro
+                    modeSection
                     presetSection
                     roundsSection
                     categorySection
@@ -43,6 +45,37 @@ struct NightSetupView: View {
             .font(Tidbits.TypeRamp.l4).foregroundStyle(Tidbits.Palette.inkSoft)
             .fixedSize(horizontal: false, vertical: true)
             .padding(.top, 6)
+    }
+
+    // MARK: Play mode (solo vs host for others)
+
+    private var modeSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Who's playing").font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
+            HStack(spacing: 10) {
+                modeChip(.solo, "Just this device", "person.fill", "Solo or pass-and-play")
+                modeChip(.host, "Host for others", "dot.radiowaves.left.and.right", "Everyone joins on their own device")
+            }
+        }
+    }
+
+    private func modeChip(_ mode: NightStartMode, _ title: String, _ symbol: String, _ blurb: String) -> some View {
+        let on = startMode == mode
+        return Button { startMode = mode } label: {
+            VStack(alignment: .leading, spacing: 4) {
+                Image(systemName: symbol).font(.system(size: 18, weight: .black))
+                    .foregroundStyle(on ? Tidbits.Palette.coral.legibleForeground : Tidbits.Palette.ink)
+                Text(title).font(Tidbits.TypeRamp.l3).foregroundStyle(on ? Tidbits.Palette.coral.legibleForeground : Tidbits.Palette.ink)
+                Text(blurb).font(Tidbits.TypeRamp.l5)
+                    .foregroundStyle((on ? Tidbits.Palette.coral.legibleForeground : Tidbits.Palette.inkSoft).opacity(0.85))
+                    .multilineTextAlignment(.leading).fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, minHeight: 96, alignment: .topLeading)
+            .padding(14)
+            .chunkyCard(fill: on ? Tidbits.Palette.coral : Tidbits.Palette.surface)
+            .padding(.trailing, Tidbits.Metric.shadowOffset)
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: Presets
@@ -164,9 +197,11 @@ struct NightSetupView: View {
             let p = plan
             guard !p.rounds.isEmpty else { return }
             dismiss()
-            onStart(p, category)
+            onStart(p, category, startMode)
         } label: {
-            Text(plan.rounds.isEmpty ? "Add a round to start" : "Start the Night · \(plan.totalQuestions) Qs")
+            Text(plan.rounds.isEmpty ? "Add a round to start"
+                 : (startMode == .host ? "Open the Room · \(plan.totalQuestions) Qs"
+                                       : "Start the Night · \(plan.totalQuestions) Qs"))
         }
         .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.coral, textColor: Tidbits.Palette.coral.legibleForeground))
         .disabled(plan.rounds.isEmpty)

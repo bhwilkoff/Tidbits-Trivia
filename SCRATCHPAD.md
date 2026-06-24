@@ -9,15 +9,15 @@
 
 ## Current state (2026-06-24)
 
-**Single biggest open item:** the **TV-hosted Trivia Night (phone-as-buzzer)** is
-built end-to-end and sim-verified to the host UI, but is **NOT two-device
-hardware-verified** — the live Bonjour pairing + answer-on-device + rejoin +
-challenge-launch only exercise on real devices. That hardware test (Ben) is the
-gate. **Game Center is code-complete** (auth/dashboard/access-point/9 achievements/
-2 leaderboards/Challenges) but needs **ASC config** — fully specced in
-`docs/GAME-CENTER-SETUP.md` (owner task; images in `tools/branding/gamecenter/`).
-Versions: Apple 1.5.3 (build 46); Android versionName 1.5.1 (verify before next
-Play upload — the 1.5.2/1.5.3 ships were Apple-only Game Center).
+**Single biggest open item:** **Trivia Night networked multiplayer (Decision
+034)** — ANY Apple device hosts or joins, host-paced, everyone-plays (the TV-only
+"Buzz Night" buzzer is **retired/replaced**). Both iOS + tvOS **BUILD SUCCEEDED**,
+but the live Bonjour pairing + answer + rejoin only exercise on real devices —
+that **2-device hardware test (Ben) is the gate**. **Game Center is code-complete**
+(auth/dashboard/access-point/9 achievements/2 leaderboards/Challenges) but needs
+**ASC config** — fully specced in `docs/GAME-CENTER-SETUP.md` (owner task; images
+in `tools/branding/gamecenter/`). Versions: Apple **1.6.0 (build 47)**; Android
+versionName 1.5.1 (verify before next Play upload — recent ships were Apple-only).
 
 
 - **All four platforms PLAY**, off one shared corpus, all pushed to `main`:
@@ -349,3 +349,34 @@ One-line-per-round; full detail in `ARCHIVE.md`.
   **ASC Game Center config** (owner, doc ready); **pass-and-play team scoring**
   for the night; web/Android have no buzzer yet (planned web-room is Phase 2);
   Couch Co-op; Link Wall.
+- **2026-06-24** — **Trivia Night → device-agnostic, host-paced local multiplayer
+  (Decision 034; supersedes the TV-only buzzer of Decision 030).** Ben: "any device
+  could be the host, all other Apple devices join — local multiplayer; redesign the
+  host so they can run the game AND play." Chose **host-paced** (host answers, then
+  taps Reveal → Next). *State found:* multiplayer was TV-host-only — `BuzzerHost`
+  `#if os(tvOS)`, `BuzzerClient` `#if os(iOS)`, race-to-buzz, phones as dumb buzzers.
+  *Work done:* **(1) Replaced the whole buzzer stack with a platform-agnostic Core
+  layer** (no `#if os` role split): `NightProtocol` (NightMessage: join/welcome/
+  roster/night/begin/reveal/answered/finished), `NightTransport` (same Bonjour +
+  room-code TLS-PSK, 1 MB frame cap for the night payload), `NightHost` +
+  `NightClient` (both compile iOS+tvOS — `NWListener` runs on iOS), and **`LiveNight`**
+  — the coordinator that wires the transport to a local `GameEngine`. Deleted the 6
+  `Buzzer*` / `BuzzNightView` files; scrubbed "Buzz" everywhere. **(2) Engine made
+  host-paceable** (`GameEngine`): `startNight(…, hostPaced:)`, `awaitingReveal` HOLDS
+  each reveal behind a "waiting for the host" beat, `onLocalAnswer` reports
+  score+correct out, `releaseReveal()` / `goToQuestion()` / `finishExternally()`
+  driven by host signals; force-submit-on-reveal so everyone reveals together. Solo
+  path untouched (`hostPaced:false`). **(3) Model:** host builds the night once,
+  ships plan + full `[Question]` (made `Codable`, incl. `GameMode`/`NightPlan`); every
+  device runs its OWN engine + scores itself; host trusts self-reports + aggregates
+  standings. **(4) UI** on the universal target: `GamePlayView`/`TVGamePlayView` gained
+  an optional `live:` (host Reveal/Next controls + held reveal + live standings;
+  joiner waits + follows; nil = solo, unchanged). New `NightLiveContainer` (iOS) +
+  `TVNightLiveContainer` (tvOS): join form / lobby (big code) / play / final
+  standings. `NightSetupView` gained a Solo/Host toggle; iOS home "Join a Night"
+  card; tvOS night hero (Play on TV / Host for others) + header "Join a Night". pbxproj
+  surgically updated (removed 6, added 6). **Both iOS + tvOS BUILD SUCCEEDED.**
+  Version → Apple **1.6.0 (build 47)**. *State left / gate:* the live Bonjour
+  pairing/answer/rejoin is **hardware-only — the 2-device test (Ben) is the gate**
+  (same gate as before, new model). web/Android networked = Phase-2 web-room;
+  pass-and-play stays their multiplayer. *Left:* team scoring; Couch Co-op; Link Wall.

@@ -3,7 +3,7 @@ import SwiftUI
 /// The v1 single-player modes. Multiplayer modes (head-to-head, team,
 /// living-room) layer on top in Phase 2 — they reuse the same GameEngine
 /// loop, only the win condition and scoring shell differ.
-enum GameMode: String, CaseIterable, Identifiable, Sendable {
+enum GameMode: String, CaseIterable, Identifiable, Sendable, Codable {
     case classic     // 10 questions, accuracy + speed bonus
     case timeAttack  // as many as you can in 60s
     case survival    // keep going until one wrong answer

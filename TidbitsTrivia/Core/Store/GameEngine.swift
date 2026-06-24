@@ -35,6 +35,16 @@ final class GameEngine {
     private(set) var lastAnswer: AnsweredQuestion?
     private(set) var chosenIndex: Int?
 
+    // Networked Trivia Night (host-paced, everyone-plays — Decision 033). When
+    // `hostPaced`, the engine does NOT auto-advance and HOLDS the reveal: after an
+    // answer it sits in `.reveal` with `awaitingReveal == true` (the answer hidden
+    // behind a "waiting for the host" beat) until the host calls `releaseReveal()`.
+    // `onLocalAnswer` fires when this device locks an answer (index, running score,
+    // correct) so the coordinator can report it to the host. nil/false otherwise.
+    private(set) var hostPaced = false
+    private(set) var awaitingReveal = false
+    var onLocalAnswer: ((Int, Int, Bool) -> Void)?
+
     // Stake mode: the remaining confidence-chip budget and the chip committed
     // to the current question (0 = not yet staked). Unused in other modes.
     private(set) var stakeTiers: [StakeTier] = []
@@ -149,12 +159,16 @@ final class GameEngine {
     /// round-tagged mixed question list (see `QuestionProvider.nightQuestions`).
     /// Runs through the same shape-routing loop as every other mode — a night is
     /// just a question stream whose shapes change round to round.
-    func startNight(plan: NightPlan, category: TriviaCategory, questions: [Question]) {
+    /// `hostPaced` runs the night as networked local multiplayer (Decision 033):
+    /// the engine holds each reveal and never auto-advances — the host drives
+    /// `releaseReveal()` / `advance()` for everyone. Solo / pass-and-play pass false.
+    func startNight(plan: NightPlan, category: TriviaCategory, questions: [Question], hostPaced: Bool = false) {
         self.mode = .barTrivia
         self.category = category
         phase = .loading
         triedLoad = true
         reset()
+        self.hostPaced = hostPaced
         self.nightPlan = plan
         self.questions = questions
         QuestionProvider.shared.markSeen(questions.map(\.id))
@@ -164,6 +178,7 @@ final class GameEngine {
 
     private func reset() {
         nightPlan = nil
+        hostPaced = false; awaitingReveal = false
         index = 0; score = 0; streak = 0; maxStreak = 0
         answered = []; lastAnswer = nil; chosenIndex = nil; globalDeadline = nil
         stakeTiers = mode == .stake
@@ -199,6 +214,7 @@ final class GameEngine {
         }
         if current?.accepted != nil { typedText = "" }
         if current?.enumerate != nil { enumFilled = []; enumNamed = []; enumLastHit = false; typedText = "" }
+        awaitingReveal = false
         phase = .playing
         questionStart = .now
         // Trivia Night mixes shapes within one run, so the clock comes from the
@@ -258,12 +274,7 @@ final class GameEngine {
                 // Dispatch the timeout by the question's SHAPE, not the mode, so
                 // a Trivia Night (which mixes shapes) times out each question
                 // correctly. Single-shape modes resolve identically.
-                if current?.closest != nil { submitGuess() }
-                else if current?.ordering != nil { submitOrder() }
-                else if current?.matching != nil { submitMatch() }
-                else if current?.accepted != nil { submitText() }
-                else if current?.enumerate != nil { finishEnum() }
-                else { submit(nil) }
+                forceTimeoutSubmit()
             }
         }
     }
@@ -311,7 +322,7 @@ final class GameEngine {
             streak = 0; Haptics.wrong()
         }
         score += pts
-        phase = .reveal
+        finishReveal()
     }
 
     // MARK: Ordering
@@ -354,7 +365,7 @@ final class GameEngine {
         if perfect { streak += 1; maxStreak = max(maxStreak, streak); Haptics.correct() }
         else { streak = 0; Haptics.wrong() }
         score += pts
-        phase = .reveal
+        finishReveal()
     }
 
     // MARK: Matching
@@ -398,7 +409,7 @@ final class GameEngine {
         if perfect { streak += 1; maxStreak = max(maxStreak, streak); Haptics.correct() }
         else { streak = 0; Haptics.wrong() }
         score += pts
-        phase = .reveal
+        finishReveal()
     }
 
     // MARK: Type-the-answer
@@ -431,7 +442,7 @@ final class GameEngine {
         } else {
             streak = 0; Haptics.wrong()
         }
-        phase = .reveal
+        finishReveal()
     }
 
     // MARK: Enumeration (Q8)
@@ -485,7 +496,7 @@ final class GameEngine {
         let answer = AnsweredQuestion(question: q, chosenIndex: hit ? 0 : 1, secondsTaken: clockBudget - remaining)
         answered.append(answer)
         lastAnswer = answer
-        phase = .reveal
+        finishReveal()
     }
 
     static func matchesAccepted(_ input: String, _ accepted: [String]) -> Bool {
@@ -549,7 +560,51 @@ final class GameEngine {
             Haptics.wrong()
             if mode == .survival { phase = .reveal; return }   // reveal then end
         }
+        finishReveal()
+    }
+
+    /// Land in the reveal phase after an answer. In a networked host-paced night
+    /// the answer is HELD (`awaitingReveal`) behind a "waiting for the host" beat
+    /// and this device reports its result to the host; solo/pass-and-play reveal
+    /// immediately. Either way the phase is `.reveal` so the views switch the same.
+    private func finishReveal() {
+        if hostPaced {
+            awaitingReveal = true
+            if let a = lastAnswer { onLocalAnswer?(index, score, a.isCorrect) }
+        }
         phase = .reveal
+    }
+
+    /// Host-paced: the host revealed — drop the hold so the answer shows. A device
+    /// that never answered is force-submitted as a miss first, so everyone reveals
+    /// together regardless of who was mid-thought.
+    func releaseReveal() {
+        guard hostPaced else { return }
+        if phase == .playing { forceTimeoutSubmit() }
+        awaitingReveal = false
+    }
+
+    /// Host-paced: jump every device to a specific question (the host's `begin`).
+    func goToQuestion(_ i: Int) {
+        ticker?.cancel()
+        guard questions.indices.contains(i) else { endGame(); return }
+        index = i
+        beginQuestion()
+    }
+
+    /// Host-paced: the host ended the night for everyone.
+    func finishExternally() { endGame() }
+
+    /// Resolve the current question with no further input, by its SHAPE (a clock
+    /// timeout, or a host reveal that caught a slow player). Single-shape modes
+    /// resolve identically.
+    private func forceTimeoutSubmit() {
+        if current?.closest != nil { submitGuess() }
+        else if current?.ordering != nil { submitOrder() }
+        else if current?.matching != nil { submitMatch() }
+        else if current?.accepted != nil { submitText() }
+        else if current?.enumerate != nil { finishEnum() }
+        else { submit(nil) }
     }
 
     /// Advance from the reveal screen to the next question (or finish).

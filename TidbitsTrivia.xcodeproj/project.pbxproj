@@ -11,7 +11,6 @@
 		0608CF492FA14F91750D1B69 /* SettingsView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4534F27C4206B9640778460 /* SettingsView_tvOS.swift */; };
 		11697E55857894F38D742127 /* ProgressStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A73FA1930578863B642985C /* ProgressStats.swift */; };
 		11CCA7505B02468A02988A0C /* closest.json in Resources */ = {isa = PBXBuildFile; fileRef = 1241A5F7969CF344FFE75DA6 /* closest.json */; };
-		14D9988F7891E91323181BEA /* BuzzerProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75B1B87B261C164A421546D6 /* BuzzerProtocol.swift */; };
 		154A589A9053D9ECF66EE341 /* typeanswer.json in Resources */ = {isa = PBXBuildFile; fileRef = 39FBC9BD13DA4CCB86AC1EF4 /* typeanswer.json */; };
 		157E84B3984C8AF6BB3E4900 /* PlayerRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = D85FC9EA0ED55C307CC3525F /* PlayerRecord.swift */; };
 		16F7B6BE37EAC0372AE1AB55 /* SeededRNG.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1C1A6AE174DDC149D5EE7BB /* SeededRNG.swift */; };
@@ -26,25 +25,29 @@
 		3DDD98934D198791F4C9C508 /* oddoneout.json in Resources */ = {isa = PBXBuildFile; fileRef = DEB3E620FB0E374A393778E4 /* oddoneout.json */; };
 		43F36ECB879791F4A899B1AF /* CreateQuizView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96283977862FC546F8219011 /* CreateQuizView.swift */; };
 		43F8B1E0DFD953763387E1D7 /* NightPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = A485FF3BF7BA5BCFEC4FBC2E /* NightPlan.swift */; };
+		FEED00000000000000000000 /* NightProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEED00000000000000000001 /* NightProtocol.swift */; };
+		FEED00000000000000000002 /* NightTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEED00000000000000000003 /* NightTransport.swift */; };
+		FEED00000000000000000004 /* NightHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEED00000000000000000005 /* NightHost.swift */; };
+		FEED00000000000000000006 /* NightClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEED00000000000000000007 /* NightClient.swift */; };
+		FEED00000000000000000008 /* LiveNight.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEED00000000000000000009 /* LiveNight.swift */; };
+		FEED0000000000000000000A /* NightLiveContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEED0000000000000000000B /* NightLiveContainer.swift */; };
 		453B198C89878F4FC0690176 /* NightView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABC3E5834F087B503EF2FE95 /* NightView_tvOS.swift */; };
 		46C78F229E1F5ABC0888E25F /* NightSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD70222B5EE4C4145E4D1F84 /* NightSetupView.swift */; };
 		476021C7C87B8F571D3D5108 /* difficulty.json in Resources */ = {isa = PBXBuildFile; fileRef = 0C8075B00F30AAE8E925FF05 /* difficulty.json */; };
 		47EC13554A9F7DAAAC0104A3 /* PartyContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F18495176F588DF9E5C7907E /* PartyContainerView.swift */; };
-		4DC91A451AB7826A0104F2F6 /* BuzzerHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28A222FFBE5C2A42222CA04F /* BuzzerHost.swift */; };
 		4E1DDB93B46A5CC413B608F5 /* NightContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40995246A8957880F31323EB /* NightContainerView.swift */; };
 		4F92081B7F2AFB470A7DC5C2 /* RecordsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C18E4CA3BD148F09E1BE077 /* RecordsView.swift */; };
 		512F6230D9E8F7A314AFF0ED /* RecordsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7633D27702A6874F7D8993DF /* RecordsStore.swift */; };
 		563B7C1B43D0FCF86A3ACC0A /* DebugHooks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BD01942F33620E5D75A8E7D /* DebugHooks.swift */; };
 		5B37FF3AF882A4CAD88CE62D /* GameComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 337562191FABFA21A46484FA /* GameComponents.swift */; };
-		64832D6149F7B6BA6C80DC62 /* BuzzNightView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DDE908F4D0C2B4AEBFF65E1 /* BuzzNightView_tvOS.swift */; };
 		6C6BC38059EF80F78C963AEA /* picture.json in Resources */ = {isa = PBXBuildFile; fileRef = 6E8760FF39E12021DC07BE8F /* picture.json */; };
 		6CF073BFB022FF600B3B9428 /* GamePlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE92745D6860E623628A0CBC /* GamePlayView.swift */; };
 		7051BF4D2CFDDEB46EC57971 /* Haptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDC047AE9E00DBB79A4FD169 /* Haptics.swift */; };
 		78068FB172485742F7C68313 /* DifficultyOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C0424A46E0A825EA0A8EFE2 /* DifficultyOverlay.swift */; };
 		7E457DE11CD8D820A503C8EB /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 3C266F600F75F40E459D2276 /* PrivacyInfo.xcprivacy */; };
-		8173D65E0C01C75F852B1886 /* BuzzerClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = C11F9512791D87E03F2F510A /* BuzzerClient.swift */; };
 		868239CDDF1A55B51710E012 /* Scoring.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EBCE6DDE7254EB4010E1679 /* Scoring.swift */; };
 		87D2A2B94B2CE47C7ADB8348 /* GameView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5C9D9266531ECD27156562D /* GameView_tvOS.swift */; };
+		FEED000000000000000000F0 /* NightLiveContainer_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEED000000000000000000F1 /* NightLiveContainer_tvOS.swift */; };
 		918AE96520BD2A89643D6E20 /* TriviaCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCB14B0E2B13CCA2DDA250ED /* TriviaCategory.swift */; };
 		92153A2172FBD8BD36DE55C5 /* thisorthat.json in Resources */ = {isa = PBXBuildFile; fileRef = BADC61A185827BBE0B9857AA /* thisorthat.json */; };
 		92B4788F3A0CAC7DE68FB848 /* CorpusDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB24F551656B187A42C81D44 /* CorpusDatabase.swift */; };
@@ -60,19 +63,16 @@
 		B60770C2C79E6CC6D4EA52AC /* JSONQuestionSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5641E998849F8570AF1C8387 /* JSONQuestionSource.swift */; };
 		B726DC9ED39E20DD9B3F5FD1 /* GameSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BFCD6FF44ED08F84EBBD05E /* GameSettings.swift */; };
 		C8F2A4B8CAC81B530D5A6D7D /* RecordsView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = F705319E1E9AC235B5D005C4 /* RecordsView_tvOS.swift */; };
-		C995289FC3CA797ED7128EF2 /* BuzzerJoinView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 053207871318F0379EE045FF /* BuzzerJoinView.swift */; };
 		CCA8AF2E7F7567E5B153E60F /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B2FEBFB29C12A172EADB66F /* SettingsView.swift */; };
 		D78451DA6D74E2BA65EB56C8 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AAEF55F4DD8DEA37D200C32 /* HomeView.swift */; };
 		DD17E6E2BBC121F9A5B69E32 /* order.json in Resources */ = {isa = PBXBuildFile; fileRef = 79A5D10D9EBC4D0950DE13CF /* order.json */; };
 		DF28093A48DE5460E1A7691C /* DelightfulQuizGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 161521EA893E91207502AEC2 /* DelightfulQuizGenerator.swift */; };
 		E6770F1D60EEB51BCEDD54B3 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8BAC363A3AF3ACE88A58A9AB /* LaunchScreen.storyboard */; };
 		EE8626F023BDE890D701F4B1 /* ContentView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = C23D07A7744AE72B2935CB2F /* ContentView_tvOS.swift */; };
-		F6940DE23C8FDFFC0EFDD656 /* BuzzerTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = A781EF8AAD2C417EC527EC32 /* BuzzerTransport.swift */; };
 		FC6C3246C07842892F682C5D /* GameCenterManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89A31C82C50C6EB1DA9AE9A4 /* GameCenterManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		053207871318F0379EE045FF /* BuzzerJoinView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuzzerJoinView.swift; sourceTree = "<group>"; };
 		0BFCD6FF44ED08F84EBBD05E /* GameSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSettings.swift; sourceTree = "<group>"; };
 		0BFD0D04EAFA9DBEB25F3A8E /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		0C18E4CA3BD148F09E1BE077 /* RecordsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordsView.swift; sourceTree = "<group>"; };
@@ -81,7 +81,6 @@
 		1241A5F7969CF344FFE75DA6 /* closest.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = closest.json; sourceTree = "<group>"; };
 		161521EA893E91207502AEC2 /* DelightfulQuizGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DelightfulQuizGenerator.swift; sourceTree = "<group>"; };
 		1BD01942F33620E5D75A8E7D /* DebugHooks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugHooks.swift; sourceTree = "<group>"; };
-		28A222FFBE5C2A42222CA04F /* BuzzerHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuzzerHost.swift; sourceTree = "<group>"; };
 		337562191FABFA21A46484FA /* GameComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameComponents.swift; sourceTree = "<group>"; };
 		35F518DED9832731B1294DD3 /* TidbitsTriviaApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TidbitsTriviaApp.swift; sourceTree = "<group>"; };
 		39FBC9BD13DA4CCB86AC1EF4 /* typeanswer.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = typeanswer.json; sourceTree = "<group>"; };
@@ -94,10 +93,8 @@
 		5A73FA1930578863B642985C /* ProgressStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressStats.swift; sourceTree = "<group>"; };
 		655168DF8FE110D6336394D2 /* WikipediaClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WikipediaClient.swift; sourceTree = "<group>"; };
 		6C78FEA628F8D5DC705D414E /* match.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = match.json; sourceTree = "<group>"; };
-		6DDE908F4D0C2B4AEBFF65E1 /* BuzzNightView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuzzNightView_tvOS.swift; sourceTree = "<group>"; };
 		6E8760FF39E12021DC07BE8F /* picture.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = picture.json; sourceTree = "<group>"; };
 		73D5D7FD07809D194BF90B30 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		75B1B87B261C164A421546D6 /* BuzzerProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuzzerProtocol.swift; sourceTree = "<group>"; };
 		7633D27702A6874F7D8993DF /* RecordsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordsStore.swift; sourceTree = "<group>"; };
 		79A5D10D9EBC4D0950DE13CF /* order.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = order.json; sourceTree = "<group>"; };
 		7A77D01159167F1BE602ABED /* GameContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameContainerView.swift; sourceTree = "<group>"; };
@@ -113,14 +110,18 @@
 		96283977862FC546F8219011 /* CreateQuizView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateQuizView.swift; sourceTree = "<group>"; };
 		9C0424A46E0A825EA0A8EFE2 /* DifficultyOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DifficultyOverlay.swift; sourceTree = "<group>"; };
 		A485FF3BF7BA5BCFEC4FBC2E /* NightPlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightPlan.swift; sourceTree = "<group>"; };
-		A781EF8AAD2C417EC527EC32 /* BuzzerTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuzzerTransport.swift; sourceTree = "<group>"; };
+		FEED00000000000000000001 /* NightProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightProtocol.swift; sourceTree = "<group>"; };
+		FEED00000000000000000003 /* NightTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightTransport.swift; sourceTree = "<group>"; };
+		FEED00000000000000000005 /* NightHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightHost.swift; sourceTree = "<group>"; };
+		FEED00000000000000000007 /* NightClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightClient.swift; sourceTree = "<group>"; };
+		FEED00000000000000000009 /* LiveNight.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveNight.swift; sourceTree = "<group>"; };
+		FEED0000000000000000000B /* NightLiveContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightLiveContainer.swift; sourceTree = "<group>"; };
 		AB6E2342A764B8401C9516E9 /* Design.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Design.swift; sourceTree = "<group>"; };
 		ABC3E5834F087B503EF2FE95 /* NightView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightView_tvOS.swift; sourceTree = "<group>"; };
 		B1C1A6AE174DDC149D5EE7BB /* SeededRNG.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeededRNG.swift; sourceTree = "<group>"; };
 		BADC61A185827BBE0B9857AA /* thisorthat.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = thisorthat.json; sourceTree = "<group>"; };
 		BCB14B0E2B13CCA2DDA250ED /* TriviaCategory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TriviaCategory.swift; sourceTree = "<group>"; };
 		BE92745D6860E623628A0CBC /* GamePlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GamePlayView.swift; sourceTree = "<group>"; };
-		C11F9512791D87E03F2F510A /* BuzzerClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuzzerClient.swift; sourceTree = "<group>"; };
 		C23D07A7744AE72B2935CB2F /* ContentView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView_tvOS.swift; sourceTree = "<group>"; };
 		CDC047AE9E00DBB79A4FD169 /* Haptics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Haptics.swift; sourceTree = "<group>"; };
 		D2BE9E793BFE4E52464B69A2 /* TidbitsTrivia.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TidbitsTrivia.entitlements; sourceTree = "<group>"; };
@@ -134,6 +135,7 @@
 		F3AE68F153F8C298960BFD36 /* Player.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Player.swift; sourceTree = "<group>"; };
 		F4534F27C4206B9640778460 /* SettingsView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView_tvOS.swift; sourceTree = "<group>"; };
 		F5C9D9266531ECD27156562D /* GameView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView_tvOS.swift; sourceTree = "<group>"; };
+		FEED000000000000000000F1 /* NightLiveContainer_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightLiveContainer_tvOS.swift; sourceTree = "<group>"; };
 		F705319E1E9AC235B5D005C4 /* RecordsView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordsView_tvOS.swift; sourceTree = "<group>"; };
 		FD70222B5EE4C4145E4D1F84 /* NightSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightSetupView.swift; sourceTree = "<group>"; };
 		FFC46D4CE8D03186C064C759 /* Question.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Question.swift; sourceTree = "<group>"; };
@@ -255,9 +257,9 @@
 		B7FF0BD6F715F7F0F08BD521 /* tvOS */ = {
 			isa = PBXGroup;
 			children = (
-				6DDE908F4D0C2B4AEBFF65E1 /* BuzzNightView_tvOS.swift */,
 				C23D07A7744AE72B2935CB2F /* ContentView_tvOS.swift */,
 				F5C9D9266531ECD27156562D /* GameView_tvOS.swift */,
+				FEED000000000000000000F1 /* NightLiveContainer_tvOS.swift */,
 				ABC3E5834F087B503EF2FE95 /* NightView_tvOS.swift */,
 				F705319E1E9AC235B5D005C4 /* RecordsView_tvOS.swift */,
 				F4534F27C4206B9640778460 /* SettingsView_tvOS.swift */,
@@ -295,10 +297,11 @@
 		E6842571E6A114474C252661 /* Networking */ = {
 			isa = PBXGroup;
 			children = (
-				C11F9512791D87E03F2F510A /* BuzzerClient.swift */,
-				28A222FFBE5C2A42222CA04F /* BuzzerHost.swift */,
-				75B1B87B261C164A421546D6 /* BuzzerProtocol.swift */,
-				A781EF8AAD2C417EC527EC32 /* BuzzerTransport.swift */,
+				FEED00000000000000000001 /* NightProtocol.swift */,
+				FEED00000000000000000003 /* NightTransport.swift */,
+				FEED00000000000000000005 /* NightHost.swift */,
+				FEED00000000000000000007 /* NightClient.swift */,
+				FEED00000000000000000009 /* LiveNight.swift */,
 				655168DF8FE110D6336394D2 /* WikipediaClient.swift */,
 			);
 			path = Networking;
@@ -307,11 +310,11 @@
 		E75C4A5D189196AE2932A113 /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				053207871318F0379EE045FF /* BuzzerJoinView.swift */,
 				96283977862FC546F8219011 /* CreateQuizView.swift */,
 				7A77D01159167F1BE602ABED /* GameContainerView.swift */,
 				BE92745D6860E623628A0CBC /* GamePlayView.swift */,
 				7AAEF55F4DD8DEA37D200C32 /* HomeView.swift */,
+				FEED0000000000000000000B /* NightLiveContainer.swift */,
 				40995246A8957880F31323EB /* NightContainerView.swift */,
 				FD70222B5EE4C4145E4D1F84 /* NightSetupView.swift */,
 				0BFD0D04EAFA9DBEB25F3A8E /* OnboardingView.swift */,
@@ -440,12 +443,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				254A5D097C6BED08159370E5 /* AppStore.swift in Sources */,
-				64832D6149F7B6BA6C80DC62 /* BuzzNightView_tvOS.swift in Sources */,
-				8173D65E0C01C75F852B1886 /* BuzzerClient.swift in Sources */,
-				4DC91A451AB7826A0104F2F6 /* BuzzerHost.swift in Sources */,
-				C995289FC3CA797ED7128EF2 /* BuzzerJoinView.swift in Sources */,
-				14D9988F7891E91323181BEA /* BuzzerProtocol.swift in Sources */,
-				F6940DE23C8FDFFC0EFDD656 /* BuzzerTransport.swift in Sources */,
 				AD2E45CD70618846B0546B96 /* ContentView_iOS.swift in Sources */,
 				EE8626F023BDE890D701F4B1 /* ContentView_tvOS.swift in Sources */,
 				92B4788F3A0CAC7DE68FB848 /* CorpusDatabase.swift in Sources */,
@@ -462,11 +459,18 @@
 				6CF073BFB022FF600B3B9428 /* GamePlayView.swift in Sources */,
 				B726DC9ED39E20DD9B3F5FD1 /* GameSettings.swift in Sources */,
 				87D2A2B94B2CE47C7ADB8348 /* GameView_tvOS.swift in Sources */,
+				FEED000000000000000000F0 /* NightLiveContainer_tvOS.swift in Sources */,
 				7051BF4D2CFDDEB46EC57971 /* Haptics.swift in Sources */,
 				D78451DA6D74E2BA65EB56C8 /* HomeView.swift in Sources */,
 				B60770C2C79E6CC6D4EA52AC /* JSONQuestionSource.swift in Sources */,
 				4E1DDB93B46A5CC413B608F5 /* NightContainerView.swift in Sources */,
 				43F8B1E0DFD953763387E1D7 /* NightPlan.swift in Sources */,
+				FEED00000000000000000000 /* NightProtocol.swift in Sources */,
+				FEED00000000000000000002 /* NightTransport.swift in Sources */,
+				FEED00000000000000000004 /* NightHost.swift in Sources */,
+				FEED00000000000000000006 /* NightClient.swift in Sources */,
+				FEED00000000000000000008 /* LiveNight.swift in Sources */,
+				FEED0000000000000000000A /* NightLiveContainer.swift in Sources */,
 				46C78F229E1F5ABC0888E25F /* NightSetupView.swift in Sources */,
 				453B198C89878F4FC0690176 /* NightView_tvOS.swift in Sources */,
 				9EA492C785F5F4ED0BFB78FF /* OnboardingView.swift in Sources */,

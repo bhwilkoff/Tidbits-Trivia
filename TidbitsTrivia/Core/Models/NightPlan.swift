@@ -11,7 +11,11 @@ import Foundation
 /// Bar Trivia is a CLIENT meta-mode (like Stake/Sweep): it composes existing
 /// question sources into one mixed list and runs it through the shape-routing
 /// `GameEngine` — no new question type, no corpus change (Decisions 025/031).
-struct NightRound: Identifiable, Hashable, Sendable {
+/// How the configured night is played (Decision 033). `solo` runs on this one
+/// device (pass-and-play); `host` opens a room any other Apple device can join.
+enum NightStartMode: Hashable, Sendable { case solo, host }
+
+struct NightRound: Identifiable, Hashable, Sendable, Codable {
     /// The question TYPE this round draws from — a `GameMode` whose questions
     /// have a distinct shape the engine already renders.
     var kind: GameMode
@@ -19,18 +23,22 @@ struct NightRound: Identifiable, Hashable, Sendable {
     var id: String { kind.rawValue }
     var title: String { kind.nightRoundTitle }
     var symbol: String { kind.symbol }
+
+    enum CodingKeys: String, CodingKey { case kind, count }
 }
 
-struct NightPlan: Hashable, Sendable {
+/// `Codable` because a host serializes the plan over the wire to every joiner so
+/// each device builds the SAME night (Decision 033).
+struct NightPlan: Hashable, Sendable, Codable {
     var rounds: [NightRound]
-    /// Empty = solo. Two or more = pass-and-play teams (the device is handed
-    /// around) or, on a TV host, the seats that buzz in.
+    /// Empty = solo / networked-everyone-plays. Two or more = pass-and-play teams
+    /// (one device handed around).
     var teams: [String] = []
-    /// TV-host phone-as-buzzer (tvOS only). Solo/pass-and-play ignore it.
-    var useBuzzer: Bool = false
 
     var totalQuestions: Int { rounds.reduce(0) { $0 + $1.count } }
     var isTeam: Bool { teams.count >= 2 }
+
+    enum CodingKeys: String, CodingKey { case rounds, teams }
 
     /// The question types a night can be built from — every shape the engine
     /// renders, in a sensible default running order.

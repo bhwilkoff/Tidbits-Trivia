@@ -70,15 +70,21 @@ private enum TVFocus: Hashable { case stake(Int), answer(Int), closestSlider, cl
 
 struct TVGamePlayView: View {
     let onQuit: () -> Void
+    /// Non-nil in a networked Trivia Night (Decision 033) — the host gets the
+    /// reveal/advance controls; a joiner's reveal is held until the host reveals.
+    var live: LiveNight? = nil
     @Environment(AppStore.self) private var store
     @FocusState private var focus: TVFocus?
     @State private var typeRevealed = false
     @State private var enumRevealed = false
     @State private var enumSelfCount = 0
     private var game: GameEngine { store.game }
+    /// In a host-paced night the answer is revealed only when the host reveals.
+    private var heldReveal: Bool { game.phase == .reveal && game.awaitingReveal }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 40) {
+            if let live { TVNightRoomStrip(live: live) }
             hud
             if let q = game.current {
                 if game.mode == .barTrivia, let round = game.currentRound { roundBanner(round) }
@@ -117,7 +123,17 @@ struct TVGamePlayView: View {
                         }
                     }
                 }
-                if game.phase == .reveal { reveal(q) }
+                if game.phase == .reveal {
+                    if heldReveal { tvLockedBeat }
+                    else {
+                        reveal(q)
+                        if let live { TVNightStandings(live: live) }
+                    }
+                }
+                // Host's reveal control — reachable while answering or holding.
+                if let live, live.role == .host, game.phase == .playing || heldReveal {
+                    tvHostRevealBar(live)
+                }
             }
             Spacer()
         }
@@ -134,7 +150,8 @@ struct TVGamePlayView: View {
             if game.mode == .stake && s != 0 && game.phase == .playing { focus = .answer(0) }
         }
         .task {
-            guard DebugHooks.autopilot else { return }
+            // Disabled in a networked night — the host paces it (autopilot would fight that).
+            guard DebugHooks.autopilot, live == nil else { return }
             while game.phase != .finished && game.phase != .idle {
                 try? await Task.sleep(for: .seconds(0.9))
                 switch game.phase {
@@ -438,7 +455,8 @@ struct TVGamePlayView: View {
         .background(RoundedRectangle(cornerRadius: 18).fill(TVTheme.panel))
     }
     private func state(_ idx: Int, _ q: Question) -> TVAnswerStyle.State {
-        guard game.phase == .reveal else { return .idle }
+        // Hold the reveal in a host-paced night until the host reveals.
+        guard game.phase == .reveal, !game.awaitingReveal else { return .idle }
         if idx == q.correctIndex { return .correct }
         if idx == game.chosenIndex { return .wrong }
         return .dim
@@ -473,10 +491,19 @@ struct TVGamePlayView: View {
                 Label("Round \(game.currentRoundNumber) complete · up next: \(next.title)", systemImage: "flag.checkered")
                     .font(.system(size: 25, weight: .bold, design: .rounded)).foregroundStyle(game.mode.accent)
             }
-            Button(isLast ? "See Results" : (game.nextRoundAfterCurrent.map { "Start \($0.title)" } ?? "Next")) { game.advance() }
-                .buttonStyle(TVChipStyle(accent: Tidbits.Palette.blue, selected: false))
-                .focused($focus, equals: .next)
-                .padding(.top, 8)
+            // Solo advances locally; the host advances everyone; a joiner just
+            // follows (the host drives the "next" beat — no button on their screen).
+            if live == nil {
+                Button(nextLabel) { game.advance() }
+                    .buttonStyle(TVChipStyle(accent: Tidbits.Palette.blue, selected: false))
+                    .focused($focus, equals: .next)
+                    .padding(.top, 8)
+            } else if live?.role == .host {
+                Button(nextLabel) { live?.next() }
+                    .buttonStyle(TVChipStyle(accent: Tidbits.Palette.blue, selected: false))
+                    .focused($focus, equals: .next)
+                    .padding(.top, 8)
+            }
         }
         .padding(28)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -484,6 +511,83 @@ struct TVGamePlayView: View {
     }
     private var isLast: Bool {
         game.mode != .timeAttack && game.mode != .survival && game.index + 1 >= game.questions.count
+    }
+    private var nextLabel: String {
+        isLast ? "See Results" : (game.nextRoundAfterCurrent.map { "Start \($0.title)" } ?? "Next")
+    }
+
+    // MARK: Networked night (held reveal + host controls)
+
+    private var tvLockedBeat: some View {
+        HStack(spacing: 16) {
+            Image(systemName: "lock.fill").font(.system(size: 28)).foregroundStyle(game.mode.accent)
+            Text("Locked in — waiting for the host to reveal…")
+                .font(.system(size: 31, weight: .heavy, design: .rounded)).foregroundStyle(.white)
+        }
+        .padding(28).frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: 22).fill(TVTheme.panel))
+    }
+
+    /// The host's pacing control at ten feet — "k of n answered" + a Reveal button
+    /// (focusable; the held-reveal phase lands focus here).
+    private func tvHostRevealBar(_ live: LiveNight) -> some View {
+        HStack(spacing: 24) {
+            Text("\(live.answeredCount) of \(live.playerCount) answered")
+                .font(.system(size: 27, weight: .bold, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+            Spacer()
+            Button("Reveal") { live.reveal() }
+                .buttonStyle(TVChipStyle(accent: game.mode.accent, selected: false))
+                .focused($focus, equals: .next)
+        }
+        .frame(maxWidth: 1300)
+    }
+}
+
+// MARK: - Networked-night chrome (tvOS)
+
+/// The room strip atop a networked night — code (host) or room name (joiner) + count.
+struct TVNightRoomStrip: View {
+    let live: LiveNight
+    var body: some View {
+        HStack(spacing: 18) {
+            Image(systemName: live.role == .host ? "dot.radiowaves.left.and.right" : "iphone.radiowaves.left.and.right")
+                .font(.system(size: 25, weight: .bold)).foregroundStyle(Tidbits.Palette.coral)
+            if live.role == .host {
+                Text("JOIN CODE \(live.roomCode)").font(.system(size: 27, weight: .black, design: .rounded))
+                    .foregroundStyle(.white).kerning(2)
+            } else {
+                Text(live.roomName.isEmpty ? "Connected" : live.roomName)
+                    .font(.system(size: 27, weight: .bold, design: .rounded)).foregroundStyle(.white)
+            }
+            Spacer()
+            Label("\(live.playerCount)", systemImage: "person.2.fill")
+                .font(.system(size: 25, weight: .bold, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+        }
+    }
+}
+
+/// Standings shown at each reveal — leader crowned, you highlighted.
+struct TVNightStandings: View {
+    let live: LiveNight
+    var body: some View {
+        let sorted = live.players.sorted { $0.score > $1.score }
+        return VStack(alignment: .leading, spacing: 10) {
+            Text("STANDINGS").font(.system(size: 26, weight: .heavy, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+            ForEach(sorted) { p in
+                HStack(spacing: 14) {
+                    if live.leaderSeat == p.seat {
+                        Image(systemName: "crown.fill").font(.system(size: 22)).foregroundStyle(Tidbits.Palette.yellow)
+                    }
+                    Text(p.name).font(.system(size: 29, weight: .bold, design: .rounded)).foregroundStyle(.white)
+                    if p.isHost { Text("HOST").font(.system(size: 18, weight: .black, design: .rounded)).foregroundStyle(TVTheme.textSoft) }
+                    Spacer()
+                    Text("\(p.score)").font(.system(size: 31, weight: .black, design: .rounded).monospacedDigit()).foregroundStyle(.white)
+                }
+                .padding(.horizontal, 24).padding(.vertical, 12)
+                .background(RoundedRectangle(cornerRadius: 14).fill(p.seat == live.mySeat ? Tidbits.Palette.mint.opacity(0.22) : TVTheme.panel))
+            }
+        }
+        .frame(maxWidth: 1300)
     }
 }
 

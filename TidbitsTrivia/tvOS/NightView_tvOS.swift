@@ -66,13 +66,12 @@ struct TVNightContainer: View {
 /// category, then start. Presets-first keeps it one focus-hop on the couch; the
 /// fine-grained per-round editor lives on the phone (where a Siri Remote isn't).
 struct NightSetupView_tvOS: View {
-    let onStart: (NightPlan, TriviaCategory) -> Void
-    let onStartBuzzer: (NightPlan, TriviaCategory) -> Void
+    let onStart: (NightPlan, TriviaCategory, NightStartMode) -> Void
     @Environment(\.dismiss) private var dismiss
     @State private var presetIndex = 1   // Pub Night
     @State private var category: TriviaCategory = .named("mixed")
     @FocusState private var focus: Field?
-    private enum Field: Hashable { case preset(Int), category(Int), start, buzzer }
+    private enum Field: Hashable { case preset(Int), category(Int), start, host }
 
     private var plan: NightPlan { NightPlan.presets[presetIndex].plan }
 
@@ -89,20 +88,20 @@ struct NightSetupView_tvOS: View {
                     presetRow
                     categoryRow
                     HStack(spacing: 24) {
-                        Button("Start the Night · \(plan.totalQuestions) Questions") {
-                            dismiss(); onStart(plan, category)
+                        Button("Play on this TV · \(plan.totalQuestions) Questions") {
+                            dismiss(); onStart(plan, category, .solo)
                         }
                         .buttonStyle(TVChipStyle(accent: Tidbits.Palette.coral, selected: false))
                         .focused($focus, equals: .start)
                         Button {
-                            dismiss(); onStartBuzzer(plan, category)
+                            dismiss(); onStart(plan, category, .host)
                         } label: {
-                            Label("Use Phones as Buzzers", systemImage: "iphone.radiowaves.left.and.right")
+                            Label("Host for Other Devices", systemImage: "dot.radiowaves.left.and.right")
                         }
                         .buttonStyle(TVChipStyle(accent: Tidbits.Palette.grape, selected: false))
-                        .focused($focus, equals: .buzzer)
+                        .focused($focus, equals: .host)
                     }
-                    Text("Hosting with phones turns the TV into the stage and everyone's phone into a buzzer — first to buzz answers on their phone, the room celebrates each score. (Buzzable rounds only.)")
+                    Text("Host a night and everyone joins on their own iPhone or iPad — the TV shows a join code and the standings, and you play along with the remote.")
                         .font(.system(size: 23, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
                 }
                 .padding(90)

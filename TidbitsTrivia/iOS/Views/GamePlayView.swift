@@ -7,11 +7,16 @@ import SwiftUI
 /// curiosity door (the learning-orientation mandate).
 struct GamePlayView: View {
     let game: GameEngine
+    /// Non-nil in a networked Trivia Night (Decision 033): the host gets the
+    /// reveal + advance controls; a joiner's reveal is held until the host reveals.
+    /// nil for solo / pass-and-play — the view behaves exactly as before.
+    var live: LiveNight? = nil
     let onQuit: () -> Void
     @FocusState private var enumFocused: Bool
 
     var body: some View {
         VStack(spacing: 0) {
+            if let live { NightRoomStrip(live: live) }
             hud
             if let q = game.current {
                 ScrollView {
@@ -27,7 +32,16 @@ struct GamePlayView: View {
                         else if q.ordering != nil { orderingPanel() }
                         else if let spec = q.closest { closestPanel(spec) }
                         else { answers(for: q) }
-                        if game.phase == .reveal { reveal(for: q) }
+                        // Networked night: the answer is HELD behind a "waiting for
+                        // the host" beat until the host reveals (so no one sees the
+                        // answer early); then everyone reveals + sees the standings.
+                        if game.phase == .reveal {
+                            if game.awaitingReveal { lockedBeat }
+                            else {
+                                reveal(for: q)
+                                if let live { NightStandingsCard(live: live) }
+                            }
+                        }
                     }
                     .padding(.horizontal, Tidbits.Metric.pad)
                     .padding(.bottom, 24)
@@ -41,14 +55,19 @@ struct GamePlayView: View {
                 .scrollBounceBehavior(.basedOnSize)
             }
             Spacer(minLength: 0)
-            if game.phase == .reveal { nextBar }
+            if let live {
+                if live.role == .host { hostControlBar(live) }   // joiners just follow the host
+            } else if game.phase == .reveal {
+                nextBar
+            }
         }
         .background(Tidbits.Palette.bg.ignoresSafeArea())
         .onAppear { GameCenterManager.shared.setAccessPointActive(false) }
         .onDisappear { GameCenterManager.shared.setAccessPointActive(true) }
         .task {
-            // Screenshot/CI autopilot — no-op unless TIDBITS_AUTOPILOT=1.
-            guard DebugHooks.autopilot else { return }
+            // Screenshot/CI autopilot — no-op unless TIDBITS_AUTOPILOT=1. Disabled
+            // in a networked night (the host paces it; autopilot would fight that).
+            guard DebugHooks.autopilot, live == nil else { return }
             while game.phase != .finished && game.phase != .idle {
                 try? await Task.sleep(for: .seconds(0.9))
                 switch game.phase {
@@ -422,7 +441,8 @@ struct GamePlayView: View {
     }
 
     private func answerState(idx: Int, q: Question) -> AnswerButton.State {
-        guard game.phase == .reveal else { return .idle }
+        // Hold the reveal in a host-paced night until the host reveals.
+        guard game.phase == .reveal, !game.awaitingReveal else { return .idle }
         if idx == q.correctIndex { return .correct }
         if idx == game.chosenIndex { return .wrong }
         return .dimmed
@@ -536,6 +556,101 @@ struct GamePlayView: View {
 
     private var isLast: Bool {
         game.mode != .timeAttack && game.mode != .survival && game.index + 1 >= game.questions.count
+    }
+
+    // MARK: Networked night (host controls + held reveal)
+
+    /// Shown after this device locks an answer, before the host reveals — so no
+    /// one sees the answer early. The host's copy nudges them to reveal.
+    private var lockedBeat: some View {
+        let host = live?.role == .host
+        return HStack(spacing: 10) {
+            Image(systemName: "lock.fill").foregroundStyle(game.mode.accent)
+            Text(host ? "Answer locked — reveal when everyone's in."
+                      : "Locked in — waiting for the host to reveal…")
+                .font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .chunkyCard(fill: Tidbits.Palette.bgDeep)
+        .padding(.trailing, Tidbits.Metric.shadowOffset)
+    }
+
+    /// The host's pacing bar — "k of n answered" then a single button that reveals,
+    /// then advances (the two beats the host picked).
+    private func hostControlBar(_ live: LiveNight) -> some View {
+        let revealed = game.phase == .reveal && !game.awaitingReveal
+        return VStack(spacing: 8) {
+            if !revealed {
+                Text("\(live.answeredCount) of \(live.playerCount) answered")
+                    .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+            }
+            Button {
+                if revealed { live.next() } else { live.reveal() }
+            } label: {
+                Text(revealed ? (isLast ? "See Results" : (game.nextRoundAfterCurrent.map { "Start \($0.title)" } ?? "Next Question"))
+                              : "Reveal")
+            }
+            .buttonStyle(ChunkyButtonStyle(fill: revealed ? Tidbits.Palette.ink : game.mode.accent,
+                                           textColor: revealed ? .white : game.mode.accent.legibleForeground))
+        }
+        .padding(.horizontal, Tidbits.Metric.pad)
+        .padding(.bottom, 16)
+        .padding(.trailing, Tidbits.Metric.shadowOffset)
+    }
+}
+
+// MARK: - Shared networked-night chrome (iOS)
+
+/// The slim strip atop a networked night: the room code (host) or "you're in"
+/// (joiner), and a live answered-count while a question is open.
+struct NightRoomStrip: View {
+    let live: LiveNight
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: live.role == .host ? "dot.radiowaves.left.and.right" : "iphone.radiowaves.left.and.right")
+                .font(.system(size: 15, weight: .bold)).foregroundStyle(Tidbits.Palette.coral)
+            if live.role == .host {
+                Text("ROOM \(live.roomCode)").font(.system(size: 16, weight: .black, design: .rounded))
+                    .foregroundStyle(Tidbits.Palette.ink).kerning(1)
+            } else {
+                Text(live.roomName.isEmpty ? "Connected" : live.roomName)
+                    .font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+            }
+            Spacer()
+            Label("\(live.playerCount)", systemImage: "person.2.fill")
+                .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+        }
+        .padding(.horizontal, Tidbits.Metric.pad).padding(.top, 8).padding(.bottom, 2)
+    }
+}
+
+/// The standings shown at each reveal — your row highlighted, the leader crowned.
+struct NightStandingsCard: View {
+    let live: LiveNight
+    var body: some View {
+        let sorted = live.players.sorted { $0.score > $1.score }
+        return VStack(alignment: .leading, spacing: 8) {
+            Text("STANDINGS").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+            ForEach(sorted) { p in
+                HStack(spacing: 8) {
+                    if live.leaderSeat == p.seat {
+                        Image(systemName: "crown.fill").font(.system(size: 13)).foregroundStyle(Tidbits.Palette.yellow)
+                    }
+                    Text(p.name).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                    if p.isHost { Text("HOST").font(.system(size: 10, weight: .black)).foregroundStyle(Tidbits.Palette.inkSoft) }
+                    Spacer()
+                    Text("\(p.score)").font(.system(size: 17, weight: .black, design: .rounded).monospacedDigit())
+                        .foregroundStyle(Tidbits.Palette.ink)
+                }
+                .padding(.horizontal, 12).padding(.vertical, 10)
+                .chunkyCard(fill: p.seat == live.mySeat ? Tidbits.Palette.mint.opacity(0.22) : Tidbits.Palette.surface)
+                .padding(.trailing, Tidbits.Metric.shadowOffset)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.top, 4)
     }
 }
 

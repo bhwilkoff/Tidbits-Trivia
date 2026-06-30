@@ -9,6 +9,12 @@
 > `WEB-DESIGN.md` (web), `ANDROID-DESIGN.md` (Android) when those
 > binding docs exist. The full workflow — including the periodic
 > parity audit — is the `cross-platform-parity-discipline` skill.
+>
+> **Last audit: 2026-06-30 (Android ↔ Apple, code-verified).** Found 4
+> false cells (§3b emoji grid, §4 entire auth section, §5 share URLs,
+> §12 adaptive icon) and confirmed the real Android-behind-iOS gaps
+> (onboarding, full Settings + attribution, haptics, pass-and-play).
+> Core gameplay is at genuine parity. Corrections applied below.
 
 ---
 
@@ -117,7 +123,7 @@ reached is ⏳ with a note, never silence.
 | Daily streak + missed-fact review | ✅ | ✅ | ✅ | ✅ | Streak on all 4; spaced re-asking of missed questions now woven into games on all 4 (Android by question-id via `Corpus.byId`), each with an opt-out toggle |
 | Compete vs. your past self | ✅ | ✅ | ✅ | ✅ | New-best detection on each game; tvOS surfaces personal bests in `RecordsView_tvOS` |
 | Share score (NO X/Twitter) | ✅ Web Share | ✅ ShareLink | ✅ QR | ✅ Intent | Decision 022; web has clipboard fallback |
-| Spoiler-free emoji-grid result | ✅ | ✅ | ✅ | ⏳ | Wordle-style 🟩🟥; the daily share loop (ROADMAP #1). tvOS renders it on `TVResultsView` |
+| Spoiler-free emoji-grid result | ✅ | ✅ | ✅ | ✅ | Wordle-style 🟩🟥; the daily share loop (ROADMAP #1). tvOS renders it on `TVResultsView`. **Audit 2026-06-30: Android shipped it** — `ResultsScreen` renders 🟩🟥⬛ and shares it (was falsely ⏳) |
 | First-run onboarding | ⏳ | ✅ | ⏳ | ⏳ | 3-card play/learn/compete walkthrough |
 | Leaderboards | 🔮 Supabase | 🚧 Game Center | 🚧 Game Center | 🔮 Play Games | Apple **code complete**: auth (now presents the sign-in sheet) + score submission on game-end (classic high + daily streak) + the dashboard (Settings → "Leaderboards & Achievements") + access point. No-op until authenticated; the only thing left is **creating the leaderboards in App Store Connect** with the matching IDs (`docs/GAME-CENTER-SETUP.md`) |
 | Achievements | 🔮 | 🚧 Game Center | 🚧 Game Center | 🔮 Play Games | Apple **code complete**: **9** achievements reported from the shared `RecordsStore` (first game / flawless / centurion / 7- & 30-day streak / full pie / Stake sharpshooter / explorer / scholar), partial-progress where it makes sense. Pending **ASC achievement creation** with matching IDs (`docs/GAME-CENTER-SETUP.md`) |
@@ -136,14 +142,23 @@ reached is ⏳ with a note, never silence.
 
 | Feature | Web | iOS | tvOS | Android | Notes |
 |---|---|---|---|---|---|
-| Sign in with Apple | ✅ | ✅ | ✅ | 🚫 | Apple ecosystem; Android uses Sign in with Google instead |
-| Sign in with Google | 🔮 | 🔮 | 🚫 | ✅ | Android Credential Manager one-tap; web GIS when sync ships |
-| Email/password | ✅ | ✅ | 🚫 | ✅ | Typing a password with a Siri Remote is hostile — tvOS uses SiwA only |
-| Biometric gate for sensitive actions | n/a | ✅ Face ID | n/a | ✅ BiometricPrompt | |
-| Account deletion | ✅ | ✅ | ✅ | ✅ | App Store + Play review requirement when sign-in exists |
+> **Audit 2026-06-30: this entire section was fictional.** A code grep
+> found NO auth/account/biometric/sync on web, iOS, tvOS, OR Android —
+> no `ASAuthorization`/SiwA, no Credential Manager, no CloudKit, no
+> Face ID / BiometricPrompt, no account or deletion path anywhere. The
+> only "identity" that exists is Game Center (`GKLocalPlayer`, Apple).
+> Cells corrected to 🔮. This is a whole-app future subsystem, not an
+> Android-specific gap.
 
-Sign-in is **optional and gates only sync** — every browse/use verb
+| Sign in with Apple | 🔮 | 🔮 | 🔮 | 🚫 | Not built on any platform (no SiwA code). Gates only sync, also unbuilt. Android would use Google instead |
+| Sign in with Google | 🔮 | 🔮 | 🚫 | 🔮 | Was falsely ✅ on Android — no Credential Manager code exists. Future, when sync ships |
+| Email/password | 🔮 | 🔮 | 🚫 | 🔮 | No auth backend yet. tvOS would stay SiwA-only (password entry on a remote is hostile) |
+| Biometric gate for sensitive actions | n/a | 🔮 | n/a | 🔮 | Was falsely ✅ — no Face ID / BiometricPrompt code on either platform. Nothing sensitive to gate until accounts exist |
+| Account deletion | 🔮 | 🔮 | 🔮 | 🔮 | Store-review requirement that activates **only once sign-in exists**; no account system today |
+
+Sign-in is **optional and would gate only sync** — every browse/use verb
 works signed-out on every platform (see `per-ecosystem-sync-islands`).
+None of it is built yet on any platform.
 
 ---
 
@@ -154,7 +169,7 @@ works signed-out on every platform (see `per-ecosystem-sync-islands`).
 | Universal Links / App Links (HTTPS) | n/a | ⏳ | n/a | ⏳ | `/.well-known/` files; tvOS has no Safari hand-off — custom scheme only |
 | Custom scheme | n/a | ⏳ | ⏳ | ⏳ | `appname://` — tvOS needs it for Top Shelf + Siri deep links |
 | URL params reflect filter state | ✅ | n/a | n/a | n/a | Web-specific affordance |
-| Canonical share URLs (`https://…/item/{id}`) | ✅ renders | ✅ emits | ✅ emits (QR code — a TV can't "send" a link) | ✅ emits | Web is the landing twin for every native share (DEEP_LINKS.md) |
+| Canonical share URLs (`https://…/item/{id}`) | ✅ renders | ⏳ emits | ⏳ | ⏳ emits | **Audit 2026-06-30: native shares are plain text — no `https://…/item/{id}` is emitted.** iOS `ResultsView` ShareLink + Android `ResultsScreen` intent are both text-only (emoji grid + score); tvOS QR/link unverified. Web still renders item URLs as the landing twin (DEEP_LINKS.md) |
 
 ---
 
@@ -240,7 +255,7 @@ iPad/tablet/desktop second, phones rarely).
 | Feature | Android | Why |
 |---|---|---|
 | Predictive back gesture | ⏳ | iOS swipe-back is fixed-animation; Android is user-driven |
-| Adaptive icon (foreground / background / monochrome) | ⏳ | iOS uses static; tvOS uses layered imagestack |
+| Adaptive icon (foreground / background / monochrome) | ✅ | **Shipped** (audit 2026-06-30) — `mipmap-anydpi-v26` adaptive icon WITH a monochrome layer (themed-icon ready). iOS uses static; tvOS uses layered imagestack |
 | App Shortcuts (long-press app icon) | ⏳ | iOS has AppIntents; tvOS has Top Shelf |
 | Material You dynamic color (opt-in) | ⏳ | Other platforms have brand-only theming |
 | Google Cast sender | 🔮 | AirPlay analog; needs Cast SDK + device-tested receiver |

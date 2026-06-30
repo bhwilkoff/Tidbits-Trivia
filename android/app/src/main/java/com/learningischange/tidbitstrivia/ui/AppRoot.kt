@@ -44,6 +44,8 @@ import androidx.compose.ui.unit.sp
 import com.learningischange.tidbitstrivia.data.*
 import com.learningischange.tidbitstrivia.ui.theme.Ink
 import com.learningischange.tidbitstrivia.ui.theme.Pops
+import com.learningischange.tidbitstrivia.ui.theme.accentText
+import com.learningischange.tidbitstrivia.ui.theme.onAccent
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -290,7 +292,7 @@ private fun PlayingScreen(game: GameState) {
                 }
             }
         }
-        Text(Category.byId(q.categoryId).name.uppercase(), color = Pops.at(Category.byId(q.categoryId).colorIndex), fontWeight = FontWeight.Bold, fontSize = 13.sp)
+        Text(Category.byId(q.categoryId).name.uppercase(), color = accentText(Pops.at(Category.byId(q.categoryId).colorIndex)), fontWeight = FontWeight.Bold, fontSize = 13.sp)
         q.imageUrl?.let { url ->
             ChunkyCard(fill = MaterialTheme.colorScheme.surfaceVariant, modifier = Modifier.fillMaxWidth()) {
                 AsyncImage(model = url, contentDescription = "Identify this",
@@ -339,10 +341,10 @@ private fun PlayingScreen(game: GameState) {
                     if (q.explanation.isNotEmpty()) Text(q.explanation)
                     if (game.mode == Mode.BAR_TRIVIA && game.nextRoundTitle != null)
                         Text("🏁 Round ${game.currentRoundNumber} complete · up next: ${game.nextRoundTitle}",
-                            color = Pops.coral, fontWeight = FontWeight.Bold)
+                            color = accentText(Pops.coral), fontWeight = FontWeight.Bold)
                 }
             }
-            Button(onClick = { game.advance() }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Ink)) {
+            Button(onClick = { game.advance() }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Ink, contentColor = Color.White)) {
                 Text(if (game.isLast) "See Results" else if (game.nextRoundTitle != null) "Start ${game.nextRoundTitle}" else "Next")
             }
         }
@@ -359,7 +361,7 @@ private fun EnumeratePanel(game: GameState, spec: EnumSpec) {
     val submit = { game.submitEnumGuess(input); input = "" }
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
         Text("${game.enumFilled.size} / ${spec.total}", fontWeight = FontWeight.Black, fontSize = 24.sp,
-            color = Pops.teal, modifier = Modifier.weight(1f))
+            color = accentText(Pops.teal), modifier = Modifier.weight(1f))
         TextButton(onClick = { game.finishEnum() }) { Text("Done") }
     }
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -460,7 +462,7 @@ private fun MatchingPanel(game: GameState, m: MatchSpec) {
             }
         }
         if (live) Button(onClick = { game.submitMatch() }, modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = Pops.coral)) { Text("Submit") }
+            colors = ButtonDefaults.buttonColors(containerColor = Pops.coral, contentColor = Color.White)) { Text("Submit") }
     }
 }
 
@@ -482,7 +484,7 @@ private fun OrderingPanel(game: GameState) {
             }
         }
         if (live) Button(onClick = { game.submitOrder() }, modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = Pops.blue)) { Text("Submit Order") }
+            colors = ButtonDefaults.buttonColors(containerColor = Pops.blue, contentColor = Color.White)) { Text("Submit Order") }
     }
 }
 
@@ -523,9 +525,11 @@ private fun StakeSelector(game: GameState) {
                     color = if (selected) Pops.mint else MaterialTheme.colorScheme.surface,
                     border = BorderStroke(2.5.dp, Ink),
                     modifier = Modifier.weight(1f).alpha(if (usable) 1f else 0.4f)) {
+                    // Ink on the mint selected fill (not theme onSurface, which goes light in dark mode).
+                    val tierFg = if (selected) Ink else MaterialTheme.colorScheme.onSurface
                     Column(Modifier.padding(vertical = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(tier.label, fontWeight = FontWeight.Black, fontSize = 15.sp)
-                        Text("+${tier.value} · ${tier.remaining} left", fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                        Text(tier.label, color = tierFg, fontWeight = FontWeight.Black, fontSize = 15.sp)
+                        Text("+${tier.value} · ${tier.remaining} left", color = tierFg, fontWeight = FontWeight.Bold, fontSize = 11.sp)
                     }
                 }
             }
@@ -536,7 +540,8 @@ private fun StakeSelector(game: GameState) {
 @Composable
 private fun AnswerButton(text: String, state: AnswerVisual, enabled: Boolean, onClick: () -> Unit) {
     val bg = when (state) { AnswerVisual.CORRECT -> Pops.mint; AnswerVisual.WRONG -> Pops.coral; else -> MaterialTheme.colorScheme.surface }
-    val fg = when (state) { AnswerVisual.CORRECT, AnswerVisual.WRONG -> Color.White; else -> MaterialTheme.colorScheme.onSurface }
+    // Ink on the light mint (white-on-mint is ~1.6:1); white on the deeper coral.
+    val fg = when (state) { AnswerVisual.CORRECT -> Ink; AnswerVisual.WRONG -> Color.White; else -> MaterialTheme.colorScheme.onSurface }
     Surface(onClick = onClick, enabled = enabled, shape = RoundedCornerShape(14.dp), color = bg,
         border = BorderStroke(2.5.dp, Ink), modifier = Modifier.fillMaxWidth().alpha(if (state == AnswerVisual.DIM) 0.45f else 1f)) {
         Text(text, Modifier.padding(16.dp), color = fg, fontWeight = FontWeight.Bold, fontSize = 17.sp)
@@ -566,7 +571,7 @@ private fun ResultsScreen(game: GameState, onPlayAgain: () -> Unit, onDone: () -
         Button(onClick = {
             val text = "🧠 Tidbits Trivia — ${game.mode.title}\n$grid\n${game.correctCount}/$total right · ${game.score} pts · $acc%\nTrivia from all of Wikipedia.\nhttps://tidbitstrivia.com"
             context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, text) }, "Share"))
-        }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Pops.blue)) { Text("Share Score") }
+        }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Pops.blue, contentColor = Color.White)) { Text("Share Score") }
         // F2 — full missed-fact recap: every wrong answer becomes a "now you know" card.
         val missed = game.answered.filter { !it.correct }
         if (missed.isNotEmpty()) {
@@ -575,7 +580,7 @@ private fun ResultsScreen(game: GameState, onPlayAgain: () -> Unit, onDone: () -
                 ChunkyCard(modifier = Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(14.dp).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(a.q.prompt, fontWeight = FontWeight.Bold)
-                        Text(a.q.answerText, color = Pops.mint, fontWeight = FontWeight.Black)
+                        Text(a.q.answerText, color = accentText(Pops.mint), fontWeight = FontWeight.Black)
                         if (a.q.explanation.isNotEmpty()) Text(a.q.explanation, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
                     }
                 }
@@ -690,10 +695,10 @@ private fun TopicRow(d: DomainProgress) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(c.name, fontWeight = FontWeight.Bold)
-                    if (d.hasWedge) Text("✓", color = Pops.mint, fontWeight = FontWeight.Black)
+                    if (d.hasWedge) Text("✓", color = accentText(Pops.mint), fontWeight = FontWeight.Black)
                     Spacer(Modifier.weight(1f))
                     Surface(color = col, shape = RoundedCornerShape(999.dp), border = BorderStroke(2.dp, Ink)) {
-                        Text("Lvl ${d.level}", color = Color.White, fontWeight = FontWeight.Black, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 9.dp, vertical = 2.dp))
+                        Text("Lvl ${d.level}", color = onAccent(col), fontWeight = FontWeight.Black, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 9.dp, vertical = 2.dp))
                     }
                 }
                 Box(Modifier.fillMaxWidth().height(12.dp).background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(999.dp)).border(2.dp, Ink, RoundedCornerShape(999.dp))) {
@@ -726,10 +731,10 @@ private fun CreateScreen(onPlay: (List<Question>, String) -> Unit) {
         Text("Create a quiz", fontSize = 30.sp, fontWeight = FontWeight.Black)
         Text("Pick any subject. We'll pull it from Wikipedia and build you a quiz.", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
         OutlinedTextField(topic, { topic = it }, label = { Text("e.g. The Renaissance") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-        Button(onClick = { generate(topic) }, enabled = !working, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Pops.grape)) {
+        Button(onClick = { generate(topic) }, enabled = !working, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Pops.grape, contentColor = Color.White)) {
             if (working) { CircularProgressIndicator(Modifier.size(20.dp), color = Color.White, strokeWidth = 2.dp); Spacer(Modifier.width(10.dp)); Text("Building your quiz…") } else Text("Generate Quiz")
         }
-        error?.let { Text(it, color = Pops.coral) }
+        error?.let { Text(it, color = accentText(Pops.coral)) }
         Text("Need a spark?", fontWeight = FontWeight.Bold, fontSize = 20.sp)
         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             items(suggestions, key = { it }) { s -> AssistChip(onClick = { topic = s; generate(s) }, label = { Text(s) }) }

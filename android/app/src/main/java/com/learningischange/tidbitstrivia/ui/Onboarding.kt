@@ -72,7 +72,7 @@ fun OnboardingScreen(onDone: () -> Unit) {
             Button(
                 onClick = { if (last) onDone() else scope.launch { pager.animateScrollToPage(pager.currentPage + 1) } },
                 modifier = Modifier.fillMaxWidth().height(54.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Ink),
+                colors = ButtonDefaults.buttonColors(containerColor = Ink, contentColor = Color.White),
             ) { Text(if (last) "Start Playing" else "Next", fontWeight = FontWeight.Bold, fontSize = 17.sp) }
         }
     }

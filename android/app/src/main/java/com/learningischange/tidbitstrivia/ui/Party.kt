@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.sp
 import com.learningischange.tidbitstrivia.data.*
 import com.learningischange.tidbitstrivia.ui.theme.Ink
 import com.learningischange.tidbitstrivia.ui.theme.Pops
+import com.learningischange.tidbitstrivia.ui.theme.accentText
 
 // Local pass-and-play (parity with iOS PartyContainerView): 2-4 players, ONE
 // shared fair question set, hand-off between turns, ranked scoreboard. Solo
@@ -106,7 +107,7 @@ private fun PartySetup(names: List<String>, onNames: (List<String>) -> Unit, onC
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             OutlinedButton(onClick = onCancel) { Text("Cancel") }
             Button(onClick = onStart, enabled = names.all { it.isNotBlank() },
-                colors = ButtonDefaults.buttonColors(containerColor = Pops.grape)) { Text("Start") }
+                colors = ButtonDefaults.buttonColors(containerColor = Pops.grape, contentColor = Color.White)) { Text("Start") }
         }
         Spacer(Modifier.height(24.dp))
     }
@@ -123,7 +124,7 @@ private fun Handoff(name: String, num: Int, total: Int, onBegin: () -> Unit) {
         Text(name, fontWeight = FontWeight.Black, fontSize = 34.sp, textAlign = TextAlign.Center)
         Text("Player $num of $total", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
         Spacer(Modifier.height(28.dp))
-        Button(onClick = onBegin, modifier = Modifier.fillMaxWidth().height(54.dp), colors = ButtonDefaults.buttonColors(containerColor = Ink)) {
+        Button(onClick = onBegin, modifier = Modifier.fillMaxWidth().height(54.dp), colors = ButtonDefaults.buttonColors(containerColor = Ink, contentColor = Color.White)) {
             Text("I'm $name — Begin", fontWeight = FontWeight.Bold, fontSize = 17.sp)
         }
     }
@@ -137,7 +138,7 @@ private fun PartyTurn(playerName: String, qNumber: Int, qTotal: Int, question: Q
             Text(playerName, fontWeight = FontWeight.Black, modifier = Modifier.weight(1f))
             AssistChip(onClick = {}, label = { Text("$qNumber / $qTotal") })
         }
-        Text(Category.byId(question.categoryId).name.uppercase(), color = Pops.at(Category.byId(question.categoryId).colorIndex), fontWeight = FontWeight.Bold, fontSize = 13.sp)
+        Text(Category.byId(question.categoryId).name.uppercase(), color = accentText(Pops.at(Category.byId(question.categoryId).colorIndex)), fontWeight = FontWeight.Bold, fontSize = 13.sp)
         Text(question.prompt, fontWeight = FontWeight.Black, fontSize = 23.sp)
         question.options.forEachIndexed { i, opt ->
             val state = when {
@@ -155,7 +156,7 @@ private fun PartyTurn(playerName: String, qNumber: Int, qTotal: Int, question: Q
                     if (question.explanation.isNotEmpty()) Text(question.explanation)
                 }
             }
-            Button(onClick = onNext, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Ink)) {
+            Button(onClick = onNext, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Ink, contentColor = Color.White)) {
                 Text(if (qNumber >= qTotal) "Done — pass it on" else "Next")
             }
         }
@@ -166,7 +167,7 @@ private fun PartyTurn(playerName: String, qNumber: Int, qTotal: Int, question: Q
 @Composable
 private fun PartyAnswer(text: String, state: AnswerVisual, enabled: Boolean, onClick: () -> Unit) {
     val bg = when (state) { AnswerVisual.CORRECT -> Pops.mint; AnswerVisual.WRONG -> Pops.coral; else -> MaterialTheme.colorScheme.surface }
-    val fg = when (state) { AnswerVisual.CORRECT, AnswerVisual.WRONG -> Color.White; else -> MaterialTheme.colorScheme.onSurface }
+    val fg = when (state) { AnswerVisual.CORRECT -> Ink; AnswerVisual.WRONG -> Color.White; else -> MaterialTheme.colorScheme.onSurface }
     Surface(onClick = onClick, enabled = enabled, shape = RoundedCornerShape(14.dp), color = bg, border = BorderStroke(2.5.dp, Ink), modifier = Modifier.fillMaxWidth()) {
         Text(text, Modifier.padding(16.dp), color = fg, fontWeight = FontWeight.Bold, fontSize = 17.sp)
     }
@@ -189,7 +190,7 @@ private fun Scoreboard(names: List<String>, scores: IntArray, corrects: IntArray
                 }
             }
         }
-        Button(onClick = onShare, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Pops.blue)) { Text("Share") }
+        Button(onClick = onShare, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Pops.blue, contentColor = Color.White)) { Text("Share") }
         Button(onClick = onRematch, modifier = Modifier.fillMaxWidth()) { Text("Rematch") }
         TextButton(onClick = onDone) { Text("Done") }
     }

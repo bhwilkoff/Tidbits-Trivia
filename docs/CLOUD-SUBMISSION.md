@@ -1,0 +1,68 @@
+# Cloud submission runbook — Tidbits Trivia
+
+How to ship Tidbits Trivia to the **App Store** (iOS + iPadOS + tvOS) and **Google Play**,
+built in the cloud. This is the build/submit PIPELINE; listing copy lives in
+`docs/app-store-listing.md` + `docs/play-store-listing.md`.
+
+> **Why cloud:** the dev Mac runs a *beta* macOS, so a local `xcodebuild` archive is rejected by
+> App Review (**ITMS-90301** — "built with this version of the OS"); Apple also keeps raising the
+> required Xcode floor (**ITMS-90111**). Building on a GitHub-hosted **`macos-26`** runner (released
+> macOS + Xcode 26.6) clears both, and it's **free** for this public repo. This is the same pipeline
+> Archive Watch uses.
+
+---
+
+## Apple App Store (iOS + tvOS) — DEFAULT
+
+1. **Bump the version + push.** Edit `AppVersion.xcconfig` (`MARKETING_VERSION` and
+   `CURRENT_PROJECT_VERSION` +1 — never via the Xcode identity panel), commit, push. The runner
+   builds the committed version; the build number must be ahead of the last upload.
+2. **Run the workflow:**
+   ```
+   gh workflow run appstore-build.yml -f platform=all     # or ios | tvos
+   gh run watch $(gh run list --workflow=appstore-build.yml -L1 --json databaseId -q '.[0].databaseId')
+   ```
+   `.github/workflows/appstore-build.yml` (runner `macos-26`) selects Xcode 26.6, imports the signing
+   `.p12`s from repo secrets into a temp keychain, and runs `tools/submit-appstore.sh all` — which
+   archives the **`TidbitsTrivia`** scheme for iOS and tvOS, creates App Store provisioning profiles
+   for `com.learningischange.tidbitstrivia`, and uploads both to App Store Connect.
+3. **Finish in App Store Connect (web):** each build processes (a few min), then on the Tidbits record
+   → the iOS and the tvOS platform → **select the build** → **Submit for Review**.
+
+**Signing** is MANUAL via `.p12` secrets (cloud-managed signing fails for this team's API key). The
+secrets are **shared across the team's apps** (team `L2G756LY8N`) and are already set:
+`APPLE_DIST_P12`, `APPLE_INSTALLER_P12`, `APPLE_P12_PASSWORD`, `APPLE_DIST_CERT_ID`, `ASC_KEY_P8`,
+`ASC_KEY_ID`, `ASC_ISSUER_ID`. To re-seed (if a cert changes): `tools/ci_make_signing_p12.py
+distribution out.p12 <pw>` → `gh secret set APPLE_DIST_P12 --body "$(base64 -i out.p12 | tr -d '\n')"`.
+
+Local `tools/submit-appstore.sh ios` works too, but ONLY on a machine running a released macOS — it is
+rejected ITMS-90301 on the beta box. Use the cloud workflow.
+
+---
+
+## Google Play
+
+Two paths, both via the Play Developer API:
+
+- **CI (existing, tag-gated → Internal Testing):** `.github/workflows/android-build.yml` builds the AAB
+  and uploads to the **internal** track on a `v*-android` tag push (the `r0adkll/upload-google-play`
+  action). Secrets: `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`,
+  `PLAY_SERVICE_ACCOUNT_JSON`. (The `packageName` was a `com.example.appname` placeholder — now fixed
+  to `com.learningischange.tidbitstrivia`.)
+- **CLI (new, production-capable):** `tools/submit-play.sh [--track production|internal] [--notes "…"]`
+  builds the release AAB and uploads it via `tools/play-publish.py` (Play Developer API v3) — the
+  Archive Watch pathway. Needs the upload keystore configured locally (`~/.gradle/gradle.properties`)
+  and the service-account JSON at `~/.config/play/tidbits-play.json` (or `PLAY_SERVICE_ACCOUNT_JSON`).
+
+**Version lockstep:** Android `versionName` tracks the iOS `MARKETING_VERSION` (both now `1.6.0`); bump
+`versionCode` +1 every Play upload (`submit-play.sh` does this automatically).
+
+---
+
+## House rules that still apply
+- Versions via `AppVersion.xcconfig` (iOS) / `android/app/build.gradle.kts` (Android) — never the Xcode
+  identity panel. Bump on every ship.
+- iOS 26 / tvOS 26 baseline; no third-party Swift packages. Keep iOS + tvOS at parity (`PARITY.md`).
+- The submission tooling (`tools/submit-appstore.sh`, `asc_certs.py`, `asc_profiles.py`,
+  `ci_make_signing_p12.py`, `submit-play.sh`, `play-publish.py`) is shared with Archive Watch — see its
+  `apple-app-store-cli-submission` skill + `docs/macOS-DESIGN.md` §C for the deep details.

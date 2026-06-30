@@ -81,7 +81,7 @@ jobs:
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
-          packageName: com.example.appname   # FILL IN
+          packageName: com.learningischange.tidbitstrivia
           releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
           track: internal
           status: completed

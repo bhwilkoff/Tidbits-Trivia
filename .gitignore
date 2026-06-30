@@ -88,3 +88,6 @@ native-debug-symbols.zip
 tools/corpus/cache/qrank.csv.gz
 tools/corpus/cache/clickstream-*.tsv.gz
 tools/corpus/corpus_source.sqlite
+tools/asc-credentials.env
+AuthKey_*.p8
+*.p12

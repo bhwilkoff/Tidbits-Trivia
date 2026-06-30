@@ -33,7 +33,7 @@ these patterns; invoke the skill when its trigger matches.
 | Designing/changing shared backend data the clients consume | `shared-data-plane-contract` |
 | Video/audio streaming from hosts you don't control | `resilient-media-streaming` |
 | Sync, sign-in, favorites/progress across devices | `per-ecosystem-sync-islands` |
-| Preparing any store submission (App Store, Play, tvOS) | `store-submission-playbook` |
+| Preparing any store submission (App Store, Play, tvOS) | `store-submission-playbook` + `docs/CLOUD-SUBMISSION.md` (DEFAULT = cloud build `gh workflow run appstore-build.yml`; the beta-macOS dev box can't ship locally) |
 | Logging an architecture decision | `architectural-decision-log` |
 | User pushback after 3+ iterations of "still broken" | `3d-feature-debug-loop` |
 

@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Tidbits</string>
+
+    <!-- App Shortcuts (long-press the launcher icon) -->
+    <string name="sc_daily_short">Daily Tidbit</string>
+    <string name="sc_daily_long">Play today\'s 7 questions</string>
+    <string name="sc_night_short">Trivia Night</string>
+    <string name="sc_night_long">Host a night of mixed rounds</string>
+    <string name="sc_party_short">Pass &amp; Play</string>
+    <string name="sc_party_long">2–4 players, one phone</string>
 </resources>

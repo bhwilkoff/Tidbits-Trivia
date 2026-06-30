@@ -21,6 +21,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -52,14 +53,23 @@ sealed interface Route {
     data object Create : Route
     data class Game(val mode: Mode, val category: Category, val custom: List<Question>? = null, val label: String? = null, val nightRounds: List<Pair<String, Int>>? = null) : Route
     data object NightSetup : Route
+    data object Settings : Route
+    data object Party : Route
 }
 
 @Composable
-fun AppRoot(store: Store) {
+fun AppRoot(
+    store: Store,
+    dynamicColor: Boolean = false,
+    onDynamicColor: (Boolean) -> Unit = {},
+    deepLink: String? = null,
+    onDeepLinkConsumed: () -> Unit = {},
+) {
     val context = LocalContext.current
     val backStack = remember { mutableStateListOf<Route>(Route.Home) }
     val current = backStack.last()
     var corpusReady by remember { mutableStateOf(Corpus.loaded) }
+    var onboarded by remember { mutableStateOf(store.hasOnboarded()) }
     LaunchedEffect(Unit) {
         if (!Corpus.loaded) runCatching { Corpus.load(context) }
         if (!Pictures.loaded) runCatching { Pictures.load(context) }
@@ -74,25 +84,48 @@ fun AppRoot(store: Store) {
         corpusReady = true
     }
 
+    // Deep-link inbox (parity with iOS .onOpenURL): MainActivity hands the
+    // parsed host here; we route then mark consumed. Unknown links open Home.
+    LaunchedEffect(deepLink) {
+        when (deepLink) {
+            null -> {}
+            "daily" -> { backStack.clear(); backStack.add(Route.Home); backStack.add(Route.Game(Mode.DAILY, Category.byId("mixed"))) }
+            "night" -> { backStack.clear(); backStack.add(Route.Home); backStack.add(Route.NightSetup) }
+            "party" -> { backStack.clear(); backStack.add(Route.Home); backStack.add(Route.Party) }
+            "create" -> { backStack.clear(); backStack.add(Route.Create) }
+            "settings" -> { backStack.clear(); backStack.add(Route.Home); backStack.add(Route.Settings) }
+            else -> { backStack.clear(); backStack.add(Route.Home) }
+        }
+        if (deepLink != null) onDeepLinkConsumed()
+    }
+
     BackHandler(enabled = backStack.size > 1) { backStack.removeAt(backStack.lastIndex) }
 
-    val showBar = current !is Route.Game
-    Scaffold(bottomBar = { if (showBar) BottomBar(current) { backStack.clear(); backStack.add(it) } }) { pad ->
-        Box(Modifier.padding(pad).fillMaxSize()) {
-            when (val r = current) {
-                is Route.Home -> HomeScreen(
-                    onPlay = { mode, cat -> backStack.add(Route.Game(mode, cat)) },
-                    onNight = { backStack.add(Route.NightSetup) },
-                )
-                is Route.NightSetup -> NightSetupScreen(
-                    onStart = { rounds, cat, label -> backStack.removeAt(backStack.lastIndex); backStack.add(Route.Game(Mode.BAR_TRIVIA, cat, label = label, nightRounds = rounds)) },
-                    onCancel = { backStack.removeAt(backStack.lastIndex) },
-                )
-                is Route.Records -> RecordsScreen(store)
-                is Route.Create -> CreateScreen { qs, label -> backStack.add(Route.Game(Mode.CLASSIC, Category.byId("mixed"), qs, label)) }
-                is Route.Game -> GameScreen(r, store) { backStack.removeAt(backStack.lastIndex) }
+    val showBar = current is Route.Home || current is Route.Records || current is Route.Create
+    Box(Modifier.fillMaxSize()) {
+        Scaffold(bottomBar = { if (showBar) BottomBar(current) { backStack.clear(); backStack.add(it) } }) { pad ->
+            Box(Modifier.padding(pad).fillMaxSize()) {
+                when (val r = current) {
+                    is Route.Home -> HomeScreen(
+                        onPlay = { mode, cat -> backStack.add(Route.Game(mode, cat)) },
+                        onNight = { backStack.add(Route.NightSetup) },
+                        onParty = { backStack.add(Route.Party) },
+                        onSettings = { backStack.add(Route.Settings) },
+                    )
+                    is Route.NightSetup -> NightSetupScreen(
+                        onStart = { rounds, cat, label -> backStack.removeAt(backStack.lastIndex); backStack.add(Route.Game(Mode.BAR_TRIVIA, cat, label = label, nightRounds = rounds)) },
+                        onCancel = { backStack.removeAt(backStack.lastIndex) },
+                    )
+                    is Route.Records -> RecordsScreen(store)
+                    is Route.Create -> CreateScreen { qs, label -> backStack.add(Route.Game(Mode.CLASSIC, Category.byId("mixed"), qs, label)) }
+                    is Route.Game -> GameScreen(r, store) { backStack.removeAt(backStack.lastIndex) }
+                    is Route.Settings -> SettingsScreen(store, dynamicColor, onDynamicColor)
+                    is Route.Party -> PartyContainer(store) { backStack.removeAt(backStack.lastIndex) }
+                }
             }
         }
+        // First-run onboarding overlays everything (incl. the bottom bar).
+        if (!onboarded) OnboardingScreen { store.setOnboarded(true); onboarded = true }
     }
 }
 
@@ -108,11 +141,16 @@ private fun BottomBar(current: Route, onSelect: (Route) -> Unit) {
 // ---- Home ----
 
 @Composable
-private fun HomeScreen(onPlay: (Mode, Category) -> Unit, onNight: () -> Unit) {
+private fun HomeScreen(onPlay: (Mode, Category) -> Unit, onNight: () -> Unit, onParty: () -> Unit, onSettings: () -> Unit) {
     var selectedMode by remember { mutableStateOf(Mode.CLASSIC) }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
-        Text("TIDBITS", fontSize = 40.sp, fontWeight = FontWeight.Black)
-        Text("Trivia from the whole of Wikipedia.", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text("TIDBITS", fontSize = 40.sp, fontWeight = FontWeight.Black)
+                Text("Trivia from the whole of Wikipedia.", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+            }
+            IconButton(onClick = onSettings) { Icon(Icons.Filled.Settings, contentDescription = "Settings") }
+        }
 
         ChunkyCard(fill = Pops.yellow, onClick = { onPlay(Mode.DAILY, Category.byId("mixed")) }) {
             Column(Modifier.padding(18.dp)) {
@@ -125,6 +163,13 @@ private fun HomeScreen(onPlay: (Mode, Category) -> Unit, onNight: () -> Unit) {
             Column(Modifier.padding(18.dp)) {
                 Text("TRIVIA NIGHT", fontWeight = FontWeight.Black, fontSize = 20.sp, color = Color.White)
                 Text("Host a night of mixed rounds — every kind of question.", color = Color.White.copy(alpha = 0.85f))
+            }
+        }
+
+        ChunkyCard(fill = Pops.grape, onClick = onParty) {
+            Column(Modifier.padding(18.dp)) {
+                Text("PASS & PLAY", fontWeight = FontWeight.Black, fontSize = 20.sp, color = Color.White)
+                Text("2–4 players, one phone, the same questions. Take turns.", color = Color.White.copy(alpha = 0.85f))
             }
         }
 
@@ -193,10 +238,15 @@ private fun NightSetupScreen(onStart: (List<Pair<String, Int>>, Category, String
 @Composable
 private fun GameScreen(route: Route.Game, store: Store, onDone: () -> Unit) {
     val scope = rememberCoroutineScope()
+    val haptics = rememberGameHaptics(store)
     val game = remember { GameState(route.mode, route.category, store, route.custom, route.label, route.nightRounds) }
     LaunchedEffect(Unit) { game.start() }
     LaunchedEffect(game.index, game.phase) {
         while (game.phase == GamePhase.PLAYING) { delay(100); game.tick() }
+    }
+    // Correct/wrong haptics fire once per question when the reveal lands.
+    LaunchedEffect(game.index, game.phase) {
+        if (game.phase == GamePhase.REVEAL) { if (game.lastCorrect) haptics.correct() else haptics.wrong() }
     }
     when (game.phase) {
         GamePhase.LOADING -> Box(Modifier.fillMaxSize(), Alignment.Center) {
@@ -514,7 +564,7 @@ private fun ResultsScreen(game: GameState, onPlayAgain: () -> Unit, onDone: () -
             }
         }
         Button(onClick = {
-            val text = "🧠 Tidbits Trivia — ${game.mode.title}\n$grid\n${game.correctCount}/$total right · ${game.score} pts · $acc%\nTrivia from all of Wikipedia."
+            val text = "🧠 Tidbits Trivia — ${game.mode.title}\n$grid\n${game.correctCount}/$total right · ${game.score} pts · $acc%\nTrivia from all of Wikipedia.\nhttps://tidbitstrivia.com"
             context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, text) }, "Share"))
         }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Pops.blue)) { Text("Share Score") }
         // F2 — full missed-fact recap: every wrong answer becomes a "now you know" card.
@@ -557,7 +607,6 @@ private fun RecordsScreen(store: Store) {
         Text("Records", fontSize = 30.sp, fontWeight = FontWeight.Black)
         if (records.isEmpty()) {
             ChunkyCard { Column(Modifier.padding(20.dp)) { Text("No games yet", fontWeight = FontWeight.Bold); Text("Play a round and your scores and streaks show up here.", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)) } }
-            ReviewSetting(store)
             return@Column
         }
         ChunkyCard(fill = Pops.yellow) {
@@ -609,26 +658,7 @@ private fun RecordsScreen(store: Store) {
             val b = store.bestScore(m.name)
             if (b > 0) ChunkyCard { Row(Modifier.padding(14.dp).fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) { Text(m.title, fontWeight = FontWeight.Bold); Text("$b", fontWeight = FontWeight.Black, fontSize = 20.sp) } }
         }
-        ReviewSetting(store)
         Spacer(Modifier.height(24.dp))
-    }
-}
-
-// Settings — the Review-questions toggle (parity with iOS/web). Spaced re-asking
-// of missed questions; off = only ever new questions.
-@Composable
-private fun ReviewSetting(store: Store) {
-    var on by remember { mutableStateOf(store.reviewEnabled()) }
-    Text("Settings", fontWeight = FontWeight.Bold, fontSize = 20.sp)
-    ChunkyCard {
-        Row(Modifier.padding(16.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Column(Modifier.weight(1f)) {
-                Text("Review questions", fontWeight = FontWeight.Bold)
-                Text("Re-ask questions you've missed, spaced out, so they stick. Off = only new questions.",
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f), fontSize = 13.sp)
-            }
-            Switch(checked = on, onCheckedChange = { on = it; store.setReviewEnabled(it) })
-        }
     }
 }
 

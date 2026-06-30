@@ -11,13 +11,14 @@
         android:name=".app.AppNameApplication"
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
+        android:enableOnBackInvokedCallback="true"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.AppName.Splash"
-        tools:targetApi="35">
+        tools:targetApi="36">
 
         <activity
             android:name=".MainActivity"
@@ -32,26 +33,32 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
 
-            <!-- App Links (HTTPS, autoVerify against .well-known/assetlinks.json).
-                 FILL IN your domain + path prefixes. -->
-            <!--
+            <!-- App Links (HTTPS) — autoVerify against
+                 https://tidbitstrivia.com/.well-known/assetlinks.json. The
+                 assetlinks file must list the Play App Signing SHA-256 (from
+                 Play Console -> App integrity) for installs from Play to verify;
+                 the upload-key fingerprint covers local/sideloaded builds. Until
+                 the Play cert is added, these open via the chooser (still work),
+                 they just aren't auto-verified. -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
-                <data android:scheme="https" android:host="example.com"/>
+                <data android:scheme="https" android:host="tidbitstrivia.com"/>
+                <data android:scheme="https" android:host="www.tidbitstrivia.com"/>
             </intent-filter>
-            -->
 
-            <!-- Custom scheme deep links (OAuth callbacks, same-app deep links). -->
-            <!--
+            <!-- Custom scheme — App Shortcuts + same-app deep links (DEEP_LINKS.md). -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
-                <data android:scheme="appname"/>
+                <data android:scheme="tidbits"/>
             </intent-filter>
-            -->
+
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts"/>
         </activity>
 
         <!-- Firebase Messaging service goes here when push ships -->

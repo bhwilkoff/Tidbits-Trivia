@@ -124,14 +124,14 @@ reached is ⏳ with a note, never silence.
 | Compete vs. your past self | ✅ | ✅ | ✅ | ✅ | New-best detection on each game; tvOS surfaces personal bests in `RecordsView_tvOS` |
 | Share score (NO X/Twitter) | ✅ Web Share | ✅ ShareLink | ✅ QR | ✅ Intent | Decision 022; web has clipboard fallback |
 | Spoiler-free emoji-grid result | ✅ | ✅ | ✅ | ✅ | Wordle-style 🟩🟥; the daily share loop (ROADMAP #1). tvOS renders it on `TVResultsView`. **Audit 2026-06-30: Android shipped it** — `ResultsScreen` renders 🟩🟥⬛ and shares it (was falsely ⏳) |
-| First-run onboarding | ⏳ | ✅ | ⏳ | ⏳ | 3-card play/learn/compete walkthrough |
+| First-run onboarding | ⏳ | ✅ | ⏳ | ✅ | 3-card play/learn/compete walkthrough. **Android shipped 2026-06-30** (`OnboardingScreen`, emulator-verified: 🧠 All-of-Wikipedia / 💡 Learn-every-round / 🎉 Solo-or-together) |
 | Leaderboards | 🔮 Supabase | 🚧 Game Center | 🚧 Game Center | 🔮 Play Games | Apple **code complete**: auth (now presents the sign-in sheet) + score submission on game-end (classic high + daily streak) + the dashboard (Settings → "Leaderboards & Achievements") + access point. No-op until authenticated; the only thing left is **creating the leaderboards in App Store Connect** with the matching IDs (`docs/GAME-CENTER-SETUP.md`) |
 | Achievements | 🔮 | 🚧 Game Center | 🚧 Game Center | 🔮 Play Games | Apple **code complete**: **9** achievements reported from the shared `RecordsStore` (first game / flawless / centurion / 7- & 30-day streak / full pie / Stake sharpshooter / explorer / scholar), partial-progress where it makes sense. Pending **ASC achievement creation** with matching IDs (`docs/GAME-CENTER-SETUP.md`) |
 | Challenges (friend score/achievement) | 🔮 | 🚧 Game Center | 🚧 Game Center | 🔮 | iOS-26 async friend challenges — **code complete** (challenge listener registered; "Play" launches Classic). Rides the leaderboards/achievements; enable "challengeable" per board in ASC. Fits async-first (Decision 023), no backend. **Activities deliberately skipped** (would fork the Bonjour/Supabase multiplayer story; Apple-only) |
-| Local pass-and-play | 🔮 | ✅ | ⏳ | 🔮 | 2–4 players, shared fair question set, hand-off + scoreboard |
+| Local pass-and-play | 🔮 | ✅ | ⏳ | ✅ | 2–4 players, shared fair question set, hand-off + scoreboard. **Android shipped 2026-06-30** (`PartyContainer`, emulator-verified: setup → handoff → turns → ranked scoreboard + share) |
 | Spaced re-asking of missed facts | ✅ | ✅ | ✅ | ✅ | Due misses woven into corpus-MCQ games (skips Daily + non-MCQ modes); resolve on correct. **Opt-out toggle** ("Review questions") on every platform: iOS/tvOS via `GameSettings.reviewKey` @AppStorage (both now in their Settings screen), web + Android via a Records→Settings switch. Default ON |
-| Haptic feedback | n/a | ✅ | n/a | ⏳ | Correct/wrong/milestone; Settings toggle |
-| Settings (haptics, reset, attribution) | ◑ | ✅ | ✅ | ◑ | iOS + tvOS: full Settings (review toggle / reset seen / reset all records / Game Center status / attribution; haptics is n/a on tvOS). tvOS reached from the home header. web/Android: "Review questions" toggle so far (Records→Settings); reset/about still pending there |
+| Haptic feedback | n/a | ✅ | n/a | ✅ | Correct/wrong; Settings toggle. **Android shipped 2026-06-30** (`GameHaptics` via `View.performHapticFeedback` CONFIRM/REJECT, honors the Settings toggle) |
+| Settings (haptics, reset, attribution) | ◑ | ✅ | ✅ | ✅ | iOS + tvOS: full Settings (review toggle / reset seen / reset all records / Game Center status / attribution; haptics is n/a on tvOS). tvOS reached from the home header. **Android shipped full Settings 2026-06-30** (`SettingsScreen` via Home gear: haptics + review toggles, Material You toggle, reset seen, reset all records, version, Wikipedia CC BY-SA attribution — emulator-verified). web: "Review questions" toggle so far (Records→Settings); reset/about still pending there |
 | Async head-to-head / groups | 🔮 | ⏳ Game Center | ⏳ | 🔮 | Async > real-time for survivability (ROADMAP) |
 | Trivia Night — networked (any device hosts/joins) | 🔮 | 🚧 host+join | 🚧 host+join | 🔮 | **Device-agnostic local multiplayer (Decision 033 — supersedes the TV-only buzzer of Decision 030).** ANY Apple device (iPhone, iPad, Apple TV) can **host** a Trivia Night or **join** one — there is no special "TV host" and no "Buzz Night" (the name is retired). The model is **host-paced, everyone-plays**: the host builds the night once and ships the whole question list to every device (`NightHost`/`NightClient`/`LiveNight` over the same Bonjour + room-code TLS-PSK transport, now platform-agnostic); each device runs its own `GameEngine` over the identical list and **scores itself locally** (host trusts self-reports — friendly living-room game, no server). Everyone answers on their OWN screen (no race-to-buzz); the **host plays too** and taps **Reveal → Next** to pace it. The engine is `hostPaced`: it HOLDS each reveal behind a "waiting for the host" beat (so no one sees the answer early), then everyone reveals together and sees the **live standings** (leader crowned). Every question shape works (not just MCQ — the whole night). Device-based silent rejoin (stable per-device id → same seat + score) and mid-night catch-up (host replays the night + current question). **iOS/iPadOS**: home "Trivia Night" (Solo / Host toggle in `NightSetupView`) + "Join a Night" card → `NightLiveContainer`. **tvOS**: night hero (Play on this TV / Host for others) + header "Join a Night" → `TVNightLiveContainer` (big join code on the screen, host plays with the remote). Built + **both platforms BUILD SUCCEEDED**; the live Bonjour pairing/answer/rejoin is **hardware-only — a 2-device test is the gate** (Ben). Web/Android = Phase 2 web-room (Cloudflare DO); pass-and-play (one device) remains their multiplayer story. ROADMAP #4 |
 | Cross-platform online | 🔮 | 🔮 | 🔮 | 🔮 | Supabase, after Apple online proves out (Decision 020) |
@@ -166,10 +166,10 @@ None of it is built yet on any platform.
 
 | Feature | Web | iOS | tvOS | Android | Notes |
 |---|---|---|---|---|---|
-| Universal Links / App Links (HTTPS) | n/a | ⏳ | n/a | ⏳ | `/.well-known/` files; tvOS has no Safari hand-off — custom scheme only |
-| Custom scheme | n/a | ⏳ | ⏳ | ⏳ | `appname://` — tvOS needs it for Top Shelf + Siri deep links |
+| Universal Links / App Links (HTTPS) | n/a | ⏳ | n/a | 🚧 | `/.well-known/` files; tvOS has no Safari hand-off — custom scheme only. **Android 2026-06-30**: intent-filter (`autoVerify`, tidbitstrivia.com) + `.well-known/assetlinks.json` shipped; autoVerify is **OWNER-blocked** until the Play App Signing SHA-256 is added to assetlinks (Play Console → App integrity) — until then HTTPS links open via chooser |
+| Custom scheme | n/a | ✅ | ⏳ | ✅ | `tidbits://` — **Android shipped 2026-06-30** (manifest BROWSABLE filter + `MainActivity.routeFor` → AppRoot inbox; emulator-verified `tidbits://party` + `tidbits://settings`). iOS handler exists in `.onOpenURL`. tvOS needs it for Top Shelf + Siri deep links |
 | URL params reflect filter state | ✅ | n/a | n/a | n/a | Web-specific affordance |
-| Canonical share URLs (`https://…/item/{id}`) | ✅ renders | ⏳ emits | ⏳ | ⏳ emits | **Audit 2026-06-30: native shares are plain text — no `https://…/item/{id}` is emitted.** iOS `ResultsView` ShareLink + Android `ResultsScreen` intent are both text-only (emoji grid + score); tvOS QR/link unverified. Web still renders item URLs as the landing twin (DEEP_LINKS.md) |
+| Canonical share URLs (`https://…/item/{id}`) | ✅ renders | ⏳ emits | ⏳ | ✅ emits | **Audit 2026-06-30:** iOS `ResultsView` ShareLink + tvOS still text-only (no URL). **Android now emits `https://tidbitstrivia.com`** in the score + pass-and-play share (a canonical landing twin); per-`item/{id}` deep-share is the next step. iOS should match. Web renders item URLs as the landing twin (DEEP_LINKS.md) |
 
 ---
 
@@ -254,12 +254,12 @@ iPad/tablet/desktop second, phones rarely).
 
 | Feature | Android | Why |
 |---|---|---|
-| Predictive back gesture | ⏳ | iOS swipe-back is fixed-animation; Android is user-driven |
+| Predictive back gesture | ✅ | **Shipped 2026-06-30** — `android:enableOnBackInvokedCallback="true"`; Compose `BackHandler` drives the back stack. iOS swipe-back is fixed-animation; Android is user-driven |
 | Adaptive icon (foreground / background / monochrome) | ✅ | **Shipped** (audit 2026-06-30) — `mipmap-anydpi-v26` adaptive icon WITH a monochrome layer (themed-icon ready). iOS uses static; tvOS uses layered imagestack |
-| App Shortcuts (long-press app icon) | ⏳ | iOS has AppIntents; tvOS has Top Shelf |
-| Material You dynamic color (opt-in) | ⏳ | Other platforms have brand-only theming |
+| App Shortcuts (long-press app icon) | ✅ | **Shipped 2026-06-30** — static `shortcuts.xml` (Daily / Trivia Night / Pass & Play) firing `tidbits://` deep links. iOS has AppIntents; tvOS has Top Shelf |
+| Material You dynamic color (opt-in) | ✅ | **Shipped 2026-06-30** — Settings → "Use system colors" toggle drives `AppTheme(dynamicColor)` (Android 12+). Brand theme default. Other platforms have brand-only theming |
 | Google Cast sender | 🔮 | AirPlay analog; needs Cast SDK + device-tested receiver |
-| 16 KB page size support | ⏳ | Mandatory for new releases targeting Android 15+ |
+| 16 KB page size support | ✅ | Satisfied by AGP 9.2 + `targetSdk = 36` (16 KB-aligned native libs by default). Mandatory for new releases targeting Android 15+ |
 
 ---
 

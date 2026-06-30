@@ -792,6 +792,25 @@ class Store(context: Context) {
     fun reviewEnabled(): Boolean = prefs.getBoolean("reviewEnabled", true)
     fun setReviewEnabled(v: Boolean) = prefs.edit().putBoolean("reviewEnabled", v).apply()
 
+    // First-run onboarding + per-user prefs (parity with iOS @AppStorage).
+    fun hasOnboarded(): Boolean = prefs.getBoolean("hasOnboarded", false)
+    fun setOnboarded(v: Boolean) = prefs.edit().putBoolean("hasOnboarded", v).apply()
+    fun hapticsEnabled(): Boolean = prefs.getBoolean("hapticsEnabled", true)
+    fun setHapticsEnabled(v: Boolean) = prefs.edit().putBoolean("hapticsEnabled", v).apply()
+    fun dynamicColorEnabled(): Boolean = prefs.getBoolean("dynamicColor", false)
+    fun setDynamicColorEnabled(v: Boolean) = prefs.edit().putBoolean("dynamicColor", v).apply()
+
+    // Settings → Data. Reset Seen re-opens the whole corpus; Reset All Records
+    // wipes scores/streak/calibration/telemetry/misses but keeps onboarding +
+    // preference flags (mirror iOS SettingsView "Reset All Records").
+    fun resetSeen() { seen.clear(); prefs.edit().remove("seen").apply() }
+    fun resetAllRecords() {
+        prefs.edit()
+            .remove("records").remove("calibration").remove("answerTelemetry")
+            .remove("missed").remove("streak_cur").remove("streak_best").remove("streak_day")
+            .apply()
+    }
+
     fun recordMisses(results: List<Pair<String, Boolean>>) {
         val o = JSONObject(prefs.getString("missed", "{}") ?: "{}")
         for ((id, correct) in results) {

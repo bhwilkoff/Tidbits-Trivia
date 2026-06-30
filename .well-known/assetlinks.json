@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.tidbitstrivia.app",
+      "sha256_cert_fingerprints": [
+        "3E:DE:FF:71:BE:BD:D9:92:AC:B2:3E:BE:39:8D:03:59:BF:88:5D:B9:53:46:87:AD:32:C1:18:33:CE:F7:FD:38"
+      ]
+    }
+  }
+]

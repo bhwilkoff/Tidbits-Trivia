@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Static App Shortcuts (parity with iOS AppIntents / tvOS Top Shelf).
+     Each fires a tidbits:// deep link resolved by MainActivity's BROWSABLE
+     intent-filter (implicit — so it works for both the .debug and release
+     applicationIds) and mapped by routeFor(). -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="daily"
+        android:enabled="true"
+        android:shortcutShortLabel="@string/sc_daily_short"
+        android:shortcutLongLabel="@string/sc_daily_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="tidbits://daily"/>
+    </shortcut>
+    <shortcut
+        android:shortcutId="night"
+        android:enabled="true"
+        android:shortcutShortLabel="@string/sc_night_short"
+        android:shortcutLongLabel="@string/sc_night_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="tidbits://night"/>
+    </shortcut>
+    <shortcut
+        android:shortcutId="party"
+        android:enabled="true"
+        android:shortcutShortLabel="@string/sc_party_short"
+        android:shortcutLongLabel="@string/sc_party_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="tidbits://party"/>
+    </shortcut>
+</shortcuts>

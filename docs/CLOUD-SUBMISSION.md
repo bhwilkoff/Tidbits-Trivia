@@ -47,6 +47,19 @@ rejected ITMS-90301 on the beta box. Use the cloud workflow.
 > (`com.learningischange.tidbitstrivia`); the Kotlin namespace/code package also stays
 > `com.learningischange.tidbitstrivia` (applicationId ≠ namespace is fine on Android).
 
+**Signing (wired 2026-06-30, first beta).** The release AAB is signed by a dedicated Tidbits
+**upload key** at `~/keystores/tidbits-upload.jks` (alias `upload`, SHA-256
+`3E:DE:FF:71:BE:BD:D9:92:AC:B2:3E:BE:39:8D:03:59:BF:88:5D:B9:53:46:87:AD:32:C1:18:33:CE:F7:FD:38`) —
+**back this keystore + its password up; losing it locks out all future updates.** `app/build.gradle.kts`
+resolves the signing config from `android/keystore/signing.properties` (gitignored) for local builds,
+falling back to the CI-injected `UPLOAD_*` project properties; the file wins when present so a local
+build never picks up a sibling app's `UPLOAD_*` from the shared `~/.gradle/gradle.properties` (which is
+Archive Watch's). **Play API auth reuses the Archive Watch service account**
+(`~/.config/play/archivewatch-play.json`, `archivewatch-ci@archivewatch-play.iam.gserviceaccount.com`) —
+it has release permission on the Tidbits app under the same Play developer account, so pass
+`PLAY_SERVICE_ACCOUNT_JSON=~/.config/play/archivewatch-play.json` until a dedicated `tidbits-play.json`
+is issued.
+
 Two paths, both via the Play Developer API:
 
 - **CLI (the set-up pathway, production-capable):** `tools/submit-play.sh [--track production|internal]

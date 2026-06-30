@@ -3,11 +3,25 @@
 // bundled JSON asset. Hilt / Nav3 / Room / Ktor arrive when complexity
 // demands them, not before.
 
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
 }
+
+// Release signing. Local builds read android/keystore/signing.properties
+// (gitignored); CI injects the same UPLOAD_* keys as project properties. The
+// file wins when present so a local Tidbits build never picks up a sibling
+// app's UPLOAD_* values from the shared ~/.gradle/gradle.properties.
+val signingProps = Properties().apply {
+    val f = rootProject.file("keystore/signing.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+}
+fun signingValue(key: String): String? =
+    signingProps.getProperty(key) ?: (project.findProperty(key) as String?)
+val uploadKeystorePath: String? = signingValue("UPLOAD_KEYSTORE_PATH")
 
 android {
     namespace = "com.learningischange.tidbitstrivia"
@@ -23,6 +37,17 @@ android {
         vectorDrawables { useSupportLibrary = true }
     }
 
+    signingConfigs {
+        if (uploadKeystorePath != null) {
+            create("release") {
+                storeFile = rootProject.file(uploadKeystorePath)
+                storePassword = signingValue("UPLOAD_KEYSTORE_PASSWORD")
+                keyAlias = signingValue("UPLOAD_KEY_ALIAS")
+                keyPassword = signingValue("UPLOAD_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         debug {
             applicationIdSuffix = ".debug"
@@ -30,6 +55,9 @@ android {
             isDebuggable = true
         }
         release {
+            if (uploadKeystorePath != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(

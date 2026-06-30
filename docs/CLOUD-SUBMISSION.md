@@ -74,6 +74,26 @@ Two paths, both via the Play Developer API:
 **Version lockstep:** Android `versionName` tracks the iOS `MARKETING_VERSION` (both now `1.6.1`); bump
 `versionCode` +1 every Play upload (`submit-play.sh` does this automatically).
 
+### App content + store listing via API (no Console for these)
+
+`tools/push-play-content.py` pushes the parts of Play setup that the Developer API *does* expose, so
+they don't need the Console:
+
+- **Data safety** — `applications.dataSafety` accepts the Console's CSV as a string. Tidbits collects no
+  data, so `tools/play-data-safety.csv` answers only `PSL_DATA_COLLECTION_COLLECTS_PERSONAL_DATA=FALSE`
+  (the full 783-row template, every other row blank). Gotcha: with collection FALSE you must NOT answer
+  `PSL_SUPPORTED_ACCOUNT_CREATION_METHODS` — the API 400s ("you cannot answer …"). The CSV column schema
+  comes from the Console's downloadable template (mirrored by owenbean400/fastlane-plugin-google_data_safety).
+- **Store listing** — `edits.listings` (title/short/full, en-US) + `edits.images` (phone screenshots).
+  Screenshots live pre-padded in `branding/play-screenshots/` (1311×2622, exactly 2:1); the iPhone-native
+  `branding/screenshots/` shots are 1206×2622 ≈ 2.17:1 and Play rejects them (phone max aspect ratio 2:1).
+
+Run: `PLAY_SERVICE_ACCOUNT_JSON=~/.config/play/archivewatch-play.json tools/push-play-content.py`.
+
+**Still Console-only (no API endpoint exists):** content rating (IARC questionnaire), target audience &
+content, privacy policy URL (not in `edits.details` or `Listing`), ads declaration, and App access
+(reviewer test credentials). These must be completed by hand before a production release.
+
 ---
 
 ## House rules that still apply

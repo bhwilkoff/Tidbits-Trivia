@@ -2,7 +2,8 @@
 
 Paste-ready. Update here first, every release.
 
-- **Package**: `com.learningischange.tidbitstrivia`
+- **Play package (`applicationId`)**: `com.tidbitstrivia.app` · code namespace stays `com.learningischange.tidbitstrivia`
+- **Pushed via API**: title, short/full description, and phone screenshots (`tools/push-play-content.py`); Data safety = no data collected. Content rating / target audience / privacy policy URL remain Console-only.
 - **Category**: Trivia · **Tags**: trivia, quiz, education
 - **Content rating**: Everyone (general-knowledge questions)
 - **Price**: Free · **In-app purchases**: none (v1) · **Ads**: none

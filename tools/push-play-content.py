@@ -25,6 +25,7 @@ KEY = os.environ.get("PLAY_SERVICE_ACCOUNT_JSON", os.path.expanduser("~/.config/
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CSV = os.path.join(ROOT, "tools", "play-data-safety.csv")
 SHOTS = os.path.join(ROOT, "branding", "play-screenshots")
+FEATURE = os.path.join(ROOT, "branding", "play-feature-graphic.png")  # 1024x500, no alpha
 
 TITLE = "Tidbits: Wikipedia Trivia"
 SHORT = "Real trivia from all of Wikipedia. Play the daily, learn a fact, keep a streak."
@@ -71,16 +72,18 @@ def push_listing(s):
     s.edits().listings().update(packageName=PKG, editId=eid, language="en-US",
                                 body={"language": "en-US", "title": TITLE,
                                       "shortDescription": SHORT, "fullDescription": FULL}).execute()
-    s.edits().images().deleteall(packageName=PKG, editId=eid, language="en-US",
-                                 imageType="phoneScreenshots").execute()
+    for itype, paths in (("phoneScreenshots", sorted(glob.glob(os.path.join(SHOTS, "*.png")))),
+                         ("featureGraphic", [FEATURE] if os.path.isfile(FEATURE) else [])):
+        s.edits().images().deleteall(packageName=PKG, editId=eid, language="en-US",
+                                     imageType=itype).execute()
+        for p in paths:
+            s.edits().images().upload(packageName=PKG, editId=eid, language="en-US",
+                                      imageType=itype,
+                                      media_body=MediaFileUpload(p, mimetype="image/png")).execute()
     shots = sorted(glob.glob(os.path.join(SHOTS, "*.png")))
-    for sh in shots:
-        s.edits().images().upload(packageName=PKG, editId=eid, language="en-US",
-                                  imageType="phoneScreenshots",
-                                  media_body=MediaFileUpload(sh, mimetype="image/png")).execute()
     s.edits().validate(packageName=PKG, editId=eid).execute()
     s.edits().commit(packageName=PKG, editId=eid).execute()
-    print(f"OK — title + descriptions + {len(shots)} phone screenshots committed")
+    print(f"OK — title + descriptions + {len(shots)} screenshots + feature graphic committed")
 
 
 def main():

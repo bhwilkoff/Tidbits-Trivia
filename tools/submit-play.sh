@@ -25,7 +25,7 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-export PLAY_PACKAGE="com.learningischange.tidbitstrivia"
+export PLAY_PACKAGE="com.tidbitstrivia.app"
 GRADLE="android/app/build.gradle.kts"
 KEY="${PLAY_SERVICE_ACCOUNT_JSON:-$HOME/.config/play/tidbits-play.json}"
 [ -f "$KEY" ] || { echo "Missing service-account JSON at $KEY (see setup notes at top)"; exit 1; }

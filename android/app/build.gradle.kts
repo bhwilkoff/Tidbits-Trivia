@@ -14,7 +14,7 @@ android {
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.learningischange.tidbitstrivia"
+        applicationId = "com.tidbitstrivia.app"
         minSdk = 29
         targetSdk = 36
         versionCode = 33

@@ -42,19 +42,23 @@ rejected ITMS-90301 on the beta box. Use the cloud workflow.
 
 ## Google Play
 
+> **Play package = `com.tidbitstrivia.app`** (the listing the owner created 2026-06-30). This is the
+> Android `applicationId` + the Play `packageName` — it is DIFFERENT from the iOS bundle id
+> (`com.learningischange.tidbitstrivia`); the Kotlin namespace/code package also stays
+> `com.learningischange.tidbitstrivia` (applicationId ≠ namespace is fine on Android).
+
 Two paths, both via the Play Developer API:
 
-- **CI (existing, tag-gated → Internal Testing):** `.github/workflows/android-build.yml` builds the AAB
-  and uploads to the **internal** track on a `v*-android` tag push (the `r0adkll/upload-google-play`
-  action). Secrets: `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`,
-  `PLAY_SERVICE_ACCOUNT_JSON`. (The `packageName` was a `com.example.appname` placeholder — now fixed
-  to `com.learningischange.tidbitstrivia`.)
-- **CLI (new, production-capable):** `tools/submit-play.sh [--track production|internal] [--notes "…"]`
-  builds the release AAB and uploads it via `tools/play-publish.py` (Play Developer API v3) — the
-  Archive Watch pathway. Needs the upload keystore configured locally (`~/.gradle/gradle.properties`)
+- **CLI (the set-up pathway, production-capable):** `tools/submit-play.sh [--track production|internal]
+  [--notes "…"]` builds the release AAB and uploads it via `tools/play-publish.py` (Play Developer API
+  v3, `PLAY_PACKAGE=com.tidbitstrivia.app`). Needs the upload keystore in `~/.gradle/gradle.properties`
   and the service-account JSON at `~/.config/play/tidbits-play.json` (or `PLAY_SERVICE_ACCOUNT_JSON`).
+- **CI (tag-gated → Internal Testing):** `.github/workflows/android-build.yml` builds the AAB and
+  uploads to the **internal** track on a `v*-android` tag push (`r0adkll/upload-google-play`,
+  `packageName: com.tidbitstrivia.app`). Secrets: `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`,
+  `KEY_PASSWORD`, `PLAY_SERVICE_ACCOUNT_JSON`. (The old `com.example.appname` placeholder bug is fixed.)
 
-**Version lockstep:** Android `versionName` tracks the iOS `MARKETING_VERSION` (both now `1.6.0`); bump
+**Version lockstep:** Android `versionName` tracks the iOS `MARKETING_VERSION` (both now `1.6.1`); bump
 `versionCode` +1 every Play upload (`submit-play.sh` does this automatically).
 
 ---

@@ -18,7 +18,6 @@ enum TVTheme {
 struct ContentView_tvOS: View {
     @Environment(AppStore.self) private var store
     @Environment(GameCenterManager.self) private var gameCenter
-    @State private var selectedMode: GameMode = .classic
     @State private var launch: LaunchRequest?
     @State private var nightLaunch: NightLaunchRequest?
     @State private var hostLaunch: NightLaunchRequest?
@@ -26,7 +25,14 @@ struct ContentView_tvOS: View {
     @State private var showRecords = false
     @State private var showSettings = false
     @State private var showNightSetup = false
-    @FocusState private var dailyFocused: Bool
+    @State private var showCustomize = false
+    @FocusState private var primaryFocused: Bool
+
+    /// Launch a game and (unless Daily) remember it as the Quick Play default.
+    private func play(_ mode: GameMode, _ category: TriviaCategory) {
+        store.rememberSelection(mode: mode, category: category)
+        launch = LaunchRequest(mode: mode, category: category)
+    }
 
     var body: some View {
         ZStack {
@@ -34,16 +40,21 @@ struct ContentView_tvOS: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 60) {
                     header
+                    quickPlayHero
                     dailyHero
                     nightHero
-                    modeRow
-                    categoryShelf
+                    customizeHero
                 }
                 .padding(.horizontal, 90)
                 .padding(.vertical, 60)
             }
         }
-        .defaultFocus($dailyFocused, true)
+        .defaultFocus($primaryFocused, true)
+        .fullScreenCover(isPresented: $showCustomize) {
+            TVCustomizePicker(initialMode: store.quickPlay.mode) { mode, cat in
+                showCustomize = false; play(mode, cat)
+            }
+        }
         .fullScreenCover(item: $launch) { req in
             TVGameContainer(mode: req.mode, category: req.category)
         }
@@ -93,15 +104,15 @@ struct ContentView_tvOS: View {
         }
     }
 
-    private var nightHero: some View {
-        Button { showNightSetup = true } label: {
+    private var quickPlayHero: some View {
+        Button { play(store.quickPlay.mode, store.quickPlay.category) } label: {
             HStack(spacing: 28) {
-                Image(systemName: "party.popper.fill").font(.system(size: 56, weight: .black))
+                Image(systemName: "play.fill").font(.system(size: 60, weight: .black))
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("TRIVIA NIGHT").font(.system(size: 40, weight: .black, design: .rounded))
-                    Text("Host a night of mixed rounds — every kind of question.")
-                        .font(.system(size: 29, weight: .medium, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.85))
+                    Text("QUICK PLAY").font(.system(size: 44, weight: .black, design: .rounded))
+                    Text("\(store.quickPlay.mode.title.uppercased()) · \(store.quickPlay.category.name.uppercased())")
+                        .font(.system(size: 27, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.9))
                 }
                 Spacer()
             }
@@ -110,6 +121,56 @@ struct ContentView_tvOS: View {
             .frame(maxWidth: .infinity)
         }
         .buttonStyle(TVNightHeroStyle())
+        .focused($primaryFocused)
+    }
+
+    // One unified Trivia Night entry — both verbs live inside the card (backlog #4).
+    private var nightHero: some View {
+        VStack(alignment: .leading, spacing: 24) {
+            HStack(spacing: 28) {
+                Image(systemName: "party.popper.fill").font(.system(size: 52, weight: .black))
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("TRIVIA NIGHT").font(.system(size: 40, weight: .black, design: .rounded))
+                    Text("Host or join a night of mixed rounds.")
+                        .font(.system(size: 29, weight: .medium, design: .rounded))
+                        .foregroundStyle(TVTheme.textSoft)
+                }
+                Spacer()
+            }
+            .foregroundStyle(TVTheme.text)
+            HStack(spacing: 24) {
+                Button { showNightSetup = true } label: {
+                    Label("Start a night", systemImage: "play.fill").font(.system(size: 27, weight: .bold, design: .rounded))
+                }
+                .buttonStyle(TVChipStyle(accent: Tidbits.Palette.coral, selected: false))
+                Button { showJoinNight = true } label: {
+                    Label("Join a night", systemImage: "number").font(.system(size: 27, weight: .bold, design: .rounded))
+                }
+                .buttonStyle(TVChipStyle(accent: Tidbits.Palette.teal, selected: false))
+            }
+            .focusSection()
+        }
+        .padding(40)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(TVTheme.panel, in: RoundedRectangle(cornerRadius: 28))
+    }
+
+    private var customizeHero: some View {
+        Button { showCustomize = true } label: {
+            HStack(spacing: 24) {
+                Image(systemName: "slider.horizontal.3").font(.system(size: 40, weight: .black))
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Customize a game").font(.system(size: 34, weight: .heavy, design: .rounded))
+                    Text("Pick a mode, a category, save a mix")
+                        .font(.system(size: 25, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+                }
+                Spacer()
+            }
+            .foregroundStyle(TVTheme.text)
+            .padding(32)
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(TVChipStyle(accent: Tidbits.Palette.blue, selected: false))
     }
 
     private var header: some View {
@@ -124,11 +185,6 @@ struct ContentView_tvOS: View {
             }
             Spacer()
             HStack(spacing: 20) {
-                Button { showJoinNight = true } label: {
-                    Label("Join a Night", systemImage: "iphone.radiowaves.left.and.right")
-                        .font(.system(size: 26, weight: .bold, design: .rounded))
-                }
-                .buttonStyle(TVChipStyle(accent: Tidbits.Palette.teal, selected: false))
                 Button { showRecords = true } label: {
                     Label("Records", systemImage: "chart.bar.fill")
                         .font(.system(size: 26, weight: .bold, design: .rounded))
@@ -163,64 +219,82 @@ struct ContentView_tvOS: View {
             .frame(maxWidth: .infinity)
         }
         .buttonStyle(TVHeroStyle())
-        .focused($dailyFocused)
+    }
+}
+
+// MARK: - Customize picker (the mode + category shelves, on demand)
+
+/// Full-screen focus picker opened from the Customize hero. Mode shelf drives the
+/// category shelf; selecting a category starts the game. Shelves scroll
+/// horizontally (14 modes × 240pt overflow 1920pt — a bare HStack would balloon
+/// the whole content width and render everything oversized).
+private struct TVCustomizePicker: View {
+    let initialMode: GameMode
+    let onPlay: (GameMode, TriviaCategory) -> Void
+    @State private var selectedMode: GameMode
+
+    init(initialMode: GameMode, onPlay: @escaping (GameMode, TriviaCategory) -> Void) {
+        self.initialMode = initialMode; self.onPlay = onPlay
+        _selectedMode = State(initialValue: initialMode)
     }
 
-    private var modeRow: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            Text("Pick a mode").font(.system(size: 38, weight: .heavy, design: .rounded)).foregroundStyle(TVTheme.text)
-            // MUST scroll horizontally: 14 modes × 240pt overflow the 1920pt
-            // screen, and a bare HStack here (inside a vertical-only ScrollView)
-            // would balloon the whole content width far past the screen — the
-            // entire UI then renders oversized. Same pattern as categoryShelf.
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 30) {
-                    ForEach(GameMode.allCases.filter { $0 != .daily && $0 != .barTrivia }) { mode in
-                        Button { selectedMode = mode } label: {
-                            VStack(spacing: 10) {
-                                Image(systemName: mode.symbol).font(.system(size: 34, weight: .black))
-                                Text(mode.title).font(.system(size: 27, weight: .bold, design: .rounded))
+    var body: some View {
+        ZStack {
+            TVTheme.bg.ignoresSafeArea()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 50) {
+                    Text("Customize a game")
+                        .font(.system(size: 56, weight: .black, design: .rounded)).foregroundStyle(TVTheme.text)
+                    VStack(alignment: .leading, spacing: 18) {
+                        Text("Mode").font(.system(size: 34, weight: .heavy, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 30) {
+                                ForEach(GameMode.allCases.filter { $0 != .daily && $0 != .barTrivia }) { mode in
+                                    Button { selectedMode = mode } label: {
+                                        VStack(spacing: 10) {
+                                            Image(systemName: mode.symbol).font(.system(size: 34, weight: .black))
+                                            Text(mode.title).font(.system(size: 27, weight: .bold, design: .rounded))
+                                        }
+                                        .frame(width: 240, height: 150)
+                                    }
+                                    .buttonStyle(TVChipStyle(accent: mode.accent, selected: selectedMode == mode))
+                                }
                             }
-                            .frame(width: 240, height: 150)
+                            .padding(.vertical, 30)
                         }
-                        .buttonStyle(TVChipStyle(accent: mode.accent, selected: selectedMode == mode))
+                        .scrollClipDisabled()
                     }
-                }
-                .padding(.vertical, 30)
-            }
-            .scrollClipDisabled()
-        }
-        .focusSection()
-    }
-
-    private var categoryShelf: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            Text("Choose a category · \(selectedMode.title)")
-                .font(.system(size: 38, weight: .heavy, design: .rounded)).foregroundStyle(TVTheme.text)
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 36) {
-                    ForEach(TriviaCategory.all) { cat in
-                        Button {
-                            launch = LaunchRequest(mode: selectedMode, category: cat)
-                        } label: {
-                            VStack(alignment: .leading, spacing: 16) {
-                                Image(systemName: cat.symbol).font(.system(size: 44, weight: .black)).foregroundStyle(.white)
-                                Spacer()
-                                Text(cat.name).font(.system(size: 30, weight: .heavy, design: .rounded)).foregroundStyle(.white)
-                                Text(cat.blurb).font(.system(size: 23, weight: .medium, design: .rounded)).foregroundStyle(.white.opacity(0.8))
-                                    .lineLimit(2)
+                    .focusSection()
+                    VStack(alignment: .leading, spacing: 18) {
+                        Text("Category · \(selectedMode.title)")
+                            .font(.system(size: 34, weight: .heavy, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 36) {
+                                ForEach(TriviaCategory.all) { cat in
+                                    Button { onPlay(selectedMode, cat) } label: {
+                                        VStack(alignment: .leading, spacing: 16) {
+                                            Image(systemName: cat.symbol).font(.system(size: 44, weight: .black)).foregroundStyle(.white)
+                                            Spacer()
+                                            Text(cat.name).font(.system(size: 30, weight: .heavy, design: .rounded)).foregroundStyle(.white)
+                                            Text(cat.blurb).font(.system(size: 23, weight: .medium, design: .rounded)).foregroundStyle(.white.opacity(0.8))
+                                                .lineLimit(2)
+                                        }
+                                        .padding(28)
+                                        .frame(width: 320, height: 300, alignment: .leading)
+                                    }
+                                    .buttonStyle(TVCategoryStyle(accent: cat.color))
+                                }
                             }
-                            .padding(28)
-                            .frame(width: 320, height: 300, alignment: .leading)
+                            .padding(.vertical, 30)
                         }
-                        .buttonStyle(TVCategoryStyle(accent: cat.color))
+                        .scrollClipDisabled()
                     }
+                    .focusSection()
                 }
-                .padding(.vertical, 30)
+                .padding(.horizontal, 90)
+                .padding(.vertical, 60)
             }
-            .scrollClipDisabled()
         }
-        .focusSection()
     }
 }
 

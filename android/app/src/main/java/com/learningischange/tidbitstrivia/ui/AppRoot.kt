@@ -906,7 +906,10 @@ private fun CreateScreen(onPlay: (List<Question>, String) -> Unit) {
         if (t.trim().length < 2 || working) return
         working = true; error = null
         scope.launch {
-            val qs = Wikipedia.generate(t.trim(), "mixed", 8)
+            // Grounded generation: prefer REAL corpus questions on the topic; fall
+            // back to live generation only when the corpus is thin (no hallucination).
+            var qs = Corpus.search(t.trim(), 8)
+            if (qs.size < 4) qs = Wikipedia.generate(t.trim(), "mixed", 8)
             working = false
             if (qs.size >= 3) onPlay(qs, t.trim()) else error = "Couldn't build a good quiz for “${t.trim()}”. Try a broader subject."
         }

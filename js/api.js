@@ -94,6 +94,25 @@ export const Corpus = {
     return shuffle(this.questions, rnd).slice(0, count);
   },
 
+  // Create: real, already-vetted corpus questions matching the topic's words
+  // (prompt + Wikipedia source title). Grounded generation's retrieval baseline —
+  // no hallucination (docs/CREATE-QUESTION-GEN-PLAYBOOK.md).
+  search(topic, limit) {
+    const tokens = topic.toLowerCase().split(/[^a-z0-9]+/).filter((t) => t.length >= 3);
+    if (!tokens.length) return [];
+    const scored = [];
+    for (const q of this.questions) {
+      const title = (q.sourceTitle || '').toLowerCase(), prompt = (q.prompt || '').toLowerCase();
+      let s = 0;
+      for (const t of tokens) { if (title.includes(t)) s += 2; if (prompt.includes(t)) s += 1; }
+      if (s > 0) scored.push([q, s]);
+    }
+    scored.sort((a, b) => b[1] - a[1]);
+    const pool = scored.slice(0, Math.max(limit * 3, 24)).map((x) => x[0]);
+    for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+    return pool.slice(0, limit);
+  },
+
   get count() { return this.questions.length; },
 };
 

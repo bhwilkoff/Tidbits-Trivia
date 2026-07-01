@@ -254,7 +254,10 @@ function bindCreate() {
     const err = $('#create-err'); err.hidden = true;
     const btn = $('#gen'); btn.textContent = 'Building your quiz…'; btn.disabled = true;
     try {
-      const qs = await Wikipedia.generate(topic, 'mixed', 8);
+      // Grounded generation: prefer REAL corpus questions on the topic; fall back
+      // to live generation only when the corpus is thin (no hallucination).
+      let qs = Corpus.search(topic, 8);
+      if (qs.length < 4) qs = await Wikipedia.generate(topic, 'mixed', 8);
       if (qs.length >= 3) startGame('classic', catById('mixed'), { custom: qs, label: topic });
       else { err.textContent = `Couldn't build a good quiz for “${topic}”. Try a broader or more famous subject.`; err.hidden = false; }
     } catch { err.textContent = 'Network trouble reaching Wikipedia. Try again.'; err.hidden = false; }

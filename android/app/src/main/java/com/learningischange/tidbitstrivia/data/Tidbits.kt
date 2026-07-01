@@ -236,6 +236,19 @@ object Corpus {
 
     fun byId(id: String): Question? = all.firstOrNull { it.id == id }
 
+    /** Create feature: real, already-vetted corpus questions matching the topic's
+     *  words (prompt + Wikipedia source title). Grounded generation's retrieval
+     *  baseline — no live API, no hallucination (docs/CREATE-QUESTION-GEN-PLAYBOOK.md). */
+    fun search(topic: String, limit: Int): List<Question> {
+        val tokens = topic.lowercase().split(Regex("[^a-z0-9]+")).filter { it.length >= 3 }
+        if (tokens.isEmpty()) return emptyList()
+        return all.mapNotNull { q ->
+            val title = q.sourceTitle.lowercase(); val prompt = q.prompt.lowercase()
+            val score = tokens.sumOf { (if (title.contains(it)) 2 else 0) + (if (prompt.contains(it)) 1 else 0) }
+            if (score > 0) q to score else null
+        }.sortedByDescending { it.second }.take(maxOf(limit * 3, 24)).map { it.first }.shuffled().take(limit)
+    }
+
     fun daily(dayKey: String, count: Int): List<Question> =
         all.shuffledWith(SeededRng(stableSeed(dayKey))).take(count)
 }

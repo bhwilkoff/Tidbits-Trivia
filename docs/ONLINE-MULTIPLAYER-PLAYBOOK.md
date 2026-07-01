@@ -13,6 +13,17 @@
 > and a host-authoritative round model. This playbook REUSES that game model and
 > that payload; the only new thing is the *transport* (a neutral cloud relay) and
 > the *matchmaking* layer on top.
+>
+> **OWNER CONSTRAINT (2026-07-01): online play need NOT be cross-platform.** Only
+> *local* multiplayer must stay cross-platform (it already is). This materially
+> widens the options: online can be **per-ecosystem** — GameKit `GKMatch`/automatch
+> for Apple↔Apple, the Android equivalent (or the shared cloud relay below) for
+> Android, each with the **universal offline bot** as the always-available fallback.
+> That means v0 (bot) + an Apple-native GameKit path can ship with **zero backend**;
+> the neutral Cloudflare/Supabase relay in §3 becomes optional — needed only if/when
+> we want true cross-platform online or a web/Android online path, not for launch.
+> Re-read §1–§2 with this relaxation in mind: GameKit is no longer "useless as the
+> transport" — it's the recommended Apple online path.
 
 ---
 

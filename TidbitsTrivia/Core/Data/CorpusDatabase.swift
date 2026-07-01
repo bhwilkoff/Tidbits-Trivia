@@ -66,6 +66,50 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
         }
     }
 
+    /// All question IDs for a category in STABLE id order (no RANDOM()). The
+    /// caller seed-shuffles for a deterministic-but-varied slice — this is what
+    /// makes the Daily identical for everyone for the calendar day. "mixed"/""
+    /// = the whole corpus.
+    func orderedIDs(categoryID: String) -> [String] {
+        queue.sync {
+            guard let db else { return [] }
+            let whole = categoryID == "mixed" || categoryID.isEmpty
+            let sql = whole
+                ? "SELECT id FROM questions ORDER BY id"
+                : "SELECT id FROM questions WHERE category_id = ? ORDER BY id"
+            var stmt: OpaquePointer?
+            defer { sqlite3_finalize(stmt) }
+            guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return [] }
+            if !whole { sqlite3_bind_text(stmt, 1, categoryID, -1, Self.transientDestructor) }
+            var ids: [String] = []
+            while sqlite3_step(stmt) == SQLITE_ROW {
+                if let c = sqlite3_column_text(stmt, 0) { ids.append(String(cString: c)) }
+            }
+            return ids
+        }
+    }
+
+    /// Fetch specific questions by id, returned in the SAME order as `ids`.
+    func questions(ids: [String]) -> [Question] {
+        guard !ids.isEmpty else { return [] }
+        return queue.sync {
+            guard let db else { return [] }
+            let placeholders = Array(repeating: "?", count: ids.count).joined(separator: ",")
+            let sql = "SELECT * FROM questions WHERE id IN (\(placeholders))"
+            var stmt: OpaquePointer?
+            defer { sqlite3_finalize(stmt) }
+            guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return [] }
+            for (i, id) in ids.enumerated() {
+                sqlite3_bind_text(stmt, Int32(i + 1), id, -1, Self.transientDestructor)
+            }
+            var byId: [String: Question] = [:]
+            while sqlite3_step(stmt) == SQLITE_ROW {
+                if let q = Self.row(stmt) { byId[q.id] = q }
+            }
+            return ids.compactMap { byId[$0] }
+        }
+    }
+
     private static func text(_ stmt: OpaquePointer?, _ col: Int32) -> String {
         guard let c = sqlite3_column_text(stmt, col) else { return "" }
         return String(cString: c)

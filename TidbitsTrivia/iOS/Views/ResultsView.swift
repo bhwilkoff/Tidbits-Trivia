@@ -129,7 +129,7 @@ struct ResultsView: View {
     private var shareText: String {
         let pct = Int(summary.accuracy * 100)
         let header = summary.mode == .daily ? "🧠 Tidbits Daily — \(QuestionProvider.dayKey())" : "🧠 Tidbits Trivia — \(summary.mode.title)"
-        return "\(header)\n\(emojiGrid)\n\(summary.correct)/\(summary.total) right · \(summary.score) pts · \(pct)%\nTrivia from all of Wikipedia. Can you beat it?"
+        return "\(header)\n\(emojiGrid)\n\(summary.correct)/\(summary.total) right · \(summary.score) pts · \(pct)%\nTrivia from all of Wikipedia. Play at https://tidbitstrivia.com"
     }
 }
 

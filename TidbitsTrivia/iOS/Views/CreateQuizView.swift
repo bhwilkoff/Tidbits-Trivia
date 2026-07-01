@@ -12,8 +12,12 @@ struct CreateQuizView: View {
     @State private var error: String?
     @State private var generated: [Question] = []
     @State private var playing = false
+    @FocusState private var topicFocused: Bool
+    @State private var stageIndex = 0
 
     private let suggestions = ["Space exploration", "Ancient Rome", "Jazz", "Volcanoes", "The Olympics", "Marie Curie"]
+    private let stages = ["Searching Wikipedia…", "Pulling out the facts…",
+                          "Writing your questions…", "Double-checking the answers…"]
 
     var body: some View {
         ScrollView {
@@ -28,6 +32,13 @@ struct CreateQuizView: View {
         }
         .background(Tidbits.Palette.bg.ignoresSafeArea())
         .navigationTitle("Create")
+        .scrollDismissesKeyboard(.interactively)
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") { topicFocused = false }
+            }
+        }
         .fullScreenCover(isPresented: $playing) {
             CustomGameContainer(topic: topic.isEmpty ? "Custom" : topic, questions: generated)
         }
@@ -51,24 +62,38 @@ struct CreateQuizView: View {
                 .font(Tidbits.TypeRamp.l3)
                 .textInputAutocapitalization(.words)
                 .submitLabel(.go)
+                .focused($topicFocused)
                 .onSubmit(generate)
                 .padding(14)
                 .background(RoundedRectangle(cornerRadius: 12).fill(Tidbits.Palette.bg))
                 .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Tidbits.Palette.border, lineWidth: 2.5))
-            Button(action: generate) {
-                if isWorking {
-                    HStack(spacing: 10) { ProgressView().tint(.white); Text("Building your quiz…") }
-                        .frame(maxWidth: .infinity)
-                } else {
-                    Text("Generate Quiz")
-                }
+            if isWorking {
+                progressCard
+            } else {
+                Button(action: generate) { Text("Generate Quiz") }
+                    .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.grape, textColor: .white))
+                    .disabled(topic.trimmingCharacters(in: .whitespaces).count < 2)
             }
-            .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.grape, textColor: .white))
-            .disabled(isWorking || topic.trimmingCharacters(in: .whitespaces).count < 2)
         }
         .padding(16)
         .chunkyCard()
         .padding(.trailing, Tidbits.Metric.shadowOffset)
+    }
+
+    /// Generation is a single opaque async call, so an honest indeterminate bar
+    /// plus a cycling status beats a fake percentage — it tells the user work is
+    /// happening and what stage it's at, which is what a long wait needs.
+    private var progressCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            ProgressView()
+                .progressViewStyle(.linear)
+                .tint(Tidbits.Palette.grape)
+            Text(stages[stageIndex])
+                .font(Tidbits.TypeRamp.l5)
+                .foregroundStyle(Tidbits.Palette.inkSoft)
+                .contentTransition(.opacity)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func errorBanner(_ message: String) -> some View {
@@ -93,7 +118,18 @@ struct CreateQuizView: View {
         guard q.count >= 2, !isWorking else { return }
         topic = q
         error = nil
+        topicFocused = false   // drop the keyboard so the progress is visible
+        stageIndex = 0
         isWorking = true
+        // Cycle the status text while the (opaque) generation runs.
+        Task {
+            var i = 0
+            while isWorking {
+                try? await Task.sleep(for: .seconds(0.9))
+                i += 1
+                withAnimation { stageIndex = min(i, stages.count - 1) }
+            }
+        }
         Task {
             let result = await QuestionProvider.shared.liveQuestions(
                 topic: q, category: .named("mixed"), count: 8)

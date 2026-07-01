@@ -75,15 +75,18 @@ final class GameCenterManager {
     // MARK: Access point + dashboard
 
     private func configureAccessPoint() {
-        GKAccessPoint.shared.location = .topLeading
-        GKAccessPoint.shared.showHighlights = true
-        GKAccessPoint.shared.isActive = true
+        // Intentionally NEVER activate the floating access point (the "rocketship"
+        // that otherwise sits on top of the app permanently). GameKit still shows
+        // its own transient "Welcome back" sign-in banner off the authenticate
+        // handler — that's a separate path. Game Center is reached on demand from
+        // the Records screen (showDashboard()).
+        GKAccessPoint.shared.isActive = false
     }
 
-    /// Hide the access point during active gameplay, show it on menus.
+    /// Deliberately a no-op: we never show the floating access point. Kept so
+    /// existing menu/gameplay callers compile; Game Center opens from Records.
     func setAccessPointActive(_ active: Bool) {
-        guard isAuthenticated else { return }
-        GKAccessPoint.shared.isActive = active
+        GKAccessPoint.shared.isActive = false
     }
 
     /// Open the full Game Center dashboard (leaderboards + achievements + profile).

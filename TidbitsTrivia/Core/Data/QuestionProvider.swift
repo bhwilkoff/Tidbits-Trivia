@@ -177,16 +177,20 @@ final class QuestionProvider {
     /// player gets the same 7 questions (shareable result, fair ladder).
     func dailyQuestions(category: TriviaCategory) async -> [Question] {
         let day = Self.dayKey()
-        let seed = "\(day)".stableSeed
-        // Pull a deterministic slice from the corpus (no seen-exclusion —
-        // the Daily is the same for everyone, by design).
+        // Per-day AND per-category, so each category has its own daily set.
+        let seed = "\(day):\(category.id)".stableSeed
         var rng = SeededRNG(seed: seed)
-        let pool = CorpusDatabase.shared.questions(
-            categoryID: "mixed", excluding: [], limit: 60)
-        guard pool.count >= GameMode.daily.questionCount else {
-            return await liveQuestions(topic: "On this day", category: category, count: GameMode.daily.questionCount)
+        // Deterministic pool: STABLE id order → seeded shuffle → the SAME slice
+        // for everyone all day. (The old path used `ORDER BY RANDOM()`, so the
+        // seeded shuffle reordered a fresh random pool each open — the questions
+        // changed every time. Determinism must start at the pool, not the shuffle.)
+        let ids = CorpusDatabase.shared.orderedIDs(categoryID: category.id)
+        let count = GameMode.daily.questionCount
+        guard ids.count >= count else {
+            return await liveQuestions(topic: "On this day", category: category, count: count)
         }
-        return Array(pool.shuffled(using: &rng).prefix(GameMode.daily.questionCount))
+        let picked = Array(ids.shuffled(using: &rng).prefix(count))
+        return CorpusDatabase.shared.questions(ids: picked)
     }
 
     static func dayKey(_ date: Date = .now) -> String {

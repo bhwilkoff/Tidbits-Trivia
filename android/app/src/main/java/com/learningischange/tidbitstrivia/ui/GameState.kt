@@ -25,7 +25,14 @@ class GameState(
     private val custom: List<Question>?,
     val label: String?,
     private val nightRounds: List<Pair<String, Int>>? = null,
+    // Networked Trivia Night (Decision 033): answers don't auto-reveal — they lock
+    // and wait for the host, who calls releaseReveal()/goToQuestion() for everyone.
+    val hostPaced: Boolean = false,
 ) {
+    /** Fired when this device locks an answer (networked night → report to host). */
+    var onLocalAnswer: ((score: Int, correct: Boolean) -> Unit)? = null
+    /** Host-paced: answered this question, holding until the host reveals. */
+    var awaitingReveal by mutableStateOf(false)
     var phase by mutableStateOf(GamePhase.LOADING)
     var index by mutableIntStateOf(0)
     var score by mutableIntStateOf(0)
@@ -237,7 +244,7 @@ class GameState(
     }
 
     fun tick() {
-        if (phase != GamePhase.PLAYING) return
+        if (phase != GamePhase.PLAYING || awaitingReveal) return
         val g = globalRemaining()
         if (g != null) { remaining = g; if (g <= 0) end() }
         else { remaining = max(0.0, budget - (now() - qStart) / 1000.0); if (remaining <= 0) { val c = current; when { c?.closest != null -> submitGuess(); c?.ordering != null -> submitOrder(); c?.matching != null -> submitMatch(); c?.accepted != null -> submitText(); c?.enumerate != null -> finishEnum(); else -> submit(null) } } }
@@ -251,7 +258,7 @@ class GameState(
         answered.add(Answered(q, if (correct) q.correctIndex else -1, correct, taken))
         lastCorrect = correct
         if (correct) { streak++; maxStreak = max(maxStreak, streak); score += Scoring.points(true, taken, mode.perQuestion?.toDouble() ?: 25.0, streak) } else streak = 0
-        phase = GamePhase.REVEAL
+        finishAnswer()
     }
 
     // Enumeration (Q8): type a guess; fill the first unfilled group it matches.
@@ -283,7 +290,7 @@ class GameState(
         val hit = got > 0 && got * 2 >= spec.groups.size
         answered.add(Answered(q, if (hit) q.correctIndex else -1, hit, budget - remaining))
         lastCorrect = hit
-        phase = GamePhase.REVEAL
+        finishAnswer()
     }
 
     fun selectMatchKey(i: Int) {
@@ -310,7 +317,7 @@ class GameState(
         lastCorrect = perfect
         if (perfect) { streak++; maxStreak = max(maxStreak, streak) } else streak = 0
         score += pts
-        phase = GamePhase.REVEAL
+        finishAnswer()
     }
 
     fun moveOrderItem(i: Int, up: Boolean) {
@@ -336,7 +343,7 @@ class GameState(
         lastCorrect = perfect
         if (perfect) { streak++; maxStreak = max(maxStreak, streak) } else streak = 0
         score += pts
-        phase = GamePhase.REVEAL
+        finishAnswer()
     }
 
     fun setGuess(v: Double) {
@@ -355,7 +362,7 @@ class GameState(
         lastCorrect = close
         if (close) { streak++; maxStreak = max(maxStreak, streak) } else streak = 0
         score += pts
-        phase = GamePhase.REVEAL
+        finishAnswer()
     }
 
     fun submit(choice: Int?) {
@@ -383,7 +390,7 @@ class GameState(
                 else -> Scoring.points(true, taken, mode.perQuestion?.toDouble() ?: budget, streak)
             }
         } else streak = 0
-        phase = GamePhase.REVEAL
+        finishAnswer()
     }
 
     fun advance() {
@@ -403,6 +410,46 @@ class GameState(
             store.recordTelemetry(mode, answered.map { it.q to it.chosen })
             store.recordMisses(answered.map { it.q.id to it.correct })   // for spaced review
             if (mode == Mode.STAKE) store.addCalibration(stakeOutcomes.mapValues { it.value[0] to it.value[1] })
+        }
+    }
+
+    // Self-paced: reveal immediately. Host-paced (networked night): lock + report,
+    // then hold on a "waiting for the host" beat until releaseReveal().
+    private fun finishAnswer() {
+        if (hostPaced) { awaitingReveal = true; onLocalAnswer?.invoke(score, lastCorrect) }
+        else phase = GamePhase.REVEAL
+    }
+
+    // ---- Networked Trivia Night control (Decision 033) ----
+
+    /** Everyone reveals now. If this device never locked an answer, lock a miss
+     *  first so its self-report still reaches the host. */
+    fun releaseReveal() {
+        if (phase == GamePhase.REVEAL) return
+        if (answered.size <= index) lockCurrentIfUnanswered()
+        awaitingReveal = false
+        phase = GamePhase.REVEAL
+    }
+
+    /** Jump to question i (the host's begin signal; or the host's own Next). */
+    fun goToQuestion(i: Int) {
+        if (i < 0 || i >= questions.size) { finishExternally(); return }
+        index = i; awaitingReveal = false; begin()
+    }
+
+    /** The host ended the night — show the final standings. */
+    fun finishExternally() { awaitingReveal = false; phase = GamePhase.FINISHED }
+
+    private fun lockCurrentIfUnanswered() {
+        if (answered.size > index) return
+        val c = current
+        when {
+            c?.closest != null -> submitGuess()
+            c?.ordering != null -> submitOrder()
+            c?.matching != null -> submitMatch()
+            c?.accepted != null -> submitText()
+            c?.enumerate != null -> finishEnum()
+            else -> submit(null)
         }
     }
 

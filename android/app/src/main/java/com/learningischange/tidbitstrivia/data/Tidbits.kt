@@ -365,6 +365,51 @@ object Difficulty {
     fun get(title: String): Int = map[title.replace(" ", "_")] ?: 3
 }
 
+// Build a Trivia Night's mixed question list from a round plan — one round draws
+// one question TYPE, so a night pulls from every type (Decision 033). Shared by the
+// solo night (GameState) and the networked host (LiveNight); each question is tagged
+// with its roundIndex for the round banners. The host ships the IDS of this list;
+// each joiner resolves them locally, then re-tags roundIndex from the same plan.
+suspend fun buildNightQuestions(rounds: List<Pair<String, Int>>, categoryId: String, seen: Set<String>): List<Question> {
+    val all = mutableListOf<Question>()
+    val picked = mutableSetOf<String>()
+    rounds.forEachIndexed { ri, (kind, count) ->
+        val excl = seen + picked
+        for (q in sourceNightType(kind, categoryId, count, excl)) { all.add(q.copy(roundIndex = ri)); picked.add(q.id) }
+    }
+    return all
+}
+
+private suspend fun sourceNightType(kind: String, categoryId: String, count: Int, seen: Set<String>): List<Question> = when (kind) {
+    "pictureId" -> Pictures.pull(categoryId, seen, count)
+    "thisOrThat" -> ThisOrThat.pull(categoryId, seen, count)
+    "closestCall" -> ClosestCall.pull(categoryId, seen, count)
+    "ordering" -> OrderingSet.pull(categoryId, seen, count)
+    "matching" -> MatchingSet.pull(categoryId, seen, count)
+    "typeAnswer" -> TypeAnswerSet.pull(categoryId, seen, count)
+    "oddOneOut" -> OddOneOutSet.pull("mixed", seen, count)
+    "enumerate" -> EnumerateSet.pull("mixed", emptySet(), count)
+    else -> {
+        var pulled = Corpus.pull(categoryId, seen, count)
+        if (pulled.size < count) {
+            val topic = if (categoryId == "mixed") "popular" else Category.byId(categoryId).name
+            pulled = pulled + Wikipedia.generate(topic, categoryId, count - pulled.size)
+        }
+        pulled.take(count)
+    }
+}
+
+/** Re-tag a resolved id-based night with roundIndex from the plan (by position). */
+fun List<Question>.tagRounds(rounds: List<Pair<String, Int>>): List<Question> {
+    val out = ArrayList<Question>(size)
+    var i = 0
+    rounds.forEachIndexed { ri, (_, count) ->
+        repeat(count) { if (i < size) { out.add(this[i].copy(roundIndex = ri)); i++ } }
+    }
+    while (i < size) { out.add(this[i]); i++ }
+    return out
+}
+
 fun dayKey(): String {
     val c = Calendar.getInstance()
     return "%04d-%02d-%02d".format(c.get(Calendar.YEAR), c.get(Calendar.MONTH) + 1, c.get(Calendar.DAY_OF_MONTH))
@@ -791,6 +836,11 @@ class Store(context: Context) {
     // the corpus is simply never re-asked).
     fun reviewEnabled(): Boolean = prefs.getBoolean("reviewEnabled", true)
     fun setReviewEnabled(v: Boolean) = prefs.edit().putBoolean("reviewEnabled", v).apply()
+
+    // Stable per-device id for Trivia Night rejoin-by-identity (Decision 033).
+    fun deviceId(): String = prefs.getString("deviceId", null) ?: java.util.UUID.randomUUID().toString().also {
+        prefs.edit().putString("deviceId", it).apply()
+    }
 
     // First-run onboarding + per-user prefs (parity with iOS @AppStorage).
     fun hasOnboarded(): Boolean = prefs.getBoolean("hasOnboarded", false)

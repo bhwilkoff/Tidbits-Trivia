@@ -1,7 +1,10 @@
 package com.learningischange.tidbitstrivia.ui
 
 import android.content.Intent
+import android.os.Build
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -55,6 +58,8 @@ sealed interface Route {
     data object Create : Route
     data class Game(val mode: Mode, val category: Category, val custom: List<Question>? = null, val label: String? = null, val nightRounds: List<Pair<String, Int>>? = null) : Route
     data object NightSetup : Route
+    data object NightJoin : Route
+    data object NightLive : Route
     data object Settings : Route
     data object Party : Route
 }
@@ -72,6 +77,11 @@ fun AppRoot(
     val current = backStack.last()
     var corpusReady by remember { mutableStateOf(Corpus.loaded) }
     var onboarded by remember { mutableStateOf(store.hasOnboarded()) }
+    // The live networked Trivia Night (Decision 033), created on Host/Join.
+    var live by remember { mutableStateOf<LiveNight?>(null) }
+    // NSD discovery needs NEARBY_WIFI_DEVICES on Android 13+; request on Host/Join.
+    val nearbyPerm = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
+    fun ensureNearby() { if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) nearbyPerm.launch(android.Manifest.permission.NEARBY_WIFI_DEVICES) }
     LaunchedEffect(Unit) {
         if (!Corpus.loaded) runCatching { Corpus.load(context) }
         if (!Pictures.loaded) runCatching { Pictures.load(context) }
@@ -112,12 +122,29 @@ fun AppRoot(
                         onPlay = { mode, cat -> backStack.add(Route.Game(mode, cat)) },
                         onNight = { backStack.add(Route.NightSetup) },
                         onParty = { backStack.add(Route.Party) },
+                        onJoinNight = { ensureNearby(); backStack.add(Route.NightJoin) },
                         onSettings = { backStack.add(Route.Settings) },
                     )
                     is Route.NightSetup -> NightSetupScreen(
-                        onStart = { rounds, cat, label -> backStack.removeAt(backStack.lastIndex); backStack.add(Route.Game(Mode.BAR_TRIVIA, cat, label = label, nightRounds = rounds)) },
+                        onStartSolo = { rounds, cat, label -> backStack.removeAt(backStack.lastIndex); backStack.add(Route.Game(Mode.BAR_TRIVIA, cat, label = label, nightRounds = rounds)) },
+                        onHost = { rounds, cat, _ ->
+                            ensureNearby()
+                            live = LiveNight.host(store, context, rounds, cat.id, hostName = "Host")
+                            backStack.removeAt(backStack.lastIndex); backStack.add(Route.NightLive)
+                        },
                         onCancel = { backStack.removeAt(backStack.lastIndex) },
                     )
+                    is Route.NightJoin -> NightJoinScreen(
+                        onJoin = { code, name ->
+                            val l = LiveNight.join(store, context); live = l; l.join(code, name)
+                            backStack.removeAt(backStack.lastIndex); backStack.add(Route.NightLive)
+                        },
+                        onCancel = { backStack.removeAt(backStack.lastIndex) },
+                    )
+                    is Route.NightLive -> live?.let { l ->
+                        BackHandler { l.end(); live = null; backStack.removeAt(backStack.lastIndex) }
+                        NightContainer(l, store) { l.end(); live = null; backStack.clear(); backStack.add(Route.Home) }
+                    } ?: Box(Modifier.fillMaxSize())
                     is Route.Records -> RecordsScreen(store)
                     is Route.Create -> CreateScreen { qs, label -> backStack.add(Route.Game(Mode.CLASSIC, Category.byId("mixed"), qs, label)) }
                     is Route.Game -> GameScreen(r, store) { backStack.removeAt(backStack.lastIndex) }
@@ -143,7 +170,7 @@ private fun BottomBar(current: Route, onSelect: (Route) -> Unit) {
 // ---- Home ----
 
 @Composable
-private fun HomeScreen(onPlay: (Mode, Category) -> Unit, onNight: () -> Unit, onParty: () -> Unit, onSettings: () -> Unit) {
+private fun HomeScreen(onPlay: (Mode, Category) -> Unit, onNight: () -> Unit, onParty: () -> Unit, onJoinNight: () -> Unit, onSettings: () -> Unit) {
     var selectedMode by remember { mutableStateOf(Mode.CLASSIC) }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -165,6 +192,11 @@ private fun HomeScreen(onPlay: (Mode, Category) -> Unit, onNight: () -> Unit, on
             Column(Modifier.padding(18.dp)) {
                 Text("TRIVIA NIGHT", fontWeight = FontWeight.Black, fontSize = 20.sp, color = Color.White)
                 Text("Host a night of mixed rounds — every kind of question.", color = Color.White.copy(alpha = 0.85f))
+                Spacer(Modifier.height(10.dp))
+                Surface(onClick = onJoinNight, shape = RoundedCornerShape(999.dp), color = Color.White) {
+                    Text("Join a night →", Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
+                        fontWeight = FontWeight.Bold, color = Pops.coral, fontSize = 14.sp)
+                }
             }
         }
 
@@ -205,7 +237,11 @@ private fun HomeScreen(onPlay: (Mode, Category) -> Unit, onNight: () -> Unit, on
 // ---- Trivia Night setup ----
 
 @Composable
-private fun NightSetupScreen(onStart: (List<Pair<String, Int>>, Category, String) -> Unit, onCancel: () -> Unit) {
+private fun NightSetupScreen(
+    onStartSolo: (List<Pair<String, Int>>, Category, String) -> Unit,
+    onHost: (List<Pair<String, Int>>, Category, String) -> Unit,
+    onCancel: () -> Unit,
+) {
     var preset by remember { mutableStateOf(1) }
     var cat by remember { mutableStateOf(Category.byId("mixed")) }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -227,11 +263,37 @@ private fun NightSetupScreen(onStart: (List<Pair<String, Int>>, Category, String
                 FilterChip(selected = cat.id == c.id, onClick = { cat = c }, label = { Text(c.name) })
             }
         }
+        Button(onClick = { val p = Night.presets[preset]; onHost(p.rounds, cat, p.name) }, modifier = Modifier.fillMaxWidth().height(52.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Pops.coral, contentColor = Color.White)) {
+            Text("Host for others (Apple or Android)", fontWeight = FontWeight.Bold)
+        }
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             OutlinedButton(onClick = onCancel) { Text("Cancel") }
-            Button(onClick = { val p = Night.presets[preset]; onStart(p.rounds, cat, p.name) }) { Text("Start the Night") }
+            OutlinedButton(onClick = { val p = Night.presets[preset]; onStartSolo(p.rounds, cat, p.name) }, modifier = Modifier.weight(1f)) { Text("Play here (solo)") }
         }
         Spacer(Modifier.height(24.dp))
+    }
+}
+
+@Composable
+private fun NightJoinScreen(onJoin: (String, String) -> Unit, onCancel: () -> Unit) {
+    var code by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf("") }
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Text("Join a Trivia Night", fontSize = 28.sp, fontWeight = FontWeight.Black)
+        Text("On the same Wi-Fi as the host. Works whether they're on Apple or Android.",
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+        OutlinedTextField(
+            value = code, onValueChange = { code = it.uppercase().filter { c -> c.isLetterOrDigit() }.take(4) },
+            label = { Text("Room code") }, singleLine = true, modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters),
+        )
+        OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Your name") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            OutlinedButton(onClick = onCancel) { Text("Cancel") }
+            Button(onClick = { onJoin(code, name) }, enabled = code.length == 4, modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(containerColor = Pops.coral, contentColor = Color.White)) { Text("Join") }
+        }
     }
 }
 
@@ -267,8 +329,9 @@ private fun GameScreen(route: Route.Game, store: Store, onDone: () -> Unit) {
 }
 
 @Composable
-private fun PlayingScreen(game: GameState) {
+internal fun PlayingScreen(game: GameState) {
     val q = game.current ?: return
+    val live = game.phase == GamePhase.PLAYING && !game.awaitingReveal   // accepting input
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(game.progressLabel, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
@@ -302,11 +365,11 @@ private fun PlayingScreen(game: GameState) {
         }
         Text(q.prompt, fontWeight = FontWeight.Black, fontSize = 23.sp)
         if (game.mode == Mode.SWEEP) SweepGrid(game)
-        if (game.mode == Mode.STAKE && game.phase == GamePhase.PLAYING) StakeSelector(game)
+        if (game.mode == Mode.STAKE && live) StakeSelector(game)
         q.closest?.let { ClosestPanel(game, it) }
         if (q.ordering != null) OrderingPanel(game)
         q.matching?.let { MatchingPanel(game, it) }
-        if (q.accepted != null && game.phase == GamePhase.PLAYING) {
+        if (q.accepted != null && live) {
             OutlinedTextField(
                 value = game.typedText, onValueChange = { game.typedText = it },
                 placeholder = { Text("Type your answer…") }, singleLine = true,
@@ -316,9 +379,15 @@ private fun PlayingScreen(game: GameState) {
             Button(onClick = { game.submitText() }, enabled = game.typedText.isNotBlank(), modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = Pops.mint, contentColor = Ink)) { Text("Submit") }
         }
-        q.enumerate?.let { spec -> if (game.phase == GamePhase.PLAYING) EnumeratePanel(game, spec) }
-        val answersLocked = game.phase != GamePhase.PLAYING || (game.mode == Mode.STAKE && game.currentStake == 0)
+        q.enumerate?.let { spec -> if (live) EnumeratePanel(game, spec) }
+        val answersLocked = !live || (game.mode == Mode.STAKE && game.currentStake == 0)
         q.options.forEachIndexed { i, opt -> AnswerButton(opt, game.answerState(i), !answersLocked) { game.submit(i) } }
+        if (game.awaitingReveal) {
+            ChunkyCard(fill = Pops.blue.copy(alpha = 0.14f)) {
+                Text("Locked in — waiting for the host…", Modifier.padding(16.dp).fillMaxWidth(),
+                    fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, color = accentText(Pops.blue))
+            }
+        }
         if (game.phase == GamePhase.REVEAL) {
             ChunkyCard(fill = MaterialTheme.colorScheme.surfaceVariant) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -344,7 +413,8 @@ private fun PlayingScreen(game: GameState) {
                             color = accentText(Pops.coral), fontWeight = FontWeight.Bold)
                 }
             }
-            Button(onClick = { game.advance() }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Ink, contentColor = Color.White)) {
+            // Self-paced advances here; a networked night is advanced by the host (below the game).
+            if (!game.hostPaced) Button(onClick = { game.advance() }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Ink, contentColor = Color.White)) {
                 Text(if (game.isLast) "See Results" else if (game.nextRoundTitle != null) "Start ${game.nextRoundTitle}" else "Next")
             }
         }

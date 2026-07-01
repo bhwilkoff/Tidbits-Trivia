@@ -966,3 +966,37 @@ gets the reveal, not just whoever buzzed first.
   a two-device test is the gate before this is "done". Web/Android
   networked play is the Phase-2 web-room (different transport); their
   multiplayer today is pass-and-play on one device.
+
+## 035 — Home: exactly one primary action (Quick Play); pickers are progressive disclosure (rule R-HOME-1)
+
+The home screen has ONE visually dominant call-to-action — **Quick Play** —
+that starts a game in ≤2 taps with a smart default (the last mode+category
+played, else Mixed Bag + Classic). Everything else (Daily, Trivia Night,
+Pass & Play, Create) is visually secondary, and the mode + category pickers
+are **never permanently open** — they live behind a "Customize a game" sheet.
+
+**Why:** the old home stacked five equal-weight cards plus an always-open
+13-mode rail and 8-category grid — a scan-heavy, scroll-heavy, decision-heavy
+wall before a single question appeared, and overwhelming to a first-time user.
+There was no front door. Competing equal-weight surfaces defeat the home's one
+job: get a returning or new player into a question fast. (Owner complaint,
+2026-07-01; design in `docs/HOME-REDESIGN-PROPOSAL.md`.)
+
+**How to apply:** one saturated hero, everything else quieter (density by
+subtraction, not decoration). Selection is a *task* → a native modal
+(iOS `.sheet`, Android `ModalBottomSheet`, web `<dialog>`, tvOS focus screen),
+not inline sections. The default resolver + last-selection persistence + preset
+model are shared Core logic (four mirrors); the hero/sheet presentation is
+native per platform. **Do not "harmonize" a second hero back onto the home** —
+the single-primary-action rule is load-bearing. Trivia Night is likewise ONE
+entry with host/join inside it, never separate home buttons.
+
+**Related (same 2026-07-01 pass):** Records made self-explaining — the confusing
+domains Pie removed, per-domain rows now say "N more to Level X", no cryptic
+abbreviations ("Accuracy"/"Correct", not "Lifetime acc."/"Right"). Create made
+corpus-grounded — retrieves REAL vetted corpus questions for a topic instead of
+hallucinating (Decision 033's on-device generation was "obvious or nonsensical";
+grounded retrieval is the every-device baseline). Daily made deterministic
+(seeded pool, not `ORDER BY RANDOM()`). Android icon aligned to the canonical iOS
+mark (confetti moved to a full-bleed background layer). Achievement taxonomy in
+`docs/achievements.json` (GC + Play API creation owner-blocked).

@@ -449,3 +449,28 @@ One-line-per-round; full detail in `ARCHIVE.md`.
   process-death score restore from roster, GitHub-gist REMOTE transport, web
   networked night, id-parity golden test, `docs/NIGHT-WIRE-SCHEMA.md`. Versions:
   Apple 1.6.9/51, Android 1.6.10/42.
+- **2026-07-01 (ten-task polish pass — all shipped to `main`).** *State found:*
+  in beta on all platforms; owner filed 10 issues. *Work done:* **(1)** Game Center
+  rocketship no longer floats — never activate `GKAccessPoint` (auth banner still
+  shows). **(2)** Daily was non-deterministic on iOS (`ORDER BY RANDOM()` pool) →
+  deterministic stable-id seeded pool per-day+category; Android/web were already
+  deterministic; share links to tidbitstrivia.com. **(3+4+6)** **Home redesign
+  (rule R-HOME-1, Decision 035) on ALL FOUR platforms** — one Quick Play hero
+  (last-played default + Surprise), prominent Daily, unified Trivia Night
+  (host/join in one sheet — kills the 3 entry points AND the horizontal-scroll
+  bug), Customize sheet (mode+category+presets), More-ways tiles. Shared quick-play/
+  preset logic (Core/Store/localStorage) + native sheet per platform. iOS + Android
+  screenshot-verified; web/tvOS build-verified. **(5)** Android icon now matches the
+  canonical iOS mark (confetti → full-bleed background layer, tile-only foreground).
+  **(7)** Create is **corpus-grounded** on iOS+Android+web — retrieves REAL vetted
+  corpus questions by topic (verified: "Jazz" → a real Ornette Coleman question),
+  live-gen fallback only when thin. **(8)** Records redesigned on all 4 — removed the
+  confusing Pie, per-domain "N more to Level X", spelled-out labels; achievement
+  taxonomy in `docs/achievements.json`. **(9)** iOS Create keyboard-dismiss + progress
+  bar. **(10)** Online-multiplayer playbook (`docs/ONLINE-MULTIPLAYER-PLAYBOOK.md`,
+  research-only) — owner set online need NOT be cross-platform → GameKit + universal
+  bot v0, zero backend. *State left:* 4 research playbooks in `docs/`. **Owner tasks
+  (blocked):** create GC/Play achievements via API (needs ASC key + GC enabled; Play
+  Games project + service account). **Verify on device:** iOS ships via TestFlight
+  (no version bump this pass — beta builds are the owner's call). Versions unchanged
+  (Apple 1.6.9/51, Android 1.6.10/vc42) — bump on the next ship.

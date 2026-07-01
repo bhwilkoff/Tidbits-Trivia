@@ -60,9 +60,10 @@ reached is ⏳ with a note, never silence.
 
 | Verb | Web | iOS | tvOS | Android | Notes |
 |---|---|---|---|---|---|
-| Play (home: daily, modes, categories) | ✅ | ✅ | ✅ | ✅ | iOS: bottom Tab. Web: hash-routed tabs + URL state. tvOS: dark-first focus shelf. Android: bottom NavigationBar |
-| Records (stats, streak, review) | ✅ | ✅ | ✅ | ✅ | tvOS browse screen (`RecordsView_tvOS`, focus-scrollable dark-first) shipped — streak, lifetime, Pie, Topic Levels, calibration, bests, review; reached from the home header. Android via SharedPreferences |
-| Create (quiz from any topic) | ✅ | ✅ | 🚫 | ✅ | tvOS: typing a topic on a Siri Remote is hostile — consume shared links instead |
+| Play (home) — Quick Play + progressive disclosure | ✅ | ✅ | ✅ | ✅ | **Redesigned 2026-07-01 (rule R-HOME-1, Decision 035):** ONE Quick Play hero (smart last-played default + Surprise), prominent Daily, unified Trivia Night, mode/category behind a Customize sheet, More-ways tiles. Native idiom per platform (iOS `.sheet`, Android `ModalBottomSheet`, web `<dialog>`, tvOS focus picker). Shared quick-play/preset logic in Core/Store/localStorage |
+| Quick Play + saved presets (power-user) | ✅ | ✅ | ✅ | ✅ | Last-(mode,category) resolves the Quick Play default; saveable presets ("My Mix"); Surprise = random. Shared resolver logic; per-platform persistence |
+| Records (stats, streak, review) | ✅ | ✅ | ✅ | ✅ | **Redesigned 2026-07-01 (Task 8):** removed the confusing domains Pie; per-domain rows explain the level ("N more to Level X"); spelled-out labels ("Accuracy"/"Correct", "Level"). Achievement taxonomy authored in `docs/achievements.json` (GC + Play creation via API is owner-blocked). Android via SharedPreferences |
+| Create (quiz from any topic) | ✅ | ✅ | 🚫 | ✅ | **Corpus-grounded 2026-07-01 (Task 7):** retrieves REAL vetted corpus questions matching the topic (no hallucination), falls back to live generation only when thin. tvOS: typing on a Siri Remote is hostile — n/a |
 
 ---
 

@@ -90,7 +90,8 @@ allowed), not blind. (2) **Search all transports in parallel** so Wi-Fi Aware
 can auto-select for Android↔Android without breaking cross-platform (it's disabled by
 default right now). (3) process-death score-restore from the roster; (4) **GitHub-gist
 REMOTE** transport (serverless internet play, host OAuth device-flow); (5) web
-networked night; (6) id-parity golden test + `docs/NIGHT-WIRE-SCHEMA.md`.
+networked night. ~~(6) id-parity golden test + `docs/NIGHT-WIRE-SCHEMA.md`~~ —
+**DONE 2026-07-01** (`tools/night-wire/run_golden.sh`; run after ANY wire change).
 **Other big tracks:** Game Center ASC config (`docs/GAME-CENTER-SETUP.md`, owner),
 Play Console owner tasks (content rating / target audience / privacy URL), web
 pass-and-play + onboarding parity, more question types, adaptive difficulty.
@@ -520,3 +521,20 @@ One-line-per-round; full detail in `ARCHIVE.md`.
   2-device session re-covers it incidentally. *Left:* Wi-Fi Aware + BLE adapters are
   now thin — build them against hardware per the doc (two device-only open questions).
   No version bump (no ship); bump on next beta push.
+- **2026-07-01 (night wire-schema doc + golden tests — networked-night track item 6).**
+  *Did:* **`docs/NIGHT-WIRE-SCHEMA.md`** — the normative Apple↔Android wire contract
+  (framing/crypto, discovery, message kinds + required fields, the
+  encodeDefaults/strict-Codable rules, the pinned forward-compat delta: unknown kind
+  → Apple `.unknown` vs Android frame-drop, and the invariant that `.night` MUST ship
+  BOTH `questionIds` and full `questions` until Apple gains id resolution). Plus the
+  **golden test suite** (`tools/night-wire/run_golden.sh`): canonical fixtures in
+  `tools/night-wire/golden/messages/` (single source, both platforms) → Apple harness
+  (`apple_golden.swift`, compiled against the REAL repo wire files) validates fixtures
+  + writes AES-GCM frames → Android `GoldenWireTest` validates the same fixtures,
+  **opens the Swift-encoded frames**, writes its own → Apple harness **opens the
+  Kotlin-encoded frames** → `check_id_parity.py` asserts the corpus id set is
+  identical across Apple sqlite / web json / Android json (20,318 ids) + all 9
+  per-mode JSONs byte-identical. *Verified:* full loop PASS from a clean slate (both
+  cross-decode directions green, 4/4 Android tests, id parity green). Kotlin gotcha:
+  block comments NEST — a `/*.json` glob inside a KDoc unbalances it. *Run it after
+  ANY wire change.*

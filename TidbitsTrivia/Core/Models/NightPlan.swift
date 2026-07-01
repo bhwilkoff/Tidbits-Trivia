@@ -76,3 +76,14 @@ struct NightPlan: Hashable, Sendable, Codable {
         ("The Works", "Every question type · ~28", works),
     ]
 }
+
+extension NightPlan {
+    // Lenient decode: an Android host omits `teams` when empty (kotlinx
+    // encodeDefaults=false). Tolerate it so a `night` from Android decodes →
+    // otherwise the joiner never gets the questions and hangs on "waiting".
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        rounds = try c.decode([NightRound].self, forKey: .rounds)
+        teams = (try? c.decode([String].self, forKey: .teams)) ?? []
+    }
+}

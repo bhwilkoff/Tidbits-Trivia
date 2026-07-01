@@ -101,6 +101,20 @@ struct NightPlayer: Codable, Sendable, Equatable, Identifiable {
     var id: Int { seat }
 }
 
+extension NightPlayer {
+    // Lenient decode: an Android host (kotlinx encodeDefaults=false) omits fields
+    // equal to their default (score=0, answered=false, isHost=false). Tolerate them
+    // so a `roster` from Android doesn't fail to decode → "0 in the room".
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        seat = try c.decode(Int.self, forKey: .seat)
+        name = (try? c.decode(String.self, forKey: .name)) ?? "Player \(seat)"
+        score = (try? c.decode(Int.self, forKey: .score)) ?? 0
+        answered = (try? c.decode(Bool.self, forKey: .answered)) ?? false
+        isHost = (try? c.decode(Bool.self, forKey: .isHost)) ?? false
+    }
+}
+
 // MARK: - Room code → PSK
 
 /// A short, human-shareable room code the host shows. Excludes ambiguous glyphs

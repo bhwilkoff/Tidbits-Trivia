@@ -28,7 +28,11 @@ object Night {
     const val headerBytes = 4
     const val maxMessageBytes = 1 shl 20
 
-    val json = Json { ignoreUnknownKeys = true; encodeDefaults = false }
+    // encodeDefaults=true is REQUIRED for cross-platform: Apple's NightPlayer/NightPlan
+    // use strict synthesized Codable and throw on missing keys, so we must emit
+    // default-valued fields (score=0, answered=false, teams=[]) too. explicitNulls=false
+    // keeps null optionals omitted (Apple's decodeIfPresent handles their absence).
+    val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; explicitNulls = false }
 }
 
 @Serializable

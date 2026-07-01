@@ -283,7 +283,7 @@ function viewRecords() {
     <h1 class="page-title">Records</h1>
     <div class="banner card daily"><div><div class="muted">DAILY STREAK</div><div class="big">${st.current} days</div></div><div class="muted">best ${st.best} 🔥</div></div>
     <div class="stat-row">
-      ${statBox(lt.games, 'Games', '#8B5CF6')}${statBox(lt.acc + '%', 'Lifetime acc.', '#2D5BFF')}${statBox(lt.correct, 'Right', '#2FCB8A')}
+      ${statBox(lt.games, 'Games', '#8B5CF6')}${statBox(lt.acc + '%', 'Accuracy', '#2D5BFF')}${statBox(lt.correct, 'Correct', '#2FCB8A')}
     </div>
     ${progressSection()}
     ${calibrationSection()}
@@ -312,29 +312,25 @@ function calibrationSection() {
     ${rows}`;
 }
 
-// Topic Levels (depth) + The Pie (breadth) — SOLO-BACKLOG M3 + M4.
+// Topic Levels (depth). Plain-language "N more to Level X" so the number means
+// something; the confusing breadth pie was removed (Task 8).
 function progressSection() {
   const ds = Store.progress();
-  const earned = ds.filter((d) => d.hasWedge).length;
-  const seg = 100 / ds.length;
-  const stops = ds.map((d, i) => {
-    const col = d.hasWedge ? catColor(catById(d.id)) : '#e8dcc2';
-    return `${col} ${(i * seg).toFixed(2)}% ${((i + 1) * seg).toFixed(2)}%`;
-  }).join(', ');
-  const blurb = earned === 7
-    ? 'Full pie — every domain mastered. That breadth is yours to keep.'
-    : 'Earn a wedge in each domain by answering its questions well. The pie fills only when you cover them all.';
+  const explored = ds.filter((d) => d.total > 0).length;
+  const mastered = ds.filter((d) => d.hasWedge).length;
   const rows = ds.filter((d) => d.total > 0).map((d) => {
     const c = catById(d.id), col = catColor(c);
+    const remaining = Math.max(0, Math.round((1 - d.levelProgress) * 5 * (d.level + 1)));
     return `<div class="card topic-row">
       <span class="topic-ic" style="background:${col}">${c.symbol}</span>
       <div class="topic-main">
-        <div class="topic-head"><b>${h(c.name)}</b>${d.hasWedge ? '<span class="wedge">✓</span>' : ''}<span class="lvl" style="background:${col}">Lvl ${d.level}</span></div>
+        <div class="topic-head"><b>${h(c.name)}</b>${d.hasWedge ? '<span class="wedge">✓</span>' : ''}<span class="lvl" style="background:${col}">Level ${d.level}</span></div>
         <div class="xp-track"><div class="xp-fill" style="width:${Math.max(6, d.levelProgress * 100)}%;background:${col}"></div></div>
+        <div class="muted topic-sub">${remaining} more to Level ${d.level + 1}</div>
       </div></div>`;
   }).join('');
   return `<h2 class="section">Your knowledge</h2>
-    <div class="card pie-card"><div class="pie" style="background:conic-gradient(${stops})"><span class="pie-count">${earned}/7</span></div><p class="muted pie-blurb">${blurb}</p></div>
+    <p class="muted">Each domain levels up as you answer its questions correctly. You've explored ${explored} of 7 domains and mastered ${mastered}. A ✓ means mastered — 15+ right at 60%+ accuracy.</p>
     ${rows}`;
 }
 

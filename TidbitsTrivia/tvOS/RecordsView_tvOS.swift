@@ -86,8 +86,8 @@ struct RecordsView_tvOS: View {
         let pct = totalQs == 0 ? 0 : Int(Double(totalCorrect) / Double(totalQs) * 100)
         return HStack(spacing: 24) {
             tvStatBox("\(records.count)", "Games", Tidbits.Palette.grape)
-            tvStatBox("\(pct)%", "Lifetime Acc.", Tidbits.Palette.blue)
-            tvStatBox("\(totalCorrect)", "Right", Tidbits.Palette.mint)
+            tvStatBox("\(pct)%", "Accuracy", Tidbits.Palette.blue)
+            tvStatBox("\(totalCorrect)", "Correct", Tidbits.Palette.mint)
         }
     }
 
@@ -142,32 +142,20 @@ struct RecordsView_tvOS: View {
     }
 
     private var progressSection: some View {
-        let ds = domains
-        let earned = DomainProgress.wedgesEarned(ds)
+        let ds = domains.filter { $0.total > 0 }
+        let mastered = ds.filter { $0.hasWedge }.count
         return VStack(alignment: .leading, spacing: 16) {
             Text("Your knowledge").font(.system(size: 40, weight: .heavy, design: .rounded)).foregroundStyle(TVTheme.text)
-            TVRecordsCard(fill: TVTheme.panel) {
-                HStack(spacing: 36) {
-                    ZStack {
-                        TVPieProgressView(domains: ds).frame(width: 150, height: 150)
-                        VStack(spacing: -2) {
-                            Text("\(earned)/7").font(.system(size: 36, weight: .black, design: .rounded)).foregroundStyle(.white)
-                            Text("domains").font(.system(size: 20, weight: .bold, design: .rounded)).foregroundStyle(TVTheme.textSoft)
-                        }
-                    }
-                    Text(earned == 7
-                         ? "Full pie — you've mastered every domain. That breadth is yours to keep."
-                         : "Earn a wedge in each domain by answering its questions well. The pie fills only when you cover them all.")
-                        .font(.system(size: 27, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-            ForEach(ds.filter { $0.total > 0 }) { d in topicRow(d) }
+            Text("Each domain levels up as you answer its questions correctly. You've explored \(ds.count) of 7 domains and mastered \(mastered). A checkmark means mastered — 15+ right at 60%+ accuracy.")
+                .font(.system(size: 27, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+                .fixedSize(horizontal: false, vertical: true)
+            ForEach(ds) { d in topicRow(d) }
         }
     }
 
     private func topicRow(_ d: DomainProgress) -> some View {
         let cat = TriviaCategory.named(d.categoryID)
+        let remaining = max(0, d.nextLevelCorrect - d.correct)
         return TVRecordsCard(fill: TVTheme.panel) {
             HStack(spacing: 24) {
                 Image(systemName: cat.symbol).font(.system(size: 32, weight: .black)).foregroundStyle(cat.color.legibleForeground)
@@ -180,7 +168,7 @@ struct RecordsView_tvOS: View {
                             Image(systemName: "checkmark.seal.fill").font(.system(size: 26, weight: .bold)).foregroundStyle(Tidbits.Palette.mint)
                         }
                         Spacer()
-                        Text("Lvl \(d.level)").font(.system(size: 24, weight: .black, design: .rounded))
+                        Text("Level \(d.level)").font(.system(size: 24, weight: .black, design: .rounded))
                             .foregroundStyle(cat.color.legibleForeground)
                             .padding(.horizontal, 18).padding(.vertical, 6)
                             .background(Capsule().fill(cat.color))
@@ -192,6 +180,8 @@ struct RecordsView_tvOS: View {
                         }
                     }
                     .frame(height: 18)
+                    Text("\(d.correct) correct · \(remaining) more to Level \(d.level + 1)")
+                        .font(.system(size: 22, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
                 }
             }
         }
@@ -273,27 +263,4 @@ private struct TVRecordsCardInner<Content: View>: View {
     }
 }
 
-/// The Pie — seven equal wedges, one per knowledge domain. Earned wedges show
-/// their category color; unearned are dim. (tvOS copy of the iOS Canvas pie.)
-private struct TVPieProgressView: View {
-    let domains: [DomainProgress]
-    var body: some View {
-        Canvas { ctx, size in
-            let n = max(1, domains.count)
-            let radius = min(size.width, size.height) / 2 - 2
-            let center = CGPoint(x: size.width / 2, y: size.height / 2)
-            for (i, d) in domains.enumerated() {
-                let start = Angle(degrees: Double(i) / Double(n) * 360 - 90)
-                let end = Angle(degrees: Double(i + 1) / Double(n) * 360 - 90)
-                var slice = Path()
-                slice.move(to: center)
-                slice.addArc(center: center, radius: radius, startAngle: start, endAngle: end, clockwise: false)
-                slice.closeSubpath()
-                let fill = d.hasWedge ? TriviaCategory.named(d.categoryID).color : Color.white.opacity(0.10)
-                ctx.fill(slice, with: .color(fill))
-                ctx.stroke(slice, with: .color(.black.opacity(0.5)), lineWidth: 2)
-            }
-        }
-    }
-}
 #endif

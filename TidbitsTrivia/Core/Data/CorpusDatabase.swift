@@ -89,6 +89,40 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
         }
     }
 
+    /// Topic search for the Create feature: real, already-vetted corpus questions
+    /// whose prompt or Wikipedia source title match the topic's words. Ranked by
+    /// how many topic words hit (source-title hits weighted). This is grounded
+    /// generation's retrieval baseline — no live API, no hallucination, every
+    /// device (docs/CREATE-QUESTION-GEN-PLAYBOOK.md).
+    func search(topic: String, limit: Int) -> [Question] {
+        let tokens = topic.lowercased().split { !$0.isLetter && !$0.isNumber }.map(String.init).filter { $0.count >= 3 }
+        guard !tokens.isEmpty else { return [] }
+        return queue.sync {
+            guard let db else { return [] }
+            let clause = tokens.map { _ in "(lower(prompt) LIKE ? OR lower(source_title) LIKE ?)" }.joined(separator: " OR ")
+            let sql = "SELECT * FROM questions WHERE \(clause) LIMIT 400"
+            var stmt: OpaquePointer?
+            defer { sqlite3_finalize(stmt) }
+            guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return [] }
+            var idx: Int32 = 1
+            for t in tokens {
+                let like = "%\(t)%"
+                sqlite3_bind_text(stmt, idx, like, -1, Self.transientDestructor); idx += 1
+                sqlite3_bind_text(stmt, idx, like, -1, Self.transientDestructor); idx += 1
+            }
+            var scored: [(Question, Int)] = []
+            while sqlite3_step(stmt) == SQLITE_ROW {
+                guard let q = Self.row(stmt) else { continue }
+                let title = q.sourceTitle.lowercased(), prompt = q.prompt.lowercased()
+                let score = tokens.reduce(0) { $0 + (title.contains($1) ? 2 : 0) + (prompt.contains($1) ? 1 : 0) }
+                scored.append((q, score))
+            }
+            // Keep the best matches, then shuffle that pool so repeated Creates vary.
+            let pool = scored.sorted { $0.1 > $1.1 }.prefix(max(limit * 3, 24)).map { $0.0 }
+            return Array(pool.shuffled().prefix(limit))
+        }
+    }
+
     /// Fetch specific questions by id, returned in the SAME order as `ids`.
     func questions(ids: [String]) -> [Question] {
         guard !ids.isEmpty else { return [] }

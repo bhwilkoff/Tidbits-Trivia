@@ -131,8 +131,14 @@ struct CreateQuizView: View {
             }
         }
         Task {
-            let result = await QuestionProvider.shared.liveQuestions(
-                topic: q, category: .named("mixed"), count: 8)
+            // Grounded generation: prefer REAL, already-vetted corpus questions on
+            // the topic (no hallucination, works on every device). Fall back to live
+            // generation only when the corpus is thin for an obscure topic.
+            var result = CorpusDatabase.shared.search(topic: q, limit: 8)
+            if result.count < 4 {
+                result = await QuestionProvider.shared.liveQuestions(
+                    topic: q, category: .named("mixed"), count: 8)
+            }
             isWorking = false
             if result.count >= 3 {
                 generated = result

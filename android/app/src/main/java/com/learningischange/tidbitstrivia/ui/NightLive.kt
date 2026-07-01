@@ -31,16 +31,19 @@ import kotlinx.coroutines.launch
 fun NightContainer(live: LiveNight, store: Store, onExit: () -> Unit) {
     when (live.stage) {
         LiveNight.Stage.LOBBY ->
-            if (live.role == LiveNight.Role.HOST) HostLobby(live) else JoinerWaiting(live, onExit)
-        LiveNight.Stage.PLAYING -> NightPlaying(live)
+            if (live.role == LiveNight.Role.HOST) HostLobby(live, onExit) else JoinerWaiting(live, onExit)
+        LiveNight.Stage.PLAYING -> NightPlaying(live, onExit)
         LiveNight.Stage.FINISHED -> NightStandings(live, onExit)
     }
 }
 
 @Composable
-private fun HostLobby(live: LiveNight) {
+private fun HostLobby(live: LiveNight, onExit: () -> Unit) {
     val scope = rememberCoroutineScope()
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Row(Modifier.fillMaxWidth()) {
+            TextButton(onClick = onExit) { Text("Cancel", color = Pops.coral, fontWeight = FontWeight.Bold) }
+        }
         Text("Trivia Night", fontWeight = FontWeight.Black, fontSize = 26.sp)
         Text("Others join with this code:", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
         NightCard(fill = Pops.coral) {
@@ -77,16 +80,33 @@ private fun JoinerWaiting(live: LiveNight, onExit: () -> Unit) {
 }
 
 @Composable
-private fun NightPlaying(live: LiveNight) {
+private fun NightPlaying(live: LiveNight, onExit: () -> Unit) {
     val game = live.game ?: return
+    var confirmLeave by remember { mutableStateOf(false) }
     // Drive the per-question clock locally (host paces reveal/advance).
     LaunchedEffect(game.index, game.phase, game.awaitingReveal) {
         while (game.phase == GamePhase.PLAYING && !game.awaitingReveal) { delay(100); game.tick() }
     }
+    val host = live.role == LiveNight.Role.HOST
     Column(Modifier.fillMaxSize()) {
+        Row(Modifier.fillMaxWidth().padding(start = 4.dp, top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            TextButton(onClick = { confirmLeave = true }) {
+                Text(if (host) "End night" else "Leave", color = Pops.coral, fontWeight = FontWeight.Bold)
+            }
+            Spacer(Modifier.weight(1f))
+        }
         StandingsStrip(live.players, live.mySeat, live.leaderSeat)
         Box(Modifier.weight(1f)) { PlayingScreen(game) }
-        if (live.role == LiveNight.Role.HOST) HostControls(live)
+        if (host) HostControls(live)
+    }
+    if (confirmLeave) {
+        AlertDialog(
+            onDismissRequest = { confirmLeave = false },
+            title = { Text(if (host) "End the night?" else "Leave the night?") },
+            text = { Text(if (host) "This ends the night for everyone." else "You'll drop out; the others keep playing.") },
+            confirmButton = { TextButton(onClick = { confirmLeave = false; onExit() }) { Text(if (host) "End" else "Leave", color = Pops.coral) } },
+            dismissButton = { TextButton(onClick = { confirmLeave = false }) { Text("Keep playing") } },
+        )
     }
 }
 

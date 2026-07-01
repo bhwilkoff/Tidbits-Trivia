@@ -9,13 +9,28 @@
 
 ## Current state (2026-07-01)
 
-**In beta on all platforms; cross-platform networked Trivia Night CONFIRMED on
-hardware (Android joined an iPhone-hosted night).** Versions: Apple **1.6.9
-(build 51)** → TestFlight (iOS+tvOS); Android **1.6.10 (versionCode 42)** → Play
-**internal** track (com.tidbitstrivia.app; first Play beta submitted this session —
-Data Safety + listing + feature graphic all via the Play API, signing via
-~/keystores/tidbits-upload.jks + android/keystore/signing.properties). Web
-auto-deploys to GitHub Pages (no networked night — that's the Phase-2 GitHub path).
+**In beta on all platforms.** Versions: Apple **1.6.12 (build 53)** → TestFlight
+(iOS+tvOS); Android **1.6.12 (versionCode 44)** → Play **internal**
+(com.tidbitstrivia.app; signing via ~/keystores/tidbits-upload.jks +
+android/keystore/signing.properties). Web auto-deploys to GitHub Pages. Bump on
+every ship (see memory `versioning-convention`).
+
+**Latest pass (2026-07-01, all shipped in 1.6.11 → 1.6.12): a 10-task owner polish
+pass — see DECISIONS 035 + memory `home-redesign-and-polish-2026-07`.** Headline:
+the **home was redesigned on all 4 platforms (rule R-HOME-1)** — ONE Quick Play
+hero (last-played default + Surprise), prominent Daily, UNIFIED Trivia Night
+(host/join in one sheet), mode/category behind a Customize sheet, presets; iOS +
+Android screenshot-verified. Also: **Create is corpus-grounded** (retrieves REAL
+vetted corpus questions by topic, and never answers with the topic itself — the
+1.6.12 fix; live-gen fallback only when thin), **Records redesigned** (no pie,
+"N more to Level X", plain labels), **Android icon** matched to iOS, **Daily
+determinism** fixed, GC access-point no longer floats. 4 research playbooks in
+`docs/`. **OWNER-BLOCKED next:** create GC/Play achievements via API (needs ASC key
++ Game Center enabled; Play Games project + service account; taxonomy in
+`docs/achievements.json`).
+
+**Networked Trivia Night** remains built + hardware-confirmed cross-platform
+(below); no change this pass.
 
 **Networked Trivia Night (Decision 033) is the headline feature — built + working
 cross-platform, serverless, native-APIs-only.** See `docs/CROSS-PLATFORM-MULTIPLAYER.md`
@@ -474,3 +489,13 @@ One-line-per-round; full detail in `ARCHIVE.md`.
   Games project + service account). **Verify on device:** iOS ships via TestFlight
   (no version bump this pass — beta builds are the owner's call). Versions unchanged
   (Apple 1.6.9/51, Android 1.6.10/vc42) — bump on the next ship.
+- **2026-07-01 (shipped the polish pass to beta).** Bumped **1.6.11** then **1.6.12**;
+  pushed iOS+tvOS → TestFlight (cloud `appstore-build.yml`, both builds SUCCEEDED) and
+  Android → Play internal (`submit-play.sh`). *Owner tested 1.6.11 and flagged:* Create
+  "Chicago" returned questions whose ANSWER was "Chicago"/"Chicago Med" (giveaway — the
+  player typed the topic). *Fix (1.6.12, iOS/Android/web `Corpus.search`):* drop any
+  retrieved question whose correct ANSWER contains a topic word — keep questions ABOUT
+  the topic that answer with something else. Coverage stays deep (Chicago 110 / Rome 270
+  / Jazz 97 survive). Verified on the iOS 27 sim ("Chicago" → 1919 Black Sox → Kenesaw
+  Mountain Landis). *Owner feedback:* Create speed + writing quality "significantly
+  better." Versions now Apple 1.6.12/53, Android 1.6.12/44.

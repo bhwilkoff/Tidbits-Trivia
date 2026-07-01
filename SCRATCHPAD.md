@@ -9,8 +9,8 @@
 
 ## Current state (2026-07-01)
 
-**In beta on all platforms.** Versions: Apple **1.6.12 (build 53)** → TestFlight
-(iOS+tvOS); Android **1.6.12 (versionCode 44)** → Play **internal**
+**In beta on all platforms.** Versions: Apple **1.6.13 (build 54)** → TestFlight
+(iOS+tvOS); Android **1.6.13 (versionCode 45)** → Play **internal**
 (com.tidbitstrivia.app; signing via ~/keystores/tidbits-upload.jks +
 android/keystore/signing.properties). Web auto-deploys to GitHub Pages. Bump on
 every ship (see memory `versioning-convention`).
@@ -552,8 +552,12 @@ One-line-per-round; full detail in `ARCHIVE.md`.
   emulator carried a STALE legacy package (`com.learningischange.tidbitstrivia.debug`)
   that shadowed verification — uninstalled; current id is `com.tidbitstrivia.app.debug`.
   Headless 390px web shots show a right-edge card clip that PRE-DATES this pass
-  (verified via git stash) — check on a real phone sometime. No version bump (no
-  ship); bump on next beta push.
+  (verified via git stash) — check on a real phone sometime. *Shipped to beta
+  same day:* **1.6.13** — Apple build 54 via cloud `appstore-build.yml` (SUCCESS →
+  TestFlight) + Android vc 45 to Play internal (`tools/submit-play.sh --track
+  internal --no-bump`, key via `PLAY_SERVICE_ACCOUNT_JSON=~/.config/play/
+  archivewatch-play.json` — the script's default `tidbits-play.json` path doesn't
+  exist); web live via Pages (sw v7).
 - **2026-07-01 (night wire-schema doc + golden tests — networked-night track item 6).**
   *Did:* **`docs/NIGHT-WIRE-SCHEMA.md`** — the normative Apple↔Android wire contract
   (framing/crypto, discovery, message kinds + required fields, the

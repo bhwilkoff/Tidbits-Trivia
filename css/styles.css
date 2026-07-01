@@ -324,3 +324,21 @@ body {
 .night-cat-label select { font: inherit; padding: 10px 12px; border-radius: 12px;
   border: 2.5px solid var(--color-border); background: var(--color-surface); color: var(--color-ink); }
 .night-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+/* ---- Home redesign (rule R-HOME-1: one Quick Play hero) ---- */
+.banner.hero { background: var(--color-primary); color: #fff; align-items: flex-start; padding: 20px; }
+.banner.hero .hero-main { display: flex; flex-direction: column; gap: 4px; text-align: left; }
+.hero-title { font-weight: 900; font-size: 28px; letter-spacing: 0.5px; }
+.hero-sub { font-weight: 800; font-size: 15px; opacity: 0.95; }
+.hero-hint { font-size: 13px; opacity: 0.85; }
+.hero-surprise { background: rgba(255,255,255,0.24); color: #fff; font-weight: 800; font-size: 13px;
+  padding: 7px 12px; border-radius: 999px; white-space: nowrap; }
+.banner.customize-row { background: var(--color-surface); color: var(--color-ink); }
+.home-tiles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+.tile { display: flex; flex-direction: column; gap: 8px; padding: 16px; min-height: 84px;
+  text-decoration: none; color: #fff; background: var(--color-grape);
+  border: var(--bw) solid var(--color-border); border-radius: var(--radius);
+  box-shadow: var(--shadow) var(--shadow) 0 var(--color-border); }
+.tile-emoji { font-size: 24px; } .tile-name { font-weight: 800; font-size: 16px; }
+.link-btn { background: none; border: none; color: var(--color-accent); font: inherit; font-weight: 700; cursor: pointer; padding: 4px 0; }
+#cust-modes, #cust-cats { flex-wrap: wrap; overflow: visible; }

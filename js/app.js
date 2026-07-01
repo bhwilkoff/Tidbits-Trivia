@@ -2,7 +2,7 @@
 // Apple AppStore + GameEngine + views. Vanilla JS, no framework, no build.
 
 import { Corpus, Pictures, ThisOrThat, ClosestCall, Ordering, Matching, TypeAnswer, OddOneOut, Enumerate, Difficulty, matchesAccepted, Wikipedia } from './api.js';
-import { Store, CATEGORIES, catColor, catById, MODES, NIGHT, STAKE_BUDGET, dayKey, APP_STORES } from './store.js';
+import { Store, CATEGORIES, catColor, catById, MODES, NIGHT, STAKE_BUDGET, dayKey, APP_STORES, SITE_URL } from './store.js';
 import { Scoring } from './engine.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -65,22 +65,54 @@ function renderLoading(msg) {
   app.innerHTML = `<div class="center-screen"><div class="spinner"></div><p class="muted">${h(msg)}</p></div>`;
 }
 
-// ---------------- Home ----------------
+// ---------------- Home (rule R-HOME-1: one Quick Play hero) ----------------
+const ALL_MODES = ['classic', 'timeAttack', 'survival', 'stake', 'sweep', 'pictureId', 'thisOrThat', 'closestCall', 'ordering', 'matching', 'typeAnswer', 'oddOneOut', 'ladder'];
+const CORE_MODES = ['classic', 'timeAttack', 'survival', 'stake'];
+
+function quickPlayTarget() {
+  const m = localStorage.getItem('tidbits.lastMode');
+  const c = localStorage.getItem('tidbits.lastCat');
+  if (m && MODES[m] && c) return { mode: m, cat: c };
+  return { mode: 'classic', cat: 'mixed' };
+}
+function rememberPlay(mode, catId) {
+  if (mode === 'daily') return;
+  localStorage.setItem('tidbits.lastMode', mode);
+  localStorage.setItem('tidbits.lastCat', catId);
+}
+function hasQuickPlayHistory() { return !!localStorage.getItem('tidbits.lastMode'); }
+function getPresets() { try { return JSON.parse(localStorage.getItem('tidbits.presets') || '[]'); } catch { return []; } }
+function savePreset(p) {
+  const l = getPresets().filter((x) => x.name.toLowerCase() !== p.name.toLowerCase());
+  l.unshift(p);
+  localStorage.setItem('tidbits.presets', JSON.stringify(l.slice(0, 5)));
+}
+
 function viewHome() {
-  const cats = CATEGORIES.map((c) => `
-    <button class="cat-card card" data-cat="${c.id}">
-      <span class="cat-icon" style="background:${catColor(c)}">${c.symbol}</span>
-      <span class="cat-name">${h(c.name)}</span>
-      <span class="cat-blurb muted">${h(c.blurb)}</span>
-    </button>`).join('');
-  const modes = ['classic', 'timeAttack', 'survival', 'stake', 'sweep', 'pictureId', 'thisOrThat', 'closestCall', 'ordering', 'matching', 'typeAnswer', 'oddOneOut', 'ladder'].map((m) =>
-    `<button class="chip" data-mode="${m}">${h(MODES[m].title)}</button>`).join('');
+  const qp = quickPlayTarget();
+  const qpMode = (MODES[qp.mode] || MODES.classic).title;
+  const qpCat = (catById(qp.cat) || catById('mixed')).name;
+  const first = !hasQuickPlayHistory();
   return `
     <h1 class="page-title">Trivia from the whole of Wikipedia.</h1>
+    <button class="banner card hero" data-quickplay>
+      <div class="hero-main">
+        <div class="hero-title">▶ QUICK PLAY</div>
+        <div class="hero-sub">${h(qpMode.toUpperCase())} · ${h(qpCat.toUpperCase())}</div>
+        <div class="hero-hint">${first ? 'Tap to play — customize anytime' : 'Jump straight into a round'}</div>
+      </div>
+      <span class="hero-surprise" data-surprise role="button">🎲 Surprise</span>
+    </button>
     <button class="banner card daily" data-daily><div><div class="banner-title">DAILY TIDBIT</div>
       <div class="muted">7 questions. Everyone gets the same set. Keep your streak.</div></div><span class="chev">›</span></button>
     <button class="banner card night-banner-cta" data-night-open><div><div class="banner-title">TRIVIA NIGHT</div>
-      <div class="muted">Host a night of mixed rounds — every kind of question.</div></div><span class="chev">›</span></button>
+      <div class="muted">Host or join a night of mixed rounds.</div></div><span class="chev">›</span></button>
+    <button class="banner card customize-row" data-customize><div><div class="banner-title">Customize a game</div>
+      <div class="muted">Pick a mode, a category, save a mix</div></div><span class="chev">›</span></button>
+    <h2 class="section">More ways to play</h2>
+    <div class="home-tiles">
+      <a class="tile card" href="#/create"><span class="tile-emoji">✨</span><span class="tile-name">Create</span></a>
+    </div>
     <dialog id="night-dlg" class="night-dlg">
       <div class="night-form">
         <h2>Trivia Night</h2>
@@ -97,10 +129,23 @@ function viewHome() {
         </div>
       </div>
     </dialog>
-    <h2 class="section">Pick a mode</h2>
-    <div class="chips" id="modes">${modes}</div>
-    <h2 class="section">Choose a category</h2>
-    <div class="cat-grid">${cats}</div>
+    <dialog id="customize-dlg" class="night-dlg">
+      <div class="night-form">
+        <h2>Customize a game</h2>
+        <h3 class="section">Mode</h3>
+        <div class="chips" id="cust-modes"></div>
+        <button type="button" class="link-btn" data-more-modes>More modes…</button>
+        <h3 class="section">Category</h3>
+        <div class="chips" id="cust-cats">
+          ${CATEGORIES.map((c) => `<button type="button" class="chip" data-ccat="${c.id}">${h(c.name)}</button>`).join('')}
+        </div>
+        <div id="cust-presets"></div>
+        <div class="night-actions">
+          <button type="button" class="btn" data-cust-save>Save this</button>
+          <button type="button" class="btn btn-primary" data-cust-start>Start</button>
+        </div>
+      </div>
+    </dialog>
     ${appsPromo()}`;
 }
 
@@ -118,19 +163,45 @@ function appsPromo() {
     </section>`;
 }
 
-let selectedMode = 'classic';
-function bindHome() {
-  $('#modes').addEventListener('click', (e) => {
-    const b = e.target.closest('[data-mode]'); if (!b) return;
-    selectedMode = b.dataset.mode;
-    [...$('#modes').children].forEach((c) => c.classList.toggle('on', c.dataset.mode === selectedMode));
-  });
-  [...$('#modes').children].forEach((c) => c.classList.toggle('on', c.dataset.mode === selectedMode));
-  $('[data-daily]').addEventListener('click', () => startGame('daily', catById('mixed')));
-  app.querySelectorAll('[data-cat]').forEach((b) =>
-    b.addEventListener('click', () => startGame(selectedMode, catById(b.dataset.cat))));
+let custMode = 'classic';
+let custCat = 'mixed';
+let custShowAll = false;
 
-  // Trivia Night setup dialog (native <dialog showModal> — focus trap + ESC free).
+function renderCustModes() {
+  const list = custShowAll ? ALL_MODES : CORE_MODES;
+  const box = $('#cust-modes');
+  box.innerHTML = list.map((m) => `<button type="button" class="chip${m === custMode ? ' on' : ''}" data-cmode="${m}">${h(MODES[m].title)}</button>`).join('');
+  box.querySelectorAll('[data-cmode]').forEach((b) => b.addEventListener('click', () => { custMode = b.dataset.cmode; renderCustModes(); }));
+  const more = $('[data-more-modes]'); if (more) more.textContent = custShowAll ? 'Fewer modes' : 'More modes…';
+}
+function markCustCat() { $('#cust-cats').querySelectorAll('[data-ccat]').forEach((c) => c.classList.toggle('on', c.dataset.ccat === custCat)); }
+function renderCustPresets() {
+  const ps = getPresets();
+  const el = $('#cust-presets');
+  el.innerHTML = ps.length ? `<h3 class="section">★ My presets</h3><div class="chips">${ps.map((p, i) => `<button type="button" class="chip" data-preset-idx="${i}">${h(p.name)}</button>`).join('')}</div>` : '';
+  el.querySelectorAll('[data-preset-idx]').forEach((b) => b.addEventListener('click', () => {
+    const p = getPresets()[+b.dataset.presetIdx]; if (!p) return;
+    custMode = p.mode; custCat = (p.categoryIds && p.categoryIds[0]) || 'mixed';
+    renderCustModes(); markCustCat();
+  }));
+}
+
+function bindHome() {
+  // Quick Play — the ONE primary action (+ opt-in Surprise).
+  $('[data-quickplay]').addEventListener('click', (e) => {
+    if (e.target.closest('[data-surprise]')) return;
+    const qp = quickPlayTarget(); rememberPlay(qp.mode, qp.cat); startGame(qp.mode, catById(qp.cat));
+  });
+  const surprise = $('[data-surprise]');
+  if (surprise) surprise.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const m = ALL_MODES[Math.floor(Math.random() * ALL_MODES.length)];
+    const c = CATEGORIES[Math.floor(Math.random() * CATEGORIES.length)];
+    rememberPlay(m, c.id); startGame(m, catById(c.id));
+  });
+  $('[data-daily]').addEventListener('click', () => startGame('daily', catById('mixed')));
+
+  // Trivia Night dialog (native <dialog showModal> — focus trap + ESC free).
   let nightPreset = 1;
   const dlg = $('#night-dlg');
   $('[data-night-open]').addEventListener('click', () => dlg.showModal());
@@ -144,6 +215,21 @@ function bindHome() {
     const preset = NIGHT.presets[nightPreset];
     dlg.close();
     startGame('barTrivia', catById(catId), { nightPlan: { rounds: preset.rounds }, label: preset.name });
+  });
+
+  // Customize dialog (mode + category + presets, one Start).
+  const cust = $('#customize-dlg');
+  const qp = quickPlayTarget();
+  custMode = qp.mode; custCat = qp.cat; custShowAll = !CORE_MODES.includes(custMode);
+  renderCustModes(); renderCustPresets(); markCustCat();
+  $('[data-customize]').addEventListener('click', () => { renderCustModes(); renderCustPresets(); markCustCat(); cust.showModal(); });
+  $('[data-more-modes]').addEventListener('click', () => { custShowAll = !custShowAll; renderCustModes(); });
+  $('#cust-cats').querySelectorAll('[data-ccat]').forEach((b) => b.addEventListener('click', () => { custCat = b.dataset.ccat; markCustCat(); }));
+  $('[data-cust-start]').addEventListener('click', () => { cust.close(); rememberPlay(custMode, custCat); startGame(custMode, catById(custCat)); });
+  $('[data-cust-save]').addEventListener('click', () => {
+    const def = `${(catById(custCat) || { name: '' }).name} ${MODES[custMode].title}`;
+    const name = prompt('Name this mix', def);
+    if (name && name.trim()) { savePreset({ name: name.trim(), mode: custMode, categoryIds: [custCat] }); renderCustPresets(); }
   });
 }
 
@@ -794,7 +880,7 @@ function renderResults() {
 }
 async function shareResult(s, grid) {
   const header = game.mode.id === 'daily' ? `🧠 Tidbits Daily — ${dayKey()}` : `🧠 Tidbits Trivia — ${game.mode.title}`;
-  const text = `${header}\n${grid}\n${s.correct}/${s.total} right · ${s.score} pts · ${s.acc}%\nTrivia from all of Wikipedia. Can you beat it?\n${location.origin}${location.pathname}`;
+  const text = `${header}\n${grid}\n${s.correct}/${s.total} right · ${s.score} pts · ${s.acc}%\nTrivia from all of Wikipedia. Play at ${SITE_URL}`;
   try { if (navigator.share) { await navigator.share({ text }); return; } } catch {}
   try { await navigator.clipboard.writeText(text); toast('Copied to clipboard!'); } catch { toast('Copy failed'); }
 }

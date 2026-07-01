@@ -135,6 +135,8 @@ fun AppRoot(
                         onCancel = { backStack.removeAt(backStack.lastIndex) },
                     )
                     is Route.NightJoin -> NightJoinScreen(
+                        initialCode = store.lastNightCode(),
+                        initialName = store.lastNightName(),
                         onJoin = { code, name ->
                             val l = LiveNight.join(store, context); live = l; l.join(code, name)
                             backStack.removeAt(backStack.lastIndex); backStack.add(Route.NightLive)
@@ -276,9 +278,9 @@ private fun NightSetupScreen(
 }
 
 @Composable
-private fun NightJoinScreen(onJoin: (String, String) -> Unit, onCancel: () -> Unit) {
-    var code by remember { mutableStateOf("") }
-    var name by remember { mutableStateOf("") }
+private fun NightJoinScreen(initialCode: String, initialName: String, onJoin: (String, String) -> Unit, onCancel: () -> Unit) {
+    var code by remember { mutableStateOf(initialCode) }
+    var name by remember { mutableStateOf(initialName) }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text("Join a Trivia Night", fontSize = 28.sp, fontWeight = FontWeight.Black)
         Text("On the same Wi-Fi as the host. Works whether they're on Apple or Android.",

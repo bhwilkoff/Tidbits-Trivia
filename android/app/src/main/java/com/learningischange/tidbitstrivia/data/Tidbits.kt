@@ -842,6 +842,12 @@ class Store(context: Context) {
         prefs.edit().putString("deviceId", it).apply()
     }
 
+    // Last room joined — pre-fills the Join screen so a quick rejoin is one tap.
+    fun lastNightCode(): String = prefs.getString("lastNightCode", "") ?: ""
+    fun lastNightName(): String = prefs.getString("lastNightName", "") ?: ""
+    fun rememberNight(code: String, name: String) =
+        prefs.edit().putString("lastNightCode", code.uppercase()).putString("lastNightName", name).apply()
+
     // First-run onboarding + per-user prefs (parity with iOS @AppStorage).
     fun hasOnboarded(): Boolean = prefs.getBoolean("hasOnboarded", false)
     fun setOnboarded(v: Boolean) = prefs.edit().putBoolean("hasOnboarded", v).apply()

@@ -38,24 +38,48 @@ class NightClient(
     private var key = ByteArray(0)
     private var framer = NightFramer(ByteArray(32))
     private var displayName = ""
+    private var code = ""
     private var peer: NightPeer? = null
+    private var intentionalLeave = false
+    private var reconnectAttempts = 0
 
     fun join(code: String, name: String) {
-        val c = code.trim().uppercase()
+        intentionalLeave = false
+        reconnectAttempts = 0
+        this.code = code.trim().uppercase()
         displayName = name.trim()
-        key = RoomCode.key(c)
-        framer = NightFramer(key)
+        key = RoomCode.key(this.code)
+        startConnect()
+    }
+
+    private fun startConnect() {
+        framer = NightFramer(key)   // fresh framer per connection (the byte stream resets)
         status = Status.searching
         transport.connect(
-            roomCode = c,
-            onConnected = { p -> main.post { peer = p; status = Status.connecting; sendJoin() } },
+            roomCode = code,
+            onConnected = { p -> main.post { peer = p; reconnectAttempts = 0; status = Status.connecting; sendJoin() } },
             onFrame = { bytes -> main.post { framer.ingest(bytes).forEach { handle(it) } } },
-            onDropped = { main.post { if (status != Status.idle) { status = Status.searching } } },
+            onDropped = { main.post { attemptReconnect() } },
             onStatus = { s -> main.post { statusMessage = s } },
         )
     }
 
+    /** A drop mid-night silently re-discovers the room and rejoins with the SAME
+     *  deviceID — the host resumes our seat + score and replays the night + current
+     *  question. No re-entering the code. Mirrors the Apple client. */
+    private fun attemptReconnect() {
+        peer = null
+        if (intentionalLeave) return
+        if (reconnectAttempts >= 12) { status = Status.failed; statusMessage = "Lost the room — tap Rejoin"; return }
+        reconnectAttempts++
+        status = Status.searching
+        statusMessage = "Reconnecting…"
+        transport.disconnect()
+        main.postDelayed({ if (!intentionalLeave) startConnect() }, 1200)
+    }
+
     fun leave() {
+        intentionalLeave = true
         peer?.let { NightWire.encode(NightMessage(NightKind.leave), key)?.let { f -> it.send(f) } }
         transport.disconnect()
         peer = null; status = Status.idle; seat = null; roomName = null; players.clear()

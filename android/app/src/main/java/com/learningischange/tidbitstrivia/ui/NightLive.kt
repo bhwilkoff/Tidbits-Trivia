@@ -95,6 +95,12 @@ private fun NightPlaying(live: LiveNight, onExit: () -> Unit) {
             }
             Spacer(Modifier.weight(1f))
         }
+        if (live.reconnecting) {
+            Surface(color = Pops.yellow.copy(alpha = 0.9f), modifier = Modifier.fillMaxWidth()) {
+                Text("Reconnecting…", Modifier.padding(vertical = 6.dp), textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Bold, color = Ink)
+            }
+        }
         StandingsStrip(live.players, live.mySeat, live.leaderSeat)
         Box(Modifier.weight(1f)) { PlayingScreen(game) }
         if (host) HostControls(live)

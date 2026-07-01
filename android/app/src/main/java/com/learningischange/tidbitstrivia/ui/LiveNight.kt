@@ -48,7 +48,10 @@ class LiveNight private constructor(
             val ln = LiveNight(Role.JOINER, store, context, emptyList(), "mixed")
             val c = NightClient(NightTransports.client(context), store.deviceId())
             ln.client = c
-            c.onNight = { plan, qs ->
+            c.onNight = onNight@{ plan, qs ->
+                // On a reconnect the host replays the night; keep the existing game
+                // (and its local score) — just jump to the current question via onBegin.
+                if (ln.game != null) { ln.stage = Stage.PLAYING; return@onNight }
                 val planRounds = plan.rounds.map { it.kind to it.count }
                 val tagged = qs.tagRounds(planRounds)
                 val g = GameState(Mode.BAR_TRIVIA, Category.byId("mixed"), store, tagged, "Trivia Night", planRounds, hostPaced = true)
@@ -99,7 +102,7 @@ class LiveNight private constructor(
 
     // ---- Joiner actions ----
 
-    fun join(code: String, name: String) { client?.join(code, name) }
+    fun join(code: String, name: String) { store.rememberNight(code, name); client?.join(code, name) }
 
     // ---- Shared read model (the live screen observes these) ----
 
@@ -110,6 +113,8 @@ class LiveNight private constructor(
     val everyoneAnswered: Boolean get() = host?.everyoneAnswered ?: false
     val leaderSeat: Int? get() = players.maxByOrNull { it.score }?.takeIf { it.score > 0 }?.seat
     val clientStatus: NightClient.Status? get() = client?.status
+    /** A joiner silently re-discovering the room after a drop (mid-night). */
+    val reconnecting: Boolean get() = role == Role.JOINER && client?.status == NightClient.Status.searching
 
     fun end() {
         host?.stop()

@@ -7,29 +7,44 @@
 > `docs/ROADMAP.md`, `docs/DATA-CONTRACT.md`. Detailed per-round history is in
 > `ARCHIVE.md`.
 
-## Current state (2026-06-24)
+## Current state (2026-07-01)
 
-**Single biggest open item:** **Trivia Night networked multiplayer (Decision
-034)** — ANY Apple device hosts or joins, host-paced, everyone-plays (the TV-only
-"Buzz Night" buzzer is **retired/replaced**). Both iOS + tvOS **BUILD SUCCEEDED**,
-but the live Bonjour pairing + answer + rejoin only exercise on real devices —
-that **2-device hardware test (Ben) is the gate**. **Game Center is code-complete**
-(auth/dashboard/access-point/9 achievements/2 leaderboards/Challenges) but needs
-**ASC config** — fully specced in `docs/GAME-CENTER-SETUP.md` (owner task; images
-in `tools/branding/gamecenter/`). Versions: Apple **1.6.0 (build 47)**; Android
-versionName 1.5.1 (verify before next Play upload — recent ships were Apple-only).
+**In beta on all platforms; cross-platform networked Trivia Night CONFIRMED on
+hardware (Android joined an iPhone-hosted night).** Versions: Apple **1.6.9
+(build 51)** → TestFlight (iOS+tvOS); Android **1.6.10 (versionCode 42)** → Play
+**internal** track (com.tidbitstrivia.app; first Play beta submitted this session —
+Data Safety + listing + feature graphic all via the Play API, signing via
+~/keystores/tidbits-upload.jks + android/keystore/signing.properties). Web
+auto-deploys to GitHub Pages (no networked night — that's the Phase-2 GitHub path).
 
+**Networked Trivia Night (Decision 033) is the headline feature — built + working
+cross-platform, serverless, native-APIs-only.** See `docs/CROSS-PLATFORM-MULTIPLAYER.md`
+and memory `cross-platform-trivia-night`. Model: host-paced, everyone-plays; any
+device hosts or joins with a 4-letter room code; each device runs its own engine +
+scores itself; rejoin-by-deviceID. Wire: DNS-SD discovery + plain TCP + app-layer
+AES-GCM keyed by the room code (Apple migrated OFF TLS-PSK so Android can speak it;
+Apple keeps `includePeerToPeer`/AWDL so Apple↔Apple stays router-free — no
+degradation). `.night` ships canonical `WireQuestion`s. **Transports:** mDNS+TCP is
+the DEFAULT (only cross-platform path today); Wi-Fi Aware + BLE adapters are BUILT
+on Android but device-gated + NOT auto-selected (iOS lacks them). **iOS Wi-Fi Aware
++ BLE are the next big piece** — both need an Apple transport-interface refactor
+first (the Apple host/client are wired to `NWConnection`; abstract them behind a
+connection interface like Android's `NightPeer`). Rejoin auto-reconnects on Android
+now too. **The gate on everything networked is a 2-device HARDWARE test** — emulators/
+simulators can't mDNS-peer or run the WA/BLE radios.
 
-- **All four platforms PLAY**, off one shared corpus, all pushed to `main`:
-  - **iOS/iPadOS** — full SP (4 modes, 8 categories, learn-reveal), local
-    pass-and-play (2–4), records + spaced repetition, create-a-quiz, daily,
-    haptics, Settings, onboarding, app icon, Game Center scaffold (no-op until
-    entitlement). Verified iPhone 17 Pro sim.
-  - **Web** — full SP loop, PWA, network-first corpus, canonical share target.
-  - **tvOS** — dark-first focus-correct home + game loop + results. Now
-    store-asset-complete: layered App Icon + Top Shelf brand assets ship, target
-    re-enabled (universal iOS+tvOS), both slices build clean (2026-06-19).
-  - **Android** — full SP loop (home/game/results/records/create), Compose/M3.
+**Game Center** still code-complete, needs **ASC config** (`docs/GAME-CENTER-SETUP.md`,
+owner task).
+
+- **All four platforms PLAY**, off one shared corpus, all on `main`:
+  - **iOS/iPadOS** — full SP, pass-and-play, records + spaced repetition, create,
+    daily, haptics, Settings, onboarding, networked Trivia Night (host/join).
+  - **tvOS** — dark-first focus UI; game loop, records, settings, networked night.
+  - **Web** — full SP loop, PWA, canonical share target. No networked night yet.
+  - **Android** — at PARITY with iOS now (onboarding, full Settings + Wikipedia
+    attribution, haptics, pass-and-play, deep links, app shortcuts, adaptive icon,
+    Material You, predictive back) + networked Trivia Night (host/join/rejoin).
+    Compose/M3. Dark-mode legibility fixed (accent-text + button contentColors).
 - **Corpus**: **~4,500 questions** = summary (describe + cloze) +
   1,144 deep-extraction `fact:*` (Decision 027) + 1,942 Wikidata. **Quality over
   quantity** (Decision 029): summary path reworked into bar-trivia "describe &
@@ -49,13 +64,19 @@ versionName 1.5.1 (verify before next Play upload — recent ships were Apple-on
 
 ## Next up (see docs/HANDOFF.md §6 for the full backlog)
 
-Big tracks: online multiplayer (Game Center → Supabase), store submission prep
-(iOS + Play), **phone-as-buzzer Phase 1** (foundation landed — needs two-device
-pairing test + Buzz Night game-mode wiring), more question types (Q1 This-or-That
-real/fake is next corpus-native; then E1 enrichment unlocks 7), adaptive difficulty.
-Quick follow-ups: `clean_clue` on explanation text; P31-typed distractors for
-the summary path; quality gates 6/7/9; branded iOS launch screen; web
-pass-and-play + onboarding parity; Android Room; real share domain.
+**Networked-night track (hottest):** (1) **iOS Wi-Fi Aware + BLE** — first the
+**Apple transport-interface refactor** (abstract `NightHost`/`NightClient` off
+`NWConnection` behind a connection interface like Android's `NightPeer`), then the
+iOS 26 `WiFiAware` (`NetworkListener`/`NetworkBrowser`, Info.plist `WiFiAwareServices`)
++ Core Bluetooth adapters. (2) **Search all transports in parallel** so Wi-Fi Aware
+can auto-select for Android↔Android without breaking cross-platform (it's disabled by
+default right now). (3) process-death score-restore from the roster; (4) **GitHub-gist
+REMOTE** transport (serverless internet play, host OAuth device-flow); (5) web
+networked night; (6) id-parity golden test + `docs/NIGHT-WIRE-SCHEMA.md`.
+**Other big tracks:** Game Center ASC config (`docs/GAME-CENTER-SETUP.md`, owner),
+Play Console owner tasks (content rating / target audience / privacy URL), web
+pass-and-play + onboarding parity, more question types, adaptive difficulty.
+**Always required:** every networked change needs a **2-device hardware test** (Ben).
 
 ## Build (quick ref — full recipes in docs/HANDOFF.md §3)
 
@@ -380,3 +401,51 @@ One-line-per-round; full detail in `ARCHIVE.md`.
   pairing/answer/rejoin is **hardware-only — the 2-device test (Ben) is the gate**
   (same gate as before, new model). web/Android networked = Phase-2 web-room;
   pass-and-play stays their multiplayer. *Left:* team scoring; Couch Co-op; Link Wall.
+- **2026-06-30 → 07-01 (big multi-part session — compaction handoff).**
+  *State found:* Android was a lean SP-only app; networked night was Apple-only
+  (build-verified, unpaired); no store betas out. *Work done, all shipped to `main`:*
+  **(A) First Google Play beta** for `com.tidbitstrivia.app` — generated a dedicated
+  upload keystore (`~/keystores/tidbits-upload.jks` + gitignored
+  `android/keystore/signing.properties`; build.gradle reads file-first, CI `UPLOAD_*`
+  fallback), pushed **Data Safety** (no-data CSV via `applications.dataSafety`),
+  **store listing** (title/desc/7 screenshots padded to 2:1) + **feature graphic**
+  (1024×500, `tools/make-play-feature-graphic.py`) all via the Play API
+  (`tools/push-play-content.py`, reuses the Archive Watch service account). Console-
+  only bits (content rating, target audience, privacy URL) = owner. **(B) Android
+  parity wave** — closed every Android-behind-iOS gap (onboarding, full Settings +
+  Wikipedia CC BY-SA attribution + reset actions, haptics `GameHaptics`, pass-and-play
+  `PartyContainer`, deep links `tidbits://` + App Links intent-filters + inbox, app
+  shortcuts, predictive back, Material You, adaptive icon) and CORRECTED 4 false
+  PARITY cells (the whole §4 auth section was fictional on every platform). **(C)
+  Dark-mode legibility** — colored Buttons had no `contentColor` → dark-on-bright in
+  dark mode (Share Score/Play Again/Next); added theme `onPrimary/Secondary/Tertiary
+  =White` + explicit contentColors + `accentText()`/`onAccent()` helpers
+  (see memory `legibility-check-compositing`). **(D) Cross-platform networked Trivia
+  Night** — investigated (`docs/CROSS-PLATFORM-MULTIPLAYER.md`): iOS TLS-PSK uses
+  GCM-PSK which Android CAN'T speak → moved to **plain TCP + app-layer AES-GCM** keyed
+  by the room code (byte-identical both sides). Built the whole Android stack
+  (`net/NightProtocol.kt` messages+crypto+framing, `NightTransport` interface,
+  `NsdTcpTransport`, `NightHost`/`NightClient`, `ui/LiveNight.kt` bridge to a
+  host-paced `GameState`, `ui/NightLive.kt` UI) AND migrated Apple to the same v2
+  (drop TLS keep AWDL, canonical `WireQuestion`, id-based `.night`) — **both BUILD
+  SUCCEEDED**. Added Android **Wi-Fi Aware** (`WifiAwareTransport`) + **BLE**
+  (`BleTransport`) adapters (built, device-gated, NOT auto-selected). **(E) Beta
+  builds to all platforms** (TestFlight via `appstore-build.yml`; Play internal via
+  `submit-play.sh`). **(F) Fixed 5 real cross-platform bugs found on hardware** (see
+  memory `cross-platform-trivia-night`): iOS `NSBonjourServices` stale service name;
+  Android auto-picking Wi-Fi Aware (iOS has none) → default mDNS+TCP; Android
+  `encodeDefaults=false` vs Apple strict Codable → roster/night dropped (set
+  `encodeDefaults=true` + lenient Apple decoders + a unit test); no exit button on the
+  Android live night; and **cross-platform rejoin** (Android client never
+  re-discovered on drop → added auto-reconnect + score-preserving replay + pre-filled
+  quick rejoin). **Android host → iPhone join is now CONFIRMED working on hardware.**
+  *State left / gates:* everything networked still needs a **2-device hardware test**
+  (no emulator can mDNS-peer or run WA/BLE radios). **Next big piece: iOS Wi-Fi Aware +
+  BLE** — both blocked on an **Apple transport-interface refactor** (host/client are
+  `NWConnection`-bound; abstract behind a connection interface like Android's
+  `NightPeer`), then the new iOS 26 `WiFiAware` `NetworkListener`/`Browser` API +
+  Info.plist `WiFiAwareServices`. Other queued: "search all transports in parallel"
+  (so WA can turn back on for Android↔Android without breaking cross-platform),
+  process-death score restore from roster, GitHub-gist REMOTE transport, web
+  networked night, id-parity golden test, `docs/NIGHT-WIRE-SCHEMA.md`. Versions:
+  Apple 1.6.9/51, Android 1.6.10/42.

@@ -1,6 +1,7 @@
 import Foundation
 import Network
 import Observation
+import CryptoKit
 
 /// The host side of a Trivia Night (Decision 033) — runs on ANY Apple device
 /// (iPhone, iPad, Apple TV). Publishes a Bonjour service secured by a room-code
@@ -35,9 +36,9 @@ final class NightHost {
 
     private final class Peer {
         let connection: NWConnection
-        let framer = NightFramer()
+        let framer: NightFramer
         var seat: Int?
-        init(_ c: NWConnection) { connection = c }
+        init(_ c: NWConnection, key: SymmetricKey) { connection = c; framer = NightFramer(key: key) }
     }
 
     private var listener: NWListener?
@@ -45,6 +46,8 @@ final class NightHost {
     private var nextSeat = 1
     /// deviceID → seat, so a reconnecting device resumes its seat + score.
     private var seatByDevice: [String: Int] = [:]
+    /// AES-GCM key derived from the room code (v2 app-layer crypto, not TLS).
+    private var key = RoomCode.presharedKey(for: "")
 
     // The live night, retained so a device that joins (or rejoins) mid-game is
     // caught all the way up: the full question list, where we are, and whether
@@ -59,10 +62,11 @@ final class NightHost {
     func start(hostName: String) {
         stop()
         roomCode = RoomCode.generate()
+        key = RoomCode.presharedKey(for: roomCode)
         let name = hostName.trimmingCharacters(in: .whitespacesAndNewlines)
         players = [NightPlayer(seat: Self.hostSeat, name: name.isEmpty ? "Host" : name, isHost: true)]
         do {
-            let listener = try NWListener(using: NightTransport.parameters(code: roomCode))
+            let listener = try NWListener(using: NightTransport.parameters())
             listener.service = NWListener.Service(name: "Tidbits-\(roomCode)", type: Night.serviceType)
             listener.newConnectionHandler = { [weak self] conn in
                 Task { @MainActor in self?.accept(conn) }
@@ -97,7 +101,8 @@ final class NightHost {
     /// Ship the whole night to everyone, once, at game start.
     func broadcastNight(plan: NightPlan, questions: [Question]) {
         activePlan = plan; activeQuestions = questions
-        var m = NightMessage(.night); m.plan = plan; m.questions = questions
+        var m = NightMessage(.night); m.plan = plan
+        m.questionIds = questions.map(\.id); m.questions = questions.map { $0.toWire() }
         broadcast(m)
     }
 
@@ -138,7 +143,7 @@ final class NightHost {
     // MARK: Connections
 
     private func accept(_ conn: NWConnection) {
-        let peer = Peer(conn)
+        let peer = Peer(conn, key: key)
         peers[ObjectIdentifier(conn)] = peer
         conn.stateUpdateHandler = { [weak self] state in
             Task { @MainActor in
@@ -194,7 +199,7 @@ final class NightHost {
             peer.seat = seat
             var welcome = NightMessage(.welcome)
             welcome.seat = seat; welcome.roomName = "Tidbits \(roomCode)"
-            NightTransport.send(welcome, over: peer.connection)
+            NightTransport.send(welcome, over: peer.connection, key: key)
             broadcastRoster()
             replayState(to: peer)   // catch a mid-night (re)join all the way up
 
@@ -217,14 +222,15 @@ final class NightHost {
     /// so a late arrival lands right IN the game, not on a waiting screen.
     private func replayState(to peer: Peer) {
         guard let plan = activePlan, let questions = activeQuestions else { return }
-        var n = NightMessage(.night); n.plan = plan; n.questions = questions
-        NightTransport.send(n, over: peer.connection)
+        var n = NightMessage(.night); n.plan = plan
+        n.questionIds = questions.map(\.id); n.questions = questions.map { $0.toWire() }
+        NightTransport.send(n, over: peer.connection, key: key)
         if currentIndex >= 0 {
             var b = NightMessage(.begin); b.questionIndex = currentIndex
-            NightTransport.send(b, over: peer.connection)
+            NightTransport.send(b, over: peer.connection, key: key)
             if revealed {
                 var r = NightMessage(.reveal); r.questionIndex = currentIndex
-                NightTransport.send(r, over: peer.connection)
+                NightTransport.send(r, over: peer.connection, key: key)
             }
         }
     }
@@ -232,7 +238,7 @@ final class NightHost {
     // MARK: Broadcast
 
     private func broadcast(_ m: NightMessage) {
-        for p in peers.values { NightTransport.send(m, over: p.connection) }
+        for p in peers.values { NightTransport.send(m, over: p.connection, key: key) }
     }
     private func broadcastRoster() {
         var m = NightMessage(.roster); m.players = players

@@ -139,17 +139,24 @@ JSON for `NightMessage`, `NightPlan`, `NightRound`, `NightPlayer`, and a compact
 `WireQuestion`. Android maps its `Question` ↔ `WireQuestion`; the Apple migration
 does the same for its `Question`.
 
-### What Apple has to change for interop
+### What Apple changed for interop — DONE (2026-06-30, BUILD SUCCEEDED)
 
-The Apple networking code is **build-verified only, not yet two-device-verified** —
-so migrating it now is cheap:
+The Apple v2 migration is in and compiles:
 
-1. `NightTransport.parameters` — drop `NWProtocolTLS`; use a plain-TCP `NWParameters`.
-2. `NightTransport.encode` / `NightFramer` — wrap/unwrap the body in `AES.GCM` using
-   `RoomCode.presharedKey(for:)` (already exists) as the symmetric key.
-3. `Question` / `NightPlan` — encode/decode the canonical `WireQuestion` schema.
+1. `NightTransport.parameters()` — dropped `NWProtocolTLS`; plain-TCP `NWParameters`
+   with `includePeerToPeer = true` **kept** (Apple↔Apple still pairs over AWDL with
+   no router — no degradation).
+2. `NightTransport.encode` / `NightFramer` — wrap/unwrap the body in `AES.GCM`
+   (12-byte nonce ‖ ciphertext ‖ 16-byte tag) with `RoomCode.presharedKey(for:)` as
+   the key — byte-identical to Android's `NightWire`.
+3. `NightProtocol` — added the canonical `WireQuestion` (Codable, field names matching
+   Android; lenient decoder for kotlinx's omitted defaults); `.night` ships
+   `questionIds` + `[WireQuestion]`; the joiner maps `WireQuestion → Question`.
 
-Host/client state machines, room codes, rejoin-by-device — all unchanged.
+Host/client state machines, room codes, rejoin-by-device — unchanged. `GameMode`
+raw values already equal Android's round-kind strings, so `NightRound` is wire-
+compatible. **Gate:** a real Apple↔Android (and Apple↔Apple, Android↔Android)
+2-device pairing test.
 
 > **Open decision for the owner:** migrate Apple fully to this v2 (one protocol
 > everywhere, true cross-platform) **or** keep Apple's TLS-PSK for Apple↔Apple and

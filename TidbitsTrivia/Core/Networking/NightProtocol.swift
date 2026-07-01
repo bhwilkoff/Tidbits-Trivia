@@ -58,7 +58,12 @@ struct NightMessage: Codable, Sendable {
     /// so they embed directly; every device runs its OWN engine over this exact
     /// list and scores itself locally (Decision 033 — host trusts self-reports).
     var plan: NightPlan?
-    var questions: [Question]?
+    /// Id-based night (future corpus-parity optimization) — the resolver prefers
+    /// ids, falling back to the canonical `questions` below for any it can't find.
+    var questionIds: [String]?
+    /// The night content as canonical cross-platform wire questions, so a Kotlin
+    /// or Swift peer renders it without canonicalizing each other's Question type.
+    var questions: [WireQuestion]?
     /// On `.answered`: the joiner's running TOTAL score and whether THIS question
     /// was correct, so the host can update the standings without re-judging.
     var score: Int?
@@ -76,7 +81,8 @@ struct NightMessage: Codable, Sendable {
         players = try c.decodeIfPresent([NightPlayer].self, forKey: .players)
         questionIndex = try c.decodeIfPresent(Int.self, forKey: .questionIndex)
         plan = try c.decodeIfPresent(NightPlan.self, forKey: .plan)
-        questions = try c.decodeIfPresent([Question].self, forKey: .questions)
+        questionIds = try c.decodeIfPresent([String].self, forKey: .questionIds)
+        questions = try c.decodeIfPresent([WireQuestion].self, forKey: .questions)
         score = try c.decodeIfPresent(Int.self, forKey: .score)
         correct = try c.decodeIfPresent(Bool.self, forKey: .correct)
     }
@@ -123,6 +129,100 @@ enum RoomCode {
         presharedKey(for: code).withUnsafeBytes { Data($0) }
     }
 
-    /// A short identity tag the TLS handshake binds the PSK to (the "hint").
+    /// A short identity tag (kept for reference; v2 uses the key for AES-GCM, not TLS).
     static let pskIdentity = "tidbits-night"
+}
+
+// MARK: - Canonical wire question (cross-platform)
+
+/// The night ships questions in this shape — field names match the Android
+/// `WireQuestion` exactly (docs/CROSS-PLATFORM-MULTIPLAYER.md) so a Swift host's
+/// night renders on a Kotlin joiner and vice versa. It's a transport DTO, not the
+/// app's `Question`: `categoryId`/`sourceUrl` (not `categoryID`/`sourceURL`), and
+/// no `templateID`. The custom decoder tolerates keys Android omits when a value
+/// equals its default (kotlinx `encodeDefaults = false`).
+struct WireClosest: Codable, Sendable { let answer, min, max, step, tolerance: Double; let unit: String }
+struct WireMatch: Codable, Sendable { let keys: [String]; let values: [String] }
+struct WireEnum: Codable, Sendable { let groups: [[String]] }
+
+struct WireQuestion: Codable, Sendable {
+    var id: String
+    var prompt: String
+    var options: [String]
+    var correctIndex: Int
+    var categoryId: String
+    var difficulty: Int
+    var explanation: String
+    var sourceTitle: String
+    var sourceUrl: String
+    var imageUrl: String?
+    var closest: WireClosest?
+    var ordering: [String]?
+    var matching: WireMatch?
+    var accepted: [String]?
+    var enumerate: WireEnum?
+    var roundIndex: Int?
+
+    init(id: String, prompt: String, options: [String], correctIndex: Int, categoryId: String,
+         difficulty: Int, explanation: String, sourceTitle: String, sourceUrl: String, imageUrl: String?,
+         closest: WireClosest?, ordering: [String]?, matching: WireMatch?, accepted: [String]?,
+         enumerate: WireEnum?, roundIndex: Int?) {
+        self.id = id; self.prompt = prompt; self.options = options; self.correctIndex = correctIndex
+        self.categoryId = categoryId; self.difficulty = difficulty; self.explanation = explanation
+        self.sourceTitle = sourceTitle; self.sourceUrl = sourceUrl; self.imageUrl = imageUrl
+        self.closest = closest; self.ordering = ordering; self.matching = matching
+        self.accepted = accepted; self.enumerate = enumerate; self.roundIndex = roundIndex
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        prompt = (try? c.decode(String.self, forKey: .prompt)) ?? ""
+        options = (try? c.decode([String].self, forKey: .options)) ?? []
+        correctIndex = (try? c.decode(Int.self, forKey: .correctIndex)) ?? 0
+        categoryId = (try? c.decode(String.self, forKey: .categoryId)) ?? "mixed"
+        difficulty = (try? c.decode(Int.self, forKey: .difficulty)) ?? 3
+        explanation = (try? c.decode(String.self, forKey: .explanation)) ?? ""
+        sourceTitle = (try? c.decode(String.self, forKey: .sourceTitle)) ?? ""
+        sourceUrl = (try? c.decode(String.self, forKey: .sourceUrl)) ?? ""
+        imageUrl = try? c.decodeIfPresent(String.self, forKey: .imageUrl)
+        closest = try? c.decodeIfPresent(WireClosest.self, forKey: .closest)
+        ordering = try? c.decodeIfPresent([String].self, forKey: .ordering)
+        matching = try? c.decodeIfPresent(WireMatch.self, forKey: .matching)
+        accepted = try? c.decodeIfPresent([String].self, forKey: .accepted)
+        enumerate = try? c.decodeIfPresent(WireEnum.self, forKey: .enumerate)
+        roundIndex = try? c.decodeIfPresent(Int.self, forKey: .roundIndex)
+    }
+}
+
+extension Question {
+    func toWire() -> WireQuestion {
+        WireQuestion(
+            id: id, prompt: prompt, options: options, correctIndex: correctIndex,
+            categoryId: categoryID, difficulty: difficulty, explanation: explanation,
+            sourceTitle: sourceTitle, sourceUrl: sourceURL?.absoluteString ?? "",
+            imageUrl: imageURL?.absoluteString,
+            closest: closest.map { WireClosest(answer: $0.answer, min: $0.min, max: $0.max, step: $0.step, tolerance: $0.tolerance, unit: $0.unit) },
+            ordering: ordering,
+            matching: matching.map { WireMatch(keys: $0.keys, values: $0.values) },
+            accepted: accepted,
+            enumerate: enumerate.map { WireEnum(groups: $0.groups) },
+            roundIndex: roundIndex)
+    }
+}
+
+extension WireQuestion {
+    func toQuestion() -> Question {
+        Question(
+            id: id, prompt: prompt, options: options, correctIndex: correctIndex,
+            categoryID: categoryId, difficulty: difficulty, explanation: explanation,
+            sourceTitle: sourceTitle, sourceURL: URL(string: sourceUrl), templateID: "wire",
+            imageURL: imageUrl.flatMap { URL(string: $0) },
+            closest: closest.map { ClosestSpec(answer: $0.answer, min: $0.min, max: $0.max, step: $0.step, tolerance: $0.tolerance, unit: $0.unit) },
+            ordering: ordering,
+            matching: matching.map { MatchSpec(keys: $0.keys, values: $0.values) },
+            accepted: accepted,
+            enumerate: enumerate.map { EnumSpec(groups: $0.groups) },
+            roundIndex: roundIndex)
+    }
 }

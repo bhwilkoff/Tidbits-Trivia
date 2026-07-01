@@ -42,6 +42,7 @@ class NightHost(private val transport: NightHostTransport) {
     // Retained so a device that (re)joins mid-game is caught all the way up.
     private var activePlan: NightPlan? = null
     private var activeIds: List<String> = emptyList()
+    private var activeWire: List<WireQuestion> = emptyList()
     private var currentIndex = -1
     private var revealed = false
 
@@ -67,16 +68,18 @@ class NightHost(private val transport: NightHostTransport) {
         peers.values.forEach { it.peer.close() }
         peers.clear(); players.clear(); seatByDevice.clear()
         isListening = false; nextSeat = 1
-        activePlan = null; activeIds = emptyList(); currentIndex = -1; revealed = false
+        activePlan = null; activeIds = emptyList(); activeWire = emptyList(); currentIndex = -1; revealed = false
         lastError = null
     }
 
     // ---- Pacing (called by LiveNight on the host's behalf) ----
 
-    /** Ship the whole night to everyone, once, at start — id-based. */
+    /** Ship the whole night to everyone, once, at start. Sends ids (for a future
+     *  corpus-parity optimization) AND the canonical WireQuestions, so a joiner
+     *  resolves every question type whether or not it has the same corpus. */
     fun broadcastNight(plan: NightPlan, questions: List<Question>) {
-        activePlan = plan; activeIds = questions.map { it.id }
-        broadcast(NightMessage(NightKind.night, plan = plan, questionIds = activeIds))
+        activePlan = plan; activeIds = questions.map { it.id }; activeWire = questions.map { it.toWire() }
+        broadcast(NightMessage(NightKind.night, plan = plan, questionIds = activeIds, questions = activeWire))
     }
 
     fun broadcastBegin(index: Int) {
@@ -137,7 +140,7 @@ class NightHost(private val transport: NightHostTransport) {
     /** Bring a freshly-(re)joined device up to the live state. */
     private fun replayState(peer: NightPeer) {
         val plan = activePlan ?: return
-        send(peer, NightMessage(NightKind.night, plan = plan, questionIds = activeIds))
+        send(peer, NightMessage(NightKind.night, plan = plan, questionIds = activeIds, questions = activeWire))
         if (currentIndex >= 0) {
             send(peer, NightMessage(NightKind.begin, questionIndex = currentIndex))
             if (revealed) send(peer, NightMessage(NightKind.reveal, questionIndex = currentIndex))

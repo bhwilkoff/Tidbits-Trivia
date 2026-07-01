@@ -1,6 +1,7 @@
 import Foundation
 import Network
 import Observation
+import CryptoKit
 
 /// The joiner side of a Trivia Night (Decision 033) — runs on ANY Apple device.
 /// Browses for the host's Bonjour service, connects with the room-code PSK (so
@@ -31,7 +32,8 @@ final class NightClient {
 
     private var browser: NWBrowser?
     private var connection: NWConnection?
-    private let framer = NightFramer()
+    private var key = RoomCode.presharedKey(for: "")
+    private var framer = NightFramer(key: RoomCode.presharedKey(for: ""))
     private var code = ""
     private let deviceID = NightClient.loadDeviceID()
     private var intentionalLeave = false
@@ -56,6 +58,8 @@ final class NightClient {
         intentionalLeave = false
         reconnectAttempts = 0
         self.code = code.uppercased()
+        key = RoomCode.presharedKey(for: self.code)
+        framer = NightFramer(key: key)
         displayName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         UserDefaults.standard.set(self.code, forKey: "tidbits.night.lastCode")
         UserDefaults.standard.set(displayName, forKey: "tidbits.night.lastName")
@@ -66,7 +70,7 @@ final class NightClient {
         teardownSockets()
         status = .searching
         let browser = NWBrowser(for: .bonjour(type: Night.serviceType, domain: nil),
-                                using: NightTransport.parameters(code: self.code))
+                                using: NightTransport.parameters())
         browser.browseResultsChangedHandler = { [weak self] results, _ in
             Task { @MainActor in self?.consider(results) }
         }
@@ -90,7 +94,7 @@ final class NightClient {
 
     func leave() {
         intentionalLeave = true
-        if let c = connection { NightTransport.send(NightMessage(.leave), over: c) }
+        if let c = connection { NightTransport.send(NightMessage(.leave), over: c, key: key) }
         teardownSockets()
         status = .idle; seat = nil; roomName = nil; players = []
     }
@@ -108,7 +112,7 @@ final class NightClient {
         guard let c = connection else { return }
         var m = NightMessage(.answered)
         m.score = score; m.correct = correct
-        NightTransport.send(m, over: c)
+        NightTransport.send(m, over: c, key: key)
     }
 
     // MARK: Discovery → connection
@@ -125,7 +129,7 @@ final class NightClient {
 
     private func connect(to endpoint: NWEndpoint) {
         status = .connecting
-        let conn = NWConnection(to: endpoint, using: NightTransport.parameters(code: code))
+        let conn = NWConnection(to: endpoint, using: NightTransport.parameters())
         conn.stateUpdateHandler = { [weak self] state in
             Task { @MainActor in
                 switch state {
@@ -146,7 +150,7 @@ final class NightClient {
         var join = NightMessage(.join)
         join.displayName = displayName.isEmpty ? nil : displayName
         join.deviceID = deviceID
-        NightTransport.send(join, over: c)
+        NightTransport.send(join, over: c, key: key)
     }
 
     private func receive() {
@@ -169,7 +173,12 @@ final class NightClient {
         case .roster:
             players = m.players ?? players
         case .night:
-            if let plan = m.plan, let qs = m.questions { onNight?(plan, qs) }
+            // Resolve the canonical wire questions to local Questions (an id-based
+            // corpus lookup is a future optimization; we ship full questions today).
+            if let plan = m.plan, let wire = m.questions {
+                let qs = wire.map { $0.toQuestion() }
+                if !qs.isEmpty { onNight?(plan, qs) }
+            }
         case .begin:
             if let i = m.questionIndex { onBegin?(i) }
         case .reveal:

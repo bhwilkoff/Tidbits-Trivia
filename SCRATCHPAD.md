@@ -10,7 +10,8 @@
 ## Current state (2026-07-01)
 
 **In beta on all platforms.** Versions: Apple **1.6.13 (build 54)** → TestFlight
-(iOS+tvOS); Android **1.6.13 (versionCode 45)** → Play **internal**
+(iOS+tvOS); Android **1.6.14 (versionCode 46)** → Play **internal** (Android-only
+reveal-parity ship on top of 1.6.13)
 (com.tidbitstrivia.app; signing via ~/keystores/tidbits-upload.jks +
 android/keystore/signing.properties). Web auto-deploys to GitHub Pages. Bump on
 every ship (see memory `versioning-convention`).

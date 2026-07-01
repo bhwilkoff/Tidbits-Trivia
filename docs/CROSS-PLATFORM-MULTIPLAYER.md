@@ -222,7 +222,15 @@ behind a clear "needs a GitHub sign-in, adds a few seconds of lag" note.
    **auto-falls-back to mDNS+TCP** when the hardware lacks Wi-Fi Aware, so nothing
    regresses. Device-gated (no emulator has the radio). **iOS: planned** — see below.
 5. **Transport adapter #3 — BLE** (Core Bluetooth ↔ Android BLE) → the "works with no
-   Wi-Fi at all" universal fallback.
+   Wi-Fi at all" universal fallback. **Android: built** (2026-06-30, `net/BleTransport.kt`,
+   compiles) — host = GATT server + advertiser (room code in the service data); joiner =
+   central (scans for it, connects). Each frame is MTU-chunked; `NightFramer` reassembles
+   the byte stream, so chunking is invisible to the app. OPEN GATT link + app-layer
+   AES-GCM. Device-gated (emulators have no real BLE radio). **Selection:** BLE is NOT
+   auto-picked over Wi-Fi Aware / mDNS+TCP (it's lower-bandwidth and for the no-network
+   case) — it's wired as a capability (`hasBle`) for an explicit "No Wi-Fi? Use Bluetooth"
+   choice or a discovery-timeout fallback (small UI follow-up). iOS BLE = the Core
+   Bluetooth twin, after the Apple transport-interface refactor.
 6. **Remote (optional):** R1 GitHub-Gist transport behind the same `NightMessage`.
 
 ## iOS 26 Wi-Fi Aware — the plan (not yet built)

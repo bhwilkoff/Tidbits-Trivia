@@ -10,6 +10,14 @@
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE"/>
     <!-- Wi-Fi Aware is optional — the app falls back to DNS-SD + TCP without it. -->
     <uses-feature android:name="android.hardware.wifi.aware" android:required="false"/>
+
+    <!-- Bluetooth LE — the "no Wi-Fi at all" Trivia Night fallback (Android 12+ perms). -->
+    <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_SCAN"
+        android:usesPermissionFlags="neverForLocation"/>
+    <uses-feature android:name="android.hardware.bluetooth_le" android:required="false"/>
     <!-- NSD discovery reveals nearby devices; Android 13+ gates it behind this
          runtime permission (neverForLocation = we don't derive location). -->
     <uses-permission

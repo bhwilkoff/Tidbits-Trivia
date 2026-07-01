@@ -113,6 +113,12 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
             var scored: [(Question, Int)] = []
             while sqlite3_step(stmt) == SQLITE_ROW {
                 guard let q = Self.row(stmt) else { continue }
+                // The player typed the topic, so a question whose ANSWER is (or
+                // contains) the topic is a giveaway ("Chicago" → answer "Chicago").
+                // Keep only questions that are ABOUT the topic but answer with
+                // something else.
+                let answer = q.correctAnswer.lowercased()
+                if tokens.contains(where: { answer.contains($0) }) { continue }
                 let title = q.sourceTitle.lowercased(), prompt = q.prompt.lowercased()
                 let score = tokens.reduce(0) { $0 + (title.contains($1) ? 2 : 0) + (prompt.contains($1) ? 1 : 0) }
                 scored.append((q, score))

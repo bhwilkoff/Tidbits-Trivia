@@ -102,6 +102,10 @@ export const Corpus = {
     if (!tokens.length) return [];
     const scored = [];
     for (const q of this.questions) {
+      // Drop questions whose ANSWER is/contains the topic — the player typed it,
+      // so that's a giveaway ("Chicago" → answer "Chicago"). Keep ones ABOUT it.
+      const answer = ((q.options && q.options[q.correctIndex]) || '').toLowerCase();
+      if (tokens.some((t) => answer.includes(t))) continue;
       const title = (q.sourceTitle || '').toLowerCase(), prompt = (q.prompt || '').toLowerCase();
       let s = 0;
       for (const t of tokens) { if (title.includes(t)) s += 2; if (prompt.includes(t)) s += 1; }

@@ -243,6 +243,10 @@ object Corpus {
         val tokens = topic.lowercase().split(Regex("[^a-z0-9]+")).filter { it.length >= 3 }
         if (tokens.isEmpty()) return emptyList()
         return all.mapNotNull { q ->
+            // Drop questions whose ANSWER is/contains the topic — the player typed it,
+            // so that's a giveaway ("Chicago" → answer "Chicago"). Keep ones ABOUT it.
+            val answer = q.answerText.lowercase()
+            if (tokens.any { answer.contains(it) }) return@mapNotNull null
             val title = q.sourceTitle.lowercase(); val prompt = q.prompt.lowercase()
             val score = tokens.sumOf { (if (title.contains(it)) 2 else 0) + (if (prompt.contains(it)) 1 else 0) }
             if (score > 0) q to score else null

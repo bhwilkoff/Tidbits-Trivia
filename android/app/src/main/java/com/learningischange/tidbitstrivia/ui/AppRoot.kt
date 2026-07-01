@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
@@ -119,10 +120,12 @@ fun AppRoot(
             Box(Modifier.padding(pad).fillMaxSize()) {
                 when (val r = current) {
                     is Route.Home -> HomeScreen(
+                        store = store,
                         onPlay = { mode, cat -> backStack.add(Route.Game(mode, cat)) },
                         onNight = { backStack.add(Route.NightSetup) },
                         onParty = { backStack.add(Route.Party) },
                         onJoinNight = { ensureNearby(); backStack.add(Route.NightJoin) },
+                        onCreate = { backStack.clear(); backStack.add(Route.Create) },
                         onSettings = { backStack.add(Route.Settings) },
                     )
                     is Route.NightSetup -> NightSetupScreen(
@@ -171,68 +174,199 @@ private fun BottomBar(current: Route, onSelect: (Route) -> Unit) {
 
 // ---- Home ----
 
+// Home (rule R-HOME-1): ONE primary action — Quick Play — with mode/category
+// selection behind a Customize sheet. See docs/HOME-REDESIGN-PROPOSAL.md.
 @Composable
-private fun HomeScreen(onPlay: (Mode, Category) -> Unit, onNight: () -> Unit, onParty: () -> Unit, onJoinNight: () -> Unit, onSettings: () -> Unit) {
-    var selectedMode by remember { mutableStateOf(Mode.CLASSIC) }
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+private fun HomeScreen(
+    store: Store,
+    onPlay: (Mode, Category) -> Unit,
+    onNight: () -> Unit,
+    onParty: () -> Unit,
+    onJoinNight: () -> Unit,
+    onCreate: () -> Unit,
+    onSettings: () -> Unit,
+) {
+    var showCustomize by remember { mutableStateOf(false) }
+    var showNight by remember { mutableStateOf(false) }
+    val (qpMode, qpCat) = store.quickPlay()
+    val firstRun = !store.hasQuickPlayHistory()
+    val fade = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+
+    fun play(mode: Mode, cat: Category) { store.rememberPlay(mode, cat); onPlay(mode, cat) }
+
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text("TIDBITS", fontSize = 40.sp, fontWeight = FontWeight.Black)
-                Text("Trivia from the whole of Wikipedia.", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                Text("Trivia from the whole of Wikipedia.", color = fade)
             }
             IconButton(onClick = onSettings) { Icon(Icons.Filled.Settings, contentDescription = "Settings") }
         }
 
-        ChunkyCard(fill = Pops.yellow, onClick = { onPlay(Mode.DAILY, Category.byId("mixed")) }) {
-            Column(Modifier.padding(18.dp)) {
-                Text("DAILY TIDBIT", fontWeight = FontWeight.Black, fontSize = 20.sp, color = Ink)
-                Text("7 questions. Everyone gets the same set. Keep your streak.", color = Ink.copy(alpha = 0.75f))
-            }
-        }
-
-        ChunkyCard(fill = Pops.coral, onClick = onNight) {
-            Column(Modifier.padding(18.dp)) {
-                Text("TRIVIA NIGHT", fontWeight = FontWeight.Black, fontSize = 20.sp, color = Color.White)
-                Text("Host a night of mixed rounds — every kind of question.", color = Color.White.copy(alpha = 0.85f))
-                Spacer(Modifier.height(10.dp))
-                Surface(onClick = onJoinNight, shape = RoundedCornerShape(999.dp), color = Color.White) {
-                    Text("Join a night →", Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
-                        fontWeight = FontWeight.Bold, color = Pops.coral, fontSize = 14.sp)
-                }
-            }
-        }
-
-        ChunkyCard(fill = Pops.grape, onClick = onParty) {
-            Column(Modifier.padding(18.dp)) {
-                Text("PASS & PLAY", fontWeight = FontWeight.Black, fontSize = 20.sp, color = Color.White)
-                Text("2–4 players, one phone, the same questions. Take turns.", color = Color.White.copy(alpha = 0.85f))
-            }
-        }
-
-        Text("Pick a mode", fontWeight = FontWeight.Bold, fontSize = 20.sp)
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            items(listOf(Mode.CLASSIC, Mode.TIME_ATTACK, Mode.SURVIVAL, Mode.STAKE, Mode.SWEEP, Mode.PICTURE_ID, Mode.THIS_OR_THAT, Mode.CLOSEST_CALL, Mode.ORDERING, Mode.MATCHING, Mode.TYPE_ANSWER, Mode.ODD_ONE_OUT, Mode.LADDER), key = { it.name }) { m ->
-                FilterChip(selected = selectedMode == m, onClick = { selectedMode = m }, label = { Text(m.title) })
-            }
-        }
-
-        Text("Choose a category", fontWeight = FontWeight.Bold, fontSize = 20.sp)
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2), modifier = Modifier.heightIn(max = 1000.dp),
-            horizontalArrangement = Arrangement.spacedBy(14.dp), verticalArrangement = Arrangement.spacedBy(14.dp),
-            userScrollEnabled = false,
-        ) {
-            items(Category.all, key = { it.id }) { cat ->
-                ChunkyCard(onClick = { onPlay(selectedMode, cat) }) {
-                    Column(Modifier.padding(16.dp).height(140.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Box(Modifier.size(48.dp).background(Pops.at(cat.colorIndex), CircleShape), contentAlignment = Alignment.Center) { Text(cat.icon, fontSize = 24.sp) }
-                        Text(cat.name, fontWeight = FontWeight.Bold, fontSize = 17.sp)
-                        Text(cat.blurb, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+        // Quick Play — the ONE primary action.
+        ChunkyCard(fill = Pops.coral, onClick = { play(qpMode, qpCat) }) {
+            Column(Modifier.padding(20.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Filled.PlayArrow, null, tint = Color.White, modifier = Modifier.size(30.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text("QUICK PLAY", fontWeight = FontWeight.Black, fontSize = 28.sp, color = Color.White)
+                    Spacer(Modifier.weight(1f))
+                    Surface(onClick = { val (m, c) = store.surprise(); play(m, c) },
+                        shape = RoundedCornerShape(999.dp), color = Color.White.copy(alpha = 0.24f)) {
+                        Text("🎲 Surprise", Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+                            color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                     }
                 }
+                Spacer(Modifier.height(6.dp))
+                Text("${qpMode.title.uppercase()} · ${qpCat.name.uppercase()}", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                Text(if (firstRun) "Tap to play — customize anytime" else "Jump straight into a round",
+                    color = Color.White.copy(alpha = 0.85f), fontSize = 13.sp)
             }
         }
+
+        // Daily — kept prominent (the daily-return habit).
+        ChunkyCard(fill = Pops.yellow, onClick = { onPlay(Mode.DAILY, Category.byId("mixed")) }) {
+            Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("☀️", fontSize = 30.sp); Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text("DAILY TIDBIT", fontWeight = FontWeight.Black, fontSize = 20.sp, color = Ink)
+                    Text("7 questions. Everyone gets the same set. Keep your streak.", color = Ink.copy(alpha = 0.75f), fontSize = 13.sp)
+                }
+                Icon(Icons.Filled.KeyboardArrowRight, null, tint = Ink)
+            }
+        }
+
+        // Trivia Night — one unified entry → host/join sheet.
+        ChunkyCard(fill = Pops.coral, onClick = { showNight = true }) {
+            Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("🎉", fontSize = 28.sp); Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text("TRIVIA NIGHT", fontWeight = FontWeight.Black, fontSize = 20.sp, color = Color.White)
+                    Text("Host or join a night of mixed rounds.", color = Color.White.copy(alpha = 0.85f), fontSize = 13.sp)
+                }
+                Icon(Icons.Filled.KeyboardArrowRight, null, tint = Color.White)
+            }
+        }
+
+        // Customize — secondary; opens the mode/category sheet.
+        Surface(onClick = { showCustomize = true }, shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surface, border = BorderStroke(2.dp, Ink)) {
+            Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("🎛️", fontSize = 22.sp); Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text("Customize a game", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    Text("Pick a mode, a category, save a mix", color = fade, fontSize = 13.sp)
+                }
+                Icon(Icons.Filled.KeyboardArrowRight, null, tint = fade)
+            }
+        }
+
+        Text("More ways to play", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+        Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+            HomeTile("👥", "Pass & Play", Pops.grape, Modifier.weight(1f), onParty)
+            HomeTile("✨", "Create", Pops.teal, Modifier.weight(1f), onCreate)
+        }
         Spacer(Modifier.height(24.dp))
+    }
+
+    if (showNight) NightEntrySheet(onDismiss = { showNight = false },
+        onStart = { showNight = false; onNight() }, onJoin = { showNight = false; onJoinNight() })
+    if (showCustomize) CustomizeSheet(store = store, initial = store.quickPlay(),
+        onDismiss = { showCustomize = false }, onStart = { m, c -> showCustomize = false; play(m, c) })
+}
+
+@Composable
+private fun HomeTile(emoji: String, title: String, fill: Color, modifier: Modifier, onClick: () -> Unit) {
+    ChunkyCard(fill = fill, onClick = onClick, modifier = modifier) {
+        Column(Modifier.padding(14.dp).heightIn(min = 76.dp)) {
+            Text(emoji, fontSize = 24.sp)
+            Spacer(Modifier.height(6.dp))
+            Text(title, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = onAccent(fill))
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun NightEntrySheet(onDismiss: () -> Unit, onStart: () -> Unit, onJoin: () -> Unit) {
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(Modifier.padding(horizontal = 24.dp).padding(bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Text("Trivia Night", fontWeight = FontWeight.Black, fontSize = 26.sp)
+            Text("A night of mixed rounds — every kind of question. Host for the room, or join someone's code. Apple or Android, same code.",
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f), fontSize = 14.sp)
+            ChunkyCard(fill = Pops.coral, onClick = onStart, modifier = Modifier.fillMaxWidth()) { NightRow("▶", "Start a night", "Host for others, or play solo") }
+            ChunkyCard(fill = Pops.teal, onClick = onJoin, modifier = Modifier.fillMaxWidth()) { NightRow("#", "Join a night", "Enter a host's 4-letter code") }
+        }
+    }
+}
+
+@Composable
+private fun NightRow(glyph: String, title: String, sub: String) {
+    Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(glyph, fontSize = 22.sp, fontWeight = FontWeight.Black, color = Color.White)
+        Spacer(Modifier.width(14.dp))
+        Column(Modifier.weight(1f)) {
+            Text(title, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.White)
+            Text(sub, fontSize = 13.sp, color = Color.White.copy(alpha = 0.9f))
+        }
+        Icon(Icons.Filled.KeyboardArrowRight, null, tint = Color.White)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@Composable
+private fun CustomizeSheet(store: Store, initial: Pair<Mode, Category>, onDismiss: () -> Unit, onStart: (Mode, Category) -> Unit) {
+    var mode by remember { mutableStateOf(initial.first) }
+    var cat by remember { mutableStateOf(initial.second) }
+    var showAll by remember { mutableStateOf(initial.first !in coreModes) }
+    var presets by remember { mutableStateOf(store.presets()) }
+    var saving by remember { mutableStateOf(false) }
+    val fade = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text("Customize a game", fontWeight = FontWeight.Black, fontSize = 22.sp)
+            Text("MODE", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = fade)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                (if (showAll) playableModes else coreModes).forEach { m ->
+                    FilterChip(selected = mode == m, onClick = { mode = m }, label = { Text(m.title) })
+                }
+            }
+            TextButton(onClick = { showAll = !showAll }, contentPadding = PaddingValues(0.dp)) {
+                Text(if (showAll) "Fewer modes" else "More modes…", color = Pops.blue)
+            }
+            Text("CATEGORY", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = fade)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Category.all.forEach { c -> FilterChip(selected = cat.id == c.id, onClick = { cat = c }, label = { Text(c.name) }) }
+            }
+            if (presets.isNotEmpty()) {
+                Text("★ MY PRESETS", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = fade)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    presets.forEach { p -> AssistChip(onClick = { mode = p.mode; cat = p.category }, label = { Text(p.name) }) }
+                }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedButton(onClick = { saving = true }) { Text("Save this") }
+                Button(onClick = { onStart(mode, cat) }, modifier = Modifier.weight(1f).height(50.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Pops.coral, contentColor = Color.White)) {
+                    Text("Start", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                }
+            }
+        }
+    }
+    if (saving) {
+        var name by remember { mutableStateOf("${cat.name} ${mode.title}") }
+        AlertDialog(onDismissRequest = { saving = false },
+            title = { Text("Save this mix") },
+            text = { OutlinedTextField(value = name, onValueChange = { name = it }, singleLine = true, label = { Text("Name") }) },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (name.isNotBlank()) { store.savePreset(GamePreset(name.trim(), mode.name, listOf(cat.id))); presets = store.presets() }
+                    saving = false
+                }) { Text("Save") }
+            },
+            dismissButton = { TextButton(onClick = { saving = false }) { Text("Cancel") } })
     }
 }
 

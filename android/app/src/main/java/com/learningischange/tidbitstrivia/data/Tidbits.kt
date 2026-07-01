@@ -848,6 +848,15 @@ class Store(context: Context) {
     fun rememberNight(code: String, name: String) =
         prefs.edit().putString("lastNightCode", code.uppercase()).putString("lastNightName", name).apply()
 
+    // Quick Play memory + presets (home redesign — R-HOME-1, mirrors iOS AppStore).
+    fun lastPlayedModeName(): String? = prefs.getString("lastMode", null)
+    fun lastPlayedCategoryId(): String = prefs.getString("lastCat", null) ?: "mixed"
+    fun hasQuickPlayHistory(): Boolean = prefs.getString("lastMode", null) != null
+    fun rememberSelection(modeName: String, catId: String) =
+        prefs.edit().putString("lastMode", modeName).putString("lastCat", catId).apply()
+    fun presetsJson(): String = prefs.getString("presets", "[]") ?: "[]"
+    fun savePresetsJson(json: String) = prefs.edit().putString("presets", json).apply()
+
     // First-run onboarding + per-user prefs (parity with iOS @AppStorage).
     fun hasOnboarded(): Boolean = prefs.getBoolean("hasOnboarded", false)
     fun setOnboarded(v: Boolean) = prefs.edit().putBoolean("hasOnboarded", v).apply()

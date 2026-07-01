@@ -827,24 +827,14 @@ private fun RecordsScreen(store: Store) {
             }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            StatBox("${life.first}", "Games", Pops.grape); StatBox("${life.third}%", "Lifetime", Pops.blue); StatBox("${life.second}", "Right", Pops.mint)
+            StatBox("${life.first}", "Games", Pops.grape); StatBox("${life.third}%", "Accuracy", Pops.blue); StatBox("${life.second}", "Correct", Pops.mint)
         }
         val prog = remember { store.progress() }
-        val earned = prog.count { it.hasWedge }
+        val explored = prog.count { it.total > 0 }
+        val mastered = prog.count { it.hasWedge }
         Text("Your knowledge", fontWeight = FontWeight.Bold, fontSize = 20.sp)
-        ChunkyCard(fill = MaterialTheme.colorScheme.surfaceVariant) {
-            Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                Box(contentAlignment = Alignment.Center) {
-                    PieProgress(prog, Modifier.size(104.dp))
-                    Box(Modifier.size(44.dp).background(MaterialTheme.colorScheme.surfaceVariant, CircleShape).border(2.dp, Ink, CircleShape), contentAlignment = Alignment.Center) {
-                        Text("$earned/7", fontWeight = FontWeight.Black, fontSize = 17.sp)
-                    }
-                }
-                Text(if (earned == 7) "Full pie — every domain mastered. That breadth is yours to keep."
-                     else "Earn a wedge in each domain by answering its questions well. The pie fills only when you cover them all.",
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f), modifier = Modifier.weight(1f))
-            }
-        }
+        Text("Each domain levels up as you answer its questions correctly. You've explored $explored of 7 domains and mastered $mastered. A ✓ means mastered — 15+ right at 60%+ accuracy.",
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
         prog.filter { it.total > 0 }.forEach { TopicRow(it) }
         val calib = remember { store.calibration() }
         if (calib.values.any { it.second > 0 }) {
@@ -873,26 +863,12 @@ private fun RecordsScreen(store: Store) {
     }
 }
 
-// The Pie — seven equal wedges, one per domain; earned wedges show their
-// category color, unearned ones are dim (SOLO-BACKLOG M3).
-@Composable
-private fun PieProgress(domains: List<DomainProgress>, modifier: Modifier = Modifier) {
-    val n = domains.size.coerceAtLeast(1)
-    Canvas(modifier) {
-        val sweep = 360f / n
-        domains.forEachIndexed { i, d ->
-            val start = -90f + i * sweep
-            val col = if (d.hasWedge) Pops.at(Category.byId(d.id).colorIndex) else Color(0xFFE8DCC2)
-            drawArc(col, start, sweep, useCenter = true)
-            drawArc(Ink, start, sweep, useCenter = true, style = Stroke(width = 4f))
-        }
-    }
-}
-
-// One domain's depth: icon, name, wedge check, level badge, XP bar (M4).
+// One domain's depth: icon, name, mastered check, level badge, XP bar, and a
+// plain-language "N more to Level X" so the number means something.
 @Composable
 private fun TopicRow(d: DomainProgress) {
     val c = Category.byId(d.id); val col = Pops.at(c.colorIndex)
+    val remaining = (5 * (d.level + 1) * (d.level + 2) / 2 - d.correct).coerceAtLeast(0)
     ChunkyCard {
         Row(Modifier.padding(12.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Box(Modifier.size(36.dp).background(col, CircleShape).border(2.5.dp, Ink, CircleShape), contentAlignment = Alignment.Center) {
@@ -904,12 +880,14 @@ private fun TopicRow(d: DomainProgress) {
                     if (d.hasWedge) Text("✓", color = accentText(Pops.mint), fontWeight = FontWeight.Black)
                     Spacer(Modifier.weight(1f))
                     Surface(color = col, shape = RoundedCornerShape(999.dp), border = BorderStroke(2.dp, Ink)) {
-                        Text("Lvl ${d.level}", color = onAccent(col), fontWeight = FontWeight.Black, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 9.dp, vertical = 2.dp))
+                        Text("Level ${d.level}", color = onAccent(col), fontWeight = FontWeight.Black, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 9.dp, vertical = 2.dp))
                     }
                 }
                 Box(Modifier.fillMaxWidth().height(12.dp).background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(999.dp)).border(2.dp, Ink, RoundedCornerShape(999.dp))) {
                     Box(Modifier.fillMaxWidth(d.levelProgress.coerceIn(0.05f, 1f)).fillMaxHeight().background(col, RoundedCornerShape(999.dp)))
                 }
+                Text("${d.correct} correct · $remaining more to Level ${d.level + 1}",
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f), fontSize = 13.sp)
             }
         }
     }

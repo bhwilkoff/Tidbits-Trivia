@@ -1,0 +1,25 @@
+{
+  "$comment": "Canonical, cross-platform achievement + leaderboard taxonomy for Tidbits Trivia. ONE source of truth consumed by both the App Store Connect API script (Apple Game Center) and the Google Play Games Services Publishing API script (see docs/GAMECENTER-ACHIEVEMENTS-PLAYBOOK.md). Slugs are shared so the same conceptual achievement exists on both platforms. Learning-oriented: streaks, category mastery, breadth across domains, calibration, comeback — not raw volume. Creating these via API is OWNER-BLOCKED (needs the ASC API key + Game Center enabled on the app; and a Play Games Services project + service account). The app already tracks every unlock condition locally (RecordsStore / Store.progress()).",
+  "version": 1,
+  "leaderboards": [
+    { "slug": "lb_daily_streak", "name": "Daily Streak", "detail": "Longest consecutive days of the Daily Tidbit", "unit": "days", "sort": "high_to_low" },
+    { "slug": "lb_lifetime_correct", "name": "Questions Learned", "detail": "Lifetime correct answers", "unit": "answers", "sort": "high_to_low" },
+    { "slug": "lb_classic_high", "name": "Classic High Score", "detail": "Best single Classic game score", "unit": "points", "sort": "high_to_low" },
+    { "slug": "lb_survival_best", "name": "Survival Streak", "detail": "Most questions in one Survival run", "unit": "questions", "sort": "high_to_low" }
+  ],
+  "achievements": [
+    { "slug": "ach_first_game", "name": "First Tidbit", "detail": "Finish your first game.", "points": 5, "condition": "games_played >= 1" },
+    { "slug": "ach_daily_7", "name": "Week of Wonder", "detail": "Keep a 7-day Daily streak.", "points": 15, "condition": "daily_streak >= 7" },
+    { "slug": "ach_daily_30", "name": "Month of Marvels", "detail": "Keep a 30-day Daily streak.", "points": 40, "condition": "daily_streak >= 30" },
+    { "slug": "ach_perfect_daily", "name": "Flawless Daily", "detail": "Get every Daily question right.", "points": 20, "condition": "daily_game.correct == daily_game.total" },
+    { "slug": "ach_master_one", "name": "Domain Master", "detail": "Master any one domain (15+ right at 60%+).", "points": 20, "condition": "any(domain.hasWedge)" },
+    { "slug": "ach_master_all", "name": "Renaissance Mind", "detail": "Master all seven domains.", "points": 100, "condition": "count(domain.hasWedge) == 7" },
+    { "slug": "ach_breadth_all", "name": "Well-Rounded", "detail": "Play a question in every one of the seven domains.", "points": 15, "condition": "count(domain.total > 0) == 7" },
+    { "slug": "ach_level5", "name": "Deep Diver", "detail": "Reach Level 5 in any domain.", "points": 25, "condition": "any(domain.level >= 5)" },
+    { "slug": "ach_correct_100", "name": "Century", "detail": "Answer 100 questions correctly.", "points": 20, "condition": "lifetime_correct >= 100" },
+    { "slug": "ach_correct_1000", "name": "Scholar", "detail": "Answer 1000 questions correctly.", "points": 60, "condition": "lifetime_correct >= 1000" },
+    { "slug": "ach_calibrated", "name": "Sure Thing", "detail": "Land a max-confidence Stake bet at 80%+ hit-rate over 10+ tries.", "points": 25, "condition": "calibration.top_tier.rate >= 0.80 && calibration.top_tier.total >= 10" },
+    { "slug": "ach_comeback", "name": "Comeback", "detail": "Win a Survival run of 15+ after ending a previous run at 3 or fewer.", "points": 20, "condition": "survival_best >= 15 && had_run <= 3" },
+    { "slug": "ach_night_host", "name": "Master of Ceremonies", "detail": "Host a Trivia Night that someone joins.", "points": 20, "condition": "night_hosted_with_guest >= 1" }
+  ]
+}

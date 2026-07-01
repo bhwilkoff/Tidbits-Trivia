@@ -1,18 +1,18 @@
 import Foundation
-import Network
 import Observation
 import CryptoKit
 
 /// The joiner side of a Trivia Night (Decision 033) — runs on ANY Apple device.
-/// Browses for the host's Bonjour service, connects with the room-code PSK (so
-/// only a device that can read the code pairs), receives the whole night, and
+/// Discovers the host's room by code, connects, receives the whole night, and
 /// then follows the host's pacing signals. It plays on its OWN screen and scores
 /// itself locally, reporting only its running total back to the host.
 ///
 /// The actual game (rendering questions, capturing answers) is driven by
 /// `LiveNight`, which wires these callbacks to a local `GameEngine`.
 ///
-/// Build-verified, NOT yet two-device-verified — see NightTransport's note.
+/// Link-layer-agnostic: discovery + byte transport live behind
+/// `NightClientTransport` (Bonjour mDNS+TCP by default; Wi-Fi Aware / BLE
+/// later). This class owns the protocol, the crypto, and the retry policy.
 @Observable
 @MainActor
 final class NightClient {
@@ -30,14 +30,18 @@ final class NightClient {
     var onReveal: ((Int) -> Void)?
     var onFinished: (() -> Void)?
 
-    private var browser: NWBrowser?
-    private var connection: NWConnection?
+    private let transport: any NightClientTransport
+    private var link: (any NightPeerLink)?
     private var key = RoomCode.presharedKey(for: "")
     private var framer = NightFramer(key: RoomCode.presharedKey(for: ""))
     private var code = ""
     private let deviceID = NightClient.loadDeviceID()
     private var intentionalLeave = false
     private var reconnectAttempts = 0
+
+    init(transport: any NightClientTransport = BonjourClientTransport()) {
+        self.transport = transport
+    }
 
     /// The last room this device joined — pre-filled next time so a recognized
     /// device doesn't have to retype the code.
@@ -63,22 +67,26 @@ final class NightClient {
         displayName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         UserDefaults.standard.set(self.code, forKey: "tidbits.night.lastCode")
         UserDefaults.standard.set(displayName, forKey: "tidbits.night.lastName")
-        startBrowsing()
+        startConnect()
     }
 
-    private func startBrowsing() {
-        teardownSockets()
+    private func startConnect() {
+        link = nil
         status = .searching
-        let browser = NWBrowser(for: .bonjour(type: Night.serviceType, domain: nil),
-                                using: NightTransport.parameters())
-        browser.browseResultsChangedHandler = { [weak self] results, _ in
-            Task { @MainActor in self?.consider(results) }
-        }
-        browser.stateUpdateHandler = { [weak self] state in
-            Task { @MainActor in if case .failed = state { self?.attemptReconnect() } }
-        }
-        self.browser = browser
-        browser.start(queue: .main)
+        transport.connect(
+            roomCode: code,
+            onConnected: { [weak self] link in self?.onConnected(link) },
+            onFrame: { [weak self] bytes in
+                guard let self else { return }
+                for m in self.framer.ingest(bytes) { self.handle(m) }
+            },
+            onDropped: { [weak self] in self?.attemptReconnect() },
+            onStatus: { [weak self] s in
+                switch s {
+                case .searching:  self?.status = .searching
+                case .connecting: self?.status = .connecting
+                }
+            })
     }
 
     /// A drop mid-game silently re-discovers the room and rejoins (the host
@@ -89,19 +97,17 @@ final class NightClient {
             return
         }
         reconnectAttempts += 1
-        startBrowsing()
+        startConnect()
     }
 
     func leave() {
         intentionalLeave = true
-        if let c = connection { NightTransport.send(NightMessage(.leave), over: c, key: key) }
-        teardownSockets()
+        if let link, let frame = NightTransport.encode(NightMessage(.leave), key: key) {
+            link.send(frame)
+        }
+        transport.disconnect()
+        link = nil
         status = .idle; seat = nil; roomName = nil; players = []
-    }
-
-    private func teardownSockets() {
-        browser?.cancel(); browser = nil
-        connection?.cancel(); connection = nil
     }
 
     // MARK: Reporting
@@ -109,61 +115,22 @@ final class NightClient {
     /// Tell the host this device locked an answer this question, with the running
     /// total + whether it was right — the host folds it into the standings.
     func reportAnswer(score: Int, correct: Bool) {
-        guard let c = connection else { return }
+        guard let link else { return }
         var m = NightMessage(.answered)
         m.score = score; m.correct = correct
-        NightTransport.send(m, over: c, key: key)
+        guard let frame = NightTransport.encode(m, key: key) else { return }
+        link.send(frame)
     }
 
-    // MARK: Discovery → connection
+    // MARK: Connection → join handshake
 
-    private func consider(_ results: Set<NWBrowser.Result>) {
-        guard connection == nil else { return }
-        for r in results {
-            if case let .service(name, _, _, _) = r.endpoint, name.uppercased().hasSuffix(code) {
-                connect(to: r.endpoint)
-                return
-            }
-        }
-    }
-
-    private func connect(to endpoint: NWEndpoint) {
-        status = .connecting
-        let conn = NWConnection(to: endpoint, using: NightTransport.parameters())
-        conn.stateUpdateHandler = { [weak self] state in
-            Task { @MainActor in
-                switch state {
-                case .ready:  self?.onConnected()
-                case .failed: self?.attemptReconnect()
-                default:      break
-                }
-            }
-        }
-        connection = conn
-        conn.start(queue: .main)
-        receive()
-    }
-
-    private func onConnected() {
-        browser?.cancel(); browser = nil
-        guard let c = connection else { return }
+    private func onConnected(_ link: any NightPeerLink) {
+        self.link = link
         var join = NightMessage(.join)
         join.displayName = displayName.isEmpty ? nil : displayName
         join.deviceID = deviceID
-        NightTransport.send(join, over: c, key: key)
-    }
-
-    private func receive() {
-        connection?.receive(minimumIncompleteLength: 1, maximumLength: Night.maxMessageBytes) { [weak self] data, _, isComplete, error in
-            Task { @MainActor in
-                guard let self else { return }
-                if let data, !data.isEmpty {
-                    for m in self.framer.ingest(data) { self.handle(m) }
-                }
-                if isComplete || error != nil { self.attemptReconnect(); return }
-                self.receive()
-            }
-        }
+        guard let frame = NightTransport.encode(join, key: key) else { return }
+        link.send(frame)
     }
 
     private func handle(_ m: NightMessage) {

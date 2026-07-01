@@ -1,19 +1,20 @@
 import Foundation
-import Network
 import Observation
 import CryptoKit
 
 /// The host side of a Trivia Night (Decision 033) — runs on ANY Apple device
-/// (iPhone, iPad, Apple TV). Publishes a Bonjour service secured by a room-code
-/// PSK, accepts joiners, owns the authoritative roster + standings, and drives
-/// the night's pacing on behalf of the human host (who is also a player).
+/// (iPhone, iPad, Apple TV). Advertises a room secured by the room-code key,
+/// accepts joiners, owns the authoritative roster + standings, and drives the
+/// night's pacing on behalf of the human host (who is also a player).
 ///
 /// The host does NOT judge answers — every device runs its own engine over the
 /// identical question list and scores itself, reporting its running total. For a
 /// friendly living-room game that trust is the right tradeoff (no server, no
 /// anti-cheat); the host just aggregates and paces.
 ///
-/// Build-verified, NOT yet two-device-verified — see NightTransport's note.
+/// Link-layer-agnostic: all discovery + byte transport lives behind
+/// `NightHostTransport` (Bonjour mDNS+TCP by default; Wi-Fi Aware / BLE later).
+/// This class owns the protocol, the crypto, and the seat/rejoin model.
 @Observable
 @MainActor
 final class NightHost {
@@ -35,14 +36,14 @@ final class NightHost {
     static let hostSeat = 0
 
     private final class Peer {
-        let connection: NWConnection
+        let link: any NightPeerLink
         let framer: NightFramer
         var seat: Int?
-        init(_ c: NWConnection, key: SymmetricKey) { connection = c; framer = NightFramer(key: key) }
+        init(_ link: any NightPeerLink, key: SymmetricKey) { self.link = link; framer = NightFramer(key: key) }
     }
 
-    private var listener: NWListener?
-    private var peers: [ObjectIdentifier: Peer] = [:]
+    private let transport: any NightHostTransport
+    private var peers: [String: Peer] = [:]
     private var nextSeat = 1
     /// deviceID → seat, so a reconnecting device resumes its seat + score.
     private var seatByDevice: [String: Int] = [:]
@@ -57,6 +58,10 @@ final class NightHost {
     private var currentIndex = -1
     private var revealed = false
 
+    init(transport: any NightHostTransport = BonjourHostTransport()) {
+        self.transport = transport
+    }
+
     // MARK: Lifecycle
 
     func start(hostName: String) {
@@ -65,32 +70,26 @@ final class NightHost {
         key = RoomCode.presharedKey(for: roomCode)
         let name = hostName.trimmingCharacters(in: .whitespacesAndNewlines)
         players = [NightPlayer(seat: Self.hostSeat, name: name.isEmpty ? "Host" : name, isHost: true)]
-        do {
-            let listener = try NWListener(using: NightTransport.parameters())
-            listener.service = NWListener.Service(name: "Tidbits-\(roomCode)", type: Night.serviceType)
-            listener.newConnectionHandler = { [weak self] conn in
-                Task { @MainActor in self?.accept(conn) }
-            }
-            listener.stateUpdateHandler = { [weak self] state in
-                Task { @MainActor in
-                    switch state {
-                    case .ready:         self?.isListening = true
-                    case .failed(let e): self?.lastError = "\(e)"; self?.isListening = false
-                    case .cancelled:     self?.isListening = false
-                    default:             break
-                    }
+        transport.start(
+            roomCode: roomCode,
+            onPeer: { [weak self] link in self?.accept(link) },
+            onFrame: { [weak self] link, bytes in self?.ingest(bytes, from: link) },
+            onDrop: { [weak self] link in
+                self?.peers.removeValue(forKey: link.id)
+                // Keep the player + score in the roster so a dropped device can
+                // REJOIN (same deviceID → same seat) and resume.
+            },
+            onState: { [weak self] state in
+                switch state {
+                case .ready:         self?.isListening = true
+                case .failed(let e): self?.lastError = e; self?.isListening = false
+                case .stopped:       self?.isListening = false
                 }
-            }
-            self.listener = listener
-            listener.start(queue: .main)
-        } catch {
-            lastError = "\(error)"
-        }
+            })
     }
 
     func stop() {
-        listener?.cancel(); listener = nil
-        for p in peers.values { p.connection.cancel() }
+        transport.stop()
         peers.removeAll(); players.removeAll(); seatByDevice.removeAll()
         isListening = false; nextSeat = 1
         activePlan = nil; activeQuestions = nil; currentIndex = -1; revealed = false
@@ -142,39 +141,13 @@ final class NightHost {
 
     // MARK: Connections
 
-    private func accept(_ conn: NWConnection) {
-        let peer = Peer(conn, key: key)
-        peers[ObjectIdentifier(conn)] = peer
-        conn.stateUpdateHandler = { [weak self] state in
-            Task { @MainActor in
-                switch state {
-                case .failed, .cancelled: self?.drop(conn)
-                default: break
-                }
-            }
-        }
-        conn.start(queue: .main)
-        receive(on: peer)
+    private func accept(_ link: any NightPeerLink) {
+        peers[link.id] = Peer(link, key: key)
     }
 
-    private func receive(on peer: Peer) {
-        peer.connection.receive(minimumIncompleteLength: 1, maximumLength: Night.maxMessageBytes) { [weak self] data, _, isComplete, error in
-            Task { @MainActor in
-                guard let self else { return }
-                if let data, !data.isEmpty {
-                    for msg in peer.framer.ingest(data) { self.handle(msg, from: peer) }
-                }
-                if isComplete || error != nil { self.drop(peer.connection); return }
-                self.receive(on: peer)
-            }
-        }
-    }
-
-    private func drop(_ conn: NWConnection) {
-        guard let peer = peers.removeValue(forKey: ObjectIdentifier(conn)) else { return }
-        conn.cancel()
-        // Keep the player + score in the roster so a dropped device can REJOIN
-        // (same deviceID → same seat) and resume. Only the socket is freed here.
+    private func ingest(_ bytes: Data, from link: any NightPeerLink) {
+        guard let peer = peers[link.id] else { return }
+        for msg in peer.framer.ingest(bytes) { handle(msg, from: peer) }
     }
 
     // MARK: Message handling
@@ -199,7 +172,7 @@ final class NightHost {
             peer.seat = seat
             var welcome = NightMessage(.welcome)
             welcome.seat = seat; welcome.roomName = "Tidbits \(roomCode)"
-            NightTransport.send(welcome, over: peer.connection, key: key)
+            send(welcome, to: peer)
             broadcastRoster()
             replayState(to: peer)   // catch a mid-night (re)join all the way up
 
@@ -210,7 +183,8 @@ final class NightHost {
             broadcastRoster()
 
         case .leave:
-            drop(peer.connection)
+            peers.removeValue(forKey: peer.link.id)
+            peer.link.close()
 
         default:
             break
@@ -224,21 +198,26 @@ final class NightHost {
         guard let plan = activePlan, let questions = activeQuestions else { return }
         var n = NightMessage(.night); n.plan = plan
         n.questionIds = questions.map(\.id); n.questions = questions.map { $0.toWire() }
-        NightTransport.send(n, over: peer.connection, key: key)
+        send(n, to: peer)
         if currentIndex >= 0 {
             var b = NightMessage(.begin); b.questionIndex = currentIndex
-            NightTransport.send(b, over: peer.connection, key: key)
+            send(b, to: peer)
             if revealed {
                 var r = NightMessage(.reveal); r.questionIndex = currentIndex
-                NightTransport.send(r, over: peer.connection, key: key)
+                send(r, to: peer)
             }
         }
     }
 
-    // MARK: Broadcast
+    // MARK: Send / broadcast
 
+    private func send(_ m: NightMessage, to peer: Peer) {
+        guard let frame = NightTransport.encode(m, key: key) else { return }
+        peer.link.send(frame)
+    }
     private func broadcast(_ m: NightMessage) {
-        for p in peers.values { NightTransport.send(m, over: p.connection, key: key) }
+        guard let frame = NightTransport.encode(m, key: key) else { return }
+        for p in peers.values { p.link.send(frame) }
     }
     private func broadcastRoster() {
         var m = NightMessage(.roster); m.players = players

@@ -7,8 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		02F153022C6FAD01DE261FB5 /* LiveNight.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AD18ED3C40BFC78AFD8FB0C /* LiveNight.swift */; };
 		03FB04C17EDA45D30AC911F4 /* QuestionProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B9A918292A8BD08D5EEAFA6 /* QuestionProvider.swift */; };
 		0608CF492FA14F91750D1B69 /* SettingsView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4534F27C4206B9640778460 /* SettingsView_tvOS.swift */; };
+		0E0A3E02FDD6CEB760974C4B /* NightTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12852A694244CCEEC20EB41B /* NightTransport.swift */; };
 		11697E55857894F38D742127 /* ProgressStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A73FA1930578863B642985C /* ProgressStats.swift */; };
 		11CCA7505B02468A02988A0C /* closest.json in Resources */ = {isa = PBXBuildFile; fileRef = 1241A5F7969CF344FFE75DA6 /* closest.json */; };
 		154A589A9053D9ECF66EE341 /* typeanswer.json in Resources */ = {isa = PBXBuildFile; fileRef = 39FBC9BD13DA4CCB86AC1EF4 /* typeanswer.json */; };
@@ -25,12 +27,6 @@
 		3DDD98934D198791F4C9C508 /* oddoneout.json in Resources */ = {isa = PBXBuildFile; fileRef = DEB3E620FB0E374A393778E4 /* oddoneout.json */; };
 		43F36ECB879791F4A899B1AF /* CreateQuizView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96283977862FC546F8219011 /* CreateQuizView.swift */; };
 		43F8B1E0DFD953763387E1D7 /* NightPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = A485FF3BF7BA5BCFEC4FBC2E /* NightPlan.swift */; };
-		FEED00000000000000000000 /* NightProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEED00000000000000000001 /* NightProtocol.swift */; };
-		FEED00000000000000000002 /* NightTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEED00000000000000000003 /* NightTransport.swift */; };
-		FEED00000000000000000004 /* NightHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEED00000000000000000005 /* NightHost.swift */; };
-		FEED00000000000000000006 /* NightClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEED00000000000000000007 /* NightClient.swift */; };
-		FEED00000000000000000008 /* LiveNight.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEED00000000000000000009 /* LiveNight.swift */; };
-		FEED0000000000000000000A /* NightLiveContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEED0000000000000000000B /* NightLiveContainer.swift */; };
 		453B198C89878F4FC0690176 /* NightView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABC3E5834F087B503EF2FE95 /* NightView_tvOS.swift */; };
 		46C78F229E1F5ABC0888E25F /* NightSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD70222B5EE4C4145E4D1F84 /* NightSetupView.swift */; };
 		476021C7C87B8F571D3D5108 /* difficulty.json in Resources */ = {isa = PBXBuildFile; fileRef = 0C8075B00F30AAE8E925FF05 /* difficulty.json */; };
@@ -39,15 +35,18 @@
 		4F92081B7F2AFB470A7DC5C2 /* RecordsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C18E4CA3BD148F09E1BE077 /* RecordsView.swift */; };
 		512F6230D9E8F7A314AFF0ED /* RecordsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7633D27702A6874F7D8993DF /* RecordsStore.swift */; };
 		563B7C1B43D0FCF86A3ACC0A /* DebugHooks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BD01942F33620E5D75A8E7D /* DebugHooks.swift */; };
+		58D69F6CD06518853ACBCE55 /* NightProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2188212D23A7B95BDD7D6ED6 /* NightProtocol.swift */; };
 		5B37FF3AF882A4CAD88CE62D /* GameComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 337562191FABFA21A46484FA /* GameComponents.swift */; };
 		6C6BC38059EF80F78C963AEA /* picture.json in Resources */ = {isa = PBXBuildFile; fileRef = 6E8760FF39E12021DC07BE8F /* picture.json */; };
 		6CF073BFB022FF600B3B9428 /* GamePlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE92745D6860E623628A0CBC /* GamePlayView.swift */; };
 		7051BF4D2CFDDEB46EC57971 /* Haptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDC047AE9E00DBB79A4FD169 /* Haptics.swift */; };
+		720B221EF4EDD7A3044FB807 /* BonjourTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83FF1890FBAD38C220D2C1BE /* BonjourTransport.swift */; };
 		78068FB172485742F7C68313 /* DifficultyOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C0424A46E0A825EA0A8EFE2 /* DifficultyOverlay.swift */; };
 		7E457DE11CD8D820A503C8EB /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 3C266F600F75F40E459D2276 /* PrivacyInfo.xcprivacy */; };
+		822891D7170B156CB45A51CF /* NightHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61CF6B570C9884F8DF3645CD /* NightHost.swift */; };
 		868239CDDF1A55B51710E012 /* Scoring.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EBCE6DDE7254EB4010E1679 /* Scoring.swift */; };
 		87D2A2B94B2CE47C7ADB8348 /* GameView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5C9D9266531ECD27156562D /* GameView_tvOS.swift */; };
-		FEED000000000000000000F0 /* NightLiveContainer_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEED000000000000000000F1 /* NightLiveContainer_tvOS.swift */; };
+		8932DF2335A76D131E937272 /* NightLiveContainer_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF5CC9559B7356814F9FE1D4 /* NightLiveContainer_tvOS.swift */; };
 		918AE96520BD2A89643D6E20 /* TriviaCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCB14B0E2B13CCA2DDA250ED /* TriviaCategory.swift */; };
 		92153A2172FBD8BD36DE55C5 /* thisorthat.json in Resources */ = {isa = PBXBuildFile; fileRef = BADC61A185827BBE0B9857AA /* thisorthat.json */; };
 		92B4788F3A0CAC7DE68FB848 /* CorpusDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB24F551656B187A42C81D44 /* CorpusDatabase.swift */; };
@@ -62,8 +61,11 @@
 		B0A9BD87C5B11C8B3EA379C9 /* Question.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFC46D4CE8D03186C064C759 /* Question.swift */; };
 		B60770C2C79E6CC6D4EA52AC /* JSONQuestionSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5641E998849F8570AF1C8387 /* JSONQuestionSource.swift */; };
 		B726DC9ED39E20DD9B3F5FD1 /* GameSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BFCD6FF44ED08F84EBBD05E /* GameSettings.swift */; };
+		BAE653DC19291745458BE180 /* NightLiveContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80062C51298B935C19365672 /* NightLiveContainer.swift */; };
+		C0DE632706A625B3AFF44EF8 /* NightLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = D50CC8FE4C2A40751C616B5F /* NightLink.swift */; };
 		C8F2A4B8CAC81B530D5A6D7D /* RecordsView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = F705319E1E9AC235B5D005C4 /* RecordsView_tvOS.swift */; };
 		CCA8AF2E7F7567E5B153E60F /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B2FEBFB29C12A172EADB66F /* SettingsView.swift */; };
+		D408A3818D906999A4AD99DC /* NightClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0B1B4D9BA126D3D5E585A00 /* NightClient.swift */; };
 		D78451DA6D74E2BA65EB56C8 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AAEF55F4DD8DEA37D200C32 /* HomeView.swift */; };
 		DD17E6E2BBC121F9A5B69E32 /* order.json in Resources */ = {isa = PBXBuildFile; fileRef = 79A5D10D9EBC4D0950DE13CF /* order.json */; };
 		DF28093A48DE5460E1A7691C /* DelightfulQuizGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 161521EA893E91207502AEC2 /* DelightfulQuizGenerator.swift */; };
@@ -79,8 +81,11 @@
 		0C8075B00F30AAE8E925FF05 /* difficulty.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = difficulty.json; sourceTree = "<group>"; };
 		0EBCE6DDE7254EB4010E1679 /* Scoring.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Scoring.swift; sourceTree = "<group>"; };
 		1241A5F7969CF344FFE75DA6 /* closest.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = closest.json; sourceTree = "<group>"; };
+		12852A694244CCEEC20EB41B /* NightTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightTransport.swift; sourceTree = "<group>"; };
 		161521EA893E91207502AEC2 /* DelightfulQuizGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DelightfulQuizGenerator.swift; sourceTree = "<group>"; };
 		1BD01942F33620E5D75A8E7D /* DebugHooks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugHooks.swift; sourceTree = "<group>"; };
+		2188212D23A7B95BDD7D6ED6 /* NightProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightProtocol.swift; sourceTree = "<group>"; };
+		2AD18ED3C40BFC78AFD8FB0C /* LiveNight.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveNight.swift; sourceTree = "<group>"; };
 		337562191FABFA21A46484FA /* GameComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameComponents.swift; sourceTree = "<group>"; };
 		35F518DED9832731B1294DD3 /* TidbitsTriviaApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TidbitsTriviaApp.swift; sourceTree = "<group>"; };
 		39FBC9BD13DA4CCB86AC1EF4 /* typeanswer.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = typeanswer.json; sourceTree = "<group>"; };
@@ -91,6 +96,7 @@
 		4E7FAFB9A435F25FF322EC97 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		5641E998849F8570AF1C8387 /* JSONQuestionSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONQuestionSource.swift; sourceTree = "<group>"; };
 		5A73FA1930578863B642985C /* ProgressStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressStats.swift; sourceTree = "<group>"; };
+		61CF6B570C9884F8DF3645CD /* NightHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightHost.swift; sourceTree = "<group>"; };
 		655168DF8FE110D6336394D2 /* WikipediaClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WikipediaClient.swift; sourceTree = "<group>"; };
 		6C78FEA628F8D5DC705D414E /* match.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = match.json; sourceTree = "<group>"; };
 		6E8760FF39E12021DC07BE8F /* picture.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = picture.json; sourceTree = "<group>"; };
@@ -102,6 +108,8 @@
 		7C55D3DCAE5E46980D666B83 /* GameMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameMode.swift; sourceTree = "<group>"; };
 		7C60A815D0EFF35CF18DAB26 /* ResultsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultsView.swift; sourceTree = "<group>"; };
 		7F619B1D3BB620DD1304475A /* AppStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStore.swift; sourceTree = "<group>"; };
+		80062C51298B935C19365672 /* NightLiveContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightLiveContainer.swift; sourceTree = "<group>"; };
+		83FF1890FBAD38C220D2C1BE /* BonjourTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BonjourTransport.swift; sourceTree = "<group>"; };
 		8635E2E7CD914F8DFE8136CC /* TidbitsTrivia.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = TidbitsTrivia.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		89A31C82C50C6EB1DA9AE9A4 /* GameCenterManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameCenterManager.swift; sourceTree = "<group>"; };
 		8B9A918292A8BD08D5EEAFA6 /* QuestionProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuestionProvider.swift; sourceTree = "<group>"; };
@@ -109,13 +117,8 @@
 		8E0122AFA7F2570D4CCDD4BA /* ContentView_iOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView_iOS.swift; sourceTree = "<group>"; };
 		96283977862FC546F8219011 /* CreateQuizView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateQuizView.swift; sourceTree = "<group>"; };
 		9C0424A46E0A825EA0A8EFE2 /* DifficultyOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DifficultyOverlay.swift; sourceTree = "<group>"; };
+		A0B1B4D9BA126D3D5E585A00 /* NightClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightClient.swift; sourceTree = "<group>"; };
 		A485FF3BF7BA5BCFEC4FBC2E /* NightPlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightPlan.swift; sourceTree = "<group>"; };
-		FEED00000000000000000001 /* NightProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightProtocol.swift; sourceTree = "<group>"; };
-		FEED00000000000000000003 /* NightTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightTransport.swift; sourceTree = "<group>"; };
-		FEED00000000000000000005 /* NightHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightHost.swift; sourceTree = "<group>"; };
-		FEED00000000000000000007 /* NightClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightClient.swift; sourceTree = "<group>"; };
-		FEED00000000000000000009 /* LiveNight.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveNight.swift; sourceTree = "<group>"; };
-		FEED0000000000000000000B /* NightLiveContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightLiveContainer.swift; sourceTree = "<group>"; };
 		AB6E2342A764B8401C9516E9 /* Design.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Design.swift; sourceTree = "<group>"; };
 		ABC3E5834F087B503EF2FE95 /* NightView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightView_tvOS.swift; sourceTree = "<group>"; };
 		B1C1A6AE174DDC149D5EE7BB /* SeededRNG.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeededRNG.swift; sourceTree = "<group>"; };
@@ -124,7 +127,9 @@
 		BE92745D6860E623628A0CBC /* GamePlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GamePlayView.swift; sourceTree = "<group>"; };
 		C23D07A7744AE72B2935CB2F /* ContentView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView_tvOS.swift; sourceTree = "<group>"; };
 		CDC047AE9E00DBB79A4FD169 /* Haptics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Haptics.swift; sourceTree = "<group>"; };
+		CF5CC9559B7356814F9FE1D4 /* NightLiveContainer_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightLiveContainer_tvOS.swift; sourceTree = "<group>"; };
 		D2BE9E793BFE4E52464B69A2 /* TidbitsTrivia.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TidbitsTrivia.entitlements; sourceTree = "<group>"; };
+		D50CC8FE4C2A40751C616B5F /* NightLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightLink.swift; sourceTree = "<group>"; };
 		D85FC9EA0ED55C307CC3525F /* PlayerRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerRecord.swift; sourceTree = "<group>"; };
 		DEB3E620FB0E374A393778E4 /* oddoneout.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = oddoneout.json; sourceTree = "<group>"; };
 		E48988FC967EF362B69C2FB5 /* TemplateEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplateEngine.swift; sourceTree = "<group>"; };
@@ -135,11 +140,10 @@
 		F3AE68F153F8C298960BFD36 /* Player.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Player.swift; sourceTree = "<group>"; };
 		F4534F27C4206B9640778460 /* SettingsView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView_tvOS.swift; sourceTree = "<group>"; };
 		F5C9D9266531ECD27156562D /* GameView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView_tvOS.swift; sourceTree = "<group>"; };
-		FEED000000000000000000F1 /* NightLiveContainer_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightLiveContainer_tvOS.swift; sourceTree = "<group>"; };
 		F705319E1E9AC235B5D005C4 /* RecordsView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordsView_tvOS.swift; sourceTree = "<group>"; };
 		FD70222B5EE4C4145E4D1F84 /* NightSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightSetupView.swift; sourceTree = "<group>"; };
 		FFC46D4CE8D03186C064C759 /* Question.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Question.swift; sourceTree = "<group>"; };
-		"TEMP_0E441DB6-0F9C-44B4-ABA4-0BA7DEC2F832" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
+		"TEMP_A5155736-2454-43B2-92D9-3EF132D434E0" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -259,7 +263,7 @@
 			children = (
 				C23D07A7744AE72B2935CB2F /* ContentView_tvOS.swift */,
 				F5C9D9266531ECD27156562D /* GameView_tvOS.swift */,
-				FEED000000000000000000F1 /* NightLiveContainer_tvOS.swift */,
+				CF5CC9559B7356814F9FE1D4 /* NightLiveContainer_tvOS.swift */,
 				ABC3E5834F087B503EF2FE95 /* NightView_tvOS.swift */,
 				F705319E1E9AC235B5D005C4 /* RecordsView_tvOS.swift */,
 				F4534F27C4206B9640778460 /* SettingsView_tvOS.swift */,
@@ -297,11 +301,13 @@
 		E6842571E6A114474C252661 /* Networking */ = {
 			isa = PBXGroup;
 			children = (
-				FEED00000000000000000001 /* NightProtocol.swift */,
-				FEED00000000000000000003 /* NightTransport.swift */,
-				FEED00000000000000000005 /* NightHost.swift */,
-				FEED00000000000000000007 /* NightClient.swift */,
-				FEED00000000000000000009 /* LiveNight.swift */,
+				83FF1890FBAD38C220D2C1BE /* BonjourTransport.swift */,
+				2AD18ED3C40BFC78AFD8FB0C /* LiveNight.swift */,
+				A0B1B4D9BA126D3D5E585A00 /* NightClient.swift */,
+				61CF6B570C9884F8DF3645CD /* NightHost.swift */,
+				D50CC8FE4C2A40751C616B5F /* NightLink.swift */,
+				2188212D23A7B95BDD7D6ED6 /* NightProtocol.swift */,
+				12852A694244CCEEC20EB41B /* NightTransport.swift */,
 				655168DF8FE110D6336394D2 /* WikipediaClient.swift */,
 			);
 			path = Networking;
@@ -314,8 +320,8 @@
 				7A77D01159167F1BE602ABED /* GameContainerView.swift */,
 				BE92745D6860E623628A0CBC /* GamePlayView.swift */,
 				7AAEF55F4DD8DEA37D200C32 /* HomeView.swift */,
-				FEED0000000000000000000B /* NightLiveContainer.swift */,
 				40995246A8957880F31323EB /* NightContainerView.swift */,
+				80062C51298B935C19365672 /* NightLiveContainer.swift */,
 				FD70222B5EE4C4145E4D1F84 /* NightSetupView.swift */,
 				0BFD0D04EAFA9DBEB25F3A8E /* OnboardingView.swift */,
 				F18495176F588DF9E5C7907E /* PartyContainerView.swift */,
@@ -351,10 +357,10 @@
 			path = TidbitsTrivia;
 			sourceTree = "<group>";
 		};
-		"TEMP_B7B4D7DC-10A5-44FF-80BA-348A7745CBB8" /* Tidbits-Trivia */ = {
+		"TEMP_723AD7EF-94E7-4F17-B0DA-FA84245F2793" /* Tidbits-Trivia */ = {
 			isa = PBXGroup;
 			children = (
-				"TEMP_0E441DB6-0F9C-44B4-ABA4-0BA7DEC2F832" /* AppVersion.xcconfig */,
+				"TEMP_A5155736-2454-43B2-92D9-3EF132D434E0" /* AppVersion.xcconfig */,
 			);
 			path = "Tidbits-Trivia";
 			sourceTree = "<group>";
@@ -443,6 +449,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				254A5D097C6BED08159370E5 /* AppStore.swift in Sources */,
+				720B221EF4EDD7A3044FB807 /* BonjourTransport.swift in Sources */,
 				AD2E45CD70618846B0546B96 /* ContentView_iOS.swift in Sources */,
 				EE8626F023BDE890D701F4B1 /* ContentView_tvOS.swift in Sources */,
 				92B4788F3A0CAC7DE68FB848 /* CorpusDatabase.swift in Sources */,
@@ -459,19 +466,20 @@
 				6CF073BFB022FF600B3B9428 /* GamePlayView.swift in Sources */,
 				B726DC9ED39E20DD9B3F5FD1 /* GameSettings.swift in Sources */,
 				87D2A2B94B2CE47C7ADB8348 /* GameView_tvOS.swift in Sources */,
-				FEED000000000000000000F0 /* NightLiveContainer_tvOS.swift in Sources */,
 				7051BF4D2CFDDEB46EC57971 /* Haptics.swift in Sources */,
 				D78451DA6D74E2BA65EB56C8 /* HomeView.swift in Sources */,
 				B60770C2C79E6CC6D4EA52AC /* JSONQuestionSource.swift in Sources */,
+				02F153022C6FAD01DE261FB5 /* LiveNight.swift in Sources */,
+				D408A3818D906999A4AD99DC /* NightClient.swift in Sources */,
 				4E1DDB93B46A5CC413B608F5 /* NightContainerView.swift in Sources */,
+				822891D7170B156CB45A51CF /* NightHost.swift in Sources */,
+				C0DE632706A625B3AFF44EF8 /* NightLink.swift in Sources */,
+				BAE653DC19291745458BE180 /* NightLiveContainer.swift in Sources */,
+				8932DF2335A76D131E937272 /* NightLiveContainer_tvOS.swift in Sources */,
 				43F8B1E0DFD953763387E1D7 /* NightPlan.swift in Sources */,
-				FEED00000000000000000000 /* NightProtocol.swift in Sources */,
-				FEED00000000000000000002 /* NightTransport.swift in Sources */,
-				FEED00000000000000000004 /* NightHost.swift in Sources */,
-				FEED00000000000000000006 /* NightClient.swift in Sources */,
-				FEED00000000000000000008 /* LiveNight.swift in Sources */,
-				FEED0000000000000000000A /* NightLiveContainer.swift in Sources */,
+				58D69F6CD06518853ACBCE55 /* NightProtocol.swift in Sources */,
 				46C78F229E1F5ABC0888E25F /* NightSetupView.swift in Sources */,
+				0E0A3E02FDD6CEB760974C4B /* NightTransport.swift in Sources */,
 				453B198C89878F4FC0690176 /* NightView_tvOS.swift in Sources */,
 				9EA492C785F5F4ED0BFB78FF /* OnboardingView.swift in Sources */,
 				47EC13554A9F7DAAAC0104A3 /* PartyContainerView.swift in Sources */,
@@ -500,7 +508,7 @@
 /* Begin XCBuildConfiguration section */
 		296659EF0549868336801823 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_0E441DB6-0F9C-44B4-ABA4-0BA7DEC2F832" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_A5155736-2454-43B2-92D9-3EF132D434E0" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -616,7 +624,7 @@
 		};
 		E6F711EEEE2896F84FE9AB98 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_0E441DB6-0F9C-44B4-ABA4-0BA7DEC2F832" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_A5155736-2454-43B2-92D9-3EF132D434E0" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;

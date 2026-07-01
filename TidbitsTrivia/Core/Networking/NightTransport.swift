@@ -1,29 +1,16 @@
 import Foundation
-import Network
 import CryptoKit
 
-/// Shared Network.framework plumbing for Trivia Night local multiplayer
-/// (Decision 033), migrated to the cross-platform v2 wire (docs/CROSS-PLATFORM-
-/// MULTIPLAYER.md): plain TCP + app-layer AES-GCM keyed by the room code, so an
-/// Android device — whose TLS stack can't speak Apple's GCM-PSK suite — can join.
+/// Trivia Night frame codec (Decision 033) — the cross-platform v2 wire
+/// (docs/CROSS-PLATFORM-MULTIPLAYER.md): app-layer AES-GCM keyed by the room
+/// code, so an Android device — whose TLS stack can't speak Apple's GCM-PSK
+/// suite — can join. The AES-GCM key is `SHA256("tidbits-night-v1:<CODE>")`.
 ///
-/// **No Apple↔Apple degradation:** `includePeerToPeer` stays on, so two Apple
-/// devices still pair over AWDL with no router; the same Bonjour service is also
-/// advertised on the LAN, which is how Android (no AWDL) discovers it over a
-/// shared Wi-Fi. The AES-GCM key is the SAME `SHA256("tidbits-night-v1:<CODE>")`
-/// this file already derived for the PSK, reused as the symmetric key.
-///
-/// Build-verified, NOT yet two-device-verified — a cross-platform pairing test is
-/// the gate.
+/// Pure value-logic (no Network import): a transport behind the `NightPeerLink`
+/// seam moves these frames as opaque bytes — Bonjour mDNS+TCP today (which keeps
+/// `includePeerToPeer`, so Apple↔Apple stays router-free over AWDL), Wi-Fi Aware
+/// / BLE / remote links later, all carrying the identical frames.
 enum NightTransport {
-
-    /// Plain-TCP parameters with peer-to-peer Wi-Fi opted in (Apple↔Apple AWDL).
-    /// Confidentiality + auth are the app-layer AES-GCM below, not TLS.
-    static func parameters() -> NWParameters {
-        let params = NWParameters.tcp
-        params.includePeerToPeer = true
-        return params
-    }
 
     /// Frame a message: `4-byte big-endian length + AES-256-GCM(nonce‖ciphertext‖tag)`.
     /// Byte-identical to the Android `NightWire` scheme (12-byte nonce, 16-byte tag).
@@ -39,14 +26,6 @@ enum NightTransport {
         var out = Data(bytes: &prefix, count: Night.headerBytes)
         out.append(body)
         return out
-    }
-
-    /// Send one framed, encrypted message on a connection (best-effort).
-    static func send(_ message: NightMessage, over connection: NWConnection, key: SymmetricKey) {
-        guard let data = encode(message, key: key) else { return }
-        connection.send(content: data, completion: .contentProcessed { error in
-            if let error { print("[night] send failed: \(error)") }
-        })
     }
 }
 

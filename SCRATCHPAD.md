@@ -79,11 +79,14 @@ owner task).
 
 ## Next up (see docs/HANDOFF.md §6 for the full backlog)
 
-**Networked-night track (hottest):** (1) **iOS Wi-Fi Aware + BLE** — first the
-**Apple transport-interface refactor** (abstract `NightHost`/`NightClient` off
-`NWConnection` behind a connection interface like Android's `NightPeer`), then the
-iOS 26 `WiFiAware` (`NetworkListener`/`NetworkBrowser`, Info.plist `WiFiAwareServices`)
-+ Core Bluetooth adapters. (2) **Search all transports in parallel** so Wi-Fi Aware
+**Networked-night track (hottest):** (1) **iOS Wi-Fi Aware + BLE** — the
+**Apple transport-interface refactor is DONE (2026-07-01)**: `NightHost`/`NightClient`
+are off `NWConnection`, behind `NightLink.swift` (`NightPeerLink`, mirror of Android's
+`NightPeer`) + `BonjourTransport.swift`. The iOS 26 `WiFiAware` + Core Bluetooth
+adapters are now thin second implementations — but per
+`docs/CROSS-PLATFORM-MULTIPLAYER.md` they should be built AGAINST HARDWARE (two
+device-only open questions: unpaired-strangers pairing model; whether non-TLS is
+allowed), not blind. (2) **Search all transports in parallel** so Wi-Fi Aware
 can auto-select for Android↔Android without breaking cross-platform (it's disabled by
 default right now). (3) process-death score-restore from the roster; (4) **GitHub-gist
 REMOTE** transport (serverless internet play, host OAuth device-flow); (5) web
@@ -499,3 +502,21 @@ One-line-per-round; full detail in `ARCHIVE.md`.
   / Jazz 97 survive). Verified on the iOS 27 sim ("Chicago" → 1919 Black Sox → Kenesaw
   Mountain Landis). *Owner feedback:* Create speed + writing quality "significantly
   better." Versions now Apple 1.6.12/53, Android 1.6.12/44.
+- **2026-07-01 (Apple transport-interface refactor — networked-night track item 1a).**
+  *State found:* Apple `NightHost`/`NightClient` hard-wired to `NWListener`/`NWBrowser`/
+  `NWConnection` — the blocker for iOS Wi-Fi Aware + BLE. *Did:* new
+  `Core/Networking/NightLink.swift` (`NightPeerLink` + `NightHostTransport` +
+  `NightClientTransport`, the Swift mirror of Android's `net/NightTransport.kt` seam —
+  transports move opaque GCM frames only, callbacks `@MainActor` for Swift-6
+  sendability) + `BonjourTransport.swift` (all Network.framework code extracted:
+  `BonjourHostTransport`/`BonjourClientTransport`/`ConnectionPeer`, `includePeerToPeer`
+  kept so Apple↔Apple stays AWDL). `NightHost`/`NightClient` now own only protocol/
+  crypto/seats/rejoin, keyed by peer id, transport constructor-injected (default
+  Bonjour). `NightTransport.swift` reduced to the pure frame codec. Public API
+  unchanged → zero UI edits. *Verified:* iOS + tvOS BUILD SUCCEEDED **and** a
+  standalone swiftc loopback harness ran the REAL repo transport files end-to-end:
+  advertise → discover-by-code → frames both ways → host drop reported (PASS).
+  Wire + behavior unchanged, so the existing hardware confirmation stands; the next
+  2-device session re-covers it incidentally. *Left:* Wi-Fi Aware + BLE adapters are
+  now thin — build them against hardware per the doc (two device-only open questions).
+  No version bump (no ship); bump on next beta push.

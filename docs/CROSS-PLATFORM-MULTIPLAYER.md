@@ -215,11 +215,42 @@ behind a clear "needs a GitHub sign-in, adds a few seconds of lag" note.
 3. **Verify id parity** (`docs/DATA-CONTRACT.md`): a golden test asserting the same
    question has the same id in the Apple SQLite corpus and the Android JSON corpus —
    the precondition for shipping IDs. Pin `docs/NIGHT-WIRE-SCHEMA.md`.
-4. **Transport adapter #2 — Wi-Fi Aware** (`WiFiAware` on iOS 26, `WifiAwareManager` on
-   Android) → best cross-platform path, no router. Same state machine.
+4. **Transport adapter #2 — Wi-Fi Aware** (no router). **Android: built** (2026-06-30,
+   `net/WifiAwareTransport.kt`, compiles) — `WifiAwareManager` publish/subscribe →
+   `WifiAwareNetworkSpecifier` → a TCP socket over the Wi-Fi Aware `Network` (open data
+   path; app-layer AES-GCM unchanged). Capability-gated: `NightTransports.host/client`
+   **auto-falls-back to mDNS+TCP** when the hardware lacks Wi-Fi Aware, so nothing
+   regresses. Device-gated (no emulator has the radio). **iOS: planned** — see below.
 5. **Transport adapter #3 — BLE** (Core Bluetooth ↔ Android BLE) → the "works with no
    Wi-Fi at all" universal fallback.
 6. **Remote (optional):** R1 GitHub-Gist transport behind the same `NightMessage`.
+
+## iOS 26 Wi-Fi Aware — the plan (not yet built)
+
+The iOS side is a **larger, genuinely-unverifiable** change, so it's staged, not
+rushed. What the API research (WWDC25) established:
+
+- **New declarative networking API.** iOS 26 doesn't use `NWListener`/`NWConnection`
+  for Wi-Fi Aware — it uses `NetworkListener` / `NetworkBrowser` / `NetworkConnection`
+  with a `.wifiAware(.connecting(to:from:))` descriptor and a `.parameters { … }`
+  builder. Our current `NightHost`/`NightClient` are hard-wired to `NWConnection`'s
+  `receive`/`send`, so adding Wi-Fi Aware means **first refactoring the Apple host/
+  client behind a small connection interface** (mirroring Android's `NightPeer`) —
+  then a Wi-Fi Aware adapter is a thin second implementation.
+- **Service declaration:** Info.plist `WiFiAwareServices` dict with a ≤15-char name
+  (`.tcp` suffix) — must equal Android's `TidbitsNight` service — marked Publishable +
+  Subscribable; plus `WAPublishableService` / `WASubscribableService` extensions.
+- **Capability gate:** `WACapabilities.supportedFeatures.contains(.wifiAware)`, with the
+  same auto-fallback to Bonjour+TCP the Android side already does.
+
+**Two open questions that only a device answers** (why it's not written blind): (1)
+the **pairing model** — `WAPairedDevice` implies a system pairing step; whether the
+"strangers in a room, type a code" flow works UNPAIRED (via a device filter on the
+service) needs testing; (2) whether the new API lets us run a **plain (non-TLS)**
+connection so our app-layer AES-GCM carries auth, or forces `TLS()` (which would
+re-introduce the exact Android-can't-do-GCM-PSK problem). Recommend proving the
+**mDNS+TCP** path on two devices first, then building the Apple connection-interface
+refactor + Wi-Fi Aware adapter against real hardware.
 
 ## House rules that apply
 

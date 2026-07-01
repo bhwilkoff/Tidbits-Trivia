@@ -38,7 +38,7 @@ class LiveNight private constructor(
     companion object {
         fun host(store: Store, context: Context, rounds: List<Pair<String, Int>>, categoryId: String, hostName: String): LiveNight {
             val ln = LiveNight(Role.HOST, store, context, rounds, categoryId)
-            val h = NightHost(NsdTcpHostTransport(context.applicationContext))
+            val h = NightHost(NightTransports.host(context))
             ln.host = h
             h.start(hostName)
             return ln
@@ -46,7 +46,7 @@ class LiveNight private constructor(
 
         fun join(store: Store, context: Context): LiveNight {
             val ln = LiveNight(Role.JOINER, store, context, emptyList(), "mixed")
-            val c = NightClient(NsdTcpClientTransport(context.applicationContext), store.deviceId())
+            val c = NightClient(NightTransports.client(context), store.deviceId())
             ln.client = c
             c.onNight = { plan, qs ->
                 val planRounds = plan.rounds.map { it.kind to it.count }

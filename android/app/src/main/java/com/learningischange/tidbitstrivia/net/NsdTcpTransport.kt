@@ -7,7 +7,6 @@ import android.net.wifi.WifiManager
 import java.net.InetSocketAddress
 import java.net.ServerSocket
 import java.net.Socket
-import java.util.concurrent.Executors
 
 /**
  * Transport adapter #1: DNS-SD (NsdManager) + plain TCP. This is the PROVEN
@@ -16,35 +15,11 @@ import java.util.concurrent.Executors
  * host and vice versa, over a shared Wi-Fi router. Confidentiality/auth is the
  * app-layer AES-GCM in NightWire (Android can't speak Apple's GCM-PSK TLS suite).
  *
- * Wi-Fi Aware / BLE are future adapters implementing the same interfaces; the
- * host/client state machine never changes. NOT yet two-device-verified.
+ * Wi-Fi Aware (no router) is adapter #2; the host/client state machine never
+ * changes. NOT yet two-device-verified. `SocketPeer` is shared (NightTransport.kt).
  *
  * Requires NEARBY_WIFI_DEVICES (Android 13+) for discovery; the UI requests it.
  */
-private class SocketPeer(private val socket: Socket) : NightPeer {
-    override val id = "${socket.inetAddress?.hostAddress}:${socket.port}#${System.identityHashCode(socket)}"
-    private val out = socket.getOutputStream()
-    private val writer = Executors.newSingleThreadExecutor()
-
-    override fun send(frame: ByteArray) {
-        writer.execute { runCatching { synchronized(out) { out.write(frame); out.flush() } } }
-    }
-    override fun close() {
-        runCatching { socket.close() }
-        runCatching { writer.shutdownNow() }
-    }
-    fun readLoop(onBytes: (ByteArray) -> Unit, onEnd: () -> Unit) {
-        Thread {
-            val buf = ByteArray(16 * 1024)
-            val ins = runCatching { socket.getInputStream() }.getOrNull()
-            if (ins != null) runCatching {
-                while (true) { val n = ins.read(buf); if (n < 0) break; onBytes(buf.copyOf(n)) }
-            }
-            onEnd()
-        }.apply { isDaemon = true }.start()
-    }
-}
-
 class NsdTcpHostTransport(private val context: Context) : NightHostTransport {
     private var server: ServerSocket? = null
     private var nsd: NsdManager? = null

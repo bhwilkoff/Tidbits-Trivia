@@ -2,10 +2,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Trivia Night local multiplayer (DNS-SD discovery + TCP sockets). -->
+    <!-- Trivia Night local multiplayer (DNS-SD discovery + TCP sockets; Wi-Fi Aware). -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE"/>
+    <!-- Wi-Fi Aware is optional — the app falls back to DNS-SD + TCP without it. -->
+    <uses-feature android:name="android.hardware.wifi.aware" android:required="false"/>
     <!-- NSD discovery reveals nearby devices; Android 13+ gates it behind this
          runtime permission (neverForLocation = we don't derive location). -->
     <uses-permission

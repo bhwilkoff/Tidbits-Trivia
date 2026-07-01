@@ -558,6 +558,19 @@ One-line-per-round; full detail in `ARCHIVE.md`.
   internal --no-bump`, key via `PLAY_SERVICE_ACCOUNT_JSON=~/.config/play/
   archivewatch-play.json` — the script's default `tidbits-play.json` path doesn't
   exist); web live via Pages (sw v7).
+- **2026-07-01 (Android reveal parity — owner: post-answer reveals "not nearly as
+  robust as iOS" + missing Wikipedia link).** *Found:* PARITY row 94 ("Learn the
+  fact" reveal) was a silently-false ✅ — Android's reveal card had no status icon
+  and NO source link (iOS: `Link("Read <title> on Wikipedia")`; web: "Read on
+  Wikipedia ↗"; Android: nothing), plus a leftover 🏁 emoji. *Fix (AppRoot.kt):*
+  mint `Verified` / coral `Lightbulb` badge, explanation bumped to 15sp/0.9 alpha,
+  round-complete line → `SportsScore` icon, and "Read <sourceTitle> on Wikipedia"
+  TextButton via `LocalUriHandler` (`Icons.AutoMirrored.Filled.OpenInNew` needs its
+  own import even with the filled wildcard). *Verified:* assembleDebug green;
+  emulator: answered a real Geography question → reveal shows badge + explanation +
+  link; tapping the link opens Chrome. PARITY row corrected. *Also seen:* one
+  transient "corpus is empty" error on FIRST launch after reinstall (load race,
+  pre-existing) — recovered on retry; worth a future produceState/loading-gate look.
 - **2026-07-01 (night wire-schema doc + golden tests — networked-night track item 6).**
   *Did:* **`docs/NIGHT-WIRE-SCHEMA.md`** — the normative Apple↔Android wire contract
   (framing/crypto, discovery, message kinds + required fields, the

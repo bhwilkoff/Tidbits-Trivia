@@ -91,7 +91,7 @@ reached is ⏳ with a note, never silence.
 | 8 categories | ✅ | ✅ | ✅ | ✅ | Mixed/History/Science/Geography/Arts/Film&TV/Music/Sports |
 | Countdown clock + speed bonus | ✅ | ✅ | ✅ | ✅ | Per-question or global per mode |
 | Streak multiplier | ✅ | ✅ | ✅ | ✅ | Capped at 2× (bounded reward) |
-| "Learn the fact" reveal + Wikipedia link | ✅ | ✅ | ✅ | ✅ | The mission-critical screen |
+| "Learn the fact" reveal + Wikipedia link | ✅ | ✅ | ✅ | ✅ | The mission-critical screen. **2026-07-01 audit: the Android cell was silently false** — its reveal lacked the correct/lightbulb status icon and the "Read <title> on Wikipedia" source link both iOS + web had. Fixed same day: Material `Verified`/`Lightbulb` badge, richer explanation type, `SportsScore` round-complete icon (was a 🏁 emoji), and the source link via `LocalUriHandler` — emulator-verified opening Chrome |
 | Post-game missed-fact recap | ✅ | ✅ | ✅ | ✅ | Full "Tidbits to remember" list — every miss + answer + cited fact. tvOS in a focusable ScrollView; Android in the results scroll (SOLO-BACKLOG F2) |
 | Four content states (load/empty/error/offline) | ✅ | ✅ | ✅ | ✅ | Web: service-worker offline; native: bundled corpus |
 | Emoji-grid result on screen | ✅ | ✅ | ✅ | ✅ | + share intent (Android), ShareLink (iOS), Web Share |

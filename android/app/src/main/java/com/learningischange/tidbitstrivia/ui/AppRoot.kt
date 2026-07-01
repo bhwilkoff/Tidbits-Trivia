@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.*
@@ -38,6 +39,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import coil3.compose.AsyncImage
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -599,9 +601,13 @@ internal fun PlayingScreen(game: GameState) {
             }
         }
         if (game.phase == GamePhase.REVEAL) {
+            val uriHandler = LocalUriHandler.current
             ChunkyCard(fill = MaterialTheme.colorScheme.surfaceVariant) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Icon(if (game.lastCorrect) Icons.Filled.Verified else Icons.Filled.Lightbulb, null,
+                            tint = if (game.lastCorrect) accentText(Pops.mint) else accentText(Pops.coral),
+                            modifier = Modifier.size(22.dp))
                         Text(if (game.lastCorrect) "Nice — you knew it." else "Now you know.", fontWeight = FontWeight.Bold, fontSize = 17.sp, modifier = Modifier.weight(1f))
                         if (game.mode == Mode.STAKE) {
                             val earned = if (game.lastCorrect) "+${game.currentStake}" else "+0"
@@ -617,10 +623,22 @@ internal fun PlayingScreen(game: GameState) {
                     }
                     if (q.accepted != null) Text("Answer: ${q.answerText}", fontWeight = FontWeight.Bold)
                     q.enumerate?.let { spec -> EnumerateReveal(game, spec) }
-                    if (q.explanation.isNotEmpty()) Text(q.explanation)
+                    if (q.explanation.isNotEmpty()) Text(q.explanation, fontSize = 15.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f))
                     if (game.mode == Mode.BAR_TRIVIA && game.nextRoundTitle != null)
-                        Text("🏁 Round ${game.currentRoundNumber} complete · up next: ${game.nextRoundTitle}",
-                            color = accentText(Pops.coral), fontWeight = FontWeight.Bold)
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Icon(Icons.Filled.SportsScore, null, tint = accentText(Pops.coral), modifier = Modifier.size(18.dp))
+                            Text("Round ${game.currentRoundNumber} complete · up next: ${game.nextRoundTitle}",
+                                color = accentText(Pops.coral), fontWeight = FontWeight.Bold)
+                        }
+                    // Parity with iOS/web: every reveal links back to its source article.
+                    if (q.sourceUrl.isNotEmpty()) {
+                        TextButton(onClick = { uriHandler.openUri(q.sourceUrl) }, contentPadding = PaddingValues(0.dp)) {
+                            Icon(Icons.AutoMirrored.Filled.OpenInNew, null, modifier = Modifier.size(16.dp), tint = Pops.blue)
+                            Spacer(Modifier.width(6.dp))
+                            Text("Read ${q.sourceTitle} on Wikipedia", color = Pops.blue, fontSize = 13.sp)
+                        }
+                    }
                 }
             }
             // Self-paced advances here; a networked night is advanced by the host (below the game).

@@ -2,10 +2,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Required perms ship empty; add per-feature as you wire them up. -->
-    <!-- <uses-permission android:name="android.permission.INTERNET"/> auto-granted -->
-    <!-- <uses-permission android:name="android.permission.CAMERA"/> for Scan -->
-    <!-- <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/> for FCM -->
+    <!-- Trivia Night local multiplayer (DNS-SD discovery + TCP sockets). -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE"/>
+    <!-- NSD discovery reveals nearby devices; Android 13+ gates it behind this
+         runtime permission (neverForLocation = we don't derive location). -->
+    <uses-permission
+        android:name="android.permission.NEARBY_WIFI_DEVICES"
+        android:usesPermissionFlags="neverForLocation"/>
 
     <application
         android:name=".app.AppNameApplication"

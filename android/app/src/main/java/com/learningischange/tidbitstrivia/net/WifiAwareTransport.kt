@@ -167,11 +167,16 @@ class WifiAwareClientTransport(private val context: Context) : NightClientTransp
     }
 }
 
-/** Pick the best available transport: Wi-Fi Aware (no router) when the hardware
- *  supports it, else the proven DNS-SD + TCP over a shared Wi-Fi. */
+/**
+ * Which transport to use. **Default = mDNS+TCP** — it is the only path that is
+ * cross-platform today: an iPhone host advertises over Bonjour/mDNS and has NO
+ * Wi-Fi Aware yet, so auto-selecting Wi-Fi Aware here would make an Android
+ * joiner listen on a channel the iPhone never publishes (it just spins on
+ * "searching"). Wi-Fi Aware / BLE are BUILT (`WifiAwareTransport`, `BleTransport`)
+ * and `hasWifiAware`/`hasBle` gate them, but they stay opt-in until iOS ships its
+ * side and we can search all transports in parallel (docs/CROSS-PLATFORM-MULTIPLAYER.md).
+ */
 object NightTransports {
-    fun host(context: Context): NightHostTransport =
-        if (hasWifiAware(context)) WifiAwareHostTransport(context.applicationContext) else NsdTcpHostTransport(context.applicationContext)
-    fun client(context: Context): NightClientTransport =
-        if (hasWifiAware(context)) WifiAwareClientTransport(context.applicationContext) else NsdTcpClientTransport(context.applicationContext)
+    fun host(context: Context): NightHostTransport = NsdTcpHostTransport(context.applicationContext)
+    fun client(context: Context): NightClientTransport = NsdTcpClientTransport(context.applicationContext)
 }

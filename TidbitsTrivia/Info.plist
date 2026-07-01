@@ -24,10 +24,10 @@
 	<false/>
 	<key>NSBonjourServices</key>
 	<array>
-		<string>_tidbits-buzz._tcp</string>
+		<string>_tidbits-night._tcp</string>
 	</array>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>Tidbits uses your local network so phones in the room can act as buzzers for the TV — no internet required.</string>
+	<string>Tidbits uses your local network so nearby devices can host and join a Trivia Night together — no internet required.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

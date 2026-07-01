@@ -22,11 +22,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.*
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -57,7 +54,7 @@ sealed interface Route {
     data object Home : Route
     data object Records : Route
     data object Create : Route
-    data class Game(val mode: Mode, val category: Category, val custom: List<Question>? = null, val label: String? = null, val nightRounds: List<Pair<String, Int>>? = null) : Route
+    data class Game(val mode: Mode, val category: Category, val custom: List<Question>? = null, val label: String? = null, val nightRounds: List<Pair<String, Int>>? = null, val dailyDay: String? = null) : Route
     data object NightSetup : Route
     data object NightJoin : Route
     data object NightLive : Route
@@ -122,6 +119,7 @@ fun AppRoot(
                     is Route.Home -> HomeScreen(
                         store = store,
                         onPlay = { mode, cat -> backStack.add(Route.Game(mode, cat)) },
+                        onPlayDaily = { day -> backStack.add(Route.Game(Mode.DAILY, Category.byId("mixed"), dailyDay = day)) },
                         onNight = { backStack.add(Route.NightSetup) },
                         onParty = { backStack.add(Route.Party) },
                         onJoinNight = { ensureNearby(); backStack.add(Route.NightJoin) },
@@ -180,6 +178,7 @@ private fun BottomBar(current: Route, onSelect: (Route) -> Unit) {
 private fun HomeScreen(
     store: Store,
     onPlay: (Mode, Category) -> Unit,
+    onPlayDaily: (String) -> Unit,
     onNight: () -> Unit,
     onParty: () -> Unit,
     onJoinNight: () -> Unit,
@@ -188,6 +187,7 @@ private fun HomeScreen(
 ) {
     var showCustomize by remember { mutableStateOf(false) }
     var showNight by remember { mutableStateOf(false) }
+    var showDailyArchive by remember { mutableStateOf(false) }
     val (qpMode, qpCat) = store.quickPlay()
     val firstRun = !store.hasQuickPlayHistory()
     val fade = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
@@ -203,19 +203,13 @@ private fun HomeScreen(
             IconButton(onClick = onSettings) { Icon(Icons.Filled.Settings, contentDescription = "Settings") }
         }
 
-        // Quick Play — the ONE primary action.
+        // Quick Play — ONE action, one target (R-HOME-1a, Decision 036).
         ChunkyCard(fill = Pops.coral, onClick = { play(qpMode, qpCat) }) {
             Column(Modifier.padding(20.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Filled.PlayArrow, null, tint = Color.White, modifier = Modifier.size(30.dp))
                     Spacer(Modifier.width(6.dp))
                     Text("QUICK PLAY", fontWeight = FontWeight.Black, fontSize = 28.sp, color = Color.White)
-                    Spacer(Modifier.weight(1f))
-                    Surface(onClick = { val (m, c) = store.surprise(); play(m, c) },
-                        shape = RoundedCornerShape(999.dp), color = Color.White.copy(alpha = 0.24f)) {
-                        Text("🎲 Surprise", Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
-                            color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                    }
                 }
                 Spacer(Modifier.height(6.dp))
                 Text("${qpMode.title.uppercase()} · ${qpCat.name.uppercase()}", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
@@ -224,13 +218,37 @@ private fun HomeScreen(
             }
         }
 
-        // Daily — kept prominent (the daily-return habit).
-        ChunkyCard(fill = Pops.yellow, onClick = { onPlay(Mode.DAILY, Category.byId("mixed")) }) {
+        // Surprise + Customize — the quiet secondary pair under the hero (R-HOME-1a).
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            OutlinedButton(onClick = { val (m, c) = store.surprise(); play(m, c) }, modifier = Modifier.weight(1f)) {
+                Icon(Icons.Filled.Casino, null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Surprise me", fontWeight = FontWeight.Bold)
+            }
+            OutlinedButton(onClick = { showCustomize = true }, modifier = Modifier.weight(1f)) {
+                Icon(Icons.Filled.Tune, null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Customize", fontWeight = FontWeight.Bold)
+            }
+        }
+
+        // Daily — play-once (R-DAILY-1): locked once done; tap then opens the archive.
+        val todayScore = store.dailyScore(dayKey())
+        ChunkyCard(fill = Pops.yellow, onClick = {
+            if (todayScore != null) showDailyArchive = true else onPlay(Mode.DAILY, Category.byId("mixed"))
+        }) {
             Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("☀️", fontSize = 30.sp); Spacer(Modifier.width(12.dp))
+                Icon(if (todayScore == null) Icons.Filled.WbSunny else Icons.Filled.Verified,
+                    null, tint = Ink, modifier = Modifier.size(30.dp))
+                Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
                     Text("DAILY TIDBIT", fontWeight = FontWeight.Black, fontSize = 20.sp, color = Ink)
-                    Text("7 questions. Everyone gets the same set. Keep your streak.", color = Ink.copy(alpha = 0.75f), fontSize = 13.sp)
+                    if (todayScore != null) {
+                        Text("Done for today — you scored $todayScore. New set tomorrow.", color = Ink.copy(alpha = 0.75f), fontSize = 13.sp)
+                        Text("Play previous days", color = Ink, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    } else {
+                        Text("7 questions. Everyone gets the same set. Keep your streak.", color = Ink.copy(alpha = 0.75f), fontSize = 13.sp)
+                    }
                 }
                 Icon(Icons.Filled.KeyboardArrowRight, null, tint = Ink)
             }
@@ -239,7 +257,8 @@ private fun HomeScreen(
         // Trivia Night — one unified entry → host/join sheet.
         ChunkyCard(fill = Pops.coral, onClick = { showNight = true }) {
             Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("🎉", fontSize = 28.sp); Spacer(Modifier.width(12.dp))
+                Icon(Icons.Filled.Celebration, null, tint = Color.White, modifier = Modifier.size(28.dp))
+                Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
                     Text("TRIVIA NIGHT", fontWeight = FontWeight.Black, fontSize = 20.sp, color = Color.White)
                     Text("Host or join a night of mixed rounds.", color = Color.White.copy(alpha = 0.85f), fontSize = 13.sp)
@@ -248,23 +267,12 @@ private fun HomeScreen(
             }
         }
 
-        // Customize — secondary; opens the mode/category sheet.
-        Surface(onClick = { showCustomize = true }, shape = RoundedCornerShape(16.dp),
-            color = MaterialTheme.colorScheme.surface, border = BorderStroke(2.dp, Ink)) {
-            Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("🎛️", fontSize = 22.sp); Spacer(Modifier.width(12.dp))
-                Column(Modifier.weight(1f)) {
-                    Text("Customize a game", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                    Text("Pick a mode, a category, save a mix", color = fade, fontSize = 13.sp)
-                }
-                Icon(Icons.Filled.KeyboardArrowRight, null, tint = fade)
-            }
-        }
-
         Text("More ways to play", fontWeight = FontWeight.Bold, fontSize = 20.sp)
         Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-            HomeTile("👥", "Pass & Play", Pops.grape, Modifier.weight(1f), onParty)
-            HomeTile("✨", "Create", Pops.teal, Modifier.weight(1f), onCreate)
+            HomeTile(Icons.Filled.Group, "Pass & Play", Pops.grape, Modifier.weight(1f), onParty)
+            // Placeholder for the next marquee feature (Decision 036) —
+            // Create still lives one tap away in its own tab.
+            ComingSoonTile(Icons.Filled.Public, "Online Multiplayer", Modifier.weight(1f))
         }
         Spacer(Modifier.height(24.dp))
     }
@@ -273,17 +281,75 @@ private fun HomeScreen(
         onStart = { showNight = false; onNight() }, onJoin = { showNight = false; onJoinNight() })
     if (showCustomize) CustomizeSheet(store = store, initial = store.quickPlay(),
         onDismiss = { showCustomize = false }, onStart = { m, c -> showCustomize = false; play(m, c) })
+    if (showDailyArchive) DailyArchiveSheet(store = store,
+        onDismiss = { showDailyArchive = false },
+        onPlayDay = { day -> showDailyArchive = false; onPlayDaily(day) })
 }
 
 @Composable
-private fun HomeTile(emoji: String, title: String, fill: Color, modifier: Modifier, onClick: () -> Unit) {
+private fun HomeTile(icon: ImageVector, title: String, fill: Color, modifier: Modifier, onClick: () -> Unit) {
     ChunkyCard(fill = fill, onClick = onClick, modifier = modifier) {
         Column(Modifier.padding(14.dp).heightIn(min = 76.dp)) {
-            Text(emoji, fontSize = 24.sp)
+            Icon(icon, null, tint = onAccent(fill), modifier = Modifier.size(24.dp))
             Spacer(Modifier.height(6.dp))
             Text(title, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = onAccent(fill))
         }
     }
+}
+
+/** The Online Multiplayer placeholder (Decision 036) — visibly not-yet-tappable. */
+@Composable
+private fun ComingSoonTile(icon: ImageVector, title: String, modifier: Modifier) {
+    Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(2.dp, MaterialTheme.colorScheme.outline), modifier = modifier.alpha(0.75f)) {
+        Column(Modifier.padding(14.dp).heightIn(min = 76.dp)) {
+            Icon(icon, null, modifier = Modifier.size(24.dp))
+            Spacer(Modifier.height(6.dp))
+            Text(title, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            Text("Coming soon", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+        }
+    }
+}
+
+/** Previous Tidbits — the Daily archive (R-DAILY-1). */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DailyArchiveSheet(store: Store, onDismiss: () -> Unit, onPlayDay: (String) -> Unit) {
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 24.dp).padding(bottom = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text("Previous Tidbits", fontWeight = FontWeight.Black, fontSize = 22.sp)
+            Text("Every day has its own set of 7 — the same for everyone. Catching up doesn't change your streak.",
+                fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+            recentDayKeys(30).forEach { day ->
+                val score = store.dailyScore(day)
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text(dayLabel(day), fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                    if (score != null) {
+                        Text("Scored $score", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                    } else {
+                        TextButton(onClick = { onPlayDay(day) }) { Text("Play") }
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun recentDayKeys(count: Int): List<String> {
+    val c = java.util.Calendar.getInstance()
+    return (0 until count).map {
+        val k = "%04d-%02d-%02d".format(c.get(java.util.Calendar.YEAR), c.get(java.util.Calendar.MONTH) + 1, c.get(java.util.Calendar.DAY_OF_MONTH))
+        c.add(java.util.Calendar.DAY_OF_MONTH, -1)
+        k
+    }
+}
+
+private fun dayLabel(day: String): String {
+    if (day == dayKey()) return "Today"
+    val f = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
+    val d = runCatching { f.parse(day) }.getOrNull() ?: return day
+    return java.text.SimpleDateFormat("EEE, MMM d", java.util.Locale.getDefault()).format(d)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -294,16 +360,16 @@ private fun NightEntrySheet(onDismiss: () -> Unit, onStart: () -> Unit, onJoin: 
             Text("Trivia Night", fontWeight = FontWeight.Black, fontSize = 26.sp)
             Text("A night of mixed rounds — every kind of question. Host for the room, or join someone's code. Apple or Android, same code.",
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f), fontSize = 14.sp)
-            ChunkyCard(fill = Pops.coral, onClick = onStart, modifier = Modifier.fillMaxWidth()) { NightRow("▶", "Start a night", "Host for others, or play solo") }
-            ChunkyCard(fill = Pops.teal, onClick = onJoin, modifier = Modifier.fillMaxWidth()) { NightRow("#", "Join a night", "Enter a host's 4-letter code") }
+            ChunkyCard(fill = Pops.coral, onClick = onStart, modifier = Modifier.fillMaxWidth()) { NightRow(Icons.Filled.PlayArrow, "Start a night", "Host for others, or play solo") }
+            ChunkyCard(fill = Pops.teal, onClick = onJoin, modifier = Modifier.fillMaxWidth()) { NightRow(Icons.Filled.Tag, "Join a night", "Enter a host's 4-letter code") }
         }
     }
 }
 
 @Composable
-private fun NightRow(glyph: String, title: String, sub: String) {
+private fun NightRow(icon: ImageVector, title: String, sub: String) {
     Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(glyph, fontSize = 22.sp, fontWeight = FontWeight.Black, color = Color.White)
+        Icon(icon, null, tint = Color.White, modifier = Modifier.size(24.dp))
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
             Text(title, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.White)
@@ -327,27 +393,30 @@ private fun CustomizeSheet(store: Store, initial: Pair<Mode, Category>, onDismis
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text("Customize a game", fontWeight = FontWeight.Black, fontSize = 22.sp)
-            Text("MODE", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = fade)
+            Text("Mode", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = fade)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 (if (showAll) playableModes else coreModes).forEach { m ->
                     FilterChip(selected = mode == m, onClick = { mode = m }, label = { Text(m.title) })
                 }
             }
+            // Bare mode names ("Stake", "Which First?") don't explain themselves —
+            // the selected mode always shows its one-liner.
+            Text("${mode.title}: ${mode.blurb}", fontSize = 13.sp, color = fade)
             TextButton(onClick = { showAll = !showAll }, contentPadding = PaddingValues(0.dp)) {
-                Text(if (showAll) "Fewer modes" else "More modes…", color = Pops.blue)
+                Text(if (showAll) "Show fewer modes" else "Show all modes", color = Pops.blue)
             }
-            Text("CATEGORY", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = fade)
+            Text("Category", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = fade)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Category.all.forEach { c -> FilterChip(selected = cat.id == c.id, onClick = { cat = c }, label = { Text(c.name) }) }
             }
             if (presets.isNotEmpty()) {
-                Text("★ MY PRESETS", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = fade)
+                Text("My presets", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = fade)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     presets.forEach { p -> AssistChip(onClick = { mode = p.mode; cat = p.category }, label = { Text(p.name) }) }
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedButton(onClick = { saving = true }) { Text("Save this") }
+                OutlinedButton(onClick = { saving = true }) { Text("Save preset") }
                 Button(onClick = { onStart(mode, cat) }, modifier = Modifier.weight(1f).height(50.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Pops.coral, contentColor = Color.White)) {
                     Text("Start", fontWeight = FontWeight.Bold, fontSize = 16.sp)
@@ -358,7 +427,7 @@ private fun CustomizeSheet(store: Store, initial: Pair<Mode, Category>, onDismis
     if (saving) {
         var name by remember { mutableStateOf("${cat.name} ${mode.title}") }
         AlertDialog(onDismissRequest = { saving = false },
-            title = { Text("Save this mix") },
+            title = { Text("Save this combination") },
             text = { OutlinedTextField(value = name, onValueChange = { name = it }, singleLine = true, label = { Text("Name") }) },
             confirmButton = {
                 TextButton(onClick = {
@@ -439,7 +508,7 @@ private fun NightJoinScreen(initialCode: String, initialName: String, onJoin: (S
 private fun GameScreen(route: Route.Game, store: Store, onDone: () -> Unit) {
     val scope = rememberCoroutineScope()
     val haptics = rememberGameHaptics(store)
-    val game = remember { GameState(route.mode, route.category, store, route.custom, route.label, route.nightRounds) }
+    val game = remember { GameState(route.mode, route.category, store, route.custom, route.label, route.nightRounds, dailyDay = route.dailyDay) }
     LaunchedEffect(Unit) { game.start() }
     LaunchedEffect(game.index, game.phase) {
         while (game.phase == GamePhase.PLAYING) { delay(100); game.tick() }
@@ -459,7 +528,10 @@ private fun GameScreen(route: Route.Game, store: Store, onDone: () -> Unit) {
                 Button(onClick = onDone) { Text("Back") }
             }
         }
-        GamePhase.FINISHED -> ResultsScreen(game, onPlayAgain = { scope.launch { game.restart() } }, onDone = onDone)
+        // The Daily is play-once (R-DAILY-1) — no replay of a locked set.
+        GamePhase.FINISHED -> ResultsScreen(game,
+            onPlayAgain = if (route.mode == Mode.DAILY) null else ({ scope.launch { game.restart() } }),
+            onDone = onDone)
         else -> PlayingScreen(game)
     }
 }
@@ -473,8 +545,10 @@ internal fun PlayingScreen(game: GameState) {
             Text(game.progressLabel, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
             LinearProgressIndicator(progress = { game.clockFraction.toFloat() }, modifier = Modifier.weight(1f),
                 color = if (game.remaining <= 5) Pops.coral else Pops.blue)
-            AssistChip(onClick = {}, label = { Text("🔥 ${game.streak}") })
-            AssistChip(onClick = {}, label = { Text("★ ${game.score}") })
+            AssistChip(onClick = {}, label = { Text("${game.streak}") },
+                leadingIcon = { Icon(Icons.Filled.LocalFireDepartment, null, modifier = Modifier.size(16.dp)) })
+            AssistChip(onClick = {}, label = { Text("${game.score}") },
+                leadingIcon = { Icon(Icons.Filled.Star, null, modifier = Modifier.size(16.dp)) })
         }
         if (game.mode == Mode.BAR_TRIVIA && game.currentRoundTitle != null) {
             ChunkyCard(fill = MaterialTheme.colorScheme.surfaceVariant, modifier = Modifier.fillMaxWidth()) {
@@ -757,7 +831,7 @@ private fun AnswerButton(text: String, state: AnswerVisual, enabled: Boolean, on
 // ---- Results ----
 
 @Composable
-private fun ResultsScreen(game: GameState, onPlayAgain: () -> Unit, onDone: () -> Unit) {
+private fun ResultsScreen(game: GameState, onPlayAgain: (() -> Unit)?, onDone: () -> Unit) {
     val context = LocalContext.current
     val total = game.answered.size
     val acc = if (total == 0) 0 else game.correctCount * 100 / total
@@ -792,7 +866,7 @@ private fun ResultsScreen(game: GameState, onPlayAgain: () -> Unit, onDone: () -
                 }
             }
         }
-        Button(onClick = onPlayAgain, modifier = Modifier.fillMaxWidth()) { Text("Play Again") }
+        if (onPlayAgain != null) Button(onClick = onPlayAgain, modifier = Modifier.fillMaxWidth()) { Text("Play Again") }
         TextButton(onClick = onDone) { Text("Done") }
     }
 }
@@ -872,12 +946,12 @@ private fun TopicRow(d: DomainProgress) {
     ChunkyCard {
         Row(Modifier.padding(12.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Box(Modifier.size(36.dp).background(col, CircleShape).border(2.5.dp, Ink, CircleShape), contentAlignment = Alignment.Center) {
-                Text(c.icon, fontSize = 16.sp)
+                Icon(categoryIcon(c.id), null, tint = onAccent(col), modifier = Modifier.size(18.dp))
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(c.name, fontWeight = FontWeight.Bold)
-                    if (d.hasWedge) Text("✓", color = accentText(Pops.mint), fontWeight = FontWeight.Black)
+                    if (d.hasWedge) Icon(Icons.Filled.Verified, "Mastered", tint = accentText(Pops.mint), modifier = Modifier.size(16.dp))
                     Spacer(Modifier.weight(1f))
                     Surface(color = col, shape = RoundedCornerShape(999.dp), border = BorderStroke(2.dp, Ink)) {
                         Text("Level ${d.level}", color = onAccent(col), fontWeight = FontWeight.Black, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 9.dp, vertical = 2.dp))
@@ -935,4 +1009,16 @@ private fun CreateScreen(onPlay: (List<Question>, String) -> Unit) {
 private fun ChunkyCard(modifier: Modifier = Modifier, fill: Color = MaterialTheme.colorScheme.surface, onClick: (() -> Unit)? = null, content: @Composable () -> Unit) {
     val base = modifier.fillMaxWidth().then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
     Surface(shape = RoundedCornerShape(18.dp), color = fill, border = BorderStroke(2.5.dp, Ink), modifier = base) { content() }
+}
+
+/** R-ICON-1: category glyphs come from Material Symbols, not the emoji field. */
+internal fun categoryIcon(id: String): ImageVector = when (id) {
+    "history" -> Icons.Filled.HistoryEdu
+    "science" -> Icons.Filled.Science
+    "geography" -> Icons.Filled.Public
+    "arts" -> Icons.Filled.TheaterComedy
+    "film" -> Icons.Filled.Movie
+    "music" -> Icons.Filled.MusicNote
+    "sports" -> Icons.Filled.EmojiEvents
+    else -> Icons.Filled.Shuffle
 }

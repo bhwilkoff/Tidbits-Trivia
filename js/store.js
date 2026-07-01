@@ -117,11 +117,21 @@ export const Store = {
   resetSeen() { this._seen.clear(); localStorage.removeItem('tidbits.seen'); },
 
   records() { return LS.get('tidbits.records', []); },
-  addRecord(rec) {
+  addRecord(rec, countsForStreak = true) {
     const all = this.records();
     all.unshift(rec);
     LS.set('tidbits.records', all.slice(0, 500));
-    if (rec.mode === 'daily') this._bumpStreak();
+    // Archive catch-ups of past Dailies don't feed the streak (R-DAILY-1).
+    if (rec.mode === 'daily' && countsForStreak) this._bumpStreak();
+  },
+
+  // R-DAILY-1: per-day Daily results — first completion locks the day.
+  dailyScore(day) { return LS.get('tidbits.daily.results', {})[day] ?? null; },
+  recordDaily(day, score) {
+    const m = LS.get('tidbits.daily.results', {});
+    if (m[day] != null) return;
+    m[day] = score;
+    LS.set('tidbits.daily.results', m);
   },
   bestScore(mode) {
     return this.records().filter((r) => r.mode === mode).reduce((m, r) => Math.max(m, r.score), 0);

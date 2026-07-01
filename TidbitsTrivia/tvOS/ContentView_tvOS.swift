@@ -26,6 +26,7 @@ struct ContentView_tvOS: View {
     @State private var showSettings = false
     @State private var showNightSetup = false
     @State private var showCustomize = false
+    @State private var showDailyArchive = false
     @FocusState private var primaryFocused: Bool
 
     /// Launch a game and (unless Daily) remember it as the Quick Play default.
@@ -41,9 +42,9 @@ struct ContentView_tvOS: View {
                 VStack(alignment: .leading, spacing: 60) {
                     header
                     quickPlayHero
+                    quickActionsRow
                     dailyHero
                     nightHero
-                    customizeHero
                 }
                 .padding(.horizontal, 90)
                 .padding(.vertical, 60)
@@ -56,7 +57,13 @@ struct ContentView_tvOS: View {
             }
         }
         .fullScreenCover(item: $launch) { req in
-            TVGameContainer(mode: req.mode, category: req.category)
+            TVGameContainer(mode: req.mode, category: req.category, dailyDay: req.dailyDay)
+        }
+        .fullScreenCover(isPresented: $showDailyArchive) {
+            TVDailyArchive { day in
+                showDailyArchive = false
+                launch = LaunchRequest(mode: .daily, category: .named("mixed"), dailyDay: day)
+            }
         }
         .fullScreenCover(item: $nightLaunch) { req in
             TVNightContainer(plan: req.plan, category: req.category)
@@ -155,22 +162,23 @@ struct ContentView_tvOS: View {
         .background(TVTheme.panel, in: RoundedRectangle(cornerRadius: 28))
     }
 
-    private var customizeHero: some View {
-        Button { showCustomize = true } label: {
-            HStack(spacing: 24) {
-                Image(systemName: "slider.horizontal.3").font(.system(size: 40, weight: .black))
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Customize a game").font(.system(size: 34, weight: .heavy, design: .rounded))
-                    Text("Pick a mode, a category, save a mix")
-                        .font(.system(size: 25, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
-                }
-                Spacer()
+    /// R-HOME-1a: the hero is ONE action — Surprise + Customize are a quiet
+    /// chip row directly beneath it.
+    private var quickActionsRow: some View {
+        HStack(spacing: 24) {
+            Button { play(store.surpriseMe().mode, store.surpriseMe().category) } label: {
+                Label("Surprise me", systemImage: "die.face.5.fill")
+                    .font(.system(size: 27, weight: .bold, design: .rounded))
             }
-            .foregroundStyle(TVTheme.text)
-            .padding(32)
-            .frame(maxWidth: .infinity)
+            .buttonStyle(TVChipStyle(accent: Tidbits.Palette.grape, selected: false))
+            Button { showCustomize = true } label: {
+                Label("Customize a game", systemImage: "slider.horizontal.3")
+                    .font(.system(size: 27, weight: .bold, design: .rounded))
+            }
+            .buttonStyle(TVChipStyle(accent: Tidbits.Palette.blue, selected: false))
+            Spacer()
         }
-        .buttonStyle(TVChipStyle(accent: Tidbits.Palette.blue, selected: false))
+        .focusSection()
     }
 
     private var header: some View {
@@ -201,14 +209,18 @@ struct ContentView_tvOS: View {
     }
 
     private var dailyHero: some View {
-        Button {
-            launch = LaunchRequest(mode: .daily, category: .named("mixed"))
+        let played = DailyLog.todayScore
+        return Button {
+            if played != nil { showDailyArchive = true }
+            else { launch = LaunchRequest(mode: .daily, category: .named("mixed")) }
         } label: {
             HStack(spacing: 28) {
-                Image(systemName: "sun.max.fill").font(.system(size: 64, weight: .black))
+                Image(systemName: played == nil ? "sun.max.fill" : "checkmark.seal.fill")
+                    .font(.system(size: 64, weight: .black))
                 VStack(alignment: .leading, spacing: 8) {
                     Text("DAILY TIDBIT").font(.system(size: 40, weight: .black, design: .rounded))
-                    Text("7 questions. Everyone gets the same set. Keep your streak.")
+                    Text(played.map { "Done for today — you scored \($0). Press to play previous days." }
+                         ?? "7 questions. Everyone gets the same set. Keep your streak.")
                         .font(.system(size: 29, weight: .medium, design: .rounded))
                         .foregroundStyle(.black.opacity(0.7))
                 }
@@ -290,6 +302,51 @@ private struct TVCustomizePicker: View {
                         .scrollClipDisabled()
                     }
                     .focusSection()
+                }
+                .padding(.horizontal, 90)
+                .padding(.vertical, 60)
+            }
+        }
+    }
+}
+
+// MARK: - Previous Tidbits (the Daily archive, R-DAILY-1)
+
+private struct TVDailyArchive: View {
+    let onPlay: (String) -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        ZStack {
+            TVTheme.bg.ignoresSafeArea()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 40) {
+                    Text("Previous Tidbits")
+                        .font(.system(size: 56, weight: .black, design: .rounded)).foregroundStyle(TVTheme.text)
+                    Text("Every day has its own set of 7 — the same for everyone. Catching up doesn't change your streak.")
+                        .font(.system(size: 27, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+                    VStack(spacing: 18) {
+                        ForEach(DailyLog.recentDays(), id: \.day) { entry in
+                            let today = QuestionProvider.dayKey()
+                            Button {
+                                if entry.score == nil { onPlay(entry.day) } else { dismiss() }
+                            } label: {
+                                HStack {
+                                    Text(entry.day == today ? "Today" : entry.day)
+                                        .font(.system(size: 29, weight: .bold, design: .rounded))
+                                    Spacer()
+                                    Text(entry.score.map { "Scored \($0)" } ?? "Play")
+                                        .font(.system(size: 27, weight: .medium, design: .rounded))
+                                        .foregroundStyle(entry.score == nil ? TVTheme.text : TVTheme.textSoft)
+                                }
+                                .padding(.horizontal, 32).padding(.vertical, 18)
+                                .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(TVChipStyle(accent: entry.score == nil ? Tidbits.Palette.coral : Tidbits.Palette.blue,
+                                                     selected: false))
+                            .disabled(entry.score != nil && entry.day != today)
+                        }
+                    }
                 }
                 .padding(.horizontal, 90)
                 .padding(.vertical, 60)

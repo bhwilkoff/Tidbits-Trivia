@@ -23,7 +23,11 @@ async function boot() {
   renderLoading('Loading Tidbits…');
   try { await Corpus.load(); } catch (e) { /* live fallback still works */ }
   if (!location.hash) location.hash = '#/play';
-  if (location.hash.startsWith('#/daily')) { render(); startGame('daily', catById('mixed')); return; }
+  if (location.hash.startsWith('#/daily')) {
+    render();
+    if (Store.dailyScore(dayKey()) == null) startGame('daily', catById('mixed'));
+    return;
+  }
   // Shareable Trivia Night deep links: #/night (Pub) or #/night/quick|works.
   if (location.hash.startsWith('#/night')) {
     render();
@@ -49,14 +53,28 @@ function render() {
   document.title = 'Tidbits Trivia';
 }
 
+// R-ICON-1 (Decision 036): UI icons are inline SVG, never emoji. Emoji stay in
+// CONTENT (share grids, celebration copy, streak data strings).
+const ICON = {
+  play: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M4 2l9 6-9 6z" fill="currentColor"/></svg>',
+  create: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M7 2h2v5h5v2H9v5H7V9H2V7h5z" fill="currentColor"/></svg>',
+  records: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M2 13h2.4V6H2zM6.8 13h2.4V3H6.8zM11.6 13H14V8h-2.4z" fill="currentColor"/></svg>',
+  die: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><rect x="1.6" y="1.6" width="12.8" height="12.8" rx="3" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="5.4" cy="5.4" r="1.15" fill="currentColor"/><circle cx="10.6" cy="5.4" r="1.15" fill="currentColor"/><circle cx="8" cy="8" r="1.15" fill="currentColor"/><circle cx="5.4" cy="10.6" r="1.15" fill="currentColor"/><circle cx="10.6" cy="10.6" r="1.15" fill="currentColor"/></svg>',
+  sliders: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><g stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M2 4.2h7M12.4 4.2H14M2 8h2.6M8 8h6M2 11.8h5M10.4 11.8H14"/></g><circle cx="10.6" cy="4.2" r="1.7" fill="currentColor"/><circle cx="5.9" cy="8" r="1.7" fill="currentColor"/><circle cx="8.4" cy="11.8" r="1.7" fill="currentColor"/></svg>',
+  globe: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.2"/><ellipse cx="8" cy="8" rx="2.8" ry="6.2"/><path d="M2 8h12M2.8 5h10.4M2.8 11h10.4"/></g></svg>',
+  flame: '<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path d="M8.3 1.2c.3 2.6-3.6 4-3.6 7.4a3.9 3.9 0 007.8 0c0-1.3-.5-2.3-1.2-3.2-.3 1-.9 1.5-1.5 1.5.4-1.6-.2-4-1.5-5.7z" fill="currentColor"/></svg>',
+  sun: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><circle cx="8" cy="8" r="3.2" fill="currentColor"/><g stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.4 1.4M11.6 11.6L13 13M13 3l-1.4 1.4M4.4 11.6L3 13"/></g></svg>',
+  check: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M2.5 8.5l3.5 3.5 7.5-8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+};
+
 function header(tab) {
   const tabBtn = (id, label, icon) => `<a class="tab ${tab === id ? 'active' : ''}" href="#/${id}">${icon}<span>${label}</span></a>`;
   return `<header class="topbar">
     <div class="brand">TIDBITS</div>
     <nav class="tabs">
-      ${tabBtn('play', 'Play', '▶')}
-      ${tabBtn('create', 'Create', '✦')}
-      ${tabBtn('records', 'Records', '▌▌')}
+      ${tabBtn('play', 'Play', ICON.play)}
+      ${tabBtn('create', 'Create', ICON.create)}
+      ${tabBtn('records', 'Records', ICON.records)}
     </nav>
   </header>`;
 }
@@ -97,21 +115,21 @@ function viewHome() {
     <h1 class="page-title">Trivia from the whole of Wikipedia.</h1>
     <button class="banner card hero" data-quickplay>
       <div class="hero-main">
-        <div class="hero-title">▶ QUICK PLAY</div>
+        <div class="hero-title">${ICON.play} QUICK PLAY</div>
         <div class="hero-sub">${h(qpMode.toUpperCase())} · ${h(qpCat.toUpperCase())}</div>
         <div class="hero-hint">${first ? 'Tap to play — customize anytime' : 'Jump straight into a round'}</div>
       </div>
-      <span class="hero-surprise" data-surprise role="button">🎲 Surprise</span>
     </button>
-    <button class="banner card daily" data-daily><div><div class="banner-title">DAILY TIDBIT</div>
-      <div class="muted">7 questions. Everyone gets the same set. Keep your streak.</div></div><span class="chev">›</span></button>
+    <div class="quick-actions">
+      <button class="btn btn-quiet" data-surprise>${ICON.die}<span>Surprise me</span></button>
+      <button class="btn btn-quiet" data-customize>${ICON.sliders}<span>Customize</span></button>
+    </div>
+    ${dailyBanner()}
     <button class="banner card night-banner-cta" data-night-open><div><div class="banner-title">TRIVIA NIGHT</div>
       <div class="muted">Host or join a night of mixed rounds.</div></div><span class="chev">›</span></button>
-    <button class="banner card customize-row" data-customize><div><div class="banner-title">Customize a game</div>
-      <div class="muted">Pick a mode, a category, save a mix</div></div><span class="chev">›</span></button>
     <h2 class="section">More ways to play</h2>
     <div class="home-tiles">
-      <a class="tile card" href="#/create"><span class="tile-emoji">✨</span><span class="tile-name">Create</span></a>
+      <div class="tile card soon" aria-disabled="true"><span class="tile-ico">${ICON.globe}</span><span class="tile-name">Online Multiplayer</span><span class="muted">Coming soon</span></div>
     </div>
     <dialog id="night-dlg" class="night-dlg">
       <div class="night-form">
@@ -129,24 +147,68 @@ function viewHome() {
         </div>
       </div>
     </dialog>
+    <dialog id="daily-dlg" class="night-dlg">
+      <div class="night-form">
+        <h2>Previous Tidbits</h2>
+        <p class="muted">Every day has its own set of 7 — the same for everyone. Catching up doesn't change your streak.</p>
+        <div class="daily-list">
+          ${dailyArchiveRows()}
+        </div>
+        <div class="night-actions"><button type="button" class="btn" data-daily-close>Close</button></div>
+      </div>
+    </dialog>
     <dialog id="customize-dlg" class="night-dlg">
       <div class="night-form">
         <h2>Customize a game</h2>
         <h3 class="section">Mode</h3>
         <div class="chips" id="cust-modes"></div>
-        <button type="button" class="link-btn" data-more-modes>More modes…</button>
+        <p class="muted" id="cust-blurb"></p>
+        <button type="button" class="link-btn" data-more-modes>Show all modes</button>
         <h3 class="section">Category</h3>
         <div class="chips" id="cust-cats">
           ${CATEGORIES.map((c) => `<button type="button" class="chip" data-ccat="${c.id}">${h(c.name)}</button>`).join('')}
         </div>
         <div id="cust-presets"></div>
         <div class="night-actions">
-          <button type="button" class="btn" data-cust-save>Save this</button>
+          <button type="button" class="btn" data-cust-save>Save preset</button>
           <button type="button" class="btn btn-primary" data-cust-start>Start</button>
         </div>
       </div>
     </dialog>
     ${appsPromo()}`;
+}
+
+// Daily banner (R-DAILY-1): play-once; locked state opens the archive.
+function dailyBanner() {
+  const score = Store.dailyScore(dayKey());
+  if (score == null) {
+    return `<button class="banner card daily" data-daily><div><div class="banner-title">${ICON.sun} DAILY TIDBIT</div>
+      <div class="muted">7 questions. Everyone gets the same set. Keep your streak.</div></div><span class="chev">›</span></button>`;
+  }
+  return `<button class="banner card daily" data-daily><div><div class="banner-title">${ICON.check} DAILY TIDBIT</div>
+    <div class="muted">Done for today — you scored ${score}. New set tomorrow.</div>
+    <div class="muted"><u>Play previous days</u></div></div><span class="chev">›</span></button>`;
+}
+
+function dailyArchiveRows() {
+  const days = [];
+  const d = new Date();
+  for (let i = 0; i < 30; i++) {
+    days.push(dayKey(d));
+    d.setDate(d.getDate() - 1);
+  }
+  const today = dayKey();
+  const label = (k) => {
+    if (k === today) return 'Today';
+    const [y, m, dd] = k.split('-').map(Number);
+    return new Date(y, m - 1, dd).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+  };
+  return days.map((k) => {
+    const sc = Store.dailyScore(k);
+    return `<div class="daily-row"><b>${label(k)}</b>${sc != null
+      ? `<span class="muted">Scored ${sc}</span>`
+      : `<button type="button" class="btn" data-daily-day="${k}">Play</button>`}</div>`;
+  }).join('');
 }
 
 // Native-app promotion — appears at the foot of the scrollable home screen.
@@ -172,13 +234,15 @@ function renderCustModes() {
   const box = $('#cust-modes');
   box.innerHTML = list.map((m) => `<button type="button" class="chip${m === custMode ? ' on' : ''}" data-cmode="${m}">${h(MODES[m].title)}</button>`).join('');
   box.querySelectorAll('[data-cmode]').forEach((b) => b.addEventListener('click', () => { custMode = b.dataset.cmode; renderCustModes(); }));
-  const more = $('[data-more-modes]'); if (more) more.textContent = custShowAll ? 'Fewer modes' : 'More modes…';
+  const more = $('[data-more-modes]'); if (more) more.textContent = custShowAll ? 'Show fewer modes' : 'Show all modes';
+  // Bare mode names ("Stake", "Which First?") don't explain themselves.
+  const blurb = $('#cust-blurb'); if (blurb) blurb.textContent = `${MODES[custMode].title}: ${MODES[custMode].blurb}`;
 }
 function markCustCat() { $('#cust-cats').querySelectorAll('[data-ccat]').forEach((c) => c.classList.toggle('on', c.dataset.ccat === custCat)); }
 function renderCustPresets() {
   const ps = getPresets();
   const el = $('#cust-presets');
-  el.innerHTML = ps.length ? `<h3 class="section">★ My presets</h3><div class="chips">${ps.map((p, i) => `<button type="button" class="chip" data-preset-idx="${i}">${h(p.name)}</button>`).join('')}</div>` : '';
+  el.innerHTML = ps.length ? `<h3 class="section">My presets</h3><div class="chips">${ps.map((p, i) => `<button type="button" class="chip" data-preset-idx="${i}">${h(p.name)}</button>`).join('')}</div>` : '';
   el.querySelectorAll('[data-preset-idx]').forEach((b) => b.addEventListener('click', () => {
     const p = getPresets()[+b.dataset.presetIdx]; if (!p) return;
     custMode = p.mode; custCat = (p.categoryIds && p.categoryIds[0]) || 'mixed';
@@ -187,19 +251,26 @@ function renderCustPresets() {
 }
 
 function bindHome() {
-  // Quick Play — the ONE primary action (+ opt-in Surprise).
-  $('[data-quickplay]').addEventListener('click', (e) => {
-    if (e.target.closest('[data-surprise]')) return;
+  // Quick Play — ONE action, one target (R-HOME-1a); Surprise is its own button.
+  $('[data-quickplay]').addEventListener('click', () => {
     const qp = quickPlayTarget(); rememberPlay(qp.mode, qp.cat); startGame(qp.mode, catById(qp.cat));
   });
-  const surprise = $('[data-surprise]');
-  if (surprise) surprise.addEventListener('click', (e) => {
-    e.stopPropagation();
+  $('[data-surprise]').addEventListener('click', () => {
     const m = ALL_MODES[Math.floor(Math.random() * ALL_MODES.length)];
     const c = CATEGORIES[Math.floor(Math.random() * CATEGORIES.length)];
     rememberPlay(m, c.id); startGame(m, catById(c.id));
   });
-  $('[data-daily]').addEventListener('click', () => startGame('daily', catById('mixed')));
+  // Daily is play-once (R-DAILY-1): once done, the card opens the archive.
+  const dailyDlg = $('#daily-dlg');
+  $('[data-daily]').addEventListener('click', () => {
+    if (Store.dailyScore(dayKey()) != null) dailyDlg.showModal();
+    else startGame('daily', catById('mixed'));
+  });
+  $('[data-daily-close]').addEventListener('click', () => dailyDlg.close());
+  dailyDlg.querySelectorAll('[data-daily-day]').forEach((b) => b.addEventListener('click', () => {
+    dailyDlg.close();
+    startGame('daily', catById('mixed'), { dailyDay: b.dataset.dailyDay });
+  }));
 
   // Trivia Night dialog (native <dialog showModal> — focus trap + ESC free).
   let nightPreset = 1;
@@ -228,7 +299,7 @@ function bindHome() {
   $('[data-cust-start]').addEventListener('click', () => { cust.close(); rememberPlay(custMode, custCat); startGame(custMode, catById(custCat)); });
   $('[data-cust-save]').addEventListener('click', () => {
     const def = `${(catById(custCat) || { name: '' }).name} ${MODES[custMode].title}`;
-    const name = prompt('Name this mix', def);
+    const name = prompt('Name this preset', def);
     if (name && name.trim()) { savePreset({ name: name.trim(), mode: custMode, categoryIds: [custCat] }); renderCustPresets(); }
   });
 }
@@ -341,6 +412,7 @@ function progressSection() {
 class Game {
   constructor(mode, category, opts = {}) {
     this.mode = MODES[mode]; this.category = category; this.label = opts.label;
+    this.dailyDay = opts.dailyDay || null;   // archive plays of a past Daily (R-DAILY-1)
     this.questions = []; this.index = 0; this.score = 0; this.streak = 0; this.maxStreak = 0;
     this.answered = []; this.chosen = null; this.phase = 'loading';
     this.remaining = 0; this.timer = null; this.qStart = 0; this.globalDeadline = null;
@@ -357,7 +429,7 @@ class Game {
     let qs;
     if (this._custom) qs = this._custom;
     else if (this.mode.id === 'barTrivia') qs = await this._loadNight();
-    else if (this.mode.id === 'daily') qs = Corpus.daily(dayKey(), 7);
+    else if (this.mode.id === 'daily') qs = Corpus.daily(this.dailyDay || dayKey(), 7);
     else if (this.mode.id === 'pictureId') {
       await Pictures.load();
       qs = Pictures.pull(this.category.id, Store._seen, this.mode.count);
@@ -653,7 +725,10 @@ class Game {
   _end() { clearInterval(this.timer); this.phase = 'finished'; this._persist(); renderResults(); }
   _persist() {
     const correct = this.answered.filter((a) => a.correct).length;
-    Store.addRecord({ mode: this.mode.id, categoryID: this.category.id, score: this.score, correct, total: this.answered.length, maxStreak: this.maxStreak, date: dayKey() });
+    if (this.mode.id === 'daily') Store.recordDaily(this.dailyDay || dayKey(), this.score);
+    // Only TODAY'S daily feeds the streak — archive catch-ups don't (R-DAILY-1).
+    Store.addRecord({ mode: this.mode.id, categoryID: this.category.id, score: this.score, correct, total: this.answered.length, maxStreak: this.maxStreak, date: dayKey() },
+      (this.dailyDay || dayKey()) === dayKey());
     Store.recordMisses(this.answered);
     Store.recordTelemetry(this.mode.id, this.answered);
     if (this.mode.id === 'stake') Store.addCalibration(this.stakeOutcomes);
@@ -705,7 +780,7 @@ function renderGame() {
     <div class="game">
       <div class="hud">
         <button class="x" data-quit>✕</button>
-        <span class="pill streak ${game.streak >= 2 ? 'hot' : ''}">🔥 ${game.streak}</span>
+        <span class="pill streak ${game.streak >= 2 ? 'hot' : ''}">${ICON.flame} ${game.streak}</span>
         <span class="pill score">★ ${game.score}</span>
       </div>
       <div class="clockbar"><span id="clk-label">${progress}</span><div class="clock-track"><div id="clk-fill" class="clock-fill"></div></div><span id="clk-secs"></span></div>
@@ -870,11 +945,12 @@ function renderResults() {
       <div class="card pad grid-card"><div class="emoji">${grid}</div><div class="muted">Spoiler-free — safe to share</div></div>
       ${missed.length ? `<h2 class="section">Tidbits to remember</h2>${missed.map((a) => `<div class="card pad"><b>${h(a.q.prompt)}</b><div class="ans">Answer: ${h(a.q.options[a.q.correctIndex])}</div><p class="muted">${h(a.q.explanation)}</p></div>`).join('')}` : ''}
       <button class="btn btn-blue btn-full" data-share>Share Score</button>
-      <button class="btn btn-primary btn-full" data-again>Play Again</button>
+      ${game.mode.id === 'daily' ? '' : '<button class="btn btn-primary btn-full" data-again>Play Again</button>'}
       <button class="btn btn-text btn-full" data-done>Done</button>
     </div>`;
   $('[data-share]').addEventListener('click', () => shareResult(s, grid));
-  $('[data-again]').addEventListener('click', () => startGame(game.mode.id, game.category, game._custom ? { custom: game._custom, label: game.label } : undefined));
+  const again = $('[data-again]');
+  if (again) again.addEventListener('click', () => startGame(game.mode.id, game.category, game._custom ? { custom: game._custom, label: game.label } : undefined));
   $('[data-done]').addEventListener('click', quitGame);
 }
 async function shareResult(s, grid) {

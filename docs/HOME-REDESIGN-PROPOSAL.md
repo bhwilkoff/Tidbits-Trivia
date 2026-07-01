@@ -1,6 +1,14 @@
 # Home Redesign Proposal — "Two taps to trivia"
 
-> **Status:** Proposal (binding-design-doc style). Not yet built.
+> **Status:** BUILT on all four platforms (2026-07-01), then **revised same
+> day after owner audit — see Decision 036.** The deltas from this document
+> as written: (1) the hero contains NO embedded Surprise button — "Surprise
+> me" + "Customize" are a secondary-actions row under the hero (R-HOME-1a);
+> (2) every emoji glyph in the wireframes below is now a platform-system
+> icon — SF Symbols / Material Symbols / inline SVG (R-ICON-1); (3) the
+> "Create" home tile is the **Online Multiplayer placeholder** (Create lives
+> in its tab); (4) the Daily is play-once with a Previous Tidbits archive
+> (R-DAILY-1). Where a wireframe below disagrees, Decision 036 wins.
 > **Author:** design-research session, 2026-07-01.
 > **Scope:** The Play/Home surface on all four platforms (iOS/iPadOS,
 > tvOS, Android, web). No game-loop, corpus, or networking changes.

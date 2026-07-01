@@ -1000,3 +1000,64 @@ grounded retrieval is the every-device baseline). Daily made deterministic
 (seeded pool, not `ORDER BY RANDOM()`). Android icon aligned to the canonical iOS
 mark (confetti moved to a full-bleed background layer). Achievement taxonomy in
 `docs/achievements.json` (GC + Play API creation owner-blocked).
+
+## 036 — Design-audit pass: single-action hero, platform icons only, play-once Daily (rules R-HOME-1a, R-ICON-1, R-DAILY-1)
+
+Four rules from the owner's audit of the R-HOME-1 redesign (2026-07-01): the
+redesign's *structure* was right but several surfaces drifted from
+native-platform-first.
+
+**R-HOME-1a — the hero is ONE action.** The Quick Play hero contains no
+embedded second button. "Surprise me" and "Customize" are a compact
+secondary-actions row directly beneath the hero — two quiet, equal-weight
+buttons in the platform's native secondary-button idiom. (This replaces the
+full-width Customize row AND the capsule-inside-the-hero.)
+
+**Why:** a tap target inside a tap target is awkward on every platform —
+it splits the hero's affordance ("which half do I press?"), breaks
+accessibility grouping, and on web required a nested `role="button"` span
+inside a `<button>` (invalid interactive nesting). Owner: "the Quick Play
+button that is half a surprise button looks incredibly awkward."
+
+**R-ICON-1 — UI icons come from the platform icon system; emoji are content,
+never chrome.** Apple = SF Symbols. Android = Material Symbols
+(material-icons-extended, already a dependency). Web = inline SVG where an
+icon is truly needed, otherwise typographic text. Emoji remain ONLY in
+*content*: share-score grids, celebration copy ("You won! 🎉"), reveal
+headers, onboarding hero art, streak data strings.
+
+**Why:** emoji render inconsistently across OS versions/vendors, can't take
+tint/weight/size tokens, read as unfinished next to real iconography, and
+violate each platform's design language. Owner: "stop using Emojis as icons."
+iOS already did this right — it is the mapping reference (the audit's
+cross-platform icon table lives in the 2026-07-01 session log).
+
+**R-DAILY-1 — the Daily is played ONCE per day; previous dailies are
+replayable from an archive.** Today's Daily locks after completion (the card
+flips to a "done — come back tomorrow" state showing your score). Tapping the
+completed card opens **Previous Tidbits**: a list of recent days (capped ~30)
+with each day's played/score state; an unplayed past day can be played —
+the Daily generator is deterministic-by-date, so any past day's set
+regenerates from its date, no question storage needed. Past days never
+affect the streak (streak = played on the day, as today).
+
+**Why:** a replayable daily is a self-defeating skill test — the second run
+is memorization, and it cheapens the one-shot shared-set social contract
+("everyone gets the same 7"). The archive keeps the learning value (catch-up,
+revisit) without the exploit. Owner: "you shouldn't be able to replay the
+Daily Tidbit… You should be able to play previous daily tidbits, though."
+
+**Also in this pass (no new rule):** the home "Create" tile becomes the
+**Online Multiplayer placeholder** (coming-soon, disabled) — Create remains
+one tap away in its own tab; online multiplayer is the next marquee feature
+(docs/ONLINE-MULTIPLAYER-PLAYBOOK.md) and earns the home slot Create didn't
+need twice. The Customize sheet's labels were de-shouted (sentence case, no
+"★" in headers, native section-header idioms) and every mode now
+self-explains: the selected mode's one-line blurb renders under the mode
+picker, because bare names like "Stake" or "Which First?" were unreadable
+options (owner: "the text on buttons and options within the Customize a Game
+interface is particularly bad").
+
+**Documented inversion (do not harmonize):** the tvOS Customize picker starts
+the game on category selection — no Start button — because selection-is-action
+is the ten-foot idiom; phone/web/tablet commit with an explicit Start.

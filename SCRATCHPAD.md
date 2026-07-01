@@ -521,6 +521,39 @@ One-line-per-round; full detail in `ARCHIVE.md`.
   2-device session re-covers it incidentally. *Left:* Wi-Fi Aware + BLE adapters are
   now thin — build them against hardware per the doc (two device-only open questions).
   No version bump (no ship); bump on next beta push.
+- **2026-07-01 (design-audit pass — Decision 036, owner feedback on the R-HOME-1 redesign).**
+  Owner: Customize "text on buttons and options is particularly bad"; "stop using
+  Emojis as icons"; audit all platforms for platform design language; Create home
+  tile → Online Multiplayer placeholder; hero "half a surprise button… incredibly
+  awkward"; Daily = play-once + previous-days archive. *Did (all 4 platforms, each
+  built + iOS/Android/web screenshot-verified):* **(1) R-HOME-1a** — hero is ONE
+  clean button; Surprise + Customize became a quiet secondary pair beneath it
+  (iOS bordered buttons / Android M3 OutlinedButtons / web `.btn-quiet` pair /
+  tvOS chip row — tvOS also GAINED Surprise). **(2) R-ICON-1** — emoji chrome
+  eliminated: Android home cards/tiles/night rows/records category circles/wedge/
+  in-game chips/leader/handoff → Material Symbols (extended lib was already a dep;
+  `categoryIcon(id)` maps the emoji field); web tab bar/hero/tiles/streak pill →
+  inline `ICON` SVG set; iOS ★ header dropped. Emoji stay in CONTENT only (share
+  grids, celebrations, onboarding art). **(3) Customize sheet de-shouted** —
+  sentence-case headers, no ★, "Show all modes"/"Save preset", selected mode's
+  blurb line self-explains cryptic names; iOS chip grid min 108→150 + lineLimit(1)
+  (fixed the mid-word "Surviv al"/"Geograph y" wraps — the flagged bug). **(4)
+  Online Multiplayer placeholder** (dashed coming-soon tile) replaced the Create
+  tile on iOS/Android/web homes; Create stays in its tab. **(5) R-DAILY-1** —
+  Daily locks after completion (card flips to score + "come back tomorrow"; Play
+  Again suppressed on results); NEW **Previous Tidbits archive** (30 days, iOS
+  sheet List / Android ModalBottomSheet / web dialog / tvOS focus list): unplayed
+  past days replay via the deterministic day-key (engine/provider/summary/records
+  now thread `dailyDay` on all 4); past plays never bump the streak; first
+  completion locks a day (`DailyLog.swift` / Store.dailyScore x3 mirrors). New
+  debug hooks `TIDBITS_CUSTOMIZE=1` / `TIDBITS_DAILY_ARCHIVE=1`. *Verified:* iOS +
+  tvOS + Android builds green, web `node --check`, sw CACHE v6→v7; screenshots:
+  iOS home/customize/archive, Android home/customize, web home. *Notes:* Android
+  emulator carried a STALE legacy package (`com.learningischange.tidbitstrivia.debug`)
+  that shadowed verification — uninstalled; current id is `com.tidbitstrivia.app.debug`.
+  Headless 390px web shots show a right-edge card clip that PRE-DATES this pass
+  (verified via git stash) — check on a real phone sometime. No version bump (no
+  ship); bump on next beta push.
 - **2026-07-01 (night wire-schema doc + golden tests — networked-night track item 6).**
   *Did:* **`docs/NIGHT-WIRE-SCHEMA.md`** — the normative Apple↔Android wire contract
   (framing/crypto, discovery, message kinds + required fields, the

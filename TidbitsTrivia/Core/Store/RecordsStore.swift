@@ -26,7 +26,14 @@ enum RecordsStore {
             resolveMiss(questionID: right.question.id, in: context)
         }
 
-        if summary.mode == .daily { bumpDailyStreak(in: context) }
+        if summary.mode == .daily {
+            let day = summary.dailyDay ?? QuestionProvider.dayKey()
+            DailyLog.record(day: day, score: summary.score)
+            // Only TODAY'S daily feeds the streak — archive catch-ups
+            // (R-DAILY-1) record their day's score but don't count as showing
+            // up on that day.
+            if day == QuestionProvider.dayKey() { bumpDailyStreak(in: context) }
+        }
         if summary.mode == .stake { addCalibration(summary.stakeOutcomes, in: context) }
         recordTelemetry(summary.answered, mode: summary.mode)
 

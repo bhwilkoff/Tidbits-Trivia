@@ -9,6 +9,8 @@ import SwiftData
 struct GameContainerView: View {
     let mode: GameMode
     let category: TriviaCategory
+    /// Archive plays of a past Daily pass their day key (R-DAILY-1).
+    var dailyDay: String? = nil
 
     @Environment(AppStore.self) private var store
     @Environment(\.dismiss) private var dismiss
@@ -16,6 +18,12 @@ struct GameContainerView: View {
     @State private var recorded = false
 
     private var game: GameEngine { store.game }
+
+    /// The Daily is play-once (R-DAILY-1) — no replay of a locked set.
+    private var playAgainAction: (() -> Void)? {
+        if mode == .daily { return nil }
+        return { self.replay() }
+    }
 
     var body: some View {
         ZStack {
@@ -26,7 +34,7 @@ struct GameContainerView: View {
             case .playing, .reveal:
                 GamePlayView(game: game, onQuit: close)
             case .finished:
-                ResultsView(summary: game.summary, onPlayAgain: replay, onDone: close)
+                ResultsView(summary: game.summary, onPlayAgain: playAgainAction, onDone: close)
                     .onAppear(perform: persistIfNeeded)
             }
         }
@@ -39,7 +47,7 @@ struct GameContainerView: View {
                     ? RecordsStore.dueReview(in: modelContext, limit: 30) : []
                 if category.id != "mixed" { review = review.filter { $0.categoryID == category.id } }
                 review = Array(review.prefix(2))
-                await game.start(mode: mode, category: category, review: review)
+                await game.start(mode: mode, category: category, review: review, dailyDay: dailyDay)
             }
         }
     }

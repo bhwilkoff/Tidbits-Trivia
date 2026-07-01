@@ -6,7 +6,8 @@ import SwiftUI
 /// the fact, so the session ends with "now I know these."
 struct ResultsView: View {
     let summary: GameSummary
-    let onPlayAgain: () -> Void
+    /// nil = replay not allowed (the Daily is play-once, R-DAILY-1).
+    let onPlayAgain: (() -> Void)?
     let onDone: () -> Void
 
     var body: some View {
@@ -106,8 +107,10 @@ struct ResultsView: View {
                     .background(RoundedRectangle(cornerRadius: Tidbits.Metric.radius).fill(Tidbits.Palette.blue))
                     .overlay(RoundedRectangle(cornerRadius: Tidbits.Metric.radius).strokeBorder(Tidbits.Palette.border, lineWidth: 3))
             }
-            Button("Play Again", action: onPlayAgain)
-                .buttonStyle(ChunkyButtonStyle())
+            if let onPlayAgain {
+                Button("Play Again", action: onPlayAgain)
+                    .buttonStyle(ChunkyButtonStyle())
+            }
             Button("Done", action: onDone)
                 .font(Tidbits.TypeRamp.l3)
                 .foregroundStyle(Tidbits.Palette.inkSoft)

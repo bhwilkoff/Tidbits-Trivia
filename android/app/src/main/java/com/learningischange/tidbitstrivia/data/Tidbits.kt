@@ -769,7 +769,7 @@ class Store(context: Context) {
 
     data class Rec(val mode: String, val categoryId: String, val score: Int, val correct: Int, val total: Int, val maxStreak: Int, val day: String)
 
-    fun addRecord(r: Rec) {
+    fun addRecord(r: Rec, countsForStreak: Boolean = true) {
         val arr = org.json.JSONArray(prefs.getString("records", "[]"))
         val o = JSONObject().put("mode", r.mode).put("cat", r.categoryId).put("score", r.score)
             .put("correct", r.correct).put("total", r.total).put("streak", r.maxStreak).put("day", r.day)
@@ -777,7 +777,7 @@ class Store(context: Context) {
         list.add(0, o)
         val out = org.json.JSONArray(); list.take(500).forEach { out.put(it) }
         prefs.edit().putString("records", out.toString()).apply()
-        if (r.mode == "DAILY") bumpStreak()
+        if (r.mode == "DAILY" && countsForStreak) bumpStreak()
     }
     fun records(): List<Rec> {
         val arr = org.json.JSONArray(prefs.getString("records", "[]"))
@@ -907,6 +907,18 @@ class Store(context: Context) {
         val o = JSONObject(prefs.getString("missed", "{}") ?: "{}")
         return o.keys().asSequence().map { it to o.getInt(it) }
             .sortedByDescending { it.second }.take(limit).map { it.first }.toList()
+    }
+
+    // R-DAILY-1: per-day Daily results — first completion locks the day.
+    fun dailyScore(day: String): Int? {
+        val o = JSONObject(prefs.getString("daily_results", "{}") ?: "{}")
+        return if (o.has(day)) o.getInt(day) else null
+    }
+    fun recordDaily(day: String, score: Int) {
+        val o = JSONObject(prefs.getString("daily_results", "{}") ?: "{}")
+        if (o.has(day)) return
+        o.put(day, score)
+        prefs.edit().putString("daily_results", o.toString()).apply()
     }
 
     fun streak(): Pair<Int, Int> = (prefs.getInt("streak_cur", 0)) to (prefs.getInt("streak_best", 0))

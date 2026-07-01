@@ -9,6 +9,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -169,7 +171,7 @@ private fun Roster(players: List<NightPlayer>, leaderSeat: Int?) {
                 Row(Modifier.padding(horizontal = 14.dp, vertical = 12.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Box(Modifier.size(28.dp).background(Pops.at(p.seat), CircleShape))
                     Text(p.name + if (p.isHost) " · host" else "", fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                    if (p.seat == leaderSeat) Text("👑", fontSize = 16.sp)
+                    if (p.seat == leaderSeat) Icon(Icons.Filled.EmojiEvents, "Leader", modifier = Modifier.size(16.dp), tint = Pops.yellow)
                 }
             }
         }
@@ -183,7 +185,7 @@ private fun StandingsStrip(players: List<NightPlayer>, mySeat: Int?, leaderSeat:
             val mine = p.seat == mySeat
             Surface(shape = RoundedCornerShape(999.dp), color = if (mine) Pops.blue else MaterialTheme.colorScheme.surface, border = BorderStroke(2.dp, Ink)) {
                 Row(Modifier.padding(horizontal = 12.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    if (p.seat == leaderSeat) Text("👑", fontSize = 13.sp)
+                    if (p.seat == leaderSeat) Icon(Icons.Filled.EmojiEvents, "Leader", modifier = Modifier.size(13.dp), tint = Pops.yellow)
                     Text(p.name, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = if (mine) Color.White else MaterialTheme.colorScheme.onSurface)
                     Text("${p.score}", fontWeight = FontWeight.Black, fontSize = 13.sp, color = if (mine) Color.White else MaterialTheme.colorScheme.onSurface)
                 }

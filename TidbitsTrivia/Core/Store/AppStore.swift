@@ -101,7 +101,9 @@ enum DeepLink: Equatable, Sendable {
 nonisolated struct LaunchRequest: Identifiable, Sendable {
     let mode: GameMode
     let category: TriviaCategory
-    var id: String { "\(mode.rawValue)-\(category.id)" }
+    /// Set only for archive plays of a past Daily (R-DAILY-1).
+    var dailyDay: String? = nil
+    var id: String { "\(mode.rawValue)-\(category.id)-\(dailyDay ?? "")" }
 }
 
 /// A request to launch a configured Trivia Night — drives a `fullScreenCover(item:)`

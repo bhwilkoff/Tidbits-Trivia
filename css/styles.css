@@ -95,6 +95,7 @@ body {
 .btn-grape { background: var(--color-grape); }
 .btn-ink { background: var(--color-ink); }
 .btn-text { background: none; box-shadow: none; border-color: transparent; color: var(--color-ink-soft); }
+.btn-quiet { background: var(--color-surface); color: var(--color-ink); }
 .btn-text:active { transform: none; }
 
 .input { width: 100%; font: inherit; font-size: 17px; padding: 14px; border-radius: 12px;
@@ -331,14 +332,21 @@ body {
 .hero-title { font-weight: 900; font-size: 28px; letter-spacing: 0.5px; }
 .hero-sub { font-weight: 800; font-size: 15px; opacity: 0.95; }
 .hero-hint { font-size: 13px; opacity: 0.85; }
-.hero-surprise { background: rgba(255,255,255,0.24); color: #fff; font-weight: 800; font-size: 13px;
-  padding: 7px 12px; border-radius: 999px; white-space: nowrap; }
-.banner.customize-row { background: var(--color-surface); color: var(--color-ink); }
+.hero-title svg { vertical-align: -1px; margin-right: 4px; }
+.quick-actions { display: flex; gap: 12px; padding-right: var(--shadow); }
+.quick-actions .btn { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center;
+  gap: 8px; font-size: 16px; padding: 12px 10px; white-space: nowrap; }
 .home-tiles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
 .tile { display: flex; flex-direction: column; gap: 8px; padding: 16px; min-height: 84px;
   text-decoration: none; color: #fff; background: var(--color-grape);
   border: var(--bw) solid var(--color-border); border-radius: var(--radius);
   box-shadow: var(--shadow) var(--shadow) 0 var(--color-border); }
-.tile-emoji { font-size: 24px; } .tile-name { font-weight: 800; font-size: 16px; }
+.tile-ico svg { width: 24px; height: 24px; display: block; } .tile-name { font-weight: 800; font-size: 16px; }
+.tile.soon { background: var(--color-surface); color: var(--color-ink); border-style: dashed;
+  box-shadow: none; opacity: 0.8; cursor: default; }
+.daily-list { display: flex; flex-direction: column; gap: 6px; max-height: 46vh; overflow-y: auto; }
+.daily-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 40px; }
+.tab svg { display: block; }
+.pill svg { vertical-align: -2px; }
 .link-btn { background: none; border: none; color: var(--color-accent); font: inherit; font-weight: 700; cursor: pointer; padding: 4px 0; }
 #cust-modes, #cust-cats { flex-wrap: wrap; overflow: visible; }

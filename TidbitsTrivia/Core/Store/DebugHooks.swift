@@ -35,6 +35,16 @@ enum DebugHooks {
 
     /// TIDBITS_PARTY=1 → open Pass & Play on launch (combine with AUTOPILOT
     /// to drive the whole party flow to the scoreboard for screenshots).
+    /// TIDBITS_CUSTOMIZE=1 opens the Customize sheet on launch (screenshots).
+    static var openCustomize: Bool {
+        ProcessInfo.processInfo.environment["TIDBITS_CUSTOMIZE"] == "1"
+    }
+
+    /// TIDBITS_DAILY_ARCHIVE=1 opens the Previous Tidbits archive on launch.
+    static var openDailyArchive: Bool {
+        ProcessInfo.processInfo.environment["TIDBITS_DAILY_ARCHIVE"] == "1"
+    }
+
     static var openParty: Bool {
         ProcessInfo.processInfo.environment["TIDBITS_PARTY"] == "1"
     }

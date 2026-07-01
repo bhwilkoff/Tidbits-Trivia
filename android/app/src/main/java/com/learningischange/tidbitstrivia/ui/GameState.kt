@@ -28,6 +28,8 @@ class GameState(
     // Networked Trivia Night (Decision 033): answers don't auto-reveal — they lock
     // and wait for the host, who calls releaseReveal()/goToQuestion() for everyone.
     val hostPaced: Boolean = false,
+    /** Archive plays of a past Daily pass their day key (R-DAILY-1). */
+    private val dailyDay: String? = null,
 ) {
     /** Fired when this device locks an answer (networked night → report to host). */
     var onLocalAnswer: ((score: Int, correct: Boolean) -> Unit)? = null
@@ -95,7 +97,7 @@ class GameState(
         val qs = when {
             custom != null -> custom
             mode == Mode.BAR_TRIVIA -> loadNight()
-            mode == Mode.DAILY -> Corpus.daily(dayKey(), 7)
+            mode == Mode.DAILY -> Corpus.daily(dailyDay ?: dayKey(), 7)
             mode == Mode.PICTURE_ID -> Pictures.pull(category.id, store.seenSet, mode.count)
             mode == Mode.THIS_OR_THAT -> ThisOrThat.pull(category.id, store.seenSet, mode.count)
             mode == Mode.CLOSEST_CALL -> ClosestCall.pull(category.id, store.seenSet, mode.count)
@@ -406,7 +408,10 @@ class GameState(
         phase = GamePhase.FINISHED
         if (!recorded) {
             recorded = true
-            store.addRecord(Store.Rec(mode.name, category.id, score, correctCount, answered.size, maxStreak, dayKey()))
+            if (mode == Mode.DAILY) store.recordDaily(dailyDay ?: dayKey(), score)
+            // Only TODAY'S daily feeds the streak — archive catch-ups don't (R-DAILY-1).
+            store.addRecord(Store.Rec(mode.name, category.id, score, correctCount, answered.size, maxStreak, dayKey()),
+                countsForStreak = (dailyDay ?: dayKey()) == dayKey())
             store.recordTelemetry(mode, answered.map { it.q to it.chosen })
             store.recordMisses(answered.map { it.q.id to it.correct })   // for spaced review
             if (mode == Mode.STAKE) store.addCalibration(stakeOutcomes.mapValues { it.value[0] to it.value[1] })

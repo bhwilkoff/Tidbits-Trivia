@@ -37,9 +37,9 @@ final class QuestionProvider {
 
     /// Questions for a standard game. Tries the corpus first; if it can't
     /// supply enough fresh questions, tops up with live generation.
-    func questions(mode: GameMode, category: TriviaCategory) async -> [Question] {
+    func questions(mode: GameMode, category: TriviaCategory, dailyDay: String? = nil) async -> [Question] {
         let need = min(mode.questionCount, mode == .timeAttack ? 25 : mode.questionCount)
-        if mode == .daily { return await dailyQuestions(category: category) }
+        if mode == .daily { return await dailyQuestions(category: category, day: dailyDay ?? Self.dayKey()) }
         // Enrichment-built modes ride their own bundled JSON source (E1).
         if mode == .pictureId {
             return JSONQuestionSource.picture.questions(categoryID: category.id, excluding: seen, limit: need)
@@ -175,8 +175,9 @@ final class QuestionProvider {
 
     /// The Daily puzzle: deterministic for the calendar day so every
     /// player gets the same 7 questions (shareable result, fair ladder).
-    func dailyQuestions(category: TriviaCategory) async -> [Question] {
-        let day = Self.dayKey()
+    /// `day` defaults to today; the Previous Tidbits archive (R-DAILY-1)
+    /// passes an earlier key and gets that day's exact set back.
+    func dailyQuestions(category: TriviaCategory, day: String = QuestionProvider.dayKey()) async -> [Question] {
         // Per-day AND per-category, so each category has its own daily set.
         let seed = "\(day):\(category.id)".stableSeed
         var rng = SeededRNG(seed: seed)

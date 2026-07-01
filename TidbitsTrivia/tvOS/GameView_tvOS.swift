@@ -8,6 +8,8 @@ import SwiftData
 struct TVGameContainer: View {
     let mode: GameMode
     let category: TriviaCategory
+    /// Archive plays of a past Daily pass their day key (R-DAILY-1).
+    var dailyDay: String? = nil
     @Environment(AppStore.self) private var store
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
@@ -24,7 +26,7 @@ struct TVGameContainer: View {
             case .playing, .reveal:
                 TVGamePlayView(onQuit: close)
             case .finished:
-                TVResultsView(summary: game.summary, onPlayAgain: replay, onDone: close)
+                TVResultsView(summary: game.summary, onPlayAgain: playAgainAction, onDone: close)
                     .onAppear(perform: persist)
             }
         }
@@ -35,7 +37,7 @@ struct TVGameContainer: View {
                     ? RecordsStore.dueReview(in: modelContext, limit: 30) : []
                 if category.id != "mixed" { review = review.filter { $0.categoryID == category.id } }
                 review = Array(review.prefix(2))
-                await game.start(mode: mode, category: category, review: review)
+                await game.start(mode: mode, category: category, review: review, dailyDay: dailyDay)
             }
         }
         .onExitCommand(perform: close)   // Menu button quits the game (modal: allowed)
@@ -61,6 +63,12 @@ struct TVGameContainer: View {
         RecordsStore.record(game.summary, in: modelContext)
     }
     private func replay() { recorded = false; Task { await game.start(mode: mode, category: category) } }
+
+    /// The Daily is play-once (R-DAILY-1) — no replay of a locked set.
+    private var playAgainAction: (() -> Void)? {
+        if mode == .daily { return nil }
+        return { self.replay() }
+    }
     private func close() { game.quit(); dismiss() }
 }
 
@@ -624,7 +632,8 @@ struct TVAnswerStyle: ButtonStyle {
 
 struct TVResultsView: View {
     let summary: GameSummary
-    let onPlayAgain: () -> Void
+    /// nil = replay not allowed (the Daily is play-once, R-DAILY-1).
+    let onPlayAgain: (() -> Void)?
     let onDone: () -> Void
     @FocusState private var playAgainFocused: Bool
 
@@ -645,9 +654,11 @@ struct TVResultsView: View {
                 }
                 Text(grid).font(.system(size: 40))
                 HStack(spacing: 30) {
-                    Button("Play Again", action: onPlayAgain)
-                        .buttonStyle(TVChipStyle(accent: Tidbits.Palette.coral, selected: false))
-                        .focused($playAgainFocused)
+                    if let onPlayAgain {
+                        Button("Play Again", action: onPlayAgain)
+                            .buttonStyle(TVChipStyle(accent: Tidbits.Palette.coral, selected: false))
+                            .focused($playAgainFocused)
+                    }
                     Button("Done", action: onDone)
                         .buttonStyle(TVChipStyle(accent: Tidbits.Palette.blue, selected: false))
                 }

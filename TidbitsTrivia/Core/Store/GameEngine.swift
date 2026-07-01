@@ -20,6 +20,9 @@ final class GameEngine {
     // Configuration
     private(set) var mode: GameMode = .classic
     private(set) var category: TriviaCategory = .named("mixed")
+    /// Which calendar day this Daily is for (nil for every other mode) — the
+    /// archive plays past days; the recorder keys the result to THIS day.
+    private(set) var dailyDay: String?
     /// Trivia Night plan (bar-trivia mode only) — the rounds being played, so the
     /// UI can show round headers / end-of-round beats. nil in every other mode.
     private(set) var nightPlan: NightPlan? = nil
@@ -122,13 +125,14 @@ final class GameEngine {
 
     // MARK: Lifecycle
 
-    func start(mode: GameMode, category: TriviaCategory, review: [Question] = []) async {
+    func start(mode: GameMode, category: TriviaCategory, review: [Question] = [], dailyDay: String? = nil) async {
         self.mode = mode
         self.category = category
+        self.dailyDay = mode == .daily ? (dailyDay ?? QuestionProvider.dayKey()) : nil
         phase = .loading
         triedLoad = true
         reset()
-        var qs = await QuestionProvider.shared.questions(mode: mode, category: category)
+        var qs = await QuestionProvider.shared.questions(mode: mode, category: category, dailyDay: dailyDay)
         if !review.isEmpty { qs = Self.weave(fresh: qs, review: review) }
         questions = qs
         QuestionProvider.shared.markSeen(qs.map(\.id))
@@ -642,7 +646,7 @@ final class GameEngine {
         return GameSummary(
             mode: mode, category: category, score: score,
             correct: correct, total: answered.count, maxStreak: maxStreak,
-            answered: answered, stakeOutcomes: stakeOutcomes)
+            answered: answered, stakeOutcomes: stakeOutcomes, dailyDay: dailyDay)
     }
 }
 
@@ -672,6 +676,9 @@ struct GameSummary: Sendable {
     let maxStreak: Int
     let answered: [AnsweredQuestion]
     var stakeOutcomes: [Int: StakeOutcome] = [:]
+    /// The calendar day a Daily run was for (nil for other modes) — past-day
+    /// archive plays record to their own day and never touch the streak.
+    var dailyDay: String? = nil
 
     var accuracy: Double { total == 0 ? 0 : Double(correct) / Double(total) }
     var missed: [AnsweredQuestion] { answered.filter { !$0.isCorrect } }

@@ -9,6 +9,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.WavingHand
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -117,7 +119,7 @@ private fun PartySetup(names: List<String>, onNames: (List<String>) -> Unit, onC
 private fun Handoff(name: String, num: Int, total: Int, onBegin: () -> Unit) {
     Column(Modifier.fillMaxSize().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
         Box(Modifier.size(96.dp).background(Pops.at(num), CircleShape).border(BorderStroke(3.dp, Ink), CircleShape), contentAlignment = Alignment.Center) {
-            Text("👋", fontSize = 44.sp)
+            Icon(Icons.Filled.WavingHand, null, modifier = Modifier.size(44.dp), tint = Ink)
         }
         Spacer(Modifier.height(20.dp))
         Text("Pass the phone to", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))

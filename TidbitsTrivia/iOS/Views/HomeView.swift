@@ -14,6 +14,7 @@ struct HomeView: View {
     @State private var showJoinNight = false
     @State private var showParty = false
     @State private var showSettings = false
+    @State private var showDailyArchive = false
     @State private var nightLaunch: NightLaunchRequest?
     @State private var hostLaunch: NightLaunchRequest?
     @AppStorage("tidbits.hasOnboarded") private var hasOnboarded = false
@@ -29,11 +30,13 @@ struct HomeView: View {
                 header
                 QuickPlayHero(request: store.quickPlay,
                               isFirstRun: !store.hasQuickPlayHistory,
-                              onPlay: { start(store.quickPlay) },
-                              onSurprise: { start(store.surpriseMe()) })
-                DailyCard { start(LaunchRequest(mode: .daily, category: .named("mixed")), remember: false) }
+                              onPlay: { start(store.quickPlay) })
+                quickActionsRow
+                DailyCard(playedScore: DailyLog.todayScore) {
+                    if DailyLog.playedToday { showDailyArchive = true }
+                    else { start(LaunchRequest(mode: .daily, category: .named("mixed")), remember: false) }
+                }
                 TriviaNightCard { showNightSheet = true }
-                CustomizeRow { showCustomize = true }
                 moreWaysSection
             }
             .padding(.horizontal, Tidbits.Metric.pad)
@@ -48,7 +51,13 @@ struct HomeView: View {
             }
         }
         .fullScreenCover(item: $launch) { req in
-            GameContainerView(mode: req.mode, category: req.category)
+            GameContainerView(mode: req.mode, category: req.category, dailyDay: req.dailyDay)
+        }
+        .sheet(isPresented: $showDailyArchive) {
+            DailyArchiveSheet { day in
+                showDailyArchive = false
+                start(LaunchRequest(mode: .daily, category: .named("mixed"), dailyDay: day), remember: false)
+            }
         }
         .fullScreenCover(item: $nightLaunch) { req in
             NightContainerView(plan: req.plan, category: req.category)
@@ -89,6 +98,8 @@ struct HomeView: View {
                 start(LaunchRequest(mode: ap.mode, category: ap.category))
             }
             if DebugHooks.openParty { showParty = true }
+            if DebugHooks.openCustomize { showCustomize = true }
+            if DebugHooks.openDailyArchive { showDailyArchive = true }
         }
         .onChange(of: gameCenter.pendingChallengeMode) { _, m in
             if m != nil, let mode = gameCenter.consumePendingChallenge() {
@@ -117,6 +128,15 @@ struct HomeView: View {
         .padding(.top, 8)
     }
 
+    /// R-HOME-1a: the hero is ONE action — Surprise + Customize live here,
+    /// two quiet equal-weight secondary buttons directly beneath it.
+    private var quickActionsRow: some View {
+        HStack(spacing: 14) {
+            QuickActionButton(symbol: "die.face.5.fill", title: "Surprise me") { start(store.surpriseMe()) }
+            QuickActionButton(symbol: "slider.horizontal.3", title: "Customize") { showCustomize = true }
+        }
+    }
+
     private var moreWaysSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("More ways to play")
@@ -124,7 +144,9 @@ struct HomeView: View {
                 .foregroundStyle(Tidbits.Palette.ink)
             HStack(spacing: 14) {
                 SmallTile(symbol: "person.2.fill", title: "Pass & Play", fill: Tidbits.Palette.grape) { showParty = true }
-                SmallTile(symbol: "sparkles", title: "Create", fill: Tidbits.Palette.teal) { store.selectedTab = .create }
+                // Placeholder for the next marquee feature (Decision 036) —
+                // Create still lives one tap away in its own tab.
+                ComingSoonTile(symbol: "globe.americas.fill", title: "Online Multiplayer")
             }
         }
     }
@@ -136,66 +158,50 @@ private struct QuickPlayHero: View {
     let request: LaunchRequest
     let isFirstRun: Bool
     let onPlay: () -> Void
-    let onSurprise: () -> Void
 
     private var fg: Color { Tidbits.Palette.coral.legibleForeground }
 
+    // ONE action, one real Button (R-HOME-1a) — no embedded second target.
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .center) {
-                Image(systemName: "play.fill").font(.system(size: 28, weight: .black))
-                Text("QUICK PLAY")
-                    .font(.system(size: 30, weight: .black, design: .rounded)).kerning(0.5)
-                Spacer(minLength: 8)
-                Button(action: onSurprise) {
-                    Label("Surprise", systemImage: "die.face.5.fill")
-                        .font(Tidbits.TypeRamp.l5)
-                        .padding(.horizontal, 12).padding(.vertical, 8)
-                        .background(Capsule().fill(fg.opacity(0.22)))
+        Button(action: onPlay) {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(alignment: .center, spacing: 10) {
+                    Image(systemName: "play.fill").font(.system(size: 28, weight: .black))
+                    Text("QUICK PLAY")
+                        .font(.system(size: 30, weight: .black, design: .rounded)).kerning(0.5)
+                    Spacer(minLength: 0)
                 }
-                .buttonStyle(.plain)
+                .foregroundStyle(fg)
+                Text("\(request.mode.title.uppercased()) · \(request.category.name.uppercased())")
+                    .font(Tidbits.TypeRamp.l6)
+                    .foregroundStyle(fg.opacity(0.95))
+                Text(isFirstRun ? "Tap to play — customize anytime" : "Jump straight into a round")
+                    .font(Tidbits.TypeRamp.l5)
+                    .foregroundStyle(fg.opacity(0.85))
             }
-            .foregroundStyle(fg)
-            Text("\(request.mode.title.uppercased()) · \(request.category.name.uppercased())")
-                .font(Tidbits.TypeRamp.l6)
-                .foregroundStyle(fg.opacity(0.95))
-            Text(isFirstRun ? "Tap to play — customize anytime" : "Jump straight into a round")
-                .font(Tidbits.TypeRamp.l5)
-                .foregroundStyle(fg.opacity(0.85))
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(20)
+            .chunkyCard(fill: Tidbits.Palette.coral)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(20)
-        .chunkyCard(fill: Tidbits.Palette.coral)
-        .contentShape(Rectangle())
-        .onTapGesture(perform: onPlay)
+        .buttonStyle(.plain)
         .padding(.trailing, Tidbits.Metric.shadowOffset)
-        .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(.isButton)
     }
 }
 
-// MARK: - Customize row (secondary — opens the picker sheet)
-
-private struct CustomizeRow: View {
+/// One of the two quiet secondary actions under the hero (R-HOME-1a).
+private struct QuickActionButton: View {
+    let symbol: String
+    let title: String
     let action: () -> Void
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 14) {
-                Image(systemName: "slider.horizontal.3")
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundStyle(Tidbits.Palette.ink)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Customize a game")
-                        .font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
-                    Text("Pick a mode, a category, save a mix")
-                        .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
-                }
-                Spacer(minLength: 0)
-                Image(systemName: "chevron.right").font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(Tidbits.Palette.inkSoft)
+            HStack(spacing: 8) {
+                Image(systemName: symbol).font(.system(size: 17, weight: .bold))
+                Text(title).font(Tidbits.TypeRamp.l3)
             }
-            .padding(16)
+            .foregroundStyle(Tidbits.Palette.ink)
             .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
             .background(RoundedRectangle(cornerRadius: 14).fill(Tidbits.Palette.surface))
             .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Tidbits.Palette.border, lineWidth: 2.5))
         }
@@ -224,6 +230,27 @@ private struct SmallTile: View {
         .buttonStyle(.plain)
         .padding(.trailing, Tidbits.Metric.shadowOffset)
         .padding(.bottom, Tidbits.Metric.shadowOffset)
+    }
+}
+
+// MARK: - Coming-soon tile (the Online Multiplayer placeholder, Decision 036)
+
+private struct ComingSoonTile: View {
+    let symbol: String
+    let title: String
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Image(systemName: symbol).font(.system(size: 24, weight: .black))
+            Text(title).font(Tidbits.TypeRamp.l3)
+            Text("Coming soon").font(Tidbits.TypeRamp.l5).opacity(0.7)
+        }
+        .foregroundStyle(Tidbits.Palette.ink)
+        .frame(maxWidth: .infinity, minHeight: 84, alignment: .topLeading)
+        .padding(14)
+        .background(RoundedRectangle(cornerRadius: 14).fill(Tidbits.Palette.surface))
+        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Tidbits.Palette.border, style: StrokeStyle(lineWidth: 2.5, dash: [7, 5])))
+        .opacity(0.75)
+        .accessibilityLabel("\(title), coming soon")
     }
 }
 
@@ -294,7 +321,9 @@ private struct CustomizeSheet: View {
     private var playableModes: [GameMode] {
         GameMode.allCases.filter { $0 != .daily && $0 != .barTrivia }
     }
-    private let grid = [GridItem(.adaptive(minimum: 108), spacing: 10)]
+    // 150pt floor: every mode/category name fits ONE line — narrower cells
+    // mid-word-wrapped "Survival"/"Geography" (the owner's "text is bad" bug).
+    private let grid = [GridItem(.adaptive(minimum: 150), spacing: 10)]
 
     init(initial: LaunchRequest, presets: [GamePreset],
          onStart: @escaping (LaunchRequest) -> Void,
@@ -322,7 +351,7 @@ private struct CustomizeSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Save this") { presetName = suggestedName; saving = true }
+                    Button("Save preset") { presetName = suggestedName; saving = true }
                 }
             }
             .safeAreaInset(edge: .bottom) {
@@ -333,7 +362,7 @@ private struct CustomizeSheet: View {
                 .padding(.horizontal, 20).padding(.vertical, 12)
                 .background(.ultraThinMaterial)
             }
-            .alert("Save this mix", isPresented: $saving) {
+            .alert("Save this combination", isPresented: $saving) {
                 TextField("Name", text: $presetName)
                 Button("Save") {
                     let name = presetName.trimmingCharacters(in: .whitespaces)
@@ -349,14 +378,19 @@ private struct CustomizeSheet: View {
 
     private var modeSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("MODE").font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
+            Text("Mode").font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
             LazyVGrid(columns: grid, alignment: .leading, spacing: 10) {
                 ForEach(showAllModes ? playableModes : coreModes) { m in
                     ModeChip(mode: m, selected: mode == m) { mode = m }
                 }
             }
+            // Bare mode names ("Stake", "Which First?") don't explain
+            // themselves — the selected mode always shows its one-liner.
+            Text("\(mode.title): \(mode.blurb)")
+                .font(Tidbits.TypeRamp.l5)
+                .foregroundStyle(Tidbits.Palette.inkSoft)
             Button { withAnimation { showAllModes.toggle() } } label: {
-                Text(showAllModes ? "Fewer modes" : "More modes…")
+                Text(showAllModes ? "Show fewer modes" : "Show all modes")
                     .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.blue)
             }
         }
@@ -364,13 +398,14 @@ private struct CustomizeSheet: View {
 
     private var categorySection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("CATEGORY").font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
+            Text("Category").font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
             LazyVGrid(columns: grid, alignment: .leading, spacing: 10) {
                 ForEach(TriviaCategory.all) { c in
                     let on = category.id == c.id
                     Button { category = c } label: {
                         Text(c.name)
                             .font(Tidbits.TypeRamp.l3)
+                            .lineLimit(1).minimumScaleFactor(0.8)
                             .foregroundStyle(on ? c.color.legibleForeground : Tidbits.Palette.ink)
                             .frame(maxWidth: .infinity)
                             .padding(.horizontal, 12).padding(.vertical, 11)
@@ -385,12 +420,13 @@ private struct CustomizeSheet: View {
 
     private var presetsSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("★ MY PRESETS").font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
+            Text("My presets").font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
             LazyVGrid(columns: grid, alignment: .leading, spacing: 10) {
                 ForEach(presets) { p in
                     Button { mode = p.mode; category = .named(p.primaryCategoryID) } label: {
                         Text(p.name)
                             .font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                            .lineLimit(1).minimumScaleFactor(0.8)
                             .frame(maxWidth: .infinity)
                             .padding(.horizontal, 12).padding(.vertical, 11)
                             .background(Capsule().fill(Tidbits.Palette.surface))
@@ -409,21 +445,36 @@ private struct CustomizeSheet: View {
 // MARK: - Daily card (kept prominent — the daily-return habit)
 
 private struct DailyCard: View {
+    /// Non-nil once today's Daily is done — the card flips to its locked
+    /// state and the tap opens the Previous Tidbits archive (R-DAILY-1).
+    let playedScore: Int?
     let action: () -> Void
+
     var body: some View {
         Button(action: action) {
             HStack(spacing: 14) {
-                Image(systemName: "sun.max.fill")
+                Image(systemName: playedScore == nil ? "sun.max.fill" : "checkmark.seal.fill")
                     .font(.system(size: 34, weight: .black))
                     .foregroundStyle(Tidbits.Palette.ink)
                 VStack(alignment: .leading, spacing: 3) {
                     Text("DAILY TIDBIT")
                         .font(Tidbits.TypeRamp.l2)
                         .foregroundStyle(Tidbits.Palette.ink)
-                    Text("7 questions. Everyone gets the same set. Keep your streak.")
-                        .font(Tidbits.TypeRamp.l5)
-                        .foregroundStyle(Tidbits.Palette.ink.opacity(0.75))
-                        .multilineTextAlignment(.leading)
+                    if let playedScore {
+                        Text("Done for today — you scored \(playedScore). New set tomorrow.")
+                            .font(Tidbits.TypeRamp.l5)
+                            .foregroundStyle(Tidbits.Palette.ink.opacity(0.75))
+                            .multilineTextAlignment(.leading)
+                        Text("Play previous days")
+                            .font(Tidbits.TypeRamp.l5)
+                            .foregroundStyle(Tidbits.Palette.ink)
+                            .underline()
+                    } else {
+                        Text("7 questions. Everyone gets the same set. Keep your streak.")
+                            .font(Tidbits.TypeRamp.l5)
+                            .foregroundStyle(Tidbits.Palette.ink.opacity(0.75))
+                            .multilineTextAlignment(.leading)
+                    }
                 }
                 Spacer(minLength: 0)
                 Image(systemName: "chevron.right.circle.fill")
@@ -435,6 +486,59 @@ private struct DailyCard: View {
         }
         .buttonStyle(.plain)
         .padding(.trailing, Tidbits.Metric.shadowOffset)
+    }
+}
+
+// MARK: - Previous Tidbits (the Daily archive, R-DAILY-1)
+
+private struct DailyArchiveSheet: View {
+    let onPlay: (String) -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    ForEach(DailyLog.recentDays(), id: \.day) { entry in
+                        row(for: entry)
+                    }
+                } footer: {
+                    Text("Every day has its own set of 7 — the same for everyone. Catching up on a missed day doesn't change your streak.")
+                }
+            }
+            .navigationTitle("Previous Tidbits")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } }
+            }
+        }
+        .presentationDetents([.medium, .large])
+    }
+
+    @ViewBuilder
+    private func row(for entry: (day: String, score: Int?)) -> some View {
+        let today = QuestionProvider.dayKey()
+        HStack {
+            Text(Self.label(for: entry.day, today: today))
+            Spacer()
+            if let score = entry.score {
+                Text("Scored \(score)")
+                    .font(Tidbits.TypeRamp.l5)
+                    .foregroundStyle(Tidbits.Palette.inkSoft)
+            } else if entry.day == today {
+                Button("Play") { onPlay(entry.day) }.buttonStyle(.borderedProminent).tint(Tidbits.Palette.coral)
+            } else {
+                Button("Play") { onPlay(entry.day) }.buttonStyle(.bordered)
+            }
+        }
+    }
+
+    static func label(for day: String, today: String) -> String {
+        if day == today { return "Today" }
+        let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"
+        guard let date = f.date(from: day) else { return day }
+        if Calendar.current.isDateInYesterday(date) { return "Yesterday" }
+        return date.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day())
     }
 }
 
@@ -481,6 +585,7 @@ private struct ModeChip: View {
             HStack(spacing: 8) {
                 Image(systemName: mode.symbol).font(.system(size: 15, weight: .bold))
                 Text(mode.title).font(Tidbits.TypeRamp.l3)
+                    .lineLimit(1).minimumScaleFactor(0.8)
             }
             .foregroundStyle(selected ? mode.accent.legibleForeground : Tidbits.Palette.ink)
             .frame(maxWidth: .infinity)

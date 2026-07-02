@@ -559,6 +559,25 @@ One-line-per-round; full detail in `ARCHIVE.md`.
   internal --no-bump`, key via `PLAY_SERVICE_ACCOUNT_JSON=~/.config/play/
   archivewatch-play.json` — the script's default `tidbits-play.json` path doesn't
   exist); web live via Pages (sw v7).
+- **2026-07-02 (matchmaking-services research for Android/web online — owner:
+  "research 3rd party matching services… preferably free apis or otherwise
+  integrate into our current github stack").** 3 parallel web-research agents
+  (official sources, all verified 2026-07-02) → **`docs/MATCHMAKING-SERVICES-
+  RESEARCH.md`**. Recommendation: **Firebase RTDB (Spark)** — free forever, no
+  card, HARD-STOPS instead of billing, official Kotlin + no-build browser SDKs,
+  zero server code via Security Rules + Anonymous Auth, 100 conns ≈ 25 rooms;
+  and it's Google's own designated PGS-multiplayer replacement. Fallback:
+  **Nostr ephemeral relays** (zero-account, fits our AES-GCM wire exactly;
+  alpha Kotlin libs). Killed by the Kotlin+browser filter: EOS (no web SDK),
+  Photon (no Kotlin SDK), PlayFab (no web Party SDK; 1,000 LIFETIME players),
+  Colyseus (Kotlin client dead), Unity (engine-bound), Hathora (shut down
+  5/2026), Pusher (Android SDK frozen 2022), PubNub (200 MAU cap), Supabase
+  (1-week inactivity pause). **GitHub-as-relay honestly assessed: fallback-
+  grade** (device flow is CORS-blocked in browsers → no web auth story;
+  500 writes/hr cap; raw-gist CDN ~5 min). *Owner decisions:* approve Firebase
+  as vendor; anonymous auth OK?; then a `FirebaseRtdbTransport` slots behind
+  the existing `NightPeer` seam (transaction-claimed queue = leader election,
+  same auto-paced model as GameKit Quick Match).
 - **2026-07-02 (Apple online Quick Match over GameKit — Decision 039; owner:
   "all of the online multiplayer [through] native platform multiplayer options…
   I don't think Cloudflare should have to enter the picture").** Owner informed

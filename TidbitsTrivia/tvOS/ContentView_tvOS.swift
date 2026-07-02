@@ -29,6 +29,7 @@ struct ContentView_tvOS: View {
     @State private var showCustomize = false
     @State private var showDailyArchive = false
     @State private var versusBot: BotProfile?
+    @State private var showQuickMatch = false
     @Environment(\.modelContext) private var modelContext
     @FocusState private var primaryFocused: Bool
 
@@ -65,6 +66,9 @@ struct ContentView_tvOS: View {
         }
         .fullScreenCover(item: $versusBot) { bot in
             TVVersusContainer(bot: bot)
+        }
+        .fullScreenCover(isPresented: $showQuickMatch) {
+            TVQuickMatchContainer()
         }
         .fullScreenCover(isPresented: $showDailyArchive) {
             TVDailyArchive { day in
@@ -196,7 +200,7 @@ struct ContentView_tvOS: View {
                 Image(systemName: "globe.americas.fill").font(.system(size: 52, weight: .black))
                 VStack(alignment: .leading, spacing: 8) {
                     Text("ONLINE MULTIPLAYER").font(.system(size: 40, weight: .black, design: .rounded))
-                    Text("Quick Match with real players is coming soon — face a CPU opponent now.")
+                    Text("Match with real players over Game Center, or face a CPU opponent.")
                         .font(.system(size: 29, weight: .medium, design: .rounded))
                         .foregroundStyle(TVTheme.textSoft)
                 }
@@ -204,6 +208,11 @@ struct ContentView_tvOS: View {
             }
             .foregroundStyle(TVTheme.text)
             HStack(spacing: 24) {
+                Button { showQuickMatch = true } label: {
+                    Label("Quick Match", systemImage: "globe.americas.fill")
+                        .font(.system(size: 27, weight: .bold, design: .rounded))
+                }
+                .buttonStyle(TVChipStyle(accent: Tidbits.Palette.blue, selected: false))
                 versusChip(BotProfile.house(playerAccuracy: recentAccuracy), accent: Tidbits.Palette.coral)
                 versusChip(.rookie, accent: Tidbits.Palette.mint)
                 versusChip(.regular, accent: Tidbits.Palette.blue)

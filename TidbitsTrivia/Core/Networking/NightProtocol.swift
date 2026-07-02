@@ -21,6 +21,12 @@ enum Night {
     /// generous — a "Works" night is ~40 KB of JSON; 1 MB leaves wide headroom.
     static let headerBytes = 4
     static let maxMessageBytes = 1 << 20
+
+    /// The fixed "room code" for Game Center matches (Decision 039): GameKit
+    /// has no human-relayed code and its link is already authenticated, so
+    /// both sides key the wire's GCM with this constant — the crypto becomes
+    /// plain framing and the wire stays byte-identical to the local night.
+    static let gameKitCode = "GKQM"
 }
 
 // MARK: - Messages

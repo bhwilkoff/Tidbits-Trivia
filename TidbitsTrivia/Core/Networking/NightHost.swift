@@ -64,9 +64,9 @@ final class NightHost {
 
     // MARK: Lifecycle
 
-    func start(hostName: String) {
+    func start(hostName: String, code: String? = nil) {
         stop()
-        roomCode = RoomCode.generate()
+        roomCode = code ?? RoomCode.generate()
         key = RoomCode.presharedKey(for: roomCode)
         let name = hostName.trimmingCharacters(in: .whitespacesAndNewlines)
         players = [NightPlayer(seat: Self.hostSeat, name: name.isEmpty ? "Host" : name, isHost: true)]

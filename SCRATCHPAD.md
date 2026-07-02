@@ -559,6 +559,28 @@ One-line-per-round; full detail in `ARCHIVE.md`.
   internal --no-bump`, key via `PLAY_SERVICE_ACCOUNT_JSON=~/.config/play/
   archivewatch-play.json` — the script's default `tidbits-play.json` path doesn't
   exist); web live via Pages (sw v7).
+- **2026-07-02 (Apple online Quick Match over GameKit — Decision 039; owner:
+  "all of the online multiplayer [through] native platform multiplayer options…
+  I don't think Cloudflare should have to enter the picture").** Owner informed
+  of the §2 reality (Play Games multiplayer is DEAD; PGS v2 has no transport) →
+  online = **Apple-only, GameKit**. Built: `Core/Networking/GameKitTransport.swift`
+  — `GKMatch` behind the `NightPeerLink` seam (the transport refactor pays off:
+  NightHost/NightClient/LiveNight/wire/rejoin run UNCHANGED over Game Center);
+  leader = lowest gamePlayerID (host), others join the leader; wire GCM keyed by
+  fixed `Night.gameKitCode` (GC already encrypts; crypto degrades to framing —
+  wire stays byte-identical). LiveNight gained transport injection + **autoPace**
+  (leader auto-starts when the room fills, auto-reveals when everyone answered
+  or clock+grace, auto-advances after 6s — no host taps between strangers) +
+  `expectedPlayers`. UI: iOS `QuickMatchView` + tvOS `QuickMatchView_tvOS`
+  (`GKMatchmakerViewController` 2–4 players, auth gate, fail state) →
+  `NightLiveContainer(live:)` / `TVNightLiveContainer(live:)` reuse (new inits;
+  online lobby hides the join code + shows "Starting…"). Multiplayer sheet's
+  Quick Match row is LIVE on iOS/tvOS (blue card); Android/web rows stay
+  honestly coming-soon-never-under-039. New hook `TIDBITS_MULTIPLAYER=1`.
+  *Verified:* iOS + tvOS builds green; iOS sheet screenshot (live QM row + 4
+  CPU rows). **GATE: 2-device Game Center HARDWARE test** (sandbox GC on sims
+  is a wall) — if matchmaking errors, check the ASC Game Center compatibility
+  config (owner-verify). *Not shipped to beta yet.*
 - **2026-07-02 (online multiplayer v0 — Play vs CPU, Decision 038; owner: "start
   working on the online multiplayer buildout… using the playbook").** Playbook v0
   built on ALL 4 platforms: the home "Online Multiplayer" tile is LIVE — one

@@ -1126,3 +1126,37 @@ bots, the label and a visible notice come with it.
 pass-and-play — solo records stay honest). v1 (owner-gated next): pick the
 backend (Cloudflare DO room actor recommended) + the identity story, then the
 room state machine in playbook §3d reuses this exact bot spec server-side.
+
+## 039 — Online play rides native platform multiplayer; no third-party backend (owner decision)
+
+Owner (2026-07-02): "all of the online multiplayer [flows] through the native
+platform multiplayer options (Game Center and Google Play Games). I don't
+think Cloudflare should have to enter into the picture." So: **Apple online =
+GameKit**, no neutral relay, no server costs.
+
+**The consequence to keep honest (playbook §2, owner informed):** Google
+killed Play Games multiplayer in March 2020 — PGS v2 has sign-in/friends/
+leaderboards but NO match transport, and Google's own migration path is
+"build your own backend," which this decision rules out. Therefore **online
+play exists on Apple platforms only**; Android and web keep Play vs CPU +
+local Trivia Night, and their Quick Match slot stays honestly "coming soon"
+(it can only ever light up if this decision is revisited).
+
+**How it's built (reuse, not reinvention):** GameKit is just another link
+behind the `NightPeerLink` seam (`Core/Networking/GameKitTransport.swift`) —
+the entire proven Trivia Night machinery (NightHost/NightClient/LiveNight,
+wire protocol, rejoin) runs unchanged over a `GKMatch`. A match has no host,
+so every device elects the SAME leader (lowest gamePlayerID); the leader runs
+NightHost, everyone else NightClient. The wire's GCM is keyed by the fixed
+`Night.gameKitCode` (GameKit already authenticates + encrypts the link; the
+app-layer crypto degrades to framing, keeping the wire byte-identical to the
+local night). Stranger matches are **auto-paced**: the leader's LiveNight
+reveals when everyone answered (or clock + grace) and advances after a
+readable beat — no human host taps. Matchmaking UI = Apple's stock
+`GKMatchmakerViewController` (invites + automatch, 2–4 players).
+
+**How to apply:** the hardware gate applies double here — GameKit matches
+can't run on simulators without sandbox Game Center pain; the 2-device
+REAL-DEVICE test (two Game Center accounts) is the acceptance gate. If
+matchmaking errors on TestFlight, check App Store Connect → the app's Game
+Center config (compatibility matrix) — flagged as the owner-verify item.

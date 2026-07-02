@@ -7,6 +7,7 @@ import SwiftUI
 struct MultiplayerSheet: View {
     let recentAccuracy: Double
     let onPickBot: (BotProfile) -> Void
+    let onQuickMatch: () -> Void
 
     var body: some View {
         ScrollView {
@@ -18,21 +19,25 @@ struct MultiplayerSheet: View {
                     .font(Tidbits.TypeRamp.l5)
                     .foregroundStyle(Tidbits.Palette.inkSoft)
 
-                HStack(spacing: 14) {
-                    Image(systemName: "globe.americas.fill").font(.system(size: 24, weight: .black))
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Quick Match").font(Tidbits.TypeRamp.l3)
-                        Text("Matchmaking with real players — coming soon")
-                            .font(Tidbits.TypeRamp.l5).opacity(0.7)
+                // LIVE (Decision 039): Game Center matchmaking, Apple-to-Apple.
+                Button(action: onQuickMatch) {
+                    HStack(spacing: 14) {
+                        Image(systemName: "globe.americas.fill").font(.system(size: 24, weight: .black))
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Quick Match").font(Tidbits.TypeRamp.l3)
+                            Text("Match with real players over Game Center")
+                                .font(Tidbits.TypeRamp.l5).opacity(0.9)
+                        }
+                        Spacer(minLength: 0)
+                        Image(systemName: "chevron.right").font(.system(size: 15, weight: .bold))
                     }
-                    Spacer(minLength: 0)
+                    .foregroundStyle(Tidbits.Palette.blue.legibleForeground)
+                    .padding(16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .chunkyCard(fill: Tidbits.Palette.blue)
                 }
-                .foregroundStyle(Tidbits.Palette.ink)
-                .padding(16)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(RoundedRectangle(cornerRadius: 14).fill(Tidbits.Palette.surface))
-                .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Tidbits.Palette.border, style: StrokeStyle(lineWidth: 2.5, dash: [7, 5])))
-                .opacity(0.75)
+                .buttonStyle(.plain)
+                .padding(.trailing, Tidbits.Metric.shadowOffset)
 
                 Text("Play a CPU opponent now")
                     .font(Tidbits.TypeRamp.l2)

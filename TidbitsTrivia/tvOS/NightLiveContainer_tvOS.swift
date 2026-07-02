@@ -20,6 +20,12 @@ struct TVNightLiveContainer: View {
     init(hosting plan: NightPlan, category: TriviaCategory, engine: GameEngine, hostName: String) {
         _live = State(wrappedValue: LiveNight(hostingPlan: plan, category: category, hostName: hostName, engine: engine))
     }
+    /// Run a prebuilt night (online Quick Match hands one over with GameKit
+    /// transports already wired — Decision 039).
+    init(live: LiveNight) {
+        _live = State(wrappedValue: live)
+    }
+
     init(joining engine: GameEngine) {
         _live = State(wrappedValue: LiveNight(joiningEngine: engine))
     }

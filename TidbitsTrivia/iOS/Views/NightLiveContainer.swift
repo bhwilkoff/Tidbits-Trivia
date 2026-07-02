@@ -26,6 +26,12 @@ struct NightLiveContainer: View {
         _live = State(wrappedValue: LiveNight(joiningEngine: engine))
     }
 
+    /// Run a prebuilt night (online Quick Match hands one over with GameKit
+    /// transports already wired — Decision 039).
+    init(live: LiveNight) {
+        _live = State(wrappedValue: live)
+    }
+
     private var game: GameEngine { live.engine }
     private var joinerNeedsToJoin: Bool {
         live.role == .joiner && live.client?.status != .joined
@@ -110,7 +116,7 @@ struct NightLiveContainer: View {
                     Spacer()
                     Color.clear.frame(width: 38, height: 1)
                 }
-                if live.role == .host {
+                if live.role == .host && !live.autoPace {
                     VStack(spacing: 6) {
                         Text("SCAN-FREE JOIN CODE").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
                         Text(live.roomCode).font(.system(size: 64, weight: .black, design: .rounded))
@@ -121,6 +127,8 @@ struct NightLiveContainer: View {
                     }
                     .frame(maxWidth: .infinity).padding(20)
                     .chunkyCard(fill: Tidbits.Palette.bgDeep).padding(.trailing, Tidbits.Metric.shadowOffset)
+                } else if live.autoPace {
+                    Text("Match found").font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
                 } else {
                     Text(live.roomName.isEmpty ? "You're in" : "You're in · \(live.roomName)")
                         .font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
@@ -128,7 +136,12 @@ struct NightLiveContainer: View {
 
                 rosterList
 
-                if live.role == .host {
+                if live.role == .host && live.autoPace {
+                    HStack(spacing: 10) {
+                        ProgressView().tint(Tidbits.Palette.inkSoft)
+                        Text("Starting…").font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.inkSoft)
+                    }
+                } else if live.role == .host {
                     Button("Start the Night") { Task { await live.startNight() } }
                         .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.coral, textColor: Tidbits.Palette.coral.legibleForeground))
                     Text("You'll play too — answer on this device, then reveal for everyone.")

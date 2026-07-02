@@ -1,7 +1,13 @@
 # Online Multiplayer Playbook — Real-Time Online + CPU/Bot Fallback
 
-> **Status:** RESEARCH / PLAYBOOK for a future session. Nothing here is built yet.
-> This document is the design brief a future implementation session reads first.
+> **Status:** v0 (Play vs CPU) BUILT on all four platforms 2026-07-02 (Decision
+> 038). **OWNER DECISION 2026-07-02 (Decision 039): online play rides NATIVE
+> platform multiplayer only — GameKit — no Cloudflare/Supabase.** The Apple
+> GameKit Quick Match is BUILT (GKMatch behind the `NightPeerLink` seam,
+> leader-elected, auto-paced; 2-device hardware test = the gate). Because
+> Google killed Play Games multiplayer (§2), Android/web online cannot exist
+> under this decision — they keep Play vs CPU + local night. §3 (neutral
+> backend) is retained as reference only.
 >
 > **Scope:** REAL-TIME ONLINE play — strangers and friends competing across the
 > world, cross-platform (iOS/iPadOS + tvOS + Android + web), PLUS a believable

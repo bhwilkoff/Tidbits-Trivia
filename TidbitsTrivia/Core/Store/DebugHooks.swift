@@ -50,6 +50,11 @@ enum DebugHooks {
         ProcessInfo.processInfo.environment["TIDBITS_VERSUS"]
     }
 
+    /// TIDBITS_MULTIPLAYER=1 opens the Online Multiplayer sheet on launch.
+    static var openMultiplayer: Bool {
+        ProcessInfo.processInfo.environment["TIDBITS_MULTIPLAYER"] == "1"
+    }
+
     static var openParty: Bool {
         ProcessInfo.processInfo.environment["TIDBITS_PARTY"] == "1"
     }

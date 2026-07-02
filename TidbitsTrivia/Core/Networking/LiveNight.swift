@@ -23,6 +23,13 @@ final class LiveNight {
     private(set) var client: NightClient?
     private(set) var stage: Stage = .lobby
 
+    /// Online quick match (Decision 039): the leader device paces the game
+    /// automatically (no human host taps) and starts when the room is full.
+    let autoPace: Bool
+    var expectedPlayers: Int?
+    private var paceTask: Task<Void, Never>?
+    private var revealShownAt: Date?
+
     private let plan: NightPlan
     private let category: TriviaCategory
 
@@ -30,14 +37,19 @@ final class LiveNight {
 
     /// Stand up a room and wait in the lobby for joiners. The host configures the
     /// plan first; `startNight()` builds the questions and kicks everyone off.
-    init(hostingPlan plan: NightPlan, category: TriviaCategory, hostName: String, engine: GameEngine) {
+    init(hostingPlan plan: NightPlan, category: TriviaCategory, hostName: String, engine: GameEngine,
+         transport: (any NightHostTransport)? = nil, roomCode: String? = nil,
+         autoPace: Bool = false, expectedPlayers: Int? = nil) {
         self.role = .host
         self.plan = plan
         self.category = category
         self.engine = engine
-        let h = NightHost()
+        self.autoPace = autoPace
+        self.expectedPlayers = expectedPlayers
+        let h = transport.map { NightHost(transport: $0) } ?? NightHost()
         self.host = h
-        h.start(hostName: hostName)
+        h.start(hostName: hostName, code: roomCode)
+        if autoPace { startAutoPace() }
         engine.onLocalAnswer = { [weak self] _, score, correct in
             self?.host?.setHostAnswered(score: score, correct: correct)
         }
@@ -78,12 +90,13 @@ final class LiveNight {
 
     /// Discover + join a room, then follow the host's pacing. The engine is driven
     /// entirely by the host's `night` / `begin` / `reveal` / `finished` signals.
-    init(joiningEngine engine: GameEngine) {
+    init(joiningEngine engine: GameEngine, transport: (any NightClientTransport)? = nil) {
         self.role = .joiner
         self.plan = .quick
         self.category = .named("mixed")
         self.engine = engine
-        let c = NightClient()
+        self.autoPace = false
+        let c = transport.map { NightClient(transport: $0) } ?? NightClient()
         self.client = c
         c.onNight = { [weak self] plan, qs in
             guard let self else { return }
@@ -121,7 +134,39 @@ final class LiveNight {
         return top.seat
     }
 
+    /// The leader's auto-pilot for online matches: start when the room fills,
+    /// reveal when everyone answered (or the clock + grace runs out), advance
+    /// a beat after each reveal — the pacing a human host does by hand in a
+    /// living-room night.
+    private func startAutoPace() {
+        paceTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(0.6))
+                guard let self, self.stage != .finished else { break }
+                guard self.role == .host, let host = self.host else { continue }
+                switch self.stage {
+                case .lobby:
+                    if let expected = self.expectedPlayers, host.players.count >= expected {
+                        await self.startNight()
+                    }
+                case .playing:
+                    if self.engine.phase == .reveal && !self.engine.awaitingReveal {
+                        // Reveal is showing — hold a readable beat, then advance.
+                        if let shown = self.revealShownAt {
+                            if Date().timeIntervalSince(shown) >= 6 { self.revealShownAt = nil; self.next() }
+                        } else { self.revealShownAt = Date() }
+                    } else if host.everyoneAnswered {
+                        self.reveal()
+                    }
+                case .finished:
+                    break
+                }
+            }
+        }
+    }
+
     func end() {
+        paceTask?.cancel()
         host?.stop()
         client?.leave()
         engine.onLocalAnswer = nil

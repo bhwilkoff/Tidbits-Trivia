@@ -18,6 +18,7 @@ struct HomeView: View {
     @State private var showDailyArchive = false
     @State private var showMultiplayer = false
     @State private var versusBot: BotProfile?
+    @State private var showQuickMatch = false
     @Environment(\.modelContext) private var modelContext
     @State private var nightLaunch: NightLaunchRequest?
     @State private var hostLaunch: NightLaunchRequest?
@@ -95,10 +96,12 @@ struct HomeView: View {
         }
         .sheet(isPresented: $showSettings) { SettingsView() }
         .sheet(isPresented: $showMultiplayer) {
-            MultiplayerSheet(recentAccuracy: recentAccuracy) { bot in
-                showMultiplayer = false
-                versusBot = bot
-            }
+            MultiplayerSheet(recentAccuracy: recentAccuracy,
+                             onPickBot: { bot in showMultiplayer = false; versusBot = bot },
+                             onQuickMatch: { showMultiplayer = false; showQuickMatch = true })
+        }
+        .fullScreenCover(isPresented: $showQuickMatch) {
+            QuickMatchContainer()
         }
         .fullScreenCover(item: $versusBot) { bot in
             VersusContainerView(bot: bot)
@@ -112,6 +115,7 @@ struct HomeView: View {
             }
             if DebugHooks.openParty { showParty = true }
             if DebugHooks.openCustomize { showCustomize = true }
+            if DebugHooks.openMultiplayer { showMultiplayer = true }
             if let vb = DebugHooks.versusBot {
                 versusBot = vb == "house" ? .house(playerAccuracy: recentAccuracy)
                     : BotProfile.presets.first { $0.id == vb } ?? .regular

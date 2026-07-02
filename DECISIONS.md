@@ -1061,3 +1061,34 @@ interface is particularly bad").
 **Documented inversion (do not harmonize):** the tvOS Customize picker starts
 the game on category selection — no Start button — because selection-is-action
 is the ten-foot idiom; phone/web/tablet commit with an explicit Start.
+
+## 037 — The Daily is picked by hash-rank, not seeded shuffle (one algorithm, three mirrors, golden-tested)
+
+The Daily's set for a day is: rank every corpus question id by
+`FNV-1a64(UTF-8 "daily:<day>:<categoryId>:<id>")` and take the 7 smallest,
+presented in ascending rank order. No RNG, no shuffle, no pool ordering.
+Mirrors: `Core/Engine/DailyPick.swift`, `Tidbits.kt pickDailyIds`,
+`engine.js pickDaily`. Prove any change with `tools/daily-parity/run.sh`
+(runs the REAL code on all three stacks against each platform's own bundled
+corpus and diffs) — and keep `tools/night-wire/check_id_parity.py` green,
+because identical sets also require identical id sets.
+
+**Why:** the owner caught the Daily differing on Android vs iOS vs web —
+defeating its whole premise ("everyone gets the same 7", comparable scores).
+The old "same FNV-1a/SplitMix64 constants" claim was never true END-TO-END:
+the three platforms had different seed strings (`day:category` vs bare day),
+different hashes (web was 32-bit FNV over UTF-16 code units), different pools
+(sorted ids vs corpus load order), and three different shuffle algorithms
+(Swift stdlib `shuffled(using:)` consumes the RNG differently than both
+hand-rolled Fisher-Yates variants). Making three shuffles byte-compatible is
+fragile forever; hash-ranking each id independently is order-independent BY
+CONSTRUCTION, so platform storage/sort differences simply can't matter.
+
+**How to apply:** never re-introduce a shuffle or RNG into daily selection.
+Any change to the rank string lands in ALL THREE mirrors + the golden test in
+the same change set. The golden immediately caught a real divergence:
+Kotlin's `Byte` is signed, so Android's FNV-1a sign-extended every non-ASCII
+UTF-8 byte (`Skarsgård`) — mask with `and 0xFF` when hashing bytes in Kotlin.
+Caveat: the web corpus refreshes network-first, so around a corpus publish
+the web may briefly hold a NEWER id set than the store apps — the daily can
+differ across platforms for that window only; id parity is the invariant.

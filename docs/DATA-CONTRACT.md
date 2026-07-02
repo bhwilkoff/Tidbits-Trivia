@@ -139,3 +139,23 @@ popularity floor via the Pageviews API, vandalism/freshness cross-checks —
 need a **Wikidata SPARQL** spine (typed siblings for distractors, qualifiers
 `P580/P582/P585` for dates, ranks for canonical values). That is the top
 content priority after the iOS loop ships (ROADMAP #2).
+
+## The Daily selection (Decision 037 — part of the contract)
+
+Every client MUST derive the Daily from the bundled corpus with the canonical
+hash-rank pick — this is a cross-client contract, not an implementation detail,
+because scores are only comparable if everyone answers the same 7:
+
+```
+rank(id)  = FNV-1a64( UTF-8("daily:" + dayKey + ":" + categoryId + ":" + id) )
+dayKey    = local yyyy-MM-dd     categoryId = "mixed" for the home Daily
+set       = the 7 ids with the SMALLEST ranks (unsigned), ascending
+tie-break = id, by UTF-8 byte order (unreachable in practice)
+```
+
+FNV-1a64: offset `0xCBF29CE484222325`, prime `0x100000001B3`, over UTF-8
+BYTES (mask signed bytes — see the Kotlin gotcha in Decision 037). Mirrors:
+`DailyPick.swift` / `Tidbits.kt pickDailyIds` / `engine.js pickDaily`.
+Golden proof: `tools/daily-parity/run.sh` (+ id parity via
+`tools/night-wire/check_id_parity.py`). Corpus-version skew (web refreshes
+network-first) is the one tolerated divergence window.

@@ -171,9 +171,24 @@ class SeededRng(seed: Long) {
     }
 }
 
+/** Decision 037: rank = FNV-1a64(UTF-8 "daily:<day>:<categoryId>:<id>"), take the
+ *  `count` SMALLEST (unsigned!), ascending. Order-independent — no RNG, no shuffle.
+ *  Keep byte-identical with DailyPick.swift and engine.js pickDaily; the golden
+ *  check is tools/daily-parity/run.sh. */
+fun dailyRank(day: String, categoryId: String, id: String): ULong =
+    stableSeed("daily:$day:$categoryId:$id").toULong()
+
+fun pickDailyIds(ids: List<String>, day: String, categoryId: String, count: Int): List<String> =
+    ids.sortedWith(compareBy({ dailyRank(day, categoryId, it) }, { it }))
+        .take(count)
+
 fun stableSeed(s: String): Long {
     var h = -0x340d631b7bdddcdbL // 0xCBF29CE484222325 FNV offset
-    for (b in s.toByteArray()) { h = (h xor b.toLong()) * 0x100000001B3L }
+    // Mask to an unsigned byte: Kotlin's Byte is SIGNED, so a bare toLong()
+    // sign-extends every non-ASCII UTF-8 byte (e.g. the å in Skarsgård) and
+    // silently diverges from the Swift/JS FNV-1a — the daily-parity golden
+    // caught exactly this (Decision 037).
+    for (b in s.toByteArray()) { h = (h xor (b.toLong() and 0xFF)) * 0x100000001B3L }
     return h
 }
 
@@ -253,8 +268,12 @@ object Corpus {
         }.sortedByDescending { it.second }.take(maxOf(limit * 3, 24)).map { it.first }.shuffled().take(limit)
     }
 
-    fun daily(dayKey: String, count: Int): List<Question> =
-        all.shuffledWith(SeededRng(stableSeed(dayKey))).take(count)
+    fun daily(dayKey: String, count: Int): List<Question> {
+        // Canonical hash-rank selection (Decision 037) — the SAME 7 on every
+        // platform (mirrors DailyPick.swift + engine.js pickDaily exactly).
+        val byId = all.associateBy { it.id }
+        return pickDailyIds(all.map { it.id }, dayKey, "mixed", count).mapNotNull { byId[it] }
+    }
 }
 
 // ---- Enrichment-built mode sources (E1): a bundled JSON question set, same row

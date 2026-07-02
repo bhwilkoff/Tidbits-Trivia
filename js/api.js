@@ -2,7 +2,7 @@
 // IndexedDB) + Wikipedia client (live generation). Mirrors the Apple
 // CorpusDatabase + WikipediaClient. All network goes through here.
 
-import { makeQuestions, stableSeed, seededRng, shuffle } from './engine.js';
+import { makeQuestions, stableSeed, seededRng, shuffle, pickDaily } from './engine.js';
 
 const ACTION = 'https://en.wikipedia.org/w/api.php';
 const COLS = ['id', 'prompt', 'options', 'correctIndex', 'categoryID', 'difficulty', 'explanation', 'sourceTitle', 'sourceURL'];
@@ -88,10 +88,12 @@ export const Corpus = {
     return a.slice(0, limit);
   },
 
-  // Deterministic daily slice (same for everyone on a given day).
+  // The canonical cross-platform Daily (Decision 037): identical 7 on
+  // iOS/tvOS/Android/web via the shared hash-rank pick — see engine.js.
   daily(dayKey, count) {
-    const rnd = seededRng(stableSeed(dayKey));
-    return shuffle(this.questions, rnd).slice(0, count);
+    const byId = new Map(this.questions.map((q) => [q.id, q]));
+    return pickDaily(this.questions.map((q) => q.id), dayKey, 'mixed', count)
+      .map((id) => byId.get(id)).filter(Boolean);
   },
 
   // Create: real, already-vetted corpus questions matching the topic's words

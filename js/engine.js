@@ -25,6 +25,31 @@ export function stableSeed(str) {
   return h >>> 0;
 }
 
+// Decision 037: the canonical cross-platform Daily. rank = FNV-1a **64-bit**
+// over the UTF-8 bytes of "daily:<day>:<categoryId>:<id>"; the day's set is the
+// `count` smallest ranks, ascending. Order-independent — no RNG, no shuffle, no
+// dependence on corpus array order. Keep byte-identical with DailyPick.swift and
+// Tidbits.kt pickDailyIds; the golden check is tools/daily-parity/run.sh.
+// (stableSeed above is 32-bit over UTF-16 code units — NOT the same hash; it
+// stays for live-generation seeding only.)
+export function fnv1a64(str) {
+  const bytes = new TextEncoder().encode(str);
+  let h = 0xcbf29ce484222325n;
+  for (const b of bytes) {
+    h ^= BigInt(b);
+    h = BigInt.asUintN(64, h * 0x100000001b3n);
+  }
+  return h;
+}
+
+export function pickDaily(ids, day, categoryId, count) {
+  return ids
+    .map((id) => [fnv1a64(`daily:${day}:${categoryId}:${id}`), id])
+    .sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : a[1] < b[1] ? -1 : 1))
+    .slice(0, count)
+    .map((x) => x[1]);
+}
+
 export function shuffle(arr, rnd) {
   const a = arr.slice();
   for (let i = a.length - 1; i > 0; i--) {

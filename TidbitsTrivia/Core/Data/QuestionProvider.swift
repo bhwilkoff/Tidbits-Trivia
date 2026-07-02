@@ -178,19 +178,16 @@ final class QuestionProvider {
     /// `day` defaults to today; the Previous Tidbits archive (R-DAILY-1)
     /// passes an earlier key and gets that day's exact set back.
     func dailyQuestions(category: TriviaCategory, day: String = QuestionProvider.dayKey()) async -> [Question] {
-        // Per-day AND per-category, so each category has its own daily set.
-        let seed = "\(day):\(category.id)".stableSeed
-        var rng = SeededRNG(seed: seed)
-        // Deterministic pool: STABLE id order → seeded shuffle → the SAME slice
-        // for everyone all day. (The old path used `ORDER BY RANDOM()`, so the
-        // seeded shuffle reordered a fresh random pool each open — the questions
-        // changed every time. Determinism must start at the pool, not the shuffle.)
+        // Canonical hash-rank selection (Decision 037) — the SAME 7 on every
+        // platform. The previous per-platform seeded shuffles never agreed
+        // (different shuffle algorithms + pools + seed strings); DailyPick is
+        // order-independent, so only the shared id set matters.
         let ids = CorpusDatabase.shared.orderedIDs(categoryID: category.id)
         let count = GameMode.daily.questionCount
         guard ids.count >= count else {
             return await liveQuestions(topic: "On this day", category: category, count: count)
         }
-        let picked = Array(ids.shuffled(using: &rng).prefix(count))
+        let picked = DailyPick.pick(ids: ids, day: day, categoryID: category.id, count: count)
         return CorpusDatabase.shared.questions(ids: picked)
     }
 

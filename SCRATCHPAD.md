@@ -9,9 +9,9 @@
 
 ## Current state (2026-07-01)
 
-**In beta on all platforms.** Versions: Apple **1.6.13 (build 54)** → TestFlight
-(iOS+tvOS); Android **1.6.14 (versionCode 46)** → Play **internal** (Android-only
-reveal-parity ship on top of 1.6.13)
+**In beta on all platforms.** Versions: Apple **1.6.15 (build 55)** → TestFlight
+(iOS+tvOS); Android **1.6.15 (versionCode 47)** → Play **internal** (lockstep
+restored; 1.6.15 = the unified cross-platform Daily, Decision 037)
 (com.tidbitstrivia.app; signing via ~/keystores/tidbits-upload.jks +
 android/keystore/signing.properties). Web auto-deploys to GitHub Pages. Bump on
 every ship (see memory `versioning-convention`).
@@ -559,6 +559,23 @@ One-line-per-round; full detail in `ARCHIVE.md`.
   internal --no-bump`, key via `PLAY_SERVICE_ACCOUNT_JSON=~/.config/play/
   archivewatch-play.json` — the script's default `tidbits-play.json` path doesn't
   exist); web live via Pages (sw v7).
+- **2026-07-02 (cross-platform Daily unification — owner: "the daily tidbit on
+  android is different than it is on iOS and… the web… it has to be the same
+  across all platforms").** *Found:* the PARITY "same seed" note was silently
+  false — Apple seeded `"<day>:<cat>"` over sorted ids through Swift's stdlib
+  shuffle; Android seeded bare `dayKey` over corpus load order through a
+  double-based Fisher-Yates; web used a 32-BIT FNV over UTF-16 through a
+  `z % 1e6` RNG. Three different sets every day. *Fix (Decision 037):* canonical
+  **hash-rank pick** — `FNV-1a64(UTF-8 "daily:<day>:<categoryId>:<id>")`, take
+  the 7 smallest, ascending; NO RNG/shuffle/pool-order dependence. Mirrors:
+  `Core/Engine/DailyPick.swift` + `Tidbits.kt pickDailyIds` + `engine.js
+  pickDaily` (+ DATA-CONTRACT §Daily). **Golden test** `tools/daily-parity/run.sh`
+  runs the REAL code on all 3 stacks against each platform's own bundled corpus
+  and diffs — it immediately caught a second real bug: Kotlin's signed `Byte`
+  sign-extended non-ASCII UTF-8 bytes in `stableSeed` (Skarsgård ranked wrong)
+  → mask `and 0xFF`. *Verified:* golden PASS (4 test days identical on
+  Swift/Kotlin/JS), iOS+tvOS+Android builds green, web `node --check`, sw v8.
+  Run the golden after ANY corpus regen or rank change.
 - **2026-07-01 (Android reveal parity — owner: post-answer reveals "not nearly as
   robust as iOS" + missing Wikipedia link).** *Found:* PARITY row 94 ("Learn the
   fact" reveal) was a silently-false ✅ — Android's reveal card had no status icon

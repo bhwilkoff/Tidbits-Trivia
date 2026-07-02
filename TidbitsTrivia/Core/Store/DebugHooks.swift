@@ -45,6 +45,11 @@ enum DebugHooks {
         ProcessInfo.processInfo.environment["TIDBITS_DAILY_ARCHIVE"] == "1"
     }
 
+    /// TIDBITS_VERSUS=house|rookie|regular|ace starts a vs-CPU match on launch.
+    static var versusBot: String? {
+        ProcessInfo.processInfo.environment["TIDBITS_VERSUS"]
+    }
+
     static var openParty: Bool {
         ProcessInfo.processInfo.environment["TIDBITS_PARTY"] == "1"
     }

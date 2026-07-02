@@ -1,5 +1,6 @@
 #if os(iOS)
 import SwiftUI
+import SwiftData
 
 /// Home (rule R-HOME-1): ONE primary action — Quick Play — with everything else
 /// visually secondary and the mode/category pickers behind a Customize sheet.
@@ -15,6 +16,9 @@ struct HomeView: View {
     @State private var showParty = false
     @State private var showSettings = false
     @State private var showDailyArchive = false
+    @State private var showMultiplayer = false
+    @State private var versusBot: BotProfile?
+    @Environment(\.modelContext) private var modelContext
     @State private var nightLaunch: NightLaunchRequest?
     @State private var hostLaunch: NightLaunchRequest?
     @AppStorage("tidbits.hasOnboarded") private var hasOnboarded = false
@@ -90,6 +94,15 @@ struct HomeView: View {
             }
         }
         .sheet(isPresented: $showSettings) { SettingsView() }
+        .sheet(isPresented: $showMultiplayer) {
+            MultiplayerSheet(recentAccuracy: recentAccuracy) { bot in
+                showMultiplayer = false
+                versusBot = bot
+            }
+        }
+        .fullScreenCover(item: $versusBot) { bot in
+            VersusContainerView(bot: bot)
+        }
         .fullScreenCover(isPresented: showOnboarding) {
             OnboardingView { hasOnboarded = true }
         }
@@ -99,6 +112,10 @@ struct HomeView: View {
             }
             if DebugHooks.openParty { showParty = true }
             if DebugHooks.openCustomize { showCustomize = true }
+            if let vb = DebugHooks.versusBot {
+                versusBot = vb == "house" ? .house(playerAccuracy: recentAccuracy)
+                    : BotProfile.presets.first { $0.id == vb } ?? .regular
+            }
             if DebugHooks.openDailyArchive { showDailyArchive = true }
         }
         .onChange(of: gameCenter.pendingChallengeMode) { _, m in
@@ -106,6 +123,16 @@ struct HomeView: View {
                 start(LaunchRequest(mode: mode, category: .named("mixed")))
             }
         }
+    }
+
+    /// Rolling accuracy over recent games — tunes the adaptive House bot.
+    private var recentAccuracy: Double {
+        var d = FetchDescriptor<GameRecord>(sortBy: [SortDescriptor(\.date, order: .reverse)])
+        d.fetchLimit = 20
+        let recs = (try? modelContext.fetch(d)) ?? []
+        let total = recs.reduce(0) { $0 + $1.total }
+        guard total > 0 else { return 0.6 }
+        return Double(recs.reduce(0) { $0 + $1.correct }) / Double(total)
     }
 
     /// Launch a game and (unless it's the Daily) remember it as the Quick Play default.
@@ -144,9 +171,9 @@ struct HomeView: View {
                 .foregroundStyle(Tidbits.Palette.ink)
             HStack(spacing: 14) {
                 SmallTile(symbol: "person.2.fill", title: "Pass & Play", fill: Tidbits.Palette.grape) { showParty = true }
-                // Placeholder for the next marquee feature (Decision 036) —
-                // Create still lives one tap away in its own tab.
-                ComingSoonTile(symbol: "globe.americas.fill", title: "Online Multiplayer")
+                // Live surface now (Decision 038): v0 Play-vs-CPU inside;
+                // the Quick Match row is the honest v1 slot.
+                SmallTile(symbol: "globe.americas.fill", title: "Online Multiplayer", fill: Tidbits.Palette.blue) { showMultiplayer = true }
             }
         }
     }
@@ -230,27 +257,6 @@ private struct SmallTile: View {
         .buttonStyle(.plain)
         .padding(.trailing, Tidbits.Metric.shadowOffset)
         .padding(.bottom, Tidbits.Metric.shadowOffset)
-    }
-}
-
-// MARK: - Coming-soon tile (the Online Multiplayer placeholder, Decision 036)
-
-private struct ComingSoonTile: View {
-    let symbol: String
-    let title: String
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Image(systemName: symbol).font(.system(size: 24, weight: .black))
-            Text(title).font(Tidbits.TypeRamp.l3)
-            Text("Coming soon").font(Tidbits.TypeRamp.l5).opacity(0.7)
-        }
-        .foregroundStyle(Tidbits.Palette.ink)
-        .frame(maxWidth: .infinity, minHeight: 84, alignment: .topLeading)
-        .padding(14)
-        .background(RoundedRectangle(cornerRadius: 14).fill(Tidbits.Palette.surface))
-        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Tidbits.Palette.border, style: StrokeStyle(lineWidth: 2.5, dash: [7, 5])))
-        .opacity(0.75)
-        .accessibilityLabel("\(title), coming soon")
     }
 }
 

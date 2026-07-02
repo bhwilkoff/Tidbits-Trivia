@@ -81,6 +81,9 @@ struct TVGamePlayView: View {
     /// Non-nil in a networked Trivia Night (Decision 033) — the host gets the
     /// reveal/advance controls; a joiner's reveal is held until the host reveals.
     var live: LiveNight? = nil
+    /// Non-nil in a Play-vs-CPU match (Decision 038): a standings strip rides
+    /// the top and each reveal shows what the bot did.
+    var versus: BotMatch? = nil
     @Environment(AppStore.self) private var store
     @FocusState private var focus: TVFocus?
     @State private var typeRevealed = false
@@ -93,6 +96,7 @@ struct TVGamePlayView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 40) {
             if let live { TVNightRoomStrip(live: live) }
+            if let versus { TVVersusStrip(match: versus, game: game) }
             hud
             if let q = game.current {
                 if game.mode == .barTrivia, let round = game.currentRound { roundBanner(round) }
@@ -136,6 +140,7 @@ struct TVGamePlayView: View {
                     else {
                         reveal(q)
                         if let live { TVNightStandings(live: live) }
+                        if let versus { TVVersusRevealCard(match: versus) }
                     }
                 }
                 // Host's reveal control — reachable while answering or holding.

@@ -129,8 +129,18 @@ function viewHome() {
       <div class="muted">Host or join a night of mixed rounds.</div></div><span class="chev">›</span></button>
     <h2 class="section">More ways to play</h2>
     <div class="home-tiles">
-      <div class="tile card soon" aria-disabled="true"><span class="tile-ico">${ICON.globe}</span><span class="tile-name">Online Multiplayer</span><span class="muted">Coming soon</span></div>
+      <button class="tile card mp" data-multiplayer><span class="tile-ico">${ICON.globe}</span><span class="tile-name">Online Multiplayer</span><span class="tile-sub">Play vs CPU now</span></button>
     </div>
+    <dialog id="mp-dlg" class="night-dlg">
+      <div class="night-form">
+        <h2>Online Multiplayer</h2>
+        <p class="muted">Face an opponent on the same questions — fastest correct answers win.</p>
+        <div class="mp-soon"><b>Quick Match</b><span class="muted">Matchmaking with real players — coming soon</span></div>
+        <h3 class="section">Play a CPU opponent now</h3>
+        ${botRows()}
+        <div class="night-actions"><button type="button" class="btn" data-mp-close>Close</button></div>
+      </div>
+    </dialog>
     <dialog id="night-dlg" class="night-dlg">
       <div class="night-form">
         <h2>Trivia Night</h2>
@@ -176,6 +186,24 @@ function viewHome() {
       </div>
     </dialog>
     ${appsPromo()}`;
+}
+
+// Play vs CPU (Decision 038): the four opponents. Bots are ALWAYS labeled CPU.
+function recentAccuracy() {
+  const recs = Store.records().slice(0, 20);
+  const total = recs.reduce((n, r) => n + r.total, 0);
+  if (!total) return 0.6;
+  return recs.reduce((n, r) => n + r.correct, 0) / total;
+}
+function botRows() {
+  const rows = [
+    [houseBot(recentAccuracy()), 'Adapts to how you\u2019ve been playing \u2014 a fair fight'],
+    [BOTS.rookie, 'Takes it easy. Strong on sports and film'],
+    [BOTS.regular, 'A solid all-rounder. Loves history'],
+    [BOTS.ace, 'Fast and sharp. Science is its home turf'],
+  ];
+  return rows.map(([b, blurb]) => `<button type="button" class="night-preset bot-row" data-bot="${b.id}">
+      <b>${h(b.name)} <span class="cpu-tag">CPU</span></b><span class="muted">${blurb}</span></button>`).join('');
 }
 
 // Daily banner (R-DAILY-1): play-once; locked state opens the archive.
@@ -267,6 +295,14 @@ function bindHome() {
     else startGame('daily', catById('mixed'));
   });
   $('[data-daily-close]').addEventListener('click', () => dailyDlg.close());
+  // Online Multiplayer (Decision 038): v0 = Play vs CPU; Quick Match = honest v1 slot.
+  const mpDlg = $('#mp-dlg');
+  $('[data-multiplayer]').addEventListener('click', () => mpDlg.showModal());
+  $('[data-mp-close]').addEventListener('click', () => mpDlg.close());
+  mpDlg.querySelectorAll('[data-bot]').forEach((b) => b.addEventListener('click', () => {
+    mpDlg.close();
+    startGame('classic', catById('mixed'), { versusBot: b.dataset.bot });
+  }));
   dailyDlg.querySelectorAll('[data-daily-day]').forEach((b) => b.addEventListener('click', () => {
     dailyDlg.close();
     startGame('daily', catById('mixed'), { dailyDay: b.dataset.dailyDay });
@@ -413,6 +449,8 @@ class Game {
   constructor(mode, category, opts = {}) {
     this.mode = MODES[mode]; this.category = category; this.label = opts.label;
     this.dailyDay = opts.dailyDay || null;   // archive plays of a past Daily (R-DAILY-1)
+    // Play vs CPU (Decision 038): a bot resolving the same questions.
+    this.versus = opts.versusBot ? new VsMatch([botById(opts.versusBot, recentAccuracy())]) : null;
     this.questions = []; this.index = 0; this.score = 0; this.streak = 0; this.maxStreak = 0;
     this.answered = []; this.chosen = null; this.phase = 'loading';
     this.remaining = 0; this.timer = null; this.qStart = 0; this.globalDeadline = null;
@@ -554,6 +592,7 @@ class Game {
   _begin() {
     this.chosen = null; this.currentStake = 0; this.phase = 'playing'; this.qStart = Date.now();
     const cur = this.current;
+    if (this.versus && cur) this.versus.beginQuestion(cur, this.mode.perQuestion ?? 30);
     if (cur && cur.closest) { this.currentGuess = Math.round((cur.closest.min + cur.closest.max) / 2); this.lastGuessPoints = 0; }
     if (cur && cur.ordering) {
       let s = cur.ordering.slice();
@@ -749,6 +788,26 @@ async function startGame(mode, category, opts) {
 function quitGame() { if (game) clearInterval(game.timer); game = null; render(); }
 
 // ---------------- Game render ----------------
+// "You 320 · Ace Botsworth CPU 410" — the running head-to-head (Decision 038).
+function versusStrip() {
+  const seats = game.versus.seats.map((s) =>
+    `<span>${h(s.bot.name)} ${s.score} <span class="cpu-tag">CPU</span></span>`).join('');
+  return `<div class="vs-strip"><span>You ${game.score}</span>${seats}</div>`;
+}
+
+// What the opponent did on THIS question — inside the reveal beat.
+function versusRevealCard() {
+  const rows = game.versus.seats.map((s) => {
+    const a = game.versus.pending.find((x) => x.botId === s.bot.id);
+    let line;
+    if (!a || a.choiceIndex == null) line = `${h(s.bot.name)} ran out of time`;
+    else if (s.lastCorrect) line = `${h(s.bot.name)} got it in ${a.seconds.toFixed(1)}s`;
+    else line = `${h(s.bot.name)} missed it`;
+    return `<div class="vs-line ${s.lastCorrect ? 'hit' : 'miss'}">${line}</div>`;
+  }).join('');
+  return `<div class="card reveal vs-reveal">${rows}</div>`;
+}
+
 function renderGame() {
   const q = game.current; if (!q) return;
   const cat = catById(q.categoryID);
@@ -772,7 +831,8 @@ function renderGame() {
   const typeP = q.accepted ? typeAnswerPanel() : '';
   const enumP = q.enumerate ? enumeratePanel(q.enumerate) : '';
   const pic = q.image ? `<div class="card pic-card"><img class="pic-img" src="${h(q.image)}" alt="Identify this" loading="eager" onerror="this.parentNode.classList.add('pic-failed')"><span class="pic-fallback muted">Couldn't load the image</span></div>` : '';
-  const reveal = game.phase === 'reveal' ? revealCard(q) : '';
+  if (game.versus && game.phase === 'reveal') game.versus.commit(q, game.index, game.mode.perQuestion ?? 30);
+  const reveal = game.phase === 'reveal' ? revealCard(q) + (game.versus ? versusRevealCard() : '') : '';
   const banner = (game.mode.id === 'barTrivia' && game.currentRound) ? nightBanner() : '';
   const fixedCount = game.mode.id !== 'timeAttack' && game.mode.id !== 'survival';
   const progress = fixedCount ? `${game.index + 1} / ${game.questions.length}` : `#${game.index + 1}`;
@@ -784,6 +844,7 @@ function renderGame() {
         <span class="pill score">★ ${game.score}</span>
       </div>
       <div class="clockbar"><span id="clk-label">${progress}</span><div class="clock-track"><div id="clk-fill" class="clock-fill"></div></div><span id="clk-secs"></span></div>
+      ${game.versus ? versusStrip() : ''}
       <div class="qwrap">
         ${banner}
         ${pic}
@@ -931,9 +992,29 @@ function renderGameError() {
 }
 
 // ---------------- Results ----------------
+// Final standings for a vs-CPU match (Decision 038) — winner banner + rows.
+function renderVersusResults(s) {
+  const top = game.versus.standings[0];
+  const won = game.score >= (top ? top.score : 0);
+  const row = (name, score, isCpu, highlight) =>
+    `<div class="card vs-standing ${highlight ? 'win' : ''}"><b>${h(name)}${isCpu ? ' <span class="cpu-tag">CPU</span>' : ''}</b><span class="vs-score">${score}</span></div>`;
+  app.innerHTML = `
+    <div class="results">
+      <h1 class="page-title">${won ? 'You won! 🎉' : h(top.bot.name) + ' takes it'}</h1>
+      ${row('You', game.score, false, won)}
+      ${game.versus.standings.map((t) => row(t.bot.name, t.score, true, !won && t === top)).join('')}
+      <p class="muted">${s.correct}/${s.total} correct · rematches sharpen recall</p>
+      <button class="btn btn-primary btn-full" data-again>Rematch</button>
+      <button class="btn btn-text btn-full" data-done>Done</button>
+    </div>`;
+  $('[data-again]').addEventListener('click', () => startGame('classic', catById('mixed'), { versusBot: game.versus.seats[0].bot.id }));
+  $('[data-done]').addEventListener('click', quitGame);
+}
+
 function renderResults() {
   const s = game.summary();
   const grid = s.answered.map((a) => (a.chosen === null ? '⬛' : a.correct ? '🟩' : '🟥')).join('');
+  if (game.versus) { renderVersusResults(s); return; }
   const headline = s.acc === 100 ? 'Flawless!' : s.acc >= 80 ? 'Brilliant' : s.acc >= 50 ? 'Nicely done' : 'Good run';
   const missed = s.answered.filter((a) => !a.correct);
   app.innerHTML = `

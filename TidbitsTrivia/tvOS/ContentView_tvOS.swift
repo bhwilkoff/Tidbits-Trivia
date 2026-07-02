@@ -1,5 +1,6 @@
 #if os(tvOS)
 import SwiftUI
+import SwiftData
 
 // MARK: - tvOS palette (dark-first; reserve brightness for focus)
 
@@ -27,6 +28,8 @@ struct ContentView_tvOS: View {
     @State private var showNightSetup = false
     @State private var showCustomize = false
     @State private var showDailyArchive = false
+    @State private var versusBot: BotProfile?
+    @Environment(\.modelContext) private var modelContext
     @FocusState private var primaryFocused: Bool
 
     /// Launch a game and (unless Daily) remember it as the Quick Play default.
@@ -45,6 +48,7 @@ struct ContentView_tvOS: View {
                     quickActionsRow
                     dailyHero
                     nightHero
+                    multiplayerPanel
                 }
                 .padding(.horizontal, 90)
                 .padding(.vertical, 60)
@@ -58,6 +62,9 @@ struct ContentView_tvOS: View {
         }
         .fullScreenCover(item: $launch) { req in
             TVGameContainer(mode: req.mode, category: req.category, dailyDay: req.dailyDay)
+        }
+        .fullScreenCover(item: $versusBot) { bot in
+            TVVersusContainer(bot: bot)
         }
         .fullScreenCover(isPresented: $showDailyArchive) {
             TVDailyArchive { day in
@@ -179,6 +186,55 @@ struct ContentView_tvOS: View {
             Spacer()
         }
         .focusSection()
+    }
+
+    // Online Multiplayer (Decision 038): v0 Play-vs-CPU chips; the Quick Match
+    // line is the honest v1 slot. Bots are ALWAYS labeled CPU.
+    private var multiplayerPanel: some View {
+        VStack(alignment: .leading, spacing: 24) {
+            HStack(spacing: 28) {
+                Image(systemName: "globe.americas.fill").font(.system(size: 52, weight: .black))
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("ONLINE MULTIPLAYER").font(.system(size: 40, weight: .black, design: .rounded))
+                    Text("Quick Match with real players is coming soon — face a CPU opponent now.")
+                        .font(.system(size: 29, weight: .medium, design: .rounded))
+                        .foregroundStyle(TVTheme.textSoft)
+                }
+                Spacer()
+            }
+            .foregroundStyle(TVTheme.text)
+            HStack(spacing: 24) {
+                versusChip(BotProfile.house(playerAccuracy: recentAccuracy), accent: Tidbits.Palette.coral)
+                versusChip(.rookie, accent: Tidbits.Palette.mint)
+                versusChip(.regular, accent: Tidbits.Palette.blue)
+                versusChip(.ace, accent: Tidbits.Palette.grape)
+            }
+            .focusSection()
+        }
+        .padding(40)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(TVTheme.panel, in: RoundedRectangle(cornerRadius: 28))
+    }
+
+    private func versusChip(_ bot: BotProfile, accent: Color) -> some View {
+        Button { versusBot = bot } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "cpu").font(.system(size: 24, weight: .black))
+                Text(bot.name).font(.system(size: 27, weight: .bold, design: .rounded))
+                TVCPUTag()
+            }
+        }
+        .buttonStyle(TVChipStyle(accent: accent, selected: false))
+    }
+
+    /// Rolling accuracy over recent games — tunes the adaptive House bot.
+    private var recentAccuracy: Double {
+        var d = FetchDescriptor<GameRecord>(sortBy: [SortDescriptor(\.date, order: .reverse)])
+        d.fetchLimit = 20
+        let recs = (try? modelContext.fetch(d)) ?? []
+        let total = recs.reduce(0) { $0 + $1.total }
+        guard total > 0 else { return 0.6 }
+        return Double(recs.reduce(0) { $0 + $1.correct }) / Double(total)
     }
 
     private var header: some View {

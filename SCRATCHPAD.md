@@ -559,6 +559,27 @@ One-line-per-round; full detail in `ARCHIVE.md`.
   internal --no-bump`, key via `PLAY_SERVICE_ACCOUNT_JSON=~/.config/play/
   archivewatch-play.json` — the script's default `tidbits-play.json` path doesn't
   exist); web live via Pages (sw v7).
+- **2026-07-02 (online multiplayer v0 — Play vs CPU, Decision 038; owner: "start
+  working on the online multiplayer buildout… using the playbook").** Playbook v0
+  built on ALL 4 platforms: the home "Online Multiplayer" tile is LIVE — one
+  surface (iOS sheet / Android ModalBottomSheet / web dialog / tvOS panel) with
+  **Quick Match honestly marked coming-soon** (the v1 slot) + four CPU opponents:
+  **The House** (adapts to rolling player accuracy), Rookie .55 / Regular .70 /
+  Ace .85. Bot spec (3 mirrors: `Core/Engine/BotOpponent.swift`, `data/Bots.kt`,
+  `js/bots.js`): p = clamp(base+category+difficultyAdj, .02, .98), log-normal
+  timing (correct ~15% faster, ~5% freeze), player's own Scoring; resolve at
+  question start, commit at reveal. UI: live "You N · Bot N CPU" strip,
+  per-reveal outcome line ("got it in 5.4s"/"missed it"/"ran out of time"),
+  final standings + Rematch. **CPU label everywhere (honesty rule).** No
+  GameRecords written (like pass-and-play). New hook `TIDBITS_VERSUS=<bot>`.
+  *Verified:* iOS full loop live (strip → reveal → standings, autopilot lost to
+  Tina 604–1,577); Android live (sheet → The House match → reveal "got it in
+  5.4s"); tvOS + iOS + Android builds green, web node --check; tvOS panel is
+  component-mirrored but the headless TV sim parks on a Game Center sign-in
+  interstitial — eyeball it on real hardware in beta. *v1 next (owner
+  decisions):* backend (Cloudflare DO room actor recommended vs Supabase) +
+  identity story (anonymous device id vs accounts) — then the playbook §3d room
+  state machine reuses this bot spec server-side as timeout-fill.
 - **2026-07-02 (cross-platform Daily unification — owner: "the daily tidbit on
   android is different than it is on iOS and… the web… it has to be the same
   across all platforms").** *Found:* the PARITY "same seed" note was silently

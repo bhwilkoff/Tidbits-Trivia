@@ -345,6 +345,19 @@ body {
 .tile.soon { background: var(--color-surface); color: var(--color-ink); border-style: dashed;
   box-shadow: none; opacity: 0.8; cursor: default; }
 .daily-list { display: flex; flex-direction: column; gap: 6px; max-height: 46vh; overflow-y: auto; }
+.tile.mp { cursor: pointer; font: inherit; text-align: left; background: var(--color-accent); }
+.tile-sub { font-size: 12px; opacity: 0.85; }
+.cpu-tag { font-size: 10px; font-weight: 900; background: rgba(0,0,0,0.22); color: inherit;
+  border-radius: 999px; padding: 1px 6px; vertical-align: 1px; }
+.mp-soon { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border-radius: 12px;
+  border: 2px dashed var(--color-border); opacity: 0.8; }
+.vs-strip { display: flex; justify-content: space-between; gap: 10px; font-weight: 800; font-size: 14px;
+  padding: 7px 14px; margin: 0 var(--pad) 8px; background: var(--color-surface);
+  border: 2px solid var(--color-border); border-radius: 10px; }
+.vs-line { font-weight: 700; } .vs-line.hit { color: #1E9E6A; } .vs-line.miss { color: var(--color-primary); }
+.vs-standing { display: flex; justify-content: space-between; align-items: center; padding: 16px; margin-bottom: 10px; }
+.vs-standing.win { background: var(--color-yellow); }
+.vs-score { font-weight: 900; font-size: 22px; }
 .daily-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 40px; }
 .tab svg { display: block; }
 .pill svg { vertical-align: -2px; }

@@ -57,6 +57,7 @@ sealed interface Route {
     data object Records : Route
     data object Create : Route
     data class Game(val mode: Mode, val category: Category, val custom: List<Question>? = null, val label: String? = null, val nightRounds: List<Pair<String, Int>>? = null, val dailyDay: String? = null) : Route
+    data class Versus(val botId: String) : Route
     data object NightSetup : Route
     data object NightJoin : Route
     data object NightLive : Route
@@ -122,6 +123,7 @@ fun AppRoot(
                         store = store,
                         onPlay = { mode, cat -> backStack.add(Route.Game(mode, cat)) },
                         onPlayDaily = { day -> backStack.add(Route.Game(Mode.DAILY, Category.byId("mixed"), dailyDay = day)) },
+                        onVersus = { id -> backStack.add(Route.Versus(id)) },
                         onNight = { backStack.add(Route.NightSetup) },
                         onParty = { backStack.add(Route.Party) },
                         onJoinNight = { ensureNearby(); backStack.add(Route.NightJoin) },
@@ -153,6 +155,7 @@ fun AppRoot(
                     is Route.Records -> RecordsScreen(store)
                     is Route.Create -> CreateScreen { qs, label -> backStack.add(Route.Game(Mode.CLASSIC, Category.byId("mixed"), qs, label)) }
                     is Route.Game -> GameScreen(r, store) { backStack.removeAt(backStack.lastIndex) }
+                    is Route.Versus -> VersusScreen(r.botId, store) { backStack.removeAt(backStack.lastIndex) }
                     is Route.Settings -> SettingsScreen(store, dynamicColor, onDynamicColor)
                     is Route.Party -> PartyContainer(store) { backStack.removeAt(backStack.lastIndex) }
                 }
@@ -181,6 +184,7 @@ private fun HomeScreen(
     store: Store,
     onPlay: (Mode, Category) -> Unit,
     onPlayDaily: (String) -> Unit,
+    onVersus: (String) -> Unit,
     onNight: () -> Unit,
     onParty: () -> Unit,
     onJoinNight: () -> Unit,
@@ -190,6 +194,7 @@ private fun HomeScreen(
     var showCustomize by remember { mutableStateOf(false) }
     var showNight by remember { mutableStateOf(false) }
     var showDailyArchive by remember { mutableStateOf(false) }
+    var showMultiplayer by remember { mutableStateOf(false) }
     val (qpMode, qpCat) = store.quickPlay()
     val firstRun = !store.hasQuickPlayHistory()
     val fade = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
@@ -272,9 +277,9 @@ private fun HomeScreen(
         Text("More ways to play", fontWeight = FontWeight.Bold, fontSize = 20.sp)
         Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
             HomeTile(Icons.Filled.Group, "Pass & Play", Pops.grape, Modifier.weight(1f), onParty)
-            // Placeholder for the next marquee feature (Decision 036) —
-            // Create still lives one tap away in its own tab.
-            ComingSoonTile(Icons.Filled.Public, "Online Multiplayer", Modifier.weight(1f))
+            // Live surface now (Decision 038): v0 Play-vs-CPU inside; the
+            // Quick Match row is the honest v1 slot.
+            HomeTile(Icons.Filled.Public, "Online Multiplayer", Pops.blue, Modifier.weight(1f)) { showMultiplayer = true }
         }
         Spacer(Modifier.height(24.dp))
     }
@@ -286,6 +291,9 @@ private fun HomeScreen(
     if (showDailyArchive) DailyArchiveSheet(store = store,
         onDismiss = { showDailyArchive = false },
         onPlayDay = { day -> showDailyArchive = false; onPlayDaily(day) })
+    if (showMultiplayer) MultiplayerSheet(store = store,
+        onDismiss = { showMultiplayer = false },
+        onPickBot = { id -> showMultiplayer = false; onVersus(id) })
 }
 
 @Composable
@@ -295,20 +303,6 @@ private fun HomeTile(icon: ImageVector, title: String, fill: Color, modifier: Mo
             Icon(icon, null, tint = onAccent(fill), modifier = Modifier.size(24.dp))
             Spacer(Modifier.height(6.dp))
             Text(title, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = onAccent(fill))
-        }
-    }
-}
-
-/** The Online Multiplayer placeholder (Decision 036) — visibly not-yet-tappable. */
-@Composable
-private fun ComingSoonTile(icon: ImageVector, title: String, modifier: Modifier) {
-    Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(2.dp, MaterialTheme.colorScheme.outline), modifier = modifier.alpha(0.75f)) {
-        Column(Modifier.padding(14.dp).heightIn(min = 76.dp)) {
-            Icon(icon, null, modifier = Modifier.size(24.dp))
-            Spacer(Modifier.height(6.dp))
-            Text(title, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-            Text("Coming soon", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
         }
     }
 }
@@ -539,7 +533,7 @@ private fun GameScreen(route: Route.Game, store: Store, onDone: () -> Unit) {
 }
 
 @Composable
-internal fun PlayingScreen(game: GameState) {
+internal fun PlayingScreen(game: GameState, match: VsMatch? = null) {
     val q = game.current ?: return
     val live = game.phase == GamePhase.PLAYING && !game.awaitingReveal   // accepting input
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -552,6 +546,7 @@ internal fun PlayingScreen(game: GameState) {
             AssistChip(onClick = {}, label = { Text("${game.score}") },
                 leadingIcon = { Icon(Icons.Filled.Star, null, modifier = Modifier.size(16.dp)) })
         }
+        if (match != null) VersusStrip(game, match)
         if (game.mode == Mode.BAR_TRIVIA && game.currentRoundTitle != null) {
             ChunkyCard(fill = MaterialTheme.colorScheme.surfaceVariant, modifier = Modifier.fillMaxWidth()) {
                 Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -631,6 +626,7 @@ internal fun PlayingScreen(game: GameState) {
                             Text("Round ${game.currentRoundNumber} complete · up next: ${game.nextRoundTitle}",
                                 color = accentText(Pops.coral), fontWeight = FontWeight.Bold)
                         }
+                    if (match != null) { Spacer(Modifier.height(2.dp)); }
                     // Parity with iOS/web: every reveal links back to its source article.
                     if (q.sourceUrl.isNotEmpty()) {
                         TextButton(onClick = { uriHandler.openUri(q.sourceUrl) }, contentPadding = PaddingValues(0.dp)) {
@@ -641,6 +637,7 @@ internal fun PlayingScreen(game: GameState) {
                     }
                 }
             }
+            if (match != null) VersusRevealCard(match)
             // Self-paced advances here; a networked night is advanced by the host (below the game).
             if (!game.hostPaced) Button(onClick = { game.advance() }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Ink, contentColor = Color.White)) {
                 Text(if (game.isLast) "See Results" else if (game.nextRoundTitle != null) "Start ${game.nextRoundTitle}" else "Next")
@@ -1024,7 +1021,7 @@ private fun CreateScreen(onPlay: (List<Question>, String) -> Unit) {
 // ---- Reusable chunky card ----
 
 @Composable
-private fun ChunkyCard(modifier: Modifier = Modifier, fill: Color = MaterialTheme.colorScheme.surface, onClick: (() -> Unit)? = null, content: @Composable () -> Unit) {
+internal fun ChunkyCard(modifier: Modifier = Modifier, fill: Color = MaterialTheme.colorScheme.surface, onClick: (() -> Unit)? = null, content: @Composable () -> Unit) {
     val base = modifier.fillMaxWidth().then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
     Surface(shape = RoundedCornerShape(18.dp), color = fill, border = BorderStroke(2.5.dp, Ink), modifier = base) { content() }
 }

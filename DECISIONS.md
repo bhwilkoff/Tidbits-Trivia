@@ -1092,3 +1092,37 @@ UTF-8 byte (`Skarsgård`) — mask with `and 0xFF` when hashing bytes in Kotlin.
 Caveat: the web corpus refreshes network-first, so around a corpus publish
 the web may briefly hold a NEWER id set than the store apps — the daily can
 differ across platforms for that window only; id parity is the invariant.
+
+## 038 — Online multiplayer is per-ecosystem + bot-first; v0 ships Play vs CPU with honest labels
+
+Online play ships in phases (docs/ONLINE-MULTIPLAYER-PLAYBOOK.md). **v0 (this
+pass): Play vs CPU** — a fully-offline believable opponent behind the home's
+"Online Multiplayer" surface, with the online Quick Match row visible and
+honestly marked coming-soon. The surface is ONE entry (R-HOME-1 idiom, like
+the unified Trivia Night sheet): pick The House / Rookie / Regular / Ace and
+play a classic round head-to-head.
+
+**Why bot-first:** neither store ecosystem can host cross-platform online
+(GameKit is Apple-only; Google killed Play Games multiplayer in 2020 —
+playbook §1–2), so real online needs either GameKit per-ecosystem or a
+neutral relay (Cloudflare DO / Supabase, §3) — both owner-gated (infra, auth,
+identity). The bot mode is owner-unblocked, delivers competitive trivia
+everywhere immediately, and becomes v1's timeout-fill / dropout brain.
+
+**The believability spec (all three mirrors — BotOpponent.swift / Bots.kt /
+js/bots.js, keep in lockstep):** per-question correct-rate = clamp(baseSkill
++ categorySkill + difficultyAdj, .02, .98) — never certain, visibly uneven
+across categories; answer time = log-normal jitter (correct ≈15% faster,
+~5% freeze-and-miss); scores use the player's own Scoring rules. Presets:
+Rookie .55 / Regular .70 / Ace .85 + **The House**, which tracks the
+player's rolling accuracy (fair fight; "meet the learner where they are").
+
+**HONESTY RULE (learning-orientation, non-negotiable): a bot is always
+visibly labeled CPU** — a tag on every roster row, strip, and standings line.
+Never present a bot as a human; when v1 backfills empty online seats with
+bots, the label and a visible notice come with it.
+
+**How to apply:** vs-CPU matches don't write GameRecords (same as
+pass-and-play — solo records stay honest). v1 (owner-gated next): pick the
+backend (Cloudflare DO room actor recommended) + the identity story, then the
+room state machine in playbook §3d reuses this exact bot spec server-side.

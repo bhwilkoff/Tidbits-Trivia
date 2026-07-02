@@ -11,12 +11,16 @@ struct GamePlayView: View {
     /// reveal + advance controls; a joiner's reveal is held until the host reveals.
     /// nil for solo / pass-and-play — the view behaves exactly as before.
     var live: LiveNight? = nil
+    /// Non-nil in a Play-vs-CPU match (Decision 038): a compact standings
+    /// strip rides the top and each reveal shows what the bot did.
+    var versus: BotMatch? = nil
     let onQuit: () -> Void
     @FocusState private var enumFocused: Bool
 
     var body: some View {
         VStack(spacing: 0) {
             if let live { NightRoomStrip(live: live) }
+            if let versus { VersusStrip(match: versus, game: game) }
             hud
             if let q = game.current {
                 ScrollView {
@@ -40,6 +44,7 @@ struct GamePlayView: View {
                             else {
                                 reveal(for: q)
                                 if let live { NightStandingsCard(live: live) }
+                                if let versus { VersusRevealCard(match: versus) }
                             }
                         }
                     }

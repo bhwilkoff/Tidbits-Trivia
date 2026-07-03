@@ -9,8 +9,8 @@
 
 ## Current state (2026-07-01)
 
-**In beta on all platforms.** Versions: Apple **1.6.15 (build 55)** → TestFlight
-(iOS+tvOS); Android **1.6.15 (versionCode 47)** → Play **internal** (lockstep
+**In beta on all platforms.** Versions: Apple **1.6.16 (build 56)** → TestFlight
+(iOS+tvOS); Android **1.6.16 (versionCode 48)** → Play **internal**
 restored; 1.6.15 = the unified cross-platform Daily, Decision 037)
 (com.tidbitstrivia.app; signing via ~/keystores/tidbits-upload.jks +
 android/keystore/signing.properties). Web auto-deploys to GitHub Pages. Bump on

@@ -84,7 +84,7 @@ struct ContentView_tvOS: View {
                                  engine: store.game, hostName: NightClient.lastName)
         }
         .fullScreenCover(isPresented: $showJoinNight) {
-            TVNightLiveContainer(joining: store.game)
+            TVJoinGameContainer()
         }
         .fullScreenCover(isPresented: $showNightSetup) {
             NightSetupView_tvOS { plan, category, mode in
@@ -149,7 +149,7 @@ struct ContentView_tvOS: View {
                 Image(systemName: "party.popper.fill").font(.system(size: 52, weight: .black))
                 VStack(alignment: .leading, spacing: 8) {
                     Text("TRIVIA NIGHT").font(.system(size: 40, weight: .black, design: .rounded))
-                    Text("Host or join a night of mixed rounds.")
+                    Text("Host a night, or join one with a code — including a Tidbits Live event.")
                         .font(.system(size: 29, weight: .medium, design: .rounded))
                         .foregroundStyle(TVTheme.textSoft)
                 }
@@ -162,7 +162,7 @@ struct ContentView_tvOS: View {
                 }
                 .buttonStyle(TVChipStyle(accent: Tidbits.Palette.coral, selected: false))
                 Button { showJoinNight = true } label: {
-                    Label("Join a night", systemImage: "number").font(.system(size: 27, weight: .bold, design: .rounded))
+                    Label("Join a game", systemImage: "number").font(.system(size: 27, weight: .bold, design: .rounded))
                 }
                 .buttonStyle(TVChipStyle(accent: Tidbits.Palette.teal, selected: false))
             }

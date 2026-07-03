@@ -56,6 +56,7 @@
 		868239CDDF1A55B51710E012 /* Scoring.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EBCE6DDE7254EB4010E1679 /* Scoring.swift */; };
 		87D2A2B94B2CE47C7ADB8348 /* GameView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5C9D9266531ECD27156562D /* GameView_tvOS.swift */; };
 		8932DF2335A76D131E937272 /* NightLiveContainer_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF5CC9559B7356814F9FE1D4 /* NightLiveContainer_tvOS.swift */; };
+		A1B2C3D4E5F6000000AC0600 /* LiveJoinView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000AC0601 /* LiveJoinView_tvOS.swift */; };
 		918AE96520BD2A89643D6E20 /* TriviaCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCB14B0E2B13CCA2DDA250ED /* TriviaCategory.swift */; };
 		92153A2172FBD8BD36DE55C5 /* thisorthat.json in Resources */ = {isa = PBXBuildFile; fileRef = BADC61A185827BBE0B9857AA /* thisorthat.json */; };
 		92B4788F3A0CAC7DE68FB848 /* CorpusDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB24F551656B187A42C81D44 /* CorpusDatabase.swift */; };
@@ -182,6 +183,7 @@
 		CB9BC2DDC68229C08A32FF1E /* VersusContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VersusContainerView.swift; sourceTree = "<group>"; };
 		CDC047AE9E00DBB79A4FD169 /* Haptics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Haptics.swift; sourceTree = "<group>"; };
 		CF5CC9559B7356814F9FE1D4 /* NightLiveContainer_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightLiveContainer_tvOS.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000AC0601 /* LiveJoinView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveJoinView_tvOS.swift; sourceTree = "<group>"; };
 		D2BE9E793BFE4E52464B69A2 /* TidbitsTrivia.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TidbitsTrivia.entitlements; sourceTree = "<group>"; };
 		D50CC8FE4C2A40751C616B5F /* NightLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightLink.swift; sourceTree = "<group>"; };
 		D85FC9EA0ED55C307CC3525F /* PlayerRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerRecord.swift; sourceTree = "<group>"; };
@@ -323,6 +325,7 @@
 				C23D07A7744AE72B2935CB2F /* ContentView_tvOS.swift */,
 				F5C9D9266531ECD27156562D /* GameView_tvOS.swift */,
 				CF5CC9559B7356814F9FE1D4 /* NightLiveContainer_tvOS.swift */,
+				A1B2C3D4E5F6000000AC0601 /* LiveJoinView_tvOS.swift */,
 				ABC3E5834F087B503EF2FE95 /* NightView_tvOS.swift */,
 				3D57E4D59AAC3B3F125BEF6C /* QuickMatchView_tvOS.swift */,
 				F705319E1E9AC235B5D005C4 /* RecordsView_tvOS.swift */,
@@ -591,6 +594,7 @@
 				C0DE632706A625B3AFF44EF8 /* NightLink.swift in Sources */,
 				BAE653DC19291745458BE180 /* NightLiveContainer.swift in Sources */,
 				8932DF2335A76D131E937272 /* NightLiveContainer_tvOS.swift in Sources */,
+				A1B2C3D4E5F6000000AC0600 /* LiveJoinView_tvOS.swift in Sources */,
 				43F8B1E0DFD953763387E1D7 /* NightPlan.swift in Sources */,
 				58D69F6CD06518853ACBCE55 /* NightProtocol.swift in Sources */,
 				46C78F229E1F5ABC0888E25F /* NightSetupView.swift in Sources */,

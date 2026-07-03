@@ -1,15 +1,22 @@
 #if os(iOS)
 import SwiftUI
 
-/// Join a Mac-hosted Tidbits Live event from an iPhone/iPad — enter the code on
-/// the big screen, pick a team, answer on your phone. The native twin of the web
-/// join (js/live.js), on the shared LivePlayerClient + LiveRoom contract.
+/// Unified "Join a game" on iPhone/iPad. One code box resolves to either a
+/// Mac-hosted **Tidbits Live** event (Firebase RTDB `live/{code}`, works over the
+/// internet — the native twin of js/live.js on the shared `LivePlayerClient`) or a
+/// local peer **Trivia Night** (mDNS, same Wi-Fi). We probe RTDB first; a miss
+/// falls back to LAN discovery via `NightLiveContainer`. Same verb; the player
+/// never has to know which system hosts them.
 struct LiveJoinView: View {
     var initialCode: String = ""
     @Environment(\.dismiss) private var dismiss
+    @Environment(AppStore.self) private var store
     @State private var client = LivePlayerClient()
     @State private var code = ""
     @State private var team = ""
+    @State private var probing = false
+    @State private var formError: String?
+    @State private var nightJoin: NightJoinReq?
 
     var body: some View {
         ZStack {
@@ -18,13 +25,31 @@ struct LiveJoinView: View {
         }
         .onAppear { if code.isEmpty { code = initialCode.uppercased() } }
         .interactiveDismissDisabled(client.joined)
+        .fullScreenCover(item: $nightJoin) { req in
+            NightLiveContainer(joining: store.game, autoJoin: (req.code, req.name))
+        }
         .task {
-            // CI/device hook: auto-join a known room to verify the flow headless.
+            // CI/device hook: auto-resolve a known room to verify the flow headless.
             if ProcessInfo.processInfo.environment["TIDBITS_LIVE_AUTOJOIN"] == "1",
                !initialCode.isEmpty, !client.joined {
-                team = "iOS Tester"; await client.join(code: initialCode, team: team)
+                code = initialCode; team = "iOS Tester"; await resolve()
             }
         }
+    }
+
+    /// Probe the hosted-event backend first; a hit joins the Live room, a miss
+    /// hands off to the LAN peer night (which runs its own discovery + surfaces
+    /// its own not-found state).
+    private func resolve() async {
+        let c = code.uppercased().filter { $0.isLetter || $0.isNumber }
+        let t = team.trimmingCharacters(in: .whitespaces)
+        guard c.count >= 4 else { formError = "Enter the 4-letter code from the screen."; return }
+        guard !t.isEmpty else { formError = "Enter a team name."; return }
+        formError = nil; probing = true
+        let isLive = (try? await FirebaseRTDB.shared.exists("\(LiveRoom.path(c))/meta")) ?? false
+        probing = false
+        if isLive { await client.join(code: c, team: t) }
+        else { nightJoin = NightJoinReq(code: c, name: t) }
     }
 
     // MARK: Join
@@ -38,7 +63,7 @@ struct LiveJoinView: View {
                 .background(Capsule().fill(Tidbits.Palette.coral))
                 .overlay(Capsule().strokeBorder(Tidbits.Palette.border, lineWidth: 2.5))
             Text("Join the game").font(.system(size: 30, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
-            Text("Enter the code on the big screen.").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+            Text("Enter a host's code — a Tidbits Live event or a nearby Trivia Night.").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft).multilineTextAlignment(.center)
             TextField("CODE", text: $code)
                 .textInputAutocapitalization(.characters).autocorrectionDisabled()
                 .multilineTextAlignment(.center).font(.system(size: 30, weight: .black, design: .monospaced))
@@ -53,16 +78,16 @@ struct LiveJoinView: View {
                 .padding(16)
                 .background(RoundedRectangle(cornerRadius: 14).fill(.white))
                 .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Tidbits.Palette.border, lineWidth: 2.5))
-            if let e = client.errorText {
+            if let e = formError ?? client.errorText {
                 Text(e).font(Tidbits.TypeRamp.l5).foregroundStyle(.red)
             }
             Button {
-                Task { await client.join(code: code, team: team) }
+                Task { await resolve() }
             } label: {
-                Text(client.joining ? "Joining…" : "Join").frame(maxWidth: .infinity)
+                Text(probing || client.joining ? "Joining…" : "Join").frame(maxWidth: .infinity)
             }
             .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.coral, textColor: .white))
-            .disabled(client.joining)
+            .disabled(client.joining || probing)
             Button("Cancel") { dismiss() }.font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft).padding(.top, 4)
             Spacer()
         }
@@ -172,5 +197,12 @@ struct LiveJoinView: View {
             : (client.hasAnswered ? ("Locked in — waiting for the reveal…", Tidbits.Palette.mint) : ("Tap your answer.", Tidbits.Palette.inkSoft))
         Text(note.0).font(Tidbits.TypeRamp.l4).foregroundStyle(note.1).frame(maxWidth: .infinity).padding(.top, 6)
     }
+}
+
+/// A resolved LAN-night handoff from the unified join front (RTDB probe missed).
+private struct NightJoinReq: Identifiable {
+    let code: String
+    let name: String
+    var id: String { code }
 }
 #endif

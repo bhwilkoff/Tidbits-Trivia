@@ -45,6 +45,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.learningischange.tidbitstrivia.data.*
+import com.learningischange.tidbitstrivia.net.FirebaseNet
 import com.learningischange.tidbitstrivia.ui.theme.Ink
 import com.learningischange.tidbitstrivia.ui.theme.Pops
 import com.learningischange.tidbitstrivia.ui.theme.accentText
@@ -62,6 +63,7 @@ sealed interface Route {
     data object NightSetup : Route
     data object NightJoin : Route
     data object NightLive : Route
+    data class LiveRoom(val code: String, val name: String) : Route
     data object Settings : Route
     data object Party : Route
 }
@@ -75,6 +77,7 @@ fun AppRoot(
     onDeepLinkConsumed: () -> Unit = {},
 ) {
     val context = LocalContext.current
+    val rootScope = rememberCoroutineScope()
     val backStack = remember { mutableStateListOf<Route>(Route.Home) }
     val current = backStack.last()
     var corpusReady by remember { mutableStateOf(Corpus.loaded) }
@@ -145,12 +148,27 @@ fun AppRoot(
                     is Route.NightJoin -> NightJoinScreen(
                         initialCode = store.lastNightCode(),
                         initialName = store.lastNightName(),
+                        // Unified join: probe the hosted Tidbits Live backend first;
+                        // a hit opens the Live player, a miss falls back to the LAN
+                        // peer night (mDNS). A probe failure (offline) also falls back
+                        // — the local night doesn't need the internet.
                         onJoin = { code, name ->
-                            val l = LiveNight.join(store, context); live = l; l.join(code, name)
-                            backStack.removeAt(backStack.lastIndex); backStack.add(Route.NightLive)
+                            rootScope.launch {
+                                val isLive = runCatching { FirebaseNet.probeLive(code) }.getOrDefault(false)
+                                backStack.removeAt(backStack.lastIndex)
+                                if (isLive) {
+                                    backStack.add(Route.LiveRoom(code, name))
+                                } else {
+                                    val l = LiveNight.join(store, context); live = l; l.join(code, name)
+                                    backStack.add(Route.NightLive)
+                                }
+                            }
                         },
                         onCancel = { backStack.removeAt(backStack.lastIndex) },
                     )
+                    is Route.LiveRoom -> LiveRoomScreen(r.code, r.name) {
+                        backStack.removeAt(backStack.lastIndex)
+                    }
                     is Route.NightLive -> live?.let { l ->
                         BackHandler { l.end(); live = null; backStack.removeAt(backStack.lastIndex) }
                         NightContainer(l, store) { l.end(); live = null; backStack.clear(); backStack.add(Route.Home) }
@@ -370,7 +388,7 @@ private fun NightEntrySheet(onDismiss: () -> Unit, onStart: () -> Unit, onJoin: 
             Text("A night of mixed rounds — every kind of question. Host for the room, or join someone's code. Apple or Android, same code.",
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f), fontSize = 14.sp)
             ChunkyCard(fill = Pops.coral, onClick = onStart, modifier = Modifier.fillMaxWidth()) { NightRow(Icons.Filled.PlayArrow, "Start a night", "Host for others, or play solo") }
-            ChunkyCard(fill = Pops.teal, onClick = onJoin, modifier = Modifier.fillMaxWidth()) { NightRow(Icons.Filled.Tag, "Join a night", "Enter a host's 4-letter code") }
+            ChunkyCard(fill = Pops.teal, onClick = onJoin, modifier = Modifier.fillMaxWidth()) { NightRow(Icons.Filled.Tag, "Join a game", "Enter a host's 4-letter code") }
         }
     }
 }
@@ -538,8 +556,8 @@ private fun NightJoinScreen(initialCode: String, initialName: String, onJoin: (S
     var code by remember { mutableStateOf(initialCode) }
     var name by remember { mutableStateOf(initialName) }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Text("Join a Trivia Night", fontSize = 28.sp, fontWeight = FontWeight.Black)
-        Text("On the same Wi-Fi as the host. Works whether they're on Apple or Android.",
+        Text("Join a game", fontSize = 28.sp, fontWeight = FontWeight.Black)
+        Text("Enter a host's code — a Tidbits Live event (from anywhere) or a nearby Trivia Night (same Wi-Fi).",
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
         OutlinedTextField(
             value = code, onValueChange = { code = it.uppercase().filter { c -> c.isLetterOrDigit() }.take(4) },

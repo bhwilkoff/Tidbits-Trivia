@@ -12,22 +12,30 @@ struct TVNightLiveContainer: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @State private var recorded = false
+    @State private var didAutoJoin = false
     @State private var code = NightClient.lastCode
     @State private var name = NightClient.lastName
     @FocusState private var focus: Field?
     private enum Field: Hashable { case code, name, join, start }
+    /// When the unified "Join a game" front has already collected a code+name
+    /// (the RTDB probe missed → this is a LAN night), auto-submit the join so the
+    /// player doesn't re-enter it. nil = show the join form as usual.
+    private let autoJoin: (code: String, name: String)?
 
     init(hosting plan: NightPlan, category: TriviaCategory, engine: GameEngine, hostName: String) {
         _live = State(wrappedValue: LiveNight(hostingPlan: plan, category: category, hostName: hostName, engine: engine))
+        self.autoJoin = nil
     }
     /// Run a prebuilt night (online Quick Match hands one over with GameKit
     /// transports already wired — Decision 039).
     init(live: LiveNight) {
         _live = State(wrappedValue: live)
+        self.autoJoin = nil
     }
 
-    init(joining engine: GameEngine) {
+    init(joining engine: GameEngine, autoJoin: (code: String, name: String)? = nil) {
         _live = State(wrappedValue: LiveNight(joiningEngine: engine))
+        self.autoJoin = autoJoin
     }
 
     private var game: GameEngine { live.engine }
@@ -47,6 +55,12 @@ struct TVNightLiveContainer: View {
             }
         }
         .onExitCommand(perform: close)
+        .task {
+            guard let aj = autoJoin, !didAutoJoin else { return }
+            didAutoJoin = true
+            code = aj.code; name = aj.name
+            live.join(code: aj.code, name: aj.name)
+        }
     }
 
     // MARK: Joiner — enter the code

@@ -122,6 +122,81 @@ object FirebaseNet {
     }
 
     data class Player(val name: String, val score: Int, val done: Boolean)
+
+    // MARK: - Tidbits Live (Mac-hosted pub event; path `live/{code}`)
+    //
+    // The join half of the Tidbits Live room contract (docs/LIVE-ROOM-CONTRACT.md).
+    // A separate room model from Quick Match (`rooms/`): the Mac host owns
+    // meta/pub/scores; this player owns teams/{uid} + answers/{qid}/{uid}. Mirrors
+    // js/firebase.js (liveJoin/liveOnPub/liveSubmit/…) and the Swift LivePlayerClient
+    // exactly — the same keys, so a Mac host reaches Apple, web, AND Android players.
+
+    data class LivePub(
+        val round: Int, val roundTitle: String, val qid: String, val qNum: Int, val qTotal: Int,
+        val phase: String, val prompt: String, val options: List<String>?, val format: String,
+        val answerIndex: Int?,
+    )
+    data class LiveMeta(val state: String, val venue: String)
+
+    /** True if a Mac host has opened `live/{code}` — the unified "Join a game"
+     *  front probes this to tell a hosted Live event from a LAN Trivia Night. */
+    suspend fun probeLive(code: String): Boolean {
+        ensureAuth()
+        return db.getReference("live/$code/meta").get().await().exists()
+    }
+
+    /** Register this device as a team in the room; returns the uid. */
+    suspend fun liveJoin(code: String, team: String): String {
+        val me = ensureAuth()
+        db.getReference("live/$code/teams/$me")
+            .setValue(mapOf("name" to team, "joinedAt" to System.currentTimeMillis())).await()
+        return me
+    }
+
+    /** Submit an answer for the current question (host reveals + scores). */
+    suspend fun liveSubmit(code: String, qid: String, choice: Int) {
+        val me = uid ?: return
+        db.getReference("live/$code/answers/$qid/$me")
+            .setValue(mapOf("choice" to choice.toLong(), "ts" to System.currentTimeMillis())).await()
+    }
+
+    fun liveLeave(code: String) {
+        val me = uid ?: return
+        db.getReference("live/$code/teams/$me").removeValue()
+    }
+
+    fun liveOnPub(code: String, cb: (LivePub?) -> Unit): () -> Unit =
+        listen("live/$code/pub") { cb(parsePub(it)) }
+
+    fun liveOnMeta(code: String, cb: (LiveMeta?) -> Unit): () -> Unit =
+        listen("live/$code/meta") { snap ->
+            cb(if (snap.exists()) LiveMeta(
+                state = snap.child("state").getValue(String::class.java) ?: "lobby",
+                venue = snap.child("venue").getValue(String::class.java) ?: "",
+            ) else null)
+        }
+
+    fun liveOnScore(code: String, cb: (Int) -> Unit): () -> Unit {
+        val me = uid ?: return {}
+        return listen("live/$code/scores/$me") { snap -> cb((snap.getValue(Long::class.java) ?: 0L).toInt()) }
+    }
+
+    private fun parsePub(snap: DataSnapshot): LivePub? {
+        val qid = snap.child("qid").getValue(String::class.java) ?: return null
+        val opts = snap.child("options").children.mapNotNull { it.getValue(String::class.java) }
+        return LivePub(
+            round = (snap.child("round").getValue(Long::class.java) ?: 0L).toInt(),
+            roundTitle = snap.child("roundTitle").getValue(String::class.java) ?: "",
+            qid = qid,
+            qNum = (snap.child("qNum").getValue(Long::class.java) ?: 0L).toInt(),
+            qTotal = (snap.child("qTotal").getValue(Long::class.java) ?: 0L).toInt(),
+            phase = snap.child("phase").getValue(String::class.java) ?: "question",
+            prompt = snap.child("prompt").getValue(String::class.java) ?: "",
+            options = opts.ifEmpty { null },
+            format = snap.child("format").getValue(String::class.java) ?: "classic",
+            answerIndex = snap.child("answerIndex").getValue(Long::class.java)?.toInt(),
+        )
+    }
 }
 
 private suspend fun DatabaseReference.runTransaction(handler: (MutableData) -> Transaction.Result): Boolean {

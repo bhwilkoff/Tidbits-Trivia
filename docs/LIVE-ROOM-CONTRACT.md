@@ -7,8 +7,18 @@ GameKit is Apple-only and mDNS/TCP can't reach a browser, so RTDB is the only
 common denominator.
 
 Swift source of truth: `TidbitsTrivia/Core/Networking/LiveRoom.swift` +
-`FirebaseRTDB.swift`. Web mirror: `js/live.js`. Android mirror: `FirebaseNet.kt`.
+`FirebaseRTDB.swift`. Web mirror: `js/live.js`. Android mirror: `FirebaseNet.live*`.
 **Additive-only** — never repurpose a key.
+
+**Join surfaces (all built 2026-07-03):**
+- **web** — `js/live.js`, route `#/live/CODE`.
+- **iOS/iPadOS + tvOS** — the shared Core `LivePlayerClient` (@MainActor @Observable
+  on the `FirebaseRTDB` REST client) behind `LiveJoinView` (iOS) / `TVLivePlayerView`
+  (tvOS).
+- **Android** — `FirebaseNet.live*` (real Firebase SDK) behind `LiveRoomScreen`.
+- **Unified "Join a game"** (iOS/tvOS/Android): one code box probes `live/{code}/meta`
+  (`FirebaseRTDB.exists` / `FirebaseNet.probeLive`); a hit opens the Live player, a
+  miss falls back to the LAN Trivia Night. Web is Live-only (no mDNS in a browser).
 
 ## Tree — `live/{code}`
 

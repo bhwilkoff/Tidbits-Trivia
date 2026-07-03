@@ -12,7 +12,6 @@ struct HomeView: View {
     @State private var showCustomize = false
     @State private var showNightSheet = false
     @State private var showNightSetup = false
-    @State private var showJoinNight = false
     @State private var showParty = false
     @State private var showSettings = false
     @State private var showDailyArchive = false
@@ -48,7 +47,7 @@ struct HomeView: View {
                 Button { showLiveJoin = true } label: {
                     HStack(spacing: 6) {
                         Image(systemName: "qrcode.viewfinder").font(.system(size: 15, weight: .bold))
-                        Text("Have a code? Join a live event")
+                        Text("Have a code? Join a game")
                         Image(systemName: "arrow.right").font(.system(size: 13, weight: .bold))
                     }
                     .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.blue)
@@ -83,9 +82,6 @@ struct HomeView: View {
             NightLiveContainer(hosting: req.plan, category: req.category,
                                engine: store.game, hostName: NightClient.lastName)
         }
-        .fullScreenCover(isPresented: $showJoinNight) {
-            NightLiveContainer(joining: store.game)
-        }
         .fullScreenCover(isPresented: $showParty) { PartyContainerView() }
         .sheet(isPresented: $showCustomize) {
             CustomizeSheet(initial: store.quickPlay,
@@ -96,7 +92,7 @@ struct HomeView: View {
         }
         .sheet(isPresented: $showNightSheet) {
             NightEntrySheet(onStart: { showNightSheet = false; showNightSetup = true },
-                            onJoin: { showNightSheet = false; showJoinNight = true })
+                            onJoin: { showNightSheet = false; liveJoinCode = ""; showLiveJoin = true })
         }
         .sheet(isPresented: $showNightSetup) {
             NightSetupView { plan, category, mode in

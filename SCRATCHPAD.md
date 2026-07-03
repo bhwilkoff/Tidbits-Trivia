@@ -782,3 +782,29 @@ One-line-per-round; full detail in `ARCHIVE.md`.
   cross-venue leaderboards (backend), show-mode boards (Phase C). NOT YET: macOS
   App Store submission plumbing (asc_profiles `mac` branch — its own scope). The
   Mac target is not yet on the release/TestFlight cloud path.
+- **2026-07-03 (Tidbits Live join — every platform + unified "Join a game").**
+  *Session recovered after a mid-work crash* (git clean at d6c09c1 "native iOS join";
+  memory `tidbits-live-networked-join` + the task list re-seeded the plan). *State
+  found:* Tidbits Live (Mac-hosted RTDB `live/{code}`) had web + iOS join built; tvOS
+  + Android join missing; two separate join entries (Live vs local Night). *Owner call
+  (interop):* a **unified join surface**, not a shared wire. *Built + build-verified on
+  all three stacks:* **(1) tvOS Live join** — `TVLivePlayerView` on the shared Core
+  `LivePlayerClient` (already cross-platform) + `TVJoinGameContainer`. **(2) Android
+  Live join** — `FirebaseNet.live*` (probeLive/liveJoin/liveOnPub/liveOnMeta/liveOnScore/
+  liveSubmit/liveLeave + LivePub/LiveMeta, real Firebase SDK, mirrors js/live.js) +
+  Compose `LiveRoomScreen` + a `LiveRoom` route. **(3) Unified "Join a game"** on
+  iOS/tvOS/Android — one code box probes `live/{code}/meta` (new `FirebaseRTDB.exists`
+  / `FirebaseNet.probeLive`); a hit opens the Live player, a miss falls back to the LAN
+  Trivia Night (added an `autoJoin` param to iOS+tvOS `NightLiveContainer` so the
+  pre-collected code/name doesn't get re-entered). Home labels "Join a night" →
+  "Join a game" everywhere; the dead iOS `showJoinNight` cover removed. Web stays
+  Live-only (no mDNS). *Gotcha re-hit:* the Swift-6 isolated-conformance trap — a
+  `@MainActor` `LiveRoom.Meta` can't be decoded inside the `FirebaseRTDB` actor, so the
+  probe uses a decode-free `exists()`. *Verified:* iOS (iPhone 17 Pro/26.0), tvOS
+  (Apple TV 4K/26.0), Android (assembleDebug) all BUILD green; iOS unified join form
+  render-verified on the sim ("Join the game" + the both-systems subtitle, chunky
+  styling intact). No wire change → night-wire golden untouched. **Version stays
+  1.6.17/57/vc49** (the d6c09c1 iOS-join bump — this whole join wave is one unshipped
+  version; bump on the next ship). **Owner gate (unchanged):** `firebase deploy --only
+  database` for the `live` rules + a real Mac host + a phone to run the live end-to-end
+  flow. See PARITY "Tidbits Live — join a Mac-hosted event" + `docs/LIVE-ROOM-CONTRACT.md`.

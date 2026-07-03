@@ -109,6 +109,19 @@ actor FirebaseRTDB {
         let (_, resp) = try await session.data(for: req)
         try Self.check(resp)
     }
+    /// True if a value exists (non-null) at `path`. A cheap presence check that
+    /// decodes nothing — so it can probe a node keyed by a @MainActor-isolated
+    /// Codable type (e.g. `live/{code}/meta`) without tripping Swift 6's
+    /// isolated-conformance rule inside this actor. Used by the unified "Join a
+    /// game" front to tell a hosted Tidbits Live room from a LAN Trivia Night.
+    func exists(_ path: String) async throws -> Bool {
+        let token = try await validToken()
+        let (data, resp) = try await session.data(from: restURL(path, token: token))
+        try Self.check(resp)
+        guard let s = String(data: data, encoding: .utf8) else { return false }
+        return !data.isEmpty && s != "null"
+    }
+
     /// Read + decode the value at `path` (nil if the node is absent → JSON null).
     func get<T: Decodable>(_ path: String, as type: T.Type) async throws -> T? {
         let token = try await validToken()

@@ -90,8 +90,14 @@ struct ContentView_macOS: View {
 
     private var shell: some View {
         NavigationSplitView {
-            List(SidebarSection.allCases, selection: $section) { item in
-                Label(item.title, systemImage: item.symbol)
+            // Explicit .tag(item) so the row tag type matches the selection
+            // binding (SidebarSection). Without it the List auto-tags rows by
+            // their String id, the types mismatch, and clicks never select.
+            List(selection: $section) {
+                ForEach(SidebarSection.allCases) { item in
+                    Label(item.title, systemImage: item.symbol)
+                        .tag(item)
+                }
             }
             .navigationSplitViewColumnWidth(min: 200, ideal: 220)
         } detail: {

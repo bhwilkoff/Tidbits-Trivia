@@ -332,6 +332,7 @@ body {
 .night-form { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
 .night-form h2 { margin: 0; }
 .night-presets { display: flex; flex-direction: column; gap: 10px; }
+.night-or { text-align: center; font-size: 12px; margin: 2px 0; }
 .night-preset { text-align: left; font: inherit; cursor: pointer; padding: 12px 14px;
   border-radius: 14px; background: var(--color-surface);
   border: 2.5px solid var(--color-border); display: flex; flex-direction: column; gap: 2px; }

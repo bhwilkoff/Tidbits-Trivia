@@ -163,6 +163,8 @@ function viewHome() {
       <div class="night-form">
         <h2>Trivia Night</h2>
         <p class="muted">A night of mixed rounds — every kind of question. Each answer ends on a fact to learn.</p>
+        <button type="button" class="night-preset" data-live-join><b>${ICON.globe} Join a game</b><span class="muted">Enter a host's 4-letter code — join a Tidbits Live event</span></button>
+        <div class="night-or muted">or start your own</div>
         <div class="night-presets">
           ${NIGHT.presets.map((p, i) => `<button type="button" class="night-preset${i === 1 ? ' on' : ''}" data-preset="${i}"><b>${h(p.name)}</b>
             ${p.rounds.map(([k, n], ri) => `<span class="muted round-line">${ri + 1}. ${h(NIGHT.roundTitle[k] || k)} · ${n} questions</span>`).join('')}</button>`).join('')}
@@ -353,6 +355,7 @@ function bindHome() {
   let nightPreset = 1;
   const dlg = $('#night-dlg');
   $('[data-night-open]').addEventListener('click', () => dlg.showModal());
+  $('[data-live-join]').addEventListener('click', () => { dlg.close(); location.hash = '#/live'; });
   dlg.querySelectorAll('[data-preset]').forEach((b) => b.addEventListener('click', () => {
     nightPreset = +b.dataset.preset;
     dlg.querySelectorAll('[data-preset]').forEach((x) => x.classList.toggle('on', x === b));

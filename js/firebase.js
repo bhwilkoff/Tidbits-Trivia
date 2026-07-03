@@ -98,6 +98,38 @@ export const FirebaseNet = {
     const { ref, remove } = _fns.db;
     try { await remove(ref(_db, `rooms/${roomId}/players/${_uid}`)); } catch { /* best effort */ }
   },
+
+  // ---- Tidbits Live: join a Mac-hosted pub event (live/{code}) ----
+  // Contract: docs/LIVE-ROOM-CONTRACT.md. The player owns teams/{uid} +
+  // answers/{qid}/{uid}; the host owns meta/pub/scores.
+  async liveJoin(code, teamName, { onError } = {}) {
+    try {
+      const { db } = await ensure();
+      await db.set(db.ref(_db, `live/${code}/teams/${_uid}`), { name: teamName || 'Team', joinedAt: Date.now() });
+      return { code, uid: _uid };
+    } catch (e) { onError && onError(authHint(e)); throw e; }
+  },
+  liveOnPub(code, cb) {
+    const { ref, onValue } = _fns.db;
+    return onValue(ref(_db, `live/${code}/pub`), (s) => cb(s.val()));
+  },
+  liveOnMeta(code, cb) {
+    const { ref, onValue } = _fns.db;
+    return onValue(ref(_db, `live/${code}/meta`), (s) => cb(s.val()));
+  },
+  liveOnScore(code, cb) {
+    const { ref, onValue } = _fns.db;
+    return onValue(ref(_db, `live/${code}/scores/${_uid}`), (s) => cb(s.val() || 0));
+  },
+  async liveSubmit(code, qid, answer) {
+    const { db } = await ensure();
+    await db.set(db.ref(_db, `live/${code}/answers/${qid}/${_uid}`), { ...answer, ts: Date.now() });
+  },
+  async liveLeave(code) {
+    if (!_fns) return;
+    const { ref, remove } = _fns.db;
+    try { await remove(ref(_db, `live/${code}/teams/${_uid}`)); } catch { /* best effort */ }
+  },
 };
 
 function authHint(e) {

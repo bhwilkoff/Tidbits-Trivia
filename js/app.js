@@ -6,6 +6,7 @@ import { Store, CATEGORIES, catColor, catById, MODES, NIGHT, STAKE_BUDGET, dayKe
 import { Scoring } from './engine.js';
 import { BOTS, houseBot, botById, VsMatch } from './bots.js';
 import { FirebaseNet } from './firebase.js';
+import { openLive, closeLive } from './live.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const h = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -43,6 +44,9 @@ async function boot() {
 
 // ---------------- Top-level render ----------------
 function render() {
+  // Tidbits Live player: #/live or #/live/CODE — a self-managing overlay.
+  if (location.hash.startsWith('#/live')) { openLive(location.hash.split('/')[2] || ''); return; }
+  closeLive(); // idempotent teardown when the hash leaves #/live
   if (game) return; // game overlay owns the screen
   const tab = currentTab();
   app.innerHTML = `

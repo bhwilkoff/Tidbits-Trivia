@@ -51,10 +51,20 @@ When shipping any user-facing feature:
 
 ## 0. Platform set
 
-Web + iOS + iPadOS + tvOS + Android (Decision 020). tvOS earns its place
-because living-room trivia is lean-back (Decision 021). iOS is the lead
+Web + iOS + iPadOS + tvOS + Android (Decision 020), with **macOS the
+committed fifth platform** (Decision 042) — the next major scope of work.
+tvOS earns its place because living-room trivia is lean-back (Decision
+021); macOS earns its place because trivia is genuinely lean-in and the
+universal Apple target makes the Mac nearly free to add. iOS is the lead
 platform; everything ships there first, then mirrors. A platform not yet
 reached is ⏳ with a note, never silence.
+
+**macOS status: ⏳ Planned across the board** — the `macos-platform-patterns`
+skill and a `TidbitsTrivia/macOS/` starter scaffold are in place, but the
+shell isn't built, so every feature below is ⏳ on macOS. A dedicated macOS
+column gets threaded into the tables (with honest per-feature cells) as the
+Mac shell lands; until then this single line is the macOS row so the matrix
+doesn't carry a misleadingly-empty column for a 0%-built platform.
 
 ## 1. Top-level navigation
 

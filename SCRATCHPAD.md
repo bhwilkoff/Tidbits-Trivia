@@ -93,6 +93,24 @@ owner task).
 
 ## Next up (see docs/HANDOFF.md §6 for the full backlog)
 
+**macOS app — THE next major scope (Decision 042, pulled from the 5th-gen
+template 2026-07-03).** Skills (`macos-platform-patterns`,
+`cloud-appstore-submission`, `play-cli-submission`) + a starter
+`TidbitsTrivia/macOS/ContentView_macOS.swift` + a `RootView` `#elseif os(macOS)`
+branch are in place; CLAUDE.md / DECISIONS 042 / PARITY §0 frame it. **To build
+it:** (1) add native **Mac** (not "Designed for iPad") to the target's Supported
+Destinations; (2) build the `NavigationSplitView` shell + Mac views in
+`TidbitsTrivia/macOS/` (reuse Core — AppStore, engine, RecordsStore, corpus —
+verbatim; `#if os(iOS)`-guard any UIKit-touching Core symbol); (3) read
+`macos-platform-patterns` FIRST (player-replaces-window-root, fill-image trap,
+ImagePipeline, menu-bar `.commands`). **Submission plumbing is part of THIS
+scope, not done yet:** `tools/submit-appstore.sh` + `asc_profiles.py` need a
+`mac` branch (DEST `generic/platform=macOS`, `.pkg` export via the
+3rd-Party-Mac-Installer cert) and the workflow a `mac` choice option — the
+`cloud-appstore-submission` skill documents exactly what's needed. Seed a
+`macOS-DESIGN.md` (from `docs/templates/PLATFORM-DESIGN-template.md`) once the
+shell passes ~3 screens, not before.
+
 **Networked-night track (hottest):** (1) **iOS Wi-Fi Aware + BLE** — the
 **Apple transport-interface refactor is DONE (2026-07-01)**: `NightHost`/`NightClient`
 are off `NWConnection`, behind `NightLink.swift` (`NightPeerLink`, mirror of Android's

@@ -65,6 +65,8 @@ struct RootView: View {
     var body: some View {
         #if os(tvOS)
         ContentView_tvOS()
+        #elseif os(macOS)
+        ContentView_macOS()   // starter scaffold — see the macos-platform-patterns skill
         #else
         ContentView_iOS()
         #endif

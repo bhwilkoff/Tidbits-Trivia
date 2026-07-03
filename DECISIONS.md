@@ -1220,3 +1220,32 @@ adding a field to AnswerDetail means all four writers + readers.
 **Also (share redesign):** the uniform red/green squares became answer dots
 (🟢/🔴/⚫️) + a proportional accuracy meter (▰▱) + a 🔥 best-run flourish — more
 compelling and more informative, still spoiler-free. Mirrored on all four.
+
+## 042 — macOS joins the universal Apple target (amends 013); it's the next scope
+
+The one Xcode target that serves iPhone, iPad, and Apple TV (Decision 013)
+gains **macOS** as a fourth destination. macOS reuses the entire Apple `Core/`
+verbatim (AppStore, the game engine, RecordsStore, the corpus, sync) and rides
+the same CloudKit private database; only the shell is new. Skills
+(`macos-platform-patterns`, `cloud-appstore-submission`, `play-cli-submission`)
++ a starter `TidbitsTrivia/macOS/ContentView_macOS.swift` are in place — the
+shell itself is the next major scope of work.
+
+**Why:** once a universal target exists, macOS is the cheapest platform to add
+(~60–70% of the Swift is already platform-agnostic). Trivia is genuinely
+lean-in — a pointer + keyboard + menu-bar Mac app is a natural fit, unlike the
+tvOS lean-back constraint. Adding it as a destination (not a separate target)
+keeps versioning (`AppVersion.xcconfig`), sync, and the shared destination
+registry unified for free.
+
+**How to apply:** in Xcode, add native **Mac** (NOT "Mac (Designed for iPad)")
+to the target's Supported Destinations. New UI goes in `TidbitsTrivia/macOS/`
+behind `#if os(macOS)`; the `_macOS.swift` suffix marks Mac-only views. The
+`RootView` branches explicitly (`#elseif os(macOS) ContentView_macOS()`).
+`#if os(iOS)`-guard any Core symbol that imports UIKit. Build the Mac
+destination as part of "done" whenever a shared file changes — a green iOS build
+doesn't prove the Mac slice compiles. Read `macos-platform-patterns` before the
+shell: NavigationSplitView (not resized tabs), game-in-progress replaces the
+window root, the fill-image layout trap, ImagePipeline for art, menu-bar
+`.commands`. Submission is the same cloud path plus a 3rd-Party-Mac-Installer
+cert for `.pkg` signing (`-f platform=mac`).

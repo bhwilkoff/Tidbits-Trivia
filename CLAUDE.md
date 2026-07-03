@@ -33,7 +33,9 @@ these patterns; invoke the skill when its trigger matches.
 | Designing/changing shared backend data the clients consume | `shared-data-plane-contract` |
 | Video/audio streaming from hosts you don't control | `resilient-media-streaming` |
 | Sync, sign-in, favorites/progress across devices | `per-ecosystem-sync-islands` |
-| Preparing any store submission (App Store, Play, tvOS) | `store-submission-playbook` + `docs/CLOUD-SUBMISSION.md` (DEFAULT = cloud build `gh workflow run appstore-build.yml`; the beta-macOS dev box can't ship locally) |
+| Preparing an Apple store submission (iOS / iPadOS / macOS / tvOS) | `cloud-appstore-submission` + `docs/CLOUD-SUBMISSION.md` (DEFAULT = cloud build `gh workflow run appstore-build.yml`; the beta-macOS dev box can't ship locally) |
+| Preparing a Play submission (Android AAB) | `play-cli-submission` (CLI-only: the `edits` transaction via `tools/submit-play.sh`) |
+| Designing / building the macOS app (the next scope) | `macos-platform-patterns` FIRST (NavigationSplitView shell, player-as-root, AppKit seams, sandbox) |
 | Logging an architecture decision | `architectural-decision-log` |
 | User pushback after 3+ iterations of "still broken" | `3d-feature-debug-loop` |
 
@@ -124,12 +126,15 @@ check before "done."
 
 Available as a **web app**, a **native iOS/iPadOS app**, a **native
 Apple TV (tvOS) app**, and a **native Android app** — four native
-experiences, one feature set. When adding to one platform, note the
-equivalent work in SCRATCHPAD.md and update PARITY.md.
+experiences shipping today, one feature set. A **native macOS app** is
+the next platform (the fifth), riding the same universal Apple target —
+skills + scaffold are in place (Decision 042). When adding to one
+platform, note the equivalent work in SCRATCHPAD.md and update PARITY.md.
 
 **Feature parity, not design consistency.** Web feels like the web.
-iOS feels like iOS. tvOS feels like the living room. Android feels
-like Android. The verbs are identical; the idioms aren't.
+iOS feels like iOS. macOS feels like a Mac (pointer + keyboard + menu
+bar). tvOS feels like the living room. Android feels like Android. The
+verbs are identical; the idioms aren't.
 
 Not every app needs all four. Decide the platform set in M0 and
 record it in DECISIONS.md — tvOS earns its place when the content
@@ -189,28 +194,31 @@ fallback):
 
 ---
 
-## Apple apps (iOS / iPadOS / tvOS) — one universal target
+## Apple apps (iOS / iPadOS / macOS / tvOS) — one universal target
 
-**Stack**: Swift 6, SwiftUI (`@Observable`, **iOS 26 / tvOS 26
+**Stack**: Swift 6, SwiftUI (`@Observable`, **iOS 26 / macOS 26 / tvOS 26
 baseline**), SwiftData for local persistence, Keychain for
 credential storage, URLSession direct to API (no third-party
 packages).
 
-iOS 26 / tvOS 26 are the floor. Use the 26-era native APIs directly —
-Liquid Glass, `Tab(role: .search)`, `TabView(.sidebarAdaptable)`,
-`scrollEdgeEffectStyle`, `.matchedTransitionSource` +
-`.navigationTransition(.zoom)` — without `@available` guards. Don't
-write iOS 17/18 workarounds.
+iOS 26 / macOS 26 / tvOS 26 are the floor. Use the 26-era native APIs
+directly — Liquid Glass, `Tab(role: .search)`,
+`TabView(.sidebarAdaptable)`, `scrollEdgeEffectStyle`,
+`.matchedTransitionSource` + `.navigationTransition(.zoom)` — without
+`@available` guards. Don't write iOS 17/18 workarounds.
 
-**One Xcode target serves iPhone, iPad, AND Apple TV** (Decision
-013). Shared logic lives in `Core/`; per-platform UI lives in
-`iOS/` and `tvOS/` groups behind `#if os(iOS)` / `#if os(tvOS)`
-guards. Production experience: ~60–70% of a media app's Swift is
-platform-agnostic (models, networking, query layer, playback-queue
-logic, sync) — the universal target makes that reuse real instead
-of aspirational, and both platforms ride the same CloudKit private
-database for free household sync. See `apple/README.md` for the
-exact Xcode setup.
+**One Xcode target serves iPhone, iPad, Mac, AND Apple TV** (Decision
+013, amended for macOS by Decision 042). Shared logic lives in `Core/`;
+per-platform UI lives in `iOS/`, `macOS/`, and `tvOS/` groups behind
+`#if os(iOS)` / `#if os(macOS)` / `#if os(tvOS)` guards. Production
+experience: ~60–70% of an app's Swift is platform-agnostic (models,
+networking, query layer, game/queue logic, sync) — the universal target
+makes that reuse real instead of aspirational, and every platform rides
+the same CloudKit private database for free household sync. **macOS is
+the cheapest platform to add** once the universal target exists: the
+whole Core comes for free, and only the shell (a `NavigationSplitView` +
+menu-bar Mac app, NOT the iOS app resized) is new. See `apple/README.md`
+and the `macos-platform-patterns` skill for the exact setup.
 
 **Project structure** — Xcode Cloud compatible:
 
@@ -222,6 +230,7 @@ exact Xcode setup.
 │   ├── Core/              ← platform-agnostic: Models, Networking,
 │   │                        Store, query/queue/sync logic
 │   ├── iOS/               ← iPhone/iPad views (#if os(iOS))
+│   ├── macOS/             ← Mac views (#if os(macOS)) — NavigationSplitView shell
 │   ├── tvOS/              ← Apple TV views (#if os(tvOS))
 │   └── Resources/
 ├── AppVersion.xcconfig    ← shared version numbers (all Apple targets)
@@ -279,6 +288,39 @@ shipped apps — see the vendored skills for depth):
 - **SourceKit phantom errors are stale index, not real.** Trust
   `xcodebuild`, not editor squiggles. `@Query` macro views can
   cascade unrelated "Cannot find X in scope" errors across a file.
+  (You'll see this on `macOS/` files too until macOS is a real build
+  destination — `AppStore`/`Tidbits` resolve fine once it is.)
+
+### macOS-specific guardrails (read `macos-platform-patterns` first)
+
+macOS is the **next major scope of work** — the skill + the
+`TidbitsTrivia/macOS/` starter scaffold are in place; the shell isn't
+built yet. Before building it:
+
+- **macOS is a pointer + keyboard + menu-bar + resizable multi-window
+  app, NOT the iOS app resized.** Reuse Core verbatim (AppStore, the
+  game engine, RecordsStore, the corpus); rebuild only the shell.
+  `#if os(iOS)`-guard any Core symbol that touches UIKit.
+- **Shell = `NavigationSplitView`** (a sidebar `Section` enum feeding
+  ONE `NavigationPath` → a single detail column), not the iOS per-tab
+  stack. Menu-bar `.commands` are first-class (⌘N new game, ⌘, opens
+  Settings — Settings rides the app menu, never a sidebar row).
+- **A game in progress REPLACES the window root** — never an
+  `.overlay`/`.fullScreenCover` on the split view (its toolbar +
+  sidebar toggle bleed through). The iOS game-overlay pattern maps to
+  "swap the window root."
+- **Same fill-image layout trap as iOS** — a resizable-window hero is
+  full-width 16:9 aspect-*fit* with NO `maxHeight` cap; art rides
+  `.background`/`.overlay` + `.clipped()`.
+- **Never bare `AsyncImage` for picture-round art** — route through one
+  `ImagePipeline` (decoded `NSCache` + a capped `URLSession`); decode
+  non-RGB → sRGB once (`Image(nsImage:)`'s Metal path renders grayscale
+  as a white box).
+- **Mac App Store** needs App Sandbox (narrow scopes), hardened
+  runtime, an app-icon set, and `PrivacyInfo.xcprivacy`. Submission is
+  the same cloud path as iOS/tvOS plus a **3rd-Party-Mac-Installer
+  cert** for `.pkg` signing (`gh workflow run appstore-build.yml -f
+  platform=mac`; see the `cloud-appstore-submission` skill).
 
 ---
 
@@ -357,9 +399,10 @@ and the Android skill stack carry the depth):
 
 ## Shared design system
 
-**Design tokens** — keep four copies in lockstep:
+**Design tokens** — keep the copies in lockstep (macOS shares the Apple
+`Core/` copy — no separate Mac palette):
 
-| Token | Web | iOS/tvOS (Core) | Android |
+| Token | Web | Apple (iOS/macOS/tvOS Core) | Android |
 |---|---|---|---|
 | Primary | `--color-primary` in `:root` | `Color.primary` in `Design.swift` | `BrandPrimary` in `ui/theme/Color.kt` |
 | Surface | `--color-surface` | `Color.surface` | `BrandSurface` |

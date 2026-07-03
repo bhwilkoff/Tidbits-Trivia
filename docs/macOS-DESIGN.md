@@ -150,6 +150,25 @@ A0.2); game-show "show mode" boards (Phase C, A0.3); sponsor-ad monetization
 stream-out to Twitch/YouTube. Each is a `PARITY.md`/backlog row with its
 reason, never silently attempted.
 
+## §A7 — Implementation status (2026-07-03)
+
+**Shipped + build-verified** (the MVP, paper-style + the differentiators):
+event builder (§A2), host cockpit with reveal-on-command pacing + **manual
+score override** + points-per-correct (§A3.1-3.2), the **tie-break engine**
+(§A3.5, numeric closest-wins), the **big-screen projector window** (§A1.1/A1.2,
+two-window session sharing), **offline** hosting + **printable** question
+pack / answer sheet / results PDFs (§A5.1-5.2), and **venue branding** on the
+big screen + printed sheets.
+
+**Deferred (need capabilities not available to verify: a serverless
+transport + 2-device testing), tracked — not dropped:** networked team JOIN
+(QR/web phone submission, §A4.1) + reconnect (§A4.2); the formats that depend
+on it — **fastest-finger speed scoring**, **audio round** (also needs audio
+content the corpus lacks), **poll/majority**; **cheating deterrence** (§A5.3,
+needs the join page's focus signal). These are the same networked gate as the
+parity Trivia-Night host/join and online Quick Match. Free-text review (§A3.3)
+also lands with networked join (paper mode has no typed answers to review).
+
 ---
 
 # PART B — The parity face (Play / Records / Create / everything iOS+tvOS)

@@ -50,6 +50,7 @@ private struct QuestionPackPage: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text(event.name).font(.system(size: 26, weight: .bold))
+            if !event.venue.isEmpty { Text(event.venue).font(.system(size: 14, weight: .semibold)) }
             Text("Host question pack · \(event.rounds.count) rounds · \(event.totalQuestions) questions")
                 .font(.system(size: 12)).foregroundStyle(.secondary)
             ForEach(Array(event.rounds.enumerated()), id: \.element.id) { ri, round in

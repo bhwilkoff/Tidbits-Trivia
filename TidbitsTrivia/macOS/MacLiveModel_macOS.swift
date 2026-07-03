@@ -21,6 +21,8 @@ struct LiveRound: Identifiable, Codable, Hashable {
 struct LiveEvent: Identifiable, Codable, Hashable {
     var id = UUID()
     var name: String
+    /// Venue branding (§A-Phase-B): shown on the big screen + printed sheets.
+    var venue: String = ""
     var rounds: [LiveRound] = []
     var createdAt: Date = .now
 

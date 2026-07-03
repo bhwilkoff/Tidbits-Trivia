@@ -70,6 +70,9 @@ struct LiveBuilderView_macOS: View {
                 TextField("Event name", text: $working.name)
                     .textFieldStyle(.plain).font(.system(size: 24, weight: .black, design: .rounded))
                     .foregroundStyle(Tidbits.Palette.ink)
+                TextField("Venue (shown on the big screen)", text: $working.venue)
+                    .textFieldStyle(.roundedBorder).font(Tidbits.TypeRamp.l4)
+                    .frame(maxWidth: 340)
 
                 Text("Rounds").font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
                 if working.rounds.isEmpty {

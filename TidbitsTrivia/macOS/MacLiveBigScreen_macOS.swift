@@ -37,8 +37,13 @@ struct LiveBigScreen_macOS: View {
 
     private func live(_ s: LiveHostSession) -> some View {
         VStack(spacing: 24) {
-            HStack {
-                Text(s.event.name.uppercased()).font(.system(size: 30, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(s.event.name.uppercased()).font(.system(size: 30, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
+                    if !s.event.venue.isEmpty {
+                        Text(s.event.venue).font(.system(size: 22, weight: .heavy, design: .rounded)).foregroundStyle(Tidbits.Palette.coral)
+                    }
+                }
                 Spacer()
                 Text("ROUND \(s.roundNumber)/\(s.roundCount) · \(s.roundTitle)")
                     .font(.system(size: 26, weight: .heavy, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)

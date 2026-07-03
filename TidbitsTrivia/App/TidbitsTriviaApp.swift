@@ -49,6 +49,7 @@ struct TidbitsTriviaApp: App {
             SettingsView_macOS()
                 .environment(gameCenter)
                 .tint(Tidbits.Palette.blue)
+                .preferredColorScheme(.light)
         }
         .modelContainer(modelContainer)
 
@@ -58,6 +59,7 @@ struct TidbitsTriviaApp: App {
             LiveBigScreen_macOS()
                 .environment(liveCoordinator)
                 .tint(Tidbits.Palette.blue)
+                .preferredColorScheme(.light)
         }
         .modelContainer(modelContainer)
         #endif
@@ -98,7 +100,10 @@ struct RootView: View {
         #if os(tvOS)
         ContentView_tvOS()
         #elseif os(macOS)
-        ContentView_macOS()   // starter scaffold — see the macos-platform-patterns skill
+        // The Tidbits sticker design is a light "cream paper" theme — pin light
+        // appearance so the Mac chrome (title bar, sidebar, List, fields) matches
+        // instead of following system dark mode (the iOS §7.2 analog).
+        ContentView_macOS().preferredColorScheme(.light)
         #else
         ContentView_iOS()
         #endif

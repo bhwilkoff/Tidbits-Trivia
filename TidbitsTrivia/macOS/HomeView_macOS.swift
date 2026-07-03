@@ -124,6 +124,8 @@ struct HomeView_macOS: View {
                     Text("QUICK PLAY").font(.system(size: 28, weight: .black, design: .rounded))
                     Text("\(req.mode.title.uppercased()) · \(req.category.name.uppercased())")
                         .font(Tidbits.TypeRamp.l6).opacity(0.95)
+                    Text(store.hasQuickPlayHistory ? "Click to jump straight into a round" : "Click to play — customize anytime")
+                        .font(Tidbits.TypeRamp.l5).opacity(0.85)
                 }
                 Spacer(minLength: 0)
             }

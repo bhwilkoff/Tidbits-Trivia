@@ -16,6 +16,7 @@ struct RecordsView_tvOS: View {
     private var toReview: [MissedFact]
     @Query(sort: \CalibrationTally.tierValue, order: .reverse) private var calibration: [CalibrationTally]
     @Environment(\.dismiss) private var dismiss
+    @State private var recap: GameRecord?
 
     var body: some View {
         ZStack {
@@ -30,6 +31,7 @@ struct RecordsView_tvOS: View {
                     } else {
                         streakCard
                         lifetimeRow
+                        historySection
                         progressSection
                         if calibration.contains(where: { $0.total > 0 }) { calibrationSection }
                         bestsSection
@@ -42,6 +44,35 @@ struct RecordsView_tvOS: View {
             }
         }
         .onExitCommand { dismiss() }   // Menu button leaves Records (modal: allowed)
+        .fullScreenCover(item: $recap) { TVGameRecapView(record: $0) }
+    }
+
+    // Game history (owner: scroll your previous games at ten feet). Focusable
+    // rows push a recap of that game's questions.
+    private var historySection: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            Text("Your games").font(.system(size: 40, weight: .heavy, design: .rounded)).foregroundStyle(TVTheme.text)
+            ForEach(records.prefix(20)) { rec in
+                Button { recap = rec } label: {
+                    HStack(spacing: 20) {
+                        Image(systemName: rec.mode.symbol).font(.system(size: 30, weight: .black))
+                            .foregroundStyle(rec.mode.accent)
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("\(rec.mode.title) · \(TriviaCategory.named(rec.categoryID).name)")
+                                .font(.system(size: 29, weight: .bold, design: .rounded)).foregroundStyle(TVTheme.text)
+                            TVAnswerStrip(record: rec)
+                        }
+                        Spacer()
+                        Text("\(rec.correct)/\(rec.total)").font(.system(size: 27, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+                        Text("\(rec.score)").font(.system(size: 34, weight: .black, design: .rounded)).foregroundStyle(TVTheme.text)
+                    }
+                    .padding(.horizontal, 30).padding(.vertical, 20)
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(TVChipStyle(accent: rec.mode.accent, selected: false))
+            }
+        }
+        .focusSection()
     }
 
     private var emptyState: some View {
@@ -260,6 +291,68 @@ private struct TVRecordsCardInner<Content: View>: View {
                 .strokeBorder(.white.opacity(focused ? 0.9 : 0), lineWidth: 4))
             .scaleEffect(focused ? 1.012 : 1.0)
             .animation(.easeOut(duration: 0.16), value: focused)
+    }
+}
+
+
+// The run's shape at ten feet: a pip per question in the domain color when
+// correct, hollow when missed.
+struct TVAnswerStrip: View {
+    let record: GameRecord
+    var body: some View {
+        HStack(spacing: 6) {
+            if record.answers.isEmpty {
+                ForEach(0..<max(record.total, 1), id: \.self) { i in
+                    Circle().fill(i < record.correct ? Tidbits.Palette.mint : TVTheme.panel)
+                        .frame(width: 16, height: 16)
+                }
+            } else {
+                ForEach(record.answers.prefix(24)) { a in
+                    Circle().fill(a.correct ? TriviaCategory.named(a.categoryID).color : TVTheme.panel)
+                        .frame(width: 16, height: 16)
+                }
+            }
+        }
+    }
+}
+
+/// A game's questions at ten feet — focus-scrollable, each with its answer and
+/// a right/wrong mark.
+struct TVGameRecapView: View {
+    let record: GameRecord
+    @Environment(\.dismiss) private var dismiss
+    var body: some View {
+        ZStack {
+            TVTheme.bg.ignoresSafeArea()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 24) {
+                    Text("\(record.mode.title) · \(record.score)")
+                        .font(.system(size: 56, weight: .black, design: .rounded)).foregroundStyle(TVTheme.text)
+                    if record.answers.isEmpty {
+                        Text("This game was played before per-question history was added, so only the totals are here.")
+                            .font(.system(size: 27, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+                    }
+                    ForEach(record.answers) { a in
+                        HStack(alignment: .top, spacing: 18) {
+                            Image(systemName: a.correct ? "checkmark.circle.fill" : "xmark.circle.fill")
+                                .font(.system(size: 30, weight: .bold))
+                                .foregroundStyle(a.correct ? Tidbits.Palette.mint : Tidbits.Palette.coral)
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text(a.prompt).font(.system(size: 29, weight: .bold, design: .rounded)).foregroundStyle(TVTheme.text)
+                                Text("Answer: \(a.answer)").font(.system(size: 25, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+                            }
+                            Spacer()
+                        }
+                        .padding(28)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(TVTheme.panel, in: RoundedRectangle(cornerRadius: 20))
+                    }
+                }
+                .padding(.horizontal, 90).padding(.vertical, 60)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .onExitCommand { dismiss() }
     }
 }
 

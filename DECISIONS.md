@@ -1194,3 +1194,29 @@ identity). The `js/firebase.js` transport + the Android `FirebaseRtdbTransport`
 implement the same `NightPeer` seam the local night uses, so the match
 machinery is reused, not reinvented. The 2-device hardware test remains the
 acceptance gate for anything networked.
+
+## 041 — Records are interactive: per-game answer detail is persisted; history + drill-ins everywhere
+
+Every completed game now persists its per-question detail (`AnswerDetail`:
+qid, prompt, categoryID, correct, answer) alongside the aggregate — SwiftData
+`GameRecord.answers` (optional Data, automatic migration), Android
+`Store.Rec.answers` (record JSON), web localStorage. This is the foundation
+for an interactive Records tab (owner request, Threes-inspired).
+
+**Why:** aggregate-only records ("you scored 640, 7/10") are a dead end — you
+can't revisit which questions you missed, compare attempts, or scroll your
+history. The owner wanted to drill into domains + personal bests and scroll
+previous games the way Threes shows past runs. That requires the per-question
+detail on disk.
+
+**How to apply:** the detail is spoiler-safe (it's the player's own history) so
+it persists in the clear. Records surfaces it three ways — a game-history scroll
+(each game a card + a category-colored answer-dot strip, tap → recap), a domain
+drill-in (Missed / Got right, latest outcome per question), and a personal-best
+drill-in (every attempt, best crowned). Old records with no detail degrade to
+totals-only — never crash, never fabricate. Keep the four stores in lockstep:
+adding a field to AnswerDetail means all four writers + readers.
+
+**Also (share redesign):** the uniform red/green squares became answer dots
+(🟢/🔴/⚫️) + a proportional accuracy meter (▰▱) + a 🔥 best-run flourish — more
+compelling and more informative, still spoiler-free. Mirrored on all four.

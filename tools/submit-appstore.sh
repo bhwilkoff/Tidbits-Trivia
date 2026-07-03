@@ -99,6 +99,10 @@ PLIST="$EXPORT-ExportOptions.plist"; mkdir -p "$(dirname "$PLIST")"
   echo "  <key>teamID</key><string>$TEAM</string>"
   echo '  <key>signingStyle</key><string>manual</string>'
   echo "  <key>signingCertificate</key><string>Apple Distribution: Learning is Change, Inc. ($TEAM)</string>"
+  # Mac App Store .pkg needs the INSTALLER identity named explicitly — installer
+  # certs are never part of a provisioning profile, so without this xcodebuild
+  # tries to match it against the app profile and fails the export.
+  [ "$PLATFORM" = "mac" ] && echo "  <key>installerSigningCertificate</key><string>3rd Party Mac Developer Installer: Learning is Change, Inc. ($TEAM)</string>"
   echo '  <key>manageAppVersionAndBuildNumber</key><false/>'
   echo '  <key>provisioningProfiles</key><dict>'
   echo "$PJSON" | python3 -c "import json,sys

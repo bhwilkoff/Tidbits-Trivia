@@ -20,6 +20,8 @@ struct ContentView_macOS: View {
     @State private var customGame: CustomLaunch?
     /// A solo Trivia Night — also replaces the window root.
     @State private var nightLaunch: NightLaunchRequest?
+    /// A Play-vs-CPU match — also replaces the window root.
+    @State private var versusBot: BotProfile?
     @AppStorage("tidbits.hasOnboarded") private var hasOnboarded = false
 
     var body: some View {
@@ -37,6 +39,9 @@ struct ContentView_macOS: View {
                     self.nightLaunch = nil
                 }
                 .transition(.opacity)
+            } else if let versusBot {
+                VersusContainer_macOS(bot: versusBot) { self.versusBot = nil }
+                    .transition(.opacity)
             } else {
                 shell
             }
@@ -44,11 +49,15 @@ struct ContentView_macOS: View {
         .animation(.snappy(duration: 0.2), value: launch?.id)
         .animation(.snappy(duration: 0.2), value: customGame?.id)
         .animation(.snappy(duration: 0.2), value: nightLaunch?.id)
+        .animation(.snappy(duration: 0.2), value: versusBot?.id)
         .task {
             DebugHooks.seedRecordsIfRequested(modelContext)
             // Screenshot/CI hook (parity with iOS/tvOS): TIDBITS_AUTOPLAY="mode:category".
             if launch == nil, let ap = DebugHooks.autoplay {
                 start(LaunchRequest(mode: ap.mode, category: ap.category, mixModes: DebugHooks.mixModes))
+            }
+            if versusBot == nil, let vb = DebugHooks.versusBot {
+                versusBot = vb == "house" ? .house(playerAccuracy: 0.6) : (BotProfile.presets.first { $0.id == vb } ?? .regular)
             }
             if let tab = DebugHooks.initialTab {
                 section = SidebarSection(rawValue: tab.rawValue)
@@ -78,7 +87,7 @@ struct ContentView_macOS: View {
         Group {
             NavigationStack(path: $path) {
                 switch section ?? .play {
-                case .play:    HomeView_macOS(onPlay: start, onNight: { nightLaunch = $0 })
+                case .play:    HomeView_macOS(onPlay: start, onNight: { nightLaunch = $0 }, onVersus: { versusBot = $0 })
                 case .records: RecordsView_macOS()
                 case .create:  CreateView_macOS { topic, qs in customGame = CustomLaunch(topic: topic, questions: qs) }
                 }

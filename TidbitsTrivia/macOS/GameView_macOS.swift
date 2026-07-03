@@ -8,12 +8,15 @@ import SwiftUI
 struct GameView_macOS: View {
     @Bindable var game: GameEngine
     let onQuit: () -> Void
+    /// Play-vs-CPU: when set, shows the running head-to-head + the bot's result.
+    var versus: BotMatch? = nil
 
     @FocusState private var typeFieldFocused: Bool
 
     var body: some View {
         VStack(spacing: 0) {
             hud
+            if let versus { versusStrip(versus) }
             Divider().overlay(Tidbits.Palette.border)
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
@@ -87,6 +90,23 @@ struct GameView_macOS: View {
             .padding(.horizontal, 12).padding(.vertical, 6)
             .background(Capsule().fill(fill))
             .overlay(Capsule().strokeBorder(Tidbits.Palette.border, lineWidth: 2))
+    }
+
+    // MARK: Versus (Play-vs-CPU)
+
+    private func versusStrip(_ match: BotMatch) -> some View {
+        HStack(spacing: 10) {
+            Text("You \(game.score)").font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+            Spacer(minLength: 0)
+            ForEach(match.seats) { seat in
+                HStack(spacing: 5) {
+                    Text("\(seat.bot.name) \(seat.score)").font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                    CPUTag_macOS()
+                }
+            }
+        }
+        .padding(.horizontal, 20).padding(.vertical, 8)
+        .background(Tidbits.Palette.surface)
     }
 
     // MARK: Shape router
@@ -336,6 +356,15 @@ struct GameView_macOS: View {
                 Link("Read \(q.sourceTitle) on Wikipedia ↗", destination: url)
                     .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.blue)
             }
+            if let versus {
+                ForEach(versus.seats) { seat in
+                    HStack(spacing: 8) {
+                        Image(systemName: seat.lastCorrect == true ? "checkmark.circle.fill" : "xmark.circle.fill")
+                            .foregroundStyle(seat.lastCorrect == true ? Tidbits.Palette.mint : Tidbits.Palette.coral)
+                        Text(versusLine(versus, seat)).font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.ink)
+                    }
+                }
+            }
             Button(game.mode == .survival && !correct ? "See results" : "Continue") { game.advance() }
                 .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.coral, textColor: .white))
                 .keyboardShortcut(.defaultAction)
@@ -344,6 +373,23 @@ struct GameView_macOS: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .chunkyCard(fill: Tidbits.Palette.bgDeep)
         .padding(.top, 8)
+    }
+
+    private func versusLine(_ match: BotMatch, _ seat: BotMatch.Seat) -> String {
+        guard let answer = match.pending.first(where: { $0.botID == seat.bot.id }) else { return seat.bot.name }
+        if !answer.answered { return "\(seat.bot.name) ran out of time" }
+        let secs = answer.seconds.map { String(format: "%.1fs", $0) } ?? ""
+        return seat.lastCorrect == true ? "\(seat.bot.name) got it in \(secs)" : "\(seat.bot.name) missed it"
+    }
+}
+
+/// The honest label (Decision 038): every bot is visibly CPU, everywhere.
+struct CPUTag_macOS: View {
+    var body: some View {
+        Text("CPU").font(.system(size: 11, weight: .black, design: .rounded))
+            .padding(.horizontal, 6).padding(.vertical, 2)
+            .foregroundStyle(Tidbits.Palette.ink)
+            .background(Capsule().fill(.black.opacity(0.18)))
     }
 }
 #endif

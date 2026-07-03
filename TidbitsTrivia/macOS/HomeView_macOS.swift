@@ -8,6 +8,7 @@ import SwiftUI
 struct HomeView_macOS: View {
     let onPlay: (LaunchRequest) -> Void
     let onNight: (NightLaunchRequest) -> Void
+    let onVersus: (BotProfile) -> Void
 
     @Environment(AppStore.self) private var store
     @State private var mode: GameMode = .classic
@@ -15,6 +16,7 @@ struct HomeView_macOS: View {
     @State private var showCustomize = false
     @State private var showDailyArchive = false
     @State private var showNightSetup = false
+    @State private var showMultiplayer = false
 
     /// Single-player modes the picker offers (Daily, Trivia Night, and the
     /// Custom Mix builder are their own surfaces — parity follow-ups).
@@ -36,6 +38,7 @@ struct HomeView_macOS: View {
                 Button("Previous Tidbits…") { showDailyArchive = true }
                     .buttonStyle(.plain).font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.blue)
                 triviaNightCard
+                onlineCard
                 modeSection
                 categorySection
                 startBar
@@ -60,6 +63,27 @@ struct HomeView_macOS: View {
                 onNight(NightLaunchRequest(plan: plan, category: category))
             }
         }
+        .sheet(isPresented: $showMultiplayer) {
+            MultiplayerSheet_macOS(recentAccuracy: 0.6, onPickBot: onVersus)
+        }
+    }
+
+    private var onlineCard: some View {
+        Button { showMultiplayer = true } label: {
+            HStack(spacing: 14) {
+                Image(systemName: "globe.americas.fill").font(.system(size: 24, weight: .black))
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("ONLINE MULTIPLAYER").font(Tidbits.TypeRamp.l2)
+                    Text("Play vs CPU now — real players soon.").font(Tidbits.TypeRamp.l5).opacity(0.9)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right").font(.system(size: 18, weight: .bold))
+            }
+            .foregroundStyle(Tidbits.Palette.blue.legibleForeground)
+            .padding(18).frame(maxWidth: .infinity, alignment: .leading)
+            .chunkyCard(fill: Tidbits.Palette.blue)
+        }
+        .buttonStyle(.plain)
     }
 
     private var triviaNightCard: some View {

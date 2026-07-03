@@ -50,6 +50,8 @@ struct ContentView_macOS: View {
         .animation(.snappy(duration: 0.2), value: customGame?.id)
         .animation(.snappy(duration: 0.2), value: nightLaunch?.id)
         .animation(.snappy(duration: 0.2), value: versusBot?.id)
+        .onChange(of: store.inbox) { _, _ in handleInbox() }
+        .onAppear { handleInbox() }
         .task {
             DebugHooks.seedRecordsIfRequested(modelContext)
             // Screenshot/CI hook (parity with iOS/tvOS): TIDBITS_AUTOPLAY="mode:category".
@@ -103,6 +105,20 @@ struct ContentView_macOS: View {
             store.rememberSelection(mode: request.mode, category: request.category, mixModes: request.mixModes)
         }
         launch = request
+    }
+
+    /// Deep links land in the store inbox (App.onOpenURL) and are consumed here
+    /// once foregrounded — never mutating navigation from outside the view tree.
+    private func handleInbox() {
+        for link in store.drainInbox() {
+            switch link {
+            case .daily:
+                section = .play
+                launch = LaunchRequest(mode: .daily, category: .named("mixed"))
+            case .topic, .category:
+                section = .play
+            }
+        }
     }
 }
 

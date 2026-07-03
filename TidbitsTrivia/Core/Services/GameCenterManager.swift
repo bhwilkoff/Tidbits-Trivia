@@ -2,6 +2,8 @@ import SwiftUI
 import GameKit
 #if canImport(UIKit)
 import UIKit   // GKGameCenterViewController / UIApplication presentation (iOS + tvOS)
+#elseif canImport(AppKit)
+import AppKit   // GKDialogController presentation (macOS)
 #endif
 
 /// Game Center bridge — authentication, leaderboard submission, achievement
@@ -99,15 +101,22 @@ final class GameCenterManager {
 
     /// Open the full Game Center dashboard (leaderboards + achievements + profile).
     func showDashboard() {
+        guard isAuthenticated else { return }
         #if canImport(UIKit)
-        guard isAuthenticated, let top = Self.topViewController() else { return }
+        guard let top = Self.topViewController() else { return }
         let vc = GKGameCenterViewController(state: .dashboard)
         vc.gameCenterDelegate = DashboardDelegate.shared
         top.present(vc, animated: true)
+        #elseif canImport(AppKit)
+        // macOS presents the Game Center dashboard via GKDialogController,
+        // parented to the key window. Safe no-op if there's no window yet.
+        let vc = GKGameCenterViewController(state: .dashboard)
+        vc.gameCenterDelegate = DashboardDelegate.shared
+        if let window = NSApplication.shared.keyWindow ?? NSApplication.shared.windows.first {
+            GKDialogController.shared().parentWindow = window
+            GKDialogController.shared().present(vc)
+        }
         #endif
-        // macOS: the Game Center dashboard opens via GKDialogController /
-        // GKAccessPoint.trigger — a tracked parity item; no-op for now so the
-        // Mac build compiles and Records still shows local stats.
     }
 
     // MARK: Leaderboards
@@ -161,6 +170,8 @@ private final class DashboardDelegate: NSObject, GKGameCenterControllerDelegate 
     func gameCenterViewControllerDidFinish(_ gameCenterViewController: GKGameCenterViewController) {
         #if canImport(UIKit)
         gameCenterViewController.dismiss(animated: true)
+        #elseif canImport(AppKit)
+        GKDialogController.shared().dismiss(gameCenterViewController)
         #endif
     }
 }

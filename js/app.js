@@ -464,6 +464,29 @@ function maybeOfferSave(label, questions) {
   window._lastCreated = { label, questions };
 }
 
+// Canonical cross-platform wire question (matches Android WireQuestion + the
+// night wire): categoryId / sourceUrl / imageUrl casing, so a web-hosted online
+// match decodes on Android and vice versa.
+function toWire(q) {
+  return {
+    id: q.id, prompt: q.prompt, options: q.options || [], correctIndex: q.correctIndex || 0,
+    categoryId: q.categoryID || 'mixed', difficulty: q.difficulty || 3, explanation: q.explanation || '',
+    sourceTitle: q.sourceTitle || '', sourceUrl: q.sourceURL || '', imageUrl: q.image || null,
+    closest: q.closest || null, ordering: q.ordering || null, matching: q.matching || null,
+    accepted: q.accepted || null, enumerate: q.enumerate || null, roundIndex: q.roundIndex ?? null,
+  };
+}
+function fromWire(w) {
+  if (!w || !w.id) return null;
+  return {
+    id: w.id, prompt: w.prompt, options: w.options || [], correctIndex: w.correctIndex || 0,
+    categoryID: w.categoryId || 'mixed', difficulty: w.difficulty || 3, explanation: w.explanation || '',
+    sourceTitle: w.sourceTitle || '', sourceURL: w.sourceUrl || '', image: w.imageUrl || null,
+    closest: w.closest || null, ordering: w.ordering || null, matching: w.matching || null,
+    accepted: w.accepted || null, enumerate: w.enumerate || null, roundIndex: w.roundIndex ?? null,
+  };
+}
+
 // ---------------- Online Quick Match (Firebase RTDB, Decision 040) ----------------
 // Same-questions race: a leader builds the set + writes it to the room; every
 // device plays it locally and self-reports its score; live standings from the
@@ -500,16 +523,18 @@ const OnlineMatch = {
   },
 
   async _startAsLeader() {
-    // Build a shared 8-question mixed set and publish it.
-    const ids = await buildCreateSet('popular culture and general knowledge').catch(() => []);
-    let qs = ids;
+    // Build a shared 8-question set and publish it in the CANONICAL wire shape
+    // (field names matching Android's WireQuestion) so a web-hosted match
+    // decodes on Android and vice versa — same contract as the night wire.
+    let qs = Corpus.pull('mixed', new Set(), 8);
     if (!qs || qs.length < 5) qs = Corpus.pull('mixed', new Set(), 8);
-    await FirebaseNet.setMeta(this.roomId, { state: 'playing', startedAt: Date.now(), questions: JSON.stringify(qs) });
+    await FirebaseNet.setMeta(this.roomId, { state: 'playing', startedAt: Date.now(), questions: JSON.stringify(qs.map(toWire)) });
   },
 
   async _play() {
-    let qs = [];
-    try { qs = JSON.parse(this.meta.questions || '[]'); } catch { qs = []; }
+    let wire = [];
+    try { wire = JSON.parse(this.meta.questions || '[]'); } catch { wire = []; }
+    const qs = wire.map(fromWire).filter(Boolean);
     if (!qs.length) return;
     startGame('mix', catById('mixed'), { custom: qs, label: 'Online Match', online: this });
   },

@@ -108,7 +108,7 @@ fun CpuTag(tint: Color = Color.White) {
 /** Home surface: Quick Match (honest v1 slot) + the four CPU opponents. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MultiplayerSheet(store: Store, onDismiss: () -> Unit, onPickBot: (String) -> Unit) {
+fun MultiplayerSheet(store: Store, onDismiss: () -> Unit, onPickBot: (String) -> Unit, onQuickMatch: () -> Unit) {
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 24.dp).padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -116,16 +116,15 @@ fun MultiplayerSheet(store: Store, onDismiss: () -> Unit, onPickBot: (String) ->
             Text("Face an opponent on the same questions — fastest correct answers win.",
                 fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
 
-            Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surface,
-                border = BorderStroke(2.dp, MaterialTheme.colorScheme.outline)) {
-                Row(Modifier.padding(14.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Filled.Public, null, modifier = Modifier.size(22.dp))
+            ChunkyCard(fill = Pops.blue, onClick = onQuickMatch, modifier = Modifier.fillMaxWidth()) {
+                Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Filled.Public, null, tint = Color.White, modifier = Modifier.size(24.dp))
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
-                        Text("Quick Match", fontWeight = FontWeight.Bold)
-                        Text("Matchmaking with real players — coming soon", fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                        Text("Quick Match", fontWeight = FontWeight.Bold, fontSize = 17.sp, color = Color.White)
+                        Text("Find another player online — best score wins", fontSize = 12.sp, color = Color.White.copy(alpha = 0.9f))
                     }
+                    Icon(Icons.Filled.ChevronRight, null, tint = Color.White)
                 }
             }
 
@@ -271,6 +270,22 @@ private fun StandingRow(name: String, score: Int, isCpu: Boolean, highlight: Boo
             if (isCpu) { Spacer(Modifier.width(8.dp)); CpuTag(tint = MaterialTheme.colorScheme.onSurface) }
             Spacer(Modifier.weight(1f))
             Text("$score", fontWeight = FontWeight.Black, fontSize = 22.sp, color = if (highlight) Ink else MaterialTheme.colorScheme.onSurface)
+        }
+    }
+}
+
+/** Live online standings strip during a match (Decision 040): you vs opponents. */
+@Composable
+fun OnlineStrip(game: GameState, roster: Map<String, com.learningischange.tidbitstrivia.net.FirebaseNet.Player>) {
+    val ranked = roster.entries.sortedByDescending { it.value.score }
+    Surface(color = MaterialTheme.colorScheme.surfaceVariant, shape = RoundedCornerShape(12.dp)) {
+        Row(Modifier.padding(horizontal = 14.dp, vertical = 8.dp).fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
+            ranked.forEach { e ->
+                val me = e.key == com.learningischange.tidbitstrivia.net.FirebaseNet.uid
+                Text("${e.value.name.substringBefore(' ')}${if (me) " (you)" else ""} ${e.value.score}",
+                    fontWeight = if (me) FontWeight.Black else FontWeight.Bold, fontSize = 14.sp)
+            }
         }
     }
 }

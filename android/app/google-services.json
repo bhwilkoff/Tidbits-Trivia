@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "842242746909",
+    "firebase_url": "https://tidbits-trivia-f2ddb-default-rtdb.firebaseio.com",
+    "project_id": "tidbits-trivia-f2ddb",
+    "storage_bucket": "tidbits-trivia-f2ddb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:842242746909:android:852c14553f7331eb6f74f4",
+        "android_client_info": {
+          "package_name": "com.tidbitstrivia.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAor53ifwBbMjMGx101LTyLYrQTz8I3vzQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:842242746909:android:9ba3e0907ee5a1c26f74f4",
+        "android_client_info": {
+          "package_name": "com.tidbitstrivia.app.debug"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAor53ifwBbMjMGx101LTyLYrQTz8I3vzQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

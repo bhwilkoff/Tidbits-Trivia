@@ -929,6 +929,9 @@ class Store(context: Context) {
     fun hasQuickPlayHistory(): Boolean = prefs.getString("lastMode", null) != null
     fun rememberSelection(modeName: String, catId: String) =
         prefs.edit().putString("lastMode", modeName).putString("lastCat", catId).apply()
+    fun lastPlayerName(): String = prefs.getString("player_name", "") ?: ""
+    fun savePlayerName(n: String) = prefs.edit().putString("player_name", n).apply()
+
     fun mixModesCsv(): String? = prefs.getString("mix_modes", null)
     fun saveMixModes(csv: String) = prefs.edit().putString("mix_modes", csv).apply()
 

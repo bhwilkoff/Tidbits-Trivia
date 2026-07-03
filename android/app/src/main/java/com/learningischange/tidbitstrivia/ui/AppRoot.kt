@@ -58,6 +58,7 @@ sealed interface Route {
     data object Create : Route
     data class Game(val mode: Mode, val category: Category, val custom: List<Question>? = null, val label: String? = null, val nightRounds: List<Pair<String, Int>>? = null, val dailyDay: String? = null, val mixModes: List<Mode>? = null) : Route
     data class Versus(val botId: String) : Route
+    object OnlineMatch : Route
     data object NightSetup : Route
     data object NightJoin : Route
     data object NightLive : Route
@@ -125,6 +126,7 @@ fun AppRoot(
                         onPlayMix = { modes, cat -> backStack.add(Route.Game(Mode.MIX, cat, mixModes = modes)) },
                         onPlayDaily = { day -> backStack.add(Route.Game(Mode.DAILY, Category.byId("mixed"), dailyDay = day)) },
                         onVersus = { id -> backStack.add(Route.Versus(id)) },
+                        onQuickMatch = { backStack.add(Route.OnlineMatch) },
                         onNight = { backStack.add(Route.NightSetup) },
                         onParty = { backStack.add(Route.Party) },
                         onJoinNight = { ensureNearby(); backStack.add(Route.NightJoin) },
@@ -157,6 +159,7 @@ fun AppRoot(
                     is Route.Create -> CreateScreen { qs, label -> backStack.add(Route.Game(Mode.MIX, Category.byId("mixed"), qs, label)) }
                     is Route.Game -> GameScreen(r, store) { backStack.removeAt(backStack.lastIndex) }
                     is Route.Versus -> VersusScreen(r.botId, store) { backStack.removeAt(backStack.lastIndex) }
+                    is Route.OnlineMatch -> OnlineMatchScreen(store) { backStack.removeAt(backStack.lastIndex) }
                     is Route.Settings -> SettingsScreen(store, dynamicColor, onDynamicColor)
                     is Route.Party -> PartyContainer(store) { backStack.removeAt(backStack.lastIndex) }
                 }
@@ -187,6 +190,7 @@ private fun HomeScreen(
     onPlayMix: (List<Mode>, Category) -> Unit,
     onPlayDaily: (String) -> Unit,
     onVersus: (String) -> Unit,
+    onQuickMatch: () -> Unit,
     onNight: () -> Unit,
     onParty: () -> Unit,
     onJoinNight: () -> Unit,
@@ -301,7 +305,8 @@ private fun HomeScreen(
         onPlayDay = { day -> showDailyArchive = false; onPlayDaily(day) })
     if (showMultiplayer) MultiplayerSheet(store = store,
         onDismiss = { showMultiplayer = false },
-        onPickBot = { id -> showMultiplayer = false; onVersus(id) })
+        onPickBot = { id -> showMultiplayer = false; onVersus(id) },
+        onQuickMatch = { showMultiplayer = false; onQuickMatch() })
 }
 
 @Composable
@@ -586,7 +591,7 @@ private fun GameScreen(route: Route.Game, store: Store, onDone: () -> Unit) {
 }
 
 @Composable
-internal fun PlayingScreen(game: GameState, match: VsMatch? = null) {
+internal fun PlayingScreen(game: GameState, match: VsMatch? = null, onlineRoster: Map<String, com.learningischange.tidbitstrivia.net.FirebaseNet.Player>? = null) {
     val q = game.current ?: return
     val live = game.phase == GamePhase.PLAYING && !game.awaitingReveal   // accepting input
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -600,6 +605,7 @@ internal fun PlayingScreen(game: GameState, match: VsMatch? = null) {
                 leadingIcon = { Icon(Icons.Filled.Star, null, modifier = Modifier.size(16.dp)) })
         }
         if (match != null) VersusStrip(game, match)
+        if (onlineRoster != null) OnlineStrip(game, onlineRoster)
         if (game.mode == Mode.BAR_TRIVIA && game.currentRoundTitle != null) {
             ChunkyCard(fill = MaterialTheme.colorScheme.surfaceVariant, modifier = Modifier.fillMaxWidth()) {
                 Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {

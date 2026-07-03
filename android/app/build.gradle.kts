@@ -9,6 +9,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.google.services)
 }
 
 // Release signing. Local builds read android/keystore/signing.properties
@@ -86,6 +87,10 @@ kotlin {
 
 dependencies {
     implementation(platform(libs.compose.bom))
+    // Firebase (online Quick Match — Decision 040)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.database)
+    implementation(libs.firebase.auth)
     androidTestImplementation(platform(libs.compose.bom))
     implementation(libs.bundles.compose.core)
     debugImplementation(libs.compose.ui.tooling)
@@ -98,6 +103,7 @@ dependencies {
 
     implementation(libs.coroutines.core)
     implementation(libs.coroutines.android)
+    implementation(libs.coroutines.play.services)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.datastore.preferences)
     implementation(libs.okhttp)

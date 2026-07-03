@@ -324,7 +324,10 @@ body {
 
 .night-dlg { border: var(--bw) solid var(--color-border); border-radius: var(--radius);
   background: var(--color-bg); color: var(--color-ink); max-width: 460px; width: 92%;
-  box-shadow: var(--shadow) var(--shadow) 0 var(--color-border); padding: 0; }
+  box-shadow: var(--shadow) var(--shadow) 0 var(--color-border); padding: 0;
+  /* A modal <dialog> centers via the UA's inset:0 + margin:auto; the global
+     `* { margin: 0 }` reset kills that and pins it top-left. Restore it. */
+  margin: auto; }
 .night-dlg::backdrop { background: rgba(26,23,20,0.45); }
 .night-form { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
 .night-form h2 { margin: 0; }

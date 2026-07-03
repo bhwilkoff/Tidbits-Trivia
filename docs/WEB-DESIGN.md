@@ -72,7 +72,11 @@ native platform — every `tidbits://…` has an `https://…` twin
   one surface for every mode.
 - **§3.7 Modal** = `<dialog showModal>` ONLY (the Records drill-in
   sheets, Customize, Night entry). **No `position: fixed` overlays** —
-  they break Safari's compositor at the Dynamic Island (§7.2).
+  they break Safari's compositor at the Dynamic Island (§7.2). **Every
+  dialog MUST set `margin: auto`** — a modal `<dialog>` centers via the
+  UA's `inset: 0 + margin: auto`, and the global `* { margin: 0 }` reset
+  silently kills it, pinning the popup to the top-left corner (the
+  2026-07-03 "popups appear in the corner" bug).
 
 ## §4 The chunky card (`.card`) — binding
 

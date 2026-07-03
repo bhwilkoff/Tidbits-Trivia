@@ -7,31 +7,44 @@
 > `docs/ROADMAP.md`, `docs/DATA-CONTRACT.md`. Detailed per-round history is in
 > `ARCHIVE.md`.
 
-## Current state (2026-07-01)
+## Current state (2026-07-03)
 
-**In beta on all platforms.** Versions: Apple **1.6.16 (build 56)** → TestFlight
-(iOS+tvOS); Android **1.6.16 (versionCode 48)** → Play **internal**
-restored; 1.6.15 = the unified cross-platform Daily, Decision 037)
-(com.tidbitstrivia.app; signing via ~/keystores/tidbits-upload.jks +
-android/keystore/signing.properties). Web auto-deploys to GitHub Pages. Bump on
+**In beta on all platforms — 1.6.16 shipped.** Versions: Apple **1.6.16 (build 56)**
+→ TestFlight (iOS+tvOS, both slices uploaded); Android **1.6.16 (versionCode 48)**
+→ Play **internal** (com.tidbitstrivia.app; signing via ~/keystores/tidbits-upload.jks
++ android/keystore/signing.properties). Web auto-deploys to GitHub Pages. Bump on
 every ship (see memory `versioning-convention`).
 
-**Latest pass (2026-07-01, all shipped in 1.6.11 → 1.6.12): a 10-task owner polish
-pass — see DECISIONS 035 + memory `home-redesign-and-polish-2026-07`.** Headline:
-the **home was redesigned on all 4 platforms (rule R-HOME-1)** — ONE Quick Play
-hero (last-played default + Surprise), prominent Daily, UNIFIED Trivia Night
-(host/join in one sheet), mode/category behind a Customize sheet, presets; iOS +
-Android screenshot-verified. Also: **Create is corpus-grounded** (retrieves REAL
-vetted corpus questions by topic, and never answers with the topic itself — the
-1.6.12 fix; live-gen fallback only when thin), **Records redesigned** (no pie,
-"N more to Level X", plain labels), **Android icon** matched to iOS, **Daily
-determinism** fixed, GC access-point no longer floats. 4 research playbooks in
-`docs/`. **OWNER-BLOCKED next:** create GC/Play achievements via API (needs ASC key
-+ Game Center enabled; Play Games project + service account; taxonomy in
-`docs/achievements.json`).
+**Latest pass (2026-07-03, all shipped in 1.6.16): a 6-item owner request.**
+See the session log + Decisions 038–041 + memories `firebase-online-multiplayer`
+and `apple-cert-cap-autofix`. Headline items:
+1. **Web hotfix** — a missing `bots.js` import crashed boot ("loading tidbits"
+   forever); fixed + a boot-error ratchet so a module crash can't silently hang.
+2. **Multi-select Customize → Custom Mix** (iOS/Android/web): pick 2+ modes, one
+   `mix` game draws across all, shuffled (rides the night's shape-driven engine).
+3. **Trivia Night = real rounds** (all 4): engine `roundIntro` phase + per-round
+   interstitial ("ROUND 1 OF 5 · General Knowledge · 6 questions"), setup lists
+   full round lineups, wrapped category grids (no rails).
+4. **Create quality** (3 engines): dropped the `src:continent:` template + easy
+   tier + a per-category cap (kills the sports/geography monopoly) + shape-blended
+   sets (MCQ + picture/this-or-that/closest); web saved sets.
+5. **Online Quick Match** — **Apple = GameKit (Decision 039), Android+web =
+   Firebase RTDB (Decision 040)**. Firebase backend fully provisioned + client
+   hardware-verified (memory `firebase-online-multiplayer`). Play Games
+   multiplayer is dead, so Android could only go via a backend. Bots-as-CPU
+   (Decision 038) is the always-available offline fallback.
+6. **Interactive Records** (Decision 041, all 4): per-game answer detail persisted
+   → game-history scroll (category-colored answer dots) + tap-through recap +
+   domain/best drill-ins + share redesign (dots/meter/best-run, no red-green
+   squares). Verified live on iOS + Android.
 
-**Networked Trivia Night** remains built + hardware-confirmed cross-platform
-(below); no change this pass.
+Also fixed this pass: the **Apple cert cap** that blocked the first 1.6.16 iOS
+build — the cloud workflow now self-revokes stale auto-created Development certs
+before every archive (memory `apple-cert-cap-autofix`); build 56 re-ran green.
+
+**Networked Trivia Night** (local, Decision 033) unchanged — the serverless
+mDNS+TCP+AES-GCM cross-platform night below; the new online Quick Match is a
+SEPARATE feature (GameKit / Firebase), not the local night.
 
 **Networked Trivia Night (Decision 033) is the headline feature — built + working
 cross-platform, serverless, native-APIs-only.** See `docs/CROSS-PLATFORM-MULTIPLAYER.md`
@@ -559,7 +572,7 @@ One-line-per-round; full detail in `ARCHIVE.md`.
   internal --no-bump`, key via `PLAY_SERVICE_ACCOUNT_JSON=~/.config/play/
   archivewatch-play.json` — the script's default `tidbits-play.json` path doesn't
   exist); web live via Pages (sw v7).
-- **2026-07-03 (big 6-item owner pass — all shipped 1.6.16).** (1) **Web hotfix**: a missing bots.js import crashed boot ("loading tidbits" forever) — fixed + boot-error ratchet. (2) **Multi-select Customize → Custom Mix** (iOS/Android/web). (3) **Trivia Night redesign**: real **rounds system** (engine `roundIntro` phase + per-round interstitial), setup lists full round lineups, wrapped category grids. (4) **Create quality**: dropped `continent` template + easy tier, per-category cap (kills sports/geography monopoly), **shape-blended** sets, web saved sets. (5) **Firebase RTDB online Quick Match** (Android+web, Decision 040) — backend provisioned via CLI (RTDB, rules, apps, anon auth); leader-elected same-questions race, self-scored, live standings; **hardware-verified** (emulator: anon auth + room + 2-player roster + shared-set launch) + web lifecycle **11/11 via REST**; Apple stays GameKit (039); fixed a real rules security hole. (6) **Interactive Records** (Decision 041, all 4): per-game answer detail persisted → game-history scroll + per-question recap + domain/best drill-ins + share redesign (dots/meter/best-run, no red-green squares). Firebase login:ci token env-only, never committed; google-services.json committed (non-secret); anon auth = identity. Versions 1.6.16/56/vc48.
+- **2026-07-03 (big 6-item owner pass — all shipped 1.6.16).** (1) **Web hotfix**: a missing bots.js import crashed boot ("loading tidbits" forever) — fixed + boot-error ratchet. (2) **Multi-select Customize → Custom Mix** (iOS/Android/web). (3) **Trivia Night redesign**: real **rounds system** (engine `roundIntro` phase + per-round interstitial), setup lists full round lineups, wrapped category grids. (4) **Create quality**: dropped `continent` template + easy tier, per-category cap (kills sports/geography monopoly), **shape-blended** sets, web saved sets. (5) **Firebase RTDB online Quick Match** (Android+web, Decision 040) — backend provisioned via CLI (RTDB, rules, apps, anon auth); leader-elected same-questions race, self-scored, live standings; **hardware-verified** (emulator: anon auth + room + 2-player roster + shared-set launch) + web lifecycle **11/11 via REST**; Apple stays GameKit (039); fixed a real rules security hole. (6) **Interactive Records** (Decision 041, all 4): per-game answer detail persisted → game-history scroll + per-question recap + domain/best drill-ins + share redesign (dots/meter/best-run, no red-green squares). Firebase login:ci token env-only, never committed; google-services.json committed (non-secret); anon auth = identity. Versions 1.6.16/56/vc48. *Shipped to beta:* Android vc48 → Play internal + web → Pages both clean; the first iOS/tvOS cloud build FAILED on the Apple cert cap (too many auto-created dev certs from prior builds) → fixed by a self-revoking cleanup step in appstore-build.yml (`asc_certs.py cleanup`, memory [[apple-cert-cap-autofix]]); re-dispatched → build 56 uploaded both slices to TestFlight green. Firebase login:ci token was env-only, never committed; owner declined revoking it/clearing test anon users.
 - **2026-07-02 (matchmaking-services research for Android/web online — owner:
   "research 3rd party matching services… preferably free apis or otherwise
   integrate into our current github stack").** 3 parallel web-research agents

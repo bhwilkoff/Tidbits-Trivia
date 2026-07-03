@@ -808,3 +808,20 @@ One-line-per-round; full detail in `ARCHIVE.md`.
   version; bump on the next ship). **Owner gate (unchanged):** `firebase deploy --only
   database` for the `live` rules + a real Mac host + a phone to run the live end-to-end
   flow. See PARITY "Tidbits Live — join a Mac-hosted event" + `docs/LIVE-ROOM-CONTRACT.md`.
+- **2026-07-03 (shipped 1.6.17 to beta on ALL platforms — incl. the FIRST macOS
+  App Store build).** Owner deployed the `live` Firebase rules, then asked to push to
+  TestFlight + Play for testing. *Shipped:* **iOS + tvOS → TestFlight** (cloud
+  `appstore-build.yml -f platform=all`, **build 58**) — the first dispatch failed
+  "bundle version 57 already used" (57 was uploaded pre-crash from the iOS-join-only
+  commit, predating the unified-join work) → bumped 57→58 from HEAD, re-ran green.
+  **Android → Play internal** (`submit-play.sh --track internal --no-bump`, **vc49**,
+  archivewatch key) — clean. **macOS → App Store Connect** (**NEW: mac is now on the
+  cloud path**, `-f platform=mac`, build 58) — wired the whole mac submission branch
+  this session; 3 first-build failures each cleanly fixed (App Sandbox entitlement via
+  `CODE_SIGN_ENTITLEMENTS[sdk=macosx*]`; explicit `installerSigningCertificate` for the
+  .pkg; `LSApplicationCategoryType`) — see memory `macos-appstore-submission`. All four
+  platforms now on 1.6.17 (Apple build 58 / Android vc49). *Uploaded ≠ submitted:* these
+  are TestFlight/internal builds for testing; ASC processing + test-group assignment +
+  export compliance are owner clicks; Mac App Store REVIEW (screenshots/listing) is later.
+  **To test the Live flow:** run the Mac host (local build works today) → join from
+  TestFlight iOS/tvOS, Play-internal Android, and web.

@@ -1,5 +1,47 @@
 #if os(macOS)
 import SwiftUI
+import AppKit
+import CoreImage.CIFilterBuiltins
+
+/// The canonical web join URL a QR encodes. `tidbitstrivia.com/live/{code}`
+/// redirects (via 404.html) to the hash-routed web player with the code
+/// prefilled — so scanning joins WITHOUT typing the 4-char code.
+func liveJoinURL(_ code: String) -> String { "https://tidbitstrivia.com/live/\(code)" }
+
+/// Generate a crisp, scannable QR NSImage for a string (CoreImage, no network).
+@MainActor func makeLiveQR(_ string: String) -> NSImage? {
+    let filter = CIFilter.qrCodeGenerator()
+    filter.message = Data(string.utf8)
+    filter.correctionLevel = "M"
+    guard let ci = filter.outputImage?.transformed(by: CGAffineTransform(scaleX: 12, y: 12)) else { return nil }
+    let rep = NSCIImageRep(ciImage: ci)
+    let img = NSImage(size: rep.size)
+    img.addRepresentation(rep)
+    return img
+}
+
+/// Big-screen join panel: a scannable QR + the 4-char code (for anyone typing).
+/// The QR opens the web player with the code prefilled — join without typing.
+struct LiveJoinPanel: View {
+    let code: String
+    var qrSize: CGFloat = 150
+    var body: some View {
+        VStack(spacing: 8) {
+            Text("SCAN TO JOIN").font(.system(size: 17, weight: .heavy, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
+            if let img = makeLiveQR(liveJoinURL(code)) {
+                Image(nsImage: img).interpolation(.none).resizable()
+                    .frame(width: qrSize, height: qrSize)
+                    .padding(10).background(RoundedRectangle(cornerRadius: 12).fill(.white))
+                    .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Tidbits.Palette.border, lineWidth: 3))
+            }
+            Text("CODE \(code)").font(.system(size: 26, weight: .black, design: .monospaced)).foregroundStyle(Tidbits.Palette.ink).kerning(2)
+            Text("or tidbitstrivia.com/live").font(.system(size: 14, weight: .semibold, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
+        }
+        .padding(18)
+        .background(RoundedRectangle(cornerRadius: 18).fill(Tidbits.Palette.surface))
+        .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(Tidbits.Palette.border, lineWidth: 3))
+    }
+}
 
 /// Shares the active host session between the cockpit window and the projector
 /// window (macOS-DESIGN §A1.1 — two views of ONE live event, never mirrored).
@@ -68,7 +110,13 @@ struct LiveBigScreen_macOS: View {
                 }
             }
             Spacer()
-            leaderboard(s)
+            HStack(alignment: .bottom, spacing: 24) {
+                leaderboard(s)
+                Spacer(minLength: 0)
+                if let net = coordinator.net, net.isOpen {
+                    LiveJoinPanel(code: net.code)
+                }
+            }
         }
         .padding(48)
     }

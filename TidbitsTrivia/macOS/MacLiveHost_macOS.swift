@@ -194,8 +194,10 @@ struct LiveHostView_macOS: View {
             }
             if net.isOpen {
                 HStack(spacing: 8) {
-                    Image(systemName: "qrcode").font(.system(size: 15, weight: .bold)).foregroundStyle(Tidbits.Palette.blue)
-                    Text("Players join at tidbitstrivia.com/live").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                    if let qr = makeLiveQR(liveJoinURL(net.code)) {
+                        Image(nsImage: qr).interpolation(.none).resizable().frame(width: 40, height: 40)
+                    }
+                    Text("Players scan, or join at tidbitstrivia.com/live").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
                     Text("CODE \(net.code)").font(.system(size: 15, weight: .black, design: .monospaced)).foregroundStyle(Tidbits.Palette.ink)
                     if !net.joined.isEmpty {
                         Text("· \(net.joined.count) joined").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.mint)

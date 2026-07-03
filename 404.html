@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tidbits</title>
+<script>
+  // GitHub Pages is a static host and the app is hash-routed, so a clean path
+  // like /live/WK4P (a shared link or the big-screen QR target) 404s. Turn the
+  // path into the hash route the app understands and bounce to the index, so
+  // tidbitstrivia.com/live/WK4P works the same as .../#/live/WK4P.
+  (function () {
+    var path = location.pathname.replace(/^\/+/, '').replace(/\/+$/, '');
+    var dest = '/' + (path ? '#/' + path : '') + location.search;
+    location.replace(dest);
+  })();
+</script>
+</head>
+<body>Redirecting to Tidbits…</body>
+</html>

@@ -252,6 +252,8 @@ struct LiveHostView_macOS: View {
                         Button("Break a tie…") { tieGroup = session.tiedGroups.first ?? []; showTieBreak = true }
                             .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.yellow, textColor: Tidbits.Palette.ink))
                     }
+                    Button("Print results") { LivePrint.results(name: session.event.name, standings: session.standings) }
+                        .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.ink))
                     Button("Done", action: onClose).buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.coral, textColor: .white)).keyboardShortcut(.cancelAction)
                 }
                 .padding(.top, 8)

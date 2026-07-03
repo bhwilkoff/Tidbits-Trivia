@@ -92,6 +92,7 @@
 		A1B2C3D4E5F6000000AC05B2 /* MacLiveBuilder_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000AC05B1 /* MacLiveBuilder_macOS.swift */; };
 		A1B2C3D4E5F6000000AC05C2 /* MacLiveHost_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000AC05C1 /* MacLiveHost_macOS.swift */; };
 		A1B2C3D4E5F6000000AC05D2 /* MacLiveBigScreen_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000AC05D1 /* MacLiveBigScreen_macOS.swift */; };
+		A1B2C3D4E5F6000000AC05E2 /* MacLivePrint_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000AC05E1 /* MacLivePrint_macOS.swift */; };
 		A1B2C3D4E5F6000000AC05A2 /* MacLiveModel_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000AC05A1 /* MacLiveModel_macOS.swift */; };
 		FC6C3246C07842892F682C5D /* GameCenterManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89A31C82C50C6EB1DA9AE9A4 /* GameCenterManager.swift */; };
 /* End PBXBuildFile section */
@@ -166,6 +167,7 @@
 		A1B2C3D4E5F6000000AC05B1 /* MacLiveBuilder_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacLiveBuilder_macOS.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F6000000AC05C1 /* MacLiveHost_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacLiveHost_macOS.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F6000000AC05D1 /* MacLiveBigScreen_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacLiveBigScreen_macOS.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000AC05E1 /* MacLivePrint_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacLivePrint_macOS.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F6000000AC05A1 /* MacLiveModel_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacLiveModel_macOS.swift; sourceTree = "<group>"; };
 		C72A2CD5C4B8BDED3AE57AAC /* DailyPick.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyPick.swift; sourceTree = "<group>"; };
 		CB9BC2DDC68229C08A32FF1E /* VersusContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VersusContainerView.swift; sourceTree = "<group>"; };
@@ -346,6 +348,7 @@
 				A1B2C3D4E5F6000000AC05B1 /* MacLiveBuilder_macOS.swift */,
 				A1B2C3D4E5F6000000AC05C1 /* MacLiveHost_macOS.swift */,
 				A1B2C3D4E5F6000000AC05D1 /* MacLiveBigScreen_macOS.swift */,
+				A1B2C3D4E5F6000000AC05E1 /* MacLivePrint_macOS.swift */,
 				A1B2C3D4E5F6000000AC05A1 /* MacLiveModel_macOS.swift */,
 			);
 			path = macOS;
@@ -540,6 +543,7 @@
 				A1B2C3D4E5F6000000AC05B2 /* MacLiveBuilder_macOS.swift in Sources */,
 				A1B2C3D4E5F6000000AC05C2 /* MacLiveHost_macOS.swift in Sources */,
 				A1B2C3D4E5F6000000AC05D2 /* MacLiveBigScreen_macOS.swift in Sources */,
+				A1B2C3D4E5F6000000AC05E2 /* MacLivePrint_macOS.swift in Sources */,
 				A1B2C3D4E5F6000000AC05A2 /* MacLiveModel_macOS.swift in Sources */,
 				92B4788F3A0CAC7DE68FB848 /* CorpusDatabase.swift in Sources */,
 				43F36ECB879791F4A899B1AF /* CreateQuizView.swift in Sources */,

@@ -91,6 +91,13 @@ struct LiveBuilderView_macOS: View {
                     Button("Host live →") { store.upsert(working); onHost(working) }
                         .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.coral, textColor: .white))
                         .disabled(working.totalQuestions == 0)
+                    Spacer()
+                    Menu {
+                        Button("Question pack (host)") { LivePrint.questionPack(working) }
+                        Button("Answer sheet (teams)") { LivePrint.answerSheet(working) }
+                    } label: { Label("Print…", systemImage: "printer") }
+                        .frame(width: 120)
+                        .disabled(working.totalQuestions == 0)
                 }
             }
             .padding(24)

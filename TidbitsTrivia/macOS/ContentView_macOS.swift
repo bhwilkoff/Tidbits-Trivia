@@ -18,6 +18,7 @@ struct ContentView_macOS: View {
     @State private var launch: LaunchRequest?
     /// A live-generated (Create) game — also replaces the window root.
     @State private var customGame: CustomLaunch?
+    @AppStorage("tidbits.hasOnboarded") private var hasOnboarded = false
 
     var body: some View {
         Group {
@@ -60,6 +61,9 @@ struct ContentView_macOS: View {
         // ⌘N (menu bar) → start Quick Play. focusedSceneValue is only live while
         // the shell is on screen, so ⌘N is naturally disabled mid-game.
         .focusedSceneValue(\.newGame, NewGameAction { start(store.quickPlay) })
+        .sheet(isPresented: Binding(get: { !hasOnboarded }, set: { if !$0 { hasOnboarded = true } })) {
+            OnboardingSheet_macOS { hasOnboarded = true }
+        }
     }
 
     @ViewBuilder private var detail: some View {

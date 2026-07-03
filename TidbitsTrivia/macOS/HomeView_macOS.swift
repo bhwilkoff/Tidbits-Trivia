@@ -11,6 +11,8 @@ struct HomeView_macOS: View {
     @Environment(AppStore.self) private var store
     @State private var mode: GameMode = .classic
     @State private var category: TriviaCategory = .named("mixed")
+    @State private var showCustomize = false
+    @State private var showDailyArchive = false
 
     /// Single-player modes the picker offers (Daily, Trivia Night, and the
     /// Custom Mix builder are their own surfaces — parity follow-ups).
@@ -26,8 +28,11 @@ struct HomeView_macOS: View {
                 quickPlayHero
                 HStack(spacing: 14) {
                     secondaryButton("Surprise me", symbol: "die.face.5.fill") { onPlay(store.surpriseMe()) }
+                    secondaryButton("Customize…", symbol: "slider.horizontal.3") { showCustomize = true }
                     dailyButton
                 }
+                Button("Previous Tidbits…") { showDailyArchive = true }
+                    .buttonStyle(.plain).font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.blue)
                 modeSection
                 categorySection
                 startBar
@@ -38,6 +43,15 @@ struct HomeView_macOS: View {
         }
         .background(Tidbits.Palette.bg)
         .navigationTitle("Play")
+        .sheet(isPresented: $showCustomize) {
+            CustomizeSheet_macOS(initial: store.quickPlay, presets: store.presets,
+                                 onStart: onPlay, onSave: { store.savePreset($0) }, onDelete: { store.deletePreset($0) })
+        }
+        .sheet(isPresented: $showDailyArchive) {
+            DailyArchiveSheet_macOS { day in
+                onPlay(LaunchRequest(mode: .daily, category: .named("mixed"), dailyDay: day))
+            }
+        }
     }
 
     private var header: some View {

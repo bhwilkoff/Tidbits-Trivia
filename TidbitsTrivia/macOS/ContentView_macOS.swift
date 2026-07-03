@@ -16,17 +16,25 @@ struct ContentView_macOS: View {
     /// The active game. When set, the game surface REPLACES the split view as
     /// the window root (macOS-DESIGN §B2).
     @State private var launch: LaunchRequest?
+    /// A live-generated (Create) game — also replaces the window root.
+    @State private var customGame: CustomLaunch?
 
     var body: some View {
         Group {
             if let launch {
                 GameContainerView_macOS(request: launch) { self.launch = nil }
                     .transition(.opacity)
+            } else if let customGame {
+                CustomGameContainer_macOS(topic: customGame.topic, questions: customGame.questions) {
+                    self.customGame = nil
+                }
+                .transition(.opacity)
             } else {
                 shell
             }
         }
         .animation(.snappy(duration: 0.2), value: launch?.id)
+        .animation(.snappy(duration: 0.2), value: customGame?.id)
         .task {
             DebugHooks.seedRecordsIfRequested(modelContext)
             // Screenshot/CI hook (parity with iOS/tvOS): TIDBITS_AUTOPLAY="mode:category".
@@ -50,7 +58,7 @@ struct ContentView_macOS: View {
                 switch section ?? .play {
                 case .play:    HomeView_macOS(onPlay: start)
                 case .records: RecordsView_macOS()
-                case .create:  CreatePlaceholder_macOS()
+                case .create:  CreateView_macOS { topic, qs in customGame = CustomLaunch(topic: topic, questions: qs) }
                 }
             }
         }
@@ -84,14 +92,10 @@ enum SidebarSection: String, CaseIterable, Identifiable {
     }
 }
 
-// MARK: - Placeholder (next parity increment — Create Mac view)
-
-private struct CreatePlaceholder_macOS: View {
-    var body: some View {
-        ContentUnavailableView("Create",
-            systemImage: "sparkles",
-            description: Text("Spin a quiz on any topic — the native Mac Create screen lands next."))
-            .navigationTitle("Create")
-    }
+/// A live-generated (Create) game launch — carries the pre-built question set.
+struct CustomLaunch: Identifiable {
+    let id = UUID()
+    let topic: String
+    let questions: [Question]
 }
 #endif

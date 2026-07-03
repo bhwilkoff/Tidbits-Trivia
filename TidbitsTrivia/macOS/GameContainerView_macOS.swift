@@ -98,6 +98,54 @@ struct GameContainerView_macOS: View {
     }
 }
 
+// MARK: - Custom (Create) game container
+
+/// Runs a live-generated (Create) question set through the same Mac surface.
+struct CustomGameContainer_macOS: View {
+    let topic: String
+    let questions: [Question]
+    let onClose: () -> Void
+
+    @Environment(AppStore.self) private var store
+    @Environment(\.modelContext) private var modelContext
+    @State private var started = false
+    @State private var recorded = false
+
+    private var game: GameEngine { store.game }
+
+    var body: some View {
+        ZStack {
+            Tidbits.Palette.bg.ignoresSafeArea()
+            switch game.phase {
+            case .idle, .loading:
+                ProgressView().controlSize(.large)
+            case .roundIntro, .playing, .reveal:
+                GameView_macOS(game: game, onQuit: close)
+            case .finished:
+                ResultsView_macOS(summary: game.summary, onPlayAgain: replay, onDone: close)
+                    .onAppear(perform: persist)
+            }
+        }
+        .onAppear {
+            if !started {
+                started = true
+                game.startCustom(mode: .mix, category: .named("mixed"), questions: questions)
+            }
+        }
+    }
+
+    private func persist() {
+        guard !recorded else { return }
+        recorded = true
+        RecordsStore.record(game.summary, in: modelContext)
+    }
+    private func replay() {
+        recorded = false
+        game.startCustom(mode: .mix, category: .named("mixed"), questions: questions)
+    }
+    private func close() { game.quit(); onClose() }
+}
+
 // MARK: - Results (Mac)
 
 struct ResultsView_macOS: View {

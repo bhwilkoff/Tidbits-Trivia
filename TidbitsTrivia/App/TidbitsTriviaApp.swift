@@ -5,6 +5,9 @@ import SwiftData
 struct TidbitsTriviaApp: App {
     @State private var store = AppStore()
     @State private var gameCenter = GameCenterManager.shared
+    /// One container shared across scenes (the Mac Settings scene resets records
+    /// through the SAME store as the main window).
+    private let modelContainer = TidbitsTriviaApp.makeModelContainer()
 
     init() {
         URLCache.shared = URLCache(memoryCapacity: 50_000_000, diskCapacity: 200_000_000)
@@ -28,7 +31,19 @@ struct TidbitsTriviaApp: App {
                     }
                 }
         }
-        .modelContainer(Self.makeModelContainer())
+        .modelContainer(modelContainer)
+        #if os(macOS)
+        .commands { TidbitsCommands() }   // ⌘N → New Quick Play (§B1a)
+        #endif
+
+        #if os(macOS)
+        Settings {
+            SettingsView_macOS()
+                .environment(gameCenter)
+                .tint(Tidbits.Palette.blue)
+        }
+        .modelContainer(modelContainer)
+        #endif
     }
 
     /// Plain on-disk store with an in-memory fallback so the app ALWAYS

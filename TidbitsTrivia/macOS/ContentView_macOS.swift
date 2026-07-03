@@ -54,6 +54,16 @@ struct ContentView_macOS: View {
             }
             .navigationSplitViewColumnWidth(min: 200, ideal: 220)
         } detail: {
+            detail
+        }
+        .tint(Tidbits.Palette.blue)
+        // ⌘N (menu bar) → start Quick Play. focusedSceneValue is only live while
+        // the shell is on screen, so ⌘N is naturally disabled mid-game.
+        .focusedSceneValue(\.newGame, NewGameAction { start(store.quickPlay) })
+    }
+
+    @ViewBuilder private var detail: some View {
+        Group {
             NavigationStack(path: $path) {
                 switch section ?? .play {
                 case .play:    HomeView_macOS(onPlay: start)
@@ -97,5 +107,33 @@ struct CustomLaunch: Identifiable {
     let id = UUID()
     let topic: String
     let questions: [Question]
+}
+
+// MARK: - Menu-bar commands (macOS-DESIGN §B1a: ⌘N does the app's primary create)
+
+/// The shell publishes this so the ⌘N menu command can start a game without
+/// reaching into ContentView's private @State.
+struct NewGameAction { let start: () -> Void }
+struct NewGameKey: FocusedValueKey { typealias Value = NewGameAction }
+extension FocusedValues {
+    var newGame: NewGameAction? {
+        get { self[NewGameKey.self] }
+        set { self[NewGameKey.self] = newValue }
+    }
+}
+
+/// Menu-bar commands: ⌘N replaces File ▸ New with "New Quick Play".
+struct TidbitsCommands: Commands {
+    var body: some Commands {
+        CommandGroup(replacing: .newItem) { NewGameMenuItem() }
+    }
+    private struct NewGameMenuItem: View {
+        @FocusedValue(\.newGame) private var newGame
+        var body: some View {
+            Button("New Quick Play") { newGame?.start() }
+                .keyboardShortcut("n", modifiers: .command)
+                .disabled(newGame == nil)
+        }
+    }
 }
 #endif

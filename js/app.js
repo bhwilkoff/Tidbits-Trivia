@@ -50,8 +50,7 @@ function render() {
     <main class="main">${tab === 'play' ? viewHome() : tab === 'create' ? viewCreate() : viewRecords()}</main>`;
   if (tab === 'play') bindHome();
   if (tab === 'create') bindCreate();
-  const rt = document.getElementById('review-toggle');
-  if (rt) rt.addEventListener('change', (e) => Store.setReviewEnabled(e.target.checked));
+  if (tab === 'records') bindRecords();
   document.title = 'Tidbits Trivia';
 }
 
@@ -619,10 +618,14 @@ function viewRecords() {
     <div class="stat-row">
       ${statBox(lt.games, 'Games', '#8B5CF6')}${statBox(lt.acc + '%', 'Accuracy', '#2D5BFF')}${statBox(lt.correct, 'Correct', '#2FCB8A')}
     </div>
+    <h2 class="section">Your games</h2>
+    <p class="muted">Every game you've played — tap one to see the questions.</p>
+    ${recs.slice(0, 40).map((r, i) => gameHistoryRow(r, i)).join('')}
     ${progressSection()}
     ${calibrationSection()}
     <h2 class="section">Personal bests</h2>
-    ${bests.map((x) => `<div class="card row"><b>${h(x.m.title)}</b><span class="big-sm">${x.best}</span></div>`).join('') || '<p class="muted">Play a mode to set a best.</p>'}
+    <p class="muted">Tap a mode to scroll your previous attempts.</p>
+    ${bests.map((x) => `<button class="card row rec-tap" data-best="${x.m.id}"><span><b>${h(x.m.title)}</b><span class="muted"> · ${recs.filter((r) => r.mode === x.m.id).length} played</span></span><span class="big-sm">${x.best} ›</span></button>`).join('') || '<p class="muted">Play a mode to set a best.</p>'}
     ${review.length ? `<h2 class="section">Facts to review</h2><p class="muted">We slip these back into future games.</p>
       ${review.map((q) => `<div class="card pad"><b>${h(q.prompt)}</b><div class="ans">Answer: ${h(q.options[q.correctIndex])}</div></div>`).join('')}` : ''}
     ${settingsSection()}`;
@@ -655,17 +658,89 @@ function progressSection() {
   const rows = ds.filter((d) => d.total > 0).map((d) => {
     const c = catById(d.id), col = catColor(c);
     const remaining = Math.max(0, Math.round((1 - d.levelProgress) * 5 * (d.level + 1)));
-    return `<div class="card topic-row">
+    return `<button class="card topic-row rec-tap" data-domain="${d.id}">
       <span class="topic-ic" style="background:${col}">${c.symbol}</span>
       <div class="topic-main">
         <div class="topic-head"><b>${h(c.name)}</b>${d.hasWedge ? '<span class="wedge">✓</span>' : ''}<span class="lvl" style="background:${col}">Level ${d.level}</span></div>
         <div class="xp-track"><div class="xp-fill" style="width:${Math.max(6, d.levelProgress * 100)}%;background:${col}"></div></div>
         <div class="muted topic-sub">${remaining} more to Level ${d.level + 1}</div>
-      </div></div>`;
+      </div><span class="chev">›</span></button>`;
   }).join('');
   return `<h2 class="section">Your knowledge</h2>
     <p class="muted">Each domain levels up as you answer its questions correctly. You've explored ${explored} of 7 domains and mastered ${mastered}. A ✓ means mastered — 15+ right at 60%+ accuracy.</p>
     ${rows}`;
+}
+
+// Interactive Records (owner): game history, per-game recap, domain + best
+// drill-ins. Answer detail is persisted per game (Store.addRecord answers[]).
+function answerDots(rec) {
+  const a = rec.answers;
+  if (!a || !a.length) {
+    let out = '';
+    for (let i = 0; i < Math.max(rec.total, 1); i++) out += `<span class="dot" style="background:${i < rec.correct ? 'var(--color-mint)' : 'var(--color-surface)'}"></span>`;
+    return `<span class="dots">${out}</span>`;
+  }
+  return `<span class="dots">${a.slice(0, 24).map((x) => `<span class="dot" style="background:${x.correct ? catColor(catById(x.cat)) : 'var(--color-surface)'}"></span>`).join('')}</span>`;
+}
+function relTime(at) {
+  if (!at) return '';
+  const d = Date.now() - at;
+  if (d < 60000) return 'just now';
+  if (d < 3600000) return Math.floor(d / 60000) + 'm ago';
+  if (d < 86400000) return Math.floor(d / 3600000) + 'h ago';
+  return Math.floor(d / 86400000) + 'd ago';
+}
+function gameHistoryRow(rec, i) {
+  const m = MODES[rec.mode] || MODES.classic;
+  return `<button class="card game-row rec-tap" data-recap="${i}">
+    <span class="game-main"><span class="game-head"><b>${h(m.title)}</b><span class="muted"> · ${h((catById(rec.categoryID) || {name:''}).name)}</span></span>
+    ${answerDots(rec)}<span class="muted game-sub">${rec.correct}/${rec.total} correct${rec.at ? ' · ' + relTime(rec.at) : ''}</span></span>
+    <span class="big-sm">${rec.score}</span></button>`;
+}
+function answerLine(a) {
+  return `<div class="card ans-line"><span class="ans-seal ${a.correct ? 'ok' : 'no'}">${a.correct ? '✓' : '✕'}</span>
+    <span><b>${h(a.prompt)}</b><div class="muted">Answer: ${h(a.answer)}</div></span></div>`;
+}
+function openRecap(rec) {
+  const m = MODES[rec.mode] || MODES.classic;
+  const acc = rec.total ? Math.round(rec.correct / rec.total * 100) : 0;
+  const body = `<h2>${h(m.title)} · ${rec.score}</h2>
+    <div class="stat-row">${statBox(rec.correct + '/' + rec.total, 'Correct', '#2FCB8A')}${statBox(acc + '%', 'Accuracy', '#2D5BFF')}</div>
+    ${(rec.answers && rec.answers.length) ? rec.answers.map(answerLine).join('') : '<p class="muted">This game was played before per-question history was added, so only the totals are here.</p>'}`;
+  showRecordsSheet(body);
+}
+function openDomain(catId) {
+  const recs = Store.records(); const seen = new Set(); const ans = [];
+  for (const r of recs) for (const a of (r.answers || [])) if (a.cat === catId && !seen.has(a.qid)) { seen.add(a.qid); ans.push(a); }
+  const wrong = ans.filter((a) => !a.correct), right = ans.filter((a) => a.correct);
+  const body = `<h2>${h((catById(catId) || {name:''}).name)}</h2>
+    ${!ans.length ? '<p class="muted">No per-question history yet for this domain. Play a game here and it’ll show up.</p>' : ''}
+    ${wrong.length ? `<h3 class="section">Missed (${wrong.length})</h3>${wrong.map(answerLine).join('')}` : ''}
+    ${right.length ? `<h3 class="section">Got right (${right.length})</h3>${right.map(answerLine).join('')}` : ''}`;
+  showRecordsSheet(body);
+}
+function openBests(modeId) {
+  const attempts = Store.records().filter((r) => r.mode === modeId);
+  const best = attempts.reduce((m, r) => Math.max(m, r.score), 0);
+  const m = MODES[modeId] || MODES.classic;
+  const body = `<h2>${h(m.title)} attempts</h2><p class="muted">Newest first. Your best is ${best}.</p>
+    ${attempts.map((r) => Store.records().indexOf(r)).map((idx) => { const r = Store.records()[idx]; return `<button class="card game-row rec-tap" data-recap="${idx}">
+      <span class="game-main"><span class="game-head">${r.score === best ? '🏆 ' : ''}<b>${r.at ? relTime(r.at) : r.date}</b></span>${answerDots(r)}</span><span class="big-sm">${r.score} ›</span></button>`; }).join('')}`;
+  showRecordsSheet(body);
+}
+function showRecordsSheet(bodyHTML) {
+  let dlg = document.getElementById('rec-dlg');
+  if (!dlg) { dlg = document.createElement('dialog'); dlg.id = 'rec-dlg'; dlg.className = 'night-dlg'; document.body.appendChild(dlg); }
+  dlg.innerHTML = `<div class="night-form rec-sheet">${bodyHTML}<div class="night-actions"><button type="button" class="btn" data-rec-close>Done</button></div></div>`;
+  dlg.querySelector('[data-rec-close]').addEventListener('click', () => dlg.close());
+  dlg.querySelectorAll('[data-recap]').forEach((b) => b.addEventListener('click', () => { dlg.close(); openRecap(Store.records()[+b.dataset.recap]); }));
+  dlg.showModal();
+}
+function bindRecords() {
+  app.querySelectorAll('[data-recap]').forEach((b) => b.addEventListener('click', () => openRecap(Store.records()[+b.dataset.recap])));
+  app.querySelectorAll('[data-domain]').forEach((b) => b.addEventListener('click', () => openDomain(b.dataset.domain)));
+  app.querySelectorAll('[data-best]').forEach((b) => b.addEventListener('click', () => openBests(b.dataset.best)));
+  const rt = $('#review-toggle'); if (rt) rt.addEventListener('change', (e) => Store.setReviewEnabled(e.target.checked));
 }
 
 // ---------------- Game engine ----------------
@@ -1021,7 +1096,8 @@ class Game {
     const correct = this.answered.filter((a) => a.correct).length;
     if (this.mode.id === 'daily') Store.recordDaily(this.dailyDay || dayKey(), this.score);
     // Only TODAY'S daily feeds the streak — archive catch-ups don't (R-DAILY-1).
-    Store.addRecord({ mode: this.mode.id, categoryID: this.category.id, score: this.score, correct, total: this.answered.length, maxStreak: this.maxStreak, date: dayKey() },
+    const answers = this.answered.map((a) => ({ qid: a.q.id, prompt: a.q.prompt, cat: a.q.categoryID, correct: !!a.correct, answer: a.q.options[a.q.correctIndex] || (a.q.closest ? closestFmtVal(a.q.closest.answer, a.q.closest) : '') }));
+    Store.addRecord({ mode: this.mode.id, categoryID: this.category.id, score: this.score, correct, total: this.answered.length, maxStreak: this.maxStreak, date: dayKey(), at: Date.now(), answers },
       (this.dailyDay || dayKey()) === dayKey());
     Store.recordMisses(this.answered);
     Store.recordTelemetry(this.mode.id, this.answered);
@@ -1296,7 +1372,7 @@ function renderVersusResults(s) {
 
 function renderResults() {
   const s = game.summary();
-  const grid = s.answered.map((a) => (a.chosen === null ? '⬛' : a.correct ? '🟩' : '🟥')).join('');
+  const grid = s.answered.map((a) => (a.chosen === null ? '⚫️' : a.correct ? '🟢' : '🔴')).join('');
   if (game.versus) { renderVersusResults(s); return; }
   const headline = s.acc === 100 ? 'Flawless!' : s.acc >= 80 ? 'Brilliant' : s.acc >= 50 ? 'Nicely done' : 'Good run';
   const missed = s.answered.filter((a) => !a.correct);
@@ -1325,8 +1401,11 @@ function renderResults() {
   $('[data-done]').addEventListener('click', quitGame);
 }
 async function shareResult(s, grid) {
-  const header = game.mode.id === 'daily' ? `🧠 Tidbits Daily — ${dayKey()}` : `🧠 Tidbits Trivia — ${game.mode.title}`;
-  const text = `${header}\n${grid}\n${s.correct}/${s.total} right · ${s.score} pts · ${s.acc}%\nTrivia from all of Wikipedia. Play at ${SITE_URL}`;
+  const header = game.mode.id === 'daily' ? `🧠 Tidbits Daily — ${dayKey()}` : `🧠 Tidbits — ${game.mode.title}`;
+  const filled = Math.round(s.acc * 7 / 100);
+  const meter = '▰'.repeat(filled) + '▱'.repeat(7 - filled);
+  const streak = s.maxStreak >= 3 ? `\n🔥 Best run ${s.maxStreak}` : '';
+  const text = `${header}\n${s.score} pts · ${s.correct}/${s.total}\n${meter} ${s.acc}%\n${grid}${streak}\nPlay at ${SITE_URL}`;
   try { if (navigator.share) { await navigator.share({ text }); return; } } catch {}
   try { await navigator.clipboard.writeText(text); toast('Copied to clipboard!'); } catch { toast('Copy failed'); }
 }

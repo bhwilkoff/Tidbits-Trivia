@@ -723,3 +723,27 @@ One-line-per-round; full detail in `ARCHIVE.md`.
   captured real gaps in the docs: Android brand font unwired (`Type.kt` FontFamily.Default)
   + no hard card shadow; tvOS no `TVType` ramp constant + no `hasClaimedInitialFocus`
   guard; macOS `GameCenterManager` UIKit import unguarded (blocks the Mac build).
+- **2026-07-03 (macOS scope KICKOFF — foundation + Tidbits Live research + plan).**
+  *Found:* macOS was a 79-line NavigationSplitView stub NOT wired into the Xcode
+  target; `SUPPORTED_PLATFORMS` had no `macosx`; `GameCenterManager` imported UIKit
+  unguarded (the compile blocker). *Did:* (1) **Foundation — native Mac app now
+  compiles AND launches** (verified via native run + screenshot): added `macosx` +
+  `MACOSX_DEPLOYMENT_TARGET=26.0` + `SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD=NO` to
+  both configs, excluded LaunchScreen.storyboard from macOS, wired
+  `ContentView_macOS.swift` into the target (group+fileRef+buildFile+Sources), and
+  guarded every UIKit seam in GameCenterManager with `#if canImport(UIKit)` (Mac GC
+  dashboard = tracked stub). iOS build re-verified green. (2) **Competitive research
+  + dossier** `docs/EVENT-TRIVIA-COMPETITIVE.md` — 4 cited passes (Crowdpurr,
+  Quizado, SpeedQuizzing, Buzztime, TriviaMaker, Rapid Trivia + ~15-platform survey)
+  → market map + master feature checklist (TS/differentiator/premium) + host
+  pain-points + 3-moat thesis. (3) **Scope locked with owner → Decision 043**:
+  parallel/parity-led sequencing, serverless for v1 (no backend), Tidbits-native
+  rounds first (show-mode = Phase C). (4) **`docs/macOS-DESIGN.md` restructured**
+  into PART A (Tidbits Live event system — binding rules §A0–A6: two-surface
+  cockpit+bigscreen split, reference-document event, manual score override +
+  free-text review + tie-break engine as the differentiators, serverless join,
+  offline/printable fallback) and PART B (parity face; §0 foundation marked DONE).
+  *Left / NEXT:* build the Part-B parity screens (Home/Play + the Mac game surface,
+  then Records, Create, Trivia Night) reusing Core — the shell detail columns are
+  still placeholder Text. Then layer Tidbits Live Phase A. Add a macOS column to
+  PARITY.md once parity screens start landing.

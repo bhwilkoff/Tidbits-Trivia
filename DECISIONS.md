@@ -1249,3 +1249,44 @@ shell: NavigationSplitView (not resized tabs), game-in-progress replaces the
 window root, the fill-image layout trap, ImagePipeline for art, menu-bar
 `.commands`. Submission is the same cloud path plus a 3rd-Party-Mac-Installer
 cert for `.pkg` signing (`-f platform=mac`).
+
+## 043 — Tidbits Live: the Mac-exclusive pub/event trivia system (scope locked)
+
+macOS earns a Mac-exclusive **Tidbits Live** — an emcee/admin dashboard that
+runs a live pub/bar/event trivia night driving a projected big screen while
+teams answer on phones (web now, native Tidbits apps later). It ships alongside
+the full parity face (Decision 042), not instead of it. Scope decisions, locked
+2026-07-03 with the owner (research: `docs/EVENT-TRIVIA-COMPETITIVE.md`):
+
+1. **Sequencing = parallel, parity-led.** Stand up the Mac parity shell + core
+   screens first (reuses Core, unblocks everything), then layer Tidbits Live on
+   top. Each phase ships something runnable.
+2. **Serverless for now.** MVP is single-venue over the local network + optional
+   Firebase (already used for online match). Cross-venue/season leaderboards and
+   venue lead-capture (which need a backend) are deferred — NOT built until a
+   backend is a deliberate later decision. Do not add a server for v1.
+3. **Tidbits-native rounds first.** Build a clean round/format system in the
+   Tidbits sticker-book design (MCQ, picture, audio, nearest-wins,
+   fastest-finger, wager). Game-show boards (Jeopardy/Feud/Wheel "show mode")
+   are Phase C, not MVP.
+
+**Why:** the whole competitor field (Quizado — native Mac but 1.0-rated —
+SpeedQuizzing, Buzztime, Crowdpurr) shares the same gaps, and they map exactly
+to host pain: no manual score override, no real tie-break engine, weak cheating
+deterrence, no Wi-Fi/paper fallback, no built-in monetization. Tidbits has three
+moats none of them combine: a consumer install base to join with (every event
+funnels into daily play), a 20k+ corpus + `DelightfulQuizGenerator` already
+built, and native-Mac quality where incumbents read dated. The locked scope
+targets the under-served differentiators first and avoids a premature backend.
+
+**How to apply:** MVP (Phase A) is the host cockpit end-to-end — event builder
+(corpus/AI/manual) → manual pacing + reveal-on-command + **manual score
+override** + **free-text review** → big-screen output (question, QR join,
+ten-foot team leaderboard) → phone/web team join with reconnect → auto-scoring +
+cumulative leaderboard + **tie-break engine** → recap; offline-capable with a
+**printable answer-sheet fallback**. The event is a `.package`-style REFERENCE
+document (Rule 11: Library ≠ Project — the corpus/question library is app-global
+SwiftData, the event references it, neither embeds a re-hosted copy). Any
+"generate" assist yields an EDITABLE round the host shapes, never a one-tap
+finished night (`learning-orientation-design`). The full binding spec is
+`docs/macOS-DESIGN.md` Part A; every event surface quotes a rule there.

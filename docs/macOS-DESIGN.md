@@ -1,11 +1,11 @@
 # Tidbits Trivia — macOS Design (BINDING)
 
-**Status: binding spec — the shell is not yet built.** macOS is the next
-platform (Decision 042). Today only a 79-line `NavigationSplitView` stub
-exists (`macOS/ContentView_macOS.swift`, placeholder detail columns) and
-the app has no macOS `.commands`. This doc is the contract to **build
-against**; quote the rule before adding any window, view, sheet, command,
-or engine path. Amend, never silently contradict.
+**Status: binding — foundation built; shell + Tidbits Live in progress.**
+macOS is a live scope (Decision 042). The native Mac target now COMPILES
+and LAUNCHES the `NavigationSplitView` shell (foundation committed
+2026-07-03); the detail columns are still placeholders. This doc is the
+contract to **build against**; quote the rule before adding any window,
+view, sheet, command, or engine path. Amend, never silently contradict.
 
 Division of labor: **this doc** = the binding macOS contract.
 **`macos-platform-patterns` skill** = the mechanics + failure modes.
@@ -15,20 +15,156 @@ duplicated here. **The Mac app is NOT the iOS app resized** — it is a
 pointer + keyboard + menu-bar + resizable-window app that reuses Core
 verbatim and rebuilds only the shell.
 
-Tidbits macOS is **parity-only** — a browse/play/records/create face on
-the shared Core. There is no Mac-exclusive heavy editor, so this doc has
-no "Part A." If one is ever proposed, it earns its own part first.
+The Mac app is **two things** (Decision 043): **PART A — Tidbits Live**, a
+Mac-exclusive pub/event trivia emcee system the touch/TV/web platforms
+can't host; and **PART B — the parity face** (Play / Records / Create /
+Trivia Night / everything iOS+tvOS do). Build order is parity-led: the
+Part B shell + core screens first, then Part A layered on top.
 
-## §0 — Before the shell compiles (the blocker)
+---
 
-0.1 **`#if os(iOS)`-guard every Core symbol that imports UIKit.** The
-concrete blocker is `Core/Services/GameCenterManager.swift`: `import
-UIKit` is unguarded (line 3) and it uses `UIViewController` /
-`UIApplication.shared.connectedScenes` (lines 133-134) with no guard, and
-it is on the launch path (`App/TidbitsTriviaApp.swift:7`). Guard it (and
-provide a macOS no-op or `NSViewController`/GameKit-macOS path) before the
-Mac destination will build. `Core/Services/Haptics.swift` is already
-correctly guarded — follow its shape.
+# PART A — Tidbits Live (the Mac-exclusive event system, BINDING)
+
+*A host/emcee dashboard that runs a live pub/bar/event trivia night: the
+Mac drives a projected big screen while teams answer on phones. Grounded in
+the competitive research (`docs/EVENT-TRIVIA-COMPETITIVE.md`) and the locked
+scope (Decision 043). Every event surface quotes a rule here.*
+
+## §A0 — Thesis & the three locked decisions
+
+A0.1 **Why Mac-only.** An emcee cockpit needs a pointer+keyboard+menu,
+multi-window (host cockpit on the laptop, big-screen output on the
+projector), local-network hosting, a filesystem for event documents and
+printable fallbacks, and long-running live control — things the
+touch/TV/web platforms structurally can't host. Do not port a touch idiom
+(a full-screen modal builder, one-pane nav) into it.
+
+A0.2 **Serverless (Decision 043).** MVP is single-venue over the local
+network + optional Firebase (the online-match transport). **No backend
+in v1.** Cross-venue/season leaderboards and venue lead-capture are
+deferred until a backend is a deliberate later decision — do not build a
+server, and do not design a surface that requires one.
+
+A0.3 **Tidbits-native rounds first (Decision 043).** Formats render in the
+sticker-book design language (`chunkyCard`, the six pops, the type ramp) —
+NOT game-show boards. Jeopardy/Feud/Wheel "show mode" is Phase C, gated
+behind its own rules; never let it leak into the MVP round system.
+
+## §A1 — Scenes & the two-surface split (load-bearing)
+
+A1.1 **Tidbits Live is its own scene family**, distinct from the Part-B
+`WindowGroup`. The event opens a **document-backed host window** (the
+cockpit) plus a **separate big-screen output window** targeted at the
+projector/second display. The cockpit and the big screen are DIFFERENT
+views of one live event model — never the same view mirrored (the host
+sees controls + upcoming questions + the answer key; the room must not).
+
+A1.2 **The big-screen output is ten-foot UI.** It obeys the tvOS-grade
+legibility bar (large type, high contrast, team names + scores readable
+across a loud room), reusing the `mobile-first-density-design` "focus does
+the work" discipline. It shows only: the current question/media, the QR +
+join code, and the team leaderboard — never host-only affordances.
+
+A1.3 **The event is a REFERENCE document, not a copy** (Rule 11: Library ≠
+Project). The app-global **question library** (the corpus + the host's
+saved questions) is SwiftData; a **saved event** is a `.package`-style
+document that *references* library questions + its own edits — it never
+re-hosts the corpus. A weekly night is a duplicated event document.
+
+## §A2 — The event builder
+
+A2.1 **An event is an ordered list of named rounds; a round is an ordered
+list of questions.** First-class round + question objects (the wedge
+against Crowdpurr, which has no round object). Reorder/clone rounds and
+questions by drag (native `.draggable`/`.dropDestination`).
+
+A2.2 **Three ways to fill a round, all yielding EDITABLE questions**
+(`learning-orientation-design` — never a one-tap finished night): (a) pull
+from the 20k+ corpus by category/difficulty; (b) **AI-generate** a themed
+round via `DelightfulQuizGenerator`, which the host then edits; (c) hand-
+author. Every generated question lands in the editor for the host to
+approve/fix — automate the mechanical, preserve the editorial judgment.
+
+A2.3 **Round formats (MVP set), Tidbits-native:** MCQ, True/False, Picture,
+Nearest-Wins (numeric — also the tie-break unit), Ordering, Wager (Stake),
+Poll/Majority. Audio round and Fastest-Finger (speed scoring) are Phase B.
+Each format reuses the existing `GameMode`/question shapes where one maps.
+
+## §A3 — The host cockpit (the emcee's live control — our differentiators)
+
+A3.1 **Host-paced by default; reveal-on-command.** The host advances
+questions and triggers the answer/score reveal ("dramatic pause") — never
+an auto-timer that outruns the room. An optional per-question timer is a
+host choice, not the default.
+
+A3.2 **Manual score override is first-class** (the #1 field gap — almost
+nobody ships it). The host can adjust any team's score on any question at
+any time, with a visible audit of the change. This is the referee model:
+the host is the authority, not the algorithm.
+
+A3.3 **Free-text answers get a review lane with spelling leniency.** Typed
+answers are grouped (identical → one row) and the host one-taps
+mark-correct/incorrect; near-misses are surfaced for a judgment call. Auto-
+matching (alias-based, reusing the corpus's accepted-answer sets) proposes,
+the host disposes.
+
+A3.4 **Live answer tally.** The host sees submissions arrive in real time
+(counts per option, who's answered) before revealing.
+
+A3.5 **A built-in tie-break engine** (the field punts this). On a tie, the
+host triggers a Nearest-Wins numeric prompt (or sudden-death question)
+resolved live; the engine breaks the tie and updates standings.
+
+## §A4 — Player join & teams (serverless)
+
+A4.1 **Teams, not solo, are the unit.** Several phones join one team; the
+team name shows on the big screen. Join via **QR + short code** to a web
+page (zero-install) over the local network; **native-Tidbits-app join is
+Phase B** (the moat — deep-link the existing apps). No player app is ever
+required.
+
+A4.2 **Reconnect is designed in** (a field weak spot): a dropped phone
+rejoins its team by code without losing the team's score.
+
+A4.3 **Player transport reuses the existing serverless stack** (the
+Trivia Night mDNS+TCP / Firebase islands) — no new backend (A0.2).
+
+## §A5 — Reliability & integrity (Mac-native strengths — lean in)
+
+A5.1 **Offline-capable.** The event runs on the local network with no
+internet dependency; the Mac holds the authoritative event state.
+
+A5.2 **Printable fallback.** Every event exports **printable answer
+sheets + a question pack** (the Wi-Fi-dies contingency the field ignores) —
+a native `NSPrintOperation`/PDF path.
+
+A5.3 **Cheating deterrence (Phase B):** fast answer-lock windows, a
+tab-switch/focus signal from the join page, and a brains-only tie-break —
+addressing the #1 host complaint. Never claim more deterrence than shipped.
+
+## §A6 — Out of scope for Tidbits Live v1 (deferred, with reason)
+
+Cross-venue / season leaderboards & venue lead-capture (need a backend,
+A0.2); game-show "show mode" boards (Phase C, A0.3); sponsor-ad monetization
+& prize/coupon fulfillment (Phase C — decide the monetization stance first);
+stream-out to Twitch/YouTube. Each is a `PARITY.md`/backlog row with its
+reason, never silently attempted.
+
+---
+
+# PART B — The parity face (Play / Records / Create / everything iOS+tvOS)
+
+*The native-Mac face on the shared Core — pointer+keyboard+menu idioms, NOT
+the iOS app resized. Build this shell + core screens first (Decision 043).*
+
+## §0 — Foundation (DONE 2026-07-03)
+
+0.1 **The UIKit compile blocker is guarded.** `GameCenterManager` wrapped
+every UIKit presentation seam (`UIApplication`/`UIViewController`/`.present`)
+in `#if canImport(UIKit)`; GameKit auth/submit/report stay cross-platform.
+The macOS Game Center dashboard (via `GKDialogController`) is a tracked
+parity stub. `Core/Services/Haptics.swift` was already guarded — the shape
+to follow for any future UIKit-touching Core symbol.
 
 0.2 **`Core/Design/Design.swift` is fully portable** — pure SwiftUI,
 no UIKit/AppKit. macOS shares `Tidbits.Palette`, `TypeRamp`, `Metric`,

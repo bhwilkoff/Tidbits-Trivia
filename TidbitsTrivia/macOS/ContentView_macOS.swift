@@ -22,6 +22,8 @@ struct ContentView_macOS: View {
     @State private var nightLaunch: NightLaunchRequest?
     /// A Play-vs-CPU match — also replaces the window root.
     @State private var versusBot: BotProfile?
+    /// A Tidbits Live event being previewed/hosted — replaces the window root.
+    @State private var livePreview: LiveEvent?
     @AppStorage("tidbits.hasOnboarded") private var hasOnboarded = false
 
     var body: some View {
@@ -42,6 +44,9 @@ struct ContentView_macOS: View {
             } else if let versusBot {
                 VersusContainer_macOS(bot: versusBot) { self.versusBot = nil }
                     .transition(.opacity)
+            } else if let livePreview {
+                LivePreviewContainer_macOS(event: livePreview) { self.livePreview = nil }
+                    .transition(.opacity)
             } else {
                 shell
             }
@@ -50,6 +55,7 @@ struct ContentView_macOS: View {
         .animation(.snappy(duration: 0.2), value: customGame?.id)
         .animation(.snappy(duration: 0.2), value: nightLaunch?.id)
         .animation(.snappy(duration: 0.2), value: versusBot?.id)
+        .animation(.snappy(duration: 0.2), value: livePreview?.id)
         .onChange(of: store.inbox) { _, _ in handleInbox() }
         .onAppear { handleInbox() }
         .task {
@@ -61,7 +67,9 @@ struct ContentView_macOS: View {
             if versusBot == nil, let vb = DebugHooks.versusBot {
                 versusBot = vb == "house" ? .house(playerAccuracy: 0.6) : (BotProfile.presets.first { $0.id == vb } ?? .regular)
             }
-            if let tab = DebugHooks.initialTab {
+            if ProcessInfo.processInfo.environment["TIDBITS_TAB"] == "live" {
+                section = .live
+            } else if let tab = DebugHooks.initialTab {
                 section = SidebarSection(rawValue: tab.rawValue)
             }
         }
@@ -92,6 +100,7 @@ struct ContentView_macOS: View {
                 case .play:    HomeView_macOS(onPlay: start, onNight: { nightLaunch = $0 }, onVersus: { versusBot = $0 })
                 case .records: RecordsView_macOS()
                 case .create:  CreateView_macOS { topic, qs in customGame = CustomLaunch(topic: topic, questions: qs) }
+                case .live:    LiveBuilderView_macOS(onPreview: { livePreview = $0 }, onHost: { livePreview = $0 })
                 }
             }
         }
@@ -125,16 +134,16 @@ struct ContentView_macOS: View {
 /// Sidebar sections = the top-level verbs (the macOS analog of the iOS tab bar).
 /// Settings rides the app menu (⌘,), never a sidebar row.
 enum SidebarSection: String, CaseIterable, Identifiable {
-    case play, records, create
+    case play, records, create, live
     var id: String { rawValue }
     var title: String {
         switch self {
-        case .play: "Play"; case .records: "Records"; case .create: "Create"
+        case .play: "Play"; case .records: "Records"; case .create: "Create"; case .live: "Tidbits Live"
         }
     }
     var symbol: String {
         switch self {
-        case .play: "play.fill"; case .records: "chart.bar.fill"; case .create: "sparkles"
+        case .play: "play.fill"; case .records: "chart.bar.fill"; case .create: "sparkles"; case .live: "megaphone.fill"
         }
     }
 }

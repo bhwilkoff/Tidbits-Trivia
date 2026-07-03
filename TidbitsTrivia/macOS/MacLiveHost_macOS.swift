@@ -59,6 +59,22 @@ final class LiveHostSession {
         if index + 1 >= questions.count { finished = true } else { index += 1 }
     }
     var standings: [LiveTeam] { teams.sorted { $0.score > $1.score } }
+
+    // MARK: Tie-break engine (§A3.5 — the field punts this; we ship it)
+
+    /// Groups of teams sharing a score (the ties a host must resolve for prizes).
+    var tiedGroups: [[LiveTeam]] {
+        Dictionary(grouping: teams.filter { $0.score > 0 }, by: \.score)
+            .values.filter { $0.count > 1 }
+            .sorted { ($0.first?.score ?? 0) > ($1.first?.score ?? 0) }
+            .map { $0.sorted { $0.name < $1.name } }
+    }
+    /// Resolve a tie: the closest guess to `target` wins the tie-break (+1),
+    /// nudging them clear. Numeric "closest wins" is the pub-standard protocol.
+    func breakTie(target: Double, guesses: [LiveTeam.ID: Double]) {
+        guard let winner = guesses.min(by: { abs($0.value - target) < abs($1.value - target) })?.key else { return }
+        adjust(winner, by: 1)
+    }
 }
 
 // MARK: - Host container + cockpit
@@ -90,6 +106,8 @@ struct LiveHostView_macOS: View {
     @Bindable var session: LiveHostSession
     let onClose: () -> Void
     @State private var newTeam = ""
+    @State private var showTieBreak = false
+    @State private var tieGroup: [LiveTeam] = []
 
     var body: some View {
         Group {
@@ -229,10 +247,71 @@ struct LiveHostView_macOS: View {
                     .chunkyCard(fill: i == 0 ? Tidbits.Palette.yellow : Tidbits.Palette.surface)
                 }
                 if session.teams.isEmpty { Text("No teams were scored this night.").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft) }
-                Button("Done", action: onClose).buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.coral, textColor: .white)).keyboardShortcut(.cancelAction).padding(.top, 8)
+                HStack(spacing: 14) {
+                    if !session.tiedGroups.isEmpty {
+                        Button("Break a tie…") { tieGroup = session.tiedGroups.first ?? []; showTieBreak = true }
+                            .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.yellow, textColor: Tidbits.Palette.ink))
+                    }
+                    Button("Done", action: onClose).buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.coral, textColor: .white)).keyboardShortcut(.cancelAction)
+                }
+                .padding(.top, 8)
             }
             .padding(28).frame(maxWidth: 620).frame(maxWidth: .infinity)
         }
+        .sheet(isPresented: $showTieBreak) {
+            TieBreakSheet_macOS(teams: tieGroup) { target, guesses in
+                session.breakTie(target: target, guesses: guesses)
+            }
+        }
+    }
+}
+
+// MARK: - Tie-break sheet
+
+/// Numeric "closest wins" tie-break (§A3.5). The host asks a number question,
+/// enters the answer, then each tied team's guess; the engine picks the winner.
+struct TieBreakSheet_macOS: View {
+    let teams: [LiveTeam]
+    let onResolve: (Double, [LiveTeam.ID: Double]) -> Void
+    @Environment(\.dismiss) private var dismiss
+    @State private var target = ""
+    @State private var guesses: [LiveTeam.ID: String] = [:]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Tie-break").font(.system(size: 26, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
+            Text("Ask a number question (e.g. \u{201C}what year did the Eiffel Tower open?\u{201D}). Enter the answer, then each team's guess — closest wins.")
+                .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft).fixedSize(horizontal: false, vertical: true)
+            HStack {
+                Text("Correct number").font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                Spacer()
+                TextField("e.g. 1889", text: $target).frame(width: 120).textFieldStyle(.roundedBorder)
+            }
+            Divider().overlay(Tidbits.Palette.border)
+            ForEach(teams) { team in
+                HStack {
+                    Text(team.name).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                    Spacer()
+                    TextField("guess", text: Binding(get: { guesses[team.id] ?? "" }, set: { guesses[team.id] = $0 }))
+                        .frame(width: 120).textFieldStyle(.roundedBorder)
+                }
+            }
+            HStack {
+                Button("Cancel") { dismiss() }.keyboardShortcut(.cancelAction)
+                Spacer()
+                Button("Resolve tie") {
+                    let t = Double(target) ?? 0
+                    var g: [LiveTeam.ID: Double] = [:]
+                    for team in teams { if let v = Double(guesses[team.id] ?? "") { g[team.id] = v } }
+                    onResolve(t, g)
+                    dismiss()
+                }
+                .buttonStyle(.borderedProminent).tint(Tidbits.Palette.coral)
+                .keyboardShortcut(.defaultAction)
+                .disabled(target.isEmpty)
+            }
+        }
+        .padding(24).frame(width: 460).background(Tidbits.Palette.bg)
     }
 }
 #endif

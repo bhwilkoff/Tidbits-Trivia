@@ -33,7 +33,6 @@ struct NightSetupSheet_macOS: View {
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(preset.name).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
                                     Text(preset.blurb).font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
-                                    Text(roundLine(preset.plan)).font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
                                 }
                                 Spacer()
                             }
@@ -71,12 +70,6 @@ struct NightSetupSheet_macOS: View {
         }
         .frame(width: 520, height: 640)
         .background(Tidbits.Palette.bg)
-    }
-
-    private func roundLine(_ plan: NightPlan) -> String {
-        let n = plan.rounds.count
-        let qs = plan.rounds.reduce(0) { $0 + $1.count }
-        return "\(n) rounds · \(qs) questions"
     }
 }
 

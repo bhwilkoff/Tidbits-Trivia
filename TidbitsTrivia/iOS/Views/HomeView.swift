@@ -17,6 +17,8 @@ struct HomeView: View {
     @State private var showSettings = false
     @State private var showDailyArchive = false
     @State private var showMultiplayer = false
+    @State private var showLiveJoin = false
+    @State private var liveJoinCode = ""
     @State private var versusBot: BotProfile?
     @State private var showQuickMatch = false
     @Environment(\.modelContext) private var modelContext
@@ -43,6 +45,16 @@ struct HomeView: View {
                 }
                 TriviaNightCard { showNightSheet = true }
                 moreWaysSection
+                Button { showLiveJoin = true } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "qrcode.viewfinder").font(.system(size: 15, weight: .bold))
+                        Text("Have a code? Join a live event")
+                        Image(systemName: "arrow.right").font(.system(size: 13, weight: .bold))
+                    }
+                    .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.blue)
+                    .frame(maxWidth: .infinity).padding(.vertical, 6)
+                }
+                .buttonStyle(.plain)
             }
             .padding(.horizontal, Tidbits.Metric.pad)
             .padding(.bottom, 32)
@@ -106,6 +118,7 @@ struct HomeView: View {
         .fullScreenCover(item: $versusBot) { bot in
             VersusContainerView(bot: bot)
         }
+        .sheet(isPresented: $showLiveJoin) { LiveJoinView(initialCode: liveJoinCode) }
         .fullScreenCover(isPresented: showOnboarding) {
             OnboardingView { hasOnboarded = true }
         }
@@ -121,6 +134,9 @@ struct HomeView: View {
                     : BotProfile.presets.first { $0.id == vb } ?? .regular
             }
             if DebugHooks.openDailyArchive { showDailyArchive = true }
+            if let jc = ProcessInfo.processInfo.environment["TIDBITS_LIVE_JOIN"], !jc.isEmpty {
+                liveJoinCode = jc; showLiveJoin = true
+            }
         }
         .onChange(of: gameCenter.pendingChallengeMode) { _, m in
             if m != nil, let mode = gameCenter.consumePendingChallenge() {

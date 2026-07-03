@@ -22,7 +22,8 @@ if [ "$PLATFORM" = "all" ]; then for p in $PLATFORMS; do "$0" "$p"; done; exit 0
 case "$PLATFORM" in
   ios)  DEST="generic/platform=iOS" ;;
   tvos) DEST="generic/platform=tvOS" ;;
-  *) echo "unsupported platform '$PLATFORM' (use: $PLATFORMS all)"; exit 1 ;;
+  mac)  DEST="generic/platform=macOS" ;;   # Mac App Store: sandboxed .app -> signed .pkg (installer cert auto-selected from the keychain)
+  *) echo "unsupported platform '$PLATFORM' (use: $PLATFORMS mac all)"; exit 1 ;;
 esac
 
 # --- released Xcode (App Review rejects beta-Xcode builds) --------------------------------------

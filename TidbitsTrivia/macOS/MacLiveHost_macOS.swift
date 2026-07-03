@@ -66,13 +66,24 @@ final class LiveHostSession {
 struct LiveHostContainer_macOS: View {
     let event: LiveEvent
     let onClose: () -> Void
+    @Environment(LiveHostCoordinator.self) private var coordinator
+    @Environment(\.openWindow) private var openWindow
     @State private var session: LiveHostSession
 
     init(event: LiveEvent, onClose: @escaping () -> Void) {
         self.event = event; self.onClose = onClose
         _session = State(initialValue: LiveHostSession(event: event))
     }
-    var body: some View { LiveHostView_macOS(session: session, onClose: onClose) }
+    var body: some View {
+        LiveHostView_macOS(session: session) {
+            coordinator.session = nil    // clear the projector
+            onClose()
+        }
+        .onAppear {
+            coordinator.session = session          // publish to the big screen (§A1.1)
+            openWindow(id: "tidbits-bigscreen")     // pop the projector window
+        }
+    }
 }
 
 struct LiveHostView_macOS: View {

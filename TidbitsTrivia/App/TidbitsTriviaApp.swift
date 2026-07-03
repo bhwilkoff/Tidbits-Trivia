@@ -5,6 +5,11 @@ import SwiftData
 struct TidbitsTriviaApp: App {
     @State private var store = AppStore()
     @State private var gameCenter = GameCenterManager.shared
+    #if os(macOS)
+    /// Shares the active Tidbits Live host session between the cockpit and the
+    /// projector (big-screen) windows (§A1.1).
+    @State private var liveCoordinator = LiveHostCoordinator()
+    #endif
     /// One container shared across scenes (the Mac Settings scene resets records
     /// through the SAME store as the main window).
     private let modelContainer = TidbitsTriviaApp.makeModelContainer()
@@ -18,6 +23,9 @@ struct TidbitsTriviaApp: App {
             RootView()
                 .environment(store)
                 .environment(gameCenter)
+                #if os(macOS)
+                .environment(liveCoordinator)
+                #endif
                 .tint(Tidbits.Palette.blue)
                 .task { gameCenter.authenticate() }
                 // .onOpenURL fires for BOTH custom schemes and Universal
@@ -40,6 +48,15 @@ struct TidbitsTriviaApp: App {
         Settings {
             SettingsView_macOS()
                 .environment(gameCenter)
+                .tint(Tidbits.Palette.blue)
+        }
+        .modelContainer(modelContainer)
+
+        // The Tidbits Live projector output — its own window; drag to the
+        // second display. Reads the shared host session (§A1.1/A1.2).
+        WindowGroup(id: "tidbits-bigscreen") {
+            LiveBigScreen_macOS()
+                .environment(liveCoordinator)
                 .tint(Tidbits.Palette.blue)
         }
         .modelContainer(modelContainer)

@@ -7,12 +7,14 @@ import SwiftUI
 /// rather than behind a sheet — pointer + click, no tab bar.
 struct HomeView_macOS: View {
     let onPlay: (LaunchRequest) -> Void
+    let onNight: (NightLaunchRequest) -> Void
 
     @Environment(AppStore.self) private var store
     @State private var mode: GameMode = .classic
     @State private var category: TriviaCategory = .named("mixed")
     @State private var showCustomize = false
     @State private var showDailyArchive = false
+    @State private var showNightSetup = false
 
     /// Single-player modes the picker offers (Daily, Trivia Night, and the
     /// Custom Mix builder are their own surfaces — parity follow-ups).
@@ -33,6 +35,7 @@ struct HomeView_macOS: View {
                 }
                 Button("Previous Tidbits…") { showDailyArchive = true }
                     .buttonStyle(.plain).font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.blue)
+                triviaNightCard
                 modeSection
                 categorySection
                 startBar
@@ -52,6 +55,30 @@ struct HomeView_macOS: View {
                 onPlay(LaunchRequest(mode: .daily, category: .named("mixed"), dailyDay: day))
             }
         }
+        .sheet(isPresented: $showNightSetup) {
+            NightSetupSheet_macOS { plan, category in
+                onNight(NightLaunchRequest(plan: plan, category: category))
+            }
+        }
+    }
+
+    private var triviaNightCard: some View {
+        Button { showNightSetup = true } label: {
+            HStack(spacing: 14) {
+                Image(systemName: "party.popper.fill").font(.system(size: 26, weight: .black))
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("TRIVIA NIGHT").font(Tidbits.TypeRamp.l2)
+                    Text("A night of mixed rounds — every kind of question.").font(Tidbits.TypeRamp.l5).opacity(0.9)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right").font(.system(size: 18, weight: .bold))
+            }
+            .foregroundStyle(Tidbits.Palette.coral.legibleForeground)
+            .padding(18)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .chunkyCard(fill: Tidbits.Palette.coral)
+        }
+        .buttonStyle(.plain)
     }
 
     private var header: some View {

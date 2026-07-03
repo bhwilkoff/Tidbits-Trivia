@@ -18,6 +18,8 @@ struct ContentView_macOS: View {
     @State private var launch: LaunchRequest?
     /// A live-generated (Create) game — also replaces the window root.
     @State private var customGame: CustomLaunch?
+    /// A solo Trivia Night — also replaces the window root.
+    @State private var nightLaunch: NightLaunchRequest?
     @AppStorage("tidbits.hasOnboarded") private var hasOnboarded = false
 
     var body: some View {
@@ -30,12 +32,18 @@ struct ContentView_macOS: View {
                     self.customGame = nil
                 }
                 .transition(.opacity)
+            } else if let nightLaunch {
+                NightContainer_macOS(plan: nightLaunch.plan, category: nightLaunch.category) {
+                    self.nightLaunch = nil
+                }
+                .transition(.opacity)
             } else {
                 shell
             }
         }
         .animation(.snappy(duration: 0.2), value: launch?.id)
         .animation(.snappy(duration: 0.2), value: customGame?.id)
+        .animation(.snappy(duration: 0.2), value: nightLaunch?.id)
         .task {
             DebugHooks.seedRecordsIfRequested(modelContext)
             // Screenshot/CI hook (parity with iOS/tvOS): TIDBITS_AUTOPLAY="mode:category".
@@ -70,7 +78,7 @@ struct ContentView_macOS: View {
         Group {
             NavigationStack(path: $path) {
                 switch section ?? .play {
-                case .play:    HomeView_macOS(onPlay: start)
+                case .play:    HomeView_macOS(onPlay: start, onNight: { nightLaunch = $0 })
                 case .records: RecordsView_macOS()
                 case .create:  CreateView_macOS { topic, qs in customGame = CustomLaunch(topic: topic, questions: qs) }
                 }

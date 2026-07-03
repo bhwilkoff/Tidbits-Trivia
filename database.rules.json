@@ -28,6 +28,36 @@
           }
         }
       }
+    },
+    "live": {
+      "$code": {
+        ".read": "auth != null",
+        "//": "The host owns meta/pub/scores; players own their own team + answers. A room-level write matches ONLY the host deleting the whole room (teardown).",
+        ".write": "auth != null && data.child('meta/host').val() === auth.uid && !newData.exists()",
+        "meta": {
+          ".write": "auth != null && (!data.exists() || data.child('host').val() === auth.uid)",
+          ".validate": "newData.hasChildren(['host','createdAt'])"
+        },
+        "pub": {
+          ".write": "auth != null && root.child('live').child($code).child('meta/host').val() === auth.uid"
+        },
+        "scores": {
+          ".write": "auth != null && root.child('live').child($code).child('meta/host').val() === auth.uid"
+        },
+        "teams": {
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid",
+            ".validate": "newData.hasChildren(['name'])"
+          }
+        },
+        "answers": {
+          "$qid": {
+            "$uid": {
+              ".write": "auth != null && auth.uid === $uid"
+            }
+          }
+        }
+      }
     }
   }
 }

@@ -1160,3 +1160,37 @@ can't run on simulators without sandbox Game Center pain; the 2-device
 REAL-DEVICE test (two Game Center accounts) is the acceptance gate. If
 matchmaking errors on TestFlight, check App Store Connect → the app's Game
 Center config (compatibility matrix) — flagged as the owner-verify item.
+
+## 040 — Android + web online play rides Firebase Realtime Database (owner-approved backend)
+
+Online Quick Match on Android and web uses **Firebase Realtime Database**
+(project `tidbits-trivia-f2ddb`), chosen in `docs/MATCHMAKING-SERVICES-RESEARCH.md`
+and approved by the owner (2026-07-03). Apple stays on GameKit (Decision 039);
+Firebase covers the platforms GameKit/Play Games can't (Play Games multiplayer
+is dead — playbook §2).
+
+**Why RTDB:** genuinely free tier (no card, hard-stops instead of billing),
+official Kotlin + no-build-step browser SDKs, and rooms need **zero server
+code** — Security Rules + Anonymous Auth enforce the shape. It's also Google's
+own designated replacement for the Play Games multiplayer it retired.
+
+**Model (mirrors local Trivia Night's trust model):** a room is a short code;
+each device runs its own engine over the shared question set and self-reports
+its score; a leader-elected coordinator paces. Anonymous auth gives each device
+a uid so rules can scope writes — no accounts, no PII. Frames/scores are RTDB
+children, not a socket; the low-frequency trivia traffic fits the free tier
+(~25 concurrent rooms on 100 connections).
+
+**Provisioned via CLI (this session):** RTDB instance
+`tidbits-trivia-f2ddb-default-rtdb` (us-central1), Security Rules
+(`database.rules.json`, deployed), a registered Web app (config in
+`js/firebase-config.js` — non-secret by design). **The one console-only step:**
+Firebase Auth's first-time provisioning + the Anonymous provider toggle are
+gated behind the console (the API path requires Blaze billing, which we don't
+want) — owner enables Authentication → Anonymous once, free.
+
+**How to apply:** never require real accounts for v1 (anonymous is the
+identity). The `js/firebase.js` transport + the Android `FirebaseRtdbTransport`
+implement the same `NightPeer` seam the local night uses, so the match
+machinery is reused, not reinvented. The 2-device hardware test remains the
+acceptance gate for anything networked.

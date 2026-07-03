@@ -91,3 +91,4 @@ tools/corpus/corpus_source.sqlite
 tools/asc-credentials.env
 AuthKey_*.p8
 *.p12
+.firebase/

@@ -825,12 +825,18 @@ class Store(context: Context) {
     }
     val seenSet: Set<String> get() = seen
 
-    data class Rec(val mode: String, val categoryId: String, val score: Int, val correct: Int, val total: Int, val maxStreak: Int, val day: String)
+    data class AnswerDetail(val qid: String, val prompt: String, val categoryId: String, val correct: Boolean, val answer: String)
+    data class Rec(val mode: String, val categoryId: String, val score: Int, val correct: Int, val total: Int, val maxStreak: Int, val day: String,
+                   val at: Long = 0L, val answers: List<AnswerDetail> = emptyList())
 
     fun addRecord(r: Rec, countsForStreak: Boolean = true) {
         val arr = org.json.JSONArray(prefs.getString("records", "[]"))
+        val ans = org.json.JSONArray()
+        r.answers.forEach { a -> ans.put(JSONObject().put("qid", a.qid).put("p", a.prompt)
+            .put("cat", a.categoryId).put("ok", a.correct).put("ans", a.answer)) }
         val o = JSONObject().put("mode", r.mode).put("cat", r.categoryId).put("score", r.score)
             .put("correct", r.correct).put("total", r.total).put("streak", r.maxStreak).put("day", r.day)
+            .put("at", if (r.at > 0) r.at else System.currentTimeMillis()).put("answers", ans)
         val list = (0 until arr.length()).map { arr.getJSONObject(it) }.toMutableList()
         list.add(0, o)
         val out = org.json.JSONArray(); list.take(500).forEach { out.put(it) }
@@ -839,8 +845,14 @@ class Store(context: Context) {
     }
     fun records(): List<Rec> {
         val arr = org.json.JSONArray(prefs.getString("records", "[]"))
-        return (0 until arr.length()).map { arr.getJSONObject(it) }.map {
-            Rec(it.getString("mode"), it.getString("cat"), it.getInt("score"), it.getInt("correct"), it.getInt("total"), it.getInt("streak"), it.getString("day"))
+        return (0 until arr.length()).map { arr.getJSONObject(it) }.map { o ->
+            val ansArr = o.optJSONArray("answers")
+            val answers = if (ansArr == null) emptyList() else (0 until ansArr.length()).map { i ->
+                val a = ansArr.getJSONObject(i)
+                AnswerDetail(a.getString("qid"), a.getString("p"), a.getString("cat"), a.getBoolean("ok"), a.getString("ans"))
+            }
+            Rec(o.getString("mode"), o.getString("cat"), o.getInt("score"), o.getInt("correct"), o.getInt("total"), o.getInt("streak"), o.getString("day"),
+                o.optLong("at", 0L), answers)
         }
     }
     fun bestScore(mode: String) = records().filter { it.mode == mode }.maxOfOrNull { it.score } ?: 0

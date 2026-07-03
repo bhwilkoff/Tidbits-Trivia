@@ -450,7 +450,8 @@ class GameState(
             recorded = true
             if (mode == Mode.DAILY) store.recordDaily(dailyDay ?: dayKey(), score)
             // Only TODAY'S daily feeds the streak — archive catch-ups don't (R-DAILY-1).
-            store.addRecord(Store.Rec(mode.name, category.id, score, correctCount, answered.size, maxStreak, dayKey()),
+            val details = answered.map { Store.AnswerDetail(it.q.id, it.q.prompt, it.q.categoryId, it.correct, it.q.answerText) }
+            store.addRecord(Store.Rec(mode.name, category.id, score, correctCount, answered.size, maxStreak, dayKey(), answers = details),
                 countsForStreak = (dailyDay ?: dayKey()) == dayKey())
             store.recordTelemetry(mode, answered.map { it.q to it.chosen })
             store.recordMisses(answered.map { it.q.id to it.correct })   // for spaced review

@@ -909,7 +909,7 @@ private fun ResultsScreen(game: GameState, onPlayAgain: (() -> Unit)?, onDone: (
     val context = LocalContext.current
     val total = game.answered.size
     val acc = if (total == 0) 0 else game.correctCount * 100 / total
-    val grid = game.answered.joinToString("") { if (it.chosen == null) "⬛" else if (it.correct) "🟩" else "🟥" }
+    val grid = game.answered.joinToString("") { if (it.chosen == null) "⚫️" else if (it.correct) "🟢" else "🔴" }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         Text(when { acc == 100 -> "FLAWLESS!"; acc >= 80 -> "BRILLIANT"; acc >= 50 -> "NICELY DONE"; else -> "GOOD RUN" }, fontWeight = FontWeight.Black, fontSize = 22.sp)
         Text("${game.score}", fontWeight = FontWeight.Black, fontSize = 64.sp)
@@ -923,7 +923,10 @@ private fun ResultsScreen(game: GameState, onPlayAgain: (() -> Unit)?, onDone: (
             }
         }
         Button(onClick = {
-            val text = "🧠 Tidbits Trivia — ${game.mode.title}\n$grid\n${game.correctCount}/$total right · ${game.score} pts · $acc%\nTrivia from all of Wikipedia.\nhttps://tidbitstrivia.com"
+            val filled = Math.round(acc * 7 / 100.0).toInt().coerceIn(0, 7)
+            val meter = "▰".repeat(filled) + "▱".repeat(7 - filled)
+            val streak = if (game.maxStreak >= 3) "\n🔥 Best run ${game.maxStreak}" else ""
+            val text = "🧠 Tidbits — ${game.mode.title}\n${game.score} pts · ${game.correctCount}/$total\n$meter $acc%\n$grid$streak\nPlay at https://tidbitstrivia.com"
             context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, text) }, "Share"))
         }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Pops.blue, contentColor = Color.White)) { Text("Share Score") }
         // F2 — full missed-fact recap: every wrong answer becomes a "now you know" card.
@@ -962,6 +965,9 @@ private fun RecordsScreen(store: Store) {
     val records = remember { store.records() }
     val streak = remember { store.streak() }
     val life = remember { store.lifetime() }
+    var recap by remember { mutableStateOf<Store.Rec?>(null) }
+    var drillDomain by remember { mutableStateOf<String?>(null) }
+    var bestsMode by remember { mutableStateOf<Mode?>(null) }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Text("Records", fontSize = 30.sp, fontWeight = FontWeight.Black)
         if (records.isEmpty()) {
@@ -977,13 +983,16 @@ private fun RecordsScreen(store: Store) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             StatBox("${life.first}", "Games", Pops.grape); StatBox("${life.third}%", "Accuracy", Pops.blue); StatBox("${life.second}", "Correct", Pops.mint)
         }
+        Text("Your games", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+        Text("Every game you've played — tap one to see the questions.", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+        records.take(40).forEach { rec -> GameHistoryRow(rec) { recap = rec } }
         val prog = remember { store.progress() }
         val explored = prog.count { it.total > 0 }
         val mastered = prog.count { it.hasWedge }
         Text("Your knowledge", fontWeight = FontWeight.Bold, fontSize = 20.sp)
         Text("Each domain levels up as you answer its questions correctly. You've explored $explored of 7 domains and mastered $mastered. A ✓ means mastered — 15+ right at 60%+ accuracy.",
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
-        prog.filter { it.total > 0 }.forEach { TopicRow(it) }
+        prog.filter { it.total > 0 }.forEach { TopicRow(it) { drillDomain = it.id } }
         val calib = remember { store.calibration() }
         if (calib.values.any { it.second > 0 }) {
             Text("Your calibration", fontWeight = FontWeight.Bold, fontSize = 20.sp)
@@ -1003,21 +1012,151 @@ private fun RecordsScreen(store: Store) {
             }
         }
         Text("Personal bests", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+        Text("Tap a mode to scroll your previous attempts.", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
         Mode.entries.forEach { m ->
-            val b = store.bestScore(m.name)
-            if (b > 0) ChunkyCard { Row(Modifier.padding(14.dp).fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) { Text(m.title, fontWeight = FontWeight.Bold); Text("$b", fontWeight = FontWeight.Black, fontSize = 20.sp) } }
+            val attempts = records.filter { it.mode == m.name }
+            val b = attempts.maxOfOrNull { it.score } ?: 0
+            if (b > 0) ChunkyCard(onClick = { bestsMode = m }) {
+                Row(Modifier.padding(14.dp).fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Column { Text(m.title, fontWeight = FontWeight.Bold); Text("${attempts.size} played", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)) }
+                    Row(verticalAlignment = Alignment.CenterVertically) { Text("$b", fontWeight = FontWeight.Black, fontSize = 20.sp); Icon(Icons.Filled.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)) }
+                }
+            }
         }
         Spacer(Modifier.height(24.dp))
+    }
+    recap?.let { RecapDialog(it) { recap = null } }
+    drillDomain?.let { DomainDrillDialog(it, records) { drillDomain = null } }
+    bestsMode?.let { m -> BestAttemptsDialog(m, records.filter { it.mode == m.name }, onOpen = { recap = it; bestsMode = null }) { bestsMode = null } }
+}
+
+// One past game as a card: mode, category, score, colored answer dots, when.
+@Composable
+private fun GameHistoryRow(rec: Store.Rec, onClick: () -> Unit) {
+    val mode = runCatching { Mode.valueOf(rec.mode) }.getOrDefault(Mode.CLASSIC)
+    ChunkyCard(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
+        Row(Modifier.padding(12.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(mode.title, fontWeight = FontWeight.Bold)
+                    Text(" · ${Category.byId(rec.categoryId).name}", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                }
+                Spacer(Modifier.height(4.dp)); AnswerDots(rec)
+                Text("${rec.correct}/${rec.total} correct${if (rec.at > 0) " · " + relativeTime(rec.at) else ""}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+            }
+            Text("${rec.score}", fontWeight = FontWeight.Black, fontSize = 20.sp)
+        }
+    }
+}
+
+// The run's shape: a pip per question in the domain's color when correct, hollow
+// when missed (owner: more compelling than red/green squares). Falls back to a
+// correct/total bar for old records with no per-question detail.
+@Composable
+private fun AnswerDots(rec: Store.Rec) {
+    Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+        if (rec.answers.isEmpty()) {
+            repeat(maxOf(rec.total, 1)) { i ->
+                Box(Modifier.size(10.dp).background(if (i < rec.correct) Pops.mint else MaterialTheme.colorScheme.surface, CircleShape).border(1.5.dp, Ink, CircleShape))
+            }
+        } else {
+            rec.answers.take(24).forEach { a ->
+                val c = Pops.at(Category.byId(a.categoryId).colorIndex)
+                Box(Modifier.size(10.dp).background(if (a.correct) c else MaterialTheme.colorScheme.surface, CircleShape).border(1.5.dp, Ink, CircleShape))
+            }
+        }
+    }
+}
+
+private fun relativeTime(at: Long): String {
+    val d = System.currentTimeMillis() - at
+    return when {
+        d < 60_000 -> "just now"
+        d < 3_600_000 -> "${d / 60_000}m ago"
+        d < 86_400_000 -> "${d / 3_600_000}h ago"
+        else -> "${d / 86_400_000}d ago"
+    }
+}
+
+@Composable
+private fun AnswerLine(a: Store.AnswerDetail) {
+    ChunkyCard(fill = MaterialTheme.colorScheme.surface, modifier = Modifier.fillMaxWidth()) {
+        Row(Modifier.padding(14.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Icon(if (a.correct) Icons.Filled.CheckCircle else Icons.Filled.Cancel, null,
+                tint = if (a.correct) accentText(Pops.mint) else accentText(Pops.coral), modifier = Modifier.size(20.dp))
+            Column(Modifier.weight(1f)) {
+                Text(a.prompt, fontWeight = FontWeight.Bold)
+                Text("Answer: ${a.answer}", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RecapDialog(rec: Store.Rec, onDismiss: () -> Unit) {
+    val mode = runCatching { Mode.valueOf(rec.mode) }.getOrDefault(Mode.CLASSIC)
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text("${mode.title} · ${rec.score}", fontWeight = FontWeight.Black, fontSize = 22.sp)
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                StatBox("${rec.correct}/${rec.total}", "Correct", Pops.mint)
+                StatBox("${if (rec.total > 0) rec.correct * 100 / rec.total else 0}%", "Accuracy", Pops.blue)
+            }
+            if (rec.answers.isEmpty()) Text("This game was played before per-question history was added, so only the totals are here.", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+            rec.answers.forEach { AnswerLine(it) }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DomainDrillDialog(categoryId: String, records: List<Store.Rec>, onDismiss: () -> Unit) {
+    val seen = HashSet<String>(); val answers = mutableListOf<Store.AnswerDetail>()
+    records.forEach { r -> r.answers.forEach { a -> if (a.categoryId == categoryId && seen.add(a.qid)) answers.add(a) } }
+    val wrong = answers.filter { !it.correct }; val right = answers.filter { it.correct }
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(Category.byId(categoryId).name, fontWeight = FontWeight.Black, fontSize = 22.sp)
+            if (answers.isEmpty()) Text("No per-question history yet for this domain. Play a game here and it'll show up.", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+            if (wrong.isNotEmpty()) { Text("Missed (${wrong.size})", fontWeight = FontWeight.Bold, fontSize = 18.sp); wrong.forEach { AnswerLine(it) } }
+            if (right.isNotEmpty()) { Text("Got right (${right.size})", fontWeight = FontWeight.Bold, fontSize = 18.sp); right.forEach { AnswerLine(it) } }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun BestAttemptsDialog(mode: Mode, attempts: List<Store.Rec>, onOpen: (Store.Rec) -> Unit, onDismiss: () -> Unit) {
+    val best = attempts.maxOfOrNull { it.score } ?: 0
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text("${mode.title} attempts", fontWeight = FontWeight.Black, fontSize = 22.sp)
+            Text("Newest first. Your best is $best.", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+            attempts.forEach { rec ->
+                ChunkyCard(onClick = { onOpen(rec) }, modifier = Modifier.fillMaxWidth()) {
+                    Row(Modifier.padding(14.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        if (rec.score == best) Icon(Icons.Filled.EmojiEvents, null, tint = Pops.yellow, modifier = Modifier.size(18.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(if (rec.at > 0) relativeTime(rec.at) else rec.day, fontWeight = FontWeight.Bold)
+                            Spacer(Modifier.height(4.dp)); AnswerDots(rec)
+                        }
+                        Text("${rec.score}", fontWeight = FontWeight.Black, fontSize = 20.sp)
+                        Icon(Icons.Filled.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                    }
+                }
+            }
+        }
     }
 }
 
 // One domain's depth: icon, name, mastered check, level badge, XP bar, and a
 // plain-language "N more to Level X" so the number means something.
 @Composable
-private fun TopicRow(d: DomainProgress) {
+private fun TopicRow(d: DomainProgress, onClick: () -> Unit = {}) {
     val c = Category.byId(d.id); val col = Pops.at(c.colorIndex)
     val remaining = (5 * (d.level + 1) * (d.level + 2) / 2 - d.correct).coerceAtLeast(0)
-    ChunkyCard {
+    ChunkyCard(onClick = onClick) {
         Row(Modifier.padding(12.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Box(Modifier.size(36.dp).background(col, CircleShape).border(2.5.dp, Ink, CircleShape), contentAlignment = Alignment.Center) {
                 Icon(categoryIcon(c.id), null, tint = onAccent(col), modifier = Modifier.size(18.dp))

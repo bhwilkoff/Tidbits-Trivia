@@ -11,6 +11,20 @@
 > including the periodic parity audit — is the
 > `cross-platform-parity-discipline` skill.
 >
+> **macOS (5th platform) — 2026-07-03:** the native Mac app is BUILT and
+> launches (Decision 042/043). Full parity face — Play, Records (R-REC-1
+> dashboard), Create, Settings + ⌘,/⌘N menu commands, Customize (mix +
+> presets), Daily archive, onboarding, solo Trivia Night, Versus CPU +
+> Online-Multiplayer picker, deep links, Game Center dashboard — all native,
+> reusing Core verbatim, build- + screenshot-verified. Plus the Mac-exclusive
+> **Tidbits Live** pub-event system (event builder, host cockpit with
+> reveal-on-command + manual score override, tie-break engine, big-screen
+> projector window, offline + printable answer sheets, venue branding).
+> DEFERRED (⏳, need a serverless transport + 2-device testing): networked
+> Trivia-Night host/join, online Quick Match, and networked Tidbits Live team
+> join + its dependent formats (fastest-finger, audio, poll, cheating
+> deterrence). See `docs/macOS-DESIGN.md` §A7 + `docs/EVENT-TRIVIA-COMPETITIVE.md`.
+>
 > **Last audit: 2026-06-30 (Android ↔ Apple, code-verified).** Found 4
 > false cells (§3b emoji grid, §4 entire auth section, §5 share URLs,
 > §12 adaptive icon) and confirmed the real Android-behind-iOS gaps

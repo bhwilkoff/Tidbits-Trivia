@@ -767,3 +767,18 @@ One-line-per-round; full detail in `ARCHIVE.md`.
   Trivia Night host/join, online Quick Match. Build: `xcodebuild -scheme TidbitsTrivia
   -destination 'platform=macOS,arch=arm64' -derivedDataPath /tmp/tidbits-mac-dd
   CODE_SIGNING_ALLOWED=NO`; run: ad-hoc codesign + open + screencapture.
+- **2026-07-03 (macOS BUILDOUT COMPLETE — 12/12 loop tasks).** The native Mac app
+  (5th platform) is built, launches, and all three Apple platforms build green
+  (iOS/tvOS/macOS). SHIPPED + verified: full parity face (Play/Records/Create/
+  Settings+menu-commands/Customize/Daily-archive/onboarding/solo-Trivia-Night/
+  Versus-CPU/Online-MP-picker/deep-links/GC-dashboard) + the Mac-exclusive
+  **Tidbits Live** (builder → host cockpit w/ reveal-on-command + manual score
+  override → tie-break engine → big-screen projector window → offline + printable
+  PDFs → venue branding). All `TidbitsTrivia/macOS/*_macOS.swift`, #if os(macOS),
+  reuse Core. DEFERRED ⏳ (need serverless transport + 2-device/GC/real-hardware
+  testing, documented in macOS-DESIGN §A7 + PARITY): networked Trivia-Night
+  host/join, online Quick Match, networked Tidbits Live team-join + its dependent
+  formats (fastest-finger, audio, poll, cheating-deterrence, free-text review),
+  cross-venue leaderboards (backend), show-mode boards (Phase C). NOT YET: macOS
+  App Store submission plumbing (asc_profiles `mac` branch — its own scope). The
+  Mac target is not yet on the release/TestFlight cloud path.

@@ -3,18 +3,16 @@
     "queue": {
       ".read": "auth != null",
       "$bucket": {
-        "$uid": {
-          ".write": "auth != null && auth.uid == $uid",
-          ".validate": "newData.hasChildren(['name','ts']) && newData.child('ts').isNumber()"
-        }
+        ".read": "auth != null",
+        ".write": "auth != null",
+        ".validate": "!newData.exists() || newData.hasChildren(['roomId','host'])"
       }
     },
     "rooms": {
       "$roomId": {
         ".read": "auth != null",
-        ".write": "auth != null",
-        ".validate": "$roomId.length >= 4 && $roomId.length <= 8",
         "meta": {
+          ".write": "auth != null && $roomId.length >= 4 && $roomId.length <= 8",
           ".validate": "newData.hasChildren(['host','createdAt'])"
         },
         "players": {
@@ -25,7 +23,8 @@
         },
         "msgs": {
           "$msgId": {
-            ".validate": "newData.hasChildren(['from','ts']) && newData.child('from').val() == auth.uid"
+            ".write": "auth != null && newData.child('from').val() == auth.uid",
+            ".validate": "newData.hasChildren(['from','ts'])"
           }
         }
       }

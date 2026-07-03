@@ -5,6 +5,7 @@ import { Corpus, Pictures, ThisOrThat, ClosestCall, Ordering, Matching, TypeAnsw
 import { Store, CATEGORIES, catColor, catById, MODES, NIGHT, STAKE_BUDGET, dayKey, APP_STORES, SITE_URL } from './store.js';
 import { Scoring } from './engine.js';
 import { BOTS, houseBot, botById, VsMatch } from './bots.js';
+import { FirebaseNet } from './firebase.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const h = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -149,7 +150,7 @@ function viewHome() {
       <div class="night-form">
         <h2>Online Multiplayer</h2>
         <p class="muted">Face an opponent on the same questions — fastest correct answers win.</p>
-        <div class="mp-soon"><b>Quick Match</b><span class="muted">Matchmaking with real players — coming soon</span></div>
+        <button type="button" class="night-preset" data-quickmatch><b>${ICON.globe} Quick Match</b><span class="muted">Find another player online — same questions, best score wins</span></button>
         <h3 class="section">Play a CPU opponent now</h3>
         ${botRows()}
         <div class="night-actions"><button type="button" class="btn" data-mp-close>Close</button></div>
@@ -338,6 +339,8 @@ function bindHome() {
     mpDlg.close();
     startGame('classic', catById('mixed'), { versusBot: b.dataset.bot });
   }));
+  const qm = $('[data-quickmatch]');
+  if (qm) qm.addEventListener('click', () => { mpDlg.close(); OnlineMatch.start(); });
   dailyDlg.querySelectorAll('[data-daily-day]').forEach((b) => b.addEventListener('click', () => {
     dailyDlg.close();
     startGame('daily', catById('mixed'), { dailyDay: b.dataset.dailyDay });
@@ -461,6 +464,117 @@ function maybeOfferSave(label, questions) {
   window._lastCreated = { label, questions };
 }
 
+// ---------------- Online Quick Match (Firebase RTDB, Decision 040) ----------------
+// Same-questions race: a leader builds the set + writes it to the room; every
+// device plays it locally and self-reports its score; live standings from the
+// roster; best score wins. Trust model = local Trivia Night (room-gated,
+// self-scored). Apple uses GameKit instead (Decision 039).
+const OnlineMatch = {
+  roomId: null, isLeader: false, unsubRoster: null, unsubMeta: null, players: {}, meta: {},
+  name: (localStorage.getItem('tidbits.night.lastName') || 'Player'),
+
+  async start() {
+    render(); // clear
+    renderLoading('Finding a match…');
+    try {
+      const res = await FirebaseNet.quickMatch(this.name, { onError: (m) => { this._fail(m); } });
+      if (!res) return;
+      this.roomId = res.roomId; this.isLeader = res.isLeader;
+      this._listen();
+      this.renderLobby();
+    } catch (e) { /* onError already rendered */ }
+  },
+
+  _listen() {
+    this.unsubRoster = FirebaseNet.onRoster(this.roomId, (p) => {
+      this.players = p || {};
+      if (game && game._online) renderGame();           // live standings during play
+      else if (!this.meta.state || this.meta.state === 'lobby') this.renderLobby();
+      else if (this.meta.state === 'finished') this.renderStandings();
+    });
+    this.unsubMeta = FirebaseNet.onMeta(this.roomId, async (m) => {
+      this.meta = m || {};
+      if (this.meta.state === 'playing' && (!game || !game._online)) await this._play();
+      else if (this.meta.state === 'finished' && (!game || game.phase !== 'finished')) this.renderStandings();
+    });
+  },
+
+  async _startAsLeader() {
+    // Build a shared 8-question mixed set and publish it.
+    const ids = await buildCreateSet('popular culture and general knowledge').catch(() => []);
+    let qs = ids;
+    if (!qs || qs.length < 5) qs = Corpus.pull('mixed', new Set(), 8);
+    await FirebaseNet.setMeta(this.roomId, { state: 'playing', startedAt: Date.now(), questions: JSON.stringify(qs) });
+  },
+
+  async _play() {
+    let qs = [];
+    try { qs = JSON.parse(this.meta.questions || '[]'); } catch { qs = []; }
+    if (!qs.length) return;
+    startGame('mix', catById('mixed'), { custom: qs, label: 'Online Match', online: this });
+  },
+
+  reportProgress(score, done) {
+    if (this.roomId) FirebaseNet.reportScore(this.roomId, score, done).catch(() => {});
+    if (done && this.isLeader) FirebaseNet.setMeta(this.roomId, { state: 'finished' }).catch(() => {});
+  },
+
+  leave() {
+    if (this.unsubRoster) this.unsubRoster();
+    if (this.unsubMeta) this.unsubMeta();
+    if (this.roomId) FirebaseNet.leave(this.roomId);
+    this.roomId = null; this.isLeader = false; this.players = {}; this.meta = {};
+    if (game) { clearInterval(game.timer); game = null; }
+    render();
+  },
+
+  _roster() {
+    return Object.entries(this.players).map(([uid, p]) => ({ uid, me: uid === FirebaseNet.uid, ...p }))
+      .sort((a, b) => (b.score || 0) - (a.score || 0));
+  },
+
+  renderLobby() {
+    const roster = this._roster();
+    const enough = roster.length >= 2;
+    app.innerHTML = `<div class="online-lobby">
+      <h1 class="page-title">Online Match</h1>
+      <p class="muted">${enough ? 'Ready when you are.' : 'Waiting for another player to join…'}</p>
+      <div class="card pad"><div class="muted">ROOM CODE</div><div class="big-sm">${h(this.roomId)}</div>
+        <p class="muted">Share this code for a friend to join, or wait for a random opponent.</p></div>
+      <h2 class="section">${roster.length} in the room</h2>
+      ${roster.map((r) => `<div class="card row"><b>${h(r.name || 'Player')}${r.me ? ' (you)' : ''}</b></div>`).join('')}
+      ${this.isLeader ? `<button class="btn btn-primary btn-full" data-start ${enough ? '' : 'disabled'}>Start the Match</button>`
+                      : `<div class="card row muted">Waiting for the host to start…</div>`}
+      <button class="btn btn-text btn-full" data-leave>Leave</button>
+    </div>`;
+    const st = $('[data-start]'); if (st) st.addEventListener('click', () => this._startAsLeader());
+    $('[data-leave]').addEventListener('click', () => this.leave());
+  },
+
+  renderStandings() {
+    if (this.unsubMeta) { /* keep roster live */ }
+    const roster = this._roster();
+    const top = roster[0];
+    const meScore = (this.players[FirebaseNet.uid] || {}).score || 0;
+    const won = top && top.uid === FirebaseNet.uid;
+    app.innerHTML = `<div class="results">
+      <h1 class="page-title">${won ? 'You won! 🎉' : (top ? h(top.name || 'Opponent') + ' takes it' : 'Match over')}</h1>
+      ${roster.map((r, i) => `<div class="card vs-standing ${i === 0 ? 'win' : ''}"><b>${h(r.name || 'Player')}${r.me ? ' (you)' : ''}</b><span class="vs-score">${r.score || 0}</span></div>`).join('')}
+      <button class="btn btn-primary btn-full" data-again>New Match</button>
+      <button class="btn btn-text btn-full" data-done>Done</button>
+    </div>`;
+    $('[data-again]').addEventListener('click', () => { this.leave(); OnlineMatch.start(); });
+    $('[data-done]').addEventListener('click', () => this.leave());
+  },
+
+  _fail(msg) {
+    app.innerHTML = `<div class="online-lobby"><h1 class="page-title">Couldn't start online play</h1>
+      <p class="muted">${h(msg)}</p><button class="btn btn-primary btn-full" data-done>Back</button></div>`;
+    $('[data-done]').addEventListener('click', () => this.leave());
+  },
+};
+window.OnlineMatch = OnlineMatch;
+
 // ---------------- Records ----------------
 function settingsSection() {
   const on = Store.reviewEnabled();
@@ -537,6 +651,7 @@ class Game {
     // Play vs CPU (Decision 038): a bot resolving the same questions.
     this.versus = opts.versusBot ? new VsMatch([botById(opts.versusBot, recentAccuracy())]) : null;
     this.mixModes = opts.mixModes || null;   // Custom Mix: multi-select Customize
+    this._online = opts.online || null;      // Online Quick Match coordinator (Decision 040)
     this.questions = []; this.index = 0; this.score = 0; this.streak = 0; this.maxStreak = 0;
     this.answered = []; this.chosen = null; this.phase = 'loading';
     this.remaining = 0; this.timer = null; this.qStart = 0; this.globalDeadline = null;
@@ -874,7 +989,9 @@ class Game {
     if (this.index >= this.questions.length) return this._end();
     this._begin();
   }
-  _end() { clearInterval(this.timer); this.phase = 'finished'; this._persist(); renderResults(); }
+  _end() { clearInterval(this.timer); this.phase = 'finished'; this._persist();
+    if (this._online) { this._online.reportProgress(this.score, true); this._online.renderStandings(); return; }
+    renderResults(); }
   _persist() {
     const correct = this.answered.filter((a) => a.correct).length;
     if (this.mode.id === 'daily') Store.recordDaily(this.dailyDay || dayKey(), this.score);
@@ -898,7 +1015,7 @@ async function startGame(mode, category, opts) {
   if (game.phase === 'error') renderGameError();
 }
 
-function quitGame() { if (game) clearInterval(game.timer); game = null; render(); }
+function quitGame() { if (game && game._online) { OnlineMatch.leave(); return; } if (game) clearInterval(game.timer); game = null; render(); }
 
 // ---------------- Game render ----------------
 // The beat between rounds of a Trivia Night — what's coming and how many
@@ -917,6 +1034,13 @@ function renderRoundIntro() {
     </div>`;
   $('[data-start-round]').addEventListener('click', () => game.startRound());
   $('[data-quit]').addEventListener('click', quitGame);
+}
+
+// Live online standings during a match (Decision 040): you vs each opponent.
+function onlineStrip() {
+  const roster = game._online._roster();
+  const cells = roster.map((r) => `<span>${h((r.name || 'Player').split(' ')[0])}${r.me ? ' (you)' : ''} ${r.score || 0}</span>`).join('');
+  return `<div class="vs-strip">${cells}</div>`;
 }
 
 // "You 320 · Ace Botsworth CPU 410" — the running head-to-head (Decision 038).
@@ -964,6 +1088,7 @@ function renderGame() {
   const enumP = q.enumerate ? enumeratePanel(q.enumerate) : '';
   const pic = q.image ? `<div class="card pic-card"><img class="pic-img" src="${h(q.image)}" alt="Identify this" loading="eager" onerror="this.parentNode.classList.add('pic-failed')"><span class="pic-fallback muted">Couldn't load the image</span></div>` : '';
   if (game.versus && game.phase === 'reveal') game.versus.commit(q, game.index, game.mode.perQuestion ?? 30);
+  if (game._online && game.phase === 'reveal') game._online.reportProgress(game.score, false);
   const reveal = game.phase === 'reveal' ? revealCard(q) + (game.versus ? versusRevealCard() : '') : '';
   const banner = (game.mode.id === 'barTrivia' && game.currentRound) ? nightBanner() : '';
   const fixedCount = game.mode.id !== 'timeAttack' && game.mode.id !== 'survival';
@@ -977,6 +1102,7 @@ function renderGame() {
       </div>
       <div class="clockbar"><span id="clk-label">${progress}</span><div class="clock-track"><div id="clk-fill" class="clock-fill"></div></div><span id="clk-secs"></span></div>
       ${game.versus ? versusStrip() : ''}
+      ${game._online ? onlineStrip() : ''}
       <div class="qwrap">
         ${banner}
         ${pic}

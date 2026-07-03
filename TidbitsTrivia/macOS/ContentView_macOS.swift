@@ -10,6 +10,7 @@ import SwiftUI
 
 struct ContentView_macOS: View {
     @Environment(AppStore.self) private var store
+    @Environment(\.modelContext) private var modelContext
     @State private var section: SidebarSection? = .play
     @State private var path = NavigationPath()
     /// The active game. When set, the game surface REPLACES the split view as
@@ -27,6 +28,7 @@ struct ContentView_macOS: View {
         }
         .animation(.snappy(duration: 0.2), value: launch?.id)
         .task {
+            DebugHooks.seedRecordsIfRequested(modelContext)
             // Screenshot/CI hook (parity with iOS/tvOS): TIDBITS_AUTOPLAY="mode:category".
             if launch == nil, let ap = DebugHooks.autoplay {
                 start(LaunchRequest(mode: ap.mode, category: ap.category, mixModes: DebugHooks.mixModes))
@@ -47,7 +49,7 @@ struct ContentView_macOS: View {
             NavigationStack(path: $path) {
                 switch section ?? .play {
                 case .play:    HomeView_macOS(onPlay: start)
-                case .records: RecordsPlaceholder_macOS()
+                case .records: RecordsView_macOS()
                 case .create:  CreatePlaceholder_macOS()
                 }
             }
@@ -82,16 +84,7 @@ enum SidebarSection: String, CaseIterable, Identifiable {
     }
 }
 
-// MARK: - Placeholders (next parity increments — Records + Create Mac views)
-
-private struct RecordsPlaceholder_macOS: View {
-    var body: some View {
-        ContentUnavailableView("Records",
-            systemImage: "chart.bar.fill",
-            description: Text("Your history, streak, and drill-ins — the native Mac Records screen lands next."))
-            .navigationTitle("Records")
-    }
-}
+// MARK: - Placeholder (next parity increment — Create Mac view)
 
 private struct CreatePlaceholder_macOS: View {
     var body: some View {

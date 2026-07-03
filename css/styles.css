@@ -52,7 +52,12 @@ body {
 .main { flex: 1; min-height: 0; overflow-y: auto; padding: 8px var(--pad) 40px; -webkit-overflow-scrolling: touch; }
 
 .page-title { font-size: 30px; font-weight: 900; line-height: 1.1; margin: 10px 0 18px; }
-.section { font-size: 20px; font-weight: 800; margin: 22px 0 12px; }
+.section { font-size: 20px; font-weight: 800; margin: 28px 0 10px; }
+/* A section's descriptive line must not glue to the card below it — give the
+   caption real air on both sides so headings pair with their subtitle and the
+   cards breathe (the Records "congested" bug, 2026-07-03). Scoped to .main so
+   dialogs (which use flex gap) are untouched. */
+.main p.muted { margin-bottom: 14px; line-height: 1.4; }
 
 /* ---- Chunky card ---- */
 .card {

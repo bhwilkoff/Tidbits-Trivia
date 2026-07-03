@@ -7,6 +7,9 @@ import SwiftUI
 @MainActor
 final class LiveHostCoordinator {
     var session: LiveHostSession?
+    /// The networked room (nil for a paper-only night) — shared so the projector
+    /// can show the join code + the joined-team leaderboard.
+    var net: LiveHostNet?
 }
 
 /// The big-screen (projector) output — ten-foot UI (§A1.2). Shows ONLY the

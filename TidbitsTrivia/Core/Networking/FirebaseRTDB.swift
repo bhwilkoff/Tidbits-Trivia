@@ -119,11 +119,21 @@ actor FirebaseRTDB {
     }
 
     private func write<T: Encodable>(_ path: String, _ value: T, method: String) async throws {
+        try await writeJSON(path, JSONEncoder().encode(value), method: method)
+    }
+
+    /// Write pre-encoded JSON. Callers on another actor (e.g. the @MainActor host)
+    /// encode their own value first, so a MainActor-isolated Codable conformance
+    /// never has to run inside this actor (Swift 6 isolated-conformances).
+    func putJSON(_ path: String, _ json: Data) async throws { try await writeJSON(path, json, method: "PUT") }
+    func patchJSON(_ path: String, _ json: Data) async throws { try await writeJSON(path, json, method: "PATCH") }
+
+    private func writeJSON(_ path: String, _ json: Data, method: String) async throws {
         let token = try await validToken()
         var req = URLRequest(url: restURL(path, token: token))
         req.httpMethod = method
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        req.httpBody = try JSONEncoder().encode(value)
+        req.httpBody = json
         let (_, resp) = try await session.data(for: req)
         try Self.check(resp)
     }

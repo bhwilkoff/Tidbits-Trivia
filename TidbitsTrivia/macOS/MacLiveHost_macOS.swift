@@ -75,6 +75,27 @@ final class LiveHostSession {
         guard let winner = guesses.min(by: { abs($0.value - target) < abs($1.value - target) })?.key else { return }
         adjust(winner, by: 1)
     }
+
+    // MARK: Networked publish (the pub state phones/web render — LiveRoom.Pub)
+
+    var currentFormat: String {
+        let ri = current?.roundIndex ?? 0
+        return event.rounds.indices.contains(ri) ? event.rounds[ri].format.rawValue : ""
+    }
+    /// The live state to publish for the current question (or an "ended" frame).
+    func currentPub() -> LiveRoom.Pub {
+        guard let q = current else {
+            return LiveRoom.Pub(round: roundNumber, roundTitle: roundTitle, qid: "end", qNum: 0, qTotal: 0,
+                                phase: LiveRoom.Phase.ended, prompt: "", options: nil, format: "", answerIndex: nil)
+        }
+        let inR = questionInRound
+        return LiveRoom.Pub(round: roundNumber, roundTitle: roundTitle,
+                            qid: LiveRoom.qid(round: q.roundIndex ?? 0, question: index),
+                            qNum: inR.n, qTotal: inR.of,
+                            phase: revealed ? LiveRoom.Phase.reveal : LiveRoom.Phase.question,
+                            prompt: q.prompt, options: q.options, format: currentFormat,
+                            answerIndex: revealed ? q.correctIndex : nil)
+    }
 }
 
 // MARK: - Host container + cockpit
@@ -85,25 +106,59 @@ struct LiveHostContainer_macOS: View {
     @Environment(LiveHostCoordinator.self) private var coordinator
     @Environment(\.openWindow) private var openWindow
     @State private var session: LiveHostSession
+    @State private var net = LiveHostNet()
 
     init(event: LiveEvent, onClose: @escaping () -> Void) {
         self.event = event; self.onClose = onClose
         _session = State(initialValue: LiveHostSession(event: event))
     }
     var body: some View {
-        LiveHostView_macOS(session: session) {
-            coordinator.session = nil    // clear the projector
+        LiveHostView_macOS(session: session, net: net) {
+            let net = self.net
+            Task { await net.close() }
+            coordinator.session = nil            // clear the projector
+            coordinator.net = nil
             onClose()
         }
         .onAppear {
             coordinator.session = session          // publish to the big screen (§A1.1)
+            coordinator.net = net
             openWindow(id: "tidbits-bigscreen")     // pop the projector window
+        }
+        // Open the networked room and publish the first question.
+        .task {
+            await net.open(event: event)
+            await net.setState("live")
+            await net.publish(session.currentPub())
+        }
+        // Re-publish whenever the host advances or reveals; auto-score on reveal.
+        .onChange(of: session.index) { _, _ in
+            Task { await net.publish(session.currentPub()) }
+        }
+        .onChange(of: session.revealed) { _, revealed in
+            Task {
+                await net.publish(session.currentPub())
+                if revealed { await scoreReveal() }
+            }
+        }
+        .onChange(of: session.finished) { _, done in
+            if done { Task { await net.setState("ended"); await net.publish(session.currentPub()) } }
+        }
+    }
+
+    /// On reveal, award points to every joined team whose submission matched the
+    /// correct option. Manual override (± in the scoreboard) still applies on top.
+    private func scoreReveal() async {
+        guard let q = session.current else { return }
+        for (uid, ans) in net.answers where ans.choice == q.correctIndex {
+            await net.setScore(uid, (net.scores[uid] ?? 0) + session.pointsPerCorrect)
         }
     }
 }
 
 struct LiveHostView_macOS: View {
     @Bindable var session: LiveHostSession
+    var net: LiveHostNet
     let onClose: () -> Void
     @State private var newTeam = ""
     @State private var showTieBreak = false
@@ -136,6 +191,19 @@ struct LiveHostView_macOS: View {
                 Spacer()
                 Text("ROUND \(session.roundNumber)/\(session.roundCount) · \(session.roundTitle)")
                     .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+            }
+            if net.isOpen {
+                HStack(spacing: 8) {
+                    Image(systemName: "qrcode").font(.system(size: 15, weight: .bold)).foregroundStyle(Tidbits.Palette.blue)
+                    Text("Players join at tidbitstrivia.com/live").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                    Text("CODE \(net.code)").font(.system(size: 15, weight: .black, design: .monospaced)).foregroundStyle(Tidbits.Palette.ink)
+                    if !net.joined.isEmpty {
+                        Text("· \(net.joined.count) joined").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.mint)
+                    }
+                }
+                .padding(.horizontal, 12).padding(.vertical, 7)
+                .background(RoundedRectangle(cornerRadius: 10).fill(Tidbits.Palette.surface))
+                .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Tidbits.Palette.border, lineWidth: 2))
             }
             if let q = session.current {
                 let inR = session.questionInRound
@@ -195,7 +263,24 @@ struct LiveHostView_macOS: View {
             Divider().overlay(Tidbits.Palette.border)
             ScrollView {
                 VStack(spacing: 10) {
-                    if session.teams.isEmpty {
+                    if net.isOpen {
+                        HStack {
+                            Text("JOINED").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                            Spacer()
+                            if session.revealed == false, !net.answers.isEmpty {
+                                Text("\(net.answers.count) answered").font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.mint)
+                            }
+                        }
+                        if net.joined.isEmpty {
+                            Text("Waiting for phones to join with code \(net.code)…")
+                                .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                        }
+                        ForEach(net.joined) { joinedRow($0) }
+                        if !session.teams.isEmpty {
+                            Divider().overlay(Tidbits.Palette.border).padding(.vertical, 4)
+                            Text("IN-ROOM (PAPER)").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                        }
+                    } else if session.teams.isEmpty {
                         Text("Add the teams in the room. When you reveal an answer, tap ✓ to award points, or ± to correct any score.")
                             .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft).padding(.top, 20)
                     }
@@ -226,6 +311,26 @@ struct LiveHostView_macOS: View {
                 .menuStyle(.borderlessButton).frame(width: 20)
         }
         .padding(12).chunkyCard()
+    }
+
+    /// A phone/web-joined team: auto-scored on reveal, with ± manual override
+    /// (writes back to the room) and a live "answered this question" dot.
+    private func joinedRow(_ team: LiveHostNet.Joined) -> some View {
+        HStack(spacing: 8) {
+            VStack(alignment: .leading, spacing: 1) {
+                HStack(spacing: 5) {
+                    if net.answers[team.id] != nil && !session.revealed {
+                        Circle().fill(Tidbits.Palette.mint).frame(width: 7, height: 7)
+                    }
+                    Text(team.name).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink).lineLimit(1)
+                }
+                Text("\(team.score)").font(.system(size: 22, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
+            }
+            Spacer()
+            Button { Task { await net.setScore(team.id, team.score - 1) } } label: { Image(systemName: "minus") }.buttonStyle(.bordered)
+            Button { Task { await net.setScore(team.id, team.score + 1) } } label: { Image(systemName: "plus") }.buttonStyle(.bordered)
+        }
+        .padding(12).chunkyCard(fill: Tidbits.Palette.blue.opacity(0.10))
     }
 
     // MARK: Final standings

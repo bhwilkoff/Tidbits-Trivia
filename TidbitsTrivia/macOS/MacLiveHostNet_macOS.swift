@@ -1,0 +1,142 @@
+#if os(macOS)
+import Foundation
+
+/// Bridges the Tidbits Live host cockpit to the Firebase RTDB room (the contract
+/// in LiveRoom.swift), so iOS/Android/web players join a Mac-hosted event. The
+/// host owns the room: it publishes `pub` as it advances, streams the joined
+/// `teams` + their `answers`, and writes `scores`. Paper-mode hosting still works
+/// unchanged — this only adds the networked layer when the host opens a room.
+@MainActor
+@Observable
+final class LiveHostNet {
+    private let db = FirebaseRTDB.shared
+
+    private(set) var code = ""
+    /// Joined phone/web teams (uid → name+score), merged from `teams` + `scores`.
+    private(set) var teams: [String: LiveRoom.Team] = [:]
+    private(set) var scores: [String: Int] = [:]
+    /// Submissions for the CURRENT question (uid → answer), reset each question.
+    private(set) var answers: [String: LiveRoom.Answer] = [:]
+    private(set) var lastError: String?
+
+    var isOpen: Bool { !code.isEmpty }
+    var joined: [Joined] {
+        teams.map { Joined(id: $0.key, name: $0.value.name, score: scores[$0.key] ?? 0) }
+            .sorted { $0.score != $1.score ? $0.score > $1.score : $0.name < $1.name }
+    }
+    struct Joined: Identifiable, Hashable { let id: String; let name: String; let score: Int }
+
+    private var streamTasks: [Task<Void, Never>] = []
+    private var answersTask: Task<Void, Never>?
+    private var currentQid = ""
+
+    // MARK: Lifecycle
+
+    /// Open a room for this event and start streaming joins. Returns the code.
+    @discardableResult
+    func open(event: LiveEvent) async -> String? {
+        do {
+            let host = try await db.ensureAuth()
+            // TIDBITS_LIVE_CODE pins a known code for deterministic device/CI testing.
+            let code = ProcessInfo.processInfo.environment["TIDBITS_LIVE_CODE"] ?? FirebaseRTDB.newRoomCode()
+            let meta = LiveRoom.Meta(host: host, createdAt: Self.nowMS(), name: event.name,
+                                     venue: event.venue, state: "lobby")
+            try await db.putJSON("\(LiveRoom.path(code))/meta", try JSONEncoder().encode(meta))
+            self.code = code
+            watchTeams(code)
+            watchScores(code)
+            return code
+        } catch {
+            lastError = "Couldn't open a networked room: \(error)"
+            return nil
+        }
+    }
+
+    /// Publish the current question state for players to render.
+    func publish(_ pub: LiveRoom.Pub) async {
+        guard isOpen else { return }
+        if pub.qid != currentQid {          // new question → re-key the answers watch
+            currentQid = pub.qid
+            answers = [:]
+            watchAnswers(code, qid: pub.qid)
+        }
+        guard let json = try? JSONEncoder().encode(pub) else { return }
+        try? await db.putJSON("\(LiveRoom.path(code))/pub", json)
+    }
+
+    func setState(_ state: String) async {
+        guard isOpen else { return }
+        try? await db.patch("\(LiveRoom.path(code))/meta", ["state": state])
+    }
+
+    /// Push a team's authoritative score (host owns scoring / manual override).
+    func setScore(_ uid: String, _ score: Int) async {
+        guard isOpen else { return }
+        try? await db.put("\(LiveRoom.path(code))/scores/\(uid)", max(0, score))
+    }
+
+    /// Tear the room down (host-only delete allowed by the rules).
+    func close() async {
+        streamTasks.forEach { $0.cancel() }; answersTask?.cancel()
+        streamTasks = []; answersTask = nil
+        let code = self.code
+        self.code = ""
+        guard !code.isEmpty else { return }
+        try? await db.delete(LiveRoom.path(code))
+    }
+
+    // MARK: Streams
+
+    private func watchTeams(_ code: String) {
+        streamTasks.append(Task { [weak self, db] in
+            guard let stream = try? await db.stream("\(LiveRoom.path(code))/teams") else { return }
+            do { for try await ev in stream {
+                await self?.applyTeams(ev)
+            } } catch { }
+        })
+    }
+    private func watchScores(_ code: String) {
+        streamTasks.append(Task { [weak self, db] in
+            guard let stream = try? await db.stream("\(LiveRoom.path(code))/scores") else { return }
+            do { for try await ev in stream {
+                await self?.applyScores(ev)
+            } } catch { }
+        })
+    }
+    private func watchAnswers(_ code: String, qid: String) {
+        answersTask?.cancel()
+        answersTask = Task { [weak self, db] in
+            guard let stream = try? await db.stream("\(LiveRoom.path(code))/answers/\(qid)") else { return }
+            do { for try await ev in stream {
+                await self?.applyAnswers(ev, qid: qid)
+            } } catch { }
+        }
+    }
+
+    private func applyTeams(_ ev: FirebaseRTDB.StreamEvent) {
+        Self.merge(ev, into: &teams, as: LiveRoom.Team.self)
+    }
+    private func applyScores(_ ev: FirebaseRTDB.StreamEvent) {
+        Self.merge(ev, into: &scores, as: Int.self)
+    }
+    private func applyAnswers(_ ev: FirebaseRTDB.StreamEvent, qid: String) {
+        guard qid == currentQid else { return }
+        Self.merge(ev, into: &answers, as: LiveRoom.Answer.self)
+    }
+
+    /// Fold an RTDB SSE event into a `[uid: T]` dict. Path "/" replaces the whole
+    /// node; "/uid" upserts (or removes on null) one child.
+    private static func merge<T: Decodable>(_ ev: FirebaseRTDB.StreamEvent, into dict: inout [String: T], as: T.Type) {
+        if ev.path == "/" {
+            dict = [:]
+            if let d = ev.dataJSON, let map = try? JSONDecoder().decode([String: T].self, from: d) { dict = map }
+        } else {
+            let key = String(ev.path.dropFirst())
+            if let d = ev.dataJSON, let v = try? JSONDecoder().decode(T.self, from: d) { dict[key] = v }
+            else { dict.removeValue(forKey: key) }
+        }
+    }
+
+    static func nowMS() -> Int { Int(Date().timeIntervalSince1970 * 1000) }
+}
+#endif

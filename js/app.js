@@ -385,17 +385,40 @@ function bindHome() {
 // ---------------- Create ----------------
 function viewCreate() {
   const sugg = ['Space exploration', 'Ancient Rome', 'Jazz', 'Volcanoes', 'The Olympics', 'Marie Curie'];
+  const saved = getSavedSets();
   return `
     <h1 class="page-title">Create a quiz</h1>
-    <p class="muted">Pick any subject. We'll pull it straight from Wikipedia and build you a quiz.</p>
+    <p class="muted">Pick any subject. We'll pull a varied set — different kinds of questions across categories — from the corpus and Wikipedia.</p>
     <div class="card pad">
       <input id="topic" class="input" placeholder="e.g. The Renaissance" autocomplete="off">
       <button id="gen" class="btn btn-grape btn-full">Generate Quiz</button>
       <div id="create-err" class="error" hidden></div>
     </div>
     <h2 class="section">Need a spark?</h2>
-    <div class="chips wrap">${sugg.map((s) => `<button class="chip" data-sugg="${h(s)}">${h(s)}</button>`).join('')}</div>`;
+    <div class="chips wrap">${sugg.map((s) => `<button class="chip" data-sugg="${h(s)}">${h(s)}</button>`).join('')}</div>
+    ${saved.length ? `<h2 class="section">Your saved sets</h2>
+      <div class="saved-sets">${saved.map((set, i) => `<div class="card saved-set">
+        <button class="saved-play" data-play-set="${i}"><b>${h(set.label)}</b><span class="muted">${set.questions.length} questions · saved ${new Date(set.savedAt).toLocaleDateString()}</span></button>
+        <button class="saved-del icon-btn" data-del-set="${i}" aria-label="Delete set">✕</button>
+      </div>`).join('')}</div>` : ''}`;
 }
+// Build a varied Create set (owner: multiple modes AND categories, not 8
+// near-identical questions). Diversity-capped MCQ from the corpus + a couple of
+// topic-matched OTHER shapes (picture / this-or-that / closest) so the quiz
+// mixes question types. Falls back to live Wikipedia only when the corpus is thin.
+async function buildCreateSet(topic) {
+  const shaped = [];
+  for (const src of [Pictures, ThisOrThat, ClosestCall]) {
+    try { shaped.push(...await src.searchMatch(topic, 1)); } catch { /* source optional */ }
+  }
+  const mcqNeeded = Math.max(4, 8 - shaped.length);
+  let mcq = Corpus.search(topic, mcqNeeded);
+  if (mcq.length < 3) { const gen = await Wikipedia.generate(topic, 'mixed', 8); if (gen.length >= 3) return gen; }
+  const set = [...mcq, ...shaped].slice(0, 8);
+  for (let i = set.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [set[i], set[j]] = [set[j], set[i]]; }
+  return set;
+}
+
 function bindCreate() {
   const run = async () => {
     const topic = $('#topic').value.trim();
@@ -403,12 +426,11 @@ function bindCreate() {
     const err = $('#create-err'); err.hidden = true;
     const btn = $('#gen'); btn.textContent = 'Building your quiz…'; btn.disabled = true;
     try {
-      // Grounded generation: prefer REAL corpus questions on the topic; fall back
-      // to live generation only when the corpus is thin (no hallucination).
-      let qs = Corpus.search(topic, 8);
-      if (qs.length < 4) qs = await Wikipedia.generate(topic, 'mixed', 8);
-      if (qs.length >= 3) startGame('classic', catById('mixed'), { custom: qs, label: topic });
-      else { err.textContent = `Couldn't build a good quiz for “${topic}”. Try a broader or more famous subject.`; err.hidden = false; }
+      const qs = await buildCreateSet(topic);
+      if (qs.length >= 3) {
+        maybeOfferSave(topic, qs);
+        startGame('mix', catById('mixed'), { custom: qs, label: topic });
+      } else { err.textContent = `Couldn't build a good quiz for “${topic}”. Try a broader or more famous subject.`; err.hidden = false; }
     } catch { err.textContent = 'Network trouble reaching Wikipedia. Try again.'; err.hidden = false; }
     btn.textContent = 'Generate Quiz'; btn.disabled = false;
   };
@@ -416,6 +438,27 @@ function bindCreate() {
   $('#topic').addEventListener('keydown', (e) => { if (e.key === 'Enter') run(); });
   app.querySelectorAll('[data-sugg]').forEach((b) =>
     b.addEventListener('click', () => { $('#topic').value = b.dataset.sugg; run(); }));
+  app.querySelectorAll('[data-play-set]').forEach((b) =>
+    b.addEventListener('click', () => {
+      const set = getSavedSets()[+b.dataset.playSet]; if (!set) return;
+      startGame('mix', catById('mixed'), { custom: set.questions, label: set.label });
+    }));
+  app.querySelectorAll('[data-del-set]').forEach((b) =>
+    b.addEventListener('click', () => { deleteSavedSet(+b.dataset.delSet); render(); }));
+}
+
+// ---- Saved question sets (owner; future: share with other players) ----
+function getSavedSets() { try { return JSON.parse(localStorage.getItem('tidbits.savedSets') || '[]'); } catch { return []; } }
+function saveSet(label, questions) {
+  const list = getSavedSets().filter((s) => s.label.toLowerCase() !== label.toLowerCase());
+  list.unshift({ label, questions, savedAt: Date.now() });
+  localStorage.setItem('tidbits.savedSets', JSON.stringify(list.slice(0, 20)));
+}
+function deleteSavedSet(i) { const l = getSavedSets(); l.splice(i, 1); localStorage.setItem('tidbits.savedSets', JSON.stringify(l)); }
+function maybeOfferSave(label, questions) {
+  // Non-blocking: remember the last built set so the player can save it from
+  // the results screen (a Save button is added there).
+  window._lastCreated = { label, questions };
 }
 
 // ---------------- Records ----------------
@@ -1115,10 +1158,17 @@ function renderResults() {
       <div class="card pad grid-card"><div class="emoji">${grid}</div><div class="muted">Spoiler-free — safe to share</div></div>
       ${missed.length ? `<h2 class="section">Tidbits to remember</h2>${missed.map((a) => `<div class="card pad"><b>${h(a.q.prompt)}</b><div class="ans">Answer: ${h(a.q.options[a.q.correctIndex])}</div><p class="muted">${h(a.q.explanation)}</p></div>`).join('')}` : ''}
       <button class="btn btn-blue btn-full" data-share>Share Score</button>
+      ${game._custom ? '<button class="btn btn-full" data-save-set>Save this set</button>' : ''}
       ${game.mode.id === 'daily' ? '' : '<button class="btn btn-primary btn-full" data-again>Play Again</button>'}
       <button class="btn btn-text btn-full" data-done>Done</button>
     </div>`;
   $('[data-share]').addEventListener('click', () => shareResult(s, grid));
+  const saveBtn = $('[data-save-set]');
+  if (saveBtn) saveBtn.addEventListener('click', () => {
+    const label = (game.label || 'My set').trim();
+    saveSet(label, game._custom);
+    saveBtn.textContent = 'Saved ✓'; saveBtn.disabled = true;
+  });
   const again = $('[data-again]');
   if (again) again.addEventListener('click', () => startGame(game.mode.id, game.category, game._custom ? { custom: game._custom, label: game.label } : undefined));
   $('[data-done]').addEventListener('click', quitGame);

@@ -131,14 +131,20 @@ struct CreateQuizView: View {
             }
         }
         Task {
-            // Grounded generation: prefer REAL, already-vetted corpus questions on
-            // the topic (no hallucination, works on every device). Fall back to live
-            // generation only when the corpus is thin for an obscure topic.
-            var result = CorpusDatabase.shared.search(topic: q, limit: 8)
-            if result.count < 4 {
-                result = await QuestionProvider.shared.liveQuestions(
-                    topic: q, category: .named("mixed"), count: 8)
+            // Grounded + VARIED (owner): diversity-capped corpus MCQ plus a couple
+            // of topic-matched OTHER shapes (picture / this-or-that / closest) so
+            // the set mixes question types AND categories, not 8 near-identical
+            // questions. Live Wikipedia only when the corpus is thin.
+            var shaped: [Question] = []
+            for src in [JSONQuestionSource.picture, .thisOrThat, .closestCall] {
+                shaped.append(contentsOf: src.searchMatch(topic: q, limit: 1))
             }
+            var mcq = CorpusDatabase.shared.search(topic: q, limit: max(4, 8 - shaped.count))
+            if mcq.count < 3 {
+                let gen = await QuestionProvider.shared.liveQuestions(topic: q, category: .named("mixed"), count: 8)
+                if gen.count >= 3 { mcq = gen; shaped = [] }
+            }
+            var result = Array((mcq + shaped).shuffled().prefix(8))
             isWorking = false
             if result.count >= 3 {
                 generated = result
@@ -198,7 +204,7 @@ struct CustomGameContainer: View {
             }
         }
         .onAppear {
-            if !started { started = true; game.startCustom(mode: .classic, category: .named("mixed"), questions: questions) }
+            if !started { started = true; game.startCustom(mode: .mix, category: .named("mixed"), questions: questions) }
         }
     }
 
@@ -207,7 +213,7 @@ struct CustomGameContainer: View {
         recorded = true
         RecordsStore.record(game.summary, in: modelContext)
     }
-    private func replay() { recorded = false; game.startCustom(mode: .classic, category: .named("mixed"), questions: questions) }
+    private func replay() { recorded = false; game.startCustom(mode: .mix, category: .named("mixed"), questions: questions) }
     private func close() { game.quit(); dismiss() }
 }
 #endif

@@ -258,15 +258,40 @@ object Corpus {
     fun search(topic: String, limit: Int): List<Question> {
         val tokens = topic.lowercase().split(Regex("[^a-z0-9]+")).filter { it.length >= 3 }
         if (tokens.isEmpty()) return emptyList()
-        return all.mapNotNull { q ->
+        val ranked = all.mapNotNull { q ->
             // Drop questions whose ANSWER is/contains the topic — the player typed it,
             // so that's a giveaway ("Chicago" → answer "Chicago"). Keep ones ABOUT it.
             val answer = q.answerText.lowercase()
             if (tokens.any { answer.contains(it) }) return@mapNotNull null
+            // Diversity (owner): drop the "which continent is X on" template — easy,
+            // repetitive, non-educational — and the trivially-easy tier.
+            if (q.id.startsWith("src:continent:")) return@mapNotNull null
+            if (q.difficulty <= 1) return@mapNotNull null
             val title = q.sourceTitle.lowercase(); val prompt = q.prompt.lowercase()
             val score = tokens.sumOf { (if (title.contains(it)) 2 else 0) + (if (prompt.contains(it)) 1 else 0) }
             if (score > 0) q to score else null
-        }.sortedByDescending { it.second }.take(maxOf(limit * 3, 24)).map { it.first }.shuffled().take(limit)
+        }.sortedByDescending { it.second }.map { it.first }
+        return diversifyByCategory(ranked, limit)
+    }
+
+    /** Round-robin a ranked list across categories, capping any one domain — the
+     *  anti-monopoly rule for Create (owner: too many sports/geography questions). */
+    private fun diversifyByCategory(ranked: List<Question>, limit: Int): List<Question> {
+        val perCat = maxOf(2, Math.ceil(limit / 3.0).toInt())
+        val lanes = LinkedHashMap<String, MutableList<Question>>()
+        for (q in ranked) {
+            val lane = lanes.getOrPut(q.categoryId) { mutableListOf() }
+            if (lane.size < perCat) lane.add(q)
+        }
+        val out = mutableListOf<Question>()
+        var progressed = true
+        while (out.size < limit && progressed) {
+            progressed = false
+            for (lane in lanes.values) {
+                if (lane.isNotEmpty()) { out.add(lane.removeAt(0)); progressed = true; if (out.size >= limit) break }
+            }
+        }
+        return out.shuffled()
     }
 
     fun daily(dayKey: String, count: Int): List<Question> {
@@ -373,6 +398,19 @@ class JsonQuestionSet(private val asset: String) {
     fun pull(categoryId: String, seen: Set<String>, limit: Int): List<Question> {
         val src = if (categoryId == "mixed") all else (byCat[categoryId] ?: emptyList())
         return src.filter { it.id !in seen }.shuffled().take(limit)
+    }
+
+    /** Topic-matched pull (Create shape variety): prompt/title mentions a token,
+     *  answer doesn't give it away. */
+    fun searchMatch(topic: String, limit: Int): List<Question> {
+        val tokens = topic.lowercase().split(Regex("[^a-z0-9]+")).filter { it.length >= 3 }
+        if (tokens.isEmpty()) return emptyList()
+        return all.filter { q ->
+            val ans = q.answerText.lowercase()
+            if (tokens.any { ans.contains(it) }) return@filter false
+            val hay = "${q.prompt} ${q.sourceTitle}".lowercase()
+            tokens.any { hay.contains(it) }
+        }.shuffled().take(limit)
     }
 }
 

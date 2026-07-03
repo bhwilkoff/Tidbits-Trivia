@@ -38,6 +38,20 @@ nonisolated final class JSONQuestionSource: @unchecked Sendable {
         return Array(pool.shuffled().prefix(limit))
     }
 
+    /// Topic-matched pull (Create shape variety): questions whose prompt/title
+    /// mention a topic token but whose answer doesn't give it away.
+    func searchMatch(topic: String, limit: Int) -> [Question] {
+        let tokens = topic.lowercased().split { !$0.isLetter && !$0.isNumber }.map(String.init).filter { $0.count >= 3 }
+        guard !tokens.isEmpty else { return [] }
+        let hits = all.filter { q in
+            let ans = q.correctAnswer.lowercased()
+            if tokens.contains(where: { ans.contains($0) }) { return false }
+            let hay = (q.prompt + " " + q.sourceTitle).lowercased()
+            return tokens.contains { hay.contains($0) }
+        }
+        return Array(hits.shuffled().prefix(limit))
+    }
+
     private static func num(_ v: Any) -> Double? { (v as? NSNumber)?.doubleValue }
 
     private static func parse(_ r: [Any]) -> Question? {

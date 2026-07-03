@@ -154,7 +154,7 @@ fun AppRoot(
                         NightContainer(l, store) { l.end(); live = null; backStack.clear(); backStack.add(Route.Home) }
                     } ?: Box(Modifier.fillMaxSize())
                     is Route.Records -> RecordsScreen(store)
-                    is Route.Create -> CreateScreen { qs, label -> backStack.add(Route.Game(Mode.CLASSIC, Category.byId("mixed"), qs, label)) }
+                    is Route.Create -> CreateScreen { qs, label -> backStack.add(Route.Game(Mode.MIX, Category.byId("mixed"), qs, label)) }
                     is Route.Game -> GameScreen(r, store) { backStack.removeAt(backStack.lastIndex) }
                     is Route.Versus -> VersusScreen(r.botId, store) { backStack.removeAt(backStack.lastIndex) }
                     is Route.Settings -> SettingsScreen(store, dynamicColor, onDynamicColor)
@@ -1048,12 +1048,17 @@ private fun CreateScreen(onPlay: (List<Question>, String) -> Unit) {
         if (t.trim().length < 2 || working) return
         working = true; error = null
         scope.launch {
-            // Grounded generation: prefer REAL corpus questions on the topic; fall
-            // back to live generation only when the corpus is thin (no hallucination).
-            var qs = Corpus.search(t.trim(), 8)
-            if (qs.size < 4) qs = Wikipedia.generate(t.trim(), "mixed", 8)
+            // Grounded + VARIED (owner): diversity-capped corpus MCQ plus a couple
+            // of topic-matched OTHER shapes so the set mixes question types AND
+            // categories. Live Wikipedia only when the corpus is thin.
+            val topicT = t.trim()
+            val shaped = mutableListOf<Question>()
+            for (src in listOf(Pictures, ThisOrThat, ClosestCall)) shaped += src.searchMatch(topicT, 1)
+            var mcq = Corpus.search(topicT, maxOf(4, 8 - shaped.size))
+            if (mcq.size < 3) { val gen = Wikipedia.generate(topicT, "mixed", 8); if (gen.size >= 3) { mcq = gen; shaped.clear() } }
+            val qs = (mcq + shaped).shuffled().take(8)
             working = false
-            if (qs.size >= 3) onPlay(qs, t.trim()) else error = "Couldn't build a good quiz for “${t.trim()}”. Try a broader subject."
+            if (qs.size >= 3) onPlay(qs, topicT) else error = "Couldn't build a good quiz for “$topicT”. Try a broader subject."
         }
     }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {

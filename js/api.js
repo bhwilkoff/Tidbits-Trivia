@@ -48,6 +48,32 @@ async function idbSet(key, val) {
   } catch { /* best-effort cache */ }
 }
 
+// Round-robin a scored, already-ranked list across categories, capping how many
+// come from any one domain — the anti-monopoly rule for Create (owner: too many
+// sports/geography questions when a topic is dense in one category).
+function diversify(ranked, limit) {
+  const perCat = Math.max(2, Math.ceil(limit / 3));   // ~1/3 of the set, min 2
+  const byCat = new Map();
+  for (const q of ranked) {
+    const c = q.categoryID || 'mixed';
+    if (!byCat.has(c)) byCat.set(c, []);
+    if (byCat.get(c).length < perCat) byCat.get(c).push(q);
+  }
+  // Interleave categories (best-ranked first within each) until we hit the limit.
+  const lanes = [...byCat.values()];
+  const out = [];
+  let added = true;
+  while (out.length < limit && added) {
+    added = false;
+    for (const lane of lanes) {
+      if (lane.length) { out.push(lane.shift()); added = true; if (out.length >= limit) break; }
+    }
+  }
+  // Shuffle so the quiz doesn't march category-by-category.
+  for (let i = out.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [out[i], out[j]] = [out[j], out[i]]; }
+  return out;
+}
+
 export const Corpus = {
   questions: [], byCategory: {}, loaded: false,
 
@@ -108,15 +134,20 @@ export const Corpus = {
       // so that's a giveaway ("Chicago" → answer "Chicago"). Keep ones ABOUT it.
       const answer = ((q.options && q.options[q.correctIndex]) || '').toLowerCase();
       if (tokens.some((t) => answer.includes(t))) continue;
+      // Diversity (owner): drop the "which continent is X on" template — easy,
+      // repetitive, and doesn't teach anything — and the trivially-easy tier.
+      if ((q.id || '').startsWith('src:continent:')) continue;
+      if ((q.difficulty || 2) <= 1) continue;
       const title = (q.sourceTitle || '').toLowerCase(), prompt = (q.prompt || '').toLowerCase();
       let s = 0;
       for (const t of tokens) { if (title.includes(t)) s += 2; if (prompt.includes(t)) s += 1; }
       if (s > 0) scored.push([q, s]);
     }
     scored.sort((a, b) => b[1] - a[1]);
-    const pool = scored.slice(0, Math.max(limit * 3, 24)).map((x) => x[0]);
-    for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
-    return pool.slice(0, limit);
+    // Cap per-category so a topic dense in one domain (a city with sports teams
+    // → 8 sports-player questions) can't monopolize the set; round-robin across
+    // categories for a genuinely varied quiz.
+    return diversify(scored.map((x) => x[0]), limit);
   },
 
   get count() { return this.questions.length; },
@@ -188,6 +219,21 @@ function makeJsonSet(filename, parseRow = rowToQuestion) {
       const a = src.filter((q) => !seen.has(q.id)).slice();
       for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
       return a.slice(0, limit);
+    },
+    // Topic-matched pull (Create shape variety): questions whose prompt/title
+    // mention a topic token, answer doesn't give it away.
+    async searchMatch(topic, limit) {
+      await this.load();
+      const tokens = topic.toLowerCase().split(/[^a-z0-9]+/).filter((t) => t.length >= 3);
+      if (!tokens.length) return [];
+      const hits = this.questions.filter((q) => {
+        const ans = ((q.options && q.options[q.correctIndex]) || '').toLowerCase();
+        if (tokens.some((t) => ans.includes(t))) return false;
+        const hay = `${q.prompt} ${q.sourceTitle}`.toLowerCase();
+        return tokens.some((t) => hay.includes(t));
+      });
+      for (let i = hits.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [hits[i], hits[j]] = [hits[j], hits[i]]; }
+      return hits.slice(0, limit);
     },
   };
 }

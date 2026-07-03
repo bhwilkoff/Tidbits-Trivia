@@ -119,14 +119,43 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
                 // something else.
                 let answer = q.correctAnswer.lowercased()
                 if tokens.contains(where: { answer.contains($0) }) { continue }
+                // Diversity (owner): drop the "which continent is X on" template —
+                // easy, repetitive, non-educational — and the trivially-easy tier.
+                if q.id.hasPrefix("src:continent:") { continue }
+                if q.difficulty <= 1 { continue }
                 let title = q.sourceTitle.lowercased(), prompt = q.prompt.lowercased()
                 let score = tokens.reduce(0) { $0 + (title.contains($1) ? 2 : 0) + (prompt.contains($1) ? 1 : 0) }
                 scored.append((q, score))
             }
-            // Keep the best matches, then shuffle that pool so repeated Creates vary.
-            let pool = scored.sorted { $0.1 > $1.1 }.prefix(max(limit * 3, 24)).map { $0.0 }
-            return Array(pool.shuffled().prefix(limit))
+            let ranked = scored.sorted { $0.1 > $1.1 }.map { $0.0 }
+            return Self.diversify(ranked, limit: limit)
         }
+    }
+
+    /// Round-robin a ranked list across categories, capping any one domain — the
+    /// anti-monopoly rule for Create (owner: too many sports/geography questions
+    /// when a topic is dense in one category).
+    static func diversify(_ ranked: [Question], limit: Int) -> [Question] {
+        let perCat = max(2, Int(ceil(Double(limit) / 3)))
+        var lanes: [String: [Question]] = [:]
+        var order: [String] = []
+        for q in ranked {
+            let c = q.categoryID
+            if lanes[c] == nil { lanes[c] = []; order.append(c) }
+            if lanes[c]!.count < perCat { lanes[c]!.append(q) }
+        }
+        var out: [Question] = []
+        var progressed = true
+        while out.count < limit && progressed {
+            progressed = false
+            for c in order {
+                if !(lanes[c]?.isEmpty ?? true) {
+                    out.append(lanes[c]!.removeFirst()); progressed = true
+                    if out.count >= limit { break }
+                }
+            }
+        }
+        return out.shuffled()
     }
 
     /// Fetch specific questions by id, returned in the SAME order as `ids`.

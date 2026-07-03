@@ -362,6 +362,10 @@ body {
   min-height: 60vh; text-align: center; gap: 8px; }
 .round-intro-kicker { letter-spacing: 2px; font-weight: 800; font-size: 12px; }
 .night-preset .round-line { display: block; font-size: 12px; }
+.saved-sets { display: flex; flex-direction: column; gap: 10px; }
+.saved-set { display: flex; align-items: stretch; justify-content: space-between; padding: 0; overflow: hidden; }
+.saved-play { flex: 1; text-align: left; background: none; border: none; font: inherit; cursor: pointer; padding: 14px 16px; display: flex; flex-direction: column; gap: 2px; color: var(--color-ink); }
+.saved-del { padding: 0 16px; background: none; border: none; border-left: 2px solid var(--color-border); font-size: 18px; cursor: pointer; color: var(--color-ink-soft); }
 .daily-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 40px; }
 .tab svg { display: block; }
 .pill svg { vertical-align: -2px; }

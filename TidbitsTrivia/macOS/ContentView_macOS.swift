@@ -22,8 +22,10 @@ struct ContentView_macOS: View {
     @State private var nightLaunch: NightLaunchRequest?
     /// A Play-vs-CPU match — also replaces the window root.
     @State private var versusBot: BotProfile?
-    /// A Tidbits Live event being previewed/hosted — replaces the window root.
+    /// A Tidbits Live event being previewed solo — replaces the window root.
     @State private var livePreview: LiveEvent?
+    /// A Tidbits Live event being HOSTED (the emcee cockpit) — replaces the root.
+    @State private var liveHost: LiveEvent?
     @AppStorage("tidbits.hasOnboarded") private var hasOnboarded = false
 
     var body: some View {
@@ -47,6 +49,9 @@ struct ContentView_macOS: View {
             } else if let livePreview {
                 LivePreviewContainer_macOS(event: livePreview) { self.livePreview = nil }
                     .transition(.opacity)
+            } else if let liveHost {
+                LiveHostContainer_macOS(event: liveHost) { self.liveHost = nil }
+                    .transition(.opacity)
             } else {
                 shell
             }
@@ -56,6 +61,7 @@ struct ContentView_macOS: View {
         .animation(.snappy(duration: 0.2), value: nightLaunch?.id)
         .animation(.snappy(duration: 0.2), value: versusBot?.id)
         .animation(.snappy(duration: 0.2), value: livePreview?.id)
+        .animation(.snappy(duration: 0.2), value: liveHost?.id)
         .onChange(of: store.inbox) { _, _ in handleInbox() }
         .onAppear { handleInbox() }
         .task {
@@ -66,6 +72,13 @@ struct ContentView_macOS: View {
             }
             if versusBot == nil, let vb = DebugHooks.versusBot {
                 versusBot = vb == "house" ? .house(playerAccuracy: 0.6) : (BotProfile.presets.first { $0.id == vb } ?? .regular)
+            }
+            if liveHost == nil, ProcessInfo.processInfo.environment["TIDBITS_LIVE_HOST"] == "1" {
+                var ev = LiveEvent(name: "Friday Pub Quiz")
+                for (i, fmt) in [GameMode.classic, GameMode.oddOneOut].enumerated() {
+                    ev.rounds.append(await LiveEventStore.buildRound(format: fmt, category: .named(i == 0 ? "history" : "science"), count: 5))
+                }
+                liveHost = ev
             }
             if ProcessInfo.processInfo.environment["TIDBITS_TAB"] == "live" {
                 section = .live
@@ -100,7 +113,7 @@ struct ContentView_macOS: View {
                 case .play:    HomeView_macOS(onPlay: start, onNight: { nightLaunch = $0 }, onVersus: { versusBot = $0 })
                 case .records: RecordsView_macOS()
                 case .create:  CreateView_macOS { topic, qs in customGame = CustomLaunch(topic: topic, questions: qs) }
-                case .live:    LiveBuilderView_macOS(onPreview: { livePreview = $0 }, onHost: { livePreview = $0 })
+                case .live:    LiveBuilderView_macOS(onPreview: { livePreview = $0 }, onHost: { liveHost = $0 })
                 }
             }
         }

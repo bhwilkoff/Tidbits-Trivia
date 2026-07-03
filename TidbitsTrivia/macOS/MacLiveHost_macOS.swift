@@ -1,0 +1,227 @@
+#if os(macOS)
+import SwiftUI
+
+// MARK: - Host session (macOS-DESIGN Part A §A3 — the emcee cockpit)
+
+/// One team in a live event. Score is authoritative on the host's Mac.
+struct LiveTeam: Identifiable, Hashable {
+    let id = UUID()
+    var name: String
+    var score: Int = 0
+}
+
+/// The live hosting session: the host drives pacing + reveal, and OWNS the
+/// score (manual override is first-class — the #1 gap across the field, §A3.2).
+/// v1 is paper-style (teams answer on paper, host marks); networked phone join
+/// (#10) layers on top without changing this model.
+@Observable
+@MainActor
+final class LiveHostSession {
+    let event: LiveEvent
+    var teams: [LiveTeam] = []
+    var index = 0
+    var revealed = false
+    var finished = false
+    /// Points a correct answer is worth this round (host-adjustable; pub default 1).
+    var pointsPerCorrect = 1
+
+    init(event: LiveEvent) { self.event = event }
+
+    var questions: [Question] { event.questionStream }
+    var current: Question? { questions.indices.contains(index) ? questions[index] : nil }
+    var roundNumber: Int { (current?.roundIndex ?? 0) + 1 }
+    var roundCount: Int { max(event.rounds.count, 1) }
+    var roundTitle: String {
+        let ri = current?.roundIndex ?? 0
+        return event.rounds.indices.contains(ri) ? event.rounds[ri].title : ""
+    }
+    var questionInRound: (n: Int, of: Int) {
+        let ri = current?.roundIndex ?? 0
+        let inRound = questions.enumerated().filter { $0.element.roundIndex == ri }
+        let pos = (inRound.firstIndex { $0.offset == index } ?? 0) + 1
+        return (pos, inRound.count)
+    }
+
+    func addTeam(_ name: String) {
+        let n = name.trimmingCharacters(in: .whitespaces)
+        guard !n.isEmpty, !teams.contains(where: { $0.name.caseInsensitiveCompare(n) == .orderedSame }) else { return }
+        teams.append(LiveTeam(name: n))
+    }
+    func removeTeam(_ id: LiveTeam.ID) { teams.removeAll { $0.id == id } }
+    /// Manual score adjustment — the referee model (§A3.2). Never below 0.
+    func adjust(_ id: LiveTeam.ID, by delta: Int) {
+        guard let i = teams.firstIndex(where: { $0.id == id }) else { return }
+        teams[i].score = max(0, teams[i].score + delta)
+    }
+    func reveal() { revealed = true }
+    func next() {
+        revealed = false
+        if index + 1 >= questions.count { finished = true } else { index += 1 }
+    }
+    var standings: [LiveTeam] { teams.sorted { $0.score > $1.score } }
+}
+
+// MARK: - Host container + cockpit
+
+struct LiveHostContainer_macOS: View {
+    let event: LiveEvent
+    let onClose: () -> Void
+    @State private var session: LiveHostSession
+
+    init(event: LiveEvent, onClose: @escaping () -> Void) {
+        self.event = event; self.onClose = onClose
+        _session = State(initialValue: LiveHostSession(event: event))
+    }
+    var body: some View { LiveHostView_macOS(session: session, onClose: onClose) }
+}
+
+struct LiveHostView_macOS: View {
+    @Bindable var session: LiveHostSession
+    let onClose: () -> Void
+    @State private var newTeam = ""
+
+    var body: some View {
+        Group {
+            if session.finished { standings }
+            else { cockpit }
+        }
+        .background(Tidbits.Palette.bg)
+    }
+
+    // MARK: Cockpit
+
+    private var cockpit: some View {
+        HStack(spacing: 0) {
+            stage
+            Divider().overlay(Tidbits.Palette.border)
+            scoreboard
+        }
+    }
+
+    private var stage: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            HStack {
+                Button(action: onClose) { Image(systemName: "xmark").font(.system(size: 14, weight: .bold)) }
+                    .buttonStyle(.plain).keyboardShortcut(.cancelAction)
+                Text(session.event.name).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                Spacer()
+                Text("ROUND \(session.roundNumber)/\(session.roundCount) · \(session.roundTitle)")
+                    .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+            }
+            if let q = session.current {
+                let inR = session.questionInRound
+                Text("Question \(inR.n) of \(inR.of)").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                Text(q.prompt).font(.system(size: 30, weight: .bold, design: .rounded))
+                    .foregroundStyle(Tidbits.Palette.ink).fixedSize(horizontal: false, vertical: true)
+                if session.revealed {
+                    HStack(spacing: 8) {
+                        Image(systemName: "checkmark.circle.fill").foregroundStyle(Tidbits.Palette.mint)
+                        Text(q.correctAnswer).font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
+                    }
+                    if !q.explanation.isEmpty {
+                        Text(q.explanation).font(Tidbits.TypeRamp.l4).foregroundStyle(Tidbits.Palette.inkSoft)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                } else {
+                    Text("Read it out. Reveal the answer when the room is ready.")
+                        .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                }
+            }
+            Spacer()
+            HStack(spacing: 12) {
+                if !session.revealed {
+                    Button("Reveal answer") { session.reveal() }
+                        .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.yellow, textColor: Tidbits.Palette.ink))
+                        .keyboardShortcut(.defaultAction)
+                } else {
+                    Button(session.index + 1 >= session.questions.count ? "Finish night" : "Next question") { session.next() }
+                        .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.coral, textColor: .white))
+                        .keyboardShortcut(.defaultAction)
+                }
+                Spacer()
+                Text("\(session.index + 1) / \(session.questions.count)").font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft)
+            }
+        }
+        .padding(28)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+
+    // MARK: Scoreboard (manual scoring — the differentiator)
+
+    private var scoreboard: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                Text("Teams").font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                Spacer()
+                Text("pts/correct").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                Stepper("\(session.pointsPerCorrect)", value: $session.pointsPerCorrect, in: 1...10).labelsHidden()
+            }
+            .padding(12)
+            HStack(spacing: 8) {
+                TextField("Add a team…", text: $newTeam)
+                    .textFieldStyle(.roundedBorder).onSubmit { session.addTeam(newTeam); newTeam = "" }
+                Button("Add") { session.addTeam(newTeam); newTeam = "" }.disabled(newTeam.trimmingCharacters(in: .whitespaces).isEmpty)
+            }
+            .padding(.horizontal, 12).padding(.bottom, 8)
+            Divider().overlay(Tidbits.Palette.border)
+            ScrollView {
+                VStack(spacing: 10) {
+                    if session.teams.isEmpty {
+                        Text("Add the teams in the room. When you reveal an answer, tap ✓ to award points, or ± to correct any score.")
+                            .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft).padding(.top, 20)
+                    }
+                    ForEach(session.standings) { team in teamRow(team) }
+                }
+                .padding(12)
+            }
+        }
+        .frame(width: 320)
+        .background(Tidbits.Palette.bgDeep)
+    }
+
+    private func teamRow(_ team: LiveTeam) -> some View {
+        HStack(spacing: 8) {
+            VStack(alignment: .leading, spacing: 1) {
+                Text(team.name).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink).lineLimit(1)
+                Text("\(team.score)").font(.system(size: 22, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
+            }
+            Spacer()
+            // Award (only meaningful once revealed) + manual override (always).
+            if session.revealed {
+                Button { session.adjust(team.id, by: session.pointsPerCorrect) } label: { Image(systemName: "checkmark") }
+                    .buttonStyle(.borderedProminent).tint(Tidbits.Palette.mint).help("Award \(session.pointsPerCorrect)")
+            }
+            Button { session.adjust(team.id, by: -1) } label: { Image(systemName: "minus") }.buttonStyle(.bordered)
+            Button { session.adjust(team.id, by: 1) } label: { Image(systemName: "plus") }.buttonStyle(.bordered)
+            Menu { Button("Remove team", role: .destructive) { session.removeTeam(team.id) } } label: { Image(systemName: "ellipsis") }
+                .menuStyle(.borderlessButton).frame(width: 20)
+        }
+        .padding(12).chunkyCard()
+    }
+
+    // MARK: Final standings
+
+    private var standings: some View {
+        ScrollView {
+            VStack(spacing: 16) {
+                Text("Final standings").font(.system(size: 34, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink).padding(.top, 24)
+                Text(session.event.name).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.inkSoft)
+                ForEach(Array(session.standings.enumerated()), id: \.element.id) { i, team in
+                    HStack(spacing: 12) {
+                        Text("\(i + 1)").font(.system(size: 22, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft).frame(width: 30)
+                        if i == 0 { Image(systemName: "crown.fill").foregroundStyle(Tidbits.Palette.yellow) }
+                        Text(team.name).font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
+                        Spacer()
+                        Text("\(team.score)").font(.system(size: 26, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
+                    }
+                    .padding(16).frame(maxWidth: .infinity)
+                    .chunkyCard(fill: i == 0 ? Tidbits.Palette.yellow : Tidbits.Palette.surface)
+                }
+                if session.teams.isEmpty { Text("No teams were scored this night.").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft) }
+                Button("Done", action: onClose).buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.coral, textColor: .white)).keyboardShortcut(.cancelAction).padding(.top, 8)
+            }
+            .padding(28).frame(maxWidth: 620).frame(maxWidth: .infinity)
+        }
+    }
+}
+#endif

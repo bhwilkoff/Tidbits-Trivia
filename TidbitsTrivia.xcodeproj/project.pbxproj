@@ -35,6 +35,7 @@
 		476021C7C87B8F571D3D5108 /* difficulty.json in Resources */ = {isa = PBXBuildFile; fileRef = 0C8075B00F30AAE8E925FF05 /* difficulty.json */; };
 		47EC13554A9F7DAAAC0104A3 /* PartyContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F18495176F588DF9E5C7907E /* PartyContainerView.swift */; };
 		4A06D62E81F226D6F37CE02F /* GameKitTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B6C1AB3D2D712041E246473 /* GameKitTransport.swift */; };
+		FBDB000000000000000000B1 /* FirebaseRTDB.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBDB000000000000000000A1 /* FirebaseRTDB.swift */; };
 		4E1DDB93B46A5CC413B608F5 /* NightContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40995246A8957880F31323EB /* NightContainerView.swift */; };
 		4F92081B7F2AFB470A7DC5C2 /* RecordsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C18E4CA3BD148F09E1BE077 /* RecordsView.swift */; };
 		512F6230D9E8F7A314AFF0ED /* RecordsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7633D27702A6874F7D8993DF /* RecordsStore.swift */; };
@@ -132,6 +133,7 @@
 		7A77D01159167F1BE602ABED /* GameContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameContainerView.swift; sourceTree = "<group>"; };
 		7AAEF55F4DD8DEA37D200C32 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		7B6C1AB3D2D712041E246473 /* GameKitTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameKitTransport.swift; sourceTree = "<group>"; };
+		FBDB000000000000000000A1 /* FirebaseRTDB.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseRTDB.swift; sourceTree = "<group>"; };
 		7C55D3DCAE5E46980D666B83 /* GameMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameMode.swift; sourceTree = "<group>"; };
 		7C60A815D0EFF35CF18DAB26 /* ResultsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultsView.swift; sourceTree = "<group>"; };
 		7F619B1D3BB620DD1304475A /* AppStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStore.swift; sourceTree = "<group>"; };
@@ -376,6 +378,7 @@
 			children = (
 				83FF1890FBAD38C220D2C1BE /* BonjourTransport.swift */,
 				7B6C1AB3D2D712041E246473 /* GameKitTransport.swift */,
+				FBDB000000000000000000A1 /* FirebaseRTDB.swift */,
 				2AD18ED3C40BFC78AFD8FB0C /* LiveNight.swift */,
 				A0B1B4D9BA126D3D5E585A00 /* NightClient.swift */,
 				61CF6B570C9884F8DF3645CD /* NightHost.swift */,
@@ -558,6 +561,7 @@
 				2EF467D5E5DB3E3B82354C1D /* GameContainerView.swift in Sources */,
 				A7BDC3D377EC8267B055AAB0 /* GameEngine.swift in Sources */,
 				4A06D62E81F226D6F37CE02F /* GameKitTransport.swift in Sources */,
+				FBDB000000000000000000B1 /* FirebaseRTDB.swift in Sources */,
 				9B22CE4581A58C784D66DDB1 /* GameMode.swift in Sources */,
 				6CF073BFB022FF600B3B9428 /* GamePlayView.swift in Sources */,
 				B726DC9ED39E20DD9B3F5FD1 /* GameSettings.swift in Sources */,

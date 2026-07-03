@@ -45,6 +45,13 @@ enum DebugHooks {
         ProcessInfo.processInfo.environment["TIDBITS_DAILY_ARCHIVE"] == "1"
     }
 
+    /// TIDBITS_MIX=classic,pictureId,closestCall — the modes for a TIDBITS_AUTOPLAY=mix:… launch.
+    static var mixModes: [GameMode]? {
+        guard let raw = ProcessInfo.processInfo.environment["TIDBITS_MIX"] else { return nil }
+        let modes = raw.split(separator: ",").compactMap { GameMode(rawValue: String($0)) }
+        return modes.isEmpty ? nil : modes
+    }
+
     /// TIDBITS_VERSUS=house|rookie|regular|ace starts a vs-CPU match on launch.
     static var versusBot: String? {
         ProcessInfo.processInfo.environment["TIDBITS_VERSUS"]

@@ -119,11 +119,26 @@ final class GameEngine {
     /// The clock budget to DISPLAY for the current question — shape-derived for a
     /// Trivia Night (which mixes shapes), the flat per-mode value otherwise.
     var displayClockBudget: Double {
-        if mode == .barTrivia { return Self.shapeBudget(current) }
+        if mode == .barTrivia || mode == .mix { return Self.shapeBudget(current) }
         return mode.perQuestionSeconds ?? mode.globalClockSeconds ?? 30
     }
 
     // MARK: Lifecycle
+
+    /// Custom Mix: the Customize sheet's multi-select — shapes shuffled together.
+    func startMix(modes: [GameMode], category: TriviaCategory) async {
+        self.mode = .mix
+        self.category = category
+        self.dailyDay = nil
+        phase = .loading
+        triedLoad = true
+        reset()
+        let qs = await QuestionProvider.shared.mixQuestions(modes: modes, category: category,
+                                                            count: GameMode.mix.questionCount)
+        questions = qs
+        guard !qs.isEmpty else { phase = .idle; return }
+        beginQuestion()
+    }
 
     func start(mode: GameMode, category: TriviaCategory, review: [Question] = [], dailyDay: String? = nil) async {
         self.mode = mode
@@ -223,7 +238,7 @@ final class GameEngine {
         questionStart = .now
         // Trivia Night mixes shapes within one run, so the clock comes from the
         // current question's SHAPE, not a single per-mode value.
-        clockBudget = mode == .barTrivia
+        clockBudget = mode == .barTrivia || mode == .mix
             ? Self.shapeBudget(current)
             : (mode.perQuestionSeconds ?? (globalRemaining() ?? 30))
         remaining = globalRemaining() ?? clockBudget

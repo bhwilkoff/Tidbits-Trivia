@@ -52,6 +52,7 @@ export const MODES = {
   ladder: { id: 'ladder', title: 'Ladder', blurb: 'Climb from easy to hard.', perQuestion: 20, count: 10, accent: '#FF5C5C' },
   enumerate: { id: 'enumerate', title: 'Name as Many', blurb: 'How many can you name?', perQuestion: 60, count: 3, accent: '#13B6C9' },
   barTrivia: { id: 'barTrivia', title: 'Trivia Night', blurb: 'Host a night. Every kind of round.', perQuestion: 20, count: 20, accent: '#FF5C5C' },
+  mix: { id: 'mix', title: 'Custom Mix', blurb: 'Your picked modes, shuffled together.', perQuestion: 20, count: 10, accent: '#13B6C9' },
   daily: { id: 'daily', title: 'Daily Tidbit', blurb: 'Everyone’s puzzle. Keep your streak.', perQuestion: 30, count: 7, accent: '#FFC93C' },
 };
 

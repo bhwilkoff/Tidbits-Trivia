@@ -56,7 +56,7 @@ sealed interface Route {
     data object Home : Route
     data object Records : Route
     data object Create : Route
-    data class Game(val mode: Mode, val category: Category, val custom: List<Question>? = null, val label: String? = null, val nightRounds: List<Pair<String, Int>>? = null, val dailyDay: String? = null) : Route
+    data class Game(val mode: Mode, val category: Category, val custom: List<Question>? = null, val label: String? = null, val nightRounds: List<Pair<String, Int>>? = null, val dailyDay: String? = null, val mixModes: List<Mode>? = null) : Route
     data class Versus(val botId: String) : Route
     data object NightSetup : Route
     data object NightJoin : Route
@@ -122,6 +122,7 @@ fun AppRoot(
                     is Route.Home -> HomeScreen(
                         store = store,
                         onPlay = { mode, cat -> backStack.add(Route.Game(mode, cat)) },
+                        onPlayMix = { modes, cat -> backStack.add(Route.Game(Mode.MIX, cat, mixModes = modes)) },
                         onPlayDaily = { day -> backStack.add(Route.Game(Mode.DAILY, Category.byId("mixed"), dailyDay = day)) },
                         onVersus = { id -> backStack.add(Route.Versus(id)) },
                         onNight = { backStack.add(Route.NightSetup) },
@@ -183,6 +184,7 @@ private fun BottomBar(current: Route, onSelect: (Route) -> Unit) {
 private fun HomeScreen(
     store: Store,
     onPlay: (Mode, Category) -> Unit,
+    onPlayMix: (List<Mode>, Category) -> Unit,
     onPlayDaily: (String) -> Unit,
     onVersus: (String) -> Unit,
     onNight: () -> Unit,
@@ -200,6 +202,10 @@ private fun HomeScreen(
     val fade = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
 
     fun play(mode: Mode, cat: Category) { store.rememberPlay(mode, cat); onPlay(mode, cat) }
+    fun playMix(modes: List<Mode>, cat: Category) {
+        if (modes.size == 1) { play(modes[0], cat); return }
+        store.rememberMix(modes, cat); onPlayMix(modes, cat)
+    }
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -211,7 +217,9 @@ private fun HomeScreen(
         }
 
         // Quick Play — ONE action, one target (R-HOME-1a, Decision 036).
-        ChunkyCard(fill = Pops.coral, onClick = { play(qpMode, qpCat) }) {
+        ChunkyCard(fill = Pops.coral, onClick = {
+            if (qpMode == Mode.MIX) playMix(store.lastMixModes(), qpCat) else play(qpMode, qpCat)
+        }) {
             Column(Modifier.padding(20.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Filled.PlayArrow, null, tint = Color.White, modifier = Modifier.size(30.dp))
@@ -287,7 +295,7 @@ private fun HomeScreen(
     if (showNight) NightEntrySheet(onDismiss = { showNight = false },
         onStart = { showNight = false; onNight() }, onJoin = { showNight = false; onJoinNight() })
     if (showCustomize) CustomizeSheet(store = store, initial = store.quickPlay(),
-        onDismiss = { showCustomize = false }, onStart = { m, c -> showCustomize = false; play(m, c) })
+        onDismiss = { showCustomize = false }, onStart = { ms, c -> showCustomize = false; playMix(ms, c) })
     if (showDailyArchive) DailyArchiveSheet(store = store,
         onDismiss = { showDailyArchive = false },
         onPlayDay = { day -> showDailyArchive = false; onPlayDaily(day) })
@@ -377,10 +385,12 @@ private fun NightRow(icon: ImageVector, title: String, sub: String) {
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-private fun CustomizeSheet(store: Store, initial: Pair<Mode, Category>, onDismiss: () -> Unit, onStart: (Mode, Category) -> Unit) {
-    var mode by remember { mutableStateOf(initial.first) }
+private fun CustomizeSheet(store: Store, initial: Pair<Mode, Category>, onDismiss: () -> Unit, onStart: (List<Mode>, Category) -> Unit) {
+    var modes by remember { mutableStateOf(
+        if (initial.first == Mode.MIX) store.lastMixModes().toSet().ifEmpty { setOf(Mode.CLASSIC) }
+        else setOf(initial.first)) }
     var cat by remember { mutableStateOf(initial.second) }
-    var showAll by remember { mutableStateOf(initial.first !in coreModes) }
+    var showAll by remember { mutableStateOf(!coreModes.toSet().containsAll(modes)) }
     var presets by remember { mutableStateOf(store.presets()) }
     var saving by remember { mutableStateOf(false) }
     val fade = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
@@ -392,12 +402,17 @@ private fun CustomizeSheet(store: Store, initial: Pair<Mode, Category>, onDismis
             Text("Mode", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = fade)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 (if (showAll) playableModes else coreModes).forEach { m ->
-                    FilterChip(selected = mode == m, onClick = { mode = m }, label = { Text(m.title) })
+                    // Multi-select: tap toggles; the last selected can't be removed.
+                    FilterChip(selected = m in modes, onClick = {
+                        modes = if (m in modes) { if (modes.size > 1) modes - m else modes } else modes + m
+                    }, label = { Text(m.title) })
                 }
             }
             // Bare mode names ("Stake", "Which First?") don't explain themselves —
-            // the selected mode always shows its one-liner.
-            Text("${mode.title}: ${mode.blurb}", fontSize = 13.sp, color = fade)
+            // one mode shows its blurb; several explain the mix.
+            Text(if (modes.size == 1) modes.first().let { "${it.title}: ${it.blurb}" }
+                 else "Custom Mix: questions drawn from all ${modes.size} selected modes, shuffled together.",
+                fontSize = 13.sp, color = fade)
             TextButton(onClick = { showAll = !showAll }, contentPadding = PaddingValues(0.dp)) {
                 Text(if (showAll) "Show fewer modes" else "Show all modes", color = Pops.blue)
             }
@@ -408,26 +423,35 @@ private fun CustomizeSheet(store: Store, initial: Pair<Mode, Category>, onDismis
             if (presets.isNotEmpty()) {
                 Text("My presets", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = fade)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    presets.forEach { p -> AssistChip(onClick = { mode = p.mode; cat = p.category }, label = { Text(p.name) }) }
+                    presets.forEach { p -> AssistChip(onClick = {
+                    modes = if (p.mode == Mode.MIX) p.modes.toSet().ifEmpty { setOf(Mode.CLASSIC) } else setOf(p.mode)
+                    if (!coreModes.toSet().containsAll(modes)) showAll = true
+                    cat = p.category
+                }, label = { Text(p.name) }) }
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 OutlinedButton(onClick = { saving = true }) { Text("Save preset") }
-                Button(onClick = { onStart(mode, cat) }, modifier = Modifier.weight(1f).height(50.dp),
+                Button(onClick = { onStart(playableModes.filter { it in modes }, cat) }, modifier = Modifier.weight(1f).height(50.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Pops.coral, contentColor = Color.White)) {
-                    Text("Start", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text(if (modes.size > 1) "Start the Mix (${modes.size})" else "Start", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
             }
         }
     }
     if (saving) {
-        var name by remember { mutableStateOf("${cat.name} ${mode.title}") }
+        var name by remember { mutableStateOf(if (modes.size == 1) "${cat.name} ${modes.first().title}" else "${cat.name} Mix") }
         AlertDialog(onDismissRequest = { saving = false },
             title = { Text("Save this combination") },
             text = { OutlinedTextField(value = name, onValueChange = { name = it }, singleLine = true, label = { Text("Name") }) },
             confirmButton = {
                 TextButton(onClick = {
-                    if (name.isNotBlank()) { store.savePreset(GamePreset(name.trim(), mode.name, listOf(cat.id))); presets = store.presets() }
+                    if (name.isNotBlank()) {
+                        val m = if (modes.size == 1) modes.first() else Mode.MIX
+                        store.savePreset(GamePreset(name.trim(), m.name, listOf(cat.id),
+                            modeIds = playableModes.filter { it in modes }.map { it.name }))
+                        presets = store.presets()
+                    }
                     saving = false
                 }) { Text("Save") }
             },
@@ -504,7 +528,7 @@ private fun NightJoinScreen(initialCode: String, initialName: String, onJoin: (S
 private fun GameScreen(route: Route.Game, store: Store, onDone: () -> Unit) {
     val scope = rememberCoroutineScope()
     val haptics = rememberGameHaptics(store)
-    val game = remember { GameState(route.mode, route.category, store, route.custom, route.label, route.nightRounds, dailyDay = route.dailyDay) }
+    val game = remember { GameState(route.mode, route.category, store, route.custom, route.label, route.nightRounds, dailyDay = route.dailyDay, mixModes = route.mixModes) }
     LaunchedEffect(Unit) { game.start() }
     LaunchedEffect(game.index, game.phase) {
         while (game.phase == GamePhase.PLAYING) { delay(100); game.tick() }

@@ -19,6 +19,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable, Codable {
     case ladder      // questions climb easy→hard (F3 derived difficulty)
     case enumerate   // name as many of a set as you can in 60s; tvOS self-marks
     case barTrivia   // Trivia Night: a configurable multi-round "bar trivia" night
+    case mix         // Custom Mix: the Customize sheet multi-select, shuffled together
     case daily       // one fixed daily set, streak-bearing, shareable
 
     var id: String { rawValue }
@@ -56,6 +57,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable, Codable {
         case .ladder:     return "Ladder"
         case .enumerate:  return "Name as Many"
         case .barTrivia:  return "Trivia Night"
+        case .mix:        return "Custom Mix"
         case .daily:      return "Daily Tidbit"
         }
     }
@@ -77,6 +79,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable, Codable {
         case .ladder:     return "Climb from easy to hard."
         case .enumerate:  return "How many can you name?"
         case .barTrivia:  return "Host a night. Every kind of round."
+        case .mix:        return "Your picked modes, shuffled together."
         case .daily:      return "Everyone's puzzle. Keep your streak."
         }
     }
@@ -98,6 +101,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable, Codable {
         case .ladder:     return "chart.line.uptrend.xyaxis"
         case .enumerate:  return "list.bullet.rectangle.fill"
         case .barTrivia:  return "party.popper.fill"
+        case .mix:        return "rectangle.stack.fill"
         case .daily:      return "sun.max.fill"
         }
     }
@@ -119,6 +123,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable, Codable {
         case .ladder:     return Tidbits.Palette.coral
         case .enumerate:  return Tidbits.Palette.teal
         case .barTrivia:  return Tidbits.Palette.coral
+        case .mix:        return Tidbits.Palette.teal
         case .daily:      return Tidbits.Palette.yellow
         }
     }
@@ -141,6 +146,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable, Codable {
         case .ladder:     return 20
         case .enumerate:  return 60    // the whole point: name as many as you can in 60s
         case .barTrivia:  return 20    // nominal — the engine picks a per-round clock by question shape
+        case .mix:        return 20    // nominal — shape-driven clock, same as a night
         case .daily:      return 30
         }
     }
@@ -162,6 +168,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable, Codable {
         case .ladder:     return 10
         case .enumerate:  return 3     // three list puzzles per round, 60s each
         case .barTrivia:  return 20    // nominal — the plan's rounds determine the real count
+        case .mix:        return 10
         case .daily:      return 7
         }
     }

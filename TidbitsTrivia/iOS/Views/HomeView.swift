@@ -56,7 +56,7 @@ struct HomeView: View {
             }
         }
         .fullScreenCover(item: $launch) { req in
-            GameContainerView(mode: req.mode, category: req.category, dailyDay: req.dailyDay)
+            GameContainerView(mode: req.mode, category: req.category, dailyDay: req.dailyDay, mixModes: req.mixModes)
         }
         .sheet(isPresented: $showDailyArchive) {
             DailyArchiveSheet { day in
@@ -111,7 +111,7 @@ struct HomeView: View {
         }
         .task {
             if launch == nil, let ap = DebugHooks.autoplay {
-                start(LaunchRequest(mode: ap.mode, category: ap.category))
+                start(LaunchRequest(mode: ap.mode, category: ap.category, mixModes: DebugHooks.mixModes))
             }
             if DebugHooks.openParty { showParty = true }
             if DebugHooks.openCustomize { showCustomize = true }
@@ -141,7 +141,7 @@ struct HomeView: View {
 
     /// Launch a game and (unless it's the Daily) remember it as the Quick Play default.
     private func start(_ req: LaunchRequest, remember: Bool = true) {
-        if remember { store.rememberSelection(mode: req.mode, category: req.category) }
+        if remember { store.rememberSelection(mode: req.mode, category: req.category, mixModes: req.mixModes) }
         launch = req
     }
 
@@ -321,7 +321,7 @@ private struct CustomizeSheet: View {
     let onDelete: (GamePreset) -> Void
 
     @Environment(\.dismiss) private var dismiss
-    @State private var mode: GameMode
+    @State private var modes: Set<GameMode>
     @State private var category: TriviaCategory
     @State private var showAllModes: Bool
     @State private var saving = false
@@ -329,7 +329,7 @@ private struct CustomizeSheet: View {
 
     private let coreModes: [GameMode] = [.classic, .timeAttack, .survival, .stake]
     private var playableModes: [GameMode] {
-        GameMode.allCases.filter { $0 != .daily && $0 != .barTrivia }
+        GameMode.allCases.filter { $0 != .daily && $0 != .barTrivia && $0 != .mix }
     }
     // 150pt floor: every mode/category name fits ONE line — narrower cells
     // mid-word-wrapped "Survival"/"Geography" (the owner's "text is bad" bug).
@@ -341,9 +341,21 @@ private struct CustomizeSheet: View {
          onDelete: @escaping (GamePreset) -> Void) {
         self.initial = initial; self.presets = presets
         self.onStart = onStart; self.onSave = onSave; self.onDelete = onDelete
-        _mode = State(initialValue: initial.mode)
+        let initialModes: Set<GameMode> = initial.mode == .mix
+            ? Set(initial.mixModes ?? [.classic]) : [initial.mode]
+        _modes = State(initialValue: initialModes)
         _category = State(initialValue: initial.category)
-        _showAllModes = State(initialValue: ![GameMode.classic, .timeAttack, .survival, .stake].contains(initial.mode))
+        _showAllModes = State(initialValue: !initialModes.isSubset(of: [GameMode.classic, .timeAttack, .survival, .stake]))
+    }
+
+    /// The launch this sheet currently describes: one mode plays it straight;
+    /// several become a Custom Mix drawn across all of them.
+    private var request: LaunchRequest {
+        if modes.count == 1, let only = modes.first {
+            return LaunchRequest(mode: only, category: category)
+        }
+        let ordered = playableModes.filter { modes.contains($0) }
+        return LaunchRequest(mode: .mix, category: category, mixModes: ordered)
     }
 
     var body: some View {
@@ -365,8 +377,9 @@ private struct CustomizeSheet: View {
                 }
             }
             .safeAreaInset(edge: .bottom) {
-                Button { onStart(LaunchRequest(mode: mode, category: category)) } label: {
-                    Label("Start", systemImage: "play.fill").frame(maxWidth: .infinity)
+                Button { onStart(request) } label: {
+                    Label(modes.count > 1 ? "Start the Mix (\(modes.count) modes)" : "Start",
+                          systemImage: "play.fill").frame(maxWidth: .infinity)
                 }
                 .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.coral, textColor: .white))
                 .padding(.horizontal, 20).padding(.vertical, 12)
@@ -376,7 +389,11 @@ private struct CustomizeSheet: View {
                 TextField("Name", text: $presetName)
                 Button("Save") {
                     let name = presetName.trimmingCharacters(in: .whitespaces)
-                    if !name.isEmpty { onSave(GamePreset(name: name, mode: mode, categoryIDs: [category.id])) }
+                    let m = modes.count == 1 ? (modes.first ?? .classic) : .mix
+                    if !name.isEmpty {
+                        onSave(GamePreset(name: name, mode: m, categoryIDs: [category.id],
+                                          modeIDs: playableModes.filter { modes.contains($0) }.map(\.rawValue)))
+                    }
                 }
                 Button("Cancel", role: .cancel) {}
             }
@@ -384,19 +401,31 @@ private struct CustomizeSheet: View {
         .presentationDetents([.large])
     }
 
-    private var suggestedName: String { "\(category.name) \(mode.title)" }
+    private var suggestedName: String {
+        modes.count == 1 ? "\(category.name) \(modes.first?.title ?? "")"
+                         : "\(category.name) Mix"
+    }
+
+    private var modeBlurb: String {
+        if modes.count == 1, let m = modes.first { return "\(m.title): \(m.blurb)" }
+        return "Custom Mix: questions drawn from all \(modes.count) selected modes, shuffled together."
+    }
 
     private var modeSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Mode").font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
             LazyVGrid(columns: grid, alignment: .leading, spacing: 10) {
                 ForEach(showAllModes ? playableModes : coreModes) { m in
-                    ModeChip(mode: m, selected: mode == m) { mode = m }
+                    // Multi-select: tap toggles; the last selected can't be removed.
+                    ModeChip(mode: m, selected: modes.contains(m)) {
+                        if modes.contains(m) { if modes.count > 1 { modes.remove(m) } }
+                        else { modes.insert(m) }
+                    }
                 }
             }
             // Bare mode names ("Stake", "Which First?") don't explain
-            // themselves — the selected mode always shows its one-liner.
-            Text("\(mode.title): \(mode.blurb)")
+            // themselves — one mode shows its blurb; several explain the mix.
+            Text(modeBlurb)
                 .font(Tidbits.TypeRamp.l5)
                 .foregroundStyle(Tidbits.Palette.inkSoft)
             Button { withAnimation { showAllModes.toggle() } } label: {
@@ -433,7 +462,14 @@ private struct CustomizeSheet: View {
             Text("My presets").font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
             LazyVGrid(columns: grid, alignment: .leading, spacing: 10) {
                 ForEach(presets) { p in
-                    Button { mode = p.mode; category = .named(p.primaryCategoryID) } label: {
+                    Button {
+                        if p.mode == .mix, let ids = p.modeIDs {
+                            modes = Set(ids.compactMap(GameMode.init(rawValue:)))
+                            if modes.isEmpty { modes = [.classic] }
+                            showAllModes = true
+                        } else { modes = [p.mode] }
+                        category = .named(p.primaryCategoryID)
+                    } label: {
                         Text(p.name)
                             .font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
                             .lineLimit(1).minimumScaleFactor(0.8)

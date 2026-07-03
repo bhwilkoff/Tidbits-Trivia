@@ -100,6 +100,19 @@ function rememberPlay(mode, catId) {
   localStorage.setItem('tidbits.lastCat', catId);
 }
 function hasQuickPlayHistory() { return !!localStorage.getItem('tidbits.lastMode'); }
+// Custom Mix memory — so Quick Play can replay the last multi-select.
+function rememberMix(modes, catId) {
+  rememberPlay('mix', catId);
+  localStorage.setItem('tidbits.mixModes', modes.join(','));
+}
+function lastMixModes() {
+  return (localStorage.getItem('tidbits.mixModes') || '').split(',').filter((m) => MODES[m] && m !== 'mix');
+}
+function startMixOrSingle(modes, catId) {
+  if (modes.length === 1) { rememberPlay(modes[0], catId); startGame(modes[0], catById(catId)); return; }
+  rememberMix(modes, catId);
+  startGame('mix', catById(catId), { mixModes: modes });
+}
 function getPresets() { try { return JSON.parse(localStorage.getItem('tidbits.presets') || '[]'); } catch { return []; } }
 function savePreset(p) {
   const l = getPresets().filter((x) => x.name.toLowerCase() !== p.name.toLowerCase());
@@ -254,18 +267,29 @@ function appsPromo() {
     </section>`;
 }
 
-let custMode = 'classic';
+let custModes = ['classic'];
 let custCat = 'mixed';
 let custShowAll = false;
 
 function renderCustModes() {
   const list = custShowAll ? ALL_MODES : CORE_MODES;
   const box = $('#cust-modes');
-  box.innerHTML = list.map((m) => `<button type="button" class="chip${m === custMode ? ' on' : ''}" data-cmode="${m}">${h(MODES[m].title)}</button>`).join('');
-  box.querySelectorAll('[data-cmode]').forEach((b) => b.addEventListener('click', () => { custMode = b.dataset.cmode; renderCustModes(); }));
+  box.innerHTML = list.map((m) => `<button type="button" class="chip${custModes.includes(m) ? ' on' : ''}" data-cmode="${m}">${h(MODES[m].title)}</button>`).join('');
+  // Multi-select: tap toggles; the last selected can't be removed.
+  box.querySelectorAll('[data-cmode]').forEach((b) => b.addEventListener('click', () => {
+    const m = b.dataset.cmode;
+    if (custModes.includes(m)) { if (custModes.length > 1) custModes = custModes.filter((x) => x !== m); }
+    else custModes = ALL_MODES.filter((x) => custModes.includes(x) || x === m);
+    renderCustModes();
+  }));
   const more = $('[data-more-modes]'); if (more) more.textContent = custShowAll ? 'Show fewer modes' : 'Show all modes';
-  // Bare mode names ("Stake", "Which First?") don't explain themselves.
-  const blurb = $('#cust-blurb'); if (blurb) blurb.textContent = `${MODES[custMode].title}: ${MODES[custMode].blurb}`;
+  // One mode shows its blurb; several explain the mix.
+  const blurb = $('#cust-blurb');
+  if (blurb) blurb.textContent = custModes.length === 1
+    ? `${MODES[custModes[0]].title}: ${MODES[custModes[0]].blurb}`
+    : `Custom Mix: questions drawn from all ${custModes.length} selected modes, shuffled together.`;
+  const startBtn = $('[data-cust-start]');
+  if (startBtn) startBtn.textContent = custModes.length > 1 ? `Start the Mix (${custModes.length})` : 'Start';
 }
 function markCustCat() { $('#cust-cats').querySelectorAll('[data-ccat]').forEach((c) => c.classList.toggle('on', c.dataset.ccat === custCat)); }
 function renderCustPresets() {
@@ -274,7 +298,10 @@ function renderCustPresets() {
   el.innerHTML = ps.length ? `<h3 class="section">My presets</h3><div class="chips">${ps.map((p, i) => `<button type="button" class="chip" data-preset-idx="${i}">${h(p.name)}</button>`).join('')}</div>` : '';
   el.querySelectorAll('[data-preset-idx]').forEach((b) => b.addEventListener('click', () => {
     const p = getPresets()[+b.dataset.presetIdx]; if (!p) return;
-    custMode = p.mode; custCat = (p.categoryIds && p.categoryIds[0]) || 'mixed';
+    custModes = p.mode === 'mix' && p.modeIds && p.modeIds.length ? p.modeIds.filter((m) => MODES[m]) : [p.mode];
+    if (!custModes.length) custModes = ['classic'];
+    if (!custModes.every((m) => CORE_MODES.includes(m))) custShowAll = true;
+    custCat = (p.categoryIds && p.categoryIds[0]) || 'mixed';
     renderCustModes(); markCustCat();
   }));
 }
@@ -282,7 +309,13 @@ function renderCustPresets() {
 function bindHome() {
   // Quick Play — ONE action, one target (R-HOME-1a); Surprise is its own button.
   $('[data-quickplay]').addEventListener('click', () => {
-    const qp = quickPlayTarget(); rememberPlay(qp.mode, qp.cat); startGame(qp.mode, catById(qp.cat));
+    const qp = quickPlayTarget();
+    if (qp.mode === 'mix') {
+      const modes = lastMixModes();
+      if (modes.length >= 2) { startMixOrSingle(modes, qp.cat); return; }
+      startGame('classic', catById(qp.cat)); return;
+    }
+    rememberPlay(qp.mode, qp.cat); startGame(qp.mode, catById(qp.cat));
   });
   $('[data-surprise]').addEventListener('click', () => {
     const m = ALL_MODES[Math.floor(Math.random() * ALL_MODES.length)];
@@ -328,16 +361,23 @@ function bindHome() {
   // Customize dialog (mode + category + presets, one Start).
   const cust = $('#customize-dlg');
   const qp = quickPlayTarget();
-  custMode = qp.mode; custCat = qp.cat; custShowAll = !CORE_MODES.includes(custMode);
+  custModes = qp.mode === 'mix' ? (lastMixModes().length ? lastMixModes() : ['classic']) : [qp.mode];
+  custCat = qp.cat; custShowAll = !custModes.every((m) => CORE_MODES.includes(m));
   renderCustModes(); renderCustPresets(); markCustCat();
   $('[data-customize]').addEventListener('click', () => { renderCustModes(); renderCustPresets(); markCustCat(); cust.showModal(); });
   $('[data-more-modes]').addEventListener('click', () => { custShowAll = !custShowAll; renderCustModes(); });
   $('#cust-cats').querySelectorAll('[data-ccat]').forEach((b) => b.addEventListener('click', () => { custCat = b.dataset.ccat; markCustCat(); }));
-  $('[data-cust-start]').addEventListener('click', () => { cust.close(); rememberPlay(custMode, custCat); startGame(custMode, catById(custCat)); });
+  $('[data-cust-start]').addEventListener('click', () => { cust.close(); startMixOrSingle(custModes, custCat); });
   $('[data-cust-save]').addEventListener('click', () => {
-    const def = `${(catById(custCat) || { name: '' }).name} ${MODES[custMode].title}`;
+    const def = custModes.length === 1
+      ? `${(catById(custCat) || { name: '' }).name} ${MODES[custModes[0]].title}`
+      : `${(catById(custCat) || { name: '' }).name} Mix`;
     const name = prompt('Name this preset', def);
-    if (name && name.trim()) { savePreset({ name: name.trim(), mode: custMode, categoryIds: [custCat] }); renderCustPresets(); }
+    if (name && name.trim()) {
+      savePreset({ name: name.trim(), mode: custModes.length === 1 ? custModes[0] : 'mix',
+        categoryIds: [custCat], modeIds: custModes });
+      renderCustPresets();
+    }
   });
 }
 
@@ -452,6 +492,7 @@ class Game {
     this.dailyDay = opts.dailyDay || null;   // archive plays of a past Daily (R-DAILY-1)
     // Play vs CPU (Decision 038): a bot resolving the same questions.
     this.versus = opts.versusBot ? new VsMatch([botById(opts.versusBot, recentAccuracy())]) : null;
+    this.mixModes = opts.mixModes || null;   // Custom Mix: multi-select Customize
     this.questions = []; this.index = 0; this.score = 0; this.streak = 0; this.maxStreak = 0;
     this.answered = []; this.chosen = null; this.phase = 'loading';
     this.remaining = 0; this.timer = null; this.qStart = 0; this.globalDeadline = null;
@@ -469,6 +510,7 @@ class Game {
     if (this._custom) qs = this._custom;
     else if (this.mode.id === 'barTrivia') qs = await this._loadNight();
     else if (this.mode.id === 'daily') qs = Corpus.daily(this.dailyDay || dayKey(), 7);
+    else if (this.mode.id === 'mix') qs = this._loadMix();
     else if (this.mode.id === 'pictureId') {
       await Pictures.load();
       qs = Pictures.pull(this.category.id, Store._seen, this.mode.count);
@@ -551,6 +593,21 @@ class Game {
     }
     return all;
   }
+  // Custom Mix: pull from EVERY selected mode, shuffle together (no rounds).
+  async _loadMix() {
+    const modes = this.mixModes && this.mixModes.length ? this.mixModes : ['classic'];
+    const per = Math.max(2, Math.ceil(this.mode.count / modes.length) + 1);
+    const seen = new Set(Store._seen);
+    const pool = [];
+    for (const m of modes) {
+      const qs = await this._sourceType(m, per, seen);
+      for (const q of qs) { q.roundIndex = null; pool.push(q); seen.add(q.id); }
+    }
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    return pool.slice(0, this.mode.count);
+  }
   // Source `count` questions of one TYPE — same loaders the standard game uses.
   async _sourceType(kind, count, seen) {
     switch (kind) {
@@ -608,7 +665,7 @@ class Game {
     if (cur && cur.accepted) this.typedText = '';
     if (cur && cur.enumerate) { this.enumFilled = new Set(); this.enumNamed = []; this.enumLastHit = false; this.typedText = ''; }
     this.budget = this._globalRemaining()
-      ?? (this.mode.id === 'barTrivia' ? NIGHT.shapeBudget(cur) : this.mode.perQuestion)
+      ?? (this.mode.id === 'barTrivia' || this.mode.id === 'mix' ? NIGHT.shapeBudget(cur) : this.mode.perQuestion)
       ?? 30;
     this.remaining = this.budget;
     clearInterval(this.timer);

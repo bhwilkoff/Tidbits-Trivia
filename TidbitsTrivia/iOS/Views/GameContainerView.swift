@@ -11,6 +11,8 @@ struct GameContainerView: View {
     let category: TriviaCategory
     /// Archive plays of a past Daily pass their day key (R-DAILY-1).
     var dailyDay: String? = nil
+    /// Custom Mix: the modes behind a multi-select Customize launch.
+    var mixModes: [GameMode]? = nil
 
     @Environment(AppStore.self) private var store
     @Environment(\.dismiss) private var dismiss
@@ -39,7 +41,9 @@ struct GameContainerView: View {
             }
         }
         .task {
-            if game.phase == .idle {
+            if game.phase == .idle, mode == .mix {
+                await game.startMix(modes: mixModes ?? [.classic], category: category)
+            } else if game.phase == .idle {
                 // Weave in spaced-review questions (skip Daily — it's fair/fixed).
                 // In a single-category game, only re-ask misses from THAT category —
                 // otherwise a missed Film & TV question surfaces in an Arts & Lit round.
@@ -82,7 +86,8 @@ struct GameContainerView: View {
 
     private func replay() {
         recorded = false
-        Task { await game.start(mode: mode, category: category) }
+        if mode == .mix { Task { await game.startMix(modes: mixModes ?? [.classic], category: category) } }
+        else { Task { await game.start(mode: mode, category: category) } }
     }
 
     private func close() {

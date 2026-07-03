@@ -38,15 +38,29 @@ final class AppStore {
     }
 
     /// Record what the player just launched, so Quick Play mirrors their groove.
-    func rememberSelection(mode: GameMode, category: TriviaCategory) {
+    func rememberSelection(mode: GameMode, category: TriviaCategory, mixModes: [GameMode]? = nil) {
         guard mode != .daily else { return }   // the Daily is a separate habit
         lastPlayedModeRaw = mode.rawValue
         lastPlayedCategoryID = category.id
+        if mode == .mix, let mixModes {
+            UserDefaults.standard.set(mixModes.map(\.rawValue), forKey: "tidbits.lastMixModes")
+        }
+    }
+
+    /// The modes behind the last Custom Mix (so Quick Play can replay it).
+    var lastMixModes: [GameMode] {
+        (UserDefaults.standard.stringArray(forKey: "tidbits.lastMixModes") ?? [])
+            .compactMap(GameMode.init(rawValue:))
     }
 
     /// The Quick Play target: last-played if known, else the friendly default.
     var quickPlay: LaunchRequest {
         if let raw = lastPlayedModeRaw, let mode = GameMode(rawValue: raw), let cid = lastPlayedCategoryID {
+            if mode == .mix {
+                let modes = lastMixModes
+                guard modes.count >= 2 else { return LaunchRequest(mode: .classic, category: .named(cid)) }
+                return LaunchRequest(mode: .mix, category: .named(cid), mixModes: modes)
+            }
             return LaunchRequest(mode: mode, category: .named(cid))
         }
         return LaunchRequest(mode: .classic, category: .named("mixed"))
@@ -56,7 +70,7 @@ final class AppStore {
     /// Serendipity — opt-in, never the default (a random default reads as "the
     /// app doesn't know what I want").
     func surpriseMe() -> LaunchRequest {
-        let modes = GameMode.allCases.filter { $0 != .daily && $0 != .barTrivia }
+        let modes = GameMode.allCases.filter { $0 != .daily && $0 != .barTrivia && $0 != .mix }
         return LaunchRequest(mode: modes.randomElement() ?? .classic,
                              category: TriviaCategory.all.randomElement() ?? .named("mixed"))
     }
@@ -87,6 +101,8 @@ nonisolated struct GamePreset: Identifiable, Codable, Sendable, Hashable {
     var name: String
     var mode: GameMode
     var categoryIDs: [String]
+    /// For `.mix` presets: the modes behind the mix (additive; nil for others).
+    var modeIDs: [String]? = nil
     var primaryCategoryID: String { categoryIDs.first ?? "mixed" }
 }
 
@@ -103,7 +119,9 @@ nonisolated struct LaunchRequest: Identifiable, Sendable {
     let category: TriviaCategory
     /// Set only for archive plays of a past Daily (R-DAILY-1).
     var dailyDay: String? = nil
-    var id: String { "\(mode.rawValue)-\(category.id)-\(dailyDay ?? "")" }
+    /// Set only for a Custom Mix (multi-select Customize) — the modes to draw from.
+    var mixModes: [GameMode]? = nil
+    var id: String { "\(mode.rawValue)-\(category.id)-\(dailyDay ?? "")-\(mixModes?.map(\.rawValue).joined(separator: "+") ?? "")" }
 }
 
 /// A request to launch a configured Trivia Night — drives a `fullScreenCover(item:)`

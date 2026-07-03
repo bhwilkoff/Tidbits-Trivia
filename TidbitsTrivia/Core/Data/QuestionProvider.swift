@@ -173,6 +173,24 @@ final class QuestionProvider {
         }
     }
 
+    /// Custom Mix (multi-select Customize): pull from EVERY selected mode and
+    /// shuffle them together — one game, many shapes, no rounds. The engine's
+    /// shape-driven clock/guards (built for Trivia Night) render each question
+    /// by its own shape, so this is a pure sourcing concern.
+    func mixQuestions(modes: [GameMode], category: TriviaCategory, count: Int) async -> [Question] {
+        guard !modes.isEmpty else { return [] }
+        let perMode = max(2, Int((Double(count) / Double(modes.count)).rounded(.up)) + 1)
+        var pool: [Question] = []
+        for mode in modes {
+            let qs = await questions(mode: mode, category: category)
+            pool.append(contentsOf: qs.prefix(perMode).map { q in
+                var q = q; q.roundIndex = nil; return q   // no round banners in a mix
+            })
+        }
+        markSeen(pool.map(\.id))
+        return Array(pool.shuffled().prefix(count))
+    }
+
     /// The Daily puzzle: deterministic for the calendar day so every
     /// player gets the same 7 questions (shareable result, fair ladder).
     /// `day` defaults to today; the Previous Tidbits archive (R-DAILY-1)

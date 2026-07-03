@@ -30,6 +30,8 @@ class GameState(
     val hostPaced: Boolean = false,
     /** Archive plays of a past Daily pass their day key (R-DAILY-1). */
     private val dailyDay: String? = null,
+    /** Custom Mix: the modes behind a multi-select Customize launch. */
+    private val mixModes: List<Mode>? = null,
 ) {
     /** Fired when this device locks an answer (networked night → report to host). */
     var onLocalAnswer: ((score: Int, correct: Boolean) -> Unit)? = null
@@ -97,6 +99,14 @@ class GameState(
         val qs = when {
             custom != null -> custom
             mode == Mode.BAR_TRIVIA -> loadNight()
+            // Custom Mix: pull from EVERY selected mode, shuffle together — the
+            // shape-driven clock/guards (built for the night) render each shape.
+            mode == Mode.MIX -> {
+                val modes = mixModes?.ifEmpty { null } ?: listOf(Mode.CLASSIC)
+                val per = maxOf(2, (Mode.MIX.count + modes.size - 1) / modes.size + 1)
+                modes.flatMap { m -> sourceFor(m, per) }.distinctBy { it.id }
+                    .shuffled().take(Mode.MIX.count)
+            }
             mode == Mode.DAILY -> Corpus.daily(dailyDay ?: dayKey(), 7)
             mode == Mode.PICTURE_ID -> Pictures.pull(category.id, store.seenSet, mode.count)
             mode == Mode.THIS_OR_THAT -> ThisOrThat.pull(category.id, store.seenSet, mode.count)
@@ -115,10 +125,24 @@ class GameState(
             else -> loadStandard()
         }
         questions = if (mode.count == 99 || mode == Mode.BAR_TRIVIA) qs else qs.take(mode.count)
+        // (MIX already built to exactly its count above.)
         store.markSeen(questions.map { it.id })
         if (questions.isEmpty()) { phase = GamePhase.ERROR; return }
         if (mode.globalClock != null) globalDeadline = now() + mode.globalClock * 1000L
         begin()
+    }
+
+    /** One mode's questions, the same way start() sources each mode (for MIX). */
+    private fun sourceFor(m: Mode, need: Int): List<Question> = when (m) {
+        Mode.PICTURE_ID -> Pictures.pull(category.id, store.seenSet, need)
+        Mode.THIS_OR_THAT -> ThisOrThat.pull(category.id, store.seenSet, need)
+        Mode.CLOSEST_CALL -> ClosestCall.pull(category.id, store.seenSet, need)
+        Mode.ORDERING -> OrderingSet.pull(category.id, store.seenSet, need)
+        Mode.MATCHING -> MatchingSet.pull(category.id, store.seenSet, need)
+        Mode.TYPE_ANSWER -> TypeAnswerSet.pull(category.id, store.seenSet, need)
+        Mode.ODD_ONE_OUT -> OddOneOutSet.pull("mixed", store.seenSet, need)
+        Mode.ENUMERATE -> EnumerateSet.pull("mixed", emptySet(), need)
+        else -> Corpus.pull(category.id, store.seenSet, need)
     }
 
     suspend fun restart() = start()
@@ -236,7 +260,7 @@ class GameState(
         phase = GamePhase.PLAYING
         qStart = now()
         budget = globalRemaining()
-            ?: if (mode == Mode.BAR_TRIVIA) Night.shapeBudget(current) else (mode.perQuestion?.toDouble() ?: 30.0)
+            ?: if (mode == Mode.BAR_TRIVIA || mode == Mode.MIX) Night.shapeBudget(current) else (mode.perQuestion?.toDouble() ?: 30.0)
         remaining = budget
     }
 

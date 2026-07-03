@@ -13,15 +13,18 @@ import kotlinx.serialization.json.Json
  * presets are a power-user affordance. See docs/HOME-REDESIGN-PROPOSAL.md.
  */
 @Serializable
-data class GamePreset(val name: String, val modeName: String, val categoryIds: List<String>) {
+data class GamePreset(val name: String, val modeName: String, val categoryIds: List<String>,
+                      val modeIds: List<String>? = null) {
     val mode: Mode get() = runCatching { Mode.valueOf(modeName) }.getOrNull() ?: Mode.CLASSIC
     val category: Category get() = Category.byId(categoryIds.firstOrNull() ?: "mixed")
+    /** For MIX presets: the modes behind the mix. */
+    val modes: List<Mode> get() = (modeIds ?: emptyList()).mapNotNull { runCatching { Mode.valueOf(it) }.getOrNull() }
 }
 
 private val presetJson = Json { ignoreUnknownKeys = true }
 
 /** Everything a Quick Play / Customize game can be — the Daily and networked night are separate. */
-val playableModes: List<Mode> = Mode.entries.filter { it != Mode.DAILY && it != Mode.BAR_TRIVIA }
+val playableModes: List<Mode> = Mode.entries.filter { it != Mode.DAILY && it != Mode.BAR_TRIVIA && it != Mode.MIX }
 /** The four shown first in the Customize sheet; the rest live under "More modes". */
 val coreModes: List<Mode> = listOf(Mode.CLASSIC, Mode.TIME_ATTACK, Mode.SURVIVAL, Mode.STAKE)
 
@@ -33,6 +36,14 @@ fun Store.rememberPlay(mode: Mode, category: Category) {
     if (mode != Mode.DAILY) rememberSelection(mode.name, category.id)
 }
 fun Store.surprise(): Pair<Mode, Category> = playableModes.random() to Category.all.random()
+
+/** Custom Mix memory — so Quick Play can replay the last multi-select. */
+fun Store.rememberMix(modes: List<Mode>, category: Category) {
+    rememberSelection(Mode.MIX.name, category.id)
+    saveMixModes(modes.joinToString(",") { it.name })
+}
+fun Store.lastMixModes(): List<Mode> =
+    (mixModesCsv() ?: "").split(",").mapNotNull { runCatching { Mode.valueOf(it) }.getOrNull() }
 
 fun Store.presets(): List<GamePreset> =
     runCatching { presetJson.decodeFromString<List<GamePreset>>(presetsJson()) }.getOrDefault(emptyList())

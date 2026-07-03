@@ -117,6 +117,7 @@ enum class Mode(val title: String, val blurb: String, val perQuestion: Int?, val
     LADDER("Ladder", "Climb from easy to hard.", 20, null, 10),
     ENUMERATE("Name as Many", "How many can you name?", 60, null, 3),
     BAR_TRIVIA("Trivia Night", "Host a night. Every kind of round.", 20, null, 20),
+    MIX("Custom Mix", "Your picked modes, shuffled together.", 20, null, 10),
     DAILY("Daily Tidbit", "Everyone's puzzle. Keep your streak.", 30, null, 7),
 }
 
@@ -890,6 +891,9 @@ class Store(context: Context) {
     fun hasQuickPlayHistory(): Boolean = prefs.getString("lastMode", null) != null
     fun rememberSelection(modeName: String, catId: String) =
         prefs.edit().putString("lastMode", modeName).putString("lastCat", catId).apply()
+    fun mixModesCsv(): String? = prefs.getString("mix_modes", null)
+    fun saveMixModes(csv: String) = prefs.edit().putString("mix_modes", csv).apply()
+
     fun presetsJson(): String = prefs.getString("presets", "[]") ?: "[]"
     fun savePresetsJson(json: String) = prefs.edit().putString("presets", json).apply()
 

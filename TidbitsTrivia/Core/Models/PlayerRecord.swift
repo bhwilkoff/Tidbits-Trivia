@@ -13,8 +13,14 @@ final class GameRecord {
     var total: Int
     var maxStreak: Int
     var date: Date
+    /// Per-question detail for this game, JSON-encoded (`[AnswerDetail]`). Optional
+    /// so the SwiftData migration is automatic and pre-existing records (from
+    /// before drill-ins shipped) just have no detail to expand. Powers the
+    /// game-history recap + domain/best drill-ins (owner: interactive Records).
+    var answersData: Data?
 
-    init(mode: GameMode, categoryID: String, score: Int, correct: Int, total: Int, maxStreak: Int, date: Date = .now) {
+    init(mode: GameMode, categoryID: String, score: Int, correct: Int, total: Int, maxStreak: Int,
+         answers: [AnswerDetail] = [], date: Date = .now) {
         self.id = UUID()
         self.modeRaw = mode.rawValue
         self.categoryID = categoryID
@@ -23,10 +29,27 @@ final class GameRecord {
         self.total = total
         self.maxStreak = maxStreak
         self.date = date
+        self.answersData = answers.isEmpty ? nil : try? JSONEncoder().encode(answers)
     }
 
     var mode: GameMode { GameMode(rawValue: modeRaw) ?? .classic }
     var accuracy: Double { total == 0 ? 0 : Double(correct) / Double(total) }
+    var answers: [AnswerDetail] {
+        guard let answersData else { return [] }
+        return (try? JSONDecoder().decode([AnswerDetail].self, from: answersData)) ?? []
+    }
+}
+
+/// One question's outcome inside a completed game — the drill-in unit (owner:
+/// "drill into your domains and see the questions… you got right or wrong").
+/// Spoiler-safe to persist (it's the player's own history).
+nonisolated struct AnswerDetail: Codable, Hashable, Identifiable {
+    let qid: String
+    let prompt: String
+    let categoryID: String
+    let correct: Bool
+    let answer: String        // the correct answer (the thing to remember)
+    var id: String { qid }
 }
 
 /// A question the player got wrong, kept so the engine can re-ask it

@@ -52,11 +52,19 @@ struct ResultsView: View {
         }
     }
 
-    /// Spoiler-free Wordle-style grid — the shareable retention loop.
+    /// Spoiler-free run — answer dots (owner: more compelling than red/green
+    /// squares). Circles read as "answers"; skips are distinct from misses.
     private var emojiGrid: String {
         summary.answered.map { a in
-            a.chosenIndex == nil ? "⬛" : (a.isCorrect ? "🟩" : "🟥")
+            a.chosenIndex == nil ? "⚫️" : (a.isCorrect ? "🟢" : "🔴")
         }.joined()
+    }
+
+    /// A proportional accuracy meter for the share — a visual the eye reads
+    /// instantly, unlike a bare percentage.
+    private var accuracyMeter: String {
+        let filled = Int((summary.accuracy * 7).rounded())
+        return String(repeating: "▰", count: filled) + String(repeating: "▱", count: 7 - filled)
     }
 
     private var gridCard: some View {
@@ -131,8 +139,9 @@ struct ResultsView: View {
 
     private var shareText: String {
         let pct = Int(summary.accuracy * 100)
-        let header = summary.mode == .daily ? "🧠 Tidbits Daily — \(QuestionProvider.dayKey())" : "🧠 Tidbits Trivia — \(summary.mode.title)"
-        return "\(header)\n\(emojiGrid)\n\(summary.correct)/\(summary.total) right · \(summary.score) pts · \(pct)%\nTrivia from all of Wikipedia. Play at https://tidbitstrivia.com"
+        let header = summary.mode == .daily ? "🧠 Tidbits Daily — \(QuestionProvider.dayKey())" : "🧠 Tidbits — \(summary.mode.title)"
+        let streak = summary.maxStreak >= 3 ? "\n🔥 Best run \(summary.maxStreak)" : ""
+        return "\(header)\n\(summary.score) pts · \(summary.correct)/\(summary.total)\n\(accuracyMeter) \(pct)%\n\(emojiGrid)\(streak)\nPlay at https://tidbitstrivia.com"
     }
 }
 

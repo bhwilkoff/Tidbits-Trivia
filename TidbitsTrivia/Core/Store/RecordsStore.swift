@@ -12,10 +12,15 @@ enum RecordsStore {
         let priorBest = bestScore(mode: summary.mode, categoryID: summary.category.id, in: context)
         let isNewBest = summary.score > priorBest
 
+        let details = summary.answered.map { a in
+            AnswerDetail(qid: a.question.id, prompt: a.question.prompt,
+                         categoryID: a.question.categoryID, correct: a.isCorrect,
+                         answer: a.question.correctAnswer)
+        }
         let rec = GameRecord(
             mode: summary.mode, categoryID: summary.category.id,
             score: summary.score, correct: summary.correct, total: summary.total,
-            maxStreak: summary.maxStreak)
+            maxStreak: summary.maxStreak, answers: details)
         context.insert(rec)
 
         for miss in summary.missed {

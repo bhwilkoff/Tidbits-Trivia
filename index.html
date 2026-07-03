@@ -28,6 +28,16 @@
 
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="css/styles.css">
+  <script>
+    window.addEventListener('error', (e) => {
+      var app = document.getElementById('app');
+      if (app && app.textContent.toLowerCase().includes('loading')) {
+        app.innerHTML = '<div style="padding:40px 24px;font-family:inherit"><h2>Something broke while loading</h2>' +
+          '<p style="opacity:.7">' + (e.message || 'Script error') + '</p>' +
+          '<p><a href="javascript:location.reload(true)">Reload</a></p></div>';
+      }
+    });
+  </script>
 </head>
 <body>
   <a href="#app" class="skip-link">Skip to content</a>

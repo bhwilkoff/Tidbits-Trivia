@@ -63,10 +63,44 @@ def create_and_import(ctype):
                     "-T", "/usr/bin/codesign", "-T", "/usr/bin/productbuild"], check=False, capture_output=True)
     return cid
 
+def cleanup(keep=2, dry_run=False):
+    """Revoke the surplus DEVELOPMENT certs the archive auto-creates each cloud
+    build (`-allowProvisioningUpdates` mints a fresh one on every clean runner →
+    they pile up until Apple's cert cap blocks the build). Targets ONLY plain
+    Development certs named "Created via API" (spares named personal certs and
+    every Distribution cert); keeps the newest `keep` for headroom. Idempotent —
+    safe to run at the head of every build."""
+    d = api("GET", "/v1/certificates?limit=200")
+    devs = []
+    for c in d.get("data", []):
+        a = c["attributes"]
+        t = (a.get("certificateType") or "")
+        if "DEVELOPMENT" in t and "DISTRIBUTION" not in t and a.get("displayName") == "Created via API":
+            devs.append((a.get("expirationDate", ""), c["id"], t))
+    devs.sort(reverse=True)   # newest expiration first
+    surplus = devs[keep:]
+    print(f"[cleanup] {len(devs)} API-created Development certs; keeping {min(keep, len(devs))}, "
+          f"revoking {len(surplus)}{' (dry run)' if dry_run else ''}", file=sys.stderr)
+    for _, cid, t in surplus:
+        if dry_run:
+            print(f"[cleanup] would revoke {cid} ({t})", file=sys.stderr)
+            continue
+        try:
+            api("DELETE", f"/v1/certificates/{cid}")
+            print(f"[cleanup] revoked {cid} ({t})", file=sys.stderr)
+        except SystemExit as e:
+            print(f"[cleanup] skip {cid}: {e}", file=sys.stderr)   # never fail the build on a revoke error
+    return len(surplus)
+
 def main():
-    if len(sys.argv) != 2 or sys.argv[1] not in TYPE:
+    args = sys.argv[1:]
+    if args and args[0] == "cleanup":
+        keep = int(args[args.index("--keep") + 1]) if "--keep" in args else 2
+        cleanup(keep=keep, dry_run="--dry-run" in args)
+        return
+    if len(args) != 1 or args[0] not in TYPE:
         raise SystemExit(__doc__)
-    ctype = TYPE[sys.argv[1]]
+    ctype = TYPE[args[0]]
     cid = find(ctype) or create_and_import(ctype)
     print(cid)
 

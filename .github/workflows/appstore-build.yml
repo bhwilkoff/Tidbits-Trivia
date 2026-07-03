@@ -77,6 +77,15 @@ jobs:
           chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${KID}.p8
           printf 'ASC_KEY_ID=%s\nASC_ISSUER_ID=%s\n' "$KID" "$ISS" > tools/asc-credentials.env
 
+      - name: Revoke stale auto-created Development certs (prevents the cert-cap block)
+        run: |
+          # Each clean runner's `archive -allowProvisioningUpdates` mints a fresh
+          # Development cert; without this they accumulate until Apple's cap blocks
+          # the build (ITMS / "maximum number of certificates"). Self-cleaning, keep
+          # a little headroom. Never fails the build.
+          set -a; . tools/asc-credentials.env; set +a
+          python tools/asc_certs.py cleanup --keep 2 || true
+
       - name: Archive + sign + upload to App Store Connect
         env:
           ASC_DIST_CERT_ID: ${{ secrets.APPLE_DIST_CERT_ID }}

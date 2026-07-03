@@ -1,66 +1,72 @@
 #if os(macOS)
 import SwiftUI
 
-// MARK: - Root View (macOS) — STARTER SCAFFOLD
+// MARK: - Root View (macOS)
 //
-// Read the `macos-platform-patterns` skill before building on this. macOS is a
-// full-parity platform sharing the same Core/ as iOS + tvOS — the FEATURE set is
-// identical (play, daily, records, create, online); the IDIOM is a pointer +
-// keyboard + menu-bar + resizable multi-window Mac app, NOT the iOS app resized.
-//
-// This file is a STARTING POINT for the macOS scope of work. The detail columns
-// are placeholders on purpose — the iOS views (ContentView_iOS, RecordsView,
-// etc.) are `#if os(iOS)`-guarded, so the Mac shell gets its own views that
-// reuse Core (AppStore, the game engine, RecordsStore, the corpus) verbatim.
-//
-// The load-bearing macOS rules (all cost real iteration to learn — see the skill):
-//   1. Shell = NavigationSplitView (sidebar Section enum + ONE NavigationPath
-//      feeding a single detail column) — NOT the iOS per-tab stack.
-//   2. A game in progress REPLACES the split view as the window root — never an
-//      .overlay/cover on the split view (its toolbar + sidebar toggle bleed
-//      through). The iOS game overlay pattern maps to "swap the window root".
-//   3. A resizable-window hero is full-width 16:9 aspect-FIT with NO maxHeight
-//      cap; art rides .background/.overlay + .clipped() so a fill image can't
-//      inflate layout (the same trap called out in CLAUDE.md for iOS).
-//   4. Never bare AsyncImage for picture-round art — route through an
-//      ImagePipeline (decoded NSCache + one capped URLSession); decode non-RGB
-//      → sRGB once (Image(nsImage:)'s Metal path renders grayscale as a white box).
-//   5. Structured concurrency (.task(id:)), never Combine Timer.publish, for the
-//      question clock / hero rotation.
-//   6. Menu-bar `.commands` are first-class (⌘N new game, ⌘, Settings). Settings
-//      rides the app menu, never a sidebar row.
+// The Mac shell (macOS-DESIGN Part B): a NavigationSplitView (sidebar Section
+// enum → one detail column), NOT the iOS per-tab stack. A game in progress
+// REPLACES the window root (Rule 4 / §B2) — never an overlay on the split view,
+// whose toolbar + sidebar toggle would bleed through.
 
 struct ContentView_macOS: View {
     @Environment(AppStore.self) private var store
     @State private var section: SidebarSection? = .play
     @State private var path = NavigationPath()
+    /// The active game. When set, the game surface REPLACES the split view as
+    /// the window root (macOS-DESIGN §B2).
+    @State private var launch: LaunchRequest?
 
     var body: some View {
+        Group {
+            if let launch {
+                GameContainerView_macOS(request: launch) { self.launch = nil }
+                    .transition(.opacity)
+            } else {
+                shell
+            }
+        }
+        .animation(.snappy(duration: 0.2), value: launch?.id)
+        .task {
+            // Screenshot/CI hook (parity with iOS/tvOS): TIDBITS_AUTOPLAY="mode:category".
+            if launch == nil, let ap = DebugHooks.autoplay {
+                start(LaunchRequest(mode: ap.mode, category: ap.category, mixModes: DebugHooks.mixModes))
+            }
+            if let tab = DebugHooks.initialTab {
+                section = SidebarSection(rawValue: tab.rawValue)
+            }
+        }
+    }
+
+    private var shell: some View {
         NavigationSplitView {
             List(SidebarSection.allCases, selection: $section) { item in
                 Label(item.title, systemImage: item.symbol)
             }
             .navigationSplitViewColumnWidth(min: 200, ideal: 220)
         } detail: {
-            // ONE NavigationPath feeds the single detail column. Every pushable
-            // destination is a Hashable route resolved by a single
-            // .navigationDestination — never a per-view destination (the same
-            // shared-registry rule as iOS/tvOS in CLAUDE.md).
             NavigationStack(path: $path) {
                 switch section ?? .play {
-                case .play:    Text("Play — Quick Play, Daily, Trivia Night, Online")   // FILL IN (macOS scope)
-                case .records: Text("Records — history, drill-ins, bests")              // FILL IN (macOS scope)
-                case .create:  Text("Create — build a set")                             // FILL IN (macOS scope)
+                case .play:    HomeView_macOS(onPlay: start)
+                case .records: RecordsPlaceholder_macOS()
+                case .create:  CreatePlaceholder_macOS()
                 }
             }
         }
         .tint(Tidbits.Palette.blue)
     }
+
+    /// Launch a game and (unless it's the Daily) remember it as the Quick Play
+    /// default — the same rule as the iOS Home (R-HOME-1).
+    private func start(_ request: LaunchRequest) {
+        if request.mode != .daily {
+            store.rememberSelection(mode: request.mode, category: request.category, mixModes: request.mixModes)
+        }
+        launch = request
+    }
 }
 
-/// Sidebar sections = the top-level verbs (the macOS analog of the iOS tab bar /
-/// tvOS sidebar). Mirrors Tidbits' three destinations. Settings rides the app
-/// menu (⌘,), never a sidebar row.
+/// Sidebar sections = the top-level verbs (the macOS analog of the iOS tab bar).
+/// Settings rides the app menu (⌘,), never a sidebar row.
 enum SidebarSection: String, CaseIterable, Identifiable {
     case play, records, create
     var id: String { rawValue }
@@ -73,6 +79,26 @@ enum SidebarSection: String, CaseIterable, Identifiable {
         switch self {
         case .play: "play.fill"; case .records: "chart.bar.fill"; case .create: "sparkles"
         }
+    }
+}
+
+// MARK: - Placeholders (next parity increments — Records + Create Mac views)
+
+private struct RecordsPlaceholder_macOS: View {
+    var body: some View {
+        ContentUnavailableView("Records",
+            systemImage: "chart.bar.fill",
+            description: Text("Your history, streak, and drill-ins — the native Mac Records screen lands next."))
+            .navigationTitle("Records")
+    }
+}
+
+private struct CreatePlaceholder_macOS: View {
+    var body: some View {
+        ContentUnavailableView("Create",
+            systemImage: "sparkles",
+            description: Text("Spin a quiz on any topic — the native Mac Create screen lands next."))
+            .navigationTitle("Create")
     }
 }
 #endif

@@ -21,6 +21,8 @@ struct TVVersusContainer: View {
                 switch game.phase {
                 case .idle, .loading:
                     ProgressView().controlSize(.large)
+                case .roundIntro:   // vs-CPU runs classic — unreachable, but total
+                    TVGamePlayView(onQuit: close, versus: match)
                 case .playing, .reveal:
                     TVGamePlayView(onQuit: close, versus: match)
                 case .finished:

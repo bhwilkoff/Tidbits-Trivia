@@ -88,15 +88,29 @@ struct NightSetupView: View {
                     rounds = preset.plan.rounds
                     presetName = preset.name
                 } label: {
-                    HStack(spacing: 12) {
-                        VStack(alignment: .leading, spacing: 2) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack(spacing: 12) {
                             Text(preset.name).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
-                            Text(preset.blurb).font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                            Spacer()
+                            Image(systemName: presetName == preset.name ? "largecircle.fill.circle" : "circle")
+                                .foregroundStyle(presetName == preset.name ? Tidbits.Palette.coral : Tidbits.Palette.inkSoft)
                         }
-                        Spacer()
-                        Image(systemName: presetName == preset.name ? "largecircle.fill.circle" : "circle")
-                            .foregroundStyle(presetName == preset.name ? Tidbits.Palette.coral : Tidbits.Palette.inkSoft)
+                        // The full lineup — owner: it must be OBVIOUS what the
+                        // rounds are and how many questions each holds.
+                        VStack(alignment: .leading, spacing: 3) {
+                            ForEach(Array(preset.plan.rounds.enumerated()), id: \.offset) { i, round in
+                                HStack(spacing: 6) {
+                                    Text("\(i + 1).").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                                        .frame(width: 18, alignment: .trailing)
+                                    Image(systemName: round.kind.symbol).font(.system(size: 11, weight: .bold))
+                                        .foregroundStyle(round.kind.accent)
+                                    Text(round.kind.nightRoundTitle).font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.ink)
+                                    Text("· \(round.count) questions").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                                }
+                            }
+                        }
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(14)
                     .chunkyCard(fill: presetName == preset.name ? Tidbits.Palette.coral.opacity(0.16) : Tidbits.Palette.surface)
                     .padding(.trailing, Tidbits.Metric.shadowOffset)
@@ -171,23 +185,21 @@ struct NightSetupView: View {
     private var categorySection: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Category").font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 10) {
-                    ForEach(TriviaCategory.all) { cat in
-                        Button { category = cat } label: {
-                            HStack(spacing: 8) {
-                                Image(systemName: cat.symbol).font(.system(size: 14, weight: .bold))
-                                Text(cat.name).font(Tidbits.TypeRamp.l3)
-                            }
-                            .foregroundStyle(category.id == cat.id ? cat.color.legibleForeground : Tidbits.Palette.ink)
-                            .padding(.horizontal, 14).padding(.vertical, 10)
-                            .background(Capsule().fill(category.id == cat.id ? cat.color : Tidbits.Palette.surface))
+            // Wrapped grid, never a horizontal rail (Decision 036 native-first).
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 10)], alignment: .leading, spacing: 10) {
+                ForEach(TriviaCategory.all) { cat in
+                    let on = category.id == cat.id
+                    Button { category = cat } label: {
+                        Text(cat.name).font(Tidbits.TypeRamp.l3)
+                            .lineLimit(1).minimumScaleFactor(0.8)
+                            .foregroundStyle(on ? cat.color.legibleForeground : Tidbits.Palette.ink)
+                            .frame(maxWidth: .infinity)
+                            .padding(.horizontal, 12).padding(.vertical, 11)
+                            .background(Capsule().fill(on ? cat.color : Tidbits.Palette.surface))
                             .overlay(Capsule().strokeBorder(Tidbits.Palette.border, lineWidth: 2.5))
-                        }
-                        .buttonStyle(.plain)
                     }
+                    .buttonStyle(.plain)
                 }
-                .padding(.vertical, 4)
             }
         }
     }

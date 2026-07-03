@@ -23,6 +23,8 @@ struct TVGameContainer: View {
             switch game.phase {
             case .idle, .loading:
                 if game.loadFailed { errorState } else { loading }
+            case .roundIntro:
+                TVRoundIntroView(game: game)
             case .playing, .reveal:
                 TVGamePlayView(onQuit: close)
             case .finished:
@@ -741,6 +743,39 @@ struct TVResultsView: View {
         case 0.5..<0.8: return "Nicely done"
         default: return "Good run"
         }
+    }
+}
+
+/// The between-rounds beat of a solo Trivia Night at ten feet (Decision 036
+/// follow-up: rounds must be FELT). Focus lands on the single Start button.
+struct TVRoundIntroView: View {
+    let game: GameEngine
+
+    var body: some View {
+        VStack(spacing: 30) {
+            Spacer()
+            if let round = game.introRound {
+                Text("ROUND \(game.currentRoundNumber) OF \(game.roundCount)")
+                    .font(.system(size: 29, weight: .bold, design: .rounded))
+                    .foregroundStyle(TVTheme.textSoft).kerning(2)
+                Image(systemName: round.kind.symbol)
+                    .font(.system(size: 84, weight: .black))
+                    .foregroundStyle(round.kind.accent)
+                Text(round.kind.nightRoundTitle)
+                    .font(.system(size: 56, weight: .black, design: .rounded))
+                    .foregroundStyle(TVTheme.text)
+                Text("\(round.count) questions · \(round.kind.blurb)")
+                    .font(.system(size: 29, weight: .medium, design: .rounded))
+                    .foregroundStyle(TVTheme.textSoft)
+            }
+            Spacer()
+            Button("Start Round \(game.currentRoundNumber)") { game.startRound() }
+                .buttonStyle(TVChipStyle(accent: Tidbits.Palette.coral, selected: false))
+            Spacer().frame(height: 60)
+        }
+        .padding(80)
+        .frame(maxWidth: .infinity)
+        .background(TVTheme.bg.ignoresSafeArea())
     }
 }
 #endif

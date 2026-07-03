@@ -12,6 +12,7 @@ final class GameEngine {
     enum Phase: Equatable {
         case idle
         case loading
+        case roundIntro      // a Trivia Night round is about to start (owner: rounds must be FELT)
         case playing
         case reveal          // answer shown, "learn the fact" visible
         case finished
@@ -221,7 +222,31 @@ final class GameEngine {
         return result
     }
 
+    /// The last round an interstitial was shown for — each round intro fires once.
+    private var introducedRound: Int? = nil
+
+    /// The round the pending interstitial describes.
+    var introRound: NightRound? {
+        guard let ri = current?.roundIndex, let plan = nightPlan, plan.rounds.indices.contains(ri) else { return nil }
+        return plan.rounds[ri]
+    }
+
+    /// Confirm the interstitial — actually begin the round's first question.
+    func startRound() {
+        guard phase == .roundIntro else { return }
+        introducedRound = current?.roundIndex
+        beginQuestion()
+    }
+
     private func beginQuestion() {
+        // A solo/pass night HOLDS on a round interstitial when a new round begins
+        // (host-paced nights are paced by the host; autopilot drives straight through).
+        if mode == .barTrivia, !hostPaced, !DebugHooks.autopilot,
+           let ri = current?.roundIndex, ri != introducedRound {
+            phase = .roundIntro
+            ticker?.cancel()
+            return
+        }
         chosenIndex = nil
         currentStake = 0
         if let spec = current?.closest { currentGuess = ((spec.min + spec.max) / 2).rounded() }

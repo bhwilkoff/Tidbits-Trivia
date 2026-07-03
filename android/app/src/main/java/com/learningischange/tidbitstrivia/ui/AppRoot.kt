@@ -459,6 +459,29 @@ private fun CustomizeSheet(store: Store, initial: Pair<Mode, Category>, onDismis
     }
 }
 
+/** The beat between rounds of a solo/pass Trivia Night — what's coming and how
+ *  many questions, then an explicit start (owner: rounds must be FELT). */
+@Composable
+private fun RoundIntroScreen(game: GameState) {
+    val kindName = game.currentRoundTitle ?: "Next Round"
+    Column(Modifier.fillMaxSize().padding(24.dp),
+        verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+        Text("ROUND ${game.currentRoundNumber} OF ${game.roundCount}",
+            fontSize = 13.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+        Spacer(Modifier.height(10.dp))
+        Text(kindName, fontSize = 30.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.Center)
+        Spacer(Modifier.height(6.dp))
+        Text("${game.introRoundCount} questions", fontSize = 15.sp,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+        Spacer(Modifier.height(28.dp))
+        Button(onClick = { game.startRound() }, modifier = Modifier.fillMaxWidth().height(52.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Pops.coral, contentColor = Color.White)) {
+            Text("Start Round ${game.currentRoundNumber}", fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
 // ---- Trivia Night setup ----
 
 @Composable
@@ -476,15 +499,20 @@ private fun NightSetupScreen(
         Text("Format", fontWeight = FontWeight.Bold, fontSize = 18.sp)
         Night.presets.forEachIndexed { i, p ->
             ChunkyCard(fill = if (preset == i) Pops.coral.copy(alpha = 0.16f) else MaterialTheme.colorScheme.surface, onClick = { preset = i }) {
-                Column(Modifier.padding(14.dp)) {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(p.name, fontWeight = FontWeight.Black, fontSize = 17.sp)
-                    Text(p.blurb, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                    // The full lineup — owner: it must be OBVIOUS what the rounds
+                    // are and how many questions each holds. Full names, no rails.
+                    p.rounds.forEachIndexed { ri, r ->
+                        Text("${ri + 1}.  ${Night.roundTitle[r.first] ?: r.first} · ${r.second} questions",
+                            fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f))
+                    }
                 }
             }
         }
         Text("Category", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(Category.all, key = { it.id }) { c ->
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Category.all.forEach { c ->
                 FilterChip(selected = cat.id == c.id, onClick = { cat = c }, label = { Text(c.name) })
             }
         }
@@ -548,6 +576,7 @@ private fun GameScreen(route: Route.Game, store: Store, onDone: () -> Unit) {
                 Button(onClick = onDone) { Text("Back") }
             }
         }
+        GamePhase.ROUND_INTRO -> RoundIntroScreen(game)
         // The Daily is play-once (R-DAILY-1) — no replay of a locked set.
         GamePhase.FINISHED -> ResultsScreen(game,
             onPlayAgain = if (route.mode == Mode.DAILY) null else ({ scope.launch { game.restart() } }),

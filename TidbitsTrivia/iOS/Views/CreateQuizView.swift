@@ -190,7 +190,7 @@ struct CustomGameContainer: View {
             switch game.phase {
             case .idle, .loading:
                 ProgressView().controlSize(.large).tint(Tidbits.Palette.ink)
-            case .playing, .reveal:
+            case .roundIntro, .playing, .reveal:
                 GamePlayView(game: game, onQuit: close)
             case .finished:
                 ResultsView(summary: game.summary, onPlayAgain: replay, onDone: close)

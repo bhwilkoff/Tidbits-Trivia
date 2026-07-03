@@ -108,6 +108,8 @@ struct VersusContainerView: View {
                 switch game.phase {
                 case .idle, .loading:
                     ProgressView().controlSize(.large).tint(Tidbits.Palette.ink)
+                case .roundIntro:   // vs-CPU runs classic — unreachable, but total
+                    GamePlayView(game: game, versus: match, onQuit: close)
                 case .playing, .reveal:
                     GamePlayView(game: game, versus: match, onQuit: close)
                 case .finished:

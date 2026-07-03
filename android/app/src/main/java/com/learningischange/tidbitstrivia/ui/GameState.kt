@@ -8,7 +8,7 @@ import androidx.compose.runtime.setValue
 import com.learningischange.tidbitstrivia.data.*
 import kotlin.math.max
 
-enum class GamePhase { LOADING, PLAYING, REVEAL, FINISHED, ERROR }
+enum class GamePhase { LOADING, ROUND_INTRO, PLAYING, REVEAL, FINISHED, ERROR }
 enum class AnswerVisual { IDLE, CORRECT, WRONG, DIM }
 
 data class Answered(val q: Question, val chosen: Int?, val correct: Boolean, val taken: Double)
@@ -198,6 +198,17 @@ class GameState(
         }
     }
 
+    // Round interstitial (owner: rounds must be FELT). Solo/pass nights hold on
+    // an intro beat when a new round begins; host-paced nights are host-paced.
+    private var introducedRound: Int? = null
+    val introRoundCount: Int get() = current?.roundIndex?.let { ri ->
+        (nightRounds ?: Night.presets[1].rounds).getOrNull(ri)?.second } ?: 0
+    fun startRound() {
+        if (phase != GamePhase.ROUND_INTRO) return
+        introducedRound = current?.roundIndex
+        begin()
+    }
+
     // Trivia Night round helpers (for the round banner + end-of-round beat).
     private val nightMeta: List<Pair<String, String>> get() =
         (nightRounds ?: Night.presets[1].rounds).map { it.first to (Night.roundTitle[it.first] ?: it.first) }
@@ -242,6 +253,11 @@ class GameState(
     }
 
     private fun begin() {
+        val ri = current?.roundIndex
+        if (mode == Mode.BAR_TRIVIA && !hostPaced && ri != null && ri != introducedRound) {
+            phase = GamePhase.ROUND_INTRO
+            return
+        }
         chosen = null
         currentStake = 0
         current?.closest?.let { currentGuess = Math.round((it.min + it.max) / 2).toDouble() }

@@ -33,6 +33,8 @@ struct GameContainerView: View {
             switch game.phase {
             case .idle, .loading:
                 if game.loadFailed { loadError } else { loadingState }
+            case .roundIntro:
+                RoundIntroView(game: game, onQuit: close)
             case .playing, .reveal:
                 GamePlayView(game: game, onQuit: close)
             case .finished:

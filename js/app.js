@@ -160,7 +160,8 @@ function viewHome() {
         <h2>Trivia Night</h2>
         <p class="muted">A night of mixed rounds — every kind of question. Each answer ends on a fact to learn.</p>
         <div class="night-presets">
-          ${NIGHT.presets.map((p, i) => `<button type="button" class="night-preset${i === 1 ? ' on' : ''}" data-preset="${i}"><b>${h(p.name)}</b><span class="muted">${h(p.blurb)}</span></button>`).join('')}
+          ${NIGHT.presets.map((p, i) => `<button type="button" class="night-preset${i === 1 ? ' on' : ''}" data-preset="${i}"><b>${h(p.name)}</b>
+            ${p.rounds.map(([k, n], ri) => `<span class="muted round-line">${ri + 1}. ${h(NIGHT.roundTitle[k] || k)} · ${n} questions</span>`).join('')}</button>`).join('')}
         </div>
         <label class="night-cat-label">Category
           <select id="night-cat">${CATEGORIES.map((c) => `<option value="${c.id}">${h(c.name)}</option>`).join('')}</select>
@@ -582,6 +583,12 @@ class Game {
     return r;
   }
   // Trivia Night: build the round-tagged mixed list from the plan's rounds.
+  startRound() {
+    if (this.phase !== 'roundIntro') return;
+    this._introducedRound = this.current?.roundIndex ?? null;
+    this._begin();   // handles clock + render itself
+  }
+
   async _loadNight() {
     const rounds = this._nightPlan?.rounds || NIGHT.presets[1].rounds;
     const all = [];
@@ -648,8 +655,13 @@ class Game {
   }
   get stakeLabel() { return this.stakeTiers.find((t) => t.value === this.currentStake)?.label ?? ''; }
   _begin() {
-    this.chosen = null; this.currentStake = 0; this.phase = 'playing'; this.qStart = Date.now();
     const cur = this.current;
+    // A night HOLDS on a round interstitial when a new round begins
+    // (owner: rounds must be FELT, not just a banner swap).
+    if (this.mode.id === 'barTrivia' && cur && cur.roundIndex != null && cur.roundIndex !== this._introducedRound) {
+      this.phase = 'roundIntro'; clearInterval(this.timer); renderGame(); return;
+    }
+    this.chosen = null; this.currentStake = 0; this.phase = 'playing'; this.qStart = Date.now();
     if (this.versus && cur) this.versus.beginQuestion(cur, this.mode.perQuestion ?? 30);
     if (cur && cur.closest) { this.currentGuess = Math.round((cur.closest.min + cur.closest.max) / 2); this.lastGuessPoints = 0; }
     if (cur && cur.ordering) {
@@ -846,6 +858,24 @@ async function startGame(mode, category, opts) {
 function quitGame() { if (game) clearInterval(game.timer); game = null; render(); }
 
 // ---------------- Game render ----------------
+// The beat between rounds of a Trivia Night — what's coming and how many
+// questions, then an explicit start (owner: rounds must be FELT).
+function renderRoundIntro() {
+  const ri = game.current?.roundIndex ?? 0;
+  const [kind, count] = (game._nightPlan?.rounds || [])[ri] || ['classic', 0];
+  const title = NIGHT.roundTitle[kind] || kind;
+  app.innerHTML = `
+    <div class="round-intro">
+      <div class="muted round-intro-kicker">ROUND ${ri + 1} OF ${(game._nightPlan?.rounds || []).length}</div>
+      <h1 class="page-title">${h(title)}</h1>
+      <p class="muted">${count} questions</p>
+      <button class="btn btn-primary btn-full" data-start-round>Start Round ${ri + 1}</button>
+      <button class="btn btn-text btn-full" data-quit>Quit the night</button>
+    </div>`;
+  $('[data-start-round]').addEventListener('click', () => game.startRound());
+  $('[data-quit]').addEventListener('click', quitGame);
+}
+
 // "You 320 · Ace Botsworth CPU 410" — the running head-to-head (Decision 038).
 function versusStrip() {
   const seats = game.versus.seats.map((s) =>
@@ -868,6 +898,7 @@ function versusRevealCard() {
 
 function renderGame() {
   const q = game.current; if (!q) return;
+  if (game.phase === 'roundIntro') { renderRoundIntro(); return; }
   const cat = catById(q.categoryID);
   // Stake: answers are locked until a confidence chip is committed.
   const staking = game.mode.id === 'stake';

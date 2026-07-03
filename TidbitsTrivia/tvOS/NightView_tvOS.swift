@@ -21,6 +21,8 @@ struct TVNightContainer: View {
             switch game.phase {
             case .idle, .loading:
                 if game.loadFailed { errorState } else { loading }
+            case .roundIntro:
+                TVRoundIntroView(game: game)
             case .playing, .reveal:
                 TVGamePlayView(onQuit: close)
             case .finished:

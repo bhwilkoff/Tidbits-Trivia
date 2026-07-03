@@ -1,6 +1,8 @@
 import SwiftUI
 import GameKit
+#if canImport(UIKit)
 import UIKit   // GKGameCenterViewController / UIApplication presentation (iOS + tvOS)
+#endif
 
 /// Game Center bridge — authentication, leaderboard submission, achievement
 /// reporting, the access point, and the dashboard. Every method is a safe no-op
@@ -57,7 +59,13 @@ final class GameCenterManager {
         GKLocalPlayer.local.authenticateHandler = { [weak self] viewController, error in
             guard let self else { return }
             if let viewController {
+                #if canImport(UIKit)
                 Self.topViewController()?.present(viewController, animated: true)
+                #endif
+                // macOS: GameKit presents its own sign-in window off this handler;
+                // presenting the NSViewController via GKDialogController is a
+                // tracked parity item.
+                _ = viewController
                 return
             }
             self.isAuthenticated = GKLocalPlayer.local.isAuthenticated
@@ -91,10 +99,15 @@ final class GameCenterManager {
 
     /// Open the full Game Center dashboard (leaderboards + achievements + profile).
     func showDashboard() {
+        #if canImport(UIKit)
         guard isAuthenticated, let top = Self.topViewController() else { return }
         let vc = GKGameCenterViewController(state: .dashboard)
         vc.gameCenterDelegate = DashboardDelegate.shared
         top.present(vc, animated: true)
+        #endif
+        // macOS: the Game Center dashboard opens via GKDialogController /
+        // GKAccessPoint.trigger — a tracked parity item; no-op for now so the
+        // Mac build compiles and Records still shows local stats.
     }
 
     // MARK: Leaderboards
@@ -130,6 +143,7 @@ final class GameCenterManager {
 
     // MARK: Top view controller (for presenting GameKit UIKit screens)
 
+    #if canImport(UIKit)
     static func topViewController() -> UIViewController? {
         let scene = UIApplication.shared.connectedScenes
             .first { $0.activationState == .foregroundActive } as? UIWindowScene
@@ -137,6 +151,7 @@ final class GameCenterManager {
         while let presented = vc?.presentedViewController { vc = presented }
         return vc
     }
+    #endif
 }
 
 /// Dashboard dismissal — GKGameCenterControllerDelegate must be an NSObject, so
@@ -144,7 +159,9 @@ final class GameCenterManager {
 private final class DashboardDelegate: NSObject, GKGameCenterControllerDelegate {
     static let shared = DashboardDelegate()
     func gameCenterViewControllerDidFinish(_ gameCenterViewController: GKGameCenterViewController) {
+        #if canImport(UIKit)
         gameCenterViewController.dismiss(animated: true)
+        #endif
     }
 }
 

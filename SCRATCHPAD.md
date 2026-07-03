@@ -747,3 +747,23 @@ One-line-per-round; full detail in `ARCHIVE.md`.
   then Records, Create, Trivia Night) reusing Core — the shell detail columns are
   still placeholder Text. Then layer Tidbits Live Phase A. Add a macOS column to
   PARITY.md once parity screens start landing.
+- **2026-07-03 (macOS BUILDOUT — autonomous /loop, in progress).** Building the full
+  macOS app (parity + Tidbits Live) via a self-paced loop. Backlog = 12 tasks (see the
+  session task list). **DONE (9/12), all committed + build-verified + screenshot-checked:**
+  Parity face complete — Play/Home, Records (R-REC-1 dashboard), Create, Settings + ⌘,/⌘N
+  menu commands, Customize (mix+presets), Daily archive, onboarding, solo Trivia Night,
+  Versus CPU + Online-Multiplayer picker, deep-link inbox, macOS Game Center dashboard
+  (GKDialogController). **Tidbits Live** (Mac-exclusive, Decision 043) — event model+store
+  +builder (LiveEvent/LiveRound, MacLiveBuilder), solo preview, HOST COCKPIT (MacLiveHost:
+  reveal-on-command pacing + manual per-team score override — the headline differentiators),
+  and the BIG-SCREEN projector window (MacLiveBigScreen + LiveHostCoordinator shares the
+  session across two windows). All macOS views are `TidbitsTrivia/macOS/*_macOS.swift`,
+  #if os(macOS); reuse Core verbatim. pbxproj edits via a python helper (UUID prefix
+  A1B2C3D4E5F6000000AC05xx). Screenshot hooks: TIDBITS_AUTOPLAY / TIDBITS_VERSUS /
+  TIDBITS_TAB=live / TIDBITS_LIVE_HOST=1. **NEXT (10-12):** #10 team join (serverless/QR)
+  + tie-break engine + scoring; #11 offline + printable answer sheets (NSPrintOperation)
+  + recap; #12 Phase-B formats (audio/fastest-finger/poll) + venue branding + cheating
+  deterrence. **DEFERRED parity** (⏳, need transport + 2-device testing): networked
+  Trivia Night host/join, online Quick Match. Build: `xcodebuild -scheme TidbitsTrivia
+  -destination 'platform=macOS,arch=arm64' -derivedDataPath /tmp/tidbits-mac-dd
+  CODE_SIGNING_ALLOWED=NO`; run: ad-hoc codesign + open + screencapture.

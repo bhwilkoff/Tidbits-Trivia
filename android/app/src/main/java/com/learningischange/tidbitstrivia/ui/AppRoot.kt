@@ -968,6 +968,7 @@ private fun RecordsScreen(store: Store) {
     var recap by remember { mutableStateOf<Store.Rec?>(null) }
     var drillDomain by remember { mutableStateOf<String?>(null) }
     var bestsMode by remember { mutableStateOf<Mode?>(null) }
+    var showAllGames by remember { mutableStateOf(false) }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Text("Records", fontSize = 30.sp, fontWeight = FontWeight.Black)
         if (records.isEmpty()) {
@@ -984,8 +985,16 @@ private fun RecordsScreen(store: Store) {
             StatBox("${life.first}", "Games", Pops.grape); StatBox("${life.third}%", "Accuracy", Pops.blue); StatBox("${life.second}", "Correct", Pops.mint)
         }
         Text("Your games", fontWeight = FontWeight.Bold, fontSize = 20.sp)
-        Text("Every game you've played — tap one to see the questions.", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
-        records.take(40).forEach { rec -> GameHistoryRow(rec) { recap = rec } }
+        Text("Your latest rounds — tap one to see the questions.", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+        // ANDROID-DESIGN §5.3: a bounded preview (3 most recent) + a "See all"
+        // drill-in, so Records stays a dashboard, not a 40-card ledger.
+        records.take(3).forEach { rec -> GameHistoryRow(rec) { recap = rec } }
+        if (records.size > 3) ChunkyCard(onClick = { showAllGames = true }, modifier = Modifier.fillMaxWidth()) {
+            Row(Modifier.padding(14.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("See all ${records.size} games", fontWeight = FontWeight.Bold)
+                Icon(Icons.Filled.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+            }
+        }
         val prog = remember { store.progress() }
         val explored = prog.count { it.total > 0 }
         val mastered = prog.count { it.hasWedge }
@@ -1028,6 +1037,7 @@ private fun RecordsScreen(store: Store) {
     recap?.let { RecapDialog(it) { recap = null } }
     drillDomain?.let { DomainDrillDialog(it, records) { drillDomain = null } }
     bestsMode?.let { m -> BestAttemptsDialog(m, records.filter { it.mode == m.name }, onOpen = { recap = it; bestsMode = null }) { bestsMode = null } }
+    if (showAllGames) AllGamesDialog(records, onOpen = { recap = it; showAllGames = false }) { showAllGames = false }
 }
 
 // One past game as a card: mode, category, score, colored answer dots, when.
@@ -1146,6 +1156,20 @@ private fun BestAttemptsDialog(mode: Mode, attempts: List<Store.Rec>, onOpen: (S
                     }
                 }
             }
+        }
+    }
+}
+
+// Full game history (the "See all" drill-in, ANDROID-DESIGN §5.3): the long
+// tail lives here, behind the 3-game preview on Records.
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AllGamesDialog(records: List<Store.Rec>, onOpen: (Store.Rec) -> Unit, onDismiss: () -> Unit) {
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text("All games", fontWeight = FontWeight.Black, fontSize = 22.sp)
+            Text("Newest first — tap one to see the questions.", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+            records.forEach { rec -> GameHistoryRow(rec) { onOpen(rec) } }
         }
     }
 }

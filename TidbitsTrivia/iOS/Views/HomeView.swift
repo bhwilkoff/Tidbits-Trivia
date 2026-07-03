@@ -260,7 +260,6 @@ private struct SmallTile: View {
         }
         .buttonStyle(.plain)
         .padding(.trailing, Tidbits.Metric.shadowOffset)
-        .padding(.bottom, Tidbits.Metric.shadowOffset)
     }
 }
 

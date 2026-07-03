@@ -6,6 +6,7 @@ import SwiftUI
 /// a tab. One NavigationStack per tab, paths owned by AppStore.
 struct ContentView_iOS: View {
     @Environment(AppStore.self) private var store
+    @Environment(\.modelContext) private var modelContext
 
     var body: some View {
         @Bindable var store = store
@@ -22,6 +23,7 @@ struct ContentView_iOS: View {
         }
         .onChange(of: store.inbox) { _, _ in handleInbox() }
         .onAppear {
+            DebugHooks.seedRecordsIfRequested(modelContext)
             handleInbox()
             if let tab = DebugHooks.initialTab { store.selectedTab = tab }
         }

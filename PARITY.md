@@ -5,10 +5,11 @@
 >
 > Companion to `CLAUDE.md` (project context), `SCRATCHPAD.md` (active
 > milestone), `DECISIONS.md` (architecture decisions). Per-platform
-> design rules live in `DESIGN.md` (iOS), `tvOS-DESIGN.md` (tvOS),
-> `WEB-DESIGN.md` (web), `ANDROID-DESIGN.md` (Android) when those
-> binding docs exist. The full workflow — including the periodic
-> parity audit — is the `cross-platform-parity-discipline` skill.
+> **binding** design rules live in `docs/iOS-DESIGN.md`,
+> `docs/tvOS-DESIGN.md`, `docs/WEB-DESIGN.md`, `docs/ANDROID-DESIGN.md`,
+> and `docs/macOS-DESIGN.md` (authored 2026-07-03). The full workflow —
+> including the periodic parity audit — is the
+> `cross-platform-parity-discipline` skill.
 >
 > **Last audit: 2026-06-30 (Android ↔ Apple, code-verified).** Found 4
 > false cells (§3b emoji grid, §4 entire auth section, §5 share URLs,
@@ -103,6 +104,7 @@ doesn't carry a misleadingly-empty column for a 0%-built platform.
 | Name as Many / enumeration (Q8) | ✅ | ✅ | ✅ fallback | ✅ | 3-puzzle "name as many X in 60s" round (`enumerate.json`, 11 puzzles / 243 slots: continent→countries + curated planets/elements/oceans/Great Lakes/continents). Type against a live clock; each unique answer (alias-matched via the type-answer normalizer + E1 aliases) fills a chip; +1 each (count-scored). Reveal shows the full set, named vs. missed (testing effect). iOS/web/Android = text field; **tvOS** = recall-self-mark (reveal list + count stepper — keyboard wall at ten feet). Replayable drill: ignores the seen-set. Data curated (historical/defunct states + dupes dropped, PRC→China). SOLO-BACKLOG Q8 |
 | Daily Tidbit (deterministic, streak) | ✅ | ✅ | ✅ | ✅ | **2026-07-01 audit: the old "same seed on all platforms" note was silently false** — three different seed strings/hashes/pools/shuffles meant every platform picked a DIFFERENT daily (owner caught it). Now: one canonical hash-rank pick (Decision 037, `DailyPick.swift`/`pickDailyIds`/`pickDaily`), golden-proven identical on all three stacks via `tools/daily-parity/run.sh` (which also flushed out Kotlin's signed-byte FNV divergence on non-ASCII ids) |
 | Interactive Records — game history, drill-ins, richer share | ✅ | ✅ | ✅ | ✅ | **2026-07-03 (owner):** per-game answer detail now persisted (`GameRecord.answers` / Rec.answers / localStorage) so Records is interactive. **"Your games" history** (Threes-style scroll) on all 4 — each game a card with a category-colored answer-dot strip + score + relative time, tap → per-question recap (question · answer · right/wrong). **Domain drill-in** (Missed / Got right) + **personal-best drill-in** (every attempt, best crowned) via sheets on iOS/Android/web; tvOS has the history scroll + recap (drill-in sheets ⏳ = touch idiom). **Share redesigned**: answer dots (🟢/🔴/⚫️) + accuracy meter (▰▱) + 🔥 best-run, replacing uniform squares. Old records degrade gracefully (totals only). Verified live on iOS + Android |
+| Records-as-dashboard (R-REC-1: preview + "See all") | 🚧 | ✅ | ✅ | 🚧 | **2026-07-03 (owner: "kitchen sink / squished"):** Records was dumping up to 40 game cards inline plus every domain/mode — the overload + claustrophobia bug. New binding rule **R-REC-1** (iOS-DESIGN §5.3–5.6 / WEB-DESIGN §5 / ANDROID-DESIGN §5): Records is a *dashboard* — show the **3 most recent** games + a **"See all N games"** drill-in sheet, never the full ledger inline. **iOS** (`RecordsView.swift`, build-verified ✅) + **web** (`app.js`/`styles.css`, syntax-verified; browser screenshot ⏳ extension offline) done this pass; web also fixed the flush-stacked `.game-row` shadow-collision (the "squished" half). **Android** ⏳ mirror (`RecordsScreen` still `records.take(40)`). **tvOS** already summarized (bounded at 20; tvOS-DESIGN §7). Follow-up ⏳: fold the chunky-card shadow gutter into the `chunkyCard` modifier app-wide (iOS-DESIGN §7.1) — a 10-file layout refactor needing a sim screenshot pass |
 | Daily play-once + Previous Tidbits archive (R-DAILY-1) | ✅ | ✅ | ✅ | ✅ | **2026-07-01 (Decision 036):** today's Daily locks after completion (card flips to done-state with score; no Play Again on results); archive lists last 30 days — unplayed past days playable via the deterministic day-key seed; past plays never bump the streak. Per-day results: UserDefaults (Apple) / SharedPreferences (Android) / localStorage (web) |
 | 8 categories | ✅ | ✅ | ✅ | ✅ | Mixed/History/Science/Geography/Arts/Film&TV/Music/Sports |
 | Countdown clock + speed bonus | ✅ | ✅ | ✅ | ✅ | Per-question or global per mode |

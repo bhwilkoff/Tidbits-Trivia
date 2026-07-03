@@ -361,7 +361,10 @@ body {
 .online-lobby { display: flex; flex-direction: column; gap: 12px; }
 .online-lobby .big-sm { letter-spacing: 4px; }
 .rec-tap { cursor: pointer; font: inherit; text-align: left; width: 100%; border: var(--bw) solid var(--color-border); }
-.game-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; }
+.game-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; margin-bottom: 10px; }
+/* WEB-DESIGN §5.4: the drill-in ledger is a LIGHT list — drop the hard
+   sticker shadow so 40 rows don't read as a conveyor belt of luggage. */
+.rec-sheet .game-row { box-shadow: none; margin-bottom: 8px; }
 .game-main { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .game-head { display: flex; align-items: baseline; gap: 2px; }
 .game-sub { font-size: 12px; }

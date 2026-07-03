@@ -126,6 +126,11 @@ struct ChunkyCard: ViewModifier {
                     .fill(Tidbits.Palette.border)
                     .offset(x: Tidbits.Metric.shadowOffset, y: Tidbits.Metric.shadowOffset)
             )
+            // The hard offset shadow draws 5pt below the card's bounds. The
+            // modifier reserves that vertical gutter itself so stacked cards
+            // never collide (iOS-DESIGN §7.1). Call sites still reserve the
+            // TRAILING gutter (the horizontal-grid-safe fold-in is a follow-up).
+            .padding(.bottom, Tidbits.Metric.shadowOffset)
     }
 }
 

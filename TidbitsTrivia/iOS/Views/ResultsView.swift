@@ -162,7 +162,6 @@ struct StatBox: View {
         .padding(.vertical, 16)
         .chunkyCard(fill: tint.opacity(0.18))
         .padding(.trailing, Tidbits.Metric.shadowOffset)
-        .padding(.bottom, Tidbits.Metric.shadowOffset)
     }
 }
 #endif

@@ -619,8 +619,9 @@ function viewRecords() {
       ${statBox(lt.games, 'Games', '#8B5CF6')}${statBox(lt.acc + '%', 'Accuracy', '#2D5BFF')}${statBox(lt.correct, 'Correct', '#2FCB8A')}
     </div>
     <h2 class="section">Your games</h2>
-    <p class="muted">Every game you've played — tap one to see the questions.</p>
-    ${recs.slice(0, 40).map((r, i) => gameHistoryRow(r, i)).join('')}
+    <p class="muted">Your latest rounds — tap one to see the questions.</p>
+    ${recs.slice(0, 3).map((r, i) => gameHistoryRow(r, i)).join('')}
+    ${recs.length > 3 ? `<button class="card row rec-tap" data-all-games><span><b>See all ${recs.length} games</b></span><span class="chev">›</span></button>` : ''}
     ${progressSection()}
     ${calibrationSection()}
     <h2 class="section">Personal bests</h2>
@@ -719,6 +720,14 @@ function openDomain(catId) {
     ${right.length ? `<h3 class="section">Got right (${right.length})</h3>${right.map(answerLine).join('')}` : ''}`;
   showRecordsSheet(body);
 }
+// Full game history (WEB-DESIGN §5.3 "See all"): the long tail lives here,
+// behind the 3-game summary preview, so Records stays a dashboard not a ledger.
+function openAllGames() {
+  const recs = Store.records();
+  const body = `<h2>All games</h2><p class="muted">Newest first — tap one to see the questions.</p>
+    ${recs.map((r, i) => gameHistoryRow(r, i)).join('')}`;
+  showRecordsSheet(body);
+}
 function openBests(modeId) {
   const attempts = Store.records().filter((r) => r.mode === modeId);
   const best = attempts.reduce((m, r) => Math.max(m, r.score), 0);
@@ -740,6 +749,7 @@ function bindRecords() {
   app.querySelectorAll('[data-recap]').forEach((b) => b.addEventListener('click', () => openRecap(Store.records()[+b.dataset.recap])));
   app.querySelectorAll('[data-domain]').forEach((b) => b.addEventListener('click', () => openDomain(b.dataset.domain)));
   app.querySelectorAll('[data-best]').forEach((b) => b.addEventListener('click', () => openBests(b.dataset.best)));
+  app.querySelector('[data-all-games]')?.addEventListener('click', openAllGames);
   const rt = $('#review-toggle'); if (rt) rt.addEventListener('change', (e) => Store.setReviewEnabled(e.target.checked));
 }
 

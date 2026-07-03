@@ -700,3 +700,26 @@ One-line-per-round; full detail in `ARCHIVE.md`.
   cross-decode directions green, 4/4 Android tests, id parity green). Kotlin gotcha:
   block comments NEST — a `/*.json` glob inside a KDoc unbalances it. *Run it after
   ANY wire change.*
+- **2026-07-03 (per-platform design docs + Records-as-dashboard, owner request).**
+  *Found:* owner flagged Records (iOS + web esp.) as a "kitchen sink" — up to 40 game
+  cards dumped inline + every domain/mode, and cramped/"squished" spacing vs the
+  generous Home tab. Audited: root cause = Records is a *ledger not a dashboard*
+  (`records.prefix(40)`/`slice(0,40)`/`take(40)` inline on iOS/web/Android; tvOS
+  already summarized at 20) + the `chunkyCard` hard shadow gutter is applied by hand,
+  inconsistently (Records omitted the bottom gutter → collisions), + row padding below
+  the app's own standard. *Did:* (1) **Authored 5 binding per-platform design docs**
+  under `docs/` (`iOS-`/`WEB-`/`tvOS-`/`ANDROID-`/`macOS-DESIGN.md`) from the
+  QuintAppTemplate templates, fully rewritten for Tidbits' trivia domain + actual
+  shipped code (3 tabs, 17 modes, 8 categories, the chunky-card system, tvOS dark-first
+  `TVTheme`, Android M3/brand-font gap, macOS §0 UIKit-guard compile blocker). Registered
+  them in CLAUDE.md + PARITY header. (2) **New binding rule R-REC-1** (dashboard, not
+  ledger): show 3 recent + "See all N games" drill-in. Shipped on **iOS**
+  (`RecordsView.swift` + `AllGamesSheet`, **build-verified ✅**) and **web** (`app.js`
+  `openAllGames` + `styles.css` `.game-row` gutter fix for the flush-stack squish,
+  syntax-verified). *Left / TODO:* **web browser screenshot ⏳** (Chrome extension
+  offline this session); **Android mirror ⏳** (`RecordsScreen` still `take(40)`);
+  **systemic `chunkyCard` shadow-gutter fold-in ⏳** (iOS-DESIGN §7.1 — 48 call sites /
+  10 files, needs a sim screenshot pass so it doesn't regress the Home tab). Also
+  captured real gaps in the docs: Android brand font unwired (`Type.kt` FontFamily.Default)
+  + no hard card shadow; tvOS no `TVType` ramp constant + no `hasClaimedInitialFocus`
+  guard; macOS `GameCenterManager` UIKit import unguarded (blocks the Mac build).

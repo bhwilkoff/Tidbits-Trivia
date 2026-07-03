@@ -16,6 +16,7 @@ struct RecordsView: View {
     @State private var recap: GameRecord?
     @State private var drillDomain: String?
     @State private var bestsMode: GameMode?
+    @State private var showAllGames = false
 
     var body: some View {
         ScrollView {
@@ -43,6 +44,9 @@ struct RecordsView: View {
         }
         .sheet(item: Binding(get: { bestsMode.map(ModeID.init) }, set: { bestsMode = $0?.mode })) { m in
             BestAttemptsSheet(mode: m.mode, records: records.filter { $0.mode == m.mode }) { recap = $0 }
+        }
+        .sheet(isPresented: $showAllGames) {
+            AllGamesSheet(records: records) { recap = $0 }
         }
     }
 
@@ -90,16 +94,34 @@ struct RecordsView: View {
 
     // MARK: Game history (owner: scroll your previous games, Threes-style)
 
+    // iOS-DESIGN §5.4: a bounded preview (the 3 most recent) + a "See all"
+    // drill-in, so Records reads as a dashboard, not a 40-card ledger.
     private var historySection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Your games").font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
-            Text("Every game you've played — tap one to see the questions.")
+            Text("Your latest rounds — tap one to see the questions.")
                 .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
-            ForEach(records.prefix(40)) { rec in
+            ForEach(records.prefix(3)) { rec in
                 Button { recap = rec } label: { GameHistoryRow(record: rec) }
                     .buttonStyle(.plain)
             }
+            if records.count > 3 {
+                Button { showAllGames = true } label: { seeAllRow("See all \(records.count) games") }
+                    .buttonStyle(.plain)
+            }
         }
+    }
+
+    private func seeAllRow(_ title: String) -> some View {
+        HStack {
+            Text(title).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+            Spacer()
+            Image(systemName: "chevron.right").font(.system(size: 13, weight: .bold))
+                .foregroundStyle(Tidbits.Palette.inkSoft)
+        }
+        .padding(14)
+        .chunkyCard(fill: Tidbits.Palette.bgDeep)
+        .padding(.trailing, Tidbits.Metric.shadowOffset)
     }
 
     // MARK: Calibration (F1) — from Stake rounds
@@ -411,6 +433,35 @@ struct DomainDrillSheet: View {
             }
             .background(Tidbits.Palette.bg.ignoresSafeArea())
             .navigationTitle(cat.name)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } } }
+        }
+    }
+}
+
+// MARK: - Full game history (the "See all" drill-in, iOS-DESIGN §5.4)
+
+/// The long tail of games lives here, behind the 3-game preview on Records.
+/// Tapping a game hands off to the recap sheet (dismiss-then-open, the same
+/// two-sheet pattern BestAttemptsSheet uses).
+struct AllGamesSheet: View {
+    let records: [GameRecord]
+    let onOpen: (GameRecord) -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
+                    ForEach(records) { rec in
+                        Button { dismiss(); onOpen(rec) } label: { GameHistoryRow(record: rec) }
+                            .buttonStyle(.plain)
+                    }
+                }
+                .padding(Tidbits.Metric.pad)
+            }
+            .background(Tidbits.Palette.bg.ignoresSafeArea())
+            .navigationTitle("All games")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } } }
         }

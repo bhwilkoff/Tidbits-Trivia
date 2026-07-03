@@ -450,24 +450,31 @@ element.
 
 ---
 
-## When to create a binding design doc
+## Binding design docs (they exist — treat as binding)
 
-If your project grows past ~5 views on a platform, add that
-platform's binding design doc: `DESIGN.md` (iOS), `tvOS-DESIGN.md`,
-`WEB-DESIGN.md`, `ANDROID-DESIGN.md`. The
-`binding-design-doc-discipline` skill defines the workflow: quote
-the rule before proposing UI work; fix the doc, then fix the
-feature. Seed each from `docs/templates/PLATFORM-DESIGN-template.md`.
+Every platform now has a **binding** design doc under `docs/`
+(authored 2026-07-03 from the QuintAppTemplate per-platform
+templates, adapted to Tidbits' real trivia domain and shipped code):
 
-The sibling docs share a shape: the cross-platform **principles**
-are identical; the **idioms** they reference diverge. When a rule
-in one doc deliberately inverts a rule in another (tvOS auto-focuses
-Play on Detail; iOS never steals focus), say so in the doc — that
-inversion is load-bearing, and a future session will otherwise
-"harmonize" it into a bug.
+- `docs/iOS-DESIGN.md` — iPhone/iPad (three tabs, chunky-card system,
+  Records-as-dashboard rule R-REC-1).
+- `docs/WEB-DESIGN.md` — the web viewer + canonical link target.
+- `docs/tvOS-DESIGN.md` — the dark-first living-room surface
+  (`TVTheme`, focus contract) — deliberately inverts the iOS look.
+- `docs/ANDROID-DESIGN.md` — Material 3, brand-first theme.
+- `docs/macOS-DESIGN.md` — binding **spec** for the next scope (shell
+  not yet built); leads with §0, the UIKit-guard compile blocker.
 
-Don't create these on day 1 — wait until the platform's UI
-complexity warrants the doc. Once created, treat as binding.
+The `binding-design-doc-discipline` skill defines the workflow:
+**quote the rule number before proposing UI work; fix the doc first,
+then fix the feature.** Proposals and commits cite rules, e.g. "per
+iOS-DESIGN §5.4."
+
+The sibling docs share a shape: the cross-platform **principles** are
+identical; the **idioms** diverge. Load-bearing inversions are stated
+in-doc (tvOS `.buttonStyle(.plain)` kills focus / iOS `.plain` is
+correct; tvOS dark-first / iOS+web+macOS cream sticker) — never
+"harmonize" them into a bug.
 
 ---
 

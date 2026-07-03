@@ -1,4 +1,5 @@
 import Foundation
+import SwiftData
 
 /// Environment hooks that drive the app to a known state for screenshots
 /// and CI verification. No-ops in production (the env vars are never set);
@@ -69,5 +70,36 @@ enum DebugHooks {
     /// TIDBITS_ONBOARD=1 → force the first-run walkthrough (for screenshots).
     static var forceOnboarding: Bool {
         ProcessInfo.processInfo.environment["TIDBITS_ONBOARD"] == "1"
+    }
+
+    /// TIDBITS_SEED_RECORDS=<n> → insert N synthetic games + a streak so the
+    /// Records dashboard can be screenshot-verified with realistic data. No-op
+    /// unless the env var is set AND the store is empty (never touches real data).
+    static var seedRecords: Int? {
+        ProcessInfo.processInfo.environment["TIDBITS_SEED_RECORDS"].flatMap(Int.init)
+    }
+
+    @MainActor
+    static func seedRecordsIfRequested(_ context: ModelContext) {
+        guard let n = seedRecords, n > 0 else { return }
+        let existing = (try? context.fetch(FetchDescriptor<GameRecord>())) ?? []
+        guard existing.isEmpty else { return }
+        let modes: [GameMode] = [.classic, .timeAttack, .survival, .stake, .sweep, .oddOneOut, .ladder]
+        let cats = ["history", "science", "geography", "arts", "screen", "music", "sports", "mixed"]
+        for i in 0..<n {
+            let mode = modes[i % modes.count]
+            let cat = cats[i % cats.count]
+            let total = 7 + (i % 4)
+            let correct = max(1, total - (i % 5))
+            let answers: [AnswerDetail] = (i % 3 == 0) ? [] : (0..<total).map { k in
+                AnswerDetail(qid: "q\(i)_\(k)", prompt: "Sample question \(k + 1) from \(cat)?",
+                             categoryID: cat, correct: k < correct, answer: "Answer \(k + 1)")
+            }
+            context.insert(GameRecord(mode: mode, categoryID: cat, score: 40 + (i * 37) % 120,
+                                      correct: correct, total: total, maxStreak: correct,
+                                      answers: answers, date: Date().addingTimeInterval(-Double(i) * 3600)))
+        }
+        context.insert(DailyStreak(current: 5, best: 12, lastPlayedDay: "2026-07-03"))
+        try? context.save()
     }
 }

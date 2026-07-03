@@ -79,13 +79,22 @@ native platform — every `tidbits://…` has an `https://…` twin
 The 90s-sticker surface: thick ink border + a hard 5px offset shadow,
 baked into `.card` (`styles.css:52-56`).
 
-- **§4.1 Stacked cards always carry a bottom gutter.** `.card`'s
-  `box-shadow: 5px 5px 0` bleeds down into the next element. Any list of
-  stacked cards MUST separate them (a `margin-bottom` ≥ the shadow, or a
-  gap on the flex/grid parent). **The `.game-row` history cards shipped
-  with no `margin-bottom` (`styles.css:364`) so 40 shadowed cards
-  stacked flush — the "squished" bug (2026-07-03). Every card list gets
-  a consistent gutter; none is exempt.**
+- **§4.1 Every stacked chunky element carries a bottom gutter that
+  CLEARS the shadow.** `.card`/`.banner`/`.btn`/`.tile` all draw
+  `box-shadow: 5px 5px 0`, which bleeds into whatever follows. A
+  `margin-bottom` (or parent gap) of merely the shadow height reads as
+  "squished" — use ≥ ~16px so there is real air, not a 3px sliver. This
+  bit twice on 2026-07-03: the `.game-row` history cards shipped flush
+  (no margin), and Home's `.banner` (8px) + `.quick-actions` (0) let the
+  Quick-Play/Surprise/Daily shadows collide. Every stacked element gets a
+  gutter; none is exempt.
+- **§4.1a The top bar fits its narrowest target.** Brand + all three tab
+  labels must fit at 360px (mobile-first compact sizing), scaling up at
+  ≥480px — never let a tab clip off-screen (the "Records tab cut off"
+  bug).
+- **§4.1b A one-item grid fills its row.** `.home-tiles` uses
+  `auto-fit`/`minmax` so the single web tile spans full width instead of
+  sitting half-width beside an empty column.
 - **§4.2 One canonical cell per list** (small multiples): every history
   row is `.game-row`, every domain row is `.topic-row`, every answer is
   `.ans-line`. A variant folds back with a class, not a new layout.

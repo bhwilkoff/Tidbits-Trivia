@@ -194,4 +194,19 @@ final class LiveNightHost {
         }
         return a.choice == q.correctIndex ? mcqPoints : 0                             // MCQ / picture / T-or-T / odd
     }
+
+    /// True for the option-based types (classic/describe/cloze/oddOneOut/thisOrThat/
+    /// pictureId) — the host renders options; everything else has a bespoke surface.
+    static func isMCQ(_ q: Question) -> Bool {
+        q.closest == nil && q.ordering == nil && q.matching == nil && q.accepted == nil && q.enumerate == nil
+    }
+    /// The host-facing correct answer to read out on reveal (all types).
+    static func answerLine(_ q: Question) -> String {
+        if let c = q.closest { return c.formattedAnswer }
+        if let acc = q.accepted { return acc.first ?? q.correctAnswer }
+        if let ord = q.ordering { return ord.joined(separator: " → ") }
+        if let m = q.matching { return zip(m.keys, m.values).map { "\($0.0) = \($0.1)" }.joined(separator: ", ") }
+        if let e = q.enumerate { return e.displayNames.joined(separator: ", ") }
+        return q.correctAnswer
+    }
 }

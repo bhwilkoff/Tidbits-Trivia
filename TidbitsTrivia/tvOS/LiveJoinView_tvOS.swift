@@ -159,21 +159,32 @@ struct TVLivePlayerView: View {
 
     @ViewBuilder private func questionView(_ p: LiveRoom.Pub) -> some View {
         let revealed = p.phase == LiveRoom.Phase.reveal
+        let locked = revealed || client.hasAnswered
         VStack(alignment: .leading, spacing: 30) {
             Text("ROUND \(p.round) · \(p.roundTitle.uppercased()) — Q\(p.qNum)/\(p.qTotal)")
                 .font(.system(size: 25, weight: .heavy, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+            if let img = p.imageURL, let url = URL(string: img) {
+                AsyncImage(url: url) { phase in
+                    if let image = phase.image { image.resizable().scaledToFit() } else { Color.clear }
+                }
+                .frame(maxWidth: .infinity, maxHeight: 300).clipShape(RoundedRectangle(cornerRadius: 16))
+            }
             Text(p.prompt).font(.system(size: 48, weight: .black, design: .rounded)).foregroundStyle(.white)
                 .fixedSize(horizontal: false, vertical: true)
-            if let options = p.options, !options.isEmpty {
+            if let n = p.numeric {
+                TVNumericAnswer(spec: n, locked: locked) { v in Task { await client.submit(number: v) } }.id(p.qid)
+            } else if let options = p.options, !options.isEmpty {
                 VStack(spacing: 20) {
                     ForEach(Array(options.enumerated()), id: \.offset) { i, opt in
                         optionButton(i, opt, p: p, revealed: revealed)
                     }
                 }
                 .defaultFocus($focusedOption, 0)
+            } else if p.orderItems != nil || p.matchKeys != nil || p.enumTarget != nil {
+                Label("This round plays best on a phone — open Tidbits → Join a game on a handset to answer.", systemImage: "iphone")
+                    .font(.system(size: 27, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
             } else {
-                Text("Answer on your team sheet — the host is scoring this round.")
-                    .font(.system(size: 29, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+                TVTextAnswer(locked: locked) { t in Task { await client.submit(text: t) } }.id(p.qid)
             }
             statusNote(p, revealed: revealed)
         }
@@ -202,6 +213,52 @@ struct TVLivePlayerView: View {
             ? (client.chosen == p.answerIndex ? ("Correct!", Tidbits.Palette.mint) : client.chosen == nil ? ("No answer submitted.", TVTheme.textSoft) : ("Not this time.", Tidbits.Palette.coral))
             : (client.hasAnswered ? ("Locked in — waiting for the reveal…", Tidbits.Palette.mint) : ("Choose your answer with the remote.", TVTheme.textSoft))
         Text(note.0).font(.system(size: 31, weight: .bold, design: .rounded)).foregroundStyle(note.1).padding(.top, 8)
+    }
+}
+
+/// Ten-foot numeric estimate: a focusable −/+ stepper + Submit (tvOS has no Slider).
+private struct TVNumericAnswer: View {
+    let spec: LiveRoom.Numeric
+    let locked: Bool
+    var onSubmit: (Double) -> Void
+    @State private var value: Double
+    @State private var sent = false
+    init(spec: LiveRoom.Numeric, locked: Bool, onSubmit: @escaping (Double) -> Void) {
+        self.spec = spec; self.locked = locked; self.onSubmit = onSubmit
+        _value = State(initialValue: ((spec.min + spec.max) / 2).rounded())
+    }
+    private var step: Double { spec.step > 0 ? spec.step : 1 }
+    var body: some View {
+        HStack(spacing: 28) {
+            Button("−") { value = max(spec.min, value - step) }.buttonStyle(TVChipStyle(accent: Tidbits.Palette.blue, selected: false)).disabled(locked || sent)
+            Text(value == value.rounded() ? "\(Int(value))\(unit)" : String(format: "%.1f%@", value, unit))
+                .font(.system(size: 44, weight: .black, design: .rounded)).foregroundStyle(.white).frame(minWidth: 220)
+            Button("+") { value = min(spec.max, value + step) }.buttonStyle(TVChipStyle(accent: Tidbits.Palette.blue, selected: false)).disabled(locked || sent)
+            if !sent {
+                Button("Submit") { sent = true; onSubmit(value) }.buttonStyle(TVChipStyle(accent: Tidbits.Palette.coral, selected: false)).disabled(locked)
+            }
+        }
+    }
+    private var unit: String { spec.unit.isEmpty ? "" : " \(spec.unit)" }
+}
+
+/// Ten-foot free-text answer (uses the tvOS on-screen keyboard).
+private struct TVTextAnswer: View {
+    let locked: Bool
+    var onSubmit: (String) -> Void
+    @State private var text = ""
+    @State private var sent = false
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            TextField("Type your answer", text: $text).autocorrectionDisabled()
+                .font(.system(size: 36, weight: .bold, design: .rounded)).frame(maxWidth: 700).disabled(locked || sent)
+            if !sent {
+                Button("Submit") {
+                    let t = text.trimmingCharacters(in: .whitespaces)
+                    if !t.isEmpty { sent = true; onSubmit(t) }
+                }.buttonStyle(TVChipStyle(accent: Tidbits.Palette.coral, selected: false)).disabled(locked)
+            }
+        }
     }
 }
 

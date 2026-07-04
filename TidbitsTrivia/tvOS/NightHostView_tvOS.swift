@@ -74,23 +74,39 @@ struct TVNightHostView: View {
                 if let q = host.current {
                     Text("ROUND \(host.roundNumber)/\(host.roundCount) · \(host.roundTitle.uppercased()) — Q\(host.questionInRound.n)/\(host.questionInRound.of) · \(host.answeredCount) answered")
                         .font(.system(size: 23, weight: .heavy, design: .rounded)).foregroundStyle(TVTheme.textSoft)
-                    Text(q.prompt).font(.system(size: 44, weight: .black, design: .rounded)).foregroundStyle(.white).fixedSize(horizontal: false, vertical: true)
-                    ForEach(Array(q.options.enumerated()), id: \.offset) { i, opt in
-                        let chosen = host.hostChoice == i
-                        let state: TVLiveOptionState = host.revealed
-                            ? (i == q.correctIndex ? .correct : (chosen ? .wrong : .normal))
-                            : (chosen ? .chosen : .normal)
-                        Button { if host.hostPlays { Task { await host.hostAnswer(i) } } } label: {
-                            HStack(spacing: 16) {
-                                Text("\(i + 1)").font(.system(size: 22, weight: .black)).foregroundStyle(.white)
-                                    .frame(width: 40, height: 40).background(RoundedRectangle(cornerRadius: 10).fill(.black.opacity(0.35)))
-                                Text(opt).font(.system(size: 28, weight: .bold, design: .rounded)).foregroundStyle(.white)
-                                Spacer(minLength: 0)
-                            }
+                    if let img = q.imageURL {
+                        AsyncImage(url: img) { phase in
+                            if let image = phase.image { image.resizable().scaledToFit() } else { Color.clear }
                         }
-                        .buttonStyle(TVLiveOptionStyle(state: state))
-                        .focused($focus, equals: .opt(i))
-                        .disabled(!host.hostPlays || host.revealed || host.hostAnswered)
+                        .frame(maxHeight: 260).clipShape(RoundedRectangle(cornerRadius: 14))
+                    }
+                    Text(q.prompt).font(.system(size: 44, weight: .black, design: .rounded)).foregroundStyle(.white).fixedSize(horizontal: false, vertical: true)
+                    if LiveNightHost.isMCQ(q) {
+                        ForEach(Array(q.options.enumerated()), id: \.offset) { i, opt in
+                            let chosen = host.hostChoice == i
+                            let state: TVLiveOptionState = host.revealed
+                                ? (i == q.correctIndex ? .correct : (chosen ? .wrong : .normal))
+                                : (chosen ? .chosen : .normal)
+                            Button { if host.hostPlays { Task { await host.hostAnswer(i) } } } label: {
+                                HStack(spacing: 16) {
+                                    Text("\(i + 1)").font(.system(size: 22, weight: .black)).foregroundStyle(.white)
+                                        .frame(width: 40, height: 40).background(RoundedRectangle(cornerRadius: 10).fill(.black.opacity(0.35)))
+                                    Text(opt).font(.system(size: 28, weight: .bold, design: .rounded)).foregroundStyle(.white)
+                                    Spacer(minLength: 0)
+                                }
+                            }
+                            .buttonStyle(TVLiveOptionStyle(state: state))
+                            .focused($focus, equals: .opt(i))
+                            .disabled(!host.hostPlays || host.revealed || host.hostAnswered)
+                        }
+                    } else {
+                        Text("Players answer on their devices. Reveal when everyone's in.")
+                            .font(.system(size: 27, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+                        if host.revealed {
+                            Text("Answer: \(LiveNightHost.answerLine(q))")
+                                .font(.system(size: 31, weight: .heavy, design: .rounded)).foregroundStyle(TVTheme.bg)
+                                .padding(.horizontal, 22).padding(.vertical, 12).background(RoundedRectangle(cornerRadius: 14).fill(Tidbits.Palette.mint))
+                        }
                     }
                     HStack(spacing: 20) {
                         if !host.revealed {

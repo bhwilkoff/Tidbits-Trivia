@@ -123,7 +123,7 @@ struct NightHostView: View {
                     }
                     Text(q.prompt).font(.system(size: 24, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
                         .fixedSize(horizontal: false, vertical: true)
-                    if Self.isMCQ(q) {
+                    if LiveNightHost.isMCQ(q) {
                         ForEach(Array(q.options.enumerated()), id: \.offset) { i, opt in
                             let chosen = host.hostChoice == i
                             let correct = host.revealed && i == q.correctIndex
@@ -152,7 +152,7 @@ struct NightHostView: View {
                         Text("Players answer on their devices. Reveal when everyone's in.")
                             .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
                         if host.revealed {
-                            Text("Answer: \(Self.answerLine(q))").font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                            Text("Answer: \(LiveNightHost.answerLine(q))").font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
                                 .padding(12).frame(maxWidth: .infinity, alignment: .leading).chunkyCard(fill: Tidbits.Palette.mint)
                         }
                     }
@@ -216,19 +216,6 @@ struct NightHostView: View {
     }
     private func errorLabel(_ e: String) -> some View {
         Label(e, systemImage: "exclamationmark.triangle.fill").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.coral)
-    }
-
-    static func isMCQ(_ q: Question) -> Bool {
-        q.closest == nil && q.ordering == nil && q.matching == nil && q.accepted == nil && q.enumerate == nil
-    }
-    /// The host-facing correct answer to read out on reveal (all types).
-    static func answerLine(_ q: Question) -> String {
-        if let c = q.closest { return c.formattedAnswer }
-        if let acc = q.accepted { return acc.first ?? q.correctAnswer }
-        if let ord = q.ordering { return ord.joined(separator: " → ") }
-        if let m = q.matching { return zip(m.keys, m.values).map { "\($0.0) = \($0.1)" }.joined(separator: ", ") }
-        if let e = q.enumerate { return e.displayNames.joined(separator: ", ") }
-        return q.correctAnswer
     }
 
     static func qrImage(_ string: String) -> UIImage? {

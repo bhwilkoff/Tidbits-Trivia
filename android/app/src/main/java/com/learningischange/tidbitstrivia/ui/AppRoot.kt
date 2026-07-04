@@ -42,6 +42,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import com.learningischange.tidbitstrivia.data.PlayerIdentity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.learningischange.tidbitstrivia.data.*
@@ -278,11 +279,12 @@ private fun HomeScreen(
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
                     Text("DAILY TIDBIT", fontWeight = FontWeight.Black, fontSize = 20.sp, color = Ink)
+                    val dayStreak = PlayerIdentity.profile?.streak?.current ?: 0
                     if (todayScore != null) {
-                        Text("Done for today — you scored $todayScore. New set tomorrow.", color = Ink.copy(alpha = 0.75f), fontSize = 13.sp)
+                        Text("Done for today — you scored $todayScore.${if (dayStreak >= 2) " 🔥 $dayStreak-day streak kept alive." else ""} New set tomorrow.", color = Ink.copy(alpha = 0.75f), fontSize = 13.sp)
                         Text("Play previous days", color = Ink, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                     } else {
-                        Text("7 questions. Everyone gets the same set. Keep your streak.", color = Ink.copy(alpha = 0.75f), fontSize = 13.sp)
+                        Text(if (dayStreak >= 2) "🔥 $dayStreak-day streak — play today's 7 to keep it going" else "7 questions. Everyone gets the same set. Start your streak.", color = Ink.copy(alpha = 0.75f), fontSize = 13.sp)
                     }
                 }
                 Icon(Icons.Filled.KeyboardArrowRight, null, tint = Ink)
@@ -952,10 +954,23 @@ private fun ResultsScreen(game: GameState, onPlayAgain: (() -> Unit)?, onDone: (
                 Text(grid, fontSize = 24.sp); Text("Spoiler-free — safe to share", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
             }
         }
+        // L2: the cross-context day streak made visible — encouragement, never punishing.
+        val st = PlayerIdentity.profile?.streak
+        if (st != null && st.current >= 1) {
+            ChunkyCard(fill = Pops.coral.copy(alpha = 0.12f)) {
+                Column(Modifier.padding(16.dp).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("🔥 ${st.current}", fontWeight = FontWeight.Black, fontSize = 44.sp, color = Pops.coral)
+                    Text(if (st.current > 1 && st.current == st.longest) "day streak · your best ever!" else "day streak", fontWeight = FontWeight.Bold)
+                    if (st.freezes > 0) Text("🧊 ${st.freezes} freeze${if (st.freezes == 1) "" else "s"} banked — miss a day and this keeps your streak alive",
+                        fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f), textAlign = TextAlign.Center)
+                }
+            }
+        }
         Button(onClick = {
             val filled = Math.round(acc * 7 / 100.0).toInt().coerceIn(0, 7)
             val meter = "▰".repeat(filled) + "▱".repeat(7 - filled)
-            val streak = if (game.maxStreak >= 3) "\n🔥 Best run ${game.maxStreak}" else ""
+            val dayStreak = PlayerIdentity.profile?.streak?.current ?: 0
+            val streak = if (dayStreak >= 2) "\n🔥 $dayStreak-day streak" else if (game.maxStreak >= 3) "\n🔥 Best run ${game.maxStreak}" else ""
             val text = "🧠 Tidbits — ${game.mode.title}\n${game.score} pts · ${game.correctCount}/$total\n$meter $acc%\n$grid$streak\nPlay at https://tidbitstrivia.com"
             context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, text) }, "Share"))
         }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Pops.blue, contentColor = Color.White)) { Text("Share Score") }

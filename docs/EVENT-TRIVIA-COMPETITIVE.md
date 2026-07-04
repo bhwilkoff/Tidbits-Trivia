@@ -63,6 +63,13 @@ operation **in-house** vs. paying (3).
 
 ---
 
+> **2026-07-03 upgrade wave SHIPPED (1.6.20):** speed-bonus/fastest-finger scoring,
+> free-text review + spelling leniency (Mac cockpit), host answer-lock cheating
+> deterrence (all platforms), a live vote-distribution tally (poll/majority viz), and
+> the big-screen SHOW system (theatrical reveal, climbing leaderboard, round-intro
+> cards, winner celebration — §A8). Deferred: kick/moderate (needs a rules change),
+> CSV import, recurring scheduling, analytics, tab-switch focus signal.
+
 ## 3. The master feature checklist
 
 Legend: **[TS]** table-stakes (must-have to be credible) · **[D]** differentiator

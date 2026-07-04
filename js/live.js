@@ -5,7 +5,7 @@
 import { FirebaseNet } from './firebase.js';
 
 const S = { code: '', team: '', joined: false, joining: false, pub: null, meta: null,
-            score: 0, submittedQid: null, chosen: null, error: '' };
+            score: 0, submittedQid: null, chosen: null, error: '', local: {} };
 let root = null, unsubs = [];
 
 export function openLive(code = '') {
@@ -44,7 +44,7 @@ async function join() {
     unsubs.push(FirebaseNet.liveOnMeta(code, (m) => { S.meta = m; draw(); }));
     unsubs.push(FirebaseNet.liveOnScore(code, (v) => { S.score = v; draw(); }));
     unsubs.push(FirebaseNet.liveOnPub(code, (p) => {
-      if (p && p.qid !== S.pub?.qid) { S.submittedQid = null; S.chosen = null; }
+      if (p && p.qid !== S.pub?.qid) { S.submittedQid = null; S.chosen = null; S.local = {}; }
       S.pub = p; draw();
     }));
     draw();
@@ -55,12 +55,13 @@ async function join() {
   }
 }
 
-async function pick(i) {
+async function submitAns(fields) {
   if (!S.pub || S.pub.phase !== 'question' || S.submittedQid === S.pub.qid) return;
-  S.chosen = i; S.submittedQid = S.pub.qid; draw();
-  try { await FirebaseNet.liveSubmit(S.code, S.pub.qid, { choice: i }); }
+  S.submittedQid = S.pub.qid; draw();
+  try { await FirebaseNet.liveSubmit(S.code, S.pub.qid, fields); }
   catch { S.submittedQid = null; S.chosen = null; S.error = 'Answer didn’t send — tap again.'; draw(); }
 }
+async function pick(i) { S.chosen = i; submitAns({ choice: i }); }
 
 function esc(s) { return String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 
@@ -75,6 +76,36 @@ function draw() {
   }
   root.querySelector('#live-x')?.addEventListener('click', () => { location.hash = '#/play'; });
   root.querySelectorAll('[data-opt]').forEach((b) => b.addEventListener('click', () => pick(+b.dataset.opt)));
+
+  const p = S.pub;
+  root.querySelector('#live-range')?.addEventListener('input', (e) => {
+    S.local.num = +e.target.value;
+    const d = root.querySelector('#live-numval'); if (d) d.textContent = `${S.local.num}${p?.numeric?.unit ? ' ' + p.numeric.unit : ''}`;
+  });
+  root.querySelector('#live-text')?.addEventListener('input', (e) => { S.local.text = e.target.value; });
+  root.querySelectorAll('.live-mv').forEach((b) => b.addEventListener('click', () => {
+    const [pos, dir] = b.dataset.mv.split(':').map(Number);
+    const order = S.local.order || (p.orderItems || []).map((_, i) => i);
+    const n = pos + dir;
+    if (n >= 0 && n < order.length) { [order[pos], order[n]] = [order[n], order[pos]]; S.local.order = order; draw(); }
+  }));
+  root.querySelectorAll('.live-sel').forEach((sel) => sel.addEventListener('change', (e) => {
+    const i = +sel.dataset.key; const pairs = S.local.pairs || (p.matchKeys || []).map(() => -1);
+    pairs[i] = +e.target.value; S.local.pairs = pairs;
+  }));
+  root.querySelector('#live-add')?.addEventListener('click', () => {
+    const t = (root.querySelector('#live-enum')?.value || '').trim();
+    const items = S.local.enumItems || [];
+    if (t && !items.some((x) => x.toLowerCase() === t.toLowerCase())) { items.push(t); S.local.enumItems = items; draw(); }
+  });
+  root.querySelector('#live-submit')?.addEventListener('click', () => {
+    if (!p) return;
+    if (p.numeric) submitAns({ number: S.local.num != null ? S.local.num : Math.round((p.numeric.min + p.numeric.max) / 2) });
+    else if (p.orderItems) submitAns({ order: S.local.order || p.orderItems.map((_, i) => i) });
+    else if (p.matchKeys) { const pairs = S.local.pairs || p.matchKeys.map(() => -1); if (pairs.some((v) => v < 0)) return; submitAns({ pairs }); }
+    else if (p.enumTarget != null) { const items = S.local.enumItems || []; if (!items.length) return; submitAns({ list: items }); }
+    else { const t = (root.querySelector('#live-text')?.value || '').trim(); if (t) submitAns({ text: t }); }
+  });
 }
 
 function joinHTML() {
@@ -109,28 +140,59 @@ function playHTML() {
   }
 
   const revealed = p.phase === 'reveal';
-  const opts = (p.options || []).map((o, i) => {
-    const chosen = S.chosen === i;
-    const correct = revealed && p.answerIndex === i;
-    const wrong = revealed && chosen && p.answerIndex !== i;
-    const cls = ['live-opt', chosen ? 'chosen' : '', correct ? 'correct' : '', wrong ? 'wrong' : ''].join(' ');
-    const dis = (revealed || S.submittedQid === p.qid) ? 'disabled' : '';
-    return `<button class="${cls}" data-opt="${i}" ${dis}><span class="live-optnum">${i + 1}</span>${esc(o)}</button>`;
-  }).join('');
-
+  const answered = S.submittedQid === p.qid;
   const status = revealed
-    ? (S.chosen === p.answerIndex ? `<div class="live-note ok">Correct! +points</div>`
-       : S.chosen == null ? `<div class="live-note">No answer submitted.</div>`
-       : `<div class="live-note miss">Not this time.</div>`)
-    : (S.submittedQid === p.qid ? `<div class="live-note ok">Locked in — waiting for the reveal…</div>`
-       : `<div class="live-note">Tap your answer.</div>`);
+    ? `<div class="live-note ok">Answer revealed — check your score.</div>`
+    : (answered ? `<div class="live-note ok">Locked in — waiting for the reveal…</div>`
+       : `<div class="live-note">Answer below.</div>`);
+  const img = p.imageURL ? `<img class="live-img" src="${esc(p.imageURL)}" alt="">` : '';
 
   return `<div class="live-play">${head}
     <div class="live-round">ROUND ${p.round} · ${esc(p.roundTitle)} — Q${p.qNum}/${p.qTotal}</div>
+    ${img}
     <div class="live-q">${esc(p.prompt)}</div>
-    <div class="live-opts">${opts || '<p class="live-sub">Answer on your team sheet — the host is scoring this round.</p>'}</div>
+    ${answerHTML(p, revealed)}
     ${status}
   </div>`;
+}
+
+/** The right answer input for the question type. The host scores each on reveal. */
+function answerHTML(p, revealed) {
+  const locked = revealed || S.submittedQid === p.qid;
+  const L = S.local;
+  const submit = locked ? '' : '<button id="live-submit" class="live-go">Submit</button>';
+  if (p.options) {
+    return `<div class="live-opts">${p.options.map((o, i) => {
+      const chosen = S.chosen === i;
+      const correct = revealed && p.answerIndex === i;
+      const wrong = revealed && chosen && p.answerIndex !== i;
+      const cls = ['live-opt', chosen ? 'chosen' : '', correct ? 'correct' : '', wrong ? 'wrong' : ''].join(' ');
+      return `<button class="${cls}" data-opt="${i}" ${locked ? 'disabled' : ''}><span class="live-optnum">${i + 1}</span>${esc(o)}</button>`;
+    }).join('')}</div>`;
+  }
+  if (p.numeric) {
+    const n = p.numeric;
+    const val = L.num != null ? L.num : Math.round((n.min + n.max) / 2);
+    return `<div class="live-num" id="live-numval">${val}${n.unit ? ' ' + esc(n.unit) : ''}</div>
+      <input id="live-range" class="live-range" type="range" min="${n.min}" max="${n.max}" step="${n.step || 1}" value="${val}" ${locked ? 'disabled' : ''}>${submit}`;
+  }
+  if (p.orderItems) {
+    const order = L.order || p.orderItems.map((_, i) => i);
+    return `<div class="live-order">${order.map((idx, pos) =>
+      `<div class="live-orow"><span class="live-onum">${pos + 1}.</span><span class="live-oname">${esc(p.orderItems[idx])}</span>${locked ? '' : `<button class="live-mv" data-mv="${pos}:-1">▲</button><button class="live-mv" data-mv="${pos}:1">▼</button>`}</div>`).join('')}</div>${submit}`;
+  }
+  if (p.matchKeys && p.matchValues) {
+    const pairs = L.pairs || p.matchKeys.map(() => -1);
+    return `<div class="live-match">${p.matchKeys.map((k, i) =>
+      `<div class="live-mrow"><span>${esc(k)}</span><select class="live-sel" data-key="${i}" ${locked ? 'disabled' : ''}><option value="-1">Choose…</option>${p.matchValues.map((v, vi) => `<option value="${vi}" ${pairs[i] === vi ? 'selected' : ''}>${esc(v)}</option>`).join('')}</select></div>`).join('')}</div>${submit}`;
+  }
+  if (p.enumTarget != null) {
+    const items = L.enumItems || [];
+    return `<p class="live-sub">Name as many as you can (${items.length}${p.enumTarget ? '/' + p.enumTarget : ''})</p>
+      ${items.length ? `<div class="live-chips">${items.map(esc).join(' · ')}</div>` : ''}
+      ${locked ? '' : `<div class="live-addrow"><input id="live-enum" class="live-in" placeholder="Add one…"><button id="live-add" class="live-go">Add</button></div><button id="live-submit" class="live-go">Done</button>`}`;
+  }
+  return `<input id="live-text" class="live-in" placeholder="Type your answer" value="${esc(L.text || '')}" ${locked ? 'disabled' : ''}>${submit}`;
 }
 
 function injectStyles() {
@@ -163,6 +225,17 @@ function injectStyles() {
   .live-opt.correct{background:#3CCB8A;color:#fff}
   .live-opt.wrong{background:#f3d1cd}
   .live-optnum{display:inline-flex;width:26px;height:26px;align-items:center;justify-content:center;border-radius:8px;background:#231E1A;color:#fff;font-weight:900;font-size:.9rem;flex:none}
+  .live-img{display:block;max-width:100%;max-height:260px;border-radius:12px;margin:6px 0}
+  .live-num{font-weight:900;font-size:1.8rem;color:#231E1A;text-align:center;margin:6px 0}
+  .live-range{width:100%;margin:6px 0 12px}
+  .live-order,.live-match{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+  .live-orow,.live-mrow{display:flex;align-items:center;gap:8px;padding:10px 12px;border:2.5px solid #231E1A;border-radius:12px;background:#fff}
+  .live-onum{font-weight:900;color:#8a8078}.live-oname{flex:1;font-weight:800;color:#231E1A}
+  .live-mrow>span:first-child{flex:1;font-weight:800;color:#231E1A}
+  .live-mv{width:34px;height:34px;border:2px solid #231E1A;border-radius:8px;background:#fff;font-weight:900;cursor:pointer}
+  .live-sel{padding:8px;border:2px solid #231E1A;border-radius:8px;font-weight:700;background:#fff}
+  .live-chips{font-weight:800;color:#231E1A;margin:6px 0}
+  .live-addrow{display:flex;gap:8px;align-items:center}.live-addrow .live-in{margin:0}.live-addrow .live-go{width:auto;margin:0;padding:12px 18px}
   .live-note{margin-top:18px;text-align:center;font-weight:800;color:#8a8078}
   .live-note.ok{color:#2f9e6f}.live-note.miss{color:#c0392b}
   .live-center{text-align:center;padding:40px 16px}`;

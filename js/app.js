@@ -1451,7 +1451,8 @@ let nhRoot = null;
 
 async function openNightHost(plan, cat) {
   Object.assign(NH, { code: '', error: '', questions: [], index: 0, revealed: false, stage: 'lobby',
-    teams: {}, scores: {}, answers: {}, hostChoice: null, plan, cat, unsubs: [], ansUnsub: null });
+    teams: {}, scores: {}, answers: {}, hostChoice: null, plan, cat, unsubs: [], ansUnsub: null,
+    shuffledOrder: [], shuffledValues: [] });
   nhInjectStyles();
   if (!nhRoot) { nhRoot = document.createElement('div'); nhRoot.className = 'nh-ov'; document.body.appendChild(nhRoot); }
   drawHost();
@@ -1474,15 +1475,48 @@ function closeNightHost() {
   NH.code = ''; NH.stage = 'lobby';
 }
 
+function nhIsMCQ(q) { return !q.closest && !q.ordering && !q.matching && !q.accepted && !q.enumerate; }
+function nhShuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function nhPrepare() {
+  const q = NH.questions[NH.index];
+  NH.shuffledOrder = q && q.ordering ? nhShuffle([...q.ordering]) : [];
+  NH.shuffledValues = q && q.matching ? nhShuffle([...q.matching.values]) : [];
+}
+
 function nhPub() {
   const q = NH.questions[NH.index];
-  if (!q) return { round: 0, roundTitle: '', qid: 'end', qNum: 0, qTotal: 0, phase: 'ended', prompt: '', options: null, format: '', answerIndex: null };
+  if (!q) return { round: 0, roundTitle: '', qid: 'end', qNum: 0, qTotal: 0, phase: 'ended', prompt: '', format: '' };
   const ri = q.roundIndex || 0;
   const inRound = NH.questions.filter((x) => (x.roundIndex || 0) === ri);
   const kind = (NH.plan.rounds[ri] || [])[0];
-  return { round: ri + 1, roundTitle: NIGHT.roundTitle[kind] || kind || '', qid: `r${ri}q${NH.index}`,
+  const p = { round: ri + 1, roundTitle: NIGHT.roundTitle[kind] || kind || '', qid: `r${ri}q${NH.index}`,
     qNum: inRound.indexOf(q) + 1, qTotal: inRound.length, phase: NH.revealed ? 'reveal' : 'question',
-    prompt: q.prompt, options: q.options, format: kind || 'classic', answerIndex: NH.revealed ? q.correctIndex : null };
+    prompt: q.prompt, format: kind || 'classic' };
+  if (nhIsMCQ(q)) { p.options = q.options; if (NH.revealed) p.answerIndex = q.correctIndex; }
+  if (q.image) p.imageURL = q.image;
+  if (q.closest) p.numeric = { min: q.closest.min, max: q.closest.max, step: q.closest.step, unit: q.closest.unit };
+  if (q.ordering) p.orderItems = NH.shuffledOrder;
+  if (q.matching) { p.matchKeys = q.matching.keys; p.matchValues = NH.shuffledValues; }
+  if (q.enumerate) p.enumTarget = q.enumerate.groups.length;
+  return p;
+}
+
+/** Points for one submission, by type (mirrors LiveNightHost.score). */
+function nhScore(q, a) {
+  if (q.closest) { if (a.number == null) return 0; const err = Math.abs(a.number - q.closest.answer); return err < q.closest.tolerance ? Math.round(50 * (1 - err / q.closest.tolerance)) : 0; }
+  if (q.ordering) { if (!a.order) return 0; let pts = 0; a.order.forEach((idx, pos) => { if (NH.shuffledOrder[idx] === q.ordering[pos]) pts++; }); return pts; }
+  if (q.matching) { if (!a.pairs) return 0; let pts = 0; q.matching.keys.forEach((k, i) => { const vi = a.pairs[i]; if (vi != null && NH.shuffledValues[vi] === q.matching.values[i]) pts++; }); return pts; }
+  if (q.accepted) return a.text && matchesAccepted(a.text, q.accepted) ? 1 : 0;
+  if (q.enumerate) { if (!a.list) return 0; const filled = new Set(); for (const name of a.list) { for (let gi = 0; gi < q.enumerate.groups.length; gi++) { if (!filled.has(gi) && matchesAccepted(name, q.enumerate.groups[gi])) { filled.add(gi); break; } } } return filled.size; }
+  return a.choice === q.correctIndex ? 1 : 0;
+}
+function nhAnswerLine(q) {
+  if (q.closest) return q.closest.unit ? `${q.closest.answer} ${q.closest.unit}` : `${q.closest.answer}`;
+  if (q.accepted) return q.accepted[0] || '';
+  if (q.ordering) return q.ordering.join(' → ');
+  if (q.matching) return q.matching.keys.map((k, i) => `${k} = ${q.matching.values[i]}`).join(', ');
+  if (q.enumerate) return q.enumerate.groups.map((g) => g[0]).join(', ');
+  return (q.options && q.options[q.correctIndex]) || '';
 }
 
 async function nhPublish() {
@@ -1497,6 +1531,7 @@ async function nhStart() {
   if (!NH.code || !NH.questions.length) return;
   if (NH.hostPlays) await FirebaseNet.liveHostJoinAsTeam(NH.code, NH.hostName || 'Host');
   NH.index = 0; NH.revealed = false; NH.hostChoice = null; NH.stage = 'playing';
+  nhPrepare();
   await FirebaseNet.liveSetState(NH.code, 'live');
   await nhPublish(); drawHost();
 }
@@ -1506,7 +1541,8 @@ async function nhReveal() {
   await FirebaseNet.livePublish(NH.code, nhPub());
   const q = NH.questions[NH.index];
   for (const [uid, ans] of Object.entries(NH.answers)) {
-    if (ans && ans.choice === q.correctIndex) await FirebaseNet.liveSetScore(NH.code, uid, (NH.scores[uid] || 0) + 1);
+    const pts = ans ? nhScore(q, ans) : 0;
+    if (pts > 0) await FirebaseNet.liveSetScore(NH.code, uid, (NH.scores[uid] || 0) + pts);
   }
   drawHost();
 }
@@ -1514,7 +1550,7 @@ async function nhNext() {
   if (!NH.revealed) return;
   NH.revealed = false; NH.hostChoice = null; NH.index++;
   if (!NH.questions[NH.index]) { NH.stage = 'ended'; await FirebaseNet.liveSetState(NH.code, 'ended'); await FirebaseNet.livePublish(NH.code, nhPub()); }
-  else await nhPublish();
+  else { nhPrepare(); await nhPublish(); }
   drawHost();
 }
 async function nhAnswer(i) {
@@ -1564,20 +1600,29 @@ function drawHost() {
   }
   // playing
   const p = nhPub();
-  const opts = (p.options || []).map((o, i) => {
-    const chosen = NH.hostChoice === i;
-    const correct = NH.revealed && i === NH.questions[NH.index].correctIndex;
-    const wrong = NH.revealed && chosen && !correct;
-    const cls = ['nh-opt', chosen ? 'chosen' : '', correct ? 'correct' : '', wrong ? 'wrong' : ''].join(' ');
-    const dis = (!NH.hostPlays || NH.revealed || NH.hostChoice != null) ? 'disabled' : '';
-    return `<button class="${cls}" data-nhopt="${i}" ${dis}><span class="nh-optn">${i + 1}</span>${h(o)}</button>`;
-  }).join('');
+  const q = NH.questions[NH.index];
+  const img = p.imageURL ? `<img class="nh-img" src="${h(p.imageURL)}" alt="">` : '';
+  let body;
+  if (nhIsMCQ(q)) {
+    const opts = (p.options || []).map((o, i) => {
+      const chosen = NH.hostChoice === i;
+      const correct = NH.revealed && i === q.correctIndex;
+      const wrong = NH.revealed && chosen && !correct;
+      const cls = ['nh-opt', chosen ? 'chosen' : '', correct ? 'correct' : '', wrong ? 'wrong' : ''].join(' ');
+      const dis = (!NH.hostPlays || NH.revealed || NH.hostChoice != null) ? 'disabled' : '';
+      return `<button class="${cls}" data-nhopt="${i}" ${dis}><span class="nh-optn">${i + 1}</span>${h(o)}</button>`;
+    }).join('');
+    body = `<div class="nh-opts">${opts}</div>`;
+  } else {
+    body = `<p class="muted">Players answer on their devices. Reveal when everyone's in.</p>${NH.revealed ? `<div class="nh-answer">Answer: ${h(nhAnswerLine(q))}</div>` : ''}`;
+  }
   nhRoot.innerHTML = `<div class="nh-play">
     <div class="nh-head"><div class="nh-badge">CODE ${NH.code}</div><div class="muted">${Object.keys(NH.answers).length} answered</div>
       <button class="nh-x" id="nh-x" aria-label="End">✕</button></div>
     <div class="nh-round">ROUND ${p.round}/${NH.plan.rounds.length} · ${h(p.roundTitle)} — Q${p.qNum}/${p.qTotal}</div>
+    ${img}
     <div class="nh-q">${h(p.prompt)}</div>
-    <div class="nh-opts">${opts}</div>
+    ${body}
     <div class="nh-actions">${NH.revealed ? '<button class="btn btn-primary" id="nh-next">Next</button>' : '<button class="btn btn-primary" id="nh-reveal">Reveal</button>'}</div>
     ${standings}
   </div>`;
@@ -1604,6 +1649,8 @@ function nhInjectStyles() {
   .nh-head{display:flex;align-items:center;gap:12px;padding:4px 0 12px}
   .nh-round{font-weight:800;color:#8a8078;margin:6px 0}
   .nh-q{font-weight:900;font-size:1.5rem;line-height:1.25;color:#231E1A;margin:6px 0 16px}
+  .nh-img{display:block;max-width:100%;max-height:260px;border-radius:12px;margin:6px 0}
+  .nh-answer{font-weight:900;color:#231E1A;background:#3CCB8A;border-radius:12px;padding:12px;margin-bottom:14px}
   .nh-opts{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
   .nh-opt{display:flex;align-items:center;gap:12px;text-align:left;padding:14px;font-size:1.05rem;font-weight:800;color:#231E1A;background:#fff;border:2.5px solid #231E1A;border-radius:14px;box-shadow:3px 3px 0 #231E1A;cursor:pointer}
   .nh-opt:disabled{cursor:default}.nh-opt.chosen{background:#DDE3FF}.nh-opt.correct{background:#3CCB8A;color:#fff}.nh-opt.wrong{background:#f3d1cd}

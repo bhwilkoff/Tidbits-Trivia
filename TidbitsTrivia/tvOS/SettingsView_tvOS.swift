@@ -11,6 +11,7 @@ struct SettingsView_tvOS: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(GameCenterManager.self) private var gameCenter
+    @Environment(PlayerIdentityStore.self) private var identity
     @AppStorage(GameSettings.reviewKey) private var reviewEnabled = true
     @State private var confirmReset = false
 
@@ -27,6 +28,23 @@ struct SettingsView_tvOS: View {
             TVTheme.bg.ignoresSafeArea()
             NavigationStack {
                 Form {
+                Section("Profile") {
+                    if let p = identity.profile {
+                        HStack(spacing: 20) {
+                            Circle().fill(Color(hue: PlayerIdentity.avatarHue(p.avatarSeed), saturation: 0.55, brightness: 0.85))
+                                .overlay(Text(PlayerIdentity.initials(p.name)).font(.system(size: 26, weight: .black, design: .rounded)).foregroundStyle(.black))
+                                .frame(width: 64, height: 64)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(p.name).font(.headline)
+                                Text("Rating \(Int(p.rating.value)) · \(p.streak.current)-day streak").foregroundStyle(.secondary)
+                            }
+                        }
+                        LabeledContent("Games played", value: "\(p.stats.gamesPlayed)")
+                        LabeledContent("Live nights", value: "\(p.stats.liveNights)")
+                    } else {
+                        Text("Setting up your profile…").foregroundStyle(.secondary)
+                    }
+                }
                 Section {
                     Toggle("Review questions", isOn: $reviewEnabled)
                 } header: {

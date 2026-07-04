@@ -7,9 +7,12 @@ import SwiftData
 /// Mac (that's a touch affordance).
 struct SettingsView_macOS: View {
     @Environment(GameCenterManager.self) private var gameCenter
+    @Environment(PlayerIdentityStore.self) private var identity
     @Environment(\.modelContext) private var modelContext
     @AppStorage(GameSettings.reviewKey) private var reviewEnabled = true
     @State private var confirmReset = false
+    @State private var editingName = false
+    @State private var draftName = ""
 
     private var version: String {
         let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
@@ -19,6 +22,25 @@ struct SettingsView_macOS: View {
 
     var body: some View {
         Form {
+            Section("Profile") {
+                if let p = identity.profile {
+                    HStack(spacing: 12) {
+                        profileAvatar(p.avatarSeed, PlayerIdentity.initials(p.name), 44)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(p.name).font(.headline)
+                            Text("\(p.streak.current)-day streak · \(p.stats.gamesPlayed) games").font(.caption).foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Button("Rename…") { draftName = p.name; editingName = true }
+                    }
+                    let acc = p.stats.questionsAnswered > 0 ? p.stats.correct * 100 / p.stats.questionsAnswered : 0
+                    LabeledContent("Tidbits Rating", value: p.rating.provisional ? "\(Int(p.rating.value)) · provisional" : "\(Int(p.rating.value))")
+                    LabeledContent("Accuracy", value: "\(acc)%")
+                    LabeledContent("Live nights", value: "\(p.stats.liveNights)")
+                } else {
+                    Text("Setting up your profile…").foregroundStyle(.secondary)
+                }
+            }
             Section("Gameplay") {
                 Toggle("Review questions", isOn: $reviewEnabled)
                 Text("Occasionally re-asks questions you've missed, spaced out, so they stick. Turn off to only ever see new questions.")
@@ -41,13 +63,28 @@ struct SettingsView_macOS: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 460, height: 460)
+        .frame(width: 460, height: 560)
         .confirmationDialog("Reset everything?", isPresented: $confirmReset) {
             Button("Reset Everything", role: .destructive) { resetAll() }
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("This permanently deletes your scores, streaks, and review list.")
         }
+        .alert("Display name", isPresented: $editingName) {
+            TextField("Name", text: $draftName)
+            Button("Save") { Task { await identity.rename(draftName) } }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("The name other players and venues see on leaderboards.")
+        }
+    }
+
+    /// A deterministic seeded avatar — shared shape with the iOS profile.
+    private func profileAvatar(_ seed: String, _ initials: String, _ size: CGFloat) -> some View {
+        Circle().fill(Color(hue: PlayerIdentity.avatarHue(seed), saturation: 0.55, brightness: 0.85))
+            .overlay(Circle().strokeBorder(Tidbits.Palette.ink, lineWidth: 2))
+            .overlay(Text(initials).font(.system(size: size / 2.6, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink))
+            .frame(width: size, height: size)
     }
 
     private func resetAll() {

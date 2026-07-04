@@ -88,6 +88,19 @@ enum PlayerIdentity {
         "standings/\(season)/\(venue)/\(uid)"
     }
 
+    /// Up-to-two initials for the seeded avatar (shared by every platform's profile UI).
+    nonisolated static func initials(_ name: String) -> String {
+        let parts = name.split(separator: " ").prefix(2)
+        let s = parts.compactMap { $0.first }.map(String.init).joined()
+        return s.isEmpty ? "?" : s.uppercased()
+    }
+
+    /// Deterministic avatar hue (0–1) from the seed — djb2, matching iOS/Android/web.
+    nonisolated static func avatarHue(_ seed: String) -> Double {
+        let stable = seed.utf8.reduce(5381) { ($0 &* 33) &+ Int($1) }
+        return Double(abs(stable) % 360) / 360.0
+    }
+
     /// Today in the player's local zone, "yyyy-MM-dd" (the streak day key).
     nonisolated static func todayString() -> String {
         let f = DateFormatter(); f.locale = Locale(identifier: "en_US_POSIX"); f.dateFormat = "yyyy-MM-dd"

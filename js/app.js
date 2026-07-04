@@ -27,10 +27,13 @@ window.addEventListener('hashchange', render);
 // the identity. pushLocal on sign-in so anon plays aren't lost; then pull the union.
 async function syncDailyLog(pushLocal = false) {
   if (!Identity.signedIn) return;
-  if (pushLocal) { for (const [day, score] of Object.entries(Store.allDaily())) Identity.syncDailyScore(day, score); }
-  const remote = await Identity.fetchDailyLog();
+  const remote = await Identity.fetchDailyLog();   // read first — the account is authoritative
+  // Push only days the account doesn't already have — an established daily score is never
+  // overwritten, so replaying a day while logged out can't beat it.
+  if (pushLocal) { for (const [day, score] of Object.entries(Store.allDaily())) { if (remote[day] == null) Identity.syncDailyScore(day, score); } }
+  // Adopt the account's value for every day (reconciles a cross-device conflict).
   let changed = false;
-  for (const [day, score] of Object.entries(remote)) { if (Store.dailyScore(day) == null) { Store.recordDaily(day, score); changed = true; } }
+  for (const [day, score] of Object.entries(remote)) { if (Store.dailyScore(day) !== score) { Store.adoptDaily(day, score); changed = true; } }
   if (changed) render();
 }
 

@@ -135,6 +135,13 @@ export const Store = {
     m[day] = score;
     LS.set('tidbits.daily.results', m);
   },
+  // Adopt the signed-in account's authoritative score for a day (overwrites local). Used
+  // ONLY by cross-device sync to reconcile a conflict — gameplay stays first-wins.
+  adoptDaily(day, score) {
+    const m = LS.get('tidbits.daily.results', {});
+    m[day] = score;
+    LS.set('tidbits.daily.results', m);
+  },
   bestScore(mode) {
     return this.records().filter((r) => r.mode === mode).reduce((m, r) => Math.max(m, r.score), 0);
   },

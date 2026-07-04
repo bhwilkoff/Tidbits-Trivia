@@ -1001,6 +1001,13 @@ class Store(context: Context) {
         o.put(day, score)
         prefs.edit().putString("daily_results", o.toString()).apply()
     }
+    /** Adopt the signed-in account's authoritative score for a day (overwrites local). Used
+     *  ONLY by cross-device sync to reconcile a conflict — gameplay stays first-wins. */
+    fun adoptDaily(day: String, score: Int) {
+        val o = JSONObject(prefs.getString("daily_results", "{}") ?: "{}")
+        o.put(day, score)
+        prefs.edit().putString("daily_results", o.toString()).apply()
+    }
 
     fun streak(): Pair<Int, Int> = (prefs.getInt("streak_cur", 0)) to (prefs.getInt("streak_best", 0))
     private fun bumpStreak() {

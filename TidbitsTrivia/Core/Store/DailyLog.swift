@@ -35,6 +35,14 @@ enum DailyLog {
         UserDefaults.standard.set(map, forKey: key)
     }
 
+    /// Adopt the signed-in account's authoritative score for a day (overwrites). Used ONLY by
+    /// the cross-device sync to reconcile a conflict — gameplay stays first-completion-wins.
+    static func adopt(day: String, score: Int) {
+        var map = (UserDefaults.standard.dictionary(forKey: key) as? [String: Int]) ?? [:]
+        map[day] = score
+        UserDefaults.standard.set(map, forKey: key)
+    }
+
     /// The archive: today first, then the previous days, newest → oldest.
     static func recentDays(_ count: Int = archiveDays) -> [(day: String, score: Int?)] {
         let cal = Calendar.current

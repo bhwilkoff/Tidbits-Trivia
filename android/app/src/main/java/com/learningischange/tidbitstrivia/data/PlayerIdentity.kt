@@ -154,9 +154,14 @@ object PlayerIdentity {
     suspend fun syncDailyLog(store: Store, pushLocal: Boolean = false) {
         if (!signedIn) return
         val key = profileId ?: return
-        if (pushLocal) store.allDaily().forEach { (day, score) -> runCatching { FirebaseNet.setDailyScore(key, day, score) } }
-        val remote = runCatching { FirebaseNet.loadDailyLog(key) }.getOrNull() ?: return
-        remote.forEach { (day, score) -> store.recordDaily(day, score) }
+        val remote = runCatching { FirebaseNet.loadDailyLog(key) }.getOrNull() ?: emptyMap()
+        // Push only days the account doesn't already have — an established daily score is
+        // never overwritten, so replaying a day while logged out can't beat it.
+        if (pushLocal) store.allDaily().forEach { (day, score) ->
+            if (!remote.containsKey(day)) runCatching { FirebaseNet.setDailyScore(key, day, score) }
+        }
+        // The account is authoritative — adopt its value for every day (reconciles cross-device).
+        remote.forEach { (day, score) -> store.adoptDaily(day, score) }
         dailyLogRev++   // trigger recomposition of the daily card/lock
     }
 

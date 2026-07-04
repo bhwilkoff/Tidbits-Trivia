@@ -186,10 +186,16 @@ final class PlayerIdentityStore {
     /// plays first so nothing is lost; then pull the union into the local store.
     func syncDailyLog(pushLocal: Bool = false) async {
         guard signedIn, let key = profileId else { return }
-        if pushLocal { for (day, score) in DailyLog.all() { try? await db.put("dailyLog/\(key)/\(day)", score) } }
-        if let remote = (try? await db.get("dailyLog/\(key)", as: [String: Int].self)) ?? nil {
-            for (day, score) in remote { DailyLog.record(day: day, score: score) }
+        let remote = ((try? await db.get("dailyLog/\(key)", as: [String: Int].self)) ?? nil) ?? [:]
+        // Push only days the account doesn't already have — an established daily score is never
+        // overwritten, so replaying a day while logged out can't beat it.
+        if pushLocal {
+            for (day, score) in DailyLog.all() where remote[day] == nil {
+                try? await db.put("dailyLog/\(key)/\(day)", score)
+            }
         }
+        // The account is authoritative — adopt its value for every day (reconciles cross-device).
+        for (day, score) in remote { DailyLog.adopt(day: day, score: score) }
     }
 
     private var watchTask: Task<Void, Never>?

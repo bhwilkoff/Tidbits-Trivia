@@ -145,6 +145,7 @@ object FirebaseNet {
     data class LiveAnswer(
         val choice: Int? = null, val text: String? = null, val number: Double? = null,
         val order: List<Int>? = null, val pairs: List<Int>? = null, val list: List<String>? = null,
+        val ts: Long = 0,
     )
     data class LiveMeta(val state: String, val venue: String)
 
@@ -271,6 +272,7 @@ object FirebaseNet {
                     order = c.child("order").children.mapNotNull { (it.value as? Number)?.toInt() }.ifEmpty { null },
                     pairs = c.child("pairs").children.mapNotNull { (it.value as? Number)?.toInt() }.ifEmpty { null },
                     list = c.child("list").children.mapNotNull { it.getValue(String::class.java) }.ifEmpty { null },
+                    ts = (c.child("ts").value as? Number)?.toLong() ?: 0L,
                 )
             }.toMap())
         }

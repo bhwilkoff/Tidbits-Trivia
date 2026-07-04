@@ -11,7 +11,7 @@ struct TVNightHostView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var host: LiveNightHost
     @FocusState private var focus: Field?
-    private enum Field: Hashable { case play, start, reveal, next, opt(Int) }
+    private enum Field: Hashable { case play, speed, start, reveal, next, opt(Int) }
 
     init(plan: NightPlan, category: TriviaCategory) {
         _host = State(wrappedValue: LiveNightHost(plan: plan, category: category))
@@ -52,9 +52,14 @@ struct TVNightHostView: View {
                 if let e = host.errorText {
                     Label(e, systemImage: "exclamationmark.triangle.fill").font(.system(size: 25, weight: .bold, design: .rounded)).foregroundStyle(Tidbits.Palette.coral)
                 }
-                Button(host.hostPlays ? "I'll play too: ON" : "I'll play too: OFF") { host.hostPlays.toggle() }
-                    .buttonStyle(TVChipStyle(accent: Tidbits.Palette.teal, selected: host.hostPlays))
-                    .focused($focus, equals: .play)
+                HStack(spacing: 20) {
+                    Button(host.hostPlays ? "I'll play too: ON" : "I'll play too: OFF") { host.hostPlays.toggle() }
+                        .buttonStyle(TVChipStyle(accent: Tidbits.Palette.teal, selected: host.hostPlays))
+                        .focused($focus, equals: .play)
+                    Button(host.speedBonus ? "Speed bonus: ON" : "Speed bonus: OFF") { host.speedBonus.toggle() }
+                        .buttonStyle(TVChipStyle(accent: Tidbits.Palette.blue, selected: host.speedBonus))
+                        .focused($focus, equals: .speed)
+                }
                 Button(host.isOpen ? "Start the Night" : "Opening room…") { Task { await host.start() } }
                     .buttonStyle(TVChipStyle(accent: Tidbits.Palette.coral, selected: false))
                     .focused($focus, equals: .start).disabled(!host.isOpen)

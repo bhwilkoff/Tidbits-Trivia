@@ -75,6 +75,7 @@ fun NightHostScreen(rounds: List<Pair<String, Int>>, category: Category, store: 
     var answers by remember { mutableStateOf<Map<String, FirebaseNet.LiveAnswer>>(emptyMap()) }
     var hostPlays by remember { mutableStateOf(false) }
     var hostName by remember { mutableStateOf("Host") }
+    var speedBonus by remember { mutableStateOf(false) }
     var hostChoice by remember { mutableStateOf<Int?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
     var ansUnsub by remember { mutableStateOf<(() -> Unit)?>(null) }
@@ -146,9 +147,15 @@ fun NightHostScreen(rounds: List<Pair<String, Int>>, category: Category, store: 
         revealed = true
         FirebaseNet.livePublish(code, pubMap())
         val q = questions.getOrNull(index) ?: return@launch
-        answers.forEach { (uid, a) ->
-            val pts = liveScore(q, a, shuffledOrder, shuffledValues, 1)
-            if (pts > 0) FirebaseNet.liveSetScore(code, uid, (scores[uid] ?: 0) + pts)
+        val base = answers.mapValues { liveScore(q, it.value, shuffledOrder, shuffledValues, 1) }
+        val bonus = HashMap<String, Int>()
+        if (speedBonus) {
+            answers.filter { base[it.key]!! > 0 }.entries.sortedBy { it.value.ts }
+                .forEachIndexed { rank, e -> if (rank < 3) bonus[e.key] = 3 - rank }
+        }
+        base.forEach { (uid, pts) ->
+            val total = pts + (bonus[uid] ?: 0)
+            if (total > 0) FirebaseNet.liveSetScore(code, uid, (scores[uid] ?: 0) + total)
         }
     }
     fun next() = scope.launch {
@@ -198,6 +205,13 @@ fun NightHostScreen(rounds: List<Pair<String, Int>>, category: Category, store: 
                     Switch(checked = hostPlays, onCheckedChange = { hostPlays = it })
                 }
                 if (hostPlays) OutlinedTextField(value = hostName, onValueChange = { hostName = it }, label = { Text("Your name") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Speed bonus", fontWeight = FontWeight.Bold, color = ink)
+                        Text("Fastest correct answers earn +3 / +2 / +1.", color = soft, fontSize = 13.sp)
+                    }
+                    Switch(checked = speedBonus, onCheckedChange = { speedBonus = it })
+                }
                 Button(onClick = { start() }, enabled = code.isNotEmpty(), modifier = Modifier.fillMaxWidth().height(52.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Pops.coral, contentColor = Color.White)) {
                     Text(if (code.isNotEmpty()) "Start the Night" else "Opening room…", fontWeight = FontWeight.Bold)

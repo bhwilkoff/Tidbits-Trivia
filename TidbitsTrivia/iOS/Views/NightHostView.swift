@@ -39,6 +39,8 @@ struct NightHostView: View {
                 joinCard
                 rosterCard
                 hostPlaysCard
+                toggleCard(title: "Speed bonus", sub: "Fastest correct answers earn +3 / +2 / +1.",
+                           isOn: Binding(get: { host.speedBonus }, set: { host.speedBonus = $0 }))
                 Button(host.isOpen ? "Start the Night" : "Opening room…") { Task { await host.start() } }
                     .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.coral, textColor: .white))
                     .disabled(!host.isOpen)
@@ -102,6 +104,18 @@ struct NightHostView: View {
                     .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Tidbits.Palette.border, lineWidth: 2))
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading).padding(16)
+        .chunkyCard(fill: Tidbits.Palette.surface).padding(.trailing, Tidbits.Metric.shadowOffset)
+    }
+
+    private func toggleCard(title: String, sub: String, isOn: Binding<Bool>) -> some View {
+        Toggle(isOn: isOn) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                Text(sub).font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+            }
+        }
+        .tint(Tidbits.Palette.coral)
         .frame(maxWidth: .infinity, alignment: .leading).padding(16)
         .chunkyCard(fill: Tidbits.Palette.surface).padding(.trailing, Tidbits.Metric.shadowOffset)
     }

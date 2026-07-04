@@ -1452,7 +1452,7 @@ let nhRoot = null;
 async function openNightHost(plan, cat) {
   Object.assign(NH, { code: '', error: '', questions: [], index: 0, revealed: false, stage: 'lobby',
     teams: {}, scores: {}, answers: {}, hostChoice: null, plan, cat, unsubs: [], ansUnsub: null,
-    shuffledOrder: [], shuffledValues: [] });
+    shuffledOrder: [], shuffledValues: [], speedBonus: false });
   nhInjectStyles();
   if (!nhRoot) { nhRoot = document.createElement('div'); nhRoot.className = 'nh-ov'; document.body.appendChild(nhRoot); }
   drawHost();
@@ -1540,9 +1540,14 @@ async function nhReveal() {
   NH.revealed = true;
   await FirebaseNet.livePublish(NH.code, nhPub());
   const q = NH.questions[NH.index];
-  for (const [uid, ans] of Object.entries(NH.answers)) {
-    const pts = ans ? nhScore(q, ans) : 0;
-    if (pts > 0) await FirebaseNet.liveSetScore(NH.code, uid, (NH.scores[uid] || 0) + pts);
+  const base = Object.entries(NH.answers).map(([uid, a]) => ({ uid, pts: a ? nhScore(q, a) : 0, ts: (a && a.ts) || 0 }));
+  const bonus = {};
+  if (NH.speedBonus) {
+    base.filter((e) => e.pts > 0).sort((a, b) => a.ts - b.ts).forEach((e, rank) => { if (rank < 3) bonus[e.uid] = 3 - rank; });
+  }
+  for (const e of base) {
+    const total = e.pts + (bonus[e.uid] || 0);
+    if (total > 0) await FirebaseNet.liveSetScore(NH.code, e.uid, (NH.scores[e.uid] || 0) + total);
   }
   drawHost();
 }
@@ -1589,12 +1594,14 @@ function drawHost() {
       ${standings}
       <label class="nh-toggle"><input type="checkbox" id="nh-plays" ${NH.hostPlays ? 'checked' : ''}> I'll play too</label>
       ${NH.hostPlays ? `<input class="nh-in" id="nh-name" placeholder="Your name" value="${h(NH.hostName)}">` : ''}
+      <label class="nh-toggle"><input type="checkbox" id="nh-speed" ${NH.speedBonus ? 'checked' : ''}> Speed bonus (fastest +3/+2/+1)</label>
       <button class="btn btn-primary" id="nh-start" ${NH.code ? '' : 'disabled'}>${NH.code ? 'Start the Night' : 'Opening room…'}</button>
       <p class="muted">You run the questions; everyone answers on their own device.</p>
     </div>`;
     nhRoot.querySelector('#nh-x').addEventListener('click', closeNightHost);
     nhRoot.querySelector('#nh-start').addEventListener('click', nhStart);
     nhRoot.querySelector('#nh-plays').addEventListener('change', (e) => { NH.hostPlays = e.target.checked; drawHost(); });
+    nhRoot.querySelector('#nh-speed')?.addEventListener('change', (e) => { NH.speedBonus = e.target.checked; });
     const nm = nhRoot.querySelector('#nh-name'); if (nm) nm.addEventListener('input', (e) => { NH.hostName = e.target.value; });
     return;
   }

@@ -30,6 +30,11 @@ final class LiveNightHost {
     /// answers each question on this device and is scored in the standings.
     var hostPlays = false
     var hostName = "Host"
+    /// Speed bonus (fastest-finger): the fastest CORRECT answers earn +3/+2/+1 on top
+    /// of the base point (owner upgrade). Ranked by submission `ts`.
+    var speedBonus = false
+    /// The uid that answered correct fastest this question (for a ⚡ tag on reveal).
+    private(set) var fastestUid: String?
     /// The host's selected option for the current question (host-plays mode).
     private(set) var hostChoice: Int?
     var hostAnswered: Bool { hostChoice != nil }
@@ -159,9 +164,17 @@ final class LiveNightHost {
     /// (every question type). Nothing that could leak an answer was ever published.
     private func autoScore() async {
         guard let q = current else { return }
-        for (uid, ans) in net.answers {
-            let pts = Self.score(q, ans, shuffledOrder: shuffledOrder, shuffledValues: shuffledValues, mcqPoints: pointsPerCorrect)
-            if pts > 0 { await net.setScore(uid, (net.scores[uid] ?? 0) + pts) }
+        // Base points per team, plus a speed rank bonus for the fastest correct.
+        let base = net.answers.map { (uid: $0.key, pts: Self.score(q, $0.value, shuffledOrder: shuffledOrder, shuffledValues: shuffledValues, mcqPoints: pointsPerCorrect), ts: $0.value.ts) }
+        var bonus: [String: Int] = [:]
+        let correctBySpeed = base.filter { $0.pts > 0 }.sorted { $0.ts < $1.ts }
+        fastestUid = correctBySpeed.first?.uid
+        if speedBonus {
+            for (rank, e) in correctBySpeed.enumerated() where rank < 3 { bonus[e.uid] = 3 - rank }   // +3 / +2 / +1
+        }
+        for e in base {
+            let total = e.pts + (bonus[e.uid] ?? 0)
+            if total > 0 { await net.setScore(e.uid, (net.scores[e.uid] ?? 0) + total) }
         }
     }
 

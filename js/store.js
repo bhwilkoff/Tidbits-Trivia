@@ -128,6 +128,7 @@ export const Store = {
 
   // R-DAILY-1: per-day Daily results — first completion locks the day.
   dailyScore(day) { return LS.get('tidbits.daily.results', {})[day] ?? null; },
+  allDaily() { return LS.get('tidbits.daily.results', {}); },
   recordDaily(day, score) {
     const m = LS.get('tidbits.daily.results', {});
     if (m[day] != null) return;

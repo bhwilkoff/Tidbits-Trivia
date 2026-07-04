@@ -23,9 +23,20 @@ function currentTab() {
 }
 window.addEventListener('hashchange', render);
 
+// L2: sync the daily log across devices when signed in — done-today + the archive follow
+// the identity. pushLocal on sign-in so anon plays aren't lost; then pull the union.
+async function syncDailyLog(pushLocal = false) {
+  if (!Identity.signedIn) return;
+  if (pushLocal) { for (const [day, score] of Object.entries(Store.allDaily())) Identity.syncDailyScore(day, score); }
+  const remote = await Identity.fetchDailyLog();
+  let changed = false;
+  for (const [day, score] of Object.entries(remote)) { if (Store.dailyScore(day) == null) { Store.recordDaily(day, score); changed = true; } }
+  if (changed) render();
+}
+
 async function boot() {
   renderLoading('Loading Tidbits…');
-  Identity.bootstrap();   // stable anon uid → portable profile (local-first)
+  Identity.bootstrap().then(() => syncDailyLog());   // stable anon uid → portable profile + daily log
   Identity.onChange(() => { const t = location.hash; if (t.startsWith('#/profile') || t.startsWith('#/records')) render(); });
   try { await Corpus.load(); } catch (e) { /* live fallback still works */ }
   if (!location.hash) location.hash = '#/play';
@@ -127,6 +138,7 @@ function bindProfile() {
     b.disabled = true;
     try {
       const merged = await Identity.signIn(b.dataset.signin);
+      syncDailyLog(true);   // push anon daily plays, pull the cross-device union
       render();
       if (merged) setTimeout(() => alert('Welcome back — we combined your two profiles, so nothing was lost.'), 50);
     } catch (e) {
@@ -1199,7 +1211,7 @@ class Game {
     renderResults(); }
   _persist() {
     const correct = this.answered.filter((a) => a.correct).length;
-    if (this.mode.id === 'daily') Store.recordDaily(this.dailyDay || dayKey(), this.score);
+    if (this.mode.id === 'daily') { const dk = this.dailyDay || dayKey(); Store.recordDaily(dk, this.score); Identity.syncDailyScore(dk, this.score); }
     // Only TODAY'S daily feeds the streak — archive catch-ups don't (R-DAILY-1).
     const answers = this.answered.map((a) => ({ qid: a.q.id, prompt: a.q.prompt, cat: a.q.categoryID, correct: !!a.correct, answer: a.q.options[a.q.correctIndex] || (a.q.closest ? closestFmtVal(a.q.closest.answer, a.q.closest) : '') }));
     Store.addRecord({ mode: this.mode.id, categoryID: this.category.id, score: this.score, correct, total: this.answered.length, maxStreak: this.maxStreak, date: dayKey(), at: Date.now(), answers },

@@ -77,6 +77,16 @@ export const Identity = {
   get signedIn() { return FirebaseNet.isSignedIn(); },
   get email() { return FirebaseNet.currentEmail(); },
 
+  // Daily log sync — when signed in, a daily completion also lands in dailyLog/{key} so
+  // "done today" + the archive follow you across devices. Anonymous stays local-only.
+  async syncDailyScore(day, score) {
+    if (this.signedIn && this.profileId) { try { await FirebaseNet.setDailyScore(this.profileId, day, score); } catch {} }
+  },
+  async fetchDailyLog() {
+    if (this.signedIn && this.profileId) { try { return (await FirebaseNet.loadDailyLog(this.profileId)) || {}; } catch {} }
+    return {};
+  },
+
   // Sign in with Apple/Google → key the profile by the verified email so BOTH providers
   // (and every device) share one record set. Merges this device's anonymous activity into
   // the email-keyed profile the first time; the guard prevents ever re-merging.

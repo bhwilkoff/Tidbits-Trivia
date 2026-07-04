@@ -70,6 +70,12 @@
         ".write": "auth != null && auth.token.email_verified === true && newData.val() === auth.token.email && (!data.exists() || data.val() === auth.token.email)"
       }
     },
+    "dailyLog": {
+      "$key": {
+        ".read": "auth != null && (auth.uid === $key || (auth.token.email_verified === true && root.child('emailOwners').child($key).val() === auth.token.email))",
+        ".write": "auth != null && (auth.uid === $key || (auth.token.email_verified === true && root.child('emailOwners').child($key).val() === auth.token.email))"
+      }
+    },
     "playersPrivate": {
       "$uid": {
         ".read": "auth != null && auth.uid === $uid",

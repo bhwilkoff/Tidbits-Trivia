@@ -90,6 +90,17 @@ export const FirebaseNet = {
     return onValue(ref(_db, `players/${key}`), (snap) => cb(snap.val()));
   },
 
+  // Synced daily log (dayKey → score) — so "done today" + the archive follow the identity.
+  async setDailyScore(key, day, score) {
+    const { db } = await ensure();
+    await db.set(db.ref(_db, `dailyLog/${key}/${day}`), score);
+  },
+  async loadDailyLog(key) {
+    const { db } = await ensure();
+    const snap = await db.get(db.ref(_db, `dailyLog/${key}`));
+    return snap.exists() ? snap.val() : {};
+  },
+
   // Quick Match: claim a waiting room via a transaction (first writer becomes
   // the joiner of an existing open room; otherwise create one and wait). Returns
   // { roomId, isLeader }.

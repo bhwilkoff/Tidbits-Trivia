@@ -11,6 +11,25 @@ name: Deploy web to Pages
 on:
   push:
     branches: [main]
+    # Only redeploy when WEB files change. GitHub Pages soft-limits deployments
+    # (~10/hr) — without this, every Swift/Kotlin/docs commit triggered a needless
+    # web deploy and we hit the limit ("Deployment failed, try again later").
+    paths:
+      - 'index.html'
+      - '404.html'
+      - 'privacy.html'
+      - 'support.html'
+      - 'manifest.json'
+      - 'sw.js'
+      - 'robots.txt'
+      - 'sitemap.xml'
+      - 'CNAME'
+      - '.nojekyll'
+      - 'css/**'
+      - 'js/**'
+      - 'assets/**'
+      - 'branding/**'
+      - '.github/workflows/pages.yml'
   workflow_dispatch:
 
 permissions:

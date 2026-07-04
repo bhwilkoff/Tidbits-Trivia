@@ -4,12 +4,24 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Slider
+import androidx.compose.material3.TextButton
+import coil3.compose.AsyncImage
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -82,15 +94,16 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
         }
     }
 
-    fun submit(i: Int) {
+    fun submitFields(fields: Map<String, Any?>) {
         val p = pub ?: return
         if (p.phase != "question" || submittedQid == p.qid) return
-        chosen = i; submittedQid = p.qid
+        submittedQid = p.qid
         scope.launch {
-            try { FirebaseNet.liveSubmit(code, p.qid, i) }
+            try { FirebaseNet.liveSubmitAnswer(code, p.qid, fields) }
             catch (e: Exception) { submittedQid = null; chosen = null; error = "Answer didn't send — tap again." }
         }
     }
+    fun submit(i: Int) { chosen = i; submitFields(mapOf("choice" to i.toLong())) }
 
     val ink = MaterialTheme.colorScheme.onSurface
     val soft = ink.copy(alpha = 0.6f)
@@ -141,19 +154,26 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
                 Text("ROUND ${p.round} · ${p.roundTitle.uppercase()} — Q${p.qNum}/${p.qTotal}",
                     fontSize = 13.sp, fontWeight = FontWeight.Bold, color = soft)
                 Spacer(Modifier.height(10.dp))
+                p.imageUrl?.let { url ->
+                    AsyncImage(model = url, contentDescription = null, modifier = Modifier.fillMaxWidth().height(220.dp))
+                    Spacer(Modifier.height(12.dp))
+                }
                 Text(p.prompt, fontSize = 24.sp, fontWeight = FontWeight.Black, color = ink)
                 Spacer(Modifier.height(16.dp))
-                val opts = p.options
-                if (opts != null) {
-                    opts.forEachIndexed { i, opt ->
+                val locked = revealed || submittedQid == p.qid
+                when {
+                    p.numeric != null -> NumericAnswer(p.numeric, p.qid, locked) { submitFields(mapOf("number" to it)) }
+                    p.options != null -> p.options.forEachIndexed { i, opt ->
                         val isChosen = chosen == i
                         val correct = revealed && p.answerIndex == i
                         val wrong = revealed && isChosen && p.answerIndex != i
-                        OptionRow(i, opt, isChosen, correct, wrong, enabled = !revealed && submittedQid != p.qid) { submit(i) }
+                        OptionRow(i, opt, isChosen, correct, wrong, enabled = !locked) { submit(i) }
                         Spacer(Modifier.height(12.dp))
                     }
-                } else {
-                    Text("Answer on your team sheet — the host is scoring this round.", color = soft)
+                    p.orderItems != null -> OrderingAnswer(p.orderItems, p.qid, locked) { o -> submitFields(mapOf("order" to o.map { it.toLong() })) }
+                    p.matchKeys != null && p.matchValues != null -> MatchingAnswer(p.matchKeys, p.matchValues, p.qid, locked) { pr -> submitFields(mapOf("pairs" to pr.map { it.toLong() })) }
+                    p.enumTarget != null -> EnumerateAnswer(p.enumTarget, p.qid, locked) { submitFields(mapOf("list" to it)) }
+                    else -> TextAnswer(p.qid, locked) { submitFields(mapOf("text" to it)) }
                 }
                 Spacer(Modifier.height(6.dp))
                 val note = when {
@@ -202,5 +222,111 @@ private fun OptionRow(i: Int, opt: String, chosen: Boolean, correct: Boolean, wr
             modifier = Modifier.size(26.dp).background(MaterialTheme.colorScheme.onSurface, RoundedCornerShape(8.dp)).padding(top = 3.dp))
         Spacer(Modifier.width(12.dp))
         Text(opt, color = fg, fontWeight = FontWeight.Bold, fontSize = 17.sp)
+    }
+}
+
+// ---- Per-type answer surfaces (host auto-scores each on reveal) -------------
+
+@Composable
+private fun NumericAnswer(spec: FirebaseNet.LiveNumeric, qid: String, locked: Boolean, onSubmit: (Double) -> Unit) {
+    var value by remember(qid) { mutableStateOf((spec.min + spec.max) / 2) }
+    var sent by remember(qid) { mutableStateOf(false) }
+    val ink = MaterialTheme.colorScheme.onSurface
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        val unit = if (spec.unit.isBlank()) "" else " ${spec.unit}"
+        val label = if (value == kotlin.math.floor(value)) "${value.toInt()}$unit" else String.format("%.1f%s", value, unit)
+        Text(label, fontSize = 28.sp, fontWeight = FontWeight.Black, color = ink)
+        Slider(value = value.toFloat(), onValueChange = { value = it.toDouble() },
+            valueRange = spec.min.toFloat()..spec.max.toFloat(), enabled = !locked && !sent)
+        if (!sent) Button(onClick = { sent = true; onSubmit(value) }, enabled = !locked, modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = Pops.coral, contentColor = Color.White)) { Text("Submit", fontWeight = FontWeight.Bold) }
+    }
+}
+
+@Composable
+private fun TextAnswer(qid: String, locked: Boolean, onSubmit: (String) -> Unit) {
+    var text by remember(qid) { mutableStateOf("") }
+    var sent by remember(qid) { mutableStateOf(false) }
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        OutlinedTextField(value = text, onValueChange = { text = it }, label = { Text("Type your answer") },
+            singleLine = true, enabled = !locked && !sent, modifier = Modifier.fillMaxWidth())
+        if (!sent) Button(onClick = { val t = text.trim(); if (t.isNotEmpty()) { sent = true; onSubmit(t) } },
+            enabled = !locked, modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = Pops.coral, contentColor = Color.White)) { Text("Submit", fontWeight = FontWeight.Bold) }
+    }
+}
+
+@Composable
+private fun EnumerateAnswer(target: Int, qid: String, locked: Boolean, onSubmit: (List<String>) -> Unit) {
+    var entry by remember(qid) { mutableStateOf("") }
+    var items by remember(qid) { mutableStateOf(listOf<String>()) }
+    var sent by remember(qid) { mutableStateOf(false) }
+    val ink = MaterialTheme.colorScheme.onSurface
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text("Name as many as you can (${items.size}${if (target > 0) "/$target" else ""})", color = ink.copy(alpha = 0.6f))
+        if (items.isNotEmpty()) Text(items.joinToString(" · "), color = ink, fontWeight = FontWeight.Bold)
+        if (!sent) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                OutlinedTextField(value = entry, onValueChange = { entry = it }, label = { Text("Add one…") }, singleLine = true, enabled = !locked, modifier = Modifier.weight(1f))
+                Button(onClick = { val t = entry.trim(); if (t.isNotEmpty() && items.none { it.equals(t, true) }) { items = items + t; entry = "" } }, enabled = !locked && entry.isNotBlank()) { Text("Add") }
+            }
+            Button(onClick = { sent = true; onSubmit(items) }, enabled = !locked && items.isNotEmpty(), modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = Pops.coral, contentColor = Color.White)) { Text("Done", fontWeight = FontWeight.Bold) }
+        }
+    }
+}
+
+@Composable
+private fun OrderingAnswer(items: List<String>, qid: String, locked: Boolean, onSubmit: (List<Int>) -> Unit) {
+    var order by remember(qid) { mutableStateOf(items.indices.toList()) }
+    var sent by remember(qid) { mutableStateOf(false) }
+    val ink = MaterialTheme.colorScheme.onSurface
+    fun swap(pos: Int, d: Int) {
+        val n = pos + d
+        if (n in order.indices) order = order.toMutableList().apply { val t = this[pos]; this[pos] = this[n]; this[n] = t }
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("Put them in order (top = first).", color = ink.copy(alpha = 0.6f))
+        order.forEachIndexed { pos, idx ->
+            Row(Modifier.fillMaxWidth().border(2.dp, ink.copy(alpha = 0.12f), RoundedCornerShape(12.dp)).padding(horizontal = 12.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("${pos + 1}.", fontWeight = FontWeight.Black, color = ink.copy(alpha = 0.6f))
+                Spacer(Modifier.width(8.dp))
+                Text(items[idx], color = ink, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                if (!locked && !sent) {
+                    IconButton(onClick = { swap(pos, -1) }, enabled = pos > 0) { Icon(Icons.Filled.KeyboardArrowUp, "Up") }
+                    IconButton(onClick = { swap(pos, 1) }, enabled = pos < order.size - 1) { Icon(Icons.Filled.KeyboardArrowDown, "Down") }
+                }
+            }
+        }
+        if (!sent) Button(onClick = { sent = true; onSubmit(order) }, enabled = !locked, modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = Pops.coral, contentColor = Color.White)) { Text("Submit", fontWeight = FontWeight.Bold) }
+    }
+}
+
+@Composable
+private fun MatchingAnswer(keys: List<String>, values: List<String>, qid: String, locked: Boolean, onSubmit: (List<Int>) -> Unit) {
+    var pairs by remember(qid) { mutableStateOf(List(keys.size) { -1 }) }
+    var sent by remember(qid) { mutableStateOf(false) }
+    val ink = MaterialTheme.colorScheme.onSurface
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("Match each to its pair.", color = ink.copy(alpha = 0.6f))
+        keys.forEachIndexed { i, key ->
+            var expanded by remember(qid, i) { mutableStateOf(false) }
+            Row(Modifier.fillMaxWidth().border(2.dp, ink.copy(alpha = 0.12f), RoundedCornerShape(12.dp)).padding(horizontal = 12.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(key, color = ink, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                Box {
+                    TextButton(onClick = { if (!locked && !sent) expanded = true }) {
+                        Text(if (pairs[i] >= 0) values[pairs[i]] else "Choose…", color = if (pairs[i] >= 0) Pops.blue else ink.copy(alpha = 0.6f))
+                    }
+                    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                        values.forEachIndexed { vi, v ->
+                            DropdownMenuItem(text = { Text(v) }, onClick = { pairs = pairs.toMutableList().also { it[i] = vi }; expanded = false })
+                        }
+                    }
+                }
+            }
+        }
+        if (!sent) Button(onClick = { sent = true; onSubmit(pairs) }, enabled = !locked && pairs.none { it < 0 }, modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = Pops.coral, contentColor = Color.White)) { Text("Submit", fontWeight = FontWeight.Bold) }
     }
 }

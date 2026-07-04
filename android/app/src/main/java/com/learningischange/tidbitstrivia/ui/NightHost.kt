@@ -44,6 +44,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.compose.AsyncImage
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import com.learningischange.tidbitstrivia.data.Category
@@ -51,6 +52,7 @@ import com.learningischange.tidbitstrivia.data.Night
 import com.learningischange.tidbitstrivia.data.Question
 import com.learningischange.tidbitstrivia.data.Store
 import com.learningischange.tidbitstrivia.data.buildNightQuestions
+import com.learningischange.tidbitstrivia.data.TypeMatch
 import com.learningischange.tidbitstrivia.net.FirebaseNet
 import com.learningischange.tidbitstrivia.ui.theme.Pops
 import kotlinx.coroutines.launch
@@ -70,15 +72,24 @@ fun NightHostScreen(rounds: List<Pair<String, Int>>, category: Category, store: 
     var stage by remember { mutableStateOf("lobby") }
     var teams by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
     var scores by remember { mutableStateOf<Map<String, Int>>(emptyMap()) }
-    var answers by remember { mutableStateOf<Map<String, Int>>(emptyMap()) }
+    var answers by remember { mutableStateOf<Map<String, FirebaseNet.LiveAnswer>>(emptyMap()) }
     var hostPlays by remember { mutableStateOf(false) }
     var hostName by remember { mutableStateOf("Host") }
     var hostChoice by remember { mutableStateOf<Int?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
     var ansUnsub by remember { mutableStateOf<(() -> Unit)?>(null) }
+    // Per-question shuffles, fixed once so publish + reveal agree (ordering/matching).
+    var shuffledOrder by remember { mutableStateOf<List<String>>(emptyList()) }
+    var shuffledValues by remember { mutableStateOf<List<String>>(emptyList()) }
     val scope = rememberCoroutineScope()
 
     fun qid(): String = questions.getOrNull(index)?.let { "r${it.roundIndex ?: 0}q$index" } ?: "end"
+
+    fun prepareQuestion() {
+        val q = questions.getOrNull(index)
+        shuffledOrder = q?.ordering?.shuffled() ?: emptyList()
+        shuffledValues = q?.matching?.values?.shuffled() ?: emptyList()
+    }
 
     fun pubMap(): Map<String, Any?> {
         val q = questions.getOrNull(index) ?: return mapOf(
@@ -87,12 +98,18 @@ fun NightHostScreen(rounds: List<Pair<String, Int>>, category: Category, store: 
         val ri = q.roundIndex ?: 0
         val inRound = questions.filter { (it.roundIndex ?: 0) == ri }
         val kind = rounds.getOrNull(ri)?.first ?: ""
+        val mcq = liveIsMCQ(q)
         val m = mutableMapOf<String, Any?>(
             "round" to ri + 1, "roundTitle" to (Night.roundTitle[kind] ?: kind),
             "qid" to "r${ri}q$index", "qNum" to inRound.indexOf(q) + 1, "qTotal" to inRound.size,
             "phase" to if (revealed) "reveal" else "question",
-            "prompt" to q.prompt, "options" to q.options, "format" to kind)
-        if (revealed) m["answerIndex"] = q.correctIndex
+            "prompt" to q.prompt, "format" to kind)
+        if (mcq) { m["options"] = q.options; if (revealed) m["answerIndex"] = q.correctIndex }
+        q.imageUrl?.let { m["imageURL"] = it }
+        q.closest?.let { m["numeric"] = mapOf("min" to it.min, "max" to it.max, "step" to it.step, "unit" to it.unit) }
+        if (q.ordering != null) m["orderItems"] = shuffledOrder
+        q.matching?.let { m["matchKeys"] = it.keys; m["matchValues"] = shuffledValues }
+        q.enumerate?.let { m["enumTarget"] = it.total }
         return m
     }
     fun watchAnswers() {
@@ -120,6 +137,7 @@ fun NightHostScreen(rounds: List<Pair<String, Int>>, category: Category, store: 
         if (questions.isEmpty() || code.isEmpty()) return@launch
         if (hostPlays) FirebaseNet.liveHostJoinAsTeam(code, hostName.ifBlank { "Host" })
         index = 0; revealed = false; hostChoice = null; stage = "playing"
+        prepareQuestion()
         FirebaseNet.liveSetState(code, "live")
         FirebaseNet.livePublish(code, pubMap()); watchAnswers()
     }
@@ -128,14 +146,17 @@ fun NightHostScreen(rounds: List<Pair<String, Int>>, category: Category, store: 
         revealed = true
         FirebaseNet.livePublish(code, pubMap())
         val q = questions.getOrNull(index) ?: return@launch
-        answers.forEach { (uid, choice) -> if (choice == q.correctIndex) FirebaseNet.liveSetScore(code, uid, (scores[uid] ?: 0) + 1) }
+        answers.forEach { (uid, a) ->
+            val pts = liveScore(q, a, shuffledOrder, shuffledValues, 1)
+            if (pts > 0) FirebaseNet.liveSetScore(code, uid, (scores[uid] ?: 0) + pts)
+        }
     }
     fun next() = scope.launch {
         if (!revealed) return@launch
         revealed = false; hostChoice = null; index++
         if (questions.getOrNull(index) == null) {
             stage = "ended"; FirebaseNet.liveSetState(code, "ended"); FirebaseNet.livePublish(code, pubMap())
-        } else { FirebaseNet.livePublish(code, pubMap()); watchAnswers() }
+        } else { prepareQuestion(); FirebaseNet.livePublish(code, pubMap()); watchAnswers() }
     }
     fun hostAnswer(i: Int) = scope.launch {
         if (!hostPlays || revealed || hostChoice != null) return@launch
@@ -190,20 +211,31 @@ fun NightHostScreen(rounds: List<Pair<String, Int>>, category: Category, store: 
                     val inRound = questions.filter { (it.roundIndex ?: 0) == ri }
                     Text("ROUND ${ri + 1}/${rounds.size} · ${Night.roundTitle[rounds.getOrNull(ri)?.first ?: ""] ?: ""} — Q${inRound.indexOf(q) + 1}/${inRound.size} · ${answers.size} answered",
                         color = soft, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    q.imageUrl?.let { url ->
+                        AsyncImage(model = url, contentDescription = null, modifier = Modifier.fillMaxWidth().height(200.dp))
+                    }
                     Text(q.prompt, fontSize = 22.sp, fontWeight = FontWeight.Black, color = ink)
-                    q.options.forEachIndexed { i, opt ->
-                        val chosen = hostChoice == i
-                        val correct = revealed && i == q.correctIndex
-                        val wrong = revealed && chosen && !correct
-                        val bg = when { correct -> Pops.mint; wrong -> Color(0xFFF3D1CD); chosen -> Pops.blue.copy(alpha = 0.18f); else -> MaterialTheme.colorScheme.surface }
-                        Row(Modifier.fillMaxWidth().background(bg, RoundedCornerShape(14.dp))
-                            .border(2.dp, ink.copy(alpha = 0.12f), RoundedCornerShape(14.dp))
-                            .clickable(enabled = hostPlays && !revealed && hostChoice == null) { hostAnswer(i) }
-                            .padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Text("${i + 1}", color = Color.White, fontWeight = FontWeight.Black, textAlign = TextAlign.Center,
-                                modifier = Modifier.size(26.dp).background(ink, RoundedCornerShape(7.dp)).padding(top = 2.dp))
-                            Spacer(Modifier.width(12.dp))
-                            Text(opt, color = if (correct) Color.White else ink, fontWeight = FontWeight.Bold)
+                    if (liveIsMCQ(q)) {
+                        q.options.forEachIndexed { i, opt ->
+                            val chosen = hostChoice == i
+                            val correct = revealed && i == q.correctIndex
+                            val wrong = revealed && chosen && !correct
+                            val bg = when { correct -> Pops.mint; wrong -> Color(0xFFF3D1CD); chosen -> Pops.blue.copy(alpha = 0.18f); else -> MaterialTheme.colorScheme.surface }
+                            Row(Modifier.fillMaxWidth().background(bg, RoundedCornerShape(14.dp))
+                                .border(2.dp, ink.copy(alpha = 0.12f), RoundedCornerShape(14.dp))
+                                .clickable(enabled = hostPlays && !revealed && hostChoice == null) { hostAnswer(i) }
+                                .padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Text("${i + 1}", color = Color.White, fontWeight = FontWeight.Black, textAlign = TextAlign.Center,
+                                    modifier = Modifier.size(26.dp).background(ink, RoundedCornerShape(7.dp)).padding(top = 2.dp))
+                                Spacer(Modifier.width(12.dp))
+                                Text(opt, color = if (correct) Color.White else ink, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    } else {
+                        Text("Players answer on their devices. Reveal when everyone's in.", color = soft)
+                        if (revealed) {
+                            Text("Answer: ${liveAnswerLine(q)}", color = ink, fontWeight = FontWeight.Bold,
+                                modifier = Modifier.fillMaxWidth().background(Pops.mint, RoundedCornerShape(12.dp)).padding(12.dp))
                         }
                     }
                     if (!revealed) Button(onClick = { reveal() }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Pops.blue, contentColor = Color.White)) { Text("Reveal", fontWeight = FontWeight.Bold) }
@@ -234,4 +266,45 @@ private fun qrBitmap(text: String, size: Int = 480): ImageBitmap {
     val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
     for (x in 0 until size) for (y in 0 until size) bmp.setPixel(x, y, if (matrix.get(x, y)) AColor.BLACK else AColor.WHITE)
     return bmp.asImageBitmap()
+}
+
+// ---- Host-side type helpers (mirror LiveNightHost.swift) --------------------
+
+fun liveIsMCQ(q: Question): Boolean =
+    q.closest == null && q.ordering == null && q.matching == null && q.accepted == null && q.enumerate == null
+
+fun liveAnswerLine(q: Question): String = when {
+    q.closest != null -> q.closest.formattedAnswer
+    q.accepted != null -> q.accepted.firstOrNull() ?: q.answerText
+    q.ordering != null -> q.ordering.joinToString(" → ")
+    q.matching != null -> q.matching.keys.zip(q.matching.values).joinToString(", ") { (k, v) -> "$k = $v" }
+    q.enumerate != null -> q.enumerate.displayNames.joinToString(", ")
+    else -> q.answerText
+}
+
+/** Points for one submission, by question type (mirrors LiveNightHost.score). */
+fun liveScore(q: Question, a: FirebaseNet.LiveAnswer, shuffledOrder: List<String>, shuffledValues: List<String>, mcqPoints: Int): Int {
+    q.closest?.let { c -> return a.number?.let { c.points(it) } ?: 0 }
+    q.ordering?.let { correct ->
+        val order = a.order ?: return 0
+        val seq = order.mapNotNull { shuffledOrder.getOrNull(it) }
+        return seq.zip(correct).count { it.first == it.second }
+    }
+    q.matching?.let { m ->
+        val pairs = a.pairs ?: return 0
+        var pts = 0
+        m.keys.forEachIndexed { i, _ ->
+            val vi = pairs.getOrNull(i)
+            if (vi != null && shuffledValues.getOrNull(vi) == m.values.getOrNull(i)) pts++
+        }
+        return pts
+    }
+    q.accepted?.let { acc -> return if (a.text != null && TypeMatch.matches(a.text, acc)) mcqPoints else 0 }
+    q.enumerate?.let { e ->
+        val list = a.list ?: return 0
+        val filled = mutableSetOf<Int>()
+        for (name in list) for ((gi, group) in e.groups.withIndex()) if (gi !in filled && TypeMatch.matches(name, group)) { filled.add(gi); break }
+        return filled.size
+    }
+    return if (a.choice == q.correctIndex) mcqPoints else 0
 }

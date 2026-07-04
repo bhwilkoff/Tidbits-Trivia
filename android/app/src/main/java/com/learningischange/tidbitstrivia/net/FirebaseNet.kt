@@ -131,10 +131,20 @@ object FirebaseNet {
     // js/firebase.js (liveJoin/liveOnPub/liveSubmit/…) and the Swift LivePlayerClient
     // exactly — the same keys, so a Mac host reaches Apple, web, AND Android players.
 
+    data class LiveNumeric(val min: Double, val max: Double, val step: Double, val unit: String)
     data class LivePub(
         val round: Int, val roundTitle: String, val qid: String, val qNum: Int, val qTotal: Int,
         val phase: String, val prompt: String, val options: List<String>?, val format: String,
         val answerIndex: Int?,
+        // Non-MCQ payloads (only the field for the current `format` is set).
+        val imageUrl: String? = null, val numeric: LiveNumeric? = null,
+        val orderItems: List<String>? = null, val matchKeys: List<String>? = null,
+        val matchValues: List<String>? = null, val enumTarget: Int? = null,
+    )
+    /** A player's submission (any shape) — the host scores it locally on reveal. */
+    data class LiveAnswer(
+        val choice: Int? = null, val text: String? = null, val number: Double? = null,
+        val order: List<Int>? = null, val pairs: List<Int>? = null, val list: List<String>? = null,
     )
     data class LiveMeta(val state: String, val venue: String)
 
@@ -153,11 +163,16 @@ object FirebaseNet {
         return me
     }
 
-    /** Submit an answer for the current question (host reveals + scores). */
+    /** Submit an MCQ answer (host reveals + scores). */
     suspend fun liveSubmit(code: String, qid: String, choice: Int) {
+        liveSubmitAnswer(code, qid, mapOf("choice" to choice.toLong()))
+    }
+
+    /** Submit any answer shape (number/text/order/pairs/list) — see LiveAnswer. */
+    suspend fun liveSubmitAnswer(code: String, qid: String, fields: Map<String, Any?>) {
         val me = uid ?: return
         db.getReference("live/$code/answers/$qid/$me")
-            .setValue(mapOf("choice" to choice.toLong(), "ts" to System.currentTimeMillis())).await()
+            .setValue(fields + ("ts" to System.currentTimeMillis())).await()
     }
 
     fun liveLeave(code: String) {
@@ -195,6 +210,18 @@ object FirebaseNet {
             options = opts.ifEmpty { null },
             format = snap.child("format").getValue(String::class.java) ?: "classic",
             answerIndex = snap.child("answerIndex").getValue(Long::class.java)?.toInt(),
+            imageUrl = snap.child("imageURL").getValue(String::class.java),
+            numeric = snap.child("numeric").takeIf { it.exists() }?.let { n ->
+                LiveNumeric(
+                    (n.child("min").value as? Number)?.toDouble() ?: 0.0,
+                    (n.child("max").value as? Number)?.toDouble() ?: 0.0,
+                    (n.child("step").value as? Number)?.toDouble() ?: 1.0,
+                    n.child("unit").getValue(String::class.java) ?: "")
+            },
+            orderItems = snap.child("orderItems").children.mapNotNull { it.getValue(String::class.java) }.ifEmpty { null },
+            matchKeys = snap.child("matchKeys").children.mapNotNull { it.getValue(String::class.java) }.ifEmpty { null },
+            matchValues = snap.child("matchValues").children.mapNotNull { it.getValue(String::class.java) }.ifEmpty { null },
+            enumTarget = snap.child("enumTarget").getValue(Long::class.java)?.toInt(),
         )
     }
 
@@ -233,12 +260,18 @@ object FirebaseNet {
                 id to (c.getValue(Long::class.java) ?: 0L).toInt()
             }.toMap())
         }
-    fun liveOnAnswers(code: String, qid: String, cb: (Map<String, Int>) -> Unit): () -> Unit =
+    fun liveOnAnswers(code: String, qid: String, cb: (Map<String, LiveAnswer>) -> Unit): () -> Unit =
         listen("live/$code/answers/$qid") { snap ->
             cb(snap.children.mapNotNull { c ->
                 val id = c.key ?: return@mapNotNull null
-                val choice = c.child("choice").getValue(Long::class.java) ?: return@mapNotNull null
-                id to choice.toInt()
+                id to LiveAnswer(
+                    choice = (c.child("choice").value as? Number)?.toInt(),
+                    text = c.child("text").getValue(String::class.java),
+                    number = (c.child("number").value as? Number)?.toDouble(),
+                    order = c.child("order").children.mapNotNull { (it.value as? Number)?.toInt() }.ifEmpty { null },
+                    pairs = c.child("pairs").children.mapNotNull { (it.value as? Number)?.toInt() }.ifEmpty { null },
+                    list = c.child("list").children.mapNotNull { it.getValue(String::class.java) }.ifEmpty { null },
+                )
             }.toMap())
         }
     // Host-plays-too: register as a team + answer under the host's own uid.

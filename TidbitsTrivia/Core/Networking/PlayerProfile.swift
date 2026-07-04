@@ -116,6 +116,31 @@ enum PlayerIdentity {
     }
 }
 
+extension PlayerIdentity {
+    nonisolated static func isDefaultName(_ n: String) -> Bool { n.hasPrefix("Player ") }
+
+    /// LOSSLESS merge of a local anon profile into an `account` profile (the survivor)
+    /// when a sign-in resolves to an existing account. Stats are summed and are
+    /// order-independent; see `docs/PLAYER-IDENTITY-CONTRACT.md`.
+    nonisolated static func merge(local a: Profile, account b: Profile) -> Profile {
+        let name = !isDefaultName(b.name) ? b.name : (!isDefaultName(a.name) ? a.name : b.name)
+        let rGames = a.rating.games + b.rating.games
+        let rating = Rating(value: max(a.rating.value, b.rating.value), games: rGames,
+                            provisional: rGames < Rating.establishedAt)
+        let streak = Streak(current: a.streak.lastPlayedDay >= b.streak.lastPlayedDay ? a.streak.current : b.streak.current,
+                            longest: max(a.streak.longest, b.streak.longest),
+                            lastPlayedDay: max(a.streak.lastPlayedDay, b.streak.lastPlayedDay),
+                            freezes: max(a.streak.freezes, b.streak.freezes))
+        let stats = Stats(gamesPlayed: a.stats.gamesPlayed + b.stats.gamesPlayed,
+                          questionsAnswered: a.stats.questionsAnswered + b.stats.questionsAnswered,
+                          correct: a.stats.correct + b.stats.correct,
+                          liveNights: a.stats.liveNights + b.stats.liveNights,
+                          venuesVisited: max(a.stats.venuesVisited, b.stats.venuesVisited))
+        return Profile(name: name, createdAt: min(a.createdAt, b.createdAt),
+                       avatarSeed: b.avatarSeed, rating: rating, streak: streak, stats: stats)
+    }
+}
+
 extension PlayerIdentity.Rating {
     /// Elo-style update after a game. `accuracy` (0…1) is the score; `field` is the
     /// implied opponent/difficulty rating (solo = a fixed field; live can pass the real

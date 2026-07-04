@@ -99,6 +99,34 @@ function playedStreak(s, day, liveNight) {
   return { current, longest, lastPlayedDay, freezes };
 }
 
+function isDefaultName(n) { return (n || '').startsWith('Player '); }
+
+// LOSSLESS merge of a local anon profile into an account profile (the survivor) on a
+// sign-in conflict — stats summed, order-independent. Mirror of Swift/Kotlin merge.
+export function mergeProfiles(local, account) {
+  const later = local.streak.lastPlayedDay >= account.streak.lastPlayedDay;
+  const rGames = local.rating.games + account.rating.games;
+  return {
+    name: !isDefaultName(account.name) ? account.name : (!isDefaultName(local.name) ? local.name : account.name),
+    createdAt: Math.min(local.createdAt, account.createdAt),
+    avatarSeed: account.avatarSeed,
+    rating: { value: Math.max(local.rating.value, account.rating.value), games: rGames, provisional: rGames < ESTABLISHED_AT },
+    streak: {
+      current: later ? local.streak.current : account.streak.current,
+      longest: Math.max(local.streak.longest, account.streak.longest),
+      lastPlayedDay: later ? local.streak.lastPlayedDay : account.streak.lastPlayedDay,
+      freezes: Math.max(local.streak.freezes, account.streak.freezes),
+    },
+    stats: {
+      gamesPlayed: local.stats.gamesPlayed + account.stats.gamesPlayed,
+      questionsAnswered: local.stats.questionsAnswered + account.stats.questionsAnswered,
+      correct: local.stats.correct + account.stats.correct,
+      liveNights: local.stats.liveNights + account.stats.liveNights,
+      venuesVisited: Math.max(local.stats.venuesVisited, account.stats.venuesVisited),
+    },
+  };
+}
+
 function today() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;

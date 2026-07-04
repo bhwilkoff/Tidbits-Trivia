@@ -121,6 +121,28 @@ object PlayerIdentity {
         return Streak(cur, longest, last, freezes)
     }
 
+    fun isDefaultName(n: String) = n.startsWith("Player ")
+
+    /** LOSSLESS merge of a local anon profile into an account profile (survivor) on
+     *  sign-in conflict — stats summed, order-independent. Mirror of Swift/JS merge. */
+    fun merge(local: Profile, account: Profile): Profile {
+        val name = if (!isDefaultName(account.name)) account.name else if (!isDefaultName(local.name)) local.name else account.name
+        val rGames = local.rating.games + account.rating.games
+        val rating = Rating(maxOf(local.rating.value, account.rating.value), rGames, rGames < ESTABLISHED_AT)
+        val streak = Streak(
+            if (local.streak.lastPlayedDay >= account.streak.lastPlayedDay) local.streak.current else account.streak.current,
+            maxOf(local.streak.longest, account.streak.longest),
+            maxOf(local.streak.lastPlayedDay, account.streak.lastPlayedDay),
+            maxOf(local.streak.freezes, account.streak.freezes))
+        val stats = Stats(
+            local.stats.gamesPlayed + account.stats.gamesPlayed,
+            local.stats.questionsAnswered + account.stats.questionsAnswered,
+            local.stats.correct + account.stats.correct,
+            local.stats.liveNights + account.stats.liveNights,
+            maxOf(local.stats.venuesVisited, account.stats.venuesVisited))
+        return Profile(name, minOf(local.createdAt, account.createdAt), account.avatarSeed, rating, streak, stats)
+    }
+
     private val fmt = SimpleDateFormat("yyyy-MM-dd", Locale.US)
     fun today(): String = fmt.format(Date())
     fun dayGap(from: String, to: String): Int {

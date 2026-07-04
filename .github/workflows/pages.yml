@@ -62,5 +62,36 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: '_site'
+      # The Pages deployment API intermittently returns "Deployment failed, try again
+      # later" when a deploy lands close to a prior one (rate/concurrency). That is a
+      # TRANSIENT reject, not a build error — so retry up to 3× with backoff instead of
+      # letting one flake turn the whole build red. cancel-in-progress stays false so a
+      # deploy is never cancelled mid-flight (which can wedge the next one).
       - id: deployment
         uses: actions/deploy-pages@v4
+        continue-on-error: true
+      - name: Retry deploy (attempt 2)
+        if: steps.deployment.outcome == 'failure'
+        run: echo "Deploy attempt 1 failed (transient) — waiting 60s before retry…" && sleep 60
+      - id: deployment2
+        if: steps.deployment.outcome == 'failure'
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
+      - name: Retry deploy (attempt 3)
+        if: steps.deployment.outcome == 'failure' && steps.deployment2.outcome == 'failure'
+        run: echo "Deploy attempt 2 failed (transient) — waiting 120s before final retry…" && sleep 120
+      - id: deployment3
+        if: steps.deployment.outcome == 'failure' && steps.deployment2.outcome == 'failure'
+        uses: actions/deploy-pages@v4
+      # If all three attempts failed, fail the job loudly (a real, non-transient problem).
+      - name: Confirm a deploy succeeded
+        if: always()
+        run: |
+          if [ "${{ steps.deployment.outcome }}" = "success" ] || \
+             [ "${{ steps.deployment2.outcome }}" = "success" ] || \
+             [ "${{ steps.deployment3.outcome }}" = "success" ]; then
+            echo "Pages deploy succeeded."
+          else
+            echo "::error::All 3 Pages deploy attempts failed — not a transient flake."
+            exit 1
+          fi

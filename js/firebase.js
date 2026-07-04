@@ -20,8 +20,22 @@ async function ensure() {
   _app = app.initializeApp(FIREBASE_CONFIG);
   _db = db.getDatabase(_app);
   _auth = auth.getAuth(_app);
-  const cred = await auth.signInAnonymously(_auth);   // throws if provider disabled
-  _uid = cred.user.uid;
+  // Persist the session across reloads. getAuth defaults to local persistence, but be
+  // explicit so a refresh always restores the signed-in user.
+  try { await auth.setPersistence(_auth, auth.browserLocalPersistence); } catch {}
+  // CRITICAL: wait for Firebase to restore any PERSISTED user (federated OR anon) before
+  // deciding whether to create an anonymous one. Calling signInAnonymously() while a
+  // Google/Apple user is persisted REPLACES it — a silent logout + a brand-new uid on every
+  // page refresh (records stop sticking). Only mint an anon when nobody is signed in.
+  await new Promise((resolve) => {
+    const unsub = auth.onAuthStateChanged(_auth, (u) => { unsub(); resolve(u); });
+  });
+  if (_auth.currentUser) {
+    _uid = _auth.currentUser.uid;
+  } else {
+    const cred = await auth.signInAnonymously(_auth);   // throws if the provider is disabled
+    _uid = cred.user.uid;
+  }
   _fns = { db, auth };
   return _fns;
 }

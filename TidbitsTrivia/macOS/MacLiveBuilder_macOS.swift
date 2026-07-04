@@ -83,6 +83,7 @@ struct LiveBuilderView_macOS: View {
                 }
 
                 addRoundBar
+                balanceMeter
 
                 Divider().overlay(Tidbits.Palette.border).padding(.vertical, 4)
                 HStack(spacing: 12) {
@@ -151,6 +152,45 @@ struct LiveBuilderView_macOS: View {
         .padding(12)
         .background(RoundedRectangle(cornerRadius: 12).fill(Tidbits.Palette.bgDeep))
         .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Tidbits.Palette.border, lineWidth: 2))
+    }
+
+    /// Wave A: a read-only composition meter — shows the host the night's difficulty curve
+    /// and category spread so THEY can balance it. Informs, never auto-rebalances.
+    @ViewBuilder private var balanceMeter: some View {
+        let qs = working.questionStream
+        if qs.count >= 2 {
+            let easy = qs.filter { $0.difficulty <= 2 }.count
+            let med = qs.filter { $0.difficulty == 3 }.count
+            let hard = qs.filter { $0.difficulty >= 4 }.count
+            let byCat = Dictionary(grouping: qs, by: { $0.categoryID }).mapValues(\.count).sorted { $0.value > $1.value }
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Balance").font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                GeometryReader { geo in
+                    HStack(spacing: 2) {
+                        ForEach(Array([(easy, Tidbits.Palette.mint), (med, Tidbits.Palette.blue), (hard, Tidbits.Palette.coral)].enumerated()), id: \.offset) { _, seg in
+                            if seg.0 > 0 { seg.1.frame(width: max(4, geo.size.width * CGFloat(seg.0) / CGFloat(qs.count))) }
+                        }
+                    }
+                }
+                .frame(height: 14).clipShape(Capsule())
+                Text("Easy \(easy) · Medium \(med) · Hard \(hard)").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                Text(byCat.prefix(6).map { "\($0.key.capitalized) \($0.value)" }.joined(separator: " · "))
+                    .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                if let hint = balanceHint(easy: easy, hard: hard, byCat: byCat, total: qs.count) {
+                    Text(hint).font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.coral)
+                }
+            }
+            .padding(14)
+            .background(RoundedRectangle(cornerRadius: 12).fill(Tidbits.Palette.bgDeep))
+            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Tidbits.Palette.border, lineWidth: 2))
+        }
+    }
+
+    private func balanceHint(easy: Int, hard: Int, byCat: [(key: String, value: Int)], total: Int) -> String? {
+        if hard > total / 2 { return "Skews hard — a few easier questions keep the whole room in it." }
+        if easy > total * 2 / 3 { return "Mostly easy — add a couple of stumpers for the ringers." }
+        if let top = byCat.first, top.value > total / 2 { return "\(top.key.capitalized) dominates — mix in other categories for range." }
+        return nil
     }
 
     private func newEvent() {

@@ -149,21 +149,12 @@ fun AppRoot(
                     is Route.NightJoin -> NightJoinScreen(
                         initialCode = store.lastNightCode(),
                         initialName = store.lastNightName(),
-                        // Unified join: probe the hosted Tidbits Live backend first;
-                        // a hit opens the Live player, a miss falls back to the LAN
-                        // peer night (mDNS). A probe failure (offline) also falls back
-                        // — the local night doesn't need the internet.
-                        onJoin = { code, name ->
-                            rootScope.launch {
-                                val isLive = runCatching { FirebaseNet.probeLive(code) }.getOrDefault(false)
-                                backStack.removeAt(backStack.lastIndex)
-                                if (isLive) {
-                                    backStack.add(Route.LiveRoom(code, name))
-                                } else {
-                                    val l = LiveNight.join(store, context); live = l; l.join(code, name)
-                                    backStack.add(Route.NightLive)
-                                }
-                            }
+                        // Unified join on the shared RTDB backend: the screen probes
+                        // live/{code}; a hit opens the Live player (Tidbits Live event
+                        // OR a Trivia Night — same backend), a miss is a clear not-found.
+                        onFound = { code, name ->
+                            store.rememberNight(code, name)
+                            backStack.removeAt(backStack.lastIndex); backStack.add(Route.LiveRoom(code, name))
                         },
                         onCancel = { backStack.removeAt(backStack.lastIndex) },
                     )
@@ -556,23 +547,37 @@ private fun NightSetupScreen(
 }
 
 @Composable
-private fun NightJoinScreen(initialCode: String, initialName: String, onJoin: (String, String) -> Unit, onCancel: () -> Unit) {
+private fun NightJoinScreen(initialCode: String, initialName: String, onFound: (String, String) -> Unit, onCancel: () -> Unit) {
     var code by remember { mutableStateOf(initialCode) }
     var name by remember { mutableStateOf(initialName) }
+    var probing by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text("Join a game", fontSize = 28.sp, fontWeight = FontWeight.Black)
-        Text("Enter a host's code — a Tidbits Live event (from anywhere) or a nearby Trivia Night (same Wi-Fi).",
+        Text("Enter a host's code — a Tidbits Live event or a Trivia Night. Works from anywhere.",
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
         OutlinedTextField(
-            value = code, onValueChange = { code = it.uppercase().filter { c -> c.isLetterOrDigit() }.take(4) },
+            value = code, onValueChange = { code = it.uppercase().filter { c -> c.isLetterOrDigit() }.take(4); error = null },
             label = { Text("Room code") }, singleLine = true, modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters),
         )
         OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Your name") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+        error?.let { Text(it, color = Pops.coral, fontWeight = FontWeight.Bold) }
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             OutlinedButton(onClick = onCancel) { Text("Cancel") }
-            Button(onClick = { onJoin(code, name) }, enabled = code.length == 4, modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(containerColor = Pops.coral, contentColor = Color.White)) { Text("Join") }
+            Button(
+                onClick = {
+                    scope.launch {
+                        probing = true; error = null
+                        val exists = runCatching { FirebaseNet.probeLive(code) }.getOrDefault(false)
+                        probing = false
+                        if (exists) onFound(code, name) else error = "No game found for that code."
+                    }
+                },
+                enabled = code.length == 4 && !probing, modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(containerColor = Pops.coral, contentColor = Color.White),
+            ) { Text(if (probing) "Finding…" else "Join") }
         }
     }
 }

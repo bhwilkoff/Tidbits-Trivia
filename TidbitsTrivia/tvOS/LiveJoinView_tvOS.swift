@@ -1,22 +1,21 @@
 #if os(tvOS)
 import SwiftUI
 
-/// Unified "Join a game" on Apple TV. One 4-letter code box resolves to either a
-/// **Mac-hosted Tidbits Live** event (Firebase RTDB `live/{code}`, works over the
-/// internet) or a **local peer Trivia Night** (mDNS, same Wi-Fi). We probe RTDB
-/// first — a hit routes to the Live player on the shared `LivePlayerClient`; a
-/// miss falls back to LAN discovery via the existing `TVNightLiveContainer`.
-/// Same verb everywhere; the player never has to know which system hosts them.
+/// Unified "Join a game" on Apple TV. One 4-letter code box joins any room on the
+/// shared Firebase RTDB backend (`live/{code}`) — a Mac-hosted **Tidbits Live**
+/// event OR a casual **Trivia Night** hosted from any device (owner architecture:
+/// both ride one backend). Renders on the shared `LivePlayerClient`. Same verb
+/// everywhere; the player never has to know which product hosts them.
 struct TVJoinGameContainer: View {
-    @Environment(AppStore.self) private var store
     @Environment(\.dismiss) private var dismiss
     @State private var code = NightClient.lastCode
     @State private var name = NightClient.lastName
     @State private var probing = false
+    @State private var error: String?
     @State private var route: Route = .form
     @FocusState private var focus: Field?
     private enum Field: Hashable { case code, name, join }
-    private enum Route: Equatable { case form, live, night }
+    private enum Route: Equatable { case form, live }
 
     var body: some View {
         ZStack {
@@ -24,7 +23,6 @@ struct TVJoinGameContainer: View {
             switch route {
             case .form:  joinForm
             case .live:  TVLivePlayerView(code: code, team: name, onClose: { dismiss() })
-            case .night: TVNightLiveContainer(joining: store.game, autoJoin: (code, name))
             }
         }
         .onExitCommand { if route == .form { dismiss() } }
@@ -51,26 +49,29 @@ struct TVJoinGameContainer: View {
             if probing {
                 Label("Finding your game…", systemImage: "antenna.radiowaves.left.and.right")
                     .font(.system(size: 25, weight: .bold, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+            } else if let error {
+                Label(error, systemImage: "exclamationmark.triangle.fill")
+                    .font(.system(size: 25, weight: .bold, design: .rounded)).foregroundStyle(Tidbits.Palette.coral)
             }
             Button(probing ? "Finding…" : "Join") { Task { await resolve() } }
                 .buttonStyle(TVChipStyle(accent: Tidbits.Palette.coral, selected: false))
                 .focused($focus, equals: .join).disabled(code.count < 4 || probing)
-            Text("A Tidbits Live event works from anywhere. A local Trivia Night needs the same Wi-Fi as the host.")
+            Text("Enter a host's code — a Tidbits Live event or a Trivia Night. Works from anywhere.")
                 .font(.system(size: 23, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
         }
         .padding(90)
         .defaultFocus($focus, .code)
     }
 
-    /// Probe the hosted-event backend first; a miss means "try the LAN" (the peer
-    /// night runs its own discovery + surfaces its own not-found state).
+    /// Confirm a room exists at this code, then join it (Live event or Trivia
+    /// Night — same backend). A miss is a clear not-found.
     private func resolve() async {
         let c = code.uppercased().filter { $0.isLetter || $0.isNumber }
         guard c.count >= 4 else { return }
-        probing = true
-        let isLive = (try? await FirebaseRTDB.shared.exists("\(LiveRoom.path(c))/meta")) ?? false
+        probing = true; error = nil
+        let exists = (try? await FirebaseRTDB.shared.exists("\(LiveRoom.path(c))/meta")) ?? false
         probing = false
-        route = isLive ? .live : .night
+        if exists { route = .live } else { error = "No game found for that code." }
     }
 }
 

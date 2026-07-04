@@ -1,10 +1,16 @@
-# Tidbits Live — cross-platform room contract (Firebase RTDB)
+# Tidbits Live / Trivia Night — cross-platform room contract (Firebase RTDB)
 
-The networked join that lets **iOS / Android / web** players play a **Mac-hosted**
-Tidbits Live event. One backend all four reach: **Firebase RTDB** (project
+The one backend that powers BOTH products (Decision 044): a **Mac-hosted Tidbits
+Live** event (the marquee) AND a casual **Trivia Night** hosted from **any**
+platform — iOS / iPadOS / tvOS / Android / **web**. Players on all six surfaces
+join the same `live/{code}` room. One backend all reach: **Firebase RTDB** (project
 `tidbits-trivia-f2ddb`, the same non-secret config as `js/firebase-config.js`).
 GameKit is Apple-only and mDNS/TCP can't reach a browser, so RTDB is the only
 common denominator.
+
+**Hosts** (own `meta`/`pub`/`scores`): Trivia Night — `LiveHostNet`+`LiveNightHost`
+(Apple), `FirebaseNet` host methods+`NightHostScreen` (Android), `js/firebase.js`
+host methods+`openNightHost` (web). Tidbits Live — `MacLiveHostNet` (macOS only).
 
 Swift source of truth: `TidbitsTrivia/Core/Networking/LiveRoom.swift` +
 `FirebaseRTDB.swift`. Web mirror: `js/live.js`. Android mirror: `FirebaseNet.live*`.

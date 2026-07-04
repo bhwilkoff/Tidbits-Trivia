@@ -1,22 +1,19 @@
 #if os(iOS)
 import SwiftUI
 
-/// Unified "Join a game" on iPhone/iPad. One code box resolves to either a
-/// Mac-hosted **Tidbits Live** event (Firebase RTDB `live/{code}`, works over the
-/// internet — the native twin of js/live.js on the shared `LivePlayerClient`) or a
-/// local peer **Trivia Night** (mDNS, same Wi-Fi). We probe RTDB first; a miss
-/// falls back to LAN discovery via `NightLiveContainer`. Same verb; the player
-/// never has to know which system hosts them.
+/// Unified "Join a game" on iPhone/iPad. One code box joins any room on the shared
+/// Firebase RTDB backend (`live/{code}`) — a Mac-hosted **Tidbits Live** event OR a
+/// casual **Trivia Night** hosted from any device (owner architecture: both ride one
+/// backend). Renders on the shared `LivePlayerClient` (native twin of js/live.js).
+/// Same verb; the player never has to know which product hosts them.
 struct LiveJoinView: View {
     var initialCode: String = ""
     @Environment(\.dismiss) private var dismiss
-    @Environment(AppStore.self) private var store
     @State private var client = LivePlayerClient()
     @State private var code = ""
     @State private var team = ""
     @State private var probing = false
     @State private var formError: String?
-    @State private var nightJoin: NightJoinReq?
 
     var body: some View {
         ZStack {
@@ -25,9 +22,6 @@ struct LiveJoinView: View {
         }
         .onAppear { if code.isEmpty { code = initialCode.uppercased() } }
         .interactiveDismissDisabled(client.joined)
-        .fullScreenCover(item: $nightJoin) { req in
-            NightLiveContainer(joining: store.game, autoJoin: (req.code, req.name))
-        }
         .task {
             // CI/device hook: auto-resolve a known room to verify the flow headless.
             if ProcessInfo.processInfo.environment["TIDBITS_LIVE_AUTOJOIN"] == "1",
@@ -37,19 +31,18 @@ struct LiveJoinView: View {
         }
     }
 
-    /// Probe the hosted-event backend first; a hit joins the Live room, a miss
-    /// hands off to the LAN peer night (which runs its own discovery + surfaces
-    /// its own not-found state).
+    /// Confirm a room exists at this code, then join it (Live event or Trivia
+    /// Night — same backend). A miss is a clear not-found, not a silent LAN search.
     private func resolve() async {
         let c = code.uppercased().filter { $0.isLetter || $0.isNumber }
         let t = team.trimmingCharacters(in: .whitespaces)
         guard c.count >= 4 else { formError = "Enter the 4-letter code from the screen."; return }
         guard !t.isEmpty else { formError = "Enter a team name."; return }
         formError = nil; probing = true
-        let isLive = (try? await FirebaseRTDB.shared.exists("\(LiveRoom.path(c))/meta")) ?? false
+        let exists = (try? await FirebaseRTDB.shared.exists("\(LiveRoom.path(c))/meta")) ?? false
         probing = false
-        if isLive { await client.join(code: c, team: t) }
-        else { nightJoin = NightJoinReq(code: c, name: t) }
+        if exists { await client.join(code: c, team: t) }
+        else { formError = "No game found for that code. Check it and try again." }
     }
 
     // MARK: Join
@@ -197,12 +190,5 @@ struct LiveJoinView: View {
             : (client.hasAnswered ? ("Locked in — waiting for the reveal…", Tidbits.Palette.mint) : ("Tap your answer.", Tidbits.Palette.inkSoft))
         Text(note.0).font(Tidbits.TypeRamp.l4).foregroundStyle(note.1).frame(maxWidth: .infinity).padding(.top, 6)
     }
-}
-
-/// A resolved LAN-night handoff from the unified join front (RTDB probe missed).
-private struct NightJoinReq: Identifiable {
-    let code: String
-    let name: String
-    var id: String { code }
 }
 #endif

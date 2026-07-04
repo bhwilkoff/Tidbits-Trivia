@@ -1290,3 +1290,36 @@ SwiftData, the event references it, neither embeds a re-hosted copy). Any
 "generate" assist yields an EDITABLE round the host shapes, never a one-tap
 finished night (`learning-orientation-design`). The full binding spec is
 `docs/macOS-DESIGN.md` Part A; every event surface quotes a rule there.
+
+## 044 — Trivia Night + Tidbits Live share ONE backend; host from any platform (amends 034)
+
+Trivia Night and Tidbits Live are now two PRODUCTS on ONE backend — Firebase
+Realtime Database `live/{code}` (the contract in `docs/LIVE-ROOM-CONTRACT.md`) —
+with UNIFIED host and join code paths. Owner architecture, 2026-07-03:
+
+1. **Trivia Night = casual, host from ANY platform.** iOS, iPadOS, tvOS, Android,
+   **and web** can host a quick game with friends AND join one. It's lightweight.
+2. **Tidbits Live = the marquee, macOS-only host** for large-scale venue events —
+   far more feature-rich than Night, built for continual expansion (Decision 043).
+   It rides the same rooms, so its players come from the same unified join.
+3. **Join is one flow everywhere.** "Join a game" → a 4-letter code → the shared
+   player (`LivePlayerClient` on Apple, `FirebaseNet`/`LiveRoomScreen` on Android,
+   `js/live.js` on web). The player never knows or cares which product hosts them.
+4. **One QR** — `https://tidbitstrivia.com/live/CODE` (works via `404.html`). Every
+   host lobby (Night on all platforms + the Mac Live cockpit/projector) shows it;
+   scanning joins with the code prefilled.
+
+**Why:** Decision 034's Trivia Night was **local mDNS/Bonjour**, which a web browser
+physically cannot reach (no LAN discovery) and which the owner wanted available
+everywhere. RTDB is the only backend all six surfaces share, and it already powered
+Tidbits Live join. Unifying makes "host anywhere, join anywhere, incl. the web" real
+with no new infrastructure, and collapses two join flows into one.
+
+**How to apply:** the shared host is `LiveHostNet` (RTDB bridge, promoted to Core)
++ `LiveNightHost` (Apple) / `FirebaseNet` host methods (Android) / `js/firebase.js`
+host methods (web) — open a room, publish each `pub` (answer withheld until reveal),
+**auto-score on reveal**, pace Reveal→Next, standings. A host may "play too" (self-
+joins as a team). The **old mDNS Night stack** (`NightHost`/`NightClient`/
+`BonjourTransport`, Wi-Fi Aware, BLE, `net/Night*` on Android) is **legacy** — no
+longer wired for Trivia Night; `LiveNight` survives only as the GameKit Quick Match
+coordinator (Decision 039). Do not add mDNS to new join/host flows.

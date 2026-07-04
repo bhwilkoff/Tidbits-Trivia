@@ -83,6 +83,7 @@
 		CCA8AF2E7F7567E5B153E60F /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B2FEBFB29C12A172EADB66F /* SettingsView.swift */; };
 		D28850D4B46D40A2897B334F /* QuickMatchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F69A4F5B18F41A84998E9E3D /* QuickMatchView.swift */; };
 		FBDB000000000000000000D1 /* LiveJoinView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBDB000000000000000000C1 /* LiveJoinView.swift */; };
+		FBDB0000000000000000FF08 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBDB0000000000000000FF07 /* ProfileView.swift */; };
 		A1B2C3D4E5F6000000AC0612 /* NightHostView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000AC0613 /* NightHostView.swift */; };
 		D408A3818D906999A4AD99DC /* NightClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0B1B4D9BA126D3D5E585A00 /* NightClient.swift */; };
 		D78451DA6D74E2BA65EB56C8 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AAEF55F4DD8DEA37D200C32 /* HomeView.swift */; };
@@ -209,6 +210,7 @@
 		F5C9D9266531ECD27156562D /* GameView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView_tvOS.swift; sourceTree = "<group>"; };
 		F69A4F5B18F41A84998E9E3D /* QuickMatchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickMatchView.swift; sourceTree = "<group>"; };
 		FBDB000000000000000000C1 /* LiveJoinView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveJoinView.swift; sourceTree = "<group>"; };
+		FBDB0000000000000000FF07 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F6000000AC0613 /* NightHostView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightHostView.swift; sourceTree = "<group>"; };
 		F705319E1E9AC235B5D005C4 /* RecordsView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordsView_tvOS.swift; sourceTree = "<group>"; };
 		FD70222B5EE4C4145E4D1F84 /* NightSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightSetupView.swift; sourceTree = "<group>"; };
@@ -435,6 +437,7 @@
 				F18495176F588DF9E5C7907E /* PartyContainerView.swift */,
 				F69A4F5B18F41A84998E9E3D /* QuickMatchView.swift */,
 				FBDB000000000000000000C1 /* LiveJoinView.swift */,
+				FBDB0000000000000000FF07 /* ProfileView.swift */,
 				A1B2C3D4E5F6000000AC0613 /* NightHostView.swift */,
 				0C18E4CA3BD148F09E1BE077 /* RecordsView.swift */,
 				7C60A815D0EFF35CF18DAB26 /* ResultsView.swift */,
@@ -632,6 +635,7 @@
 				03FB04C17EDA45D30AC911F4 /* QuestionProvider.swift in Sources */,
 				D28850D4B46D40A2897B334F /* QuickMatchView.swift in Sources */,
 				FBDB000000000000000000D1 /* LiveJoinView.swift in Sources */,
+				FBDB0000000000000000FF08 /* ProfileView.swift in Sources */,
 				A1B2C3D4E5F6000000AC0612 /* NightHostView.swift in Sources */,
 				BFFC359435DBA3FF985509D1 /* QuickMatchView_tvOS.swift in Sources */,
 				512F6230D9E8F7A314AFF0ED /* RecordsStore.swift in Sources */,

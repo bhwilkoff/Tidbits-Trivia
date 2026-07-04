@@ -26,17 +26,21 @@ final class PlayerIdentityStore {
         do {
             let uid = try await db.ensureAuth()
             profileId = uid
-            if let existing = try await db.get(PlayerIdentity.publicPath(uid), as: PlayerIdentity.Profile.self) {
+            if let existing = try? await db.get(PlayerIdentity.publicPath(uid), as: PlayerIdentity.Profile.self) {
                 profile = existing
             } else {
+                // Local-first: show the profile immediately, persist best-effort (works
+                // offline and before the players/ rules are deployed).
                 let fresh = Self.newProfile(name: Self.suggestedName())
-                try await db.put(PlayerIdentity.publicPath(uid), fresh)
                 profile = fresh
+                try? await db.put(PlayerIdentity.publicPath(uid), fresh)
             }
             await linkNativeIdentity()
             loaded = true
         } catch {
-            print("[Identity] bootstrap failed: \(error)")
+            // Even offline (no auth) show a local profile so the UI always works.
+            if profile == nil { profile = Self.newProfile(name: Self.suggestedName()) }
+            print("[Identity] bootstrap degraded: \(error)")
         }
     }
 

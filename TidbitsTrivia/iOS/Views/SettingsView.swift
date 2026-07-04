@@ -8,6 +8,7 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(GameCenterManager.self) private var gameCenter
+    @Environment(PlayerIdentityStore.self) private var identity
     @AppStorage(Haptics.defaultsKey) private var hapticsEnabled = true
     @AppStorage(GameSettings.reviewKey) private var reviewEnabled = true
     @State private var confirmReset = false
@@ -21,6 +22,22 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
+                Section {
+                    NavigationLink { ProfileView() } label: {
+                        HStack(spacing: 12) {
+                            if let p = identity.profile {
+                                Avatar(seed: p.avatarSeed, initials: ProfileView.initials(p.name)).frame(width: 44, height: 44)
+                                VStack(alignment: .leading, spacing: 1) {
+                                    Text(p.name).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                                    Text("Rating \(Int(p.rating.value)) · \(p.streak.current)-day streak")
+                                        .font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft)
+                                }
+                            } else {
+                                Text("Your Profile")
+                            }
+                        }
+                    }
+                }
                 Section("Feedback") {
                     Toggle("Haptics", isOn: $hapticsEnabled)
                 }

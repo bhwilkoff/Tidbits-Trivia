@@ -7,6 +7,56 @@
 > `docs/ROADMAP.md`, `docs/DATA-CONTRACT.md`. Detailed per-round history is in
 > `ARCHIVE.md`.
 
+## Current state (2026-07-04)
+
+**Shipped 1.6.26 / build 67 / vc57 across all platforms.** Apple → TestFlight
+(iOS+tvOS) + App Store Connect (mac) via the cloud workflow; **Android → Play
+internal is now CI-automated** (push a `v*-android` tag → `android-build.yml` signs +
+uploads; the 6 Play secrets are set — see memory `play-signing-and-submission`); web
+auto-deploys (SW **v38**). Working tree clean. **Bump version every ship.**
+
+This session was three big streams, all built via self-paced `/loop`. Memories carry
+the depth: `portable-identity-spine`, `play-signing-and-submission`,
+`wave-a-authoring-depth`.
+
+**Stream 1 — Durable / cross-provider identity (commits 26d6927→e432aca).** Built on
+the portable identity spine (1.6.22). Sign-in (Apple + Google) promotes the anon
+account; **profiles are keyed by the VERIFIED EMAIL** (`players/{sha256(email)}`,
+`allowDuplicateEmails=true`) so Apple + Google + web all converge on ONE record set —
+this was the fix for "authenticate with either, keep records." Lossless idempotent
+`mergeProfiles`; sign-out → fresh anon; adopt provider name on login if still default;
+live cross-device NAME sync; `emailOwners/{key}` ownership-proof rule (deployed).
+**Caveat:** Apple "Hide My Email" gives a relay address that won't match a Google email
+(separate identity) — must Share Email to converge.
+- **Firebase setup DONE (verified via admin API):** Google + Apple providers enabled;
+  `tidbitstrivia.com` in Authorized domains; Android SHA-1s registered INCLUDING the
+  **Play App Signing key** (`45:B0:95…` — the gotcha: Play re-signs, so the upload/debug
+  SHA isn't enough for Google Sign-In on Play builds); Apple-on-web configured (Services
+  ID `com.learningischange.tidbitstrivia.web` + Team `L2G756LY8N` + Key `QT5PJV96B7`).
+  API read recipe: `gcloud auth print-access-token` + `x-goog-user-project` header.
+
+**Stream 2 — L2 daily-habit loop (da3d729→30d4859, shipped).** Cross-context day-streak
+surfaced everywhere (results moment + daily card + share) and UNIFIED as the one streak
+of record (Records repointed off the legacy per-device `DailyStreak`, which stays only
+for the GC leaderboard); spoiler-free share carries the day streak; **daily-log
+cross-device sync** (`dailyLog/{emailKey}`) so "done today" + the archive follow the
+identity (owner ask). All 5 platforms.
+
+**Stream 3 — Wave A: Tidbits Live host authoring depth (6ee66c7→ba1680c, PAUSED 8/9).**
+Story-behind-the-answer on reveal (big screen + join clients), difficulty/category
+balance meter, per-round timers + on-screen countdown (all surfaces), drag-to-reorder,
+CSV import, per-round host notes. **Remaining = the final wager round (task #40)** — a
+real gameplay build (bet points on the last Q). Resume `/loop wave a` or redirect to
+Wave B/C/E or consumer L3/L4/L5.
+
+**Infra fix:** GitHub Pages was failing intermittently ("Deployment failed, try again
+later") — root cause was the ~10/hr Pages deploy rate limit hit by publishing the whole
+23MB repo on EVERY commit. Fixed: switched to a concurrency-controlled Actions workflow
+(`.github/workflows/pages.yml`) that stages ONLY web files into `_site`, with a `paths:`
+filter so non-web commits don't redeploy.
+
+---
+
 ## Current state (2026-07-03)
 
 **In beta on all platforms — 1.6.16 shipped.** Versions: Apple **1.6.16 (build 56)**

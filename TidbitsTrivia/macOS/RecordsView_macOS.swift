@@ -10,6 +10,7 @@ import SwiftData
 struct RecordsView_macOS: View {
     @Query(sort: \GameRecord.date, order: .reverse) private var records: [GameRecord]
     @Query private var streaks: [DailyStreak]
+    @Environment(PlayerIdentityStore.self) private var identity
     @Query(filter: #Predicate<MissedFact> { !$0.resolved }, sort: \MissedFact.missCount, order: .reverse)
     private var toReview: [MissedFact]
     @Query(sort: \CalibrationTally.tierValue, order: .reverse) private var calibration: [CalibrationTally]
@@ -59,12 +60,12 @@ struct RecordsView_macOS: View {
     private var streakCard: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                Text("DAILY STREAK").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.ink.opacity(0.7))
-                Text("\(streak?.current ?? 0) days").font(.system(size: 30, weight: .black, design: .rounded))
+                Text("DAY STREAK").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.ink.opacity(0.7))
+                Text("\(identity.profile?.streak.current ?? 0) days").font(.system(size: 30, weight: .black, design: .rounded))
                     .foregroundStyle(Tidbits.Palette.ink)
             }
             Spacer()
-            Text("best \(streak?.best ?? 0)").font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+            Text("best \(identity.profile?.streak.longest ?? 0)").font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
             Image(systemName: "flame.fill").font(.system(size: 28, weight: .black)).foregroundStyle(Tidbits.Palette.coral)
         }
         .padding(20)

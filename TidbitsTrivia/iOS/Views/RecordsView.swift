@@ -12,6 +12,7 @@ struct RecordsView: View {
     @Query(filter: #Predicate<MissedFact> { !$0.resolved }, sort: \MissedFact.missCount, order: .reverse)
     private var toReview: [MissedFact]
     @Query(sort: \CalibrationTally.tierValue, order: .reverse) private var calibration: [CalibrationTally]
+    @Environment(PlayerIdentityStore.self) private var identity
 
     @State private var recap: GameRecord?
     @State private var drillDomain: String?
@@ -64,15 +65,15 @@ struct RecordsView: View {
     private var streakCard: some View {
         HStack(spacing: 16) {
             VStack(alignment: .leading, spacing: 2) {
-                Text("DAILY STREAK").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.ink.opacity(0.7))
-                Text("\(streak?.current ?? 0) days")
+                Text("DAY STREAK").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.ink.opacity(0.7))
+                Text("\(identity.profile?.streak.current ?? 0) days")
                     .font(.system(size: 30, weight: .black, design: .rounded))
                     .foregroundStyle(Tidbits.Palette.ink)
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 2) {
                 Text("BEST").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.ink.opacity(0.7))
-                Text("\(streak?.best ?? 0)").font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
+                Text("\(identity.profile?.streak.longest ?? 0)").font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
             }
             Image(systemName: "flame.fill").font(.system(size: 32, weight: .black)).foregroundStyle(Tidbits.Palette.coral)
         }

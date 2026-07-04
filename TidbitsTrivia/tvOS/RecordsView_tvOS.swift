@@ -12,6 +12,7 @@ import SwiftData
 struct RecordsView_tvOS: View {
     @Query(sort: \GameRecord.date, order: .reverse) private var records: [GameRecord]
     @Query private var streaks: [DailyStreak]
+    @Environment(PlayerIdentityStore.self) private var identity
     @Query(filter: #Predicate<MissedFact> { !$0.resolved }, sort: \MissedFact.missCount, order: .reverse)
     private var toReview: [MissedFact]
     @Query(sort: \CalibrationTally.tierValue, order: .reverse) private var calibration: [CalibrationTally]
@@ -97,13 +98,13 @@ struct RecordsView_tvOS: View {
             HStack(spacing: 28) {
                 Image(systemName: "flame.fill").font(.system(size: 56, weight: .black)).foregroundStyle(Tidbits.Palette.coral)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("DAILY STREAK").font(.system(size: 24, weight: .bold, design: .rounded)).foregroundStyle(.black.opacity(0.7))
-                    Text("\(streak?.current ?? 0) days").font(.system(size: 48, weight: .black, design: .rounded)).foregroundStyle(.black)
+                    Text("DAY STREAK").font(.system(size: 24, weight: .bold, design: .rounded)).foregroundStyle(.black.opacity(0.7))
+                    Text("\(identity.profile?.streak.current ?? 0) days").font(.system(size: 48, weight: .black, design: .rounded)).foregroundStyle(.black)
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 2) {
                     Text("BEST").font(.system(size: 24, weight: .bold, design: .rounded)).foregroundStyle(.black.opacity(0.7))
-                    Text("\(streak?.best ?? 0)").font(.system(size: 48, weight: .black, design: .rounded)).foregroundStyle(.black)
+                    Text("\(identity.profile?.streak.longest ?? 0)").font(.system(size: 48, weight: .black, design: .rounded)).foregroundStyle(.black)
                 }
             }
         }

@@ -1022,8 +1022,8 @@ private fun RecordsScreen(store: Store) {
         }
         ChunkyCard(fill = Pops.yellow) {
             Row(Modifier.padding(18.dp).fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Column { Text("DAILY STREAK", color = Ink.copy(alpha = 0.7f), fontSize = 12.sp); Text("${streak.first} days", fontWeight = FontWeight.Black, fontSize = 26.sp, color = Ink) }
-                Text("best ${streak.second} 🔥", color = Ink, fontWeight = FontWeight.Bold)
+                Column { Text("DAY STREAK", color = Ink.copy(alpha = 0.7f), fontSize = 12.sp); Text("${PlayerIdentity.profile?.streak?.current ?: 0} days", fontWeight = FontWeight.Black, fontSize = 26.sp, color = Ink) }
+                Text("best ${PlayerIdentity.profile?.streak?.longest ?: 0} 🔥", color = Ink, fontWeight = FontWeight.Bold)
             }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {

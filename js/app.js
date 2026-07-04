@@ -709,7 +709,7 @@ function viewRecords() {
   return `
     <h1 class="page-title">Records</h1>
     ${profileCard()}
-    <div class="banner card daily"><div><div class="muted">DAILY STREAK</div><div class="big">${st.current} days</div></div><div class="muted">best ${st.best} 🔥</div></div>
+    <div class="banner card daily"><div><div class="muted">DAY STREAK</div><div class="big">${Identity.profile?.streak?.current || 0} days</div></div><div class="muted">best ${Identity.profile?.streak?.longest || 0} 🔥</div></div>
     <div class="stat-row">
       ${statBox(lt.games, 'Games', '#8B5CF6')}${statBox(lt.acc + '%', 'Accuracy', '#2D5BFF')}${statBox(lt.correct, 'Correct', '#2FCB8A')}
     </div>

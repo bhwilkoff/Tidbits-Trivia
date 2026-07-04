@@ -44,6 +44,9 @@ enum RecordsStore {
 
         try? context.save()
         submitToGameCenter(summary, in: context)
+        // Feed the portable identity: solo play moves the Tidbits Rating + cross-context
+        // streak. Live games flow through the claim flow instead.
+        Task { await PlayerIdentityStore.shared.recordGame(correct: summary.correct, total: summary.total) }
         return isNewBest
     }
 

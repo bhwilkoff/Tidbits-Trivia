@@ -87,4 +87,56 @@ enum PlayerIdentity {
     static func standingPath(season: String, venue: String, uid: String) -> String {
         "standings/\(season)/\(venue)/\(uid)"
     }
+
+    /// Today in the player's local zone, "yyyy-MM-dd" (the streak day key).
+    nonisolated static func todayString() -> String {
+        let f = DateFormatter(); f.locale = Locale(identifier: "en_US_POSIX"); f.dateFormat = "yyyy-MM-dd"
+        return f.string(from: Date())
+    }
+
+    /// Whole-day gap between two "yyyy-MM-dd" strings (empty `from` → 1 = a fresh start).
+    nonisolated static func dayGap(from: String, to: String) -> Int {
+        guard !from.isEmpty else { return 1 }
+        let f = DateFormatter(); f.locale = Locale(identifier: "en_US_POSIX"); f.dateFormat = "yyyy-MM-dd"
+        guard let a = f.date(from: from), let b = f.date(from: to) else { return 99 }
+        return Calendar.current.dateComponents([.day], from: a, to: b).day ?? 99
+    }
+}
+
+extension PlayerIdentity.Rating {
+    /// Elo-style update after a game. `accuracy` (0…1) is the score; `field` is the
+    /// implied opponent/difficulty rating (solo = a fixed field; live can pass the real
+    /// average opponent rating). Provisional games move faster (higher K); `weight`
+    /// boosts live games. Self-correcting + bounded: a consistent-accuracy player
+    /// converges to the rating where `expected == their accuracy`.
+    nonisolated func updated(accuracy: Double, field: Double = 1200, weight: Double = 1) -> PlayerIdentity.Rating {
+        let expected = 1.0 / (1.0 + pow(10, (field - value) / 400))
+        let k = (provisional ? 64.0 : 24.0) * weight
+        let n = games + 1
+        let newValue = max(100, (value + k * (accuracy - expected)).rounded())
+        return PlayerIdentity.Rating(value: newValue, games: n, provisional: n < PlayerIdentity.Rating.establishedAt)
+    }
+}
+
+extension PlayerIdentity.Streak {
+    /// Register play on `today` ("yyyy-MM-dd"). Same day = unchanged; a consecutive day
+    /// = +1; a ONE-day gap consumes a freeze (streak preserved); a bigger gap resets to 1
+    /// (forgiving restart — never punishing). A live night grants a freeze token (cap 3).
+    nonisolated func played(today: String, liveNight: Bool = false) -> PlayerIdentity.Streak {
+        var s = self
+        if today != lastPlayedDay {
+            let gap = PlayerIdentity.dayGap(from: lastPlayedDay, to: today)
+            if lastPlayedDay.isEmpty || gap == 1 {
+                s.current += 1
+            } else if gap == 2 && s.freezes > 0 {
+                s.freezes -= 1; s.current += 1            // a freeze covers one missed day
+            } else {
+                s.current = 1                             // gap too big → forgiving restart
+            }
+            s.longest = max(s.longest, s.current)
+            s.lastPlayedDay = today
+        }
+        if liveNight { s.freezes = min(s.freezes + 1, 3) }
+        return s
+    }
 }

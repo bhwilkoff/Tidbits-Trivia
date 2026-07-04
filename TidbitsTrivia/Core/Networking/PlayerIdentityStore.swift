@@ -64,6 +64,20 @@ final class PlayerIdentityStore {
         #endif
     }
 
+    /// Record a finished game into the portable profile (rating + streak + stats) and
+    /// persist best-effort. Called on every solo game; live games flow via the claim flow.
+    func recordGame(correct: Int, total: Int, live: Bool = false) async {
+        guard var p = profile, let uid = profileId, total > 0 else { return }
+        p.rating = p.rating.updated(accuracy: Double(correct) / Double(total), weight: live ? 1.5 : 1.0)
+        p.streak = p.streak.played(today: PlayerIdentity.todayString(), liveNight: live)
+        p.stats.gamesPlayed += 1
+        p.stats.questionsAnswered += total
+        p.stats.correct += correct
+        if live { p.stats.liveNights += 1 }
+        profile = p
+        try? await db.put(PlayerIdentity.publicPath(uid), p)
+    }
+
     /// Update the public display name.
     func rename(_ name: String) async {
         guard let uid = profileId, var p = profile else { return }

@@ -804,6 +804,21 @@ One-line-per-round; full detail in `ARCHIVE.md`.
   four Apple/Android build targets green throughout. **Owner gate:** the multi-device
   live run (rules deployed). **Follow-up:** full HOST process-death resume. See memory
   [[unified-live-backend]].
+- **2026-07-03 (TIDBITS LIVE UPGRADE WAVE — SHIPPED 1.6.20/61/vc52, all platforms).**
+  Owner-greenlit /loop initiative to significantly upgrade Tidbits Live, unblocked by
+  the RTDB join. Five serverless tracks, each verified+committed: (1) big-screen SHOW
+  system §A8 — theatrical reveal, spring-reordered climbing leaderboard, winner
+  celebration, question cross-fade, full-screen round-intro cards, all reduce-motion
+  gated (8823c2a, 55600b2); (2) fastest-finger/speed-bonus scoring, host toggle, all
+  platforms, host-side +3/+2/+1 by answer ts (8cd5e2f); (3) free-text review +
+  spelling leniency in the Mac cockpit — auto-scores all types for networked teams,
+  ✓/✗ verdict + one-tap mark-correct override §A3.3 (44cd303); (4) cheating-deterrence
+  answer-lock 'pencils down' all platforms, LiveRoom.Pub.locked §A5.3 (350796d,
+  601eecd); (5) live vote-distribution tally (poll/majority viz) on the big screen,
+  content-free (69bf609). Ship 42dd4c1. **Deferred long-tail (out of scope this wave):**
+  kick/moderate (needs meta/kicked rules change), CSV import, recurring scheduling,
+  analytics, tab-switch focus signal, brains-only tie-break, authored no-answer poll.
+  See [[tidbits-live-upgrade-initiative]].
 - **2026-07-03 (ALL question types playable in a hosted night — SHIPPED 1.6.19, all
   platforms).** Owner audit ask: not all types worked in hosted Trivia Nights (only
   MCQ; Picture dropped its image; Closest Call/Ordering/Matching/Type-answer/Enumerate

@@ -37,6 +37,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.delay
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -182,7 +183,11 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
                     Spacer(Modifier.height(12.dp))
                 }
                 Text(p.prompt, fontSize = 24.sp, fontWeight = FontWeight.Black, color = ink)
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(12.dp))
+                if (!revealed && p.deadline != null) {   // Wave A: on-screen timer
+                    Countdown(p.deadline)
+                    Spacer(Modifier.height(12.dp))
+                }
                 val locked = revealed || submittedQid == p.qid || p.locked
                 when {
                     p.numeric != null -> NumericAnswer(p.numeric, p.qid, locked) { submitFields(mapOf("number" to it)) }
@@ -217,6 +222,19 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
             }
         }
     }
+}
+
+@Composable
+private fun Countdown(deadlineMs: Long) {   // Wave A: ticks to the host's deadline, coral at ≤5s
+    var now by remember { mutableStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(deadlineMs) {
+        while (System.currentTimeMillis() < deadlineMs) { now = System.currentTimeMillis(); delay(500) }
+        now = deadlineMs
+    }
+    val secs = (((deadlineMs - now).coerceAtLeast(0) + 999) / 1000).toInt()
+    val txt = if (secs >= 60) "%d:%02d".format(secs / 60, secs % 60) else "${secs}s"
+    Text(txt, fontSize = 30.sp, fontWeight = FontWeight.Black,
+        color = if (secs <= 5) Pops.coral else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
 }
 
 @Composable

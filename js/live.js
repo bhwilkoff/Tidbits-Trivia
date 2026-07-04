@@ -81,9 +81,25 @@ async function pick(i) { S.chosen = i; submitAns({ choice: i }); }
 
 function esc(s) { return String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 
+// Wave A: tick the countdown element to the host's deadline (self-clears when it's gone).
+let _liveTimerInt = null;
+function ensureLiveTimer() {
+  if (_liveTimerInt) return;
+  const tick = () => {
+    const el = document.getElementById('live-timer');
+    if (!el) { clearInterval(_liveTimerInt); _liveTimerInt = null; return; }
+    const secs = Math.max(0, Math.ceil((+el.dataset.dl - Date.now()) / 1000));
+    el.textContent = secs >= 60 ? `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}` : `${secs}s`;
+    el.style.color = secs <= 5 ? '#FF5C35' : 'var(--color-text)';
+  };
+  tick();
+  _liveTimerInt = setInterval(tick, 500);
+}
+
 function draw() {
   if (!root) return;
   root.innerHTML = S.joined ? playHTML() : joinHTML();
+  if (document.getElementById('live-timer')) ensureLiveTimer();
   if (!S.joined) {
     root.querySelector('#live-join')?.addEventListener('click', join);
     root.querySelector('#live-code')?.addEventListener('input', (e) => {
@@ -168,6 +184,7 @@ function playHTML() {
     <div class="live-round">ROUND ${p.round} · ${esc(p.roundTitle)} — Q${p.qNum}/${p.qTotal}</div>
     ${img}
     <div class="live-q">${esc(p.prompt)}</div>
+    ${!revealed && p.deadline ? `<div id="live-timer" data-dl="${p.deadline}" style="font-size:30px;font-weight:900;text-align:center;margin:6px 0;font-variant-numeric:tabular-nums"></div>` : ''}
     ${answerHTML(p, revealed)}
     ${status}
     ${revealed && p.story ? `<div style="margin-top:12px;padding:12px 14px;border-radius:12px;background:var(--color-surface);line-height:1.5;color:var(--color-text)">${esc(p.story)}</div>` : ''}

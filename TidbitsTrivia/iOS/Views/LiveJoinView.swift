@@ -166,6 +166,7 @@ struct LiveJoinView: View {
             }
             Text(p.prompt).font(.system(size: 24, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
                 .fixedSize(horizontal: false, vertical: true)
+            if let d = p.deadline, !revealed { countdownView(d) }   // Wave A: on-screen timer
             answerSurface(p, revealed: revealed)
             statusNote(p, revealed: revealed)
             if revealed, let story = p.story, !story.isEmpty {   // Wave A: the story behind the answer
@@ -176,6 +177,17 @@ struct LiveJoinView: View {
                     .padding(14)
                     .background(RoundedRectangle(cornerRadius: 12).fill(Tidbits.Palette.surface))
             }
+        }
+    }
+
+    /// Wave A: the shared countdown, ticking to the host's deadline (coral at ≤5s).
+    @ViewBuilder private func countdownView(_ deadlineMs: Int) -> some View {
+        TimelineView(.periodic(from: .now, by: 0.5)) { _ in
+            let remaining = max(0, deadlineMs - Int(Date().timeIntervalSince1970 * 1000))
+            let secs = Int((Double(remaining) / 1000).rounded(.up))
+            Text(secs >= 60 ? String(format: "%d:%02d", secs / 60, secs % 60) : "\(secs)s")
+                .font(.system(size: 32, weight: .black, design: .rounded)).monospacedDigit()
+                .foregroundStyle(secs <= 5 ? Tidbits.Palette.coral : Tidbits.Palette.inkSoft)
         }
     }
 

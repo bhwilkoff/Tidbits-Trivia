@@ -235,6 +235,7 @@ object FirebaseNet {
         val matchValues: List<String>? = null, val enumTarget: Int? = null,
         val locked: Boolean = false,
         val story: String? = null,   // Wave A: the story behind the answer (reveal only)
+        val deadline: Long? = null,  // Wave A: epoch-ms countdown deadline (question phase)
     )
     /** A player's submission (any shape) — the host scores it locally on reveal. */
     data class LiveAnswer(
@@ -320,6 +321,7 @@ object FirebaseNet {
             enumTarget = snap.child("enumTarget").getValue(Long::class.java)?.toInt(),
             locked = snap.child("locked").getValue(Boolean::class.java) ?: false,
             story = snap.child("story").getValue(String::class.java),
+            deadline = snap.child("deadline").getValue(Long::class.java),
         )
     }
 

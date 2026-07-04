@@ -10,6 +10,13 @@ let root = null, unsubs = [];
 
 export function openLive(code = '') {
   S.code = (code || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
+  // Pre-fill for an easy rejoin after a reload/restart (the anon uid persists,
+  // so the team's score is intact). The Firebase SDK auto-reconnects a live
+  // subscription through a transient drop with no action needed.
+  try {
+    if (!S.code) S.code = (localStorage.getItem('tidbits.live.code') || '');
+    if (!S.team) S.team = (localStorage.getItem('tidbits.live.team') || '');
+  } catch { /* private mode */ }
   injectStyles();
   if (!root) { root = document.createElement('div'); root.className = 'live-ov'; document.body.appendChild(root); }
   draw();
@@ -33,6 +40,7 @@ async function join() {
   try {
     await FirebaseNet.liveJoin(code, team, { onError: (m) => { S.error = m; } });
     S.joined = true; S.joining = false;
+    try { localStorage.setItem('tidbits.live.code', code); localStorage.setItem('tidbits.live.team', team); } catch { /* private mode */ }
     unsubs.push(FirebaseNet.liveOnMeta(code, (m) => { S.meta = m; draw(); }));
     unsubs.push(FirebaseNet.liveOnScore(code, (v) => { S.score = v; draw(); }));
     unsubs.push(FirebaseNet.liveOnPub(code, (p) => {

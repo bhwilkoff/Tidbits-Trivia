@@ -8,8 +8,8 @@ import SwiftUI
 /// everywhere; the player never has to know which product hosts them.
 struct TVJoinGameContainer: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var code = NightClient.lastCode
-    @State private var name = NightClient.lastName
+    @State private var code = LivePlayerClient.lastCode
+    @State private var name = LivePlayerClient.lastTeam
     @State private var probing = false
     @State private var error: String?
     @State private var route: Route = .form

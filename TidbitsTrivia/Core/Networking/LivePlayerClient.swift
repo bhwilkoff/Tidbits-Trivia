@@ -38,6 +38,7 @@ final class LivePlayerClient {
             let t = LiveRoom.Team(name: team, joinedAt: Self.nowMS())
             try await db.putJSON("\(LiveRoom.path(code))/teams/\(uid)", try JSONEncoder().encode(t))
             self.code = code; self.joined = true; self.joining = false
+            Self.remember(code: code, team: team)   // easy one-tap rejoin after a restart
             watch(code, uid: uid)
         } catch {
             joining = false
@@ -64,10 +65,20 @@ final class LivePlayerClient {
         tasks.append(streamTask("\(LiveRoom.path(code))/meta") { [weak self] ev in self?.applyMeta(ev) })
         tasks.append(streamTask("\(LiveRoom.path(code))/scores/\(uid)") { [weak self] ev in self?.applyScore(ev) })
     }
+    /// A self-reconnecting SSE subscription. If the connection drops (lock,
+    /// background, signal loss, token expiry) the stream ends; we back off briefly
+    /// and re-open. RTDB re-sends the whole node on re-subscribe, so the player
+    /// transparently resyncs to the current question + score — no manual rejoin for
+    /// a transient drop. (The Firebase SDK does this natively on Android/web; the
+    /// hand-rolled Apple REST client must do it here.)
     private func streamTask(_ path: String, _ apply: @escaping @MainActor (FirebaseRTDB.StreamEvent) -> Void) -> Task<Void, Never> {
         Task { [db] in
-            guard let stream = try? await db.stream(path) else { return }
-            do { for try await ev in stream { await MainActor.run { apply(ev) } } } catch {}
+            while !Task.isCancelled {
+                if let stream = try? await db.stream(path) {
+                    do { for try await ev in stream { await MainActor.run { apply(ev) } } } catch {}
+                }
+                if !Task.isCancelled { try? await Task.sleep(for: .seconds(1.5)) }
+            }
         }
     }
 
@@ -84,4 +95,15 @@ final class LivePlayerClient {
     }
 
     static func nowMS() -> Int { Int(Date().timeIntervalSince1970 * 1000) }
+
+    // MARK: Rejoin memory — pre-fill the last game so reconnecting after an app
+    // restart is one tap (the anon uid persists, so the team's score is intact).
+    private static let codeKey = "tidbits.live.lastCode"
+    private static let teamKey = "tidbits.live.lastTeam"
+    static var lastCode: String { UserDefaults.standard.string(forKey: codeKey) ?? "" }
+    static var lastTeam: String { UserDefaults.standard.string(forKey: teamKey) ?? "" }
+    static func remember(code: String, team: String) {
+        UserDefaults.standard.set(code, forKey: codeKey)
+        UserDefaults.standard.set(team, forKey: teamKey)
+    }
 }

@@ -20,7 +20,10 @@ struct LiveJoinView: View {
             Tidbits.Palette.bg.ignoresSafeArea()
             if client.joined { player } else { joinForm }
         }
-        .onAppear { if code.isEmpty { code = initialCode.uppercased() } }
+        .onAppear {
+            if code.isEmpty { code = initialCode.isEmpty ? LivePlayerClient.lastCode : initialCode.uppercased() }
+            if team.isEmpty { team = LivePlayerClient.lastTeam }
+        }
         .interactiveDismissDisabled(client.joined)
         .task {
             // CI/device hook: auto-resolve a known room to verify the flow headless.

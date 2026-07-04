@@ -109,29 +109,39 @@ final class LiveHostNet {
 
     // MARK: Streams
 
+    // Each watcher self-reconnects: if the host's SSE connection drops (lock,
+    // background, signal loss, token expiry) the stream ends; we back off and
+    // re-open. RTDB re-sends the whole node on re-subscribe, so the roster /
+    // answers / scores resync — the host keeps running the game through a drop.
     private func watchTeams(_ code: String) {
         streamTasks.append(Task { [weak self, db] in
-            guard let stream = try? await db.stream("\(LiveRoom.path(code))/teams") else { return }
-            do { for try await ev in stream {
-                await self?.applyTeams(ev)
-            } } catch { }
+            while !Task.isCancelled {
+                if let stream = try? await db.stream("\(LiveRoom.path(code))/teams") {
+                    do { for try await ev in stream { await self?.applyTeams(ev) } } catch { }
+                }
+                if !Task.isCancelled { try? await Task.sleep(for: .seconds(1.5)) }
+            }
         })
     }
     private func watchScores(_ code: String) {
         streamTasks.append(Task { [weak self, db] in
-            guard let stream = try? await db.stream("\(LiveRoom.path(code))/scores") else { return }
-            do { for try await ev in stream {
-                await self?.applyScores(ev)
-            } } catch { }
+            while !Task.isCancelled {
+                if let stream = try? await db.stream("\(LiveRoom.path(code))/scores") {
+                    do { for try await ev in stream { await self?.applyScores(ev) } } catch { }
+                }
+                if !Task.isCancelled { try? await Task.sleep(for: .seconds(1.5)) }
+            }
         })
     }
     private func watchAnswers(_ code: String, qid: String) {
         answersTask?.cancel()
         answersTask = Task { [weak self, db] in
-            guard let stream = try? await db.stream("\(LiveRoom.path(code))/answers/\(qid)") else { return }
-            do { for try await ev in stream {
-                await self?.applyAnswers(ev, qid: qid)
-            } } catch { }
+            while !Task.isCancelled {
+                if let stream = try? await db.stream("\(LiveRoom.path(code))/answers/\(qid)") {
+                    do { for try await ev in stream { await self?.applyAnswers(ev, qid: qid) } } catch { }
+                }
+                if !Task.isCancelled { try? await Task.sleep(for: .seconds(1.5)) }
+            }
         }
     }
 

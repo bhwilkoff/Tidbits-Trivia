@@ -78,6 +78,17 @@ export const Identity = {
     return res.merged;
   },
 
+  // Sign out → back to a fresh anonymous profile on this device. The account's records
+  // stay saved in the cloud; signing in again (same provider) restores + merges them.
+  async signOut() {
+    const uid = await FirebaseNet.signOutUser();
+    this.profileId = uid;
+    const existing = await FirebaseNet.loadProfile(uid);
+    this.profile = existing || newProfile();
+    if (!existing) { try { await FirebaseNet.saveProfile(uid, this.profile); } catch {} }
+    this._save(); this._emit();
+  },
+
   _persist() {
     this._save(); this._emit();
     if (this.profileId) FirebaseNet.saveProfile(this.profileId, this.profile).catch(() => {});

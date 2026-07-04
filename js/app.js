@@ -103,7 +103,7 @@ function viewProfile() {
 // Federated sign-in makes records durable + roam across devices (docs/PLAYER-IDENTITY-CONTRACT.md).
 function authBlock() {
   if (Identity.signedIn) {
-    return `<div class="card pad" style="margin-top:16px;text-align:center"><div class="muted">✓ Signed in${Identity.email ? ' as ' + h(Identity.email) : ''}</div><div class="muted" style="font-size:.8rem">Your records are saved and follow you to every device.</div></div>`;
+    return `<div class="card pad" style="margin-top:16px;text-align:center"><div class="muted">✓ Signed in${Identity.email ? ' as ' + h(Identity.email) : ''}</div><div class="muted" style="font-size:.8rem">Your records are saved and follow you to every device.</div><button data-signout style="margin-top:12px;padding:8px 18px;font-weight:700;border:2px solid #231E1A;border-radius:12px;background:#fff;cursor:pointer">Sign out</button></div>`;
   }
   const btn = (id, label) => `<button data-signin="${id}" style="flex:1;padding:14px;font-weight:800;border:2.5px solid #231E1A;border-radius:14px;background:#fff;box-shadow:3px 3px 0 #231E1A;cursor:pointer">${label}</button>`;
   return `<div style="margin-top:18px">
@@ -115,6 +115,11 @@ function bindProfile() {
   app.querySelector('[data-rename]')?.addEventListener('click', () => {
     const name = prompt('Display name — what other players and venues see:', Identity.profile?.name || '');
     if (name != null) { Identity.rename(name); render(); }
+  });
+  app.querySelector('[data-signout]')?.addEventListener('click', async () => {
+    if (!confirm('Sign out? Your records stay saved to your account — sign in again to bring them back.')) return;
+    try { await Identity.signOut(); render(); }
+    catch (e) { console.error('[identity] sign-out error', e); alert('Sign-out didn’t complete. Please try again.'); }
   });
   app.querySelectorAll('[data-signin]').forEach((b) => b.addEventListener('click', async () => {
     const row = document.getElementById('signin-row');

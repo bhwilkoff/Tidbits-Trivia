@@ -55,6 +55,16 @@ export const FirebaseNet = {
   isSignedIn() { return !!(_auth && _auth.currentUser && !_auth.currentUser.isAnonymous); },
   currentEmail() { return (_auth && _auth.currentUser && _auth.currentUser.email) || null; },
 
+  // Sign out of the federated account and return to a FRESH anonymous session (new uid).
+  // The account's records stay in players/{accountUid}; signing back in restores them.
+  async signOutUser() {
+    const { auth } = await ensure();
+    await auth.signOut(_auth);
+    const cred = await auth.signInAnonymously(_auth);
+    _uid = cred.user.uid;
+    return _uid;
+  },
+
   // Promote the anonymous account with a federated credential. Returns { uid, merged,
   // prevUid }: linkWithPopup keeps the SAME uid (merged=false); if the credential is
   // already tied to another account, sign into it (merged=true, a new uid to merge into).

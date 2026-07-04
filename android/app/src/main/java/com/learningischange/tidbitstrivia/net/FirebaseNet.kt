@@ -197,6 +197,60 @@ object FirebaseNet {
             answerIndex = snap.child("answerIndex").getValue(Long::class.java)?.toInt(),
         )
     }
+
+    // ---- HOST side (this device opens live/{code} and owns meta/pub/scores) ----
+    // The Android app can now HOST a casual Trivia Night on the same backend as
+    // Tidbits Live (owner architecture). Mirrors LiveNightHost (Swift) + the web.
+
+    suspend fun liveHostOpen(name: String): String {
+        val me = ensureAuth()
+        val code = newCode()
+        db.getReference("live/$code/meta").setValue(mapOf(
+            "host" to me, "createdAt" to System.currentTimeMillis(),
+            "name" to name, "venue" to "", "state" to "lobby")).await()
+        return code
+    }
+    suspend fun livePublish(code: String, pub: Map<String, Any?>) {
+        db.getReference("live/$code/pub").setValue(pub).await()
+    }
+    suspend fun liveSetState(code: String, state: String) {
+        db.getReference("live/$code/meta").updateChildren(mapOf("state" to state)).await()
+    }
+    suspend fun liveSetScore(code: String, uid: String, score: Int) {
+        db.getReference("live/$code/scores/$uid").setValue(maxOf(0, score).toLong()).await()
+    }
+    fun liveOnTeams(code: String, cb: (Map<String, String>) -> Unit): () -> Unit =
+        listen("live/$code/teams") { snap ->
+            cb(snap.children.mapNotNull { c ->
+                val id = c.key ?: return@mapNotNull null
+                id to (c.child("name").getValue(String::class.java) ?: "Team")
+            }.toMap())
+        }
+    fun liveOnScores(code: String, cb: (Map<String, Int>) -> Unit): () -> Unit =
+        listen("live/$code/scores") { snap ->
+            cb(snap.children.mapNotNull { c ->
+                val id = c.key ?: return@mapNotNull null
+                id to (c.getValue(Long::class.java) ?: 0L).toInt()
+            }.toMap())
+        }
+    fun liveOnAnswers(code: String, qid: String, cb: (Map<String, Int>) -> Unit): () -> Unit =
+        listen("live/$code/answers/$qid") { snap ->
+            cb(snap.children.mapNotNull { c ->
+                val id = c.key ?: return@mapNotNull null
+                val choice = c.child("choice").getValue(Long::class.java) ?: return@mapNotNull null
+                id to choice.toInt()
+            }.toMap())
+        }
+    // Host-plays-too: register as a team + answer under the host's own uid.
+    suspend fun liveHostJoinAsTeam(code: String, name: String) {
+        val me = uid ?: return
+        db.getReference("live/$code/teams/$me").setValue(mapOf("name" to name, "joinedAt" to System.currentTimeMillis())).await()
+    }
+    suspend fun liveHostAnswer(code: String, qid: String, choice: Int) {
+        val me = uid ?: return
+        db.getReference("live/$code/answers/$qid/$me").setValue(mapOf("choice" to choice.toLong(), "ts" to System.currentTimeMillis())).await()
+    }
+    fun liveClose(code: String) { db.getReference("live/$code").removeValue() }
 }
 
 private suspend fun DatabaseReference.runTransaction(handler: (MutableData) -> Transaction.Result): Boolean {

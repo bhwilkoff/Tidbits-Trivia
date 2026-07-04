@@ -110,6 +110,7 @@ dependencies {
     implementation(libs.splashscreen)
     implementation(libs.coil.compose)         // Picture ID (Q7) image loading
     implementation(libs.coil.network.okhttp)
+    implementation(libs.zxing.core)           // QR generation for the Trivia Night host
 
     testImplementation(libs.junit)
     testImplementation(libs.coroutines.test)

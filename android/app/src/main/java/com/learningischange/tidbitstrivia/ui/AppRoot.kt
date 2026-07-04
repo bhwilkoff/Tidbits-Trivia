@@ -64,6 +64,7 @@ sealed interface Route {
     data object NightJoin : Route
     data object NightLive : Route
     data class LiveRoom(val code: String, val name: String) : Route
+    data class LiveHost(val rounds: List<Pair<String, Int>>, val category: Category) : Route
     data object Settings : Route
     data object Party : Route
 }
@@ -139,9 +140,9 @@ fun AppRoot(
                     is Route.NightSetup -> NightSetupScreen(
                         onStartSolo = { rounds, cat, label -> backStack.removeAt(backStack.lastIndex); backStack.add(Route.Game(Mode.BAR_TRIVIA, cat, label = label, nightRounds = rounds)) },
                         onHost = { rounds, cat, _ ->
-                            ensureNearby()
-                            live = LiveNight.host(store, context, rounds, cat.id, hostName = "Host")
-                            backStack.removeAt(backStack.lastIndex); backStack.add(Route.NightLive)
+                            // Owner architecture: host on the shared RTDB backend (any
+                            // platform + web can join), not the old local mDNS night.
+                            backStack.removeAt(backStack.lastIndex); backStack.add(Route.LiveHost(rounds, cat))
                         },
                         onCancel = { backStack.removeAt(backStack.lastIndex) },
                     )
@@ -167,6 +168,9 @@ fun AppRoot(
                         onCancel = { backStack.removeAt(backStack.lastIndex) },
                     )
                     is Route.LiveRoom -> LiveRoomScreen(r.code, r.name) {
+                        backStack.removeAt(backStack.lastIndex)
+                    }
+                    is Route.LiveHost -> NightHostScreen(r.rounds, r.category, store) {
                         backStack.removeAt(backStack.lastIndex)
                     }
                     is Route.NightLive -> live?.let { l ->

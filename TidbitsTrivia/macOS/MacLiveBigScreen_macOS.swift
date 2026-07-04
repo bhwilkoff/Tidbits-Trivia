@@ -63,6 +63,8 @@ struct LiveBigScreen_macOS: View {
 
     /// §A8.5 — one show-timing spring, disabled under reduce-motion.
     private var showAnim: Animation? { reduceMotion ? nil : .spring(response: 0.55, dampingFraction: 0.72) }
+    /// A8.3 — the round number currently being announced (full-screen card), nil = none.
+    @State private var introRound: Int?
 
     var body: some View {
         ZStack {
@@ -75,6 +77,36 @@ struct LiveBigScreen_macOS: View {
         }
         .frame(minWidth: 720, minHeight: 480)
         .animation(showAnim, value: coordinator.session?.finished)
+        .overlay {
+            if let r = introRound, let s = coordinator.session, !s.finished {
+                roundIntroCard(r, title: s.roundTitle, count: s.questionInRound.of)
+                    .transition(.opacity).zIndex(10)
+            }
+        }
+        .animation(showAnim, value: introRound)
+        .onChange(of: coordinator.session?.roundNumber) { _, n in
+            if let n, coordinator.session?.finished == false { introRound = n }   // A8.3 announce each new round (and round 1)
+        }
+        .task(id: introRound) {
+            guard introRound != nil else { return }
+            try? await Task.sleep(for: .seconds(reduceMotion ? 1.4 : 2.6))
+            introRound = nil
+        }
+    }
+
+    /// A8.3 — the full-screen round announcement ("ROUND 2 · HISTORY · 6 questions").
+    private func roundIntroCard(_ round: Int, title: String, count: Int) -> some View {
+        ZStack {
+            Tidbits.Palette.ink.ignoresSafeArea()
+            VStack(spacing: 18) {
+                Text("ROUND \(round)").font(.system(size: 40, weight: .heavy, design: .rounded)).foregroundStyle(Tidbits.Palette.coral)
+                Text(title.isEmpty ? "LET'S PLAY" : title.uppercased())
+                    .font(.system(size: 88, weight: .black, design: .rounded)).foregroundStyle(.white)
+                    .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
+                Text("\(count) question\(count == 1 ? "" : "s")").font(.system(size: 32, weight: .heavy, design: .rounded)).foregroundStyle(.white.opacity(0.7))
+            }
+            .padding(60)
+        }
     }
 
     private var splash: some View {

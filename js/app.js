@@ -96,7 +96,19 @@ function viewProfile() {
     </div>
     ${line('TIDBITS RATING', r.provisional ? `Provisional · ${r.games}/15 games` : `${r.games} games rated`, Math.round(r.value))}
     ${line('STREAK', `Longest ${p.streak.longest} · ${p.streak.freezes} freeze${p.streak.freezes === 1 ? '' : 's'}`, p.streak.current)}
-    <div class="stat-row">${statBox(p.stats.gamesPlayed, 'Games', '#8B5CF6')}${statBox(acc + '%', 'Accuracy', '#2D5BFF')}${statBox(p.stats.liveNights, 'Live nights', '#FF5C35')}${statBox(p.stats.venuesVisited, 'Venues', '#2FCB8A')}</div>`;
+    <div class="stat-row">${statBox(p.stats.gamesPlayed, 'Games', '#8B5CF6')}${statBox(acc + '%', 'Accuracy', '#2D5BFF')}${statBox(p.stats.liveNights, 'Live nights', '#FF5C35')}${statBox(p.stats.venuesVisited, 'Venues', '#2FCB8A')}</div>
+    ${authBlock()}`;
+}
+
+// Federated sign-in makes records durable + roam across devices (docs/PLAYER-IDENTITY-CONTRACT.md).
+function authBlock() {
+  if (Identity.signedIn) {
+    return `<div class="card pad" style="margin-top:16px;text-align:center"><div class="muted">✓ Signed in${Identity.email ? ' as ' + h(Identity.email) : ''}</div><div class="muted" style="font-size:.8rem">Your records are saved and follow you to every device.</div></div>`;
+  }
+  const btn = (id, label) => `<button data-signin="${id}" style="flex:1;padding:14px;font-weight:800;border:2.5px solid #231E1A;border-radius:14px;background:#fff;box-shadow:3px 3px 0 #231E1A;cursor:pointer">${label}</button>`;
+  return `<div style="margin-top:18px">
+    <div class="muted" style="text-align:center;margin-bottom:10px;font-weight:700">Save your progress — sign in so your records follow you to any device.</div>
+    <div style="display:flex;gap:10px" id="signin-row">${btn('google.com', 'Continue with Google')}${btn('apple.com', 'Continue with Apple')}</div></div>`;
 }
 function bindProfile() {
   app.querySelector('[data-back]')?.addEventListener('click', () => { if (history.length > 1) history.back(); else location.hash = '#/records'; });
@@ -104,6 +116,22 @@ function bindProfile() {
     const name = prompt('Display name — what other players and venues see:', Identity.profile?.name || '');
     if (name != null) { Identity.rename(name); render(); }
   });
+  app.querySelectorAll('[data-signin]').forEach((b) => b.addEventListener('click', async () => {
+    const row = document.getElementById('signin-row');
+    if (row) row.style.opacity = '0.5';
+    b.disabled = true;
+    try {
+      const merged = await Identity.signIn(b.dataset.signin);
+      render();
+      if (merged) setTimeout(() => alert('Welcome back — we combined your two profiles, so nothing was lost.'), 50);
+    } catch (e) {
+      if (row) row.style.opacity = '1';
+      b.disabled = false;
+      if (e?.code !== 'auth/popup-closed-by-user' && e?.code !== 'auth/cancelled-popup-request') {
+        alert('Sign-in didn’t complete. Please try again.');
+      }
+    }
+  }));
 }
 
 function header(tab) {

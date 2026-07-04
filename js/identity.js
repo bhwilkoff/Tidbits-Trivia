@@ -57,6 +57,27 @@ export const Identity = {
     this.profile.name = t; this._persist();
   },
 
+  get signedIn() { return FirebaseNet.isSignedIn(); },
+  get email() { return FirebaseNet.currentEmail(); },
+
+  // Promote the anon account (Apple/Google) so records roam + survive session loss.
+  // On a conflict (the credential already has an account), merge losslessly into it.
+  async signIn(providerId) {
+    const localProfile = this.profile || {};
+    const res = await FirebaseNet.signInWith(providerId);
+    this.profileId = res.uid;
+    if (res.merged) {
+      const account = (await FirebaseNet.loadProfile(res.uid)) || newProfile();
+      this.profile = mergeProfiles(localProfile, account);
+      await FirebaseNet.saveProfile(res.uid, this.profile);
+      if (res.prevUid && res.prevUid !== res.uid) FirebaseNet.deleteProfile(res.prevUid);
+    } else if (this.profile) {
+      await FirebaseNet.saveProfile(res.uid, this.profile);   // promoted in place; keep records
+    }
+    this._save(); this._emit();
+    return res.merged;
+  },
+
   _persist() {
     this._save(); this._emit();
     if (this.profileId) FirebaseNet.saveProfile(this.profileId, this.profile).catch(() => {});

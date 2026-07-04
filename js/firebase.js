@@ -48,6 +48,36 @@ export const FirebaseNet = {
     const { db } = await ensure();
     await db.set(db.ref(_db, `players/${uid}`), profile);
   },
+  async deleteProfile(uid) {
+    const { db } = await ensure();
+    try { await db.remove(db.ref(_db, `players/${uid}`)); } catch { /* rules may forbid post-switch */ }
+  },
+  isSignedIn() { return !!(_auth && _auth.currentUser && !_auth.currentUser.isAnonymous); },
+  currentEmail() { return (_auth && _auth.currentUser && _auth.currentUser.email) || null; },
+
+  // Promote the anonymous account with a federated credential. Returns { uid, merged,
+  // prevUid }: linkWithPopup keeps the SAME uid (merged=false); if the credential is
+  // already tied to another account, sign into it (merged=true, a new uid to merge into).
+  async signInWith(providerId) {
+    const { auth } = await ensure();
+    const provider = providerId === 'apple.com' ? new auth.OAuthProvider('apple.com') : new auth.GoogleAuthProvider();
+    if (providerId === 'apple.com') { provider.addScope('email'); provider.addScope('name'); }
+    const prevUid = _uid;
+    try {
+      const result = await auth.linkWithPopup(_auth.currentUser, provider);
+      _uid = result.user.uid;
+      return { uid: _uid, merged: false, prevUid };
+    } catch (e) {
+      if (e && e.code === 'auth/credential-already-in-use') {
+        const P = providerId === 'apple.com' ? auth.OAuthProvider : auth.GoogleAuthProvider;
+        const cred = P.credentialFromError(e);
+        const result = await auth.signInWithCredential(_auth, cred);
+        _uid = result.user.uid;
+        return { uid: _uid, merged: true, prevUid };
+      }
+      throw e;
+    }
+  },
 
   // Quick Match: claim a waiting room via a transaction (first writer becomes
   // the joiner of an existing open room; otherwise create one and wait). Returns

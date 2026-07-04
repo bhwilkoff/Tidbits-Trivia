@@ -12,6 +12,7 @@ struct LiveRound: Identifiable, Codable, Hashable {
     var format: GameMode
     var categoryID: String
     var questions: [Question]
+    var timerSeconds: Int? = nil   // Wave A: per-question countdown for this round (nil/0 = off) — optional so saved events still decode
 
     var symbol: String { format.symbol }
 }

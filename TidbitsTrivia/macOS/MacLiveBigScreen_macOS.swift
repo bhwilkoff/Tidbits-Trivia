@@ -130,6 +130,7 @@ struct LiveBigScreen_macOS: View {
                 Text("ROUND \(s.roundNumber)/\(s.roundCount) · \(s.roundTitle)")
                     .font(.system(size: 26, weight: .heavy, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
             }
+            if let d = s.deadlineMs, !s.revealed { countdown(deadlineMs: d) }   // Wave A: on-screen timer
             Spacer()
             VStack(spacing: 12) {
                 if let q = s.current {
@@ -179,6 +180,18 @@ struct LiveBigScreen_macOS: View {
             }
         }
         .padding(48)
+    }
+
+    /// Wave A: the on-screen countdown — the room watches the clock; turns coral at ≤5s.
+    @ViewBuilder private func countdown(deadlineMs: Int) -> some View {
+        TimelineView(.periodic(from: .now, by: 0.5)) { _ in
+            let remaining = max(0, deadlineMs - Int(Date().timeIntervalSince1970 * 1000))
+            let secs = Int((Double(remaining) / 1000).rounded(.up))
+            Text(secs >= 60 ? String(format: "%d:%02d", secs / 60, secs % 60) : "\(secs)")
+                .font(.system(size: 60, weight: .black, design: .rounded)).monospacedDigit()
+                .foregroundStyle(secs <= 5 ? Tidbits.Palette.coral : Tidbits.Palette.ink)
+                .contentTransition(.numericText())
+        }
     }
 
     /// A8/poll: live vote distribution — bars grow as answers land; the correct

@@ -22,13 +22,14 @@ final class LiveHostSession {
     var index = 0
     var revealed = false
     var finished = false
+    var deadlineMs: Int? = nil   // Wave A: epoch-ms countdown deadline for the current timed question
     /// Points a correct answer is worth this round (host-adjustable; pub default 1).
     var pointsPerCorrect = 1
     /// Per-question display shuffles (fixed once so publish + reveal agree).
     var shuffledOrder: [String] = []
     var shuffledValues: [String] = []
 
-    init(event: LiveEvent) { self.event = event; prepare() }
+    init(event: LiveEvent) { self.event = event; prepare(); armTimer() }
 
     /// Compute the display shuffles for the current question (ordering/matching).
     func prepare() {
@@ -62,10 +63,16 @@ final class LiveHostSession {
         guard let i = teams.firstIndex(where: { $0.id == id }) else { return }
         teams[i].score = max(0, teams[i].score + delta)
     }
-    func reveal() { revealed = true }
+    func reveal() { revealed = true; deadlineMs = nil }
     func next() {
         revealed = false
-        if index + 1 >= questions.count { finished = true } else { index += 1; prepare() }
+        if index + 1 >= questions.count { finished = true } else { index += 1; prepare(); armTimer() }
+    }
+    /// Wave A: arm the per-question countdown from the current round's timer (0/nil = off).
+    func armTimer() {
+        let ri = current?.roundIndex ?? 0
+        let secs = (event.rounds.indices.contains(ri) ? event.rounds[ri].timerSeconds : nil) ?? 0
+        deadlineMs = secs > 0 ? Int(Date().timeIntervalSince1970 * 1000) + secs * 1000 : nil
     }
     var standings: [LiveTeam] { teams.sorted { $0.score > $1.score } }
 
@@ -110,6 +117,7 @@ final class LiveHostSession {
         if q.ordering != nil { p.orderItems = shuffledOrder }
         if let m = q.matching { p.matchKeys = m.keys; p.matchValues = shuffledValues }
         if let e = q.enumerate { p.enumTarget = e.total }
+        if !revealed, let d = deadlineMs { p.deadline = d }   // Wave A: the countdown deadline
         if revealed {   // Wave A: the story behind the answer — the learning payoff, only at reveal
             let s = q.explanation.trimmingCharacters(in: .whitespacesAndNewlines)
             if !s.isEmpty { p.story = s }

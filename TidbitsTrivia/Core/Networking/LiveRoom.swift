@@ -45,6 +45,7 @@ enum LiveRoom {
         var enumTarget: Int? = nil        // enumerate — how many are in the set
         var locked: Bool? = nil           // cheating deterrence (§A5.3): "pencils down" — no more answers
         var story: String? = nil          // Wave A: the "story behind the answer" — the learning payoff, shown ONLY on reveal
+        var deadline: Int? = nil          // Wave A: epoch-ms countdown deadline for a timed question (nil = no timer)
     }
 
     /// Closest Call bounds a joiner needs to render a number input (the answer +

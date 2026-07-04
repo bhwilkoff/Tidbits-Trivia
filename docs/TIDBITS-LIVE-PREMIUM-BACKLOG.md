@@ -286,6 +286,30 @@ rate, and the live event is the only surface that manufactures real friends.**
 | **Two-track progression** | Separate **skill** (rating) from **loyalty/consistency** (nights, streaks, venues) so both the ringer and the regular have something to chase | D (Peloton Club) | ⬜ |
 | **Anonymous-join → claim flow** | Stranger plays via QR/code in seconds; "claim your score — you placed 4th of 22" upgrades the session onto a real profile | TS | 🔨 (join exists; no claim) |
 
+**Platform-native identity (owner constraint — "same identity, native idiom").** The
+portable identity is *one shared, cross-platform* Tidbits profile on the $0 data plane
+(§M) — it must be, because a single pub room has iPhone, Android, and web players and the
+cross-venue leaderboard has to span all of them. But **each platform signs in and surfaces
+identity / achievements / friends through its OWN native system**, so the account feels
+built for that platform:
+
+- **Apple (iOS / iPadOS / macOS / tvOS):** **Sign in with Apple** for the roaming account
+  + **Game Center** for OS-level achievements, friends, and per-platform leaderboards.
+  GameKit is *already wired* (`GameCenterManager` / `gameCenter.authenticate()`), and the
+  precedent is set — Apple online match already uses GameKit while Android/web use Firebase.
+  Sync rides the existing CloudKit private DB (per-ecosystem sync islands).
+- **Android:** **Google Play Games Services** (achievements, friends, leaderboards) +
+  **Credential Manager / Google Sign-In**.
+- **Web:** **federated (Sign in with Apple / Google) + passkeys/WebAuthn**; Firebase Auth.
+
+The native player ID **links** to the shared Tidbits `profileId`. Native
+achievements/leaderboards **mirror** Tidbits milestones where it fits (push a "Won a Live
+night" achievement to Game Center / Play Games), while the *authoritative cross-venue &
+cross-platform* leaderboard lives on the shared $0 plane and **renders in native-styled UI
+per platform** (a Game-Center-flavored board on Apple, a Play-Games-flavored one on
+Android). Never a single generic account screen reused across platforms — each is the
+native one, over a shared profile.
+
 ### L2 — Daily-habit loop (retention backbone; cheap to build)
 
 | Feature | What it does | Signal | Status |
@@ -367,7 +391,7 @@ error*, never an invoice.
 
 | Need | How, at $0 | Why it can't bill |
 |---|---|---|
-| **Identity / auth** | Firebase **anonymous** auth (unlimited, free) + optional `linkWithCredential` to Apple/Google for cross-device roam. Profile at `/players/{uid}`, uid-scoped rules (already the model) | Classic Auth is free, no card, no MAU meter |
+| **Identity / auth** | Firebase **anonymous** auth (unlimited, free) as the shared `uid`; **native sign-in per platform links to it** — Sign in with Apple + Game Center (Apple), Play Games + Google (Android), federated + passkeys (web) — via `linkWithCredential`. Profile at `/players/{uid}`, uid-scoped rules (already the model). Native achievements/friends stay on Game Center / Play Games; the shared profile carries rating/streak/venues | Classic Auth + anonymous + Apple/Google federation are all free, no card, no MAU meter; Game Center / Play Games are free OS services |
 | **Cross-venue / season leaderboards** | Devices write one *final* score per event to `/scores/{season}/{venue}/{uid}`. A **GitHub Actions cron** reads via RTDB REST, ranks, commits `data/leaderboard/*.json` → served static from Pages. **Clients read the JSON, not RTDB.** | Static reads are free/cacheable; one write/event stays far under Spark caps |
 | **Analytics** | Compact append-only writes to `/analytics/{date}/…` (clients never read them back); nightly cron rolls up → `data/analytics/summary.json`, prunes raw. + Cloudflare Web Analytics (free) | Write-only protects egress; rollup is static |
 | **Venue directory** | Curated `data/venues.json` in git, served from Pages (same DATA-CONTRACT discipline as the corpus); self-registration via a moderated Worker→D1 or GitHub-issue form + cron promote | Read-heavy reference data = textbook static file |

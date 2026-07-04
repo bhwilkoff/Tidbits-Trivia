@@ -79,8 +79,7 @@ struct HomeView: View {
             NightContainerView(plan: req.plan, category: req.category)
         }
         .fullScreenCover(item: $hostLaunch) { req in
-            NightLiveContainer(hosting: req.plan, category: req.category,
-                               engine: store.game, hostName: NightClient.lastName)
+            NightHostView(plan: req.plan, category: req.category)
         }
         .fullScreenCover(isPresented: $showParty) { PartyContainerView() }
         .sheet(isPresented: $showCustomize) {
@@ -123,6 +122,7 @@ struct HomeView: View {
                 start(LaunchRequest(mode: ap.mode, category: ap.category, mixModes: DebugHooks.mixModes))
             }
             if DebugHooks.openParty { showParty = true }
+            if DebugHooks.openNightHost { hostLaunch = NightLaunchRequest(plan: .quick, category: .named("mixed")) }
             if DebugHooks.openCustomize { showCustomize = true }
             if DebugHooks.openMultiplayer { showMultiplayer = true }
             if let vb = DebugHooks.versusBot {

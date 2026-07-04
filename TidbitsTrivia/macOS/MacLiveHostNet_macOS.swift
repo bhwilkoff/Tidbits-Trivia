@@ -1,11 +1,12 @@
-#if os(macOS)
 import Foundation
 
-/// Bridges the Tidbits Live host cockpit to the Firebase RTDB room (the contract
-/// in LiveRoom.swift), so iOS/Android/web players join a Mac-hosted event. The
-/// host owns the room: it publishes `pub` as it advances, streams the joined
-/// `teams` + their `answers`, and writes `scores`. Paper-mode hosting still works
-/// unchanged — this only adds the networked layer when the host opens a room.
+/// The SHARED Firebase RTDB host bridge (the `live/{code}` contract in
+/// LiveRoom.swift) — used by BOTH the macOS Tidbits Live cockpit AND the
+/// cross-platform Trivia Night host (`LiveNightHost`), since both products ride
+/// one backend (owner architecture, amends Decision 033). The host owns the room:
+/// it publishes `pub` as it advances, streams the joined `teams` + their
+/// `answers`, and writes `scores`. Platform-agnostic (Core) — no UI, no
+/// per-platform types.
 @MainActor
 @Observable
 final class LiveHostNet {
@@ -32,15 +33,16 @@ final class LiveHostNet {
 
     // MARK: Lifecycle
 
-    /// Open a room for this event and start streaming joins. Returns the code.
+    /// Open a room and start streaming joins. Returns the code. `name`/`venue`
+    /// come from the host product (a Tidbits Live event, or a Trivia Night).
     @discardableResult
-    func open(event: LiveEvent) async -> String? {
+    func open(name: String, venue: String = "") async -> String? {
         do {
             let host = try await db.ensureAuth()
             // TIDBITS_LIVE_CODE pins a known code for deterministic device/CI testing.
             let code = ProcessInfo.processInfo.environment["TIDBITS_LIVE_CODE"] ?? FirebaseRTDB.newRoomCode()
-            let meta = LiveRoom.Meta(host: host, createdAt: Self.nowMS(), name: event.name,
-                                     venue: event.venue, state: "lobby")
+            let meta = LiveRoom.Meta(host: host, createdAt: Self.nowMS(), name: name,
+                                     venue: venue, state: "lobby")
             try await db.putJSON("\(LiveRoom.path(code))/meta", try JSONEncoder().encode(meta))
             self.code = code
             watchTeams(code)
@@ -139,4 +141,3 @@ final class LiveHostNet {
 
     static func nowMS() -> Int { Int(Date().timeIntervalSince1970 * 1000) }
 }
-#endif

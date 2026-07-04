@@ -127,7 +127,7 @@ struct LiveHostContainer_macOS: View {
         }
         // Open the networked room and publish the first question.
         .task {
-            await net.open(event: event)
+            await net.open(name: event.name, venue: event.venue)
             await net.setState("live")
             await net.publish(session.currentPub())
         }

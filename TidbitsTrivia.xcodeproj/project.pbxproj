@@ -38,6 +38,7 @@
 		FBDB000000000000000000B1 /* FirebaseRTDB.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBDB000000000000000000A1 /* FirebaseRTDB.swift */; };
 		FBDB000000000000000000B2 /* LiveRoom.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBDB000000000000000000A2 /* LiveRoom.swift */; };
 		FBDB000000000000000000B3 /* LivePlayerClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBDB000000000000000000A3 /* LivePlayerClient.swift */; };
+		A1B2C3D4E5F6000000AC0610 /* LiveNightHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000AC0611 /* LiveNightHost.swift */; };
 		4E1DDB93B46A5CC413B608F5 /* NightContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40995246A8957880F31323EB /* NightContainerView.swift */; };
 		4F92081B7F2AFB470A7DC5C2 /* RecordsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C18E4CA3BD148F09E1BE077 /* RecordsView.swift */; };
 		512F6230D9E8F7A314AFF0ED /* RecordsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7633D27702A6874F7D8993DF /* RecordsStore.swift */; };
@@ -78,6 +79,7 @@
 		CCA8AF2E7F7567E5B153E60F /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B2FEBFB29C12A172EADB66F /* SettingsView.swift */; };
 		D28850D4B46D40A2897B334F /* QuickMatchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F69A4F5B18F41A84998E9E3D /* QuickMatchView.swift */; };
 		FBDB000000000000000000D1 /* LiveJoinView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBDB000000000000000000C1 /* LiveJoinView.swift */; };
+		A1B2C3D4E5F6000000AC0612 /* NightHostView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000AC0613 /* NightHostView.swift */; };
 		D408A3818D906999A4AD99DC /* NightClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0B1B4D9BA126D3D5E585A00 /* NightClient.swift */; };
 		D78451DA6D74E2BA65EB56C8 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AAEF55F4DD8DEA37D200C32 /* HomeView.swift */; };
 		DD17E6E2BBC121F9A5B69E32 /* order.json in Resources */ = {isa = PBXBuildFile; fileRef = 79A5D10D9EBC4D0950DE13CF /* order.json */; };
@@ -141,6 +143,7 @@
 		FBDB000000000000000000A1 /* FirebaseRTDB.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseRTDB.swift; sourceTree = "<group>"; };
 		FBDB000000000000000000A2 /* LiveRoom.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveRoom.swift; sourceTree = "<group>"; };
 		FBDB000000000000000000A3 /* LivePlayerClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LivePlayerClient.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000AC0611 /* LiveNightHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveNightHost.swift; sourceTree = "<group>"; };
 		7C55D3DCAE5E46980D666B83 /* GameMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameMode.swift; sourceTree = "<group>"; };
 		7C60A815D0EFF35CF18DAB26 /* ResultsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultsView.swift; sourceTree = "<group>"; };
 		7F619B1D3BB620DD1304475A /* AppStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStore.swift; sourceTree = "<group>"; };
@@ -198,6 +201,7 @@
 		F5C9D9266531ECD27156562D /* GameView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView_tvOS.swift; sourceTree = "<group>"; };
 		F69A4F5B18F41A84998E9E3D /* QuickMatchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickMatchView.swift; sourceTree = "<group>"; };
 		FBDB000000000000000000C1 /* LiveJoinView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveJoinView.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6000000AC0613 /* NightHostView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightHostView.swift; sourceTree = "<group>"; };
 		F705319E1E9AC235B5D005C4 /* RecordsView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordsView_tvOS.swift; sourceTree = "<group>"; };
 		FD70222B5EE4C4145E4D1F84 /* NightSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightSetupView.swift; sourceTree = "<group>"; };
 		FFC46D4CE8D03186C064C759 /* Question.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Question.swift; sourceTree = "<group>"; };
@@ -393,6 +397,7 @@
 				FBDB000000000000000000A1 /* FirebaseRTDB.swift */,
 				FBDB000000000000000000A2 /* LiveRoom.swift */,
 				FBDB000000000000000000A3 /* LivePlayerClient.swift */,
+				A1B2C3D4E5F6000000AC0611 /* LiveNightHost.swift */,
 				2AD18ED3C40BFC78AFD8FB0C /* LiveNight.swift */,
 				A0B1B4D9BA126D3D5E585A00 /* NightClient.swift */,
 				61CF6B570C9884F8DF3645CD /* NightHost.swift */,
@@ -418,6 +423,7 @@
 				F18495176F588DF9E5C7907E /* PartyContainerView.swift */,
 				F69A4F5B18F41A84998E9E3D /* QuickMatchView.swift */,
 				FBDB000000000000000000C1 /* LiveJoinView.swift */,
+				A1B2C3D4E5F6000000AC0613 /* NightHostView.swift */,
 				0C18E4CA3BD148F09E1BE077 /* RecordsView.swift */,
 				7C60A815D0EFF35CF18DAB26 /* ResultsView.swift */,
 				3B2FEBFB29C12A172EADB66F /* SettingsView.swift */,
@@ -580,6 +586,7 @@
 				FBDB000000000000000000B1 /* FirebaseRTDB.swift in Sources */,
 				FBDB000000000000000000B2 /* LiveRoom.swift in Sources */,
 				FBDB000000000000000000B3 /* LivePlayerClient.swift in Sources */,
+				A1B2C3D4E5F6000000AC0610 /* LiveNightHost.swift in Sources */,
 				9B22CE4581A58C784D66DDB1 /* GameMode.swift in Sources */,
 				6CF073BFB022FF600B3B9428 /* GamePlayView.swift in Sources */,
 				B726DC9ED39E20DD9B3F5FD1 /* GameSettings.swift in Sources */,
@@ -609,6 +616,7 @@
 				03FB04C17EDA45D30AC911F4 /* QuestionProvider.swift in Sources */,
 				D28850D4B46D40A2897B334F /* QuickMatchView.swift in Sources */,
 				FBDB000000000000000000D1 /* LiveJoinView.swift in Sources */,
+				A1B2C3D4E5F6000000AC0612 /* NightHostView.swift in Sources */,
 				BFFC359435DBA3FF985509D1 /* QuickMatchView_tvOS.swift in Sources */,
 				512F6230D9E8F7A314AFF0ED /* RecordsStore.swift in Sources */,
 				4F92081B7F2AFB470A7DC5C2 /* RecordsView.swift in Sources */,

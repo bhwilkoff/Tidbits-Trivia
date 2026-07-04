@@ -67,6 +67,11 @@ enum DebugHooks {
         ProcessInfo.processInfo.environment["TIDBITS_PARTY"] == "1"
     }
 
+    /// TIDBITS_NIGHT_HOST=1 → open the RTDB Trivia Night host lobby (code + QR).
+    static var openNightHost: Bool {
+        ProcessInfo.processInfo.environment["TIDBITS_NIGHT_HOST"] == "1"
+    }
+
     /// TIDBITS_ONBOARD=1 → force the first-run walkthrough (for screenshots).
     static var forceOnboarding: Bool {
         ProcessInfo.processInfo.environment["TIDBITS_ONBOARD"] == "1"

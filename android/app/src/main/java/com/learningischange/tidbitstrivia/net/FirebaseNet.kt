@@ -1,6 +1,13 @@
 package com.learningischange.tidbitstrivia.net
 
+import android.content.Context
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
+import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
@@ -56,6 +63,33 @@ object FirebaseNet {
             stats = com.learningischange.tidbitstrivia.data.PlayerIdentity.Stats(
                 i(stat, "gamesPlayed"), i(stat, "questionsAnswered"), i(stat, "correct"),
                 i(stat, "liveNights"), i(stat, "venuesVisited")))
+    }
+
+    fun isSignedIn(): Boolean = auth.currentUser?.let { !it.isAnonymous } ?: false
+
+    data class LinkResult(val uid: String, val merged: Boolean, val prevUid: String)
+
+    /** Google sign-in via Credential Manager → link to the current anon account (same
+     *  uid). If the Google account already has a Firebase account, sign into it and
+     *  report merged so the caller can lossless-merge. Needs the Firebase web client id. */
+    suspend fun linkGoogle(context: Context, webClientId: String): LinkResult {
+        val option = GetGoogleIdOption.Builder()
+            .setServerClientId(webClientId)
+            .setFilterByAuthorizedAccounts(false)
+            .build()
+        val request = GetCredentialRequest.Builder().addCredentialOption(option).build()
+        val response = CredentialManager.create(context).getCredential(context, request)
+        val googleCred = GoogleIdTokenCredential.createFrom(response.credential.data)
+        val firebaseCred = GoogleAuthProvider.getCredential(googleCred.idToken, null)
+        val user = auth.currentUser ?: throw IllegalStateException("no session")
+        val prev = user.uid
+        return try {
+            val res = user.linkWithCredential(firebaseCred).await()
+            LinkResult(res.user!!.uid, false, prev)
+        } catch (e: FirebaseAuthUserCollisionException) {
+            val res = auth.signInWithCredential(firebaseCred).await()
+            LinkResult(res.user!!.uid, true, prev)
+        }
     }
 
     suspend fun saveProfile(uid: String, p: com.learningischange.tidbitstrivia.data.PlayerIdentity.Profile) {

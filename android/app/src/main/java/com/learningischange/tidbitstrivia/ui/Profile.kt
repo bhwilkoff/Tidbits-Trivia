@@ -19,6 +19,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -30,12 +31,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import com.learningischange.tidbitstrivia.R
+import kotlinx.coroutines.launch
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -87,6 +94,22 @@ fun ProfileScreen(onBack: () -> Unit) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             StatTile("Live nights", "${p.stats.liveNights}", ink, soft, Modifier.weight(1f))
             StatTile("Venues", "${p.stats.venuesVisited}", ink, soft, Modifier.weight(1f))
+        }
+
+        Spacer(Modifier.height(18.dp))
+        val scope = rememberCoroutineScope()
+        val context = LocalContext.current
+        val webClientId = stringResource(R.string.tidbits_web_client_id)
+        if (PlayerIdentity.signedIn) {
+            Text("✓ Signed in — your records sync to every device", color = soft, fontSize = 14.sp,
+                textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+        } else if (webClientId != "TODO_ENABLE_GOOGLE_IN_FIREBASE") {
+            Text("Save your progress", fontSize = 18.sp, fontWeight = FontWeight.Black, color = ink)
+            Text("Sign in so your records follow you to any device.", color = soft, fontSize = 13.sp,
+                textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+            Spacer(Modifier.height(8.dp))
+            Button(onClick = { scope.launch { runCatching { PlayerIdentity.linkGoogle(context, webClientId) } } },
+                modifier = Modifier.fillMaxWidth()) { Text("Continue with Google", fontWeight = FontWeight.Bold) }
         }
     }
 

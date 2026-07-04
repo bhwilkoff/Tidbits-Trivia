@@ -31,6 +31,9 @@ object PlayerIdentity {
 
     var profileId: String? = null; private set
     var profile: Profile? by mutableStateOf(null); private set
+    /// True once promoted from anonymous via a federated sign-in (records roam + survive
+    /// session loss). The Firebase SDK persists the session, so this is authoritative.
+    var signedIn: Boolean by mutableStateOf(false); private set
 
     /** Ensure identity: stable anon uid → load/create players/{uid}. Local-first: shows a
      *  profile immediately, persists best-effort (works offline / before rules deploy). */
@@ -39,6 +42,7 @@ object PlayerIdentity {
             try {
                 val uid = FirebaseNet.ensureAuth()
                 profileId = uid
+                signedIn = FirebaseNet.isSignedIn()
                 profile = FirebaseNet.loadProfile(uid) ?: newProfile().also {
                     runCatching { FirebaseNet.saveProfile(uid, it) }
                 }
@@ -79,6 +83,24 @@ object PlayerIdentity {
                 liveNights = p.stats.liveNights + 1))
         profile = np
         scope.launch { runCatching { FirebaseNet.saveProfile(uid, np) } }
+    }
+
+    /** Google sign-in → promote the anon account so records roam + survive session loss.
+     *  On conflict, lossless-merge into the existing account. Returns true if merged. */
+    suspend fun linkGoogle(context: android.content.Context, webClientId: String): Boolean {
+        val local = profile
+        val res = FirebaseNet.linkGoogle(context, webClientId)
+        profileId = res.uid
+        if (res.merged) {
+            val account = FirebaseNet.loadProfile(res.uid) ?: newProfile()
+            val m = merge(local ?: account, account)
+            profile = m
+            runCatching { FirebaseNet.saveProfile(res.uid, m) }
+        } else if (local != null) {
+            runCatching { FirebaseNet.saveProfile(res.uid, local) }
+        }
+        signedIn = true
+        return res.merged
     }
 
     fun rename(name: String) {

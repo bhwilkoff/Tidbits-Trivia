@@ -56,6 +56,7 @@ final class PlayerIdentityStore {
                 }
             }
             if let id = profileId { watch(id) }                 // (B) live name sync
+            if signedIn { await syncDailyLog() }                 // (L2) pull the synced daily log
             await linkNativeIdentity()
             loaded = true
         } catch {
@@ -143,6 +144,7 @@ final class PlayerIdentityStore {
             try? await db.put(PlayerIdentity.publicPath(key), merged)
             markSignedIn()
             watch(key)                                          // (B) live name sync
+            await syncDailyLog(pushLocal: true)                 // (L2) push anon plays, pull the union
         } catch {
             print("[Identity] Apple sign-in failed: \(error)")
         }
@@ -151,6 +153,23 @@ final class PlayerIdentityStore {
     private func markSignedIn() {
         signedIn = true
         UserDefaults.standard.set(true, forKey: "tidbits.identity.signedIn")
+    }
+
+    /// (L2) Daily log sync — when signed in, a daily completion also lands in
+    /// dailyLog/{key} so "done today" + the archive follow the identity across devices.
+    func syncDailyScore(day: String, score: Int) async {
+        guard signedIn, let key = profileId else { return }
+        try? await db.put("dailyLog/\(key)/\(day)", score)
+    }
+
+    /// Reconcile the local DailyLog with the synced one. On sign-in, push local (anon)
+    /// plays first so nothing is lost; then pull the union into the local store.
+    func syncDailyLog(pushLocal: Bool = false) async {
+        guard signedIn, let key = profileId else { return }
+        if pushLocal { for (day, score) in DailyLog.all() { try? await db.put("dailyLog/\(key)/\(day)", score) } }
+        if let remote = (try? await db.get("dailyLog/\(key)", as: [String: Int].self)) ?? nil {
+            for (day, score) in remote { DailyLog.record(day: day, score: score) }
+        }
     }
 
     private var watchTask: Task<Void, Never>?

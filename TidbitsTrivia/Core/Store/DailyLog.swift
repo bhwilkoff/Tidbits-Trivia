@@ -21,6 +21,9 @@ enum DailyLog {
 
     static func played(_ day: String) -> Bool { score(for: day) != nil }
 
+    /// The whole local map (dayKey → score) — for pushing anon plays to the synced log.
+    static func all() -> [String: Int] { (UserDefaults.standard.dictionary(forKey: key) as? [String: Int]) ?? [:] }
+
     static var playedToday: Bool { played(QuestionProvider.dayKey()) }
     static var todayScore: Int? { score(for: QuestionProvider.dayKey()) }
 

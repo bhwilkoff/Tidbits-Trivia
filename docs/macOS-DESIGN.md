@@ -169,6 +169,30 @@ needs the join page's focus signal). These are the same networked gate as the
 parity Trivia-Night host/join and online Quick Match. Free-text review (§A3.3)
 also lands with networked join (paper mode has no typed answers to review).
 
+## §A8 — The SHOW system (big-screen presentation, 2026-07-03 upgrade)
+
+The projector is a **show**, not a slide. The single design goal (owner): the most
+incredible bar-trivia big screen in the world. Binding rules:
+
+- **A8.1 — The reveal is theatre.** When the host reveals, the correct answer
+  arrives with a dramatic beat: a scale-in + glow, the correct MCQ option lights
+  and the rest dim, a short pause before the leaderboard reacts. Never a plain
+  text swap.
+- **A8.2 — The leaderboard is alive.** Team rows **animate to their new rank** when
+  scores change (spring reorder, keyed by team id) — the "climb" is the drama.
+  A team that jumps ranks is briefly highlighted.
+- **A8.3 — Rounds are announced.** A new round opens with a full-screen round-intro
+  card ("ROUND 2 · HISTORY · 6 questions"), then transitions into Q1. Questions
+  cross-fade/slide, never hard-cut.
+- **A8.4 — The finish is a celebration.** Final standings animate in; the winner
+  gets a celebratory moment (confetti/crown flourish) sized for ten feet.
+- **A8.5 — Motion is ten-foot + accessible.** Timings are readable across a loud
+  room (nothing under ~0.4s, holds of ~1–2s on key beats). **Every animation gates
+  on `accessibilityReduceMotion`** — reduced motion falls back to instant/opacity.
+- **A8.6 — One show system, reused.** The reveal/leaderboard/round-intro/celebration
+  components are shared by the big screen AND (scaled down) the cockpit preview, and
+  every new format (speed podium, poll bars) plugs into them — never a bespoke look.
+
 ---
 
 # PART B — The parity face (Play / Records / Create / everything iOS+tvOS)

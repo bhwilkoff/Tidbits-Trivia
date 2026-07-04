@@ -59,17 +59,22 @@ final class LiveHostCoordinator {
 /// host-only affordance. Opens as its own window; drag it to the projector.
 struct LiveBigScreen_macOS: View {
     @Environment(LiveHostCoordinator.self) private var coordinator
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// §A8.5 — one show-timing spring, disabled under reduce-motion.
+    private var showAnim: Animation? { reduceMotion ? nil : .spring(response: 0.55, dampingFraction: 0.72) }
 
     var body: some View {
         ZStack {
             Tidbits.Palette.bg.ignoresSafeArea()
             if let s = coordinator.session {
-                if s.finished { standings(s) } else { live(s) }
+                if s.finished { standings(s).transition(.opacity) } else { live(s).transition(.opacity) }
             } else {
-                splash
+                splash.transition(.opacity)
             }
         }
         .frame(minWidth: 720, minHeight: 480)
+        .animation(showAnim, value: coordinator.session?.finished)
     }
 
     private var splash: some View {
@@ -94,21 +99,29 @@ struct LiveBigScreen_macOS: View {
                     .font(.system(size: 26, weight: .heavy, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
             }
             Spacer()
-            if let q = s.current {
-                Text(q.prompt)
-                    .font(.system(size: 56, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
-                    .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
-                if s.revealed {
-                    Text(q.correctAnswer)
-                        .font(.system(size: 52, weight: .black, design: .rounded)).foregroundStyle(.white)
-                        .padding(.horizontal, 28).padding(.vertical, 14)
-                        .background(Capsule().fill(Tidbits.Palette.mint))
-                        .overlay(Capsule().strokeBorder(Tidbits.Palette.border, lineWidth: 4))
-                        .padding(.top, 12)
-                } else {
-                    Text("Answers on your team sheet").font(.system(size: 26, weight: .semibold, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
+            VStack(spacing: 12) {
+                if let q = s.current {
+                    Text(q.prompt)
+                        .font(.system(size: 56, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
+                        .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
+                        .id(q.id)
+                        .transition(.opacity.combined(with: .move(edge: .top)))
+                    if s.revealed {
+                        Text(q.correctAnswer)
+                            .font(.system(size: 52, weight: .black, design: .rounded)).foregroundStyle(.white)
+                            .padding(.horizontal, 28).padding(.vertical, 14)
+                            .background(Capsule().fill(Tidbits.Palette.mint))
+                            .overlay(Capsule().strokeBorder(Tidbits.Palette.border, lineWidth: 4))
+                            .shadow(color: Tidbits.Palette.mint.opacity(reduceMotion ? 0 : 0.65), radius: 34)
+                            .padding(.top, 12)
+                            .transition(.scale(scale: 0.55).combined(with: .opacity))   // A8.1 the reveal is theatre
+                    } else {
+                        Text("Answers on your team sheet").font(.system(size: 26, weight: .semibold, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
+                    }
                 }
             }
+            .animation(showAnim, value: s.revealed)
+            .animation(showAnim, value: s.current?.id)
             Spacer()
             HStack(alignment: .bottom, spacing: 24) {
                 leaderboard(s)
@@ -122,26 +135,40 @@ struct LiveBigScreen_macOS: View {
     }
 
     private func leaderboard(_ s: LiveHostSession) -> some View {
-        HStack(spacing: 16) {
-            ForEach(Array(s.standings.prefix(5).enumerated()), id: \.element.id) { i, team in
-                HStack(spacing: 10) {
-                    if i == 0 { Image(systemName: "crown.fill").font(.system(size: 22)).foregroundStyle(Tidbits.Palette.yellow) }
-                    Text(team.name).font(.system(size: 26, weight: .heavy, design: .rounded)).foregroundStyle(Tidbits.Palette.ink).lineLimit(1)
-                    Text("\(team.score)").font(.system(size: 30, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
-                }
-                .padding(.horizontal, 20).padding(.vertical, 14)
-                .background(RoundedRectangle(cornerRadius: 16).fill(i == 0 ? Tidbits.Palette.yellow : Tidbits.Palette.surface))
-                .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(Tidbits.Palette.border, lineWidth: 3))
-            }
+        VStack(alignment: .leading, spacing: 10) {
             if s.teams.isEmpty {
-                Text("Teams appear here as the host adds them.").font(.system(size: 24, weight: .semibold, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
+                Text("Teams appear here as they join.").font(.system(size: 24, weight: .semibold, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
+            } else {
+                ForEach(Array(s.standings.prefix(5).enumerated()), id: \.element.id) { i, team in
+                    HStack(spacing: 14) {
+                        Text("\(i + 1)").font(.system(size: 24, weight: .black, design: .rounded)).foregroundStyle(i == 0 ? Tidbits.Palette.ink : Tidbits.Palette.inkSoft).frame(width: 32)
+                        if i == 0 { Image(systemName: "crown.fill").font(.system(size: 22)).foregroundStyle(Tidbits.Palette.yellow) }
+                        Text(team.name).font(.system(size: 26, weight: .heavy, design: .rounded)).foregroundStyle(Tidbits.Palette.ink).lineLimit(1)
+                        Spacer(minLength: 20)
+                        Text("\(team.score)").font(.system(size: 30, weight: .black, design: .rounded).monospacedDigit()).foregroundStyle(Tidbits.Palette.ink)
+                    }
+                    .padding(.horizontal, 20).padding(.vertical, 12).frame(width: 460)
+                    .background(RoundedRectangle(cornerRadius: 16).fill(i == 0 ? Tidbits.Palette.yellow : Tidbits.Palette.surface))
+                    .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(Tidbits.Palette.border, lineWidth: 3))
+                    .transition(.opacity)
+                }
             }
         }
+        .animation(showAnim, value: s.standings.prefix(5).map(\.id))   // A8.2 the leaderboard climbs
     }
 
     private func standings(_ s: LiveHostSession) -> some View {
         VStack(spacing: 20) {
-            Text("FINAL STANDINGS").font(.system(size: 56, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
+            if let winner = s.standings.first, winner.score > 0 {
+                HStack(spacing: 16) {
+                    Image(systemName: "party.popper.fill").font(.system(size: 40)).foregroundStyle(Tidbits.Palette.coral)
+                    Text("\(winner.name) wins!").font(.system(size: 60, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
+                    Image(systemName: "party.popper.fill").font(.system(size: 40)).foregroundStyle(Tidbits.Palette.coral).scaleEffect(x: -1)
+                }
+                .symbolEffect(.bounce, options: reduceMotion ? .nonRepeating : .repeating)
+            } else {
+                Text("FINAL STANDINGS").font(.system(size: 56, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
+            }
             ForEach(Array(s.standings.prefix(8).enumerated()), id: \.element.id) { i, team in
                 HStack(spacing: 20) {
                     Text("\(i + 1)").font(.system(size: 40, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft).frame(width: 60)

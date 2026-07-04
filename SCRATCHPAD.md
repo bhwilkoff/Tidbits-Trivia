@@ -804,6 +804,26 @@ One-line-per-round; full detail in `ARCHIVE.md`.
   four Apple/Android build targets green throughout. **Owner gate:** the multi-device
   live run (rules deployed). **Follow-up:** full HOST process-death resume. See memory
   [[unified-live-backend]].
+- **2026-07-03 (ALL question types playable in a hosted night — SHIPPED 1.6.19, all
+  platforms).** Owner audit ask: not all types worked in hosted Trivia Nights (only
+  MCQ; Picture dropped its image; Closest Call/Ordering/Matching/Type-answer/Enumerate
+  broke or leaked). Owner chose FULL interactive support. Built over a self-paced /loop,
+  one platform per iteration, each verified+committed: **contract** — `LiveRoom.Pub`
+  gains imageURL/numeric/orderItems/matchKeys+Values/enumTarget; `Answer` gains
+  number/order/pairs/list; NOTHING that leaks an answer is published (correct order/
+  pairing/accepted/set stay on the host). **Host auto-scores on reveal from its LOCAL
+  Question**, scorer mirrored 3×: `LiveNightHost.score` (Swift), `liveScore` (Kotlin),
+  `nhScore` (JS) — MCQ/picture exact, numeric proximity, ordering/matching partial,
+  type-answer alias-match, enumerate unique-set. Per-question ordering/matching shuffle
+  fixed once. **Joiner answer surfaces** on iOS (`LiveJoinView`), tvOS (`TVLivePlayerView`
+  — reorder/match/enumerate deferred to a phone, Siri Remote), Android (`LiveRoom.kt`,
+  +ZXist... Coil image), web (`js/live.js#answerHTML`). **Host screens** show the image +
+  a game-master surface + the answer on reveal (`LiveNightHost.isMCQ/answerLine`). Mac
+  Tidbits Live host publishes the same pub fields (keeps manual/referee scoring). Docs:
+  `LIVE-ROOM-CONTRACT.md` pub section + PARITY row. **Shipped 1.6.19/60/vc51:** iOS+tvOS
+  →TestFlight, macOS→ASC (both cloud builds green), Android→Play internal, web→Pages
+  (SW v24). All five build/verify green. Owner gate: multi-device live run. See memory
+  [[unified-live-backend]].
 - **2026-07-03 (Tidbits Live join — every platform + unified "Join a game").**
   *Session recovered after a mid-work crash* (git clean at d6c09c1 "native iOS join";
   memory `tidbits-live-networked-join` + the task list re-seeded the plan). *State

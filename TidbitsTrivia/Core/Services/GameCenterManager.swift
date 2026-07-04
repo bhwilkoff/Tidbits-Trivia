@@ -78,6 +78,9 @@ final class GameCenterManager {
             if self.isAuthenticated {
                 self.configureAccessPoint()
                 GKLocalPlayer.local.register(self.challengeListener)   // challenge events
+                // Link the Game Center player into the shared portable profile now that
+                // auth has completed (it's async — bootstrap may have run first).
+                Task { await PlayerIdentityStore.shared.linkNativeIdentity() }
             }
         }
     }

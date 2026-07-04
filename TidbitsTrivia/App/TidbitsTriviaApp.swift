@@ -27,7 +27,11 @@ struct TidbitsTriviaApp: App {
                 .environment(liveCoordinator)
                 #endif
                 .tint(Tidbits.Palette.blue)
-                .task { gameCenter.authenticate() }
+                .environment(PlayerIdentityStore.shared)
+                .task {
+                    gameCenter.authenticate()
+                    await PlayerIdentityStore.shared.bootstrap()   // stable uid → portable profile
+                }
                 // .onOpenURL fires for BOTH custom schemes and Universal
                 // Links on iOS 17+. Route into the inbox, never directly.
                 .onOpenURL { url in

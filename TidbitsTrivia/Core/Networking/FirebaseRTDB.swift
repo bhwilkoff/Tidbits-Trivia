@@ -45,7 +45,13 @@ actor FirebaseRTDB {
     @discardableResult
     func ensureAuth() async throws -> String {
         if let uid, Date() < expiry.addingTimeInterval(-300) { return uid }
-        if refreshToken != nil { try await refreshSession() } else { try await signUpAnonymous() }
+        if refreshToken == nil { refreshToken = Keychain.get(Self.refreshKey) }   // restore persisted session
+        if refreshToken != nil {
+            do { try await refreshSession() }
+            catch { refreshToken = nil; Keychain.delete(Self.refreshKey); try await signUpAnonymous() }
+        } else {
+            try await signUpAnonymous()
+        }
         guard let uid else { throw RTDBError.noToken }
         return uid
     }
@@ -79,11 +85,16 @@ actor FirebaseRTDB {
         apply(idToken: r.id_token, refreshToken: r.refresh_token, expiresIn: r.expires_in, uid: r.user_id)
     }
 
+    /// Keychain key for the anonymous refresh token — persisting it keeps the `uid`
+    /// (hence the portable player profile) stable across relaunches.
+    static let refreshKey = "tidbits.fb.anonRefresh"
+
     private func apply(idToken: String, refreshToken: String, expiresIn: String, uid: String) {
         self.idToken = idToken
         self.refreshToken = refreshToken
         self.uid = uid
         self.expiry = Date().addingTimeInterval(TimeInterval(expiresIn) ?? 3600)
+        Keychain.set(refreshToken, for: Self.refreshKey)
     }
 
     private func validToken() async throws -> String {

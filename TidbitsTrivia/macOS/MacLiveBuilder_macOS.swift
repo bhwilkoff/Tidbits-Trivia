@@ -131,6 +131,13 @@ struct LiveBuilderView_macOS: View {
             Button { working.rounds.remove(at: i) } label: { Image(systemName: "trash") }.buttonStyle(.borderless)
         }
         .padding(14).chunkyCard()
+        .draggable(round.id.uuidString)   // Wave A: drag-to-reorder (chevrons remain as a fallback)
+        .dropDestination(for: String.self) { items, _ in
+            guard let idStr = items.first,
+                  let from = working.rounds.firstIndex(where: { $0.id.uuidString == idStr }), from != i else { return false }
+            withAnimation { working.rounds.move(fromOffsets: IndexSet(integer: from), toOffset: from < i ? i + 1 : i) }
+            return true
+        }
     }
 
     private var addRoundBar: some View {

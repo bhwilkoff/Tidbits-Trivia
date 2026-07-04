@@ -80,8 +80,7 @@ struct ContentView_tvOS: View {
             TVNightContainer(plan: req.plan, category: req.category)
         }
         .fullScreenCover(item: $hostLaunch) { req in
-            TVNightLiveContainer(hosting: req.plan, category: req.category,
-                                 engine: store.game, hostName: NightClient.lastName)
+            TVNightHostView(plan: req.plan, category: req.category)
         }
         .fullScreenCover(isPresented: $showJoinNight) {
             TVJoinGameContainer()

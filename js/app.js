@@ -299,12 +299,15 @@ function botRows() {
 // Daily banner (R-DAILY-1): play-once; locked state opens the archive.
 function dailyBanner() {
   const score = Store.dailyScore(dayKey());
+  const day = Identity.profile?.streak?.current || 0;
+  const flame = day >= 2 ? `🔥 ${day}-day streak` : '';
   if (score == null) {
+    const sub = flame ? `${flame} — play today's 7 to keep it going` : '7 questions. Everyone gets the same set. Start your streak.';
     return `<button class="banner card daily" data-daily><div><div class="banner-title">${ICON.sun} DAILY TIDBIT</div>
-      <div class="muted">7 questions. Everyone gets the same set. Keep your streak.</div></div><span class="chev">›</span></button>`;
+      <div class="muted">${sub}</div></div><span class="chev">›</span></button>`;
   }
   return `<button class="banner card daily" data-daily><div><div class="banner-title">${ICON.check} DAILY TIDBIT</div>
-    <div class="muted">Done for today — you scored ${score}. New set tomorrow.</div>
+    <div class="muted">Done for today — you scored ${score}.${flame ? ` ${flame} kept alive.` : ''} New set tomorrow.</div>
     <div class="muted"><u>Play previous days</u></div></div><span class="chev">›</span></button>`;
 }
 
@@ -1473,6 +1476,18 @@ function renderVersusResults(s) {
   $('[data-done]').addEventListener('click', quitGame);
 }
 
+// L2: the cross-context day streak made visible — encouragement, never punishing (no
+// countdown timers or "your streak dies!" anxiety; freezes are shown as reassurance).
+function streakMoment() {
+  const st = Identity.profile?.streak;
+  if (!st || st.current < 1) return '';
+  const best = st.current > 1 && st.current === st.longest ? ' · your best ever!' : '';
+  const freezeLine = st.freezes > 0
+    ? `<div class="muted" style="font-size:.85rem">🧊 ${st.freezes} freeze${st.freezes === 1 ? '' : 's'} banked — miss a day and this keeps your streak alive</div>`
+    : '';
+  return `<div class="card pad" style="text-align:center"><div class="huge" style="color:#FF7A00">🔥 ${st.current}</div><div class="muted"><b>day streak</b>${best}</div>${freezeLine}</div>`;
+}
+
 function renderResults() {
   const s = game.summary();
   const grid = s.answered.map((a) => (a.chosen === null ? '⚫️' : a.correct ? '🟢' : '🔴')).join('');
@@ -1486,6 +1501,7 @@ function renderResults() {
         <div class="muted">${h(game.label || game.mode.title)} · ${h(game.category.name)}</div></div>
       <div class="stat-row">${statBox(s.correct + '/' + s.total, 'Correct', '#2FCB8A')}${statBox(s.acc + '%', 'Accuracy', '#2D5BFF')}${statBox(s.maxStreak, 'Best streak', '#FF5C5C')}</div>
       <div class="card pad grid-card"><div class="emoji">${grid}</div><div class="muted">Spoiler-free — safe to share</div></div>
+      ${streakMoment()}
       ${missed.length ? `<h2 class="section">Tidbits to remember</h2>${missed.map((a) => `<div class="card pad"><b>${h(a.q.prompt)}</b><div class="ans">Answer: ${h(a.q.options[a.q.correctIndex])}</div><p class="muted">${h(a.q.explanation)}</p></div>`).join('')}` : ''}
       <button class="btn btn-blue btn-full" data-share>Share Score</button>
       ${game._custom ? '<button class="btn btn-full" data-save-set>Save this set</button>' : ''}
@@ -1507,7 +1523,8 @@ async function shareResult(s, grid) {
   const header = game.mode.id === 'daily' ? `🧠 Tidbits Daily — ${dayKey()}` : `🧠 Tidbits — ${game.mode.title}`;
   const filled = Math.round(s.acc * 7 / 100);
   const meter = '▰'.repeat(filled) + '▱'.repeat(7 - filled);
-  const streak = s.maxStreak >= 3 ? `\n🔥 Best run ${s.maxStreak}` : '';
+  const day = Identity.profile?.streak?.current || 0;   // cross-context day streak (the habit metric)
+  const streak = day >= 2 ? `\n🔥 ${day}-day streak` : (s.maxStreak >= 3 ? `\n🔥 Best run ${s.maxStreak}` : '');
   const text = `${header}\n${s.score} pts · ${s.correct}/${s.total}\n${meter} ${s.acc}%\n${grid}${streak}\nPlay at ${SITE_URL}`;
   try { if (navigator.share) { await navigator.share({ text }); return; } } catch {}
   try { await navigator.clipboard.writeText(text); toast('Copied to clipboard!'); } catch { toast('Copy failed'); }

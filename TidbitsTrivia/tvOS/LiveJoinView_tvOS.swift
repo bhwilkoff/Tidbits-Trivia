@@ -171,6 +171,8 @@ struct TVLivePlayerView: View {
             }
             Text(p.prompt).font(.system(size: 48, weight: .black, design: .rounded)).foregroundStyle(.white)
                 .fixedSize(horizontal: false, vertical: true)
+            if let d = p.deadline, !revealed { tvCountdown(d) }              // Wave A: on-screen timer
+            if p.wager == true, !revealed { tvWagerControl(max(0, client.score)) }  // Wave A: wager stake
             if let n = p.numeric {
                 TVNumericAnswer(spec: n, locked: locked) { v in Task { await client.submit(number: v) } }.id(p.qid)
             } else if let options = p.options, !options.isEmpty {
@@ -187,7 +189,44 @@ struct TVLivePlayerView: View {
                 TVTextAnswer(locked: locked) { t in Task { await client.submit(text: t) } }.id(p.qid)
             }
             statusNote(p, revealed: revealed)
+            if revealed, let story = p.story, !story.isEmpty {   // Wave A: the story behind the answer
+                Text(story).font(.system(size: 28, weight: .semibold)).foregroundStyle(TVTheme.textSoft)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(24).frame(maxWidth: .infinity, alignment: .leading)
+                    .background(RoundedRectangle(cornerRadius: 16).fill(Color.white.opacity(0.06)))
+            }
         }
+    }
+
+    /// Wave A: the shared countdown on the TV (coral at ≤5s).
+    @ViewBuilder private func tvCountdown(_ deadlineMs: Int) -> some View {
+        TimelineView(.periodic(from: .now, by: 0.5)) { _ in
+            let remaining = max(0, deadlineMs - Int(Date().timeIntervalSince1970 * 1000))
+            let secs = Int((Double(remaining) / 1000).rounded(.up))
+            Text(secs >= 60 ? String(format: "%d:%02d", secs / 60, secs % 60) : "\(secs)")
+                .font(.system(size: 56, weight: .black, design: .rounded)).monospacedDigit()
+                .foregroundStyle(secs <= 5 ? Tidbits.Palette.coral : .white)
+        }
+    }
+
+    /// Wave A: the stake control — focusable −/+ buttons (no Stepper; the remote drives these).
+    @ViewBuilder private func tvWagerControl(_ maxBet: Int) -> some View {
+        let step = max(1, maxBet / 10)
+        VStack(alignment: .leading, spacing: 12) {
+            Text("YOUR WAGER").font(.system(size: 24, weight: .heavy, design: .rounded)).foregroundStyle(Tidbits.Palette.coral)
+            if maxBet == 0 {
+                Text("No points to wager yet.").font(.system(size: 26, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+            } else {
+                HStack(spacing: 28) {
+                    Button { client.wager = max(0, min(client.wager, maxBet) - step) } label: { Image(systemName: "minus").font(.system(size: 30, weight: .black)) }
+                    Text("\(min(client.wager, maxBet)) of \(maxBet)")
+                        .font(.system(size: 40, weight: .black, design: .rounded)).monospacedDigit().foregroundStyle(.white).frame(minWidth: 260)
+                    Button { client.wager = min(maxBet, min(client.wager, maxBet) + step) } label: { Image(systemName: "plus").font(.system(size: 30, weight: .black)) }
+                }
+            }
+        }
+        .padding(24).frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: 16).fill(Tidbits.Palette.coral.opacity(0.18)))
     }
 
     private func optionButton(_ i: Int, _ opt: String, p: LiveRoom.Pub, revealed: Bool) -> some View {

@@ -110,8 +110,15 @@ fun ProfileScreen(onBack: () -> Unit) {
             Text("Sign in so your records follow you to any device.", color = soft, fontSize = 13.sp,
                 textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.height(8.dp))
-            Button(onClick = { scope.launch { runCatching { PlayerIdentity.linkGoogle(context, webClientId) } } },
-                modifier = Modifier.fillMaxWidth()) { Text("Continue with Google", fontWeight = FontWeight.Bold) }
+            Button(onClick = {
+                scope.launch {
+                    runCatching { PlayerIdentity.linkGoogle(context, webClientId) }
+                        .onFailure {
+                            android.util.Log.e("Identity", "Google sign-in failed", it)
+                            android.widget.Toast.makeText(context, "Sign-in didn’t complete: ${it.message ?: it.javaClass.simpleName}", android.widget.Toast.LENGTH_LONG).show()
+                        }
+                }
+            }, modifier = Modifier.fillMaxWidth()) { Text("Continue with Google", fontWeight = FontWeight.Bold) }
         }
     }
 

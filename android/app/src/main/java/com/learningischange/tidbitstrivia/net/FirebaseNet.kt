@@ -140,6 +140,7 @@ object FirebaseNet {
         val imageUrl: String? = null, val numeric: LiveNumeric? = null,
         val orderItems: List<String>? = null, val matchKeys: List<String>? = null,
         val matchValues: List<String>? = null, val enumTarget: Int? = null,
+        val locked: Boolean = false,
     )
     /** A player's submission (any shape) — the host scores it locally on reveal. */
     data class LiveAnswer(
@@ -223,6 +224,7 @@ object FirebaseNet {
             matchKeys = snap.child("matchKeys").children.mapNotNull { it.getValue(String::class.java) }.ifEmpty { null },
             matchValues = snap.child("matchValues").children.mapNotNull { it.getValue(String::class.java) }.ifEmpty { null },
             enumTarget = snap.child("enumTarget").getValue(Long::class.java)?.toInt(),
+            locked = snap.child("locked").getValue(Boolean::class.java) ?: false,
         )
     }
 

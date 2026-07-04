@@ -1452,7 +1452,7 @@ let nhRoot = null;
 async function openNightHost(plan, cat) {
   Object.assign(NH, { code: '', error: '', questions: [], index: 0, revealed: false, stage: 'lobby',
     teams: {}, scores: {}, answers: {}, hostChoice: null, plan, cat, unsubs: [], ansUnsub: null,
-    shuffledOrder: [], shuffledValues: [], speedBonus: false });
+    shuffledOrder: [], shuffledValues: [], speedBonus: false, locked: false });
   nhInjectStyles();
   if (!nhRoot) { nhRoot = document.createElement('div'); nhRoot.className = 'nh-ov'; document.body.appendChild(nhRoot); }
   drawHost();
@@ -1498,6 +1498,7 @@ function nhPub() {
   if (q.ordering) p.orderItems = NH.shuffledOrder;
   if (q.matching) { p.matchKeys = q.matching.keys; p.matchValues = NH.shuffledValues; }
   if (q.enumerate) p.enumTarget = q.enumerate.groups.length;
+  if (NH.locked && !NH.revealed) p.locked = true;
   return p;
 }
 
@@ -1530,10 +1531,16 @@ async function nhPublish() {
 async function nhStart() {
   if (!NH.code || !NH.questions.length) return;
   if (NH.hostPlays) await FirebaseNet.liveHostJoinAsTeam(NH.code, NH.hostName || 'Host');
-  NH.index = 0; NH.revealed = false; NH.hostChoice = null; NH.stage = 'playing';
+  NH.index = 0; NH.revealed = false; NH.locked = false; NH.hostChoice = null; NH.stage = 'playing';
   nhPrepare();
   await FirebaseNet.liveSetState(NH.code, 'live');
   await nhPublish(); drawHost();
+}
+async function nhLock() {
+  if (NH.revealed || NH.locked) return;
+  NH.locked = true;
+  await FirebaseNet.livePublish(NH.code, nhPub());
+  drawHost();
 }
 async function nhReveal() {
   if (NH.revealed) return;
@@ -1553,7 +1560,7 @@ async function nhReveal() {
 }
 async function nhNext() {
   if (!NH.revealed) return;
-  NH.revealed = false; NH.hostChoice = null; NH.index++;
+  NH.revealed = false; NH.locked = false; NH.hostChoice = null; NH.index++;
   if (!NH.questions[NH.index]) { NH.stage = 'ended'; await FirebaseNet.liveSetState(NH.code, 'ended'); await FirebaseNet.livePublish(NH.code, nhPub()); }
   else { nhPrepare(); await nhPublish(); }
   drawHost();
@@ -1630,10 +1637,14 @@ function drawHost() {
     ${img}
     <div class="nh-q">${h(p.prompt)}</div>
     ${body}
-    <div class="nh-actions">${NH.revealed ? '<button class="btn btn-primary" id="nh-next">Next</button>' : '<button class="btn btn-primary" id="nh-reveal">Reveal</button>'}</div>
+    ${NH.locked && !NH.revealed ? '<div class="nh-answer" style="background:#FF5C35">Answers locked — pencils down!</div>' : ''}
+    <div class="nh-actions">${NH.revealed
+      ? '<button class="btn btn-primary" id="nh-next">Next</button>'
+      : `${NH.locked ? '' : '<button class="btn" id="nh-lock">Lock</button> '}<button class="btn btn-primary" id="nh-reveal">Reveal</button>`}</div>
     ${standings}
   </div>`;
   nhRoot.querySelector('#nh-x').addEventListener('click', closeNightHost);
+  const lk = nhRoot.querySelector('#nh-lock'); if (lk) lk.addEventListener('click', nhLock);
   const rv = nhRoot.querySelector('#nh-reveal'); if (rv) rv.addEventListener('click', nhReveal);
   const nx = nhRoot.querySelector('#nh-next'); if (nx) nx.addEventListener('click', nhNext);
   nhRoot.querySelectorAll('[data-nhopt]').forEach((b) => b.addEventListener('click', () => nhAnswer(+b.dataset.nhopt)));

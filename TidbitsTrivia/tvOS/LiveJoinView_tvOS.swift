@@ -159,7 +159,7 @@ struct TVLivePlayerView: View {
 
     @ViewBuilder private func questionView(_ p: LiveRoom.Pub) -> some View {
         let revealed = p.phase == LiveRoom.Phase.reveal
-        let locked = revealed || client.hasAnswered
+        let locked = revealed || client.hasAnswered || p.locked == true
         VStack(alignment: .leading, spacing: 30) {
             Text("ROUND \(p.round) · \(p.roundTitle.uppercased()) — Q\(p.qNum)/\(p.qTotal)")
                 .font(.system(size: 25, weight: .heavy, design: .rounded)).foregroundStyle(TVTheme.textSoft)
@@ -205,13 +205,14 @@ struct TVLivePlayerView: View {
         }
         .buttonStyle(TVLiveOptionStyle(state: state))
         .focused($focusedOption, equals: i)
-        .disabled(revealed || client.hasAnswered)
+        .disabled(revealed || client.hasAnswered || p.locked == true)
     }
 
     @ViewBuilder private func statusNote(_ p: LiveRoom.Pub, revealed: Bool) -> some View {
         let note: (String, Color) = revealed
             ? (client.chosen == p.answerIndex ? ("Correct!", Tidbits.Palette.mint) : client.chosen == nil ? ("No answer submitted.", TVTheme.textSoft) : ("Not this time.", Tidbits.Palette.coral))
-            : (client.hasAnswered ? ("Locked in — waiting for the reveal…", Tidbits.Palette.mint) : ("Choose your answer with the remote.", TVTheme.textSoft))
+            : (client.hasAnswered ? ("Locked in — waiting for the reveal…", Tidbits.Palette.mint)
+               : p.locked == true ? ("Answers locked — pencils down!", Tidbits.Palette.coral) : ("Choose your answer with the remote.", TVTheme.textSoft))
         Text(note.0).font(.system(size: 31, weight: .bold, design: .rounded)).foregroundStyle(note.1).padding(.top, 8)
     }
 }

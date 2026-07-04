@@ -23,6 +23,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -69,6 +70,7 @@ fun NightHostScreen(rounds: List<Pair<String, Int>>, category: Category, store: 
     var questions by remember { mutableStateOf<List<Question>>(emptyList()) }
     var index by remember { mutableStateOf(0) }
     var revealed by remember { mutableStateOf(false) }
+    var locked by remember { mutableStateOf(false) }
     var stage by remember { mutableStateOf("lobby") }
     var teams by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
     var scores by remember { mutableStateOf<Map<String, Int>>(emptyMap()) }
@@ -111,6 +113,7 @@ fun NightHostScreen(rounds: List<Pair<String, Int>>, category: Category, store: 
         if (q.ordering != null) m["orderItems"] = shuffledOrder
         q.matching?.let { m["matchKeys"] = it.keys; m["matchValues"] = shuffledValues }
         q.enumerate?.let { m["enumTarget"] = it.total }
+        if (locked && !revealed) m["locked"] = true
         return m
     }
     fun watchAnswers() {
@@ -137,7 +140,7 @@ fun NightHostScreen(rounds: List<Pair<String, Int>>, category: Category, store: 
     fun start() = scope.launch {
         if (questions.isEmpty() || code.isEmpty()) return@launch
         if (hostPlays) FirebaseNet.liveHostJoinAsTeam(code, hostName.ifBlank { "Host" })
-        index = 0; revealed = false; hostChoice = null; stage = "playing"
+        index = 0; revealed = false; locked = false; hostChoice = null; stage = "playing"
         prepareQuestion()
         FirebaseNet.liveSetState(code, "live")
         FirebaseNet.livePublish(code, pubMap()); watchAnswers()
@@ -158,9 +161,14 @@ fun NightHostScreen(rounds: List<Pair<String, Int>>, category: Category, store: 
             if (total > 0) FirebaseNet.liveSetScore(code, uid, (scores[uid] ?: 0) + total)
         }
     }
+    fun lock() = scope.launch {
+        if (revealed || locked) return@launch
+        locked = true
+        FirebaseNet.livePublish(code, pubMap())
+    }
     fun next() = scope.launch {
         if (!revealed) return@launch
-        revealed = false; hostChoice = null; index++
+        revealed = false; locked = false; hostChoice = null; index++
         if (questions.getOrNull(index) == null) {
             stage = "ended"; FirebaseNet.liveSetState(code, "ended"); FirebaseNet.livePublish(code, pubMap())
         } else { prepareQuestion(); FirebaseNet.livePublish(code, pubMap()); watchAnswers() }
@@ -252,7 +260,11 @@ fun NightHostScreen(rounds: List<Pair<String, Int>>, category: Category, store: 
                                 modifier = Modifier.fillMaxWidth().background(Pops.mint, RoundedCornerShape(12.dp)).padding(12.dp))
                         }
                     }
-                    if (!revealed) Button(onClick = { reveal() }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Pops.blue, contentColor = Color.White)) { Text("Reveal", fontWeight = FontWeight.Bold) }
+                    if (!revealed && locked) Text("Answers locked — pencils down!", color = Pops.coral, fontWeight = FontWeight.Bold)
+                    if (!revealed) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        if (!locked) OutlinedButton(onClick = { lock() }, modifier = Modifier.weight(1f)) { Text("Lock", fontWeight = FontWeight.Bold) }
+                        Button(onClick = { reveal() }, modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = Pops.blue, contentColor = Color.White)) { Text("Reveal", fontWeight = FontWeight.Bold) }
+                    }
                     else Button(onClick = { next() }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Pops.coral, contentColor = Color.White)) { Text("Next", fontWeight = FontWeight.Bold) }
                 }
                 StandingsList(standings, ink)

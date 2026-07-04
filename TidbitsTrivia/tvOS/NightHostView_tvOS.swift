@@ -11,7 +11,7 @@ struct TVNightHostView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var host: LiveNightHost
     @FocusState private var focus: Field?
-    private enum Field: Hashable { case play, speed, start, reveal, next, opt(Int) }
+    private enum Field: Hashable { case play, speed, start, lock, reveal, next, opt(Int) }
 
     init(plan: NightPlan, category: TriviaCategory) {
         _host = State(wrappedValue: LiveNightHost(plan: plan, category: category))
@@ -115,12 +115,19 @@ struct TVNightHostView: View {
                     }
                     HStack(spacing: 20) {
                         if !host.revealed {
+                            if !host.locked {
+                                Button("Lock") { Task { await host.lock() } }
+                                    .buttonStyle(TVChipStyle(accent: Tidbits.Palette.yellow, selected: false)).focused($focus, equals: .lock)
+                            }
                             Button("Reveal") { Task { await host.reveal() } }
                                 .buttonStyle(TVChipStyle(accent: Tidbits.Palette.blue, selected: false)).focused($focus, equals: .reveal)
                         } else {
                             Button("Next") { Task { await host.next() } }
                                 .buttonStyle(TVChipStyle(accent: Tidbits.Palette.coral, selected: false)).focused($focus, equals: .next)
                         }
+                    }
+                    if host.locked && !host.revealed {
+                        Text("Answers locked — pencils down!").font(.system(size: 24, weight: .heavy, design: .rounded)).foregroundStyle(Tidbits.Palette.coral)
                     }
                 }
             }

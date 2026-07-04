@@ -56,7 +56,7 @@ async function join() {
 }
 
 async function submitAns(fields) {
-  if (!S.pub || S.pub.phase !== 'question' || S.submittedQid === S.pub.qid) return;
+  if (!S.pub || S.pub.phase !== 'question' || S.submittedQid === S.pub.qid || S.pub.locked) return;
   S.submittedQid = S.pub.qid; draw();
   try { await FirebaseNet.liveSubmit(S.code, S.pub.qid, fields); }
   catch { S.submittedQid = null; S.chosen = null; S.error = 'Answer didn’t send — tap again.'; draw(); }
@@ -144,6 +144,7 @@ function playHTML() {
   const status = revealed
     ? `<div class="live-note ok">Answer revealed — check your score.</div>`
     : (answered ? `<div class="live-note ok">Locked in — waiting for the reveal…</div>`
+       : p.locked ? `<div class="live-note" style="color:#FF5C35">Answers locked — pencils down!</div>`
        : `<div class="live-note">Answer below.</div>`);
   const img = p.imageURL ? `<img class="live-img" src="${esc(p.imageURL)}" alt="">` : '';
 
@@ -158,7 +159,7 @@ function playHTML() {
 
 /** The right answer input for the question type. The host scores each on reveal. */
 function answerHTML(p, revealed) {
-  const locked = revealed || S.submittedQid === p.qid;
+  const locked = revealed || S.submittedQid === p.qid || p.locked === true;
   const L = S.local;
   const submit = locked ? '' : '<button id="live-submit" class="live-go">Submit</button>';
   if (p.options) {

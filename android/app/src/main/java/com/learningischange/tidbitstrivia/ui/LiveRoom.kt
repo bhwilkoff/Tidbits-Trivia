@@ -96,7 +96,7 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
 
     fun submitFields(fields: Map<String, Any?>) {
         val p = pub ?: return
-        if (p.phase != "question" || submittedQid == p.qid) return
+        if (p.phase != "question" || submittedQid == p.qid || p.locked) return
         submittedQid = p.qid
         scope.launch {
             try { FirebaseNet.liveSubmitAnswer(code, p.qid, fields) }
@@ -160,7 +160,7 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
                 }
                 Text(p.prompt, fontSize = 24.sp, fontWeight = FontWeight.Black, color = ink)
                 Spacer(Modifier.height(16.dp))
-                val locked = revealed || submittedQid == p.qid
+                val locked = revealed || submittedQid == p.qid || p.locked
                 when {
                     p.numeric != null -> NumericAnswer(p.numeric, p.qid, locked) { submitFields(mapOf("number" to it)) }
                     p.options != null -> p.options.forEachIndexed { i, opt ->
@@ -181,6 +181,7 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
                     revealed && chosen == null -> "No answer submitted." to soft
                     revealed -> "Not this time." to Pops.coral
                     submittedQid == p.qid -> "Locked in — waiting for the reveal…" to Pops.mint
+                    p.locked -> "Answers locked — pencils down!" to Pops.coral
                     else -> "Tap your answer." to soft
                 }
                 Text(note.first, color = note.second, fontWeight = FontWeight.Bold, fontSize = 16.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)

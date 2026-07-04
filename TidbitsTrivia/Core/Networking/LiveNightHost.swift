@@ -33,6 +33,11 @@ final class LiveNightHost {
     /// The host's selected option for the current question (host-plays mode).
     private(set) var hostChoice: Int?
     var hostAnswered: Bool { hostChoice != nil }
+    /// Per-question display shuffles, computed ONCE when a question becomes current
+    /// so publish and reveal agree on indices (ordering/matching). The correct
+    /// order/pairing is never shipped — the host scores from its local Question.
+    private(set) var shuffledOrder: [String] = []
+    private(set) var shuffledValues: [String] = []
 
     init(plan: NightPlan, category: TriviaCategory, title: String = "Trivia Night") {
         self.plan = plan
@@ -79,8 +84,16 @@ final class LiveNightHost {
         guard !questions.isEmpty else { errorText = "No questions available."; return }
         if hostPlays { await net.joinAsHost(name: hostName.isEmpty ? "Host" : hostName) }
         index = 0; revealed = false; hostChoice = nil; stage = .playing
+        prepareQuestion()
         await net.setState("live")
         await net.publish(pub())
+    }
+
+    /// Compute the display shuffles for the current question (once), so the
+    /// ordering/matching indices are stable across publish + reveal.
+    private func prepareQuestion() {
+        shuffledOrder = current?.ordering?.shuffled() ?? []
+        shuffledValues = current?.matching?.values.shuffled() ?? []
     }
 
     /// Host-plays mode: the host answers the current question on this device.
@@ -104,7 +117,7 @@ final class LiveNightHost {
         revealed = false
         hostChoice = nil
         index += 1
-        if current == nil { await end() } else { await net.publish(pub()) }
+        if current == nil { await end() } else { prepareQuestion(); await net.publish(pub()) }
     }
 
     func end() async {
@@ -121,12 +134,20 @@ final class LiveNightHost {
         guard let q = current else { return endedPub() }
         let inR = questionInRound
         let fmt = plan.rounds.indices.contains(roundIndex) ? plan.rounds[roundIndex].kind.rawValue : ""
-        return LiveRoom.Pub(round: roundNumber, roundTitle: roundTitle,
-                            qid: LiveRoom.qid(round: q.roundIndex ?? 0, question: index),
-                            qNum: inR.n, qTotal: inR.of,
-                            phase: revealed ? LiveRoom.Phase.reveal : LiveRoom.Phase.question,
-                            prompt: q.prompt, options: q.options, format: fmt,
-                            answerIndex: revealed ? q.correctIndex : nil)
+        // MCQ = no structured spec (classic/describe/cloze/oddOneOut/thisOrThat/pictureId).
+        let mcq = q.closest == nil && q.ordering == nil && q.matching == nil && q.accepted == nil && q.enumerate == nil
+        var p = LiveRoom.Pub(round: roundNumber, roundTitle: roundTitle,
+                             qid: LiveRoom.qid(round: q.roundIndex ?? 0, question: index),
+                             qNum: inR.n, qTotal: inR.of,
+                             phase: revealed ? LiveRoom.Phase.reveal : LiveRoom.Phase.question,
+                             prompt: q.prompt, options: mcq ? q.options : nil, format: fmt,
+                             answerIndex: (revealed && mcq) ? q.correctIndex : nil)
+        p.imageURL = q.imageURL?.absoluteString                   // pictureId (also MCQ)
+        if let c = q.closest { p.numeric = LiveRoom.Numeric(min: c.min, max: c.max, step: c.step, unit: c.unit) }
+        if q.ordering != nil { p.orderItems = shuffledOrder }     // correct order withheld
+        if let m = q.matching { p.matchKeys = m.keys; p.matchValues = shuffledValues }
+        if let e = q.enumerate { p.enumTarget = e.total }
+        return p
     }
 
     private func endedPub() -> LiveRoom.Pub {
@@ -134,11 +155,43 @@ final class LiveNightHost {
                      phase: LiveRoom.Phase.ended, prompt: "", options: nil, format: "", answerIndex: nil)
     }
 
-    /// Award points to every team whose submitted choice matches the answer.
+    /// On reveal, score every player's submission against the host's LOCAL Question
+    /// (every question type). Nothing that could leak an answer was ever published.
     private func autoScore() async {
         guard let q = current else { return }
-        for (uid, ans) in net.answers where ans.choice == q.correctIndex {
-            await net.setScore(uid, (net.scores[uid] ?? 0) + pointsPerCorrect)
+        for (uid, ans) in net.answers {
+            let pts = Self.score(q, ans, shuffledOrder: shuffledOrder, shuffledValues: shuffledValues, mcqPoints: pointsPerCorrect)
+            if pts > 0 { await net.setScore(uid, (net.scores[uid] ?? 0) + pts) }
         }
+    }
+
+    /// Points for one submission, by question type (partial credit for ordering /
+    /// matching / enumerate; proximity for numeric; alias-match for typed).
+    static func score(_ q: Question, _ a: LiveRoom.Answer, shuffledOrder: [String], shuffledValues: [String], mcqPoints: Int) -> Int {
+        if let c = q.closest { return a.number.map { c.points(for: $0) } ?? 0 }
+        if let correctOrder = q.ordering, let order = a.order {
+            let seq = order.compactMap { shuffledOrder.indices.contains($0) ? shuffledOrder[$0] : nil }
+            return zip(seq, correctOrder).reduce(0) { $0 + ($1.0 == $1.1 ? 1 : 0) }   // +1 per correct position
+        }
+        if let m = q.matching, let pairs = a.pairs {
+            var pts = 0
+            for (i, _) in m.keys.enumerated() where i < pairs.count && shuffledValues.indices.contains(pairs[i]) {
+                if shuffledValues[pairs[i]] == m.values[i] { pts += 1 }               // +1 per correct pairing
+            }
+            return pts
+        }
+        if let accepted = q.accepted, let text = a.text {
+            return GameEngine.matchesAccepted(text, accepted) ? mcqPoints : 0
+        }
+        if let e = q.enumerate, let list = a.list {
+            var filled = Set<Int>()
+            for name in list {
+                for (gi, group) in e.groups.enumerated() where !filled.contains(gi) {
+                    if GameEngine.matchesAccepted(name, group) { filled.insert(gi); break }
+                }
+            }
+            return filled.count                                                       // +1 per unique set member
+        }
+        return a.choice == q.correctIndex ? mcqPoints : 0                             // MCQ / picture / T-or-T / odd
     }
 }

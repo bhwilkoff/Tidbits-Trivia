@@ -31,9 +31,24 @@ enum LiveRoom {
         var qTotal: Int
         var phase: String       // Phase.*
         var prompt: String
-        var options: [String]?  // present for MCQ; nil/empty for free-text
-        var format: String      // GameMode.rawValue of the round
+        var options: [String]?  // present for MCQ; nil/empty for non-MCQ
+        var format: String      // GameMode.rawValue — the joiner switches its answer UI on this
         var answerIndex: Int?   // correct option — ONLY populated in `reveal`
+        // Non-MCQ payloads (additive; only the relevant one is set per `format`).
+        // NONE of these leak the answer — the host auto-scores on reveal from its
+        // own local Question (accepted lists / correct order / sets never ship).
+        var imageURL: String? = nil       // pictureId
+        var numeric: Numeric? = nil       // closestCall — bounds only, not the answer
+        var orderItems: [String]? = nil   // ordering — items to arrange (correct order withheld)
+        var matchKeys: [String]? = nil    // matching — the keys
+        var matchValues: [String]? = nil  // matching — SHUFFLED values (correct pairing withheld)
+        var enumTarget: Int? = nil        // enumerate — how many are in the set
+    }
+
+    /// Closest Call bounds a joiner needs to render a number input (the answer +
+    /// tolerance stay on the host for reveal-time proximity scoring).
+    struct Numeric: Codable, Equatable {
+        var min: Double; var max: Double; var step: Double; var unit: String
     }
 
     /// A team as the joining player writes it (`teams/{uid}`). The running score
@@ -44,9 +59,14 @@ enum LiveRoom {
     }
 
     /// A player's submission for the current question (`answers/{qid}/{uid}`).
+    /// The shape depends on the question `format`; only the relevant field is set.
     struct Answer: Codable, Equatable {
-        var choice: Int?        // selected option index (MCQ)
-        var text: String?       // free-text answer (typed formats)
+        var choice: Int? = nil  // MCQ / picture / this-or-that / odd-one-out
+        var text: String? = nil // type-the-answer (free text)
+        var number: Double? = nil // closest call (numeric estimate)
+        var order: [Int]? = nil // ordering — the player's arrangement as indices into orderItems
+        var pairs: [Int]? = nil // matching — for key i, the chosen matchValues index
+        var list: [String]? = nil // enumerate — the names the player entered
         var ts: Int             // epoch ms — first-submission ordering / speed
     }
 

@@ -127,8 +127,9 @@ function bindProfile() {
     } catch (e) {
       if (row) row.style.opacity = '1';
       b.disabled = false;
+      console.error('[identity] sign-in error', e);
       if (e?.code !== 'auth/popup-closed-by-user' && e?.code !== 'auth/cancelled-popup-request') {
-        alert('Sign-in didn’t complete. Please try again.');
+        alert('Sign-in didn’t complete (' + (e?.code || e?.message || 'unknown error') + '). Please try again.');
       }
     }
   }));

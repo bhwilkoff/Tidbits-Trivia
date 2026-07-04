@@ -173,12 +173,19 @@ struct NightHostView: View {
                 }
                 HStack(spacing: 12) {
                     if !host.revealed {
+                        if !host.locked {
+                            Button("Lock") { Task { await host.lock() } }
+                                .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.ink))
+                        }
                         Button("Reveal") { Task { await host.reveal() } }
                             .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.blue, textColor: .white))
                     } else {
                         Button("Next") { Task { await host.next() } }
                             .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.coral, textColor: .white))
                     }
+                }
+                if host.locked && !host.revealed {
+                    Text("Answers locked — pencils down!").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.coral)
                 }
                 standingsCard
             }

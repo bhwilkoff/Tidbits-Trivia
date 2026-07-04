@@ -43,6 +43,7 @@ enum LiveRoom {
         var matchKeys: [String]? = nil    // matching — the keys
         var matchValues: [String]? = nil  // matching — SHUFFLED values (correct pairing withheld)
         var enumTarget: Int? = nil        // enumerate — how many are in the set
+        var locked: Bool? = nil           // cheating deterrence (§A5.3): "pencils down" — no more answers
     }
 
     /// Closest Call bounds a joiner needs to render a number input (the answer +

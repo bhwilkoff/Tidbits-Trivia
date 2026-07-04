@@ -35,6 +35,9 @@ final class LiveNightHost {
     var speedBonus = false
     /// The uid that answered correct fastest this question (for a ⚡ tag on reveal).
     private(set) var fastestUid: String?
+    /// Cheating deterrence (§A5.3): "pencils down" — the host freezes answers before
+    /// reveal, so no one can look it up and answer late. Reset each question.
+    private(set) var locked = false
     /// The host's selected option for the current question (host-plays mode).
     private(set) var hostChoice: Int?
     var hostAnswered: Bool { hostChoice != nil }
@@ -88,7 +91,7 @@ final class LiveNightHost {
         questions = await QuestionProvider.shared.nightQuestions(plan: plan, category: category)
         guard !questions.isEmpty else { errorText = "No questions available."; return }
         if hostPlays { await net.joinAsHost(name: hostName.isEmpty ? "Host" : hostName) }
-        index = 0; revealed = false; hostChoice = nil; stage = .playing
+        index = 0; revealed = false; hostChoice = nil; locked = false; stage = .playing
         prepareQuestion()
         await net.setState("live")
         await net.publish(pub())
@@ -108,6 +111,14 @@ final class LiveNightHost {
         await net.submitHostAnswer(qid: LiveRoom.qid(round: q.roundIndex ?? 0, question: index), choice: i)
     }
 
+    /// "Pencils down" — freeze answers before the reveal (cheating deterrence, §A5.3).
+    /// Players who haven't submitted can no longer answer; a late Googler is locked out.
+    func lock() async {
+        guard stage == .playing, !revealed, !locked else { return }
+        locked = true
+        await net.publish(pub())
+    }
+
     /// Show the answer on every device at once, then award points.
     func reveal() async {
         guard stage == .playing, current != nil, !revealed else { return }
@@ -121,6 +132,7 @@ final class LiveNightHost {
         guard stage == .playing, revealed else { return }
         revealed = false
         hostChoice = nil
+        locked = false
         index += 1
         if current == nil { await end() } else { prepareQuestion(); await net.publish(pub()) }
     }
@@ -152,6 +164,7 @@ final class LiveNightHost {
         if q.ordering != nil { p.orderItems = shuffledOrder }     // correct order withheld
         if let m = q.matching { p.matchKeys = m.keys; p.matchValues = shuffledValues }
         if let e = q.enumerate { p.enumTarget = e.total }
+        if locked && !revealed { p.locked = true }
         return p
     }
 

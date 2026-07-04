@@ -173,7 +173,7 @@ struct LiveJoinView: View {
 
     /// The right input for the question's type. The host auto-scores each on reveal.
     @ViewBuilder private func answerSurface(_ p: LiveRoom.Pub, revealed: Bool) -> some View {
-        let locked = revealed || client.hasAnswered
+        let locked = revealed || client.hasAnswered || p.locked == true
         if let n = p.numeric {
             LiveNumericAnswer(spec: n, locked: locked) { v in Task { await client.submit(number: v) } }.id(p.qid)
         } else if let items = p.orderItems, !items.isEmpty {
@@ -204,13 +204,14 @@ struct LiveJoinView: View {
             .padding(16).frame(maxWidth: .infinity, alignment: .leading).chunkyCard(fill: fill)
         }
         .buttonStyle(.plain)
-        .disabled(revealed || client.hasAnswered)
+        .disabled(revealed || client.hasAnswered || p.locked == true)
     }
 
     @ViewBuilder private func statusNote(_ p: LiveRoom.Pub, revealed: Bool) -> some View {
         let note: (String, Color) = revealed
             ? (client.chosen == p.answerIndex ? ("Correct!", Tidbits.Palette.mint) : client.chosen == nil ? ("No answer submitted.", Tidbits.Palette.inkSoft) : ("Not this time.", .red))
-            : (client.hasAnswered ? ("Locked in — waiting for the reveal…", Tidbits.Palette.mint) : ("Tap your answer.", Tidbits.Palette.inkSoft))
+            : (client.hasAnswered ? ("Locked in — waiting for the reveal…", Tidbits.Palette.mint)
+               : p.locked == true ? ("Answers locked — pencils down!", Tidbits.Palette.coral) : ("Tap your answer.", Tidbits.Palette.inkSoft))
         Text(note.0).font(Tidbits.TypeRamp.l4).foregroundStyle(note.1).frame(maxWidth: .infinity).padding(.top, 6)
     }
 }

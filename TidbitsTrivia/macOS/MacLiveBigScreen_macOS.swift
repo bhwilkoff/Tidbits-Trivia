@@ -153,6 +153,18 @@ struct LiveBigScreen_macOS: View {
                     } else {
                         Text("Answer on your phones").font(.system(size: 26, weight: .semibold, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
                     }
+                    if s.revealed {   // Wave A: the story behind the answer — the learning payoff on the big screen
+                        let story = q.explanation.trimmingCharacters(in: .whitespacesAndNewlines)
+                        if !story.isEmpty {
+                            Text(story)
+                                .font(.system(size: 30, weight: .medium, design: .rounded))
+                                .foregroundStyle(Tidbits.Palette.inkSoft)
+                                .multilineTextAlignment(.center)
+                                .frame(maxWidth: 1100)
+                                .padding(.top, 18)
+                                .transition(.opacity)
+                        }
+                    }
                 }
             }
             .animation(showAnim, value: s.revealed)

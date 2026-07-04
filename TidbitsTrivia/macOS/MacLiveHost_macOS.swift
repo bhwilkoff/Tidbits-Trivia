@@ -110,6 +110,10 @@ final class LiveHostSession {
         if q.ordering != nil { p.orderItems = shuffledOrder }
         if let m = q.matching { p.matchKeys = m.keys; p.matchValues = shuffledValues }
         if let e = q.enumerate { p.enumTarget = e.total }
+        if revealed {   // Wave A: the story behind the answer — the learning payoff, only at reveal
+            let s = q.explanation.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !s.isEmpty { p.story = s }
+        }
         return p
     }
 }

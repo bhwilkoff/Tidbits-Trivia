@@ -36,7 +36,11 @@ actor FirebaseRTDB {
         self.session = session
     }
 
-    enum RTDBError: Error, Equatable { case http(Int), noToken, badResponse }
+    enum RTDBError: Error, Equatable { case http(Int), noToken, badResponse, alreadyLinked }
+
+    /// Outcome of a federated sign-in: the resulting uid, whether we signed into an
+    /// EXISTING account (so the caller must merge), and the uid we were before.
+    struct LinkResult: Sendable { let uid: String; let merged: Bool; let prevUid: String? }
 
     // MARK: - Auth (anonymous)
 
@@ -83,6 +87,46 @@ actor FirebaseRTDB {
         try Self.check(resp)
         let r = try JSONDecoder().decode(RefreshResponse.self, from: data)
         apply(idToken: r.id_token, refreshToken: r.refresh_token, expiresIn: r.expires_in, uid: r.user_id)
+    }
+
+    private struct IdpResponse: Decodable {
+        let idToken: String; let refreshToken: String; let expiresIn: String; let localId: String
+    }
+
+    /// Link an Apple credential to the CURRENT anon account (promotes it — same uid). If
+    /// the credential is already tied to another account, sign into that one instead and
+    /// report `merged` so the caller can lossless-merge the local profile in.
+    func linkWithApple(identityToken: String, rawNonce: String) async throws -> LinkResult {
+        let cur = try await ensureAuth()   // ensure a live anon session + its idToken
+        let prev = uid
+        let post = "id_token=\(identityToken)&providerId=apple.com&nonce=\(rawNonce)"
+        _ = cur
+        do {
+            let r = try await signInWithIdp(postBody: post, linkTo: try await validToken())
+            apply(idToken: r.idToken, refreshToken: r.refreshToken, expiresIn: r.expiresIn, uid: r.localId)
+            return LinkResult(uid: r.localId, merged: false, prevUid: prev)
+        } catch RTDBError.alreadyLinked {
+            let r = try await signInWithIdp(postBody: post, linkTo: nil)
+            apply(idToken: r.idToken, refreshToken: r.refreshToken, expiresIn: r.expiresIn, uid: r.localId)
+            return LinkResult(uid: r.localId, merged: true, prevUid: prev)
+        }
+    }
+
+    private func signInWithIdp(postBody: String, linkTo idToken: String?) async throws -> IdpResponse {
+        var body: [String: Any] = ["postBody": postBody, "requestUri": "http://localhost",
+                                   "returnSecureToken": true, "returnIdpCredential": true]
+        if let idToken { body["idToken"] = idToken }
+        var req = URLRequest(url: URL(string: "https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=\(config.apiKey)")!)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpBody = try JSONSerialization.data(withJSONObject: body)
+        let (data, resp) = try await session.data(for: req)
+        if let http = resp as? HTTPURLResponse, http.statusCode >= 400 {
+            let msg = String(data: data, encoding: .utf8) ?? ""
+            if msg.contains("FEDERATED_USER_ID_ALREADY_LINKED") || msg.contains("EMAIL_EXISTS") { throw RTDBError.alreadyLinked }
+            throw RTDBError.http(http.statusCode)
+        }
+        return try JSONDecoder().decode(IdpResponse.self, from: data)
     }
 
     /// Keychain key for the anonymous refresh token — persisting it keeps the `uid`

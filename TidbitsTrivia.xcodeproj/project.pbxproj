@@ -40,6 +40,7 @@
 		FBDB0000000000000000FF02 /* PlayerProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBDB0000000000000000FF01 /* PlayerProfile.swift */; };
 		FBDB0000000000000000FF04 /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBDB0000000000000000FF03 /* Keychain.swift */; };
 		FBDB0000000000000000FF06 /* PlayerIdentityStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBDB0000000000000000FF05 /* PlayerIdentityStore.swift */; };
+		FBDB0000000000000000FF0A /* AppleSignIn.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBDB0000000000000000FF09 /* AppleSignIn.swift */; };
 		FBDB000000000000000000B3 /* LivePlayerClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBDB000000000000000000A3 /* LivePlayerClient.swift */; };
 		A1B2C3D4E5F6000000AC0610 /* LiveNightHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6000000AC0611 /* LiveNightHost.swift */; };
 		4E1DDB93B46A5CC413B608F5 /* NightContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40995246A8957880F31323EB /* NightContainerView.swift */; };
@@ -150,6 +151,7 @@
 		FBDB0000000000000000FF01 /* PlayerProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerProfile.swift; sourceTree = "<group>"; };
 		FBDB0000000000000000FF03 /* Keychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keychain.swift; sourceTree = "<group>"; };
 		FBDB0000000000000000FF05 /* PlayerIdentityStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerIdentityStore.swift; sourceTree = "<group>"; };
+		FBDB0000000000000000FF09 /* AppleSignIn.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSignIn.swift; sourceTree = "<group>"; };
 		FBDB000000000000000000A3 /* LivePlayerClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LivePlayerClient.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F6000000AC0611 /* LiveNightHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveNightHost.swift; sourceTree = "<group>"; };
 		7C55D3DCAE5E46980D666B83 /* GameMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameMode.swift; sourceTree = "<group>"; };
@@ -410,6 +412,7 @@
 				FBDB0000000000000000FF01 /* PlayerProfile.swift */,
 				FBDB0000000000000000FF03 /* Keychain.swift */,
 				FBDB0000000000000000FF05 /* PlayerIdentityStore.swift */,
+				FBDB0000000000000000FF09 /* AppleSignIn.swift */,
 				FBDB000000000000000000A3 /* LivePlayerClient.swift */,
 				A1B2C3D4E5F6000000AC0611 /* LiveNightHost.swift */,
 				2AD18ED3C40BFC78AFD8FB0C /* LiveNight.swift */,
@@ -603,6 +606,7 @@
 				FBDB0000000000000000FF02 /* PlayerProfile.swift in Sources */,
 				FBDB0000000000000000FF04 /* Keychain.swift in Sources */,
 				FBDB0000000000000000FF06 /* PlayerIdentityStore.swift in Sources */,
+				FBDB0000000000000000FF0A /* AppleSignIn.swift in Sources */,
 				FBDB000000000000000000B3 /* LivePlayerClient.swift in Sources */,
 				A1B2C3D4E5F6000000AC0610 /* LiveNightHost.swift in Sources */,
 				9B22CE4581A58C784D66DDB1 /* GameMode.swift in Sources */,

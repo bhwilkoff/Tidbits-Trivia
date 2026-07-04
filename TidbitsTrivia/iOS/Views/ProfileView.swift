@@ -1,5 +1,6 @@
 #if os(iOS)
 import SwiftUI
+import AuthenticationServices
 
 /// The player's portable Tidbits identity, rendered native-iOS (chunky sticker cards).
 /// Reads `PlayerIdentityStore` — the ONE shared profile that spans solo + live — and
@@ -9,6 +10,7 @@ struct ProfileView: View {
     @Environment(GameCenterManager.self) private var gameCenter
     @State private var editingName = false
     @State private var draftName = ""
+    @State private var appleNonce = ""
 
     var body: some View {
         ScrollView {
@@ -25,6 +27,7 @@ struct ProfileView: View {
                         }
                         .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.blue, textColor: .white))
                     }
+                    saveProgress
                 }
                 .padding(Tidbits.Metric.pad)
             } else {
@@ -106,6 +109,34 @@ struct ProfileView: View {
             Text(label.uppercased()).font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft)
         }
         .frame(maxWidth: .infinity).padding(.vertical, 16).chunkyCard(fill: Tidbits.Palette.surface)
+    }
+
+    @ViewBuilder private var saveProgress: some View {
+        if identity.signedIn {
+            Label("Signed in — your records sync to every device", systemImage: "checkmark.seal.fill")
+                .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                .frame(maxWidth: .infinity).padding(.top, 6)
+        } else {
+            VStack(spacing: 8) {
+                Text("Save your progress").font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                Text("Sign in so your records follow you to any device.")
+                    .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft).multilineTextAlignment(.center)
+                SignInWithAppleButton(.signIn) { request in
+                    appleNonce = AppleNonce.random()
+                    request.requestedScopes = [.email, .fullName]
+                    request.nonce = AppleNonce.sha256(appleNonce)
+                } onCompletion: { result in
+                    if case .success(let auth) = result,
+                       let cred = auth.credential as? ASAuthorizationAppleIDCredential,
+                       let data = cred.identityToken, let token = String(data: data, encoding: .utf8) {
+                        Task { await identity.linkApple(idToken: token, rawNonce: appleNonce) }
+                    }
+                }
+                .signInWithAppleButtonStyle(.black)
+                .frame(height: 48)
+            }
+            .padding(.top, 10)
+        }
     }
 
     static func initials(_ name: String) -> String {

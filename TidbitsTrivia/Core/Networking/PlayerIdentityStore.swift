@@ -17,6 +17,9 @@ final class PlayerIdentityStore {
     private(set) var profileId: String?     // the shared Firebase anon uid
     private(set) var profile: PlayerIdentity.Profile?
     private(set) var loaded = false
+    /// True once the account is promoted from anonymous via a federated sign-in — then
+    /// records roam + survive session loss. Persisted so it's known at next launch.
+    private(set) var signedIn = UserDefaults.standard.bool(forKey: "tidbits.identity.signedIn")
 
     private let db = FirebaseRTDB.shared
 
@@ -93,6 +96,29 @@ final class PlayerIdentityStore {
         p.stats.liveNights += 1
         profile = p
         try? await db.put(PlayerIdentity.publicPath(uid), p)
+    }
+
+    /// Sign in with Apple → promote the anon account so records roam + survive session
+    /// loss. On a conflict (the Apple id already has an account), lossless-merge into it.
+    /// Called from the SignInWithAppleButton completion with the identity token + raw nonce.
+    func linkApple(idToken: String, rawNonce: String) async {
+        do {
+            let local = profile
+            let res = try await db.linkWithApple(identityToken: idToken, rawNonce: rawNonce)
+            profileId = res.uid
+            if res.merged {
+                let account = (try? await db.get(PlayerIdentity.publicPath(res.uid), as: PlayerIdentity.Profile.self)) ?? Self.newProfile(name: Self.suggestedName())
+                let merged = PlayerIdentity.merge(local: local ?? account, account: account)
+                profile = merged
+                try? await db.put(PlayerIdentity.publicPath(res.uid), merged)
+            } else if let local {
+                try? await db.put(PlayerIdentity.publicPath(res.uid), local)   // promoted in place
+            }
+            signedIn = true
+            UserDefaults.standard.set(true, forKey: "tidbits.identity.signedIn")
+        } catch {
+            print("[Identity] Apple sign-in failed: \(error)")
+        }
     }
 
     /// Update the public display name.

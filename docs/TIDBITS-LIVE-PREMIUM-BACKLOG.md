@@ -17,6 +17,49 @@ treat AI as an assist.
 
 ---
 
+## Strategy & the way forward (owner direction, 2026-07-04)
+
+This backlog is **not** a plan to match competitors' tiers. Four owner principles govern
+it:
+
+1. **Different value proposition — a game you take *with you*.** Tidbits Trivia is a
+   consumer trivia GAME that also hosts/joins live in-person events *from the same app,
+   under one identity*. Nobody else combines a consumer game with an event platform. The
+   thesis: **your play at a live Tidbits Live night feeds your personal stats, streak,
+   skill rating, and per-venue standing — and between nights you keep playing solo.** One
+   portable identity across every context. That "companion you carry between the trivia
+   nights you attend" is the moat, and it makes the "network" features (cross-venue
+   leaderboards, venue standings) *consumer retention hooks*, not just venue tooling.
+
+2. **Build everything first; decide the paywall later.** We do NOT design around a pricing
+   model. Build the full feature set — **two eventual premium surfaces, both TBD**:
+   (a) *consumer premium* (individuals pay for consumer features — set still to be
+   researched/defined) and (b) *host premium* (Tidbits Live features). What lands behind
+   a paywall is decided *after* the features exist. **No competitor's model or feature
+   set determines ours** — the market data below is landscape awareness only.
+
+3. **$0 ongoing cost is a hard guardrail.** We build many free apps at ~$0. Infrastructure
+   is allowed **only if it can run at essentially zero ongoing cost and can never silently
+   accrue a metered bill.** This *reframes the old "backend vs. serverless" gate*: the
+   question is not "backend?" but **"can it live within free tiers that never bill?"** —
+   and for the moat features the answer is yes (the app already runs on Firebase RTDB's
+   free Spark tier + GitHub Pages; Cloudflare Workers/KV/D1/R2 free tiers are additional
+   headroom). *(A dedicated research pass is confirming the concrete free-tier limits and
+   the exact $0 stack; findings fold into §Decisions + Wave E.)*
+
+4. **Same identity, both directions.** The persistent player identity is the connective
+   tissue: it's simultaneously the consumer game's progression system AND the venue's
+   cross-venue leaderboard. Build the identity/data plane once, at $0, and both surfaces
+   ride it.
+
+**What this changes vs. the gates below:** monetization is *deferred, not blocked* —
+build the *capability* (e.g., a lead-capture form, a sponsor slot, branding depth), leave
+the *paywall* decision for later. The backend gate is *reframed* — Wave E is **unblocked
+as long as we hold the $0-ongoing line**. A separate **consumer feature/premium backlog**
+is still to be produced (research in flight) and will be appended as §L when ready.
+
+---
+
 ## Legend
 
 | Tag | Meaning |
@@ -243,9 +286,12 @@ is a first-class format to design *for*, not a legacy fallback.
 
 ## Proposed loop waves (point `/loop` at these in order)
 
-Sequenced so each wave is **serverless and shippable** until Wave D/E, which need owner
-decisions. Every wave = "same verb, native idiom" across the platforms the feature
-touches (most are macOS host + big screen; join-side pieces fan to iOS/tvOS/Android/web).
+Per owner direction (§Strategy): **build everything, defer the paywall.** All waves are
+buildable now — A–C and L are serverless; D builds monetization *capability* without
+wiring a paywall; E adds the portable-identity data plane at **$0 ongoing cost** (Firebase
+Spark / Cloudflare free tiers, degrade-don't-bill). Every wave = "same verb, native
+idiom" across the platforms the feature touches (most are macOS host + big screen;
+join-side + consumer pieces fan to iOS/tvOS/Android/web).
 
 - **Wave A — Authoring & run-of-show depth** (all serverless): question library + reuse +
   **avoid-repeats**, **drag-to-reorder**, **difficulty/category balance meter**,
@@ -259,32 +305,44 @@ touches (most are macOS host + big screen; join-side pieces fan to iOS/tvOS/Andr
   paper+digital** leaderboard, **beautiful printables**, **answer/name moderation gate**,
   **team merge**, **final-wager + brains-only tie-breaks**, **answer-lock timer**,
   optional **tab-switch focus signal**, **data export (CSV)**.
-- **Wave D — Venue business & monetization** 🔒 (needs decisions): pricing/player-caps,
-  **white-label depth**, **sponsor kit**, **lead capture + export**, **recurring-series
-  scheduling** (recurring is serverless; the rest need the monetization stance).
-- **Wave E — The network moat** 🔒 (needs a backend decision): **persistent team
-  accounts + cross-venue/season leaderboards**, **multi-venue org→hosts**, **analytics
-  dashboard**, **retention layer** (badges/streaks/shareable profiles), **venue
-  directory**.
+- **Wave D — Venue business & monetization *capabilities*** (serverless; build the
+  capability, **defer the paywall**): **recurring-series scheduling**, **white-label
+  depth**, **sponsor kit**, **lead capture + CSV export**, **data export**. No pricing or
+  paywall wired — just the features, ready to gate later.
+- **Wave E — Portable-identity data plane + network moat** ($0 ongoing cost): the
+  connective tissue — **persistent player identity** spanning solo + live, **skill rating
+  / lifetime stats**, **cross-venue & season leaderboards + per-venue standings**,
+  **multi-venue org→hosts**, **analytics dashboard**, **retention layer**
+  (badges/streaks/shareable profiles), **venue directory**. On Firebase Spark / Cloudflare
+  free tiers; must degrade gracefully at a free ceiling, never bill.
+- **Wave L — Consumer game depth** (research pending → §L): the surface that makes the
+  game worth carrying between nights — progression/levels/leagues, friends & social
+  challenges, seasons, collection, the daily-habit loop, and how live-event results feed
+  the personal profile. Defined when the consumer research lands.
 
 ---
 
-## Decisions for Ben (gate Waves D & E)
+## Decisions — resolved / deferred (owner direction 2026-07-04)
 
-1. **Backend or serverless?** Cross-venue/season leaderboards, lead capture, multi-venue,
-   host networks, and cross-event analytics all need a network backend. Tidbits is
-   serverless today (per-ecosystem sync + Firebase RTDB for live rooms). This is the
-   single biggest fork — it unlocks the Buzztime/Sporcle moat (Wave E) but is real
-   infrastructure.
-2. **Monetization stance.** Is Tidbits Live a paid venue product? If so, which model —
-   **per-venue subscription** ($199–299/mo, Buzztime), **per-event activation**
-   (SpeedQuizzing), or **per-host SaaS tier** ($25–100/mo)? And does it carry
-   **sponsor/ads** + **lead capture**? This shapes Wave D.
-3. **Show-format ambition.** How far into named game-show boards (Jeopardy/Feud/Wheel) do
-   we go? (Phase-C in the dossier; big build, wide appeal.)
-4. **Already decided by the research** (no further input needed): **music = BYO-clip
-   only**, never a bundled catalog (licensing stays with the venue); **SFX = safe to
-   bundle**; **paper = a first-class format**, not a fallback.
+1. **Backend vs. serverless → RESOLVED: build it, but only at $0 ongoing.** The gate is
+   no longer "should we have a backend" but "does it stay within free tiers that never
+   bill." Firebase RTDB Spark (already live) + GitHub Pages, with Cloudflare
+   Workers/KV/D1/R2 free tiers as headroom, cover the moat. **Wave E is unblocked** as
+   long as it holds the $0 line and degrades gracefully at a free ceiling rather than
+   billing. (Concrete limits + the exact recommended stack land from the infra research.)
+2. **Monetization → DEFERRED by design.** Build every feature first; decide the paywall
+   after. **Two eventual premium surfaces, both TBD:** consumer premium (individuals) and
+   host premium (Tidbits Live). Build monetization *capabilities* (lead-capture form,
+   sponsor slot, branding depth) without wiring any paywall or pricing yet. No
+   competitor's model determines ours.
+3. **Consumer feature/premium set → research in flight.** A consumer-side backlog (game
+   depth, progression, social, retention, portable identity) is being researched and will
+   append here as **§L**. The loop should build both surfaces.
+4. **Show-format ambition (Jeopardy/Feud/Wheel) → still open.** Big build, wide appeal;
+   sequence it after the core waves unless prioritized.
+5. **Settled by the research (no input needed):** **music = BYO-clip only** (licensing
+   stays with the venue — never bundle a catalog); **SFX/stingers = safe to bundle**
+   (royalty-free); **paper = a first-class format**, not a fallback.
 
 ---
 

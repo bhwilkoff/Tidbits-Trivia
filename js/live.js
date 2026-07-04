@@ -6,7 +6,7 @@ import { FirebaseNet } from './firebase.js';
 import { Identity } from './identity.js';
 
 const S = { code: '', team: '', joined: false, joining: false, pub: null, meta: null,
-            score: 0, submittedQid: null, chosen: null, error: '', local: {},
+            score: 0, wager: 0, submittedQid: null, chosen: null, error: '', local: {},
             liveAnswered: 0, liveCorrect: 0, talliedQid: null, recorded: false };
 
 // Live→profile bridge: feed the portable identity once when the night ends.
@@ -73,11 +73,24 @@ async function join() {
 
 async function submitAns(fields) {
   if (!S.pub || S.pub.phase !== 'question' || S.submittedQid === S.pub.qid || S.pub.locked) return;
+  if (S.pub.wager) fields = { ...fields, wager: Math.max(0, Math.min(S.wager || 0, S.score || 0)) };   // Wave A: attach the stake
   S.submittedQid = S.pub.qid; draw();
   try { await FirebaseNet.liveSubmit(S.code, S.pub.qid, fields); }
   catch { S.submittedQid = null; S.chosen = null; S.error = 'Answer didn’t send — tap again.'; draw(); }
 }
 async function pick(i) { S.chosen = i; submitAns({ choice: i }); }
+
+// Wave A: the stake input on a wager question — bet 0…your score.
+function wagerHTML() {
+  const maxBet = Math.max(0, S.score || 0);
+  const w = Math.min(S.wager || 0, maxBet);
+  return `<div class="live-wager">
+    <div class="live-wager-label">YOUR WAGER</div>
+    ${maxBet === 0 ? `<div class="live-sub">No points to wager yet.</div>`
+      : `<input id="live-wager-range" type="range" min="0" max="${maxBet}" step="1" value="${w}">
+         <div class="live-wager-val"><span id="live-wager-num">${w}</span> of ${maxBet} pts</div>`}
+  </div>`;
+}
 
 function esc(s) { return String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 
@@ -100,6 +113,8 @@ function draw() {
   if (!root) return;
   root.innerHTML = S.joined ? playHTML() : joinHTML();
   if (document.getElementById('live-timer')) ensureLiveTimer();
+  const wr = document.getElementById('live-wager-range');   // Wave A: wager slider
+  if (wr) wr.oninput = (e) => { S.wager = +e.target.value; const n = document.getElementById('live-wager-num'); if (n) n.textContent = e.target.value; };
   if (!S.joined) {
     root.querySelector('#live-join')?.addEventListener('click', join);
     root.querySelector('#live-code')?.addEventListener('input', (e) => {
@@ -185,6 +200,7 @@ function playHTML() {
     ${img}
     <div class="live-q">${esc(p.prompt)}</div>
     ${!revealed && p.deadline ? `<div id="live-timer" data-dl="${p.deadline}" style="font-size:30px;font-weight:900;text-align:center;margin:6px 0;font-variant-numeric:tabular-nums"></div>` : ''}
+    ${!revealed && p.wager ? wagerHTML() : ''}
     ${answerHTML(p, revealed)}
     ${status}
     ${revealed && p.story ? `<div style="margin-top:12px;padding:12px 14px;border-radius:12px;background:var(--color-surface);line-height:1.5;color:var(--color-text)">${esc(p.story)}</div>` : ''}
@@ -246,6 +262,10 @@ function injectStyles() {
   .live-go:disabled{opacity:.6}
   .live-err{color:#c0392b;font-weight:700;margin:6px 0}
   .live-x{position:absolute;top:16px;right:16px;width:34px;height:34px;border-radius:999px;border:2.5px solid #231E1A;background:#fff;font-weight:900;cursor:pointer;color:#231E1A}
+  .live-wager{margin:10px 0;padding:12px;border-radius:12px;background:rgba(255,92,53,.12)}
+  .live-wager-label{font-weight:800;font-size:.8rem;color:#FF5C35;letter-spacing:.04em}
+  .live-wager input[type=range]{width:100%;margin:8px 0;accent-color:#FF5C35}
+  .live-wager-val{font-weight:900;font-size:1.3rem;color:#231E1A}
   .live-play{padding:16px;max-width:640px;width:100%;margin:0 auto;position:relative}
   .live-head{display:flex;align-items:center;gap:12px;padding:6px 0 14px}
   .live-team{font-weight:900;font-size:1.15rem;color:#231E1A}

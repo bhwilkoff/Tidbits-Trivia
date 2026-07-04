@@ -133,6 +133,11 @@ struct LiveBuilderView_macOS: View {
                 ForEach([30, 45, 60, 90, 120], id: \.self) { s in Button("\(s)s") { working.rounds[i].timerSeconds = s } }
             } label: { Label(round.timerSeconds.map { "\($0)s" } ?? "Timer", systemImage: "timer") }
                 .menuStyle(.borderlessButton).fixedSize()
+            Toggle(isOn: Binding(   // Wave A: wager round
+                get: { working.rounds[i].isWager ?? false },
+                set: { working.rounds[i].isWager = $0 ? true : nil })) {
+                Label("Wager", systemImage: "dollarsign.circle")
+            }.toggleStyle(.button).font(Tidbits.TypeRamp.l5).fixedSize()
             Button { move(i, up: true) } label: { Image(systemName: "chevron.up") }.buttonStyle(.borderless).disabled(i == 0)
             Button { move(i, up: false) } label: { Image(systemName: "chevron.down") }.buttonStyle(.borderless).disabled(i == working.rounds.count - 1)
             Button { working.rounds.remove(at: i) } label: { Image(systemName: "trash") }.buttonStyle(.borderless)

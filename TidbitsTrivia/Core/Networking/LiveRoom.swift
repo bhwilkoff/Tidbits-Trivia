@@ -46,6 +46,7 @@ enum LiveRoom {
         var locked: Bool? = nil           // cheating deterrence (§A5.3): "pencils down" — no more answers
         var story: String? = nil          // Wave A: the "story behind the answer" — the learning payoff, shown ONLY on reveal
         var deadline: Int? = nil          // Wave A: epoch-ms countdown deadline for a timed question (nil = no timer)
+        var wager: Bool? = nil            // Wave A: this is a wager question — the joiner shows a wager stepper (0…their score)
     }
 
     /// Closest Call bounds a joiner needs to render a number input (the answer +
@@ -70,6 +71,7 @@ enum LiveRoom {
         var order: [Int]? = nil // ordering — the player's arrangement as indices into orderItems
         var pairs: [Int]? = nil // matching — for key i, the chosen matchValues index
         var list: [String]? = nil // enumerate — the names the player entered
+        var wager: Int? = nil   // Wave A: points staked on this question (host clamps to the team's score at reveal)
         var ts: Int             // epoch ms — first-submission ordering / speed
     }
 

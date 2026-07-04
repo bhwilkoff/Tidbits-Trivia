@@ -67,6 +67,7 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
     var pub by remember { mutableStateOf<FirebaseNet.LivePub?>(null) }
     var meta by remember { mutableStateOf<FirebaseNet.LiveMeta?>(null) }
     var score by remember { mutableStateOf(0) }
+    var wager by remember { mutableStateOf(0) }   // Wave A: the player's stake for a wager question
     var joined by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     var submittedQid by remember { mutableStateOf<String?>(null) }
@@ -99,6 +100,7 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
     fun submitFields(fields: Map<String, Any?>) {
         val p = pub ?: return
         if (p.phase != "question" || submittedQid == p.qid || p.locked) return
+        val fields = if (p.wager) fields + ("wager" to wager.coerceIn(0, score).toLong()) else fields   // Wave A: attach the stake
         submittedQid = p.qid
         scope.launch {
             try { FirebaseNet.liveSubmitAnswer(code, p.qid, fields) }
@@ -188,6 +190,10 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
                     Countdown(p.deadline)
                     Spacer(Modifier.height(12.dp))
                 }
+                if (!revealed && p.wager) {   // Wave A: wager input
+                    WagerInput(score, wager) { wager = it }
+                    Spacer(Modifier.height(12.dp))
+                }
                 val locked = revealed || submittedQid == p.qid || p.locked
                 when {
                     p.numeric != null -> NumericAnswer(p.numeric, p.qid, locked) { submitFields(mapOf("number" to it)) }
@@ -235,6 +241,21 @@ private fun Countdown(deadlineMs: Long) {   // Wave A: ticks to the host's deadl
     val txt = if (secs >= 60) "%d:%02d".format(secs / 60, secs % 60) else "${secs}s"
     Text(txt, fontSize = 30.sp, fontWeight = FontWeight.Black,
         color = if (secs <= 5) Pops.coral else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+}
+
+@Composable
+private fun WagerInput(score: Int, wager: Int, onChange: (Int) -> Unit) {   // Wave A: stake 0…your score
+    val maxBet = score.coerceAtLeast(0)
+    Column(Modifier.fillMaxWidth()
+        .background(Pops.coral.copy(alpha = 0.12f), RoundedCornerShape(12.dp)).padding(12.dp)) {
+        Text("YOUR WAGER", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Pops.coral)
+        if (maxBet == 0) {
+            Text("No points to wager yet.", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+        } else {
+            Slider(value = wager.coerceIn(0, maxBet).toFloat(), onValueChange = { onChange(it.toInt()) }, valueRange = 0f..maxBet.toFloat())
+            Text("${wager.coerceIn(0, maxBet)} of $maxBet pts", fontSize = 20.sp, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.onSurface)
+        }
+    }
 }
 
 @Composable

@@ -236,6 +236,7 @@ object FirebaseNet {
         val locked: Boolean = false,
         val story: String? = null,   // Wave A: the story behind the answer (reveal only)
         val deadline: Long? = null,  // Wave A: epoch-ms countdown deadline (question phase)
+        val wager: Boolean = false,  // Wave A: wager question — the joiner shows a stake input
     )
     /** A player's submission (any shape) — the host scores it locally on reveal. */
     data class LiveAnswer(
@@ -322,6 +323,7 @@ object FirebaseNet {
             locked = snap.child("locked").getValue(Boolean::class.java) ?: false,
             story = snap.child("story").getValue(String::class.java),
             deadline = snap.child("deadline").getValue(Long::class.java),
+            wager = snap.child("wager").getValue(Boolean::class.java) ?: false,
         )
     }
 

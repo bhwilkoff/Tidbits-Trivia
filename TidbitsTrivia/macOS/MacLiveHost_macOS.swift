@@ -50,6 +50,11 @@ final class LiveHostSession {
         let ri = current?.roundIndex ?? 0
         return event.rounds.indices.contains(ri) ? event.rounds[ri].hostNote : nil
     }
+    /// Wave A: is the current round a wager round (teams stake points)?
+    var currentRoundIsWager: Bool {
+        let ri = current?.roundIndex ?? 0
+        return event.rounds.indices.contains(ri) ? (event.rounds[ri].isWager ?? false) : false
+    }
     var questionInRound: (n: Int, of: Int) {
         let ri = current?.roundIndex ?? 0
         let inRound = questions.enumerated().filter { $0.element.roundIndex == ri }
@@ -123,6 +128,7 @@ final class LiveHostSession {
         if let m = q.matching { p.matchKeys = m.keys; p.matchValues = shuffledValues }
         if let e = q.enumerate { p.enumTarget = e.total }
         if !revealed, let d = deadlineMs { p.deadline = d }   // Wave A: the countdown deadline
+        if !revealed, currentRoundIsWager { p.wager = true }  // Wave A: wager round — joiners show a stake input
         if revealed {   // Wave A: the story behind the answer — the learning payoff, only at reveal
             let s = q.explanation.trimmingCharacters(in: .whitespacesAndNewlines)
             if !s.isEmpty { p.story = s }
@@ -185,10 +191,19 @@ struct LiveHostContainer_macOS: View {
     /// applies on top (§A3.2).
     private func scoreReveal() async {
         guard let q = session.current else { return }
+        let wagerRound = session.currentRoundIsWager
         for (uid, ans) in net.answers {
             let pts = LiveNightHost.score(q, ans, shuffledOrder: session.shuffledOrder,
                                           shuffledValues: session.shuffledValues, mcqPoints: session.pointsPerCorrect)
-            if pts > 0 { await net.setScore(uid, (net.scores[uid] ?? 0) + pts) }
+            if wagerRound {
+                // Wave A: stake clamped to the team's current score; correct +stake, wrong −stake.
+                let current = net.scores[uid] ?? 0
+                let stake = max(0, min(ans.wager ?? 0, current))
+                guard stake > 0 else { continue }
+                await net.setScore(uid, pts > 0 ? current + stake : current - stake)
+            } else if pts > 0 {
+                await net.setScore(uid, (net.scores[uid] ?? 0) + pts)
+            }
         }
     }
 }
@@ -260,6 +275,10 @@ struct LiveHostView_macOS: View {
                         Text(note).font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.blue).fixedSize(horizontal: false, vertical: true)
                     }
                     .padding(8).background(RoundedRectangle(cornerRadius: 8).fill(Tidbits.Palette.blue.opacity(0.12)))
+                }
+                if session.currentRoundIsWager {   // Wave A: wager round indicator
+                    Label("Wager round — teams stake points (correct +stake, wrong −stake)", systemImage: "dollarsign.circle.fill")
+                        .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.coral)
                 }
                 if session.revealed {
                     HStack(spacing: 8) {

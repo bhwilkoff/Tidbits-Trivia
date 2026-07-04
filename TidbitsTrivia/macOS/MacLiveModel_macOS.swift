@@ -14,6 +14,7 @@ struct LiveRound: Identifiable, Codable, Hashable {
     var questions: [Question]
     var timerSeconds: Int? = nil   // Wave A: per-question countdown for this round (nil/0 = off) — optional so saved events still decode
     var hostNote: String? = nil    // Wave A: the host's prep note for this round, shown in the cockpit (never published)
+    var isWager: Bool? = nil       // Wave A: a wager round — teams stake points on each question (correct +stake, wrong −stake)
 
     var symbol: String { format.symbol }
 }

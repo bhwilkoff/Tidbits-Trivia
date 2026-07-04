@@ -17,6 +17,7 @@ final class LivePlayerClient {
     private(set) var pub: LiveRoom.Pub?
     private(set) var meta: LiveRoom.Meta?
     private(set) var score = 0
+    var wager = 0   // Wave A: the player's stake for a wager question (UI-bound; clamped to score on send)
     private(set) var submittedQid: String?
     private(set) var chosen: Int?
     private(set) var errorText: String?
@@ -66,6 +67,8 @@ final class LivePlayerClient {
     private func send(_ ans: LiveRoom.Answer) async {
         guard let pub, pub.phase == LiveRoom.Phase.question, submittedQid != pub.qid, let uid else { return }
         submittedQid = pub.qid
+        var ans = ans
+        if pub.wager == true { ans.wager = max(0, min(wager, score)) }   // Wave A: attach the stake
         do { try await db.putJSON("\(LiveRoom.path(code))/answers/\(pub.qid)/\(uid)", try JSONEncoder().encode(ans)) }
         catch { chosen = nil; submittedQid = nil; errorText = "Answer didn't send — tap again." }
     }

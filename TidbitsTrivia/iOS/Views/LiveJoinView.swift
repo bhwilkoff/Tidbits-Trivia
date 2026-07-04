@@ -167,6 +167,7 @@ struct LiveJoinView: View {
             Text(p.prompt).font(.system(size: 24, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
                 .fixedSize(horizontal: false, vertical: true)
             if let d = p.deadline, !revealed { countdownView(d) }   // Wave A: on-screen timer
+            if p.wager == true, !revealed { wagerStepper() }        // Wave A: wager round
             answerSurface(p, revealed: revealed)
             statusNote(p, revealed: revealed)
             if revealed, let story = p.story, !story.isEmpty {   // Wave A: the story behind the answer
@@ -178,6 +179,23 @@ struct LiveJoinView: View {
                     .background(RoundedRectangle(cornerRadius: 12).fill(Tidbits.Palette.surface))
             }
         }
+    }
+
+    /// Wave A: the stake input on a wager question — bet 0…your score.
+    @ViewBuilder private func wagerStepper() -> some View {
+        let maxBet = max(0, client.score)
+        VStack(alignment: .leading, spacing: 6) {
+            Text("YOUR WAGER").font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.coral)
+            Stepper(value: Binding(get: { min(client.wager, maxBet) }, set: { client.wager = $0 }),
+                    in: 0...maxBet, step: max(1, maxBet / 10)) {
+                Text("\(min(client.wager, maxBet)) of \(maxBet) pts")
+                    .font(.system(size: 22, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
+            }
+            .disabled(maxBet == 0)
+            if maxBet == 0 { Text("No points to wager yet.").font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft) }
+        }
+        .padding(12).frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: 12).fill(Tidbits.Palette.coral.opacity(0.12)))
     }
 
     /// Wave A: the shared countdown, ticking to the host's deadline (coral at ≤5s).

@@ -12,5 +12,5 @@
     <!-- Firebase web client id for Google sign-in (Credential Manager). Paste the
          "Web client (auto created…)" OAuth client id from Firebase Console → Auth →
          Google, after enabling Google. Until then sign-in is disabled gracefully. -->
-    <string name="tidbits_web_client_id" translatable="false">TODO_ENABLE_GOOGLE_IN_FIREBASE</string>
+    <string name="tidbits_web_client_id" translatable="false">842242746909-328oa6s4tvl9vq9c0m368qdlsaun7gpj.apps.googleusercontent.com</string>
 </resources>

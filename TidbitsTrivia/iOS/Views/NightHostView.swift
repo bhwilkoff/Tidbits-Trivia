@@ -115,31 +115,46 @@ struct NightHostView: View {
                 if let q = host.current {
                     Text("ROUND \(host.roundNumber)/\(host.roundCount) · Q\(host.questionInRound.n)/\(host.questionInRound.of) · \(host.answeredCount) answered")
                         .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                    if let img = q.imageURL {
+                        AsyncImage(url: img) { phase in
+                            if let image = phase.image { image.resizable().scaledToFit() } else if phase.error != nil { EmptyView() } else { ProgressView().frame(maxWidth: .infinity, minHeight: 140) }
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: 220).clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
                     Text(q.prompt).font(.system(size: 24, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
                         .fixedSize(horizontal: false, vertical: true)
-                    ForEach(Array(q.options.enumerated()), id: \.offset) { i, opt in
-                        let chosen = host.hostChoice == i
-                        let correct = host.revealed && i == q.correctIndex
-                        let wrong = host.revealed && chosen && i != q.correctIndex
-                        let fill: Color = correct ? Tidbits.Palette.mint : wrong ? Color(red: 0.95, green: 0.82, blue: 0.80) : chosen ? Tidbits.Palette.blue.opacity(0.18) : .white
-                        Button {
-                            if host.hostPlays { Task { await host.hostAnswer(i) } }
-                        } label: {
-                            HStack(spacing: 10) {
-                                Text("\(i + 1)").font(.system(size: 14, weight: .black)).foregroundStyle(.white)
-                                    .frame(width: 24, height: 24).background(RoundedRectangle(cornerRadius: 7).fill(Tidbits.Palette.ink))
-                                Text(opt).font(Tidbits.TypeRamp.l3).foregroundStyle(correct ? .white : Tidbits.Palette.ink).multilineTextAlignment(.leading)
-                                Spacer(minLength: 0)
+                    if Self.isMCQ(q) {
+                        ForEach(Array(q.options.enumerated()), id: \.offset) { i, opt in
+                            let chosen = host.hostChoice == i
+                            let correct = host.revealed && i == q.correctIndex
+                            let wrong = host.revealed && chosen && i != q.correctIndex
+                            let fill: Color = correct ? Tidbits.Palette.mint : wrong ? Color(red: 0.95, green: 0.82, blue: 0.80) : chosen ? Tidbits.Palette.blue.opacity(0.18) : .white
+                            Button {
+                                if host.hostPlays { Task { await host.hostAnswer(i) } }
+                            } label: {
+                                HStack(spacing: 10) {
+                                    Text("\(i + 1)").font(.system(size: 14, weight: .black)).foregroundStyle(.white)
+                                        .frame(width: 24, height: 24).background(RoundedRectangle(cornerRadius: 7).fill(Tidbits.Palette.ink))
+                                    Text(opt).font(Tidbits.TypeRamp.l3).foregroundStyle(correct ? .white : Tidbits.Palette.ink).multilineTextAlignment(.leading)
+                                    Spacer(minLength: 0)
+                                }
+                                .padding(12).frame(maxWidth: .infinity, alignment: .leading)
+                                .chunkyCard(fill: fill).padding(.trailing, Tidbits.Metric.shadowOffset)
                             }
-                            .padding(12).frame(maxWidth: .infinity, alignment: .leading)
-                            .chunkyCard(fill: fill).padding(.trailing, Tidbits.Metric.shadowOffset)
+                            .buttonStyle(.plain)
+                            .disabled(!host.hostPlays || host.revealed || host.hostAnswered)
                         }
-                        .buttonStyle(.plain)
-                        .disabled(!host.hostPlays || host.revealed || host.hostAnswered)
-                    }
-                    if host.hostPlays && !host.revealed {
-                        Text(host.hostAnswered ? "Locked in — reveal when everyone's ready." : "Tap your answer, then Reveal.")
+                        if host.hostPlays && !host.revealed {
+                            Text(host.hostAnswered ? "Locked in — reveal when everyone's ready." : "Tap your answer, then Reveal.")
+                                .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                        }
+                    } else {
+                        Text("Players answer on their devices. Reveal when everyone's in.")
                             .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                        if host.revealed {
+                            Text("Answer: \(Self.answerLine(q))").font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                                .padding(12).frame(maxWidth: .infinity, alignment: .leading).chunkyCard(fill: Tidbits.Palette.mint)
+                        }
                     }
                 }
                 HStack(spacing: 12) {
@@ -201,6 +216,19 @@ struct NightHostView: View {
     }
     private func errorLabel(_ e: String) -> some View {
         Label(e, systemImage: "exclamationmark.triangle.fill").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.coral)
+    }
+
+    static func isMCQ(_ q: Question) -> Bool {
+        q.closest == nil && q.ordering == nil && q.matching == nil && q.accepted == nil && q.enumerate == nil
+    }
+    /// The host-facing correct answer to read out on reveal (all types).
+    static func answerLine(_ q: Question) -> String {
+        if let c = q.closest { return c.formattedAnswer }
+        if let acc = q.accepted { return acc.first ?? q.correctAnswer }
+        if let ord = q.ordering { return ord.joined(separator: " → ") }
+        if let m = q.matching { return zip(m.keys, m.values).map { "\($0.0) = \($0.1)" }.joined(separator: ", ") }
+        if let e = q.enumerate { return e.displayNames.joined(separator: ", ") }
+        return q.correctAnswer
     }
 
     static func qrImage(_ string: String) -> UIImage? {

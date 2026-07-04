@@ -46,10 +46,18 @@ final class LivePlayerClient {
         }
     }
 
-    func submit(choice: Int) async {
+    func submit(choice: Int) async { chosen = choice; await send(LiveRoom.Answer(choice: choice, ts: Self.nowMS())) }
+    func submit(number: Double) async { await send(LiveRoom.Answer(number: number, ts: Self.nowMS())) }
+    func submit(text: String) async { await send(LiveRoom.Answer(text: text, ts: Self.nowMS())) }
+    func submit(order: [Int]) async { await send(LiveRoom.Answer(order: order, ts: Self.nowMS())) }
+    func submit(pairs: [Int]) async { await send(LiveRoom.Answer(pairs: pairs, ts: Self.nowMS())) }
+    func submit(list: [String]) async { await send(LiveRoom.Answer(list: list, ts: Self.nowMS())) }
+
+    /// Write a submission for the current question (any shape) — first-write wins;
+    /// the host auto-scores it on reveal from its local Question.
+    private func send(_ ans: LiveRoom.Answer) async {
         guard let pub, pub.phase == LiveRoom.Phase.question, submittedQid != pub.qid, let uid else { return }
-        chosen = choice; submittedQid = pub.qid
-        let ans = LiveRoom.Answer(choice: choice, text: nil, ts: Self.nowMS())
+        submittedQid = pub.qid
         do { try await db.putJSON("\(LiveRoom.path(code))/answers/\(pub.qid)/\(uid)", try JSONEncoder().encode(ans)) }
         catch { chosen = nil; submittedQid = nil; errorText = "Answer didn't send — tap again." }
     }

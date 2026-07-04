@@ -155,17 +155,37 @@ struct LiveJoinView: View {
         VStack(alignment: .leading, spacing: 14) {
             Text("ROUND \(p.round) · \(p.roundTitle.uppercased()) — Q\(p.qNum)/\(p.qTotal)")
                 .font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft)
+            if let img = p.imageURL, let url = URL(string: img) {
+                AsyncImage(url: url) { phase in
+                    if let image = phase.image { image.resizable().scaledToFit() }
+                    else if phase.error != nil { EmptyView() }
+                    else { ProgressView().frame(maxWidth: .infinity, minHeight: 160) }
+                }
+                .frame(maxWidth: .infinity, maxHeight: 240)
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+            }
             Text(p.prompt).font(.system(size: 24, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
                 .fixedSize(horizontal: false, vertical: true)
-            if let options = p.options, !options.isEmpty {
-                ForEach(Array(options.enumerated()), id: \.offset) { i, opt in
-                    optionButton(i, opt, p: p, revealed: revealed)
-                }
-            } else {
-                Text("Answer on your team sheet — the host is scoring this round.")
-                    .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
-            }
+            answerSurface(p, revealed: revealed)
             statusNote(p, revealed: revealed)
+        }
+    }
+
+    /// The right input for the question's type. The host auto-scores each on reveal.
+    @ViewBuilder private func answerSurface(_ p: LiveRoom.Pub, revealed: Bool) -> some View {
+        let locked = revealed || client.hasAnswered
+        if let n = p.numeric {
+            LiveNumericAnswer(spec: n, locked: locked) { v in Task { await client.submit(number: v) } }.id(p.qid)
+        } else if let items = p.orderItems, !items.isEmpty {
+            LiveOrderingAnswer(items: items, locked: locked) { o in Task { await client.submit(order: o) } }.id(p.qid)
+        } else if let keys = p.matchKeys, let values = p.matchValues, !keys.isEmpty {
+            LiveMatchingAnswer(keys: keys, values: values, locked: locked) { pr in Task { await client.submit(pairs: pr) } }.id(p.qid)
+        } else if p.enumTarget != nil {
+            LiveEnumerateAnswer(target: p.enumTarget ?? 0, locked: locked) { l in Task { await client.submit(list: l) } }.id(p.qid)
+        } else if let options = p.options, !options.isEmpty {
+            ForEach(Array(options.enumerated()), id: \.offset) { i, opt in optionButton(i, opt, p: p, revealed: revealed) }
+        } else {
+            LiveTextAnswer(locked: locked) { t in Task { await client.submit(text: t) } }.id(p.qid)
         }
     }
 
@@ -193,5 +213,148 @@ struct LiveJoinView: View {
             : (client.hasAnswered ? ("Locked in — waiting for the reveal…", Tidbits.Palette.mint) : ("Tap your answer.", Tidbits.Palette.inkSoft))
         Text(note.0).font(Tidbits.TypeRamp.l4).foregroundStyle(note.1).frame(maxWidth: .infinity).padding(.top, 6)
     }
+}
+
+// MARK: - Per-type answer surfaces (host auto-scores each on reveal)
+
+private struct LiveNumericAnswer: View {
+    let spec: LiveRoom.Numeric
+    let locked: Bool
+    var onSubmit: (Double) -> Void
+    @State private var value: Double
+    @State private var sent = false
+    init(spec: LiveRoom.Numeric, locked: Bool, onSubmit: @escaping (Double) -> Void) {
+        self.spec = spec; self.locked = locked; self.onSubmit = onSubmit
+        _value = State(initialValue: ((spec.min + spec.max) / 2).rounded())
+    }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(value == value.rounded() ? "\(Int(value))\(unit)" : String(format: "%.1f%@", value, unit))
+                .font(.system(size: 30, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
+            Slider(value: $value, in: spec.min...spec.max, step: spec.step > 0 ? spec.step : 1)
+                .tint(Tidbits.Palette.blue).disabled(locked || sent)
+            if !sent { submitButton(disabled: locked) { sent = true; onSubmit(value) } }
+        }
+    }
+    private var unit: String { spec.unit.isEmpty ? "" : " \(spec.unit)" }
+}
+
+private struct LiveTextAnswer: View {
+    let locked: Bool
+    var onSubmit: (String) -> Void
+    @State private var text = ""
+    @State private var sent = false
+    var body: some View {
+        VStack(spacing: 10) {
+            TextField("Type your answer", text: $text).textFieldStyle(.roundedBorder).autocorrectionDisabled().disabled(locked || sent)
+            if !sent {
+                submitButton(disabled: locked || text.trimmingCharacters(in: .whitespaces).isEmpty) {
+                    sent = true; onSubmit(text.trimmingCharacters(in: .whitespaces))
+                }
+            }
+        }
+    }
+}
+
+private struct LiveEnumerateAnswer: View {
+    let target: Int
+    let locked: Bool
+    var onSubmit: ([String]) -> Void
+    @State private var entry = ""
+    @State private var items: [String] = []
+    @State private var sent = false
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Name as many as you can \(target > 0 ? "(\(items.count)/\(target))" : "(\(items.count))")")
+                .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+            if !items.isEmpty {
+                Text(items.joined(separator: " · ")).font(Tidbits.TypeRamp.l4).foregroundStyle(Tidbits.Palette.ink)
+                    .frame(maxWidth: .infinity, alignment: .leading).fixedSize(horizontal: false, vertical: true)
+            }
+            if !sent {
+                HStack {
+                    TextField("Add one…", text: $entry).textFieldStyle(.roundedBorder).autocorrectionDisabled().disabled(locked)
+                        .onSubmit(add)
+                    Button("Add", action: add).disabled(locked || entry.trimmingCharacters(in: .whitespaces).isEmpty)
+                }
+                submitButton(title: "Done", disabled: locked || items.isEmpty) { sent = true; onSubmit(items) }
+            }
+        }
+    }
+    private func add() {
+        let t = entry.trimmingCharacters(in: .whitespaces)
+        guard !t.isEmpty, !items.contains(where: { $0.caseInsensitiveCompare(t) == .orderedSame }) else { return }
+        items.append(t); entry = ""
+    }
+}
+
+private struct LiveOrderingAnswer: View {
+    let items: [String]
+    let locked: Bool
+    var onSubmit: ([Int]) -> Void
+    @State private var order: [Int]
+    @State private var sent = false
+    init(items: [String], locked: Bool, onSubmit: @escaping ([Int]) -> Void) {
+        self.items = items; self.locked = locked; self.onSubmit = onSubmit
+        _order = State(initialValue: Array(items.indices))
+    }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Put them in order (top = first).").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+            ForEach(Array(order.enumerated()), id: \.element) { pos, idx in
+                HStack(spacing: 10) {
+                    Text("\(pos + 1).").font(.system(size: 15, weight: .black)).foregroundStyle(Tidbits.Palette.inkSoft)
+                    Text(items[idx]).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                    Spacer(minLength: 0)
+                    if !locked && !sent {
+                        Button { move(pos, -1) } label: { Image(systemName: "chevron.up") }.disabled(pos == 0).buttonStyle(.plain)
+                        Button { move(pos, 1) } label: { Image(systemName: "chevron.down") }.disabled(pos == order.count - 1).buttonStyle(.plain)
+                    }
+                }
+                .padding(12).frame(maxWidth: .infinity, alignment: .leading).chunkyCard(fill: .white)
+            }
+            if !sent { submitButton(disabled: locked) { sent = true; onSubmit(order) } }
+        }
+    }
+    private func move(_ pos: Int, _ d: Int) { let n = pos + d; guard order.indices.contains(n) else { return }; order.swapAt(pos, n) }
+}
+
+private struct LiveMatchingAnswer: View {
+    let keys: [String]
+    let values: [String]
+    let locked: Bool
+    var onSubmit: ([Int]) -> Void
+    @State private var pairs: [Int]
+    @State private var sent = false
+    init(keys: [String], values: [String], locked: Bool, onSubmit: @escaping ([Int]) -> Void) {
+        self.keys = keys; self.values = values; self.locked = locked; self.onSubmit = onSubmit
+        _pairs = State(initialValue: Array(repeating: -1, count: keys.count))
+    }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Match each to its pair.").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+            ForEach(Array(keys.enumerated()), id: \.offset) { i, key in
+                HStack {
+                    Text(key).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                    Spacer(minLength: 8)
+                    Menu {
+                        ForEach(Array(values.enumerated()), id: \.offset) { vi, v in Button(v) { pairs[i] = vi } }
+                    } label: {
+                        Text(pairs[i] >= 0 ? values[pairs[i]] : "Choose…")
+                            .font(Tidbits.TypeRamp.l4).foregroundStyle(pairs[i] >= 0 ? Tidbits.Palette.blue : Tidbits.Palette.inkSoft)
+                    }.disabled(locked || sent)
+                }
+                .padding(12).frame(maxWidth: .infinity, alignment: .leading).chunkyCard(fill: .white)
+            }
+            if !sent { submitButton(disabled: locked || pairs.contains(-1)) { sent = true; onSubmit(pairs) } }
+        }
+    }
+}
+
+/// Shared submit button for the answer surfaces.
+@ViewBuilder private func submitButton(title: String = "Submit", disabled: Bool, _ action: @escaping () -> Void) -> some View {
+    Button(title, action: action)
+        .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.coral, textColor: .white))
+        .disabled(disabled).frame(maxWidth: .infinity)
 }
 #endif

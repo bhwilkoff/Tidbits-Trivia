@@ -20,6 +20,13 @@ final class LivePlayerClient {
     private(set) var submittedQid: String?
     private(set) var chosen: Int?
     private(set) var errorText: String?
+
+    // Live→profile bridge: tally MCQ accuracy across the night, then feed the portable
+    // profile once when the game ends (a live night keeps your streak + counts).
+    private var liveAnswered = 0
+    private var liveCorrect = 0
+    private var talliedQid: String?
+    private var recordedEnd = false
     private var uid: String?
     private var tasks: [Task<Void, Never>] = []
 
@@ -38,6 +45,7 @@ final class LivePlayerClient {
             let t = LiveRoom.Team(name: team, joinedAt: Self.nowMS())
             try await db.putJSON("\(LiveRoom.path(code))/teams/\(uid)", try JSONEncoder().encode(t))
             self.code = code; self.joined = true; self.joining = false
+            liveAnswered = 0; liveCorrect = 0; talliedQid = nil; recordedEnd = false
             Self.remember(code: code, team: team)   // easy one-tap rejoin after a restart
             watch(code, uid: uid)
         } catch {
@@ -94,9 +102,28 @@ final class LivePlayerClient {
         guard let d = ev.dataJSON, let p = try? JSONDecoder().decode(LiveRoom.Pub.self, from: d) else { pub = nil; return }
         if p.qid != pub?.qid { submittedQid = nil; chosen = nil }
         pub = p
+        // Tally MCQ accuracy once per question, at reveal (answerIndex is present then).
+        if p.phase == LiveRoom.Phase.reveal, talliedQid != p.qid {
+            talliedQid = p.qid
+            if p.options != nil, submittedQid == p.qid {   // an MCQ we answered
+                liveAnswered += 1
+                if chosen == p.answerIndex { liveCorrect += 1 }
+            }
+        }
+        recordIfEnded()
     }
     private func applyMeta(_ ev: FirebaseRTDB.StreamEvent) {
         if let d = ev.dataJSON, let m = try? JSONDecoder().decode(LiveRoom.Meta.self, from: d) { meta = m }
+        recordIfEnded()
+    }
+
+    /// Feed the portable profile ONCE when the night ends — a live night keeps the
+    /// cross-context streak + counts, and MCQ accuracy nudges the rating.
+    private func recordIfEnded() {
+        guard joined, !recordedEnd, meta?.state == "ended" || pub?.phase == LiveRoom.Phase.ended else { return }
+        recordedEnd = true
+        let correct = liveCorrect, answered = liveAnswered
+        Task { await PlayerIdentityStore.shared.recordLiveGame(correct: correct, answered: answered) }
     }
     private func applyScore(_ ev: FirebaseRTDB.StreamEvent) {
         if let d = ev.dataJSON, let v = try? JSONDecoder().decode(Int.self, from: d) { score = v } else { score = 0 }

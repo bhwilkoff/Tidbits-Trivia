@@ -78,6 +78,23 @@ final class PlayerIdentityStore {
         try? await db.put(PlayerIdentity.publicPath(uid), p)
     }
 
+    /// Record a finished LIVE game — the bridge that makes "solo AND live feed one
+    /// identity" real. Advances the cross-context streak (a live night, which also grants
+    /// a freeze), counts the night, and nudges the rating from MCQ accuracy when available.
+    func recordLiveGame(correct: Int, answered: Int) async {
+        guard var p = profile, let uid = profileId else { return }
+        if answered > 0 {
+            p.rating = p.rating.updated(accuracy: Double(correct) / Double(answered), weight: 1.5)
+            p.stats.questionsAnswered += answered
+            p.stats.correct += correct
+        }
+        p.streak = p.streak.played(today: PlayerIdentity.todayString(), liveNight: true)
+        p.stats.gamesPlayed += 1
+        p.stats.liveNights += 1
+        profile = p
+        try? await db.put(PlayerIdentity.publicPath(uid), p)
+    }
+
     /// Update the public display name.
     func rename(_ name: String) async {
         guard let uid = profileId, var p = profile else { return }

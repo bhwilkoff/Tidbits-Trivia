@@ -170,6 +170,7 @@ function playHTML() {
     <div class="live-q">${esc(p.prompt)}</div>
     ${answerHTML(p, revealed)}
     ${status}
+    ${revealed && p.story ? `<div style="margin-top:12px;padding:12px 14px;border-radius:12px;background:var(--color-surface);line-height:1.5;color:var(--color-text)">${esc(p.story)}</div>` : ''}
   </div>`;
 }
 

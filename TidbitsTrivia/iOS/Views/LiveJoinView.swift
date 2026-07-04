@@ -168,6 +168,14 @@ struct LiveJoinView: View {
                 .fixedSize(horizontal: false, vertical: true)
             answerSurface(p, revealed: revealed)
             statusNote(p, revealed: revealed)
+            if revealed, let story = p.story, !story.isEmpty {   // Wave A: the story behind the answer
+                Text(story)
+                    .font(Tidbits.TypeRamp.l4).foregroundStyle(Tidbits.Palette.inkSoft)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(14)
+                    .background(RoundedRectangle(cornerRadius: 12).fill(Tidbits.Palette.surface))
+            }
         }
     }
 

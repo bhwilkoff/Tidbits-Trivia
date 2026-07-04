@@ -234,6 +234,7 @@ object FirebaseNet {
         val orderItems: List<String>? = null, val matchKeys: List<String>? = null,
         val matchValues: List<String>? = null, val enumTarget: Int? = null,
         val locked: Boolean = false,
+        val story: String? = null,   // Wave A: the story behind the answer (reveal only)
     )
     /** A player's submission (any shape) — the host scores it locally on reveal. */
     data class LiveAnswer(
@@ -318,6 +319,7 @@ object FirebaseNet {
             matchValues = snap.child("matchValues").children.mapNotNull { it.getValue(String::class.java) }.ifEmpty { null },
             enumTarget = snap.child("enumTarget").getValue(Long::class.java)?.toInt(),
             locked = snap.child("locked").getValue(Boolean::class.java) ?: false,
+            story = snap.child("story").getValue(String::class.java),
         )
     }
 

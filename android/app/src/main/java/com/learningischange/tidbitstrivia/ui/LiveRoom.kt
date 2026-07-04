@@ -208,6 +208,12 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
                     else -> "Tap your answer." to soft
                 }
                 Text(note.first, color = note.second, fontWeight = FontWeight.Bold, fontSize = 16.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
+                if (revealed && !p.story.isNullOrBlank()) {   // Wave A: the story behind the answer
+                    Spacer(Modifier.height(10.dp))
+                    Text(p.story!!, fontSize = 15.sp, lineHeight = 21.sp, textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp))
+                }
             }
         }
     }

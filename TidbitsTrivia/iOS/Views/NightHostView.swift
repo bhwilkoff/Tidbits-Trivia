@@ -38,6 +38,7 @@ struct NightHostView: View {
                 if let e = host.errorText { errorLabel(e) }
                 joinCard
                 rosterCard
+                hostPlaysCard
                 Button(host.isOpen ? "Start the Night" : "Opening room…") { Task { await host.start() } }
                     .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.coral, textColor: .white))
                     .disabled(!host.isOpen)
@@ -85,7 +86,27 @@ struct NightHostView: View {
         .chunkyCard(fill: Tidbits.Palette.surface).padding(.trailing, Tidbits.Metric.shadowOffset)
     }
 
-    // MARK: Playing (game master)
+    private var hostPlaysCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Toggle(isOn: Binding(get: { host.hostPlays }, set: { host.hostPlays = $0 })) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("I'll play too").font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                    Text("Answer on this device and join the standings.").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                }
+            }
+            .tint(Tidbits.Palette.coral)
+            if host.hostPlays {
+                TextField("Your name", text: Binding(get: { host.hostName }, set: { host.hostName = $0 }))
+                    .textInputAutocapitalization(.words)
+                    .padding(12).background(RoundedRectangle(cornerRadius: 10).fill(.white))
+                    .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Tidbits.Palette.border, lineWidth: 2))
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading).padding(16)
+        .chunkyCard(fill: Tidbits.Palette.surface).padding(.trailing, Tidbits.Metric.shadowOffset)
+    }
+
+    // MARK: Playing
 
     private var playing: some View {
         ScrollView {
@@ -97,15 +118,28 @@ struct NightHostView: View {
                     Text(q.prompt).font(.system(size: 24, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
                         .fixedSize(horizontal: false, vertical: true)
                     ForEach(Array(q.options.enumerated()), id: \.offset) { i, opt in
+                        let chosen = host.hostChoice == i
                         let correct = host.revealed && i == q.correctIndex
-                        HStack(spacing: 10) {
-                            Text("\(i + 1)").font(.system(size: 14, weight: .black)).foregroundStyle(.white)
-                                .frame(width: 24, height: 24).background(RoundedRectangle(cornerRadius: 7).fill(Tidbits.Palette.ink))
-                            Text(opt).font(Tidbits.TypeRamp.l3).foregroundStyle(correct ? .white : Tidbits.Palette.ink)
-                            Spacer(minLength: 0)
+                        let wrong = host.revealed && chosen && i != q.correctIndex
+                        let fill: Color = correct ? Tidbits.Palette.mint : wrong ? Color(red: 0.95, green: 0.82, blue: 0.80) : chosen ? Tidbits.Palette.blue.opacity(0.18) : .white
+                        Button {
+                            if host.hostPlays { Task { await host.hostAnswer(i) } }
+                        } label: {
+                            HStack(spacing: 10) {
+                                Text("\(i + 1)").font(.system(size: 14, weight: .black)).foregroundStyle(.white)
+                                    .frame(width: 24, height: 24).background(RoundedRectangle(cornerRadius: 7).fill(Tidbits.Palette.ink))
+                                Text(opt).font(Tidbits.TypeRamp.l3).foregroundStyle(correct ? .white : Tidbits.Palette.ink).multilineTextAlignment(.leading)
+                                Spacer(minLength: 0)
+                            }
+                            .padding(12).frame(maxWidth: .infinity, alignment: .leading)
+                            .chunkyCard(fill: fill).padding(.trailing, Tidbits.Metric.shadowOffset)
                         }
-                        .padding(12).frame(maxWidth: .infinity, alignment: .leading)
-                        .chunkyCard(fill: correct ? Tidbits.Palette.mint : .white).padding(.trailing, Tidbits.Metric.shadowOffset)
+                        .buttonStyle(.plain)
+                        .disabled(!host.hostPlays || host.revealed || host.hostAnswered)
+                    }
+                    if host.hostPlays && !host.revealed {
+                        Text(host.hostAnswered ? "Locked in — reveal when everyone's ready." : "Tap your answer, then Reveal.")
+                            .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
                     }
                 }
                 HStack(spacing: 12) {

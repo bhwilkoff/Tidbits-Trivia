@@ -26,6 +26,13 @@ final class LiveNightHost {
     let title: String
     /// Points a correct answer earns (casual default; host could expose later).
     var pointsPerCorrect = 1
+    /// Host-plays-too (owner: "I'll play too" toggle). When on, the host also
+    /// answers each question on this device and is scored in the standings.
+    var hostPlays = false
+    var hostName = "Host"
+    /// The host's selected option for the current question (host-plays mode).
+    private(set) var hostChoice: Int?
+    var hostAnswered: Bool { hostChoice != nil }
 
     init(plan: NightPlan, category: TriviaCategory, title: String = "Trivia Night") {
         self.plan = plan
@@ -70,9 +77,17 @@ final class LiveNightHost {
         // QuestionProvider returns round-ordered, roundIndex-tagged questions.
         questions = await QuestionProvider.shared.nightQuestions(plan: plan, category: category)
         guard !questions.isEmpty else { errorText = "No questions available."; return }
-        index = 0; revealed = false; stage = .playing
+        if hostPlays { await net.joinAsHost(name: hostName.isEmpty ? "Host" : hostName) }
+        index = 0; revealed = false; hostChoice = nil; stage = .playing
         await net.setState("live")
         await net.publish(pub())
+    }
+
+    /// Host-plays mode: the host answers the current question on this device.
+    func hostAnswer(_ i: Int) async {
+        guard hostPlays, stage == .playing, !revealed, hostChoice == nil, let q = current else { return }
+        hostChoice = i
+        await net.submitHostAnswer(qid: LiveRoom.qid(round: q.roundIndex ?? 0, question: index), choice: i)
     }
 
     /// Show the answer on every device at once, then award points.
@@ -87,6 +102,7 @@ final class LiveNightHost {
     func next() async {
         guard stage == .playing, revealed else { return }
         revealed = false
+        hostChoice = nil
         index += 1
         if current == nil { await end() } else { await net.publish(pub()) }
     }

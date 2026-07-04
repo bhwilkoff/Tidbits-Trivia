@@ -13,6 +13,9 @@ final class LiveHostNet {
     private let db = FirebaseRTDB.shared
 
     private(set) var code = ""
+    /// The host's own anon uid (owns meta/pub/scores). Also used when the host
+    /// plays along (host-plays-too mode) — they self-register as a team.
+    private(set) var hostUid = ""
     /// Joined phone/web teams (uid → name+score), merged from `teams` + `scores`.
     private(set) var teams: [String: LiveRoom.Team] = [:]
     private(set) var scores: [String: Int] = [:]
@@ -45,6 +48,7 @@ final class LiveHostNet {
                                      venue: venue, state: "lobby")
             try await db.putJSON("\(LiveRoom.path(code))/meta", try JSONEncoder().encode(meta))
             self.code = code
+            self.hostUid = host
             watchTeams(code)
             watchScores(code)
             return code
@@ -75,6 +79,22 @@ final class LiveHostNet {
     func setScore(_ uid: String, _ score: Int) async {
         guard isOpen else { return }
         try? await db.put("\(LiveRoom.path(code))/scores/\(uid)", max(0, score))
+    }
+
+    /// Host-plays-too: register the host as a team so they appear in the roster +
+    /// standings (their uid is `hostUid`; the rules allow it since it's their own).
+    func joinAsHost(name: String) async {
+        guard isOpen, !hostUid.isEmpty else { return }
+        let t = LiveRoom.Team(name: name, joinedAt: Self.nowMS())
+        if let json = try? JSONEncoder().encode(t) { try? await db.putJSON("\(LiveRoom.path(code))/teams/\(hostUid)", json) }
+    }
+
+    /// Host-plays-too: submit the host's own answer for a question (auto-scored on
+    /// reveal alongside every other player).
+    func submitHostAnswer(qid: String, choice: Int) async {
+        guard isOpen, !hostUid.isEmpty else { return }
+        let a = LiveRoom.Answer(choice: choice, text: nil, ts: Self.nowMS())
+        if let json = try? JSONEncoder().encode(a) { try? await db.putJSON("\(LiveRoom.path(code))/answers/\(qid)/\(hostUid)", json) }
     }
 
     /// Tear the room down (host-only delete allowed by the rules).

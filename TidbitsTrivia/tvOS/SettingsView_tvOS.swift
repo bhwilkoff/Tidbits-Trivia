@@ -1,6 +1,7 @@
 #if os(tvOS)
 import SwiftUI
 import SwiftData
+import AuthenticationServices
 
 /// tvOS Settings — parity with the iOS sheet, ten-foot and focus-driven.
 /// Native Form works on tvOS and gives free focus + section semantics
@@ -14,6 +15,7 @@ struct SettingsView_tvOS: View {
     @Environment(PlayerIdentityStore.self) private var identity
     @AppStorage(GameSettings.reviewKey) private var reviewEnabled = true
     @State private var confirmReset = false
+    @State private var appleNonce = ""
 
     private var version: String {
         let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
@@ -41,6 +43,19 @@ struct SettingsView_tvOS: View {
                         }
                         LabeledContent("Games played", value: "\(p.stats.gamesPlayed)")
                         LabeledContent("Live nights", value: "\(p.stats.liveNights)")
+                        if identity.signedIn {
+                            Label("Signed in — records sync to every device", systemImage: "checkmark.seal.fill").foregroundStyle(.secondary)
+                        } else {
+                            SignInWithAppleButton(.signIn) { req in
+                                appleNonce = AppleNonce.random(); req.requestedScopes = [.email, .fullName]; req.nonce = AppleNonce.sha256(appleNonce)
+                            } onCompletion: { result in
+                                if case .success(let auth) = result, let c = auth.credential as? ASAuthorizationAppleIDCredential,
+                                   let d = c.identityToken, let t = String(data: d, encoding: .utf8) {
+                                    Task { await identity.linkApple(idToken: t, rawNonce: appleNonce) }
+                                }
+                            }
+                            .signInWithAppleButtonStyle(.white).frame(height: 60)
+                        }
                     } else {
                         Text("Setting up your profile…").foregroundStyle(.secondary)
                     }

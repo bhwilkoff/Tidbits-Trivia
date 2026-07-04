@@ -1,6 +1,7 @@
 #if os(macOS)
 import SwiftUI
 import SwiftData
+import AuthenticationServices
 
 /// Mac Settings (macOS-DESIGN §B1: rides the app menu / ⌘,, never a sidebar
 /// row). Native `Form`, reusing the shared GameSettings keys. No haptics on the
@@ -13,6 +14,7 @@ struct SettingsView_macOS: View {
     @State private var confirmReset = false
     @State private var editingName = false
     @State private var draftName = ""
+    @State private var appleNonce = ""
 
     private var version: String {
         let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
@@ -37,6 +39,20 @@ struct SettingsView_macOS: View {
                     LabeledContent("Tidbits Rating", value: p.rating.provisional ? "\(Int(p.rating.value)) · provisional" : "\(Int(p.rating.value))")
                     LabeledContent("Accuracy", value: "\(acc)%")
                     LabeledContent("Live nights", value: "\(p.stats.liveNights)")
+                    if identity.signedIn {
+                        Label("Signed in — records sync to every device", systemImage: "checkmark.seal.fill")
+                            .font(.caption).foregroundStyle(.secondary)
+                    } else {
+                        SignInWithAppleButton(.signIn) { req in
+                            appleNonce = AppleNonce.random(); req.requestedScopes = [.email, .fullName]; req.nonce = AppleNonce.sha256(appleNonce)
+                        } onCompletion: { result in
+                            if case .success(let auth) = result, let c = auth.credential as? ASAuthorizationAppleIDCredential,
+                               let d = c.identityToken, let t = String(data: d, encoding: .utf8) {
+                                Task { await identity.linkApple(idToken: t, rawNonce: appleNonce) }
+                            }
+                        }
+                        .signInWithAppleButtonStyle(.black).frame(height: 36)
+                    }
                 } else {
                     Text("Setting up your profile…").foregroundStyle(.secondary)
                 }

@@ -30,9 +30,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Stage web files only
+        run: |
+          mkdir -p _site
+          for item in index.html 404.html privacy.html support.html manifest.json sw.js \
+                      robots.txt sitemap.xml CNAME .nojekyll css js assets branding; do
+            [ -e "$item" ] && cp -r "$item" _site/
+          done
+          test -f _site/index.html   # fail loudly if the site root is missing
+          echo "Staged $(du -sh _site | cut -f1) across $(find _site -type f | wc -l | tr -d ' ') files"
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: '_site'
       - id: deployment
         uses: actions/deploy-pages@v4

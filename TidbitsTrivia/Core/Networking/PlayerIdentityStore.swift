@@ -28,9 +28,12 @@ final class PlayerIdentityStore {
     func bootstrap() async {
         do {
             let uid = try await db.ensureAuth()
-            if let email = await db.currentEmail() {            // signed in → key by verified email
+            // Prefer the token's email; fall back to the persisted one so an Apple session
+            // (whose refreshed token can omit the email) still re-keys to the shared profile.
+            if let email = await db.currentEmail() ?? Self.persistedEmail() {   // signed in → key by verified email
                 signedIn = true
                 UserDefaults.standard.set(true, forKey: "tidbits.identity.signedIn")
+                Self.persistEmail(email)
                 let key = PlayerIdentity.accountKey(forEmail: email)
                 profileId = key
                 if let existing = try? await db.get(PlayerIdentity.publicPath(key), as: PlayerIdentity.Profile.self) {
@@ -121,15 +124,22 @@ final class PlayerIdentityStore {
     /// every device) share one record set. Merges this device's anonymous activity into the
     /// email-keyed profile; the guard prevents ever re-merging. Called from the
     /// SignInWithAppleButton completion with the identity token + raw nonce.
-    func linkApple(idToken: String, rawNonce: String, appleName: String? = nil) async {
+    func linkApple(idToken: String, rawNonce: String, appleName: String? = nil, appleEmail: String? = nil) async {
         guard !signedIn else { return }   // already on a durable account — never re-merge the same records
         do {
             let local = profile ?? Self.newProfile(name: Self.suggestedName())
             let res = try await db.signInWithApple(identityToken: idToken, rawNonce: rawNonce)
-            guard let email = res.email else {                  // no email (rare) — uid-keyed fallback
+            // Apple shares the email ONLY on the first authorization. Capture it wherever it
+            // appears — Firebase's response, the native credential, or Apple's identity-token
+            // claim — so the profile keys by email (and converges with Google) even when
+            // Firebase's response omits it. Without this, Apple fell back to uid-keying.
+            let email = [res.email, appleEmail, FirebaseRTDB.email(fromJWT: idToken)]
+                .compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }
+                .first { !$0.isEmpty }
+            guard let email else {                              // no email anywhere — uid-keyed fallback
                 profileId = res.uid
                 try? await db.put(PlayerIdentity.publicPath(res.uid), local)
-                markSignedIn(); return
+                Self.persistEmail(nil); markSignedIn(); return
             }
             let key = PlayerIdentity.accountKey(forEmail: email)
             try? await db.put("emailOwners/\(key)", email)
@@ -142,6 +152,7 @@ final class PlayerIdentityStore {
             profile = merged
             profileId = key
             try? await db.put(PlayerIdentity.publicPath(key), merged)
+            Self.persistEmail(email)                            // survive Apple's empty token email on relaunch
             markSignedIn()
             watch(key)                                          // (B) live name sync
             await syncDailyLog(pushLocal: true)                 // (L2) push anon plays, pull the union
@@ -154,6 +165,15 @@ final class PlayerIdentityStore {
         signedIn = true
         UserDefaults.standard.set(true, forKey: "tidbits.identity.signedIn")
     }
+
+    private static let emailDefaultsKey = "tidbits.identity.email"
+    /// Persist the resolved account email so bootstrap can re-key by it after relaunch even
+    /// when the (Apple) token omits the email claim. Cleared on sign-out.
+    static func persistEmail(_ email: String?) {
+        if let email { UserDefaults.standard.set(email, forKey: emailDefaultsKey) }
+        else { UserDefaults.standard.removeObject(forKey: emailDefaultsKey) }
+    }
+    static func persistedEmail() -> String? { UserDefaults.standard.string(forKey: emailDefaultsKey) }
 
     /// (L2) Daily log sync — when signed in, a daily completion also lands in
     /// dailyLog/{key} so "done today" + the archive follow the identity across devices.
@@ -213,6 +233,7 @@ final class PlayerIdentityStore {
             }
             signedIn = false
             UserDefaults.standard.set(false, forKey: "tidbits.identity.signedIn")
+            Self.persistEmail(nil)                              // forget the account email
             watch(uid)                                          // (B) re-point to the fresh anon
         } catch {
             print("[Identity] sign-out failed: \(error)")

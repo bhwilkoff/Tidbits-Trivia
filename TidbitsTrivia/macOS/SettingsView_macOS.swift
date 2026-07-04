@@ -50,7 +50,7 @@ struct SettingsView_macOS: View {
                             if case .success(let auth) = result, let c = auth.credential as? ASAuthorizationAppleIDCredential,
                                let d = c.identityToken, let t = String(data: d, encoding: .utf8) {
                                 let name = [c.fullName?.givenName, c.fullName?.familyName].compactMap { $0 }.joined(separator: " ")
-                                Task { await identity.linkApple(idToken: t, rawNonce: appleNonce, appleName: name.isEmpty ? nil : name) }
+                                Task { await identity.linkApple(idToken: t, rawNonce: appleNonce, appleName: name.isEmpty ? nil : name, appleEmail: c.email) }
                             }
                         }
                         .signInWithAppleButtonStyle(.black).frame(height: 36)

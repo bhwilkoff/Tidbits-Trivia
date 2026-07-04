@@ -108,13 +108,21 @@ actor FirebaseRTDB {
     /// token payload (nil for anonymous). Lets the profile re-key by email after relaunch.
     func currentEmail() -> String? {
         guard let token = idToken else { return nil }
+        return Self.email(fromJWT: token)
+    }
+
+    /// Decode the `email` claim from any JWT payload (a Firebase ID token OR Apple's identity
+    /// token). Apple shares the email only on the FIRST authorization — reading it straight
+    /// from the token is the most reliable capture. Returns nil if absent/empty.
+    nonisolated static func email(fromJWT token: String) -> String? {
         let parts = token.split(separator: ".")
         guard parts.count == 3 else { return nil }
         var b64 = String(parts[1]).replacingOccurrences(of: "-", with: "+").replacingOccurrences(of: "_", with: "/")
         while b64.count % 4 != 0 { b64 += "=" }
         guard let data = Data(base64Encoded: b64),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
-        return json["email"] as? String
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let email = json["email"] as? String, !email.isEmpty else { return nil }
+        return email
     }
 
     /// Sign out of the federated account and return to a FRESH anonymous session (new

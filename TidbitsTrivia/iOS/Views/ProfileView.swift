@@ -135,7 +135,7 @@ struct ProfileView: View {
                        let cred = auth.credential as? ASAuthorizationAppleIDCredential,
                        let data = cred.identityToken, let token = String(data: data, encoding: .utf8) {
                         let name = [cred.fullName?.givenName, cred.fullName?.familyName].compactMap { $0 }.joined(separator: " ")
-                        Task { await identity.linkApple(idToken: token, rawNonce: appleNonce, appleName: name.isEmpty ? nil : name) }
+                        Task { await identity.linkApple(idToken: token, rawNonce: appleNonce, appleName: name.isEmpty ? nil : name, appleEmail: cred.email) }
                     }
                 }
                 .signInWithAppleButtonStyle(.black)

@@ -174,7 +174,8 @@ function viewHome() {
         </label>
         <div class="night-actions">
           <button type="button" class="btn" data-night-cancel>Cancel</button>
-          <button type="button" class="btn btn-primary" data-night-start>Start the Night</button>
+          <button type="button" class="btn" data-night-start>Play solo</button>
+          <button type="button" class="btn btn-primary" data-night-host>Host for others</button>
         </div>
       </div>
     </dialog>
@@ -366,6 +367,12 @@ function bindHome() {
     const preset = NIGHT.presets[nightPreset];
     dlg.close();
     startGame('barTrivia', catById(catId), { nightPlan: { rounds: preset.rounds }, label: preset.name });
+  });
+  $('[data-night-host]').addEventListener('click', () => {
+    const catId = $('#night-cat').value;
+    const preset = NIGHT.presets[nightPreset];
+    dlg.close();
+    openNightHost({ rounds: preset.rounds }, catById(catId));
   });
 
   // Customize dialog (mode + category + presets, one Start).
@@ -1429,6 +1436,182 @@ async function shareResult(s, grid) {
 function toast(msg) {
   const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t);
   setTimeout(() => t.remove(), 1800);
+}
+
+// ---- Trivia Night HOST (web) ----------------------------------------------
+// Owner architecture: the web hosts a casual Night on the SAME RTDB backend as
+// Tidbits Live. Build the night with the shared loader, open live/{code}, then
+// pace Reveal → Next while phones/other apps join (the unified live player) and
+// auto-score. (Web has no native QR encoder, so the host shows the code + link;
+// project a QR from a phone/TV/Mac host, which all render one.)
+const NH = { code: '', error: '', questions: [], index: 0, revealed: false, stage: 'lobby',
+             teams: {}, scores: {}, answers: {}, hostPlays: false, hostName: 'Host',
+             hostChoice: null, plan: null, cat: null, unsubs: [], ansUnsub: null };
+let nhRoot = null;
+
+async function openNightHost(plan, cat) {
+  Object.assign(NH, { code: '', error: '', questions: [], index: 0, revealed: false, stage: 'lobby',
+    teams: {}, scores: {}, answers: {}, hostChoice: null, plan, cat, unsubs: [], ansUnsub: null });
+  nhInjectStyles();
+  if (!nhRoot) { nhRoot = document.createElement('div'); nhRoot.className = 'nh-ov'; document.body.appendChild(nhRoot); }
+  drawHost();
+  try { const g = new Game('barTrivia', cat, { nightPlan: plan }); await g.load(); NH.questions = g.questions || []; }
+  catch { NH.error = 'Couldn’t build the night.'; drawHost(); return; }
+  try {
+    const r = await FirebaseNet.liveHostOpen('Trivia Night', { onError: (m) => { NH.error = m; } });
+    NH.code = r.code;
+    NH.unsubs.push(FirebaseNet.liveOnTeams(NH.code, (t) => { NH.teams = t || {}; drawHost(); }));
+    NH.unsubs.push(FirebaseNet.liveOnScores(NH.code, (s) => { NH.scores = s || {}; drawHost(); }));
+  } catch { if (!NH.error) NH.error = 'Couldn’t open a room. Check your connection.'; }
+  drawHost();
+}
+
+function closeNightHost() {
+  NH.unsubs.forEach((u) => { try { u(); } catch {} }); NH.unsubs = [];
+  if (NH.ansUnsub) { try { NH.ansUnsub(); } catch {} NH.ansUnsub = null; }
+  if (NH.code) FirebaseNet.liveClose(NH.code).catch(() => {});
+  if (nhRoot) { nhRoot.remove(); nhRoot = null; }
+  NH.code = ''; NH.stage = 'lobby';
+}
+
+function nhPub() {
+  const q = NH.questions[NH.index];
+  if (!q) return { round: 0, roundTitle: '', qid: 'end', qNum: 0, qTotal: 0, phase: 'ended', prompt: '', options: null, format: '', answerIndex: null };
+  const ri = q.roundIndex || 0;
+  const inRound = NH.questions.filter((x) => (x.roundIndex || 0) === ri);
+  const kind = (NH.plan.rounds[ri] || [])[0];
+  return { round: ri + 1, roundTitle: NIGHT.roundTitle[kind] || kind || '', qid: `r${ri}q${NH.index}`,
+    qNum: inRound.indexOf(q) + 1, qTotal: inRound.length, phase: NH.revealed ? 'reveal' : 'question',
+    prompt: q.prompt, options: q.options, format: kind || 'classic', answerIndex: NH.revealed ? q.correctIndex : null };
+}
+
+async function nhPublish() {
+  const pub = nhPub();
+  await FirebaseNet.livePublish(NH.code, pub);
+  if (NH.ansUnsub) { try { NH.ansUnsub(); } catch {} }
+  NH.answers = {};
+  NH.ansUnsub = FirebaseNet.liveOnAnswers(NH.code, pub.qid, (a) => { NH.answers = a || {}; drawHost(); });
+}
+
+async function nhStart() {
+  if (!NH.code || !NH.questions.length) return;
+  if (NH.hostPlays) await FirebaseNet.liveHostJoinAsTeam(NH.code, NH.hostName || 'Host');
+  NH.index = 0; NH.revealed = false; NH.hostChoice = null; NH.stage = 'playing';
+  await FirebaseNet.liveSetState(NH.code, 'live');
+  await nhPublish(); drawHost();
+}
+async function nhReveal() {
+  if (NH.revealed) return;
+  NH.revealed = true;
+  await FirebaseNet.livePublish(NH.code, nhPub());
+  const q = NH.questions[NH.index];
+  for (const [uid, ans] of Object.entries(NH.answers)) {
+    if (ans && ans.choice === q.correctIndex) await FirebaseNet.liveSetScore(NH.code, uid, (NH.scores[uid] || 0) + 1);
+  }
+  drawHost();
+}
+async function nhNext() {
+  if (!NH.revealed) return;
+  NH.revealed = false; NH.hostChoice = null; NH.index++;
+  if (!NH.questions[NH.index]) { NH.stage = 'ended'; await FirebaseNet.liveSetState(NH.code, 'ended'); await FirebaseNet.livePublish(NH.code, nhPub()); }
+  else await nhPublish();
+  drawHost();
+}
+async function nhAnswer(i) {
+  if (!NH.hostPlays || NH.revealed || NH.hostChoice != null) return;
+  NH.hostChoice = i;
+  await FirebaseNet.liveHostAnswer(NH.code, nhPub().qid, i);
+  drawHost();
+}
+
+function nhStandings() {
+  return Object.entries(NH.teams).map(([uid, t]) => ({ uid, name: (t && t.name) || 'Team', score: NH.scores[uid] || 0 }))
+    .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
+}
+
+function drawHost() {
+  if (!nhRoot) return;
+  const st = nhStandings();
+  const standings = `<div class="nh-stand"><div class="muted">STANDINGS</div>${st.length ? st.map((t, i) =>
+    `<div class="nh-row"><span>${i === 0 ? '👑 ' : ''}${h(t.name)}</span><b>${t.score}</b></div>`).join('') :
+    '<div class="muted">Players appear here as they join.</div>'}</div>`;
+
+  if (NH.stage === 'ended') {
+    nhRoot.innerHTML = `<div class="nh-card"><h1>${st[0] ? h(st[0].name) + ' wins!' : "That's a night!"}</h1>${standings}
+      <button class="btn btn-primary" id="nh-done">Done</button></div>`;
+    nhRoot.querySelector('#nh-done').addEventListener('click', closeNightHost);
+    return;
+  }
+  if (NH.stage === 'lobby') {
+    nhRoot.innerHTML = `<div class="nh-card">
+      <button class="nh-x" id="nh-x" aria-label="Close">✕</button>
+      <div class="nh-badge">TRIVIA NIGHT</div>
+      <p class="muted">Players join at</p>
+      <a class="nh-link" href="${SITE_URL}/live/${NH.code}" target="_blank" rel="noopener">tidbitstrivia.com/live</a>
+      <div class="nh-code">${NH.code || '····'}</div>
+      ${NH.error ? `<div class="nh-err">${h(NH.error)}</div>` : ''}
+      ${standings}
+      <label class="nh-toggle"><input type="checkbox" id="nh-plays" ${NH.hostPlays ? 'checked' : ''}> I'll play too</label>
+      ${NH.hostPlays ? `<input class="nh-in" id="nh-name" placeholder="Your name" value="${h(NH.hostName)}">` : ''}
+      <button class="btn btn-primary" id="nh-start" ${NH.code ? '' : 'disabled'}>${NH.code ? 'Start the Night' : 'Opening room…'}</button>
+      <p class="muted">You run the questions; everyone answers on their own device.</p>
+    </div>`;
+    nhRoot.querySelector('#nh-x').addEventListener('click', closeNightHost);
+    nhRoot.querySelector('#nh-start').addEventListener('click', nhStart);
+    nhRoot.querySelector('#nh-plays').addEventListener('change', (e) => { NH.hostPlays = e.target.checked; drawHost(); });
+    const nm = nhRoot.querySelector('#nh-name'); if (nm) nm.addEventListener('input', (e) => { NH.hostName = e.target.value; });
+    return;
+  }
+  // playing
+  const p = nhPub();
+  const opts = (p.options || []).map((o, i) => {
+    const chosen = NH.hostChoice === i;
+    const correct = NH.revealed && i === NH.questions[NH.index].correctIndex;
+    const wrong = NH.revealed && chosen && !correct;
+    const cls = ['nh-opt', chosen ? 'chosen' : '', correct ? 'correct' : '', wrong ? 'wrong' : ''].join(' ');
+    const dis = (!NH.hostPlays || NH.revealed || NH.hostChoice != null) ? 'disabled' : '';
+    return `<button class="${cls}" data-nhopt="${i}" ${dis}><span class="nh-optn">${i + 1}</span>${h(o)}</button>`;
+  }).join('');
+  nhRoot.innerHTML = `<div class="nh-play">
+    <div class="nh-head"><div class="nh-badge">CODE ${NH.code}</div><div class="muted">${Object.keys(NH.answers).length} answered</div>
+      <button class="nh-x" id="nh-x" aria-label="End">✕</button></div>
+    <div class="nh-round">ROUND ${p.round}/${NH.plan.rounds.length} · ${h(p.roundTitle)} — Q${p.qNum}/${p.qTotal}</div>
+    <div class="nh-q">${h(p.prompt)}</div>
+    <div class="nh-opts">${opts}</div>
+    <div class="nh-actions">${NH.revealed ? '<button class="btn btn-primary" id="nh-next">Next</button>' : '<button class="btn btn-primary" id="nh-reveal">Reveal</button>'}</div>
+    ${standings}
+  </div>`;
+  nhRoot.querySelector('#nh-x').addEventListener('click', closeNightHost);
+  const rv = nhRoot.querySelector('#nh-reveal'); if (rv) rv.addEventListener('click', nhReveal);
+  const nx = nhRoot.querySelector('#nh-next'); if (nx) nx.addEventListener('click', nhNext);
+  nhRoot.querySelectorAll('[data-nhopt]').forEach((b) => b.addEventListener('click', () => nhAnswer(+b.dataset.nhopt)));
+}
+
+function nhInjectStyles() {
+  if (document.getElementById('nh-styles')) return;
+  const s = document.createElement('style'); s.id = 'nh-styles';
+  s.textContent = `
+  .nh-ov{position:fixed;inset:0;z-index:9999;background:var(--color-bg,#FCF5E9);display:flex;flex-direction:column;overflow-y:auto}
+  .nh-card{margin:auto;max-width:460px;width:calc(100% - 40px);padding:28px;text-align:center;position:relative}
+  .nh-play{max-width:680px;width:100%;margin:0 auto;padding:16px;position:relative}
+  .nh-badge{display:inline-block;font-weight:900;letter-spacing:.08em;font-size:.8rem;color:#fff;background:var(--color-primary,#FF746F);padding:5px 12px;border-radius:999px;border:2.5px solid #231E1A}
+  .nh-code{font-family:ui-monospace,monospace;font-weight:900;font-size:3rem;letter-spacing:.3em;color:#231E1A;margin:6px 0}
+  .nh-link{font-weight:800;color:var(--color-accent,#2D5BFF);text-decoration:none}
+  .nh-err{color:#c0392b;font-weight:700;margin:6px 0}
+  .nh-x{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:999px;border:2.5px solid #231E1A;background:#fff;font-weight:900;cursor:pointer}
+  .nh-toggle{display:flex;align-items:center;gap:8px;justify-content:center;font-weight:700;margin:10px 0;color:#231E1A}
+  .nh-in{display:block;width:100%;box-sizing:border-box;margin:8px 0;padding:12px;border:2.5px solid #231E1A;border-radius:12px;font-weight:700}
+  .nh-head{display:flex;align-items:center;gap:12px;padding:4px 0 12px}
+  .nh-round{font-weight:800;color:#8a8078;margin:6px 0}
+  .nh-q{font-weight:900;font-size:1.5rem;line-height:1.25;color:#231E1A;margin:6px 0 16px}
+  .nh-opts{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
+  .nh-opt{display:flex;align-items:center;gap:12px;text-align:left;padding:14px;font-size:1.05rem;font-weight:800;color:#231E1A;background:#fff;border:2.5px solid #231E1A;border-radius:14px;box-shadow:3px 3px 0 #231E1A;cursor:pointer}
+  .nh-opt:disabled{cursor:default}.nh-opt.chosen{background:#DDE3FF}.nh-opt.correct{background:#3CCB8A;color:#fff}.nh-opt.wrong{background:#f3d1cd}
+  .nh-optn{display:inline-flex;width:26px;height:26px;align-items:center;justify-content:center;border-radius:8px;background:#231E1A;color:#fff;font-weight:900;font-size:.9rem;flex:none}
+  .nh-actions{display:flex;gap:10px;margin-bottom:14px}
+  .nh-stand{text-align:left;margin-top:10px;border-top:2px solid var(--color-border,#E7DFD2);padding-top:10px}
+  .nh-row{display:flex;justify-content:space-between;padding:6px 0;font-weight:800;color:#231E1A}`;
+  document.head.appendChild(s);
 }
 
 boot();

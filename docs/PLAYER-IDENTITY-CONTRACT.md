@@ -80,6 +80,53 @@ The authoritative **cross-venue** leaderboard lives on the shared plane and **re
 native-styled UI per platform** (Game-Center-flavored on Apple, Play-Games-flavored on
 Android) — never one generic account screen reused across platforms.
 
+## Cross-device claim & account recovery (durable identity)
+
+**The gap:** anonymous uids are per-install/browser and disposable — they survive a
+device's own sessions (Keychain / IndexedDB / SDK cache) but do NOT roam across devices,
+and a cleared web session (incognito, cleared data, new browser/machine) orphans the
+profile at `players/{old_uid}`. Both "bring my records to a new device" and "recover a
+lost web session" have the same fix.
+
+**Mechanism — promote the anon account with a federated sign-in.** Firebase
+`linkWithCredential(Apple|Google)` on an anonymous user upgrades the **same uid** to a
+permanent, credential-linked account (all records preserved, no migration). Then
+`signInWithCredential` with that credential on any other device returns the **same uid** →
+the same `players/{uid}`. One durable identity that roams AND survives session loss.
+
+**Owner decisions (2026-07-04):** **sign-in only** (Apple + Google; no transfer code —
+records are durable only via an account); **auto-merge, lossless** on conflict.
+
+**Flows:**
+- *Web → mobile:* web "Save my progress" → Sign in → anon `players/uid_web` becomes
+  permanent. Mobile signs in with the same account → same uid → records appear.
+- *Lost session:* signed-in users sign in again → same uid → restored. Anonymous-only
+  profiles are unrecoverable by design (hence the "Save your progress" prompt).
+
+**Merge (`mergeProfiles(local, account)`) — deterministic, order-independent, lossless.**
+When the credential is already tied to a different uid *with data* (`credential-already-in-use`),
+sign into that account, combine, write back to the **account uid** (the survivor), then
+best-effort delete the loser's `players/{uid}`:
+- `name`: prefer the non-default name (not `Player NNNN`); else the account's.
+- `createdAt`: **min** (earliest). `avatarSeed`: the account's (stable identity).
+- `rating`: `value = max`, `games = sum`, `provisional = games < 15`.
+- `streak`: `current`/`lastPlayedDay` from whichever has the **later** `lastPlayedDay`;
+  `longest = max`; `freezes = max`.
+- `stats`: `gamesPlayed`/`questionsAnswered`/`correct`/`liveNights` = **sum**;
+  `venuesVisited` = size of the unioned private venue list.
+- private: `email` = first non-null; native IDs (appleUserID/gameCenterID/playGamesID/
+  googleUserID) = union; `venues` = union.
+
+**Per-platform sign-in (native idiom, over the shared merge):**
+- **Apple:** Sign in with Apple (`ASAuthorizationController`) → Firebase
+  `OAuthProvider("apple.com")` credential → link/sign-in. (Google also offered.)
+- **Android:** Google Sign-In via **Credential Manager** → `GoogleAuthProvider` credential.
+- **Web:** Firebase `linkWithPopup` / `signInWithPopup` (Apple + Google providers).
+
+**UX:** a "Save your progress" / Sign-in button on every profile surface for anonymous
+users; once signed in it shows "Signed in as …". A merge shows a quiet "Combined your
+profiles" note. **$0:** federated auth is free/unlimited on Spark — no new billing surface.
+
 ## Security rules (`database.rules.json`)
 
 - **`players/{uid}`** — public read (leaderboard display), write gated on `auth.uid == $uid`,

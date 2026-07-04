@@ -3,9 +3,19 @@
 // (docs/LIVE-ROOM-CONTRACT.md). Self-managing full-screen overlay so it needs no
 // changes to the main render loop; the big-screen QR points here (#/live/CODE).
 import { FirebaseNet } from './firebase.js';
+import { Identity } from './identity.js';
 
 const S = { code: '', team: '', joined: false, joining: false, pub: null, meta: null,
-            score: 0, submittedQid: null, chosen: null, error: '', local: {} };
+            score: 0, submittedQid: null, chosen: null, error: '', local: {},
+            liveAnswered: 0, liveCorrect: 0, talliedQid: null, recorded: false };
+
+// Live→profile bridge: feed the portable identity once when the night ends.
+function recordIfEnded() {
+  if (!S.joined || S.recorded) return;
+  if (S.meta?.state !== 'ended' && S.pub?.phase !== 'ended') return;
+  S.recorded = true;
+  Identity.recordLiveGame(S.liveCorrect, S.liveAnswered);
+}
 let root = null, unsubs = [];
 
 export function openLive(code = '') {
@@ -40,12 +50,18 @@ async function join() {
   try {
     await FirebaseNet.liveJoin(code, team, { onError: (m) => { S.error = m; } });
     S.joined = true; S.joining = false;
+    S.liveAnswered = 0; S.liveCorrect = 0; S.talliedQid = null; S.recorded = false;
     try { localStorage.setItem('tidbits.live.code', code); localStorage.setItem('tidbits.live.team', team); } catch { /* private mode */ }
-    unsubs.push(FirebaseNet.liveOnMeta(code, (m) => { S.meta = m; draw(); }));
+    unsubs.push(FirebaseNet.liveOnMeta(code, (m) => { S.meta = m; recordIfEnded(); draw(); }));
     unsubs.push(FirebaseNet.liveOnScore(code, (v) => { S.score = v; draw(); }));
     unsubs.push(FirebaseNet.liveOnPub(code, (p) => {
       if (p && p.qid !== S.pub?.qid) { S.submittedQid = null; S.chosen = null; S.local = {}; }
-      S.pub = p; draw();
+      S.pub = p;
+      if (p && p.phase === 'reveal' && S.talliedQid !== p.qid) {   // tally MCQ accuracy at reveal
+        S.talliedQid = p.qid;
+        if (p.options && S.submittedQid === p.qid) { S.liveAnswered++; if (S.chosen === p.answerIndex) S.liveCorrect++; }
+      }
+      recordIfEnded(); draw();
     }));
     draw();
   } catch (e) {

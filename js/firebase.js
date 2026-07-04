@@ -37,6 +37,18 @@ export const FirebaseNet = {
   get uid() { return _uid; },
   available: true,
 
+  // Portable player identity (players/{uid}) — see js/identity.js.
+  async ensureUid() { await ensure(); return _uid; },
+  async loadProfile(uid) {
+    const { db } = await ensure();
+    const snap = await db.get(db.ref(_db, `players/${uid}`));
+    return snap.exists() ? snap.val() : null;
+  },
+  async saveProfile(uid, profile) {
+    const { db } = await ensure();
+    await db.set(db.ref(_db, `players/${uid}`), profile);
+  },
+
   // Quick Match: claim a waiting room via a transaction (first writer becomes
   // the joiner of an existing open room; otherwise create one and wait). Returns
   // { roomId, isLeader }.

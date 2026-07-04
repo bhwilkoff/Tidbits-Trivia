@@ -7,6 +7,7 @@ import { Scoring } from './engine.js';
 import { BOTS, houseBot, botById, VsMatch } from './bots.js';
 import { FirebaseNet } from './firebase.js';
 import { openLive, closeLive } from './live.js';
+import { Identity, avatarHue, initialsOf } from './identity.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const h = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -24,6 +25,8 @@ window.addEventListener('hashchange', render);
 
 async function boot() {
   renderLoading('Loading Tidbits…');
+  Identity.bootstrap();   // stable anon uid → portable profile (local-first)
+  Identity.onChange(() => { const t = location.hash; if (t.startsWith('#/profile') || t.startsWith('#/records')) render(); });
   try { await Corpus.load(); } catch (e) { /* live fallback still works */ }
   if (!location.hash) location.hash = '#/play';
   if (location.hash.startsWith('#/daily')) {
@@ -48,6 +51,10 @@ function render() {
   if (location.hash.startsWith('#/live')) { openLive(location.hash.split('/')[2] || ''); return; }
   closeLive(); // idempotent teardown when the hash leaves #/live
   if (game) return; // game overlay owns the screen
+  if (location.hash.startsWith('#/profile')) {
+    app.innerHTML = `<main class="main">${viewProfile()}</main>`;
+    bindProfile(); document.title = 'Tidbits Trivia'; return;
+  }
   const tab = currentTab();
   app.innerHTML = `
     ${header(tab)}
@@ -71,6 +78,33 @@ const ICON = {
   sun: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><circle cx="8" cy="8" r="3.2" fill="currentColor"/><g stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.4 1.4M11.6 11.6L13 13M13 3l-1.4 1.4M4.4 11.6L3 13"/></g></svg>',
   check: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M2.5 8.5l3.5 3.5 7.5-8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
 };
+
+// The portable Tidbits identity — the web twin of the iOS/Android profile screens.
+function viewProfile() {
+  const p = Identity.profile;
+  const back = `<button data-back style="background:none;border:none;font-weight:800;color:var(--color-accent);cursor:pointer;padding:8px 0;font-size:1rem">‹ Back</button>`;
+  if (!p) return `${back}<div class="card pad muted">Setting up your profile…</div>`;
+  const hue = avatarHue(p.avatarSeed), r = p.rating;
+  const acc = p.stats.questionsAnswered ? Math.round(p.stats.correct / p.stats.questionsAnswered * 100) : 0;
+  const line = (label, sub, val) => `<div class="card pad" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+    <div><div class="muted" style="font-weight:800;font-size:.8rem">${label}</div><div class="muted" style="font-size:.8rem">${sub}</div></div>
+    <div style="font-size:2.3rem;font-weight:900;font-variant-numeric:tabular-nums">${val}</div></div>`;
+  return `${back}
+    <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin:6px 0 18px">
+      <div style="width:88px;height:88px;border-radius:999px;background:hsl(${hue} 55% 72%);border:3px solid #231E1A;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:2rem;color:#231E1A">${h(initialsOf(p.name))}</div>
+      <button data-rename style="background:none;border:none;cursor:pointer;font-size:1.6rem;font-weight:900;color:#231E1A">${h(p.name)} <span style="font-size:1rem">✎</span></button>
+    </div>
+    ${line('TIDBITS RATING', r.provisional ? `Provisional · ${r.games}/15 games` : `${r.games} games rated`, Math.round(r.value))}
+    ${line('STREAK', `Longest ${p.streak.longest} · ${p.streak.freezes} freeze${p.streak.freezes === 1 ? '' : 's'}`, p.streak.current)}
+    <div class="stat-row">${statBox(p.stats.gamesPlayed, 'Games', '#8B5CF6')}${statBox(acc + '%', 'Accuracy', '#2D5BFF')}${statBox(p.stats.liveNights, 'Live nights', '#FF5C35')}${statBox(p.stats.venuesVisited, 'Venues', '#2FCB8A')}</div>`;
+}
+function bindProfile() {
+  app.querySelector('[data-back]')?.addEventListener('click', () => { if (history.length > 1) history.back(); else location.hash = '#/records'; });
+  app.querySelector('[data-rename]')?.addEventListener('click', () => {
+    const name = prompt('Display name — what other players and venues see:', Identity.profile?.name || '');
+    if (name != null) { Identity.rename(name); render(); }
+  });
+}
 
 function header(tab) {
   const tabBtn = (id, label, icon) => `<a class="tab ${tab === id ? 'active' : ''}" href="#/${id}">${icon}<span>${label}</span></a>`;
@@ -620,14 +654,24 @@ function settingsSection() {
     <label class="card row review-toggle"><span><b>Review questions</b><div class="muted">Re-ask questions you've missed, spaced out, so they stick. Off = only new questions.</div></span>
       <input type="checkbox" id="review-toggle" ${on ? 'checked' : ''}></label>`;
 }
+function profileCard() {
+  const p = Identity.profile;
+  const av = (hue, inner) => `<div style="width:44px;height:44px;border-radius:999px;background:hsl(${hue} 55% 72%);border:2.5px solid #231E1A;display:flex;align-items:center;justify-content:center;font-weight:900;color:#231E1A;flex:none">${inner}</div>`;
+  const body = p
+    ? `${av(avatarHue(p.avatarSeed), h(initialsOf(p.name)))}<div style="flex:1"><b>${h(p.name)}</b><div class="muted" style="font-size:.8rem">Rating ${Math.round(p.rating.value)} · ${p.streak.current}-day streak</div></div>`
+    : `${av(210, '')}<div style="flex:1"><b>Your Profile</b></div>`;
+  return `<a href="#/profile" class="card pad" style="display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;margin-bottom:14px">${body}<span class="chev">›</span></a>`;
+}
+
 function viewRecords() {
   const recs = Store.records();
-  if (!recs.length) return `<h1 class="page-title">Records</h1><div class="empty card pad"><p>No games yet.</p><p class="muted">Play a round and your scores, streaks, and facts to review show up here.</p></div>${settingsSection()}`;
+  if (!recs.length) return `<h1 class="page-title">Records</h1>${profileCard()}<div class="empty card pad"><p>No games yet.</p><p class="muted">Play a round and your scores, streaks, and facts to review show up here.</p></div>${settingsSection()}`;
   const lt = Store.lifetime(), st = Store.streak();
   const bests = Object.values(MODES).map((m) => ({ m, best: Store.bestScore(m.id) })).filter((x) => x.best > 0);
   const review = Store.reviewEnabled() ? Store.dueReview(8) : [];
   return `
     <h1 class="page-title">Records</h1>
+    ${profileCard()}
     <div class="banner card daily"><div><div class="muted">DAILY STREAK</div><div class="big">${st.current} days</div></div><div class="muted">best ${st.best} 🔥</div></div>
     <div class="stat-row">
       ${statBox(lt.games, 'Games', '#8B5CF6')}${statBox(lt.acc + '%', 'Accuracy', '#2D5BFF')}${statBox(lt.correct, 'Correct', '#2FCB8A')}
@@ -1125,6 +1169,7 @@ class Game {
       (this.dailyDay || dayKey()) === dayKey());
     Store.recordMisses(this.answered);
     Store.recordTelemetry(this.mode.id, this.answered);
+    Identity.recordGame(correct, this.answered.length);   // feed the portable identity
     if (this.mode.id === 'stake') Store.addCalibration(this.stakeOutcomes);
   }
   summary() {

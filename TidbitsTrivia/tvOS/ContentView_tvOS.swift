@@ -19,6 +19,8 @@ enum TVTheme {
 struct ContentView_tvOS: View {
     @Environment(AppStore.self) private var store
     @Environment(GameCenterManager.self) private var gameCenter
+    @Environment(PlayerIdentityStore.self) private var identity
+    private var dayStreak: Int { identity.profile?.streak.current ?? 0 }
     @State private var launch: LaunchRequest?
     @State private var nightLaunch: NightLaunchRequest?
     @State private var hostLaunch: NightLaunchRequest?
@@ -283,8 +285,8 @@ struct ContentView_tvOS: View {
                     .font(.system(size: 64, weight: .black))
                 VStack(alignment: .leading, spacing: 8) {
                     Text("DAILY TIDBIT").font(.system(size: 40, weight: .black, design: .rounded))
-                    Text(played.map { "Done for today — you scored \($0). Press to play previous days." }
-                         ?? "7 questions. Everyone gets the same set. Keep your streak.")
+                    Text(played.map { "Done for today — you scored \($0)." + (dayStreak >= 2 ? " 🔥 \(dayStreak)-day streak kept alive." : "") + " Press to play previous days." }
+                         ?? (dayStreak >= 2 ? "🔥 \(dayStreak)-day streak — play today's 7 to keep it going" : "7 questions. Everyone gets the same set. Start your streak."))
                         .font(.system(size: 29, weight: .medium, design: .rounded))
                         .foregroundStyle(.black.opacity(0.7))
                 }

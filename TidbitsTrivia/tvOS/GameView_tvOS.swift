@@ -639,6 +639,7 @@ struct TVAnswerStyle: ButtonStyle {
 
 struct TVResultsView: View {
     let summary: GameSummary
+    @Environment(PlayerIdentityStore.self) private var identity
     /// nil = replay not allowed (the Daily is play-once, R-DAILY-1).
     let onPlayAgain: (() -> Void)?
     let onDone: () -> Void
@@ -660,6 +661,17 @@ struct TVResultsView: View {
                     stat("\(summary.maxStreak)", "Best streak")
                 }
                 Text(grid).font(.system(size: 40))
+                if let st = identity.profile?.streak, st.current >= 1 {
+                    VStack(spacing: 6) {
+                        Text("🔥 \(st.current)").font(.system(size: 60, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.coral)
+                        Text(st.current > 1 && st.current == st.longest ? "day streak · your best ever!" : "day streak")
+                            .font(.system(size: 29, weight: .semibold, design: .rounded)).foregroundStyle(.white)
+                        if st.freezes > 0 {
+                            Text("🧊 \(st.freezes) freeze\(st.freezes == 1 ? "" : "s") banked")
+                                .font(.system(size: 25, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+                        }
+                    }
+                }
                 HStack(spacing: 30) {
                     if let onPlayAgain {
                         Button("Play Again", action: onPlayAgain)

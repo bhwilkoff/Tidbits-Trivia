@@ -9,6 +9,7 @@ struct ResultsView: View {
     /// nil = replay not allowed (the Daily is play-once, R-DAILY-1).
     let onPlayAgain: (() -> Void)?
     let onDone: () -> Void
+    @Environment(PlayerIdentityStore.self) private var identity
 
     var body: some View {
         ScrollView {
@@ -16,6 +17,7 @@ struct ResultsView: View {
                 scoreCard
                 statsRow
                 gridCard
+                streakMoment
                 if !summary.missed.isEmpty { recap }
                 buttons
             }
@@ -65,6 +67,25 @@ struct ResultsView: View {
     private var accuracyMeter: String {
         let filled = Int((summary.accuracy * 7).rounded())
         return String(repeating: "▰", count: filled) + String(repeating: "▱", count: 7 - filled)
+    }
+
+    /// L2: the cross-context day streak made visible — encouragement, never punishing
+    /// (no countdowns / "streak dies!" anxiety; freezes shown as reassurance).
+    @ViewBuilder private var streakMoment: some View {
+        if let st = identity.profile?.streak, st.current >= 1 {
+            VStack(spacing: 4) {
+                Text("🔥 \(st.current)").font(.system(size: 44, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.coral)
+                Text(st.current > 1 && st.current == st.longest ? "day streak · your best ever!" : "day streak")
+                    .font(Tidbits.TypeRamp.l4).foregroundStyle(Tidbits.Palette.ink)
+                if st.freezes > 0 {
+                    Text("🧊 \(st.freezes) freeze\(st.freezes == 1 ? "" : "s") banked — miss a day and this keeps your streak alive")
+                        .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft).multilineTextAlignment(.center)
+                }
+            }
+            .frame(maxWidth: .infinity).padding(.vertical, 16)
+            .chunkyCard(fill: Tidbits.Palette.coral.opacity(0.12))
+            .padding(.trailing, Tidbits.Metric.shadowOffset)
+        }
     }
 
     private var gridCard: some View {
@@ -140,7 +161,8 @@ struct ResultsView: View {
     private var shareText: String {
         let pct = Int(summary.accuracy * 100)
         let header = summary.mode == .daily ? "🧠 Tidbits Daily — \(QuestionProvider.dayKey())" : "🧠 Tidbits — \(summary.mode.title)"
-        let streak = summary.maxStreak >= 3 ? "\n🔥 Best run \(summary.maxStreak)" : ""
+        let day = identity.profile?.streak.current ?? 0
+        let streak = day >= 2 ? "\n🔥 \(day)-day streak" : (summary.maxStreak >= 3 ? "\n🔥 Best run \(summary.maxStreak)" : "")
         return "\(header)\n\(summary.score) pts · \(summary.correct)/\(summary.total)\n\(accuracyMeter) \(pct)%\n\(emojiGrid)\(streak)\nPlay at https://tidbitstrivia.com"
     }
 }

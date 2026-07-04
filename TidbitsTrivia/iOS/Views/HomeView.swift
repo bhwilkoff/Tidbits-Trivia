@@ -506,6 +506,8 @@ private struct DailyCard: View {
     /// state and the tap opens the Previous Tidbits archive (R-DAILY-1).
     let playedScore: Int?
     let action: () -> Void
+    @Environment(PlayerIdentityStore.self) private var identity
+    private var dayStreak: Int { identity.profile?.streak.current ?? 0 }
 
     var body: some View {
         Button(action: action) {
@@ -518,7 +520,7 @@ private struct DailyCard: View {
                         .font(Tidbits.TypeRamp.l2)
                         .foregroundStyle(Tidbits.Palette.ink)
                     if let playedScore {
-                        Text("Done for today — you scored \(playedScore). New set tomorrow.")
+                        Text("Done for today — you scored \(playedScore).\(dayStreak >= 2 ? " 🔥 \(dayStreak)-day streak kept alive." : "") New set tomorrow.")
                             .font(Tidbits.TypeRamp.l5)
                             .foregroundStyle(Tidbits.Palette.ink.opacity(0.75))
                             .multilineTextAlignment(.leading)
@@ -527,7 +529,7 @@ private struct DailyCard: View {
                             .foregroundStyle(Tidbits.Palette.ink)
                             .underline()
                     } else {
-                        Text("7 questions. Everyone gets the same set. Keep your streak.")
+                        Text(dayStreak >= 2 ? "🔥 \(dayStreak)-day streak — play today's 7 to keep it going" : "7 questions. Everyone gets the same set. Start your streak.")
                             .font(Tidbits.TypeRamp.l5)
                             .foregroundStyle(Tidbits.Palette.ink.opacity(0.75))
                             .multilineTextAlignment(.leading)

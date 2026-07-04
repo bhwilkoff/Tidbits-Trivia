@@ -782,6 +782,28 @@ One-line-per-round; full detail in `ARCHIVE.md`.
   cross-venue leaderboards (backend), show-mode boards (Phase C). NOT YET: macOS
   App Store submission plumbing (asc_profiles `mac` branch — its own scope). The
   Mac target is not yet on the release/TestFlight cloud path.
+- **2026-07-03 (unified host/join on ONE backend — Decision 044 — SHIPPED 1.6.18 all
+  platforms).** Owner architecture: Trivia Night + Tidbits Live share the RTDB
+  `live/{code}` backend; Night = casual, host from ANY platform (incl. web); Live =
+  Mac-only marquee. Built over a self-paced /loop in phases, each verified + committed:
+  **(P1)** Core shared host — `LiveHostNet` promoted to Core + `LiveNightHost`
+  coordinator (build night, publish pub, auto-score on reveal, pace) + iOS `NightHostView`
+  (**verified live**: opened room 45ZB against Firebase, real QR). **(host-plays)** an
+  "I'll play too" toggle (host runs it, or answers + is scored). **(P2)** tvOS
+  `TVNightHostView`, web (`js/firebase.js` host methods + `openNightHost`, "Host for
+  others"), Android (ZXing dep + `FirebaseNet.liveHost*` + `NightHostScreen`) — every
+  platform hosts. **(P3)** unified join drops the dead mDNS fallback (probe → join or
+  "no game found"); mDNS/Bonjour Night stack demoted to legacy (LiveNight kept only for
+  GameKit Quick Match); Decision 044 + PARITY + LIVE-ROOM-CONTRACT updated. Also fixed a
+  live iOS regression: NSBonjourServices declared the retired `_tidbits-buzz._tcp`.
+  **(P4 rejoin, owner ask)** Apple SSE streams self-reconnect on drop (LivePlayerClient +
+  LiveHostNet; Android/web SDKs already do) + one-tap restart rejoin via pre-filled
+  code+team (score intact via persistent anon uid). One QR everywhere:
+  `tidbitstrivia.com/live/CODE`. **Shipped 1.6.18/59/vc50:** iOS+tvOS→TestFlight,
+  macOS→ASC (both cloud builds green), Android→Play internal, web→Pages (SW v23). All
+  four Apple/Android build targets green throughout. **Owner gate:** the multi-device
+  live run (rules deployed). **Follow-up:** full HOST process-death resume. See memory
+  [[unified-live-backend]].
 - **2026-07-03 (Tidbits Live join — every platform + unified "Join a game").**
   *Session recovered after a mid-work crash* (git clean at d6c09c1 "native iOS join";
   memory `tidbits-live-networked-join` + the task list re-seeded the plan). *State

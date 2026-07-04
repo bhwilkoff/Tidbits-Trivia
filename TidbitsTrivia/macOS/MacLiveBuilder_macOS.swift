@@ -122,6 +122,10 @@ struct LiveBuilderView_macOS: View {
                 Text(round.title).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
                 Text("\(round.format.title) · \(TriviaCategory.named(round.categoryID).name) · \(round.questions.count) questions")
                     .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                TextField("Host note (shown in the cockpit)", text: Binding(   // Wave A
+                    get: { working.rounds[i].hostNote ?? "" },
+                    set: { working.rounds[i].hostNote = $0.isEmpty ? nil : $0 }))
+                    .textFieldStyle(.roundedBorder).font(Tidbits.TypeRamp.l5).frame(maxWidth: 360)
             }
             Spacer()
             Menu {   // Wave A: per-round countdown

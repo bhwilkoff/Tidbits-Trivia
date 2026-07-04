@@ -45,6 +45,11 @@ final class LiveHostSession {
         let ri = current?.roundIndex ?? 0
         return event.rounds.indices.contains(ri) ? event.rounds[ri].title : ""
     }
+    /// Wave A: the host's prep note for the current round (cockpit-only; never published).
+    var currentRoundNote: String? {
+        let ri = current?.roundIndex ?? 0
+        return event.rounds.indices.contains(ri) ? event.rounds[ri].hostNote : nil
+    }
     var questionInRound: (n: Int, of: Int) {
         let ri = current?.roundIndex ?? 0
         let inRound = questions.enumerated().filter { $0.element.roundIndex == ri }
@@ -249,6 +254,13 @@ struct LiveHostView_macOS: View {
                 Text("Question \(inR.n) of \(inR.of)").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
                 Text(q.prompt).font(.system(size: 30, weight: .bold, design: .rounded))
                     .foregroundStyle(Tidbits.Palette.ink).fixedSize(horizontal: false, vertical: true)
+                if let note = session.currentRoundNote, !note.isEmpty {   // Wave A: host prep note (cockpit only)
+                    HStack(alignment: .top, spacing: 6) {
+                        Image(systemName: "note.text").foregroundStyle(Tidbits.Palette.blue)
+                        Text(note).font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.blue).fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(8).background(RoundedRectangle(cornerRadius: 8).fill(Tidbits.Palette.blue.opacity(0.12)))
+                }
                 if session.revealed {
                     HStack(spacing: 8) {
                         Image(systemName: "checkmark.circle.fill").foregroundStyle(Tidbits.Palette.mint)

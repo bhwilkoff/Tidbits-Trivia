@@ -1,5 +1,6 @@
 #if os(macOS)
 import SwiftUI
+import UniformTypeIdentifiers
 
 /// Tidbits Live — the event builder (macOS-DESIGN Part A §A2). Left: the host's
 /// saved events. Right: the round editor. An event is an ordered list of named
@@ -95,6 +96,8 @@ struct LiveBuilderView_macOS: View {
                     Button("Host live →") { store.upsert(working); onHost(working) }
                         .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.coral, textColor: .white))
                         .disabled(working.totalQuestions == 0)
+                    Button("Import CSV…") { importCSV() }   // Wave A: bulk-author a round
+                        .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.ink))
                     Spacer()
                     Menu {
                         Button("Question pack (host)") { LivePrint.questionPack(working) }
@@ -203,6 +206,51 @@ struct LiveBuilderView_macOS: View {
         if easy > total * 2 / 3 { return "Mostly easy — add a couple of stumpers for the ringers." }
         if let top = byCat.first, top.value > total / 2 { return "\(top.key.capitalized) dominates — mix in other categories for range." }
         return nil
+    }
+
+    /// Wave A: CSV import — bulk-author a round from a host's question bank.
+    /// Columns: prompt, correct, wrong1, wrong2, wrong3, [category], [difficulty 1-5], [explanation].
+    private func importCSV() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.commaSeparatedText, .plainText, .text]
+        panel.allowsMultipleSelection = false
+        guard panel.runModal() == .OK, let url = panel.url,
+              let text = try? String(contentsOf: url, encoding: .utf8) else { return }
+        let qs = Self.parseCSVQuestions(text)
+        guard !qs.isEmpty else { return }
+        working.rounds.append(LiveRound(title: "Imported round", format: .classic, categoryID: "mixed", questions: qs))
+    }
+
+    static func parseCSVQuestions(_ text: String) -> [Question] {
+        var out: [Question] = []
+        for raw in text.split(whereSeparator: \.isNewline) {
+            let f = splitCSVLine(String(raw))
+            guard f.count >= 5, !f[0].isEmpty, !f[1].isEmpty else { continue }
+            if ["prompt", "question"].contains(f[0].lowercased()) { continue }   // header row
+            var opts = [f[1], f[2], f[3], f[4]].filter { !$0.isEmpty }
+            while opts.count < 4 { opts.append("—") }
+            opts = Array(opts.prefix(4)).shuffled()
+            let ci = opts.firstIndex(of: f[1]) ?? 0
+            let cat = (f.count > 5 && !f[5].isEmpty) ? f[5].lowercased() : "mixed"
+            let diff = min(5, max(1, f.count > 6 ? (Int(f[6]) ?? 3) : 3))
+            let expl = f.count > 7 ? f[7] : ""
+            out.append(Question(id: UUID().uuidString, prompt: f[0], options: opts, correctIndex: ci,
+                                categoryID: cat, difficulty: diff, explanation: expl,
+                                sourceTitle: "", sourceURL: nil, templateID: "csv"))
+        }
+        return out
+    }
+
+    /// Minimal quote-aware CSV line split (handles "commas, in fields").
+    static func splitCSVLine(_ line: String) -> [String] {
+        var fields: [String] = []; var cur = ""; var inQuotes = false
+        for ch in line {
+            if ch == "\"" { inQuotes.toggle() }
+            else if ch == ",", !inQuotes { fields.append(cur.trimmingCharacters(in: .whitespaces)); cur = "" }
+            else { cur.append(ch) }
+        }
+        fields.append(cur.trimmingCharacters(in: .whitespaces))
+        return fields
     }
 
     private func newEvent() {

@@ -448,7 +448,7 @@ class GameState(
         phase = GamePhase.FINISHED
         if (!recorded) {
             recorded = true
-            if (mode == Mode.DAILY) store.recordDaily(dailyDay ?: dayKey(), score)
+            if (mode == Mode.DAILY) { val dk = dailyDay ?: dayKey(); store.recordDaily(dk, score); com.learningischange.tidbitstrivia.data.PlayerIdentity.syncDailyScore(dk, score) }
             // Only TODAY'S daily feeds the streak — archive catch-ups don't (R-DAILY-1).
             val details = answered.map { Store.AnswerDetail(it.q.id, it.q.prompt, it.q.categoryId, it.correct, it.q.answerText) }
             store.addRecord(Store.Rec(mode.name, category.id, score, correctCount, answered.size, maxStreak, dayKey(), answers = details),

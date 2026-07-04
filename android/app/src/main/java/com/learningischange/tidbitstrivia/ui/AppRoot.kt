@@ -90,6 +90,12 @@ fun AppRoot(
     // NSD discovery needs NEARBY_WIFI_DEVICES on Android 13+; request on Host/Join.
     val nearbyPerm = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
     fun ensureNearby() { if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) nearbyPerm.launch(android.Manifest.permission.NEARBY_WIFI_DEVICES) }
+    // (L2) Sync the daily log whenever signed in — pull the cross-device union (and push
+    // any local anon plays so nothing is lost). Fires on boot-when-signed-in and on sign-in.
+    LaunchedEffect(com.learningischange.tidbitstrivia.data.PlayerIdentity.signedIn) {
+        if (com.learningischange.tidbitstrivia.data.PlayerIdentity.signedIn)
+            com.learningischange.tidbitstrivia.data.PlayerIdentity.syncDailyLog(store, pushLocal = true)
+    }
     LaunchedEffect(Unit) {
         com.learningischange.tidbitstrivia.data.PlayerIdentity.bootstrap()   // stable uid → portable profile
         if (!Corpus.loaded) runCatching { Corpus.load(context) }
@@ -269,7 +275,7 @@ private fun HomeScreen(
         }
 
         // Daily — play-once (R-DAILY-1): locked once done; tap then opens the archive.
-        val todayScore = store.dailyScore(dayKey())
+        val todayScore = run { com.learningischange.tidbitstrivia.data.PlayerIdentity.dailyLogRev; store.dailyScore(dayKey()) }
         ChunkyCard(fill = Pops.yellow, onClick = {
             if (todayScore != null) showDailyArchive = true else onPlay(Mode.DAILY, Category.byId("mixed"))
         }) {

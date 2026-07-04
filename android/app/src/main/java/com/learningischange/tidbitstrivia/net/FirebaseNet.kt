@@ -81,6 +81,17 @@ object FirebaseNet {
         db.getReference("emailOwners/$accountKey").setValue(email).await()
     }
 
+    /** Synced daily log (dayKey → score) — so "done today" + the archive follow the identity. */
+    suspend fun setDailyScore(key: String, day: String, score: Int) {
+        db.getReference("dailyLog/$key/$day").setValue(score).await()
+    }
+    suspend fun loadDailyLog(key: String): Map<String, Int> {
+        val snap = db.getReference("dailyLog/$key").get().await()
+        val out = HashMap<String, Int>()
+        for (child in snap.children) child.getValue(Int::class.java)?.let { out[child.key!!] = it }
+        return out
+    }
+
     /** (B) Live NAME sync — a remote name change on players/{key} fires cb. Returns an
      *  unsubscribe fn. Name-only so a game in progress elsewhere can't revert local stats. */
     fun observeName(key: String, cb: (String?) -> Unit): () -> Unit {

@@ -34,6 +34,8 @@ object PlayerIdentity {
     /// True once promoted from anonymous via a federated sign-in (records roam + survive
     /// session loss). The Firebase SDK persists the session, so this is authoritative.
     var signedIn: Boolean by mutableStateOf(false); private set
+    /// Bumped after the daily log syncs, so the daily card/lock recompose off the fresh data.
+    var dailyLogRev: Int by mutableStateOf(0); private set
 
     /** Ensure identity: stable anon uid → load/create players/{uid}. Local-first: shows a
      *  profile immediately, persists best-effort (works offline / before rules deploy). */
@@ -138,6 +140,24 @@ object PlayerIdentity {
             val p = profile
             if (name != null && p != null && name != p.name) profile = p.copy(name = name)
         }
+    }
+
+    /** (L2) Daily log sync — when signed in, a daily completion also lands in dailyLog/{key}
+     *  so "done today" + the archive follow the identity across devices. */
+    fun syncDailyScore(day: String, score: Int) {
+        if (!signedIn) return
+        val key = profileId ?: return
+        scope.launch { runCatching { FirebaseNet.setDailyScore(key, day, score) } }
+    }
+    /** Reconcile the local daily log with the synced one. On sign-in, push local (anon)
+     *  plays first so nothing is lost; then pull the union into the local store. */
+    suspend fun syncDailyLog(store: Store, pushLocal: Boolean = false) {
+        if (!signedIn) return
+        val key = profileId ?: return
+        if (pushLocal) store.allDaily().forEach { (day, score) -> runCatching { FirebaseNet.setDailyScore(key, day, score) } }
+        val remote = runCatching { FirebaseNet.loadDailyLog(key) }.getOrNull() ?: return
+        remote.forEach { (day, score) -> store.recordDaily(day, score) }
+        dailyLogRev++   // trigger recomposition of the daily card/lock
     }
 
     /** Stable, non-reversible profile key from the verified email — mirror of JS/Swift. */

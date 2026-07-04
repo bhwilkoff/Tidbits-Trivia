@@ -990,6 +990,11 @@ class Store(context: Context) {
         val o = JSONObject(prefs.getString("daily_results", "{}") ?: "{}")
         return if (o.has(day)) o.getInt(day) else null
     }
+    /** The whole local map (dayKey → score) — for pushing anon plays to the synced log. */
+    fun allDaily(): Map<String, Int> {
+        val o = JSONObject(prefs.getString("daily_results", "{}") ?: "{}")
+        return o.keys().asSequence().associateWith { o.getInt(it) }
+    }
     fun recordDaily(day: String, score: Int) {
         val o = JSONObject(prefs.getString("daily_results", "{}") ?: "{}")
         if (o.has(day)) return

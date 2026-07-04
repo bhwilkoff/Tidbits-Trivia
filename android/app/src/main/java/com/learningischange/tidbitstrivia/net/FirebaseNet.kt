@@ -36,6 +36,36 @@ object FirebaseNet {
         return u
     }
 
+    // ---- Portable player identity (players/{uid}) — see PlayerIdentity.kt ----
+
+    suspend fun loadProfile(uid: String): com.learningischange.tidbitstrivia.data.PlayerIdentity.Profile? {
+        val s = db.getReference("players/$uid").get().await()
+        if (!s.exists()) return null
+        fun i(c: com.google.firebase.database.DataSnapshot, k: String) = c.child(k).getValue(Long::class.java)?.toInt() ?: 0
+        val r = s.child("rating"); val st = s.child("streak"); val stat = s.child("stats")
+        return com.learningischange.tidbitstrivia.data.PlayerIdentity.Profile(
+            name = s.child("name").getValue(String::class.java) ?: "",
+            createdAt = s.child("createdAt").getValue(Long::class.java) ?: 0L,
+            avatarSeed = s.child("avatarSeed").getValue(String::class.java) ?: "",
+            rating = com.learningischange.tidbitstrivia.data.PlayerIdentity.Rating(
+                r.child("value").getValue(Double::class.java) ?: 1000.0, i(r, "games"),
+                r.child("provisional").getValue(Boolean::class.java) ?: true),
+            streak = com.learningischange.tidbitstrivia.data.PlayerIdentity.Streak(
+                i(st, "current"), i(st, "longest"),
+                st.child("lastPlayedDay").getValue(String::class.java) ?: "", i(st, "freezes")),
+            stats = com.learningischange.tidbitstrivia.data.PlayerIdentity.Stats(
+                i(stat, "gamesPlayed"), i(stat, "questionsAnswered"), i(stat, "correct"),
+                i(stat, "liveNights"), i(stat, "venuesVisited")))
+    }
+
+    suspend fun saveProfile(uid: String, p: com.learningischange.tidbitstrivia.data.PlayerIdentity.Profile) {
+        db.getReference("players/$uid").setValue(mapOf(
+            "name" to p.name, "createdAt" to p.createdAt, "avatarSeed" to p.avatarSeed,
+            "rating" to mapOf("value" to p.rating.value, "games" to p.rating.games, "provisional" to p.rating.provisional),
+            "streak" to mapOf("current" to p.streak.current, "longest" to p.streak.longest, "lastPlayedDay" to p.streak.lastPlayedDay, "freezes" to p.streak.freezes),
+            "stats" to mapOf("gamesPlayed" to p.stats.gamesPlayed, "questionsAnswered" to p.stats.questionsAnswered, "correct" to p.stats.correct, "liveNights" to p.stats.liveNights, "venuesVisited" to p.stats.venuesVisited))).await()
+    }
+
     data class Match(val roomId: String, val isLeader: Boolean)
 
     /** Claim an open room from the queue, else create + advertise one. */

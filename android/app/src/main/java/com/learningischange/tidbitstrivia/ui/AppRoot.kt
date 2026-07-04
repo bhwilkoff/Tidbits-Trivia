@@ -89,6 +89,7 @@ fun AppRoot(
     val nearbyPerm = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
     fun ensureNearby() { if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) nearbyPerm.launch(android.Manifest.permission.NEARBY_WIFI_DEVICES) }
     LaunchedEffect(Unit) {
+        com.learningischange.tidbitstrivia.data.PlayerIdentity.bootstrap()   // stable uid → portable profile
         if (!Corpus.loaded) runCatching { Corpus.load(context) }
         if (!Pictures.loaded) runCatching { Pictures.load(context) }
         if (!ThisOrThat.loaded) runCatching { ThisOrThat.load(context) }

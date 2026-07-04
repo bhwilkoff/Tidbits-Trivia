@@ -130,6 +130,58 @@ export const FirebaseNet = {
     const { ref, remove } = _fns.db;
     try { await remove(ref(_db, `live/${code}/teams/${_uid}`)); } catch { /* best effort */ }
   },
+
+  // --- HOST side (this device opens live/{code} and owns meta/pub/scores) ---
+  // The web can now HOST a casual Trivia Night on the same backend as Tidbits
+  // Live (owner architecture). Mirrors LiveNightHost (Swift) + FirebaseNet
+  // (Android). The rich Tidbits Live host stays macOS-only.
+  async liveHostOpen(name, { onError } = {}) {
+    try {
+      const { db } = await ensure();
+      const code = newCode();
+      await db.set(db.ref(_db, `live/${code}/meta`),
+        { host: _uid, createdAt: Date.now(), name: name || 'Trivia Night', venue: '', state: 'lobby' });
+      return { code, uid: _uid };
+    } catch (e) { onError && onError(authHint(e)); throw e; }
+  },
+  async livePublish(code, pub) {
+    const { db } = await ensure();
+    await db.set(db.ref(_db, `live/${code}/pub`), pub);
+  },
+  async liveSetState(code, state) {
+    const { db } = await ensure();
+    await db.update(db.ref(_db, `live/${code}/meta`), { state });
+  },
+  async liveSetScore(code, uid, score) {
+    const { db } = await ensure();
+    await db.set(db.ref(_db, `live/${code}/scores/${uid}`), Math.max(0, score | 0));
+  },
+  liveOnTeams(code, cb) {
+    const { ref, onValue } = _fns.db;
+    return onValue(ref(_db, `live/${code}/teams`), (s) => cb(s.val() || {}));
+  },
+  liveOnScores(code, cb) {
+    const { ref, onValue } = _fns.db;
+    return onValue(ref(_db, `live/${code}/scores`), (s) => cb(s.val() || {}));
+  },
+  liveOnAnswers(code, qid, cb) {
+    const { ref, onValue } = _fns.db;
+    return onValue(ref(_db, `live/${code}/answers/${qid}`), (s) => cb(s.val() || {}));
+  },
+  // Host-plays-too: the host registers as a team + answers under its own uid.
+  async liveHostJoinAsTeam(code, name) {
+    const { db } = await ensure();
+    await db.set(db.ref(_db, `live/${code}/teams/${_uid}`), { name: name || 'Host', joinedAt: Date.now() });
+  },
+  async liveHostAnswer(code, qid, choice) {
+    const { db } = await ensure();
+    await db.set(db.ref(_db, `live/${code}/answers/${qid}/${_uid}`), { choice, ts: Date.now() });
+  },
+  async liveClose(code) {
+    if (!_fns) return;
+    const { ref, remove } = _fns.db;
+    try { await remove(ref(_db, `live/${code}`)); } catch { /* best effort */ }
+  },
 };
 
 function authHint(e) {

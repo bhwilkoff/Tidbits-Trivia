@@ -66,6 +66,7 @@ sealed interface Route {
     data class LiveRoom(val code: String, val name: String) : Route
     data class LiveHost(val rounds: List<Pair<String, Int>>, val category: Category) : Route
     data object Settings : Route
+    data object Profile : Route
     data object Party : Route
 }
 
@@ -174,7 +175,8 @@ fun AppRoot(
                     is Route.Game -> GameScreen(r, store) { backStack.removeAt(backStack.lastIndex) }
                     is Route.Versus -> VersusScreen(r.botId, store) { backStack.removeAt(backStack.lastIndex) }
                     is Route.OnlineMatch -> OnlineMatchScreen(store) { backStack.removeAt(backStack.lastIndex) }
-                    is Route.Settings -> SettingsScreen(store, dynamicColor, onDynamicColor)
+                    is Route.Settings -> SettingsScreen(store, dynamicColor, onDynamicColor, onProfile = { backStack.add(Route.Profile) })
+                    is Route.Profile -> ProfileScreen(onBack = { backStack.removeLastOrNull() })
                     is Route.Party -> PartyContainer(store) { backStack.removeAt(backStack.lastIndex) }
                 }
             }

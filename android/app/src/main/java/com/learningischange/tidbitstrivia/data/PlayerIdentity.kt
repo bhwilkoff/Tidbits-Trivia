@@ -64,6 +64,23 @@ object PlayerIdentity {
         scope.launch { runCatching { FirebaseNet.saveProfile(uid, np) } }
     }
 
+    /** A finished LIVE game — advances the cross-context streak (a live night, +freeze),
+     *  counts the night, nudges the rating from MCQ accuracy when available. */
+    fun recordLiveGame(correct: Int, answered: Int) {
+        val p = profile ?: return; val uid = profileId ?: return
+        val rating = if (answered > 0) updatedRating(p.rating, correct.toDouble() / answered, 1.5) else p.rating
+        val np = p.copy(
+            rating = rating,
+            streak = playedStreak(p.streak, today(), true),
+            stats = p.stats.copy(
+                gamesPlayed = p.stats.gamesPlayed + 1,
+                questionsAnswered = p.stats.questionsAnswered + (if (answered > 0) answered else 0),
+                correct = p.stats.correct + (if (answered > 0) correct else 0),
+                liveNights = p.stats.liveNights + 1))
+        profile = np
+        scope.launch { runCatching { FirebaseNet.saveProfile(uid, np) } }
+    }
+
     fun rename(name: String) {
         val p = profile ?: return; val uid = profileId ?: return
         val t = name.trim().take(24); if (t.isEmpty()) return

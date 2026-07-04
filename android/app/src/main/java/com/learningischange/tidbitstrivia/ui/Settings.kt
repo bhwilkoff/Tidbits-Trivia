@@ -25,7 +25,7 @@ import com.learningischange.tidbitstrivia.ui.theme.Pops
 // Full Settings (parity with iOS SettingsView): feedback / gameplay /
 // appearance / data / about. Reached from the Home gear.
 @Composable
-fun SettingsScreen(store: Store, dynamicColor: Boolean, onDynamicColor: (Boolean) -> Unit) {
+fun SettingsScreen(store: Store, dynamicColor: Boolean, onDynamicColor: (Boolean) -> Unit, onProfile: () -> Unit = {}) {
     val context = LocalContext.current
     var haptics by remember { mutableStateOf(store.hapticsEnabled()) }
     var review by remember { mutableStateOf(store.reviewEnabled()) }
@@ -38,6 +38,11 @@ fun SettingsScreen(store: Store, dynamicColor: Boolean, onDynamicColor: (Boolean
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Text("Settings", fontSize = 30.sp, fontWeight = FontWeight.Black)
+
+        val profile = com.learningischange.tidbitstrivia.data.PlayerIdentity.profile
+        ActionRow(profile?.name ?: "Your Profile",
+            profile?.let { "Rating ${it.rating.value.toInt()} · ${it.streak.current}-day streak · tap to view" }
+                ?: "Your portable Tidbits identity") { onProfile() }
 
         Section("Feedback")
         ToggleRow("Haptics", "Buzz on correct and wrong answers.", haptics) { haptics = it; store.setHapticsEnabled(it) }

@@ -36,6 +36,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -109,6 +110,28 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
     val soft = ink.copy(alpha = 0.6f)
     val p = pub
     val ended = meta?.state == "ended" || p?.phase == "ended"
+
+    // Live→profile bridge: tally MCQ accuracy, feed the portable profile once at the end.
+    var liveAnswered by remember { mutableStateOf(0) }
+    var liveCorrect by remember { mutableStateOf(0) }
+    var talliedQid by remember { mutableStateOf<String?>(null) }
+    var recordedEnd by remember { mutableStateOf(false) }
+    LaunchedEffect(p?.qid, p?.phase) {
+        val pub = p ?: return@LaunchedEffect
+        if (pub.phase == "reveal" && talliedQid != pub.qid) {
+            talliedQid = pub.qid
+            if (pub.options != null && submittedQid == pub.qid) {
+                liveAnswered++
+                if (chosen == pub.answerIndex) liveCorrect++
+            }
+        }
+    }
+    LaunchedEffect(ended) {
+        if (ended && joined && !recordedEnd) {
+            recordedEnd = true
+            com.learningischange.tidbitstrivia.data.PlayerIdentity.recordLiveGame(liveCorrect, liveAnswered)
+        }
+    }
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp)) {
         if (joined) {

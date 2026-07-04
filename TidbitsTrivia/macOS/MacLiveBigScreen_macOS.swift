@@ -106,7 +106,10 @@ struct LiveBigScreen_macOS: View {
                         .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
                         .id(q.id)
                         .transition(.opacity.combined(with: .move(edge: .top)))
-                    if s.revealed {
+                    let hasVotes = !(coordinator.net?.answers.isEmpty ?? true)
+                    if LiveNightHost.isMCQ(q), hasVotes || s.revealed {
+                        voteTally(q, revealed: s.revealed)   // A8: the room watches the votes land
+                    } else if s.revealed {
                         Text(q.correctAnswer)
                             .font(.system(size: 52, weight: .black, design: .rounded)).foregroundStyle(.white)
                             .padding(.horizontal, 28).padding(.vertical, 14)
@@ -116,7 +119,7 @@ struct LiveBigScreen_macOS: View {
                             .padding(.top, 12)
                             .transition(.scale(scale: 0.55).combined(with: .opacity))   // A8.1 the reveal is theatre
                     } else {
-                        Text("Answers on your team sheet").font(.system(size: 26, weight: .semibold, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
+                        Text("Answer on your phones").font(.system(size: 26, weight: .semibold, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
                     }
                 }
             }
@@ -132,6 +135,36 @@ struct LiveBigScreen_macOS: View {
             }
         }
         .padding(48)
+    }
+
+    /// A8/poll: live vote distribution — bars grow as answers land; the correct
+    /// option lights mint on reveal. The "how did the room vote" show moment.
+    private func voteTally(_ q: Question, revealed: Bool) -> some View {
+        let answers = coordinator.net?.answers ?? [:]
+        let counts = q.options.indices.map { i in answers.values.filter { $0.choice == i }.count }
+        let total = max(counts.reduce(0, +), 1)
+        return VStack(spacing: 10) {
+            ForEach(Array(q.options.enumerated()), id: \.offset) { i, opt in
+                let n = counts[i]
+                let correct = revealed && i == q.correctIndex
+                HStack(spacing: 14) {
+                    Text(opt).font(.system(size: 26, weight: .heavy, design: .rounded))
+                        .foregroundStyle(correct ? Tidbits.Palette.mint : Tidbits.Palette.ink)
+                        .frame(width: 300, alignment: .leading).lineLimit(1)
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
+                            Capsule().fill(Tidbits.Palette.surface)
+                            Capsule().fill(correct ? Tidbits.Palette.mint : Tidbits.Palette.blue.opacity(revealed ? 0.35 : 0.7))
+                                .frame(width: max(10, geo.size.width * CGFloat(n) / CGFloat(total)))
+                        }
+                    }.frame(height: 30)
+                    Text("\(n)").font(.system(size: 26, weight: .black, design: .rounded).monospacedDigit())
+                        .foregroundStyle(Tidbits.Palette.ink).frame(width: 52)
+                }
+            }
+        }
+        .frame(maxWidth: 900)
+        .animation(showAnim, value: counts)
     }
 
     private func leaderboard(_ s: LiveHostSession) -> some View {

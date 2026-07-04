@@ -266,6 +266,124 @@ is a first-class format to design *for*, not a legacy fallback.
 
 ---
 
+## L. Consumer game & the portable identity (the "take-it-with-you" surface)
+
+Researched 2026-07-04 (consumer trivia landscape + portable-identity analogs). The
+decisive finding, from the QuizUp & HQ Trivia post-mortems: **engagement ≠ retention in
+trivia** — every loser had huge engagement and no durable retention. The fix the winners
+(Duolingo, LearnedLeague, Trivia Crack) found is **layered progression that persists**.
+So: *build the persistent identity/progression layer before any content-volume race.*
+The unique wedge — nobody fuses a consumer game + event platform under one identity — is
+mechanistically justified by Peloton's data: **friend-connected users churn at ~half the
+rate, and the live event is the only surface that manufactures real friends.**
+
+### L1 — The identity spine (build this first)
+
+| Feature | What it does | Signal | Status |
+|---|---|---|---|
+| **Portable player identity** | One profile (anon-first, claim-later) carries everything across solo + live, every device | TS (the spine) | 🔨 (per-ecosystem sync exists; no unified profile) |
+| **Tidbits Rating (Elo-style)** | A single skill number updated by *every* game — solo and live; live weighted higher (real opponents). Provisional → established (~10–26 games) | D (chess Elo / LearnedLeague — strongest retention of any model) | ⬜ |
+| **Two-track progression** | Separate **skill** (rating) from **loyalty/consistency** (nights, streaks, venues) so both the ringer and the regular have something to chase | D (Peloton Club) | ⬜ |
+| **Anonymous-join → claim flow** | Stranger plays via QR/code in seconds; "claim your score — you placed 4th of 22" upgrades the session onto a real profile | TS | 🔨 (join exists; no claim) |
+
+### L2 — Daily-habit loop (retention backbone; cheap to build)
+
+| Feature | What it does | Signal | Status |
+|---|---|---|---|
+| Daily challenge | One shared daily set, same for everyone (Wordle/Daily Dose) | TS | ✅ (Daily Tidbit) |
+| **Cross-context streak** | One streak kept alive by a solo game **OR** a live night — makes the sparse event and daily solo *the same habit* | D (the bridge) | 🔨 (solo streak exists; not cross-context) |
+| **Forgiving streak-protection** | Freeze/repair, restartable, "attending a live night auto-protects your streak" — *never* punishing (punishing streaks tank reviews) | D | ⬜ |
+| Spoiler-free shareable result | Wordle-grid-style share of the daily/live result — recruits without requiring the recipient to have played | D | ⬜ |
+
+### L3 — Progression, leagues & seasons
+
+| Feature | What it does | Signal | Status |
+|---|---|---|---|
+| XP / levels | XP on every action; levels unlock harder content | D | 🔨 |
+| **Leagues / divisions** | Weekly promotion/relegation cohort (Duolingo lifted completion +25%) | D | ⬜ |
+| **Seasons** | Periodic reset → fresh competitive start → re-engagement spike | D | ⬜ |
+| Personal records & deep stats | Longest streak, avg accuracy, best category, lifetime totals (a Sporcle-Orange-style "deep stats" surface people pay for) | D | 🔨 (Records exists) |
+
+### L4 — Collection & cosmetics (monetization-safe, non-skill-gated)
+
+| Feature | What it does | Signal | Status |
+|---|---|---|---|
+| **Levelable badges** | Achievement badges that grind to higher tiers (Sporcle/Untappd), incl. venue-attendance badges | D | 🔨 |
+| Collection layer | Trivia Crack's mascots/cards — "fun to accumulate," not skill-gated | D | ⬜ |
+| Avatars / cosmetics | Optional self-expression (loved, no pay-to-win grievance) | P (safe premium) | ⬜ |
+| Themed / topic packs | More content you *want* (never a gate on core content) | P (safe premium) | 🔨 (corpus/topics exist) |
+
+### L5 — Social (the friend-manufacturing engine)
+
+| Feature | What it does | Signal | Status |
+|---|---|---|---|
+| **Async friend duels** | Challenge-a-friend turn-based (Trivia Crack's viral core loop) | D | ⬜ |
+| **Persistent teams (solo ↔ live)** | The pub team is the natural social unit; carry it across solo + live | D | 🔨 (live teams only) |
+| **"Add the people you played with"** | After a live night, connect the teammates/rivals you actually met (the churn-halving move) | D (the strategic payload) | ⬜ |
+| Friends vs. global leaderboards | See friends' progress beside global | D | 🔨 |
+| "How did you know that?" prompt | After a hard answer, invite the story — turns results into conversation (Water Cooler Trivia) | D (charter-aligned) | ⬜ |
+
+### L6 — The solo ↔ live bridge & place graph (the moat)
+
+| Feature | What it does | Signal | Status |
+|---|---|---|---|
+| **Both contexts feed the same numbers** | Solo and live update the *same* rating & streak — non-negotiable core of "one identity" | TS (the bridge) | ⬜ |
+| **Per-venue standings** | "You're #3 at O'Malley's, #12 in the city" — Strava segments for trivia; nested venue→city→global so everyone has a winnable arena | D | ⬜ 💲 |
+| **Defendable venue titles** | "House Champion" (top score — a KOM you can *lose*, loss-aversion return pressure) + "Regular / Local Legend" (most nights — Swarm mayorship) | D | ⬜ 💲 |
+| **Venue attendance tiers/badges** | Newcomer → Regular → House Fixture, leveling (Untappd), optional venue perk | D | ⬜ 💲 |
+| **Event history feed** | Each live night a permanent dated card (venue, rank, score, a standout question) — MLB "Fan History" | D | ⬜ 💲 |
+| **"Trivia tourism"** | Venues-visited collection → "played 4 venues, play a 5th for Explorer" (parkrun) | D | ⬜ 💲 |
+
+*(💲 = rides the $0 data plane in §M.)*
+
+### L7 — Monetization-safe design rules (so a paywall is *possible* later, without resentment)
+
+- **Design the loved primitives in, the resented ones out.** Resentment gradient (loved→hated): cosmetics ≈ themed packs > remove-ads > earnable hints > soft currency > hard-currency collection > **energy/lives walls**.
+- **Never architect an energy/lives wall into the core loop** — most resented, hardest to remove later. Keep the core game free and unlimited.
+- **The safe premium surfaces** (whenever you decide): remove-ads, cosmetics, themed packs, a **deep-stats/status tier** (Sporcle Orange proves people pay for stats+badges alone).
+- **Monetize the host/organizer, not per-player nickel-and-diming** (Kahoot/Water Cooler model) — the person running the pub night is the natural payer; players play free.
+- **Live events must never be the *only* loop or a cost center** (HQ/QuizUp died this way). Live sits *on top of* the daily solo habit and *feeds* the identity.
+
+---
+
+## M. The $0 data plane (architecture for the identity + moat — no ongoing cost)
+
+Researched 2026-07-04. The moat features (§L6, §I, §K) need shared state — and it can run
+at **genuine $0 ongoing** on infrastructure the app already has. The governing rule and
+the design that enforces it:
+
+**The one rule that makes "$0, never bills" enforceable:** *a credit card is the billing
+switch.* No card on file → metered billing is **physically impossible**. Firebase Spark
+shuts the product off at the cap; Cloudflare Free hard-errors; GitHub Pages soft-limits.
+Card-free tiers are **walls, not meters**. **Policy: no payment method on any Tidbits
+infra account, ever.**
+
+**Two-plane design.** A tiny **live/write plane** (Firebase RTDB Spark — already built,
+card-free, blocks at cap) for real-time rooms + small per-user writes, and a
+**static/aggregate plane** (**GitHub Actions cron → static JSON on GitHub Pages** — the
+exact model the repo already uses for its question corpus) for everything read by many.
+Every bulk read is a cached static file; every ceiling degrades to *stale data or an
+error*, never an invoice.
+
+| Need | How, at $0 | Why it can't bill |
+|---|---|---|
+| **Identity / auth** | Firebase **anonymous** auth (unlimited, free) + optional `linkWithCredential` to Apple/Google for cross-device roam. Profile at `/players/{uid}`, uid-scoped rules (already the model) | Classic Auth is free, no card, no MAU meter |
+| **Cross-venue / season leaderboards** | Devices write one *final* score per event to `/scores/{season}/{venue}/{uid}`. A **GitHub Actions cron** reads via RTDB REST, ranks, commits `data/leaderboard/*.json` → served static from Pages. **Clients read the JSON, not RTDB.** | Static reads are free/cacheable; one write/event stays far under Spark caps |
+| **Analytics** | Compact append-only writes to `/analytics/{date}/…` (clients never read them back); nightly cron rolls up → `data/analytics/summary.json`, prunes raw. + Cloudflare Web Analytics (free) | Write-only protects egress; rollup is static |
+| **Venue directory** | Curated `data/venues.json` in git, served from Pages (same DATA-CONTRACT discipline as the corpus); self-registration via a moderated Worker→D1 or GitHub-issue form + cron promote | Read-heavy reference data = textbook static file |
+
+**Graduation plane (only if RTDB's 100-connection / 10 GB-egress ceiling ever bites):**
+Cloudflare **Workers + D1 + R2** — all card-free, hard-stop, and **R2 egress is $0 on
+every tier**. Move write-ingest to a Worker→D1 (100k writes/day) and serve boards from R2;
+RTDB stays purely for live rooms.
+
+**The one hard "don't": never enable Firebase Blaze.** Cloud Functions, any server-side
+outbound call, a 2nd DB instance, or SMS/phone auth all force Blaze — and Blaze has **no
+true hard spending cap**. Do *all* scheduled compute in **GitHub Actions** (card-free),
+never Firebase Functions. This design adds **zero new billing surfaces**.
+
+---
+
 ## The unmet-need differentiators (gaps nobody ships well — build these to win)
 
 1. **Mid-game editing** — fix a typo/wrong key while live; hosts fear the crash-mid-game
@@ -309,16 +427,27 @@ join-side + consumer pieces fan to iOS/tvOS/Android/web).
   capability, **defer the paywall**): **recurring-series scheduling**, **white-label
   depth**, **sponsor kit**, **lead capture + CSV export**, **data export**. No pricing or
   paywall wired — just the features, ready to gate later.
-- **Wave E — Portable-identity data plane + network moat** ($0 ongoing cost): the
-  connective tissue — **persistent player identity** spanning solo + live, **skill rating
-  / lifetime stats**, **cross-venue & season leaderboards + per-venue standings**,
-  **multi-venue org→hosts**, **analytics dashboard**, **retention layer**
-  (badges/streaks/shareable profiles), **venue directory**. On Firebase Spark / Cloudflare
-  free tiers; must degrade gracefully at a free ceiling, never bill.
-- **Wave L — Consumer game depth** (research pending → §L): the surface that makes the
-  game worth carrying between nights — progression/levels/leagues, friends & social
-  challenges, seasons, collection, the daily-habit loop, and how live-event results feed
-  the personal profile. Defined when the consumer research lands.
+- **Wave E — Portable-identity data plane + network moat** ($0 ongoing cost; §L6 + §M):
+  the connective tissue — **persistent player identity** spanning solo + live, **skill
+  rating / lifetime stats**, **cross-venue & season leaderboards + per-venue standings +
+  defendable titles**, **multi-venue org→hosts**, **analytics dashboard**, **venue
+  directory**. Built on the §M two-plane $0 architecture (Firebase Spark writes + GitHub
+  Actions cron → static JSON); degrades to stale-not-billed at any ceiling; no card, ever.
+- **Wave L — Consumer game depth** (§L): the surface that makes the game worth carrying
+  between nights — the **identity spine** (portable profile + Elo rating + two-track
+  progression + claim flow), the **daily-habit loop** (cross-context forgiving streak,
+  shareable result), **leagues/seasons**, **collection/cosmetics**, **async friend duels +
+  persistent teams**, and the **"add the people you played with"** friend-manufacturing
+  move. Monetization-safe by design (§L7 — no energy walls).
+
+**Recommended lead — build the identity spine early.** The strongest research signal is
+"**persistent identity/progression before the content-volume race**" (QuizUp/HQ died
+without it). So the highest-leverage first build is **§L1 (identity spine) + §M ($0 data
+plane) + §L2 (cross-context streak)** — it's cheap, it's the moat's foundation, and every
+later feature (leaderboards, titles, leagues, host analytics) rides it. Two tracks can
+then run in parallel: **host craft (A→D)** on the Mac app, and **consumer/identity (L→E)**
+across all platforms — they meet at the live event, where a joined player's result flows
+into their portable profile.
 
 ---
 
@@ -365,3 +494,16 @@ agents that produced this backlog. Primary references by theme:
 - **Venue business:** Buzztime, Sporcle Events/Globe league, Trivnow, World Tavern
   franchise, Crowdpurr (lead capture/white-label), TriviaBuild, Trivia Nation, ExMachina
   (monetization), CNBC/Untappd (business value).
+- **Consumer game (§L):** Trivia Crack, QuizUp & HQ Trivia (post-mortems), LearnedLeague,
+  Sporcle, Jackbox, Duolingo/NYT (habit/leagues/streaks), Water Cooler Trivia, Trivia
+  Royale/Star (monetization). *Key: engagement ≠ retention; build persistent progression
+  first; forgiving streaks; avoid energy walls.*
+- **Portable identity (§L6):** parkrun (persistent barcode), chess Elo (USCF/FIDE), Strava
+  (segments/KOM/Local Legends), Swarm (mayorships), Untappd (venue badge leveling), Pokémon
+  GO (place graph), Kahoot (player identifier / anonymous join), MLB Ballpark (fan history),
+  Peloton (two-track + friends-halve-churn). *Model: parkrun × Elo × Strava-local ×
+  Peloton, via Kahoot anonymous-join/claim-later.*
+- **$0 architecture (§M):** Firebase Spark limits + Blaze trap, Cloudflare
+  Workers/KV/D1/R2/Pages free tiers (R2 zero-egress), GitHub Pages+Actions, Supabase/Turso/
+  Deno/Val Town (fetched 2026-07-04). *Rule: no card = no bill; two-plane, static-aggregate,
+  never Blaze.*

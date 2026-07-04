@@ -63,6 +63,7 @@ export const Identity = {
   // Promote the anon account (Apple/Google) so records roam + survive session loss.
   // On a conflict (the credential already has an account), merge losslessly into it.
   async signIn(providerId) {
+    if (this.signedIn) return false;   // already on a durable account — never re-merge the same records
     const localProfile = this.profile || {};
     const res = await FirebaseNet.signInWith(providerId);
     this.profileId = res.uid;

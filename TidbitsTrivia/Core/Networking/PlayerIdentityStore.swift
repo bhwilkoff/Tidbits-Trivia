@@ -102,6 +102,7 @@ final class PlayerIdentityStore {
     /// loss. On a conflict (the Apple id already has an account), lossless-merge into it.
     /// Called from the SignInWithAppleButton completion with the identity token + raw nonce.
     func linkApple(idToken: String, rawNonce: String) async {
+        guard !signedIn else { return }   // already on a durable account — never re-merge the same records
         do {
             let local = profile
             let res = try await db.linkWithApple(identityToken: idToken, rawNonce: rawNonce)

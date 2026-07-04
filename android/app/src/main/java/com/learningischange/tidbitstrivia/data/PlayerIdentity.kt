@@ -88,6 +88,7 @@ object PlayerIdentity {
     /** Google sign-in → promote the anon account so records roam + survive session loss.
      *  On conflict, lossless-merge into the existing account. Returns true if merged. */
     suspend fun linkGoogle(context: android.content.Context, webClientId: String): Boolean {
+        if (signedIn) return false   // already on a durable account — never re-merge the same records
         val local = profile
         val res = FirebaseNet.linkGoogle(context, webClientId)
         profileId = res.uid

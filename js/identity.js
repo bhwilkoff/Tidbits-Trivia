@@ -39,6 +39,7 @@ export const Identity = {
         this.profile = remote || this.profile || newProfile();
         if (!remote) { try { await FirebaseNet.saveProfile(uid, this.profile); } catch {} }
       }
+      if (this.profileId) this._watch(this.profileId);
       this._save(); this._emit();
     } catch {
       if (!this.profile) { this.profile = newProfile(); this._save(); this._emit(); }
@@ -86,6 +87,7 @@ export const Identity = {
     if (!res.email) {                                            // no email (rare) — uid-keyed fallback
       this.profileId = res.uid;
       await FirebaseNet.saveProfile(res.uid, local);
+      this._watch(res.uid);
       this._save(); this._emit();
       return false;
     }
@@ -93,10 +95,24 @@ export const Identity = {
     await FirebaseNet.setEmailOwner(key, res.email);
     const existing = await FirebaseNet.loadProfile(key);
     this.profile = existing ? mergeProfiles(local, existing) : local;
+    if (isDefaultName(this.profile.name) && res.displayName) this.profile.name = res.displayName.trim().slice(0, 24);   // (A) adopt provider name
     this.profileId = key;
     await FirebaseNet.saveProfile(key, this.profile);
+    this._watch(key);
     this._save(); this._emit();
     return !!existing;
+  },
+
+  // (B) Live cross-device sync — a remote profile change (e.g. a rename on another device)
+  // updates this one in place. Re-pointed on bootstrap / sign-in / sign-out.
+  _profileUnsub: null,
+  _watch(key) {
+    if (this._profileUnsub) { try { this._profileUnsub(); } catch {} this._profileUnsub = null; }
+    try {
+      this._profileUnsub = FirebaseNet.onProfile(key, (val) => {   // name-only: avoids a stats revert if mid-game elsewhere
+        if (val && val.name && this.profile && val.name !== this.profile.name) { this.profile.name = val.name; this._save(); this._emit(); }
+      });
+    } catch {}
   },
 
   // Sign out → back to a fresh anonymous profile on this device. The account's records
@@ -107,6 +123,7 @@ export const Identity = {
     const existing = await FirebaseNet.loadProfile(uid);
     this.profile = existing || newProfile();
     if (!existing) { try { await FirebaseNet.saveProfile(uid, this.profile); } catch {} }
+    this._watch(uid);
     this._save(); this._emit();
   },
 

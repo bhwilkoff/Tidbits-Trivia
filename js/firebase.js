@@ -74,7 +74,7 @@ export const FirebaseNet = {
     if (providerId === 'apple.com') { provider.addScope('email'); provider.addScope('name'); }
     const result = await auth.signInWithPopup(_auth, provider);
     _uid = result.user.uid;
-    return { uid: _uid, email: result.user.email };
+    return { uid: _uid, email: result.user.email, displayName: result.user.displayName };
   },
 
   // Ownership proof for the email-keyed profile: emailOwners/{key} = the verified email.
@@ -82,6 +82,12 @@ export const FirebaseNet = {
   async setEmailOwner(accountKey, email) {
     const { db } = await ensure();
     await db.set(db.ref(_db, `emailOwners/${accountKey}`), email);
+  },
+
+  // Live listener on a profile (cross-device sync). Returns an unsubscribe fn.
+  onProfile(key, cb) {
+    const { ref, onValue } = _fns.db;
+    return onValue(ref(_db, `players/${key}`), (snap) => cb(snap.val()));
   },
 
   // Quick Match: claim a waiting room via a transaction (first writer becomes

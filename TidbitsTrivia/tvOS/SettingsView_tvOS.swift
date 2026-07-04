@@ -52,7 +52,8 @@ struct SettingsView_tvOS: View {
                             } onCompletion: { result in
                                 if case .success(let auth) = result, let c = auth.credential as? ASAuthorizationAppleIDCredential,
                                    let d = c.identityToken, let t = String(data: d, encoding: .utf8) {
-                                    Task { await identity.linkApple(idToken: t, rawNonce: appleNonce) }
+                                    let name = [c.fullName?.givenName, c.fullName?.familyName].compactMap { $0 }.joined(separator: " ")
+                                    Task { await identity.linkApple(idToken: t, rawNonce: appleNonce, appleName: name.isEmpty ? nil : name) }
                                 }
                             }
                             .signInWithAppleButtonStyle(.white).frame(height: 60)

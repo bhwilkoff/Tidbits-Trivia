@@ -55,6 +55,7 @@ final class PlayerIdentityStore {
                     try? await db.put(PlayerIdentity.publicPath(uid), fresh)
                 }
             }
+            if let id = profileId { watch(id) }                 // (B) live name sync
             await linkNativeIdentity()
             loaded = true
         } catch {
@@ -119,7 +120,7 @@ final class PlayerIdentityStore {
     /// every device) share one record set. Merges this device's anonymous activity into the
     /// email-keyed profile; the guard prevents ever re-merging. Called from the
     /// SignInWithAppleButton completion with the identity token + raw nonce.
-    func linkApple(idToken: String, rawNonce: String) async {
+    func linkApple(idToken: String, rawNonce: String, appleName: String? = nil) async {
         guard !signedIn else { return }   // already on a durable account — never re-merge the same records
         do {
             let local = profile ?? Self.newProfile(name: Self.suggestedName())
@@ -132,11 +133,16 @@ final class PlayerIdentityStore {
             let key = PlayerIdentity.accountKey(forEmail: email)
             try? await db.put("emailOwners/\(key)", email)
             let existing = (try? await db.get(PlayerIdentity.publicPath(key), as: PlayerIdentity.Profile.self)) ?? nil
-            let merged = existing.map { PlayerIdentity.merge(local: local, account: $0) } ?? local
+            var merged = existing.map { PlayerIdentity.merge(local: local, account: $0) } ?? local
+            if PlayerIdentity.isDefaultName(merged.name),
+               let n = (appleName ?? res.displayName)?.trimmingCharacters(in: .whitespacesAndNewlines), !n.isEmpty {
+                merged.name = String(n.prefix(24))              // (A) adopt the provider's name
+            }
             profile = merged
             profileId = key
             try? await db.put(PlayerIdentity.publicPath(key), merged)
             markSignedIn()
+            watch(key)                                          // (B) live name sync
         } catch {
             print("[Identity] Apple sign-in failed: \(error)")
         }
@@ -145,6 +151,32 @@ final class PlayerIdentityStore {
     private func markSignedIn() {
         signedIn = true
         UserDefaults.standard.set(true, forKey: "tidbits.identity.signedIn")
+    }
+
+    private var watchTask: Task<Void, Never>?
+    /// (B) Live cross-device NAME sync — stream players/{key} and apply remote name changes
+    /// (name-only, so a game in progress on another device can't revert local stats). The
+    /// SSE stream ends on drop; back off and reconnect. Re-pointed on bootstrap/sign-in/out.
+    private func watch(_ key: String) {
+        watchTask?.cancel()
+        watchTask = Task { [weak self] in
+            while !Task.isCancelled {
+                guard let db = self?.db else { return }
+                if let stream = try? await db.stream(PlayerIdentity.publicPath(key)) {
+                    do {
+                        for try await ev in stream {
+                            guard ev.event == "put", ev.path == "/", let data = ev.dataJSON,
+                                  let p = try? JSONDecoder().decode(PlayerIdentity.Profile.self, from: data) else { continue }
+                            await MainActor.run {
+                                guard let self, self.profileId == key, self.profile?.name != p.name else { return }
+                                self.profile?.name = p.name
+                            }
+                        }
+                    } catch {}
+                }
+                try? await Task.sleep(nanoseconds: 3_000_000_000)
+            }
+        }
     }
 
     /// Sign out → back to a fresh anonymous profile on this device. The account's records
@@ -162,6 +194,7 @@ final class PlayerIdentityStore {
             }
             signedIn = false
             UserDefaults.standard.set(false, forKey: "tidbits.identity.signedIn")
+            watch(uid)                                          // (B) re-point to the fresh anon
         } catch {
             print("[Identity] sign-out failed: \(error)")
         }

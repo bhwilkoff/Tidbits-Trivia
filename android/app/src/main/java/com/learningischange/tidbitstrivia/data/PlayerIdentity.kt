@@ -61,6 +61,7 @@ object PlayerIdentity {
                         runCatching { FirebaseNet.saveProfile(uid, it) }
                     }
                 }
+                profileId?.let { watch(it) }                    // (B) live name sync
             } catch (e: Exception) {
                 if (profile == null) profile = newProfile()   // offline / no auth → local profile
             }
@@ -112,17 +113,31 @@ object PlayerIdentity {
             profileId = res.uid
             runCatching { FirebaseNet.saveProfile(res.uid, local) }
             signedIn = true
+            watch(res.uid)
             return false
         }
         val key = accountKey(email)
         runCatching { FirebaseNet.setEmailOwner(key, email) }
         val existing = FirebaseNet.loadProfile(key)
-        val merged = if (existing != null) merge(local, existing) else local
+        var merged = if (existing != null) merge(local, existing) else local
+        val dn = res.displayName?.trim()
+        if (isDefaultName(merged.name) && !dn.isNullOrEmpty()) merged = merged.copy(name = dn.take(24))   // (A) adopt provider name
         profile = merged
         profileId = key
         runCatching { FirebaseNet.saveProfile(key, merged) }
         signedIn = true
+        watch(key)   // (B) live name sync
         return existing != null
+    }
+
+    private var unwatch: (() -> Unit)? = null
+    /** (B) Live cross-device NAME sync — a rename elsewhere updates this device in place. */
+    private fun watch(key: String) {
+        unwatch?.invoke(); unwatch = null
+        unwatch = FirebaseNet.observeName(key) { name ->
+            val p = profile
+            if (name != null && p != null && name != p.name) profile = p.copy(name = name)
+        }
     }
 
     /** Stable, non-reversible profile key from the verified email — mirror of JS/Swift. */
@@ -138,6 +153,7 @@ object PlayerIdentity {
         profileId = uid
         profile = FirebaseNet.loadProfile(uid) ?: newProfile().also { runCatching { FirebaseNet.saveProfile(uid, it) } }
         signedIn = false
+        watch(uid)                                              // (B) re-point to the fresh anon
     }
 
     fun rename(name: String) {

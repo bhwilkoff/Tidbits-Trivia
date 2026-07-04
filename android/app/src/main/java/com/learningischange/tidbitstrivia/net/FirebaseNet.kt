@@ -81,7 +81,19 @@ object FirebaseNet {
         db.getReference("emailOwners/$accountKey").setValue(email).await()
     }
 
-    data class FederatedResult(val uid: String, val email: String?)
+    /** (B) Live NAME sync — a remote name change on players/{key} fires cb. Returns an
+     *  unsubscribe fn. Name-only so a game in progress elsewhere can't revert local stats. */
+    fun observeName(key: String, cb: (String?) -> Unit): () -> Unit {
+        val ref = db.getReference("players/$key")
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snap: DataSnapshot) { cb(snap.child("name").getValue(String::class.java)) }
+            override fun onCancelled(e: DatabaseError) {}
+        }
+        ref.addValueEventListener(listener)
+        return { ref.removeEventListener(listener) }
+    }
+
+    data class FederatedResult(val uid: String, val email: String?, val displayName: String?)
 
     /** Google sign-in via Credential Manager → the Google Firebase account + its verified
      *  email. Identity keys the shared profile by the email so Apple + Google converge. */
@@ -95,7 +107,7 @@ object FirebaseNet {
         val googleCred = GoogleIdTokenCredential.createFrom(response.credential.data)
         val firebaseCred = GoogleAuthProvider.getCredential(googleCred.idToken, null)
         val res = auth.signInWithCredential(firebaseCred).await()
-        return FederatedResult(res.user!!.uid, res.user!!.email)
+        return FederatedResult(res.user!!.uid, res.user!!.email, res.user!!.displayName)
     }
 
     suspend fun saveProfile(uid: String, p: com.learningischange.tidbitstrivia.data.PlayerIdentity.Profile) {

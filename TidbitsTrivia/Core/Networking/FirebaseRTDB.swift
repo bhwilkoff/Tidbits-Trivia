@@ -40,7 +40,7 @@ actor FirebaseRTDB {
 
     /// Outcome of a federated sign-in: the provider account's uid + its verified email
     /// (identity keys the shared profile by the email, not the uid).
-    struct FederatedResult: Sendable { let uid: String; let email: String? }
+    struct FederatedResult: Sendable { let uid: String; let email: String?; let displayName: String? }
 
     // MARK: - Auth (anonymous)
 
@@ -91,7 +91,7 @@ actor FirebaseRTDB {
 
     private struct IdpResponse: Decodable {
         let idToken: String; let refreshToken: String; let expiresIn: String; let localId: String
-        let email: String?
+        let email: String?; let displayName: String?
     }
 
     /// Sign in with Apple → the Apple Firebase account (its own uid; allowDuplicateEmails
@@ -101,7 +101,7 @@ actor FirebaseRTDB {
         let post = "id_token=\(identityToken)&providerId=apple.com&nonce=\(rawNonce)"
         let r = try await signInWithIdp(postBody: post, linkTo: nil)
         apply(idToken: r.idToken, refreshToken: r.refreshToken, expiresIn: r.expiresIn, uid: r.localId)
-        return FederatedResult(uid: r.localId, email: r.email)
+        return FederatedResult(uid: r.localId, email: r.email, displayName: r.displayName)
     }
 
     /// The verified email of the current federated session, decoded from the Firebase ID

@@ -162,12 +162,16 @@ struct LiveHostContainer_macOS: View {
         }
     }
 
-    /// On reveal, award points to every joined team whose submission matched the
-    /// correct option. Manual override (± in the scoreboard) still applies on top.
+    /// On reveal, auto-score every joined team's submission for EVERY question type
+    /// (shared scorer). Free-text answers are alias-matched; the host reviews +
+    /// overrides borderline ones in the scoreboard (§A3.3 leniency). Manual ± still
+    /// applies on top (§A3.2).
     private func scoreReveal() async {
         guard let q = session.current else { return }
-        for (uid, ans) in net.answers where ans.choice == q.correctIndex {
-            await net.setScore(uid, (net.scores[uid] ?? 0) + session.pointsPerCorrect)
+        for (uid, ans) in net.answers {
+            let pts = LiveNightHost.score(q, ans, shuffledOrder: session.shuffledOrder,
+                                          shuffledValues: session.shuffledValues, mcqPoints: session.pointsPerCorrect)
+            if pts > 0 { await net.setScore(uid, (net.scores[uid] ?? 0) + pts) }
         }
     }
 }
@@ -332,23 +336,59 @@ struct LiveHostView_macOS: View {
     }
 
     /// A phone/web-joined team: auto-scored on reveal, with ± manual override
-    /// (writes back to the room) and a live "answered this question" dot.
+    /// (writes back to the room), a live "answered" dot, and — for free-text rounds
+    /// — the team's typed answer with an auto-match verdict + a leniency "mark
+    /// correct" the host can grant on a borderline miss (§A3.3, host pain #2).
     private func joinedRow(_ team: LiveHostNet.Joined) -> some View {
-        HStack(spacing: 8) {
-            VStack(alignment: .leading, spacing: 1) {
-                HStack(spacing: 5) {
-                    if net.answers[team.id] != nil && !session.revealed {
-                        Circle().fill(Tidbits.Palette.mint).frame(width: 7, height: 7)
+        let ans = net.answers[team.id]
+        let q = session.current
+        return VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 8) {
+                VStack(alignment: .leading, spacing: 1) {
+                    HStack(spacing: 5) {
+                        if ans != nil && !session.revealed {
+                            Circle().fill(Tidbits.Palette.mint).frame(width: 7, height: 7)
+                        }
+                        Text(team.name).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink).lineLimit(1)
                     }
-                    Text(team.name).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink).lineLimit(1)
+                    Text("\(team.score)").font(.system(size: 22, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
                 }
-                Text("\(team.score)").font(.system(size: 22, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
+                Spacer()
+                // Leniency: for a free-text answer the matcher REJECTED, let the host accept it.
+                if let q, let ans, session.revealed, q.accepted != nil, !autoMatched(q, ans) {
+                    Button { Task { await net.setScore(team.id, team.score + session.pointsPerCorrect) } } label: {
+                        Image(systemName: "checkmark")
+                    }.buttonStyle(.borderedProminent).tint(Tidbits.Palette.mint).help("Mark correct (+\(session.pointsPerCorrect))")
+                }
+                Button { Task { await net.setScore(team.id, team.score - 1) } } label: { Image(systemName: "minus") }.buttonStyle(.bordered)
+                Button { Task { await net.setScore(team.id, team.score + 1) } } label: { Image(systemName: "plus") }.buttonStyle(.bordered)
             }
-            Spacer()
-            Button { Task { await net.setScore(team.id, team.score - 1) } } label: { Image(systemName: "minus") }.buttonStyle(.bordered)
-            Button { Task { await net.setScore(team.id, team.score + 1) } } label: { Image(systemName: "plus") }.buttonStyle(.bordered)
+            if let q, let ans, let typed = submittedText(q, ans) {
+                HStack(spacing: 6) {
+                    Image(systemName: "text.quote").font(.system(size: 11)).foregroundStyle(Tidbits.Palette.inkSoft)
+                    Text(typed).font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.ink).italic().lineLimit(2)
+                    if session.revealed {
+                        Image(systemName: autoMatched(q, ans) ? "checkmark.circle.fill" : "xmark.circle")
+                            .foregroundStyle(autoMatched(q, ans) ? Tidbits.Palette.mint : Tidbits.Palette.coral)
+                    }
+                }
+            }
         }
         .padding(12).chunkyCard(fill: Tidbits.Palette.blue.opacity(0.10))
+    }
+
+    /// Whether the shared scorer credits this submission (for the ✓/✗ verdict).
+    private func autoMatched(_ q: Question, _ a: LiveRoom.Answer) -> Bool {
+        LiveNightHost.score(q, a, shuffledOrder: session.shuffledOrder, shuffledValues: session.shuffledValues, mcqPoints: session.pointsPerCorrect) > 0
+    }
+
+    /// The team's submission rendered for host review (free-text shows what they typed).
+    private func submittedText(_ q: Question, _ a: LiveRoom.Answer) -> String? {
+        if q.accepted != nil { return a.text }
+        if let c = q.closest, let n = a.number { let s = n == n.rounded() ? String(Int(n)) : String(format: "%.1f", n); return c.unit.isEmpty ? s : "\(s) \(c.unit)" }
+        if let c = a.choice, q.options.indices.contains(c) { return q.options[c] }
+        if let list = a.list, !list.isEmpty { return list.joined(separator: " · ") }
+        return nil
     }
 
     // MARK: Final standings

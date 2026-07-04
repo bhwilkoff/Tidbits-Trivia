@@ -13,7 +13,20 @@
           "package_name": "com.tidbitstrivia.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "842242746909-7jc15s78q7j0gi72hvqid3m79c9rjvoc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.tidbitstrivia.app",
+            "certificate_hash": "9c955b6e5590495b0153b8ab940bca752d9c09c2"
+          }
+        },
+        {
+          "client_id": "842242746909-328oa6s4tvl9vq9c0m368qdlsaun7gpj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAor53ifwBbMjMGx101LTyLYrQTz8I3vzQ"
@@ -21,7 +34,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "842242746909-328oa6s4tvl9vq9c0m368qdlsaun7gpj.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     },
@@ -32,7 +50,20 @@
           "package_name": "com.tidbitstrivia.app.debug"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "842242746909-vjto3fj9l748oii3kor6sjnksioq2gtp.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.tidbitstrivia.app.debug",
+            "certificate_hash": "b20de17e31c16d33e0308b2f9d97a8c3d2c5a743"
+          }
+        },
+        {
+          "client_id": "842242746909-328oa6s4tvl9vq9c0m368qdlsaun7gpj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAor53ifwBbMjMGx101LTyLYrQTz8I3vzQ"
@@ -40,7 +71,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "842242746909-328oa6s4tvl9vq9c0m368qdlsaun7gpj.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

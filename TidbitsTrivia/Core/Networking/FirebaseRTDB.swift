@@ -112,6 +112,15 @@ actor FirebaseRTDB {
         }
     }
 
+    /// Sign out of the federated account and return to a FRESH anonymous session (new
+    /// uid). The account's records stay in players/{accountUid}; signing back in restores.
+    func signOut() async throws -> String {
+        Keychain.delete(Self.refreshKey)
+        idToken = nil; refreshToken = nil; uid = nil; expiry = .distantPast
+        try await signUpAnonymous()
+        return uid ?? ""
+    }
+
     private func signInWithIdp(postBody: String, linkTo idToken: String?) async throws -> IdpResponse {
         var body: [String: Any] = ["postBody": postBody, "requestUri": "http://localhost",
                                    "returnSecureToken": true, "returnIdpCredential": true]

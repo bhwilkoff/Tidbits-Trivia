@@ -103,6 +103,15 @@ object PlayerIdentity {
         return res.merged
     }
 
+    /** Sign out → back to a fresh anonymous profile on this device. The account's records
+     *  stay in the cloud; signing in again (Google) restores + merges them. */
+    suspend fun signOut() {
+        val uid = FirebaseNet.signOutUser()
+        profileId = uid
+        profile = FirebaseNet.loadProfile(uid) ?: newProfile().also { runCatching { FirebaseNet.saveProfile(uid, it) } }
+        signedIn = false
+    }
+
     fun rename(name: String) {
         val p = profile ?: return; val uid = profileId ?: return
         val t = name.trim().take(24); if (t.isEmpty()) return

@@ -121,6 +121,26 @@ final class PlayerIdentityStore {
         }
     }
 
+    /// Sign out → back to a fresh anonymous profile on this device. The account's records
+    /// stay in the cloud; signing in again (Apple) restores + merges them.
+    func signOut() async {
+        do {
+            let uid = try await db.signOut()
+            profileId = uid
+            if let existing = try? await db.get(PlayerIdentity.publicPath(uid), as: PlayerIdentity.Profile.self) {
+                profile = existing
+            } else {
+                let fresh = Self.newProfile(name: Self.suggestedName())
+                profile = fresh
+                try? await db.put(PlayerIdentity.publicPath(uid), fresh)
+            }
+            signedIn = false
+            UserDefaults.standard.set(false, forKey: "tidbits.identity.signedIn")
+        } catch {
+            print("[Identity] sign-out failed: \(error)")
+        }
+    }
+
     /// Update the public display name.
     func rename(_ name: String) async {
         guard let uid = profileId, var p = profile else { return }

@@ -103,6 +103,8 @@ fun ProfileScreen(onBack: () -> Unit) {
         if (PlayerIdentity.signedIn) {
             Text("✓ Signed in — your records sync to every device", color = soft, fontSize = 14.sp,
                 textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+            TextButton(onClick = { scope.launch { runCatching { PlayerIdentity.signOut() } } },
+                modifier = Modifier.fillMaxWidth()) { Text("Sign out") }
         } else if (webClientId != "TODO_ENABLE_GOOGLE_IN_FIREBASE") {
             Text("Save your progress", fontSize = 18.sp, fontWeight = FontWeight.Black, color = ink)
             Text("Sign in so your records follow you to any device.", color = soft, fontSize = 13.sp,

@@ -113,9 +113,14 @@ struct ProfileView: View {
 
     @ViewBuilder private var saveProgress: some View {
         if identity.signedIn {
-            Label("Signed in — your records sync to every device", systemImage: "checkmark.seal.fill")
-                .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
-                .frame(maxWidth: .infinity).padding(.top, 6)
+            VStack(spacing: 10) {
+                Label("Signed in — your records sync to every device", systemImage: "checkmark.seal.fill")
+                    .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                    .frame(maxWidth: .infinity)
+                Button("Sign out") { Task { await identity.signOut() } }
+                    .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+            }
+            .padding(.top, 6)
         } else {
             VStack(spacing: 8) {
                 Text("Save your progress").font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)

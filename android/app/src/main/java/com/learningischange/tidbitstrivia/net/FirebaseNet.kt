@@ -67,6 +67,13 @@ object FirebaseNet {
 
     fun isSignedIn(): Boolean = auth.currentUser?.let { !it.isAnonymous } ?: false
 
+    /** Sign out of the federated account and return to a FRESH anonymous session (new
+     *  uid). The account's records stay in players/{accountUid}; signing in again restores. */
+    suspend fun signOutUser(): String {
+        auth.signOut()
+        return auth.signInAnonymously().await().user!!.uid
+    }
+
     data class LinkResult(val uid: String, val merged: Boolean, val prevUid: String)
 
     /** Google sign-in via Credential Manager → link to the current anon account (same

@@ -42,6 +42,7 @@ struct SettingsView_macOS: View {
                     if identity.signedIn {
                         Label("Signed in — records sync to every device", systemImage: "checkmark.seal.fill")
                             .font(.caption).foregroundStyle(.secondary)
+                        Button("Sign out") { Task { await identity.signOut() } }
                     } else {
                         SignInWithAppleButton(.signIn) { req in
                             appleNonce = AppleNonce.random(); req.requestedScopes = [.email, .fullName]; req.nonce = AppleNonce.sha256(appleNonce)

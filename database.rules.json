@@ -59,10 +59,15 @@
       }
     },
     "players": {
-      "$uid": {
+      "$key": {
         ".read": "auth != null",
-        ".write": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && (auth.uid === $key || (auth.token.email_verified === true && root.child('emailOwners').child($key).val() === auth.token.email))",
         ".validate": "newData.hasChildren(['name','createdAt'])"
+      }
+    },
+    "emailOwners": {
+      "$key": {
+        ".write": "auth != null && auth.token.email_verified === true && newData.val() === auth.token.email && (!data.exists() || data.val() === auth.token.email)"
       }
     },
     "playersPrivate": {

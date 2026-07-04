@@ -15,14 +15,30 @@ export const Identity = {
   _emit() { this._subs.forEach((f) => { try { f(this.profile); } catch {} }); },
 
   // Local-first: show a cached/local profile immediately, then reconcile with the cloud.
+  // Signed-in users are keyed by their VERIFIED email (so Apple + Google share records);
+  // anonymous users stay keyed by uid until they sign in.
   async bootstrap() {
     try { const c = JSON.parse(localStorage.getItem(LS_KEY) || 'null'); if (c) { this.profile = c; this._emit(); } } catch {}
     try {
       const uid = await FirebaseNet.ensureUid();
-      this.profileId = uid;
-      const remote = await FirebaseNet.loadProfile(uid);
-      this.profile = remote || this.profile || newProfile();
-      if (!remote) { try { await FirebaseNet.saveProfile(uid, this.profile); } catch {} }
+      const email = FirebaseNet.currentEmail();
+      if (FirebaseNet.isSignedIn() && email) {
+        const key = await accountKey(email);
+        this.profileId = key;
+        let remote = await FirebaseNet.loadProfile(key);
+        if (!remote) {                                  // migrate an older uid-keyed profile
+          const base = (await FirebaseNet.loadProfile(uid)) || this.profile || newProfile();
+          await FirebaseNet.setEmailOwner(key, email);
+          await FirebaseNet.saveProfile(key, base);
+          remote = base;
+        }
+        this.profile = remote;
+      } else {
+        this.profileId = uid;
+        const remote = await FirebaseNet.loadProfile(uid);
+        this.profile = remote || this.profile || newProfile();
+        if (!remote) { try { await FirebaseNet.saveProfile(uid, this.profile); } catch {} }
+      }
       this._save(); this._emit();
     } catch {
       if (!this.profile) { this.profile = newProfile(); this._save(); this._emit(); }
@@ -60,23 +76,27 @@ export const Identity = {
   get signedIn() { return FirebaseNet.isSignedIn(); },
   get email() { return FirebaseNet.currentEmail(); },
 
-  // Promote the anon account (Apple/Google) so records roam + survive session loss.
-  // On a conflict (the credential already has an account), merge losslessly into it.
+  // Sign in with Apple/Google → key the profile by the verified email so BOTH providers
+  // (and every device) share one record set. Merges this device's anonymous activity into
+  // the email-keyed profile the first time; the guard prevents ever re-merging.
   async signIn(providerId) {
     if (this.signedIn) return false;   // already on a durable account — never re-merge the same records
-    const localProfile = this.profile || {};
-    const res = await FirebaseNet.signInWith(providerId);
-    this.profileId = res.uid;
-    if (res.merged) {
-      const account = (await FirebaseNet.loadProfile(res.uid)) || newProfile();
-      this.profile = mergeProfiles(localProfile, account);
-      await FirebaseNet.saveProfile(res.uid, this.profile);
-      if (res.prevUid && res.prevUid !== res.uid) FirebaseNet.deleteProfile(res.prevUid);
-    } else if (this.profile) {
-      await FirebaseNet.saveProfile(res.uid, this.profile);   // promoted in place; keep records
+    const local = this.profile || newProfile();
+    const res = await FirebaseNet.signInFederated(providerId);   // { uid, email }
+    if (!res.email) {                                            // no email (rare) — uid-keyed fallback
+      this.profileId = res.uid;
+      await FirebaseNet.saveProfile(res.uid, local);
+      this._save(); this._emit();
+      return false;
     }
+    const key = await accountKey(res.email);
+    await FirebaseNet.setEmailOwner(key, res.email);
+    const existing = await FirebaseNet.loadProfile(key);
+    this.profile = existing ? mergeProfiles(local, existing) : local;
+    this.profileId = key;
+    await FirebaseNet.saveProfile(key, this.profile);
     this._save(); this._emit();
-    return res.merged;
+    return !!existing;
   },
 
   // Sign out → back to a fresh anonymous profile on this device. The account's records
@@ -158,6 +178,14 @@ export function mergeProfiles(local, account) {
       venuesVisited: Math.max(local.stats.venuesVisited, account.stats.venuesVisited),
     },
   };
+}
+
+// Stable, non-reversible profile key from the verified email — Apple + Google with the
+// same email land on the SAME profile. Mirror of the Swift/Kotlin sha256Hex(email).
+async function accountKey(email) {
+  const norm = (email || '').trim().toLowerCase();
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(norm));
+  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 function today() {

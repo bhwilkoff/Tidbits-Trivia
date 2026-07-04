@@ -28,15 +28,32 @@ final class PlayerIdentityStore {
     func bootstrap() async {
         do {
             let uid = try await db.ensureAuth()
-            profileId = uid
-            if let existing = try? await db.get(PlayerIdentity.publicPath(uid), as: PlayerIdentity.Profile.self) {
-                profile = existing
-            } else {
-                // Local-first: show the profile immediately, persist best-effort (works
-                // offline and before the players/ rules are deployed).
-                let fresh = Self.newProfile(name: Self.suggestedName())
-                profile = fresh
-                try? await db.put(PlayerIdentity.publicPath(uid), fresh)
+            if let email = await db.currentEmail() {            // signed in → key by verified email
+                signedIn = true
+                UserDefaults.standard.set(true, forKey: "tidbits.identity.signedIn")
+                let key = PlayerIdentity.accountKey(forEmail: email)
+                profileId = key
+                if let existing = try? await db.get(PlayerIdentity.publicPath(key), as: PlayerIdentity.Profile.self) {
+                    profile = existing
+                } else {                                        // migrate an older uid-keyed profile
+                    let base = (try? await db.get(PlayerIdentity.publicPath(uid), as: PlayerIdentity.Profile.self)) ?? Self.newProfile(name: Self.suggestedName())
+                    try? await db.put("emailOwners/\(key)", email)
+                    try? await db.put(PlayerIdentity.publicPath(key), base)
+                    profile = base
+                }
+            } else {                                            // anonymous → key by uid
+                signedIn = false
+                UserDefaults.standard.set(false, forKey: "tidbits.identity.signedIn")
+                profileId = uid
+                if let existing = try? await db.get(PlayerIdentity.publicPath(uid), as: PlayerIdentity.Profile.self) {
+                    profile = existing
+                } else {
+                    // Local-first: show the profile immediately, persist best-effort (works
+                    // offline and before the players/ rules are deployed).
+                    let fresh = Self.newProfile(name: Self.suggestedName())
+                    profile = fresh
+                    try? await db.put(PlayerIdentity.publicPath(uid), fresh)
+                }
             }
             await linkNativeIdentity()
             loaded = true
@@ -98,28 +115,36 @@ final class PlayerIdentityStore {
         try? await db.put(PlayerIdentity.publicPath(uid), p)
     }
 
-    /// Sign in with Apple → promote the anon account so records roam + survive session
-    /// loss. On a conflict (the Apple id already has an account), lossless-merge into it.
-    /// Called from the SignInWithAppleButton completion with the identity token + raw nonce.
+    /// Sign in with Apple → key the profile by the verified email so Apple + Google (and
+    /// every device) share one record set. Merges this device's anonymous activity into the
+    /// email-keyed profile; the guard prevents ever re-merging. Called from the
+    /// SignInWithAppleButton completion with the identity token + raw nonce.
     func linkApple(idToken: String, rawNonce: String) async {
         guard !signedIn else { return }   // already on a durable account — never re-merge the same records
         do {
-            let local = profile
-            let res = try await db.linkWithApple(identityToken: idToken, rawNonce: rawNonce)
-            profileId = res.uid
-            if res.merged {
-                let account = (try? await db.get(PlayerIdentity.publicPath(res.uid), as: PlayerIdentity.Profile.self)) ?? Self.newProfile(name: Self.suggestedName())
-                let merged = PlayerIdentity.merge(local: local ?? account, account: account)
-                profile = merged
-                try? await db.put(PlayerIdentity.publicPath(res.uid), merged)
-            } else if let local {
-                try? await db.put(PlayerIdentity.publicPath(res.uid), local)   // promoted in place
+            let local = profile ?? Self.newProfile(name: Self.suggestedName())
+            let res = try await db.signInWithApple(identityToken: idToken, rawNonce: rawNonce)
+            guard let email = res.email else {                  // no email (rare) — uid-keyed fallback
+                profileId = res.uid
+                try? await db.put(PlayerIdentity.publicPath(res.uid), local)
+                markSignedIn(); return
             }
-            signedIn = true
-            UserDefaults.standard.set(true, forKey: "tidbits.identity.signedIn")
+            let key = PlayerIdentity.accountKey(forEmail: email)
+            try? await db.put("emailOwners/\(key)", email)
+            let existing = (try? await db.get(PlayerIdentity.publicPath(key), as: PlayerIdentity.Profile.self)) ?? nil
+            let merged = existing.map { PlayerIdentity.merge(local: local, account: $0) } ?? local
+            profile = merged
+            profileId = key
+            try? await db.put(PlayerIdentity.publicPath(key), merged)
+            markSignedIn()
         } catch {
             print("[Identity] Apple sign-in failed: \(error)")
         }
+    }
+
+    private func markSignedIn() {
+        signedIn = true
+        UserDefaults.standard.set(true, forKey: "tidbits.identity.signedIn")
     }
 
     /// Sign out → back to a fresh anonymous profile on this device. The account's records

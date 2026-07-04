@@ -66,20 +66,26 @@ object FirebaseNet {
     }
 
     fun isSignedIn(): Boolean = auth.currentUser?.let { !it.isAnonymous } ?: false
+    fun currentEmail(): String? = auth.currentUser?.takeIf { !it.isAnonymous }?.email
 
     /** Sign out of the federated account and return to a FRESH anonymous session (new
-     *  uid). The account's records stay in players/{accountUid}; signing in again restores. */
+     *  uid). The account's records stay keyed by email; signing in again restores them. */
     suspend fun signOutUser(): String {
         auth.signOut()
         return auth.signInAnonymously().await().user!!.uid
     }
 
-    data class LinkResult(val uid: String, val merged: Boolean, val prevUid: String)
+    /** Ownership proof for the email-keyed profile — the players/{key} write rule requires
+     *  emailOwners/{key} to match auth.token.email. */
+    suspend fun setEmailOwner(accountKey: String, email: String) {
+        db.getReference("emailOwners/$accountKey").setValue(email).await()
+    }
 
-    /** Google sign-in via Credential Manager → link to the current anon account (same
-     *  uid). If the Google account already has a Firebase account, sign into it and
-     *  report merged so the caller can lossless-merge. Needs the Firebase web client id. */
-    suspend fun linkGoogle(context: Context, webClientId: String): LinkResult {
+    data class FederatedResult(val uid: String, val email: String?)
+
+    /** Google sign-in via Credential Manager → the Google Firebase account + its verified
+     *  email. Identity keys the shared profile by the email so Apple + Google converge. */
+    suspend fun signInGoogle(context: Context, webClientId: String): FederatedResult {
         val option = GetGoogleIdOption.Builder()
             .setServerClientId(webClientId)
             .setFilterByAuthorizedAccounts(false)
@@ -88,15 +94,8 @@ object FirebaseNet {
         val response = CredentialManager.create(context).getCredential(context, request)
         val googleCred = GoogleIdTokenCredential.createFrom(response.credential.data)
         val firebaseCred = GoogleAuthProvider.getCredential(googleCred.idToken, null)
-        val user = auth.currentUser ?: throw IllegalStateException("no session")
-        val prev = user.uid
-        return try {
-            val res = user.linkWithCredential(firebaseCred).await()
-            LinkResult(res.user!!.uid, false, prev)
-        } catch (e: FirebaseAuthUserCollisionException) {
-            val res = auth.signInWithCredential(firebaseCred).await()
-            LinkResult(res.user!!.uid, true, prev)
-        }
+        val res = auth.signInWithCredential(firebaseCred).await()
+        return FederatedResult(res.user!!.uid, res.user!!.email)
     }
 
     suspend fun saveProfile(uid: String, p: com.learningischange.tidbitstrivia.data.PlayerIdentity.Profile) {

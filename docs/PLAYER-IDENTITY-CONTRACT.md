@@ -88,11 +88,25 @@ and a cleared web session (incognito, cleared data, new browser/machine) orphans
 profile at `players/{old_uid}`. Both "bring my records to a new device" and "recover a
 lost web session" have the same fix.
 
-**Mechanism — promote the anon account with a federated sign-in.** Firebase
-`linkWithCredential(Apple|Google)` on an anonymous user upgrades the **same uid** to a
-permanent, credential-linked account (all records preserved, no migration). Then
-`signInWithCredential` with that credential on any other device returns the **same uid** →
-the same `players/{uid}`. One durable identity that roams AND survives session loss.
+**Mechanism — key the profile by the VERIFIED EMAIL (revised 2026-07-04).** A person uses
+Apple on Apple devices and Google on Android/web; both providers share one email. Rather
+than fight Firebase's one-account-per-email linking (which needs both providers on one
+device — impossible here), we set `allowDuplicateEmails=true` (each provider gets its own
+Firebase uid) and store the profile at `players/{accountKey}` where
+`accountKey = sha256(lowercased verified email)`. Apple and Google with the same email
+compute the **same key → same records**, on every device. Anonymous users stay keyed by
+`uid` until they sign in (then their anon activity merges into the email-keyed profile).
+
+- **Security/privacy:** the key is a one-way hash (email never exposed). `emailOwners/{key}`
+  (not publicly readable) holds the owner email; the `players/{key}` write rule requires it
+  to equal `auth.token.email` with `auth.token.email_verified`. Two logins with the same
+  verified email = provably one person. $0 (rules only, no backend).
+- **`accountKey`** is byte-identical in Swift (`CryptoKit`), Kotlin (`MessageDigest`), JS
+  (`crypto.subtle`): `sha256hex(email.trim().lowercased())`.
+- **Apple "Hide My Email" caveat:** Apple then supplies a per-app relay address, which won't
+  match the user's Google email — so a Hide-My-Email Apple login is a separate (stable)
+  identity, not merged with Google. Sharing the real email is required to converge.
+- Sign-out returns to a fresh anonymous `uid`; signing in again re-derives the email key.
 
 **Owner decisions (2026-07-04):** **sign-in only** (Apple + Google; no transfer code —
 records are durable only via an account); **auto-merge, lossless** on conflict.

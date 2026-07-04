@@ -41,10 +41,25 @@ object PlayerIdentity {
         scope.launch {
             try {
                 val uid = FirebaseNet.ensureAuth()
-                profileId = uid
-                signedIn = FirebaseNet.isSignedIn()
-                profile = FirebaseNet.loadProfile(uid) ?: newProfile().also {
-                    runCatching { FirebaseNet.saveProfile(uid, it) }
+                val email = FirebaseNet.currentEmail()
+                if (FirebaseNet.isSignedIn() && email != null) {   // signed in → key by verified email
+                    signedIn = true
+                    val key = accountKey(email)
+                    profileId = key
+                    val remote = FirebaseNet.loadProfile(key)
+                    if (remote != null) profile = remote
+                    else {                                          // migrate an older uid-keyed profile
+                        val base = FirebaseNet.loadProfile(uid) ?: newProfile()
+                        runCatching { FirebaseNet.setEmailOwner(key, email) }
+                        runCatching { FirebaseNet.saveProfile(key, base) }
+                        profile = base
+                    }
+                } else {                                            // anonymous → key by uid
+                    signedIn = false
+                    profileId = uid
+                    profile = FirebaseNet.loadProfile(uid) ?: newProfile().also {
+                        runCatching { FirebaseNet.saveProfile(uid, it) }
+                    }
                 }
             } catch (e: Exception) {
                 if (profile == null) profile = newProfile()   // offline / no auth → local profile
@@ -85,24 +100,36 @@ object PlayerIdentity {
         scope.launch { runCatching { FirebaseNet.saveProfile(uid, np) } }
     }
 
-    /** Google sign-in → promote the anon account so records roam + survive session loss.
-     *  On conflict, lossless-merge into the existing account. Returns true if merged. */
+    /** Google sign-in → key the profile by the verified email so Apple + Google (and every
+     *  device) share one record set. Merges this device's anonymous activity in; the guard
+     *  prevents ever re-merging. Returns true if it merged into an existing account. */
     suspend fun linkGoogle(context: android.content.Context, webClientId: String): Boolean {
         if (signedIn) return false   // already on a durable account — never re-merge the same records
-        val local = profile
-        val res = FirebaseNet.linkGoogle(context, webClientId)
-        profileId = res.uid
-        if (res.merged) {
-            val account = FirebaseNet.loadProfile(res.uid) ?: newProfile()
-            val m = merge(local ?: account, account)
-            profile = m
-            runCatching { FirebaseNet.saveProfile(res.uid, m) }
-        } else if (local != null) {
+        val local = profile ?: newProfile()
+        val res = FirebaseNet.signInGoogle(context, webClientId)
+        val email = res.email
+        if (email == null) {                                    // no email (rare) — uid-keyed fallback
+            profileId = res.uid
             runCatching { FirebaseNet.saveProfile(res.uid, local) }
+            signedIn = true
+            return false
         }
+        val key = accountKey(email)
+        runCatching { FirebaseNet.setEmailOwner(key, email) }
+        val existing = FirebaseNet.loadProfile(key)
+        val merged = if (existing != null) merge(local, existing) else local
+        profile = merged
+        profileId = key
+        runCatching { FirebaseNet.saveProfile(key, merged) }
         signedIn = true
-        return res.merged
+        return existing != null
     }
+
+    /** Stable, non-reversible profile key from the verified email — mirror of JS/Swift. */
+    fun accountKey(email: String): String =
+        java.security.MessageDigest.getInstance("SHA-256")
+            .digest(email.trim().lowercase().toByteArray())
+            .joinToString("") { "%02x".format(it) }
 
     /** Sign out → back to a fresh anonymous profile on this device. The account's records
      *  stay in the cloud; signing in again (Google) restores + merges them. */

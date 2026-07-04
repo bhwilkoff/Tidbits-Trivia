@@ -38,9 +38,9 @@ actor FirebaseRTDB {
 
     enum RTDBError: Error, Equatable { case http(Int), noToken, badResponse, alreadyLinked }
 
-    /// Outcome of a federated sign-in: the resulting uid, whether we signed into an
-    /// EXISTING account (so the caller must merge), and the uid we were before.
-    struct LinkResult: Sendable { let uid: String; let merged: Bool; let prevUid: String? }
+    /// Outcome of a federated sign-in: the provider account's uid + its verified email
+    /// (identity keys the shared profile by the email, not the uid).
+    struct FederatedResult: Sendable { let uid: String; let email: String? }
 
     // MARK: - Auth (anonymous)
 
@@ -91,25 +91,30 @@ actor FirebaseRTDB {
 
     private struct IdpResponse: Decodable {
         let idToken: String; let refreshToken: String; let expiresIn: String; let localId: String
+        let email: String?
     }
 
-    /// Link an Apple credential to the CURRENT anon account (promotes it — same uid). If
-    /// the credential is already tied to another account, sign into that one instead and
-    /// report `merged` so the caller can lossless-merge the local profile in.
-    func linkWithApple(identityToken: String, rawNonce: String) async throws -> LinkResult {
-        let cur = try await ensureAuth()   // ensure a live anon session + its idToken
-        let prev = uid
+    /// Sign in with Apple → the Apple Firebase account (its own uid; allowDuplicateEmails
+    /// lets it coexist with a Google account for the same email). Identity keys the shared
+    /// profile by the verified email so both providers land on the same records.
+    func signInWithApple(identityToken: String, rawNonce: String) async throws -> FederatedResult {
         let post = "id_token=\(identityToken)&providerId=apple.com&nonce=\(rawNonce)"
-        _ = cur
-        do {
-            let r = try await signInWithIdp(postBody: post, linkTo: try await validToken())
-            apply(idToken: r.idToken, refreshToken: r.refreshToken, expiresIn: r.expiresIn, uid: r.localId)
-            return LinkResult(uid: r.localId, merged: false, prevUid: prev)
-        } catch RTDBError.alreadyLinked {
-            let r = try await signInWithIdp(postBody: post, linkTo: nil)
-            apply(idToken: r.idToken, refreshToken: r.refreshToken, expiresIn: r.expiresIn, uid: r.localId)
-            return LinkResult(uid: r.localId, merged: true, prevUid: prev)
-        }
+        let r = try await signInWithIdp(postBody: post, linkTo: nil)
+        apply(idToken: r.idToken, refreshToken: r.refreshToken, expiresIn: r.expiresIn, uid: r.localId)
+        return FederatedResult(uid: r.localId, email: r.email)
+    }
+
+    /// The verified email of the current federated session, decoded from the Firebase ID
+    /// token payload (nil for anonymous). Lets the profile re-key by email after relaunch.
+    func currentEmail() -> String? {
+        guard let token = idToken else { return nil }
+        let parts = token.split(separator: ".")
+        guard parts.count == 3 else { return nil }
+        var b64 = String(parts[1]).replacingOccurrences(of: "-", with: "+").replacingOccurrences(of: "_", with: "/")
+        while b64.count % 4 != 0 { b64 += "=" }
+        guard let data = Data(base64Encoded: b64),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
+        return json["email"] as? String
     }
 
     /// Sign out of the federated account and return to a FRESH anonymous session (new

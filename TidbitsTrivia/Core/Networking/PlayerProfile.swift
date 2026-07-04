@@ -1,4 +1,5 @@
 import Foundation
+import CryptoKit
 
 /// The portable Tidbits player identity — the wire contract for the shared, cross-platform
 /// profile that spans solo play AND live events, on the $0 data plane (Firebase RTDB Spark;
@@ -19,6 +20,13 @@ enum PlayerIdentity {
     static let privatePath = "playersPrivate"
     static func publicPath(_ uid: String) -> String { "\(publicPath)/\(uid)" }
     static func privatePath(_ uid: String) -> String { "\(privatePath)/\(uid)" }
+
+    /// Stable, non-reversible profile key from the verified email — Apple + Google with
+    /// the same email land on the SAME profile. Mirror of the JS/Kotlin sha256Hex(email).
+    static func accountKey(forEmail email: String) -> String {
+        let norm = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        return SHA256.hash(data: Data(norm.utf8)).map { String(format: "%02x", $0) }.joined()
+    }
 
     /// `players/{uid}` — the public profile (anyone signed-in can read it for leaderboards;
     /// only the owner can write). Non-sensitive display + aggregate stats only.

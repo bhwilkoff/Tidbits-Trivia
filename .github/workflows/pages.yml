@@ -1,0 +1,38 @@
+# GitHub Pages deploy for the web app. Replaces the built-in "deploy from a branch"
+# flow, which has NO concurrency control — rapid pushes created overlapping deployments
+# and GitHub failed some with "Deployment failed, try again later." The `concurrency`
+# group serializes deploys (one at a time; intermediate queued runs are skipped, the
+# in-progress one is allowed to finish), which fixes the intermittent failures.
+#
+# The site is the repo root as-is (a vanilla static site; .nojekyll bypasses Jekyll,
+# CNAME preserves the custom domain) — identical content to the legacy branch deploy.
+name: Deploy web to Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+      - id: deployment
+        uses: actions/deploy-pages@v4

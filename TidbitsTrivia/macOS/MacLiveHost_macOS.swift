@@ -189,6 +189,11 @@ struct LiveHostView_macOS: View {
             if session.finished { standings }
             else { cockpit }
         }
+        // Explicit min so window resizing measures the prompt at a real width. Without
+        // it, .contentMinSize proposes ~0 width to the fixedSize prompt Text, which
+        // wraps to one glyph per line and reports a runaway min height (~5800px),
+        // pinning the window absurdly tall. The projector avoids this the same way.
+        .frame(minWidth: 900, maxWidth: .infinity, minHeight: 560, maxHeight: .infinity)
         .background(Tidbits.Palette.bg)
     }
 

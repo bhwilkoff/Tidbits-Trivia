@@ -42,6 +42,11 @@ struct TidbitsTriviaApp: App {
         .modelContainer(modelContainer)
         #if os(macOS)
         .commands { TidbitsCommands() }   // ⌘N → New Quick Play (§B1a)
+        // Resize freely down to the content's min — WITHOUT this the default
+        // (.automatic) lets fixed content sizes fight the window drag (the
+        // cockpit + projector felt "stuck" when resizing).
+        .windowResizability(.contentMinSize)
+        .defaultSize(width: 1180, height: 760)
         #endif
 
         #if os(macOS)
@@ -62,6 +67,8 @@ struct TidbitsTriviaApp: App {
                 .preferredColorScheme(.light)
         }
         .modelContainer(modelContainer)
+        .windowResizability(.contentMinSize)   // projector must resize to any display
+        .defaultSize(width: 1280, height: 720)
         #endif
     }
 

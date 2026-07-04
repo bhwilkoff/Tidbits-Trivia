@@ -24,8 +24,17 @@ final class LiveHostSession {
     var finished = false
     /// Points a correct answer is worth this round (host-adjustable; pub default 1).
     var pointsPerCorrect = 1
+    /// Per-question display shuffles (fixed once so publish + reveal agree).
+    var shuffledOrder: [String] = []
+    var shuffledValues: [String] = []
 
-    init(event: LiveEvent) { self.event = event }
+    init(event: LiveEvent) { self.event = event; prepare() }
+
+    /// Compute the display shuffles for the current question (ordering/matching).
+    func prepare() {
+        shuffledOrder = current?.ordering?.shuffled() ?? []
+        shuffledValues = current?.matching?.values.shuffled() ?? []
+    }
 
     var questions: [Question] { event.questionStream }
     var current: Question? { questions.indices.contains(index) ? questions[index] : nil }
@@ -56,7 +65,7 @@ final class LiveHostSession {
     func reveal() { revealed = true }
     func next() {
         revealed = false
-        if index + 1 >= questions.count { finished = true } else { index += 1 }
+        if index + 1 >= questions.count { finished = true } else { index += 1; prepare() }
     }
     var standings: [LiveTeam] { teams.sorted { $0.score > $1.score } }
 
@@ -89,12 +98,19 @@ final class LiveHostSession {
                                 phase: LiveRoom.Phase.ended, prompt: "", options: nil, format: "", answerIndex: nil)
         }
         let inR = questionInRound
-        return LiveRoom.Pub(round: roundNumber, roundTitle: roundTitle,
-                            qid: LiveRoom.qid(round: q.roundIndex ?? 0, question: index),
-                            qNum: inR.n, qTotal: inR.of,
-                            phase: revealed ? LiveRoom.Phase.reveal : LiveRoom.Phase.question,
-                            prompt: q.prompt, options: q.options, format: currentFormat,
-                            answerIndex: revealed ? q.correctIndex : nil)
+        let mcq = LiveNightHost.isMCQ(q)
+        var p = LiveRoom.Pub(round: roundNumber, roundTitle: roundTitle,
+                             qid: LiveRoom.qid(round: q.roundIndex ?? 0, question: index),
+                             qNum: inR.n, qTotal: inR.of,
+                             phase: revealed ? LiveRoom.Phase.reveal : LiveRoom.Phase.question,
+                             prompt: q.prompt, options: mcq ? q.options : nil, format: currentFormat,
+                             answerIndex: (revealed && mcq) ? q.correctIndex : nil)
+        p.imageURL = q.imageURL?.absoluteString
+        if let c = q.closest { p.numeric = LiveRoom.Numeric(min: c.min, max: c.max, step: c.step, unit: c.unit) }
+        if q.ordering != nil { p.orderItems = shuffledOrder }
+        if let m = q.matching { p.matchKeys = m.keys; p.matchValues = shuffledValues }
+        if let e = q.enumerate { p.enumTarget = e.total }
+        return p
     }
 }
 

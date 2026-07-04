@@ -37,20 +37,34 @@ no confusable chars) shown on the big screen for players to enter.
 | `pub` | host | the live question state players render (see below) |
 | `scores/{uid}` | host | integer — a team's running score (host owns scoring) |
 | `teams/{uid}` | that player | `{ name, joinedAt: ms }` |
-| `answers/{qid}/{uid}` | that player | `{ choice?: Int, text?: String, ts: ms }` |
+| `answers/{qid}/{uid}` | that player | `{ choice?, text?, number?, order?:[Int], pairs?:[Int], list?:[String], ts }` |
 
-### `pub` (host-published, players stream it)
+### `pub` (host-published, players stream it) — ALL question types
 ```json
 {
   "round": 1, "roundTitle": "History",
   "qid": "r0q3", "qNum": 3, "qTotal": 5,
   "phase": "question",            // intro | question | reveal | ended
-  "prompt": "…", "options": ["A","B","C","D"], "format": "classic",
-  "answerIndex": 2                // ONLY present in phase "reveal"
+  "prompt": "…", "format": "classic",
+  "options": ["A","B","C","D"],   // MCQ / picture / this-or-that / odd-one-out
+  "answerIndex": 2,               // ONLY present in phase "reveal" (MCQ)
+  "imageURL": "…",                // pictureId
+  "numeric": {"min":,"max":,"step":,"unit":""},   // closestCall (NOT the answer)
+  "orderItems": ["…"],            // ordering (SHUFFLED; correct order withheld)
+  "matchKeys": ["…"], "matchValues": ["…"],       // matching (values SHUFFLED)
+  "enumTarget": 8                 // enumerate (how many in the set)
 }
 ```
 `qid = "r{roundIndex}q{questionIndex}"` is stable across reveal/advance so answers
-key cleanly. `answerIndex` is withheld until reveal so a joined phone can't peek.
+key cleanly. **Every question type is playable** — only the field(s) for the current
+`format` are set. **Nothing that could leak the answer is ever published** (correct
+order, pairings, accepted text, the enumerate set): the host **auto-scores on reveal
+from its own local `Question`** — MCQ/picture exact, numeric proximity, ordering/
+matching partial credit, type-answer via alias-match, enumerate by unique set members.
+`answerIndex` is withheld until reveal. The per-question ordering/matching shuffle is
+fixed once (publish == reveal) so submitted indices stay valid. The scorer is mirrored
+in `LiveNightHost.score` (Swift), `liveScore` (Kotlin), `nhScore` (JS). Tidbits Live
+(Mac) publishes the same fields but keeps its manual/referee scoring.
 
 ## Security rules (`database.rules.json` → `live`)
 

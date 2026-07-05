@@ -70,6 +70,13 @@ final class LiveHostSession {
         let pos = questionInRound.n - 1
         return bms.indices.contains(pos) ? bms[pos] : nil
     }
+    /// Wave B: the video clip bookmark for the current question (nil unless it's a video round).
+    var currentVideoBookmark: Data? {
+        let ri = current?.roundIndex ?? 0
+        guard event.rounds.indices.contains(ri), let bms = event.rounds[ri].videoBookmarks else { return nil }
+        let pos = questionInRound.n - 1
+        return bms.indices.contains(pos) ? bms[pos] : nil
+    }
     var questionInRound: (n: Int, of: Int) {
         let ri = current?.roundIndex ?? 0
         let inRound = questions.enumerated().filter { $0.element.roundIndex == ri }
@@ -92,6 +99,8 @@ final class LiveHostSession {
     func next() {
         revealed = false
         if index + 1 >= questions.count { finished = true } else { index += 1; prepare(); armTimer() }
+        LiveVideoPlayer.shared.stop()   // Wave B: clear the previous question's video + clip (the music bed keeps looping)
+        LiveAudioPlayer.shared.stop()
     }
     /// Wave A: arm the per-question countdown from the current round's timer (0/nil = off).
     func armTimer() {
@@ -309,6 +318,12 @@ struct LiveHostView_macOS: View {
                 if let clip = session.currentAudioBookmark {   // Wave B: audio round — play this question's clip
                     Button { LiveAudioPlayer.shared.openBookmark(clip); LiveAudioPlayer.shared.togglePlay() } label: {
                         Label("Play this clip", systemImage: "play.circle.fill").font(Tidbits.TypeRamp.l4)
+                    }
+                    .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.blue, textColor: .white))
+                }
+                if let vid = session.currentVideoBookmark {   // Wave B: video round — play on the big screen
+                    Button { LiveVideoPlayer.shared.openBookmark(vid); LiveVideoPlayer.shared.play() } label: {
+                        Label("Play video on the big screen", systemImage: "play.rectangle.fill").font(Tidbits.TypeRamp.l4)
                     }
                     .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.blue, textColor: .white))
                 }
@@ -919,6 +934,41 @@ final class LiveMusicBed {
         player.scheduleFile(file, at: nil) { [weak self] in
             Task { @MainActor in if self?.isPlaying == true { self?.scheduleLoop() } }
         }
+    }
+}
+
+// MARK: - Wave B: video questions (played on the big screen)
+
+/// A video clip for a video-round question, shown on the BIG SCREEN (the room watches) via
+/// AVKit. The host loads + plays it; the big screen renders whatever is loaded here.
+@Observable @MainActor
+final class LiveVideoPlayer {
+    static let shared = LiveVideoPlayer()
+
+    private(set) var player: AVPlayer?
+    private(set) var hasVideo = false
+    private var accessedURL: URL?
+
+    func open(_ url: URL) {
+        stop()
+        player = AVPlayer(url: url)
+        hasVideo = true
+    }
+
+    func openBookmark(_ data: Data) {
+        var stale = false
+        guard let url = try? URL(resolvingBookmarkData: data, options: .withSecurityScope,
+                                 relativeTo: nil, bookmarkDataIsStale: &stale),
+              url.startAccessingSecurityScopedResource() else { return }
+        open(url); accessedURL = url
+    }
+
+    func play() { player?.seek(to: .zero); player?.play() }
+    func pause() { player?.pause() }
+
+    func stop() {
+        player?.pause(); player = nil; hasVideo = false
+        if let u = accessedURL { u.stopAccessingSecurityScopedResource(); accessedURL = nil }
     }
 }
 #endif

@@ -1,6 +1,7 @@
 #if os(macOS)
 import SwiftUI
 import AppKit
+import AVKit
 import CoreImage.CIFilterBuiltins
 
 /// The canonical web join URL a QR encodes. `tidbitstrivia.com/live/{code}`
@@ -140,6 +141,12 @@ struct LiveBigScreen_macOS: View {
                         .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
                         .id(q.id)
                         .transition(.opacity.combined(with: .move(edge: .top)))
+                    if LiveVideoPlayer.shared.hasVideo, let vplayer = LiveVideoPlayer.shared.player {   // Wave B: video question
+                        VideoPlayer(player: vplayer)
+                            .frame(maxWidth: .infinity, minHeight: 420, maxHeight: 560)
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
+                            .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(Tidbits.Palette.border, lineWidth: 4))
+                    }
                     let hasVotes = !(coordinator.net?.answers.isEmpty ?? true)
                     if LiveNightHost.isMCQ(q), hasVotes || s.revealed {
                         voteTally(q, revealed: s.revealed)   // A8: the room watches the votes land

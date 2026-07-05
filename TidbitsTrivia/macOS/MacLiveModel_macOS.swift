@@ -17,6 +17,7 @@ struct LiveRound: Identifiable, Codable, Hashable {
     var isWager: Bool? = nil       // Wave A: a wager round — teams stake points on each question (correct +stake, wrong −stake)
     var audioBookmarks: [Data]? = nil   // Wave B: security-scoped bookmarks to each question's audio clip (audio round; parallel to questions)
     var isSpeed: Bool? = nil            // Wave B: a speed round — correct answers earn a fastest-first bonus
+    var videoBookmarks: [Data]? = nil   // Wave B: security-scoped bookmarks to each question's video clip (video round; parallel to questions)
 
     var symbol: String { format.symbol }
 }

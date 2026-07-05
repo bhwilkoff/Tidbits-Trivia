@@ -100,6 +100,8 @@ struct LiveBuilderView_macOS: View {
                         .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.ink))
                     Button("Audio round…") { addAudioRound() }   // Wave B: name-that-clip round
                         .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.ink))
+                    Button("Video round…") { addVideoRound() }   // Wave B: name-that-video round
+                        .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.ink))
                     Spacer()
                     Menu {
                         Button("Question pack (host)") { LivePrint.questionPack(working) }
@@ -257,6 +259,27 @@ struct LiveBuilderView_macOS: View {
         }
         working.rounds.append(LiveRound(title: "Audio round", format: .typeAnswer, categoryID: "music",
                                         questions: questions, audioBookmarks: bookmarks))
+    }
+
+    /// Wave B: build a video round from picked clips — each becomes a "name it" (typeAnswer)
+    /// question; the clip plays on the big screen during the round.
+    private func addVideoRound() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.movie, .video, .mpeg4Movie, .quickTimeMovie]
+        panel.allowsMultipleSelection = true
+        guard panel.runModal() == .OK, !panel.urls.isEmpty else { return }
+        var questions: [Question] = []
+        var bookmarks: [Data] = []
+        for (i, url) in panel.urls.enumerated() {
+            let answer = url.deletingPathExtension().lastPathComponent
+            questions.append(Question(id: UUID().uuidString, prompt: "Clip \(i + 1) — name it",
+                                      options: [answer], correctIndex: 0, categoryID: "screen", difficulty: 3,
+                                      explanation: "", sourceTitle: "", sourceURL: nil, templateID: "video",
+                                      accepted: [answer]))
+            bookmarks.append((try? url.bookmarkData(options: .withSecurityScope)) ?? Data())
+        }
+        working.rounds.append(LiveRound(title: "Video round", format: .typeAnswer, categoryID: "screen",
+                                        questions: questions, videoBookmarks: bookmarks))
     }
 
     static func parseCSVQuestions(_ text: String) -> [Question] {

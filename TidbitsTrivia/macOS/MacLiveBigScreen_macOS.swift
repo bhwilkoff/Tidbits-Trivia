@@ -160,6 +160,7 @@ struct LiveBigScreen_macOS: View {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(s.event.name.uppercased()).font(.system(size: 30, weight: .black, design: .rounded)).foregroundStyle(Color(hexString: s.event.brandHex) ?? Tidbits.Palette.ink)   // Wave D: white-label brand accent
+                        .lineLimit(1).minimumScaleFactor(0.6)
                     if !s.event.venue.isEmpty {
                         Text(s.event.venue).font(.system(size: 22, weight: .heavy, design: .rounded)).foregroundStyle(Tidbits.Palette.coral)
                     }
@@ -167,6 +168,7 @@ struct LiveBigScreen_macOS: View {
                 Spacer()
                 Text("ROUND \(s.roundNumber)/\(s.roundCount) · \(s.roundTitle)")
                     .font(.system(size: 26, weight: .heavy, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
+                    .lineLimit(1).minimumScaleFactor(0.6)   // a long round title shrinks instead of wrapping/overflowing
             }
             if let d = s.deadlineMs, !s.revealed { countdown(deadlineMs: d) }   // Wave A: on-screen timer
             Spacer()
@@ -175,7 +177,8 @@ struct LiveBigScreen_macOS: View {
                     chromeRow(q, s)   // Wave B: format + difficulty chrome
                     Text(q.prompt)
                         .font(.system(size: 56, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
-                        .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
+                        .multilineTextAlignment(.center).lineLimit(5).minimumScaleFactor(0.45)   // a long prompt scales to fit, never overflows the projector
+                        .frame(maxWidth: 1200)
                         .id(q.id)
                         .transition(.opacity.combined(with: .move(edge: .top)))
                     if LiveVideoPlayer.shared.hasVideo, let vplayer = LiveVideoPlayer.shared.player {   // Wave B: video question
@@ -190,6 +193,7 @@ struct LiveBigScreen_macOS: View {
                     } else if s.revealed {
                         Text(q.correctAnswer)
                             .font(.system(size: 52, weight: .black, design: .rounded)).foregroundStyle(.white)
+                            .lineLimit(2).minimumScaleFactor(0.5)   // a long answer fits the capsule
                             .padding(.horizontal, 28).padding(.vertical, 14)
                             .background(Capsule().fill(Tidbits.Palette.mint))
                             .overlay(Capsule().strokeBorder(Tidbits.Palette.border, lineWidth: 4))

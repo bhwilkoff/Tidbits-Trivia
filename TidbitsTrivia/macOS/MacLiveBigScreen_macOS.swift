@@ -251,15 +251,29 @@ struct LiveBigScreen_macOS: View {
         .animation(showAnim, value: counts)
     }
 
+    /// Wave C: the hybrid standings — networked phone teams AND in-room paper teams merged into
+    /// ONE ranked list (the differentiator the field doesn't ship well).
+    struct UnifiedStanding: Identifiable { let id: String; let name: String; let score: Int; let paper: Bool }
+    private func unifiedStandings(_ s: LiveHostSession) -> [UnifiedStanding] {
+        var rows: [UnifiedStanding] = []
+        if let net = coordinator.net {
+            for (uid, team) in net.teams { rows.append(.init(id: uid, name: team.name, score: net.scores[uid] ?? 0, paper: false)) }
+        }
+        for t in s.teams { rows.append(.init(id: "paper:\(t.id)", name: t.name, score: t.score, paper: true)) }
+        return rows.sorted { $0.score > $1.score }
+    }
+
     private func leaderboard(_ s: LiveHostSession) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            if s.teams.isEmpty {
+        let rows = unifiedStandings(s)
+        return VStack(alignment: .leading, spacing: 10) {
+            if rows.isEmpty {
                 Text("Teams appear here as they join.").font(.system(size: 24, weight: .semibold, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
             } else {
-                ForEach(Array(s.standings.prefix(5).enumerated()), id: \.element.id) { i, team in
+                ForEach(Array(rows.prefix(5).enumerated()), id: \.element.id) { i, team in
                     HStack(spacing: 14) {
                         Text("\(i + 1)").font(.system(size: 24, weight: .black, design: .rounded)).foregroundStyle(i == 0 ? Tidbits.Palette.ink : Tidbits.Palette.inkSoft).frame(width: 32)
                         if i == 0 { Image(systemName: "crown.fill").font(.system(size: 22)).foregroundStyle(Tidbits.Palette.yellow) }
+                        Image(systemName: team.paper ? "pencil" : "iphone").font(.system(size: 15)).foregroundStyle(Tidbits.Palette.inkSoft)   // Wave C: paper vs phone
                         Text(team.name).font(.system(size: 26, weight: .heavy, design: .rounded)).foregroundStyle(Tidbits.Palette.ink).lineLimit(1)
                         Spacer(minLength: 20)
                         Text("\(team.score)").font(.system(size: 30, weight: .black, design: .rounded).monospacedDigit()).foregroundStyle(Tidbits.Palette.ink)
@@ -271,12 +285,13 @@ struct LiveBigScreen_macOS: View {
                 }
             }
         }
-        .animation(showAnim, value: s.standings.prefix(5).map(\.id))   // A8.2 the leaderboard climbs
+        .animation(showAnim, value: rows.prefix(5).map(\.id))   // A8.2 the leaderboard climbs
     }
 
     private func standings(_ s: LiveHostSession) -> some View {
-        VStack(spacing: 20) {
-            if let winner = s.standings.first, winner.score > 0 {
+        let rows = unifiedStandings(s)
+        return VStack(spacing: 20) {
+            if let winner = rows.first, winner.score > 0 {
                 HStack(spacing: 16) {
                     Image(systemName: "party.popper.fill").font(.system(size: 40)).foregroundStyle(Tidbits.Palette.coral)
                     Text("\(winner.name) wins!").font(.system(size: 60, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
@@ -286,10 +301,11 @@ struct LiveBigScreen_macOS: View {
             } else {
                 Text("FINAL STANDINGS").font(.system(size: 56, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
             }
-            ForEach(Array(s.standings.prefix(8).enumerated()), id: \.element.id) { i, team in
+            ForEach(Array(rows.prefix(8).enumerated()), id: \.element.id) { i, team in
                 HStack(spacing: 20) {
                     Text("\(i + 1)").font(.system(size: 40, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft).frame(width: 60)
                     if i == 0 { Image(systemName: "crown.fill").font(.system(size: 34)).foregroundStyle(Tidbits.Palette.yellow) }
+                    Image(systemName: team.paper ? "pencil" : "iphone").font(.system(size: 22)).foregroundStyle(Tidbits.Palette.inkSoft)
                     Text(team.name).font(.system(size: 40, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
                     Spacer()
                     Text("\(team.score)").font(.system(size: 44, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)

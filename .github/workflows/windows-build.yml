@@ -36,6 +36,22 @@ jobs:
       - name: Publish self-contained win-x64 .exe
         run: dotnet publish Tidbits.App/Tidbits.App.csproj -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -o publish/win-x64
 
+      - name: Launch the real .exe + screenshot the live window (proves it LAUNCHES)
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath "publish/win-x64/Tidbits.App.exe" -PassThru
+          Start-Sleep -Seconds 10
+          Add-Type -AssemblyName System.Windows.Forms, System.Drawing
+          $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+          $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
+          $g = [System.Drawing.Graphics]::FromImage($bmp)
+          $g.CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
+          New-Item -ItemType Directory -Force -Path artifacts | Out-Null
+          $bmp.Save("$PWD/artifacts/launched-desktop.png")
+          if ($p.HasExited) { throw "Tidbits.App.exe exited early (code $($p.ExitCode)) — did not stay running" }
+          Stop-Process -Id $p.Id -Force
+          Write-Host "App launched and stayed running; desktop captured."
+
       - name: Upload snapshots
         uses: actions/upload-artifact@v4
         with:

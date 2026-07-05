@@ -24,6 +24,7 @@ final class LiveHostSession {
     var teams: [LiveTeam] = []
     var index = 0
     var revealed = false
+    var scoredIndices: Set<Int> = []   // adaptability: score each question ONCE (so go-back / re-reveal never double-scores)
     var finished = false
     var deadlineMs: Int? = nil   // Wave A: epoch-ms countdown deadline for the current timed question
     var locked = false           // Wave C: answers locked ("pencils down") — auto-set at the timer deadline or manually
@@ -114,6 +115,25 @@ final class LiveHostSession {
         LiveVideoPlayer.shared.stop()   // Wave B: clear the previous question's video + clip (the music bed keeps looping)
         LiveAudioPlayer.shared.stop()
     }
+
+    /// Adaptability: skip the current question WITHOUT revealing or scoring it ("let's skip this one").
+    func skip() {
+        guard index + 1 < questions.count else { finished = true; return }
+        revealed = false; locked = false
+        index += 1; prepare(); armTimer()
+        LiveVideoPlayer.shared.stop(); LiveAudioPlayer.shared.stop()
+    }
+
+    /// Adaptability: step back to the previous question, shown already-revealed (it was scored;
+    /// the scoredIndices guard means re-revealing never double-scores). "Wait, go back."
+    func previous() {
+        guard index > 0 else { return }
+        index -= 1; prepare()
+        locked = false; deadlineMs = nil
+        revealed = true
+        LiveVideoPlayer.shared.stop(); LiveAudioPlayer.shared.stop()
+    }
+    var canGoBack: Bool { index > 0 }
     /// Wave A: arm the per-question countdown from the current round's timer (0/nil = off).
     func armTimer() {
         let ri = current?.roundIndex ?? 0
@@ -242,6 +262,8 @@ struct LiveHostContainer_macOS: View {
     /// applies on top (§A3.2).
     private func scoreReveal() async {
         guard let q = session.current else { return }
+        guard !session.scoredIndices.contains(session.index) else { return }   // adaptability: score each question ONCE
+        session.scoredIndices.insert(session.index)
         let wagerRound = session.currentRoundIsWager
         let speedRound = session.currentRoundIsSpeed
         var speedCorrect: [(uid: String, ts: Int, pts: Int)] = []
@@ -371,12 +393,21 @@ struct LiveHostView_macOS: View {
             answerDistribution   // §A3.4: live per-option tally — read the room before revealing
             Spacer()
             HStack(spacing: 12) {
+                Button { session.previous() } label: { Image(systemName: "chevron.left").font(.system(size: 14, weight: .bold)) }   // adaptability: go back
+                    .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.ink))
+                    .disabled(!session.canGoBack)
+                    .keyboardShortcut(.leftArrow, modifiers: .command)
+                    .help("Back to the previous question (⌘←)")
                 if !session.revealed {
                     Button(session.locked ? "Answers locked" : "Lock answers") {   // Wave C: manual pencils-down
                         session.locked = true; Task { await net.publish(session.currentPub()) }
                     }
                     .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.ink))
                     .disabled(session.locked)
+                    Button("Skip") { session.skip() }   // adaptability: skip this question (no score)
+                        .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.inkSoft))
+                        .keyboardShortcut(.rightArrow, modifiers: .command)
+                        .help("Skip this question — no score (⌘→)")
                     Button("Reveal answer") { session.reveal() }
                         .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.yellow, textColor: Tidbits.Palette.ink))
                         .keyboardShortcut(.defaultAction)

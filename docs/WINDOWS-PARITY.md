@@ -49,8 +49,8 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [x] 2.1 `GameEngine` (all 18 modes, phases, clocks, host-paced, all submit paths) — end-to-end tests GREEN
 - [ ] 2.3 `ProgressStats`/DomainProgress/Badges
 - [ ] 2.4 `BotOpponent`
-- [~] 2.5 Play surface — Quick Play LIVE (starts a real Classic game); Surprise/Customize/Daily/Night/Online-MP pending
-- [ ] 2.6 Customize/Quick Play sheets (mode multiselect, category grid, presets)
+- [~] 2.5 Play/Home surface — Quick Play hero + Daily + category picker + mode grid (all MCQ modes reachable); Surprise/Night/Online-MP pending
+- [~] 2.6 Customize — category picker + mode grid on Home; mode multiselect (mix) + saved presets pending
 - [~] 2.7 Game surface — MCQ playing/reveal/finished LIVE + headless-PNG verified; specialty-mode surfaces pending
 - [ ] 2.8 Per-mode answer surfaces (picture/numeric/ordering/matching/type/enumerate/stake/sweep)
 - [ ] 2.9 Image pipeline (decoded cache + capped HttpClient, sRGB)

@@ -2,13 +2,31 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="Tidbits.App.Views.PlayView">
     <Panel>
-        <StackPanel x:Name="Landing" Margin="36,32" Spacing="18" MaxWidth="760" HorizontalAlignment="Left">
-            <TextBlock Text="Play" FontSize="34" FontWeight="Black"/>
-            <TextBlock Text="Quick into a round — trivia from the whole of Wikipedia."
-                       FontSize="15" Opacity="0.75" TextWrapping="Wrap"/>
-            <Button x:Name="QuickPlayBtn" Click="OnQuickPlay" Content="Quick Play"
-                    Classes="accent" Padding="26,15" FontSize="18" FontWeight="Bold" Margin="0,8,0,0"/>
-        </StackPanel>
+        <ScrollViewer x:Name="Landing">
+            <StackPanel Margin="36,30" Spacing="16" MaxWidth="760" HorizontalAlignment="Left">
+                <TextBlock Text="Play" FontSize="34" FontWeight="Black"/>
+                <TextBlock Text="Trivia from the whole of Wikipedia." FontSize="15" Opacity="0.7"/>
+
+                <!-- Quick Play hero -->
+                <Button Click="OnQuickPlay" Classes="accent" HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Left" Padding="24,18" Margin="0,6,0,0">
+                    <StackPanel Spacing="3">
+                        <TextBlock Text="QUICK PLAY" FontSize="23" FontWeight="Black"/>
+                        <TextBlock Text="Jump straight into a round" FontSize="13" Opacity="0.9"/>
+                    </StackPanel>
+                </Button>
+
+                <!-- Daily + category -->
+                <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                    <Button Content="Daily Tidbit" Click="OnDaily" Padding="18,12" FontWeight="SemiBold"/>
+                    <TextBlock Text="Category:" VerticalAlignment="Center" Opacity="0.7"/>
+                    <ComboBox x:Name="CategoryPicker" MinWidth="150"/>
+                </StackPanel>
+
+                <TextBlock Text="Modes" FontSize="20" FontWeight="Bold" Margin="0,12,0,0"/>
+                <WrapPanel x:Name="ModesPanel"/>
+            </StackPanel>
+        </ScrollViewer>
         <ContentControl x:Name="GameHost"/>
     </Panel>
 </UserControl>

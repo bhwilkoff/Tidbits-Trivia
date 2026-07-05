@@ -1,0 +1,40 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Tidbits.App.ViewModels"
+             x:Class="Tidbits.App.Views.JoinPlayerView"
+             x:DataType="vm:LivePlayerViewModel">
+    <ScrollViewer>
+        <StackPanel Margin="36,32" Spacing="16" MaxWidth="560" HorizontalAlignment="Left">
+            <!-- Entry -->
+            <StackPanel IsVisible="{Binding NotJoined}" Spacing="12">
+                <TextBlock Text="Join a game" FontSize="28" FontWeight="Black"/>
+                <TextBlock Text="Enter the 4-letter code from the host's screen." FontSize="14" Opacity="0.7"/>
+                <TextBox x:Name="CodeBox" Watermark="Code (e.g. 2NRE)" FontSize="18" MaxLength="4" Padding="12"/>
+                <TextBox x:Name="TeamBox" Watermark="Your team name" FontSize="16" Padding="12"/>
+                <Button Content="Join" Click="OnJoin" Classes="accent" Padding="26,12" FontWeight="Bold" HorizontalAlignment="Left"/>
+                <TextBlock Text="{Binding Client.ErrorText}" Foreground="#D64545" FontSize="13"
+                           IsVisible="{Binding Client.ErrorText, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+            </StackPanel>
+
+            <!-- Joined: the game -->
+            <StackPanel IsVisible="{Binding !NotJoined}" Spacing="14">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Text="{Binding Client.Meta.Name}" FontWeight="Bold" FontSize="18" VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="1" Text="{Binding Client.Score, StringFormat='{}{0} pts'}"
+                               FontWeight="Black" FontSize="18" Foreground="#FF5C35"/>
+                </Grid>
+
+                <TextBlock IsVisible="{Binding WaitingForStart}" Text="You're in! Waiting for the host to start…"
+                           Opacity="0.7" FontSize="15"/>
+
+                <TextBlock IsVisible="{Binding ShowQuestion}" Text="{Binding Client.Pub.Prompt}"
+                           FontSize="21" FontWeight="Bold" TextWrapping="Wrap"/>
+                <StackPanel x:Name="OptionsPanel" Spacing="0"/>
+                <TextBlock IsVisible="{Binding Answered}" Text="Answer locked ✓" Foreground="#1E9E6A" FontWeight="SemiBold"/>
+
+                <TextBlock IsVisible="{Binding IsEnded}" Text="Night over — thanks for playing!"
+                           FontSize="18" FontWeight="Bold" Margin="0,10,0,0"/>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

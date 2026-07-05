@@ -7,9 +7,12 @@
                 <TextBlock Text="Tidbits Live" FontSize="34" FontWeight="Black"/>
                 <TextBlock Text="Host a trivia night — players join from their phones by a 4-letter code. The host cockpit runs the show; a projector window goes on the big screen."
                            FontSize="15" Opacity="0.72" TextWrapping="Wrap"/>
-                <TextBlock Text="Choose a format" FontSize="18" FontWeight="Bold" Margin="0,10,0,0"/>
+                <TextBlock Text="Host a night" FontSize="18" FontWeight="Bold" Margin="0,10,0,0"/>
                 <StackPanel x:Name="PresetsPanel" Spacing="10"/>
                 <TextBlock x:Name="StatusText" IsVisible="False" Opacity="0.75" FontSize="13" TextWrapping="Wrap"/>
+
+                <TextBlock Text="Or join a game" FontSize="18" FontWeight="Bold" Margin="0,16,0,0"/>
+                <Button Content="Join a game with a code" Click="OnJoinGame" Padding="18,12" HorizontalAlignment="Left"/>
             </StackPanel>
         </ScrollViewer>
         <ContentControl x:Name="CockpitHost"/>

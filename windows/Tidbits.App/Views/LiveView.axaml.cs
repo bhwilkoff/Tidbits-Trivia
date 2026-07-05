@@ -66,6 +66,12 @@ public partial class LiveView : UserControl
         }
     }
 
+    private void OnJoinGame(object? sender, RoutedEventArgs e)
+    {
+        Setup.IsVisible = false;
+        CockpitHost.Content = new JoinPlayerView { DataContext = new LivePlayerViewModel() };
+    }
+
     /// Called by the cockpit's Close to return to setup.
     public void BackToSetup()
     {

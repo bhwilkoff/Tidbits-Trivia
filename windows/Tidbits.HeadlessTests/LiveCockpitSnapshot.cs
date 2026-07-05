@@ -43,6 +43,17 @@ public class LiveCockpitSnapshot
         Dispatcher.UIThread.RunJobs();
         proj.CaptureRenderedFrame()!.Save(Path.Combine(dir, "live-projector.png"));
 
+        // A real joiner receives the question — render the join surface.
+        var player = new LivePlayerViewModel();
+        await player.Join(host.Code, "Team Bravo");
+        var t0 = Environment.TickCount64;
+        while (player.Client.Pub is null && Environment.TickCount64 - t0 < 10000) await Task.Delay(150);
+        var joinWin = new Window { Width = 560, Height = 680, Content = new JoinPlayerView { DataContext = player } };
+        joinWin.Show();
+        Dispatcher.UIThread.RunJobs();
+        joinWin.CaptureRenderedFrame()!.Save(Path.Combine(dir, "live-join.png"));
+
+        await player.Leave();
         await host.Close();
     }
 }

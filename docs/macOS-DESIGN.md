@@ -330,8 +330,13 @@ platform=mac`). The submission tooling (`tools/submit-appstore.sh` +
 
 7.1 The iOS app resized / a per-tab stack instead of the split view
 (§2.1). 7.2 A game as an overlay/cover on the split view instead of the
-window root (§3.1). 7.3 Settings as a sidebar row instead of `⌘,`
-(§2.2). 7.4 An unguarded UIKit import reaching the Mac build (§0.1). 7.5
+window root (§3.1). 7.3 Settings as a sidebar **content row** (a peer
+nav destination in the List) instead of `⌘,` (§2.2) — BUT a footer
+`SettingsLink` that OPENS the `⌘,` scene IS allowed and is required for
+discoverability: `⌘,`-only proved undiscoverable and a user couldn't
+find sign-in at all (2026-07-05). Keep Settings out of the content
+hierarchy; a labeled footer affordance to reach it is correct. 7.4 An
+unguarded UIKit import reaching the Mac build (§0.1). 7.5
 A fill-image hero with a fixed/`maxHeight` frame (§5.2). 7.6 Bare
 `AsyncImage` for picture art (§5.3). 7.7 A Records inline dump — build
 the dashboard, don't port the bug (§4.1). 7.8 A second game engine

@@ -52,7 +52,7 @@ import kotlin.math.abs
 /** The portable Tidbits identity, native Material — the Android twin of the iOS
  *  ProfileView. Reads PlayerIdentity.profile (the ONE shared cross-platform profile). */
 @Composable
-fun ProfileScreen(onBack: () -> Unit) {
+fun ProfileScreen(onBack: () -> Unit, onLeaderboard: () -> Unit = {}) {
     val p = PlayerIdentity.profile
     var editing by remember { mutableStateOf(false) }
     var draft by remember { mutableStateOf("") }
@@ -95,6 +95,9 @@ fun ProfileScreen(onBack: () -> Unit) {
             StatTile("Live nights", "${p.stats.liveNights}", ink, soft, Modifier.weight(1f))
             StatTile("Venues", "${p.stats.venuesVisited}", ink, soft, Modifier.weight(1f))
         }
+
+        Spacer(Modifier.height(14.dp))
+        Button(onClick = onLeaderboard, modifier = Modifier.fillMaxWidth()) { Text("Leaderboard") }   // Wave E
 
         Spacer(Modifier.height(18.dp))
         val scope = rememberCoroutineScope()

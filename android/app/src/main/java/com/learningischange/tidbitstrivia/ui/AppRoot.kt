@@ -68,6 +68,7 @@ sealed interface Route {
     data class LiveHost(val rounds: List<Pair<String, Int>>, val category: Category) : Route
     data object Settings : Route
     data object Profile : Route
+    data object Leaderboard : Route   // Wave E: cross-venue / season standings
     data object Party : Route
 }
 
@@ -183,7 +184,8 @@ fun AppRoot(
                     is Route.Versus -> VersusScreen(r.botId, store) { backStack.removeAt(backStack.lastIndex) }
                     is Route.OnlineMatch -> OnlineMatchScreen(store) { backStack.removeAt(backStack.lastIndex) }
                     is Route.Settings -> SettingsScreen(store, dynamicColor, onDynamicColor, onProfile = { backStack.add(Route.Profile) })
-                    is Route.Profile -> ProfileScreen(onBack = { backStack.removeLastOrNull() })
+                    is Route.Profile -> ProfileScreen(onBack = { backStack.removeLastOrNull() }, onLeaderboard = { backStack.add(Route.Leaderboard) })
+                    is Route.Leaderboard -> LeaderboardScreen(onBack = { backStack.removeLastOrNull() })
                     is Route.Party -> PartyContainer(store) { backStack.removeAt(backStack.lastIndex) }
                 }
             }

@@ -121,6 +121,13 @@ object FirebaseNet {
             com.learningischange.tidbitstrivia.data.PlayerIdentity.Friend(uid, c.child("name").getValue(String::class.java) ?: "Player")
         }
     }
+    // L5 async friend duels.
+    suspend fun createDuel(id: String, obj: Map<String, Any?>) { db.getReference("duels/$id").setValue(obj).await() }
+    suspend fun loadDuel(id: String): com.google.firebase.database.DataSnapshot = db.getReference("duels/$id").get().await()
+    suspend fun submitDuelPlayer(id: String, uid: String, obj: Map<String, Any?>) { db.getReference("duels/$id/players/$uid").setValue(obj).await() }
+    suspend fun sendDuelInvite(toUid: String, duelId: String, obj: Map<String, Any?>) { db.getReference("duelInbox/$toUid/$duelId").setValue(obj).await() }
+    suspend fun loadDuelInbox(uid: String): com.google.firebase.database.DataSnapshot = db.getReference("duelInbox/$uid").get().await()
+    suspend fun clearDuelInvite(uid: String, duelId: String) { db.getReference("duelInbox/$uid/$duelId").removeValue().await() }
     suspend fun loadDailyLog(key: String): Map<String, Int> {
         val snap = db.getReference("dailyLog/$key").get().await()
         val out = HashMap<String, Int>()

@@ -336,3 +336,95 @@ final class PlayerIdentityStore {
         return "Player \(Int.random(in: 1000...9999))"
     }
 }
+
+// MARK: - Async friend duels (L5)
+
+nonisolated struct DuelQ: Codable, Sendable {
+    var p: String; var o: [String]; var c: Int; var e: String = ""
+}
+nonisolated struct DuelPlayer: Codable, Sendable {
+    var name: String; var done: Bool = false; var score: Int = 0
+}
+nonisolated struct Duel: Codable, Sendable {
+    var createdBy: String; var createdAt: Int; var challenged: String
+    var questions: [DuelQ]; var players: [String: DuelPlayer]
+}
+nonisolated struct DuelInvite: Codable, Sendable, Identifiable {
+    var id: String; var from: String; var fromName: String; var at: Int
+}
+private nonisolated struct DuelInviteWrite: Codable { var from: String; var fromName: String; var at: Int }
+
+/// One row of the duels list — my duel + how it stands (your-turn / waiting / result).
+nonisolated struct DuelStanding: Identifiable, Sendable {
+    var id: String; var oppName: String
+    var myDone: Bool; var myScore: Int; var oppDone: Bool; var oppScore: Int
+}
+
+/// The async-duel store — mirror of js/duels.js. A duel is one shared question set both players
+/// answer on their own time; each writes only their own score slot; the challenger drops an
+/// invite in the friend's private inbox. Serverless, $0.
+@Observable @MainActor
+final class DuelStore {
+    static let shared = DuelStore()
+    private let db = FirebaseRTDB.shared
+    private static let key = "tidbits.duels"
+
+    private(set) var trackedIDs: [String] = UserDefaults.standard.stringArray(forKey: DuelStore.key) ?? []
+
+    private func track(_ id: String) {
+        guard !trackedIDs.contains(id) else { return }
+        trackedIDs = Array(([id] + trackedIDs).prefix(40))
+        UserDefaults.standard.set(trackedIDs, forKey: Self.key)
+    }
+    private func nowMs() -> Int { Int(Date().timeIntervalSince1970 * 1000) }
+
+    func challenge(friendUID: String, friendName: String, questions: [DuelQ]) async -> String? {
+        guard let me = await db.uid, !friendUID.isEmpty, !questions.isEmpty else { return nil }
+        let id = String(UUID().uuidString.replacingOccurrences(of: "-", with: "").prefix(16).lowercased())
+        let myName = PlayerIdentityStore.shared.profile?.name ?? "You"
+        let duel = Duel(createdBy: me, createdAt: nowMs(), challenged: friendUID,
+                        questions: questions, players: [me: DuelPlayer(name: myName)])
+        do {
+            try await db.put("duels/\(id)", duel)
+            try await db.put("duelInbox/\(friendUID)/\(id)", DuelInviteWrite(from: me, fromName: myName, at: nowMs()))
+            track(id); return id
+        } catch { return nil }
+    }
+
+    func load(_ id: String) async -> Duel? { (try? await db.get("duels/\(id)", as: Duel.self)) ?? nil }
+
+    func submit(_ id: String, score: Int) async {
+        guard let me = await db.uid else { return }
+        let myName = PlayerIdentityStore.shared.profile?.name ?? "You"
+        try? await db.put("duels/\(id)/players/\(me)", DuelPlayer(name: myName, done: true, score: score))
+        track(id)
+    }
+
+    func inbox() async -> [DuelInvite] {
+        guard let me = await db.uid,
+              let raw = (try? await db.get("duelInbox/\(me)", as: [String: DuelInviteWrite].self)) ?? nil
+        else { return [] }
+        return raw.map { DuelInvite(id: $0.key, from: $0.value.from, fromName: $0.value.fromName, at: $0.value.at) }
+            .sorted { $0.at > $1.at }
+    }
+
+    func accept(_ id: String) async {
+        track(id)
+        if let me = await db.uid { try? await db.delete("duelInbox/\(me)/\(id)") }
+    }
+
+    func mine() async -> [DuelStanding] {
+        guard let me = await db.uid else { return [] }
+        var out: [DuelStanding] = []
+        for id in trackedIDs {
+            guard let d = await load(id) else { continue }
+            let mine = d.players[me]
+            let oppUID = d.players.keys.first { $0 != me } ?? d.challenged
+            let opp = d.players[oppUID]
+            out.append(DuelStanding(id: id, oppName: opp?.name ?? "Opponent",
+                                    myDone: mine?.done ?? false, myScore: mine?.score ?? 0,
+                                    oppDone: opp?.done ?? false, oppScore: opp?.score ?? 0))
+        }
+        return out
+    }
+}

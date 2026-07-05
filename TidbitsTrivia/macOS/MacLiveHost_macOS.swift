@@ -1,5 +1,6 @@
 #if os(macOS)
 import SwiftUI
+import AVFoundation
 
 // MARK: - Host session (macOS-DESIGN Part A §A3 — the emcee cockpit)
 
@@ -308,9 +309,24 @@ struct LiveHostView_macOS: View {
                 Spacer()
                 Text("\(session.index + 1) / \(session.questions.count)").font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft)
             }
+            sfxBar   // Wave B: the stinger board
         }
         .padding(28)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+
+    /// Wave B: the SFX / stinger board — the host fires show sounds through the Mac's output
+    /// (the venue PA when connected). Sounds are synthesized, so nothing is licensed or bundled.
+    private var sfxBar: some View {
+        HStack(spacing: 8) {
+            ForEach(LiveSFXBoard.Stinger.allCases) { s in
+                Button { LiveSFXBoard.shared.play(s) } label: {
+                    Label(s.label, systemImage: s.symbol).font(Tidbits.TypeRamp.l6)
+                }
+                .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.ink))
+                .keyboardShortcut(s.shortcut, modifiers: [])
+            }
+        }
     }
 
     // MARK: Scoreboard (manual scoring — the differentiator)
@@ -525,6 +541,99 @@ struct TieBreakSheet_macOS: View {
             }
         }
         .padding(24).frame(width: 460).background(Tidbits.Palette.bg)
+    }
+}
+
+// MARK: - Wave B: SFX / stinger board (synthesized — nothing licensed or bundled)
+
+/// The host's show soundboard. Sounds are generated on the fly (simple tone + envelope
+/// synthesis) and played through the Mac's current output — the venue PA when the Mac is
+/// plugged into it. Closes the "run a separate soundboard app" gap.
+@MainActor
+final class LiveSFXBoard {
+    static let shared = LiveSFXBoard()
+
+    enum Stinger: String, CaseIterable, Identifiable {
+        case correct, wrong, countdown, timeUp, fanfare
+        var id: String { rawValue }
+        var label: String {
+            switch self {
+            case .correct: return "Correct"; case .wrong: return "Wrong"
+            case .countdown: return "Tick"; case .timeUp: return "Time!"; case .fanfare: return "Fanfare"
+            }
+        }
+        var symbol: String {
+            switch self {
+            case .correct: return "checkmark.circle.fill"; case .wrong: return "xmark.octagon.fill"
+            case .countdown: return "timer"; case .timeUp: return "bell.fill"; case .fanfare: return "party.popper.fill"
+            }
+        }
+        /// A number-key shortcut so the host can fire a stinger without leaving the keyboard.
+        var shortcut: KeyEquivalent {
+            switch self {
+            case .correct: return "1"; case .wrong: return "2"; case .countdown: return "3"
+            case .timeUp: return "4"; case .fanfare: return "5"
+            }
+        }
+    }
+
+    private let engine = AVAudioEngine()
+    private let player = AVAudioPlayerNode()
+    private let format = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 1)!
+    private var buffers: [Stinger: AVAudioPCMBuffer] = [:]
+    private var prepared = false
+
+    private init() {
+        engine.attach(player)
+        engine.connect(player, to: engine.mainMixerNode, format: format)
+        for s in Stinger.allCases { buffers[s] = Self.render(s, format: format) }
+    }
+
+    func play(_ s: Stinger) {
+        guard let buf = buffers[s] else { return }
+        do {
+            if !prepared { try engine.start(); player.play(); prepared = true }
+            player.scheduleBuffer(buf, at: nil, options: .interrupts)
+        } catch { print("[SFX] play failed: \(error)") }
+    }
+
+    /// Render a stinger to a mono PCM buffer. Each note is (freq, seconds, sawtooth?); a short
+    /// attack + linear release envelope keeps it click-free. freq 0 = a rest.
+    private static func render(_ s: Stinger, format: AVAudioFormat) -> AVAudioPCMBuffer {
+        let notes: [(f: Double, d: Double, saw: Bool)]
+        switch s {
+        case .correct:   notes = [(659.25, 0.11, false), (987.77, 0.20, false)]                 // E5 → B5 chime
+        case .wrong:     notes = [(196.00, 0.16, true), (155.56, 0.28, true)]                   // G3 → D#3 buzz
+        case .countdown: notes = [(880.0, 0.07, false)]                                          // A5 tick
+        case .timeUp:    notes = [(220, 0.12, true), (0, 0.05, true), (220, 0.12, true), (0, 0.05, true), (220, 0.22, true)]
+        case .fanfare:   notes = [(523.25, 0.1, false), (659.25, 0.1, false), (783.99, 0.1, false), (1046.5, 0.32, false)]
+        }
+        let sr = format.sampleRate
+        let total = max(1, notes.reduce(0) { $0 + Int($1.d * sr) })
+        let buf = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(total))!
+        buf.frameLength = AVAudioFrameCount(total)
+        let ch = buf.floatChannelData![0]
+        var idx = 0
+        for note in notes {
+            let n = Int(note.d * sr)
+            for i in 0..<n where idx < total {
+                let t = Double(i) / sr
+                let attack = min(1.0, t / 0.005)                    // 5ms fade-in
+                let release = 1.0 - Double(i) / Double(max(n, 1))   // linear fade-out
+                var sample = 0.0
+                if note.f > 0 {
+                    if note.saw {
+                        let phase = (note.f * t).truncatingRemainder(dividingBy: 1.0)
+                        sample = 2.0 * phase - 1.0
+                    } else {
+                        sample = sin(2.0 * .pi * note.f * t)
+                    }
+                }
+                ch[idx] = Float(sample * attack * release * 0.45)
+                idx += 1
+            }
+        }
+        return buf
     }
 }
 #endif

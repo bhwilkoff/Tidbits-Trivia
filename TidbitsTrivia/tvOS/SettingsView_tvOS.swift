@@ -119,6 +119,7 @@ struct SettingsView_tvOS: View {
 struct LeaderboardView_tvOS: View {
     @State private var overall: [LeaderboardRow] = []
     @State private var venues: [(venue: String, rows: [LeaderboardRow])] = []
+    @State private var myUid = ""
     @State private var loading = true
 
     var body: some View {
@@ -142,10 +143,13 @@ struct LeaderboardView_tvOS: View {
     }
 
     private func row(_ i: Int, _ r: LeaderboardRow) -> some View {
-        HStack(spacing: 20) {
+        let mine = !myUid.isEmpty && r.uid == myUid   // Wave E: defendable titles
+        return HStack(spacing: 18) {
             Text("\(i + 1)").font(.system(size: 30, weight: .black, design: .rounded)).foregroundStyle(i == 0 ? Color.white : TVTheme.textSoft).frame(width: 50, alignment: .leading)
             if i == 0 { Image(systemName: "crown.fill").foregroundStyle(Tidbits.Palette.yellow) }
             Text(r.name).font(.system(size: 30, weight: .heavy, design: .rounded)).foregroundStyle(.white)
+            if mine { Text("YOU").font(.system(size: 20, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.blue) }
+            if i == 0 { Text("CHAMPION").font(.system(size: 20, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.coral) }
             Spacer()
             Text("\(r.score)").font(.system(size: 30, weight: .black, design: .rounded).monospacedDigit()).foregroundStyle(.white)
         }
@@ -153,6 +157,7 @@ struct LeaderboardView_tvOS: View {
     }
 
     private func load() async {
+        myUid = await FirebaseRTDB.shared.uid ?? ""
         let idx = await LeaderboardAPI.index()
         guard let season = idx.keys.sorted().last else { loading = false; return }
         overall = await LeaderboardAPI.overall(season: season)

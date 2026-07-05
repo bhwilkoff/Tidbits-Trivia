@@ -38,14 +38,14 @@ import org.json.JSONObject
 
 private const val LB_BASE = "https://tidbitstrivia.com/data/leaderboard"
 
-private data class LbRow(val name: String, val score: Int)
+private data class LbRow(val name: String, val score: Int, val uid: String)
 
 private suspend fun fetchText(url: String): String? =
     withContext(Dispatchers.IO) { runCatching { java.net.URL(url).readText() }.getOrNull() }
 
 private fun parseRows(s: String?): List<LbRow> {
     val arr = runCatching { JSONArray(s ?: "[]") }.getOrNull() ?: return emptyList()
-    return (0 until arr.length()).map { val o = arr.getJSONObject(it); LbRow(o.optString("name", "Player"), o.optInt("score")) }
+    return (0 until arr.length()).map { val o = arr.getJSONObject(it); LbRow(o.optString("name", "Player"), o.optInt("score"), o.optString("uid", "")) }
 }
 
 @Composable
@@ -53,10 +53,12 @@ fun LeaderboardScreen(onBack: () -> Unit) {
     var overall by remember { mutableStateOf<List<LbRow>>(emptyList()) }
     var venues by remember { mutableStateOf<List<Pair<String, List<LbRow>>>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
+    var myUid by remember { mutableStateOf("") }
     val ink = MaterialTheme.colorScheme.onSurface
     val soft = ink.copy(alpha = 0.6f)
 
     LaunchedEffect(Unit) {
+        myUid = com.learningischange.tidbitstrivia.net.FirebaseNet.uid() ?: ""   // Wave E: defendable titles
         val idx = runCatching { JSONObject(fetchText("$LB_BASE/index.json") ?: "{}") }.getOrNull() ?: JSONObject()
         val season = idx.keys().asSequence().toList().sorted().lastOrNull()
         if (season != null) {
@@ -86,11 +88,11 @@ fun LeaderboardScreen(onBack: () -> Unit) {
             else -> LazyColumn(Modifier.fillMaxSize()) {
                 if (overall.isNotEmpty()) {
                     item { SectionHeader("This season · Overall", ink) }
-                    itemsIndexed(overall) { i, r -> LbRowView(i, r, ink, soft) }
+                    itemsIndexed(overall) { i, r -> LbRowView(i, r, myUid, ink, soft) }
                 }
                 venues.forEach { (venue, rows) ->
                     item { SectionHeader(venue, ink) }
-                    itemsIndexed(rows) { i, r -> LbRowView(i, r, ink, soft) }
+                    itemsIndexed(rows) { i, r -> LbRowView(i, r, myUid, ink, soft) }
                 }
             }
         }
@@ -104,10 +106,15 @@ private fun SectionHeader(text: String, ink: Color) {
 }
 
 @Composable
-private fun LbRowView(i: Int, r: LbRow, ink: Color, soft: Color) {
+private fun LbRowView(i: Int, r: LbRow, myUid: String, ink: Color, soft: Color) {
+    val mine = r.uid.isNotEmpty() && r.uid == myUid   // Wave E: defendable titles
     Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
         Text("${i + 1}", fontWeight = FontWeight.Black, color = if (i == 0) ink else soft, modifier = Modifier.width(30.dp))
-        Text(r.name, fontWeight = FontWeight.SemiBold, color = ink, modifier = Modifier.weight(1f))
+        Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+            Text(r.name, fontWeight = FontWeight.SemiBold, color = ink)
+            if (mine) Text(" YOU", fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.primary, fontSize = 12.sp)
+            if (i == 0) Text(" CHAMPION", fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.tertiary, fontSize = 12.sp)
+        }
         Text("${r.score}", fontWeight = FontWeight.Black, color = ink)
     }
 }

@@ -175,6 +175,7 @@ struct Avatar: View {
 struct LeaderboardView: View {
     @State private var overall: [LeaderboardRow] = []
     @State private var venues: [(venue: String, rows: [LeaderboardRow])] = []
+    @State private var myUid = ""
     @State private var loading = true
 
     var body: some View {
@@ -198,16 +199,21 @@ struct LeaderboardView: View {
     }
 
     private func row(_ i: Int, _ r: LeaderboardRow) -> some View {
-        HStack(spacing: 12) {
+        let mine = !myUid.isEmpty && r.uid == myUid   // Wave E: defendable titles
+        return HStack(spacing: 10) {
             Text("\(i + 1)").font(.headline.monospacedDigit()).foregroundStyle(i == 0 ? Tidbits.Palette.ink : Tidbits.Palette.inkSoft).frame(width: 30, alignment: .leading)
             if i == 0 { Image(systemName: "crown.fill").foregroundStyle(Tidbits.Palette.yellow) }
             Text(r.name).fontWeight(.semibold)
+            if mine { Text("YOU").font(.caption2.weight(.black)).foregroundStyle(Tidbits.Palette.blue) }
+            if i == 0 { Text("CHAMPION").font(.caption2.weight(.black)).foregroundStyle(Tidbits.Palette.coral) }
             Spacer()
             Text("\(r.score)").font(.headline.monospacedDigit())
         }
+        .listRowBackground(mine ? Tidbits.Palette.blue.opacity(0.12) : nil)
     }
 
     private func load() async {
+        myUid = await FirebaseRTDB.shared.uid ?? ""
         let idx = await LeaderboardAPI.index()
         guard let season = idx.keys.sorted().last else { loading = false; return }
         overall = await LeaderboardAPI.overall(season: season)

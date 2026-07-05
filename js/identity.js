@@ -95,6 +95,7 @@ export const Identity = {
 
   get signedIn() { return FirebaseNet.isSignedIn(); },
   get email() { return FirebaseNet.currentEmail(); },
+  get authUid() { return FirebaseNet.uid; },   // Wave E: the standings/leaderboard are keyed by the AUTH uid
 
   // Daily log sync — when signed in, a daily completion also lands in dailyLog/{key} so
   // "done today" + the archive follow you across devices. Anonymous stays local-only.

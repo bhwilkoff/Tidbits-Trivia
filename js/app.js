@@ -733,14 +733,17 @@ async function loadLeaderboard() {
   const body = document.getElementById('lb-body');
   if (!body) return;
   const e = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const myUid = Identity.authUid;   // Wave E: defendable titles — mark the champion + your own row
   const table = (rows) => (!rows || !rows.length)
     ? `<p class="body" style="opacity:.55">No standings yet.</p>`
-    : `<div style="display:flex;flex-direction:column;gap:6px;margin:8px 0 20px">` + rows.slice(0, 25).map((r, i) =>
-        `<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:12px;background:var(--color-surface)">
+    : `<div style="display:flex;flex-direction:column;gap:6px;margin:8px 0 20px">` + rows.slice(0, 25).map((r, i) => {
+        const me = !!(r.uid && r.uid === myUid);
+        return `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;background:var(--color-surface);${me ? 'outline:2px solid var(--color-accent);outline-offset:-2px' : ''}">
            <span style="font-weight:900;width:28px;opacity:${i === 0 ? 1 : 0.5}">${i + 1}</span>
-           <span style="flex:1;font-weight:700">${e(r.name || 'Player')}</span>
+           <span style="flex:1;font-weight:700">${e(r.name || 'Player')}${me ? ' <b style="font-size:.7em;color:var(--color-accent)">YOU</b>' : ''}${i === 0 ? ' <b style="font-size:.7em;color:var(--color-primary)">CHAMPION</b>' : ''}</span>
            <span style="font-weight:900;font-variant-numeric:tabular-nums">${r.score | 0}</span>
-         </div>`).join('') + `</div>`;
+         </div>`;
+      }).join('') + `</div>`;
   try {
     const base = 'data/leaderboard';
     const index = await fetch(`${base}/index.json`, { cache: 'no-cache' }).then((r) => r.json());

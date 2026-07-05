@@ -663,9 +663,11 @@ struct LiveHostView_macOS: View {
             .padding(28).frame(maxWidth: 620).frame(maxWidth: .infinity)
         }
         .sheet(isPresented: $showTieBreak) {
-            TieBreakSheet_macOS(teams: tieGroup) { target, guesses in
+            TieBreakSheet_macOS(teams: tieGroup, onResolve: { target, guesses in
                 session.breakTie(target: target, guesses: guesses)
-            }
+            }, onPickWinner: { winner in
+                session.adjust(winner, by: 1)   // Wave C: brains-only — nudge the chosen team clear
+            })
         }
     }
 }
@@ -677,42 +679,63 @@ struct LiveHostView_macOS: View {
 struct TieBreakSheet_macOS: View {
     let teams: [LiveTeam]
     let onResolve: (Double, [LiveTeam.ID: Double]) -> Void
+    let onPickWinner: (LiveTeam.ID) -> Void   // Wave C: brains-only manual pick
     @Environment(\.dismiss) private var dismiss
+    @State private var mode = 0   // 0 = closest number, 1 = brains-only
     @State private var target = ""
     @State private var guesses: [LiveTeam.ID: String] = [:]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Tie-break").font(.system(size: 26, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
-            Text("Ask a number question (e.g. \u{201C}what year did the Eiffel Tower open?\u{201D}). Enter the answer, then each team's guess — closest wins.")
-                .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft).fixedSize(horizontal: false, vertical: true)
-            HStack {
-                Text("Correct number").font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
-                Spacer()
-                TextField("e.g. 1889", text: $target).frame(width: 120).textFieldStyle(.roundedBorder)
-            }
-            Divider().overlay(Tidbits.Palette.border)
-            ForEach(teams) { team in
+            Picker("", selection: $mode) {
+                Text("Closest number").tag(0)
+                Text("Brains-only").tag(1)
+            }.pickerStyle(.segmented).labelsHidden()
+            if mode == 0 {
+                Text("Ask a number question (e.g. \u{201C}what year did the Eiffel Tower open?\u{201D}). Enter the answer, then each team's guess — closest wins.")
+                    .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft).fixedSize(horizontal: false, vertical: true)
                 HStack {
-                    Text(team.name).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                    Text("Correct number").font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
                     Spacer()
-                    TextField("guess", text: Binding(get: { guesses[team.id] ?? "" }, set: { guesses[team.id] = $0 }))
-                        .frame(width: 120).textFieldStyle(.roundedBorder)
+                    TextField("e.g. 1889", text: $target).frame(width: 120).textFieldStyle(.roundedBorder)
                 }
-            }
-            HStack {
+                Divider().overlay(Tidbits.Palette.border)
+                ForEach(teams) { team in
+                    HStack {
+                        Text(team.name).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                        Spacer()
+                        TextField("guess", text: Binding(get: { guesses[team.id] ?? "" }, set: { guesses[team.id] = $0 }))
+                            .frame(width: 120).textFieldStyle(.roundedBorder)
+                    }
+                }
+                HStack {
+                    Button("Cancel") { dismiss() }.keyboardShortcut(.cancelAction)
+                    Spacer()
+                    Button("Resolve tie") {
+                        let t = Double(target) ?? 0
+                        var g: [LiveTeam.ID: Double] = [:]
+                        for team in teams { if let v = Double(guesses[team.id] ?? "") { g[team.id] = v } }
+                        onResolve(t, g); dismiss()
+                    }
+                    .buttonStyle(.borderedProminent).tint(Tidbits.Palette.coral)
+                    .keyboardShortcut(.defaultAction).disabled(target.isEmpty)
+                }
+            } else {
+                Text("Phones down. Ask a question aloud — first correct hand wins. Tap the team that won.")
+                    .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft).fixedSize(horizontal: false, vertical: true)
+                ForEach(teams) { team in
+                    Button { onPickWinner(team.id); dismiss() } label: {
+                        HStack {
+                            Text(team.name).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                            Spacer()
+                            Image(systemName: "crown.fill").foregroundStyle(Tidbits.Palette.yellow)
+                        }
+                        .padding(.vertical, 4)
+                    }
+                    .buttonStyle(.bordered)
+                }
                 Button("Cancel") { dismiss() }.keyboardShortcut(.cancelAction)
-                Spacer()
-                Button("Resolve tie") {
-                    let t = Double(target) ?? 0
-                    var g: [LiveTeam.ID: Double] = [:]
-                    for team in teams { if let v = Double(guesses[team.id] ?? "") { g[team.id] = v } }
-                    onResolve(t, g)
-                    dismiss()
-                }
-                .buttonStyle(.borderedProminent).tint(Tidbits.Palette.coral)
-                .keyboardShortcut(.defaultAction)
-                .disabled(target.isEmpty)
             }
         }
         .padding(24).frame(width: 460).background(Tidbits.Palette.bg)

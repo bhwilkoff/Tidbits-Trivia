@@ -92,6 +92,26 @@
           }
         }
       }
+    },
+    "duels": {
+      "$id": {
+        ".read": "auth != null",
+        ".write": "auth != null && !data.exists()",
+        "players": {
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid"
+          }
+        }
+      }
+    },
+    "duelInbox": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        "$duelId": {
+          ".write": "auth != null",
+          ".validate": "newData.hasChildren(['from','at'])"
+        }
+      }
     }
   }
 }

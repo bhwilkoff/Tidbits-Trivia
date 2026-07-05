@@ -95,6 +95,34 @@ export const FirebaseNet = {
     await db.remove(db.ref(_db, `playersPrivate/${uid}/friends/${friendUid}`));
   },
 
+  // L5 async friend duels: a duel = one shared question set, both players answer on their own time.
+  async createDuel(id, obj) {
+    const { db } = await ensure();
+    await db.set(db.ref(_db, `duels/${id}`), obj);
+  },
+  async loadDuel(id) {
+    const { db } = await ensure();
+    const snap = await db.get(db.ref(_db, `duels/${id}`));
+    return snap.exists() ? snap.val() : null;
+  },
+  async submitDuelPlayer(id, uid, slot) {   // each player writes ONLY their own players/{uid} slot (rules)
+    const { db } = await ensure();
+    await db.set(db.ref(_db, `duels/${id}/players/${uid}`), slot);
+  },
+  async sendDuelInvite(toUid, duelId, obj) {
+    const { db } = await ensure();
+    await db.set(db.ref(_db, `duelInbox/${toUid}/${duelId}`), obj);
+  },
+  async loadDuelInbox(uid) {
+    const { db } = await ensure();
+    const snap = await db.get(db.ref(_db, `duelInbox/${uid}`));
+    return snap.exists() ? snap.val() : {};
+  },
+  async clearDuelInvite(uid, duelId) {
+    const { db } = await ensure();
+    await db.remove(db.ref(_db, `duelInbox/${uid}/${duelId}`));
+  },
+
   // Sign out of the federated account and return to a FRESH anonymous session (new uid).
   // The account's records stay in players/{accountUid}; signing back in restores them.
   async signOutUser() {

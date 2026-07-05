@@ -33,7 +33,7 @@ android {
         minSdk = 29
         targetSdk = 36
         versionCode = 59
-        versionName = "1.6.28"   // lockstep with iOS MARKETING_VERSION (X.Y.Z, bump every ship)
+        versionName = "1.6.29"   // lockstep with iOS MARKETING_VERSION (X.Y.Z, bump every ship)
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
     }

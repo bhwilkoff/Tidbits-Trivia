@@ -996,6 +996,23 @@ private fun ResultsScreen(game: GameState, onPlayAgain: (() -> Unit)?, onDone: (
                 }
             }
         }
+        // L5 (charter): hard questions you nailed → invite the story + a conversation.
+        val nailed = game.answered.filter { it.correct && it.q.difficulty >= 4 }
+        if (nailed.isNotEmpty()) {
+            Text("Tough ones you nailed", fontWeight = FontWeight.Bold, fontSize = 20.sp, modifier = Modifier.fillMaxWidth())
+            nailed.forEach { a ->
+                ChunkyCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(14.dp).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(a.q.prompt, fontWeight = FontWeight.Bold)
+                        Text("You got it: ${a.q.answerText}", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                        TextButton(onClick = {
+                            val text = "I knew \"${a.q.prompt}\" on Tidbits Trivia — it's ${a.q.answerText}. How did YOU know that? 🧠"
+                            context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, text) }, "Share"))
+                        }, contentPadding = PaddingValues(0.dp)) { Text("How did you know that? · Share", color = Pops.blue) }
+                    }
+                }
+            }
+        }
         if (onPlayAgain != null) Button(onClick = onPlayAgain, modifier = Modifier.fillMaxWidth()) { Text("Play Again") }
         TextButton(onClick = onDone) { Text("Done") }
     }

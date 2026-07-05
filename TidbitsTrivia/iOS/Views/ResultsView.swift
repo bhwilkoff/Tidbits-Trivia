@@ -19,6 +19,7 @@ struct ResultsView: View {
                 gridCard
                 streakMoment
                 if !summary.missed.isEmpty { recap }
+                if !nailed.isEmpty { nailedRecap }   // L5 (charter): "how did you know that?"
                 buttons
             }
             .padding(.horizontal, Tidbits.Metric.pad)
@@ -95,6 +96,29 @@ struct ResultsView: View {
         }
         .frame(maxWidth: .infinity).padding(.vertical, 16)
         .chunkyCard(fill: Tidbits.Palette.bgDeep).padding(.trailing, Tidbits.Metric.shadowOffset)
+    }
+
+    /// L5 (charter): hard questions you answered right — invite the story + a conversation.
+    private var nailed: [AnsweredQuestion] { summary.answered.filter { $0.isCorrect && $0.question.difficulty >= 4 } }
+
+    private var nailedRecap: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Tough ones you nailed", systemImage: "sparkles")
+                .font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
+            ForEach(nailed) { a in
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(a.question.prompt).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                    Text("You got it: \(a.question.correctAnswer)").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                    ShareLink(item: "I knew \"\(a.question.prompt)\" on Tidbits Trivia — it's \(a.question.correctAnswer). How did YOU know that? 🧠") {
+                        Label("How did you know that? · Share", systemImage: "square.and.arrow.up")
+                            .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.blue)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(14).chunkyCard(fill: Tidbits.Palette.surface)
+                .padding(.trailing, Tidbits.Metric.shadowOffset)
+            }
+        }
     }
 
     private var recap: some View {

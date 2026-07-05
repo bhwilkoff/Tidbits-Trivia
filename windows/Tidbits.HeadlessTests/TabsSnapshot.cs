@@ -34,4 +34,13 @@ public class TabsSnapshot
         Dispatcher.UIThread.RunJobs();
         win.CaptureRenderedFrame()!.Save(Path.Combine(Art(), "settings.png"));
     }
+
+    [AvaloniaFact]
+    public void Live_setup_renders()
+    {
+        var win = new Window { Width = 900, Height = 680, Content = new LiveView() };
+        win.Show();
+        Dispatcher.UIThread.RunJobs();
+        win.CaptureRenderedFrame()!.Save(Path.Combine(Art(), "live-setup.png"));
+    }
 }

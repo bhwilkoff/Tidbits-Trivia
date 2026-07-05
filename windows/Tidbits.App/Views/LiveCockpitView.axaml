@@ -1,0 +1,65 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Tidbits.App.ViewModels"
+             x:Class="Tidbits.App.Views.LiveCockpitView"
+             x:DataType="vm:LiveHostViewModel">
+    <Grid RowDefinitions="Auto,*,Auto" Margin="28,20">
+        <!-- Header: code + roster status -->
+        <StackPanel Grid.Row="0" Spacing="4">
+            <TextBlock Text="{Binding Host.Code, StringFormat='Join code: {0}'}" FontSize="24" FontWeight="Black" Foreground="#FF5C35"/>
+            <StackPanel Orientation="Horizontal" Spacing="6">
+                <TextBlock Text="{Binding Host.PlayerCount}" FontWeight="Bold"/>
+                <TextBlock Text="players ·" Opacity="0.7"/>
+                <TextBlock Text="{Binding Host.AnsweredCount}" FontWeight="Bold"/>
+                <TextBlock Text="answered" Opacity="0.7"/>
+            </StackPanel>
+        </StackPanel>
+
+        <!-- Body: question + standings -->
+        <Grid Grid.Row="1" ColumnDefinitions="*,220" Margin="0,16">
+            <ScrollViewer>
+                <StackPanel Spacing="12">
+                    <TextBlock Text="{Binding Host.RoundTitle}" Opacity="0.6" FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding Host.Current.Prompt}" FontSize="22" FontWeight="Bold" TextWrapping="Wrap"/>
+                    <ItemsControl ItemsSource="{Binding Host.Current.Options}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Padding="14,11" Margin="0,3" CornerRadius="8"
+                                        Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                                        BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                                    <TextBlock Text="{Binding}"/>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+
+            <StackPanel Grid.Column="1" Spacing="6">
+                <TextBlock Text="Standings" FontWeight="Bold"/>
+                <TextBlock Text="No players yet" FontSize="12" Opacity="0.5"
+                           IsVisible="{Binding !Host.PlayerCount}"/>
+                <ItemsControl ItemsSource="{Binding Host.Standings}" x:CompileBindings="False">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid ColumnDefinitions="*,Auto" Margin="0,3">
+                                <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis"/>
+                                <TextBlock Grid.Column="1" Text="{Binding Score}" FontWeight="Bold" Margin="8,0,0,0"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Grid>
+
+        <!-- Controls -->
+        <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <Button Content="Reveal" Click="OnReveal" Classes="accent" Padding="20,10" FontWeight="Bold"/>
+                <Button Content="Next" Click="OnNext" Padding="20,10"/>
+                <Button Content="Lock" Click="OnLock" Padding="20,10"/>
+            </StackPanel>
+            <Button Grid.Column="1" Content="End night" Click="OnClose" Padding="16,10"/>
+        </Grid>
+    </Grid>
+</UserControl>

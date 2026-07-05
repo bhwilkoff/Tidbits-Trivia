@@ -86,9 +86,9 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [ ] 3.7 Builder shell (two-pane)
 - [ ] 3.8 Fill a round 3 ways (corpus/AI/hand)
 - [ ] 3.13 Solo preview (no records)
-- [ ] 3.14 `LiveHostSession` (authoritative host model + currentPub)
-- [ ] 3.15 Cockpit UI (stage + scoreboard; replaces window)
-- [ ] 3.16 Reveal-on-command + auto-score
+- [~] 3.14 host session — LiveNightHost (authoritative model + currentPub builder, all shapes) done for Trivia Night; full Tidbits Live cockpit features pending
+- [~] 3.15 Cockpit UI — code/roster header + question + options + standings + reveal/next/lock/end; LIVE PNG vs real room. Projector + polish pending
+- [x] 3.16 Reveal-on-command + auto-score (LiveNightHost.Reveal→AutoScore, speed bonus)
 - [ ] 3.17 Show-nav (reveal/next/skip/prev/jump/hold)
 - [ ] 3.18 Manual score override
 - [ ] 3.19 Networked join strip (QR + code)
@@ -100,7 +100,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [ ] 3.41 Winner celebration
 - [ ] 3.42 Big-screen chrome (format/difficulty/countdown/QR/story)
 - [ ] 3.44 Printable/PDF fallback
-- [ ] 3.45 Networked Trivia-Night host from Windows
+- [x] 3.45 Networked Trivia-Night host from Windows (LiveNightHost: openRoom/start/reveal+auto-score/next/end) — LIVE cockpit PNG vs real room
 
 ## Slice 5 — Wave A authoring depth
 - [ ] 3.9 Drag-to-reorder rounds/questions

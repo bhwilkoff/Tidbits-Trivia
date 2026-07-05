@@ -48,6 +48,10 @@ public partial class MainWindow : Window
         {
             ContentHost.Content = new SettingsView();
         }
+        else if (tag == "live")
+        {
+            ContentHost.Content = new LiveView();
+        }
         else if (vm.Sections.TryGetValue(tag, out var section))
         {
             ContentHost.Content = new SectionFrameView { DataContext = section };

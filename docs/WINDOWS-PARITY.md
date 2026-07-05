@@ -72,7 +72,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [ ] 2.25 Leaderboard read (season/venue board + friends filter + titles)
 
 ## Slice 3 — Live networking Core ★
-- [ ] 1.18 ★ `FirebaseRTDB` (REST + SSE, anon auth, room codes)
+- [x] 1.18 ★ `FirebaseRTDB` (REST + SSE, anon auth, room codes) — LIVE smoke GREEN vs real project (anon→put→get→delete); offline unit tests GREEN. DPAPI token encryption = follow-up 1.22
 - [x] 1.16 ★ `PlayerProfile`/PlayerIdentity contract + helpers (accountKey SHA256, venueKey, season, avatarHue djb2, Elo, streak, merge, LeaderboardRow) — 7 golden tests GREEN
 - [ ] 1.17 `PlayerIdentityStore` (portable identity façade)
 - [x] 3.1 ★ `LiveRoom` wire types (Meta/Pub/Numeric/Team/Answer/Phase) — keys match web twin, null-omitted; wire tests GREEN

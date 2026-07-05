@@ -76,8 +76,8 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [x] 1.16 ★ `PlayerProfile`/PlayerIdentity contract + helpers (accountKey SHA256, venueKey, season, avatarHue djb2, Elo, streak, merge, LeaderboardRow) — 7 golden tests GREEN
 - [ ] 1.17 `PlayerIdentityStore` (portable identity façade)
 - [x] 3.1 ★ `LiveRoom` wire types (Meta/Pub/Numeric/Team/Answer/Phase) — keys match web twin, null-omitted; wire tests GREEN
-- [ ] 3.3 `LiveNightHost.score` (per-shape authoritative scoring)
-- [ ] 3.2 `LiveHostNet` (networked host publish + SSE roster)
+- [x] 3.3 `LiveScoring` (per-shape authoritative scoring: MCQ/numeric/ordering/matching/type/enumerate) — 6 tests GREEN
+- [x] 3.2 `LiveHostNet` (open room + publish + setState/setScore + host-plays + self-reconnecting SSE roster/scores/answers, lock-guarded) — builds
 - [ ] 3.4 `LivePlayerClient` (join a hosted room)
 - [ ] 3.5 LAN Night stack (optional; RTDB-only acceptable)
 

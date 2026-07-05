@@ -66,7 +66,9 @@ struct TidbitsTriviaApp: App {
         Settings {
             SettingsView_macOS()
                 .environment(gameCenter)
-                .tint(Tidbits.Palette.blue)
+                .environment(PlayerIdentityStore.shared)   // CRASH FIX: the Settings scene does NOT inherit the
+                .environment(store)                        // WindowGroup's .environment injections — a missing
+                .tint(Tidbits.Palette.blue)                // @Environment(PlayerIdentityStore) was a fatal crash on open.
                 .preferredColorScheme(.light)
         }
         .modelContainer(modelContainer)

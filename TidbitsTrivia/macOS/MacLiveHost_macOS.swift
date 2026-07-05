@@ -2,6 +2,7 @@
 import SwiftUI
 import AVFoundation
 import CoreAudio
+import UniformTypeIdentifiers
 
 // MARK: - Host session (macOS-DESIGN Part A §A3 — the emcee cockpit)
 
@@ -310,7 +311,8 @@ struct LiveHostView_macOS: View {
                 Spacer()
                 Text("\(session.index + 1) / \(session.questions.count)").font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft)
             }
-            sfxBar   // Wave B: the stinger board
+            sfxBar        // Wave B: the stinger board
+            audioClipBar  // Wave B: clip playback to the PA
         }
         .padding(28)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -336,6 +338,29 @@ struct LiveHostView_macOS: View {
                 .keyboardShortcut(s.shortcut, modifiers: [])
             }
         }
+    }
+
+    /// Wave B: play an audio clip through the routed output (walk-in music, an audio-round clip).
+    private var audioClipBar: some View {
+        let audio = LiveAudioPlayer.shared
+        return HStack(spacing: 10) {
+            Button { pickAudioClip() } label: { Label("Open clip…", systemImage: "music.note.list").font(Tidbits.TypeRamp.l6) }
+                .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.ink))
+            if !audio.trackName.isEmpty {
+                Button { audio.togglePlay() } label: { Image(systemName: audio.isPlaying ? "pause.fill" : "play.fill") }
+                    .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.mint, textColor: .white))
+                Button { audio.stop() } label: { Image(systemName: "stop.fill") }
+                    .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.ink))
+                Text(audio.trackName).font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft).lineLimit(1)
+            }
+        }
+    }
+
+    private func pickAudioClip() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.audio, .mp3, .wav, .mpeg4Audio, .aiff]
+        panel.allowsMultipleSelection = false
+        if panel.runModal() == .OK, let url = panel.url { LiveAudioPlayer.shared.open(url) }
     }
 
     // MARK: Scoreboard (manual scoring — the differentiator)
@@ -702,6 +727,69 @@ final class LiveSFXBoard {
             }
         }
         return buf
+    }
+}
+
+/// Apply the host's chosen show-audio output device (persisted by name via the SFX board) to
+/// an engine's output node. Call BEFORE engine.start(). No-op for the system default.
+@MainActor
+func applyShowOutputDevice(to engine: AVAudioEngine) {
+    guard let name = UserDefaults.standard.string(forKey: "tidbits.sfx.output"),
+          let dev = LiveSFXBoard.availableOutputs().first(where: { $0.name == name }),
+          let unit = engine.outputNode.audioUnit else { return }
+    var id = dev.id
+    AudioUnitSetProperty(unit, kAudioOutputUnitProperty_CurrentDevice,
+                         kAudioUnitScope_Global, 0, &id, UInt32(MemoryLayout<AudioDeviceID>.size))
+}
+
+// MARK: - Wave B: audio clip playback to the venue PA (audio rounds / walk-in music)
+
+/// Full-level clip playback on the host's chosen output device — the host opens an audio file
+/// and plays it through the PA. The streamed-file core that audio rounds build on.
+@Observable @MainActor
+final class LiveAudioPlayer {
+    static let shared = LiveAudioPlayer()
+
+    private let engine = AVAudioEngine()
+    private let player = AVAudioPlayerNode()
+    private var file: AVAudioFile?
+    private var started = false
+    private var scheduled = false
+    private(set) var trackName = ""
+    private(set) var isPlaying = false
+
+    private init() { engine.attach(player) }
+
+    /// Load an audio file (stops anything playing). Its format drives the node connection.
+    func open(_ url: URL) {
+        stop()
+        do {
+            let f = try AVAudioFile(forReading: url)
+            file = f
+            trackName = url.deletingPathExtension().lastPathComponent
+            engine.connect(player, to: engine.mainMixerNode, format: f.processingFormat)
+        } catch { print("[Audio] open failed: \(error)"); file = nil; trackName = "" }
+    }
+
+    /// Play from the start / resume from pause; a second tap pauses.
+    func togglePlay() {
+        guard let file else { return }
+        do {
+            if isPlaying { player.pause(); isPlaying = false; return }
+            if !started { applyShowOutputDevice(to: engine); try engine.start(); started = true }
+            if !scheduled {
+                player.scheduleFile(file, at: nil) { [weak self] in
+                    Task { @MainActor in self?.isPlaying = false; self?.scheduled = false }
+                }
+                scheduled = true
+            }
+            player.play(); isPlaying = true
+        } catch { print("[Audio] play failed: \(error)") }
+    }
+
+    func stop() {
+        player.stop(); if engine.isRunning { engine.stop() }
+        isPlaying = false; started = false; scheduled = false
     }
 }
 #endif

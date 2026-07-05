@@ -9,6 +9,10 @@
 	     live-generation, Commons images. No server / no incoming. -->
 	<key>com.apple.security.network.client</key>
 	<true/>
+	<!-- Read files the host picks via NSOpenPanel: CSV question import (Wave A) and audio
+	     clips for playback / audio rounds (Wave B). Read-only — we never write them back. -->
+	<key>com.apple.security.files.user-selected.read-only</key>
+	<true/>
 	<!-- Same Game Center capability the iOS/tvOS slices use (shared App ID). -->
 	<key>com.apple.developer.game-center</key>
 	<true/>

@@ -32,8 +32,8 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [x] 1.14 ★ `SeededRNG` (splitmix64) + `stableSeed` (FNV-1a64)
 - [x] 1.15 ★ `DailyPick` (canonical cross-platform daily)
 - [x] 2.2 `Scoring.points` (base 100 + speed + streak ×2 cap)
-- [ ] 1.7 `CorpusDatabase` (bundled `corpus.sqlite` via Microsoft.Data.Sqlite)
-- [ ] 1.8 `JSONQuestionSource` (positional-array enrichment sets)
+- [x] 1.7 `CorpusDatabase` — JSON-backed over shared assets/corpus.json (no native dep); all query methods; loads 20,318 verified
+- [x] 1.8 `JSONQuestionSource` + `PositionalQuestionParser` (one parser, all 8 shapes)
 - [ ] 1.9 `QuestionProvider` (router + seen-set + night/mix/daily/live builders)
 - [ ] 1.10 `DifficultyOverlay` (difficulty.json → Ladder)
 - [ ] 1.11 `WikipediaClient` (HttpClient REST)

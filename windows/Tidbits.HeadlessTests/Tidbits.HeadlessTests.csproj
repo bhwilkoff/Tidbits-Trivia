@@ -27,6 +27,8 @@
 
   <ItemGroup>
     <Content Include="Fixtures\**" CopyToOutputDirectory="PreserveNewest" />
+    <!-- The shared corpus (link, not a copy in git) — Windows is another consumer of assets/. -->
+    <Content Include="..\..\assets\corpus.json" Link="Fixtures\corpus.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

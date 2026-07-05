@@ -1,0 +1,124 @@
+using Tidbits.Core.Engine;
+using Tidbits.Core.Models;
+
+namespace Tidbits.Core.Data;
+
+/// Read-only reader over the shared corpus (assets/corpus.json — the same 20k+
+/// quality-gated questions as the Apple SQLite / Android Room / web IndexedDB:
+/// one corpus, four readers). Loaded in-memory; query semantics port
+/// Core/Data/CorpusDatabase.swift.
+public sealed class CorpusDatabase
+{
+    private readonly List<Question> _all;
+
+    public CorpusDatabase(IEnumerable<Question> questions) => _all = questions.ToList();
+
+    public static CorpusDatabase Load(Stream corpusJson) => new(PositionalQuestionParser.Load(corpusJson));
+
+    public bool IsAvailable => _all.Count > 0;
+    public int Count => _all.Count;
+
+    /// Up to `limit` random questions in a category, excluding seen ids. "mixed" = all.
+    public List<Question> Questions(string categoryId, ISet<string> seen, int limit)
+    {
+        var pool = _all.Where(q => (categoryId == "mixed" || q.CategoryId == categoryId) && !seen.Contains(q.Id)).ToList();
+        return QueryHelpers.Shuffle(pool).Take(limit).ToList();
+    }
+
+    /// All ids for a category in a stable order. The daily uses this + DailyPick,
+    /// which is order-independent, so only the id SET matters (identical across
+    /// platforms because the corpus is identical). "mixed"/"" = the whole corpus.
+    public List<string> OrderedIds(string categoryId)
+    {
+        var whole = categoryId is "mixed" or "";
+        return _all.Where(q => whole || q.CategoryId == categoryId)
+                   .Select(q => q.Id)
+                   .OrderBy(x => x, Utf8Ordinal.Instance)
+                   .ToList();
+    }
+
+    /// Fetch specific questions by id, returned in the SAME order as `ids`.
+    public List<Question> Questions(IReadOnlyList<string> ids)
+    {
+        if (ids.Count == 0) return [];
+        var want = new HashSet<string>(ids);
+        var byId = new Dictionary<string, Question>();
+        foreach (var q in _all)
+            if (want.Contains(q.Id)) byId[q.Id] = q;
+        return ids.Select(id => byId.GetValueOrDefault(id)).Where(q => q is not null).Select(q => q!).ToList();
+    }
+
+    /// Topic search for Create: vetted corpus questions whose prompt/title match the
+    /// topic's words, ranked by hits (title weighted), with the answer-giveaway,
+    /// continent-template, and trivially-easy filters — then diversified.
+    public List<Question> Search(string topic, int limit)
+    {
+        var tokens = QueryHelpers.Tokenize(topic);
+        if (tokens.Count == 0) return [];
+
+        // WHERE (prompt LIKE %t% OR title LIKE %t%) for any token, LIMIT 400 (pre-filter).
+        var matched = new List<Question>();
+        foreach (var q in _all)
+        {
+            var prompt = q.Prompt.ToLowerInvariant();
+            var title = q.SourceTitle.ToLowerInvariant();
+            if (tokens.Any(t => prompt.Contains(t) || title.Contains(t)))
+            {
+                matched.Add(q);
+                if (matched.Count >= 400) break;
+            }
+        }
+
+        var scored = new List<(Question q, int score)>();
+        foreach (var q in matched)
+        {
+            var answer = q.CorrectAnswer.ToLowerInvariant();
+            if (tokens.Any(t => answer.Contains(t))) continue;      // answer would give it away
+            if (q.Id.StartsWith("src:continent:")) continue;        // repetitive template
+            if (q.Difficulty <= 1) continue;                        // trivially easy
+            var title = q.SourceTitle.ToLowerInvariant();
+            var prompt = q.Prompt.ToLowerInvariant();
+            var score = tokens.Sum(t => (title.Contains(t) ? 2 : 0) + (prompt.Contains(t) ? 1 : 0));
+            scored.Add((q, score));
+        }
+
+        var ranked = scored.OrderByDescending(s => s.score).Select(s => s.q).ToList();
+        return Diversify(ranked, limit);
+    }
+
+    /// Round-robin a ranked list across categories, capping any one domain (the
+    /// anti-monopoly rule for Create).
+    public static List<Question> Diversify(List<Question> ranked, int limit)
+    {
+        var perCat = Math.Max(2, (int)Math.Ceiling(limit / 3.0));
+        var lanes = new Dictionary<string, Queue<Question>>();
+        var order = new List<string>();
+        foreach (var q in ranked)
+        {
+            if (!lanes.TryGetValue(q.CategoryId, out var lane))
+            {
+                lane = new Queue<Question>();
+                lanes[q.CategoryId] = lane;
+                order.Add(q.CategoryId);
+            }
+            if (lane.Count < perCat) lane.Enqueue(q);
+        }
+
+        var outp = new List<Question>();
+        var progressed = true;
+        while (outp.Count < limit && progressed)
+        {
+            progressed = false;
+            foreach (var c in order)
+            {
+                if (lanes[c].Count > 0)
+                {
+                    outp.Add(lanes[c].Dequeue());
+                    progressed = true;
+                    if (outp.Count >= limit) break;
+                }
+            }
+        }
+        return QueryHelpers.Shuffle(outp);
+    }
+}

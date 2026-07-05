@@ -1,5 +1,6 @@
 package com.learningischange.tidbitstrivia.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -72,7 +73,8 @@ fun ProfileScreen(onBack: () -> Unit, onLeaderboard: () -> Unit = {}) {
             return@Column
         }
         Spacer(Modifier.height(12.dp))
-        ProfileAvatar(p.avatarSeed, initialsOf(p.name), 96.dp)
+        Box(Modifier.clickable { PlayerIdentity.rerollAvatar() }) { ProfileAvatar(p.avatarSeed, initialsOf(p.name), 96.dp) }   // L4 cosmetics
+        Text("Tap your avatar to shuffle its color", fontSize = 12.sp, color = soft)
         TextButton(onClick = { draft = p.name; editing = true }) {
             Text(p.name, fontSize = 24.sp, fontWeight = FontWeight.Black, color = ink)
         }

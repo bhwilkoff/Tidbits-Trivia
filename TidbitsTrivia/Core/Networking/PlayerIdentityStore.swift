@@ -272,6 +272,14 @@ final class PlayerIdentityStore {
         catch { print("[Identity] rename failed: \(error)") }
     }
 
+    /// L4 cosmetics: re-roll the avatar seed → a new deterministic color. Persists + syncs like rename.
+    func rerollAvatar() async {
+        guard let uid = profileId, var p = profile else { return }
+        p.avatarSeed = String(UUID().uuidString.prefix(8)).lowercased()
+        do { try await db.put(PlayerIdentity.publicPath(uid), p); profile = p }
+        catch { print("[Identity] avatar reroll failed: \(error)") }
+    }
+
     // MARK: New profile
 
     private static func newProfile(name: String) -> PlayerIdentity.Profile {

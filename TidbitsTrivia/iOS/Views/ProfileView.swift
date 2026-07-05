@@ -57,6 +57,8 @@ struct ProfileView: View {
     private func header(_ p: PlayerIdentity.Profile) -> some View {
         VStack(spacing: 12) {
             Avatar(seed: p.avatarSeed, initials: Self.initials(p.name)).frame(width: 96, height: 96)
+                .onTapGesture { Task { await identity.rerollAvatar() } }   // L4 cosmetics
+            Text("Tap your avatar to shuffle its color").font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft)
             Button { draftName = p.name; editingName = true } label: {
                 HStack(spacing: 6) {
                     Text(p.name).font(Tidbits.TypeRamp.l1).foregroundStyle(Tidbits.Palette.ink)

@@ -217,6 +217,13 @@ object PlayerIdentity {
         scope.launch { runCatching { FirebaseNet.saveProfile(uid, np) } }
     }
 
+    /** L4 cosmetics: re-roll the avatar seed -> a new deterministic color. Persists + syncs like rename. */
+    fun rerollAvatar() {
+        val p = profile ?: return; val uid = profileId ?: return
+        val np = p.copy(avatarSeed = java.util.UUID.randomUUID().toString().take(8).lowercase()); profile = np
+        scope.launch { runCatching { FirebaseNet.saveProfile(uid, np) } }
+    }
+
     private fun newProfile() = Profile(
         "Player ${(1000..9999).random()}", System.currentTimeMillis(),
         java.util.UUID.randomUUID().toString().take(8).lowercase(), Rating(), Streak(), Stats())

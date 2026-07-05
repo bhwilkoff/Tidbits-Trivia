@@ -8,6 +8,7 @@ import { BOTS, houseBot, botById, VsMatch } from './bots.js';
 import { FirebaseNet } from './firebase.js';
 import { openLive, closeLive } from './live.js';
 import { Identity, avatarHue, initialsOf } from './identity.js';
+import { Duels } from './duels.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const h = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -72,6 +73,10 @@ function render() {
   if (location.hash.startsWith('#/leaderboard')) {   // Wave E: cross-venue / season standings
     app.innerHTML = `${header(currentTab())}<main class="main">${viewLeaderboard()}</main>`;
     loadLeaderboard(); document.title = 'Tidbits Trivia — Leaderboard'; return;
+  }
+  if (location.hash.startsWith('#/duels')) {   // L5: async friend duels
+    app.innerHTML = `${header(currentTab())}<main class="main">${viewDuels()}</main>`;
+    loadDuels(); document.title = 'Tidbits Trivia — Duels'; return;
   }
   const tab = currentTab();
   app.innerHTML = `
@@ -774,13 +779,14 @@ async function loadLeaderboard() {
     if (myFriends.length) {
       const scoreByUid = {}; for (const r of overall) scoreByUid[r.uid] = r.score;
       const me = overall.find((r) => r.uid === myUid);
-      const fr = [...myFriends.map((f) => ({ name: f.name, score: scoreByUid[f.uid] ?? null })),
+      const fr = [...myFriends.map((f) => ({ uid: f.uid, name: f.name, score: scoreByUid[f.uid] ?? null })),
                   ...(me ? [{ name: `${me.name} (you)`, score: me.score, me: true }] : [])]
         .sort((a, b) => (b.score ?? -1) - (a.score ?? -1));
       html += `<h2 class="section-header">Friends</h2><div style="display:flex;flex-direction:column;gap:6px;margin:8px 0 20px">` + fr.map((f, i) =>
         `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;background:var(--color-surface);${f.me ? 'outline:2px solid var(--color-accent);outline-offset:-2px' : ''}">
            <span style="font-weight:900;width:28px;opacity:.5">${i + 1}</span>
            <span style="flex:1;font-weight:700">${e(f.name)}</span>
+           ${f.uid ? `<button data-challenge="${e(f.uid)}" data-cname="${e(f.name)}" style="padding:4px 12px;font-weight:800;border:2px solid var(--color-accent);border-radius:9px;background:transparent;color:var(--color-accent);cursor:pointer;font-size:.85em">Duel</button>` : ''}
            <span style="font-weight:900;font-variant-numeric:tabular-nums">${f.score === null ? '—' : f.score}</span></div>`).join('') + `</div>`;
     }
     html += `<h2 class="section-header">${e(seasonDisplay(season))} · Overall</h2>${table(overall)}`;
@@ -789,10 +795,70 @@ async function loadLeaderboard() {
       html += `<h2 class="section-header">${e(venue)}</h2>${table(rows)}`;
     }
     body.innerHTML = html;
+    body.querySelectorAll('[data-challenge]').forEach((b) => b.addEventListener('click', () => challengeFriend(b.dataset.challenge, b.dataset.cname)));   // L5 duels
   } catch { body.innerHTML = emptyLeaderboard(); }
 }
 function emptyLeaderboard() {
   return `<p class="body" style="opacity:.7">No standings yet. Play a live Tidbits night while signed in and you'll climb the board here — it refreshes hourly.</p>`;
+}
+
+// L5 async friend duels ---------------------------------------------------
+async function buildDuelSet() {
+  const topics = ['history', 'science', 'movies', 'music', 'sports', 'geography', 'art', 'nature'];
+  const topic = topics[Math.floor(Math.random() * topics.length)];
+  const set = await buildCreateSet(topic);
+  return set.filter((q) => Array.isArray(q.options) && q.options.length >= 2 && typeof q.correctIndex === 'number').slice(0, 6);
+}
+
+async function challengeFriend(uid, name) {
+  if (!Identity.signedIn) { toast('Sign in to challenge friends'); return; }
+  toast('Building your challenge…');
+  const qs = await buildDuelSet();
+  if (qs.length < 3) { toast('Couldn’t build a duel set — try again'); return; }
+  const id = await Duels.challenge({ uid, name }, qs);
+  toast(id ? `Challenge sent to ${name}!` : 'Couldn’t send the challenge');
+}
+
+async function playDuel(id) {
+  await Duels.accept(id);
+  const d = await Duels.load(id);
+  if (!d) { toast('Duel not found'); return; }
+  location.hash = '#/play';
+  startGame('mix', catById('mixed'), { custom: Duels.questionsOf(d), label: 'Duel', duelId: id });
+}
+
+function viewDuels() {
+  return `<div style="max-width:640px;margin:0 auto;padding:8px 4px">
+    <a href="#/records" style="color:var(--color-accent);text-decoration:none;font-weight:700">‹ Records</a>
+    <h1 class="view-heading">Duels</h1>
+    <p class="body">Challenge a friend to the same questions — whoever scores higher wins. Answer on your own time.</p>
+    <div id="duels-body"><p class="body">Loading…</p></div>
+  </div>`;
+}
+
+async function loadDuels() {
+  const body = document.getElementById('duels-body');
+  if (!body) return;
+  if (!Identity.signedIn) { body.innerHTML = `<p class="body" style="opacity:.7">Sign in to challenge friends and track your duels.</p>`; return; }
+  const e = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const [inbox, mine] = await Promise.all([Duels.inbox(), Duels.mine()]);
+  const inRow = (v) => `<div class="card pad" style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <span style="flex:1"><b>${e(v.fromName || 'A friend')}</b> challenged you</span>
+      <button data-duel-play="${e(v.id)}" class="btn btn-primary" style="padding:8px 16px">Play</button></div>`;
+  const statusOf = (d) => {
+    if (d.myDone && d.oppDone) return d.myScore > d.oppScore ? `<b style="color:var(--color-primary)">Won ${d.myScore}–${d.oppScore}</b>` : d.myScore < d.oppScore ? `Lost ${d.myScore}–${d.oppScore}` : `Tied ${d.myScore}–${d.oppScore}`;
+    if (d.myDone) return `<span class="muted">Waiting on ${e(d.oppName)}</span>`;
+    return `<button data-duel-play="${e(d.id)}" class="btn btn-primary" style="padding:6px 14px">Your turn</button>`;
+  };
+  const myRow = (d) => `<div class="card pad" style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <span style="flex:1;font-weight:700">vs ${e(d.oppName)}</span>${statusOf(d)}</div>`;
+  const mineIds = new Set(mine.map((d) => d.id));
+  const pending = inbox.filter((v) => !mineIds.has(v.id));
+  body.innerHTML =
+    (pending.length ? `<h2 class="section">Challenges for you</h2>${pending.map(inRow).join('')}` : '') +
+    (mine.length ? `<h2 class="section">Your duels</h2>${mine.map(myRow).join('')}` : '') +
+    (!pending.length && !mine.length ? `<p class="body" style="opacity:.7">No duels yet. Add friends from a live night, then tap Challenge on the Leaderboard.</p>` : '');
+  body.querySelectorAll('[data-duel-play]').forEach((b) => b.addEventListener('click', () => playDuel(b.dataset.duelPlay)));
 }
 
 function viewRecords() {
@@ -805,6 +871,7 @@ function viewRecords() {
     <h1 class="page-title">Records</h1>
     ${profileCard()}
     <a href="#/leaderboard" class="card pad" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;margin-bottom:14px">${ICON.globe}<span style="flex:1;font-weight:700">Leaderboard</span><span class="chev">›</span></a>
+    <a href="#/duels" class="card pad" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;margin-bottom:14px"><span style="flex:1;font-weight:700">Duels</span><span class="chev">›</span></a>
     <div class="banner card daily"><div><div class="muted">DAY STREAK</div><div class="big">${Identity.profile?.streak?.current || 0} days</div></div><div class="muted">best ${Identity.profile?.streak?.longest || 0} 🔥</div></div>
     <div class="stat-row">
       ${statBox(lt.games, 'Games', '#8B5CF6')}${statBox(lt.acc + '%', 'Accuracy', '#2D5BFF')}${statBox(lt.correct, 'Correct', '#2FCB8A')}
@@ -998,6 +1065,7 @@ class Game {
     this.answered = []; this.chosen = null; this.phase = 'loading';
     this.remaining = 0; this.timer = null; this.qStart = 0; this.globalDeadline = null;
     this._custom = opts.custom;
+    this._duelId = opts.duelId;   // L5: submit this game's score to the duel on finish
     // Trivia Night: the plan's rounds [[kind, count], …] + the per-round meta for banners.
     this._nightPlan = opts.nightPlan || (mode === 'barTrivia' ? { rounds: NIGHT.presets[1].rounds } : null);
     this._nightRounds = (this._nightPlan?.rounds || []).map(([kind]) => ({ kind, title: NIGHT.roundTitle[kind] || kind }));
@@ -1658,6 +1726,25 @@ function renderResults() {
   if (again) again.addEventListener('click', () => startGame(game.mode.id, game.category, game._custom ? { custom: game._custom, label: game.label } : undefined));
   $('[data-done]').addEventListener('click', quitGame);
   app.querySelectorAll('[data-hdyk]').forEach((b) => b.addEventListener('click', () => shareHDYK(nailed[+b.dataset.hdyk])));
+  if (game._duelId) {   // L5: submit my score to the duel + show the outcome
+    const duelId = game._duelId, myScore = s.score;
+    Duels.submit(duelId, myScore).then(async () => {
+      const d = await Duels.load(duelId), me = Identity.authUid;
+      const oppUid = Object.keys(d?.players || {}).find((u) => u !== me);
+      const opp = oppUid ? d.players[oppUid] : null;
+      const line = !opp?.done ? `Your ${myScore} is in — waiting on ${opp?.name || 'your friend'} to play.`
+        : myScore > opp.score ? `You won the duel ${myScore}–${opp.score}!`
+        : myScore < opp.score ? `${opp.name} took this one ${opp.score}–${myScore}. Rematch?`
+        : `Dead tie, ${myScore}–${opp.score}.`;
+      const results = document.querySelector('.results');
+      if (results) {
+        const card = document.createElement('div');
+        card.className = 'card pad'; card.style.marginTop = '12px';
+        card.innerHTML = `<b>Duel result</b><div class="muted" style="margin:4px 0 8px">${line}</div><a href="#/duels" style="color:var(--color-accent);font-weight:700">See all duels ›</a>`;
+        results.insertBefore(card, results.children[1] || null);
+      }
+    });
+  }
 }
 // L5 (charter): a hard answer you knew → invite the story + a conversation, not a passive move-on.
 async function shareHDYK(a) {

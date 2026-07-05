@@ -1,0 +1,14 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Tidbits.App.Views.PlayView">
+    <Panel>
+        <StackPanel x:Name="Landing" Margin="36,32" Spacing="18" MaxWidth="760" HorizontalAlignment="Left">
+            <TextBlock Text="Play" FontSize="34" FontWeight="Black"/>
+            <TextBlock Text="Quick into a round — trivia from the whole of Wikipedia."
+                       FontSize="15" Opacity="0.75" TextWrapping="Wrap"/>
+            <Button x:Name="QuickPlayBtn" Click="OnQuickPlay" Content="Quick Play"
+                    Classes="accent" Padding="26,15" FontSize="18" FontWeight="Bold" Margin="0,8,0,0"/>
+        </StackPanel>
+        <ContentControl x:Name="GameHost"/>
+    </Panel>
+</UserControl>

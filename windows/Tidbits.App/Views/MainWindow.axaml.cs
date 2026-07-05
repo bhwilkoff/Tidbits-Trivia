@@ -28,7 +28,14 @@ public partial class MainWindow : Window
             ? "settings"
             : (e.SelectedItem as FANavigationViewItem)?.Tag as string ?? "play";
 
-        if (vm.Sections.TryGetValue(tag, out var section))
+        // Play is a real, playable surface now; the other tabs are still frames.
+        if (tag == "play")
+        {
+            ContentHost.Content = new PlayView();
+        }
+        else if (vm.Sections.TryGetValue(tag, out var section))
+        {
             ContentHost.Content = new SectionFrameView { DataContext = section };
+        }
     }
 }

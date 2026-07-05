@@ -1,0 +1,68 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Tidbits.App.ViewModels"
+             xmlns:conv="using:Tidbits.App.Converters"
+             x:Class="Tidbits.App.Views.GameView"
+             x:DataType="vm:GameViewModel">
+    <Grid RowDefinitions="Auto,*">
+        <!-- Header: score · streak · timer -->
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Margin="28,18,28,4">
+            <StackPanel Orientation="Horizontal" Spacing="18">
+                <TextBlock Text="{Binding Engine.Score, StringFormat='Score {0}'}" FontWeight="Bold" FontSize="15"/>
+                <TextBlock Text="{Binding Engine.Streak, StringFormat='Streak {0}'}" Opacity="0.7" FontSize="15"/>
+            </StackPanel>
+            <TextBlock Grid.Column="2" FontWeight="Bold" FontSize="15"
+                       Foreground="#FF5C35"
+                       Text="{Binding Engine.Remaining, Converter={x:Static conv:Conv.Seconds}}"/>
+        </Grid>
+
+        <Panel Grid.Row="1">
+            <!-- Playing -->
+            <ScrollViewer IsVisible="{Binding Engine.CurrentPhase, Converter={x:Static conv:Conv.IsPlaying}}">
+                <StackPanel Margin="36,12" Spacing="18" MaxWidth="760" HorizontalAlignment="Left">
+                    <TextBlock Text="{Binding Engine.Current.Prompt}" FontSize="24" FontWeight="Bold" TextWrapping="Wrap"/>
+                    <ItemsControl ItemsSource="{Binding Engine.Current.Options}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Click="OnOption" Content="{Binding}"
+                                        HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                                        Margin="0,4" Padding="16,13" FontSize="15"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Reveal: learn the fact -->
+            <ScrollViewer IsVisible="{Binding Engine.CurrentPhase, Converter={x:Static conv:Conv.IsReveal}}">
+                <StackPanel Margin="36,12" Spacing="16" MaxWidth="760" HorizontalAlignment="Left">
+                    <TextBlock Text="{Binding Engine.Current.Prompt}" FontSize="19" FontWeight="Bold"
+                               TextWrapping="Wrap" Opacity="0.75"/>
+                    <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="1" CornerRadius="10" Padding="18">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="{Binding Engine.Current.CorrectAnswer, StringFormat='Answer: {0}'}"
+                                       FontWeight="Bold" FontSize="17" Foreground="#1E9E6A" TextWrapping="Wrap"/>
+                            <TextBlock Text="{Binding Engine.Current.Explanation}" TextWrapping="Wrap" Opacity="0.85"/>
+                        </StackPanel>
+                    </Border>
+                    <Button Content="Next" Click="OnNext" HorizontalAlignment="Left"
+                            Padding="22,12" FontWeight="Bold" Classes="accent"/>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Finished -->
+            <ScrollViewer IsVisible="{Binding Engine.CurrentPhase, Converter={x:Static conv:Conv.IsFinished}}">
+                <StackPanel Margin="36,40" Spacing="14" MaxWidth="520" HorizontalAlignment="Center">
+                    <TextBlock Text="Game over" FontSize="18" Opacity="0.6" HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding Engine.Score}" FontSize="64" FontWeight="Black" HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding Engine.Summary.Correct, StringFormat='{}{0} correct'}"
+                               FontSize="16" Opacity="0.75" HorizontalAlignment="Center"/>
+                    <Button Content="Done" Click="OnDone" HorizontalAlignment="Center"
+                            Padding="26,12" FontWeight="Bold" Classes="accent"/>
+                </StackPanel>
+            </ScrollViewer>
+        </Panel>
+    </Grid>
+</UserControl>

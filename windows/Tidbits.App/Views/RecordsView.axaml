@@ -1,0 +1,87 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Tidbits.App.ViewModels"
+             x:Class="Tidbits.App.Views.RecordsView"
+             x:DataType="vm:RecordsViewModel">
+    <ScrollViewer>
+        <StackPanel Margin="36,32" Spacing="18" MaxWidth="760" HorizontalAlignment="Left">
+            <TextBlock Text="Records" FontSize="34" FontWeight="Black"/>
+            <TextBlock Text="Compete against your past self." FontSize="15" Opacity="0.7"/>
+
+            <TextBlock IsVisible="{Binding NoGames}" Margin="0,20,0,0" Opacity="0.7" TextWrapping="Wrap"
+                       Text="No games yet — play a round and your scores, streaks, and knowledge show up here."/>
+
+            <StackPanel IsVisible="{Binding HasGames}" Spacing="18">
+                <!-- Streak + lifetime -->
+                <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1" CornerRadius="12" Padding="20">
+                    <Grid ColumnDefinitions="*,*,*">
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="Day streak" FontSize="12" Opacity="0.6"/>
+                            <TextBlock Text="{Binding StreakCurrent}" FontSize="30" FontWeight="Black"/>
+                            <TextBlock Text="{Binding StreakBest, StringFormat='best {0}'}" FontSize="12" Opacity="0.6"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Spacing="2">
+                            <TextBlock Text="Games" FontSize="12" Opacity="0.6"/>
+                            <TextBlock Text="{Binding LifetimeGames}" FontSize="30" FontWeight="Black"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Spacing="2">
+                            <TextBlock Text="Accuracy" FontSize="12" Opacity="0.6"/>
+                            <TextBlock Text="{Binding LifetimeAccuracy, StringFormat='{}{0}%'}" FontSize="30" FontWeight="Black"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Recent games -->
+                <TextBlock Text="Your games" FontSize="20" FontWeight="Bold"/>
+                <ItemsControl ItemsSource="{Binding RecentGames}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:GameRow">
+                            <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                                    BorderThickness="1" CornerRadius="10" Padding="14,12" Margin="0,0,0,8">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <StackPanel Spacing="2">
+                                        <TextBlock Text="{Binding Mode}" FontWeight="SemiBold"/>
+                                        <TextBlock Text="{Binding Category}" FontSize="12" Opacity="0.65"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+                                        <TextBlock Text="{Binding ScoreLine}" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                                        <TextBlock Text="{Binding Date}" FontSize="12" Opacity="0.6" HorizontalAlignment="Right"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock IsVisible="{Binding HasMoreGames}" Foreground="#FF5C35" FontWeight="SemiBold"
+                           Text="{Binding TotalGames, StringFormat='See all {0} games'}"/>
+
+                <!-- Knowledge (hidden until a specific-category game is played) -->
+                <StackPanel IsVisible="{Binding HasDomains}" Spacing="8">
+                    <TextBlock Text="Your knowledge" FontSize="20" FontWeight="Bold" Margin="0,6,0,0"/>
+                    <ItemsControl ItemsSource="{Binding Domains}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:DomainRow">
+                                <Grid ColumnDefinitions="140,*,Auto" Margin="0,0,0,10">
+                                    <TextBlock Text="{Binding Name}" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                    <ProgressBar Grid.Column="1" Minimum="0" Maximum="1" Value="{Binding Progress}"
+                                                 VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                    <TextBlock Grid.Column="2" Text="{Binding LevelLine}" FontSize="12" Opacity="0.7" VerticalAlignment="Center"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+
+                <!-- Review -->
+                <Border IsVisible="{Binding HasReview}" Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,4,0,0">
+                    <TextBlock Text="{Binding ReviewCount, StringFormat='{}{0} facts to review'}" FontWeight="SemiBold"/>
+                </Border>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -47,7 +47,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 
 ## Slice 2 — Consumer vertical
 - [x] 2.1 `GameEngine` (all 18 modes, phases, clocks, host-paced, all submit paths) — end-to-end tests GREEN
-- [ ] 2.3 `ProgressStats`/DomainProgress/Badges
+- [x] 2.3 `ProgressStats`/DomainProgress/Badges (ProgressMath levels + wedges + LevelableBadge/BadgeMath) — pure port
 - [ ] 2.4 `BotOpponent`
 - [~] 2.5 Play/Home surface — Quick Play hero + Daily + category picker + mode grid (all MCQ modes reachable); Surprise/Night/Online-MP pending
 - [~] 2.6 Customize — category picker + mode grid on Home; mode multiselect (mix) + saved presets pending
@@ -57,7 +57,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [ ] 2.10 Results recap (score/accuracy/streak/missed-fact + reflection)
 - [ ] 2.11 Emoji-grid share
 - [ ] 2.12 Four content states on every list/grid
-- [ ] 2.13 Records dashboard (R-REC-1: streak/lifetime/recent-3+See-all/knowledge/calibration/bests/review)
+- [~] 2.13 Records dashboard (R-REC-1) — streak+lifetime card, recent 3 + See-all, per-domain knowledge bars, review count; PNG-verified. Drill-ins/calibration/badges/pie pending
 - [ ] 2.14 Records drill-ins (game recap, domain, bests)
 - [ ] 2.15 Topic Levels + Pie + calibration + badges + avatar re-roll
 - [ ] 2.16 Records sign-in banner

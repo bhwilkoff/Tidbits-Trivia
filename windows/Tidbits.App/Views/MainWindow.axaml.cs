@@ -28,10 +28,17 @@ public partial class MainWindow : Window
             ? "settings"
             : (e.SelectedItem as FANavigationViewItem)?.Tag as string ?? "play";
 
-        // Play is a real, playable surface now; the other tabs are still frames.
+        // Play + Records are real surfaces now; the other tabs are still frames.
         if (tag == "play")
         {
             ContentHost.Content = new PlayView();
+        }
+        else if (tag == "records")
+        {
+            ContentHost.Content = new RecordsView
+            {
+                DataContext = new RecordsViewModel(Services.GameData.Shared.Value.Records),
+            };
         }
         else if (vm.Sections.TryGetValue(tag, out var section))
         {

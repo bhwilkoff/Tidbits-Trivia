@@ -1,0 +1,63 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Tidbits.Core.Models;
+using Tidbits.Core.Store;
+
+namespace Tidbits.App.ViewModels;
+
+/// The Records dashboard (R-REC-1) — pure derivations of the recorded games:
+/// streak, lifetime, recent 3, per-domain knowledge, facts to review.
+public sealed class RecordsViewModel
+{
+    public bool HasGames { get; }
+    public bool NoGames => !HasGames;
+    public int StreakCurrent { get; }
+    public int StreakBest { get; }
+    public int LifetimeGames { get; }
+    public int LifetimeCorrect { get; }
+    public int LifetimeAccuracy { get; } // percent
+    public int TotalGames { get; }
+    public bool HasMoreGames { get; }
+    public IReadOnlyList<GameRow> RecentGames { get; }
+    public IReadOnlyList<DomainRow> Domains { get; }
+    public bool HasDomains => Domains.Count > 0;
+    public int ReviewCount { get; }
+    public bool HasReview => ReviewCount > 0;
+
+    public RecordsViewModel(RecordsStore store)
+    {
+        var games = store.Games.OrderByDescending(g => g.Date).ToList();
+        HasGames = games.Count > 0;
+        StreakCurrent = store.Streak.Current;
+        StreakBest = store.Streak.Best;
+        LifetimeGames = games.Count;
+        TotalGames = games.Count;
+        HasMoreGames = games.Count > 3;
+        LifetimeCorrect = games.Sum(g => g.Correct);
+        var answered = games.Sum(g => g.Total);
+        LifetimeAccuracy = answered == 0 ? 0 : (int)Math.Round(100.0 * LifetimeCorrect / answered);
+
+        RecentGames = games.Take(3).Select(g => new GameRow(
+            g.Mode.Title(), TriviaCategory.Named(g.CategoryId).Name, g.Score, g.Correct, g.Total,
+            g.Date.ToLocalTime().ToString("MMM d"))).ToList();
+
+        Domains = DomainProgress.Summarize(games.Select(g => (g.CategoryId, g.Correct, g.Total)))
+            .Where(d => d.Total > 0)
+            .Select(d => new DomainRow(
+                TriviaCategory.Named(d.CategoryId).Name, d.Level, d.LevelProgress,
+                (int)Math.Round(d.Accuracy * 100), d.HasWedge)).ToList();
+
+        ReviewCount = store.Missed.Count(m => !m.Resolved);
+    }
+}
+
+public sealed record GameRow(string Mode, string Category, int Score, int Correct, int Total, string Date)
+{
+    public string ScoreLine => $"{Score} pts · {Correct}/{Total}";
+}
+
+public sealed record DomainRow(string Name, int Level, double Progress, int Accuracy, bool Mastered)
+{
+    public string LevelLine => Mastered ? $"Level {Level} · mastered" : $"Level {Level} · {Accuracy}%";
+}

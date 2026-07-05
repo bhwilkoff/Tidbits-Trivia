@@ -368,6 +368,7 @@ struct LiveHostView_macOS: View {
                         .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
                 }
             }
+            answerDistribution   // §A3.4: live per-option tally — read the room before revealing
             Spacer()
             HStack(spacing: 12) {
                 if !session.revealed {
@@ -619,6 +620,44 @@ struct LiveHostView_macOS: View {
     /// Whether the shared scorer credits this submission (for the ✓/✗ verdict).
     private func autoMatched(_ q: Question, _ a: LiveRoom.Answer) -> Bool {
         LiveNightHost.score(q, a, shuffledOrder: session.shuffledOrder, shuffledValues: session.shuffledValues, mcqPoints: session.pointsPerCorrect) > 0
+    }
+
+    /// §A3.4 — the live per-option tally (how many teams chose each option), so the host reads
+    /// the room before revealing. Host-only; the correct option is marked (the host knows it).
+    private func optionCounts(_ count: Int) -> [Int] {
+        var c = [Int](repeating: 0, count: count)
+        for a in net.answers.values { if let ch = a.choice, c.indices.contains(ch) { c[ch] += 1 } }
+        return c
+    }
+
+    @ViewBuilder private var answerDistribution: some View {
+        if !session.revealed, let q = session.current, let opts = session.currentPub().options, !opts.isEmpty {
+            let counts = optionCounts(opts.count)
+            let total = max(1, counts.reduce(0, +))
+            VStack(alignment: .leading, spacing: 5) {
+                Text("LIVE ANSWERS").font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft)
+                ForEach(Array(opts.enumerated()), id: \.offset) { i, opt in
+                    let isCorrect = opt == q.correctAnswer
+                    HStack(spacing: 8) {
+                        Text(opt).font(Tidbits.TypeRamp.l6).foregroundStyle(isCorrect ? Tidbits.Palette.mint : Tidbits.Palette.ink)
+                            .frame(width: 180, alignment: .leading).lineLimit(1)
+                        GeometryReader { geo in
+                            ZStack(alignment: .leading) {
+                                Capsule().fill(Tidbits.Palette.surface)
+                                Capsule().fill(isCorrect ? Tidbits.Palette.mint : Tidbits.Palette.blue)
+                                    .frame(width: max(4, geo.size.width * CGFloat(counts[i]) / CGFloat(total)))
+                            }
+                        }
+                        .frame(height: 14)
+                        Text("\(counts[i])").font(Tidbits.TypeRamp.l6).monospacedDigit()
+                            .foregroundStyle(Tidbits.Palette.inkSoft).frame(width: 24, alignment: .trailing)
+                    }
+                }
+            }
+            .padding(10)
+            .background(RoundedRectangle(cornerRadius: 8).fill(Tidbits.Palette.bg))
+            .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Tidbits.Palette.border, lineWidth: 2))
+        }
     }
 
     /// The team's submission rendered for host review (free-text shows what they typed).

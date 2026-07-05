@@ -326,7 +326,11 @@ struct LiveHostView_macOS: View {
         // it, .contentMinSize proposes ~0 width to the fixedSize prompt Text, which
         // wraps to one glyph per line and reports a runaway min height (~5800px),
         // pinning the window absurdly tall. The projector avoids this the same way.
-        .frame(minWidth: 900, maxWidth: .infinity, minHeight: 560, maxHeight: .infinity)
+        // minHeight raised 560 → 680: the cockpit stage (header + join + question + round
+        // indicators + answer distribution + timer + action row + the 3 AV bars) needs more than
+        // 560pt, so at the old minimum the bottom AV controls clipped. This keeps the window tall
+        // enough to show every control without a risky ScrollView restructure of the tuned layout.
+        .frame(minWidth: 900, maxWidth: .infinity, minHeight: 680, maxHeight: .infinity)
         .background(Tidbits.Palette.bg)
     }
 

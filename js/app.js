@@ -69,6 +69,10 @@ function render() {
     app.innerHTML = `<main class="main">${viewProfile()}</main>`;
     bindProfile(); document.title = 'Tidbits Trivia'; return;
   }
+  if (location.hash.startsWith('#/leaderboard')) {   // Wave E: cross-venue / season standings
+    app.innerHTML = `${header(currentTab())}<main class="main">${viewLeaderboard()}</main>`;
+    loadLeaderboard(); document.title = 'Tidbits Trivia — Leaderboard'; return;
+  }
   const tab = currentTab();
   app.innerHTML = `
     ${header(tab)}
@@ -715,6 +719,47 @@ function profileCard() {
   return `<a href="#/profile" class="card pad" style="display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;margin-bottom:14px">${body}<span class="chev">›</span></a>`;
 }
 
+// Wave E: the cross-venue / season leaderboard, read from the static JSON the hourly cron
+// commits to data/leaderboard/ — free/cacheable, never RTDB.
+function viewLeaderboard() {
+  return `<div style="max-width:640px;margin:0 auto;padding:8px 4px">
+    <a href="#/records" style="color:var(--color-accent);text-decoration:none;font-weight:700">‹ Records</a>
+    <h1 class="view-heading">Leaderboard</h1>
+    <p class="body">Season standings across every venue where you've played a live Tidbits night.</p>
+    <div id="lb-body"><p class="body">Loading…</p></div>
+  </div>`;
+}
+async function loadLeaderboard() {
+  const body = document.getElementById('lb-body');
+  if (!body) return;
+  const e = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const table = (rows) => (!rows || !rows.length)
+    ? `<p class="body" style="opacity:.55">No standings yet.</p>`
+    : `<div style="display:flex;flex-direction:column;gap:6px;margin:8px 0 20px">` + rows.slice(0, 25).map((r, i) =>
+        `<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:12px;background:var(--color-surface)">
+           <span style="font-weight:900;width:28px;opacity:${i === 0 ? 1 : 0.5}">${i + 1}</span>
+           <span style="flex:1;font-weight:700">${e(r.name || 'Player')}</span>
+           <span style="font-weight:900;font-variant-numeric:tabular-nums">${r.score | 0}</span>
+         </div>`).join('') + `</div>`;
+  try {
+    const base = 'data/leaderboard';
+    const index = await fetch(`${base}/index.json`, { cache: 'no-cache' }).then((r) => r.json());
+    const seasons = Object.keys(index || {}).sort().reverse();
+    if (!seasons.length) { body.innerHTML = emptyLeaderboard(); return; }
+    const season = seasons[0];
+    const overall = await fetch(`${base}/${season}/_overall.json`).then((r) => r.json()).catch(() => []);
+    let html = `<h2 class="section-header">${e(season)} · Overall</h2>${table(overall)}`;
+    for (const venue of (index[season] || [])) {
+      const rows = await fetch(`${base}/${season}/${encodeURIComponent(venue)}.json`).then((r) => r.json()).catch(() => []);
+      html += `<h2 class="section-header">${e(venue)}</h2>${table(rows)}`;
+    }
+    body.innerHTML = html;
+  } catch { body.innerHTML = emptyLeaderboard(); }
+}
+function emptyLeaderboard() {
+  return `<p class="body" style="opacity:.7">No standings yet. Play a live Tidbits night while signed in and you'll climb the board here — it refreshes hourly.</p>`;
+}
+
 function viewRecords() {
   const recs = Store.records();
   if (!recs.length) return `<h1 class="page-title">Records</h1>${profileCard()}<div class="empty card pad"><p>No games yet.</p><p class="muted">Play a round and your scores, streaks, and facts to review show up here.</p></div>${settingsSection()}`;
@@ -724,6 +769,7 @@ function viewRecords() {
   return `
     <h1 class="page-title">Records</h1>
     ${profileCard()}
+    <a href="#/leaderboard" class="card pad" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;margin-bottom:14px">${ICON.globe}<span style="flex:1;font-weight:700">Leaderboard</span><span class="chev">›</span></a>
     <div class="banner card daily"><div><div class="muted">DAY STREAK</div><div class="big">${Identity.profile?.streak?.current || 0} days</div></div><div class="muted">best ${Identity.profile?.streak?.longest || 0} 🔥</div></div>
     <div class="stat-row">
       ${statBox(lt.games, 'Games', '#8B5CF6')}${statBox(lt.acc + '%', 'Accuracy', '#2D5BFF')}${statBox(lt.correct, 'Correct', '#2FCB8A')}

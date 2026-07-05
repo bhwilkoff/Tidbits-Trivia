@@ -27,6 +27,8 @@ final class LiveHostSession {
     var finished = false
     var deadlineMs: Int? = nil   // Wave A: epoch-ms countdown deadline for the current timed question
     var locked = false           // Wave C: answers locked ("pencils down") — auto-set at the timer deadline or manually
+    var blockedTeams: Set<String> = []   // Wave C: networked team uids the host hid from the big screen (a bad name)
+    func toggleBlocked(_ uid: String) { if blockedTeams.contains(uid) { blockedTeams.remove(uid) } else { blockedTeams.insert(uid) } }
     /// Points a correct answer is worth this round (host-adjustable; pub default 1).
     var pointsPerCorrect = 1
     /// Per-question display shuffles (fixed once so publish + reveal agree).
@@ -570,6 +572,14 @@ struct LiveHostView_macOS: View {
                 }
                 Button { Task { await net.setScore(team.id, team.score - 1) } } label: { Image(systemName: "minus") }.buttonStyle(.bordered)
                 Button { Task { await net.setScore(team.id, team.score + 1) } } label: { Image(systemName: "plus") }.buttonStyle(.bordered)
+                Button { session.toggleBlocked(team.id) } label: {   // Wave C: moderation gate — hide a bad name from the screen
+                    Image(systemName: session.blockedTeams.contains(team.id) ? "eye.slash.fill" : "eye")
+                }
+                .buttonStyle(.bordered)
+                .help(session.blockedTeams.contains(team.id) ? "Hidden from the big screen — tap to show" : "Hide this name from the big screen")
+            }
+            if session.blockedTeams.contains(team.id) {
+                Text("Hidden from the big screen").font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.coral)
             }
             if let q, let ans, let typed = submittedText(q, ans) {
                 HStack(spacing: 6) {

@@ -257,7 +257,9 @@ struct LiveBigScreen_macOS: View {
     private func unifiedStandings(_ s: LiveHostSession) -> [UnifiedStanding] {
         var rows: [UnifiedStanding] = []
         if let net = coordinator.net {
-            for (uid, team) in net.teams { rows.append(.init(id: uid, name: team.name, score: net.scores[uid] ?? 0, paper: false)) }
+            for (uid, team) in net.teams where !s.blockedTeams.contains(uid) {   // Wave C: moderation — hidden names don't project
+                rows.append(.init(id: uid, name: team.name, score: net.scores[uid] ?? 0, paper: false))
+            }
         }
         for t in s.teams { rows.append(.init(id: "paper:\(t.id)", name: t.name, score: t.score, paper: true)) }
         return rows.sorted { $0.score > $1.score }

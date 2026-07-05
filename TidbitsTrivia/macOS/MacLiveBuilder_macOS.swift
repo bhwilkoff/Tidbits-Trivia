@@ -151,38 +151,40 @@ struct LiveBuilderView_macOS: View {
     }
 
     private func roundRow(_ i: Int, _ round: LiveRound) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: round.symbol).foregroundStyle(round.format.accent.legibleForeground)
-                .frame(width: 34, height: 34).background(Circle().fill(round.format.accent))
-                .overlay(Circle().strokeBorder(Tidbits.Palette.border, lineWidth: 2.5))
-            VStack(alignment: .leading, spacing: 2) {
-                Text(round.title).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
-                Text("\(round.format.title) · \(TriviaCategory.named(round.categoryID).name) · \(round.questions.count) questions")
-                    .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
-                TextField("Host note (shown in the cockpit)", text: Binding(   // Wave A
-                    get: { working.rounds[i].hostNote ?? "" },
-                    set: { working.rounds[i].hostNote = $0.isEmpty ? nil : $0 }))
-                    .textFieldStyle(.roundedBorder).font(Tidbits.TypeRamp.l5).frame(maxWidth: 360)
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 12) {
+                Image(systemName: round.symbol).foregroundStyle(round.format.accent.legibleForeground)
+                    .frame(width: 34, height: 34).background(Circle().fill(round.format.accent))
+                    .overlay(Circle().strokeBorder(Tidbits.Palette.border, lineWidth: 2.5))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(round.title).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink).lineLimit(1)
+                    Text("\(round.format.title) · \(TriviaCategory.named(round.categoryID).name) · \(round.questions.count) questions")
+                        .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft).lineLimit(1)
+                }
+                Spacer()
+                Menu {   // Wave A: per-round countdown
+                    Button("No timer") { working.rounds[i].timerSeconds = nil }
+                    ForEach([30, 45, 60, 90, 120], id: \.self) { s in Button("\(s)s") { working.rounds[i].timerSeconds = s } }
+                } label: { Label(round.timerSeconds.map { "\($0)s" } ?? "Timer", systemImage: "timer") }
+                    .menuStyle(.borderlessButton).fixedSize()
+                Toggle(isOn: Binding(   // Wave A: wager round
+                    get: { working.rounds[i].isWager ?? false },
+                    set: { working.rounds[i].isWager = $0 ? true : nil })) {
+                    Label("Wager", systemImage: "dollarsign.circle")
+                }.toggleStyle(.button).font(Tidbits.TypeRamp.l5).fixedSize()
+                Toggle(isOn: Binding(   // Wave B: speed round
+                    get: { working.rounds[i].isSpeed ?? false },
+                    set: { working.rounds[i].isSpeed = $0 ? true : nil })) {
+                    Label("Speed", systemImage: "bolt")
+                }.toggleStyle(.button).font(Tidbits.TypeRamp.l5).fixedSize()
+                Button { move(i, up: true) } label: { Image(systemName: "chevron.up") }.buttonStyle(.borderless).disabled(i == 0)
+                Button { move(i, up: false) } label: { Image(systemName: "chevron.down") }.buttonStyle(.borderless).disabled(i == working.rounds.count - 1)
+                Button { working.rounds.remove(at: i) } label: { Image(systemName: "trash") }.buttonStyle(.borderless)
             }
-            Spacer()
-            Menu {   // Wave A: per-round countdown
-                Button("No timer") { working.rounds[i].timerSeconds = nil }
-                ForEach([30, 45, 60, 90, 120], id: \.self) { s in Button("\(s)s") { working.rounds[i].timerSeconds = s } }
-            } label: { Label(round.timerSeconds.map { "\($0)s" } ?? "Timer", systemImage: "timer") }
-                .menuStyle(.borderlessButton).fixedSize()
-            Toggle(isOn: Binding(   // Wave A: wager round
-                get: { working.rounds[i].isWager ?? false },
-                set: { working.rounds[i].isWager = $0 ? true : nil })) {
-                Label("Wager", systemImage: "dollarsign.circle")
-            }.toggleStyle(.button).font(Tidbits.TypeRamp.l5).fixedSize()
-            Toggle(isOn: Binding(   // Wave B: speed round
-                get: { working.rounds[i].isSpeed ?? false },
-                set: { working.rounds[i].isSpeed = $0 ? true : nil })) {
-                Label("Speed", systemImage: "bolt")
-            }.toggleStyle(.button).font(Tidbits.TypeRamp.l5).fixedSize()
-            Button { move(i, up: true) } label: { Image(systemName: "chevron.up") }.buttonStyle(.borderless).disabled(i == 0)
-            Button { move(i, up: false) } label: { Image(systemName: "chevron.down") }.buttonStyle(.borderless).disabled(i == working.rounds.count - 1)
-            Button { working.rounds.remove(at: i) } label: { Image(systemName: "trash") }.buttonStyle(.borderless)
+            TextField("Host note (shown in the cockpit)", text: Binding(   // Wave A — its own line, full width
+                get: { working.rounds[i].hostNote ?? "" },
+                set: { working.rounds[i].hostNote = $0.isEmpty ? nil : $0 }))
+                .textFieldStyle(.roundedBorder).font(Tidbits.TypeRamp.l5)
         }
         .padding(14).chunkyCard()
         .draggable(round.id.uuidString)   // Wave A: drag-to-reorder (chevrons remain as a fallback)

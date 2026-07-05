@@ -58,6 +58,13 @@ final class LiveHostSession {
         let ri = current?.roundIndex ?? 0
         return event.rounds.indices.contains(ri) ? (event.rounds[ri].isWager ?? false) : false
     }
+    /// Wave B: the audio clip bookmark for the current question (nil unless it's an audio round).
+    var currentAudioBookmark: Data? {
+        let ri = current?.roundIndex ?? 0
+        guard event.rounds.indices.contains(ri), let bms = event.rounds[ri].audioBookmarks else { return nil }
+        let pos = questionInRound.n - 1
+        return bms.indices.contains(pos) ? bms[pos] : nil
+    }
     var questionInRound: (n: Int, of: Int) {
         let ri = current?.roundIndex ?? 0
         let inRound = questions.enumerated().filter { $0.element.roundIndex == ri }
@@ -282,6 +289,12 @@ struct LiveHostView_macOS: View {
                 if session.currentRoundIsWager {   // Wave A: wager round indicator
                     Label("Wager round — teams stake points (correct +stake, wrong −stake)", systemImage: "dollarsign.circle.fill")
                         .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.coral)
+                }
+                if let clip = session.currentAudioBookmark {   // Wave B: audio round — play this question's clip
+                    Button { LiveAudioPlayer.shared.openBookmark(clip); LiveAudioPlayer.shared.togglePlay() } label: {
+                        Label("Play this clip", systemImage: "play.circle.fill").font(Tidbits.TypeRamp.l4)
+                    }
+                    .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.blue, textColor: .white))
                 }
                 if session.revealed {
                     HStack(spacing: 8) {
@@ -760,6 +773,18 @@ final class LiveAudioPlayer {
 
     private init() { engine.attach(player) }
 
+    private var accessedURL: URL?
+    /// Open a saved audio-round clip from its security-scoped bookmark (starts sandbox access;
+    /// released on the next open/stop).
+    func openBookmark(_ data: Data) {
+        var stale = false
+        guard let url = try? URL(resolvingBookmarkData: data, options: .withSecurityScope,
+                                 relativeTo: nil, bookmarkDataIsStale: &stale),
+              url.startAccessingSecurityScopedResource() else { return }
+        open(url)             // open() → stop() releases the PREVIOUS accessed url
+        accessedURL = url     // ...then hold the new one
+    }
+
     /// Load an audio file (stops anything playing). Its format drives the node connection.
     func open(_ url: URL) {
         stop()
@@ -790,6 +815,7 @@ final class LiveAudioPlayer {
     func stop() {
         player.stop(); if engine.isRunning { engine.stop() }
         isPlaying = false; started = false; scheduled = false
+        if let u = accessedURL { u.stopAccessingSecurityScopedResource(); accessedURL = nil }
     }
 }
 #endif

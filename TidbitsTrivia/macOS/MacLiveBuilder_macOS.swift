@@ -98,6 +98,8 @@ struct LiveBuilderView_macOS: View {
                         .disabled(working.totalQuestions == 0)
                     Button("Import CSV…") { importCSV() }   // Wave A: bulk-author a round
                         .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.ink))
+                    Button("Audio round…") { addAudioRound() }   // Wave B: name-that-clip round
+                        .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.ink))
                     Spacer()
                     Menu {
                         Button("Question pack (host)") { LivePrint.questionPack(working) }
@@ -228,6 +230,28 @@ struct LiveBuilderView_macOS: View {
         let qs = Self.parseCSVQuestions(text)
         guard !qs.isEmpty else { return }
         working.rounds.append(LiveRound(title: "Imported round", format: .classic, categoryID: "mixed", questions: qs))
+    }
+
+    /// Wave B: build an audio round from picked clips — each clip becomes a "name it"
+    /// (typeAnswer) question, answer defaulting to the filename, with a security-scoped
+    /// bookmark stored parallel so the host can play the right clip during the round.
+    private func addAudioRound() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.audio, .mp3, .wav, .mpeg4Audio, .aiff]
+        panel.allowsMultipleSelection = true
+        guard panel.runModal() == .OK, !panel.urls.isEmpty else { return }
+        var questions: [Question] = []
+        var bookmarks: [Data] = []
+        for (i, url) in panel.urls.enumerated() {
+            let answer = url.deletingPathExtension().lastPathComponent
+            questions.append(Question(id: UUID().uuidString, prompt: "Track \(i + 1) — name it",
+                                      options: [answer], correctIndex: 0, categoryID: "music", difficulty: 3,
+                                      explanation: "", sourceTitle: "", sourceURL: nil, templateID: "audio",
+                                      accepted: [answer]))
+            bookmarks.append((try? url.bookmarkData(options: .withSecurityScope)) ?? Data())
+        }
+        working.rounds.append(LiveRound(title: "Audio round", format: .typeAnswer, categoryID: "music",
+                                        questions: questions, audioBookmarks: bookmarks))
     }
 
     static func parseCSVQuestions(_ text: String) -> [Question] {

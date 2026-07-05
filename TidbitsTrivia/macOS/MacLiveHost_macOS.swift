@@ -424,11 +424,17 @@ struct LiveHostView_macOS: View {
                         .keyboardShortcut(.defaultAction)
                 }
                 Spacer()
-                Text("\(session.index + 1) / \(session.questions.count)").font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft)
+                Text("\(session.index + 1) / \(session.questions.count) · Space to advance").font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft)
             }
             sfxBar        // Wave B: the stinger board
             audioClipBar  // Wave B: clip playback to the PA
             musicBedBar   // Wave B: looping background music
+            Button("") {   // intuitive: SPACE = advance the show (reveal → next) — the emcee's clicker key.
+                guard !session.onBreak else { return }   // won't fire while a text field is focused (the field takes space)
+                if session.revealed { session.next() } else { session.reveal() }
+            }
+            .keyboardShortcut(.space, modifiers: [])
+            .buttonStyle(.plain).frame(width: 0, height: 0).opacity(0).accessibilityHidden(true)
         }
         .padding(28)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)

@@ -29,6 +29,7 @@ struct RecordsView: View {
                     lifetimeRow
                     historySection
                     progressSection
+                    badgesSection
                     if calibration.contains(where: { $0.total > 0 }) { calibrationSection }
                     bestsSection
                     if !toReview.isEmpty { reviewSection }
@@ -181,6 +182,58 @@ struct RecordsView: View {
                     .buttonStyle(.plain)
             }
         }
+    }
+
+    // L4: levelable badges — tiered milestones from BadgeMath (shared Core), hidden until one is earned.
+    private var badgesSection: some View {
+        let lifetime = records.reduce(into: (correct: 0, total: 0)) { $0.correct += $1.correct; $0.total += $1.total }
+        let acc = lifetime.total > 0 ? Int(Double(lifetime.correct) / Double(lifetime.total) * 100) : 0
+        let mastered = domains.filter { $0.hasWedge }.count
+        let badges = BadgeMath.badges(games: records.count,
+                                      longestStreak: identity.profile?.streak.longest ?? 0,
+                                      mastered: mastered, lifetimeAccuracy: acc,
+                                      liveNights: identity.profile?.stats.liveNights ?? 0)
+        return Group {
+            if badges.contains(where: { $0.tier > 0 }) {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Badges").font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
+                    Text("Milestones that level up as you play — depth, consistency, and range.")
+                        .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                    ForEach(badges) { badgeRow($0) }
+                }
+            }
+        }
+    }
+
+    private func badgeRow(_ b: LevelableBadge) -> some View {
+        HStack(spacing: 12) {
+            Text(b.tier > 0 ? "\(b.tier)" : "·").font(.system(size: 17, weight: .black, design: .rounded))
+                .foregroundStyle(.white).frame(width: 36, height: 36)
+                .background(Circle().fill(b.tier > 0 ? Tidbits.Palette.coral : Tidbits.Palette.inkSoft))
+                .overlay(Circle().strokeBorder(Tidbits.Palette.border, lineWidth: 2.5))
+            VStack(alignment: .leading, spacing: 5) {
+                HStack {
+                    Text(b.name).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                    Spacer()
+                    Text("Tier \(b.tier)/\(b.maxTier)").font(.system(size: 13, weight: .black, design: .rounded))
+                        .foregroundStyle(.white).padding(.horizontal, 9).padding(.vertical, 3)
+                        .background(Capsule().fill(Tidbits.Palette.blue))
+                        .overlay(Capsule().strokeBorder(Tidbits.Palette.border, lineWidth: 2))
+                }
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        Capsule().fill(Tidbits.Palette.bgDeep)
+                        Capsule().fill(Tidbits.Palette.coral).frame(width: max(6, geo.size.width * b.progress))
+                    }
+                    .overlay(Capsule().strokeBorder(Tidbits.Palette.border, lineWidth: 2))
+                }
+                .frame(height: 12)
+                Text(b.detail).font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+            }
+        }
+        .padding(12)
+        .chunkyCard()
+        .padding(.trailing, Tidbits.Metric.shadowOffset)
     }
 
     private func topicRow(_ d: DomainProgress) -> some View {

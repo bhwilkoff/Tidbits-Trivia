@@ -70,3 +70,41 @@ struct DomainProgress: Identifiable, Sendable, Hashable {
         domains.filter(\.hasWedge).count
     }
 }
+
+// MARK: - Levelable badges (L4)
+
+/// One tiered achievement badge — recognises a real milestone (games, streak,
+/// mastery, accuracy, live nights) that levels up as the number grows. A pure
+/// derivation of existing stats (no new persistence); tiers match web + Android.
+nonisolated struct LevelableBadge: Identifiable, Sendable {
+    let name: String
+    let value: Int
+    let tiers: [Int]
+    let unit: String
+
+    var id: String { name }
+    var tier: Int { tiers.filter { value >= $0 }.count }
+    var maxTier: Int { tiers.count }
+    var next: Int? { tier < tiers.count ? tiers[tier] : nil }
+    var progress: Double {
+        guard let next else { return 1 }
+        let floor = tier > 0 ? tiers[tier - 1] : 0
+        return min(1, max(0.06, Double(value - floor) / Double(next - floor)))
+    }
+    var detail: String {
+        next.map { "\(value)/\($0) \(unit) to Tier \(tier + 1)" } ?? "Maxed — \(value) \(unit)"
+    }
+}
+
+enum BadgeMath {
+    static func badges(games: Int, longestStreak: Int, mastered: Int,
+                       lifetimeAccuracy: Int, liveNights: Int) -> [LevelableBadge] {
+        [
+            .init(name: "Scholar", value: games, tiers: [10, 50, 100, 500], unit: "games"),
+            .init(name: "On a Roll", value: longestStreak, tiers: [3, 7, 30, 100], unit: "day streak"),
+            .init(name: "Domain Master", value: mastered, tiers: [1, 3, 5, 7], unit: "domains mastered"),
+            .init(name: "Sharpshooter", value: games >= 5 ? lifetimeAccuracy : 0, tiers: [60, 75, 85, 95], unit: "% accuracy"),
+            .init(name: "Regular", value: liveNights, tiers: [1, 5, 15, 40], unit: "live nights"),
+        ]
+    }
+}

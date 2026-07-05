@@ -1072,6 +1072,20 @@ private fun RecordsScreen(store: Store) {
         Text("Each domain levels up as you answer its questions correctly. You've explored $explored of 7 domains and mastered $mastered. A ✓ means mastered — 15+ right at 60%+ accuracy.",
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
         prog.filter { it.total > 0 }.forEach { TopicRow(it) { drillDomain = it.id } }
+        // L4: levelable badges — tiered milestones from BadgeMath (mirror of Core), hidden until one is earned.
+        val totalQ = records.sumOf { it.total }
+        val badges = BadgeMath.badges(
+            games = records.size,
+            longestStreak = PlayerIdentity.profile?.streak?.longest ?: 0,
+            mastered = mastered,
+            lifetimeAccuracy = if (totalQ > 0) records.sumOf { it.correct } * 100 / totalQ else 0,
+            liveNights = PlayerIdentity.profile?.stats?.liveNights ?: 0)
+        if (badges.any { it.tier > 0 }) {
+            Text("Badges", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+            Text("Milestones that level up as you play — depth, consistency, and range.",
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+            badges.forEach { b -> BadgeRow(b) }
+        }
         val calib = remember { store.calibration() }
         if (calib.values.any { it.second > 0 }) {
             Text("Your calibration", fontWeight = FontWeight.Bold, fontSize = 20.sp)
@@ -1240,6 +1254,29 @@ private fun AllGamesDialog(records: List<Store.Rec>, onOpen: (Store.Rec) -> Unit
             Text("All games", fontWeight = FontWeight.Black, fontSize = 22.sp)
             Text("Newest first — tap one to see the questions.", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
             records.forEach { rec -> GameHistoryRow(rec) { onOpen(rec) } }
+        }
+    }
+}
+
+// L4: one levelable badge — tier number, name, tier chip, progress bar, plain-language detail.
+@Composable
+private fun BadgeRow(b: LevelableBadge) {
+    ChunkyCard(modifier = Modifier.fillMaxWidth()) {
+        Row(Modifier.padding(12.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Box(Modifier.size(36.dp).background(if (b.tier > 0) Pops.coral else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f), CircleShape).border(2.dp, Ink, CircleShape), contentAlignment = Alignment.Center) {
+                Text(if (b.tier > 0) "${b.tier}" else "·", fontWeight = FontWeight.Black, color = Color.White)
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(b.name, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                    Text("Tier ${b.tier}/${b.maxTier}", fontWeight = FontWeight.Black, fontSize = 12.sp, color = accentText(Pops.blue),
+                        modifier = Modifier.background(Pops.blue, RoundedCornerShape(999.dp)).border(2.dp, Ink, RoundedCornerShape(999.dp)).padding(horizontal = 9.dp, vertical = 3.dp))
+                }
+                Box(Modifier.fillMaxWidth().height(12.dp).background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(999.dp)).border(2.dp, Ink, RoundedCornerShape(999.dp))) {
+                    Box(Modifier.fillMaxWidth(b.progress).fillMaxHeight().background(Pops.coral, RoundedCornerShape(999.dp)))
+                }
+                Text(b.detail, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+            }
         }
     }
 }

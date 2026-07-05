@@ -803,6 +803,28 @@ data class DomainProgress(
     val id: String, val correct: Int, val total: Int,
     val level: Int, val levelProgress: Float, val hasWedge: Boolean,
 )
+
+// L4: levelable badges — mirror of Core BadgeMath. Tiers match web + iOS.
+data class LevelableBadge(val name: String, val value: Int, val tiers: List<Int>, val unit: String) {
+    val tier: Int get() = tiers.count { value >= it }
+    val maxTier: Int get() = tiers.size
+    val next: Int? get() = if (tier < tiers.size) tiers[tier] else null
+    val progress: Float get() {
+        val n = next ?: return 1f
+        val floor = if (tier > 0) tiers[tier - 1] else 0
+        return ((value - floor).toFloat() / (n - floor)).coerceIn(0.06f, 1f)
+    }
+    val detail: String get() = next?.let { "$value/$it $unit to Tier ${tier + 1}" } ?: "Maxed — $value $unit"
+}
+object BadgeMath {
+    fun badges(games: Int, longestStreak: Int, mastered: Int, lifetimeAccuracy: Int, liveNights: Int) = listOf(
+        LevelableBadge("Scholar", games, listOf(10, 50, 100, 500), "games"),
+        LevelableBadge("On a Roll", longestStreak, listOf(3, 7, 30, 100), "day streak"),
+        LevelableBadge("Domain Master", mastered, listOf(1, 3, 5, 7), "domains mastered"),
+        LevelableBadge("Sharpshooter", if (games >= 5) lifetimeAccuracy else 0, listOf(60, 75, 85, 95), "% accuracy"),
+        LevelableBadge("Regular", liveNights, listOf(1, 5, 15, 40), "live nights"),
+    )
+}
 object ProgressMath {
     val domains = listOf("history", "science", "geography", "arts", "screen", "music", "sports")
     const val WEDGE_CORRECT = 15

@@ -145,6 +145,7 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
         if (ended && joined && !recordedEnd) {
             recordedEnd = true
             com.learningischange.tidbitstrivia.data.PlayerIdentity.recordLiveGame(liveCorrect, liveAnswered)
+            com.learningischange.tidbitstrivia.data.PlayerIdentity.recordStanding(meta?.venue ?: "", score)   // Wave E: per-venue season standing
         }
     }
 

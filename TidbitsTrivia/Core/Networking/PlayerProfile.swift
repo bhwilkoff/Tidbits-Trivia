@@ -96,6 +96,28 @@ enum PlayerIdentity {
         "standings/\(season)/\(venue)/\(uid)"
     }
 
+    /// The current season id — calendar quarter, e.g. "2026-S3". Byte-identical across
+    /// Swift/Kotlin/JS so every platform writes to the same partition.
+    static func currentSeason(now: Date = Date()) -> String {
+        let c = Calendar(identifier: .gregorian).dateComponents([.year, .month], from: now)
+        let quarter = (((c.month ?? 1) - 1) / 3) + 1
+        return "\(c.year ?? 2026)-S\(quarter)"
+    }
+
+    /// A venue key safe for an RTDB path — ASCII a-z0-9 kept, every other run collapsed to a
+    /// single "-", edges trimmed. Byte-identical to the JS/Kotlin `[^a-z0-9]+`→`-` regex.
+    static func venueKey(_ venue: String) -> String {
+        let lowered = venue.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        var out = "", lastDash = false
+        for ch in lowered {
+            if ("a"..."z").contains(ch) || ("0"..."9").contains(ch) { out.append(ch); lastDash = false }
+            else if !lastDash { out.append("-"); lastDash = true }
+        }
+        while out.hasPrefix("-") { out.removeFirst() }
+        while out.hasSuffix("-") { out.removeLast() }
+        return out
+    }
+
     /// Up-to-two initials for the seeded avatar (shared by every platform's profile UI).
     nonisolated static func initials(_ name: String) -> String {
         let parts = name.split(separator: " ").prefix(2)

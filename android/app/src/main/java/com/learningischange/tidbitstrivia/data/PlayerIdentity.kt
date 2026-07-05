@@ -103,6 +103,35 @@ object PlayerIdentity {
         scope.launch { runCatching { FirebaseNet.saveProfile(uid, np) } }
     }
 
+    /** Wave E: write this player's cumulative per-venue season standing after a live night —
+     *  keyed by the AUTH uid (the standings rule requires auth.uid === $uid). The $0 cron
+     *  aggregates these into the static cross-venue leaderboard. */
+    fun recordStanding(venue: String, score: Int) {
+        val vk = venueKey(venue); val name = profile?.name
+        if (vk.isEmpty() || score <= 0 || name == null) return
+        scope.launch {
+            val uid = FirebaseNet.uid() ?: return@launch
+            val path = "standings/${currentSeason()}/$vk/$uid"
+            runCatching {
+                val existing = FirebaseNet.loadStanding(path)
+                val prevScore = (existing?.get("score") as? Number)?.toInt() ?: 0
+                val prevNights = (existing?.get("nights") as? Number)?.toInt() ?: 0
+                FirebaseNet.setStanding(path, mapOf(
+                    "name" to name,
+                    "score" to (prevScore + score).toLong(),
+                    "nights" to (prevNights + 1).toLong(),
+                    "updatedAt" to System.currentTimeMillis()))
+            }
+        }
+    }
+
+    /** Byte-identical to Swift/JS: calendar-quarter season id + a path-safe venue key. */
+    fun currentSeason(): String {
+        val c = java.util.Calendar.getInstance()
+        return "${c.get(java.util.Calendar.YEAR)}-S${c.get(java.util.Calendar.MONTH) / 3 + 1}"
+    }
+    fun venueKey(v: String): String = v.trim().lowercase().replace(Regex("[^a-z0-9]+"), "-").trim('-')
+
     /** Google sign-in → key the profile by the verified email so Apple + Google (and every
      *  device) share one record set. Merges this device's anonymous activity in; the guard
      *  prevents ever re-merging. Returns true if it merged into an existing account. */

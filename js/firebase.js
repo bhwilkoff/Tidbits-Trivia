@@ -69,6 +69,17 @@ export const FirebaseNet = {
   isSignedIn() { return !!(_auth && _auth.currentUser && !_auth.currentUser.isAnonymous); },
   currentEmail() { return (_auth && _auth.currentUser && _auth.currentUser.email) || null; },
 
+  // Wave E: per-venue season standing (standings/{season}/{venue}/{uid}) — keyed by AUTH uid.
+  async loadStanding(path) {
+    const { db } = await ensure();
+    const snap = await db.get(db.ref(_db, path));
+    return snap.exists() ? snap.val() : null;
+  },
+  async saveStanding(path, obj) {
+    const { db } = await ensure();
+    await db.set(db.ref(_db, path), obj);
+  },
+
   // Sign out of the federated account and return to a FRESH anonymous session (new uid).
   // The account's records stay in players/{accountUid}; signing back in restores them.
   async signOutUser() {

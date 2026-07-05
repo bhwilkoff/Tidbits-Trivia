@@ -85,6 +85,17 @@ object FirebaseNet {
     suspend fun setDailyScore(key: String, day: String, score: Int) {
         db.getReference("dailyLog/$key/$day").setValue(score).await()
     }
+
+    // Wave E: per-venue season standing (standings/{season}/{venue}/{uid}) — keyed by AUTH uid.
+    fun uid(): String? = auth.currentUser?.uid
+    suspend fun loadStanding(path: String): Map<String, Any?>? {
+        val snap = db.getReference(path).get().await()
+        @Suppress("UNCHECKED_CAST")
+        return snap.value as? Map<String, Any?>
+    }
+    suspend fun setStanding(path: String, obj: Map<String, Any?>) {
+        db.getReference(path).setValue(obj).await()
+    }
     suspend fun loadDailyLog(key: String): Map<String, Int> {
         val snap = db.getReference("dailyLog/$key").get().await()
         val out = HashMap<String, Int>()

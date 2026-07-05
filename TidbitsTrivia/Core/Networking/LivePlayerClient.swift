@@ -128,7 +128,11 @@ final class LivePlayerClient {
         guard joined, !recordedEnd, meta?.state == "ended" || pub?.phase == LiveRoom.Phase.ended else { return }
         recordedEnd = true
         let correct = liveCorrect, answered = liveAnswered
-        Task { await PlayerIdentityStore.shared.recordLiveGame(correct: correct, answered: answered) }
+        let venue = meta?.venue ?? "", nightScore = score
+        Task {
+            await PlayerIdentityStore.shared.recordLiveGame(correct: correct, answered: answered)
+            await PlayerIdentityStore.shared.recordStanding(venue: venue, score: nightScore)   // Wave E: per-venue season standing
+        }
     }
     private func applyScore(_ ev: FirebaseRTDB.StreamEvent) {
         if let d = ev.dataJSON, let v = try? JSONDecoder().decode(Int.self, from: d) { score = v } else { score = 0 }

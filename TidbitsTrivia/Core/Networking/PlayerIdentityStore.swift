@@ -120,6 +120,22 @@ final class PlayerIdentityStore {
         try? await db.put(PlayerIdentity.publicPath(uid), p)
     }
 
+    /// Wave E: write this player's cumulative per-venue season standing after a live night.
+    /// Keyed by the AUTH uid (the standings rule requires `auth.uid === $uid`); the $0
+    /// GitHub-Actions cron aggregates these into the static cross-venue leaderboard.
+    func recordStanding(venue: String, score: Int) async {
+        let vk = PlayerIdentity.venueKey(venue)
+        guard !vk.isEmpty, score > 0, let profile else { return }
+        guard let authUid = await db.uid else { return }
+        let path = PlayerIdentity.standingPath(season: PlayerIdentity.currentSeason(), venue: vk, uid: authUid)
+        let existing = (try? await db.get(path, as: PlayerIdentity.Standing.self)) ?? nil
+        let s = PlayerIdentity.Standing(name: profile.name,
+                                        score: (existing?.score ?? 0) + score,
+                                        nights: (existing?.nights ?? 0) + 1,
+                                        updatedAt: Int(Date().timeIntervalSince1970 * 1000))
+        try? await db.put(path, s)
+    }
+
     /// Sign in with Apple → key the profile by the verified email so Apple + Google (and
     /// every device) share one record set. Merges this device's anonymous activity into the
     /// email-keyed profile; the guard prevents ever re-merging. Called from the

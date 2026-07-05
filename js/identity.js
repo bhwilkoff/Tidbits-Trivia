@@ -68,6 +68,25 @@ export const Identity = {
     this._persist();
   },
 
+  // Wave E: write this player's cumulative per-venue season standing after a live night —
+  // keyed by the AUTH uid (the standings rule requires auth.uid === $uid). The $0 cron
+  // aggregates these into the static cross-venue leaderboard.
+  async recordStanding(venue, score) {
+    const vk = venueKey(venue);
+    const uid = FirebaseNet.uid;
+    if (!vk || !(score > 0) || !this.profile || !uid) return;
+    const path = `standings/${currentSeason()}/${vk}/${uid}`;
+    try {
+      const existing = await FirebaseNet.loadStanding(path);
+      await FirebaseNet.saveStanding(path, {
+        name: this.profile.name,
+        score: (existing?.score || 0) + score,
+        nights: (existing?.nights || 0) + 1,
+        updatedAt: Date.now(),
+      });
+    } catch {}
+  },
+
   rename(name) {
     if (!this.profile) return;
     const t = (name || '').trim().slice(0, 24); if (!t) return;
@@ -214,6 +233,10 @@ async function accountKey(email) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(norm));
   return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
 }
+
+// Wave E: byte-identical to Swift/Kotlin — calendar-quarter season id + a path-safe venue key.
+function currentSeason(d = new Date()) { return `${d.getFullYear()}-S${Math.floor(d.getMonth() / 3) + 1}`; }
+function venueKey(v) { return (v || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''); }
 
 function today() {
   const d = new Date();

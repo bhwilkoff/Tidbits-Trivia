@@ -20,6 +20,7 @@ function recordIfEnded() {
   if (S.meta?.state !== 'ended' && S.pub?.phase !== 'ended') return;
   S.recorded = true;
   Identity.recordLiveGame(S.liveCorrect, S.liveAnswered);
+  Identity.recordStanding(S.meta?.venue || '', S.score || 0);   // Wave E: per-venue season standing
 }
 let root = null, unsubs = [];
 

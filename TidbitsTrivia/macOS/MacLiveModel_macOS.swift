@@ -32,6 +32,7 @@ struct LiveEvent: Identifiable, Codable, Hashable {
     var rounds: [LiveRound] = []
     var createdAt: Date = .now
     var weekday: Int? = nil   // Wave D: recurring-series scheduling — 1=Sun…7=Sat (nil = one-off); optional so saved events decode
+    var sponsor: String = ""  // Wave D: sponsor kit — "brought to you by …" in the lobby + between rounds + a per-question tag
 
     var totalQuestions: Int { rounds.reduce(0) { $0 + $1.questions.count } }
     /// Wave D: the day-name of a recurring series (nil for a one-off).

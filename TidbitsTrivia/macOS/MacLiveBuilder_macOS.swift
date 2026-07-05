@@ -94,6 +94,8 @@ struct LiveBuilderView_macOS: View {
                             .font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft)
                     }
                 }
+                TextField("Sponsor (optional — shown as “brought to you by …”)", text: $working.sponsor)   // Wave D: sponsor kit
+                    .textFieldStyle(.roundedBorder).font(Tidbits.TypeRamp.l5).frame(maxWidth: 340)
 
                 Text("Rounds").font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
                 if working.rounds.isEmpty {

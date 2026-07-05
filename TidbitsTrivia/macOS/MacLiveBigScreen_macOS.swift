@@ -77,6 +77,16 @@ struct LiveBigScreen_macOS: View {
             }
         }
         .frame(minWidth: 720, minHeight: 480)
+        .overlay(alignment: .bottom) {   // Wave D: sponsor kit — a persistent branded footer (lobby + between rounds + play)
+            if let s = coordinator.session, !s.event.sponsor.isEmpty {
+                Text("Brought to you by \(s.event.sponsor)")
+                    .font(.system(size: 24, weight: .heavy, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
+                    .padding(.vertical, 9).padding(.horizontal, 24)
+                    .background(Capsule().fill(Tidbits.Palette.surface))
+                    .overlay(Capsule().strokeBorder(Tidbits.Palette.border, lineWidth: 2))
+                    .padding(.bottom, 26)
+            }
+        }
         .animation(showAnim, value: coordinator.session?.finished)
         .overlay {
             if let r = introRound, let s = coordinator.session, !s.finished {

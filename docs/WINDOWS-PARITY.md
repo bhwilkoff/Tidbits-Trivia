@@ -91,7 +91,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [x] 3.16 Reveal-on-command + auto-score (LiveNightHost.Reveal→AutoScore, speed bonus)
 - [ ] 3.17 Show-nav (reveal/next/skip/prev/jump/hold)
 - [ ] 3.18 Manual score override
-- [ ] 3.19 Networked join strip (QR + code)
+- [x] 3.19 Networked join strip (QR + code + tidbitstrivia.com/live) — QRCoder pure-C# PNG; LIVE cockpit PNG shows scannable QR
 - [ ] 3.36 Projector window (chromeless, 2nd monitor, hot-plug safe)
 - [ ] 3.37 Projector states + cross-fades + viewport-fraction text
 - [ ] 3.38 Reveal choreography

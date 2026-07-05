@@ -4,16 +4,22 @@
              x:Class="Tidbits.App.Views.LiveCockpitView"
              x:DataType="vm:LiveHostViewModel">
     <Grid RowDefinitions="Auto,*,Auto" Margin="28,20">
-        <!-- Header: code + roster status -->
-        <StackPanel Grid.Row="0" Spacing="4">
-            <TextBlock Text="{Binding Host.Code, StringFormat='Join code: {0}'}" FontSize="24" FontWeight="Black" Foreground="#FF5C35"/>
-            <StackPanel Orientation="Horizontal" Spacing="6">
-                <TextBlock Text="{Binding Host.PlayerCount}" FontWeight="Bold"/>
-                <TextBlock Text="players ·" Opacity="0.7"/>
-                <TextBlock Text="{Binding Host.AnsweredCount}" FontWeight="Bold"/>
-                <TextBlock Text="answered" Opacity="0.7"/>
+        <!-- Header: join info + roster status + QR -->
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+            <StackPanel Spacing="3" VerticalAlignment="Center">
+                <TextBlock Text="{Binding Host.Code, StringFormat='Join code: {0}'}" FontSize="26" FontWeight="Black" Foreground="#FF5C35"/>
+                <TextBlock Text="tidbitstrivia.com/live" FontSize="13" Opacity="0.6"/>
+                <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,6,0,0">
+                    <TextBlock Text="{Binding Host.PlayerCount}" FontWeight="Bold"/>
+                    <TextBlock Text="players ·" Opacity="0.7"/>
+                    <TextBlock Text="{Binding Host.AnsweredCount}" FontWeight="Bold"/>
+                    <TextBlock Text="answered" Opacity="0.7"/>
+                </StackPanel>
             </StackPanel>
-        </StackPanel>
+            <Border Grid.Column="1" Background="White" Padding="6" CornerRadius="8" VerticalAlignment="Top">
+                <Image x:Name="QrImage" Width="104" Height="104"/>
+            </Border>
+        </Grid>
 
         <!-- Body: question + standings -->
         <Grid Grid.Row="1" ColumnDefinitions="*,220" Margin="0,16">

@@ -769,6 +769,20 @@ async function loadLeaderboard() {
     const sm = seasonMeta();   // L3 seasons: the fresh-start banner
     let html = `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border-radius:14px;background:var(--color-primary);color:#fff;margin:6px 0 16px">
        <b>${e(sm.name)}</b><span style="opacity:.9;font-size:.85em">Resets in ${sm.days} day${sm.days === 1 ? '' : 's'} — a fresh climb</span></div>`;
+    // L5 social graph: a Friends view — the people you added, ranked by their public standing.
+    const myFriends = Identity.friends();
+    if (myFriends.length) {
+      const scoreByUid = {}; for (const r of overall) scoreByUid[r.uid] = r.score;
+      const me = overall.find((r) => r.uid === myUid);
+      const fr = [...myFriends.map((f) => ({ name: f.name, score: scoreByUid[f.uid] ?? null })),
+                  ...(me ? [{ name: `${me.name} (you)`, score: me.score, me: true }] : [])]
+        .sort((a, b) => (b.score ?? -1) - (a.score ?? -1));
+      html += `<h2 class="section-header">Friends</h2><div style="display:flex;flex-direction:column;gap:6px;margin:8px 0 20px">` + fr.map((f, i) =>
+        `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;background:var(--color-surface);${f.me ? 'outline:2px solid var(--color-accent);outline-offset:-2px' : ''}">
+           <span style="font-weight:900;width:28px;opacity:.5">${i + 1}</span>
+           <span style="flex:1;font-weight:700">${e(f.name)}</span>
+           <span style="font-weight:900;font-variant-numeric:tabular-nums">${f.score === null ? '—' : f.score}</span></div>`).join('') + `</div>`;
+    }
     html += `<h2 class="section-header">${e(seasonDisplay(season))} · Overall</h2>${table(overall)}`;
     for (const venue of (index[season] || [])) {
       const rows = await fetch(`${base}/${season}/${encodeURIComponent(venue)}.json`).then((r) => r.json()).catch(() => []);

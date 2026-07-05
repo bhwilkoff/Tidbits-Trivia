@@ -21,10 +21,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -40,6 +44,7 @@ import org.json.JSONObject
 private const val LB_BASE = "https://tidbitstrivia.com/data/leaderboard"
 
 private data class LbRow(val name: String, val score: Int, val uid: String)
+private data class FR(val uid: String?, val name: String, val score: Int?, val me: Boolean)   // L5: a friend-board row
 
 private suspend fun fetchText(url: String): String? =
     withContext(Dispatchers.IO) { runCatching { java.net.URL(url).readText() }.getOrNull() }
@@ -69,6 +74,8 @@ fun LeaderboardScreen(onBack: () -> Unit) {
     var venues by remember { mutableStateOf<List<Pair<String, List<LbRow>>>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
     var myUid by remember { mutableStateOf("") }
+    val challenged = remember { mutableStateListOf<String>() }   // L5: friends I've challenged this view
+    val scope = rememberCoroutineScope()
     val ink = MaterialTheme.colorScheme.onSurface
     val soft = ink.copy(alpha = 0.6f)
 
@@ -112,15 +119,25 @@ fun LeaderboardScreen(onBack: () -> Unit) {
                 if (friends.isNotEmpty()) {
                     val byUid = overall.associate { it.uid to it.score }
                     val meRow = overall.firstOrNull { it.uid == myUid }
-                    val fr = (friends.map { Triple(it.name, byUid[it.uid], false) } +
-                              (meRow?.let { listOf(Triple("${it.name} (you)", it.score, true)) } ?: emptyList()))
-                        .sortedByDescending { it.second ?: -1 }
+                    val fr = (friends.map { FR(it.uid, it.name, byUid[it.uid], false) } +
+                              (meRow?.let { listOf(FR(null, "${it.name} (you)", it.score, true)) } ?: emptyList()))
+                        .sortedByDescending { it.score ?: -1 }
                     item { SectionHeader("Friends", ink) }
                     itemsIndexed(fr) { i, f ->
                         Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
                             Text("${i + 1}", fontWeight = FontWeight.Black, color = soft, modifier = Modifier.width(30.dp))
-                            Text(f.first, fontWeight = FontWeight.SemiBold, color = ink, modifier = Modifier.weight(1f))
-                            Text(f.second?.toString() ?: "—", fontWeight = FontWeight.Black, color = if (f.second == null) soft else ink)
+                            Text(f.name, fontWeight = FontWeight.SemiBold, color = ink, modifier = Modifier.weight(1f))
+                            if (f.uid != null && !f.me) {
+                                if (challenged.contains(f.uid)) Text("Sent", fontSize = 12.sp, color = soft, modifier = Modifier.padding(end = 8.dp))
+                                else TextButton(onClick = {
+                                    val uid = f.uid; val name = f.name
+                                    scope.launch {
+                                        val qs = buildDuelSet()
+                                        if (qs.size >= 3 && com.learningischange.tidbitstrivia.data.Duels.challenge(uid, name, qs) != null) challenged.add(uid)
+                                    }
+                                }) { Text("Duel", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary) }
+                            }
+                            Text(f.score?.toString() ?: "—", fontWeight = FontWeight.Black, color = if (f.score == null) soft else ink)
                         }
                     }
                 }

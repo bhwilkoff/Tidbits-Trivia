@@ -11,6 +11,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -58,7 +59,7 @@ sealed interface Route {
     data object Home : Route
     data object Records : Route
     data object Create : Route
-    data class Game(val mode: Mode, val category: Category, val custom: List<Question>? = null, val label: String? = null, val nightRounds: List<Pair<String, Int>>? = null, val dailyDay: String? = null, val mixModes: List<Mode>? = null) : Route
+    data class Game(val mode: Mode, val category: Category, val custom: List<Question>? = null, val label: String? = null, val nightRounds: List<Pair<String, Int>>? = null, val dailyDay: String? = null, val mixModes: List<Mode>? = null, val duelId: String? = null) : Route
     data class Versus(val botId: String) : Route
     object OnlineMatch : Route
     data object NightSetup : Route
@@ -69,6 +70,7 @@ sealed interface Route {
     data object Settings : Route
     data object Profile : Route
     data object Leaderboard : Route   // Wave E: cross-venue / season standings
+    data object Duels : Route          // L5: async friend duels
     data object Party : Route
 }
 
@@ -184,8 +186,9 @@ fun AppRoot(
                     is Route.Versus -> VersusScreen(r.botId, store) { backStack.removeAt(backStack.lastIndex) }
                     is Route.OnlineMatch -> OnlineMatchScreen(store) { backStack.removeAt(backStack.lastIndex) }
                     is Route.Settings -> SettingsScreen(store, dynamicColor, onDynamicColor, onProfile = { backStack.add(Route.Profile) })
-                    is Route.Profile -> ProfileScreen(onBack = { backStack.removeLastOrNull() }, onLeaderboard = { backStack.add(Route.Leaderboard) })
+                    is Route.Profile -> ProfileScreen(onBack = { backStack.removeLastOrNull() }, onLeaderboard = { backStack.add(Route.Leaderboard) }, onDuels = { backStack.add(Route.Duels) })
                     is Route.Leaderboard -> LeaderboardScreen(onBack = { backStack.removeLastOrNull() })
+                    is Route.Duels -> DuelsScreen(onBack = { backStack.removeLastOrNull() }, onPlay = { id, qs -> backStack.add(Route.Game(Mode.MIX, Category.byId("mixed"), qs, "Duel", duelId = id)) })
                     is Route.Party -> PartyContainer(store) { backStack.removeAt(backStack.lastIndex) }
                 }
             }
@@ -624,8 +627,8 @@ private fun GameScreen(route: Route.Game, store: Store, onDone: () -> Unit) {
         GamePhase.ROUND_INTRO -> RoundIntroScreen(game)
         // The Daily is play-once (R-DAILY-1) — no replay of a locked set.
         GamePhase.FINISHED -> ResultsScreen(game,
-            onPlayAgain = if (route.mode == Mode.DAILY) null else ({ scope.launch { game.restart() } }),
-            onDone = onDone)
+            onPlayAgain = if (route.mode == Mode.DAILY || route.duelId != null) null else ({ scope.launch { game.restart() } }),
+            onDone = onDone, duelId = route.duelId)
         else -> PlayingScreen(game)
     }
 }
@@ -945,8 +948,9 @@ private fun AnswerButton(text: String, state: AnswerVisual, enabled: Boolean, on
 // ---- Results ----
 
 @Composable
-private fun ResultsScreen(game: GameState, onPlayAgain: (() -> Unit)?, onDone: () -> Unit) {
+private fun ResultsScreen(game: GameState, onPlayAgain: (() -> Unit)?, onDone: () -> Unit, duelId: String? = null) {
     val context = LocalContext.current
+    if (duelId != null) LaunchedEffect(duelId) { com.learningischange.tidbitstrivia.data.Duels.submit(duelId, game.score) }   // L5: submit my duel score
     val total = game.answered.size
     val acc = if (total == 0) 0 else game.correctCount * 100 / total
     val grid = game.answered.joinToString("") { if (it.chosen == null) "⚫️" else if (it.correct) "🟢" else "🔴" }
@@ -1370,4 +1374,82 @@ internal fun categoryIcon(id: String): ImageVector = when (id) {
     "music" -> Icons.Filled.MusicNote
     "sports" -> Icons.Filled.EmojiEvents
     else -> Icons.Filled.Shuffle
+}
+
+// L5 async friend duels ------------------------------------------------------
+
+internal suspend fun buildDuelSet(): List<com.learningischange.tidbitstrivia.data.DuelQ> {
+    val topics = listOf("history", "science", "movies", "music", "sports", "geography", "art", "nature")
+    return Corpus.search(topics.random(), 6).filter { it.options.size >= 2 }.take(6)
+        .map { com.learningischange.tidbitstrivia.data.DuelQ(it.prompt, it.options, it.correctIndex, it.explanation) }
+}
+
+@Composable
+private fun DuelsScreen(onBack: () -> Unit, onPlay: (String, List<Question>) -> Unit) {
+    var inbox by remember { mutableStateOf<List<com.learningischange.tidbitstrivia.data.DuelInvite>>(emptyList()) }
+    var mine by remember { mutableStateOf<List<com.learningischange.tidbitstrivia.data.DuelStanding>>(emptyList()) }
+    var loading by remember { mutableStateOf(true) }
+    val scope = rememberCoroutineScope()
+    val ink = MaterialTheme.colorScheme.onSurface
+    val soft = ink.copy(alpha = 0.6f)
+    LaunchedEffect(Unit) {
+        inbox = com.learningischange.tidbitstrivia.data.Duels.inbox()
+        mine = com.learningischange.tidbitstrivia.data.Duels.mine()
+        loading = false
+    }
+    fun play(id: String) = scope.launch {
+        com.learningischange.tidbitstrivia.data.Duels.accept(id)
+        val snap = com.learningischange.tidbitstrivia.data.Duels.load(id) ?: return@launch
+        val qs = com.learningischange.tidbitstrivia.data.Duels.questionsOf(snap).mapIndexed { i, q ->
+            Question(id = "duel-$i", prompt = q.p, options = q.o, correctIndex = q.c, categoryId = "mixed",
+                difficulty = 3, explanation = q.e, sourceTitle = "", sourceUrl = "")
+        }
+        onPlay(id, qs)
+    }
+    Column(Modifier.fillMaxSize().padding(20.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            TextButton(onClick = onBack) { Text("‹ Back") }
+            Text("Duels", fontSize = 28.sp, fontWeight = FontWeight.Black, color = ink)
+        }
+        Text("Challenge a friend to the same questions — higher score wins. Answer on your own time.",
+            color = soft, modifier = Modifier.padding(bottom = 12.dp))
+        when {
+            loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+            else -> {
+                val mineIds = mine.map { it.id }.toSet()
+                val pending = inbox.filter { it.id !in mineIds }
+                LazyColumn(Modifier.fillMaxSize()) {
+                    if (pending.isEmpty() && mine.isEmpty()) item {
+                        Text("No duels yet. Add friends from a live night, then tap Duel on the Leaderboard.", color = soft)
+                    }
+                    if (pending.isNotEmpty()) {
+                        item { Text("Challenges for you", fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.padding(vertical = 6.dp)) }
+                        items(pending, key = { it.id }) { inv ->
+                            Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Text("${inv.fromName} challenged you", fontWeight = FontWeight.SemiBold, color = ink, modifier = Modifier.weight(1f))
+                                TextButton(onClick = { play(inv.id) }) { Text("Play", color = Pops.blue) }
+                            }
+                        }
+                    }
+                    if (mine.isNotEmpty()) {
+                        item { Text("Your duels", fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.padding(vertical = 6.dp)) }
+                        items(mine, key = { it.id }) { d ->
+                            Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Text("vs ${d.oppName}", fontWeight = FontWeight.SemiBold, color = ink, modifier = Modifier.weight(1f))
+                                when {
+                                    d.myDone && d.oppDone -> Text(
+                                        if (d.myScore > d.oppScore) "Won ${d.myScore}-${d.oppScore}"
+                                        else if (d.myScore < d.oppScore) "Lost ${d.myScore}-${d.oppScore}"
+                                        else "Tied ${d.myScore}-${d.oppScore}",
+                                        fontWeight = FontWeight.Bold, color = if (d.myScore > d.oppScore) Pops.coral else soft)
+                                    d.myDone -> Text("Waiting on ${d.oppName}", fontSize = 13.sp, color = soft)
+                                    else -> TextButton(onClick = { play(d.id) }) { Text("Your turn", color = Pops.blue) }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

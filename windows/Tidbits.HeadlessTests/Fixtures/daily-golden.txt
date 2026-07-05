@@ -1,0 +1,4 @@
+2026-07-01 src:cloze:Graham_Kennedy src:cloze:Black_panther src:cloze:Design src:describe:Brian_Austin_Green src:cloze:Halloween_(franchise) src:cloze:The_Notorious_B.I.G. src:describe:Ellyse_Perry
+2026-07-02 src:cloze:George_Headley wd:composer:Q104876047 src:describe:Ice-T src:cloze:Gatorade wd:continent:Q1492 wd:continent:Q1490 wd:continent:Q1497
+2026-12-31 src:describe:William_Godwin src:cloze:Denis_Villeneuve wd:director:Q111947659 src:describe:Eugene_O'Neill src:cloze:Dilip_Kumar wd:director:Q748599 src:describe:Callum_Turner
+2027-02-28 src:cloze:Scarlett_Johansson src:describe:Patrick_Dempsey wd:continent:Q28513 wd:continent:Q28515 wd:composer:Q724008 wd:director:Q104123 src:describe:Cobie_Smulders

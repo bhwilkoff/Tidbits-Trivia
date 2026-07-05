@@ -22,6 +22,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Tidbits.App\Tidbits.App.csproj" />
+    <ProjectReference Include="..\Tidbits.Core\Tidbits.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Fixtures\**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

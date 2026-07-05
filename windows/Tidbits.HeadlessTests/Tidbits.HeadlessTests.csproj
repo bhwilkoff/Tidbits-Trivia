@@ -29,6 +29,8 @@
     <Content Include="Fixtures\**" CopyToOutputDirectory="PreserveNewest" />
     <!-- The shared corpus (link, not a copy in git) — Windows is another consumer of assets/. -->
     <Content Include="..\..\assets\corpus.json" Link="Fixtures\corpus.json" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Full shared data under Data/ so GameData.Shared (app path) resolves in tests too. -->
+    <Content Include="..\..\assets\*.json" Link="Data\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

@@ -138,6 +138,17 @@ public sealed class RecordsStore
 
     public int[]? AnswerDistribution(string questionId) => _data.Telemetry.GetValueOrDefault(questionId);
 
+    /// Wipe all records (Settings → Reset all records).
+    public void ResetAll()
+    {
+        _data.Games.Clear();
+        _data.Missed.Clear();
+        _data.Calibration.Clear();
+        _data.Telemetry.Clear();
+        _data.Streak = new DailyStreak();
+        Save();
+    }
+
     private void Save()
     {
         try

@@ -41,7 +41,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [ ] 1.13 AI generator → Windows stub (isAvailable=false → TemplateEngine)
 - [ ] 1.22 `Keychain` → Credential Manager/DPAPI
 - [x] 1.23 `Haptics` → no-op stub
-- [ ] 1.21 `GameSettings` KV
+- [x] 1.21 `GameSettings` KV (JSON-backed) + RecordsStore.ResetAll
 - [ ] 1.20 `DailyLog` (per-day results, first-completion-wins)
 - [x] golden-vector contract test harness (§8.7) — daily parity GREEN vs Apple/Kotlin/JS
 
@@ -61,9 +61,9 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [ ] 2.14 Records drill-ins (game recap, domain, bests)
 - [ ] 2.15 Topic Levels + Pie + calibration + badges + avatar re-roll
 - [ ] 2.16 Records sign-in banner
-- [ ] 2.17 Create (topic → corpus diversify + live-gen fallback)
+- [x] 2.17 Create — topic → corpus retrieval + diversify → play the set (live-gen fallback stubbed); PNG-verified
 - [ ] 2.18 Create saved sets
-- [ ] 2.19 Settings page
+- [x] 2.19 Settings page — review toggle + reset seen/records + about/version; PNG-verified
 - [ ] 2.20 Trivia Night (solo)
 - [ ] 2.21 Versus CPU / Online-MP picker
 - [ ] 2.22 Spaced re-asking + day-streak surfacing

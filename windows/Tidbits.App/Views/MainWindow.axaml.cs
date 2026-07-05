@@ -40,6 +40,14 @@ public partial class MainWindow : Window
                 DataContext = new RecordsViewModel(Services.GameData.Shared.Value.Records),
             };
         }
+        else if (tag == "create")
+        {
+            ContentHost.Content = new CreateView();
+        }
+        else if (tag == "settings")
+        {
+            ContentHost.Content = new SettingsView();
+        }
         else if (vm.Sections.TryGetValue(tag, out var section))
         {
             ContentHost.Content = new SectionFrameView { DataContext = section };

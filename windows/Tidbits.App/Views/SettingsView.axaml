@@ -1,0 +1,36 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Tidbits.App.Views.SettingsView">
+    <ScrollViewer>
+        <StackPanel Margin="36,32" Spacing="22" MaxWidth="600" HorizontalAlignment="Left">
+            <TextBlock Text="Settings" FontSize="34" FontWeight="Black"/>
+
+            <StackPanel Spacing="6">
+                <TextBlock Text="Account" FontSize="18" FontWeight="Bold"/>
+                <TextBlock Text="Sign-in to sync your records across devices arrives with Tidbits Live."
+                           FontSize="13" Opacity="0.65" TextWrapping="Wrap"/>
+            </StackPanel>
+
+            <StackPanel Spacing="6">
+                <TextBlock Text="Gameplay" FontSize="18" FontWeight="Bold"/>
+                <ToggleSwitch x:Name="ReviewToggle" Content="Review questions" IsCheckedChanged="OnReviewToggled"/>
+                <TextBlock Text="Occasionally re-asks questions you've missed, spaced out, so they stick."
+                           FontSize="13" Opacity="0.65" TextWrapping="Wrap"/>
+            </StackPanel>
+
+            <StackPanel Spacing="8">
+                <TextBlock Text="Data" FontSize="18" FontWeight="Bold"/>
+                <Button Content="Reset seen questions" Click="OnResetSeen" HorizontalAlignment="Left"/>
+                <Button Content="Reset all records" Click="OnResetRecords" HorizontalAlignment="Left"/>
+                <TextBlock x:Name="DataStatus" IsVisible="False" FontSize="13" Foreground="#1E9E6A"/>
+            </StackPanel>
+
+            <StackPanel Spacing="6">
+                <TextBlock Text="About" FontSize="18" FontWeight="Bold"/>
+                <TextBlock x:Name="VersionText" FontSize="14"/>
+                <TextBlock Text="Content from Wikipedia, available under CC BY-SA. Tidbits is a learning game — every question is a door to learn more."
+                           FontSize="13" Opacity="0.65" TextWrapping="Wrap"/>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

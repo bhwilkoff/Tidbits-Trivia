@@ -136,6 +136,21 @@ public sealed class QuestionProvider
         return QueryHelpers.Shuffle(pool).Take(count).ToList();
     }
 
+    /// Create a quiz on a topic — vetted corpus questions matching the topic
+    /// (retrieval + diversify), live-gen top-up if thin (stubbed for now). Marks seen.
+    public async Task<List<Question>> CreateQuestions(string topic, int count = 10)
+    {
+        var found = _src.Corpus.Search(topic, count);
+        if (found.Count < count)
+        {
+            var live = await LiveQuestions(topic, TriviaCategory.Named("mixed"), count - found.Count);
+            found = found.Concat(live).ToList();
+        }
+        var set = found.Take(count).ToList();
+        MarkSeen(set.Select(q => q.Id));
+        return set;
+    }
+
     /// The Daily puzzle: deterministic for the calendar day (DailyPick, order-independent).
     public async Task<List<Question>> DailyQuestions(TriviaCategory category, string? day = null)
     {

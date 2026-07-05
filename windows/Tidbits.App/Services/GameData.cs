@@ -12,14 +12,16 @@ public sealed class GameData
     public QuestionSources Sources { get; }
     public QuestionProvider Provider { get; }
     public RecordsStore Records { get; }
+    public GameSettings Settings { get; }
 
     private GameData(QuestionSources sources)
     {
         Sources = sources;
         Provider = new QuestionProvider(sources);
-        Records = new RecordsStore(Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "TidbitsTrivia", "records.json"));
+        var appDir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TidbitsTrivia");
+        Records = new RecordsStore(Path.Combine(appDir, "records.json"));
+        Settings = new GameSettings(Path.Combine(appDir, "settings.json"));
     }
 
     public static GameData FromDirectory(string dir) => new(QuestionSources.LoadFromDirectory(dir));

@@ -1,0 +1,38 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Tidbits.App.ViewModels"
+             x:Class="Tidbits.App.Views.SectionFrameView"
+             x:DataType="vm:SectionViewModel">
+    <ScrollViewer>
+        <StackPanel Margin="36,32" Spacing="18" MaxWidth="760" HorizontalAlignment="Left">
+            <TextBlock Text="{Binding Title}" FontSize="34" FontWeight="Black"/>
+            <TextBlock Text="{Binding Subtitle}" FontSize="15" Opacity="0.75" TextWrapping="Wrap"/>
+
+            <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1" CornerRadius="10" Padding="20">
+                <StackPanel Spacing="12">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Border Width="10" Height="10" CornerRadius="5"
+                                Background="#FF5C35" VerticalAlignment="Center"/>
+                        <TextBlock Text="Planned features — frame only in this build"
+                                   FontWeight="SemiBold" FontSize="13" Opacity="0.9"/>
+                    </StackPanel>
+                    <ItemsControl ItemsSource="{Binding Features}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,3">
+                                    <TextBlock Text="•" Opacity="0.5"/>
+                                    <TextBlock Text="{Binding}" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <TextBlock Text="Feature parity ships in the loops after this one."
+                       FontSize="12" Opacity="0.5" FontStyle="Italic"/>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

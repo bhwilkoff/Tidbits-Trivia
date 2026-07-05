@@ -1,0 +1,22 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Tidbits.App.App"
+             xmlns:local="using:Tidbits.App"
+             xmlns:sty="using:FluentAvalonia.Styling"
+             RequestedThemeVariant="Default">
+    <!-- "Default" follows the system light/dark; FluentAvaloniaTheme gives the WinUI 11 look. -->
+
+    <Application.DataTemplates>
+        <local:ViewLocator/>
+    </Application.DataTemplates>
+
+    <Application.Resources>
+        <!-- Brand tokens (shared design system — WINDOWS-DESIGN §5.1). -->
+        <Color x:Key="BrandPrimary">#FF5C35</Color>
+        <Color x:Key="BrandAccent">#0047FF</Color>
+    </Application.Resources>
+
+    <Application.Styles>
+        <sty:FluentAvaloniaTheme />
+    </Application.Styles>
+</Application>

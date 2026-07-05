@@ -1,0 +1,35 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="using:FluentAvalonia.UI.Controls"
+        xmlns:vm="using:Tidbits.App.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="1180" d:DesignHeight="760"
+        x:Class="Tidbits.App.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="Tidbits Trivia"
+        Width="1180" Height="760" MinWidth="900" MinHeight="680">
+
+    <Design.DataContext>
+        <vm:MainWindowViewModel/>
+    </Design.DataContext>
+
+    <!-- WINDOWS-DESIGN §2.1: FluentAvalonia NavigationView (the WinUI idiom), Settings
+         as a footer item (§2.2). Content swaps in code-behind on selection. -->
+    <ui:FANavigationView x:Name="Nav"
+                         PaneTitle="Tidbits"
+                         PaneDisplayMode="Left"
+                         IsSettingsVisible="True"
+                         IsBackButtonVisible="False"
+                         SelectionChanged="OnNavSelectionChanged">
+        <ui:FANavigationView.MenuItems>
+            <ui:FANavigationViewItem Content="Play" Tag="play"/>
+            <ui:FANavigationViewItem Content="Records" Tag="records"/>
+            <ui:FANavigationViewItem Content="Create" Tag="create"/>
+            <ui:FANavigationViewItem Content="Tidbits Live" Tag="live"/>
+        </ui:FANavigationView.MenuItems>
+
+        <ContentControl x:Name="ContentHost"/>
+    </ui:FANavigationView>
+</Window>

@@ -1,0 +1,49 @@
+name: Windows build + snapshots
+
+# Real-Windows confirmation of the Avalonia app (WINDOWS-PLAYBOOK §4).
+# windows-latest is unlimited-free on a public repo. Builds the app, runs the
+# headless PNG snapshots ON Windows, cross-checks the win-x64 publish, and
+# uploads the PNGs + the .exe as artifacts.
+on:
+  workflow_dispatch: {}
+  push:
+    paths: ['windows/**', '.github/workflows/windows-build.yml']
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: windows
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore Tidbits.slnx
+
+      - name: Build (Release)
+        run: dotnet build Tidbits.slnx -c Release --no-restore
+
+      - name: Headless snapshots (real Windows render)
+        env:
+          TIDBITS_ARTIFACTS: ${{ github.workspace }}/windows/artifacts
+        run: dotnet test Tidbits.HeadlessTests/Tidbits.HeadlessTests.csproj -c Release --no-build
+
+      - name: Publish self-contained win-x64 .exe
+        run: dotnet publish Tidbits.App/Tidbits.App.csproj -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -o publish/win-x64
+
+      - name: Upload snapshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-snapshots
+          path: windows/artifacts/*.png
+
+      - name: Upload app
+        uses: actions/upload-artifact@v4
+        with:
+          name: tidbits-win-x64
+          path: windows/publish/win-x64/Tidbits.App.exe

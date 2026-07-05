@@ -342,6 +342,7 @@ struct LiveHostView_macOS: View {
             }
             sfxBar        // Wave B: the stinger board
             audioClipBar  // Wave B: clip playback to the PA
+            musicBedBar   // Wave B: looping background music
         }
         .padding(28)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -390,6 +391,29 @@ struct LiveHostView_macOS: View {
         panel.allowedContentTypes = [.audio, .mp3, .wav, .mpeg4Audio, .aiff]
         panel.allowsMultipleSelection = false
         if panel.runModal() == .OK, let url = panel.url { LiveAudioPlayer.shared.open(url) }
+    }
+
+    /// Wave B: a looping background music bed (walk-in / between-round) with a level slider.
+    private var musicBedBar: some View {
+        let bed = LiveMusicBed.shared
+        return HStack(spacing: 10) {
+            Button { pickMusicBed() } label: { Label("Music bed…", systemImage: "music.quarternote.3").font(Tidbits.TypeRamp.l6) }
+                .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.ink))
+            if !bed.trackName.isEmpty {
+                Button { bed.toggle() } label: { Image(systemName: bed.isPlaying ? "pause.fill" : "play.fill") }
+                    .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.blue, textColor: .white))
+                Image(systemName: "speaker.fill").font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft)
+                Slider(value: Binding(get: { Double(bed.volume) }, set: { bed.volume = Float($0) }), in: 0...1).frame(width: 90)
+                Text(bed.trackName).font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft).lineLimit(1)
+            }
+        }
+    }
+
+    private func pickMusicBed() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.audio, .mp3, .wav, .mpeg4Audio, .aiff]
+        panel.allowsMultipleSelection = false
+        if panel.runModal() == .OK, let url = panel.url { LiveMusicBed.shared.open(url) }
     }
 
     // MARK: Scoreboard (manual scoring — the differentiator)
@@ -832,6 +856,69 @@ final class LiveAudioPlayer {
         player.stop(); if engine.isRunning { engine.stop() }
         isPlaying = false; started = false; scheduled = false
         if let u = accessedURL { u.stopAccessingSecurityScopedResource(); accessedURL = nil }
+    }
+}
+
+// MARK: - Wave B: looping music bed (walk-in / between-round ambiance)
+
+/// A looping background music bed at a low level — walk-in music, between-round ambiance — on
+/// the routed output, independent of the SFX board and clip player (a clip plays over it).
+@Observable @MainActor
+final class LiveMusicBed {
+    static let shared = LiveMusicBed()
+
+    private let engine = AVAudioEngine()
+    private let player = AVAudioPlayerNode()
+    private var file: AVAudioFile?
+    private var accessedURL: URL?
+    private var started = false
+    private(set) var trackName = ""
+    private(set) var isPlaying = false
+    var volume: Float = 0.35 { didSet { engine.mainMixerNode.outputVolume = max(0, min(1, volume)) } }
+
+    private init() { engine.attach(player) }
+
+    func open(_ url: URL) {
+        stop()
+        do {
+            let f = try AVAudioFile(forReading: url)
+            file = f; trackName = url.deletingPathExtension().lastPathComponent
+            engine.connect(player, to: engine.mainMixerNode, format: f.processingFormat)
+        } catch { print("[MusicBed] open failed: \(error)"); file = nil; trackName = "" }
+    }
+
+    func openBookmark(_ data: Data) {
+        var stale = false
+        guard let url = try? URL(resolvingBookmarkData: data, options: .withSecurityScope,
+                                 relativeTo: nil, bookmarkDataIsStale: &stale),
+              url.startAccessingSecurityScopedResource() else { return }
+        open(url); accessedURL = url
+    }
+
+    func toggle() {
+        guard file != nil else { return }
+        if isPlaying { player.pause(); isPlaying = false; return }
+        do {
+            if !started {
+                applyShowOutputDevice(to: engine); try engine.start()
+                engine.mainMixerNode.outputVolume = volume; started = true; scheduleLoop()
+            }
+            player.play(); isPlaying = true
+        } catch { print("[MusicBed] play failed: \(error)") }
+    }
+
+    func stop() {
+        player.stop(); if engine.isRunning { engine.stop() }
+        isPlaying = false; started = false
+        if let u = accessedURL { u.stopAccessingSecurityScopedResource(); accessedURL = nil }
+    }
+
+    /// Re-schedule the file each time it finishes so it loops for any length of clip.
+    private func scheduleLoop() {
+        guard let file else { return }
+        player.scheduleFile(file, at: nil) { [weak self] in
+            Task { @MainActor in if self?.isPlaying == true { self?.scheduleLoop() } }
+        }
     }
 }
 #endif

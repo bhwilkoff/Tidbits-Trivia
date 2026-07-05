@@ -45,15 +45,26 @@ struct SettingsView_macOS: View {
                         Button("Sign out") { Task { await identity.signOut() } }
                     } else {
                         SignInWithAppleButton(.signIn) { req in
+                            identity.reportAuthError(nil)
                             appleNonce = AppleNonce.random(); req.requestedScopes = [.email, .fullName]; req.nonce = AppleNonce.sha256(appleNonce)
                         } onCompletion: { result in
-                            if case .success(let auth) = result, let c = auth.credential as? ASAuthorizationAppleIDCredential,
-                               let d = c.identityToken, let t = String(data: d, encoding: .utf8) {
+                            switch result {
+                            case .success(let auth):
+                                guard let c = auth.credential as? ASAuthorizationAppleIDCredential,
+                                      let d = c.identityToken, let t = String(data: d, encoding: .utf8) else {
+                                    identity.reportAuthError("Apple didn't return an identity token — please try again."); return
+                                }
                                 let name = [c.fullName?.givenName, c.fullName?.familyName].compactMap { $0 }.joined(separator: " ")
                                 Task { await identity.linkApple(idToken: t, rawNonce: appleNonce, appleName: name.isEmpty ? nil : name, appleEmail: c.email) }
+                            case .failure(let err):
+                                if (err as? ASAuthorizationError)?.code == .canceled { return }   // user backed out — no error nag
+                                identity.reportAuthError("Apple sign-in failed: \((err as NSError).localizedDescription)")
                             }
                         }
                         .signInWithAppleButtonStyle(.black).frame(height: 36)
+                        if let e = identity.authError {
+                            Text(e).font(.caption).foregroundStyle(.red).fixedSize(horizontal: false, vertical: true)
+                        }
                     }
                 } else {
                     Text("Setting up your profile…").foregroundStyle(.secondary)

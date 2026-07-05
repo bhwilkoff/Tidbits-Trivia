@@ -20,6 +20,9 @@ final class PlayerIdentityStore {
     /// True once the account is promoted from anonymous via a federated sign-in — then
     /// records roam + survive session loss. Persisted so it's known at next launch.
     private(set) var signedIn = UserDefaults.standard.bool(forKey: "tidbits.identity.signedIn")
+    /// Surfaced to the sign-in UI so a failed Sign in with Apple is VISIBLE (not silently dropped).
+    private(set) var authError: String?
+    func reportAuthError(_ message: String?) { authError = message }
 
     private let db = FirebaseRTDB.shared
 
@@ -142,6 +145,7 @@ final class PlayerIdentityStore {
     /// SignInWithAppleButton completion with the identity token + raw nonce.
     func linkApple(idToken: String, rawNonce: String, appleName: String? = nil, appleEmail: String? = nil) async {
         guard !signedIn else { return }   // already on a durable account — never re-merge the same records
+        authError = nil
         do {
             let local = profile ?? Self.newProfile(name: Self.suggestedName())
             let res = try await db.signInWithApple(identityToken: idToken, rawNonce: rawNonce)
@@ -173,6 +177,7 @@ final class PlayerIdentityStore {
             watch(key)                                          // (B) live name sync
             await syncDailyLog(pushLocal: true)                 // (L2) push anon plays, pull the union
         } catch {
+            authError = "Sign-in couldn't complete. \((error as NSError).localizedDescription)"
             print("[Identity] Apple sign-in failed: \(error)")
         }
     }

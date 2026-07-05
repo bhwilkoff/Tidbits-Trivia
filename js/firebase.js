@@ -80,6 +80,21 @@ export const FirebaseNet = {
     await db.set(db.ref(_db, path), obj);
   },
 
+  // Social graph (L5): a private friends list under the owner-only playersPrivate bucket (no rule change).
+  async loadFriends(uid) {
+    const { db } = await ensure();
+    const snap = await db.get(db.ref(_db, `playersPrivate/${uid}/friends`));
+    return snap.exists() ? snap.val() : {};
+  },
+  async setFriend(uid, friendUid, obj) {
+    const { db } = await ensure();
+    await db.set(db.ref(_db, `playersPrivate/${uid}/friends/${friendUid}`), obj);
+  },
+  async removeFriend(uid, friendUid) {
+    const { db } = await ensure();
+    await db.remove(db.ref(_db, `playersPrivate/${uid}/friends/${friendUid}`));
+  },
+
   // Sign out of the federated account and return to a FRESH anonymous session (new uid).
   // The account's records stay in players/{accountUid}; signing back in restores them.
   async signOutUser() {

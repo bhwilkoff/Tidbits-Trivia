@@ -41,6 +41,7 @@ export const Identity = {
       }
       if (this.profileId) this._watch(this.profileId);
       this._save(); this._emit();
+      this.loadFriends();   // L5 social graph: pull the private friends list (fire-and-forget)
     } catch {
       if (!this.profile) { this.profile = newProfile(); this._save(); this._emit(); }
     }
@@ -97,6 +98,33 @@ export const Identity = {
   rerollAvatar() {
     if (!this.profile) return;
     this.profile.avatarSeed = Math.random().toString(36).slice(2, 10); this._persist();
+  },
+
+  // Social graph (L5): a private "people I've played with / follow" list. Their standings come
+  // from the already-public leaderboard; the list itself lives under owner-only playersPrivate.
+  _friends: JSON.parse(localStorage.getItem('tidbits.friends') || '{}'),
+  friends() {
+    return Object.entries(this._friends).map(([uid, v]) => ({ uid, ...v })).sort((a, b) => (b.since || 0) - (a.since || 0));
+  },
+  isFriend(uid) { return !!(uid && this._friends[uid]); },
+  async addFriend(uid, name, avatarSeed) {
+    if (!uid || uid === this.authUid || this._friends[uid]) return;
+    this._friends[uid] = { name: name || 'Player', avatarSeed: avatarSeed || '', since: Date.now() };
+    localStorage.setItem('tidbits.friends', JSON.stringify(this._friends));
+    const me = this.authUid; if (me) { try { await FirebaseNet.setFriend(me, uid, this._friends[uid]); } catch {} }
+  },
+  async removeFriend(uid) {
+    if (!this._friends[uid]) return;
+    delete this._friends[uid];
+    localStorage.setItem('tidbits.friends', JSON.stringify(this._friends));
+    const me = this.authUid; if (me) { try { await FirebaseNet.removeFriend(me, uid); } catch {} }
+  },
+  async loadFriends() {
+    const me = this.authUid; if (!me) return;
+    try {
+      const remote = await FirebaseNet.loadFriends(me);
+      if (remote && typeof remote === 'object') { this._friends = remote; localStorage.setItem('tidbits.friends', JSON.stringify(remote)); }
+    } catch {}
   },
 
   get signedIn() { return FirebaseNet.isSignedIn(); },

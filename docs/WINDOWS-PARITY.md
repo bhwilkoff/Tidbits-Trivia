@@ -28,19 +28,19 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [x] 1.3 `TriviaCategory` (8 categories)
 - [ ] 1.4 `Player` (pass-and-play)
 - [ ] 1.5 `PlayerRecord` set (GameRecord/AnswerDetail/MissedFact/CalibrationTally/DailyStreak) → EF Core/SQLite
-- [ ] 1.6 `NightPlan`/`NightRound`/`NightStartMode` + presets
+- [x] 1.6 `NightPlan`/`NightRound`/`NightStartMode` + presets (wire-compat; GameMode→string converter)
 - [x] 1.14 ★ `SeededRNG` (splitmix64) + `stableSeed` (FNV-1a64)
 - [x] 1.15 ★ `DailyPick` (canonical cross-platform daily)
 - [x] 2.2 `Scoring.points` (base 100 + speed + streak ×2 cap)
 - [x] 1.7 `CorpusDatabase` — JSON-backed over shared assets/corpus.json (no native dep); all query methods; loads 20,318 verified
 - [x] 1.8 `JSONQuestionSource` + `PositionalQuestionParser` (one parser, all 8 shapes)
-- [ ] 1.9 `QuestionProvider` (router + seen-set + night/mix/daily/live builders)
-- [ ] 1.10 `DifficultyOverlay` (difficulty.json → Ladder)
+- [x] 1.9 `QuestionProvider` (router + seen-set + night/mix/daily builders; live-gen stubbed)
+- [x] 1.10 `DifficultyOverlay` (difficulty.json → Ladder) + `QuestionSources` loader
 - [ ] 1.11 `WikipediaClient` (HttpClient REST)
 - [ ] 1.12 `TemplateEngine` (question gen; Regex)
 - [ ] 1.13 AI generator → Windows stub (isAvailable=false → TemplateEngine)
 - [ ] 1.22 `Keychain` → Credential Manager/DPAPI
-- [ ] 1.23 `Haptics` → no-op stub
+- [x] 1.23 `Haptics` → no-op stub
 - [ ] 1.21 `GameSettings` KV
 - [ ] 1.20 `DailyLog` (per-day results, first-completion-wins)
 - [x] golden-vector contract test harness (§8.7) — daily parity GREEN vs Apple/Kotlin/JS

@@ -1,11 +1,26 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
 namespace Tidbits.Core.Models;
 
 /// The game modes (port of Core/Models/GameMode.swift). The string IDs are the
-/// wire values — keep them byte-identical to the Swift rawValues.
+/// wire values — keep them byte-identical to the Swift rawValues. Serializes as
+/// that string (not the enum ordinal) for cross-platform wire compatibility.
+[JsonConverter(typeof(GameModeJsonConverter))]
 public enum GameMode
 {
     Classic, TimeAttack, Survival, Stake, Sweep, PictureId, ThisOrThat, ClosestCall,
     Ordering, Matching, TypeAnswer, OddOneOut, Ladder, Enumerate, BarTrivia, Mix, Daily,
+}
+
+/// (De)serializes GameMode as its wire string ("classic", "timeAttack", …).
+public sealed class GameModeJsonConverter : JsonConverter<GameMode>
+{
+    public override GameMode Read(ref Utf8JsonReader reader, Type _, JsonSerializerOptions __) =>
+        GameModeExtensions.FromId(reader.GetString() ?? "") ?? GameMode.Classic;
+
+    public override void Write(Utf8JsonWriter writer, GameMode value, JsonSerializerOptions _) =>
+        writer.WriteStringValue(value.Id());
 }
 
 public readonly record struct StakeChip(int Value, string Label, int Count);

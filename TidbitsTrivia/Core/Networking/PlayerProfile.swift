@@ -208,3 +208,39 @@ extension PlayerIdentity.Streak {
         return s
     }
 }
+
+// MARK: - Wave E: leaderboard (read the static JSON the cron commits — never RTDB)
+
+/// One ranked row in a venue or cross-venue leaderboard (decoded from data/leaderboard/*.json).
+nonisolated struct LeaderboardRow: Codable, Identifiable, Sendable {
+    var uid: String
+    var name: String
+    var score: Int
+    var nights: Int
+    var venues: Int?
+    var id: String { uid }
+}
+
+/// Reads the static leaderboard JSON from Pages (free/cacheable). The hourly cron produces it
+/// from the standings devices write; clients never hit RTDB for this.
+nonisolated enum LeaderboardAPI {
+    static let base = "https://tidbitstrivia.com/data/leaderboard"
+
+    /// {season: [venue, …]}, newest season first is the caller's job.
+    static func index() async -> [String: [String]] {
+        await fetch("\(base)/index.json") ?? [:]
+    }
+    static func overall(season: String) async -> [LeaderboardRow] {
+        await fetch("\(base)/\(season)/_overall.json") ?? []
+    }
+    static func venue(season: String, venue: String) async -> [LeaderboardRow] {
+        let v = venue.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? venue
+        return await fetch("\(base)/\(season)/\(v).json") ?? []
+    }
+
+    private static func fetch<T: Decodable>(_ urlString: String) async -> T? {
+        guard let url = URL(string: urlString),
+              let (data, _) = try? await URLSession.shared.data(from: url) else { return nil }
+        return try? JSONDecoder().decode(T.self, from: data)
+    }
+}

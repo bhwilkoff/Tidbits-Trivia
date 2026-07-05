@@ -20,6 +20,10 @@ struct ProfileView: View {
                     ratingCard(p.rating)
                     streakCard(p.streak)
                     statsGrid(p.stats)
+                    NavigationLink { LeaderboardView() } label: {   // Wave E: cross-venue / season standings
+                        Label("Leaderboard", systemImage: "trophy.fill").frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.ink))
                     if gameCenter.isAuthenticated {
                         Button { gameCenter.showDashboard() } label: {
                             Label("Game Center — Leaderboards & Achievements", systemImage: "gamecontroller.fill")
@@ -164,6 +168,56 @@ struct Avatar: View {
             .fill(Color(hue: hue, saturation: 0.55, brightness: 0.85))
             .overlay(Circle().strokeBorder(Tidbits.Palette.ink, lineWidth: 3))
             .overlay(Text(initials).font(.system(size: 34, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink))
+    }
+}
+
+/// Wave E: the cross-venue / season leaderboard — reads the static JSON the cron commits.
+struct LeaderboardView: View {
+    @State private var overall: [LeaderboardRow] = []
+    @State private var venues: [(venue: String, rows: [LeaderboardRow])] = []
+    @State private var loading = true
+
+    var body: some View {
+        List {
+            if loading {
+                HStack { Spacer(); ProgressView(); Spacer() }
+            } else if overall.isEmpty && venues.isEmpty {
+                Text("No standings yet. Play a live Tidbits night while signed in and you'll climb the board here — it refreshes hourly.")
+                    .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+            } else {
+                if !overall.isEmpty {
+                    Section("This season · Overall") { ForEach(Array(overall.enumerated()), id: \.element.id) { row($0.offset, $0.element) } }
+                }
+                ForEach(venues, id: \.venue) { v in
+                    Section(v.venue) { ForEach(Array(v.rows.enumerated()), id: \.element.id) { row($0.offset, $0.element) } }
+                }
+            }
+        }
+        .navigationTitle("Leaderboard")
+        .task { await load() }
+    }
+
+    private func row(_ i: Int, _ r: LeaderboardRow) -> some View {
+        HStack(spacing: 12) {
+            Text("\(i + 1)").font(.headline.monospacedDigit()).foregroundStyle(i == 0 ? Tidbits.Palette.ink : Tidbits.Palette.inkSoft).frame(width: 30, alignment: .leading)
+            if i == 0 { Image(systemName: "crown.fill").foregroundStyle(Tidbits.Palette.yellow) }
+            Text(r.name).fontWeight(.semibold)
+            Spacer()
+            Text("\(r.score)").font(.headline.monospacedDigit())
+        }
+    }
+
+    private func load() async {
+        let idx = await LeaderboardAPI.index()
+        guard let season = idx.keys.sorted().last else { loading = false; return }
+        overall = await LeaderboardAPI.overall(season: season)
+        var vs: [(venue: String, rows: [LeaderboardRow])] = []
+        for venue in (idx[season] ?? []).sorted() {
+            let rows = await LeaderboardAPI.venue(season: season, venue: venue)
+            if !rows.isEmpty { vs.append((venue, rows)) }
+        }
+        venues = vs
+        loading = false
     }
 }
 #endif

@@ -29,6 +29,7 @@ on:
       - 'js/**'
       - 'assets/**'
       - 'branding/**'
+      - 'data/**'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -53,7 +54,7 @@ jobs:
         run: |
           mkdir -p _site
           for item in index.html 404.html privacy.html support.html manifest.json sw.js \
-                      robots.txt sitemap.xml CNAME .nojekyll css js assets branding; do
+                      robots.txt sitemap.xml CNAME .nojekyll css js assets branding data; do
             [ -e "$item" ] && cp -r "$item" _site/
           done
           test -f _site/index.html   # fail loudly if the site root is missing

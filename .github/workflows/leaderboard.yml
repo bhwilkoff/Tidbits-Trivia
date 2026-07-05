@@ -1,0 +1,37 @@
+# Wave E — the $0 aggregate plane (§M). Hourly: read the per-venue/season standings from
+# RTDB (public read), rank, and commit static leaderboard JSON to data/leaderboard/. The
+# commit triggers the Pages deploy, so clients read a free/cacheable static file instead of
+# hitting RTDB. One RTDB read + at most one commit per hour — far under the Spark free tier.
+name: Aggregate leaderboard
+
+on:
+  schedule:
+    - cron: "17 * * * *"   # hourly at :17 (off the top-of-hour cron congestion)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: "leaderboard"
+  cancel-in-progress: false
+
+jobs:
+  aggregate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Aggregate standings → static JSON
+        run: python3 tools/aggregate_leaderboard.py
+      - name: Commit if changed (triggers the Pages deploy)
+        run: |
+          git config user.name "tidbits-leaderboard-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add data/leaderboard
+          if git diff --cached --quiet; then
+            echo "No leaderboard change — nothing to commit."
+          else
+            git commit -m "leaderboard: refresh static JSON"
+            git pull --rebase --autostash origin main || true
+            git push
+          fi

@@ -83,8 +83,8 @@
       }
     },
     "standings": {
+      ".read": true,
       "$season": {
-        ".read": "auth != null",
         "$venue": {
           "$uid": {
             ".write": "auth != null && auth.uid === $uid",

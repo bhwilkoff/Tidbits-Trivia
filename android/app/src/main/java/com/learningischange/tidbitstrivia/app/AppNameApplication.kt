@@ -1,6 +1,7 @@
 package com.learningischange.tidbitstrivia.app
 
 import android.app.Application
+import com.learningischange.tidbitstrivia.data.Duels
 import com.learningischange.tidbitstrivia.data.Store
 
 /**
@@ -15,6 +16,7 @@ class AppNameApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         container = AppContainer(Store(this))
+        Duels.init(this)   // L5: persist tracked duel ids across process death
     }
 }
 

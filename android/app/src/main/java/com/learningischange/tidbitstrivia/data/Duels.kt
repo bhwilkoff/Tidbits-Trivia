@@ -14,9 +14,18 @@ data class DuelInvite(val id: String, val from: String, val fromName: String, va
 
 object Duels {
     private val ids = mutableListOf<String>()
+    private var prefs: android.content.SharedPreferences? = null
+
+    /** Called once from the Application so tracked duel ids survive process death. */
+    fun init(ctx: android.content.Context) {
+        prefs = ctx.getSharedPreferences("tidbits.duels", android.content.Context.MODE_PRIVATE)
+        ids.clear()
+        ids.addAll((prefs?.getString("ids", "") ?: "").split(",").filter { it.isNotBlank() })
+    }
     private fun track(id: String) {
         if (ids.contains(id)) return
         ids.add(0, id); while (ids.size > 40) ids.removeAt(ids.lastIndex)
+        prefs?.edit()?.putString("ids", ids.joinToString(","))?.apply()
     }
 
     suspend fun challenge(friendUid: String, friendName: String, questions: List<DuelQ>): String? {

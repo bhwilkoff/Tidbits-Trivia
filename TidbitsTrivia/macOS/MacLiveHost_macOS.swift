@@ -26,6 +26,7 @@ final class LiveHostSession {
     var revealed = false
     var finished = false
     var deadlineMs: Int? = nil   // Wave A: epoch-ms countdown deadline for the current timed question
+    var locked = false           // Wave C: answers locked ("pencils down") — auto-set at the timer deadline or manually
     /// Points a correct answer is worth this round (host-adjustable; pub default 1).
     var pointsPerCorrect = 1
     /// Per-question display shuffles (fixed once so publish + reveal agree).
@@ -98,6 +99,7 @@ final class LiveHostSession {
     func reveal() { revealed = true; deadlineMs = nil }
     func next() {
         revealed = false
+        locked = false   // Wave C: new question — answers reopen
         if index + 1 >= questions.count { finished = true } else { index += 1; prepare(); armTimer() }
         LiveVideoPlayer.shared.stop()   // Wave B: clear the previous question's video + clip (the music bed keeps looping)
         LiveAudioPlayer.shared.stop()
@@ -152,6 +154,7 @@ final class LiveHostSession {
         if let m = q.matching { p.matchKeys = m.keys; p.matchValues = shuffledValues }
         if let e = q.enumerate { p.enumTarget = e.total }
         if !revealed, let d = deadlineMs { p.deadline = d }   // Wave A: the countdown deadline
+        if !revealed, locked { p.locked = true }              // Wave C: pencils down — no more answers
         if !revealed, currentRoundIsWager { p.wager = true }  // Wave A: wager round — joiners show a stake input
         if revealed {   // Wave A: the story behind the answer — the learning payoff, only at reveal
             let s = q.explanation.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -170,6 +173,7 @@ struct LiveHostContainer_macOS: View {
     @Environment(\.openWindow) private var openWindow
     @State private var session: LiveHostSession
     @State private var net = LiveHostNet()
+    @State private var lockTask: Task<Void, Never>?   // Wave C: auto-lock at the timer deadline
 
     init(event: LiveEvent, onClose: @escaping () -> Void) {
         self.event = event; self.onClose = onClose
@@ -206,6 +210,19 @@ struct LiveHostContainer_macOS: View {
         }
         .onChange(of: session.finished) { _, done in
             if done { Task { await net.setState("ended"); await net.publish(session.currentPub()) } }
+        }
+        // Wave C: answer-lock timer — when a question is armed with a deadline, auto-lock
+        // answers ("pencils down") the moment it passes, and republish so phones stop accepting.
+        .onChange(of: session.deadlineMs) { _, deadline in
+            lockTask?.cancel()
+            guard let deadline else { return }
+            lockTask = Task {
+                let ms = deadline - Int(Date().timeIntervalSince1970 * 1000)
+                if ms > 0 { try? await Task.sleep(nanoseconds: UInt64(ms) * 1_000_000) }
+                guard !Task.isCancelled, session.deadlineMs == deadline, !session.revealed else { return }
+                session.locked = true
+                await net.publish(session.currentPub())
+            }
         }
     }
 
@@ -344,6 +361,11 @@ struct LiveHostView_macOS: View {
             Spacer()
             HStack(spacing: 12) {
                 if !session.revealed {
+                    Button(session.locked ? "Answers locked" : "Lock answers") {   // Wave C: manual pencils-down
+                        session.locked = true; Task { await net.publish(session.currentPub()) }
+                    }
+                    .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.ink))
+                    .disabled(session.locked)
                     Button("Reveal answer") { session.reveal() }
                         .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.yellow, textColor: Tidbits.Palette.ink))
                         .keyboardShortcut(.defaultAction)

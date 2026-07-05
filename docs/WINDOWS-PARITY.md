@@ -46,7 +46,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [x] golden-vector contract test harness (§8.7) — daily parity GREEN vs Apple/Kotlin/JS
 
 ## Slice 2 — Consumer vertical
-- [ ] 2.1 `GameEngine` (all 18 modes, phases, clocks, host-paced)
+- [x] 2.1 `GameEngine` (all 18 modes, phases, clocks, host-paced, all submit paths) — end-to-end tests GREEN
 - [ ] 2.3 `ProgressStats`/DomainProgress/Badges
 - [ ] 2.4 `BotOpponent`
 - [ ] 2.5 Home/Play surface (Quick Play hero + Surprise/Customize + Daily + Night + Online-MP)

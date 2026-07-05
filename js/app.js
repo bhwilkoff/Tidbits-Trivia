@@ -109,8 +109,9 @@ function viewProfile() {
     <div style="font-size:2.3rem;font-weight:900;font-variant-numeric:tabular-nums">${val}</div></div>`;
   return `${back}
     <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin:6px 0 18px">
-      <div style="width:88px;height:88px;border-radius:999px;background:hsl(${hue} 55% 72%);border:3px solid #231E1A;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:2rem;color:#231E1A">${h(initialsOf(p.name))}</div>
+      <button data-shuffle title="Shuffle your color" style="width:88px;height:88px;border-radius:999px;background:hsl(${hue} 55% 72%);border:3px solid #231E1A;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:2rem;color:#231E1A;cursor:pointer;padding:0">${h(initialsOf(p.name))}</button>
       <button data-rename style="background:none;border:none;cursor:pointer;font-size:1.6rem;font-weight:900;color:#231E1A">${h(p.name)} <span style="font-size:1rem">✎</span></button>
+      <div class="muted" style="font-size:.75rem">Tap your avatar to shuffle its color</div>
     </div>
     ${line('TIDBITS RATING', r.provisional ? `Provisional · ${r.games}/15 games` : `${r.games} games rated`, Math.round(r.value))}
     ${line('STREAK', `Longest ${p.streak.longest} · ${p.streak.freezes} freeze${p.streak.freezes === 1 ? '' : 's'}`, p.streak.current)}
@@ -134,6 +135,7 @@ function bindProfile() {
     const name = prompt('Display name — what other players and venues see:', Identity.profile?.name || '');
     if (name != null) { Identity.rename(name); render(); }
   });
+  app.querySelector('[data-shuffle]')?.addEventListener('click', () => { Identity.rerollAvatar(); render(); });   // L4 cosmetics
   app.querySelector('[data-signout]')?.addEventListener('click', async () => {
     if (!confirm('Sign out? Your records stay saved to your account — sign in again to bring them back.')) return;
     try { await Identity.signOut(); render(); }

@@ -93,6 +93,12 @@ export const Identity = {
     this.profile.name = t; this._persist();
   },
 
+  // L4 cosmetics: re-roll the avatar seed → a new deterministic hue. Persists + syncs like rename.
+  rerollAvatar() {
+    if (!this.profile) return;
+    this.profile.avatarSeed = Math.random().toString(36).slice(2, 10); this._persist();
+  },
+
   get signedIn() { return FirebaseNet.isSignedIn(); },
   get email() { return FirebaseNet.currentEmail(); },
   get authUid() { return FirebaseNet.uid; },   // Wave E: the standings/leaderboard are keyed by the AUTH uid

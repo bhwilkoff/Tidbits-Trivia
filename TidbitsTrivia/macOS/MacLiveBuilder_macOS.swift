@@ -140,6 +140,11 @@ struct LiveBuilderView_macOS: View {
                 set: { working.rounds[i].isWager = $0 ? true : nil })) {
                 Label("Wager", systemImage: "dollarsign.circle")
             }.toggleStyle(.button).font(Tidbits.TypeRamp.l5).fixedSize()
+            Toggle(isOn: Binding(   // Wave B: speed round
+                get: { working.rounds[i].isSpeed ?? false },
+                set: { working.rounds[i].isSpeed = $0 ? true : nil })) {
+                Label("Speed", systemImage: "bolt")
+            }.toggleStyle(.button).font(Tidbits.TypeRamp.l5).fixedSize()
             Button { move(i, up: true) } label: { Image(systemName: "chevron.up") }.buttonStyle(.borderless).disabled(i == 0)
             Button { move(i, up: false) } label: { Image(systemName: "chevron.down") }.buttonStyle(.borderless).disabled(i == working.rounds.count - 1)
             Button { working.rounds.remove(at: i) } label: { Image(systemName: "trash") }.buttonStyle(.borderless)

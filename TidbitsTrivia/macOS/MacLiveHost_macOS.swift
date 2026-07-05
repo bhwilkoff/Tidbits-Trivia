@@ -58,6 +58,11 @@ final class LiveHostSession {
         let ri = current?.roundIndex ?? 0
         return event.rounds.indices.contains(ri) ? (event.rounds[ri].isWager ?? false) : false
     }
+    /// Wave B: is the current round a speed round (fastest-first bonus)?
+    var currentRoundIsSpeed: Bool {
+        let ri = current?.roundIndex ?? 0
+        return event.rounds.indices.contains(ri) ? (event.rounds[ri].isSpeed ?? false) : false
+    }
     /// Wave B: the audio clip bookmark for the current question (nil unless it's an audio round).
     var currentAudioBookmark: Data? {
         let ri = current?.roundIndex ?? 0
@@ -202,6 +207,8 @@ struct LiveHostContainer_macOS: View {
     private func scoreReveal() async {
         guard let q = session.current else { return }
         let wagerRound = session.currentRoundIsWager
+        let speedRound = session.currentRoundIsSpeed
+        var speedCorrect: [(uid: String, ts: Int, pts: Int)] = []
         for (uid, ans) in net.answers {
             let pts = LiveNightHost.score(q, ans, shuffledOrder: session.shuffledOrder,
                                           shuffledValues: session.shuffledValues, mcqPoints: session.pointsPerCorrect)
@@ -212,8 +219,13 @@ struct LiveHostContainer_macOS: View {
                 guard stake > 0 else { continue }
                 await net.setScore(uid, pts > 0 ? current + stake : current - stake)
             } else if pts > 0 {
-                await net.setScore(uid, (net.scores[uid] ?? 0) + pts)
+                if speedRound { speedCorrect.append((uid, ans.ts, pts)) }   // defer — rank by speed below
+                else { await net.setScore(uid, (net.scores[uid] ?? 0) + pts) }
             }
+        }
+        // Wave B: speed round — base points + a fastest-first bonus (1st correct +3, 2nd +2, 3rd +1).
+        for (rank, c) in speedCorrect.sorted(by: { $0.ts < $1.ts }).enumerated() {
+            await net.setScore(c.uid, (net.scores[c.uid] ?? 0) + c.pts + max(0, 3 - rank))
         }
     }
 }
@@ -289,6 +301,10 @@ struct LiveHostView_macOS: View {
                 if session.currentRoundIsWager {   // Wave A: wager round indicator
                     Label("Wager round — teams stake points (correct +stake, wrong −stake)", systemImage: "dollarsign.circle.fill")
                         .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.coral)
+                }
+                if session.currentRoundIsSpeed {   // Wave B: speed round indicator
+                    Label("Speed round — fastest correct answers earn a bonus (+3/+2/+1)", systemImage: "bolt.fill")
+                        .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.yellow)
                 }
                 if let clip = session.currentAudioBookmark {   // Wave B: audio round — play this question's clip
                     Button { LiveAudioPlayer.shared.openBookmark(clip); LiveAudioPlayer.shared.togglePlay() } label: {

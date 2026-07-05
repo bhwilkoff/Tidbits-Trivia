@@ -132,8 +132,8 @@ struct VersusResultsView_macOS: View {
                 Text("\(game.summary.correct)/\(game.summary.total) correct · rematches sharpen recall")
                     .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
                 HStack(spacing: 14) {
-                    Button("Rematch", action: onRematch).buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.coral, textColor: .white)).keyboardShortcut(.defaultAction)
-                    Button("Done", action: onDone).buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.ink)).keyboardShortcut(.cancelAction)
+                    Button("Rematch", action: onRematch).buttonStyle(CompactButtonStyle(fill: Tidbits.Palette.coral, textColor: .white, prominent: true)).keyboardShortcut(.defaultAction)
+                    Button("Done", action: onDone).buttonStyle(CompactButtonStyle()).keyboardShortcut(.cancelAction)
                 }
             }
             .padding(28).frame(maxWidth: 560).frame(maxWidth: .infinity)

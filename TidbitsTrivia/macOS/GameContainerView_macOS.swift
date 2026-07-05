@@ -184,11 +184,11 @@ struct ResultsView_macOS: View {
                 HStack(spacing: 14) {
                     if let onPlayAgain {
                         Button("Play again", action: onPlayAgain)
-                            .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.coral, textColor: .white))
+                            .buttonStyle(CompactButtonStyle(fill: Tidbits.Palette.coral, textColor: .white, prominent: true))
                             .keyboardShortcut(.defaultAction)
                     }
                     Button("Done", action: onDone)
-                        .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.ink))
+                        .buttonStyle(CompactButtonStyle())
                         .keyboardShortcut(.cancelAction)
                 }
                 .padding(.top, 8)

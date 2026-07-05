@@ -190,25 +190,91 @@ Keep the system-accent focus ring visible.
 
 ---
 
-## 6. Distribution + auto-update ($0)
+## 6. Publishing — the channel decision (which store, and how)
 
-Pipeline (Mac-authored, CI-run):
-1. `dotnet publish -r win-x64 --self-contained` _(CI)_.
+**THE RECOMMENDATION: Microsoft Store as the primary channel, GitHub
+Releases + winget as the $0 direct channel alongside it.** Rationale
+below; game storefronts (Steam/itch.io) are a *later, consumer-only*
+option, not the host/venue path.
+
+### 6.1 Channel matrix (all Mac-authored; CI does the Windows steps)
+
+| Channel | Cost | Signing / SmartScreen | Auto-update | Best for | Verdict |
+|---|---|---|---|---|---|
+| **Microsoft Store (MSIX)** | **$0** (reg fee waived 2025) | **MS signs it → NO SmartScreen** | Store-managed | Broadest reach, trust, discoverability | **PRIMARY** |
+| **GitHub Releases + Velopack** | $0 | Unsigned → SmartScreen until rep builds (or add Azure signing) | Velopack delta self-update | Direct download, fast iteration, beta channel | **SECONDARY (pair w/ Store)** |
+| **winget** (`winget install`) | $0 | Points at your GitHub installer (inherits its signing) | via the referenced installer | Power users, IT, scriptable installs | **ADD — free, easy** |
+| **Website direct** (tidbitstrivia.com) | $0 | Same as GitHub installer | via Velopack | Venue operators, link from web app | Yes (same artifact) |
+| **Steam** (Steamworks) | **$100 one-time**, recoupable after $1k rev; **30% cut** | Steam handles it | Steam client | *Consumer game*, games audience | Later/optional, consumer-only |
+| **itch.io** | $0 to publish; you set rev split | itch app handles it | itch app | *Consumer game*, indie audience | Later/optional, consumer-only |
+
+### 6.2 Why Microsoft Store is the right primary path
+
+- **It kills the signing problem for free.** Registration fee is waived
+  (start at `storedeveloper.microsoft.com`, ID-verify), and **Microsoft
+  signs the package** — users see **no SmartScreen "unknown publisher"
+  warning** and you never buy or renew a cert. This is the single
+  biggest reason to go Store-primary: it's the only $0 path that also
+  removes the trust warning.
+- **Discoverability + auto-update** are built in — a venue owner can
+  search "Tidbits" in the Store, and updates flow without our infra.
+- **Submission reality (2026):** the Store's MSIX submission is a
+  **periodic semi-manual step** (Partner Center web upload; the VS
+  "automate store submissions" feature was removed in VS 2026, and the
+  programmatic submission API covers MSI/EXE better than MSIX). Fine for
+  a desktop app shipping every few weeks — package MSIX on the free
+  `windows-latest` runner, then upload to Partner Center. (Alternatively
+  the Store accepts **unpackaged MSI/EXE** apps by pointing at a stable
+  installer URL + the MSI/EXE submission API — but MSIX is what gets the
+  auto-signing/no-SmartScreen benefit, so prefer MSIX for the Store.)
+
+### 6.3 Why ALSO ship GitHub Releases + winget (the $0 direct channel)
+
+Store review adds latency and MSIX sandboxing; the direct channel gives
+control + speed and reaches users who don't use the Store:
+1. GitHub Actions: `dotnet publish -r win-x64 --self-contained` _(CI)_.
 2. **Velopack** `vpk pack` → installer + delta updates + self-updating
    app _(CI, free Windows runner)_.
-3. Publish assets to **GitHub Releases** (the update feed — $0 hosting).
-4. App self-updates via Velopack `UpdateManager` against the Release.
+3. Publish assets to **GitHub Releases** (the update feed — $0 hosting);
+   app self-updates via Velopack `UpdateManager`.
+4. **winget manifest** (a YAML PR to `microsoft/winget-pkgs`, or
+   `wingetcreate` — **free, no Windows PC needed**) pointing at the
+   GitHub Release installer, so `winget install Tidbits.TidbitsTrivia`
+   works for power users / IT / scripted venue setups.
+- SmartScreen applies to this channel until reputation builds — the Store
+  channel is the "no warning" path; this is the "full control" path.
 
-**Two $0 distribution answers (design §Open-decisions):**
-- **Microsoft Store** — free registration (`storedeveloper.microsoft.com`,
-  ID verify), package **MSIX** on the Windows runner, **Store re-signs →
-  no SmartScreen, $0**. Store review + MSIX + sandbox are the cost.
-- **Ship unsigned** via Velopack/GitHub — $0, but SmartScreen "unknown
-  publisher" until reputation builds. **Never self-sign** (worse).
-- **Later, optional:** Azure Artifact Signing ~$9.99/mo (cloud, no token,
-  `azure/trusted-signing-action`, US individual qualifies) removes
-  SmartScreen for direct download. Pipeline unchanged — just add a sign
-  step. Defer until there's an audience (holds the $0 line).
+### 6.4 The signing question (only relevant to the direct channel)
+
+The Store channel needs no signing (MS does it). For the **direct**
+channel, in cost order: **ship unsigned** ($0, SmartScreen tax) →
+**Azure Artifact Signing ~$9.99/mo** (cloud, no token,
+`azure/trusted-signing-action`, US individual qualifies; removes
+SmartScreen; pipeline unchanged — just add a sign step) → **avoid**
+OV/EV certs ($200–685/yr + mailed FIPS dongle, no better outcome; EV's
+instant-SmartScreen pass was removed in 2024). **Never self-sign** (hard-
+blocked, worse than unsigned).
+
+### 6.5 Game storefronts (consumer mode only, later)
+
+Tidbits is a game, so **Steam** and **itch.io** are legitimate channels
+*for the consumer game* — but NOT for the host/venue app, and not needed
+initially. **Steam** = $100 one-time (recoupable after $1k revenue) +
+30% cut, but a huge built-in games audience + it handles
+signing/updates. **itch.io** = free to publish, you set the revenue
+split, indie-game audience. Consider these only if/when the consumer
+game is a monetization focus; the host/venue marquee ships via Store +
+direct.
+
+### 6.6 Bottom line
+
+- **Host/venue app (the marquee):** Microsoft Store (MSIX, $0, no
+  SmartScreen) + GitHub Releases/Velopack + winget + a website download
+  link. All $0.
+- **Consumer game:** same Store + direct channels; optionally add
+  itch.io ($0) and later Steam ($100) for the games audience.
+- **Start with:** Store + GitHub Releases/Velopack in parallel from day
+  one of shipping — same build artifact, two channels, $0.
 
 ---
 

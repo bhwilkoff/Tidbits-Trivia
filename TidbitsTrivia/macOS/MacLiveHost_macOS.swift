@@ -144,6 +144,16 @@ final class LiveHostSession {
         index = i; prepare(); armTimer()
         LiveVideoPlayer.shared.stop(); LiveAudioPlayer.shared.stop()
     }
+    /// Adaptability: extend the current question's countdown live ("give them 30 more seconds").
+    /// Starting from now if no timer was running. Re-opens answers if a passed timer had auto-locked.
+    func addTime(_ seconds: Int) {
+        let base = max(deadlineMs ?? 0, Int(Date().timeIntervalSince1970 * 1000))
+        deadlineMs = base + seconds * 1000
+        locked = false
+    }
+    /// Adaptability: drop the countdown entirely (untimed from here).
+    func clearTimer() { deadlineMs = nil }
+
     /// Wave A: arm the per-question countdown from the current round's timer (0/nil = off).
     func armTimer() {
         let ri = current?.roundIndex ?? 0
@@ -255,6 +265,7 @@ struct LiveHostContainer_macOS: View {
         // answers ("pencils down") the moment it passes, and republish so phones stop accepting.
         .onChange(of: session.deadlineMs) { _, deadline in
             lockTask?.cancel()
+            Task { await net.publish(session.currentPub()) }   // adaptability: extend/clear updates the room's countdown live
             guard let deadline else { return }
             lockTask = Task {
                 let ms = deadline - Int(Date().timeIntervalSince1970 * 1000)
@@ -417,6 +428,17 @@ struct LiveHostView_macOS: View {
                 }
             }
             answerDistribution   // §A3.4: live per-option tally — read the room before revealing
+            if !session.revealed, session.current != nil {   // adaptability: extend/clear the countdown live
+                HStack(spacing: 8) {
+                    Image(systemName: "timer").foregroundStyle(Tidbits.Palette.inkSoft)
+                    Button("+30s") { session.addTime(30) }.buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.ink))
+                    Button("+15s") { session.addTime(15) }.buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.ink))
+                    if session.deadlineMs != nil {
+                        Button("Clear timer") { session.clearTimer() }.buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.inkSoft))
+                    }
+                }
+                .font(Tidbits.TypeRamp.l6)
+            }
             Spacer()
             HStack(spacing: 12) {
                 Button { session.previous() } label: { Image(systemName: "chevron.left").font(.system(size: 14, weight: .bold)) }   // adaptability: go back

@@ -21,6 +21,30 @@ function recordIfEnded() {
   S.recorded = true;
   Identity.recordLiveGame(S.liveCorrect, S.liveAnswered);
   Identity.recordStanding(S.meta?.venue || '', S.score || 0);   // Wave E: per-venue season standing
+  captureCoplayers();   // L5 social graph: remember who you played with
+}
+
+// L5: read the room roster once at night-end and stash the co-players (uid + name + venue),
+// so the "Add the people you played with" surface can offer to connect with them.
+async function captureCoplayers() {
+  try {
+    const teams = await FirebaseNet.liveTeams(S.code);
+    const me = Identity.authUid, now = Date.now();
+    const list = JSON.parse(localStorage.getItem('tidbits.coplayers') || '{}');
+    for (const [uid, t] of Object.entries(teams || {})) {
+      if (!uid || uid === me) continue;
+      list[uid] = { uid, name: t?.name || 'Player', venue: S.meta?.venue || '', at: now };
+    }
+    const recent = Object.values(list).sort((a, b) => b.at - a.at).slice(0, 30);
+    const obj = {}; for (const c of recent) obj[c.uid] = c;
+    localStorage.setItem('tidbits.coplayers', JSON.stringify(obj));
+    draw();
+  } catch {}
+}
+
+export function recentCoplayers() {
+  try { return Object.values(JSON.parse(localStorage.getItem('tidbits.coplayers') || '{}')).sort((a, b) => b.at - a.at); }
+  catch { return []; }
 }
 let root = null, unsubs = [];
 
@@ -130,6 +154,9 @@ function draw() {
   }
   root.querySelector('#live-x')?.addEventListener('click', () => { location.hash = '#/play'; });
   root.querySelectorAll('[data-opt]').forEach((b) => b.addEventListener('click', () => pick(+b.dataset.opt)));
+  root.querySelectorAll('[data-add]').forEach((b) => b.addEventListener('click', async () => {   // L5 social graph
+    await Identity.addFriend(b.dataset.add, b.dataset.name, ''); draw();
+  }));
 
   const p = S.pub;
   root.querySelector('#live-range')?.addEventListener('input', (e) => {
@@ -175,6 +202,21 @@ function joinHTML() {
   </div>`;
 }
 
+// L5: "Add the people you played with" — the freshly-captured co-players, minus those already added.
+function coplayersHTML() {
+  const co = recentCoplayers().slice(0, 12);
+  if (!co.length) return '';
+  const rows = co.map((c) => {
+    const added = Identity.isFriend(c.uid);
+    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(255,255,255,.08);border-radius:12px;margin:4px 0">
+      <span style="flex:1;font-weight:700">${esc(c.name)}</span>
+      ${added ? `<span style="opacity:.7;font-size:.85em">Added ✓</span>`
+              : `<button data-add="${esc(c.uid)}" data-name="${esc(c.name)}" style="padding:6px 14px;font-weight:800;border:2px solid #fff;border-radius:10px;background:transparent;color:#fff;cursor:pointer">Add</button>`}
+    </div>`;
+  }).join('');
+  return `<div style="margin:16px 0;max-width:340px;width:100%"><div class="live-sub" style="margin-bottom:6px">Add the people you played with</div>${rows}</div>`;
+}
+
 function playHTML() {
   const p = S.pub;
   const head = `<div class="live-head">
@@ -190,6 +232,7 @@ function playHTML() {
   if (p.phase === 'ended' || (S.meta && S.meta.state === 'ended')) {
     return `<div class="live-play">${head}<div class="live-center"><div class="live-badge">THAT'S A WRAP</div>
       <h2>Final score: ${S.score}</h2><p class="live-sub">Thanks for playing. ${esc(S.meta?.venue || '')}</p>
+      ${coplayersHTML()}
       <button id="live-x" class="live-go">Done</button></div></div>`;
   }
 

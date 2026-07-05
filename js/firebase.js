@@ -229,6 +229,12 @@ export const FirebaseNet = {
     const { db } = await ensure();
     await db.set(db.ref(_db, `live/${code}/answers/${qid}/${_uid}`), { ...answer, ts: Date.now() });
   },
+  // L5 social graph: read the room roster once (uid → {name}) to capture co-players at night-end.
+  async liveTeams(code) {
+    const { db } = await ensure();
+    const snap = await db.get(db.ref(_db, `live/${code}/teams`));
+    return snap.exists() ? snap.val() : {};
+  },
   async liveLeave(code) {
     if (!_fns) return;
     const { ref, remove } = _fns.db;

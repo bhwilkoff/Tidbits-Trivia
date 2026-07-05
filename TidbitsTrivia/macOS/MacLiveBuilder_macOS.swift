@@ -120,27 +120,27 @@ struct LiveBuilderView_macOS: View {
                 balanceMeter
 
                 Divider().overlay(Tidbits.Palette.border).padding(.vertical, 4)
-                HStack(spacing: 12) {
+                HStack(spacing: 10) {
                     Button("Save event") { store.upsert(working); selectedID = working.id }
-                        .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.ink))
+                        .buttonStyle(CompactButtonStyle())
                     Button("Preview solo") { store.upsert(working); onPreview(working) }
-                        .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.blue, textColor: .white))
+                        .buttonStyle(CompactButtonStyle(fill: Tidbits.Palette.blue, textColor: .white, prominent: true))
                         .disabled(working.totalQuestions == 0)
                     Button("Host live →") { store.upsert(working); onHost(working) }
-                        .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.coral, textColor: .white))
+                        .buttonStyle(CompactButtonStyle(fill: Tidbits.Palette.coral, textColor: .white, prominent: true))
                         .disabled(working.totalQuestions == 0)
-                    Button("Import CSV…") { importCSV() }   // Wave A: bulk-author a round
-                        .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.ink))
-                    Button("Audio round…") { addAudioRound() }   // Wave B: name-that-clip round
-                        .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.ink))
-                    Button("Video round…") { addVideoRound() }   // Wave B: name-that-video round
-                        .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.ink))
+                    Menu {   // secondary "add a round type" actions — folded out of the primary row to declutter
+                        Button("Import CSV…") { importCSV() }
+                        Button("Audio round…") { addAudioRound() }
+                        Button("Video round…") { addVideoRound() }
+                    } label: { Label("Add round…", systemImage: "plus") }
+                        .menuStyle(.borderlessButton).fixedSize()
                     Spacer()
                     Menu {
                         Button("Question pack (host)") { LivePrint.questionPack(working) }
                         Button("Answer sheet (teams)") { LivePrint.answerSheet(working) }
                     } label: { Label("Print…", systemImage: "printer") }
-                        .frame(width: 120)
+                        .menuStyle(.borderlessButton).fixedSize()
                         .disabled(working.totalQuestions == 0)
                 }
             }

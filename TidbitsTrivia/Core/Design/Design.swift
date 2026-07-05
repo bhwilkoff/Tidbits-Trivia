@@ -170,3 +170,27 @@ struct ChunkyButtonStyle: ButtonStyle {
             .animation(.snappy(duration: 0.08), value: pressed)
     }
 }
+
+/// A CONTROL-sized chunky button for toolbars / inline / secondary actions. `ChunkyButtonStyle`
+/// is a full-width primary CTA (`maxWidth: .infinity` + 16pt padding + L3 font) — applying it to a
+/// row of controls stretches and crowds them (the macOS "malformed buttons" bug). This one sizes to
+/// its label, keeps the sticker border, and offers a `prominent` fill for the one primary action.
+struct CompactButtonStyle: ButtonStyle {
+    var fill: Color = Tidbits.Palette.surface
+    var textColor: Color = Tidbits.Palette.ink
+    var prominent: Bool = false
+    func makeBody(configuration: Configuration) -> some View {
+        let pressed = configuration.isPressed
+        return configuration.label
+            .font(Tidbits.TypeRamp.l5.weight(.bold))
+            .foregroundStyle(textColor)
+            .lineLimit(1)
+            .padding(.horizontal, prominent ? 18 : 13)
+            .padding(.vertical, prominent ? 10 : 7)
+            .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(fill))
+            .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(Tidbits.Palette.border, lineWidth: 2))
+            .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .opacity(pressed ? 0.75 : 1)
+            .animation(.snappy(duration: 0.08), value: pressed)
+    }
+}

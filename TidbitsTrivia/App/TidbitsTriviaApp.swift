@@ -32,6 +32,15 @@ struct TidbitsTriviaApp: App {
                     gameCenter.authenticate()
                     await PlayerIdentityStore.shared.bootstrap()   // stable uid → portable profile
                 }
+                #if os(macOS)
+                .task {   // design-observability: render the cockpit to a PNG + exit (never in normal use)
+                    if let path = ProcessInfo.processInfo.environment["TIDBITS_SNAPSHOT"] {
+                        try? await Task.sleep(nanoseconds: 400_000_000)
+                        LiveCockpitSnapshot.writePNG(to: path)
+                        exit(0)
+                    }
+                }
+                #endif
                 // .onOpenURL fires for BOTH custom schemes and Universal
                 // Links on iOS 17+. Route into the inbox, never directly.
                 .onOpenURL { url in

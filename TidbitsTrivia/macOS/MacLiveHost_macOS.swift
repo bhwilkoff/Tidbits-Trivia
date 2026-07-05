@@ -1192,3 +1192,34 @@ final class LiveVideoPlayer {
     }
 }
 #endif
+
+#if os(macOS)
+import AppKit
+
+/// Offline design-observability: render the real cockpit (with a mock session) to a PNG so the
+/// UI can be inspected without driving a live event. Gated by the TIDBITS_SNAPSHOT env var
+/// (see the app entry) — never runs in normal use.
+enum LiveCockpitSnapshot {
+    @MainActor static func writePNG(to path: String) {
+        func q(_ p: String, _ opts: [String]) -> Question {
+            Question(id: UUID().uuidString, prompt: p, options: opts, correctIndex: 0, categoryID: "history",
+                     difficulty: 3, explanation: "A quick note on why that's the answer.", sourceTitle: "", sourceURL: nil, templateID: "mcq")
+        }
+        let round = LiveRound(title: "Round 1 — General Knowledge", format: .classic, categoryID: "history",
+                              questions: [q("In what year did the Berlin Wall fall?", ["1989", "1991", "1987", "1990"]),
+                                          q("Who painted the Mona Lisa?", ["Leonardo da Vinci", "Michelangelo", "Raphael", "Donatello"])])
+        let event = LiveEvent(name: "Thursday Night Trivia", venue: "The Anchor", rounds: [round])
+        let session = LiveHostSession(event: event)
+        let net = LiveHostNet()
+        let coord = LiveHostCoordinator()
+        let view = LiveHostView_macOS(session: session, net: net, onClose: {})
+            .environment(coord)
+            .frame(width: 1280, height: 820)
+        let renderer = ImageRenderer(content: view)
+        renderer.scale = 2
+        guard let img = renderer.nsImage, let tiff = img.tiffRepresentation,
+              let rep = NSBitmapImageRep(data: tiff), let png = rep.representation(using: .png, properties: [:]) else { return }
+        try? png.write(to: URL(fileURLWithPath: path))
+    }
+}
+#endif

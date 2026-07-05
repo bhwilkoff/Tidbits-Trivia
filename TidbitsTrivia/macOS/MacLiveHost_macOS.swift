@@ -830,7 +830,7 @@ struct TieBreakSheet_macOS: View {
                 Divider().overlay(Tidbits.Palette.border)
                 ForEach(teams) { team in
                     HStack {
-                        Text(team.name).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                        Text(team.name).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink).lineLimit(1)
                         Spacer()
                         TextField("guess", text: Binding(get: { guesses[team.id] ?? "" }, set: { guesses[team.id] = $0 }))
                             .frame(width: 120).textFieldStyle(.roundedBorder)

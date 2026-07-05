@@ -134,6 +134,7 @@ struct LiveBigScreen_macOS: View {
             Spacer()
             VStack(spacing: 12) {
                 if let q = s.current {
+                    chromeRow(q, s)   // Wave B: format + difficulty chrome
                     Text(q.prompt)
                         .font(.system(size: 56, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
                         .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
@@ -180,6 +181,25 @@ struct LiveBigScreen_macOS: View {
             }
         }
         .padding(48)
+    }
+
+    /// Wave B: the show chrome above each question — what KIND of question and how hard.
+    @ViewBuilder private func chromeRow(_ q: Question, _ s: LiveHostSession) -> some View {
+        let ri = q.roundIndex ?? 0
+        let format = s.event.rounds.indices.contains(ri) ? s.event.rounds[ri].format : nil
+        HStack(spacing: 16) {
+            if let format {
+                Label(format.title, systemImage: format.symbol)
+                    .font(.system(size: 24, weight: .heavy, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
+            }
+            let (label, color): (String, Color) = q.difficulty <= 2 ? ("EASY", Tidbits.Palette.mint)
+                : q.difficulty == 3 ? ("MEDIUM", Tidbits.Palette.blue) : ("HARD", Tidbits.Palette.coral)
+            Text(label)
+                .font(.system(size: 22, weight: .black, design: .rounded)).foregroundStyle(.white)
+                .padding(.horizontal, 16).padding(.vertical, 5)
+                .background(Capsule().fill(color))
+        }
+        .padding(.bottom, 4)
     }
 
     /// Wave A: the on-screen countdown — the room watches the clock; turns coral at ≤5s.

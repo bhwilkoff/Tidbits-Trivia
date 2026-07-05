@@ -48,7 +48,7 @@ public partial class PlayView : UserControl
     private async void StartGame(GameMode mode)
     {
         var engine = GameData.Shared.Value.NewEngine();
-        var vm = new GameViewModel(engine);
+        var vm = new GameViewModel(engine, GameData.Shared.Value.Records);
         vm.Closed += () =>
         {
             GameHost.Content = null;

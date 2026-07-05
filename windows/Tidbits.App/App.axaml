@@ -17,6 +17,7 @@
     </Application.Resources>
 
     <Application.Styles>
-        <sty:FluentAvaloniaTheme />
+        <!-- Brand-coral accent (WINDOWS-DESIGN §5.1) instead of the default purple. -->
+        <sty:FluentAvaloniaTheme CustomAccentColor="#FF5C35" />
     </Application.Styles>
 </Application>

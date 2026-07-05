@@ -15,7 +15,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 ## Slice 0 — Skeleton & pipeline
 - [x] 0.1 FluentAvalonia `NavigationView` shell (Play·Records·Create·Live + Settings)
 - [x] 0.6 Headless-PNG harness + `windows-latest` CI (build/snapshot/launch)
-- [ ] 0.7 Design tokens as `ThemeVariant` dictionaries (cream `0xFBF3E4` + 7 pops, 6-level ramp)
+- [~] 0.7 Design tokens — brand-coral accent set (#FF5C35); full palette dictionaries + 6-level ramp pending
 - [ ] 0.8 `chunkyCard`/`ChunkyButtonStyle`/`CompactButtonStyle` as `ControlTheme`s
 - [ ] 0.2 `Win32HostInterop` seam (Mica/DWM, taskbar, hotkeys, snap)
 - [ ] 0.3 Window chrome: extend-titlebar + Mica + theme follow
@@ -27,7 +27,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [x] 1.2 `GameMode` (17 modes + metadata)
 - [x] 1.3 `TriviaCategory` (8 categories)
 - [ ] 1.4 `Player` (pass-and-play)
-- [ ] 1.5 `PlayerRecord` set (GameRecord/AnswerDetail/MissedFact/CalibrationTally/DailyStreak) → EF Core/SQLite
+- [x] 1.5 `PlayerRecord` set (GameRecord/AnswerDetail/MissedFact/CalibrationTally/DailyStreak) — JSON-backed (SQLite swap possible later)
 - [x] 1.6 `NightPlan`/`NightRound`/`NightStartMode` + presets (wire-compat; GameMode→string converter)
 - [x] 1.14 ★ `SeededRNG` (splitmix64) + `stableSeed` (FNV-1a64)
 - [x] 1.15 ★ `DailyPick` (canonical cross-platform daily)

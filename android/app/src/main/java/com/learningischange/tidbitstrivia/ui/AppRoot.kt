@@ -1437,11 +1437,19 @@ private fun DuelsScreen(onBack: () -> Unit, onPlay: (String, List<Question>) -> 
                             Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
                                 Text("vs ${d.oppName}", fontWeight = FontWeight.SemiBold, color = ink, modifier = Modifier.weight(1f))
                                 when {
-                                    d.myDone && d.oppDone -> Text(
-                                        if (d.myScore > d.oppScore) "Won ${d.myScore}-${d.oppScore}"
-                                        else if (d.myScore < d.oppScore) "Lost ${d.myScore}-${d.oppScore}"
-                                        else "Tied ${d.myScore}-${d.oppScore}",
-                                        fontWeight = FontWeight.Bold, color = if (d.myScore > d.oppScore) Pops.coral else soft)
+                                    d.myDone && d.oppDone -> Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            if (d.myScore > d.oppScore) "Won ${d.myScore}-${d.oppScore}"
+                                            else if (d.myScore < d.oppScore) "Lost ${d.myScore}-${d.oppScore}"
+                                            else "Tied ${d.myScore}-${d.oppScore}",
+                                            fontWeight = FontWeight.Bold, color = if (d.myScore > d.oppScore) Pops.coral else soft)
+                                        if (d.oppUid.isNotEmpty()) TextButton(onClick = {
+                                            scope.launch {
+                                                val qs = buildDuelSet()
+                                                if (qs.size >= 3) { com.learningischange.tidbitstrivia.data.Duels.challenge(d.oppUid, d.oppName, qs); inbox = com.learningischange.tidbitstrivia.data.Duels.inbox(); mine = com.learningischange.tidbitstrivia.data.Duels.mine() }
+                                            }
+                                        }) { Text("Rematch", fontSize = 13.sp, color = MaterialTheme.colorScheme.primary) }
+                                    }
                                     d.myDone -> Text("Waiting on ${d.oppName}", fontSize = 13.sp, color = soft)
                                     else -> TextButton(onClick = { play(d.id) }) { Text("Your turn", color = Pops.blue) }
                                 }

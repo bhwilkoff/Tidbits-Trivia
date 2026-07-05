@@ -69,7 +69,7 @@ export const Duels = {
       const oppUid = Object.keys(d.players || {}).find((u) => u !== me) || d.challenged;
       const opp = oppUid && d.players ? d.players[oppUid] : null;
       out.push({
-        id, myDone: !!mine?.done, myScore: mine?.score || 0,
+        id, myDone: !!mine?.done, myScore: mine?.score || 0, oppUid: oppUid || '',
         oppName: opp?.name || 'Opponent', oppDone: !!opp?.done, oppScore: opp?.score || 0,
       });
     }

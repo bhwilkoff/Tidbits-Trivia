@@ -335,6 +335,10 @@ struct DuelsView: View {
             if d.myDone && d.oppDone {
                 Text(d.myScore > d.oppScore ? "Won \(d.myScore)-\(d.oppScore)" : d.myScore < d.oppScore ? "Lost \(d.myScore)-\(d.oppScore)" : "Tied \(d.myScore)-\(d.oppScore)")
                     .fontWeight(.bold).foregroundStyle(d.myScore > d.oppScore ? Tidbits.Palette.coral : Tidbits.Palette.inkSoft)
+                if !d.oppUid.isEmpty {
+                    Button("Rematch") { Task { await rematch(d.oppUid, d.oppName) } }
+                        .buttonStyle(.borderless).font(.caption.weight(.bold)).foregroundStyle(Tidbits.Palette.blue)
+                }
             } else if d.myDone {
                 Text("Waiting on \(d.oppName)").font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft)
             } else {
@@ -352,6 +356,13 @@ struct DuelsView: View {
                      categoryID: "mixed", difficulty: 3, explanation: $0.e, sourceTitle: "", sourceURL: nil, templateID: "duel")
         }
         playing = PlayableDuel(id: id, questions: Array(qs))
+    }
+
+    private func rematch(_ uid: String, _ name: String) async {
+        let qs = await QuestionProvider.shared.questions(mode: .mix, category: .named("mixed"))
+        let ds = qs.filter { $0.options.count >= 2 }.prefix(6).map { DuelQ(p: $0.prompt, o: $0.options, c: $0.correctIndex, e: $0.explanation) }
+        _ = await store.challenge(friendUID: uid, friendName: name, questions: Array(ds))
+        await load()
     }
 
     private func load() async {

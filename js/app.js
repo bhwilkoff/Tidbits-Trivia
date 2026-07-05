@@ -846,7 +846,10 @@ async function loadDuels() {
       <span style="flex:1"><b>${e(v.fromName || 'A friend')}</b> challenged you</span>
       <button data-duel-play="${e(v.id)}" class="btn btn-primary" style="padding:8px 16px">Play</button></div>`;
   const statusOf = (d) => {
-    if (d.myDone && d.oppDone) return d.myScore > d.oppScore ? `<b style="color:var(--color-primary)">Won ${d.myScore}–${d.oppScore}</b>` : d.myScore < d.oppScore ? `Lost ${d.myScore}–${d.oppScore}` : `Tied ${d.myScore}–${d.oppScore}`;
+    if (d.myDone && d.oppDone) {
+      const res = d.myScore > d.oppScore ? `<b style="color:var(--color-primary)">Won ${d.myScore}–${d.oppScore}</b>` : d.myScore < d.oppScore ? `Lost ${d.myScore}–${d.oppScore}` : `Tied ${d.myScore}–${d.oppScore}`;
+      return `${res}${d.oppUid ? ` <button data-rematch="${e(d.oppUid)}" data-rname="${e(d.oppName)}" style="margin-left:8px;padding:4px 12px;font-weight:800;border:2px solid var(--color-accent);border-radius:9px;background:transparent;color:var(--color-accent);cursor:pointer;font-size:.85em">Rematch</button>` : ''}`;
+    }
     if (d.myDone) return `<span class="muted">Waiting on ${e(d.oppName)}</span>`;
     return `<button data-duel-play="${e(d.id)}" class="btn btn-primary" style="padding:6px 14px">Your turn</button>`;
   };
@@ -859,6 +862,7 @@ async function loadDuels() {
     (mine.length ? `<h2 class="section">Your duels</h2>${mine.map(myRow).join('')}` : '') +
     (!pending.length && !mine.length ? `<p class="body" style="opacity:.7">No duels yet. Add friends from a live night, then tap Challenge on the Leaderboard.</p>` : '');
   body.querySelectorAll('[data-duel-play]').forEach((b) => b.addEventListener('click', () => playDuel(b.dataset.duelPlay)));
+  body.querySelectorAll('[data-rematch]').forEach((b) => b.addEventListener('click', async () => { await challengeFriend(b.dataset.rematch, b.dataset.rname); loadDuels(); }));
 }
 
 function viewRecords() {

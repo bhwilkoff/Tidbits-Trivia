@@ -356,7 +356,7 @@ private nonisolated struct DuelInviteWrite: Codable { var from: String; var from
 
 /// One row of the duels list — my duel + how it stands (your-turn / waiting / result).
 nonisolated struct DuelStanding: Identifiable, Sendable {
-    var id: String; var oppName: String
+    var id: String; var oppName: String; var oppUid: String
     var myDone: Bool; var myScore: Int; var oppDone: Bool; var oppScore: Int
 }
 
@@ -421,7 +421,7 @@ final class DuelStore {
             let mine = d.players[me]
             let oppUID = d.players.keys.first { $0 != me } ?? d.challenged
             let opp = d.players[oppUID]
-            out.append(DuelStanding(id: id, oppName: opp?.name ?? "Opponent",
+            out.append(DuelStanding(id: id, oppName: opp?.name ?? "Opponent", oppUid: oppUID,
                                     myDone: mine?.done ?? false, myScore: mine?.score ?? 0,
                                     oppDone: opp?.done ?? false, oppScore: opp?.score ?? 0))
         }

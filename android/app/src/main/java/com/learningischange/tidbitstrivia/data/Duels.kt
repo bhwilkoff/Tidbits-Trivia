@@ -9,7 +9,7 @@ import com.google.firebase.database.DataSnapshot
 import com.learningischange.tidbitstrivia.net.FirebaseNet
 
 data class DuelQ(val p: String, val o: List<String>, val c: Int, val e: String = "")
-data class DuelStanding(val id: String, val oppName: String, val myDone: Boolean, val myScore: Int, val oppDone: Boolean, val oppScore: Int)
+data class DuelStanding(val id: String, val oppName: String, val oppUid: String, val myDone: Boolean, val myScore: Int, val oppDone: Boolean, val oppScore: Int)
 data class DuelInvite(val id: String, val from: String, val fromName: String, val at: Long)
 
 object Duels {
@@ -92,6 +92,7 @@ object Duels {
             out.add(
                 DuelStanding(id,
                     oppP?.child("name")?.getValue(String::class.java) ?: "Opponent",
+                    oppUid ?: "",
                     mineP.child("done").getValue(Boolean::class.java) ?: false,
                     (mineP.child("score").getValue(Long::class.java) ?: 0L).toInt(),
                     oppP?.child("done")?.getValue(Boolean::class.java) ?: false,

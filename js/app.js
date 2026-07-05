@@ -1558,6 +1558,7 @@ function renderResults() {
   if (game.versus) { renderVersusResults(s); return; }
   const headline = s.acc === 100 ? 'Flawless!' : s.acc >= 80 ? 'Brilliant' : s.acc >= 50 ? 'Nicely done' : 'Good run';
   const missed = s.answered.filter((a) => !a.correct);
+  const nailed = s.answered.filter((a) => a.correct && (a.q.difficulty || 3) >= 4);   // L5: hard-correct → "how did you know that?"
   app.innerHTML = `
     <div class="results">
       <div class="card scorecard" style="--tint:${catColor(game.category)}">
@@ -1567,6 +1568,7 @@ function renderResults() {
       <div class="card pad grid-card"><div class="emoji">${grid}</div><div class="muted">Spoiler-free — safe to share</div></div>
       ${streakMoment()}
       ${missed.length ? `<h2 class="section">Tidbits to remember</h2>${missed.map((a) => `<div class="card pad"><b>${h(a.q.prompt)}</b><div class="ans">Answer: ${h(a.q.options[a.q.correctIndex])}</div><p class="muted">${h(a.q.explanation)}</p></div>`).join('')}` : ''}
+      ${nailed.length ? `<h2 class="section">Tough ones you nailed</h2>${nailed.map((a, i) => `<div class="card pad"><b>${h(a.q.prompt)}</b><div class="ans">You got it: ${h(a.q.options[a.q.correctIndex] || '')}</div><button class="btn btn-text" data-hdyk="${i}" style="padding:6px 0;color:var(--color-accent);text-align:left">How did you know that? · Share ›</button></div>`).join('')}` : ''}
       <button class="btn btn-blue btn-full" data-share>Share Score</button>
       ${game._custom ? '<button class="btn btn-full" data-save-set>Save this set</button>' : ''}
       ${game.mode.id === 'daily' ? '' : '<button class="btn btn-primary btn-full" data-again>Play Again</button>'}
@@ -1582,7 +1584,17 @@ function renderResults() {
   const again = $('[data-again]');
   if (again) again.addEventListener('click', () => startGame(game.mode.id, game.category, game._custom ? { custom: game._custom, label: game.label } : undefined));
   $('[data-done]').addEventListener('click', quitGame);
+  app.querySelectorAll('[data-hdyk]').forEach((b) => b.addEventListener('click', () => shareHDYK(nailed[+b.dataset.hdyk])));
 }
+// L5 (charter): a hard answer you knew → invite the story + a conversation, not a passive move-on.
+async function shareHDYK(a) {
+  if (!a) return;
+  const answer = a.q.options[a.q.correctIndex] || '';
+  const text = `I knew "${a.q.prompt}" on Tidbits Trivia — it's ${answer}. How did YOU know that? 🧠`;
+  try { if (navigator.share) { await navigator.share({ text }); return; } } catch {}
+  try { await navigator.clipboard.writeText(text); toast('Copied — go start a conversation!'); } catch { toast('Share failed'); }
+}
+
 async function shareResult(s, grid) {
   const header = game.mode.id === 'daily' ? `🧠 Tidbits Daily — ${dayKey()}` : `🧠 Tidbits — ${game.mode.title}`;
   const filled = Math.round(s.acc * 7 / 100);

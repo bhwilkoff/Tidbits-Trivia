@@ -782,6 +782,7 @@ function viewRecords() {
     ${recs.slice(0, 3).map((r, i) => gameHistoryRow(r, i)).join('')}
     ${recs.length > 3 ? `<button class="card row rec-tap" data-all-games><span><b>See all ${recs.length} games</b></span><span class="chev">›</span></button>` : ''}
     ${progressSection()}
+    ${badgesSection()}
     ${calibrationSection()}
     <h2 class="section">Personal bests</h2>
     <p class="muted">Tap a mode to scroll your previous attempts.</p>
@@ -828,6 +829,46 @@ function progressSection() {
   }).join('');
   return `<h2 class="section">Your knowledge</h2>
     <p class="muted">Each domain levels up as you answer its questions correctly. You've explored ${explored} of 7 domains and mastered ${mastered}. A ✓ means mastered — 15+ right at 60%+ accuracy.</p>
+    ${rows}`;
+}
+
+// L4: levelable badges — recognise real milestones (games, streak, mastery, accuracy, live nights),
+// tiered. Plain-language "N more to Tier X" so the number means something; tier number as the icon
+// (no emoji chrome, R-ICON-1), reusing the Topic-Level visual language.
+function computeBadges() {
+  const lt = Store.lifetime();
+  const mastered = Store.progress().filter((d) => d.hasWedge).length;
+  const longest = Identity.profile?.streak?.longest || 0;
+  const liveNights = Identity.profile?.stats?.liveNights || 0;
+  const defs = [
+    { name: 'Scholar', val: lt.games, tiers: [10, 50, 100, 500], unit: 'games' },
+    { name: 'On a Roll', val: longest, tiers: [3, 7, 30, 100], unit: 'day streak' },
+    { name: 'Domain Master', val: mastered, tiers: [1, 3, 5, 7], unit: 'domains mastered' },
+    { name: 'Sharpshooter', val: lt.games >= 5 ? lt.acc : 0, tiers: [60, 75, 85, 95], unit: '% lifetime accuracy' },
+    { name: 'Regular', val: liveNights, tiers: [1, 5, 15, 40], unit: 'live nights' },
+  ];
+  return defs.map((d) => {
+    const tier = d.tiers.filter((t) => d.val >= t).length;
+    const next = tier < d.tiers.length ? d.tiers[tier] : null;
+    const floor = tier > 0 ? d.tiers[tier - 1] : 0;
+    const pct = next === null ? 100 : Math.min(100, Math.max(6, Math.round(((d.val - floor) / (next - floor)) * 100)));
+    return { name: d.name, unit: d.unit, val: d.val, tier, max: d.tiers.length, next, pct };
+  });
+}
+
+function badgesSection() {
+  const badges = computeBadges();
+  if (!badges.some((b) => b.tier > 0)) return '';   // hide until the player earns their first
+  const rows = badges.map((b) => `
+    <div class="card topic-row" style="opacity:${b.tier > 0 ? 1 : 0.5}">
+      <span class="topic-ic" style="background:${b.tier > 0 ? 'var(--color-primary)' : 'var(--color-border)'};color:#fff">${b.tier || '·'}</span>
+      <div class="topic-main">
+        <div class="topic-head"><b>${h(b.name)}</b><span class="lvl" style="background:var(--color-accent)">Tier ${b.tier}/${b.max}</span></div>
+        <div class="xp-track"><div class="xp-fill" style="width:${b.pct}%;background:var(--color-primary)"></div></div>
+        <div class="muted topic-sub">${b.next === null ? `Maxed — ${b.val} ${b.unit}` : `${b.val}/${b.next} ${b.unit} to Tier ${b.tier + 1}`}</div>
+      </div></div>`).join('');
+  return `<h2 class="section">Badges</h2>
+    <p class="muted">Milestones that level up as you play — depth, consistency, and range.</p>
     ${rows}`;
 }
 

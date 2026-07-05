@@ -38,8 +38,20 @@ public partial class LiveCockpitView : UserControl
     private async void OnNext(object? sender, RoutedEventArgs e) { if (Vm is { } vm) await vm.Next(); }
     private async void OnLock(object? sender, RoutedEventArgs e) { if (Vm is { } vm) await vm.Lock(); }
 
+    private ProjectorWindow? _projector;
+
+    private void OnProjector(object? sender, RoutedEventArgs e)
+    {
+        if (Vm is not { } vm) return;
+        if (_projector is not null) { _projector.Activate(); return; }
+        _projector = new ProjectorWindow(vm);
+        _projector.Closed += (_, _) => _projector = null;
+        _projector.Show();
+    }
+
     private async void OnClose(object? sender, RoutedEventArgs e)
     {
+        _projector?.Close();
         if (Vm is { } vm) await vm.Close();
         this.FindAncestorOfType<LiveView>()?.BackToSetup();
     }

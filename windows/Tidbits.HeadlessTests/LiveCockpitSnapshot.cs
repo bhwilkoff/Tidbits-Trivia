@@ -35,6 +35,14 @@ public class LiveCockpitSnapshot
         Dispatcher.UIThread.RunJobs();
 
         win.CaptureRenderedFrame()!.Save(Path.Combine(dir, "live-cockpit.png"));
+
+        // The projector big-screen view (rendered directly; the 2nd-monitor placement is
+        // Windows-runtime and CI-verified separately).
+        var proj = new Window { Width = 1280, Height = 720, Content = new ProjectorView { DataContext = vm } };
+        proj.Show();
+        Dispatcher.UIThread.RunJobs();
+        proj.CaptureRenderedFrame()!.Save(Path.Combine(dir, "live-projector.png"));
+
         await host.Close();
     }
 }

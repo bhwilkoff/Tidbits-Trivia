@@ -1,0 +1,55 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Tidbits.App.ViewModels"
+             x:Class="Tidbits.App.Views.ProjectorView"
+             x:DataType="vm:LiveHostViewModel">
+    <Panel Background="#0A0A12">
+        <!-- Lobby: join info + QR -->
+        <Viewbox IsVisible="{Binding IsLobby}" Margin="120" Stretch="Uniform">
+            <StackPanel Spacing="18" Width="900" HorizontalAlignment="Center">
+                <TextBlock Text="JOIN NOW" Foreground="#FF5C35" FontSize="60" FontWeight="Black" HorizontalAlignment="Center"/>
+                <TextBlock Text="tidbitstrivia.com/live" Foreground="White" FontSize="34" Opacity="0.8" HorizontalAlignment="Center"/>
+                <TextBlock Text="{Binding Host.Code}" Foreground="White" FontSize="150" FontWeight="Black" HorizontalAlignment="Center"/>
+                <Border Background="White" Padding="16" CornerRadius="16" HorizontalAlignment="Center">
+                    <Image x:Name="LobbyQr" Width="240" Height="240"/>
+                </Border>
+            </StackPanel>
+        </Viewbox>
+
+        <!-- Question / reveal -->
+        <Viewbox IsVisible="{Binding IsPlaying}" Margin="100,80" Stretch="Uniform">
+            <StackPanel Width="1400" Spacing="26">
+                <TextBlock Text="{Binding Host.RoundTitle}" Foreground="#FF5C35" FontSize="34" FontWeight="Bold"/>
+                <TextBlock Text="{Binding Host.Current.Prompt}" Foreground="White" FontSize="60" FontWeight="Black" TextWrapping="Wrap"/>
+                <ItemsControl ItemsSource="{Binding Host.Current.Options}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Padding="24,18" Margin="0,6" CornerRadius="12" Background="#1C1C28">
+                                <TextBlock Text="{Binding}" Foreground="White" FontSize="40"/>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock IsVisible="{Binding IsReveal}" Foreground="#3FCF8E" FontSize="46" FontWeight="Black"
+                           TextWrapping="Wrap" Text="{Binding RevealAnswer, StringFormat='Answer: {0}'}"/>
+            </StackPanel>
+        </Viewbox>
+
+        <!-- Ended: final standings -->
+        <Viewbox IsVisible="{Binding IsEnded}" Margin="120" Stretch="Uniform">
+            <StackPanel Width="900" Spacing="14">
+                <TextBlock Text="Final standings" Foreground="#FF5C35" FontSize="56" FontWeight="Black" HorizontalAlignment="Center"/>
+                <ItemsControl ItemsSource="{Binding Host.Standings}" x:CompileBindings="False">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid ColumnDefinitions="*,Auto" Margin="0,8">
+                                <TextBlock Text="{Binding Name}" Foreground="White" FontSize="40"/>
+                                <TextBlock Grid.Column="1" Text="{Binding Score}" Foreground="White" FontSize="40" FontWeight="Black" Margin="24,0,0,0"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Viewbox>
+    </Panel>
+</UserControl>

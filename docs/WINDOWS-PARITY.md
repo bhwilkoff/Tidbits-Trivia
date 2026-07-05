@@ -92,8 +92,8 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [ ] 3.17 Show-nav (reveal/next/skip/prev/jump/hold)
 - [ ] 3.18 Manual score override
 - [x] 3.19 Networked join strip (QR + code + tidbitstrivia.com/live) — QRCoder pure-C# PNG; LIVE cockpit PNG shows scannable QR
-- [ ] 3.36 Projector window (chromeless, 2nd monitor, hot-plug safe)
-- [ ] 3.37 Projector states + cross-fades + viewport-fraction text
+- [x] 3.36 Projector window (chromeless WindowDecorations.None, 2nd-monitor via Screens API, hot-plug re-place on Screens.Changed) — 'Show on projector' in cockpit
+- [x] 3.37 Projector states (lobby QR / question+options / reveal answer / final standings) + Viewbox scale-to-fit text — LIVE PNG verified
 - [ ] 3.38 Reveal choreography
 - [ ] 3.39 Animated climbing leaderboard (unified phone+paper)
 - [ ] 3.40 Round-intro cards

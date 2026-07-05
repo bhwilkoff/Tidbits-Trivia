@@ -18,6 +18,13 @@ public sealed class LiveHostViewModel : ObservableObject
         Host.PropertyChanged += (_, _) => Dispatcher.UIThread.Post(() => OnPropertyChanged(string.Empty));
     }
 
+    public bool IsLobby => Host.CurrentStage == LiveNightHost.Stage.Lobby;
+    public bool IsPlaying => Host.CurrentStage == LiveNightHost.Stage.Playing;
+    public bool IsEnded => Host.CurrentStage == LiveNightHost.Stage.Ended;
+    public bool IsReveal => Host.Revealed;
+    /// The correct option text (shown big on the projector at reveal).
+    public string? RevealAnswer => Host.Current is { } q ? LiveScoring.AnswerLine(q) : null;
+
     public Task StartHosting() => Host.Start();
     public Task Reveal() => Host.Reveal();
     public Task Next() => Host.Next();

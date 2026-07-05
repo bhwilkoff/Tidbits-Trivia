@@ -65,7 +65,10 @@
                 <Button Content="Next" Click="OnNext" Padding="20,10"/>
                 <Button Content="Lock" Click="OnLock" Padding="20,10"/>
             </StackPanel>
-            <Button Grid.Column="1" Content="End night" Click="OnClose" Padding="16,10"/>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
+                <Button Content="Show on projector" Click="OnProjector" Padding="16,10"/>
+                <Button Content="End night" Click="OnClose" Padding="16,10"/>
+            </StackPanel>
         </Grid>
     </Grid>
 </UserControl>

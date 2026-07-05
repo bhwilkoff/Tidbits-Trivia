@@ -1,6 +1,7 @@
 #if os(macOS)
 import SwiftUI
 import AVFoundation
+import CoreAudio
 
 // MARK: - Host session (macOS-DESIGN Part A §A3 — the emcee cockpit)
 
@@ -319,6 +320,14 @@ struct LiveHostView_macOS: View {
     /// (the venue PA when connected). Sounds are synthesized, so nothing is licensed or bundled.
     private var sfxBar: some View {
         HStack(spacing: 8) {
+            Menu {   // Wave B: route show audio to the venue PA (or any output device)
+                Button("System default") { LiveSFXBoard.shared.select(deviceID: nil, name: "System default") }
+                ForEach(LiveSFXBoard.availableOutputs(), id: \.id) { dev in
+                    Button(dev.name) { LiveSFXBoard.shared.select(deviceID: dev.id, name: dev.name) }
+                }
+            } label: { Label(LiveSFXBoard.shared.outputName, systemImage: "hifispeaker.fill").font(Tidbits.TypeRamp.l6) }
+                .menuStyle(.borderlessButton).fixedSize()
+            Divider().frame(height: 20)
             ForEach(LiveSFXBoard.Stinger.allCases) { s in
                 Button { LiveSFXBoard.shared.play(s) } label: {
                     Label(s.label, systemImage: s.symbol).font(Tidbits.TypeRamp.l6)
@@ -549,7 +558,7 @@ struct TieBreakSheet_macOS: View {
 /// The host's show soundboard. Sounds are generated on the fly (simple tone + envelope
 /// synthesis) and played through the Mac's current output — the venue PA when the Mac is
 /// plugged into it. Closes the "run a separate soundboard app" gap.
-@MainActor
+@Observable @MainActor
 final class LiveSFXBoard {
     static let shared = LiveSFXBoard()
 
@@ -582,19 +591,78 @@ final class LiveSFXBoard {
     private let format = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 1)!
     private var buffers: [Stinger: AVAudioPCMBuffer] = [:]
     private var prepared = false
+    /// The chosen output device (nil = system default). Show audio routes here — point it at
+    /// the venue PA. Observable so the picker reflects the selection.
+    private(set) var outputName = "System default"
+    private var selectedDeviceID: AudioDeviceID?
 
     private init() {
         engine.attach(player)
         engine.connect(player, to: engine.mainMixerNode, format: format)
         for s in Stinger.allCases { buffers[s] = Self.render(s, format: format) }
+        // Restore a previously-chosen PA output by name (device IDs aren't stable; names are).
+        if let saved = UserDefaults.standard.string(forKey: "tidbits.sfx.output"),
+           let dev = Self.availableOutputs().first(where: { $0.name == saved }) {
+            selectedDeviceID = dev.id; outputName = dev.name
+        }
     }
 
     func play(_ s: Stinger) {
         guard let buf = buffers[s] else { return }
         do {
-            if !prepared { try engine.start(); player.play(); prepared = true }
+            if !prepared {
+                if let id = selectedDeviceID, let unit = engine.outputNode.audioUnit {
+                    var dev = id   // route to the chosen device BEFORE the engine starts
+                    AudioUnitSetProperty(unit, kAudioOutputUnitProperty_CurrentDevice,
+                                         kAudioUnitScope_Global, 0, &dev, UInt32(MemoryLayout<AudioDeviceID>.size))
+                }
+                try engine.start(); player.play(); prepared = true
+            }
             player.scheduleBuffer(buf, at: nil, options: .interrupts)
         } catch { print("[SFX] play failed: \(error)") }
+    }
+
+    /// Route show audio to a device (nil = system default). Applied on the next play; if the
+    /// engine is running it's torn down so the new device takes effect.
+    func select(deviceID: AudioDeviceID?, name: String) {
+        selectedDeviceID = deviceID
+        outputName = name
+        if deviceID == nil { UserDefaults.standard.removeObject(forKey: "tidbits.sfx.output") }
+        else { UserDefaults.standard.set(name, forKey: "tidbits.sfx.output") }
+        if engine.isRunning { player.stop(); engine.stop(); prepared = false }
+    }
+
+    /// Every current output device (id + name) — the venue PA, the Mac speakers, etc.
+    static func availableOutputs() -> [(id: AudioDeviceID, name: String)] {
+        var addr = AudioObjectPropertyAddress(mSelector: kAudioHardwarePropertyDevices,
+                                              mScope: kAudioObjectPropertyScopeGlobal,
+                                              mElement: kAudioObjectPropertyElementMain)
+        var size: UInt32 = 0
+        guard AudioObjectGetPropertyDataSize(AudioObjectID(kAudioObjectSystemObject), &addr, 0, nil, &size) == noErr else { return [] }
+        var ids = [AudioDeviceID](repeating: 0, count: Int(size) / MemoryLayout<AudioDeviceID>.stride)
+        guard AudioObjectGetPropertyData(AudioObjectID(kAudioObjectSystemObject), &addr, 0, nil, &size, &ids) == noErr else { return [] }
+        var result: [(AudioDeviceID, String)] = []
+        for id in ids {
+            var cfgAddr = AudioObjectPropertyAddress(mSelector: kAudioDevicePropertyStreamConfiguration,
+                                                     mScope: kAudioDevicePropertyScopeOutput,
+                                                     mElement: kAudioObjectPropertyElementMain)
+            var cfgSize: UInt32 = 0
+            guard AudioObjectGetPropertyDataSize(id, &cfgAddr, 0, nil, &cfgSize) == noErr, cfgSize > 0 else { continue }
+            let raw = UnsafeMutableRawPointer.allocate(byteCount: Int(cfgSize), alignment: MemoryLayout<AudioBufferList>.alignment)
+            defer { raw.deallocate() }
+            guard AudioObjectGetPropertyData(id, &cfgAddr, 0, nil, &cfgSize, raw) == noErr else { continue }
+            let abl = UnsafeMutableAudioBufferListPointer(raw.assumingMemoryBound(to: AudioBufferList.self))
+            guard abl.reduce(0, { $0 + Int($1.mNumberChannels) }) > 0 else { continue }   // output channels only
+            var nameAddr = AudioObjectPropertyAddress(mSelector: kAudioObjectPropertyName,
+                                                      mScope: kAudioObjectPropertyScopeGlobal,
+                                                      mElement: kAudioObjectPropertyElementMain)
+            var name: Unmanaged<CFString>?
+            var nameSize = UInt32(MemoryLayout<Unmanaged<CFString>?>.size)
+            guard AudioObjectGetPropertyData(id, &nameAddr, 0, nil, &nameSize, &name) == noErr,
+                  let cf = name?.takeRetainedValue() else { continue }
+            result.append((id, cf as String))
+        }
+        return result
     }
 
     /// Render a stinger to a mono PCM buffer. Each note is (freq, seconds, sawtooth?); a short

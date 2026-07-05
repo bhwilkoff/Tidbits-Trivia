@@ -28,6 +28,7 @@ struct RecordsView_macOS: View {
                         description: Text("Play a round and your scores, streaks, and facts to review show up here."))
                         .padding(.top, 60)
                 } else {
+                    if !identity.signedIn { syncBanner }
                     streakCard
                     lifetimeRow
                     gamesSection
@@ -53,6 +54,31 @@ struct RecordsView_macOS: View {
         .sheet(isPresented: $showAllGames) {
             AllGamesSheet_macOS(records: records) { recap = $0 }
         }
+    }
+
+    /// Shown on the dashboard when signed out — the discoverable route to sign-in (which lives in
+    /// Settings). Surfaces the actual need ("sync your records") where players see their records,
+    /// rather than only behind ⌘,. Opens the native Settings scene via SettingsLink.
+    private var syncBanner: some View {
+        SettingsLink {
+            HStack(spacing: 14) {
+                Image(systemName: "icloud.and.arrow.up.fill")
+                    .font(.system(size: 24, weight: .black)).foregroundStyle(Tidbits.Palette.coral)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Sign in to sync your records")
+                        .font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                    Text("Keep your streak, rating, and history across every device.")
+                        .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                }
+                Spacer()
+                Image(systemName: "chevron.right.circle.fill")
+                    .font(.system(size: 22, weight: .bold)).foregroundStyle(Tidbits.Palette.inkSoft)
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .chunkyCard(fill: Tidbits.Palette.surface)
+        }
+        .buttonStyle(.plain)
     }
 
     private var streak: DailyStreak? { streaks.first }

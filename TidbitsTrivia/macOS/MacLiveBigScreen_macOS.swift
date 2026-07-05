@@ -327,6 +327,15 @@ struct LiveBigScreen_macOS: View {
                 .background(RoundedRectangle(cornerRadius: 18).fill(i == 0 ? Tidbits.Palette.yellow : Tidbits.Palette.surface))
                 .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(Tidbits.Palette.border, lineWidth: 3))
             }
+            if !s.event.leadCaptureURL.isEmpty, let qr = makeLiveQR(s.event.leadCaptureURL) {   // Wave D: lead capture
+                VStack(spacing: 12) {
+                    Text("Join \(s.event.venue.isEmpty ? "our" : "\(s.event.venue)'s") mailing list")
+                        .font(.system(size: 30, weight: .heavy, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
+                    Image(nsImage: qr).interpolation(.none).resizable().frame(width: 180, height: 180)
+                        .padding(10).background(RoundedRectangle(cornerRadius: 12).fill(.white))
+                }
+                .padding(.top, 24)
+            }
         }
         .padding(48)
     }

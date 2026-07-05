@@ -280,6 +280,41 @@ final class PlayerIdentityStore {
         catch { print("[Identity] avatar reroll failed: \(error)") }
     }
 
+    // MARK: - Social graph (L5): a private "people I've played with" list
+
+    var friends: [PlayerIdentity.Friend] = {
+        guard let d = UserDefaults.standard.data(forKey: "tidbits.friends"),
+              let list = try? JSONDecoder().decode([PlayerIdentity.Friend].self, from: d) else { return [] }
+        return list.sorted { $0.since > $1.since }
+    }()
+
+    func isFriend(_ uid: String) -> Bool { friends.contains { $0.uid == uid } }
+
+    private func persistFriends() {
+        if let d = try? JSONEncoder().encode(friends) { UserDefaults.standard.set(d, forKey: "tidbits.friends") }
+    }
+
+    func addFriend(uid: String, name: String, avatarSeed: String = "") async {
+        guard !uid.isEmpty, let me = await db.uid, uid != me, !isFriend(uid) else { return }
+        let f = PlayerIdentity.Friend(uid: uid, name: name.isEmpty ? "Player" : name, avatarSeed: avatarSeed,
+                                      since: Int(Date().timeIntervalSince1970 * 1000))
+        friends.insert(f, at: 0); persistFriends()
+        try? await db.put("playersPrivate/\(me)/friends/\(uid)", f)
+    }
+
+    func removeFriend(_ uid: String) async {
+        friends.removeAll { $0.uid == uid }; persistFriends()
+        guard let me = await db.uid else { return }
+        try? await db.delete("playersPrivate/\(me)/friends/\(uid)")
+    }
+
+    func loadFriends() async {
+        guard let me = await db.uid,
+              let remote = (try? await db.get("playersPrivate/\(me)/friends", as: [String: PlayerIdentity.Friend].self)) ?? nil
+        else { return }
+        friends = remote.values.sorted { $0.since > $1.since }; persistFriends()
+    }
+
     // MARK: New profile
 
     private static func newProfile(name: String) -> PlayerIdentity.Profile {

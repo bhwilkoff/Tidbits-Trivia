@@ -96,6 +96,23 @@ object FirebaseNet {
     suspend fun setStanding(path: String, obj: Map<String, Any?>) {
         db.getReference(path).setValue(obj).await()
     }
+    // L5 social graph: private friends list under owner-only playersPrivate/{uid}/friends.
+    suspend fun loadFriends(uid: String): List<com.learningischange.tidbitstrivia.data.PlayerIdentity.Friend> {
+        val snap = db.getReference("playersPrivate/$uid/friends").get().await()
+        return snap.children.mapNotNull { c ->
+            val fuid = c.child("uid").getValue(String::class.java) ?: c.key ?: return@mapNotNull null
+            com.learningischange.tidbitstrivia.data.PlayerIdentity.Friend(
+                fuid, c.child("name").getValue(String::class.java) ?: "Player",
+                c.child("avatarSeed").getValue(String::class.java) ?: "",
+                c.child("since").getValue(Long::class.java) ?: 0L)
+        }
+    }
+    suspend fun setFriend(uid: String, friendUid: String, obj: Map<String, Any?>) {
+        db.getReference("playersPrivate/$uid/friends/$friendUid").setValue(obj).await()
+    }
+    suspend fun removeFriend(uid: String, friendUid: String) {
+        db.getReference("playersPrivate/$uid/friends/$friendUid").removeValue().await()
+    }
     suspend fun loadDailyLog(key: String): Map<String, Int> {
         val snap = db.getReference("dailyLog/$key").get().await()
         val out = HashMap<String, Int>()

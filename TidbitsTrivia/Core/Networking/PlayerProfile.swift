@@ -39,6 +39,16 @@ enum PlayerIdentity {
         var stats: Stats
     }
 
+    /// L5 social graph: a person you've played with and added — a private "follow" stored under
+    /// the owner-only playersPrivate/{uid}/friends bucket. Their standing comes from the public board.
+    nonisolated struct Friend: Codable, Identifiable, Sendable, Equatable {
+        var uid: String
+        var name: String
+        var avatarSeed: String = ""
+        var since: Int = 0
+        var id: String { uid }
+    }
+
     /// The Tidbits Rating — an Elo-style skill number updated by EVERY game, solo and live
     /// (live weighted higher: real opponents, higher stakes). Provisional until `games`
     /// reaches `establishedAt`, so the number is honest from cold-start and stable long-term.

@@ -26,11 +26,15 @@ object PlayerIdentity {
     data class Profile(val name: String, val createdAt: Long, val avatarSeed: String,
                        val rating: Rating, val streak: Streak, val stats: Stats)
 
+    // L5 social graph: a person you've played with and added — a private "follow".
+    data class Friend(val uid: String, val name: String, val avatarSeed: String = "", val since: Long = 0L)
+
     const val ESTABLISHED_AT = 15
     private val scope = CoroutineScope(Dispatchers.Main)
 
     var profileId: String? = null; private set
     var profile: Profile? by mutableStateOf(null); private set
+    var friends: List<Friend> by mutableStateOf(emptyList()); private set
     /// True once promoted from anonymous via a federated sign-in (records roam + survive
     /// session loss). The Firebase SDK persists the session, so this is authoritative.
     var signedIn: Boolean by mutableStateOf(false); private set
@@ -222,6 +226,28 @@ object PlayerIdentity {
         val p = profile ?: return; val uid = profileId ?: return
         val np = p.copy(avatarSeed = java.util.UUID.randomUUID().toString().take(8).lowercase()); profile = np
         scope.launch { runCatching { FirebaseNet.saveProfile(uid, np) } }
+    }
+
+    // --- Social graph (L5): a private "people I've played with" list ---
+    fun isFriend(uid: String) = friends.any { it.uid == uid }
+
+    fun addFriend(uid: String, name: String, avatarSeed: String = "") {
+        val me = FirebaseNet.uid() ?: return
+        if (uid.isEmpty() || uid == me || isFriend(uid)) return
+        val f = Friend(uid, name.ifEmpty { "Player" }, avatarSeed, System.currentTimeMillis())
+        friends = listOf(f) + friends
+        scope.launch { runCatching { FirebaseNet.setFriend(me, uid, mapOf("uid" to f.uid, "name" to f.name, "avatarSeed" to f.avatarSeed, "since" to f.since)) } }
+    }
+
+    fun removeFriend(uid: String) {
+        friends = friends.filterNot { it.uid == uid }
+        val me = FirebaseNet.uid() ?: return
+        scope.launch { runCatching { FirebaseNet.removeFriend(me, uid) } }
+    }
+
+    fun loadFriends() {
+        val me = FirebaseNet.uid() ?: return
+        scope.launch { runCatching { friends = FirebaseNet.loadFriends(me).sortedByDescending { it.since } } }
     }
 
     private fun newProfile() = Profile(

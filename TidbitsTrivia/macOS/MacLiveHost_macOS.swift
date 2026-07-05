@@ -135,6 +135,15 @@ final class LiveHostSession {
         LiveVideoPlayer.shared.stop(); LiveAudioPlayer.shared.stop()
     }
     var canGoBack: Bool { index > 0 }
+
+    /// Adaptability: jump to any question (or the first of any round) on the fly. Un-revealed +
+    /// re-armed; the scoredIndices guard keeps scoring correct if you leap over questions.
+    func jump(to i: Int) {
+        guard questions.indices.contains(i), i != index else { return }
+        revealed = false; locked = false
+        index = i; prepare(); armTimer()
+        LiveVideoPlayer.shared.stop(); LiveAudioPlayer.shared.stop()
+    }
     /// Wave A: arm the per-question countdown from the current round's timer (0/nil = off).
     func armTimer() {
         let ri = current?.roundIndex ?? 0
@@ -333,6 +342,16 @@ struct LiveHostView_macOS: View {
                 .buttonStyle(ChunkyButtonStyle(fill: session.onBreak ? Tidbits.Palette.mint : Tidbits.Palette.surface, textColor: Tidbits.Palette.ink))
                 .keyboardShortcut("b", modifiers: .command)
                 .help(session.onBreak ? "Resume the game" : "Hold — show a 'Back in a moment' slide on the big screen (⌘B)")
+                Menu {   // adaptability: jump to any round/question on the fly
+                    ForEach(Array(session.event.rounds.enumerated()), id: \.offset) { ri, round in
+                        Section(round.title) {
+                            ForEach(Array(session.questions.enumerated()).filter { $0.element.roundIndex == ri }, id: \.offset) { pair in
+                                Button("\(pair.offset + 1). \(String(pair.element.prompt.prefix(50)))") { session.jump(to: pair.offset) }
+                            }
+                        }
+                    }
+                } label: { Label("Jump", systemImage: "list.number").font(Tidbits.TypeRamp.l5) }
+                .menuStyle(.borderlessButton).fixedSize()
                 Text("ROUND \(session.roundNumber)/\(session.roundCount) · \(session.roundTitle)")
                     .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
             }

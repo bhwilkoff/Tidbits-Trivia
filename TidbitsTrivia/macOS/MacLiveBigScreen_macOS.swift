@@ -85,7 +85,8 @@ struct LiveBigScreen_macOS: View {
         ZStack {
             Tidbits.Palette.bg.ignoresSafeArea()
             if let s = coordinator.session {
-                if s.finished { standings(s).transition(.opacity) } else { live(s).transition(.opacity) }
+                if s.onBreak { breakSlide(s).transition(.opacity) }   // adaptability: intermission hold
+                else if s.finished { standings(s).transition(.opacity) } else { live(s).transition(.opacity) }
             } else {
                 splash.transition(.opacity)
             }
@@ -139,6 +140,18 @@ struct LiveBigScreen_macOS: View {
             Image(systemName: "megaphone.fill").font(.system(size: 64, weight: .black)).foregroundStyle(Tidbits.Palette.coral)
             Text("TIDBITS LIVE").font(.system(size: 72, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
             Text("The host will start the night shortly.").font(.system(size: 28, weight: .semibold, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
+        }
+    }
+
+    /// Adaptability: the intermission hold — the projector rests here on a break while the game
+    /// position is preserved in the cockpit.
+    private func breakSlide(_ s: LiveHostSession) -> some View {
+        VStack(spacing: 20) {
+            Image(systemName: "cup.and.saucer.fill").font(.system(size: 56, weight: .black)).foregroundStyle(Tidbits.Palette.coral)
+            Text(s.event.name.isEmpty ? "TIDBITS LIVE" : s.event.name.uppercased())
+                .font(.system(size: 34, weight: .heavy, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
+            Text("Back in a moment").font(.system(size: 72, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
+            Text("Grab a drink — the next round is coming up.").font(.system(size: 28, weight: .semibold, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
         }
     }
 

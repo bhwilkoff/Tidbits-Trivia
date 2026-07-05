@@ -25,6 +25,7 @@ final class LiveHostSession {
     var index = 0
     var revealed = false
     var scoredIndices: Set<Int> = []   // adaptability: score each question ONCE (so go-back / re-reveal never double-scores)
+    var onBreak = false                // adaptability: hold the big screen on an intermission slide (game position preserved)
     var finished = false
     var deadlineMs: Int? = nil   // Wave A: epoch-ms countdown deadline for the current timed question
     var locked = false           // Wave C: answers locked ("pencils down") — auto-set at the timer deadline or manually
@@ -326,6 +327,12 @@ struct LiveHostView_macOS: View {
                     .buttonStyle(.plain).keyboardShortcut(.cancelAction)
                 Text(session.event.name).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
                 Spacer()
+                Button { session.onBreak.toggle() } label: {   // adaptability: intermission hold
+                    Label(session.onBreak ? "Resume" : "Hold", systemImage: session.onBreak ? "play.fill" : "pause.fill").font(Tidbits.TypeRamp.l5)
+                }
+                .buttonStyle(ChunkyButtonStyle(fill: session.onBreak ? Tidbits.Palette.mint : Tidbits.Palette.surface, textColor: Tidbits.Palette.ink))
+                .keyboardShortcut("b", modifiers: .command)
+                .help(session.onBreak ? "Resume the game" : "Hold — show a 'Back in a moment' slide on the big screen (⌘B)")
                 Text("ROUND \(session.roundNumber)/\(session.roundCount) · \(session.roundTitle)")
                     .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
             }

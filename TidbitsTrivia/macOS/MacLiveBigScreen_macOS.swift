@@ -337,7 +337,7 @@ struct LiveBigScreen_macOS: View {
             if let winner = rows.first, winner.score > 0 {
                 HStack(spacing: 16) {
                     Image(systemName: "party.popper.fill").font(.system(size: 40)).foregroundStyle(Tidbits.Palette.coral)
-                    Text("\(winner.name) wins!").font(.system(size: 60, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
+                    Text("\(winner.name) wins!").font(.system(size: 60, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink).lineLimit(1).minimumScaleFactor(0.4)
                     Image(systemName: "party.popper.fill").font(.system(size: 40)).foregroundStyle(Tidbits.Palette.coral).scaleEffect(x: -1)
                 }
                 .symbolEffect(.bounce, options: reduceMotion ? .nonRepeating : .repeating)
@@ -349,7 +349,7 @@ struct LiveBigScreen_macOS: View {
                     Text("\(i + 1)").font(.system(size: 40, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft).frame(width: 60)
                     if i == 0 { Image(systemName: "crown.fill").font(.system(size: 34)).foregroundStyle(Tidbits.Palette.yellow) }
                     Image(systemName: team.paper ? "pencil" : "iphone").font(.system(size: 22)).foregroundStyle(Tidbits.Palette.inkSoft)
-                    Text(team.name).font(.system(size: 40, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
+                    Text(team.name).font(.system(size: 40, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink).lineLimit(1).minimumScaleFactor(0.5)
                     Spacer()
                     Text("\(team.score)").font(.system(size: 44, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
                 }

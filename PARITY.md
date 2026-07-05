@@ -30,6 +30,15 @@
 > Tidbits Live dependent formats (fastest-finger, audio, poll, cheating
 > deterrence). See `docs/macOS-DESIGN.md` §A7 + `docs/EVENT-TRIVIA-COMPETITIVE.md`.
 >
+> **Windows (6th platform) — 2026-07-05: SCAFFOLD BUILT + RUNS on Win11; feature
+> parity is the next loop.** The Avalonia app launches on real Windows 11 (verified
+> via a windows-latest CI screenshot) with the frame of every Mac tab (Play,
+> Records, Create, Tidbits Live + Settings) in a FluentAvalonia NavigationView. The
+> $0 pipeline is proven end-to-end from the Mac: headless-PNG observability +
+> win-x64 cross-build + free windows-latest CI that builds, snapshots, and launches
+> the .exe. Frames are placeholders — feature parity (Core port first, then
+> host-first Live) ships in the following loops. Below is the original research note.
+>
 > **Windows (6th platform) — 2026-07-05: RESEARCHED, verdict GO, NOT built.**
 > A native Windows 10/11 app (host-first, full Tidbits Live parity) is feasible
 > at ~$0, built entirely from the Mac. Stack: **Avalonia UI v12 (.NET/C#)** —

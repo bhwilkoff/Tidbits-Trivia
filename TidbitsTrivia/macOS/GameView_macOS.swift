@@ -211,7 +211,7 @@ struct GameView_macOS: View {
                 .disabled(game.phase == .reveal)
                 .onSubmit { game.submitText() }
             Button("Submit") { game.submitText() }
-                .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.mint, textColor: Tidbits.Palette.ink))
+                .buttonStyle(CompactButtonStyle(fill: Tidbits.Palette.mint, textColor: Tidbits.Palette.ink, prominent: true))
                 .disabled(game.phase == .reveal)
         }
         .onAppear { typeFieldFocused = true }
@@ -234,7 +234,7 @@ struct GameView_macOS: View {
                             .focused($typeFieldFocused)
                             .onSubmit { game.submitEnumGuess(game.typedText) }
                         Button("Done") { game.finishEnum() }
-                            .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.ink))
+                            .buttonStyle(CompactButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.ink, prominent: true))
                     }
                     .onAppear { typeFieldFocused = true }
                 }

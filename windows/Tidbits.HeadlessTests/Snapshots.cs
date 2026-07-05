@@ -1,3 +1,4 @@
+using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Styling;
@@ -36,5 +37,26 @@ public class Snapshots
 
         var frame = win.CaptureRenderedFrame();
         frame!.Save(Path.Combine(ArtifactsDir(), $"mainwindow-{theme}.png"));
+    }
+
+    // Proves the frame of EVERY Mac tab renders (the bootstrap-loop goal).
+    [AvaloniaTheory]
+    [InlineData("play")]
+    [InlineData("records")]
+    [InlineData("create")]
+    [InlineData("live")]
+    [InlineData("settings")]
+    public void Section_frame(string key)
+    {
+        var sections = new MainWindowViewModel().Sections;
+        var win = new Window
+        {
+            Width = 900,
+            Height = 680,
+            Content = new SectionFrameView { DataContext = sections[key] },
+        };
+        win.Show();
+        Dispatcher.UIThread.RunJobs();
+        win.CaptureRenderedFrame()!.Save(Path.Combine(ArtifactsDir(), $"section-{key}.png"));
     }
 }

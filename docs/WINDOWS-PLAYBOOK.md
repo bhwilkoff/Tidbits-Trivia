@@ -319,3 +319,56 @@ CI, shipped via a $0 channel.
 considering later is ~$10/mo Azure signing, and only to remove the
 SmartScreen prompt on direct downloads — deferrable and pipeline-
 compatible.
+
+---
+
+## 9. Reproduction log — as-built 2026-07-05 (the scaffold actually works)
+
+The bootstrap (playbook §7 steps 1) is DONE and verified. Exact working
+sequence on this Apple Silicon Mac (.NET 10.0.203 already installed):
+
+```bash
+dotnet new install Avalonia.Templates
+cd windows
+dotnet new sln -n Tidbits                                   # → Tidbits.slnx (new slnx format)
+dotnet new classlib -o Tidbits.Core -f net10.0
+dotnet new avalonia.mvvm -o Tidbits.App                     # Avalonia 12.0.5 + CommunityToolkit.Mvvm
+dotnet sln Tidbits.slnx add Tidbits.Core/*.csproj Tidbits.App/*.csproj
+dotnet add Tidbits.App package FluentAvaloniaUI             # WinUI-accurate controls (v3.0.0)
+dotnet add Tidbits.App reference Tidbits.Core/Tidbits.Core.csproj
+dotnet new xunit -o Tidbits.HeadlessTests -f net10.0
+dotnet add Tidbits.HeadlessTests package Avalonia.Headless.XUnit --version 12.0.5
+dotnet add Tidbits.HeadlessTests package Avalonia.Skia --version 12.0.5
+dotnet add Tidbits.HeadlessTests reference Tidbits.App/Tidbits.App.csproj
+dotnet sln Tidbits.slnx add Tidbits.HeadlessTests/*.csproj
+
+# see the UI from the Mac (writes windows/artifacts/mainwindow-*.png):
+TIDBITS_ARTIFACTS=$PWD/artifacts dotnet test Tidbits.HeadlessTests
+# cross-build the real Windows binary from the Mac:
+dotnet publish Tidbits.App -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -o publish/win-x64
+#   → publish/win-x64/Tidbits.App.exe = "PE32+ executable (GUI) x86-64, for MS Windows"
+```
+
+**Three version gotchas hit (all now fixed in-repo — will bite again on a
+fresh clone with different package versions):**
+1. **FluentAvaloniaUI 3.0.0 prefixes every control `FA`** — `FANavigationView`,
+   `FANavigationViewItem`, `FANavigationViewSelectionChangedEventArgs` (v2 used
+   the unprefixed names). Symptom: XAML "Unable to resolve type NavigationView".
+   Find real names with `strings <pkg>/lib/*/FluentAvalonia.dll | grep FA`.
+2. **`Avalonia.Headless.XUnit` 12.0.5 requires xunit v3** (`xunit.v3`
+   3.2.2), but `dotnet new xunit` on .NET 10 pins **xunit v2** → `CS0433
+   InlineDataAttribute exists in both`. Fix: replace `xunit` with `xunit.v3`
+   in the test csproj.
+3. **`AvaloniaTestApplicationAttribute` is in the `Avalonia.Headless`
+   namespace**, NOT `Avalonia.Headless.XUnit`. Use
+   `[assembly: Avalonia.Headless.AvaloniaTestApplication(typeof(TestAppBuilder))]`.
+
+**Headless render config that produces real pixels** (not a blank stub):
+`AppBuilder.Configure<App>().UseSkia().WithInterFont().UseHeadless(new
+AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = false })`, then
+`window.Show(); Dispatcher.UIThread.RunJobs(); window.CaptureRenderedFrame().Save(png)`.
+
+**Verified this build:** the FluentAvalonia `NavigationView` shell renders
+with all five surfaces (Play · Records · Create · Tidbits Live · Settings
+footer), light + dark, brand accent — Read-confirmed from the PNG. CI
+(`windows-build.yml`) reproduces the same on real `windows-latest`.

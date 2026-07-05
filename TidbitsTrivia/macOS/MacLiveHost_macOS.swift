@@ -553,13 +553,16 @@ struct LiveHostView_macOS: View {
 
     private var scoreboard: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack {
+            HStack(spacing: 10) {
                 Text("Teams").font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
                 Spacer()
+                Stepper(value: $session.pointsPerCorrect, in: 1...10) {
+                    Text("\(session.pointsPerCorrect) pt\(session.pointsPerCorrect == 1 ? "" : "s")/correct")
+                        .font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft)
+                }
+                .fixedSize()
                 Button { exportResultsCSV() } label: { Image(systemName: "square.and.arrow.up") }   // Wave C: data export
                     .buttonStyle(.borderless).help("Export standings to CSV")
-                Text("pts/correct").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
-                Stepper("\(session.pointsPerCorrect)", value: $session.pointsPerCorrect, in: 1...10).labelsHidden()
             }
             .padding(12)
             HStack(spacing: 8) {

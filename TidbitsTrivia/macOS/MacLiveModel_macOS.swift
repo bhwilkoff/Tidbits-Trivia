@@ -34,6 +34,7 @@ struct LiveEvent: Identifiable, Codable, Hashable {
     var weekday: Int? = nil   // Wave D: recurring-series scheduling — 1=Sun…7=Sat (nil = one-off); optional so saved events decode
     var sponsor: String = ""  // Wave D: sponsor kit — "brought to you by …" in the lobby + between rounds + a per-question tag
     var leadCaptureURL: String = ""  // Wave D: lead capture — the host's mailing-list signup URL, shown as a QR at the end of the night
+    var brandHex: String = ""        // Wave D: white-label — the host's brand accent (hex), applied to the big-screen event title
 
     var totalQuestions: Int { rounds.reduce(0) { $0 + $1.questions.count } }
     /// Wave D: the day-name of a recurring series (nil for a one-off).

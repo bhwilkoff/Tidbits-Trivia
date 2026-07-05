@@ -98,6 +98,15 @@ struct LiveBuilderView_macOS: View {
                     .textFieldStyle(.roundedBorder).font(Tidbits.TypeRamp.l5).frame(maxWidth: 340)
                 TextField("Mailing-list URL (optional — a “join our list” QR at the end)", text: $working.leadCaptureURL)   // Wave D: lead capture
                     .textFieldStyle(.roundedBorder).font(Tidbits.TypeRamp.l5).frame(maxWidth: 340)
+                HStack(spacing: 10) {   // Wave D: white-label brand accent
+                    ColorPicker("Brand accent (big-screen title)", selection: Binding(
+                        get: { Color(hexString: working.brandHex) ?? Tidbits.Palette.coral },
+                        set: { working.brandHex = $0.hexString }))
+                        .font(Tidbits.TypeRamp.l5).fixedSize()
+                    if !working.brandHex.isEmpty {
+                        Button("Reset to default") { working.brandHex = "" }.font(Tidbits.TypeRamp.l6)
+                    }
+                }
 
                 Text("Rounds").font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
                 if working.rounds.isEmpty {

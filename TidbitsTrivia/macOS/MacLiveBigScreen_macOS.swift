@@ -9,6 +9,20 @@ import CoreImage.CIFilterBuiltins
 /// prefilled — so scanning joins WITHOUT typing the 4-char code.
 func liveJoinURL(_ code: String) -> String { "https://tidbitstrivia.com/live/\(code)" }
 
+/// Wave D: white-label — a #RRGGBB hex ↔ SwiftUI Color round-trip for the host's brand accent.
+extension Color {
+    init?(hexString: String) {
+        var h = hexString.trimmingCharacters(in: .whitespaces)
+        if h.hasPrefix("#") { h.removeFirst() }
+        guard h.count == 6, let v = UInt64(h, radix: 16) else { return nil }
+        self = Color(red: Double((v >> 16) & 0xFF) / 255, green: Double((v >> 8) & 0xFF) / 255, blue: Double(v & 0xFF) / 255)
+    }
+    var hexString: String {
+        let ns = NSColor(self).usingColorSpace(.sRGB) ?? .black
+        return String(format: "#%02X%02X%02X", Int((ns.redComponent * 255).rounded()), Int((ns.greenComponent * 255).rounded()), Int((ns.blueComponent * 255).rounded()))
+    }
+}
+
 /// Generate a crisp, scannable QR NSImage for a string (CoreImage, no network).
 @MainActor func makeLiveQR(_ string: String) -> NSImage? {
     let filter = CIFilter.qrCodeGenerator()
@@ -132,7 +146,7 @@ struct LiveBigScreen_macOS: View {
         VStack(spacing: 24) {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(s.event.name.uppercased()).font(.system(size: 30, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
+                    Text(s.event.name.uppercased()).font(.system(size: 30, weight: .black, design: .rounded)).foregroundStyle(Color(hexString: s.event.brandHex) ?? Tidbits.Palette.ink)   // Wave D: white-label brand accent
                     if !s.event.venue.isEmpty {
                         Text(s.event.venue).font(.system(size: 22, weight: .heavy, design: .rounded)).foregroundStyle(Tidbits.Palette.coral)
                     }

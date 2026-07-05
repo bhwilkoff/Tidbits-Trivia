@@ -24,6 +24,10 @@ struct ProfileView: View {
                         Label("Leaderboard", systemImage: "trophy.fill").frame(maxWidth: .infinity)
                     }
                     .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.ink))
+                    NavigationLink { DuelsView() } label: {   // L5: async friend duels
+                        Label("Duels", systemImage: "flag.2.crossed.fill").frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.ink))
                     if gameCenter.isAuthenticated {
                         Button { gameCenter.showDashboard() } label: {
                             Label("Game Center — Leaderboards & Achievements", systemImage: "gamecontroller.fill")
@@ -178,6 +182,7 @@ struct LeaderboardView: View {
     @State private var overall: [LeaderboardRow] = []
     @State private var venues: [(venue: String, rows: [LeaderboardRow])] = []
     @State private var friends: [PlayerIdentity.Friend] = []
+    @State private var challenged: Set<String> = []
     @State private var myUid = ""
     @State private var loading = true
 
@@ -225,10 +230,24 @@ struct LeaderboardView: View {
         HStack(spacing: 10) {
             Text("\(i + 1)").font(.headline.monospacedDigit()).foregroundStyle(Tidbits.Palette.inkSoft).frame(width: 30, alignment: .leading)
             Text(f.name).fontWeight(.semibold)
+            if !f.isMe {   // L5: challenge to a duel
+                if challenged.contains(f.id) {
+                    Text("Sent").font(.caption2).foregroundStyle(Tidbits.Palette.inkSoft)
+                } else {
+                    Button("Duel") { Task { await challenge(f.id, f.name) } }
+                        .buttonStyle(.borderless).font(.caption.weight(.bold)).foregroundStyle(Tidbits.Palette.blue)
+                }
+            }
             Spacer()
             Text(f.score.map(String.init) ?? "—").font(.headline.monospacedDigit()).foregroundStyle(f.score == nil ? Tidbits.Palette.inkSoft : Tidbits.Palette.ink)
         }
         .listRowBackground(f.isMe ? Tidbits.Palette.blue.opacity(0.12) : nil)
+    }
+
+    private func challenge(_ uid: String, _ name: String) async {
+        let qs = await QuestionProvider.shared.questions(mode: .mix, category: .named("mixed"))
+        let ds = qs.filter { $0.options.count >= 2 }.prefix(6).map { DuelQ(p: $0.prompt, o: $0.options, c: $0.correctIndex, e: $0.explanation) }
+        if await DuelStore.shared.challenge(friendUID: uid, friendName: name, questions: Array(ds)) != nil { challenged.insert(uid) }
     }
 
     private func row(_ i: Int, _ r: LeaderboardRow) -> some View {
@@ -261,4 +280,116 @@ struct LeaderboardView: View {
         loading = false
     }
 }
+
+// MARK: - Async friend duels (L5)
+
+struct PlayableDuel: Identifiable { let id: String; let questions: [Question] }
+
+/// The duels list — incoming challenges + your duels with status (your-turn / waiting / result).
+struct DuelsView: View {
+    @State private var inbox: [DuelInvite] = []
+    @State private var mine: [DuelStanding] = []
+    @State private var loading = true
+    @State private var playing: PlayableDuel?
+    private let store = DuelStore.shared
+
+    var body: some View {
+        List {
+            if loading {
+                HStack { Spacer(); ProgressView(); Spacer() }
+            } else {
+                let mineIDs = Set(mine.map(\.id))
+                let pending = inbox.filter { !mineIDs.contains($0.id) }
+                if pending.isEmpty && mine.isEmpty {
+                    Text("No duels yet. Add friends from a live night, then tap Duel on the Leaderboard.")
+                        .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                }
+                if !pending.isEmpty {
+                    Section("Challenges for you") {
+                        ForEach(pending) { inv in
+                            HStack {
+                                Text("\(inv.fromName) challenged you").fontWeight(.semibold)
+                                Spacer()
+                                Button("Play") { Task { await play(inv.id) } }
+                                    .buttonStyle(.borderless).foregroundStyle(Tidbits.Palette.blue)
+                            }
+                        }
+                    }
+                }
+                if !mine.isEmpty {
+                    Section("Your duels") { ForEach(mine) { duelRow($0) } }
+                }
+            }
+        }
+        .navigationTitle("Duels")
+        .task { await load() }
+        .fullScreenCover(item: $playing) { pd in
+            DuelGameContainer(duelId: pd.id, questions: pd.questions) { playing = nil; Task { await load() } }
+        }
+    }
+
+    @ViewBuilder private func duelRow(_ d: DuelStanding) -> some View {
+        HStack {
+            Text("vs \(d.oppName)").fontWeight(.semibold)
+            Spacer()
+            if d.myDone && d.oppDone {
+                Text(d.myScore > d.oppScore ? "Won \(d.myScore)-\(d.oppScore)" : d.myScore < d.oppScore ? "Lost \(d.myScore)-\(d.oppScore)" : "Tied \(d.myScore)-\(d.oppScore)")
+                    .fontWeight(.bold).foregroundStyle(d.myScore > d.oppScore ? Tidbits.Palette.coral : Tidbits.Palette.inkSoft)
+            } else if d.myDone {
+                Text("Waiting on \(d.oppName)").font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft)
+            } else {
+                Button("Your turn") { Task { await play(d.id) } }
+                    .buttonStyle(.borderless).foregroundStyle(Tidbits.Palette.blue)
+            }
+        }
+    }
+
+    private func play(_ id: String) async {
+        await store.accept(id)
+        guard let d = await store.load(id) else { return }
+        let qs = d.questions.prefix(10).map {
+            Question(id: UUID().uuidString, prompt: $0.p, options: $0.o, correctIndex: $0.c,
+                     categoryID: "mixed", difficulty: 3, explanation: $0.e, sourceTitle: "", sourceURL: nil, templateID: "duel")
+        }
+        playing = PlayableDuel(id: id, questions: Array(qs))
+    }
+
+    private func load() async {
+        async let ib = store.inbox()
+        async let mn = store.mine()
+        inbox = await ib; mine = await mn; loading = false
+    }
+}
+
+/// Plays a duel's shared question set on the game engine, then submits my score to my slot.
+struct DuelGameContainer: View {
+    let duelId: String
+    let questions: [Question]
+    let onDone: () -> Void
+    @State private var game = GameEngine()
+    @State private var started = false
+    @State private var submitted = false
+
+    var body: some View {
+        ZStack {
+            Tidbits.Palette.bg.ignoresSafeArea()
+            switch game.phase {
+            case .idle, .loading:
+                ProgressView().controlSize(.large).tint(Tidbits.Palette.ink)
+            case .roundIntro, .playing, .reveal:
+                GamePlayView(game: game, onQuit: close)
+            case .finished:
+                ResultsView(summary: game.summary, onPlayAgain: nil, onDone: close).onAppear(perform: submit)
+            }
+        }
+        .onAppear { if !started { started = true; game.startCustom(mode: .mix, category: .named("mixed"), questions: questions) } }
+    }
+    private func submit() {
+        guard !submitted else { return }; submitted = true
+        let s = game.summary.score
+        Task { await DuelStore.shared.submit(duelId, score: s) }
+    }
+    private func close() { game.quit(); onDone() }
+}
+
 #endif

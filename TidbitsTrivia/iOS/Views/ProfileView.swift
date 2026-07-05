@@ -188,6 +188,14 @@ struct LeaderboardView: View {
                 Text("No standings yet. Play a live Tidbits night while signed in and you'll climb the board here — it refreshes hourly.")
                     .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
             } else {
+                Section {   // L3 seasons: the fresh-start banner
+                    HStack {
+                        Text(PlayerIdentity.seasonDisplay(PlayerIdentity.currentSeason())).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                        Spacer()
+                        Text("Resets in \(PlayerIdentity.seasonResetDays()) days").font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft)
+                    }
+                    .listRowBackground(Tidbits.Palette.coral.opacity(0.15))
+                }
                 if !overall.isEmpty {
                     Section("This season · Overall") { ForEach(Array(overall.enumerated()), id: \.element.id) { row($0.offset, $0.element) } }
                 }

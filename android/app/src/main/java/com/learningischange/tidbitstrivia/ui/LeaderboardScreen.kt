@@ -48,6 +48,20 @@ private fun parseRows(s: String?): List<LbRow> {
     return (0 until arr.length()).map { val o = arr.getJSONObject(it); LbRow(o.optString("name", "Player"), o.optInt("score"), o.optString("uid", "")) }
 }
 
+// L3 seasons: friendly name + the fresh-start countdown (calendar quarters, matching Core/JS).
+private fun currentSeasonName(): String {
+    val cal = java.util.Calendar.getInstance()
+    return "Q${cal.get(java.util.Calendar.MONTH) / 3 + 1} ${cal.get(java.util.Calendar.YEAR)}"
+}
+private fun seasonResetDays(): Int {
+    val now = java.util.Calendar.getInstance()
+    val q = now.get(java.util.Calendar.MONTH) / 3 + 1
+    val next = java.util.Calendar.getInstance().apply {
+        clear(); set(now.get(java.util.Calendar.YEAR), q * 3, 1)
+    }
+    return maxOf(0, Math.ceil((next.timeInMillis - now.timeInMillis) / 86_400_000.0).toInt())
+}
+
 @Composable
 fun LeaderboardScreen(onBack: () -> Unit) {
     var overall by remember { mutableStateOf<List<LbRow>>(emptyList()) }
@@ -86,6 +100,12 @@ fun LeaderboardScreen(onBack: () -> Unit) {
                 Text("No standings yet. Play a live Tidbits night while signed in and you'll climb the board here — it refreshes hourly.",
                     color = soft, modifier = Modifier.padding(top = 24.dp))
             else -> LazyColumn(Modifier.fillMaxSize()) {
+                item {   // L3 seasons: the fresh-start banner
+                    Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text(currentSeasonName(), fontWeight = FontWeight.Black, color = ink, modifier = Modifier.weight(1f))
+                        Text("Resets in ${seasonResetDays()} days", fontSize = 13.sp, color = soft)
+                    }
+                }
                 if (overall.isNotEmpty()) {
                     item { SectionHeader("This season · Overall", ink) }
                     itemsIndexed(overall) { i, r -> LbRowView(i, r, myUid, ink, soft) }

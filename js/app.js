@@ -723,6 +723,19 @@ function profileCard() {
 
 // Wave E: the cross-venue / season leaderboard, read from the static JSON the hourly cron
 // commits to data/leaderboard/ — free/cacheable, never RTDB.
+// L3 seasons: friendly display + the fresh-start countdown (calendar quarters, matching Core currentSeason).
+function seasonDisplay(key) {
+  const m = /^(\d{4})-S(\d)$/.exec(key || '');
+  return m ? `Q${m[2]} ${m[1]}` : (key || 'Season');
+}
+function seasonMeta() {
+  const now = new Date();
+  const q = Math.floor(now.getMonth() / 3) + 1;
+  const nextStart = new Date(now.getFullYear(), q * 3, 1);   // first day of the next quarter
+  const days = Math.max(0, Math.ceil((nextStart - now) / 86400000));
+  return { key: `${now.getFullYear()}-S${q}`, name: `Q${q} ${now.getFullYear()}`, days };
+}
+
 function viewLeaderboard() {
   return `<div style="max-width:640px;margin:0 auto;padding:8px 4px">
     <a href="#/records" style="color:var(--color-accent);text-decoration:none;font-weight:700">‹ Records</a>
@@ -753,7 +766,10 @@ async function loadLeaderboard() {
     if (!seasons.length) { body.innerHTML = emptyLeaderboard(); return; }
     const season = seasons[0];
     const overall = await fetch(`${base}/${season}/_overall.json`).then((r) => r.json()).catch(() => []);
-    let html = `<h2 class="section-header">${e(season)} · Overall</h2>${table(overall)}`;
+    const sm = seasonMeta();   // L3 seasons: the fresh-start banner
+    let html = `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border-radius:14px;background:var(--color-primary);color:#fff;margin:6px 0 16px">
+       <b>${e(sm.name)}</b><span style="opacity:.9;font-size:.85em">Resets in ${sm.days} day${sm.days === 1 ? '' : 's'} — a fresh climb</span></div>`;
+    html += `<h2 class="section-header">${e(seasonDisplay(season))} · Overall</h2>${table(overall)}`;
     for (const venue of (index[season] || [])) {
       const rows = await fetch(`${base}/${season}/${encodeURIComponent(venue)}.json`).then((r) => r.json()).catch(() => []);
       html += `<h2 class="section-header">${e(venue)}</h2>${table(rows)}`;

@@ -130,6 +130,13 @@ struct LeaderboardView_tvOS: View {
                 Text("No standings yet. Play a live Tidbits night while signed in and the board fills in here — it refreshes hourly.")
                     .foregroundStyle(TVTheme.textSoft)
             } else {
+                Section {   // L3 seasons: the fresh-start banner
+                    HStack {
+                        Text(PlayerIdentity.seasonDisplay(PlayerIdentity.currentSeason())).font(.system(size: 30, weight: .heavy, design: .rounded)).foregroundStyle(.white)
+                        Spacer()
+                        Text("Resets in \(PlayerIdentity.seasonResetDays()) days").foregroundStyle(TVTheme.textSoft)
+                    }
+                }
                 if !overall.isEmpty {
                     Section("This season · Overall") { ForEach(Array(overall.enumerated()), id: \.element.id) { row($0.offset, $0.element) } }
                 }

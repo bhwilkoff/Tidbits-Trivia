@@ -104,6 +104,23 @@ enum PlayerIdentity {
         return "\(c.year ?? 2026)-S\(quarter)"
     }
 
+    /// L3 seasons: friendly display for a "YYYY-SQ" key (e.g. "2026-S3" → "Q3 2026").
+    static func seasonDisplay(_ key: String) -> String {
+        let parts = key.split(separator: "-")
+        if parts.count == 2, parts[1].hasPrefix("S") { return "Q\(parts[1].dropFirst()) \(parts[0])" }
+        return key
+    }
+
+    /// L3 seasons: days until the current calendar-quarter season resets — the fresh-start countdown.
+    static func seasonResetDays(now: Date = Date()) -> Int {
+        let cal = Calendar(identifier: .gregorian)
+        let c = cal.dateComponents([.year, .month], from: now)
+        let quarter = (((c.month ?? 1) - 1) / 3) + 1
+        var comps = DateComponents(); comps.year = c.year; comps.month = (quarter * 3) + 1; comps.day = 1
+        guard let next = cal.date(from: comps) else { return 0 }
+        return max(0, cal.dateComponents([.day], from: now, to: next).day ?? 0)
+    }
+
     /// A venue key safe for an RTDB path — ASCII a-z0-9 kept, every other run collapsed to a
     /// single "-", edges trimmed. Byte-identical to the JS/Kotlin `[^a-z0-9]+`→`-` regex.
     static func venueKey(_ venue: String) -> String {

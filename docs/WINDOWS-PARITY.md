@@ -78,7 +78,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [x] 3.1 ★ `LiveRoom` wire types (Meta/Pub/Numeric/Team/Answer/Phase) — keys match web twin, null-omitted; wire tests GREEN
 - [x] 3.3 `LiveScoring` (per-shape authoritative scoring: MCQ/numeric/ordering/matching/type/enumerate) — 6 tests GREEN
 - [x] 3.2 `LiveHostNet` (open room + publish + setState/setScore + host-plays + self-reconnecting SSE roster/scores/answers, lock-guarded) — builds
-- [ ] 3.4 `LivePlayerClient` (join a hosted room)
+- [x] 3.4 `LivePlayerClient` (join, typed submits, SSE watch pub/meta/score, coplayers) — LIVE END-TO-END host↔join↔score GREEN
 - [ ] 3.5 LAN Night stack (optional; RTDB-only acceptable)
 
 ## Slice 4 — Host cockpit + projector MVP

@@ -99,6 +99,17 @@ struct ContentView_macOS: View {
                         .tag(item)
                 }
             }
+            // Discoverable entry to Settings + Sign in with Apple. ⌘, still works; this is the
+            // visible affordance (the app menu alone wasn't discoverable). SettingsLink opens the
+            // native Settings scene.
+            .safeAreaInset(edge: .bottom) {
+                SettingsLink {
+                    Label("Settings & Account", systemImage: "gearshape.fill")
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, 12).padding(.vertical, 10)
+            }
             .navigationSplitViewColumnWidth(min: 200, ideal: 220)
         } detail: {
             detail

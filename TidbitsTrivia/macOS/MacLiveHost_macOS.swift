@@ -438,6 +438,8 @@ struct LiveHostView_macOS: View {
             HStack {
                 Text("Teams").font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
                 Spacer()
+                Button { exportResultsCSV() } label: { Image(systemName: "square.and.arrow.up") }   // Wave C: data export
+                    .buttonStyle(.borderless).help("Export standings to CSV")
                 Text("pts/correct").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
                 Stepper("\(session.pointsPerCorrect)", value: $session.pointsPerCorrect, in: 1...10).labelsHidden()
             }
@@ -479,6 +481,24 @@ struct LiveHostView_macOS: View {
         }
         .frame(width: 320)
         .background(Tidbits.Palette.bgDeep)
+    }
+
+    /// Wave C: export the unified standings (phone + paper teams) to a CSV the host keeps.
+    private func exportResultsCSV() {
+        var rows: [(name: String, score: Int, kind: String)] = []
+        for (uid, team) in net.teams { rows.append((team.name, net.scores[uid] ?? 0, "phone")) }
+        for t in session.teams { rows.append((t.name, t.score, "paper")) }
+        rows.sort { $0.score > $1.score }
+        func esc(_ s: String) -> String {
+            (s.contains(",") || s.contains("\"") || s.contains("\n"))
+                ? "\"\(s.replacingOccurrences(of: "\"", with: "\"\""))\"" : s
+        }
+        var csv = "rank,team,score,type\n"
+        for (i, r) in rows.enumerated() { csv += "\(i + 1),\(esc(r.name)),\(r.score),\(r.kind)\n" }
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.commaSeparatedText]
+        panel.nameFieldStringValue = "\(session.event.name) — results.csv"
+        if panel.runModal() == .OK, let url = panel.url { try? csv.data(using: .utf8)?.write(to: url) }
     }
 
     private func teamRow(_ team: LiveTeam) -> some View {

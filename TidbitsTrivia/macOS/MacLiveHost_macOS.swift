@@ -93,6 +93,14 @@ final class LiveHostSession {
         teams.append(LiveTeam(name: n))
     }
     func removeTeam(_ id: LiveTeam.ID) { teams.removeAll { $0.id == id } }
+    /// Wave C: merge one team's score into another and drop it (a split team reconciled).
+    func merge(_ from: LiveTeam.ID, into to: LiveTeam.ID) {
+        guard from != to,
+              let fi = teams.firstIndex(where: { $0.id == from }),
+              let ti = teams.firstIndex(where: { $0.id == to }) else { return }
+        teams[ti].score += teams[fi].score
+        teams.remove(at: fi)
+    }
     /// Manual score adjustment — the referee model (§A3.2). Never below 0.
     func adjust(_ id: LiveTeam.ID, by delta: Int) {
         guard let i = teams.firstIndex(where: { $0.id == id }) else { return }
@@ -539,7 +547,16 @@ struct LiveHostView_macOS: View {
             }
             Button { session.adjust(team.id, by: -1) } label: { Image(systemName: "minus") }.buttonStyle(.bordered)
             Button { session.adjust(team.id, by: 1) } label: { Image(systemName: "plus") }.buttonStyle(.bordered)
-            Menu { Button("Remove team", role: .destructive) { session.removeTeam(team.id) } } label: { Image(systemName: "ellipsis") }
+            Menu {
+                if session.teams.count > 1 {   // Wave C: merge a split team into another
+                    Menu("Merge into…") {
+                        ForEach(session.teams.filter { $0.id != team.id }) { other in
+                            Button(other.name) { session.merge(team.id, into: other.id) }
+                        }
+                    }
+                }
+                Button("Remove team", role: .destructive) { session.removeTeam(team.id) }
+            } label: { Image(systemName: "ellipsis") }
                 .menuStyle(.borderlessButton).frame(width: 20)
         }
         .padding(12).chunkyCard()

@@ -30,6 +30,17 @@
 > Tidbits Live dependent formats (fastest-finger, audio, poll, cheating
 > deterrence). See `docs/macOS-DESIGN.md` §A7 + `docs/EVENT-TRIVIA-COMPETITIVE.md`.
 >
+> **Windows (6th platform) — 2026-07-05: RESEARCHED, verdict GO, NOT built.**
+> A native Windows 10/11 app (host-first, full Tidbits Live parity) is feasible
+> at ~$0, built entirely from the Mac. Stack: **Avalonia UI v12 (.NET/C#)** —
+> cross-builds win-x64 from macOS; **Avalonia.Headless** renders pixel-faithful
+> PNGs on the Mac (solves observability); a **C# client twin** of the shared RTDB
+> `live/{code}` data plane gives Live parity with no backend change; $0 dist via
+> free Microsoft Store (auto-signed) or Velopack/GitHub Releases. Binding spec +
+> playbook: `docs/WINDOWS-DESIGN.md`, `docs/WINDOWS-PLAYBOOK.md`,
+> `docs/WINDOWS-RESEARCH.md`. Windows is a ⏳ column pending owner greenlight to
+> scaffold `windows/` + build the host-first slice (playbook §7).
+>
 > **Last audit: 2026-06-30 (Android ↔ Apple, code-verified).** Found 4
 > false cells (§3b emoji grid, §4 entire auth section, §5 share URLs,
 > §12 adaptive icon) and confirmed the real Android-behind-iOS gaps

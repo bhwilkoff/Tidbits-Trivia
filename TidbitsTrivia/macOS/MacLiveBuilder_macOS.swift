@@ -51,6 +51,10 @@ struct LiveBuilderView_macOS: View {
                         Text(ev.name).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
                         Text("\(ev.rounds.count) rounds · \(ev.totalQuestions) questions")
                             .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                        if let next = ev.nextOccurrence, let day = ev.weekdayName {   // Wave D: recurring series
+                            Label("Every \(day) · next \(next.formatted(.dateTime.month().day()))", systemImage: "repeat")
+                                .font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.coral)
+                        }
                     }
                     .tag(ev.id)
                     .contextMenu { Button("Delete", role: .destructive) { store.delete(ev) } }
@@ -74,6 +78,22 @@ struct LiveBuilderView_macOS: View {
                 TextField("Venue (shown on the big screen)", text: $working.venue)
                     .textFieldStyle(.roundedBorder).font(Tidbits.TypeRamp.l4)
                     .frame(maxWidth: 340)
+                HStack(spacing: 8) {   // Wave D: recurring-series scheduling
+                    Image(systemName: "repeat").foregroundStyle(Tidbits.Palette.inkSoft)
+                    Menu {
+                        Button("One-off (not recurring)") { working.weekday = nil }
+                        ForEach(1...7, id: \.self) { wd in
+                            Button("Every \(Calendar.current.weekdaySymbols[wd - 1])") { working.weekday = wd }
+                        }
+                    } label: {
+                        Text(working.weekdayName.map { "Every \($0)" } ?? "One-off").font(Tidbits.TypeRamp.l5)
+                    }
+                    .menuStyle(.borderlessButton).fixedSize()
+                    if let next = working.nextOccurrence {
+                        Text("· next \(next.formatted(.dateTime.weekday(.abbreviated).month().day()))")
+                            .font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft)
+                    }
+                }
 
                 Text("Rounds").font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
                 if working.rounds.isEmpty {

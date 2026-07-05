@@ -31,8 +31,21 @@ struct LiveEvent: Identifiable, Codable, Hashable {
     var venue: String = ""
     var rounds: [LiveRound] = []
     var createdAt: Date = .now
+    var weekday: Int? = nil   // Wave D: recurring-series scheduling — 1=Sun…7=Sat (nil = one-off); optional so saved events decode
 
     var totalQuestions: Int { rounds.reduce(0) { $0 + $1.questions.count } }
+    /// Wave D: the day-name of a recurring series (nil for a one-off).
+    var weekdayName: String? {
+        guard let weekday, (1...7).contains(weekday) else { return nil }
+        return Calendar.current.weekdaySymbols[weekday - 1]
+    }
+    /// Wave D: the next calendar date this series lands on (nil for a one-off) — the app
+    /// surfaces "this week's night" so the host reuses the template instead of rebuilding it.
+    var nextOccurrence: Date? {
+        guard let weekday, (1...7).contains(weekday) else { return nil }
+        return Calendar.current.nextDate(after: .now, matching: DateComponents(weekday: weekday),
+                                         matchingPolicy: .nextTime)
+    }
     /// The full question stream, round-tagged, for play/host (mirrors a Night).
     var questionStream: [Question] {
         var out: [Question] = []

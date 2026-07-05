@@ -69,6 +69,9 @@ struct SettingsView_tvOS: View {
                 } footer: {
                     Text("Occasionally re-asks questions you've missed, spaced out, so they stick. Turn off to only ever see new questions.")
                 }
+                Section("Leaderboard") {   // Wave E: cross-venue / season standings
+                    NavigationLink("Cross-venue standings") { LeaderboardView_tvOS() }
+                }
                 Section("Game Center") {
                     HStack {
                         Text("Status")
@@ -109,6 +112,57 @@ struct SettingsView_tvOS: View {
         try? modelContext.delete(model: CalibrationTally.self)
         try? modelContext.save()
         QuestionProvider.shared.resetSeen()
+    }
+}
+
+/// Wave E: the cross-venue / season leaderboard on the TV — reuses the shared Core fetcher.
+struct LeaderboardView_tvOS: View {
+    @State private var overall: [LeaderboardRow] = []
+    @State private var venues: [(venue: String, rows: [LeaderboardRow])] = []
+    @State private var loading = true
+
+    var body: some View {
+        List {
+            if loading {
+                HStack { Spacer(); ProgressView(); Spacer() }
+            } else if overall.isEmpty && venues.isEmpty {
+                Text("No standings yet. Play a live Tidbits night while signed in and the board fills in here — it refreshes hourly.")
+                    .foregroundStyle(TVTheme.textSoft)
+            } else {
+                if !overall.isEmpty {
+                    Section("This season · Overall") { ForEach(Array(overall.enumerated()), id: \.element.id) { row($0.offset, $0.element) } }
+                }
+                ForEach(venues, id: \.venue) { v in
+                    Section(v.venue) { ForEach(Array(v.rows.enumerated()), id: \.element.id) { row($0.offset, $0.element) } }
+                }
+            }
+        }
+        .navigationTitle("Leaderboard")
+        .task { await load() }
+    }
+
+    private func row(_ i: Int, _ r: LeaderboardRow) -> some View {
+        HStack(spacing: 20) {
+            Text("\(i + 1)").font(.system(size: 30, weight: .black, design: .rounded)).foregroundStyle(i == 0 ? Color.white : TVTheme.textSoft).frame(width: 50, alignment: .leading)
+            if i == 0 { Image(systemName: "crown.fill").foregroundStyle(Tidbits.Palette.yellow) }
+            Text(r.name).font(.system(size: 30, weight: .heavy, design: .rounded)).foregroundStyle(.white)
+            Spacer()
+            Text("\(r.score)").font(.system(size: 30, weight: .black, design: .rounded).monospacedDigit()).foregroundStyle(.white)
+        }
+        .padding(.vertical, 6)
+    }
+
+    private func load() async {
+        let idx = await LeaderboardAPI.index()
+        guard let season = idx.keys.sorted().last else { loading = false; return }
+        overall = await LeaderboardAPI.overall(season: season)
+        var vs: [(venue: String, rows: [LeaderboardRow])] = []
+        for venue in (idx[season] ?? []).sorted() {
+            let rows = await LeaderboardAPI.venue(season: season, venue: venue)
+            if !rows.isEmpty { vs.append((venue, rows)) }
+        }
+        venues = vs
+        loading = false
     }
 }
 #endif

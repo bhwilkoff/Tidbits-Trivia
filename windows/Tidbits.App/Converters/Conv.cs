@@ -15,6 +15,9 @@ public static class Conv
     public static readonly FuncValueConverter<GameEngine.Phase, bool> IsFinished =
         new(p => p == GameEngine.Phase.Finished);
 
+    public static readonly FuncValueConverter<GameEngine.Phase, bool> NotFinished =
+        new(p => p != GameEngine.Phase.Finished && p != GameEngine.Phase.Idle && p != GameEngine.Phase.Loading);
+
     public static readonly FuncValueConverter<double, string> Seconds =
         new(s => $"{(int)System.Math.Ceiling(s)}s");
 }

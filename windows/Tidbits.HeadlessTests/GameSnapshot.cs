@@ -36,4 +36,24 @@ public class GameSnapshot
         Dispatcher.UIThread.RunJobs();
         win.CaptureRenderedFrame()!.Save(Path.Combine(Art(), "game-question.png"));
     }
+
+    [AvaloniaFact]
+    public async Task Reveal_highlights_the_answer()
+    {
+        var sources = QuestionSources.LoadFromDirectory(Path.Combine(AppContext.BaseDirectory, "Fixtures"));
+        var engine = new GameEngine(new QuestionProvider(sources), sources.Difficulty);
+        await engine.Start(GameMode.Classic, TriviaCategory.Named("mixed"));
+
+        var vm = new GameViewModel(engine);
+        var win = new Window { Width = 900, Height = 680, Content = new GameView { DataContext = vm } };
+        win.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        // Answer wrong so the PNG shows green (correct) + red (chosen-wrong).
+        var q = engine.Current!;
+        engine.Submit((q.CorrectIndex + 1) % q.Options.Count);
+        Assert.Equal(GameEngine.Phase.Reveal, engine.CurrentPhase);
+        Dispatcher.UIThread.RunJobs();
+        win.CaptureRenderedFrame()!.Save(Path.Combine(Art(), "game-reveal.png"));
+    }
 }

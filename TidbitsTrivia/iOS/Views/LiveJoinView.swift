@@ -9,6 +9,7 @@ import SwiftUI
 struct LiveJoinView: View {
     var initialCode: String = ""
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
     @State private var client = LivePlayerClient()
     @State private var code = ""
     @State private var team = ""
@@ -25,6 +26,9 @@ struct LiveJoinView: View {
             if team.isEmpty { team = LivePlayerClient.lastTeam }
         }
         .interactiveDismissDisabled(client.joined)
+        .onChange(of: scenePhase) { _, phase in   // Wave C: flag leaving the app mid-question (soft cheat signal)
+            if phase != .active, client.pub?.phase == LiveRoom.Phase.question, !client.hasAnswered { client.blurred = true }
+        }
         .task {
             // CI/device hook: auto-resolve a known room to verify the flow headless.
             if ProcessInfo.processInfo.environment["TIDBITS_LIVE_AUTOJOIN"] == "1",

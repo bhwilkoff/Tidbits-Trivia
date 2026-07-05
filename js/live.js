@@ -6,8 +6,13 @@ import { FirebaseNet } from './firebase.js';
 import { Identity } from './identity.js';
 
 const S = { code: '', team: '', joined: false, joining: false, pub: null, meta: null,
-            score: 0, wager: 0, submittedQid: null, chosen: null, error: '', local: {},
+            score: 0, wager: 0, blurred: false, submittedQid: null, chosen: null, error: '', local: {},
             liveAnswered: 0, liveCorrect: 0, talliedQid: null, recorded: false };
+
+// Wave C: flag if the player switches tab / backgrounds mid-question before submitting.
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && S.pub?.phase === 'question' && S.submittedQid !== S.pub?.qid) S.blurred = true;
+});
 
 // Live→profile bridge: feed the portable identity once when the night ends.
 function recordIfEnded() {
@@ -55,7 +60,7 @@ async function join() {
     unsubs.push(FirebaseNet.liveOnMeta(code, (m) => { S.meta = m; recordIfEnded(); draw(); }));
     unsubs.push(FirebaseNet.liveOnScore(code, (v) => { S.score = v; draw(); }));
     unsubs.push(FirebaseNet.liveOnPub(code, (p) => {
-      if (p && p.qid !== S.pub?.qid) { S.submittedQid = null; S.chosen = null; S.local = {}; }
+      if (p && p.qid !== S.pub?.qid) { S.submittedQid = null; S.chosen = null; S.local = {}; S.blurred = false; }   // Wave C: reset focus flag
       S.pub = p;
       if (p && p.phase === 'reveal' && S.talliedQid !== p.qid) {   // tally MCQ accuracy at reveal
         S.talliedQid = p.qid;
@@ -74,6 +79,7 @@ async function join() {
 async function submitAns(fields) {
   if (!S.pub || S.pub.phase !== 'question' || S.submittedQid === S.pub.qid || S.pub.locked) return;
   if (S.pub.wager) fields = { ...fields, wager: Math.max(0, Math.min(S.wager || 0, S.score || 0)) };   // Wave A: attach the stake
+  if (S.blurred) fields = { ...fields, blurred: true };   // Wave C: flag mid-question tab-switch
   S.submittedQid = S.pub.qid; draw();
   try { await FirebaseNet.liveSubmit(S.code, S.pub.qid, fields); }
   catch { S.submittedQid = null; S.chosen = null; S.error = 'Answer didn’t send — tap again.'; draw(); }

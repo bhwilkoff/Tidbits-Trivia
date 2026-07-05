@@ -68,6 +68,7 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
     var meta by remember { mutableStateOf<FirebaseNet.LiveMeta?>(null) }
     var score by remember { mutableStateOf(0) }
     var wager by remember { mutableStateOf(0) }   // Wave A: the player's stake for a wager question
+    var blurred by remember { mutableStateOf(false) }   // Wave C: left the app mid-question (soft cheat signal)
     var joined by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     var submittedQid by remember { mutableStateOf<String?>(null) }
@@ -83,7 +84,7 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
                 unsubs += FirebaseNet.liveOnMeta(code) { meta = it }
                 unsubs += FirebaseNet.liveOnScore(code) { score = it }
                 unsubs += FirebaseNet.liveOnPub(code) { p ->
-                    if (p != null && p.qid != pub?.qid) { submittedQid = null; chosen = null }
+                    if (p != null && p.qid != pub?.qid) { submittedQid = null; chosen = null; blurred = false }   // Wave C: reset focus flag
                     pub = p
                 }
             } catch (e: Exception) {
@@ -97,10 +98,21 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
         }
     }
 
+    // Wave C: flag if the player backgrounds the app mid-question before submitting.
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val obs = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_STOP && pub?.phase == "question" && submittedQid != pub?.qid) blurred = true
+        }
+        lifecycleOwner.lifecycle.addObserver(obs)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(obs) }
+    }
+
     fun submitFields(fields: Map<String, Any?>) {
         val p = pub ?: return
         if (p.phase != "question" || submittedQid == p.qid || p.locked) return
-        val fields = if (p.wager) fields + ("wager" to wager.coerceIn(0, score).toLong()) else fields   // Wave A: attach the stake
+        var fields = if (p.wager) fields + ("wager" to wager.coerceIn(0, score).toLong()) else fields   // Wave A: attach the stake
+        if (blurred) fields = fields + ("blurred" to true)   // Wave C: flag mid-question app-switch
         submittedQid = p.qid
         scope.launch {
             try { FirebaseNet.liveSubmitAnswer(code, p.qid, fields) }

@@ -18,6 +18,7 @@ final class LivePlayerClient {
     private(set) var meta: LiveRoom.Meta?
     private(set) var score = 0
     var wager = 0   // Wave A: the player's stake for a wager question (UI-bound; clamped to score on send)
+    var blurred = false   // Wave C: set true if the player left the app during this question (attached to the answer)
     private(set) var submittedQid: String?
     private(set) var chosen: Int?
     private(set) var errorText: String?
@@ -69,6 +70,7 @@ final class LivePlayerClient {
         submittedQid = pub.qid
         var ans = ans
         if pub.wager == true { ans.wager = max(0, min(wager, score)) }   // Wave A: attach the stake
+        if blurred { ans.blurred = true }   // Wave C: flag if they left the app during this question
         do { try await db.putJSON("\(LiveRoom.path(code))/answers/\(pub.qid)/\(uid)", try JSONEncoder().encode(ans)) }
         catch { chosen = nil; submittedQid = nil; errorText = "Answer didn't send — tap again." }
     }
@@ -103,7 +105,7 @@ final class LivePlayerClient {
 
     private func applyPub(_ ev: FirebaseRTDB.StreamEvent) {
         guard let d = ev.dataJSON, let p = try? JSONDecoder().decode(LiveRoom.Pub.self, from: d) else { pub = nil; return }
-        if p.qid != pub?.qid { submittedQid = nil; chosen = nil }
+        if p.qid != pub?.qid { submittedQid = nil; chosen = nil; blurred = false }   // Wave C: reset the focus flag for the new question
         pub = p
         // Tally MCQ accuracy once per question, at reveal (answerIndex is present then).
         if p.phase == LiveRoom.Phase.reveal, talliedQid != p.qid {

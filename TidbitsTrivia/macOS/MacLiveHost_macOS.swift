@@ -560,6 +560,10 @@ struct LiveHostView_macOS: View {
                             Circle().fill(Tidbits.Palette.mint).frame(width: 7, height: 7)
                         }
                         Text(team.name).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink).lineLimit(1)
+                        if ans?.blurred == true {   // Wave C: left the app during the question — a soft cheat signal
+                            Image(systemName: "eye.trianglebadge.exclamationmark.fill").font(.system(size: 13))
+                                .foregroundStyle(Tidbits.Palette.coral).help("Left the app during this question")
+                        }
                     }
                     Text("\(team.score)").font(.system(size: 22, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
                 }

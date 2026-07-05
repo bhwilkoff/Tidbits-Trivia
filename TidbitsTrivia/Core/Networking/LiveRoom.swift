@@ -72,6 +72,7 @@ enum LiveRoom {
         var pairs: [Int]? = nil // matching — for key i, the chosen matchValues index
         var list: [String]? = nil // enumerate — the names the player entered
         var wager: Int? = nil   // Wave A: points staked on this question (host clamps to the team's score at reveal)
+        var blurred: Bool? = nil // Wave C: the player left the app/tab during this question before submitting (soft cheat signal)
         var ts: Int             // epoch ms — first-submission ordering / speed
     }
 

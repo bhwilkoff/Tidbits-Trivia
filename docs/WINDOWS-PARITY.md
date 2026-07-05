@@ -75,7 +75,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [ ] 1.18 ★ `FirebaseRTDB` (REST + SSE, anon auth, room codes)
 - [ ] 1.16 ★ `PlayerProfile` wire contract (Rating/Streak/Stats/accountKey/venueKey/season/avatarHue)
 - [ ] 1.17 `PlayerIdentityStore` (portable identity façade)
-- [ ] 3.1 ★ `LiveRoom` wire types (Meta/Pub/Numeric/Team/Answer/Phase)
+- [x] 3.1 ★ `LiveRoom` wire types (Meta/Pub/Numeric/Team/Answer/Phase) — keys match web twin, null-omitted; wire tests GREEN
 - [ ] 3.3 `LiveNightHost.score` (per-shape authoritative scoring)
 - [ ] 3.2 `LiveHostNet` (networked host publish + SSE roster)
 - [ ] 3.4 `LivePlayerClient` (join a hosted room)

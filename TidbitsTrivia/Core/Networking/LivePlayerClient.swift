@@ -132,6 +132,19 @@ final class LivePlayerClient {
         Task {
             await PlayerIdentityStore.shared.recordLiveGame(correct: correct, answered: answered)
             await PlayerIdentityStore.shared.recordStanding(venue: venue, score: nightScore)   // Wave E: per-venue season standing
+            await captureCoplayers()   // L5 social graph
+        }
+    }
+
+    /// L5 social graph: the co-players from this room, captured at night-end for the "Add" surface.
+    private(set) var coplayers: [PlayerIdentity.Friend] = []
+
+    private func captureCoplayers() async {
+        guard let me = uid,
+              let teams = (try? await db.get("\(LiveRoom.path(code))/teams", as: [String: LiveRoom.Team].self)) ?? nil
+        else { return }
+        coplayers = teams.compactMap { entry in
+            entry.key == me ? nil : PlayerIdentity.Friend(uid: entry.key, name: entry.value.name)
         }
     }
     private func applyScore(_ ev: FirebaseRTDB.StreamEvent) {

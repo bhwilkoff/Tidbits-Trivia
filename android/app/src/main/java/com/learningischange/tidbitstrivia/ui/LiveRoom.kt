@@ -131,6 +131,7 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
     var liveCorrect by remember { mutableStateOf(0) }
     var talliedQid by remember { mutableStateOf<String?>(null) }
     var recordedEnd by remember { mutableStateOf(false) }
+    var coplayers by remember { mutableStateOf<List<com.learningischange.tidbitstrivia.data.PlayerIdentity.Friend>>(emptyList()) }   // L5 social graph
     LaunchedEffect(p?.qid, p?.phase) {
         val pub = p ?: return@LaunchedEffect
         if (pub.phase == "reveal" && talliedQid != pub.qid) {
@@ -146,6 +147,8 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
             recordedEnd = true
             com.learningischange.tidbitstrivia.data.PlayerIdentity.recordLiveGame(liveCorrect, liveAnswered)
             com.learningischange.tidbitstrivia.data.PlayerIdentity.recordStanding(meta?.venue ?: "", score)   // Wave E: per-venue season standing
+            val me = com.learningischange.tidbitstrivia.net.FirebaseNet.uid()   // L5: capture co-players
+            coplayers = runCatching { com.learningischange.tidbitstrivia.net.FirebaseNet.liveTeams(code).filter { it.uid != me } }.getOrDefault(emptyList())
         }
     }
 
@@ -178,6 +181,18 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
                 Badge("THAT'S A WRAP", Pops.coral)
                 Spacer(Modifier.height(12.dp))
                 Text("Final score: $score", fontSize = 26.sp, fontWeight = FontWeight.Black, color = ink)
+                if (coplayers.isNotEmpty()) {   // L5: "Add the people you played with"
+                    Spacer(Modifier.height(16.dp))
+                    Text("Add the people you played with", fontSize = 13.sp, color = soft)
+                    Spacer(Modifier.height(6.dp))
+                    coplayers.forEach { c ->
+                        Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Text(c.name, fontWeight = FontWeight.SemiBold, color = ink, modifier = Modifier.weight(1f))
+                            if (com.learningischange.tidbitstrivia.data.PlayerIdentity.isFriend(c.uid)) Text("Added", fontSize = 13.sp, color = soft)
+                            else TextButton(onClick = { com.learningischange.tidbitstrivia.data.PlayerIdentity.addFriend(c.uid, c.name) }) { Text("Add", color = Pops.blue) }
+                        }
+                    }
+                }
                 Spacer(Modifier.height(16.dp))
                 Button(onClick = onDone, colors = ButtonDefaults.buttonColors(containerColor = Pops.coral, contentColor = Color.White)) { Text("Done") }
             }

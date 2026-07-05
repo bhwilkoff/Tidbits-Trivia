@@ -113,6 +113,14 @@ object FirebaseNet {
     suspend fun removeFriend(uid: String, friendUid: String) {
         db.getReference("playersPrivate/$uid/friends/$friendUid").removeValue().await()
     }
+    // L5: read the live room roster once (uid → {name}) to capture co-players at night-end.
+    suspend fun liveTeams(code: String): List<com.learningischange.tidbitstrivia.data.PlayerIdentity.Friend> {
+        val snap = db.getReference("live/$code/teams").get().await()
+        return snap.children.mapNotNull { c ->
+            val uid = c.key ?: return@mapNotNull null
+            com.learningischange.tidbitstrivia.data.PlayerIdentity.Friend(uid, c.child("name").getValue(String::class.java) ?: "Player")
+        }
+    }
     suspend fun loadDailyLog(key: String): Map<String, Int> {
         val snap = db.getReference("dailyLog/$key").get().await()
         val out = HashMap<String, Int>()

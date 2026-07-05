@@ -148,10 +148,34 @@ struct LiveJoinView: View {
             Text("THAT'S A WRAP").font(Tidbits.TypeRamp.l5).foregroundStyle(.white)
                 .padding(.horizontal, 12).padding(.vertical, 5).background(Capsule().fill(Tidbits.Palette.coral))
             Text("Final score: \(client.score)").font(.system(size: 26, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
+            if !client.coplayers.isEmpty { coplayersView }
             Button("Done") { Task { await client.leave(); dismiss() } }
                 .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.coral, textColor: .white)).padding(.top, 8)
         }
         .padding(.top, 40)
+    }
+
+    /// L5 social graph: "Add the people you played with" — the captured co-players → the private friend graph.
+    private var coplayersView: some View {
+        let store = PlayerIdentityStore.shared
+        return VStack(spacing: 6) {
+            Text("Add the people you played with").font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft)
+            ForEach(client.coplayers) { c in
+                HStack {
+                    Text(c.name).fontWeight(.semibold).foregroundStyle(Tidbits.Palette.ink)
+                    Spacer()
+                    if store.isFriend(c.uid) {
+                        Text("Added").font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft)
+                    } else {
+                        Button("Add") { Task { await store.addFriend(uid: c.uid, name: c.name) } }
+                            .buttonStyle(.borderless).foregroundStyle(Tidbits.Palette.blue)
+                    }
+                }
+                .padding(.horizontal, 14).padding(.vertical, 8)
+                .background(RoundedRectangle(cornerRadius: 10).fill(Tidbits.Palette.surface))
+            }
+        }
+        .frame(maxWidth: 320).padding(.top, 6)
     }
 
     @ViewBuilder private func questionView(_ p: LiveRoom.Pub) -> some View {

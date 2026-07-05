@@ -177,6 +177,7 @@ struct Avatar: View {
 struct LeaderboardView: View {
     @State private var overall: [LeaderboardRow] = []
     @State private var venues: [(venue: String, rows: [LeaderboardRow])] = []
+    @State private var friends: [PlayerIdentity.Friend] = []
     @State private var myUid = ""
     @State private var loading = true
 
@@ -196,6 +197,9 @@ struct LeaderboardView: View {
                     }
                     .listRowBackground(Tidbits.Palette.coral.opacity(0.15))
                 }
+                if !friends.isEmpty {   // L5 social graph: your people, ranked by their public standing
+                    Section("Friends") { ForEach(Array(friendRanks.enumerated()), id: \.element.id) { friendRow($0.offset, $0.element) } }
+                }
                 if !overall.isEmpty {
                     Section("This season · Overall") { ForEach(Array(overall.enumerated()), id: \.element.id) { row($0.offset, $0.element) } }
                 }
@@ -206,6 +210,25 @@ struct LeaderboardView: View {
         }
         .navigationTitle("Leaderboard")
         .task { await load() }
+    }
+
+    private struct FriendRank: Identifiable { let id: String; let name: String; let score: Int?; let isMe: Bool }
+    private var friendRanks: [FriendRank] {
+        var byUid: [String: Int] = [:]; for r in overall { byUid[r.uid] = r.score }
+        var rows = friends.map { FriendRank(id: $0.uid, name: $0.name, score: byUid[$0.uid], isMe: false) }
+        if let me = overall.first(where: { $0.uid == myUid }) {
+            rows.append(FriendRank(id: myUid, name: "\(me.name) (you)", score: me.score, isMe: true))
+        }
+        return rows.sorted { ($0.score ?? -1) > ($1.score ?? -1) }
+    }
+    private func friendRow(_ i: Int, _ f: FriendRank) -> some View {
+        HStack(spacing: 10) {
+            Text("\(i + 1)").font(.headline.monospacedDigit()).foregroundStyle(Tidbits.Palette.inkSoft).frame(width: 30, alignment: .leading)
+            Text(f.name).fontWeight(.semibold)
+            Spacer()
+            Text(f.score.map(String.init) ?? "—").font(.headline.monospacedDigit()).foregroundStyle(f.score == nil ? Tidbits.Palette.inkSoft : Tidbits.Palette.ink)
+        }
+        .listRowBackground(f.isMe ? Tidbits.Palette.blue.opacity(0.12) : nil)
     }
 
     private func row(_ i: Int, _ r: LeaderboardRow) -> some View {
@@ -224,6 +247,8 @@ struct LeaderboardView: View {
 
     private func load() async {
         myUid = await FirebaseRTDB.shared.uid ?? ""
+        await PlayerIdentityStore.shared.loadFriends()   // L5 social graph
+        friends = PlayerIdentityStore.shared.friends
         let idx = await LeaderboardAPI.index()
         guard let season = idx.keys.sorted().last else { loading = false; return }
         overall = await LeaderboardAPI.overall(season: season)

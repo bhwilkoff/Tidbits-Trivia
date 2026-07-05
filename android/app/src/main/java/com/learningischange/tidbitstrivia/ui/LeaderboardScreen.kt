@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.learningischange.tidbitstrivia.data.PlayerIdentity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -73,6 +74,7 @@ fun LeaderboardScreen(onBack: () -> Unit) {
 
     LaunchedEffect(Unit) {
         myUid = com.learningischange.tidbitstrivia.net.FirebaseNet.uid() ?: ""   // Wave E: defendable titles
+        com.learningischange.tidbitstrivia.data.PlayerIdentity.loadFriends()   // L5 social graph
         val idx = runCatching { JSONObject(fetchText("$LB_BASE/index.json") ?: "{}") }.getOrNull() ?: JSONObject()
         val season = idx.keys().asSequence().toList().sorted().lastOrNull()
         if (season != null) {
@@ -104,6 +106,22 @@ fun LeaderboardScreen(onBack: () -> Unit) {
                     Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text(currentSeasonName(), fontWeight = FontWeight.Black, color = ink, modifier = Modifier.weight(1f))
                         Text("Resets in ${seasonResetDays()} days", fontSize = 13.sp, color = soft)
+                    }
+                }
+                val friends = PlayerIdentity.friends   // L5 social graph: your people, ranked by public standing
+                if (friends.isNotEmpty()) {
+                    val byUid = overall.associate { it.uid to it.score }
+                    val meRow = overall.firstOrNull { it.uid == myUid }
+                    val fr = (friends.map { Triple(it.name, byUid[it.uid], false) } +
+                              (meRow?.let { listOf(Triple("${it.name} (you)", it.score, true)) } ?: emptyList()))
+                        .sortedByDescending { it.second ?: -1 }
+                    item { SectionHeader("Friends", ink) }
+                    itemsIndexed(fr) { i, f ->
+                        Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Text("${i + 1}", fontWeight = FontWeight.Black, color = soft, modifier = Modifier.width(30.dp))
+                            Text(f.first, fontWeight = FontWeight.SemiBold, color = ink, modifier = Modifier.weight(1f))
+                            Text(f.second?.toString() ?: "—", fontWeight = FontWeight.Black, color = if (f.second == null) soft else ink)
+                        }
                     }
                 }
                 if (overall.isNotEmpty()) {

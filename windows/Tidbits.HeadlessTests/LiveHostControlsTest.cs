@@ -94,6 +94,18 @@ public class LiveHostControlsTest
     }
 
     [Fact]
+    public async Task Team_merge_folds_and_hides_the_merged_team()
+    {
+        var host = NewHost();
+        await host.MergeTeams("a", "a");        // same team → no-op
+        Assert.False(host.IsHidden("a"));
+        await host.MergeTeams("", "b");          // empty target → no-op
+        Assert.False(host.IsHidden("b"));
+        await host.MergeTeams("a", "b");         // fold b into a → b leaves the screen
+        Assert.True(host.IsHidden("b"));
+    }
+
+    [Fact]
     public void Cheat_flag_is_clear_before_any_answers()
     {
         var host = NewHost();

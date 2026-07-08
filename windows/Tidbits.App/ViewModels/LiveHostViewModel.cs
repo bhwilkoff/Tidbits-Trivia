@@ -70,4 +70,5 @@ public sealed class LiveHostViewModel : ObservableObject
     public System.Collections.Generic.IReadOnlyList<LiveHostNet.Joined> ModeratedStandings => Host.ModeratedStandings;
     public void ToggleHidden(string uid) => Host.ToggleHidden(uid);
     public bool IsHidden(string uid) => Host.IsHidden(uid);
+    public Task MergeTeams(string intoUid, string fromUid) => Host.MergeTeams(intoUid, fromUid);
 }

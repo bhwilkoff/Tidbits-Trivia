@@ -78,6 +78,18 @@ public sealed class LiveNightHost : ObservableObject
         Notify();
     }
 
+    /// Merge one team into another (3.25) — combine their scores onto `intoUid`,
+    /// zero the merged team, and drop it from the big screen. For a paper team that
+    /// got split across two entries.
+    public async Task MergeTeams(string intoUid, string fromUid)
+    {
+        if (string.IsNullOrEmpty(intoUid) || string.IsNullOrEmpty(fromUid) || intoUid == fromUid) return;
+        await Net.SetScore(intoUid, Net.ScoreOf(intoUid) + Net.ScoreOf(fromUid));
+        await Net.SetScore(fromUid, 0);
+        _hidden.Add(fromUid);
+        Notify();
+    }
+
     /// Standings with hidden team names replaced by "(hidden)" — projector-safe.
     public IReadOnlyList<LiveHostNet.Joined> ModeratedStandings =>
         Standings.Select(j => _hidden.Contains(j.Id) ? j with { Name = "(hidden)" } : j).ToList();

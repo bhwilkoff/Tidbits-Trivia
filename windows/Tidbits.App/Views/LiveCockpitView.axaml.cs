@@ -2,7 +2,9 @@ using System;
 using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.Media;
 using Avalonia.VisualTree;
+using FluentAvalonia.UI.Controls;
 using Tidbits.App.Services;
 using Tidbits.App.ViewModels;
 
@@ -112,6 +114,32 @@ public partial class LiveCockpitView : UserControl
     private async void OnAdd15(object? sender, RoutedEventArgs e) { if (Vm is { } vm) await vm.AddTime(15); RefreshCountdown(); }
     private async void OnAdd30(object? sender, RoutedEventArgs e) { if (Vm is { } vm) await vm.AddTime(30); RefreshCountdown(); }
     private async void OnClearTimer(object? sender, RoutedEventArgs e) { if (Vm is { } vm) await vm.ClearTimer(); RefreshCountdown(); }
+
+    /// Merge teams — pick the team to keep and the team to fold into it (their
+    /// scores combine; the folded team leaves the big screen).
+    private async void OnMergeTeams(object? sender, RoutedEventArgs e)
+    {
+        if (Vm is not { } vm || vm.Host.Standings.Count < 2) return;
+        var teams = new System.Collections.Generic.List<Tidbits.Core.Networking.LiveHostNet.Joined>(vm.Host.Standings);
+        var tmpl = new Avalonia.Controls.Templates.FuncDataTemplate<Tidbits.Core.Networking.LiveHostNet.Joined>(
+            (t, _) => new TextBlock { Text = $"{t.Name} ({t.Score})" });
+        var keep = new ComboBox { ItemsSource = teams, ItemTemplate = tmpl, SelectedIndex = 0, MinWidth = 240 };
+        var fold = new ComboBox { ItemsSource = teams, ItemTemplate = tmpl, SelectedIndex = 1, MinWidth = 240 };
+
+        var panel = new StackPanel { Spacing = 8, MinWidth = 300 };
+        panel.Children.Add(new TextBlock { Text = "Fold the second team into the first — their scores combine.", TextWrapping = Avalonia.Media.TextWrapping.Wrap, Opacity = 0.75 });
+        panel.Children.Add(new TextBlock { Text = "Keep", FontWeight = FontWeight.SemiBold, Margin = new Avalonia.Thickness(0, 6, 0, 0) });
+        panel.Children.Add(keep);
+        panel.Children.Add(new TextBlock { Text = "Fold in", FontWeight = FontWeight.SemiBold, Margin = new Avalonia.Thickness(0, 6, 0, 0) });
+        panel.Children.Add(fold);
+
+        var dlg = new FAContentDialog { Title = "Merge teams", Content = panel, PrimaryButtonText = "Merge", CloseButtonText = "Cancel" };
+        var result = await dlg.ShowAsync();
+        if (result == FAContentDialogResult.Primary
+            && keep.SelectedItem is Tidbits.Core.Networking.LiveHostNet.Joined a
+            && fold.SelectedItem is Tidbits.Core.Networking.LiveHostNet.Joined b)
+            await vm.MergeTeams(a.Id, b.Id);
+    }
 
     // Name moderation gate — toggle a team's name off the big screen.
     private void OnToggleHide(object? sender, RoutedEventArgs e)

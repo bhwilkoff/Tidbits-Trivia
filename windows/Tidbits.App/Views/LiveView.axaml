@@ -29,6 +29,8 @@
                     <Button Content="+ Add round" Click="OnAddRound"/>
                 </StackPanel>
                 <StackPanel x:Name="BuilderRounds" Spacing="4"/>
+                <!-- Balance meter: question-type mix + variety verdict -->
+                <StackPanel x:Name="BalancePanel" Spacing="4" IsVisible="False"/>
                 <StackPanel Orientation="Horizontal" Spacing="8">
                     <Button Content="Host this event" Click="OnHostEvent" Classes="accent" Padding="16,10"/>
                     <Button Content="Save event" Click="OnSaveEvent" Padding="16,10"/>

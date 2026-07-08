@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
@@ -76,6 +77,41 @@ public partial class LiveView : UserControl
             row.Children.Add(del);
             BuilderRounds.Children.Add(row);
         }
+        RebuildBalance();
+    }
+
+    /// The balance meter — a bar per question type (width ∝ its share) + a variety
+    /// verdict, so the host can see the night's mix as they compose it.
+    private void RebuildBalance()
+    {
+        BalancePanel.Children.Clear();
+        BalancePanel.IsVisible = _rounds.Count > 0;
+        if (_rounds.Count == 0) return;
+
+        var shares = Tidbits.Core.Networking.LiveEventBalance.ByType(_rounds);
+        int max = shares.Count > 0 ? System.Math.Max(1, shares.Max(s => s.Questions)) : 1;
+        foreach (var s in shares)
+        {
+            var stack = new Panel { Height = 22, Margin = new Avalonia.Thickness(0, 1) };
+            stack.Children.Add(new Border
+            {
+                Background = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#33FF5C35")),
+                CornerRadius = new Avalonia.CornerRadius(5), HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left,
+                Width = 120 + 260.0 * s.Questions / max,
+            });
+            stack.Children.Add(new TextBlock
+            {
+                Text = $"{s.Kind.Title()} · {s.Questions}", FontSize = 12, Margin = new Avalonia.Thickness(8, 0),
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+            });
+            BalancePanel.Children.Add(stack);
+        }
+        BalancePanel.Children.Add(new TextBlock
+        {
+            Text = Tidbits.Core.Networking.LiveEventBalance.Verdict(_rounds),
+            FontSize = 12, FontWeight = Avalonia.Media.FontWeight.SemiBold, Foreground = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#FF5C35")),
+            Margin = new Avalonia.Thickness(0, 4, 0, 0),
+        });
     }
 
     private LiveEvent CurrentEvent() => new()

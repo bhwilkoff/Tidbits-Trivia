@@ -28,6 +28,9 @@ public sealed class LiveHostViewModel : ObservableObject
     public bool CanGoBack => Host.CanGoBack;
     public int? SecondsRemaining => Host.SecondsRemaining;
     public bool HasFlags => Host.HasFlags;
+    public bool IsLocked => Host.Locked;
+    /// The answer window has hit its deadline and isn't locked yet — cue auto-lock.
+    public bool AutoLockDue => Host.SecondsRemaining == 0 && !Host.Locked && !Host.Revealed;
     public string FlagLine => Host.FlaggedCount == 1
         ? "1 team left the app this question"
         : $"{Host.FlaggedCount} teams left the app this question";

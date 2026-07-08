@@ -27,8 +27,12 @@ public partial class LiveCockpitView : UserControl
 
     private void RefreshCountdown()
     {
-        var s = Vm?.SecondsRemaining;
+        if (Vm is not { } vm) { CountdownText.Text = ""; return; }
+        var s = vm.SecondsRemaining;
         CountdownText.Text = s is { } n ? $"{n}s" : "";
+        // Auto-lock at pencils-down: when the deadline hits 0, lock the round
+        // (idempotent — Host.Lock no-ops once locked/revealed).
+        if (vm.AutoLockDue) _ = vm.Lock();
     }
 
     protected override void OnDataContextChanged(EventArgs e)

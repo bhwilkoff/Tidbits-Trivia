@@ -68,6 +68,10 @@
             <Button Content="+15" Click="OnAdd15" Padding="12,7"/>
             <Button Content="+30" Click="OnAdd30" Padding="12,7"/>
             <Button Content="Clear" Click="OnClearTimer" Padding="12,7"/>
+            <Border IsVisible="{Binding IsLocked}" Background="#FF5C35" CornerRadius="6" Padding="10,4"
+                    VerticalAlignment="Center">
+                <TextBlock Text="LOCKED" Foreground="White" FontWeight="Black" FontSize="12"/>
+            </Border>
         </StackPanel>
 
         <!-- Controls -->

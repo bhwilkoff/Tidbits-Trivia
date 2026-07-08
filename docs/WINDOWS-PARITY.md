@@ -112,7 +112,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 
 ## Slice 6 — Wave C submission & scoring
 - [ ] 3.21 Free-text review + spelling leniency
-- [ ] 3.22 Answer-lock (manual + auto-timer)
+- [x] 3.22 Answer-lock — manual Lock (existing, publishes pub.locked) + **auto-lock at pencils-down**: when the countdown deadline hits 0 the cockpit tick fires Lock (idempotent — Host.Lock no-ops once locked/revealed). A coral LOCKED badge shows the state. Guard test (safe defaults); live path gated
 - [ ] 3.24 Tie-break engine (numeric + brains-only)
 - [ ] 3.25 Team merge
 - [x] 3.26 Name moderation gate — a per-team "Hide" toggle in the cockpit standings hides an offensive networked name from the big screen; the cockpit still shows the real name, the projector renders `ModeratedStandings` ("(hidden)"). LiveNightHost.ToggleHidden/IsHidden/ModeratedStandings; toggle-state test GREEN

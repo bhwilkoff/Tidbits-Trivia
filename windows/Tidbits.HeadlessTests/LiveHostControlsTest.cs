@@ -72,6 +72,15 @@ public class LiveHostControlsTest
     }
 
     [Fact]
+    public void Answer_lock_defaults_are_safe()
+    {
+        var host = NewHost();
+        var vm = new LiveHostViewModel(host);
+        Assert.False(vm.IsLocked);        // not locked before play
+        Assert.False(vm.AutoLockDue);     // no deadline → no auto-lock cue
+    }
+
+    [Fact]
     public void Moderation_gate_toggles_a_hidden_name()
     {
         var host = NewHost();

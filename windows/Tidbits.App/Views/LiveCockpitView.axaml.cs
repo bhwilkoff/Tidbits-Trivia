@@ -119,6 +119,28 @@ public partial class LiveCockpitView : UserControl
             await vm.Adjust(uid, delta);
     }
 
+    /// Export the unified standings to a CSV file via the native save picker.
+    private async void OnExportCsv(object? sender, RoutedEventArgs e)
+    {
+        if (Vm is not { } vm || !vm.HasStandings) return;
+        var top = TopLevel.GetTopLevel(this);
+        if (top is null) return;
+        var file = await top.StorageProvider.SaveFilePickerAsync(new Avalonia.Platform.Storage.FilePickerSaveOptions
+        {
+            Title = "Export standings",
+            SuggestedFileName = $"tidbits-standings-{vm.Host.Code}.csv",
+            DefaultExtension = "csv",
+            FileTypeChoices = new[]
+            {
+                new Avalonia.Platform.Storage.FilePickerFileType("CSV") { Patterns = new[] { "*.csv" } },
+            },
+        });
+        if (file is null) return;
+        await using var stream = await file.OpenWriteAsync();
+        await using var writer = new System.IO.StreamWriter(stream);
+        await writer.WriteAsync(vm.StandingsCsv());
+    }
+
     private ProjectorWindow? _projector;
 
     private void OnProjector(object? sender, RoutedEventArgs e)

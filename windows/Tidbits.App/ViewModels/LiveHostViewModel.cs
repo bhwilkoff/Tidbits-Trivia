@@ -58,4 +58,8 @@ public sealed class LiveHostViewModel : ObservableObject
     public Task ClearTimer() => Host.ClearTimer();
     public Task Adjust(string uid, int delta) => Host.AdjustScore(uid, delta);
     public Task Close() => Host.Close();
+
+    /// The unified standings as CSV text (Wave C export).
+    public string StandingsCsv() => LiveExport.StandingsCsv(Host.Standings);
+    public bool HasStandings => Host.Standings.Count > 0;
 }

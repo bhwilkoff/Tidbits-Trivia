@@ -11,14 +11,14 @@ namespace Tidbits.App.Views;
 
 public partial class PlayView : UserControl
 {
-    // Modes with a built answer surface: MCQ shapes + numeric (Closest Call) +
-    // free-text (Name It). Ordering/Matching/Enumerate/Picture ID get their own
-    // surfaces in a later parity pass.
+    // Modes with a built answer surface: MCQ shapes + Stake (chips + MCQ) +
+    // numeric (Closest Call) + free-text (Name It) + reorder (In Order).
+    // Matching/Enumerate/Picture ID get their own surfaces in a later parity pass.
     private static readonly GameMode[] Offered =
     {
-        GameMode.Classic, GameMode.TimeAttack, GameMode.Survival, GameMode.Sweep,
-        GameMode.Ladder, GameMode.OddOneOut, GameMode.ThisOrThat,
-        GameMode.ClosestCall, GameMode.TypeAnswer,
+        GameMode.Classic, GameMode.TimeAttack, GameMode.Survival, GameMode.Stake,
+        GameMode.Sweep, GameMode.Ladder, GameMode.OddOneOut, GameMode.ThisOrThat,
+        GameMode.ClosestCall, GameMode.TypeAnswer, GameMode.Ordering,
     };
 
     public PlayView()

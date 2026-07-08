@@ -20,4 +20,9 @@ public static class Conv
 
     public static readonly FuncValueConverter<double, string> Seconds =
         new(s => $"{(int)System.Math.Ceiling(s)}s");
+
+    /// True when a string is non-empty — used to hide the reveal "Answer:" line
+    /// for shapes (ordering/matching) with no single answer string.
+    public static readonly FuncValueConverter<string?, bool> NonEmpty =
+        new(s => !string.IsNullOrWhiteSpace(s));
 }

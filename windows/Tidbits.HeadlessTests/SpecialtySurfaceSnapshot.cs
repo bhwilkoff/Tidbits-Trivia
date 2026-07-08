@@ -51,6 +51,46 @@ public class SpecialtySurfaceSnapshot
     }
 
     [AvaloniaFact]
+    public async Task Stake_renders_chips_then_scores_the_stake()
+    {
+        var (engine, _, win) = Start(GameMode.Stake);
+        await engine.Start(GameMode.Stake, TriviaCategory.Named("mixed"));
+        Assert.Equal(GameEngine.Phase.Playing, engine.CurrentPhase);
+        Assert.NotEmpty(engine.StakeTiers);
+        Dispatcher.UIThread.RunJobs();
+        win.CaptureRenderedFrame()!.Save(Path.Combine(Art(), "game-stake.png"));
+
+        // Answering before a chip is committed is a no-op; committing then answering
+        // correct adds exactly the staked value.
+        var q = engine.Current!;
+        engine.Submit(q.CorrectIndex);
+        Assert.Equal(GameEngine.Phase.Playing, engine.CurrentPhase); // blocked, no stake yet
+        int stake = engine.StakeTiers[0].Value;
+        engine.SetStake(stake);
+        engine.Submit(q.CorrectIndex);
+        Assert.Equal(GameEngine.Phase.Reveal, engine.CurrentPhase);
+        Assert.Equal(stake, engine.Score);
+    }
+
+    [AvaloniaFact]
+    public async Task In_order_renders_reorderable_items_and_submits()
+    {
+        var (engine, _, win) = Start(GameMode.Ordering);
+        await engine.Start(GameMode.Ordering, TriviaCategory.Named("mixed"));
+        Assert.Equal(GameEngine.Phase.Playing, engine.CurrentPhase);
+        Assert.NotNull(engine.Current!.Ordering);
+        Assert.NotEmpty(engine.CurrentOrder);
+        Dispatcher.UIThread.RunJobs();
+        win.CaptureRenderedFrame()!.Save(Path.Combine(Art(), "game-ordering.png"));
+
+        // A move reorders in place; submitting resolves to reveal with a score.
+        engine.MoveOrderItem(1, up: true);
+        engine.SubmitOrder();
+        Assert.Equal(GameEngine.Phase.Reveal, engine.CurrentPhase);
+        Assert.True(engine.LastOrderPoints >= 0);
+    }
+
+    [AvaloniaFact]
     public async Task Name_it_renders_a_text_field_and_accepts()
     {
         var (engine, _, win) = Start(GameMode.TypeAnswer);

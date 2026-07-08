@@ -7,6 +7,7 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Tidbits.App.ViewModels;
+using Tidbits.Core.Models;
 using Tidbits.Core.Store;
 
 namespace Tidbits.App.Views;
@@ -47,11 +48,15 @@ public partial class GameView : UserControl
         bool reveal = engine.CurrentPhase == GameEngine.Phase.Reveal;
         if (q.Closest is { } closest) { BuildNumeric(engine, closest, reveal); return; }
         if (q.Accepted is not null) { BuildText(engine, reveal); return; }
+        if (q.Ordering is { } ordering) { BuildOrdering(engine, ordering, reveal); return; }
+        if (engine.Mode == GameMode.Stake) { BuildStake(engine, q, reveal); return; }
         BuildMcq(engine, q, reveal);
     }
 
     /// MCQ options — green correct / red chosen-wrong / dim others on reveal.
-    private void BuildMcq(GameEngine engine, Tidbits.Core.Models.Question q, bool reveal)
+    /// When !interactive (Stake before a chip is committed) options are dimmed
+    /// and unclickable.
+    private void BuildMcq(GameEngine engine, Tidbits.Core.Models.Question q, bool reveal, bool interactive = true)
     {
         for (int i = 0; i < q.Options.Count; i++)
         {
@@ -74,12 +79,94 @@ public partial class GameView : UserControl
                 else if (i == engine.ChosenIndex) { btn.Background = Wrong; btn.Foreground = Brushes.White; }
                 else btn.Opacity = 0.45;
             }
-            else
+            else if (interactive)
             {
                 btn.Click += (_, _) => _vm?.Submit(idx);
             }
+            else
+            {
+                btn.IsHitTestVisible = false;
+                btn.Opacity = 0.4;
+            }
             OptionsPanel.Children.Add(btn);
         }
+    }
+
+    /// Stake — a confidence-chip budget row above the MCQ options. Options stay
+    /// dimmed until a chip is committed (the engine blocks Submit otherwise).
+    private void BuildStake(GameEngine engine, Tidbits.Core.Models.Question q, bool reveal)
+    {
+        if (!reveal)
+        {
+            var chips = new WrapPanel { Margin = new Thickness(0, 0, 0, 6) };
+            foreach (var tier in engine.StakeTiers)
+            {
+                var t = tier;
+                bool selected = engine.CurrentStake == t.Value;
+                var chip = new Button
+                {
+                    Content = $"{t.Label} +{t.Value} · ×{t.Remaining}",
+                    Margin = new Thickness(0, 0, 8, 8), Padding = new Thickness(14, 9),
+                    IsEnabled = t.Remaining > 0 || selected,
+                };
+                if (selected) chip.Classes.Add("accent");
+                chip.Click += (_, _) => engine.SetStake(t.Value);
+                chips.Children.Add(chip);
+            }
+            OptionsPanel.Children.Add(chips);
+            OptionsPanel.Children.Add(new TextBlock
+            {
+                Text = engine.CurrentStake == 0 ? "Commit a chip, then answer." : $"Staked {engine.StakeLabel} (+{engine.CurrentStake})",
+                FontSize = 13, Opacity = 0.7, Margin = new Thickness(0, 0, 0, 8),
+            });
+        }
+        BuildMcq(engine, q, reveal, interactive: reveal || engine.CurrentStake != 0);
+    }
+
+    /// In Order — each item with up/down move buttons, then Submit. On reveal the
+    /// panel shows the correct sequence (the shared card has no single answer).
+    private void BuildOrdering(GameEngine engine, System.Collections.Generic.IReadOnlyList<string> correct, bool reveal)
+    {
+        if (reveal)
+        {
+            OptionsPanel.Children.Add(new TextBlock
+            {
+                Text = "Correct order", FontWeight = FontWeight.Bold, FontSize = 14, Margin = new Thickness(0, 0, 0, 6),
+            });
+            for (int i = 0; i < correct.Count; i++)
+                OptionsPanel.Children.Add(new TextBlock
+                {
+                    Text = $"{i + 1}.  {correct[i]}", FontSize = 15, Foreground = Correct, Margin = new Thickness(0, 3),
+                });
+            return;
+        }
+
+        var order = engine.CurrentOrder;
+        for (int i = 0; i < order.Count; i++)
+        {
+            int idx = i;
+            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), Margin = new Thickness(0, 4) };
+            var label = new Border
+            {
+                Background = new SolidColorBrush(Color.Parse("#20808080")), CornerRadius = new CornerRadius(8),
+                Padding = new Thickness(14, 11), Child = new TextBlock { Text = order[i], FontSize = 15 },
+            };
+            var up = new Button { Content = "▲", Margin = new Thickness(6, 0, 0, 0), Padding = new Thickness(12, 8), IsEnabled = idx > 0 };
+            var down = new Button { Content = "▼", Margin = new Thickness(6, 0, 0, 0), Padding = new Thickness(12, 8), IsEnabled = idx < order.Count - 1 };
+            up.Click += (_, _) => engine.MoveOrderItem(idx, up: true);
+            down.Click += (_, _) => engine.MoveOrderItem(idx, up: false);
+            Grid.SetColumn(up, 1); Grid.SetColumn(down, 2);
+            row.Children.Add(label); row.Children.Add(up); row.Children.Add(down);
+            OptionsPanel.Children.Add(row);
+        }
+        var submit = new Button
+        {
+            Content = "Submit order", HorizontalAlignment = HorizontalAlignment.Left,
+            Padding = new Thickness(22, 12), FontWeight = FontWeight.Bold, Margin = new Thickness(0, 10, 0, 0),
+        };
+        submit.Classes.Add("accent");
+        submit.Click += (_, _) => engine.SubmitOrder();
+        OptionsPanel.Children.Add(submit);
     }
 
     /// Closest Call — a slider over [min,max] plus a live value read-out and a

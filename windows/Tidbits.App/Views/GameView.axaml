@@ -32,6 +32,7 @@
                             BorderThickness="1" CornerRadius="10" Padding="18" Margin="0,6,0,0">
                         <StackPanel Spacing="6">
                             <TextBlock Text="{Binding Engine.Current.CorrectAnswer, StringFormat='Answer: {0}'}"
+                                       IsVisible="{Binding Engine.Current.CorrectAnswer, Converter={x:Static conv:Conv.NonEmpty}}"
                                        FontWeight="Bold" FontSize="16" Foreground="#1E9E6A" TextWrapping="Wrap"/>
                             <TextBlock Text="{Binding Engine.Current.Explanation}" TextWrapping="Wrap" Opacity="0.85"/>
                         </StackPanel>

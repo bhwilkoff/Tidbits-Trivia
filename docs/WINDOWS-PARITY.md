@@ -64,7 +64,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [x] 2.17 Create — topic → corpus retrieval + diversify → play the set (live-gen fallback stubbed); PNG-verified
 - [ ] 2.18 Create saved sets
 - [x] 2.19 Settings page — review toggle + reset seen/records + about/version; PNG-verified
-- [ ] 2.20 Trivia Night (solo)
+- [x] 2.20 Trivia Night (solo) — 3 preset cards (Quick/Pub/The Works) on the Play landing → a self-paced multi-round night off the shape-routing engine; each round opens with a centered interstitial ("ROUND n OF m · title · k questions · Start round"), every shape plays through to the results recap. Full-night play-through test GREEN (all 3 rounds, every question answered). Networked host = Slice 4
 - [ ] 2.21 Versus CPU / Online-MP picker
 - [ ] 2.22 Spaced re-asking + day-streak surfacing
 - [ ] 2.23 Daily play-once lock + archive

@@ -109,6 +109,7 @@ public sealed class GameEngine : ObservableObject
     }
     public int CurrentRoundNumber => (Current?.RoundIndex ?? 0) + 1;
     public int RoundCount => NightPlan?.Rounds.Count ?? 0;
+    public string RoundBanner => $"ROUND {CurrentRoundNumber} OF {RoundCount}";
 
     public NightRound? NextRoundAfterCurrent
     {

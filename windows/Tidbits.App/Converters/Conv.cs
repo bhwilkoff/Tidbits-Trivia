@@ -15,6 +15,14 @@ public static class Conv
     public static readonly FuncValueConverter<GameEngine.Phase, bool> IsFinished =
         new(p => p == GameEngine.Phase.Finished);
 
+    public static readonly FuncValueConverter<GameEngine.Phase, bool> IsRoundIntro =
+        new(p => p == GameEngine.Phase.RoundIntro);
+
+    /// The question surface shows only while playing or on reveal — NOT during
+    /// the round interstitial (which has its own card).
+    public static readonly FuncValueConverter<GameEngine.Phase, bool> IsQuestion =
+        new(p => p == GameEngine.Phase.Playing || p == GameEngine.Phase.Reveal);
+
     public static readonly FuncValueConverter<GameEngine.Phase, bool> NotFinished =
         new(p => p != GameEngine.Phase.Finished && p != GameEngine.Phase.Idle && p != GameEngine.Phase.Loading);
 

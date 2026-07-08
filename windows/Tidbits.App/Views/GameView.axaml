@@ -17,8 +17,26 @@
         </Grid>
 
         <Panel Grid.Row="1">
+            <!-- Round interstitial (Trivia Night): ROUND n OF m · title · k questions -->
+            <Border IsVisible="{Binding Engine.CurrentPhase, Converter={x:Static conv:Conv.IsRoundIntro}}"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1"
+                    CornerRadius="14" Padding="40,32" MaxWidth="520">
+                <StackPanel Spacing="8" HorizontalAlignment="Center">
+                    <TextBlock FontSize="14" FontWeight="Bold" Foreground="#FF5C35" HorizontalAlignment="Center"
+                               Text="{Binding Engine.RoundBanner}"/>
+                    <TextBlock FontSize="30" FontWeight="Black" HorizontalAlignment="Center" TextAlignment="Center"
+                               Text="{Binding Engine.IntroRound.Title}"/>
+                    <TextBlock FontSize="15" Opacity="0.7" HorizontalAlignment="Center"
+                               Text="{Binding Engine.IntroRound.Count, StringFormat='{}{0} questions'}"/>
+                    <Button Content="Start round" Click="OnStartRound" Classes="accent"
+                            HorizontalAlignment="Center" Padding="28,13" FontWeight="Bold" Margin="0,10,0,0"/>
+                </StackPanel>
+            </Border>
+
             <!-- Question (playing + reveal share the prompt + options; options colored on reveal) -->
-            <ScrollViewer IsVisible="{Binding Engine.CurrentPhase, Converter={x:Static conv:Conv.NotFinished}}">
+            <ScrollViewer IsVisible="{Binding Engine.CurrentPhase, Converter={x:Static conv:Conv.IsQuestion}}">
                 <StackPanel Margin="36,12" Spacing="18" MaxWidth="760" HorizontalAlignment="Left">
                     <TextBlock Text="{Binding Engine.Current.Prompt}" FontSize="24" FontWeight="Bold" TextWrapping="Wrap"/>
 

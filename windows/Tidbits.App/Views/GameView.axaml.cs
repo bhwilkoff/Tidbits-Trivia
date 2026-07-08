@@ -446,6 +446,8 @@ public partial class GameView : UserControl
         box.Focus();
     }
 
+    private void OnStartRound(object? sender, RoutedEventArgs e) => _vm?.StartRound();
+
     private void OnNext(object? sender, RoutedEventArgs e) => _vm?.Advance();
 
     private void OnDone(object? sender, RoutedEventArgs e) => _vm?.Quit();

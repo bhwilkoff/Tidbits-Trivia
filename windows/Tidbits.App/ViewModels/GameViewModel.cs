@@ -59,6 +59,7 @@ public sealed class GameViewModel : ObservableObject, IDisposable
 
     public void Submit(int index) => Engine.Submit(index);
     public void Advance() => Engine.Advance();
+    public void StartRound() => Engine.StartRound();
     public void Quit() { Engine.Quit(); Closed?.Invoke(); }
     public void PlayAgain() => PlayAgainRequested?.Invoke();
 

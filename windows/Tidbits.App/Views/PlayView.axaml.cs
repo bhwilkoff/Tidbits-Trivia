@@ -42,6 +42,29 @@ public partial class PlayView : UserControl
             btn.Click += (_, _) => StartGame(mode);
             ModesPanel.Children.Add(btn);
         }
+
+        // Trivia Night presets (Quick / Pub / The Works) — each launches a solo,
+        // self-paced night of themed rounds with a round interstitial.
+        foreach (var preset in NightPlan.Presets)
+        {
+            var plan = preset.Plan;
+            var card = new Button
+            {
+                Margin = new Avalonia.Thickness(0, 0, 10, 10), Padding = new Avalonia.Thickness(16, 12),
+                HorizontalContentAlignment = HorizontalAlignment.Left,
+                Content = new StackPanel
+                {
+                    Spacing = 2,
+                    Children =
+                    {
+                        new TextBlock { Text = preset.Name, FontWeight = Avalonia.Media.FontWeight.Bold },
+                        new TextBlock { Text = preset.Blurb, FontSize = 12, Opacity = 0.65 },
+                    },
+                },
+            };
+            card.Click += (_, _) => StartNight(plan);
+            NightPanel.Children.Add(card);
+        }
     }
 
     private TriviaCategory SelectedCategory() =>
@@ -62,6 +85,20 @@ public partial class PlayView : UserControl
         Landing.IsVisible = false;
         GameHost.Content = new GameView { DataContext = vm };
         await engine.Start(mode, cat);
+    }
+
+    private async void StartNight(NightPlan plan)
+    {
+        var cat = SelectedCategory();
+        var data = GameData.Shared.Value;
+        var questions = await data.Provider.NightQuestions(plan, cat);
+        var engine = data.NewEngine();
+        var vm = new GameViewModel(engine, data.Records);
+        vm.Closed += () => { GameHost.Content = null; Landing.IsVisible = true; };
+        vm.PlayAgainRequested += () => StartNight(plan);
+        Landing.IsVisible = false;
+        GameHost.Content = new GameView { DataContext = vm };
+        engine.StartNight(plan, cat, questions);
     }
 
     private void OnQuickPlay(object? sender, RoutedEventArgs e) => StartGame(GameMode.Classic);

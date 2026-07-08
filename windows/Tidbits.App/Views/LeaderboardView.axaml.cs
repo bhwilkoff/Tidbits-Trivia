@@ -21,10 +21,14 @@ public partial class LeaderboardView : UserControl
     /// The player's private friend list — leads the board with a "Friends" section.
     public IReadOnlyList<PlayerIdentity.Friend> Friends { get; set; } = new List<PlayerIdentity.Friend>();
 
+    /// Fetch + render on load. Tests set this false to render deterministically
+    /// (the async network fetch would otherwise race a manual Render).
+    public bool AutoLoad { get; set; } = true;
+
     public LeaderboardView()
     {
         InitializeComponent();
-        Loaded += async (_, _) => await LoadAsync();
+        Loaded += async (_, _) => { if (AutoLoad) await LoadAsync(); };
     }
 
     private async System.Threading.Tasks.Task LoadAsync()

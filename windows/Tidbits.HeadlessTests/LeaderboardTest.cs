@@ -78,7 +78,7 @@ public class LeaderboardTest
         var data = new LeaderboardData("2026-Q3", overall,
             new List<VenueBoard> { new("The Anchor", overall.GetRange(1, 2)) });
 
-        var view = new LeaderboardView { MyUid = "me" };
+        var view = new LeaderboardView { MyUid = "me", AutoLoad = false };
         var win = new Window { Width = 760, Height = 640, Content = view };
         win.Show();
         Dispatcher.UIThread.RunJobs();

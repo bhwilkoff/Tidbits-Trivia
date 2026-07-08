@@ -48,17 +48,19 @@ public class FriendStoreTest
         };
         var data = new LeaderboardData("2026-S3", overall, new List<VenueBoard>());
 
-        var view = new LeaderboardView { MyUid = "me" };
+        // AutoLoad off → no network fetch to race the manual Render (deterministic).
+        var view = new LeaderboardView
+        {
+            AutoLoad = false,
+            MyUid = "me",
+            Friends = new List<PlayerIdentity.Friend>
+            {
+                new() { Uid = "f1", Name = "Carl" },  // on the board → 120
+                new() { Uid = "f9", Name = "Dana" },  // not yet ranked → —
+            },
+        };
         var win = new Window { Width = 760, Height = 640, Content = view };
         win.Show();
-        Dispatcher.UIThread.RunJobs(); // Loaded → LoadAsync runs first (sets Friends from the empty store)
-
-        // Now set the friends explicitly + re-render (production reads them from GameData).
-        view.Friends = new List<PlayerIdentity.Friend>
-        {
-            new() { Uid = "f1", Name = "Carl" },      // on the board → 120
-            new() { Uid = "f9", Name = "Dana" },      // not yet ranked → —
-        };
         view.Render(data);
         Dispatcher.UIThread.RunJobs();
 

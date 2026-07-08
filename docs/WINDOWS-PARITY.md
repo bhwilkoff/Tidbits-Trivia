@@ -115,7 +115,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [ ] 3.22 Answer-lock (manual + auto-timer)
 - [ ] 3.24 Tie-break engine (numeric + brains-only)
 - [ ] 3.25 Team merge
-- [ ] 3.26 Name/answer moderation gate
+- [x] 3.26 Name moderation gate — a per-team "Hide" toggle in the cockpit standings hides an offensive networked name from the big screen; the cockpit still shows the real name, the projector renders `ModeratedStandings` ("(hidden)"). LiveNightHost.ToggleHidden/IsHidden/ModeratedStandings; toggle-state test GREEN
 - [x] 3.27 Focus/cheat flag — the join client flags a player who switches away from the app while a question is live + unanswered (Window.Deactivated → Client.Blurred → Answer.blurred, already wired in the client). The host cockpit surfaces a coral "N teams left the app this question" line under standings (LiveNightHost.FlaggedCount off AnswersSnapshot). Guard test; live path gated
 - [x] 3.28 CSV export — an "Export CSV" cockpit button writes the unified standings (Rank,Team,Score) via the native SaveFilePicker to a `tidbits-standings-{code}.csv`. `LiveExport.StandingsCsv` is pure + quote/comma-escaped (unit test: ranking + escaping + empty→header-only)
 - [ ] 3.29 In-room paper teams (hybrid)

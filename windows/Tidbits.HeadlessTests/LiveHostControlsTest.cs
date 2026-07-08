@@ -72,6 +72,19 @@ public class LiveHostControlsTest
     }
 
     [Fact]
+    public void Moderation_gate_toggles_a_hidden_name()
+    {
+        var host = NewHost();
+        Assert.False(host.IsHidden("u1"));
+        host.ToggleHidden("u1");
+        Assert.True(host.IsHidden("u1"));
+        host.ToggleHidden("u1");
+        Assert.False(host.IsHidden("u1"));   // toggles back
+        host.ToggleHidden("");               // empty uid ignored
+        Assert.Empty(host.ModeratedStandings); // no teams yet, no throw
+    }
+
+    [Fact]
     public void Cheat_flag_is_clear_before_any_answers()
     {
         var host = NewHost();

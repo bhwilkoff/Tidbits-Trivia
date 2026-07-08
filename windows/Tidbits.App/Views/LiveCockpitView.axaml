@@ -40,13 +40,15 @@
                 <ItemsControl ItemsSource="{Binding Host.Standings}" x:CompileBindings="False">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Grid ColumnDefinitions="*,Auto,Auto,Auto" Margin="0,3">
+                            <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto" Margin="0,3">
                                 <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
-                                <Button Grid.Column="1" Content="−" Click="OnScoreDown" Tag="{Binding Id}"
-                                        Padding="7,1" MinWidth="0" FontWeight="Bold"/>
-                                <TextBlock Grid.Column="2" Text="{Binding Score}" FontWeight="Bold"
+                                <Button Grid.Column="1" Content="Hide" Click="OnToggleHide" Tag="{Binding Id}"
+                                        Padding="7,1" MinWidth="0" FontSize="11" Opacity="0.7"/>
+                                <Button Grid.Column="2" Content="−" Click="OnScoreDown" Tag="{Binding Id}"
+                                        Padding="7,1" MinWidth="0" FontWeight="Bold" Margin="4,0,0,0"/>
+                                <TextBlock Grid.Column="3" Text="{Binding Score}" FontWeight="Bold"
                                            MinWidth="26" TextAlignment="Center" VerticalAlignment="Center" Margin="4,0"/>
-                                <Button Grid.Column="3" Content="+" Click="OnScoreUp" Tag="{Binding Id}"
+                                <Button Grid.Column="4" Content="+" Click="OnScoreUp" Tag="{Binding Id}"
                                         Padding="7,1" MinWidth="0" FontWeight="Bold"/>
                             </Grid>
                         </DataTemplate>

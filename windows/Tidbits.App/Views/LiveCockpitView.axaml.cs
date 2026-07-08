@@ -109,6 +109,13 @@ public partial class LiveCockpitView : UserControl
     private async void OnAdd30(object? sender, RoutedEventArgs e) { if (Vm is { } vm) await vm.AddTime(30); RefreshCountdown(); }
     private async void OnClearTimer(object? sender, RoutedEventArgs e) { if (Vm is { } vm) await vm.ClearTimer(); RefreshCountdown(); }
 
+    // Name moderation gate — toggle a team's name off the big screen.
+    private void OnToggleHide(object? sender, RoutedEventArgs e)
+    {
+        if (Vm is { } vm && (sender as Control)?.Tag is string uid && uid.Length > 0)
+            vm.ToggleHidden(uid);
+    }
+
     // Manual score override — the team uid rides the button's Tag.
     private async void OnScoreUp(object? sender, RoutedEventArgs e) => await Adjust(sender, +1);
     private async void OnScoreDown(object? sender, RoutedEventArgs e) => await Adjust(sender, -1);

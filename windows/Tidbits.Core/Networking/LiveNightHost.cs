@@ -64,6 +64,24 @@ public sealed class LiveNightHost : ObservableObject
     public int RoundCount => Math.Max(_plan.Rounds.Count, 1);
     public string RoundTitle => RoundIndex < _plan.Rounds.Count ? _plan.Rounds[RoundIndex].Kind.NightRoundTitle() : "";
 
+    private readonly HashSet<string> _hidden = new(); // moderation gate (3.26)
+
+    public bool IsHidden(string uid) => _hidden.Contains(uid);
+
+    /// Toggle a team's name off (or back on) the big screen — for an offensive
+    /// networked name. The cockpit still shows the real name; the projector uses
+    /// ModeratedStandings.
+    public void ToggleHidden(string uid)
+    {
+        if (string.IsNullOrEmpty(uid)) return;
+        if (!_hidden.Add(uid)) _hidden.Remove(uid);
+        Notify();
+    }
+
+    /// Standings with hidden team names replaced by "(hidden)" — projector-safe.
+    public IReadOnlyList<LiveHostNet.Joined> ModeratedStandings =>
+        Standings.Select(j => _hidden.Contains(j.Id) ? j with { Name = "(hidden)" } : j).ToList();
+
     /// Teams flagged for leaving the app mid-question (Wave C cheat signal, 3.27).
     public int FlaggedCount => Net.AnswersSnapshot().Values.Count(a => a.Blurred == true);
     public bool HasFlags => FlaggedCount > 0;

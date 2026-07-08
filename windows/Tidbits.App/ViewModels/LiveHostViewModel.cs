@@ -62,4 +62,9 @@ public sealed class LiveHostViewModel : ObservableObject
     /// The unified standings as CSV text (Wave C export).
     public string StandingsCsv() => LiveExport.StandingsCsv(Host.Standings);
     public bool HasStandings => Host.Standings.Count > 0;
+
+    // Name moderation gate (3.26) — projector uses the moderated names.
+    public System.Collections.Generic.IReadOnlyList<LiveHostNet.Joined> ModeratedStandings => Host.ModeratedStandings;
+    public void ToggleHidden(string uid) => Host.ToggleHidden(uid);
+    public bool IsHidden(string uid) => Host.IsHidden(uid);
 }

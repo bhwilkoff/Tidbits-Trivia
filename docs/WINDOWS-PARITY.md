@@ -85,7 +85,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [x] 3.6 `LiveEvent` + `LiveEventStore` — an authored event = a named list of rounds (reusing NightRound kind+count); JSON-backed store (upsert by id, newest-first, persists); `ToPlan()` converts an event straight to a NightPlan for the host. Convert + store round-trip test
 - [~] 3.7 Builder — the Live setup gains a "build a custom event" section: name + add rounds (mode picker × count), a live rounds list (remove each), then Host this event or Save event; saved events list with Host/delete. Single-column (not the Mac two-pane) but fully composes + hosts + persists. Drag-reorder / per-round depth pending
 - [ ] 3.8 Fill a round 3 ways (corpus/AI/hand)
-- [ ] 3.13 Solo preview (no records)
+- [x] 3.13 Solo preview — a "Preview solo" button in the event builder plays the composed event through the shared solo-night engine (StartNight, host-paced off) with records:null (no records written), so the host can vet the questions before hosting. Authored-event play-through test GREEN (both rounds run to Finished)
 - [~] 3.14 host session — LiveNightHost (authoritative model + currentPub builder, all shapes) done for Trivia Night; setup now exposes host options (category picker, speed-bonus toggle, "I'll play too" + team name — set on the host before Start; PNG-verified). Full authored-event cockpit features pending
 - [~] 3.15 Cockpit UI — code/roster header + question + options + standings + reveal/next/lock/end; LIVE PNG vs real room. Projector + polish pending
 - [x] 3.16 Reveal-on-command + auto-score (LiveNightHost.Reveal→AutoScore, speed bonus)

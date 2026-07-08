@@ -144,6 +144,24 @@ public partial class LiveView : UserControl
         StartHosting(ev.ToPlan(), ev.Name);
     }
 
+    /// Play the composed event solo (no records) to vet the questions (3.13).
+    private async void OnPreviewEvent(object? sender, RoutedEventArgs e)
+    {
+        if (_rounds.Count == 0) { StatusText.Text = "Add at least one round first."; StatusText.IsVisible = true; return; }
+        var data = GameData.Shared.Value;
+        var cat = CategoryPicker.SelectedItem as TriviaCategory ?? TriviaCategory.Named("mixed");
+        var plan = CurrentEvent().ToPlan();
+        var questions = await data.Provider.NightQuestions(plan, cat);
+        if (questions.Count == 0) { StatusText.Text = "No questions available for that event."; StatusText.IsVisible = true; return; }
+        var engine = data.NewEngine();
+        var vm = new GameViewModel(engine, records: null); // preview → no records
+        vm.Closed += () => { CockpitHost.Content = null; Setup.IsVisible = true; };
+        Setup.IsVisible = false;
+        StatusText.IsVisible = false;
+        CockpitHost.Content = new GameView { DataContext = vm };
+        engine.StartNight(plan, cat, questions);
+    }
+
     private void OnSaveEvent(object? sender, RoutedEventArgs e)
     {
         if (_rounds.Count == 0) { StatusText.Text = "Add at least one round first."; StatusText.IsVisible = true; return; }

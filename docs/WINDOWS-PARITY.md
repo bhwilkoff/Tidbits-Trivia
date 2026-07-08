@@ -99,7 +99,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [ ] 3.40 Round-intro cards
 - [~] 3.41 Winner celebration — the projector's final-standings screen leads with a green "{winner} wins the night" banner (top of the ordered standings). Confetti/animation polish pending
 - [~] 3.42 Big-screen chrome — the projector question screen now shows the round title + "Question X of Y · N players" chrome and a large live coral countdown (ticks off Pub.Deadline via a 1s DispatcherTimer). Format/difficulty labels + story on reveal pending
-- [ ] 3.44 Printable/PDF fallback
+- [x] 3.44 Printable fallback — a "Print" button in the cockpit writes a styled, print-ready HTML standings sheet (LiveExport.StandingsHtml, HTML-escaped) to temp and opens it in the default browser via the OS Launcher (print / save-as-PDF — the $0 path). HTML generator unit-tested (structure + XSS-safe escaping)
 - [x] 3.45 Networked Trivia-Night host from Windows (LiveNightHost: openRoom/start/reveal+auto-score/next/end) — LIVE cockpit PNG vs real room
 
 ## Slice 5 — Wave A authoring depth

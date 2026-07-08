@@ -29,4 +29,20 @@ public class LiveExportTest
     {
         Assert.Equal("Rank,Team,Score\n", LiveExport.StandingsCsv(new List<LiveHostNet.Joined>()));
     }
+
+    [Fact]
+    public void Standings_html_is_printable_and_escapes()
+    {
+        var standings = new List<LiveHostNet.Joined>
+        {
+            new("u1", "Quiz Khalifa", 120),
+            new("u2", "<script>", 30),   // must be escaped, not injected
+        };
+        var html = LiveExport.StandingsHtml(standings, "Friday Night");
+        Assert.StartsWith("<!doctype html>", html);
+        Assert.Contains("<h1>Friday Night</h1>", html);
+        Assert.Contains("<td>Quiz Khalifa</td>", html);
+        Assert.Contains("&lt;script&gt;", html);        // escaped
+        Assert.DoesNotContain("<script>", html);         // not injected
+    }
 }

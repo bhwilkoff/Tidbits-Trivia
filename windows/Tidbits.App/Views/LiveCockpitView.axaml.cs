@@ -257,6 +257,22 @@ public partial class LiveCockpitView : UserControl
         await writer.WriteAsync(vm.StandingsCsv());
     }
 
+    /// Print standings — write a print-ready HTML sheet and open it in the default
+    /// browser (which prints / saves to PDF). The $0 printable fallback.
+    private async void OnPrintStandings(object? sender, RoutedEventArgs e)
+    {
+        if (Vm is not { } vm || !vm.HasStandings) return;
+        var html = Tidbits.Core.Networking.LiveExport.StandingsHtml(vm.Host.Standings, $"{vm.Host.Title} — Standings");
+        var path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"tidbits-standings-{vm.Host.Code}.html");
+        try
+        {
+            await System.IO.File.WriteAllTextAsync(path, html);
+            var top = TopLevel.GetTopLevel(this);
+            if (top?.Launcher is { } launcher) await launcher.LaunchUriAsync(new Uri(new Uri("file://"), path));
+        }
+        catch { /* best-effort */ }
+    }
+
     private ProjectorWindow? _projector;
 
     private void OnProjector(object? sender, RoutedEventArgs e)

@@ -93,6 +93,7 @@
                         Classes="accent"/>
                 <Button Content="Merge teams" Click="OnMergeTeams" Padding="16,10"/>
                 <Button Content="Export CSV" Click="OnExportCsv" Padding="16,10"/>
+                <Button Content="Print" Click="OnPrintStandings" Padding="16,10"/>
                 <Button Content="Show on projector" Click="OnProjector" Padding="16,10"/>
                 <Button Content="End night" Click="OnClose" Padding="16,10"/>
             </StackPanel>

@@ -24,6 +24,10 @@
                 <TextBlock Text="Or build a custom event" FontSize="18" FontWeight="Bold" Margin="0,14,0,0"/>
                 <TextBox x:Name="EventNameBox" Watermark="Event name (e.g. Friday Pub Quiz)" MaxWidth="360" HorizontalAlignment="Left"/>
                 <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBox x:Name="SponsorBox" Watermark="Sponsor (optional)" MinWidth="220"/>
+                    <TextBox x:Name="BrandHexBox" Watermark="Brand color #hex" MinWidth="130"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="8">
                     <ComboBox x:Name="RoundModeBox" MinWidth="160"/>
                     <ComboBox x:Name="RoundCountBox" MinWidth="90"/>
                     <Button Content="+ Add round" Click="OnAddRound"/>

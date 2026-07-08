@@ -15,6 +15,8 @@ public sealed record LiveEvent
     [JsonPropertyName("id")] public string Id { get; init; } = Guid.NewGuid().ToString("N");
     [JsonPropertyName("name")] public string Name { get; init; } = "Trivia Night";
     [JsonPropertyName("rounds")] public IReadOnlyList<NightRound> Rounds { get; init; } = new List<NightRound>();
+    [JsonPropertyName("sponsor")] public string? Sponsor { get; init; }   // Wave D sponsor kit
+    [JsonPropertyName("brandHex")] public string? BrandHex { get; init; } // Wave D white-label accent
 
     [JsonIgnore] public int TotalQuestions => Rounds.Sum(r => r.Count);
     [JsonIgnore] public string Summary =>

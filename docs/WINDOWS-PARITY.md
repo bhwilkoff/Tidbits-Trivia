@@ -130,9 +130,9 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 
 ## Slice 8 — Waves D + E (venue + moat)
 - [ ] 3.46 Recurring-series scheduling
-- [ ] 3.47 Sponsor kit (big-screen footer)
+- [x] 3.47 Sponsor kit — an event Sponsor flows to a persistent "Brought to you by {sponsor}" footer on the projector across all phases (LiveEvent.Sponsor → LiveNightHost.Sponsor → VM SponsorLine/HasSponsor). Set in the builder, persists in the saved event; PNG-verified
 - [ ] 3.48 Lead capture QR
-- [ ] 3.49 White-label brand accent
+- [x] 3.49 White-label brand accent — an event BrandHex recolors the projector accents (JOIN NOW / round title / final-standings header) via VM BrandBrush (parses the hex, falls back to brand coral on invalid). Set in the builder, persists; branding test + branded-lobby PNG (blue #0047FF verified)
 - [x] 3.50 ★ Standings write (season/venue) — when a live night ends, `LivePlayerClient.RecordStanding` adds the player's score to their cumulative `standings/{season}/{venueKey}/{authUid}` (read-modify-write, keyed by auth uid per the rule), fired once from RecordIfEnded. `StandingWrite` payload (name/score/nights/updatedAt) + the season/venue path pieces are byte-identical to the web/Swift/Kotlin twins — unit-tested (2026-S3 quarter format, path-safe venue key, JSON keys). Completes the moat with the 2.25 read side; the hourly cron aggregates all platforms' writes
 - [x] 3.51 Leaderboard read + defendable titles — shipped as 2.25 (LeaderboardApi + a top-level Leaderboard nav → season overall + per-venue, CHAMPION on #1, signed-in player's row highlighted). Now paired with the 3.50 write side = the complete moat
 - [ ] 3.52 Social graph (add players you played with)

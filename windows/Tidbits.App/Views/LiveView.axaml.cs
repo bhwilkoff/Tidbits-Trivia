@@ -135,13 +135,15 @@ public partial class LiveView : UserControl
     {
         Name = string.IsNullOrWhiteSpace(EventNameBox.Text) ? "Custom Night" : EventNameBox.Text!.Trim(),
         Rounds = new System.Collections.Generic.List<NightRound>(_rounds),
+        Sponsor = string.IsNullOrWhiteSpace(SponsorBox.Text) ? null : SponsorBox.Text!.Trim(),
+        BrandHex = string.IsNullOrWhiteSpace(BrandHexBox.Text) ? null : BrandHexBox.Text!.Trim(),
     };
 
     private void OnHostEvent(object? sender, RoutedEventArgs e)
     {
         if (_rounds.Count == 0) { StatusText.Text = "Add at least one round first."; StatusText.IsVisible = true; return; }
         var ev = CurrentEvent();
-        StartHosting(ev.ToPlan(), ev.Name);
+        StartHosting(ev.ToPlan(), ev.Name, ev.Sponsor, ev.BrandHex);
     }
 
     /// Play the composed event solo (no records) to vet the questions (3.13).
@@ -194,7 +196,7 @@ public partial class LiveView : UserControl
             });
             var host = new Button { Content = "Host", Padding = new Avalonia.Thickness(14, 7), Margin = new Avalonia.Thickness(8, 0, 0, 0) };
             host.Classes.Add("accent");
-            host.Click += (_, _) => StartHosting(e.ToPlan(), e.Name);
+            host.Click += (_, _) => StartHosting(e.ToPlan(), e.Name, e.Sponsor, e.BrandHex);
             Grid.SetColumn(host, 1);
             grid.Children.Add(host);
             var del = new Button { Content = "✕", Padding = new Avalonia.Thickness(10, 7), Margin = new Avalonia.Thickness(8, 0, 0, 0) };
@@ -206,7 +208,7 @@ public partial class LiveView : UserControl
         }
     }
 
-    private async void StartHosting(NightPlan plan, string title)
+    private async void StartHosting(NightPlan plan, string title, string? sponsor = null, string? brandHex = null)
     {
         var data = GameData.Shared.Value;
         var category = CategoryPicker.SelectedItem as TriviaCategory ?? TriviaCategory.Named("mixed");
@@ -215,6 +217,8 @@ public partial class LiveView : UserControl
             SpeedBonus = SpeedBonusCheck.IsChecked == true,
             HostPlays = HostPlaysCheck.IsChecked == true,
             HostName = string.IsNullOrWhiteSpace(HostNameBox.Text) ? "Host" : HostNameBox.Text!.Trim(),
+            Sponsor = sponsor,
+            BrandHex = brandHex,
         };
         var vm = new LiveHostViewModel(host);
         Setup.IsVisible = false;

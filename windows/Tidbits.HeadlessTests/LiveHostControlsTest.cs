@@ -72,6 +72,24 @@ public class LiveHostControlsTest
     }
 
     [Fact]
+    public void Venue_branding_flows_to_the_view_model()
+    {
+        var host = NewHost();
+        var vm = new LiveHostViewModel(host);
+        Assert.False(vm.HasSponsor);
+        Assert.Equal(Avalonia.Media.Color.Parse("#FF5C35"), ((Avalonia.Media.SolidColorBrush)vm.BrandBrush).Color); // default
+
+        host.Sponsor = "The Anchor Pub";
+        host.BrandHex = "#0047FF";
+        Assert.True(vm.HasSponsor);
+        Assert.Equal("Brought to you by The Anchor Pub", vm.SponsorLine);
+        Assert.Equal(Avalonia.Media.Color.Parse("#0047FF"), ((Avalonia.Media.SolidColorBrush)vm.BrandBrush).Color);
+
+        host.BrandHex = "not-a-color";   // invalid → falls back to the brand coral
+        Assert.Equal(Avalonia.Media.Color.Parse("#FF5C35"), ((Avalonia.Media.SolidColorBrush)vm.BrandBrush).Color);
+    }
+
+    [Fact]
     public void Answer_lock_defaults_are_safe()
     {
         var host = NewHost();

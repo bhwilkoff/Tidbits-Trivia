@@ -47,6 +47,12 @@ public class LiveEventTest
             Assert.Equal("Friday v2", reloaded.All[0].Name);
             Assert.Equal(9, reloaded.All[0].TotalQuestions);
 
+            // Sponsor + white-label brand persist too.
+            store.Save((reloaded.All[0] with { Sponsor = "The Anchor", BrandHex = "#0047FF" }));
+            var again = new LiveEventStore(path);
+            Assert.Equal("The Anchor", again.All[0].Sponsor);
+            Assert.Equal("#0047FF", again.All[0].BrandHex);
+
             reloaded.Remove(ev.Id);
             Assert.Empty(reloaded.All);
         }

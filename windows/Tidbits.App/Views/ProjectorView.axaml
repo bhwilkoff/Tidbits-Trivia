@@ -7,7 +7,7 @@
         <!-- Lobby: join info + QR -->
         <Viewbox IsVisible="{Binding IsLobby}" Margin="120" Stretch="Uniform">
             <StackPanel Spacing="18" Width="900" HorizontalAlignment="Center">
-                <TextBlock Text="JOIN NOW" Foreground="#FF5C35" FontSize="60" FontWeight="Black" HorizontalAlignment="Center"/>
+                <TextBlock Text="JOIN NOW" Foreground="{Binding BrandBrush}" FontSize="60" FontWeight="Black" HorizontalAlignment="Center"/>
                 <TextBlock Text="tidbitstrivia.com/live" Foreground="White" FontSize="34" Opacity="0.8" HorizontalAlignment="Center"/>
                 <TextBlock Text="{Binding Host.Code}" Foreground="White" FontSize="150" FontWeight="Black" HorizontalAlignment="Center"/>
                 <Border Background="White" Padding="16" CornerRadius="16" HorizontalAlignment="Center">
@@ -21,7 +21,7 @@
             <StackPanel Width="1400" Spacing="26">
                 <Grid ColumnDefinitions="*,Auto">
                     <StackPanel Spacing="4">
-                        <TextBlock Text="{Binding Host.RoundTitle}" Foreground="#FF5C35" FontSize="34" FontWeight="Bold"/>
+                        <TextBlock Text="{Binding Host.RoundTitle}" Foreground="{Binding BrandBrush}" FontSize="34" FontWeight="Bold"/>
                         <TextBlock Text="{Binding QuestionChrome}" Foreground="White" Opacity="0.55" FontSize="24"/>
                     </StackPanel>
                     <TextBlock x:Name="CountdownBig" Grid.Column="1" Foreground="#FF5C35" FontSize="72"
@@ -42,13 +42,17 @@
             </StackPanel>
         </Viewbox>
 
+        <!-- Sponsor kit footer (all phases) -->
+        <TextBlock IsVisible="{Binding HasSponsor}" Text="{Binding SponsorLine}" Foreground="White" Opacity="0.55"
+                   FontSize="22" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,28"/>
+
         <!-- Ended: final standings -->
         <Viewbox IsVisible="{Binding IsEnded}" Margin="120" Stretch="Uniform">
             <StackPanel Width="900" Spacing="14">
                 <TextBlock Text="{Binding WinnerLine}" IsVisible="{Binding HasWinner}" Foreground="#3FCF8E"
                            FontSize="52" FontWeight="Black" HorizontalAlignment="Center" TextAlignment="Center"
                            TextWrapping="Wrap" Margin="0,0,0,10"/>
-                <TextBlock Text="Final standings" Foreground="#FF5C35" FontSize="56" FontWeight="Black" HorizontalAlignment="Center"/>
+                <TextBlock Text="Final standings" Foreground="{Binding BrandBrush}" FontSize="56" FontWeight="Black" HorizontalAlignment="Center"/>
                 <ItemsControl ItemsSource="{Binding ModeratedStandings}" x:CompileBindings="False">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>

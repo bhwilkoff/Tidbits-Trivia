@@ -28,6 +28,23 @@ public sealed class LiveHostViewModel : ObservableObject
     public bool CanGoBack => Host.CanGoBack;
     public int? SecondsRemaining => Host.SecondsRemaining;
     public bool HasFlags => Host.HasFlags;
+
+    // Wave D venue branding (big screen).
+    public bool HasSponsor => !string.IsNullOrWhiteSpace(Host.Sponsor);
+    public string SponsorLine => $"Brought to you by {Host.Sponsor}";
+    public Avalonia.Media.IBrush BrandBrush
+    {
+        get
+        {
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(Host.BrandHex))
+                    return new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse(Host.BrandHex!));
+            }
+            catch { /* fall through to the brand default */ }
+            return new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#FF5C35"));
+        }
+    }
     public bool IsLocked => Host.Locked;
     /// The answer window has hit its deadline and isn't locked yet — cue auto-lock.
     public bool AutoLockDue => Host.SecondsRemaining == 0 && !Host.Locked && !Host.Revealed;

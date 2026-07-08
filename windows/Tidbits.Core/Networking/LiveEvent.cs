@@ -18,12 +18,33 @@ public sealed record LiveEvent
     [JsonPropertyName("sponsor")] public string? Sponsor { get; init; }   // Wave D sponsor kit
     [JsonPropertyName("brandHex")] public string? BrandHex { get; init; } // Wave D white-label accent
     [JsonPropertyName("leadCaptureURL")] public string? LeadCaptureUrl { get; init; } // Wave D lead capture
+    [JsonPropertyName("weekday")] public int? Weekday { get; init; } // Wave D recurring (0=Sun..6=Sat), null = one-off
 
     [JsonIgnore] public int TotalQuestions => Rounds.Sum(r => r.Count);
+    [JsonIgnore] public bool IsRecurring => Weekday is >= 0 and <= 6;
     [JsonIgnore] public string Summary =>
         $"{Rounds.Count} round{(Rounds.Count == 1 ? "" : "s")} · {TotalQuestions} questions";
 
+    /// "Every Monday · next Jul 14" for a recurring event, else "" (needs `now`
+    /// passed so it's deterministic/testable).
+    public string ScheduleLine(DateTime now) =>
+        IsRecurring ? RecurringSchedule.Display((DayOfWeek)Weekday!.Value, now) : "";
+
     public NightPlan ToPlan() => new() { Rounds = Rounds.ToList() };
+}
+
+/// Recurring-series date math (Wave D). Pure so it can be unit-tested.
+public static class RecurringSchedule
+{
+    /// The next date (today counts) that falls on `weekday`, on/after `from`.
+    public static DateTime NextOccurrence(DayOfWeek weekday, DateTime from)
+    {
+        int delta = ((int)weekday - (int)from.DayOfWeek + 7) % 7; // 0 = today
+        return from.Date.AddDays(delta);
+    }
+
+    public static string Display(DayOfWeek weekday, DateTime from) =>
+        $"Every {weekday} · next {NextOccurrence(weekday, from):MMM d}";
 }
 
 /// Persisted authored events (host-side). JSON-file-backed, newest-first.

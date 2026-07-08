@@ -49,6 +49,9 @@ public partial class LiveView : UserControl
         RoundModeBox.SelectedIndex = 0;
         RoundCountBox.ItemsSource = new[] { 3, 4, 5, 6, 8 };
         RoundCountBox.SelectedIndex = 1; // 4
+        // Index 0 = one-off; 1..7 = Sunday..Saturday (DayOfWeek 0..6 = index-1).
+        WeekdayBox.ItemsSource = new[] { "One-off", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
+        WeekdayBox.SelectedIndex = 0;
         BuildSavedEvents();
     }
 
@@ -138,6 +141,7 @@ public partial class LiveView : UserControl
         Sponsor = string.IsNullOrWhiteSpace(SponsorBox.Text) ? null : SponsorBox.Text!.Trim(),
         BrandHex = string.IsNullOrWhiteSpace(BrandHexBox.Text) ? null : BrandHexBox.Text!.Trim(),
         LeadCaptureUrl = string.IsNullOrWhiteSpace(LeadUrlBox.Text) ? null : LeadUrlBox.Text!.Trim(),
+        Weekday = WeekdayBox.SelectedIndex >= 1 ? WeekdayBox.SelectedIndex - 1 : (int?)null,
     };
 
     private void OnHostEvent(object? sender, RoutedEventArgs e)
@@ -192,7 +196,11 @@ public partial class LiveView : UserControl
                 Children =
                 {
                     new TextBlock { Text = e.Name, FontWeight = Avalonia.Media.FontWeight.SemiBold },
-                    new TextBlock { Text = e.Summary, FontSize = 12, Opacity = 0.65 },
+                    new TextBlock
+                    {
+                        Text = e.IsRecurring ? $"{e.ScheduleLine(DateTime.Now)} · {e.Summary}" : e.Summary,
+                        FontSize = 12, Opacity = 0.65,
+                    },
                 },
             });
             var host = new Button { Content = "Host", Padding = new Avalonia.Thickness(14, 7), Margin = new Avalonia.Thickness(8, 0, 0, 0) };

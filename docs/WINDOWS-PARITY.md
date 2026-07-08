@@ -129,7 +129,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [ ] 3.35 Speed-tiered scoring (verify)
 
 ## Slice 8 — Waves D + E (venue + moat)
-- [ ] 3.46 Recurring-series scheduling
+- [x] 3.46 Recurring-series scheduling — an event can repeat weekly (a "Repeats" weekday picker in the builder → LiveEvent.Weekday); the saved-events list shows "Every {day} · next {date}" so a weekly host reuses the template. Pure RecurringSchedule.NextOccurrence/Display (today counts, wraps the week) + IsRecurring/ScheduleLine — unit-tested. Wave D venue business COMPLETE (recurring + sponsor + white-label + lead-capture)
 - [x] 3.47 Sponsor kit — an event Sponsor flows to a persistent "Brought to you by {sponsor}" footer on the projector across all phases (LiveEvent.Sponsor → LiveNightHost.Sponsor → VM SponsorLine/HasSponsor). Set in the builder, persists in the saved event; PNG-verified
 - [x] 3.48 Lead-capture QR — an event LeadCaptureUrl → a "Join the mailing list" QR on the projector final-standings screen (QrHelper, pure-C#), pointing at the venue's own signup URL (venue keeps its CRM). Builder field, threaded through StartHosting, persists in the saved event; round-trip + VM tests
 - [x] 3.49 White-label brand accent — an event BrandHex recolors the projector accents (JOIN NOW / round title / final-standings header) via VM BrandBrush (parses the hex, falls back to brand coral on invalid). Set in the builder, persists; branding test + branded-lobby PNG (blue #0047FF verified)

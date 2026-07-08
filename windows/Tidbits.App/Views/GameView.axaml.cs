@@ -34,8 +34,9 @@ public partial class GameView : UserControl
 
     private void OnEngineChanged(object? sender, PropertyChangedEventArgs e) => RebuildOptions();
 
-    /// Options are rebuilt on each engine change so reveal can recolor them
-    /// (green correct / red chosen-wrong / dim others) — clickable only while playing.
+    /// The answer surface is rebuilt on each engine change and dispatched by the
+    /// question's shape: MCQ options (recolored on reveal), a numeric slider
+    /// (Closest Call), or a text field (Name It / Type-the-answer).
     private void RebuildOptions()
     {
         OptionsPanel.Children.Clear();
@@ -44,6 +45,14 @@ public partial class GameView : UserControl
         if (engine.CurrentPhase is not (GameEngine.Phase.Playing or GameEngine.Phase.Reveal)) return;
 
         bool reveal = engine.CurrentPhase == GameEngine.Phase.Reveal;
+        if (q.Closest is { } closest) { BuildNumeric(engine, closest, reveal); return; }
+        if (q.Accepted is not null) { BuildText(engine, reveal); return; }
+        BuildMcq(engine, q, reveal);
+    }
+
+    /// MCQ options — green correct / red chosen-wrong / dim others on reveal.
+    private void BuildMcq(GameEngine engine, Tidbits.Core.Models.Question q, bool reveal)
+    {
         for (int i = 0; i < q.Options.Count; i++)
         {
             int idx = i;
@@ -71,6 +80,101 @@ public partial class GameView : UserControl
             }
             OptionsPanel.Children.Add(btn);
         }
+    }
+
+    /// Closest Call — a slider over [min,max] plus a live value read-out and a
+    /// Submit button. On reveal, shows the player's guess (the answer + points
+    /// land in the shared "learn the fact" card).
+    private void BuildNumeric(GameEngine engine, Tidbits.Core.Models.ClosestSpec spec, bool reveal)
+    {
+        string Fmt(double v)
+        {
+            var n = v == Math.Round(v) ? ((long)v).ToString() : v.ToString("0.##");
+            return string.IsNullOrEmpty(spec.Unit) ? n : $"{n} {spec.Unit}";
+        }
+
+        if (reveal)
+        {
+            OptionsPanel.Children.Add(new TextBlock
+            {
+                Text = $"Your guess: {Fmt(engine.CurrentGuess)}",
+                FontSize = 15, Opacity = 0.8, Margin = new Thickness(0, 4),
+            });
+            return;
+        }
+
+        var readout = new TextBlock
+        {
+            Text = Fmt(engine.CurrentGuess), FontSize = 30, FontWeight = FontWeight.Bold,
+            HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 8),
+        };
+        var slider = new Slider
+        {
+            Minimum = spec.Min, Maximum = spec.Max, Value = engine.CurrentGuess,
+            TickFrequency = spec.Step > 0 ? spec.Step : 1, IsSnapToTickEnabled = spec.Step > 0,
+            Margin = new Thickness(0, 4),
+        };
+        slider.PropertyChanged += (_, ev) =>
+        {
+            if (ev.Property == Slider.ValueProperty)
+            {
+                engine.SetGuess(slider.Value);
+                readout.Text = Fmt(engine.CurrentGuess);
+            }
+        };
+        var ends = new Grid { ColumnDefinitions = new ColumnDefinitions("*,*") };
+        var lo = new TextBlock { Text = Fmt(spec.Min), FontSize = 12, Opacity = 0.55 };
+        var hi = new TextBlock { Text = Fmt(spec.Max), FontSize = 12, Opacity = 0.55,
+            HorizontalAlignment = HorizontalAlignment.Right };
+        Grid.SetColumn(hi, 1);
+        ends.Children.Add(lo); ends.Children.Add(hi);
+
+        var submit = new Button
+        {
+            Content = "Submit guess", HorizontalAlignment = HorizontalAlignment.Left,
+            Padding = new Thickness(22, 12), FontWeight = FontWeight.Bold, Margin = new Thickness(0, 10, 0, 0),
+        };
+        submit.Classes.Add("accent");
+        submit.Click += (_, _) => engine.SubmitGuess();
+
+        OptionsPanel.Children.Add(readout);
+        OptionsPanel.Children.Add(slider);
+        OptionsPanel.Children.Add(ends);
+        OptionsPanel.Children.Add(submit);
+    }
+
+    /// Name It / Type-the-answer — a text field + Submit (also submits on Enter).
+    private void BuildText(GameEngine engine, bool reveal)
+    {
+        if (reveal)
+        {
+            OptionsPanel.Children.Add(new TextBlock
+            {
+                Text = string.IsNullOrWhiteSpace(engine.TypedText) ? "You didn't answer" : $"You typed: {engine.TypedText}",
+                FontSize = 15, Opacity = 0.8, Margin = new Thickness(0, 4),
+            });
+            return;
+        }
+
+        var box = new TextBox
+        {
+            Text = engine.TypedText, Watermark = "Type your answer…", FontSize = 16,
+            Margin = new Thickness(0, 4),
+        };
+        var submit = new Button
+        {
+            Content = "Submit", HorizontalAlignment = HorizontalAlignment.Left,
+            Padding = new Thickness(22, 12), FontWeight = FontWeight.Bold, Margin = new Thickness(0, 10, 0, 0),
+        };
+        submit.Classes.Add("accent");
+        void Go() { engine.TypedText = box.Text ?? ""; engine.SubmitText(); }
+        box.TextChanged += (_, _) => engine.TypedText = box.Text ?? "";
+        box.KeyDown += (_, ev) => { if (ev.Key == Avalonia.Input.Key.Enter) Go(); };
+        submit.Click += (_, _) => Go();
+
+        OptionsPanel.Children.Add(box);
+        OptionsPanel.Children.Add(submit);
+        box.Focus();
     }
 
     private void OnNext(object? sender, RoutedEventArgs e) => _vm?.Advance();

@@ -52,7 +52,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [~] 2.5 Play/Home surface — Quick Play hero + Daily + category picker + mode grid (all MCQ modes reachable); Surprise/Night/Online-MP pending
 - [~] 2.6 Customize — category picker + mode grid on Home; mode multiselect (mix) + saved presets pending
 - [~] 2.7 Game surface — MCQ playing/reveal/finished LIVE + headless-PNG verified; specialty-mode surfaces pending
-- [ ] 2.8 Per-mode answer surfaces (picture/numeric/ordering/matching/type/enumerate/stake/sweep)
+- [~] 2.8 Per-mode answer surfaces — numeric slider (Closest Call) + free-text (Name It) built + PNG-verified + play-through tests GREEN; Sweep/Ladder/OddOneOut/ThisOrThat already ride MCQ. Ordering/matching/enumerate/stake/picture pending
 - [ ] 2.9 Image pipeline (decoded cache + capped HttpClient, sRGB)
 - [x] 2.10 Results recap — coral scorecard (headline/score/mode·category) + stat row (correct/accuracy/best-streak) + spoiler-free grid + "Tidbits to remember" missed-fact cards + Play Again (hidden for Daily) + Done; PNG-verified
 - [x] 2.11 Emoji-grid share — `ShareText` (Core, byte-faithful web twin: 🟢🔴⚫️ grid + ▰▱ meter + streak/best-run fallback + play link) → clipboard (Windows native idiom); 3 golden tests GREEN

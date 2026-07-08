@@ -19,7 +19,14 @@
         <!-- Question / reveal -->
         <Viewbox IsVisible="{Binding IsPlaying}" Margin="100,80" Stretch="Uniform">
             <StackPanel Width="1400" Spacing="26">
-                <TextBlock Text="{Binding Host.RoundTitle}" Foreground="#FF5C35" FontSize="34" FontWeight="Bold"/>
+                <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="{Binding Host.RoundTitle}" Foreground="#FF5C35" FontSize="34" FontWeight="Bold"/>
+                        <TextBlock Text="{Binding QuestionChrome}" Foreground="White" Opacity="0.55" FontSize="24"/>
+                    </StackPanel>
+                    <TextBlock x:Name="CountdownBig" Grid.Column="1" Foreground="#FF5C35" FontSize="72"
+                               FontWeight="Black" VerticalAlignment="Center"/>
+                </Grid>
                 <TextBlock Text="{Binding Host.Current.Prompt}" Foreground="White" FontSize="60" FontWeight="Black" TextWrapping="Wrap"/>
                 <ItemsControl ItemsSource="{Binding Host.Current.Options}">
                     <ItemsControl.ItemTemplate>
@@ -38,6 +45,9 @@
         <!-- Ended: final standings -->
         <Viewbox IsVisible="{Binding IsEnded}" Margin="120" Stretch="Uniform">
             <StackPanel Width="900" Spacing="14">
+                <TextBlock Text="{Binding WinnerLine}" IsVisible="{Binding HasWinner}" Foreground="#3FCF8E"
+                           FontSize="52" FontWeight="Black" HorizontalAlignment="Center" TextAlignment="Center"
+                           TextWrapping="Wrap" Margin="0,0,0,10"/>
                 <TextBlock Text="Final standings" Foreground="#FF5C35" FontSize="56" FontWeight="Black" HorizontalAlignment="Center"/>
                 <ItemsControl ItemsSource="{Binding Host.Standings}" x:CompileBindings="False">
                     <ItemsControl.ItemTemplate>

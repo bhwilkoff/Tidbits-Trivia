@@ -8,10 +8,21 @@ namespace Tidbits.App.Views;
 public partial class ProjectorView : UserControl
 {
     private string _qrCode = "";
+    private readonly Avalonia.Threading.DispatcherTimer _tick;
 
     public ProjectorView()
     {
         InitializeComponent();
+        _tick = new Avalonia.Threading.DispatcherTimer(
+            TimeSpan.FromSeconds(1), Avalonia.Threading.DispatcherPriority.Normal, (_, _) => RefreshCountdown());
+        _tick.Start();
+        DetachedFromVisualTree += (_, _) => _tick.Stop();
+    }
+
+    private void RefreshCountdown()
+    {
+        var s = (DataContext as LiveHostViewModel)?.SecondsRemaining;
+        CountdownBig.Text = s is { } n ? $"{n}s" : "";
     }
 
     protected override void OnDataContextChanged(EventArgs e)

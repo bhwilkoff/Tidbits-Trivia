@@ -59,5 +59,15 @@ public class LiveHostControlsTest
         Assert.NotNull(vm.Skip());
         Assert.NotNull(vm.Back());
         Assert.NotNull(vm.Adjust("uid", 1));
+        Assert.NotNull(vm.StartTimer(30));
+    }
+
+    [Fact]
+    public void Projector_chrome_is_safe_before_any_players()
+    {
+        var vm = new LiveHostViewModel(NewHost());
+        Assert.False(vm.HasWinner);              // no standings yet
+        Assert.Equal("", vm.WinnerLine);
+        Assert.Contains("player", vm.QuestionChrome); // renders a chrome string, no throw
     }
 }

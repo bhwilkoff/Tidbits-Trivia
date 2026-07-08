@@ -28,6 +28,21 @@ public sealed class LiveHostViewModel : ObservableObject
     public bool CanGoBack => Host.CanGoBack;
     public int? SecondsRemaining => Host.SecondsRemaining;
 
+    /// Big-screen chrome (3.42): "Question X of Y · N players".
+    public string QuestionChrome
+    {
+        get
+        {
+            var (n, of) = Host.QuestionInRound;
+            var players = Host.PlayerCount;
+            return $"Question {n} of {of} · {players} player{(players == 1 ? "" : "s")}";
+        }
+    }
+
+    // Winner celebration (3.41) — top of the ordered standings.
+    public bool HasWinner => Host.Standings.Count > 0;
+    public string WinnerLine => Host.Standings.Count > 0 ? $"{Host.Standings[0].Name} wins the night" : "";
+
     public Task StartHosting() => Host.Start();
     public Task Reveal() => Host.Reveal();
     public Task Next() => Host.Next();

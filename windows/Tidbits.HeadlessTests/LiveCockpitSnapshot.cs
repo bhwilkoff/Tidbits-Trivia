@@ -55,7 +55,9 @@ public class LiveCockpitSnapshot
         Assert.Null(host.SecondsRemaining);
 
         // The projector big-screen view (rendered directly; the 2nd-monitor placement is
-        // Windows-runtime and CI-verified separately).
+        // Windows-runtime and CI-verified separately). Start a timer so the big-screen
+        // countdown + chrome show in the snapshot.
+        await host.StartTimer(45);
         var proj = new Window { Width = 1280, Height = 720, Content = new ProjectorView { DataContext = vm } };
         proj.Show();
         Dispatcher.UIThread.RunJobs();

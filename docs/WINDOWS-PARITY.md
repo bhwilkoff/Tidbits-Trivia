@@ -97,8 +97,8 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [ ] 3.38 Reveal choreography
 - [ ] 3.39 Animated climbing leaderboard (unified phone+paper)
 - [ ] 3.40 Round-intro cards
-- [ ] 3.41 Winner celebration
-- [ ] 3.42 Big-screen chrome (format/difficulty/countdown/QR/story)
+- [~] 3.41 Winner celebration — the projector's final-standings screen leads with a green "{winner} wins the night" banner (top of the ordered standings). Confetti/animation polish pending
+- [~] 3.42 Big-screen chrome — the projector question screen now shows the round title + "Question X of Y · N players" chrome and a large live coral countdown (ticks off Pub.Deadline via a 1s DispatcherTimer). Format/difficulty labels + story on reveal pending
 - [ ] 3.44 Printable/PDF fallback
 - [x] 3.45 Networked Trivia-Night host from Windows (LiveNightHost: openRoom/start/reveal+auto-score/next/end) — LIVE cockpit PNG vs real room
 

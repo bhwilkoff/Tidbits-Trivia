@@ -1,0 +1,44 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Tidbits.App.Views.PartyView">
+    <Panel>
+        <!-- Setup: enter 2–4 player names -->
+        <ScrollViewer x:Name="Setup">
+            <StackPanel Margin="36,32" Spacing="14" MaxWidth="520" HorizontalAlignment="Left">
+                <TextBlock Text="Pass &amp; Play" FontSize="30" FontWeight="Black"/>
+                <TextBlock Text="2–4 players, one device, the same questions. Hand off between turns."
+                           FontSize="14" Opacity="0.72" TextWrapping="Wrap"/>
+                <TextBox x:Name="P1" Watermark="Player 1" FontSize="16" Padding="12"/>
+                <TextBox x:Name="P2" Watermark="Player 2" FontSize="16" Padding="12"/>
+                <TextBox x:Name="P3" Watermark="Player 3 (optional)" FontSize="16" Padding="12"/>
+                <TextBox x:Name="P4" Watermark="Player 4 (optional)" FontSize="16" Padding="12"/>
+                <Button Content="Start" Click="OnStart" Classes="accent" Padding="26,12" FontWeight="Bold" HorizontalAlignment="Left"/>
+                <TextBlock x:Name="SetupError" IsVisible="False" Foreground="#D64545" FontSize="13"/>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Handoff: pass the device to the next player -->
+        <Border x:Name="Handoff" IsVisible="False" HorizontalAlignment="Center" VerticalAlignment="Center"
+                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1"
+                CornerRadius="14" Padding="40,32" MaxWidth="480">
+            <StackPanel Spacing="10" HorizontalAlignment="Center">
+                <TextBlock Text="Pass the device to" FontSize="15" Opacity="0.7" HorizontalAlignment="Center"/>
+                <TextBlock x:Name="HandoffName" FontSize="30" FontWeight="Black" HorizontalAlignment="Center" TextAlignment="Center"/>
+                <Button x:Name="StartTurnBtn" Content="Start turn" Click="OnStartTurn" Classes="accent"
+                        HorizontalAlignment="Center" Padding="28,13" FontWeight="Bold" Margin="0,8,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <ContentControl x:Name="GameHost"/>
+
+        <!-- Scoreboard -->
+        <ScrollViewer x:Name="Scoreboard" IsVisible="False">
+            <StackPanel Margin="36,36" Spacing="12" MaxWidth="480" HorizontalAlignment="Center">
+                <TextBlock Text="Final scores" FontSize="26" FontWeight="Black" HorizontalAlignment="Center"/>
+                <StackPanel x:Name="ScoreList" Spacing="8"/>
+                <Button Content="Done" Click="OnDone" HorizontalAlignment="Center" Padding="26,11" Margin="0,8,0,0"/>
+            </StackPanel>
+        </ScrollViewer>
+    </Panel>
+</UserControl>

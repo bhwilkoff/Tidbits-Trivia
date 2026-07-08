@@ -232,5 +232,13 @@ public partial class PlayView : UserControl
         engine.StartNight(plan, cat, questions);
     }
 
+    private void OnPassAndPlay(object? sender, RoutedEventArgs e)
+    {
+        var party = new PartyView();
+        party.Closed += () => { GameHost.Content = null; Landing.IsVisible = true; };
+        Landing.IsVisible = false;
+        GameHost.Content = party;
+    }
+
     private void OnQuickPlay(object? sender, RoutedEventArgs e) => StartGame(GameMode.Classic);
 }

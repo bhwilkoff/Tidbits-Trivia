@@ -26,7 +26,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [x] 1.1 `Question` + Closest/Match/Enum/Answered specs
 - [x] 1.2 `GameMode` (17 modes + metadata)
 - [x] 1.3 `TriviaCategory` (8 categories)
-- [ ] 1.4 `Player` (pass-and-play)
+- [x] 1.4 `Player` / Pass & Play — a "Pass & Play" launcher on the Play landing → PartyView: enter 2–4 names, everyone plays the SAME shared question set (drawn once, replayed per player via StartCustom), a "Pass the device to {name}" hand-off between turns, then a ranked scoreboard (winner in coral). Matches don't write records. Setup PNG-verified
 - [x] 1.5 `PlayerRecord` set (GameRecord/AnswerDetail/MissedFact/CalibrationTally/DailyStreak) — JSON-backed (SQLite swap possible later)
 - [x] 1.6 `NightPlan`/`NightRound`/`NightStartMode` + presets (wire-compat; GameMode→string converter)
 - [x] 1.14 ★ `SeededRNG` (splitmix64) + `stableSeed` (FNV-1a64)

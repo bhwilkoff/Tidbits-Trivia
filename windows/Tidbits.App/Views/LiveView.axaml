@@ -7,6 +7,16 @@
                 <TextBlock Text="Tidbits Live" FontSize="34" FontWeight="Black"/>
                 <TextBlock Text="Host a trivia night — players join from their phones by a 4-letter code. The host cockpit runs the show; a projector window goes on the big screen."
                            FontSize="15" Opacity="0.72" TextWrapping="Wrap"/>
+                <TextBlock Text="Night options" FontSize="18" FontWeight="Bold" Margin="0,10,0,0"/>
+                <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                    <TextBlock Text="Category:" VerticalAlignment="Center" Opacity="0.7"/>
+                    <ComboBox x:Name="CategoryPicker" MinWidth="150"/>
+                </StackPanel>
+                <CheckBox x:Name="SpeedBonusCheck" Content="Speed bonus — fastest correct answers score extra (+3 / +2 / +1)"/>
+                <CheckBox x:Name="HostPlaysCheck" Content="I'll play too (answer on this device and be scored)"/>
+                <TextBox x:Name="HostNameBox" Watermark="Your team name" MaxWidth="260"
+                         HorizontalAlignment="Left" IsEnabled="{Binding #HostPlaysCheck.IsChecked}"/>
+
                 <TextBlock Text="Host a night" FontSize="18" FontWeight="Bold" Margin="0,10,0,0"/>
                 <StackPanel x:Name="PresetsPanel" Spacing="10"/>
                 <TextBlock x:Name="StatusText" IsVisible="False" Opacity="0.75" FontSize="13" TextWrapping="Wrap"/>

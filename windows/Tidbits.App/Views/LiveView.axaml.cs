@@ -14,6 +14,12 @@ public partial class LiveView : UserControl
     public LiveView()
     {
         InitializeComponent();
+
+        CategoryPicker.ItemsSource = TriviaCategory.All;
+        CategoryPicker.ItemTemplate = new Avalonia.Controls.Templates.FuncDataTemplate<TriviaCategory>(
+            (c, _) => new TextBlock { Text = c?.Name ?? "" });
+        CategoryPicker.SelectedIndex = 0; // Mixed Bag
+
         foreach (var (name, blurb, plan) in NightPlan.Presets)
         {
             var p = plan;
@@ -40,7 +46,13 @@ public partial class LiveView : UserControl
     private async void StartHosting(NightPlan plan, string title)
     {
         var data = GameData.Shared.Value;
-        var host = new LiveNightHost(plan, TriviaCategory.Named("mixed"), data.Provider, title);
+        var category = CategoryPicker.SelectedItem as TriviaCategory ?? TriviaCategory.Named("mixed");
+        var host = new LiveNightHost(plan, category, data.Provider, title)
+        {
+            SpeedBonus = SpeedBonusCheck.IsChecked == true,
+            HostPlays = HostPlaysCheck.IsChecked == true,
+            HostName = string.IsNullOrWhiteSpace(HostNameBox.Text) ? "Host" : HostNameBox.Text!.Trim(),
+        };
         var vm = new LiveHostViewModel(host);
         Setup.IsVisible = false;
         CockpitHost.Content = new LiveCockpitView { DataContext = vm };

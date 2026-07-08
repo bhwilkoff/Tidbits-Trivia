@@ -39,8 +39,12 @@ public class DuelsUiTest
             new("d4", true, 2, "u4", "Kurt", true, 7),    // you lost
         };
         var inbox = new List<DuelInvite> { new() { From = "u9", FromName = "Marie", At = 1, Id = "d9" } };
+        var friends = new List<Tidbits.Core.Networking.PlayerIdentity.Friend>
+        {
+            new() { Uid = "f1", Name = "Rosalind" },
+        };
 
-        var panel = DuelsUi.BuildPanel(mine, inbox);
+        var panel = DuelsUi.BuildPanel(mine, inbox, friends: friends, onChallenge: _ => { });
         var win = new Window { Width = 460, Height = 620, Content = panel };
         win.Show();
         Dispatcher.UIThread.RunJobs();
@@ -50,6 +54,8 @@ public class DuelsUiTest
         Assert.Contains(texts, t => t is not null && t.Contains("Marie challenged"));
         Assert.Contains("Your turn", texts);
         Assert.Contains(texts, t => t is not null && t.Contains("You won 9–5"));
+        Assert.Contains("Challenge a friend", texts);
+        Assert.Contains("Rosalind", texts);
         win.CaptureRenderedFrame()!.Save(Path.Combine(dir, "duels-panel.png"));
     }
 }

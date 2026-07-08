@@ -2,6 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using Avalonia.Interactivity;
+using FluentAvalonia.UI.Controls;
+using Tidbits.App.ViewModels;
+using Tidbits.Core.Models;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -70,6 +74,56 @@ public partial class LeaderboardView : UserControl
         Body.Children.Add(Section($"{data.Season} · Overall", data.Overall));
         foreach (var v in data.Venues)
             Body.Children.Add(Section(v.Name, v.Rows));
+    }
+
+    // MARK: Async friend duels (2.24)
+
+    /// Open the duels surface: incoming challenges + my active/finished duels,
+    /// fetched from the shared RTDB. Accept clears an invite; Play runs the frozen set.
+    private async void OnDuels(object? sender, RoutedEventArgs e)
+    {
+        var g = Services.GameData.Shared.Value;
+        var dialog = new FAContentDialog { Title = "Duels", CloseButtonText = "Done" };
+        dialog.Content = new TextBlock { Text = "Loading…", Opacity = 0.6 };
+        var showing = dialog.ShowAsync();
+
+        try
+        {
+            var mine = await g.Duels.Mine(g.Rtdb);
+            var inbox = await g.Duels.Inbox(g.Rtdb);
+            dialog.Content = DuelsUi.BuildPanel(mine, inbox,
+                onAccept: async id => { await g.Duels.Accept(g.Rtdb, id); },
+                onPlay: id => { dialog.Hide(); _ = PlayDuel(id); },
+                friends: g.Friends.All,
+                onChallenge: f => { dialog.Hide(); _ = ChallengeFriend(f); });
+        }
+        catch { dialog.Content = new TextBlock { Text = "Couldn't reach duels — check your connection.", TextWrapping = TextWrapping.Wrap }; }
+        await showing;
+    }
+
+    /// Load a duel's frozen set, play it, and submit the score on finish.
+    private async System.Threading.Tasks.Task PlayDuel(string id)
+    {
+        var g = Services.GameData.Shared.Value;
+        var duel = await g.Duels.Load(g.Rtdb, id);
+        var questions = DuelStore.QuestionsOf(duel);
+        if (questions.Count == 0) return;
+
+        var engine = g.NewEngine();
+        var vm = new GameViewModel(engine, g.Records);
+        vm.Closed += () => DuelGameHost.Content = null;
+        vm.Finished += () => { _ = g.Duels.Submit(g.Rtdb, id, g.PlayerName, vm.Summary.Correct); };
+        DuelGameHost.Content = new GameView { DataContext = vm };
+        engine.StartCustom(Tidbits.Core.Models.GameMode.Classic, TriviaCategory.Named("mixed"), questions);
+    }
+
+    /// Challenge a friend to a fresh 6-question set.
+    public async System.Threading.Tasks.Task ChallengeFriend(PlayerIdentity.Friend friend)
+    {
+        var g = Services.GameData.Shared.Value;
+        var questions = await g.Provider.Questions(TriviaCategory.Named("mixed"), 6);
+        if (questions.Count == 0) return;
+        await g.Duels.Challenge(g.Rtdb, friend, g.PlayerName, questions);
     }
 
     private Control Section(string title, IReadOnlyList<LeaderboardRow> rows, bool showChampion = true)

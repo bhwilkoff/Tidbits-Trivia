@@ -30,9 +30,28 @@ public static class DuelsUi
     /// The full panel: incoming challenges (inbox) + my active/finished duels.
     /// `onAccept(id)` / `onPlay(id)` fire the actions; either may be null in tests.
     public static Control BuildPanel(IReadOnlyList<DuelSummary> mine, IReadOnlyList<DuelInvite> inbox,
-        Action<string>? onAccept = null, Action<string>? onPlay = null)
+        Action<string>? onAccept = null, Action<string>? onPlay = null,
+        IReadOnlyList<PlayerIdentity.Friend>? friends = null, Action<PlayerIdentity.Friend>? onChallenge = null)
     {
         var root = new StackPanel { Spacing = 14, MinWidth = 380 };
+
+        if (friends is { Count: > 0 } && onChallenge is not null)
+        {
+            root.Children.Add(Header("Challenge a friend"));
+            foreach (var f in friends)
+            {
+                var friend = f;
+                var card = Card();
+                var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
+                grid.Children.Add(new TextBlock { Text = friend.Name, VerticalAlignment = VerticalAlignment.Center, FontWeight = FontWeight.SemiBold });
+                var btn = new Button { Content = "Challenge", Padding = new Avalonia.Thickness(14, 6) };
+                btn.Click += (_, _) => onChallenge(friend);
+                Grid.SetColumn(btn, 1);
+                grid.Children.Add(btn);
+                card.Child = grid;
+                root.Children.Add(card);
+            }
+        }
 
         if (inbox.Count > 0)
         {

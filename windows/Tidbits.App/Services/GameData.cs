@@ -19,6 +19,9 @@ public sealed class GameData
     public Tidbits.Core.Networking.FriendStore Friends { get; }
     public Tidbits.Core.Networking.PlayerIdentityStore Identity { get; }
     public Tidbits.Core.Networking.DuelStore Duels { get; }
+    /// Shared anon-authed RTDB client for non-Live networked features (duels).
+    public Tidbits.Core.Networking.FirebaseRtdb Rtdb { get; } = new();
+    public string PlayerName => Identity.Current.Name;
 
     private GameData(QuestionSources sources)
     {

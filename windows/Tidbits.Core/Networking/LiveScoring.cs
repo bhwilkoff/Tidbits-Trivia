@@ -48,6 +48,11 @@ public static class LiveScoring
         return a.Choice == q.CorrectIndex ? mcqPoints : 0;   // MCQ / picture / T-or-T / odd
     }
 
+    /// Wager-round delta (3.11): correct +stake, wrong −stake. The caller clamps
+    /// the team's total to ≥0. `stake` is the team's committed wager (already
+    /// bounded to 0…their score client-side).
+    public static int WagerDelta(bool correct, int stake) => correct ? stake : -stake;
+
     /// Option-based types (classic/describe/cloze/oddOneOut/thisOrThat/pictureId).
     public static bool IsMcq(Question q) =>
         q.Closest is null && q.Ordering is null && q.Matching is null && q.Accepted is null && q.Enumerate is null;

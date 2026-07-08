@@ -31,6 +31,7 @@ public sealed class LiveNightHost : ObservableObject
     public bool HostPlays { get; set; }
     public string HostName { get; set; } = "Host";
     public bool SpeedBonus { get; set; }
+    public int? WagerRoundIndex { get; set; } // Wave A: which round is the final wager (RoundIndex), null = none
     public string? Sponsor { get; set; }    // Wave D sponsor kit (big-screen footer)
     public string? BrandHex { get; set; }    // Wave D white-label accent (big-screen)
     public string? LeadCaptureUrl { get; set; } // Wave D lead-capture QR (final standings)
@@ -90,6 +91,7 @@ public sealed class LiveNightHost : ObservableObject
     public int PlayerCount => Net.PlayerCount;
     public int AnsweredCount => Net.AnsweredCount;
     public int RoundIndex => Current?.RoundIndex ?? 0;
+    public bool IsWagerRound => WagerRoundIndex is { } w && Current is not null && RoundIndex == w;
     public int RoundNumber => RoundIndex + 1;
     public int RoundCount => Math.Max(_plan.Rounds.Count, 1);
     public string RoundTitle => RoundIndex < _plan.Rounds.Count ? _plan.Rounds[RoundIndex].Kind.NightRoundTitle() : "";
@@ -368,6 +370,7 @@ public sealed class LiveNightHost : ObservableObject
             EnumTarget = q.Enumerate?.Total,
             Locked = Locked && !Revealed ? true : null,
             Deadline = Revealed ? null : _deadline,
+            Wager = IsWagerRound ? true : null,
         };
     }
 
@@ -383,6 +386,20 @@ public sealed class LiveNightHost : ObservableObject
         var q = Current;
         if (q is null) return;
         var answers = Net.AnswersSnapshot();
+
+        // Final wager round: correct +stake, wrong −stake (clamped ≥0), no speed bonus.
+        if (IsWagerRound)
+        {
+            foreach (var kv in answers)
+            {
+                var correct = LiveScoring.Score(q, kv.Value, _shuffledOrder, _shuffledValues, PointsPerCorrect) > 0;
+                var stake = kv.Value.Wager ?? 0;
+                var delta = LiveScoring.WagerDelta(correct, stake);
+                if (delta != 0) await Net.SetScore(kv.Key, Math.Max(0, Net.ScoreOf(kv.Key) + delta));
+            }
+            return;
+        }
+
         var baseScores = answers.Select(kv =>
             (uid: kv.Key, pts: LiveScoring.Score(q, kv.Value, _shuffledOrder, _shuffledValues, PointsPerCorrect), ts: kv.Value.Ts)).ToList();
 

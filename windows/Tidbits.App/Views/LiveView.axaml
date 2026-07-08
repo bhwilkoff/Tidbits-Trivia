@@ -38,6 +38,7 @@
                     <Button Content="+ Add round" Click="OnAddRound"/>
                 </StackPanel>
                 <StackPanel x:Name="BuilderRounds" Spacing="4"/>
+                <CheckBox x:Name="WagerFinalCheck" Content="Make the last round a final wager (teams stake points)"/>
                 <!-- Balance meter: question-type mix + variety verdict -->
                 <StackPanel x:Name="BalancePanel" Spacing="4" IsVisible="False"/>
                 <StackPanel Orientation="Horizontal" Spacing="8">

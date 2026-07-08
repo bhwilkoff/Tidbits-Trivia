@@ -122,7 +122,7 @@ public sealed class LivePlayerClient
         LiveRoom.Pub? p = null;
         if (ev.DataJson is not null) { try { p = JsonSerializer.Deserialize<LiveRoom.Pub>(ev.DataJson, Wire.Json); } catch { } }
         if (p is null) { Pub = null; return; }
-        if (p.Qid != Pub?.Qid) { SubmittedQid = null; Chosen = null; Blurred = false; }
+        if (p.Qid != Pub?.Qid) { SubmittedQid = null; Chosen = null; Blurred = false; Wager = 0; }
         Pub = p;
         if (p.Phase == LiveRoom.Phase.Reveal && _talliedQid != p.Qid)
         {

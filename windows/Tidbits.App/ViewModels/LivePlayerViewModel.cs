@@ -26,6 +26,10 @@ public sealed class LivePlayerViewModel : ObservableObject
     public bool WaitingForStart => Client.Joined && Client.Pub is null;
     public bool ShowQuestion => Client.Pub?.Phase == LiveRoom.Phase.Question;
     public bool ShowReveal => Client.Pub?.Phase == LiveRoom.Phase.Reveal;
+    // Final wager round — stake 0…your score before answering.
+    public bool IsWager => ShowQuestion && Client.Pub?.Wager == true;
+    public int MaxWager => Client.Score;
+    public int Wager { get => Client.Wager; set => Client.Wager = value; }
     public bool IsEnded => Client.Meta?.State == "ended" || Client.Pub?.Phase == LiveRoom.Phase.Ended;
     public bool Answered => Client.HasAnswered;
 

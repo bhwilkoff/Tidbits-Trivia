@@ -107,6 +107,20 @@ public partial class JoinPlayerView : UserControl
         bool reveal = c.Pub.Phase == LiveRoom.Phase.Reveal;
         bool answered = c.HasAnswered;
 
+        // Final wager round: a stake stepper (0…your score) above the options.
+        if (question && !answered && _vm is { IsWager: true } vm)
+        {
+            int max = System.Math.Max(0, vm.MaxWager);
+            var label = new TextBlock { Text = $"Wager: {vm.Wager} of {max}", FontWeight = FontWeight.Bold, Margin = new Thickness(0, 0, 0, 4) };
+            var stake = new Slider { Minimum = 0, Maximum = max, Value = vm.Wager, IsSnapToTickEnabled = true, TickFrequency = 1 };
+            stake.PropertyChanged += (_, ev) =>
+            {
+                if (ev.Property == Slider.ValueProperty) { vm.Wager = (int)stake.Value; label.Text = $"Wager: {vm.Wager} of {max}"; }
+            };
+            OptionsPanel.Children.Add(label);
+            OptionsPanel.Children.Add(stake);
+        }
+
         for (int i = 0; i < opts.Count; i++)
         {
             int idx = i;

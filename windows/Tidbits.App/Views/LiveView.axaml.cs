@@ -142,6 +142,7 @@ public partial class LiveView : UserControl
         BrandHex = string.IsNullOrWhiteSpace(BrandHexBox.Text) ? null : BrandHexBox.Text!.Trim(),
         LeadCaptureUrl = string.IsNullOrWhiteSpace(LeadUrlBox.Text) ? null : LeadUrlBox.Text!.Trim(),
         Weekday = WeekdayBox.SelectedIndex >= 1 ? WeekdayBox.SelectedIndex - 1 : (int?)null,
+        WagerFinalRound = WagerFinalCheck.IsChecked == true,
     };
 
     private void OnHostEvent(object? sender, RoutedEventArgs e)
@@ -229,6 +230,7 @@ public partial class LiveView : UserControl
             Sponsor = branding?.Sponsor,
             BrandHex = branding?.BrandHex,
             LeadCaptureUrl = branding?.LeadCaptureUrl,
+            WagerRoundIndex = branding?.WagerFinalRound == true ? System.Math.Max(0, plan.Rounds.Count - 1) : null,
         };
         var vm = new LiveHostViewModel(host);
         Setup.IsVisible = false;

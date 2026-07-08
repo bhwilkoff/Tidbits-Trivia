@@ -48,6 +48,8 @@ public sealed class LiveHostViewModel : ObservableObject
             new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse(i == 0 ? "#FFC93C" : "#FFFFFF")))).ToList();
     // Round-intro moment (3.40): the first question of a round gets a big title band.
     public bool ShowRoundIntro => !Host.Revealed && Host.QuestionInRound.N == 1;
+    // Reveal choreography (3.38): the correct option index once revealed (else null).
+    public int? RevealCorrectIndex => Host.Revealed && Host.Current is { } q ? q.CorrectIndex : null;
     public string? CurrentRoundNote => Host.CurrentRoundNote;
     public bool HasRoundNote => Host.CurrentRoundNote is not null;
     /// The correct option text (shown big on the projector at reveal).

@@ -69,6 +69,7 @@ public class LiveHostControlsTest
         Assert.False(vm.ShowRoundIntro);         // no live question → no round-intro band
         Assert.False(vm.IsWagerRound);
         Assert.False(vm.HasRoundNote);
+        Assert.Null(vm.RevealCorrectIndex);      // nothing revealed → no green highlight
     }
 
     [Fact]

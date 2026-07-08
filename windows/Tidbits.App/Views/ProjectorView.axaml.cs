@@ -28,8 +28,41 @@ public partial class ProjectorView : UserControl
     protected override void OnDataContextChanged(EventArgs e)
     {
         base.OnDataContextChanged(e);
-        if (DataContext is LiveHostViewModel vm) vm.PropertyChanged += (_, _) => RefreshQr();
+        if (DataContext is LiveHostViewModel vm)
+            vm.PropertyChanged += (_, _) => { RefreshQr(); RefreshOptions(); };
         RefreshQr();
+        RefreshOptions();
+    }
+
+    /// Build the big-screen option cards; on reveal, the correct one lights up green
+    /// and the rest dim (3.38 reveal choreography).
+    private void RefreshOptions()
+    {
+        QOptions.Children.Clear();
+        var vm = DataContext as LiveHostViewModel;
+        var options = vm?.Host.Current?.Options;
+        if (options is null) return;
+        int? correct = vm!.RevealCorrectIndex;
+        for (int i = 0; i < options.Count; i++)
+        {
+            bool isCorrect = correct == i;
+            bool revealed = correct is not null;
+            QOptions.Children.Add(new Border
+            {
+                Padding = new Avalonia.Thickness(24, 18),
+                Margin = new Avalonia.Thickness(0, 6),
+                CornerRadius = new Avalonia.CornerRadius(12),
+                Background = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse(isCorrect ? "#3FCF8E" : "#1C1C28")),
+                Opacity = revealed && !isCorrect ? 0.4 : 1.0,
+                Child = new TextBlock
+                {
+                    Text = options[i],
+                    Foreground = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse(isCorrect ? "#0A0A12" : "#FFFFFF")),
+                    FontSize = 40,
+                    FontWeight = isCorrect ? Avalonia.Media.FontWeight.Black : Avalonia.Media.FontWeight.Normal,
+                },
+            });
+        }
     }
 
     private string _leadUrl = "";

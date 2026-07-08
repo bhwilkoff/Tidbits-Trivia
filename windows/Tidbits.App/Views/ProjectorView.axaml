@@ -52,15 +52,9 @@
                                FontWeight="Black" VerticalAlignment="Center"/>
                 </Grid>
                 <TextBlock Text="{Binding Host.Current.Prompt}" Foreground="White" FontSize="60" FontWeight="Black" TextWrapping="Wrap"/>
-                <ItemsControl ItemsSource="{Binding Host.Current.Options}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Border Padding="24,18" Margin="0,6" CornerRadius="12" Background="#1C1C28">
-                                <TextBlock Text="{Binding}" Foreground="White" FontSize="40"/>
-                            </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                <!-- Options with reveal choreography: the correct one lights up green
+                     on reveal (built in code-behind so each row can recolor). -->
+                <StackPanel x:Name="QOptions"/>
                 <TextBlock IsVisible="{Binding IsReveal}" Foreground="#3FCF8E" FontSize="46" FontWeight="Black"
                            TextWrapping="Wrap" Text="{Binding RevealAnswer, StringFormat='Answer: {0}'}"/>
             </StackPanel>

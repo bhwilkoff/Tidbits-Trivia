@@ -18,7 +18,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [~] 0.7 Design tokens — brand-coral accent set (#FF5C35); full palette dictionaries + 6-level ramp pending
 - [ ] 0.8 `chunkyCard`/`ChunkyButtonStyle`/`CompactButtonStyle` as `ControlTheme`s
 - [ ] 0.2 `Win32HostInterop` seam (Mica/DWM, taskbar, hotkeys, snap)
-- [ ] 0.3 Window chrome: extend-titlebar + Mica + theme follow
+- [~] 0.3 Window chrome — Mica backdrop applied (MainWindow TransparencyLevelHint="Mica,AcrylicBlur,None"; the Win11 material, graceful fallback to opaque on Win10/headless). FluentAvalonia's opaque control surfaces keep content readable (avoided the risky global Background=Transparent). Extend-titlebar + theme-follow still pending; Mica visual is windows-latest-CI-verified (headless ignores the hint; 114/114 shell tests still GREEN)
 - [ ] 0.4 App-nav store + deep-link inbox + Quick-Play memory + presets
 - [ ] 0.5 `tidbitstrivia://` + https deep-link registration (needs package identity)
 

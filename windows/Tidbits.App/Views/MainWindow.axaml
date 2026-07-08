@@ -9,6 +9,7 @@
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/avalonia-logo.ico"
         Title="Tidbits Trivia"
+        TransparencyLevelHint="Mica,AcrylicBlur,None"
         Width="1180" Height="760" MinWidth="900" MinHeight="680">
 
     <Design.DataContext>

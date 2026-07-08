@@ -21,6 +21,8 @@
             <StackPanel Width="1400" Spacing="26">
                 <Grid ColumnDefinitions="*,Auto">
                     <StackPanel Spacing="4">
+                        <TextBlock Text="★ FINAL WAGER ★" IsVisible="{Binding IsWagerRound}" Foreground="#FFC93C"
+                                   FontSize="40" FontWeight="Black"/>
                         <TextBlock Text="{Binding Host.RoundTitle}" Foreground="{Binding BrandBrush}" FontSize="34" FontWeight="Bold"/>
                         <TextBlock Text="{Binding QuestionChrome}" Foreground="White" Opacity="0.55" FontSize="24"/>
                     </StackPanel>

@@ -18,6 +18,7 @@ public sealed class GameData
     public Tidbits.Core.Networking.LiveEventStore LiveEvents { get; }
     public Tidbits.Core.Networking.FriendStore Friends { get; }
     public Tidbits.Core.Networking.PlayerIdentityStore Identity { get; }
+    public Tidbits.Core.Networking.DuelStore Duels { get; }
 
     private GameData(QuestionSources sources)
     {
@@ -32,6 +33,7 @@ public sealed class GameData
         LiveEvents = new Tidbits.Core.Networking.LiveEventStore(Path.Combine(appDir, "live-events.json"));
         Friends = new Tidbits.Core.Networking.FriendStore(Path.Combine(appDir, "friends.json"));
         Identity = new Tidbits.Core.Networking.PlayerIdentityStore(Path.Combine(appDir, "profile.json"));
+        Duels = new Tidbits.Core.Networking.DuelStore(Path.Combine(appDir, "duels.json"));
     }
 
     public static GameData FromDirectory(string dir) => new(QuestionSources.LoadFromDirectory(dir));

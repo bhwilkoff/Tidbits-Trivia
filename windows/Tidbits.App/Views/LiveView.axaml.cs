@@ -41,6 +41,98 @@ public partial class LiveView : UserControl
             btn.Click += (_, _) => StartHosting(p, name);
             PresetsPanel.Children.Add(btn);
         }
+
+        RoundModeBox.ItemsSource = NightPlan.AllKinds;
+        RoundModeBox.ItemTemplate = new Avalonia.Controls.Templates.FuncDataTemplate<GameMode>(
+            (m, _) => new TextBlock { Text = m.Title() });
+        RoundModeBox.SelectedIndex = 0;
+        RoundCountBox.ItemsSource = new[] { 3, 4, 5, 6, 8 };
+        RoundCountBox.SelectedIndex = 1; // 4
+        BuildSavedEvents();
+    }
+
+    // The rounds being composed for a custom event.
+    private readonly System.Collections.Generic.List<NightRound> _rounds = new();
+
+    private void OnAddRound(object? sender, RoutedEventArgs e)
+    {
+        if (RoundModeBox.SelectedItem is not GameMode mode || RoundCountBox.SelectedItem is not int count) return;
+        _rounds.Add(new NightRound { Kind = mode, Count = count });
+        RebuildBuilderRounds();
+    }
+
+    private void RebuildBuilderRounds()
+    {
+        BuilderRounds.Children.Clear();
+        for (int i = 0; i < _rounds.Count; i++)
+        {
+            int idx = i;
+            var r = _rounds[i];
+            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), Margin = new Avalonia.Thickness(0, 0, 0, 2) };
+            row.Children.Add(new TextBlock { Text = $"{idx + 1}. {r.Kind.Title()} · {r.Count} questions", VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center });
+            var del = new Button { Content = "✕", Padding = new Avalonia.Thickness(8, 2), FontSize = 12 };
+            del.Click += (_, _) => { _rounds.RemoveAt(idx); RebuildBuilderRounds(); };
+            Grid.SetColumn(del, 1);
+            row.Children.Add(del);
+            BuilderRounds.Children.Add(row);
+        }
+    }
+
+    private LiveEvent CurrentEvent() => new()
+    {
+        Name = string.IsNullOrWhiteSpace(EventNameBox.Text) ? "Custom Night" : EventNameBox.Text!.Trim(),
+        Rounds = new System.Collections.Generic.List<NightRound>(_rounds),
+    };
+
+    private void OnHostEvent(object? sender, RoutedEventArgs e)
+    {
+        if (_rounds.Count == 0) { StatusText.Text = "Add at least one round first."; StatusText.IsVisible = true; return; }
+        var ev = CurrentEvent();
+        StartHosting(ev.ToPlan(), ev.Name);
+    }
+
+    private void OnSaveEvent(object? sender, RoutedEventArgs e)
+    {
+        if (_rounds.Count == 0) { StatusText.Text = "Add at least one round first."; StatusText.IsVisible = true; return; }
+        GameData.Shared.Value.LiveEvents.Save(CurrentEvent());
+        BuildSavedEvents();
+    }
+
+    private void BuildSavedEvents()
+    {
+        SavedEvents.Children.Clear();
+        var events = GameData.Shared.Value.LiveEvents.All;
+        SavedEventsHeader.IsVisible = events.Count > 0;
+        foreach (var ev in events)
+        {
+            var e = ev;
+            var row = new Border
+            {
+                Background = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#0F808080")),
+                CornerRadius = new Avalonia.CornerRadius(10), Padding = new Avalonia.Thickness(14, 10),
+            };
+            var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto") };
+            grid.Children.Add(new StackPanel
+            {
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center, Spacing = 1,
+                Children =
+                {
+                    new TextBlock { Text = e.Name, FontWeight = Avalonia.Media.FontWeight.SemiBold },
+                    new TextBlock { Text = e.Summary, FontSize = 12, Opacity = 0.65 },
+                },
+            });
+            var host = new Button { Content = "Host", Padding = new Avalonia.Thickness(14, 7), Margin = new Avalonia.Thickness(8, 0, 0, 0) };
+            host.Classes.Add("accent");
+            host.Click += (_, _) => StartHosting(e.ToPlan(), e.Name);
+            Grid.SetColumn(host, 1);
+            grid.Children.Add(host);
+            var del = new Button { Content = "✕", Padding = new Avalonia.Thickness(10, 7), Margin = new Avalonia.Thickness(8, 0, 0, 0) };
+            del.Click += (_, _) => { GameData.Shared.Value.LiveEvents.Remove(e.Id); BuildSavedEvents(); };
+            Grid.SetColumn(del, 2);
+            grid.Children.Add(del);
+            row.Child = grid;
+            SavedEvents.Children.Add(row);
+        }
     }
 
     private async void StartHosting(NightPlan plan, string title)

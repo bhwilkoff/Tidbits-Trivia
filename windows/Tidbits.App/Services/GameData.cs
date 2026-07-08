@@ -15,6 +15,7 @@ public sealed class GameData
     public GameSettings Settings { get; }
     public DailyLog Daily { get; }
     public SavedSetsStore SavedSets { get; }
+    public Tidbits.Core.Networking.LiveEventStore LiveEvents { get; }
 
     private GameData(QuestionSources sources)
     {
@@ -26,6 +27,7 @@ public sealed class GameData
         Settings = new GameSettings(Path.Combine(appDir, "settings.json"));
         Daily = new DailyLog(Path.Combine(appDir, "daily.json"));
         SavedSets = new SavedSetsStore(Path.Combine(appDir, "saved-sets.json"));
+        LiveEvents = new Tidbits.Core.Networking.LiveEventStore(Path.Combine(appDir, "live-events.json"));
     }
 
     public static GameData FromDirectory(string dir) => new(QuestionSources.LoadFromDirectory(dir));

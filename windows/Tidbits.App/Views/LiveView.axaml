@@ -19,6 +19,24 @@
 
                 <TextBlock Text="Host a night" FontSize="18" FontWeight="Bold" Margin="0,10,0,0"/>
                 <StackPanel x:Name="PresetsPanel" Spacing="10"/>
+
+                <!-- Build a custom event -->
+                <TextBlock Text="Or build a custom event" FontSize="18" FontWeight="Bold" Margin="0,14,0,0"/>
+                <TextBox x:Name="EventNameBox" Watermark="Event name (e.g. Friday Pub Quiz)" MaxWidth="360" HorizontalAlignment="Left"/>
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <ComboBox x:Name="RoundModeBox" MinWidth="160"/>
+                    <ComboBox x:Name="RoundCountBox" MinWidth="90"/>
+                    <Button Content="+ Add round" Click="OnAddRound"/>
+                </StackPanel>
+                <StackPanel x:Name="BuilderRounds" Spacing="4"/>
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Content="Host this event" Click="OnHostEvent" Classes="accent" Padding="16,10"/>
+                    <Button Content="Save event" Click="OnSaveEvent" Padding="16,10"/>
+                </StackPanel>
+
+                <TextBlock x:Name="SavedEventsHeader" Text="Saved events" FontSize="16" FontWeight="Bold"
+                           Margin="0,10,0,0" IsVisible="False"/>
+                <StackPanel x:Name="SavedEvents" Spacing="6"/>
                 <TextBlock x:Name="StatusText" IsVisible="False" Opacity="0.75" FontSize="13" TextWrapping="Wrap"/>
 
                 <TextBlock Text="Or join a game" FontSize="18" FontWeight="Bold" Margin="0,16,0,0"/>

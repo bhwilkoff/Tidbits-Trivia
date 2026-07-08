@@ -123,9 +123,9 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 
 ## Slice 7 — Wave B AV & show (Windows audio/video backend)
 - [x] 3.30 SFX/stinger board — a host sound board on LibVLCSharp (AvPlayer, verified on Windows CI): `SfxBoard` (Core, persisted BYO-clip pads, dedup, cap-24, filename→label) + SfxBoardUi pad grid reachable from the cockpit "🔊 SFX" button; tap a pad → AvPlayer.PlaySfx, "+ Add sound" file-picks audio. Model + label + render tests (PNG). AvPlayer verified on windows-latest CI (168 passed, 0 skipped — LibVLC loads on the x64 ship target)
-- [ ] 3.31 PA output-device routing (WASAPI)
+- [x] 3.31 PA output-device routing — the cockpit "🔊 Audio" panel lists LibVLC output devices (AvPlayer.OutputDevices) in a picker; selecting one routes all channels via AvPlayer.SetOutputDevice. Falls back to "System default" when no extra devices. Rendered in the combined audio panel (PNG)
 - [ ] 3.32 Audio round (BYO clips)
-- [ ] 3.33 Looping music beds
+- [x] 3.33 Looping music beds — "Choose bed" file-picks audio → AvPlayer.PlayBed (input-repeat loop on its own channel, under the SFX + question clip), a Stop button, and a volume slider → AvPlayer.SetBedVolume. In the cockpit audio panel; playback on the CI-verified AvPlayer
 - [ ] 3.34 Video questions (LibVLCSharp/media element)
 - [x] 3.35 Speed-tiered scoring — the fastest three correct answers score +3/+2/+1; extracted the tiering out of AutoScore into pure LiveScoring.SpeedBonuses(fastest-first uids) and unit-tested it (3/2/1, 4th+ none, fewer-than-3, nobody-correct). Gated by the host SpeedBonus toggle
 

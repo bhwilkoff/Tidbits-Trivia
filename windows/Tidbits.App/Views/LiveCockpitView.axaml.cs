@@ -171,29 +171,48 @@ public partial class LiveCockpitView : UserControl
     private async void OnSkip(object? sender, RoutedEventArgs e) { if (Vm is { } vm) await vm.Skip(); }
     private void OnToggleHold(object? sender, RoutedEventArgs e) => Vm?.ToggleHold();
 
-    /// The SFX board (3.30): tap a pad to fire a stinger through the shared AvPlayer;
-    /// "Add sound" picks an audio file the host owns. Rebuilds as pads change.
-    private async void OnSfx(object? sender, RoutedEventArgs e)
+    private int _bedVolume = 60;
+    private bool _bedPlaying;
+    private string? _outputDevice;
+
+    private static readonly Avalonia.Platform.Storage.FilePickerFileType AudioFilter =
+        new("Audio") { Patterns = new[] { "*.mp3", "*.wav", "*.m4a", "*.ogg", "*.aac", "*.flac" } };
+
+    private async System.Threading.Tasks.Task<string?> PickAudio(string title, bool multiple, System.Action<string> each)
+    {
+        var top = TopLevel.GetTopLevel(this);
+        if (top is null) return null;
+        var files = await top.StorageProvider.OpenFilePickerAsync(new Avalonia.Platform.Storage.FilePickerOpenOptions
+        {
+            Title = title, AllowMultiple = multiple, FileTypeFilter = new[] { AudioFilter },
+        });
+        string? last = null;
+        foreach (var f in files) { each(f.Path.LocalPath); last = f.Path.LocalPath; }
+        return last;
+    }
+
+    /// The host audio center (Wave B): PA output routing (3.31), a looping music bed
+    /// (3.33), and the SFX board (3.30), all through the shared AvPlayer.
+    private async void OnAudio(object? sender, RoutedEventArgs e)
     {
         var g = Services.GameData.Shared.Value;
-        var dialog = new FAContentDialog { Title = "Sound board", CloseButtonText = "Done" };
+        var dialog = new FAContentDialog { Title = "Audio", CloseButtonText = "Done" };
 
-        void Rebuild() => dialog.Content = SfxBoardUi.BuildPanel(g.Sfx.Pads,
-            onPlay: path => g.Av.PlaySfx(path),
-            onAdd: async () =>
+        void Rebuild() => dialog.Content = AudioPanelUi.BuildPanel(
+            devices: g.Av.OutputDevices(), currentDevice: _outputDevice,
+            onDevice: id => { _outputDevice = id; g.Av.SetOutputDevice(id); },
+            bedPlaying: _bedPlaying, bedVolume: _bedVolume,
+            onChooseBed: async () =>
             {
-                var top = TopLevel.GetTopLevel(this);
-                if (top is null) return;
-                var files = await top.StorageProvider.OpenFilePickerAsync(new Avalonia.Platform.Storage.FilePickerOpenOptions
-                {
-                    Title = "Add a sound", AllowMultiple = true,
-                    FileTypeFilter = new[] { new Avalonia.Platform.Storage.FilePickerFileType("Audio")
-                        { Patterns = new[] { "*.mp3", "*.wav", "*.m4a", "*.ogg", "*.aac", "*.flac" } } },
-                });
-                foreach (var f in files) g.Sfx.Add(f.Path.LocalPath);
-                Rebuild();
+                var picked = await PickAudio("Choose a music bed", false, _ => { });
+                if (picked is not null) { g.Av.PlayBed(picked); g.Av.SetBedVolume(_bedVolume); _bedPlaying = true; Rebuild(); }
             },
-            onRemove: path => { g.Sfx.Remove(path); Rebuild(); });
+            onStopBed: () => { g.Av.StopBed(); _bedPlaying = false; Rebuild(); },
+            onBedVolume: v => { _bedVolume = v; g.Av.SetBedVolume(v); },
+            pads: g.Sfx.Pads,
+            onPlaySfx: path => g.Av.PlaySfx(path),
+            onAddSfx: async () => { await PickAudio("Add a sound", true, p => g.Sfx.Add(p)); Rebuild(); },
+            onRemoveSfx: path => { g.Sfx.Remove(path); Rebuild(); });
 
         Rebuild();
         await dialog.ShowAsync();

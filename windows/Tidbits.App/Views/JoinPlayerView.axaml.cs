@@ -18,6 +18,7 @@ public partial class JoinPlayerView : UserControl
 
     private LivePlayerViewModel? _vm;
     private readonly Avalonia.Threading.DispatcherTimer _tick;
+    private Window? _window;
 
     public JoinPlayerView()
     {
@@ -25,7 +26,24 @@ public partial class JoinPlayerView : UserControl
         _tick = new Avalonia.Threading.DispatcherTimer(
             TimeSpan.FromSeconds(1), Avalonia.Threading.DispatcherPriority.Normal, (_, _) => RefreshCountdown());
         _tick.Start();
-        DetachedFromVisualTree += (_, _) => _tick.Stop();
+        AttachedToVisualTree += (_, _) =>
+        {
+            // Wave C cheat signal (3.27): if the player switches away from the app
+            // while a question is live and unanswered, flag their next answer.
+            _window = TopLevel.GetTopLevel(this) as Window;
+            if (_window is not null) _window.Deactivated += OnWindowDeactivated;
+        };
+        DetachedFromVisualTree += (_, _) =>
+        {
+            _tick.Stop();
+            if (_window is not null) _window.Deactivated -= OnWindowDeactivated;
+        };
+    }
+
+    private void OnWindowDeactivated(object? sender, EventArgs e)
+    {
+        if (_vm is { } vm && vm.ShowQuestion && !vm.Client.HasAnswered)
+            vm.Client.Blurred = true;
     }
 
     /// Tick the host's countdown down locally (coral, turns urgent ≤5s).

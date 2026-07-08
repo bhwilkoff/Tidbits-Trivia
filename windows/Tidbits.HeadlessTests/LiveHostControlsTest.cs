@@ -70,4 +70,15 @@ public class LiveHostControlsTest
         Assert.Equal("", vm.WinnerLine);
         Assert.Contains("player", vm.QuestionChrome); // renders a chrome string, no throw
     }
+
+    [Fact]
+    public void Cheat_flag_is_clear_before_any_answers()
+    {
+        var host = NewHost();
+        Assert.Equal(0, host.FlaggedCount);
+        Assert.False(host.HasFlags);
+        var vm = new LiveHostViewModel(host);
+        Assert.False(vm.HasFlags);
+        Assert.Contains("left the app", vm.FlagLine); // the line renders (0 teams)
+    }
 }

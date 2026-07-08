@@ -64,6 +64,10 @@ public sealed class LiveNightHost : ObservableObject
     public int RoundCount => Math.Max(_plan.Rounds.Count, 1);
     public string RoundTitle => RoundIndex < _plan.Rounds.Count ? _plan.Rounds[RoundIndex].Kind.NightRoundTitle() : "";
 
+    /// Teams flagged for leaving the app mid-question (Wave C cheat signal, 3.27).
+    public int FlaggedCount => Net.AnswersSnapshot().Values.Count(a => a.Blurred == true);
+    public bool HasFlags => FlaggedCount > 0;
+
     /// Live per-option answer counts for the current MCQ (empty for non-MCQ) —
     /// updates as submissions stream in (3.20). Index-aligned with the options.
     public IReadOnlyList<int> AnswerDistribution

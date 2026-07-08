@@ -27,6 +27,10 @@ public sealed class LiveHostViewModel : ObservableObject
 
     public bool CanGoBack => Host.CanGoBack;
     public int? SecondsRemaining => Host.SecondsRemaining;
+    public bool HasFlags => Host.HasFlags;
+    public string FlagLine => Host.FlaggedCount == 1
+        ? "1 team left the app this question"
+        : $"{Host.FlaggedCount} teams left the app this question";
 
     /// Big-screen chrome (3.42): "Question X of Y · N players".
     public string QuestionChrome

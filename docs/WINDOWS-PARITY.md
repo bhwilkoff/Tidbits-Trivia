@@ -19,7 +19,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [ ] 0.8 `chunkyCard`/`ChunkyButtonStyle`/`CompactButtonStyle` as `ControlTheme`s
 - [ ] 0.2 `Win32HostInterop` seam (Mica/DWM, taskbar, hotkeys, snap)
 - [~] 0.3 Window chrome — Mica backdrop applied (MainWindow TransparencyLevelHint="Mica,AcrylicBlur,None"; the Win11 material, graceful fallback to opaque on Win10/headless). FluentAvalonia's opaque control surfaces keep content readable (avoided the risky global Background=Transparent). Extend-titlebar + theme-follow still pending; Mica visual is windows-latest-CI-verified (headless ignores the hint; 114/114 shell tests still GREEN)
-- [ ] 0.4 App-nav store + deep-link inbox + Quick-Play memory + presets
+- [~] 0.4 Deep-link inbox + routing — `DeepLink.Parse` maps the custom scheme (tidbitstrivia://live/2NRE, ://daily, ://leaderboard, …) AND the https twin to a nav target (+ sanitized 4-char room code); Program captures a launch URL, MainWindow.Route consumes it on Loaded to select the tab (the inbox pattern — external entry never touches nav directly). Parser + nav-tag unit-tested (12+6 cases). Quick-Play memory / presets still pending
 - [ ] 0.5 `tidbitstrivia://` + https deep-link registration (needs package identity)
 
 ## Slice 1 — Core foundation (`Tidbits.Core`)

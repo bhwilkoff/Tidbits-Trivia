@@ -1,3 +1,4 @@
+using System.Linq;
 using Avalonia.Controls;
 using FluentAvalonia.UI.Controls;
 using Tidbits.App.ViewModels;
@@ -16,7 +17,19 @@ public partial class MainWindow : Window
         {
             if (Nav.SelectedItem is null && Nav.MenuItems.Count > 0)
                 Nav.SelectedItem = Nav.MenuItems[0];
+            // Deep-link inbox: route a launch URL once shown (external entry points
+            // never touch the nav directly — they land here and the root consumes them).
+            var target = Tidbits.Core.Networking.DeepLink.Parse(Program.LaunchUrl);
+            Route(target);
         };
+    }
+
+    /// Select the nav tab a deep link routes to (no-op for None).
+    public void Route(Tidbits.Core.Networking.DeepLinkTarget target)
+    {
+        if (target.Kind == Tidbits.Core.Networking.DeepLinkKind.None) return;
+        foreach (var item in Nav.MenuItems.OfType<FANavigationViewItem>())
+            if (item.Tag as string == target.NavTag) { Nav.SelectedItem = item; break; }
     }
 
     private void OnNavSelectionChanged(object? sender, FANavigationViewSelectionChangedEventArgs e)

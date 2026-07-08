@@ -26,6 +26,7 @@
         <ui:FANavigationView.MenuItems>
             <ui:FANavigationViewItem Content="Play" Tag="play"/>
             <ui:FANavigationViewItem Content="Records" Tag="records"/>
+            <ui:FANavigationViewItem Content="Leaderboard" Tag="leaderboard"/>
             <ui:FANavigationViewItem Content="Create" Tag="create"/>
             <ui:FANavigationViewItem Content="Tidbits Live" Tag="live"/>
         </ui:FANavigationView.MenuItems>

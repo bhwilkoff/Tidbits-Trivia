@@ -1,0 +1,12 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Tidbits.App.Views.LeaderboardView">
+    <ScrollViewer>
+        <StackPanel Margin="36,32" Spacing="16" MaxWidth="760" HorizontalAlignment="Left">
+            <TextBlock Text="Leaderboard" FontSize="34" FontWeight="Black"/>
+            <TextBlock Text="Season standings across every venue where you've played a live Tidbits night."
+                       FontSize="15" Opacity="0.7" TextWrapping="Wrap"/>
+            <StackPanel x:Name="Body" Spacing="10"/>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -40,6 +40,10 @@ public partial class MainWindow : Window
                 DataContext = new RecordsViewModel(Services.GameData.Shared.Value.Records),
             };
         }
+        else if (tag == "leaderboard")
+        {
+            ContentHost.Content = new LeaderboardView();
+        }
         else if (tag == "create")
         {
             ContentHost.Content = new CreateView();

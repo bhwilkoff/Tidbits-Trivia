@@ -69,7 +69,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [ ] 2.22 Spaced re-asking + day-streak surfacing
 - [x] 2.23 Daily play-once lock + archive — the Play landing shows today's Daily as a coral hero (play-once; flips to a done card with score once completed) plus a "Previous Tidbits" archive of the last 14 days; unplayed past days are playable via the deterministic day-key seed and never bump the streak (RecordsStore only bumps when day==today). DailyLog records first-completion-wins. PNG-verified
 - [ ] 2.24 Async friend duels (DuelStore + inbox)
-- [ ] 2.25 Leaderboard read (season/venue board + friends filter + titles)
+- [~] 2.25 Leaderboard read — `LeaderboardApi` (Core) reads the STATIC data/leaderboard/ JSON (index → latest season → _overall + per-venue, never RTDB; cache-no-cache); a top-level "Leaderboard" nav item → LeaderboardView renders season overall + each venue (top 25), CHAMPION on #1 and the signed-in player's row highlighted (defendable titles). Empty-state until real live nights end. Parse tests (fake handler) + champion/you PNG. Friends filter needs the friend store (pending)
 
 ## Slice 3 — Live networking Core ★
 - [x] 1.18 ★ `FirebaseRTDB` (REST + SSE, anon auth, room codes) — LIVE smoke GREEN vs real project (anon→put→get→delete); offline unit tests GREEN. DPAPI token encryption = follow-up 1.22

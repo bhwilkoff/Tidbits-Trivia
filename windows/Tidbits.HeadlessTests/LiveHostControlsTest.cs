@@ -106,6 +106,19 @@ public class LiveHostControlsTest
     }
 
     [Fact]
+    public void Tie_detection_finds_shared_top_score()
+    {
+        var J = (string id, int s) => new LiveHostNet.Joined(id, id, s);
+        // A clear leader → no tie.
+        Assert.Empty(LiveNightHost.Ties(new[] { J("a", 30), J("b", 20) }));
+        // Two teams tied at the (non-zero) top → both returned.
+        var tie = LiveNightHost.Ties(new[] { J("a", 30), J("b", 30), J("c", 10) });
+        Assert.Equal(2, tie.Count);
+        // A tie at zero (nobody scored) is not a tie-break situation.
+        Assert.Empty(LiveNightHost.Ties(new[] { J("a", 0), J("b", 0) }));
+    }
+
+    [Fact]
     public void Cheat_flag_is_clear_before_any_answers()
     {
         var host = NewHost();

@@ -71,4 +71,9 @@ public sealed class LiveHostViewModel : ObservableObject
     public void ToggleHidden(string uid) => Host.ToggleHidden(uid);
     public bool IsHidden(string uid) => Host.IsHidden(uid);
     public Task MergeTeams(string intoUid, string fromUid) => Host.MergeTeams(intoUid, fromUid);
+
+    // Tie-break (3.24) — brains-only manual pick among the tied leaders.
+    public bool HasTie => Host.HasTie;
+    public System.Collections.Generic.IReadOnlyList<LiveHostNet.Joined> TiedLeaders => Host.TiedLeaders;
+    public Task BreakTie(string uid) => Host.BreakTie(uid);
 }

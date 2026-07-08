@@ -78,6 +78,23 @@ public sealed class LiveNightHost : ObservableObject
         Notify();
     }
 
+    /// Teams sharing the top score (a tie for first) — else empty (3.24).
+    public IReadOnlyList<LiveHostNet.Joined> TiedLeaders => Ties(Standings);
+    public bool HasTie => TiedLeaders.Count >= 2;
+
+    /// Pure: the leaders sharing the (non-zero) top score, or empty if no tie.
+    public static IReadOnlyList<LiveHostNet.Joined> Ties(IReadOnlyList<LiveHostNet.Joined> standings)
+    {
+        if (standings.Count < 2 || standings[0].Score == 0) return System.Array.Empty<LiveHostNet.Joined>();
+        var top = standings[0].Score;
+        var tied = standings.Where(j => j.Score == top).ToList();
+        return tied.Count >= 2 ? tied : System.Array.Empty<LiveHostNet.Joined>();
+    }
+
+    /// Break a tie in the winner's favor (brains-only manual pick) — +1 to the
+    /// chosen team so they're strictly ahead.
+    public Task BreakTie(string uid) => AdjustScore(uid, +1);
+
     /// Merge one team into another (3.25) — combine their scores onto `intoUid`,
     /// zero the merged team, and drop it from the big screen. For a paper team that
     /// got split across two entries.

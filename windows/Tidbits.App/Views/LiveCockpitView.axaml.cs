@@ -141,6 +141,26 @@ public partial class LiveCockpitView : UserControl
             await vm.MergeTeams(a.Id, b.Id);
     }
 
+    /// Tie-break — pick the winner among the teams tied for first (+1 to them).
+    private async void OnBreakTie(object? sender, RoutedEventArgs e)
+    {
+        if (Vm is not { } vm || !vm.HasTie) return;
+        var tied = new System.Collections.Generic.List<Tidbits.Core.Networking.LiveHostNet.Joined>(vm.TiedLeaders);
+        var pick = new ComboBox
+        {
+            ItemsSource = tied, SelectedIndex = 0, MinWidth = 240,
+            ItemTemplate = new Avalonia.Controls.Templates.FuncDataTemplate<Tidbits.Core.Networking.LiveHostNet.Joined>(
+                (t, _) => new TextBlock { Text = $"{t.Name} ({t.Score})" }),
+        };
+        var panel = new StackPanel { Spacing = 8, MinWidth = 300 };
+        panel.Children.Add(new TextBlock { Text = "Brains-only tie-break — pick the winner. They get +1 to take the lead.", TextWrapping = TextWrapping.Wrap, Opacity = 0.75 });
+        panel.Children.Add(pick);
+        var dlg = new FAContentDialog { Title = "Break the tie", Content = panel, PrimaryButtonText = "Award +1", CloseButtonText = "Cancel" };
+        if (await dlg.ShowAsync() == FAContentDialogResult.Primary
+            && pick.SelectedItem is Tidbits.Core.Networking.LiveHostNet.Joined w)
+            await vm.BreakTie(w.Id);
+    }
+
     // Name moderation gate — toggle a team's name off the big screen.
     private void OnToggleHide(object? sender, RoutedEventArgs e)
     {

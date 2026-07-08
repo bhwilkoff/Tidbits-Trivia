@@ -78,7 +78,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [x] 3.1 ★ `LiveRoom` wire types (Meta/Pub/Numeric/Team/Answer/Phase) — keys match web twin, null-omitted; wire tests GREEN
 - [x] 3.3 `LiveScoring` (per-shape authoritative scoring: MCQ/numeric/ordering/matching/type/enumerate) — 6 tests GREEN
 - [x] 3.2 `LiveHostNet` (open room + publish + setState/setScore + host-plays + self-reconnecting SSE roster/scores/answers, lock-guarded) — builds
-- [x] 3.4 `LivePlayerClient` (join, typed submits, SSE watch pub/meta/score, coplayers) — LIVE END-TO-END host↔join↔score GREEN
+- [x] 3.4 `LivePlayerClient` (join, typed submits, SSE watch pub/meta/score, coplayers) — LIVE END-TO-END host↔join↔score GREEN. **Wave A join display added:** a live coral countdown (ticks off Pub.Deadline, turns red ≤5s), and on reveal the correct-answer card + the host's "story behind the answer". VM guard test (null-safe before a question); live values from the SSE pub (gated)
 - [ ] 3.5 LAN Night stack (optional; RTDB-only acceptable)
 
 ## Slice 4 — Host cockpit + projector MVP

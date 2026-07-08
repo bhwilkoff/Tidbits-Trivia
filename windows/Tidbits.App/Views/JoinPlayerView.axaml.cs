@@ -17,10 +17,23 @@ public partial class JoinPlayerView : UserControl
     private static readonly IBrush Picked = new SolidColorBrush(Color.Parse("#FF5C35"));
 
     private LivePlayerViewModel? _vm;
+    private readonly Avalonia.Threading.DispatcherTimer _tick;
 
     public JoinPlayerView()
     {
         InitializeComponent();
+        _tick = new Avalonia.Threading.DispatcherTimer(
+            TimeSpan.FromSeconds(1), Avalonia.Threading.DispatcherPriority.Normal, (_, _) => RefreshCountdown());
+        _tick.Start();
+        DetachedFromVisualTree += (_, _) => _tick.Stop();
+    }
+
+    /// Tick the host's countdown down locally (coral, turns urgent ≤5s).
+    private void RefreshCountdown()
+    {
+        var s = _vm?.SecondsRemaining;
+        CountdownText.Text = s is { } n and > 0 ? $"{n}s" : "";
+        CountdownText.Foreground = s is { } m && m <= 5 ? Wrong : Picked;
     }
 
     protected override void OnDataContextChanged(EventArgs e)

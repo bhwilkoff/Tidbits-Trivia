@@ -27,10 +27,25 @@
                 <TextBlock IsVisible="{Binding WaitingForStart}" Text="You're in! Waiting for the host to start…"
                            Opacity="0.7" FontSize="15"/>
 
+                <TextBlock x:Name="CountdownText" Foreground="#FF5C35" FontSize="26" FontWeight="Black"/>
+
                 <TextBlock IsVisible="{Binding ShowQuestion}" Text="{Binding Client.Pub.Prompt}"
                            FontSize="21" FontWeight="Bold" TextWrapping="Wrap"/>
                 <StackPanel x:Name="OptionsPanel" Spacing="0"/>
                 <TextBlock IsVisible="{Binding Answered}" Text="Answer locked ✓" Foreground="#1E9E6A" FontWeight="SemiBold"/>
+
+                <!-- Reveal: the correct answer + the host's story behind it -->
+                <Border IsVisible="{Binding HasRevealAnswer}"
+                        Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1"
+                        CornerRadius="10" Padding="16" Margin="0,4,0,0">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="{Binding RevealAnswerLine, StringFormat='Answer: {0}'}"
+                                   Foreground="#1E9E6A" FontWeight="Bold" FontSize="16" TextWrapping="Wrap"/>
+                        <TextBlock IsVisible="{Binding HasStory}" Text="{Binding Story}"
+                                   Opacity="0.85" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Border>
 
                 <TextBlock IsVisible="{Binding IsEnded}" Text="Night over — thanks for playing!"
                            FontSize="18" FontWeight="Bold" Margin="0,10,0,0"/>

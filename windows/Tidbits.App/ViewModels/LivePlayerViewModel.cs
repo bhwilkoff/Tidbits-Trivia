@@ -28,4 +28,31 @@ public sealed class LivePlayerViewModel : ObservableObject
     public bool ShowReveal => Client.Pub?.Phase == LiveRoom.Phase.Reveal;
     public bool IsEnded => Client.Meta?.State == "ended" || Client.Pub?.Phase == LiveRoom.Phase.Ended;
     public bool Answered => Client.HasAnswered;
+
+    /// Seconds left on the host's published deadline (Wave A join display), or null
+    /// when no timer is running / not on a live question.
+    public int? SecondsRemaining
+    {
+        get
+        {
+            if (!ShowQuestion || Client.Pub?.Deadline is not { } d) return null;
+            var now = System.DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            return (int)System.Math.Max(0, (d - now) / 1000);
+        }
+    }
+
+    /// On reveal: the correct option text + the host's "story behind the answer".
+    public string? RevealAnswerLine
+    {
+        get
+        {
+            var p = Client.Pub;
+            if (!ShowReveal || p?.AnswerIndex is not { } ai || p.Options is not { } opts
+                || ai < 0 || ai >= opts.Count) return null;
+            return opts[ai];
+        }
+    }
+    public bool HasRevealAnswer => RevealAnswerLine is not null;
+    public string? Story => Client.Pub?.Story;
+    public bool HasStory => ShowReveal && !string.IsNullOrEmpty(Client.Pub?.Story);
 }

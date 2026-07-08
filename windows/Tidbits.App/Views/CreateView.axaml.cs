@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
@@ -41,6 +42,36 @@ public partial class CreateView : UserControl
         SaveBtn.Content = $"Save “{topic}” ({questions.Count})";
         SaveBtn.IsVisible = true;
         Play(questions);
+    }
+
+    /// Import hand-authored questions from a CSV → save as a replayable set.
+    private async void OnImportCsv(object? sender, RoutedEventArgs e)
+    {
+        var top = TopLevel.GetTopLevel(this);
+        if (top is null) return;
+        var files = await top.StorageProvider.OpenFilePickerAsync(new Avalonia.Platform.Storage.FilePickerOpenOptions
+        {
+            Title = "Import questions (CSV)", AllowMultiple = false,
+            FileTypeFilter = new[]
+            {
+                new Avalonia.Platform.Storage.FilePickerFileType("CSV") { Patterns = new[] { "*.csv" } },
+            },
+        });
+        var file = files.FirstOrDefault();
+        if (file is null) return;
+
+        string text;
+        using (var stream = await file.OpenReadAsync())
+        using (var reader = new System.IO.StreamReader(stream))
+            text = await reader.ReadToEndAsync();
+
+        var questions = Tidbits.Core.Data.CsvQuestions.Parse(text);
+        if (questions.Count == 0) { Status("No valid questions found in that CSV."); return; }
+
+        var label = System.IO.Path.GetFileNameWithoutExtension(file.Name);
+        GameData.Shared.Value.SavedSets.Add(string.IsNullOrWhiteSpace(label) ? "Imported" : label, questions);
+        Status($"Imported {questions.Count} questions — saved as a set below.");
+        BuildSaved();
     }
 
     private void OnSaveSet(object? sender, RoutedEventArgs e)

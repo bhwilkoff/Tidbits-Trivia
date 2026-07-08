@@ -106,7 +106,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [ ] 3.9 Drag-to-reorder rounds/questions
 - [x] 3.10 Balance meter — as the host composes a custom event, a live meter shows the question-type mix (a bar per type, width ∝ its share) + a plain-language variety verdict ("One-note — add another type" … "Great variety"). Pure LiveEventBalance.ByType/Verdict; unit-tested. (Category balance n/a — category is set once in Night options)
 - [ ] 3.11 Per-round timer/wager/speed/host-note
-- [ ] 3.12 CSV import
+- [x] 3.12 CSV import — Create gains an "Import CSV" button: native open-file picker → `CsvQuestions.Parse` (RFC-4180-ish: quoted fields, embedded commas, "" escapes; header + malformed rows dropped) → hand-authored MCQs saved as a replayable set (SavedSetsStore). Pure parser unit-tested (quoting + malformed drops)
 - [x] 3.20 Live answer distribution/tally — the cockpit options now render a live per-option answer-distribution bar (proportional width + count) that updates as submissions stream in; the correct option tints green on reveal. `LiveNightHost.AnswerDistribution` + a pure `Tally(...)` helper (unit-tested: buckets choices, ignores unanswered/out-of-range)
 - [x] 3.23 Live countdown controls — host starts a per-question answer deadline (30s/60s) and extends (+15/+30) or clears it; the deadline rides `Pub.Deadline` so join clients + the projector tick it down. Cockpit shows a live 1s-ticking countdown; the deadline auto-clears on question advance/reveal. Guard test + gated live start/extend/clear verified
 

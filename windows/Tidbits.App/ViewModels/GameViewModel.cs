@@ -24,6 +24,10 @@ public sealed class GameViewModel : ObservableObject, IDisposable
     /// Raised when the player taps Play Again (restart same mode + category).
     public event Action? PlayAgainRequested;
 
+    /// Raised once when the game reaches Finished (after the record write) — lets
+    /// the launcher log a Daily result, etc.
+    public event Action? Finished;
+
     // Results recap (read once the engine reaches Finished; the finish handler
     // raises an all-properties change so these bindings re-evaluate).
     public GameSummary Summary => Engine.Summary;
@@ -54,6 +58,7 @@ public sealed class GameViewModel : ObservableObject, IDisposable
             _recorded = true;
             _records?.Record(Engine.Summary);
             OnPropertyChanged(string.Empty); // refresh every recap binding at once
+            Finished?.Invoke();
         }
     }
 

@@ -3,9 +3,11 @@ using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
+using Avalonia.Media;
 using Tidbits.App.Services;
 using Tidbits.App.ViewModels;
 using Tidbits.Core.Models;
+using Tidbits.Core.Store;
 
 namespace Tidbits.App.Views;
 
@@ -65,6 +67,86 @@ public partial class PlayView : UserControl
             card.Click += (_, _) => StartNight(plan);
             NightPanel.Children.Add(card);
         }
+
+        BuildDaily();
+    }
+
+    /// Today's Daily (play-once — a done card once completed) plus a "Previous
+    /// Tidbits" archive of the last 14 days: past days are playable (deterministic
+    /// day-key seed) and never bump the streak (enforced in RecordsStore).
+    private void BuildDaily()
+    {
+        DailyPanel.Children.Clear();
+        var log = GameData.Shared.Value.Daily;
+        var today = QuestionProvider.DayKey();
+
+        for (int i = 0; i < 14; i++)
+        {
+            var date = DateTime.Now.Date.AddDays(-i);
+            var day = QuestionProvider.DayKey(date);
+            bool isToday = day == today;
+            var result = log.Result(day);
+            var label = isToday ? "Today" : date.ToString("ddd, MMM d");
+
+            var row = new Border
+            {
+                Background = isToday && result is null ? new SolidColorBrush(Color.Parse("#FF5C35")) : null,
+                CornerRadius = new Avalonia.CornerRadius(10),
+                BorderBrush = result is not null || !isToday ? new SolidColorBrush(Color.Parse("#22808080")) : null,
+                BorderThickness = new Avalonia.Thickness(isToday && result is null ? 0 : 1),
+                Padding = new Avalonia.Thickness(16, 12), Margin = new Avalonia.Thickness(0, 0, 0, 6),
+            };
+            var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
+            bool heroToday = isToday && result is null;
+            var labelBlock = new TextBlock
+            {
+                Text = label, FontWeight = Avalonia.Media.FontWeight.SemiBold, VerticalAlignment = VerticalAlignment.Center,
+            };
+            if (heroToday) labelBlock.Foreground = Brushes.White; // else inherit the themed default
+            grid.Children.Add(labelBlock);
+
+            if (result is not null)
+            {
+                var done = new TextBlock
+                {
+                    Text = $"{result.Correct}/{result.Total} · {result.Score} pts", VerticalAlignment = VerticalAlignment.Center,
+                    Opacity = 0.75, FontSize = 13,
+                };
+                Grid.SetColumn(done, 1);
+                grid.Children.Add(done);
+            }
+            else
+            {
+                var d = day;
+                var play = new Button
+                {
+                    Content = isToday ? "Play today's Tidbit" : "Play",
+                    Padding = new Avalonia.Thickness(16, 8),
+                    Classes = { "accent" },
+                };
+                play.Click += (_, _) => StartDaily(d);
+                Grid.SetColumn(play, 1);
+                grid.Children.Add(play);
+            }
+            row.Child = grid;
+            DailyPanel.Children.Add(row);
+        }
+    }
+
+    private async void StartDaily(string day)
+    {
+        var data = GameData.Shared.Value;
+        var engine = data.NewEngine();
+        var vm = new GameViewModel(engine, data.Records);
+        vm.Closed += () => { GameHost.Content = null; Landing.IsVisible = true; BuildDaily(); };
+        vm.Finished += () =>
+        {
+            var s = engine.Summary;
+            data.Daily.Record(s.DailyDay ?? day, s.Score, s.Correct, s.Total);
+        };
+        Landing.IsVisible = false;
+        GameHost.Content = new GameView { DataContext = vm };
+        await engine.Start(GameMode.Daily, TriviaCategory.Named("mixed"), dailyDay: day);
     }
 
     private TriviaCategory SelectedCategory() =>
@@ -102,5 +184,4 @@ public partial class PlayView : UserControl
     }
 
     private void OnQuickPlay(object? sender, RoutedEventArgs e) => StartGame(GameMode.Classic);
-    private void OnDaily(object? sender, RoutedEventArgs e) => StartGame(GameMode.Daily);
 }

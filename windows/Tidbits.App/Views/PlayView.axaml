@@ -16,12 +16,15 @@
                     </StackPanel>
                 </Button>
 
-                <!-- Daily + category -->
+                <!-- Category -->
                 <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                    <Button Content="Daily Tidbit" Click="OnDaily" Padding="18,12" FontWeight="SemiBold"/>
                     <TextBlock Text="Category:" VerticalAlignment="Center" Opacity="0.7"/>
                     <ComboBox x:Name="CategoryPicker" MinWidth="150"/>
                 </StackPanel>
+
+                <!-- Daily Tidbit (play-once) + Previous Tidbits archive -->
+                <TextBlock Text="Daily Tidbit" FontSize="20" FontWeight="Bold" Margin="0,12,0,0"/>
+                <StackPanel x:Name="DailyPanel" Spacing="8"/>
 
                 <TextBlock Text="Trivia Night" FontSize="20" FontWeight="Bold" Margin="0,12,0,0"/>
                 <TextBlock Text="A themed night of rounds — each round a different question type."

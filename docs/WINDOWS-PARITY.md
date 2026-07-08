@@ -42,7 +42,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [ ] 1.22 `Keychain` → Credential Manager/DPAPI
 - [x] 1.23 `Haptics` → no-op stub
 - [x] 1.21 `GameSettings` KV (JSON-backed) + RecordsStore.ResetAll
-- [ ] 1.20 `DailyLog` (per-day results, first-completion-wins)
+- [x] 1.20 `DailyLog` (per-day results, first-completion-wins; JSON-backed; a replay can't overwrite a day's record) — unit test GREEN
 - [x] golden-vector contract test harness (§8.7) — daily parity GREEN vs Apple/Kotlin/JS
 
 ## Slice 2 — Consumer vertical
@@ -67,7 +67,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [x] 2.20 Trivia Night (solo) — 3 preset cards (Quick/Pub/The Works) on the Play landing → a self-paced multi-round night off the shape-routing engine; each round opens with a centered interstitial ("ROUND n OF m · title · k questions · Start round"), every shape plays through to the results recap. Full-night play-through test GREEN (all 3 rounds, every question answered). Networked host = Slice 4
 - [ ] 2.21 Versus CPU / Online-MP picker
 - [ ] 2.22 Spaced re-asking + day-streak surfacing
-- [ ] 2.23 Daily play-once lock + archive
+- [x] 2.23 Daily play-once lock + archive — the Play landing shows today's Daily as a coral hero (play-once; flips to a done card with score once completed) plus a "Previous Tidbits" archive of the last 14 days; unplayed past days are playable via the deterministic day-key seed and never bump the streak (RecordsStore only bumps when day==today). DailyLog records first-completion-wins. PNG-verified
 - [ ] 2.24 Async friend duels (DuelStore + inbox)
 - [ ] 2.25 Leaderboard read (season/venue board + friends filter + titles)
 

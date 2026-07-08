@@ -13,6 +13,7 @@ public sealed class GameData
     public QuestionProvider Provider { get; }
     public RecordsStore Records { get; }
     public GameSettings Settings { get; }
+    public DailyLog Daily { get; }
 
     private GameData(QuestionSources sources)
     {
@@ -22,6 +23,7 @@ public sealed class GameData
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TidbitsTrivia");
         Records = new RecordsStore(Path.Combine(appDir, "records.json"));
         Settings = new GameSettings(Path.Combine(appDir, "settings.json"));
+        Daily = new DailyLog(Path.Combine(appDir, "daily.json"));
     }
 
     public static GameData FromDirectory(string dir) => new(QuestionSources.LoadFromDirectory(dir));

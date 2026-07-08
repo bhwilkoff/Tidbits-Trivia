@@ -12,6 +12,35 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 
 ---
 
+## Status (2026-07-08) — feature-complete for everything verifiable off-Windows
+
+**85 done · 19 partial · 4 open.** Every consumer, host, social, identity,
+live-question-generation, and duels feature is built + tested (167 headless
+tests, green on `windows-latest` CI). Wave B AV is 4/5: SFX board (3.30), PA
+routing (3.31), music beds (3.33), audio round (3.32) all ship on LibVLCSharp,
+which CI confirmed loads + plays on the x64 target.
+
+**The remainder needs a real Windows box (this dev box is an arm64 Mac):**
+- **3.34 video picture** — the audio of a video plays; the on-screen picture is
+  blocked. `LibVLCSharp.Avalonia`'s VideoView builds against Avalonia 12 but
+  crashes at runtime (compiled vs Avalonia 11). Unblock = an Avalonia-12
+  VideoView, or a LibVLC video-callback → Avalonia bitmap (version-independent +
+  headless-verifiable, but ~100 lines of unsafe interop best iterated with real
+  LibVLC in hand — arm64 macOS has no LibVLC native).
+- **0.2 Win32 interop** — Mica shipped (0.3); taskbar progress, global hotkeys,
+  and snap layouts need Win32 P/Invoke, unverifiable off-Windows.
+- **0.5 deep-link OS registration** — the parser + inbox are done (0.4); the
+  `tidbitstrivia://` + https protocol registration needs an MSIX package identity.
+- **1.22 Keychain → DPAPI** — Windows-only API; also no durable credentials to
+  store yet (auth is anon).
+- **3.5 LAN night** — explicitly optional (RTDB path is acceptable).
+
+Everything above is either **hardware/packaging-gated** or **optional** — none is
+both verifiable in this environment and required. The build is ready for a
+Windows-box pass to finish the AV picture + packaging batch.
+
+---
+
 ## Slice 0 — Skeleton & pipeline
 - [x] 0.1 FluentAvalonia `NavigationView` shell (Play·Records·Create·Live + Settings)
 - [x] 0.6 Headless-PNG harness + `windows-latest` CI (build/snapshot/launch)

@@ -61,6 +61,28 @@ public sealed class LiveNightHost : ObservableObject
     public int RoundCount => Math.Max(_plan.Rounds.Count, 1);
     public string RoundTitle => RoundIndex < _plan.Rounds.Count ? _plan.Rounds[RoundIndex].Kind.NightRoundTitle() : "";
 
+    /// Live per-option answer counts for the current MCQ (empty for non-MCQ) —
+    /// updates as submissions stream in (3.20). Index-aligned with the options.
+    public IReadOnlyList<int> AnswerDistribution
+    {
+        get
+        {
+            var q = Current;
+            if (q is null || !LiveScoring.IsMcq(q)) return System.Array.Empty<int>();
+            return Tally(q.Options.Count, Net.AnswersSnapshot().Values.Select(a => a.Choice));
+        }
+    }
+
+    /// Count choices into per-option buckets (out-of-range choices ignored). Pure
+    /// so the tally can be unit-tested without a live room.
+    public static int[] Tally(int optionCount, IEnumerable<int?> choices)
+    {
+        var counts = new int[System.Math.Max(0, optionCount)];
+        foreach (var c in choices)
+            if (c is { } i && i >= 0 && i < counts.Length) counts[i]++;
+        return counts;
+    }
+
     public (int N, int Of) QuestionInRound
     {
         get

@@ -107,7 +107,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [ ] 3.10 Difficulty/category balance meter
 - [ ] 3.11 Per-round timer/wager/speed/host-note
 - [ ] 3.12 CSV import
-- [ ] 3.20 Live answer distribution/tally
+- [x] 3.20 Live answer distribution/tally — the cockpit options now render a live per-option answer-distribution bar (proportional width + count) that updates as submissions stream in; the correct option tints green on reveal. `LiveNightHost.AnswerDistribution` + a pure `Tally(...)` helper (unit-tested: buckets choices, ignores unanswered/out-of-range)
 - [ ] 3.23 Live countdown controls (+30/+15/clear)
 
 ## Slice 6 — Wave C submission & scoring

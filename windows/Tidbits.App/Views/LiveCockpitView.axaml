@@ -27,17 +27,9 @@
                 <StackPanel Spacing="12">
                     <TextBlock Text="{Binding Host.RoundTitle}" Opacity="0.6" FontWeight="SemiBold"/>
                     <TextBlock Text="{Binding Host.Current.Prompt}" FontSize="22" FontWeight="Bold" TextWrapping="Wrap"/>
-                    <ItemsControl ItemsSource="{Binding Host.Current.Options}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Border Padding="14,11" Margin="0,3" CornerRadius="8"
-                                        Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
-                                        BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1">
-                                    <TextBlock Text="{Binding}"/>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                    <!-- Options with a live answer-distribution bar (built in code-behind
+                         so each row can carry a proportional bar + reveal highlight). -->
+                    <StackPanel x:Name="OptionsTally" Spacing="6"/>
                 </StackPanel>
             </ScrollViewer>
 

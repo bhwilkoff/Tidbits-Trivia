@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
@@ -19,8 +20,56 @@ public partial class LiveCockpitView : UserControl
     protected override void OnDataContextChanged(EventArgs e)
     {
         base.OnDataContextChanged(e);
-        if (Vm is { } vm) vm.PropertyChanged += (_, _) => RefreshQr();
+        if (Vm is { } vm) vm.PropertyChanged += (_, _) => { RefreshQr(); RefreshTally(); };
         RefreshQr();
+        RefreshTally();
+    }
+
+    /// Rebuild the options with a live per-option answer-distribution bar. The
+    /// correct option is tinted green on reveal.
+    private void RefreshTally()
+    {
+        OptionsTally.Children.Clear();
+        var host = Vm?.Host;
+        if (host?.Current is not { } q || q.Options.Count == 0) return;
+
+        var dist = host.AnswerDistribution;
+        int max = dist.Count > 0 ? Math.Max(1, dist.Max()) : 1;
+        bool reveal = host.Revealed;
+
+        for (int i = 0; i < q.Options.Count; i++)
+        {
+            int count = i < dist.Count ? dist[i] : 0;
+            bool correct = reveal && i == q.CorrectIndex;
+
+            var bar = new Border
+            {
+                Height = 34, CornerRadius = new Avalonia.CornerRadius(8),
+                Background = new Avalonia.Media.SolidColorBrush(
+                    Avalonia.Media.Color.Parse(correct ? "#3320A060" : "#14808080")),
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left,
+                Width = 60 + (500.0 * count / max),
+                MinWidth = 60,
+            };
+            var label = new TextBlock
+            {
+                Text = q.Options[i], VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                Margin = new Avalonia.Thickness(12, 0), FontWeight = correct ? Avalonia.Media.FontWeight.Bold : Avalonia.Media.FontWeight.Normal,
+            };
+            var countTb = new TextBlock
+            {
+                Text = count.ToString(), FontWeight = Avalonia.Media.FontWeight.Bold, Opacity = count > 0 ? 0.9 : 0.4,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center, Margin = new Avalonia.Thickness(8, 0),
+            };
+            var over = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
+            over.Children.Add(label);
+            Grid.SetColumn(countTb, 1);
+            over.Children.Add(countTb);
+            var stack = new Panel();          // the bar sits behind the label + count
+            stack.Children.Add(bar);
+            stack.Children.Add(over);
+            OptionsTally.Children.Add(stack);
+        }
     }
 
     /// Generate the join QR once the room code is known (and only when it changes).

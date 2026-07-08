@@ -37,6 +37,15 @@ public class LiveHostControlsTest
     }
 
     [Fact]
+    public void Answer_distribution_tallies_choices_per_option()
+    {
+        // 4 options; choices from 6 teams (one unanswered, one out-of-range).
+        var choices = new int?[] { 0, 2, 2, 1, null, 9 };
+        var tally = LiveNightHost.Tally(4, choices);
+        Assert.Equal(new[] { 1, 1, 2, 0 }, tally); // idx0:1, idx1:1, idx2:2, idx3:0
+    }
+
+    [Fact]
     public void ViewModel_exposes_the_new_commands()
     {
         var vm = new LiveHostViewModel(NewHost());

@@ -49,6 +49,12 @@
 
                 <TextBlock IsVisible="{Binding IsEnded}" Text="Night over — thanks for playing!"
                            FontSize="18" FontWeight="Bold" Margin="0,10,0,0"/>
+
+                <!-- L5 social graph: add the people you played with -->
+                <StackPanel IsVisible="{Binding HasCoplayers}" Spacing="8" Margin="0,6,0,0">
+                    <TextBlock Text="Add the people you played with" FontWeight="SemiBold"/>
+                    <StackPanel x:Name="CoplayersPanel" Spacing="6"/>
+                </StackPanel>
             </StackPanel>
         </StackPanel>
     </ScrollViewer>

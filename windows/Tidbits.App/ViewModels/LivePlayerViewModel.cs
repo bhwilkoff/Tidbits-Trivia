@@ -29,6 +29,12 @@ public sealed class LivePlayerViewModel : ObservableObject
     public bool IsEnded => Client.Meta?.State == "ended" || Client.Pub?.Phase == LiveRoom.Phase.Ended;
     public bool Answered => Client.HasAnswered;
 
+    // L5 social graph — "add the people you played with" at the wrap.
+    public System.Collections.Generic.IReadOnlyList<PlayerIdentity.Friend> Coplayers => Client.Coplayers;
+    public bool HasCoplayers => IsEnded && Client.Coplayers.Count > 0;
+    public bool IsFriend(string uid) { try { return Services.GameData.Shared.Value.Friends.Contains(uid); } catch { return false; } }
+    public void AddFriend(PlayerIdentity.Friend f) { try { Services.GameData.Shared.Value.Friends.Add(f); } catch { } }
+
     /// Seconds left on the host's published deadline (Wave A join display), or null
     /// when no timer is running / not on a live question.
     public int? SecondsRemaining

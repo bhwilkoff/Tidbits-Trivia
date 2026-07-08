@@ -61,9 +61,33 @@ public partial class JoinPlayerView : UserControl
         _vm = DataContext as LivePlayerViewModel;
         if (_vm is not null) _vm.Client.Changed += OnClientChanged;
         RebuildOptions();
+        RebuildCoplayers();
     }
 
-    private void OnClientChanged() => Avalonia.Threading.Dispatcher.UIThread.Post(RebuildOptions);
+    private void OnClientChanged() => Avalonia.Threading.Dispatcher.UIThread.Post(() => { RebuildOptions(); RebuildCoplayers(); });
+
+    /// At the wrap, list the people you played with, each with an Add / Added button.
+    private void RebuildCoplayers()
+    {
+        CoplayersPanel.Children.Clear();
+        if (_vm is not { } vm || !vm.HasCoplayers) return;
+        foreach (var co in vm.Coplayers)
+        {
+            var friend = co;
+            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
+            row.Children.Add(new TextBlock { Text = friend.Name, VerticalAlignment = VerticalAlignment.Center });
+            bool added = vm.IsFriend(friend.Uid);
+            var btn = new Button
+            {
+                Content = added ? "Added ✓" : "Add", IsEnabled = !added,
+                Padding = new Thickness(14, 6), FontSize = 13,
+            };
+            btn.Click += (_, _) => { vm.AddFriend(friend); btn.Content = "Added ✓"; btn.IsEnabled = false; };
+            Grid.SetColumn(btn, 1);
+            row.Children.Add(btn);
+            CoplayersPanel.Children.Add(row);
+        }
+    }
 
     private async void OnJoin(object? sender, RoutedEventArgs e)
     {

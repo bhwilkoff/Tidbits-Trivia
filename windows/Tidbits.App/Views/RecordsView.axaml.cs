@@ -17,12 +17,23 @@ public partial class RecordsView : UserControl
     public RecordsView()
     {
         InitializeComponent();
+        RefreshProfile();
     }
 
     protected override void OnDataContextChanged(System.EventArgs e)
     {
         base.OnDataContextChanged(e);
+        RefreshProfile();
         BuildPie();
+    }
+
+    /// Show who you're playing as (name + deterministic hue avatar) in the banner.
+    private void RefreshProfile()
+    {
+        if (ProfileName is null) return;
+        var p = Services.GameData.Shared.Value.Identity.Current;
+        ProfileName.Text = $"Playing as {p.Name}";
+        ProfileAvatar.Background = new SolidColorBrush(new HslColor(1.0, p.AvatarHue * 360.0, 0.62, 0.55).ToRgb());
     }
 
     /// The Pie — one wedge per domain, filled in its category color when mastered,

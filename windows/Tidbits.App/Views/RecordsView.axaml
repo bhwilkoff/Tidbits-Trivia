@@ -8,6 +8,20 @@
             <TextBlock Text="Records" FontSize="34" FontWeight="Black"/>
             <TextBlock Text="Compete against your past self." FontSize="15" Opacity="0.7"/>
 
+            <!-- Profile / sync banner (2.16): who you're playing as + where records live -->
+            <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1" CornerRadius="12" Padding="14,12">
+                <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                    <Border x:Name="ProfileAvatar" Width="40" Height="40" CornerRadius="20"/>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock x:Name="ProfileName" FontWeight="SemiBold"/>
+                        <TextBlock Text="Records are saved on this device · edit your profile in Settings"
+                                   FontSize="12" Opacity="0.6"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
             <TextBlock IsVisible="{Binding NoGames}" Margin="0,20,0,0" Opacity="0.7" TextWrapping="Wrap"
                        Text="No games yet — play a round and your scores, streaks, and knowledge show up here."/>
 

@@ -154,6 +154,30 @@ public sealed class LivePlayerClient
         _recordedEnd = true;
         NightEnded?.Invoke(_liveCorrect, _liveAnswered, Meta?.Venue ?? "", Score);
         _ = CaptureCoplayers();
+        _ = RecordStanding(Meta?.Venue ?? "", Score);
+    }
+
+    /// Wave E moat write (3.50): after a live night, add this player's score to
+    /// their cumulative per-venue/season standing, keyed by the AUTH uid (the
+    /// standings rule requires auth.uid === $uid). The $0 cron aggregates these
+    /// into the static cross-venue leaderboard. Byte-identical to web recordStanding.
+    private async Task RecordStanding(string venue, int score)
+    {
+        var vk = PlayerIdentity.VenueKey(venue);
+        if (string.IsNullOrEmpty(vk) || score <= 0 || _uid is null) return;
+        var path = $"standings/{PlayerIdentity.CurrentSeason()}/{vk}/{_uid}";
+        try
+        {
+            var existing = await _db.Get<StandingWrite>(path);
+            await _db.Put(path, new StandingWrite
+            {
+                Name = LastTeam,
+                Score = (existing?.Score ?? 0) + score,
+                Nights = (existing?.Nights ?? 0) + 1,
+                UpdatedAt = NowMs(),
+            });
+        }
+        catch { /* best-effort; the night's score already showed live */ }
     }
 
     private async Task CaptureCoplayers()
@@ -170,4 +194,14 @@ public sealed class LivePlayerClient
     }
 
     public static long NowMs() => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+}
+
+/// The Wave E standing payload written to standings/{season}/{venue}/{uid} —
+/// keys byte-identical to the web/Swift/Kotlin twins so the cron reads them all.
+public sealed record StandingWrite
+{
+    [System.Text.Json.Serialization.JsonPropertyName("name")] public string Name { get; init; } = "";
+    [System.Text.Json.Serialization.JsonPropertyName("score")] public int Score { get; init; }
+    [System.Text.Json.Serialization.JsonPropertyName("nights")] public int Nights { get; init; }
+    [System.Text.Json.Serialization.JsonPropertyName("updatedAt")] public long UpdatedAt { get; init; }
 }

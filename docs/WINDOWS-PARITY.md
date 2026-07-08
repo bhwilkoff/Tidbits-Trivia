@@ -133,7 +133,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [ ] 3.47 Sponsor kit (big-screen footer)
 - [ ] 3.48 Lead capture QR
 - [ ] 3.49 White-label brand accent
-- [ ] 3.50 ★ Standings write (season/venue)
+- [x] 3.50 ★ Standings write (season/venue) — when a live night ends, `LivePlayerClient.RecordStanding` adds the player's score to their cumulative `standings/{season}/{venueKey}/{authUid}` (read-modify-write, keyed by auth uid per the rule), fired once from RecordIfEnded. `StandingWrite` payload (name/score/nights/updatedAt) + the season/venue path pieces are byte-identical to the web/Swift/Kotlin twins — unit-tested (2026-S3 quarter format, path-safe venue key, JSON keys). Completes the moat with the 2.25 read side; the hourly cron aggregates all platforms' writes
 - [ ] 3.51 Leaderboard read + defendable titles
 - [ ] 3.52 Social graph (add players you played with)
 

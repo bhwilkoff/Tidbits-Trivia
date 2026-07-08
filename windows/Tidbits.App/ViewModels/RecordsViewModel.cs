@@ -20,6 +20,7 @@ public sealed class RecordsViewModel
     public int TotalGames { get; }
     public bool HasMoreGames { get; }
     public IReadOnlyList<GameRow> RecentGames { get; }
+    public IReadOnlyList<GameDetail> AllGames { get; }
     public IReadOnlyList<DomainRow> Domains { get; }
     public bool HasDomains => Domains.Count > 0;
     public int ReviewCount { get; }
@@ -44,6 +45,11 @@ public sealed class RecordsViewModel
             g.Mode.Title(), TriviaCategory.Named(g.CategoryId).Name, g.Score, g.Correct, g.Total,
             g.Date.ToLocalTime().ToString("MMM d"))).ToList();
 
+        AllGames = games.Select(g => new GameDetail(
+            g.Mode.Title(), TriviaCategory.Named(g.CategoryId).Name, $"{g.Score} pts · {g.Correct}/{g.Total}",
+            g.Date.ToLocalTime().ToString("MMM d, h:mm tt"),
+            g.Answers.Select(a => new AnswerDot(a.Correct, a.Prompt, a.Answer)).ToList())).ToList();
+
         Domains = DomainProgress.Summarize(games.Select(g => (g.CategoryId, g.Correct, g.Total)))
             .Where(d => d.Total > 0)
             .Select(d => new DomainRow(
@@ -64,6 +70,13 @@ public sealed class RecordsViewModel
 }
 
 public sealed record BadgeRow(string Name, string Detail, double Progress, int Tier);
+
+public sealed record AnswerDot(bool Correct, string Prompt, string Answer);
+
+public sealed record GameDetail(string Mode, string Category, string ScoreLine, string Date, IReadOnlyList<AnswerDot> Answers)
+{
+    public string Header => $"{Mode} · {Category}";
+}
 
 public sealed record GameRow(string Mode, string Category, int Score, int Correct, int Total, string Date)
 {

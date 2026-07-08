@@ -55,8 +55,11 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-                <TextBlock IsVisible="{Binding HasMoreGames}" Foreground="#FF5C35" FontWeight="SemiBold"
-                           Text="{Binding TotalGames, StringFormat='See all {0} games'}"/>
+                <Button IsVisible="{Binding HasMoreGames}" Click="OnSeeAllGames"
+                        Background="Transparent" BorderThickness="0" Padding="0" HorizontalAlignment="Left">
+                    <TextBlock Foreground="#FF5C35" FontWeight="SemiBold"
+                               Text="{Binding TotalGames, StringFormat='See all {0} games ›'}"/>
+                </Button>
 
                 <!-- Knowledge (hidden until a specific-category game is played) -->
                 <StackPanel IsVisible="{Binding HasDomains}" Spacing="8">

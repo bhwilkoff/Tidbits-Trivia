@@ -58,7 +58,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [x] 2.11 Emoji-grid share — `ShareText` (Core, byte-faithful web twin: 🟢🔴⚫️ grid + ▰▱ meter + streak/best-run fallback + play link) → clipboard (Windows native idiom); 3 golden tests GREEN
 - [ ] 2.12 Four content states on every list/grid
 - [~] 2.13 Records dashboard (R-REC-1) — streak+lifetime card, recent 3 + See-all, per-domain knowledge bars, review count; PNG-verified. Drill-ins/calibration/badges/pie pending
-- [ ] 2.14 Records drill-ins (game recap, domain, bests)
+- [~] 2.14 Records drill-ins — "See all N games" opens a native FAContentDialog listing every game (header · score · green/red answer-dot strip); tapping a game drills into a per-question recap (dot · prompt · answer) with a back nav. VM exposes full GameDetail/AnswerDot; list + recap PNG-verified. Domain / personal-best drill-ins pending
 - [~] 2.15 Topic Levels (per-domain XP bars) shipped in the Records dashboard; **Badges** section shipped (levelable milestones via the ported BadgeMath — earned-only, coral tier-number circle icon per R-ICON-1, progress bar + "N/M to Tier k" detail; PNG-verified). Pie + Stake calibration + avatar re-roll pending; liveNights=0 until live-night records are tracked locally
 - [ ] 2.16 Records sign-in banner
 - [x] 2.17 Create — topic → corpus retrieval + diversify → play the set (live-gen fallback stubbed); PNG-verified

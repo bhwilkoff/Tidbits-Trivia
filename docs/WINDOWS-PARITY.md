@@ -108,7 +108,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [ ] 3.11 Per-round timer/wager/speed/host-note
 - [ ] 3.12 CSV import
 - [x] 3.20 Live answer distribution/tally — the cockpit options now render a live per-option answer-distribution bar (proportional width + count) that updates as submissions stream in; the correct option tints green on reveal. `LiveNightHost.AnswerDistribution` + a pure `Tally(...)` helper (unit-tested: buckets choices, ignores unanswered/out-of-range)
-- [ ] 3.23 Live countdown controls (+30/+15/clear)
+- [x] 3.23 Live countdown controls — host starts a per-question answer deadline (30s/60s) and extends (+15/+30) or clears it; the deadline rides `Pub.Deadline` so join clients + the projector tick it down. Cockpit shows a live 1s-ticking countdown; the deadline auto-clears on question advance/reveal. Guard test + gated live start/extend/clear verified
 
 ## Slice 6 — Wave C submission & scoring
 - [ ] 3.21 Free-text review + spelling leniency

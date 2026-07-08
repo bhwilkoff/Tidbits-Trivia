@@ -26,6 +26,7 @@ public sealed class LiveHostViewModel : ObservableObject
     public string? RevealAnswer => Host.Current is { } q ? LiveScoring.AnswerLine(q) : null;
 
     public bool CanGoBack => Host.CanGoBack;
+    public int? SecondsRemaining => Host.SecondsRemaining;
 
     public Task StartHosting() => Host.Start();
     public Task Reveal() => Host.Reveal();
@@ -33,6 +34,9 @@ public sealed class LiveHostViewModel : ObservableObject
     public Task Lock() => Host.Lock();
     public Task Skip() => Host.SkipNext();
     public Task Back() => Host.GoBack();
+    public Task StartTimer(int seconds) => Host.StartTimer(seconds);
+    public Task AddTime(int seconds) => Host.AddTime(seconds);
+    public Task ClearTimer() => Host.ClearTimer();
     public Task Adjust(string uid, int delta) => Host.AdjustScore(uid, delta);
     public Task Close() => Host.Close();
 }

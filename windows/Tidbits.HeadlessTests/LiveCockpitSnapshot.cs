@@ -45,6 +45,15 @@ public class LiveCockpitSnapshot
         Assert.Equal(startIdx, host.Index);
         Assert.False(host.Revealed);
 
+        // Live countdown (3.23): starting a timer sets a deadline; extending grows it.
+        await host.StartTimer(30);
+        Assert.NotNull(host.SecondsRemaining);
+        Assert.InRange(host.SecondsRemaining!.Value, 25, 30);
+        await host.AddTime(30);
+        Assert.InRange(host.SecondsRemaining!.Value, 55, 60);
+        await host.ClearTimer();
+        Assert.Null(host.SecondsRemaining);
+
         // The projector big-screen view (rendered directly; the 2nd-monitor placement is
         // Windows-runtime and CI-verified separately).
         var proj = new Window { Width = 1280, Height = 720, Content = new ProjectorView { DataContext = vm } };

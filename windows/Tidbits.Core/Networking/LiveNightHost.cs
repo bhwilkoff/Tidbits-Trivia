@@ -38,6 +38,9 @@ public sealed class LiveNightHost : ObservableObject
 
     private List<string> _shuffledOrder = new();
     private List<string> _shuffledValues = new();
+    private long? _deadline; // epoch-ms answer deadline (live countdown, 3.23)
+
+    private static long NowMs() => System.DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
     public LiveNightHost(NightPlan plan, TriviaCategory category, QuestionProvider provider,
                          string title = "Trivia Night", LiveHostNet? net = null)
@@ -150,7 +153,7 @@ public sealed class LiveNightHost : ObservableObject
     public async Task Next()
     {
         if (CurrentStage != Stage.Playing || !Revealed) return;
-        Revealed = false; HostChoice = null; Locked = false;
+        Revealed = false; HostChoice = null; Locked = false; _deadline = null;
         Index++;
         if (Current is null) await End();
         else { PrepareQuestion(); await Net.Publish(BuildPub()); }
@@ -161,7 +164,7 @@ public sealed class LiveNightHost : ObservableObject
     public async Task SkipNext()
     {
         if (CurrentStage != Stage.Playing) return;
-        Revealed = false; HostChoice = null; Locked = false;
+        Revealed = false; HostChoice = null; Locked = false; _deadline = null;
         Index++;
         if (Current is null) await End();
         else { PrepareQuestion(); await Net.Publish(BuildPub()); }
@@ -172,7 +175,7 @@ public sealed class LiveNightHost : ObservableObject
     public async Task GoBack()
     {
         if (CurrentStage != Stage.Playing || Index <= 0) return;
-        Revealed = false; HostChoice = null; Locked = false;
+        Revealed = false; HostChoice = null; Locked = false; _deadline = null;
         Index--;
         PrepareQuestion();
         await Net.Publish(BuildPub());
@@ -180,6 +183,37 @@ public sealed class LiveNightHost : ObservableObject
     }
 
     public bool CanGoBack => CurrentStage == Stage.Playing && Index > 0;
+
+    /// Live countdown (3.23) — the host starts/extends a per-question answer
+    /// deadline, published so join clients + the projector tick it down.
+    public async Task StartTimer(int seconds)
+    {
+        if (CurrentStage != Stage.Playing || Revealed || seconds <= 0) return;
+        _deadline = NowMs() + seconds * 1000L;
+        await Net.Publish(BuildPub());
+        Notify();
+    }
+
+    public async Task AddTime(int seconds)
+    {
+        if (CurrentStage != Stage.Playing || Revealed) return;
+        _deadline = (_deadline ?? NowMs()) + seconds * 1000L;
+        await Net.Publish(BuildPub());
+        Notify();
+    }
+
+    public async Task ClearTimer()
+    {
+        if (_deadline is null) return;
+        _deadline = null;
+        await Net.Publish(BuildPub());
+        Notify();
+    }
+
+    /// Seconds left on the current deadline, or null when no timer is running.
+    public int? SecondsRemaining => _deadline is { } d && !Revealed
+        ? (int)System.Math.Max(0, (d - NowMs()) / 1000)
+        : null;
 
     /// Manual score override (3.18) — nudge a team's score (never below 0).
     public async Task AdjustScore(string uid, int delta)
@@ -222,6 +256,7 @@ public sealed class LiveNightHost : ObservableObject
             MatchValues = q.Matching is not null ? _shuffledValues : null,
             EnumTarget = q.Enumerate?.Total,
             Locked = Locked && !Revealed ? true : null,
+            Deadline = Revealed ? null : _deadline,
         };
     }
 

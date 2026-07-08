@@ -32,6 +32,10 @@ public class LiveHostControlsTest
         await host.GoBack();
         await host.AdjustScore("someuid", +5);
         await host.AdjustScore("", -1);          // empty uid ignored
+        await host.StartTimer(30);               // no room / not playing → ignored
+        await host.AddTime(15);
+        await host.ClearTimer();
+        Assert.Null(host.SecondsRemaining);      // no timer running
         Assert.Equal(LiveNightHost.Stage.Lobby, host.CurrentStage);
         Assert.False(host.CanGoBack);
     }

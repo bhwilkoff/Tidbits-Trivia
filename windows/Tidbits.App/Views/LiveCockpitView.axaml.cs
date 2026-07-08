@@ -12,9 +12,23 @@ public partial class LiveCockpitView : UserControl
 {
     private string _qrCode = "";
 
+    private readonly Avalonia.Threading.DispatcherTimer _tick;
+
     public LiveCockpitView()
     {
         InitializeComponent();
+        // Tick the countdown display once a second (the deadline itself lives in the
+        // published pub; this just renders the remaining seconds locally).
+        _tick = new Avalonia.Threading.DispatcherTimer(
+            TimeSpan.FromSeconds(1), Avalonia.Threading.DispatcherPriority.Normal, (_, _) => RefreshCountdown());
+        _tick.Start();
+        DetachedFromVisualTree += (_, _) => _tick.Stop();
+    }
+
+    private void RefreshCountdown()
+    {
+        var s = Vm?.SecondsRemaining;
+        CountdownText.Text = s is { } n ? $"{n}s" : "";
     }
 
     protected override void OnDataContextChanged(EventArgs e)
@@ -88,6 +102,12 @@ public partial class LiveCockpitView : UserControl
     private async void OnLock(object? sender, RoutedEventArgs e) { if (Vm is { } vm) await vm.Lock(); }
     private async void OnSkip(object? sender, RoutedEventArgs e) { if (Vm is { } vm) await vm.Skip(); }
     private async void OnBack(object? sender, RoutedEventArgs e) { if (Vm is { } vm) await vm.Back(); }
+
+    private async void OnTimer30(object? sender, RoutedEventArgs e) { if (Vm is { } vm) await vm.StartTimer(30); RefreshCountdown(); }
+    private async void OnTimer60(object? sender, RoutedEventArgs e) { if (Vm is { } vm) await vm.StartTimer(60); RefreshCountdown(); }
+    private async void OnAdd15(object? sender, RoutedEventArgs e) { if (Vm is { } vm) await vm.AddTime(15); RefreshCountdown(); }
+    private async void OnAdd30(object? sender, RoutedEventArgs e) { if (Vm is { } vm) await vm.AddTime(30); RefreshCountdown(); }
+    private async void OnClearTimer(object? sender, RoutedEventArgs e) { if (Vm is { } vm) await vm.ClearTimer(); RefreshCountdown(); }
 
     // Manual score override — the team uid rides the button's Tag.
     private async void OnScoreUp(object? sender, RoutedEventArgs e) => await Adjust(sender, +1);

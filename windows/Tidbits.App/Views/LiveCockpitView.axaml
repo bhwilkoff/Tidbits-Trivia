@@ -3,7 +3,7 @@
              xmlns:vm="using:Tidbits.App.ViewModels"
              x:Class="Tidbits.App.Views.LiveCockpitView"
              x:DataType="vm:LiveHostViewModel">
-    <Grid RowDefinitions="Auto,*,Auto" Margin="28,20">
+    <Grid RowDefinitions="Auto,*,Auto,Auto" Margin="28,20">
         <!-- Header: join info + roster status + QR -->
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
             <StackPanel Spacing="3" VerticalAlignment="Center">
@@ -55,8 +55,19 @@
             </StackPanel>
         </Grid>
 
+        <!-- Timer row: live countdown + start/extend/clear -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8" Margin="0,0,0,10" VerticalAlignment="Center">
+            <TextBlock x:Name="CountdownText" FontSize="20" FontWeight="Black" Foreground="#FF5C35"
+                       MinWidth="52" VerticalAlignment="Center"/>
+            <Button Content="30s" Click="OnTimer30" Padding="12,7"/>
+            <Button Content="60s" Click="OnTimer60" Padding="12,7"/>
+            <Button Content="+15" Click="OnAdd15" Padding="12,7"/>
+            <Button Content="+30" Click="OnAdd30" Padding="12,7"/>
+            <Button Content="Clear" Click="OnClearTimer" Padding="12,7"/>
+        </StackPanel>
+
         <!-- Controls -->
-        <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
+        <Grid Grid.Row="3" ColumnDefinitions="*,Auto">
             <StackPanel Orientation="Horizontal" Spacing="10">
                 <Button Content="‹ Back" Click="OnBack" Padding="14,10" IsEnabled="{Binding CanGoBack}"/>
                 <Button Content="Reveal" Click="OnReveal" Classes="accent" Padding="20,10" FontWeight="Bold"/>

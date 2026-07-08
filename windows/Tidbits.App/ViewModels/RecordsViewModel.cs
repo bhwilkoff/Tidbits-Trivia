@@ -24,6 +24,8 @@ public sealed class RecordsViewModel
     public bool HasDomains => Domains.Count > 0;
     public int ReviewCount { get; }
     public bool HasReview => ReviewCount > 0;
+    public IReadOnlyList<BadgeRow> Badges { get; }
+    public bool HasBadges => Badges.Count > 0;
 
     public RecordsViewModel(RecordsStore store)
     {
@@ -49,8 +51,19 @@ public sealed class RecordsViewModel
                 (int)Math.Round(d.Accuracy * 100), d.HasWedge)).ToList();
 
         ReviewCount = store.Missed.Count(m => !m.Resolved);
+
+        // Levelable badges — earned-only (hidden until the first tier is reached),
+        // matching web/iOS. liveNights isn't tracked locally yet → 0 (Regular stays
+        // hidden until it is), an honest gap not a false cell.
+        int mastered = Domains.Count(d => d.Mastered);
+        Badges = BadgeMath.Badges(LifetimeGames, StreakBest, mastered, LifetimeAccuracy, liveNights: 0)
+            .Where(b => b.Tier >= 1)
+            .Select(b => new BadgeRow(b.Name, b.Detail, b.Progress, b.Tier))
+            .ToList();
     }
 }
+
+public sealed record BadgeRow(string Name, string Detail, double Progress, int Tier);
 
 public sealed record GameRow(string Mode, string Category, int Score, int Correct, int Total, string Date)
 {

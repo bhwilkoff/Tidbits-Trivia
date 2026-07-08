@@ -52,4 +52,47 @@ public class RecordsSnapshot
             if (File.Exists(path)) File.Delete(path);
         }
     }
+
+    [AvaloniaFact]
+    public async Task Badges_appear_once_earned()
+    {
+        var dir = Environment.GetEnvironmentVariable("TIDBITS_ARTIFACTS")
+                  ?? Path.Combine(AppContext.BaseDirectory, "artifacts");
+        Directory.CreateDirectory(dir);
+
+        var sources = QuestionSources.LoadFromDirectory(Path.Combine(AppContext.BaseDirectory, "Fixtures"));
+        var provider = new QuestionProvider(sources);
+        var path = Path.Combine(Path.GetTempPath(), $"tidbits-badge-{Guid.NewGuid():N}.json");
+        var store = new RecordsStore(path);
+
+        try
+        {
+            // No games → no badges shown yet.
+            Assert.False(new RecordsViewModel(store).HasBadges);
+
+            var engine = new GameEngine(provider, sources.Difficulty);
+            await engine.Start(GameMode.Classic, TriviaCategory.Named("science"));
+            int g = 0;
+            while (engine.CurrentPhase != GameEngine.Phase.Finished && g++ < 30)
+            {
+                engine.Submit(engine.Current!.CorrectIndex);
+                engine.Advance();
+            }
+            // 10 recorded games → Scholar tier 1 (>=10 games) earns.
+            for (int i = 0; i < 10; i++) store.Record(engine.Summary);
+
+            var vm = new RecordsViewModel(store);
+            Assert.True(vm.HasBadges);
+            Assert.Contains(vm.Badges, b => b.Name == "Scholar" && b.Tier >= 1);
+
+            var win = new Window { Width = 900, Height = 900, Content = new RecordsView { DataContext = vm } };
+            win.Show();
+            Dispatcher.UIThread.RunJobs();
+            win.CaptureRenderedFrame()!.Save(Path.Combine(dir, "records-badges.png"));
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+        }
+    }
 }

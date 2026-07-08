@@ -59,7 +59,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [ ] 2.12 Four content states on every list/grid
 - [~] 2.13 Records dashboard (R-REC-1) — streak+lifetime card, recent 3 + See-all, per-domain knowledge bars, review count; PNG-verified. Drill-ins/calibration/badges/pie pending
 - [ ] 2.14 Records drill-ins (game recap, domain, bests)
-- [ ] 2.15 Topic Levels + Pie + calibration + badges + avatar re-roll
+- [~] 2.15 Topic Levels (per-domain XP bars) shipped in the Records dashboard; **Badges** section shipped (levelable milestones via the ported BadgeMath — earned-only, coral tier-number circle icon per R-ICON-1, progress bar + "N/M to Tier k" detail; PNG-verified). Pie + Stake calibration + avatar re-roll pending; liveNights=0 until live-night records are tracked locally
 - [ ] 2.16 Records sign-in banner
 - [x] 2.17 Create — topic → corpus retrieval + diversify → play the set (live-gen fallback stubbed); PNG-verified
 - [ ] 2.18 Create saved sets

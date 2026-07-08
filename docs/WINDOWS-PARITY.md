@@ -54,8 +54,8 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [~] 2.7 Game surface — MCQ playing/reveal/finished LIVE + headless-PNG verified; specialty-mode surfaces pending
 - [ ] 2.8 Per-mode answer surfaces (picture/numeric/ordering/matching/type/enumerate/stake/sweep)
 - [ ] 2.9 Image pipeline (decoded cache + capped HttpClient, sRGB)
-- [ ] 2.10 Results recap (score/accuracy/streak/missed-fact + reflection)
-- [ ] 2.11 Emoji-grid share
+- [x] 2.10 Results recap — coral scorecard (headline/score/mode·category) + stat row (correct/accuracy/best-streak) + spoiler-free grid + "Tidbits to remember" missed-fact cards + Play Again (hidden for Daily) + Done; PNG-verified
+- [x] 2.11 Emoji-grid share — `ShareText` (Core, byte-faithful web twin: 🟢🔴⚫️ grid + ▰▱ meter + streak/best-run fallback + play link) → clipboard (Windows native idiom); 3 golden tests GREEN
 - [ ] 2.12 Four content states on every list/grid
 - [~] 2.13 Records dashboard (R-REC-1) — streak+lifetime card, recent 3 + See-all, per-domain knowledge bars, review count; PNG-verified. Drill-ins/calibration/badges/pie pending
 - [ ] 2.14 Records drill-ins (game recap, domain, bests)
@@ -145,6 +145,9 @@ Apple Sign In (→ web OAuth or drop), FoundationModels AI (→ TemplateEngine).
 
 ---
 
-**Progress:** Slice 0 skeleton + Slice 1 models (1.1–1.3) done. Next:
-finish Slice 1 foundation (RNG/DailyPick/Scoring → corpus → persistence →
-QuestionProvider + golden test), then Slice 2 consumer vertical.
+**Progress:** Slices 0–1 foundation, the Live networking Core (Slice 3), and a
+cockpit/projector MVP (Slice 4) are largely done. Consumer vertical (Slice 2) is
+filling in: game loop now ends in a full results recap + spoiler-free share
+(2.10/2.11). Next Slice 2 gaps: per-mode answer surfaces (2.8), image pipeline
+(2.9), records drill-ins/badges (2.14/2.15), Trivia Night solo (2.20), daily
+lock + archive (2.23).

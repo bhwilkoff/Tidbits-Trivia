@@ -2,6 +2,7 @@ using System;
 using System.ComponentModel;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -75,4 +76,17 @@ public partial class GameView : UserControl
     private void OnNext(object? sender, RoutedEventArgs e) => _vm?.Advance();
 
     private void OnDone(object? sender, RoutedEventArgs e) => _vm?.Quit();
+
+    private void OnPlayAgain(object? sender, RoutedEventArgs e) => _vm?.PlayAgain();
+
+    /// Copy the spoiler-free share text to the clipboard (Windows has no system
+    /// share sheet for arbitrary text; clipboard is the native idiom).
+    private async void OnShare(object? sender, RoutedEventArgs e)
+    {
+        if (_vm is null) return;
+        var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
+        if (clipboard is null) return;
+        await clipboard.SetTextAsync(_vm.ShareString);
+        if (ShareButton is { } b) b.Content = "Copied ✓";
+    }
 }

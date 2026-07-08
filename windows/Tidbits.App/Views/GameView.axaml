@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Tidbits.App.ViewModels"
+             xmlns:models="using:Tidbits.Core.Models"
              xmlns:conv="using:Tidbits.App.Converters"
              x:Class="Tidbits.App.Views.GameView"
              x:DataType="vm:GameViewModel">
@@ -41,15 +42,85 @@
                 </StackPanel>
             </ScrollViewer>
 
-            <!-- Finished -->
+            <!-- Finished: results recap + spoiler-free share -->
             <ScrollViewer IsVisible="{Binding Engine.CurrentPhase, Converter={x:Static conv:Conv.IsFinished}}">
-                <StackPanel Margin="36,40" Spacing="14" MaxWidth="520" HorizontalAlignment="Center">
-                    <TextBlock Text="Game over" FontSize="18" Opacity="0.6" HorizontalAlignment="Center"/>
-                    <TextBlock Text="{Binding Engine.Score}" FontSize="64" FontWeight="Black" HorizontalAlignment="Center"/>
-                    <TextBlock Text="{Binding Engine.Summary.Correct, StringFormat='{}{0} correct'}"
-                               FontSize="16" Opacity="0.75" HorizontalAlignment="Center"/>
+                <StackPanel Margin="36,28,36,40" Spacing="16" MaxWidth="560" HorizontalAlignment="Center">
+                    <!-- Scorecard -->
+                    <Border Background="#FF5C35" CornerRadius="14" Padding="24,20">
+                        <StackPanel Spacing="2" HorizontalAlignment="Center">
+                            <TextBlock Text="{Binding Headline}" FontSize="14" FontWeight="Bold"
+                                       Foreground="White" Opacity="0.85" HorizontalAlignment="Center"/>
+                            <TextBlock Text="{Binding Engine.Score}" FontSize="60" FontWeight="Black"
+                                       Foreground="White" HorizontalAlignment="Center"/>
+                            <TextBlock Text="{Binding ModeCategoryLine}" FontSize="13" Foreground="White"
+                                       Opacity="0.85" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Stat row -->
+                    <UniformGrid Columns="3">
+                        <StackPanel Spacing="2" HorizontalAlignment="Center">
+                            <TextBlock Text="{Binding CorrectLine}" FontSize="22" FontWeight="Bold"
+                                       Foreground="#2FCB8A" HorizontalAlignment="Center"/>
+                            <TextBlock Text="Correct" FontSize="12" Opacity="0.7" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                        <StackPanel Spacing="2" HorizontalAlignment="Center">
+                            <TextBlock Text="{Binding AccuracyLine}" FontSize="22" FontWeight="Bold"
+                                       Foreground="#2D5BFF" HorizontalAlignment="Center"/>
+                            <TextBlock Text="Accuracy" FontSize="12" Opacity="0.7" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                        <StackPanel Spacing="2" HorizontalAlignment="Center">
+                            <TextBlock Text="{Binding Engine.MaxStreak}" FontSize="22" FontWeight="Bold"
+                                       Foreground="#FF5C5C" HorizontalAlignment="Center"/>
+                            <TextBlock Text="Best streak" FontSize="12" Opacity="0.7" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </UniformGrid>
+
+                    <!-- Emoji grid (spoiler-free) -->
+                    <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="1" CornerRadius="10" Padding="16">
+                        <StackPanel Spacing="4" HorizontalAlignment="Center">
+                            <TextBlock Text="{Binding Grid}" FontSize="20" HorizontalAlignment="Center"
+                                       TextWrapping="Wrap" TextAlignment="Center"/>
+                            <TextBlock Text="Spoiler-free — safe to share" FontSize="12" Opacity="0.6"
+                                       HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Tidbits to remember (missed facts) -->
+                    <StackPanel Spacing="10" IsVisible="{Binding HasMissed}">
+                        <TextBlock Text="Tidbits to remember" FontSize="18" FontWeight="Bold" Margin="0,4,0,0"/>
+                        <ItemsControl ItemsSource="{Binding Missed}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="models:AnsweredQuestion">
+                                    <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                                            BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                                            BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,10">
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="{Binding Question.Prompt}" FontWeight="Bold"
+                                                       TextWrapping="Wrap"/>
+                                            <TextBlock Text="{Binding Question.CorrectAnswer, StringFormat='Answer: {0}'}"
+                                                       Foreground="#1E9E6A" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                                            <TextBlock Text="{Binding Question.Explanation}" Opacity="0.8"
+                                                       TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+
+                    <!-- Actions -->
+                    <Button x:Name="ShareButton" Content="Share Score" Click="OnShare"
+                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                            Padding="0,13" FontWeight="Bold"/>
+                    <Button Content="Play Again" Click="OnPlayAgain" Classes="accent"
+                            IsVisible="{Binding CanPlayAgain}"
+                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                            Padding="0,13" FontWeight="Bold"/>
                     <Button Content="Done" Click="OnDone" HorizontalAlignment="Center"
-                            Padding="26,12" FontWeight="Bold" Classes="accent"/>
+                            Background="Transparent" Padding="26,10"/>
                 </StackPanel>
             </ScrollViewer>
         </Panel>

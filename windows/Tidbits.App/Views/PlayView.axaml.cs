@@ -45,8 +45,9 @@ public partial class PlayView : UserControl
     private TriviaCategory SelectedCategory() =>
         CategoryPicker.SelectedItem as TriviaCategory ?? TriviaCategory.Named("mixed");
 
-    private async void StartGame(GameMode mode)
+    private async void StartGame(GameMode mode, TriviaCategory? category = null)
     {
+        var cat = category ?? SelectedCategory();
         var engine = GameData.Shared.Value.NewEngine();
         var vm = new GameViewModel(engine, GameData.Shared.Value.Records);
         vm.Closed += () =>
@@ -54,9 +55,11 @@ public partial class PlayView : UserControl
             GameHost.Content = null;
             Landing.IsVisible = true;
         };
+        // Play Again restarts the exact mode + category that was just played.
+        vm.PlayAgainRequested += () => StartGame(vm.Summary.Mode, vm.Summary.Category);
         Landing.IsVisible = false;
         GameHost.Content = new GameView { DataContext = vm };
-        await engine.Start(mode, SelectedCategory());
+        await engine.Start(mode, cat);
     }
 
     private void OnQuickPlay(object? sender, RoutedEventArgs e) => StartGame(GameMode.Classic);

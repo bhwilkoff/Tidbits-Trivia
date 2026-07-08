@@ -33,7 +33,14 @@ public partial class GameView : UserControl
         RebuildOptions();
     }
 
-    private void OnEngineChanged(object? sender, PropertyChangedEventArgs e) => RebuildOptions();
+    /// Rebuild the answer surface only on a full change (phase/question) or an
+    /// explicit reorder — NOT on the 100ms Remaining tick, which would otherwise
+    /// destroy the text field / slider the player is interacting with.
+    private void OnEngineChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (string.IsNullOrEmpty(e.PropertyName) || e.PropertyName == nameof(GameEngine.CurrentOrder))
+            RebuildOptions();
+    }
 
     /// The answer surface is rebuilt on each engine change and dispatched by the
     /// question's shape: MCQ options (recolored on reveal), a numeric slider
@@ -49,6 +56,8 @@ public partial class GameView : UserControl
         if (q.Closest is { } closest) { BuildNumeric(engine, closest, reveal); return; }
         if (q.Accepted is not null) { BuildText(engine, reveal); return; }
         if (q.Ordering is { } ordering) { BuildOrdering(engine, ordering, reveal); return; }
+        if (q.Matching is { } matching) { BuildMatch(engine, matching, reveal); return; }
+        if (q.Enumerate is { } enumSpec) { BuildEnum(engine, enumSpec, reveal); return; }
         if (engine.Mode == GameMode.Stake) { BuildStake(engine, q, reveal); return; }
         BuildMcq(engine, q, reveal);
     }
@@ -167,6 +176,136 @@ public partial class GameView : UserControl
         submit.Classes.Add("accent");
         submit.Click += (_, _) => engine.SubmitOrder();
         OptionsPanel.Children.Add(submit);
+    }
+
+    /// Match Up — tap a key row (highlights), then tap a value chip to link it.
+    /// A linked key shows its value inline. Reveal lists each key → correct value.
+    private void BuildMatch(GameEngine engine, Tidbits.Core.Models.MatchSpec m, bool reveal)
+    {
+        if (reveal)
+        {
+            for (int k = 0; k < m.Keys.Count; k++)
+            {
+                bool got = engine.MatchedValue(k) == m.Values[k];
+                OptionsPanel.Children.Add(new TextBlock
+                {
+                    Text = $"{m.Keys[k]}  →  {m.Values[k]}", FontSize = 15, Margin = new Thickness(0, 3),
+                    Foreground = got ? Correct : Wrong,
+                });
+            }
+            return;
+        }
+
+        for (int k = 0; k < m.Keys.Count; k++)
+        {
+            int key = k;
+            bool selected = engine.MatchSelectedKey == k;
+            var matched = engine.MatchedValue(k);
+            var row = new Button
+            {
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                HorizontalContentAlignment = HorizontalAlignment.Left,
+                Padding = new Thickness(14, 11), Margin = new Thickness(0, 4),
+                Content = matched is null ? m.Keys[k] : $"{m.Keys[k]}  →  {matched}",
+            };
+            if (selected) row.Classes.Add("accent");
+            row.Click += (_, _) => engine.SelectMatchKey(key);
+            OptionsPanel.Children.Add(row);
+        }
+
+        OptionsPanel.Children.Add(new TextBlock
+        {
+            Text = engine.MatchSelectedKey is null ? "Tap a row, then tap its match below." : "Now tap the matching value.",
+            FontSize = 13, Opacity = 0.7, Margin = new Thickness(0, 8, 0, 4),
+        });
+        var chips = new WrapPanel();
+        for (int v = 0; v < engine.MatchValues.Count; v++)
+        {
+            int val = v;
+            var chip = new Button
+            {
+                Content = engine.MatchValues[v], Margin = new Thickness(0, 0, 8, 8), Padding = new Thickness(13, 9),
+                IsEnabled = engine.MatchSelectedKey is not null,
+            };
+            chip.Click += (_, _) => engine.AssignMatchValue(val);
+            chips.Children.Add(chip);
+        }
+        OptionsPanel.Children.Add(chips);
+
+        var submit = new Button
+        {
+            Content = "Submit matches", HorizontalAlignment = HorizontalAlignment.Left,
+            Padding = new Thickness(22, 12), FontWeight = FontWeight.Bold, Margin = new Thickness(0, 10, 0, 0),
+        };
+        submit.Classes.Add("accent");
+        submit.Click += (_, _) => engine.SubmitMatch();
+        OptionsPanel.Children.Add(submit);
+    }
+
+    /// Name as Many — type against a 60s clock; each unique hit fills a chip.
+    /// Reveal shows the full set, named vs missed. "Done" ends early.
+    private void BuildEnum(GameEngine engine, Tidbits.Core.Models.EnumSpec spec, bool reveal)
+    {
+        if (reveal)
+        {
+            var named = new System.Collections.Generic.HashSet<string>(engine.EnumNamed);
+            OptionsPanel.Children.Add(new TextBlock
+            {
+                Text = $"You named {engine.EnumNamed.Count} of {spec.Total}", FontWeight = FontWeight.Bold,
+                FontSize = 15, Margin = new Thickness(0, 0, 0, 6),
+            });
+            var all = new WrapPanel();
+            foreach (var name in spec.DisplayNames)
+            {
+                bool hit = named.Contains(name);
+                all.Children.Add(new Border
+                {
+                    Background = new SolidColorBrush(hit ? Color.Parse("#2620A060") : Color.Parse("#18808080")),
+                    CornerRadius = new CornerRadius(8), Padding = new Thickness(11, 7), Margin = new Thickness(0, 0, 8, 8),
+                    Child = new TextBlock { Text = name, FontSize = 14, Foreground = hit ? Correct : null, Opacity = hit ? 1 : 0.6 },
+                });
+            }
+            OptionsPanel.Children.Add(all);
+            return;
+        }
+
+        OptionsPanel.Children.Add(new TextBlock
+        {
+            Text = $"{engine.EnumFilled.Count} of {spec.Total}", FontSize = 22, FontWeight = FontWeight.Bold,
+            Margin = new Thickness(0, 0, 0, 6),
+        });
+
+        var box = new TextBox { Text = "", Watermark = "Name one…", FontSize = 16, Margin = new Thickness(0, 4) };
+        void Go()
+        {
+            var text = box.Text ?? "";
+            if (text.Trim().Length == 0) return;
+            engine.SubmitEnumGuess(text); // fires Changed -> rebuild (fresh empty box, refocused)
+        }
+        box.KeyDown += (_, ev) => { if (ev.Key == Avalonia.Input.Key.Enter) Go(); };
+        OptionsPanel.Children.Add(box);
+
+        if (engine.EnumNamed.Count > 0)
+        {
+            var chips = new WrapPanel { Margin = new Thickness(0, 8, 0, 0) };
+            foreach (var name in engine.EnumNamed)
+                chips.Children.Add(new Border
+                {
+                    Background = new SolidColorBrush(Color.Parse("#2620A060")), CornerRadius = new CornerRadius(8),
+                    Padding = new Thickness(11, 7), Margin = new Thickness(0, 0, 8, 8),
+                    Child = new TextBlock { Text = name, FontSize = 14, Foreground = Correct },
+                });
+            OptionsPanel.Children.Add(chips);
+        }
+
+        var done = new Button
+        {
+            Content = "Done", HorizontalAlignment = HorizontalAlignment.Left,
+            Padding = new Thickness(22, 11), Margin = new Thickness(0, 10, 0, 0),
+        };
+        done.Click += (_, _) => engine.FinishEnum();
+        OptionsPanel.Children.Add(done);
+        box.Focus();
     }
 
     /// Closest Call — a slider over [min,max] plus a live value read-out and a

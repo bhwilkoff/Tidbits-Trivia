@@ -1,3 +1,4 @@
+using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -88,6 +89,69 @@ public class SpecialtySurfaceSnapshot
         engine.SubmitOrder();
         Assert.Equal(GameEngine.Phase.Reveal, engine.CurrentPhase);
         Assert.True(engine.LastOrderPoints >= 0);
+    }
+
+    [AvaloniaFact]
+    public async Task Match_up_renders_keys_and_values_and_scores()
+    {
+        var (engine, _, win) = Start(GameMode.Matching);
+        await engine.Start(GameMode.Matching, TriviaCategory.Named("mixed"));
+        Assert.Equal(GameEngine.Phase.Playing, engine.CurrentPhase);
+        var m = engine.Current!.Matching!;
+        Assert.NotEmpty(m.Keys);
+        Dispatcher.UIThread.RunJobs();
+        win.CaptureRenderedFrame()!.Save(Path.Combine(Art(), "game-matching.png"));
+
+        // Link every key to its correct value → a perfect match.
+        for (int k = 0; k < m.Keys.Count; k++)
+        {
+            engine.SelectMatchKey(k);
+            int v = engine.MatchValues.IndexOf(m.Values[k]);
+            engine.AssignMatchValue(v);
+        }
+        engine.SubmitMatch();
+        Assert.Equal(GameEngine.Phase.Reveal, engine.CurrentPhase);
+        Assert.True(engine.LastMatchPoints > 0, "a full correct match should score");
+    }
+
+    [AvaloniaFact]
+    public async Task Name_as_many_renders_a_field_and_fills_chips()
+    {
+        var (engine, _, win) = Start(GameMode.Enumerate);
+        await engine.Start(GameMode.Enumerate, TriviaCategory.Named("mixed"));
+        Assert.Equal(GameEngine.Phase.Playing, engine.CurrentPhase);
+        var spec = engine.Current!.Enumerate!;
+        Assert.NotEmpty(spec.Groups);
+        Dispatcher.UIThread.RunJobs();
+        win.CaptureRenderedFrame()!.Save(Path.Combine(Art(), "game-enumerate.png"));
+
+        // Naming a valid member fills a chip and scores +1.
+        int before = engine.Score;
+        Assert.True(engine.SubmitEnumGuess(spec.Groups[0][0]));
+        Assert.Equal(before + 1, engine.Score);
+        Assert.Contains(0, engine.EnumFilled);
+    }
+
+    [AvaloniaFact]
+    public async Task Remaining_tick_does_not_rebuild_the_answer_surface()
+    {
+        // Regression guard: the 100ms clock fires OnPropertyChanged(nameof(Remaining));
+        // that must NOT rebuild the answer surface (would drop typing / interrupt a
+        // slider drag). The text field the player is editing must survive a tick.
+        var (engine, _, win) = Start(GameMode.TypeAnswer);
+        await engine.Start(GameMode.TypeAnswer, TriviaCategory.Named("mixed"));
+        Dispatcher.UIThread.RunJobs();
+        var view = (GameView)win.Content!;
+        var panel = view.FindControl<StackPanel>("OptionsPanel")!;
+        var box = panel.Children.OfType<TextBox>().First();
+        box.Text = "half-typed answer";
+
+        engine.Tick(); // a clock tick
+        Dispatcher.UIThread.RunJobs();
+
+        var boxAfter = panel.Children.OfType<TextBox>().First();
+        Assert.Same(box, boxAfter);                       // same control instance
+        Assert.Equal("half-typed answer", boxAfter.Text); // typing preserved
     }
 
     [AvaloniaFact]

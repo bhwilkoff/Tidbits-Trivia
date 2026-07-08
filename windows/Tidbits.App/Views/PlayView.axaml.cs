@@ -193,11 +193,17 @@ public partial class PlayView : UserControl
     private TriviaCategory SelectedCategory() =>
         CategoryPicker.SelectedItem as TriviaCategory ?? TriviaCategory.Named("mixed");
 
+    // Modes that use the standard MCQ surface, where a woven review question (a
+    // 4-option MCQ) fits — spaced re-asking skips Daily + the non-MCQ shapes.
+    private static bool Reviewable(GameMode m) => m is GameMode.Classic or GameMode.TimeAttack
+        or GameMode.Survival or GameMode.Sweep or GameMode.Ladder or GameMode.OddOneOut or GameMode.ThisOrThat;
+
     private async void StartGame(GameMode mode, TriviaCategory? category = null)
     {
         var cat = category ?? SelectedCategory();
-        var engine = GameData.Shared.Value.NewEngine();
-        var vm = new GameViewModel(engine, GameData.Shared.Value.Records);
+        var data = GameData.Shared.Value;
+        var engine = data.NewEngine();
+        var vm = new GameViewModel(engine, data.Records);
         vm.Closed += () =>
         {
             GameHost.Content = null;
@@ -207,7 +213,9 @@ public partial class PlayView : UserControl
         vm.PlayAgainRequested += () => StartGame(vm.Summary.Mode, vm.Summary.Category);
         Landing.IsVisible = false;
         GameHost.Content = new GameView { DataContext = vm };
-        await engine.Start(mode, cat);
+        // Spaced re-asking: weave due missed facts into MCQ games (opt-out via Settings).
+        var review = data.Settings.ReviewEnabled && Reviewable(mode) ? data.Records.DueReview() : null;
+        await engine.Start(mode, cat, review);
     }
 
     private async void StartNight(NightPlan plan)

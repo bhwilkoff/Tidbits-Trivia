@@ -36,7 +36,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [x] 1.8 `JSONQuestionSource` + `PositionalQuestionParser` (one parser, all 8 shapes)
 - [x] 1.9 `QuestionProvider` (router + seen-set + night/mix/daily builders; live-gen stubbed)
 - [x] 1.10 `DifficultyOverlay` (difficulty.json → Ladder) + `QuestionSources` loader
-- [ ] 1.11 `WikipediaClient` (HttpClient REST)
+- [x] 1.11 `WikipediaClient` — read-only client for the open Wikipedia REST (page/summary) + Action (search) APIs over one capped HttpClient, no key/auth, UA header, concurrent Summaries(titles) dropping failures. Parse/ParseSearch extracted static so decoding is unit-tested offline (summary fields + PageUrl/ImageUrl, search titles, malformed→empty). Foundation for the TemplateEngine (1.12) live-gen port
 - [ ] 1.12 `TemplateEngine` (question gen; Regex)
 - [ ] 1.13 AI generator → Windows stub (isAvailable=false → TemplateEngine)
 - [ ] 1.22 `Keychain` → Credential Manager/DPAPI

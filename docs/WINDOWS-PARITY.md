@@ -59,7 +59,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [ ] 2.12 Four content states on every list/grid
 - [~] 2.13 Records dashboard (R-REC-1) — streak+lifetime card, recent 3 + See-all, per-domain knowledge bars, review count; PNG-verified. Drill-ins/calibration/badges/pie pending
 - [~] 2.14 Records drill-ins — "See all N games" opens a native FAContentDialog listing every game (header · score · green/red answer-dot strip); tapping a game drills into a per-question recap (dot · prompt · answer) with a back nav. VM exposes full GameDetail/AnswerDot; list + recap PNG-verified. Domain / personal-best drill-ins pending
-- [~] 2.15 Topic Levels (per-domain XP bars) + **Badges** (levelable milestones via BadgeMath, earned-only, coral tier-number icon per R-ICON-1) + **Stake calibration** (per-tier hit rate) + **The Pie** (7-wedge Trivial-Pursuit breadth circle drawn in Avalonia geometry — each domain's wedge fills in its category color when mastered ≥15 correct/≥60% acc, "N of 7 domains mastered"; test masters Science → wedge fills, PNG) all shipped in the Records dashboard. Avatar re-roll pending (needs identity); liveNights=0 until live-night records are tracked locally
+- [~] 2.15 Topic Levels (per-domain XP bars) + **Badges** (levelable milestones via BadgeMath, earned-only, coral tier-number icon per R-ICON-1) + **Stake calibration** (per-tier hit rate) + **The Pie** (7-wedge Trivial-Pursuit breadth circle drawn in Avalonia geometry — each domain's wedge fills in its category color when mastered ≥15 correct/≥60% acc, "N of 7 domains mastered"; test masters Science → wedge fills, PNG) all shipped in the Records dashboard. Avatar re-roll shipped (Settings Profile: hue-colored avatar + Shuffle, on the new PlayerIdentityStore 1.17); liveNights=0 until live-night records are tracked locally
 - [ ] 2.16 Records sign-in banner
 - [x] 2.17 Create — topic → corpus retrieval + diversify → play the set (live-gen fallback stubbed); PNG-verified
 - [x] 2.18 Create saved sets — `SavedSetsStore` (Core, JSON-backed, newest-first, capped 30, questions serialized intact); after generating, "Save this set" stores it; a "Saved sets" list on the Create landing replays or removes each. Round-trip test + PNG-verified
@@ -74,7 +74,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 ## Slice 3 — Live networking Core ★
 - [x] 1.18 ★ `FirebaseRTDB` (REST + SSE, anon auth, room codes) — LIVE smoke GREEN vs real project (anon→put→get→delete); offline unit tests GREEN. DPAPI token encryption = follow-up 1.22
 - [x] 1.16 ★ `PlayerProfile`/PlayerIdentity contract + helpers (accountKey SHA256, venueKey, season, avatarHue djb2, Elo, streak, merge, LeaderboardRow) — 7 golden tests GREEN
-- [ ] 1.17 `PlayerIdentityStore` (portable identity façade)
+- [x] 1.17 `PlayerIdentityStore` — the local portable-identity façade: a persisted profile (display name + deterministic avatar seed), Rename (trim/cap-24) + RerollAvatar; AvatarHue via the shared djb2 PlayerIdentity.AvatarHue. Wired into GameData. Sync/sign-in layer on top later. Unit-tested (rename/reroll/persist/hue)
 - [x] 3.1 ★ `LiveRoom` wire types (Meta/Pub/Numeric/Team/Answer/Phase) — keys match web twin, null-omitted; wire tests GREEN
 - [x] 3.3 `LiveScoring` (per-shape authoritative scoring: MCQ/numeric/ordering/matching/type/enumerate) — 6 tests GREEN
 - [x] 3.2 `LiveHostNet` (open room + publish + setState/setScore + host-plays + self-reconnecting SSE roster/scores/answers, lock-guarded) — builds

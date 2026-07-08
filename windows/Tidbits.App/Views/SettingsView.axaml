@@ -5,9 +5,15 @@
         <StackPanel Margin="36,32" Spacing="22" MaxWidth="600" HorizontalAlignment="Left">
             <TextBlock Text="Settings" FontSize="34" FontWeight="Black"/>
 
-            <StackPanel Spacing="6">
-                <TextBlock Text="Account" FontSize="18" FontWeight="Bold"/>
-                <TextBlock Text="Sign-in to sync your records across devices arrives with Tidbits Live."
+            <StackPanel Spacing="10">
+                <TextBlock Text="Profile" FontSize="18" FontWeight="Bold"/>
+                <StackPanel Orientation="Horizontal" Spacing="14" VerticalAlignment="Center">
+                    <Border x:Name="AvatarCircle" Width="52" Height="52" CornerRadius="26"/>
+                    <TextBox x:Name="NameBox" Watermark="Your name" MinWidth="200" MaxLength="24"
+                             LostFocus="OnNameCommitted"/>
+                    <Button Content="Shuffle avatar" Click="OnShuffleAvatar" Padding="14,8"/>
+                </StackPanel>
+                <TextBlock Text="Your name and avatar show on the leaderboard and when you join a live night. Sync across devices arrives later."
                            FontSize="13" Opacity="0.65" TextWrapping="Wrap"/>
             </StackPanel>
 

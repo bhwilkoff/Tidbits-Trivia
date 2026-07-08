@@ -1,0 +1,50 @@
+using System.IO;
+using System.Threading.Tasks;
+using Tidbits.App.Services;
+using Tidbits.App.ViewModels;
+using Tidbits.Core.Data;
+using Tidbits.Core.Models;
+using Tidbits.Core.Networking;
+using Xunit;
+
+namespace Tidbits.HeadlessTests;
+
+/// The new host show-nav (skip / back) + manual score override wiring. The live
+/// pacing path itself needs the RTDB backend (gated in LiveCockpitSnapshot); here
+/// we verify the guards + defaults are safe with no open room.
+public class LiveHostControlsTest
+{
+    private static LiveNightHost NewHost()
+    {
+        var data = GameData.FromDirectory(Path.Combine(System.AppContext.BaseDirectory, "Data"));
+        return new LiveNightHost(NightPlan.Quick, TriviaCategory.Named("mixed"), data.Provider, "Quick Night");
+    }
+
+    [Fact]
+    public async Task Controls_are_safe_before_a_room_is_open()
+    {
+        var host = NewHost();
+        Assert.Equal(LiveNightHost.Stage.Lobby, host.CurrentStage);
+        Assert.False(host.CanGoBack);            // index 0, not playing
+
+        // In the lobby these are no-ops, not crashes.
+        await host.SkipNext();
+        await host.GoBack();
+        await host.AdjustScore("someuid", +5);
+        await host.AdjustScore("", -1);          // empty uid ignored
+        Assert.Equal(LiveNightHost.Stage.Lobby, host.CurrentStage);
+        Assert.False(host.CanGoBack);
+    }
+
+    [Fact]
+    public void ViewModel_exposes_the_new_commands()
+    {
+        var vm = new LiveHostViewModel(NewHost());
+        Assert.True(vm.IsLobby);
+        Assert.False(vm.CanGoBack);
+        // The command surface exists and returns tasks (no throw to construct).
+        Assert.NotNull(vm.Skip());
+        Assert.NotNull(vm.Back());
+        Assert.NotNull(vm.Adjust("uid", 1));
+    }
+}

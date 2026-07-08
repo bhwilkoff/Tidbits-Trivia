@@ -25,9 +25,14 @@ public sealed class LiveHostViewModel : ObservableObject
     /// The correct option text (shown big on the projector at reveal).
     public string? RevealAnswer => Host.Current is { } q ? LiveScoring.AnswerLine(q) : null;
 
+    public bool CanGoBack => Host.CanGoBack;
+
     public Task StartHosting() => Host.Start();
     public Task Reveal() => Host.Reveal();
     public Task Next() => Host.Next();
     public Task Lock() => Host.Lock();
+    public Task Skip() => Host.SkipNext();
+    public Task Back() => Host.GoBack();
+    public Task Adjust(string uid, int delta) => Host.AdjustScore(uid, delta);
     public Task Close() => Host.Close();
 }

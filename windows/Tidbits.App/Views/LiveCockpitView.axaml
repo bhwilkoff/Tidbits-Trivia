@@ -48,9 +48,14 @@
                 <ItemsControl ItemsSource="{Binding Host.Standings}" x:CompileBindings="False">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Grid ColumnDefinitions="*,Auto" Margin="0,3">
-                                <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis"/>
-                                <TextBlock Grid.Column="1" Text="{Binding Score}" FontWeight="Bold" Margin="8,0,0,0"/>
+                            <Grid ColumnDefinitions="*,Auto,Auto,Auto" Margin="0,3">
+                                <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                <Button Grid.Column="1" Content="−" Click="OnScoreDown" Tag="{Binding Id}"
+                                        Padding="7,1" MinWidth="0" FontWeight="Bold"/>
+                                <TextBlock Grid.Column="2" Text="{Binding Score}" FontWeight="Bold"
+                                           MinWidth="26" TextAlignment="Center" VerticalAlignment="Center" Margin="4,0"/>
+                                <Button Grid.Column="3" Content="+" Click="OnScoreUp" Tag="{Binding Id}"
+                                        Padding="7,1" MinWidth="0" FontWeight="Bold"/>
                             </Grid>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
@@ -61,8 +66,10 @@
         <!-- Controls -->
         <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
             <StackPanel Orientation="Horizontal" Spacing="10">
+                <Button Content="‹ Back" Click="OnBack" Padding="14,10" IsEnabled="{Binding CanGoBack}"/>
                 <Button Content="Reveal" Click="OnReveal" Classes="accent" Padding="20,10" FontWeight="Bold"/>
                 <Button Content="Next" Click="OnNext" Padding="20,10"/>
+                <Button Content="Skip ›" Click="OnSkip" Padding="14,10"/>
                 <Button Content="Lock" Click="OnLock" Padding="20,10"/>
             </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">

@@ -36,6 +36,15 @@ public class LiveCockpitSnapshot
 
         win.CaptureRenderedFrame()!.Save(Path.Combine(dir, "live-cockpit.png"));
 
+        // Show-nav (3.17): skip advances without reveal; back returns to it.
+        int startIdx = host.Index;
+        await host.SkipNext();
+        Assert.True(host.Index == startIdx + 1);
+        Assert.True(host.CanGoBack);
+        await host.GoBack();
+        Assert.Equal(startIdx, host.Index);
+        Assert.False(host.Revealed);
+
         // The projector big-screen view (rendered directly; the 2nd-monitor placement is
         // Windows-runtime and CI-verified separately).
         var proj = new Window { Width = 1280, Height = 720, Content = new ProjectorView { DataContext = vm } };

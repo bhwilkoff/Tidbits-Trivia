@@ -89,8 +89,8 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [~] 3.14 host session — LiveNightHost (authoritative model + currentPub builder, all shapes) done for Trivia Night; full Tidbits Live cockpit features pending
 - [~] 3.15 Cockpit UI — code/roster header + question + options + standings + reveal/next/lock/end; LIVE PNG vs real room. Projector + polish pending
 - [x] 3.16 Reveal-on-command + auto-score (LiveNightHost.Reveal→AutoScore, speed bonus)
-- [ ] 3.17 Show-nav (reveal/next/skip/prev/jump/hold)
-- [ ] 3.18 Manual score override
+- [~] 3.17 Show-nav — reveal/next (existing) + Skip (advance without revealing/scoring) + Back (return to the previous question, unrevealed) added to LiveNightHost + cockpit controls (Back disabled at q1). Jump/hold pending. Guard/wiring tests GREEN; live skip↔back verified in the gated smoke path
+- [x] 3.18 Manual score override — per-team −/+ buttons in the cockpit standings (LiveNightHost.AdjustScore → Net.SetScore, clamped ≥0); the team uid rides the button Tag
 - [x] 3.19 Networked join strip (QR + code + tidbitstrivia.com/live) — QRCoder pure-C# PNG; LIVE cockpit PNG shows scannable QR
 - [x] 3.36 Projector window (chromeless WindowDecorations.None, 2nd-monitor via Screens API, hot-plug re-place on Screens.Changed) — 'Show on projector' in cockpit
 - [x] 3.37 Projector states (lobby QR / question+options / reveal answer / final standings) + Viewbox scale-to-fit text — LIVE PNG verified

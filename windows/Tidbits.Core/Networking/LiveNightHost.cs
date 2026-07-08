@@ -135,6 +135,38 @@ public sealed class LiveNightHost : ObservableObject
         Notify();
     }
 
+    /// Skip the current question without revealing or scoring it (show-nav 3.17).
+    public async Task SkipNext()
+    {
+        if (CurrentStage != Stage.Playing) return;
+        Revealed = false; HostChoice = null; Locked = false;
+        Index++;
+        if (Current is null) await End();
+        else { PrepareQuestion(); await Net.Publish(BuildPub()); }
+        Notify();
+    }
+
+    /// Step back to the previous question (unrevealed) — for a misfire or a re-ask.
+    public async Task GoBack()
+    {
+        if (CurrentStage != Stage.Playing || Index <= 0) return;
+        Revealed = false; HostChoice = null; Locked = false;
+        Index--;
+        PrepareQuestion();
+        await Net.Publish(BuildPub());
+        Notify();
+    }
+
+    public bool CanGoBack => CurrentStage == Stage.Playing && Index > 0;
+
+    /// Manual score override (3.18) — nudge a team's score (never below 0).
+    public async Task AdjustScore(string uid, int delta)
+    {
+        if (string.IsNullOrEmpty(uid)) return;
+        await Net.SetScore(uid, Math.Max(0, Net.ScoreOf(uid) + delta));
+        Notify();
+    }
+
     public async Task End()
     {
         CurrentStage = Stage.Ended;

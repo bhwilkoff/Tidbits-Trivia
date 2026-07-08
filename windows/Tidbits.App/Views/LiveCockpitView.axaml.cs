@@ -37,6 +37,18 @@ public partial class LiveCockpitView : UserControl
     private async void OnReveal(object? sender, RoutedEventArgs e) { if (Vm is { } vm) await vm.Reveal(); }
     private async void OnNext(object? sender, RoutedEventArgs e) { if (Vm is { } vm) await vm.Next(); }
     private async void OnLock(object? sender, RoutedEventArgs e) { if (Vm is { } vm) await vm.Lock(); }
+    private async void OnSkip(object? sender, RoutedEventArgs e) { if (Vm is { } vm) await vm.Skip(); }
+    private async void OnBack(object? sender, RoutedEventArgs e) { if (Vm is { } vm) await vm.Back(); }
+
+    // Manual score override — the team uid rides the button's Tag.
+    private async void OnScoreUp(object? sender, RoutedEventArgs e) => await Adjust(sender, +1);
+    private async void OnScoreDown(object? sender, RoutedEventArgs e) => await Adjust(sender, -1);
+
+    private async System.Threading.Tasks.Task Adjust(object? sender, int delta)
+    {
+        if (Vm is { } vm && (sender as Control)?.Tag is string uid && uid.Length > 0)
+            await vm.Adjust(uid, delta);
+    }
 
     private ProjectorWindow? _projector;
 

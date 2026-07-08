@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using Avalonia.Controls;
 using Avalonia.Layout;
@@ -17,6 +18,9 @@ public partial class LeaderboardView : UserControl
     /// wired on Windows — champion is still marked).
     public string? MyUid { get; set; }
 
+    /// The player's private friend list — leads the board with a "Friends" section.
+    public IReadOnlyList<PlayerIdentity.Friend> Friends { get; set; } = new List<PlayerIdentity.Friend>();
+
     public LeaderboardView()
     {
         InitializeComponent();
@@ -28,6 +32,7 @@ public partial class LeaderboardView : UserControl
         Body.Children.Clear();
         Body.Children.Add(new TextBlock { Text = "Loading standings…", Opacity = 0.6 });
 
+        try { Friends = Services.GameData.Shared.Value.Friends.All; } catch { }
         Render(await LeaderboardApi.LoadAsync(Http));
     }
 
@@ -46,12 +51,24 @@ public partial class LeaderboardView : UserControl
             return;
         }
 
+        // L5 social graph: a "Friends" section — your added people, ranked by their
+        // standing on the (already-public) overall board; "—" if not yet ranked.
+        if (Friends.Count > 0)
+        {
+            var scoreByUid = data.Overall.ToDictionary(r => r.Uid, r => r.Score);
+            var rows = Friends
+                .Select(f => new LeaderboardRow { Uid = f.Uid, Name = f.Name, Score = scoreByUid.GetValueOrDefault(f.Uid, -1) })
+                .OrderByDescending(r => r.Score)
+                .ToList();
+            Body.Children.Add(Section("Friends", rows, showChampion: false));
+        }
+
         Body.Children.Add(Section($"{data.Season} · Overall", data.Overall));
         foreach (var v in data.Venues)
             Body.Children.Add(Section(v.Name, v.Rows));
     }
 
-    private Control Section(string title, IReadOnlyList<LeaderboardRow> rows)
+    private Control Section(string title, IReadOnlyList<LeaderboardRow> rows, bool showChampion = true)
     {
         var panel = new StackPanel { Spacing = 6 };
         panel.Children.Add(new TextBlock { Text = title, FontSize = 18, FontWeight = FontWeight.Bold, Margin = new Avalonia.Thickness(0, 6, 0, 2) });
@@ -65,7 +82,7 @@ public partial class LeaderboardView : UserControl
         {
             var r = rows[i];
             bool me = r.Uid is not null && r.Uid == MyUid;
-            bool champ = i == 0;
+            bool champ = i == 0 && showChampion;
             var row = new Border
             {
                 Background = new SolidColorBrush(Color.Parse("#0F808080")), CornerRadius = new Avalonia.CornerRadius(12),
@@ -80,7 +97,7 @@ public partial class LeaderboardView : UserControl
             if (champ) nameStack.Children.Add(Chip("CHAMPION", Coral));
             Grid.SetColumn(nameStack, 1);
             grid.Children.Add(nameStack);
-            var score = new TextBlock { Text = r.Score.ToString(), FontWeight = FontWeight.Black, VerticalAlignment = VerticalAlignment.Center };
+            var score = new TextBlock { Text = r.Score < 0 ? "—" : r.Score.ToString(), FontWeight = FontWeight.Black, VerticalAlignment = VerticalAlignment.Center };
             Grid.SetColumn(score, 2);
             grid.Children.Add(score);
             row.Child = grid;

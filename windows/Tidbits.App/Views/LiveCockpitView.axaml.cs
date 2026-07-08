@@ -25,6 +25,24 @@ public partial class LiveCockpitView : UserControl
             TimeSpan.FromSeconds(1), Avalonia.Threading.DispatcherPriority.Normal, (_, _) => RefreshCountdown());
         _tick.Start();
         DetachedFromVisualTree += (_, _) => _tick.Stop();
+        // Keyboard cockpit — tunnel so the show keys beat button focus.
+        AddHandler(KeyDownEvent, OnCockpitKey, Avalonia.Interactivity.RoutingStrategies.Tunnel);
+    }
+
+    private async void OnCockpitKey(object? sender, Avalonia.Input.KeyEventArgs e)
+    {
+        if (Vm is not { } vm) return;
+        var action = Services.CockpitKeymap.Resolve(e.Key, vm.Host.Revealed);
+        if (action == Services.CockpitAction.None) return;
+        e.Handled = true;
+        switch (action)
+        {
+            case Services.CockpitAction.Reveal: await vm.Reveal(); break;
+            case Services.CockpitAction.Next: await vm.Next(); break;
+            case Services.CockpitAction.Back: await vm.Back(); break;
+            case Services.CockpitAction.Skip: await vm.Skip(); break;
+            case Services.CockpitAction.Lock: await vm.Lock(); break;
+        }
     }
 
     private void RefreshCountdown()

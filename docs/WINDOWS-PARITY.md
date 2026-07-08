@@ -82,6 +82,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [ ] 3.5 LAN Night stack (optional; RTDB-only acceptable)
 
 ## Slice 4 — Host cockpit + projector MVP
+- [x] KB Keyboard cockpit (WINDOWS-DESIGN "keyboard cockpit") — the host runs the show from the keyboard: Space/Enter/→ = Reveal then Next, ← = Back, ↓/S = Skip, L = Lock. Pure CockpitKeymap.Resolve (unit-tested across keys × reveal state); the cockpit tunnels KeyDown so show keys beat button focus
 - [x] 3.6 `LiveEvent` + `LiveEventStore` — an authored event = a named list of rounds (reusing NightRound kind+count); JSON-backed store (upsert by id, newest-first, persists); `ToPlan()` converts an event straight to a NightPlan for the host. Convert + store round-trip test
 - [~] 3.7 Builder — the Live setup gains a "build a custom event" section: name + add rounds (mode picker × count), a live rounds list (remove each), then Host this event or Save event; saved events list with Host/delete. Single-column (not the Mac two-pane) but fully composes + hosts + persists. Drag-reorder / per-round depth pending
 - [ ] 3.8 Fill a round 3 ways (corpus/AI/hand)

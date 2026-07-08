@@ -1,0 +1,30 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Tidbits.App.ViewModels"
+             xmlns:views="using:Tidbits.App.Views"
+             x:Class="Tidbits.App.Views.VersusView"
+             x:DataType="vm:VersusViewModel">
+    <Grid RowDefinitions="Auto,*">
+        <!-- Live You vs CPU strip -->
+        <Border Grid.Row="0" Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="0,0,0,1"
+                Padding="28,12">
+            <Grid ColumnDefinitions="*,Auto,*">
+                <StackPanel Spacing="1">
+                    <TextBlock Text="YOU" FontSize="12" Opacity="0.6" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding PlayerScore}" FontSize="24" FontWeight="Black" Foreground="#FF5C35"/>
+                </StackPanel>
+                <TextBlock Grid.Column="1" Text="{Binding ResultLine}" VerticalAlignment="Center"
+                           FontWeight="Bold" FontSize="15" Margin="16,0"/>
+                <StackPanel Grid.Column="2" Spacing="1" HorizontalAlignment="Right">
+                    <TextBlock Text="{Binding BotLabel}" FontSize="12" Opacity="0.6" FontWeight="Bold"
+                               HorizontalAlignment="Right"/>
+                    <TextBlock Text="{Binding BotScore}" FontSize="24" FontWeight="Black" HorizontalAlignment="Right"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- The player's game -->
+        <views:GameView Grid.Row="1" DataContext="{Binding Player}"/>
+    </Grid>
+</UserControl>

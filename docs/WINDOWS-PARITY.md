@@ -48,7 +48,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 ## Slice 2 — Consumer vertical
 - [x] 2.1 `GameEngine` (all 18 modes, phases, clocks, host-paced, all submit paths) — end-to-end tests GREEN
 - [x] 2.3 `ProgressStats`/DomainProgress/Badges (ProgressMath levels + wedges + LevelableBadge/BadgeMath) — pure port
-- [ ] 2.4 `BotOpponent`
+- [x] 2.4 `BotOpponent` — faithful C# twin of js/bots.js (Rookie/Regular/Ace + The House adapting to player accuracy; category skill, difficulty adj, ~5% freeze, log-normal timing, Box–Muller; VsMatch begin/commit/standings, seedable RNG). Seeded tests prove the freeze rate (~5%) + skill (~85% for Ace) + no double-scoring on a repeated reveal
 - [~] 2.5 Play/Home surface — Quick Play hero + Daily + category picker + mode grid (all MCQ modes reachable); Surprise/Night/Online-MP pending
 - [~] 2.6 Customize — category picker + mode grid on Home; mode multiselect (mix) + saved presets pending
 - [~] 2.7 Game surface — MCQ playing/reveal/finished LIVE + headless-PNG verified; specialty-mode surfaces pending
@@ -65,7 +65,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [ ] 2.18 Create saved sets
 - [x] 2.19 Settings page — review toggle + reset seen/records + about/version; PNG-verified
 - [x] 2.20 Trivia Night (solo) — 3 preset cards (Quick/Pub/The Works) on the Play landing → a self-paced multi-round night off the shape-routing engine; each round opens with a centered interstitial ("ROUND n OF m · title · k questions · Start round"), every shape plays through to the results recap. Full-night play-through test GREEN (all 3 rounds, every question answered). Networked host = Slice 4
-- [ ] 2.21 Versus CPU / Online-MP picker
+- [~] 2.21 Versus CPU — a "Versus CPU" section on the Play landing (Rookie/Regular/Ace/The House, each labeled CPU); starts a Classic match with a live "YOU vs {bot} · CPU" score strip over the game (VersusViewModel drives VsMatch off the engine phases — resolve on each question, commit on reveal), result line on finish, rematch via Play Again. Matches don't write records (parity rule). PNG-verified. Online Quick Match (real players) still pending
 - [ ] 2.22 Spaced re-asking + day-streak surfacing
 - [x] 2.23 Daily play-once lock + archive — the Play landing shows today's Daily as a coral hero (play-once; flips to a done card with score once completed) plus a "Previous Tidbits" archive of the last 14 days; unplayed past days are playable via the deterministic day-key seed and never bump the streak (RecordsStore only bumps when day==today). DailyLog records first-completion-wins. PNG-verified
 - [ ] 2.24 Async friend duels (DuelStore + inbox)

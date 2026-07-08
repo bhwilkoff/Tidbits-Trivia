@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Interactivity;
@@ -7,6 +8,7 @@ using Avalonia.Media;
 using Tidbits.App.Services;
 using Tidbits.App.ViewModels;
 using Tidbits.Core.Models;
+using Tidbits.Core.Networking;
 using Tidbits.Core.Store;
 
 namespace Tidbits.App.Views;
@@ -68,7 +70,46 @@ public partial class PlayView : UserControl
             NightPanel.Children.Add(card);
         }
 
+        BuildVersus();
         BuildDaily();
+    }
+
+    /// Versus-CPU opponents: the three fixed bots + The House (adapts to the
+    /// player's lifetime accuracy). Every button says CPU.
+    private void BuildVersus()
+    {
+        var records = GameData.Shared.Value.Records;
+        int correct = records.Games.Sum(g => g.Correct), total = records.Games.Sum(g => g.Total);
+        double accuracy = total == 0 ? 0.6 : (double)correct / total;
+
+        var opponents = new[]
+        {
+            Bots.All["rookie"], Bots.All["regular"], Bots.All["ace"], Bots.House(accuracy),
+        };
+        foreach (var b in opponents)
+        {
+            var bot = b;
+            var btn = new Button
+            {
+                Content = $"{bot.Name} · CPU",
+                Margin = new Avalonia.Thickness(0, 0, 10, 10), Padding = new Avalonia.Thickness(16, 11),
+            };
+            btn.Click += (_, _) => StartVersus(bot);
+            VersusPanel.Children.Add(btn);
+        }
+    }
+
+    private async void StartVersus(Bot bot)
+    {
+        var data = GameData.Shared.Value;
+        var engine = data.NewEngine();
+        var player = new GameViewModel(engine, records: null); // versus matches don't write records
+        var versus = new VersusViewModel(player, bot);
+        player.Closed += () => { GameHost.Content = null; Landing.IsVisible = true; versus.Dispose(); };
+        player.PlayAgainRequested += () => StartVersus(bot); // rematch
+        Landing.IsVisible = false;
+        GameHost.Content = new VersusView { DataContext = versus };
+        await engine.Start(GameMode.Classic, SelectedCategory());
     }
 
     /// Today's Daily (play-once — a done card once completed) plus a "Previous

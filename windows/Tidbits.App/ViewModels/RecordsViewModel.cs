@@ -23,6 +23,14 @@ public sealed class RecordsViewModel
     public IReadOnlyList<GameDetail> AllGames { get; }
     public IReadOnlyList<DomainRow> Domains { get; }
     public bool HasDomains => Domains.Count > 0;
+    public IReadOnlyList<WedgeInfo> Wedges { get; }
+    public int WedgesEarned { get; }
+    public string PieCaption => WedgesEarned == 7 ? "All 7 domains mastered!" : $"{WedgesEarned} of 7 domains mastered";
+
+    private static string WedgeHex(int i) => i switch
+    {
+        0 => "#FF5C35", 1 => "#2D5BFF", 2 => "#8B5CF6", 3 => "#2FCB8A", 4 => "#13B6C9", 5 => "#FF7A00", _ => "#888888"
+    };
     public int ReviewCount { get; }
     public bool HasReview => ReviewCount > 0;
     public IReadOnlyList<BadgeRow> Badges { get; }
@@ -52,7 +60,16 @@ public sealed class RecordsViewModel
             g.Date.ToLocalTime().ToString("MMM d, h:mm tt"),
             g.Answers.Select(a => new AnswerDot(a.Correct, a.Prompt, a.Answer)).ToList())).ToList();
 
-        Domains = DomainProgress.Summarize(games.Select(g => (g.CategoryId, g.Correct, g.Total)))
+        var domainProgress = DomainProgress.Summarize(games.Select(g => (g.CategoryId, g.Correct, g.Total)));
+
+        // The Pie (breadth): one wedge per non-Mixed domain, filled when mastered.
+        var wedgeById = domainProgress.ToDictionary(d => d.CategoryId, d => d.HasWedge);
+        Wedges = TriviaCategory.All.Where(c => c.Id != "mixed")
+            .Select(c => new WedgeInfo(c.Name, WedgeHex(c.ColorIndex), wedgeById.GetValueOrDefault(c.Id)))
+            .ToList();
+        WedgesEarned = Wedges.Count(w => w.Mastered);
+
+        Domains = domainProgress
             .Where(d => d.Total > 0)
             .Select(d => new DomainRow(
                 TriviaCategory.Named(d.CategoryId).Name, d.Level, d.LevelProgress,
@@ -79,6 +96,8 @@ public sealed class RecordsViewModel
 }
 
 public sealed record BadgeRow(string Name, string Detail, double Progress, int Tier);
+
+public sealed record WedgeInfo(string Name, string Hex, bool Mastered);
 
 public sealed record CalibrationRow(string Label, int Hits, int Total, double Rate)
 {

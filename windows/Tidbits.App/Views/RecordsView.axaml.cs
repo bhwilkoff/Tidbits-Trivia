@@ -19,6 +19,50 @@ public partial class RecordsView : UserControl
         InitializeComponent();
     }
 
+    protected override void OnDataContextChanged(System.EventArgs e)
+    {
+        base.OnDataContextChanged(e);
+        BuildPie();
+    }
+
+    /// The Pie — one wedge per domain, filled in its category color when mastered,
+    /// dim otherwise (Trivial-Pursuit breadth metaphor).
+    private void BuildPie()
+    {
+        if (PieCanvas is null) return;
+        PieCanvas.Children.Clear();
+        if (DataContext is not RecordsViewModel vm || vm.Wedges.Count == 0) return;
+
+        double r = 60, cx = 60, cy = 60;
+        int n = vm.Wedges.Count;
+        for (int i = 0; i < n; i++)
+        {
+            double a0 = i * 2 * System.Math.PI / n - System.Math.PI / 2;
+            double a1 = (i + 1) * 2 * System.Math.PI / n - System.Math.PI / 2;
+            var p0 = new Avalonia.Point(cx + r * System.Math.Cos(a0), cy + r * System.Math.Sin(a0));
+            var p1 = new Avalonia.Point(cx + r * System.Math.Cos(a1), cy + r * System.Math.Sin(a1));
+
+            var fig = new PathFigure { StartPoint = new Avalonia.Point(cx, cy), IsClosed = true, IsFilled = true };
+            fig.Segments!.Add(new LineSegment { Point = p0 });
+            fig.Segments.Add(new ArcSegment
+            {
+                Point = p1, Size = new Avalonia.Size(r, r), IsLargeArc = false,
+                SweepDirection = SweepDirection.Clockwise,
+            });
+            var geo = new PathGeometry();
+            geo.Figures!.Add(fig);
+
+            var w = vm.Wedges[i];
+            var path = new Avalonia.Controls.Shapes.Path
+            {
+                Data = geo,
+                Fill = w.Mastered ? new SolidColorBrush(Color.Parse(w.Hex)) : new SolidColorBrush(Color.Parse("#22808080")),
+                Stroke = new SolidColorBrush(Color.Parse("#0A0A0A")), StrokeThickness = 1,
+            };
+            PieCanvas.Children.Add(path);
+        }
+    }
+
     /// "See all N games" → a native FAContentDialog listing every game with its
     /// answer-dot strip; tapping a game drills into a per-question recap.
     private async void OnSeeAllGames(object? sender, RoutedEventArgs e)

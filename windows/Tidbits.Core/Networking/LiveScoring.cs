@@ -48,6 +48,22 @@ public static class LiveScoring
         return a.Choice == q.CorrectIndex ? mcqPoints : 0;   // MCQ / picture / T-or-T / odd
     }
 
+    /// Speed-tier bonus (3.35): the fastest three correct answers score +3 / +2 / +1.
+    /// `correctBySpeed` is the correct-answer uids already ordered fastest-first. Pure
+    /// so the tiering is unit-testable without a live room.
+    public static Dictionary<string, int> SpeedBonuses(IEnumerable<string> correctBySpeed)
+    {
+        var bonuses = new Dictionary<string, int>();
+        int rank = 0;
+        foreach (var uid in correctBySpeed)
+        {
+            if (rank >= 3) break;
+            bonuses[uid] = 3 - rank; // +3 / +2 / +1
+            rank++;
+        }
+        return bonuses;
+    }
+
     /// Wager-round delta (3.11): correct +stake, wrong −stake. The caller clamps
     /// the team's total to ≥0. `stake` is the team's committed wager (already
     /// bounded to 0…their score client-side).

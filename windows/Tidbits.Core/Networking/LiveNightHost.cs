@@ -412,10 +412,9 @@ public sealed class LiveNightHost : ObservableObject
         var correctBySpeed = baseScores.Where(e => e.pts > 0).OrderBy(e => e.ts).ToList();
         FastestUid = correctBySpeed.Count > 0 ? correctBySpeed[0].uid : null;
 
-        var bonus = new Dictionary<string, int>();
-        if (SpeedBonus)
-            for (int rank = 0; rank < correctBySpeed.Count && rank < 3; rank++)
-                bonus[correctBySpeed[rank].uid] = 3 - rank; // +3 / +2 / +1
+        var bonus = SpeedBonus
+            ? LiveScoring.SpeedBonuses(correctBySpeed.Select(e => e.uid))
+            : new Dictionary<string, int>();
 
         foreach (var e in baseScores)
         {

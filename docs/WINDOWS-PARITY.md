@@ -127,7 +127,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [ ] 3.32 Audio round (BYO clips)
 - [ ] 3.33 Looping music beds
 - [ ] 3.34 Video questions (LibVLCSharp/media element)
-- [ ] 3.35 Speed-tiered scoring (verify)
+- [x] 3.35 Speed-tiered scoring — the fastest three correct answers score +3/+2/+1; extracted the tiering out of AutoScore into pure LiveScoring.SpeedBonuses(fastest-first uids) and unit-tested it (3/2/1, 4th+ none, fewer-than-3, nobody-correct). Gated by the host SpeedBonus toggle
 
 ## Slice 8 — Waves D + E (venue + moat)
 - [x] 3.46 Recurring-series scheduling — an event can repeat weekly (a "Repeats" weekday picker in the builder → LiveEvent.Weekday); the saved-events list shows "Every {day} · next {date}" so a weekly host reuses the template. Pure RecurringSchedule.NextOccurrence/Display (today counts, wraps the week) + IsRecurring/ScheduleLine — unit-tested. Wave D venue business COMPLETE (recurring + sponsor + white-label + lead-capture)

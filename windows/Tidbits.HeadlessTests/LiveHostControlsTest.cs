@@ -72,6 +72,19 @@ public class LiveHostControlsTest
     }
 
     [Fact]
+    public void Big_screen_standings_hold_toggles()
+    {
+        var vm = new LiveHostViewModel(NewHost());
+        Assert.False(vm.HoldStandings);
+        Assert.Empty(vm.RankedStandings);        // no players yet
+        vm.ToggleHold();
+        Assert.True(vm.HoldStandings);
+        Assert.False(vm.ShowBigScreenStandings); // gated on IsPlaying (still lobby)
+        vm.ToggleHold();
+        Assert.False(vm.HoldStandings);
+    }
+
+    [Fact]
     public void Projector_chrome_is_safe_before_any_players()
     {
         var vm = new LiveHostViewModel(NewHost());

@@ -96,7 +96,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [x] 3.36 Projector window (chromeless WindowDecorations.None, 2nd-monitor via Screens API, hot-plug re-place on Screens.Changed) — 'Show on projector' in cockpit
 - [x] 3.37 Projector states (lobby QR / question+options / reveal answer / final standings) + Viewbox scale-to-fit text — LIVE PNG verified
 - [ ] 3.38 Reveal choreography
-- [ ] 3.39 Animated climbing leaderboard (unified phone+paper)
+- [x] 3.39 Climbing leaderboard (big-screen standings hold) — a cockpit "Standings on big screen" toggle parks the current ranked standings on the projector between rounds (ModeratedStandings → RankedStandings with 1-based rank + gold leader accent, phone+paper teams unified); the question view yields while held. Hold-toggle + ranked-projection tests
 - [x] 3.40 Round-intro moment — the projector shows a brand-colored "NEW ROUND" pill above the round title on the first question of each round (LiveHostViewModel.ShowRoundIntro = first-in-round - [ ] 3.40 Round-intro cards- [ ] 3.40 Round-intro cards not revealed), giving the room a clear round-boundary beat. VM flag tested (off before a live round); big-screen look verified via windows-latest CI launch
 - [~] 3.41 Winner celebration — the projector's final-standings screen leads with a green "{winner} wins the night" banner (top of the ordered standings). Confetti/animation polish pending
 - [~] 3.42 Big-screen chrome — the projector question screen now shows the round title + "Question X of Y · N players" chrome and a large live coral countdown (ticks off Pub.Deadline via a 1s DispatcherTimer). Format/difficulty labels + story on reveal pending

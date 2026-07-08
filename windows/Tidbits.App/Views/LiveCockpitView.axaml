@@ -91,6 +91,7 @@
                 <Button Content="Next" Click="OnNext" Padding="20,10"/>
                 <Button Content="Skip ›" Click="OnSkip" Padding="14,10"/>
                 <Button Content="Lock" Click="OnLock" Padding="20,10"/>
+                <ToggleButton Content="Standings on big screen" IsChecked="{Binding HoldStandings, Mode=OneWay}" Click="OnToggleHold" Padding="14,10"/>
             </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
                 <Button Content="Break tie" Click="OnBreakTie" Padding="16,10" IsVisible="{Binding HasTie}"

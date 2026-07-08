@@ -16,8 +16,26 @@
             </StackPanel>
         </Viewbox>
 
+        <!-- Big-screen standings hold (climbing leaderboard between rounds) -->
+        <Viewbox IsVisible="{Binding ShowBigScreenStandings}" Margin="120,80" Stretch="Uniform">
+            <StackPanel Width="1100" Spacing="16">
+                <TextBlock Text="STANDINGS" Foreground="{Binding BrandBrush}" FontSize="64" FontWeight="Black" HorizontalAlignment="Center"/>
+                <ItemsControl ItemsSource="{Binding RankedStandings}" x:CompileBindings="False">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid ColumnDefinitions="90,*,Auto" Margin="0,7">
+                                <TextBlock Text="{Binding Rank}" Foreground="{Binding RankColor}" FontSize="46" FontWeight="Black"/>
+                                <TextBlock Grid.Column="1" Text="{Binding Name}" Foreground="White" FontSize="46" FontWeight="Bold" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="2" Text="{Binding Score}" Foreground="White" FontSize="46" FontWeight="Black" VerticalAlignment="Center"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Viewbox>
+
         <!-- Question / reveal -->
-        <Viewbox IsVisible="{Binding IsPlaying}" Margin="100,80" Stretch="Uniform">
+        <Viewbox IsVisible="{Binding ShowQuestionScreen}" Margin="100,80" Stretch="Uniform">
             <StackPanel Width="1400" Spacing="26">
                 <Grid ColumnDefinitions="*,Auto">
                     <StackPanel Spacing="4">

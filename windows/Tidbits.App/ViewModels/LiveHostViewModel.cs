@@ -1,9 +1,13 @@
+using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Tidbits.Core.Networking;
 
 namespace Tidbits.App.ViewModels;
+
+/// One climbing-leaderboard row for the big screen (rank + gold-leader accent).
+public sealed record LiveStandingRow(int Rank, string Name, int Score, Avalonia.Media.IBrush RankColor);
 
 /// Wraps a LiveNightHost for the cockpit UI. LiveNightHost relays its LiveHostNet
 /// changes (which fire on background SSE threads); this marshals them to the UI
@@ -23,6 +27,25 @@ public sealed class LiveHostViewModel : ObservableObject
     public bool IsEnded => Host.CurrentStage == LiveNightHost.Stage.Ended;
     public bool IsReveal => Host.Revealed;
     public bool IsWagerRound => Host.IsWagerRound;
+
+    // Big-screen standings hold (3.39) — the host parks the current climbing
+    // leaderboard on the projector between rounds; the question view yields to it.
+    private bool _holdStandings;
+    public bool HoldStandings
+    {
+        get => _holdStandings;
+        private set { _holdStandings = value; OnPropertyChanged(nameof(HoldStandings)); OnPropertyChanged(nameof(ShowBigScreenStandings)); OnPropertyChanged(nameof(ShowQuestionScreen)); }
+    }
+    public bool ShowBigScreenStandings => IsPlaying && HoldStandings;
+    public bool ShowQuestionScreen => IsPlaying && !HoldStandings;
+    public void ToggleHold() => HoldStandings = !HoldStandings;
+
+    /// Moderated standings with a 1-based rank + a gold accent for the leader — the
+    /// climbing-leaderboard rows for the big screen.
+    public System.Collections.Generic.IReadOnlyList<LiveStandingRow> RankedStandings =>
+        Host.ModeratedStandings.Select((j, i) => new LiveStandingRow(
+            i + 1, j.Name, j.Score,
+            new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse(i == 0 ? "#FFC93C" : "#FFFFFF")))).ToList();
     // Round-intro moment (3.40): the first question of a round gets a big title band.
     public bool ShowRoundIntro => !Host.Revealed && Host.QuestionInRound.N == 1;
     public string? CurrentRoundNote => Host.CurrentRoundNote;

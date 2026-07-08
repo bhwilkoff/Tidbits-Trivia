@@ -23,6 +23,10 @@
                     <StackPanel Spacing="4">
                         <TextBlock Text="★ FINAL WAGER ★" IsVisible="{Binding IsWagerRound}" Foreground="#FFC93C"
                                    FontSize="40" FontWeight="Black"/>
+                        <Border IsVisible="{Binding ShowRoundIntro}" Background="{Binding BrandBrush}" CornerRadius="8"
+                                Padding="14,4" HorizontalAlignment="Left" Margin="0,0,0,2">
+                            <TextBlock Text="NEW ROUND" Foreground="#0A0A12" FontSize="24" FontWeight="Black"/>
+                        </Border>
                         <TextBlock Text="{Binding Host.RoundTitle}" Foreground="{Binding BrandBrush}" FontSize="34" FontWeight="Bold"/>
                         <TextBlock Text="{Binding QuestionChrome}" Foreground="White" Opacity="0.55" FontSize="24"/>
                     </StackPanel>

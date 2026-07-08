@@ -97,7 +97,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [x] 3.37 Projector states (lobby QR / question+options / reveal answer / final standings) + Viewbox scale-to-fit text — LIVE PNG verified
 - [ ] 3.38 Reveal choreography
 - [ ] 3.39 Animated climbing leaderboard (unified phone+paper)
-- [ ] 3.40 Round-intro cards
+- [x] 3.40 Round-intro moment — the projector shows a brand-colored "NEW ROUND" pill above the round title on the first question of each round (LiveHostViewModel.ShowRoundIntro = first-in-round - [ ] 3.40 Round-intro cards- [ ] 3.40 Round-intro cards not revealed), giving the room a clear round-boundary beat. VM flag tested (off before a live round); big-screen look verified via windows-latest CI launch
 - [~] 3.41 Winner celebration — the projector's final-standings screen leads with a green "{winner} wins the night" banner (top of the ordered standings). Confetti/animation polish pending
 - [~] 3.42 Big-screen chrome — the projector question screen now shows the round title + "Question X of Y · N players" chrome and a large live coral countdown (ticks off Pub.Deadline via a 1s DispatcherTimer). Format/difficulty labels + story on reveal pending
 - [x] 3.44 Printable fallback — a "Print" button in the cockpit writes a styled, print-ready HTML standings sheet (LiveExport.StandingsHtml, HTML-escaped) to temp and opens it in the default browser via the OS Launcher (print / save-as-PDF — the $0 path). HTML generator unit-tested (structure + XSS-safe escaping)

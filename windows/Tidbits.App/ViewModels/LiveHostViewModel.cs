@@ -23,6 +23,8 @@ public sealed class LiveHostViewModel : ObservableObject
     public bool IsEnded => Host.CurrentStage == LiveNightHost.Stage.Ended;
     public bool IsReveal => Host.Revealed;
     public bool IsWagerRound => Host.IsWagerRound;
+    // Round-intro moment (3.40): the first question of a round gets a big title band.
+    public bool ShowRoundIntro => !Host.Revealed && Host.QuestionInRound.N == 1;
     public string? CurrentRoundNote => Host.CurrentRoundNote;
     public bool HasRoundNote => Host.CurrentRoundNote is not null;
     /// The correct option text (shown big on the projector at reveal).

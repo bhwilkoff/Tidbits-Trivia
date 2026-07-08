@@ -63,6 +63,15 @@ public class LiveHostControlsTest
     }
 
     [Fact]
+    public void Projector_flags_default_off_before_a_live_round()
+    {
+        var vm = new LiveHostViewModel(NewHost());
+        Assert.False(vm.ShowRoundIntro);         // no live question → no round-intro band
+        Assert.False(vm.IsWagerRound);
+        Assert.False(vm.HasRoundNote);
+    }
+
+    [Fact]
     public void Projector_chrome_is_safe_before_any_players()
     {
         var vm = new LiveHostViewModel(NewHost());

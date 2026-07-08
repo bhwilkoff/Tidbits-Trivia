@@ -14,6 +14,7 @@ public sealed class QuestionProvider
 {
     private readonly QuestionSources _src;
     private readonly HashSet<string> _seen = new();
+    private Networking.WikipediaClient? _wiki;
 
     public QuestionProvider(QuestionSources sources) => _src = sources;
 
@@ -162,10 +163,23 @@ public sealed class QuestionProvider
         return _src.Corpus.Questions(picked);
     }
 
-    /// Live Wikipedia generation — STUB (returns empty). Real port = WikipediaClient
-    /// + TemplateEngine (parity 1.11/1.12); tracked in WINDOWS-PARITY.md.
-    public Task<List<Question>> LiveQuestions(string topic, TriviaCategory category, int count) =>
-        Task.FromResult(new List<Question>());
+    /// Live Wikipedia generation (1.11/1.12): search the topic, fetch candidate
+    /// summaries, and run the TemplateEngine filter → good MCQs. Deterministic for
+    /// a (topic, count) pair. Degrades to empty on any network/parse failure — the
+    /// corpus is the primary source; this is the any-topic top-up.
+    public async Task<List<Question>> LiveQuestions(string topic, TriviaCategory category, int count)
+    {
+        try
+        {
+            _wiki ??= new Networking.WikipediaClient();
+            var titles = await _wiki.Search(topic, 30);
+            if (titles.Count == 0) return new();
+            var summaries = await _wiki.Summaries(titles);
+            var seed = Engine.StableSeed.Of($"{topic}:{count}");
+            return Engine.TemplateEngine.MakeQuestions(summaries, category.Id, count, seed);
+        }
+        catch { return new(); }
+    }
 
     public static string DayKey() => DateTime.Now.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
     public static string DayKey(DateTime date) => date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);

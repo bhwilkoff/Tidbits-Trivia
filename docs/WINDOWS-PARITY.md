@@ -37,8 +37,8 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [x] 1.9 `QuestionProvider` (router + seen-set + night/mix/daily builders; live-gen stubbed)
 - [x] 1.10 `DifficultyOverlay` (difficulty.json → Ladder) + `QuestionSources` loader
 - [x] 1.11 `WikipediaClient` — read-only client for the open Wikipedia REST (page/summary) + Action (search) APIs over one capped HttpClient, no key/auth, UA header, concurrent Summaries(titles) dropping failures. Parse/ParseSearch extracted static so decoding is unit-tested offline (summary fields + PageUrl/ImageUrl, search titles, malformed→empty). Foundation for the TemplateEngine (1.12) live-gen port
-- [ ] 1.12 `TemplateEngine` (question gen; Regex)
-- [ ] 1.13 AI generator → Windows stub (isAvailable=false → TemplateEngine)
+- [x] 1.12 `TemplateEngine` — faithful port of the ~380-line NLP filter (the moat): describe & cloze shapes, fame-floor + richness gates, type-key/person detection, type-matched distractors, clue cleaning, answer-leak + foreign-script rejection, seeded (splitmix64) determinism. Wired into QuestionProvider.LiveQuestions; offline tests + a naturally-reading sample Q
+- [x] 1.13 AI generator (Windows path) — no on-device model, so TemplateEngine IS the generation path (LiveQuestions runs it), matching the Apple fallback
 - [ ] 1.22 `Keychain` → Credential Manager/DPAPI
 - [x] 1.23 `Haptics` → no-op stub
 - [x] 1.21 `GameSettings` KV (JSON-backed) + RecordsStore.ResetAll
@@ -85,7 +85,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [x] KB Keyboard cockpit (WINDOWS-DESIGN "keyboard cockpit") — the host runs the show from the keyboard: Space/Enter/→ = Reveal then Next, ← = Back, ↓/S = Skip, L = Lock. Pure CockpitKeymap.Resolve (unit-tested across keys × reveal state); the cockpit tunnels KeyDown so show keys beat button focus
 - [x] 3.6 `LiveEvent` + `LiveEventStore` — an authored event = a named list of rounds (reusing NightRound kind+count); JSON-backed store (upsert by id, newest-first, persists); `ToPlan()` converts an event straight to a NightPlan for the host. Convert + store round-trip test
 - [~] 3.7 Builder — the Live setup gains a "build a custom event" section: name + add rounds (mode picker × count), a live rounds list (remove each), then Host this event or Save event; saved events list with Host/delete. Single-column (not the Mac two-pane) but fully composes + hosts + persists. Drag-reorder / per-round depth pending
-- [ ] 3.8 Fill a round 3 ways (corpus/AI/hand)
+- [x] 3.8 Fill a round 3 ways — corpus (Generate from 20k), AI/live (WikipediaClient + TemplateEngine any-topic), hand (CSV import) all in Create
 - [x] 3.13 Solo preview — a "Preview solo" button in the event builder plays the composed event through the shared solo-night engine (StartNight, host-paced off) with records:null (no records written), so the host can vet the questions before hosting. Authored-event play-through test GREEN (both rounds run to Finished)
 - [~] 3.14 host session — LiveNightHost (authoritative model + currentPub builder, all shapes) done for Trivia Night; setup now exposes host options (category picker, speed-bonus toggle, "I'll play too" + team name — set on the host before Start; PNG-verified). Full authored-event cockpit features pending
 - [~] 3.15 Cockpit UI — code/roster header + question + options + standings + reveal/next/lock/end; LIVE PNG vs real room. Projector + polish pending

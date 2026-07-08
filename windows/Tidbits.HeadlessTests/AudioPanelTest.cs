@@ -25,7 +25,8 @@ public class AudioPanelTest
         var panel = AudioPanelUi.BuildPanel(
             devices, "dev2", _ => { },
             bedPlaying: true, bedVolume: 60, onChooseBed: () => { }, onStopBed: () => { }, onBedVolume: _ => { },
-            pads, _ => { }, () => { }, _ => { });
+            pads, _ => { }, () => { }, _ => { },
+            onPlayAudioClip: () => { }, onStopClip: () => { }, onPauseClip: () => { });
 
         var win = new Window { Width = 480, Height = 620, Content = panel };
         win.Show();
@@ -36,6 +37,8 @@ public class AudioPanelTest
         Assert.Contains("Music bed", texts);
         Assert.Contains("Sound board", texts);
         Assert.Contains("Volume", texts);
+        Assert.Contains("Question clip", texts);   // audio round (3.32)
+        Assert.Contains("Play audio", texts);
         win.CaptureRenderedFrame()!.Save(Path.Combine(dir, "audio-panel.png"));
     }
 }

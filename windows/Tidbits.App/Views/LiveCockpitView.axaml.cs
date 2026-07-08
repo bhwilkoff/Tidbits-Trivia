@@ -212,7 +212,11 @@ public partial class LiveCockpitView : UserControl
             pads: g.Sfx.Pads,
             onPlaySfx: path => g.Av.PlaySfx(path),
             onAddSfx: async () => { await PickAudio("Add a sound", true, p => g.Sfx.Add(p)); Rebuild(); },
-            onRemoveSfx: path => { g.Sfx.Remove(path); Rebuild(); });
+            onRemoveSfx: path => { g.Sfx.Remove(path); Rebuild(); },
+            // Audio round (3.32): play a clip for the current question, in the room.
+            onPlayAudioClip: async () => { var p = await PickAudio("Play an audio clip", false, _ => { }); if (p is not null) g.Av.PlayClip(p); },
+            onStopClip: () => g.Av.StopClip(),
+            onPauseClip: () => g.Av.PauseClip());
 
         Rebuild();
         await dialog.ShowAsync();

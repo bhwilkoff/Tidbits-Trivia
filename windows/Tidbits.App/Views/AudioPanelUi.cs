@@ -16,9 +16,25 @@ public static class AudioPanelUi
     public static Control BuildPanel(
         IReadOnlyList<(string Id, string Name)> devices, string? currentDevice, Action<string>? onDevice,
         bool bedPlaying, int bedVolume, Action? onChooseBed, Action? onStopBed, Action<int>? onBedVolume,
-        IReadOnlyList<SfxPad> pads, Action<string>? onPlaySfx, Action? onAddSfx, Action<string>? onRemoveSfx)
+        IReadOnlyList<SfxPad> pads, Action<string>? onPlaySfx, Action? onAddSfx, Action<string>? onRemoveSfx,
+        Action? onPlayAudioClip = null, Action? onPlayVideoClip = null, Action? onStopClip = null, Action? onPauseClip = null)
     {
         var root = new StackPanel { Spacing = 18, MinWidth = 400 };
+
+        // Question clip — audio round (3.32) + video question (3.34)
+        if (onPlayAudioClip is not null || onPlayVideoClip is not null)
+        {
+            var clip = new StackPanel { Spacing = 8 };
+            clip.Children.Add(Header("Question clip"));
+            var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+            if (onPlayAudioClip is not null) row.Children.Add(ClipBtn("Play audio", onPlayAudioClip));
+            if (onPlayVideoClip is not null) row.Children.Add(ClipBtn("Play video (projector)", onPlayVideoClip));
+            row.Children.Add(ClipBtn("Pause", onPauseClip));
+            row.Children.Add(ClipBtn("Stop", onStopClip));
+            clip.Children.Add(row);
+            clip.Children.Add(new TextBlock { Text = "Audio plays in the room; video shows on the big screen.", Opacity = 0.55, FontSize = 12 });
+            root.Children.Add(clip);
+        }
 
         // PA output-device routing (3.31)
         var pa = new StackPanel { Spacing = 6 };
@@ -60,4 +76,11 @@ public static class AudioPanelUi
     }
 
     private static TextBlock Header(string t) => new() { Text = t, FontSize = 16, FontWeight = FontWeight.Bold };
+
+    private static Button ClipBtn(string label, Action? on)
+    {
+        var b = new Button { Content = label, Padding = new Avalonia.Thickness(14, 8) };
+        b.Click += (_, _) => on?.Invoke();
+        return b;
+    }
 }

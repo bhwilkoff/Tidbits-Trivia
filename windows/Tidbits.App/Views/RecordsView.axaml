@@ -105,6 +105,26 @@
                     </ItemsControl>
                 </StackPanel>
 
+                <!-- Stake calibration (per-confidence-tier hit rate) -->
+                <StackPanel IsVisible="{Binding HasCalibration}" Spacing="8">
+                    <TextBlock Text="Calibration" FontSize="20" FontWeight="Bold" Margin="0,6,0,0"/>
+                    <TextBlock Text="How often you were right at each confidence level (Stake mode)."
+                               FontSize="12" Opacity="0.6"/>
+                    <ItemsControl ItemsSource="{Binding Calibration}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:CalibrationRow">
+                                <Grid ColumnDefinitions="90,*,Auto" Margin="0,0,0,8">
+                                    <TextBlock Text="{Binding Label}" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                    <ProgressBar Grid.Column="1" Minimum="0" Maximum="1" Value="{Binding Rate}"
+                                                 VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                    <TextBlock Grid.Column="2" Text="{Binding Detail}" FontSize="12" Opacity="0.7"
+                                               VerticalAlignment="Center"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+
                 <!-- Review -->
                 <Border IsVisible="{Binding HasReview}" Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
                         BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"

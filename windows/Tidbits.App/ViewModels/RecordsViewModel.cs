@@ -27,6 +27,8 @@ public sealed class RecordsViewModel
     public bool HasReview => ReviewCount > 0;
     public IReadOnlyList<BadgeRow> Badges { get; }
     public bool HasBadges => Badges.Count > 0;
+    public IReadOnlyList<CalibrationRow> Calibration { get; }
+    public bool HasCalibration => Calibration.Count > 0;
 
     public RecordsViewModel(RecordsStore store)
     {
@@ -58,6 +60,13 @@ public sealed class RecordsViewModel
 
         ReviewCount = store.Missed.Count(m => !m.Resolved);
 
+        // Stake calibration (F1) — per-confidence-tier hit rate, the self-knowledge mirror.
+        Calibration = store.Calibration
+            .Where(c => c.Total > 0)
+            .Select(c => new CalibrationRow(
+                c.TierValue switch { 3 => "Sure", 2 => "Likely", 1 => "Hunch", _ => $"Bet {c.TierValue}" },
+                c.Hits, c.Total, (double)c.Hits / c.Total)).ToList();
+
         // Levelable badges — earned-only (hidden until the first tier is reached),
         // matching web/iOS. liveNights isn't tracked locally yet → 0 (Regular stays
         // hidden until it is), an honest gap not a false cell.
@@ -70,6 +79,11 @@ public sealed class RecordsViewModel
 }
 
 public sealed record BadgeRow(string Name, string Detail, double Progress, int Tier);
+
+public sealed record CalibrationRow(string Label, int Hits, int Total, double Rate)
+{
+    public string Detail => $"{Hits}/{Total} · {(int)System.Math.Round(Rate * 100)}%";
+}
 
 public sealed record AnswerDot(bool Correct, string Prompt, string Answer);
 

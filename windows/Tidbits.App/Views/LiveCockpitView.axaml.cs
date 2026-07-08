@@ -205,6 +205,19 @@ public partial class LiveCockpitView : UserControl
             await vm.BreakTie(w.Id);
     }
 
+    /// Add an in-room paper team to the standings (host scores it with −/+).
+    private async void OnAddPaperTeam(object? sender, RoutedEventArgs e)
+    {
+        if (Vm is not { } vm) return;
+        var box = new TextBox { Watermark = "Team name", MinWidth = 260 };
+        var dlg = new FAContentDialog
+        {
+            Title = "Add a paper team", Content = box, PrimaryButtonText = "Add", CloseButtonText = "Cancel",
+        };
+        if (await dlg.ShowAsync() == FAContentDialogResult.Primary && !string.IsNullOrWhiteSpace(box.Text))
+            vm.AddPaperTeam(box.Text);
+    }
+
     // Name moderation gate — toggle a team's name off the big screen.
     private void OnToggleHide(object? sender, RoutedEventArgs e)
     {

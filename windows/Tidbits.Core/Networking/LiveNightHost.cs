@@ -56,7 +56,34 @@ public sealed class LiveNightHost : ObservableObject
     public string Code => Net.Code;
     public bool IsOpen => Net.IsOpen;
     public Question? Current => Index >= 0 && Index < Questions.Count ? Questions[Index] : null;
-    public IReadOnlyList<LiveHostNet.Joined> Standings => Net.JoinedList();
+    // In-room paper teams (3.29) — not networked; scored by the host and ranked
+    // alongside the phone teams in ONE standings (the hybrid differentiator).
+    private readonly Dictionary<string, string> _paperNames = new();
+    private readonly Dictionary<string, int> _paperScores = new();
+    private static bool IsPaper(string uid) => uid.StartsWith("paper:", StringComparison.Ordinal);
+
+    public void AddPaperTeam(string name)
+    {
+        var n = name.Trim();
+        if (n.Length == 0) return;
+        var uid = "paper:" + Guid.NewGuid().ToString("N")[..8];
+        _paperNames[uid] = n;
+        _paperScores[uid] = 0;
+        Notify();
+    }
+
+    /// Networked phone teams + in-room paper teams, ranked together.
+    public IReadOnlyList<LiveHostNet.Joined> Standings
+    {
+        get
+        {
+            var net = Net.JoinedList();
+            if (_paperScores.Count == 0) return net;
+            var paper = _paperScores.Select(kv => new LiveHostNet.Joined(kv.Key, _paperNames[kv.Key], kv.Value));
+            return net.Concat(paper)
+                .OrderByDescending(j => j.Score).ThenBy(j => j.Name, StringComparer.Ordinal).ToList();
+        }
+    }
     public int PlayerCount => Net.PlayerCount;
     public int AnsweredCount => Net.AnsweredCount;
     public int RoundIndex => Current?.RoundIndex ?? 0;
@@ -294,6 +321,12 @@ public sealed class LiveNightHost : ObservableObject
     public async Task AdjustScore(string uid, int delta)
     {
         if (string.IsNullOrEmpty(uid)) return;
+        if (IsPaper(uid))
+        {
+            if (_paperScores.ContainsKey(uid)) _paperScores[uid] = Math.Max(0, _paperScores[uid] + delta);
+            Notify();
+            return;
+        }
         await Net.SetScore(uid, Math.Max(0, Net.ScoreOf(uid) + delta));
         Notify();
     }

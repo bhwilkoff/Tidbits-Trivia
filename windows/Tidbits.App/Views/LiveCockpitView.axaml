@@ -36,7 +36,10 @@
             </ScrollViewer>
 
             <StackPanel Grid.Column="1" Spacing="6">
-                <TextBlock Text="Standings" FontWeight="Bold"/>
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Text="Standings" FontWeight="Bold" VerticalAlignment="Center"/>
+                    <Button Grid.Column="1" Content="+ Paper team" Click="OnAddPaperTeam" FontSize="11" Padding="8,3"/>
+                </Grid>
                 <TextBlock Text="No players yet" FontSize="12" Opacity="0.5"
                            IsVisible="{Binding !Host.PlayerCount}"/>
                 <ItemsControl ItemsSource="{Binding Host.Standings}" x:CompileBindings="False">

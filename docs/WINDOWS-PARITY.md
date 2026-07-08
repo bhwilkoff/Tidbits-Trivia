@@ -118,7 +118,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [x] 3.26 Name moderation gate — a per-team "Hide" toggle in the cockpit standings hides an offensive networked name from the big screen; the cockpit still shows the real name, the projector renders `ModeratedStandings` ("(hidden)"). LiveNightHost.ToggleHidden/IsHidden/ModeratedStandings; toggle-state test GREEN
 - [x] 3.27 Focus/cheat flag — the join client flags a player who switches away from the app while a question is live + unanswered (Window.Deactivated → Client.Blurred → Answer.blurred, already wired in the client). The host cockpit surfaces a coral "N teams left the app this question" line under standings (LiveNightHost.FlaggedCount off AnswersSnapshot). Guard test; live path gated
 - [x] 3.28 CSV export — an "Export CSV" cockpit button writes the unified standings (Rank,Team,Score) via the native SaveFilePicker to a `tidbits-standings-{code}.csv`. `LiveExport.StandingsCsv` is pure + quote/comma-escaped (unit test: ranking + escaping + empty→header-only)
-- [ ] 3.29 In-room paper teams (hybrid)
+- [x] 3.29 In-room paper teams (hybrid) — the host adds a non-networked "paper" team (name dialog) that ranks alongside the phone teams in ONE standings (the hybrid differentiator); scored with the same −/+ override (routed to local paper scores, clamped ≥0). Flows through the cockpit standings, projector, moderation, tie-break, and CSV export. Offline test (add + score + clamp)
 
 ## Slice 7 — Wave B AV & show (Windows audio/video backend)
 - [ ] 3.30 SFX/stinger board (NAudio/CSCore)
@@ -134,7 +134,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [ ] 3.48 Lead capture QR
 - [ ] 3.49 White-label brand accent
 - [x] 3.50 ★ Standings write (season/venue) — when a live night ends, `LivePlayerClient.RecordStanding` adds the player's score to their cumulative `standings/{season}/{venueKey}/{authUid}` (read-modify-write, keyed by auth uid per the rule), fired once from RecordIfEnded. `StandingWrite` payload (name/score/nights/updatedAt) + the season/venue path pieces are byte-identical to the web/Swift/Kotlin twins — unit-tested (2026-S3 quarter format, path-safe venue key, JSON keys). Completes the moat with the 2.25 read side; the hourly cron aggregates all platforms' writes
-- [ ] 3.51 Leaderboard read + defendable titles
+- [x] 3.51 Leaderboard read + defendable titles — shipped as 2.25 (LeaderboardApi + a top-level Leaderboard nav → season overall + per-venue, CHAMPION on #1, signed-in player's row highlighted). Now paired with the 3.50 write side = the complete moat
 - [ ] 3.52 Social graph (add players you played with)
 
 ## Deferred (⏳/🔒 — not built on Mac either; carry as honest gaps)

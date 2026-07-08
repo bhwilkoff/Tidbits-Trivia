@@ -81,6 +81,23 @@ public class LiveHostControlsTest
     }
 
     [Fact]
+    public async Task Paper_team_joins_the_standings_and_is_scored()
+    {
+        var host = NewHost();
+        host.AddPaperTeam("");                       // empty ignored
+        host.AddPaperTeam("Corner Booth");
+        var paper = Assert.Single(host.Standings);
+        Assert.Equal("Corner Booth", paper.Name);
+        Assert.StartsWith("paper:", paper.Id);
+        Assert.Equal(0, paper.Score);
+
+        await host.AdjustScore(paper.Id, 5);         // host scores the paper team
+        Assert.Equal(5, host.Standings.Single(j => j.Id == paper.Id).Score);
+        await host.AdjustScore(paper.Id, -10);       // clamps at 0
+        Assert.Equal(0, host.Standings.Single(j => j.Id == paper.Id).Score);
+    }
+
+    [Fact]
     public void Moderation_gate_toggles_a_hidden_name()
     {
         var host = NewHost();

@@ -32,6 +32,12 @@ public sealed class LiveNightHost : ObservableObject
     public string HostName { get; set; } = "Host";
     public bool SpeedBonus { get; set; }
     public int? WagerRoundIndex { get; set; } // Wave A: which round is the final wager (RoundIndex), null = none
+    public IReadOnlyList<string> RoundNotes { get; set; } = new List<string>(); // Wave A per-round host notes
+
+    /// The host's private note for the current round (null if none) — cockpit-only.
+    public string? CurrentRoundNote =>
+        Current is not null && RoundIndex >= 0 && RoundIndex < RoundNotes.Count && RoundNotes[RoundIndex].Length > 0
+            ? RoundNotes[RoundIndex] : null;
     public string? Sponsor { get; set; }    // Wave D sponsor kit (big-screen footer)
     public string? BrandHex { get; set; }    // Wave D white-label accent (big-screen)
     public string? LeadCaptureUrl { get; set; } // Wave D lead-capture QR (final standings)

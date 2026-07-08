@@ -20,6 +20,7 @@ public sealed record LiveEvent
     [JsonPropertyName("leadCaptureURL")] public string? LeadCaptureUrl { get; init; } // Wave D lead capture
     [JsonPropertyName("weekday")] public int? Weekday { get; init; } // Wave D recurring (0=Sun..6=Sat), null = one-off
     [JsonPropertyName("wagerFinal")] public bool WagerFinalRound { get; init; } // Wave A final wager round
+    [JsonPropertyName("roundNotes")] public IReadOnlyList<string> RoundNotes { get; init; } = new List<string>(); // Wave A per-round host notes (index-aligned)
 
     [JsonIgnore] public int TotalQuestions => Rounds.Sum(r => r.Count);
     [JsonIgnore] public bool IsRecurring => Weekday is >= 0 and <= 6;

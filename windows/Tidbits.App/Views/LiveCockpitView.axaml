@@ -26,6 +26,10 @@
             <ScrollViewer>
                 <StackPanel Spacing="12">
                     <TextBlock Text="{Binding Host.RoundTitle}" Opacity="0.6" FontWeight="SemiBold"/>
+                    <!-- Host's private per-round note (cockpit-only, never on the projector) -->
+                    <Border IsVisible="{Binding HasRoundNote}" Background="#22FFC93C" CornerRadius="8" Padding="10,7">
+                        <TextBlock Text="{Binding CurrentRoundNote, StringFormat='📝 {0}'}" TextWrapping="Wrap" FontWeight="SemiBold"/>
+                    </Border>
                     <TextBlock Text="{Binding Host.Current.Prompt}" FontSize="22" FontWeight="Bold" TextWrapping="Wrap"/>
                     <!-- Options with a live answer-distribution bar (built in code-behind
                          so each row can carry a proportional bar + reveal highlight). -->

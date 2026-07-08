@@ -55,22 +55,26 @@ public partial class LiveView : UserControl
         BuildSavedEvents();
     }
 
-    // The rounds being composed for a custom event.
+    // The rounds being composed for a custom event (+ an index-aligned host note).
     private readonly System.Collections.Generic.List<NightRound> _rounds = new();
+    private readonly System.Collections.Generic.List<string> _notes = new();
 
     private void OnAddRound(object? sender, RoutedEventArgs e)
     {
         if (RoundModeBox.SelectedItem is not GameMode mode || RoundCountBox.SelectedItem is not int count) return;
         _rounds.Add(new NightRound { Kind = mode, Count = count });
+        _notes.Add(RoundNoteBox.Text?.Trim() ?? "");
+        RoundNoteBox.Text = "";
         RebuildBuilderRounds();
     }
 
-    /// Move a round up (−1) or down (+1) in the running order.
+    /// Move a round up (−1) or down (+1) in the running order (note travels with it).
     private void MoveRound(int index, int delta)
     {
         int target = index + delta;
         if (index < 0 || index >= _rounds.Count || target < 0 || target >= _rounds.Count) return;
         (_rounds[index], _rounds[target]) = (_rounds[target], _rounds[index]);
+        (_notes[index], _notes[target]) = (_notes[target], _notes[index]);
         RebuildBuilderRounds();
     }
 
@@ -81,8 +85,12 @@ public partial class LiveView : UserControl
         {
             int idx = i;
             var r = _rounds[i];
+            var note = idx < _notes.Count ? _notes[idx] : "";
             var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto,Auto"), Margin = new Avalonia.Thickness(0, 0, 0, 2) };
-            row.Children.Add(new TextBlock { Text = $"{idx + 1}. {r.Kind.Title()} · {r.Count} questions", VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center });
+            var label = note.Length > 0
+                ? $"{idx + 1}. {r.Kind.Title()} · {r.Count} questions  📝 {note}"
+                : $"{idx + 1}. {r.Kind.Title()} · {r.Count} questions";
+            row.Children.Add(new TextBlock { Text = label, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center, TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis });
             var up = new Button { Content = "▲", Padding = new Avalonia.Thickness(7, 2), FontSize = 11, IsEnabled = idx > 0 };
             up.Click += (_, _) => MoveRound(idx, -1);
             Grid.SetColumn(up, 1);
@@ -92,7 +100,7 @@ public partial class LiveView : UserControl
             Grid.SetColumn(down, 2);
             row.Children.Add(down);
             var del = new Button { Content = "✕", Padding = new Avalonia.Thickness(8, 2), FontSize = 12, Margin = new Avalonia.Thickness(4, 0, 0, 0) };
-            del.Click += (_, _) => { _rounds.RemoveAt(idx); RebuildBuilderRounds(); };
+            del.Click += (_, _) => { _rounds.RemoveAt(idx); if (idx < _notes.Count) _notes.RemoveAt(idx); RebuildBuilderRounds(); };
             Grid.SetColumn(del, 3);
             row.Children.Add(del);
             BuilderRounds.Children.Add(row);
@@ -143,6 +151,7 @@ public partial class LiveView : UserControl
         LeadCaptureUrl = string.IsNullOrWhiteSpace(LeadUrlBox.Text) ? null : LeadUrlBox.Text!.Trim(),
         Weekday = WeekdayBox.SelectedIndex >= 1 ? WeekdayBox.SelectedIndex - 1 : (int?)null,
         WagerFinalRound = WagerFinalCheck.IsChecked == true,
+        RoundNotes = new System.Collections.Generic.List<string>(_notes),
     };
 
     private void OnHostEvent(object? sender, RoutedEventArgs e)
@@ -231,6 +240,7 @@ public partial class LiveView : UserControl
             BrandHex = branding?.BrandHex,
             LeadCaptureUrl = branding?.LeadCaptureUrl,
             WagerRoundIndex = branding?.WagerFinalRound == true ? System.Math.Max(0, plan.Rounds.Count - 1) : null,
+            RoundNotes = branding?.RoundNotes ?? new System.Collections.Generic.List<string>(),
         };
         var vm = new LiveHostViewModel(host);
         Setup.IsVisible = false;

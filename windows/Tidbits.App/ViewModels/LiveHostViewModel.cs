@@ -23,6 +23,8 @@ public sealed class LiveHostViewModel : ObservableObject
     public bool IsEnded => Host.CurrentStage == LiveNightHost.Stage.Ended;
     public bool IsReveal => Host.Revealed;
     public bool IsWagerRound => Host.IsWagerRound;
+    public string? CurrentRoundNote => Host.CurrentRoundNote;
+    public bool HasRoundNote => Host.CurrentRoundNote is not null;
     /// The correct option text (shown big on the projector at reveal).
     public string? RevealAnswer => Host.Current is { } q ? LiveScoring.AnswerLine(q) : null;
 

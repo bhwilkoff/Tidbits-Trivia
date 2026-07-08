@@ -41,6 +41,12 @@ public sealed class GameViewModel : ObservableObject, IDisposable
     public bool HasMissed => Missed.Count > 0;
     public bool CanPlayAgain => Summary.Mode != GameMode.Daily;
 
+    // Day-streak surfacing at the results moment (read after the record write).
+    public int DayStreak => _records?.Streak.Current ?? 0;
+    public bool HasDayStreak => DayStreak >= 1;
+    public string DayStreakLine => DayStreak == 1 ? "1 day streak" : $"{DayStreak} day streak";
+    public bool IsBestStreak => _records is { } r && r.Streak.Current >= 2 && r.Streak.Current == r.Streak.Best;
+
     public GameViewModel(GameEngine engine, RecordsStore? records = null)
     {
         Engine = engine;

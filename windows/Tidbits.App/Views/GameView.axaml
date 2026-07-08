@@ -107,6 +107,21 @@
                         </StackPanel>
                     </Border>
 
+                    <!-- Day-streak moment -->
+                    <Border IsVisible="{Binding HasDayStreak}"
+                            Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1"
+                            CornerRadius="10" Padding="16">
+                        <StackPanel Spacing="2" HorizontalAlignment="Center">
+                            <TextBlock Text="{Binding DayStreak}" FontSize="34" FontWeight="Black"
+                                       Foreground="#FF7A00" HorizontalAlignment="Center"/>
+                            <TextBlock Text="{Binding DayStreakLine}" Opacity="0.7" FontWeight="SemiBold"
+                                       HorizontalAlignment="Center"/>
+                            <TextBlock Text="your best ever!" FontSize="12" Foreground="#FF7A00"
+                                       IsVisible="{Binding IsBestStreak}" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+
                     <!-- Tidbits to remember (missed facts) -->
                     <StackPanel Spacing="10" IsVisible="{Binding HasMissed}">
                         <TextBlock Text="Tidbits to remember" FontSize="18" FontWeight="Bold" Margin="0,4,0,0"/>

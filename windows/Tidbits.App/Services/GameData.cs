@@ -14,6 +14,7 @@ public sealed class GameData
     public RecordsStore Records { get; }
     public GameSettings Settings { get; }
     public DailyLog Daily { get; }
+    public SavedSetsStore SavedSets { get; }
 
     private GameData(QuestionSources sources)
     {
@@ -24,6 +25,7 @@ public sealed class GameData
         Records = new RecordsStore(Path.Combine(appDir, "records.json"));
         Settings = new GameSettings(Path.Combine(appDir, "settings.json"));
         Daily = new DailyLog(Path.Combine(appDir, "daily.json"));
+        SavedSets = new SavedSetsStore(Path.Combine(appDir, "saved-sets.json"));
     }
 
     public static GameData FromDirectory(string dir) => new(QuestionSources.LoadFromDirectory(dir));

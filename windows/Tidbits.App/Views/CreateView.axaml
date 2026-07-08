@@ -11,6 +11,12 @@
                 <Button x:Name="GenBtn" Content="Generate Quiz" Click="OnGenerate"
                         Classes="accent" Padding="24,13" FontWeight="Bold" HorizontalAlignment="Left"/>
                 <TextBlock x:Name="StatusText" IsVisible="False" Opacity="0.75" TextWrapping="Wrap" FontSize="14"/>
+                <Button x:Name="SaveBtn" Content="Save this set" Click="OnSaveSet" IsVisible="False"
+                        Padding="18,10" FontWeight="SemiBold" HorizontalAlignment="Left"/>
+
+                <TextBlock x:Name="SavedHeader" Text="Saved sets" FontSize="20" FontWeight="Bold"
+                           Margin="0,14,0,0" IsVisible="False"/>
+                <StackPanel x:Name="SavedPanel" Spacing="8"/>
             </StackPanel>
         </ScrollViewer>
         <ContentControl x:Name="GameHost"/>

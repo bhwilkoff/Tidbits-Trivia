@@ -106,6 +106,19 @@ public class LiveHostControlsTest
     }
 
     [Fact]
+    public void Free_text_review_is_empty_before_reveal_and_leniency_holds()
+    {
+        var host = NewHost();
+        Assert.Empty(host.TextReview);   // not revealed → nothing to review
+
+        // Spelling leniency (the matcher the review uses): case / diacritic / "the"-insensitive.
+        var accepted = new[] { "The Beatles", "Café" };
+        Assert.True(Tidbits.Core.Store.GameEngine.MatchesAccepted("beatles", accepted));
+        Assert.True(Tidbits.Core.Store.GameEngine.MatchesAccepted("cafe", accepted));
+        Assert.False(Tidbits.Core.Store.GameEngine.MatchesAccepted("rolling stones", accepted));
+    }
+
+    [Fact]
     public void Tie_detection_finds_shared_top_score()
     {
         var J = (string id, int s) => new LiveHostNet.Joined(id, id, s);

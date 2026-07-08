@@ -40,9 +40,53 @@ public partial class LiveCockpitView : UserControl
     protected override void OnDataContextChanged(EventArgs e)
     {
         base.OnDataContextChanged(e);
-        if (Vm is { } vm) vm.PropertyChanged += (_, _) => { RefreshQr(); RefreshTally(); };
+        if (Vm is { } vm) vm.PropertyChanged += (_, _) => { RefreshQr(); RefreshTally(); RefreshReview(); };
         RefreshQr();
         RefreshTally();
+        RefreshReview();
+    }
+
+    /// On reveal of a Name-It round, list each team's typed answer with an
+    /// auto-verdict; an "Accept" button awards a borderline spelling.
+    private void RefreshReview()
+    {
+        ReviewPanel.Children.Clear();
+        var rows = Vm?.TextReview;
+        if (rows is null || rows.Count == 0) return;
+
+        ReviewPanel.Children.Add(new TextBlock { Text = "Free-text review", FontWeight = FontWeight.Bold, FontSize = 14 });
+        foreach (var r in rows)
+        {
+            var row = r;
+            var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), Margin = new Avalonia.Thickness(0, 2, 0, 0) };
+            grid.Children.Add(new TextBlock
+            {
+                Text = $"{row.Name}: “{row.Text}”", TextTrimming = TextTrimming.CharacterEllipsis, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                Opacity = row.AutoCorrect ? 1 : 0.75,
+            });
+            var verdict = new TextBlock
+            {
+                Text = row.AutoCorrect ? "✓" : "✗", FontWeight = FontWeight.Black,
+                Foreground = new SolidColorBrush(Color.Parse(row.AutoCorrect ? "#1E9E6A" : "#D64545")),
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center, Margin = new Avalonia.Thickness(8, 0),
+            };
+            Grid.SetColumn(verdict, 1);
+            grid.Children.Add(verdict);
+            if (!row.AutoCorrect)
+            {
+                var accept = new Button { Content = "Accept", Padding = new Avalonia.Thickness(10, 3), FontSize = 12, Tag = row.Uid };
+                accept.Click += OnAcceptText;
+                Grid.SetColumn(accept, 2);
+                grid.Children.Add(accept);
+            }
+            ReviewPanel.Children.Add(grid);
+        }
+    }
+
+    private async void OnAcceptText(object? sender, RoutedEventArgs e)
+    {
+        if (Vm is { } vm && (sender as Control)?.Tag is string uid && uid.Length > 0)
+            await vm.AcceptText(uid);
     }
 
     /// Rebuild the options with a live per-option answer-distribution bar. The

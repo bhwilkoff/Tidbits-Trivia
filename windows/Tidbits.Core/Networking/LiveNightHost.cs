@@ -78,6 +78,30 @@ public sealed class LiveNightHost : ObservableObject
         Notify();
     }
 
+    /// Free-text review (3.21): on reveal of a Name-It round, each team's typed
+    /// answer + whether the auto-scorer accepted it. The host can accept a
+    /// borderline spelling the matcher rejected.
+    public IReadOnlyList<TextReviewRow> TextReview
+    {
+        get
+        {
+            if (!Revealed || Current?.Accepted is not { } acc)
+                return System.Array.Empty<TextReviewRow>();
+            var names = Net.JoinedList().ToDictionary(j => j.Id, j => j.Name);
+            return Net.AnswersSnapshot()
+                .Where(kv => kv.Value.Text is not null)
+                .Select(kv => new TextReviewRow(
+                    kv.Key, names.GetValueOrDefault(kv.Key, "?"), kv.Value.Text!,
+                    Store.GameEngine.MatchesAccepted(kv.Value.Text!, acc)))
+                .OrderBy(r => r.AutoCorrect).ThenBy(r => r.Name, System.StringComparer.Ordinal)
+                .ToList();
+        }
+    }
+
+    /// Accept a team's free-text answer the auto-scorer rejected — award the
+    /// per-correct points.
+    public Task AcceptText(string uid) => AdjustScore(uid, PointsPerCorrect);
+
     /// Teams sharing the top score (a tie for first) — else empty (3.24).
     public IReadOnlyList<LiveHostNet.Joined> TiedLeaders => Ties(Standings);
     public bool HasTie => TiedLeaders.Count >= 2;
@@ -341,3 +365,6 @@ public sealed class LiveNightHost : ObservableObject
         }
     }
 }
+
+/// One team's free-text submission under review (3.21).
+public sealed record TextReviewRow(string Uid, string Name, string Text, bool AutoCorrect);

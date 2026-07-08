@@ -30,6 +30,8 @@
                     <!-- Options with a live answer-distribution bar (built in code-behind
                          so each row can carry a proportional bar + reveal highlight). -->
                     <StackPanel x:Name="OptionsTally" Spacing="6"/>
+                    <!-- Free-text review (Name-It rounds, on reveal): typed answers + Accept -->
+                    <StackPanel x:Name="ReviewPanel" Spacing="6" Margin="0,10,0,0"/>
                 </StackPanel>
             </ScrollViewer>
 

@@ -87,6 +87,11 @@ public class LiveHostControlsTest
 
         host.BrandHex = "not-a-color";   // invalid → falls back to the brand coral
         Assert.Equal(Avalonia.Media.Color.Parse("#FF5C35"), ((Avalonia.Media.SolidColorBrush)vm.BrandBrush).Color);
+
+        Assert.False(vm.HasLeadCapture);
+        host.LeadCaptureUrl = "https://anchor.pub/list";
+        Assert.True(vm.HasLeadCapture);
+        Assert.Equal("https://anchor.pub/list", vm.LeadCaptureUrl);
     }
 
     [Fact]

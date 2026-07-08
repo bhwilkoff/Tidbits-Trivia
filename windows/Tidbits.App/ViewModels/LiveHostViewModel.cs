@@ -30,6 +30,8 @@ public sealed class LiveHostViewModel : ObservableObject
     public bool HasFlags => Host.HasFlags;
 
     // Wave D venue branding (big screen).
+    public bool HasLeadCapture => !string.IsNullOrWhiteSpace(Host.LeadCaptureUrl);
+    public string? LeadCaptureUrl => Host.LeadCaptureUrl;
     public bool HasSponsor => !string.IsNullOrWhiteSpace(Host.Sponsor);
     public string SponsorLine => $"Brought to you by {Host.Sponsor}";
     public Avalonia.Media.IBrush BrandBrush

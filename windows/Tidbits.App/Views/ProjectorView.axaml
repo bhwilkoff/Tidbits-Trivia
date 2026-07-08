@@ -63,6 +63,14 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
+                <!-- Lead-capture QR (Wave D) -->
+                <StackPanel IsVisible="{Binding HasLeadCapture}" Spacing="10" HorizontalAlignment="Center" Margin="0,24,0,0">
+                    <TextBlock Text="Join the mailing list" Foreground="White" Opacity="0.8" FontSize="26"
+                               HorizontalAlignment="Center"/>
+                    <Border Background="White" Padding="14" CornerRadius="14" HorizontalAlignment="Center">
+                        <Image x:Name="LeadQr" Width="200" Height="200"/>
+                    </Border>
+                </StackPanel>
             </StackPanel>
         </Viewbox>
     </Panel>

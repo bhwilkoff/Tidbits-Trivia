@@ -27,6 +27,7 @@
                     <TextBox x:Name="SponsorBox" Watermark="Sponsor (optional)" MinWidth="220"/>
                     <TextBox x:Name="BrandHexBox" Watermark="Brand color #hex" MinWidth="130"/>
                 </StackPanel>
+                <TextBox x:Name="LeadUrlBox" Watermark="Mailing-list URL (lead-capture QR, optional)" MaxWidth="360" HorizontalAlignment="Left"/>
                 <StackPanel Orientation="Horizontal" Spacing="8">
                     <ComboBox x:Name="RoundModeBox" MinWidth="160"/>
                     <ComboBox x:Name="RoundCountBox" MinWidth="90"/>

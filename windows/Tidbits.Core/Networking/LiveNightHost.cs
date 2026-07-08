@@ -33,6 +33,7 @@ public sealed class LiveNightHost : ObservableObject
     public bool SpeedBonus { get; set; }
     public string? Sponsor { get; set; }    // Wave D sponsor kit (big-screen footer)
     public string? BrandHex { get; set; }    // Wave D white-label accent (big-screen)
+    public string? LeadCaptureUrl { get; set; } // Wave D lead-capture QR (final standings)
     public string? FastestUid { get; private set; }
     public bool Locked { get; private set; }
     public int? HostChoice { get; private set; }

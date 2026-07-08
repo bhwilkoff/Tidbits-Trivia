@@ -32,11 +32,23 @@ public partial class ProjectorView : UserControl
         RefreshQr();
     }
 
+    private string _leadUrl = "";
+
     private void RefreshQr()
     {
-        var code = (DataContext as LiveHostViewModel)?.Host.Code ?? "";
-        if (code.Length == 0 || code == _qrCode) return;
-        _qrCode = code;
-        try { LobbyQr.Source = QrHelper.Generate(QrHelper.JoinUrl(code), 10); } catch { }
+        var vm = DataContext as LiveHostViewModel;
+        var code = vm?.Host.Code ?? "";
+        if (code.Length > 0 && code != _qrCode)
+        {
+            _qrCode = code;
+            try { LobbyQr.Source = QrHelper.Generate(QrHelper.JoinUrl(code), 10); } catch { }
+        }
+        // Lead-capture QR (Wave D) — points at the venue's mailing-list URL.
+        var lead = vm?.LeadCaptureUrl ?? "";
+        if (lead.Length > 0 && lead != _leadUrl)
+        {
+            _leadUrl = lead;
+            try { LeadQr.Source = QrHelper.Generate(lead, 8); } catch { }
+        }
     }
 }

@@ -17,6 +17,7 @@ public sealed record LiveEvent
     [JsonPropertyName("rounds")] public IReadOnlyList<NightRound> Rounds { get; init; } = new List<NightRound>();
     [JsonPropertyName("sponsor")] public string? Sponsor { get; init; }   // Wave D sponsor kit
     [JsonPropertyName("brandHex")] public string? BrandHex { get; init; } // Wave D white-label accent
+    [JsonPropertyName("leadCaptureURL")] public string? LeadCaptureUrl { get; init; } // Wave D lead capture
 
     [JsonIgnore] public int TotalQuestions => Rounds.Sum(r => r.Count);
     [JsonIgnore] public string Summary =>

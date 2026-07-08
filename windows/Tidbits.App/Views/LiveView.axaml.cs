@@ -62,6 +62,15 @@ public partial class LiveView : UserControl
         RebuildBuilderRounds();
     }
 
+    /// Move a round up (−1) or down (+1) in the running order.
+    private void MoveRound(int index, int delta)
+    {
+        int target = index + delta;
+        if (index < 0 || index >= _rounds.Count || target < 0 || target >= _rounds.Count) return;
+        (_rounds[index], _rounds[target]) = (_rounds[target], _rounds[index]);
+        RebuildBuilderRounds();
+    }
+
     private void RebuildBuilderRounds()
     {
         BuilderRounds.Children.Clear();
@@ -69,11 +78,19 @@ public partial class LiveView : UserControl
         {
             int idx = i;
             var r = _rounds[i];
-            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), Margin = new Avalonia.Thickness(0, 0, 0, 2) };
+            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto,Auto"), Margin = new Avalonia.Thickness(0, 0, 0, 2) };
             row.Children.Add(new TextBlock { Text = $"{idx + 1}. {r.Kind.Title()} · {r.Count} questions", VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center });
-            var del = new Button { Content = "✕", Padding = new Avalonia.Thickness(8, 2), FontSize = 12 };
+            var up = new Button { Content = "▲", Padding = new Avalonia.Thickness(7, 2), FontSize = 11, IsEnabled = idx > 0 };
+            up.Click += (_, _) => MoveRound(idx, -1);
+            Grid.SetColumn(up, 1);
+            row.Children.Add(up);
+            var down = new Button { Content = "▼", Padding = new Avalonia.Thickness(7, 2), FontSize = 11, IsEnabled = idx < _rounds.Count - 1, Margin = new Avalonia.Thickness(4, 0, 0, 0) };
+            down.Click += (_, _) => MoveRound(idx, +1);
+            Grid.SetColumn(down, 2);
+            row.Children.Add(down);
+            var del = new Button { Content = "✕", Padding = new Avalonia.Thickness(8, 2), FontSize = 12, Margin = new Avalonia.Thickness(4, 0, 0, 0) };
             del.Click += (_, _) => { _rounds.RemoveAt(idx); RebuildBuilderRounds(); };
-            Grid.SetColumn(del, 1);
+            Grid.SetColumn(del, 3);
             row.Children.Add(del);
             BuilderRounds.Children.Add(row);
         }

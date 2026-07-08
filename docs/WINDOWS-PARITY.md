@@ -103,7 +103,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [x] 3.45 Networked Trivia-Night host from Windows (LiveNightHost: openRoom/start/reveal+auto-score/next/end) — LIVE cockpit PNG vs real room
 
 ## Slice 5 — Wave A authoring depth
-- [ ] 3.9 Drag-to-reorder rounds/questions
+- [x] 3.9 Reorder rounds — each builder round row gets ▲/▼ buttons (disabled at the ends) to move it in the running order (the native Avalonia idiom, matching the In-Order mode); reordering refreshes the balance meter. (Pointer drag-drop deferred; ▲/▼ is the parity verb)
 - [x] 3.10 Balance meter — as the host composes a custom event, a live meter shows the question-type mix (a bar per type, width ∝ its share) + a plain-language variety verdict ("One-note — add another type" … "Great variety"). Pure LiveEventBalance.ByType/Verdict; unit-tested. (Category balance n/a — category is set once in Night options)
 - [ ] 3.11 Per-round timer/wager/speed/host-note
 - [x] 3.12 CSV import — Create gains an "Import CSV" button: native open-file picker → `CsvQuestions.Parse` (RFC-4180-ish: quoted fields, embedded commas, "" escapes; header + malformed rows dropped) → hand-authored MCQs saved as a replayable set (SavedSetsStore). Pure parser unit-tested (quoting + malformed drops)

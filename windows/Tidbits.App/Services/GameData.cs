@@ -22,6 +22,10 @@ public sealed class GameData
     /// Shared anon-authed RTDB client for non-Live networked features (duels).
     public Tidbits.Core.Networking.FirebaseRtdb Rtdb { get; } = new();
     public string PlayerName => Identity.Current.Name;
+    public Tidbits.Core.Networking.SfxBoard Sfx { get; }
+    /// The Wave B media engine (host-only) — lazy so we don't spin LibVLC unless hosting.
+    private AvPlayer? _av;
+    public AvPlayer Av => _av ??= new AvPlayer();
 
     private GameData(QuestionSources sources)
     {
@@ -37,6 +41,7 @@ public sealed class GameData
         Friends = new Tidbits.Core.Networking.FriendStore(Path.Combine(appDir, "friends.json"));
         Identity = new Tidbits.Core.Networking.PlayerIdentityStore(Path.Combine(appDir, "profile.json"));
         Duels = new Tidbits.Core.Networking.DuelStore(Path.Combine(appDir, "duels.json"));
+        Sfx = new Tidbits.Core.Networking.SfxBoard(Path.Combine(appDir, "sfx-board.json"));
     }
 
     public static GameData FromDirectory(string dir) => new(QuestionSources.LoadFromDirectory(dir));

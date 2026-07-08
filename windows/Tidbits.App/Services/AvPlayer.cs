@@ -77,7 +77,7 @@ public sealed class AvPlayer : IDisposable
     public void SetOutputDevice(string deviceId)
     {
         foreach (var mp in new[] { _sfx, _bed, _clip })
-            try { mp?.SetOutputDevice(null, deviceId); } catch { }
+            try { mp?.SetOutputDevice(deviceId); } catch { }
     }
 
     public void Dispose()

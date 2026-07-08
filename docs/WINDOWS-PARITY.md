@@ -122,7 +122,7 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 - [x] 3.29 In-room paper teams (hybrid) — the host adds a non-networked "paper" team (name dialog) that ranks alongside the phone teams in ONE standings (the hybrid differentiator); scored with the same −/+ override (routed to local paper scores, clamped ≥0). Flows through the cockpit standings, projector, moderation, tie-break, and CSV export. Offline test (add + score + clamp)
 
 ## Slice 7 — Wave B AV & show (Windows audio/video backend)
-- [ ] 3.30 SFX/stinger board (NAudio/CSCore)
+- [x] 3.30 SFX/stinger board — a host sound board on LibVLCSharp (AvPlayer, verified on Windows CI): `SfxBoard` (Core, persisted BYO-clip pads, dedup, cap-24, filename→label) + SfxBoardUi pad grid reachable from the cockpit "🔊 SFX" button; tap a pad → AvPlayer.PlaySfx, "+ Add sound" file-picks audio. Model + label + render tests (PNG). AvPlayer verified on windows-latest CI (168 passed, 0 skipped — LibVLC loads on the x64 ship target)
 - [ ] 3.31 PA output-device routing (WASAPI)
 - [ ] 3.32 Audio round (BYO clips)
 - [ ] 3.33 Looping music beds

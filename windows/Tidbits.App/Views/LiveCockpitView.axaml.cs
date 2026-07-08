@@ -170,6 +170,34 @@ public partial class LiveCockpitView : UserControl
     private async void OnLock(object? sender, RoutedEventArgs e) { if (Vm is { } vm) await vm.Lock(); }
     private async void OnSkip(object? sender, RoutedEventArgs e) { if (Vm is { } vm) await vm.Skip(); }
     private void OnToggleHold(object? sender, RoutedEventArgs e) => Vm?.ToggleHold();
+
+    /// The SFX board (3.30): tap a pad to fire a stinger through the shared AvPlayer;
+    /// "Add sound" picks an audio file the host owns. Rebuilds as pads change.
+    private async void OnSfx(object? sender, RoutedEventArgs e)
+    {
+        var g = Services.GameData.Shared.Value;
+        var dialog = new FAContentDialog { Title = "Sound board", CloseButtonText = "Done" };
+
+        void Rebuild() => dialog.Content = SfxBoardUi.BuildPanel(g.Sfx.Pads,
+            onPlay: path => g.Av.PlaySfx(path),
+            onAdd: async () =>
+            {
+                var top = TopLevel.GetTopLevel(this);
+                if (top is null) return;
+                var files = await top.StorageProvider.OpenFilePickerAsync(new Avalonia.Platform.Storage.FilePickerOpenOptions
+                {
+                    Title = "Add a sound", AllowMultiple = true,
+                    FileTypeFilter = new[] { new Avalonia.Platform.Storage.FilePickerFileType("Audio")
+                        { Patterns = new[] { "*.mp3", "*.wav", "*.m4a", "*.ogg", "*.aac", "*.flac" } } },
+                });
+                foreach (var f in files) g.Sfx.Add(f.Path.LocalPath);
+                Rebuild();
+            },
+            onRemove: path => { g.Sfx.Remove(path); Rebuild(); });
+
+        Rebuild();
+        await dialog.ShowAsync();
+    }
     private async void OnBack(object? sender, RoutedEventArgs e) { if (Vm is { } vm) await vm.Back(); }
 
     private async void OnTimer30(object? sender, RoutedEventArgs e) { if (Vm is { } vm) await vm.StartTimer(30); RefreshCountdown(); }

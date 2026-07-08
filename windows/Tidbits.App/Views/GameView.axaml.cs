@@ -58,6 +58,7 @@ public partial class GameView : UserControl
         if (q.Ordering is { } ordering) { BuildOrdering(engine, ordering, reveal); return; }
         if (q.Matching is { } matching) { BuildMatch(engine, matching, reveal); return; }
         if (q.Enumerate is { } enumSpec) { BuildEnum(engine, enumSpec, reveal); return; }
+        if (q.ImageUrl is { } imageUrl) { BuildPicture(engine, q, imageUrl, reveal); return; }
         if (engine.Mode == GameMode.Stake) { BuildStake(engine, q, reveal); return; }
         BuildMcq(engine, q, reveal);
     }
@@ -306,6 +307,48 @@ public partial class GameView : UserControl
         done.Click += (_, _) => engine.FinishEnum();
         OptionsPanel.Children.Add(done);
         box.Focus();
+    }
+
+    /// Picture ID — a Commons image (async-decoded via the shared ImageCache,
+    /// with a loading + unavailable fallback) above the 4 vetted MCQ options.
+    private void BuildPicture(GameEngine engine, Tidbits.Core.Models.Question q, string imageUrl, bool reveal)
+    {
+        var img = new Image { Stretch = Stretch.Uniform };
+        var hint = new TextBlock
+        {
+            Text = "Loading image…", FontSize = 13, Opacity = 0.6,
+            HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center,
+        };
+        var stack = new Panel();
+        stack.Children.Add(hint);
+        stack.Children.Add(img);
+        var frame = new Border
+        {
+            Height = 220, HorizontalAlignment = HorizontalAlignment.Stretch,
+            Background = new SolidColorBrush(Color.Parse("#14808080")), CornerRadius = new CornerRadius(10),
+            ClipToBounds = true, Margin = new Thickness(0, 0, 0, 12), Child = stack,
+        };
+        OptionsPanel.Children.Add(frame);
+
+        if (Services.ImageCache.Shared.Cached(imageUrl) is { } cached)
+        {
+            img.Source = cached; hint.IsVisible = false;
+        }
+        else
+        {
+            string qid = q.Id;
+            Services.ImageCache.Shared.LoadAsync(imageUrl).ContinueWith(t =>
+            {
+                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    if (_vm?.Engine.Current?.Id != qid) return; // the question moved on
+                    if (t.Result is { } bmp) { img.Source = bmp; hint.IsVisible = false; }
+                    else hint.Text = "Image unavailable";
+                });
+            });
+        }
+
+        BuildMcq(engine, q, reveal);
     }
 
     /// Closest Call — a slider over [min,max] plus a live value read-out and a

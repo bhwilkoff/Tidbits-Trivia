@@ -133,6 +133,25 @@ public class SpecialtySurfaceSnapshot
     }
 
     [AvaloniaFact]
+    public async Task Picture_id_renders_an_image_frame_over_options()
+    {
+        var (engine, _, win) = Start(GameMode.PictureId);
+        await engine.Start(GameMode.PictureId, TriviaCategory.Named("mixed"));
+        Assert.Equal(GameEngine.Phase.Playing, engine.CurrentPhase);
+        Assert.False(string.IsNullOrEmpty(engine.Current!.ImageUrl), "picture questions carry an image URL");
+        Assert.Equal(4, engine.Current!.Options.Count);
+        Dispatcher.UIThread.RunJobs();
+        // The image loads async over the network; the frame + the 4 vetted options
+        // render immediately (loading/unavailable fallback until decode completes).
+        win.CaptureRenderedFrame()!.Save(Path.Combine(Art(), "game-picture.png"));
+
+        // The options still score like MCQ.
+        engine.Submit(engine.Current!.CorrectIndex);
+        Assert.Equal(GameEngine.Phase.Reveal, engine.CurrentPhase);
+        Assert.True(engine.LastAnswer!.IsCorrect);
+    }
+
+    [AvaloniaFact]
     public async Task Remaining_tick_does_not_rebuild_the_answer_surface()
     {
         // Regression guard: the 100ms clock fires OnPropertyChanged(nameof(Remaining));

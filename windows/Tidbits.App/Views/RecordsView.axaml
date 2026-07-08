@@ -9,9 +9,7 @@
             <TextBlock Text="Compete against your past self." FontSize="15" Opacity="0.7"/>
 
             <!-- Profile / sync banner (2.16): who you're playing as + where records live -->
-            <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
-                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
-                    BorderThickness="1" CornerRadius="12" Padding="14,12">
+            <Border Classes="card" Padding="14,12">
                 <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
                     <Border x:Name="ProfileAvatar" Width="40" Height="40" CornerRadius="20"/>
                     <StackPanel VerticalAlignment="Center">

@@ -19,5 +19,24 @@
     <Application.Styles>
         <!-- Brand-coral accent (WINDOWS-DESIGN §5.1) instead of the default purple. -->
         <sty:FluentAvaloniaTheme CustomAccentColor="#FF5C35" />
+
+        <!-- Reusable design-token styles (WINDOWS-DESIGN §7.1) — one definition, many
+             views: chunky card, chunky/compact buttons. Adopt via Classes="card" etc. -->
+        <Style Selector="Border.card">
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="20"/>
+        </Style>
+        <Style Selector="Button.chunky">
+            <Setter Property="Padding" Value="24,13"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="CornerRadius" Value="10"/>
+        </Style>
+        <Style Selector="Button.compact">
+            <Setter Property="Padding" Value="14,8"/>
+            <Setter Property="CornerRadius" Value="8"/>
+        </Style>
     </Application.Styles>
 </Application>

@@ -27,9 +27,11 @@ public partial class CreateView : UserControl
         if (topic.Length < 2) { Status("Type a topic to generate a quiz."); return; }
 
         GenBtn.IsEnabled = false;
+        GenProgress.IsVisible = true;              // loading state
         Status("Building your quiz…");
         var questions = await GameData.Shared.Value.Provider.CreateQuestions(topic, 10);
         GenBtn.IsEnabled = true;
+        GenProgress.IsVisible = false;
 
         if (questions.Count == 0)
         {

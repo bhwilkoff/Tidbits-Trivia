@@ -13,6 +13,7 @@
                             Classes="accent" Padding="24,13" FontWeight="Bold"/>
                     <Button Content="Import CSV" Click="OnImportCsv" Padding="18,13" FontWeight="SemiBold"/>
                 </StackPanel>
+                <ProgressBar x:Name="GenProgress" IsIndeterminate="True" IsVisible="False" Height="4"/>
                 <TextBlock x:Name="StatusText" IsVisible="False" Opacity="0.75" TextWrapping="Wrap" FontSize="14"/>
                 <Button x:Name="SaveBtn" Content="Save this set" Click="OnSaveSet" IsVisible="False"
                         Padding="18,10" FontWeight="SemiBold" HorizontalAlignment="Left"/>

@@ -108,12 +108,12 @@ class GameState(
                     .shuffled().take(Mode.MIX.count)
             }
             mode == Mode.DAILY -> Corpus.daily(dailyDay ?: dayKey(), 7)
-            mode == Mode.PICTURE_ID -> Pictures.pull(category.id, store.seenSet, mode.count)
-            mode == Mode.THIS_OR_THAT -> ThisOrThat.pull(category.id, store.seenSet, mode.count)
-            mode == Mode.CLOSEST_CALL -> ClosestCall.pull(category.id, store.seenSet, mode.count)
-            mode == Mode.ORDERING -> OrderingSet.pull(category.id, store.seenSet, mode.count)
-            mode == Mode.MATCHING -> MatchingSet.pull(category.id, store.seenSet, mode.count)
-            mode == Mode.TYPE_ANSWER -> TypeAnswerSet.pull(category.id, store.seenSet, mode.count)
+            mode == Mode.PICTURE_ID -> filled(Pictures, mode.count)
+            mode == Mode.THIS_OR_THAT -> filled(ThisOrThat, mode.count)
+            mode == Mode.CLOSEST_CALL -> filled(ClosestCall, mode.count)
+            mode == Mode.ORDERING -> filled(OrderingSet, mode.count)
+            mode == Mode.MATCHING -> filled(MatchingSet, mode.count)
+            mode == Mode.TYPE_ANSWER -> filled(TypeAnswerSet, mode.count)
             mode == Mode.ODD_ONE_OUT -> OddOneOutSet.pull("mixed", store.seenSet, mode.count)
             // Small pool (~11) and a REPLAYABLE recall drill — ignore the seen-set.
             mode == Mode.ENUMERATE -> EnumerateSet.pull("mixed", emptySet(), mode.count)
@@ -134,15 +134,28 @@ class GameState(
 
     /** One mode's questions, the same way start() sources each mode (for MIX). */
     private fun sourceFor(m: Mode, need: Int): List<Question> = when (m) {
-        Mode.PICTURE_ID -> Pictures.pull(category.id, store.seenSet, need)
-        Mode.THIS_OR_THAT -> ThisOrThat.pull(category.id, store.seenSet, need)
-        Mode.CLOSEST_CALL -> ClosestCall.pull(category.id, store.seenSet, need)
-        Mode.ORDERING -> OrderingSet.pull(category.id, store.seenSet, need)
-        Mode.MATCHING -> MatchingSet.pull(category.id, store.seenSet, need)
-        Mode.TYPE_ANSWER -> TypeAnswerSet.pull(category.id, store.seenSet, need)
+        Mode.PICTURE_ID -> filled(Pictures, need)
+        Mode.THIS_OR_THAT -> filled(ThisOrThat, need)
+        Mode.CLOSEST_CALL -> filled(ClosestCall, need)
+        Mode.ORDERING -> filled(OrderingSet, need)
+        Mode.MATCHING -> filled(MatchingSet, need)
+        Mode.TYPE_ANSWER -> filled(TypeAnswerSet, need)
         Mode.ODD_ONE_OUT -> OddOneOutSet.pull("mixed", store.seenSet, need)
         Mode.ENUMERATE -> EnumerateSet.pull("mixed", emptySet(), need)
         else -> Corpus.pull(category.id, store.seenSet, need)
+    }
+
+    /** Never-empty per-type pull: picked category → whole type pool ("mixed") →
+     *  Classic corpus backstop, so a coverage hole (e.g. sports×matching = 0 rows)
+     *  plays a full round instead of the ERROR screen. Keeps the MODE pure. */
+    private fun filled(set: JsonQuestionSet, need: Int): List<Question> {
+        var qs = set.pull(category.id, store.seenSet, need)
+        if (qs.size < need && category.id != "mixed") {
+            val have = store.seenSet + qs.map { it.id }.toSet()
+            qs = qs + set.pull("mixed", have, need - qs.size)
+        }
+        if (qs.isEmpty()) qs = Corpus.pull(category.id, store.seenSet, need)
+        return qs
     }
 
     suspend fun restart() = start()

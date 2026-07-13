@@ -455,13 +455,23 @@ suspend fun buildNightQuestions(rounds: List<Pair<String, Int>>, categoryId: Str
     return all
 }
 
+/** category → whole type pool ("mixed") → Classic backstop; never empty. */
+private fun filledType(set: JsonQuestionSet, categoryId: String, count: Int, seen: Set<String>): List<Question> {
+    var qs = set.pull(categoryId, seen, count)
+    if (qs.size < count && categoryId != "mixed") {
+        val have = seen + qs.map { it.id }.toSet()
+        qs = qs + set.pull("mixed", have, count - qs.size)
+    }
+    return qs.ifEmpty { Corpus.pull(categoryId, seen, count) }
+}
+
 private suspend fun sourceNightType(kind: String, categoryId: String, count: Int, seen: Set<String>): List<Question> = when (kind) {
-    "pictureId" -> Pictures.pull(categoryId, seen, count)
-    "thisOrThat" -> ThisOrThat.pull(categoryId, seen, count)
-    "closestCall" -> ClosestCall.pull(categoryId, seen, count)
-    "ordering" -> OrderingSet.pull(categoryId, seen, count)
-    "matching" -> MatchingSet.pull(categoryId, seen, count)
-    "typeAnswer" -> TypeAnswerSet.pull(categoryId, seen, count)
+    "pictureId" -> filledType(Pictures, categoryId, count, seen)
+    "thisOrThat" -> filledType(ThisOrThat, categoryId, count, seen)
+    "closestCall" -> filledType(ClosestCall, categoryId, count, seen)
+    "ordering" -> filledType(OrderingSet, categoryId, count, seen)
+    "matching" -> filledType(MatchingSet, categoryId, count, seen)
+    "typeAnswer" -> filledType(TypeAnswerSet, categoryId, count, seen)
     "oddOneOut" -> OddOneOutSet.pull("mixed", seen, count)
     "enumerate" -> EnumerateSet.pull("mixed", emptySet(), count)
     else -> {

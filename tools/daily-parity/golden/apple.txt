@@ -1,4 +1,4 @@
-2026-07-01 src:cloze:Graham_Kennedy src:cloze:Black_panther src:cloze:Design src:describe:Brian_Austin_Green rel:P17:Q2397132 sup:P2046:248746902375 rel:P170:Q1850543
-2026-07-02 src:cloze:George_Headley fact:P570:Q372947 rel:P17:Q154849 wd:composer:Q104876047 src:describe:Ice-T src:cloze:Gatorade wd:continent:Q1492
-2026-12-31 fact:P569:Q17317909 fact:P569:Q203840 src:describe:William_Godwin src:cloze:Denis_Villeneuve wd:director:Q111947659 src:describe:Eugene_O'Neill src:cloze:Dilip_Kumar
-2027-02-28 src:cloze:Scarlett_Johansson src:describe:Patrick_Dempsey wd:continent:Q28513 wd:continent:Q28515 wd:composer:Q724008 wd:director:Q104123 src:describe:Cobie_Smulders
+2026-07-01 src:cloze:Graham_Kennedy chron:P571:829129638361 fact:P569:Q5213719 src:cloze:Black_panther fact:P569:Q207307 fact:P577:Q13255497 src:cloze:Design
+2026-07-02 src:cloze:George_Headley fact:P577:Q110152284 fact:P570:Q372947 rel:P17:Q154849 wd:composer:Q104876047 src:describe:Ice-T src:cloze:Gatorade
+2026-12-31 fact:P569:Q17317909 fact:P569:Q203840 sup:P2046:53378097545 src:describe:William_Godwin src:cloze:Denis_Villeneuve wd:director:Q111947659 src:describe:Eugene_O'Neill
+2027-02-28 fact:P571:Q329426 src:cloze:Scarlett_Johansson chron:P569:523585914880 src:describe:Patrick_Dempsey wd:continent:Q28513 wd:continent:Q28515 wd:composer:Q724008

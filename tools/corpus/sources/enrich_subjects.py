@@ -410,7 +410,8 @@ def main():
                 for c in claims.get(p, [])[:1]:
                     tq = _mainsnak_qid(c)
                     if tq:
-                        con.execute("INSERT INTO relation VALUES (?,?,?,?)", (qid, p, lbl, tq)); rels += 1
+                        # 5 cols: target_label is NULL here, filled by resolve_relations.py.
+                        con.execute("INSERT INTO relation VALUES (?,?,?,?,?)", (qid, p, lbl, tq, None)); rels += 1
         con.commit()
         if (i // 50) % 10 == 0:
             print(f"  …enriched {min(i+50, len(qids))}/{len(qids)}")

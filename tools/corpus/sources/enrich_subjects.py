@@ -58,6 +58,51 @@ OCCUPATION = {
     "Q842782": HISTORY, "Q3242115": HISTORY,
     "Q2304859": HISTORY, "Q1097498": HISTORY, "Q11900058": HISTORY,  # sovereign/ruler/explorer
     "Q10871364": SPORTS, "Q11774891": SPORTS,                        # baseball / ice-hockey player
+    # --- NULL-coverage round (2026-07): top uncovered occupations among the
+    #     7,708 uncategorized kept subjects. Only domain-unambiguous roles added;
+    #     genuinely-ambiguous ones (entrepreneur, businessperson, socialite,
+    #     lawyer, model, criminal/serial-killer, generic clergy) left UNMAPPED so
+    #     a better-matching occupation wins, else the subject stays NULL.
+    # sports
+    "Q10349745": SPORTS,  # racing automobile driver
+    "Q10841764": SPORTS,  # Formula One driver
+    "Q11607585": SPORTS,  # mixed martial arts fighter
+    "Q13474373": SPORTS,  # professional wrestler
+    "Q13381572": SPORTS,  # artistic gymnast
+    "Q11303721": SPORTS,  # golfer
+    "Q2309784": SPORTS,   # sport cyclist
+    "Q14089670": SPORTS,  # rugby union player
+    "Q12369333": SPORTS,  # amateur wrestler
+    "Q10843402": SPORTS,  # swimmer
+    # science
+    "Q11631": SCIENCE,    # astronaut
+    "Q82594": SCIENCE,    # computer scientist
+    "Q5482740": SCIENCE,  # programmer
+    "Q4773904": SCIENCE,  # anthropologist
+    "Q212980": SCIENCE,   # psychologist
+    "Q211346": SCIENCE,   # psychiatrist
+    # arts (writers / visual / design / performing)
+    "Q3501317": ARTS,     # fashion designer
+    "Q33231": ARTS,       # photographer
+    "Q1323191": ARTS,     # costume designer
+    "Q5716684": ARTS,     # dancer (performing art)
+    # DELIBERATELY NOT MAPPED (too broad — flip multi-role people who merely
+    # wrote: a general/scientist with a memoir is not "arts"): autobiographer
+    # Q18814623, non-fiction writer Q15980158, theologian Q1234713, artist Q483501.
+    # music
+    "Q2865819": MUSIC,    # opera singer
+    # screen
+    "Q17125263": SCREEN,  # YouTuber
+    "Q488111": SCREEN,    # pornographic actor (actor -> screen; keep gate is separate)
+    # history (nobility / military / regency)
+    "Q2478141": HISTORY,  # aristocrat
+    "Q1402561": HISTORY,  # military leader
+    "Q477406": HISTORY,   # regent
+    "Q12097": HISTORY,    # king
+    "Q38239859": HISTORY, # army officer
+    "Q10669499": HISTORY, # naval officer
+    "Q4991371": HISTORY,  # soldier
+    "Q19934710": HISTORY, # air force officer
 }
 # P31 instance-of -> domain (non-humans)
 INSTANCE = {
@@ -121,6 +166,98 @@ INSTANCE = {
     "Q31629": SPORTS,       # type of sport
     "Q5503": GEOGRAPHY,     # rapid transit
     "Q5741069": MUSIC,      # rock band
+    # --- NULL-coverage round (2026-07): top uncovered non-human P31 types.
+    #     Ambiguous / no-home types (websites, brands, public companies, orgs,
+    #     universities, airlines, currencies, languages, writing systems, foods,
+    #     holidays, months, ethnic groups, abstract concepts/fields) left UNMAPPED.
+    # sports
+    "Q476028": SPORTS,      # association football club
+    "Q27020041": SPORTS,    # sports season
+    "Q18608583": SPORTS,    # recurring sporting event
+    "Q135408445": SPORTS,   # men's national association football team
+    "Q2312410": SPORTS,     # sports discipline
+    "Q1478437": SPORTS,     # association football competition
+    "Q15991303": SPORTS,    # association football league
+    "Q17317604": SPORTS,    # professional wrestling event
+    "Q15991290": SPORTS,    # professional sports league
+    "Q623109": SPORTS,      # sports league
+    "Q847017": SPORTS,      # sports club
+    # screen (film / TV / games; by medium for characters)
+    "Q15773347": SCREEN,    # film character
+    "Q15773317": SCREEN,    # television character
+    "Q15711870": SCREEN,    # animated character
+    "Q1569167": SCREEN,     # video game character
+    "Q7058673": SCREEN,     # video game series
+    "Q117467246": SCREEN,   # animated television series
+    "Q3464665": SCREEN,     # television series season
+    "Q196600": SCREEN,      # media franchise
+    # arts (comics / literature / drama / photograph; by medium for characters)
+    "Q21198342": ARTS,      # manga series (comics, matches Q1004 comics -> arts)
+    "Q3658341": ARTS,       # literary character
+    "Q1114461": ARTS,       # comics character
+    "Q1667921": ARTS,       # novel series
+    "Q116476516": ARTS,     # dramatic work
+    "Q125191": ARTS,        # photograph
+    "Q223393": ARTS,        # literary genre
+    # music
+    "Q641066": MUSIC,       # girl group
+    "Q110295396": MUSIC,    # type of musical instrument
+    # geography (subnational units / regions / parks / flags)
+    "Q12443800": GEOGRAPHY, # state of India
+    "Q15149663": GEOGRAPHY, # state of Mexico
+    "Q150093": GEOGRAPHY,   # voivodeship of Poland
+    "Q180673": GEOGRAPHY,   # ceremonial county of England
+    "Q3502482": GEOGRAPHY,  # cultural region
+    "Q1620908": GEOGRAPHY,  # historical region (a place)
+    "Q15239622": GEOGRAPHY, # disputed territory
+    "Q34918903": GEOGRAPHY, # National Park of the United States
+    "Q186516": GEOGRAPHY,   # national flag
+    # history (periods / conflicts / dynasties / cultures / mythology / religion)
+    "Q11514315": HISTORY,   # historical period
+    "Q124734": HISTORY,     # rebellion
+    "Q350604": HISTORY,     # armed conflict
+    "Q164950": HISTORY,     # dynasty
+    "Q465299": HISTORY,     # archaeological culture
+    "Q11042": HISTORY,      # culture
+    "Q4204501": HISTORY,    # historical ethnic group
+    "Q17149090": HISTORY,   # armed organization
+    "Q7278": HISTORY,       # political party
+    "Q9174": HISTORY,       # religion
+    # mythology & biblical (ancient world -> history)
+    "Q20643955": HISTORY,   # human biblical figure
+    "Q29154430": HISTORY,   # book of the Bible
+    "Q179461": HISTORY,     # religious text
+    "Q30149195": HISTORY,   # biblical concept
+    "Q22989102": HISTORY,   # Greek deity
+    "Q205985": HISTORY,     # goddess
+    "Q41863069": HISTORY,   # war deity
+    "Q113103481": HISTORY,  # Olympian god
+    "Q22988604": HISTORY,   # mythological Greek character
+    "Q4271324": HISTORY,    # mythical character
+    "Q13002315": HISTORY,   # legendary figure
+    # science (anatomy / medicine / math / physics / chemistry / astronomy / CS / biology)
+    "Q112826905": SCIENCE,  # class of anatomical entity
+    "Q103812529": SCIENCE,  # organ type
+    "Q5058355": SCIENCE,    # cellular component
+    "Q112965645": SCIENCE,  # symptom or sign
+    "Q24034552": SCIENCE,   # mathematical concept
+    "Q214070": SCIENCE,     # physical law
+    "Q17444909": SCIENCE,   # astronomical object type
+    "Q59199015": SCIENCE,   # group of stereoisomers (drug/chemistry)
+    "Q9143": SCIENCE,       # programming language
+    "Q12772052": SCIENCE,   # multi-paradigm programming language
+    "Q3239681": SCIENCE,    # scientific theory
+    "Q67206691": SCIENCE,   # infrared source (astronomy)
+    "Q39367": SCIENCE,      # dog breed (zoology)
+    "Q82047057": SCIENCE,   # UCUM derived unit
+}
+# non-quizzable Wikimedia meta types -> DROP (keep=0): never good trivia subjects
+DROP_INSTANCE = {
+    "Q13406463",   # Wikimedia list article
+    "Q4167410",    # Wikimedia disambiguation page
+    "Q4167836",    # Wikimedia category
+    "Q11266439",   # Wikimedia template
+    "Q13406463",   # (dup, harmless)
 }
 # appropriateness gate — instance-of types we don't ask trivia about (mission)
 BLOCK_INSTANCE = {

@@ -141,13 +141,15 @@ def main():
                     seen_a.add(lk); group.append(name)
             groups.append(group)
         prompt = f"Name as many countries in {cont} as you can"
-        out.append([pid(prompt), prompt, groups, "Geography", SECONDS,
+        out.append([pid(prompt), prompt, groups, "geography", SECONDS,
                     f"https://en.wikipedia.org/wiki/{cont.replace(' ', '_')}"])
 
-    # 2. Hardcoded canonical sets.
+    # 2. Hardcoded canonical sets. Category IDs are canonical LOWERCASE (they must
+    # match the app's TriviaCategory ids — "geography"/"science" — or a
+    # category-filtered lookup silently misses; see the 2026-07 load audit).
     for prompt, cat, entries, url in HARDCODED:
         groups = [[name] + aliases for name, aliases in entries]
-        out.append([pid(prompt), prompt, groups, cat, SECONDS, url])
+        out.append([pid(prompt), prompt, groups, cat.lower(), SECONDS, url])
 
     payload = {"version": hashlib.sha1(json.dumps(out).encode()).hexdigest()[:12],
                "count": len(out), "questions": out}

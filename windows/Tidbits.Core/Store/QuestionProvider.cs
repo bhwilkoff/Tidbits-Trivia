@@ -40,7 +40,7 @@ public sealed class QuestionProvider
         {
             case GameMode.PictureId or GameMode.ThisOrThat or GameMode.ClosestCall
                 or GameMode.Ordering or GameMode.Matching or GameMode.TypeAnswer:
-                return _src.Enrich(mode).Questions(category.Id, _seen, need);
+                return Filled(_src.Enrich(mode), category, need, _seen);
             case GameMode.OddOneOut: // geography-only data; ignore the picked category
                 return _src.Enrich(mode).Questions("mixed", _seen, need);
             case GameMode.Enumerate: // small replayable pool; ignore the seen-set (like Daily)
@@ -86,13 +86,29 @@ public sealed class QuestionProvider
         return all;
     }
 
+    /// Never-empty per-type pull for the category-filtered special types: try the
+    /// picked category, relax to the whole type pool ("mixed") to top up short/empty
+    /// combos (e.g. sports×matching = 0 rows), then — only if the type file failed to
+    /// load entirely — a Classic corpus backstop. Keeps the MODE pure.
+    private List<Question> Filled(Data.JsonQuestionSource source, TriviaCategory category, int need, ISet<string> excluding)
+    {
+        var qs = source.Questions(category.Id, excluding, need);
+        if (qs.Count < need && category.Id != "mixed")
+        {
+            var have = new HashSet<string>(excluding);
+            have.UnionWith(qs.Select(q => q.Id));
+            qs.AddRange(source.Questions("mixed", have, need - qs.Count));
+        }
+        return qs.Count > 0 ? qs : _src.Corpus.Questions(category.Id, excluding, need);
+    }
+
     private async Task<List<Question>> Sourced(GameMode type, TriviaCategory category, int count, ISet<string> excluding)
     {
         switch (type)
         {
             case GameMode.PictureId or GameMode.ThisOrThat or GameMode.ClosestCall
                 or GameMode.Ordering or GameMode.Matching or GameMode.TypeAnswer:
-                return _src.Enrich(type).Questions(category.Id, excluding, count);
+                return Filled(_src.Enrich(type), category, count, excluding);
             case GameMode.OddOneOut:
                 return _src.Enrich(type).Questions("mixed", excluding, count);
             case GameMode.Enumerate:

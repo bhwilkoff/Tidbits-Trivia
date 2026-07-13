@@ -42,22 +42,22 @@ final class QuestionProvider {
         if mode == .daily { return await dailyQuestions(category: category, day: dailyDay ?? Self.dayKey()) }
         // Enrichment-built modes ride their own bundled JSON source (E1).
         if mode == .pictureId {
-            return JSONQuestionSource.picture.questions(categoryID: category.id, excluding: seen, limit: need)
+            return filled(.picture, category: category, need: need, excluding: seen)
         }
         if mode == .thisOrThat {
-            return JSONQuestionSource.thisOrThat.questions(categoryID: category.id, excluding: seen, limit: need)
+            return filled(.thisOrThat, category: category, need: need, excluding: seen)
         }
         if mode == .closestCall {
-            return JSONQuestionSource.closestCall.questions(categoryID: category.id, excluding: seen, limit: need)
+            return filled(.closestCall, category: category, need: need, excluding: seen)
         }
         if mode == .ordering {
-            return JSONQuestionSource.ordering.questions(categoryID: category.id, excluding: seen, limit: need)
+            return filled(.ordering, category: category, need: need, excluding: seen)
         }
         if mode == .matching {
-            return JSONQuestionSource.matching.questions(categoryID: category.id, excluding: seen, limit: need)
+            return filled(.matching, category: category, need: need, excluding: seen)
         }
         if mode == .typeAnswer {
-            return JSONQuestionSource.typeAnswer.questions(categoryID: category.id, excluding: seen, limit: need)
+            return filled(.typeAnswer, category: category, need: need, excluding: seen)
         }
         if mode == .oddOneOut {
             // Odd-one-out is geography-only data; ignore the picked category.
@@ -112,16 +112,33 @@ final class QuestionProvider {
         return all
     }
 
+    /// Never-empty per-type pull for the category-filtered special types: try the
+    /// picked category, then relax to the whole type pool ("mixed") to top up
+    /// short/empty combos (e.g. sports×matching → 0 rows), then — only if the type
+    /// file failed to load entirely — a Classic corpus backstop so the player is
+    /// never stranded. Keeps the MODE pure (a Match Up round stays Match Up).
+    private func filled(_ source: JSONQuestionSource, category: TriviaCategory, need: Int, excluding: Set<String>) -> [Question] {
+        var qs = source.questions(categoryID: category.id, excluding: excluding, limit: need)
+        if qs.count < need && category.id != "mixed" {
+            let have = excluding.union(qs.map(\.id))
+            qs.append(contentsOf: source.questions(categoryID: "mixed", excluding: have, limit: need - qs.count))
+        }
+        if qs.isEmpty {
+            qs = CorpusDatabase.shared.questions(categoryID: category.id, excluding: excluding, limit: need)
+        }
+        return qs
+    }
+
     /// Source `count` questions of one TYPE, the same way `questions(mode:)`
     /// does per mode — factored out so the night builder reuses it exactly.
     private func sourced(type: GameMode, category: TriviaCategory, count: Int, excluding: Set<String>) async -> [Question] {
         switch type {
-        case .pictureId:   return JSONQuestionSource.picture.questions(categoryID: category.id, excluding: excluding, limit: count)
-        case .thisOrThat:  return JSONQuestionSource.thisOrThat.questions(categoryID: category.id, excluding: excluding, limit: count)
-        case .closestCall: return JSONQuestionSource.closestCall.questions(categoryID: category.id, excluding: excluding, limit: count)
-        case .ordering:    return JSONQuestionSource.ordering.questions(categoryID: category.id, excluding: excluding, limit: count)
-        case .matching:    return JSONQuestionSource.matching.questions(categoryID: category.id, excluding: excluding, limit: count)
-        case .typeAnswer:  return JSONQuestionSource.typeAnswer.questions(categoryID: category.id, excluding: excluding, limit: count)
+        case .pictureId:   return filled(.picture, category: category, need: count, excluding: excluding)
+        case .thisOrThat:  return filled(.thisOrThat, category: category, need: count, excluding: excluding)
+        case .closestCall: return filled(.closestCall, category: category, need: count, excluding: excluding)
+        case .ordering:    return filled(.ordering, category: category, need: count, excluding: excluding)
+        case .matching:    return filled(.matching, category: category, need: count, excluding: excluding)
+        case .typeAnswer:  return filled(.typeAnswer, category: category, need: count, excluding: excluding)
         case .oddOneOut:   return JSONQuestionSource.oddOneOut.questions(categoryID: "mixed", excluding: excluding, limit: count)
         case .enumerate:   return JSONQuestionSource.enumerate.questions(categoryID: "mixed", excluding: [], limit: count)
         default:

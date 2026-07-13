@@ -178,7 +178,7 @@ struct ContentView_tvOS: View {
     /// chip row directly beneath it.
     private var quickActionsRow: some View {
         HStack(spacing: 24) {
-            Button { play(store.surpriseMe().mode, store.surpriseMe().category) } label: {
+            Button { let s = store.surpriseMe(); play(s.mode, s.category) } label: {
                 Label("Surprise me", systemImage: "die.face.5.fill")
                     .font(.system(size: 27, weight: .bold, design: .rounded))
             }

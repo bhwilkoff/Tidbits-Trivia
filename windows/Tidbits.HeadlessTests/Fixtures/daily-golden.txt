@@ -1,4 +1,4 @@
-2026-07-01 src:cloze:Graham_Kennedy chron:P571:829129638361 src:cloze:Sean_Payton fact:P569:Q5213719 src:cloze:Richard_Osman src:cloze:Black_panther fact:P569:Q207307
-2026-07-02 src:describe:Red,_White_&_Royal_Blue src:cloze:George_Headley wd:director:Q488041 fact:P577:Q110152284 src:cloze:Krist_Novoselic fact:P570:Q372947 rel:P17:Q154849
-2026-12-31 src:cloze:Virupaksha_(film) src:cloze:Amanita_phalloides src:describe:Hydrogen_fluoride src:describe:The_Chronicles_of_Narnia fact:P569:Q17317909 fact:P569:Q203840 src:describe:Plácido_Domingo
+2026-07-01 src:cloze:Graham_Kennedy chron:P571:829129638361 src:cloze:Sean_Payton fact:P569:Q5213719 src:cloze:Richard_Osman num:P2048:Q42225228 src:cloze:Black_panther
+2026-07-02 src:describe:Red,_White_&_Royal_Blue num:P2067:Q1009230 src:cloze:George_Headley wd:director:Q488041 num:P2067:Q1933507 fact:P577:Q110152284 src:cloze:Krist_Novoselic
+2026-12-31 src:cloze:Virupaksha_(film) src:cloze:Amanita_phalloides num:P2048:Q4679732 src:describe:Hydrogen_fluoride src:describe:The_Chronicles_of_Narnia fact:P569:Q17317909 fact:P569:Q203840
 2027-02-28 fact:P571:Q329426 src:cloze:Scarlett_Johansson src:describe:Ocean's_Thirteen src:cloze:Najwa_Nimri chron:P569:523585914880 src:cloze:Andromeda_(mythology) src:describe:Patrick_Dempsey

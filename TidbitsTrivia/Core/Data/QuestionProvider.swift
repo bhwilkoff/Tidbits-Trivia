@@ -60,16 +60,15 @@ final class QuestionProvider {
             return filled(.typeAnswer, category: category, need: need, excluding: seen)
         }
         if mode == .oddOneOut {
-            // Odd-one-out is geography-only data; ignore the picked category.
-            return JSONQuestionSource.oddOneOut.questions(categoryID: "mixed", excluding: seen, limit: need)
+            // Every category now has odd-one-out coverage — honor the picked
+            // category (filled() relaxes to the whole pool for safety).
+            return filled(.oddOneOut, category: category, need: need, excluding: seen)
         }
         if mode == .enumerate {
-            // A few list puzzles per round; curated sets span categories, so don't
-            // filter by the picked category (the set IS the topic). The pool is
-            // small (≈11) and enumeration is a REPLAYABLE recall drill — naming
-            // the countries of Asia again is the point, not a spoiler — so ignore
-            // the seen-set (like Daily) rather than exhaust it after a few rounds.
-            return JSONQuestionSource.enumerate.questions(categoryID: "mixed", excluding: [], limit: need)
+            // Enumeration is a REPLAYABLE recall drill — naming the countries of
+            // Asia again is the point, not a spoiler — so ignore the seen-set
+            // (pass []). filled() honors the category with a mixed fallback.
+            return filled(.enumerate, category: category, need: need, excluding: [])
         }
         if mode == .ladder {
             // Pull a pool, sort by the F3 derived difficulty, then span easy→hard.
@@ -139,8 +138,8 @@ final class QuestionProvider {
         case .ordering:    return filled(.ordering, category: category, need: count, excluding: excluding)
         case .matching:    return filled(.matching, category: category, need: count, excluding: excluding)
         case .typeAnswer:  return filled(.typeAnswer, category: category, need: count, excluding: excluding)
-        case .oddOneOut:   return JSONQuestionSource.oddOneOut.questions(categoryID: "mixed", excluding: excluding, limit: count)
-        case .enumerate:   return JSONQuestionSource.enumerate.questions(categoryID: "mixed", excluding: [], limit: count)
+        case .oddOneOut:   return filled(.oddOneOut, category: category, need: count, excluding: excluding)
+        case .enumerate:   return filled(.enumerate, category: category, need: count, excluding: [])
         default:
             // General-knowledge MCQ round — corpus first (offline), live top-up if thin.
             var pulled = CorpusDatabase.shared.questions(categoryID: category.id, excluding: excluding, limit: count)

@@ -472,8 +472,8 @@ private suspend fun sourceNightType(kind: String, categoryId: String, count: Int
     "ordering" -> filledType(OrderingSet, categoryId, count, seen)
     "matching" -> filledType(MatchingSet, categoryId, count, seen)
     "typeAnswer" -> filledType(TypeAnswerSet, categoryId, count, seen)
-    "oddOneOut" -> OddOneOutSet.pull("mixed", seen, count)
-    "enumerate" -> EnumerateSet.pull("mixed", emptySet(), count)
+    "oddOneOut" -> filledType(OddOneOutSet, categoryId, count, seen)
+    "enumerate" -> filledType(EnumerateSet, categoryId, count, emptySet())
     else -> {
         var pulled = Corpus.pull(categoryId, seen, count)
         if (pulled.size < count) {

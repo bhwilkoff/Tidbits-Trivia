@@ -41,10 +41,10 @@ public sealed class QuestionProvider
             case GameMode.PictureId or GameMode.ThisOrThat or GameMode.ClosestCall
                 or GameMode.Ordering or GameMode.Matching or GameMode.TypeAnswer:
                 return Filled(_src.Enrich(mode), category, need, _seen);
-            case GameMode.OddOneOut: // geography-only data; ignore the picked category
-                return _src.Enrich(mode).Questions("mixed", _seen, need);
-            case GameMode.Enumerate: // small replayable pool; ignore the seen-set (like Daily)
-                return _src.Enrich(mode).Questions("mixed", new HashSet<string>(), need);
+            case GameMode.OddOneOut: // now covers every category — honor it (with fallback)
+                return Filled(_src.Enrich(mode), category, need, _seen);
+            case GameMode.Enumerate: // replayable recall drill — ignore the seen-set
+                return Filled(_src.Enrich(mode), category, need, new HashSet<string>());
             case GameMode.Ladder:
             {
                 var pool = _src.Corpus.Questions("mixed", _seen, 80);
@@ -110,9 +110,9 @@ public sealed class QuestionProvider
                 or GameMode.Ordering or GameMode.Matching or GameMode.TypeAnswer:
                 return Filled(_src.Enrich(type), category, count, excluding);
             case GameMode.OddOneOut:
-                return _src.Enrich(type).Questions("mixed", excluding, count);
+                return Filled(_src.Enrich(type), category, count, excluding);
             case GameMode.Enumerate:
-                return _src.Enrich(type).Questions("mixed", new HashSet<string>(), count);
+                return Filled(_src.Enrich(type), category, count, new HashSet<string>());
             default:
                 var pulled = _src.Corpus.Questions(category.Id, excluding, count);
                 if (pulled.Count < count)

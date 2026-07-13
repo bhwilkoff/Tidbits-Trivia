@@ -114,9 +114,9 @@ class GameState(
             mode == Mode.ORDERING -> filled(OrderingSet, mode.count)
             mode == Mode.MATCHING -> filled(MatchingSet, mode.count)
             mode == Mode.TYPE_ANSWER -> filled(TypeAnswerSet, mode.count)
-            mode == Mode.ODD_ONE_OUT -> OddOneOutSet.pull("mixed", store.seenSet, mode.count)
-            // Small pool (~11) and a REPLAYABLE recall drill — ignore the seen-set.
-            mode == Mode.ENUMERATE -> EnumerateSet.pull("mixed", emptySet(), mode.count)
+            mode == Mode.ODD_ONE_OUT -> filled(OddOneOutSet, mode.count)
+            // A REPLAYABLE recall drill — ignore the seen-set (pass emptySet).
+            mode == Mode.ENUMERATE -> filled(EnumerateSet, mode.count, emptySet())
             mode == Mode.LADDER -> {
                 val pool = Corpus.pull("mixed", store.seenSet, 80).sortedBy { Difficulty.get(it.sourceTitle) }
                 val need = mode.count
@@ -140,18 +140,18 @@ class GameState(
         Mode.ORDERING -> filled(OrderingSet, need)
         Mode.MATCHING -> filled(MatchingSet, need)
         Mode.TYPE_ANSWER -> filled(TypeAnswerSet, need)
-        Mode.ODD_ONE_OUT -> OddOneOutSet.pull("mixed", store.seenSet, need)
-        Mode.ENUMERATE -> EnumerateSet.pull("mixed", emptySet(), need)
+        Mode.ODD_ONE_OUT -> filled(OddOneOutSet, need)
+        Mode.ENUMERATE -> filled(EnumerateSet, need, emptySet())
         else -> Corpus.pull(category.id, store.seenSet, need)
     }
 
     /** Never-empty per-type pull: picked category → whole type pool ("mixed") →
      *  Classic corpus backstop, so a coverage hole (e.g. sports×matching = 0 rows)
      *  plays a full round instead of the ERROR screen. Keeps the MODE pure. */
-    private fun filled(set: JsonQuestionSet, need: Int): List<Question> {
-        var qs = set.pull(category.id, store.seenSet, need)
+    private fun filled(set: JsonQuestionSet, need: Int, seen: Set<String> = store.seenSet): List<Question> {
+        var qs = set.pull(category.id, seen, need)
         if (qs.size < need && category.id != "mixed") {
-            val have = store.seenSet + qs.map { it.id }.toSet()
+            val have = seen + qs.map { it.id }.toSet()
             qs = qs + set.pull("mixed", have, need - qs.size)
         }
         if (qs.isEmpty()) qs = Corpus.pull(category.id, store.seenSet, need)

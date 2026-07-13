@@ -1082,10 +1082,10 @@ class Game {
   // category, then relax to the whole type pool ('mixed') to top up. Keeps the
   // MODE pure (a Match Up round stays Match Up) while covering corpus holes like
   // sports×matching. (oddOneOut/enumerate already pull 'mixed' directly.)
-  _pullType(set, count) {
-    let qs = set.pull(this.category.id, Store._seen, count);
+  _pullType(set, count, seen = Store._seen) {
+    let qs = set.pull(this.category.id, seen, count);
     if (qs.length < count && this.category.id !== 'mixed') {
-      const have = new Set([...Store._seen, ...qs.map((q) => q.id)]);
+      const have = new Set([...seen, ...qs.map((q) => q.id)]);
       qs = qs.concat(set.pull('mixed', have, count - qs.length));
     }
     return qs;
@@ -1121,14 +1121,16 @@ class Game {
       qs = this._pullType(TypeAnswer, this.mode.count);
     }
     else if (this.mode.id === 'oddOneOut') {
+      // Now that every category has odd-one-out coverage, honor the picked
+      // category (with the mixed fallback for safety).
       await OddOneOut.load();
-      qs = OddOneOut.pull('mixed', Store._seen, this.mode.count);
+      qs = this._pullType(OddOneOut, this.mode.count);
     }
     else if (this.mode.id === 'enumerate') {
-      // Small pool (~11), and enumeration is a REPLAYABLE recall drill — naming
-      // the countries of Asia again is the point — so ignore the seen-set.
+      // Enumeration is a REPLAYABLE recall drill — naming the countries of Asia
+      // again is the point — so ignore the seen-set (pass an empty one).
       await Enumerate.load();
-      qs = Enumerate.pull('mixed', new Set(), this.mode.count);
+      qs = this._pullType(Enumerate, this.mode.count, new Set());
     }
     else if (this.mode.id === 'ladder') {
       await Difficulty.load();

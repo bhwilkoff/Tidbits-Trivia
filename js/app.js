@@ -1078,6 +1078,18 @@ class Game {
     this.currentStake = 0;
     this.stakeOutcomes = {}; // F1 calibration: tierValue -> {hits, total}
   }
+  // Never-empty pull for a category-filtered special type: try the picked
+  // category, then relax to the whole type pool ('mixed') to top up. Keeps the
+  // MODE pure (a Match Up round stays Match Up) while covering corpus holes like
+  // sports×matching. (oddOneOut/enumerate already pull 'mixed' directly.)
+  _pullType(set, count) {
+    let qs = set.pull(this.category.id, Store._seen, count);
+    if (qs.length < count && this.category.id !== 'mixed') {
+      const have = new Set([...Store._seen, ...qs.map((q) => q.id)]);
+      qs = qs.concat(set.pull('mixed', have, count - qs.length));
+    }
+    return qs;
+  }
   async load() {
     let qs;
     if (this._custom) qs = this._custom;
@@ -1086,27 +1098,27 @@ class Game {
     else if (this.mode.id === 'mix') qs = this._loadMix();
     else if (this.mode.id === 'pictureId') {
       await Pictures.load();
-      qs = Pictures.pull(this.category.id, Store._seen, this.mode.count);
+      qs = this._pullType(Pictures, this.mode.count);
     }
     else if (this.mode.id === 'thisOrThat') {
       await ThisOrThat.load();
-      qs = ThisOrThat.pull(this.category.id, Store._seen, this.mode.count);
+      qs = this._pullType(ThisOrThat, this.mode.count);
     }
     else if (this.mode.id === 'closestCall') {
       await ClosestCall.load();
-      qs = ClosestCall.pull(this.category.id, Store._seen, this.mode.count);
+      qs = this._pullType(ClosestCall, this.mode.count);
     }
     else if (this.mode.id === 'ordering') {
       await Ordering.load();
-      qs = Ordering.pull(this.category.id, Store._seen, this.mode.count);
+      qs = this._pullType(Ordering, this.mode.count);
     }
     else if (this.mode.id === 'matching') {
       await Matching.load();
-      qs = Matching.pull(this.category.id, Store._seen, this.mode.count);
+      qs = this._pullType(Matching, this.mode.count);
     }
     else if (this.mode.id === 'typeAnswer') {
       await TypeAnswer.load();
-      qs = TypeAnswer.pull(this.category.id, Store._seen, this.mode.count);
+      qs = this._pullType(TypeAnswer, this.mode.count);
     }
     else if (this.mode.id === 'oddOneOut') {
       await OddOneOut.load();
@@ -1141,6 +1153,14 @@ class Game {
       }
     }
     this.questions = (this.mode.count === 99 || this.mode.id === 'barTrivia' ? qs : qs.slice(0, this.mode.count));
+    // Last-resort backstop: if a type file failed to load entirely, never strand
+    // the player on an error — give them a Classic round from the always-present
+    // 20k corpus. Only a total corpus-load failure (offline, no cache) errors.
+    if (!this.questions.length && this.mode.id !== 'daily') {
+      const classic = Corpus.pull(this.category.id, Store._seen, this.mode.count);
+      this.questions = classic.slice(0, this.mode.count);
+      Store.markSeen(this.questions.map((q) => q.id));
+    }
     Store.markSeen(this.questions.map((q) => q.id));
     if (!this.questions.length) { this.phase = 'error'; return; }
     if (this.mode.globalClock) this.globalDeadline = Date.now() + this.mode.globalClock * 1000;

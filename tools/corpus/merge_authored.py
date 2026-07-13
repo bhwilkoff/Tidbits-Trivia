@@ -51,7 +51,14 @@ def to_match(q):
 
 def to_enumerate(q):
     # [id, prompt, groups[[canonical,alias...]], category, seconds, url]
-    groups = [[m] if isinstance(m, str) else list(m) for m in q["members"]]
+    groups = []
+    for m in q["members"]:
+        if isinstance(m, str):
+            groups.append([m])
+        elif isinstance(m, dict):
+            groups.append([m["name"]] + list(m.get("aliases", [])))
+        else:
+            groups.append(list(m))
     return [f"enum:{q['category']}:{h(q['prompt'])}", q["prompt"], groups, q["category"], 60,
             wiki_url(q.get("sourceTitle"))]
 

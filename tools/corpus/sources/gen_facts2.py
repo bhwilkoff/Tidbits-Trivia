@@ -316,8 +316,8 @@ def main():
                 prop, SUP_BOUNDS.get(prop), SUP_KEEP.get(prop)).items():
             if len(members) < 4:
                 continue
-            for grp in groups(members, f"sup:{prop}:{p31}:{cat}", cap=25,
-                              reuse=reuse, reuse_cap=5):
+            for grp in groups(members, f"sup:{prop}:{p31}:{cat}", cap=85,
+                              reuse=reuse, reuse_cap=13):
                 ranked = sorted(grp, key=lambda m: m[1], reverse=True)
                 vals = [m[1] for m in ranked]
                 if len(set(vals)) != 4:            # distinct values
@@ -341,8 +341,8 @@ def main():
         for (p31, cat), members in buckets_for(prop).items():
             if len(members) < 4:
                 continue
-            for grp in groups(members, f"chron:{prop}:{p31}:{cat}", cap=25,
-                              reuse=reuse, reuse_cap=5):
+            for grp in groups(members, f"chron:{prop}:{p31}:{cat}", cap=85,
+                              reuse=reuse, reuse_cap=13):
                 ranked = sorted(grp, key=lambda m: m[1])   # earliest first
                 yrs = [int(round(m[1])) for m in ranked]
                 if len(set(yrs)) != 4:                     # distinct years

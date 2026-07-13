@@ -19,7 +19,7 @@ wd:currency / wd:elemSymbol / wd:author rows for Matching (Q5).
 
 Run AFTER enrich_subjects.py + fetch_prose.py. Usage: python3 build_corpus.py
 """
-import hashlib, json, os, re, sqlite3
+import argparse, hashlib, json, os, re, sqlite3
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 DB = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "corpus_source.sqlite"))
@@ -173,7 +173,7 @@ def make_cloze(title, lead):
     return masked
 
 
-def main():
+def main(out_override=None):
     con = sqlite3.connect(DB)
     subs = con.execute("""SELECT qid, title, category, qrank FROM subject
                           WHERE keep=1 AND category IS NOT NULL ORDER BY qrank DESC""").fetchall()
@@ -449,16 +449,24 @@ def main():
     body = json.dumps(out, ensure_ascii=False, separators=(",", ":"))
     version = hashlib.md5(body.encode()).hexdigest()[:12]
     payload = f'{{"version":"{version}","count":{len(out)},"questions":{body}}}'
-    for p in (OUT, ANDROID_JSON):
-        os.makedirs(os.path.dirname(p), exist_ok=True)
-        open(p, "w").write(payload)
-    write_sqlite(out, IOS_SQLITE)   # iOS reads the SQLite mirror
+    if out_override:
+        # Staging mode: write ONLY the given JSON; skip the shipped corpus.sqlite
+        # and the platform copies so a build never clobbers the delight-polished ship.
+        os.makedirs(os.path.dirname(os.path.abspath(out_override)) or ".", exist_ok=True)
+        open(out_override, "w").write(payload)
+        OUT_WRITTEN = out_override
+    else:
+        for p in (OUT, ANDROID_JSON):
+            os.makedirs(os.path.dirname(p), exist_ok=True)
+            open(p, "w").write(payload)
+        write_sqlite(out, IOS_SQLITE)   # iOS reads the SQLite mirror
+        OUT_WRITTEN = OUT
 
     by_cat_n = {}
     for r in out:
         if r[0].startswith("src:describe:"):
             by_cat_n[r[4]] = by_cat_n.get(r[4], 0) + 1
-    print(f"wrote {OUT}")
+    print(f"wrote {OUT_WRITTEN}")
     print(f"  total rows: {len(out):,}  (describe {made_desc:,} / cloze {made_cloze:,} / relation-MCQ {made_rel:,} / continent {made_cont:,} / elemSymbol-carried {carried:,})")
     print(f"  skipped (adult-content subjects): {skipped_adult}")
     print(f"  clickstream confusables loaded for {len(confus):,} subjects")
@@ -467,4 +475,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    ap = argparse.ArgumentParser(description="Build the Tidbits MCQ corpus.")
+    ap.add_argument("--out", metavar="PATH", default=None,
+                    help="Staging mode: write ONLY this JSON file; skip corpus.sqlite "
+                         "and the platform copies. Default (omitted) writes the shipped paths.")
+    args = ap.parse_args()
+    main(out_override=args.out)

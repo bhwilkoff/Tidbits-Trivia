@@ -1,4 +1,4 @@
-2026-07-01 src:cloze:Graham_Kennedy chron:P571:829129638361 fact:P569:Q5213719 src:cloze:Black_panther fact:P569:Q207307 fact:P577:Q13255497 src:cloze:Design
-2026-07-02 src:cloze:George_Headley fact:P577:Q110152284 fact:P570:Q372947 rel:P17:Q154849 wd:composer:Q104876047 src:describe:Ice-T src:cloze:Gatorade
-2026-12-31 fact:P569:Q17317909 fact:P569:Q203840 sup:P2046:53378097545 src:describe:William_Godwin src:cloze:Denis_Villeneuve wd:director:Q111947659 src:describe:Eugene_O'Neill
-2027-02-28 fact:P571:Q329426 src:cloze:Scarlett_Johansson chron:P569:523585914880 src:describe:Patrick_Dempsey wd:continent:Q28513 wd:continent:Q28515 wd:composer:Q724008
+2026-07-01 src:cloze:Graham_Kennedy chron:P571:829129638361 src:cloze:Sean_Payton fact:P569:Q5213719 src:cloze:Richard_Osman src:cloze:Black_panther fact:P569:Q207307
+2026-07-02 src:describe:Red,_White_&_Royal_Blue src:cloze:George_Headley wd:director:Q488041 fact:P577:Q110152284 src:cloze:Krist_Novoselic fact:P570:Q372947 rel:P17:Q154849
+2026-12-31 src:cloze:Virupaksha_(film) src:cloze:Amanita_phalloides src:describe:Hydrogen_fluoride src:describe:The_Chronicles_of_Narnia fact:P569:Q17317909 fact:P569:Q203840 src:describe:Plácido_Domingo
+2027-02-28 fact:P571:Q329426 src:cloze:Scarlett_Johansson src:describe:Ocean's_Thirteen src:cloze:Najwa_Nimri chron:P569:523585914880 src:cloze:Andromeda_(mythology) src:describe:Patrick_Dempsey

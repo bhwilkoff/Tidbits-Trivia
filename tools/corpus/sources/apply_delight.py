@@ -16,11 +16,34 @@ CORPUS = os.path.join(ROOT, "assets", "corpus.json")
 STOP = {"the", "and", "for", "was", "were", "are", "his", "her", "its", "from", "with",
         "who", "what", "that", "this", "american", "british", "english", "french", "german"}
 
+# Generic type-nouns and nationality adjectives that commonly appear INSIDE an
+# answer title but which a clue may legitimately use as a category word ("...which
+# battle?" for "Battle of Kulikovo"). Treating these as leaks falsely rejected
+# ~40% of otherwise-good rewrites, so they are excluded from the leak check (they
+# never give away the distinctive part of the answer). Mirrors the authoring brief.
+GENERIC = frozenset("""
+battle war siege revolution league cup world party national international series
+film movie show novel song album band group team club order house company
+corporation university college school church temple museum park garden river lake
+sea ocean bay gulf mountain island isle peninsula desert valley star system code
+metal rock genre style award prize medal championship tournament edition festival
+association organization movement period empire kingdom republic dynasty union
+federation county city town province district gas compound acid oxide disease
+syndrome disorder virus protein element method model process project mission
+program agency department ministry council committee court treaty act convention
+society institute foundation network station line route bridge tower building
+palace castle cathedral railway conflict crisis theory language people family
+character actor actress singer player author director group god goddess dog cat
+breed plant tree flower fish bird animal region area continent capital currency
+italian spanish russian chinese japanese korean indian brazilian mexican canadian
+australian dutch swedish polish turkish greek egyptian african european asian
+""".split())
+
 
 def answer_words(ans):
     ans = re.sub(r"\s*\([^)]*\)", "", ans)   # drop disambiguator
     return [w.lower() for w in re.findall(r"[A-Za-z][A-Za-z'’]+", ans)
-            if len(w) >= 4 and w.lower() not in STOP]
+            if len(w) >= 4 and w.lower() not in STOP and w.lower() not in GENERIC]
 
 
 def main():

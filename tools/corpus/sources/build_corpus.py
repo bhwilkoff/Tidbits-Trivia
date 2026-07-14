@@ -109,6 +109,30 @@ def infer_gender(text):
 
 NAME_STOP = re.compile(r"\b(is|are|was|were|refers|denotes|comprises|consists|served|plays?)\b", re.I)
 
+# Generic type-nouns that commonly appear INSIDE a title but also recur as
+# ordinary sentence context ("Book of Judges" → "the seventh book of…"). Masking
+# them in later positions produced the "____ is the seventh ____ of the Hebrew
+# Bible" double-blank mess. They are left visible: a lone generic noun never
+# gives away the distinctive part of the answer, and every MCQ option is itself
+# a title, so "____ is a subgenre of heavy metal" is still a fair question.
+CLOZE_COMMON = frozenset("""
+book league cup world war battle siege revolution rush state states region area
+empire kingdom republic dynasty union federation county city town province district
+national international series film movie show novel song album band group games game
+team club party order house home company corporation university college school church
+temple mosque museum park garden forest sea ocean river lake bay gulf strait mountain
+mount island islands isle peninsula desert valley plateau star system code metal rock
+pop jazz folk genre subgenre style form concept theory law effect award prize medal
+championship tournament edition festival conference association organization movement
+period era age force army navy corps division brigade regiment gas compound acid oxide
+disease syndrome disorder virus bacteria protein enzyme model method process procedure
+project mission program programme agency department ministry council committee court
+treaty act bill protocol convention society institute foundation center centre network
+station line route bridge tower building palace castle temple cathedral abbey railway
+new old great grand royal united north south east west central upper lower first second
+third fourth fifth modern ancient the and for
+""".split())
+
 def clean_lead(s):
     """Strip pronunciation guides / IPA / native-script + locale names — they
     phonetically or literally spell the answer ("(OH-klə-HOH-mə)" → Oklahoma;
@@ -157,18 +181,28 @@ def make_cloze(title, lead):
     # context words ("film", "series") stay.
     masked = "____ " + s[cut:].lstrip()
     core = re.sub(r"\s*\([^)]*\)", "", title)
-    for w in re.findall(r"[A-Za-z]{3,}", core):
+    # Mask later occurrences of DISTINCTIVE core tokens only — generic type-nouns
+    # (book, league, war…) stay visible as context (see CLOZE_COMMON) instead of
+    # becoming a second confusing blank.
+    distinctive = [w for w in re.findall(r"[A-Za-z]{3,}", core)
+                   if w.lower() not in CLOZE_COMMON]
+    for w in distinctive:
         masked = re.sub(rf"\b{re.escape(w)}\b", "____", masked, flags=re.IGNORECASE)
     masked = re.sub(r"____(?:[\s.\-]+____)+", "____", masked)        # collapse blank runs
     masked = re.sub(r"\s{2,}", " ", masked).strip()
+    # exactly one blank — a distinctive token recurring makes the stem too gappy
+    # (and often near-contentless: "____ was the predecessor state of modern ____");
+    # drop it, the describe twin still covers the subject.
+    if masked.count("____") != 1:
+        return None
     # require real context beyond the blank + dates/punctuation
     ctx = re.sub(r"____|\(?\b\d{3,4}\b[-–]?\d{0,4}\)?|[(),;:.]", " ", masked)
     if len(ctx.strip()) < 14:
         return None
-    # final guard: no core-name token of len ≥ 3 survives unmasked
+    # final guard: no DISTINCTIVE core-name token survives unmasked (generic
+    # type-nouns are allowed to remain as ordinary context)
     low = masked.lower()
-    if any(re.search(rf"\b{re.escape(w.lower())}\b", low)
-           for w in re.findall(r"[A-Za-z]{3,}", core)):
+    if any(re.search(rf"\b{re.escape(w.lower())}\b", low) for w in distinctive):
         return None
     return masked
 

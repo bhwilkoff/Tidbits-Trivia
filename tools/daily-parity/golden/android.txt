@@ -1,4 +1,4 @@
 2026-07-01 src:cloze:Graham_Kennedy chron:P571:829129638361 src:cloze:Sean_Payton fact:P569:Q5213719 src:cloze:Richard_Osman src:describe:Bloomberg_L.P. num:P2048:Q42225228
 2026-07-02 src:describe:Red,_White_&_Royal_Blue num:P2067:Q1009230 src:cloze:George_Headley wd:director:Q488041 num:P2067:Q1933507 fact:P577:Q110152284 fact:P569:Q1373377
-2026-12-31 chron:P571:108448983018 src:cloze:Virupaksha_(film) chron:P571:673245276648 src:cloze:Amanita_phalloides chron:P571:616850212486 num:P2048:Q4679732 src:describe:Hydrogen_fluoride
+2026-12-31 chron:P571:108448983018 src:cloze:Virupaksha_(film) chron:P571:673245276648 chron:P571:616850212486 num:P2048:Q4679732 src:describe:Hydrogen_fluoride src:describe:The_Chronicles_of_Narnia
 2027-02-28 chron:P571:659156415772 fact:P571:Q329426 fact:P570:Q2724073 sup:P1082:923006091162 src:cloze:Scarlett_Johansson src:describe:Ocean's_Thirteen src:cloze:Najwa_Nimri

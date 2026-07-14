@@ -50,10 +50,26 @@ def main():
 
     con = sqlite3.connect(DB)
     have = {r[0] for r in con.execute("SELECT qid FROM subject")}
-    qrank = load_qrank()
-    # candidate QIDs = Qrank top→down, not already a subject
-    cand = [q for q, _ in sorted(qrank.items(), key=lambda kv: -kv[1]) if q not in have]
-    print(f"have {len(have):,} subjects; {len(cand):,} Qrank candidates not yet held")
+    # Fast path: a precomputed top-N candidate cache (qid<TAB>rank, sorted desc)
+    # avoids re-parsing the 27M-row Qrank dump every run — that parse+sort is slow
+    # and holds a few hundred MB, which OOM-killed the fetch early under a
+    # background task's memory limit (0 subjects added). Regenerate the cache with
+    # the bounded-heap precompute in cache/qrank_top.tsv when it drains.
+    cache = os.path.join(os.path.dirname(__file__), "..", "cache", "qrank_top.tsv")
+    qrank = {}
+    if os.path.exists(cache):
+        cand = []
+        with open(cache) as fh:
+            for line in fh:
+                q, r = line.rstrip("\n").split("\t")
+                qrank[q] = int(r)
+                if q not in have:
+                    cand.append(q)                 # cache is pre-sorted top→down
+        print(f"have {len(have):,} subjects; {len(cand):,} cached Qrank candidates not yet held")
+    else:
+        qrank = load_qrank()
+        cand = [q for q, _ in sorted(qrank.items(), key=lambda kv: -kv[1]) if q not in have]
+        print(f"have {len(have):,} subjects; {len(cand):,} Qrank candidates not yet held")
 
     cols = {r[1] for r in con.execute("PRAGMA table_info(subject)")}
     added = facts = rels = 0

@@ -1,4 +1,4 @@
 2026-07-01 src:describe:Antoni_Porowski src:cloze:Graham_Kennedy fact:P571:Q385258 chron:P571:829129638361 src:cloze:Sean_Payton fact:P569:Q5213719 src:cloze:Richard_Osman
-2026-07-02 src:describe:Red,_White_&_Royal_Blue num:P2067:Q1009230 num:P2046:Q4991540 src:cloze:George_Headley wd:director:Q488041 num:P2067:Q1933507 rel:P170:Q1065786
+2026-07-02 src:describe:Red,_White_&_Royal_Blue num:P2046:Q4991540 src:cloze:George_Headley wd:director:Q488041 rel:P170:Q1065786 fact:P569:Q362721 src:describe:Deutsche_Telekom
 2026-12-31 chron:P571:108448983018 chron:P571:536825712598 src:cloze:Virupaksha_(film) chron:P571:673245276648 sup:P1082:867572100384 src:describe:The_Junior_Team chron:P571:616850212486
 2027-02-28 chron:P571:659156415772 fact:P571:Q329426 fact:P570:Q2724073 sup:P1082:923006091162 src:cloze:Scarlett_Johansson src:describe:Ocean's_Thirteen src:cloze:Najwa_Nimri

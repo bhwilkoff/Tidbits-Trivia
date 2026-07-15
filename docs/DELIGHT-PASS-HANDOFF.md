@@ -13,6 +13,36 @@ answerable with the existing type-matched options. Pipeline:
 batch files of {id, answer, options, summary} → LLM rewrites → `apply_delight.py`
 (leak-guarded merge) → regenerate `gen_*.py` → build → ship.
 
+## ▶ ACTIVE: sequential-Sonnet delight over the 130k corpus (2026-07-14)
+
+The corpus grew to 131,092 questions; ~27,900 describe/cloze clues were still
+robotic ("Who/What is this — …?", "Fill in the blank: …"). Delighting them is
+the top quality lever. **Current pipeline (durable, committed):**
+
+1. `tools/corpus/sources/build_delight_batches.py --batch 60 --limit N --start S`
+   — selects still-robotic clues that have a Wikipedia `lead` in
+   `corpus_source.sqlite`, grounds each, writes `/tmp/delight_new/in_XXX.json`
+   **highest-QRank first** (best questions where players see them most).
+2. Spawn Sonnet authoring agents **ONE AT A TIME** (never concurrent — concurrent
+   batches all hit the session limit at once and return nothing; owner correction
+   2026-07-14). Each agent rewrites one in-file → `/tmp/delight_new/out_XXX.json`.
+   Brief: grounded only in the summary, never reuse ANY word from the answer,
+   answerable from the 4 options, always end on "?", ~12–40 words.
+3. Normalize any imperative endings ("Name the film." → "— which film?") so the
+   apply guard's "?" check keeps them.
+4. `apply_delight.py` (now also globs `/tmp/delight_new/out_*.json`) — leak-guarded,
+   idempotent; writes assets + android json + iOS sqlite.
+5. `zsh tools/corpus/resync_corpus.sh` (regenerates sqlite + iOS json + Daily
+   golden with Apple==Web parity check + windows ids) THEN
+   `cp assets/corpus.json windows/Tidbits.HeadlessTests/Fixtures/corpus.json`
+   (resync does not copy the windows fixture corpus.json — do it manually).
+6. Commit + push. Do NOT rerun `gen_*.py` (they rebuild other question types from
+   source and would clobber the in-place delight).
+
+Yield ~93–100%/batch; hard country/generic answers (United States, India) keep
+their robotic original by design. Progress logged in commit messages ("Corpus
+QUALITY: sequential Sonnet delight …"). As of 2026-07-14: ~27,600 robotic remain.
+
 ## ✅ MOP-UP COMPLETE (2026-06-23, v1.5.1)
 
 The robotic leftovers the leak-guard had kept (the ~1,887 originals that survived

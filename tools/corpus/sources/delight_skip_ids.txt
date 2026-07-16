@@ -1,5 +1,7 @@
 src:cloze:Abbé_Pierre
+src:cloze:Al-Aqsa_Martyrs'_Brigades
 src:cloze:Alejandra_Silva
+src:cloze:Anwar_al-Awlaki
 src:cloze:Atila_Pesyani
 src:cloze:Caitlin_McHugh
 src:cloze:Cameron_Douglas
@@ -10,6 +12,7 @@ src:cloze:Craig_Bierko
 src:cloze:Diahnne_Abbott
 src:cloze:Esat_Oktay_Yıldıran
 src:cloze:Gavin_McInnes
+src:cloze:Geoff_Neal
 src:cloze:Guillaume_Bats
 src:cloze:Jason_Gould
 src:cloze:Jerry_Sandusky
@@ -21,11 +24,13 @@ src:cloze:Michael_Barrett_(cinematographer)
 src:cloze:Mickey_Huang
 src:cloze:Miles_Robbins
 src:cloze:Peter_Madsen
+src:cloze:Peyronie's_disease
 src:cloze:Priapus
 src:cloze:Renée_Estevez
 src:cloze:Ryan_Piers_Williams
 src:cloze:Ryo_Ryusei
 src:cloze:Sairi_Ito
+src:cloze:Sam_Spruell
 src:cloze:Shawn_Wayans
 src:cloze:Takao_Osawa
 src:cloze:Tsukasa_Aoi
@@ -33,10 +38,12 @@ src:cloze:Wanda_Nara
 src:describe:Abbé_Pierre
 src:describe:Abu_Ibrahim_al-Hashimi_al-Qurashi
 src:describe:Aimee_Osbourne
+src:describe:Al-Aqsa_Martyrs'_Brigades
 src:describe:Alejandra_Silva
 src:describe:Amalek
 src:describe:Ami_Touma
 src:describe:Anna_Yamada
+src:describe:Anwar_al-Awlaki
 src:describe:Armin_Meiwes
 src:describe:Asaram
 src:describe:Atila_Pesyani
@@ -64,8 +71,10 @@ src:describe:Exhibitionism
 src:describe:Gabriel_Matzneff
 src:describe:Gavin_McInnes
 src:describe:Genital_wart
+src:describe:Geoff_Neal
 src:describe:Guillaume_Bats
 src:describe:Gypsy-Rose_Blanchard
+src:describe:GypsyCrusader
 src:describe:How_to_Have_Sex
 src:describe:I_Spit_on_Your_Grave
 src:describe:In_the_Realm_of_the_Senses
@@ -87,11 +96,13 @@ src:describe:Mickey_Huang
 src:describe:Mifepristone
 src:describe:Miles_Robbins
 src:describe:Nana_Mori
+src:describe:Nepalese_royal_massacre
 src:describe:Nicholas_Rossi
 src:describe:Nitrogen_oxide
 src:describe:Organisation_of_Ukrainian_Nationalists
 src:describe:Patrick_Bruel
 src:describe:Peter_Madsen
+src:describe:Peyronie's_disease
 src:describe:Priapism
 src:describe:Priapus
 src:describe:R._Budd_Dwyer
@@ -102,6 +113,7 @@ src:describe:Ryan_Piers_Williams
 src:describe:Ryo_Ryusei
 src:describe:Sairi_Ito
 src:describe:Saleh_al-Arouri
+src:describe:Sam_Spruell
 src:describe:Shawn_Wayans
 src:describe:Shinji_Tanimura
 src:describe:Shotaro_Mamiya

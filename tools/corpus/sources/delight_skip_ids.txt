@@ -9,6 +9,8 @@ src:cloze:Sairi_Ito
 src:cloze:Shawn_Wayans
 src:cloze:Takao_Osawa
 src:cloze:Wanda_Nara
+src:describe:Abu_Ibrahim_al-Hashimi_al-Qurashi
+src:describe:Aimee_Osbourne
 src:describe:Alejandra_Silva
 src:describe:Amalek
 src:describe:Ami_Touma
@@ -32,11 +34,13 @@ src:describe:Guillaume_Bats
 src:describe:Gypsy-Rose_Blanchard
 src:describe:How_to_Have_Sex
 src:describe:I_Spit_on_Your_Grave
+src:describe:In_the_Realm_of_the_Senses
 src:describe:Jason_Gould
 src:describe:John_Owen_Lowe
 src:describe:Jonah_Falcon
 src:describe:Labia
 src:describe:Lee_Yi-kyung
+src:describe:Les_Exploits_d'un_jeune_Don_Juan
 src:describe:Marc_Clotet
 src:describe:Nana_Mori
 src:describe:Patrick_Bruel

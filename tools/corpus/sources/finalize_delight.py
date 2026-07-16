@@ -59,13 +59,13 @@ def main():
     # index inputs by id AND by bare title (src:TYPE:Title -> Title) for id repair
     by_id, by_title = {}, {}
     for b in range(lo, hi + 1):
-        for it in json.load(open(f"{DIR}/in_{b}.json")):
+        for it in json.load(open(f"{DIR}/in_{b:03d}.json")):
             by_id[it["id"]] = it
             by_title.setdefault(it["id"].split(":", 2)[2], it["id"])
 
     grand = 0
     for b in range(lo, hi + 1):
-        path = f"{DIR}/out_{b}.json"
+        path = f"{DIR}/out_{b:03d}.json"
         out = json.load(open(path))
         leak = mal = skip = miss = repaired = norm = 0
         for r in out:

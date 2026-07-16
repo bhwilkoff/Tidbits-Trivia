@@ -1,5 +1,6 @@
 src:cloze:Atila_Pesyani
 src:cloze:Diahnne_Abbott
+src:cloze:Guillaume_Bats
 src:cloze:Jason_Gould
 src:cloze:Sairi_Ito
 src:cloze:Shawn_Wayans
@@ -10,8 +11,11 @@ src:describe:Asaram
 src:describe:Atila_Pesyani
 src:describe:Beneil_Dariush
 src:describe:Benoît_Jacquot
+src:describe:Clitoral_erection
 src:describe:Diahnne_Abbott
 src:describe:Exhibitionism
+src:describe:Genital_wart
+src:describe:Guillaume_Bats
 src:describe:Jason_Gould
 src:describe:John_Owen_Lowe
 src:describe:Jonah_Falcon
@@ -26,9 +30,11 @@ src:describe:Shawn_Wayans
 src:describe:Shinji_Tanimura
 src:describe:Smegma
 src:describe:Talia_Balsam
+src:describe:The_Human_Centipede_2_(Full_Sequence)
 src:describe:The_Strange_Thing_About_the_Johnsons
 src:describe:Vaginal_discharge
 src:describe:Vincent_Regan
+src:describe:Vulval_vestibule
 src:describe:Wanda_Nara
 src:describe:Zahia_Dehar
 src:describe:Zoophilia

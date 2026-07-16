@@ -1,3 +1,4 @@
+src:cloze:Alejandra_Silva
 src:cloze:Atila_Pesyani
 src:cloze:Cho_Doo-soon_case
 src:cloze:Diahnne_Abbott
@@ -6,7 +7,9 @@ src:cloze:Jason_Gould
 src:cloze:Lee_Yi-kyung
 src:cloze:Sairi_Ito
 src:cloze:Shawn_Wayans
+src:cloze:Takao_Osawa
 src:cloze:Wanda_Nara
+src:describe:Alejandra_Silva
 src:describe:Amalek
 src:describe:Ami_Touma
 src:describe:Anna_Yamada
@@ -21,6 +24,7 @@ src:describe:Clitoral_erection
 src:describe:Diahnne_Abbott
 src:describe:Dupont_de_Ligonnès_murders_and_disappearance
 src:describe:Erba_Massacre
+src:describe:Erika_Toda
 src:describe:Exhibitionism
 src:describe:Gabriel_Matzneff
 src:describe:Genital_wart
@@ -38,12 +42,14 @@ src:describe:Nana_Mori
 src:describe:Patrick_Bruel
 src:describe:Priapism
 src:describe:R._Budd_Dwyer
+src:describe:Rikako_Yagi
 src:describe:Sairi_Ito
 src:describe:Saleh_al-Arouri
 src:describe:Shawn_Wayans
 src:describe:Shinji_Tanimura
 src:describe:Shotaro_Mamiya
 src:describe:Smegma
+src:describe:Takao_Osawa
 src:describe:Talia_Balsam
 src:describe:The_Human_Centipede_2_(Full_Sequence)
 src:describe:The_Strange_Thing_About_the_Johnsons

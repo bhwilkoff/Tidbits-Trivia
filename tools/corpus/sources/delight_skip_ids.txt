@@ -3,12 +3,14 @@ src:cloze:Atila_Pesyani
 src:cloze:Cho_Doo-soon_case
 src:cloze:Cooku_with_Comali_season_4
 src:cloze:Diahnne_Abbott
+src:cloze:Esat_Oktay_Yıldıran
 src:cloze:Guillaume_Bats
 src:cloze:Jason_Gould
 src:cloze:Jerry_Sandusky
 src:cloze:Lee_Yi-kyung
 src:cloze:Marlène_Jobert
 src:cloze:Meaghan_Oppenheimer
+src:cloze:Michael_Barrett_(cinematographer)
 src:cloze:Mickey_Huang
 src:cloze:Miles_Robbins
 src:cloze:Renée_Estevez
@@ -42,6 +44,7 @@ src:describe:Dunblane_massacre
 src:describe:Dupont_de_Ligonnès_murders_and_disappearance
 src:describe:Erba_Massacre
 src:describe:Erika_Toda
+src:describe:Esat_Oktay_Yıldıran
 src:describe:Exhibitionism
 src:describe:Gabriel_Matzneff
 src:describe:Genital_wart
@@ -62,8 +65,10 @@ src:describe:Marc_Clotet
 src:describe:Marlène_Jobert
 src:describe:Meaghan_Oppenheimer
 src:describe:Mickey_Huang
+src:describe:Mifepristone
 src:describe:Miles_Robbins
 src:describe:Nana_Mori
+src:describe:Nicholas_Rossi
 src:describe:Organisation_of_Ukrainian_Nationalists
 src:describe:Patrick_Bruel
 src:describe:Priapism

@@ -63,6 +63,9 @@ def main():
             by_id[it["id"]] = it
             by_title.setdefault(it["id"].split(":", 2)[2], it["id"])
 
+    skip_file = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                             "delight_skip_ids.txt")
+    skip_ids = []
     grand = 0
     for b in range(lo, hi + 1):
         path = f"{DIR}/out_{b:03d}.json"
@@ -87,6 +90,7 @@ def main():
                     norm += 1
             if q == "SKIP":
                 skip += 1
+                skip_ids.append(r["id"])   # un-delightable -> exclude next round
                 continue
             if len(q) < 25 or "?" not in q:
                 mal += 1
@@ -100,6 +104,16 @@ def main():
         print(f"batch {b}: n={len(out)} leak={leak} mal={mal} skip={skip} "
               f"miss={miss} repaired={repaired} norm={norm} -> apply {apply}")
     print(f"would-apply this round: {grand}")
+
+    if skip_ids:
+        existing = set()
+        if os.path.exists(skip_file):
+            existing = {l.strip() for l in open(skip_file) if l.strip()}
+        merged = sorted(existing | set(skip_ids))
+        if len(merged) != len(existing):
+            open(skip_file, "w").write("\n".join(merged) + "\n")
+            print(f"skip-list: +{len(merged) - len(existing)} un-delightable ids "
+                  f"({len(merged)} total)")
 
 
 if __name__ == "__main__":

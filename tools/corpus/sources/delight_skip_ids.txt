@@ -7,6 +7,7 @@ src:cloze:Guillaume_Bats
 src:cloze:Jason_Gould
 src:cloze:Lee_Yi-kyung
 src:cloze:Marlène_Jobert
+src:cloze:Ryan_Piers_Williams
 src:cloze:Ryo_Ryusei
 src:cloze:Sairi_Ito
 src:cloze:Shawn_Wayans
@@ -56,6 +57,8 @@ src:describe:Patrick_Bruel
 src:describe:Priapism
 src:describe:R._Budd_Dwyer
 src:describe:Rikako_Yagi
+src:describe:Roman_Shukhevych
+src:describe:Ryan_Piers_Williams
 src:describe:Ryo_Ryusei
 src:describe:Sairi_Ito
 src:describe:Saleh_al-Arouri

@@ -1,10 +1,12 @@
 src:cloze:Diahnne_Abbott
+src:cloze:Sairi_Ito
 src:cloze:Wanda_Nara
 src:describe:Armin_Meiwes
 src:describe:Asaram
 src:describe:Diahnne_Abbott
 src:describe:Labia
 src:describe:R._Budd_Dwyer
+src:describe:Sairi_Ito
 src:describe:Saleh_al-Arouri
 src:describe:Shinji_Tanimura
 src:describe:The_Strange_Thing_About_the_Johnsons

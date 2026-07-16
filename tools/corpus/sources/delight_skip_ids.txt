@@ -1,6 +1,7 @@
 src:cloze:Alejandra_Silva
 src:cloze:Atila_Pesyani
 src:cloze:Cho_Doo-soon_case
+src:cloze:Cooku_with_Comali_season_4
 src:cloze:Diahnne_Abbott
 src:cloze:Guillaume_Bats
 src:cloze:Jason_Gould
@@ -24,6 +25,7 @@ src:describe:Chhota_Rajan
 src:describe:Cho_Doo-soon_case
 src:describe:Clitoral_erection
 src:describe:Diahnne_Abbott
+src:describe:Dunblane_massacre
 src:describe:Dupont_de_Ligonnès_murders_and_disappearance
 src:describe:Erba_Massacre
 src:describe:Erika_Toda
@@ -61,6 +63,7 @@ src:describe:Vaginal_discharge
 src:describe:Vincent_Regan
 src:describe:Vulval_vestibule
 src:describe:Wanda_Nara
+src:describe:What_Is_a_Woman?
 src:describe:Whore_of_Babylon
 src:describe:Zahia_Dehar
 src:describe:Zoophilia

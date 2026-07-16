@@ -3,6 +3,7 @@ src:cloze:Cho_Doo-soon_case
 src:cloze:Diahnne_Abbott
 src:cloze:Guillaume_Bats
 src:cloze:Jason_Gould
+src:cloze:Lee_Yi-kyung
 src:cloze:Sairi_Ito
 src:cloze:Shawn_Wayans
 src:cloze:Wanda_Nara
@@ -17,6 +18,7 @@ src:describe:Benoît_Jacquot
 src:describe:Cho_Doo-soon_case
 src:describe:Clitoral_erection
 src:describe:Diahnne_Abbott
+src:describe:Dupont_de_Ligonnès_murders_and_disappearance
 src:describe:Erba_Massacre
 src:describe:Exhibitionism
 src:describe:Gabriel_Matzneff
@@ -28,6 +30,7 @@ src:describe:Jason_Gould
 src:describe:John_Owen_Lowe
 src:describe:Jonah_Falcon
 src:describe:Labia
+src:describe:Lee_Yi-kyung
 src:describe:Marc_Clotet
 src:describe:Nana_Mori
 src:describe:Patrick_Bruel

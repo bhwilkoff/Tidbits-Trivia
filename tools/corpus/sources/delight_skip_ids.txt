@@ -6,6 +6,8 @@ src:cloze:Diahnne_Abbott
 src:cloze:Guillaume_Bats
 src:cloze:Jason_Gould
 src:cloze:Lee_Yi-kyung
+src:cloze:Marlène_Jobert
+src:cloze:Ryo_Ryusei
 src:cloze:Sairi_Ito
 src:cloze:Shawn_Wayans
 src:cloze:Takao_Osawa
@@ -24,7 +26,10 @@ src:describe:Benoît_Jacquot
 src:describe:Chhota_Rajan
 src:describe:Cho_Doo-soon_case
 src:describe:Clitoral_erection
+src:describe:Copulation_(zoology)
+src:describe:Dersim_massacre
 src:describe:Diahnne_Abbott
+src:describe:Die_Rosenheim-Cops
 src:describe:Dunblane_massacre
 src:describe:Dupont_de_Ligonnès_murders_and_disappearance
 src:describe:Erba_Massacre
@@ -44,11 +49,14 @@ src:describe:Labia
 src:describe:Lee_Yi-kyung
 src:describe:Les_Exploits_d'un_jeune_Don_Juan
 src:describe:Marc_Clotet
+src:describe:Marlène_Jobert
 src:describe:Nana_Mori
+src:describe:Organisation_of_Ukrainian_Nationalists
 src:describe:Patrick_Bruel
 src:describe:Priapism
 src:describe:R._Budd_Dwyer
 src:describe:Rikako_Yagi
+src:describe:Ryo_Ryusei
 src:describe:Sairi_Ito
 src:describe:Saleh_al-Arouri
 src:describe:Shawn_Wayans
@@ -57,6 +65,7 @@ src:describe:Shotaro_Mamiya
 src:describe:Smegma
 src:describe:Takao_Osawa
 src:describe:Talia_Balsam
+src:describe:The_Dawn_of_the_Black_Hearts
 src:describe:The_Human_Centipede_2_(Full_Sequence)
 src:describe:The_Strange_Thing_About_the_Johnsons
 src:describe:Vaginal_discharge

@@ -1,13 +1,19 @@
+src:cloze:Abbé_Pierre
 src:cloze:Alejandra_Silva
 src:cloze:Atila_Pesyani
+src:cloze:Caitlin_McHugh
+src:cloze:Cameron_Douglas
 src:cloze:Cho_Doo-soon_case
+src:cloze:Chris_Larkin
 src:cloze:Cooku_with_Comali_season_4
 src:cloze:Craig_Bierko
 src:cloze:Diahnne_Abbott
 src:cloze:Esat_Oktay_Yıldıran
+src:cloze:Gavin_McInnes
 src:cloze:Guillaume_Bats
 src:cloze:Jason_Gould
 src:cloze:Jerry_Sandusky
+src:cloze:Jim_Bob_Duggar
 src:cloze:Lee_Yi-kyung
 src:cloze:Marlène_Jobert
 src:cloze:Meaghan_Oppenheimer
@@ -15,6 +21,7 @@ src:cloze:Michael_Barrett_(cinematographer)
 src:cloze:Mickey_Huang
 src:cloze:Miles_Robbins
 src:cloze:Peter_Madsen
+src:cloze:Priapus
 src:cloze:Renée_Estevez
 src:cloze:Ryan_Piers_Williams
 src:cloze:Ryo_Ryusei
@@ -23,6 +30,7 @@ src:cloze:Shawn_Wayans
 src:cloze:Takao_Osawa
 src:cloze:Tsukasa_Aoi
 src:cloze:Wanda_Nara
+src:describe:Abbé_Pierre
 src:describe:Abu_Ibrahim_al-Hashimi_al-Qurashi
 src:describe:Aimee_Osbourne
 src:describe:Alejandra_Silva
@@ -35,8 +43,12 @@ src:describe:Atila_Pesyani
 src:describe:Baruch_Goldstein
 src:describe:Beneil_Dariush
 src:describe:Benoît_Jacquot
+src:describe:Buried_penis
+src:describe:Caitlin_McHugh
+src:describe:Cameron_Douglas
 src:describe:Chhota_Rajan
 src:describe:Cho_Doo-soon_case
+src:describe:Chris_Larkin
 src:describe:Clitoral_erection
 src:describe:Copulation_(zoology)
 src:describe:Craig_Bierko
@@ -50,6 +62,7 @@ src:describe:Erika_Toda
 src:describe:Esat_Oktay_Yıldıran
 src:describe:Exhibitionism
 src:describe:Gabriel_Matzneff
+src:describe:Gavin_McInnes
 src:describe:Genital_wart
 src:describe:Guillaume_Bats
 src:describe:Gypsy-Rose_Blanchard
@@ -58,6 +71,7 @@ src:describe:I_Spit_on_Your_Grave
 src:describe:In_the_Realm_of_the_Senses
 src:describe:Jason_Gould
 src:describe:Jerry_Sandusky
+src:describe:Jim_Bob_Duggar
 src:describe:John_Owen_Lowe
 src:describe:Jonah_Falcon
 src:describe:K._Annamalai
@@ -65,6 +79,7 @@ src:describe:Kyoko_Koizumi
 src:describe:Labia
 src:describe:Lee_Yi-kyung
 src:describe:Les_Exploits_d'un_jeune_Don_Juan
+src:describe:Life_on_call
 src:describe:Marc_Clotet
 src:describe:Marlène_Jobert
 src:describe:Meaghan_Oppenheimer
@@ -78,6 +93,7 @@ src:describe:Organisation_of_Ukrainian_Nationalists
 src:describe:Patrick_Bruel
 src:describe:Peter_Madsen
 src:describe:Priapism
+src:describe:Priapus
 src:describe:R._Budd_Dwyer
 src:describe:Renée_Estevez
 src:describe:Rikako_Yagi
@@ -101,6 +117,7 @@ src:describe:Vaginal_discharge
 src:describe:Vincent_Regan
 src:describe:Vulval_vestibule
 src:describe:Wanda_Nara
+src:describe:Waukesha_Christmas_parade_attack
 src:describe:What_Is_a_Woman?
 src:describe:Whore_of_Babylon
 src:describe:Zahia_Dehar

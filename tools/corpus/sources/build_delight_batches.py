@@ -27,7 +27,14 @@ def main():
     ap.add_argument("--batch", type=int, default=60)
     ap.add_argument("--limit", type=int, default=300)
     ap.add_argument("--start", type=int, default=0)
+    ap.add_argument("--exclude", default=os.path.join(HERE, "delight_skip_ids.txt"),
+                    help="file of ids to skip (un-delightable: sensitive/thin). "
+                         "Keeps the --start 0 walk from re-picking dead items each round.")
     args = ap.parse_args()
+
+    excluded = set()
+    if args.exclude and os.path.exists(args.exclude):
+        excluded = {l.strip() for l in open(args.exclude) if l.strip()}
 
     con = sqlite3.connect(SRC)
     # title -> (lead, description), and title -> qrank for priority
@@ -51,6 +58,8 @@ def main():
             pass
         else:
             continue
+        if qid in excluded:
+            continue  # known un-delightable (sensitive/thin) -> don't re-pick
         title = qid.split(":", 2)[2].replace("_", " ")
         lead = lead_by_title.get(title)
         if not lead:

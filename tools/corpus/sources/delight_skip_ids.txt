@@ -60,6 +60,7 @@ src:describe:Jason_Gould
 src:describe:Jerry_Sandusky
 src:describe:John_Owen_Lowe
 src:describe:Jonah_Falcon
+src:describe:K._Annamalai
 src:describe:Kyoko_Koizumi
 src:describe:Labia
 src:describe:Lee_Yi-kyung

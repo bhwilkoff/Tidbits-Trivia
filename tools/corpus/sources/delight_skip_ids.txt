@@ -2,6 +2,7 @@ src:cloze:Alejandra_Silva
 src:cloze:Atila_Pesyani
 src:cloze:Cho_Doo-soon_case
 src:cloze:Cooku_with_Comali_season_4
+src:cloze:Craig_Bierko
 src:cloze:Diahnne_Abbott
 src:cloze:Esat_Oktay_Yıldıran
 src:cloze:Guillaume_Bats
@@ -13,6 +14,7 @@ src:cloze:Meaghan_Oppenheimer
 src:cloze:Michael_Barrett_(cinematographer)
 src:cloze:Mickey_Huang
 src:cloze:Miles_Robbins
+src:cloze:Peter_Madsen
 src:cloze:Renée_Estevez
 src:cloze:Ryan_Piers_Williams
 src:cloze:Ryo_Ryusei
@@ -37,6 +39,7 @@ src:describe:Chhota_Rajan
 src:describe:Cho_Doo-soon_case
 src:describe:Clitoral_erection
 src:describe:Copulation_(zoology)
+src:describe:Craig_Bierko
 src:describe:Dersim_massacre
 src:describe:Diahnne_Abbott
 src:describe:Die_Rosenheim-Cops
@@ -69,8 +72,10 @@ src:describe:Mifepristone
 src:describe:Miles_Robbins
 src:describe:Nana_Mori
 src:describe:Nicholas_Rossi
+src:describe:Nitrogen_oxide
 src:describe:Organisation_of_Ukrainian_Nationalists
 src:describe:Patrick_Bruel
+src:describe:Peter_Madsen
 src:describe:Priapism
 src:describe:R._Budd_Dwyer
 src:describe:Renée_Estevez

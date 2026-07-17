@@ -1,0 +1,140 @@
+name: Windows Store build + submit
+
+# The Windows twin of appstore-build.yml / submit-play.sh: package an MSIX on
+# windows-latest and submit it to the Microsoft Store from the CLI.
+#
+#   gh workflow run windows-store.yml                      # package only (default)
+#   gh workflow run windows-store.yml -f submit=true       # package + submit (draft)
+#   gh workflow run windows-store.yml -f submit=true -f commit=true   # …and publish
+#
+# Signing: Store-submitted MSIX needs NO certificate — Microsoft re-signs the
+# package after certification. We sign with a throwaway self-signed cert ONLY so the
+# package is installable for sideload testing; the Store ignores and replaces it.
+#
+# BOOTSTRAP REQUIRED BEFORE `submit` WORKS — see docs/WINDOWS-STORE-SUBMISSION.md.
+# The app must already exist in Partner Center (the API cannot create one) and must
+# have ONE completed manual submission incl. the age-ratings questionnaire.
+on:
+  workflow_dispatch:
+    inputs:
+      submit:
+        description: 'Submit the package to the Microsoft Store'
+        type: boolean
+        required: false
+        default: false
+      commit:
+        description: 'Publish the submission (false = leave it as a draft for review)'
+        type: boolean
+        required: false
+        default: false
+      flight:
+        description: 'Package flight ID for beta rings (blank = the main submission)'
+        required: false
+        default: ''
+
+jobs:
+  package:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Verify the MSIX version matches AppVersion.xcconfig
+        shell: bash
+        run: python3 tools/stamp_msix_version.py --check
+
+      # PublishSingleFile is INCOMPATIBLE with MSIX ("not supported for packaged
+      # apps") — this is a plain self-contained publish, unlike windows-build.yml's
+      # single-file .exe for direct download.
+      - name: Publish (self-contained, multi-file — NOT single-file)
+        working-directory: windows
+        run: >
+          dotnet publish Tidbits.App/Tidbits.App.csproj -c Release -r win-x64
+          --self-contained -p:PublishSingleFile=false -p:PublishReadyToRun=true
+          -o publish/msix
+
+      - name: Stage the package layout
+        shell: pwsh
+        working-directory: windows
+        run: |
+          Copy-Item Tidbits.App/AppxManifest.xml publish/msix/AppxManifest.xml -Force
+          # The manifest references Assets\Windows\*; publish/ doesn't carry them
+          # (they're AvaloniaResource, compiled into the dll, not copied out).
+          New-Item -ItemType Directory -Force -Path publish/msix/Assets/Windows | Out-Null
+          Copy-Item Tidbits.App/Assets/Windows/*.png publish/msix/Assets/Windows/ -Force
+          if (-not (Test-Path publish/msix/Tidbits.App.exe)) { throw "Tidbits.App.exe missing from the layout" }
+
+      - name: Locate the Windows SDK
+        id: sdk
+        shell: pwsh
+        run: |
+          # The SDK version drifts across runner images — never hardcode the path.
+          $tool = Get-ChildItem 'C:\Program Files (x86)\Windows Kits\10\bin\*\x64\makeappx.exe' |
+                  Sort-Object FullName | Select-Object -Last 1
+          if (-not $tool) { throw "makeappx.exe not found on the runner" }
+          $bin = Split-Path $tool.FullName
+          "bin=$bin" >> $env:GITHUB_OUTPUT
+          Write-Host "Windows SDK bin: $bin"
+
+      - name: Pack the MSIX
+        shell: pwsh
+        working-directory: windows
+        run: |
+          & "${{ steps.sdk.outputs.bin }}\makeappx.exe" pack /o /d publish/msix /p TidbitsTrivia.msix
+          if ($LASTEXITCODE -ne 0) { throw "makeappx failed" }
+
+      # Sideload-only signing. The Store re-signs with a Microsoft certificate, so
+      # this cert never reaches users — it only makes the .msix installable for
+      # testing on a real Windows box.
+      - name: Sign for sideload testing (self-signed; the Store replaces this)
+        shell: pwsh
+        working-directory: windows
+        run: |
+          $pub = ([xml](Get-Content Tidbits.App/AppxManifest.xml)).Package.Identity.Publisher
+          Write-Host "Manifest publisher: $pub"
+          $cert = New-SelfSignedCertificate -Type Custom -Subject $pub `
+            -KeyUsage DigitalSignature -FriendlyName "Tidbits sideload" `
+            -CertStoreLocation "Cert:\CurrentUser\My" `
+            -TextExtension @("2.5.29.37={text}1.3.6.1.5.5.7.3.3", "2.5.29.19={text}")
+          $pwd = ConvertTo-SecureString -String "tidbits-dev" -Force -AsPlainText
+          Export-PfxCertificate -cert "Cert:\CurrentUser\My\$($cert.Thumbprint)" -FilePath dev.pfx -Password $pwd | Out-Null
+          & "${{ steps.sdk.outputs.bin }}\signtool.exe" sign /fd SHA256 /a /f dev.pfx /p "tidbits-dev" TidbitsTrivia.msix
+          if ($LASTEXITCODE -ne 0) { throw "signtool failed" }
+          Remove-Item dev.pfx -Force
+
+      - name: Upload the MSIX
+        uses: actions/upload-artifact@v4
+        with:
+          name: tidbits-msix
+          path: windows/TidbitsTrivia.msix
+
+      # ---- Submission (opt-in) ----
+
+      - name: Install the Microsoft Store CLI
+        if: ${{ inputs.submit }}
+        uses: microsoft/microsoft-store-apppublisher@v1.2
+
+      - name: Configure msstore
+        if: ${{ inputs.submit }}
+        shell: pwsh
+        run: |
+          msstore reconfigure `
+            --tenantId '${{ secrets.MSSTORE_TENANT_ID }}' `
+            --sellerId '${{ secrets.MSSTORE_SELLER_ID }}' `
+            --clientId '${{ secrets.MSSTORE_CLIENT_ID }}' `
+            --clientSecret '${{ secrets.MSSTORE_CLIENT_SECRET }}'
+
+      - name: Publish to the Store
+        if: ${{ inputs.submit }}
+        shell: pwsh
+        working-directory: windows
+        run: |
+          $args = @('publish', "$PWD/TidbitsTrivia.msix", '-id', '${{ vars.MSSTORE_PRODUCT_ID }}')
+          # -nc leaves the submission as a DRAFT. Default to draft: an accidental
+          # publish goes to real users and cannot be un-shipped.
+          if ('${{ inputs.commit }}' -ne 'true') { $args += '-nc' }
+          if ('${{ inputs.flight }}' -ne '') { $args += @('-f', '${{ inputs.flight }}') }
+          msstore @args

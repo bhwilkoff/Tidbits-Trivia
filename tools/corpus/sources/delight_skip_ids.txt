@@ -20,7 +20,9 @@ src:cloze:Guillaume_Bats
 src:cloze:Jason_Gould
 src:cloze:Jerry_Sandusky
 src:cloze:Jim_Bob_Duggar
+src:cloze:Kang_So-ra
 src:cloze:Karen_McDougal
+src:cloze:Laura_Loomer
 src:cloze:Lee_Yi-kyung
 src:cloze:MILF_Manor
 src:cloze:Mana_Sakura
@@ -98,9 +100,11 @@ src:describe:Jim_Bob_Duggar
 src:describe:John_Owen_Lowe
 src:describe:Jonah_Falcon
 src:describe:K._Annamalai
+src:describe:Kang_So-ra
 src:describe:Karen_McDougal
 src:describe:Kyoko_Koizumi
 src:describe:Labia
+src:describe:Laura_Loomer
 src:describe:Lee_Yi-kyung
 src:describe:Les_Exploits_d'un_jeune_Don_Juan
 src:describe:Life_on_call
@@ -131,6 +135,7 @@ src:describe:Rikako_Yagi
 src:describe:Roman_Shukhevych
 src:describe:Ryan_Piers_Williams
 src:describe:Ryo_Ryusei
+src:describe:SPONGE
 src:describe:Sairi_Ito
 src:describe:Saleh_al-Arouri
 src:describe:Sam_Spruell
@@ -146,6 +151,7 @@ src:describe:The_Dawn_of_the_Black_Hearts
 src:describe:The_Human_Centipede_2_(Full_Sequence)
 src:describe:The_Strange_Thing_About_the_Johnsons
 src:describe:Tsukasa_Aoi
+src:describe:UFC_on_ESPN:_Vera_vs._Sandhagen
 src:describe:Vaginal_discharge
 src:describe:Vincent_Regan
 src:describe:Vulval_vestibule

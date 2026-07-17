@@ -12,32 +12,47 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 
 ---
 
-## Status (2026-07-08) — feature-complete for everything verifiable off-Windows
+## Status (2026-07-17) — the "needs a real Windows box" blockers are gone
 
-**85 done · 19 partial · 4 open.** Every consumer, host, social, identity,
-live-question-generation, and duels feature is built + tested (167 headless
-tests, green on `windows-latest` CI). Wave B AV is 4/5: SFX board (3.30), PA
-routing (3.31), music beds (3.33), audio round (3.32) all ship on LibVLCSharp,
-which CI confirmed loads + plays on the x64 target.
+**208 tests green** on `windows-latest`. The previous status said the remainder
+"needs a real Windows box (this dev box is an arm64 Mac)". That framing is
+retired: **`windows-latest` IS the Windows box** (Decision 045), and it is now
+drivable from the CLI — `gh workflow run windows-repl.yml` → `gh run download`
+→ `Read` the PNGs, ~2-4 min. There is no free Windows VM to find; CI is the
+answer, permanently.
 
-**The remainder needs a real Windows box (this dev box is an arm64 Mac):**
-- **3.34 video picture** — the audio of a video plays; the on-screen picture is
-  blocked. `LibVLCSharp.Avalonia`'s VideoView builds against Avalonia 12 but
-  crashes at runtime (compiled vs Avalonia 11). Unblock = an Avalonia-12
-  VideoView, or a LibVLC video-callback → Avalonia bitmap (version-independent +
-  headless-verifiable, but ~100 lines of unsafe interop best iterated with real
-  LibVLC in hand — arm64 macOS has no LibVLC native).
-- **0.2 Win32 interop** — Mica shipped (0.3); taskbar progress, global hotkeys,
-  and snap layouts need Win32 P/Invoke, unverifiable off-Windows.
-- **0.5 deep-link OS registration** — the parser + inbox are done (0.4); the
-  `tidbitstrivia://` + https protocol registration needs an MSIX package identity.
-- **1.22 Keychain → DPAPI** — Windows-only API; also no durable credentials to
-  store yet (auth is anon).
-- **3.5 LAN night** — explicitly optional (RTDB path is acceptable).
+Closed this pass:
 
-Everything above is either **hardware/packaging-gated** or **optional** — none is
-both verifiable in this environment and required. The build is ready for a
-Windows-box pass to finish the AV picture + packaging batch.
+- **0.2 Win32 interop** — `Win32HostInterop`: taskbar progress (ITaskbarList3)
+  + global hotkeys (RegisterHotKey). The round-indicator MAPPING is a pure
+  function, so the product behaviour is tested off Windows and only the P/Invoke
+  is Windows-gated. **Snap Layouts needed no code** — free with the standard
+  maximize button, which MainWindow uses.
+- **1.22 DPAPI** — the old note ("no durable credentials yet") was **wrong**:
+  FirebaseRtdb persists the Firebase *refresh* token, and FileTokenStore wrote it
+  in CLEARTEXT. Now DPAPI-protected (CurrentUser + entropy), with legacy
+  cleartext migrated and deleted on first read.
+- **0.5 deep-link registration** — `tidbitstrivia://` registered via the new
+  MSIX package identity. (The https twin is deferred BY SEQUENCE: appUriHandler
+  needs a `.well-known` naming the PackageFamilyName, which doesn't exist until
+  Partner Center assigns the identity — see WINDOWS-STORE-SUBMISSION §6.)
+- **Observability** — input simulation (real clicks/typing drive the app, not
+  just render it) + a Windows-captured visual-regression gate. The gate's first
+  real run caught a channel-order bug **in the gate itself**.
+- **MSIX + Store** — packaging and a CLI submission workflow
+  (`windows-store.yml`, `docs/WINDOWS-STORE-SUBMISSION.md`).
+
+Still open, with HONEST reasons:
+
+- **3.34 video picture [~]** — the version-independent pipeline (LibVLC RV32
+  frames → `VideoFrameSink` → `VideoSurface`) is BUILT and verified end-to-end
+  with synthetic frames, incl. aspect-fit letterboxing. What is NOT yet proven is
+  LibVLC actually invoking the callbacks with a real video file; that needs a
+  video fixture on Windows CI. The audio of a video already plays (3.32 path).
+- **3.5 LAN night** — explicitly optional (RTDB path is acceptable). Not planned.
+- **Store bootstrap** — BLOCKED ON OWNER: Partner Center cannot be automated
+  (name reservation, first manual submission incl. age ratings, Entra app
+  registration). See WINDOWS-STORE-SUBMISSION §1.
 
 ---
 
@@ -46,10 +61,10 @@ Windows-box pass to finish the AV picture + packaging batch.
 - [x] 0.6 Headless-PNG harness + `windows-latest` CI (build/snapshot/launch)
 - [~] 0.7 Design tokens — brand-coral accent set (#FF5C35); full palette dictionaries + 6-level ramp pending
 - [~] 0.8 Design-token styles — reusable Border.card (chunky card), Button.chunky, Button.compact defined once in App.axaml (WINDOWS-DESIGN §7.1) atop the existing BrandPrimary/BrandAccent tokens + FluentAvalonia coral accent (.accent). Adopted Classes="card" in Records (render-verified identical). Broad adoption across all views is a mechanical follow-up sweep
-- [ ] 0.2 `Win32HostInterop` seam (Mica/DWM, taskbar, hotkeys, snap)
+- [x] 0.2 `Win32HostInterop` seam — taskbar progress (ITaskbarList3) + global hotkeys (RegisterHotKey) behind ONE Windows-guarded helper Core never references; the round-indicator mapping is a pure function (clock outranks team count; expired clock = Error not a misleading full bar; all-answered = the reveal cue; out-of-range clamps) so it is tested off Windows, with the P/Invoke verified on windows-latest. Mica already shipped (0.3). **Snap Layouts need no code** — free with the standard maximize button (MainWindow uses standard decorations); the WM_NCHITTEST fix only matters under custom chrome
 - [~] 0.3 Window chrome — Mica backdrop applied (MainWindow TransparencyLevelHint="Mica,AcrylicBlur,None"; the Win11 material, graceful fallback to opaque on Win10/headless). FluentAvalonia's opaque control surfaces keep content readable (avoided the risky global Background=Transparent). Extend-titlebar + theme-follow still pending; Mica visual is windows-latest-CI-verified (headless ignores the hint; 114/114 shell tests still GREEN)
 - [~] 0.4 Deep-link inbox + routing — `DeepLink.Parse` maps the custom scheme (tidbitstrivia://live/2NRE, ://daily, ://leaderboard, …) AND the https twin to a nav target (+ sanitized 4-char room code); Program captures a launch URL, MainWindow.Route consumes it on Loaded to select the tab (the inbox pattern — external entry never touches nav directly). Parser + nav-tag unit-tested (12+6 cases). Quick-Play memory / presets still pending
-- [ ] 0.5 `tidbitstrivia://` + https deep-link registration (needs package identity)
+- [~] 0.5 deep-link registration — `tidbitstrivia://` REGISTERED via the MSIX package identity (AppxManifest windows.protocol); parser + inbox already existed (0.4). The **https twin is deferred by sequence, not oversight**: windows.appUriHandler needs /.well-known/windows-app-web-link naming the PackageFamilyName, and the PFN is Name + a hash of the REAL Partner Center Publisher — it does not exist until the Store identity is assigned. A guessed PFN fails silently. See WINDOWS-STORE-SUBMISSION §6
 
 ## Slice 1 — Core foundation (`Tidbits.Core`)
 - [x] 1.1 `Question` + Closest/Match/Enum/Answered specs
@@ -68,7 +83,7 @@ Windows-box pass to finish the AV picture + packaging batch.
 - [x] 1.11 `WikipediaClient` — read-only client for the open Wikipedia REST (page/summary) + Action (search) APIs over one capped HttpClient, no key/auth, UA header, concurrent Summaries(titles) dropping failures. Parse/ParseSearch extracted static so decoding is unit-tested offline (summary fields + PageUrl/ImageUrl, search titles, malformed→empty). Foundation for the TemplateEngine (1.12) live-gen port
 - [x] 1.12 `TemplateEngine` — faithful port of the ~380-line NLP filter (the moat): describe & cloze shapes, fame-floor + richness gates, type-key/person detection, type-matched distractors, clue cleaning, answer-leak + foreign-script rejection, seeded (splitmix64) determinism. Wired into QuestionProvider.LiveQuestions; offline tests + a naturally-reading sample Q
 - [x] 1.13 AI generator (Windows path) — no on-device model, so TemplateEngine IS the generation path (LiveQuestions runs it), matching the Apple fallback
-- [ ] 1.22 `Keychain` → Credential Manager/DPAPI
+- [x] 1.22 `Keychain` → DPAPI — `DpapiTokenStore` on the existing ITokenStore seam (Core stays OS-agnostic). The prior "no durable credentials yet" note was WRONG: FirebaseRtdb persists the Firebase refresh token and FileTokenStore wrote it as PLAINTEXT to LocalApplicationData — a long-lived credential sufficient to assume a player identity. Now DPAPI CurrentUser + app entropy; legacy cleartext migrated then deleted; undecryptable ciphertext (restored backup/roamed profile) drops and re-auths instead of wedging sign-in. Falls back to the file store off Windows
 - [x] 1.23 `Haptics` → no-op stub
 - [x] 1.21 `GameSettings` KV (JSON-backed) + RecordsStore.ResetAll
 - [x] 1.20 `DailyLog` (per-day results, first-completion-wins; JSON-backed; a replay can't overwrite a day's record) — unit test GREEN
@@ -155,7 +170,7 @@ Windows-box pass to finish the AV picture + packaging batch.
 - [x] 3.31 PA output-device routing — the cockpit "🔊 Audio" panel lists LibVLC output devices (AvPlayer.OutputDevices) in a picker; selecting one routes all channels via AvPlayer.SetOutputDevice. Falls back to "System default" when no extra devices. Rendered in the combined audio panel (PNG)
 - [x] 3.32 Audio round (BYO clips) — a "Question clip" cue in the cockpit audio panel: "Play audio" file-picks a clip → AvPlayer.PlayClip (its own channel, under the bed), with Pause/Stop. The host plays the clip in the room; players answer via the normal answer surface. On the CI-verified AvPlayer. Render test asserts the clip section
 - [x] 3.33 Looping music beds — "Choose bed" file-picks audio → AvPlayer.PlayBed (input-repeat loop on its own channel, under the SFX + question clip), a Stop button, and a volume slider → AvPlayer.SetBedVolume. In the cockpit audio panel; playback on the CI-verified AvPlayer
-- [~] 3.34 Video questions — BLOCKED on VideoView: LibVLCSharp.Avalonia 3.9.4 builds against Avalonia 12 but crashes at runtime (MissingMethodException Visual.get_VisualRoot in InitializeNativeOverlay — compiled vs Avalonia 11). Reverted the projector VideoView; a video clip's AUDIO still plays via AvPlayer.PlayClip (3.32 path), only the on-screen picture is blocked. Needs an Avalonia-12-compatible VideoView (Zafiro.Avalonia.LibVLCSharp / newer pkg) or a LibVLC bitmap-callback → Image, verified on a Windows display. See memory windows-wave-b-av-libvlc
+- [~] 3.34 Video questions — the bitmap-callback path is BUILT (the VideoView route is abandoned: LibVLCSharp.Avalonia 3.9.4 is compiled against Avalonia 11 and throws MissingMethodException Visual.get_VisualRoot under Avalonia 12). `AvPlayer.SetVideoSink` asks LibVLC for RV32 frames via SetVideoFormatCallbacks/SetVideoCallbacks (signatures read off the assembly by reflection: chroma is a char[4] BUFFER, not a packed uint; cleanup takes ref IntPtr; the delegates are held as fields because LibVLC keeps raw function pointers) → `VideoFrameSink` copies into a WriteableBitmap → `VideoSurface` draws it aspect-FIT (whole frame letterboxed — never the cropped-fill trap). Version-INDEPENDENT (no Avalonia inside LibVLC's path) and headless-verifiable, which VideoView never was. 8 tests drive the pipeline with SYNTHETIC frames — so it is verified on this arm64 Mac, which has no LibVLC native at all — incl. a frame reaching real rendered pixels at exact coral. **Remaining [~]:** LibVLC actually invoking the callbacks against a real video file is unproven; needs a video fixture on Windows CI. A video clip's AUDIO already plays (3.32 path)
 - [x] 3.35 Speed-tiered scoring — the fastest three correct answers score +3/+2/+1; extracted the tiering out of AutoScore into pure LiveScoring.SpeedBonuses(fastest-first uids) and unit-tested it (3/2/1, 4th+ none, fewer-than-3, nobody-correct). Gated by the host SpeedBonus toggle
 
 ## Slice 8 — Waves D + E (venue + moat)

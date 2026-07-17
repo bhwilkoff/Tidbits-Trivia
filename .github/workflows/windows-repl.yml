@@ -1,6 +1,6 @@
 name: Windows REPL
 
-# The remote Windows box (DECISION 043). No free-forever Windows VM exists, so
+# The remote Windows box (DECISION 045). No free-forever Windows VM exists, so
 # `windows-latest` — unlimited-free on this public repo — IS the Windows machine.
 # This workflow makes it drivable from the CLI with no local toolchain:
 #

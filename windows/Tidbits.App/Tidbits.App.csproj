@@ -30,11 +30,35 @@
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="9.0.0" />
     <!-- Wave B AV (owner-chosen LibVLCSharp — cross-platform, verifiable on the Mac). -->
     <PackageReference Include="LibVLCSharp" Version="3.9.4" />
-    <PackageReference Include="VideoLAN.LibVLC.Windows" Version="3.0.21" />
-    <PackageReference Include="VideoLAN.LibVLC.Mac" Version="3.1.3.1" />
+    <!-- LibVLC natives are RID-specific and MUST be conditioned. Referencing both
+         unconditionally put the 42MB macOS dylib into the win-x64 Store package.
+         With no RID (the Mac dev head / headless tests) both come along, which is
+         what lets AvPlayer be exercised locally. -->
+    <PackageReference Include="VideoLAN.LibVLC.Windows" Version="3.0.21"
+                      Condition="'$(RuntimeIdentifier)' == '' or $(RuntimeIdentifier.StartsWith('win'))" />
+    <PackageReference Include="VideoLAN.LibVLC.Mac" Version="3.1.3.1"
+                      Condition="'$(RuntimeIdentifier)' == '' or $(RuntimeIdentifier.StartsWith('osx'))" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Tidbits.Core\Tidbits.Core.csproj" />
   </ItemGroup>
+
+  <!-- Trim what a win-x64 ship must never carry:
+       - libvlc/win-x86 (~99MB): VideoLAN.LibVLC.Windows ships BOTH arches; an x64
+         app cannot load the 32-bit tree, so it is dead weight.
+       - native .pdb symbols (~105MB, mostly libSkiaSharp.pdb): debug symbols for
+         users to download and never use.
+       Together these were over half the package. -->
+  <Target Name="TrimWindowsPublishBloat" AfterTargets="Publish"
+          Condition="'$(RuntimeIdentifier)' == 'win-x64'">
+    <ItemGroup>
+      <_TidbitsBloat Include="$(PublishDir)libvlc\win-x86\**\*" />
+      <_TidbitsBloat Include="$(PublishDir)*.pdb" />
+    </ItemGroup>
+    <Delete Files="@(_TidbitsBloat)" />
+    <RemoveDir Directories="$(PublishDir)libvlc\win-x86" />
+    <Message Importance="high" Text="Trimmed win-x86 LibVLC + native pdbs from $(PublishDir)" />
+  </Target>
+
 </Project>

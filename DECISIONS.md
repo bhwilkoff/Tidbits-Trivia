@@ -1323,3 +1323,71 @@ joins as a team). The **old mDNS Night stack** (`NightHost`/`NightClient`/
 `BonjourTransport`, Wi-Fi Aware, BLE, `net/Night*` on Android) is **legacy** — no
 longer wired for Trivia Night; `LiveNight` survives only as the GameKit Quick Match
 coordinator (Decision 039). Do not add mDNS to new join/host flows.
+
+## 045 — There is no free remote Windows box; `windows-latest` IS the Windows machine
+
+Windows development is **CI-driven, not VM-driven**. `windows-latest` on this
+public repo is unlimited-free and is the only Windows compute in the loop. It is
+driven from the CLI via `.github/workflows/windows-repl.yml`
+(`gh workflow run` → `gh run watch` → `gh run download` → `Read` the PNGs, ~2-4
+min round trip). Do NOT go looking for a free Windows VM again, and do NOT RDP
+into a runner.
+
+**Why:** researched 2026-07-17, and the answer is genuinely "none exists":
+
+- **Azure** — 750h/mo B1S Windows is **12 months only**, then nothing. No
+  always-free Windows tier. 1 vCPU / 1GB is also miserable for an Avalonia GUI
+  over RDP.
+- **AWS** — the 750h/mo free tier is **gone for accounts created after
+  2025-07-15**; new accounts get $200 in credits that expire in 6 months and
+  then the account auto-closes.
+- **Google Cloud** — the Windows license is a per-vCPU premium the free tier
+  never covers; Windows images can't even be created during the trial.
+- **Oracle Always Free** — "Microsoft BYOL is not available on Free Tier or
+  trial tenancies."
+- **Windows 365** — 1-month trial; **Dev Box closed to new sign-ups 2025-11-01**.
+- **RDP-into-a-runner** — technically possible, but GitHub's Actions terms limit
+  hosted runners to "activity related to the production, testing, deployment, or
+  publication of the software project associated with the repository," GitHub
+  *does* disable repos for the ngrok+3389 pattern, the 6-hour job cap is
+  unextendable (idle burns it identically), and Tailscale's free tier allows
+  1,000 ephemeral min/mo — under three sessions. Not sustainable, and it risks
+  the account for a 1024x768 software-rendered desktop.
+
+The deeper reason this is fine: **the loop never needed a desktop.**
+`Avalonia.Headless` with `UseSkia()` + `UseHeadlessDrawing = false` renders real
+Skia pixels in-process, with deterministic frame timing and full input
+simulation — no window station, no session, no GPU. So CI gives strictly more
+than an RDP session would, reproducibly and forever.
+
+**How to apply:**
+
+1. **Iterate on the Mac head** (`dotnet test`) for speed; it renders real pixels
+   but is NOT the ship target.
+2. **Gate on `windows-latest`.** "Renders on the Mac" is not "correct on
+   Windows" — Mica, window chrome, DPAPI, Win32 interop, LibVLC natives and snap
+   are Windows-only, and several are arm64-macOS-impossible.
+3. **Visual baselines are captured ON Windows and enforced only there**
+   (`VisualBaseline`), because Skia rasterization/font fallback are not
+   guaranteed identical across heads. Refresh with
+   `gh workflow run windows-repl.yml -f update_baselines=true`, then commit the
+   artifact.
+4. **Baseline-gated renders must be deterministic** — use `StartCustom` with
+   fixed questions. `engine.Start()` draws from the 131k corpus and can never be
+   baselined.
+5. **Structure Windows-only work so the BEHAVIOUR is pure and the platform call
+   is a thin edge** — `Win32HostInterop.RoundIndicator`, `VideoFrameSink`
+   (a raw BGRA pointer, no LibVLC). That is what keeps it testable off Windows at
+   all, and it is why 3.34 and 0.2 got unblocked without a Windows box.
+6. **`CopyPixels` returns each bitmap's NATIVE format** — a captured frame is
+   RGBA, a PNG-decoded file is BGRA. Comparing them directly reads R against B,
+   which reports pixel-identical images as differing *only where they are
+   coloured* (grey has R==G==B and agrees). This produced a false 0.651%/8.391%
+   drift on the visual gate's first real run. Always normalize through one decode
+   path before comparing.
+
+**The cost model:** $0/month, forever, on a public repo. The only thing ever
+worth paying for is an Azure VM as a rare eyes-on escape hatch for the few things
+headless genuinely cannot show (native window chrome, OS font substitution, real
+GPU behaviour) — and its 12-month clock starts at signup, so defer it until
+something forces the issue.

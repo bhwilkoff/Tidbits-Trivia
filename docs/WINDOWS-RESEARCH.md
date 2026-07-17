@@ -103,16 +103,22 @@ Signing / SignPath-for-OSS) vs the $0 ship-unsigned fallback.
 - **Real-Windows confirmation ($0):** **GitHub Actions `windows-latest`
   is UNLIMITED-free for PUBLIC repos** (Tidbits is public) — run the same
   headless capture there + optionally a real-desktop PowerShell screenshot
-  of the launched `.exe`, upload as artifacts. (Private-repo free tier:
-  ~1,000 Windows min/mo since Windows counts 2×.)
+  of the launched `.exe`, upload as artifacts. (Private-repo free tier: GitHub
+  RETIRED minute multipliers — billing is now direct per-minute rates, Windows
+  2-core $0.010/min vs Linux $0.006. Moot here: public repos aren't metered.)
 - **Wine on Mac:** skip for design verification — double translation
   (x86→Wine→Rosetta) + Skia/GPU is Wine's weak spot; unreliable pixels.
   Smoke-test only. (Whisky discontinued 4/2025; free wrapper now
   "Sikarugir"; CrossOver is paid.)
-- **Free cloud Windows VMs:** none are permanently free. Azure's
-  12-month B1S trial is a rare live-RDP escape hatch only — **violates the
-  $0-ongoing guardrail after 12 months**, so not part of the steady loop.
-  GitHub Actions is the truly-$0 real-Windows path.
+- **Free cloud Windows VMs:** none are permanently free — re-researched
+  2026-07-17 and now LOCKED as **Decision 045**. Azure's 750h/mo B1S Windows is
+  12-month-only; **AWS's 750h tier is gone for accounts created after
+  2025-07-15** ($200 credits, 6-month expiry, then auto-close); GCP never covers
+  the Windows license; Oracle bars Windows BYOL on free tenancies; Dev Box closed
+  to new sign-ups 2025-11-01. RDP-into-a-runner is ToS-gray, capped at 6h, and
+  Tailscale's free ephemeral minutes allow <3 sessions/mo. **GitHub Actions is
+  the truly-$0 real-Windows path, and it is now CLI-drivable** —
+  `.github/workflows/windows-repl.yml`.
 
 **Observability loop (settled):** Mac-local `dotnet test` → headless PNG →
 `Read` the PNG (fast design loop, pixel-faithful) → `windows-latest` CI for

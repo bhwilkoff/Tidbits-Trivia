@@ -45,6 +45,41 @@ public class VisualBaselineTest
     }
 
     [AvaloniaFact]
+    public void A_captured_frame_matches_its_own_saved_png()
+    {
+        // The regression guard for the channel-order bug: a captured frame and the PNG
+        // written FROM that frame are the same image, so the comparator must report
+        // zero. It didn't — CopyPixels returns each bitmap's native format, and a
+        // captured frame's differs from a PNG-decoded file's, so the compare read R
+        // against B and reported a false 0.651%/8.391% drift on identical renders.
+        // Coloured content is essential here: grey pixels have R==G==B and would agree
+        // even with the channels swapped, hiding the bug.
+        var win = new Window
+        {
+            Width = 60,
+            Height = 40,
+            Content = new Border { Background = new SolidColorBrush(Color.FromRgb(0xFF, 0x5C, 0x35)) },
+        };
+        win.Show();
+        Dispatcher.UIThread.RunJobs();
+        var frame = win.CaptureRenderedFrame()!;
+
+        var path = Path.Combine(Path.GetTempPath(), $"tidbits-vb-{Guid.NewGuid():N}.png");
+        try
+        {
+            frame.Save(path);
+            using var reloaded = new Avalonia.Media.Imaging.Bitmap(path);
+            var (differing, total) = VisualBaselineProbe.Diff(reloaded, VisualBaselineProbe.Normalize(frame));
+            Assert.True(total > 0);
+            Assert.Equal(0, differing);
+        }
+        finally
+        {
+            try { File.Delete(path); } catch { }
+        }
+    }
+
+    [AvaloniaFact]
     public void A_resize_is_reported_as_fatal_not_as_a_pixel_count()
     {
         var a = Swatch(Colors.CornflowerBlue);

@@ -79,7 +79,7 @@ public static class VisualBaseline
             $"TIDBITS_UPDATE_BASELINES=1, then commit Baselines/windows/{name}.png.");
 
         using var expected = new Bitmap(baselinePath);
-        var (differing, total, reason) = Compare(expected, frame);
+        var (differing, total, reason) = Compare(expected, Normalize(frame));
 
         if (reason is not null)
         {
@@ -100,7 +100,27 @@ public static class VisualBaseline
         }
     }
 
+    /// Round-trip a bitmap through a PNG encode/decode so it lands in the SAME pixel
+    /// format as a baseline loaded from disk.
+    ///
+    /// This is load-bearing, not a nicety. Bitmap.CopyPixels hands back each bitmap's
+    /// NATIVE format, and a freshly-captured frame's format is not the same as a
+    /// PNG-decoded file's — the channel order differs. Comparing them directly reads R
+    /// against B, so pixel-IDENTICAL renders report as different wherever the image is
+    /// coloured (grey pixels have R==G==B and silently agree). That produced an exactly
+    /// reproducible 0.651% / 8.391% false diff on two identical images, and the
+    /// tempting "fix" — refreshing the baselines — would have hidden it forever while
+    /// leaving the gate blind to real drift.
+    internal static Bitmap Normalize(Bitmap bmp)
+    {
+        using var ms = new MemoryStream();
+        bmp.Save(ms);
+        ms.Position = 0;
+        return new Bitmap(ms);
+    }
+
     /// Per-pixel compare. Returns (differingPixels, totalPixels, fatalReason).
+    /// Both bitmaps MUST have come through the same decode path — see Normalize.
     internal static (int, int, string?) Compare(Bitmap expected, Bitmap actual)
     {
         var es = expected.PixelSize;
@@ -150,4 +170,6 @@ internal static class VisualBaselineProbe
     }
 
     public static string? FatalReason(Bitmap a, Bitmap b) => VisualBaseline.Compare(a, b).Item3;
+
+    public static Bitmap Normalize(Bitmap b) => VisualBaseline.Normalize(b);
 }

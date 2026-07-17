@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  MSIX package identity (WINDOWS-DESIGN §0.4). Identity is what unblocks the good
+  parts: protocol activation (tidbitstrivia://), toasts, jump lists — all of which
+  throw NO_PACKAGE without it. It is also what the Microsoft Store submission
+  requires.
+
+  IDENTITY IS NOT FREELY EDITABLE. Name / Publisher / Version must match Partner
+  Center EXACTLY (case- and whitespace-sensitive); a mismatch fails upload with a
+  generic error that does not name the offending field. Copy them verbatim from
+  Partner Center -> Product management -> View app identity details. The placeholder
+  Publisher below is a self-signed dev identity for sideload testing; the Store
+  bootstrap replaces it (see docs/WINDOWS-STORE-SUBMISSION.md).
+
+  VERSION RULE: four segments, and the FOURTH MUST BE 0 — it is reserved by the
+  Store. So the marketing version 1.6.44 becomes 1.6.44.0, and the build number
+  (CURRENT_PROJECT_VERSION) has nowhere to live here. Version is stamped by
+  tools/stamp_msix_version.py from AppVersion.xcconfig; do not hand-edit it.
+-->
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap rescap">
+
+  <Identity
+    Name="LearningIsChange.TidbitsTrivia"
+    Publisher="CN=TidbitsTriviaDev"
+    Version="1.6.44.0" />
+
+  <Properties>
+    <DisplayName>Tidbits Trivia</DisplayName>
+    <PublisherDisplayName>Learning Is Change</PublisherDisplayName>
+    <Logo>Assets\Windows\StoreLogo.png</Logo>
+    <Description>The best trivia questions anywhere — play solo, pass and play, or host a live trivia night.</Description>
+  </Properties>
+
+  <Dependencies>
+    <!-- minSdk 10.0.17763 (1809) matches the app's Windows 10 floor. -->
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.22621.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="en-us" />
+  </Resources>
+
+  <Applications>
+    <Application Id="TidbitsTrivia" Executable="Tidbits.App.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+        DisplayName="Tidbits Trivia"
+        Description="The best trivia questions anywhere — play solo, pass and play, or host a live trivia night."
+        BackgroundColor="transparent"
+        Square150x150Logo="Assets\Windows\Square150x150Logo.png"
+        Square44x44Logo="Assets\Windows\Square44x44Logo.png">
+        <uap:DefaultTile
+          Wide310x150Logo="Assets\Windows\Wide310x150Logo.png"
+          Square71x71Logo="Assets\Windows\Square71x71Logo.png"
+          Square310x310Logo="Assets\Windows\Square310x310Logo.png" />
+        <uap:SplashScreen Image="Assets\Windows\SplashScreen.png" BackgroundColor="#FF5C35" />
+      </uap:VisualElements>
+
+      <Extensions>
+        <!-- 0.5 — deep-link registration. The parser + inbox (0.4) already exist; this
+             is the OS half that was blocked on package identity. Every shape the app
+             emits must be declared or an external open fails silently:
+             tidbitstrivia://live/CODE, ://daily, ://leaderboard, ://item/x -->
+        <uap:Extension Category="windows.protocol">
+          <uap:Protocol Name="tidbitstrivia" DesiredView="default">
+            <uap:DisplayName>Tidbits Trivia</uap:DisplayName>
+          </uap:Protocol>
+        </uap:Extension>
+
+        <!-- The https twin (tidbitstrivia.com/live/CODE) is NOT registered yet, and
+             that is a sequencing fact, not an oversight: windows.appUriHandler
+             requires a /.well-known/windows-app-web-link on tidbitstrivia.com naming
+             the PackageFamilyName, and the PFN is Name + a hash of the real Partner
+             Center Publisher — it does not exist until the Store identity is assigned.
+             Publishing a .well-known with a guessed PFN would be worse than none
+             (silent, unverifiable failure). Add both together after the Store
+             bootstrap — see docs/WINDOWS-STORE-SUBMISSION.md step 6.
+             Until then the custom scheme carries deep links, and the https link opens
+             the web app, which is the correct fallback on every platform. -->
+      </Extensions>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <Capability Name="internetClient" />
+  </Capabilities>
+</Package>

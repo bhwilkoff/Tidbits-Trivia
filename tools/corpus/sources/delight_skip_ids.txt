@@ -2,6 +2,7 @@ src:cloze:Abbé_Pierre
 src:cloze:Abu_Hafs_al-Hashimi_al-Qurashi
 src:cloze:Al-Aqsa_Martyrs'_Brigades
 src:cloze:Alejandra_Silva
+src:cloze:Alida_Morberg
 src:cloze:Anwar_al-Awlaki
 src:cloze:Atila_Pesyani
 src:cloze:Caitlin_McHugh
@@ -61,6 +62,7 @@ src:describe:Abu_al-Hasan_al-Hashimi_al-Qurashi
 src:describe:Aimee_Osbourne
 src:describe:Al-Aqsa_Martyrs'_Brigades
 src:describe:Alejandra_Silva
+src:describe:Alida_Morberg
 src:describe:Amalek
 src:describe:Ami_Touma
 src:describe:Anna_Yamada

@@ -28,6 +28,29 @@ it refuses to drive submissions until one full manual submission exists.
 
 ---
 
+## §0 — Bootstrap progress (updated 2026-07-17)
+
+- [x] App reserved in Partner Center — **Store ID `9NRKS9LDRCWC`**, product type
+  "MSIX or PWA game".
+- [x] Real identity in `AppxManifest.xml` (Name `LearningisChangeInc.TidbitsTrivia`,
+  Publisher `CN=2DCA50F2-F930-495C-BFC0-422E60C371ED`, PublisherDisplayName
+  "Learning is Change, Inc.") — verified on a Windows CI package build.
+- [x] `MSSTORE_PRODUCT_ID` repo variable = `9NRKS9LDRCWC`.
+- [x] https deep-link twin wired end-to-end: appUriHandler in the manifest +
+  `/.well-known/windows-app-web-link` (PFN
+  `LearningisChangeInc.TidbitsTrivia_fn1p07pbc0hg8`) serving 200 live. (This pass
+  also fixed a latent bug — `.well-known` was never deployed, so the Android
+  `assetlinks.json` had been 404ing; both serve 200 now.)
+- [ ] **Auth spike** (§1.1) — Entra app registration + Manager role + `msstore
+  apps list`. NOT done. This is the real risk; do it next.
+- [ ] **4 Store secrets** (§1.5) — not set.
+- [ ] **First manual submission** incl. age ratings (§1.4) — not done; the API
+  refuses to drive submissions until it exists.
+- [ ] Verify https external-open on a real Windows box (parser is ready; only the
+  OS handoff is unverified).
+
+---
+
 ## §1 — Bootstrap (once, mostly manual — OWNER ACTION)
 
 These cannot be automated. Do them in order; step 1 is a spike that

@@ -44,6 +44,84 @@ public sealed class AvPlayer : IDisposable
     public void StopBed() => _bed?.Stop();
     public void SetBedVolume(int percent) { if (_bed is not null) _bed.Volume = Math.Clamp(percent, 0, 100); }
 
+    // ---- Video picture (3.34) ----
+
+    private VideoFrameSink? _sink;
+    private IntPtr _frameBuffer;
+    private int _pitch;
+    // These delegates MUST be held: LibVLC stores raw function pointers, so if they
+    // are collected the decoder thread calls into freed memory and takes the show down.
+    private MediaPlayer.LibVLCVideoLockCb? _lockCb;
+    private MediaPlayer.LibVLCVideoUnlockCb? _unlockCb;
+    private MediaPlayer.LibVLCVideoDisplayCb? _displayCb;
+    private MediaPlayer.LibVLCVideoFormatCb? _formatCb;
+    private MediaPlayer.LibVLCVideoCleanupCb? _cleanupCb;
+
+    /// Route the question clip's PICTURE into `sink` rather than a native window
+    /// (3.34). Call before PlayClip; null detaches (audio-only).
+    public void SetVideoSink(VideoFrameSink? sink)
+    {
+        if (_clip is null) return;
+        _sink = sink;
+        if (sink is null)
+        {
+            try { _clip.SetVideoFormat(null, 0, 0, 0); } catch { }
+            ReleaseFrameBuffer();
+            return;
+        }
+
+        _formatCb = (ref IntPtr opaque, IntPtr chroma, ref uint width, ref uint height,
+                     ref uint pitches, ref uint lines) =>
+        {
+            WriteChroma(chroma, "RV32"); // BGRA on little-endian — copies in as-is
+            _pitch = _sink!.Configure((int)width, (int)height);
+            pitches = (uint)_pitch;
+            lines = height;
+            AllocFrameBuffer(_pitch * (int)height);
+            return 1; // one picture buffer
+        };
+        _cleanupCb = (ref IntPtr opaque) => ReleaseFrameBuffer();
+        _lockCb = (IntPtr opaque, IntPtr planes) =>
+        {
+            System.Runtime.InteropServices.Marshal.WriteIntPtr(planes, _frameBuffer);
+            return IntPtr.Zero;
+        };
+        _unlockCb = (IntPtr opaque, IntPtr picture, IntPtr planes) => { };
+        _displayCb = (IntPtr opaque, IntPtr picture) =>
+        {
+            if (_frameBuffer != IntPtr.Zero) _sink?.WriteFrame(_frameBuffer, _pitch);
+        };
+
+        try
+        {
+            _clip.SetVideoFormatCallbacks(_formatCb, _cleanupCb);
+            _clip.SetVideoCallbacks(_lockCb, _unlockCb, _displayCb);
+        }
+        catch { /* no video support — the clip's AUDIO still plays (3.32) */ }
+    }
+
+    /// `chroma` is a 4-byte buffer LibVLC hands us to write the FOURCC into (NOT a
+    /// packed uint — it is char[4] on the native side).
+    internal static void WriteChroma(IntPtr chroma, string fourcc)
+    {
+        if (chroma == IntPtr.Zero) return;
+        for (int i = 0; i < 4; i++)
+            System.Runtime.InteropServices.Marshal.WriteByte(chroma, i, (byte)fourcc[i]);
+    }
+
+    private void AllocFrameBuffer(int len)
+    {
+        ReleaseFrameBuffer();
+        _frameBuffer = System.Runtime.InteropServices.Marshal.AllocHGlobal(len);
+    }
+
+    private void ReleaseFrameBuffer()
+    {
+        if (_frameBuffer == IntPtr.Zero) return;
+        System.Runtime.InteropServices.Marshal.FreeHGlobal(_frameBuffer);
+        _frameBuffer = IntPtr.Zero;
+    }
+
     /// Play the current question's audio or video clip.
     public void PlayClip(string path) => PlayOn(_clip, path, loop: false);
     public void StopClip() => _clip?.Stop();

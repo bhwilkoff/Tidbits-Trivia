@@ -86,5 +86,10 @@
 
   <Capabilities>
     <Capability Name="internetClient" />
+    <!-- Required by EntryPoint="Windows.FullTrustApplication": a packaged desktop
+         (Win32) app is full-trust by definition, and makeappx rejects the manifest
+         without it (error 80080204). This is the standard desktop-bridge capability,
+         not an escalation — it's what every packaged .exe declares. -->
+    <rescap:Capability Name="runFullTrust" />
   </Capabilities>
 </Package>

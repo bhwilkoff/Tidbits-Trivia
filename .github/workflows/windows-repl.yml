@@ -1,0 +1,105 @@
+name: Windows REPL
+
+# The remote Windows box (DECISION 043). No free-forever Windows VM exists, so
+# `windows-latest` — unlimited-free on this public repo — IS the Windows machine.
+# This workflow makes it drivable from the CLI with no local toolchain:
+#
+#   gh workflow run windows-repl.yml -f test_filter='FullyQualifiedName~InputDrivenTest'
+#   gh run watch $(gh run list -w 'Windows REPL' -L1 --json databaseId -q '.[0].databaseId')
+#   gh run download <run-id> -n windows-repl-artifacts
+#
+# Then `Read` the PNGs. Round trip is ~2-4 min. Everything runs on real Windows on
+# the real ship target, so a green run here means more than a green run on the Mac.
+#
+# NOTE: `command` is arbitrary code execution on the runner, gated by repo write
+# access. That is acceptable for a solo repo and would NOT be for a shared one.
+on:
+  workflow_dispatch:
+    inputs:
+      test_filter:
+        description: 'dotnet test --filter expression (blank = all tests)'
+        required: false
+        default: ''
+      command:
+        description: 'Extra PowerShell to run in windows/ AFTER the tests (blank = none)'
+        required: false
+        default: ''
+      update_baselines:
+        description: 'Rewrite the committed visual baselines from this run'
+        type: boolean
+        required: false
+        default: false
+      run_app:
+        description: 'Launch the real .exe and screenshot the desktop'
+        type: boolean
+        required: false
+        default: false
+
+jobs:
+  repl:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: windows
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Build (Release)
+        run: dotnet build Tidbits.slnx -c Release
+
+      - name: Tests (real Windows render + input)
+        env:
+          TIDBITS_ARTIFACTS: ${{ github.workspace }}/windows/artifacts
+          TIDBITS_UPDATE_BASELINES: ${{ inputs.update_baselines && '1' || '' }}
+        shell: pwsh
+        run: |
+          $args = @('test','Tidbits.HeadlessTests/Tidbits.HeadlessTests.csproj','-c','Release','--no-build')
+          if ('${{ inputs.test_filter }}' -ne '') { $args += @('--filter','${{ inputs.test_filter }}') }
+          dotnet @args
+
+      - name: Launch the real .exe + screenshot the desktop
+        if: ${{ inputs.run_app }}
+        shell: pwsh
+        run: |
+          dotnet publish Tidbits.App/Tidbits.App.csproj -c Release -r win-x64 --self-contained `
+            -p:PublishSingleFile=true -o publish/win-x64
+          $p = Start-Process -FilePath "publish/win-x64/Tidbits.App.exe" -PassThru
+          Start-Sleep -Seconds 10
+          Add-Type -AssemblyName System.Windows.Forms, System.Drawing
+          $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+          $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
+          $g = [System.Drawing.Graphics]::FromImage($bmp)
+          $g.CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
+          New-Item -ItemType Directory -Force -Path artifacts | Out-Null
+          $bmp.Save("$PWD/artifacts/launched-desktop.png")
+          if ($p.HasExited) { throw "Tidbits.App.exe exited early (code $($p.ExitCode))" }
+          Stop-Process -Id $p.Id -Force
+
+      - name: Ad-hoc command
+        if: ${{ inputs.command != '' }}
+        shell: pwsh
+        env:
+          TIDBITS_ARTIFACTS: ${{ github.workspace }}/windows/artifacts
+        run: ${{ inputs.command }}
+
+      # Baselines are captured on Windows (the ship target) — download this artifact
+      # and commit it when refreshing them.
+      - name: Upload refreshed baselines
+        if: ${{ inputs.update_baselines }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-baselines
+          path: windows/Tidbits.HeadlessTests/Baselines/windows/*.png
+          if-no-files-found: warn
+
+      - name: Upload artifacts (always — a FAILED run's PNGs are the diagnostic)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-repl-artifacts
+          path: windows/artifacts/*.png
+          if-no-files-found: warn

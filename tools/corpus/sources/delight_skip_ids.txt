@@ -17,6 +17,7 @@ src:cloze:Esat_Oktay_Yıldıran
 src:cloze:Gavin_McInnes
 src:cloze:Geoff_Neal
 src:cloze:Guillaume_Bats
+src:cloze:I_Spit_on_Your_Grave_2
 src:cloze:Jason_Gould
 src:cloze:Jerry_Sandusky
 src:cloze:Jim_Bob_Duggar
@@ -25,6 +26,7 @@ src:cloze:Karen_McDougal
 src:cloze:Laura_Loomer
 src:cloze:Lee_Yi-kyung
 src:cloze:MILF_Manor
+src:cloze:Mackenzie_Astin
 src:cloze:Mana_Sakura
 src:cloze:Marlène_Jobert
 src:cloze:Meaghan_Oppenheimer
@@ -93,12 +95,14 @@ src:describe:Gypsy-Rose_Blanchard
 src:describe:GypsyCrusader
 src:describe:How_to_Have_Sex
 src:describe:I_Spit_on_Your_Grave
+src:describe:I_Spit_on_Your_Grave_2
 src:describe:In_the_Realm_of_the_Senses
 src:describe:Jason_Gould
 src:describe:Jerry_Sandusky
 src:describe:Jim_Bob_Duggar
 src:describe:John_Owen_Lowe
 src:describe:Jonah_Falcon
+src:describe:Jung_Joon-young
 src:describe:K._Annamalai
 src:describe:Kang_So-ra
 src:describe:Karen_McDougal
@@ -109,6 +113,7 @@ src:describe:Lee_Yi-kyung
 src:describe:Les_Exploits_d'un_jeune_Don_Juan
 src:describe:Life_on_call
 src:describe:MILF_Manor
+src:describe:Mackenzie_Astin
 src:describe:Mana_Sakura
 src:describe:Marc_Clotet
 src:describe:Marlène_Jobert
@@ -151,6 +156,7 @@ src:describe:The_Dawn_of_the_Black_Hearts
 src:describe:The_Human_Centipede_2_(Full_Sequence)
 src:describe:The_Strange_Thing_About_the_Johnsons
 src:describe:Tsukasa_Aoi
+src:describe:Tsuyama_massacre
 src:describe:UFC_on_ESPN:_Vera_vs._Sandhagen
 src:describe:Vaginal_discharge
 src:describe:Vincent_Regan

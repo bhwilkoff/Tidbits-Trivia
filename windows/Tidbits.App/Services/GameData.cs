@@ -20,7 +20,10 @@ public sealed class GameData
     public Tidbits.Core.Networking.PlayerIdentityStore Identity { get; }
     public Tidbits.Core.Networking.DuelStore Duels { get; }
     /// Shared anon-authed RTDB client for non-Live networked features (duels).
-    public Tidbits.Core.Networking.FirebaseRtdb Rtdb { get; } = new();
+    // Tokens ride DPAPI on Windows (1.22) — the refresh token is a long-lived
+    // credential and must not sit on disk in cleartext. Falls back to the file store
+    // off Windows so the Mac head + headless tests keep working.
+    public Tidbits.Core.Networking.FirebaseRtdb Rtdb { get; } = new(tokens: new DpapiTokenStore());
     public string PlayerName => Identity.Current.Name;
     public Tidbits.Core.Networking.SfxBoard Sfx { get; }
     /// The Wave B media engine (host-only) — lazy so we don't spin LibVLC unless hosting.

@@ -1,4 +1,5 @@
 src:cloze:Abbé_Pierre
+src:cloze:Abu_Hafs_al-Hashimi_al-Qurashi
 src:cloze:Al-Aqsa_Martyrs'_Brigades
 src:cloze:Alejandra_Silva
 src:cloze:Anwar_al-Awlaki
@@ -10,6 +11,7 @@ src:cloze:Chris_Larkin
 src:cloze:Cooku_with_Comali_season_4
 src:cloze:Craig_Bierko
 src:cloze:Diahnne_Abbott
+src:cloze:Edward_Mordake
 src:cloze:Emmanuelle_(1974_film)
 src:cloze:Esat_Oktay_Yıldıran
 src:cloze:Gavin_McInnes
@@ -18,8 +20,10 @@ src:cloze:Guillaume_Bats
 src:cloze:Jason_Gould
 src:cloze:Jerry_Sandusky
 src:cloze:Jim_Bob_Duggar
+src:cloze:Karen_McDougal
 src:cloze:Lee_Yi-kyung
 src:cloze:MILF_Manor
+src:cloze:Mana_Sakura
 src:cloze:Marlène_Jobert
 src:cloze:Meaghan_Oppenheimer
 src:cloze:Michael_Barrett_(cinematographer)
@@ -41,6 +45,7 @@ src:cloze:Tsukasa_Aoi
 src:cloze:Wanda_Nara
 src:describe:2023–24_Serie_B
 src:describe:Abbé_Pierre
+src:describe:Abu_Hafs_al-Hashimi_al-Qurashi
 src:describe:Abu_Ibrahim_al-Hashimi_al-Qurashi
 src:describe:Abu_al-Hasan_al-Hashimi_al-Qurashi
 src:describe:Aimee_Osbourne
@@ -50,6 +55,7 @@ src:describe:Amalek
 src:describe:Ami_Touma
 src:describe:Anna_Yamada
 src:describe:Anwar_al-Awlaki
+src:describe:Aoi_Nakamura
 src:describe:Armin_Meiwes
 src:describe:Asaram
 src:describe:Atila_Pesyani
@@ -70,6 +76,8 @@ src:describe:Diahnne_Abbott
 src:describe:Die_Rosenheim-Cops
 src:describe:Dunblane_massacre
 src:describe:Dupont_de_Ligonnès_murders_and_disappearance
+src:describe:Edward_Mordake
+src:describe:Eiko_Koike
 src:describe:Erba_Massacre
 src:describe:Erika_Toda
 src:describe:Esat_Oktay_Yıldıran
@@ -90,12 +98,14 @@ src:describe:Jim_Bob_Duggar
 src:describe:John_Owen_Lowe
 src:describe:Jonah_Falcon
 src:describe:K._Annamalai
+src:describe:Karen_McDougal
 src:describe:Kyoko_Koizumi
 src:describe:Labia
 src:describe:Lee_Yi-kyung
 src:describe:Les_Exploits_d'un_jeune_Don_Juan
 src:describe:Life_on_call
 src:describe:MILF_Manor
+src:describe:Mana_Sakura
 src:describe:Marc_Clotet
 src:describe:Marlène_Jobert
 src:describe:Meaghan_Oppenheimer
@@ -115,6 +125,7 @@ src:describe:Peyronie's_disease
 src:describe:Priapism
 src:describe:Priapus
 src:describe:R._Budd_Dwyer
+src:describe:Rachel_Scott
 src:describe:Renée_Estevez
 src:describe:Rikako_Yagi
 src:describe:Roman_Shukhevych

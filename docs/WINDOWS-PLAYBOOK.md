@@ -113,10 +113,51 @@ dotnet test tests/Tidbits.HeadlessTests   # writes artifacts/*.png on the Mac
 
 ---
 
-## 4. Real-Windows confirmation (free CI) _(CI)_
+## 4. Real-Windows confirmation (free CI) _(CI)_ — **the Windows box**
 
-`windows-latest` is **unlimited-free on our public repo**. Two captures:
-headless PNG (deterministic) + a desktop screenshot (real chrome/Mica).
+`windows-latest` is **unlimited-free on our public repo**, and per **Decision
+045 it IS the Windows machine** — there is no free Windows VM to find, and
+RDP-into-a-runner is ToS-gray, 6h-capped, and not sustainable. Don't re-litigate;
+read the decision.
+
+### 4.1 The CLI loop (no local toolchain needed)
+
+```bash
+# Run anything on real Windows and get the PNGs back
+gh workflow run windows-repl.yml -f test_filter='FullyQualifiedName~InputDrivenTest'
+gh run watch $(gh run list -w 'Windows REPL' -L1 --json databaseId -q '.[0].databaseId')
+gh run download <run-id> -n windows-repl-artifacts   # then `Read` the PNGs
+
+gh workflow run windows-repl.yml -f run_app=true             # launch the real .exe
+gh workflow run windows-repl.yml -f update_baselines=true    # refresh baselines
+gh workflow run windows-repl.yml -f command='dotnet --info'  # ad-hoc pwsh
+```
+
+Round trip ~2-4 min. **A green run here outranks a green run on the Mac.**
+
+### 4.2 Three things the harness now does that it didn't
+
+1. **Input simulation** (`InputDrivenTest`) — real clicks and typing through
+   Avalonia's headless input stack, so the wiring BETWEEN a widget and the engine
+   is covered, not just the render. Deterministic frame timing via
+   `AvaloniaHeadlessPlatform.ForceRenderTimerTick()`.
+2. **A visual-regression gate** (`VisualBaseline`) — baselines captured ON
+   Windows and enforced only there. Baseline-gated renders **must be
+   deterministic**: use `StartCustom` with fixed questions, never
+   `engine.Start()` (it draws from the 131k corpus and differs every run).
+3. **Structure Windows-only work as pure behaviour + a thin platform edge** —
+   `Win32HostInterop.RoundIndicator`, `VideoFrameSink` (takes a raw BGRA pointer,
+   knows nothing about LibVLC). This is what made 0.2 and 3.34 testable without a
+   Windows box.
+
+> **Pixel-format trap (cost real time once):** `Bitmap.CopyPixels` returns each
+> bitmap's NATIVE format — a **captured frame is RGBA**, a **PNG-decoded file is
+> BGRA**. Comparing them directly reads R against B and reports identical images
+> as differing *only where they're coloured* (grey has R==G==B and agrees). Always
+> normalize through one decode path. Test on COLOURED pixels; grey passes either way.
+
+Two captures: headless PNG (deterministic) + a desktop screenshot (real
+chrome/Mica).
 
 ```yaml
 # .github/workflows/windows-build.yml
@@ -227,6 +268,37 @@ option, not the host/venue path.
   the Store accepts **unpackaged MSI/EXE** apps by pointing at a stable
   installer URL + the MSI/EXE submission API — but MSIX is what gets the
   auto-signing/no-SmartScreen benefit, so prefer MSIX for the Store.)
+
+### 6.2b The Store path is BUILT — see `docs/WINDOWS-STORE-SUBMISSION.md`
+
+Packaging + CLI submission now exist (2026-07-17):
+
+```bash
+gh workflow run windows-store.yml                    # package MSIX only
+gh workflow run windows-store.yml -f submit=true     # + submit as a DRAFT
+gh workflow run windows-store.yml -f submit=true -f commit=true   # + publish
+```
+
+The load-bearing facts, learned the expensive way:
+
+- **`PublishSingleFile` is INCOMPATIBLE with MSIX.** `windows-store.yml`
+  publishes multi-file on purpose; `windows-build.yml` keeps single-file for the
+  direct-download `.exe`. **Do not unify them.**
+- **Condition the LibVLC natives on the RID.** Referencing
+  `VideoLAN.LibVLC.Mac` and `.Windows` unconditionally shipped the 42MB macOS
+  dylib + the 99MB win-x86 tree inside the win-x64 package; with the native pdbs
+  (~105MB) that was over half of a 211MB package. Trimmed at publish.
+- **No signing certificate is needed** — the Store re-signs with a Microsoft cert
+  after certification. The self-signed step in the workflow exists ONLY to make
+  the artifact installable for sideload testing.
+- **The 4th version segment must be 0** (Store-reserved), so the build number has
+  nowhere to live and **every Store upload needs a MARKETING_VERSION bump**.
+  `tools/stamp_msix_version.py` keeps it in lockstep with `AppVersion.xcconfig`.
+- **Beta = private audience (UI) + package flights (CLI).** The TestFlight
+  analogue; flights support staged rollout with halt/finalize.
+- **A manual bootstrap is unavoidable**: the API cannot create the app, and it
+  refuses to drive submissions until one full manual submission (incl. age
+  ratings) exists.
 
 ### 6.3 Why ALSO ship GitHub Releases + winget (the $0 direct channel)
 

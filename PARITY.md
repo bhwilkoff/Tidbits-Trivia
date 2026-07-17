@@ -30,25 +30,30 @@
 > Tidbits Live dependent formats (fastest-finger, audio, poll, cheating
 > deterrence). See `docs/macOS-DESIGN.md` §A7 + `docs/EVENT-TRIVIA-COMPETITIVE.md`.
 >
-> **Windows (6th platform) — 2026-07-05: SCAFFOLD BUILT + RUNS on Win11; feature
-> parity is the next loop.** The Avalonia app launches on real Windows 11 (verified
-> via a windows-latest CI screenshot) with the frame of every Mac tab (Play,
-> Records, Create, Tidbits Live + Settings) in a FluentAvalonia NavigationView. The
-> $0 pipeline is proven end-to-end from the Mac: headless-PNG observability +
-> win-x64 cross-build + free windows-latest CI that builds, snapshots, and launches
-> the .exe. Frames are placeholders — feature parity (Core port first, then
-> host-first Live) ships in the following loops. Below is the original research note.
+> **Windows (6th platform) — 2026-07-17: FEATURE-BUILT; Store submission is the
+> gate.** Supersedes the two earlier notes here, which had gone stale in opposite
+> directions (one said "frames are placeholders", the other "NOT built" — both
+> false as of this audit). Reality: **208 tests green on `windows-latest`**, with
+> every consumer, host, social, identity, live-generation and duels feature built
+> in Avalonia/C# against the shared RTDB `live/{code}` plane. See
+> `docs/WINDOWS-PARITY.md` for the per-item matrix.
 >
-> **Windows (6th platform) — 2026-07-05: RESEARCHED, verdict GO, NOT built.**
-> A native Windows 10/11 app (host-first, full Tidbits Live parity) is feasible
-> at ~$0, built entirely from the Mac. Stack: **Avalonia UI v12 (.NET/C#)** —
-> cross-builds win-x64 from macOS; **Avalonia.Headless** renders pixel-faithful
-> PNGs on the Mac (solves observability); a **C# client twin** of the shared RTDB
-> `live/{code}` data plane gives Live parity with no backend change; $0 dist via
-> free Microsoft Store (auto-signed) or Velopack/GitHub Releases. Binding spec +
-> playbook: `docs/WINDOWS-DESIGN.md`, `docs/WINDOWS-PLAYBOOK.md`,
-> `docs/WINDOWS-RESEARCH.md`. Windows is a ⏳ column pending owner greenlight to
-> scaffold `windows/` + build the host-first slice (playbook §7).
+> The old "needs a real Windows box" blocker class is **retired** (Decision 045):
+> there is no free Windows VM, so `windows-latest` IS the Windows machine and it
+> is now CLI-drivable (`windows-repl.yml`). That unblocked **0.2 Win32 interop**
+> (taskbar progress + global hotkeys; snap layouts turned out to need no code) and
+> **1.22 DPAPI** (which also fixed a real exposure: the Firebase refresh token was
+> being written to disk in cleartext).
+>
+> Genuinely open: **3.34 video picture** [~] — the LibVLC-frames→WriteableBitmap
+> pipeline is built and verified with synthetic frames, but LibVLC invoking the
+> callbacks on a real video file is unproven; **the https deep-link twin**,
+> deferred by sequence (needs the PackageFamilyName, which requires the Partner
+> Center identity); and **the Store bootstrap**, which is BLOCKED ON OWNER because
+> Partner Center cannot be automated (name reservation, first manual submission
+> incl. age ratings, Entra app registration) — `docs/WINDOWS-STORE-SUBMISSION.md`.
+> Stack + rationale: `docs/WINDOWS-DESIGN.md`, `docs/WINDOWS-PLAYBOOK.md`,
+> `docs/WINDOWS-RESEARCH.md`.
 >
 > **Last audit: 2026-06-30 (Android ↔ Apple, code-verified).** Found 4
 > false cells (§3b emoji grid, §4 entire auth section, §5 share URLs,

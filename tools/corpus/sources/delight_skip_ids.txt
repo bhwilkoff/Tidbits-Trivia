@@ -10,6 +10,7 @@ src:cloze:Cho_Doo-soon_case
 src:cloze:Chris_Larkin
 src:cloze:Cooku_with_Comali_season_4
 src:cloze:Craig_Bierko
+src:cloze:Death_of_Conrad_Roy
 src:cloze:Diahnne_Abbott
 src:cloze:Edward_Mordake
 src:cloze:Emmanuelle_(1974_film)
@@ -34,19 +35,24 @@ src:cloze:Michael_Barrett_(cinematographer)
 src:cloze:Mickey_Huang
 src:cloze:Miles_Robbins
 src:cloze:Mysterious_Skin
+src:cloze:Mónica_Spear
 src:cloze:Nurgül_Yeşilçay
 src:cloze:Peter_Madsen
 src:cloze:Peyronie's_disease
 src:cloze:Priapus
 src:cloze:Renée_Estevez
+src:cloze:Russell_Williams_(criminal)
 src:cloze:Ryan_Piers_Williams
 src:cloze:Ryo_Ryusei
 src:cloze:Sairi_Ito
 src:cloze:Sam_Spruell
+src:cloze:Sex_Doll
 src:cloze:Shawn_Wayans
 src:cloze:Takao_Osawa
+src:cloze:The_Reckoning_(2023_TV_series)
 src:cloze:Tsukasa_Aoi
 src:cloze:Wanda_Nara
+src:cloze:Yoni
 src:describe:2023–24_Serie_B
 src:describe:Abbé_Pierre
 src:describe:Abu_Hafs_al-Hashimi_al-Qurashi
@@ -75,6 +81,8 @@ src:describe:Chris_Larkin
 src:describe:Clitoral_erection
 src:describe:Copulation_(zoology)
 src:describe:Craig_Bierko
+src:describe:Death_of_Conrad_Roy
+src:describe:Death_of_Mallory_Beach
 src:describe:Dersim_massacre
 src:describe:Diahnne_Abbott
 src:describe:Die_Rosenheim-Cops
@@ -82,10 +90,12 @@ src:describe:Dunblane_massacre
 src:describe:Dupont_de_Ligonnès_murders_and_disappearance
 src:describe:Edward_Mordake
 src:describe:Eiko_Koike
+src:describe:Emmanuelle
 src:describe:Erba_Massacre
 src:describe:Erika_Toda
 src:describe:Esat_Oktay_Yıldıran
 src:describe:Exhibitionism
+src:describe:Fatmagül'ün_Suçu_Ne?
 src:describe:Gabriel_Matzneff
 src:describe:Gavin_McInnes
 src:describe:Genital_wart
@@ -106,6 +116,7 @@ src:describe:Jung_Joon-young
 src:describe:K._Annamalai
 src:describe:Kang_So-ra
 src:describe:Karen_McDougal
+src:describe:Killing_of_Muhammad_al-Durrah
 src:describe:Kyoko_Koizumi
 src:describe:Labia
 src:describe:Laura_Loomer
@@ -122,6 +133,7 @@ src:describe:Mickey_Huang
 src:describe:Mifepristone
 src:describe:Miles_Robbins
 src:describe:Mysterious_Skin
+src:describe:Mónica_Spear
 src:describe:Nana_Mori
 src:describe:Nepalese_royal_massacre
 src:describe:Nicholas_Rossi
@@ -144,6 +156,7 @@ src:describe:SPONGE
 src:describe:Sairi_Ito
 src:describe:Saleh_al-Arouri
 src:describe:Sam_Spruell
+src:describe:Sex_Doll
 src:describe:Shawn_Wayans
 src:describe:Shinji_Tanimura
 src:describe:Shotaro_Mamiya
@@ -154,6 +167,7 @@ src:describe:Takao_Osawa
 src:describe:Talia_Balsam
 src:describe:The_Dawn_of_the_Black_Hearts
 src:describe:The_Human_Centipede_2_(Full_Sequence)
+src:describe:The_Reckoning_(2023_TV_series)
 src:describe:The_Strange_Thing_About_the_Johnsons
 src:describe:Tsukasa_Aoi
 src:describe:Tsuyama_massacre
@@ -165,5 +179,6 @@ src:describe:Wanda_Nara
 src:describe:Waukesha_Christmas_parade_attack
 src:describe:What_Is_a_Woman?
 src:describe:Whore_of_Babylon
+src:describe:Yoni
 src:describe:Zahia_Dehar
 src:describe:Zoophilia

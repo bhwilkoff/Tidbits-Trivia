@@ -20,17 +20,22 @@
 <Package
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
-  IgnorableNamespaces="uap rescap">
+  IgnorableNamespaces="uap uap3 rescap">
 
+  <!-- The REAL Partner Center identity for Store product 9NRKS9LDRCWC. Copied
+       verbatim from Product management -> Product identity; case- and
+       whitespace-sensitive — note "Learningis...Inc", NOT "LearningIsChange".
+       Do not "tidy" the casing. -->
   <Identity
-    Name="LearningIsChange.TidbitsTrivia"
-    Publisher="CN=TidbitsTriviaDev"
+    Name="LearningisChangeInc.TidbitsTrivia"
+    Publisher="CN=2DCA50F2-F930-495C-BFC0-422E60C371ED"
     Version="1.6.44.0" />
 
   <Properties>
     <DisplayName>Tidbits Trivia</DisplayName>
-    <PublisherDisplayName>Learning Is Change</PublisherDisplayName>
+    <PublisherDisplayName>Learning is Change, Inc.</PublisherDisplayName>
     <Logo>Assets\Windows\StoreLogo.png</Logo>
     <Description>The best trivia questions anywhere — play solo, pass and play, or host a live trivia night.</Description>
   </Properties>
@@ -70,16 +75,19 @@
           </uap:Protocol>
         </uap:Extension>
 
-        <!-- The https twin (tidbitstrivia.com/live/CODE) is NOT registered yet, and
-             that is a sequencing fact, not an oversight: windows.appUriHandler
-             requires a /.well-known/windows-app-web-link on tidbitstrivia.com naming
-             the PackageFamilyName, and the PFN is Name + a hash of the real Partner
-             Center Publisher — it does not exist until the Store identity is assigned.
-             Publishing a .well-known with a guessed PFN would be worse than none
-             (silent, unverifiable failure). Add both together after the Store
-             bootstrap — see docs/WINDOWS-STORE-SUBMISSION.md step 6.
-             Until then the custom scheme carries deep links, and the https link opens
-             the web app, which is the correct fallback on every platform. -->
+        <!-- The https twin: tidbitstrivia.com/live/CODE (and every https deep link)
+             opens the app rather than the browser. Paired with
+             /.well-known/windows-app-web-link on tidbitstrivia.com, which names the
+             PackageFamilyName LearningisChangeInc.TidbitsTrivia_fn1p07pbc0hg8 — the
+             hash suffix comes from the real Partner Center Publisher, so this could
+             only be filled in once the Store identity existed. The parser already maps
+             the https twin to a nav target (0.4); external delivery of the https URL
+             on Windows is the last thing to verify on a real box. -->
+        <uap3:Extension Category="windows.appUriHandler">
+          <uap3:AppUriHandler>
+            <uap3:Host Name="tidbitstrivia.com" />
+          </uap3:AppUriHandler>
+        </uap3:Extension>
       </Extensions>
     </Application>
   </Applications>

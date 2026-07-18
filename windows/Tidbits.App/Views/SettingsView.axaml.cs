@@ -2,6 +2,7 @@ using System.Reflection;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using FluentAvalonia.UI.Controls;
 using Tidbits.App.Services;
 
 namespace Tidbits.App.Views;
@@ -51,10 +52,23 @@ public partial class SettingsView : UserControl
         ShowStatus("Seen-questions history cleared.");
     }
 
-    private void OnResetRecords(object? sender, RoutedEventArgs e)
+    /// Reset-all is destructive + irreversible, so confirm first (iOS/web parity —
+    /// and basic data safety: an accidental click must not wipe scores/streaks).
+    private async void OnResetRecords(object? sender, RoutedEventArgs e)
     {
-        GameData.Shared.Value.Records.ResetAll();
-        ShowStatus("All records reset.");
+        var dialog = new FAContentDialog
+        {
+            Title = "Reset all records?",
+            Content = "This permanently deletes your scores, streaks, and review list. This can't be undone.",
+            PrimaryButtonText = "Reset everything",
+            CloseButtonText = "Cancel",
+            DefaultButton = FAContentDialogButton.Close,
+        };
+        if (await dialog.ShowAsync() == FAContentDialogResult.Primary)
+        {
+            GameData.Shared.Value.Records.ResetAll();
+            ShowStatus("All records reset.");
+        }
     }
 
     private void ShowStatus(string text)

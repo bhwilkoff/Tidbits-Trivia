@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Tidbits.Core.Models;
@@ -39,6 +40,14 @@ public sealed class GameViewModel : ObservableObject, IDisposable
     public string ShareString => ShareText.Compose(Summary);
     public IReadOnlyList<AnsweredQuestion> Missed => Summary.Missed;
     public bool HasMissed => Missed.Count > 0;
+    // L5 "how did you know that?": hard questions (difficulty >= 4) the player nailed.
+    public IReadOnlyList<AnsweredQuestion> Nailed =>
+        Summary.Answered.Where(a => a.IsCorrect && a.Question.Difficulty >= 4).ToList();
+    public bool HasNailed => Nailed.Count > 0;
+
+    /// The conversation-starter share for a nailed question (web/iOS parity).
+    public static string HowDidYouKnowText(AnsweredQuestion a) =>
+        $"I knew \"{a.Question.Prompt}\" on Tidbits Trivia — it's {a.Question.CorrectAnswer}. How did YOU know that?";
     public bool CanPlayAgain => Summary.Mode != GameMode.Daily;
 
     // Day-streak surfacing at the results moment (read after the record write).

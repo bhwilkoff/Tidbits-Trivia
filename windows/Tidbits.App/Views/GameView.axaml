@@ -145,6 +145,29 @@
                         </ItemsControl>
                     </StackPanel>
 
+                    <!-- Tough ones you nailed — L5 "how did you know that?" reflection -->
+                    <StackPanel Spacing="10" IsVisible="{Binding HasNailed}">
+                        <TextBlock Text="Tough ones you nailed" FontSize="18" FontWeight="Bold" Margin="0,4,0,0"/>
+                        <ItemsControl ItemsSource="{Binding Nailed}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="models:AnsweredQuestion">
+                                    <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                                            BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                                            BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,10">
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="{Binding Question.Prompt}" FontWeight="Bold" TextWrapping="Wrap"/>
+                                            <TextBlock Text="{Binding Question.CorrectAnswer, StringFormat='You got it: {0}'}"
+                                                       Foreground="#1E9E6A" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                                            <Button Content="How did you know that?" Click="OnHowDidYouKnow"
+                                                    Classes="compact" HorizontalAlignment="Left" Background="Transparent"
+                                                    Foreground="{DynamicResource SystemAccentColor}"/>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+
                     <!-- Actions -->
                     <Button x:Name="ShareButton" Content="Share Score" Click="OnShare"
                             HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"

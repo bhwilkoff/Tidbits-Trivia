@@ -464,4 +464,14 @@ public partial class GameView : UserControl
         await clipboard.SetTextAsync(_vm.ShareString);
         if (ShareButton is { } b) b.Content = "Copied ✓";
     }
+
+    /// L5 reflection — copy a conversation-starter about a hard question you nailed.
+    private async void OnHowDidYouKnow(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { DataContext: Tidbits.Core.Models.AnsweredQuestion a } btn) return;
+        var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
+        if (clipboard is null) return;
+        await clipboard.SetTextAsync(ViewModels.GameViewModel.HowDidYouKnowText(a));
+        btn.Content = "Copied — start a conversation ✓";
+    }
 }

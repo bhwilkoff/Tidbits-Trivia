@@ -57,6 +57,9 @@
                 <StackPanel x:Name="QOptions"/>
                 <TextBlock IsVisible="{Binding IsReveal}" Foreground="#3FCF8E" FontSize="46" FontWeight="Black"
                            TextWrapping="Wrap" Text="{Binding RevealAnswer, StringFormat='Answer: {0}'}"/>
+                <!-- The story behind the answer on reveal (3.42) — the room learns why. -->
+                <TextBlock IsVisible="{Binding HasRevealStory}" Foreground="White" Opacity="0.72" FontSize="30"
+                           TextWrapping="Wrap" MaxWidth="1300" Text="{Binding RevealStory}"/>
             </StackPanel>
         </Viewbox>
 

@@ -92,6 +92,8 @@ public class LiveHostControlsTest
         Assert.False(vm.HasWinner);              // no standings yet
         Assert.Equal("", vm.WinnerLine);
         Assert.Contains("player", vm.QuestionChrome); // renders a chrome string, no throw
+        Assert.Null(vm.RevealStory);             // nothing revealed → no story (3.42, safe default)
+        Assert.False(vm.HasRevealStory);
     }
 
     [Fact]

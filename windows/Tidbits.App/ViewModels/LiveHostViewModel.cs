@@ -54,6 +54,10 @@ public sealed class LiveHostViewModel : ObservableObject
     public bool HasRoundNote => Host.CurrentRoundNote is not null;
     /// The correct option text (shown big on the projector at reveal).
     public string? RevealAnswer => Host.Current is { } q ? LiveScoring.AnswerLine(q) : null;
+    /// The story/fact behind the answer, shown on the big screen at reveal (3.42) —
+    /// parity with the join client's reveal card.
+    public string? RevealStory => Host.Revealed && Host.Current is { Explanation.Length: > 0 } q ? q.Explanation : null;
+    public bool HasRevealStory => RevealStory is not null;
 
     public bool CanGoBack => Host.CanGoBack;
     public int? SecondsRemaining => Host.SecondsRemaining;
@@ -91,9 +95,14 @@ public sealed class LiveHostViewModel : ObservableObject
         {
             var (n, of) = Host.QuestionInRound;
             var players = Host.PlayerCount;
-            return $"Question {n} of {of} · {players} player{(players == 1 ? "" : "s")}";
+            var chrome = $"Question {n} of {of} · {players} player{(players == 1 ? "" : "s")}";
+            if (Host.Current is { } q) chrome += $" · {DifficultyLabel(q.Difficulty)}";
+            return chrome;
         }
     }
+
+    /// Coarse difficulty band for the big-screen chrome (1–2 easy, 3 medium, 4–5 hard).
+    private static string DifficultyLabel(int d) => d <= 2 ? "Easy" : d == 3 ? "Medium" : "Hard";
 
     // Winner celebration (3.41) — top of the ordered standings.
     public bool HasWinner => Host.Standings.Count > 0;

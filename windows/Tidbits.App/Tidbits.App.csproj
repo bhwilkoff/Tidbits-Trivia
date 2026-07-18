@@ -3,6 +3,10 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
+    <!-- Marketing version, kept in lockstep with AppVersion.xcconfig by
+         tools/stamp_msix_version.py. Surfaces in Settings > About via
+         Assembly.GetName().Version.ToString(3). -->
+    <Version>1.6.44</Version>
     <!-- VideoFrameSink copies LibVLC frames into a WriteableBitmap (3.34). -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ApplicationManifest>app.manifest</ApplicationManifest>

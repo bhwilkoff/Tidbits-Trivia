@@ -20,6 +20,7 @@ import pathlib
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 XCCONFIG = ROOT / "AppVersion.xcconfig"
 MANIFEST = ROOT / "windows" / "Tidbits.App" / "AppxManifest.xml"
+CSPROJ = ROOT / "windows" / "Tidbits.App" / "Tidbits.App.csproj"
 
 
 def marketing_version() -> str:
@@ -45,29 +46,34 @@ def msix_version(marketing: str) -> str:
     return f"{parts[0]}.{parts[1]}.{parts[2]}.0"
 
 
-def main() -> None:
-    check = "--check" in sys.argv
-    want = msix_version(marketing_version())
-
-    text = MANIFEST.read_text()
-    m = re.search(r'(<Identity\b[^>]*?\bVersion=")([^"]*)(")', text, re.S)
+def stamp(path: pathlib.Path, pattern: str, want: str, check: bool, label: str) -> None:
+    """Match `pattern` (three capture groups: prefix, VALUE, suffix) in `path` and
+    check-or-write the value to `want`."""
+    text = path.read_text()
+    m = re.search(pattern, text, re.S)
     if not m:
-        sys.exit(f"No Identity Version attribute in {MANIFEST}")
+        sys.exit(f"No {label} version match in {path}")
     have = m.group(2)
-
     if check:
         if have != want:
-            sys.exit(f"MSIX version drift: manifest has {have}, AppVersion.xcconfig implies {want}. "
-                     f"Run: python3 tools/stamp_msix_version.py")
-        print(f"MSIX version OK: {have}")
+            sys.exit(f"{label} version drift: {path.name} has {have}, AppVersion.xcconfig implies "
+                     f"{want}. Run: python3 tools/stamp_msix_version.py")
+        print(f"{label} version OK: {have}")
         return
-
     if have == want:
-        print(f"MSIX version already {want}")
+        print(f"{label} version already {want}")
         return
+    path.write_text(text[:m.start(2)] + want + text[m.end(2):])
+    print(f"{label} version {have} -> {want}")
 
-    MANIFEST.write_text(text[:m.start(2)] + want + text[m.end(2):])
-    print(f"MSIX version {have} -> {want}")
+
+def main() -> None:
+    check = "--check" in sys.argv
+    marketing = marketing_version()
+    # MSIX Identity: 4 segments, 4th reserved (1.6.44.0). csproj <Version>: the raw
+    # marketing string (1.6.44) — Settings > About reads it via GetName().Version.
+    stamp(MANIFEST, r'(<Identity\b[^>]*?\bVersion=")([^"]*)(")', msix_version(marketing), check, "MSIX")
+    stamp(CSPROJ, r'(<Version>)([^<]*)(</Version>)', marketing, check, "csproj")
 
 
 if __name__ == "__main__":

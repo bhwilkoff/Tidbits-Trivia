@@ -28,6 +28,9 @@
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="12"/>
             <Setter Property="Padding" Value="20"/>
+            <!-- §5.2: the card owns its shadow (soft elevation) — never hand-add shadow
+                 padding at a call site. Kept subtle so it reads native on Fluent. -->
+            <Setter Property="BoxShadow" Value="0 1 8 0 #1A000000"/>
         </Style>
         <Style Selector="Button.chunky">
             <Setter Property="Padding" Value="24,13"/>

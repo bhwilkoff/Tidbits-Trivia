@@ -18,8 +18,8 @@
 
                 <!-- Surprise me + Customize (Mac/web parity) -->
                 <StackPanel Orientation="Horizontal" Spacing="10">
-                    <Button Content="Surprise me" Click="OnSurprise" Padding="16,10"/>
-                    <Button Content="Customize" Click="OnCustomize" Padding="16,10"/>
+                    <Button Content="Surprise me" Click="OnSurprise" Classes="compact"/>
+                    <Button Content="Customize" Click="OnCustomize" Classes="compact"/>
                 </StackPanel>
 
                 <!-- Your mixes (saved presets) -->

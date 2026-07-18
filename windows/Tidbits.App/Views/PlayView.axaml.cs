@@ -101,14 +101,14 @@ public partial class PlayView : UserControl
             };
             grid.Children.Add(label);
 
-            var play = new Button { Content = "Play", Padding = new Avalonia.Thickness(14, 7), Classes = { "accent" } };
+            var play = new Button { Content = "Play", Classes = { "accent", "compact" } };
             play.Click += (_, _) => PlayPreset(preset);
             Grid.SetColumn(play, 1);
             grid.Children.Add(play);
 
             var remove = new Button
             {
-                Content = "Remove", Padding = new Avalonia.Thickness(12, 7),
+                Content = "Remove", Classes = { "compact" },
                 Margin = new Avalonia.Thickness(8, 0, 0, 0),
             };
             remove.Click += (_, _) => { GameData.Shared.Value.Presets.Remove(preset.Id); BuildPresets(); };
@@ -255,6 +255,10 @@ public partial class PlayView : UserControl
     {
         var cat = category ?? SelectedCategory();
         var data = GameData.Shared.Value;
+        // Quick-Play memory (parity): remember the last single play so Quick Play replays it.
+        data.Settings.LastMode = mode.ToString();
+        data.Settings.LastCategoryId = cat.Id;
+        data.Settings.Save();
         var engine = data.NewEngine();
         var vm = new GameViewModel(engine, data.Records);
         vm.Closed += () =>
@@ -293,7 +297,15 @@ public partial class PlayView : UserControl
         GameHost.Content = party;
     }
 
-    private void OnQuickPlay(object? sender, RoutedEventArgs e) => StartGame(GameMode.Classic);
+    /// Quick Play replays your last single mode + category (parity with web
+    /// quickPlayTarget), defaulting to Classic/Mixed on a fresh install.
+    private void OnQuickPlay(object? sender, RoutedEventArgs e)
+    {
+        var s = GameData.Shared.Value.Settings;
+        var mode = Enum.TryParse<GameMode>(s.LastMode, out var m) && Offered.Contains(m) ? m : GameMode.Classic;
+        var cat = TriviaCategory.Named(s.LastCategoryId ?? "mixed");
+        StartGame(mode, cat);
+    }
 
     /// Surprise me — a random offered mode + a random category, matching the Mac
     /// (surpriseMe) and web (data-surprise) parity. The offered set already excludes

@@ -4,8 +4,8 @@
     <Panel>
         <ScrollViewer x:Name="Landing">
             <StackPanel Margin="36,30" Spacing="16" MaxWidth="760" HorizontalAlignment="Left">
-                <TextBlock Text="Play" FontSize="34" FontWeight="Black"/>
-                <TextBlock Text="Trivia from the whole of Wikipedia." FontSize="15" Opacity="0.7"/>
+                <TextBlock Text="Play" Classes="view-heading"/>
+                <TextBlock Text="Trivia from the whole of Wikipedia." Classes="body" Opacity="0.7"/>
 
                 <!-- Quick Play hero -->
                 <Button Click="OnQuickPlay" Classes="accent" HorizontalAlignment="Stretch"
@@ -32,10 +32,10 @@
                 </StackPanel>
 
                 <!-- Daily Tidbit (play-once) + Previous Tidbits archive -->
-                <TextBlock Text="Daily Tidbit" FontSize="20" FontWeight="Bold" Margin="0,12,0,0"/>
+                <TextBlock Text="Daily Tidbit" Classes="section-header" Margin="0,12,0,0"/>
                 <StackPanel x:Name="DailyPanel" Spacing="8"/>
 
-                <TextBlock Text="Trivia Night" FontSize="20" FontWeight="Bold" Margin="0,12,0,0"/>
+                <TextBlock Text="Trivia Night" Classes="section-header" Margin="0,12,0,0"/>
                 <TextBlock Text="A themed night of rounds — each round a different question type."
                            FontSize="13" Opacity="0.7"/>
                 <WrapPanel x:Name="NightPanel"/>
@@ -44,12 +44,12 @@
                         HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="18,13" Margin="0,12,0,0"
                         FontWeight="SemiBold"/>
 
-                <TextBlock Text="Versus CPU" FontSize="20" FontWeight="Bold" Margin="0,12,0,0"/>
+                <TextBlock Text="Versus CPU" Classes="section-header" Margin="0,12,0,0"/>
                 <TextBlock Text="A believable bot opponent, always labeled CPU. Classic rules."
                            FontSize="13" Opacity="0.7"/>
                 <WrapPanel x:Name="VersusPanel"/>
 
-                <TextBlock Text="Modes" FontSize="20" FontWeight="Bold" Margin="0,12,0,0"/>
+                <TextBlock Text="Modes" Classes="section-header" Margin="0,12,0,0"/>
                 <WrapPanel x:Name="ModesPanel"/>
             </StackPanel>
         </ScrollViewer>

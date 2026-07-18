@@ -38,5 +38,32 @@
             <Setter Property="Padding" Value="14,8"/>
             <Setter Property="CornerRadius" Value="8"/>
         </Style>
+
+        <!-- §5.3 The six-level type ramp (L1 page title -> L6 tabular), one
+             definition adopted via Classes. Density comes from removing chrome,
+             not adding decoration (mobile-first-density-design); refuse a 7th level. -->
+        <Style Selector="TextBlock.view-heading">     <!-- L1 page title -->
+            <Setter Property="FontSize" Value="34"/>
+            <Setter Property="FontWeight" Value="Black"/>
+        </Style>
+        <Style Selector="TextBlock.section-header">   <!-- L2 section header -->
+            <Setter Property="FontSize" Value="20"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+        </Style>
+        <Style Selector="TextBlock.body-strong">      <!-- L3 emphasized body -->
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+        <Style Selector="TextBlock.body">             <!-- L4 body -->
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+        <Style Selector="TextBlock.caption">          <!-- L5 caption -->
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Opacity" Value="0.7"/>
+        </Style>
+        <Style Selector="TextBlock.tabular">          <!-- L6 tabular (scores/times) -->
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontFamily" Value="Cascadia Mono,Consolas,Menlo,monospace"/>
+        </Style>
     </Application.Styles>
 </Application>

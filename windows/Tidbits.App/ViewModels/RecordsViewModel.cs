@@ -40,6 +40,20 @@ public sealed class RecordsViewModel
 
     private IReadOnlyList<GameRecord> _games = new List<GameRecord>();
 
+    /// Personal bests — one row per mode played (best score + attempts), tappable to
+    /// scroll the previous attempts. Parity with the web openBests.
+    public IReadOnlyList<BestRow> Bests { get; private set; } = new List<BestRow>();
+    public bool HasBests => Bests.Count > 0;
+
+    /// The attempts for a mode, newest first (reuses the See-all games drill-in).
+    public IReadOnlyList<GameDetail> ModeGames(string modeId) =>
+        _games.Where(g => g.ModeRaw == modeId).Select(Detail).ToList();
+
+    private static GameDetail Detail(GameRecord g) => new(
+        g.Mode.Title(), TriviaCategory.Named(g.CategoryId).Name, $"{g.Score} pts · {g.Correct}/{g.Total}",
+        g.Date.ToLocalTime().ToString("MMM d, h:mm tt"),
+        g.Answers.Select(a => new AnswerDot(a.Correct, a.Prompt, a.Answer)).ToList());
+
     /// The per-question history for a domain (dedup by qid), split missed vs got-right
     /// — parity with the web openDomain drill-in.
     public (IReadOnlyList<AnswerDot> Missed, IReadOnlyList<AnswerDot> Right) DomainAnswers(string categoryId)
@@ -71,10 +85,11 @@ public sealed class RecordsViewModel
             g.Mode.Title(), TriviaCategory.Named(g.CategoryId).Name, g.Score, g.Correct, g.Total,
             g.Date.ToLocalTime().ToString("MMM d"))).ToList();
 
-        AllGames = games.Select(g => new GameDetail(
-            g.Mode.Title(), TriviaCategory.Named(g.CategoryId).Name, $"{g.Score} pts · {g.Correct}/{g.Total}",
-            g.Date.ToLocalTime().ToString("MMM d, h:mm tt"),
-            g.Answers.Select(a => new AnswerDot(a.Correct, a.Prompt, a.Answer)).ToList())).ToList();
+        AllGames = games.Select(Detail).ToList();
+
+        Bests = games.GroupBy(g => g.ModeRaw)
+            .Select(grp => new BestRow(grp.Key, grp.First().Mode.Title(), grp.Max(g => g.Score), grp.Count()))
+            .OrderByDescending(b => b.Best).ToList();
 
         var domainProgress = DomainProgress.Summarize(games.Select(g => (g.CategoryId, g.Correct, g.Total)));
 
@@ -131,6 +146,11 @@ public sealed record GameDetail(string Mode, string Category, string ScoreLine, 
 public sealed record GameRow(string Mode, string Category, int Score, int Correct, int Total, string Date)
 {
     public string ScoreLine => $"{Score} pts · {Correct}/{Total}";
+}
+
+public sealed record BestRow(string ModeId, string Title, int Best, int Plays)
+{
+    public string PlaysLine => $"{Plays} played";
 }
 
 public sealed record DomainRow(string CategoryId, string Name, int Level, double Progress, int Accuracy, bool Mastered)

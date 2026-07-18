@@ -145,6 +145,28 @@
                     </ItemsControl>
                 </StackPanel>
 
+                <!-- Personal bests — tap a mode to scroll its previous attempts -->
+                <StackPanel IsVisible="{Binding HasBests}" Spacing="8">
+                    <TextBlock Text="Personal bests" Classes="section-header" Margin="0,6,0,0"/>
+                    <ItemsControl ItemsSource="{Binding Bests}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:BestRow">
+                                <Button Click="OnBestDrill" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                        Background="Transparent" BorderThickness="0" Padding="0" Margin="0,0,0,8">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Title}" FontWeight="SemiBold"/>
+                                            <TextBlock Text="{Binding PlaysLine}" FontSize="12" Opacity="0.6"/>
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="1" Text="{Binding Best}" FontWeight="Bold" FontSize="18"
+                                                   VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+
                 <!-- Review -->
                 <Border IsVisible="{Binding HasReview}" Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
                         BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"

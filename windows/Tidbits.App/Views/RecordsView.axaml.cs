@@ -85,6 +85,19 @@ public partial class RecordsView : UserControl
         await dialog.ShowAsync();
     }
 
+    /// Tap a personal-best row -> the attempts for that mode (newest first), each
+    /// drilling into its recap. Reuses the See-all games list. Web openBests parity.
+    private async void OnBestDrill(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { DataContext: BestRow row }) return;
+        if (DataContext is not RecordsViewModel vm) return;
+        var games = vm.ModeGames(row.ModeId);
+        var dialog = new FAContentDialog { Title = $"{row.Title} attempts", CloseButtonText = "Done" };
+        void ShowList() => dialog.Content = GameListView(games, g => dialog.Content = RecapView(g, ShowList));
+        ShowList();
+        await dialog.ShowAsync();
+    }
+
     /// Tap a domain bar -> a native drill-in of its per-question history (missed /
     /// got right), dedup by qid — parity with the web openDomain.
     private async void OnDomainDrill(object? sender, RoutedEventArgs e)

@@ -3,7 +3,7 @@
              x:Class="Tidbits.App.Views.SettingsView">
     <ScrollViewer>
         <StackPanel Margin="36,32" Spacing="22" MaxWidth="600" HorizontalAlignment="Left">
-            <TextBlock Text="Settings" FontSize="34" FontWeight="Black"/>
+            <TextBlock Text="Settings" Classes="view-heading"/>
 
             <StackPanel Spacing="10">
                 <TextBlock Text="Profile" FontSize="18" FontWeight="Bold"/>

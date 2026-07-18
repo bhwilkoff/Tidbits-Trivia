@@ -4,7 +4,7 @@
     <Panel>
         <ScrollViewer x:Name="Landing">
             <StackPanel Margin="36,32" Spacing="16" MaxWidth="620" HorizontalAlignment="Left">
-                <TextBlock Text="Create" FontSize="34" FontWeight="Black"/>
+                <TextBlock Text="Create" Classes="view-heading"/>
                 <TextBlock Text="Generate a quiz on any topic — real, vetted questions from the whole of Wikipedia."
                            FontSize="15" Opacity="0.72" TextWrapping="Wrap"/>
                 <TextBox x:Name="TopicBox" Watermark="e.g. The Renaissance" FontSize="16" Padding="14,12" Margin="0,6,0,0"/>
@@ -18,7 +18,7 @@
                 <Button x:Name="SaveBtn" Content="Save this set" Click="OnSaveSet" IsVisible="False"
                         Padding="18,10" FontWeight="SemiBold" HorizontalAlignment="Left"/>
 
-                <TextBlock x:Name="SavedHeader" Text="Saved sets" FontSize="20" FontWeight="Bold"
+                <TextBlock x:Name="SavedHeader" Text="Saved sets" Classes="section-header"
                            Margin="0,14,0,0" IsVisible="False"/>
                 <StackPanel x:Name="SavedPanel" Spacing="8"/>
             </StackPanel>

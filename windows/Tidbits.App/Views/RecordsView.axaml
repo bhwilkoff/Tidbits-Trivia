@@ -5,7 +5,7 @@
              x:DataType="vm:RecordsViewModel">
     <ScrollViewer>
         <StackPanel Margin="36,32" Spacing="18" MaxWidth="760" HorizontalAlignment="Left">
-            <TextBlock Text="Records" FontSize="34" FontWeight="Black"/>
+            <TextBlock Text="Records" Classes="view-heading"/>
             <TextBlock Text="Compete against your past self." FontSize="15" Opacity="0.7"/>
 
             <!-- Profile / sync banner (2.16): who you're playing as + where records live -->
@@ -46,7 +46,7 @@
                 </Border>
 
                 <!-- Recent games -->
-                <TextBlock Text="Your games" FontSize="20" FontWeight="Bold"/>
+                <TextBlock Text="Your games" Classes="section-header"/>
                 <ItemsControl ItemsSource="{Binding RecentGames}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="vm:GameRow">
@@ -75,7 +75,7 @@
 
                 <!-- Knowledge (hidden until a specific-category game is played) -->
                 <StackPanel IsVisible="{Binding HasDomains}" Spacing="8">
-                    <TextBlock Text="Your knowledge" FontSize="20" FontWeight="Bold" Margin="0,6,0,0"/>
+                    <TextBlock Text="Your knowledge" Classes="section-header" Margin="0,6,0,0"/>
                     <!-- The Pie: breadth across the 7 domains (drawn in code-behind) -->
                     <StackPanel Orientation="Horizontal" Spacing="16" Margin="0,0,0,6">
                         <Canvas x:Name="PieCanvas" Width="120" Height="120"/>
@@ -97,7 +97,7 @@
 
                 <!-- Badges (levelable milestones; tier number as the icon, no emoji) -->
                 <StackPanel IsVisible="{Binding HasBadges}" Spacing="8">
-                    <TextBlock Text="Badges" FontSize="20" FontWeight="Bold" Margin="0,6,0,0"/>
+                    <TextBlock Text="Badges" Classes="section-header" Margin="0,6,0,0"/>
                     <ItemsControl ItemsSource="{Binding Badges}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="vm:BadgeRow">
@@ -124,7 +124,7 @@
 
                 <!-- Stake calibration (per-confidence-tier hit rate) -->
                 <StackPanel IsVisible="{Binding HasCalibration}" Spacing="8">
-                    <TextBlock Text="Calibration" FontSize="20" FontWeight="Bold" Margin="0,6,0,0"/>
+                    <TextBlock Text="Calibration" Classes="section-header" Margin="0,6,0,0"/>
                     <TextBlock Text="How often you were right at each confidence level (Stake mode)."
                                FontSize="12" Opacity="0.6"/>
                     <ItemsControl ItemsSource="{Binding Calibration}">

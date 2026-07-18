@@ -4,7 +4,7 @@
     <Panel>
         <ScrollViewer x:Name="Setup">
             <StackPanel Margin="36,32" Spacing="16" MaxWidth="640" HorizontalAlignment="Left">
-                <TextBlock Text="Tidbits Live" FontSize="34" FontWeight="Black"/>
+                <TextBlock Text="Tidbits Live" Classes="view-heading"/>
                 <TextBlock Text="Host a trivia night — players join from their phones by a 4-letter code. The host cockpit runs the show; a projector window goes on the big screen."
                            FontSize="15" Opacity="0.72" TextWrapping="Wrap"/>
                 <TextBlock Text="Night options" FontSize="18" FontWeight="Bold" Margin="0,10,0,0"/>

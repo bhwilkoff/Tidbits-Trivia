@@ -5,7 +5,7 @@
         <ScrollViewer>
             <StackPanel Margin="36,32" Spacing="16" MaxWidth="760" HorizontalAlignment="Left">
                 <Grid ColumnDefinitions="*,Auto">
-                    <TextBlock Text="Leaderboard" FontSize="34" FontWeight="Black"/>
+                    <TextBlock Text="Leaderboard" Classes="view-heading"/>
                     <Button Grid.Column="1" Content="⚔ Duels" Click="OnDuels" VerticalAlignment="Center" Padding="16,8"/>
                 </Grid>
                 <TextBlock Text="Season standings across every venue where you've played a live Tidbits night."

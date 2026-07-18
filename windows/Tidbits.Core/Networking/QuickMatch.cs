@@ -1,4 +1,8 @@
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
 using System.Text.Json.Serialization;
+using Tidbits.Core.Models;
 
 namespace Tidbits.Core.Networking;
 
@@ -51,4 +55,25 @@ public static class QuickMatch
     /// The result vs the opponent's score (best score wins; equal = tie).
     public static QuickOutcome Result(int myScore, int oppScore) =>
         myScore > oppScore ? QuickOutcome.Win : myScore < oppScore ? QuickOutcome.Lose : QuickOutcome.Tie;
+
+    /// The shared question set is stored JSON-stringified in meta (the leader writes
+    /// it; both parse it) — matching the web JSON.stringify(qs.map(toWire)).
+    public static string SerializeQuestions(IReadOnlyList<Question> questions) =>
+        JsonSerializer.Serialize(questions, Wire.Json);
+
+    public static List<Question> ParseQuestions(string? json)
+    {
+        if (string.IsNullOrEmpty(json)) return new();
+        try { return JsonSerializer.Deserialize<List<Question>>(json, Wire.Json) ?? new(); }
+        catch { return new(); }
+    }
+
+    /// The opponent = any roster entry that isn't me (2-player match).
+    public static KeyValuePair<string, QuickPlayer>? OpponentOf(
+        IReadOnlyDictionary<string, QuickPlayer> roster, string myUid)
+    {
+        foreach (var kv in roster)
+            if (kv.Key != myUid) return kv;
+        return null;
+    }
 }

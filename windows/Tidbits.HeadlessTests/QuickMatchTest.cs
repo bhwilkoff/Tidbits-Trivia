@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using System.Text.Json;
+using Tidbits.Core.Models;
 using Tidbits.Core.Networking;
 using Xunit;
 
@@ -6,6 +8,42 @@ namespace Tidbits.HeadlessTests;
 
 public class QuickMatchTest
 {
+    [Fact]
+    public void Questions_round_trip_through_meta()
+    {
+        var qs = new List<Question>
+        {
+            new() { Id = "q0", Prompt = "P0", CategoryId = "history", CorrectIndex = 1,
+                    Options = new List<string> { "a", "b", "c", "d" }, Difficulty = 3 },
+            new() { Id = "q1", Prompt = "P1", CategoryId = "science", CorrectIndex = 0,
+                    Options = new List<string> { "w", "x", "y", "z" }, Difficulty = 5 },
+        };
+        var json = QuickMatch.SerializeQuestions(qs);
+        var back = QuickMatch.ParseQuestions(json);
+        Assert.Equal(2, back.Count);
+        Assert.Equal("q1", back[1].Id);
+        Assert.Equal(1, back[0].CorrectIndex);
+        Assert.Empty(QuickMatch.ParseQuestions(null));   // absent set -> empty, no throw
+        Assert.Empty(QuickMatch.ParseQuestions("{bad"));  // malformed -> empty
+    }
+
+    [Fact]
+    public void OpponentOf_finds_the_other_player()
+    {
+        var roster = new Dictionary<string, QuickPlayer>
+        {
+            ["me"] = new() { Name = "Me", Score = 700 },
+            ["them"] = new() { Name = "Rival", Score = 500 },
+        };
+        var opp = QuickMatch.OpponentOf(roster, "me");
+        Assert.NotNull(opp);
+        Assert.Equal("them", opp!.Value.Key);
+        Assert.Equal("Rival", opp.Value.Value.Name);
+
+        var solo = new Dictionary<string, QuickPlayer> { ["me"] = new() { Name = "Me" } };
+        Assert.Null(QuickMatch.OpponentOf(solo, "me"));  // waiting alone -> no opponent yet
+    }
+
     [Fact]
     public void Wire_keys_match_the_web_schema()
     {

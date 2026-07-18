@@ -16,9 +16,14 @@
                     </StackPanel>
                 </Button>
 
-                <!-- Surprise me — a random mode + random category (Mac/web parity) -->
-                <Button Content="Surprise me" Click="OnSurprise"
-                        HorizontalAlignment="Left" Padding="16,10"/>
+                <!-- Surprise me + Customize (Mac/web parity) -->
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <Button Content="Surprise me" Click="OnSurprise" Padding="16,10"/>
+                    <Button Content="Customize" Click="OnCustomize" Padding="16,10"/>
+                </StackPanel>
+
+                <!-- Your mixes (saved presets) -->
+                <StackPanel x:Name="PresetsPanel" Spacing="6"/>
 
                 <!-- Category -->
                 <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">

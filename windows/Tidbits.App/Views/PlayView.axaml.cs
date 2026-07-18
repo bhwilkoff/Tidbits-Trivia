@@ -1,10 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
+using FluentAvalonia.UI.Controls;
 using Tidbits.App.Services;
 using Tidbits.App.ViewModels;
 using Tidbits.Core.Models;
@@ -72,7 +74,58 @@ public partial class PlayView : UserControl
 
         BuildVersus();
         BuildDaily();
+        BuildPresets();
     }
+
+    /// Saved Custom Mix presets ("My Mix") — each replays its modes + category,
+    /// or can be removed. Parity with the web/Mac presets list.
+    private void BuildPresets()
+    {
+        PresetsPanel.Children.Clear();
+        var presets = GameData.Shared.Value.Presets.All;
+        if (presets.Count == 0) return;
+
+        PresetsPanel.Children.Add(new TextBlock
+        {
+            Text = "Your mixes", FontWeight = Avalonia.Media.FontWeight.Bold, FontSize = 15,
+            Margin = new Avalonia.Thickness(0, 6, 0, 2),
+        });
+        foreach (var p in presets)
+        {
+            var preset = p;
+            var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto") };
+            var label = new TextBlock
+            {
+                Text = $"{preset.Name} · {preset.Modes.Count} modes",
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            grid.Children.Add(label);
+
+            var play = new Button { Content = "Play", Padding = new Avalonia.Thickness(14, 7), Classes = { "accent" } };
+            play.Click += (_, _) => PlayPreset(preset);
+            Grid.SetColumn(play, 1);
+            grid.Children.Add(play);
+
+            var remove = new Button
+            {
+                Content = "Remove", Padding = new Avalonia.Thickness(12, 7),
+                Margin = new Avalonia.Thickness(8, 0, 0, 0),
+            };
+            remove.Click += (_, _) => { GameData.Shared.Value.Presets.Remove(preset.Id); BuildPresets(); };
+            Grid.SetColumn(remove, 2);
+            grid.Children.Add(remove);
+
+            PresetsPanel.Children.Add(new Border
+            {
+                BorderBrush = new SolidColorBrush(Color.Parse("#22808080")),
+                BorderThickness = new Avalonia.Thickness(1), CornerRadius = new Avalonia.CornerRadius(10),
+                Padding = new Avalonia.Thickness(14, 10), Child = grid,
+            });
+        }
+    }
+
+    private void PlayPreset(GamePreset preset) =>
+        StartMix(preset.Modes, TriviaCategory.Named(preset.CategoryId));
 
     /// Versus-CPU opponents: the three fixed bots + The House (adapts to the
     /// player's lifetime accuracy). Every button says CPU.
@@ -251,5 +304,79 @@ public partial class PlayView : UserControl
         var cats = TriviaCategory.All.ToArray();
         var cat = cats[Random.Shared.Next(cats.Length)];
         StartGame(mode, cat);
+    }
+
+    /// Customize a mix (2.6): pick multiple modes + a category, then Play the mix
+    /// or Save it as a named preset. Parity with the web customize dialog / Mac.
+    private async void OnCustomize(object? sender, RoutedEventArgs e)
+    {
+        var checks = new List<(GameMode mode, CheckBox box)>();
+        var modesPanel = new WrapPanel();
+        foreach (var m in Offered)
+        {
+            var box = new CheckBox { Content = m.Title(), Margin = new Avalonia.Thickness(0, 0, 12, 6) };
+            checks.Add((m, box));
+            modesPanel.Children.Add(box);
+        }
+
+        var catPicker = new ComboBox { MinWidth = 160 };
+        catPicker.ItemsSource = TriviaCategory.All;
+        catPicker.ItemTemplate = new FuncDataTemplate<TriviaCategory>((c, _) => new TextBlock { Text = c?.Name ?? "" });
+        catPicker.SelectedItem = SelectedCategory();
+
+        var nameBox = new TextBox { Watermark = "Name this mix (to save)", MaxLength = 40 };
+
+        var content = new StackPanel
+        {
+            Spacing = 12, MinWidth = 360,
+            Children =
+            {
+                new TextBlock { Text = "Pick the modes to shuffle together.", Opacity = 0.75, TextWrapping = TextWrapping.Wrap },
+                modesPanel,
+                new StackPanel
+                {
+                    Orientation = Orientation.Horizontal, Spacing = 10,
+                    Children =
+                    {
+                        new TextBlock { Text = "Category:", VerticalAlignment = VerticalAlignment.Center, Opacity = 0.7 },
+                        catPicker,
+                    },
+                },
+                nameBox,
+            },
+        };
+
+        var dialog = new FAContentDialog
+        {
+            Title = "Customize a mix", Content = content,
+            PrimaryButtonText = "Play mix", SecondaryButtonText = "Save preset", CloseButtonText = "Cancel",
+        };
+
+        var result = await dialog.ShowAsync();
+        var picked = checks.Where(c => c.box.IsChecked == true).Select(c => c.mode).ToList();
+        var cat = catPicker.SelectedItem as TriviaCategory ?? TriviaCategory.Named("mixed");
+        if (picked.Count == 0) return;
+
+        if (result == FAContentDialogResult.Primary)
+        {
+            StartMix(picked, cat);
+        }
+        else if (result == FAContentDialogResult.Secondary && !string.IsNullOrWhiteSpace(nameBox.Text))
+        {
+            GameData.Shared.Value.Presets.Save(nameBox.Text!, picked, cat.Id);
+            BuildPresets();
+        }
+    }
+
+    private async void StartMix(IReadOnlyList<GameMode> modes, TriviaCategory category)
+    {
+        var data = GameData.Shared.Value;
+        var engine = data.NewEngine();
+        var vm = new GameViewModel(engine, data.Records);
+        vm.Closed += () => { GameHost.Content = null; Landing.IsVisible = true; };
+        vm.PlayAgainRequested += () => StartMix(modes, category);
+        Landing.IsVisible = false;
+        GameHost.Content = new GameView { DataContext = vm };
+        await engine.StartMix(modes, category);
     }
 }

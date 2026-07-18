@@ -15,6 +15,7 @@ public sealed class GameData
     public GameSettings Settings { get; }
     public DailyLog Daily { get; }
     public SavedSetsStore SavedSets { get; }
+    public PresetsStore Presets { get; }
     public Tidbits.Core.Networking.LiveEventStore LiveEvents { get; }
     public Tidbits.Core.Networking.FriendStore Friends { get; }
     public Tidbits.Core.Networking.PlayerIdentityStore Identity { get; }
@@ -40,6 +41,7 @@ public sealed class GameData
         Settings = new GameSettings(Path.Combine(appDir, "settings.json"));
         Daily = new DailyLog(Path.Combine(appDir, "daily.json"));
         SavedSets = new SavedSetsStore(Path.Combine(appDir, "saved-sets.json"));
+        Presets = new PresetsStore(Path.Combine(appDir, "presets.json"));
         LiveEvents = new Tidbits.Core.Networking.LiveEventStore(Path.Combine(appDir, "live-events.json"));
         Friends = new Tidbits.Core.Networking.FriendStore(Path.Combine(appDir, "friends.json"));
         Identity = new Tidbits.Core.Networking.PlayerIdentityStore(Path.Combine(appDir, "profile.json"));

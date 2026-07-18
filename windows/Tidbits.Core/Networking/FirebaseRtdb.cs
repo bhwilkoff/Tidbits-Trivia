@@ -192,6 +192,40 @@ public sealed class FirebaseRtdb
         return JsonSerializer.Deserialize<T>(s, Wire.Json);
     }
 
+    /// Read a value together with its RTDB ETag, for a compare-and-set transaction
+    /// (optimistic concurrency — the matchmaking queue claim, 2.21).
+    public async Task<(T? Value, string ETag)> GetWithEtag<T>(string path)
+    {
+        var token = await ValidToken();
+        using var req = new HttpRequestMessage(HttpMethod.Get, RestUrl(path, token));
+        req.Headers.TryAddWithoutValidation("X-Firebase-ETag", "true");
+        using var resp = await _http.SendAsync(req);
+        Check(resp);
+        var etag = resp.Headers.ETag?.Tag ?? "";
+        var s = await resp.Content.ReadAsStringAsync();
+        var value = (s.Length == 0 || s == "null") ? default : JsonSerializer.Deserialize<T>(s, Wire.Json);
+        return (value, etag);
+    }
+
+    /// Conditional PUT — writes only if the value at `path` still matches `etag`.
+    /// Returns false on 412 Precondition Failed (someone else won the race). Pass a
+    /// null value to conditionally CLEAR the node (RTDB deletes on PUT null).
+    public async Task<bool> CasPut<T>(string path, T? value, string etag)
+    {
+        var token = await ValidToken();
+        var json = JsonSerializer.SerializeToUtf8Bytes(value, Wire.Json);
+        using var req = new HttpRequestMessage(HttpMethod.Put, RestUrl(path, token))
+        {
+            Content = new ByteArrayContent(json),
+        };
+        req.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
+        req.Headers.TryAddWithoutValidation("if-match", etag);
+        using var resp = await _http.SendAsync(req);
+        if (resp.StatusCode == System.Net.HttpStatusCode.PreconditionFailed) return false;
+        Check(resp);
+        return true;
+    }
+
     private async Task WriteJson(string path, byte[] json, HttpMethod method)
     {
         var token = await ValidToken();

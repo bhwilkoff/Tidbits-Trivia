@@ -84,12 +84,15 @@
                     <ItemsControl ItemsSource="{Binding Domains}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="vm:DomainRow">
-                                <Grid ColumnDefinitions="140,*,Auto" Margin="0,0,0,10">
-                                    <TextBlock Text="{Binding Name}" VerticalAlignment="Center" FontWeight="SemiBold"/>
-                                    <ProgressBar Grid.Column="1" Minimum="0" Maximum="1" Value="{Binding Progress}"
-                                                 VerticalAlignment="Center" Margin="0,0,12,0"/>
-                                    <TextBlock Grid.Column="2" Text="{Binding LevelLine}" FontSize="12" Opacity="0.7" VerticalAlignment="Center"/>
-                                </Grid>
+                                <Button Click="OnDomainDrill" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                        Background="Transparent" BorderThickness="0" Padding="0" Margin="0,0,0,10">
+                                    <Grid ColumnDefinitions="140,*,Auto">
+                                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                        <ProgressBar Grid.Column="1" Minimum="0" Maximum="1" Value="{Binding Progress}"
+                                                     VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                        <TextBlock Grid.Column="2" Text="{Binding LevelLine}" FontSize="12" Opacity="0.7" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Button>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>

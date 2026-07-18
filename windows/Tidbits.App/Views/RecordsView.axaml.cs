@@ -85,6 +85,61 @@ public partial class RecordsView : UserControl
         await dialog.ShowAsync();
     }
 
+    /// Tap a domain bar -> a native drill-in of its per-question history (missed /
+    /// got right), dedup by qid — parity with the web openDomain.
+    private async void OnDomainDrill(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { DataContext: DomainRow row }) return;
+        if (DataContext is not RecordsViewModel vm) return;
+        var (missed, right) = vm.DomainAnswers(row.CategoryId);
+
+        var panel = new StackPanel { Spacing = 8, MinWidth = 380 };
+        if (missed.Count == 0 && right.Count == 0)
+            panel.Children.Add(new TextBlock
+            {
+                Text = "No per-question history yet for this domain. Play a game here and it'll show up.",
+                Opacity = 0.7, TextWrapping = TextWrapping.Wrap,
+            });
+        if (missed.Count > 0)
+        {
+            panel.Children.Add(DrillHead($"Missed ({missed.Count})"));
+            foreach (var a in missed) panel.Children.Add(DomainAnswerLine(a));
+        }
+        if (right.Count > 0)
+        {
+            panel.Children.Add(DrillHead($"Got right ({right.Count})"));
+            foreach (var a in right) panel.Children.Add(DomainAnswerLine(a));
+        }
+
+        var dialog = new FAContentDialog
+        {
+            Title = row.Name,
+            Content = new ScrollViewer { Content = panel, MaxHeight = 460 },
+            CloseButtonText = "Done",
+        };
+        await dialog.ShowAsync();
+    }
+
+    private static TextBlock DrillHead(string text) => new()
+    {
+        Text = text, FontWeight = FontWeight.Bold, FontSize = 15, Margin = new Avalonia.Thickness(0, 8, 0, 2),
+    };
+
+    private static Control DomainAnswerLine(AnswerDot a) => new Border
+    {
+        Background = new SolidColorBrush(Color.Parse("#14808080")),
+        CornerRadius = new Avalonia.CornerRadius(8), Padding = new Avalonia.Thickness(12, 8),
+        Child = new StackPanel
+        {
+            Spacing = 2,
+            Children =
+            {
+                new TextBlock { Text = a.Prompt, TextWrapping = TextWrapping.Wrap, FontWeight = FontWeight.SemiBold },
+                new TextBlock { Text = $"Answer: {a.Answer}", Foreground = a.Correct ? Green : Red, FontSize = 13 },
+            },
+        },
+    };
+
     /// The full games list — each a card with header, score, and its dot strip.
     /// `onSelect` drills into the per-question recap.
     public static Control GameListView(IReadOnlyList<GameDetail> games, Action<GameDetail> onSelect)

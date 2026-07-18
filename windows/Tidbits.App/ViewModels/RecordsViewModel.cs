@@ -38,6 +38,22 @@ public sealed class RecordsViewModel
     public IReadOnlyList<CalibrationRow> Calibration { get; }
     public bool HasCalibration => Calibration.Count > 0;
 
+    private IReadOnlyList<GameRecord> _games = new List<GameRecord>();
+
+    /// The per-question history for a domain (dedup by qid), split missed vs got-right
+    /// — parity with the web openDomain drill-in.
+    public (IReadOnlyList<AnswerDot> Missed, IReadOnlyList<AnswerDot> Right) DomainAnswers(string categoryId)
+    {
+        var seen = new HashSet<string>();
+        var missed = new List<AnswerDot>();
+        var right = new List<AnswerDot>();
+        foreach (var g in _games)
+            foreach (var a in g.Answers)
+                if (a.CategoryId == categoryId && seen.Add(a.Qid))
+                    (a.Correct ? right : missed).Add(new AnswerDot(a.Correct, a.Prompt, a.Answer));
+        return (missed, right);
+    }
+
     public RecordsViewModel(RecordsStore store)
     {
         var games = store.Games.OrderByDescending(g => g.Date).ToList();
@@ -72,8 +88,9 @@ public sealed class RecordsViewModel
         Domains = domainProgress
             .Where(d => d.Total > 0)
             .Select(d => new DomainRow(
-                TriviaCategory.Named(d.CategoryId).Name, d.Level, d.LevelProgress,
+                d.CategoryId, TriviaCategory.Named(d.CategoryId).Name, d.Level, d.LevelProgress,
                 (int)Math.Round(d.Accuracy * 100), d.HasWedge)).ToList();
+        _games = games;
 
         ReviewCount = store.Missed.Count(m => !m.Resolved);
 
@@ -116,7 +133,7 @@ public sealed record GameRow(string Mode, string Category, int Score, int Correc
     public string ScoreLine => $"{Score} pts · {Correct}/{Total}";
 }
 
-public sealed record DomainRow(string Name, int Level, double Progress, int Accuracy, bool Mastered)
+public sealed record DomainRow(string CategoryId, string Name, int Level, double Progress, int Accuracy, bool Mastered)
 {
     public string LevelLine => Mastered ? $"Level {Level} · mastered" : $"Level {Level} · {Accuracy}%";
 }

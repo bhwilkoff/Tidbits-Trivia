@@ -241,4 +241,15 @@ public partial class PlayView : UserControl
     }
 
     private void OnQuickPlay(object? sender, RoutedEventArgs e) => StartGame(GameMode.Classic);
+
+    /// Surprise me — a random offered mode + a random category, matching the Mac
+    /// (surpriseMe) and web (data-surprise) parity. The offered set already excludes
+    /// Daily/Night/Mix, so no extra filtering is needed.
+    private void OnSurprise(object? sender, RoutedEventArgs e)
+    {
+        var mode = Offered[Random.Shared.Next(Offered.Length)];
+        var cats = TriviaCategory.All.ToArray();
+        var cat = cats[Random.Shared.Next(cats.Length)];
+        StartGame(mode, cat);
+    }
 }

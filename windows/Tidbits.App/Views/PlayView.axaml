@@ -16,6 +16,10 @@
                     </StackPanel>
                 </Button>
 
+                <!-- Surprise me — a random mode + random category (Mac/web parity) -->
+                <Button Content="Surprise me" Click="OnSurprise"
+                        HorizontalAlignment="Left" Padding="16,10"/>
+
                 <!-- Category -->
                 <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
                     <TextBlock Text="Category:" VerticalAlignment="Center" Opacity="0.7"/>

@@ -44,6 +44,14 @@
                         HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="18,13" Margin="0,12,0,0"
                         FontWeight="SemiBold"/>
 
+                <!-- Online — Quick Match against a real player (2.21) -->
+                <TextBlock Text="Online" Classes="section-header" Margin="0,12,0,0"/>
+                <TextBlock Text="Face a real opponent on the same questions — best score wins."
+                           Classes="body" Opacity="0.7"/>
+                <Button Content="Quick Match — find an opponent online" Click="OnQuickMatch"
+                        HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="18,13"
+                        FontWeight="SemiBold"/>
+
                 <TextBlock Text="Versus CPU" Classes="section-header" Margin="0,12,0,0"/>
                 <TextBlock Text="A believable bot opponent, always labeled CPU. Classic rules."
                            FontSize="13" Opacity="0.7"/>

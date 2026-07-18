@@ -289,6 +289,18 @@ public partial class PlayView : UserControl
         engine.StartNight(plan, cat, questions);
     }
 
+    /// Online Quick Match (2.21) — find a real opponent, same questions, best score wins.
+    private void OnQuickMatch(object? sender, RoutedEventArgs e)
+    {
+        var data = GameData.Shared.Value;
+        var vm = new QuickMatchViewModel(new QuickMatchClient(data.Rtdb), data);
+        var view = new QuickMatchView(vm);
+        view.Closed += () => { GameHost.Content = null; Landing.IsVisible = true; vm.Dispose(); };
+        Landing.IsVisible = false;
+        GameHost.Content = view;
+        vm.Start(data.PlayerName);
+    }
+
     private void OnPassAndPlay(object? sender, RoutedEventArgs e)
     {
         var party = new PartyView();

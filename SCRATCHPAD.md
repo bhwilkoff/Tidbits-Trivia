@@ -7,6 +7,35 @@
 > `docs/ROADMAP.md`, `docs/DATA-CONTRACT.md`. Detailed per-round history is in
 > `ARCHIVE.md`.
 
+## Current state (2026-07-18)
+
+**Windows (6th platform) SHIPPED to the Microsoft Store — first submission IN
+CERTIFICATION (Decision 046).** Store ID `9NRKS9LDRCWC`, MSIX
+`LearningisChangeInc.TidbitsTrivia` **v1.6.45**; all 7 Partner Center sections
+Complete; publishing set to auto-go-live on cert pass. Native Avalonia 12 /
+FluentAvalonia 3 / .NET 10, **~full Mac parity**, **222 tests green on
+`windows-latest`**. The one-time Store bootstrap is DONE (Entra app + Manager
+role, 4 secrets set, name reserved, first manual submission w/ age ratings);
+every future ship is `gh workflow run windows-store.yml -f submit=true -f
+commit=true` after a `MARKETING_VERSION` bump.
+
+**Two non-obvious Store blockers solved + documented** (`docs/WINDOWS-STORE-SUBMISSION.md`
+§4 #11–12, memory `windows-store-submission`): the required `runFullTrust`
+justification on Submission Options (500-char cap), and the red "access policies
+document is not present in the config set" banner — an Xbox-Live-config blocker
+(product type = Game) cleared by **Xbox services → Test**, NOT a checklist item.
+
+**Docs updated this pass** so Windows is a fully supported channel for the
+template: `CLAUDE.md` (new "## Windows app" section + How-we-build rows + platform
+skill trigger + design-token/type-ramp columns), `PARITY.md` (Windows prose +
+§0 platform set + how macOS/Windows are tracked), `DECISIONS.md` (046),
+`docs/WINDOWS-STORE-SUBMISSION.md` (§0 all-checked, §4 gotchas),
+`docs/WINDOWS-PARITY.md` (Store row done). **TODO (owner):** rotate the Partner
+Center client secret once shipping is proven (it passed through a session
+transcript). Windows per-item tracker: `docs/WINDOWS-PARITY.md`.
+
+---
+
 ## Current state (2026-07-04)
 
 **Shipped 1.6.26 / build 67 / vc57 across all platforms.** Apple → TestFlight
@@ -932,3 +961,21 @@ One-line-per-round; full detail in `ARCHIVE.md`.
   export compliance are owner clicks; Mac App Store REVIEW (screenshots/listing) is later.
   **To test the Live flow:** run the Mac host (local build works today) → join from
   TestFlight iOS/tvOS, Play-internal Android, and web.
+- **2026-07-18 (Windows → Microsoft Store, IN CERTIFICATION — Decision 046).**
+  *Found:* a long `/loop 3` had driven the Avalonia Windows app to ~full Mac parity
+  (222 tests green, Online MP + all Tidbits Live waves + identity/social/duels
+  built) and fully staged the Partner Center submission — but two backend blockers
+  held the final submit. *Did:* Chrome-drove the last mile — (1) completed
+  **Submission Options** by writing the REQUIRED `runFullTrust` justification
+  (500-char cap; auto-declared for any packaged desktop app); (2) root-caused the
+  red **"access policies document is not present in the config set"** banner to the
+  Xbox-Live config (product type = Game) and cleared it via **Xbox services →
+  Test** (publishes to the private sandbox) — NOT a submission-checklist item;
+  confirmed package = fresh **v1.6.45** (stale 1.6.44 gone). Owner hit **Submit for
+  certification** → status **In certification**, publishing set to auto-go-live.
+  *Documented* everything so Windows is a fully supported template channel:
+  `CLAUDE.md` (new "## Windows app" section + tables), `PARITY.md`, `DECISIONS.md`
+  046, `docs/WINDOWS-STORE-SUBMISSION.md` (§0 complete, §4 #11–12), `docs/WINDOWS-PARITY.md`.
+  *State left:* awaiting Microsoft cert (hours–3 business days, auto-publishes);
+  owner TODO = rotate the Partner Center client secret. Every future Windows ship
+  is now `gh workflow run windows-store.yml -f submit=true -f commit=true`.

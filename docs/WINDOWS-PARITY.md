@@ -12,7 +12,16 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 
 ---
 
-## Status (2026-07-17) — the "needs a real Windows box" blockers are gone
+## Status (2026-07-18) — SHIPPED to the Microsoft Store (in certification)
+
+**Windows is a fully supported channel (Decision 046).** First Store submission is
+**in certification** — Store ID `9NRKS9LDRCWC`, MSIX v1.6.45, all 7 Partner Center
+sections Complete, publishing set to auto-go-live on cert pass. **222 tests green**
+on `windows-latest`. The one-time bootstrap is DONE; every future ship is
+`gh workflow run windows-store.yml -f submit=true -f commit=true` — see
+`WINDOWS-STORE-SUBMISSION.md` (incl. the two solved first-submission blockers:
+runFullTrust justification + the Xbox-services "Test" that clears the
+access-policies banner).
 
 **208 tests green** on `windows-latest`. The previous status said the remainder
 "needs a real Windows box (this dev box is an arm64 Mac)". That framing is
@@ -50,9 +59,10 @@ Still open, with HONEST reasons:
   LibVLC actually invoking the callbacks with a real video file; that needs a
   video fixture on Windows CI. The audio of a video already plays (3.32 path).
 - **3.5 LAN night** — explicitly optional (RTDB path is acceptable). Not planned.
-- **Store bootstrap** — BLOCKED ON OWNER: Partner Center cannot be automated
-  (name reservation, first manual submission incl. age ratings, Entra app
-  registration). See WINDOWS-STORE-SUBMISSION §1.
+- **Store bootstrap** — ✅ DONE (2026-07-18). First submission is in certification
+  (v1.6.45); Entra app + Manager role + 4 secrets + name reservation + first manual
+  submission (age ratings) all complete. Future ships are the §2 CLI command. See
+  WINDOWS-STORE-SUBMISSION §0.
 
 ---
 

@@ -30,30 +30,42 @@
 > Tidbits Live dependent formats (fastest-finger, audio, poll, cheating
 > deterrence). See `docs/macOS-DESIGN.md` §A7 + `docs/EVENT-TRIVIA-COMPETITIVE.md`.
 >
-> **Windows (6th platform) — 2026-07-17: FEATURE-BUILT; Store submission is the
-> gate.** Supersedes the two earlier notes here, which had gone stale in opposite
-> directions (one said "frames are placeholders", the other "NOT built" — both
-> false as of this audit). Reality: **208 tests green on `windows-latest`**, with
-> every consumer, host, social, identity, live-generation and duels feature built
-> in Avalonia/C# against the shared RTDB `live/{code}` plane. See
-> `docs/WINDOWS-PARITY.md` for the per-item matrix.
+> **Windows (6th platform) — 2026-07-18: SHIPPED to the Microsoft Store (in
+> certification). A fully supported channel (Decision 046).** Native Avalonia 12 /
+> FluentAvalonia 3 / .NET 10 app at **~full parity with the Mac app** — every
+> consumer, host (Tidbits Live Waves A–E), social, portable-identity,
+> live-generation, online-multiplayer and duels feature built in a C# port of the
+> shared logic (`Tidbits.Core`), byte-compatible on the shared RTDB
+> `live/{code}` + `queue/mixed` plane so a Windows player matches a phone/web
+> player. **222 tests green on `windows-latest`.** The Windows per-item matrix is
+> `docs/WINDOWS-PARITY.md` (kept as the authoritative Windows column so this
+> file's 4-platform tables stay readable); the top-line consumer + host verbs are
+> all met.
+>
+> **Store submission is DONE — first submission is in certification** (Store ID
+> `9NRKS9LDRCWC`, MSIX `LearningisChangeInc.TidbitsTrivia` v1.6.45). The one-time
+> Partner Center bootstrap (Entra app + Manager role, 4 secrets, name reservation,
+> first manual submission incl. age ratings) is complete; every future ship is
+> `gh workflow run windows-store.yml -f submit=true -f commit=true` — see
+> `docs/WINDOWS-STORE-SUBMISSION.md`. Two non-obvious Store blockers were solved
+> and recorded there: the required `runFullTrust` justification (Submission
+> Options), and the "access policies document" banner cleared by the Xbox-services
+> **Test** button (product type = Game).
 >
 > The old "needs a real Windows box" blocker class is **retired** (Decision 045):
-> there is no free Windows VM, so `windows-latest` IS the Windows machine and it
-> is now CLI-drivable (`windows-repl.yml`). That unblocked **0.2 Win32 interop**
-> (taskbar progress + global hotkeys; snap layouts turned out to need no code) and
-> **1.22 DPAPI** (which also fixed a real exposure: the Firebase refresh token was
-> being written to disk in cleartext).
+> there is no free Windows VM, so `windows-latest` IS the Windows machine, CLI-driven
+> via `windows-repl.yml` with a headless-PNG harness for observability. That
+> unblocked **0.2 Win32 interop** (taskbar progress + global hotkeys) and **1.22
+> DPAPI** (which also fixed a real exposure: the Firebase refresh token was written
+> to disk in cleartext).
 >
-> Genuinely open: **3.34 video picture** [~] — the LibVLC-frames→WriteableBitmap
-> pipeline is built and verified with synthetic frames, but LibVLC invoking the
-> callbacks on a real video file is unproven; **the https deep-link twin**,
-> deferred by sequence (needs the PackageFamilyName, which requires the Partner
-> Center identity); and **the Store bootstrap**, which is BLOCKED ON OWNER because
-> Partner Center cannot be automated (name reservation, first manual submission
-> incl. age ratings, Entra app registration) — `docs/WINDOWS-STORE-SUBMISSION.md`.
-> Stack + rationale: `docs/WINDOWS-DESIGN.md`, `docs/WINDOWS-PLAYBOOK.md`,
-> `docs/WINDOWS-RESEARCH.md`.
+> Genuinely open (none block parity or the Store): **3.34 video picture** [~] — the
+> LibVLC-frames→WriteableBitmap pipeline is built + verified with synthetic frames,
+> but LibVLC invoking the callbacks on a real video file needs a Windows CI fixture;
+> a few [~] polish/depth items in `docs/WINDOWS-PARITY.md` (Live builder pointer
+> drag-reorder, extend-titlebar/theme-follow). Stack + rationale:
+> `docs/WINDOWS-DESIGN.md`, `docs/WINDOWS-PLAYBOOK.md`, `docs/WINDOWS-RESEARCH.md`,
+> `docs/WINDOWS-STORE-SUBMISSION.md`.
 >
 > **Last audit: 2026-06-30 (Android ↔ Apple, code-verified).** Found 4
 > false cells (§3b emoji grid, §4 entire auth section, §5 share URLs,
@@ -96,20 +108,23 @@ When shipping any user-facing feature:
 
 ## 0. Platform set
 
-Web + iOS + iPadOS + tvOS + Android (Decision 020), with **macOS the
-committed fifth platform** (Decision 042) — the next major scope of work.
-tvOS earns its place because living-room trivia is lean-back (Decision
-021); macOS earns its place because trivia is genuinely lean-in and the
-universal Apple target makes the Mac nearly free to add. iOS is the lead
+Web + iOS + iPadOS + tvOS + Android (Decision 020), **macOS the fifth**
+(Decision 042), **Windows 10/11 the sixth** (Decision 046) — **six shipping
+platforms, one feature set.** tvOS earns its place because living-room trivia
+is lean-back (Decision 021); macOS + Windows earn theirs because trivia is
+genuinely lean-in (macOS rides the universal Apple target nearly free; Windows
+rides Avalonia + a $0 CI-only pipeline, Decision 045). iOS is the lead
 platform; everything ships there first, then mirrors. A platform not yet
 reached is ⏳ with a note, never silence.
 
-**macOS status: ⏳ Planned across the board** — the `macos-platform-patterns`
-skill and a `TidbitsTrivia/macOS/` starter scaffold are in place, but the
-shell isn't built, so every feature below is ⏳ on macOS. A dedicated macOS
-column gets threaded into the tables (with honest per-feature cells) as the
-Mac shell lands; until then this single line is the macOS row so the matrix
-doesn't carry a misleadingly-empty column for a 0%-built platform.
+**How the two newest platforms are tracked in this matrix:** the tables below
+carry the four original columns (Web / iOS / tvOS / Android) to stay readable.
+**macOS** rides the shared Apple `Core/` and is BUILT (see the macOS prose
+block above + `docs/macOS-DESIGN.md`). **Windows** is BUILT and SHIPPED and has
+its own authoritative per-item column in **`docs/WINDOWS-PARITY.md`** — treat
+that file as the Windows cell for every row here. When you ship a feature, update
+BOTH this matrix (the 4 columns + Notes) AND the relevant Windows/macOS tracker,
+same change set — that's what keeps "fully supported channel" honest.
 
 ## 1. Top-level navigation
 

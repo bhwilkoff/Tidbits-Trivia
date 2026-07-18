@@ -35,7 +35,9 @@ these patterns; invoke the skill when its trigger matches.
 | Sync, sign-in, favorites/progress across devices | `per-ecosystem-sync-islands` |
 | Preparing an Apple store submission (iOS / iPadOS / macOS / tvOS) | `cloud-appstore-submission` + `docs/CLOUD-SUBMISSION.md` (DEFAULT = cloud build `gh workflow run appstore-build.yml`; the beta-macOS dev box can't ship locally) |
 | Preparing a Play submission (Android AAB) | `play-cli-submission` (CLI-only: the `edits` transaction via `tools/submit-play.sh`) |
-| Designing / building the macOS app (the next scope) | `macos-platform-patterns` FIRST (NavigationSplitView shell, player-as-root, AppKit seams, sandbox) |
+| Preparing a Microsoft Store submission (Windows MSIX) | `docs/WINDOWS-STORE-SUBMISSION.md` (DEFAULT = `gh workflow run windows-store.yml -f submit=true -f commit=true`; bootstrap is one-time and DONE — first submission is in certification) |
+| Designing / building the macOS app | `macos-platform-patterns` FIRST (NavigationSplitView shell, player-as-root, AppKit seams, sandbox) |
+| Designing / building the Windows app | `native-platform-first` + `docs/WINDOWS-DESIGN.md` (binding) + `docs/WINDOWS-PLAYBOOK.md` (Avalonia/FluentAvalonia shell, headless-PNG observability, `windows-latest` IS the box — Decision 045) |
 | Logging an architecture decision | `architectural-decision-log` |
 | User pushback after 3+ iterations of "still broken" | `3d-feature-debug-loop` |
 
@@ -64,6 +66,18 @@ Platform-specific skill triggers:
   URL state, service worker, IndexedDB, image fallback chains, CSS
   gotchas, headless verification. Design skills under `KUI:<name>`;
   `frontend-design` for component-level work.
+- **Windows**: `docs/WINDOWS-PLAYBOOK.md` FIRST (the pipeline) +
+  `docs/WINDOWS-DESIGN.md` (binding). The load-bearing lessons are in
+  the memories `windows-ci-is-the-machine` (Decision 045: there is NO
+  free Windows VM — `windows-latest` IS the box, driven via
+  `windows-repl.yml`; plus the `CopyPixels` RGBA/BGRA trap) and
+  `windows-platform-initiative`. Avalonia 12 + FluentAvalonia 3 +
+  .NET 10; observe every UI change with the headless-PNG harness and
+  gate on `windows-latest` — "renders on the Mac head" is never
+  "correct on Windows" (Mica, chrome, DPAPI, Win32 interop, LibVLC
+  natives are Windows-only). Structure Windows-only work so the
+  BEHAVIOUR is a pure function and the platform call is a thin
+  Windows-guarded edge (`Win32HostInterop`, `VideoFrameSink`).
 
 ---
 
@@ -125,22 +139,30 @@ check before "done."
 <!-- FILL IN: One paragraph on what your app does and who it's for -->
 
 Available as a **web app**, a **native iOS/iPadOS app**, a **native
-Apple TV (tvOS) app**, and a **native Android app** — four native
-experiences shipping today, one feature set. A **native macOS app** is
-the next platform (the fifth), riding the same universal Apple target —
-skills + scaffold are in place (Decision 042). When adding to one
-platform, note the equivalent work in SCRATCHPAD.md and update PARITY.md.
+Apple TV (tvOS) app**, a **native Android app**, a **native macOS app**,
+and a **native Windows 10/11 app** — **six native experiences, one
+feature set**. macOS (5th, Decision 042) rides the universal Apple
+target; **Windows (6th, Decision 046) is a fully supported channel** —
+built in Avalonia/C#/.NET, at ~full parity with the Mac app, and
+shipping to the Microsoft Store via the same CLI shape as Apple/Play
+(first submission is in certification). When adding to one platform,
+note the equivalent work in SCRATCHPAD.md and update PARITY.md
+(cross-platform matrix) + `docs/WINDOWS-PARITY.md` (the Windows per-item
+tracker).
 
 **Feature parity, not design consistency.** Web feels like the web.
 iOS feels like iOS. macOS feels like a Mac (pointer + keyboard + menu
-bar). tvOS feels like the living room. Android feels like Android. The
-verbs are identical; the idioms aren't.
+bar). tvOS feels like the living room. Android feels like Android.
+Windows feels like Windows (Fluent + Mica, pointer + keyboard, the
+taskbar). The verbs are identical; the idioms aren't.
 
-Not every app needs all four. Decide the platform set in M0 and
+Not every app needs all six. Decide the platform set in M0 and
 record it in DECISIONS.md — tvOS earns its place when the content
 is lean-back (video, music, ambient, photos); skip it when the app
-is inherently lean-in (text entry, productivity). A skipped
-platform is a 🚫 column in PARITY.md with a reason, not a deletion.
+is inherently lean-in (text entry, productivity). Windows earns its
+place because desktop trivia is lean-in and Avalonia makes a $0,
+CI-only pipeline real (Decision 045). A skipped platform is a 🚫
+column in PARITY.md with a reason, not a deletion.
 
 ---
 
@@ -397,15 +419,133 @@ and the Android skill stack carry the depth):
 
 ---
 
+## Windows app (Windows 10/11 — 6th platform, Decision 046)
+
+**Stack**: **Avalonia 12** + **FluentAvaloniaUI 3** + **.NET 10** (C#),
+`CommunityToolkit.Mvvm` for MVVM, LibVLCSharp for AV (Wave B),
+QRCoder + `System.Security.Cryptography.ProtectedData` (DPAPI). No
+XAML-Islands, no WinUI, no WPF — **Avalonia-only**, because it renders
+real Skia pixels headlessly (that is what makes the $0 CI-only pipeline
+real — Decision 045). Ships to the Microsoft Store as an **MSIX**;
+Microsoft re-signs, so there is no signing cert to manage.
+
+**Why Avalonia and not WinUI**: the whole platform rides one hard
+constraint — **there is no free Windows VM and this dev box is an arm64
+Mac** (Decision 045). `Avalonia.Headless` with `UseSkia()` renders the
+real UI to PNG in-process on any OS, so the app is observable from the
+Mac and gated on `windows-latest` CI. WinUI cannot do this.
+
+**Project structure** (`windows/`, a sibling module — different
+toolchain, like `android/`):
+
+```
+windows/
+├── Tidbits.slnx                    ← solution
+├── Tidbits.Core/                   ← platform-agnostic C# PORT of the shared logic
+│   ├── Models/                       (Question, Answered, Closest/Match/Enum specs)
+│   ├── Networking/                   (FirebaseRtdb, QuickMatch(Client), Live*, DeepLink)
+│   └── Store/                        (GameData, GameSettings, Records, Presets, Identity)
+├── Tidbits.App/                    ← Avalonia UI (#if not needed — Windows-only module)
+│   ├── App.axaml                     (the 6-level type ramp + Border.card/Button styles)
+│   ├── Views/  ViewModels/  Services/
+│   ├── AppxManifest.xml              (Store identity — case-sensitive; see submission doc)
+│   └── app.manifest                  (Win32 app manifest)
+├── Tidbits.HeadlessTests/          ← xUnit + Avalonia.Headless (render + input + unit)
+└── artifacts/  publish/            ← rendered PNGs / build output
+```
+
+`Tidbits.Core` is a **hand-port of the shared game logic to C#** — the
+6th mirror alongside Swift Core / Kotlin / JS. Determinism-critical
+pieces (daily pick, season/venue keys, wire types) must pass golden
+vectors against the other stacks (byte-compatible, so a Windows player
+matches a phone/web player on the shared Firebase `live/{code}` +
+`queue/mixed` plane).
+
+**Run / verify** (the loop is CI, not a local desktop):
+- **Iterate on the Mac head** for speed: `cd windows && dotnet test`
+  (renders real pixels via headless Skia; NOT the ship target).
+- **Gate on Windows**: `gh workflow run windows-repl.yml` →
+  `gh run download <id>` → `Read` the PNGs (~2–4 min). "Renders on the
+  Mac" is never "correct on Windows."
+- **Refresh visual baselines** (captured ON Windows, enforced only
+  there): `gh workflow run windows-repl.yml -f update_baselines=true`,
+  then commit the artifact.
+
+**Critical conventions** (from the buildout — depth in
+`docs/WINDOWS-PLAYBOOK.md` + the `windows-*` memories):
+- **FluentAvalonia components first** — `NavigationView` (the shell),
+  `FAContentDialog` (modals/confirms), `SettingsExpander`, before any
+  custom control. The shell is a `FANavigationView` with all Mac tabs
+  (Play · Records · Leaderboard · Create · Live + Settings).
+- **MVVM via `CommunityToolkit.Mvvm`** — `[ObservableProperty]` /
+  `[RelayCommand]`; Views are parameterless + bind `DataContext` (a
+  ctor param trips `AVLN3001`).
+- **Compiled bindings on** (`AvaloniaUseCompiledBindingsByDefault`) —
+  `x:DataType` on every view; a binding typo is a build error, not a
+  silent runtime blank.
+- **The 6-level type ramp + `Border.card` live once in `App.axaml`**
+  (`view-heading`/`section-header`/`body-strong`/`body`/`caption`/
+  `tabular`; the card owns its elevation shadow) — WINDOWS-DESIGN §5.
+- **All network calls through the shared `FirebaseRtdb`** (REST + SSE,
+  anon auth) — never a raw `HttpClient` from a view/VM. It carries the
+  ETag CAS primitive (`GetWithEtag`/`CasPut`) for the atomic
+  quick-match queue-claim.
+- **Secrets are DPAPI-protected** (`ProtectedData`, CurrentUser +
+  entropy) — never cleartext on disk. The Firebase refresh token was a
+  real cleartext-exposure bug this caught.
+- **Structure Windows-only work so BEHAVIOUR is a pure function and the
+  platform call is a thin Windows-guarded edge** — `Win32HostInterop`
+  (taskbar progress + hotkeys), `VideoFrameSink` (raw BGRA pointer, no
+  LibVLC). This is what keeps it unit-testable off Windows.
+- **`CopyPixels` returns each bitmap's NATIVE format** — a captured
+  frame is RGBA, a PNG-decoded file is BGRA. Normalize through one
+  decode path before comparing, or the visual gate reports false drift
+  (Decision 045).
+- **LibVLC natives MUST be RID-conditioned** in the csproj — referencing
+  `VideoLAN.LibVLC.Mac` + `.Windows` unconditionally shipped a 42MB
+  macOS dylib + the 99MB win-x86 tree into the win-x64 MSIX (half of
+  211MB). `TrimWindowsPublishBloat` also strips win-x86 + native pdbs.
+- **`PublishSingleFile` is incompatible with MSIX** — `windows-store.yml`
+  publishes multi-file; `windows-build.yml` keeps single-file for the
+  direct-download `.exe`. Don't unify them.
+- **Version bump on every ship** — `<Version>` in `Tidbits.App.csproj`,
+  tied to `AppVersion.xcconfig` by `tools/stamp_msix_version.py` (which
+  stamps + checks BOTH the csproj and the MSIX manifest). The Store
+  reserves the 4th version segment, so two builds of the same
+  MARKETING_VERSION are indistinguishable — bump every time.
+
+**Ship to the Microsoft Store (CLI)** — full runbook in
+`docs/WINDOWS-STORE-SUBMISSION.md`. Same shape as Apple/Play: a one-time
+manual bootstrap (DONE — Store ID `9NRKS9LDRCWC`, Entra app + Manager
+role, 4 secrets set, first submission in certification), then every ship
+is a command:
+
+```bash
+vim AppVersion.xcconfig && python3 tools/stamp_msix_version.py  # bump first
+gh workflow run windows-store.yml                               # package only
+gh workflow run windows-store.yml -f submit=true                # + draft
+gh workflow run windows-store.yml -f submit=true -f commit=true # + publish
+```
+
+Two Store gotchas that are NOT in any checklist (both re-appear on a
+fresh product): the **Submission Options** page has a REQUIRED
+`runFullTrust` justification (auto-declared for any packaged desktop
+app; 500-char cap), and the red **"access policies document is not
+present in the config set"** banner is an Xbox-Live-config blocker
+(product type = Game) — cleared by **Xbox services → bottom → Test**
+(publishes to the private sandbox), not by any submission section.
+
+---
+
 ## Shared design system
 
 **Design tokens** — keep the copies in lockstep (macOS shares the Apple
 `Core/` copy — no separate Mac palette):
 
-| Token | Web | Apple (iOS/macOS/tvOS Core) | Android |
-|---|---|---|---|
-| Primary | `--color-primary` in `:root` | `Color.primary` in `Design.swift` | `BrandPrimary` in `ui/theme/Color.kt` |
-| Surface | `--color-surface` | `Color.surface` | `BrandSurface` |
+| Token | Web | Apple (iOS/macOS/tvOS Core) | Android | Windows |
+|---|---|---|---|---|
+| Primary | `--color-primary` in `:root` | `Color.primary` in `Design.swift` | `BrandPrimary` in `ui/theme/Color.kt` | `BrandPrimary` in `App.axaml` (+ FluentAvalonia `.accent`) |
+| Surface | `--color-surface` | `Color.surface` | `BrandSurface` | `BrandSurface` / `Border.card` |
 
 <!-- FILL IN your palette. Two systems, kept distinct:
      - Brand (UI chrome only): primary CTA, accent, background, surface
@@ -429,14 +569,14 @@ and the Android skill stack carry the depth):
 Refuse a seventh; refactor instead. See `mobile-first-density-design`
 for the discipline.
 
-| Level | Web class | iOS `Font.TextStyle` | tvOS | Android M3 token |
-|---|---|---|---|---|
-| L1 Page title | `.view-heading` | `.largeTitle` | `.title1` (57pt) | `displaySmall` |
-| L2 Section header | `.section-header` | `.title2` | `.title3` (38pt) | `headlineSmall` |
-| L3 Emphasized body | `.body-strong` | `.headline` | `.headline` | `titleMedium` |
-| L4 Body | `.body` | `.body` | `.body` (29pt — the 10-ft floor) | `bodyMedium` |
-| L5 Caption | `.caption` | `.caption` | `.caption1` (25pt) | `labelMedium` |
-| L6 Tabular | `.tabular` | `.body.monospacedDigit()` | same | `bodySmall` w/ tabular |
+| Level | Web class | iOS `Font.TextStyle` | tvOS | Android M3 token | Windows (`App.axaml`) |
+|---|---|---|---|---|---|
+| L1 Page title | `.view-heading` | `.largeTitle` | `.title1` (57pt) | `displaySmall` | `TextBlock.view-heading` (34/Black) |
+| L2 Section header | `.section-header` | `.title2` | `.title3` (38pt) | `headlineSmall` | `.section-header` (20/Bold) |
+| L3 Emphasized body | `.body-strong` | `.headline` | `.headline` | `titleMedium` | `.body-strong` |
+| L4 Body | `.body` | `.body` | `.body` (29pt — the 10-ft floor) | `bodyMedium` | `.body` |
+| L5 Caption | `.caption` | `.caption` | `.caption1` (25pt) | `labelMedium` | `.caption` |
+| L6 Tabular | `.tabular` | `.body.monospacedDigit()` | same | `bodySmall` w/ tabular | `.tabular` |
 
 tvOS uses the same six levels but its own ramp — system tokens only,
 never hardcoded sizes. 29pt is the body floor at ten feet; Dynamic

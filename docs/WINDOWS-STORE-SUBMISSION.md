@@ -28,7 +28,10 @@ it refuses to drive submissions until one full manual submission exists.
 
 ---
 
-## §0 — Bootstrap progress (updated 2026-07-17)
+## §0 — Bootstrap progress (COMPLETE — first submission in certification 2026-07-18)
+
+**The entire one-time bootstrap is done. The first submission is in certification.**
+From here, every ship is the §2 CLI command — you never repeat §1.
 
 - [x] App reserved in Partner Center — **Store ID `9NRKS9LDRCWC`**, product type
   "MSIX or PWA game".
@@ -38,16 +41,25 @@ it refuses to drive submissions until one full manual submission exists.
 - [x] `MSSTORE_PRODUCT_ID` repo variable = `9NRKS9LDRCWC`.
 - [x] https deep-link twin wired end-to-end: appUriHandler in the manifest +
   `/.well-known/windows-app-web-link` (PFN
-  `LearningisChangeInc.TidbitsTrivia_fn1p07pbc0hg8`) serving 200 live. (This pass
-  also fixed a latent bug — `.well-known` was never deployed, so the Android
-  `assetlinks.json` had been 404ing; both serve 200 now.)
-- [ ] **Auth spike** (§1.1) — Entra app registration + Manager role + `msstore
-  apps list`. NOT done. This is the real risk; do it next.
-- [ ] **4 Store secrets** (§1.5) — not set.
-- [ ] **First manual submission** incl. age ratings (§1.4) — not done; the API
-  refuses to drive submissions until it exists.
+  `LearningisChangeInc.TidbitsTrivia_fn1p07pbc0hg8`) serving 200 live.
+- [x] **Auth spike PASSED (§1.1).** The `AADSTS7000118`/Spark-PROD bug does NOT
+  affect this tenant — `msstore apps list` returns the product. Path: the Partner
+  Center account was a personal MSA with ZERO associated tenants; fix was to
+  associate the auto-created **Default Directory** tenant
+  (`b88cf767-bb2e-4929-be56-ca0b22962887`) via a cloud-only Global Admin, then grant
+  **Manager(Windows)** to the app registration. Full detail in the memory
+  `windows-store-submission`.
+- [x] **4 Store secrets set (§1.5)** — `MSSTORE_TENANT_ID`, `MSSTORE_CLIENT_ID`,
+  `MSSTORE_CLIENT_SECRET`, `MSSTORE_SELLER_ID` (=`95246400`). **Rotate the client
+  secret** once shipping is proven (its value passed through a session transcript).
+- [x] **First submission COMPLETE (manual, Chrome-driven) — IN CERTIFICATION.** MSIX
+  v1.6.45 Validated + ranked #1 for Win10/11 Desktop; all 7 sections Complete
+  (Pricing, Properties, Age ratings, Packages, Store listings, Xbox Creators
+  Program, Submission Options). Publishing set to "as soon as it passes cert" — it
+  goes live automatically. See §4 gotchas #11–#12 for the two non-obvious blockers
+  solved on the way.
 - [ ] Verify https external-open on a real Windows box (parser is ready; only the
-  OS handoff is unverified).
+  OS handoff is unverified) — the sole remaining nice-to-have, not a blocker.
 
 ---
 
@@ -203,6 +215,28 @@ msstore flights submission rollout finalize <productId> <flightId>
     and there's no official headless-CI guidance. We let Store
     certification be the gate; the first manual submission (§1.4) surfaces
     manifest problems.
+11. **Submission Options has a REQUIRED `runFullTrust` justification —
+    this keeps the section "Incomplete" until you fill it.** Any packaged
+    Win32 / desktop-bridge app (our Avalonia/.NET MSIX) auto-declares
+    `runFullTrust`; you cannot remove it, you must justify it. Partner
+    Center → the submission → **Submission Options** → "Why do you need the
+    runFullTrust capability?" — **500-char cap** (a longer paste truncates
+    mid-sentence). An honest one-liner works: it's the standard capability
+    for a packaged classic desktop app to run its own managed code; no
+    elevation, no access to other apps' data. Filling it flips the section
+    to Complete.
+12. **The red banner "The access policies document is not present in the
+    config set. This document is required for all publish operations." is
+    an Xbox-Live-config blocker, NOT a submission-checklist item — and it
+    persists through reloads with every section Complete.** It appears
+    because the product type is a **Game**, so Partner Center provisions an
+    Xbox Live config whose "access policies document" is only generated when
+    you publish that config to the private test sandbox. FIX: left-nav
+    **Xbox services** → scroll to the bottom → click **Test** ("Success"
+    appears; this publishes to the private sandbox only, never retail). The
+    "Xbox Creators Program" row reading Complete in the submission checklist
+    does NOT cover this. Documented MS cause (Q&A 303156) — not a support
+    ticket.
 
 ---
 

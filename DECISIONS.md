@@ -1391,3 +1391,52 @@ worth paying for is an Azure VM as a rare eyes-on escape hatch for the few thing
 headless genuinely cannot show (native window chrome, OS font substitution, real
 GPU behaviour) — and its 12-month clock starts at signup, so defer it until
 something forces the issue.
+
+---
+
+## 046 — Windows 10/11 is the 6th platform and a fully supported channel
+
+*Date: 2026-07-18*
+
+Windows is a **first-class shipping platform**, on equal footing with web / iOS /
+iPadOS / tvOS / macOS / Android — not an experiment. Native **Avalonia 12 +
+FluentAvalonia 3 + .NET 10** (C#), shipping to the **Microsoft Store** as an MSIX
+via the same CLI shape as Apple/Play. The shared game logic is hand-ported to a
+6th mirror, `Tidbits.Core` (C#), byte-compatible with the Swift/Kotlin/JS stacks
+on the shared Firebase `live/{code}` + `queue/mixed` plane. First submission is in
+certification (Store ID `9NRKS9LDRCWC`, v1.6.45); every future ship is
+`gh workflow run windows-store.yml -f submit=true -f commit=true`.
+
+**Why:** desktop trivia is genuinely lean-in, Windows is the largest desktop
+install base, and Avalonia's headless-Skia rendering made a **$0, CI-only**
+pipeline real (Decision 045) — so the platform could reach ~full Mac parity and
+ship without ever owning a Windows machine. Avalonia over WinUI specifically
+*because* only Avalonia renders real pixels off-Windows; that is the whole reason
+the platform is observable and testable from an arm64 Mac. The universal-Apple
+lesson (60–70% of an app is platform-agnostic) held again: the expensive part was
+the shell + the Store bootstrap, not the logic.
+
+**How to apply:**
+
+1. **Treat Windows as a parity row, never a follow-up.** When shipping a feature,
+   mirror it in `Tidbits.Core`/`Tidbits.App` in the same change set where feasible
+   and update `docs/WINDOWS-PARITY.md` (the authoritative Windows column) alongside
+   `PARITY.md`. A platform you can't reach right now gets `[~]`/⏳ with a note,
+   never silence.
+2. **Same verb, native idiom.** Windows feels like Windows — Fluent + Mica,
+   `NavigationView` shell, `FAContentDialog`, pointer + keyboard, taskbar progress.
+   Don't port the iOS/Android look; port the verbs. Binding rules:
+   `docs/WINDOWS-DESIGN.md`.
+3. **Observe every UI change headlessly and gate on `windows-latest`** (Decision
+   045). "Renders on the Mac head" is never "correct on Windows."
+4. **Determinism-critical Core (daily pick, season/venue keys, wire types) must
+   pass golden vectors** against the other stacks — byte-compatibility is what lets
+   a Windows player match a phone/web player.
+5. **Every ship bumps `MARKETING_VERSION`** (`AppVersion.xcconfig` →
+   `tools/stamp_msix_version.py` stamps both the csproj and the MSIX manifest); the
+   Store reserves the 4th version segment, so an un-bumped rebuild is indistinguishable.
+6. **The Store bootstrap is one-time and DONE** — don't repeat §1 of
+   `docs/WINDOWS-STORE-SUBMISSION.md`; it's the runbook for the *next* app in the
+   template. Two non-obvious first-submission blockers are recorded there
+   (runFullTrust justification; the Xbox-services "Test" that clears the
+   access-policies banner for Game-type products).

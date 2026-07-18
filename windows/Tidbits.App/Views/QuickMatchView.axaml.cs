@@ -11,21 +11,28 @@ namespace Tidbits.App.Views;
 /// events fire off the SSE thread).
 public partial class QuickMatchView : UserControl
 {
-    private readonly QuickMatchViewModel _vm;
+    private QuickMatchViewModel? _vm;
     public event Action? Closed;
 
-    public QuickMatchView(QuickMatchViewModel vm)
+    // Parameterless ctor + DataContext binding (the Avalonia idiom, and it keeps the
+    // XAML runtime loader / ViewLocator able to instantiate the view).
+    public QuickMatchView()
     {
         InitializeComponent();
-        _vm = vm;
-        _vm.Changed += OnVmChanged;
-        Render();
+        DataContextChanged += (_, _) =>
+        {
+            if (_vm is not null) _vm.Changed -= OnVmChanged;
+            _vm = DataContext as QuickMatchViewModel;
+            if (_vm is not null) _vm.Changed += OnVmChanged;
+            Render();
+        };
     }
 
     private void OnVmChanged() => Dispatcher.UIThread.Post(Render);
 
     private void Render()
     {
+        if (_vm is null) return;
         Root.Children.Clear();
         Root.Children.Add(_vm.Current switch
         {

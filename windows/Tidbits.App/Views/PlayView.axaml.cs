@@ -294,7 +294,7 @@ public partial class PlayView : UserControl
     {
         var data = GameData.Shared.Value;
         var vm = new QuickMatchViewModel(new QuickMatchClient(data.Rtdb), data);
-        var view = new QuickMatchView(vm);
+        var view = new QuickMatchView { DataContext = vm };
         view.Closed += () => { GameHost.Content = null; Landing.IsVisible = true; vm.Dispose(); };
         Landing.IsVisible = false;
         GameHost.Content = view;

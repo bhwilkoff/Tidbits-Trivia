@@ -34,7 +34,7 @@ public class QuickMatchViewTest
         Assert.True(vm.IsSearching);
         Assert.Equal("Finding an opponent…", vm.StatusLine);
 
-        var win = new Window { Width = 900, Height = 620, Content = new QuickMatchView(vm) };
+        var win = new Window { Width = 900, Height = 620, Content = new QuickMatchView { DataContext = vm } };
         win.Show();
         Dispatcher.UIThread.RunJobs();
         win.CaptureRenderedFrame()!.Save(Path.Combine(dir, "quickmatch-searching.png"));

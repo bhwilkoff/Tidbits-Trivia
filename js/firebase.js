@@ -152,6 +152,14 @@ export const FirebaseNet = {
     await db.set(db.ref(_db, `emailOwners/${accountKey}`), email);
   },
 
+  // Daily Six (docs/DAILY-SIX-CONTRACT.md): one write per player per day to
+  // dailySix/{day}/{uid}. Keyed by the auth uid (rules: own-uid write only), NOT the
+  // account key — a single device plays once; sign-in isn't required to compete.
+  async submitDailySix(day, row) {
+    const { db } = await ensure();
+    await db.set(db.ref(_db, `dailySix/${day}/${_uid}`), row);
+  },
+
   // Live listener on a profile (cross-device sync). Returns an unsubscribe fn.
   onProfile(key, cb) {
     const { ref, onValue } = _fns.db;

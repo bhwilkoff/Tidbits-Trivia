@@ -256,6 +256,40 @@ export const Difficulty = {
   get(title) { return this.map[(title || '').replace(/ /g, '_')] ?? 3; },
 };
 
+// Daily Six — the $0 global daily competition (docs/DAILY-SIX-CONTRACT.md).
+// The day's six are the shared pickDaily set; results come from the static JSON the
+// hourly cron commits to data/dailysix/ — free/cacheable, never a live RTDB read.
+export const DailySix = {
+  DAY_COUNT: 6,
+
+  // The six questions for a UTC day — identical on every platform (Decision 037).
+  questions(dayKey) {
+    return Corpus.daily(dayKey, this.DAY_COUNT);
+  },
+
+  // The published board for a day, or null if the cron hasn't published it yet
+  // (e.g. nobody has played today, or it's the current in-progress day).
+  async results(dayKey) {
+    try {
+      const r = await fetch(`data/dailysix/${dayKey}.json`, { cache: 'no-cache' });
+      return r.ok ? await r.json() : null;
+    } catch { return null; }
+  },
+
+  // Your percentile from the published histogram: the share of players you strictly
+  // beat. Pure + tiny, so a player outside the top board still sees "you beat 83%".
+  // Returns null when the histogram is empty (you'd be the only/first player).
+  percentile(hist, myScore) {
+    if (!hist) return null;
+    let below = 0, total = 0;
+    for (const [score, count] of Object.entries(hist)) {
+      total += count;
+      if (Number(score) < myScore) below += count;
+    }
+    return total ? Math.round((below / total) * 100) : null;
+  },
+};
+
 // Free-text normalization (mirror of GameEngine.normalizeType).
 export function normalizeType(s) {
   let t = (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();

@@ -23,7 +23,11 @@ echo "--- android (Tidbits.kt pickDailyIds against the Android asset)"
 (cd android && JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" \
   ./gradlew :app:testDebugUnitTest --tests '*DailyParityTest*' --rerun --no-daemon -q)
 
+echo "--- cron (aggregate_dailysix.py pick_daily against assets/corpus.json)"
+python3 tools/daily-parity/cron_pick.py assets/corpus.json "$G/cron.txt"
+
 echo "--- diff"
 diff "$G/apple.txt" "$G/web.txt" && diff "$G/apple.txt" "$G/android.txt" \
-  && echo "PASS: daily parity — identical sets on all three stacks" \
+  && diff "$G/apple.txt" "$G/cron.txt" \
+  && echo "PASS: daily parity — identical sets on all four stacks (incl. the cron)" \
   || { echo "FAIL: daily sets differ"; exit 1; }

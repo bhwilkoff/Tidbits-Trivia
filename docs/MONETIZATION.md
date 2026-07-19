@@ -474,13 +474,15 @@ spectate-via-static-JSON overflow path.
 > LearnedLeague) survived. This is not a compromise architecture — it is the one that
 > has actually sustained competitive trivia communities.
 
-### ⚠️ Doc conflict to resolve before building any Club-gated mode
+### Doc conflict — RESOLVED 2026-07-19
 
-**Decision 022** says monetization is *"convenience/cosmetic — never content-gating."*
-**Decision 047** reframes Club as the learning tier, and the slate (Knowledge Atlas,
-Story Archive, Expedition) is closer to content than convenience. 047 is later and
-governs, but the texts read as inconsistent. Per *"fix the doc first, then fix the
-feature,"* amend 022 to point at 047 **before** shipping a Club-gated mode.
+Decision 022 originally said monetization is *"convenience/cosmetic — never
+content-gating,"* which read as inconsistent with Club being the learning tier.
+**022 has been amended:** its real target is dark patterns, and the operative test it
+already states — *would removing this feature help the free user?* — is exactly what
+separates a fair paid tier (adds new value; a free player is unaffected by its absence)
+from a dark one (removes value a free user relies on). Club adds; it never subtracts.
+Same line as R-MON-1 and R-MON-4. Cleared to build Club-gated modes.
 
 ---
 

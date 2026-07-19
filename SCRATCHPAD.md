@@ -7,6 +7,39 @@
 > `docs/ROADMAP.md`, `docs/DATA-CONTRACT.md`. Detailed per-round history is in
 > `ARCHIVE.md`.
 
+## Current state (2026-07-19) — later
+
+**Decision 022 contradiction FIXED + Daily Six spine BUILT.**
+
+022 said monetization is "convenience/cosmetic — never content-gating," which
+clashed with 047 (Club = the learning tier). Amended 022: its real target is dark
+patterns, and the test it already states — *would removing this help the free
+user?* — separates a fair paid tier (adds new value) from a dark one (removes value
+a free user relies on). Club adds; never subtracts. Cleared to build Club modes.
+
+**Daily Six** (first global-multiplayer feature, MONETIZATION §4c) — backend spine
+done and verified, `docs/DAILY-SIX-CONTRACT.md`:
+- Everyone worldwide gets the SAME six via `pickDaily(...,6)`. Added a Python cron
+  picker and **proved it byte-identical to the JS picker over the real 100k corpus**
+  (`tools/daily-parity/run.sh` now diffs 4 stacks incl. the cron).
+- RTDB rules: `dailySix/{day}/{uid}` (own-uid write, shape-validated). **Needs a
+  `firebase deploy` — owner-gated.**
+- `tools/aggregate_dailysix.py` + `.github/workflows/dailysix.yml` (hourly :34):
+  ranks the field, publishes `data/dailysix/{day}.json` = board + score histogram +
+  per-Q global accuracy. **Verified with an offline sim** (`--input`) — ranking,
+  tie-break, histogram, per-Q accuracy all correct against seeded data.
+- Web data layer: `DailySix` in api.js (questions/results/percentile) +
+  `submitDailySix` in firebase.js. **Producer↔consumer verified**: the web
+  `percentile()` computes correctly against the aggregator's own histogram.
+- Free to play + rank (R-MON-4); Club buys the autopsy — reads the SAME public JSON,
+  zero extra backend.
+
+**REMAINING for Daily Six:** web game-loop wiring (play 6 → submit → results view),
+then iOS/Android/tvOS/macOS/Windows ports (mechanical per the contract), then deploy
+rules. Next global modes after: push ("the appointment"), Rundles, Conviction.
+
+---
+
 ## Current state (2026-07-19)
 
 **MONETIZATION DECIDED — Decision 047, `docs/MONETIZATION.md` (ADOPTED).** This

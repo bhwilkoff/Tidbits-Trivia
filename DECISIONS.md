@@ -526,8 +526,29 @@ help the user). The X/Twitter exclusion is an explicit product requirement.
 
 **How to apply**: every engagement mechanic passes the learning-orientation
 four-question test AND the "would removing it help the user?" check before it
-ships. Monetization, when it comes, is convenience/cosmetic — never
-content-gating.
+ships.
+
+**Amended 2026-07-19 (reconciled with Decision 047).** The original final clause
+read *"Monetization, when it comes, is convenience/cosmetic — never
+content-gating."* That was written before a paid tier existed and it is **too
+narrow** — Decision 047 makes Tidbits Club the *learning* tier, which includes
+new content and new gameplay, not just cosmetics. The rule 022 was actually
+reaching for is not "never gate content" but **"never take value away from a
+free user"** — which is the dark-pattern tell, and which R-MON-1 already states
+precisely. The reconciled boundary:
+
+- **A dark pattern removes or withholds something the free user relies on** to
+  pressure a purchase (energy to keep playing, a streak-restore, a
+  previously-free feature). **Still banned, absolutely.**
+- **A fair paid tier adds NEW value a free user never had** and never needed to
+  play well. **Allowed** — this is what Club is.
+
+The operative test is unchanged and still decides every case: *would removing
+this feature help the free user?* Energy gating: yes, removing it helps them →
+banned. The Knowledge Atlas or Ranked Seasons: no, a free player is unaffected
+by its absence → fair. This is the same line as R-MON-1 (free tier never
+reduced after go-live) and R-MON-4 (never gate a seat, gate the view from the
+seat). See `docs/MONETIZATION.md`.
 
 ---
 

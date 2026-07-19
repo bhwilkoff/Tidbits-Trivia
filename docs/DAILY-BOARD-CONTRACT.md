@@ -23,7 +23,7 @@ computes the same set locally and identically:
 Corpus.daily(day, 7)  ==  pickDaily(allIds, day, "mixed", 7)   // Decision 037, byte-identical on all 6 platforms
 ```
 
-`day` is the UTC date `YYYY-MM-DD`. Because `pickDaily` is a pure FNV-1a-64 rank
+`day` is the local calendar date `YYYY-MM-DD` (same `dayKey` the shipped Daily uses on every platform). Because `pickDaily` is a pure FNV-1a-64 rank
 (no RNG, order-independent), an iPhone in Tokyo and a PC in Lagos derive the same
 seven ids for the same day with zero communication. This is what makes the board
 free: **there is no set to distribute and no pairing to compute.**

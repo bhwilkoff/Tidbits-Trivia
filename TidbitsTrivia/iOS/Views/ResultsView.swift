@@ -10,6 +10,10 @@ struct ResultsView: View {
     let onPlayAgain: (() -> Void)?
     let onDone: () -> Void
     @Environment(PlayerIdentityStore.self) private var identity
+    @State private var showBoard = false
+
+    /// Today's Daily (not an archive replay) feeds the global board.
+    private var isTodayDaily: Bool { summary.mode == .daily && summary.dailyDay == nil }
 
     var body: some View {
         ScrollView {
@@ -17,6 +21,7 @@ struct ResultsView: View {
                 scoreCard
                 statsRow
                 gridCard
+                if isTodayDaily { dailyBoardCTA }
                 streakMoment
                 if !summary.missed.isEmpty { recap }
                 if !nailed.isEmpty { nailedRecap }   // L5 (charter): "how did you know that?"
@@ -26,6 +31,38 @@ struct ResultsView: View {
             .padding(.vertical, 24)
         }
         .background(Tidbits.Palette.bg.ignoresSafeArea())
+        .task { if isTodayDaily { await identity.submitDailyBoard(summary: summary) } }
+        .sheet(isPresented: $showBoard) {
+            DailyBoardView(day: QuestionProvider.dayKey(), myScore: summary.score, myMarks: todayMarks)
+        }
+    }
+
+    /// The player's 7-char hit string aligned to the shared pickDaily order (for the board's
+    /// per-question row). Computed once here from the summary.
+    private var todayMarks: String {
+        let ids = CorpusDatabase.shared.orderedIDs(categoryID: "mixed")
+        let qids = DailyPick.pick(ids: ids, day: QuestionProvider.dayKey(), categoryID: "mixed", count: GameMode.daily.questionCount)
+        return DailyBoard.marks(answered: summary.answered, qids: qids)
+    }
+
+    /// "The whole world played today's set" — the invite into the global board.
+    private var dailyBoardCTA: some View {
+        Button { showBoard = true } label: {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("The whole world played today's set")
+                        .font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                    Text("See where you landed against everyone")
+                        .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                }
+                Spacer()
+                Image(systemName: "globe").foregroundStyle(Tidbits.Palette.blue)
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity)
+            .chunkyCard(fill: Tidbits.Palette.blue.opacity(0.12))
+        }
+        .buttonStyle(.plain)
     }
 
     private var scoreCard: some View {

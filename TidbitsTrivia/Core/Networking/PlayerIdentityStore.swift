@@ -139,6 +139,27 @@ final class PlayerIdentityStore {
         try? await db.put(path, s)
     }
 
+    /// The Daily's global board (docs/DAILY-BOARD-CONTRACT.md): after finishing TODAY's
+    /// Daily, write this player's one row so the hourly cron can rank the field. Keyed by
+    /// the AUTH uid (the rule requires `auth.uid === $uid`), like standings. Archive replays
+    /// of past days never write (they pass a non-nil dailyDay). Free — sign-in not required.
+    func submitDailyBoard(summary: GameSummary) async {
+        guard summary.mode == .daily, summary.dailyDay == nil else { return }   // today only
+        guard let profile, let authUid = await db.uid else { return }
+        let day = QuestionProvider.dayKey()
+        let allIDs = CorpusDatabase.shared.orderedIDs(categoryID: "mixed")
+        let qids = DailyPick.pick(ids: allIDs, day: day, categoryID: "mixed", count: GameMode.daily.questionCount)
+        let ms = Int(summary.answered.reduce(0.0) { $0 + $1.secondsTaken } * 1000)
+        let entry = DailyBoard.Entry(name: profile.name,
+                                     avatarSeed: profile.avatarSeed,
+                                     score: summary.score,
+                                     correct: summary.correct,
+                                     marks: DailyBoard.marks(answered: summary.answered, qids: qids),
+                                     ms: ms,
+                                     at: Int(Date().timeIntervalSince1970 * 1000))
+        try? await db.put("dailyBoard/\(day)/\(authUid)", entry)
+    }
+
     /// Sign in with Apple → key the profile by the verified email so Apple + Google (and
     /// every device) share one record set. Merges this device's anonymous activity into the
     /// email-keyed profile; the guard prevents ever re-merging. Called from the

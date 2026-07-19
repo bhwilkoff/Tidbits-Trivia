@@ -166,11 +166,22 @@ Legend: **[TS]** table-stakes (must-have to be credible) · **[D]** differentiat
 | Post-event analytics / returning-team tracking | D | ▶︎ |
 
 ### I. Pricing models observed
-Freemium + monthly subscription (dominant: Kahoot ~$10–17, TriviaMaker $6.99,
-Crowdpurr $50–500, Quizado €490–1,990/yr); per-participant (Water Cooler ~$1);
-**per-event / pay-per-quiz** (VenueTrivia ~$50, SpeedQuizzing £21, Quizado
-$74.99 — the occasional-host sweet spot); full-service per-night (host networks).
-*Decision for Ben later; not a build item.*
+*(Re-verified 2026-07-19 — three figures below were wrong or stale. The full
+landscape survey and the resulting strategy now live in `docs/MONETIZATION.md`.)*
+
+Freemium + monthly subscription (dominant: **Kahoot $19–79/mo individual, Teams
+from $6,000/yr at a 25-seat minimum** — the old "~$10–17" understated it ~2×;
+TriviaMaker $6.99, Crowdpurr $50–500, Quizado €490–1,990/yr, **axis = venue
+count, and their $74.99 per-event App Store option is GONE — subscription-only
+now**); **per-participant (Water Cooler ~$1 — bills ACTIVE participants only,
+gates zero features, and is the only vendor in the survey with no findable
+pricing complaint)**; per-event / pay-per-quiz (VenueTrivia $5–82.50,
+SpeedQuizzing £7–21/activation — the occasional-host sweet spot); full-service
+per-night (host networks; Sporcle Live $3/player + $15 admin, collared
+$115–225).
+
+**The structural finding:** every vendor monetizes exactly ONE side of the room —
+player OR host/venue, never both. See `docs/MONETIZATION.md` §1.
 
 ---
 

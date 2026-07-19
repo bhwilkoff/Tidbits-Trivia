@@ -7,6 +7,61 @@
 > `docs/ROADMAP.md`, `docs/DATA-CONTRACT.md`. Detailed per-round history is in
 > `ARCHIVE.md`.
 
+## Current state (2026-07-19)
+
+**MONETIZATION DECIDED — Decision 047, `docs/MONETIZATION.md` (ADOPTED).** This
+session was strategy + research only: **no product code changed.** Two research
+passes (a ~35-vendor pricing survey; a six-platform IAP/legal mechanics pass) plus
+a code audit of the identity spine.
+
+**The model:** *Hosting is free forever, unconditional. Tidbits Club is for players
+— $29.99/yr or $3.99/mo. Venues buy Club passes in bulk ($99/10) and give them away
+as **prizes**, not a software fee.* Plus a **Founding Member lifetime $79.99, first
+90 days only** (owner chose sub + lifetime over subscription-only; bounded by the
+90-day window, the $79.99 price, a badge, and a **day-90 review**).
+
+**Why:** every vendor monetizes exactly ONE side of the room — Sporcle owns both a
+consumer sub and a bar-trivia network and runs them unconnected. Venues pay hosts
+$150–250/night against $2,000–4,000 revenue, so host *software* is ~4% of spend and
+is where all the pricing rage lives. Give the 4% away; competitors can't follow
+because host software IS their business. A 40-person night = 40 qualified installs.
+
+**Four binding rules (DECISIONS.md 047):** R-MON-1 free tier is never reduced
+(premium is only NEW value — Sporcle's worst complaint was retracting free stats);
+R-MON-2 unlock by account sign-in ONLY (App Store 3.1.1 bans codes/QR); R-MON-3
+clients never write `entitlements/` (a Cloudflare Worker is sole writer); local
+store receipts authoritative and checked offline first. **Club is "get better," not
+"play more"** — the premium tier is the *learning* tier.
+
+**Verified in code this pass (not assumed):** `sha256(verified email)` IS enforced
+server-side by RTDB rules (`email_verified === true` + `emailOwners` proof) — good
+entitlement foundation. `players/{key}` is world-readable + owner-writable, so the
+entitlement needs its own `.write:false` subtree. **Windows has NO sign-in at all**
+(`windows/Tidbits.Core/Networking/PlayerIdentityStore.cs` is local-only by its own
+comment) — it cannot resolve an email-keyed entitlement. Zero IAP code anywhere
+(greenfield).
+
+**NEXT (go-live critical path, rule 7 = all six ship together, Windows sets the
+date):** (1) **Windows sign-in** — port the Apple/Google federated flow already
+shipped on web+Android into `Tidbits.Core`; (2) **timebox the `Tidbits.Windows`
+IAP spike EARLY** (Avalonia + MSIX + `StoreContext` + `IInitializeWithWindow` via
+`TryGetPlatformHandle` — every piece documented, the composition has no public
+worked example, CI-only verifiable per Decision 045; its failure would reopen the
+Game-vs-non-game call); (3) **build the five Club features** (long pole, parallel);
+(4) Worker + MoR + `entitlements/` rules + store product config; (5) web promo
+surface; (6) six-channel ship. **Do today: enroll in the Apple Small Business
+Program** — free, 15-day activation, halves year-one sub commission.
+
+**Owner review items:** §8 items 4 (Windows stays a Game) and 5 (Family Sharing ON)
+are *Claude's defaults*, not owner calls — Family Sharing hardens on ship (turning
+it off later would take an entitlement from real families).
+
+**Also corrected:** `docs/EVENT-TRIVIA-COMPETITIVE.md` §I had 3 stale/wrong figures
+(Kahoot understated ~2×; Quizado's per-event option is gone; Water Cooler bills
+*active* participants only).
+
+---
+
 ## Current state (2026-07-18)
 
 **Windows (6th platform) SHIPPED to the Microsoft Store — first submission IN

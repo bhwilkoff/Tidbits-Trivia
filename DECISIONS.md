@@ -1440,3 +1440,81 @@ the shell + the Store bootstrap, not the logic.
    template. Two non-obvious first-submission blockers are recorded there
    (runFullTrust justification; the Xbox-services "Test" that clears the
    access-policies banner for Game-type products).
+
+---
+
+## 047 — Monetization: hosting is free forever; players pay (the two-sided model)
+
+**Tidbits Live hosting is free forever and unconditionally — unlimited players,
+events, and venues. Revenue comes from players (Tidbits Club, $29.99/yr) and from
+venues buying Club passes in bulk as PRIZES ($99 / 10 passes), never as a software
+fee.** Full strategy + per-platform mechanics: `docs/MONETIZATION.md`.
+
+**Why:** Every vendor in the category monetizes exactly ONE side of the room —
+consumer apps charge the player, host tools charge the host/venue. Nobody bridges
+them. Sporcle is the proof: it owns both a consumer subscription ($3.99/mo) and a
+national bar-trivia network ($3/player/night), and runs them as two unconnected
+businesses — players at a Sporcle Live bar are never converted into app
+subscribers.
+
+The economics say why the bridge is the right side to stand on. Venues pay hosts
+$150–250/night and make $2,000–4,000 off the night, so host *software* is ~4% of
+the spend — the least valuable and most price-resented slice. That is exactly
+where every complaint in the research clusters ("wildly overpriced" — Kahoot;
+"$149 and I've not seen the value" — Crowdpurr; "price gouging" — Wayground).
+
+So we give the 4% away. It costs ~$0 (Firebase Spark + GitHub Pages) and deletes
+the revenue basis of Crowdpurr, Kahoot, Quizado, Trivnow, Slido, and AhaSlides.
+**They cannot follow — host software IS their business; for us it is customer
+acquisition.** A 40-person bar night is 40 qualified installs delivered by someone
+already paying a human $200 to make those people play trivia. That is the funnel
+nobody is capturing, and it is the moat `docs/EVENT-TRIVIA-COMPETITIVE.md` §5.1
+already identified from the feature side.
+
+**How to apply:**
+
+1. **Never gate a hosting feature.** Any later proposal to cap players, events, or
+   venues, or to add a "Pro host" tier, violates this decision — it is not a
+   pricing tweak. The unconditionality is the competitive weapon.
+2. **R-MON-1 — the free tier is never reduced.** Nothing currently free may move
+   behind the paywall, ever. Premium is only newly built value. *Why:* Sporcle's
+   defining complaint is that previously-free stats went behind a subscription;
+   that single act generates more anger than any price. We are unusually exposed
+   because ~everything already ships free — which is why Club must be five NEW
+   features (§4), not a carve-out.
+3. **R-MON-2 — entitlement unlocks by account sign-in ONLY.** Never a code, key,
+   coupon, voucher, or QR redeemed in-app. *Why:* App Store Guideline 3.1.1
+   explicitly bans those mechanisms; our `sha256(verified email)` spine is already
+   the compliant shape. Venue prize passes are assigned to an email and simply
+   appear on sign-in. A well-meaning "have a code?" field would convert a
+   compliant app into a rejection.
+4. **R-MON-3 — clients never write to `entitlements/`.** A Cloudflare Worker is
+   the sole writer. *Why:* `players/{key}` is world-readable and owner-writable by
+   design, so a client-written `isPro` flag is trivially forged by anyone with the
+   RTDB URL.
+5. **Club is "get better," not "play more."** The premium tier is the *learning*
+   tier — knowledge map, practice-your-misses spaced repetition, ranked seasons,
+   story archive, host question library. This is the only framing that satisfies
+   both the learning charter and R-MON-1.
+6. **Local store receipts are authoritative and checked offline first**; the
+   remote entitlement is the fallback for web purchases. Never gate a
+   store-proven entitlement behind a network read.
+7. **Cost stays $0 ongoing** — Firebase Spark + Cloudflare Worker free tier +
+   Merchant of Record (variable only). Fixed cost is the $99/yr Apple membership
+   already carried. Never enable a metered tier.
+
+**Also decided:** a **Founding Member lifetime unlock at $79.99, first 90 days
+only** ships alongside the subscription (owner call, over a subscription-only
+recommendation). The cannibalization risk is accepted and bounded by three
+binding constraints — the 90-day window, the $79.99 price (~2.7yr breakeven, not
+$59.99), and a Founding Member badge. **Day-90 review is part of the decision:**
+if lifetime take-up dominates annual, that is evidence the annual price is wrong,
+not that lifetime should continue.
+
+**Go-live (rule 7): all six platforms ship the paywall simultaneously**, and
+**Windows sets the date** — it has no sign-in at all today
+(`windows/Tidbits.Core/Networking/PlayerIdentityStore.cs` is local-only), so it
+cannot resolve an email-keyed entitlement. Windows sign-in + the Avalonia
+`StoreContext` IAP spike are the critical path and the only items not verifiable
+on the Mac head (Decision 045). Enroll in the Apple Small Business Program
+immediately — free, 15-day activation, halves year-one subscription commission.

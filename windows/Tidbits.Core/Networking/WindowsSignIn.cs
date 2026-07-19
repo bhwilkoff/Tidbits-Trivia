@@ -1,0 +1,67 @@
+namespace Tidbits.Core.Networking;
+
+/// Composes the desktop OAuth flow into a single "sign in with Google" verb for the UI.
+///
+/// The whole point of the split is that everything decision-shaped
+/// (`GoogleOAuth.BuildAuthUrl` / `ParseCallback` / `StateMatches` / PKCE) is pure and
+/// tested on the Mac, and this class only sequences them. The two edges — a real
+/// loopback socket and a real browser — are injectable.
+public sealed class WindowsSignIn
+{
+    private readonly FirebaseRtdb _db;
+    private readonly GoogleOAuth.Config _config;
+    private readonly IBrowserLauncher _browser;
+    private readonly HttpClient _http;
+
+    public WindowsSignIn(
+        FirebaseRtdb db,
+        GoogleOAuth.Config? config = null,
+        IBrowserLauncher? browser = null,
+        HttpClient? http = null)
+    {
+        _db = db;
+        _config = config ?? GoogleOAuth.Config.Default;
+        _browser = browser ?? new SystemBrowserLauncher();
+        _http = http ?? new HttpClient();
+    }
+
+    public bool IsConfigured => _config.IsConfigured;
+
+    /// Full round trip: open the browser, wait for the loopback redirect, exchange the
+    /// code, hand the id_token to Firebase. Returns the federated result so the caller
+    /// can re-key the profile by verified email.
+    ///
+    /// Cancellation is honored so a user who closes the sign-in sheet doesn't leave a
+    /// socket bound forever.
+    public async Task<FirebaseRtdb.FederatedResult> SignInWithGoogle(CancellationToken ct = default)
+    {
+        if (!_config.IsConfigured) throw new OAuthNotConfiguredException();
+
+        var pkce = GoogleOAuth.CreatePkce();
+        var state = GoogleOAuth.Base64Url(Guid.NewGuid().ToByteArray());
+
+        using var listener = new LoopbackAuthListener();
+        var url = GoogleOAuth.BuildAuthUrl(_config, listener.RedirectUri, pkce.Challenge, state);
+        _browser.Open(url);
+
+        var cb = await listener.WaitForCallback(ct);
+        if (cb.Error is { } err) throw new OAuthDeniedException(err);
+        if (!GoogleOAuth.StateMatches(state, cb.State)) throw new OAuthDeniedException("state_mismatch");
+        if (cb.Code is not { } code) throw new OAuthDeniedException("no_code");
+
+        var idToken = await GoogleOAuth.ExchangeCodeForIdToken(
+            _config, code, pkce.Verifier, listener.RedirectUri, _http);
+        return await _db.SignInWithGoogle(idToken);
+    }
+}
+
+/// The user declined, the callback was forged, or Google returned an error. Separate
+/// from a transport failure so the UI can stay quiet on a plain cancel.
+public sealed class OAuthDeniedException(string reason)
+    : Exception($"Google sign-in did not complete ({reason}).")
+{
+    public string Reason { get; } = reason;
+
+    /// A user closing the consent tab is not an error worth surfacing loudly.
+    public bool IsUserCancellation => Reason is "access_denied" or "no_code";
+}

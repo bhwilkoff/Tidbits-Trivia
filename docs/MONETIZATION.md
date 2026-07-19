@@ -81,12 +81,21 @@ This is the two-sided axis nobody occupies (rule 4).
 
 ## 3. What is free forever (rule 1)
 
-**R-MON-1 — the free tier is never reduced.** Nothing currently free may move
-behind the paywall, ever. Premium is only ever *newly built* value.
+**R-MON-1 — the free tier is never reduced *after go-live*.** From launch day
+forward, nothing free may move behind the paywall, ever.
 
 > **Why:** Sporcle's defining complaint is that previously-free stats went behind
-> a subscription. That single act generates more anger than the price. We are
-> structurally exposed to this because ~everything is already shipped free.
+> a subscription. That single act generates more anger than the price.
+>
+> **Scope correction (owner, 2026-07-19):** this rule binds *from go-live
+> forward*, not today. **We have not launched, so there are no users to take
+> anything from — we are DRAWING the initial line, not moving it.** Any
+> already-built feature may therefore be assigned to Club at launch. The earlier
+> "premium must be net-new only" reading was over-strict and is withdrawn.
+>
+> **How to apply:** decide the line ONCE, before go-live, and treat it as frozen
+> afterward. That makes the pre-launch scoping decision unusually high-stakes —
+> it is the only moment this is cheap to get right.
 
 Free forever, on every platform:
 
@@ -112,8 +121,24 @@ free-forever core is why.
 that only means something if you play a lot. This is the learning charter as a
 business model — the premium tier is literally the *learning* tier.
 
-Because of R-MON-1, **every one of these must be newly built before go-live.**
-None may be carved out of what ships free today.
+> **⚠️ This slate is UNDER REVISION (owner, 2026-07-19).** Two things changed:
+> (a) the owner judged it too thin — *"the ones we have outlined hardly seem like
+> features at all"* — and asked for a robust tier, most likely from **brand-new
+> extensions of gameplay**; (b) the R-MON-1 scope correction above means
+> **already-built features may also be assigned to Club at launch**. A research
+> pass is in flight; the replacement slate lands in §4a. The five below are the
+> floor, not the plan.
+>
+> **The two constraints that survive:** the free experience must still feel
+> phenomenal (the daily + casual/core play are free permanently, rule 1), and
+> **hosting stays free forever** (§8 decision 1).
+>
+> **Richest known source of net-new gameplay:** `docs/SOLO-BACKLOG.md` +
+> `docs/GAME-MODES-RESEARCH.md` already carry designed, learning-tested, *unbuilt*
+> modes — **Link Wall** (M6, the marquee NYT-Connections-style daily puzzle),
+> **True/False rapid** (Q2), and the **E1 Wikidata enrichment pass that unlocks
+> SEVEN question types**. These are the strongest candidates precisely because
+> they are new gameplay rather than a gate on old gameplay.
 
 | Club feature | Why it's worth paying for | Charter fit |
 |---|---|---|

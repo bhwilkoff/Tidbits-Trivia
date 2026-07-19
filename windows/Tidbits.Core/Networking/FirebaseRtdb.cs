@@ -93,7 +93,41 @@ public sealed class FirebaseRtdb
         return new FederatedResult(r.LocalId, r.Email, r.DisplayName);
     }
 
+    /// Google sign-in. `idToken` comes from the desktop OAuth loopback flow
+    /// (`GoogleOAuth`); Firebase accepts it because the OAuth client lives in the same
+    /// Google Cloud project. Same shape as SignInWithApple so both converge on the
+    /// email-keyed profile.
+    public async Task<FederatedResult> SignInWithGoogle(string idToken)
+    {
+        var post = $"id_token={Uri.EscapeDataString(idToken)}&providerId=google.com";
+        var r = await SignInWithIdp(post, null);
+        Apply(r.IdToken, r.RefreshToken, r.ExpiresIn, r.LocalId);
+        return new FederatedResult(r.LocalId, r.Email, r.DisplayName);
+    }
+
     public string? CurrentEmail() => _idToken is null ? null : EmailFromJwt(_idToken);
+
+    /// True when the signed-in token carries a VERIFIED email. The RTDB rules require
+    /// `auth.token.email_verified === true` to write the email-keyed profile, so the UI
+    /// must not promise a synced identity when this is false.
+    public bool CurrentEmailVerified() => _idToken is not null && EmailVerifiedFromJwt(_idToken);
+
+    /// Decode the `email_verified` claim. Mirrors the rule the RTDB enforces.
+    public static bool EmailVerifiedFromJwt(string token)
+    {
+        var parts = token.Split('.');
+        if (parts.Length != 3) return false;
+        var b64 = parts[1].Replace('-', '+').Replace('_', '/');
+        while (b64.Length % 4 != 0) b64 += "=";
+        try
+        {
+            using var doc = JsonDocument.Parse(Convert.FromBase64String(b64));
+            if (!doc.RootElement.TryGetProperty("email_verified", out var v)) return false;
+            return v.ValueKind == JsonValueKind.True ||
+                   (v.ValueKind == JsonValueKind.String && v.GetString() == "true");
+        }
+        catch { return false; }
+    }
 
     /// Decode the `email` claim from a JWT payload (Firebase ID token or Apple identity token).
     public static string? EmailFromJwt(string token)

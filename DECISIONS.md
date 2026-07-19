@@ -1476,12 +1476,16 @@ already identified from the feature side.
 1. **Never gate a hosting feature.** Any later proposal to cap players, events, or
    venues, or to add a "Pro host" tier, violates this decision — it is not a
    pricing tweak. The unconditionality is the competitive weapon.
-2. **R-MON-1 — the free tier is never reduced.** Nothing currently free may move
-   behind the paywall, ever. Premium is only newly built value. *Why:* Sporcle's
+2. **R-MON-1 — the free tier is never reduced AFTER GO-LIVE.** From launch day
+   forward, nothing free may move behind the paywall, ever. *Why:* Sporcle's
    defining complaint is that previously-free stats went behind a subscription;
-   that single act generates more anger than any price. We are unusually exposed
-   because ~everything already ships free — which is why Club must be five NEW
-   features (§4), not a carve-out.
+   that single act generates more anger than any price. **Scope (owner correction,
+   2026-07-19): this binds from go-live forward, NOT today — we have not launched,
+   so there are no users to take anything from. We are DRAWING the initial line,
+   not moving it, and any already-built feature may be assigned to Club at launch.**
+   The earlier "premium must be net-new only" reading is withdrawn. *How to apply:*
+   decide the line ONCE before go-live and treat it as frozen after — which makes
+   the pre-launch scoping call the only cheap moment to get this right.
 3. **R-MON-2 — entitlement unlocks by account sign-in ONLY.** Never a code, key,
    coupon, voucher, or QR redeemed in-app. *Why:* App Store Guideline 3.1.1
    explicitly bans those mechanisms; our `sha256(verified email)` spine is already

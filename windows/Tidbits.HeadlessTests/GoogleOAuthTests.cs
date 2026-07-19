@@ -129,19 +129,51 @@ public class GoogleOAuthTests
     // MARK: - Configuration gate
 
     [Fact]
-    public void Default_config_is_unconfigured_until_the_owner_pastes_a_desktop_client_id()
+    public void Config_is_driven_by_the_environment_so_the_id_stays_out_of_the_repo()
     {
-        Assert.False(GoogleOAuth.Config.Default.IsConfigured);
+        // Default reflects whatever the environment says — unconfigured in a clean checkout,
+        // configured in CI or once the owner sets it. Assert the relationship, not a value,
+        // so the test doesn't flip depending on who runs it.
+        var fromEnv = Environment.GetEnvironmentVariable(GoogleOAuth.Config.EnvVar);
+        Assert.Equal(!string.IsNullOrWhiteSpace(fromEnv), GoogleOAuth.Config.Default.IsConfigured);
+    }
+
+    [Fact]
+    public void An_empty_or_whitespace_client_id_is_not_configured()
+    {
+        Assert.False(new GoogleOAuth.Config("").IsConfigured);
+        Assert.False(new GoogleOAuth.Config("   ").IsConfigured);
+        Assert.True(new GoogleOAuth.Config("x.apps.googleusercontent.com").IsConfigured);
     }
 
     [Fact]
     public async Task SignIn_throws_NotConfigured_rather_than_opening_a_browser()
     {
+        // Pass an EXPLICITLY empty config, never Config.Default: Default reads the
+        // environment, so on a machine where TIDBITS_GOOGLE_CLIENT_ID is set this test
+        // would sail past the guard, bind a real loopback socket, and block forever
+        // waiting for a browser callback that never comes. Tests must not depend on
+        // ambient environment.
         var browser = new FakeBrowserLauncher();
-        var flow = new WindowsSignIn(new FirebaseRtdb(), GoogleOAuth.Config.Default, browser);
+        var flow = new WindowsSignIn(new FirebaseRtdb(), new GoogleOAuth.Config(""), browser);
         await Assert.ThrowsAsync<OAuthNotConfiguredException>(
             () => flow.SignInWithGoogle(TestContext.Current.CancellationToken));
         Assert.Null(browser.LastUrl); // no stray browser window
+    }
+
+    [Fact]
+    public async Task An_abandoned_sign_in_times_out_instead_of_hanging_forever()
+    {
+        // Regression: a user who closes the consent tab produces no callback. Without a
+        // bound, the socket stays open and the UI's sign-in button is dead permanently.
+        var flow = new WindowsSignIn(
+            new FirebaseRtdb(), new GoogleOAuth.Config("x.apps.googleusercontent.com"),
+            new FakeBrowserLauncher())
+        { Timeout = TimeSpan.FromMilliseconds(250) };
+
+        var ex = await Assert.ThrowsAsync<OAuthDeniedException>(
+            () => flow.SignInWithGoogle(TestContext.Current.CancellationToken));
+        Assert.Equal("timeout", ex.Reason);
     }
 
     // MARK: - Cancellation classification

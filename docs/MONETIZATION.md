@@ -272,26 +272,48 @@ Ordered by how likely a subscriber is to *name* them as the reason they paid:
 - **Consumables, lives, or energy.** Highest hatred-per-dollar in the category and
   a direct contradiction of the learning charter (also barred by DECISIONS 022).
 
-### ⚠️ Open question for the owner
+### Settled 2026-07-19 (owner)
 
-**Is the Host Library inside or outside "hosting is free forever"?** It is a
-host's *own accumulated question bank*, not a hosting capability — but it is
-close enough to the promise that it deserves an explicit ruling rather than a
-quiet assumption. My read: **treat it as free** unless you say otherwise; the
-promise is the more valuable asset.
+- **Host Library stays FREE.** It sits inside "hosting is free forever." The promise
+  is the more valuable asset than the feature.
+- **Stake and Wager are MERGED into one mode**, taking the best of each rather than
+  shipping two modes that feel like one. See §4b.
 
-**Also flagged:** a LearnedLeague-style **Wager** mode was proposed, but the free
-**Stake** mode (M1, shipped) already covers confidence-betting. Building both
-risks two modes that feel like one. Worth a design call before either is built.
+---
 
-### ⚠️ One legal constraint on all of pillar 1
+## 4b. Conviction — the merged Stake/Wager mode (owner-directed 2026-07-19)
 
-**Describe what the user DID, never what it MAKES them.** *"Your Geography
-accuracy rose 8 points over 6 weeks"* — true statement about their data. *"Tidbits
-makes you sharper"* — the exact claim the FTC prosecuted in **FTC v. Lumos Labs
-(2016): $2M paid, $50M judgment suspended.** Near transfer is real; far transfer
-is not. This binds every Club analytic, every store listing, and the §6 promo
-surface.
+Stake (shipped, free) and a proposed LearnedLeague-style Wager both monetize the same
+insight — *knowing what you know* — so they merge into ONE mode rather than two that
+feel like one.
+
+**What each contributed.** Stake brings the **adds-only** economy (spend confidence
+chips: Sure ×2 / Likely ×3 / Hunch ×3; correct earns, wrong earns nothing, **never
+negative**) — the charter-safe framing that makes calibration a lesson instead of a
+punishment. Wager brings **the point values matter competitively**, and LearnedLeague's
+genuinely great idea: **you assign the values to your OPPONENT.**
+
+**Conviction** = you commit a confidence level before each answer, and in head-to-head
+play you also **assign your opponent's point values** (3/2/2/1/1/0 across their six),
+scouting them from their public domain profile.
+
+Why this is the strongest mode in the slate:
+
+- **It makes async feel like a person is in the room.** You spend real thought on a
+  specific named human hours before they wake up and play — social presence produced
+  from a database row, with zero live connection. This is the answer to "make global
+  play feel alive at $0."
+- **It rewards modeling another mind**, which passes the learning-orientation test
+  emphatically — better than any mode currently shipped.
+- **It is quietly the best anti-cheat we have.** If your opponent assigns 0 points to
+  the question you'd need to look up, cheating on it earns nothing. Designing the
+  reward out beats trying to detect the behavior.
+- **It makes the domain profile load-bearing** rather than decorative — the same move
+  LearnedLeague makes by publishing per-category history.
+
+**Free vs Club:** playing Conviction is **free** (it needs an opponent — see R-MON-4).
+Club gets the **scouting dossier** (their domain profile, visualized) and the
+**post-match calibration autopsy**.
 
 ---
 
@@ -327,6 +349,138 @@ the lifetime path is already proven and live.
 
 **Review at day 90.** If lifetime take-up dominates annual, that is evidence the
 annual price is wrong, not that lifetime should continue.
+
+---
+
+## 4c. Global multiplayer at $0 (owner-directed 2026-07-19)
+
+### The correction that unlocks this
+
+I initially told the owner that global multiplayer collided with the $0 guardrail,
+because Firebase Spark caps at ~100 **simultaneous connections** app-wide. That was
+too pessimistic and the framing was wrong.
+
+Firebase defines a simultaneous connection as *"one mobile device, browser tab, or
+server app connected to the database"* — i.e. a **persistent socket**. Stateless REST
+calls are not that. **⚠️ Honest caveat: Firebase's public limits page does not state
+the REST exclusion in so many words** — it is strongly implied by the definition rather
+than documented outright. But the architecture does not rest on that inference: **this
+app already runs entirely on REST** (the Windows/Apple clients are `HttpClient`-only,
+"no SDK"), and the shipped Wave E leaderboard already does write → hourly cron →
+static JSON → clients read the JSON, never the live DB.
+
+So the budget splits into two very different economies:
+
+| | Sockets (SDK/SSE) | REST + static JSON |
+|---|---|---|
+| Ceiling | **~100 concurrent, worldwide** | 1 GB stored, 10 GB/mo egress |
+| Practical | ~25 concurrent rooms | millions of ops/month |
+| Use for | **in-person Live nights only** | **everything global** |
+
+### Two proposed rules
+
+**R-NET-1 — Sockets are rationed; REST is abundant.** Persistent connections are
+reserved for in-person Tidbits Live / Trivia Night rooms (free forever). Every global,
+worldwide or ranked feature is REST-write + cron-aggregate + static-JSON-read. **No
+global feature may open a socket.**
+
+**R-NET-2 — The hourly cron is the league office.** `leaderboard.yml` already runs
+hourly. It becomes the commissioner: matchmaking, pairing, scoring, promotion and
+relegation, and anomaly detection. Pairing computed by cron costs zero connections and
+zero dollars — and it is how LearnedLeague actually operates.
+
+### The build order
+
+| # | Ship | Why first |
+|---|---|---|
+| 1 | **The Daily Six** — everyone worldwide gets the SAME six questions daily; cron ranks and publishes | Cheapest global feature that exists (no pairing to compute), reuses the shipped cron pipeline nearly verbatim, and everything else attaches to it |
+| 2 | **Push notifications** ("the appointment") | Async lives or dies on the return trigger. Build the urgency engine *before* the things that need urgency. **⚠️ Verify FCM's free tier before building — three modes depend on it** |
+| 3 | **Rundles** — ~25–30 player cohorts, 25-day seasons, promotion/relegation | Turns a meaningless global rank into a bounded, winnable, named-rival narrative. The retention engine. Duolingo: a 30-person flight motivates where a global board doesn't |
+| 4 | **Domain profile + Conviction duels** (§4b) | The profile is prerequisite infrastructure; Conviction is what makes async feel like a person |
+| 5 | **Global Ghost Race** — race a *recorded* run from a real human, bundled into static JSON | **The ethical cold-start fix.** Instant "someone to play" at any hour, from real human data — no synthetic opponents wearing human names (Decision 038 stays intact). Ship it BEFORE there's a population |
+| 6 | **Knowledge Opposite** — match by profile *complement*, not rating twin | **The differentiator.** Research found essentially no prior art for domain-profile matchmaking in trivia. Unclaimed territory |
+
+Also cheap and additive on top of #1: **Nations** (per-capita country boards, pure
+aggregation), a **live ticker** ("1,847 people played today's Six" — past tense, always
+true), and **Glicko-2 in the cron** (RD handles irregular players; batch update over a
+rating period is the algorithm's native mode, which is exactly an hourly Action).
+
+### R-MON-4 — The Population Rule
+
+> **Never gate a seat; gate the view from the seat.** If a feature's quality depends on
+> how many other people are in it, **it is free.** Club buys what you can enjoy alone.
+>
+> **Playing, ranking, and being ranked are always free. Understanding, scouting,
+> archiving, curating, and configuring are Club.**
+
+This supersedes "filters, never rows" — correct for leaderboards, but insufficient
+here. **A thinner leaderboard is merely less interesting; a thinner matchmaking pool is
+broken.** It is also exactly the Chess.com line (they paywall Lessons, unlimited
+Puzzles, Game Review and Coach — the *analysis* layer, atop free play and rating), and
+the precise inverse of Strava's 2020 error.
+
+| Free forever | Club |
+|---|---|
+| Daily Six + global rank | Daily Six autopsy, per-question percentile, calibration |
+| A rundle seat, every season | Rundle history archive, opponent scouting |
+| Conviction duels vs anyone | Pre-match scouting dossier |
+| Knowledge Opposite / Draft & Ban matchmaking | Post-match domain autopsy, Knowledge Atlas |
+| Ghosts, Nations, Territory, tournament entry, guild membership | Founding/curating a guild, custom Club tournaments |
+| Rivalry head-to-head records | Rivalry deep analytics |
+
+**Specific warning:** do **not** put a Club-only division at the *top* of the main
+ladder. That structurally caps free players and makes the free ladder a demo — Strava's
+mistake in a new costume. Run Club competition **parallel** (a Club Invitational
+alongside the main season) so nobody's ladder is capped; Club members simply have more
+to do. The venue packs and Founding Members are well-suited to seeding those early so
+they don't feel empty.
+
+### Anti-cheat at $0 (people can google when unobserved)
+
+Commercial proctoring (webcam, lockdown browsers) is hostile, costly, and fails the
+charter. **LearnedLeague runs an honor code at 35,800+ members** — culture scales
+further than software here. Four free layers:
+
+1. **An explicit honor code** at Ranked opt-in, restated each season, in the app's voice.
+2. **Structural friction** — short per-question timers; answers publish only after the
+   daily window closes (the `live/{code}` design already withholds until reveal).
+3. **Statistical anomaly detection in the cron** — free, because the cron already reads
+   everything. Flag fast-correct answers on questions with low global accuracy; the
+   Daily Six gives the difficulty baseline for nothing.
+4. **Design the reward out** — Conviction's opponent-assigned values mean a
+   0-point question is worthless to cheat on.
+
+**Enforcement is graduated and quiet:** rating-freeze and an unranked pool, never public
+shaming. *Wrong is a door.*
+
+### What we honestly CANNOT afford — say so plainly
+
+- **Sustained live head-to-head vs strangers worldwide.** ~100 sockets app-wide is ~50
+  simultaneous live matches *for the planet*, and those sockets belong to in-person Live
+  nights — the strategic wedge. Global realtime would cannibalize it.
+- **Live global tournaments** beyond ~60 simultaneous players.
+- **Live chat and realtime presence.** Spectating can be approximated with 30-second
+  static-JSON polling; live chat cannot and should be cut.
+- **Any "online now" count or green dot.** Not merely unaffordable — **dishonest** under
+  the charter. Say *"1,847 played today,"* which is true and says more.
+
+**The one place to spend the socket budget:** a **Season Finale Hour** — once per
+season, ~60 connections, the top of each rundle, genuinely live. Rare, precious, and
+affordable *because* it is rare. Needs an explicit socket budget and a
+spectate-via-static-JSON overflow path.
+
+> **Precedent worth noting:** Decision 023 already recorded that the two realtime-only
+> trivia apps researched (HQ, QuizUp) died, while the async/league apps (Trivia Crack,
+> LearnedLeague) survived. This is not a compromise architecture — it is the one that
+> has actually sustained competitive trivia communities.
+
+### ⚠️ Doc conflict to resolve before building any Club-gated mode
+
+**Decision 022** says monetization is *"convenience/cosmetic — never content-gating."*
+**Decision 047** reframes Club as the learning tier, and the slate (Knowledge Atlas,
+Story Archive, Expedition) is closer to content than convenience. 047 is later and
+governs, but the texts read as inconsistent. Per *"fix the doc first, then fix the
+feature,"* amend 022 to point at 047 **before** shipping a Club-gated mode.
 
 ---
 

@@ -27,6 +27,10 @@ public sealed class WindowsSignIn
 
     public bool IsConfigured => _config.IsConfigured;
 
+    /// How long to wait for the browser redirect before giving up. Long enough to create
+    /// a Google account mid-flow; short enough that an abandoned attempt frees the socket.
+    public TimeSpan Timeout { get; init; } = TimeSpan.FromMinutes(5);
+
     /// Full round trip: open the browser, wait for the loopback redirect, exchange the
     /// code, hand the id_token to Firebase. Returns the federated result so the caller
     /// can re-key the profile by verified email.
@@ -44,7 +48,17 @@ public sealed class WindowsSignIn
         var url = GoogleOAuth.BuildAuthUrl(_config, listener.RedirectUri, pkce.Challenge, state);
         _browser.Open(url);
 
-        var cb = await listener.WaitForCallback(ct);
+        // Bound the wait. A user who closes the consent tab never produces a callback, and
+        // an unbounded wait leaves the socket bound and the sign-in button dead forever.
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        timeout.CancelAfter(Timeout);
+
+        GoogleOAuth.Callback cb;
+        try { cb = await listener.WaitForCallback(timeout.Token); }
+        catch (Exception) when (timeout.IsCancellationRequested && !ct.IsCancellationRequested)
+        {
+            throw new OAuthDeniedException("timeout");
+        }
         if (cb.Error is { } err) throw new OAuthDeniedException(err);
         if (!GoogleOAuth.StateMatches(state, cb.State)) throw new OAuthDeniedException("state_mismatch");
         if (cb.Code is not { } code) throw new OAuthDeniedException("no_code");

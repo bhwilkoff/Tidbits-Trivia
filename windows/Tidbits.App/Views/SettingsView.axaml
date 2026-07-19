@@ -13,8 +13,23 @@
                              LostFocus="OnNameCommitted"/>
                     <Button Content="Shuffle avatar" Click="OnShuffleAvatar" Padding="14,8"/>
                 </StackPanel>
-                <TextBlock Text="Your name and avatar show on the leaderboard and when you join a live night. Sync across devices arrives later."
+                <TextBlock Text="Your name and avatar show on the leaderboard and when you join a live night."
                            FontSize="13" Opacity="0.65" TextWrapping="Wrap"/>
+            </StackPanel>
+
+            <StackPanel x:Name="AccountSection" Spacing="8">
+                <TextBlock Text="Account" FontSize="18" FontWeight="Bold"/>
+                <TextBlock x:Name="AccountStatus" FontSize="14" TextWrapping="Wrap"/>
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <Button x:Name="SignInButton" Content="Sign in with Google"
+                            Click="OnSignIn" Padding="14,8"/>
+                    <Button x:Name="SignOutButton" Content="Sign out" IsVisible="False"
+                            Click="OnSignOut" Padding="14,8"/>
+                </StackPanel>
+                <TextBlock Text="Signing in keeps your records, streak and standings on one profile across every device you play on — phone, computer and the web."
+                           FontSize="13" Opacity="0.65" TextWrapping="Wrap"/>
+                <TextBlock x:Name="AccountError" IsVisible="False" FontSize="13"
+                           Foreground="#C4442E" TextWrapping="Wrap"/>
             </StackPanel>
 
             <StackPanel Spacing="6">

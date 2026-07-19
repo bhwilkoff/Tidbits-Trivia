@@ -28,11 +28,19 @@ public static class GoogleOAuth
     /// belongs to a client in the project it trusts.
     public sealed record Config(string ClientId)
     {
+        /// A desktop OAuth client id is NOT a secret (PKCE is the proof, and it ships inside
+        /// every installed copy anyway) — but it is deployment config, so it reads from the
+        /// environment first. That keeps it out of the repo, lets CI render the signed-in UI,
+        /// and lets the owner drop it in without a code change.
+        public const string EnvVar = "TIDBITS_GOOGLE_CLIENT_ID";
+
         public static readonly Config Default = new(
+            Environment.GetEnvironmentVariable(EnvVar)
             // TODO(owner): create a "Desktop app" OAuth client in Google Cloud console
-            // project 842242746909 and paste its id here. Until then Windows Google
-            // sign-in is inert (SignIn throws NotConfigured) — nothing else breaks.
-            "");
+            // project 842242746909 and paste its id here (or set the env var above). Until
+            // then Windows Google sign-in is inert — the Account section simply doesn't
+            // appear, and nothing else is affected.
+            ?? "");
 
         public bool IsConfigured => !string.IsNullOrWhiteSpace(ClientId);
     }

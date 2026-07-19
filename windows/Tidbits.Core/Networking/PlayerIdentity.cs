@@ -152,6 +152,14 @@ public static class PlayerIdentity
         [JsonPropertyName("rating")] public Rating Rating { get; init; } = new();
         [JsonPropertyName("streak")] public Streak Streak { get; init; } = new();
         [JsonPropertyName("stats")] public Stats Stats { get; init; } = new();
+
+        /// A fresh profile — the local-first record used before (and without) sign-in.
+        public static Profile New(string name, long? createdAt = null) => new()
+        {
+            Name = name,
+            CreatedAt = createdAt ?? DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+            AvatarSeed = Guid.NewGuid().ToString("N")[..12],
+        };
     }
 
     public sealed record Friend

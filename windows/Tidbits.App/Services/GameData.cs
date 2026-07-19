@@ -25,6 +25,10 @@ public sealed class GameData
     // credential and must not sit on disk in cleartext. Falls back to the file store
     // off Windows so the Mac head + headless tests keep working.
     public Tidbits.Core.Networking.FirebaseRtdb Rtdb { get; } = new(tokens: new DpapiTokenStore());
+    /// The account layer (portable-identity spine) — anon uid until sign-in, then keyed by
+    /// the VERIFIED email so this machine shares one profile with the player's phone/web.
+    /// Also the key an entitlement resolves against (Decision 047).
+    public Tidbits.Core.Networking.AccountIdentity Account { get; }
     public string PlayerName => Identity.Current.Name;
     public Tidbits.Core.Networking.SfxBoard Sfx { get; }
     /// The Wave B media engine (host-only) — lazy so we don't spin LibVLC unless hosting.
@@ -47,6 +51,7 @@ public sealed class GameData
         Identity = new Tidbits.Core.Networking.PlayerIdentityStore(Path.Combine(appDir, "profile.json"));
         Duels = new Tidbits.Core.Networking.DuelStore(Path.Combine(appDir, "duels.json"));
         Sfx = new Tidbits.Core.Networking.SfxBoard(Path.Combine(appDir, "sfx-board.json"));
+        Account = new Tidbits.Core.Networking.AccountIdentity(Rtdb, new DpapiTokenStore());
     }
 
     public static GameData FromDirectory(string dir) => new(QuestionSources.LoadFromDirectory(dir));

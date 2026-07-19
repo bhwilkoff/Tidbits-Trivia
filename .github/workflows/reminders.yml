@@ -1,0 +1,39 @@
+# The reminders cron — "the appointment" (docs/PUSH-CONTRACT.md). Daily: read the
+# owner-only push-token registry + today's Daily board, and nudge anyone who has a token
+# but hasn't played today. Three $0 legs (APNs-direct / FCM / Web Push) from one runner —
+# no always-on server. INERT until the owner adds the secrets below; the script exits
+# cleanly (nothing to do) when FCM_SERVICE_ACCOUNT is absent, so this is safe to merge now.
+name: Daily reminders
+
+on:
+  schedule:
+    - cron: "47 16 * * *"   # 16:47 UTC daily (off the :17 leaderboard and :34 board crons)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "reminders"
+  cancel-in-progress: false
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install send libs (only needed once secrets exist)
+        run: pip install --quiet google-auth httpx[http2] PyJWT[crypto] pywebpush
+      - name: Send reminders
+        env:
+          FCM_SERVICE_ACCOUNT: ${{ secrets.FCM_SERVICE_ACCOUNT }}
+          APNS_AUTH_KEY_P8: ${{ secrets.APNS_AUTH_KEY_P8 }}
+          APNS_KEY_ID: ${{ secrets.APNS_KEY_ID }}
+          APNS_TEAM_ID: ${{ secrets.APNS_TEAM_ID }}
+          APNS_BUNDLE_ID: ${{ secrets.APNS_BUNDLE_ID }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          VAPID_SUBJECT: ${{ secrets.VAPID_SUBJECT }}
+        run: python3 tools/send_reminders.py

@@ -139,6 +139,20 @@ final class PlayerIdentityStore {
         try? await db.put(path, s)
     }
 
+    /// Push registry (docs/PUSH-CONTRACT.md): store this device's push token under the
+    /// owner-only `pushTokens/{authUid}/{platform}` node so the reminders cron can reach
+    /// it. Keyed by the AUTH uid (per-device), mirroring the standings/board writes.
+    func savePushToken(_ token: String, platform: String) async {
+        guard !token.isEmpty, let authUid = await db.uid else { return }
+        try? await db.put("pushTokens/\(authUid)/\(platform)", token)
+    }
+
+    /// Turn reminders off — delete the token node (App Store 4.5.4: an in-app opt-out).
+    func clearPushToken(platform: String) async {
+        guard let authUid = await db.uid else { return }
+        try? await db.delete("pushTokens/\(authUid)/\(platform)")
+    }
+
     /// The Daily's global board (docs/DAILY-BOARD-CONTRACT.md): after finishing TODAY's
     /// Daily, write this player's one row so the hourly cron can rank the field. Keyed by
     /// the AUTH uid (the rule requires `auth.uid === $uid`), like standings. Archive replays

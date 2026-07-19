@@ -5,6 +5,11 @@ import SwiftData
 struct TidbitsTriviaApp: App {
     @State private var store = AppStore()
     @State private var gameCenter = GameCenterManager.shared
+    #if os(iOS)
+    /// Captures the APNs device token (docs/PUSH-CONTRACT.md). Inert until the owner
+    /// enables the Push capability on the App ID.
+    @UIApplicationDelegateAdaptor(PushManager.self) private var pushDelegate
+    #endif
     #if os(macOS)
     /// Shares the active Tidbits Live host session between the cockpit and the
     /// projector (big-screen) windows (§A1.1).

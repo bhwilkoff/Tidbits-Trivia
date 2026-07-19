@@ -31,7 +31,12 @@ struct ResultsView: View {
             .padding(.vertical, 24)
         }
         .background(Tidbits.Palette.bg.ignoresSafeArea())
-        .task { if isTodayDaily { await identity.submitDailyBoard(summary: summary) } }
+        .task {
+            if isTodayDaily {
+                await identity.submitDailyBoard(summary: summary)
+                await PushManager.shared.requestIfNeeded()   // ask with context, after a Daily
+            }
+        }
         .sheet(isPresented: $showBoard) {
             DailyBoardView(day: QuestionProvider.dayKey(), myScore: summary.score, myMarks: todayMarks)
         }

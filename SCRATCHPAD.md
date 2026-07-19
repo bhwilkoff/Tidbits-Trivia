@@ -7,6 +7,45 @@
 > `docs/ROADMAP.md`, `docs/DATA-CONTRACT.md`. Detailed per-round history is in
 > `ARCHIVE.md`.
 
+## Current state (2026-07-19) — latest+1
+
+**"Do both" — iOS Daily-board port (build-verified) + push-notifications
+foundation ($0, rules deployed).**
+
+**iOS Daily board (the reference native port).** `Core/Networking/DailyBoard.swift`
+(read API + percentile + pickDaily-aligned marks + wire types),
+`PlayerIdentityStore.submitDailyBoard` (writes `dailyBoard/{day}/{authUid}` on
+today's Daily only), `ResultsView` hook (submit + a "See how the world did" sheet),
+`iOS/Views/DailyBoardView.swift` (rank/percentile/per-Q accuracy/top, native idiom).
+**Real xcodebuild BUILD SUCCEEDED** (SourceKit "cannot find X" squiggles were the
+known stale-index phantoms). PARITY iOS ✅.
+
+**Push notifications = "the appointment" (docs/PUSH-CONTRACT.md).** Research
+confirmed **$0 on all three, no card, no always-on server**, via THREE legs (iOS
+APNs-direct since no Firebase SDK, Android FCM HTTP v1, web Web-Push/VAPID) from one
+cron. Done + verified this pass:
+- **RTDB `pushTokens/{uid}/{platform}` rule DEPLOYED + live-verified owner-only**
+  (own r/w OK; other-uid + anon all denied) — mirrors `playersPrivate`.
+- **iOS token capture BUILD-VERIFIED**: `iOS/PushNotifications.swift` (`PushManager`
+  UIApplicationDelegateAdaptor: request-auth-after-a-Daily, register, capture hex
+  token), `PlayerIdentityStore.savePushToken/clearPushToken`, wired in the app entry
+  + ResultsView.
+- **Cron sender** `tools/send_reminders.py` + `reminders.yml` written; **safe-no-op
+  verified** (exits 0 "nothing to do" with no secrets) + recipient-filter unit-checked
+  (skips who-played + malformed). Sends "Your Daily is ready" to token-holders who
+  haven't played today.
+
+**OWNER SETUP required before push actually sends** (all free, one-time — PUSH-CONTRACT
+§Owner setup): create APNs `.p8` key + enable the Push capability on the App ID (THEN
+add `aps-environment` to project.yml — not before, or the signed build breaks),
+generate the FCM service account, a VAPID keypair; add the secrets. The workflow is
+safe to merge now (inert until then).
+
+**REMAINING:** Daily-board ports (Android/tvOS/macOS/Windows); push client capture
+(Android `getToken`, web `subscribe`). Next global modes: Rundles, Conviction.
+
+---
+
 ## Current state (2026-07-19) — latest
 
 **Daily "global board" — MERGED into the one Daily (owner design catch) + web SHIPPED

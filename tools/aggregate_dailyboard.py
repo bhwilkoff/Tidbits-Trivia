@@ -1,19 +1,20 @@
 #!/usr/bin/env python3
-"""Daily Six — the $0 global daily competition aggregator (docs/DAILY-SIX-CONTRACT.md).
+"""The Daily's global board — the $0 aggregator (docs/DAILY-BOARD-CONTRACT.md).
 
-Read the per-day player results written to RTDB (public read), and for each recent day
-publish a ranked board + a score histogram (for local percentile) + per-question global
-accuracy as static JSON to data/dailysix/ — served free/cacheable from GitHub Pages.
-Clients read this JSON, NOT RTDB, so live reads stay far under the Spark free tier
-(R-NET-1). One RTDB read + at most one commit per hour (R-NET-2).
+The Daily is one shared set everyone plays; this layer ranks the field. Read the per-day
+player results written to RTDB (public read), and for each recent day publish a ranked
+board + a score histogram (for local percentile) + per-question global accuracy as static
+JSON to data/dailyboard/ — served free/cacheable from GitHub Pages. Clients read this JSON,
+NOT RTDB, so live reads stay far under the Spark free tier (R-NET-1). One RTDB read + at
+most one commit per hour (R-NET-2).
 
-Input  (RTDB): dailySix/{day}/{uid} = {name, avatarSeed, score, correct, marks, ms, at}
-Output (repo): data/dailysix/{day}.json  -> {day, qids, n, hist, perQ, top}
-               data/dailysix/index.json  -> {latest, days:[...]}
+Input  (RTDB): dailyBoard/{day}/{uid} = {name, avatarSeed, score, correct, marks, ms, at}
+Output (repo): data/dailyboard/{day}.json  -> {day, qids, n, hist, perQ, top}
+               data/dailyboard/index.json  -> {latest, days:[...]}
 
 Offline verification (no RTDB): --input <file.json> reads an RTDB-shaped dump instead.
-The day's six question ids are recomputed with the SAME pickDaily as every client, so
-qids in the output are authoritative (--corpus points at the id list; optional).
+The day's question ids are recomputed with the SAME pickDaily as every client, so qids in
+the output are authoritative (--corpus points at the id list; optional).
 """
 import argparse
 import json
@@ -21,16 +22,17 @@ import os
 import urllib.request
 
 RTDB = "https://tidbits-trivia-f2ddb-default-rtdb.firebaseio.com"
-OUT = "data/dailysix"
+OUT = "data/dailyboard"
+DAILY_COUNT = 7        # the Daily's set size (Corpus.daily(day, 7)) — matches every client
 TOP_CAP = 100          # visible leaderboard size; everyone else uses the histogram
 KEEP_DAYS = 5          # only recent days are republished; older days are frozen
 
 
-def fetch_dailysix(input_file):
+def fetch_board(input_file):
     if input_file:
         with open(input_file) as f:
             return json.load(f) or {}
-    with urllib.request.urlopen(f"{RTDB}/dailySix.json", timeout=30) as r:
+    with urllib.request.urlopen(f"{RTDB}/dailyBoard.json", timeout=30) as r:
         return json.load(r) or {}
 
 
@@ -50,28 +52,33 @@ def pick_daily(ids, day, category_id, count):
 
 
 def summarize_day(players, qids):
-    """players: {uid: {name, avatarSeed, score, correct, marks, ...}} -> the published shape."""
-    rows, hist, per_q_hits = [], {}, [0] * 6
+    """players: {uid: {name, avatarSeed, score, correct, marks, ...}} -> the published shape.
+
+    Per-question accuracy tracks each question's seen/hit counts, so it generalizes if the
+    Daily's set size ever changes.
+    """
+    rows, hist = [], {}
+    q_hits, q_seen = [0] * DAILY_COUNT, [0] * DAILY_COUNT
     for uid, p in players.items():
         if not isinstance(p, dict):
             continue
         score = int(p.get("score", 0))
-        correct = int(p.get("correct", 0))
         rows.append({
             "name": p.get("name", ""),
             "avatarSeed": p.get("avatarSeed", ""),
             "score": score,
-            "correct": correct,
+            "correct": int(p.get("correct", 0)),
         })
         hist[str(score)] = hist.get(str(score), 0) + 1
         marks = str(p.get("marks", ""))
-        for i in range(min(6, len(marks))):
+        for i in range(min(DAILY_COUNT, len(marks))):
+            q_seen[i] += 1
             if marks[i] == "1":
-                per_q_hits[i] += 1
+                q_hits[i] += 1
 
     n = len(rows)
     top = sorted(rows, key=lambda r: (-r["score"], -r["correct"], r["name"]))[:TOP_CAP]
-    per_q = [round(per_q_hits[i] / n, 4) if n else 0.0 for i in range(6)]
+    per_q = [round(q_hits[i] / q_seen[i], 4) if q_seen[i] else 0.0 for i in range(DAILY_COUNT)]
     return {"qids": qids, "n": n, "hist": hist, "perQ": per_q, "top": top}
 
 
@@ -86,7 +93,9 @@ def load_ids(corpus_file):
         return None
     with open(corpus_file) as f:
         data = json.load(f)
-    # Accept either a bare list of ids or a list of {id: ...} objects.
+    # Accept a wrapped corpus ({questions:[[id,...],...]}), a list of {id:...}, or bare ids.
+    if isinstance(data, dict) and "questions" in data:
+        return [str(q[0]) for q in data["questions"]]
     if data and isinstance(data[0], dict):
         return [str(q["id"]) for q in data]
     return [str(x) for x in data]
@@ -99,13 +108,13 @@ def main():
     ap.add_argument("--out", default=OUT)
     args = ap.parse_args()
 
-    data = fetch_dailysix(args.input)
+    data = fetch_board(args.input)
     all_ids = load_ids(args.corpus)
 
     days = sorted(k for k in data.keys() if isinstance(data.get(k), dict))
     recent = days[-KEEP_DAYS:]
     for day in recent:
-        qids = pick_daily(all_ids, day, "mixed", 6) if all_ids else []
+        qids = pick_daily(all_ids, day, "mixed", DAILY_COUNT) if all_ids else []
         summary = summarize_day(data[day], qids)
         summary["day"] = day
         write_json(f"{args.out}/{day}.json", summary)

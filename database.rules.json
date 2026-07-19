@@ -70,12 +70,12 @@
         ".write": "auth != null && auth.token.email_verified === true && newData.val() === auth.token.email && (!data.exists() || data.val() === auth.token.email)"
       }
     },
-    "dailySix": {
+    "dailyBoard": {
       ".read": true,
       "$day": {
         "$uid": {
           ".write": "auth != null && auth.uid === $uid",
-          ".validate": "newData.hasChildren(['name','score','correct','marks','at']) && newData.child('marks').isString() && newData.child('marks').val().length === 6 && newData.child('correct').isNumber() && newData.child('correct').val() >= 0 && newData.child('correct').val() <= 6"
+          ".validate": "newData.hasChildren(['name','score','correct','marks','at']) && newData.child('marks').isString() && newData.child('marks').val().length === 7 && newData.child('correct').isNumber() && newData.child('correct').val() >= 0 && newData.child('correct').val() <= 7"
         }
       }
     },

@@ -1,7 +1,7 @@
 // Tidbits — web app shell: router, views, and the game loop. Mirrors the
 // Apple AppStore + GameEngine + views. Vanilla JS, no framework, no build.
 
-import { Corpus, Pictures, ThisOrThat, ClosestCall, Ordering, Matching, TypeAnswer, OddOneOut, Enumerate, Difficulty, matchesAccepted, Wikipedia } from './api.js';
+import { Corpus, Pictures, ThisOrThat, ClosestCall, Ordering, Matching, TypeAnswer, OddOneOut, Enumerate, Difficulty, matchesAccepted, Wikipedia, DailyBoard } from './api.js';
 import { Store, CATEGORIES, catColor, catById, MODES, NIGHT, STAKE_BUDGET, dayKey, APP_STORES, SITE_URL } from './store.js';
 import { Scoring } from './engine.js';
 import { BOTS, houseBot, botById, VsMatch } from './bots.js';
@@ -77,6 +77,11 @@ function render() {
   if (location.hash.startsWith('#/duels')) {   // L5: async friend duels
     app.innerHTML = `${header(currentTab())}<main class="main">${viewDuels()}</main>`;
     loadDuels(); document.title = 'Tidbits Trivia — Duels'; return;
+  }
+  if (location.hash.startsWith('#/dailyboard')) {   // the Daily's global board (a layer on the Daily)
+    document.title = 'Tidbits Trivia — Daily';
+    game = null; renderDailyBoard();
+    return;
   }
   const tab = currentTab();
   app.innerHTML = `
@@ -334,7 +339,7 @@ function dailyBanner() {
   }
   return `<button class="banner card daily" data-daily><div><div class="banner-title">${ICON.check} DAILY TIDBIT</div>
     <div class="muted">Done for today — you scored ${score}.${flame ? ` ${flame} kept alive.` : ''} New set tomorrow.</div>
-    <div class="muted"><u>Play previous days</u></div></div><span class="chev">›</span></button>`;
+    <div class="muted"><u data-daily-board>See how the world did</u> · <u>Play previous days</u></div></div><span class="chev">›</span></button>`;
 }
 
 function dailyArchiveRows() {
@@ -434,6 +439,7 @@ function bindHome() {
     else startGame('daily', catById('mixed'));
   });
   $('[data-daily-close]').addEventListener('click', () => dailyDlg.close());
+  $('[data-daily-board]')?.addEventListener('click', (ev) => { ev.stopPropagation(); location.hash = '#/dailyboard'; });
   // Online Multiplayer (Decision 038): v0 = Play vs CPU; Quick Match = honest v1 slot.
   const mpDlg = $('#mp-dlg');
   $('[data-multiplayer]').addEventListener('click', () => mpDlg.showModal());
@@ -1752,6 +1758,7 @@ function renderResults() {
   if (again) again.addEventListener('click', () => startGame(game.mode.id, game.category, game._custom ? { custom: game._custom, label: game.label } : undefined));
   $('[data-done]').addEventListener('click', quitGame);
   app.querySelectorAll('[data-hdyk]').forEach((b) => b.addEventListener('click', () => shareHDYK(nailed[+b.dataset.hdyk])));
+  if (game.mode.id === 'daily' && !game.dailyDay) submitDailyBoardResult(s);   // today's Daily → the global board (archive replays don't count)
   if (game._duelId) {   // L5: submit my score to the duel + show the outcome
     const duelId = game._duelId, myScore = s.score;
     Duels.submit(duelId, myScore).then(async () => {
@@ -1772,6 +1779,72 @@ function renderResults() {
     });
   }
 }
+// The Daily's global board (docs/DAILY-BOARD-CONTRACT.md): write the one per-day result,
+// then invite the player to see where they landed against the world. `marks` is aligned
+// to the SHARED pickDaily order (by qid), not the play order, so per-question accuracy is
+// comparable across every player. This layers on the Daily — it never replaces the streak.
+async function submitDailyBoardResult(s) {
+  const day = dayKey();
+  const qids = Corpus.daily(day, 7).map((q) => q.id);
+  const byId = new Map(s.answered.map((a) => [a.q.id, a]));
+  const marks = qids.map((id) => (byId.get(id)?.correct ? '1' : '0')).join('');
+  const correct = s.answered.filter((a) => a.correct).length;
+  const ms = Math.round(s.answered.reduce((t, a) => t + (a.taken || 0), 0) * 1000);
+  const p = Identity.profile || {};
+  const row = { name: p.name || 'Player', avatarSeed: p.avatarSeed || '', score: s.score, correct, marks, ms, at: Date.now() };
+  localStorage.setItem('tidbits.dailyboard.score', String(s.score));
+  localStorage.setItem('tidbits.dailyboard.marks', marks);
+  try { await FirebaseNet.submitDailyBoard(day, row); } catch { /* offline: the board loads on reconnect */ }
+  const results = document.querySelector('.results');
+  if (results) {
+    const card = document.createElement('div');
+    card.className = 'card pad'; card.style.marginTop = '12px';
+    card.innerHTML = `<b>The whole world played today’s set</b>
+      <div class="muted" style="margin:4px 0 8px">Your ${s.score} is in. See where you landed against everyone today.</div>
+      <button class="btn btn-blue" data-db-board>See the global board ›</button>`;
+    results.insertBefore(card, results.children[1] || null);
+    // A finished game still owns render(); clear it so the board route can take over.
+    card.querySelector('[data-db-board]').addEventListener('click', () => { game = null; renderDailyBoard(); });
+  }
+}
+
+// The Daily's global board — read from the static JSON the hourly cron publishes
+// (free/cacheable, never RTDB). Shows your standing, per-question global accuracy vs
+// your own marks, and the top board. Honest about the hourly cadence.
+async function renderDailyBoard() {
+  const day = dayKey();
+  const myScore = Number(localStorage.getItem('tidbits.dailyboard.score') || 0);
+  app.innerHTML = `<div class="results"><div class="card scorecard" style="--tint:#0047FF">
+    <div class="muted">DAILY · ${h(day)}</div><div class="huge">${myScore}</div>
+    <div class="muted">everyone played the same set today</div></div>
+    <div id="db-board" class="card pad">Loading today’s field…</div>
+    <button class="btn btn-text btn-full" data-done>Done</button></div>`;
+  $('[data-done]')?.addEventListener('click', () => { location.hash = '#/play'; });
+  const board = $('#db-board');
+  const data = await DailyBoard.results(day);
+  if (!data || !data.n) {
+    board.innerHTML = `<b>You’re among the first today.</b>
+      <div class="muted" style="margin-top:6px">The global board refreshes every hour — check back to see where you landed.</div>`;
+    return;
+  }
+  const pct = DailyBoard.percentile(data.hist, myScore);
+  const marks = (localStorage.getItem('tidbits.dailyboard.marks') || '').padEnd(7, '?');
+  const perQ = (data.perQ || []).map((rate, i) => {
+    const mine = marks[i] === '1' ? '🟢' : marks[i] === '0' ? '🔴' : '⚫️';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:6px 0">
+      <span>${mine}</span><span style="flex:1">Question ${i + 1}</span>
+      <span class="muted" style="font-variant-numeric:tabular-nums">${Math.round(rate * 100)}% got it</span></div>`;
+  }).join('');
+  const top = (data.top || []).slice(0, 20).map((r, i) =>
+    `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:12px;background:var(--color-surface)">
+      <span style="font-weight:900;width:26px;opacity:${i === 0 ? 1 : 0.5}">${i + 1}</span>
+      <span style="flex:1;font-weight:700">${h(r.name || 'Player')}${i === 0 ? ' <b style="font-size:.7em;color:var(--color-primary)">TOP</b>' : ''}</span>
+      <span style="font-weight:900;font-variant-numeric:tabular-nums">${r.score | 0}</span></div>`).join('');
+  board.innerHTML = `${pct == null ? '' : `<div style="text-align:center;margin-bottom:10px"><span class="huge" style="font-size:2.2em">${pct}%</span><div class="muted">you beat ${pct}% of ${data.n.toLocaleString()} players today</div></div>`}
+    <h2 class="section">How the world did</h2>${perQ}
+    <h2 class="section">Today’s top</h2><div style="display:flex;flex-direction:column;gap:6px">${top}</div>`;
+}
+
 // L5 (charter): a hard answer you knew → invite the story + a conversation, not a passive move-on.
 async function shareHDYK(a) {
   if (!a) return;

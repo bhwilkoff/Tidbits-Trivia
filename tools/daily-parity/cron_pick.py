@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Daily-parity golden — cron side (Decision 037 / Daily Six).
+"""Daily-parity golden — cron side (Decision 037 / the Daily's global board).
 
-The Daily Six aggregator recomputes the day's six question ids in Python. If that picker
+The Daily-board aggregator recomputes the day's question ids in Python. If that picker
 drifts from the JS/Swift/Kotlin one, the published `qids` disagree with what every client
 plays. Import the REAL aggregator picker and emit the same "<day> <id1> … <idN>" format as
 web_pick.mjs for run.sh to diff.
@@ -10,7 +10,7 @@ import json
 import sys
 
 sys.path.insert(0, "tools")
-from aggregate_dailysix import pick_daily  # the picker the cron actually uses
+from aggregate_dailyboard import pick_daily  # the picker the cron actually uses
 
 DAYS = ["2026-07-01", "2026-07-02", "2026-12-31", "2027-02-28"]
 

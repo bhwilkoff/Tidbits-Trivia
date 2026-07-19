@@ -7,6 +7,37 @@
 > `docs/ROADMAP.md`, `docs/DATA-CONTRACT.md`. Detailed per-round history is in
 > `ARCHIVE.md`.
 
+## Current state (2026-07-19) — latest
+
+**Daily "global board" — MERGED into the one Daily (owner design catch) + web SHIPPED
++ rules DEPLOYED & live-verified.**
+
+Owner caught that the first-draft **"Daily Six" competed directly with the Daily
+Tidbit** for placement and purpose (two "same set for everyone" dailies stacked on
+home). Correct — I'd built the global-competition layer as a *rival* surface instead
+of a *layer* on the Daily everyone already plays. **Folded in:** one Daily (kept
+"Daily Tidbit", 7 questions, streak, archive — all shipped-unchanged); on completing
+today's Daily it now ALSO writes the global board and offers "See how the world did"
+(rank + percentile + per-question global accuracy + top board). Renamed all internal
+artifacts `dailySix`→`dailyBoard` (path, files, workflow, contract) since pre-launch
+is the only cheap time.
+
+**Done + verified this pass:**
+- **RTDB rules DEPLOYED** (`firebase deploy`, I have CLI access) and **live-verified
+  against the real DB**: valid 7-mark write accepted; 6-mark, correct>7, and other-uid
+  writes all DENIED; public read works. Orphaned test data cleaned.
+- **Web SHIPPED + rendered end-to-end** (headless browser): home shows ONE Daily (no
+  redundant banner); board renders rank "you beat 82% of 2,310", 7-question accuracy,
+  top board — percentile math verified consistent with the aggregator's own histogram.
+- Parity gate green at count 7 (cron picker == web picker over the real corpus, 4 stacks).
+- Aggregator generalized 6→7, sim-verified.
+
+**REMAINING:** iOS/Android/tvOS/macOS/Windows ports (mechanical per
+`docs/DAILY-BOARD-CONTRACT.md`). The cron auto-populates the board once real players
+complete the Daily. Next global modes: push, Rundles, Conviction.
+
+---
+
 ## Current state (2026-07-19) — later
 
 **Decision 022 contradiction FIXED + Daily Six spine BUILT.**

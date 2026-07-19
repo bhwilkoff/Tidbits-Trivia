@@ -121,36 +121,179 @@ free-forever core is why.
 that only means something if you play a lot. This is the learning charter as a
 business model — the premium tier is literally the *learning* tier.
 
-> **⚠️ This slate is UNDER REVISION (owner, 2026-07-19).** Two things changed:
-> (a) the owner judged it too thin — *"the ones we have outlined hardly seem like
-> features at all"* — and asked for a robust tier, most likely from **brand-new
-> extensions of gameplay**; (b) the R-MON-1 scope correction above means
-> **already-built features may also be assigned to Club at launch**. A research
-> pass is in flight; the replacement slate lands in §4a. The five below are the
-> floor, not the plan.
->
-> **The two constraints that survive:** the free experience must still feel
-> phenomenal (the daily + casual/core play are free permanently, rule 1), and
-> **hosting stays free forever** (§8 decision 1).
->
-> **Richest known source of net-new gameplay:** `docs/SOLO-BACKLOG.md` +
-> `docs/GAME-MODES-RESEARCH.md` already carry designed, learning-tested, *unbuilt*
-> modes — **Link Wall** (M6, the marquee NYT-Connections-style daily puzzle),
-> **True/False rapid** (Q2), and the **E1 Wikidata enrichment pass that unlocks
-> SEVEN question types**. These are the strongest candidates precisely because
-> they are new gameplay rather than a gate on old gameplay.
+> **The slate lives in §4a below.** An earlier five-pillar draft was cut: the
+> owner judged it too thin (*"the ones we have outlined hardly seem like
+> features at all"*), and a research pass found **three of the five collided with
+> features already shipped free** — "practice your misses" is literally
+> `dueReview()` on all four platforms with an opt-out toggle (PARITY row 214),
+> and Topic Levels / The Pie / defendable titles are free too. It was partly
+> re-selling what we already give away.
 
-| Club feature | Why it's worth paying for | Charter fit |
-|---|---|---|
-| **Knowledge map** — your accuracy by domain over time, and what it's doing | The "am I actually getting smarter" answer no trivia app gives | Deepens understanding |
-| **Practice your misses** — spaced repetition over questions you got wrong | Turns a game into a study tool; nobody in the category does this | Invites engagement |
-| **Season pass** — ranked seasons with placement, history, defendable titles | Ongoing reason to return; ties directly to live nights | Human agency |
-| **Story archive** — keep every "story behind the answer" you've unlocked, searchable | The tidbit *is* the product; make it accumulate | Deepens understanding |
-| **Host library** — your personal question bank, reuse + avoid-repeats intelligence | The one host feature worth charging for: *their own accumulated craft* | Supports craft |
+---
 
-Note the last row: hosting is free, but a host's **own accumulated work** is Club.
-That is the honest line — we give away the tool and charge for the continuity,
-on both sides of the room. Same product, same price, one identity.
+## 4a. Tidbits Club — the real slate (revised 2026-07-19)
+
+Replaces the five pillars above. Two things forced the revision: the owner judged
+the original slate too thin, and a research pass found that **three of the five
+collided with features already shipped free** — "practice your misses" is
+literally `dueReview()` on all four platforms with an opt-out toggle (PARITY row
+214), and Topic Levels / The Pie / defendable titles are free too. The old slate
+was partly re-selling what we already give away.
+
+### The line — one test
+
+> **Would a player with 5 hours of play notice this is gated?**
+> If yes, it's **free**. If it only becomes legible at 50+ hours, it's **Club**.
+
+That single test satisfies both hard constraints at once: a casual player never
+feels cheated (rule 1), and a trivia obsessive sees an obvious reason to pay. It
+is the same boundary Chess.com found — the free tier is genuinely fine for casual
+play, and the ceiling only bites when you are trying to *improve*.
+
+**Free forever, and it should feel lavish:** the daily + its archive, every core
+mode, unlimited play, records with per-game answer detail, streaks, personal
+bests, Elo, friends, duels, quick match, create-a-quiz, pass-and-play, the
+cross-venue leaderboard, and **all hosting**. That is already a more generous
+free tier than any product in the research.
+
+> **The tension worth naming.** Our free tier is already rich in exactly the
+> categories everyone else charges for — full records ≈ Chess.com Diamond,
+> streaks ≈ Duolingo Super, standings ≈ Strava paid, daily archive ≈ NYT paid.
+> **So the tier cannot be carried by analytics, because the strongest premium
+> pattern in the research is largely already given away.** It has to be carried
+> by *new verbs*. That is why the slate below leads with gameplay.
+
+> **And the failure mode to avoid:** Sporcle Orange sells ads-off + stats +
+> cosmetics and sits at **2.1/5**. Five analytics screens reads as Sporcle. Four
+> new ways to play reads as NYT.
+
+### The pitch, in one sentence
+
+**"Ranked seasons, a multi-week campaign, a map of everything you know, and a
+permanent library of every fact you've learned."**
+
+Seasons + Expedition are the *play* reason. Atlas + Archive are the *keep*
+reason. That is a materially different proposition from a stats page.
+
+### Pillar 1 — New gameplay *(the anchor; the owner's "brand-new extensions")*
+
+| Feature | What it is |
+|---|---|
+| **Ranked Seasons** ⭐ | Three-month arcs: placement, tiers, promotion **and demotion**, permanent season history. The only feature that creates a recurring, calendar-driven reason to return — and it ties solo play to live nights under one identity, which no competitor can match. Shaped as a battle pass: the free track levels by playing and **shows you the Club track you'd have earned** |
+| **Expedition** ⭐ | A multi-week structured campaign through a domain ("The 20th Century") — stages, a map, a completion certificate. **This is what turns a session game into a pursuit**, and it's the clearest "this is a real feature" on the list |
+| **Weak-spot Arena** | A round generated entirely from your own miss history, with a visible "closed the gap" payoff. The legitimate deeper layer above the free spaced review |
+| **Survival ladder** | Escalating difficulty on the shipped ratings; one life; leaderboard by depth reached |
+| **Marathon** | A 200-question graded endurance run with a permanent scorecard, played across sessions |
+| **Time Machine** | A single decade, played as a themed run with period framing |
+| **Draft** | Pick your categories before a head-to-head; your opponent picks theirs. A strategy layer over knowledge |
+| **Speed drills** | Trains recall *latency*, charted over time |
+| **Link Wall** (SOLO-BACKLOG M6) | The NYT-Connections-style puzzle: 16 fact-tiles, 4 hidden groups, reveal shows the link **and a cited why**. A *second* daily — **Daily Tidbits stays free and untouched** |
+
+Note these are meaningless without a play history, which is exactly why gating
+them passes the 5-hour test.
+
+### Pillar 2 — Retrospection: your record, interpreted
+
+Free gives you *your record*; Club gives you *your history interpreted* — the
+distinction Strava draws between "here is your run" and "here is your fitness
+curve." Genuinely new computation, not a lock on stored data.
+
+| Feature | What it adds |
+|---|---|
+| **Knowledge Atlas** ⭐ | Accuracy by domain *and sub-domain* on a 12-month trajectory — what's rising, what's decaying. Free Topic Levels + Pie untouched |
+| **Decay radar** | Flags topics you were strong in six months ago and have quietly lost — and schedules them back |
+| **Retention curve** | Measured re-recall at 1wk / 1mo / 6mo. *Did the fact actually stick?* No trivia app answers this |
+| **Calibration report** | Extends the free Stake tally into over/under-confidence by domain: where you bluff, where you underrate yourself |
+| **Miss autopsy** | Clusters your wrong answers by **why** — era, geography, category adjacency, distractor type — not just by category |
+| **Question percentile** | "You got this; 12% of players did," from the shipped answer-distribution telemetry |
+| **Year in Review** | An annual shareable retrospective. Cheap, and Duolingo's share cards drove enormous organic reach |
+
+### Pillar 3 — The library: the corpus as *your* collection
+
+Free *plays* questions; Club *keeps* them. The NYT-archive pattern, and the most
+on-brand idea available for a product whose whole thesis is that the tidbit is
+the point.
+
+| Feature | What it adds |
+|---|---|
+| **Story Archive** ⭐ | Every "story behind the answer" you've unlocked — kept forever, searchable, browsable by domain |
+| **Deep dives** | Long-form cited companion pieces for facts you've met |
+| **Curated packs** ⭐ | Regularly published themed sets, guest-authored and seasonal. **The only item that delivers fresh perceived value every month without new engineering** — the Anki/AnKing lesson: people pay for curation on top of a free tool |
+| **Source trails** | Every fact links to its citation plus a web of related facts you've seen |
+| **Annotated daily** | The daily, plus commentary on why each distractor is tempting |
+| **Fact notebook** | Your own notes on any fact, resurfaced when it returns |
+
+### Pillar 4 — Social & competitive
+
+| Feature | Evidence |
+|---|---|
+| **Leagues** | 30-person weekly flights with promotion/demotion. Duolingo: **+17% learning time, 3× highly-engaged users.** Needs population — consider free-with-Club-perks rather than fully gated |
+| **Friend streaks** | Mutual daily accountability. **+22% completion** — the highest leverage per unit of engineering in the entire research pass |
+| **Rivalries** | Auto-designated nemeses at your level, persistent head-to-head record |
+| **Club tournaments** | Scheduled brackets, standings, titles |
+| **Filtered leaderboards** | Friends / venue / region / domain. **Filters, never rows** |
+| **Streak insurance + Rest Days** | Bankable freezes and *scheduled rest that doesn't break the streak*. Selling forgiveness measurably increases engagement |
+
+> **Structural rule, from Strava's 2020 mistake:** never paywall something whose
+> value depends on free users participating. The leaderboard keeps every row for
+> free players. Hollowing out the board to sell it back would destroy the moat.
+
+### Pillar 5 — Personalization & identity
+
+**Adaptive difficulty** (targets your ~75% success band per domain) · **Saved
+custom mixes** · **Creator analytics** (for questions you wrote: plays, real
+difficulty, distractor effectiveness) · **Club identity** (Founding Member badge,
+season-history display — Lichess-style: pure status, zero competitive advantage).
+
+### The anchor eight (if the launch set must be smaller)
+
+Ordered by how likely a subscriber is to *name* them as the reason they paid:
+
+1. **Ranked Seasons** — the only feature creating a recurring, calendar-driven
+   return, and it ties solo play to live nights under one identity.
+2. **Knowledge Atlas** — the flagship "what do I actually know."
+3. **Story Archive** — the NYT-archive move; the most on-brand idea available.
+4. **Expedition** — the substantial *new gameplay*; turns a session game into a
+   pursuit.
+5. **Leagues** — best-evidenced engagement mechanic found (+17% learning time,
+   3× highly-engaged users). Needs population — consider free-with-Club-perks.
+6. **Weak-spot Arena** — the honest deeper layer above free spaced review.
+7. **Curated packs** — the only item delivering fresh value monthly *without new
+   engineering*.
+8. **Link Wall** — the marquee new puzzle; already designed in SOLO-BACKLOG M6.
+
+### Two things the research advises AGAINST
+
+- **An AI tutor/explainer as the tier anchor.** Duolingo Max — their most
+  technically impressive build — is **9% of subscribers and publicly
+  "underperforming lofty expectations."** Chess.com's AI coach is called
+  "confusing." Meanwhile Duolingo's *cheap* mechanics (streaks, leagues) carry
+  ~91% of subscribers. Do not build the trivia equivalent of Video Call with Lily.
+- **Consumables, lives, or energy.** Highest hatred-per-dollar in the category and
+  a direct contradiction of the learning charter (also barred by DECISIONS 022).
+
+### ⚠️ Open question for the owner
+
+**Is the Host Library inside or outside "hosting is free forever"?** It is a
+host's *own accumulated question bank*, not a hosting capability — but it is
+close enough to the promise that it deserves an explicit ruling rather than a
+quiet assumption. My read: **treat it as free** unless you say otherwise; the
+promise is the more valuable asset.
+
+**Also flagged:** a LearnedLeague-style **Wager** mode was proposed, but the free
+**Stake** mode (M1, shipped) already covers confidence-betting. Building both
+risks two modes that feel like one. Worth a design call before either is built.
+
+### ⚠️ One legal constraint on all of pillar 1
+
+**Describe what the user DID, never what it MAKES them.** *"Your Geography
+accuracy rose 8 points over 6 weeks"* — true statement about their data. *"Tidbits
+makes you sharper"* — the exact claim the FTC prosecuted in **FTC v. Lumos Labs
+(2016): $2M paid, $50M judgment suspended.** Near transfer is real; far transfer
+is not. This binds every Club analytic, every store listing, and the §6 promo
+surface.
+
+---
 
 ### Price (decided 2026-07-19)
 
@@ -340,8 +483,8 @@ In dependency order:
 
 | # | Blocker | Why it blocks |
 |---|---|---|
-| 1 | **Windows has no sign-in** — `PlayerIdentityStore.cs` is local-only ("sync/sign-in layer on top later") | Windows cannot resolve an email-keyed entitlement. Hard blocker. |
-| 2 | **Build the five Club features** (§4) | R-MON-1 forbids carving premium out of the free tier, and ~everything is already free. Without new features there is nothing to sell. |
+| 1 | **Windows sign-in** — Google desktop OAuth **BUILT 2026-07-19** (loopback + PKCE, 245 tests green on `windows-latest`). Remaining: paste the Desktop OAuth client id, wire `PlayerIdentityStore` to email-key, add the Settings UI | Windows could not resolve an email-keyed entitlement. Largely unblocked. |
+| 2 | **Build the Club slate** (§4a) | The tier must be substantial — a thin tier reads as Sporcle (2.1/5). This is now the **largest** item: pillar 1 alone is several new game modes. |
 | 3 | **`Tidbits.Windows` IAP spike** — Avalonia + MSIX + `StoreContext` + `IInitializeWithWindow` via `TryGetPlatformHandle` | Every piece is documented; the *composition* has no public worked example. Cannot be validated on the Mac head (Decision 045). Highest-risk item in the plan. |
 | 4 | Cloudflare Worker + MoR + `entitlements/` rules | Class B path (§7) |
 | 5 | StoreKit 2 / Play Billing / MS Store product setup + SBP enrollment | Store-side config lead time |

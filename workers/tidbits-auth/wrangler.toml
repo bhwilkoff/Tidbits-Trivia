@@ -1,0 +1,21 @@
+# tidbits-auth — the HTTPS bounce for Sign in with Apple on Windows.
+# See docs/APPLE-SIGNIN-WINDOWS.md. Deploy: cd workers/tidbits-auth && npx wrangler deploy
+#
+# $0 forever: Cloudflare Workers free tier is 100k requests/DAY, no credit card. This
+# Worker fires ONCE per Apple sign-in on Windows, so it is a rounding error against that.
+# NOTE the free quota is per ACCOUNT, shared with the other Workers on this account.
+#
+# No secrets, no bindings, no KV, no state — deliberately. The Worker only reshapes a
+# redirect, so there is nothing here worth stealing and nothing to rotate.
+
+name = "tidbits-auth"
+main = "src/index.js"
+compatibility_date = "2026-04-08"
+
+# workers.dev gives a free HTTPS subdomain with a real domain name, which is exactly what
+# Apple's redirect_uri requires ("must use the HTTPS protocool, include a domain name,
+# can't be an IP address or localhost"). No custom domain or DNS needed.
+workers_dev = true
+
+# Deliberately NOT set: no [vars], no [[kv_namespaces]], no secrets. If a future change
+# wants any of those, that is a signal the bounce is doing too much — keep it dumb.

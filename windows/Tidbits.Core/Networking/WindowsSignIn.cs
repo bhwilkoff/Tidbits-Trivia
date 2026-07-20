@@ -67,6 +67,41 @@ public sealed class WindowsSignIn
             _config, code, pkce.Verifier, listener.RedirectUri, _http);
         return await _db.SignInWithGoogle(idToken);
     }
+
+    /// Sign in with Apple (docs/APPLE-SIGNIN-WINDOWS.md). Apple can't redirect to loopback,
+    /// so the browser lands on the HTTPS bounce Worker, which 302s back here with the
+    /// id_token. We never exchange the code — so no Apple .p8 secret ever ships in the app.
+    public async Task<FirebaseRtdb.FederatedResult> SignInWithApple(CancellationToken ct = default)
+    {
+        var cfg = AppleSignIn.Config.Default;
+        if (!cfg.IsConfigured) throw new OAuthNotConfiguredException();
+
+        // Apple embeds SHA256(nonce) in the id_token; Firebase verifies against the RAW one.
+        var rawNonce = AppleSignIn.NewRawNonce();
+        var csrf = AppleSignIn.Base64Url(Guid.NewGuid().ToByteArray());
+
+        using var listener = new LoopbackAuthListener();
+        var state = AppleSignIn.BuildState(csrf, listener.Port);   // the Worker reads the port back out
+        _browser.Open(AppleSignIn.BuildAuthUrl(cfg, AppleSignIn.Sha256Hex(rawNonce), state));
+
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        timeout.CancelAfter(Timeout);
+
+        string rawQuery;
+        try { rawQuery = await listener.WaitForRawQuery(timeout.Token); }
+        catch (Exception) when (timeout.IsCancellationRequested && !ct.IsCancellationRequested)
+        {
+            throw new OAuthDeniedException("timeout");
+        }
+
+        var cb = AppleSignIn.ParseCallback(rawQuery);
+        if (cb.Error is { } err) throw new OAuthDeniedException(err);
+        // The Worker returns ONLY the nonce half of state — compare against that.
+        if (!AppleSignIn.StateMatches(csrf, cb.State)) throw new OAuthDeniedException("state_mismatch");
+        if (cb.IdToken is not { } idToken) throw new OAuthDeniedException("no_id_token");
+
+        return await _db.SignInWithApple(idToken, rawNonce);
+    }
 }
 
 /// The user declined, the callback was forged, or Google returned an error. Separate

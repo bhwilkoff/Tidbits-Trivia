@@ -36,28 +36,40 @@ public sealed class LoopbackAuthListener : IDisposable
 
     public string RedirectUri { get; }
 
+    /// The bound port. Apple's flow needs this at runtime: Apple allows only ONE
+    /// pre-registered redirect URI, so the bounce Worker learns the ephemeral port from
+    /// `state` (docs/APPLE-SIGNIN-WINDOWS.md).
+    public int Port { get; }
+
     public LoopbackAuthListener(int? fixedPort = null)
     {
-        var port = fixedPort ?? FreePort();
-        RedirectUri = $"http://127.0.0.1:{port}/";
+        Port = fixedPort ?? FreePort();
+        RedirectUri = $"http://127.0.0.1:{Port}/";
         _listener.Prefixes.Add(RedirectUri);
         _listener.Start();
     }
 
-    /// Wait for the browser redirect, serve a closing page, and return the parsed query.
-    public async Task<GoogleOAuth.Callback> WaitForCallback(CancellationToken ct = default)
+    /// Wait for the browser redirect, serve a closing page, and return the RAW query so the
+    /// caller can parse it with its own provider's contract (Google returns `code`, Apple
+    /// returns `id_token`). `looksSuccessful` only picks which closing page to show.
+    public async Task<string> WaitForRawQuery(CancellationToken ct = default)
     {
         using var reg = ct.Register(() => { try { _listener.Stop(); } catch { } });
         var ctx = await _listener.GetContextAsync();
-        var cb = GoogleOAuth.ParseCallback(ctx.Request.Url?.Query ?? "");
+        var query = ctx.Request.Url?.Query ?? "";
 
-        var html = Encoding.UTF8.GetBytes(GoogleOAuth.SuccessPageHtml(cb.Code is not null));
+        var ok = query.Contains("code=") || query.Contains("id_token=");
+        var html = Encoding.UTF8.GetBytes(GoogleOAuth.SuccessPageHtml(ok));
         ctx.Response.ContentType = "text/html; charset=utf-8";
         ctx.Response.ContentLength64 = html.Length;
         await ctx.Response.OutputStream.WriteAsync(html, ct);
         ctx.Response.Close();
-        return cb;
+        return query;
     }
+
+    /// Google-shaped convenience wrapper.
+    public async Task<GoogleOAuth.Callback> WaitForCallback(CancellationToken ct = default) =>
+        GoogleOAuth.ParseCallback(await WaitForRawQuery(ct));
 
     private static int FreePort()
     {

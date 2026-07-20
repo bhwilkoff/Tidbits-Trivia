@@ -1,0 +1,11 @@
+{
+  "name": "tidbits-auth",
+  "private": true,
+  "type": "module",
+  "description": "HTTPS bounce that makes Sign in with Apple work for the native Windows app (docs/APPLE-SIGNIN-WINDOWS.md). Stateless, holds no secrets.",
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  }
+}

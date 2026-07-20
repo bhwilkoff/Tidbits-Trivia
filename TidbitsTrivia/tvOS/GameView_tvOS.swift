@@ -688,6 +688,14 @@ struct TVResultsView: View {
             .frame(maxWidth: .infinity)
         }
         .defaultFocus($playAgainFocused, true)
+        // tvOS contributes to the global Daily board (so a living-room player is ranked);
+        // the board-VIEWING surface is a fast-follow (needs a TVTheme dark restyle — the
+        // shared cream DailyBoardContent would clash with the ten-foot dark design).
+        .task {
+            if summary.mode == .daily, summary.dailyDay == nil {
+                await identity.submitDailyBoard(summary: summary)
+            }
+        }
     }
 
     /// F2 — the full missed-fact recap at ten feet: every wrong answer becomes a

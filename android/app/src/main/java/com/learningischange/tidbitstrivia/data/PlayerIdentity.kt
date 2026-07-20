@@ -182,6 +182,25 @@ object PlayerIdentity {
         val key = profileId ?: return
         scope.launch { runCatching { FirebaseNet.setDailyScore(key, day, score) } }
     }
+
+    /** The Daily's global board (docs/DAILY-BOARD-CONTRACT.md): after finishing TODAY's
+     *  Daily, write this player's one row so the hourly cron ranks the field. Keyed by the
+     *  AUTH uid (like standings). Free — sign-in not required. `marks` is the 7-char hit
+     *  string, aligned to the shared pickDaily order by the caller (which has the answers),
+     *  so per-question accuracy is comparable across players. */
+    fun submitDailyBoard(marks: String, score: Int, correct: Int, ms: Long) {
+        val name = profile?.name ?: "Player"
+        val seed = profile?.avatarSeed ?: ""
+        scope.launch {
+            val uid = FirebaseNet.uid() ?: return@launch
+            runCatching {
+                FirebaseNet.setDailyBoard(dayKey(), uid, mapOf(
+                    "name" to name, "avatarSeed" to seed,
+                    "score" to score.toLong(), "correct" to correct.toLong(),
+                    "marks" to marks, "ms" to ms, "at" to System.currentTimeMillis()))
+            }
+        }
+    }
     /** Reconcile the local daily log with the synced one. On sign-in, push local (anon)
      *  plays first so nothing is lost; then pull the union into the local store. */
     suspend fun syncDailyLog(store: Store, pushLocal: Boolean = false) {

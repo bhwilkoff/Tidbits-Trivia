@@ -7,6 +7,34 @@
 > `docs/ROADMAP.md`, `docs/DATA-CONTRACT.md`. Detailed per-round history is in
 > `ARCHIVE.md`.
 
+## Current state (2026-07-19) — SHIP 1.6.46
+
+**Daily global board brought to ALL SIX platforms + version bump 1.6.46 + shipped.**
+
+Every platform now RANKS in the same global Daily board (the data-plane parity that
+matters — a Windows/Android/tvOS player's daily counts worldwide):
+- **Viewing UI shipped: web + iOS + macOS** (shared `Core/Views/DailyBoardContent.swift`
+  wrapped per platform; macOS via a sheet, iOS via NavigationStack). All build-verified
+  (iOS/macOS/tvOS xcodebuild BUILD SUCCEEDED).
+- **tvOS + Android + Windows CONTRIBUTE** (submit → globally ranked). Core logic tested:
+  Windows `DailyBoardApi` + 3 golden tests (259 green — a test caught my own marks
+  arithmetic error), Android `submitDailyBoard` (gradle BUILD SUCCESSFUL), tvOS submit
+  in `TVResultsView`. Board-VIEWING UI is a uniform **fast-follow** (tvOS needs a
+  TVTheme dark restyle; Android/Windows need the native board screen).
+- Daily-parity gate still green at 7 (cron picker == web picker over the real corpus).
+
+**Version 1.6.46 across all:** Apple `MARKETING_VERSION=1.6.46`/build 87, Android
+`versionName 1.6.46`/vc67, Windows MSIX `1.6.46.0` (stamp tool synced manifest).
+
+**Windows CLI dev+ship stack CONFIRMED set up** (owner asked): dev = `dotnet test` on the
+Mac head + `windows-repl.yml` gate; ship = `gh workflow run windows-store.yml`. Bootstrap
+done (Store ID 9NRKS9LDRCWC, secrets set).
+
+**SHIP:** web auto-deploys on push; Apple `appstore-build.yml`, Android `android-build.yml`,
+Windows `windows-store.yml` triggered (see the commit + the ship note at session end).
+
+---
+
 ## Current state (2026-07-19) — latest+1
 
 **"Do both" — iOS Daily-board port (build-verified) + push-notifications

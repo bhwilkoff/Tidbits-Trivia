@@ -152,6 +152,9 @@ struct ResultsView_macOS: View {
     let summary: GameSummary
     let onPlayAgain: (() -> Void)?
     let onDone: () -> Void
+    @State private var showBoard = false
+
+    private var isTodayDaily: Bool { summary.mode == .daily && summary.dailyDay == nil }
 
     var body: some View {
         ScrollView {
@@ -164,6 +167,13 @@ struct ResultsView_macOS: View {
                     stat("\(summary.correct)/\(summary.total)", "Correct", Tidbits.Palette.mint)
                     stat("\(Int(summary.accuracy * 100))%", "Accuracy", Tidbits.Palette.blue)
                     stat("\(summary.maxStreak)", "Best streak", Tidbits.Palette.coral)
+                }
+                if isTodayDaily {
+                    Button { showBoard = true } label: {
+                        Label("See how the world did", systemImage: "globe")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(CompactButtonStyle(fill: Tidbits.Palette.blue.opacity(0.14)))
                 }
                 if !summary.missed.isEmpty {
                     VStack(alignment: .leading, spacing: 10) {
@@ -198,6 +208,24 @@ struct ResultsView_macOS: View {
             .frame(maxWidth: .infinity)
         }
         .background(Tidbits.Palette.bg)
+        .task { if isTodayDaily { await PlayerIdentityStore.shared.submitDailyBoard(summary: summary) } }
+        .sheet(isPresented: $showBoard) {
+            VStack(spacing: 0) {
+                DailyBoardContent(day: QuestionProvider.dayKey(), myScore: summary.score, myMarks: todayMarks)
+                Button("Done") { showBoard = false }
+                    .buttonStyle(CompactButtonStyle())
+                    .keyboardShortcut(.cancelAction)
+                    .padding(.bottom, 16)
+            }
+            .frame(minWidth: 460, minHeight: 560)
+        }
+    }
+
+    /// The player's 7-char hit string aligned to the shared pickDaily order.
+    private var todayMarks: String {
+        let ids = CorpusDatabase.shared.orderedIDs(categoryID: "mixed")
+        let qids = DailyPick.pick(ids: ids, day: QuestionProvider.dayKey(), categoryID: "mixed", count: GameMode.daily.questionCount)
+        return DailyBoard.marks(answered: summary.answered, qids: qids)
     }
 
     private func stat(_ value: String, _ label: String, _ tint: Color) -> some View {

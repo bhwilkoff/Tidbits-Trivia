@@ -237,6 +237,11 @@ public partial class PlayView : UserControl
         {
             var s = engine.Summary;
             data.Daily.Record(s.DailyDay ?? day, s.Score, s.Correct, s.Total);
+            // Contribute to the global Daily board (docs/DAILY-BOARD-CONTRACT.md) — a
+            // Windows player is ranked worldwide. Board-VIEWING UI is a fast-follow.
+            var id = data.Identity.Current;
+            _ = Tidbits.Core.Networking.DailyBoardApi.SubmitAsync(
+                data.Rtdb, data.Sources.Corpus, s, id.Name, id.AvatarSeed);
         };
         Landing.IsVisible = false;
         GameHost.Content = new GameView { DataContext = vm };

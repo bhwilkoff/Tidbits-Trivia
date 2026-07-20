@@ -93,6 +93,11 @@ object FirebaseNet {
         @Suppress("UNCHECKED_CAST")
         return snap.value as? Map<String, Any?>
     }
+    // The Daily's global board (docs/DAILY-BOARD-CONTRACT.md): one write per player per day
+    // to dailyBoard/{day}/{uid}. Keyed by the AUTH uid (rule: own-uid write only).
+    suspend fun setDailyBoard(day: String, uid: String, obj: Map<String, Any?>) {
+        db.getReference("dailyBoard/$day/$uid").setValue(obj).await()
+    }
     suspend fun setStanding(path: String, obj: Map<String, Any?>) {
         db.getReference(path).setValue(obj).await()
     }

@@ -461,7 +461,20 @@ class GameState(
         phase = GamePhase.FINISHED
         if (!recorded) {
             recorded = true
-            if (mode == Mode.DAILY) { val dk = dailyDay ?: dayKey(); store.recordDaily(dk, score); com.learningischange.tidbitstrivia.data.PlayerIdentity.syncDailyScore(dk, score) }
+            if (mode == Mode.DAILY) {
+                val dk = dailyDay ?: dayKey(); store.recordDaily(dk, score); com.learningischange.tidbitstrivia.data.PlayerIdentity.syncDailyScore(dk, score)
+                // Contribute to the global Daily board (today only) — an Android player is
+                // ranked worldwide. marks are aligned to the shared pickDaily order (by qid,
+                // not play order) so per-question accuracy is comparable. Board-VIEWING UI is
+                // a fast-follow.
+                if (dailyDay == null) {
+                    val qids = Corpus.daily(dk, Mode.DAILY.count).map { it.id }
+                    val correctById = answered.associate { it.q.id to it.correct }
+                    val marks = qids.joinToString("") { if (correctById[it] == true) "1" else "0" }
+                    val ms = (answered.sumOf { it.taken } * 1000).toLong()
+                    com.learningischange.tidbitstrivia.data.PlayerIdentity.submitDailyBoard(marks, score, correctCount, ms)
+                }
+            }
             // Only TODAY'S daily feeds the streak — archive catch-ups don't (R-DAILY-1).
             val details = answered.map { Store.AnswerDetail(it.q.id, it.q.prompt, it.q.categoryId, it.correct, it.q.answerText) }
             store.addRecord(Store.Rec(mode.name, category.id, score, correctCount, answered.size, maxStreak, dayKey(), answers = details),

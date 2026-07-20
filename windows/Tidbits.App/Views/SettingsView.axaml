@@ -23,6 +23,8 @@
                 <StackPanel Orientation="Horizontal" Spacing="10">
                     <Button x:Name="SignInButton" Content="Sign in with Google"
                             Click="OnSignIn" Padding="14,8"/>
+                    <Button x:Name="SignInAppleButton" Content="Sign in with Apple"
+                            Click="OnSignInApple" Padding="14,8"/>
                     <Button x:Name="SignOutButton" Content="Sign out" IsVisible="False"
                             Click="OnSignOut" Padding="14,8"/>
                 </StackPanel>

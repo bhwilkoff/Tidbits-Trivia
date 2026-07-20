@@ -34,12 +34,14 @@ public partial class SettingsView : UserControl
                 ? $"Signed in as {e}. Your records sync across your devices."
                 : "Signed in. Your records sync across your devices.";
             SignInButton.IsVisible = false;
+            SignInAppleButton.IsVisible = false;
             SignOutButton.IsVisible = true;
         }
         else
         {
             AccountStatus.Text = "Playing on this device only.";
             SignInButton.IsVisible = true;
+            SignInAppleButton.IsVisible = true;
             SignOutButton.IsVisible = false;
         }
 
@@ -56,6 +58,22 @@ public partial class SettingsView : UserControl
         {
             SignInButton.IsEnabled = true;
             SignInButton.Content = "Sign in with Google";
+            RefreshAccount();
+        }
+    }
+
+    /// Apple rides an HTTPS bounce Worker rather than the loopback (Apple forbids
+    /// localhost/IP redirects) — docs/APPLE-SIGNIN-WINDOWS.md. Same convergence: Apple and
+    /// Google with the same verified email land on ONE profile.
+    private async void OnSignInApple(object? sender, RoutedEventArgs e)
+    {
+        SignInAppleButton.IsEnabled = false;
+        SignInAppleButton.Content = "Waiting for your browser…";
+        try { await GameData.Shared.Value.Account.SignInWithApple(); }
+        finally
+        {
+            SignInAppleButton.IsEnabled = true;
+            SignInAppleButton.Content = "Sign in with Apple";
             RefreshAccount();
         }
     }

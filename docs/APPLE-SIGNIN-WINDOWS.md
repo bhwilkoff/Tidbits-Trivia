@@ -1,8 +1,11 @@
 # Sign in with Apple on Windows — the $0 HTTPS bounce
 
-**Status: Worker DEPLOYED + live-verified 2026-07-20. App side + Apple portal registration
-remain.** Windows already has Google sign-in (RFC 8252 loopback + PKCE). Apple needs a
-different shape, and this is why.
+**Status: COMPLETE 2026-07-20 — Worker deployed + live-verified, app path built (270 tests),
+Apple Return URL registered + persistence-verified.** The only thing never exercised is a
+real Windows user clicking through Apple's consent screen.
+
+Windows already has Google sign-in (RFC 8252 loopback + PKCE). Apple needs a different
+shape, and this is why.
 
 ## Why the Google pattern doesn't work
 
@@ -109,12 +112,29 @@ Live at **`https://tidbits-auth.benwilkoff.workers.dev`** (account `benwilkoff@g
 > the Tidbits stack (Apple, Google Cloud, Firebase) is under `ben@learningischange.com`.
 > Functionally irrelevant; worth consolidating if the company's asset ownership ever matters.
 
-## REMAINING — owner step
+## Apple portal registration — DONE 2026-07-20
 
-Register the Return URL in the Apple Developer portal, on the **Services ID**
-`com.learningischange.tidbitstrivia.web` (the one web sign-in already uses):
+Registered on the Services ID `com.learningischange.tidbitstrivia.web` (Team `L2G756LY8N`,
+identifier confirmed from the DOM so a silent typo couldn't slip through):
 
-- **Return URL:** `https://tidbits-auth.benwilkoff.workers.dev/apple/callback`
+| | Value |
+|---|---|
+| Domain added | `tidbits-auth.benwilkoff.workers.dev` |
+| Return URL added | `https://tidbits-auth.benwilkoff.workers.dev/apple/callback` |
 
-Keep the existing Firebase handler URL registered too — web sign-in still needs it. Apple
-allows multiple Return URLs per Services ID.
+**Web sign-in was left untouched** — `tidbitstrivia.com` and
+`tidbits-trivia-f2ddb.firebaseapp.com` plus the Firebase `__/auth/handler` Return URL are
+all still registered (Apple confirmed "5 Website URLs" at save). Re-opened the config after
+a fresh page load to verify persistence, and read the stored Return URL back out of the DOM
+to confirm it matches `AppleSignIn.DefaultRedirectUri` character-for-character.
+
+> Apple notes settings can take **5 minutes to a few hours** to propagate, so a sign-in
+> attempted immediately after registration may fail before it starts working.
+
+## The one thing still unverified
+
+Nobody has completed a real Apple sign-in from Windows. Every layer is proven in isolation
+— the Worker against its deployed URL, the pure app logic by 270 tests, the portal config
+read back from Apple — but the end-to-end handshake (real consent → real id_token → Firebase
+→ email-keyed profile) needs a human on a Windows machine. Expect the first run to surface
+something; the likely candidates are propagation delay and the nonce round-trip.

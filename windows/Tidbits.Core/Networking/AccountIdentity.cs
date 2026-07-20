@@ -77,33 +77,7 @@ public sealed class AccountIdentity(FirebaseRtdb db, ITokenStore tokens, Windows
         {
             var local = Profile ?? PlayerIdentity.Profile.New(SuggestedName());
             var res = await _signIn.SignInWithGoogle(ct);
-
-            var email = FirstNonEmpty(res.Email, db.CurrentEmail());
-            if (email is null || !db.CurrentEmailVerified())
-            {
-                // Signed in, but not with a verified email — the RTDB rules would reject
-                // every email-keyed write, so stay uid-keyed and say so honestly.
-                AuthError = "Signed in, but that account has no verified email — "
-                          + "your records will stay on this device.";
-                return false;
-            }
-
-            await db.Put($"emailOwners/{PlayerIdentity.AccountKey(email)}", email);
-            var key = PlayerIdentity.AccountKey(email);
-            var existing = await db.Get<PlayerIdentity.Profile>(PlayerIdentity.PublicPath(key));
-            var merged = existing is null ? local : PlayerIdentity.Merge(local, existing);
-
-            if (PlayerIdentity.IsDefaultName(merged.Name) &&
-                FirstNonEmpty(res.DisplayName) is { } n)
-                merged = merged with { Name = n.Length > 24 ? n[..24] : n };
-
-            Profile = merged;
-            ProfileId = key;
-            AccountEmail = email;
-            await db.Put(PlayerIdentity.PublicPath(key), merged);
-            tokens.Set(EmailKey, email);
-            SignedIn = true;
-            return true;
+            return await AdoptFederated(local, res.Email, res.DisplayName);
         }
         catch (OAuthDeniedException e) when (e.IsUserCancellation)
         {
@@ -112,6 +86,31 @@ public sealed class AccountIdentity(FirebaseRtdb db, ITokenStore tokens, Windows
         catch (OAuthNotConfiguredException)
         {
             AuthError = "Google sign-in isn't available in this build yet.";
+            return false;
+        }
+        catch (Exception e)
+        {
+            AuthError = $"Sign-in couldn't complete. {e.Message}";
+            return false;
+        }
+    }
+
+    /// Sign in with Apple (docs/APPLE-SIGNIN-WINDOWS.md) — same re-keying as Google, so
+    /// Apple and Google with the same verified email converge on ONE profile.
+    public async Task<bool> SignInWithApple(CancellationToken ct = default)
+    {
+        if (SignedIn) return true;
+        AuthError = null;
+        try
+        {
+            var local = Profile ?? PlayerIdentity.Profile.New(SuggestedName());
+            var res = await _signIn.SignInWithApple(ct);
+            return await AdoptFederated(local, res.Email, res.DisplayName);
+        }
+        catch (OAuthDeniedException e) when (e.IsUserCancellation) { return false; }
+        catch (OAuthNotConfiguredException)
+        {
+            AuthError = "Apple sign-in isn't available in this build yet.";
             return false;
         }
         catch (Exception e)
@@ -132,6 +131,40 @@ public sealed class AccountIdentity(FirebaseRtdb db, ITokenStore tokens, Windows
         ProfileId = uid;
         Profile = await db.Get<PlayerIdentity.Profile>(PlayerIdentity.PublicPath(uid))
                   ?? PlayerIdentity.Profile.New(SuggestedName());
+    }
+
+    /// The shared tail of ANY federated sign-in (Google or Apple): re-key the profile onto
+    /// the verified email and merge this device's anonymous play into the account record.
+    /// Kept in one place so the two providers can never drift — that convergence is the
+    /// whole point of the email-keyed spine.
+    private async Task<bool> AdoptFederated(PlayerIdentity.Profile local, string? providerEmail, string? displayName)
+    {
+        var email = FirstNonEmpty(providerEmail, db.CurrentEmail());
+        if (email is null || !db.CurrentEmailVerified())
+        {
+            // Signed in, but not with a verified email — the RTDB rules would reject every
+            // email-keyed write, so stay uid-keyed and say so honestly rather than
+            // promising a sync that would silently fail.
+            AuthError = "Signed in, but that account has no verified email — "
+                      + "your records will stay on this device.";
+            return false;
+        }
+
+        var key = PlayerIdentity.AccountKey(email);
+        await db.Put($"emailOwners/{key}", email);
+        var existing = await db.Get<PlayerIdentity.Profile>(PlayerIdentity.PublicPath(key));
+        var merged = existing is null ? local : PlayerIdentity.Merge(local, existing);
+
+        if (PlayerIdentity.IsDefaultName(merged.Name) && FirstNonEmpty(displayName) is { } n)
+            merged = merged with { Name = n.Length > 24 ? n[..24] : n };
+
+        Profile = merged;
+        ProfileId = key;
+        AccountEmail = email;
+        await db.Put(PlayerIdentity.PublicPath(key), merged);
+        tokens.Set(EmailKey, email);
+        SignedIn = true;
+        return true;
     }
 
     /// Migrate an anonymous uid-keyed profile onto the email key the first time we see it.

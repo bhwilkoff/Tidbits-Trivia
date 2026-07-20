@@ -36,11 +36,11 @@ public static class GoogleOAuth
 
         public static readonly Config Default = new(
             Environment.GetEnvironmentVariable(EnvVar)
-            // TODO(owner): create a "Desktop app" OAuth client in Google Cloud console
-            // project 842242746909 and paste its id here (or set the env var above). Until
-            // then Windows Google sign-in is inert — the Account section simply doesn't
-            // appear, and nothing else is affected.
-            ?? "");
+            // The "Tidbits Windows (desktop)" OAuth client in Google Cloud project
+            // 842242746909 (created 2026-07-20). NOT a secret: a desktop client id ships
+            // inside every installed copy, and PKCE — not a client secret — is the proof
+            // (the desktop client's secret is deliberately unused by this loopback flow).
+            ?? "842242746909-9r4fl13sbn0v4io2614ekfgehd4c03l5.apps.googleusercontent.com");
 
         public bool IsConfigured => !string.IsNullOrWhiteSpace(ClientId);
     }

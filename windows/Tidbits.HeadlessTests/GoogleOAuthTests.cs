@@ -129,13 +129,13 @@ public class GoogleOAuthTests
     // MARK: - Configuration gate
 
     [Fact]
-    public void Config_is_driven_by_the_environment_so_the_id_stays_out_of_the_repo()
+    public void Default_ships_the_desktop_client_id_so_sign_in_is_available()
     {
-        // Default reflects whatever the environment says — unconfigured in a clean checkout,
-        // configured in CI or once the owner sets it. Assert the relationship, not a value,
-        // so the test doesn't flip depending on who runs it.
-        var fromEnv = Environment.GetEnvironmentVariable(GoogleOAuth.Config.EnvVar);
-        Assert.Equal(!string.IsNullOrWhiteSpace(fromEnv), GoogleOAuth.Config.Default.IsConfigured);
+        // The "Tidbits Windows (desktop)" client id ships in the code (not a secret — PKCE
+        // is the proof). So sign-in is configured out of the box; the env var can override.
+        Assert.True(GoogleOAuth.Config.Default.IsConfigured);
+        Assert.EndsWith(".apps.googleusercontent.com", GoogleOAuth.Config.Default.ClientId);
+        Assert.StartsWith("842242746909-", GoogleOAuth.Config.Default.ClientId);
     }
 
     [Fact]

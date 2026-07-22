@@ -2,7 +2,7 @@
 // Apple AppStore + GameEngine + views. Vanilla JS, no framework, no build.
 
 import { Corpus, Pictures, ThisOrThat, ClosestCall, Ordering, Matching, TypeAnswer, OddOneOut, Enumerate, Difficulty, matchesAccepted, Wikipedia, DailyBoard } from './api.js';
-import { Store, CATEGORIES, catColor, catById, MODES, NIGHT, STAKE_BUDGET, dayKey, APP_STORES, SITE_URL, CLUB, WeakSpotArena, StoryArchive, answerTextOf, Marathon, marathonAccuracy } from './store.js';
+import { Store, CATEGORIES, catColor, catById, MODES, NIGHT, STAKE_BUDGET, dayKey, APP_STORES, SITE_URL, CLUB, WeakSpotArena, StoryArchive, answerTextOf, Marathon, marathonAccuracy, KnowledgeAtlas } from './store.js';
 import { Scoring } from './engine.js';
 import { BOTS, houseBot, botById, VsMatch } from './bots.js';
 import { FirebaseNet } from './firebase.js';
@@ -102,6 +102,14 @@ function render() {
     app.innerHTML = `${header(currentTab())}<main class="main">${viewMarathon()}</main>`;
     bindMarathon(); document.title = 'Tidbits Trivia — Marathon'; return;
   }
+  // Tidbits Club EXCLUSIVE — Knowledge Atlas (docs/CLUB-FEATURES-BUILD.md
+  // "Feature 4"): a Records "see all" destination, canonical at #/atlas. The
+  // anti-Sporcle rule: every domain row here is a tap target into a round —
+  // it interprets AND acts, never a passive stats wall.
+  if (location.hash.startsWith('#/atlas')) {
+    app.innerHTML = `${header(currentTab())}<main class="main">${viewAtlas()}</main>`;
+    bindAtlas(); document.title = 'Tidbits Trivia — Knowledge Atlas'; return;
+  }
   const tab = currentTab();
   app.innerHTML = `
     ${header(tab)}
@@ -127,6 +135,7 @@ const ICON = {
   target: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.2"/><circle cx="8" cy="8" r="3.2"/></g><circle cx="8" cy="8" r="1.1" fill="currentColor"/></svg>',
   book: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M2 2.9c0-.6.5-1 1.1-.9 1.7.3 3.3.9 4.9 1.8 1.6-.9 3.2-1.5 4.9-1.8.6-.1 1.1.3 1.1.9v8.7c0 .5-.4.9-.9 1-1.8.3-3.5.9-5.1 1.8h-.8c-1.6-.9-3.3-1.5-5.1-1.8-.5-.1-.9-.5-.9-1z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M8 3.8v9" stroke="currentColor" stroke-width="1.4"/></svg>',
   flag: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M3.2 1.4v13.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M3.2 2.1c1.8-1 3.6.9 5.4 0s3.6.9 3.6.9v5.6c-1.8.9-3.6-.9-5.4 0s-3.6-.9-3.6-.9z" fill="currentColor"/></svg>',
+  map: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M1.5 3.1l4-1.5 5 1.5 4-1.5v11l-4 1.5-5-1.5-4 1.5z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M5.5 1.6v10.9M10.5 3.1v10.9" stroke="currentColor" stroke-width="1.3"/></svg>',
 };
 
 // The portable Tidbits identity — the web twin of the iOS/Android profile screens.
@@ -496,6 +505,90 @@ function marathonHistoryRow() {
   return `<a href="#/marathon" class="card pad" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;margin-bottom:14px">
     ${ICON.flag}<span style="flex:1"><b>Marathon</b>${club ? '' : ' <span class="club-chip">CLUB</span>'}
       <div class="muted" style="font-size:.85em">${h(sub)}</div></span><span class="chev">›</span></a>`;
+}
+
+// Tidbits Club EXCLUSIVE — Knowledge Atlas (docs/CLUB-FEATURES-BUILD.md "Feature
+// 4"). A Records destination (mirrors storyArchiveRow/marathonHistoryRow;
+// R-REC-1); Club-marked, canonical at #/atlas. Does NOT gate or duplicate the
+// free Topic Levels / Pie sections already on Records — this is the additive
+// deeper 12-month interpreted layer.
+function atlasRow() {
+  const club = Entitlement.isClub;
+  const n = club ? KnowledgeAtlas.domains().length : 0;
+  const sub = club
+    ? (n ? `${n} domain${n === 1 ? '' : 's'} mapped over the last 12 months` : 'A map of what you actually know, by domain')
+    : 'A map of what you actually know, by domain, over time';
+  return `<a href="#/atlas" class="card pad" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;margin-bottom:14px">
+    ${ICON.map}<span style="flex:1"><b>Knowledge Atlas</b>${club ? '' : ' <span class="club-chip">CLUB</span>'}
+      <div class="muted" style="font-size:.85em">${h(sub)}</div></span><span class="chev">›</span></a>`;
+}
+
+// The trap to avoid (design spec): "five analytics screens reads as a Sporcle
+// stats page." So EVERY domain row here is a tap target that launches a real
+// round in that domain (the same category-filtered launch Customize/Quick Play
+// use) — it interprets AND acts, never a passive readout. Non-members get a
+// real preview (their own strongest/weakest domain, or an honest sample) + the
+// paywall — never a blank wall.
+function viewAtlas() {
+  const back = `<button data-back style="background:none;border:none;font-weight:800;color:var(--color-accent);cursor:pointer;padding:8px 0;font-size:1rem">‹ Back</button>`;
+  if (!Entitlement.isClub) {
+    const preview = KnowledgeAtlas.previewLine() || "Club maps every domain you play across 12 months and shows what's rising or drifting.";
+    return `${back}<h1 class="page-title">Knowledge Atlas</h1>
+      <div class="card pad" style="margin-bottom:14px"><p class="body-strong">${h(preview)}</p></div>
+      <div class="card pad" style="text-align:center">
+        <p class="body-strong">A map of what you actually know, by domain, over time.</p>
+        <p class="muted">Plain accuracy and sample counts — no opaque score. Tap any domain to play a round in it.</p>
+        <a href="#/club" class="btn btn-primary" style="margin-top:12px;display:inline-block;text-decoration:none">Join Tidbits Club</a>
+      </div>`;
+  }
+  const domains = KnowledgeAtlas.domains();
+  const decaying = KnowledgeAtlas.decayRadar();
+  if (!domains.length) {
+    return `${back}<h1 class="page-title">Knowledge Atlas</h1>
+      <div class="empty card pad"><p class="body-strong">Not enough history yet.</p>
+      <p class="muted">Play across a few domains and your Atlas fills in — it needs a few weeks of history to show a trajectory.</p></div>`;
+  }
+  return `${back}<h1 class="page-title">Knowledge Atlas</h1>
+    <p class="muted">Your accuracy by domain over the trailing 12 months. Tap any domain to play a round in it.</p>
+    ${domains.map(atlasDomainRowHTML).join('')}
+    ${decaying.length ? atlasDecaySectionHTML(decaying) : ''}`;
+}
+
+// Domain row: accuracy + sample size + a trajectory arrow (▲▼) — every number
+// a door, per the design spec, so the whole row is a tap target into a round.
+function atlasDomainRowHTML(d) {
+  const c = catById(d.id), col = catColor(c);
+  const traj = d.trajectoryDelta == null ? '' :
+    `<span class="traj ${d.trajectoryDelta >= 0 ? 'up' : 'down'}">${d.trajectoryDelta >= 0 ? '▲' : '▼'}${Math.round(Math.abs(d.trajectoryDelta) * 100)}</span>`;
+  return `<button class="card topic-row rec-tap" data-atlas-domain="${d.id}">
+    <span class="topic-ic" style="background:${col}">${c.symbol}</span>
+    <div class="topic-main">
+      <div class="topic-head"><b>${h(c.name)}</b>${traj}<span class="lvl" style="background:${col}">${Math.round(d.accuracy * 100)}%</span></div>
+      <div class="xp-track"><div class="xp-fill" style="width:${Math.max(6, d.accuracy * 100)}%;background:${col}"></div></div>
+      <div class="muted topic-sub">${d.correct}/${d.total} answered · last 12 months</div>
+    </div><span class="chev">›</span></button>`;
+}
+
+// Decay radar: domains that were strong 6+ months ago and have since slipped —
+// each carries its own "Shore it up" round rather than just a number.
+function atlasDecaySectionHTML(decaying) {
+  return `<h2 class="section">Decay radar</h2>
+    <p class="muted">Domains you were strong in 6+ months ago that have since slipped.</p>
+    ${decaying.map((d) => {
+      const c = catById(d.id);
+      return `<div class="card game-row atlas-decay-row">
+        <span class="game-main"><span class="game-head"><b>${h(c.name)}</b></span>
+        <span class="muted game-sub">${Math.round(d.pastAccuracy * 100)}% then → ${Math.round(d.recentAccuracy * 100)}% now</span></span>
+        <button type="button" class="btn btn-primary" data-atlas-decay="${d.id}">Shore it up</button>
+      </div>`;
+    }).join('')}`;
+}
+
+function bindAtlas() {
+  app.querySelector('[data-back]')?.addEventListener('click', () => { if (history.length > 1) history.back(); else location.hash = '#/records'; });
+  if (!Entitlement.isClub) return;
+  app.querySelectorAll('[data-atlas-domain]').forEach((b) => b.addEventListener('click', () => startGame('classic', catById(b.dataset.atlasDomain))));
+  app.querySelectorAll('[data-atlas-decay]').forEach((b) => b.addEventListener('click', () => startGame('classic', catById(b.dataset.atlasDecay), { label: 'Shore it up' })));
 }
 
 let archiveDomain = null, archiveFilter = null, archiveText = '';
@@ -1291,6 +1384,7 @@ function viewRecords() {
     <a href="#/duels" class="card pad" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;margin-bottom:14px"><span style="flex:1;font-weight:700">Duels</span><span class="chev">›</span></a>
     ${storyArchiveRow()}
     ${marathonHistoryRow()}
+    ${atlasRow()}
     <a href="#/club" class="card pad" style="display:flex;align-items:center;gap:10px;text-decoration:none;margin-bottom:14px;background:${Entitlement.isClub ? 'var(--color-surface)' : '#2D5BFF'};color:${Entitlement.isClub ? 'inherit' : '#fff'}">⭐️<span style="flex:1;font-weight:800">${Entitlement.isClub ? 'Tidbits Club — Member' : 'Join Tidbits Club'}</span><span class="chev">›</span></a>
     <div class="banner card daily"><div><div class="muted">DAY STREAK</div><div class="big">${Identity.profile?.streak?.current || 0} days</div></div><div class="muted">best ${Identity.profile?.streak?.longest || 0} 🔥</div></div>
     <div class="stat-row">

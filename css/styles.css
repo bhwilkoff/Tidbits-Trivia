@@ -389,6 +389,11 @@ body {
    archive's domain tag can reuse it without duplicating the rule. */
 .lvl { font-weight: 900; font-size: 12px; color: #fff; padding: 2px 9px; border-radius: 999px; border: 2px solid var(--color-border); }
 .story-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+
+/* ---- Knowledge Atlas (Tidbits Club EXCLUSIVE — docs/CLUB-FEATURES-BUILD.md "Feature 4") ---- */
+.traj { font-weight: 900; font-size: 11px; color: #fff; padding: 2px 7px; border-radius: 999px; border: 2px solid var(--color-border); }
+.traj.up { background: var(--color-mint); } .traj.down { background: var(--color-primary); }
+.atlas-decay-row .btn { padding: 10px 14px; font-size: 14px; }
 .fav-star { font-size: 18px; line-height: 1; color: var(--color-ink-soft); cursor: pointer; }
 .fav-star.on { color: var(--color-yellow); }
 .daily-list { display: flex; flex-direction: column; gap: 6px; max-height: 46vh; overflow-y: auto; }

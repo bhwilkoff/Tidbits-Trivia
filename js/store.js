@@ -540,3 +540,90 @@ export const Marathon = {
 };
 
 export function marathonAccuracy(entry) { return entry && entry.total ? entry.correct / entry.total : 0; }
+
+// Tidbits Club EXCLUSIVE — Knowledge Atlas (docs/CLUB-FEATURES-BUILD.md "Feature
+// 4"). A transparent, interpreted layer over the SAME per-game rows the free
+// Topic Levels / Pie already read (Store.records() categoryID/correct/total) —
+// additive, never a lock on what's already free (R-MON-1). PURE DERIVATION, no
+// new storage; no opaque "mastery score" — every number here is a plain count.
+//
+// A game record carries no per-answer timestamp on the web (mirrors Apple's
+// AnswerDetail), so month-bucketing uses each GAME's `at`/`date` for ALL of
+// that game's answers — the same granularity the corpus already persists.
+// Trailing 12 months only; older history keeps feeding the free lifetime
+// Pie/Levels but drops out of the Atlas's month math.
+function atlasMonthsAgo(ts, now = Date.now()) {
+  const d = new Date(ts), n = new Date(now);
+  return Math.max(0, (n.getFullYear() - d.getFullYear()) * 12 + (n.getMonth() - d.getMonth()));
+}
+function atlasRows() {
+  return Store.records()
+    .map((r) => ({ categoryID: r.categoryID, correct: r.correct, total: r.total, ts: r.at || (r.date ? Date.parse(r.date) : Date.now()) }))
+    .filter((r) => atlasMonthsAgo(r.ts) <= 11);
+}
+// Below `KnowledgeAtlas.sampleFloor` answers in a window, a read is withheld
+// rather than shown noisy — "don't flag a domain with <8 answers" (design spec).
+function atlasQuarterAccuracy(rows, lo, hi) {
+  const mine = rows.filter((r) => { const m = atlasMonthsAgo(r.ts); return m >= lo && m <= hi; });
+  const total = mine.reduce((s, r) => s + r.total, 0);
+  if (total < KnowledgeAtlas.sampleFloor) return null;
+  const correct = mine.reduce((s, r) => s + r.correct, 0);
+  return correct / total;
+}
+
+export const KnowledgeAtlas = {
+  sampleFloor: 8,
+  strongThreshold: 0.70,
+  decayDelta: 0.12,
+
+  /** Per-domain trailing-12-month standing, domains never played omitted (same
+   * convention as Store.progress() for the free Pie/Levels). `trajectoryDelta`
+   * is this-quarter (months 0-2) minus prior-quarter (months 3-5) accuracy;
+   * null when either quarter is too thin to read — an honest "not enough
+   * history yet" rather than a noisy arrow. */
+  domains() {
+    const rows = atlasRows();
+    return PROGRESS.domains.map((id) => {
+      const mine = rows.filter((r) => r.categoryID === id);
+      if (!mine.length) return null;
+      const correct = mine.reduce((s, r) => s + r.correct, 0);
+      const total = mine.reduce((s, r) => s + r.total, 0);
+      const recentAccuracy = atlasQuarterAccuracy(mine, 0, 2);
+      const priorAccuracy = atlasQuarterAccuracy(mine, 3, 5);
+      const trajectoryDelta = (recentAccuracy != null && priorAccuracy != null) ? recentAccuracy - priorAccuracy : null;
+      return {
+        id, correct, total, accuracy: total ? correct / total : 0,
+        trajectoryDelta, isDecaying: trajectoryDelta != null && trajectoryDelta <= -this.decayDelta,
+      };
+    }).filter(Boolean).sort((a, b) => b.total - a.total);
+  },
+
+  /** Domains strong (>=strongThreshold) 6-11 months ago that have since dropped
+   * by >=decayDelta in the last 6 months — both windows honest about sample
+   * size — the Decay radar's "shore it up" list. */
+  decayRadar() {
+    const rows = atlasRows();
+    return PROGRESS.domains.map((id) => {
+      const mine = rows.filter((r) => r.categoryID === id);
+      const past = atlasQuarterAccuracy(mine, 6, 11);
+      const recent = atlasQuarterAccuracy(mine, 0, 5);
+      if (past == null || recent == null || past < this.strongThreshold || recent > past - this.decayDelta) return null;
+      return { id, pastAccuracy: past, recentAccuracy: recent, delta: recent - past };
+    }).filter(Boolean).sort((a, b) => a.delta - b.delta);
+  },
+
+  /** A genuine strongest + weakest domain for the non-member teaser
+   * (MONETIZATION §4a: "a real preview, never a nag"). null until the player
+   * has enough history for at least one honest read. */
+  previewLine() {
+    const ds = this.domains().filter((d) => d.total >= 3).sort((a, b) => a.accuracy - b.accuracy);
+    if (!ds.length) return null;
+    const weakest = ds[0], strongest = ds[ds.length - 1];
+    const wPct = Math.round(weakest.accuracy * 100), wName = catById(weakest.id).name;
+    if (strongest.id === weakest.id) {
+      return `${wPct}% in ${wName} so far — Club maps every domain across 12 months and shows what's rising or drifting.`;
+    }
+    const sPct = Math.round(strongest.accuracy * 100), sName = catById(strongest.id).name;
+    return `${sPct}% in ${sName}, ${wPct}% in ${wName} — Club maps everything you know and where it's drifting.`;
+  },
+};

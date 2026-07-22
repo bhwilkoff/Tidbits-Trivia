@@ -55,6 +55,18 @@ class GameState(
         val trueMissIds = weakSpotReasons.filterValues { it.startsWith("Missed") }.keys
         return answered.count { it.correct && trueMissIds.contains(it.q.id) }
     }
+
+    /** Marathon only (Club — docs/CLUB-FEATURES-BUILD.md "Feature 3"): how many
+     *  questions were already answered in EARLIER sessions of this same run — set
+     *  once by the container right after resolving/creating the run, so the HUD shows
+     *  the true position out of 200 (e.g. "84 / 200"), not this session's local
+     *  (resumed-slice) index. 0 outside [Mode.MARATHON]. */
+    var marathonOffset by mutableIntStateOf(0)
+
+    /** Marathon's "Start a new Marathon": swap in a FRESH run's remaining questions
+     *  (a brand-new custom set) rather than replay the just-finished one — mirror of
+     *  [rebuildWeakSpot]. */
+    fun rebuildMarathon(questions: List<Question>) { custom = questions }
     /** Fired when this device locks an answer (networked night → report to host). */
     var onLocalAnswer: ((score: Int, correct: Boolean) -> Unit)? = null
     /** Host-paced: answered this question, holding until the host reveals. */
@@ -102,7 +114,11 @@ class GameState(
     val current: Question? get() = questions.getOrNull(index)
     val correctCount: Int get() = answered.count { it.correct }
     val isLast: Boolean get() = mode != Mode.TIME_ATTACK && mode != Mode.SURVIVAL && index + 1 >= questions.size
-    val progressLabel: String get() = if (mode == Mode.TIME_ATTACK || mode == Mode.SURVIVAL) "#${index + 1}" else "${index + 1} / ${questions.size}"
+    val progressLabel: String get() = when {
+        mode == Mode.MARATHON -> "${marathonOffset + index + 1} / ${marathonOffset + questions.size}"
+        mode == Mode.TIME_ATTACK || mode == Mode.SURVIVAL -> "#${index + 1}"
+        else -> "${index + 1} / ${questions.size}"
+    }
     val clockFraction: Double get() = if (budget <= 0) 0.0 else (remaining / budget).coerceIn(0.0, 1.0)
 
     fun answerState(i: Int): AnswerVisual {
@@ -484,6 +500,13 @@ class GameState(
         phase = GamePhase.FINISHED
         if (!recorded) {
             recorded = true
+            // Marathon writes NO GameRecord/miss/seen-story/identity update — a single
+            // session's slice of a multi-session run would misreport lifetime stats
+            // (deliberate; mirrors the Apple/web reference). It writes its own permanent
+            // MarathonScore instead, the instant the run reaches its TRUE end — driven by
+            // the container (GameScreen), not here, since a run's true total spans however
+            // many sessions it took to finish, not just this one.
+            if (mode == Mode.MARATHON) return
             if (mode == Mode.DAILY) {
                 val dk = dailyDay ?: dayKey(); store.recordDaily(dk, score); com.learningischange.tidbitstrivia.data.PlayerIdentity.syncDailyScore(dk, score)
                 // Contribute to the global Daily board (today only) — an Android player is

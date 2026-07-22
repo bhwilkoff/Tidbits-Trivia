@@ -12,6 +12,7 @@ import androidx.compose.runtime.setValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.learningischange.tidbitstrivia.app.AppNameApplication
 import com.learningischange.tidbitstrivia.data.Entitlement
+import com.learningischange.tidbitstrivia.data.Marathon
 import com.learningischange.tidbitstrivia.ui.AppRoot
 import com.learningischange.tidbitstrivia.ui.theme.AppTheme
 
@@ -31,6 +32,12 @@ class MainActivity : ComponentActivity() {
         // the emulator pre-launch, with no real purchase (docs/CLUB-FEATURES-BUILD.md).
         if (intent.hasExtra("tidbits_club_debug")) {
             Entitlement.setDebugForceClub(intent.getBooleanExtra("tidbits_club_debug", false))
+        }
+        // DEBUG-only env hook (no-op in release): `--ei marathon_len <n>` shortens a
+        // Marathon run so it can be played to completion on the emulator — production
+        // always sees the full 200 (docs/CLUB-FEATURES-BUILD.md "Feature 3").
+        if (BuildConfig.DEBUG && intent.hasExtra("marathon_len")) {
+            Marathon.debugLengthOverride = intent.getIntExtra("marathon_len", 0).takeIf { it > 0 }
         }
         setContent {
             var dynamic by remember { mutableStateOf(store.dynamicColorEnabled()) }

@@ -133,6 +133,13 @@ enum class Mode(val title: String, val blurb: String, val perQuestion: Int?, val
     // playableModes (the free Customize/Surprise-Me pool) — it has its own Home
     // entry point (WeakSpotArena) and is always launched with a pre-built custom set.
     WEAK_SPOT("Weak-Spot Arena", "Turn your misses into a round.", 20, null, 10),
+    // Tidbits Club EXCLUSIVE (docs/CLUB-FEATURES-BUILD.md "Feature 3"). Never in
+    // playableModes — its own Home entry point (Marathon), always launched with a
+    // pre-resolved custom set (the run's remaining questions). `count` is a nominal
+    // cap only — the real per-session length is whatever's left of the run; see
+    // Marathon.runLength for the (debug-only) shortened test length. 45s/Q is
+    // generous by design — endurance, not speed.
+    MARATHON("Marathon", "200 questions. Play it across as many sittings as you like.", 45, null, 200),
 }
 
 // Trivia Night ("bar trivia") — a configurable night of themed rounds, each round
@@ -288,6 +295,10 @@ object Corpus {
     }
 
     fun byId(id: String): Question? = all.firstOrNull { it.id == id }
+
+    /** Every question id — the Marathon seeded-pick pool (docs/CLUB-FEATURES-BUILD.md
+     *  "Feature 3"); mirrors Apple's `CorpusDatabase.shared.orderedIDs(categoryID: "mixed")`. */
+    fun allIds(): List<String> = all.map { it.id }
 
     /** Create feature: real, already-vetted corpus questions matching the topic's
      *  words (prompt + Wikipedia source title). Grounded generation's retrieval
@@ -1038,6 +1049,7 @@ class Store(context: Context) {
             .remove("records").remove("calibration").remove("answerTelemetry")
             .remove("missed").remove("streak_cur").remove("streak_best").remove("streak_day")
             .remove("stories")
+            .remove("marathonRun").remove("marathonScores")
             .apply()
     }
 
@@ -1147,6 +1159,73 @@ class Store(context: Context) {
         existing.put("fav", fav)
         prefs.edit().putString("stories", o.toString()).apply()
         return fav
+    }
+
+    // ---- Marathon (Club — docs/CLUB-FEATURES-BUILD.md "Feature 3") ----
+    // The AT-MOST-ONE in-progress run + the permanent completed-run history. The
+    // resume-across-sessions mechanic is entirely in the persisted shape here: every
+    // answer round-trips through [saveMarathonRun] immediately (Marathon.record), so a
+    // process death never loses progress. A corrupt/legacy blob reads back as "no run
+    // in progress" rather than crashing.
+
+    fun marathonRun(): MarathonRun? {
+        val raw = prefs.getString("marathonRun", null) ?: return null
+        return try {
+            val o = JSONObject(raw)
+            val idsArr = o.getJSONArray("ids")
+            val ids = (0 until idsArr.length()).map { idsArr.getString(it) }
+            val resArr = o.optJSONArray("results") ?: org.json.JSONArray()
+            val results = (0 until resArr.length()).map { i ->
+                val r = resArr.getJSONObject(i)
+                MarathonAnswerRecord(r.getString("qid"), r.getString("cat"), r.getInt("diff"), r.getBoolean("ok"))
+            }
+            MarathonRun(o.getString("seed"), ids, o.getInt("currentIndex"), results, o.getLong("startedAt"), o.getLong("lastPlayedAt"))
+        } catch (e: Exception) { null }
+    }
+
+    /** Persist the run immediately — called after EVERY answer ([Marathon.record]) so
+     *  a crash/quit never loses progress (the whole point of Marathon). */
+    fun saveMarathonRun(run: MarathonRun) {
+        val o = JSONObject()
+        o.put("seed", run.seed)
+        o.put("ids", org.json.JSONArray(run.ids))
+        val resArr = org.json.JSONArray()
+        run.results.forEach { r ->
+            resArr.put(JSONObject().put("qid", r.qid).put("cat", r.categoryId).put("diff", r.difficulty).put("ok", r.correct))
+        }
+        o.put("results", resArr)
+        o.put("currentIndex", run.currentIndex)
+        o.put("startedAt", run.startedAt)
+        o.put("lastPlayedAt", run.lastPlayedAt)
+        prefs.edit().putString("marathonRun", o.toString()).apply()
+    }
+
+    fun clearMarathonRun() = prefs.edit().remove("marathonRun").apply()
+
+    /** Past completed Marathons, most recent first — the permanent history. */
+    fun marathonHistory(): List<MarathonScore> {
+        val arr = org.json.JSONArray(prefs.getString("marathonScores", "[]") ?: "[]")
+        return (0 until arr.length()).map { i ->
+            val o = arr.getJSONObject(i)
+            val domArr = o.optJSONArray("domains") ?: org.json.JSONArray()
+            val domains = (0 until domArr.length()).map { j ->
+                val d = domArr.getJSONObject(j)
+                MarathonDomainStat(d.getString("cat"), d.getInt("correct"), d.getInt("total"))
+            }
+            MarathonScore(o.getLong("date"), o.getInt("score"), o.getInt("correct"), o.getInt("total"), o.getDouble("duration"), domains)
+        }.sortedByDescending { it.date }
+    }
+
+    fun appendMarathonScore(entry: MarathonScore) {
+        val history = listOf(entry) + marathonHistory()
+        val arr = org.json.JSONArray()
+        history.take(500).forEach { s ->
+            val domArr = org.json.JSONArray()
+            s.domainBreakdown.forEach { d -> domArr.put(JSONObject().put("cat", d.categoryId).put("correct", d.correct).put("total", d.total)) }
+            arr.put(JSONObject().put("date", s.date).put("score", s.score).put("correct", s.correct)
+                .put("total", s.total).put("duration", s.durationSeconds).put("domains", domArr))
+        }
+        prefs.edit().putString("marathonScores", arr.toString()).apply()
     }
 
     // R-DAILY-1: per-day Daily results — first completion locks the day.

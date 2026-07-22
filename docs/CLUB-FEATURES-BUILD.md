@@ -49,7 +49,7 @@ ship first; season/cron infrastructure is last.
 |---|---|---|---|---|
 | 1 | **Weak-Spot Arena** | 1 gameplay | client-only: round from your own miss history | **DONE on all 6 platforms** |
 | 2 | **Story Archive** | 3 library | client-only: keep every unlocked "story behind the answer", searchable | **DONE on all 6 platforms** |
-| 3 | **Marathon** | 1 gameplay | client-only: 200-q graded endurance, cross-session scorecard | **iOS DONE (Apple reference); other platforms todo** |
+| 3 | **Marathon** | 1 gameplay | client-only: 200-q graded endurance, cross-session scorecard | **web+iOS+Android DONE; macOS/tvOS/Windows todo** |
 | 4 | **Knowledge Atlas** | 2 retrospect | client-only: accuracy by domain/sub-domain over 12mo | todo |
 | 5 | **Friend Streaks** | 4 social | light RTDB (reuses friends): mutual daily accountability | todo |
 | 6 | **Link Wall** | 1 gameplay | client-only: NYT-Connections-style 2nd daily (Daily stays free) | todo |
@@ -68,7 +68,7 @@ Legend: ✅ done+verified · 🔨 in progress · ⏳ queued · 🚫 n/a (with re
 |---|---|---|---|---|---|---|
 | 1 Weak-Spot Arena | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 2 Story Archive | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 3 Marathon | ✅ | ✅ | ⏳ | ⏳ | ⏳ | ⏳ |
+| 3 Marathon | ✅ | ✅ | ⏳ | ⏳ | ✅ | ⏳ |
 | 4 Knowledge Atlas | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 5 Friend Streaks | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 6 Link Wall | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
@@ -712,3 +712,69 @@ says is the whole point.
   `story-archive-detail.png`) — card copy, CLUB gating, story cards (domain,
   right/wrong dot, favorite star), and the detail/re-ask button all render as
   expected. `windows-latest` CI to be gated post-push.
+- **2026-07-22** — **Marathon (Feature 3) shipped on Android (1.6.50/vc72 —
+  version NOT bumped this pass, per the owner's cross-platform-alignment note).**
+  New `data/Marathon.kt`: `MarathonAnswerRecord`/`MarathonRun`/`MarathonDomainStat`/
+  `MarathonScore` data classes + the `Marathon` object (`inProgress`/`startNew`/
+  `resumeQuestions`/`record`/`finish`/`history`/`previewLine`), mirroring Apple's
+  `Marathon.swift` / web's `Marathon` in `store.js`. The 200 ids are drawn ONCE from
+  a fresh UUID seed via the SAME `stableSeed` rank-and-slice `Corpus.daily` already
+  uses for the Daily (`marathon:<seed>:<id>`, smallest-rank-first) — a resume always
+  continues into the identical, never-regenerated set. `Store` (`data/Tidbits.kt`)
+  grows `marathonRun()`/`saveMarathonRun()`/`clearMarathonRun()`/`marathonHistory()`/
+  `appendMarathonScore()` (SharedPreferences JSON, mirror of the `missed`/`stories`
+  map shape); `resetAllRecords()` clears both new keys. `Mode.MARATHON` added
+  (45s/Q, count=200 nominal), excluded from `playableModes`/remembered-selection/
+  Surprise-Me in `QuickPlay.kt`. `GameState` grows `marathonOffset` (so
+  `progressLabel` shows the true "84 / 200" position, not the resumed session's
+  local index) and `rebuildMarathon()` (swaps in a fresh run's questions for
+  "Start a new Marathon," mirror of `rebuildWeakSpot`); `end()` skips its entire
+  GameRecord/telemetry/misses/seenStory/identity write block for
+  `Mode.MARATHON` — deliberate, a session slice of a multi-session run would
+  misreport lifetime stats, mirroring the Apple/web reference exactly. `GameScreen`
+  (`ui/AppRoot.kt`) resolves-or-creates the run before `game.start()`, persists
+  EVERY answer immediately via a `LaunchedEffect(game.answered.size)` (not gated on
+  `advance()`/phase change — verified this fires during the REVEAL phase, well
+  before "Finished" ever renders), and writes the permanent `MarathonScore` +
+  clears the run the instant `currentIndex >= total`. Home gets a teal
+  `MarathonCard` (RESUME chip + CLUB chip mirroring `WeakSpotCard`'s pattern; tap
+  routes to an AlertDialog Resume/Start-Over when a run exists, else launches
+  straight in) and Records gets a `MarathonHistoryCard` (mirrors `StoryArchiveCard`)
+  opening a new `MarathonHistoryScreen` (list + `ModalBottomSheet` historical
+  detail, reusing a shared `MarathonResultCard` for both the just-finished and
+  historical views). Debug: reused `Entitlement.setDebugForceClub`/
+  `tidbits_club_debug`; new `Marathon.debugLengthOverride` (`BuildConfig.DEBUG`-
+  gated) set from a `marathon_len` Intent extra in `MainActivity`
+  (`adb shell am start … --ei marathon_len 6`) shortens a run for testing —
+  production always sees 200.
+  **`assembleDebug` BUILD SUCCESSFUL.** Emulator-verified end to end on a single
+  `emulator-5554`: Home card states (fresh / resume / last-run-%), the debug
+  `marathon_len` override, per-answer persistence confirmed via
+  `adb shell run-as … cat shared_prefs/tidbits.xml` showing `currentIndex`/results
+  updated BEFORE the reveal's "Next" was ever tapped, a REAL `am force-stop`
+  mid-run + cold relaunch resuming into the exact SAME stored id list at the
+  correct offset, full completion → inline scorecard (score, correct/total,
+  duration, "Your first Marathon" / "+N% vs last run" comparison, per-domain
+  accuracy bars using `categoryIcon` per R-ICON-1) → `marathonScores` written +
+  `marathonRun` cleared → confirmed via SharedPreferences that NO `records` entry
+  was written for the Marathon mode, and Marathon History (list + detail sheet,
+  historical view correctly hides Play-Again/See-History) both from the post-game
+  link and from Records.
+  **Caught and fixed a real bug during this verification pass** (not a hypothetical):
+  the post-finish scorecard's original "See Marathon history" wiring pushed
+  `Route.MarathonHistory` onto the shared `backStack` while `Route.Game` was still
+  logically current underneath. Because this app's router composes only the
+  single current route at a time, that push tore down `GameScreen`'s `remember`
+  state (the finished `MarathonScore`, the now-cleared `marathonRun`); popping
+  back re-entered the Marathon branch fresh, found no run in Store (already
+  cleared by `finish()`), and silently started a brand-new 200-question run —
+  reproduced live on-device (screenshotted at "1 / 200" after backing out of a
+  finished run's history link). Fixed by making "See Marathon history" a LOCAL
+  overlay boolean inside `GameScreen` (rendering `MarathonHistoryScreen` in place)
+  instead of a route push, so the scorecard's composition — and its state — is
+  never torn down. Re-verified the exact repro sequence afterward: See Marathon
+  history → Back now returns to the identical scorecard, confirmed via
+  SharedPreferences that `marathonRun` stays absent and `marathonScores` still
+  holds exactly one entry. The Records-initiated and Home-initiated navigations to
+  `Route.MarathonHistory` (no live Game route underneath) do not have this failure
+  mode and were left as ordinary route pushes.

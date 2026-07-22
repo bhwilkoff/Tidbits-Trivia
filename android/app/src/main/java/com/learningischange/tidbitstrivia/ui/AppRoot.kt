@@ -54,6 +54,7 @@ import com.learningischange.tidbitstrivia.ui.theme.accentText
 import com.learningischange.tidbitstrivia.ui.theme.onAccent
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 sealed interface Route {
     data object Home : Route
@@ -74,6 +75,7 @@ sealed interface Route {
     data object Party : Route
     data object ClubPaywall : Route    // Tidbits Club join surface (CLUB-MARKETING.md)
     data object StoryArchive : Route   // Tidbits Club EXCLUSIVE — Story Archive (Feature 2)
+    data object MarathonHistory : Route // Tidbits Club EXCLUSIVE — Marathon History (Feature 3)
 }
 
 @Composable
@@ -148,6 +150,7 @@ fun AppRoot(
                         onPlayMix = { modes, cat -> backStack.add(Route.Game(Mode.MIX, cat, mixModes = modes)) },
                         onPlayDaily = { day -> backStack.add(Route.Game(Mode.DAILY, Category.byId("mixed"), dailyDay = day)) },
                         onPlayWeakSpot = { qs, reasons -> backStack.add(Route.Game(Mode.WEAK_SPOT, Category.byId("mixed"), qs, "Weak-Spot Arena", weakSpotReasons = reasons)) },
+                        onPlayMarathon = { backStack.add(Route.Game(Mode.MARATHON, Category.byId("mixed"), label = "Marathon")) },
                         onVersus = { id -> backStack.add(Route.Versus(id)) },
                         onQuickMatch = { backStack.add(Route.OnlineMatch) },
                         onNight = { backStack.add(Route.NightSetup) },
@@ -190,6 +193,7 @@ fun AppRoot(
                     } ?: Box(Modifier.fillMaxSize())
                     is Route.Records -> RecordsScreen(store,
                         onOpenArchive = { backStack.add(Route.StoryArchive) },
+                        onOpenMarathonHistory = { backStack.add(Route.MarathonHistory) },
                         onClub = { backStack.add(Route.ClubPaywall) })
                     is Route.Create -> CreateScreen { qs, label -> backStack.add(Route.Game(Mode.MIX, Category.byId("mixed"), qs, label)) }
                     is Route.Game -> GameScreen(r, store) { backStack.removeAt(backStack.lastIndex) }
@@ -205,6 +209,9 @@ fun AppRoot(
                         onBack = { backStack.removeLastOrNull() },
                         onClub = { backStack.add(Route.ClubPaywall) },
                         onReask = { q -> backStack.add(Route.Game(Mode.CLASSIC, Category.byId(q.categoryId), listOf(q), "Re-ask")) })
+                    is Route.MarathonHistory -> MarathonHistoryScreen(store,
+                        onBack = { backStack.removeLastOrNull() },
+                        onClub = { backStack.add(Route.ClubPaywall) })
                 }
             }
         }
@@ -233,6 +240,7 @@ private fun HomeScreen(
     onPlayMix: (List<Mode>, Category) -> Unit,
     onPlayDaily: (String) -> Unit,
     onPlayWeakSpot: (List<Question>, Map<String, String>) -> Unit,
+    onPlayMarathon: () -> Unit,
     onVersus: (String) -> Unit,
     onQuickMatch: () -> Unit,
     onNight: () -> Unit,
@@ -247,6 +255,7 @@ private fun HomeScreen(
     var showDailyArchive by remember { mutableStateOf(false) }
     var showMultiplayer by remember { mutableStateOf(false) }
     var showWeakSpotEmpty by remember { mutableStateOf(false) }
+    var showMarathonChoice by remember { mutableStateOf(false) }
     val (qpMode, qpCat) = store.quickPlay()
     val firstRun = !store.hasQuickPlayHistory()
     val fade = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
@@ -346,6 +355,22 @@ private fun HomeScreen(
             } else onClub()
         }
 
+        // Marathon — Tidbits Club EXCLUSIVE (docs/CLUB-FEATURES-BUILD.md "Feature 3").
+        // Its OWN Home entry point, distinct from the quick-mode cards (it's a
+        // commitment, not a 2-minute round). Members with a run in progress get the
+        // Resume/Start-Over choice; with no run, they launch straight into a fresh
+        // one. Non-members see a real preview + a CLUB chip and tap through to the
+        // existing paywall — never a blank wall.
+        val marathonRun = remember(Entitlement.isClub) { if (Entitlement.isClub) Marathon.inProgress(store) else null }
+        val marathonHistory = remember(Entitlement.isClub) { if (Entitlement.isClub) Marathon.history(store) else emptyList() }
+        MarathonCard(isClub = Entitlement.isClub, run = marathonRun, subtitle = marathonSubtitle(Entitlement.isClub, marathonRun, marathonHistory)) {
+            when {
+                !Entitlement.isClub -> onClub()
+                marathonRun != null -> showMarathonChoice = true
+                else -> onPlayMarathon()
+            }
+        }
+
         Text("More ways to play", fontWeight = FontWeight.Bold, fontSize = 20.sp)
         Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
             HomeTile(Icons.Filled.Group, "Pass & Play", Pops.grape, Modifier.weight(1f), onParty)
@@ -375,6 +400,32 @@ private fun HomeScreen(
         text = { Text("Play a few rounds first — your misses become your arena.") },
         confirmButton = { TextButton(onClick = { showWeakSpotEmpty = false }) { Text("OK") } },
     )
+    // Marathon: a run is already in progress — offer Resume (continue the SAME fixed
+    // id list) or Start Over (discard it and draw a fresh 200). Start Over calls
+    // Marathon.startNew BEFORE navigating so GameScreen resolves the fresh run.
+    if (showMarathonChoice) {
+        val run = remember { Marathon.inProgress(store) }
+        AlertDialog(
+            onDismissRequest = { showMarathonChoice = false },
+            title = { Text("Marathon in progress") },
+            text = { Text(run?.let { "Question ${it.currentIndex + 1} of ${it.total} — resume where you left off, or start a fresh run." } ?: "") },
+            confirmButton = { TextButton(onClick = { showMarathonChoice = false; onPlayMarathon() }) { Text("Resume") } },
+            dismissButton = {
+                Row {
+                    TextButton(onClick = { showMarathonChoice = false; Marathon.startNew(store); onPlayMarathon() }) { Text("Start Over") }
+                    TextButton(onClick = { showMarathonChoice = false }) { Text("Cancel") }
+                }
+            },
+        )
+    }
+}
+
+private fun marathonSubtitle(isClub: Boolean, run: MarathonRun?, history: List<MarathonScore>): String {
+    if (!isClub) return Marathon.previewLine()
+    if (run != null) return "Question ${run.currentIndex + 1} of ${run.total} — tap to resume"
+    val last = history.firstOrNull()
+    if (last != null) return "${(last.accuracy * 100).roundToInt()}% on your last run — tap to start a new one"
+    return "200 questions. Play it across as many sittings as you like — we'll keep your place."
 }
 
 @Composable
@@ -392,6 +443,37 @@ private fun WeakSpotCard(isClub: Boolean, previewLine: String?, onClick: () -> U
                         Spacer(Modifier.width(6.dp))
                         Surface(shape = RoundedCornerShape(999.dp), color = Color.White) {
                             Text("CLUB", fontSize = 11.sp, fontWeight = FontWeight.Black, color = Pops.grape,
+                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp))
+                        }
+                    }
+                }
+                Text(subtitle, color = Color.White.copy(alpha = 0.85f), fontSize = 13.sp, maxLines = 2)
+            }
+            Icon(Icons.Filled.KeyboardArrowRight, null, tint = Color.White)
+        }
+    }
+}
+
+@Composable
+private fun MarathonCard(isClub: Boolean, run: MarathonRun?, subtitle: String, onClick: () -> Unit) {
+    ChunkyCard(fill = Pops.teal, onClick = onClick) {
+        Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Filled.Flag, null, tint = Color.White, modifier = Modifier.size(28.dp))
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("MARATHON", fontWeight = FontWeight.Black, fontSize = 20.sp, color = Color.White)
+                    if (!isClub) {
+                        Spacer(Modifier.width(6.dp))
+                        Surface(shape = RoundedCornerShape(999.dp), color = Color.White) {
+                            Text("CLUB", fontSize = 11.sp, fontWeight = FontWeight.Black, color = Pops.teal,
+                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp))
+                        }
+                    }
+                    if (run != null) {
+                        Spacer(Modifier.width(6.dp))
+                        Surface(shape = RoundedCornerShape(999.dp), color = Pops.coral) {
+                            Text("RESUME", fontSize = 11.sp, fontWeight = FontWeight.Black, color = Color.White,
                                 modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp))
                         }
                     }
@@ -698,14 +780,79 @@ private fun NightJoinScreen(initialCode: String, initialName: String, onFound: (
 private fun GameScreen(route: Route.Game, store: Store, onDone: () -> Unit) {
     val scope = rememberCoroutineScope()
     val haptics = rememberGameHaptics(store)
-    val game = remember { GameState(route.mode, route.category, store, route.custom, route.label, route.nightRounds, dailyDay = route.dailyDay, mixModes = route.mixModes, initialWeakSpotReasons = route.weakSpotReasons) }
-    LaunchedEffect(Unit) { game.start() }
+    // Marathon (Club — docs/CLUB-FEATURES-BUILD.md "Feature 3"): resolve (or create)
+    // the in-progress run FIRST, so the engine launches with the SAME fixed id list a
+    // resume must continue into — the load-bearing new mechanic. `marathonPersisted`
+    // tracks how many of THIS session's answers have already round-tripped through
+    // Store — reset to 0 whenever a fresh/rebuilt run begins.
+    var marathonRun by remember { mutableStateOf(if (route.mode == Mode.MARATHON) (Marathon.inProgress(store) ?: Marathon.startNew(store)) else null) }
+    var marathonScore by remember { mutableStateOf<MarathonScore?>(null) }
+    var marathonPersisted by remember { mutableIntStateOf(0) }
+    val marathonQuestions = remember(marathonRun) { marathonRun?.let { Marathon.resumeQuestions(it) } }
+    val game = remember { GameState(route.mode, route.category, store, marathonQuestions ?: route.custom, route.label, route.nightRounds, dailyDay = route.dailyDay, mixModes = route.mixModes, initialWeakSpotReasons = route.weakSpotReasons) }
+    LaunchedEffect(Unit) {
+        val run = marathonRun
+        if (route.mode == Mode.MARATHON && run != null && marathonQuestions.isNullOrEmpty()) {
+            // Edge case only (a run somehow already at its full length without having
+            // been finished) — close it out rather than show a blank round.
+            marathonScore = Marathon.finish(store, run)
+            marathonRun = null
+        } else {
+            if (route.mode == Mode.MARATHON) game.marathonOffset = run?.currentIndex ?: 0
+            game.start()
+        }
+    }
     LaunchedEffect(game.index, game.phase) {
         while (game.phase == GamePhase.PLAYING) { delay(100); game.tick() }
     }
     // Correct/wrong haptics fire once per question when the reveal lands.
     LaunchedEffect(game.index, game.phase) {
         if (game.phase == GamePhase.REVEAL) { if (game.lastCorrect) haptics.correct() else haptics.wrong() }
+    }
+    // Marathon: persist EVERY answer the instant it posts (not batched) — a
+    // crash/quit never loses progress (the whole point of Marathon). The instant the
+    // run reaches its TRUE end, write the permanent scorecard and clear the run.
+    LaunchedEffect(game.answered.size) {
+        if (route.mode != Mode.MARATHON) return@LaunchedEffect
+        var run = marathonRun ?: return@LaunchedEffect
+        while (marathonPersisted < game.answered.size) {
+            val a = game.answered[marathonPersisted]
+            run = Marathon.record(store, run, MarathonAnswerRecord(a.q.id, a.q.categoryId, a.q.difficulty, a.correct))
+            marathonPersisted++
+        }
+        marathonRun = run
+        if (run.currentIndex >= run.total) {
+            marathonScore = Marathon.finish(store, run)
+            marathonRun = null
+        }
+    }
+    if (route.mode == Mode.MARATHON && marathonScore != null) {
+        // A local overlay, NOT a backStack.add(Route.MarathonHistory) push: this
+        // composable's remember state (game, marathonScore, marathonRun) would be
+        // torn down the instant another route becomes current (only one route
+        // composes at a time), and popping back would re-enter this branch fresh —
+        // silently starting a brand-new 200-question run. Toggling a local boolean
+        // keeps this scorecard alive underneath.
+        var showHistory by remember { mutableStateOf(false) }
+        if (showHistory) {
+            MarathonHistoryScreen(store, onBack = { showHistory = false }, onClub = {})
+        } else {
+            MarathonResultCard(store, marathonScore!!, historical = false,
+                onPlayAgain = {
+                    scope.launch {
+                        val fresh = Marathon.startNew(store)
+                        marathonRun = fresh
+                        marathonScore = null
+                        marathonPersisted = 0
+                        game.marathonOffset = 0
+                        game.rebuildMarathon(Marathon.resumeQuestions(fresh))
+                        game.restart()
+                    }
+                },
+                onSeeHistory = { showHistory = true },
+                onDone = onDone)
+        }
+        return
     }
     when (game.phase) {
         GamePhase.LOADING -> Box(Modifier.fillMaxSize(), Alignment.Center) {
@@ -722,19 +869,28 @@ private fun GameScreen(route: Route.Game, store: Store, onDone: () -> Unit) {
         // The Daily is play-once (R-DAILY-1) — no replay of a locked set. Weak-Spot
         // Arena rebuilds fresh from the CURRENT miss store rather than replaying the
         // exact same (now partly-resolved) set — mirror of iOS/web's replay behavior.
-        GamePhase.FINISHED -> ResultsScreen(game,
-            onPlayAgain = when {
-                route.mode == Mode.DAILY || route.duelId != null -> null
-                route.mode == Mode.WEAK_SPOT -> ({
-                    scope.launch {
-                        val round = WeakSpotArena.build(store)
-                        if (round.questions.size >= WeakSpotArena.PLAYABLE_FLOOR) { game.rebuildWeakSpot(round); game.restart() }
-                        else onDone()
-                    }
-                })
-                else -> ({ scope.launch { game.restart() } })
-            },
-            onDone = onDone, duelId = route.duelId)
+        GamePhase.FINISHED -> {
+            if (route.mode == Mode.MARATHON) {
+                // Defensive fallback only — the LaunchedEffect above writes
+                // marathonScore the instant the run's last answer posts, well before
+                // this phase renders (answered.size changes during REVEAL, not here).
+                Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator() }
+            } else {
+                ResultsScreen(game,
+                    onPlayAgain = when {
+                        route.mode == Mode.DAILY || route.duelId != null -> null
+                        route.mode == Mode.WEAK_SPOT -> ({
+                            scope.launch {
+                                val round = WeakSpotArena.build(store)
+                                if (round.questions.size >= WeakSpotArena.PLAYABLE_FLOOR) { game.rebuildWeakSpot(round); game.restart() }
+                                else onDone()
+                            }
+                        })
+                        else -> ({ scope.launch { game.restart() } })
+                    },
+                    onDone = onDone, duelId = route.duelId)
+            }
+        }
         else -> PlayingScreen(game)
     }
 }
@@ -1157,7 +1313,7 @@ private fun RowScope.StatBox(value: String, label: String, tint: Color) {
 // ---- Records ----
 
 @Composable
-private fun RecordsScreen(store: Store, onOpenArchive: () -> Unit, onClub: () -> Unit) {
+private fun RecordsScreen(store: Store, onOpenArchive: () -> Unit, onOpenMarathonHistory: () -> Unit, onClub: () -> Unit) {
     val records = remember { store.records() }
     val streak = remember { store.streak() }
     val life = remember { store.lifetime() }
@@ -1197,6 +1353,12 @@ private fun RecordsScreen(store: Store, onOpenArchive: () -> Unit, onClub: () ->
         // and land on the paywall — never a blank wall (R-MON-1: the free in-moment story
         // reveal, right after answering, is untouched by this surface).
         StoryArchiveCard(store = store, isClub = Entitlement.isClub, onClick = { if (Entitlement.isClub) onOpenArchive() else onClub() })
+
+        // Marathon History — Tidbits Club EXCLUSIVE (docs/CLUB-FEATURES-BUILD.md
+        // "Feature 3"), a permanent record of every completed 200-Q run — reachable
+        // from Records in addition to the Home card's own post-game "See Marathon
+        // history" link.
+        MarathonHistoryCard(store = store, isClub = Entitlement.isClub, onClick = { if (Entitlement.isClub) onOpenMarathonHistory() else onClub() })
 
         val prog = remember { store.progress() }
         val explored = prog.count { it.total > 0 }
@@ -1535,6 +1697,189 @@ private fun StoryDetailSheet(store: Store, s: Store.SeenStory, onDismiss: () -> 
             }
         }
     }
+}
+
+// ---- Marathon (Tidbits Club EXCLUSIVE — docs/CLUB-FEATURES-BUILD.md "Feature 3") ----
+// A 200-question graded endurance run whose load-bearing NEW mechanic is
+// RESUME ACROSS SESSIONS (see data/Marathon.kt + GameScreen's marathon handling
+// above). This section is the surface: the Records/Home "Marathon History" card
+// (mirrors StoryArchiveCard), the history list + resume banner, and the shared
+// scorecard used both right after finishing AND for a historical detail view.
+
+@Composable
+private fun MarathonHistoryCard(store: Store, isClub: Boolean, onClick: () -> Unit) {
+    val history = remember(isClub) { if (isClub) Marathon.history(store) else emptyList() }
+    val subtitle = if (isClub) {
+        if (history.isEmpty()) "200 questions. Play it across as many sittings as you like — we'll keep your place."
+        else "${history.size} run${if (history.size == 1) "" else "s"} played — best ${(history.maxOf { it.accuracy } * 100).roundToInt()}%."
+    } else Marathon.previewLine()
+    ChunkyCard(fill = Pops.teal, onClick = onClick) {
+        Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Filled.Flag, null, tint = Color.White, modifier = Modifier.size(28.dp))
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("MARATHON HISTORY", fontWeight = FontWeight.Black, fontSize = 20.sp, color = Color.White)
+                    if (!isClub) {
+                        Spacer(Modifier.width(6.dp))
+                        Surface(shape = RoundedCornerShape(999.dp), color = Color.White) {
+                            Text("CLUB", fontSize = 11.sp, fontWeight = FontWeight.Black, color = Pops.teal,
+                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp))
+                        }
+                    }
+                }
+                Text(subtitle, color = Color.White.copy(alpha = 0.85f), fontSize = 13.sp, maxLines = 2)
+            }
+            Icon(Icons.Filled.KeyboardArrowRight, null, tint = Color.White)
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun MarathonHistoryScreen(store: Store, onBack: () -> Unit, onClub: () -> Unit) {
+    val ink = MaterialTheme.colorScheme.onSurface
+    Column(Modifier.fillMaxSize().padding(20.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            TextButton(onClick = onBack) { Text("‹ Back") }
+            Text("Marathon History", fontSize = 24.sp, fontWeight = FontWeight.Black, color = ink)
+        }
+        Spacer(Modifier.height(8.dp))
+
+        if (!Entitlement.isClub) {
+            ChunkyCard { Column(Modifier.padding(18.dp)) { Text(Marathon.previewLine(), fontWeight = FontWeight.Bold) } }
+            Spacer(Modifier.height(14.dp))
+            ChunkyCard(fill = Pops.teal.copy(alpha = 0.12f)) {
+                Column(Modifier.padding(20.dp).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("A 200-question test of everything, graded by domain.", fontWeight = FontWeight.Black, fontSize = 18.sp, textAlign = TextAlign.Center)
+                    Text("Play it across as many sittings as you like — we keep your place, and every run is measured against your last.",
+                        fontSize = 13.sp, color = ink.copy(alpha = 0.6f), textAlign = TextAlign.Center)
+                    Spacer(Modifier.height(12.dp))
+                    Button(onClick = onClub) { Text("Join Tidbits Club") }
+                }
+            }
+            return@Column
+        }
+
+        var selected by remember { mutableStateOf<MarathonScore?>(null) }
+        val runs = remember { Marathon.history(store) }
+        val active = remember { Marathon.inProgress(store) }
+        if (active != null) {
+            ChunkyCard(fill = Pops.teal.copy(alpha = 0.14f), modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp).fillMaxWidth()) {
+                    Text("Question ${active.currentIndex + 1} of ${active.total}", fontWeight = FontWeight.Black)
+                    Text("A run is in progress — resume it from Home.", fontSize = 13.sp, color = ink.copy(alpha = 0.6f))
+                }
+            }
+            Spacer(Modifier.height(10.dp))
+        }
+
+        if (runs.isEmpty()) {
+            ChunkyCard { Column(Modifier.padding(20.dp)) {
+                Text("No Marathons yet — play one across as many sittings as you like, we'll keep your place.", fontWeight = FontWeight.Bold)
+            } }
+        } else {
+            LazyColumn(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                items(runs, key = { it.date }) { s ->
+                    ChunkyCard(onClick = { selected = s }, modifier = Modifier.fillMaxWidth()) {
+                        Row(Modifier.padding(14.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                            Column {
+                                Text("${s.correct}/${s.total} correct · ${(s.accuracy * 100).roundToInt()}%", fontWeight = FontWeight.Bold)
+                                Text(java.text.DateFormat.getDateInstance().format(java.util.Date(s.date)), fontSize = 12.sp, color = ink.copy(alpha = 0.6f))
+                            }
+                            Text("${s.score}", fontWeight = FontWeight.Black, fontSize = 20.sp, color = Pops.teal)
+                        }
+                    }
+                }
+            }
+        }
+        selected?.let { s ->
+            ModalBottomSheet(onDismissRequest = { selected = null }) {
+                MarathonResultCard(store, s, historical = true, onPlayAgain = null, onSeeHistory = null, onDone = { selected = null })
+            }
+        }
+    }
+}
+
+/** The Marathon scorecard — shared by the just-finished flow (GameScreen) and a past
+ *  run's read-only detail (MarathonHistoryScreen). Unlike ResultsScreen (which reads
+ *  the current session's local state), this reads the permanent MarathonScore, because
+ *  a run's true total spans however many sessions it took to finish, not just one. */
+@Composable
+private fun MarathonResultCard(
+    store: Store, score: MarathonScore, historical: Boolean,
+    onPlayAgain: (() -> Unit)?, onSeeHistory: (() -> Unit)?, onDone: (() -> Unit)?,
+) {
+    val history = remember(score) { Marathon.history(store) }
+    val previous = remember(score, history) { history.firstOrNull { it.date < score.date } }
+    val acc = if (score.total == 0) 0 else (score.accuracy * 100).roundToInt()
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        ChunkyCard(fill = Pops.teal.copy(alpha = 0.18f), modifier = Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(vertical = 26.dp).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("MARATHON COMPLETE", fontWeight = FontWeight.Black, fontSize = 15.sp)
+                Text("${score.score}", fontWeight = FontWeight.Black, fontSize = 56.sp)
+                Text("${score.correct}/${score.total} correct · ${marathonDurationLabel(score.durationSeconds)}",
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+            }
+        }
+        // "+6% vs your last run" — the measured-mastery payoff (the whole reason
+        // Marathon isn't just a long Classic).
+        ChunkyCard(fill = MaterialTheme.colorScheme.surfaceVariant, modifier = Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(vertical = 14.dp).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                if (previous != null) {
+                    val delta = ((score.accuracy - previous.accuracy) * 100).roundToInt()
+                    Text(if (delta == 0) "Same as your last run" else "${if (delta > 0) "+" else ""}$delta% vs your last run",
+                        fontWeight = FontWeight.Black, fontSize = 18.sp,
+                        color = if (delta >= 0) accentText(Pops.mint) else accentText(Pops.coral))
+                    Text("Last run: ${(previous.accuracy * 100).roundToInt()}% · this run: $acc%",
+                        fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                } else {
+                    Text("Your first Marathon", fontWeight = FontWeight.Black, fontSize = 18.sp)
+                    Text("Play another to see how you're improving", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                }
+            }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            StatBox("$acc%", "Accuracy", Pops.blue)
+            StatBox("${score.score}", "Score", Pops.teal)
+            StatBox("${history.size}", "Marathons", Pops.coral)
+        }
+        // Per-domain accuracy bars — the measured-mastery map, not just a score.
+        ChunkyCard(modifier = Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(16.dp).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text("Where you stood this run", fontWeight = FontWeight.Black, fontSize = 18.sp)
+                score.domainBreakdown.filter { it.total > 0 }.forEach { stat -> MarathonDomainRow(stat) }
+            }
+        }
+        if (!historical && onSeeHistory != null) TextButton(onClick = onSeeHistory) { Text("See Marathon history") }
+        if (onPlayAgain != null) Button(onClick = onPlayAgain, modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = Pops.teal, contentColor = Color.White)) { Text("Start a new Marathon") }
+        if (onDone != null) TextButton(onClick = onDone) { Text("Done") }
+    }
+}
+
+@Composable
+private fun MarathonDomainRow(stat: MarathonDomainStat) {
+    val cat = Category.byId(stat.categoryId)
+    Column(Modifier.fillMaxWidth()) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Icon(categoryIcon(cat.id), null, tint = accentText(Pops.at(cat.colorIndex)), modifier = Modifier.size(16.dp))
+                Text(cat.name, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            }
+            Text("${stat.correct}/${stat.total} · ${(stat.accuracy * 100).roundToInt()}%", fontSize = 13.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+        }
+        Spacer(Modifier.height(4.dp))
+        LinearProgressIndicator(progress = { stat.accuracy.toFloat() }, modifier = Modifier.fillMaxWidth().height(8.dp), color = Pops.at(cat.colorIndex))
+    }
+}
+
+private fun marathonDurationLabel(seconds: Double): String {
+    val minutes = (seconds / 60).roundToInt()
+    if (minutes < 60) return "${maxOf(1, minutes)} min"
+    val hrs = minutes / 60; val rem = minutes % 60
+    return if (rem == 0) "${hrs}h" else "${hrs}h ${rem}m"
 }
 
 // L4: one levelable badge — tier number, name, tier chip, progress bar, plain-language detail.

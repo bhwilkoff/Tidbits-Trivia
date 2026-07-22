@@ -28,6 +28,9 @@ enum DebugHooks {
             .flatMap { AppStore.Tab(rawValue: $0) }
     }
 
+    /// TIDBITS_PAYWALL=1 → present the Club paywall on launch (screenshot observability).
+    static var showPaywall: Bool { ProcessInfo.processInfo.environment["TIDBITS_PAYWALL"] == "1" }
+
     /// TIDBITS_AUTOCREATE="<topic>" → prefill Create and generate a live
     /// quiz from Wikipedia (verifies the live generation path end to end).
     static var autoCreate: String? {

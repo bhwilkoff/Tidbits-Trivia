@@ -7,6 +7,7 @@ import SwiftUI
 struct ContentView_iOS: View {
     @Environment(AppStore.self) private var store
     @Environment(\.modelContext) private var modelContext
+    @State private var showPaywall = false
 
     var body: some View {
         @Bindable var store = store
@@ -27,6 +28,10 @@ struct ContentView_iOS: View {
             handleInbox()
             if let tab = DebugHooks.initialTab { store.selectedTab = tab }
         }
+        // A sheet set during the first layout pass gets swallowed; a short-delayed task
+        // presents it reliably (screenshot observability only).
+        .task { if DebugHooks.showPaywall { try? await Task.sleep(for: .milliseconds(400)); showPaywall = true } }
+        .sheet(isPresented: $showPaywall) { ClubPaywallView().environment(EntitlementStore.shared) }
     }
 
     private func handleInbox() {

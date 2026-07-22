@@ -60,6 +60,13 @@ enum DebugHooks {
         ProcessInfo.processInfo.environment["TIDBITS_STORY_ARCHIVE"] == "1"
     }
 
+    /// TIDBITS_MARATHON=1 launches (or resumes) the Club Marathon on launch —
+    /// screenshot/simulator observability. Combine with TIDBITS_MARATHON_LEN
+    /// (read by `Marathon.runLength`) to play a short run to completion.
+    static var openMarathon: Bool {
+        ProcessInfo.processInfo.environment["TIDBITS_MARATHON"] == "1"
+    }
+
     /// TIDBITS_MIX=classic,pictureId,closestCall — the modes for a TIDBITS_AUTOPLAY=mix:… launch.
     static var mixModes: [GameMode]? {
         guard let raw = ProcessInfo.processInfo.environment["TIDBITS_MIX"] else { return nil }

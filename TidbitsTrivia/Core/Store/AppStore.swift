@@ -39,7 +39,7 @@ final class AppStore {
 
     /// Record what the player just launched, so Quick Play mirrors their groove.
     func rememberSelection(mode: GameMode, category: TriviaCategory, mixModes: [GameMode]? = nil) {
-        guard mode != .daily, mode != .weakSpot else { return }   // separate habit / Club-gated, never the free Quick Play default
+        guard mode != .daily, mode != .weakSpot, mode != .marathon else { return }   // separate habit / Club-gated, never the free Quick Play default
         lastPlayedModeRaw = mode.rawValue
         lastPlayedCategoryID = category.id
         if mode == .mix, let mixModes {
@@ -71,7 +71,7 @@ final class AppStore {
     /// app doesn't know what I want").
     func surpriseMe() -> LaunchRequest {
         // Club-gated modes never surface from a free-tier random pick.
-        let modes = GameMode.allCases.filter { $0 != .daily && $0 != .barTrivia && $0 != .mix && $0 != .weakSpot }
+        let modes = GameMode.allCases.filter { $0 != .daily && $0 != .barTrivia && $0 != .mix && $0 != .weakSpot && $0 != .marathon }
         return LaunchRequest(mode: modes.randomElement() ?? .classic,
                              category: TriviaCategory.all.randomElement() ?? .named("mixed"))
     }

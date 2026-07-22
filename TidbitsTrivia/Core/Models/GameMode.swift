@@ -22,6 +22,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable, Codable {
     case mix         // Custom Mix: the Customize sheet multi-select, shuffled together
     case daily       // one fixed daily set, streak-bearing, shareable
     case weakSpot    // Club: a round built from your own miss history (WeakSpotArena)
+    case marathon    // Club: a 200-question graded endurance run, resumable across sessions
 
     var id: String { rawValue }
 
@@ -61,6 +62,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable, Codable {
         case .mix:        return "Custom Mix"
         case .daily:      return "Daily Tidbit"
         case .weakSpot:   return "Weak-Spot Arena"
+        case .marathon:   return "Marathon"
         }
     }
 
@@ -84,6 +86,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable, Codable {
         case .mix:        return "Your picked modes, shuffled together."
         case .daily:      return "Everyone's puzzle. Keep your streak."
         case .weakSpot:   return "Turn your misses into a round."
+        case .marathon:   return "200 questions. Play it across as many sittings as you like."
         }
     }
 
@@ -107,6 +110,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable, Codable {
         case .mix:        return "rectangle.stack.fill"
         case .daily:      return "sun.max.fill"
         case .weakSpot:   return "scope"
+        case .marathon:   return "flag.checkered"
         }
     }
 
@@ -130,6 +134,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable, Codable {
         case .mix:        return Tidbits.Palette.teal
         case .daily:      return Tidbits.Palette.yellow
         case .weakSpot:   return Tidbits.Palette.grape
+        case .marathon:   return Tidbits.Palette.teal
         }
     }
 
@@ -154,6 +159,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable, Codable {
         case .mix:        return 20    // nominal — shape-driven clock, same as a night
         case .daily:      return 30
         case .weakSpot:   return 20
+        case .marathon:   return 45   // endurance, not speed — generous, never a tight clock
         }
     }
 
@@ -177,6 +183,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable, Codable {
         case .mix:        return 10
         case .daily:      return 7
         case .weakSpot:   return 10
+        case .marathon:   return Marathon.runLength   // 200 in production; TIDBITS_MARATHON_LEN shortens for testing
         }
     }
 

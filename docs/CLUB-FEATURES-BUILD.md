@@ -49,7 +49,7 @@ ship first; season/cron infrastructure is last.
 |---|---|---|---|---|
 | 1 | **Weak-Spot Arena** | 1 gameplay | client-only: round from your own miss history | **DONE on all 6 platforms** |
 | 2 | **Story Archive** | 3 library | client-only: keep every unlocked "story behind the answer", searchable | **DONE on all 6 platforms** |
-| 3 | **Marathon** | 1 gameplay | client-only: 200-q graded endurance, cross-session scorecard | **iOS in progress** |
+| 3 | **Marathon** | 1 gameplay | client-only: 200-q graded endurance, cross-session scorecard | **iOS DONE (Apple reference); other platforms todo** |
 | 4 | **Knowledge Atlas** | 2 retrospect | client-only: accuracy by domain/sub-domain over 12mo | todo |
 | 5 | **Friend Streaks** | 4 social | light RTDB (reuses friends): mutual daily accountability | todo |
 | 6 | **Link Wall** | 1 gameplay | client-only: NYT-Connections-style 2nd daily (Daily stays free) | todo |
@@ -68,7 +68,7 @@ Legend: ✅ done+verified · 🔨 in progress · ⏳ queued · 🚫 n/a (with re
 |---|---|---|---|---|---|---|
 | 1 Weak-Spot Arena | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 2 Story Archive | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 3 Marathon | ⏳ | 🔨 | ⏳ | ⏳ | ⏳ | ⏳ |
+| 3 Marathon | ⏳ | ✅ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 4 Knowledge Atlas | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 5 Friend Streaks | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 6 Link Wall | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
@@ -78,6 +78,12 @@ Legend: ✅ done+verified · 🔨 in progress · ⏳ queued · 🚫 n/a (with re
 > Note: the `.weakSpot` GameMode + `WeakSpotArena` generator live in the shared Apple
 > `Core/`, so macOS/tvOS already COMPILE it — only their per-platform Home entry point +
 > Club gating remain (small). iOS is the full reference.
+>
+> Note: `.marathon` + `Marathon`/`MarathonRun`/`MarathonScore` (Core/Store,
+> Core/Models) are shared Apple `Core/`, so macOS/tvOS already COMPILE them (both
+> gates verified BUILD SUCCEEDED) — only their per-platform Home entry point + a
+> Records-equivalent history surface remain. iOS is the full reference, including
+> the resume-across-sessions mechanic other platforms mirror.
 
 ---
 

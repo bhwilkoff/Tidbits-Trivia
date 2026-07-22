@@ -13,6 +13,7 @@ struct RecordsView: View {
     private var toReview: [MissedFact]
     @Query(sort: \CalibrationTally.tierValue, order: .reverse) private var calibration: [CalibrationTally]
     @Query(sort: \SeenStory.lastSeen, order: .reverse) private var seenStories: [SeenStory]
+    @Query(sort: \MarathonScore.date, order: .reverse) private var marathonScores: [MarathonScore]
     @Environment(PlayerIdentityStore.self) private var identity
     @Environment(EntitlementStore.self) private var entitlement
     @Environment(\.modelContext) private var modelContext
@@ -22,6 +23,7 @@ struct RecordsView: View {
     @State private var bestsMode: GameMode?
     @State private var showAllGames = false
     @State private var showStoryArchive = false
+    @State private var showMarathonHistory = false
     @State private var showClubPaywall = false
 
     var body: some View {
@@ -34,6 +36,7 @@ struct RecordsView: View {
                     lifetimeRow
                     historySection
                     storyArchiveSection
+                    marathonHistorySection
                     progressSection
                     badgesSection
                     if calibration.contains(where: { $0.total > 0 }) { calibrationSection }
@@ -57,6 +60,7 @@ struct RecordsView: View {
             AllGamesSheet(records: records) { recap = $0 }
         }
         .sheet(isPresented: $showStoryArchive) { StoryArchiveView() }
+        .sheet(isPresented: $showMarathonHistory) { MarathonHistoryView() }
         .sheet(isPresented: $showClubPaywall) { ClubPaywallView() }
         .task {
             if DebugHooks.openStoryArchive { openStoryArchive() }
@@ -192,6 +196,62 @@ struct RecordsView: View {
     /// paywall with a real preview — never a blank wall.
     private func openStoryArchive() {
         if entitlement.isClub { showStoryArchive = true } else { showClubPaywall = true }
+    }
+
+    // MARK: Marathon History (Club — docs/CLUB-FEATURES-BUILD.md "Feature 3")
+
+    // The permanent record of every completed 200-Q run — reachable from
+    // Records (in addition to the Home card's own "See Marathon history" link).
+    private var marathonHistorySection: some View {
+        Button(action: openMarathonHistory) {
+            HStack(spacing: 14) {
+                Image(systemName: "flag.checkered")
+                    .font(.system(size: 30, weight: .black))
+                    .foregroundStyle(Tidbits.Palette.teal.legibleForeground)
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 6) {
+                        Text("MARATHON HISTORY")
+                            .font(Tidbits.TypeRamp.l2)
+                            .foregroundStyle(Tidbits.Palette.teal.legibleForeground)
+                        if !entitlement.isClub {
+                            Text("CLUB")
+                                .font(.system(size: 11, weight: .black, design: .rounded))
+                                .foregroundStyle(Tidbits.Palette.teal)
+                                .padding(.horizontal, 7).padding(.vertical, 3)
+                                .background(Capsule().fill(Color.white.opacity(0.92)))
+                        }
+                    }
+                    Text(marathonHistorySubtitle)
+                        .font(Tidbits.TypeRamp.l5)
+                        .foregroundStyle(Tidbits.Palette.teal.legibleForeground.opacity(0.85))
+                        .multilineTextAlignment(.leading)
+                        .lineLimit(2)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right.circle.fill")
+                    .font(.system(size: 26, weight: .bold))
+                    .foregroundStyle(Tidbits.Palette.teal.legibleForeground)
+            }
+            .padding(18)
+            .chunkyCard(fill: Tidbits.Palette.teal)
+        }
+        .buttonStyle(.plain)
+        .padding(.trailing, Tidbits.Metric.shadowOffset)
+    }
+
+    private var marathonHistorySubtitle: String {
+        if entitlement.isClub {
+            return marathonScores.isEmpty
+                ? "200 questions. Play it across as many sittings as you like — we'll keep your place."
+                : "\(marathonScores.count) run\(marathonScores.count == 1 ? "" : "s") played — best \(Int((marathonScores.map(\.accuracy).max() ?? 0) * 100))%."
+        }
+        return "See exactly where you stand across a 200-question run, by domain — Club keeps every run forever."
+    }
+
+    /// Members open the history list directly; everyone else sees the
+    /// existing paywall — never a blank wall.
+    private func openMarathonHistory() {
+        if entitlement.isClub { showMarathonHistory = true } else { showClubPaywall = true }
     }
 
     // MARK: Calibration (F1) — from Stake rounds

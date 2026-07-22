@@ -22,6 +22,15 @@ struct GameContainerView: View {
     /// around so the empty state and the "gaps closed" result tally can read it.
     @State private var activeWeakSpotRound: WeakSpotRound?
 
+    /// Marathon only (docs/CLUB-FEATURES-BUILD.md "Feature 3"): the in-progress
+    /// run this session is playing into, how many questions were already
+    /// answered in EARLIER sessions (so the HUD shows the true 84/200
+    /// position, not this session's local index), and the finished scorecard
+    /// once the run's true end is reached.
+    @State private var activeMarathonRun: MarathonRun?
+    @State private var marathonOffset = 0
+    @State private var marathonFinishedScore: MarathonScore?
+
     private var game: GameEngine { store.game }
 
     /// The Daily is play-once (R-DAILY-1) — no replay of a locked set.
@@ -51,11 +60,22 @@ struct GameContainerView: View {
             case .roundIntro:
                 RoundIntroView(game: game, onQuit: close)
             case .playing, .reveal:
-                GamePlayView(game: game, onQuit: close)
+                GamePlayView(game: game, marathonOffset: mode == .marathon ? marathonOffset : nil, onQuit: close)
             case .finished:
-                ResultsView(summary: game.summary, onPlayAgain: playAgainAction, onDone: close,
-                            weakSpotGapsClosed: weakSpotGapsClosed)
-                    .onAppear(perform: persistIfNeeded)
+                if mode == .marathon {
+                    if let score = marathonFinishedScore {
+                        MarathonResultsView(score: score, onPlayAgain: { replay() }, onDone: close)
+                    } else {
+                        // Defensive fallback — finish() runs the instant the last
+                        // answer posts (before `.finished` renders), so this
+                        // shouldn't be reachable in practice.
+                        loadingState.onAppear(perform: close)
+                    }
+                } else {
+                    ResultsView(summary: game.summary, onPlayAgain: playAgainAction, onDone: close,
+                                weakSpotGapsClosed: weakSpotGapsClosed)
+                        .onAppear(perform: persistIfNeeded)
+                }
             }
         }
         .task {
@@ -63,6 +83,8 @@ struct GameContainerView: View {
                 await game.startMix(modes: mixModes ?? [.classic], category: category)
             } else if game.phase == .idle, mode == .weakSpot {
                 startWeakSpot()
+            } else if game.phase == .idle, mode == .marathon {
+                startMarathon()
             } else if game.phase == .idle {
                 // Weave in spaced-review questions (skip Daily — it's fair/fixed).
                 // In a single-category game, only re-ask misses from THAT category —
@@ -74,6 +96,7 @@ struct GameContainerView: View {
                 await game.start(mode: mode, category: category, review: review, dailyDay: dailyDay)
             }
         }
+        .onChange(of: game.answered.count) { _, _ in persistMarathonProgress() }
     }
 
     private func startWeakSpot() {
@@ -93,6 +116,44 @@ struct GameContainerView: View {
             Text("Play a few rounds first — your misses become your arena.")
         } actions: {
             Button("Back") { close() }.tint(Tidbits.Palette.inkSoft)
+        }
+    }
+
+    // MARK: Marathon (Club — docs/CLUB-FEATURES-BUILD.md "Feature 3")
+
+    /// Resume the in-progress run if one exists, else start a fresh one.
+    /// Loads only the REMAINING questions — the HUD adds `marathonOffset`
+    /// back in so the player always sees their true position out of 200.
+    private func startMarathon() {
+        marathonFinishedScore = nil
+        let run = Marathon.inProgress(in: modelContext) ?? Marathon.startNew(in: modelContext)
+        activeMarathonRun = run
+        marathonOffset = run.currentIndex
+        let remaining = Marathon.resumeQuestions(run)
+        guard !remaining.isEmpty else {
+            // Edge case only (a run somehow already at its full length without
+            // having been finished) — close it out rather than show a blank round.
+            marathonFinishedScore = Marathon.finish(run: run, in: modelContext)
+            activeMarathonRun = nil
+            return
+        }
+        game.startCustom(mode: .marathon, category: .named("mixed"), questions: remaining)
+    }
+
+    /// Persist every new answer immediately (the whole point of Marathon: a
+    /// crash/quit never loses progress) and, the instant the run reaches its
+    /// true end, write the permanent scorecard and clear the in-progress run —
+    /// computed here, ahead of the `.finished` phase render, so there's no race.
+    private func persistMarathonProgress() {
+        guard mode == .marathon, let run = activeMarathonRun else { return }
+        let alreadyPersisted = run.currentIndex - marathonOffset
+        guard alreadyPersisted < game.answered.count else { return }
+        for i in alreadyPersisted..<game.answered.count {
+            Marathon.record(game.answered[i], run: run, in: modelContext)
+        }
+        if run.currentIndex >= run.total {
+            marathonFinishedScore = Marathon.finish(run: run, in: modelContext)
+            activeMarathonRun = nil
         }
     }
 
@@ -128,6 +189,7 @@ struct GameContainerView: View {
         recorded = false
         if mode == .mix { Task { await game.startMix(modes: mixModes ?? [.classic], category: category) } }
         else if mode == .weakSpot { startWeakSpot() }
+        else if mode == .marathon { startMarathon() }
         else { Task { await game.start(mode: mode, category: category) } }
     }
 

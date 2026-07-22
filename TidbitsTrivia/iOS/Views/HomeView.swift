@@ -26,6 +26,11 @@ struct HomeView: View {
     @State private var nightLaunch: NightLaunchRequest?
     @State private var hostLaunch: NightLaunchRequest?
     @AppStorage("tidbits.hasOnboarded") private var hasOnboarded = false
+    // Marathon (Club — docs/CLUB-FEATURES-BUILD.md "Feature 3").
+    @Query private var marathonRuns: [MarathonRun]
+    @Query(sort: \MarathonScore.date, order: .reverse) private var marathonHistory: [MarathonScore]
+    @State private var showMarathonChoice = false
+    @State private var showMarathonHistory = false
 
     private var showOnboarding: Binding<Bool> {
         Binding(get: { !hasOnboarded || DebugHooks.forceOnboarding },
@@ -46,6 +51,7 @@ struct HomeView: View {
                 }
                 TriviaNightCard { showNightSheet = true }
                 WeakSpotCard(isClub: entitlement.isClub, previewLine: weakSpotPreviewLine) { openWeakSpot() }
+                MarathonCard(isClub: entitlement.isClub, run: marathonRuns.first, subtitle: marathonSubtitle) { openMarathon() }
                 moreWaysSection
                 Button { showLiveJoin = true } label: {
                     HStack(spacing: 6) {
@@ -118,6 +124,19 @@ struct HomeView: View {
         }
         .sheet(isPresented: $showLiveJoin) { LiveJoinView(initialCode: liveJoinCode) }
         .sheet(isPresented: $showClubPaywall) { ClubPaywallView() }
+        .sheet(isPresented: $showMarathonHistory) { MarathonHistoryView() }
+        .confirmationDialog("Marathon in progress", isPresented: $showMarathonChoice, titleVisibility: .visible) {
+            Button("Resume") { start(LaunchRequest(mode: .marathon, category: .named("mixed")), remember: false) }
+            Button("Start Over", role: .destructive) {
+                Marathon.startNew(in: modelContext)
+                start(LaunchRequest(mode: .marathon, category: .named("mixed")), remember: false)
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            if let run = marathonRuns.first {
+                Text("Question \(run.currentIndex + 1) of \(run.total) — resume where you left off, or start a fresh run.")
+            }
+        }
         .fullScreenCover(isPresented: showOnboarding) {
             OnboardingView { hasOnboarded = true }
         }
@@ -136,6 +155,9 @@ struct HomeView: View {
             if DebugHooks.openDailyArchive { showDailyArchive = true }
             if let jc = ProcessInfo.processInfo.environment["TIDBITS_LIVE_JOIN"], !jc.isEmpty {
                 liveJoinCode = jc; showLiveJoin = true
+            }
+            if DebugHooks.openMarathon {
+                start(LaunchRequest(mode: .marathon, category: .named("mixed")), remember: false)
             }
         }
         .onChange(of: gameCenter.pendingChallengeMode) { _, m in
@@ -175,6 +197,31 @@ struct HomeView: View {
         } else {
             showClubPaywall = true
         }
+    }
+
+    /// Members with a run in progress get the Resume/Start Over choice; with
+    /// no run, they launch straight into a fresh one. Non-members see the
+    /// existing paywall — never a blank wall.
+    private func openMarathon() {
+        guard entitlement.isClub else { showClubPaywall = true; return }
+        if marathonRuns.first != nil {
+            showMarathonChoice = true
+        } else {
+            start(LaunchRequest(mode: .marathon, category: .named("mixed")), remember: false)
+        }
+    }
+
+    /// A real, concrete subtitle in every state — never a nag (MONETIZATION
+    /// §4a). Members see their true position or their real last-run number;
+    /// non-members see a specific illustration of the domain scorecard (there's
+    /// no free-tier Marathon data to sample from, unlike Weak-Spot/Story Archive).
+    private var marathonSubtitle: String {
+        if entitlement.isClub {
+            if let run = marathonRuns.first { return "Question \(run.currentIndex + 1) of \(run.total) — tap to resume" }
+            if let last = marathonHistory.first { return "\(Int(last.accuracy * 100))% on your last run — tap to start a new one" }
+            return "200 questions. Play it across as many sittings as you like — we'll keep your place."
+        }
+        return "See exactly where you stand — e.g. Geography 91% · History 64% — across a 200-question run you can pause and resume anytime."
     }
 
     private var header: some View {
@@ -360,9 +407,9 @@ private struct CustomizeSheet: View {
 
     private let coreModes: [GameMode] = [.classic, .timeAttack, .survival, .stake]
     private var playableModes: [GameMode] {
-        // .weakSpot is Club-only and never a free Customize pick — it has its
-        // own Home entry point (docs/CLUB-FEATURES-BUILD.md "Feature 1").
-        GameMode.allCases.filter { $0 != .daily && $0 != .barTrivia && $0 != .mix && $0 != .weakSpot }
+        // .weakSpot / .marathon are Club-only and never a free Customize pick —
+        // each has its own Home entry point (docs/CLUB-FEATURES-BUILD.md).
+        GameMode.allCases.filter { $0 != .daily && $0 != .barTrivia && $0 != .mix && $0 != .weakSpot && $0 != .marathon }
     }
     // 150pt floor: every mode/category name fits ONE line — narrower cells
     // mid-word-wrapped "Survival"/"Geography" (the owner's "text is bad" bug).
@@ -701,6 +748,60 @@ private struct WeakSpotCard: View {
             }
             .padding(18)
             .chunkyCard(fill: Tidbits.Palette.grape)
+        }
+        .buttonStyle(.plain)
+        .padding(.trailing, Tidbits.Metric.shadowOffset)
+    }
+}
+
+// MARK: - Marathon card (Club — docs/CLUB-FEATURES-BUILD.md "Feature 3")
+
+private struct MarathonCard: View {
+    let isClub: Bool
+    /// Non-nil = a run is in progress (drives the "Resume" framing).
+    let run: MarathonRun?
+    let subtitle: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 14) {
+                Image(systemName: "flag.checkered")
+                    .font(.system(size: 30, weight: .black))
+                    .foregroundStyle(Tidbits.Palette.teal.legibleForeground)
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 6) {
+                        Text("MARATHON")
+                            .font(Tidbits.TypeRamp.l2)
+                            .foregroundStyle(Tidbits.Palette.teal.legibleForeground)
+                        if !isClub {
+                            Text("CLUB")
+                                .font(.system(size: 11, weight: .black, design: .rounded))
+                                .foregroundStyle(Tidbits.Palette.teal)
+                                .padding(.horizontal, 7).padding(.vertical, 3)
+                                .background(Capsule().fill(Color.white.opacity(0.92)))
+                        }
+                        if run != nil {
+                            Text("RESUME")
+                                .font(.system(size: 11, weight: .black, design: .rounded))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 7).padding(.vertical, 3)
+                                .background(Capsule().fill(Tidbits.Palette.coral))
+                        }
+                    }
+                    Text(subtitle)
+                        .font(Tidbits.TypeRamp.l5)
+                        .foregroundStyle(Tidbits.Palette.teal.legibleForeground.opacity(0.85))
+                        .multilineTextAlignment(.leading)
+                        .lineLimit(2)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right.circle.fill")
+                    .font(.system(size: 26, weight: .bold))
+                    .foregroundStyle(Tidbits.Palette.teal.legibleForeground)
+            }
+            .padding(18)
+            .chunkyCard(fill: Tidbits.Palette.teal)
         }
         .buttonStyle(.plain)
         .padding(.trailing, Tidbits.Metric.shadowOffset)

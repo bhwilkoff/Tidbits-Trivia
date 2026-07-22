@@ -14,6 +14,10 @@ struct GamePlayView: View {
     /// Non-nil in a Play-vs-CPU match (Decision 038): a compact standings
     /// strip rides the top and each reveal shows what the bot did.
     var versus: BotMatch? = nil
+    /// Marathon only: how many questions were already answered in EARLIER
+    /// sessions — added to `game.index` so the HUD shows the true position
+    /// out of 200, not this session's local (resumed-slice) index. nil elsewhere.
+    var marathonOffset: Int? = nil
     let onQuit: () -> Void
     @FocusState private var enumFocused: Bool
 
@@ -131,6 +135,9 @@ struct GamePlayView: View {
     private var progressLabel: String {
         switch game.mode {
         case .timeAttack, .survival: return "#\(game.index + 1)"
+        case .marathon:
+            let offset = marathonOffset ?? 0
+            return "\(offset + game.index + 1) / \(offset + game.questions.count)"
         default: return "\(game.index + 1) / \(game.questions.count)"
         }
     }

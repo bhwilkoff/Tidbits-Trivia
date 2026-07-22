@@ -49,7 +49,7 @@ ship first; season/cron infrastructure is last.
 |---|---|---|---|---|
 | 1 | **Weak-Spot Arena** | 1 gameplay | client-only: round from your own miss history | **DONE on all 6 platforms** |
 | 2 | **Story Archive** | 3 library | client-only: keep every unlocked "story behind the answer", searchable | **DONE on all 6 platforms** |
-| 3 | **Marathon** | 1 gameplay | client-only: 200-q graded endurance, cross-session scorecard | todo |
+| 3 | **Marathon** | 1 gameplay | client-only: 200-q graded endurance, cross-session scorecard | **iOS in progress** |
 | 4 | **Knowledge Atlas** | 2 retrospect | client-only: accuracy by domain/sub-domain over 12mo | todo |
 | 5 | **Friend Streaks** | 4 social | light RTDB (reuses friends): mutual daily accountability | todo |
 | 6 | **Link Wall** | 1 gameplay | client-only: NYT-Connections-style 2nd daily (Daily stays free) | todo |
@@ -68,7 +68,7 @@ Legend: ✅ done+verified · 🔨 in progress · ⏳ queued · 🚫 n/a (with re
 |---|---|---|---|---|---|---|
 | 1 Weak-Spot Arena | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 2 Story Archive | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 3 Marathon | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
+| 3 Marathon | ⏳ | 🔨 | ⏳ | ⏳ | ⏳ | ⏳ |
 | 4 Knowledge Atlas | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 5 Friend Streaks | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 6 Link Wall | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
@@ -186,6 +186,63 @@ is a separate Pillar-3 item; note it as a fast-follow, don't build it here.)
 
 **Apple reference = canonical.** Other platforms mirror the behavior (same verb,
 native idiom). Reuse the Weak-Spot debug override (`TIDBITS_CLUB=1` etc.) to verify.
+
+---
+
+## Feature 3 — Marathon (design spec)
+
+**One line:** a long, graded, **resume-across-sessions** endurance run (200 questions)
+with a permanent per-domain scorecard — a personal challenge you own and measurably
+improve on (Pillar 1; MONETIZATION §4a).
+
+**The tension named + resolved (learning-orientation):** a raw endurance run leans
+"play more," and Club is "get *better*, not play more." So the value is NOT the
+volume — it's the **graded, per-domain scorecard** and the **comparison to your past
+marathons**. Marathon is framed as a measured mastery challenge, not a grind:
+- Deepen understanding? YES — 200 questions is broad cross-domain exposure, and the
+  per-domain result tells you where you're strong/weak (a map, not a score).
+- Invite participation? YES — you pace it yourself across sessions (resume), and the
+  scorecard compares against your own prior runs — your history is the input.
+- Support agency? YES — a personal best you own; the domain breakdown points you at
+  what to shore up next (links back to Weak-Spot Arena / Story Archive).
+- Clarity? YES — 200 questions, graded, resumable, a plain scorecard. No opaque model.
+
+**Line test:** a 5-hour player won't undertake a 200-Q resumable marathon; it's
+legible only to a committed player. Clean Club.
+
+**The new mechanic (this is what makes it a real feature, not a long Classic):**
+**resume across sessions.** Persist an in-progress run so the player can leave and
+come back. Each platform adds a small persisted `MarathonRun` (current index, the
+answers/score so far, the fixed 200-question id list + a seed so the SAME questions
+resume, startedAt). On launch, if an unfinished run exists, offer **Resume** or
+**Start over**. On finish, write a permanent `MarathonScore` (score, correct/total,
+per-domain breakdown, date, duration) and clear the in-progress run.
+
+**Generation:** 200 questions from the corpus (mixed by default; optionally a chosen
+domain), drawn by a stored seed so a resume is deterministic. Graded: correct/total +
+a difficulty-weighted score (reuse the existing difficulty overlay if present).
+
+**Surface:**
+- Entry: a Club-marked **Marathon** card (its own, distinct from the quick modes —
+  it's a commitment, not a 2-minute round). Shows Resume state if a run is in
+  progress ("Question 84 of 200 — resume?").
+- Play: reuse the engine's question-run loop; a persistent progress indicator
+  (84/200) and periodic save (every answer persists, so a crash/quit never loses
+  progress). No clock pressure (it's endurance, not speed) — or a generous per-Q clock.
+- Result / scorecard: score + correct/total + **per-domain accuracy bars** + how it
+  compares to your best prior marathon ("+6% vs your last run"). A permanent
+  **Marathon history** list (past runs) off Records.
+- Empty/first-run: "A 200-question test of everything. Play it across as many
+  sittings as you like — we'll keep your place."
+- Non-member: a real preview (the pitch + a sample of the domain-scorecard idea) →
+  paywall, never a blank wall.
+
+**Gating:** Club-only. Reuse the `TIDBITS_CLUB=1` etc. debug override. Do NOT let the
+`.marathon` mode leak into the free Customize grid / remembered / random default
+(same exclusion the prior two features needed on every platform).
+
+**Apple reference = canonical.** Others mirror the behavior (same verb, native idiom).
+The load-bearing shared piece is the resume persistence — get it right on Apple first.
 
 ---
 

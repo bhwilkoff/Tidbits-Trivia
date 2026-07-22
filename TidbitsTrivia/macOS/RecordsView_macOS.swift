@@ -11,14 +11,19 @@ struct RecordsView_macOS: View {
     @Query(sort: \GameRecord.date, order: .reverse) private var records: [GameRecord]
     @Query private var streaks: [DailyStreak]
     @Environment(PlayerIdentityStore.self) private var identity
+    @Environment(EntitlementStore.self) private var entitlement
+    @Environment(\.modelContext) private var modelContext
     @Query(filter: #Predicate<MissedFact> { !$0.resolved }, sort: \MissedFact.missCount, order: .reverse)
     private var toReview: [MissedFact]
     @Query(sort: \CalibrationTally.tierValue, order: .reverse) private var calibration: [CalibrationTally]
+    @Query(sort: \SeenStory.lastSeen, order: .reverse) private var seenStories: [SeenStory]
 
     @State private var recap: GameRecord?
     @State private var drillDomain: String?
     @State private var bestsMode: GameMode?
     @State private var showAllGames = false
+    @State private var showStoryArchive = false
+    @State private var showClubPaywall = false
 
     var body: some View {
         ScrollView {
@@ -32,6 +37,7 @@ struct RecordsView_macOS: View {
                     streakCard
                     lifetimeRow
                     gamesSection
+                    storyArchiveSection
                     knowledgeSection
                     if calibration.contains(where: { $0.total > 0 }) { calibrationSection }
                     bestsSection
@@ -54,6 +60,62 @@ struct RecordsView_macOS: View {
         .sheet(isPresented: $showAllGames) {
             AllGamesSheet_macOS(records: records) { recap = $0 }
         }
+        .sheet(isPresented: $showStoryArchive) { StoryArchiveView_macOS() }
+        .sheet(isPresented: $showClubPaywall) { ClubPaywallView_macOS() }
+        .task {
+            if DebugHooks.openStoryArchive { openStoryArchive() }
+        }
+    }
+
+    // MARK: Story Archive (Club — docs/CLUB-FEATURES-BUILD.md "Feature 2")
+
+    // A single Club-marked "see all" entry into the searchable story library
+    // (R-REC-1: the dashboard stays a row, not the archive itself).
+    private var storyArchiveSection: some View {
+        Button(action: openStoryArchive) {
+            HStack(spacing: 14) {
+                Image(systemName: "books.vertical.fill")
+                    .font(.system(size: 26, weight: .black))
+                    .foregroundStyle(Tidbits.Palette.teal.legibleForeground)
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 6) {
+                        Text("STORY ARCHIVE").font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.teal.legibleForeground)
+                        if !entitlement.isClub {
+                            Text("CLUB")
+                                .font(.system(size: 11, weight: .black, design: .rounded))
+                                .foregroundStyle(Tidbits.Palette.teal)
+                                .padding(.horizontal, 7).padding(.vertical, 3)
+                                .background(Capsule().fill(Color.white.opacity(0.92)))
+                        }
+                    }
+                    Text(storyArchiveSubtitle)
+                        .font(Tidbits.TypeRamp.l5)
+                        .foregroundStyle(Tidbits.Palette.teal.legibleForeground.opacity(0.85))
+                        .lineLimit(2)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right.circle.fill").foregroundStyle(Tidbits.Palette.teal.legibleForeground)
+            }
+            .padding(18).frame(maxWidth: .infinity, alignment: .leading)
+            .chunkyCard(fill: Tidbits.Palette.teal)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var storyArchiveSubtitle: String {
+        if entitlement.isClub {
+            return seenStories.isEmpty
+                ? "Every story you unlock, kept here forever."
+                : "\(seenStories.count) stor\(seenStories.count == 1 ? "y" : "ies") collected — searchable, forever."
+        }
+        return StoryArchive.previewLine(in: modelContext)
+            ?? "Club keeps every story you unlock, searchable forever."
+    }
+
+    /// Members open the archive directly; everyone else sees the existing
+    /// paywall with a real preview — never a blank wall.
+    private func openStoryArchive() {
+        if entitlement.isClub { showStoryArchive = true } else { showClubPaywall = true }
     }
 
     /// Shown on the dashboard when signed out — the discoverable route to sign-in (which lives in

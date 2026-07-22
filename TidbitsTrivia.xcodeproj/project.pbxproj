@@ -25,6 +25,7 @@
 		1D19BE6624BBA688681353EE /* ContentView_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3D542C8E636DF4AF26303CB /* ContentView_macOS.swift */; };
 		1E61B04B5E7AB5ABD7297B54 /* MacHomeSheets_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38E2048C670779462804BFCD /* MacHomeSheets_macOS.swift */; };
 		220CABC0B501E1FF8A0E7453 /* BotOpponent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DC6C8D9CA86356D95539EA4 /* BotOpponent.swift */; };
+		2408B044D1E138A30B5F47C9 /* StoryArchiveView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = F095B6F381392A0BC1A36D25 /* StoryArchiveView_tvOS.swift */; };
 		24804CB812FA16ED5E34BEF9 /* Design.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB6E2342A764B8401C9516E9 /* Design.swift */; };
 		254A5D097C6BED08159370E5 /* AppStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F619B1D3BB620DD1304475A /* AppStore.swift */; };
 		263C354095054FECCB304CBA /* TemplateEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = E48988FC967EF362B69C2FB5 /* TemplateEngine.swift */; };
@@ -117,6 +118,7 @@
 		E24C72A3A025A4A52B050A04 /* StoreKitStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE188995F9ED70842837541F /* StoreKitStore.swift */; };
 		E6770F1D60EEB51BCEDD54B3 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8BAC363A3AF3ACE88A58A9AB /* LaunchScreen.storyboard */; };
 		E75013E2AC2F2501BDCABD62 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 413749E137B330C67EFBC726 /* ProfileView.swift */; };
+		E8237474767AEB4E4F7CE3E7 /* StoryArchiveView_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = F17A18347A60D32B1B27BC00 /* StoryArchiveView_macOS.swift */; };
 		EAC2294177981789AC4770B7 /* GameView_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDDD2AC4DB9C421C5849B8F6 /* GameView_macOS.swift */; };
 		EE8626F023BDE890D701F4B1 /* ContentView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = C23D07A7744AE72B2935CB2F /* ContentView_tvOS.swift */; };
 		F7DD1CB273A01818674027BF /* RecordsView_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = C72378B7C5C86DDDB6C4CC26 /* RecordsView_macOS.swift */; };
@@ -234,6 +236,8 @@
 		EDE7E258003BBD004F3BD314 /* enumerate.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = enumerate.json; sourceTree = "<group>"; };
 		EE188995F9ED70842837541F /* StoreKitStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitStore.swift; sourceTree = "<group>"; };
 		EE23B55D63E0B5A6C7E09DDE /* TidbitsTrivia-macOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "TidbitsTrivia-macOS.entitlements"; sourceTree = "<group>"; };
+		F095B6F381392A0BC1A36D25 /* StoryArchiveView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoryArchiveView_tvOS.swift; sourceTree = "<group>"; };
+		F17A18347A60D32B1B27BC00 /* StoryArchiveView_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoryArchiveView_macOS.swift; sourceTree = "<group>"; };
 		F18495176F588DF9E5C7907E /* PartyContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PartyContainerView.swift; sourceTree = "<group>"; };
 		F3AE68F153F8C298960BFD36 /* Player.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Player.swift; sourceTree = "<group>"; };
 		F4534F27C4206B9640778460 /* SettingsView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView_tvOS.swift; sourceTree = "<group>"; };
@@ -246,7 +250,7 @@
 		FD70222B5EE4C4145E4D1F84 /* NightSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightSetupView.swift; sourceTree = "<group>"; };
 		FDDD2AC4DB9C421C5849B8F6 /* GameView_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView_macOS.swift; sourceTree = "<group>"; };
 		FFC46D4CE8D03186C064C759 /* Question.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Question.swift; sourceTree = "<group>"; };
-		"TEMP_E534E407-A5E4-46CA-8568-B8D69E837264" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
+		"TEMP_6B4AB683-D35B-4D81-97DA-99867224C2EB" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -354,6 +358,7 @@
 				DDD3021F86143D7BF5E4B79B /* MacVersus_macOS.swift */,
 				C72378B7C5C86DDDB6C4CC26 /* RecordsView_macOS.swift */,
 				DD6B7F4DD192AF52DC23B7F1 /* SettingsView_macOS.swift */,
+				F17A18347A60D32B1B27BC00 /* StoryArchiveView_macOS.swift */,
 			);
 			path = macOS;
 			sourceTree = "<group>";
@@ -414,6 +419,7 @@
 				3D57E4D59AAC3B3F125BEF6C /* QuickMatchView_tvOS.swift */,
 				F705319E1E9AC235B5D005C4 /* RecordsView_tvOS.swift */,
 				F4534F27C4206B9640778460 /* SettingsView_tvOS.swift */,
+				F095B6F381392A0BC1A36D25 /* StoryArchiveView_tvOS.swift */,
 				8B74659353899C33ECD4009F /* VersusView_tvOS.swift */,
 			);
 			path = tvOS;
@@ -528,10 +534,10 @@
 			path = TidbitsTrivia;
 			sourceTree = "<group>";
 		};
-		"TEMP_7C872D53-868B-4A55-8FEA-9C84390B7130" /* Tidbits-Trivia */ = {
+		"TEMP_E3395D0C-7EE1-4B53-A9D2-225B94CD49B3" /* Tidbits-Trivia */ = {
 			isa = PBXGroup;
 			children = (
-				"TEMP_E534E407-A5E4-46CA-8568-B8D69E837264" /* AppVersion.xcconfig */,
+				"TEMP_6B4AB683-D35B-4D81-97DA-99867224C2EB" /* AppVersion.xcconfig */,
 			);
 			path = "Tidbits-Trivia";
 			sourceTree = "<group>";
@@ -715,6 +721,8 @@
 				E24C72A3A025A4A52B050A04 /* StoreKitStore.swift in Sources */,
 				188124E453FCD7699CDE5105 /* StoryArchive.swift in Sources */,
 				13B6096EC8BAF18675A19CBF /* StoryArchiveView.swift in Sources */,
+				E8237474767AEB4E4F7CE3E7 /* StoryArchiveView_macOS.swift in Sources */,
+				2408B044D1E138A30B5F47C9 /* StoryArchiveView_tvOS.swift in Sources */,
 				263C354095054FECCB304CBA /* TemplateEngine.swift in Sources */,
 				274F21E30264310543E14DB4 /* TidbitsTriviaApp.swift in Sources */,
 				918AE96520BD2A89643D6E20 /* TriviaCategory.swift in Sources */,
@@ -730,7 +738,7 @@
 /* Begin XCBuildConfiguration section */
 		296659EF0549868336801823 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_E534E407-A5E4-46CA-8568-B8D69E837264" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_6B4AB683-D35B-4D81-97DA-99867224C2EB" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -851,7 +859,7 @@
 		};
 		E6F711EEEE2896F84FE9AB98 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_E534E407-A5E4-46CA-8568-B8D69E837264" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_6B4AB683-D35B-4D81-97DA-99867224C2EB" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;

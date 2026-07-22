@@ -13,11 +13,16 @@ struct RecordsView_tvOS: View {
     @Query(sort: \GameRecord.date, order: .reverse) private var records: [GameRecord]
     @Query private var streaks: [DailyStreak]
     @Environment(PlayerIdentityStore.self) private var identity
+    @Environment(EntitlementStore.self) private var entitlement
+    @Environment(\.modelContext) private var modelContext
     @Query(filter: #Predicate<MissedFact> { !$0.resolved }, sort: \MissedFact.missCount, order: .reverse)
     private var toReview: [MissedFact]
     @Query(sort: \CalibrationTally.tierValue, order: .reverse) private var calibration: [CalibrationTally]
+    @Query(sort: \SeenStory.lastSeen, order: .reverse) private var seenStories: [SeenStory]
     @Environment(\.dismiss) private var dismiss
     @State private var recap: GameRecord?
+    @State private var showStoryArchive = false
+    @State private var showClubPaywall = false
 
     var body: some View {
         ZStack {
@@ -33,6 +38,7 @@ struct RecordsView_tvOS: View {
                         streakCard
                         lifetimeRow
                         historySection
+                        storyArchiveSection
                         progressSection
                         if calibration.contains(where: { $0.total > 0 }) { calibrationSection }
                         bestsSection
@@ -46,6 +52,60 @@ struct RecordsView_tvOS: View {
         }
         .onExitCommand { dismiss() }   // Menu button leaves Records (modal: allowed)
         .fullScreenCover(item: $recap) { TVGameRecapView(record: $0) }
+        .fullScreenCover(isPresented: $showStoryArchive) { StoryArchiveView_tvOS() }
+        .fullScreenCover(isPresented: $showClubPaywall) { ClubPaywallView_tvOS() }
+        .task {
+            if DebugHooks.openStoryArchive { openStoryArchive() }
+        }
+    }
+
+    // MARK: Story Archive (Club — docs/CLUB-FEATURES-BUILD.md "Feature 2")
+
+    // A single Club-marked, focusable "see all" entry into the story library
+    // (R-REC-1: the dashboard stays a row, not the archive itself).
+    private var storyArchiveSection: some View {
+        Button(action: openStoryArchive) {
+            HStack(spacing: 28) {
+                Image(systemName: "books.vertical.fill").font(.system(size: 52, weight: .black))
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 16) {
+                        Text("STORY ARCHIVE").font(.system(size: 40, weight: .black, design: .rounded))
+                        if !entitlement.isClub {
+                            Text("CLUB")
+                                .font(.system(size: 22, weight: .black, design: .rounded))
+                                .padding(.horizontal, 14).padding(.vertical, 6)
+                                .background(Capsule().fill(.white.opacity(0.92)))
+                                .foregroundStyle(Tidbits.Palette.teal)
+                        }
+                    }
+                    Text(storyArchiveSubtitle)
+                        .font(.system(size: 29, weight: .medium, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.9))
+                        .lineLimit(2)
+                }
+                Spacer()
+            }
+            .foregroundStyle(.white)
+            .padding(40)
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(TVStoryArchiveCardStyle())
+    }
+
+    private var storyArchiveSubtitle: String {
+        if entitlement.isClub {
+            return seenStories.isEmpty
+                ? "Every story you unlock, kept here forever."
+                : "\(seenStories.count) stor\(seenStories.count == 1 ? "y" : "ies") collected — searchable, forever."
+        }
+        return StoryArchive.previewLine(in: modelContext)
+            ?? "Club keeps every story you unlock, searchable forever."
+    }
+
+    /// Members open the archive directly; everyone else sees the existing
+    /// paywall with a real preview — never a blank wall.
+    private func openStoryArchive() {
+        if entitlement.isClub { showStoryArchive = true } else { showClubPaywall = true }
     }
 
     // Game history (owner: scroll your previous games at ten feet). Focusable
@@ -258,6 +318,24 @@ struct RecordsView_tvOS: View {
                     }
                 }
             }
+        }
+    }
+}
+
+// MARK: - Story Archive entry (focusable hero button, mirrors TVWeakSpotHeroStyle)
+
+struct TVStoryArchiveCardStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View { Inner(configuration: configuration) }
+    struct Inner: View {
+        let configuration: Configuration
+        @Environment(\.isFocused) private var focused
+        var body: some View {
+            configuration.label
+                .background(RoundedRectangle(cornerRadius: 28).fill(Tidbits.Palette.teal.gradient))
+                .overlay(RoundedRectangle(cornerRadius: 28).strokeBorder(.white.opacity(focused ? 0.9 : 0), lineWidth: 5))
+                .scaleEffect(focused ? 1.03 : 1.0)
+                .shadow(color: Tidbits.Palette.teal.opacity(focused ? 0.6 : 0), radius: 30, y: 12)
+                .animation(.easeOut(duration: 0.18), value: focused)
         }
     }
 }

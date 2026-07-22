@@ -23,6 +23,7 @@ public sealed class EntitlementStore
 {
     private readonly FirebaseRtdb _db;
     private readonly AccountIdentity _identity;
+    private readonly IStoreGateway _store;
     private readonly string _cachePath;
 
     private sealed record Cache
@@ -34,10 +35,12 @@ public sealed class EntitlementStore
     /// instantly, before any network round-trip.
     public bool IsClub { get; private set; }
 
-    public EntitlementStore(FirebaseRtdb db, AccountIdentity identity, string? cachePath = null)
+    public EntitlementStore(FirebaseRtdb db, AccountIdentity identity,
+                            IStoreGateway? store = null, string? cachePath = null)
     {
         _db = db;
         _identity = identity;
+        _store = store ?? new NoStoreGateway();
         _cachePath = cachePath ?? Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "TidbitsTrivia", "entitlement.json");
@@ -48,22 +51,31 @@ public sealed class EntitlementStore
     /// Never throws; the worst case is "keep the cached answer".
     public async Task RefreshAsync()
     {
-        if (!_identity.SignedIn || _identity.ProfileId is not { } key)
+        // Class A — the Microsoft Store (local, offline, attested). A clean YES wins now.
+        bool? local = null;
+        try { local = await _store.IsClubEntitledAsync(); } catch { /* treat as unknown */ }
+        if (local == true) { Set(true); return; }
+
+        // Class B — the web purchase (remote), only when signed in with a verified email.
+        if (_identity.SignedIn && _identity.ProfileId is { } key)
         {
-            // Not signed in -> no remote entitlement is readable. Don't aggressively revoke
-            // a cached true (fail open); it re-confirms on the next signed-in refresh. A
-            // fresh anon session with no cache is simply not Club.
+            try
+            {
+                var ent = await _db.Get<Entitlement>(Entitlement.Path(key));
+                if (ent?.GrantsClub == true) { Set(true); return; }
+                // A clean remote read of nothing AND a clean local "no" is a definitive negative.
+                if (local == false) { Set(false); return; }
+                // else: local unknown (null) -> no clean negative, keep cached (fail open).
+            }
+            catch
+            {
+                // transient RTDB error -> keep the cached answer (fail open)
+            }
             return;
         }
-        try
-        {
-            var ent = await _db.Get<Entitlement>(Entitlement.Path(key));
-            Set(ent?.GrantsClub ?? false); // a clean read (incl. null -> not club) is authoritative
-        }
-        catch
-        {
-            // transient RTDB error -> keep the cached answer (fail open)
-        }
+
+        // Not signed in: a clean local "no" is definitive; local unknown keeps the cache.
+        if (local == false) Set(false);
     }
 
     /// Sign-out clears the cached Club state (the next person on this device isn't you).

@@ -84,10 +84,15 @@ isEntitled = localStoreEntitlement          // Class A: StoreKit/Play/MSStore �
 
 ### Phase 3 — Windows (Microsoft Store IAP via `StoreContext`)
 - [ ] 3a. Partner Center: add-on products (subscription + durable) on Store ID `9NRKS9LDRCWC`.
-- [ ] 3b. `IStoreGateway` in `Tidbits.Core` + `WindowsStoreGateway` behind the Win TFM
-      (`StoreContext` + `IInitializeWithWindow` via `TryGetPlatformHandle`) + fake for tests.
-      **Highest-risk item — no public Avalonia worked example; CI-only verifiable.**
-- [ ] 3c. Wire into `EntitlementStore`.
+- [~] 3b. `IStoreGateway` seam DONE + Mac-verified (`Tidbits.Core/Networking/IStoreGateway.cs`:
+      interface + `StoreProductInfo`/`StorePurchaseResult`/`ClubProducts` + `NoStoreGateway`
+      default). Wired into `EntitlementStore` as the Class A local-first source (mirrors the
+      Swift `localCheck`: local YES wins; local-NO + remote-absent = definitive; local-unknown
+      fails OPEN). 285 tests (+5). **REMAINING: the real `WindowsStoreGateway` (`StoreContext`
+      + `IInitializeWithWindow` via `TryGetPlatformHandle`) in a new `Tidbits.Windows`
+      net10.0-windows project — compiles/verifies ONLY on windows-latest CI, and a live
+      purchase needs the Partner Center add-ons (owner/browser).**
+- [x] 3c. Wired into `EntitlementStore` (the seam; the real gateway swaps in on the MSIX).
 
 ### Phase 4 — Android (Play Billing) — only if Play Console access this cycle
 - [ ] 4a. Play Console: subscription + one-time products.

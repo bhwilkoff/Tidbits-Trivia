@@ -57,8 +57,68 @@ public class EntitlementStoreTests
     private static AccountIdentity SignedOutAccount() =>
         new(new FirebaseRtdb(tokens: new MemoryTokenStore()), new MemoryTokenStore());
 
-    private static EntitlementStore NewStore(string path) =>
-        new(new FirebaseRtdb(tokens: new MemoryTokenStore()), SignedOutAccount(), path);
+    private static EntitlementStore NewStore(string path, IStoreGateway? store = null) =>
+        new(new FirebaseRtdb(tokens: new MemoryTokenStore()), SignedOutAccount(), store, cachePath: path);
+
+    /// A fake local store (Class A) so the local-first / fail-open logic is testable off Windows.
+    private sealed class FakeStore(bool? entitled) : IStoreGateway
+    {
+        public Task<bool?> IsClubEntitledAsync() => Task.FromResult(entitled);
+        public Task<IReadOnlyList<StoreProductInfo>> GetProductsAsync() =>
+            Task.FromResult<IReadOnlyList<StoreProductInfo>>(Array.Empty<StoreProductInfo>());
+        public Task<StorePurchaseResult> PurchaseAsync(string productId) =>
+            Task.FromResult(StorePurchaseResult.Unavailable);
+    }
+
+    [Fact]
+    public async Task Local_store_YES_grants_club_without_any_network()
+    {
+        var path = TempCachePath();
+        try
+        {
+            var store = NewStore(path, new FakeStore(true));   // Store says entitled
+            await store.RefreshAsync();                          // signed out, no RTDB
+            Assert.True(store.IsClub);                           // Class A alone grants Club
+        }
+        finally { File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task Local_store_UNKNOWN_when_signed_out_keeps_cached_true_fail_open()
+    {
+        var path = TempCachePath();
+        try
+        {
+            File.WriteAllText(path, "{\"isClub\":true}");        // returning member, cached
+            var store = NewStore(path, new FakeStore(null));     // Store: unknown (fresh/unpackaged)
+            await store.RefreshAsync();
+            Assert.True(store.IsClub);                           // fail open — never revoke on unknown
+        }
+        finally { File.Delete(path); }
+    }
+
+    [Fact]
+    public async Task Local_store_clean_NO_while_signed_out_revokes()
+    {
+        var path = TempCachePath();
+        try
+        {
+            File.WriteAllText(path, "{\"isClub\":true}");
+            var store = NewStore(path, new FakeStore(false));    // Store: definitively not entitled
+            await store.RefreshAsync();
+            Assert.False(store.IsClub);                          // a clean negative lowers the gate
+        }
+        finally { File.Delete(path); }
+    }
+
+    [Fact]
+    public void NoStoreGateway_reports_unknown_and_unavailable()
+    {
+        var g = new NoStoreGateway();
+        Assert.Null(g.IsClubEntitledAsync().Result);             // unknown -> fail open
+        Assert.Empty(g.GetProductsAsync().Result);
+        Assert.Equal(StorePurchaseResult.Unavailable, g.PurchaseAsync("x").Result);
+    }
 
     [Fact]
     public void A_fresh_store_with_no_cache_starts_not_club()

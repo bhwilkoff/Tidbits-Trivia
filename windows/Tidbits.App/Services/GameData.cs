@@ -55,7 +55,9 @@ public sealed class GameData
         Duels = new Tidbits.Core.Networking.DuelStore(Path.Combine(appDir, "duels.json"));
         Sfx = new Tidbits.Core.Networking.SfxBoard(Path.Combine(appDir, "sfx-board.json"));
         Account = new Tidbits.Core.Networking.AccountIdentity(Rtdb, new DpapiTokenStore());
-        Entitlement = new Tidbits.Core.Networking.EntitlementStore(Rtdb, Account);
+        // NoStoreGateway on the direct-download .exe / Mac head; the WindowsStoreGateway
+        // (Microsoft Store StoreContext) replaces it in the packaged MSIX (Phase 3).
+        Entitlement = new Tidbits.Core.Networking.EntitlementStore(Rtdb, Account, new Tidbits.Core.Networking.NoStoreGateway());
     }
 
     public static GameData FromDirectory(string dir) => new(QuestionSources.LoadFromDirectory(dir));

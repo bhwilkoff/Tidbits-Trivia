@@ -2,7 +2,7 @@
 // Apple AppStore + GameEngine + views. Vanilla JS, no framework, no build.
 
 import { Corpus, Pictures, ThisOrThat, ClosestCall, Ordering, Matching, TypeAnswer, OddOneOut, Enumerate, Difficulty, matchesAccepted, Wikipedia, DailyBoard } from './api.js';
-import { Store, CATEGORIES, catColor, catById, MODES, NIGHT, STAKE_BUDGET, dayKey, APP_STORES, SITE_URL, CLUB, WeakSpotArena, StoryArchive, answerTextOf } from './store.js';
+import { Store, CATEGORIES, catColor, catById, MODES, NIGHT, STAKE_BUDGET, dayKey, APP_STORES, SITE_URL, CLUB, WeakSpotArena, StoryArchive, answerTextOf, Marathon, marathonAccuracy } from './store.js';
 import { Scoring } from './engine.js';
 import { BOTS, houseBot, botById, VsMatch } from './bots.js';
 import { FirebaseNet } from './firebase.js';
@@ -95,6 +95,13 @@ function render() {
     app.innerHTML = `${header(currentTab())}<main class="main">${viewArchive()}</main>`;
     bindArchive(); document.title = 'Tidbits Trivia — Story Archive'; return;
   }
+  // Tidbits Club EXCLUSIVE — Marathon (docs/CLUB-FEATURES-BUILD.md "Feature 3"):
+  // the hub (resume/start-over + permanent history), a Home-card + Records
+  // destination, shareable at its own canonical URL.
+  if (location.hash.startsWith('#/marathon')) {
+    app.innerHTML = `${header(currentTab())}<main class="main">${viewMarathon()}</main>`;
+    bindMarathon(); document.title = 'Tidbits Trivia — Marathon'; return;
+  }
   const tab = currentTab();
   app.innerHTML = `
     ${header(tab)}
@@ -119,6 +126,7 @@ const ICON = {
   check: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M2.5 8.5l3.5 3.5 7.5-8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   target: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.2"/><circle cx="8" cy="8" r="3.2"/></g><circle cx="8" cy="8" r="1.1" fill="currentColor"/></svg>',
   book: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M2 2.9c0-.6.5-1 1.1-.9 1.7.3 3.3.9 4.9 1.8 1.6-.9 3.2-1.5 4.9-1.8.6-.1 1.1.3 1.1.9v8.7c0 .5-.4.9-.9 1-1.8.3-3.5.9-5.1 1.8h-.8c-1.6-.9-3.3-1.5-5.1-1.8-.5-.1-.9-.5-.9-1z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M8 3.8v9" stroke="currentColor" stroke-width="1.4"/></svg>',
+  flag: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M3.2 1.4v13.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M3.2 2.1c1.8-1 3.6.9 5.4 0s3.6.9 3.6.9v5.6c-1.8.9-3.6-.9-5.4 0s-3.6-.9-3.6-.9z" fill="currentColor"/></svg>',
 };
 
 // The portable Tidbits identity — the web twin of the iOS/Android profile screens.
@@ -208,13 +216,14 @@ const CORE_MODES = ['classic', 'timeAttack', 'survival', 'stake'];
 function quickPlayTarget() {
   const m = localStorage.getItem('tidbits.lastMode');
   const c = localStorage.getItem('tidbits.lastCat');
-  // .weakSpot is Club-gated and never a remembered/random default (mirrors the
-  // Apple AppStore fix — a Club mode can't leak into the free Quick Play habit).
-  if (m && MODES[m] && m !== 'weakSpot' && c) return { mode: m, cat: c };
+  // .weakSpot / .marathon are Club-gated and never a remembered/random default
+  // (mirrors the Apple AppStore fix — a Club mode can't leak into the free
+  // Quick Play habit).
+  if (m && MODES[m] && m !== 'weakSpot' && m !== 'marathon' && c) return { mode: m, cat: c };
   return { mode: 'classic', cat: 'mixed' };
 }
 function rememberPlay(mode, catId) {
-  if (mode === 'daily' || mode === 'weakSpot') return;
+  if (mode === 'daily' || mode === 'weakSpot' || mode === 'marathon') return;
   localStorage.setItem('tidbits.lastMode', mode);
   localStorage.setItem('tidbits.lastCat', catId);
 }
@@ -261,6 +270,7 @@ function viewHome() {
     <button class="banner card night-banner-cta" data-night-open><div><div class="banner-title">TRIVIA NIGHT</div>
       <div class="muted">Host or join a night of mixed rounds.</div></div><span class="chev">›</span></button>
     ${weakSpotCard()}
+    ${marathonCard()}
     <h2 class="section">More ways to play</h2>
     <div class="home-tiles">
       <button class="tile card mp" data-multiplayer><span class="tile-ico">${ICON.globe}</span><span class="tile-name">Online Multiplayer</span><span class="tile-sub">Play vs CPU now</span></button>
@@ -320,6 +330,17 @@ function viewHome() {
         <div class="night-actions">
           <button type="button" class="btn" data-cust-save>Save preset</button>
           <button type="button" class="btn btn-primary" data-cust-start>Start</button>
+        </div>
+      </div>
+    </dialog>
+    <dialog id="marathon-dlg" class="night-dlg">
+      <div class="night-form">
+        <h2>Marathon in progress</h2>
+        <p class="muted">${marathonResumeMessage()}</p>
+        <div class="night-actions">
+          <button type="button" class="btn" data-marathon-cancel>Cancel</button>
+          <button type="button" class="btn" data-marathon-startover>Start Over</button>
+          <button type="button" class="btn btn-primary" data-marathon-resume>Resume</button>
         </div>
       </div>
     </dialog>
@@ -396,6 +417,63 @@ function renderWeakSpotEmpty() {
   $('[data-back]').addEventListener('click', render);
 }
 
+// Tidbits Club EXCLUSIVE — Marathon (docs/CLUB-FEATURES-BUILD.md "Feature 3").
+// Home entry point, distinct from the quick-mode cards (it's a commitment, not a
+// 2-minute round). Shows a RESUME chip + true position when a run is in
+// progress. Non-members see a real, concrete illustration + a CLUB chip; tapping
+// routes to the existing #/club paywall — never a blank wall.
+function marathonCard() {
+  const club = Entitlement.isClub;
+  const run = club ? Marathon.inProgress() : null;
+  const runs = club ? Marathon.history() : [];
+  let subtitle;
+  if (club) {
+    if (run) subtitle = `Question ${run.currentIndex + 1} of ${run.ids.length} — tap to resume`;
+    else if (runs[0]) subtitle = `${Math.round(marathonAccuracy(runs[0]) * 100)}% on your last run — tap to start a new one`;
+    else subtitle = 'Play it across as many sittings as you like — we’ll keep your place.';
+  } else {
+    subtitle = Marathon.previewLine();
+  }
+  const chip = club ? '' : '<span class="club-chip">CLUB</span>';
+  const resume = (club && run) ? '<span class="resume-chip">RESUME</span>' : '';
+  return `<button class="banner card marathon-banner" data-marathon>
+    <div><div class="banner-title">${ICON.flag} MARATHON ${chip}${resume}</div>
+    <div class="muted">${h(subtitle)}</div></div><span class="chev">›</span></button>`;
+}
+
+function marathonResumeMessage() {
+  const run = Marathon.inProgress();
+  return run ? `Question ${run.currentIndex + 1} of ${run.ids.length} — resume where you left off, or start a fresh run.` : '';
+}
+
+// Members with a run in progress get the Resume/Start Over dialog; with no run,
+// they launch straight into a fresh one. Non-members see the existing paywall —
+// never a blank wall.
+function openMarathon() {
+  if (!Entitlement.isClub) { location.hash = '#/club'; return; }
+  if (Marathon.inProgress()) { $('#marathon-dlg').showModal(); return; }
+  startMarathonRound(false);
+}
+
+// Resume the in-progress run if one exists (unless `startOver`), else start a
+// fresh one. Loads only the REMAINING questions — the HUD adds the run's
+// currentIndex back in so the player always sees their true position out of 200.
+function startMarathonRound(startOver) {
+  const allIds = Corpus.questions.map((q) => q.id);
+  const run = startOver ? Marathon.startNew(allIds) : (Marathon.inProgress() || Marathon.startNew(allIds));
+  const byId = new Map(Corpus.questions.map((q) => [q.id, q]));
+  const remaining = Marathon.remainingIds(run).map((id) => byId.get(id)).filter(Boolean);
+  if (!remaining.length) {
+    // Edge case only (a run somehow already at its full length without having
+    // been finished) — close it out rather than show a blank round.
+    const score = Marathon.finish(run);
+    game = null;
+    renderMarathonResults(score);
+    return;
+  }
+  startGame('marathon', catById('mixed'), { custom: remaining, marathonRun: run, marathonOffset: run.currentIndex });
+}
+
 // Tidbits Club EXCLUSIVE — Story Archive (docs/CLUB-FEATURES-BUILD.md "Feature 2").
 // A Records "see all" destination (R-REC-1); Club-marked, canonical at #/archive.
 function storyArchiveRow() {
@@ -404,6 +482,19 @@ function storyArchiveRow() {
   const sub = club ? `${n} stor${n === 1 ? 'y' : 'ies'} kept, searchable forever` : 'Every fact you unlock, kept forever';
   return `<a href="#/archive" class="card pad" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;margin-bottom:14px">
     ${ICON.book}<span style="flex:1"><b>Story Archive</b>${club ? '' : ' <span class="club-chip">CLUB</span>'}
+      <div class="muted" style="font-size:.85em">${h(sub)}</div></span><span class="chev">›</span></a>`;
+}
+
+// Tidbits Club EXCLUSIVE — Marathon (docs/CLUB-FEATURES-BUILD.md "Feature 3"). A
+// Records destination (mirrors storyArchiveRow); canonical at #/marathon.
+function marathonHistoryRow() {
+  const club = Entitlement.isClub;
+  const runs = club ? Marathon.history() : [];
+  const sub = club
+    ? (runs.length ? `${runs.length} run${runs.length === 1 ? '' : 's'} played — best ${Math.max(...runs.map((s) => Math.round(marathonAccuracy(s) * 100)))}%` : 'Play it across as many sittings as you like — we’ll keep your place.')
+    : 'A 200-question test of everything, graded by domain.';
+  return `<a href="#/marathon" class="card pad" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;margin-bottom:14px">
+    ${ICON.flag}<span style="flex:1"><b>Marathon</b>${club ? '' : ' <span class="club-chip">CLUB</span>'}
       <div class="muted" style="font-size:.85em">${h(sub)}</div></span><span class="chev">›</span></a>`;
 }
 
@@ -528,6 +619,130 @@ function openStoryDetail(qid) {
   });
 }
 
+// Tidbits Club EXCLUSIVE — Marathon (docs/CLUB-FEATURES-BUILD.md "Feature 3"):
+// the hub — resume/start-over at the top, the permanent history below. Canonical
+// at #/marathon (reachable from the Home card, the post-game scorecard, and
+// Records — the web's URL-state superpower).
+function viewMarathon() {
+  const back = `<button data-back style="background:none;border:none;font-weight:800;color:var(--color-accent);cursor:pointer;padding:8px 0;font-size:1rem">‹ Back</button>`;
+  if (!Entitlement.isClub) {
+    return `${back}<h1 class="page-title">Marathon</h1>
+      <div class="card pad" style="margin-bottom:14px"><p class="body-strong">${h(Marathon.previewLine())}</p></div>
+      <div class="card pad" style="text-align:center">
+        <p class="body-strong">A 200-question test of everything, graded by domain.</p>
+        <p class="muted">Play it across as many sittings as you like — we keep your place, and every run is measured against your last.</p>
+        <a href="#/club" class="btn btn-primary" style="margin-top:12px;display:inline-block;text-decoration:none">Join Tidbits Club</a>
+      </div>`;
+  }
+  const run = Marathon.inProgress();
+  const runs = Marathon.history();
+  const resumeBlock = run
+    ? `<button type="button" class="card pad rec-tap" data-marathon-resume style="margin-bottom:10px">
+        <b>Question ${run.currentIndex + 1} of ${run.ids.length}</b><div class="muted">Tap to resume where you left off</div></button>
+       <button type="button" class="btn btn-text" data-marathon-startover style="margin-bottom:14px">Start over instead</button>`
+    : `<button type="button" class="btn btn-primary btn-full" data-marathon-start style="margin-bottom:14px">Start a Marathon</button>`;
+  return `${back}<h1 class="page-title">Marathon</h1>
+    <p class="muted">200 questions, graded by domain. Play it across as many sittings as you like.</p>
+    ${resumeBlock}
+    <h2 class="section">Marathon history</h2>
+    ${runs.length ? runs.map((s, i) => marathonHistoryRowHTML(s, i)).join('')
+      : '<div class="empty card pad"><p>No Marathons yet — play one across as many sittings as you like, we’ll keep your place.</p></div>'}`;
+}
+
+function marathonHistoryRowHTML(s, i) {
+  const acc = Math.round(marathonAccuracy(s) * 100);
+  return `<button class="card game-row rec-tap" data-marathon-detail="${i}">
+    <span class="game-main"><span class="game-head"><b>${s.correct}/${s.total} correct · ${acc}%</b></span>
+    <span class="muted game-sub">${h(new Date(s.date).toLocaleDateString())}</span></span>
+    <span class="big-sm">${s.score}</span></button>`;
+}
+
+function bindMarathon() {
+  app.querySelector('[data-back]')?.addEventListener('click', () => { if (history.length > 1) history.back(); else location.hash = '#/play'; });
+  if (!Entitlement.isClub) return;
+  $('[data-marathon-start]')?.addEventListener('click', () => startMarathonRound(false));
+  $('[data-marathon-resume]')?.addEventListener('click', () => startMarathonRound(false));
+  $('[data-marathon-startover]')?.addEventListener('click', () => startMarathonRound(true));
+  app.querySelectorAll('[data-marathon-detail]').forEach((b) => b.addEventListener('click', () => openMarathonScoreDetail(Marathon.history()[+b.dataset.marathonDetail])));
+}
+
+// "+6% vs your last run" — the measured-mastery payoff (the whole reason
+// Marathon isn't just a long Classic). Shared by the live post-game scorecard
+// and the history detail sheet.
+function marathonCompareHTML(entry, previous) {
+  if (!previous) {
+    return `<div class="card pad marathon-compare"><div class="body-strong">Your first Marathon</div>
+      <div class="muted">Play another to see how you're improving</div></div>`;
+  }
+  const delta = Math.round((marathonAccuracy(entry) - marathonAccuracy(previous)) * 100);
+  const word = delta === 0 ? 'Same as your last run' : `${delta > 0 ? '+' : ''}${delta}% vs your last run`;
+  return `<div class="card pad marathon-compare"><div class="body-strong">${h(word)}</div>
+    <div class="muted">Last run: ${Math.round(marathonAccuracy(previous) * 100)}% · this run: ${Math.round(marathonAccuracy(entry) * 100)}%</div></div>`;
+}
+
+// Per-domain accuracy bars — the measured-mastery map, not just a score.
+function marathonDomainRowsHTML(domainBreakdown) {
+  const rows = (domainBreakdown || []).filter((d) => d.total > 0);
+  if (!rows.length) return '<p class="muted">No domain breakdown recorded.</p>';
+  return rows.map((d) => {
+    const cat = catById(d.categoryId);
+    const pct = d.total ? Math.round((d.correct / d.total) * 100) : 0;
+    return `<div class="marathon-domain-row">
+      <div class="marathon-domain-head"><span>${h(cat.symbol)} ${h(cat.name)}</span><span class="muted">${d.correct}/${d.total} · ${pct}%</span></div>
+      <div class="xp-track"><div class="xp-fill" style="width:${Math.max(6, pct)}%;background:${catColor(cat)}"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function marathonDurationLabel(seconds) {
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return `${Math.max(1, minutes)} min`;
+  const hrs = Math.floor(minutes / 60), rem = minutes % 60;
+  return rem === 0 ? `${hrs}h` : `${hrs}h ${rem}m`;
+}
+
+// A past run's read-only detail — reuses the Records dialog (mirrors
+// openStoryDetail/openRecap) rather than a full-page replace.
+function openMarathonScoreDetail(entry) {
+  if (!entry) return;
+  const runs = Marathon.history();
+  const idx = runs.findIndex((s) => s.date === entry.date);
+  const previous = idx >= 0 ? runs[idx + 1] : null;
+  const body = `<h2>${entry.correct}/${entry.total} correct · ${Math.round(marathonAccuracy(entry) * 100)}%</h2>
+    <p class="muted">${h(new Date(entry.date).toLocaleDateString())} · ${marathonDurationLabel(entry.durationSeconds)}</p>
+    ${marathonCompareHTML(entry, previous)}
+    <h3 class="section">Where you stood this run</h3>
+    ${marathonDomainRowsHTML(entry.domainBreakdown)}`;
+  showRecordsSheet(body);
+}
+
+// The Marathon scorecard — a just-completed run's payoff. Unlike renderResults
+// (which reads the current session's summary), this reads the permanent
+// MarathonScore just written, because a run's true total spans however many
+// sessions it took to finish, not just this last one.
+function renderMarathonResults(entry) {
+  const runs = Marathon.history();
+  const previous = runs[1] || null;   // runs[0] is the one we just wrote
+  const acc = Math.round(marathonAccuracy(entry) * 100);
+  app.innerHTML = `
+    <div class="results">
+      <div class="card scorecard" style="--tint:#13B6C9">
+        <div class="muted">MARATHON COMPLETE</div><div class="huge">${entry.score}</div>
+        <div class="muted">${entry.correct}/${entry.total} correct · ${marathonDurationLabel(entry.durationSeconds)}</div>
+      </div>
+      ${marathonCompareHTML(entry, previous)}
+      <div class="stat-row">${statBox(acc + '%', 'Accuracy', '#2D5BFF')}${statBox(entry.score, 'Score', '#13B6C9')}${statBox(runs.length, 'Marathons', '#FF5C5C')}</div>
+      <h2 class="section">Where you stood this run</h2>
+      ${marathonDomainRowsHTML(entry.domainBreakdown)}
+      <button type="button" class="btn btn-text btn-full" data-marathon-history>See Marathon history</button>
+      <button class="btn btn-primary btn-full" data-marathon-again>Start a new Marathon</button>
+      <button class="btn btn-text btn-full" data-done>Done</button>
+    </div>`;
+  $('[data-marathon-history]').addEventListener('click', () => { game = null; location.hash = '#/marathon'; });
+  $('[data-marathon-again]').addEventListener('click', () => { game = null; startMarathonRound(true); });
+  $('[data-done]').addEventListener('click', quitGame);
+}
+
 function dailyArchiveRows() {
   const days = [];
   const d = new Date();
@@ -641,6 +856,11 @@ function bindHome() {
     startGame('daily', catById('mixed'), { dailyDay: b.dataset.dailyDay });
   }));
   $('[data-weakspot]').addEventListener('click', openWeakSpot);
+  $('[data-marathon]').addEventListener('click', openMarathon);
+  const marathonDlg = $('#marathon-dlg');
+  $('[data-marathon-cancel]').addEventListener('click', () => marathonDlg.close());
+  $('[data-marathon-resume]').addEventListener('click', () => { marathonDlg.close(); startMarathonRound(false); });
+  $('[data-marathon-startover]').addEventListener('click', () => { marathonDlg.close(); startMarathonRound(true); });
 
   // Trivia Night dialog (native <dialog showModal> — focus trap + ESC free).
   let nightPreset = 1;
@@ -1070,6 +1290,7 @@ function viewRecords() {
     <a href="#/leaderboard" class="card pad" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;margin-bottom:14px">${ICON.globe}<span style="flex:1;font-weight:700">Leaderboard</span><span class="chev">›</span></a>
     <a href="#/duels" class="card pad" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;margin-bottom:14px"><span style="flex:1;font-weight:700">Duels</span><span class="chev">›</span></a>
     ${storyArchiveRow()}
+    ${marathonHistoryRow()}
     <a href="#/club" class="card pad" style="display:flex;align-items:center;gap:10px;text-decoration:none;margin-bottom:14px;background:${Entitlement.isClub ? 'var(--color-surface)' : '#2D5BFF'};color:${Entitlement.isClub ? 'inherit' : '#fff'}">⭐️<span style="flex:1;font-weight:800">${Entitlement.isClub ? 'Tidbits Club — Member' : 'Join Tidbits Club'}</span><span class="chev">›</span></a>
     <div class="banner card daily"><div><div class="muted">DAY STREAK</div><div class="big">${Identity.profile?.streak?.current || 0} days</div></div><div class="muted">best ${Identity.profile?.streak?.longest || 0} 🔥</div></div>
     <div class="stat-row">
@@ -1269,6 +1490,13 @@ class Game {
     // category-fill) — the "gaps closed" tally reads off both.
     this._weakSpotReasons = opts.weakSpotReasons || null;
     this._weakSpotMissCount = opts.weakSpotMissCount ?? null;
+    // Marathon (Club): the in-progress run this session is playing into, + how
+    // many questions were already answered in EARLIER sessions (so the HUD shows
+    // the true 84/200 position, not this session's local index). The finished
+    // MarathonScore lands in `_marathonScore` for renderMarathonResults.
+    this._marathonRun = opts.marathonRun || null;
+    this._marathonOffset = opts.marathonOffset || 0;
+    this._marathonScore = null;
     this._duelId = opts.duelId;   // L5: submit this game's score to the duel on finish
     // Trivia Night: the plan's rounds [[kind, count], …] + the per-round meta for banners.
     this._nightPlan = opts.nightPlan || (mode === 'barTrivia' ? { rounds: NIGHT.presets[1].rounds } : null);
@@ -1601,6 +1829,11 @@ class Game {
     const q = this.current, taken = (Date.now() - this.qStart) / 1000;
     const correct = choice === q.correctIndex;
     this.answered.push({ q, chosen: choice, correct, taken });
+    // Marathon (Club): persist THIS answer immediately, not batched — a
+    // tab-close/crash mid-run never loses progress (the whole point of Marathon).
+    if (this.mode.id === 'marathon' && this._marathonRun) {
+      Marathon.record(this._marathonRun, { qid: q.id, categoryId: q.categoryID, difficulty: q.difficulty, correct });
+    }
     if (this.mode.id === 'stake' && this.currentStake !== 0) {
       const o = this.stakeOutcomes[this.currentStake] || { hits: 0, total: 0 };
       o.total++; if (correct) o.hits++;
@@ -1625,9 +1858,21 @@ class Game {
     if (this.index >= this.questions.length) return this._end();
     this._begin();
   }
-  _end() { clearInterval(this.timer); this.phase = 'finished'; this._persist();
+  _end() {
+    clearInterval(this.timer); this.phase = 'finished';
+    // Marathon writes NO GameRecord/MissedFact/SeenStory — a single session's
+    // slice of a multi-session run would misreport lifetime stats (deliberate,
+    // mirrors the Apple reference). It writes its own permanent MarathonScore
+    // instead, exactly when the run reaches its true end.
+    if (this.mode.id === 'marathon' && this._marathonRun) {
+      this._marathonScore = Marathon.finish(this._marathonRun);
+      this._marathonRun = null;
+    } else {
+      this._persist();
+    }
     if (this._online) { this._online.reportProgress(this.score, true); this._online.renderStandings(); return; }
-    renderResults(); }
+    renderResults();
+  }
   _persist() {
     const correct = this.answered.filter((a) => a.correct).length;
     if (this.mode.id === 'daily') { const dk = this.dailyDay || dayKey(); Store.recordDaily(dk, this.score); Identity.syncDailyScore(dk, this.score); }
@@ -1741,7 +1986,11 @@ function renderGame() {
   const reveal = game.phase === 'reveal' ? revealCard(q) + (game.versus ? versusRevealCard() : '') : '';
   const banner = (game.mode.id === 'barTrivia' && game.currentRound) ? nightBanner() : '';
   const fixedCount = game.mode.id !== 'timeAttack' && game.mode.id !== 'survival';
-  const progress = fixedCount ? `${game.index + 1} / ${game.questions.length}` : `#${game.index + 1}`;
+  // Marathon's HUD adds the offset (questions answered in EARLIER sessions)
+  // back in so the player always sees their true position out of 200, not this
+  // session's local (resumed-slice) index.
+  const progress = game.mode.id === 'marathon' ? `${game._marathonOffset + game.index + 1} / ${game._marathonOffset + game.questions.length}`
+    : fixedCount ? `${game.index + 1} / ${game.questions.length}` : `#${game.index + 1}`;
   app.innerHTML = `
     <div class="game">
       <div class="hud">
@@ -1932,6 +2181,9 @@ function streakMoment() {
 }
 
 function renderResults() {
+  // Marathon reads the permanent MarathonScore just written (a run's true
+  // total spans however many sessions it took to finish, not just this one).
+  if (game.mode.id === 'marathon') { renderMarathonResults(game._marathonScore); return; }
   const s = game.summary();
   const grid = s.answered.map((a) => (a.chosen === null ? '⚫️' : a.correct ? '🟢' : '🔴')).join('');
   if (game.versus) { renderVersusResults(s); return; }

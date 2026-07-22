@@ -14,6 +14,7 @@
   --color-yellow: #FFC93C;
   --color-mint: #2FCB8A;
   --color-grape: #8B5CF6;
+  --color-teal: #13B6C9;
   --radius: 18px;
   --bw: 3px;
   --shadow: 5px;
@@ -373,6 +374,15 @@ body {
 .club-chip { display: inline-block; font-size: 11px; font-weight: 900; color: var(--color-grape);
   background: #fff; border-radius: 999px; padding: 2px 8px; margin-left: 4px; vertical-align: 2px; }
 .weakspot-reason { font-weight: 700; font-size: 13px; color: var(--color-grape); margin: -10px 0 14px; }
+
+/* ---- Marathon (Tidbits Club EXCLUSIVE — docs/CLUB-FEATURES-BUILD.md "Feature 3") ---- */
+.banner.marathon-banner { background: var(--color-teal); color: #fff; }
+.banner.marathon-banner .muted { color: rgba(255,255,255,0.85); }
+.resume-chip { display: inline-block; font-size: 11px; font-weight: 900; color: #fff;
+  background: var(--color-primary); border-radius: 999px; padding: 2px 8px; margin-left: 4px; vertical-align: 2px; }
+.marathon-compare { text-align: center; margin-bottom: 16px; }
+.marathon-domain-row { margin-bottom: 12px; }
+.marathon-domain-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; font-weight: 700; font-size: 14px; }
 
 /* ---- Story Archive (Tidbits Club EXCLUSIVE — docs/CLUB-FEATURES-BUILD.md) ---- */
 /* A standalone colored pill tag — was scoped to .topic-head; promoted so the

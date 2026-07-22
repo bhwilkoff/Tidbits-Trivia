@@ -2,6 +2,8 @@
 // TriviaCategory / GameMode / RecordsStore. Records + streak live in
 // localStorage (the per-ecosystem sync island; sign-in sync is later).
 
+import { fnv1a64 } from './engine.js';
+
 export const SITE_URL = 'https://tidbitstrivia.com';
 
 // Tidbits Club — the web's paid tier (MONETIZATION §4a). Web sells via a Merchant of
@@ -77,6 +79,11 @@ export const MODES = {
   // Tidbits Club EXCLUSIVE (docs/CLUB-FEATURES-BUILD.md "Feature 1"). Never added to
   // ALL_MODES (the free Customize/Surprise-Me pool) — it has its own Home entry point.
   weakSpot: { id: 'weakSpot', title: 'Weak-Spot Arena', blurb: 'Turn your misses into a round.', perQuestion: 20, count: 10, accent: '#8B5CF6' },
+  // Tidbits Club EXCLUSIVE (docs/CLUB-FEATURES-BUILD.md "Feature 3"). Never added to
+  // ALL_MODES — it has its own Home entry point + the resume-across-sessions flow.
+  // `count` is a cap only (the actual per-session length is whatever's left of the
+  // run); 45s/Q is generous — endurance, not speed.
+  marathon: { id: 'marathon', title: 'Marathon', blurb: '200 questions. Play it across as many sittings as you like.', perQuestion: 45, count: 200, accent: '#13B6C9' },
 };
 
 // Trivia Night ("bar trivia") — a configurable night of themed rounds, each
@@ -296,7 +303,7 @@ export const Store = {
     return ex.fav;
   },
   resetAll() {
-    ['tidbits.records', 'tidbits.streak', 'tidbits.missed', 'tidbits.seen', 'tidbits.calibration', 'tidbits.answerTelemetry', 'tidbits.stories'].forEach((k) => localStorage.removeItem(k));
+    ['tidbits.records', 'tidbits.streak', 'tidbits.missed', 'tidbits.seen', 'tidbits.calibration', 'tidbits.answerTelemetry', 'tidbits.stories', 'tidbits.marathonRun', 'tidbits.marathonScores'].forEach((k) => localStorage.removeItem(k));
     this._seen.clear();
   },
 };
@@ -429,3 +436,107 @@ export const StoryArchive = {
     return `“${s.q.explanation || s.q.prompt}” — Club keeps every story you unlock, searchable forever.`;
   },
 };
+
+// Tidbits Club EXCLUSIVE — Marathon (docs/CLUB-FEATURES-BUILD.md "Feature 3"). A
+// 200-question graded endurance run whose load-bearing NEW mechanic is RESUME
+// ACROSS SESSIONS: an in-progress MarathonRun (localStorage) holds a seed + the
+// FIXED ordered id list drawn once from that seed (mirrors the Daily's
+// deterministic pickDaily rank-and-slice — same fnv1a64 rank, just keyed by a
+// per-run seed instead of a calendar day) + currentIndex + one result per
+// answered question. Persisted after EVERY answer (Marathon.record, never
+// batched) so a tab close/crash never loses progress. On finish, writes a
+// permanent MarathonScore to history and clears the run. Deliberately writes NO
+// GameRecord/MissedFact/SeenStory — a single session's slice of a multi-session
+// run would misreport lifetime stats (mirrors the Apple reference).
+const MARATHON_RUN_KEY = 'tidbits.marathonRun';
+const MARATHON_HISTORY_KEY = 'tidbits.marathonScores';
+
+function marathonSeed() {
+  try { if (window.crypto && window.crypto.randomUUID) return crypto.randomUUID(); } catch {}
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+}
+
+export const Marathon = {
+  defaultLength: 200,
+
+  // ?marathonlen=<n> shortens a run for TESTING only (so one can be played to
+  // completion quickly) — this only ever narrows the count below 200, never
+  // widens it; production (no param) always sees the full 200.
+  get runLength() {
+    try {
+      const raw = new URLSearchParams(location.search).get('marathonlen');
+      const n = raw != null ? parseInt(raw, 10) : NaN;
+      if (Number.isFinite(n) && n > 0) return Math.min(n, this.defaultLength);
+    } catch {}
+    return this.defaultLength;
+  },
+
+  /** The in-progress run, if any (at most one). */
+  inProgress() { return LS.get(MARATHON_RUN_KEY, null); },
+
+  /** Start a fresh run, discarding any stale one (Start Over). `allIds` is
+   * every corpus question id — the caller passes Corpus.questions.map(q =>
+   * q.id) so Store stays framework-free of the corpus loader (same pattern as
+   * WeakSpotArena's `pull` param). The ids are fixed forever at creation from a
+   * fresh seed — a resume always continues into the SAME set. */
+  startNew(allIds) {
+    const seed = marathonSeed();
+    const count = Math.min(this.runLength, allIds.length);
+    const ids = allIds
+      .map((id) => [fnv1a64(`marathon:${seed}:${id}`), id])
+      .sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : (a[1] < b[1] ? -1 : 1)))
+      .slice(0, count)
+      .map((x) => x[1]);
+    const run = { seed, ids, currentIndex: 0, results: [], startedAt: Date.now(), lastPlayedAt: Date.now() };
+    LS.set(MARATHON_RUN_KEY, run);
+    return run;
+  },
+
+  /** The ids remaining to play THIS session — from currentIndex to the end
+   * (what a resumed, or fresh, session actually loads into the engine). */
+  remainingIds(run) { return run.ids.slice(Math.min(run.currentIndex, run.ids.length)); },
+
+  /** Persist one answer immediately — called after every submitted answer so a
+   * crash/quit/tab-close never loses progress (the whole point of Marathon). */
+  record(run, { qid, categoryId, difficulty, correct }) {
+    run.results.push({ qid, categoryId, difficulty: difficulty || 1, correct: !!correct });
+    run.currentIndex = run.results.length;
+    run.lastPlayedAt = Date.now();
+    LS.set(MARATHON_RUN_KEY, run);
+  },
+
+  /** The run just reached its full length — write the permanent MarathonScore
+   * (difficulty-weighted score, correct/total, per-domain breakdown, duration)
+   * and clear the in-progress run. */
+  finish(run) {
+    const results = run.results;
+    const correct = results.filter((r) => r.correct).length;
+    // A plain difficulty-weighted score (10 pts × difficulty per correct
+    // answer) — transparent by construction, no hidden model (mirrors Apple).
+    const score = results.filter((r) => r.correct).reduce((sum, r) => sum + r.difficulty * 10, 0);
+    const durationSeconds = Math.max(1, Math.round((Date.now() - run.startedAt) / 1000));
+    const domainBreakdown = PROGRESS.domains.map((id) => {
+      const rows = results.filter((r) => r.categoryId === id);
+      return { categoryId: id, correct: rows.filter((r) => r.correct).length, total: rows.length };
+    });
+    const entry = { date: Date.now(), score, correct, total: results.length, durationSeconds, domainBreakdown };
+    const history = this.history();
+    history.unshift(entry);
+    LS.set(MARATHON_HISTORY_KEY, history.slice(0, 200));
+    localStorage.removeItem(MARATHON_RUN_KEY);
+    return entry;
+  },
+
+  /** Past completed runs, most recent first — the permanent Marathon history. */
+  history() { return LS.get(MARATHON_HISTORY_KEY, []); },
+
+  /** A real, concrete illustration (MONETIZATION §4a: "a real preview, never a
+   * nag"). Marathon has no free-tier data to draw a genuine sample from (unlike
+   * Weak-Spot/Story Archive, which are built from ordinary free play) — so the
+   * non-member pitch is an honest, specific illustration of the scorecard. */
+  previewLine() {
+    return 'See exactly where you stand — e.g. Geography 91% · History 64% — across a 200-question run you can pause and resume anytime.';
+  },
+};
+
+export function marathonAccuracy(entry) { return entry && entry.total ? entry.correct / entry.total : 0; }

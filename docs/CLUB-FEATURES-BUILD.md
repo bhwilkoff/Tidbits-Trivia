@@ -47,7 +47,7 @@ ship first; season/cron infrastructure is last.
 
 | # | Feature | Pillar | Shape | Status |
 |---|---|---|---|---|
-| 1 | **Weak-Spot Arena** | 1 gameplay | client-only: round from your own miss history | **web+iOS done; Android/Windows/mac/tvOS left** |
+| 1 | **Weak-Spot Arena** | 1 gameplay | client-only: round from your own miss history | **web+iOS+Android done; Windows/mac/tvOS left** |
 | 2 | **Story Archive** | 3 library | client-only: keep every unlocked "story behind the answer", searchable | todo |
 | 3 | **Marathon** | 1 gameplay | client-only: 200-q graded endurance, cross-session scorecard | todo |
 | 4 | **Knowledge Atlas** | 2 retrospect | client-only: accuracy by domain/sub-domain over 12mo | todo |
@@ -66,7 +66,7 @@ Legend: ✅ done+verified · 🔨 in progress · ⏳ queued · 🚫 n/a (with re
 
 | Feature | web | iOS/iPadOS | macOS | tvOS | Android | Windows |
 |---|---|---|---|---|---|---|
-| 1 Weak-Spot Arena | ✅ | ✅ | ⏳ | ⏳ | ⏳ | ⏳ |
+| 1 Weak-Spot Arena | ✅ | ✅ | ⏳ | ⏳ | ✅ | ⏳ |
 | 2 Story Archive | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 3 Marathon | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 4 Knowledge Atlas | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
@@ -140,5 +140,28 @@ enter the build order.)*
   written + four-question test passed. Apple reference implementation delegated to a
   sequential Sonnet agent. Next: verify + commit Apple, then mirror web → Android →
   Windows → tvOS/macOS, then Feature 2.
+- **2026-07-22** — Android mirror shipped (1.6.48/vc70): `data/WeakSpotArena.kt`
+  (Android mirror of the generator) reads `Store.missDetails()` — the existing
+  SharedPreferences `missed` JSON map (`{id:{n,t}}`, additive `t`=lastSeen field
+  added to the prior `{id:count}` shape, read back-compat) — same
+  floor(4)/fill(8)/cap(10) + reason strings, using `DateUtils.getRelativeTimeSpanString`
+  for "Missed {relative}". `Mode.WEAK_SPOT` added to the enum, excluded from
+  `playableModes`/Quick-Play-remember/Surprise-Me. Home gets its own
+  `WeakSpotCard` (member → build+launch; non-member → CLUB chip + real/static
+  preview → existing `ClubPaywallScreen`); empty state is a Material `AlertDialog`
+  built BEFORE navigating to the game route (round is pre-built, unlike Apple's
+  build-inside-the-game-container). Debug override:
+  `Entitlement.setDebugForceClub` gated on `BuildConfig.DEBUG`, toggled via an
+  Intent extra (`adb shell am start … --ez tidbits_club_debug true`), persisted in
+  SharedPreferences. Emulator-verified end to end (member card, non-member
+  chip+preview+paywall route, empty-state dialog, a real round built from 10 seeded
+  misses, the "Missed 1 minute ago · ×1" reason caption in-play, and the "You closed
+  N gaps" result card). **Separate finding, not fixed here (out of scope for this
+  feature):** `Corpus.load` (`data/Tidbits.kt`) parses the full 42MB `corpus.json`
+  via `Json.parseToJsonElement` and OOMs on a stock (non-`largeHeap`) emulator heap
+  (192MB growth limit) — silently swallowed by the caller's `runCatching`, so any
+  game mode (not just Weak-Spot) shows the generic "No questions yet" error. Worth a
+  follow-up (`android:largeHeap` and/or a streaming parse) since the corpus has
+  grown well past what a default heap safely holds.
 </content>
 </invoke>

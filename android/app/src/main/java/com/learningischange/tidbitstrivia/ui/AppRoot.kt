@@ -59,7 +59,7 @@ sealed interface Route {
     data object Home : Route
     data object Records : Route
     data object Create : Route
-    data class Game(val mode: Mode, val category: Category, val custom: List<Question>? = null, val label: String? = null, val nightRounds: List<Pair<String, Int>>? = null, val dailyDay: String? = null, val mixModes: List<Mode>? = null, val duelId: String? = null) : Route
+    data class Game(val mode: Mode, val category: Category, val custom: List<Question>? = null, val label: String? = null, val nightRounds: List<Pair<String, Int>>? = null, val dailyDay: String? = null, val mixModes: List<Mode>? = null, val duelId: String? = null, val weakSpotReasons: Map<String, String> = emptyMap()) : Route
     data class Versus(val botId: String) : Route
     object OnlineMatch : Route
     data object NightSetup : Route
@@ -146,6 +146,7 @@ fun AppRoot(
                         onPlay = { mode, cat -> backStack.add(Route.Game(mode, cat)) },
                         onPlayMix = { modes, cat -> backStack.add(Route.Game(Mode.MIX, cat, mixModes = modes)) },
                         onPlayDaily = { day -> backStack.add(Route.Game(Mode.DAILY, Category.byId("mixed"), dailyDay = day)) },
+                        onPlayWeakSpot = { qs, reasons -> backStack.add(Route.Game(Mode.WEAK_SPOT, Category.byId("mixed"), qs, "Weak-Spot Arena", weakSpotReasons = reasons)) },
                         onVersus = { id -> backStack.add(Route.Versus(id)) },
                         onQuickMatch = { backStack.add(Route.OnlineMatch) },
                         onNight = { backStack.add(Route.NightSetup) },
@@ -153,6 +154,7 @@ fun AppRoot(
                         onJoinNight = { ensureNearby(); backStack.add(Route.NightJoin) },
                         onCreate = { backStack.clear(); backStack.add(Route.Create) },
                         onSettings = { backStack.add(Route.Settings) },
+                        onClub = { backStack.add(Route.ClubPaywall) },
                     )
                     is Route.NightSetup -> NightSetupScreen(
                         onStartSolo = { rounds, cat, label -> backStack.removeAt(backStack.lastIndex); backStack.add(Route.Game(Mode.BAR_TRIVIA, cat, label = label, nightRounds = rounds)) },
@@ -223,6 +225,7 @@ private fun HomeScreen(
     onPlay: (Mode, Category) -> Unit,
     onPlayMix: (List<Mode>, Category) -> Unit,
     onPlayDaily: (String) -> Unit,
+    onPlayWeakSpot: (List<Question>, Map<String, String>) -> Unit,
     onVersus: (String) -> Unit,
     onQuickMatch: () -> Unit,
     onNight: () -> Unit,
@@ -230,11 +233,13 @@ private fun HomeScreen(
     onJoinNight: () -> Unit,
     onCreate: () -> Unit,
     onSettings: () -> Unit,
+    onClub: () -> Unit,
 ) {
     var showCustomize by remember { mutableStateOf(false) }
     var showNight by remember { mutableStateOf(false) }
     var showDailyArchive by remember { mutableStateOf(false) }
     var showMultiplayer by remember { mutableStateOf(false) }
+    var showWeakSpotEmpty by remember { mutableStateOf(false) }
     val (qpMode, qpCat) = store.quickPlay()
     val firstRun = !store.hasQuickPlayHistory()
     val fade = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
@@ -321,6 +326,19 @@ private fun HomeScreen(
             }
         }
 
+        // Weak-Spot Arena — Tidbits Club EXCLUSIVE (docs/CLUB-FEATURES-BUILD.md
+        // "Feature 1"). Its OWN Home entry point, never the free Customize grid /
+        // Surprise-Me / remembered default. Members launch a round built from
+        // their own misses; non-members see a real preview + a CLUB chip and tap
+        // through to the existing paywall — never a blank wall.
+        WeakSpotCard(isClub = Entitlement.isClub, previewLine = if (Entitlement.isClub) null else WeakSpotArena.previewLine(store)) {
+            if (Entitlement.isClub) {
+                val round = WeakSpotArena.build(store)
+                if (round.questions.size >= WeakSpotArena.PLAYABLE_FLOOR) onPlayWeakSpot(round.questions, round.reasons)
+                else showWeakSpotEmpty = true
+            } else onClub()
+        }
+
         Text("More ways to play", fontWeight = FontWeight.Bold, fontSize = 20.sp)
         Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
             HomeTile(Icons.Filled.Group, "Pass & Play", Pops.grape, Modifier.weight(1f), onParty)
@@ -342,6 +360,40 @@ private fun HomeScreen(
         onDismiss = { showMultiplayer = false },
         onPickBot = { id -> showMultiplayer = false; onVersus(id) },
         onQuickMatch = { showMultiplayer = false; onQuickMatch() })
+    // Below the floor of true misses (and no domain history to fill from either) —
+    // the honest empty state (universal-feature-states), never the generic error.
+    if (showWeakSpotEmpty) AlertDialog(
+        onDismissRequest = { showWeakSpotEmpty = false },
+        title = { Text("Not enough misses yet") },
+        text = { Text("Play a few rounds first — your misses become your arena.") },
+        confirmButton = { TextButton(onClick = { showWeakSpotEmpty = false }) { Text("OK") } },
+    )
+}
+
+@Composable
+private fun WeakSpotCard(isClub: Boolean, previewLine: String?, onClick: () -> Unit) {
+    val subtitle = if (isClub) "Turn your misses into a round."
+        else (previewLine ?: "Your misses, turned into a round you can actually close.")
+    ChunkyCard(fill = Pops.grape, onClick = onClick) {
+        Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Filled.TrackChanges, null, tint = Color.White, modifier = Modifier.size(28.dp))
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("WEAK-SPOT ARENA", fontWeight = FontWeight.Black, fontSize = 20.sp, color = Color.White)
+                    if (!isClub) {
+                        Spacer(Modifier.width(6.dp))
+                        Surface(shape = RoundedCornerShape(999.dp), color = Color.White) {
+                            Text("CLUB", fontSize = 11.sp, fontWeight = FontWeight.Black, color = Pops.grape,
+                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp))
+                        }
+                    }
+                }
+                Text(subtitle, color = Color.White.copy(alpha = 0.85f), fontSize = 13.sp, maxLines = 2)
+            }
+            Icon(Icons.Filled.KeyboardArrowRight, null, tint = Color.White)
+        }
+    }
 }
 
 @Composable
@@ -610,7 +662,7 @@ private fun NightJoinScreen(initialCode: String, initialName: String, onFound: (
 private fun GameScreen(route: Route.Game, store: Store, onDone: () -> Unit) {
     val scope = rememberCoroutineScope()
     val haptics = rememberGameHaptics(store)
-    val game = remember { GameState(route.mode, route.category, store, route.custom, route.label, route.nightRounds, dailyDay = route.dailyDay, mixModes = route.mixModes) }
+    val game = remember { GameState(route.mode, route.category, store, route.custom, route.label, route.nightRounds, dailyDay = route.dailyDay, mixModes = route.mixModes, initialWeakSpotReasons = route.weakSpotReasons) }
     LaunchedEffect(Unit) { game.start() }
     LaunchedEffect(game.index, game.phase) {
         while (game.phase == GamePhase.PLAYING) { delay(100); game.tick() }
@@ -631,9 +683,21 @@ private fun GameScreen(route: Route.Game, store: Store, onDone: () -> Unit) {
             }
         }
         GamePhase.ROUND_INTRO -> RoundIntroScreen(game)
-        // The Daily is play-once (R-DAILY-1) — no replay of a locked set.
+        // The Daily is play-once (R-DAILY-1) — no replay of a locked set. Weak-Spot
+        // Arena rebuilds fresh from the CURRENT miss store rather than replaying the
+        // exact same (now partly-resolved) set — mirror of iOS/web's replay behavior.
         GamePhase.FINISHED -> ResultsScreen(game,
-            onPlayAgain = if (route.mode == Mode.DAILY || route.duelId != null) null else ({ scope.launch { game.restart() } }),
+            onPlayAgain = when {
+                route.mode == Mode.DAILY || route.duelId != null -> null
+                route.mode == Mode.WEAK_SPOT -> ({
+                    scope.launch {
+                        val round = WeakSpotArena.build(store)
+                        if (round.questions.size >= WeakSpotArena.PLAYABLE_FLOOR) { game.rebuildWeakSpot(round); game.restart() }
+                        else onDone()
+                    }
+                })
+                else -> ({ scope.launch { game.restart() } })
+            },
             onDone = onDone, duelId = route.duelId)
         else -> PlayingScreen(game)
     }
@@ -679,6 +743,11 @@ internal fun PlayingScreen(game: GameState, match: VsMatch? = null, onlineRoster
             }
         }
         Text(q.prompt, fontWeight = FontWeight.Black, fontSize = 23.sp)
+        // Weak-Spot Arena's "why you're seeing this" — transparency by construction,
+        // never an opaque model (docs/CLUB-FEATURES-BUILD.md "Feature 1").
+        if (game.mode == Mode.WEAK_SPOT) game.weakSpotReasons[q.id]?.let { reason ->
+            Text(reason, color = accentText(Pops.grape), fontWeight = FontWeight.Bold, fontSize = 13.sp)
+        }
         if (game.mode == Mode.SWEEP) SweepGrid(game)
         if (game.mode == Mode.STAKE && live) StakeSelector(game)
         q.closest?.let { ClosestPanel(game, it) }
@@ -964,6 +1033,17 @@ private fun ResultsScreen(game: GameState, onPlayAgain: (() -> Unit)?, onDone: (
         Text(when { acc == 100 -> "FLAWLESS!"; acc >= 80 -> "BRILLIANT"; acc >= 50 -> "NICELY DONE"; else -> "GOOD RUN" }, fontWeight = FontWeight.Black, fontSize = 22.sp)
         Text("${game.score}", fontWeight = FontWeight.Black, fontSize = 64.sp)
         Text("${game.label ?: game.mode.title} · ${game.category.name}", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+        // Weak-Spot Arena's payoff — "you didn't just play, you got better."
+        if (game.mode == Mode.WEAK_SPOT) {
+            val n = game.weakSpotGapsClosed
+            ChunkyCard(fill = Pops.grape.copy(alpha = 0.18f)) {
+                Column(Modifier.padding(vertical = 16.dp).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("You closed $n gap${if (n == 1) "" else "s"}", fontWeight = FontWeight.Black, fontSize = 22.sp)
+                    Text(if (n > 0) "Turned a miss into a win" else "Nothing to close yet this round",
+                        fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                }
+            }
+        }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             StatBox("${game.correctCount}/$total", "Correct", Pops.mint); StatBox("$acc%", "Accuracy", Pops.blue); StatBox("${game.maxStreak}", "Streak", Pops.coral)
         }

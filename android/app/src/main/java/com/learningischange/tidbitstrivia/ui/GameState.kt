@@ -22,7 +22,7 @@ class GameState(
     val mode: Mode,
     val category: Category,
     private val store: Store,
-    private val custom: List<Question>?,
+    private var custom: List<Question>?,
     val label: String?,
     private val nightRounds: List<Pair<String, Int>>? = null,
     // Networked Trivia Night (Decision 033): answers don't auto-reveal — they lock
@@ -32,7 +32,29 @@ class GameState(
     private val dailyDay: String? = null,
     /** Custom Mix: the modes behind a multi-select Customize launch. */
     private val mixModes: List<Mode>? = null,
+    /** Weak-Spot Arena (Club): per-question "why you're seeing this" reason, keyed
+     *  by question id. Empty outside [Mode.WEAK_SPOT]. */
+    initialWeakSpotReasons: Map<String, String> = emptyMap(),
 ) {
+    var weakSpotReasons: Map<String, String> = initialWeakSpotReasons
+        private set
+
+    /** Weak-Spot Arena's "Play Again": rebuild fresh from the CURRENT miss store
+     *  (misses just changed this round) rather than replay the exact same stale
+     *  set — mirror of iOS/web's rebuild-on-replay. */
+    fun rebuildWeakSpot(round: WeakSpotRound) {
+        custom = round.questions
+        weakSpotReasons = round.reasons
+    }
+
+    /** Count of this round's TRUE-miss questions (not category-fill) answered
+     *  correctly — the Weak-Spot payoff (docs/CLUB-FEATURES-BUILD.md "Feature 1").
+     *  0 outside [Mode.WEAK_SPOT]. */
+    val weakSpotGapsClosed: Int get() {
+        if (mode != Mode.WEAK_SPOT) return 0
+        val trueMissIds = weakSpotReasons.filterValues { it.startsWith("Missed") }.keys
+        return answered.count { it.correct && trueMissIds.contains(it.q.id) }
+    }
     /** Fired when this device locks an answer (networked night → report to host). */
     var onLocalAnswer: ((score: Int, correct: Boolean) -> Unit)? = null
     /** Host-paced: answered this question, holding until the host reveals. */
@@ -96,8 +118,9 @@ class GameState(
     suspend fun start() {
         phase = GamePhase.LOADING
         reset()
+        val fixedCustom = custom
         val qs = when {
-            custom != null -> custom
+            fixedCustom != null -> fixedCustom
             mode == Mode.BAR_TRIVIA -> loadNight()
             // Custom Mix: pull from EVERY selected mode, shuffle together — the
             // shape-driven clock/guards (built for the night) render each shape.

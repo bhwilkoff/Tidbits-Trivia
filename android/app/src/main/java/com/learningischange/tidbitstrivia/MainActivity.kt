@@ -11,6 +11,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.learningischange.tidbitstrivia.app.AppNameApplication
+import com.learningischange.tidbitstrivia.data.Entitlement
 import com.learningischange.tidbitstrivia.ui.AppRoot
 import com.learningischange.tidbitstrivia.ui.theme.AppTheme
 
@@ -25,6 +26,12 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         val store = (application as AppNameApplication).container.store
         deepLink.value = routeFor(intent)
+        // DEBUG-only env hook (no-op in release): `--ez tidbits_club_debug true` forces
+        // Entitlement.isClub so Club features (Weak-Spot Arena, etc.) are verifiable on
+        // the emulator pre-launch, with no real purchase (docs/CLUB-FEATURES-BUILD.md).
+        if (intent.hasExtra("tidbits_club_debug")) {
+            Entitlement.setDebugForceClub(intent.getBooleanExtra("tidbits_club_debug", false))
+        }
         setContent {
             var dynamic by remember { mutableStateOf(store.dynamicColorEnabled()) }
             AppTheme(dynamicColor = dynamic) {

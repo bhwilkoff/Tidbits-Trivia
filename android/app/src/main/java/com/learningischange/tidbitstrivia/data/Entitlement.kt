@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.learningischange.tidbitstrivia.BuildConfig
 import com.learningischange.tidbitstrivia.net.FirebaseNet
 
 /**
@@ -31,12 +32,22 @@ import com.learningischange.tidbitstrivia.net.FirebaseNet
 object Entitlement {
     private const val PREFS_NAME = "tidbits.entitlement"
     private const val KEY_IS_CLUB = "isClub"
+    private const val KEY_DEBUG_FORCE = "debugForceClub"
 
     private var prefs: SharedPreferences? = null
 
+    private var isClubStored: Boolean by mutableStateOf(false)
+    /** DEBUG-only override so every Club feature is verifiable pre-launch, with no
+     *  real purchase (docs/CLUB-FEATURES-BUILD.md gating convention — mirror of
+     *  Apple's `TIDBITS_CLUB=1` / web's `?club=1`). Toggle from an emulator with:
+     *  `adb shell am start -n com.tidbitstrivia.app.debug/com.learningischange.tidbitstrivia.MainActivity --ez tidbits_club_debug true`
+     *  (persists in SharedPreferences so it survives relaunch; pass `false` to clear).
+     *  Compiled out to a constant `false` in release via [BuildConfig.DEBUG]. */
+    private var debugForceClubFlag: Boolean by mutableStateOf(false)
+
     /** The gate. Seeded from the cached last-known-good so a returning member is Club
      *  instantly, before any network round-trip. */
-    var isClub: Boolean by mutableStateOf(false); private set
+    val isClub: Boolean get() = (BuildConfig.DEBUG && debugForceClubFlag) || isClubStored
 
     /** The Billing adapter installs this in Phase 2 ([Billing.start]). Returns the locally-
      *  proven state:
@@ -50,7 +61,16 @@ object Entitlement {
      *  mirror of Duels.init(ctx). Must run before the first refresh()/read of isClub. */
     fun init(ctx: Context) {
         prefs = ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        isClub = prefs?.getBoolean(KEY_IS_CLUB, false) ?: false
+        isClubStored = prefs?.getBoolean(KEY_IS_CLUB, false) ?: false
+        if (BuildConfig.DEBUG) debugForceClubFlag = prefs?.getBoolean(KEY_DEBUG_FORCE, false) ?: false
+    }
+
+    /** DEBUG-only: force [isClub] true (or clear the force) to verify Club features
+     *  on the emulator without a real purchase. No-op in release builds. */
+    fun setDebugForceClub(v: Boolean) {
+        if (!BuildConfig.DEBUG) return
+        debugForceClubFlag = v
+        prefs?.edit()?.putBoolean(KEY_DEBUG_FORCE, v)?.apply()
     }
 
     /** True when this record grants an active Club membership. A subscription past
@@ -91,7 +111,7 @@ object Entitlement {
     }
 
     private fun set(club: Boolean) {
-        isClub = club
+        isClubStored = club
         prefs?.edit()?.putBoolean(KEY_IS_CLUB, club)?.apply()
     }
 

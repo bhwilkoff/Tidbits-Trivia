@@ -23,8 +23,10 @@ data class GamePreset(val name: String, val modeName: String, val categoryIds: L
 
 private val presetJson = Json { ignoreUnknownKeys = true }
 
-/** Everything a Quick Play / Customize game can be — the Daily and networked night are separate. */
-val playableModes: List<Mode> = Mode.entries.filter { it != Mode.DAILY && it != Mode.BAR_TRIVIA && it != Mode.MIX }
+/** Everything a Quick Play / Customize game can be — the Daily and networked night are
+ *  separate; Weak-Spot Arena is Club-gated and has its own Home entry point (never the
+ *  free Customize grid / Surprise-Me / remembered default — docs/CLUB-FEATURES-BUILD.md). */
+val playableModes: List<Mode> = Mode.entries.filter { it != Mode.DAILY && it != Mode.BAR_TRIVIA && it != Mode.MIX && it != Mode.WEAK_SPOT }
 /** The four shown first in the Customize sheet; the rest live under "More modes". */
 val coreModes: List<Mode> = listOf(Mode.CLASSIC, Mode.TIME_ATTACK, Mode.SURVIVAL, Mode.STAKE)
 
@@ -33,7 +35,10 @@ fun Store.quickPlay(): Pair<Mode, Category> {
     return m to Category.byId(lastPlayedCategoryId())
 }
 fun Store.rememberPlay(mode: Mode, category: Category) {
-    if (mode != Mode.DAILY) rememberSelection(mode.name, category.id)
+    // Defense-in-depth: Weak-Spot Arena is already excluded from playableModes (so it
+    // can't reach this via Quick Play/Customize/Surprise-Me), but never remember it as
+    // the Quick Play default even if a future caller passes it directly.
+    if (mode != Mode.DAILY && mode != Mode.WEAK_SPOT) rememberSelection(mode.name, category.id)
 }
 fun Store.surprise(): Pair<Mode, Category> = playableModes.random() to Category.all.random()
 

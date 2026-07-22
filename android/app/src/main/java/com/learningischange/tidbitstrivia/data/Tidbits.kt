@@ -119,6 +119,10 @@ enum class Mode(val title: String, val blurb: String, val perQuestion: Int?, val
     BAR_TRIVIA("Trivia Night", "Host a night. Every kind of round.", 20, null, 20),
     MIX("Custom Mix", "Your picked modes, shuffled together.", 20, null, 10),
     DAILY("Daily Tidbit", "Everyone's puzzle. Keep your streak.", 30, null, 7),
+    // Tidbits Club EXCLUSIVE (docs/CLUB-FEATURES-BUILD.md "Feature 1"). Never in
+    // playableModes (the free Customize/Surprise-Me pool) — it has its own Home
+    // entry point (WeakSpotArena) and is always launched with a pre-built custom set.
+    WEAK_SPOT("Weak-Spot Arena", "Turn your misses into a round.", 20, null, 10),
 }
 
 // Trivia Night ("bar trivia") — a configurable night of themed rounds, each round
@@ -1001,11 +1005,21 @@ class Store(context: Context) {
             .apply()
     }
 
+    /** Reads one miss entry regardless of format: `{id: {"n": count, "t": lastSeenMs}}`
+     *  (current) or a bare int (legacy, pre-Weak-Spot-Arena — treated as lastSeen=0,
+     *  i.e. sorts as the oldest gap). */
+    private fun missEntry(o: JSONObject, id: String): Pair<Int, Long> = when (val v = o.opt(id)) {
+        is JSONObject -> v.optInt("n", 0) to v.optLong("t", 0L)
+        is Number -> v.toInt() to 0L
+        else -> 0 to 0L
+    }
+
     fun recordMisses(results: List<Pair<String, Boolean>>) {
         val o = JSONObject(prefs.getString("missed", "{}") ?: "{}")
+        val now = System.currentTimeMillis()
         for ((id, correct) in results) {
             if (correct) o.remove(id)               // re-asked-and-correct resolves it
-            else o.put(id, o.optInt(id, 0) + 1)
+            else o.put(id, JSONObject().put("n", missEntry(o, id).first + 1).put("t", now))
         }
         if (o.length() > 800) { prefs.edit().putString("missed", "{}").apply(); return }
         prefs.edit().putString("missed", o.toString()).apply()
@@ -1013,8 +1027,22 @@ class Store(context: Context) {
     /** Missed question ids, most-missed first — mapped to Questions via Corpus.byId. */
     fun dueReview(limit: Int): List<String> {
         val o = JSONObject(prefs.getString("missed", "{}") ?: "{}")
-        return o.keys().asSequence().map { it to o.getInt(it) }
+        return o.keys().asSequence().map { it to missEntry(o, it).first }
             .sortedByDescending { it.second }.take(limit).map { it.first }.toList()
+    }
+
+    /** One miss record: id, times missed, and when it was last missed (0 = unknown /
+     *  pre-dates the lastSeen field). The Weak-Spot Arena's source
+     *  (docs/CLUB-FEATURES-BUILD.md "Feature 1"). */
+    data class MissEntry(val id: String, val missCount: Int, val lastSeen: Long)
+
+    /** Full miss detail, most-missed + oldest-gap-first (mirrors iOS
+     *  `MissedFact` sort / web's `Store.missed()` sort). */
+    fun missDetails(): List<MissEntry> {
+        val o = JSONObject(prefs.getString("missed", "{}") ?: "{}")
+        return o.keys().asSequence().map { id -> val (n, t) = missEntry(o, id); MissEntry(id, n, t) }
+            .sortedWith(compareByDescending<MissEntry> { it.missCount }.thenBy { it.lastSeen })
+            .toList()
     }
 
     // R-DAILY-1: per-day Daily results — first completion locks the day.

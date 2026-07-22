@@ -33,6 +33,10 @@ public sealed class GameEngine : ObservableObject
     // Weak-Spot Arena (Club): per-question "why you're seeing this" reason, keyed by
     // question id (docs/CLUB-FEATURES-BUILD.md "Feature 1"). Empty outside .weakSpot.
     public IReadOnlyDictionary<string, string> WeakSpotReasons { get; private set; } = new Dictionary<string, string>();
+    // Marathon (Club): questions already answered in EARLIER sessions — added to Index
+    // so the HUD shows the true position across the whole run, not just this session's
+    // resumed slice (docs/CLUB-FEATURES-BUILD.md "Feature 3"). 0 outside .marathon.
+    public int MarathonOffset { get; private set; }
 
     // Live state
     public Phase CurrentPhase { get; private set; } = Phase.Idle;
@@ -91,6 +95,22 @@ public sealed class GameEngine : ObservableObject
     /// null outside `.weakSpot` or once the round has no reason recorded for it.
     public string? CurrentReason =>
         Mode == GameMode.WeakSpot && Current is { } q ? WeakSpotReasons.GetValueOrDefault(q.Id) : null;
+
+    /// Marathon only: the HUD's true position across the whole run (e.g. "84 /
+    /// 200") — offset by however many questions were already answered in
+    /// EARLIER sessions. Clamped to the total so the header never overflows to
+    /// e.g. "5 / 4" once the last question's `Advance()` has run. Empty outside
+    /// `.marathon`.
+    public string MarathonProgressLabel
+    {
+        get
+        {
+            if (Mode != GameMode.Marathon) return "";
+            var total = MarathonOffset + Questions.Count;
+            var position = Math.Min(MarathonOffset + Index + 1, total);
+            return $"{position} / {total}";
+        }
+    }
 
     public double Progress
     {
@@ -165,12 +185,15 @@ public sealed class GameEngine : ObservableObject
 
     /// `reasons` is Weak-Spot Arena's per-question "why you're seeing this" caption
     /// (question id -> reason text); empty for every other custom-question caller.
+    /// `marathonOffset` is Marathon's count of questions already answered in EARLIER
+    /// sessions (0 for every other caller and for a fresh Marathon run).
     public void StartCustom(GameMode mode, TriviaCategory category, IReadOnlyList<Question> questions,
-        IReadOnlyDictionary<string, string>? reasons = null)
+        IReadOnlyDictionary<string, string>? reasons = null, int marathonOffset = 0)
     {
         Mode = mode; Category = category;
         CurrentPhase = Phase.Loading; _triedLoad = true; Reset();
         WeakSpotReasons = reasons ?? new Dictionary<string, string>();
+        MarathonOffset = marathonOffset;
         Questions = questions.ToList();
         _provider.MarkSeen(questions.Select(q => q.Id));
         if (Questions.Count == 0) { CurrentPhase = Phase.Idle; Changed(); return; }
@@ -199,6 +222,7 @@ public sealed class GameEngine : ObservableObject
             : new();
         CurrentStake = 0; StakeOutcomes = new(); _introducedRound = null;
         WeakSpotReasons = new Dictionary<string, string>();
+        MarathonOffset = 0;
     }
 
     private static List<Question> Weave(List<Question> fresh, IReadOnlyList<Question> review)

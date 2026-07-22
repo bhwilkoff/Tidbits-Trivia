@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel;
+using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input.Platform;
@@ -40,6 +41,30 @@ public partial class GameView : UserControl
     {
         if (string.IsNullOrEmpty(e.PropertyName) || e.PropertyName == nameof(GameEngine.CurrentOrder))
             RebuildOptions();
+        if (string.IsNullOrEmpty(e.PropertyName))
+            RebuildMarathonResult();
+    }
+
+    /// Club Marathon's Finished-phase scorecard renders via the same builder the
+    /// Records "Marathon History" drill-in uses (`MarathonUi.BuildScorecard`) — one
+    /// implementation, headless-testable, instead of a parallel XAML template
+    /// (docs/CLUB-FEATURES-BUILD.md "Feature 3"). GameViewModel's own
+    /// PropertyChanged subscription (constructed first) always runs before this
+    /// one, so `_vm.MarathonResult` is already set the instant the run finishes.
+    private void RebuildMarathonResult()
+    {
+        if (MarathonResultHost is null) return;
+        var engine = _vm?.Engine;
+        if (engine?.Mode != GameMode.Marathon || engine.CurrentPhase != GameEngine.Phase.Finished
+            || _vm?.MarathonResult is not { } result || _vm.Records is not { } records)
+        {
+            MarathonResultHost.Content = null;
+            return;
+        }
+        var previous = records.MarathonHistory.SkipWhile(s => s != result).Skip(1).FirstOrDefault();
+        MarathonResultHost.Content = MarathonUi.BuildScorecard(result, previous, records.MarathonHistory.Count,
+            onPlayAgain: () => _vm!.PlayAgain(), onDone: () => _vm!.Quit(),
+            onSeeHistory: () => _ = MarathonHistoryDialog.ShowAsync(records));
     }
 
     /// The answer surface is rebuilt on each engine change and dispatched by the

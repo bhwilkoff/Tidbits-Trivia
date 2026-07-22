@@ -49,7 +49,7 @@ ship first; season/cron infrastructure is last.
 |---|---|---|---|---|
 | 1 | **Weak-Spot Arena** | 1 gameplay | client-only: round from your own miss history | **DONE on all 6 platforms** |
 | 2 | **Story Archive** | 3 library | client-only: keep every unlocked "story behind the answer", searchable | **DONE on all 6 platforms** |
-| 3 | **Marathon** | 1 gameplay | client-only: 200-q graded endurance, cross-session scorecard | **web+iOS+Android DONE; macOS/tvOS/Windows todo** |
+| 3 | **Marathon** | 1 gameplay | client-only: 200-q graded endurance, cross-session scorecard | **DONE on all 6 platforms** |
 | 4 | **Knowledge Atlas** | 2 retrospect | client-only: accuracy by domain/sub-domain over 12mo | todo |
 | 5 | **Friend Streaks** | 4 social | light RTDB (reuses friends): mutual daily accountability | todo |
 | 6 | **Link Wall** | 1 gameplay | client-only: NYT-Connections-style 2nd daily (Daily stays free) | todo |
@@ -68,7 +68,7 @@ Legend: ✅ done+verified · 🔨 in progress · ⏳ queued · 🚫 n/a (with re
 |---|---|---|---|---|---|---|
 | 1 Weak-Spot Arena | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 2 Story Archive | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 3 Marathon | ✅ | ✅ | ✅ | ✅ | ✅ | ⏳ |
+| 3 Marathon | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 4 Knowledge Atlas | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 5 Friend Streaks | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 6 Link Wall | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
@@ -778,3 +778,86 @@ says is the whole point.
   holds exactly one entry. The Records-initiated and Home-initiated navigations to
   `Route.MarathonHistory` (no live Game route underneath) do not have this failure
   mode and were left as ordinary route pushes.
+- **2026-07-22** — **Marathon (Feature 3) shipped on Windows — feature now
+  COMPLETE on all 6 platforms.** Version NOT bumped this pass (owner's
+  cross-platform-alignment note). New `Tidbits.Core/Models/MarathonModels.cs`:
+  `MarathonAnswerRecord`/`MarathonRun` (seed, ordered question-id list,
+  `CurrentIndex`, `Results`, started/lastPlayed)/`MarathonDomainStat`/
+  `MarathonScore`, held directly as nested types in `RecordsData` (a single
+  nullable `MarathonRun?` slot + a `List<MarathonScore>` history) — no
+  SOH-joined-string workaround needed, unlike `SeenStory`'s options string,
+  since System.Text.Json serializes nested lists natively. New
+  `Tidbits.Core/Store/Marathon.cs` (pure, mirrors Apple's `Marathon.swift` /
+  Android's `Marathon.kt`): `StartNew`/`ResumeIds`/`Record`/`Finish`/
+  `InProgress`/`History`/`PreviewLine`, plus `RunLength` reading
+  `TIDBITS_MARATHON_LEN` (production always 200; this only ever narrows it).
+  The 200 ids are drawn ONCE via the SAME `StableSeed`/`Utf8Ordinal`
+  rank-and-slice `DailyPick` uses for the Daily (`marathon:<seed>:<id>`,
+  smallest-rank-first) — a resume rebuilds the identical, never-regenerated
+  set. `RecordsStore` grows `SaveMarathonRun`/`FinishMarathon`
+  (`ResetAll` clears both). `GameMode.Marathon` added (45s/Q — generous,
+  never a tight clock — `QuestionCount => Marathon.RunLength`), excluded from
+  `PlayView`'s `Offered` array (never a free Customize/Surprise-Me/remembered
+  pick, same exclusion `WeakSpot` needed). `GameEngine.StartCustom` grows a
+  `marathonOffset` parameter (mirrors the existing `reasons` dictionary
+  parameter's pattern) feeding a new `MarathonOffset` + `MarathonProgressLabel`
+  ("84 / 200", clamped so it never overflows to e.g. "5 / 4" once the round's
+  last `Advance()` has run) — the HUD's true cross-session position, rendered
+  in `GameView`'s header. `GameViewModel` grows a `marathonRun` constructor
+  parameter: `OnEngineChanged` persists every new `Engine.Answered` entry to
+  the run immediately (a crash/quit never loses progress) and, the instant
+  `CurrentIndex >= Total`, writes the permanent `MarathonScore` via
+  `Marathon.Finish` and DELIBERATELY SKIPS the generic
+  `_records.Record(Engine.Summary)` path — Marathon writes NO GameRecord /
+  miss / seen-story, since a partial-session slice would misreport lifetime
+  stats (verified: `records.Games`/`Missed`/`Seen` all stay empty after a full
+  run in the new headless test). `GameView.axaml`'s Finished panel now branches
+  on a new `IsMarathonRun` flag: the generic session-scoped recap
+  (`!IsMarathonRun`) is unchanged; Marathon's own permanent scorecard
+  (`IsMarathonRun`) renders via a NEW static builder, `MarathonUi.cs`
+  (`BuildScorecard`/`BuildHistoryDetail`/`BuildHistoryList`, mirrors
+  `StoryArchiveUi`'s headless-testable split) — score, "+N% vs your last run"
+  (or "Your first Marathon"), a 3-stat row, and per-domain `ProgressBar`
+  accuracy bars — so the just-finished recap and a past run's read-only detail
+  (`MarathonHistoryDialog.cs`, list↔detail swap in one `FAContentDialog`,
+  mirrors `StoryArchiveDialog`) share exactly one implementation. `PlayView`
+  gets a teal-accented Club-marked "MARATHON" card (mirrors the Weak-Spot
+  card's builder pattern) showing a RESUME chip + "Question N of Total — tap to
+  resume" when a run is in progress, a Resume/Start-Over `FAContentDialog`
+  choice, and — non-members — a real "Geography 91% · History 64%" preview
+  pitch (Marathon is Club-only end to end, so unlike Weak-Spot/Story Archive
+  there's no free-tier sample to draw from; the pitch is an honest static
+  illustration instead, matching the Apple reference). `RecordsView` gets its
+  own "MARATHON HISTORY" card (R-REC-1) alongside the Story Archive card,
+  independent of the in-scorecard "See Marathon history" link. Reused
+  `EntitlementStore.IsClub`/`TIDBITS_CLUB=1`; `Marathon.RunLength`'s
+  `TIDBITS_MARATHON_LEN` env var is the debug shorten (mirrors Android's
+  `marathon_len` Intent extra / Apple's env var of the same name) — a run can
+  be played to completion in a test in a handful of questions; production
+  code paths never set it, so real runs always see 200.
+  **`dotnet test` (Mac head, headless Skia): 335 passed / 1 skipped
+  (pre-existing LibVLC arch skip) / 0 failed, 336 total (+17)** — covering
+  `RunLength`/env-shorten, seed-determinism (re-deriving the same rank-and-slice
+  independently reproduces the exact id order), `StartNew` overwriting a stale
+  run in its single slot, `ResumeIds`'s clamp, `Record`'s persist-immediately
+  guarantee (a FRESH `RecordsStore` over the same file sees the update),
+  `Finish`'s score/domain-breakdown math + the no-GameRecord/miss/seen-story
+  assertion, `History` ordering, `PreviewLine`, the Home card in fresh/resume/
+  non-member states, the HUD offset label, and the Records card + history
+  list/detail rendering. PNGs verified (`home-marathon-member-fresh.png`,
+  `home-marathon-member-resume.png` — RESUME chip + "Question 6 of 10", 
+  `home-marathon-non-member.png`, `marathon-hud-resume.png` — HUD reads
+  "9 / 10" mid-run, `marathon-scorecard.png` — MARATHON COMPLETE / score /
+  comparison / domain bars / History-count stat, `records-marathon-history-
+  member.png`, `records-marathon-history-non-member.png`,
+  `marathon-history-empty.png`, `marathon-history-list.png`,
+  `marathon-history-detail.png` — "+25% vs your last run"). Caught and fixed a
+  real bug during this pass: the scorecard's stats-row "Marathons" count and
+  "vs last run" comparison initially read `Services.GameData.Shared.Value.
+  Records` (the global app singleton) instead of the `RecordsStore` the
+  `GameViewModel` was actually constructed with — harmless in production
+  (same singleton) but wrong the instant a caller (a test, or any future
+  multi-profile path) injects a different store; a headless test caught it
+  immediately (`Marathons: 0` instead of `1`). Fixed by exposing
+  `GameViewModel.Records` and reading that in `GameView`'s
+  `RebuildMarathonResult` instead. `windows-latest` CI to be gated post-push.

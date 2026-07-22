@@ -4,7 +4,9 @@ using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using Tidbits.App.Services;
 using Tidbits.App.Views;
+using Tidbits.Core.Models;
 
 namespace Tidbits.HeadlessTests;
 
@@ -92,5 +94,97 @@ public class HomeSnapshot
         if (scroller is null) return;
         scroller.ScrollToEnd();
         Dispatcher.UIThread.RunJobs();
+    }
+
+    /// Member, no run in progress: the Marathon card renders "Play" with no
+    /// RESUME chip (docs/CLUB-FEATURES-BUILD.md "Feature 3").
+    [AvaloniaFact]
+    public void Play_home_renders_the_marathon_card_for_a_member_with_no_run()
+    {
+        var previousClub = Environment.GetEnvironmentVariable("TIDBITS_CLUB");
+        try
+        {
+            Environment.SetEnvironmentVariable("TIDBITS_CLUB", "1");
+            GameData.Shared.Value.Records.SaveMarathonRun(null);
+
+            var view = new PlayView();
+            var win = new Window { Width = 900, Height = 900, Content = view };
+            win.Show();
+            Dispatcher.UIThread.RunJobs();
+
+            var texts = win.GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text).ToList();
+            Assert.Contains("MARATHON", texts);
+            Assert.DoesNotContain("RESUME", texts);
+            var buttons = win.GetVisualDescendants().OfType<Button>()
+                .Where(b => (b.Content as string) == "Play").ToList();
+            Assert.NotEmpty(buttons);
+
+            ScrollToWeakSpotCard(win);
+            win.CaptureRenderedFrame()!.Save(Path.Combine(Art(), "home-marathon-member-fresh.png"));
+        }
+        finally { Environment.SetEnvironmentVariable("TIDBITS_CLUB", previousClub); }
+    }
+
+    /// Member WITH an in-progress run: "Question 6 of 10 — tap to resume", a
+    /// RESUME chip, and a "Resume" action — the load-bearing resume-across-
+    /// sessions mechanic surfaced on Home/Play.
+    [AvaloniaFact]
+    public void Play_home_renders_the_marathon_card_in_resume_state_for_a_member()
+    {
+        var previousClub = Environment.GetEnvironmentVariable("TIDBITS_CLUB");
+        var records = GameData.Shared.Value.Records;
+        try
+        {
+            Environment.SetEnvironmentVariable("TIDBITS_CLUB", "1");
+            var run = new MarathonRun("seed", Enumerable.Range(0, 10).Select(i => $"q{i}").ToList()) { CurrentIndex = 5 };
+            records.SaveMarathonRun(run);
+
+            var view = new PlayView();
+            var win = new Window { Width = 900, Height = 900, Content = view };
+            win.Show();
+            Dispatcher.UIThread.RunJobs();
+
+            var texts = win.GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text).ToList();
+            Assert.Contains("MARATHON", texts);
+            Assert.Contains("RESUME", texts);
+            Assert.Contains(texts, t => t is not null && t.Contains("Question 6 of 10"));
+            var buttons = win.GetVisualDescendants().OfType<Button>()
+                .Where(b => (b.Content as string) == "Resume").ToList();
+            Assert.NotEmpty(buttons);
+
+            ScrollToWeakSpotCard(win);
+            win.CaptureRenderedFrame()!.Save(Path.Combine(Art(), "home-marathon-member-resume.png"));
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("TIDBITS_CLUB", previousClub);
+            records.SaveMarathonRun(null);
+        }
+    }
+
+    /// Non-member: the CLUB chip + a real-or-honest preview — never a blank wall.
+    [AvaloniaFact]
+    public void Play_home_renders_the_marathon_card_for_a_non_member()
+    {
+        var previousClub = Environment.GetEnvironmentVariable("TIDBITS_CLUB");
+        try
+        {
+            Environment.SetEnvironmentVariable("TIDBITS_CLUB", "0");
+            var view = new PlayView();
+            var win = new Window { Width = 900, Height = 900, Content = view };
+            win.Show();
+            Dispatcher.UIThread.RunJobs();
+
+            var texts = win.GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text).ToList();
+            Assert.Contains("MARATHON", texts);
+            Assert.Contains("CLUB", texts);
+            var buttons = win.GetVisualDescendants().OfType<Button>()
+                .Where(b => (b.Content as string) == "Join Club").ToList();
+            Assert.NotEmpty(buttons);
+
+            ScrollToWeakSpotCard(win);
+            win.CaptureRenderedFrame()!.Save(Path.Combine(Art(), "home-marathon-non-member.png"));
+        }
+        finally { Environment.SetEnvironmentVariable("TIDBITS_CLUB", previousClub); }
     }
 }

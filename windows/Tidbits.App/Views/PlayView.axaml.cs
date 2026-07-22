@@ -77,6 +77,7 @@ public partial class PlayView : UserControl
         BuildDaily();
         BuildPresets();
         BuildWeakSpot();
+        BuildMarathonCard();
     }
 
     // MARK: - Tidbits Club: Weak-Spot Arena (docs/CLUB-FEATURES-BUILD.md "Feature 1")
@@ -177,6 +178,137 @@ public partial class PlayView : UserControl
         Landing.IsVisible = false;
         GameHost.Content = new GameView { DataContext = vm };
         engine.StartCustom(GameMode.WeakSpot, TriviaCategory.Named("mixed"), round.Questions, round.Reasons);
+    }
+
+    // MARK: - Tidbits Club: Marathon (docs/CLUB-FEATURES-BUILD.md "Feature 3")
+
+    /// A 200-question graded endurance run that RESUMES ACROSS SESSIONS — Club-
+    /// gated, never a free Customize pick (the `Offered` array above never lists
+    /// it). Members launch/resume; non-members see a real preview (their last
+    /// run's accuracy once they have Club history, else an honest static pitch —
+    /// Marathon is Club-only end to end, so there's no free-tier sample) and the
+    /// existing Club paywall — never a blank wall.
+    private void BuildMarathonCard()
+    {
+        var data = GameData.Shared.Value;
+        bool isClub = data.Entitlement.IsClub;
+        var run = Marathon.InProgress(data.Records);
+        var subtitle = isClub
+            ? (run is not null
+                ? $"Question {run.CurrentIndex + 1} of {run.Total} — tap to resume"
+                : Marathon.PreviewLine(data.Records) ?? GameMode.Marathon.Blurb())
+            : "See exactly where you stand — e.g. Geography 91% · History 64% — across a 200-question run you can pause and resume anytime.";
+
+        var titleRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, VerticalAlignment = VerticalAlignment.Center };
+        titleRow.Children.Add(new TextBlock { Text = "MARATHON", Classes = { "body-strong" } });
+        if (!isClub)
+        {
+            titleRow.Children.Add(new Border
+            {
+                Background = new SolidColorBrush(Color.Parse("#FF5C35")),
+                CornerRadius = new Avalonia.CornerRadius(6),
+                Padding = new Avalonia.Thickness(7, 2),
+                Child = new TextBlock { Text = "CLUB", FontSize = 11, FontWeight = Avalonia.Media.FontWeight.Black, Foreground = Brushes.White },
+            });
+        }
+        else if (run is not null)
+        {
+            titleRow.Children.Add(new Border
+            {
+                Background = new SolidColorBrush(Color.Parse("#13B6C9")),
+                CornerRadius = new Avalonia.CornerRadius(6),
+                Padding = new Avalonia.Thickness(7, 2),
+                Child = new TextBlock { Text = "RESUME", FontSize = 11, FontWeight = Avalonia.Media.FontWeight.Black, Foreground = Brushes.White },
+            });
+        }
+
+        var textStack = new StackPanel { Spacing = 3, VerticalAlignment = VerticalAlignment.Center, MaxWidth = 440 };
+        textStack.Children.Add(titleRow);
+        textStack.Children.Add(new TextBlock { Text = subtitle, Classes = { "caption" }, TextWrapping = TextWrapping.Wrap });
+
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
+        grid.Children.Add(textStack);
+
+        var action = new Button
+        {
+            Content = isClub ? (run is not null ? "Resume" : "Play") : "Join Club",
+            Classes = { "accent", "compact" },
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        action.Click += (_, _) => OnMarathonAction();
+        Grid.SetColumn(action, 1);
+        grid.Children.Add(action);
+
+        MarathonPanel.Content = new Border { Classes = { "card" }, Child = grid };
+    }
+
+    /// Members with a run in progress get a Resume/Start-over choice (an
+    /// FAContentDialog); with no run, they launch straight into a fresh one.
+    /// Non-members see the existing paywall — never a blank wall.
+    private async void OnMarathonAction()
+    {
+        var data = GameData.Shared.Value;
+        if (!data.Entitlement.IsClub)
+        {
+            var dialog = new FAContentDialog
+            {
+                Content = new ScrollViewer { Content = new ClubPaywallView(), MaxWidth = 520, MaxHeight = 640 },
+                CloseButtonText = "Close",
+            };
+            await dialog.ShowAsync();
+            BuildMarathonCard(); // reflect a purchase/restore made from inside the dialog
+            return;
+        }
+
+        var run = Marathon.InProgress(data.Records);
+        if (run is not null)
+        {
+            var dialog = new FAContentDialog
+            {
+                Title = "Marathon in progress",
+                Content = new TextBlock
+                {
+                    Text = $"Question {run.CurrentIndex + 1} of {run.Total} — resume where you left off, or start a fresh run.",
+                    TextWrapping = TextWrapping.Wrap, MaxWidth = 360,
+                },
+                PrimaryButtonText = "Resume", SecondaryButtonText = "Start Over", CloseButtonText = "Cancel",
+            };
+            var result = await dialog.ShowAsync();
+            if (result == FAContentDialogResult.Primary) await StartMarathonAsync(startOver: false);
+            else if (result == FAContentDialogResult.Secondary) await StartMarathonAsync(startOver: true);
+            return;
+        }
+        await StartMarathonAsync(startOver: false);
+    }
+
+    /// Resumes the in-progress run unless `startOver` (or none exists), loading
+    /// only the REMAINING questions — the HUD adds the offset back in so the
+    /// player always sees their true position out of the full run.
+    private async Task StartMarathonAsync(bool startOver)
+    {
+        var data = GameData.Shared.Value;
+        var run = startOver
+            ? Marathon.StartNew(data.Records, data.Sources.Corpus)
+            : Marathon.InProgress(data.Records) ?? Marathon.StartNew(data.Records, data.Sources.Corpus);
+        var offset = run.CurrentIndex;
+        var remainingIds = Marathon.ResumeIds(run);
+        if (remainingIds.Count == 0)
+        {
+            // Edge case only (a run already at its full length without having
+            // been finished) — close it out rather than show a blank round.
+            Marathon.Finish(data.Records, run);
+            BuildMarathonCard();
+            return;
+        }
+
+        var questions = data.Sources.Corpus.Questions(remainingIds);
+        var engine = data.NewEngine();
+        var vm = new GameViewModel(engine, data.Records, run);
+        vm.Closed += () => { GameHost.Content = null; Landing.IsVisible = true; BuildMarathonCard(); };
+        vm.PlayAgainRequested += () => _ = StartMarathonAsync(startOver: true);
+        Landing.IsVisible = false;
+        GameHost.Content = new GameView { DataContext = vm };
+        engine.StartCustom(GameMode.Marathon, TriviaCategory.Named("mixed"), questions, marathonOffset: offset);
     }
 
     /// Saved Custom Mix presets ("My Mix") — each replays its modes + category,

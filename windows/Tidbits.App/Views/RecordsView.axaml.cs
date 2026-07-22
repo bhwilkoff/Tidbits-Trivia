@@ -23,6 +23,7 @@ public partial class RecordsView : UserControl
         InitializeComponent();
         RefreshProfile();
         BuildStoryArchiveCard();
+        BuildMarathonHistoryCard();
     }
 
     protected override void OnDataContextChanged(System.EventArgs e)
@@ -31,6 +32,7 @@ public partial class RecordsView : UserControl
         RefreshProfile();
         BuildPie();
         BuildStoryArchiveCard();
+        BuildMarathonHistoryCard();
     }
 
     /// Show who you're playing as (name + deterministic hue avatar) in the banner.
@@ -298,6 +300,76 @@ public partial class RecordsView : UserControl
         }
         await StoryArchiveDialog.ShowAsync(data.Records, question => StartReask(question));
         BuildStoryArchiveCard(); // reflect any favorite toggles / re-ask outcomes
+    }
+
+    // MARK: - Tidbits Club: Marathon History (docs/CLUB-FEATURES-BUILD.md "Feature 3")
+
+    /// The permanent record of every completed 200-question run — reachable from
+    /// Records (R-REC-1) in addition to the Play card's own in-game "See Marathon
+    /// history" link. Mirrors this file's Story Archive card exactly.
+    private void BuildMarathonHistoryCard()
+    {
+        if (MarathonHistoryPanel is null) return;
+        var data = GameData.Shared.Value;
+        bool isClub = data.Entitlement.IsClub;
+        var history = data.Records.MarathonHistory;
+        var subtitle = isClub
+            ? (history.Count == 0
+                ? GameMode.Marathon.Blurb()
+                : $"{history.Count} run{(history.Count == 1 ? "" : "s")} played — best {(int)Math.Round(history.Max(s => s.Accuracy) * 100)}%.")
+            : "See exactly where you stand across a 200-question run, by domain — Club keeps every run forever.";
+
+        var titleRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, VerticalAlignment = VerticalAlignment.Center };
+        titleRow.Children.Add(new TextBlock { Text = "MARATHON HISTORY", Classes = { "body-strong" } });
+        if (!isClub)
+        {
+            titleRow.Children.Add(new Border
+            {
+                Background = new SolidColorBrush(Color.Parse("#FF5C35")),
+                CornerRadius = new Avalonia.CornerRadius(6),
+                Padding = new Avalonia.Thickness(7, 2),
+                Child = new TextBlock { Text = "CLUB", FontSize = 11, FontWeight = FontWeight.Black, Foreground = Brushes.White },
+            });
+        }
+
+        var textStack = new StackPanel { Spacing = 3, VerticalAlignment = VerticalAlignment.Center, MaxWidth = 440 };
+        textStack.Children.Add(titleRow);
+        textStack.Children.Add(new TextBlock { Text = subtitle, Classes = { "caption" }, TextWrapping = TextWrapping.Wrap });
+
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
+        grid.Children.Add(textStack);
+
+        var action = new Button
+        {
+            Content = isClub ? "Open" : "Join Club",
+            Classes = { "accent", "compact" },
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        action.Click += (_, _) => OnMarathonHistoryAction();
+        Grid.SetColumn(action, 1);
+        grid.Children.Add(action);
+
+        MarathonHistoryPanel.Content = new Border { Classes = { "card" }, Child = grid };
+    }
+
+    /// Members open the history list directly; everyone else sees the existing
+    /// paywall — never a blank wall.
+    private async void OnMarathonHistoryAction()
+    {
+        var data = GameData.Shared.Value;
+        if (!data.Entitlement.IsClub)
+        {
+            var dialog = new FAContentDialog
+            {
+                Content = new ScrollViewer { Content = new ClubPaywallView(), MaxWidth = 520, MaxHeight = 640 },
+                CloseButtonText = "Close",
+            };
+            await dialog.ShowAsync();
+            BuildMarathonHistoryCard(); // reflect a purchase/restore made from inside the dialog
+            return;
+        }
+        await MarathonHistoryDialog.ShowAsync(data.Records);
+        BuildMarathonHistoryCard(); // in case history changed while the dialog was open
     }
 
     /// Launches the "Re-ask this" 1-question drill (Duel-drill pattern) as an overlay

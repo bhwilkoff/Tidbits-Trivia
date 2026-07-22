@@ -13,6 +13,11 @@ public sealed class RecordsData
     /// The Club Story Archive's data source (docs/CLUB-FEATURES-BUILD.md "Feature 2") —
     /// every distinct question ever answered, right or wrong.
     public List<SeenStory> Seen { get; set; } = new();
+    /// The Club Marathon's in-progress run (docs/CLUB-FEATURES-BUILD.md "Feature 3") —
+    /// at most one at a time; null when no run is active.
+    public MarathonRun? MarathonRun { get; set; }
+    /// Permanent completed-Marathon history.
+    public List<MarathonScore> MarathonHistory { get; set; } = new();
 }
 
 /// Persists the outcome of a finished game (record + missed facts + Daily streak +
@@ -44,6 +49,11 @@ public sealed class RecordsStore
     /// The Club Story Archive's data source — every distinct answered question, most
     /// recently met first.
     public IReadOnlyList<SeenStory> Seen => _data.Seen.OrderByDescending(s => s.LastSeen).ToList();
+    /// The Club Marathon's in-progress run, if any (at most one).
+    public MarathonRun? MarathonRun => _data.MarathonRun;
+    /// Permanent completed-Marathon history, most recent first.
+    public IReadOnlyList<MarathonScore> MarathonHistory =>
+        _data.MarathonHistory.OrderByDescending(s => s.Date).ToList();
 
     /// Record a finished game. Returns whether it's a new best for that mode+category.
     public bool Record(GameSummary summary)
@@ -134,6 +144,26 @@ public sealed class RecordsStore
         Save();
     }
 
+    /// Persist the in-progress Marathon run (or clear it with null) — called
+    /// after every answer and on Start/Start-over so a crash/quit never loses
+    /// progress (docs/CLUB-FEATURES-BUILD.md "Feature 3").
+    public void SaveMarathonRun(MarathonRun? run)
+    {
+        _data.MarathonRun = run;
+        Save();
+    }
+
+    /// Write the permanent Marathon score and clear the in-progress run.
+    /// Marathon writes NO GameRecord / miss / seen-story here — a partial
+    /// session slice would misreport lifetime stats — so this is its own
+    /// dedicated, additive history.
+    public void FinishMarathon(MarathonScore score)
+    {
+        _data.MarathonHistory.Add(score);
+        _data.MarathonRun = null;
+        Save();
+    }
+
     private void AddCalibration(IReadOnlyDictionary<int, StakeOutcome> outcomes)
     {
         foreach (var (tier, o) in outcomes)
@@ -182,6 +212,8 @@ public sealed class RecordsStore
         _data.Calibration.Clear();
         _data.Telemetry.Clear();
         _data.Seen.Clear();
+        _data.MarathonRun = null;
+        _data.MarathonHistory.Clear();
         _data.Streak = new DailyStreak();
         Save();
     }

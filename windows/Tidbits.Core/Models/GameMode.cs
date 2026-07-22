@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Tidbits.Core.Store;
 
 namespace Tidbits.Core.Models;
 
@@ -16,6 +17,11 @@ public enum GameMode
     /// Customize grid and never a remembered/random Quick-Play or Surprise-Me default —
     /// callers must exclude it explicitly (mirrors Apple's `playableModes` filter).
     WeakSpot,
+    /// Club-only (Decision 047 / docs/CLUB-FEATURES-BUILD.md "Feature 3"): a long
+    /// graded endurance run that RESUMES ACROSS SESSIONS (`Marathon.cs`). Never in the
+    /// free Customize grid and never a remembered/random Quick-Play or Surprise-Me
+    /// default — same exclusion as WeakSpot.
+    Marathon,
 }
 
 /// (De)serializes GameMode as its wire string ("classic", "timeAttack", …).
@@ -53,6 +59,7 @@ public static class GameModeExtensions
         GameMode.Mix => "mix",
         GameMode.Daily => "daily",
         GameMode.WeakSpot => "weakSpot",
+        GameMode.Marathon => "marathon",
         _ => "classic",
     };
 
@@ -79,6 +86,7 @@ public static class GameModeExtensions
         GameMode.Mix => "Custom Mix",
         GameMode.Daily => "Daily Tidbit",
         GameMode.WeakSpot => "Weak-Spot Arena",
+        GameMode.Marathon => "Marathon",
         _ => "Classic",
     };
 
@@ -102,6 +110,7 @@ public static class GameModeExtensions
         GameMode.Mix => "Your picked modes, shuffled together.",
         GameMode.Daily => "Everyone's puzzle. Keep your streak.",
         GameMode.WeakSpot => "Turn your misses into a round.",
+        GameMode.Marathon => "200 questions. Play it across as many sittings as you like.",
         _ => "",
     };
 
@@ -141,6 +150,7 @@ public static class GameModeExtensions
         GameMode.Mix => 20,
         GameMode.Daily => 30,
         GameMode.WeakSpot => 20,
+        GameMode.Marathon => 45, // endurance, not speed — generous, never a tight clock
         _ => 20,
     };
 
@@ -164,6 +174,7 @@ public static class GameModeExtensions
         GameMode.Mix => 10,
         GameMode.Daily => 7,
         GameMode.WeakSpot => 10,
+        GameMode.Marathon => Marathon.RunLength, // 200 in production; TIDBITS_MARATHON_LEN shortens for testing
         _ => 10,
     };
 

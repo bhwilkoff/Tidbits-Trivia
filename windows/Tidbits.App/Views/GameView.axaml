@@ -12,6 +12,11 @@
                 <TextBlock Text="{Binding Engine.Score, StringFormat='Score {0}'}" FontWeight="Bold" FontSize="15"/>
                 <TextBlock Text="{Binding Engine.Streak, StringFormat='Streak {0}'}" Opacity="0.7" FontSize="15"/>
             </StackPanel>
+            <!-- Marathon only: the true position across the whole run (e.g. "84 / 200"). -->
+            <TextBlock Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center"
+                       FontWeight="Bold" FontSize="14" Opacity="0.7"
+                       Text="{Binding Engine.MarathonProgressLabel}"
+                       IsVisible="{Binding Engine.MarathonProgressLabel, Converter={x:Static conv:Conv.NonEmpty}}"/>
             <TextBlock Grid.Column="2" FontWeight="Bold" FontSize="15" Foreground="#FF5C35"
                        Text="{Binding Engine.Remaining, Converter={x:Static conv:Conv.Seconds}}"/>
         </Grid>
@@ -65,7 +70,15 @@
             </ScrollViewer>
 
             <!-- Finished: results recap + spoiler-free share -->
-            <ScrollViewer IsVisible="{Binding Engine.CurrentPhase, Converter={x:Static conv:Conv.IsFinished}}">
+            <Panel IsVisible="{Binding Engine.CurrentPhase, Converter={x:Static conv:Conv.IsFinished}}">
+            <!-- Marathon's Finished recap is its own permanent scorecard (spans
+                 however many sessions the run took) — rendered via MarathonUi, the
+                 same builder Records' "Marathon History" drill-in uses, instead of
+                 the generic session-scoped template below. -->
+            <ScrollViewer IsVisible="{Binding IsMarathonRun}">
+                <ContentControl x:Name="MarathonResultHost" Margin="36,28,36,40" HorizontalAlignment="Center"/>
+            </ScrollViewer>
+            <ScrollViewer IsVisible="{Binding !IsMarathonRun}">
                 <StackPanel Margin="36,28,36,40" Spacing="16" MaxWidth="560" HorizontalAlignment="Center">
                     <!-- Scorecard -->
                     <Border Background="#FF5C35" CornerRadius="14" Padding="24,20">
@@ -193,6 +206,7 @@
                             Background="Transparent" Padding="26,10"/>
                 </StackPanel>
             </ScrollViewer>
+            </Panel>
         </Panel>
     </Grid>
 </UserControl>

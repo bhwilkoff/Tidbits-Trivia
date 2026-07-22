@@ -79,6 +79,11 @@
                      code-behind since it reads live entitlement state, not the VM. -->
                 <ContentControl x:Name="StoryArchivePanel" Margin="0,4,0,0"/>
 
+                <!-- Marathon History (Club — docs/CLUB-FEATURES-BUILD.md "Feature 3"):
+                     the permanent record of every completed run (R-REC-1), in addition
+                     to the Play card's own in-game "See Marathon history" link. -->
+                <ContentControl x:Name="MarathonHistoryPanel" Margin="0,4,0,0"/>
+
                 <!-- Knowledge (hidden until a specific-category game is played) -->
                 <StackPanel IsVisible="{Binding HasDomains}" Spacing="8">
                     <TextBlock Text="Your knowledge" Classes="section-header" Margin="0,6,0,0"/>

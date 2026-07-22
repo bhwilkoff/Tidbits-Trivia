@@ -18,6 +18,11 @@ public sealed class GameViewModel : ObservableObject, IDisposable
     private readonly DispatcherTimer _timer;
     private readonly RecordsStore? _records;
     private bool _recorded;
+    // Club Marathon only (docs/CLUB-FEATURES-BUILD.md "Feature 3"): the run this
+    // session is persisting into, and how many of Engine.Answered have already been
+    // forwarded to it (so a re-fired PropertyChanged never double-records an answer).
+    private readonly MarathonRun? _marathonRun;
+    private int _marathonPersisted;
 
     /// Raised when the player quits back to the Play surface.
     public event Action? Closed;
@@ -64,6 +69,23 @@ public sealed class GameViewModel : ObservableObject, IDisposable
     public string WeakSpotGapsClosedSubtitle =>
         (WeakSpotGapsClosed ?? 0) > 0 ? "Turned a miss into a win" : "Nothing to close yet this round";
 
+    /// Club Marathon only: true while this session is playing/resuming a run —
+    /// gates the dedicated scorecard in GameView. The generic recap above reads
+    /// `Engine.Summary`, which is only THIS session's slice — wrong for a run
+    /// that may span many sessions (docs/CLUB-FEATURES-BUILD.md "Feature 3").
+    public bool IsMarathonRun => Engine.Mode == GameMode.Marathon;
+
+    /// The just-completed run's permanent scorecard — set once, the instant the
+    /// run reaches its true end (which may be many sessions after it started).
+    /// Null until then.
+    public MarathonScore? MarathonResult { get; private set; }
+
+    /// The RecordsStore this session actually persists into — GameView reads
+    /// this (not a global singleton) for the Marathon scorecard's "vs your last
+    /// run" comparison and history count, so it stays correct against whatever
+    /// store the caller constructed this ViewModel with (tests included).
+    public RecordsStore? Records => _records;
+
     /// The conversation-starter share for a nailed question (web/iOS parity).
     public static string HowDidYouKnowText(AnsweredQuestion a) =>
         $"I knew \"{a.Question.Prompt}\" on Tidbits Trivia — it's {a.Question.CorrectAnswer}. How did YOU know that?";
@@ -75,10 +97,16 @@ public sealed class GameViewModel : ObservableObject, IDisposable
     public string DayStreakLine => DayStreak == 1 ? "1 day streak" : $"{DayStreak} day streak";
     public bool IsBestStreak => _records is { } r && r.Streak.Current >= 2 && r.Streak.Current == r.Streak.Best;
 
-    public GameViewModel(GameEngine engine, RecordsStore? records = null)
+    /// `marathonRun` is non-null only for a Club Marathon session — it's the run
+    /// this session persists every answer into (docs/CLUB-FEATURES-BUILD.md
+    /// "Feature 3"). Passing `records` alongside it is required (Marathon still
+    /// needs RecordsStore to persist the run/score); Marathon itself writes NO
+    /// GameRecord / miss / seen-story via the generic path below.
+    public GameViewModel(GameEngine engine, RecordsStore? records = null, MarathonRun? marathonRun = null)
     {
         Engine = engine;
         _records = records;
+        _marathonRun = marathonRun;
         Engine.PropertyChanged += OnEngineChanged;
         _timer = new DispatcherTimer(TimeSpan.FromMilliseconds(100), DispatcherPriority.Normal,
             (_, _) => Engine.Tick());
@@ -87,6 +115,30 @@ public sealed class GameViewModel : ObservableObject, IDisposable
 
     private void OnEngineChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (_marathonRun is { } run && _records is { } records)
+        {
+            // Persist every new answer immediately — a crash/quit never loses
+            // progress, the whole point of Marathon.
+            while (_marathonPersisted < Engine.Answered.Count)
+            {
+                Marathon.Record(records, run, Engine.Answered[_marathonPersisted]);
+                _marathonPersisted++;
+            }
+            // The run just reached its true end — write the permanent score and
+            // clear the in-progress run. Deliberately skips the generic
+            // `_records.Record(Engine.Summary)` path below: Marathon writes NO
+            // GameRecord / miss / seen-story (a partial session slice would
+            // misreport lifetime stats).
+            if (!_recorded && run.CurrentIndex >= run.Total)
+            {
+                _recorded = true;
+                MarathonResult = Marathon.Finish(records, run);
+                OnPropertyChanged(string.Empty);
+                Finished?.Invoke();
+            }
+            return;
+        }
+
         if (Engine.CurrentPhase == GameEngine.Phase.Finished && !_recorded)
         {
             _recorded = true;

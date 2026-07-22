@@ -45,6 +45,25 @@ public sealed class GameViewModel : ObservableObject, IDisposable
         Summary.Answered.Where(a => a.IsCorrect && a.Question.Difficulty >= 4).ToList();
     public bool HasNailed => Nailed.Count > 0;
 
+    /// Weak-Spot Arena only: how many true misses this round turned correct — the
+    /// payoff headline (docs/CLUB-FEATURES-BUILD.md "Feature 1"). null outside .weakSpot.
+    public int? WeakSpotGapsClosed
+    {
+        get
+        {
+            if (Engine.Mode != GameMode.WeakSpot) return null;
+            var trueMissIds = Engine.WeakSpotReasons
+                .Where(kv => kv.Value.StartsWith("Missed", StringComparison.Ordinal))
+                .Select(kv => kv.Key).ToHashSet();
+            return Summary.Answered.Count(a => a.IsCorrect && trueMissIds.Contains(a.Question.Id));
+        }
+    }
+    public bool HasWeakSpotGapsClosed => WeakSpotGapsClosed is not null;
+    public string WeakSpotGapsClosedHeadline =>
+        $"You closed {WeakSpotGapsClosed} gap{(WeakSpotGapsClosed == 1 ? "" : "s")}";
+    public string WeakSpotGapsClosedSubtitle =>
+        (WeakSpotGapsClosed ?? 0) > 0 ? "Turned a miss into a win" : "Nothing to close yet this round";
+
     /// The conversation-starter share for a nailed question (web/iOS parity).
     public static string HowDidYouKnowText(AnsweredQuestion a) =>
         $"I knew \"{a.Question.Prompt}\" on Tidbits Trivia — it's {a.Question.CorrectAnswer}. How did YOU know that?";

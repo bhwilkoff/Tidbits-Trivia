@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Interactivity;
@@ -75,6 +76,107 @@ public partial class PlayView : UserControl
         BuildVersus();
         BuildDaily();
         BuildPresets();
+        BuildWeakSpot();
+    }
+
+    // MARK: - Tidbits Club: Weak-Spot Arena (docs/CLUB-FEATURES-BUILD.md "Feature 1")
+
+    /// A round built entirely from the player's own miss history — Club-gated, never a
+    /// free Customize pick and never a remembered/random default (the `Offered` array
+    /// above never lists it). Members launch it; non-members see a real preview (a
+    /// genuine missed fact when one exists, else an honest static line) and the
+    /// existing Club paywall — never a blank wall.
+    private void BuildWeakSpot()
+    {
+        var data = GameData.Shared.Value;
+        bool isClub = data.Entitlement.IsClub;
+        var subtitle = isClub
+            ? GameMode.WeakSpot.Blurb()
+            : WeakSpotArena.PreviewLine(data.Records)
+              ?? "Your misses, turned into a round you can actually close.";
+
+        var titleRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, VerticalAlignment = VerticalAlignment.Center };
+        titleRow.Children.Add(new TextBlock { Text = "WEAK-SPOT ARENA", Classes = { "body-strong" } });
+        if (!isClub)
+        {
+            titleRow.Children.Add(new Border
+            {
+                Background = new SolidColorBrush(Color.Parse("#FF5C35")),
+                CornerRadius = new Avalonia.CornerRadius(6),
+                Padding = new Avalonia.Thickness(7, 2),
+                Child = new TextBlock { Text = "CLUB", FontSize = 11, FontWeight = Avalonia.Media.FontWeight.Black, Foreground = Brushes.White },
+            });
+        }
+
+        var textStack = new StackPanel { Spacing = 3, VerticalAlignment = VerticalAlignment.Center, MaxWidth = 440 };
+        textStack.Children.Add(titleRow);
+        textStack.Children.Add(new TextBlock { Text = subtitle, Classes = { "caption" }, TextWrapping = TextWrapping.Wrap });
+
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
+        grid.Children.Add(textStack);
+
+        var action = new Button
+        {
+            Content = isClub ? "Play" : "Join Club",
+            Classes = { "accent", "compact" },
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        action.Click += (_, _) => OnWeakSpotAction();
+        Grid.SetColumn(action, 1);
+        grid.Children.Add(action);
+
+        WeakSpotPanel.Content = new Border { Classes = { "card" }, Child = grid };
+    }
+
+    /// Members launch the arena directly; everyone else sees the existing paywall
+    /// (the app's established modal idiom — FAContentDialog, never an interstitial).
+    private async void OnWeakSpotAction()
+    {
+        var data = GameData.Shared.Value;
+        if (!data.Entitlement.IsClub)
+        {
+            var dialog = new FAContentDialog
+            {
+                Content = new ScrollViewer { Content = new ClubPaywallView(), MaxWidth = 520, MaxHeight = 640 },
+                CloseButtonText = "Close",
+            };
+            await dialog.ShowAsync();
+            BuildWeakSpot(); // reflect a purchase/restore made from inside the dialog
+            return;
+        }
+        await StartWeakSpotAsync();
+    }
+
+    /// Builds a fresh round from the current miss history and launches it — rebuilt
+    /// (not replayed verbatim) on Play Again too, since resolved misses change what
+    /// belongs in the next round.
+    private async Task StartWeakSpotAsync()
+    {
+        var data = GameData.Shared.Value;
+        var round = WeakSpotArena.Build(data.Records, data.Sources.Corpus);
+        if (round.Questions.Count < WeakSpotArena.PlayableFloor)
+        {
+            var dialog = new FAContentDialog
+            {
+                Title = "Not enough misses yet",
+                Content = new TextBlock
+                {
+                    Text = "Play a few rounds first — your misses become your arena.",
+                    TextWrapping = TextWrapping.Wrap, MaxWidth = 360,
+                },
+                CloseButtonText = "Back",
+            };
+            await dialog.ShowAsync();
+            return;
+        }
+
+        var engine = data.NewEngine();
+        var vm = new GameViewModel(engine, data.Records);
+        vm.Closed += () => { GameHost.Content = null; Landing.IsVisible = true; BuildWeakSpot(); };
+        vm.PlayAgainRequested += () => _ = StartWeakSpotAsync();
+        Landing.IsVisible = false;
+        GameHost.Content = new GameView { DataContext = vm };
+        engine.StartCustom(GameMode.WeakSpot, TriviaCategory.Named("mixed"), round.Questions, round.Reasons);
     }
 
     /// Saved Custom Mix presets ("My Mix") — each replays its modes + category,

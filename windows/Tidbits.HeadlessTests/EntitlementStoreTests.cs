@@ -198,4 +198,33 @@ public class EntitlementStoreTests
         }
         finally { if (File.Exists(path)) File.Delete(path); }
     }
+
+    // MARK: - TIDBITS_CLUB debug override (docs/CLUB-FEATURES-BUILD.md gating convention)
+
+    [Fact]
+    public void TIDBITS_CLUB_env_override_forces_the_gate_open_without_touching_the_cache()
+    {
+        var path = TempCachePath();
+        var previous = Environment.GetEnvironmentVariable("TIDBITS_CLUB");
+        try
+        {
+            var store = NewStore(path); // no cache -> ordinarily not Club
+            Assert.False(store.IsClub);
+
+            Environment.SetEnvironmentVariable("TIDBITS_CLUB", "1");
+            Assert.True(store.IsClub);            // pre-launch override opens every gate
+            Assert.True(Tidbits.Core.Store.DebugHooks.ForceClub);
+
+            Environment.SetEnvironmentVariable("TIDBITS_CLUB", "0");
+            Assert.False(store.IsClub);            // only the literal "1" forces it open
+
+            Environment.SetEnvironmentVariable("TIDBITS_CLUB", null);
+            Assert.False(store.IsClub);            // unset -> a pure no-op, back to the real cache
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("TIDBITS_CLUB", previous);
+            if (File.Exists(path)) File.Delete(path);
+        }
+    }
 }

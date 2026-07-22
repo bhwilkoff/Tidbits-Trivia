@@ -47,7 +47,7 @@ ship first; season/cron infrastructure is last.
 
 | # | Feature | Pillar | Shape | Status |
 |---|---|---|---|---|
-| 1 | **Weak-Spot Arena** | 1 gameplay | client-only: round from your own miss history | **web+iOS+Android+macOS+tvOS done; Windows left** |
+| 1 | **Weak-Spot Arena** | 1 gameplay | client-only: round from your own miss history | **DONE on all 6 platforms** |
 | 2 | **Story Archive** | 3 library | client-only: keep every unlocked "story behind the answer", searchable | todo |
 | 3 | **Marathon** | 1 gameplay | client-only: 200-q graded endurance, cross-session scorecard | todo |
 | 4 | **Knowledge Atlas** | 2 retrospect | client-only: accuracy by domain/sub-domain over 12mo | todo |
@@ -66,7 +66,7 @@ Legend: ✅ done+verified · 🔨 in progress · ⏳ queued · 🚫 n/a (with re
 
 | Feature | web | iOS/iPadOS | macOS | tvOS | Android | Windows |
 |---|---|---|---|---|---|---|
-| 1 Weak-Spot Arena | ✅ | ✅ | ✅ | ✅ | ✅ | ⏳ |
+| 1 Weak-Spot Arena | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 2 Story Archive | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 3 Marathon | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 4 Knowledge Atlas | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
@@ -191,5 +191,40 @@ enter the build order.)*
   visually verified at the top of Home (Quick Play/Daily/Trivia Night render
   correctly under the same env) but the `weakSpotHero` itself sits below the
   fold and this sandbox has no Simulator.app GUI / remote-input tool to
-  scroll headlessly — code-reviewed instead. Windows is the only platform
-  left on this feature.
+  scroll headlessly — code-reviewed instead.
+- **2026-07-22** — **Windows mirror shipped (1.6.48/89) — Feature 1 DONE on all 6
+  platforms.** `Tidbits.Core/Store/WeakSpotArena.cs` is a pure C# port of the
+  generator (floor 4 / fill-target 8 / cap 10, same reason strings, `RecordsStore`
+  already had `MissedFact.LastSeen` from day one so no back-compat shim was
+  needed); reads `RecordsStore.Missed` (already `!Resolved`, most-missed +
+  oldest-first) and tops up via the existing `DomainProgress.Summarize` +
+  `CorpusDatabase.Questions`. `GameMode.WeakSpot` added to the enum (Id
+  `"weakSpot"`, title/blurb/count/perQuestion set explicitly in every switch) —
+  never added to `PlayView`'s `Offered` array, so it's automatically excluded
+  from the free Customize grid, Surprise-Me, and the Quick-Play-remembered
+  default (that array IS Windows's `playableModes` filter). `GameEngine.StartCustom`
+  grew an optional `reasons` parameter (`WeakSpotReasons` dict + a `CurrentReason`
+  computed property) — every other `StartCustom` call site (QuickMatch, Create,
+  Leaderboard rematch, Party) is unaffected. `GameViewModel` grew
+  `WeakSpotGapsClosed`/`HasWeakSpotGapsClosed`/headline+subtitle properties,
+  computed the same way as the Apple reference: true-miss question IDs are those
+  whose reason starts with "Missed" (not "Shoring up"), intersected with
+  correctly-answered questions in the finished summary. `EntitlementStore.IsClub`
+  now ORs in a new `DebugHooks.ForceClub` (`TIDBITS_CLUB=1`, mirroring the Apple/
+  Android debug override) alongside the existing cached/remote read. Home
+  (`PlayView`) gets a `WeakSpotPanel` card between Trivia Night and Pass & Play —
+  member: "Play" launches straight in; non-member: a CLUB chip + a real preview
+  line from `WeakSpotArena.PreviewLine` when a local miss exists, else an honest
+  static line, opening the existing `ClubPaywallView` in a `FAContentDialog` (the
+  app's established modal idiom) — never a blank wall. Below the 2-question
+  playable floor, an `FAContentDialog` shows "Play a few rounds first — your
+  misses become your arena." before ever navigating to the game surface (built
+  BEFORE launch, same shape as the Android dialog-before-navigate pattern).
+  `GameView.axaml` shows the reason caption above the prompt and a "You closed N
+  gaps" card right after the scorecard. 300/300 headless tests green (7 new
+  `WeakSpotArenaTests` for the generator, 2 `WeakSpotResultsSnapshot` render tests
+  for the reason caption + gaps-closed payoff, 2 `HomeSnapshot` member/non-member
+  card renders, 1 `EntitlementStoreTests` for the `TIDBITS_CLUB` override) —
+  screenshots confirm the card, chip, preview line, in-play reason, and "You
+  closed 2 gaps" recap all render correctly. Gated on `windows-latest` CI
+  (`windows-repl.yml`) per the standing Windows verification rule.

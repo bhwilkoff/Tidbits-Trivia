@@ -11,6 +11,11 @@ public enum GameMode
 {
     Classic, TimeAttack, Survival, Stake, Sweep, PictureId, ThisOrThat, ClosestCall,
     Ordering, Matching, TypeAnswer, OddOneOut, Ladder, Enumerate, BarTrivia, Mix, Daily,
+    /// Club-only (Decision 047 / docs/CLUB-FEATURES-BUILD.md "Feature 1"): a round built
+    /// entirely from the player's own miss history (WeakSpotArena). Never in the free
+    /// Customize grid and never a remembered/random Quick-Play or Surprise-Me default —
+    /// callers must exclude it explicitly (mirrors Apple's `playableModes` filter).
+    WeakSpot,
 }
 
 /// (De)serializes GameMode as its wire string ("classic", "timeAttack", …).
@@ -47,6 +52,7 @@ public static class GameModeExtensions
         GameMode.BarTrivia => "barTrivia",
         GameMode.Mix => "mix",
         GameMode.Daily => "daily",
+        GameMode.WeakSpot => "weakSpot",
         _ => "classic",
     };
 
@@ -72,6 +78,7 @@ public static class GameModeExtensions
         GameMode.BarTrivia => "Trivia Night",
         GameMode.Mix => "Custom Mix",
         GameMode.Daily => "Daily Tidbit",
+        GameMode.WeakSpot => "Weak-Spot Arena",
         _ => "Classic",
     };
 
@@ -94,6 +101,7 @@ public static class GameModeExtensions
         GameMode.BarTrivia => "Host a night. Every kind of round.",
         GameMode.Mix => "Your picked modes, shuffled together.",
         GameMode.Daily => "Everyone's puzzle. Keep your streak.",
+        GameMode.WeakSpot => "Turn your misses into a round.",
         _ => "",
     };
 
@@ -132,6 +140,7 @@ public static class GameModeExtensions
         GameMode.BarTrivia => 20,
         GameMode.Mix => 20,
         GameMode.Daily => 30,
+        GameMode.WeakSpot => 20,
         _ => 20,
     };
 
@@ -154,6 +163,7 @@ public static class GameModeExtensions
         GameMode.BarTrivia => 20,
         GameMode.Mix => 10,
         GameMode.Daily => 7,
+        GameMode.WeakSpot => 10,
         _ => 10,
     };
 

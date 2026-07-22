@@ -38,6 +38,9 @@
             <!-- Question (playing + reveal share the prompt + options; options colored on reveal) -->
             <ScrollViewer IsVisible="{Binding Engine.CurrentPhase, Converter={x:Static conv:Conv.IsQuestion}}">
                 <StackPanel Margin="36,12" Spacing="18" MaxWidth="760" HorizontalAlignment="Left">
+                    <!-- Weak-Spot Arena: the plain "why you're seeing this" caption. -->
+                    <TextBlock Text="{Binding Engine.CurrentReason}" Classes="caption" FontWeight="SemiBold"
+                               IsVisible="{Binding Engine.CurrentReason, Converter={x:Static conv:Conv.NonEmpty}}"/>
                     <TextBlock Text="{Binding Engine.Current.Prompt}" FontSize="24" FontWeight="Bold" TextWrapping="Wrap"/>
 
                     <!-- Options are built in code-behind so they can be recolored on reveal. -->
@@ -73,6 +76,16 @@
                                        Foreground="White" HorizontalAlignment="Center"/>
                             <TextBlock Text="{Binding ModeCategoryLine}" FontSize="13" Foreground="White"
                                        Opacity="0.85" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Weak-Spot Arena payoff — "you didn't just play, you got better." -->
+                    <Border IsVisible="{Binding HasWeakSpotGapsClosed}" Classes="card" HorizontalAlignment="Stretch">
+                        <StackPanel Spacing="2" HorizontalAlignment="Center">
+                            <TextBlock Text="{Binding WeakSpotGapsClosedHeadline}" Classes="section-header"
+                                       HorizontalAlignment="Center"/>
+                            <TextBlock Text="{Binding WeakSpotGapsClosedSubtitle}" Classes="caption"
+                                       HorizontalAlignment="Center"/>
                         </StackPanel>
                     </Border>
 

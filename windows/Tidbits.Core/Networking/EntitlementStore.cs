@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Tidbits.Core.Store;
 
 namespace Tidbits.Core.Networking;
 
@@ -32,8 +33,10 @@ public sealed class EntitlementStore
     }
 
     /// The gate. Seeded from the cached last-known-good so a returning member is Club
-    /// instantly, before any network round-trip.
-    public bool IsClub { get; private set; }
+    /// instantly, before any network round-trip. `DebugHooks.ForceClub` (TIDBITS_CLUB=1)
+    /// overrides it pre-launch, when there are no real purchases yet.
+    public bool IsClub => DebugHooks.ForceClub || _isClubStored;
+    private bool _isClubStored;
 
     public EntitlementStore(FirebaseRtdb db, AccountIdentity identity,
                             IStoreGateway? store = null, string? cachePath = null)
@@ -44,7 +47,7 @@ public sealed class EntitlementStore
         _cachePath = cachePath ?? Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "TidbitsTrivia", "entitlement.json");
-        IsClub = LoadCache();
+        _isClubStored = LoadCache();
     }
 
     /// Recompute Club status. Safe to call at launch, after sign-in, and after a purchase.
@@ -83,7 +86,7 @@ public sealed class EntitlementStore
 
     private void Set(bool club)
     {
-        IsClub = club;
+        _isClubStored = club;
         SaveCache(club);
     }
 

@@ -30,6 +30,9 @@ public sealed class GameEngine : ObservableObject
     public TriviaCategory Category { get; private set; } = TriviaCategory.Named("mixed");
     public string? DailyDay { get; private set; }
     public NightPlan? NightPlan { get; private set; }
+    // Weak-Spot Arena (Club): per-question "why you're seeing this" reason, keyed by
+    // question id (docs/CLUB-FEATURES-BUILD.md "Feature 1"). Empty outside .weakSpot.
+    public IReadOnlyDictionary<string, string> WeakSpotReasons { get; private set; } = new Dictionary<string, string>();
 
     // Live state
     public Phase CurrentPhase { get; private set; } = Phase.Idle;
@@ -83,6 +86,11 @@ public sealed class GameEngine : ObservableObject
     private int? _introducedRound;
 
     public Question? Current => Index >= 0 && Index < Questions.Count ? Questions[Index] : null;
+
+    /// The Weak-Spot Arena "why you're seeing this" caption for the current question —
+    /// null outside `.weakSpot` or once the round has no reason recorded for it.
+    public string? CurrentReason =>
+        Mode == GameMode.WeakSpot && Current is { } q ? WeakSpotReasons.GetValueOrDefault(q.Id) : null;
 
     public double Progress
     {
@@ -155,10 +163,14 @@ public sealed class GameEngine : ObservableObject
         BeginQuestion();
     }
 
-    public void StartCustom(GameMode mode, TriviaCategory category, IReadOnlyList<Question> questions)
+    /// `reasons` is Weak-Spot Arena's per-question "why you're seeing this" caption
+    /// (question id -> reason text); empty for every other custom-question caller.
+    public void StartCustom(GameMode mode, TriviaCategory category, IReadOnlyList<Question> questions,
+        IReadOnlyDictionary<string, string>? reasons = null)
     {
         Mode = mode; Category = category;
         CurrentPhase = Phase.Loading; _triedLoad = true; Reset();
+        WeakSpotReasons = reasons ?? new Dictionary<string, string>();
         Questions = questions.ToList();
         _provider.MarkSeen(questions.Select(q => q.Id));
         if (Questions.Count == 0) { CurrentPhase = Phase.Idle; Changed(); return; }
@@ -186,6 +198,7 @@ public sealed class GameEngine : ObservableObject
             ? GameModeExtensions.StakeBudget.Select(c => new StakeTier { Value = c.Value, Label = c.Label, Remaining = c.Count }).ToList()
             : new();
         CurrentStake = 0; StakeOutcomes = new(); _introducedRound = null;
+        WeakSpotReasons = new Dictionary<string, string>();
     }
 
     private static List<Question> Weave(List<Question> fresh, IReadOnlyList<Question> review)

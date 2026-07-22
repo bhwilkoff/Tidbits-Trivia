@@ -40,4 +40,10 @@ public sealed record GameSummary
 public static class DebugHooks
 {
     public static bool Autopilot { get; set; }
+
+    /// Pre-launch Club override (docs/CLUB-FEATURES-BUILD.md gating convention) — there
+    /// are no real purchases yet, so `TIDBITS_CLUB=1` forces every Club gate open. No-op
+    /// (false) whenever the env var is unset, exactly like the Apple `ProcessInfo`
+    /// equivalent (`DebugHooks.forceClub`).
+    public static bool ForceClub => Environment.GetEnvironmentVariable("TIDBITS_CLUB") == "1";
 }

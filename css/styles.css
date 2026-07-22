@@ -373,6 +373,14 @@ body {
 .club-chip { display: inline-block; font-size: 11px; font-weight: 900; color: var(--color-grape);
   background: #fff; border-radius: 999px; padding: 2px 8px; margin-left: 4px; vertical-align: 2px; }
 .weakspot-reason { font-weight: 700; font-size: 13px; color: var(--color-grape); margin: -10px 0 14px; }
+
+/* ---- Story Archive (Tidbits Club EXCLUSIVE — docs/CLUB-FEATURES-BUILD.md) ---- */
+/* A standalone colored pill tag — was scoped to .topic-head; promoted so the
+   archive's domain tag can reuse it without duplicating the rule. */
+.lvl { font-weight: 900; font-size: 12px; color: #fff; padding: 2px 9px; border-radius: 999px; border: 2px solid var(--color-border); }
+.story-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+.fav-star { font-size: 18px; line-height: 1; color: var(--color-ink-soft); cursor: pointer; }
+.fav-star.on { color: var(--color-yellow); }
 .daily-list { display: flex; flex-direction: column; gap: 6px; max-height: 46vh; overflow-y: auto; }
 .tile.mp { cursor: pointer; font: inherit; text-align: left; background: var(--color-accent); }
 .tile-sub { font-size: 12px; opacity: 0.85; }

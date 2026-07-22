@@ -265,11 +265,52 @@ export const Store = {
   dueReview(limit = 2) {
     return this.missed().filter((m) => !m.resolved).sort((a, b) => b.missCount - a.missCount).slice(0, limit).map((m) => m.q);
   },
+
+  // Story Archive (Club feature 2, docs/CLUB-FEATURES-BUILD.md "Feature 2"): every
+  // question the player has ANSWERED (right or wrong), keyed by qid. Upserted from
+  // the same place recordMisses/recordTelemetry are called (Game._persist), so
+  // "seen" = any answer, not just a correct one — you met the fact either way.
+  // R-MON-1: the in-moment story reveal (Question.explanation) stays FREE for
+  // everyone, unchanged; this is a persistent, searchable ADDITIVE library over
+  // data ordinary play already produces, storing the whole answered `q` snapshot
+  // (mirrors `missed()`) so a story survives later corpus edits and can be
+  // replayed via "Re-ask this".
+  seenStories() { return LS.get('tidbits.stories', {}); },
+  recordSeen(answered) {
+    const map = this.seenStories();
+    const now = Date.now();
+    for (const a of answered) {
+      const q = a.q; if (!q) continue;
+      const ex = map[q.id];
+      if (ex) { ex.last = now; if (a.correct) ex.everCorrect = true; }
+      else map[q.id] = { id: q.id, q, first: now, last: now, everCorrect: !!a.correct, fav: false };
+    }
+    if (Object.keys(map).length > 9000) { LS.set('tidbits.stories', {}); return; }
+    LS.set('tidbits.stories', map);
+  },
+  toggleStoryFavorite(id) {
+    const map = this.seenStories();
+    const ex = map[id]; if (!ex) return false;
+    ex.fav = !ex.fav;
+    LS.set('tidbits.stories', map);
+    return ex.fav;
+  },
   resetAll() {
-    ['tidbits.records', 'tidbits.streak', 'tidbits.missed', 'tidbits.seen', 'tidbits.calibration', 'tidbits.answerTelemetry'].forEach((k) => localStorage.removeItem(k));
+    ['tidbits.records', 'tidbits.streak', 'tidbits.missed', 'tidbits.seen', 'tidbits.calibration', 'tidbits.answerTelemetry', 'tidbits.stories'].forEach((k) => localStorage.removeItem(k));
     this._seen.clear();
   },
 };
+
+// A question's displayable correct-answer text, shared by the Story Archive
+// search/render and (via recordSeen's stored `q` snapshot) "Re-ask this" — mirrors
+// the closest-value formatting `closestFmtVal` does inline in app.js, but Store
+// stays framework-free of any single game-mode's UI concerns.
+export function answerTextOf(q) {
+  if (!q) return '';
+  if (q.options && q.correctIndex != null) return q.options[q.correctIndex];
+  if (q.closest) { const n = Math.round(q.closest.answer); return q.closest.unit ? `${n} ${q.closest.unit}` : String(n); }
+  return '';
+}
 
 // "2 weeks ago" / "yesterday" — the web's Intl mirror of Apple's
 // RelativeDateTimeFormatter, used only by Weak-Spot Arena's reason caption.
@@ -344,5 +385,47 @@ export const WeakSpotArena = {
       .sort((a, b) => b.missCount - a.missCount);
     const m = unresolved[0];
     return m ? `Missed: “${m.q.prompt}” — Club turns misses like this into a round.` : null;
+  },
+};
+
+// Tidbits Club EXCLUSIVE — Story Archive (docs/CLUB-FEATURES-BUILD.md "Feature 2").
+// The read side of Store.seenStories(): plain filtering + substring search, no
+// ranking model — the corpus stays legible, never an opaque "for you" feed.
+export const StoryArchive = {
+  /** Every seen story, most-recently-encountered first. */
+  list() {
+    return Object.values(Store.seenStories()).sort((a, b) => b.last - a.last);
+  },
+  /** Distinct domains actually present, in canonical PROGRESS order — so filter
+   * chips only ever show domains the player has actually played (never an empty
+   * chip). */
+  domainsSeen() {
+    const present = new Set(this.list().map((s) => s.q.categoryID || 'mixed'));
+    return PROGRESS.domains.filter((d) => present.has(d));
+  },
+  /** `filter`: null | 'fav' | 'missed' | 'gotit'. Plain substring match across
+   * prompt/answer/story text — never a relevance model. */
+  search(text, { domain = null, filter = null } = {}) {
+    const needle = (text || '').trim().toLowerCase();
+    return this.list().filter((s) => {
+      const q = s.q;
+      if (domain && (q.categoryID || 'mixed') !== domain) return false;
+      if (filter === 'fav' && !s.fav) return false;
+      if (filter === 'missed' && s.everCorrect) return false;
+      if (filter === 'gotit' && !s.everCorrect) return false;
+      if (!needle) return true;
+      return (q.prompt || '').toLowerCase().includes(needle)
+        || String(answerTextOf(q)).toLowerCase().includes(needle)
+        || (q.explanation || '').toLowerCase().includes(needle);
+    });
+  },
+  toggleFavorite(id) { return Store.toggleStoryFavorite(id); },
+  count() { return this.list().length; },
+  /** A genuine sample from the player's own archive (MONETIZATION §4a: "a real
+   * preview, never a nag") — the non-member Records-row + #/archive pitch. */
+  previewLine() {
+    const s = this.list()[0];
+    if (!s) return null;
+    return `“${s.q.explanation || s.q.prompt}” — Club keeps every story you unlock, searchable forever.`;
   },
 };

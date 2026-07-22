@@ -67,7 +67,7 @@ Legend: ✅ done+verified · 🔨 in progress · ⏳ queued · 🚫 n/a (with re
 | Feature | web | iOS/iPadOS | macOS | tvOS | Android | Windows |
 |---|---|---|---|---|---|---|
 | 1 Weak-Spot Arena | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 2 Story Archive | ⏳ | ✅ | ⏳ | ⏳ | ⏳ | ⏳ |
+| 2 Story Archive | ✅ | ✅ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 3 Marathon | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 4 Knowledge Atlas | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 5 Friend Streaks | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |

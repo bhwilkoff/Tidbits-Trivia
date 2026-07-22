@@ -2,7 +2,7 @@
 // Apple AppStore + GameEngine + views. Vanilla JS, no framework, no build.
 
 import { Corpus, Pictures, ThisOrThat, ClosestCall, Ordering, Matching, TypeAnswer, OddOneOut, Enumerate, Difficulty, matchesAccepted, Wikipedia, DailyBoard } from './api.js';
-import { Store, CATEGORIES, catColor, catById, MODES, NIGHT, STAKE_BUDGET, dayKey, APP_STORES, SITE_URL, CLUB, WeakSpotArena } from './store.js';
+import { Store, CATEGORIES, catColor, catById, MODES, NIGHT, STAKE_BUDGET, dayKey, APP_STORES, SITE_URL, CLUB, WeakSpotArena, StoryArchive, answerTextOf } from './store.js';
 import { Scoring } from './engine.js';
 import { BOTS, houseBot, botById, VsMatch } from './bots.js';
 import { FirebaseNet } from './firebase.js';
@@ -88,6 +88,13 @@ function render() {
     app.innerHTML = `${header(currentTab())}<main class="main">${viewClub()}</main>`;
     bindClub(); document.title = 'Tidbits Club'; return;
   }
+  // Tidbits Club EXCLUSIVE — Story Archive (docs/CLUB-FEATURES-BUILD.md "Feature 2"):
+  // a Records "see all" destination, shareable at its own canonical URL
+  // (#/archive?domain=…&fav=1, the web's URL-state superpower).
+  if (location.hash.startsWith('#/archive')) {
+    app.innerHTML = `${header(currentTab())}<main class="main">${viewArchive()}</main>`;
+    bindArchive(); document.title = 'Tidbits Trivia — Story Archive'; return;
+  }
   const tab = currentTab();
   app.innerHTML = `
     ${header(tab)}
@@ -111,6 +118,7 @@ const ICON = {
   sun: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><circle cx="8" cy="8" r="3.2" fill="currentColor"/><g stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.4 1.4M11.6 11.6L13 13M13 3l-1.4 1.4M4.4 11.6L3 13"/></g></svg>',
   check: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M2.5 8.5l3.5 3.5 7.5-8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   target: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.2"/><circle cx="8" cy="8" r="3.2"/></g><circle cx="8" cy="8" r="1.1" fill="currentColor"/></svg>',
+  book: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M2 2.9c0-.6.5-1 1.1-.9 1.7.3 3.3.9 4.9 1.8 1.6-.9 3.2-1.5 4.9-1.8.6-.1 1.1.3 1.1.9v8.7c0 .5-.4.9-.9 1-1.8.3-3.5.9-5.1 1.8h-.8c-1.6-.9-3.3-1.5-5.1-1.8-.5-.1-.9-.5-.9-1z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M8 3.8v9" stroke="currentColor" stroke-width="1.4"/></svg>',
 };
 
 // The portable Tidbits identity — the web twin of the iOS/Android profile screens.
@@ -386,6 +394,138 @@ function renderWeakSpotEmpty() {
     <button class="btn btn-primary" data-back>Back</button>
   </div>`;
   $('[data-back]').addEventListener('click', render);
+}
+
+// Tidbits Club EXCLUSIVE — Story Archive (docs/CLUB-FEATURES-BUILD.md "Feature 2").
+// A Records "see all" destination (R-REC-1); Club-marked, canonical at #/archive.
+function storyArchiveRow() {
+  const club = Entitlement.isClub;
+  const n = StoryArchive.count();
+  const sub = club ? `${n} stor${n === 1 ? 'y' : 'ies'} kept, searchable forever` : 'Every fact you unlock, kept forever';
+  return `<a href="#/archive" class="card pad" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;margin-bottom:14px">
+    ${ICON.book}<span style="flex:1"><b>Story Archive</b>${club ? '' : ' <span class="club-chip">CLUB</span>'}
+      <div class="muted" style="font-size:.85em">${h(sub)}</div></span><span class="chev">›</span></a>`;
+}
+
+let archiveDomain = null, archiveFilter = null, archiveText = '';
+
+// Members get the real searchable library. Non-members land on the SAME canonical
+// #/archive URL but see a real preview (their own most-recent story, else an
+// honest static line) + the paywall panel → #/club — never a blank wall, and
+// never a gate on the free in-moment reveal itself (R-MON-1).
+function viewArchive() {
+  const back = `<button data-back style="background:none;border:none;font-weight:800;color:var(--color-accent);cursor:pointer;padding:8px 0;font-size:1rem">‹ Back</button>`;
+  if (!Entitlement.isClub) {
+    // A REAL preview when a story exists locally; else an honest sample — never
+    // a nag, and never a blank wall (MONETIZATION §4a).
+    const preview = StoryArchive.previewLine() || '“Marie Curie is the only person to win Nobel Prizes in two different sciences.” — Club keeps every story you unlock, searchable forever.';
+    return `${back}<h1 class="page-title">Story Archive</h1>
+      <div class="card pad" style="margin-bottom:14px"><p class="body-strong">${h(preview)}</p></div>
+      <div class="card pad" style="text-align:center">
+        <p class="body-strong">Club keeps every story you unlock, searchable forever.</p>
+        <p class="muted">A permanent, searchable library of every fact you've met — favorite the ones worth keeping.</p>
+        <a href="#/club" class="btn btn-primary" style="margin-top:12px;display:inline-block;text-decoration:none">Join Tidbits Club</a>
+      </div>`;
+  }
+  const qp = new URLSearchParams(location.hash.split('?')[1] || '');
+  archiveDomain = qp.get('domain') || null;
+  archiveFilter = qp.get('fav') === '1' ? 'fav' : null;
+  archiveText = '';
+  const domains = StoryArchive.domainsSeen();
+  const statusChip = (id, label) => `<button type="button" class="chip${(archiveFilter || 'all') === id ? ' on' : ''}" data-astatus="${id}">${label}</button>`;
+  const domainChip = (id, label) => `<button type="button" class="chip${(archiveDomain || 'all') === id ? ' on' : ''}" data-adomain="${id}">${label}</button>`;
+  return `${back}<h1 class="page-title">Story Archive</h1>
+    <p class="muted">${StoryArchive.count()} stories kept — search or filter, then tap one to read it again.</p>
+    <input type="search" id="archive-search" class="input" placeholder="Search prompts, answers, stories…" style="margin-bottom:10px">
+    <div class="chips wrap" id="archive-status-chips">
+      ${statusChip('all', 'All')}${statusChip('fav', '★ Favorites')}${statusChip('missed', 'Missed')}${statusChip('gotit', 'Got it')}
+    </div>
+    ${domains.length ? `<div class="chips wrap" id="archive-domain-chips" style="margin-top:8px">
+      ${domainChip('all', 'All domains')}${domains.map((d) => domainChip(d, catById(d).name)).join('')}
+    </div>` : ''}
+    <div id="archive-results">${archiveResultsHTML()}</div>`;
+}
+
+function archiveResultsHTML() {
+  if (!StoryArchive.count()) return `<div class="empty card pad" style="margin-top:14px"><p>Play a few rounds — the stories you unlock are kept here forever.</p></div>`;
+  const results = StoryArchive.search(archiveText, { domain: archiveDomain, filter: archiveFilter });
+  if (!results.length) return `<div class="empty card pad" style="margin-top:14px"><p>No stories match.</p></div>`;
+  return `<div style="margin-top:14px">${results.map(archiveCardHTML).join('')}</div>`;
+}
+
+function archiveCardHTML(s) {
+  const q = s.q, cat = catById(q.categoryID || 'mixed');
+  return `<button type="button" class="card pad rec-tap story-card" data-story="${h(q.id)}" style="margin-bottom:10px">
+    <div class="story-meta">
+      <span class="lvl" style="background:${catColor(cat)}">${h(cat.name)}</span>
+      <span class="muted">${relTime(s.last)}</span>
+      <span class="ans-seal ${s.everCorrect ? 'ok' : 'no'}" style="margin-left:auto">${s.everCorrect ? '✓' : '✕'}</span>
+      <span class="fav-star${s.fav ? ' on' : ''}" data-fav="${h(q.id)}" title="Favorite">${s.fav ? '★' : '☆'}</span>
+    </div>
+    <b>${h(q.prompt)}</b>
+    <div class="ans">Answer: ${h(answerTextOf(q))}</div>
+  </button>`;
+}
+
+function bindArchive() {
+  app.querySelector('[data-back]')?.addEventListener('click', () => { if (history.length > 1) history.back(); else location.hash = '#/records'; });
+  if (!Entitlement.isClub) return;
+  const results = () => $('#archive-results');
+  const refresh = () => { const el = results(); if (el) el.innerHTML = archiveResultsHTML(); bindArchiveResults(); };
+  const syncURL = () => {
+    const qp = new URLSearchParams();
+    if (archiveDomain) qp.set('domain', archiveDomain);
+    if (archiveFilter === 'fav') qp.set('fav', '1');
+    const q = qp.toString();
+    history.replaceState(null, '', `#/archive${q ? `?${q}` : ''}`);
+  };
+  $('#archive-search')?.addEventListener('input', (e) => { archiveText = e.target.value; refresh(); });
+  app.querySelectorAll('[data-astatus]').forEach((b) => b.addEventListener('click', () => {
+    archiveFilter = b.dataset.astatus === 'all' ? null : b.dataset.astatus;
+    app.querySelectorAll('[data-astatus]').forEach((x) => x.classList.toggle('on', x.dataset.astatus === (archiveFilter || 'all')));
+    syncURL(); refresh();
+  }));
+  app.querySelectorAll('[data-adomain]').forEach((b) => b.addEventListener('click', () => {
+    archiveDomain = b.dataset.adomain === 'all' ? null : b.dataset.adomain;
+    app.querySelectorAll('[data-adomain]').forEach((x) => x.classList.toggle('on', x.dataset.adomain === (archiveDomain || 'all')));
+    syncURL(); refresh();
+  }));
+  bindArchiveResults();
+}
+function bindArchiveResults() {
+  const el = $('#archive-results'); if (!el) return;
+  el.querySelectorAll('[data-fav]').forEach((star) => star.addEventListener('click', (e) => {
+    e.stopPropagation();
+    StoryArchive.toggleFavorite(star.dataset.fav);
+    el.innerHTML = archiveResultsHTML();
+    bindArchiveResults();
+  }));
+  el.querySelectorAll('[data-story]').forEach((b) => b.addEventListener('click', () => openStoryDetail(b.dataset.story)));
+}
+
+function openStoryDetail(qid) {
+  const s = Store.seenStories()[qid];
+  if (!s) return;
+  const q = s.q, cat = catById(q.categoryID || 'mixed');
+  const body = `<h2>${h(q.prompt)}</h2>
+    <span class="lvl" style="background:${catColor(cat)}">${h(cat.name)}</span>
+    <div class="ans">Answer: ${h(answerTextOf(q))}</div>
+    ${q.explanation ? `<p style="margin-top:10px">${h(q.explanation)}</p>` : '<p class="muted" style="margin-top:10px">No story recorded for this one.</p>'}
+    <div style="margin-top:14px;display:flex;gap:8px">
+      <button type="button" class="btn btn-quiet" data-story-fav>${s.fav ? '★ Favorited' : '☆ Favorite'}</button>
+      <button type="button" class="btn btn-primary" data-story-reask>Re-ask this</button>
+    </div>`;
+  showRecordsSheet(body);
+  const dlg = document.getElementById('rec-dlg');
+  dlg.querySelector('[data-story-fav]').addEventListener('click', (e) => {
+    const fav = StoryArchive.toggleFavorite(qid);
+    e.target.textContent = fav ? '★ Favorited' : '☆ Favorite';
+    const el = $('#archive-results'); if (el) { el.innerHTML = archiveResultsHTML(); bindArchiveResults(); }
+  });
+  dlg.querySelector('[data-story-reask]').addEventListener('click', () => {
+    dlg.close();
+    startGame('classic', catById(q.categoryID || 'mixed'), { custom: [q], label: 'Re-ask' });
+  });
 }
 
 function dailyArchiveRows() {
@@ -929,6 +1069,7 @@ function viewRecords() {
     ${profileCard()}
     <a href="#/leaderboard" class="card pad" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;margin-bottom:14px">${ICON.globe}<span style="flex:1;font-weight:700">Leaderboard</span><span class="chev">›</span></a>
     <a href="#/duels" class="card pad" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;margin-bottom:14px"><span style="flex:1;font-weight:700">Duels</span><span class="chev">›</span></a>
+    ${storyArchiveRow()}
     <a href="#/club" class="card pad" style="display:flex;align-items:center;gap:10px;text-decoration:none;margin-bottom:14px;background:${Entitlement.isClub ? 'var(--color-surface)' : '#2D5BFF'};color:${Entitlement.isClub ? 'inherit' : '#fff'}">⭐️<span style="flex:1;font-weight:800">${Entitlement.isClub ? 'Tidbits Club — Member' : 'Join Tidbits Club'}</span><span class="chev">›</span></a>
     <div class="banner card daily"><div><div class="muted">DAY STREAK</div><div class="big">${Identity.profile?.streak?.current || 0} days</div></div><div class="muted">best ${Identity.profile?.streak?.longest || 0} 🔥</div></div>
     <div class="stat-row">
@@ -1496,6 +1637,7 @@ class Game {
       (this.dailyDay || dayKey()) === dayKey());
     Store.recordMisses(this.answered);
     Store.recordTelemetry(this.mode.id, this.answered);
+    Store.recordSeen(this.answered);   // Story Archive (Club feature 2) — every answered question, right or wrong
     Identity.recordGame(correct, this.answered.length);   // feed the portable identity
     if (this.mode.id === 'stake') Store.addCalibration(this.stakeOutcomes);
   }

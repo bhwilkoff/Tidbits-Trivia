@@ -93,6 +93,13 @@ isEntitled = localStoreEntitlement          // Class A: StoreKit/Play/MSStore �
       net10.0-windows project — compiles/verifies ONLY on windows-latest CI, and a live
       purchase needs the Partner Center add-ons (owner/browser).**
 - [x] 3c. Wired into `EntitlementStore` (the seam; the real gateway swaps in on the MSIX).
+- [x] 3d. **Windows paywall UI DONE 2026-07-21** — `ClubPaywallView` (+ `ClubPaywallUi` builder)
+      in an `FAContentDialog` off the Settings "Tidbits Club" section; hero + 4 pillars +
+      3 plans from the `IStoreGateway` seam (graceful empty-state on the NoStoreGateway .exe /
+      Mac head) + Restore + R-MON-2 note + member banner. 288 tests green, headless-PNG
+      verified. GameData exposes ONE shared `Store` gateway. **REMAINING: the real
+      `WindowsStoreGateway` (StoreContext, CI-only) + the owner's Partner Center add-ons.**
+- [x] **PAYWALL COMPLETE on all 6 platforms** (web/iOS/macOS/tvOS/Android/Windows).
 
 ### Phase 4 — Android (Play Billing) — only if Play Console access this cycle
 - [ ] 4a. Play Console: subscription + one-time products.

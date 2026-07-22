@@ -50,13 +50,17 @@ isEntitled = localStoreEntitlement          // Class A: StoreKit/Play/MSStore �
 ## Phases (each ≈ one or more loop iterations)
 
 ### Phase 0 — the shared entitlement spine  ← FOUNDATION, everything depends on it
+> **KNOWN ISSUE (fix in 0d):** `clearOnSignOut` is defined but UNWIRED on every platform
+> (Swift/JS/Kotlin) — on sign-out `refresh()` fails open and keeps cached Club, so a second
+> person on a shared device would see Club. Low risk pre-launch (no real purchases yet).
+> Wire sign-out → `clearOnSignOut()` in the 0d gating pass across all platforms.
 - [x] 0a. `entitlements/` RTDB rules — DEPLOYED + live-verified (client write DENIED, read denied to non-owner). 2026-07-21.
 - [x] 0b. Worker `/entitlements/webhook` — DONE + deployed + live-verified. HMAC-verify MoR
       event → map to grant/revoke → write `entitlements/{key}` via Firebase-SA admin (RS256
       JWT in-Worker). 18 tests. Live: 503 when unconfigured (retryable, no silent purchase
       loss), 405 on GET, Apple callback unregressed. **OWNER: set `LEMONSQUEEZY_WEBHOOK_SECRET`
       + `FIREBASE_SA_EMAIL`/`FIREBASE_SA_PRIVATE_KEY`/`FIREBASE_DB_URL` once the MoR is chosen.**
-- [~] 0c. `EntitlementStore` — **Swift Core reference + JS (web) DONE** (`Core/Networking/EntitlementStore.swift`: `isClub = local || remote`, fail-open, cached last-known-good; wired into the app entry + refresh at bootstrap; iOS/macOS/tvOS build-verified). Kotlin + C# mirrors NEXT (sequential agents). JS: `js/entitlement.js` (remote-only — web has no local store — cached, fail-open; wired at bootstrap + on identity change).
+- [~] 0c. `EntitlementStore` — **Swift Core reference + JS (web) DONE** (`Core/Networking/EntitlementStore.swift`: `isClub = local || remote`, fail-open, cached last-known-good; wired into the app entry + refresh at bootstrap; iOS/macOS/tvOS build-verified). Kotlin DONE (`data/Entitlement.kt`, remote-only, cached SharedPreferences, fail-open; wired in `AppRoot` LaunchedEffect + `AppNameApplication`; gradle BUILD SUCCESSFUL). **C# mirror NEXT** (sequential agent). JS: `js/entitlement.js` (remote-only — web has no local store — cached, fail-open; wired at bootstrap + on identity change).
 - [ ] 0d. A single `isClub` gate + a reusable "Club" upsell/paywall surface per platform.
 
 ### Phase 1 — Apple (StoreKit 2; iOS + iPadOS + macOS + tvOS via Universal Purchase)

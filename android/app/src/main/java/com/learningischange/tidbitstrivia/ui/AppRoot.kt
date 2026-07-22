@@ -95,7 +95,11 @@ fun AppRoot(
     fun ensureNearby() { if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) nearbyPerm.launch(android.Manifest.permission.NEARBY_WIFI_DEVICES) }
     // (L2) Sync the daily log whenever signed in — pull the cross-device union (and push
     // any local anon plays so nothing is lost). Fires on boot-when-signed-in and on sign-in.
+    // Club status (Entitlement.refresh) rides the same effect — mirror of js/app.js's
+    // `Identity.bootstrap().then(refresh)` + `Identity.onChange(refresh)`: this key flips
+    // once bootstrap() resolves a signed-in identity, and again on sign-in/sign-out.
     LaunchedEffect(com.learningischange.tidbitstrivia.data.PlayerIdentity.signedIn) {
+        Entitlement.refresh()
         if (com.learningischange.tidbitstrivia.data.PlayerIdentity.signedIn)
             com.learningischange.tidbitstrivia.data.PlayerIdentity.syncDailyLog(store, pushLocal = true)
     }

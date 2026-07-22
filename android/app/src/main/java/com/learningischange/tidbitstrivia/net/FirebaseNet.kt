@@ -86,6 +86,20 @@ object FirebaseNet {
         db.getReference("dailyLog/$key/$day").setValue(score).await()
     }
 
+    // Tidbits Club entitlement (MONETIZATION §7). Read-only for clients; the Worker is the
+    // sole writer. Scoped by the RTDB rule to the email-verified owner of {key}.
+    data class EntitlementRecord(val tier: String, val sources: List<String> = emptyList(), val since: Long? = null, val until: Long? = null, val ver: Int? = null)
+    suspend fun loadEntitlement(key: String): EntitlementRecord? {
+        val s = db.getReference("entitlements/$key").get().await()
+        val tier = s.child("tier").getValue(String::class.java) ?: return null
+        return EntitlementRecord(
+            tier = tier,
+            sources = s.child("sources").children.mapNotNull { it.getValue(String::class.java) },
+            since = s.child("since").getValue(Long::class.java),
+            until = s.child("until").getValue(Long::class.java),
+            ver = s.child("ver").getValue(Long::class.java)?.toInt())
+    }
+
     // Wave E: per-venue season standing (standings/{season}/{venue}/{uid}) — keyed by AUTH uid.
     fun uid(): String? = auth.currentUser?.uid
     suspend fun loadStanding(path: String): Map<String, Any?>? {

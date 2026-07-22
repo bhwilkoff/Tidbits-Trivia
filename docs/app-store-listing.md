@@ -6,7 +6,7 @@ the console. Update here first, every release.
 - **Bundle ID**: `com.learningischange.tidbitstrivia`
 - **Primary category**: Games → Trivia · **Secondary**: Education
 - **Age rating**: 4+ (no objectionable content; questions are general-knowledge)
-- **Price**: Free · **In-app purchases**: none (v1)
+- **Price**: Free · **In-app purchases**: Tidbits Club — $3.99/mo, $29.99/yr, or $79.99 lifetime Founding Member (see `docs/CLUB-MARKETING.md`)
 - **Copyright**: © 2026 Learning Is Change
 - **Support URL**: `<GitHub Pages URL>/support.html`
 - **Marketing URL**: `<GitHub Pages URL>/`

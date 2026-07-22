@@ -6,7 +6,7 @@ Paste-ready. Update here first, every release.
 - **Pushed via API**: title, short/full description, and phone screenshots (`tools/push-play-content.py`); Data safety = no data collected. Content rating / target audience / privacy policy URL remain Console-only.
 - **Category**: Trivia · **Tags**: trivia, quiz, education
 - **Content rating**: Everyone (general-knowledge questions)
-- **Price**: Free · **In-app purchases**: none (v1) · **Ads**: none
+- **Price**: Free · **In-app purchases**: Tidbits Club — $3.99/mo, $29.99/yr, or $79.99 lifetime (see `docs/CLUB-MARKETING.md`) · **Ads**: none
 - **Privacy Policy URL**: `<GitHub Pages URL>/privacy.html`
 - **Data Safety**: No data collected, no data shared (no account, no analytics)
 

@@ -60,6 +60,12 @@ enum DebugHooks {
         ProcessInfo.processInfo.environment["TIDBITS_STORY_ARCHIVE"] == "1"
     }
 
+    /// TIDBITS_ATLAS=1 opens the Club Knowledge Atlas (Records → see all) on
+    /// launch — screenshot/simulator observability, same idiom as above.
+    static var openAtlas: Bool {
+        ProcessInfo.processInfo.environment["TIDBITS_ATLAS"] == "1"
+    }
+
     /// TIDBITS_MARATHON=1 launches (or resumes) the Club Marathon on launch —
     /// screenshot/simulator observability. Combine with TIDBITS_MARATHON_LEN
     /// (read by `Marathon.runLength`) to play a short run to completion.

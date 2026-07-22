@@ -50,7 +50,7 @@ ship first; season/cron infrastructure is last.
 | 1 | **Weak-Spot Arena** | 1 gameplay | client-only: round from your own miss history | **DONE on all 6 platforms** |
 | 2 | **Story Archive** | 3 library | client-only: keep every unlocked "story behind the answer", searchable | **DONE on all 6 platforms** |
 | 3 | **Marathon** | 1 gameplay | client-only: 200-q graded endurance, cross-session scorecard | **DONE on all 6 platforms** |
-| 4 | **Knowledge Atlas** | 2 retrospect | client-only: accuracy by domain/sub-domain over 12mo, every domain tappable into a round | **iOS in progress** |
+| 4 | **Knowledge Atlas** | 2 retrospect | client-only: accuracy by domain/sub-domain over 12mo, every domain tappable into a round | **iOS DONE (Apple reference); macOS/tvOS compile, surface TBD** |
 | 5 | **Friend Streaks** | 4 social | light RTDB (reuses friends): mutual daily accountability | todo |
 | 6 | **Link Wall** | 1 gameplay | client-only: NYT-Connections-style 2nd daily (Daily stays free) | todo |
 | 7 | **Expedition** | 1 gameplay | client-only: multi-week structured campaign, map + certificate | todo |
@@ -69,7 +69,7 @@ Legend: ✅ done+verified · 🔨 in progress · ⏳ queued · 🚫 n/a (with re
 | 1 Weak-Spot Arena | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 2 Story Archive | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 3 Marathon | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 4 Knowledge Atlas | ⏳ | 🔨 | ⏳ | ⏳ | ⏳ | ⏳ |
+| 4 Knowledge Atlas | ⏳ | ✅ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 5 Friend Streaks | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 6 Link Wall | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 7 Expedition | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
@@ -84,6 +84,17 @@ Legend: ✅ done+verified · 🔨 in progress · ⏳ queued · 🚫 n/a (with re
 > gates verified BUILD SUCCEEDED) — only their per-platform Home entry point + a
 > Records-equivalent history surface remain. iOS is the full reference, including
 > the resume-across-sessions mechanic other platforms mirror.
+>
+> Note: `KnowledgeAtlas` (Core/Store) is a pure derivation of the same
+> `GameRecord.categoryID/correct/total/date` rows `ProgressMath`/`DomainProgress`
+> already read for the free Topic Levels/Pie — no new persistence, no `@Model`.
+> **The category taxonomy (`TriviaCategory.all`) is FLAT — 8 categories, no
+> sub-domains/parent groups** — so the Atlas operates at the category level only;
+> "sub-domain drill" from the design spec is not applicable until the taxonomy
+> gains a hierarchy. Month-bucketing uses each GAME's date for all of its answers
+> (`AnswerDetail` carries no per-answer timestamp). macOS/tvOS already COMPILE the
+> Core service (BUILD SUCCEEDED); only their per-platform Records surface remains.
+> iOS is the full reference. Debug hook: `TIDBITS_ATLAS=1`.
 
 ---
 

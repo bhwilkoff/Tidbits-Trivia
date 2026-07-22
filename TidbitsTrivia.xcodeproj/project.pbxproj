@@ -80,12 +80,14 @@
 		92153A2172FBD8BD36DE55C5 /* thisorthat.json in Resources */ = {isa = PBXBuildFile; fileRef = BADC61A185827BBE0B9857AA /* thisorthat.json */; };
 		92B4788F3A0CAC7DE68FB848 /* CorpusDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB24F551656B187A42C81D44 /* CorpusDatabase.swift */; };
 		97C9CBF5EDE6A048468DB3FA /* corpus.json in Resources */ = {isa = PBXBuildFile; fileRef = 528E49FC6DA146ECC87302BC /* corpus.json */; };
+		993D207E535FB4211789CC3F /* KnowledgeAtlasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25AEBF6364C0E452829EA2C6 /* KnowledgeAtlasView.swift */; };
 		9B22CE4581A58C784D66DDB1 /* GameMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C55D3DCAE5E46980D666B83 /* GameMode.swift */; };
 		9B444302313F743A58B7F7CF /* Marathon.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACBB11A0D029110390E8A92A /* Marathon.swift */; };
 		9BD52794E3B9893E95300BD5 /* corpus.sqlite in Resources */ = {isa = PBXBuildFile; fileRef = E8F18E88BA37F77E6313144F /* corpus.sqlite */; };
 		9D608A68BC182843C652E305 /* WeakSpotArena.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D5272B06F897F6B017FEF9A /* WeakSpotArena.swift */; };
 		9E05CBE2403049F68DAB9527 /* enumerate.json in Resources */ = {isa = PBXBuildFile; fileRef = EDE7E258003BBD004F3BD314 /* enumerate.json */; };
 		9EA492C785F5F4ED0BFB78FF /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BFD0D04EAFA9DBEB25F3A8E /* OnboardingView.swift */; };
+		A1403E3981ED0841F64C86B6 /* KnowledgeAtlas.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15D2DD9B6E12000D5130175D /* KnowledgeAtlas.swift */; };
 		A196A0BBE89D112E62E0577E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 73D5D7FD07809D194BF90B30 /* Assets.xcassets */; };
 		A4E1EFF1535F0273FCC53974 /* LiveJoinView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = F45A86C8863F908B3F7D4E7C /* LiveJoinView_tvOS.swift */; };
 		A690ED15A1D8831CF3E58CB8 /* Player.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3AE68F153F8C298960BFD36 /* Player.swift */; };
@@ -144,11 +146,13 @@
 		12852A694244CCEEC20EB41B /* NightTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightTransport.swift; sourceTree = "<group>"; };
 		12E5CDEC65BAF3D58483A913 /* NightHostView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightHostView_tvOS.swift; sourceTree = "<group>"; };
 		14AA2A3084196AB3E011E800 /* MarathonHistoryView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarathonHistoryView_tvOS.swift; sourceTree = "<group>"; };
+		15D2DD9B6E12000D5130175D /* KnowledgeAtlas.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnowledgeAtlas.swift; sourceTree = "<group>"; };
 		161521EA893E91207502AEC2 /* DelightfulQuizGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DelightfulQuizGenerator.swift; sourceTree = "<group>"; };
 		1BD01942F33620E5D75A8E7D /* DebugHooks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugHooks.swift; sourceTree = "<group>"; };
 		1DC6C8D9CA86356D95539EA4 /* BotOpponent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotOpponent.swift; sourceTree = "<group>"; };
 		20C99D0A7197E787FDEFA569 /* CreateView_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateView_macOS.swift; sourceTree = "<group>"; };
 		2188212D23A7B95BDD7D6ED6 /* NightProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightProtocol.swift; sourceTree = "<group>"; };
+		25AEBF6364C0E452829EA2C6 /* KnowledgeAtlasView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnowledgeAtlasView.swift; sourceTree = "<group>"; };
 		2AD18ED3C40BFC78AFD8FB0C /* LiveNight.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveNight.swift; sourceTree = "<group>"; };
 		2C50D6874040B1114294A708 /* LiveJoinView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveJoinView.swift; sourceTree = "<group>"; };
 		337562191FABFA21A46484FA /* GameComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameComponents.swift; sourceTree = "<group>"; };
@@ -260,7 +264,7 @@
 		FD70222B5EE4C4145E4D1F84 /* NightSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightSetupView.swift; sourceTree = "<group>"; };
 		FDDD2AC4DB9C421C5849B8F6 /* GameView_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView_macOS.swift; sourceTree = "<group>"; };
 		FFC46D4CE8D03186C064C759 /* Question.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Question.swift; sourceTree = "<group>"; };
-		"TEMP_513589C6-7983-47E5-821C-00770EC065AD" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
+		"TEMP_DCEB1151-420B-4E78-ADF0-A90A2297532E" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -272,6 +276,7 @@
 				1BD01942F33620E5D75A8E7D /* DebugHooks.swift */,
 				3F41E5C0BFBB0360DCD3015A /* GameEngine.swift */,
 				0BFCD6FF44ED08F84EBBD05E /* GameSettings.swift */,
+				15D2DD9B6E12000D5130175D /* KnowledgeAtlas.swift */,
 				ACBB11A0D029110390E8A92A /* Marathon.swift */,
 				5A73FA1930578863B642985C /* ProgressStats.swift */,
 				7633D27702A6874F7D8993DF /* RecordsStore.swift */,
@@ -503,6 +508,7 @@
 				7A77D01159167F1BE602ABED /* GameContainerView.swift */,
 				BE92745D6860E623628A0CBC /* GamePlayView.swift */,
 				7AAEF55F4DD8DEA37D200C32 /* HomeView.swift */,
+				25AEBF6364C0E452829EA2C6 /* KnowledgeAtlasView.swift */,
 				2C50D6874040B1114294A708 /* LiveJoinView.swift */,
 				03F6BD7D78D033E5D2D14D8B /* MarathonResultsView.swift */,
 				40995246A8957880F31323EB /* NightContainerView.swift */,
@@ -549,10 +555,10 @@
 			path = TidbitsTrivia;
 			sourceTree = "<group>";
 		};
-		"TEMP_83C3612A-5675-4C04-9F4A-A7668E5A499E" /* Tidbits-Trivia */ = {
+		"TEMP_8E9FBC7D-136B-4E48-891E-90AF1EEB894B" /* Tidbits-Trivia */ = {
 			isa = PBXGroup;
 			children = (
-				"TEMP_513589C6-7983-47E5-821C-00770EC065AD" /* AppVersion.xcconfig */,
+				"TEMP_DCEB1151-420B-4E78-ADF0-A90A2297532E" /* AppVersion.xcconfig */,
 			);
 			path = "Tidbits-Trivia";
 			sourceTree = "<group>";
@@ -682,6 +688,8 @@
 				6EA4710E34FA1FA74BF98299 /* HomeView_macOS.swift in Sources */,
 				B60770C2C79E6CC6D4EA52AC /* JSONQuestionSource.swift in Sources */,
 				CB06D72CCB303461DA6ED15C /* Keychain.swift in Sources */,
+				A1403E3981ED0841F64C86B6 /* KnowledgeAtlas.swift in Sources */,
+				993D207E535FB4211789CC3F /* KnowledgeAtlasView.swift in Sources */,
 				B72DA2D151B3156C162753C6 /* LiveJoinView.swift in Sources */,
 				A4E1EFF1535F0273FCC53974 /* LiveJoinView_tvOS.swift in Sources */,
 				02F153022C6FAD01DE261FB5 /* LiveNight.swift in Sources */,
@@ -758,7 +766,7 @@
 /* Begin XCBuildConfiguration section */
 		296659EF0549868336801823 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_513589C6-7983-47E5-821C-00770EC065AD" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_DCEB1151-420B-4E78-ADF0-A90A2297532E" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -879,7 +887,7 @@
 		};
 		E6F711EEEE2896F84FE9AB98 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_513589C6-7983-47E5-821C-00770EC065AD" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_DCEB1151-420B-4E78-ADF0-A90A2297532E" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;

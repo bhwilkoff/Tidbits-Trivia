@@ -36,6 +36,7 @@ struct TidbitsTriviaApp: App {
                 .environment(EntitlementStore.shared)
                 .task {
                     gameCenter.authenticate()
+                    StoreKitStore.shared.start()                   // install the local (StoreKit) Club check + listen for renewals
                     await PlayerIdentityStore.shared.bootstrap()   // stable uid → portable profile
                     await EntitlementStore.shared.refresh()        // Club status (local store || web entitlement)
                 }

@@ -1,0 +1,91 @@
+{
+  "identifier" : "TIDBITS-CLUB",
+  "nonRenewingSubscriptions" : [],
+  "products" : [
+    {
+      "displayPrice" : "79.99",
+      "familyShareable" : true,
+      "internalID" : "CLUB-LIFETIME",
+      "localizations" : [
+        {
+          "description" : "Tidbits Club forever — every Club feature, one time. Founding Member.",
+          "displayName" : "Founding Member (Lifetime)",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.learningischange.tidbitstrivia.club.lifetime",
+      "referenceName" : "Tidbits Club — Founding Member (Lifetime)",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_applicationInternalID" : "TIDBITS",
+    "_developerTeamID" : "L2G756LY8N",
+    "_failTransactionsEnabled" : false,
+    "_lastSynchronizedDate" : 0,
+    "_locale" : "en_US",
+    "_storefront" : "USA",
+    "_storeKitErrors" : []
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "CLUB-GROUP",
+      "localizations" : [
+        {
+          "description" : "Tidbits Club",
+          "displayName" : "Tidbits Club",
+          "locale" : "en_US"
+        }
+      ],
+      "name" : "Tidbits Club",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "3.99",
+          "familyShareable" : true,
+          "groupNumber" : 1,
+          "internalID" : "CLUB-MONTHLY",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Tidbits Club, month to month.",
+              "displayName" : "Tidbits Club (Monthly)",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.learningischange.tidbitstrivia.club.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Tidbits Club — Monthly",
+          "subscriptionGroupID" : "CLUB-GROUP",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "29.99",
+          "familyShareable" : true,
+          "groupNumber" : 1,
+          "internalID" : "CLUB-ANNUAL",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Tidbits Club for a year — best value.",
+              "displayName" : "Tidbits Club (Annual)",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.learningischange.tidbitstrivia.club.annual",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Tidbits Club — Annual",
+          "subscriptionGroupID" : "CLUB-GROUP",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
+}

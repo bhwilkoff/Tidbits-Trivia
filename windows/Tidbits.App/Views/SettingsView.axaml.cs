@@ -17,6 +17,7 @@ public partial class SettingsView : UserControl
         VersionText.Text = $"Tidbits Trivia for Windows — version {v?.ToString(3) ?? "1.0.0"}";
         RefreshProfile();
         RefreshAccount();
+        _ = GameData.Shared.Value.Entitlement.RefreshAsync();
     }
 
     // MARK: - Account (portable identity)
@@ -59,6 +60,7 @@ public partial class SettingsView : UserControl
             SignInButton.IsEnabled = true;
             SignInButton.Content = "Sign in with Google";
             RefreshAccount();
+            _ = GameData.Shared.Value.Entitlement.RefreshAsync();
         }
     }
 
@@ -75,6 +77,7 @@ public partial class SettingsView : UserControl
             SignInAppleButton.IsEnabled = true;
             SignInAppleButton.Content = "Sign in with Apple";
             RefreshAccount();
+            _ = GameData.Shared.Value.Entitlement.RefreshAsync();
         }
     }
 
@@ -91,6 +94,7 @@ public partial class SettingsView : UserControl
         };
         if (await confirm.ShowAsync() != FAContentDialogResult.Primary) return;
         await GameData.Shared.Value.Account.SignOut();
+        GameData.Shared.Value.Entitlement.ClearOnSignOut();
         RefreshAccount();
     }
 

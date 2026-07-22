@@ -54,21 +54,21 @@ isEntitled = localStoreEntitlement          // Class A: StoreKit/Play/MSStore �
 > (Swift/JS/Kotlin) — on sign-out `refresh()` fails open and keeps cached Club, so a second
 > person on a shared device would see Club. Low risk pre-launch (no real purchases yet).
 > Wire sign-out → `clearOnSignOut()` in the 0d gating pass across all platforms.
+- [x] 0c. `EntitlementStore` — Swift + JS + Kotlin + C# ALL DONE (build/test-verified).
 - [x] 0a. `entitlements/` RTDB rules — DEPLOYED + live-verified (client write DENIED, read denied to non-owner). 2026-07-21.
 - [x] 0b. Worker `/entitlements/webhook` — DONE + deployed + live-verified. HMAC-verify MoR
       event → map to grant/revoke → write `entitlements/{key}` via Firebase-SA admin (RS256
       JWT in-Worker). 18 tests. Live: 503 when unconfigured (retryable, no silent purchase
       loss), 405 on GET, Apple callback unregressed. **OWNER: set `LEMONSQUEEZY_WEBHOOK_SECRET`
       + `FIREBASE_SA_EMAIL`/`FIREBASE_SA_PRIVATE_KEY`/`FIREBASE_DB_URL` once the MoR is chosen.**
-- [~] 0c. `EntitlementStore` — **Swift Core reference + JS (web) DONE** (`Core/Networking/EntitlementStore.swift`: `isClub = local || remote`, fail-open, cached last-known-good; wired into the app entry + refresh at bootstrap; iOS/macOS/tvOS build-verified). Kotlin DONE (`data/Entitlement.kt`, remote-only, cached SharedPreferences, fail-open; wired in `AppRoot` LaunchedEffect + `AppNameApplication`; gradle BUILD SUCCESSFUL). **C# mirror NEXT** (sequential agent). JS: `js/entitlement.js` (remote-only — web has no local store — cached, fail-open; wired at bootstrap + on identity change).
+- [~] 0c. `EntitlementStore` — **Swift Core reference + JS (web) DONE** (`Core/Networking/EntitlementStore.swift`: `isClub = local || remote`, fail-open, cached last-known-good; wired into the app entry + refresh at bootstrap; iOS/macOS/tvOS build-verified). Kotlin DONE (`data/Entitlement.kt`, remote-only, cached SharedPreferences, fail-open; wired in `AppRoot` LaunchedEffect + `AppNameApplication`; gradle BUILD SUCCESSFUL). C# DONE (`Tidbits.Core/Networking/EntitlementStore.cs` + 11 tests, remote-only, JSON-file cache, fail-open; wired in `GameData` + Settings; **ClearOnSignOut wired on Windows** — the only platform where the sign-out leak is already fixed; 280 tests green). **All 4 client mirrors done.** JS: `js/entitlement.js` (remote-only — web has no local store — cached, fail-open; wired at bootstrap + on identity change).
 - [ ] 0d. A single `isClub` gate + a reusable "Club" upsell/paywall surface per platform.
 
 ### Phase 1 — Apple (StoreKit 2; iOS + iPadOS + macOS + tvOS via Universal Purchase)
-- [ ] 1a. App Store Connect: subscription group + annual/monthly + non-consumable
-      lifetime, prices, localizations. (Claude via browser.)
-- [ ] 1b. `.storekit` config for local testing.
-- [ ] 1c. StoreKit 2 client: products, purchase, `Transaction.currentEntitlements`,
-      restore, fail-open grace. Wire into `EntitlementStore`.
+- [!] 1a. App Store Connect products — BLOCKED this iteration: the Chrome extension is in a degraded state (viewport 0x0, screenshots erroring on a `params.clip.scale` binding bug), so the console UI can't be driven. Product IDs are DEFINED (see 1c/1b) and App Store Connect must match them EXACTLY:
+      `…club.annual` (auto-renew sub), `…club.monthly` (same group), `…club.lifetime` (non-consumable). Retry when the browser recovers, or owner creates them.
+- [x] 1b. `.storekit` config — `TidbitsTrivia/Resources/Tidbits.storekit` (annual $29.99 / monthly $3.99 subscription group + lifetime $79.99 non-consumable, familyShareable). Scheme-wiring for simulator purchase pending (Phase 0d).
+- [x] 1c. StoreKit 2 client — `Core/Networking/StoreKitStore.swift`: Universal-Purchase product set (3 IDs), load/purchase/restore, `Transaction.currentEntitlements` → `EntitlementStore.localCheck` (Class A), `Transaction.updates` listener for renewals. Fail-open grace (empty=unknown=nil). Wired `start()` at launch. iOS/macOS/tvOS BUILD SUCCEEDED. **Paywall UI to trigger purchase() = Phase 0d.**
 - [ ] 1d. Mirror an Apple purchase into `entitlements/` (optional; web is the universal one).
 - [ ] OWNER: Paid Apps Agreement + banking + tax; SBP enrolment.
 

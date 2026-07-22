@@ -135,6 +135,246 @@ behavior in their native idiom (same verb, native idiom).
 *(populated by the research lane; owner-facing proposals land here before they
 enter the build order.)*
 
+### 2026-07-22 — Additional incentive proposals (research pass)
+
+**Brief:** find *additional* Club-worthy layers — beyond Features 1–8 and the full
+§4a/§4c slate — that make daily players and **pub-Live regulars** genuinely *want*
+to subscribe. Every idea below is re-derived to fit the anti-passive, learning-first,
+$0 ethos; anything colliding with a shipped-free feature or the existing slate was
+killed (see §Rejected). None re-propose an existing item.
+
+**Framing note the owner should hold onto:** the monetization thesis (§2) is that a
+host night = *40 qualified installs the venue already paid to assemble.* The
+pub-Live regular is therefore the **strategically most valuable and currently
+weakest-served** Club segment — so four of the seven proposals target them, and all
+four obey R-MON-4 by gating *the view from the seat* (interpreting / archiving /
+prepping your own history), never the seat. For that segment "interpret the seat"
+is the correct Club shape and is **not** the "five analytics screens = Sporcle"
+trap, because each is welded to the live *event* the player actually attends, not a
+generic stats page.
+
+---
+
+#### Proposal A — **Night Recap** ⭐ *(the flagship pub idea)*
+
+**Pitch:** the morning after a Tidbits Live night, Club turns the room's own answer
+data into a personal autopsy — how you did *versus the table*, your standout
+category, and the questions you nailed that most of the room missed.
+
+- **Delights:** the Tidbits Live regular.
+- **Four-question test:** *Understanding* — you learn where your knowledge beat/lagged
+  a real room, not just a score. *Participation* — it's built from *your* night and
+  *your* answers, nobody else's. *Agency* — it tells you what to shore up before next
+  week; you leave more capable. *Clarity* — plain "you got Q7; 8% of the room did,"
+  no opaque model.
+- **Line test:** a 5-hr player has been to ~0–1 nights and sees only final standings
+  (free) — invisible to them. Legible only after a stack of nights → **Club. Pass.**
+- **Population Rule:** the standings *seat* stays free; Club buys the *interpretation*
+  of the room you were already in. Clean R-MON-4 pass — it's the live-night twin of
+  the already-blessed Daily-Six autopsy.
+- **$0 feasibility:** **client-only.** The room already writes `live/{code}/answers/{qid}/{uid}`
+  and the join client already reads the roster (social-graph capture proves this). The
+  recap is computed on-device from data the client saw during the night; nothing new
+  is stored or served.
+- **Build cost:** **S–M.** One new results-adjacent surface per consumer platform
+  (web/iOS/iPadOS/Android + macOS/Windows read the shared Core aggregation; tvOS 🚫
+  lean-back). Core aggregation logic written once (Swift/Kotlin/JS/C#).
+- **Builds on:** `live/{code}` answer plane, the shipped per-question answer-distribution
+  telemetry (F4), social-graph co-player capture, the "How did you know that?" reflection
+  pattern.
+
+#### Proposal B — **Home Turf** ⭐ *(venue almanac + warm-up-for-tonight)*
+
+**Pitch:** a private dossier of each venue you play — your record there, your best/worst
+category *at that venue*, recurring rivals — plus a **Warm-Up round** generated before a
+scheduled night from that venue's category tendencies crossed with your own weak spots.
+
+- **Delights:** the Tidbits Live regular (and it's a genuine *verb* — you play the warm-up,
+  you don't just read a chart).
+- **Four-question test:** *Understanding* — you learn a venue's tendencies and your gaps
+  against them. *Participation* — you *prep*; you choose to study, the tool doesn't answer
+  for you. *Agency* — you walk in ready, more capable, not dependent. *Clarity* — the warm-up
+  labels every question ("this venue leans Film & TV; you're -12% there").
+- **Line test:** meaningless below a handful of repeat visits to the same venue → **Club. Pass.**
+- **Population Rule:** attending and the cross-venue board stay free; Club buys the *prep and
+  the interpretation* of your own venue history. Pass.
+- **$0 feasibility:** **client-only.** Reuses the Wave-D recurring-series schedule
+  (`LiveEvent.weekday`) for the "before tonight" trigger and the shipped Weak-Spot generator
+  for the round; venue history aggregates the player's own `standings/{season}/{venueKey}`
+  writes + questions seen. No backend.
+- **Build cost:** **M.** Almanac view + warm-up entry per consumer platform; the warm-up
+  round itself is the Weak-Spot engine re-parameterised by venue-domain weighting (mostly
+  Core reuse).
+- **Builds on:** Wave-D recurring scheduling, Weak-Spot Arena generator (Feature 1),
+  `standings/{venueKey}` writes, Knowledge-Atlas domain math (Feature 4).
+
+#### Proposal C — **Venue Passport** *(the Untappd/Letterboxd move for pub trivia)*
+
+**Pitch:** a stamped, map-anchored archive of every venue and city you've played a Tidbits
+Live night at — an identity artifact you carry between nights ("14 venues, 3 cities, a
+7-night streak at The Anchor").
+
+- **Delights:** the Tidbits Live regular.
+- **Four-question test:** *Understanding* — weak/indirect (breadth-of-play awareness). *Participation*
+  — yes, it's *your* record of where you've been. *Agency* — self-expression / identity, the
+  Founding-Member-badge and avatar precedent. *Clarity* — one stamp per venue, dead simple.
+  (Honest read: this leans on the charter's *identity* allowance more than its *learning*
+  spine — it's the weakest of the four on Q1, kept because pub-regular identity is exactly
+  what carries between venues and costs $0.)
+- **Line test:** a casual with one venue visit sees nothing; the collection only means
+  something across many nights → **Club. Pass.**
+- **Population Rule:** attendance and the board are free; the *curated archive* of your own
+  attendance is Club. Pass.
+- **$0 feasibility:** **client-only** (aggregates the player's own `standings/{venueKey}`
+  history); an optional cron-published venue-name/city map could enrich stamps but isn't
+  required for v1.
+- **Build cost:** **S–M.** A collection/passport view per platform; no new engine.
+  Inspired by Untappd venue check-ins and the Letterboxd diary — re-derived as *knowledge
+  provenance*, not consumption bragging.
+- **Builds on:** `standings/{season}/{venueKey}`, Levelable Badges pattern, Club identity.
+
+#### Proposal D — **Table Chemistry** *(scout your own real table)*
+
+**Pitch:** for the people you've actually played live nights with (already captured, free),
+Club shows how their public domain profiles *complement* yours — who covers your weak
+categories — so you can build a stronger team next week.
+
+- **Delights:** the Tidbits Live regular + the social daily player.
+- **Four-question test:** *Understanding* — you learn the *shape* of your own and your friends'
+  knowledge, not just a rank. *Participation* — you decide who to team with; it informs, never
+  auto-picks. *Agency* — you become a better team-builder. *Clarity* — a plain complementarity
+  read ("Sam is +18% History where you're -15%"), from public profiles only.
+- **Line test:** needs a real table of repeat co-players → **Club. Pass.**
+- **Population Rule:** adding friends and the friends board stay free; the *complementarity
+  interpretation* is Club. Pass. (Distinct from the slate's *Knowledge Opposite*, which is
+  free *matchmaking* against strangers — this analyses your existing real-world table.)
+- **$0 feasibility:** **client-only.** Reads already-public `players/{uid}` domain profiles for
+  friends the player already added; pure on-device computation.
+- **Build cost:** **S–M.** A section on the friends surface per consumer platform; Core
+  complementarity math written once.
+- **Builds on:** social-graph friend list (private bucket), public domain profiles, the
+  Knowledge-Opposite complementarity metric (reused, inverted from matchmaking to retrospection).
+
+#### Proposal E — **Name That Question** *(a genuinely new gameplay verb, honoring "lead with verbs")*
+
+**Pitch:** reverse trivia — you're shown the *answer* + its cited fact and must produce the
+*question*: pick which of four questions this fact answers, or (harder) recall it. A round
+that trains how facts *connect* to questions.
+
+- **Delights:** the casual daily player (a fresh mode) and, secondarily, creators (it teaches
+  question construction).
+- **Four-question test:** *Understanding* — reverse-mapping forces deeper encoding than
+  recognition; it's a known retrieval-practice win. *Participation* — you *construct*, you don't
+  select from a menu. *Agency* — you get better at seeing what makes a fair question. *Clarity*
+  — the reveal shows the canonical question + why the near-misses don't fit.
+- **Line test:** a casual would happily play it at hour 1 — **so on its own it fails the line
+  test and would have to be free.** It qualifies as Club **only** as a *Club-difficulty / ranked*
+  layer over a free base, OR bundled as depth in a paid mode. **Flag for owner:** decide whether
+  this ships free (a new verb strengthens the whole app) with a Club *ranked* skin, or is held as
+  a Club marquee. Recommend **free base + Club ranked** — consistent with R-MON-4 logic applied to
+  modes.
+- **Population Rule:** solo, no seat dependency — n/a. Pass.
+- **$0 feasibility:** **client-only.** Reuses the corpus's existing explanation/answer text and
+  the 4-option MCQ surface; the distractor questions come from sibling corpus rows.
+- **Build cost:** **M.** A new mode across all 6 (the mode-plumbing is well-trodden — 20+ shipped
+  types); the only new asset is a question-stem inversion done at build time, like `picture.json`.
+- **Builds on:** the shared corpus + explanations, the multi-type mode engine, `gen_*` build-time
+  overlay pattern.
+
+#### Proposal F — **Trace: Connect the Facts** *(a second new verb; the most on-brand)*
+
+**Pitch:** given two entities ("Marie Curie" → "the Manhattan Project"), build the shortest chain
+of *true* relations linking them, drawn from the corpus's Wikidata relation graph — the "web of
+related facts" made playable.
+
+- **Delights:** the casual daily player; the curiosity-driven learner the charter is written for.
+- **Four-question test:** *Understanding* — you actively discover how knowledge *connects*, the
+  deepest form of the "tidbit is the point" thesis. *Participation* — you build the bridge; there's
+  no single fed answer. *Agency* — you leave seeing the corpus as a graph, not a list. *Clarity* —
+  each hop shows its cited relation.
+- **Line test:** genuinely novel and satisfying at any hour — **same caveat as E:** on its own a
+  casual would notice it gated, so ship the base free and gate a **Club daily Trace + hardest
+  chains + your solve archive.** Recommend **free base + Club depth.**
+- **Population Rule:** solo — n/a. Pass.
+- **$0 feasibility:** **build-time static JSON** (hand-verifiable chains generated offline, exactly
+  like `order.json`/`match.json`), client plays the puzzle. No runtime backend, no LLM. (Live
+  arbitrary pathfinding over the sparse graph is *not* required for v1 and is the part to avoid.)
+- **Build cost:** **M–L.** New puzzle UI per platform (a chain-builder, more custom than an MCQ) +
+  a build-time chain generator. The generator is the real work; the client is a reorder/select
+  surface.
+- **Builds on:** the ~2,850 Wikidata structured questions + `enrich.json` relations (the moat),
+  the build-time overlay pattern, Link Wall's tile idiom (adjacent, not duplicate — Link Wall
+  *groups*, Trace *chains*).
+
+#### Proposal G — **Set Workshop** *(the creator's craft coach — serves the thinnest segment)*
+
+**Pitch:** before you publish a quiz you wrote, Club lints it — flags a give-away distractor, a
+near-duplicate pair, a lopsided category mix, and predicts each question's real difficulty — so you
+learn to *author better*, not just author.
+
+- **Delights:** the creator.
+- **Four-question test:** *Understanding* — the creator learns what makes a fair, hard, clean
+  question. *Participation* — it critiques *their* set and they revise; it never rewrites for them.
+  *Agency* — they become a better setter, tool-independent. *Clarity* — every flag is a plain,
+  actionable reason, not a score.
+- **Line test:** invisible until you've written real sets — **Club. Pass.** (And distinct from the
+  slate's *Creator analytics*, which is *post-hoc play stats*; this is *pre-publish craft*.)
+- **Population Rule:** solo authoring — n/a. Pass.
+- **$0 feasibility:** **client-only.** Reuses the shipped Create quality gates / `diversify`
+  round-robin caps + the `difficulty.json` overlay + answer-telemetry heuristics — all already
+  on-device. No LLM at runtime (the "predict difficulty" is the existing pageview-derived model,
+  not a generative call).
+- **Build cost:** **S–M.** A review panel bolted onto the existing Create flow per platform; the
+  lint logic is largely the Create engine's existing checks surfaced to the user.
+- **Builds on:** Create diversity caps + quality gates, `difficulty.json`, F4 answer telemetry,
+  saved sets. This is the `mobile-first-density` "expose the structure of the domain" move applied
+  to authoring.
+
+---
+
+### Recommended top 3 to fold into the build order next
+
+1. **Night Recap (A)** — highest strategic leverage. It converts the *exact* person the
+   monetization model is built around (the host-delivered install), it's the cheapest to build
+   (client-only over data the room already produced), and it's the pub twin of an already-blessed
+   pattern (Daily-Six autopsy). **This is the single best idea for the pub-Live regular.**
+2. **Home Turf (B)** — gives the pub regular a *recurring, appointment-shaped* reason to open the
+   app between nights (prep for tonight), and it's a *verb*, not analytics. Reuses the Weak-Spot
+   engine + Wave-D scheduling, so most of it already exists.
+3. **Set Workshop (G)** — serves the creator, the thinnest-served of the three segments, with a
+   real learning payoff and near-total reuse of the shipped Create engine. Cheap, on-charter, and
+   it rounds out segment coverage (A+B are pub; this is creator).
+
+**Why these three over the two new verbs (E/F):** E and F are the most exciting *gameplay*, but
+both fail the line test *as gated features* (a casual would notice) and are best shipped as
+**free base modes with a Club ranked/depth layer** — which makes them a mode-roadmap decision, not
+a clean Club-exclusive to slot in now. A/B/G are unambiguously Club-legible and $0. If the owner
+wants a marquee *new verb* for the Club story, **Trace (F)** is the most on-brand thing in this
+whole doc — recommend it as the next *free* verb with a Club depth layer, not as a gated exclusive.
+
+**Pub-segment call-out (the weakest-served today):** A, B, C, D are all pub-Live-regular features,
+all $0, all R-MON-4-clean. Shipping even A + B alone would take the pub regular from *"Club has
+nothing for me"* to *"Club remembers my nights, preps me for the next one, and tells me how I
+really did"* — which is the identity-across-venues story the strategy doc (§2, portable identity)
+says is the whole point.
+
+### Rejected / near-misses (recorded so they aren't re-litigated)
+
+- **Spot the Fake / Fibbage-style "which fact is fabricated"** — REJECT. A learning-first brand
+  whose proudest metric is *retention* must not risk a plausible fabricated "fact" sticking. The
+  very thing we're good at works against us. Fails Q1 in spirit.
+- **Ghost of You (race your own past run, live replay)** — near-miss REJECT. "Compete vs. your past
+  self" already ships **free** (PARITY §3b); a live-ghost skin is thin and borderline on the line
+  test. Fold any polish into the free feature.
+- **Flashcard / Anki export of your misses** — REJECT as a tier anchor. Spaced review (`dueReview`)
+  is free; export is a thin convenience, not a 50-hr-legible layer.
+- **"On This Day" date-themed daily** — near-miss. Competes with the free Daily for
+  placement/purpose (the same trap that folded "Daily Six" into the Daily); also overlaps *Annotated
+  daily* on the slate. Hold.
+- **Trivia Diary (annotated timeline of all play)** — near-miss, merged. Overlaps *Fact notebook*
+  (per-fact notes) and *Venue Passport* (attendance). The distinctly-valuable slice (venue/place
+  identity) is captured better by Proposal C.
+
 ## Log
 - **2026-07-22** — doc created; build order set; Feature 1 (Weak-Spot Arena) spec
   written + four-question test passed. Apple reference implementation delegated to a

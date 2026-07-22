@@ -281,11 +281,12 @@ None of it is built yet on any platform.
 
 ## 7. Payments / subscription
 
-| Feature | Web | iOS | tvOS | Android | Notes |
+| Feature | Web | iOS | tvOS | Android | Notes (macOS + Windows folded in) |
 |---|---|---|---|---|---|
-| In-app purchase | n/a | 🔮 IAP | 🔮 IAP (same StoreKit) | 🔮 Play Billing | |
-| Web subscription | 🔮 | n/a | n/a | n/a | Stripe / Paddle when scoped |
-| Cross-platform subscription state sync | 🔮 | 🔮 | 🔮 | 🔮 | Webhooks → `user_subscriptions` table |
+| Tidbits Club — entitlement spine (`isClub` gate, fail-open, cached last-known-good) | ✅ | ✅ | ✅ | ✅ | **The one gate every Club feature checks (MONETIZATION §7, Decision 047). SHIPPED all 6 platforms:** web `js/entitlement.js`, Apple `Core/Networking/EntitlementStore.swift` (macOS ✅ + tvOS ✅ env-injected), Android `data/Entitlement.kt`, **Windows `Tidbits.Core/Networking/EntitlementStore.cs` (285 tests green)**. `isEntitled = localStore(Class A) OR remote(Class B)`; a transient miss NEVER revokes (fail open). RTDB `entitlements/{sha256(email)}` rule DEPLOYED + live-verified (clients read-only, R-MON-3). |
+| Tidbits Club — paywall UI (native, R-MON-2: sign-in only, no code field) | ✅ | ✅ | ✅ | 🚧 | Web `#/club` route ✅, iOS `ClubPaywallView` ✅, **macOS `.sheet` ✅ + tvOS `.fullScreenCover` ✅ (both BUILD SUCCEEDED)**, **Android 🚧 in progress**, Windows ⏳. Content = 1 pitch + 4 pillars + 3 plans (see `docs/CLUB-MARKETING.md` §2/§4). |
+| Tidbits Club — native purchase (Class A store) | ✅ MoR | 🚧 | 🚧 | 🚧 | Apple StoreKit 2 code ✅ (`StoreKitStore.swift`, Universal Purchase — iOS/macOS/tvOS), **Windows Store `IStoreGateway` seam ✅ Mac-verified (real `StoreContext` gateway ⏳ CI-only)**, **Android Play Billing 🚧 in progress**, web MoR webhook ✅ (`workers/tidbits-auth`). **All gated on OWNER creating the store products + signing financial agreements (CLUB-MARKETING §6).** |
+| Cross-platform entitlement sync (buy once, member everywhere) | ✅ | ✅ | ✅ | ✅ | Any platform's purchase → the shared `entitlements/{key}` plane (web) or the local store attestation (native); every client reads it. $0 (Firebase Spark + Cloudflare Worker). |
 
 ---
 

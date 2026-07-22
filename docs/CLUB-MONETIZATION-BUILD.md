@@ -1,9 +1,35 @@
 # Tidbits Club — the monetization build (running checklist)
 
-**Status: BUILDING (started 2026-07-21).** The end-to-end plan to make Tidbits Club
-**payable natively on every platform**, at $0 ongoing infra (Decision 047,
-`docs/MONETIZATION.md`). This is the loop's source of truth — every iteration updates
-it. Greenfield: no IAP code existed anywhere before this.
+**Status: CODE-COMPLETE up to the owner financial line (2026-07-21).** The end-to-end
+plan to make Tidbits Club **payable natively on every platform**, at $0 ongoing infra
+(Decision 047, `docs/MONETIZATION.md`). Greenfield: no IAP code existed before this.
+
+**What is DONE + committed + verified** (everything Claude can build and observe):
+- **Entitlement spine on all 6 platforms** — web / iOS / macOS / tvOS / Android / Windows.
+  `isClub = localStore(Class A) OR remote(Class B)`, fail-open, cached last-known-good.
+  RTDB `entitlements/` rule deployed + live-verified (clients read-only, R-MON-3).
+- **Native paywall UI on all 6 platforms** — all CI/build-verified (Windows headless-PNG +
+  windows-latest CI green; Apple macOS/tvOS BUILD SUCCEEDED; Android assembleDebug green).
+- **Native purchase code**: Apple StoreKit 2 (`StoreKitStore.swift`, Universal Purchase),
+  Android Play Billing (`data/Billing.kt`), web MoR webhook (`workers/tidbits-auth`), and
+  the Windows Store `IStoreGateway` **seam** (`NoStoreGateway` default; the real gateway is
+  the one deferred item below).
+- **`docs/CLUB-MARKETING.md`** — the owner's paste-ready store-product sheet (exact ids,
+  types, prices, descriptions, review notes for Apple / Play / Microsoft / web).
+
+**The ONE deferred code item (not a gap — a discipline call):** the real
+`WindowsStoreGateway` (Microsoft Store `StoreContext` + `IInitializeWithWindow`). It needs a
+`net10.0-windows` multi-target, has no public Avalonia worked example, and its purchase path
+**cannot be observed until the owner creates the Partner Center add-ons** — so per this
+project's "don't iterate blindly on unobservable behavior" rule it is best written WHEN the
+add-ons exist and it can actually be verified end-to-end. Until then the seam + `NoStoreGateway`
+keep the paywall shipping with a graceful empty state.
+
+**What ONLY the owner can do (the financial line — see §6-equivalent in CLUB-MARKETING):**
+sign the Apple Paid Apps Agreement + banking/tax (and create the IAPs, which ASC gates on
+that agreement), set up the Play merchant profile + products, create the Microsoft add-ons,
+sign up for a web Merchant of Record (Paddle/Lemon Squeezy) + set the Worker secrets. Once
+any of these exist, the wired code lights up Club on sign-in with NO further engineering.
 
 ## The products (Decision 047)
 

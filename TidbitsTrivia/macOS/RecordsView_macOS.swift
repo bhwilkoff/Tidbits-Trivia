@@ -8,6 +8,7 @@ import SwiftData
 /// facts to review. Reuses the shared SwiftData models + ProgressStats
 /// derivation verbatim; only the Mac-native presentation is new.
 struct RecordsView_macOS: View {
+    let onPlay: (LaunchRequest) -> Void
     @Query(sort: \GameRecord.date, order: .reverse) private var records: [GameRecord]
     @Query private var streaks: [DailyStreak]
     @Environment(PlayerIdentityStore.self) private var identity
@@ -25,6 +26,7 @@ struct RecordsView_macOS: View {
     @State private var showAllGames = false
     @State private var showStoryArchive = false
     @State private var showMarathonHistory = false
+    @State private var showAtlas = false
     @State private var showClubPaywall = false
 
     var body: some View {
@@ -41,6 +43,7 @@ struct RecordsView_macOS: View {
                     gamesSection
                     storyArchiveSection
                     marathonHistorySection
+                    atlasSection
                     knowledgeSection
                     if calibration.contains(where: { $0.total > 0 }) { calibrationSection }
                     bestsSection
@@ -65,9 +68,11 @@ struct RecordsView_macOS: View {
         }
         .sheet(isPresented: $showStoryArchive) { StoryArchiveView_macOS() }
         .sheet(isPresented: $showMarathonHistory) { MarathonHistoryView_macOS() }
+        .sheet(isPresented: $showAtlas) { KnowledgeAtlasView_macOS(onPlay: onPlay) }
         .sheet(isPresented: $showClubPaywall) { ClubPaywallView_macOS() }
         .task {
             if DebugHooks.openStoryArchive { openStoryArchive() }
+            if DebugHooks.openAtlas { openAtlas() }
         }
     }
 
@@ -119,6 +124,59 @@ struct RecordsView_macOS: View {
     /// existing paywall — never a blank wall.
     private func openMarathonHistory() {
         if entitlement.isClub { showMarathonHistory = true } else { showClubPaywall = true }
+    }
+
+    // MARK: Knowledge Atlas (Club — docs/CLUB-FEATURES-BUILD.md "Feature 4")
+
+    // Additive, deeper 12-month layer over the SAME rows the free Topic
+    // Levels / Pie already read (R-MON-1) — never a gate on those free
+    // surfaces. Every row in the Atlas itself is a click-to-play door.
+    private var atlasSection: some View {
+        Button(action: openAtlas) {
+            HStack(spacing: 14) {
+                Image(systemName: "map.fill")
+                    .font(.system(size: 26, weight: .black))
+                    .foregroundStyle(Tidbits.Palette.teal.legibleForeground)
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 6) {
+                        Text("KNOWLEDGE ATLAS").font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.teal.legibleForeground)
+                        if !entitlement.isClub {
+                            Text("CLUB")
+                                .font(.system(size: 11, weight: .black, design: .rounded))
+                                .foregroundStyle(Tidbits.Palette.teal)
+                                .padding(.horizontal, 7).padding(.vertical, 3)
+                                .background(Capsule().fill(Color.white.opacity(0.92)))
+                        }
+                    }
+                    Text(atlasSubtitle)
+                        .font(Tidbits.TypeRamp.l5)
+                        .foregroundStyle(Tidbits.Palette.teal.legibleForeground.opacity(0.85))
+                        .lineLimit(2)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right.circle.fill").foregroundStyle(Tidbits.Palette.teal.legibleForeground)
+            }
+            .padding(18).frame(maxWidth: .infinity, alignment: .leading)
+            .chunkyCard(fill: Tidbits.Palette.teal)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var atlasSubtitle: String {
+        if entitlement.isClub {
+            let mapped = KnowledgeAtlas.domains(in: modelContext).count
+            return mapped == 0
+                ? "Play across a few domains and your Atlas fills in."
+                : "\(mapped) domain\(mapped == 1 ? "" : "s") mapped over 12 months — click one to play it."
+        }
+        return KnowledgeAtlas.previewLine(in: modelContext)
+            ?? "Club maps everything you know and where it's drifting."
+    }
+
+    /// Members open the atlas directly; everyone else sees the existing
+    /// paywall with a real preview — never a blank wall.
+    private func openAtlas() {
+        if entitlement.isClub { showAtlas = true } else { showClubPaywall = true }
     }
 
     // MARK: Story Archive (Club — docs/CLUB-FEATURES-BUILD.md "Feature 2")

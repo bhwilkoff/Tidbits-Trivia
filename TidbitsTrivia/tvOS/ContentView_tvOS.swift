@@ -103,7 +103,9 @@ struct ContentView_tvOS: View {
                 }
             }
         }
-        .fullScreenCover(isPresented: $showRecords) { RecordsView_tvOS() }
+        .fullScreenCover(isPresented: $showRecords) {
+            RecordsView_tvOS(onPlay: { req in showRecords = false; launch = req })
+        }
         .fullScreenCover(isPresented: $showSettings) { SettingsView_tvOS() }
         .fullScreenCover(isPresented: $showClubPaywall) { ClubPaywallView_tvOS() }
         .fullScreenCover(isPresented: $showMarathonChoice) {

@@ -50,7 +50,7 @@ ship first; season/cron infrastructure is last.
 | 1 | **Weak-Spot Arena** | 1 gameplay | client-only: round from your own miss history | **DONE on all 6 platforms** |
 | 2 | **Story Archive** | 3 library | client-only: keep every unlocked "story behind the answer", searchable | **DONE on all 6 platforms** |
 | 3 | **Marathon** | 1 gameplay | client-only: 200-q graded endurance, cross-session scorecard | **DONE on all 6 platforms** |
-| 4 | **Knowledge Atlas** | 2 retrospect | client-only: accuracy by domain/sub-domain over 12mo, every domain tappable into a round | **iOS + web + Android DONE; macOS/tvOS compile, surface TBD** |
+| 4 | **Knowledge Atlas** | 2 retrospect | client-only: accuracy by domain/sub-domain over 12mo, every domain tappable into a round | **DONE on iOS/iPadOS, macOS, tvOS, web, Android; Windows queued** |
 | 5 | **Friend Streaks** | 4 social | light RTDB (reuses friends): mutual daily accountability | todo |
 | 6 | **Link Wall** | 1 gameplay | client-only: NYT-Connections-style 2nd daily (Daily stays free) | todo |
 | 7 | **Expedition** | 1 gameplay | client-only: multi-week structured campaign, map + certificate | todo |
@@ -69,7 +69,7 @@ Legend: ✅ done+verified · 🔨 in progress · ⏳ queued · 🚫 n/a (with re
 | 1 Weak-Spot Arena | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 2 Story Archive | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 3 Marathon | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 4 Knowledge Atlas | ✅ | ✅ | ⏳ | ⏳ | ✅ | ⏳ |
+| 4 Knowledge Atlas | ✅ | ✅ | ✅ | ✅ | ✅ | ⏳ |
 | 5 Friend Streaks | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 6 Link Wall | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 7 Expedition | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |

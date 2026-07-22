@@ -40,6 +40,7 @@
 		396E6A2004F751CA0ADC7CB7 /* ResultsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C60A815D0EFF35CF18DAB26 /* ResultsView.swift */; };
 		3DC20F18033FF99581974B52 /* MacLiveHost_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5C5D511CC45CC8C0B84A985 /* MacLiveHost_macOS.swift */; };
 		3DDD98934D198791F4C9C508 /* oddoneout.json in Resources */ = {isa = PBXBuildFile; fileRef = DEB3E620FB0E374A393778E4 /* oddoneout.json */; };
+		4315DD5CB6A3D517984B9388 /* KnowledgeAtlasView_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C85EFA6D9DAE294C88AC8C8 /* KnowledgeAtlasView_macOS.swift */; };
 		43F0592341213B6BF4FAAB6F /* MarathonHistoryView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14AA2A3084196AB3E011E800 /* MarathonHistoryView_tvOS.swift */; };
 		43F36ECB879791F4A899B1AF /* CreateQuizView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96283977862FC546F8219011 /* CreateQuizView.swift */; };
 		43F8B1E0DFD953763387E1D7 /* NightPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = A485FF3BF7BA5BCFEC4FBC2E /* NightPlan.swift */; };
@@ -68,6 +69,7 @@
 		725A6441BCC94D56C76ECCB9 /* MacNight_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A477F73E1AD5B4430586D51 /* MacNight_macOS.swift */; };
 		7763E984206A3E69A81D607D /* MacLiveModel_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56419A8DE7AAB1006563AA47 /* MacLiveModel_macOS.swift */; };
 		78068FB172485742F7C68313 /* DifficultyOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C0424A46E0A825EA0A8EFE2 /* DifficultyOverlay.swift */; };
+		7B6E1EBA8BCCEA6735C6B8C1 /* KnowledgeAtlasView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0A8539762A2F6FB3C251DE6 /* KnowledgeAtlasView_tvOS.swift */; };
 		7E457DE11CD8D820A503C8EB /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 3C266F600F75F40E459D2276 /* PrivacyInfo.xcprivacy */; };
 		822891D7170B156CB45A51CF /* NightHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61CF6B570C9884F8DF3645CD /* NightHost.swift */; };
 		859FAE7091E80AC483E8A7A6 /* DailyBoardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 770E593F52F5DB070F1B2591 /* DailyBoardView.swift */; };
@@ -214,6 +216,7 @@
 		96283977862FC546F8219011 /* CreateQuizView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateQuizView.swift; sourceTree = "<group>"; };
 		9BE19D7C519BC6A5BAFC9A2E /* GameContainerView_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameContainerView_macOS.swift; sourceTree = "<group>"; };
 		9C0424A46E0A825EA0A8EFE2 /* DifficultyOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DifficultyOverlay.swift; sourceTree = "<group>"; };
+		9C85EFA6D9DAE294C88AC8C8 /* KnowledgeAtlasView_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnowledgeAtlasView_macOS.swift; sourceTree = "<group>"; };
 		A0B1B4D9BA126D3D5E585A00 /* NightClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightClient.swift; sourceTree = "<group>"; };
 		A485FF3BF7BA5BCFEC4FBC2E /* NightPlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightPlan.swift; sourceTree = "<group>"; };
 		AB6E2342A764B8401C9516E9 /* Design.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Design.swift; sourceTree = "<group>"; };
@@ -221,6 +224,7 @@
 		ABC3E5834F087B503EF2FE95 /* NightView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightView_tvOS.swift; sourceTree = "<group>"; };
 		ABD7AE7120AC1ABEC5FBFE9B /* PlayerIdentityStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerIdentityStore.swift; sourceTree = "<group>"; };
 		ACBB11A0D029110390E8A92A /* Marathon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Marathon.swift; sourceTree = "<group>"; };
+		B0A8539762A2F6FB3C251DE6 /* KnowledgeAtlasView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnowledgeAtlasView_tvOS.swift; sourceTree = "<group>"; };
 		B1C1A6AE174DDC149D5EE7BB /* SeededRNG.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeededRNG.swift; sourceTree = "<group>"; };
 		B5C5D511CC45CC8C0B84A985 /* MacLiveHost_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacLiveHost_macOS.swift; sourceTree = "<group>"; };
 		B87EE4E2D9F044824CAA43F0 /* Keychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keychain.swift; sourceTree = "<group>"; };
@@ -264,7 +268,7 @@
 		FD70222B5EE4C4145E4D1F84 /* NightSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightSetupView.swift; sourceTree = "<group>"; };
 		FDDD2AC4DB9C421C5849B8F6 /* GameView_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView_macOS.swift; sourceTree = "<group>"; };
 		FFC46D4CE8D03186C064C759 /* Question.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Question.swift; sourceTree = "<group>"; };
-		"TEMP_DCEB1151-420B-4E78-ADF0-A90A2297532E" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
+		"TEMP_5B867102-1B45-424F-A4E5-50A36FA3085C" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -364,6 +368,7 @@
 				9BE19D7C519BC6A5BAFC9A2E /* GameContainerView_macOS.swift */,
 				FDDD2AC4DB9C421C5849B8F6 /* GameView_macOS.swift */,
 				557D060B0D805B39D4D7425C /* HomeView_macOS.swift */,
+				9C85EFA6D9DAE294C88AC8C8 /* KnowledgeAtlasView_macOS.swift */,
 				38E2048C670779462804BFCD /* MacHomeSheets_macOS.swift */,
 				5FC902EC3B5DFAB094A962AF /* MacLiveBigScreen_macOS.swift */,
 				7F7402F193E045320CDADBE8 /* MacLiveBuilder_macOS.swift */,
@@ -430,6 +435,7 @@
 				4793DE7531EE4E40F6A11F40 /* ClubPaywallView_tvOS.swift */,
 				C23D07A7744AE72B2935CB2F /* ContentView_tvOS.swift */,
 				F5C9D9266531ECD27156562D /* GameView_tvOS.swift */,
+				B0A8539762A2F6FB3C251DE6 /* KnowledgeAtlasView_tvOS.swift */,
 				F45A86C8863F908B3F7D4E7C /* LiveJoinView_tvOS.swift */,
 				14AA2A3084196AB3E011E800 /* MarathonHistoryView_tvOS.swift */,
 				12E5CDEC65BAF3D58483A913 /* NightHostView_tvOS.swift */,
@@ -555,10 +561,10 @@
 			path = TidbitsTrivia;
 			sourceTree = "<group>";
 		};
-		"TEMP_8E9FBC7D-136B-4E48-891E-90AF1EEB894B" /* Tidbits-Trivia */ = {
+		"TEMP_0FBC59DA-BF63-4158-BE20-23630133033B" /* Tidbits-Trivia */ = {
 			isa = PBXGroup;
 			children = (
-				"TEMP_DCEB1151-420B-4E78-ADF0-A90A2297532E" /* AppVersion.xcconfig */,
+				"TEMP_5B867102-1B45-424F-A4E5-50A36FA3085C" /* AppVersion.xcconfig */,
 			);
 			path = "Tidbits-Trivia";
 			sourceTree = "<group>";
@@ -690,6 +696,8 @@
 				CB06D72CCB303461DA6ED15C /* Keychain.swift in Sources */,
 				A1403E3981ED0841F64C86B6 /* KnowledgeAtlas.swift in Sources */,
 				993D207E535FB4211789CC3F /* KnowledgeAtlasView.swift in Sources */,
+				4315DD5CB6A3D517984B9388 /* KnowledgeAtlasView_macOS.swift in Sources */,
+				7B6E1EBA8BCCEA6735C6B8C1 /* KnowledgeAtlasView_tvOS.swift in Sources */,
 				B72DA2D151B3156C162753C6 /* LiveJoinView.swift in Sources */,
 				A4E1EFF1535F0273FCC53974 /* LiveJoinView_tvOS.swift in Sources */,
 				02F153022C6FAD01DE261FB5 /* LiveNight.swift in Sources */,
@@ -766,7 +774,7 @@
 /* Begin XCBuildConfiguration section */
 		296659EF0549868336801823 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_DCEB1151-420B-4E78-ADF0-A90A2297532E" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_5B867102-1B45-424F-A4E5-50A36FA3085C" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -887,7 +895,7 @@
 		};
 		E6F711EEEE2896F84FE9AB98 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_DCEB1151-420B-4E78-ADF0-A90A2297532E" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_5B867102-1B45-424F-A4E5-50A36FA3085C" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;

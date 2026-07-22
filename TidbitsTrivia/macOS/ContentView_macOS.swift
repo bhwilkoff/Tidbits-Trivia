@@ -128,7 +128,7 @@ struct ContentView_macOS: View {
             NavigationStack(path: $path) {
                 switch section ?? .play {
                 case .play:    HomeView_macOS(onPlay: start, onNight: { nightLaunch = $0 }, onVersus: { versusBot = $0 })
-                case .records: RecordsView_macOS()
+                case .records: RecordsView_macOS(onPlay: start)
                 case .create:  CreateView_macOS { topic, qs in customGame = CustomLaunch(topic: topic, questions: qs) }
                 case .live:    LiveBuilderView_macOS(onPreview: { livePreview = $0 }, onHost: { liveHost = $0 })
                 }

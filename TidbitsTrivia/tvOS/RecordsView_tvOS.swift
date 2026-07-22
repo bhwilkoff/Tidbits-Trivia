@@ -10,6 +10,7 @@ import SwiftData
 /// Remote can arrow down through the whole page (tvOS scrolling is focus-driven;
 /// without focusable targets a ScrollView never reveals lower content).
 struct RecordsView_tvOS: View {
+    let onPlay: (LaunchRequest) -> Void
     @Query(sort: \GameRecord.date, order: .reverse) private var records: [GameRecord]
     @Query private var streaks: [DailyStreak]
     @Environment(PlayerIdentityStore.self) private var identity
@@ -24,6 +25,7 @@ struct RecordsView_tvOS: View {
     @State private var recap: GameRecord?
     @State private var showStoryArchive = false
     @State private var showMarathonHistory = false
+    @State private var showAtlas = false
     @State private var showClubPaywall = false
 
     var body: some View {
@@ -42,6 +44,7 @@ struct RecordsView_tvOS: View {
                         historySection
                         storyArchiveSection
                         marathonHistorySection
+                        atlasSection
                         progressSection
                         if calibration.contains(where: { $0.total > 0 }) { calibrationSection }
                         bestsSection
@@ -57,9 +60,13 @@ struct RecordsView_tvOS: View {
         .fullScreenCover(item: $recap) { TVGameRecapView(record: $0) }
         .fullScreenCover(isPresented: $showStoryArchive) { StoryArchiveView_tvOS() }
         .fullScreenCover(isPresented: $showMarathonHistory) { TVMarathonHistoryView() }
+        .fullScreenCover(isPresented: $showAtlas) {
+            KnowledgeAtlasView_tvOS(onPlay: { req in showAtlas = false; onPlay(req) })
+        }
         .fullScreenCover(isPresented: $showClubPaywall) { ClubPaywallView_tvOS() }
         .task {
             if DebugHooks.openStoryArchive { openStoryArchive() }
+            if DebugHooks.openAtlas { openAtlas() }
         }
     }
 
@@ -109,6 +116,57 @@ struct RecordsView_tvOS: View {
     /// existing paywall — never a blank wall.
     private func openMarathonHistory() {
         if entitlement.isClub { showMarathonHistory = true } else { showClubPaywall = true }
+    }
+
+    // MARK: Knowledge Atlas (Club — docs/CLUB-FEATURES-BUILD.md "Feature 4")
+
+    // Additive, deeper 12-month layer over the SAME rows the free Topic
+    // Levels / Pie already read (R-MON-1) — never a gate on those free
+    // surfaces. Every row in the Atlas itself is a focusable play door.
+    private var atlasSection: some View {
+        Button(action: openAtlas) {
+            HStack(spacing: 28) {
+                Image(systemName: "map.fill").font(.system(size: 52, weight: .black))
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 16) {
+                        Text("KNOWLEDGE ATLAS").font(.system(size: 40, weight: .black, design: .rounded))
+                        if !entitlement.isClub {
+                            Text("CLUB")
+                                .font(.system(size: 22, weight: .black, design: .rounded))
+                                .padding(.horizontal, 14).padding(.vertical, 6)
+                                .background(Capsule().fill(.white.opacity(0.92)))
+                                .foregroundStyle(Tidbits.Palette.teal)
+                        }
+                    }
+                    Text(atlasSubtitle)
+                        .font(.system(size: 29, weight: .medium, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.9))
+                        .lineLimit(2)
+                }
+                Spacer()
+            }
+            .foregroundStyle(.white)
+            .padding(40)
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(TVAtlasCardStyle())
+    }
+
+    private var atlasSubtitle: String {
+        if entitlement.isClub {
+            let mapped = KnowledgeAtlas.domains(in: modelContext).count
+            return mapped == 0
+                ? "Play across a few domains and your Atlas fills in."
+                : "\(mapped) domain\(mapped == 1 ? "" : "s") mapped over 12 months — press one to play it."
+        }
+        return KnowledgeAtlas.previewLine(in: modelContext)
+            ?? "Club maps everything you know and where it's drifting."
+    }
+
+    /// Members open the atlas directly; everyone else sees the existing
+    /// paywall with a real preview — never a blank wall.
+    private func openAtlas() {
+        if entitlement.isClub { showAtlas = true } else { showClubPaywall = true }
     }
 
     // MARK: Story Archive (Club — docs/CLUB-FEATURES-BUILD.md "Feature 2")
@@ -377,6 +435,24 @@ struct RecordsView_tvOS: View {
 // MARK: - Story Archive entry (focusable hero button, mirrors TVWeakSpotHeroStyle)
 
 struct TVStoryArchiveCardStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View { Inner(configuration: configuration) }
+    struct Inner: View {
+        let configuration: Configuration
+        @Environment(\.isFocused) private var focused
+        var body: some View {
+            configuration.label
+                .background(RoundedRectangle(cornerRadius: 28).fill(Tidbits.Palette.teal.gradient))
+                .overlay(RoundedRectangle(cornerRadius: 28).strokeBorder(.white.opacity(focused ? 0.9 : 0), lineWidth: 5))
+                .scaleEffect(focused ? 1.03 : 1.0)
+                .shadow(color: Tidbits.Palette.teal.opacity(focused ? 0.6 : 0), radius: 30, y: 12)
+                .animation(.easeOut(duration: 0.18), value: focused)
+        }
+    }
+}
+
+// MARK: - Knowledge Atlas entry (focusable hero button, same shape as TVStoryArchiveCardStyle)
+
+struct TVAtlasCardStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View { Inner(configuration: configuration) }
     struct Inner: View {
         let configuration: Configuration

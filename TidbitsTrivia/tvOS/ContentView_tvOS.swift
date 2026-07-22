@@ -36,6 +36,10 @@ struct ContentView_tvOS: View {
     @State private var showQuickMatch = false
     @Environment(\.modelContext) private var modelContext
     @FocusState private var primaryFocused: Bool
+    // Marathon (Club — docs/CLUB-FEATURES-BUILD.md "Feature 3").
+    @Query private var marathonRuns: [MarathonRun]
+    @Query(sort: \MarathonScore.date, order: .reverse) private var marathonHistory: [MarathonScore]
+    @State private var showMarathonChoice = false
 
     /// Launch a game and (unless Daily) remember it as the Quick Play default.
     private func play(_ mode: GameMode, _ category: TriviaCategory) {
@@ -54,6 +58,7 @@ struct ContentView_tvOS: View {
                     dailyHero
                     nightHero
                     weakSpotHero
+                    marathonHero
                     multiplayerPanel
                 }
                 .padding(.horizontal, 90)
@@ -101,6 +106,17 @@ struct ContentView_tvOS: View {
         .fullScreenCover(isPresented: $showRecords) { RecordsView_tvOS() }
         .fullScreenCover(isPresented: $showSettings) { SettingsView_tvOS() }
         .fullScreenCover(isPresented: $showClubPaywall) { ClubPaywallView_tvOS() }
+        .fullScreenCover(isPresented: $showMarathonChoice) {
+            TVMarathonChoiceView(
+                run: marathonRuns.first,
+                onResume: { showMarathonChoice = false; launch = LaunchRequest(mode: .marathon, category: .named("mixed")) },
+                onStartOver: {
+                    Marathon.startNew(in: modelContext)
+                    showMarathonChoice = false
+                    launch = LaunchRequest(mode: .marathon, category: .named("mixed"))
+                },
+                onCancel: { showMarathonChoice = false })
+        }
         .task {
             if launch == nil, nightLaunch == nil, let ap = DebugHooks.autoplay {
                 // Trivia Night needs a plan, not a bare category — autoplay it with
@@ -117,6 +133,9 @@ struct ContentView_tvOS: View {
             if DebugHooks.initialTab == .records { showRecords = true }
             if launch == nil, let mode = gameCenter.consumePendingChallenge() {
                 launch = LaunchRequest(mode: mode, category: .named("mixed"))
+            }
+            if launch == nil, DebugHooks.openMarathon {
+                launch = LaunchRequest(mode: .marathon, category: .named("mixed"))
             }
         }
         // A friend's Game Center challenge accepted at runtime → launch the mode.
@@ -240,6 +259,69 @@ struct ContentView_tvOS: View {
             .frame(maxWidth: .infinity)
         }
         .buttonStyle(TVWeakSpotHeroStyle())
+    }
+
+    // MARK: - Marathon (Club — docs/CLUB-FEATURES-BUILD.md "Feature 3")
+
+    /// Members with a run in progress get the focusable Resume/Start Over
+    /// choice (never a pointer `confirmationDialog` — ten-foot needs a
+    /// focusable screen, tvos-platform-patterns); with no run, they launch
+    /// straight into a fresh one. Non-members see the existing paywall.
+    private func openMarathon() {
+        guard entitlement.isClub else { showClubPaywall = true; return }
+        if marathonRuns.first != nil {
+            showMarathonChoice = true
+        } else {
+            launch = LaunchRequest(mode: .marathon, category: .named("mixed"))
+        }
+    }
+
+    /// A real, concrete subtitle in every state — never a nag. Members see
+    /// their true position or their real last-run number; non-members see a
+    /// specific illustration of the domain scorecard.
+    private var marathonSubtitle: String {
+        if entitlement.isClub {
+            if let run = marathonRuns.first { return "Question \(run.currentIndex + 1) of \(run.total) — press to resume" }
+            if let last = marathonHistory.first { return "\(Int(last.accuracy * 100))% on your last run — press to start a new one" }
+            return "200 questions. Play it across as many sittings as you like — we'll keep your place."
+        }
+        return "See exactly where you stand — e.g. Geography 91% · History 64% — across a 200-question run you can pause and resume anytime."
+    }
+
+    private var marathonHero: some View {
+        Button(action: openMarathon) {
+            HStack(spacing: 28) {
+                Image(systemName: "flag.checkered").font(.system(size: 52, weight: .black))
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 16) {
+                        Text("MARATHON").font(.system(size: 40, weight: .black, design: .rounded))
+                        if !entitlement.isClub {
+                            Text("CLUB")
+                                .font(.system(size: 22, weight: .black, design: .rounded))
+                                .padding(.horizontal, 14).padding(.vertical, 6)
+                                .background(Capsule().fill(.white.opacity(0.92)))
+                                .foregroundStyle(Tidbits.Palette.teal)
+                        }
+                        if marathonRuns.first != nil {
+                            Text("RESUME")
+                                .font(.system(size: 22, weight: .black, design: .rounded))
+                                .padding(.horizontal, 14).padding(.vertical, 6)
+                                .background(Capsule().fill(Tidbits.Palette.coral))
+                                .foregroundStyle(.white)
+                        }
+                    }
+                    Text(marathonSubtitle)
+                        .font(.system(size: 29, weight: .medium, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.9))
+                        .lineLimit(2)
+                }
+                Spacer()
+            }
+            .foregroundStyle(.white)
+            .padding(40)
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(TVMarathonHeroStyle())
     }
 
     // Online Multiplayer (Decision 038): v0 Play-vs-CPU chips; the Quick Match
@@ -376,9 +458,9 @@ private struct TVCustomizePicker: View {
                         Text("Mode").font(.system(size: 34, weight: .heavy, design: .rounded)).foregroundStyle(TVTheme.textSoft)
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 30) {
-                                // .weakSpot is Club-only and never a free Customize pick — it
-                                // has its own Home entry point (docs/CLUB-FEATURES-BUILD.md "Feature 1").
-                                ForEach(GameMode.allCases.filter { $0 != .daily && $0 != .barTrivia && $0 != .weakSpot }) { mode in
+                                // .weakSpot / .marathon are Club-only and never a free Customize
+                                // pick — they have their own Home entry points (docs/CLUB-FEATURES-BUILD.md).
+                                ForEach(GameMode.allCases.filter { $0 != .daily && $0 != .barTrivia && $0 != .weakSpot && $0 != .marathon }) { mode in
                                     Button { selectedMode = mode } label: {
                                         VStack(spacing: 10) {
                                             Image(systemName: mode.symbol).font(.system(size: 34, weight: .black))
@@ -472,6 +554,51 @@ private struct TVDailyArchive: View {
     }
 }
 
+// MARK: - Marathon Resume / Start Over (Club — a focusable choice, never a
+// pointer confirmationDialog — tvos-platform-patterns)
+
+private struct TVMarathonChoiceView: View {
+    let run: MarathonRun?
+    let onResume: () -> Void
+    let onStartOver: () -> Void
+    let onCancel: () -> Void
+    @FocusState private var focus: Choice?
+    private enum Choice { case resume, startOver, cancel }
+
+    var body: some View {
+        ZStack {
+            TVTheme.bg.ignoresSafeArea()
+            VStack(spacing: 40) {
+                Spacer()
+                Image(systemName: "flag.checkered").font(.system(size: 76, weight: .black)).foregroundStyle(Tidbits.Palette.teal)
+                Text("Marathon in progress").font(.system(size: 52, weight: .black, design: .rounded)).foregroundStyle(TVTheme.text)
+                if let run {
+                    Text("Question \(run.currentIndex + 1) of \(run.total) — resume where you left off, or start a fresh run.")
+                        .font(.system(size: 29, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+                        .multilineTextAlignment(.center)
+                }
+                HStack(spacing: 28) {
+                    Button("Resume", action: onResume)
+                        .buttonStyle(TVChipStyle(accent: Tidbits.Palette.teal, selected: false))
+                        .focused($focus, equals: .resume)
+                    Button("Start Over", action: onStartOver)
+                        .buttonStyle(TVChipStyle(accent: Tidbits.Palette.coral, selected: false))
+                        .focused($focus, equals: .startOver)
+                    Button("Cancel", action: onCancel)
+                        .buttonStyle(TVChipStyle(accent: Tidbits.Palette.blue, selected: false))
+                        .focused($focus, equals: .cancel)
+                }
+                .focusSection()
+                Spacer()
+            }
+            .padding(90)
+            .frame(maxWidth: 1400)
+        }
+        .defaultFocus($focus, .resume)
+        .onExitCommand(perform: onCancel)
+    }
+}
+
 // MARK: - tvOS button styles (custom focus treatment; never .plain)
 
 struct TVHeroStyle: ButtonStyle {
@@ -520,6 +647,24 @@ struct TVWeakSpotHeroStyle: ButtonStyle {
                 .overlay(RoundedRectangle(cornerRadius: 28).strokeBorder(.white.opacity(focused ? 0.9 : 0), lineWidth: 5))
                 .scaleEffect(focused ? 1.03 : 1.0)
                 .shadow(color: Tidbits.Palette.grape.opacity(focused ? 0.6 : 0), radius: 30, y: 12)
+                .animation(.easeOut(duration: 0.18), value: focused)
+        }
+    }
+}
+
+/// The Marathon hero — teal, white-on-dark, lit on focus (same shape as
+/// `TVWeakSpotHeroStyle`, distinct accent for a distinct Club card).
+struct TVMarathonHeroStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View { Inner(configuration: configuration) }
+    struct Inner: View {
+        let configuration: Configuration
+        @Environment(\.isFocused) private var focused
+        var body: some View {
+            configuration.label
+                .background(RoundedRectangle(cornerRadius: 28).fill(Tidbits.Palette.teal.gradient))
+                .overlay(RoundedRectangle(cornerRadius: 28).strokeBorder(.white.opacity(focused ? 0.9 : 0), lineWidth: 5))
+                .scaleEffect(focused ? 1.03 : 1.0)
+                .shadow(color: Tidbits.Palette.teal.opacity(focused ? 0.6 : 0), radius: 30, y: 12)
                 .animation(.easeOut(duration: 0.18), value: focused)
         }
     }

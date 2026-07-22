@@ -16,6 +16,15 @@ struct GameContainerView_macOS: View {
     /// around so the empty state and the "gaps closed" result tally can read it.
     @State private var activeWeakSpotRound: WeakSpotRound?
 
+    /// Marathon only (docs/CLUB-FEATURES-BUILD.md "Feature 3"): the in-progress
+    /// run this session is playing into, how many questions were already
+    /// answered in EARLIER sessions (so the HUD shows the true 84/200
+    /// position, not this session's local index), and the finished scorecard
+    /// once the run's true end is reached.
+    @State private var activeMarathonRun: MarathonRun?
+    @State private var marathonOffset = 0
+    @State private var marathonFinishedScore: MarathonScore?
+
     private var game: GameEngine { store.game }
 
     /// The Daily is play-once (R-DAILY-1) — no replay of a locked set.
@@ -46,16 +55,28 @@ struct GameContainerView_macOS: View {
                 // Only reachable for a Trivia Night; single-player modes never hit it.
                 loadingState.task { game.startRound() }
             case .playing, .reveal:
-                GameView_macOS(game: game, onQuit: close)
+                GameView_macOS(game: game, onQuit: close, marathonOffset: request.mode == .marathon ? marathonOffset : nil)
             case .finished:
-                ResultsView_macOS(summary: game.summary,
-                                  onPlayAgain: playAgainAction,
-                                  onDone: close,
-                                  weakSpotGapsClosed: weakSpotGapsClosed)
-                    .onAppear(perform: persistIfNeeded)
+                if request.mode == .marathon {
+                    if let score = marathonFinishedScore {
+                        MarathonResultsView_macOS(score: score, onPlayAgain: { replay() }, onDone: close)
+                    } else {
+                        // Defensive fallback — finish() runs the instant the last
+                        // answer posts (before `.finished` renders), so this
+                        // shouldn't be reachable in practice.
+                        loadingState.onAppear(perform: close)
+                    }
+                } else {
+                    ResultsView_macOS(summary: game.summary,
+                                      onPlayAgain: playAgainAction,
+                                      onDone: close,
+                                      weakSpotGapsClosed: weakSpotGapsClosed)
+                        .onAppear(perform: persistIfNeeded)
+                }
             }
         }
         .task { await startIfNeeded() }
+        .onChange(of: game.answered.count) { _, _ in persistMarathonProgress() }
     }
 
     private func startIfNeeded() async {
@@ -64,6 +85,8 @@ struct GameContainerView_macOS: View {
             await game.startMix(modes: request.mixModes ?? [.classic], category: request.category)
         } else if request.mode == .weakSpot {
             startWeakSpot()
+        } else if request.mode == .marathon {
+            startMarathon()
         } else {
             var review = (request.mode.acceptsReview && GameSettings.reviewEnabled)
                 ? RecordsStore.dueReview(in: modelContext, limit: 30) : []
@@ -91,6 +114,44 @@ struct GameContainerView_macOS: View {
             Text("Play a few rounds first — your misses become your arena.")
         } actions: {
             Button("Back", action: close).tint(Tidbits.Palette.inkSoft)
+        }
+    }
+
+    // MARK: Marathon (Club — docs/CLUB-FEATURES-BUILD.md "Feature 3")
+
+    /// Resume the in-progress run if one exists, else start a fresh one.
+    /// Loads only the REMAINING questions — the HUD adds `marathonOffset`
+    /// back in so the player always sees their true position out of 200.
+    private func startMarathon() {
+        marathonFinishedScore = nil
+        let run = Marathon.inProgress(in: modelContext) ?? Marathon.startNew(in: modelContext)
+        activeMarathonRun = run
+        marathonOffset = run.currentIndex
+        let remaining = Marathon.resumeQuestions(run)
+        guard !remaining.isEmpty else {
+            // Edge case only (a run somehow already at its full length without
+            // having been finished) — close it out rather than show a blank round.
+            marathonFinishedScore = Marathon.finish(run: run, in: modelContext)
+            activeMarathonRun = nil
+            return
+        }
+        game.startCustom(mode: .marathon, category: .named("mixed"), questions: remaining)
+    }
+
+    /// Persist every new answer immediately (the whole point of Marathon: a
+    /// crash/quit never loses progress) and, the instant the run reaches its
+    /// true end, write the permanent scorecard and clear the in-progress run —
+    /// computed here, ahead of the `.finished` phase render, so there's no race.
+    private func persistMarathonProgress() {
+        guard request.mode == .marathon, let run = activeMarathonRun else { return }
+        let alreadyPersisted = run.currentIndex - marathonOffset
+        guard alreadyPersisted < game.answered.count else { return }
+        for i in alreadyPersisted..<game.answered.count {
+            Marathon.record(game.answered[i], run: run, in: modelContext)
+        }
+        if run.currentIndex >= run.total {
+            marathonFinishedScore = Marathon.finish(run: run, in: modelContext)
+            activeMarathonRun = nil
         }
     }
 
@@ -127,6 +188,8 @@ struct GameContainerView_macOS: View {
             Task { await game.startMix(modes: request.mixModes ?? [.classic], category: request.category) }
         } else if request.mode == .weakSpot {
             startWeakSpot()
+        } else if request.mode == .marathon {
+            startMarathon()
         } else {
             Task { await game.start(mode: request.mode, category: request.category) }
         }
@@ -297,6 +360,166 @@ struct ResultsView_macOS: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 16)
         .chunkyCard(fill: tint.opacity(0.18))
+    }
+}
+
+// MARK: - Marathon results (Club — docs/CLUB-FEATURES-BUILD.md "Feature 3")
+
+/// The Mac Marathon scorecard — mirrors the iOS reference (`MarathonResultsView`)
+/// with Mac-native chrome (`CompactButtonStyle`, ⌘-friendly keyboard shortcuts).
+/// Reads the permanent `MarathonScore` just written (a run's true total spans
+/// however many sessions it took, not just this last one).
+struct MarathonResultsView_macOS: View {
+    let score: MarathonScore
+    var onPlayAgain: (() -> Void)? = nil
+    let onDone: () -> Void
+    /// True when opened from the history list (a past run, read-only) rather
+    /// than right after finishing — hides the replay + history-link actions.
+    var isHistorical: Bool = false
+
+    @Query(sort: \MarathonScore.date, order: .reverse) private var allScores: [MarathonScore]
+    @State private var showHistory = false
+
+    /// The run before this one (excludes the one just written) — "vs your
+    /// last run," per the design spec's literal phrasing.
+    private var previous: MarathonScore? {
+        allScores.first { $0.date < score.date }
+    }
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 20) {
+                scoreCard
+                comparisonMoment
+                statsRow
+                domainCard
+                if !isHistorical {
+                    Button { showHistory = true } label: {
+                        Label("See Marathon history", systemImage: "clock.arrow.circlepath")
+                    }
+                    .buttonStyle(CompactButtonStyle())
+                }
+                buttons
+            }
+            .padding(32)
+            .frame(maxWidth: 640)
+            .frame(maxWidth: .infinity)
+        }
+        .background(Tidbits.Palette.bg)
+        .sheet(isPresented: $showHistory) { MarathonHistoryView_macOS() }
+    }
+
+    private var scoreCard: some View {
+        VStack(spacing: 8) {
+            Text("MARATHON COMPLETE").font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
+            Text("\(score.score)")
+                .font(.system(size: 64, weight: .black, design: .rounded))
+                .foregroundStyle(Tidbits.Palette.ink)
+            Text("\(score.correct)/\(score.total) correct · \(Self.durationLabel(score.durationSeconds))")
+                .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 28)
+        .chunkyCard(fill: Tidbits.Palette.teal.opacity(0.18))
+    }
+
+    /// "+6% vs your last run" — the measured-mastery payoff (the whole reason
+    /// Marathon isn't just a long Classic).
+    @ViewBuilder private var comparisonMoment: some View {
+        if let previous {
+            let delta = Int((score.accuracy - previous.accuracy) * 100)
+            VStack(spacing: 4) {
+                Text(delta == 0 ? "Same as your last run" : "\(delta > 0 ? "+" : "")\(delta)% vs your last run")
+                    .font(.system(size: 20, weight: .black, design: .rounded))
+                    .foregroundStyle(delta >= 0 ? Tidbits.Palette.mint : Tidbits.Palette.coral)
+                Text("Last run: \(Int(previous.accuracy * 100))% · this run: \(Int(score.accuracy * 100))%")
+                    .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
+            .chunkyCard(fill: Tidbits.Palette.surface)
+        } else {
+            VStack(spacing: 4) {
+                Text("Your first Marathon")
+                    .font(.system(size: 20, weight: .black, design: .rounded))
+                    .foregroundStyle(Tidbits.Palette.ink)
+                Text("Play another to see how you're improving")
+                    .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
+            .chunkyCard(fill: Tidbits.Palette.surface)
+        }
+    }
+
+    private var statsRow: some View {
+        HStack(spacing: 12) {
+            stat("\(Int(score.accuracy * 100))%", "Accuracy", Tidbits.Palette.blue)
+            stat("\(score.score)", "Score", Tidbits.Palette.teal)
+            stat("\(allScores.count)", "Marathons", Tidbits.Palette.coral)
+        }
+    }
+
+    /// Per-domain accuracy bars — the measured-mastery map (not just a score).
+    private var domainCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Where you stood this run").font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
+            ForEach(score.domainBreakdown.filter { $0.total > 0 }) { stat in domainRow(stat) }
+        }
+        .padding(16)
+        .chunkyCard()
+    }
+
+    private func domainRow(_ stat: MarathonDomainStat) -> some View {
+        let cat = TriviaCategory.named(stat.categoryID)
+        return VStack(alignment: .leading, spacing: 5) {
+            HStack {
+                Image(systemName: cat.symbol).font(.system(size: 13, weight: .bold)).foregroundStyle(cat.color.legibleAccent)
+                Text(cat.name).font(Tidbits.TypeRamp.l4).foregroundStyle(Tidbits.Palette.ink)
+                Spacer()
+                Text("\(stat.correct)/\(stat.total) · \(Int(stat.accuracy * 100))%")
+                    .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+            }
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(Tidbits.Palette.bgDeep)
+                    Capsule().fill(cat.color).frame(width: max(6, geo.size.width * stat.accuracy))
+                }
+                .overlay(Capsule().strokeBorder(Tidbits.Palette.border, lineWidth: 2))
+            }
+            .frame(height: 10)
+        }
+    }
+
+    private var buttons: some View {
+        HStack(spacing: 14) {
+            if let onPlayAgain {
+                Button("Start a new Marathon", action: onPlayAgain)
+                    .buttonStyle(CompactButtonStyle(fill: Tidbits.Palette.teal, textColor: .white, prominent: true))
+                    .keyboardShortcut(.defaultAction)
+            }
+            Button("Done", action: onDone)
+                .buttonStyle(CompactButtonStyle())
+                .keyboardShortcut(.cancelAction)
+        }
+    }
+
+    private func stat(_ value: String, _ label: String, _ tint: Color) -> some View {
+        VStack(spacing: 3) {
+            Text(value).font(.system(size: 26, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
+            Text(label).font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 16)
+        .chunkyCard(fill: tint.opacity(0.18))
+    }
+
+    private static func durationLabel(_ seconds: Double) -> String {
+        let minutes = Int(seconds / 60)
+        if minutes < 60 { return "\(max(1, minutes)) min" }
+        let hours = minutes / 60
+        let rem = minutes % 60
+        return rem == 0 ? "\(hours)h" : "\(hours)h \(rem)m"
     }
 }
 #endif

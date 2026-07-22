@@ -10,6 +10,10 @@ struct GameView_macOS: View {
     let onQuit: () -> Void
     /// Play-vs-CPU: when set, shows the running head-to-head + the bot's result.
     var versus: BotMatch? = nil
+    /// Marathon only: how many questions were already answered in EARLIER
+    /// sessions — added to `game.index` so the HUD shows the true position
+    /// out of 200, not this session's local (resumed-slice) index. nil elsewhere.
+    var marathonOffset: Int? = nil
 
     @FocusState private var typeFieldFocused: Bool
 
@@ -57,7 +61,11 @@ struct GameView_macOS: View {
             .buttonStyle(.plain)
             .keyboardShortcut(.cancelAction)   // Esc quits
 
-            if game.mode == .classic || game.mode == .daily {
+            if game.mode == .marathon {
+                let offset = marathonOffset ?? 0
+                Text("\(offset + game.index + 1) / \(offset + game.questions.count)")
+                    .font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft)
+            } else if game.mode == .classic || game.mode == .daily {
                 Text("\(min(game.index + 1, game.questions.count)) / \(game.questions.count)")
                     .font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft)
             } else {

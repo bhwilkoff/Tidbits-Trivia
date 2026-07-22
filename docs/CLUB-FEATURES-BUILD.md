@@ -68,7 +68,7 @@ Legend: ✅ done+verified · 🔨 in progress · ⏳ queued · 🚫 n/a (with re
 |---|---|---|---|---|---|---|
 | 1 Weak-Spot Arena | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 2 Story Archive | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 3 Marathon | ✅ | ✅ | ⏳ | ⏳ | ✅ | ⏳ |
+| 3 Marathon | ✅ | ✅ | ✅ | ✅ | ✅ | ⏳ |
 | 4 Knowledge Atlas | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 5 Friend Streaks | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 6 Link Wall | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |

@@ -19,9 +19,11 @@ struct RecordsView_tvOS: View {
     private var toReview: [MissedFact]
     @Query(sort: \CalibrationTally.tierValue, order: .reverse) private var calibration: [CalibrationTally]
     @Query(sort: \SeenStory.lastSeen, order: .reverse) private var seenStories: [SeenStory]
+    @Query(sort: \MarathonScore.date, order: .reverse) private var marathonScores: [MarathonScore]
     @Environment(\.dismiss) private var dismiss
     @State private var recap: GameRecord?
     @State private var showStoryArchive = false
+    @State private var showMarathonHistory = false
     @State private var showClubPaywall = false
 
     var body: some View {
@@ -39,6 +41,7 @@ struct RecordsView_tvOS: View {
                         lifetimeRow
                         historySection
                         storyArchiveSection
+                        marathonHistorySection
                         progressSection
                         if calibration.contains(where: { $0.total > 0 }) { calibrationSection }
                         bestsSection
@@ -53,10 +56,59 @@ struct RecordsView_tvOS: View {
         .onExitCommand { dismiss() }   // Menu button leaves Records (modal: allowed)
         .fullScreenCover(item: $recap) { TVGameRecapView(record: $0) }
         .fullScreenCover(isPresented: $showStoryArchive) { StoryArchiveView_tvOS() }
+        .fullScreenCover(isPresented: $showMarathonHistory) { TVMarathonHistoryView() }
         .fullScreenCover(isPresented: $showClubPaywall) { ClubPaywallView_tvOS() }
         .task {
             if DebugHooks.openStoryArchive { openStoryArchive() }
         }
+    }
+
+    // MARK: Marathon History (Club — docs/CLUB-FEATURES-BUILD.md "Feature 3")
+
+    // A single Club-marked, focusable "see all" entry into the run history
+    // (R-REC-1: the dashboard stays a row, not the history list itself).
+    private var marathonHistorySection: some View {
+        Button(action: openMarathonHistory) {
+            HStack(spacing: 28) {
+                Image(systemName: "flag.checkered").font(.system(size: 52, weight: .black))
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 16) {
+                        Text("MARATHON HISTORY").font(.system(size: 40, weight: .black, design: .rounded))
+                        if !entitlement.isClub {
+                            Text("CLUB")
+                                .font(.system(size: 22, weight: .black, design: .rounded))
+                                .padding(.horizontal, 14).padding(.vertical, 6)
+                                .background(Capsule().fill(.white.opacity(0.92)))
+                                .foregroundStyle(Tidbits.Palette.teal)
+                        }
+                    }
+                    Text(marathonHistorySubtitle)
+                        .font(.system(size: 29, weight: .medium, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.9))
+                        .lineLimit(2)
+                }
+                Spacer()
+            }
+            .foregroundStyle(.white)
+            .padding(40)
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(TVMarathonHeroStyle())
+    }
+
+    private var marathonHistorySubtitle: String {
+        if entitlement.isClub {
+            return marathonScores.isEmpty
+                ? "200 questions. Play it across as many sittings as you like — we'll keep your place."
+                : "\(marathonScores.count) run\(marathonScores.count == 1 ? "" : "s") played — best \(Int((marathonScores.map(\.accuracy).max() ?? 0) * 100))%."
+        }
+        return "See exactly where you stand across a 200-question run, by domain — Club keeps every run forever."
+    }
+
+    /// Members open the history list directly; everyone else sees the
+    /// existing paywall — never a blank wall.
+    private func openMarathonHistory() {
+        if entitlement.isClub { showMarathonHistory = true } else { showClubPaywall = true }
     }
 
     // MARK: Story Archive (Club — docs/CLUB-FEATURES-BUILD.md "Feature 2")

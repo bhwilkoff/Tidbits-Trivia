@@ -18,6 +18,15 @@ struct TVGameContainer: View {
     /// around so the empty state and the "gaps closed" result tally can read it.
     @State private var activeWeakSpotRound: WeakSpotRound?
 
+    /// Marathon only (docs/CLUB-FEATURES-BUILD.md "Feature 3"): the in-progress
+    /// run this session is playing into, how many questions were already
+    /// answered in EARLIER sessions (so the HUD shows the true 84/200
+    /// position, not this session's local index), and the finished scorecard
+    /// once the run's true end is reached.
+    @State private var activeMarathonRun: MarathonRun?
+    @State private var marathonOffset = 0
+    @State private var marathonFinishedScore: MarathonScore?
+
     private var game: GameEngine { store.game }
 
     /// Count of round questions that were true misses (not domain-fill) AND
@@ -41,17 +50,30 @@ struct TVGameContainer: View {
             case .roundIntro:
                 TVRoundIntroView(game: game)
             case .playing, .reveal:
-                TVGamePlayView(onQuit: close)
+                TVGamePlayView(onQuit: close, marathonOffset: mode == .marathon ? marathonOffset : nil)
             case .finished:
-                TVResultsView(summary: game.summary, onPlayAgain: playAgainAction, onDone: close,
-                              weakSpotGapsClosed: weakSpotGapsClosed)
-                    .onAppear(perform: persist)
+                if mode == .marathon {
+                    if let score = marathonFinishedScore {
+                        TVMarathonResultsView(score: score, onPlayAgain: { replay() }, onDone: close)
+                    } else {
+                        // Defensive fallback — finish() runs the instant the last
+                        // answer posts (before `.finished` renders), so this
+                        // shouldn't be reachable in practice.
+                        loading.onAppear(perform: close)
+                    }
+                } else {
+                    TVResultsView(summary: game.summary, onPlayAgain: playAgainAction, onDone: close,
+                                  weakSpotGapsClosed: weakSpotGapsClosed)
+                        .onAppear(perform: persist)
+                }
             }
         }
         .task {
             if game.phase == .idle {
                 if mode == .weakSpot {
                     startWeakSpot()
+                } else if mode == .marathon {
+                    startMarathon()
                 } else {
                     // Single-category game re-asks only same-category misses (no cross-category leak).
                     var review = (mode.acceptsReview && GameSettings.reviewEnabled)
@@ -62,6 +84,7 @@ struct TVGameContainer: View {
                 }
             }
         }
+        .onChange(of: game.answered.count) { _, _ in persistMarathonProgress() }
         .onExitCommand(perform: close)   // Menu button quits the game (modal: allowed)
     }
 
@@ -109,7 +132,46 @@ struct TVGameContainer: View {
     private func replay() {
         recorded = false
         if mode == .weakSpot { startWeakSpot() }
+        else if mode == .marathon { startMarathon() }
         else { Task { await game.start(mode: mode, category: category) } }
+    }
+
+    // MARK: Marathon (Club — docs/CLUB-FEATURES-BUILD.md "Feature 3")
+
+    /// Resume the in-progress run if one exists, else start a fresh one.
+    /// Loads only the REMAINING questions — the HUD adds `marathonOffset`
+    /// back in so the player always sees their true position out of 200.
+    private func startMarathon() {
+        marathonFinishedScore = nil
+        let run = Marathon.inProgress(in: modelContext) ?? Marathon.startNew(in: modelContext)
+        activeMarathonRun = run
+        marathonOffset = run.currentIndex
+        let remaining = Marathon.resumeQuestions(run)
+        guard !remaining.isEmpty else {
+            // Edge case only (a run somehow already at its full length without
+            // having been finished) — close it out rather than show a blank round.
+            marathonFinishedScore = Marathon.finish(run: run, in: modelContext)
+            activeMarathonRun = nil
+            return
+        }
+        game.startCustom(mode: .marathon, category: .named("mixed"), questions: remaining)
+    }
+
+    /// Persist every new answer immediately (the whole point of Marathon: a
+    /// crash/quit never loses progress) and, the instant the run reaches its
+    /// true end, write the permanent scorecard and clear the in-progress run —
+    /// computed here, ahead of the `.finished` phase render, so there's no race.
+    private func persistMarathonProgress() {
+        guard mode == .marathon, let run = activeMarathonRun else { return }
+        let alreadyPersisted = run.currentIndex - marathonOffset
+        guard alreadyPersisted < game.answered.count else { return }
+        for i in alreadyPersisted..<game.answered.count {
+            Marathon.record(game.answered[i], run: run, in: modelContext)
+        }
+        if run.currentIndex >= run.total {
+            marathonFinishedScore = Marathon.finish(run: run, in: modelContext)
+            activeMarathonRun = nil
+        }
     }
 
     /// The Daily is play-once (R-DAILY-1) — no replay of a locked set.
@@ -132,6 +194,10 @@ struct TVGamePlayView: View {
     /// Non-nil in a Play-vs-CPU match (Decision 038): a standings strip rides
     /// the top and each reveal shows what the bot did.
     var versus: BotMatch? = nil
+    /// Marathon only: how many questions were already answered in EARLIER
+    /// sessions — added to `game.index` so the HUD shows the true position
+    /// out of 200, not this session's local (resumed-slice) index. nil elsewhere.
+    var marathonOffset: Int? = nil
     @Environment(AppStore.self) private var store
     @FocusState private var focus: TVFocus?
     @State private var typeRevealed = false
@@ -488,6 +554,9 @@ struct TVGamePlayView: View {
     private var progressLabel: String {
         switch game.mode {
         case .timeAttack, .survival: return "#\(game.index + 1)"
+        case .marathon:
+            let offset = marathonOffset ?? 0
+            return "\(offset + game.index + 1) / \(offset + game.questions.count)"
         default: return "\(game.index + 1) / \(game.questions.count)"
         }
     }
@@ -838,6 +907,137 @@ struct TVResultsView: View {
         case 0.5..<0.8: return "Nicely done"
         default: return "Good run"
         }
+    }
+}
+
+// MARK: - Marathon results (Club — docs/CLUB-FEATURES-BUILD.md "Feature 3")
+
+/// The tvOS Marathon scorecard at ten feet — mirrors the iOS reference
+/// (`MarathonResultsView`) with dark-first, focus-driven chrome. Reads the
+/// permanent `MarathonScore` just written (a run's true total spans however
+/// many sessions it took to finish, not just this last one).
+struct TVMarathonResultsView: View {
+    let score: MarathonScore
+    var onPlayAgain: (() -> Void)? = nil
+    let onDone: () -> Void
+    /// True when opened from the history list (a past run, read-only) rather
+    /// than right after finishing — hides the replay + history-link actions.
+    var isHistorical: Bool = false
+
+    @Query(sort: \MarathonScore.date, order: .reverse) private var allScores: [MarathonScore]
+    @State private var showHistory = false
+    @FocusState private var playAgainFocused: Bool
+
+    private var previous: MarathonScore? {
+        allScores.first { $0.date < score.date }
+    }
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 30) {
+                Text("MARATHON COMPLETE").font(.system(size: 40, weight: .heavy, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+                Text("\(score.score)").font(.system(size: 110, weight: .black, design: .rounded)).foregroundStyle(.white)
+                Text("\(score.correct)/\(score.total) correct · \(Self.durationLabel(score.durationSeconds))")
+                    .font(.system(size: 29, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+                comparisonMoment
+                HStack(spacing: 60) {
+                    stat("\(Int(score.accuracy * 100))%", "Accuracy")
+                    stat("\(score.score)", "Score")
+                    stat("\(allScores.count)", "Marathons")
+                }
+                domainCard
+                HStack(spacing: 30) {
+                    if let onPlayAgain {
+                        Button("Start a new Marathon", action: onPlayAgain)
+                            .buttonStyle(TVChipStyle(accent: Tidbits.Palette.teal, selected: false))
+                            .focused($playAgainFocused)
+                    }
+                    Button("Done", action: onDone)
+                        .buttonStyle(TVChipStyle(accent: Tidbits.Palette.blue, selected: false))
+                }
+                .padding(.top, 8)
+                if !isHistorical {
+                    Button { showHistory = true } label: {
+                        Label("See Marathon history", systemImage: "clock.arrow.circlepath")
+                    }
+                    .buttonStyle(TVChipStyle(accent: Tidbits.Palette.teal, selected: false))
+                }
+            }
+            .padding(90)
+            .frame(maxWidth: .infinity)
+        }
+        .defaultFocus($playAgainFocused, true)
+        .fullScreenCover(isPresented: $showHistory) { TVMarathonHistoryView() }
+    }
+
+    @ViewBuilder private var comparisonMoment: some View {
+        if let previous {
+            let delta = Int((score.accuracy - previous.accuracy) * 100)
+            VStack(spacing: 6) {
+                Text(delta == 0 ? "Same as your last run" : "\(delta > 0 ? "+" : "")\(delta)% vs your last run")
+                    .font(.system(size: 36, weight: .black, design: .rounded))
+                    .foregroundStyle(delta >= 0 ? Tidbits.Palette.mint : Tidbits.Palette.coral)
+                Text("Last run: \(Int(previous.accuracy * 100))% · this run: \(Int(score.accuracy * 100))%")
+                    .font(.system(size: 25, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+            }
+            .padding(.vertical, 8).padding(.horizontal, 40)
+            .background(RoundedRectangle(cornerRadius: 20).fill(TVTheme.panel))
+        } else {
+            VStack(spacing: 6) {
+                Text("Your first Marathon")
+                    .font(.system(size: 36, weight: .black, design: .rounded)).foregroundStyle(.white)
+                Text("Play another to see how you're improving")
+                    .font(.system(size: 25, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+            }
+            .padding(.vertical, 8).padding(.horizontal, 40)
+            .background(RoundedRectangle(cornerRadius: 20).fill(TVTheme.panel))
+        }
+    }
+
+    /// Per-domain accuracy bars — the measured-mastery map (not just a score).
+    private var domainCard: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            Text("Where you stood this run").font(.system(size: 34, weight: .heavy, design: .rounded)).foregroundStyle(TVTheme.text)
+            ForEach(score.domainBreakdown.filter { $0.total > 0 }) { stat in domainRow(stat) }
+        }
+        .frame(maxWidth: 1400)
+    }
+
+    private func domainRow(_ stat: MarathonDomainStat) -> some View {
+        let cat = TriviaCategory.named(stat.categoryID)
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Image(systemName: cat.symbol).font(.system(size: 25, weight: .bold)).foregroundStyle(cat.color)
+                Text(cat.name).font(.system(size: 29, weight: .bold, design: .rounded)).foregroundStyle(.white)
+                Spacer()
+                Text("\(stat.correct)/\(stat.total) · \(Int(stat.accuracy * 100))%")
+                    .font(.system(size: 25, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+            }
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(Color.white.opacity(0.12))
+                    Capsule().fill(cat.color).frame(width: max(10, geo.size.width * stat.accuracy))
+                }
+            }
+            .frame(height: 18)
+        }
+        .padding(20)
+        .background(RoundedRectangle(cornerRadius: 18).fill(TVTheme.panel))
+    }
+
+    private func stat(_ v: String, _ l: String) -> some View {
+        VStack(spacing: 6) {
+            Text(v).font(.system(size: 46, weight: .black, design: .rounded)).foregroundStyle(.white)
+            Text(l.uppercased()).font(.system(size: 22, weight: .bold, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+        }
+    }
+
+    private static func durationLabel(_ seconds: Double) -> String {
+        let minutes = Int(seconds / 60)
+        if minutes < 60 { return "\(max(1, minutes)) min" }
+        let hours = minutes / 60
+        let rem = minutes % 60
+        return rem == 0 ? "\(hours)h" : "\(hours)h \(rem)m"
     }
 }
 

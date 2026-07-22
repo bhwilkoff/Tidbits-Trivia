@@ -1,5 +1,6 @@
 #if os(macOS)
 import SwiftUI
+import SwiftData
 
 /// The Mac Play screen — parity with iOS Home (R-HOME-1): ONE primary action
 /// (Quick Play), two quiet secondary buttons (Surprise + Customize) beneath it,
@@ -19,6 +20,10 @@ struct HomeView_macOS: View {
     @State private var showNightSetup = false
     @State private var showMultiplayer = false
     @State private var showClubPaywall = false
+    // Marathon (Club — docs/CLUB-FEATURES-BUILD.md "Feature 3").
+    @Query private var marathonRuns: [MarathonRun]
+    @Query(sort: \MarathonScore.date, order: .reverse) private var marathonHistory: [MarathonScore]
+    @State private var showMarathonChoice = false
 
     var body: some View {
         ScrollView {
@@ -29,6 +34,7 @@ struct HomeView_macOS: View {
                 dailyCard
                 triviaNightCard
                 weakSpotCard
+                marathonCard
                 onlineCard
             }
             .padding(24)
@@ -54,6 +60,21 @@ struct HomeView_macOS: View {
         }
         .sheet(isPresented: $showMultiplayer) {
             MultiplayerSheet_macOS(recentAccuracy: 0.6, onPickBot: onVersus)
+        }
+        .confirmationDialog("Marathon in progress", isPresented: $showMarathonChoice, titleVisibility: .visible) {
+            Button("Resume") { onPlay(LaunchRequest(mode: .marathon, category: .named("mixed"))) }
+            Button("Start Over", role: .destructive) {
+                Marathon.startNew(in: modelContext)
+                onPlay(LaunchRequest(mode: .marathon, category: .named("mixed")))
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            if let run = marathonRuns.first {
+                Text("Question \(run.currentIndex + 1) of \(run.total) — resume where you left off, or start a fresh run.")
+            }
+        }
+        .task {
+            if DebugHooks.openMarathon { onPlay(LaunchRequest(mode: .marathon, category: .named("mixed"))) }
         }
     }
 
@@ -225,6 +246,67 @@ struct HomeView_macOS: View {
             .foregroundStyle(Tidbits.Palette.grape.legibleForeground)
             .padding(18).frame(maxWidth: .infinity, alignment: .leading)
             .chunkyCard(fill: Tidbits.Palette.grape)
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Marathon (Club — docs/CLUB-FEATURES-BUILD.md "Feature 3")
+
+    /// Members with a run in progress get the Resume/Start Over choice; with
+    /// no run, they launch straight into a fresh one. Non-members see the
+    /// existing paywall — never a blank wall.
+    private func openMarathon() {
+        guard entitlement.isClub else { showClubPaywall = true; return }
+        if marathonRuns.first != nil {
+            showMarathonChoice = true
+        } else {
+            onPlay(LaunchRequest(mode: .marathon, category: .named("mixed")))
+        }
+    }
+
+    /// A real, concrete subtitle in every state — never a nag (MONETIZATION
+    /// §4a). Members see their true position or their real last-run number;
+    /// non-members see a specific illustration of the domain scorecard (there's
+    /// no free-tier Marathon data to sample from, unlike Weak-Spot/Story Archive).
+    private var marathonSubtitle: String {
+        if entitlement.isClub {
+            if let run = marathonRuns.first { return "Question \(run.currentIndex + 1) of \(run.total) — click to resume" }
+            if let last = marathonHistory.first { return "\(Int(last.accuracy * 100))% on your last run — click to start a new one" }
+            return "200 questions. Play it across as many sittings as you like — we'll keep your place."
+        }
+        return "See exactly where you stand — e.g. Geography 91% · History 64% — across a 200-question run you can pause and resume anytime."
+    }
+
+    private var marathonCard: some View {
+        Button(action: openMarathon) {
+            HStack(spacing: 14) {
+                Image(systemName: "flag.checkered").font(.system(size: 26, weight: .black))
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 6) {
+                        Text("MARATHON").font(Tidbits.TypeRamp.l2)
+                        if !entitlement.isClub {
+                            Text("CLUB")
+                                .font(.system(size: 11, weight: .black, design: .rounded))
+                                .foregroundStyle(Tidbits.Palette.teal)
+                                .padding(.horizontal, 7).padding(.vertical, 3)
+                                .background(Capsule().fill(Color.white.opacity(0.92)))
+                        }
+                        if marathonRuns.first != nil {
+                            Text("RESUME")
+                                .font(.system(size: 11, weight: .black, design: .rounded))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 7).padding(.vertical, 3)
+                                .background(Capsule().fill(Tidbits.Palette.coral))
+                        }
+                    }
+                    Text(marathonSubtitle).font(Tidbits.TypeRamp.l5).opacity(0.9).lineLimit(2)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right.circle.fill").font(.system(size: 24, weight: .bold))
+            }
+            .foregroundStyle(Tidbits.Palette.teal.legibleForeground)
+            .padding(18).frame(maxWidth: .infinity, alignment: .leading)
+            .chunkyCard(fill: Tidbits.Palette.teal)
         }
         .buttonStyle(.plain)
     }

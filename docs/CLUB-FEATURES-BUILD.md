@@ -60,6 +60,72 @@ Also on deck to **research** (a parallel loop lane, low-cost): fresh incentive
 ideas that deepen daily use + delight (see §Research log). The slate above is not
 frozen — research may reorder or add.
 
+**Reorder + owner-decision flag (2026-07-22):** Features 1–4 (all "you alone"
+features) shipped cleanly. **Features 5 (Friend Streaks) and 8 (Ranked Seasons) are
+SOCIAL — their value depends on other people participating, so R-MON-4 (the
+Population Rule) says do NOT fully gate the seat; the monetization doc itself flags
+them "free-with-Club-perks rather than fully gated."** Building them as pure
+Club-exclusives would violate R-MON-4 and is an **owner-level free/Club-split
+decision** (what's the free base vs the Club perk?). **These are DEFERRED pending an
+owner call.** Proceeding instead with the remaining **clean single-player** features
+that pass R-MON-4 without a split: **Expedition (next), then Link Wall** (Link Wall
+also carries a content-generation risk — a quality Connections-style group generator
+over the corpus — flagged). Build order is now: 5→**Expedition**, 6→**Link Wall**,
+then owner-gated: Friend Streaks, Ranked Seasons.
+
+## Feature 5 — Expedition (design spec)
+
+**One line:** a multi-week **structured campaign** through a single domain ("The
+20th Century", "World Geography") — ordered stages, a visible map/path, and a
+completion certificate. Turns a session game into a *pursuit* (Pillar 1 ⭐;
+MONETIZATION §4a — "the clearest 'this is a real feature' on the list").
+
+**Four-question test (passed 2026-07-22):** deepens understanding (a *structured
+progression* through a domain — stages build toward mastery, not random rounds —
+which is how real learning is scaffolded); invites participation (you choose which
+expedition to undertake and pace it across weeks — your commitment is the input);
+supports agency (a completion **certificate** is an earned mastery marker you own,
+and the map shows how far you've come on your own steam); clarity (a plain ordered
+list of stages + a progress path; each stage is a normal round — no opaque
+mechanic).
+
+**Structure (assemble from existing pieces — no new game engine):**
+- An **Expedition** = an ordered list of **stages** (say 6–10). Each stage is a
+  themed round the EXISTING engine already plays (a category/difficulty-filtered
+  `.classic`/`.ladder`/mixed round, or a specific mode), with a stage title +
+  a pass bar (e.g. "get 6/10 to advance"). Stages unlock in order.
+- A few curated Expeditions defined in data/code (domain-scoped: e.g. "The 20th
+  Century" pulls history questions across decades; "Around the World" walks
+  continents). Start with 2–3 hand-defined ones; the shape must allow adding more
+  without a client change (a small JSON/struct list).
+- **Persistence** (mirror the Marathon pattern — a resumable model): an
+  `ExpeditionProgress` per expedition {expeditionID, currentStageIndex, per-stage
+  pass/score, startedAt}. You play a stage, pass → advance; you can leave and come
+  back over days/weeks. On completing the last stage → a permanent
+  `ExpeditionCertificate` (domain, date, score) shown in a "Completed" shelf.
+
+**Surface:**
+- Entry: a Club-marked **Expeditions** destination (its own card — it's a
+  commitment, like Marathon). Lists available expeditions with progress ("Stage 3
+  of 8"), plus a Completed/certificates shelf.
+- An expedition detail = the **map/path** of stages (locked/current/done), tap the
+  current stage → play it; on pass, the next unlocks with a beat of celebration.
+- Empty/first-run: "Pick an expedition — a guided journey through a subject, one
+  stage at a time, at your own pace."
+- Non-member: a real preview (the map of an expedition + its first stage described)
+  → paywall, never a blank wall. (First stage playable-as-teaser is an option to
+  discuss; default to preview-not-play to keep it simple and honest.)
+
+**Gating:** Club-only (single-player, passes R-MON-4 — no one else needed). Reuse
+the `TIDBITS_CLUB=1` debug override. Do NOT create a new game engine — stages route
+into the existing launch path with a filter + a pass bar.
+
+**Apple reference = canonical.** The load-bearing shared pieces: the Expedition
+DATA shape (portable across platforms) + the resume/certificate persistence
+(mirror Marathon). Get both right on Apple first.
+
+---
+
 ## Per-feature × per-platform status matrix
 
 Legend: ✅ done+verified · 🔨 in progress · ⏳ queued · 🚫 n/a (with reason)
@@ -70,7 +136,8 @@ Legend: ✅ done+verified · 🔨 in progress · ⏳ queued · 🚫 n/a (with re
 | 2 Story Archive | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 3 Marathon | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 4 Knowledge Atlas | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 5 Friend Streaks | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
+| 5 Expedition | ⏳ | 🔨 | ⏳ | ⏳ | ⏳ | ⏳ |
+| — Friend Streaks (deferred: owner free/Club split, R-MON-4) | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 6 Link Wall | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 7 Expedition | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 8 Ranked Seasons | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |

@@ -72,6 +72,7 @@ sealed interface Route {
     data object Leaderboard : Route   // Wave E: cross-venue / season standings
     data object Duels : Route          // L5: async friend duels
     data object Party : Route
+    data object ClubPaywall : Route    // Tidbits Club join surface (CLUB-MARKETING.md)
 }
 
 @Composable
@@ -190,10 +191,11 @@ fun AppRoot(
                     is Route.Versus -> VersusScreen(r.botId, store) { backStack.removeAt(backStack.lastIndex) }
                     is Route.OnlineMatch -> OnlineMatchScreen(store) { backStack.removeAt(backStack.lastIndex) }
                     is Route.Settings -> SettingsScreen(store, dynamicColor, onDynamicColor, onProfile = { backStack.add(Route.Profile) })
-                    is Route.Profile -> ProfileScreen(onBack = { backStack.removeLastOrNull() }, onLeaderboard = { backStack.add(Route.Leaderboard) }, onDuels = { backStack.add(Route.Duels) })
+                    is Route.Profile -> ProfileScreen(onBack = { backStack.removeLastOrNull() }, onLeaderboard = { backStack.add(Route.Leaderboard) }, onDuels = { backStack.add(Route.Duels) }, onClub = { backStack.add(Route.ClubPaywall) })
                     is Route.Leaderboard -> LeaderboardScreen(onBack = { backStack.removeLastOrNull() })
                     is Route.Duels -> DuelsScreen(onBack = { backStack.removeLastOrNull() }, onPlay = { id, qs -> backStack.add(Route.Game(Mode.MIX, Category.byId("mixed"), qs, "Duel", duelId = id)) })
                     is Route.Party -> PartyContainer(store) { backStack.removeAt(backStack.lastIndex) }
+                    is Route.ClubPaywall -> ClubPaywallScreen(onBack = { backStack.removeLastOrNull() })
                 }
             }
         }

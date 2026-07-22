@@ -10,16 +10,21 @@ import com.learningischange.tidbitstrivia.net.FirebaseNet
 /**
  * Is this player a Tidbits Club member? The one gate every Club feature checks
  * (docs/CLUB-MONETIZATION-BUILD.md, MONETIZATION §7). Android twin of the Swift
- * EntitlementStore (TidbitsTrivia/Core/Networking/EntitlementStore.swift) and the web
- * mirror (js/entitlement.js) — same isClub gate, same fail-open discipline.
+ * EntitlementStore (TidbitsTrivia/Core/Networking/EntitlementStore.swift) and the
+ * Windows EntitlementStore.cs — same isClub gate, same fail-open discipline.
  *
- * Android has no local store yet (Class A = Google Play Billing, a later phase), so —
- * exactly like the web mirror — isClub is purely the REMOTE read: entitlements/{accountKey},
- * written by the Worker after a Merchant-of-Record purchase. Requires a verified-email
- * sign-in; the RTDB rule keys the read on emailOwners/{key} matching the auth token email.
+ * Two independent sources, per Decision 047:
+ *  - **Class A (local store):** Google Play Billing, verified on-device, authoritative,
+ *    works offline. Provided by [Billing] (Phase 2) via [localCheck] so this object never
+ *    imports the billing client directly.
+ *  - **Class B (remote):** a web purchase the Worker wrote to `entitlements/{accountKey}`.
+ *    Read-only for the client; requires a verified-email sign-in (the rule enforces it).
+ *
+ * `isClub = localStoreEntitled || remoteEntitled`.
  *
  * Fail OPEN: a transient read miss NEVER revokes Club (a paying member on a flaky
- * connection stays Club). Cache the last-known-good in SharedPreferences (mirror of
+ * connection stays Club), and an unknown local signal (Play not yet connected) NEVER
+ * revokes a cached true either. Cache the last-known-good in SharedPreferences (mirror of
  * Duels.kt's init(ctx) pattern) so a returning member is Club instantly, before any
  * network round-trip.
  */
@@ -32,6 +37,14 @@ object Entitlement {
     /** The gate. Seeded from the cached last-known-good so a returning member is Club
      *  instantly, before any network round-trip. */
     var isClub: Boolean by mutableStateOf(false); private set
+
+    /** The Billing adapter installs this in Phase 2 ([Billing.start]). Returns the locally-
+     *  proven state:
+     *   - `true`  — an owned, acknowledged, non-expired Club purchase exists.
+     *   - `false` — the store definitively reports no Club entitlement.
+     *   - `null`  — unknown (Play not connected yet, or the query failed) → treat as
+     *               "no clean signal", never revoke. Default `null` until Billing starts. */
+    var localCheck: (suspend () -> Boolean?)? = null
 
     /** Called once from the Application so the cached Club flag survives process death —
      *  mirror of Duels.init(ctx). Must run before the first refresh()/read of isClub. */
@@ -48,18 +61,30 @@ object Entitlement {
         return System.currentTimeMillis() < until
     }
 
-    /** Recompute Club status. Safe to call at launch, after sign-in, and after a purchase. */
+    /** Recompute Club status. Safe to call at launch, after sign-in, and after a purchase.
+     *  Never throws; the worst case is "keep the cached answer". */
     suspend fun refresh() {
+        // Class A — local store (Play Billing), authoritative and offline. A clean YES wins
+        // immediately, with no network round-trip needed.
+        val local = try { localCheck?.invoke() } catch (e: Exception) { null }
+        if (local == true) { set(true); return }
+
+        // Class B — the web purchase. Only possible when signed in with a verified email
+        // (the accountKey is the sha256 of that email, and the rule checks emailOwners).
         if (!PlayerIdentity.signedIn || PlayerIdentity.profileId == null) {
-            // Not signed in → no remote entitlement is readable. Don't aggressively revoke
-            // a cached true (fail open); it re-confirms on the next signed-in refresh. A
-            // fresh anon session with no cache is simply not Club.
+            // Not signed in → no remote entitlement is readable. A clean local "no" with no
+            // remote possibility is a definitive negative; a local "unknown" keeps the cached
+            // answer (fail open) — it re-confirms on the next signed-in/connected refresh.
+            if (local == false) set(false)
             return
         }
         val key = PlayerIdentity.profileId ?: return
         try {
             val ent = FirebaseNet.loadEntitlement(key)
-            set(grantsClub(ent))   // a clean read (incl. null -> not club) is authoritative
+            if (grantsClub(ent)) { set(true); return }
+            // A clean remote read of nothing AND a clean local "no" is a definitive negative.
+            if (local == false) { set(false); return }
+            // else: local was unknown (null) — no clean negative, keep cached (fail open).
         } catch (e: Exception) {
             // transient RTDB error -> keep the cached answer (fail open)
         }

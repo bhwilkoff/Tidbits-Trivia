@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,8 +20,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -47,13 +50,15 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.learningischange.tidbitstrivia.data.Entitlement
 import com.learningischange.tidbitstrivia.data.PlayerIdentity
+import com.learningischange.tidbitstrivia.ui.theme.Pops
 import kotlin.math.abs
 
 /** The portable Tidbits identity, native Material — the Android twin of the iOS
  *  ProfileView. Reads PlayerIdentity.profile (the ONE shared cross-platform profile). */
 @Composable
-fun ProfileScreen(onBack: () -> Unit, onLeaderboard: () -> Unit = {}, onDuels: () -> Unit = {}) {
+fun ProfileScreen(onBack: () -> Unit, onLeaderboard: () -> Unit = {}, onDuels: () -> Unit = {}, onClub: () -> Unit = {}) {
     val p = PlayerIdentity.profile
     var editing by remember { mutableStateOf(false) }
     var draft by remember { mutableStateOf("") }
@@ -102,6 +107,18 @@ fun ProfileScreen(onBack: () -> Unit, onLeaderboard: () -> Unit = {}, onDuels: (
         Button(onClick = onLeaderboard, modifier = Modifier.fillMaxWidth()) { Text("Leaderboard") }   // Wave E
         Spacer(Modifier.height(8.dp))
         Button(onClick = onDuels, modifier = Modifier.fillMaxWidth()) { Text("Duels") }   // L5 async friend duels
+        Spacer(Modifier.height(8.dp))
+        Button(
+            onClick = onClub, modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = if (Entitlement.isClub) MaterialTheme.colorScheme.surfaceVariant else Pops.yellow,
+                contentColor = ink,
+            ),
+        ) {
+            Icon(Icons.Filled.Star, null, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(if (Entitlement.isClub) "Tidbits Club — Member" else "Join Tidbits Club", fontWeight = FontWeight.Bold)
+        }
 
         Spacer(Modifier.height(18.dp))
         val scope = rememberCoroutineScope()

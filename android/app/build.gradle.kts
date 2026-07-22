@@ -32,7 +32,7 @@ android {
         applicationId = "com.tidbitstrivia.app"
         minSdk = 29
         targetSdk = 36
-        versionCode = 68
+        versionCode = 69
         versionName = "1.6.47"   // lockstep with iOS MARKETING_VERSION (X.Y.Z, bump every ship)
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
@@ -114,6 +114,7 @@ dependencies {
     implementation(libs.coil.compose)         // Picture ID (Q7) image loading
     implementation(libs.coil.network.okhttp)
     implementation(libs.zxing.core)           // QR generation for the Trivia Night host
+    implementation(libs.play.billing)         // Tidbits Club (Google Play Billing, Class A local source)
 
     testImplementation(libs.junit)
     testImplementation(libs.coroutines.test)

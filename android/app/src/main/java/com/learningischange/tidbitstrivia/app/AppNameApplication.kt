@@ -1,6 +1,7 @@
 package com.learningischange.tidbitstrivia.app
 
 import android.app.Application
+import com.learningischange.tidbitstrivia.data.Billing
 import com.learningischange.tidbitstrivia.data.Duels
 import com.learningischange.tidbitstrivia.data.Entitlement
 import com.learningischange.tidbitstrivia.data.Store
@@ -19,6 +20,7 @@ class AppNameApplication : Application() {
         container = AppContainer(Store(this))
         Duels.init(this)   // L5: persist tracked duel ids across process death
         Entitlement.init(this)   // Club gate: cached last-known-good survives process death
+        Billing.start(this)   // Club gate Class A: Play Billing local check + purchase flow
     }
 }
 

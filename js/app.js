@@ -2,7 +2,7 @@
 // Apple AppStore + GameEngine + views. Vanilla JS, no framework, no build.
 
 import { Corpus, Pictures, ThisOrThat, ClosestCall, Ordering, Matching, TypeAnswer, OddOneOut, Enumerate, Difficulty, matchesAccepted, Wikipedia, DailyBoard } from './api.js';
-import { Store, CATEGORIES, catColor, catById, MODES, NIGHT, STAKE_BUDGET, dayKey, APP_STORES, SITE_URL, CLUB } from './store.js';
+import { Store, CATEGORIES, catColor, catById, MODES, NIGHT, STAKE_BUDGET, dayKey, APP_STORES, SITE_URL, CLUB, WeakSpotArena } from './store.js';
 import { Scoring } from './engine.js';
 import { BOTS, houseBot, botById, VsMatch } from './bots.js';
 import { FirebaseNet } from './firebase.js';
@@ -110,6 +110,7 @@ const ICON = {
   flame: '<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path d="M8.3 1.2c.3 2.6-3.6 4-3.6 7.4a3.9 3.9 0 007.8 0c0-1.3-.5-2.3-1.2-3.2-.3 1-.9 1.5-1.5 1.5.4-1.6-.2-4-1.5-5.7z" fill="currentColor"/></svg>',
   sun: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><circle cx="8" cy="8" r="3.2" fill="currentColor"/><g stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.4 1.4M11.6 11.6L13 13M13 3l-1.4 1.4M4.4 11.6L3 13"/></g></svg>',
   check: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M2.5 8.5l3.5 3.5 7.5-8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  target: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.2"/><circle cx="8" cy="8" r="3.2"/></g><circle cx="8" cy="8" r="1.1" fill="currentColor"/></svg>',
 };
 
 // The portable Tidbits identity — the web twin of the iOS/Android profile screens.
@@ -199,11 +200,13 @@ const CORE_MODES = ['classic', 'timeAttack', 'survival', 'stake'];
 function quickPlayTarget() {
   const m = localStorage.getItem('tidbits.lastMode');
   const c = localStorage.getItem('tidbits.lastCat');
-  if (m && MODES[m] && c) return { mode: m, cat: c };
+  // .weakSpot is Club-gated and never a remembered/random default (mirrors the
+  // Apple AppStore fix — a Club mode can't leak into the free Quick Play habit).
+  if (m && MODES[m] && m !== 'weakSpot' && c) return { mode: m, cat: c };
   return { mode: 'classic', cat: 'mixed' };
 }
 function rememberPlay(mode, catId) {
-  if (mode === 'daily') return;
+  if (mode === 'daily' || mode === 'weakSpot') return;
   localStorage.setItem('tidbits.lastMode', mode);
   localStorage.setItem('tidbits.lastCat', catId);
 }
@@ -249,6 +252,7 @@ function viewHome() {
     ${dailyBanner()}
     <button class="banner card night-banner-cta" data-night-open><div><div class="banner-title">TRIVIA NIGHT</div>
       <div class="muted">Host or join a night of mixed rounds.</div></div><span class="chev">›</span></button>
+    ${weakSpotCard()}
     <h2 class="section">More ways to play</h2>
     <div class="home-tiles">
       <button class="tile card mp" data-multiplayer><span class="tile-ico">${ICON.globe}</span><span class="tile-name">Online Multiplayer</span><span class="tile-sub">Play vs CPU now</span></button>
@@ -345,6 +349,43 @@ function dailyBanner() {
   return `<button class="banner card daily" data-daily><div><div class="banner-title">${ICON.check} DAILY TIDBIT</div>
     <div class="muted">Done for today — you scored ${score}.${flame ? ` ${flame} kept alive.` : ''} New set tomorrow.</div>
     <div class="muted"><u data-daily-board>See how the world did</u> · <u>Play previous days</u></div></div><span class="chev">›</span></button>`;
+}
+
+// Tidbits Club EXCLUSIVE — Weak-Spot Arena (docs/CLUB-FEATURES-BUILD.md "Feature 1").
+// Home entry point, never the free Customize grid / Surprise-Me. Non-members see a
+// real preview (a genuine missed fact if one exists locally, else an honest static
+// line) + a CLUB chip; tapping routes to the existing #/club paywall — never a
+// blank wall. Members launch the arena directly.
+function weakSpotCard() {
+  const club = Entitlement.isClub;
+  const preview = club ? null : WeakSpotArena.previewLine();
+  const subtitle = club ? 'Turn your misses into a round.' : (preview || 'Your misses, turned into a round you can actually close.');
+  const chip = club ? '' : '<span class="club-chip">CLUB</span>';
+  return `<button class="banner card weakspot-banner" data-weakspot>
+    <div><div class="banner-title">${ICON.target} WEAK-SPOT ARENA ${chip}</div>
+    <div class="muted">${h(subtitle)}</div></div><span class="chev">›</span></button>`;
+}
+
+// Members launch the arena directly (built from their own local misses);
+// everyone else goes to the existing paywall route (rule 6 — never a blank wall).
+function openWeakSpot() {
+  if (!Entitlement.isClub) { location.hash = '#/club'; return; }
+  const round = WeakSpotArena.build((catId, excluding, limit) => Corpus.pull(catId, excluding, limit));
+  if (round.questions.length < 2) { renderWeakSpotEmpty(); return; }
+  startGame('weakSpot', catById('mixed'), {
+    custom: round.questions, weakSpotReasons: round.reasons, weakSpotMissCount: round.missCount,
+  });
+}
+
+// Below the floor of true misses (and no domain history to fill from either) —
+// the honest empty state, never the generic "no questions" error.
+function renderWeakSpotEmpty() {
+  app.innerHTML = `<div class="center-screen">
+    <h2>Not enough misses yet</h2>
+    <p class="muted">Play a few rounds first — your misses become your arena.</p>
+    <button class="btn btn-primary" data-back>Back</button>
+  </div>`;
+  $('[data-back]').addEventListener('click', render);
 }
 
 function dailyArchiveRows() {
@@ -459,6 +500,7 @@ function bindHome() {
     dailyDlg.close();
     startGame('daily', catById('mixed'), { dailyDay: b.dataset.dailyDay });
   }));
+  $('[data-weakspot]').addEventListener('click', openWeakSpot);
 
   // Trivia Night dialog (native <dialog showModal> — focus trap + ESC free).
   let nightPreset = 1;
@@ -1081,6 +1123,11 @@ class Game {
     this.answered = []; this.chosen = null; this.phase = 'loading';
     this.remaining = 0; this.timer = null; this.qStart = 0; this.globalDeadline = null;
     this._custom = opts.custom;
+    // Weak-Spot Arena (Club): per-question "why you're seeing this" reason, keyed
+    // by question ID, + how many of this round's questions were TRUE misses (vs.
+    // category-fill) — the "gaps closed" tally reads off both.
+    this._weakSpotReasons = opts.weakSpotReasons || null;
+    this._weakSpotMissCount = opts.weakSpotMissCount ?? null;
     this._duelId = opts.duelId;   // L5: submit this game's score to the duel on finish
     // Trivia Night: the plan's rounds [[kind, count], …] + the per-round meta for banners.
     this._nightPlan = opts.nightPlan || (mode === 'barTrivia' ? { rounds: NIGHT.presets[1].rounds } : null);
@@ -1456,6 +1503,13 @@ class Game {
     const correct = this.answered.filter((a) => a.correct).length;
     return { correct, total: this.answered.length, score: this.score, maxStreak: this.maxStreak, answered: this.answered, acc: this.answered.length ? Math.round(correct / this.answered.length * 100) : 0 };
   }
+  // Weak-Spot Arena's payoff — count of TRUE-miss questions (not category-fill)
+  // answered correctly this round. null outside .weakSpot.
+  weakSpotGapsClosed() {
+    if (this.mode.id !== 'weakSpot' || !this._weakSpotReasons) return null;
+    const trueMissIDs = new Set(Object.keys(this._weakSpotReasons).filter((id) => this._weakSpotReasons[id].startsWith('Missed')));
+    return this.answered.filter((a) => a.correct && trueMissIDs.has(a.q.id)).length;
+  }
 }
 
 async function startGame(mode, category, opts) {
@@ -1537,6 +1591,9 @@ function renderGame() {
   const typeP = q.accepted ? typeAnswerPanel() : '';
   const enumP = q.enumerate ? enumeratePanel(q.enumerate) : '';
   const pic = q.image ? `<div class="card pic-card"><img class="pic-img" src="${h(q.image)}" alt="Identify this" loading="eager" onerror="this.parentNode.classList.add('pic-failed')"><span class="pic-fallback muted">Couldn't load the image</span></div>` : '';
+  // Weak-Spot Arena's "why you're seeing this" — transparency by construction,
+  // never an opaque model (docs/CLUB-FEATURES-BUILD.md "Feature 1").
+  const weakReason = game.mode.id === 'weakSpot' && game._weakSpotReasons ? game._weakSpotReasons[q.id] : null;
   if (game.versus && game.phase === 'reveal') game.versus.commit(q, game.index, game.mode.perQuestion ?? 30);
   if (game._online && game.phase === 'reveal') game._online.reportProgress(game.score, false);
   const reveal = game.phase === 'reveal' ? revealCard(q) + (game.versus ? versusRevealCard() : '') : '';
@@ -1557,6 +1614,7 @@ function renderGame() {
         ${banner}
         ${pic}
         <div class="card qcard"><div class="qcat" style="color:${catColor(cat)}">${h(cat.name.toUpperCase())}</div><div class="qprompt">${h(q.prompt)}</div></div>
+        ${weakReason ? `<div class="weakspot-reason">${h(weakReason)}</div>` : ''}
         ${sweepGr}
         ${stakeSel}
         ${closest}
@@ -1738,11 +1796,13 @@ function renderResults() {
   const headline = s.acc === 100 ? 'Flawless!' : s.acc >= 80 ? 'Brilliant' : s.acc >= 50 ? 'Nicely done' : 'Good run';
   const missed = s.answered.filter((a) => !a.correct);
   const nailed = s.answered.filter((a) => a.correct && (a.q.difficulty || 3) >= 4);   // L5: hard-correct → "how did you know that?"
+  const gapsClosed = game.weakSpotGapsClosed();   // Weak-Spot Arena's payoff (Club feature 1); null elsewhere
   app.innerHTML = `
     <div class="results">
       <div class="card scorecard" style="--tint:${catColor(game.category)}">
         <div class="muted">${h(headline.toUpperCase())}</div><div class="huge">${s.score}</div>
         <div class="muted">${h(game.label || game.mode.title)} · ${h(game.category.name)}</div></div>
+      ${gapsClosed != null ? `<div class="card pad weakspot-gaps"><div class="gaps-headline">You closed ${gapsClosed} gap${gapsClosed === 1 ? '' : 's'}</div><div class="muted">${gapsClosed > 0 ? 'Turned a miss into a win' : 'Nothing to close yet this round'}</div></div>` : ''}
       <div class="stat-row">${statBox(s.correct + '/' + s.total, 'Correct', '#2FCB8A')}${statBox(s.acc + '%', 'Accuracy', '#2D5BFF')}${statBox(s.maxStreak, 'Best streak', '#FF5C5C')}</div>
       <div class="card pad grid-card"><div class="emoji">${grid}</div><div class="muted">Spoiler-free — safe to share</div></div>
       ${streakMoment()}
@@ -1761,7 +1821,11 @@ function renderResults() {
     saveBtn.textContent = 'Saved ✓'; saveBtn.disabled = true;
   });
   const again = $('[data-again]');
-  if (again) again.addEventListener('click', () => startGame(game.mode.id, game.category, game._custom ? { custom: game._custom, label: game.label } : undefined));
+  if (again) again.addEventListener('click', () => {
+    // Rebuild fresh (misses just changed) rather than replay the exact same set.
+    if (game.mode.id === 'weakSpot') { openWeakSpot(); return; }
+    startGame(game.mode.id, game.category, game._custom ? { custom: game._custom, label: game.label } : undefined);
+  });
   $('[data-done]').addEventListener('click', quitGame);
   app.querySelectorAll('[data-hdyk]').forEach((b) => b.addEventListener('click', () => shareHDYK(nailed[+b.dataset.hdyk])));
   if (game.mode.id === 'daily' && !game.dailyDay) submitDailyBoardResult(s);   // today's Daily → the global board (archive replays don't count)

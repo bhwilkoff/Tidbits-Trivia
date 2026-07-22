@@ -66,7 +66,7 @@ Legend: ✅ done+verified · 🔨 in progress · ⏳ queued · 🚫 n/a (with re
 
 | Feature | web | iOS/iPadOS | macOS | tvOS | Android | Windows |
 |---|---|---|---|---|---|---|
-| 1 Weak-Spot Arena | ⏳ | ✅ | ⏳ | ⏳ | ⏳ | ⏳ |
+| 1 Weak-Spot Arena | ✅ | ✅ | ⏳ | ⏳ | ⏳ | ⏳ |
 
 > Note: the `.weakSpot` GameMode + `WeakSpotArena` generator live in the shared Apple
 > `Core/`, so macOS/tvOS already COMPILE it — only their per-platform Home entry point +

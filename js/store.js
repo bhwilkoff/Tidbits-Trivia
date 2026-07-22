@@ -74,6 +74,9 @@ export const MODES = {
   barTrivia: { id: 'barTrivia', title: 'Trivia Night', blurb: 'Host a night. Every kind of round.', perQuestion: 20, count: 20, accent: '#FF5C5C' },
   mix: { id: 'mix', title: 'Custom Mix', blurb: 'Your picked modes, shuffled together.', perQuestion: 20, count: 10, accent: '#13B6C9' },
   daily: { id: 'daily', title: 'Daily Tidbit', blurb: 'Everyone’s puzzle. Keep your streak.', perQuestion: 30, count: 7, accent: '#FFC93C' },
+  // Tidbits Club EXCLUSIVE (docs/CLUB-FEATURES-BUILD.md "Feature 1"). Never added to
+  // ALL_MODES (the free Customize/Surprise-Me pool) — it has its own Home entry point.
+  weakSpot: { id: 'weakSpot', title: 'Weak-Spot Arena', blurb: 'Turn your misses into a round.', perQuestion: 20, count: 10, accent: '#8B5CF6' },
 };
 
 // Trivia Night ("bar trivia") — a configurable night of themed rounds, each
@@ -240,17 +243,21 @@ export const Store = {
   },
   answerDistribution(qid) { return this.answerTelemetry()[qid] || null; },
 
-  // Missed facts for spaced review.
+  // Missed facts for spaced review. `lastSeen` (added for Weak-Spot Arena,
+  // docs/CLUB-FEATURES-BUILD.md "Feature 1") is the last time the question was
+  // MISSED — the oldest-gap-first sort + "Missed X ago" caption both key off it.
+  // Legacy entries predating this field simply sort as oldest (0).
   missed() { return LS.get('tidbits.missed', []); },
   recordMisses(answered) {
     const missed = this.missed();
     const byId = new Map(missed.map((m) => [m.id, m]));
+    const now = Date.now();
     for (const a of answered) {
       if (a.correct) { const m = byId.get(a.q.id); if (m) m.resolved = true; }
       else {
         const ex = byId.get(a.q.id);
-        if (ex) { ex.missCount++; ex.resolved = false; }
-        else { const m = { id: a.q.id, q: a.q, missCount: 1, resolved: false }; missed.push(m); byId.set(a.q.id, m); }
+        if (ex) { ex.missCount++; ex.resolved = false; ex.lastSeen = now; }
+        else { const m = { id: a.q.id, q: a.q, missCount: 1, resolved: false, lastSeen: now }; missed.push(m); byId.set(a.q.id, m); }
       }
     }
     LS.set('tidbits.missed', missed);
@@ -261,5 +268,81 @@ export const Store = {
   resetAll() {
     ['tidbits.records', 'tidbits.streak', 'tidbits.missed', 'tidbits.seen', 'tidbits.calibration', 'tidbits.answerTelemetry'].forEach((k) => localStorage.removeItem(k));
     this._seen.clear();
+  },
+};
+
+// "2 weeks ago" / "yesterday" — the web's Intl mirror of Apple's
+// RelativeDateTimeFormatter, used only by Weak-Spot Arena's reason caption.
+function relativeTime(ts) {
+  if (!ts) return 'a while back';
+  const mins = Math.round((Date.now() - ts) / 60000);
+  if (mins < 1) return 'just now';
+  const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto', style: 'long' });
+  if (mins < 60) return rtf.format(-mins, 'minute');
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return rtf.format(-hours, 'hour');
+  const days = Math.round(hours / 24);
+  if (days < 30) return rtf.format(-days, 'day');
+  const months = Math.round(days / 30);
+  if (months < 12) return rtf.format(-months, 'month');
+  return rtf.format(-Math.round(months / 12), 'year');
+}
+
+// Tidbits Club EXCLUSIVE — Weak-Spot Arena (docs/CLUB-FEATURES-BUILD.md "Feature
+// 1"). The web mirror of the Apple `WeakSpotArena.build()`: a round built entirely
+// from the player's own local miss history (Store.missed()) — most-missed + oldest
+// gap first — topped up from weakest categories when true misses are thin.
+// Transparent by construction: every question carries a plain "why you're seeing
+// this" reason, never an opaque model.
+export const WeakSpotArena = {
+  roundSize: 10,
+  // Below this many true misses, the round is topped up from weak categories.
+  trueMissFloor: 4,
+  // Target size when topping up with category-fill (not the full 10 — a round
+  // mostly "shoring up X" stops being a *weak-spot* arena).
+  fillTarget: 8,
+
+  /** Build one round: { questions, reasons: {qid: reasonString}, missCount }.
+   * `pull(categoryID, excludingIds, limit)` sources the category top-up — the
+   * caller passes Corpus.pull so this generator stays a pure function of the
+   * local miss store + whatever pull function it's given (easy to test). */
+  build(pull) {
+    const unresolved = Store.missed().filter((m) => !m.resolved && m.q)
+      .sort((a, b) => b.missCount - a.missCount || (a.lastSeen || 0) - (b.lastSeen || 0));
+    const questions = [];
+    const reasons = {};
+    const pickedIDs = new Set();
+    for (const m of unresolved) {
+      if (questions.length >= this.roundSize) break;
+      if (pickedIDs.has(m.id)) continue;
+      questions.push(m.q);
+      pickedIDs.add(m.id);
+      reasons[m.id] = `Missed ${relativeTime(m.lastSeen)} · ×${m.missCount}`;
+    }
+    const missCount = questions.length;
+
+    if (missCount < this.trueMissFloor && typeof pull === 'function') {
+      const weakest = Store.progress().filter((d) => d.total >= 3).sort((a, b) => a.acc - b.acc);
+      for (const domain of weakest) {
+        if (questions.length >= this.fillTarget) break;
+        const pool = pull(domain.id, pickedIDs, this.fillTarget - questions.length) || [];
+        for (const q of pool) {
+          if (questions.length >= this.fillTarget) break;
+          questions.push(q);
+          pickedIDs.add(q.id);
+          reasons[q.id] = `Shoring up ${catById(domain.id).name}`;
+        }
+      }
+    }
+    return { questions, reasons, missCount };
+  },
+
+  /** A genuine one-line sample from the player's own misses (MONETIZATION §4a:
+   * "a real preview, never a nag") — the non-member Home-card pitch. */
+  previewLine() {
+    const unresolved = Store.missed().filter((m) => !m.resolved && m.q)
+      .sort((a, b) => b.missCount - a.missCount);
+    const m = unresolved[0];
+    return m ? `Missed: “${m.q.prompt}” — Club turns misses like this into a round.` : null;
   },
 };

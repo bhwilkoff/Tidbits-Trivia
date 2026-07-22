@@ -13,6 +13,7 @@ import { FirebaseNet } from './firebase.js';
 import { Identity } from './identity.js';
 
 const CACHE_KEY = 'tidbits.entitlement.isClub';
+const DEBUG_KEY = 'tidbitsClubDebug';
 
 function grantsClub(ent) {
   if (!ent || ent.tier !== 'club') return false;
@@ -20,9 +21,21 @@ function grantsClub(ent) {
   return Date.now() < Number(ent.until);
 }
 
+// Pre-launch there are no real purchases, so every Club feature is verified behind
+// a debug override — mirror of Apple's TIDBITS_CLUB=1 (docs/CLUB-FEATURES-BUILD.md
+// gating convention): `?club=1` in the URL, or localStorage.tidbitsClubDebug = '1'.
+function forceClub() {
+  try {
+    if (new URLSearchParams(location.search).get('club') === '1') return true;
+  } catch {}
+  try { if (localStorage.getItem(DEBUG_KEY) === '1') return true; } catch {}
+  return false;
+}
+
 export const Entitlement = {
   // Seed from the cached last-known-good so gating is correct before any network round-trip.
-  isClub: (() => { try { return localStorage.getItem(CACHE_KEY) === '1'; } catch { return false; } })(),
+  _clubStored: (() => { try { return localStorage.getItem(CACHE_KEY) === '1'; } catch { return false; } })(),
+  get isClub() { return forceClub() || this._clubStored; },
   _subs: [],
 
   /** Subscribe to Club-status changes (fires immediately with the current value). */
@@ -30,8 +43,8 @@ export const Entitlement = {
   _emit() { this._subs.forEach((f) => { try { f(this.isClub); } catch {} }); },
 
   _set(club) {
-    const changed = this.isClub !== club;
-    this.isClub = club;
+    const changed = this._clubStored !== club;
+    this._clubStored = club;
     try { localStorage.setItem(CACHE_KEY, club ? '1' : '0'); } catch {}
     if (changed) this._emit();
   },

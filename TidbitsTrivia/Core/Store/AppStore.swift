@@ -39,7 +39,7 @@ final class AppStore {
 
     /// Record what the player just launched, so Quick Play mirrors their groove.
     func rememberSelection(mode: GameMode, category: TriviaCategory, mixModes: [GameMode]? = nil) {
-        guard mode != .daily else { return }   // the Daily is a separate habit
+        guard mode != .daily, mode != .weakSpot else { return }   // separate habit / Club-gated, never the free Quick Play default
         lastPlayedModeRaw = mode.rawValue
         lastPlayedCategoryID = category.id
         if mode == .mix, let mixModes {
@@ -70,7 +70,8 @@ final class AppStore {
     /// Serendipity — opt-in, never the default (a random default reads as "the
     /// app doesn't know what I want").
     func surpriseMe() -> LaunchRequest {
-        let modes = GameMode.allCases.filter { $0 != .daily && $0 != .barTrivia && $0 != .mix }
+        // Club-gated modes never surface from a free-tier random pick.
+        let modes = GameMode.allCases.filter { $0 != .daily && $0 != .barTrivia && $0 != .mix && $0 != .weakSpot }
         return LaunchRequest(mode: modes.randomElement() ?? .classic,
                              category: TriviaCategory.all.randomElement() ?? .named("mixed"))
     }

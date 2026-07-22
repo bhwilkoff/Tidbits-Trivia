@@ -26,8 +26,10 @@ final class EntitlementStore {
     private static let sourceKey = "tidbits.entitlement.source"
 
     /// The gate. Seeded from the cached last-known-good so a returning member is Club
-    /// instantly, before any network or store round-trip.
-    private(set) var isClub: Bool = UserDefaults.standard.bool(forKey: EntitlementStore.cacheKey)
+    /// instantly, before any network or store round-trip. `DebugHooks.forceClub`
+    /// (TIDBITS_CLUB=1) overrides it pre-launch, when there are no real purchases yet.
+    private var isClubStored: Bool = UserDefaults.standard.bool(forKey: EntitlementStore.cacheKey)
+    var isClub: Bool { DebugHooks.forceClub || isClubStored }
     /// Where the current entitlement came from ("apple" / "web" / nil) — for display + debug.
     private(set) var source: String? = UserDefaults.standard.string(forKey: EntitlementStore.sourceKey)
 
@@ -74,7 +76,7 @@ final class EntitlementStore {
     }
 
     private func set(_ club: Bool, source: String?) {
-        isClub = club
+        isClubStored = club
         self.source = source
         UserDefaults.standard.set(club, forKey: EntitlementStore.cacheKey)
         UserDefaults.standard.set(source, forKey: EntitlementStore.sourceKey)

@@ -9,6 +9,9 @@ struct ResultsView: View {
     /// nil = replay not allowed (the Daily is play-once, R-DAILY-1).
     let onPlayAgain: (() -> Void)?
     let onDone: () -> Void
+    /// Weak-Spot Arena only: how many true misses this round turned correct —
+    /// the payoff headline (docs/CLUB-FEATURES-BUILD.md "Feature 1"). nil elsewhere.
+    var weakSpotGapsClosed: Int? = nil
     @Environment(PlayerIdentityStore.self) private var identity
     @State private var showBoard = false
 
@@ -19,6 +22,7 @@ struct ResultsView: View {
         ScrollView {
             VStack(spacing: 20) {
                 scoreCard
+                gapsClosedMoment
                 statsRow
                 gridCard
                 if isTodayDaily { dailyBoardCTA }
@@ -87,6 +91,24 @@ struct ResultsView: View {
         .padding(.vertical, 28)
         .chunkyCard(fill: summary.category.color.opacity(0.18))
         .padding(.trailing, Tidbits.Metric.shadowOffset)
+    }
+
+    /// Weak-Spot Arena's payoff — "you didn't just play, you got better."
+    @ViewBuilder private var gapsClosedMoment: some View {
+        if let n = weakSpotGapsClosed {
+            VStack(spacing: 4) {
+                Text("You closed \(n) gap\(n == 1 ? "" : "s")")
+                    .font(.system(size: 22, weight: .black, design: .rounded))
+                    .foregroundStyle(Tidbits.Palette.ink)
+                Text(n > 0 ? "Turned a miss into a win" : "Nothing to close yet this round")
+                    .font(Tidbits.TypeRamp.l5)
+                    .foregroundStyle(Tidbits.Palette.inkSoft)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
+            .chunkyCard(fill: Tidbits.Palette.grape.opacity(0.18))
+            .padding(.trailing, Tidbits.Metric.shadowOffset)
+        }
     }
 
     private var statsRow: some View {

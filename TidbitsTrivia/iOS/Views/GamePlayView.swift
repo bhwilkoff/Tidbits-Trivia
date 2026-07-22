@@ -28,6 +28,7 @@ struct GamePlayView: View {
                         if game.mode == .barTrivia, let round = game.currentRound { roundBanner(round) }
                         if let img = q.imageURL { pictureHeader(img) }
                         QuestionCard(question: q)
+                        if game.mode == .weakSpot, let reason = game.weakSpotReasons[q.id] { weakSpotReasonCaption(reason) }
                         if game.mode == .sweep { sweepGrid }
                         if game.mode == .stake && game.phase == .playing { stakeSelector }
                         if let spec = q.enumerate { enumeratePanel(spec) }
@@ -132,6 +133,15 @@ struct GamePlayView: View {
         case .timeAttack, .survival: return "#\(game.index + 1)"
         default: return "\(game.index + 1) / \(game.questions.count)"
         }
+    }
+
+    /// Weak-Spot Arena's "why you're seeing this" — transparency by
+    /// construction, never an opaque model (docs/CLUB-FEATURES-BUILD.md).
+    private func weakSpotReasonCaption(_ reason: String) -> some View {
+        Text(reason)
+            .font(Tidbits.TypeRamp.l5)
+            .foregroundStyle(Tidbits.Palette.grape)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     // MARK: Trivia Night round banner

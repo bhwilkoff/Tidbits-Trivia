@@ -8,7 +8,9 @@ import SwiftData
 struct HomeView: View {
     @Environment(AppStore.self) private var store
     @Environment(GameCenterManager.self) private var gameCenter
+    @Environment(EntitlementStore.self) private var entitlement
     @State private var launch: LaunchRequest?
+    @State private var showClubPaywall = false
     @State private var showCustomize = false
     @State private var showNightSheet = false
     @State private var showNightSetup = false
@@ -43,6 +45,7 @@ struct HomeView: View {
                     else { start(LaunchRequest(mode: .daily, category: .named("mixed")), remember: false) }
                 }
                 TriviaNightCard { showNightSheet = true }
+                WeakSpotCard(isClub: entitlement.isClub, previewLine: weakSpotPreviewLine) { openWeakSpot() }
                 moreWaysSection
                 Button { showLiveJoin = true } label: {
                     HStack(spacing: 6) {
@@ -114,6 +117,7 @@ struct HomeView: View {
             VersusContainerView(bot: bot)
         }
         .sheet(isPresented: $showLiveJoin) { LiveJoinView(initialCode: liveJoinCode) }
+        .sheet(isPresented: $showClubPaywall) { ClubPaywallView() }
         .fullScreenCover(isPresented: showOnboarding) {
             OnboardingView { hasOnboarded = true }
         }
@@ -155,6 +159,22 @@ struct HomeView: View {
     private func start(_ req: LaunchRequest, remember: Bool = true) {
         if remember { store.rememberSelection(mode: req.mode, category: req.category, mixModes: req.mixModes) }
         launch = req
+    }
+
+    /// A genuine one-line sample from the player's own misses (MONETIZATION §4a:
+    /// "a real preview, never a nag") — nil once they're a member (no sell needed).
+    private var weakSpotPreviewLine: String? {
+        entitlement.isClub ? nil : WeakSpotArena.previewLine(in: modelContext)
+    }
+
+    /// Club members launch the arena directly; everyone else sees the existing
+    /// paywall (never a blank wall — CLAUDE.md "gating + verification convention").
+    private func openWeakSpot() {
+        if entitlement.isClub {
+            start(LaunchRequest(mode: .weakSpot, category: .named("mixed")), remember: false)
+        } else {
+            showClubPaywall = true
+        }
     }
 
     private var header: some View {
@@ -340,7 +360,9 @@ private struct CustomizeSheet: View {
 
     private let coreModes: [GameMode] = [.classic, .timeAttack, .survival, .stake]
     private var playableModes: [GameMode] {
-        GameMode.allCases.filter { $0 != .daily && $0 != .barTrivia && $0 != .mix }
+        // .weakSpot is Club-only and never a free Customize pick — it has its
+        // own Home entry point (docs/CLUB-FEATURES-BUILD.md "Feature 1").
+        GameMode.allCases.filter { $0 != .daily && $0 != .barTrivia && $0 != .mix && $0 != .weakSpot }
     }
     // 150pt floor: every mode/category name fits ONE line — narrower cells
     // mid-word-wrapped "Survival"/"Geography" (the owner's "text is bad" bug).
@@ -627,6 +649,58 @@ private struct TriviaNightCard: View {
             }
             .padding(18)
             .chunkyCard(fill: Tidbits.Palette.coral)
+        }
+        .buttonStyle(.plain)
+        .padding(.trailing, Tidbits.Metric.shadowOffset)
+    }
+}
+
+// MARK: - Weak-Spot Arena card (Club — docs/CLUB-FEATURES-BUILD.md "Feature 1")
+
+private struct WeakSpotCard: View {
+    let isClub: Bool
+    /// A real sample from the player's own misses, shown to non-members instead
+    /// of a generic sell line (MONETIZATION §4a: "a real preview, never a nag").
+    let previewLine: String?
+    let action: () -> Void
+
+    private var subtitle: String {
+        if isClub { return "Turn your misses into a round." }
+        return previewLine ?? "Your misses, turned into a round you can actually close."
+    }
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 14) {
+                Image(systemName: "scope")
+                    .font(.system(size: 30, weight: .black))
+                    .foregroundStyle(Tidbits.Palette.grape.legibleForeground)
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 6) {
+                        Text("WEAK-SPOT ARENA")
+                            .font(Tidbits.TypeRamp.l2)
+                            .foregroundStyle(Tidbits.Palette.grape.legibleForeground)
+                        if !isClub {
+                            Text("CLUB")
+                                .font(.system(size: 11, weight: .black, design: .rounded))
+                                .foregroundStyle(Tidbits.Palette.grape)
+                                .padding(.horizontal, 7).padding(.vertical, 3)
+                                .background(Capsule().fill(Color.white.opacity(0.92)))
+                        }
+                    }
+                    Text(subtitle)
+                        .font(Tidbits.TypeRamp.l5)
+                        .foregroundStyle(Tidbits.Palette.grape.legibleForeground.opacity(0.85))
+                        .multilineTextAlignment(.leading)
+                        .lineLimit(2)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right.circle.fill")
+                    .font(.system(size: 26, weight: .bold))
+                    .foregroundStyle(Tidbits.Palette.grape.legibleForeground)
+            }
+            .padding(18)
+            .chunkyCard(fill: Tidbits.Palette.grape)
         }
         .buttonStyle(.plain)
         .padding(.trailing, Tidbits.Metric.shadowOffset)

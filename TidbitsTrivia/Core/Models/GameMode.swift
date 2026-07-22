@@ -21,6 +21,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable, Codable {
     case barTrivia   // Trivia Night: a configurable multi-round "bar trivia" night
     case mix         // Custom Mix: the Customize sheet multi-select, shuffled together
     case daily       // one fixed daily set, streak-bearing, shareable
+    case weakSpot    // Club: a round built from your own miss history (WeakSpotArena)
 
     var id: String { rawValue }
 
@@ -59,6 +60,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable, Codable {
         case .barTrivia:  return "Trivia Night"
         case .mix:        return "Custom Mix"
         case .daily:      return "Daily Tidbit"
+        case .weakSpot:   return "Weak-Spot Arena"
         }
     }
 
@@ -81,6 +83,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable, Codable {
         case .barTrivia:  return "Host a night. Every kind of round."
         case .mix:        return "Your picked modes, shuffled together."
         case .daily:      return "Everyone's puzzle. Keep your streak."
+        case .weakSpot:   return "Turn your misses into a round."
         }
     }
 
@@ -103,6 +106,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable, Codable {
         case .barTrivia:  return "party.popper.fill"
         case .mix:        return "rectangle.stack.fill"
         case .daily:      return "sun.max.fill"
+        case .weakSpot:   return "scope"
         }
     }
 
@@ -125,6 +129,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable, Codable {
         case .barTrivia:  return Tidbits.Palette.coral
         case .mix:        return Tidbits.Palette.teal
         case .daily:      return Tidbits.Palette.yellow
+        case .weakSpot:   return Tidbits.Palette.grape
         }
     }
 
@@ -148,6 +153,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable, Codable {
         case .barTrivia:  return 20    // nominal — the engine picks a per-round clock by question shape
         case .mix:        return 20    // nominal — shape-driven clock, same as a night
         case .daily:      return 30
+        case .weakSpot:   return 20
         }
     }
 
@@ -170,6 +176,7 @@ enum GameMode: String, CaseIterable, Identifiable, Sendable, Codable {
         case .barTrivia:  return 20    // nominal — the plan's rounds determine the real count
         case .mix:        return 10
         case .daily:      return 7
+        case .weakSpot:   return 10
         }
     }
 

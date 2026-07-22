@@ -81,6 +81,10 @@ final class GameEngine {
     private(set) var enumNamed: [String] = []
     var enumLastHit: Bool = false   // last submit matched — drives a flash in the UI
 
+    // Weak-Spot Arena (Club): per-question "why you're seeing this" reason,
+    // keyed by question ID. Empty outside `.weakSpot`.
+    private(set) var weakSpotReasons: [String: String] = [:]
+
     // Clocks
     private(set) var remaining: Double = 0      // seconds left on the active clock
     private var clockBudget: Double = 0
@@ -160,12 +164,15 @@ final class GameEngine {
     }
 
     /// Start a game from a pre-built question set (live "create a quiz").
-    func startCustom(mode: GameMode, category: TriviaCategory, questions: [Question]) {
+    /// `reasons` is Weak-Spot Arena's per-question "why you're seeing this"
+    /// (empty for every other custom launch).
+    func startCustom(mode: GameMode, category: TriviaCategory, questions: [Question], reasons: [String: String] = [:]) {
         self.mode = mode
         self.category = category
         phase = .loading
         triedLoad = true
         reset()
+        self.weakSpotReasons = reasons
         self.questions = questions
         QuestionProvider.shared.markSeen(questions.map(\.id))
         guard !questions.isEmpty else { phase = .idle; return }
@@ -206,6 +213,7 @@ final class GameEngine {
             : []
         currentStake = 0
         stakeOutcomes = [:]
+        weakSpotReasons = [:]
     }
 
     /// Interleave due review questions among fresh ones (count stays stable;

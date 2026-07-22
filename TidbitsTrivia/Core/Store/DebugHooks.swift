@@ -31,6 +31,11 @@ enum DebugHooks {
     /// TIDBITS_PAYWALL=1 → present the Club paywall on launch (screenshot observability).
     static var showPaywall: Bool { ProcessInfo.processInfo.environment["TIDBITS_PAYWALL"] == "1" }
 
+    /// TIDBITS_CLUB=1 → force `EntitlementStore.isClub` true. Pre-launch there are no
+    /// real purchases, so this is how every Club feature gets verified
+    /// (docs/CLUB-FEATURES-BUILD.md gating convention).
+    static var forceClub: Bool { ProcessInfo.processInfo.environment["TIDBITS_CLUB"] == "1" }
+
     /// TIDBITS_AUTOCREATE="<topic>" → prefill Create and generate a live
     /// quiz from Wikipedia (verifies the live generation path end to end).
     static var autoCreate: String? {

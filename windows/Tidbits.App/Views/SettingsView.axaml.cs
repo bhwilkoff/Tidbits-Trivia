@@ -17,7 +17,42 @@ public partial class SettingsView : UserControl
         VersionText.Text = $"Tidbits Trivia for Windows — version {v?.ToString(3) ?? "1.0.0"}";
         RefreshProfile();
         RefreshAccount();
-        _ = GameData.Shared.Value.Entitlement.RefreshAsync();
+        RefreshClub();
+        _ = RefreshEntitlementThenClub();
+    }
+
+    private async System.Threading.Tasks.Task RefreshEntitlementThenClub()
+    {
+        await GameData.Shared.Value.Entitlement.RefreshAsync();
+        RefreshClub();
+    }
+
+    // MARK: - Tidbits Club (Decision 047)
+
+    private void RefreshClub()
+    {
+        ClubButton.Content = GameData.Shared.Value.Entitlement.IsClub
+            ? "Tidbits Club — Member"
+            : "Join Tidbits Club";
+    }
+
+    /// Opens the paywall as a FAContentDialog (the app's established modal idiom) — never a
+    /// forced interstitial, always Settings-initiated. Sized comfortably for the pitch +
+    /// pillars + plans without feeling like a squeezed phone sheet.
+    private async void OnOpenClub(object? sender, RoutedEventArgs e)
+    {
+        var dialog = new FAContentDialog
+        {
+            Content = new ScrollViewer
+            {
+                Content = new ClubPaywallView(),
+                MaxWidth = 520,
+                MaxHeight = 640,
+            },
+            CloseButtonText = "Close",
+        };
+        await dialog.ShowAsync();
+        RefreshClub();
     }
 
     // MARK: - Account (portable identity)

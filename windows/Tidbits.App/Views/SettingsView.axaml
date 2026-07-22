@@ -34,6 +34,14 @@
                            Foreground="#C4442E" TextWrapping="Wrap"/>
             </StackPanel>
 
+            <StackPanel Spacing="8">
+                <TextBlock Text="Tidbits Club" FontSize="18" FontWeight="Bold"/>
+                <Button x:Name="ClubButton" Content="Join Tidbits Club" Click="OnOpenClub"
+                        HorizontalAlignment="Left" Padding="14,8"/>
+                <TextBlock Text="Ranked seasons, a knowledge atlas, a story archive, and expeditions — the whole game stays free."
+                           FontSize="13" Opacity="0.65" TextWrapping="Wrap"/>
+            </StackPanel>
+
             <StackPanel Spacing="6">
                 <TextBlock Text="Gameplay" FontSize="18" FontWeight="Bold"/>
                 <ToggleSwitch x:Name="ReviewToggle" Content="Review questions" IsCheckedChanged="OnReviewToggled"/>

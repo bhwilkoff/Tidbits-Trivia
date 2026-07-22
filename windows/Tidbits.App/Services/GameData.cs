@@ -32,6 +32,11 @@ public sealed class GameData
     /// Tidbits Club gate (Decision 047) — remote-only on Windows until the Microsoft
     /// Store `StoreContext` local check lands (Phase 3). Mirrors web/Kotlin/Swift.
     public Tidbits.Core.Networking.EntitlementStore Entitlement { get; }
+    /// The Microsoft Store IAP seam (paywall + gate share this ONE instance). NoStoreGateway
+    /// on the direct-download .exe / Mac head; the WindowsStoreGateway (Microsoft Store
+    /// StoreContext) replaces it in the packaged MSIX (Phase 3) — the paywall UI never
+    /// changes, it just starts seeing real products/purchases.
+    public Tidbits.Core.Networking.IStoreGateway Store { get; }
     public string PlayerName => Identity.Current.Name;
     public Tidbits.Core.Networking.SfxBoard Sfx { get; }
     /// The Wave B media engine (host-only) — lazy so we don't spin LibVLC unless hosting.
@@ -57,7 +62,9 @@ public sealed class GameData
         Account = new Tidbits.Core.Networking.AccountIdentity(Rtdb, new DpapiTokenStore());
         // NoStoreGateway on the direct-download .exe / Mac head; the WindowsStoreGateway
         // (Microsoft Store StoreContext) replaces it in the packaged MSIX (Phase 3).
-        Entitlement = new Tidbits.Core.Networking.EntitlementStore(Rtdb, Account, new Tidbits.Core.Networking.NoStoreGateway());
+        // ONE instance shared by the entitlement gate and the paywall UI.
+        Store = new Tidbits.Core.Networking.NoStoreGateway();
+        Entitlement = new Tidbits.Core.Networking.EntitlementStore(Rtdb, Account, Store);
     }
 
     public static GameData FromDirectory(string dir) => new(QuestionSources.LoadFromDirectory(dir));

@@ -1,0 +1,7 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Tidbits.App.Views.ClubPaywallView">
+    <!-- No internal ScrollViewer — the host (SettingsView's FAContentDialog) supplies the
+         single scroll container so nested same-axis ScrollViewers don't fight over sizing. -->
+    <Panel x:Name="Root" Margin="4"/>
+</UserControl>

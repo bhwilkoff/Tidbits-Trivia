@@ -226,6 +226,7 @@ object PlayerIdentity {
     /** Sign out → back to a fresh anonymous profile on this device. The account's records
      *  stay in the cloud; signing in again (Google) restores + merges them. */
     suspend fun signOut() {
+        Entitlement.clearOnSignOut()   // next person on this device isn't you — drop cached Club
         val uid = FirebaseNet.signOutUser()
         profileId = uid
         profile = FirebaseNet.loadProfile(uid) ?: newProfile().also { runCatching { FirebaseNet.saveProfile(uid, it) } }

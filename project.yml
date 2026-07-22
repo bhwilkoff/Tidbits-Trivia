@@ -37,6 +37,10 @@ targets:
       path: TidbitsTrivia/TidbitsTrivia.entitlements
       properties:
         com.apple.developer.game-center: true
+    # Local StoreKit config so IAP purchases work in the simulator without App Store
+    # Connect (the products still ship for real via App Store Connect at go-live).
+    scheme:
+      storeKitConfiguration: TidbitsTrivia/Resources/Tidbits.storekit
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.learningischange.tidbitstrivia

@@ -149,7 +149,7 @@ function bindProfile() {
   app.querySelector('[data-shuffle]')?.addEventListener('click', () => { Identity.rerollAvatar(); render(); });   // L4 cosmetics
   app.querySelector('[data-signout]')?.addEventListener('click', async () => {
     if (!confirm('Sign out? Your records stay saved to your account — sign in again to bring them back.')) return;
-    try { await Identity.signOut(); render(); }
+    try { await Identity.signOut(); Entitlement.clearOnSignOut(); render(); }
     catch (e) { console.error('[identity] sign-out error', e); alert('Sign-out didn’t complete. Please try again.'); }
   });
   app.querySelectorAll('[data-signin]').forEach((b) => b.addEventListener('click', async () => {

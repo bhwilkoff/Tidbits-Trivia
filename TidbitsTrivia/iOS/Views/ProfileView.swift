@@ -8,6 +8,8 @@ import AuthenticationServices
 struct ProfileView: View {
     @Environment(PlayerIdentityStore.self) private var identity
     @Environment(GameCenterManager.self) private var gameCenter
+    @Environment(EntitlementStore.self) private var entitlement
+    @State private var showPaywall = false
     @State private var editingName = false
     @State private var draftName = ""
     @State private var appleNonce = ""
@@ -20,6 +22,13 @@ struct ProfileView: View {
                     ratingCard(p.rating)
                     streakCard(p.streak)
                     statsGrid(p.stats)
+                    Button { showPaywall = true } label: {
+                        Label(entitlement.isClub ? "Tidbits Club — Member" : "Join Tidbits Club",
+                              systemImage: entitlement.isClub ? "star.circle.fill" : "star.circle")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(ChunkyButtonStyle(fill: entitlement.isClub ? Tidbits.Palette.surface : Tidbits.Palette.blue,
+                                                   textColor: entitlement.isClub ? Tidbits.Palette.ink : .white))
                     NavigationLink { LeaderboardView() } label: {   // Wave E: cross-venue / season standings
                         Label("Leaderboard", systemImage: "trophy.fill").frame(maxWidth: .infinity)
                     }
@@ -56,6 +65,7 @@ struct ProfileView: View {
         } message: {
             Text("This is the name other players and venues see on leaderboards.")
         }
+        .sheet(isPresented: $showPaywall) { ClubPaywallView() }
     }
 
     private func header(_ p: PlayerIdentity.Profile) -> some View {

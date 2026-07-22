@@ -283,6 +283,7 @@ final class PlayerIdentityStore {
     /// Sign out → back to a fresh anonymous profile on this device. The account's records
     /// stay in the cloud; signing in again (Apple) restores + merges them.
     func signOut() async {
+        EntitlementStore.shared.clearOnSignOut()   // the next person on this device isn't you — never keep cached Club
         do {
             let uid = try await db.signOut()
             profileId = uid

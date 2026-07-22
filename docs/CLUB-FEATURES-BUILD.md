@@ -48,7 +48,7 @@ ship first; season/cron infrastructure is last.
 | # | Feature | Pillar | Shape | Status |
 |---|---|---|---|---|
 | 1 | **Weak-Spot Arena** | 1 gameplay | client-only: round from your own miss history | **DONE on all 6 platforms** |
-| 2 | **Story Archive** | 3 library | client-only: keep every unlocked "story behind the answer", searchable | **iOS DONE** |
+| 2 | **Story Archive** | 3 library | client-only: keep every unlocked "story behind the answer", searchable | **DONE on all 6 platforms** |
 | 3 | **Marathon** | 1 gameplay | client-only: 200-q graded endurance, cross-session scorecard | todo |
 | 4 | **Knowledge Atlas** | 2 retrospect | client-only: accuracy by domain/sub-domain over 12mo | todo |
 | 5 | **Friend Streaks** | 4 social | light RTDB (reuses friends): mutual daily accountability | todo |
@@ -67,7 +67,7 @@ Legend: ✅ done+verified · 🔨 in progress · ⏳ queued · 🚫 n/a (with re
 | Feature | web | iOS/iPadOS | macOS | tvOS | Android | Windows |
 |---|---|---|---|---|---|---|
 | 1 Weak-Spot Arena | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 2 Story Archive | ✅ | ✅ | ✅ | ✅ | ✅ | ⏳ |
+| 2 Story Archive | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 3 Marathon | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 4 Knowledge Atlas | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 5 Friend Streaks | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
@@ -611,3 +611,41 @@ says is the whole point.
   non-member path: CLUB chip + a real preview line pulled from the player's
   own most recent story, tapping through to the existing `ClubPaywallScreen`
   (which already listed Story Archive as a pillar) rather than a blank wall.
+- **2026-07-22** — **Story Archive (Feature 2) shipped on Windows (1.6.48→1.6.49)
+  — feature now COMPLETE on all 6 platforms.** `Tidbits.Core/Models/PlayerRecord.cs`
+  gains `SeenStory` (mirrors `MissedFact`'s shape/persistence idiom): qid, prompt,
+  answer, `Story` (`Question.Explanation` captured at answer-time — the free
+  in-moment reveal is untouched, R-MON-1), categoryId, the SOH-joined options +
+  correctIndex needed to rebuild a playable `Question` for "Re-ask this,"
+  first/lastSeen, everCorrect, favorite. `RecordsStore.Record(...)` upserts one
+  per answered question (right or wrong) in the SAME loop that already writes
+  misses/telemetry; `ToggleFavorite(qid)` persists the star; `ResetAll()` clears
+  it with the rest. New `Tidbits.Core/Store/StoryArchive.cs` is the pure,
+  UI-agnostic read side (mirror of iOS/Android/web's `StoryArchive`):
+  `PreviewLine`, `Count`, `Search(stories, text, domain, filter)` — plain
+  substring + predicate, no ranking model. Records dashboard gets a Club-marked
+  "STORY ARCHIVE" card (code-behind-built, mirrors `PlayView`'s Weak-Spot card
+  exactly — CLUB chip + real/honest preview for non-members → the existing
+  `ClubPaywallView` in an `FAContentDialog`, never a blank wall) placed right
+  after "See all N games." New `StoryArchiveUi.cs` (pure static builders —
+  chips/results-list/story-card/detail, mirrors `ClubPaywallUi`'s
+  headless-testable split) + `StoryArchiveDialog.cs` (the stateful wiring: one
+  `FAContentDialog` whose Content swaps between the list and a story's detail,
+  deliberately avoiding a nested second dialog — the macOS mirror hit a real
+  "one sheet per window" bug doing that — and keeping the search `TextBox` +
+  filter/domain chips alive across rebuilds so typing never loses focus/caret).
+  Tapping a card opens the detail view (favorite toggle, full story, and — when
+  the frozen options reduce to a playable 4-option MCQ — "Re-ask this," which
+  launches a 1-question Classic drill as an overlay on `RecordsView`'s new
+  `ReaskHost` `ContentControl`, mirroring `LeaderboardView`'s `DuelGameHost`
+  rather than a nested dialog). Reused `DebugHooks.ForceClub`/`TIDBITS_CLUB=1`;
+  no new debug hook needed. `dotnet test` (Mac head, headless Skia): 319
+  passed / 1 skipped (pre-existing LibVLC arch skip) / 0 failed — 17 new tests
+  covering the seen-store upsert/OR/reset semantics, search/filter/domain
+  predicates, the Records card in both member and non-member states, and the
+  archive's empty/no-results/list/chips/detail rendering. PNGs verified
+  (`records-story-archive-member.png`, `records-story-archive-non-member.png`,
+  `story-archive-empty.png`, `story-archive-list.png`,
+  `story-archive-detail.png`) — card copy, CLUB gating, story cards (domain,
+  right/wrong dot, favorite star), and the detail/re-ask button all render as
+  expected. `windows-latest` CI to be gated post-push.

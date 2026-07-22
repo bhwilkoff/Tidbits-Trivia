@@ -10,6 +10,9 @@ public sealed class RecordsData
     public List<CalibrationTally> Calibration { get; set; } = new();
     public DailyStreak Streak { get; set; } = new();
     public Dictionary<string, int[]> Telemetry { get; set; } = new();
+    /// The Club Story Archive's data source (docs/CLUB-FEATURES-BUILD.md "Feature 2") —
+    /// every distinct question ever answered, right or wrong.
+    public List<SeenStory> Seen { get; set; } = new();
 }
 
 /// Persists the outcome of a finished game (record + missed facts + Daily streak +
@@ -38,6 +41,9 @@ public sealed class RecordsStore
     public DailyStreak Streak => _data.Streak;
     public IReadOnlyList<CalibrationTally> Calibration =>
         _data.Calibration.OrderByDescending(c => c.TierValue).ToList();
+    /// The Club Story Archive's data source — every distinct answered question, most
+    /// recently met first.
+    public IReadOnlyList<SeenStory> Seen => _data.Seen.OrderByDescending(s => s.LastSeen).ToList();
 
     /// Record a finished game. Returns whether it's a new best for that mode+category.
     public bool Record(GameSummary summary)
@@ -61,6 +67,11 @@ public sealed class RecordsStore
 
         foreach (var miss in summary.Missed) RegisterMiss(miss.Question);
         foreach (var right in summary.Answered.Where(a => a.IsCorrect)) ResolveMiss(right.Question.Id);
+
+        // Club Story Archive (Feature 2): every answered question — right or wrong —
+        // upserts into the seen-forever library. R-MON-1: purely additive; the free
+        // in-moment story reveal this reads from is untouched.
+        foreach (var a in summary.Answered) RecordSeenStory(a);
 
         if (summary.Mode == GameMode.Daily)
         {
@@ -96,6 +107,31 @@ public sealed class RecordsStore
     {
         var e = _data.Missed.FirstOrDefault(m => m.QuestionId == qid);
         if (e is { Resolved: false }) { e.Resolved = true; e.LastSeen = DateTime.UtcNow; }
+    }
+
+    private void RecordSeenStory(AnsweredQuestion answered)
+    {
+        var q = answered.Question;
+        var e = _data.Seen.FirstOrDefault(s => s.QuestionId == q.Id);
+        if (e is not null)
+        {
+            e.LastSeen = DateTime.UtcNow;
+            if (answered.IsCorrect) e.EverCorrect = true;
+        }
+        else
+        {
+            _data.Seen.Add(SeenStory.From(q, answered.IsCorrect));
+        }
+    }
+
+    /// Toggle the archive's participation lever (docs/CLUB-FEATURES-BUILD.md "Feature
+    /// 2") for one story, keyed by qid. No-op if the qid isn't in the archive.
+    public void ToggleFavorite(string qid)
+    {
+        var e = _data.Seen.FirstOrDefault(s => s.QuestionId == qid);
+        if (e is null) return;
+        e.Favorite = !e.Favorite;
+        Save();
     }
 
     private void AddCalibration(IReadOnlyDictionary<int, StakeOutcome> outcomes)
@@ -145,6 +181,7 @@ public sealed class RecordsStore
         _data.Missed.Clear();
         _data.Calibration.Clear();
         _data.Telemetry.Clear();
+        _data.Seen.Clear();
         _data.Streak = new DailyStreak();
         Save();
     }

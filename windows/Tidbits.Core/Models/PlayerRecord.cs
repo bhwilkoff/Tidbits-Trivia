@@ -71,6 +71,62 @@ public sealed class MissedFact
     }
 }
 
+/// Every DISTINCT question the player has ever answered (right or wrong) — the Club
+/// Story Archive's data source (docs/CLUB-FEATURES-BUILD.md "Feature 2"). Upserted
+/// alongside every other record write (`RecordsStore.Record`), so it costs nothing
+/// until Club makes it worth opening (R-MON-1: the free in-moment story reveal is
+/// untouched). Windows mirror of Apple's `SeenStory` / Android's `SeenStory`.
+public sealed class SeenStory
+{
+    public string QuestionId { get; set; } = "";
+    public string Prompt { get; set; } = "";
+    public string CorrectAnswer { get; set; } = "";
+    public string Story { get; set; } = "";        // Question.Explanation, captured at answer-time
+    public string CategoryId { get; set; } = "";
+    public DateTime FirstSeen { get; set; } = DateTime.UtcNow;
+    public DateTime LastSeen { get; set; } = DateTime.UtcNow;
+    public bool EverCorrect { get; set; }
+    public bool Favorite { get; set; }
+
+    // Enough to rebuild a full MCQ for "Re-ask this" (mirrors MissedFact).
+    public string OptionsJoined { get; set; } = "";
+    public int CorrectIndex { get; set; }
+    public string SourceTitle { get; set; } = "";
+    public string SourceUrl { get; set; } = "";
+    public string TemplateId { get; set; } = "";
+    public int Difficulty { get; set; } = 3;
+
+    public static SeenStory From(Question q, bool correct, DateTime? at = null)
+    {
+        var now = at ?? DateTime.UtcNow;
+        return new SeenStory
+        {
+            QuestionId = q.Id, Prompt = q.Prompt, CorrectAnswer = q.CorrectAnswer, Story = q.Explanation,
+            CategoryId = q.CategoryId, FirstSeen = now, LastSeen = now, EverCorrect = correct,
+            OptionsJoined = string.Join('', q.Options), CorrectIndex = q.CorrectIndex,
+            SourceTitle = q.SourceTitle, SourceUrl = q.SourceUrl ?? "", TemplateId = q.TemplateId, Difficulty = q.Difficulty,
+        };
+    }
+
+    /// Rebuild the question for the archive's "Re-ask this" 1-question drill. null for
+    /// shapes that don't reduce to a plain 4-option MCQ (same fallback MissedFact uses).
+    [JsonIgnore]
+    public Question? Question
+    {
+        get
+        {
+            var options = OptionsJoined.Split('');
+            if (options.Length != 4) return null;
+            return new Question
+            {
+                Id = QuestionId, Prompt = Prompt, Options = options, CorrectIndex = CorrectIndex,
+                CategoryId = CategoryId, Difficulty = Difficulty, Explanation = Story,
+                SourceTitle = SourceTitle, SourceUrl = string.IsNullOrEmpty(SourceUrl) ? null : SourceUrl, TemplateId = TemplateId,
+            };
+        }
+    }
+}
+
 /// Lifetime calibration from Stake rounds — one row per confidence tier.
 public sealed class CalibrationTally
 {

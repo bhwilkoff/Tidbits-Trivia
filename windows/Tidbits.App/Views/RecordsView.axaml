@@ -3,6 +3,7 @@
              xmlns:vm="using:Tidbits.App.ViewModels"
              x:Class="Tidbits.App.Views.RecordsView"
              x:DataType="vm:RecordsViewModel">
+    <Panel>
     <ScrollViewer>
         <StackPanel Margin="36,32" Spacing="18" MaxWidth="760" HorizontalAlignment="Left">
             <TextBlock Text="Records" Classes="view-heading"/>
@@ -72,6 +73,11 @@
                     <TextBlock Foreground="#FF5C35" FontWeight="SemiBold"
                                Text="{Binding TotalGames, StringFormat='See all {0} games ›'}"/>
                 </Button>
+
+                <!-- Story Archive (Club — docs/CLUB-FEATURES-BUILD.md "Feature 2"): a
+                     "see all" destination off the dashboard (R-REC-1), built in
+                     code-behind since it reads live entitlement state, not the VM. -->
+                <ContentControl x:Name="StoryArchivePanel" Margin="0,4,0,0"/>
 
                 <!-- Knowledge (hidden until a specific-category game is played) -->
                 <StackPanel IsVisible="{Binding HasDomains}" Spacing="8">
@@ -176,4 +182,9 @@
             </StackPanel>
         </StackPanel>
     </ScrollViewer>
+    <!-- Story Archive "Re-ask this" — overlays the dashboard while a 1-question
+         drill plays (mirrors LeaderboardView's DuelGameHost), so re-asking doesn't
+         need a nested dialog stacked on the archive's own FAContentDialog. -->
+    <ContentControl x:Name="ReaskHost"/>
+    </Panel>
 </UserControl>

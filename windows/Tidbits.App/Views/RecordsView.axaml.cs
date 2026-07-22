@@ -1,11 +1,15 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using FluentAvalonia.UI.Controls;
+using Tidbits.App.Services;
 using Tidbits.App.ViewModels;
+using Tidbits.Core.Models;
+using Tidbits.Core.Store;
 
 namespace Tidbits.App.Views;
 
@@ -18,6 +22,7 @@ public partial class RecordsView : UserControl
     {
         InitializeComponent();
         RefreshProfile();
+        BuildStoryArchiveCard();
     }
 
     protected override void OnDataContextChanged(System.EventArgs e)
@@ -25,6 +30,7 @@ public partial class RecordsView : UserControl
         base.OnDataContextChanged(e);
         RefreshProfile();
         BuildPie();
+        BuildStoryArchiveCard();
     }
 
     /// Show who you're playing as (name + deterministic hue avatar) in the banner.
@@ -221,5 +227,90 @@ public partial class RecordsView : UserControl
             list.Children.Add(row);
         }
         return new ScrollViewer { Content = list, MaxHeight = 460 };
+    }
+
+    // MARK: - Tidbits Club: Story Archive (docs/CLUB-FEATURES-BUILD.md "Feature 2")
+
+    /// The Records "see all" entry point (R-REC-1) — a Club-marked card mirroring
+    /// PlayView's Weak-Spot card. Members open the searchable archive; everyone else
+    /// sees a real preview (their most recent story, or an honest static line) and the
+    /// existing Club paywall — never a blank wall.
+    private void BuildStoryArchiveCard()
+    {
+        if (StoryArchivePanel is null) return;
+        var data = GameData.Shared.Value;
+        bool isClub = data.Entitlement.IsClub;
+        int count = StoryArchive.Count(data.Records);
+        var subtitle = isClub
+            ? (count == 0
+                ? "Every story you unlock, kept here forever."
+                : $"{count} stor{(count == 1 ? "y" : "ies")} collected — searchable, forever.")
+            : StoryArchive.PreviewLine(data.Records) ?? "Club keeps every story you unlock, searchable forever.";
+
+        var titleRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, VerticalAlignment = VerticalAlignment.Center };
+        titleRow.Children.Add(new TextBlock { Text = "STORY ARCHIVE", Classes = { "body-strong" } });
+        if (!isClub)
+        {
+            titleRow.Children.Add(new Border
+            {
+                Background = new SolidColorBrush(Color.Parse("#FF5C35")),
+                CornerRadius = new Avalonia.CornerRadius(6),
+                Padding = new Avalonia.Thickness(7, 2),
+                Child = new TextBlock { Text = "CLUB", FontSize = 11, FontWeight = FontWeight.Black, Foreground = Brushes.White },
+            });
+        }
+
+        var textStack = new StackPanel { Spacing = 3, VerticalAlignment = VerticalAlignment.Center, MaxWidth = 440 };
+        textStack.Children.Add(titleRow);
+        textStack.Children.Add(new TextBlock { Text = subtitle, Classes = { "caption" }, TextWrapping = TextWrapping.Wrap });
+
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
+        grid.Children.Add(textStack);
+
+        var action = new Button
+        {
+            Content = isClub ? "Open" : "Join Club",
+            Classes = { "accent", "compact" },
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        action.Click += (_, _) => OnStoryArchiveAction();
+        Grid.SetColumn(action, 1);
+        grid.Children.Add(action);
+
+        StoryArchivePanel.Content = new Border { Classes = { "card" }, Child = grid };
+    }
+
+    /// Members open the searchable archive directly; everyone else sees the existing
+    /// paywall (same FAContentDialog idiom as PlayView's Weak-Spot card).
+    private async void OnStoryArchiveAction()
+    {
+        var data = GameData.Shared.Value;
+        if (!data.Entitlement.IsClub)
+        {
+            var dialog = new FAContentDialog
+            {
+                Content = new ScrollViewer { Content = new ClubPaywallView(), MaxWidth = 520, MaxHeight = 640 },
+                CloseButtonText = "Close",
+            };
+            await dialog.ShowAsync();
+            BuildStoryArchiveCard(); // reflect a purchase/restore made from inside the dialog
+            return;
+        }
+        await StoryArchiveDialog.ShowAsync(data.Records, question => StartReask(question));
+        BuildStoryArchiveCard(); // reflect any favorite toggles / re-ask outcomes
+    }
+
+    /// Launches the "Re-ask this" 1-question drill (Duel-drill pattern) as an overlay
+    /// on top of the Records dashboard — mirrors LeaderboardView's DuelGameHost, so it
+    /// never needs a second dialog stacked on the archive's own FAContentDialog.
+    private void StartReask(Question question)
+    {
+        var data = GameData.Shared.Value;
+        var engine = data.NewEngine();
+        var vm = new GameViewModel(engine, data.Records);
+        vm.Closed += () => { ReaskHost.Content = null; BuildStoryArchiveCard(); };
+        vm.PlayAgainRequested += () => StartReask(question);
+        ReaskHost.Content = new GameView { DataContext = vm };
+        engine.StartCustom(GameMode.Classic, TriviaCategory.Named(question.CategoryId), new[] { question });
     }
 }

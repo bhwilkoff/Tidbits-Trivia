@@ -9,12 +9,14 @@ import AuthenticationServices
 struct SettingsView_macOS: View {
     @Environment(GameCenterManager.self) private var gameCenter
     @Environment(PlayerIdentityStore.self) private var identity
+    @Environment(EntitlementStore.self) private var entitlement
     @Environment(\.modelContext) private var modelContext
     @AppStorage(GameSettings.reviewKey) private var reviewEnabled = true
     @State private var confirmReset = false
     @State private var editingName = false
     @State private var draftName = ""
     @State private var appleNonce = ""
+    @State private var showPaywall = false
 
     private var version: String {
         let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
@@ -39,6 +41,10 @@ struct SettingsView_macOS: View {
                     LabeledContent("Tidbits Rating", value: p.rating.provisional ? "\(Int(p.rating.value)) · provisional" : "\(Int(p.rating.value))")
                     LabeledContent("Accuracy", value: "\(acc)%")
                     LabeledContent("Live nights", value: "\(p.stats.liveNights)")
+                    Button { showPaywall = true } label: {
+                        Label(entitlement.isClub ? "Tidbits Club — Member" : "Join Tidbits Club",
+                              systemImage: entitlement.isClub ? "star.circle.fill" : "star.circle")
+                    }
                     if identity.signedIn {
                         Label("Signed in — records sync to every device", systemImage: "checkmark.seal.fill")
                             .font(.caption).foregroundStyle(.secondary)
@@ -106,6 +112,7 @@ struct SettingsView_macOS: View {
         } message: {
             Text("The name other players and venues see on leaderboards.")
         }
+        .sheet(isPresented: $showPaywall) { ClubPaywallView_macOS() }
     }
 
     /// A deterministic seeded avatar — shared shape with the iOS profile.

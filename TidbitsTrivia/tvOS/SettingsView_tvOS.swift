@@ -13,9 +13,11 @@ struct SettingsView_tvOS: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(GameCenterManager.self) private var gameCenter
     @Environment(PlayerIdentityStore.self) private var identity
+    @Environment(EntitlementStore.self) private var entitlement
     @AppStorage(GameSettings.reviewKey) private var reviewEnabled = true
     @State private var confirmReset = false
     @State private var appleNonce = ""
+    @State private var showPaywall = false
 
     private var version: String {
         let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
@@ -69,6 +71,12 @@ struct SettingsView_tvOS: View {
                 } footer: {
                     Text("Occasionally re-asks questions you've missed, spaced out, so they stick. Turn off to only ever see new questions.")
                 }
+                Section("Tidbits Club") {
+                    Button { showPaywall = true } label: {
+                        Label(entitlement.isClub ? "Tidbits Club — Member" : "Join Tidbits Club",
+                              systemImage: entitlement.isClub ? "star.circle.fill" : "star.circle")
+                    }
+                }
                 Section("Leaderboard") {   // Wave E: cross-venue / season standings
                     NavigationLink("Cross-venue standings") { LeaderboardView_tvOS() }
                 }
@@ -103,6 +111,7 @@ struct SettingsView_tvOS: View {
             }
         }
         .onExitCommand { dismiss() }
+        .fullScreenCover(isPresented: $showPaywall) { ClubPaywallView_tvOS() }
     }
 
     private func resetAll() {

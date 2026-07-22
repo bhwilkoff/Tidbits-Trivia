@@ -76,7 +76,8 @@ struct TidbitsTriviaApp: App {
                 .environment(gameCenter)
                 .environment(PlayerIdentityStore.shared)   // CRASH FIX: the Settings scene does NOT inherit the
                 .environment(store)                        // WindowGroup's .environment injections — a missing
-                .tint(Tidbits.Palette.blue)                // @Environment(PlayerIdentityStore) was a fatal crash on open.
+                .environment(EntitlementStore.shared)      // @Environment(PlayerIdentityStore) was a fatal crash on open.
+                .tint(Tidbits.Palette.blue)                // Same rule for the Club paywall's EntitlementStore.
                 .preferredColorScheme(.light)
         }
         .modelContainer(modelContainer)

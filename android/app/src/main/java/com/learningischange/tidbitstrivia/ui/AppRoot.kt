@@ -73,6 +73,7 @@ sealed interface Route {
     data object Duels : Route          // L5: async friend duels
     data object Party : Route
     data object ClubPaywall : Route    // Tidbits Club join surface (CLUB-MARKETING.md)
+    data object StoryArchive : Route   // Tidbits Club EXCLUSIVE — Story Archive (Feature 2)
 }
 
 @Composable
@@ -187,7 +188,9 @@ fun AppRoot(
                         BackHandler { l.end(); live = null; backStack.removeAt(backStack.lastIndex) }
                         NightContainer(l, store) { l.end(); live = null; backStack.clear(); backStack.add(Route.Home) }
                     } ?: Box(Modifier.fillMaxSize())
-                    is Route.Records -> RecordsScreen(store)
+                    is Route.Records -> RecordsScreen(store,
+                        onOpenArchive = { backStack.add(Route.StoryArchive) },
+                        onClub = { backStack.add(Route.ClubPaywall) })
                     is Route.Create -> CreateScreen { qs, label -> backStack.add(Route.Game(Mode.MIX, Category.byId("mixed"), qs, label)) }
                     is Route.Game -> GameScreen(r, store) { backStack.removeAt(backStack.lastIndex) }
                     is Route.Versus -> VersusScreen(r.botId, store) { backStack.removeAt(backStack.lastIndex) }
@@ -198,6 +201,10 @@ fun AppRoot(
                     is Route.Duels -> DuelsScreen(onBack = { backStack.removeLastOrNull() }, onPlay = { id, qs -> backStack.add(Route.Game(Mode.MIX, Category.byId("mixed"), qs, "Duel", duelId = id)) })
                     is Route.Party -> PartyContainer(store) { backStack.removeAt(backStack.lastIndex) }
                     is Route.ClubPaywall -> ClubPaywallScreen(onBack = { backStack.removeLastOrNull() })
+                    is Route.StoryArchive -> StoryArchiveScreen(store,
+                        onBack = { backStack.removeLastOrNull() },
+                        onClub = { backStack.add(Route.ClubPaywall) },
+                        onReask = { q -> backStack.add(Route.Game(Mode.CLASSIC, Category.byId(q.categoryId), listOf(q), "Re-ask")) })
                 }
             }
         }
@@ -385,6 +392,35 @@ private fun WeakSpotCard(isClub: Boolean, previewLine: String?, onClick: () -> U
                         Spacer(Modifier.width(6.dp))
                         Surface(shape = RoundedCornerShape(999.dp), color = Color.White) {
                             Text("CLUB", fontSize = 11.sp, fontWeight = FontWeight.Black, color = Pops.grape,
+                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp))
+                        }
+                    }
+                }
+                Text(subtitle, color = Color.White.copy(alpha = 0.85f), fontSize = 13.sp, maxLines = 2)
+            }
+            Icon(Icons.Filled.KeyboardArrowRight, null, tint = Color.White)
+        }
+    }
+}
+
+@Composable
+private fun StoryArchiveCard(store: Store, isClub: Boolean, onClick: () -> Unit) {
+    val n = remember(isClub) { StoryArchive.count(store) }
+    val subtitle = if (isClub) {
+        if (n == 0) "Every story you unlock, kept here forever."
+        else "$n stor${if (n == 1) "y" else "ies"} collected — searchable, forever."
+    } else (remember(isClub) { StoryArchive.previewLine(store) } ?: "Club keeps every story you unlock, searchable forever.")
+    ChunkyCard(fill = Pops.blue, onClick = onClick) {
+        Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Filled.AutoStories, null, tint = Color.White, modifier = Modifier.size(28.dp))
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("STORY ARCHIVE", fontWeight = FontWeight.Black, fontSize = 20.sp, color = Color.White)
+                    if (!isClub) {
+                        Spacer(Modifier.width(6.dp))
+                        Surface(shape = RoundedCornerShape(999.dp), color = Color.White) {
+                            Text("CLUB", fontSize = 11.sp, fontWeight = FontWeight.Black, color = Pops.blue,
                                 modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp))
                         }
                     }
@@ -1121,7 +1157,7 @@ private fun RowScope.StatBox(value: String, label: String, tint: Color) {
 // ---- Records ----
 
 @Composable
-private fun RecordsScreen(store: Store) {
+private fun RecordsScreen(store: Store, onOpenArchive: () -> Unit, onClub: () -> Unit) {
     val records = remember { store.records() }
     val streak = remember { store.streak() }
     val life = remember { store.lifetime() }
@@ -1155,6 +1191,13 @@ private fun RecordsScreen(store: Store) {
                 Icon(Icons.Filled.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
             }
         }
+        // Story Archive — Tidbits Club EXCLUSIVE (docs/CLUB-FEATURES-BUILD.md "Feature
+        // 2"), a "see all" destination off the Records dashboard (R-REC-1). Members open
+        // the searchable library directly; non-members get a real preview + a CLUB chip
+        // and land on the paywall — never a blank wall (R-MON-1: the free in-moment story
+        // reveal, right after answering, is untouched by this surface).
+        StoryArchiveCard(store = store, isClub = Entitlement.isClub, onClick = { if (Entitlement.isClub) onOpenArchive() else onClub() })
+
         val prog = remember { store.progress() }
         val explored = prog.count { it.total > 0 }
         val mastered = prog.count { it.hasWedge }
@@ -1344,6 +1387,152 @@ private fun AllGamesDialog(records: List<Store.Rec>, onOpen: (Store.Rec) -> Unit
             Text("All games", fontWeight = FontWeight.Black, fontSize = 22.sp)
             Text("Newest first — tap one to see the questions.", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
             records.forEach { rec -> GameHistoryRow(rec) { onOpen(rec) } }
+        }
+    }
+}
+
+// ---- Story Archive (Tidbits Club EXCLUSIVE — docs/CLUB-FEATURES-BUILD.md "Feature 2") ----
+// The persistent, searchable library of every story-behind-the-answer the player has
+// unlocked (right or wrong). ADDITIVE: the free in-moment reveal (Question.explanation,
+// shown right after answering) is untouched — R-MON-1. Android mirror of Apple's
+// StoryArchiveView.swift / web's #/archive.
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun StoryArchiveScreen(store: Store, onBack: () -> Unit, onClub: () -> Unit, onReask: (Question) -> Unit) {
+    val ink = MaterialTheme.colorScheme.onSurface
+    val soft = ink.copy(alpha = 0.6f)
+    Column(Modifier.fillMaxSize().padding(20.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            TextButton(onClick = onBack) { Text("‹ Back") }
+            Text("Story Archive", fontSize = 26.sp, fontWeight = FontWeight.Black, color = ink)
+        }
+        Spacer(Modifier.height(8.dp))
+
+        if (!Entitlement.isClub) {
+            StoryArchivePreview(store, onClub)
+            return@Column
+        }
+
+        var favVersion by remember { mutableStateOf(0) }
+        var text by remember { mutableStateOf("") }
+        var filter by remember { mutableStateOf(StoryFilter.ALL) }
+        var domain by remember { mutableStateOf<String?>(null) }
+        var selected by remember { mutableStateOf<Store.SeenStory?>(null) }
+        val all = remember(favVersion) { StoryArchive.list(store) }
+        val domains = remember(all) { StoryArchive.domainsSeen(store) }
+        val results = remember(text, filter, domain, all) { StoryArchive.search(store, text, domain, filter) }
+
+        if (all.isEmpty()) {
+            ChunkyCard { Column(Modifier.padding(20.dp)) {
+                Text("Play a few rounds — the stories you unlock are kept here forever.", fontWeight = FontWeight.Bold)
+            } }
+            return@Column
+        }
+
+        Text("${all.size} stor${if (all.size == 1) "y" else "ies"} kept — search or filter, then tap one to read it again.",
+            fontSize = 13.sp, color = soft)
+        Spacer(Modifier.height(10.dp))
+        OutlinedTextField(
+            value = text, onValueChange = { text = it }, singleLine = true,
+            leadingIcon = { Icon(Icons.Filled.Search, null) },
+            placeholder = { Text("Search prompts, answers, stories…") },
+            modifier = Modifier.fillMaxWidth())
+        Spacer(Modifier.height(10.dp))
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            StoryFilter.entries.forEach { f -> FilterChip(selected = filter == f, onClick = { filter = f }, label = { Text(f.label) }) }
+        }
+        if (domains.isNotEmpty()) {
+            Spacer(Modifier.height(8.dp))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(selected = domain == null, onClick = { domain = null }, label = { Text("All domains") })
+                domains.forEach { c -> FilterChip(selected = domain == c.id, onClick = { domain = c.id }, label = { Text(c.name) }) }
+            }
+        }
+        Spacer(Modifier.height(10.dp))
+
+        if (results.isEmpty()) {
+            ChunkyCard { Column(Modifier.padding(20.dp)) { Text("No stories match.", color = soft) } }
+        } else {
+            LazyColumn(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                items(results, key = { it.qid }) { s -> StoryCard(s, onClick = { selected = s }, onToggleFav = { store.toggleStoryFavorite(s.qid); favVersion++ }) }
+            }
+        }
+        selected?.let { s ->
+            StoryDetailSheet(store, s,
+                onDismiss = { selected = null },
+                onFavToggle = { favVersion++ },
+                onReask = { q -> selected = null; onReask(q) })
+        }
+    }
+}
+
+@Composable
+private fun StoryArchivePreview(store: Store, onClub: () -> Unit) {
+    val preview = remember { StoryArchive.previewLine(store) }
+        ?: "“Marie Curie is the only person to win Nobel Prizes in two different sciences.” — Club keeps every story you unlock, searchable forever."
+    ChunkyCard { Column(Modifier.padding(18.dp)) { Text(preview, fontWeight = FontWeight.Bold) } }
+    Spacer(Modifier.height(14.dp))
+    ChunkyCard(fill = Pops.blue.copy(alpha = 0.12f)) {
+        Column(Modifier.padding(20.dp).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+            Text("Club keeps every story you unlock, searchable forever.", fontWeight = FontWeight.Black, fontSize = 18.sp, textAlign = TextAlign.Center)
+            Text("A permanent, searchable library of every fact you've met — favorite the ones worth keeping.",
+                fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f), textAlign = TextAlign.Center)
+            Spacer(Modifier.height(12.dp))
+            Button(onClick = onClub) { Text("Join Tidbits Club") }
+        }
+    }
+}
+
+// One story card: domain tag, when, right/wrong marker, favorite toggle, prompt + answer.
+@Composable
+private fun StoryCard(s: Store.SeenStory, onClick: () -> Unit, onToggleFav: () -> Unit) {
+    val cat = Category.byId(s.categoryId)
+    ChunkyCard(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(14.dp).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Surface(shape = RoundedCornerShape(999.dp), color = Pops.at(cat.colorIndex)) {
+                    Text(cat.name, fontSize = 12.sp, fontWeight = FontWeight.Black, color = Color.White,
+                        modifier = Modifier.padding(horizontal = 9.dp, vertical = 2.dp))
+                }
+                Text(relativeTime(s.lastSeen), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                Spacer(Modifier.weight(1f))
+                Icon(if (s.everCorrect) Icons.Filled.CheckCircle else Icons.Filled.Cancel, null,
+                    tint = if (s.everCorrect) accentText(Pops.mint) else accentText(Pops.coral), modifier = Modifier.size(18.dp))
+                IconButton(onClick = onToggleFav, modifier = Modifier.size(28.dp)) {
+                    Icon(if (s.favorite) Icons.Filled.Star else Icons.Filled.StarBorder, "Favorite",
+                        tint = if (s.favorite) Pops.yellow else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                }
+            }
+            Text(s.prompt, fontWeight = FontWeight.Bold)
+            Text("Answer: ${s.answer}", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun StoryDetailSheet(store: Store, s: Store.SeenStory, onDismiss: () -> Unit, onFavToggle: () -> Unit, onReask: (Question) -> Unit) {
+    var fav by remember(s.qid) { mutableStateOf(s.favorite) }
+    val cat = Category.byId(s.categoryId)
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Surface(shape = RoundedCornerShape(999.dp), color = Pops.at(cat.colorIndex), modifier = Modifier.width(IntrinsicSize.Min)) {
+                Text(cat.name, fontSize = 12.sp, fontWeight = FontWeight.Black, color = Color.White,
+                    modifier = Modifier.padding(horizontal = 9.dp, vertical = 3.dp))
+            }
+            Text(s.prompt, fontWeight = FontWeight.Black, fontSize = 20.sp)
+            Text("Answer: ${s.answer}", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+            if (s.story.isNotBlank()) Text(s.story, fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f))
+            else Text("No story recorded for this one.", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedButton(onClick = { fav = store.toggleStoryFavorite(s.qid); onFavToggle() }) {
+                    Icon(if (fav) Icons.Filled.Star else Icons.Filled.StarBorder, null, tint = if (fav) Pops.yellow else LocalContentColor.current)
+                    Spacer(Modifier.width(6.dp))
+                    Text(if (fav) "Favorited" else "Favorite")
+                }
+                s.question?.let { q -> Button(onClick = { onReask(q) }) { Text("Re-ask this") } }
+            }
         }
     }
 }

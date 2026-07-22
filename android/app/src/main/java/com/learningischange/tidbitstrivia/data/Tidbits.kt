@@ -853,6 +853,8 @@ class Store(context: Context) {
     private val prefs = context.getSharedPreferences("tidbits", Context.MODE_PRIVATE)
     private val seen = (prefs.getStringSet("seen", emptySet()) ?: emptySet()).toMutableSet()
 
+    companion object { private const val SEEN_OPTS_SEP = "" }
+
     fun seenHas(id: String) = id in seen
     fun markSeen(ids: List<String>) {
         seen.addAll(ids)
@@ -1002,6 +1004,7 @@ class Store(context: Context) {
         prefs.edit()
             .remove("records").remove("calibration").remove("answerTelemetry")
             .remove("missed").remove("streak_cur").remove("streak_best").remove("streak_day")
+            .remove("stories")
             .apply()
     }
 
@@ -1043,6 +1046,74 @@ class Store(context: Context) {
         return o.keys().asSequence().map { id -> val (n, t) = missEntry(o, id); MissEntry(id, n, t) }
             .sortedWith(compareByDescending<MissEntry> { it.missCount }.thenBy { it.lastSeen })
             .toList()
+    }
+
+    /** One story in the Club Story Archive (docs/CLUB-FEATURES-BUILD.md "Feature 2") —
+     *  a frozen snapshot of a question the player has answered (right or wrong), captured
+     *  at answer-time so it survives later corpus edits. [question] rebuilds a playable
+     *  MCQ for "Re-ask this"; null for shapes that don't reduce to >=2 plain options
+     *  (mirrors the Apple `SeenStory.question` fallback). */
+    data class SeenStory(
+        val qid: String, val prompt: String, val answer: String, val story: String, val categoryId: String,
+        private val optionsJoined: String, private val correctIndex: Int,
+        val firstSeen: Long, val lastSeen: Long, val everCorrect: Boolean, val favorite: Boolean,
+    ) {
+        val question: Question? get() {
+            val opts = optionsJoined.split(SEEN_OPTS_SEP).filter { it.isNotEmpty() }
+            if (opts.size < 2 || correctIndex !in opts.indices) return null
+            return Question(qid, prompt, opts, correctIndex, categoryId, 3, story, "", "")
+        }
+    }
+
+    /** Every DISTINCT question the player has ever answered, keyed by qid — upserted
+     *  from the same place [recordMisses]/[recordTelemetry] are called, so "seen" = any
+     *  answer, not just a correct one (you met the fact either way). ADDITIVE: the free
+     *  in-moment story reveal (Question.explanation shown right after answering) is
+     *  untouched by this store — R-MON-1. */
+    fun seenStories(): Map<String, SeenStory> {
+        val o = JSONObject(prefs.getString("stories", "{}") ?: "{}")
+        val map = LinkedHashMap<String, SeenStory>()
+        o.keys().forEach { id ->
+            val s = o.getJSONObject(id)
+            map[id] = SeenStory(
+                qid = id, prompt = s.optString("p", ""), answer = s.optString("ans", ""),
+                story = s.optString("story", ""), categoryId = s.optString("cat", "mixed"),
+                optionsJoined = s.optString("opts", ""), correctIndex = s.optInt("ci", -1),
+                firstSeen = s.optLong("first", 0L), lastSeen = s.optLong("last", 0L),
+                everCorrect = s.optBoolean("ok", false), favorite = s.optBoolean("fav", false),
+            )
+        }
+        return map
+    }
+
+    fun recordSeen(answered: List<Pair<Question, Boolean>>) {
+        val o = JSONObject(prefs.getString("stories", "{}") ?: "{}")
+        val now = System.currentTimeMillis()
+        for ((q, correct) in answered) {
+            val existing = o.optJSONObject(q.id)
+            if (existing != null) {
+                existing.put("last", now)
+                if (correct) existing.put("ok", true)
+            } else {
+                o.put(q.id, JSONObject()
+                    .put("p", q.prompt).put("ans", q.answerText).put("story", q.explanation)
+                    .put("cat", q.categoryId).put("opts", q.options.joinToString(SEEN_OPTS_SEP))
+                    .put("ci", q.correctIndex).put("first", now).put("last", now)
+                    .put("ok", correct).put("fav", false))
+            }
+        }
+        if (o.length() > 9000) { prefs.edit().putString("stories", "{}").apply(); return }
+        prefs.edit().putString("stories", o.toString()).apply()
+    }
+
+    /** Returns the new favorite state, or false if the story isn't in the archive. */
+    fun toggleStoryFavorite(qid: String): Boolean {
+        val o = JSONObject(prefs.getString("stories", "{}") ?: "{}")
+        val existing = o.optJSONObject(qid) ?: return false
+        val fav = !existing.optBoolean("fav", false)
+        existing.put("fav", fav)
+        prefs.edit().putString("stories", o.toString()).apply()
+        return fav
     }
 
     // R-DAILY-1: per-day Daily results — first completion locks the day.

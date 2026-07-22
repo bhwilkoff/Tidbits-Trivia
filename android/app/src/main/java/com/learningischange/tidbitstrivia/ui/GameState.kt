@@ -504,6 +504,7 @@ class GameState(
                 countsForStreak = (dailyDay ?: dayKey()) == dayKey())
             store.recordTelemetry(mode, answered.map { it.q to it.chosen })
             store.recordMisses(answered.map { it.q.id to it.correct })   // for spaced review
+            store.recordSeen(answered.map { it.q to it.correct })   // Club Story Archive (Feature 2)
             if (mode == Mode.STAKE) store.addCalibration(stakeOutcomes.mapValues { it.value[0] to it.value[1] })
             // Feed the portable identity: solo play moves the Tidbits Rating + streak.
             com.learningischange.tidbitstrivia.data.PlayerIdentity.recordGame(correctCount, answered.size)

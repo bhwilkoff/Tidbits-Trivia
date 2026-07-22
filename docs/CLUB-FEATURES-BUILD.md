@@ -67,7 +67,7 @@ Legend: ✅ done+verified · 🔨 in progress · ⏳ queued · 🚫 n/a (with re
 | Feature | web | iOS/iPadOS | macOS | tvOS | Android | Windows |
 |---|---|---|---|---|---|---|
 | 1 Weak-Spot Arena | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 2 Story Archive | ✅ | ✅ | ⏳ | ⏳ | ⏳ | ⏳ |
+| 2 Story Archive | ✅ | ✅ | ⏳ | ⏳ | ✅ | ⏳ |
 | 3 Marathon | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 4 Knowledge Atlas | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 5 Friend Streaks | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
@@ -570,3 +570,44 @@ says is the whole point.
   toggle and the "Re-ask this" drill — both code-reviewed against
   already-verified sibling patterns (`MissedFact.question` reconstruction,
   `DuelGameContainer`'s engine-drill shape) rather than observed live.
+- **2026-07-22** — **Story Archive (Feature 2) shipped on Android (1.6.48→1.6.49,
+  vc70→71).** `data/Tidbits.kt`'s `Store` grows a `stories` SharedPreferences JSON
+  map (mirror of the `missed` map's shape): `SeenStory` freezes qid, prompt,
+  answer, `story` (`Question.explanation` captured at answer-time — the free
+  in-moment reveal is untouched, R-MON-1), categoryId, the joined-options +
+  correctIndex needed to rebuild a playable `Question` for "Re-ask this," first/
+  lastSeen, everCorrect, favorite. `Store.recordSeen(...)` is called from
+  `GameState.end()` right next to `recordMisses`/`recordTelemetry` — the SAME
+  centralized per-answer write path every platform uses. New
+  `data/StoryArchive.kt` is the transparent read side (mirror of iOS's
+  `StoryArchive.swift` / web's `StoryArchive` in `store.js`): `list` (most-recent
+  first), `domainsSeen` (only domains actually played), `search(text, domain,
+  filter)` (plain substring + predicate, no ranking), `count`, `previewLine`.
+  Records screen gets a Club-marked `StoryArchiveCard` (blue `ChunkyCard`,
+  `AutoStories` icon, mirror of the Weak-Spot `WeakSpotCard` pattern) placed
+  right after the "See all N games" row; members open the new `StoryArchiveScreen`
+  (`OutlinedTextField` search + `FilterChip`/`FlowRow` status + domain filters +
+  a `LazyColumn` of story cards with stable `qid` keys, domain tag, relative
+  timestamp, right/wrong icon, favorite star); non-members get a real preview
+  card (their own most recent story, or an honest static line) + the "Club keeps
+  every story you unlock, searchable forever" panel → the existing
+  `ClubPaywallScreen` — never a blank wall. Tapping a card opens a
+  `ModalBottomSheet` with the full story, a favorite toggle, and (when the
+  frozen options reduce to a playable ≥2-option MCQ) "Re-ask this," which routes
+  through the same custom-question `Route.Game(Mode.CLASSIC, ..., custom =
+  listOf(q))` launch path Duels/Create already use — no new game-launch
+  plumbing. Reused the existing `BuildConfig.DEBUG`-gated
+  `Entitlement.setDebugForceClub` override; no new debug hook needed.
+  `assembleDebug` **BUILD SUCCESSFUL**. Emulator-verified end to end on a
+  temporary `android:largeHeap="true"` manifest flag (reverted before
+  finishing, per the known `Corpus.load` OOM logged in the Weak-Spot Arena
+  entry above): played a 10-question Classic round (2 correct / 8 missed) to
+  seed the archive, confirmed the Records card's member subtitle ("10 stories
+  collected — searchable, forever"), opened the archive and confirmed card
+  rendering, the Missed filter, a domain filter, both filters composed
+  together, the favorite star toggle + the Favorites filter reflecting it, the
+  detail sheet, and "Re-ask this" launching a genuine 1-question drill whose
+  reveal still shows the free story text (R-MON-1 intact). Also confirmed the
+  non-member path: CLUB chip + a real preview line pulled from the player's
+  own most recent story, tapping through to the existing `ClubPaywallScreen`
+  (which already listed Story Archive as a pillar) rather than a blank wall.

@@ -30,6 +30,11 @@ enum RecordsStore {
         for right in summary.answered where right.isCorrect {
             resolveMiss(questionID: right.question.id, in: context)
         }
+        // Club Story Archive (Feature 2): every answered question — right or
+        // wrong — upserts into the seen-forever library.
+        for a in summary.answered {
+            recordSeenStory(a, in: context)
+        }
 
         if summary.mode == .daily {
             let day = summary.dailyDay ?? QuestionProvider.dayKey()
@@ -132,6 +137,17 @@ enum RecordsStore {
         if let existing = try? context.fetch(desc).first, !existing.resolved {
             existing.resolved = true
             existing.lastSeen = .now
+        }
+    }
+
+    private static func recordSeenStory(_ answered: AnsweredQuestion, in context: ModelContext) {
+        let id = answered.question.id
+        let desc = FetchDescriptor<SeenStory>(predicate: #Predicate { $0.questionID == id })
+        if let existing = try? context.fetch(desc).first {
+            existing.lastSeen = .now
+            if answered.isCorrect { existing.everCorrect = true }
+        } else {
+            context.insert(SeenStory(question: answered.question, correct: answered.isCorrect))
         }
     }
 

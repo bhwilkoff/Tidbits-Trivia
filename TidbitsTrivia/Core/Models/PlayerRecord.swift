@@ -121,6 +121,63 @@ final class CalibrationTally {
     }
 }
 
+/// Every DISTINCT question the player has ever answered (right or wrong) —
+/// the Club Story Archive's data source (docs/CLUB-FEATURES-BUILD.md
+/// "Feature 2"). Upserted by qid alongside every other record write
+/// (`RecordsStore.record`), so it costs nothing until Club makes it worth
+/// opening (R-MON-1: the free in-moment story reveal is untouched).
+@Model
+final class SeenStory {
+    var questionID: String
+    var prompt: String
+    var correctAnswer: String
+    var story: String        // Question.explanation, captured at answer-time
+    var categoryID: String
+    var firstSeen: Date
+    var lastSeen: Date
+    var everCorrect: Bool
+    var favorite: Bool
+
+    // Enough to rebuild a full MCQ for "Re-ask this" (mirrors MissedFact).
+    var optionsJoined: String = ""
+    var correctIndex: Int = 0
+    var sourceTitle: String = ""
+    var sourceURLString: String = ""
+    var templateID: String = ""
+    var difficulty: Int = 3
+
+    init(question: Question, correct: Bool, date: Date = .now) {
+        self.questionID = question.id
+        self.prompt = question.prompt
+        self.correctAnswer = question.correctAnswer
+        self.story = question.explanation
+        self.categoryID = question.categoryID
+        self.firstSeen = date
+        self.lastSeen = date
+        self.everCorrect = correct
+        self.favorite = false
+        self.optionsJoined = question.options.joined(separator: "\u{1}")
+        self.correctIndex = question.correctIndex
+        self.sourceTitle = question.sourceTitle
+        self.sourceURLString = question.sourceURL?.absoluteString ?? ""
+        self.templateID = question.templateID
+        self.difficulty = question.difficulty
+    }
+
+    /// Rebuild the question for the archive's "Re-ask this" 1-question drill.
+    /// nil for shapes that don't reduce to a plain 4-option MCQ (same
+    /// fallback MissedFact uses).
+    var question: Question? {
+        let options = optionsJoined.split(separator: "\u{1}").map(String.init)
+        guard options.count == 4 else { return nil }
+        return Question(
+            id: questionID, prompt: prompt, options: options, correctIndex: correctIndex,
+            categoryID: categoryID, difficulty: difficulty, explanation: story,
+            sourceTitle: sourceTitle, sourceURL: URL(string: sourceURLString),
+            templateID: templateID)
+    }
+}
+
 /// Tracks the Daily streak independent of any single game record.
 @Model
 final class DailyStreak {

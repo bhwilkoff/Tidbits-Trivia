@@ -54,6 +54,12 @@ enum DebugHooks {
         ProcessInfo.processInfo.environment["TIDBITS_DAILY_ARCHIVE"] == "1"
     }
 
+    /// TIDBITS_STORY_ARCHIVE=1 opens the Club Story Archive (Records → see
+    /// all) on launch — screenshot observability, same idiom as the flags above.
+    static var openStoryArchive: Bool {
+        ProcessInfo.processInfo.environment["TIDBITS_STORY_ARCHIVE"] == "1"
+    }
+
     /// TIDBITS_MIX=classic,pictureId,closestCall — the modes for a TIDBITS_AUTOPLAY=mix:… launch.
     static var mixModes: [GameMode]? {
         guard let raw = ProcessInfo.processInfo.environment["TIDBITS_MIX"] else { return nil }

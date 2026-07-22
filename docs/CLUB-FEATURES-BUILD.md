@@ -48,7 +48,7 @@ ship first; season/cron infrastructure is last.
 | # | Feature | Pillar | Shape | Status |
 |---|---|---|---|---|
 | 1 | **Weak-Spot Arena** | 1 gameplay | client-only: round from your own miss history | **DONE on all 6 platforms** |
-| 2 | **Story Archive** | 3 library | client-only: keep every unlocked "story behind the answer", searchable | **iOS in progress** |
+| 2 | **Story Archive** | 3 library | client-only: keep every unlocked "story behind the answer", searchable | **iOS DONE** |
 | 3 | **Marathon** | 1 gameplay | client-only: 200-q graded endurance, cross-session scorecard | todo |
 | 4 | **Knowledge Atlas** | 2 retrospect | client-only: accuracy by domain/sub-domain over 12mo | todo |
 | 5 | **Friend Streaks** | 4 social | light RTDB (reuses friends): mutual daily accountability | todo |
@@ -67,7 +67,7 @@ Legend: ✅ done+verified · 🔨 in progress · ⏳ queued · 🚫 n/a (with re
 | Feature | web | iOS/iPadOS | macOS | tvOS | Android | Windows |
 |---|---|---|---|---|---|---|
 | 1 Weak-Spot Arena | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 2 Story Archive | ⏳ | 🔨 | ⏳ | ⏳ | ⏳ | ⏳ |
+| 2 Story Archive | ⏳ | ✅ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 3 Marathon | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 4 Knowledge Atlas | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 5 Friend Streaks | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
@@ -527,3 +527,46 @@ says is the whole point.
   screenshots confirm the card, chip, preview line, in-play reason, and "You
   closed 2 gaps" recap all render correctly. Gated on `windows-latest` CI
   (`windows-repl.yml`) per the standing Windows verification rule.
+- **2026-07-22** — **Story Archive (Feature 2) shipped on iOS — the Apple
+  reference.** New additive SwiftData model `SeenStory` (`Core/Models/PlayerRecord.swift`):
+  qid, prompt, correctAnswer, `story` (a captured copy of `Question.explanation`
+  — the free in-moment reveal itself is untouched, R-MON-1), categoryID,
+  firstSeen/lastSeen, everCorrect, favorite, plus the same optionsJoined/
+  correctIndex/sourceTitle/templateID/difficulty fields `MissedFact` carries so
+  a story can rebuild a full `Question` for "Re-ask this." Upserted by qid in
+  `RecordsStore.record(_:in:)` for every answered question (right or wrong) —
+  the SAME centralized write path every platform already uses, registered in
+  the `ModelContainer` schema (`TidbitsTriviaApp.makeModelContainer`).
+  `Core/Store/StoryArchive.swift` is the transparent read side: `previewLine`
+  (most-recent story, mirrors `WeakSpotArena.previewLine`), `count`,
+  `toggleFavorite(qid:)`, and `search(_:text:domain:filter:)` — plain substring
+  + predicate filtering, no ranking model. iOS: a Club-marked "Story Archive"
+  row on Records (R-REC-1's "see all" pattern) — members open
+  `StoryArchiveView` (`.searchable` + filter chips All/Favorites/Missed/Got it
+  + domain chips derived from the player's actual seen domains + story cards
+  with a favorite star and right/wrong marker); non-members get the existing
+  `ClubPaywallView` (already listed Story Archive as a pillar) with a REAL
+  preview line pulled from the player's own most recent story, never a blank
+  wall. Tapping a card opens the full story + a "Re-ask this" 1-question drill
+  that reuses `GameEngine.startCustom` on a throwaway `GameEngine()` instance
+  (mirrors `DuelGameContainer`'s exact pattern in `ProfileView.swift`) — it does
+  NOT write a new `GameRecord` (a single-question drill isn't a "game," same
+  judgment call Duels already made). Debug: reused `DebugHooks.forceClub`
+  (`TIDBITS_CLUB=1`) unchanged, plus one new small hook
+  (`TIDBITS_STORY_ARCHIVE=1`) to auto-open the archive sheet for screenshot
+  verification — same idiom as the existing `TIDBITS_CUSTOMIZE`/
+  `TIDBITS_DAILY_ARCHIVE` flags. iOS/macOS/tvOS all **BUILD SUCCEEDED**
+  (macOS/tvOS only compile the shared Core + guard the iOS-only surface with
+  `#if os(iOS)` — their own Records entry points are a later pass, per the
+  build order). iOS runtime-verified on sim: seeded real data via
+  `TIDBITS_AUTOPLAY=classic:mixed` + `TIDBITS_AUTOPILOT=1` (a genuine 10-question
+  Classic round, confirming the free story reveal still fires mid-game), then
+  screenshotted the Story Archive with 4 real story cards (domain tags,
+  right/wrong markers, relative timestamps, search bar), the domain-chip row
+  correctly limited to domains actually present (History/Geography/Film & TV),
+  the Records-dashboard card showing a genuine preview line for a non-member,
+  and the non-member tap-through landing on the existing paywall (never blank).
+  Not tap-tested (no UI-automation tool in this sandbox): the favorite-star
+  toggle and the "Re-ask this" drill — both code-reviewed against
+  already-verified sibling patterns (`MissedFact.question` reconstruction,
+  `DuelGameContainer`'s engine-drill shape) rather than observed live.

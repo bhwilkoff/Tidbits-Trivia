@@ -17,9 +17,11 @@
 		103775A7AAFF0719F1B10843 /* MacLivePrint_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F2347D320A2FB5AA7C4D34E /* MacLivePrint_macOS.swift */; };
 		11697E55857894F38D742127 /* ProgressStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A73FA1930578863B642985C /* ProgressStats.swift */; };
 		11CCA7505B02468A02988A0C /* closest.json in Resources */ = {isa = PBXBuildFile; fileRef = 1241A5F7969CF344FFE75DA6 /* closest.json */; };
+		13B6096EC8BAF18675A19CBF /* StoryArchiveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBBCC4B7D87BC1E404EBC4B8 /* StoryArchiveView.swift */; };
 		154A589A9053D9ECF66EE341 /* typeanswer.json in Resources */ = {isa = PBXBuildFile; fileRef = 39FBC9BD13DA4CCB86AC1EF4 /* typeanswer.json */; };
 		157E84B3984C8AF6BB3E4900 /* PlayerRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = D85FC9EA0ED55C307CC3525F /* PlayerRecord.swift */; };
 		16F7B6BE37EAC0372AE1AB55 /* SeededRNG.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1C1A6AE174DDC149D5EE7BB /* SeededRNG.swift */; };
+		188124E453FCD7699CDE5105 /* StoryArchive.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A3ADC850DC68E721197BEF7 /* StoryArchive.swift */; };
 		1D19BE6624BBA688681353EE /* ContentView_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3D542C8E636DF4AF26303CB /* ContentView_macOS.swift */; };
 		1E61B04B5E7AB5ABD7297B54 /* MacHomeSheets_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38E2048C670779462804BFCD /* MacHomeSheets_macOS.swift */; };
 		220CABC0B501E1FF8A0E7453 /* BotOpponent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DC6C8D9CA86356D95539EA4 /* BotOpponent.swift */; };
@@ -124,6 +126,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		0A3ADC850DC68E721197BEF7 /* StoryArchive.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoryArchive.swift; sourceTree = "<group>"; };
 		0BFCD6FF44ED08F84EBBD05E /* GameSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSettings.swift; sourceTree = "<group>"; };
 		0BFD0D04EAFA9DBEB25F3A8E /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		0C18E4CA3BD148F09E1BE077 /* RecordsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordsView.swift; sourceTree = "<group>"; };
@@ -207,6 +210,7 @@
 		B5C5D511CC45CC8C0B84A985 /* MacLiveHost_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacLiveHost_macOS.swift; sourceTree = "<group>"; };
 		B87EE4E2D9F044824CAA43F0 /* Keychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keychain.swift; sourceTree = "<group>"; };
 		BADC61A185827BBE0B9857AA /* thisorthat.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = thisorthat.json; sourceTree = "<group>"; };
+		BBBCC4B7D87BC1E404EBC4B8 /* StoryArchiveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoryArchiveView.swift; sourceTree = "<group>"; };
 		BCB14B0E2B13CCA2DDA250ED /* TriviaCategory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TriviaCategory.swift; sourceTree = "<group>"; };
 		BE92745D6860E623628A0CBC /* GamePlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GamePlayView.swift; sourceTree = "<group>"; };
 		C23D07A7744AE72B2935CB2F /* ContentView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView_tvOS.swift; sourceTree = "<group>"; };
@@ -242,7 +246,7 @@
 		FD70222B5EE4C4145E4D1F84 /* NightSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightSetupView.swift; sourceTree = "<group>"; };
 		FDDD2AC4DB9C421C5849B8F6 /* GameView_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView_macOS.swift; sourceTree = "<group>"; };
 		FFC46D4CE8D03186C064C759 /* Question.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Question.swift; sourceTree = "<group>"; };
-		"TEMP_A1CE826E-6D8B-4E08-801D-202B888BDFEC" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
+		"TEMP_E534E407-A5E4-46CA-8568-B8D69E837264" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -256,6 +260,7 @@
 				0BFCD6FF44ED08F84EBBD05E /* GameSettings.swift */,
 				5A73FA1930578863B642985C /* ProgressStats.swift */,
 				7633D27702A6874F7D8993DF /* RecordsStore.swift */,
+				0A3ADC850DC68E721197BEF7 /* StoryArchive.swift */,
 				7D5272B06F897F6B017FEF9A /* WeakSpotArena.swift */,
 			);
 			path = Store;
@@ -490,6 +495,7 @@
 				0C18E4CA3BD148F09E1BE077 /* RecordsView.swift */,
 				7C60A815D0EFF35CF18DAB26 /* ResultsView.swift */,
 				3B2FEBFB29C12A172EADB66F /* SettingsView.swift */,
+				BBBCC4B7D87BC1E404EBC4B8 /* StoryArchiveView.swift */,
 				CB9BC2DDC68229C08A32FF1E /* VersusContainerView.swift */,
 			);
 			path = Views;
@@ -522,10 +528,10 @@
 			path = TidbitsTrivia;
 			sourceTree = "<group>";
 		};
-		"TEMP_A6A33015-13E7-4F26-B54C-DD6B3A0CC4AF" /* Tidbits-Trivia */ = {
+		"TEMP_7C872D53-868B-4A55-8FEA-9C84390B7130" /* Tidbits-Trivia */ = {
 			isa = PBXGroup;
 			children = (
-				"TEMP_A1CE826E-6D8B-4E08-801D-202B888BDFEC" /* AppVersion.xcconfig */,
+				"TEMP_E534E407-A5E4-46CA-8568-B8D69E837264" /* AppVersion.xcconfig */,
 			);
 			path = "Tidbits-Trivia";
 			sourceTree = "<group>";
@@ -707,6 +713,8 @@
 				CAC06905ECB9FC605B7CAD4F /* SettingsView_macOS.swift in Sources */,
 				0608CF492FA14F91750D1B69 /* SettingsView_tvOS.swift in Sources */,
 				E24C72A3A025A4A52B050A04 /* StoreKitStore.swift in Sources */,
+				188124E453FCD7699CDE5105 /* StoryArchive.swift in Sources */,
+				13B6096EC8BAF18675A19CBF /* StoryArchiveView.swift in Sources */,
 				263C354095054FECCB304CBA /* TemplateEngine.swift in Sources */,
 				274F21E30264310543E14DB4 /* TidbitsTriviaApp.swift in Sources */,
 				918AE96520BD2A89643D6E20 /* TriviaCategory.swift in Sources */,
@@ -722,7 +730,7 @@
 /* Begin XCBuildConfiguration section */
 		296659EF0549868336801823 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_A1CE826E-6D8B-4E08-801D-202B888BDFEC" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_E534E407-A5E4-46CA-8568-B8D69E837264" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -843,7 +851,7 @@
 		};
 		E6F711EEEE2896F84FE9AB98 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_A1CE826E-6D8B-4E08-801D-202B888BDFEC" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_E534E407-A5E4-46CA-8568-B8D69E837264" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;

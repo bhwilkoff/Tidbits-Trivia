@@ -76,6 +76,7 @@ sealed interface Route {
     data object ClubPaywall : Route    // Tidbits Club join surface (CLUB-MARKETING.md)
     data object StoryArchive : Route   // Tidbits Club EXCLUSIVE — Story Archive (Feature 2)
     data object MarathonHistory : Route // Tidbits Club EXCLUSIVE — Marathon History (Feature 3)
+    data object KnowledgeAtlas : Route // Tidbits Club EXCLUSIVE — Knowledge Atlas (Feature 4)
 }
 
 @Composable
@@ -194,6 +195,7 @@ fun AppRoot(
                     is Route.Records -> RecordsScreen(store,
                         onOpenArchive = { backStack.add(Route.StoryArchive) },
                         onOpenMarathonHistory = { backStack.add(Route.MarathonHistory) },
+                        onOpenAtlas = { backStack.add(Route.KnowledgeAtlas) },
                         onClub = { backStack.add(Route.ClubPaywall) })
                     is Route.Create -> CreateScreen { qs, label -> backStack.add(Route.Game(Mode.MIX, Category.byId("mixed"), qs, label)) }
                     is Route.Game -> GameScreen(r, store) { backStack.removeAt(backStack.lastIndex) }
@@ -212,6 +214,10 @@ fun AppRoot(
                     is Route.MarathonHistory -> MarathonHistoryScreen(store,
                         onBack = { backStack.removeLastOrNull() },
                         onClub = { backStack.add(Route.ClubPaywall) })
+                    is Route.KnowledgeAtlas -> KnowledgeAtlasScreen(store,
+                        onBack = { backStack.removeLastOrNull() },
+                        onClub = { backStack.add(Route.ClubPaywall) },
+                        onPlay = { catId, label -> backStack.add(Route.Game(Mode.CLASSIC, Category.byId(catId), label = label)) })
                 }
             }
         }
@@ -503,6 +509,38 @@ private fun StoryArchiveCard(store: Store, isClub: Boolean, onClick: () -> Unit)
                         Spacer(Modifier.width(6.dp))
                         Surface(shape = RoundedCornerShape(999.dp), color = Color.White) {
                             Text("CLUB", fontSize = 11.sp, fontWeight = FontWeight.Black, color = Pops.blue,
+                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp))
+                        }
+                    }
+                }
+                Text(subtitle, color = Color.White.copy(alpha = 0.85f), fontSize = 13.sp, maxLines = 2)
+            }
+            Icon(Icons.Filled.KeyboardArrowRight, null, tint = Color.White)
+        }
+    }
+}
+
+// Knowledge Atlas — Tidbits Club EXCLUSIVE (docs/CLUB-FEATURES-BUILD.md "Feature 4").
+// The Records card (mirrors StoryArchiveCard/MarathonHistoryCard); the screen + row
+// composables live near MarathonHistoryScreen below.
+@Composable
+private fun KnowledgeAtlasCard(store: Store, isClub: Boolean, onClick: () -> Unit) {
+    val n = remember(isClub) { if (isClub) KnowledgeAtlas.domains(store).size else 0 }
+    val subtitle = if (isClub) {
+        if (n == 0) "Play across a few domains and your Atlas fills in."
+        else "$n domain${if (n == 1) "" else "s"} mapped over 12 months — tap one to play it."
+    } else (remember(isClub) { KnowledgeAtlas.previewLine(store) } ?: "Club maps everything you know and where it's drifting.")
+    ChunkyCard(fill = Pops.pink, onClick = onClick) {
+        Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Filled.Map, null, tint = Color.White, modifier = Modifier.size(28.dp))
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("KNOWLEDGE ATLAS", fontWeight = FontWeight.Black, fontSize = 20.sp, color = Color.White)
+                    if (!isClub) {
+                        Spacer(Modifier.width(6.dp))
+                        Surface(shape = RoundedCornerShape(999.dp), color = Color.White) {
+                            Text("CLUB", fontSize = 11.sp, fontWeight = FontWeight.Black, color = Pops.pink,
                                 modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp))
                         }
                     }
@@ -1313,7 +1351,7 @@ private fun RowScope.StatBox(value: String, label: String, tint: Color) {
 // ---- Records ----
 
 @Composable
-private fun RecordsScreen(store: Store, onOpenArchive: () -> Unit, onOpenMarathonHistory: () -> Unit, onClub: () -> Unit) {
+private fun RecordsScreen(store: Store, onOpenArchive: () -> Unit, onOpenMarathonHistory: () -> Unit, onOpenAtlas: () -> Unit, onClub: () -> Unit) {
     val records = remember { store.records() }
     val streak = remember { store.streak() }
     val life = remember { store.lifetime() }
@@ -1359,6 +1397,13 @@ private fun RecordsScreen(store: Store, onOpenArchive: () -> Unit, onOpenMaratho
         // from Records in addition to the Home card's own post-game "See Marathon
         // history" link.
         MarathonHistoryCard(store = store, isClub = Entitlement.isClub, onClick = { if (Entitlement.isClub) onOpenMarathonHistory() else onClub() })
+
+        // Knowledge Atlas — Tidbits Club EXCLUSIVE (docs/CLUB-FEATURES-BUILD.md "Feature
+        // 4"), a "see all" destination off Records (R-REC-1). ADDITIVE: this does NOT
+        // gate or duplicate the free Topic Levels / Pie sections just below — every
+        // domain row inside the Atlas itself is a tap-to-play door, never a passive
+        // readout (R-MON-1).
+        KnowledgeAtlasCard(store = store, isClub = Entitlement.isClub, onClick = { if (Entitlement.isClub) onOpenAtlas() else onClub() })
 
         val prog = remember { store.progress() }
         val explored = prog.count { it.total > 0 }
@@ -1880,6 +1925,129 @@ private fun marathonDurationLabel(seconds: Double): String {
     if (minutes < 60) return "${maxOf(1, minutes)} min"
     val hrs = minutes / 60; val rem = minutes % 60
     return if (rem == 0) "${hrs}h" else "${hrs}h ${rem}m"
+}
+
+// ---- Knowledge Atlas (Tidbits Club EXCLUSIVE — docs/CLUB-FEATURES-BUILD.md "Feature
+// 4") ---- A transparent, interpreted layer over the SAME per-game rows the free Topic
+// Levels / Pie already read (data/KnowledgeAtlas.kt) — additive, never a lock on what's
+// already free (R-MON-1). The trap to avoid (design spec): "a passive Sporcle stats
+// page." So EVERY domain row here is a tap target that launches a real round in that
+// domain (Route.Game(Mode.CLASSIC, category) — the same launch path Quick Play uses) —
+// it interprets AND acts, never a passive readout. Decay rows carry their own "Shore it
+// up" round. Android mirror of Apple's KnowledgeAtlasView.swift / web's #/atlas.
+
+@Composable
+private fun KnowledgeAtlasScreen(store: Store, onBack: () -> Unit, onClub: () -> Unit, onPlay: (String, String) -> Unit) {
+    val ink = MaterialTheme.colorScheme.onSurface
+    val soft = ink.copy(alpha = 0.6f)
+    Column(Modifier.fillMaxSize().padding(20.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            TextButton(onClick = onBack) { Text("‹ Back") }
+            Text("Knowledge Atlas", fontSize = 24.sp, fontWeight = FontWeight.Black, color = ink)
+        }
+        Spacer(Modifier.height(8.dp))
+
+        if (!Entitlement.isClub) {
+            val preview = remember { KnowledgeAtlas.previewLine(store) }
+                ?: "Club maps every domain you play across 12 months and shows what's rising or drifting."
+            ChunkyCard { Column(Modifier.padding(18.dp)) { Text(preview, fontWeight = FontWeight.Bold) } }
+            Spacer(Modifier.height(14.dp))
+            ChunkyCard(fill = Pops.pink.copy(alpha = 0.12f)) {
+                Column(Modifier.padding(20.dp).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("A map of what you actually know, by domain, over time.", fontWeight = FontWeight.Black, fontSize = 18.sp, textAlign = TextAlign.Center)
+                    Text("Plain accuracy and sample counts — no opaque score. Tap any domain to play a round in it.",
+                        fontSize = 13.sp, color = soft, textAlign = TextAlign.Center)
+                    Spacer(Modifier.height(12.dp))
+                    Button(onClick = onClub) { Text("Join Tidbits Club") }
+                }
+            }
+            return@Column
+        }
+
+        val domains = remember { KnowledgeAtlas.domains(store) }
+        val decaying = remember { KnowledgeAtlas.decayRadar(store) }
+
+        if (domains.isEmpty()) {
+            ChunkyCard { Column(Modifier.padding(20.dp)) {
+                Text("Not enough history yet.", fontWeight = FontWeight.Bold)
+                Text("Play across a few domains and your Atlas fills in — it needs a few weeks of history to show a trajectory.",
+                    fontSize = 13.sp, color = soft)
+            } }
+            return@Column
+        }
+
+        Text("Your accuracy by domain over the trailing 12 months. Tap any domain to play a round in it.",
+            fontSize = 13.sp, color = soft)
+        Spacer(Modifier.height(10.dp))
+        LazyColumn(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            items(domains, key = { it.categoryId }) { d -> AtlasDomainRow(d) { onPlay(d.categoryId, "Knowledge Atlas") } }
+            if (decaying.isNotEmpty()) {
+                item(key = "atlas-decay-header") {
+                    Column(Modifier.padding(top = 8.dp)) {
+                        Text("Decay radar", fontWeight = FontWeight.Black, fontSize = 18.sp, color = ink)
+                        Text("Domains you were strong in 6+ months ago that have since slipped.", fontSize = 13.sp, color = soft)
+                    }
+                }
+                items(decaying, key = { "atlas-decay-${it.categoryId}" }) { entry -> AtlasDecayRow(entry) { onPlay(entry.categoryId, "Shore it up") } }
+            }
+        }
+    }
+}
+
+// Domain row: colored category glyph, accuracy %, sample size, trajectory arrow — every
+// number a door, so the WHOLE row is a tap target into a round (mirrors TopicRow's chrome).
+@Composable
+private fun AtlasDomainRow(entry: KnowledgeAtlas.DomainAtlasEntry, onClick: () -> Unit) {
+    val cat = Category.byId(entry.categoryId)
+    val col = Pops.at(cat.colorIndex)
+    val pct = (entry.accuracy * 100).roundToInt()
+    ChunkyCard(onClick = onClick) {
+        Row(Modifier.padding(12.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Box(Modifier.size(36.dp).background(col, CircleShape).border(2.5.dp, Ink, CircleShape), contentAlignment = Alignment.Center) {
+                Icon(categoryIcon(cat.id), null, tint = onAccent(col), modifier = Modifier.size(18.dp))
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(cat.name, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                    entry.trajectoryDelta?.let { delta ->
+                        val up = delta >= 0
+                        Surface(shape = RoundedCornerShape(999.dp), color = if (up) Pops.mint else Pops.coral, border = BorderStroke(2.dp, Ink)) {
+                            Row(Modifier.padding(horizontal = 7.dp, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Icon(if (up) Icons.Filled.TrendingUp else Icons.Filled.TrendingDown, null, tint = Color.White, modifier = Modifier.size(12.dp))
+                                Text("${(kotlin.math.abs(delta) * 100).roundToInt()}", color = Color.White, fontWeight = FontWeight.Black, fontSize = 11.sp)
+                            }
+                        }
+                    }
+                    Text("$pct%", fontWeight = FontWeight.Black, fontSize = 15.sp)
+                    Icon(Icons.Filled.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                }
+                Box(Modifier.fillMaxWidth().height(12.dp).background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(999.dp)).border(2.dp, Ink, RoundedCornerShape(999.dp))) {
+                    Box(Modifier.fillMaxWidth(entry.accuracy.toFloat().coerceIn(0.05f, 1f)).fillMaxHeight().background(col, RoundedCornerShape(999.dp)))
+                }
+                Text("${entry.correct}/${entry.sampleSize} answered · last 12 months", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+            }
+        }
+    }
+}
+
+// Decay radar row: past -> now accuracy, with its own "Shore it up" round button.
+@Composable
+private fun AtlasDecayRow(entry: KnowledgeAtlas.DecayEntry, onPlay: () -> Unit) {
+    val cat = Category.byId(entry.categoryId)
+    val col = Pops.at(cat.colorIndex)
+    ChunkyCard(fill = MaterialTheme.colorScheme.surfaceVariant) {
+        Row(Modifier.padding(12.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Box(Modifier.size(36.dp).background(col, CircleShape).border(2.5.dp, Ink, CircleShape), contentAlignment = Alignment.Center) {
+                Icon(categoryIcon(cat.id), null, tint = onAccent(col), modifier = Modifier.size(18.dp))
+            }
+            Column(Modifier.weight(1f)) {
+                Text(cat.name, fontWeight = FontWeight.Bold)
+                Text("${(entry.pastAccuracy * 100).roundToInt()}% then → ${(entry.recentAccuracy * 100).roundToInt()}% now",
+                    fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+            }
+            Button(onClick = onPlay, colors = ButtonDefaults.buttonColors(containerColor = Pops.coral, contentColor = Color.White)) { Text("Shore it up") }
+        }
+    }
 }
 
 // L4: one levelable badge — tier number, name, tier chip, progress bar, plain-language detail.

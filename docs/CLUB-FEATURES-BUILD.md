@@ -50,7 +50,7 @@ ship first; season/cron infrastructure is last.
 | 1 | **Weak-Spot Arena** | 1 gameplay | client-only: round from your own miss history | **DONE on all 6 platforms** |
 | 2 | **Story Archive** | 3 library | client-only: keep every unlocked "story behind the answer", searchable | **DONE on all 6 platforms** |
 | 3 | **Marathon** | 1 gameplay | client-only: 200-q graded endurance, cross-session scorecard | **DONE on all 6 platforms** |
-| 4 | **Knowledge Atlas** | 2 retrospect | client-only: accuracy by domain/sub-domain over 12mo, every domain tappable into a round | **iOS DONE (Apple reference); macOS/tvOS compile, surface TBD** |
+| 4 | **Knowledge Atlas** | 2 retrospect | client-only: accuracy by domain/sub-domain over 12mo, every domain tappable into a round | **iOS + web + Android DONE; macOS/tvOS compile, surface TBD** |
 | 5 | **Friend Streaks** | 4 social | light RTDB (reuses friends): mutual daily accountability | todo |
 | 6 | **Link Wall** | 1 gameplay | client-only: NYT-Connections-style 2nd daily (Daily stays free) | todo |
 | 7 | **Expedition** | 1 gameplay | client-only: multi-week structured campaign, map + certificate | todo |
@@ -69,7 +69,7 @@ Legend: ✅ done+verified · 🔨 in progress · ⏳ queued · 🚫 n/a (with re
 | 1 Weak-Spot Arena | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 2 Story Archive | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 3 Marathon | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 4 Knowledge Atlas | ✅ | ✅ | ⏳ | ⏳ | ⏳ | ⏳ |
+| 4 Knowledge Atlas | ✅ | ✅ | ⏳ | ⏳ | ✅ | ⏳ |
 | 5 Friend Streaks | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 6 Link Wall | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 7 Expedition | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
@@ -95,6 +95,20 @@ Legend: ✅ done+verified · 🔨 in progress · ⏳ queued · 🚫 n/a (with re
 > (`AnswerDetail` carries no per-answer timestamp). macOS/tvOS already COMPILE the
 > Core service (BUILD SUCCEEDED); only their per-platform Records surface remains.
 > iOS is the full reference. Debug hook: `TIDBITS_ATLAS=1`.
+>
+> Note: Android's `data/KnowledgeAtlas.kt` mirrors the Apple/web math exactly
+> (sampleFloor 8 / strongThreshold 0.70 / decayDelta 0.12) over `Store.records()` —
+> pure derivation, no new persistence. Unlike web/Apple, Android's `Store.Rec` has
+> carried a game-level epoch (`at`) since the original Records-history feature, so
+> no additive timestamp change was needed; a record with a missing/zero `at` is
+> treated as older than the trailing-12-month window (same as any record that old)
+> and keeps feeding the free lifetime Pie/Levels untouched. Records → Knowledge
+> Atlas card (Pops.pink) → `KnowledgeAtlasScreen`; every domain row taps into
+> `Route.Game(Mode.CLASSIC, Category)`, the same launch path Quick Play uses; decay
+> rows carry their own "Shore it up" round. Reused `tidbits_club_debug`. Windows is
+> next: `Tidbits.Core`'s `GameRecord` already has a `Date` field (`DateTime.UtcNow`
+> default) mirroring Android's `at` — port the same pure-derivation math over
+> `GameData`'s stored records, no schema change needed there either.
 
 ---
 

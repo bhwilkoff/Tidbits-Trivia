@@ -50,7 +50,7 @@ ship first; season/cron infrastructure is last.
 | 1 | **Weak-Spot Arena** | 1 gameplay | client-only: round from your own miss history | **DONE on all 6 platforms** |
 | 2 | **Story Archive** | 3 library | client-only: keep every unlocked "story behind the answer", searchable | **DONE on all 6 platforms** |
 | 3 | **Marathon** | 1 gameplay | client-only: 200-q graded endurance, cross-session scorecard | **DONE on all 6 platforms** |
-| 4 | **Knowledge Atlas** | 2 retrospect | client-only: accuracy by domain/sub-domain over 12mo | todo |
+| 4 | **Knowledge Atlas** | 2 retrospect | client-only: accuracy by domain/sub-domain over 12mo, every domain tappable into a round | **iOS in progress** |
 | 5 | **Friend Streaks** | 4 social | light RTDB (reuses friends): mutual daily accountability | todo |
 | 6 | **Link Wall** | 1 gameplay | client-only: NYT-Connections-style 2nd daily (Daily stays free) | todo |
 | 7 | **Expedition** | 1 gameplay | client-only: multi-week structured campaign, map + certificate | todo |
@@ -69,7 +69,7 @@ Legend: ✅ done+verified · 🔨 in progress · ⏳ queued · 🚫 n/a (with re
 | 1 Weak-Spot Arena | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 2 Story Archive | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 3 Marathon | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 4 Knowledge Atlas | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
+| 4 Knowledge Atlas | ⏳ | 🔨 | ⏳ | ⏳ | ⏳ | ⏳ |
 | 5 Friend Streaks | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 6 Link Wall | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 7 Expedition | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
@@ -249,6 +249,62 @@ a difficulty-weighted score (reuse the existing difficulty overlay if present).
 
 **Apple reference = canonical.** Others mirror the behavior (same verb, native idiom).
 The load-bearing shared piece is the resume persistence — get it right on Apple first.
+
+---
+
+## Feature 4 — Knowledge Atlas (design spec)
+
+**One line:** your accuracy by domain *and sub-domain* on a 12-month trajectory —
+what's rising, what's decaying — with every domain tappable into a round that shores
+it up. Your record, *interpreted* (Pillar 2 ⭐; MONETIZATION §4a).
+
+**The trap to avoid (research finding):** "five analytics screens reads as Sporcle
+(2.1★)." So Knowledge Atlas must NOT be a passive dashboard. The rule for this
+feature: **every number is a door.** Tapping a weak or decaying domain launches a
+targeted round (reuse the Weak-Spot engine / a domain-filtered round). It interprets
+AND acts. That is what keeps it "get better," not a stats wall.
+
+**Four-question test (passed 2026-07-22):** deepens understanding (a map of what you
+know shows the SHAPE of your knowledge, not just a score — and names sub-domains you'd
+never have articulated); invites participation (you act on it — tap a decaying domain
+→ play it; you choose what to shore up); supports agency (it points you at your own
+next step and hands you the round to take it — the opposite of a passive readout);
+clarity (plain bars + a simple up/down trajectory arrow; NO opaque "mastery score"
+black box — show the accuracy and the sample size).
+
+**Data source (local):** the persisted per-answer history (`AnswerDetail`/`GameRecord`
+on Apple — each carries categoryID + correct + the record's date; the equivalents on
+web/Android/Windows). Bucket answers by **domain** (and sub-domain where the corpus
+has one — check the category taxonomy) × **month** for the trailing 12 months. Compute
+per-domain accuracy, sample size, and a trajectory (this-quarter vs prior-quarter
+delta). Everything is a transparent count — no model.
+- **Decay radar** (a sub-view of the same data): domains you were strong in 6+ months
+  ago and have since declined → surfaced with a "shore it up" round button. Honest
+  about sample size (don't flag a domain with 3 answers).
+
+**Surface:**
+- Entry: a Club-marked **Knowledge Atlas** destination off Records (R-REC-1 "see all";
+  Records already has free Topic Levels / The Pie — Atlas is the deeper 12-month
+  interpreted layer, and must NOT gate or duplicate those free surfaces).
+- The atlas: a scannable list/grid of domains, each with accuracy, sample size, a
+  trajectory arrow (▲▼ + delta), and a tap target → a round in that domain. A
+  sub-domain drill-down where the taxonomy supports it. A **Decay radar** section.
+- Empty/thin state: "Play across a few domains and your Atlas fills in — it needs a
+  few weeks of history to show a trajectory." (honest about needing history — which
+  is exactly why it passes the line test.)
+- Non-member: a real preview (their single strongest + weakest domain, or a sample) +
+  the honest "Club maps everything you know and where it's drifting" panel → paywall,
+  never a blank wall.
+
+**NOT in scope here (separate Pillar-2 fast-follows, note them):** Retention curve,
+Calibration report (the Stake tally already exists free), Miss autopsy, Year in Review.
+Knowledge Atlas + Decay radar is the anchor; keep it focused.
+
+**Gating:** Club-only; reuse the `TIDBITS_CLUB=1` debug override. No mode/engine change
+needed beyond the "tap a domain → launch a domain-filtered round" hook (reuse existing
+category-filtered launch).
+
+**Apple reference = canonical.** Others mirror (same verb, native idiom).
 
 ---
 

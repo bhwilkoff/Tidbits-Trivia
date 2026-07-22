@@ -18,6 +18,7 @@ namespace Tidbits.HeadlessTests;
 /// plans, and member states render deterministically from injected state, offline, without
 /// depending on GameData.Shared's singleton entitlement/store state. One extra test wires the
 /// real `ClubPaywallView` to confirm it reads GameData.Shared correctly end-to-end.
+[Collection("EnvSensitive")]
 public class ClubPaywallTests
 {
     private static string ArtifactsDir()

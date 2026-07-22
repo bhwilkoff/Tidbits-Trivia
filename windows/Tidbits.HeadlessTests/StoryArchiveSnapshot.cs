@@ -22,6 +22,7 @@ namespace Tidbits.HeadlessTests;
 /// entry-point card (Club-marked, R-REC-1) and the archive's pure rendering
 /// (`StoryArchiveUi`, mirrors ClubPaywallUi's headless-testable static-builder
 /// pattern). Windows is the last of six platforms.
+[Collection("EnvSensitive")]
 public class StoryArchiveSnapshot
 {
     private static string Art()
@@ -72,51 +73,41 @@ public class StoryArchiveSnapshot
     [AvaloniaFact]
     public async Task Records_shows_the_story_archive_card_for_a_member()
     {
-        var previous = Environment.GetEnvironmentVariable("TIDBITS_CLUB");
-        try
-        {
-            Environment.SetEnvironmentVariable("TIDBITS_CLUB", "1");
-            var store = await StoreWithOneGame();
-            var win = new Window { Width = 900, Height = 900, Content = new RecordsView { DataContext = new RecordsViewModel(store) } };
-            win.Show();
-            Dispatcher.UIThread.RunJobs();
-            ScrollToBottom(win);
+        using var _ = new EnvVarScope("TIDBITS_CLUB", "1");
+        var store = await StoreWithOneGame();
+        var win = new Window { Width = 900, Height = 900, Content = new RecordsView { DataContext = new RecordsViewModel(store) } };
+        win.Show();
+        Dispatcher.UIThread.RunJobs();
+        ScrollToBottom(win);
 
-            var texts = TextsOf(win);
-            Assert.Contains("STORY ARCHIVE", texts);
-            Assert.DoesNotContain("CLUB", texts); // member -> no chip
-            var buttons = win.GetVisualDescendants().OfType<Button>().Where(b => (b.Content as string) == "Open").ToList();
-            Assert.NotEmpty(buttons);
+        var texts = TextsOf(win);
+        Assert.Contains("STORY ARCHIVE", texts);
+        Assert.DoesNotContain("CLUB", texts); // member -> no chip
+        var buttons = win.GetVisualDescendants().OfType<Button>().Where(b => (b.Content as string) == "Open").ToList();
+        Assert.NotEmpty(buttons);
 
-            win.CaptureRenderedFrame()!.Save(Path.Combine(Art(), "records-story-archive-member.png"));
-        }
-        finally { Environment.SetEnvironmentVariable("TIDBITS_CLUB", previous); }
+        win.CaptureRenderedFrame()!.Save(Path.Combine(Art(), "records-story-archive-member.png"));
     }
 
     [AvaloniaFact]
     public async Task Records_shows_the_club_chip_and_a_real_or_honest_preview_for_a_non_member()
     {
-        var previous = Environment.GetEnvironmentVariable("TIDBITS_CLUB");
-        try
-        {
-            Environment.SetEnvironmentVariable("TIDBITS_CLUB", "0");
-            var store = await StoreWithOneGame();
-            var win = new Window { Width = 900, Height = 900, Content = new RecordsView { DataContext = new RecordsViewModel(store) } };
-            win.Show();
-            Dispatcher.UIThread.RunJobs();
-            ScrollToBottom(win);
+        using var _ = new EnvVarScope("TIDBITS_CLUB", "0");
+        var store = await StoreWithOneGame();
+        var win = new Window { Width = 900, Height = 900, Content = new RecordsView { DataContext = new RecordsViewModel(store) } };
+        win.Show();
+        Dispatcher.UIThread.RunJobs();
+        ScrollToBottom(win);
 
-            var texts = TextsOf(win);
-            Assert.Contains("STORY ARCHIVE", texts);
-            Assert.Contains("CLUB", texts); // non-member -> chip
-            var buttons = win.GetVisualDescendants().OfType<Button>().Where(b => (b.Content as string) == "Join Club").ToList();
-            Assert.NotEmpty(buttons);
-            // Never a blank wall: some subtitle line renders regardless of local history.
-            Assert.Contains(texts, t => t is not null && t.Contains("Club", StringComparison.Ordinal));
+        var texts = TextsOf(win);
+        Assert.Contains("STORY ARCHIVE", texts);
+        Assert.Contains("CLUB", texts); // non-member -> chip
+        var buttons = win.GetVisualDescendants().OfType<Button>().Where(b => (b.Content as string) == "Join Club").ToList();
+        Assert.NotEmpty(buttons);
+        // Never a blank wall: some subtitle line renders regardless of local history.
+        Assert.Contains(texts, t => t is not null && t.Contains("Club", StringComparison.Ordinal));
 
-            win.CaptureRenderedFrame()!.Save(Path.Combine(Art(), "records-story-archive-non-member.png"));
-        }
-        finally { Environment.SetEnvironmentVariable("TIDBITS_CLUB", previous); }
+        win.CaptureRenderedFrame()!.Save(Path.Combine(Art(), "records-story-archive-non-member.png"));
     }
 
     // MARK: - Archive rendering (StoryArchiveUi — pure, headless-testable)

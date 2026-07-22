@@ -8,6 +8,7 @@ namespace Tidbits.HeadlessTests;
 /// mirrors — a signed-OUT refresh must never touch the network or revoke a cached answer;
 /// that's the slice testable here without a live RTDB round-trip (see RtdbLiveSmoke for the
 /// gated live path).
+[Collection("EnvSensitive")]
 public class EntitlementStoreTests
 {
     // MARK: - Entitlement.GrantsClub (the wire-record rule)

@@ -21,6 +21,7 @@ namespace Tidbits.HeadlessTests;
 /// entry-point card (Club-marked, R-REC-1) and the atlas's pure rendering
 /// (`KnowledgeAtlasUi`, mirrors `StoryArchiveUi`/`ClubPaywallUi`'s headless-testable
 /// static-builder pattern). Windows is the last of six platforms.
+[Collection("EnvSensitive")]
 public class KnowledgeAtlasSnapshot
 {
     private static string Art()
@@ -62,48 +63,38 @@ public class KnowledgeAtlasSnapshot
     [AvaloniaFact]
     public void Records_shows_the_knowledge_atlas_card_for_a_member()
     {
-        var previous = Environment.GetEnvironmentVariable("TIDBITS_CLUB");
-        try
-        {
-            Environment.SetEnvironmentVariable("TIDBITS_CLUB", "1");
-            var store = StoreWithHistory(new[] { G("history", 8, 10, 1) });
-            var win = new Window { Width = 900, Height = 1000, Content = new RecordsView { DataContext = new RecordsViewModel(store) } };
-            win.Show();
-            Dispatcher.UIThread.RunJobs();
+        using var _ = new EnvVarScope("TIDBITS_CLUB", "1");
+        var store = StoreWithHistory(new[] { G("history", 8, 10, 1) });
+        var win = new Window { Width = 900, Height = 1000, Content = new RecordsView { DataContext = new RecordsViewModel(store) } };
+        win.Show();
+        Dispatcher.UIThread.RunJobs();
 
-            var texts = TextsOf(win);
-            Assert.Contains("KNOWLEDGE ATLAS", texts);
-            var buttons = win.GetVisualDescendants().OfType<Button>().Where(b => (b.Content as string) == "Open").ToList();
-            Assert.NotEmpty(buttons);
+        var texts = TextsOf(win);
+        Assert.Contains("KNOWLEDGE ATLAS", texts);
+        var buttons = win.GetVisualDescendants().OfType<Button>().Where(b => (b.Content as string) == "Open").ToList();
+        Assert.NotEmpty(buttons);
 
-            win.CaptureRenderedFrame()!.Save(Path.Combine(Art(), "records-knowledge-atlas-member.png"));
-        }
-        finally { Environment.SetEnvironmentVariable("TIDBITS_CLUB", previous); }
+        win.CaptureRenderedFrame()!.Save(Path.Combine(Art(), "records-knowledge-atlas-member.png"));
     }
 
     [AvaloniaFact]
     public void Records_shows_the_club_chip_and_a_real_or_honest_preview_for_a_non_member()
     {
-        var previous = Environment.GetEnvironmentVariable("TIDBITS_CLUB");
-        try
-        {
-            Environment.SetEnvironmentVariable("TIDBITS_CLUB", "0");
-            var store = StoreWithHistory(new[] { G("history", 9, 10, 1), G("science", 2, 10, 1) });
-            var win = new Window { Width = 900, Height = 1000, Content = new RecordsView { DataContext = new RecordsViewModel(store) } };
-            win.Show();
-            Dispatcher.UIThread.RunJobs();
+        using var _ = new EnvVarScope("TIDBITS_CLUB", "0");
+        var store = StoreWithHistory(new[] { G("history", 9, 10, 1), G("science", 2, 10, 1) });
+        var win = new Window { Width = 900, Height = 1000, Content = new RecordsView { DataContext = new RecordsViewModel(store) } };
+        win.Show();
+        Dispatcher.UIThread.RunJobs();
 
-            var texts = TextsOf(win);
-            Assert.Contains("KNOWLEDGE ATLAS", texts);
-            Assert.Contains("CLUB", texts); // non-member -> chip
-            var buttons = win.GetVisualDescendants().OfType<Button>().Where(b => (b.Content as string) == "Join Club").ToList();
-            Assert.NotEmpty(buttons);
-            // Never a blank wall: some subtitle line renders regardless of local history.
-            Assert.Contains(texts, t => t is not null && t.Contains("Club", StringComparison.Ordinal));
+        var texts = TextsOf(win);
+        Assert.Contains("KNOWLEDGE ATLAS", texts);
+        Assert.Contains("CLUB", texts); // non-member -> chip
+        var buttons = win.GetVisualDescendants().OfType<Button>().Where(b => (b.Content as string) == "Join Club").ToList();
+        Assert.NotEmpty(buttons);
+        // Never a blank wall: some subtitle line renders regardless of local history.
+        Assert.Contains(texts, t => t is not null && t.Contains("Club", StringComparison.Ordinal));
 
-            win.CaptureRenderedFrame()!.Save(Path.Combine(Art(), "records-knowledge-atlas-non-member.png"));
-        }
-        finally { Environment.SetEnvironmentVariable("TIDBITS_CLUB", previous); }
+        win.CaptureRenderedFrame()!.Save(Path.Combine(Art(), "records-knowledge-atlas-non-member.png"));
     }
 
     // MARK: - Atlas rendering (KnowledgeAtlasUi — pure, headless-testable)

@@ -13,6 +13,10 @@ struct GameContainerView: View {
     var dailyDay: String? = nil
     /// Custom Mix: the modes behind a multi-select Customize launch.
     var mixModes: [GameMode]? = nil
+    /// Expedition stage play only (docs/CLUB-FEATURES-BUILD.md "Feature 5"):
+    /// the campaign + stage this round belongs to. nil for every other launch.
+    var expedition: Expedition? = nil
+    var expeditionStageIndex: Int? = nil
 
     @Environment(AppStore.self) private var store
     @Environment(\.dismiss) private var dismiss
@@ -21,6 +25,15 @@ struct GameContainerView: View {
     /// Weak-Spot Arena only: the round just built (questions + reasons), kept
     /// around so the empty state and the "gaps closed" result tally can read it.
     @State private var activeWeakSpotRound: WeakSpotRound?
+
+    /// Expedition stage play only: the outcome once `finishExpeditionStage`
+    /// records it (nil until then — the result view falls back to computing
+    /// pass/fail straight off `game.summary` for its first render).
+    @State private var expeditionStageOutcome: (passed: Bool, certificate: ExpeditionCertificate?)?
+    @State private var expeditionRecorded = false
+    private var expeditionStage: ExpeditionStage? {
+        expedition?.stages.first { $0.index == expeditionStageIndex }
+    }
 
     /// Marathon only (docs/CLUB-FEATURES-BUILD.md "Feature 3"): the in-progress
     /// run this session is playing into, how many questions were already
@@ -71,6 +84,10 @@ struct GameContainerView: View {
                         // shouldn't be reachable in practice.
                         loadingState.onAppear(perform: close)
                     }
+                } else if let expedition, let stageIndex = expeditionStageIndex, let stage = expeditionStage {
+                    ExpeditionStageResultView(expedition: expedition, stage: stage, summary: game.summary,
+                                              outcome: expeditionStageOutcome, onRetry: { replay() }, onDone: close)
+                        .onAppear(perform: { finishExpeditionStage(expedition: expedition, stageIndex: stageIndex) })
                 } else {
                     ResultsView(summary: game.summary, onPlayAgain: playAgainAction, onDone: close,
                                 weakSpotGapsClosed: weakSpotGapsClosed)
@@ -85,6 +102,8 @@ struct GameContainerView: View {
                 startWeakSpot()
             } else if game.phase == .idle, mode == .marathon {
                 startMarathon()
+            } else if game.phase == .idle, let expedition, let stageIndex = expeditionStageIndex {
+                startExpeditionStage(expedition: expedition, stageIndex: stageIndex)
             } else if game.phase == .idle {
                 // Weave in spaced-review questions (skip Daily — it's fair/fixed).
                 // In a single-category game, only re-ask misses from THAT category —
@@ -157,6 +176,33 @@ struct GameContainerView: View {
         }
     }
 
+    // MARK: Expedition (Club — docs/CLUB-FEATURES-BUILD.md "Feature 5")
+
+    /// Route the stage's category + difficulty band into the EXISTING
+    /// `.classic` launch path — an Expedition is not a new game engine.
+    private func startExpeditionStage(expedition: Expedition, stageIndex: Int) {
+        expeditionStageOutcome = nil
+        expeditionRecorded = false
+        guard let stage = expedition.stages.first(where: { $0.index == stageIndex }) else { close(); return }
+        let questions = Expeditions.startStage(expedition, stageIndex: stageIndex)
+        game.startCustom(mode: .classic, category: .named(stage.categoryID), questions: questions)
+    }
+
+    /// The stage is a normal round, so it records like any other (feeds
+    /// Records/spaced-review/Story Archive) AND records the Expedition-specific
+    /// pass/fail outcome once. TIDBITS_EXPEDITION_FORCE_PASS overrides the
+    /// score for verification (autopilot always picks option 0, so it can't
+    /// reliably clear a real pass bar).
+    private func finishExpeditionStage(expedition: Expedition, stageIndex: Int) {
+        guard !expeditionRecorded, let stage = expeditionStage else { return }
+        expeditionRecorded = true
+        persistIfNeeded()
+        let summary = game.summary
+        let correct = DebugHooks.forceExpeditionPass ? stage.questionCount : summary.correct
+        expeditionStageOutcome = Expeditions.recordStageResult(
+            expedition: expedition, stageIndex: stageIndex, correct: correct, total: summary.total, in: modelContext)
+    }
+
     private var loadingState: some View {
         VStack(spacing: 18) {
             ProgressView().controlSize(.large).tint(Tidbits.Palette.ink)
@@ -190,6 +236,7 @@ struct GameContainerView: View {
         if mode == .mix { Task { await game.startMix(modes: mixModes ?? [.classic], category: category) } }
         else if mode == .weakSpot { startWeakSpot() }
         else if mode == .marathon { startMarathon() }
+        else if let expedition, let stageIndex = expeditionStageIndex { startExpeditionStage(expedition: expedition, stageIndex: stageIndex) }
         else { Task { await game.start(mode: mode, category: category) } }
     }
 

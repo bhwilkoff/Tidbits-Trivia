@@ -73,6 +73,41 @@ enum DebugHooks {
         ProcessInfo.processInfo.environment["TIDBITS_MARATHON"] == "1"
     }
 
+    /// TIDBITS_EXPEDITION=1 opens Club Expeditions on launch — screenshot/
+    /// simulator observability, same idiom as TIDBITS_MARATHON/TIDBITS_ATLAS.
+    static var openExpedition: Bool {
+        ProcessInfo.processInfo.environment["TIDBITS_EXPEDITION"] == "1"
+    }
+
+    /// TIDBITS_EXPEDITION_FORCE_PASS=1 → a played Expedition stage always
+    /// records as a full pass regardless of the actual score. Verification-only
+    /// (so a stage/campaign can be advanced and a certificate written quickly
+    /// in the simulator without needing autopilot to answer every MCQ
+    /// correctly — autopilot always submits option 0). No-op in production.
+    static var forceExpeditionPass: Bool {
+        ProcessInfo.processInfo.environment["TIDBITS_EXPEDITION_FORCE_PASS"] == "1"
+    }
+
+    /// TIDBITS_EXPEDITION_MAP=<expeditionID> → open Expeditions straight into
+    /// that expedition's map (skips the list tap) — verification/screenshot
+    /// convenience on a dev box with no GUI Simulator window to tap through.
+    static var expeditionMapPreview: String? {
+        ProcessInfo.processInfo.environment["TIDBITS_EXPEDITION_MAP"]
+    }
+
+    /// TIDBITS_EXPEDITION_AUTOPLAY="<expeditionID>:<stageIndex>" → open
+    /// Expeditions and launch straight into that stage's play (skips the map's
+    /// Play tap) — verification-only, same reasoning as `expeditionMapPreview`.
+    /// Combine with TIDBITS_AUTOPILOT + TIDBITS_EXPEDITION_FORCE_PASS to drive
+    /// a stage pass -> advance/persist -> (on the last stage) certificate,
+    /// end to end, from the CLI.
+    static var expeditionAutoplay: (expeditionID: String, stageIndex: Int)? {
+        guard let raw = ProcessInfo.processInfo.environment["TIDBITS_EXPEDITION_AUTOPLAY"] else { return nil }
+        let parts = raw.split(separator: ":").map(String.init)
+        guard let id = parts.first, parts.count > 1, let idx = Int(parts[1]) else { return nil }
+        return (id, idx)
+    }
+
     /// TIDBITS_MIX=classic,pictureId,closestCall — the modes for a TIDBITS_AUTOPLAY=mix:… launch.
     static var mixModes: [GameMode]? {
         guard let raw = ProcessInfo.processInfo.environment["TIDBITS_MIX"] else { return nil }

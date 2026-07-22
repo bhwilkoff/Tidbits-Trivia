@@ -31,6 +31,9 @@ struct HomeView: View {
     @Query(sort: \MarathonScore.date, order: .reverse) private var marathonHistory: [MarathonScore]
     @State private var showMarathonChoice = false
     @State private var showMarathonHistory = false
+    // Expeditions (Club — docs/CLUB-FEATURES-BUILD.md "Feature 5").
+    @Query private var expeditionProgress: [ExpeditionProgress]
+    @State private var showExpeditions = false
 
     private var showOnboarding: Binding<Bool> {
         Binding(get: { !hasOnboarded || DebugHooks.forceOnboarding },
@@ -52,6 +55,7 @@ struct HomeView: View {
                 TriviaNightCard { showNightSheet = true }
                 WeakSpotCard(isClub: entitlement.isClub, previewLine: weakSpotPreviewLine) { openWeakSpot() }
                 MarathonCard(isClub: entitlement.isClub, run: marathonRuns.first, subtitle: marathonSubtitle) { openMarathon() }
+                ExpeditionsCard(isClub: entitlement.isClub, subtitle: expeditionSubtitle) { showExpeditions = true }
                 moreWaysSection
                 Button { showLiveJoin = true } label: {
                     HStack(spacing: 6) {
@@ -125,6 +129,7 @@ struct HomeView: View {
         .sheet(isPresented: $showLiveJoin) { LiveJoinView(initialCode: liveJoinCode) }
         .sheet(isPresented: $showClubPaywall) { ClubPaywallView() }
         .sheet(isPresented: $showMarathonHistory) { MarathonHistoryView() }
+        .sheet(isPresented: $showExpeditions) { ExpeditionsView() }
         .confirmationDialog("Marathon in progress", isPresented: $showMarathonChoice, titleVisibility: .visible) {
             Button("Resume") { start(LaunchRequest(mode: .marathon, category: .named("mixed")), remember: false) }
             Button("Start Over", role: .destructive) {
@@ -158,6 +163,9 @@ struct HomeView: View {
             }
             if DebugHooks.openMarathon {
                 start(LaunchRequest(mode: .marathon, category: .named("mixed")), remember: false)
+            }
+            if DebugHooks.openExpedition || DebugHooks.expeditionMapPreview != nil || DebugHooks.expeditionAutoplay != nil {
+                showExpeditions = true
             }
         }
         .onChange(of: gameCenter.pendingChallengeMode) { _, m in
@@ -222,6 +230,16 @@ struct HomeView: View {
             return "200 questions. Play it across as many sittings as you like — we'll keep your place."
         }
         return "See exactly where you stand — e.g. Geography 91% · History 64% — across a 200-question run you can pause and resume anytime."
+    }
+
+    /// A real preview even for non-members — the expeditions themselves are
+    /// curated content, not player data, so there's nothing to hide behind a
+    /// generic sell line (MONETIZATION §4a).
+    private var expeditionSubtitle: String {
+        if let active = expeditionProgress.first, let exp = Expedition.named(active.expeditionID) {
+            return "\(exp.title): stage \(active.currentStageIndex + 1) of \(exp.stageCount) — tap to continue"
+        }
+        return "Multi-week campaigns through a single subject — pick one, and go at your own pace."
     }
 
     private var header: some View {
@@ -802,6 +820,51 @@ private struct MarathonCard: View {
             }
             .padding(18)
             .chunkyCard(fill: Tidbits.Palette.teal)
+        }
+        .buttonStyle(.plain)
+        .padding(.trailing, Tidbits.Metric.shadowOffset)
+    }
+}
+
+// MARK: - Expeditions card (Club — docs/CLUB-FEATURES-BUILD.md "Feature 5")
+
+private struct ExpeditionsCard: View {
+    let isClub: Bool
+    let subtitle: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 14) {
+                Image(systemName: "figure.run")
+                    .font(.system(size: 30, weight: .black))
+                    .foregroundStyle(Tidbits.Palette.pink.legibleForeground)
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 6) {
+                        Text("EXPEDITIONS")
+                            .font(Tidbits.TypeRamp.l2)
+                            .foregroundStyle(Tidbits.Palette.pink.legibleForeground)
+                        if !isClub {
+                            Text("CLUB")
+                                .font(.system(size: 11, weight: .black, design: .rounded))
+                                .foregroundStyle(Tidbits.Palette.pink)
+                                .padding(.horizontal, 7).padding(.vertical, 3)
+                                .background(Capsule().fill(Color.white.opacity(0.92)))
+                        }
+                    }
+                    Text(subtitle)
+                        .font(Tidbits.TypeRamp.l5)
+                        .foregroundStyle(Tidbits.Palette.pink.legibleForeground.opacity(0.85))
+                        .multilineTextAlignment(.leading)
+                        .lineLimit(2)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right.circle.fill")
+                    .font(.system(size: 26, weight: .bold))
+                    .foregroundStyle(Tidbits.Palette.pink.legibleForeground)
+            }
+            .padding(18)
+            .chunkyCard(fill: Tidbits.Palette.pink)
         }
         .buttonStyle(.plain)
         .padding(.trailing, Tidbits.Metric.shadowOffset)

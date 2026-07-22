@@ -136,7 +136,7 @@ Legend: ✅ done+verified · 🔨 in progress · ⏳ queued · 🚫 n/a (with re
 | 2 Story Archive | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 3 Marathon | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 4 Knowledge Atlas | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 5 Expedition | ⏳ | 🔨 | ⏳ | ⏳ | ⏳ | ⏳ |
+| 5 Expedition | ⏳ | ✅ | ⏳ | ⏳ | ⏳ | ⏳ |
 | — Friend Streaks (deferred: owner free/Club split, R-MON-4) | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 6 Link Wall | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 7 Expedition | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
@@ -162,6 +162,31 @@ Legend: ✅ done+verified · 🔨 in progress · ⏳ queued · 🚫 n/a (with re
 > (`AnswerDetail` carries no per-answer timestamp). macOS/tvOS already COMPILE the
 > Core service (BUILD SUCCEEDED); only their per-platform Records surface remains.
 > iOS is the full reference. Debug hook: `TIDBITS_ATLAS=1`.
+>
+> Note: Expedition's data shape (`Expedition`/`ExpeditionStage`, Core/Models/
+> ExpeditionModels.swift) is a plain `static let all` catalog — 3 hand-defined
+> campaigns (The 20th Century / Around the World / The Scientific Record, 7
+> stages each) — plus two `@Model`s (`ExpeditionProgress` at-many-in-progress,
+> `ExpeditionCertificate` permanent), both registered in the ModelContainer
+> schema. NOT a new game engine: `Expeditions.startStage` filters the bundled
+> corpus by the stage's `categoryID` + a DIFFICULTY BAND (the taxonomy is FLAT
+> — same constraint the Knowledge Atlas hit — so stages differentiate by
+> difficulty, not sub-domain) and routes into the existing `.classic` launch
+> path. macOS/tvOS already COMPILE the Core service + models (BUILD SUCCEEDED);
+> only their per-platform Home entry point + map surface remain. iOS is the
+> full reference: an Expeditions destination reachable by everyone (the list +
+> an expedition's stage map are a real preview; only the Play tap is Club-gated
+> → `ClubPaywallView`, never a blank wall), a stage pass unlocks the next +
+> persists across relaunch (hardware-verified via SQLite inspection, mirroring
+> Marathon), and the last stage passing writes a permanent certificate + clears
+> progress (also SQLite-confirmed). Debug hooks: `TIDBITS_EXPEDITION=1` (open
+> the list) + `TIDBITS_EXPEDITION_FORCE_PASS=1` (a stage always records as a
+> pass regardless of score — autopilot always submits option 0, so it can't
+> reliably clear a real pass bar) + two verification-only hooks added because
+> this dev box has no GUI Simulator window to tap through:
+> `TIDBITS_EXPEDITION_MAP=<id>` (open straight to a map) and
+> `TIDBITS_EXPEDITION_AUTOPLAY=<id>:<stageIndex>` (launch straight into a
+> stage's play).
 >
 > Note: Android's `data/KnowledgeAtlas.kt` mirrors the Apple/web math exactly
 > (sampleFloor 8 / strongThreshold 0.70 / decayDelta 0.12) over `Store.records()` —

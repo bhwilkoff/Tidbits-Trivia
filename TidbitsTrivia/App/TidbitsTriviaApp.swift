@@ -104,7 +104,8 @@ struct TidbitsTriviaApp: App {
     /// isn't present, so it can't ship before the entitlement is configured.
     static func makeModelContainer() -> ModelContainer {
         let schema = Schema([GameRecord.self, MissedFact.self, DailyStreak.self, CalibrationTally.self, SeenStory.self,
-                             MarathonRun.self, MarathonScore.self])
+                             MarathonRun.self, MarathonScore.self,
+                             ExpeditionProgress.self, ExpeditionCertificate.self])
         #if os(tvOS)
         // Application Support is NOT writable on real Apple TV (Decision 017;
         // the simulator is lenient and won't catch it). Persist in Caches,

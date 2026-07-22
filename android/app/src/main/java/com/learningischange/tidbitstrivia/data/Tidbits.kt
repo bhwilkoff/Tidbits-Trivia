@@ -3,8 +3,18 @@ package com.learningischange.tidbitstrivia.data
 import android.content.Context
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.decodeFromStream
 import kotlinx.serialization.json.double
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
@@ -222,31 +232,54 @@ object Scoring {
 
 // ---- Corpus (bundled JSON asset, in-memory) ----
 
+// corpus.json rows are plain positional 9-element JSON arrays (not keyed objects).
+// This serializer decodes ONE row's JsonElement at a time (via the streaming
+// JsonDecoder) so Corpus.load never materializes a JsonElement tree for the
+// whole ~131k-row/42MB corpus — that whole-tree materialization (the old
+// Json.parseToJsonElement(text) call) was the OOM on a stock (non-largeHeap)
+// device heap; the OOM was swallowed by the caller's runCatching, so every game
+// mode silently showed "No questions yet" instead of crashing loudly.
+@OptIn(ExperimentalSerializationApi::class)
+private object CorpusRowSerializer : KSerializer<Question> {
+    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("CorpusRow")
+    override fun serialize(encoder: Encoder, value: Question): Unit =
+        throw UnsupportedOperationException("corpus rows are read-only")
+    override fun deserialize(decoder: Decoder): Question {
+        val a = (decoder as JsonDecoder).decodeJsonElement().jsonArray
+        return Question(
+            id = a[0].jsonPrimitive.content, prompt = a[1].jsonPrimitive.content,
+            options = a[2].jsonArray.map { it.jsonPrimitive.content },
+            correctIndex = a[3].jsonPrimitive.content.toInt(),
+            categoryId = a[4].jsonPrimitive.content,
+            difficulty = a[5].jsonPrimitive.content.toInt(),
+            explanation = a[6].jsonPrimitive.content,
+            sourceTitle = a[7].jsonPrimitive.content,
+            sourceUrl = a[8].jsonPrimitive.content,
+        )
+    }
+}
+private object CorpusQuestionListSerializer : KSerializer<List<Question>> by ListSerializer(CorpusRowSerializer)
+
+@Serializable
+private data class CorpusFile(
+    @Serializable(with = CorpusQuestionListSerializer::class)
+    val questions: List<Question> = emptyList(),
+)
+
 object Corpus {
     private var all: List<Question> = emptyList()
     private var byCat: Map<String, List<Question>> = emptyMap()
     var loaded = false; private set
     val count get() = all.size
+    private val streamingJson = Json { ignoreUnknownKeys = true }
 
+    @OptIn(ExperimentalSerializationApi::class)
     suspend fun load(context: Context) = withContext(Dispatchers.IO) {
         if (loaded) return@withContext
-        val text = context.assets.open("corpus.json").bufferedReader().use { it.readText() }
-        val arr = Json.parseToJsonElement(text).jsonObject["questions"]!!.jsonArray
-        all = arr.map { el ->
-            val a = el.jsonArray
-            Question(
-                id = a[0].jsonPrimitive.content, prompt = a[1].jsonPrimitive.content,
-                options = a[2].jsonArray.map { it.jsonPrimitive.content },
-                correctIndex = a[3].jsonPrimitive.content.toInt(),
-                categoryId = a[4].jsonPrimitive.content,
-                difficulty = a[5].jsonPrimitive.content.toInt(),
-                explanation = a[6].jsonPrimitive.content,
-                sourceTitle = a[7].jsonPrimitive.content,
-                sourceUrl = a[8].jsonPrimitive.content,
-            )
-        }
+        all = context.assets.open("corpus.json").use { streamingJson.decodeFromStream<CorpusFile>(it) }.questions
         byCat = all.groupBy { it.categoryId }
         loaded = true
+        android.util.Log.d("Corpus", "loaded ${all.size} questions")
     }
 
     fun pull(categoryId: String, seen: Set<String>, limit: Int): List<Question> {

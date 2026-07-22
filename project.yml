@@ -41,6 +41,12 @@ targets:
     # Connect (the products still ship for real via App Store Connect at go-live).
     scheme:
       storeKitConfiguration: TidbitsTrivia/Resources/Tidbits.storekit
+    # NOTE: an XCTest target hosting SKTestSession purchase tests
+    # (TidbitsTriviaTests/ClubPurchaseTests.swift) is written and ready, but a hosted-
+    # unit-test build under this Xcode-beta/XcodeGen combo hits a "Multiple commands produce
+    # TidbitsTrivia.swiftmodule" collision (the app module builds twice). Needs a focused
+    # config pass (likely: put the Core in a framework, or the app-as-host TEST_HOST wiring).
+    # Deferred so the app stays clean-building; the test file is kept for that pass.
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.learningischange.tidbitstrivia

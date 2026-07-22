@@ -2,7 +2,7 @@
 // Apple AppStore + GameEngine + views. Vanilla JS, no framework, no build.
 
 import { Corpus, Pictures, ThisOrThat, ClosestCall, Ordering, Matching, TypeAnswer, OddOneOut, Enumerate, Difficulty, matchesAccepted, Wikipedia, DailyBoard } from './api.js';
-import { Store, CATEGORIES, catColor, catById, MODES, NIGHT, STAKE_BUDGET, dayKey, APP_STORES, SITE_URL } from './store.js';
+import { Store, CATEGORIES, catColor, catById, MODES, NIGHT, STAKE_BUDGET, dayKey, APP_STORES, SITE_URL, CLUB } from './store.js';
 import { Scoring } from './engine.js';
 import { BOTS, houseBot, botById, VsMatch } from './bots.js';
 import { FirebaseNet } from './firebase.js';
@@ -83,6 +83,10 @@ function render() {
     document.title = 'Tidbits Trivia — Daily';
     game = null; renderDailyBoard();
     return;
+  }
+  if (location.hash.startsWith('#/club')) {   // Tidbits Club — the promo/join surface (rule 6)
+    app.innerHTML = `${header(currentTab())}<main class="main">${viewClub()}</main>`;
+    bindClub(); document.title = 'Tidbits Club'; return;
   }
   const tab = currentTab();
   app.innerHTML = `
@@ -883,6 +887,7 @@ function viewRecords() {
     ${profileCard()}
     <a href="#/leaderboard" class="card pad" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;margin-bottom:14px">${ICON.globe}<span style="flex:1;font-weight:700">Leaderboard</span><span class="chev">›</span></a>
     <a href="#/duels" class="card pad" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;margin-bottom:14px"><span style="flex:1;font-weight:700">Duels</span><span class="chev">›</span></a>
+    <a href="#/club" class="card pad" style="display:flex;align-items:center;gap:10px;text-decoration:none;margin-bottom:14px;background:${Entitlement.isClub ? 'var(--color-surface)' : '#2D5BFF'};color:${Entitlement.isClub ? 'inherit' : '#fff'}">⭐️<span style="flex:1;font-weight:800">${Entitlement.isClub ? 'Tidbits Club — Member' : 'Join Tidbits Club'}</span><span class="chev">›</span></a>
     <div class="banner card daily"><div><div class="muted">DAY STREAK</div><div class="big">${Identity.profile?.streak?.current || 0} days</div></div><div class="muted">best ${Identity.profile?.streak?.longest || 0} 🔥</div></div>
     <div class="stat-row">
       ${statBox(lt.games, 'Games', '#8B5CF6')}${statBox(lt.acc + '%', 'Accuracy', '#2D5BFF')}${statBox(lt.correct, 'Correct', '#2FCB8A')}
@@ -1812,6 +1817,52 @@ async function submitDailyBoardResult(s) {
 // The Daily's global board — read from the static JSON the hourly cron publishes
 // (free/cacheable, never RTDB). Shows your standing, per-question global accuracy vs
 // your own marks, and the top board. Honest about the hourly cadence.
+// Tidbits Club — the web promo/join surface (MONETIZATION §4a, rule 6). Sells the tier
+// without ever gating the free game. Web pays via a Merchant of Record (best margin);
+// R-MON-2: "already a member?" is SIGN IN, never a code field.
+function viewClub() {
+  if (Entitlement.isClub) {
+    return `<div style="max-width:640px;margin:0 auto;padding:8px 0">
+      <div class="card pad" style="text-align:center;--tint:#2FCB8A">
+        <div style="font-size:2.4em">✅</div>
+        <h1 class="view-heading">You're a Club member</h1>
+        <p class="muted">Thanks for backing Tidbits. Every Club feature is yours across all your devices.</p>
+      </div></div>`;
+  }
+  const pillars = CLUB.pillars.map(([icon, title, blurb]) =>
+    `<div style="display:flex;gap:12px;align-items:flex-start;padding:8px 0">
+       <div style="font-size:1.4em;width:1.6em;text-align:center">${icon}</div>
+       <div><div style="font-weight:800">${h(title)}</div><div class="muted" style="font-size:.9em">${h(blurb)}</div></div>
+     </div>`).join('');
+  const plans = CLUB.plans.map((p) => {
+    const ready = !!p.checkout;
+    return `<button class="club-plan" data-checkout="${h(p.checkout)}" ${ready ? '' : 'disabled'}
+      style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:16px;border-radius:16px;border:3px solid var(--color-border);background:${p.accent};color:#fff;cursor:${ready ? 'pointer' : 'default'};opacity:${ready ? 1 : 0.85};margin-bottom:10px">
+      <div style="flex:1"><div style="font-weight:900;font-size:1.05em">${h(p.name)}</div><div style="opacity:.9;font-size:.85em">${h(p.tag)}</div></div>
+      <div style="font-weight:900;font-size:1.3em">${h(p.price)}</div></button>`;
+  }).join('');
+  const billingNote = CLUB.plans.some((p) => p.checkout) ? '' :
+    `<p class="muted" style="text-align:center;font-size:.85em">Secure checkout is being set up — plans go live shortly.</p>`;
+  return `<div style="max-width:640px;margin:0 auto;padding:8px 0">
+    <div class="card pad" style="text-align:center;--tint:#2D5BFF;margin-bottom:16px">
+      <div style="font-size:2.2em">⭐️</div>
+      <h1 class="view-heading">Get better, not just play more</h1>
+      <p class="muted">${h(CLUB.pitch)}</p>
+      <p class="muted" style="font-size:.85em"><b>The whole game stays free.</b> Club is the layer on top.</p>
+    </div>
+    <div class="card pad" style="margin-bottom:16px">${pillars}</div>
+    ${plans}
+    ${billingNote}
+    <p class="muted" style="text-align:center;font-size:.85em;margin-top:12px">Bought Tidbits Club already? <a href="#/profile" style="color:var(--color-accent);font-weight:700">Sign in with the same email</a> — it's already yours.</p>
+  </div>`;
+}
+function bindClub() {
+  app.querySelectorAll('[data-checkout]').forEach((b) => b.addEventListener('click', () => {
+    const url = b.dataset.checkout;
+    if (url) window.open(url, '_blank', 'noopener');   // MoR hosted checkout
+  }));
+}
+
 async function renderDailyBoard() {
   const day = dayKey();
   const myScore = Number(localStorage.getItem('tidbits.dailyboard.score') || 0);

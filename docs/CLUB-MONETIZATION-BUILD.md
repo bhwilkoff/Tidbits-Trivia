@@ -62,7 +62,7 @@ isEntitled = localStoreEntitlement          // Class A: StoreKit/Play/MSStore �
       loss), 405 on GET, Apple callback unregressed. **OWNER: set `LEMONSQUEEZY_WEBHOOK_SECRET`
       + `FIREBASE_SA_EMAIL`/`FIREBASE_SA_PRIVATE_KEY`/`FIREBASE_DB_URL` once the MoR is chosen.**
 - [~] 0c. `EntitlementStore` — **Swift Core reference + JS (web) DONE** (`Core/Networking/EntitlementStore.swift`: `isClub = local || remote`, fail-open, cached last-known-good; wired into the app entry + refresh at bootstrap; iOS/macOS/tvOS build-verified). Kotlin DONE (`data/Entitlement.kt`, remote-only, cached SharedPreferences, fail-open; wired in `AppRoot` LaunchedEffect + `AppNameApplication`; gradle BUILD SUCCESSFUL). C# DONE (`Tidbits.Core/Networking/EntitlementStore.cs` + 11 tests, remote-only, JSON-file cache, fail-open; wired in `GameData` + Settings; **ClearOnSignOut wired on Windows** — the only platform where the sign-out leak is already fixed; 280 tests green). **All 4 client mirrors done.** JS: `js/entitlement.js` (remote-only — web has no local store — cached, fail-open; wired at bootstrap + on identity change).
-- [~] 0d. iOS paywall DONE (`iOS/Views/ClubPaywallView.swift` — hero + 4-pillar value prop + 3 StoreKit plans w/ live prices + Restore + R-MON-2 web-sign-in note; entry point in ProfileView; sheet). `.storekit` wired into the scheme (XcodeGen `scheme.storeKitConfiguration` → products load in the sim). iOS BUILD SUCCEEDED. iOS BUILD SUCCEEDED (all Apple platforms). Added a `TIDBITS_PAYWALL=1` debug hook, but the automated sim render didn't surface the sheet (env/SwiftUI-timing in the sim — not chased further; paywall is build-verified). **Purchase verification via an Apple XCTest `SKTestSession` target is the reliable next step** (no Apple test target exists yet). Then macOS/tvOS/web/Windows paywall surfaces.
+- [~] 0d. iOS paywall DONE (`iOS/Views/ClubPaywallView.swift` — hero + 4-pillar value prop + 3 StoreKit plans w/ live prices + Restore + R-MON-2 web-sign-in note; entry point in ProfileView; sheet). `.storekit` wired into the scheme (XcodeGen `scheme.storeKitConfiguration` → products load in the sim). iOS BUILD SUCCEEDED. iOS BUILD SUCCEEDED (all Apple platforms). Added a `TIDBITS_PAYWALL=1` debug hook, but the automated sim render didn't surface the sheet (env/SwiftUI-timing in the sim — not chased further; paywall is build-verified). SKTestSession purchase test WRITTEN (`docs/pending-tests/ClubPurchaseTests.swift`) but the hosted-unit-test target hits a "Multiple commands produce TidbitsTrivia.swiftmodule" collision under this Xcode-beta/XcodeGen — DEFERRED to a focused config pass (likely: move Core to a framework). Web paywall DONE (this iter). Remaining: macOS/tvOS/Windows paywall + Windows StoreContext.
 
 ### Phase 1 — Apple (StoreKit 2; iOS + iPadOS + macOS + tvOS via Universal Purchase)
 - [!] 1a. App Store Connect products — BLOCKED this iteration: the Chrome extension is in a degraded state (viewport 0x0, screenshots erroring on a `params.clip.scale` binding bug), so the console UI can't be driven. Product IDs are DEFINED (see 1c/1b) and App Store Connect must match them EXACTLY:
@@ -73,8 +73,11 @@ isEntitled = localStoreEntitlement          // Class A: StoreKit/Play/MSStore �
 - [ ] OWNER: Paid Apps Agreement + banking + tax; SBP enrolment.
 
 ### Phase 2 — Web (Merchant of Record) + the promo/marketing surface (rule 6)
-- [ ] 2a. Promo-forward "Tidbits Club" section on the web app — sells without degrading
-      the free experience (additive, never an interstitial).
+- [x] 2a. Web Club promo page DONE — `#/club` route + `viewClub()`: hero + §4a pitch, 4 value
+      pillars, 3 plan cards (lifetime/annual/monthly, MoR checkout), R-MON-2 sign-in note,
+      member state when `Entitlement.isClub`. Entry link in Records. `CLUB` config in store.js
+      (owner fills each plan's `checkout` URL once the MoR products exist). Syntax-verified;
+      visual check pending (Chrome extension down).
 - [ ] 2b. MoR checkout (Paddle/Lemon Squeezy hosted checkout or overlay).
 - [ ] 2c. Worker webhook live (0b) → entitlement write → app lights up on sign-in.
 - [ ] OWNER: choose + sign up for the MoR; set the Worker secrets.

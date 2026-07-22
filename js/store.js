@@ -4,6 +4,26 @@
 
 export const SITE_URL = 'https://tidbitstrivia.com';
 
+// Tidbits Club — the web's paid tier (MONETIZATION §4a). Web sells via a Merchant of
+// Record (best margin; MoR handles VAT/sales tax). Each plan's `checkout` is the MoR
+// hosted-checkout URL — OWNER fills these once the MoR (Paddle / Lemon Squeezy) products
+// exist; until then the buttons show an honest "billing setup in progress" state.
+// The Worker webhook (workers/tidbits-auth) then writes the entitlement on purchase.
+export const CLUB = {
+  pitch: "Ranked seasons, a map of everything you know, and a library of every fact you've learned.",
+  pillars: [
+    ['🏆', 'Ranked Seasons', 'A calendar-driven climb — and your live pub nights count too.'],
+    ['🗺️', 'Knowledge Atlas', 'A map of what you actually know, by domain, over time.'],
+    ['📚', 'Story Archive', "Every fact you've learned, kept forever and searchable."],
+    ['🧭', 'Expeditions', 'Multi-week campaigns that turn a session game into a pursuit.'],
+  ],
+  plans: [
+    { id: 'lifetime', name: 'Founding Member', price: '$79.99', tag: 'Lifetime · first 90 days only', accent: '#FF5C5C', checkout: '' },
+    { id: 'annual',   name: 'Tidbits Club',    price: '$29.99', tag: 'per year · best value',        accent: '#2D5BFF', checkout: '' },
+    { id: 'monthly',  name: 'Tidbits Club',    price: '$3.99',  tag: 'per month',                    accent: '#2D5BFF', checkout: '' },
+  ],
+};
+
 // Native-app promotion. Set a store URL when that app goes live; until then it
 // renders as "Coming soon" on the home screen. Keep in lockstep with releases.
 export const APP_STORES = [

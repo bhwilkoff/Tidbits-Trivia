@@ -33,9 +33,11 @@ struct TidbitsTriviaApp: App {
                 #endif
                 .tint(Tidbits.Palette.blue)
                 .environment(PlayerIdentityStore.shared)
+                .environment(EntitlementStore.shared)
                 .task {
                     gameCenter.authenticate()
                     await PlayerIdentityStore.shared.bootstrap()   // stable uid → portable profile
+                    await EntitlementStore.shared.refresh()        // Club status (local store || web entitlement)
                 }
                 #if os(macOS)
                 .task {   // design-observability: render the cockpit to a PNG + exit (never in normal use)

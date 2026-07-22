@@ -97,6 +97,12 @@
         ".write": "auth != null && auth.uid === $uid"
       }
     },
+    "entitlements": {
+      "$key": {
+        ".read": "auth != null && auth.token.email_verified === true && root.child('emailOwners').child($key).val() === auth.token.email",
+        ".write": false
+      }
+    },
     "standings": {
       ".read": true,
       "$season": {

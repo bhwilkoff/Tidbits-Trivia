@@ -70,6 +70,13 @@ export const FirebaseNet = {
   currentEmail() { return (_auth && _auth.currentUser && _auth.currentUser.email) || null; },
 
   // Wave E: per-venue season standing (standings/{season}/{venue}/{uid}) — keyed by AUTH uid.
+  // Tidbits Club entitlement (MONETIZATION §7). Read-only for clients; the Worker is the
+  // sole writer. Scoped by the rule to the email-verified owner of {key}.
+  async loadEntitlement(key) {
+    const { db } = await ensure();
+    const snap = await db.get(db.ref(_db, `entitlements/${key}`));
+    return snap.exists() ? snap.val() : null;
+  },
   async loadStanding(path) {
     const { db } = await ensure();
     const snap = await db.get(db.ref(_db, path));

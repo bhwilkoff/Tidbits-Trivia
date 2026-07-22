@@ -1,4 +1,6 @@
 import { parseState, loopbackUrl } from './state.js';
+import { emailToKey, verifySignature, mapEvent } from './entitlements.js';
+import { adminConfigured, writeEntitlement } from './admin.js';
 
 /**
  * tidbits-auth — the HTTPS bounce that makes "Sign in with Apple" possible on Windows.
@@ -31,15 +33,54 @@ const SECURITY_HEADERS = {
 };
 
 export default {
-  async fetch(request) {
+  async fetch(request, env) {
     const url = new URL(request.url);
     switch (url.pathname) {
-      case '/apple/callback': return appleCallback(request);
-      case '/health':         return new Response('ok', { headers: { 'cache-control': 'no-store' } });
-      default:                return new Response('Not found', { status: 404 });
+      case '/apple/callback':       return appleCallback(request);
+      case '/entitlements/webhook': return entitlementsWebhook(request, env);
+      case '/health':               return new Response('ok', { headers: { 'cache-control': 'no-store' } });
+      default:                      return new Response('Not found', { status: 404 });
     }
   },
 };
+
+/**
+ * The Merchant-of-Record purchase webhook (MONETIZATION §7). Verifies the MoR signature,
+ * maps the event to a Club grant/revoke, and writes entitlements/{sha256(email)} as admin.
+ * Idempotent: the same event replayed just rewrites the same record.
+ *
+ * Status codes are chosen for MoR retry behavior: 401 (bad signature) and 200 (accepted /
+ * ignored) are terminal; 503 (not yet configured, or a transient write failure) tells the
+ * MoR to retry — so no purchase is lost if the owner sets the secrets after a webhook fires.
+ */
+async function entitlementsWebhook(request, env) {
+  if (request.method !== 'POST') return new Response('Method not allowed', { status: 405 });
+
+  const secret = env && env.LEMONSQUEEZY_WEBHOOK_SECRET;
+  if (!secret || !adminConfigured(env)) {
+    return new Response('entitlement webhook not configured yet', { status: 503 });
+  }
+
+  const rawBody = await request.text();      // RAW bytes — a re-serialized body won't match the HMAC
+  const sig = request.headers.get('X-Signature');
+  if (!(await verifySignature(rawBody, sig, secret))) {
+    return new Response('bad signature', { status: 401 });
+  }
+
+  let event;
+  try { event = JSON.parse(rawBody); } catch { return new Response('bad json', { status: 400 }); }
+
+  const decision = mapEvent(event);
+  if (!decision) return new Response('ignored', { status: 200 });   // not purchase-relevant
+
+  try {
+    const key = await emailToKey(decision.email);
+    await writeEntitlement(env, key, decision);
+    return new Response('ok', { status: 200, headers: { 'cache-control': 'no-store' } });
+  } catch (e) {
+    return new Response(`write failed: ${e.message}`, { status: 503 });   // retryable
+  }
+}
 
 async function appleCallback(request) {
   // Apple form_posts here. Anything else is not Apple.

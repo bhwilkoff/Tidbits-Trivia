@@ -8,6 +8,7 @@ import { BOTS, houseBot, botById, VsMatch } from './bots.js';
 import { FirebaseNet } from './firebase.js';
 import { openLive, closeLive } from './live.js';
 import { Identity, avatarHue, initialsOf } from './identity.js';
+import { Entitlement } from './entitlement.js';
 import { Duels } from './duels.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -40,8 +41,8 @@ async function syncDailyLog(pushLocal = false) {
 
 async function boot() {
   renderLoading('Loading Tidbits…');
-  Identity.bootstrap().then(() => syncDailyLog());   // stable anon uid → portable profile + daily log
-  Identity.onChange(() => { const t = location.hash; if (t.startsWith('#/profile') || t.startsWith('#/records')) render(); });
+  Identity.bootstrap().then(() => { syncDailyLog(); Entitlement.refresh(); });   // + Club status
+  Identity.onChange(() => { Entitlement.refresh(); const t = location.hash; if (t.startsWith('#/profile') || t.startsWith('#/records')) render(); });
   try { await Corpus.load(); } catch (e) { /* live fallback still works */ }
   if (!location.hash) location.hash = '#/play';
   if (location.hash.startsWith('#/daily')) {

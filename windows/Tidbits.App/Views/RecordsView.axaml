@@ -84,6 +84,12 @@
                      to the Play card's own in-game "See Marathon history" link. -->
                 <ContentControl x:Name="MarathonHistoryPanel" Margin="0,4,0,0"/>
 
+                <!-- Knowledge Atlas (Club — docs/CLUB-FEATURES-BUILD.md "Feature 4"): a
+                     transparent, INTERPRETED 12-month layer over the same rows the free
+                     Topic Levels/Pie below already read (R-MON-1) — every domain row a
+                     tap-to-play door, never a passive stats wall. -->
+                <ContentControl x:Name="KnowledgeAtlasPanel" Margin="0,4,0,0"/>
+
                 <!-- Knowledge (hidden until a specific-category game is played) -->
                 <StackPanel IsVisible="{Binding HasDomains}" Spacing="8">
                     <TextBlock Text="Your knowledge" Classes="section-header" Margin="0,6,0,0"/>
@@ -191,5 +197,9 @@
          drill plays (mirrors LeaderboardView's DuelGameHost), so re-asking doesn't
          need a nested dialog stacked on the archive's own FAContentDialog. -->
     <ContentControl x:Name="ReaskHost"/>
+    <!-- Knowledge Atlas domain play — overlays the dashboard while a full round
+         plays (mirrors ReaskHost above), so tapping a domain doesn't need a nested
+         dialog stacked on the atlas's own FAContentDialog. -->
+    <ContentControl x:Name="AtlasHost"/>
     </Panel>
 </UserControl>

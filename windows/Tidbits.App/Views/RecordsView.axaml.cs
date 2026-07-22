@@ -24,6 +24,7 @@ public partial class RecordsView : UserControl
         RefreshProfile();
         BuildStoryArchiveCard();
         BuildMarathonHistoryCard();
+        BuildKnowledgeAtlasCard();
     }
 
     protected override void OnDataContextChanged(System.EventArgs e)
@@ -33,6 +34,7 @@ public partial class RecordsView : UserControl
         BuildPie();
         BuildStoryArchiveCard();
         BuildMarathonHistoryCard();
+        BuildKnowledgeAtlasCard();
     }
 
     /// Show who you're playing as (name + deterministic hue avatar) in the banner.
@@ -384,5 +386,93 @@ public partial class RecordsView : UserControl
         vm.PlayAgainRequested += () => StartReask(question);
         ReaskHost.Content = new GameView { DataContext = vm };
         engine.StartCustom(GameMode.Classic, TriviaCategory.Named(question.CategoryId), new[] { question });
+    }
+
+    // MARK: - Tidbits Club: Knowledge Atlas (docs/CLUB-FEATURES-BUILD.md "Feature 4")
+
+    /// The Records "see all" entry point (R-REC-1) — a Club-marked card mirroring
+    /// the Story Archive/Marathon History cards exactly. A transparent, INTERPRETED
+    /// layer over the same rows the free Topic Levels/Pie already read (R-MON-1) —
+    /// never a gate on those free surfaces. Members open the atlas (every domain
+    /// row a tap-to-play door + a Decay radar); everyone else sees a real
+    /// strongest/weakest preview and the existing Club paywall — never a blank wall.
+    private void BuildKnowledgeAtlasCard()
+    {
+        if (KnowledgeAtlasPanel is null) return;
+        var data = GameData.Shared.Value;
+        bool isClub = data.Entitlement.IsClub;
+        var mapped = KnowledgeAtlas.Domains(data.Records.Games);
+        var subtitle = isClub
+            ? (mapped.Count == 0
+                ? "Play across a few domains and your Atlas fills in."
+                : $"{mapped.Count} domain{(mapped.Count == 1 ? "" : "s")} mapped over 12 months — tap one to play it.")
+            : KnowledgeAtlas.PreviewLine(data.Records.Games) ?? "Club maps everything you know and where it's drifting.";
+
+        var titleRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, VerticalAlignment = VerticalAlignment.Center };
+        titleRow.Children.Add(new TextBlock { Text = "KNOWLEDGE ATLAS", Classes = { "body-strong" } });
+        if (!isClub)
+        {
+            titleRow.Children.Add(new Border
+            {
+                Background = new SolidColorBrush(Color.Parse("#FF5C35")),
+                CornerRadius = new Avalonia.CornerRadius(6),
+                Padding = new Avalonia.Thickness(7, 2),
+                Child = new TextBlock { Text = "CLUB", FontSize = 11, FontWeight = FontWeight.Black, Foreground = Brushes.White },
+            });
+        }
+
+        var textStack = new StackPanel { Spacing = 3, VerticalAlignment = VerticalAlignment.Center, MaxWidth = 440 };
+        textStack.Children.Add(titleRow);
+        textStack.Children.Add(new TextBlock { Text = subtitle, Classes = { "caption" }, TextWrapping = TextWrapping.Wrap });
+
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
+        grid.Children.Add(textStack);
+
+        var action = new Button
+        {
+            Content = isClub ? "Open" : "Join Club",
+            Classes = { "accent", "compact" },
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        action.Click += (_, _) => OnKnowledgeAtlasAction();
+        Grid.SetColumn(action, 1);
+        grid.Children.Add(action);
+
+        KnowledgeAtlasPanel.Content = new Border { Classes = { "card" }, Child = grid };
+    }
+
+    /// Members open the atlas directly; everyone else sees the existing paywall
+    /// (same FAContentDialog idiom as the Story Archive/Marathon cards).
+    private async void OnKnowledgeAtlasAction()
+    {
+        var data = GameData.Shared.Value;
+        if (!data.Entitlement.IsClub)
+        {
+            var dialog = new FAContentDialog
+            {
+                Content = new ScrollViewer { Content = new ClubPaywallView(), MaxWidth = 520, MaxHeight = 640 },
+                CloseButtonText = "Close",
+            };
+            await dialog.ShowAsync();
+            BuildKnowledgeAtlasCard(); // reflect a purchase/restore made from inside the dialog
+            return;
+        }
+        await KnowledgeAtlasDialog.ShowAsync(data.Records, category => StartAtlasPlay(category));
+    }
+
+    /// Tapping a domain (or a Decay radar "Shore it up") launches a full round in
+    /// that domain as an overlay on the Records dashboard — mirrors the Story
+    /// Archive's ReaskHost, so it never needs a second dialog stacked on the
+    /// atlas's own FAContentDialog. A full round (not a 1-question drill), same
+    /// launch path Quick Play uses (`engine.Start`).
+    private async void StartAtlasPlay(TriviaCategory category)
+    {
+        var data = GameData.Shared.Value;
+        var engine = data.NewEngine();
+        var vm = new GameViewModel(engine, data.Records);
+        vm.Closed += () => { AtlasHost.Content = null; BuildKnowledgeAtlasCard(); };
+        vm.PlayAgainRequested += () => StartAtlasPlay(category);
+        AtlasHost.Content = new GameView { DataContext = vm };
+        await engine.Start(GameMode.Classic, category);
     }
 }

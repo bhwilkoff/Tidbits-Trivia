@@ -50,7 +50,7 @@ ship first; season/cron infrastructure is last.
 | 1 | **Weak-Spot Arena** | 1 gameplay | client-only: round from your own miss history | **DONE on all 6 platforms** |
 | 2 | **Story Archive** | 3 library | client-only: keep every unlocked "story behind the answer", searchable | **DONE on all 6 platforms** |
 | 3 | **Marathon** | 1 gameplay | client-only: 200-q graded endurance, cross-session scorecard | **DONE on all 6 platforms** |
-| 4 | **Knowledge Atlas** | 2 retrospect | client-only: accuracy by domain/sub-domain over 12mo, every domain tappable into a round | **DONE on iOS/iPadOS, macOS, tvOS, web, Android; Windows queued** |
+| 4 | **Knowledge Atlas** | 2 retrospect | client-only: accuracy by domain/sub-domain over 12mo, every domain tappable into a round | **DONE on all 6 platforms** |
 | 5 | **Friend Streaks** | 4 social | light RTDB (reuses friends): mutual daily accountability | todo |
 | 6 | **Link Wall** | 1 gameplay | client-only: NYT-Connections-style 2nd daily (Daily stays free) | todo |
 | 7 | **Expedition** | 1 gameplay | client-only: multi-week structured campaign, map + certificate | todo |
@@ -69,7 +69,7 @@ Legend: ✅ done+verified · 🔨 in progress · ⏳ queued · 🚫 n/a (with re
 | 1 Weak-Spot Arena | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 2 Story Archive | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 3 Marathon | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 4 Knowledge Atlas | ✅ | ✅ | ✅ | ✅ | ✅ | ⏳ |
+| 4 Knowledge Atlas | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 5 Friend Streaks | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 6 Link Wall | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 7 Expedition | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
@@ -942,3 +942,49 @@ says is the whole point.
   immediately (`Marathons: 0` instead of `1`). Fixed by exposing
   `GameViewModel.Records` and reading that in `GameView`'s
   `RebuildMarathonResult` instead. `windows-latest` CI to be gated post-push.
+- **2026-07-22** — **Knowledge Atlas (Feature 4) shipped on Windows — feature now
+  COMPLETE on all 6 platforms.** Version NOT bumped (owner's cross-platform-
+  alignment note; still 1.6.51). PURE DERIVATION: new `Tidbits.Core/Store/
+  KnowledgeAtlas.cs` computes everything from the SAME `GameRecord.CategoryId/
+  Correct/Total/Date` rows the free Topic Levels/Pie already read
+  (`ProgressMath.DomainIds`) — no new persistence, no schema change, mirrors
+  Apple's `KnowledgeAtlas.swift` / Android's `KnowledgeAtlas.kt` constant-for-
+  constant (`SampleFloor` 8, `StrongThreshold` 0.70, `DecayDelta` 0.12).
+  `Domains`/`DecayRadar`/`PreviewLine`, month-bucketed off each GAME's `Date`
+  (per-answer timestamps don't exist, same granularity as the other ports).
+  The anti-Sporcle guard: every domain row in `KnowledgeAtlasUi.BuildDomainRow`
+  is a full-row `Button` that launches a real Classic round in that domain
+  (`engine.Start(GameMode.Classic, category)`, the same launch path Quick Play
+  uses) via a new `AtlasHost` overlay on the Records dashboard (mirrors
+  `ReaskHost`'s "no nested dialog" pattern) — interprets AND acts, never a
+  passive stats wall. Decay radar rows carry their own "Shore it up" button.
+  `KnowledgeAtlasDialog` (FAContentDialog) + a Club-marked Records card
+  (CLUB chip + real strongest/weakest preview → `ClubPaywallView` for
+  non-members, never a blank wall) — same code-behind idiom as the Story
+  Archive/Marathon History cards (reads `GameData.Shared.Value`, not the VM).
+  Reused `TIDBITS_CLUB`/`DebugHooks.ForceClub`.
+
+  `dotnet test` (Mac head, headless Skia): 357 passed / 1 skipped (pre-existing
+  LibVLC arch skip) / 0 failed, 358 total (+22) on a clean run — covering
+  trailing-12-month cutoff, sample-floor withholding (both the per-domain
+  quarter read and the decay radar's two windows), trajectory-delta sign +
+  the decay threshold, domain sort order, decay-radar sort-by-steepest-drop,
+  and the honest single-/dual-domain preview-line phrasing, plus headless
+  renders of the Records card (member/non-member) and `KnowledgeAtlasUi`
+  (empty state, one domain row with its trajectory badge, one decay row +
+  "Shore it up", and the full atlas with both sections together). PNGs
+  verified: `records-knowledge-atlas-member.png`, `records-knowledge-atlas-
+  non-member.png`, `knowledge-atlas-empty.png`, `knowledge-atlas-domain-
+  row.png`, `knowledge-atlas-decay-row.png`, `knowledge-atlas-full.png`.
+  **Known pre-existing flake, NOT introduced by this change**: re-running the
+  full suite intermittently (~1 in 3 runs) fails 5 `EntitlementStoreTests`
+  cases with `TIDBITS_CLUB` reading `true` instead of `false` — a process-
+  wide env-var race between this suite's (and `StoryArchiveSnapshot`'s/
+  `MarathonHistorySnapshot`'s/`HomeSnapshot`'s) `Environment.SetEnvironmentVariable`
+  toggling inside `[AvaloniaFact]` tests running concurrently with
+  `EntitlementStoreTests`' plain `[Fact]`s. Confirmed pre-existing (reproduces
+  with a clean re-run, same 5 tests, same assertion) and out of this feature's
+  scope to fix (would mean adding `[Collection]` serialization to
+  `EntitlementStoreTests.cs` and every sibling Club-feature test file) —
+  flagged here rather than silently worked around. `windows-latest` CI to be
+  gated post-push.

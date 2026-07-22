@@ -20,6 +20,7 @@ struct ContentView_tvOS: View {
     @Environment(AppStore.self) private var store
     @Environment(GameCenterManager.self) private var gameCenter
     @Environment(PlayerIdentityStore.self) private var identity
+    @Environment(EntitlementStore.self) private var entitlement
     private var dayStreak: Int { identity.profile?.streak.current ?? 0 }
     @State private var launch: LaunchRequest?
     @State private var nightLaunch: NightLaunchRequest?
@@ -30,6 +31,7 @@ struct ContentView_tvOS: View {
     @State private var showNightSetup = false
     @State private var showCustomize = false
     @State private var showDailyArchive = false
+    @State private var showClubPaywall = false
     @State private var versusBot: BotProfile?
     @State private var showQuickMatch = false
     @Environment(\.modelContext) private var modelContext
@@ -51,6 +53,7 @@ struct ContentView_tvOS: View {
                     quickActionsRow
                     dailyHero
                     nightHero
+                    weakSpotHero
                     multiplayerPanel
                 }
                 .padding(.horizontal, 90)
@@ -97,6 +100,7 @@ struct ContentView_tvOS: View {
         }
         .fullScreenCover(isPresented: $showRecords) { RecordsView_tvOS() }
         .fullScreenCover(isPresented: $showSettings) { SettingsView_tvOS() }
+        .fullScreenCover(isPresented: $showClubPaywall) { ClubPaywallView_tvOS() }
         .task {
             if launch == nil, nightLaunch == nil, let ap = DebugHooks.autoplay {
                 // Trivia Night needs a plan, not a bare category — autoplay it with
@@ -191,6 +195,51 @@ struct ContentView_tvOS: View {
             Spacer()
         }
         .focusSection()
+    }
+
+    // MARK: - Weak-Spot Arena (Club — docs/CLUB-FEATURES-BUILD.md "Feature 1")
+
+    /// A real sample from the player's own misses, shown to non-members instead
+    /// of a generic sell line (MONETIZATION §4a: "a real preview, never a nag").
+    private var weakSpotPreviewLine: String? {
+        entitlement.isClub ? nil : WeakSpotArena.previewLine(in: modelContext)
+    }
+
+    /// Club members launch the arena directly (never remembered as the Quick
+    /// Play default — `AppStore.rememberSelection` already excludes it);
+    /// everyone else sees the existing paywall (never a blank wall).
+    private func openWeakSpot() {
+        if entitlement.isClub { launch = LaunchRequest(mode: .weakSpot, category: .named("mixed")) }
+        else { showClubPaywall = true }
+    }
+
+    private var weakSpotHero: some View {
+        Button(action: openWeakSpot) {
+            HStack(spacing: 28) {
+                Image(systemName: "scope").font(.system(size: 52, weight: .black))
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 16) {
+                        Text("WEAK-SPOT ARENA").font(.system(size: 40, weight: .black, design: .rounded))
+                        if !entitlement.isClub {
+                            Text("CLUB")
+                                .font(.system(size: 22, weight: .black, design: .rounded))
+                                .padding(.horizontal, 14).padding(.vertical, 6)
+                                .background(Capsule().fill(.white.opacity(0.92)))
+                                .foregroundStyle(Tidbits.Palette.grape)
+                        }
+                    }
+                    Text(entitlement.isClub ? "Turn your misses into a round." : (weakSpotPreviewLine ?? "Your misses, turned into a round you can actually close."))
+                        .font(.system(size: 29, weight: .medium, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.9))
+                        .lineLimit(2)
+                }
+                Spacer()
+            }
+            .foregroundStyle(.white)
+            .padding(40)
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(TVWeakSpotHeroStyle())
     }
 
     // Online Multiplayer (Decision 038): v0 Play-vs-CPU chips; the Quick Match
@@ -327,7 +376,9 @@ private struct TVCustomizePicker: View {
                         Text("Mode").font(.system(size: 34, weight: .heavy, design: .rounded)).foregroundStyle(TVTheme.textSoft)
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 30) {
-                                ForEach(GameMode.allCases.filter { $0 != .daily && $0 != .barTrivia }) { mode in
+                                // .weakSpot is Club-only and never a free Customize pick — it
+                                // has its own Home entry point (docs/CLUB-FEATURES-BUILD.md "Feature 1").
+                                ForEach(GameMode.allCases.filter { $0 != .daily && $0 != .barTrivia && $0 != .weakSpot }) { mode in
                                     Button { selectedMode = mode } label: {
                                         VStack(spacing: 10) {
                                             Image(systemName: mode.symbol).font(.system(size: 34, weight: .black))
@@ -451,6 +502,24 @@ struct TVNightHeroStyle: ButtonStyle {
                 .overlay(RoundedRectangle(cornerRadius: 28).strokeBorder(.white.opacity(focused ? 0.9 : 0), lineWidth: 5))
                 .scaleEffect(focused ? 1.03 : 1.0)
                 .shadow(color: Tidbits.Palette.coral.opacity(focused ? 0.6 : 0), radius: 30, y: 12)
+                .animation(.easeOut(duration: 0.18), value: focused)
+        }
+    }
+}
+
+/// The Weak-Spot Arena hero — grape, white-on-dark, lit on focus (same shape
+/// as `TVNightHeroStyle`, different accent for a distinct Club card).
+struct TVWeakSpotHeroStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View { Inner(configuration: configuration) }
+    struct Inner: View {
+        let configuration: Configuration
+        @Environment(\.isFocused) private var focused
+        var body: some View {
+            configuration.label
+                .background(RoundedRectangle(cornerRadius: 28).fill(Tidbits.Palette.grape.gradient))
+                .overlay(RoundedRectangle(cornerRadius: 28).strokeBorder(.white.opacity(focused ? 0.9 : 0), lineWidth: 5))
+                .scaleEffect(focused ? 1.03 : 1.0)
+                .shadow(color: Tidbits.Palette.grape.opacity(focused ? 0.6 : 0), radius: 30, y: 12)
                 .animation(.easeOut(duration: 0.18), value: focused)
         }
     }

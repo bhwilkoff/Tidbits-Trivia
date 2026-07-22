@@ -47,7 +47,7 @@ ship first; season/cron infrastructure is last.
 
 | # | Feature | Pillar | Shape | Status |
 |---|---|---|---|---|
-| 1 | **Weak-Spot Arena** | 1 gameplay | client-only: round from your own miss history | **web+iOS+Android done; Windows/mac/tvOS left** |
+| 1 | **Weak-Spot Arena** | 1 gameplay | client-only: round from your own miss history | **web+iOS+Android+macOS+tvOS done; Windows left** |
 | 2 | **Story Archive** | 3 library | client-only: keep every unlocked "story behind the answer", searchable | todo |
 | 3 | **Marathon** | 1 gameplay | client-only: 200-q graded endurance, cross-session scorecard | todo |
 | 4 | **Knowledge Atlas** | 2 retrospect | client-only: accuracy by domain/sub-domain over 12mo | todo |
@@ -66,7 +66,7 @@ Legend: ✅ done+verified · 🔨 in progress · ⏳ queued · 🚫 n/a (with re
 
 | Feature | web | iOS/iPadOS | macOS | tvOS | Android | Windows |
 |---|---|---|---|---|---|---|
-| 1 Weak-Spot Arena | ✅ | ✅ | ⏳ | ⏳ | ✅ | ⏳ |
+| 1 Weak-Spot Arena | ✅ | ✅ | ✅ | ✅ | ✅ | ⏳ |
 | 2 Story Archive | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 3 Marathon | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 4 Knowledge Atlas | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
@@ -163,5 +163,33 @@ enter the build order.)*
   game mode (not just Weak-Spot) shows the generic "No questions yet" error. Worth a
   follow-up (`android:largeHeap` and/or a streaming parse) since the corpus has
   grown well past what a default heap safely holds.
-</content>
-</invoke>
+- **2026-07-22** — macOS + tvOS mirrors shipped. Both ride the shared Apple
+  `Core/` generator verbatim (`WeakSpotArena.build`, `GameEngine.startCustom`,
+  `EntitlementStore.isClub`) — only per-platform Home entry + gameplay/results
+  presentation were new. **macOS** (`HomeView_macOS.swift`): a `weakSpotCard`
+  row between Trivia Night and Online Multiplayer (member → launch via the
+  existing `onPlay`; non-member → CLUB chip + real preview line →
+  `ClubPaywallView_macOS` `.sheet`); `GameContainerView_macOS.swift` builds the
+  round in `.task`/`replay()`, shows the "Play a few rounds first" empty state
+  under the floor, and passes `weakSpotGapsClosed` into `ResultsView_macOS`'s
+  new "You closed N gaps" card; `GameView_macOS.swift` shows the per-question
+  reason caption. **tvOS** (`ContentView_tvOS.swift`): a focusable
+  `weakSpotHero` (new `TVWeakSpotHeroStyle`, mirroring `TVNightHeroStyle`)
+  between the Trivia Night and Online Multiplayer heroes; `TVGameContainer` in
+  `GameView_tvOS.swift` mirrors the same build/empty-state/replay logic (a
+  ten-foot custom empty state, dark-first), `TVGamePlayView` shows the reason
+  caption, `TVResultsView` shows the gaps-closed card. **Found + fixed while
+  verifying "never a remembered/random default":** three free Customize/Live
+  mode pickers didn't exclude `.weakSpot` from their `GameMode.allCases` lists
+  — `CustomizeSheet_macOS` (`MacHomeSheets_macOS.swift`), the Tidbits Live
+  round-format picker (`MacLiveBuilder_macOS.swift`), and the tvOS
+  `TVCustomizePicker` (`ContentView_tvOS.swift`) — all now filter it out, same
+  as iOS's `playableModes`. Both platforms **BUILD SUCCEEDED**
+  (`CODE_SIGNING_ALLOWED=NO`, Xcode 27/Xcode-beta); macOS visually verified
+  with `TIDBITS_CLUB=1` (the Weak-Spot Arena card renders correctly, Club
+  copy hidden for a member) via a direct-binary launch + screenshot; tvOS
+  visually verified at the top of Home (Quick Play/Daily/Trivia Night render
+  correctly under the same env) but the `weakSpotHero` itself sits below the
+  fold and this sandbox has no Simulator.app GUI / remote-input tool to
+  scroll headlessly — code-reviewed instead. Windows is the only platform
+  left on this feature.

@@ -20,7 +20,9 @@ struct LiveBuilderView_macOS: View {
     @State private var busy = false
 
     private var playableFormats: [GameMode] {
-        GameMode.allCases.filter { $0 != .daily && $0 != .barTrivia && $0 != .mix }
+        // .weakSpot is a personal-miss-history round, not a shareable Live
+        // format, and Club-gated besides — never offered here.
+        GameMode.allCases.filter { $0 != .daily && $0 != .barTrivia && $0 != .mix && $0 != .weakSpot }
     }
 
     var body: some View {

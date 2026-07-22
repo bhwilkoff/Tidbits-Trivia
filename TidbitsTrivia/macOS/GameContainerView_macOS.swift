@@ -12,6 +12,9 @@ struct GameContainerView_macOS: View {
     @Environment(AppStore.self) private var store
     @Environment(\.modelContext) private var modelContext
     @State private var recorded = false
+    /// Weak-Spot Arena only: the round just built (questions + reasons), kept
+    /// around so the empty state and the "gaps closed" result tally can read it.
+    @State private var activeWeakSpotRound: WeakSpotRound?
 
     private var game: GameEngine { store.game }
 
@@ -21,12 +24,24 @@ struct GameContainerView_macOS: View {
         return { self.replay() }
     }
 
+    /// Count of round questions that were true misses (not domain-fill) AND
+    /// answered correctly — the Weak-Spot payoff (docs/CLUB-FEATURES-BUILD.md
+    /// "Feature 1"). nil outside `.weakSpot`.
+    private var weakSpotGapsClosed: Int? {
+        guard request.mode == .weakSpot, let round = activeWeakSpotRound else { return nil }
+        let trueMissIDs = Set(round.reasons.filter { $0.value.hasPrefix("Missed") }.keys)
+        return game.summary.answered.filter { $0.isCorrect && trueMissIDs.contains($0.question.id) }.count
+    }
+
     var body: some View {
         ZStack {
             Tidbits.Palette.bg.ignoresSafeArea()
             switch game.phase {
             case .idle, .loading:
-                if game.loadFailed { loadError } else { loadingState }
+                // nil round = still building (loadingState); a built round under
+                // the floor is the honest empty state, never the generic error.
+                if request.mode == .weakSpot, let round = activeWeakSpotRound, round.questions.count < 2 { weakSpotEmptyState }
+                else if game.loadFailed { loadError } else { loadingState }
             case .roundIntro:
                 // Only reachable for a Trivia Night; single-player modes never hit it.
                 loadingState.task { game.startRound() }
@@ -35,7 +50,8 @@ struct GameContainerView_macOS: View {
             case .finished:
                 ResultsView_macOS(summary: game.summary,
                                   onPlayAgain: playAgainAction,
-                                  onDone: close)
+                                  onDone: close,
+                                  weakSpotGapsClosed: weakSpotGapsClosed)
                     .onAppear(perform: persistIfNeeded)
             }
         }
@@ -46,6 +62,8 @@ struct GameContainerView_macOS: View {
         guard game.phase == .idle else { return }
         if request.mode == .mix {
             await game.startMix(modes: request.mixModes ?? [.classic], category: request.category)
+        } else if request.mode == .weakSpot {
+            startWeakSpot()
         } else {
             var review = (request.mode.acceptsReview && GameSettings.reviewEnabled)
                 ? RecordsStore.dueReview(in: modelContext, limit: 30) : []
@@ -53,6 +71,26 @@ struct GameContainerView_macOS: View {
             review = Array(review.prefix(2))
             await game.start(mode: request.mode, category: request.category,
                              review: review, dailyDay: request.dailyDay)
+        }
+    }
+
+    private func startWeakSpot() {
+        let round = WeakSpotArena.build(in: modelContext)
+        activeWeakSpotRound = round
+        if round.questions.count >= 2 {
+            game.startCustom(mode: .weakSpot, category: .named("mixed"), questions: round.questions, reasons: round.reasons)
+        } else {
+            game.quit()   // drop out of `.finished` (a replay) back to `.idle` so the empty state shows
+        }
+    }
+
+    private var weakSpotEmptyState: some View {
+        ContentUnavailableView {
+            Label("Not enough misses yet", systemImage: "scope")
+        } description: {
+            Text("Play a few rounds first — your misses become your arena.")
+        } actions: {
+            Button("Back", action: close).tint(Tidbits.Palette.inkSoft)
         }
     }
 
@@ -87,6 +125,8 @@ struct GameContainerView_macOS: View {
         recorded = false
         if request.mode == .mix {
             Task { await game.startMix(modes: request.mixModes ?? [.classic], category: request.category) }
+        } else if request.mode == .weakSpot {
+            startWeakSpot()
         } else {
             Task { await game.start(mode: request.mode, category: request.category) }
         }
@@ -152,6 +192,9 @@ struct ResultsView_macOS: View {
     let summary: GameSummary
     let onPlayAgain: (() -> Void)?
     let onDone: () -> Void
+    /// Weak-Spot Arena only: how many true misses this round turned correct —
+    /// the payoff headline (docs/CLUB-FEATURES-BUILD.md "Feature 1"). nil elsewhere.
+    var weakSpotGapsClosed: Int? = nil
     @State private var showBoard = false
 
     private var isTodayDaily: Bool { summary.mode == .daily && summary.dailyDay == nil }
@@ -163,6 +206,7 @@ struct ResultsView_macOS: View {
                 Text("\(summary.score)")
                     .font(.system(size: 72, weight: .black, design: .rounded))
                     .foregroundStyle(Tidbits.Palette.ink)
+                gapsClosedMoment
                 HStack(spacing: 14) {
                     stat("\(summary.correct)/\(summary.total)", "Correct", Tidbits.Palette.mint)
                     stat("\(Int(summary.accuracy * 100))%", "Accuracy", Tidbits.Palette.blue)
@@ -226,6 +270,23 @@ struct ResultsView_macOS: View {
         let ids = CorpusDatabase.shared.orderedIDs(categoryID: "mixed")
         let qids = DailyPick.pick(ids: ids, day: QuestionProvider.dayKey(), categoryID: "mixed", count: GameMode.daily.questionCount)
         return DailyBoard.marks(answered: summary.answered, qids: qids)
+    }
+
+    /// Weak-Spot Arena's payoff — "you didn't just play, you got better."
+    @ViewBuilder private var gapsClosedMoment: some View {
+        if let n = weakSpotGapsClosed {
+            VStack(spacing: 4) {
+                Text("You closed \(n) gap\(n == 1 ? "" : "s")")
+                    .font(.system(size: 20, weight: .black, design: .rounded))
+                    .foregroundStyle(Tidbits.Palette.ink)
+                Text(n > 0 ? "Turned a miss into a win" : "Nothing to close yet this round")
+                    .font(Tidbits.TypeRamp.l5)
+                    .foregroundStyle(Tidbits.Palette.inkSoft)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .chunkyCard(fill: Tidbits.Palette.grape.opacity(0.18))
+        }
     }
 
     private func stat(_ value: String, _ label: String, _ tint: Color) -> some View {

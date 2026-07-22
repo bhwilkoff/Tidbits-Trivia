@@ -29,6 +29,7 @@ struct GameView_macOS: View {
                             .font(.system(size: 28, weight: .bold, design: .rounded))
                             .foregroundStyle(Tidbits.Palette.ink)
                             .fixedSize(horizontal: false, vertical: true)
+                        if game.mode == .weakSpot, let reason = game.weakSpotReasons[q.id] { weakSpotReasonCaption(reason) }
                         if let url = q.imageURL { picture(url) }
                         shapePanel(q)
                         if game.phase == .reveal { revealFooter(q) }
@@ -83,6 +84,14 @@ struct GameView_macOS: View {
             .overlay(Capsule().strokeBorder(Tidbits.Palette.border, lineWidth: 2))
         }
         .frame(height: 14)
+    }
+
+    /// Weak-Spot Arena's "why you're seeing this" — transparency by
+    /// construction, never an opaque model (docs/CLUB-FEATURES-BUILD.md).
+    private func weakSpotReasonCaption(_ reason: String) -> some View {
+        Text(reason)
+            .font(Tidbits.TypeRamp.l5)
+            .foregroundStyle(Tidbits.Palette.grape)
     }
 
     private func pill(_ text: String, fill: Color, fg: Color = Tidbits.Palette.ink) -> some View {

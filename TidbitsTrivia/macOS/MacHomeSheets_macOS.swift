@@ -21,7 +21,9 @@ struct CustomizeSheet_macOS: View {
     @State private var presetName = ""
 
     private let coreModes: [GameMode] = [.classic, .timeAttack, .survival, .stake]
-    private var playableModes: [GameMode] { GameMode.allCases.filter { $0 != .daily && $0 != .barTrivia && $0 != .mix } }
+    // .weakSpot is Club-only and never a free Customize pick — it has its own
+    // Home entry point (docs/CLUB-FEATURES-BUILD.md "Feature 1").
+    private var playableModes: [GameMode] { GameMode.allCases.filter { $0 != .daily && $0 != .barTrivia && $0 != .mix && $0 != .weakSpot } }
     private let grid = [GridItem(.adaptive(minimum: 150), spacing: 10)]
 
     init(initial: LaunchRequest, presets: [GamePreset],

@@ -14,35 +14,77 @@ struct TVGameContainer: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @State private var recorded = false
+    /// Weak-Spot Arena only: the round just built (questions + reasons), kept
+    /// around so the empty state and the "gaps closed" result tally can read it.
+    @State private var activeWeakSpotRound: WeakSpotRound?
 
     private var game: GameEngine { store.game }
+
+    /// Count of round questions that were true misses (not domain-fill) AND
+    /// answered correctly — the Weak-Spot payoff (docs/CLUB-FEATURES-BUILD.md
+    /// "Feature 1"). nil outside `.weakSpot`.
+    private var weakSpotGapsClosed: Int? {
+        guard mode == .weakSpot, let round = activeWeakSpotRound else { return nil }
+        let trueMissIDs = Set(round.reasons.filter { $0.value.hasPrefix("Missed") }.keys)
+        return game.summary.answered.filter { $0.isCorrect && trueMissIDs.contains($0.question.id) }.count
+    }
 
     var body: some View {
         ZStack {
             TVTheme.bg.ignoresSafeArea()
             switch game.phase {
             case .idle, .loading:
-                if game.loadFailed { errorState } else { loading }
+                // nil round = still building (loading); a built round under the
+                // floor is the honest empty state, never the generic error.
+                if mode == .weakSpot, let round = activeWeakSpotRound, round.questions.count < 2 { weakSpotEmptyState }
+                else if game.loadFailed { errorState } else { loading }
             case .roundIntro:
                 TVRoundIntroView(game: game)
             case .playing, .reveal:
                 TVGamePlayView(onQuit: close)
             case .finished:
-                TVResultsView(summary: game.summary, onPlayAgain: playAgainAction, onDone: close)
+                TVResultsView(summary: game.summary, onPlayAgain: playAgainAction, onDone: close,
+                              weakSpotGapsClosed: weakSpotGapsClosed)
                     .onAppear(perform: persist)
             }
         }
         .task {
             if game.phase == .idle {
-                // Single-category game re-asks only same-category misses (no cross-category leak).
-                var review = (mode.acceptsReview && GameSettings.reviewEnabled)
-                    ? RecordsStore.dueReview(in: modelContext, limit: 30) : []
-                if category.id != "mixed" { review = review.filter { $0.categoryID == category.id } }
-                review = Array(review.prefix(2))
-                await game.start(mode: mode, category: category, review: review, dailyDay: dailyDay)
+                if mode == .weakSpot {
+                    startWeakSpot()
+                } else {
+                    // Single-category game re-asks only same-category misses (no cross-category leak).
+                    var review = (mode.acceptsReview && GameSettings.reviewEnabled)
+                        ? RecordsStore.dueReview(in: modelContext, limit: 30) : []
+                    if category.id != "mixed" { review = review.filter { $0.categoryID == category.id } }
+                    review = Array(review.prefix(2))
+                    await game.start(mode: mode, category: category, review: review, dailyDay: dailyDay)
+                }
             }
         }
         .onExitCommand(perform: close)   // Menu button quits the game (modal: allowed)
+    }
+
+    private func startWeakSpot() {
+        let round = WeakSpotArena.build(in: modelContext)
+        activeWeakSpotRound = round
+        if round.questions.count >= 2 {
+            game.startCustom(mode: .weakSpot, category: .named("mixed"), questions: round.questions, reasons: round.reasons)
+        } else {
+            game.quit()   // drop out of `.finished` (a replay) back to `.idle` so the empty state shows
+        }
+    }
+
+    private var weakSpotEmptyState: some View {
+        VStack(spacing: 24) {
+            Image(systemName: "scope").font(.system(size: 60, weight: .black)).foregroundStyle(Tidbits.Palette.grape)
+            Text("Not enough misses yet").font(.system(size: 44, weight: .black, design: .rounded)).foregroundStyle(.white)
+            Text("Play a few rounds first — your misses become your arena.")
+                .font(.system(size: 29, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+                .multilineTextAlignment(.center)
+            Button("Back", action: close).buttonStyle(TVChipStyle(accent: Tidbits.Palette.blue, selected: false))
+        }
+        .frame(maxWidth: 900)
     }
 
     private var loading: some View {
@@ -64,7 +106,11 @@ struct TVGameContainer: View {
         recorded = true
         RecordsStore.record(game.summary, in: modelContext)
     }
-    private func replay() { recorded = false; Task { await game.start(mode: mode, category: category) } }
+    private func replay() {
+        recorded = false
+        if mode == .weakSpot { startWeakSpot() }
+        else { Task { await game.start(mode: mode, category: category) } }
+    }
 
     /// The Daily is play-once (R-DAILY-1) — no replay of a locked set.
     private var playAgainAction: (() -> Void)? {
@@ -110,6 +156,7 @@ struct TVGamePlayView: View {
                     .font(.system(size: 48, weight: .heavy, design: .rounded))
                     .foregroundStyle(.white)
                     .fixedSize(horizontal: false, vertical: true)
+                if game.mode == .weakSpot, let reason = game.weakSpotReasons[q.id] { weakSpotReasonCaption(reason) }
                 if game.mode == .sweep { sweepRow }
                 if game.mode == .stake && game.phase == .playing { stakeRow }
                 if let spec = q.enumerate {
@@ -444,6 +491,15 @@ struct TVGamePlayView: View {
         default: return "\(game.index + 1) / \(game.questions.count)"
         }
     }
+
+    /// Weak-Spot Arena's "why you're seeing this" — transparency by
+    /// construction, never an opaque model (docs/CLUB-FEATURES-BUILD.md).
+    private func weakSpotReasonCaption(_ reason: String) -> some View {
+        Text(reason)
+            .font(.system(size: 25, weight: .semibold, design: .rounded))
+            .foregroundStyle(Tidbits.Palette.grape)
+    }
+
     private var clockFraction: Double {
         let budget = game.displayClockBudget
         return budget <= 0 ? 0 : max(0, min(1, game.remaining / budget))
@@ -643,6 +699,9 @@ struct TVResultsView: View {
     /// nil = replay not allowed (the Daily is play-once, R-DAILY-1).
     let onPlayAgain: (() -> Void)?
     let onDone: () -> Void
+    /// Weak-Spot Arena only: how many true misses this round turned correct —
+    /// the payoff headline (docs/CLUB-FEATURES-BUILD.md "Feature 1"). nil elsewhere.
+    var weakSpotGapsClosed: Int? = nil
     @FocusState private var playAgainFocused: Bool
 
     private var grid: String {
@@ -655,6 +714,7 @@ struct TVResultsView: View {
                 Text(headline.uppercased()).font(.system(size: 40, weight: .heavy, design: .rounded)).foregroundStyle(TVTheme.textSoft)
                 Text("\(summary.score)").font(.system(size: 110, weight: .black, design: .rounded)).foregroundStyle(.white)
                 Text("\(summary.mode.title) · \(summary.category.name)").font(.system(size: 31, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+                gapsClosedMoment
                 HStack(spacing: 60) {
                     stat("\(summary.correct)/\(summary.total)", "Correct")
                     stat("\(Int(summary.accuracy * 100))%", "Accuracy")
@@ -754,6 +814,21 @@ struct TVResultsView: View {
         VStack(spacing: 6) {
             Text(v).font(.system(size: 46, weight: .black, design: .rounded)).foregroundStyle(.white)
             Text(l.uppercased()).font(.system(size: 22, weight: .bold, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+        }
+    }
+
+    /// Weak-Spot Arena's payoff — "you didn't just play, you got better."
+    @ViewBuilder private var gapsClosedMoment: some View {
+        if let n = weakSpotGapsClosed {
+            VStack(spacing: 6) {
+                Text("You closed \(n) gap\(n == 1 ? "" : "s")")
+                    .font(.system(size: 36, weight: .black, design: .rounded)).foregroundStyle(.white)
+                Text(n > 0 ? "Turned a miss into a win" : "Nothing to close yet this round")
+                    .font(.system(size: 27, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+            }
+            .padding(.vertical, 8)
+            .padding(.horizontal, 40)
+            .background(RoundedRectangle(cornerRadius: 20).fill(Tidbits.Palette.grape.opacity(0.28)))
         }
     }
     private var headline: String {

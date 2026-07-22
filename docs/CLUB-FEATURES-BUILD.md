@@ -47,7 +47,7 @@ ship first; season/cron infrastructure is last.
 
 | # | Feature | Pillar | Shape | Status |
 |---|---|---|---|---|
-| 1 | **Weak-Spot Arena** | 1 gameplay | client-only: round from your own miss history | **in progress** |
+| 1 | **Weak-Spot Arena** | 1 gameplay | client-only: round from your own miss history | **web+iOS done; Android/Windows/mac/tvOS left** |
 | 2 | **Story Archive** | 3 library | client-only: keep every unlocked "story behind the answer", searchable | todo |
 | 3 | **Marathon** | 1 gameplay | client-only: 200-q graded endurance, cross-session scorecard | todo |
 | 4 | **Knowledge Atlas** | 2 retrospect | client-only: accuracy by domain/sub-domain over 12mo | todo |
@@ -67,10 +67,6 @@ Legend: ✅ done+verified · 🔨 in progress · ⏳ queued · 🚫 n/a (with re
 | Feature | web | iOS/iPadOS | macOS | tvOS | Android | Windows |
 |---|---|---|---|---|---|---|
 | 1 Weak-Spot Arena | ✅ | ✅ | ⏳ | ⏳ | ⏳ | ⏳ |
-
-> Note: the `.weakSpot` GameMode + `WeakSpotArena` generator live in the shared Apple
-> `Core/`, so macOS/tvOS already COMPILE it — only their per-platform Home entry point +
-> Club gating remain (small). iOS is the full reference.
 | 2 Story Archive | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 3 Marathon | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 4 Knowledge Atlas | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
@@ -78,6 +74,10 @@ Legend: ✅ done+verified · 🔨 in progress · ⏳ queued · 🚫 n/a (with re
 | 6 Link Wall | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 7 Expedition | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 8 Ranked Seasons | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
+
+> Note: the `.weakSpot` GameMode + `WeakSpotArena` generator live in the shared Apple
+> `Core/`, so macOS/tvOS already COMPILE it — only their per-platform Home entry point +
+> Club gating remain (small). iOS is the full reference.
 
 ---
 

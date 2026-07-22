@@ -48,7 +48,7 @@ ship first; season/cron infrastructure is last.
 | # | Feature | Pillar | Shape | Status |
 |---|---|---|---|---|
 | 1 | **Weak-Spot Arena** | 1 gameplay | client-only: round from your own miss history | **DONE on all 6 platforms** |
-| 2 | **Story Archive** | 3 library | client-only: keep every unlocked "story behind the answer", searchable | todo |
+| 2 | **Story Archive** | 3 library | client-only: keep every unlocked "story behind the answer", searchable | **iOS in progress** |
 | 3 | **Marathon** | 1 gameplay | client-only: 200-q graded endurance, cross-session scorecard | todo |
 | 4 | **Knowledge Atlas** | 2 retrospect | client-only: accuracy by domain/sub-domain over 12mo | todo |
 | 5 | **Friend Streaks** | 4 social | light RTDB (reuses friends): mutual daily accountability | todo |
@@ -67,7 +67,7 @@ Legend: ✅ done+verified · 🔨 in progress · ⏳ queued · 🚫 n/a (with re
 | Feature | web | iOS/iPadOS | macOS | tvOS | Android | Windows |
 |---|---|---|---|---|---|---|
 | 1 Weak-Spot Arena | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 2 Story Archive | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
+| 2 Story Archive | ⏳ | 🔨 | ⏳ | ⏳ | ⏳ | ⏳ |
 | 3 Marathon | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 4 Knowledge Atlas | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 5 Friend Streaks | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
@@ -127,6 +127,65 @@ your misses become your arena."
 
 **Apple reference = the canonical implementation.** Other platforms mirror its
 behavior in their native idiom (same verb, native idiom).
+
+---
+
+## Feature 2 — Story Archive (design spec)
+
+**One line:** Club keeps every "story behind the answer" you've ever unlocked —
+a permanent, searchable, browsable library of the facts you've met. The corpus as
+*your* collection (Pillar 3 ⭐, the NYT-archive pattern; MONETIZATION §4a).
+
+**The load-bearing constraint (R-MON-1 — do not violate):** the story
+(`Question.explanation`) is shown FREE in the moment, after you answer, on every
+platform. Story Archive does **not** gate or remove that. It ADDS a surface that
+does not exist for free users at all — free users see each story once, in passing;
+Club members get the persistent, searchable, revisitable *library* of everything
+they've seen. Additive, never subtractive. (This is why it passes the line test: a
+5-hour player has a thin archive; the value only compounds at 50+ hours.)
+
+**Four-question test (passed 2026-07-22):** deepens understanding (revisiting +
+connecting facts you've learned is textbook spaced retrieval; the library makes the
+corpus a place you *study*, not just play); invites participation (you curate it by
+what you play; add a lightweight **favorite** ⭐ and it becomes your own collection —
+a co-authored result, not a passive feed); supports agency (a reference you *own* and
+can search offline — makes you more capable independently); clarity (a plain
+searchable list/grid → tap → read the story; no opaque model, no "for you" surface —
+expose the domain structure via filters, per the skill).
+
+**Data source (local, per device):** the set of DISTINCT questions the player has
+encountered — derivable from the already-persisted per-answer detail
+(`AnswerDetail`/`GameRecord` qids on Apple; the equivalent seen/answered records on
+web/Android/Windows). Join each qid → the corpus row for its `explanation` (story),
+`prompt`, `correctAnswer`, and category/domain. If a platform doesn't persist a seen
+qid set, add one additively (a small append-on-answer store), keyed by qid, cheap.
+Whether "seen" = answered (right or wrong) or "unlocked = answered correctly" is a
+design call: default to **any question you've answered** (you met the fact either
+way), and MARK which ones you got right — that's more honest and more useful.
+
+**The surface (Club-gated, new):**
+- Entry point: a **Story Archive** row/section in Records (Records is the dashboard,
+  R-REC-1 — the archive is a "see all" destination off it), Club-marked.
+- A searchable, filterable list/grid of story cards: the fact, the answer, its domain,
+  the date you met it, a right/wrong marker, and a **favorite** toggle.
+- **Search** by text (prompt/answer/story) + **filter** by domain and by
+  favorited/missed. The web's URL-state superpower applies (`#/archive?domain=…`).
+- Tap a card → read the full story (`explanation`) + a link to re-ask that question
+  (routes into a 1-question drill or the Weak-Spot engine). Closes the loop back to
+  play.
+- Empty state (member, nothing seen yet): "Play a few rounds — the stories you unlock
+  are kept here forever."
+- Non-member: a real preview (their most recent story, or a sample) + the honest
+  "Club keeps every story you unlock, searchable forever" panel → existing paywall.
+  Never a wall on the in-moment story itself.
+
+**Favorite ⭐ (the participation lever):** a per-qid favorite flag (local; syncs later
+via the existing per-ecosystem sync if present). Favorites get their own filter. Keep
+it dead simple — a heart/star on the card. (A full "fact notebook" with your own notes
+is a separate Pillar-3 item; note it as a fast-follow, don't build it here.)
+
+**Apple reference = canonical.** Other platforms mirror the behavior (same verb,
+native idiom). Reuse the Weak-Spot debug override (`TIDBITS_CLUB=1` etc.) to verify.
 
 ---
 

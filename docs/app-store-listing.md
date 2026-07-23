@@ -8,10 +8,11 @@ the console. Update here first, every release.
 - **Age rating**: 4+ (no objectionable content; questions are general-knowledge)
 - **Price**: Free · **In-app purchases**: Tidbits Club — $3.99/mo, $29.99/yr, or $79.99 lifetime Founding Member (see `docs/CLUB-MARKETING.md`)
 - **Copyright**: © 2026 Learning Is Change
-- **Support URL**: `<GitHub Pages URL>/support.html`
-- **Marketing URL**: `<GitHub Pages URL>/`
-- **Privacy Policy URL**: `<GitHub Pages URL>/privacy.html`
-- **App Privacy**: Data Not Collected (no account, no analytics, no tracking)
+- **Support URL**: `https://tidbitstrivia.com/support.html`
+- **Marketing URL**: `https://tidbitstrivia.com/`
+- **Privacy Policy URL**: `https://tidbitstrivia.com/privacy.html`
+- **License Agreement (EULA)**: `https://tidbitstrivia.com/terms.html` (custom EULA; auto-renew terms + per-store cancel)
+- **App Privacy**: The full game collects nothing. Three OPTIONAL features collect data, all Linked + App-Functionality, NEVER tracking: sign-in (Name, User ID), leaderboards (game stats → "Other Data"), Tidbits Club (Email Address, stored as a one-way hash). Must match `PrivacyInfo.xcprivacy` + privacy.html (2026-07-23 IAP-compliance pass).
 
 ## App Name (≤30 chars)
 `Tidbits: Wikipedia Trivia` (25)
@@ -33,7 +34,7 @@ apps, every question is built from real, sourced facts, with a "learn the fact"
 card after each one so you walk away knowing something new.
 
 WHY TIDBITS IS DIFFERENT
-• Real facts, not recycled questions. Over 11,000 questions, generated and
+• Real facts, not recycled questions. Over 100,000 questions, generated and
   fact-checked from Wikipedia and Wikidata — and they never repeat until you've
   seen them all.
 • 22 kinds of questions. Not just "which of these is right" — identify the
@@ -57,11 +58,17 @@ WAYS TO PLAY
 BUILT TO RESPECT YOU
 • Works fully offline — the question bank lives on your device.
 • No ads. No energy meters. No "pay to keep your streak." No dark patterns.
-• Free. The goal is to make you a little more curious, not to farm your
-  attention.
+• The full game is free — every question, every mode.
 
-Tidbits is also on the web, Apple TV, and Android — same game, your streak and
-favorites at home on each.
+TIDBITS CLUB (optional)
+Go deeper with an optional membership: Ranked Seasons, a Knowledge Atlas that
+maps what you know by domain, a Story Archive of every fact you've learned, and
+multi-week Expeditions. Buy once — you're a member on every device you sign in
+on. Monthly, yearly, or a one-time Founding Member purchase. The core game
+always stays free.
+
+Tidbits is also on the web, Apple TV, Mac, Windows, and Android — same game,
+your streak and favorites at home on each.
 
 ## What's New (v1.0)
 The first release of Tidbits — thousands of Wikipedia-built questions, the Daily

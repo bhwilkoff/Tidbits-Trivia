@@ -24,6 +24,11 @@ public sealed class RecordsData
     public Dictionary<string, ExpeditionProgress> ExpeditionProgress { get; set; } = new();
     /// Permanent completed-Expedition certificates.
     public List<ExpeditionCertificate> ExpeditionCertificates { get; set; } = new();
+    /// The Club Link Wall's daily rows (docs/CLUB-FEATURES-BUILD.md "Feature 6") —
+    /// keyed by day (`yyyy-MM-dd`), like `ExpeditionProgress`; several days (past
+    /// completed + today in-progress) can sit here at once, unlike Marathon's single
+    /// slot. One row per day; reopening resumes THIS row, never a fresh board.
+    public Dictionary<string, LinkWallResult> LinkWall { get; set; } = new();
 }
 
 /// Persists the outcome of a finished game (record + missed facts + Daily streak +
@@ -66,6 +71,9 @@ public sealed class RecordsStore
     /// Permanent completed-Expedition certificates, most recent first.
     public IReadOnlyList<ExpeditionCertificate> ExpeditionCertificates =>
         _data.ExpeditionCertificates.OrderByDescending(c => c.CompletedAt).ToList();
+    /// The Club Link Wall's daily rows, keyed by day (docs/CLUB-FEATURES-BUILD.md
+    /// "Feature 6").
+    public IReadOnlyDictionary<string, LinkWallResult> LinkWall => _data.LinkWall;
 
     /// Record a finished game. Returns whether it's a new best for that mode+category.
     public bool Record(GameSummary summary)
@@ -202,6 +210,25 @@ public sealed class RecordsStore
         Save();
     }
 
+    /// Fetch today's (or any day's) Link Wall row, or insert a fresh one — never a
+    /// second row for the same day. Mirrors Apple's `LinkWallLog.resultOrCreate`.
+    public LinkWallResult LinkWallResultOrCreate(string day)
+    {
+        if (_data.LinkWall.TryGetValue(day, out var existing)) return existing;
+        var fresh = new LinkWallResult { Day = day };
+        _data.LinkWall[day] = fresh;
+        Save();
+        return fresh;
+    }
+
+    /// Persist one day's Link Wall progress — called after every guess so a
+    /// crash/quit never loses progress (docs/CLUB-FEATURES-BUILD.md "Feature 6").
+    public void SaveLinkWallResult(LinkWallResult result)
+    {
+        _data.LinkWall[result.Day] = result;
+        Save();
+    }
+
     private void AddCalibration(IReadOnlyDictionary<int, StakeOutcome> outcomes)
     {
         foreach (var (tier, o) in outcomes)
@@ -254,6 +281,7 @@ public sealed class RecordsStore
         _data.MarathonHistory.Clear();
         _data.ExpeditionProgress.Clear();
         _data.ExpeditionCertificates.Clear();
+        _data.LinkWall.Clear();
         _data.Streak = new DailyStreak();
         Save();
     }

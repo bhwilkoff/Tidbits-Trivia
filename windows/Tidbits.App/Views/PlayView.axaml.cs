@@ -79,6 +79,7 @@ public partial class PlayView : UserControl
         BuildWeakSpot();
         BuildMarathonCard();
         BuildExpeditionsCard();
+        BuildLinkWallCard();
     }
 
     // MARK: - Tidbits Club: Weak-Spot Arena (docs/CLUB-FEATURES-BUILD.md "Feature 1")
@@ -387,6 +388,99 @@ public partial class PlayView : UserControl
         GameHost.Content = new GameView { DataContext = vm };
         engine.StartCustom(GameMode.Classic, TriviaCategory.Named(stage.CategoryId), questions);
     }
+
+    // MARK: - Tidbits Club: Link Wall (docs/CLUB-FEATURES-BUILD.md "Feature 6")
+
+    /// A NYT-Connections-style SECOND daily — Club-marked, sitting right next to the
+    /// free Daily Tidbit above (which this never touches). Members open straight into
+    /// today's board (or its result, if already played); non-members see a real
+    /// preview — today's easiest group's actual label, generated fresh from the
+    /// bundled corpus (public content, not a nag) — and the existing Club paywall,
+    /// never a blank wall.
+    private void BuildLinkWallCard()
+    {
+        var data = GameData.Shared.Value;
+        bool isClub = data.Entitlement.IsClub;
+        var day = QuestionProvider.DayKey();
+        var puzzle = LinkWall.Puzzle(day, LinkWallMatchQuestions());
+        var todayResult = data.Records.LinkWall.GetValueOrDefault(day);
+
+        string subtitle;
+        if (isClub)
+        {
+            subtitle = todayResult switch
+            {
+                { Completed: true, Won: true } => "Solved today's wall — see the recap.",
+                { Completed: true, Won: false } => "See today's groups.",
+                { Completed: false } => "In progress — tap to keep going.",
+                _ => "4 groups of 4. One guess at a time, 4 mistakes allowed.",
+            };
+        }
+        else
+        {
+            var previewLabel = puzzle?.Groups.OrderBy(g => g.Difficulty).FirstOrDefault()?.Label;
+            subtitle = previewLabel is not null
+                ? $"Today's board includes \"{previewLabel}\" — find all four groups."
+                : "A second daily: 16 facts, 4 hidden groups. Find them all.";
+        }
+
+        var titleRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, VerticalAlignment = VerticalAlignment.Center };
+        titleRow.Children.Add(new TextBlock { Text = "LINK WALL", Classes = { "body-strong" } });
+        if (!isClub)
+        {
+            titleRow.Children.Add(new Border
+            {
+                Background = new SolidColorBrush(Color.Parse("#FF5C35")),
+                CornerRadius = new Avalonia.CornerRadius(6),
+                Padding = new Avalonia.Thickness(7, 2),
+                Child = new TextBlock { Text = "CLUB", FontSize = 11, FontWeight = Avalonia.Media.FontWeight.Black, Foreground = Brushes.White },
+            });
+        }
+
+        var textStack = new StackPanel { Spacing = 3, VerticalAlignment = VerticalAlignment.Center, MaxWidth = 440 };
+        textStack.Children.Add(titleRow);
+        textStack.Children.Add(new TextBlock { Text = subtitle, Classes = { "caption" }, TextWrapping = TextWrapping.Wrap });
+
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
+        grid.Children.Add(textStack);
+
+        var action = new Button
+        {
+            Content = isClub ? "Play" : "Join Club",
+            Classes = { "accent", "compact" },
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        action.Click += (_, _) => OnLinkWallAction();
+        Grid.SetColumn(action, 1);
+        grid.Children.Add(action);
+
+        LinkWallPanel.Content = new Border { Classes = { "card" }, Child = grid };
+    }
+
+    /// Members open straight into today's board (the FAContentDialog board/result
+    /// swap); non-members see the existing paywall — never a blank wall.
+    private async void OnLinkWallAction()
+    {
+        var data = GameData.Shared.Value;
+        if (!data.Entitlement.IsClub)
+        {
+            var dialog = new FAContentDialog
+            {
+                Content = new ScrollViewer { Content = new ClubPaywallView(), MaxWidth = 520, MaxHeight = 640 },
+                CloseButtonText = "Close",
+            };
+            await dialog.ShowAsync();
+            BuildLinkWallCard(); // reflect a purchase/restore made from inside the dialog
+            return;
+        }
+        await LinkWallDialog.ShowAsync(data.Records, LinkWallMatchQuestions(), QuestionProvider.DayKey());
+        BuildLinkWallCard(); // reflect today's progress/result changed while the dialog was open
+    }
+
+    /// The bundled match.json rows Link Wall's generator draws from — the same
+    /// enrichment source that already powers the free Match-Up mode.
+    private static List<Question> LinkWallMatchQuestions() =>
+        GameData.Shared.Value.Sources.Enrich(GameMode.Matching).Questions("mixed", new HashSet<string>(), 100_000);
 
     /// Saved Custom Mix presets ("My Mix") — each replays its modes + category,
     /// or can be removed. Parity with the web/Mac presets list.

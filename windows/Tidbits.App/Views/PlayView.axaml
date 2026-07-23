@@ -35,6 +35,10 @@
                 <TextBlock Text="Daily Tidbit" Classes="section-header" Margin="0,12,0,0"/>
                 <StackPanel x:Name="DailyPanel" Spacing="8"/>
 
+                <!-- Tidbits Club: Link Wall (docs/CLUB-FEATURES-BUILD.md "Feature 6") — the
+                     Club's SECOND daily, right next to the free one above. -->
+                <ContentControl x:Name="LinkWallPanel" Margin="0,4,0,0"/>
+
                 <TextBlock Text="Trivia Night" Classes="section-header" Margin="0,12,0,0"/>
                 <TextBlock Text="A themed night of rounds — each round a different question type."
                            FontSize="13" Opacity="0.7"/>

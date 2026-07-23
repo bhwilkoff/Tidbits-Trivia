@@ -1,5 +1,42 @@
 # Tidbits Club — Owner Go-Live Playbook
 
+## ⚡ Setup progress — 2026-07-23 (driven by Claude via Chrome)
+
+**DONE (products created + configured):**
+- **Lemon Squeezy (web):** all 3 products created + **Published** (store slug `tidbits`):
+  Founding Member (Lifetime) $79.99, Yearly $29.99/yr, Monthly $3.99/mo. Their
+  hosted-checkout URLs are **wired into `js/store.js`** and committed. *Store
+  application is still under Lemon Squeezy review (test mode) — live payments start
+  once LS approves the store + you flip off Test mode.*
+- **Apple App Store Connect:** all 3 products created + fully configured (Family
+  Sharing on, US price + auto-matrix, all 175 regions, English localization) —
+  matching the exact IDs the app loads:
+  `…club.lifetime` (Non-Consumable, $79.99) · `…club.annual` (auto-renew, $29.99/yr) ·
+  `…club.monthly` (auto-renew, $3.99/mo), both subs in the **"Tidbits Club"** group.
+
+**REMAINING — owner only:**
+1. **Apple:** add a **review screenshot** (the paywall) to each of the 3 products and
+   **submit them with your next app version** (Apple reviews IAPs alongside a build).
+   Enroll in the **Small Business Program** if not done. *(Everything else on Apple is set.)*
+2. **Lemon Squeezy webhook + Worker secrets** — create a webhook in LS → Settings →
+   Webhooks: callback URL `https://tidbits-auth.benwilkoff.workers.dev/entitlements/webhook`,
+   subscribe to `order_created` + all `subscription_*` events, and set a **signing
+   secret**. Then set that same value as `LEMONSQUEEZY_WEBHOOK_SECRET` on the Worker,
+   plus `FIREBASE_SA_EMAIL` / `FIREBASE_SA_PRIVATE_KEY` / `FIREBASE_DB_URL`. Until these
+   are set the Worker returns 503 (safe) and web purchases won't grant Club. *(Claude
+   generated a candidate secret this session and shared it in chat — not stored in git.)*
+3. **Google Play — BLOCKED:** the Chrome session's default Google account (u/0) hit a
+   *"create a developer account"* flow, i.e. it's **not** the Google login that owns the
+   Tidbits developer account (likely `ben@learningischange.com` vs a personal login).
+   Switch to the correct Google account, then create `club_lifetime` (in-app) /
+   `club_annual` (sub, annual base plan) / `club_monthly` (sub, monthly base plan).
+4. **Microsoft:** add-ons for a **Game** product require the base app to be **published**
+   (Tidbits is still *in certification*). Create the 3 add-ons (`club.lifetime` durable,
+   `club.annual` / `club.monthly` subscriptions) once the app goes live.
+
+---
+
+
 **What this is:** the short list of tasks **only you can do** to turn on Tidbits
 Club monetization across all platforms. Everything else (client code, the
 entitlement Worker, RTDB rules, paywalls, product *definitions*) is already built

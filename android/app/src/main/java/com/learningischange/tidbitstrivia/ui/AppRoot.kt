@@ -80,6 +80,7 @@ sealed interface Route {
     data object KnowledgeAtlas : Route // Tidbits Club EXCLUSIVE — Knowledge Atlas (Feature 4)
     data object ExpeditionHub : Route  // Tidbits Club EXCLUSIVE — Expeditions hub (Feature 5); reachable by everyone (real preview)
     data class ExpeditionMap(val expeditionId: String) : Route // an expedition's stage path; also a real preview for non-members
+    data object LinkWall : Route       // Tidbits Club EXCLUSIVE — Link Wall (Feature 6): a second daily
 }
 
 @Composable
@@ -156,6 +157,7 @@ fun AppRoot(
                         onPlayWeakSpot = { qs, reasons -> backStack.add(Route.Game(Mode.WEAK_SPOT, Category.byId("mixed"), qs, "Weak-Spot Arena", weakSpotReasons = reasons)) },
                         onPlayMarathon = { backStack.add(Route.Game(Mode.MARATHON, Category.byId("mixed"), label = "Marathon")) },
                         onExpeditions = { backStack.add(Route.ExpeditionHub) },
+                        onLinkWall = { backStack.add(Route.LinkWall) },
                         onVersus = { id -> backStack.add(Route.Versus(id)) },
                         onQuickMatch = { backStack.add(Route.OnlineMatch) },
                         onNight = { backStack.add(Route.NightSetup) },
@@ -234,6 +236,9 @@ fun AppRoot(
                             backStack.add(Route.Game(Mode.CLASSIC, Category.byId(stage.categoryId), qs, stage.title,
                                 expeditionId = expedition.id, expeditionStageIndex = stageIndex))
                         })
+                    is Route.LinkWall -> LinkWallScreen(store,
+                        onBack = { backStack.removeLastOrNull() },
+                        onClub = { backStack.add(Route.ClubPaywall) })
                 }
             }
         }
@@ -264,6 +269,7 @@ private fun HomeScreen(
     onPlayWeakSpot: (List<Question>, Map<String, String>) -> Unit,
     onPlayMarathon: () -> Unit,
     onExpeditions: () -> Unit,
+    onLinkWall: () -> Unit,
     onVersus: (String) -> Unit,
     onQuickMatch: () -> Unit,
     onNight: () -> Unit,
@@ -351,6 +357,13 @@ private fun HomeScreen(
                 Icon(Icons.Filled.KeyboardArrowRight, null, tint = Ink)
             }
         }
+
+        // Link Wall — Tidbits Club EXCLUSIVE (docs/CLUB-FEATURES-BUILD.md "Feature 6"):
+        // a NYT-Connections-style SECOND daily, right next to the free Daily Tidbit card
+        // (which stays completely untouched above). Members launch today's board;
+        // non-members see a real preview + a CLUB chip and tap through to the existing
+        // paywall — never a blank wall.
+        LinkWallCard(isClub = Entitlement.isClub) { if (Entitlement.isClub) onLinkWall() else onClub() }
 
         // Trivia Night — one unified entry → host/join sheet.
         ChunkyCard(fill = Pops.coral, onClick = { showNight = true }) {
@@ -504,6 +517,35 @@ private fun MarathonCard(isClub: Boolean, run: MarathonRun?, subtitle: String, o
                         Spacer(Modifier.width(6.dp))
                         Surface(shape = RoundedCornerShape(999.dp), color = Pops.coral) {
                             Text("RESUME", fontSize = 11.sp, fontWeight = FontWeight.Black, color = Color.White,
+                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp))
+                        }
+                    }
+                }
+                Text(subtitle, color = Color.White.copy(alpha = 0.85f), fontSize = 13.sp, maxLines = 2)
+            }
+            Icon(Icons.Filled.KeyboardArrowRight, null, tint = Color.White)
+        }
+    }
+}
+
+// Link Wall — Tidbits Club EXCLUSIVE (docs/CLUB-FEATURES-BUILD.md "Feature 6"). Its
+// OWN Home entry point right beside the free Daily card (a second daily, not a
+// variant of the first). Content-clean-generated, not player data, so — like
+// Marathon — the non-member pitch is the real, concrete previewLine() copy.
+@Composable
+private fun LinkWallCard(isClub: Boolean, onClick: () -> Unit) {
+    val subtitle = if (isClub) "16 tiles, 4 groups — a brand-new wall today." else LinkWall.previewLine()
+    ChunkyCard(fill = Pops.grape, onClick = onClick) {
+        Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Filled.GridView, null, tint = Color.White, modifier = Modifier.size(28.dp))
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("LINK WALL", fontWeight = FontWeight.Black, fontSize = 20.sp, color = Color.White)
+                    if (!isClub) {
+                        Spacer(Modifier.width(6.dp))
+                        Surface(shape = RoundedCornerShape(999.dp), color = Color.White) {
+                            Text("CLUB", fontSize = 11.sp, fontWeight = FontWeight.Black, color = Pops.grape,
                                 modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp))
                         }
                     }

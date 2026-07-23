@@ -1051,6 +1051,7 @@ class Store(context: Context) {
             .remove("stories")
             .remove("marathonRun").remove("marathonScores")
             .remove("expeditionProgress").remove("expeditionCertificates")
+            .remove("linkwall")
             .apply()
     }
 
@@ -1227,6 +1228,74 @@ class Store(context: Context) {
                 .put("total", s.total).put("duration", s.durationSeconds).put("domains", domArr))
         }
         prefs.edit().putString("marathonScores", arr.toString()).apply()
+    }
+
+    // ---- Link Wall (Club — docs/CLUB-FEATURES-BUILD.md "Feature 6") ----
+    // One puzzle per day (the generator itself, LinkWall.puzzle(day), is stateless and
+    // deterministic — nothing about the PUZZLE is persisted). What IS persisted is the
+    // player's progress THROUGH that day's board, keyed by day, one row per day — a
+    // reload/relaunch resumes mid-progress; a completed day shows the result, not a
+    // fresh board (mirrors Marathon's immediate-persist-after-every-answer discipline).
+    // Shared JSON shape (the contract for the Windows port too):
+    //   linkwall = { [day]: { mistakes, completed, won, date,
+    //                          guessHistory: [[Int]], solvedLabels: [String] } }
+
+    fun linkWallResult(day: String): LinkWall.LinkWallResult? {
+        val all = JSONObject(prefs.getString("linkwall", "{}") ?: "{}")
+        val o = all.optJSONObject(day) ?: return null
+        return linkWallResultFromJson(o)
+    }
+
+    private fun linkWallResultFromJson(o: JSONObject): LinkWall.LinkWallResult {
+        val ghArr = o.optJSONArray("guessHistory") ?: org.json.JSONArray()
+        val guessHistory = (0 until ghArr.length()).map { i ->
+            val row = ghArr.getJSONArray(i)
+            (0 until row.length()).map { row.getInt(it) }
+        }
+        val slArr = o.optJSONArray("solvedLabels") ?: org.json.JSONArray()
+        val solvedLabels = (0 until slArr.length()).map { slArr.getString(it) }
+        return LinkWall.LinkWallResult(
+            mistakes = o.optInt("mistakes", 0),
+            completed = o.optBoolean("completed", false),
+            won = o.optBoolean("won", false),
+            date = o.optLong("date", System.currentTimeMillis()),
+            guessHistory = guessHistory,
+            solvedLabels = solvedLabels,
+        )
+    }
+
+    /** Fetch a day's row, or insert a fresh one — never a second row for the same day. */
+    fun linkWallResultOrCreate(day: String): LinkWall.LinkWallResult {
+        linkWallResult(day)?.let { return it }
+        val fresh = LinkWall.LinkWallResult(date = System.currentTimeMillis())
+        return saveLinkWallResult(day, fresh)
+    }
+
+    fun saveLinkWallResult(day: String, result: LinkWall.LinkWallResult): LinkWall.LinkWallResult {
+        val all = JSONObject(prefs.getString("linkwall", "{}") ?: "{}")
+        val o = JSONObject()
+            .put("mistakes", result.mistakes).put("completed", result.completed).put("won", result.won)
+            .put("date", result.date)
+        val ghArr = org.json.JSONArray()
+        result.guessHistory.forEach { row -> ghArr.put(org.json.JSONArray(row)) }
+        o.put("guessHistory", ghArr)
+        o.put("solvedLabels", org.json.JSONArray(result.solvedLabels))
+        all.put(day, o)
+        prefs.edit().putString("linkwall", all.toString()).apply()
+        return result
+    }
+
+    /** Appends one guess row, correct or not — called immediately on every submit so a
+     *  reload/crash never loses progress (same discipline as Marathon.record). */
+    fun recordLinkWallGuess(day: String, difficulties: List<Int>): LinkWall.LinkWallResult {
+        val r = linkWallResult(day) ?: linkWallResultOrCreate(day)
+        return saveLinkWallResult(day, r.copy(guessHistory = r.guessHistory + listOf(difficulties)))
+    }
+
+    fun recordLinkWallSolvedGroup(day: String, label: String): LinkWall.LinkWallResult {
+        val r = linkWallResult(day) ?: linkWallResultOrCreate(day)
+        if (label in r.solvedLabels) return r
+        return saveLinkWallResult(day, r.copy(solvedLabels = r.solvedLabels + label))
     }
 
     // ---- Expeditions (Club — docs/CLUB-FEATURES-BUILD.md "Feature 5") ----

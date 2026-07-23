@@ -18,6 +18,7 @@ on:
       - 'index.html'
       - '404.html'
       - 'privacy.html'
+      - 'terms.html'
       - 'support.html'
       - 'manifest.json'
       - 'sw.js'
@@ -53,7 +54,7 @@ jobs:
       - name: Stage web files only
         run: |
           mkdir -p _site
-          for item in index.html 404.html privacy.html support.html manifest.json sw.js \
+          for item in index.html 404.html privacy.html terms.html support.html manifest.json sw.js \
                       robots.txt sitemap.xml CNAME .nojekyll css js assets branding data \
                       .well-known; do
             [ -e "$item" ] && cp -r "$item" _site/

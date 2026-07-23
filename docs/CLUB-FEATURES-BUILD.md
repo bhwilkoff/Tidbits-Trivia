@@ -514,6 +514,33 @@ stages, and stage 2 only proceeds if stage 1's quality is real:
 decision for the owner, and move on (do NOT ship a weak daily — memory
 `quality-over-volume-steer`).
 
+### Stage 1 RESULT (2026-07-22) — gate NOT passed; bounded fix in progress
+Built `Core/Store/LinkWall.swift` (BUILD SUCCEEDED, Core-only, dormant/not wired).
+Generated 8 real daily puzzles for judging. **Verdict: the MECHANISM is sound** —
+deterministic day→theme→block via `DailyPick`, exact-collision rejection, difficulty
+ordering (yellow→purple), cited "why"; the **element-symbol theme is flawless every
+time**, proving the approach works. **But 4/8 puzzles shipped a mislabeled/wrong tile**,
+concentrated in 3 generic themes whose `match.json` pools were built for the Matching
+mode (decoys don't need to be clean there, but Link Wall's labeled-group promise
+exposes them):
+- **`capital`**: mixes modern sovereign capitals with US state capitals (Little Rock),
+  UK county towns (Truro), and historical/dynastic seats (Edo, Puhar, Kutaisi) — and a
+  disputed-territory sensitivity (Gilgit). ~60%+ of blocks impure.
+- **`author`**: labels religious texts / founding documents (Genesis, UDHR) as "novels".
+- **`director`**: labels TV series (Top of the Pops) as "films".
+- `currency`: one bad entry ("bimetallism" = a policy, not a currency).
+- **Repetition**: sports/history themes each have ONE source block → always the same 4
+  tiles; two themes already repeated within 8 samples.
+- **Near-dup**: the exact-string collision guard missed "Declaration of Independence"
+  vs "Declaration of Independence signed" (same referent, two tiles).
+**Fix (Stage 1.5, scoped — NOT a rebuild):** an allowlist/filter layer over the
+capital/author/director pools (exclude subnational + historical-polity capitals,
+non-novel written works, TV series) before they enter `themeTable`; patch the currency
+entry; tighten the collision guard to catch substring/near-duplicates; downweight
+singleton themes (<3 candidate blocks) in the daily ranking. Re-sample 8, re-judge.
+**Only then** decide Stage 2. All fixes live in `LinkWall.swift` — do NOT edit
+`match.json` (it serves the Matching mode correctly as-is).
+
 ---
 
 ## Deferred (need an owner decision before building)

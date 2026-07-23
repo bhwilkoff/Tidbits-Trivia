@@ -44,6 +44,11 @@ struct ContentView_tvOS: View {
     @Query private var expeditionProgress: [ExpeditionProgress]
     @State private var showExpeditions = false
     @State private var expeditionLaunch: TVExpeditionStageLaunch?
+    // Link Wall (Club — docs/CLUB-FEATURES-BUILD.md "Feature 6"). Sorted desc
+    // + filtered by day rather than a predicate-init'd @Query, so this view's
+    // existing memberwise init stays untouched (rows accumulate, one per day).
+    @Query(sort: \LinkWallResult.date, order: .reverse) private var linkWallResults: [LinkWallResult]
+    @State private var showLinkWall = false
 
     /// Launch a game and (unless Daily) remember it as the Quick Play default.
     private func play(_ mode: GameMode, _ category: TriviaCategory) {
@@ -60,6 +65,7 @@ struct ContentView_tvOS: View {
                     quickPlayHero
                     quickActionsRow
                     dailyHero
+                    linkWallHero
                     nightHero
                     weakSpotHero
                     marathonHero
@@ -134,6 +140,9 @@ struct ContentView_tvOS: View {
             TVGameContainer(mode: .classic, category: .named(launch.stage.categoryID),
                             expedition: launch.expedition, expeditionStageIndex: launch.stageIndex)
         }
+        .fullScreenCover(isPresented: $showLinkWall) {
+            LinkWallView_tvOS(day: QuestionProvider.dayKey()) { showLinkWall = false }
+        }
         .task {
             if launch == nil, nightLaunch == nil, let ap = DebugHooks.autoplay {
                 // Trivia Night needs a plan, not a bare category — autoplay it with
@@ -157,6 +166,7 @@ struct ContentView_tvOS: View {
             if DebugHooks.openExpedition || DebugHooks.expeditionMapPreview != nil || DebugHooks.expeditionAutoplay != nil {
                 showExpeditions = true
             }
+            if DebugHooks.openLinkWall { openLinkWall() }
         }
         // A friend's Game Center challenge accepted at runtime → launch the mode.
         .onChange(of: gameCenter.pendingChallengeMode) { _, m in
@@ -234,6 +244,68 @@ struct ContentView_tvOS: View {
             Spacer()
         }
         .focusSection()
+    }
+
+    // MARK: - Link Wall (Club — docs/CLUB-FEATURES-BUILD.md "Feature 6")
+
+    /// Today's Link Wall row, if any — `nil` for a not-yet-played day, present
+    /// (possibly `completed`) once a guess has been submitted.
+    private var linkWallToday: LinkWallResult? {
+        linkWallResults.first { $0.day == QuestionProvider.dayKey() }
+    }
+
+    /// A real preview for non-members — today's easiest (yellow) group's
+    /// label, straight off the actual generator (MONETIZATION §4a: "a real
+    /// preview, never a nag"). Never reveals the group's members/why.
+    private var linkWallPreviewLabel: String? {
+        LinkWall.puzzle(for: QuestionProvider.dayKey())?.groups.first?.label
+    }
+
+    /// Club members launch (or resume) today's board directly; everyone else
+    /// see the existing paywall — never a blank wall.
+    private func openLinkWall() {
+        if entitlement.isClub { showLinkWall = true } else { showClubPaywall = true }
+    }
+
+    private var linkWallSubtitle: String {
+        if entitlement.isClub {
+            if let r = linkWallToday {
+                if r.completed { return r.won ? "Solved today's wall — see the recap." : "See today's groups." }
+                return "In progress — press to keep going."
+            }
+            return "4 groups of 4. One guess at a time, 4 mistakes allowed."
+        }
+        if let linkWallPreviewLabel { return "Today's board includes \"\(linkWallPreviewLabel)\" — find all four groups." }
+        return "A second daily: 16 facts, 4 hidden groups. Find them all."
+    }
+
+    private var linkWallHero: some View {
+        Button(action: openLinkWall) {
+            HStack(spacing: 28) {
+                Image(systemName: "square.grid.3x3.fill").font(.system(size: 52, weight: .black))
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 16) {
+                        Text("LINK WALL").font(.system(size: 40, weight: .black, design: .rounded))
+                        if !entitlement.isClub {
+                            Text("CLUB")
+                                .font(.system(size: 22, weight: .black, design: .rounded))
+                                .padding(.horizontal, 14).padding(.vertical, 6)
+                                .background(Capsule().fill(.white.opacity(0.92)))
+                                .foregroundStyle(Tidbits.Palette.mint)
+                        }
+                    }
+                    Text(linkWallSubtitle)
+                        .font(.system(size: 29, weight: .medium, design: .rounded))
+                        .foregroundStyle(.black.opacity(0.75))
+                        .lineLimit(2)
+                }
+                Spacer()
+            }
+            .foregroundStyle(.black)
+            .padding(40)
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(TVLinkWallHeroStyle())
     }
 
     // MARK: - Weak-Spot Arena (Club — docs/CLUB-FEATURES-BUILD.md "Feature 1")
@@ -758,6 +830,23 @@ struct TVExpeditionHeroStyle: ButtonStyle {
                 .overlay(RoundedRectangle(cornerRadius: 28).strokeBorder(.white.opacity(focused ? 0.9 : 0), lineWidth: 5))
                 .scaleEffect(focused ? 1.03 : 1.0)
                 .shadow(color: Tidbits.Palette.pink.opacity(focused ? 0.6 : 0), radius: 30, y: 12)
+                .animation(.easeOut(duration: 0.18), value: focused)
+        }
+    }
+}
+
+/// The Link Wall hero — mint, a LIGHT pop (like the Daily's yellow), so it's
+/// black-on-mint rather than white-on-dark like the other Club heroes.
+struct TVLinkWallHeroStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View { Inner(configuration: configuration) }
+    struct Inner: View {
+        let configuration: Configuration
+        @Environment(\.isFocused) private var focused
+        var body: some View {
+            configuration.label
+                .background(RoundedRectangle(cornerRadius: 28).fill(Tidbits.Palette.mint))
+                .scaleEffect(focused ? 1.04 : 1.0)
+                .shadow(color: .black.opacity(focused ? 0.5 : 0), radius: 24, y: 10)
                 .animation(.easeOut(duration: 0.18), value: focused)
         }
     }

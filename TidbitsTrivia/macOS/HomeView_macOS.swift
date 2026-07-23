@@ -30,6 +30,11 @@ struct HomeView_macOS: View {
     // Expeditions (Club — docs/CLUB-FEATURES-BUILD.md "Feature 5").
     @Query private var expeditionProgress: [ExpeditionProgress]
     @State private var showExpeditions = false
+    // Link Wall (Club — docs/CLUB-FEATURES-BUILD.md "Feature 6"). Sorted desc
+    // + filtered by day rather than a predicate-init'd @Query, so this view's
+    // existing memberwise init stays untouched (rows accumulate, one per day).
+    @Query(sort: \LinkWallResult.date, order: .reverse) private var linkWallResults: [LinkWallResult]
+    @State private var showLinkWall = false
 
     var body: some View {
         ScrollView {
@@ -38,6 +43,7 @@ struct HomeView_macOS: View {
                 quickPlayHero
                 quickActionsRow
                 dailyCard
+                linkWallCard
                 triviaNightCard
                 weakSpotCard
                 marathonCard
@@ -71,6 +77,9 @@ struct HomeView_macOS: View {
         .sheet(isPresented: $showExpeditions) {
             ExpeditionsHubView_macOS(onPlayStage: onExpedition)
         }
+        .sheet(isPresented: $showLinkWall) {
+            LinkWallView_macOS(day: QuestionProvider.dayKey())
+        }
         .confirmationDialog("Marathon in progress", isPresented: $showMarathonChoice, titleVisibility: .visible) {
             Button("Resume") { onPlay(LaunchRequest(mode: .marathon, category: .named("mixed"))) }
             Button("Start Over", role: .destructive) {
@@ -88,6 +97,7 @@ struct HomeView_macOS: View {
             if DebugHooks.openExpedition || DebugHooks.expeditionMapPreview != nil || DebugHooks.expeditionAutoplay != nil {
                 showExpeditions = true
             }
+            if DebugHooks.openLinkWall { openLinkWall() }
         }
     }
 
@@ -212,6 +222,66 @@ struct HomeView_macOS: View {
             .foregroundStyle(Tidbits.Palette.blue.legibleForeground)
             .padding(18).frame(maxWidth: .infinity, alignment: .leading)
             .chunkyCard(fill: Tidbits.Palette.blue)
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Link Wall (Club — docs/CLUB-FEATURES-BUILD.md "Feature 6")
+
+    /// Today's Link Wall row, if any — `nil` for a not-yet-played day, present
+    /// (possibly `completed`) once a guess has been submitted.
+    private var linkWallToday: LinkWallResult? {
+        linkWallResults.first { $0.day == QuestionProvider.dayKey() }
+    }
+
+    /// A real preview for non-members — today's easiest (yellow) group's
+    /// label, straight off the actual generator (MONETIZATION §4a: "a real
+    /// preview, never a nag"). Never reveals the group's members/why.
+    private var linkWallPreviewLabel: String? {
+        LinkWall.puzzle(for: QuestionProvider.dayKey())?.groups.first?.label
+    }
+
+    /// Club members launch (or resume) today's board directly; everyone else
+    /// sees the existing paywall — never a blank wall.
+    private func openLinkWall() {
+        if entitlement.isClub { showLinkWall = true } else { showClubPaywall = true }
+    }
+
+    private var linkWallSubtitle: String {
+        if entitlement.isClub {
+            if let r = linkWallToday {
+                if r.completed { return r.won ? "Solved today's wall — see the recap." : "See today's groups." }
+                return "In progress — click to keep going."
+            }
+            return "4 groups of 4. One guess at a time, 4 mistakes allowed."
+        }
+        if let linkWallPreviewLabel { return "Today's board includes \"\(linkWallPreviewLabel)\" — find all four groups." }
+        return "A second daily: 16 facts, 4 hidden groups. Find them all."
+    }
+
+    private var linkWallCard: some View {
+        Button(action: openLinkWall) {
+            HStack(spacing: 14) {
+                Image(systemName: "square.grid.3x3.fill").font(.system(size: 26, weight: .black))
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 6) {
+                        Text("LINK WALL").font(Tidbits.TypeRamp.l2)
+                        if !entitlement.isClub {
+                            Text("CLUB")
+                                .font(.system(size: 11, weight: .black, design: .rounded))
+                                .foregroundStyle(Tidbits.Palette.mint)
+                                .padding(.horizontal, 7).padding(.vertical, 3)
+                                .background(Capsule().fill(Color.white.opacity(0.92)))
+                        }
+                    }
+                    Text(linkWallSubtitle).font(Tidbits.TypeRamp.l5).opacity(0.9).lineLimit(2)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right.circle.fill").font(.system(size: 24, weight: .bold))
+            }
+            .foregroundStyle(Tidbits.Palette.mint.legibleForeground)
+            .padding(18).frame(maxWidth: .infinity, alignment: .leading)
+            .chunkyCard(fill: Tidbits.Palette.mint)
         }
         .buttonStyle(.plain)
     }

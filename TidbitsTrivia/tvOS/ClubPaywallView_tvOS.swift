@@ -39,6 +39,7 @@ struct ClubPaywallView_tvOS: View {
                         plans
                         restoreRow
                         webNote
+                        legalFooter
                     }
                     if let message {
                         Text(message).font(.system(size: 25, weight: .medium, design: .rounded))
@@ -124,7 +125,7 @@ struct ClubPaywallView_tvOS: View {
                 }
                 Spacer()
                 if busy == product.id { ProgressView().tint(.white) }
-                else { Text(product.displayPrice).font(.system(size: 31, weight: .black, design: .rounded)) }
+                else { Text(Self.priceLabel(product)).font(.system(size: 31, weight: .black, design: .rounded)) }
             }
             .frame(maxWidth: .infinity)
         }
@@ -139,10 +140,35 @@ struct ClubPaywallView_tvOS: View {
             .focused($focus, equals: .restore)
     }
 
-    /// R-MON-2 — sign in lives in Settings' Profile section, not here; never a code field.
+    /// R-MON-2 — an existing membership unlocks by SIGNING IN (Settings → Profile), never a
+    /// code field. Worded neutrally (no external-purchase steering) for App Store 3.1.3(b).
     private var webNote: some View {
-        Text("Bought Tidbits Club on the web? Sign in with the same email in Settings — it's already yours.")
+        Text("Already have Tidbits Club? Sign in with the same account in Settings and it unlocks here.")
             .font(.system(size: 22, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+    }
+
+    /// App Store 3.1.2 — auto-renew disclosure must appear next to the purchase controls.
+    /// tvOS has no browser, so Terms/Privacy are cited by URL (Apple's tvOS convention) rather
+    /// than as tappable links.
+    private var legalFooter: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Monthly and Yearly are auto-renewable subscriptions at the prices shown above. Payment is charged to your Apple Account at purchase confirmation. Each renews automatically unless auto-renewal is turned off at least 24 hours before the current period ends; manage or cancel anytime in your Apple Account settings. Founding Member is a one-time purchase for lifetime access — it does not renew.")
+                .font(.system(size: 20, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+            Text("Terms of Use and Privacy Policy: tidbitstrivia.com/terms.html · tidbitstrivia.com/privacy.html")
+                .font(.system(size: 20, weight: .semibold, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+        }
+    }
+
+    /// Price with billing period for subscriptions (e.g. "$29.99/yr"); the raw price for the
+    /// one-time lifetime product. Apple requires the period be shown before purchase.
+    static func priceLabel(_ product: StoreKit.Product) -> String {
+        guard let period = product.subscription?.subscriptionPeriod else { return product.displayPrice }
+        let unit: String
+        switch period.unit {
+        case .day: unit = "day"; case .week: unit = "wk"; case .month: unit = "mo"; case .year: unit = "yr"
+        @unknown default: return product.displayPrice
+        }
+        return "\(product.displayPrice)/\(unit)"
     }
 
     private func buy(_ product: StoreKit.Product) async {

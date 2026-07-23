@@ -152,5 +152,24 @@ isEntitled = localStoreEntitlement          // Class A: StoreKit/Play/MSStore �
   from the Swift one) → **one sequential Sonnet agent at a time** (never concurrent — they
   all hit the session limit together and return nothing; memory `sequential-not-concurrent-agents`).
 
+## App Store IAP-compliance pass (2026-07-23) — pre-submission hardening
+Closed the guideline gaps that get IAP apps rejected, so the binary we submit is clean:
+- **G3.1.2 (subscription disclosure)** — every paywall (iOS/macOS/tvOS/web) now shows the
+  billing PERIOD in the price ("$29.99/yr"), a full auto-renew disclosure block, and
+  functional **Terms of Use (EULA)** + **Privacy Policy** links next to the buy controls.
+- **G3.1.3(b) (anti-steering)** — the "already have Club?" note reworded neutrally: "sign in
+  with the same account and it unlocks here" — no external-purchase steering language.
+- **New `terms.html`** (EULA: the three products, auto-renew terms, per-store cancel paths,
+  refunds-by-store) + **rewritten `privacy.html`** (discloses account sign-in, leaderboards,
+  and the Club sha256(email) entitlement record).
+- **`PrivacyInfo.xcprivacy` FIXED** — was stale (`NSPrivacyCollectedDataTypes` empty, "no
+  account" comment) while the app now collects account data. Now declares Email / Name /
+  UserID / OtherData, all Linked + App-Functionality + non-tracking. **Owner must set the App
+  Store Connect App Privacy questionnaire to MATCH** (Apple cross-references manifest ↔ policy
+  ↔ nutrition labels ↔ traffic — G5.1.1/5.1.2). Same declaration is owed to Play Data Safety
+  + Microsoft privacy.
+- Bumped 1.6.51/91 → **1.6.52/92** (Android vc75) so the submitted binary carries all of this.
+- iOS `** BUILD SUCCEEDED **`; manifest `plutil -lint` OK.
+
 ## Log
 - **2026-07-21** — plan written; Phase 0a rules DEPLOYED+verified; Phase 0c Swift `EntitlementStore` reference built + 3-platform build-verified. Next: JS/Kotlin/C# `EntitlementStore` mirrors (sequential agents), then 0b Worker webhook + Phase 1 App Store Connect products.

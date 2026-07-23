@@ -303,7 +303,7 @@ export const Store = {
     return ex.fav;
   },
   resetAll() {
-    ['tidbits.records', 'tidbits.streak', 'tidbits.missed', 'tidbits.seen', 'tidbits.calibration', 'tidbits.answerTelemetry', 'tidbits.stories', 'tidbits.marathonRun', 'tidbits.marathonScores'].forEach((k) => localStorage.removeItem(k));
+    ['tidbits.records', 'tidbits.streak', 'tidbits.missed', 'tidbits.seen', 'tidbits.calibration', 'tidbits.answerTelemetry', 'tidbits.stories', 'tidbits.marathonRun', 'tidbits.marathonScores', 'tidbits.expeditionProgress', 'tidbits.expeditionCertificates'].forEach((k) => localStorage.removeItem(k));
     this._seen.clear();
   },
 };
@@ -625,5 +625,139 @@ export const KnowledgeAtlas = {
     }
     const sPct = Math.round(strongest.accuracy * 100), sName = catById(strongest.id).name;
     return `${sPct}% in ${sName}, ${wPct}% in ${wName} — Club maps everything you know and where it's drifting.`;
+  },
+};
+
+// Tidbits Club EXCLUSIVE — Expedition (docs/CLUB-FEATURES-BUILD.md "Feature 5").
+// A multi-week structured CAMPAIGN through one domain: an ordered list of
+// STAGES, each a normal category+difficulty-band round the EXISTING engine
+// already plays (routed into 'classic' via Expeditions.startStage) — NOT a
+// new game engine, same discipline as Weak-Spot/Marathon. The taxonomy
+// (CATEGORIES) is FLAT — no sub-domains like "1920s" or "South America" — so
+// stages within one campaign differentiate by DIFFICULTY BAND, the same
+// constraint Knowledge Atlas hit. Mirrors the Apple reference
+// (Core/Models/ExpeditionModels.swift + Core/Store/Expeditions.swift)
+// byte-for-byte in campaign content; several campaigns may be in progress at
+// once (unlike Marathon's at-most-one run), so persistence is a MAP keyed by
+// expeditionId, not a singleton.
+const EXPEDITION_PROGRESS_KEY = 'tidbits.expeditionProgress';
+const EXPEDITION_CERTS_KEY = 'tidbits.expeditionCertificates';
+
+export const Expeditions = {
+  // 3 hand-defined 7-stage campaigns (design spec: "start with 2–3"; the
+  // shape allows adding more later — append here, no other client change
+  // needed). categoryId is a real web CATEGORIES id.
+  all: [
+    {
+      id: 'twentieth-century', title: 'The 20th Century', symbol: '📜', domain: 'history',
+      subtitle: 'A hundred years, decade by decade — from the Great War to the dot-com boom.',
+      stages: [
+        { index: 0, title: 'Turn of the Century', blurb: 'Where it all began — the basics of a hundred years.', categoryId: 'history', difficultyRange: [1, 2], questionCount: 10, passBar: 6 },
+        { index: 1, title: 'The Great Wars', blurb: 'Two wars that reshaped the century.', categoryId: 'history', difficultyRange: [1, 3], questionCount: 10, passBar: 6 },
+        { index: 2, title: 'The Cold War Era', blurb: 'A world split in two.', categoryId: 'history', difficultyRange: [2, 3], questionCount: 10, passBar: 6 },
+        { index: 3, title: 'Movements & Milestones', blurb: 'Civil rights, independence, revolutions.', categoryId: 'history', difficultyRange: [2, 4], questionCount: 10, passBar: 6 },
+        { index: 4, title: 'Leaders & Turning Points', blurb: 'The decisions that moved history.', categoryId: 'history', difficultyRange: [3, 4], questionCount: 10, passBar: 6 },
+        { index: 5, title: 'The Wider Century', blurb: 'Everything else the timeline holds.', categoryId: 'history', difficultyRange: [3, 5], questionCount: 10, passBar: 6 },
+        { index: 6, title: "The Historian's Final Exam", blurb: "The century's hardest corners.", categoryId: 'history', difficultyRange: [4, 5], questionCount: 10, passBar: 6 },
+      ],
+    },
+    {
+      id: 'around-the-world', title: 'Around the World', symbol: '🌎', domain: 'geography',
+      subtitle: 'A geography trek from the basics of the map to its far corners.',
+      stages: [
+        { index: 0, title: 'The Basics of the Map', blurb: 'Continents, oceans, and the big picture.', categoryId: 'geography', difficultyRange: [1, 2], questionCount: 10, passBar: 6 },
+        { index: 1, title: 'Capitals & Borders', blurb: 'Where the lines are drawn.', categoryId: 'geography', difficultyRange: [1, 3], questionCount: 10, passBar: 6 },
+        { index: 2, title: 'Rivers, Ranges & Deserts', blurb: "The planet's physical geography.", categoryId: 'geography', difficultyRange: [2, 3], questionCount: 10, passBar: 6 },
+        { index: 3, title: 'Nations & Peoples', blurb: 'Who lives where, and why.', categoryId: 'geography', difficultyRange: [2, 4], questionCount: 10, passBar: 6 },
+        { index: 4, title: 'Cities of the World', blurb: "The places everyone's heard of.", categoryId: 'geography', difficultyRange: [3, 4], questionCount: 10, passBar: 6 },
+        { index: 5, title: 'The Far Corners', blurb: "The places most people haven't.", categoryId: 'geography', difficultyRange: [3, 5], questionCount: 10, passBar: 6 },
+        { index: 6, title: 'World-Class', blurb: "Geography's hardest questions.", categoryId: 'geography', difficultyRange: [4, 5], questionCount: 10, passBar: 6 },
+      ],
+    },
+    {
+      id: 'scientific-record', title: 'The Scientific Record', symbol: '⚛️', domain: 'science',
+      subtitle: 'From first principles to the frontier — the story of how we know what we know.',
+      stages: [
+        { index: 0, title: 'First Principles', blurb: 'The fundamentals everyone starts with.', categoryId: 'science', difficultyRange: [1, 2], questionCount: 10, passBar: 6 },
+        { index: 1, title: 'Matter & Energy', blurb: 'Physics and chemistry, from the ground up.', categoryId: 'science', difficultyRange: [1, 3], questionCount: 10, passBar: 6 },
+        { index: 2, title: 'Life Itself', blurb: "Biology's big ideas.", categoryId: 'science', difficultyRange: [2, 3], questionCount: 10, passBar: 6 },
+        { index: 3, title: 'The Great Discoveries', blurb: 'The breakthroughs that changed everything.', categoryId: 'science', difficultyRange: [2, 4], questionCount: 10, passBar: 6 },
+        { index: 4, title: 'The Scientists Behind It', blurb: 'The people who did the work.', categoryId: 'science', difficultyRange: [3, 4], questionCount: 10, passBar: 6 },
+        { index: 5, title: 'The Frontier', blurb: 'Where the science is still being written.', categoryId: 'science', difficultyRange: [3, 5], questionCount: 10, passBar: 6 },
+        { index: 6, title: 'The Comprehensive Exam', blurb: "Science's deepest cuts.", categoryId: 'science', difficultyRange: [4, 5], questionCount: 10, passBar: 6 },
+      ],
+    },
+  ],
+
+  named(id) { return this.all.find((e) => e.id === id) || null; },
+  stage(expedition, stageIndex) { return (expedition && expedition.stages.find((s) => s.index === stageIndex)) || null; },
+
+  /** Every campaign's progress, keyed by expeditionId — several may be in
+   * progress at once (unlike Marathon's at-most-one run). */
+  _progressAll() { return LS.get(EXPEDITION_PROGRESS_KEY, {}); },
+  progress(id) { return this._progressAll()[id] || null; },
+  available() { return this.all.map((expedition) => ({ expedition, progress: this.progress(expedition.id) })); },
+
+  /** The question set for one stage — a fresh, difficulty-banded pull from the
+   * bundled corpus each attempt (a stage is replayable on a miss, so there's
+   * no "seen" exclusion the way a normal round has). Never-empty: relaxes to
+   * the whole category pool if the difficulty band comes up thin. `pull`
+   * mirrors Corpus.pull's signature (categoryId, seenSet, limit) — the caller
+   * passes it in so Store stays framework-free of the corpus loader (same
+   * pattern as WeakSpotArena.build / Marathon.startNew). */
+  startStage(expeditionOrId, stageIndex, pull) {
+    const expedition = typeof expeditionOrId === 'string' ? this.named(expeditionOrId) : expeditionOrId;
+    const stage = this.stage(expedition, stageIndex);
+    if (!expedition || !stage || typeof pull !== 'function') return [];
+    const overfetch = Math.max(stage.questionCount * 8, 80);
+    const pool = pull(stage.categoryId, new Set(), overfetch) || [];
+    const [lo, hi] = stage.difficultyRange;
+    let banded = pool.filter((q) => (q.difficulty || 1) >= lo && (q.difficulty || 1) <= hi);
+    if (banded.length < stage.questionCount) banded = pool;
+    return banded.slice(0, stage.questionCount);
+  },
+
+  /** A stage just finished — pass advances (and unlocks the next stage); the
+   * LAST stage passing writes the permanent certificate and clears the
+   * in-progress row (mirrors Marathon's finish). Fail leaves progress exactly
+   * where it was — the player stays on the same stage, "try again." */
+  recordStageResult(expeditionId, stageIndex, correct, total) {
+    const expedition = this.named(expeditionId);
+    const stage = this.stage(expedition, stageIndex);
+    if (!expedition || !stage) return { passed: false, certificate: null };
+    const all = this._progressAll();
+    const p = all[expeditionId] || { currentStageIndex: 0, stageResults: [], startedAt: Date.now(), lastPlayedAt: Date.now() };
+    const passed = correct >= stage.passBar;
+    p.stageResults = p.stageResults.filter((r) => r.stage !== stageIndex);
+    p.stageResults.push({ stage: stageIndex, pass: passed, score: correct, total });
+    p.lastPlayedAt = Date.now();
+    if (passed) p.currentStageIndex = Math.max(p.currentStageIndex, stageIndex + 1);
+    if (!passed || stageIndex < expedition.stages.length - 1) {
+      all[expeditionId] = p;
+      LS.set(EXPEDITION_PROGRESS_KEY, all);
+      return { passed, certificate: null };
+    }
+    // Final stage passed — write the certificate, retire the progress row.
+    const totalScore = p.stageResults.reduce((s, r) => s + r.score, 0);
+    const certificate = { expeditionId, domain: expedition.domain, title: expedition.title, completedAt: Date.now(), totalScore, stagesCompleted: expedition.stages.length };
+    const certs = this.certificates();
+    certs.unshift(certificate);
+    LS.set(EXPEDITION_CERTS_KEY, certs);
+    delete all[expeditionId];
+    LS.set(EXPEDITION_PROGRESS_KEY, all);
+    return { passed: true, certificate };
+  },
+
+  /** Every completed Expedition, most recent first — the permanent history
+   * (the hub's Completed/certificates shelf). */
+  certificates() { return LS.get(EXPEDITION_CERTS_KEY, []); },
+
+  /** Expeditions are curated CONTENT, not player data (unlike Weak-Spot/Story
+   * Archive, which are built from ordinary free play) — so the non-member
+   * pitch is the same honest description everyone sees, never a nag
+   * (MONETIZATION §4a). Both the hub list and an expedition's map are a REAL
+   * preview reachable by everyone; only tapping Play on a stage is gated. */
+  previewLine() {
+    return 'Multi-week campaigns through a single subject — pick one, and go at your own pace.';
   },
 };

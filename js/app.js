@@ -2,7 +2,7 @@
 // Apple AppStore + GameEngine + views. Vanilla JS, no framework, no build.
 
 import { Corpus, Pictures, ThisOrThat, ClosestCall, Ordering, Matching, TypeAnswer, OddOneOut, Enumerate, Difficulty, matchesAccepted, Wikipedia, DailyBoard } from './api.js';
-import { Store, CATEGORIES, catColor, catById, MODES, NIGHT, STAKE_BUDGET, dayKey, APP_STORES, SITE_URL, CLUB, WeakSpotArena, StoryArchive, answerTextOf, Marathon, marathonAccuracy, KnowledgeAtlas } from './store.js';
+import { Store, CATEGORIES, catColor, catById, MODES, NIGHT, STAKE_BUDGET, dayKey, APP_STORES, SITE_URL, CLUB, WeakSpotArena, StoryArchive, answerTextOf, Marathon, marathonAccuracy, KnowledgeAtlas, Expeditions } from './store.js';
 import { Scoring } from './engine.js';
 import { BOTS, houseBot, botById, VsMatch } from './bots.js';
 import { FirebaseNet } from './firebase.js';
@@ -45,6 +45,10 @@ async function boot() {
   Identity.onChange(() => { Entitlement.refresh(); const t = location.hash; if (t.startsWith('#/profile') || t.startsWith('#/records')) render(); });
   try { await Corpus.load(); } catch (e) { /* live fallback still works */ }
   if (!location.hash) location.hash = '#/play';
+  // ?expedition=<id> — jump straight to a campaign's map (open convenience,
+  // mirrors Apple's TIDBITS_EXPEDITION_MAP verification hook).
+  const expeditionParam = new URLSearchParams(location.search).get('expedition');
+  if (expeditionParam && Expeditions.named(expeditionParam)) location.hash = `#/expeditions/${expeditionParam}`;
   if (location.hash.startsWith('#/daily')) {
     render();
     if (Store.dailyScore(dayKey()) == null) startGame('daily', catById('mixed'));
@@ -110,6 +114,17 @@ function render() {
     app.innerHTML = `${header(currentTab())}<main class="main">${viewAtlas()}</main>`;
     bindAtlas(); document.title = 'Tidbits Trivia — Knowledge Atlas'; return;
   }
+  // Tidbits Club EXCLUSIVE — Expedition (docs/CLUB-FEATURES-BUILD.md "Feature
+  // 5"): the hub (#/expeditions) + a per-campaign map (#/expeditions/<id>) are
+  // a REAL preview reachable by EVERYONE (the campaigns are curated content,
+  // not player data) — only tapping Play on a stage is Club-gated, never a
+  // blank wall.
+  if (location.hash.startsWith('#/expeditions')) {
+    const id = location.hash.split('/')[2] || null;
+    app.innerHTML = `${header(currentTab())}<main class="main">${id ? viewExpeditionMap(id) : viewExpeditions()}</main>`;
+    if (id) bindExpeditionMap(id); else bindExpeditions();
+    document.title = id ? 'Tidbits Trivia — Expedition' : 'Tidbits Trivia — Expeditions'; return;
+  }
   const tab = currentTab();
   app.innerHTML = `
     ${header(tab)}
@@ -136,6 +151,7 @@ const ICON = {
   book: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M2 2.9c0-.6.5-1 1.1-.9 1.7.3 3.3.9 4.9 1.8 1.6-.9 3.2-1.5 4.9-1.8.6-.1 1.1.3 1.1.9v8.7c0 .5-.4.9-.9 1-1.8.3-3.5.9-5.1 1.8h-.8c-1.6-.9-3.3-1.5-5.1-1.8-.5-.1-.9-.5-.9-1z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M8 3.8v9" stroke="currentColor" stroke-width="1.4"/></svg>',
   flag: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M3.2 1.4v13.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M3.2 2.1c1.8-1 3.6.9 5.4 0s3.6.9 3.6.9v5.6c-1.8.9-3.6-.9-5.4 0s-3.6-.9-3.6-.9z" fill="currentColor"/></svg>',
   map: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M1.5 3.1l4-1.5 5 1.5 4-1.5v11l-4 1.5-5-1.5-4 1.5z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M5.5 1.6v10.9M10.5 3.1v10.9" stroke="currentColor" stroke-width="1.3"/></svg>',
+  compass: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><circle cx="8" cy="8" r="6.3" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M10.4 5.6L8.9 8.9 5.6 10.4 7.1 7.1z" fill="currentColor"/></svg>',
 };
 
 // The portable Tidbits identity — the web twin of the iOS/Android profile screens.
@@ -280,6 +296,7 @@ function viewHome() {
       <div class="muted">Host or join a night of mixed rounds.</div></div><span class="chev">›</span></button>
     ${weakSpotCard()}
     ${marathonCard()}
+    ${expeditionCard()}
     <h2 class="section">More ways to play</h2>
     <div class="home-tiles">
       <button class="tile card mp" data-multiplayer><span class="tile-ico">${ICON.globe}</span><span class="tile-name">Online Multiplayer</span><span class="tile-sub">Play vs CPU now</span></button>
@@ -481,6 +498,175 @@ function startMarathonRound(startOver) {
     return;
   }
   startGame('marathon', catById('mixed'), { custom: remaining, marathonRun: run, marathonOffset: run.currentIndex });
+}
+
+// Tidbits Club EXCLUSIVE — Expedition (docs/CLUB-FEATURES-BUILD.md "Feature 5").
+// Home entry point. Unlike Weak-Spot/Marathon, the hub AND an expedition's map
+// are a REAL preview reachable by EVERYONE (the campaigns are curated CONTENT,
+// not player data, so there's nothing to hide behind a generic sell line) — so
+// this card always opens #/expeditions; only tapping Play on a stage is
+// Club-gated (see bindExpeditionMap).
+function expeditionCard() {
+  const club = Entitlement.isClub;
+  const active = Expeditions.all.find((e) => Expeditions.progress(e.id));
+  const activeProgress = active ? Expeditions.progress(active.id) : null;
+  const subtitle = active
+    ? `${active.title}: stage ${Math.min(activeProgress.currentStageIndex + 1, active.stages.length)} of ${active.stages.length} — tap to continue`
+    : Expeditions.previewLine();
+  const chip = club ? '' : '<span class="club-chip">CLUB</span>';
+  return `<a href="#/expeditions" class="banner card expedition-banner" style="text-decoration:none">
+    <div><div class="banner-title">${ICON.compass} EXPEDITIONS ${chip}</div>
+    <div class="muted">${h(subtitle)}</div></div><span class="chev">›</span></a>`;
+}
+
+// Tidbits Club EXCLUSIVE — Expedition (docs/CLUB-FEATURES-BUILD.md "Feature 5").
+// The hub: pick a campaign (progress-aware subtitle), plus a Completed shelf.
+// Reachable by everyone — no Club gate here (see the design spec's "map as a
+// real preview" rule); only Play (bindExpeditionMap) is gated.
+function viewExpeditions() {
+  const back = `<button data-back style="background:none;border:none;font-weight:800;color:var(--color-accent);cursor:pointer;padding:8px 0;font-size:1rem">‹ Back</button>`;
+  const certs = Expeditions.certificates();
+  return `${back}<h1 class="page-title">Expeditions</h1>
+    <p class="muted">Pick an expedition — a guided journey through a subject, one stage at a time, at your own pace.</p>
+    ${Expeditions.all.map(expeditionRowHTML).join('')}
+    ${certs.length ? expeditionCertificatesShelfHTML(certs) : ''}`;
+}
+
+function expeditionRowHTML(expedition) {
+  const p = Expeditions.progress(expedition.id);
+  const hasCert = Expeditions.certificates().some((c) => c.expeditionId === expedition.id);
+  const subtitle = p
+    ? `Stage ${Math.min(p.currentStageIndex + 1, expedition.stages.length)} of ${expedition.stages.length} — tap to continue`
+    : hasCert ? 'Completed — tap to play again' : expedition.subtitle;
+  const col = catColor(catById(expedition.domain));
+  return `<a href="#/expeditions/${expedition.id}" class="card pad expedition-row" style="display:flex;align-items:center;gap:12px;background:${col};color:#fff;margin-bottom:12px">
+    <span style="font-size:1.7em;line-height:1">${expedition.symbol}</span>
+    <span style="flex:1"><b style="text-transform:uppercase;letter-spacing:.02em">${h(expedition.title)}</b>
+      <div style="font-size:.85em;opacity:.92">${h(subtitle)}</div></span>
+    <span class="chev">›</span></a>`;
+}
+
+function expeditionCertificatesShelfHTML(certs) {
+  return `<h2 class="section">Completed</h2>
+    ${certs.map((c) => `<div class="card pad" style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+      <span style="font-size:1.4em">🏅</span>
+      <span style="flex:1"><b>${h(c.title)}</b>
+        <div class="muted" style="font-size:.85em">${c.stagesCompleted} stages · ${c.totalScore} correct · ${h(new Date(c.completedAt).toLocaleDateString())}</div></span>
+    </div>`).join('')}`;
+}
+
+function bindExpeditions() {
+  app.querySelector('[data-back]')?.addEventListener('click', () => { if (history.length > 1) history.back(); else location.hash = '#/play'; });
+}
+
+// An expedition's detail = the map/path of stages (locked/current/done
+// markers) — a REAL preview even for non-members (MONETIZATION §4a: never a
+// blank wall). Only tapping Play on the current stage is Club-gated.
+function viewExpeditionMap(id) {
+  const back = `<button data-back style="background:none;border:none;font-weight:800;color:var(--color-accent);cursor:pointer;padding:8px 0;font-size:1rem">‹ Back</button>`;
+  const expedition = Expeditions.named(id);
+  if (!expedition) return `${back}<div class="empty card pad"><p>Expedition not found.</p></div>`;
+  const club = Entitlement.isClub;
+  const p = Expeditions.progress(id);
+  const hasCert = Expeditions.certificates().some((c) => c.expeditionId === id);
+  const currentStageIndex = p ? Math.min(p.currentStageIndex, expedition.stages.length - 1) : 0;
+  const col = catColor(catById(expedition.domain));
+  const statusLine = (hasCert && !p)
+    ? '🏅 Completed — play again for another certificate'
+    : `${expedition.stages.length} stages · pick up where you left off, any time`;
+  const stageRows = expedition.stages.map((stage) => expeditionStageRowHTML(stage, currentStageIndex, col)).join('');
+  const paywallNote = club ? '' : `<div class="card pad" style="text-align:center;margin-top:14px">
+    <p class="muted">Join Tidbits Club to play this expedition. Everything above is a preview — no charge to look around.</p>
+    <a href="#/club" class="btn btn-primary" style="margin-top:10px;display:inline-block;text-decoration:none">Join Tidbits Club</a></div>`;
+  return `${back}<h1 class="page-title">${h(expedition.title)}</h1>
+    <p class="muted">${h(expedition.subtitle)}</p>
+    <p class="muted" style="font-weight:700">${h(statusLine)}</p>
+    ${stageRows}
+    ${paywallNote}`;
+}
+
+function expeditionStageRowHTML(stage, currentStageIndex, domainColor) {
+  const done = stage.index < currentStageIndex;
+  const isCurrent = stage.index === currentStageIndex;
+  const locked = !done && !isCurrent;
+  const markerBg = done ? 'var(--color-mint)' : isCurrent ? domainColor : 'var(--color-surface)';
+  const markerContent = done ? '✓' : locked ? '🔒' : String(stage.index + 1);
+  const playBtn = isCurrent ? `<button type="button" class="btn btn-primary" data-expedition-play="${stage.index}" style="margin-top:8px">Play</button>` : '';
+  return `<div class="card pad expedition-stage-row" style="opacity:${locked ? 0.55 : 1};margin-bottom:10px">
+    <span class="expedition-stage-marker" style="background:${markerBg}">${markerContent}</span>
+    <span style="flex:1">
+      <div class="body-strong">${h(stage.title)}</div>
+      <div class="muted" style="font-size:.85em">${h(stage.blurb)}</div>
+      ${playBtn}
+    </span>
+  </div>`;
+}
+
+function bindExpeditionMap(id) {
+  app.querySelector('[data-back]')?.addEventListener('click', () => { if (history.length > 1) history.back(); else location.hash = '#/expeditions'; });
+  app.querySelectorAll('[data-expedition-play]').forEach((b) => b.addEventListener('click', () => {
+    if (!Entitlement.isClub) { location.hash = '#/club'; return; }
+    startExpeditionStage(id, +b.dataset.expeditionPlay);
+  }));
+}
+
+// Route the stage's category + difficulty band into the EXISTING 'classic'
+// launch path — an Expedition is not a new game engine. A stage plays as a
+// normal round (it writes a normal GameRecord via Game._persist — see _end())
+// and is replayable on a miss (a fresh pull each attempt).
+function startExpeditionStage(id, stageIndex) {
+  const expedition = Expeditions.named(id);
+  const stage = expedition && Expeditions.stage(expedition, stageIndex);
+  if (!expedition || !stage) return;
+  const questions = Expeditions.startStage(expedition, stageIndex, (catId, excluding, limit) => Corpus.pull(catId, excluding, limit));
+  if (!questions.length) {
+    app.innerHTML = `<div class="center-screen"><h2>Couldn't load this stage</h2><p class="muted">Please try again.</p><button class="btn btn-primary" data-back>Back</button></div>`;
+    $('[data-back]').addEventListener('click', () => { location.hash = `#/expeditions/${id}`; });
+    return;
+  }
+  startGame('classic', catById(stage.categoryId), { custom: questions, label: stage.title, expeditionId: id, expeditionStageIndex: stageIndex });
+}
+
+// The post-stage beat: pass unlocks the next stage (or, on the last stage,
+// writes the certificate); fail leaves the player on the same stage, "Try
+// again." A stage is a normal round — game._persist() already wrote its
+// GameRecord — this screen adds the campaign-specific pass/fail interpretation.
+function renderExpeditionStageResult() {
+  const expedition = Expeditions.named(game._expeditionId);
+  const stage = Expeditions.stage(expedition, game._expeditionStageIndex);
+  const outcome = game._expeditionOutcome || { passed: false, certificate: null };
+  const s = game.summary();
+  const passed = outcome.passed;
+  const cert = outcome.certificate;
+  const nextStageNumber = Math.min(stage.index + 2, expedition.stages.length);
+  const headline = cert ? 'EXPEDITION COMPLETE' : passed ? `STAGE ${stage.index + 1} PASSED` : 'NOT QUITE';
+  const bodyLine = cert
+    ? `You completed ${expedition.title} — every stage, start to finish.`
+    : passed
+      ? `${stage.title} is done. Stage ${nextStageNumber} just unlocked.`
+      : `Needed ${stage.passBar} of ${stage.questionCount} to advance — you got ${s.correct}. Give it another go.`;
+  const certCard = cert ? `<div class="card pad" style="text-align:center;background:#FF5DA2;color:#fff;margin-bottom:16px">
+      <div class="muted" style="color:rgba(255,255,255,.85)">CERTIFICATE EARNED</div>
+      <div style="font-size:1.3em;font-weight:900">${h(cert.title)}</div>
+      <div class="muted" style="color:rgba(255,255,255,.85)">${cert.stagesCompleted} stages · ${cert.totalScore} correct total</div>
+    </div>` : '';
+  app.innerHTML = `
+    <div class="results">
+      <div class="card scorecard" style="--tint:${passed ? '#2FCB8A' : '#FF5C5C'}">
+        <div class="muted">${h(headline)}</div>
+        <div class="huge">${s.correct}/${s.total}</div>
+        <div class="muted">${h(bodyLine)}</div>
+      </div>
+      ${certCard}
+      <div class="stat-row">${statBox(s.correct + '/' + s.total, 'Correct', '#2D5BFF')}${statBox(stage.passBar, 'Pass bar', '#FF5DA2')}${statBox(`${Math.min(stage.index + (passed ? 2 : 1), expedition.stages.length)}/${expedition.stages.length}`, 'Stage', '#1A1714')}</div>
+      ${passed
+        ? `<button class="btn btn-primary btn-full" data-expedition-continue>${cert ? 'Done' : 'Continue'}</button>`
+        : `<button class="btn btn-primary btn-full" data-expedition-retry>Try Again</button>
+           <button class="btn btn-text btn-full" data-expedition-map>Back to map</button>`}
+    </div>`;
+  $('[data-expedition-continue]')?.addEventListener('click', () => { game = null; location.hash = `#/expeditions/${expedition.id}`; });
+  $('[data-expedition-map]')?.addEventListener('click', () => { game = null; location.hash = `#/expeditions/${expedition.id}`; });
+  $('[data-expedition-retry]')?.addEventListener('click', () => { game = null; startExpeditionStage(expedition.id, stage.index); });
 }
 
 // Tidbits Club EXCLUSIVE — Story Archive (docs/CLUB-FEATURES-BUILD.md "Feature 2").
@@ -1591,6 +1777,14 @@ class Game {
     this._marathonRun = opts.marathonRun || null;
     this._marathonOffset = opts.marathonOffset || 0;
     this._marathonScore = null;
+    // Expedition stage play only (Club feature 5): which campaign + stage this
+    // round belongs to (null for every other launch). It IS a normal round —
+    // _persist() still writes a GameRecord — but _end() ALSO records the
+    // campaign-specific pass/fail outcome, landing here for
+    // renderExpeditionStageResult.
+    this._expeditionId = opts.expeditionId ?? null;
+    this._expeditionStageIndex = opts.expeditionStageIndex ?? null;
+    this._expeditionOutcome = null;
     this._duelId = opts.duelId;   // L5: submit this game's score to the duel on finish
     // Trivia Night: the plan's rounds [[kind, count], …] + the per-round meta for banners.
     this._nightPlan = opts.nightPlan || (mode === 'barTrivia' ? { rounds: NIGHT.presets[1].rounds } : null);
@@ -1963,6 +2157,14 @@ class Game {
       this._marathonRun = null;
     } else {
       this._persist();
+      // Expedition (Club feature 5): a stage IS a normal round (the GameRecord
+      // was just written above) — this ADDS the campaign-specific pass/fail
+      // outcome (pass advances/unlocks; the last stage passing writes a
+      // permanent certificate).
+      if (this._expeditionId != null && this._expeditionStageIndex != null) {
+        const s = this.summary();
+        this._expeditionOutcome = Expeditions.recordStageResult(this._expeditionId, this._expeditionStageIndex, s.correct, s.total);
+      }
     }
     if (this._online) { this._online.reportProgress(this.score, true); this._online.renderStandings(); return; }
     renderResults();
@@ -2075,6 +2277,10 @@ function renderGame() {
   // Weak-Spot Arena's "why you're seeing this" — transparency by construction,
   // never an opaque model (docs/CLUB-FEATURES-BUILD.md "Feature 1").
   const weakReason = game.mode.id === 'weakSpot' && game._weakSpotReasons ? game._weakSpotReasons[q.id] : null;
+  // Expedition (Club feature 5): a small in-play indicator of which campaign +
+  // stage this round belongs to (mirrors the Weak-Spot reason caption).
+  const expeditionLine = (game._expeditionId != null)
+    ? `${Expeditions.named(game._expeditionId)?.title || ''} · Stage ${game._expeditionStageIndex + 1}` : null;
   if (game.versus && game.phase === 'reveal') game.versus.commit(q, game.index, game.mode.perQuestion ?? 30);
   if (game._online && game.phase === 'reveal') game._online.reportProgress(game.score, false);
   const reveal = game.phase === 'reveal' ? revealCard(q) + (game.versus ? versusRevealCard() : '') : '';
@@ -2100,6 +2306,7 @@ function renderGame() {
         ${pic}
         <div class="card qcard"><div class="qcat" style="color:${catColor(cat)}">${h(cat.name.toUpperCase())}</div><div class="qprompt">${h(q.prompt)}</div></div>
         ${weakReason ? `<div class="weakspot-reason">${h(weakReason)}</div>` : ''}
+        ${expeditionLine ? `<div class="expedition-instage">${h(expeditionLine)}</div>` : ''}
         ${sweepGr}
         ${stakeSel}
         ${closest}
@@ -2278,6 +2485,9 @@ function renderResults() {
   // Marathon reads the permanent MarathonScore just written (a run's true
   // total spans however many sessions it took to finish, not just this one).
   if (game.mode.id === 'marathon') { renderMarathonResults(game._marathonScore); return; }
+  // Expedition (Club feature 5): the campaign-specific pass/fail beat, not the
+  // generic results screen.
+  if (game._expeditionId != null) { renderExpeditionStageResult(); return; }
   const s = game.summary();
   const grid = s.answered.map((a) => (a.chosen === null ? '⚫️' : a.correct ? '🟢' : '🔴')).join('');
   if (game.versus) { renderVersusResults(s); return; }

@@ -136,7 +136,7 @@ Legend: ✅ done+verified · 🔨 in progress · ⏳ queued · 🚫 n/a (with re
 | 2 Story Archive | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 3 Marathon | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 4 Knowledge Atlas | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 5 Expedition | ⏳ | ✅ | ⏳ | ⏳ | ⏳ | ⏳ |
+| 5 Expedition | ✅ | ✅ | ⏳ | ⏳ | ⏳ | ⏳ |
 | — Friend Streaks (deferred: owner free/Club split, R-MON-4) | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 6 Link Wall | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 7 Expedition | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
@@ -1080,3 +1080,85 @@ says is the whole point.
   `EntitlementStoreTests.cs` and every sibling Club-feature test file) —
   flagged here rather than silently worked around. `windows-latest` CI to be
   gated post-push.
+- **2026-07-22** — **Expedition (Feature 5) shipped on web (mirror of the Apple
+  reference, dd9e3ff).** `js/store.js` gets `Expeditions`: the SAME 3
+  hand-defined 7-stage campaigns as Apple (The 20th Century/history, Around
+  the World/geography, The Scientific Record/science — each stage a
+  category+difficulty-band pair, `questionCount:10`/`passBar:6` throughout,
+  byte-aligned to `ExpeditionModels.swift`), `named`/`stage`/`available`/
+  `progress` reads, `startStage(expeditionOrId, stageIndex, pull)` (a fresh
+  difficulty-banded pull each attempt via a caller-supplied `pull` — same
+  framework-free-of-Corpus pattern as `WeakSpotArena.build`/`Marathon.startNew`
+  — relaxing to the whole category pool if the band comes up thin), and
+  `recordStageResult` (pass advances `currentStageIndex`; the LAST stage
+  passing writes a certificate to `tidbits.expeditionCertificates` and deletes
+  the progress row). Persistence mirrors Marathon's shape but as a MAP, not a
+  singleton (several campaigns may be in progress at once):
+  `tidbits.expeditionProgress` = `{expeditionId: {currentStageIndex,
+  stageResults:[{stage,pass,score,total}], startedAt, lastPlayedAt}}`;
+  `tidbits.expeditionCertificates` = `[{expeditionId, domain, title,
+  completedAt, totalScore, stagesCompleted}]` (both keys added to
+  `Store.resetAll`). A stage plays as a normal `'classic'` round via the
+  EXISTING launch path (`startExpeditionStage` → `startGame('classic',
+  catById(stage.categoryId), {custom, expeditionId, expeditionStageIndex})`)
+  — `Game._persist()` still writes its GameRecord (a stage IS a real round,
+  feeding Records/spaced-review/Story Archive/Knowledge Atlas honestly), and
+  `Game._end()` additionally calls `Expeditions.recordStageResult`, landing in
+  `game._expeditionOutcome` for a NEW `renderExpeditionStageResult()` screen
+  (pass → "Continue"/next-stage-unlocked or, on the final stage, a
+  certificate card + "Done"; fail → "Try Again" relaunches the SAME stage with
+  a fresh pull, never advances). A pink `EXPEDITIONS` Home card (`--color-pink:
+  #FF5DA2`, matching the Apple pink) always opens `#/expeditions` — UNLIKE
+  Weak-Spot/Marathon's card, this is never gated at the tap, because (per the
+  design spec) the hub list AND an expedition's map are curated CONTENT, not
+  player data, so both are a REAL preview reachable by everyone; only tapping
+  Play on the current stage is Club-gated (`bindExpeditionMap` routes
+  non-members to `#/club`). `#/expeditions` (hub: campaign list with
+  progress-aware subtitles, domain-colored cards, + a Completed certificates
+  shelf) and `#/expeditions/<id>` (map: locked/current/done stage markers,
+  Play on the current stage) are both canonical, shareable URLs (mirrors
+  `#/live/<code>`'s path-segment convention). `?expedition=<id>` is a new
+  open convenience (boot-time redirect to the map, mirrors Apple's
+  `TIDBITS_EXPEDITION_MAP` verification hook). Reused `?club=1`/
+  `tidbitsClubDebug` unchanged; no new debug hook needed. No version bump
+  (1.6.51 unchanged per instruction).
+
+  node --check clean on both files. Headless-verified via the claude-in-chrome
+  MCP browser (a local `python3 -m http.server` + real page loads/reloads +
+  `javascript_tool` DOM/localStorage inspection — no force-pass hook was
+  added; every pass/fail below is a GENUINE scored round). With `?club=1`:
+  opened `#/expeditions` (3 domain-colored campaign cards, correct
+  progress-aware subtitles) and a map (`#/expeditions/twentieth-century` —
+  stage 1 current, stages 2–7 locked with 🔒). Drove real stage plays by
+  cross-referencing each rendered question's prompt against a freshly-fetched
+  `assets/corpus.json` and clicking the matching option: answered stage 1
+  fully CORRECT → real 10/10 → "STAGE 1 PASSED" → `currentStageIndex`
+  advanced 0→1 in `localStorage.tidbits.expeditionProgress`, and a genuine
+  `location.reload()` (not just a hash change) re-rendered the map with
+  stage 1 ✓/stage 2 current, confirming persistence survives a real reload.
+  Also confirmed a normal `GameRecord` was written to `tidbits.records`
+  (`mode:"classic"`, `categoryID:"history"`, 10 real per-question answers) —
+  "a stage IS a real round." Then answered stage 2 fully WRONG → real 0/10 →
+  "NOT QUITE — Needed 6 of 10 to advance — you got 0" → `currentStageIndex`
+  stayed at 1 (did NOT advance) → "Try Again" relaunched stage 2 with a fresh
+  question set (confirmed via the in-play "The 20th Century · Stage 2"
+  caption + a different prompt). Confirmed the non-member path: the SAME
+  URL without `?club=1` still rendered the full map (real preview, stage
+  markers intact, no blank wall) plus the "Join Tidbits Club…" note, and
+  tapping Play routed to `#/club` without starting a round; the Home card
+  also always opened `#/expeditions` (never straight to the paywall) even
+  as a non-member, with a CLUB chip. Verified the FULL completion path for
+  real: seeded `tidbits.expeditionProgress` to stage 6 (the last stage) via
+  localStorage, then played and passed stage 7 with all-correct real
+  answers (7/10, still ≥ the 6 pass bar) — the result screen showed
+  "EXPEDITION COMPLETE" + a certificate card ("The 20th Century — 7 stages ·
+  55 correct total"), and `localStorage` confirmed
+  `tidbits.expeditionCertificates` gained the entry
+  (`{expeditionId:"twentieth-century", domain:"history",
+  stagesCompleted:7, totalScore:55, ...}`) while
+  `tidbits.expeditionProgress` lost the `twentieth-century` key in the same
+  write. Confirmed the post-completion hub/map both read this correctly
+  ("Completed — tap to play again", a "Completed" shelf with the
+  certificate, stage 1 offered fresh for a replay). No console errors on a
+  clean load. Screenshotted at 390×844 (mobile-first): the map, hub, and
+  Home card all render without horizontal overflow.

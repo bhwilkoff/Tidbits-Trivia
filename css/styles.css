@@ -15,6 +15,7 @@
   --color-mint: #2FCB8A;
   --color-grape: #8B5CF6;
   --color-teal: #13B6C9;
+  --color-pink: #FF5DA2;
   --radius: 18px;
   --bw: 3px;
   --shadow: 5px;
@@ -394,6 +395,16 @@ body {
 .traj { font-weight: 900; font-size: 11px; color: #fff; padding: 2px 7px; border-radius: 999px; border: 2px solid var(--color-border); }
 .traj.up { background: var(--color-mint); } .traj.down { background: var(--color-primary); }
 .atlas-decay-row .btn { padding: 10px 14px; font-size: 14px; }
+
+/* ---- Expedition (Tidbits Club EXCLUSIVE — docs/CLUB-FEATURES-BUILD.md "Feature 5") ---- */
+.banner.expedition-banner { background: var(--color-pink); color: #fff; }
+.banner.expedition-banner .muted { color: rgba(255,255,255,0.85); }
+.expedition-row { text-decoration: none; }
+.expedition-stage-row { display: flex; gap: 12px; align-items: flex-start; }
+.expedition-stage-marker { flex: none; width: 32px; height: 32px; border-radius: 50%; display: flex;
+  align-items: center; justify-content: center; font-weight: 900; font-size: 13px; color: #fff;
+  border: var(--bw) solid var(--color-border); }
+.expedition-instage { font-weight: 700; font-size: 13px; color: var(--color-pink); margin: -10px 0 14px; }
 .fav-star { font-size: 18px; line-height: 1; color: var(--color-ink-soft); cursor: pointer; }
 .fav-star.on { color: var(--color-yellow); }
 .daily-list { display: flex; flex-direction: column; gap: 6px; max-height: 46vh; overflow-y: auto; }

@@ -3,6 +3,8 @@ package com.learningischange.tidbitstrivia.ui
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -74,6 +76,14 @@ private fun planTag(p: Billing.ClubProduct): String? = when (p) {
     Billing.ClubProduct.MONTHLY -> null
 }
 
+// Google Play Subscriptions policy (like App Store 3.1.2) requires the billing period be
+// shown next to the price before purchase. Play's formattedPrice is the raw amount only.
+private fun periodSuffix(p: Billing.ClubProduct): String = when (p) {
+    Billing.ClubProduct.ANNUAL -> "/yr"
+    Billing.ClubProduct.MONTHLY -> "/mo"
+    Billing.ClubProduct.LIFETIME -> ""   // one-time, does not renew
+}
+
 private tailrec fun Context.findActivity(): Activity? = when (this) {
     is Activity -> this
     is ContextWrapper -> baseContext.findActivity()
@@ -128,8 +138,11 @@ fun ClubPaywallScreen(onBack: () -> Unit) {
                     message = if (Entitlement.isClub) null else "No purchase found to restore."
                 }
             }) { Text("Restore Purchases", color = Pops.blue) }
-            Text("Bought Tidbits Club on the web? Sign in with the same email — it's already yours.",
+            // R-MON-2 — an existing membership unlocks by SIGNING IN, never a code field.
+            // Worded neutrally (no external-purchase steering).
+            Text("Already have Tidbits Club? Sign in with the same account and it unlocks here.",
                 fontSize = 12.sp, color = soft, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+            LegalFooter(context, soft)
         }
 
         // A purchase resolves isClub -> clear any pending spinner once it lands.
@@ -137,6 +150,30 @@ fun ClubPaywallScreen(onBack: () -> Unit) {
 
         message?.let { Text(it, fontSize = 12.sp, color = soft, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) }
         Spacer(Modifier.height(12.dp))
+    }
+}
+
+// Google Play Subscriptions policy: disclose auto-renew terms + link Terms/Privacy next to
+// the purchase controls. Mirrors the Apple/web paywall legal footer.
+@Composable
+private fun LegalFooter(context: Context, soft: Color) {
+    fun open(url: String) = context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text("Monthly and Yearly are auto-renewing subscriptions at the prices shown above. " +
+            "Payment is charged to your Google Play account at confirmation. Each renews " +
+            "automatically unless you cancel at least 24 hours before the period ends; manage " +
+            "or cancel anytime in the Play Store under Subscriptions. Founding Member is a " +
+            "one-time purchase for lifetime access — it does not renew.",
+            fontSize = 11.sp, color = soft, textAlign = TextAlign.Center)
+        Row(horizontalArrangement = Arrangement.spacedBy(18.dp)) {
+            TextButton(onClick = { open("https://tidbitstrivia.com/terms.html") }) {
+                Text("Terms of Use", color = Pops.blue, fontSize = 12.sp)
+            }
+            TextButton(onClick = { open("https://tidbitstrivia.com/privacy.html") }) {
+                Text("Privacy Policy", color = Pops.blue, fontSize = 12.sp)
+            }
+        }
     }
 }
 
@@ -214,7 +251,7 @@ private fun Plans(activity: Activity?, busyProductId: String?, onBuy: (String) -
                         if (busyProductId == plan.product.id) {
                             CircularProgressIndicator(Modifier.height(20.dp).width(20.dp), color = Color.White)
                         } else {
-                            Text(plan.formattedPrice, fontWeight = FontWeight.Black, fontSize = 18.sp, color = Color.White)
+                            Text(plan.formattedPrice + periodSuffix(plan.product), fontWeight = FontWeight.Black, fontSize = 18.sp, color = Color.White)
                         }
                     }
                 }

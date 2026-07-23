@@ -79,6 +79,23 @@ enum DebugHooks {
         ProcessInfo.processInfo.environment["TIDBITS_EXPEDITION"] == "1"
     }
 
+    /// TIDBITS_LINKWALL=1 opens the Club Link Wall (Feature 6, Stage 2) on
+    /// launch — same screenshot/simulator observability idiom as the flags
+    /// above. Combine with TIDBITS_CLUB=1 (Link Wall is Club-gated).
+    static var openLinkWall: Bool {
+        ProcessInfo.processInfo.environment["TIDBITS_LINKWALL"] == "1"
+    }
+
+    /// TIDBITS_LINKWALL_AUTOPLAY="win"|"lose" drives the Link Wall board to
+    /// completion by submitting real guesses programmatically — this dev box
+    /// has no GUI Simulator window to tap a 4x4 grid through (same reasoning
+    /// as TIDBITS_AUTOPILOT/TIDBITS_EXPEDITION_AUTOPLAY). "win" submits each
+    /// group correctly in order; "lose" submits 4 deliberately-mixed (3-of-a-
+    /// group + 1 outsider) guesses to exhaust mistakes and trigger the reveal.
+    static var linkWallAutoplay: String? {
+        ProcessInfo.processInfo.environment["TIDBITS_LINKWALL_AUTOPLAY"]
+    }
+
     /// TIDBITS_EXPEDITION_FORCE_PASS=1 → a played Expedition stage always
     /// records as a full pass regardless of the actual score. Verification-only
     /// (so a stage/campaign can be advanced and a certificate written quickly

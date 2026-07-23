@@ -34,6 +34,12 @@ struct HomeView: View {
     // Expeditions (Club — docs/CLUB-FEATURES-BUILD.md "Feature 5").
     @Query private var expeditionProgress: [ExpeditionProgress]
     @State private var showExpeditions = false
+    // Link Wall (Club — docs/CLUB-FEATURES-BUILD.md "Feature 6", STAGED —
+    // iOS-reference-first). Sorted desc + filtered by day rather than a
+    // predicate-init'd @Query, so HomeView's existing memberwise init stays
+    // untouched (rows accumulate, one per day, never deleted).
+    @Query(sort: \LinkWallResult.date, order: .reverse) private var linkWallResults: [LinkWallResult]
+    @State private var showLinkWall = false
 
     private var showOnboarding: Binding<Bool> {
         Binding(get: { !hasOnboarded || DebugHooks.forceOnboarding },
@@ -52,6 +58,7 @@ struct HomeView: View {
                     if DailyLog.playedToday { showDailyArchive = true }
                     else { start(LaunchRequest(mode: .daily, category: .named("mixed")), remember: false) }
                 }
+                LinkWallCard(isClub: entitlement.isClub, todayResult: linkWallToday, previewLabel: linkWallPreviewLabel) { openLinkWall() }
                 TriviaNightCard { showNightSheet = true }
                 WeakSpotCard(isClub: entitlement.isClub, previewLine: weakSpotPreviewLine) { openWeakSpot() }
                 MarathonCard(isClub: entitlement.isClub, run: marathonRuns.first, subtitle: marathonSubtitle) { openMarathon() }
@@ -130,6 +137,9 @@ struct HomeView: View {
         .sheet(isPresented: $showClubPaywall) { ClubPaywallView() }
         .sheet(isPresented: $showMarathonHistory) { MarathonHistoryView() }
         .sheet(isPresented: $showExpeditions) { ExpeditionsView() }
+        .fullScreenCover(isPresented: $showLinkWall) {
+            LinkWallView(day: QuestionProvider.dayKey()) { showLinkWall = false }
+        }
         .confirmationDialog("Marathon in progress", isPresented: $showMarathonChoice, titleVisibility: .visible) {
             Button("Resume") { start(LaunchRequest(mode: .marathon, category: .named("mixed")), remember: false) }
             Button("Start Over", role: .destructive) {
@@ -167,6 +177,7 @@ struct HomeView: View {
             if DebugHooks.openExpedition || DebugHooks.expeditionMapPreview != nil || DebugHooks.expeditionAutoplay != nil {
                 showExpeditions = true
             }
+            if DebugHooks.openLinkWall { openLinkWall() }
         }
         .onChange(of: gameCenter.pendingChallengeMode) { _, m in
             if m != nil, let mode = gameCenter.consumePendingChallenge() {
@@ -205,6 +216,25 @@ struct HomeView: View {
         } else {
             showClubPaywall = true
         }
+    }
+
+    /// Today's Link Wall row, if any — `nil` for a not-yet-played day, present
+    /// (possibly `completed`) once a guess has been submitted.
+    private var linkWallToday: LinkWallResult? {
+        linkWallResults.first { $0.day == QuestionProvider.dayKey() }
+    }
+
+    /// A real preview for non-members — today's easiest (yellow) group's
+    /// label, straight off the actual generator (MONETIZATION §4a: "a real
+    /// preview, never a nag"). Never reveals the group's members/why.
+    private var linkWallPreviewLabel: String? {
+        LinkWall.puzzle(for: QuestionProvider.dayKey())?.groups.first?.label
+    }
+
+    /// Club members launch (or resume) today's board directly; everyone else
+    /// sees the existing paywall — never a blank wall.
+    private func openLinkWall() {
+        if entitlement.isClub { showLinkWall = true } else { showClubPaywall = true }
     }
 
     /// Members with a run in progress get the Resume/Start Over choice; with
@@ -865,6 +895,67 @@ private struct ExpeditionsCard: View {
             }
             .padding(18)
             .chunkyCard(fill: Tidbits.Palette.pink)
+        }
+        .buttonStyle(.plain)
+        .padding(.trailing, Tidbits.Metric.shadowOffset)
+    }
+}
+
+// MARK: - Link Wall card (Club — docs/CLUB-FEATURES-BUILD.md "Feature 6", STAGED)
+
+private struct LinkWallCard: View {
+    let isClub: Bool
+    /// Non-nil once a guess has been submitted today — `completed` flips the
+    /// subtitle to the outcome; the card never re-offers a finished day.
+    let todayResult: LinkWallResult?
+    /// Non-members see today's easiest group's real label instead of a nag.
+    let previewLabel: String?
+    let action: () -> Void
+
+    private var subtitle: String {
+        if isClub {
+            if let r = todayResult {
+                if r.completed { return r.won ? "Solved today's wall — see the recap." : "See today's groups." }
+                return "In progress — tap to keep going."
+            }
+            return "4 groups of 4. One guess at a time, 4 mistakes allowed."
+        }
+        if let previewLabel { return "Today's board includes \"\(previewLabel)\" — find all four groups." }
+        return "A second daily: 16 facts, 4 hidden groups. Find them all."
+    }
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 14) {
+                Image(systemName: "square.grid.3x3.fill")
+                    .font(.system(size: 30, weight: .black))
+                    .foregroundStyle(Tidbits.Palette.mint.legibleForeground)
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 6) {
+                        Text("LINK WALL")
+                            .font(Tidbits.TypeRamp.l2)
+                            .foregroundStyle(Tidbits.Palette.mint.legibleForeground)
+                        if !isClub {
+                            Text("CLUB")
+                                .font(.system(size: 11, weight: .black, design: .rounded))
+                                .foregroundStyle(Tidbits.Palette.mint)
+                                .padding(.horizontal, 7).padding(.vertical, 3)
+                                .background(Capsule().fill(Color.white.opacity(0.92)))
+                        }
+                    }
+                    Text(subtitle)
+                        .font(Tidbits.TypeRamp.l5)
+                        .foregroundStyle(Tidbits.Palette.mint.legibleForeground.opacity(0.85))
+                        .multilineTextAlignment(.leading)
+                        .lineLimit(2)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right.circle.fill")
+                    .font(.system(size: 26, weight: .bold))
+                    .foregroundStyle(Tidbits.Palette.mint.legibleForeground)
+            }
+            .padding(18)
+            .chunkyCard(fill: Tidbits.Palette.mint)
         }
         .buttonStyle(.plain)
         .padding(.trailing, Tidbits.Metric.shadowOffset)

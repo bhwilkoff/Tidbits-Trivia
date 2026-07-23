@@ -21,6 +21,7 @@ struct ClubPaywallView: View {
         ("map.fill",           "Knowledge Atlas", "A map of what you actually know, by domain, over time."),
         ("books.vertical.fill","Story Archive",   "Every fact you've learned, kept forever and searchable."),
         ("figure.run",         "Expeditions",     "Multi-week campaigns that turn a session game into a pursuit."),
+        ("square.grid.3x3.fill","Link Wall",      "A second daily — 16 facts, 4 hidden groups, one shareable puzzle."),
     ]
 
     var body: some View {

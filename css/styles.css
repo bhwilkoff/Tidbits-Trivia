@@ -451,3 +451,57 @@ body {
 .pill svg { vertical-align: -2px; }
 .link-btn { background: none; border: none; color: var(--color-accent); font: inherit; font-weight: 700; cursor: pointer; padding: 4px 0; }
 #cust-modes, #cust-cats { flex-wrap: wrap; overflow: visible; }
+
+/* ---- Link Wall (Tidbits Club EXCLUSIVE — docs/CLUB-FEATURES-BUILD.md "Feature 6") ---- */
+.banner.linkwall-banner { background: var(--color-accent); color: #fff; }
+.banner.linkwall-banner .muted { color: rgba(255,255,255,0.85); }
+.dot.on { background: var(--color-ink); }
+.dot:not(.on) { background: var(--color-bg-deep); }
+.linkwall-mistakes { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.lw-mistakes-label { font-weight: 800; font-size: 12px; color: var(--color-ink-soft); letter-spacing: 0.5px; }
+.linkwall-mistakes .dots { gap: 6px; }
+.linkwall-mistakes .dot { width: 12px; height: 12px; }
+
+/* Mobile-first 4x4 grid: at 375px (16px page padding, 8px gaps) each tile is
+   ~80px wide — small type + wrapping handles the longest match.json members
+   ("The Life and Opinions of Tristram Shandy, Gentleman"). */
+.linkwall-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+.linkwall-tile { font: inherit; font-weight: 800; font-size: 11px; line-height: 1.15; text-align: center;
+  cursor: pointer; min-height: 72px; display: flex; align-items: center; justify-content: center;
+  padding: 6px 4px; overflow-wrap: break-word; word-break: break-word; hyphens: auto;
+  border-radius: 12px; background: var(--color-surface); color: var(--color-ink);
+  border: 2.5px solid var(--color-border); }
+.linkwall-tile.sel { background: var(--color-ink); color: #fff; }
+@media (min-width: 480px) { .linkwall-tile { font-size: 13px; min-height: 78px; } }
+
+@keyframes lw-shake {
+  10%, 90% { transform: translateX(-1px); }
+  20%, 80% { transform: translateX(2px); }
+  30%, 50%, 70% { transform: translateX(-4px); }
+  40%, 60% { transform: translateX(4px); }
+}
+.linkwall-grid.shake { animation: lw-shake 0.4s; }
+
+.linkwall-oneaway { display: inline-block; font-weight: 800; font-size: 13px; padding: 8px 14px;
+  border-radius: 999px; background: var(--color-yellow); color: var(--color-ink);
+  border: 2.5px solid var(--color-border); margin-bottom: 10px; }
+.linkwall-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.linkwall-actions .btn { flex: 1; min-width: 100px; }
+.linkwall-actions [data-lw-submit] { flex: 1.4; }
+
+.linkwall-group-row { padding: 12px 14px; border-radius: 14px; margin-bottom: 8px;
+  border: 2.5px solid var(--color-border); }
+.linkwall-group-label { font-weight: 900; font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase; }
+.linkwall-group-members, .linkwall-group-why { font-weight: 700; font-size: 13px; margin-top: 2px; }
+
+/* Difficulty palette (1 yellow easiest ... 4 purple hardest — the Connections
+   convention); 3/4 are dark enough to need white text for contrast. */
+.lw-diff-1 { background: var(--color-yellow); color: var(--color-ink); }
+.lw-diff-2 { background: var(--color-mint); color: var(--color-ink); }
+.lw-diff-3 { background: var(--color-accent); color: #fff; }
+.lw-diff-4 { background: var(--color-grape); color: #fff; }
+
+.linkwall-result-icon svg { width: 40px; height: 40px; }
+.linkwall-share-grid { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.linkwall-share-row { display: flex; gap: 4px; }
+.linkwall-sq { width: 22px; height: 22px; border-radius: 4px; display: inline-block; }

@@ -2,7 +2,7 @@
 // TriviaCategory / GameMode / RecordsStore. Records + streak live in
 // localStorage (the per-ecosystem sync island; sign-in sync is later).
 
-import { fnv1a64 } from './engine.js';
+import { fnv1a64, pickDaily, stableSeed, seededRng, shuffle } from './engine.js';
 
 export const SITE_URL = 'https://tidbitstrivia.com';
 
@@ -303,7 +303,7 @@ export const Store = {
     return ex.fav;
   },
   resetAll() {
-    ['tidbits.records', 'tidbits.streak', 'tidbits.missed', 'tidbits.seen', 'tidbits.calibration', 'tidbits.answerTelemetry', 'tidbits.stories', 'tidbits.marathonRun', 'tidbits.marathonScores', 'tidbits.expeditionProgress', 'tidbits.expeditionCertificates'].forEach((k) => localStorage.removeItem(k));
+    ['tidbits.records', 'tidbits.streak', 'tidbits.missed', 'tidbits.seen', 'tidbits.calibration', 'tidbits.answerTelemetry', 'tidbits.stories', 'tidbits.marathonRun', 'tidbits.marathonScores', 'tidbits.expeditionProgress', 'tidbits.expeditionCertificates', 'tidbits.linkwall'].forEach((k) => localStorage.removeItem(k));
     this._seen.clear();
   },
 };
@@ -759,5 +759,412 @@ export const Expeditions = {
    * preview reachable by everyone; only tapping Play on a stage is gated. */
   previewLine() {
     return 'Multi-week campaigns through a single subject — pick one, and go at your own pace.';
+  },
+};
+
+// Tidbits Club EXCLUSIVE — Link Wall (docs/CLUB-FEATURES-BUILD.md "Feature 6"). A
+// NYT-Connections-style SECOND daily: 16 tiles hide 4 themed groups of 4. This is a
+// faithful JS port of Core/Store/LinkWall.swift's Stage 1.5/1.6 content-clean
+// generator — same deterministic day->theme->block ranking (the `pickDaily`
+// rank-and-slice this file's Daily/Marathon already use), same allowlist/denylist
+// purity filters over match.json's capital/currency/author/director/composer pools
+// (built for the Matching mode, where an impure decoy doesn't matter — Link Wall's
+// labeled-group promise exposes them), same near-duplicate collision guard, same
+// singleton-theme downweighting. Do NOT edit match.json for this — it serves
+// Matching correctly as-is; all purification lives here, mirroring the Swift file.
+const LW_CAPITAL_PROMPT = 'Match each country to its capital.';
+const LW_CURRENCY_PROMPT = 'Match each country to its currency.';
+const LW_AUTHOR_PROMPT = 'Match each book to its author.';
+const LW_DIRECTOR_PROMPT = 'Match each film to its director.';
+const LW_COMPOSER_PROMPT = 'Match each work to its composer.';
+
+// Modern UN-member sovereign states (plus Vatican City and the State of Palestine,
+// both UN observer states) — exact name strings as they appear as match.json keys.
+// Deliberately excludes historical/dynastic polities, colonial empires, US states,
+// UK home-nation subdivisions, and disputed/self-declared territories (Northern
+// Cyprus, Republic of Artsakh, Somaliland, Gilgit-Baltistan, West Bank, Gaza
+// Strip) — verbatim port of LinkWall.swift's `sovereignCountries` (Stage 1.5 fix).
+const LW_SOVEREIGN_COUNTRIES = new Set([
+  'Afghanistan', 'Albania', 'Algeria', 'Angola', 'Armenia', 'Australia',
+  'Azerbaijan', 'Bahrain', 'Bangladesh', 'Barbados', 'Belarus', 'Belize',
+  'Benin', 'Bhutan', 'Bolivia', 'Bosnia and Herzegovina', 'Botswana',
+  'Brunei', 'Bulgaria', 'Burkina Faso', 'Burundi', 'Cambodia', 'Cameroon',
+  'Canada', 'Cape Verde', 'Central African Republic', 'Chad', 'Chile',
+  'China', 'Colombia', 'Comoros', 'Costa Rica', 'Croatia', 'Cuba',
+  'Democratic Republic of the Congo', 'Denmark', 'Djibouti', 'Dominica',
+  'Ecuador', 'El Salvador', 'Equatorial Guinea', 'Eritrea', 'Eswatini',
+  'Ethiopia', 'Fiji', 'France', 'Gabon', 'Georgia (country)', 'Germany',
+  'Ghana', 'Grenada', 'Guatemala', 'Guinea-Bissau', 'Guyana', 'Haiti',
+  'Honduras', 'Hungary', 'Iceland', 'India', 'Iraq', 'Israel',
+  'Ivory Coast', 'Jamaica', 'Japan', 'Jordan', 'Kazakhstan', 'Kenya',
+  'Kingdom of the Netherlands', 'Kiribati', 'Kuwait', 'Kyrgyzstan',
+  'Laos', 'Latvia', 'Lesotho', 'Liberia', 'Libya', 'Liechtenstein',
+  'Lithuania', 'Madagascar', 'Malawi', 'Maldives', 'Mali',
+  'Marshall Islands', 'Mauritania', 'Mauritius', 'Mexico', 'Moldova',
+  'Mongolia', 'Montenegro', 'Mozambique', 'Myanmar', 'Namibia', 'Nauru',
+  'Nepal', 'New Zealand', 'Nicaragua', 'Niger', 'Nigeria',
+  'North Macedonia', 'Oman', 'Palau', 'Palestine', 'Panama',
+  'Papua New Guinea', 'Paraguay', 'Peru', 'Philippines', 'Qatar',
+  'Republic of Ireland', 'Republic of the Congo', 'Romania', 'Russia',
+  'Rwanda', 'Saint Kitts and Nevis', 'Saint Lucia', 'Samoa',
+  'San Marino', 'São Tomé and Príncipe', 'Senegal', 'Serbia',
+  'Seychelles', 'Sierra Leone', 'Slovakia', 'Slovenia',
+  'Solomon Islands', 'Somalia', 'South Sudan', 'Sudan', 'Suriname',
+  'Sweden', 'Syria', 'Tajikistan', 'Tanzania', 'The Bahamas',
+  'The Gambia', 'Thailand', 'Timor-Leste', 'Togo', 'Tonga',
+  'Trinidad and Tobago', 'Tunisia', 'Turkey', 'Turkmenistan', 'Tuvalu',
+  'Uganda', 'Ukraine', 'United Arab Emirates', 'United Kingdom',
+  'United States', 'Uruguay', 'Uzbekistan', 'Vanuatu', 'Vatican City',
+  'Venezuela', 'Vietnam', 'Yemen', 'Zambia', 'Zimbabwe',
+]);
+
+// `composer` pool entries that are real classical/operatic compositions (an
+// ALLOWLIST, not a denylist — the pool is dominated by film/TV/video-game scores
+// and pop/rock/folk/anthem songs, so listing the ~40 genuine classical works is
+// far shorter and more robust). Verbatim port of LinkWall.swift's `classicalWorks`.
+const LW_CLASSICAL_WORKS = new Set([
+  'Fantasia on a Theme by Thomas Tallis', 'String Quintet (Schubert)',
+  'Magnificat (Bach)', 'Grosse Fuge', 'Symphony No. 3 (Górecki)',
+  'Symphony No. 9 (Bruckner)', 'Piano Sonata No. 2 (Chopin)',
+  'Pierrot lunaire', 'Nixon in China', 'Violin Concerto (Mendelssohn)',
+  'Requiem (Fauré)', 'Symphony No. 5 (Shostakovich)',
+  'Symphony No. 8 (Mahler)', 'Die Meistersinger von Nürnberg',
+  'Enigma Variations', 'Suite bergamasque', "L'Orfeo",
+  'The Pirates of Penzance', 'Scheherazade (Rimsky-Korsakov)',
+  'Symphony No. 7 (Shostakovich)', 'Der Rosenkavalier',
+  'Orpheus in the Underworld', 'The Tales of Hoffmann',
+  'Goldberg Variations', 'Adagio for Strings',
+  'Toccata and Fugue in D minor, BWV 565', 'Il trovatore',
+  'The Firebird', 'The Blue Danube', 'Das Rheingold', 'Porgy and Bess',
+  '4′33″', 'Parsifal', 'Symphony No. 9 (Dvořák)', 'The Planets',
+  'Pictures at an Exhibition', 'Nabucco', 'Rigoletto', 'Boléro',
+  'Carmina Burana (Orff)', 'Tosca', 'Aida', 'Turandot',
+]);
+
+// `author` pool entries that are real (`prompt`-cited) but are NOT books: canonical
+// scripture, founding/legal/institutional documents, hymns/anthems/oaths, and
+// outright wrong-medium/nonsense entries. Verbatim port of `nonBookTitles`.
+const LW_NON_BOOK_TITLES = new Set([
+  'Kesh temple hymn', "Cædmon's Hymn", 'Book of Genesis',
+  'Epistle to the Romans', 'Book of Sirach', 'Gospel of Mark',
+  'Gospel of Luke', 'Gospel of John', 'Gospel of Matthew',
+  'Acts of the Apostles', 'Book of Mormon', 'Book of Revelation',
+  'Torah', 'Old Testament', 'New Testament', 'Rigveda',
+  'Bhagavata Purana',
+  'Universal Declaration of Human Rights', 'The Federalist Papers',
+  'Constitution of the United States', 'Constitution of India',
+  'Amazing Grace', 'Deutschlandlied', 'Hippocratic Oath',
+  'A Mighty Fortress Is Our God',
+  'Deus Ex (video game)', 'Elite (video game)', 'Portal (video game)',
+  'Fate/Stay Night', 'LazyTown', "My Sister's Keeper (film)",
+  'The Walking Dead: Daryl Dixon', 'Fear the Walking Dead',
+  'The Marvelous Mrs. Maisel', 'Band of Brothers (miniseries)',
+  'The Batman (film)', 'The Truman Show', 'Final Destination (film)',
+  "Leila's Brothers", 'Semaglutide', 'Mein Kampf',
+]);
+
+// `director` pool entries that are NOT films: TV series, miniseries, game shows,
+// and video games. Verbatim port of `nonFilmTitles` + the disambiguator-suffix
+// pattern (`isRealFilm`).
+const LW_NON_FILM_TITLES = new Set([
+  'Top of the Pops', 'South Pacific (musical)', 'Angels in America',
+  'GoldenEye 007', 'Last of the Summer Wine', 'Wolfenstein 3D',
+  'The Jeffersons', 'The Honeymooners', 'Fawlty Towers',
+  'The Price Is Right', 'I Love Lucy',
+  'Castlevania: Symphony of the Night', "Blue's Clues", 'American Idiot',
+  'Family Feud', 'My Love from the Star', 'Super Mario 64',
+  "Gilligan's Island", 'Jeopardy!', 'BioShock', 'Days of Our Lives',
+  'The Fresh Prince of Bel-Air', 'Miami Vice', 'American Idol',
+  'Final Fantasy VII', 'Carnival Row', 'The Good Bad Mother',
+  'Castaway Diva', 'Fauda', 'Mr. Queen',
+  'Gayniggers from Outer Space', 'All of Us Are Dead', 'Kuruluş: Osman',
+  'Doctor Cha', '81st Golden Globes', 'The Orville',
+  'Extraordinary Attorney Woo', 'Star Trek: Discovery',
+  'My Life with the Walter Boys', 'Ginny & Georgia',
+]);
+
+function lwIsRealClassical(title) { return LW_CLASSICAL_WORKS.has(title); }
+function lwIsRealBook(title) { return !LW_NON_BOOK_TITLES.has(title); }
+function lwIsRealFilm(title) {
+  if (LW_NON_FILM_TITLES.has(title)) return false;
+  const lower = title.toLowerCase();
+  return !(lower.includes('video game') || lower.includes('tv series') || lower.includes('miniseries') || lower.includes('(musical)'));
+}
+
+// Verbatim port of `themeTable` — keyed by the exact match.json prompt string; picks
+// a display label, which side of the match becomes the tiles, and a hand-set
+// difficulty (1 easiest/yellow ... 4 hardest/purple, the Connections convention).
+const LW_THEME_TABLE = {
+  [LW_CAPITAL_PROMPT]: { label: 'World Capitals', difficulty: 3, useKeys: false },
+  [LW_CURRENCY_PROMPT]: { label: 'World Currencies', difficulty: 3, useKeys: false },
+  'Match each element to its symbol.': { label: 'Chemical Element Symbols', difficulty: 4, useKeys: false },
+  [LW_AUTHOR_PROMPT]: { label: 'Books & Their Authors', difficulty: 2, useKeys: true },
+  [LW_COMPOSER_PROMPT]: { label: 'Composers & Their Works', difficulty: 3, useKeys: true },
+  [LW_DIRECTOR_PROMPT]: { label: 'Iconic Films', difficulty: 1, useKeys: true },
+
+  'Match each Summer Olympic Games to the city that hosted it.': { label: 'Olympic Host Cities', difficulty: 2, useKeys: false },
+  'Match each tennis Grand Slam tournament to the city or country where it is held.': { label: 'Grand Slam Tennis Tournaments', difficulty: 2, useKeys: true },
+  'Match each racing driver or event to its motorsport.': { label: 'Motorsports', difficulty: 2, useKeys: false },
+  'Match each NBA legend to the team he is most associated with.': { label: 'NBA Legends', difficulty: 1, useKeys: true },
+  'Match each NFL quarterback to the team he won a Super Bowl with.': { label: 'Super Bowl-Winning Quarterbacks', difficulty: 2, useKeys: true },
+  'Match each soccer club to the city where it plays.': { label: 'European Soccer Clubs', difficulty: 2, useKeys: true },
+  'Match each footballer to their national team.': { label: 'World-Class Footballers', difficulty: 1, useKeys: true },
+  'Match each athlete to their sport.': { label: 'Legendary Athletes', difficulty: 1, useKeys: true },
+  'Match each Olympic sprinter to the country they represented.': { label: 'Olympic Sprinters', difficulty: 2, useKeys: true },
+  'Match each football stadium to the club that calls it home.': { label: 'Famous Football Stadiums', difficulty: 3, useKeys: true },
+  'Match each MLB player to the team he is most associated with.': { label: 'MLB Legends', difficulty: 2, useKeys: true },
+
+  'Match each U.S. President to the war fought during his time in office.': { label: 'U.S. Presidents & Their Wars', difficulty: 2, useKeys: true },
+  'Match each revolution or independence movement to its country.': { label: 'Revolutions & Independence Movements', difficulty: 2, useKeys: true },
+  'Match each invention or achievement to the person credited with it.': { label: 'Landmark Inventions', difficulty: 2, useKeys: true },
+  'Match each historical figure to the country they led.': { label: 'Historical Leaders', difficulty: 2, useKeys: true },
+  'Match each explorer to the region they are famous for exploring or reaching.': { label: 'Famous Explorers', difficulty: 2, useKeys: true },
+  'Match each famous battle to the war it was part of.': { label: 'Famous Battles', difficulty: 3, useKeys: true },
+  'Match each major event to the year it occurred.': { label: 'Major Historical Events', difficulty: 3, useKeys: true },
+  'Match each U.S. President to the number of his presidency.': { label: 'U.S. Presidents by Number', difficulty: 2, useKeys: true },
+  'Match each historic document to the country that produced it.': { label: 'Historic Documents', difficulty: 2, useKeys: true },
+  'Match each ancient wonder or landmark to the civilization that built it.': { label: 'Ancient Wonders & Landmarks', difficulty: 2, useKeys: true },
+  'Match each treaty or agreement to what it accomplished.': { label: 'Treaties & Agreements', difficulty: 3, useKeys: true },
+};
+
+// Splitmix64 raw draw (mirrors Swift's `SeededRNG.next()` bit-for-bit: state =
+// seed+phi at init, then state += phi before the first hash) seeded from the exact
+// same `fnv1a64` used by DailyPick/Marathon — only used for the "drop one of 5 keys
+// down to 4" trim, where LinkWall.swift calls `rng.next() % UInt64(count)` once.
+function lwSplitmix64Draw(seedStr) {
+  const PHI = 0x9e3779b97f4a7c15n;
+  let state = BigInt.asUintN(64, fnv1a64(seedStr) + PHI);
+  state = BigInt.asUintN(64, state + PHI);
+  let z = state;
+  z = BigInt.asUintN(64, (z ^ (z >> 30n)) * 0xbf58476d1ce4e5b9n);
+  z = BigInt.asUintN(64, (z ^ (z >> 27n)) * 0x94d049bb133111ebn);
+  z = z ^ (z >> 31n);
+  return z;
+}
+
+// Exact match, OR one string is a substring/prefix of the other after lowercasing
+// (short strings — under 6 characters both sides — require an exact match only).
+// Verbatim port of `isNearDuplicate` — catches "Declaration of Independence" vs
+// "Declaration of Independence signed" (same referent, two tiles).
+function lwIsNearDuplicate(a, b) {
+  const x = a.toLowerCase();
+  const y = b.toLowerCase();
+  if (Math.min(x.length, y.length) < 6) return x === y;
+  return x.includes(y) || y.includes(x);
+}
+
+// The full candidate pool built from the web's match.json rows (same source the
+// Matching mode already loads — `Matching.questions` from api.js — passed in by the
+// caller so Store stays framework-free of the corpus loader, same pattern as
+// WeakSpotArena.build(pull) / Marathon.startNew(allIds)). Verbatim port of
+// LinkWall.swift's `candidates()`, including the Stage 1.5 pool-and-recombine for
+// capital/composer and the purity filters for currency/author/director.
+function lwCandidates(matchQuestions) {
+  const all = (matchQuestions || []).slice().sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  const out = [];
+  const sovereignCapitalPairs = [];
+  const classicalWorkPairs = [];
+
+  for (const q of all) {
+    const m = q.matching;
+    if (!m || !Array.isArray(m.keys) || !Array.isArray(m.values) || m.keys.length !== m.values.length || m.keys.length < 4) continue;
+    const theme = LW_THEME_TABLE[q.prompt];
+    if (!theme) continue;
+
+    let keys = m.keys.slice();
+    let values = m.values.slice();
+    if (keys.length > 4) {
+      // Deterministically drop one pair down to exactly 4 (sports/history blocks
+      // carry 5) — the remaining 4 pairs are still individually correct.
+      const z = lwSplitmix64Draw(`linkwall:trim:${q.id}`);
+      const dropIndex = Number(z % BigInt(keys.length));
+      keys.splice(dropIndex, 1);
+      values.splice(dropIndex, 1);
+    }
+
+    // World Capitals: pool every clean (country, capital) pair across ALL blocks
+    // instead — no single block yields 4 modern sovereign capitals.
+    if (q.prompt === LW_CAPITAL_PROMPT) {
+      for (let i = 0; i < keys.length; i++) {
+        if (LW_SOVEREIGN_COUNTRIES.has(keys[i])) sovereignCapitalPairs.push({ country: keys[i], capital: values[i] });
+      }
+      continue;
+    }
+    // Composers & Their Works: same pool-and-re-chunk treatment.
+    if (q.prompt === LW_COMPOSER_PROMPT) {
+      for (let i = 0; i < keys.length; i++) {
+        if (lwIsRealClassical(keys[i])) classicalWorkPairs.push({ work: keys[i], composer: values[i] });
+      }
+      continue;
+    }
+
+    const members = theme.useKeys ? keys : values;
+    const deduped = new Set(members.map((s) => s.toLowerCase()));
+    if (members.length !== 4 || deduped.size !== 4) continue;
+
+    if (q.prompt === LW_CURRENCY_PROMPT) {
+      // Every key must be a modern sovereign country (also catches the
+      // "bimetallism" policy-not-currency entry via its paired key "Ming dynasty"),
+      // plus an explicit second guard on that exact value.
+      if (!keys.every((k) => LW_SOVEREIGN_COUNTRIES.has(k))) continue;
+      if (values.some((v) => v.toLowerCase() === 'bimetallism')) continue;
+    }
+    if (q.prompt === LW_AUTHOR_PROMPT) {
+      if (!members.every(lwIsRealBook)) continue;
+    }
+    if (q.prompt === LW_DIRECTOR_PROMPT) {
+      if (!members.every(lwIsRealFilm)) continue;
+    }
+
+    const why = keys.map((k, i) => `${k} → ${values[i]}`).join(' · ');
+    out.push({ id: q.id, theme, members, why });
+  }
+
+  // Re-chunk the clean capital pairs into synthetic 4-member blocks. Sorted order
+  // keeps the chunking itself deterministic; the day-keyed block ranking decides
+  // WHICH chunk (and whether the theme appears at all) shows on a given day.
+  const capitalTheme = LW_THEME_TABLE[LW_CAPITAL_PROMPT];
+  const orderedCapitals = sovereignCapitalPairs.slice().sort((a, b) => (a.country < b.country ? -1 : a.country > b.country ? 1 : 0));
+  const usableCapitals = orderedCapitals.length - (orderedCapitals.length % 4);
+  for (let start = 0, chunkIndex = 0; start < usableCapitals; start += 4, chunkIndex++) {
+    const chunk = orderedCapitals.slice(start, start + 4);
+    const why = chunk.map((c) => `${c.country} → ${c.capital}`).join(' · ');
+    out.push({ id: `match:capital:clean:${chunkIndex}`, theme: capitalTheme, members: chunk.map((c) => c.capital), why });
+  }
+
+  const composerTheme = LW_THEME_TABLE[LW_COMPOSER_PROMPT];
+  const orderedComposers = classicalWorkPairs.slice().sort((a, b) => (a.work < b.work ? -1 : a.work > b.work ? 1 : 0));
+  const usableComposers = orderedComposers.length - (orderedComposers.length % 4);
+  for (let start = 0, chunkIndex = 0; start < usableComposers; start += 4, chunkIndex++) {
+    const chunk = orderedComposers.slice(start, start + 4);
+    const why = chunk.map((c) => `${c.work} → ${c.composer}`).join(' · ');
+    out.push({ id: `match:composer:clean:${chunkIndex}`, theme: composerTheme, members: chunk.map((c) => c.work), why });
+  }
+
+  return out;
+}
+
+// Ranks the day's themes, DOWNWEIGHTING (not excluding) themes with a thin
+// candidate pool (<3 blocks — the sports/history prompts, each backed by exactly
+// ONE match.json block) so they surface less often relative to the six many-block
+// themes. Verbatim port of `rankedThemes` (k=10 chosen by Apple's simulation).
+function lwRankedThemes(byTheme, day) {
+  const UINT64_MAX = (1n << 64n) - 1n;
+  const weighted = [];
+  for (const label of Object.keys(byTheme)) {
+    const base = fnv1a64(`daily:${day}:linkwall-theme:${label}`);
+    const normalized = Number(base) / Number(UINT64_MAX);
+    const isThin = (byTheme[label] || []).length < 3;
+    const k = isThin ? 10 : 1;
+    const adjusted = 1 - Math.pow(1 - normalized, k);
+    weighted.push({ label, key: adjusted });
+  }
+  weighted.sort((a, b) => (a.key !== b.key ? a.key - b.key : (a.label < b.label ? -1 : a.label > b.label ? 1 : 0)));
+  return weighted.map((w) => w.label);
+}
+
+export const LinkWall = {
+  /** The deterministic Link Wall for a given calendar day — same day => same
+   * puzzle for everyone (mirrors LinkWall.swift's `puzzle(for:)`). `matchQuestions`
+   * is `Matching.questions` (already `await Matching.load()`ed by the caller — same
+   * injected-corpus pattern as Marathon.startNew/WeakSpotArena.build). `null` only
+   * if the bundled corpus can't fill 4 non-colliding groups. */
+  puzzle(day, matchQuestions) {
+    const pool = lwCandidates(matchQuestions);
+    if (!pool.length) return null;
+
+    const byTheme = {};
+    for (const c of pool) (byTheme[c.theme.label] ||= []).push(c);
+
+    const themeRank = lwRankedThemes(byTheme, day);
+    const usedMembers = [];
+    const groups = [];
+
+    for (const themeLabel of themeRank) {
+      if (groups.length >= 4) break;
+      const blocks = byTheme[themeLabel];
+      if (!blocks) continue;
+      const blockRank = pickDaily(blocks.map((b) => b.id), day, `linkwall-block:${themeLabel}`, blocks.length);
+      const byID = new Map(blocks.map((b) => [b.id, b]));
+      for (const id of blockRank) {
+        const candidate = byID.get(id);
+        if (!candidate) continue;
+        const collides = candidate.members.some((nm) => usedMembers.some((um) => lwIsNearDuplicate(nm, um)));
+        if (collides) continue;
+        usedMembers.push(...candidate.members);
+        groups.push({ label: candidate.theme.label, why: candidate.why, members: candidate.members, difficulty: candidate.theme.difficulty });
+        break;   // one block per theme per day
+      }
+    }
+
+    if (groups.length !== 4) return null;
+    groups.sort((a, b) => (a.difficulty !== b.difficulty ? a.difficulty - b.difficulty : (a.label < b.label ? -1 : a.label > b.label ? 1 : 0)));
+
+    const rnd = seededRng(stableSeed(`linkwall:tiles:${day}`));
+    const tiles = shuffle(groups.flatMap((g) => g.members), rnd);
+    return { day, groups, tiles };
+  },
+
+  /** Link Wall is curated-by-generator CONTENT, not player data (unlike Weak-Spot/
+   * Story Archive) — so, like Marathon, the non-member pitch is an honest, concrete
+   * illustration rather than a computed sample (MONETIZATION §4a: "a real preview,
+   * never a nag"). */
+  previewLine() {
+    return "16 tiles hide 4 groups of 4 — solve things like World Capitals or Iconic Films before 4 mistakes. A brand-new wall every day.";
+  },
+};
+
+// Persisted outcome of one day's Link Wall — localStorage mirror of the Swift
+// `LinkWallResult`/`LinkWallLog` (SwiftData there; a day is unique there too). One
+// row per day keyed by `day`; reopening a completed OR in-progress day resumes this
+// row, never a fresh board. Contract (shared shape for the Android/Windows ports):
+//   tidbits.linkwall = { [day]: {
+//     mistakes: number,
+//     completed: boolean,
+//     won: boolean,
+//     date: number (ms epoch, first-created),
+//     guessHistory: number[][],  // one row per guess, IN ORDER, each of the 4
+//                                // tapped tiles' TRUE group difficulty (1..4) at
+//                                // guess time — exactly what the share grid renders
+//     solvedLabels: string[],   // solved group labels, in SOLVE order
+//   } }
+const LINKWALL_KEY = 'tidbits.linkwall';
+
+export const LinkWallLog = {
+  _all() { return LS.get(LINKWALL_KEY, {}); },
+
+  /** Today's (or any day's) persisted result, or null if never started. */
+  result(day) { return this._all()[day] || null; },
+
+  /** Fetch a day's row, or insert a fresh one — never a second row for the same
+   * day (mirrors `LinkWallLog.resultOrCreate`). */
+  resultOrCreate(day) {
+    const all = this._all();
+    if (all[day]) return all[day];
+    const fresh = { mistakes: 0, completed: false, won: false, date: Date.now(), guessHistory: [], solvedLabels: [] };
+    all[day] = fresh;
+    LS.set(LINKWALL_KEY, all);
+    return fresh;
+  },
+
+  save(day, result) {
+    const all = this._all();
+    all[day] = result;
+    LS.set(LINKWALL_KEY, all);
+    return result;
+  },
+
+  /** Appends one guess row, correct or not — called immediately on every submit so
+   * a reload/crash never loses progress (same discipline as Marathon.record). */
+  recordGuess(day, difficulties) {
+    const r = this.result(day) || this.resultOrCreate(day);
+    r.guessHistory = [...r.guessHistory, difficulties];
+    return this.save(day, r);
+  },
+
+  recordSolvedGroup(day, label) {
+    const r = this.result(day) || this.resultOrCreate(day);
+    if (!r.solvedLabels.includes(label)) r.solvedLabels = [...r.solvedLabels, label];
+    return this.save(day, r);
   },
 };

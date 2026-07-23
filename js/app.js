@@ -2,7 +2,7 @@
 // Apple AppStore + GameEngine + views. Vanilla JS, no framework, no build.
 
 import { Corpus, Pictures, ThisOrThat, ClosestCall, Ordering, Matching, TypeAnswer, OddOneOut, Enumerate, Difficulty, matchesAccepted, Wikipedia, DailyBoard } from './api.js';
-import { Store, CATEGORIES, catColor, catById, MODES, NIGHT, STAKE_BUDGET, dayKey, APP_STORES, SITE_URL, CLUB, WeakSpotArena, StoryArchive, answerTextOf, Marathon, marathonAccuracy, KnowledgeAtlas, Expeditions } from './store.js';
+import { Store, CATEGORIES, catColor, catById, MODES, NIGHT, STAKE_BUDGET, dayKey, APP_STORES, SITE_URL, CLUB, WeakSpotArena, StoryArchive, answerTextOf, Marathon, marathonAccuracy, KnowledgeAtlas, Expeditions, LinkWall, LinkWallLog } from './store.js';
 import { Scoring } from './engine.js';
 import { BOTS, houseBot, botById, VsMatch } from './bots.js';
 import { FirebaseNet } from './firebase.js';
@@ -49,6 +49,8 @@ async function boot() {
   // mirrors Apple's TIDBITS_EXPEDITION_MAP verification hook).
   const expeditionParam = new URLSearchParams(location.search).get('expedition');
   if (expeditionParam && Expeditions.named(expeditionParam)) location.hash = `#/expeditions/${expeditionParam}`;
+  // ?linkwall=1 — open convenience (mirrors ?expedition=<id>), Feature 6.
+  if (new URLSearchParams(location.search).get('linkwall') === '1') location.hash = '#/linkwall';
   if (location.hash.startsWith('#/daily')) {
     render();
     if (Store.dailyScore(dayKey()) == null) startGame('daily', catById('mixed'));
@@ -114,6 +116,17 @@ function render() {
     app.innerHTML = `${header(currentTab())}<main class="main">${viewAtlas()}</main>`;
     bindAtlas(); document.title = 'Tidbits Trivia — Knowledge Atlas'; return;
   }
+  // Tidbits Club EXCLUSIVE — Link Wall (docs/CLUB-FEATURES-BUILD.md "Feature 6"): a
+  // NYT-Connections-style SECOND daily. Canonical at #/linkwall. Building today's
+  // puzzle needs match.json loaded (async, like Matching mode), so this route
+  // renders a loading state first, mirroring #/dailyboard's async render.
+  if (location.hash.startsWith('#/linkwall')) {
+    document.title = 'Tidbits Trivia — Link Wall';
+    game = null;
+    app.innerHTML = `${header(currentTab())}<main class="main">${linkWallLoadingHTML()}</main>`;
+    loadLinkWallRoute();
+    return;
+  }
   // Tidbits Club EXCLUSIVE — Expedition (docs/CLUB-FEATURES-BUILD.md "Feature
   // 5"): the hub (#/expeditions) + a per-campaign map (#/expeditions/<id>) are
   // a REAL preview reachable by EVERYONE (the campaigns are curated content,
@@ -152,6 +165,8 @@ const ICON = {
   flag: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M3.2 1.4v13.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M3.2 2.1c1.8-1 3.6.9 5.4 0s3.6.9 3.6.9v5.6c-1.8.9-3.6-.9-5.4 0s-3.6-.9-3.6-.9z" fill="currentColor"/></svg>',
   map: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M1.5 3.1l4-1.5 5 1.5 4-1.5v11l-4 1.5-5-1.5-4 1.5z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M5.5 1.6v10.9M10.5 3.1v10.9" stroke="currentColor" stroke-width="1.3"/></svg>',
   compass: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><circle cx="8" cy="8" r="6.3" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M10.4 5.6L8.9 8.9 5.6 10.4 7.1 7.1z" fill="currentColor"/></svg>',
+  grid: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1.5" y="1.5" width="5.5" height="5.5" rx="1"/><rect x="9" y="1.5" width="5.5" height="5.5" rx="1"/><rect x="1.5" y="9" width="5.5" height="5.5" rx="1"/><rect x="9" y="9" width="5.5" height="5.5" rx="1"/></g></svg>',
+  xmark: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>',
 };
 
 // The portable Tidbits identity — the web twin of the iOS/Android profile screens.
@@ -292,6 +307,7 @@ function viewHome() {
       <button class="btn btn-quiet" data-customize>${ICON.sliders}<span>Customize</span></button>
     </div>
     ${dailyBanner()}
+    ${linkWallCard()}
     <button class="banner card night-banner-cta" data-night-open><div><div class="banner-title">TRIVIA NIGHT</div>
       <div class="muted">Host or join a night of mixed rounds.</div></div><span class="chev">›</span></button>
     ${weakSpotCard()}
@@ -404,6 +420,36 @@ function dailyBanner() {
   return `<button class="banner card daily" data-daily><div><div class="banner-title">${ICON.check} DAILY TIDBIT</div>
     <div class="muted">Done for today — you scored ${score}.${flame ? ` ${flame} kept alive.` : ''} New set tomorrow.</div>
     <div class="muted"><u data-daily-board>See how the world did</u> · <u>Play previous days</u></div></div><span class="chev">›</span></button>`;
+}
+
+// Tidbits Club EXCLUSIVE — Link Wall (docs/CLUB-FEATURES-BUILD.md "Feature 6"): a
+// NYT-Connections-style SECOND daily, right by the free Daily card above — clearly
+// a second, distinct habit, never a replacement for it. Doesn't need match.json
+// loaded just to render the card (only completion state, which is local); the
+// puzzle itself is built lazily when #/linkwall actually opens. Non-members see a
+// real, concrete (if generic) preview + a CLUB chip — tapping routes to the
+// existing #/club paywall, never a blank wall (mirrors weakSpotCard/marathonCard).
+function linkWallCard() {
+  const club = Entitlement.isClub;
+  let subtitle;
+  if (club) {
+    const result = LinkWallLog.result(dayKey());
+    if (result && result.completed) {
+      subtitle = result.won
+        ? `Solved in ${result.guessHistory.length} guess${result.guessHistory.length === 1 ? '' : 'es'} — new wall tomorrow.`
+        : "Didn't solve it today — new wall tomorrow.";
+    } else if (result && result.guessHistory.length) {
+      subtitle = 'In progress — tap to keep going.';
+    } else {
+      subtitle = "16 tiles, 4 hidden groups — today's second daily.";
+    }
+  } else {
+    subtitle = LinkWall.previewLine();
+  }
+  const chip = club ? '' : '<span class="club-chip">CLUB</span>';
+  return `<button class="banner card linkwall-banner" data-linkwall>
+    <div><div class="banner-title">${ICON.grid} LINK WALL ${chip}</div>
+    <div class="muted">${h(subtitle)}</div></div><span class="chev">›</span></button>`;
 }
 
 // Tidbits Club EXCLUSIVE — Weak-Spot Arena (docs/CLUB-FEATURES-BUILD.md "Feature 1").
@@ -1136,6 +1182,10 @@ function bindHome() {
   }));
   $('[data-weakspot]').addEventListener('click', openWeakSpot);
   $('[data-marathon]').addEventListener('click', openMarathon);
+  $('[data-linkwall]').addEventListener('click', () => {
+    if (!Entitlement.isClub) { location.hash = '#/club'; return; }
+    location.hash = '#/linkwall';
+  });
   const marathonDlg = $('#marathon-dlg');
   $('[data-marathon-cancel]').addEventListener('click', () => marathonDlg.close());
   $('[data-marathon-resume]').addEventListener('click', () => { marathonDlg.close(); startMarathonRound(false); });
@@ -2574,6 +2624,233 @@ async function submitDailyBoardResult(s) {
     // A finished game still owns render(); clear it so the board route can take over.
     card.querySelector('[data-db-board]').addEventListener('click', () => { game = null; renderDailyBoard(); });
   }
+}
+
+// ---------------- Link Wall (Tidbits Club EXCLUSIVE — docs/CLUB-FEATURES-BUILD.md
+// "Feature 6") ----------------
+// A NYT-Connections-style SECOND daily: 16 tiles hide 4 themed groups of 4. Unlike
+// the game engine's MCQ modes, Link Wall never routes through startGame/GameEngine
+// — it owns its own tiny play loop here (mirrors the iOS LinkWallView, which for
+// the same reason never routes through GameContainerView/GameEngine either). `lw`
+// is the one in-memory session (mirrors the module-level `game` variable).
+let lw = null;   // { day, puzzle, result, remaining, selected, solved, oneAway, shaking }
+let lwOneAwayToken = 0;
+let lwShakeToken = 0;
+
+function linkWallLoadingHTML() {
+  return `${linkWallBackHTML()}<h1 class="page-title">Link Wall</h1>
+    <div class="center-screen"><div class="spinner"></div></div>`;
+}
+function linkWallBackHTML() {
+  return `<button data-back style="background:none;border:none;font-weight:800;color:var(--color-accent);cursor:pointer;padding:8px 0;font-size:1rem">‹ Back</button>`;
+}
+
+// Entry point for the #/linkwall route — async because building today's board
+// needs match.json loaded (same lazy load the Matching mode already does).
+async function loadLinkWallRoute() {
+  if (!Entitlement.isClub) { linkWallReplaceMain(linkWallPaywallHTML()); bindLinkWallBackOnly(); return; }
+  try { await Matching.load(); } catch { /* handled by the empty-pool check below */ }
+  const day = dayKey();
+  const puzzle = LinkWall.puzzle(day, Matching.questions);
+  if (!puzzle) { linkWallReplaceMain(linkWallUnavailableHTML()); bindLinkWallBackOnly(); return; }
+  lw = initLinkWallState(day, puzzle);
+  renderLinkWallBoard();
+}
+
+function linkWallReplaceMain(html) {
+  const main = $('.main');
+  if (main) main.innerHTML = html;
+}
+function bindLinkWallBackOnly() {
+  app.querySelector('[data-back]')?.addEventListener('click', () => { location.hash = '#/play'; });
+}
+
+// Non-member paywall (rule 6: never a blank wall) — a real, concrete illustration
+// (Marathon-style; Link Wall has no free-tier player data to sample from either).
+function linkWallPaywallHTML() {
+  return `${linkWallBackHTML()}<h1 class="page-title">Link Wall</h1>
+    <div class="card pad" style="margin-bottom:14px"><p class="body-strong">${h(LinkWall.previewLine())}</p></div>
+    <div class="card pad" style="text-align:center">
+      <p class="body-strong">16 tiles. 4 hidden groups. 4 mistakes allowed.</p>
+      <p class="muted">A second daily, NYT-Connections style — find all four groups before you run out of guesses.</p>
+      <a href="#/club" class="btn btn-primary" style="margin-top:12px;display:inline-block;text-decoration:none">Join Tidbits Club</a>
+    </div>`;
+}
+function linkWallUnavailableHTML() {
+  return `${linkWallBackHTML()}<h1 class="page-title">Link Wall</h1>
+    <div class="empty card pad"><p>Couldn't build today's board from the corpus. Try again tomorrow.</p></div>`;
+}
+
+// Every tile's true group — the answer key behind "one away", collapse-on-correct,
+// and the share grid's colors (mirrors LinkWallView.tileGroup).
+function lwTileGroupMap(puzzle) {
+  const map = {};
+  puzzle.groups.forEach((g) => g.members.forEach((m) => { map[m] = g; }));
+  return map;
+}
+
+// Resumes a mid-progress OR completed day from the persisted row rather than
+// always starting a fresh board (mirrors LinkWallView.loadIfNeeded).
+function initLinkWallState(day, puzzle) {
+  const result = LinkWallLog.resultOrCreate(day);
+  const byLabel = {};
+  puzzle.groups.forEach((g) => { byLabel[g.label] = g; });
+  const solved = (result.solvedLabels || []).map((l) => byLabel[l]).filter(Boolean);
+  const solvedMembers = new Set(solved.flatMap((g) => g.members));
+  const remaining = puzzle.tiles.filter((t) => !solvedMembers.has(t));
+  return { day, puzzle, result, remaining, selected: [], solved, oneAway: null, shaking: false };
+}
+
+function renderLinkWallBoard() {
+  if (!lw) return;
+  linkWallReplaceMain(lw.result.completed ? linkWallResultHTML() : linkWallBoardHTML());
+  bindLinkWallInteractions();
+}
+
+function linkWallBoardHTML() {
+  const mistakesDots = Array.from({ length: 4 }, (_, i) =>
+    `<span class="dot${i < (4 - lw.result.mistakes) ? ' on' : ''}"></span>`).join('');
+  const solvedRows = lw.solved.map(linkWallGroupRowHTML).join('');
+  const tilesHTML = lw.remaining.map((t) => `<button type="button" class="linkwall-tile${lw.selected.includes(t) ? ' sel' : ''}" data-lw-tile="${h(t)}">${h(t)}</button>`).join('');
+  const oneAway = lw.oneAway ? `<div class="linkwall-oneaway">${h(lw.oneAway)}</div>` : '';
+  return `${linkWallBackHTML()}<h1 class="page-title">Link Wall</h1>
+    <p class="muted">Find the four groups of four.</p>
+    <div class="linkwall-mistakes"><span class="lw-mistakes-label">MISTAKES</span><span class="dots">${mistakesDots}</span></div>
+    ${solvedRows}
+    <div class="linkwall-grid${lw.shaking ? ' shake' : ''}">${tilesHTML}</div>
+    ${oneAway}
+    <div class="linkwall-actions">
+      <button type="button" class="btn btn-quiet" data-lw-deselect ${lw.selected.length ? '' : 'disabled'}>Deselect All</button>
+      <button type="button" class="btn btn-quiet" data-lw-shuffle>Shuffle</button>
+      <button type="button" class="btn btn-primary" data-lw-submit ${lw.selected.length === 4 ? '' : 'disabled'}>Submit</button>
+    </div>`;
+}
+
+function linkWallGroupRowHTML(g) {
+  return `<div class="linkwall-group-row lw-diff-${g.difficulty}">
+    <div class="linkwall-group-label">${h(g.label)}</div>
+    <div class="linkwall-group-members">${g.members.map(h).join(' · ')}</div>
+  </div>`;
+}
+
+function bindLinkWallInteractions() {
+  app.querySelector('[data-back]')?.addEventListener('click', () => { location.hash = '#/play'; });
+  if (!lw || lw.result.completed) { bindLinkWallResultInteractions(); return; }
+  app.querySelectorAll('[data-lw-tile]').forEach((b) => b.addEventListener('click', () => {
+    lwToggleTile(b.dataset.lwTile); renderLinkWallBoard();
+  }));
+  $('[data-lw-deselect]')?.addEventListener('click', () => { lw.selected = []; renderLinkWallBoard(); });
+  $('[data-lw-shuffle]')?.addEventListener('click', () => { lw.remaining = shuffleInPlace(lw.remaining); renderLinkWallBoard(); });
+  $('[data-lw-submit]')?.addEventListener('click', () => { lwSubmit(); renderLinkWallBoard(); });
+}
+
+// Plain Fisher-Yates — the tile Shuffle button is a display convenience, not a
+// deterministic thing (unlike the puzzle's own daily tile order).
+function shuffleInPlace(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+
+function lwToggleTile(tile) {
+  if (!lw) return;
+  const idx = lw.selected.indexOf(tile);
+  if (idx >= 0) lw.selected.splice(idx, 1);
+  else if (lw.selected.length < 4) lw.selected.push(tile);
+}
+
+function lwSubmit() {
+  if (!lw || lw.selected.length !== 4) return;
+  const puzzle = lw.puzzle;
+  const tileGroup = lwTileGroupMap(puzzle);
+  const selectedSet = new Set(lw.selected);
+  const difficulties = lw.selected.map((t) => (tileGroup[t] ? tileGroup[t].difficulty : 0));
+  lw.result = LinkWallLog.recordGuess(lw.day, difficulties);
+
+  const matched = puzzle.groups.find((g) => !lw.solved.some((s) => s.label === g.label) && g.members.every((m) => selectedSet.has(m)));
+  if (matched) {
+    lw.result = LinkWallLog.recordSolvedGroup(lw.day, matched.label);
+    lw.solved.push(matched);
+    lw.remaining = lw.remaining.filter((t) => !selectedSet.has(t));
+    lw.selected = [];
+    lw.oneAway = null;
+    if (lw.solved.length === puzzle.groups.length) lwFinish(true);
+    return;
+  }
+
+  lw.result.mistakes += 1;
+  LinkWallLog.save(lw.day, lw.result);
+  const closest = puzzle.groups.find((g) => !lw.solved.some((s) => s.label === g.label)
+    && lw.selected.filter((t) => g.members.includes(t)).length === 3);
+  const oneAwayToken = ++lwOneAwayToken;
+  lw.oneAway = closest ? 'One away…' : null;
+  if (lw.oneAway) {
+    setTimeout(() => { if (lw && lwOneAwayToken === oneAwayToken) { lw.oneAway = null; renderLinkWallBoard(); } }, 1600);
+  }
+  const shakeToken = ++lwShakeToken;
+  lw.shaking = true;
+  setTimeout(() => { if (lw && lwShakeToken === shakeToken) { lw.shaking = false; renderLinkWallBoard(); } }, 450);
+  if (lw.result.mistakes >= 4) lwFinish(false);
+}
+
+// Loss reveals every remaining group; win just locks the day. Either way
+// result.completed flips, so the next render swaps to the result screen.
+function lwFinish(won) {
+  if (!lw) return;
+  const puzzle = lw.puzzle;
+  if (!won) {
+    const remaining = puzzle.groups.filter((g) => !lw.solved.some((s) => s.label === g.label));
+    lw.solved.push(...remaining);
+    lw.selected = [];
+  }
+  lw.result.completed = true;
+  lw.result.won = won;
+  LinkWallLog.save(lw.day, lw.result);
+}
+
+function linkWallResultHTML() {
+  const puzzle = lw.puzzle, result = lw.result;
+  const shareRows = (result.guessHistory || []).map((row) =>
+    `<div class="linkwall-share-row">${row.map((d) => `<span class="linkwall-sq lw-diff-${d}"></span>`).join('')}</div>`).join('');
+  const groupsReveal = puzzle.groups.map((g) => `<div class="linkwall-group-row lw-diff-${g.difficulty}">
+      <div class="linkwall-group-label">${h(g.label)}</div>
+      <div class="linkwall-group-why">${h(g.why)}</div>
+    </div>`).join('');
+  const sub = result.won
+    ? `${result.mistakes} mistake${result.mistakes === 1 ? '' : 's'} — nice work.`
+    : "Here's today's four groups. New wall tomorrow.";
+  return `${linkWallBackHTML()}<div class="results">
+    <div class="card scorecard" style="--tint:${result.won ? '#2FCB8A' : '#FF5C5C'}">
+      <div class="linkwall-result-icon">${result.won ? ICON.check : ICON.xmark}</div>
+      <div class="muted">${result.won ? 'SOLVED' : 'NEXT TIME'}</div>
+      <div class="muted">${h(sub)}</div>
+    </div>
+    ${shareRows ? `<div class="card pad grid-card"><div class="linkwall-share-grid">${shareRows}</div></div>` : ''}
+    <h2 class="section">Today's four groups</h2>
+    ${groupsReveal}
+    <button class="btn btn-blue btn-full" data-lw-share>Share</button>
+    <button class="btn btn-text btn-full" data-back>Done</button>
+  </div>`;
+}
+
+function bindLinkWallResultInteractions() {
+  $('[data-lw-share]')?.addEventListener('click', shareLinkWall);
+}
+
+// Wordle/Connections-convention emoji share (docs/CLUB-FEATURES-BUILD.md Stage 2:
+// "a shareable grid of colored squares — huge organic reach"). Web Share API with
+// clipboard fallback, mirroring shareResult/shareHDYK.
+async function shareLinkWall() {
+  if (!lw) return;
+  const { result, day } = lw;
+  const EMOJI = { 1: '🟨', 2: '🟩', 3: '🟦', 4: '🟪' };
+  const rows = (result.guessHistory || []).map((row) => row.map((d) => EMOJI[d] || '⬜').join('')).join('\n');
+  const summary = result.won
+    ? `Solved in ${result.guessHistory.length} guess${result.guessHistory.length === 1 ? '' : 'es'}.`
+    : "Didn't solve it today.";
+  const text = [`🧠 Tidbits Link Wall — ${day}`, rows, summary, `Play at ${SITE_URL}`].join('\n');
+  try { if (navigator.share) { await navigator.share({ text }); return; } } catch {}
+  try { await navigator.clipboard.writeText(text); toast('Copied to clipboard!'); } catch { toast('Copy failed'); }
 }
 
 // The Daily's global board — read from the static JSON the hourly cron publishes

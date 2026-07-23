@@ -8,6 +8,10 @@ import SwiftData
 struct GameContainerView_macOS: View {
     let request: LaunchRequest
     let onClose: () -> Void
+    /// Expedition stage play only (docs/CLUB-FEATURES-BUILD.md "Feature 5"):
+    /// the campaign + stage this round belongs to. nil for every other launch.
+    var expedition: Expedition? = nil
+    var expeditionStageIndex: Int? = nil
 
     @Environment(AppStore.self) private var store
     @Environment(\.modelContext) private var modelContext
@@ -15,6 +19,15 @@ struct GameContainerView_macOS: View {
     /// Weak-Spot Arena only: the round just built (questions + reasons), kept
     /// around so the empty state and the "gaps closed" result tally can read it.
     @State private var activeWeakSpotRound: WeakSpotRound?
+
+    /// Expedition stage play only: the outcome once `finishExpeditionStage`
+    /// records it (nil until then — the result view falls back to computing
+    /// pass/fail straight off `game.summary` for its first render).
+    @State private var expeditionStageOutcome: (passed: Bool, certificate: ExpeditionCertificate?)?
+    @State private var expeditionRecorded = false
+    private var expeditionStage: ExpeditionStage? {
+        expedition?.stages.first { $0.index == expeditionStageIndex }
+    }
 
     /// Marathon only (docs/CLUB-FEATURES-BUILD.md "Feature 3"): the in-progress
     /// run this session is playing into, how many questions were already
@@ -66,6 +79,10 @@ struct GameContainerView_macOS: View {
                         // shouldn't be reachable in practice.
                         loadingState.onAppear(perform: close)
                     }
+                } else if let expedition, let stageIndex = expeditionStageIndex, let stage = expeditionStage {
+                    ExpeditionStageResultView_macOS(expedition: expedition, stage: stage, summary: game.summary,
+                                                    outcome: expeditionStageOutcome, onRetry: { replay() }, onDone: close)
+                        .onAppear(perform: { finishExpeditionStage(expedition: expedition, stageIndex: stageIndex) })
                 } else {
                     ResultsView_macOS(summary: game.summary,
                                       onPlayAgain: playAgainAction,
@@ -87,6 +104,8 @@ struct GameContainerView_macOS: View {
             startWeakSpot()
         } else if request.mode == .marathon {
             startMarathon()
+        } else if let expedition, let stageIndex = expeditionStageIndex {
+            startExpeditionStage(expedition: expedition, stageIndex: stageIndex)
         } else {
             var review = (request.mode.acceptsReview && GameSettings.reviewEnabled)
                 ? RecordsStore.dueReview(in: modelContext, limit: 30) : []
@@ -155,6 +174,33 @@ struct GameContainerView_macOS: View {
         }
     }
 
+    // MARK: Expedition (Club — docs/CLUB-FEATURES-BUILD.md "Feature 5")
+
+    /// Route the stage's category + difficulty band into the EXISTING
+    /// `.classic` launch path — an Expedition is not a new game engine.
+    private func startExpeditionStage(expedition: Expedition, stageIndex: Int) {
+        expeditionStageOutcome = nil
+        expeditionRecorded = false
+        guard let stage = expedition.stages.first(where: { $0.index == stageIndex }) else { close(); return }
+        let questions = Expeditions.startStage(expedition, stageIndex: stageIndex)
+        game.startCustom(mode: .classic, category: .named(stage.categoryID), questions: questions)
+    }
+
+    /// The stage is a normal round, so it records like any other (feeds
+    /// Records/spaced-review/Story Archive) AND records the Expedition-specific
+    /// pass/fail outcome once. TIDBITS_EXPEDITION_FORCE_PASS overrides the
+    /// score for verification (autopilot always picks option 0, so it can't
+    /// reliably clear a real pass bar).
+    private func finishExpeditionStage(expedition: Expedition, stageIndex: Int) {
+        guard !expeditionRecorded, let stage = expeditionStage else { return }
+        expeditionRecorded = true
+        persistIfNeeded()
+        let summary = game.summary
+        let correct = DebugHooks.forceExpeditionPass ? stage.questionCount : summary.correct
+        expeditionStageOutcome = Expeditions.recordStageResult(
+            expedition: expedition, stageIndex: stageIndex, correct: correct, total: summary.total, in: modelContext)
+    }
+
     private var loadingState: some View {
         VStack(spacing: 18) {
             ProgressView().controlSize(.large)
@@ -190,6 +236,8 @@ struct GameContainerView_macOS: View {
             startWeakSpot()
         } else if request.mode == .marathon {
             startMarathon()
+        } else if let expedition, let stageIndex = expeditionStageIndex {
+            startExpeditionStage(expedition: expedition, stageIndex: stageIndex)
         } else {
             Task { await game.start(mode: request.mode, category: request.category) }
         }
@@ -520,6 +568,114 @@ struct MarathonResultsView_macOS: View {
         let hours = minutes / 60
         let rem = minutes % 60
         return rem == 0 ? "\(hours)h" : "\(hours)h \(rem)m"
+    }
+}
+
+// MARK: - Expedition stage result (Club — docs/CLUB-FEATURES-BUILD.md
+// "Feature 5"; mirrors the iOS reference `ExpeditionStageResultView`)
+
+/// The Mac post-play beat for an Expedition stage — pass unlocks the next
+/// stage (or, on the last stage, writes a certificate); fail keeps the
+/// player on the same stage, "Try Again."
+struct ExpeditionStageResultView_macOS: View {
+    let expedition: Expedition
+    let stage: ExpeditionStage
+    let summary: GameSummary
+    /// Set once `finishExpeditionStage` records the true outcome; nil for the
+    /// first render (the fallback below reads straight off `summary`, which
+    /// is already final by `.finished`).
+    let outcome: (passed: Bool, certificate: ExpeditionCertificate?)?
+    let onRetry: () -> Void
+    let onDone: () -> Void
+
+    private var passed: Bool { outcome?.passed ?? (summary.correct >= stage.passBar) }
+    private var certificate: ExpeditionCertificate? { outcome?.certificate }
+    private var nextStageNumber: Int { min(stage.index + 2, expedition.stageCount) }
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 20) {
+                headline
+                statsRow
+                if let certificate { certificateCard(certificate) }
+                buttons
+            }
+            .padding(32)
+            .frame(maxWidth: 640)
+            .frame(maxWidth: .infinity)
+        }
+        .background(Tidbits.Palette.bg)
+    }
+
+    private var headline: some View {
+        VStack(spacing: 8) {
+            Image(systemName: certificate != nil ? "rosette" : (passed ? "checkmark.seal.fill" : "arrow.counterclockwise.circle.fill"))
+                .font(.system(size: 44))
+                .foregroundStyle(passed ? Tidbits.Palette.mint : Tidbits.Palette.coral)
+            Text(certificate != nil ? "EXPEDITION COMPLETE" : (passed ? "STAGE \(stage.index + 1) PASSED" : "NOT QUITE"))
+                .font(Tidbits.TypeRamp.l1)
+                .foregroundStyle(Tidbits.Palette.ink)
+            Text(bodyLine)
+                .font(Tidbits.TypeRamp.l4)
+                .foregroundStyle(Tidbits.Palette.inkSoft)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 20)
+        .chunkyCard(fill: (passed ? Tidbits.Palette.mint : Tidbits.Palette.coral).opacity(0.16))
+    }
+
+    private var bodyLine: String {
+        if certificate != nil { return "You completed \(expedition.title) — every stage, start to finish." }
+        if passed { return "\(stage.title) is done. Stage \(nextStageNumber) just unlocked." }
+        return "Needed \(stage.passBar) of \(stage.questionCount) to advance — you got \(summary.correct). Give it another go."
+    }
+
+    private var statsRow: some View {
+        HStack(spacing: 14) {
+            stat("\(summary.correct)/\(summary.total)", "Correct", Tidbits.Palette.blue)
+            stat("\(stage.passBar)", "Pass bar", Tidbits.Palette.pink)
+            stat("\(min(stage.index + (passed ? 2 : 1), expedition.stageCount))/\(expedition.stageCount)", "Stage", Tidbits.Palette.ink)
+        }
+    }
+
+    private func certificateCard(_ cert: ExpeditionCertificate) -> some View {
+        VStack(spacing: 6) {
+            Text("CERTIFICATE EARNED").font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
+            Text(cert.title).font(.system(size: 22, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
+            Text("\(cert.stagesCompleted) stages · \(cert.totalScore) correct total")
+                .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(18)
+        .chunkyCard(fill: Tidbits.Palette.pink)
+    }
+
+    private var buttons: some View {
+        HStack(spacing: 14) {
+            if passed {
+                Button(certificate != nil ? "Done" : "Continue", action: onDone)
+                    .buttonStyle(CompactButtonStyle(fill: Tidbits.Palette.pink, textColor: .white, prominent: true))
+                    .keyboardShortcut(.defaultAction)
+            } else {
+                Button("Try Again", action: onRetry)
+                    .buttonStyle(CompactButtonStyle(fill: Tidbits.Palette.coral, textColor: .white, prominent: true))
+                    .keyboardShortcut(.defaultAction)
+                Button("Back to map", action: onDone)
+                    .buttonStyle(CompactButtonStyle())
+                    .keyboardShortcut(.cancelAction)
+            }
+        }
+    }
+
+    private func stat(_ value: String, _ label: String, _ tint: Color) -> some View {
+        VStack(spacing: 3) {
+            Text(value).font(.system(size: 24, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
+            Text(label).font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 14)
+        .chunkyCard(fill: tint.opacity(0.18))
     }
 }
 #endif

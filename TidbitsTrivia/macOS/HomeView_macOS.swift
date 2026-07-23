@@ -11,6 +11,9 @@ struct HomeView_macOS: View {
     let onPlay: (LaunchRequest) -> Void
     let onNight: (NightLaunchRequest) -> Void
     let onVersus: (BotProfile) -> Void
+    /// Expedition stage play only (docs/CLUB-FEATURES-BUILD.md "Feature 5") —
+    /// bubbles to `ContentView_macOS`, which swaps the window root.
+    let onExpedition: (Expedition, Int) -> Void
 
     @Environment(AppStore.self) private var store
     @Environment(EntitlementStore.self) private var entitlement
@@ -24,6 +27,9 @@ struct HomeView_macOS: View {
     @Query private var marathonRuns: [MarathonRun]
     @Query(sort: \MarathonScore.date, order: .reverse) private var marathonHistory: [MarathonScore]
     @State private var showMarathonChoice = false
+    // Expeditions (Club — docs/CLUB-FEATURES-BUILD.md "Feature 5").
+    @Query private var expeditionProgress: [ExpeditionProgress]
+    @State private var showExpeditions = false
 
     var body: some View {
         ScrollView {
@@ -35,6 +41,7 @@ struct HomeView_macOS: View {
                 triviaNightCard
                 weakSpotCard
                 marathonCard
+                expeditionsCard
                 onlineCard
             }
             .padding(24)
@@ -61,6 +68,9 @@ struct HomeView_macOS: View {
         .sheet(isPresented: $showMultiplayer) {
             MultiplayerSheet_macOS(recentAccuracy: 0.6, onPickBot: onVersus)
         }
+        .sheet(isPresented: $showExpeditions) {
+            ExpeditionsHubView_macOS(onPlayStage: onExpedition)
+        }
         .confirmationDialog("Marathon in progress", isPresented: $showMarathonChoice, titleVisibility: .visible) {
             Button("Resume") { onPlay(LaunchRequest(mode: .marathon, category: .named("mixed"))) }
             Button("Start Over", role: .destructive) {
@@ -75,6 +85,9 @@ struct HomeView_macOS: View {
         }
         .task {
             if DebugHooks.openMarathon { onPlay(LaunchRequest(mode: .marathon, category: .named("mixed"))) }
+            if DebugHooks.openExpedition || DebugHooks.expeditionMapPreview != nil || DebugHooks.expeditionAutoplay != nil {
+                showExpeditions = true
+            }
         }
     }
 
@@ -307,6 +320,46 @@ struct HomeView_macOS: View {
             .foregroundStyle(Tidbits.Palette.teal.legibleForeground)
             .padding(18).frame(maxWidth: .infinity, alignment: .leading)
             .chunkyCard(fill: Tidbits.Palette.teal)
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Expeditions (Club — docs/CLUB-FEATURES-BUILD.md "Feature 5")
+
+    /// A real preview even for non-members — the expeditions themselves are
+    /// curated content, not player data, so there's nothing to hide behind a
+    /// generic sell line (MONETIZATION §4a). The card always opens the hub
+    /// (never the paywall directly); only tapping Play on a stage is gated.
+    private var expeditionSubtitle: String {
+        if let active = expeditionProgress.first, let exp = Expedition.named(active.expeditionID) {
+            return "\(exp.title): stage \(active.currentStageIndex + 1) of \(exp.stageCount) — click to continue"
+        }
+        return "Multi-week campaigns through a single subject — pick one, and go at your own pace."
+    }
+
+    private var expeditionsCard: some View {
+        Button { showExpeditions = true } label: {
+            HStack(spacing: 14) {
+                Image(systemName: "figure.run").font(.system(size: 26, weight: .black))
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 6) {
+                        Text("EXPEDITIONS").font(Tidbits.TypeRamp.l2)
+                        if !entitlement.isClub {
+                            Text("CLUB")
+                                .font(.system(size: 11, weight: .black, design: .rounded))
+                                .foregroundStyle(Tidbits.Palette.pink)
+                                .padding(.horizontal, 7).padding(.vertical, 3)
+                                .background(Capsule().fill(Color.white.opacity(0.92)))
+                        }
+                    }
+                    Text(expeditionSubtitle).font(Tidbits.TypeRamp.l5).opacity(0.9).lineLimit(2)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right.circle.fill").font(.system(size: 24, weight: .bold))
+            }
+            .foregroundStyle(Tidbits.Palette.pink.legibleForeground)
+            .padding(18).frame(maxWidth: .infinity, alignment: .leading)
+            .chunkyCard(fill: Tidbits.Palette.pink)
         }
         .buttonStyle(.plain)
     }

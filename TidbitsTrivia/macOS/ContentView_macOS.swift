@@ -16,6 +16,10 @@ struct ContentView_macOS: View {
     /// The active game. When set, the game surface REPLACES the split view as
     /// the window root (macOS-DESIGN §B2).
     @State private var launch: LaunchRequest?
+    /// An Expedition stage in play (docs/CLUB-FEATURES-BUILD.md "Feature 5")
+    /// — also replaces the window root, carrying the campaign context
+    /// `LaunchRequest` alone can't express.
+    @State private var expeditionLaunch: ExpeditionStageLaunch_macOS?
     /// A live-generated (Create) game — also replaces the window root.
     @State private var customGame: CustomLaunch?
     /// A solo Trivia Night — also replaces the window root.
@@ -52,6 +56,12 @@ struct ContentView_macOS: View {
             } else if let liveHost {
                 LiveHostContainer_macOS(event: liveHost) { self.liveHost = nil }
                     .transition(.opacity)
+            } else if let expeditionLaunch {
+                GameContainerView_macOS(request: LaunchRequest(mode: .classic, category: .named(expeditionLaunch.stage.categoryID)),
+                                        onClose: { self.expeditionLaunch = nil },
+                                        expedition: expeditionLaunch.expedition,
+                                        expeditionStageIndex: expeditionLaunch.stageIndex)
+                    .transition(.opacity)
             } else {
                 shell
             }
@@ -62,6 +72,7 @@ struct ContentView_macOS: View {
         .animation(.snappy(duration: 0.2), value: versusBot?.id)
         .animation(.snappy(duration: 0.2), value: livePreview?.id)
         .animation(.snappy(duration: 0.2), value: liveHost?.id)
+        .animation(.snappy(duration: 0.2), value: expeditionLaunch?.id)
         .onChange(of: store.inbox) { _, _ in handleInbox() }
         .onAppear { handleInbox() }
         .task {
@@ -127,7 +138,10 @@ struct ContentView_macOS: View {
         Group {
             NavigationStack(path: $path) {
                 switch section ?? .play {
-                case .play:    HomeView_macOS(onPlay: start, onNight: { nightLaunch = $0 }, onVersus: { versusBot = $0 })
+                case .play:    HomeView_macOS(onPlay: start, onNight: { nightLaunch = $0 }, onVersus: { versusBot = $0 },
+                                              onExpedition: { expedition, stageIndex in
+                                                  expeditionLaunch = ExpeditionStageLaunch_macOS(expedition: expedition, stageIndex: stageIndex)
+                                              })
                 case .records: RecordsView_macOS(onPlay: start)
                 case .create:  CreateView_macOS { topic, qs in customGame = CustomLaunch(topic: topic, questions: qs) }
                 case .live:    LiveBuilderView_macOS(onPreview: { livePreview = $0 }, onHost: { liveHost = $0 })
@@ -183,6 +197,18 @@ struct CustomLaunch: Identifiable {
     let id = UUID()
     let topic: String
     let questions: [Question]
+}
+
+/// Resolved once a member taps "Play" on an Expedition's current stage
+/// (docs/CLUB-FEATURES-BUILD.md "Feature 5") — drives the window-root swap
+/// into `GameContainerView_macOS`. `LaunchRequest` alone can't carry the
+/// campaign context, so this is a small macOS-only wrapper (mirrors the
+/// private `ExpeditionStageLaunch` on iOS).
+struct ExpeditionStageLaunch_macOS: Identifiable {
+    let expedition: Expedition
+    let stageIndex: Int
+    var id: String { "\(expedition.id)-\(stageIndex)" }
+    var stage: ExpeditionStage { expedition.stages.first { $0.index == stageIndex }! }
 }
 
 // MARK: - Menu-bar commands (macOS-DESIGN §B1a: ⌘N does the app's primary create)

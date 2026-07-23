@@ -40,6 +40,10 @@ struct ContentView_tvOS: View {
     @Query private var marathonRuns: [MarathonRun]
     @Query(sort: \MarathonScore.date, order: .reverse) private var marathonHistory: [MarathonScore]
     @State private var showMarathonChoice = false
+    // Expeditions (Club — docs/CLUB-FEATURES-BUILD.md "Feature 5").
+    @Query private var expeditionProgress: [ExpeditionProgress]
+    @State private var showExpeditions = false
+    @State private var expeditionLaunch: TVExpeditionStageLaunch?
 
     /// Launch a game and (unless Daily) remember it as the Quick Play default.
     private func play(_ mode: GameMode, _ category: TriviaCategory) {
@@ -59,6 +63,7 @@ struct ContentView_tvOS: View {
                     nightHero
                     weakSpotHero
                     marathonHero
+                    expeditionsHero
                     multiplayerPanel
                 }
                 .padding(.horizontal, 90)
@@ -119,6 +124,16 @@ struct ContentView_tvOS: View {
                 },
                 onCancel: { showMarathonChoice = false })
         }
+        .fullScreenCover(isPresented: $showExpeditions) {
+            TVExpeditionsHubView(onPlayStage: { expedition, stageIndex in
+                showExpeditions = false
+                expeditionLaunch = TVExpeditionStageLaunch(expedition: expedition, stageIndex: stageIndex)
+            })
+        }
+        .fullScreenCover(item: $expeditionLaunch) { launch in
+            TVGameContainer(mode: .classic, category: .named(launch.stage.categoryID),
+                            expedition: launch.expedition, expeditionStageIndex: launch.stageIndex)
+        }
         .task {
             if launch == nil, nightLaunch == nil, let ap = DebugHooks.autoplay {
                 // Trivia Night needs a plan, not a bare category — autoplay it with
@@ -138,6 +153,9 @@ struct ContentView_tvOS: View {
             }
             if launch == nil, DebugHooks.openMarathon {
                 launch = LaunchRequest(mode: .marathon, category: .named("mixed"))
+            }
+            if DebugHooks.openExpedition || DebugHooks.expeditionMapPreview != nil || DebugHooks.expeditionAutoplay != nil {
+                showExpeditions = true
             }
         }
         // A friend's Game Center challenge accepted at runtime → launch the mode.
@@ -324,6 +342,48 @@ struct ContentView_tvOS: View {
             .frame(maxWidth: .infinity)
         }
         .buttonStyle(TVMarathonHeroStyle())
+    }
+
+    // MARK: - Expeditions (Club — docs/CLUB-FEATURES-BUILD.md "Feature 5")
+
+    /// A real preview even for non-members — the expeditions themselves are
+    /// curated content, not player data, so there's nothing to hide behind a
+    /// generic sell line (MONETIZATION §4a). The hero always opens the hub
+    /// (never the paywall directly); only pressing Play on a stage is gated.
+    private var expeditionSubtitle: String {
+        if let active = expeditionProgress.first, let exp = Expedition.named(active.expeditionID) {
+            return "\(exp.title): stage \(active.currentStageIndex + 1) of \(exp.stageCount) — press to continue"
+        }
+        return "Multi-week campaigns through a single subject — pick one, and go at your own pace."
+    }
+
+    private var expeditionsHero: some View {
+        Button { showExpeditions = true } label: {
+            HStack(spacing: 28) {
+                Image(systemName: "figure.run").font(.system(size: 52, weight: .black))
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 16) {
+                        Text("EXPEDITIONS").font(.system(size: 40, weight: .black, design: .rounded))
+                        if !entitlement.isClub {
+                            Text("CLUB")
+                                .font(.system(size: 22, weight: .black, design: .rounded))
+                                .padding(.horizontal, 14).padding(.vertical, 6)
+                                .background(Capsule().fill(.white.opacity(0.92)))
+                                .foregroundStyle(Tidbits.Palette.pink)
+                        }
+                    }
+                    Text(expeditionSubtitle)
+                        .font(.system(size: 29, weight: .medium, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.9))
+                        .lineLimit(2)
+                }
+                Spacer()
+            }
+            .foregroundStyle(.white)
+            .padding(40)
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(TVExpeditionHeroStyle())
     }
 
     // Online Multiplayer (Decision 038): v0 Play-vs-CPU chips; the Quick Match
@@ -556,6 +616,19 @@ private struct TVDailyArchive: View {
     }
 }
 
+// MARK: - Expedition stage launch (Club — docs/CLUB-FEATURES-BUILD.md "Feature 5")
+
+/// Resolved once a member presses Play on an Expedition's current stage —
+/// drives `TVGameContainer` via `.fullScreenCover(item:)`. `LaunchRequest`
+/// alone can't carry the campaign context (mirrors iOS's private
+/// `ExpeditionStageLaunch` / macOS's `ExpeditionStageLaunch_macOS`).
+struct TVExpeditionStageLaunch: Identifiable {
+    let expedition: Expedition
+    let stageIndex: Int
+    var id: String { "\(expedition.id)-\(stageIndex)" }
+    var stage: ExpeditionStage { expedition.stages.first { $0.index == stageIndex }! }
+}
+
 // MARK: - Marathon Resume / Start Over (Club — a focusable choice, never a
 // pointer confirmationDialog — tvos-platform-patterns)
 
@@ -667,6 +740,24 @@ struct TVMarathonHeroStyle: ButtonStyle {
                 .overlay(RoundedRectangle(cornerRadius: 28).strokeBorder(.white.opacity(focused ? 0.9 : 0), lineWidth: 5))
                 .scaleEffect(focused ? 1.03 : 1.0)
                 .shadow(color: Tidbits.Palette.teal.opacity(focused ? 0.6 : 0), radius: 30, y: 12)
+                .animation(.easeOut(duration: 0.18), value: focused)
+        }
+    }
+}
+
+/// The Expeditions hero — pink, white-on-dark, lit on focus (same shape as
+/// `TVMarathonHeroStyle`, distinct accent for a distinct Club card).
+struct TVExpeditionHeroStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View { Inner(configuration: configuration) }
+    struct Inner: View {
+        let configuration: Configuration
+        @Environment(\.isFocused) private var focused
+        var body: some View {
+            configuration.label
+                .background(RoundedRectangle(cornerRadius: 28).fill(Tidbits.Palette.pink.gradient))
+                .overlay(RoundedRectangle(cornerRadius: 28).strokeBorder(.white.opacity(focused ? 0.9 : 0), lineWidth: 5))
+                .scaleEffect(focused ? 1.03 : 1.0)
+                .shadow(color: Tidbits.Palette.pink.opacity(focused ? 0.6 : 0), radius: 30, y: 12)
                 .animation(.easeOut(duration: 0.18), value: focused)
         }
     }

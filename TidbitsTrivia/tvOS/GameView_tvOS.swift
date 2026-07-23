@@ -10,6 +10,10 @@ struct TVGameContainer: View {
     let category: TriviaCategory
     /// Archive plays of a past Daily pass their day key (R-DAILY-1).
     var dailyDay: String? = nil
+    /// Expedition stage play only (docs/CLUB-FEATURES-BUILD.md "Feature 5"):
+    /// the campaign + stage this round belongs to. nil for every other launch.
+    var expedition: Expedition? = nil
+    var expeditionStageIndex: Int? = nil
     @Environment(AppStore.self) private var store
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
@@ -17,6 +21,15 @@ struct TVGameContainer: View {
     /// Weak-Spot Arena only: the round just built (questions + reasons), kept
     /// around so the empty state and the "gaps closed" result tally can read it.
     @State private var activeWeakSpotRound: WeakSpotRound?
+
+    /// Expedition stage play only: the outcome once `finishExpeditionStage`
+    /// records it (nil until then — the result view falls back to computing
+    /// pass/fail straight off `game.summary` for its first render).
+    @State private var expeditionStageOutcome: (passed: Bool, certificate: ExpeditionCertificate?)?
+    @State private var expeditionRecorded = false
+    private var expeditionStage: ExpeditionStage? {
+        expedition?.stages.first { $0.index == expeditionStageIndex }
+    }
 
     /// Marathon only (docs/CLUB-FEATURES-BUILD.md "Feature 3"): the in-progress
     /// run this session is playing into, how many questions were already
@@ -61,6 +74,10 @@ struct TVGameContainer: View {
                         // shouldn't be reachable in practice.
                         loading.onAppear(perform: close)
                     }
+                } else if let expedition, let stageIndex = expeditionStageIndex, let stage = expeditionStage {
+                    TVExpeditionStageResultView(expedition: expedition, stage: stage, summary: game.summary,
+                                                outcome: expeditionStageOutcome, onRetry: { replay() }, onDone: close)
+                        .onAppear(perform: { finishExpeditionStage(expedition: expedition, stageIndex: stageIndex) })
                 } else {
                     TVResultsView(summary: game.summary, onPlayAgain: playAgainAction, onDone: close,
                                   weakSpotGapsClosed: weakSpotGapsClosed)
@@ -74,6 +91,8 @@ struct TVGameContainer: View {
                     startWeakSpot()
                 } else if mode == .marathon {
                     startMarathon()
+                } else if let expedition, let stageIndex = expeditionStageIndex {
+                    startExpeditionStage(expedition: expedition, stageIndex: stageIndex)
                 } else {
                     // Single-category game re-asks only same-category misses (no cross-category leak).
                     var review = (mode.acceptsReview && GameSettings.reviewEnabled)
@@ -133,7 +152,35 @@ struct TVGameContainer: View {
         recorded = false
         if mode == .weakSpot { startWeakSpot() }
         else if mode == .marathon { startMarathon() }
+        else if let expedition, let stageIndex = expeditionStageIndex { startExpeditionStage(expedition: expedition, stageIndex: stageIndex) }
         else { Task { await game.start(mode: mode, category: category) } }
+    }
+
+    // MARK: Expedition (Club — docs/CLUB-FEATURES-BUILD.md "Feature 5")
+
+    /// Route the stage's category + difficulty band into the EXISTING
+    /// `.classic` launch path — an Expedition is not a new game engine.
+    private func startExpeditionStage(expedition: Expedition, stageIndex: Int) {
+        expeditionStageOutcome = nil
+        expeditionRecorded = false
+        guard let stage = expedition.stages.first(where: { $0.index == stageIndex }) else { close(); return }
+        let questions = Expeditions.startStage(expedition, stageIndex: stageIndex)
+        game.startCustom(mode: .classic, category: .named(stage.categoryID), questions: questions)
+    }
+
+    /// The stage is a normal round, so it records like any other (feeds
+    /// Records/spaced-review/Story Archive) AND records the Expedition-specific
+    /// pass/fail outcome once. TIDBITS_EXPEDITION_FORCE_PASS overrides the
+    /// score for verification (autopilot always picks option 0, so it can't
+    /// reliably clear a real pass bar).
+    private func finishExpeditionStage(expedition: Expedition, stageIndex: Int) {
+        guard !expeditionRecorded, let stage = expeditionStage else { return }
+        expeditionRecorded = true
+        persist()
+        let summary = game.summary
+        let correct = DebugHooks.forceExpeditionPass ? stage.questionCount : summary.correct
+        expeditionStageOutcome = Expeditions.recordStageResult(
+            expedition: expedition, stageIndex: stageIndex, correct: correct, total: summary.total, in: modelContext)
     }
 
     // MARK: Marathon (Club — docs/CLUB-FEATURES-BUILD.md "Feature 3")
@@ -1071,6 +1118,95 @@ struct TVRoundIntroView: View {
         .padding(80)
         .frame(maxWidth: .infinity)
         .background(TVTheme.bg.ignoresSafeArea())
+    }
+}
+
+// MARK: - Expedition stage result (Club — docs/CLUB-FEATURES-BUILD.md
+// "Feature 5"; mirrors the iOS reference `ExpeditionStageResultView`)
+
+/// The tvOS post-play beat for an Expedition stage, ten-foot and dark-first
+/// — pass unlocks the next stage (or, on the last stage, writes a
+/// certificate); fail keeps the player on the same stage, "Try Again."
+struct TVExpeditionStageResultView: View {
+    let expedition: Expedition
+    let stage: ExpeditionStage
+    let summary: GameSummary
+    /// Set once `finishExpeditionStage` records the true outcome; nil for the
+    /// first render (the fallback below reads straight off `summary`, which
+    /// is already final by `.finished`).
+    let outcome: (passed: Bool, certificate: ExpeditionCertificate?)?
+    let onRetry: () -> Void
+    let onDone: () -> Void
+    @FocusState private var primaryFocused: Bool
+
+    private var passed: Bool { outcome?.passed ?? (summary.correct >= stage.passBar) }
+    private var certificate: ExpeditionCertificate? { outcome?.certificate }
+    private var nextStageNumber: Int { min(stage.index + 2, expedition.stageCount) }
+
+    var body: some View {
+        ZStack {
+            TVTheme.bg.ignoresSafeArea()
+            ScrollView {
+                VStack(spacing: 34) {
+                    Image(systemName: certificate != nil ? "rosette" : (passed ? "checkmark.seal.fill" : "arrow.counterclockwise.circle.fill"))
+                        .font(.system(size: 84, weight: .black))
+                        .foregroundStyle(passed ? Tidbits.Palette.mint : Tidbits.Palette.coral)
+                    Text(certificate != nil ? "EXPEDITION COMPLETE" : (passed ? "STAGE \(stage.index + 1) PASSED" : "NOT QUITE"))
+                        .font(.system(size: 52, weight: .black, design: .rounded)).foregroundStyle(TVTheme.text)
+                    Text(bodyLine)
+                        .font(.system(size: 29, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+                        .multilineTextAlignment(.center)
+                    HStack(spacing: 60) {
+                        stat("\(summary.correct)/\(summary.total)", "Correct")
+                        stat("\(stage.passBar)", "Pass bar")
+                        stat("\(min(stage.index + (passed ? 2 : 1), expedition.stageCount))/\(expedition.stageCount)", "Stage")
+                    }
+                    if let certificate { certificateCard(certificate) }
+                    HStack(spacing: 30) {
+                        if passed {
+                            Button(certificate != nil ? "Done" : "Continue", action: onDone)
+                                .buttonStyle(TVChipStyle(accent: Tidbits.Palette.pink, selected: false))
+                                .focused($primaryFocused)
+                        } else {
+                            Button("Try Again", action: onRetry)
+                                .buttonStyle(TVChipStyle(accent: Tidbits.Palette.coral, selected: false))
+                                .focused($primaryFocused)
+                            Button("Back to map", action: onDone)
+                                .buttonStyle(TVChipStyle(accent: Tidbits.Palette.blue, selected: false))
+                        }
+                    }
+                    .padding(.top, 8)
+                }
+                .padding(90)
+                .frame(maxWidth: .infinity)
+            }
+        }
+        .defaultFocus($primaryFocused, true)
+    }
+
+    private var bodyLine: String {
+        if certificate != nil { return "You completed \(expedition.title) — every stage, start to finish." }
+        if passed { return "\(stage.title) is done. Stage \(nextStageNumber) just unlocked." }
+        return "Needed \(stage.passBar) of \(stage.questionCount) to advance — you got \(summary.correct). Give it another go."
+    }
+
+    private func certificateCard(_ cert: ExpeditionCertificate) -> some View {
+        VStack(spacing: 10) {
+            Text("CERTIFICATE EARNED").font(.system(size: 34, weight: .heavy, design: .rounded)).foregroundStyle(TVTheme.text)
+            Text(cert.title).font(.system(size: 40, weight: .black, design: .rounded)).foregroundStyle(.white)
+            Text("\(cert.stagesCompleted) stages · \(cert.totalScore) correct total")
+                .font(.system(size: 25, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+        }
+        .padding(36)
+        .frame(maxWidth: .infinity)
+        .background(RoundedRectangle(cornerRadius: 28).fill(Tidbits.Palette.pink.gradient))
+    }
+
+    private func stat(_ v: String, _ l: String) -> some View {
+        VStack(spacing: 6) {
+            Text(v).font(.system(size: 46, weight: .black, design: .rounded)).foregroundStyle(.white)
+            Text(l.uppercased()).font(.system(size: 22, weight: .bold, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+        }
     }
 }
 #endif

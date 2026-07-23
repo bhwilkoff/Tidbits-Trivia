@@ -138,7 +138,7 @@ Legend: ✅ done+verified · 🔨 in progress · ⏳ queued · 🚫 n/a (with re
 | 4 Knowledge Atlas | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 5 Expedition | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | — Friend Streaks (deferred: owner free/Club split, R-MON-4) | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| 6 Link Wall | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
+| 6 Link Wall (STAGE 1: generator + quality gate) | — | 🔨 | — | — | — | — |
 | 7 Expedition | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 8 Ranked Seasons | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 
@@ -461,6 +461,71 @@ needed beyond the "tap a domain → launch a domain-filtered round" hook (reuse 
 category-filtered launch).
 
 **Apple reference = canonical.** Others mirror (same verb, native idiom).
+
+---
+
+## Feature 6 — Link Wall (design spec + STAGED build)
+
+**One line:** a NYT-Connections-style daily puzzle — 16 fact-tiles, 4 hidden groups
+of 4; solving reveals each group's link + a cited why. A **second daily** (Pillar 1;
+Daily Tidbits stays FREE and untouched — Link Wall is the Club daily).
+
+**Four-question test (passed 2026-07-22):** deepens understanding (grouping forces
+you to find the *connections between* facts, a higher-order skill than recall);
+invites participation (you form the hypotheses — the whole game is your judgment);
+supports agency (a daily habit that trains pattern-finding you keep); clarity (a plain
+16-tile grid, pick 4, submit — the rules are self-evident). Passes cleanly; single-
+player so R-MON-4 is fine.
+
+**THE RISK (why this is staged):** good Connections puzzles are normally *hand-crafted*
+by editors — the fun is fair **misdirection** (a tile that plausibly fits two groups).
+Auto-generating that WELL from a trivia corpus is hard. So this feature is built in TWO
+stages, and stage 2 only proceeds if stage 1's quality is real:
+
+### Stage 1 (FIRST — a scoped prototype, Apple Core only): the generator + a quality gate
+- Build the generator in Swift `Core/` over the corpus's EXISTING STRUCTURED RELATION
+  DATA (the sets that already back matching/oddoneout/enumerate: country→capital/
+  currency, element→symbol, book→author, country→continent, continent→countries,
+  planets, elements, oceans, …). A puzzle = pick 4 relation-sets that each yield 4
+  clean members → 4 groups of 4 → 16 tiles, shuffled. Each group carries a themed
+  label + a cited why (from the corpus source fields).
+- **Deterministic daily seed** (reuse the `DailyPick` hash-rank so everyone gets the
+  SAME Link Wall each day — needed for a shareable, fair Club daily), plus difficulty
+  ordering (yellow easiest → purple hardest, the Connections convention) if derivable.
+- **The quality gate:** GENERATE ~8 real puzzles and HONESTLY ASSESS them: are the 4
+  groups each unambiguously themed? Are there accidental cross-group collisions that
+  make it unsolvable or unfair? Is it too trivially easy (zero overlap) to be fun?
+  Write the verdict. **If the puzzles are clean + solvable + at least mildly
+  interesting → proceed to Stage 2. If they're trivially easy or unfair → STOP and
+  flag: this needs either a smarter generator or a curated puzzle set (an owner call).**
+  v1 does NOT need editorial-grade misdirection — "clean, fair, themed daily grouping"
+  is the bar; be honest about where it lands.
+
+### Stage 2 (ONLY if Stage 1's quality passes): the full feature across 6 platforms
+- The play surface: a 16-tile grid, select 4 → submit, N mistakes allowed (4, the
+  Connections convention), "one away" feedback, solved groups collapse to a labeled
+  row, reveal shows each link + cited why. A daily result (guesses used, shareable
+  grid of colored squares — the Wordle/Connections share pattern, huge organic reach).
+  Club-gated; a second daily entry (the free Daily is untouched). Same verb, native
+  idiom; the generator is portable (mirror the relation-set + seed logic per platform,
+  or generate once and publish a daily JSON — decide in Stage 2 based on cost).
+
+**If Stage 1 fails the gate:** record the finding here, flag the curated-vs-generated
+decision for the owner, and move on (do NOT ship a weak daily — memory
+`quality-over-volume-steer`).
+
+---
+
+## Deferred (need an owner decision before building)
+
+- **Friend Streaks** (Pillar 4) & **Ranked Seasons** (Pillar 1) — SOCIAL; value depends
+  on population, so R-MON-4 says don't fully gate the seat. **Owner call needed: what's
+  the free base vs the Club perk?** (e.g. streaks free / streak-insurance + rivalry
+  Club; ranked play free / a parallel Club Invitational + defendable titles Club.) Until
+  then, unbuildable without risking an R-MON-1/R-MON-4 violation.
+- **Research proposals** (see below) — Night Recap / Home Turf / Set Workshop etc. are
+  owner-review items; the top-3 (esp. Night Recap for the pub-Live regular) are strong
+  candidates to fold in after the anchor set.
 
 ---
 

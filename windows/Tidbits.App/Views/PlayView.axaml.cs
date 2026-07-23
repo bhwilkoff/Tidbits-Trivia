@@ -78,6 +78,7 @@ public partial class PlayView : UserControl
         BuildPresets();
         BuildWeakSpot();
         BuildMarathonCard();
+        BuildExpeditionsCard();
     }
 
     // MARK: - Tidbits Club: Weak-Spot Arena (docs/CLUB-FEATURES-BUILD.md "Feature 1")
@@ -309,6 +310,82 @@ public partial class PlayView : UserControl
         Landing.IsVisible = false;
         GameHost.Content = new GameView { DataContext = vm };
         engine.StartCustom(GameMode.Marathon, TriviaCategory.Named("mixed"), questions, marathonOffset: offset);
+    }
+
+    // MARK: - Tidbits Club: Expeditions (docs/CLUB-FEATURES-BUILD.md "Feature 5")
+
+    /// A multi-week structured campaign through one domain — Club-marked, but UNLIKE
+    /// Weak-Spot/Marathon this card's action ALWAYS opens the hub (never the paywall
+    /// directly): the hub + a campaign's map are a real preview reachable by
+    /// everyone, and only tapping Play on a stage is Club-gated
+    /// (docs/CLUB-FEATURES-BUILD.md "Feature 5" — "never a blank wall").
+    private void BuildExpeditionsCard()
+    {
+        var data = GameData.Shared.Value;
+        bool isClub = data.Entitlement.IsClub;
+        var available = Expeditions.Available(data.Records);
+        int started = available.Count(a => a.Progress is not null);
+        var subtitle = started > 0
+            ? $"{started} of {available.Count} expeditions underway."
+            : Expeditions.PreviewLine();
+
+        var titleRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, VerticalAlignment = VerticalAlignment.Center };
+        titleRow.Children.Add(new TextBlock { Text = "EXPEDITIONS", Classes = { "body-strong" } });
+        if (!isClub)
+        {
+            titleRow.Children.Add(new Border
+            {
+                Background = new SolidColorBrush(Color.Parse("#FF5C35")),
+                CornerRadius = new Avalonia.CornerRadius(6),
+                Padding = new Avalonia.Thickness(7, 2),
+                Child = new TextBlock { Text = "CLUB", FontSize = 11, FontWeight = Avalonia.Media.FontWeight.Black, Foreground = Brushes.White },
+            });
+        }
+
+        var textStack = new StackPanel { Spacing = 3, VerticalAlignment = VerticalAlignment.Center, MaxWidth = 440 };
+        textStack.Children.Add(titleRow);
+        textStack.Children.Add(new TextBlock { Text = subtitle, Classes = { "caption" }, TextWrapping = TextWrapping.Wrap });
+
+        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
+        grid.Children.Add(textStack);
+
+        // Always "Open" — the hub is a real preview reachable by everyone.
+        var action = new Button { Content = "Open", Classes = { "accent", "compact" }, VerticalAlignment = VerticalAlignment.Center };
+        action.Click += (_, _) => OnExpeditionsAction();
+        Grid.SetColumn(action, 1);
+        grid.Children.Add(action);
+
+        ExpeditionsPanel.Content = new Border { Classes = { "card" }, Child = grid };
+    }
+
+    private async void OnExpeditionsAction()
+    {
+        var data = GameData.Shared.Value;
+        await ExpeditionsDialog.ShowAsync(data.Records, StartExpeditionStage);
+        BuildExpeditionsCard(); // reflect progress/certificates changed while the dialog was open
+    }
+
+    /// Launches one stage as a NORMAL Classic round with a difficulty-banded custom
+    /// question set — a stage writes a genuine GameRecord (unlike Marathon), and
+    /// GameViewModel layers the pass/fail/certificate tracking on top via
+    /// `Expeditions.RecordStageResult`. Continuing/retrying/finishing all return to
+    /// the expedition's map so the player sees the result reflected immediately.
+    private async void StartExpeditionStage(Expedition expedition, int stageIndex)
+    {
+        var data = GameData.Shared.Value;
+        var stage = expedition.Stages.First(s => s.Index == stageIndex);
+        var questions = Expeditions.StartStage(data.Sources.Corpus, expedition, stageIndex);
+        var engine = data.NewEngine();
+        var vm = new GameViewModel(engine, data.Records, expeditionStage: (expedition, stageIndex));
+        vm.Closed += () =>
+        {
+            GameHost.Content = null; Landing.IsVisible = true; BuildExpeditionsCard();
+            _ = ExpeditionsDialog.ShowAsync(data.Records, StartExpeditionStage, openExpeditionId: expedition.Id);
+        };
+        vm.PlayAgainRequested += () => StartExpeditionStage(expedition, stageIndex); // retry the SAME stage
+        Landing.IsVisible = false;
+        GameHost.Content = new GameView { DataContext = vm };
+        engine.StartCustom(GameMode.Classic, TriviaCategory.Named(stage.CategoryId), questions);
     }
 
     /// Saved Custom Mix presets ("My Mix") — each replays its modes + category,

@@ -23,6 +23,11 @@ public sealed class GameViewModel : ObservableObject, IDisposable
     // forwarded to it (so a re-fired PropertyChanged never double-records an answer).
     private readonly MarathonRun? _marathonRun;
     private int _marathonPersisted;
+    // Club Expedition only (docs/CLUB-FEATURES-BUILD.md "Feature 5"): the campaign +
+    // stage this session is playing, if any. Unlike Marathon, a stage writes a NORMAL
+    // GameRecord via the generic path below — this only adds the campaign-tracking
+    // (pass/fail + certificate) on top, once, at Finished.
+    private readonly (Expedition Expedition, int StageIndex)? _expeditionStage;
 
     /// Raised when the player quits back to the Play surface.
     public event Action? Closed;
@@ -80,6 +85,20 @@ public sealed class GameViewModel : ObservableObject, IDisposable
     /// Null until then.
     public MarathonScore? MarathonResult { get; private set; }
 
+    /// Club Expedition only: true while this session is playing one campaign's stage
+    /// — gates the dedicated pass/fail/certificate recap in GameView instead of the
+    /// generic session-scoped recap (docs/CLUB-FEATURES-BUILD.md "Feature 5").
+    public bool IsExpeditionStage => _expeditionStage is not null;
+
+    /// The just-finished stage's outcome — set once, the instant the round reaches
+    /// Finished. Null until then / outside an Expedition session.
+    public ExpeditionPlayResult? ExpeditionResult { get; private set; }
+
+    /// True for the generic session-scoped recap panel — every session EXCEPT a
+    /// Marathon run (its own permanent scorecard) or an Expedition stage (its own
+    /// pass/fail/certificate beat), which are mutually exclusive with each other.
+    public bool ShowGenericRecap => !IsMarathonRun && !IsExpeditionStage;
+
     /// The RecordsStore this session actually persists into — GameView reads
     /// this (not a global singleton) for the Marathon scorecard's "vs your last
     /// run" comparison and history count, so it stays correct against whatever
@@ -102,11 +121,13 @@ public sealed class GameViewModel : ObservableObject, IDisposable
     /// "Feature 3"). Passing `records` alongside it is required (Marathon still
     /// needs RecordsStore to persist the run/score); Marathon itself writes NO
     /// GameRecord / miss / seen-story via the generic path below.
-    public GameViewModel(GameEngine engine, RecordsStore? records = null, MarathonRun? marathonRun = null)
+    public GameViewModel(GameEngine engine, RecordsStore? records = null, MarathonRun? marathonRun = null,
+        (Expedition Expedition, int StageIndex)? expeditionStage = null)
     {
         Engine = engine;
         _records = records;
         _marathonRun = marathonRun;
+        _expeditionStage = expeditionStage;
         Engine.PropertyChanged += OnEngineChanged;
         _timer = new DispatcherTimer(TimeSpan.FromMilliseconds(100), DispatcherPriority.Normal,
             (_, _) => Engine.Tick());
@@ -143,6 +164,16 @@ public sealed class GameViewModel : ObservableObject, IDisposable
         {
             _recorded = true;
             _records?.Record(Engine.Summary);
+            // Club Expedition (Feature 5): unlike Marathon, a stage IS a normal
+            // GameRecord write (above) — this only layers the campaign tracking
+            // (pass/fail, next-stage unlock, certificate) on top.
+            if (_expeditionStage is { } es && _records is { } expRecords)
+            {
+                var stage = es.Expedition.Stages.First(s => s.Index == es.StageIndex);
+                var (passed, cert) = Expeditions.RecordStageResult(
+                    expRecords, es.Expedition, es.StageIndex, Engine.Summary.Correct, Engine.Summary.Total);
+                ExpeditionResult = new ExpeditionPlayResult(es.Expedition, stage, passed, Engine.Summary.Correct, Engine.Summary.Total, cert);
+            }
             OnPropertyChanged(string.Empty); // refresh every recap binding at once
             Finished?.Invoke();
         }
@@ -160,3 +191,8 @@ public sealed class GameViewModel : ObservableObject, IDisposable
         Engine.PropertyChanged -= OnEngineChanged;
     }
 }
+
+/// One Expedition stage's just-finished outcome — the recap DTO `GameView` renders
+/// via `ExpeditionsUi.BuildStageResult` (docs/CLUB-FEATURES-BUILD.md "Feature 5").
+public sealed record ExpeditionPlayResult(
+    Expedition Expedition, ExpeditionStage Stage, bool Passed, int Correct, int Total, ExpeditionCertificate? Certificate);

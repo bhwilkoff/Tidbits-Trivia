@@ -42,7 +42,10 @@ public partial class GameView : UserControl
         if (string.IsNullOrEmpty(e.PropertyName) || e.PropertyName == nameof(GameEngine.CurrentOrder))
             RebuildOptions();
         if (string.IsNullOrEmpty(e.PropertyName))
+        {
             RebuildMarathonResult();
+            RebuildExpeditionResult();
+        }
     }
 
     /// Club Marathon's Finished-phase scorecard renders via the same builder the
@@ -65,6 +68,28 @@ public partial class GameView : UserControl
         MarathonResultHost.Content = MarathonUi.BuildScorecard(result, previous, records.MarathonHistory.Count,
             onPlayAgain: () => _vm!.PlayAgain(), onDone: () => _vm!.Quit(),
             onSeeHistory: () => _ = MarathonHistoryDialog.ShowAsync(records));
+    }
+
+    /// Club Expedition's Finished-phase pass/fail/certificate beat — renders via
+    /// `ExpeditionsUi.BuildStageResult` (docs/CLUB-FEATURES-BUILD.md "Feature 5").
+    /// Continue (pass) / Try Again (fail) / Done (certificate) all just close the
+    /// session — the launcher's `Closed` handler re-opens the campaign's map so the
+    /// player sees the result reflected immediately (mirrors Marathon's
+    /// `RebuildMarathonResult` pattern: GameViewModel's own PropertyChanged
+    /// subscription runs first, so `_vm.ExpeditionResult` is already set here).
+    private void RebuildExpeditionResult()
+    {
+        if (ExpeditionResultHost is null) return;
+        var engine = _vm?.Engine;
+        if (engine?.CurrentPhase != GameEngine.Phase.Finished || _vm?.ExpeditionResult is not { } result)
+        {
+            ExpeditionResultHost.Content = null;
+            return;
+        }
+        ExpeditionResultHost.Content = ExpeditionsUi.BuildStageResult(result,
+            onContinue: () => _vm!.Quit(),
+            onRetry: () => _vm!.PlayAgain(),
+            onDone: () => _vm!.Quit());
     }
 
     /// The answer surface is rebuilt on each engine change and dispatched by the

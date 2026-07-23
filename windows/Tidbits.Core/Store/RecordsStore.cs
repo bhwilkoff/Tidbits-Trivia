@@ -18,6 +18,12 @@ public sealed class RecordsData
     public MarathonRun? MarathonRun { get; set; }
     /// Permanent completed-Marathon history.
     public List<MarathonScore> MarathonHistory { get; set; } = new();
+    /// The Club Expedition's in-progress campaigns (docs/CLUB-FEATURES-BUILD.md
+    /// "Feature 5") — keyed by expeditionId; SEVERAL concurrent, unlike Marathon's
+    /// single slot.
+    public Dictionary<string, ExpeditionProgress> ExpeditionProgress { get; set; } = new();
+    /// Permanent completed-Expedition certificates.
+    public List<ExpeditionCertificate> ExpeditionCertificates { get; set; } = new();
 }
 
 /// Persists the outcome of a finished game (record + missed facts + Daily streak +
@@ -54,6 +60,12 @@ public sealed class RecordsStore
     /// Permanent completed-Marathon history, most recent first.
     public IReadOnlyList<MarathonScore> MarathonHistory =>
         _data.MarathonHistory.OrderByDescending(s => s.Date).ToList();
+    /// The Club Expedition's in-progress campaigns, keyed by expeditionId — several
+    /// concurrent (docs/CLUB-FEATURES-BUILD.md "Feature 5").
+    public IReadOnlyDictionary<string, ExpeditionProgress> ExpeditionProgress => _data.ExpeditionProgress;
+    /// Permanent completed-Expedition certificates, most recent first.
+    public IReadOnlyList<ExpeditionCertificate> ExpeditionCertificates =>
+        _data.ExpeditionCertificates.OrderByDescending(c => c.CompletedAt).ToList();
 
     /// Record a finished game. Returns whether it's a new best for that mode+category.
     public bool Record(GameSummary summary)
@@ -164,6 +176,32 @@ public sealed class RecordsStore
         Save();
     }
 
+    /// Persist one campaign's in-progress state (docs/CLUB-FEATURES-BUILD.md
+    /// "Feature 5") — called after every stage attempt so a player can leave and
+    /// come back over days or weeks. Unlike `SaveMarathonRun`'s single slot, this
+    /// upserts into a dictionary — several campaigns can be in progress at once.
+    public void SaveExpeditionProgress(ExpeditionProgress progress)
+    {
+        _data.ExpeditionProgress[progress.ExpeditionId] = progress;
+        Save();
+    }
+
+    /// Retire a campaign's in-progress row — called once its last stage passes
+    /// (the permanent certificate is written in the same call, see
+    /// `AppendExpeditionCertificate`).
+    public void DeleteExpeditionProgress(string expeditionId)
+    {
+        _data.ExpeditionProgress.Remove(expeditionId);
+        Save();
+    }
+
+    /// Write a permanent Expedition certificate — a completed campaign, kept forever.
+    public void AppendExpeditionCertificate(ExpeditionCertificate certificate)
+    {
+        _data.ExpeditionCertificates.Add(certificate);
+        Save();
+    }
+
     private void AddCalibration(IReadOnlyDictionary<int, StakeOutcome> outcomes)
     {
         foreach (var (tier, o) in outcomes)
@@ -214,6 +252,8 @@ public sealed class RecordsStore
         _data.Seen.Clear();
         _data.MarathonRun = null;
         _data.MarathonHistory.Clear();
+        _data.ExpeditionProgress.Clear();
+        _data.ExpeditionCertificates.Clear();
         _data.Streak = new DailyStreak();
         Save();
     }

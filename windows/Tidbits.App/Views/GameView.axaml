@@ -78,7 +78,15 @@
             <ScrollViewer IsVisible="{Binding IsMarathonRun}">
                 <ContentControl x:Name="MarathonResultHost" Margin="36,28,36,40" HorizontalAlignment="Center"/>
             </ScrollViewer>
-            <ScrollViewer IsVisible="{Binding !IsMarathonRun}">
+            <!-- Club Expedition's Finished recap is its own dedicated pass/fail/
+                 certificate beat (docs/CLUB-FEATURES-BUILD.md "Feature 5"),
+                 rendered via ExpeditionsUi, instead of the generic recap below —
+                 a stage still writes a normal GameRecord, but the campaign
+                 tracking gets its own moment, same idiom as Marathon's scorecard. -->
+            <ScrollViewer IsVisible="{Binding IsExpeditionStage}">
+                <ContentControl x:Name="ExpeditionResultHost" Margin="36,28,36,40" HorizontalAlignment="Center"/>
+            </ScrollViewer>
+            <ScrollViewer IsVisible="{Binding ShowGenericRecap}">
                 <StackPanel Margin="36,28,36,40" Spacing="16" MaxWidth="560" HorizontalAlignment="Center">
                     <!-- Scorecard -->
                     <Border Background="#FF5C35" CornerRadius="14" Padding="24,20">

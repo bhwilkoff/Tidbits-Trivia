@@ -46,4 +46,11 @@ public static class DebugHooks
     /// (false) whenever the env var is unset, exactly like the Apple `ProcessInfo`
     /// equivalent (`DebugHooks.forceClub`).
     public static bool ForceClub => Environment.GetEnvironmentVariable("TIDBITS_CLUB") == "1";
+
+    /// Club Expedition stage force-pass (docs/CLUB-FEATURES-BUILD.md "Feature 5") — a
+    /// played stage always records as a pass regardless of score, mirroring Apple's
+    /// TIDBITS_EXPEDITION_FORCE_PASS / Android's `Expeditions.debugForcePass`.
+    /// Settable directly (like `Autopilot`) rather than env-only, so a test can flip
+    /// it without touching the process environment. False in normal play.
+    public static bool ExpeditionForcePass { get; set; }
 }

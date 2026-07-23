@@ -138,7 +138,7 @@ Legend: ✅ done+verified · 🔨 in progress · ⏳ queued · 🚫 n/a (with re
 | 4 Knowledge Atlas | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 5 Expedition | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | — Friend Streaks (deferred: owner free/Club split, R-MON-4) | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| 6 Link Wall | — | ✅ iOS (Stage 2a) | ⏳ HOLD | ⏳ HOLD | ⏳ HOLD | ⏳ HOLD |
+| 6 Link Wall | 🔨 | ✅ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 7 Expedition | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 8 Ranked Seasons | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 
@@ -566,12 +566,20 @@ Applied the scoped fixes in `LinkWall.swift` (BUILD SUCCEEDED, still Core-only):
 ### Stage 2 — STAGED AGAIN (iOS-reference-first, then hold for an OWNER decision)
 Unlike Features 1–5 (fanned out to 6 platforms once validated), Link Wall's repetition/
 obscurity ceiling is a genuine **curated-vs-generated PRODUCT decision** only the owner
-can make. So: build the **iOS play surface only** on the (content-clean) generator so
-there's a real, playable, judge-able feature — then **HOLD the 5-platform fan-out** and
-present the owner the decision: (a) ship the auto-generated daily as-is (accept the ~1–2
-week repeat cadence), (b) enrich the corpus (add clean capital/composer/sports pairs to
-`match.json`) to deepen variety, or (c) commission a curated/hand-authored puzzle set
-(the real NYT model). The generator + iOS surface are reusable under any choice.
+can make. So: build the **iOS play surface first** on the (content-clean) generator so there's a
+real, playable, judge-able feature (DONE, commit 21fa143) — then continue the fan-out.
+
+**Decision update (2026-07-22): fan-out RESUMED, not held.** The play surface + generator
+are **direction-agnostic** — they work identically whether the puzzle source stays
+generated, gets corpus-enriched, or becomes a curated set. So completing Feature 6 to
+6-platform parity does NOT pre-empt the owner's choice; only the puzzle CONTENT source is
+affected, and it's swappable under the same surface. Fanning out now (web → Android →
+Windows → macOS/tvOS). **The curated-vs-generated + repetition/obscurity question is a
+CONTENT-ENHANCEMENT decision for the owner, NOT a ship blocker:** (a) ship the
+auto-generated daily as-is (accept the ~1–2 week repeat cadence; obscure-but-teachable
+tiles actually fit Tidbits' learning thesis), (b) enrich the corpus (add clean
+capital/composer/sports pairs — additively, helps Matching too), or (c) commission a
+curated puzzle set (the real NYT model). All three reuse the shipped surface + generator.
 
 ---
 

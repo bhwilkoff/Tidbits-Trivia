@@ -136,7 +136,7 @@ Legend: ✅ done+verified · 🔨 in progress · ⏳ queued · 🚫 n/a (with re
 | 2 Story Archive | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 3 Marathon | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 4 Knowledge Atlas | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 5 Expedition | ✅ | ✅ | ⏳ | ⏳ | ⏳ | ⏳ |
+| 5 Expedition | ✅ | ✅ | ⏳ | ⏳ | ✅ | ⏳ |
 | — Friend Streaks (deferred: owner free/Club split, R-MON-4) | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 6 Link Wall | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 7 Expedition | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
@@ -201,6 +201,45 @@ Legend: ✅ done+verified · 🔨 in progress · ⏳ queued · 🚫 n/a (with re
 > next: `Tidbits.Core`'s `GameRecord` already has a `Date` field (`DateTime.UtcNow`
 > default) mirroring Android's `at` — port the same pure-derivation math over
 > `GameData`'s stored records, no schema change needed there either.
+>
+> Note: Android's `data/Expeditions.kt` mirrors the Apple/web catalog exactly —
+> the SAME 3 seven-stage campaigns (The 20th Century / Around the World / The
+> Scientific Record), `questionCount`=10 / `passBar`=6, difficulty bands per
+> stage over the real per-question `Question.difficulty` field (no separate
+> overlay needed — Android's classic corpus rows already carry a genuine 1-5
+> difficulty). `Expeditions.startStage` pulls a difficulty-banded set from
+> `Corpus.pull(categoryId, …)`, relaxing to the whole category pool if the band
+> comes up thin (never-empty, mirrors Ladder's difficulty filtering).
+> Persistence is a `Store.expeditionProgress()` SharedPreferences JSON object
+> keyed by expeditionId (several campaigns in progress at once, mirroring
+> Apple's per-expeditionID rows / web's MAP) + a separate
+> `expeditionCertificates` JSON array. A stage plays as a normal `Mode.CLASSIC`
+> round with a `custom` question list (`GameState.end()` needed NO
+> special-casing — a stage genuinely writes an ordinary `GameRecord`/misses/
+> telemetry, unlike Marathon which deliberately skips that write); only the
+> RESULT screen is special-cased in `GameScreen` (`Route.Game.expeditionId` +
+> `expeditionStageIndex`), calling `Expeditions.recordStageResult` once on
+> `GamePhase.FINISHED` and rendering a dedicated pass/fail/certificate beat
+> (`ExpeditionStageResultScreen`) instead of the default `ResultsScreen`. Mint
+> Club `ExpeditionsCard` on Home (always opens the hub, never the paywall
+> directly — hub + map are curated content reachable by everyone, matching
+> Apple/web); `ExpeditionsHubScreen` (campaign list + certificates shelf) and
+> `ExpeditionMapScreen` (locked/current/done stage path) render fully for
+> non-members too; only the map's "Play" button is Club-gated → the existing
+> `ClubPaywallScreen`. Debug: reused `tidbits_club_debug` + a new DEBUG-only
+> `expedition_force_pass` intent extra (`Expeditions.debugForcePass`, mirrors
+> Apple's `TIDBITS_EXPEDITION_FORCE_PASS` — autopilot can't reliably clear a
+> real pass bar either). assembleDebug BUILD SUCCESSFUL; emulator-verified: a
+> REAL (non-forced) round scored 1/10 → "NOT QUITE — Needed 6 of 10... you got
+> 1" → Try Again → stage did NOT advance (SharedPreferences-confirmed,
+> `currentStageIndex` stayed 0); the force-pass hook drove a full 7-stage
+> completion → certificate written (`totalScore`/`stagesCompleted`) with the
+> progress row DELETED in the same SharedPreferences edit; both the
+> in-progress failed campaign and the completed certificate survived TWO cold
+> `am force-stop` relaunches, and two campaigns (one failed-and-stuck, one
+> completed) stayed independent throughout; non-member hub/map rendered as a
+> full preview and tapping Play routed to `ClubPaywallScreen`. No version
+> bump.
 
 ---
 

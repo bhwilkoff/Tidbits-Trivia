@@ -43,6 +43,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import com.learningischange.tidbitstrivia.BuildConfig
 import com.learningischange.tidbitstrivia.data.PlayerIdentity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -60,7 +61,7 @@ sealed interface Route {
     data object Home : Route
     data object Records : Route
     data object Create : Route
-    data class Game(val mode: Mode, val category: Category, val custom: List<Question>? = null, val label: String? = null, val nightRounds: List<Pair<String, Int>>? = null, val dailyDay: String? = null, val mixModes: List<Mode>? = null, val duelId: String? = null, val weakSpotReasons: Map<String, String> = emptyMap()) : Route
+    data class Game(val mode: Mode, val category: Category, val custom: List<Question>? = null, val label: String? = null, val nightRounds: List<Pair<String, Int>>? = null, val dailyDay: String? = null, val mixModes: List<Mode>? = null, val duelId: String? = null, val weakSpotReasons: Map<String, String> = emptyMap(), val expeditionId: String? = null, val expeditionStageIndex: Int? = null) : Route
     data class Versus(val botId: String) : Route
     object OnlineMatch : Route
     data object NightSetup : Route
@@ -77,6 +78,8 @@ sealed interface Route {
     data object StoryArchive : Route   // Tidbits Club EXCLUSIVE — Story Archive (Feature 2)
     data object MarathonHistory : Route // Tidbits Club EXCLUSIVE — Marathon History (Feature 3)
     data object KnowledgeAtlas : Route // Tidbits Club EXCLUSIVE — Knowledge Atlas (Feature 4)
+    data object ExpeditionHub : Route  // Tidbits Club EXCLUSIVE — Expeditions hub (Feature 5); reachable by everyone (real preview)
+    data class ExpeditionMap(val expeditionId: String) : Route // an expedition's stage path; also a real preview for non-members
 }
 
 @Composable
@@ -152,6 +155,7 @@ fun AppRoot(
                         onPlayDaily = { day -> backStack.add(Route.Game(Mode.DAILY, Category.byId("mixed"), dailyDay = day)) },
                         onPlayWeakSpot = { qs, reasons -> backStack.add(Route.Game(Mode.WEAK_SPOT, Category.byId("mixed"), qs, "Weak-Spot Arena", weakSpotReasons = reasons)) },
                         onPlayMarathon = { backStack.add(Route.Game(Mode.MARATHON, Category.byId("mixed"), label = "Marathon")) },
+                        onExpeditions = { backStack.add(Route.ExpeditionHub) },
                         onVersus = { id -> backStack.add(Route.Versus(id)) },
                         onQuickMatch = { backStack.add(Route.OnlineMatch) },
                         onNight = { backStack.add(Route.NightSetup) },
@@ -218,6 +222,18 @@ fun AppRoot(
                         onBack = { backStack.removeLastOrNull() },
                         onClub = { backStack.add(Route.ClubPaywall) },
                         onPlay = { catId, label -> backStack.add(Route.Game(Mode.CLASSIC, Category.byId(catId), label = label)) })
+                    is Route.ExpeditionHub -> ExpeditionsHubScreen(store,
+                        onBack = { backStack.removeLastOrNull() },
+                        onOpenMap = { id -> backStack.add(Route.ExpeditionMap(id)) })
+                    is Route.ExpeditionMap -> ExpeditionMapScreen(store, r.expeditionId,
+                        onBack = { backStack.removeLastOrNull() },
+                        onClub = { backStack.add(Route.ClubPaywall) },
+                        onPlayStage = { expedition, stageIndex ->
+                            val stage = expedition.stages.firstOrNull { it.index == stageIndex } ?: return@ExpeditionMapScreen
+                            val qs = Expeditions.startStage(expedition, stageIndex)
+                            backStack.add(Route.Game(Mode.CLASSIC, Category.byId(stage.categoryId), qs, stage.title,
+                                expeditionId = expedition.id, expeditionStageIndex = stageIndex))
+                        })
                 }
             }
         }
@@ -247,6 +263,7 @@ private fun HomeScreen(
     onPlayDaily: (String) -> Unit,
     onPlayWeakSpot: (List<Question>, Map<String, String>) -> Unit,
     onPlayMarathon: () -> Unit,
+    onExpeditions: () -> Unit,
     onVersus: (String) -> Unit,
     onQuickMatch: () -> Unit,
     onNight: () -> Unit,
@@ -377,6 +394,13 @@ private fun HomeScreen(
             }
         }
 
+        // Expeditions — Tidbits Club EXCLUSIVE (docs/CLUB-FEATURES-BUILD.md "Feature 5").
+        // UNLIKE the other Club cards above: the hub list AND an expedition's stage map
+        // are curated CONTENT, a real preview reachable by EVERYONE — only tapping Play
+        // on a stage is Club-gated. So this card always opens the hub, never the
+        // paywall directly (mirrors Apple/web).
+        ExpeditionsCard(store = store, isClub = Entitlement.isClub, onClick = onExpeditions)
+
         Text("More ways to play", fontWeight = FontWeight.Bold, fontSize = 20.sp)
         Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
             HomeTile(Icons.Filled.Group, "Pass & Play", Pops.grape, Modifier.weight(1f), onParty)
@@ -480,6 +504,40 @@ private fun MarathonCard(isClub: Boolean, run: MarathonRun?, subtitle: String, o
                         Spacer(Modifier.width(6.dp))
                         Surface(shape = RoundedCornerShape(999.dp), color = Pops.coral) {
                             Text("RESUME", fontSize = 11.sp, fontWeight = FontWeight.Black, color = Color.White,
+                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp))
+                        }
+                    }
+                }
+                Text(subtitle, color = Color.White.copy(alpha = 0.85f), fontSize = 13.sp, maxLines = 2)
+            }
+            Icon(Icons.Filled.KeyboardArrowRight, null, tint = Color.White)
+        }
+    }
+}
+
+// Expeditions — Tidbits Club EXCLUSIVE (docs/CLUB-FEATURES-BUILD.md "Feature 5"). The
+// Home card (mirrors MarathonCard/StoryArchiveCard); the hub/map/result screens live
+// near ExpeditionsHubScreen below.
+@Composable
+private fun ExpeditionsCard(store: Store, isClub: Boolean, onClick: () -> Unit) {
+    val progressCount = remember(isClub) { Expeditions.available(store).count { it.second != null } }
+    val certCount = remember(isClub) { Expeditions.certificates(store).size }
+    val subtitle = when {
+        progressCount > 0 -> "$progressCount expedition${if (progressCount == 1) "" else "s"} in progress — tap to continue"
+        certCount > 0 -> "$certCount completed — pick a new one, or play one again"
+        else -> Expeditions.previewLine()
+    }
+    ChunkyCard(fill = Pops.mint, onClick = onClick) {
+        Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Filled.Terrain, null, tint = Color.White, modifier = Modifier.size(28.dp))
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("EXPEDITIONS", fontWeight = FontWeight.Black, fontSize = 20.sp, color = Color.White)
+                    if (!isClub) {
+                        Spacer(Modifier.width(6.dp))
+                        Surface(shape = RoundedCornerShape(999.dp), color = Color.White) {
+                            Text("CLUB", fontSize = 11.sp, fontWeight = FontWeight.Black, color = Pops.mint,
                                 modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp))
                         }
                     }
@@ -888,6 +946,42 @@ private fun GameScreen(route: Route.Game, store: Store, onDone: () -> Unit) {
                     }
                 },
                 onSeeHistory = { showHistory = true },
+                onDone = onDone)
+        }
+        return
+    }
+    // Expedition (Club — docs/CLUB-FEATURES-BUILD.md "Feature 5"): a stage is a normal
+    // CLASSIC round — GameState.end() writes an ordinary GameRecord/misses/telemetry
+    // ("a stage writes a normal record, it IS a real round"), no special-casing needed
+    // there. Only the RESULT screen is special: once the round finishes, record the
+    // stage outcome (pass/fail, and a certificate if this was the campaign's last
+    // stage) exactly once, then show the pass/fail beat instead of ResultsScreen.
+    val expedition = remember(route.expeditionId) { route.expeditionId?.let { Expeditions.named(it) } }
+    val expeditionStage = remember(expedition, route.expeditionStageIndex) {
+        expedition?.stages?.firstOrNull { it.index == route.expeditionStageIndex }
+    }
+    var expeditionOutcome by remember { mutableStateOf<Pair<Boolean, ExpeditionCertificate?>?>(null) }
+    LaunchedEffect(game.phase) {
+        if (game.phase == GamePhase.FINISHED && expedition != null && expeditionStage != null && expeditionOutcome == null) {
+            // DEBUG-only verification hook (compiled out in release): force a full pass
+            // regardless of the actual score — mirrors Apple's TIDBITS_EXPEDITION_FORCE_PASS
+            // (autopilot can't reliably clear a real pass bar answering blind).
+            val correct = if (BuildConfig.DEBUG && Expeditions.debugForcePass) expeditionStage.questionCount else game.correctCount
+            expeditionOutcome = Expeditions.recordStageResult(store, expedition, expeditionStage.index, correct, expeditionStage.questionCount)
+        }
+    }
+    if (expedition != null && expeditionStage != null && game.phase == GamePhase.FINISHED) {
+        if (expeditionOutcome == null) {
+            Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator() }
+        } else {
+            ExpeditionStageResultScreen(expedition, expeditionStage, game.correctCount, expeditionOutcome!!,
+                onRetry = {
+                    scope.launch {
+                        expeditionOutcome = null
+                        game.rebuildExpeditionStage(Expeditions.startStage(expedition, expeditionStage.index))
+                        game.restart()
+                    }
+                },
                 onDone = onDone)
         }
         return
@@ -2046,6 +2140,222 @@ private fun AtlasDecayRow(entry: KnowledgeAtlas.DecayEntry, onPlay: () -> Unit) 
                     fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
             }
             Button(onClick = onPlay, colors = ButtonDefaults.buttonColors(containerColor = Pops.coral, contentColor = Color.White)) { Text("Shore it up") }
+        }
+    }
+}
+
+// ---- Expeditions (Tidbits Club EXCLUSIVE — docs/CLUB-FEATURES-BUILD.md "Feature 5")
+// ---- A multi-week structured campaign through one domain: an ordered list of themed
+// stages, a visible map/path, and a completion certificate — assembled from the
+// EXISTING engine (data/Expeditions.kt), no new game mode. UNLIKE the other Club
+// surfaces above, the hub and an expedition's map are curated CONTENT — a real preview
+// reachable by EVERYONE; only tapping Play on the current stage is Club-gated (routes
+// non-members to the existing paywall). Android mirror of Apple's ExpeditionsView.swift
+// / web's #/expeditions.
+
+@Composable
+private fun ExpeditionsHubScreen(store: Store, onBack: () -> Unit, onOpenMap: (String) -> Unit) {
+    val ink = MaterialTheme.colorScheme.onSurface
+    val soft = ink.copy(alpha = 0.6f)
+    val progressRows = remember { Expeditions.available(store).associate { it.first.id to it.second } }
+    val certificates = remember { Expeditions.certificates(store) }
+    Column(Modifier.fillMaxSize().padding(20.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            TextButton(onClick = onBack) { Text("‹ Back") }
+            Text("Expeditions", fontSize = 24.sp, fontWeight = FontWeight.Black, color = ink)
+        }
+        Spacer(Modifier.height(4.dp))
+        Text(Expeditions.previewLine(), fontSize = 13.sp, color = soft)
+        Spacer(Modifier.height(14.dp))
+        LazyColumn(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            items(Expeditions.all, key = { it.id }) { expedition ->
+                ExpeditionRow(expedition, progressRows[expedition.id], certificates.any { it.expeditionId == expedition.id }) {
+                    onOpenMap(expedition.id)
+                }
+            }
+            if (certificates.isNotEmpty()) {
+                item(key = "expeditions-completed-header") {
+                    Text("Completed", fontWeight = FontWeight.Black, fontSize = 18.sp, color = ink, modifier = Modifier.padding(top = 8.dp))
+                }
+                items(certificates, key = { "expedition-cert-${it.expeditionId}-${it.completedAt}" }) { cert -> ExpeditionCertRow(cert) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ExpeditionRow(expedition: Expedition, progress: ExpeditionProgress?, hasCertificate: Boolean, onClick: () -> Unit) {
+    val col = Pops.at(Category.byId(expedition.domain).colorIndex)
+    val subtitle = when {
+        progress != null -> "Stage ${minOf(progress.currentStageIndex + 1, expedition.stageCount)} of ${expedition.stageCount} — tap to continue"
+        hasCertificate -> "Completed — tap to play again"
+        else -> expedition.subtitle
+    }
+    ChunkyCard(fill = col, onClick = onClick) {
+        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(categoryIcon(expedition.domain), null, tint = onAccent(col), modifier = Modifier.size(28.dp))
+            Spacer(Modifier.width(14.dp))
+            Column(Modifier.weight(1f)) {
+                Text(expedition.title.uppercase(), fontWeight = FontWeight.Black, fontSize = 18.sp, color = onAccent(col))
+                Text(subtitle, fontSize = 13.sp, color = onAccent(col).copy(alpha = 0.85f), maxLines = 2)
+            }
+            Icon(Icons.Filled.KeyboardArrowRight, null, tint = onAccent(col))
+        }
+    }
+}
+
+@Composable
+private fun ExpeditionCertRow(cert: ExpeditionCertificate) {
+    ChunkyCard(fill = MaterialTheme.colorScheme.surfaceVariant) {
+        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Filled.WorkspacePremium, null, tint = Pops.mint, modifier = Modifier.size(24.dp))
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(cert.title, fontWeight = FontWeight.Bold)
+                Text("${cert.stagesCompleted} stages · ${cert.totalScore} correct · ${java.text.DateFormat.getDateInstance().format(java.util.Date(cert.completedAt))}",
+                    fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+            }
+        }
+    }
+}
+
+@Composable
+private fun ExpeditionMapScreen(store: Store, expeditionId: String, onBack: () -> Unit, onClub: () -> Unit, onPlayStage: (Expedition, Int) -> Unit) {
+    val expedition = remember(expeditionId) { Expeditions.named(expeditionId) }
+    if (expedition == null) { LaunchedEffect(Unit) { onBack() }; return }
+    val ink = MaterialTheme.colorScheme.onSurface
+    val soft = ink.copy(alpha = 0.6f)
+    val progress = remember(expeditionId) { Expeditions.progress(store, expeditionId) }
+    val hasCertificate = remember(expeditionId) { Expeditions.certificates(store).any { it.expeditionId == expeditionId } }
+    val currentStageIndex = progress?.currentStageIndex ?: 0
+    Column(Modifier.fillMaxSize().padding(20.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            TextButton(onClick = onBack) { Text("‹ Back") }
+            Text(expedition.title, fontSize = 20.sp, fontWeight = FontWeight.Black, color = ink, maxLines = 1)
+        }
+        Spacer(Modifier.height(4.dp))
+        Text(expedition.subtitle, fontSize = 13.sp, color = soft)
+        Spacer(Modifier.height(6.dp))
+        if (hasCertificate && progress == null) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Filled.WorkspacePremium, null, tint = Pops.mint, modifier = Modifier.size(16.dp))
+                Spacer(Modifier.width(6.dp))
+                Text("Completed — play again for another certificate", fontSize = 13.sp, color = Pops.mint, fontWeight = FontWeight.Bold)
+            }
+        } else {
+            Text("${expedition.stageCount} stages · pick up where you left off, any time", fontSize = 13.sp, color = soft)
+        }
+        Spacer(Modifier.height(16.dp))
+        LazyColumn(Modifier.weight(1f).fillMaxWidth()) {
+            items(expedition.stages, key = { it.index }) { stage ->
+                ExpeditionStageRow(stage, currentStageIndex, onPlay = {
+                    if (Entitlement.isClub) onPlayStage(expedition, stage.index) else onClub()
+                })
+                if (stage.index != expedition.stages.size - 1) {
+                    Box(Modifier.padding(start = 17.dp).width(2.dp).height(14.dp).background(MaterialTheme.colorScheme.outlineVariant))
+                }
+            }
+        }
+        if (!Entitlement.isClub) {
+            Spacer(Modifier.height(8.dp))
+            Text("Join Tidbits Club to play this expedition. Everything above is a preview — no charge to look around.",
+                fontSize = 12.sp, color = soft)
+        }
+    }
+}
+
+@Composable
+private fun ExpeditionStageRow(stage: ExpeditionStage, currentStageIndex: Int, onPlay: () -> Unit) {
+    val ink = MaterialTheme.colorScheme.onSurface
+    val done = stage.index < currentStageIndex
+    val isCurrent = stage.index == currentStageIndex
+    val locked = !done && !isCurrent
+    Row(Modifier.fillMaxWidth().padding(vertical = 6.dp).alpha(if (locked) 0.55f else 1f), verticalAlignment = Alignment.Top) {
+        Box(
+            Modifier.size(34.dp)
+                .background(if (done) Pops.mint else if (isCurrent) Pops.coral else MaterialTheme.colorScheme.surfaceVariant, CircleShape)
+                .border(2.5.dp, Ink, CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            when {
+                done -> Icon(Icons.Filled.Check, null, tint = Color.White, modifier = Modifier.size(16.dp))
+                locked -> Icon(Icons.Filled.Lock, null, tint = ink.copy(alpha = 0.6f), modifier = Modifier.size(14.dp))
+                else -> Text("${stage.index + 1}", fontWeight = FontWeight.Black, color = Color.White)
+            }
+        }
+        Spacer(Modifier.width(14.dp))
+        Column(Modifier.weight(1f)) {
+            Text(stage.title, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = if (locked) ink.copy(alpha = 0.6f) else ink)
+            Text(stage.blurb, fontSize = 13.sp, color = ink.copy(alpha = 0.6f), maxLines = 2)
+            if (isCurrent) {
+                Spacer(Modifier.height(6.dp))
+                Button(onClick = onPlay, colors = ButtonDefaults.buttonColors(containerColor = Pops.coral, contentColor = Color.White)) { Text("Play") }
+            }
+        }
+    }
+}
+
+/** The post-stage beat (pass unlocks the next stage; fail offers "Try Again"; the
+ *  campaign's last stage passing shows a certificate card) — reuses [StatBox] the same
+ *  way MarathonResultCard/ResultsScreen do. */
+@Composable
+private fun ExpeditionStageResultScreen(
+    expedition: Expedition, stage: ExpeditionStage, correct: Int,
+    outcome: Pair<Boolean, ExpeditionCertificate?>, onRetry: () -> Unit, onDone: () -> Unit,
+) {
+    val (passed, certificate) = outcome
+    val ink = MaterialTheme.colorScheme.onSurface
+    val nextStageNumber = minOf(stage.index + 2, expedition.stageCount)
+    Column(
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(18.dp), horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        ChunkyCard(fill = (if (passed) Pops.mint else Pops.coral).copy(alpha = 0.16f), modifier = Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(vertical = 22.dp).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(
+                    if (certificate != null) Icons.Filled.WorkspacePremium else if (passed) Icons.Filled.CheckCircle else Icons.Filled.Replay,
+                    null, tint = if (passed) Pops.mint else Pops.coral, modifier = Modifier.size(44.dp),
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    if (certificate != null) "EXPEDITION COMPLETE" else if (passed) "STAGE ${stage.index + 1} PASSED" else "NOT QUITE",
+                    fontWeight = FontWeight.Black, fontSize = 22.sp, color = ink,
+                )
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    when {
+                        certificate != null -> "You completed ${expedition.title} — every stage, start to finish."
+                        passed -> "${stage.title} is done. Stage $nextStageNumber just unlocked."
+                        else -> "Needed ${stage.passBar} of ${stage.questionCount} to advance — you got $correct. Give it another go."
+                    },
+                    fontSize = 14.sp, color = ink.copy(alpha = 0.7f), textAlign = TextAlign.Center,
+                )
+            }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            StatBox("$correct/${stage.questionCount}", "Correct", Pops.blue)
+            StatBox("${stage.passBar}", "Pass bar", Pops.mint)
+            StatBox("${minOf(stage.index + (if (passed) 2 else 1), expedition.stageCount)}/${expedition.stageCount}", "Stage", Pops.coral)
+        }
+        if (certificate != null) {
+            ChunkyCard(fill = Pops.mint, modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(18.dp).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("CERTIFICATE EARNED", fontWeight = FontWeight.Black, fontSize = 15.sp, color = Color.White)
+                    Text(certificate.title, fontWeight = FontWeight.Black, fontSize = 20.sp, color = Color.White)
+                    Text("${certificate.stagesCompleted} stages · ${certificate.totalScore} correct total",
+                        fontSize = 13.sp, color = Color.White.copy(alpha = 0.85f))
+                }
+            }
+        }
+        if (passed) {
+            Button(onClick = onDone, modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = Pops.mint, contentColor = Color.White)) {
+                Text(if (certificate != null) "Done" else "Continue")
+            }
+        } else {
+            Button(onClick = onRetry, modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = Pops.coral, contentColor = Color.White)) { Text("Try Again") }
+            TextButton(onClick = onDone) { Text("Back to map") }
         }
     }
 }

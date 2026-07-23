@@ -12,6 +12,7 @@ import androidx.compose.runtime.setValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.learningischange.tidbitstrivia.app.AppNameApplication
 import com.learningischange.tidbitstrivia.data.Entitlement
+import com.learningischange.tidbitstrivia.data.Expeditions
 import com.learningischange.tidbitstrivia.data.Marathon
 import com.learningischange.tidbitstrivia.ui.AppRoot
 import com.learningischange.tidbitstrivia.ui.theme.AppTheme
@@ -38,6 +39,13 @@ class MainActivity : ComponentActivity() {
         // always sees the full 200 (docs/CLUB-FEATURES-BUILD.md "Feature 3").
         if (BuildConfig.DEBUG && intent.hasExtra("marathon_len")) {
             Marathon.debugLengthOverride = intent.getIntExtra("marathon_len", 0).takeIf { it > 0 }
+        }
+        // DEBUG-only env hook (no-op in release): `--ez expedition_force_pass true` makes
+        // a played Expedition stage always record as a full pass regardless of score —
+        // verification-only, mirrors Apple's TIDBITS_EXPEDITION_FORCE_PASS
+        // (docs/CLUB-FEATURES-BUILD.md "Feature 5").
+        if (BuildConfig.DEBUG && intent.hasExtra("expedition_force_pass")) {
+            Expeditions.debugForcePass = intent.getBooleanExtra("expedition_force_pass", false)
         }
         setContent {
             var dynamic by remember { mutableStateOf(store.dynamicColorEnabled()) }

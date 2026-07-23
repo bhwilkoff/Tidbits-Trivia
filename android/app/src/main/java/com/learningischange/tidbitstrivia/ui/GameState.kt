@@ -67,6 +67,10 @@ class GameState(
      *  (a brand-new custom set) rather than replay the just-finished one — mirror of
      *  [rebuildWeakSpot]. */
     fun rebuildMarathon(questions: List<Question>) { custom = questions }
+
+    /** Expedition (Club) "Try Again": swap in a freshly-drawn stage question set — a
+     *  stage is replayable on a miss, mirrors [rebuildWeakSpot]/[rebuildMarathon]. */
+    fun rebuildExpeditionStage(questions: List<Question>) { custom = questions }
     /** Fired when this device locks an answer (networked night → report to host). */
     var onLocalAnswer: ((score: Int, correct: Boolean) -> Unit)? = null
     /** Host-paced: answered this question, holding until the host reveals. */

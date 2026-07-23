@@ -1050,6 +1050,7 @@ class Store(context: Context) {
             .remove("missed").remove("streak_cur").remove("streak_best").remove("streak_day")
             .remove("stories")
             .remove("marathonRun").remove("marathonScores")
+            .remove("expeditionProgress").remove("expeditionCertificates")
             .apply()
     }
 
@@ -1226,6 +1227,71 @@ class Store(context: Context) {
                 .put("total", s.total).put("duration", s.durationSeconds).put("domains", domArr))
         }
         prefs.edit().putString("marathonScores", arr.toString()).apply()
+    }
+
+    // ---- Expeditions (Club — docs/CLUB-FEATURES-BUILD.md "Feature 5") ----
+    // Unlike Marathon's at-most-one run, SEVERAL expeditions may be in progress at
+    // once — one JSON object keyed by expeditionId (mirrors Apple's per-expeditionID
+    // ExpeditionProgress rows / web's tidbits.expeditionProgress MAP). A corrupt/legacy
+    // blob reads back as "nothing in progress" rather than crashing.
+
+    fun expeditionProgress(): Map<String, ExpeditionProgress> {
+        val raw = prefs.getString("expeditionProgress", null) ?: return emptyMap()
+        return try {
+            val o = JSONObject(raw)
+            o.keys().asSequence().mapNotNull { id ->
+                val p = o.optJSONObject(id) ?: return@mapNotNull null
+                val resArr = p.optJSONArray("stageResults") ?: org.json.JSONArray()
+                val results = (0 until resArr.length()).map { i ->
+                    val r = resArr.getJSONObject(i)
+                    ExpeditionStageResult(r.getInt("stage"), r.getBoolean("pass"), r.getInt("correct"), r.getInt("total"))
+                }
+                id to ExpeditionProgress(id, p.getInt("currentStageIndex"), results, p.getLong("startedAt"), p.getLong("lastPlayedAt"))
+            }.toMap()
+        } catch (e: Exception) { emptyMap() }
+    }
+
+    /** Persist one expedition's progress row (upsert by expeditionId) — called after
+     *  EVERY stage attempt so a player can leave and come back over days or weeks. */
+    fun saveExpeditionProgress(progress: ExpeditionProgress) {
+        val root = JSONObject(prefs.getString("expeditionProgress", "{}") ?: "{}")
+        val p = JSONObject()
+        p.put("currentStageIndex", progress.currentStageIndex)
+        val resArr = org.json.JSONArray()
+        progress.stageResults.forEach { r ->
+            resArr.put(JSONObject().put("stage", r.stageIndex).put("pass", r.passed).put("correct", r.correct).put("total", r.total))
+        }
+        p.put("stageResults", resArr)
+        p.put("startedAt", progress.startedAt)
+        p.put("lastPlayedAt", progress.lastPlayedAt)
+        root.put(progress.expeditionId, p)
+        prefs.edit().putString("expeditionProgress", root.toString()).apply()
+    }
+
+    fun deleteExpeditionProgress(expeditionId: String) {
+        val root = JSONObject(prefs.getString("expeditionProgress", "{}") ?: "{}")
+        root.remove(expeditionId)
+        prefs.edit().putString("expeditionProgress", root.toString()).apply()
+    }
+
+    /** Every completed Expedition, most recent first — the permanent certificates shelf. */
+    fun expeditionCertificates(): List<ExpeditionCertificate> {
+        val arr = org.json.JSONArray(prefs.getString("expeditionCertificates", "[]") ?: "[]")
+        return (0 until arr.length()).map { i ->
+            val o = arr.getJSONObject(i)
+            ExpeditionCertificate(o.getString("expeditionId"), o.getString("domain"), o.getString("title"),
+                o.getLong("completedAt"), o.getInt("totalScore"), o.getInt("stagesCompleted"))
+        }.sortedByDescending { it.completedAt }
+    }
+
+    fun appendExpeditionCertificate(cert: ExpeditionCertificate) {
+        val history = listOf(cert) + expeditionCertificates()
+        val arr = org.json.JSONArray()
+        history.take(500).forEach { c ->
+            arr.put(JSONObject().put("expeditionId", c.expeditionId).put("domain", c.domain).put("title", c.title)
+                .put("completedAt", c.completedAt).put("totalScore", c.totalScore).put("stagesCompleted", c.stagesCompleted))
+        }
+        prefs.edit().putString("expeditionCertificates", arr.toString()).apply()
     }
 
     // R-DAILY-1: per-day Daily results — first completion locks the day.

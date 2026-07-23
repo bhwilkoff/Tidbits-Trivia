@@ -13,6 +13,17 @@
   matching the exact IDs the app loads:
   `…club.lifetime` (Non-Consumable, $79.99) · `…club.annual` (auto-renew, $29.99/yr) ·
   `…club.monthly` (auto-renew, $3.99/mo), both subs in the **"Tidbits Club"** group.
+- **Google Play (Android):** all 3 products created + **Active** on dev account
+  `7973176709446146294` (app `4974359415935101457`, package `com.tidbitstrivia.app`):
+  `club_annual` (subscription, base plan `annual-autorenew`, Yearly, $29.99, Active) ·
+  `club_monthly` (subscription, base plan `monthly-autorenew`, Monthly, $3.99, Active) ·
+  `club_lifetime` (one-time "Buy" product, purchase option `lifetime`, $79.99, **Active,
+  "Backwards compatible"** so the legacy `club_lifetime` INAPP query in `Billing.kt`
+  resolves). Prices auto-converted to all 173–177 regions from the USD base. *This
+  required first uploading a **billing-enabled AAB** — Play gates all in-app product
+  creation on a build declaring the BILLING permission; the prior Play build predated
+  Play Billing. Built + signed + uploaded **vc74 (1.6.51) to the Internal track** via
+  `tools/submit-play.sh` (service account `~/.config/play/archivewatch-play.json`).*
 
 **REMAINING — owner only:**
 1. **Apple:** add a **review screenshot** (the paywall) to each of the 3 products and
@@ -25,11 +36,10 @@
    plus `FIREBASE_SA_EMAIL` / `FIREBASE_SA_PRIVATE_KEY` / `FIREBASE_DB_URL`. Until these
    are set the Worker returns 503 (safe) and web purchases won't grant Club. *(Claude
    generated a candidate secret this session and shared it in chat — not stored in git.)*
-3. **Google Play — BLOCKED:** the Chrome session's default Google account (u/0) hit a
-   *"create a developer account"* flow, i.e. it's **not** the Google login that owns the
-   Tidbits developer account (likely `ben@learningischange.com` vs a personal login).
-   Switch to the correct Google account, then create `club_lifetime` (in-app) /
-   `club_annual` (sub, annual base plan) / `club_monthly` (sub, monthly base plan).
+3. **Google Play — DONE (products live).** All 3 products created + Active (see above).
+   The only Play follow-up is **promoting the Internal-track vc74 build toward
+   production** when you're ready to go live (the billing-enabled build is on Internal
+   now, which is all Play needed to unblock product creation and sandbox testing).
 4. **Microsoft:** add-ons for a **Game** product require the base app to be **published**
    (Tidbits is still *in certification*). Create the 3 add-ons (`club.lifetime` durable,
    `club.annual` / `club.monthly` subscriptions) once the app goes live.

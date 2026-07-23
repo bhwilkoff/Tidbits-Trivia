@@ -20,9 +20,9 @@ export const CLUB = {
     ['🧭', 'Expeditions', 'Multi-week campaigns that turn a session game into a pursuit.'],
   ],
   plans: [
-    { id: 'lifetime', name: 'Founding Member', price: '$79.99', tag: 'Lifetime · first 90 days only', accent: '#FF5C5C', checkout: '' },
-    { id: 'annual',   name: 'Tidbits Club',    price: '$29.99', tag: 'per year · best value',        accent: '#2D5BFF', checkout: '' },
-    { id: 'monthly',  name: 'Tidbits Club',    price: '$3.99',  tag: 'per month',                    accent: '#2D5BFF', checkout: '' },
+    { id: 'lifetime', name: 'Founding Member', price: '$79.99', tag: 'Lifetime · first 90 days only', accent: '#FF5C5C', checkout: 'https://tidbits.lemonsqueezy.com/checkout/buy/e8aee436-dc74-4282-b1be-51c5bd522087' },
+    { id: 'annual',   name: 'Tidbits Club',    price: '$29.99', tag: 'per year · best value',        accent: '#2D5BFF', checkout: 'https://tidbits.lemonsqueezy.com/checkout/buy/305f4620-1ff3-41f6-b01b-2f91b45d144a' },
+    { id: 'monthly',  name: 'Tidbits Club',    price: '$3.99',  tag: 'per month',                    accent: '#2D5BFF', checkout: 'https://tidbits.lemonsqueezy.com/checkout/buy/74455f45-b5c7-430b-aee2-574888769189' },
   ],
 };
 

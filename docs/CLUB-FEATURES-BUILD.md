@@ -541,6 +541,38 @@ singleton themes (<3 candidate blocks) in the daily ranking. Re-sample 8, re-jud
 **Only then** decide Stage 2. All fixes live in `LinkWall.swift` — do NOT edit
 `match.json` (it serves the Matching mode correctly as-is).
 
+### Stage 1.5 + 1.6 RESULT (2026-07-22) — content gate PASSED
+Applied the scoped fixes in `LinkWall.swift` (BUILD SUCCEEDED, still Core-only):
+- `capital` + `currency` + `composer`: the impure themes are pooled-and-recombined
+  from an allowlist of clean pairs (145 sovereign countries / 43 real classical works)
+  into synthetic 4-tile blocks — per-block filtering alone would've killed them (0–1 of
+  60 blocks were 4-for-4 clean). `author` + `director`: denylist + `isRealBook`/
+  `isRealFilm`. Relabels: "Classical Compositions"→"Composers & Their Works",
+  "Classic Novels"→"Books & Their Authors". Collision guard now catches near-dups
+  (substring/prefix). Singleton themes downweighted (k=10) so they surface ~1.2 of 4
+  slots (was ~3.1). Also fixed a type-checker-timeout expression.
+- **A fresh 8-puzzle sample is now 100% content-clean — 0 broken groups across ALL
+  themes** (was 4/8 in Stage 1). Every tile is real + correctly attributed.
+
+**Two KNOWN LIMITATIONS (corpus-depth, not code — an OWNER decision, see below):**
+1. **Thin clean pools repeat.** World Capitals = 9 synthetic chunks (39 clean pairs);
+   Composers = 10 (43 works). Exact repeats surface ~every 1–2 weeks on a daily cadence
+   (one already did within 8 samples). The 20 sports/history themes are **hard
+   singletons** (1 block each) → identical 4 tiles whenever picked.
+2. **The clean pools skew obscure** (capitals like Lobamba; works like *Nabucco*) — fair
+   and teachable via the reveal, but not the recognizable-tile *delight* of a
+   hand-crafted NYT Connections.
+
+### Stage 2 — STAGED AGAIN (iOS-reference-first, then hold for an OWNER decision)
+Unlike Features 1–5 (fanned out to 6 platforms once validated), Link Wall's repetition/
+obscurity ceiling is a genuine **curated-vs-generated PRODUCT decision** only the owner
+can make. So: build the **iOS play surface only** on the (content-clean) generator so
+there's a real, playable, judge-able feature — then **HOLD the 5-platform fan-out** and
+present the owner the decision: (a) ship the auto-generated daily as-is (accept the ~1–2
+week repeat cadence), (b) enrich the corpus (add clean capital/composer/sports pairs to
+`match.json`) to deepen variety, or (c) commission a curated/hand-authored puzzle set
+(the real NYT model). The generator + iOS surface are reusable under any choice.
+
 ---
 
 ## Deferred (need an owner decision before building)

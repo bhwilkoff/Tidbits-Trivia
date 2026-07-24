@@ -62,7 +62,8 @@ public sealed class CorpusDatabase
         {
             var prompt = q.Prompt.ToLowerInvariant();
             var title = q.SourceTitle.ToLowerInvariant();
-            if (tokens.Any(t => prompt.Contains(t) || title.Contains(t)))
+            var explanationPre = q.Explanation.ToLowerInvariant();
+            if (tokens.Any(t => prompt.Contains(t) || title.Contains(t) || explanationPre.Contains(t)))
             {
                 matched.Add(q);
                 if (matched.Count >= 400) break;
@@ -78,7 +79,8 @@ public sealed class CorpusDatabase
             if (q.Difficulty <= 1) continue;                        // trivially easy
             var title = q.SourceTitle.ToLowerInvariant();
             var prompt = q.Prompt.ToLowerInvariant();
-            var score = tokens.Sum(t => (title.Contains(t) ? 2 : 0) + (prompt.Contains(t) ? 1 : 0));
+            var explanation = q.Explanation.ToLowerInvariant();
+            var score = tokens.Sum(t => (title.Contains(t) ? 2 : 0) + (prompt.Contains(t) ? 1 : 0) + (explanation.Contains(t) ? 1 : 0));
             scored.Add((q, score));
         }
 

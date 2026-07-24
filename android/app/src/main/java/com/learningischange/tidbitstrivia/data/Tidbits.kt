@@ -315,8 +315,8 @@ object Corpus {
             // repetitive, non-educational — and the trivially-easy tier.
             if (q.id.startsWith("src:continent:")) return@mapNotNull null
             if (q.difficulty <= 1) return@mapNotNull null
-            val title = q.sourceTitle.lowercase(); val prompt = q.prompt.lowercase()
-            val score = tokens.sumOf { (if (title.contains(it)) 2 else 0) + (if (prompt.contains(it)) 1 else 0) }
+            val title = q.sourceTitle.lowercase(); val prompt = q.prompt.lowercase(); val explanation = q.explanation.lowercase()
+            val score = tokens.sumOf { (if (title.contains(it)) 2 else 0) + (if (prompt.contains(it)) 1 else 0) + (if (explanation.contains(it)) 1 else 0) }
             if (score > 0) q to score else null
         }.sortedByDescending { it.second }.map { it.first }
         return diversifyByCategory(ranked, limit)
@@ -456,7 +456,7 @@ class JsonQuestionSet(private val asset: String) {
         return all.filter { q ->
             val ans = q.answerText.lowercase()
             if (tokens.any { ans.contains(it) }) return@filter false
-            val hay = "${q.prompt} ${q.sourceTitle}".lowercase()
+            val hay = "${q.prompt} ${q.sourceTitle} ${q.explanation}".lowercase()
             tokens.any { hay.contains(it) }
         }.shuffled().take(limit)
     }

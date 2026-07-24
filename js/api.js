@@ -138,9 +138,9 @@ export const Corpus = {
       // repetitive, and doesn't teach anything — and the trivially-easy tier.
       if ((q.id || '').startsWith('src:continent:')) continue;
       if ((q.difficulty || 2) <= 1) continue;
-      const title = (q.sourceTitle || '').toLowerCase(), prompt = (q.prompt || '').toLowerCase();
+      const title = (q.sourceTitle || '').toLowerCase(), prompt = (q.prompt || '').toLowerCase(), explanation = (q.explanation || '').toLowerCase();
       let s = 0;
-      for (const t of tokens) { if (title.includes(t)) s += 2; if (prompt.includes(t)) s += 1; }
+      for (const t of tokens) { if (title.includes(t)) s += 2; if (prompt.includes(t)) s += 1; if (explanation.includes(t)) s += 1; }
       if (s > 0) scored.push([q, s]);
     }
     scored.sort((a, b) => b[1] - a[1]);
@@ -229,7 +229,7 @@ function makeJsonSet(filename, parseRow = rowToQuestion) {
       const hits = this.questions.filter((q) => {
         const ans = ((q.options && q.options[q.correctIndex]) || '').toLowerCase();
         if (tokens.some((t) => ans.includes(t))) return false;
-        const hay = `${q.prompt} ${q.sourceTitle}`.toLowerCase();
+        const hay = `${q.prompt} ${q.sourceTitle} ${q.explanation || ''}`.toLowerCase();
         return tokens.some((t) => hay.includes(t));
       });
       for (let i = hits.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [hits[i], hits[j]] = [hits[j], hits[i]]; }

@@ -46,7 +46,7 @@ nonisolated final class JSONQuestionSource: @unchecked Sendable {
         let hits = all.filter { q in
             let ans = q.correctAnswer.lowercased()
             if tokens.contains(where: { ans.contains($0) }) { return false }
-            let hay = (q.prompt + " " + q.sourceTitle).lowercased()
+            let hay = (q.prompt + " " + q.sourceTitle + " " + q.explanation).lowercased()
             return tokens.contains { hay.contains($0) }
         }
         return Array(hits.shuffled().prefix(limit))

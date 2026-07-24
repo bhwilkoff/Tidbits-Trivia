@@ -99,7 +99,7 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
         guard !tokens.isEmpty else { return [] }
         return queue.sync {
             guard let db else { return [] }
-            let clause = tokens.map { _ in "(lower(prompt) LIKE ? OR lower(source_title) LIKE ?)" }.joined(separator: " OR ")
+            let clause = tokens.map { _ in "(lower(prompt) LIKE ? OR lower(source_title) LIKE ? OR lower(explanation) LIKE ?)" }.joined(separator: " OR ")
             let sql = "SELECT * FROM questions WHERE \(clause) LIMIT 400"
             var stmt: OpaquePointer?
             defer { sqlite3_finalize(stmt) }
@@ -107,6 +107,7 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
             var idx: Int32 = 1
             for t in tokens {
                 let like = "%\(t)%"
+                sqlite3_bind_text(stmt, idx, like, -1, Self.transientDestructor); idx += 1
                 sqlite3_bind_text(stmt, idx, like, -1, Self.transientDestructor); idx += 1
                 sqlite3_bind_text(stmt, idx, like, -1, Self.transientDestructor); idx += 1
             }
@@ -123,8 +124,8 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
                 // easy, repetitive, non-educational — and the trivially-easy tier.
                 if q.id.hasPrefix("src:continent:") { continue }
                 if q.difficulty <= 1 { continue }
-                let title = q.sourceTitle.lowercased(), prompt = q.prompt.lowercased()
-                let score = tokens.reduce(0) { $0 + (title.contains($1) ? 2 : 0) + (prompt.contains($1) ? 1 : 0) }
+                let title = q.sourceTitle.lowercased(), prompt = q.prompt.lowercased(), explanation = q.explanation.lowercased()
+                let score = tokens.reduce(0) { $0 + (title.contains($1) ? 2 : 0) + (prompt.contains($1) ? 1 : 0) + (explanation.contains($1) ? 1 : 0) }
                 scored.append((q, score))
             }
             let ranked = scored.sorted { $0.1 > $1.1 }.map { $0.0 }

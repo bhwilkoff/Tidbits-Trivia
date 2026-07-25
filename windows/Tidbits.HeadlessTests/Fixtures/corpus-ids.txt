@@ -64943,7 +64943,6 @@ src:describe:Salford_City_F.C.
 src:describe:Akram_Afif
 src:cloze:Akram_Afif
 src:describe:Jarrod_Bowen
-src:cloze:Jarrod_Bowen
 src:describe:Kemba_Walker
 src:cloze:Kemba_Walker
 src:describe:Patrick_Beverley
@@ -64969,7 +64968,6 @@ src:cloze:Eddie_Howe
 src:describe:Yair_Rodríguez
 src:cloze:Yair_Rodríguez
 src:describe:Alessia_Russo
-src:cloze:Alessia_Russo
 src:describe:Ukyo_Shuto
 src:cloze:Ukyo_Shuto
 src:cloze:Manuel_Ugarte_(footballer)
@@ -64985,10 +64983,8 @@ src:cloze:Derrick_Lewis
 src:describe:Lisandro_Martínez
 src:cloze:Lisandro_Martínez
 src:describe:Petra_Kvitová
-src:cloze:Petra_Kvitová
 src:describe:UEFA_Intertoto_Cup
 src:describe:Mitchell_Starc
-src:cloze:Mitchell_Starc
 src:describe:2021_Copa_América
 src:describe:Wim_Hof
 src:cloze:Wim_Hof
@@ -64998,7 +64994,6 @@ src:describe:Bolton_Wanderers_F.C.
 src:describe:Jamahal_Hill
 src:cloze:Jamahal_Hill
 src:describe:Joe_Root
-src:cloze:Joe_Root
 src:describe:Owen_Farrell
 src:describe:Al_Horford
 src:cloze:Al_Horford
@@ -65007,14 +65002,12 @@ src:cloze:Ralf_Schumacher
 src:describe:Kyler_Murray
 src:cloze:Kyler_Murray
 src:describe:Sourav_Ganguly
-src:cloze:Sourav_Ganguly
 src:describe:Patrick_Kane
 src:cloze:Patrick_Kane
 src:describe:Iyo_Sky
 src:describe:Keisuke_Honda
 src:describe:2022–23_FA_Cup
 src:describe:Shinji_Kagawa
-src:cloze:Shinji_Kagawa
 src:describe:Jaap_Stam
 src:cloze:Jaap_Stam
 src:describe:Cruz_Azul
@@ -65037,7 +65030,6 @@ src:cloze:Moise_Kean
 src:describe:Fabio_Grosso
 src:cloze:Fabio_Grosso
 src:describe:Douglas_Costa
-src:cloze:Douglas_Costa
 src:describe:Pétanque
 src:cloze:Pétanque
 src:describe:Luuk_de_Jong

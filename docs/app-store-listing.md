@@ -14,6 +14,34 @@ the console. Update here first, every release.
 - **License Agreement (EULA)**: `https://tidbitstrivia.com/terms.html` (custom EULA; auto-renew terms + per-store cancel)
 - **App Privacy**: The full game collects nothing. Three OPTIONAL features collect data, all Linked + App-Functionality, NEVER tracking: sign-in (Name, User ID), leaderboards (game stats → "Other Data"), Tidbits Club (Email Address, stored as a one-way hash). Must match `PrivacyInfo.xcprivacy` + privacy.html (2026-07-23 IAP-compliance pass).
 
+### EULA setup is PER-PLATFORM App Store Connect app record — verify on EVERY platform
+
+**Ratchet (2026-07-25)**: tvOS was rejected — "offers auto-renewable
+subscriptions but does not include a functional link to the Terms of Use
+(EULA) in the app's metadata" — even though macOS's identical listing had
+already passed review. This is because each Apple platform (iOS, tvOS,
+macOS) has its OWN separate App Store Connect app record with its OWN
+"License Agreement" setting under **App Information** — it is NOT
+inherited from another platform's record, and defaults to Apple's
+Standard EULA (no custom link) until explicitly changed. Passing on one
+platform is not evidence the others are configured.
+
+**Fix, required on EVERY Apple platform's App Store Connect record**
+(App Store Connect → the platform's app → **App Information** → scroll to
+**License Agreement**):
+1. Select **Custom License Agreement** (not "Apple's Standard EULA").
+2. Paste the full text of `terms.html` (App Store Connect wants the
+   agreement TEXT in this field, not just a URL — copy the rendered page
+   text, or paste the URL if the field accepts a link; check which the
+   current UI offers and use the same approach the working macOS/iOS
+   records already use, so all platforms stay identical).
+3. Save, then re-submit the affected platform's build for review.
+
+Do this for tvOS now (the active rejection), and audit iOS + macOS to
+confirm both actually have it set (don't assume from "macOS passed" —
+verify directly in App Store Connect, since a reviewer not flagging it
+this pass isn't proof it's configured).
+
 ## App Name (≤30 chars)
 `Tidbits: Wikipedia Trivia` (25)
 

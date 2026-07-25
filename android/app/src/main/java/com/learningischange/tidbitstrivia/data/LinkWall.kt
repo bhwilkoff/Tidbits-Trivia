@@ -272,13 +272,25 @@ object LinkWall {
 
             // World Capitals: pool every clean (country, capital) pair across ALL
             // blocks instead — no single block yields 4 modern sovereign capitals.
+            // The SAME country can legitimately appear in multiple match.json blocks
+            // (each independently correct), so dedupe by country here — otherwise two
+            // identical pairs can land in the same re-chunked group of 4, producing a
+            // duplicate tile.
             if (q.prompt == CAPITAL_PROMPT) {
-                keys.indices.forEach { i -> if (sovereignCountries.contains(keys[i])) sovereignCapitalPairs.add(keys[i] to values[i]) }
+                keys.indices.forEach { i ->
+                    if (sovereignCountries.contains(keys[i]) && sovereignCapitalPairs.none { it.first == keys[i] }) {
+                        sovereignCapitalPairs.add(keys[i] to values[i])
+                    }
+                }
                 continue
             }
-            // Composers & Their Works: same pool-and-re-chunk treatment.
+            // Composers & Their Works: same pool-and-re-chunk treatment, same dedupe need.
             if (q.prompt == COMPOSER_PROMPT) {
-                keys.indices.forEach { i -> if (isRealClassical(keys[i])) classicalWorkPairs.add(keys[i] to values[i]) }
+                keys.indices.forEach { i ->
+                    if (isRealClassical(keys[i]) && classicalWorkPairs.none { it.first == keys[i] }) {
+                        classicalWorkPairs.add(keys[i] to values[i])
+                    }
+                }
                 continue
             }
 

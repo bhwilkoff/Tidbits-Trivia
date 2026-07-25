@@ -116,8 +116,13 @@ enum LinkWall {
             // sovereign capitals (see the Stage 1.5 note above) — pool every
             // clean (country, capital) pair across ALL blocks instead and
             // re-chunk below, so this block itself contributes no Candidate.
+            // The SAME country can legitimately appear in multiple match.json blocks
+            // (each independently correct), so dedupe by country here — otherwise two
+            // identical pairs can land in the same re-chunked group of 4, producing a
+            // duplicate tile.
             if q.prompt == capitalPrompt {
-                for (country, capital) in zip(keys, values) where sovereignCountries.contains(country) {
+                for (country, capital) in zip(keys, values)
+                where sovereignCountries.contains(country) && !sovereignCapitalPairs.contains(where: { $0.country == country }) {
                     sovereignCapitalPairs.append((country, capital))
                 }
                 continue
@@ -127,9 +132,10 @@ enum LinkWall {
             // essentially no block is 4-for-4 real classical works (the pool
             // is dominated by film/TV/video-game scores and pop/rock songs
             // sharing the same "Match each work to its composer." prompt).
-            // Same pool-and-re-chunk treatment.
+            // Same pool-and-re-chunk treatment, same dedupe need.
             if q.prompt == composerPrompt {
-                for (work, composer) in zip(keys, values) where isRealClassical(work) {
+                for (work, composer) in zip(keys, values)
+                where isRealClassical(work) && !classicalWorkPairs.contains(where: { $0.work == work }) {
                     classicalWorkPairs.append((work, composer))
                 }
                 continue

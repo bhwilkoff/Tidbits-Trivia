@@ -984,16 +984,23 @@ function lwCandidates(matchQuestions) {
 
     // World Capitals: pool every clean (country, capital) pair across ALL blocks
     // instead — no single block yields 4 modern sovereign capitals.
+    // The SAME country can legitimately appear in multiple match.json blocks (each
+    // independently correct), so dedupe by country here -- otherwise two identical
+    // pairs can land in the same re-chunked group of 4, producing a duplicate tile.
     if (q.prompt === LW_CAPITAL_PROMPT) {
       for (let i = 0; i < keys.length; i++) {
-        if (LW_SOVEREIGN_COUNTRIES.has(keys[i])) sovereignCapitalPairs.push({ country: keys[i], capital: values[i] });
+        if (LW_SOVEREIGN_COUNTRIES.has(keys[i]) && !sovereignCapitalPairs.some((p) => p.country === keys[i])) {
+          sovereignCapitalPairs.push({ country: keys[i], capital: values[i] });
+        }
       }
       continue;
     }
-    // Composers & Their Works: same pool-and-re-chunk treatment.
+    // Composers & Their Works: same pool-and-re-chunk treatment, same dedupe need.
     if (q.prompt === LW_COMPOSER_PROMPT) {
       for (let i = 0; i < keys.length; i++) {
-        if (lwIsRealClassical(keys[i])) classicalWorkPairs.push({ work: keys[i], composer: values[i] });
+        if (lwIsRealClassical(keys[i]) && !classicalWorkPairs.some((p) => p.work === keys[i])) {
+          classicalWorkPairs.push({ work: keys[i], composer: values[i] });
+        }
       }
       continue;
     }

@@ -365,7 +365,7 @@ struct RecordsView: View {
         let mastered = ds.filter { $0.hasWedge }.count
         return VStack(alignment: .leading, spacing: 12) {
             Text("Your knowledge").font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
-            Text("Each domain levels up as you answer its questions correctly. You've explored \(ds.count) of 7 domains and mastered \(mastered). Tap a domain to see the questions you've faced.")
+            Text("Each domain levels up as you answer its questions correctly. You've explored \(ds.count) of 8 domains and mastered \(mastered). Tap a domain to see the questions you've faced.")
                 .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
                 .fixedSize(horizontal: false, vertical: true)
             ForEach(ds) { d in

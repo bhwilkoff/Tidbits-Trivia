@@ -43,7 +43,7 @@ public class PieTest
             }
 
             var vm = new RecordsViewModel(store);
-            Assert.Equal(7, vm.Wedges.Count);
+            Assert.Equal(8, vm.Wedges.Count);
             Assert.True(vm.WedgesEarned >= 1);
             Assert.Contains(vm.Wedges, w => w.Name == "Science" && w.Mastered);
 

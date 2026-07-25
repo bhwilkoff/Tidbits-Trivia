@@ -91,7 +91,7 @@ enum RecordsStore {
         }
         let domains = DomainProgress.summarize(records.map { ($0.categoryID, $0.correct, $0.total) })
         gc.report(GameCenterManager.Achievement.fullPie,
-                  percent: Double(DomainProgress.wedgesEarned(domains)) / 7 * 100)
+                  percent: Double(DomainProgress.wedgesEarned(domains)) / Double(ProgressMath.domainIDs.count) * 100)
         if summary.mode == .stake {
             let total = summary.stakeOutcomes.values.reduce(0) { $0 + $1.total }
             let hits = summary.stakeOutcomes.values.reduce(0) { $0 + $1.hits }

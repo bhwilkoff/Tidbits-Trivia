@@ -1545,7 +1545,7 @@ private fun RecordsScreen(store: Store, onOpenArchive: () -> Unit, onOpenMaratho
         val explored = prog.count { it.total > 0 }
         val mastered = prog.count { it.hasWedge }
         Text("Your knowledge", fontWeight = FontWeight.Bold, fontSize = 20.sp)
-        Text("Each domain levels up as you answer its questions correctly. You've explored $explored of 7 domains and mastered $mastered. A ✓ means mastered — 15+ right at 60%+ accuracy.",
+        Text("Each domain levels up as you answer its questions correctly. You've explored $explored of 8 domains and mastered $mastered. A ✓ means mastered — 15+ right at 60%+ accuracy.",
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
         prog.filter { it.total > 0 }.forEach { TopicRow(it) { drillDomain = it.id } }
         // L4: levelable badges — tiered milestones from BadgeMath (mirror of Core), hidden until one is earned.

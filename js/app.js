@@ -1677,7 +1677,7 @@ function progressSection() {
       </div><span class="chev">›</span></button>`;
   }).join('');
   return `<h2 class="section">Your knowledge</h2>
-    <p class="muted">Each domain levels up as you answer its questions correctly. You've explored ${explored} of 7 domains and mastered ${mastered}. A ✓ means mastered — 15+ right at 60%+ accuracy.</p>
+    <p class="muted">Each domain levels up as you answer its questions correctly. You've explored ${explored} of 8 domains and mastered ${mastered}. A ✓ means mastered — 15+ right at 60%+ accuracy.</p>
     ${rows}`;
 }
 

@@ -25,7 +25,7 @@ public sealed class RecordsViewModel
     public bool HasDomains => Domains.Count > 0;
     public IReadOnlyList<WedgeInfo> Wedges { get; }
     public int WedgesEarned { get; }
-    public string PieCaption => WedgesEarned == 7 ? "All 7 domains mastered!" : $"{WedgesEarned} of 7 domains mastered";
+    public string PieCaption => WedgesEarned == 8 ? "All 8 domains mastered!" : $"{WedgesEarned} of 8 domains mastered";
 
     private static string WedgeHex(int i) => i switch
     {

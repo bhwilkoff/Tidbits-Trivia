@@ -348,7 +348,7 @@ struct RecordsView_tvOS: View {
         let mastered = ds.filter { $0.hasWedge }.count
         return VStack(alignment: .leading, spacing: 16) {
             Text("Your knowledge").font(.system(size: 40, weight: .heavy, design: .rounded)).foregroundStyle(TVTheme.text)
-            Text("Each domain levels up as you answer its questions correctly. You've explored \(ds.count) of 7 domains and mastered \(mastered). A checkmark means mastered — 15+ right at 60%+ accuracy.")
+            Text("Each domain levels up as you answer its questions correctly. You've explored \(ds.count) of 8 domains and mastered \(mastered). A checkmark means mastered — 15+ right at 60%+ accuracy.")
                 .font(.system(size: 27, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
                 .fixedSize(horizontal: false, vertical: true)
             ForEach(ds) { d in topicRow(d) }

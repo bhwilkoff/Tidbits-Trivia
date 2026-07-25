@@ -59198,7 +59198,6 @@ src:cloze:Josh_Andrés_Rivera
 src:describe:Sophie_Rundle
 src:cloze:Sophie_Rundle
 src:describe:Suzuka_Nakamoto
-src:cloze:Suzuka_Nakamoto
 src:describe:Spirit:_Stallion_of_the_Cimarron
 src:describe:Trigun
 src:cloze:Trigun

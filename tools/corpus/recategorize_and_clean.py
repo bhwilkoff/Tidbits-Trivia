@@ -39,6 +39,7 @@ DOMAINS = [
     ("screen", re.compile(r'\b(actor|actress|film director|filmmaker|screenwriter|film producer|television presenter|television host|talk show host|voice actor|comedian|television|sitcom|video game)\b', re.I)),
     ("arts", re.compile(r'\b(novelist|poet|playwright|author|writer|painter|sculptor|philosopher|essayist|cartoonist|illustrator|animator|architect|photographer|dramatist|art historian|fashion designer|journalist|theologian)\b', re.I)),
     ("history", re.compile(r'\b(king|queen|emperor|empress|president|politician|monarch|general|prime minister|statesman|pharaoh|dictator|senator|revolutionary|warlord|chieftain|admiral|marshal|nobleman|aristocrat|duke|duchess|sultan|caliph|tsar|chancellor|governor|viceroy|diplomat|activist)\b', re.I)),
+    ("business", re.compile(r'\b(entrepreneur|businessperson|businessman|businesswoman|CEO|chief executive|executive|founder|co-founder|magnate|tycoon|financier|investor|automaker|manufacturer|conglomerate|corporation|multinational|retailer|airline|brewery)\b', re.I)),
 ]
 
 

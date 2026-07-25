@@ -169,7 +169,7 @@ enum DebugHooks {
         let existing = (try? context.fetch(FetchDescriptor<GameRecord>())) ?? []
         guard existing.isEmpty else { return }
         let modes: [GameMode] = [.classic, .timeAttack, .survival, .stake, .sweep, .oddOneOut, .ladder]
-        let cats = ["history", "science", "geography", "arts", "screen", "music", "sports", "mixed"]
+        let cats = ["history", "science", "geography", "arts", "screen", "music", "sports", "business", "mixed"]
         for i in 0..<n {
             let mode = modes[i % modes.count]
             let cat = cats[i % cats.count]

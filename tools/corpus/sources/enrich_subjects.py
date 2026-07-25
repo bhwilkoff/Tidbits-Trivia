@@ -30,6 +30,7 @@ DB = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "corpus_sourc
 # ---- category mapping: Wikidata type/occupation QID -> app domain -----------
 SCREEN = "screen"; MUSIC = "music"; SPORTS = "sports"; ARTS = "arts"
 SCIENCE = "science"; GEOGRAPHY = "geography"; HISTORY = "history"
+BUSINESS = "business"
 
 # P106 occupation (for humans) -> domain
 OCCUPATION = {
@@ -58,9 +59,15 @@ OCCUPATION = {
     "Q842782": HISTORY, "Q3242115": HISTORY,
     "Q2304859": HISTORY, "Q1097498": HISTORY, "Q11900058": HISTORY,  # sovereign/ruler/explorer
     "Q10871364": SPORTS, "Q11774891": SPORTS,                        # baseball / ice-hockey player
+    # business (2026-07-25: entrepreneur/businessperson used to be deliberately
+    # left unmapped because there was no home category for them -- now there is.
+    "Q131524": BUSINESS,   # entrepreneur
+    "Q43845": BUSINESS,    # businessperson
+    "Q484876": BUSINESS,   # investor
+    "Q1113723": BUSINESS,  # chief executive officer
     # --- NULL-coverage round (2026-07): top uncovered occupations among the
     #     7,708 uncategorized kept subjects. Only domain-unambiguous roles added;
-    #     genuinely-ambiguous ones (entrepreneur, businessperson, socialite,
+    #     genuinely-ambiguous ones (socialite,
     #     lawyer, model, criminal/serial-killer, generic clergy) left UNMAPPED so
     #     a better-matching occupation wins, else the subject stays NULL.
     # sports
@@ -112,7 +119,7 @@ INSTANCE = {
     "Q229390": SCREEN, "Q93204": SCREEN,
     # music
     "Q482994": MUSIC, "Q134556": MUSIC, "Q7366": MUSIC, "Q215380": MUSIC,
-    "Q2088357": MUSIC, "Q105543609": MUSIC, "Q207628": MUSIC, "Q4830453": MUSIC,
+    "Q2088357": MUSIC, "Q105543609": MUSIC, "Q207628": MUSIC,
     "Q1067164": MUSIC, "Q34379": MUSIC,
     # arts
     "Q571": ARTS, "Q7725634": ARTS, "Q3305213": ARTS, "Q860861": ARTS,
@@ -166,8 +173,18 @@ INSTANCE = {
     "Q31629": SPORTS,       # type of sport
     "Q5503": GEOGRAPHY,     # rapid transit
     "Q5741069": MUSIC,      # rock band
+    # business (2026-07-25: brands/companies used to be deliberately left
+    # unmapped because there was no home category -- now there is. NOTE: this
+    # also fixes the root cause of the "company defaults to music" bug --
+    # Q4830453 (business) was wrongly mapped to MUSIC above and has been moved.
+    "Q4830453": BUSINESS,   # business
+    "Q783794": BUSINESS,    # company
+    "Q6881511": BUSINESS,   # enterprise
+    "Q431289": BUSINESS,    # brand
+    "Q161726": BUSINESS,    # corporation
+    "Q615536": BUSINESS,    # start-up company
     # --- NULL-coverage round (2026-07): top uncovered non-human P31 types.
-    #     Ambiguous / no-home types (websites, brands, public companies, orgs,
+    #     Ambiguous / no-home types (websites, public
     #     universities, airlines, currencies, languages, writing systems, foods,
     #     holidays, months, ethnic groups, abstract concepts/fields) left UNMAPPED.
     # sports

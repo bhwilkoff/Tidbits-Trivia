@@ -72,7 +72,7 @@ GENERIC_P31 = {
 
 CAT_NOUN = {"history": "figure or event", "science": "subject", "geography": "place",
             "arts": "work or artist", "screen": "film, show, or star", "music": "musician or work",
-            "sports": "sports figure", "mixed": "subject"}
+            "sports": "sports figure", "business": "company or brand", "mixed": "subject"}
 
 
 def url_title(title):

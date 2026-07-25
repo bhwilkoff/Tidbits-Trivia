@@ -39,7 +39,7 @@ WHY TIDBITS IS DIFFERENT
 WAYS TO PLAY
 - Daily Tidbit - the same seven questions for everyone, every day. Build a streak.
 - Classic, Time Attack, and Survival modes.
-- Eight categories: History, Science, Geography, Arts & Lit, Film & TV, Music, Sports, and a Mixed Bag.
+- Nine categories: History, Science, Geography, Arts & Lit, Film & TV, Music, Sports, Business, and a Mixed Bag.
 - Create a quiz from ANY topic - type "jazz" or "volcanoes" or your hometown and Tidbits builds a quiz from Wikipedia on the spot.
 
 BUILT TO RESPECT YOU

@@ -24,7 +24,7 @@
 The current home has **far too much on one screen** and is
 **overwhelming to a first-time user**. To start any non-Daily game you
 must scroll past four full-width cards, then scan a horizontal rail of
-**13 modes**, then scroll a **2-column grid of 8 categories** and tap
+**13 modes**, then scroll a **2-column grid of 9 categories** and tap
 one. That's a scan-heavy, scroll-heavy, decision-heavy path before a
 single question appears.
 
@@ -249,7 +249,7 @@ from "Customize a game." Medium/half detent, expandable to full.
 │  └────────┴────────┴────────┴────────┘                 │    first, rest under
 │                                                        │    "…more"
 │  CATEGORY                                               │  L2
-│  ( Mixed )  History   Science   Geography               │  ← chips, single-
+│  ( Mixed )  History   Science   Geography   Business    │  ← chips, single-
 │   Arts&Lit  Film&TV   Music     Sports                  │    select (or multi,
 │                                                        │    see §6)
 │                                                        │

@@ -107,6 +107,7 @@ data class Category(val id: String, val name: String, val icon: String, val colo
             Category("screen", "Film & TV", "🎬", 0, "The big and small screen."),
             Category("music", "Music", "🎵", 2, "From Bach to beats."),
             Category("sports", "Sports", "🏆", 1, "Games and the greats."),
+            Category("business", "Business", "🏢", 3, "Companies and the brands behind them."),
         )
         fun byId(id: String) = all.firstOrNull { it.id == id } ?: all[0]
     }

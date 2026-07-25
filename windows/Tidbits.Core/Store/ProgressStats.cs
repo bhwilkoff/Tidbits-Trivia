@@ -6,7 +6,7 @@ namespace Tidbits.Core.Store;
 public static class ProgressMath
 {
     public static readonly IReadOnlyList<string> DomainIds =
-        new[] { "history", "science", "geography", "arts", "screen", "music", "sports" };
+        new[] { "history", "science", "geography", "arts", "screen", "music", "sports", "business" };
 
     public const int WedgeCorrect = 15;
     public const double WedgeAccuracy = 0.60;

@@ -22,6 +22,7 @@ struct TriviaCategory: Identifiable, Hashable, Sendable {
         .init(id: "screen",    name: "Film & TV",   symbol: "film.fill",          colorIndex: 0, blurb: "The big and small screen."),
         .init(id: "music",     name: "Music",       symbol: "music.note",         colorIndex: 2, blurb: "From Bach to beats."),
         .init(id: "sports",    name: "Sports",      symbol: "sportscourt.fill",   colorIndex: 1, blurb: "Games and the greats."),
+        .init(id: "business",  name: "Business",    symbol: "building.2.fill",    colorIndex: 3, blurb: "Companies and the brands behind them."),
     ]
 
     static func named(_ id: String) -> TriviaCategory {

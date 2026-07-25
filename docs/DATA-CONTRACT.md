@@ -40,7 +40,7 @@ Single table `questions`. **Column order is load-bearing** — the iOS reader
 | 4 | `option2` | TEXT | |
 | 5 | `option3` | TEXT | exactly 4 options (gate B8) |
 | 6 | `correct_index` | INT | 0–3; key position shuffled (gate B22) |
-| 7 | `category_id` | TEXT | one of the 8 category ids |
+| 7 | `category_id` | TEXT | one of the 9 category ids |
 | 8 | `difficulty` | INT | 1–5 proxy (pageview/extract length) |
 | 9 | `explanation` | TEXT | the "learn the fact" payload |
 | 10 | `source_title` | TEXT | Wikipedia article title |
@@ -49,7 +49,7 @@ Single table `questions`. **Column order is load-bearing** — the iOS reader
 
 Index: `idx_category` on `category_id`. Categories:
 `mixed`(virtual, spans all) · `history` · `science` · `geography` · `arts` ·
-`screen` · `music` · `sports`.
+`screen` · `music` · `sports` · `business`.
 
 ## Template shapes
 

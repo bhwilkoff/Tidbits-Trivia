@@ -15,6 +15,7 @@ public sealed record TriviaCategory(string Id, string Name, string Symbol, int C
         new TriviaCategory("screen",    "Film & TV",  "film",        0, "The big and small screen."),
         new TriviaCategory("music",     "Music",      "music",       2, "From Bach to beats."),
         new TriviaCategory("sports",    "Sports",     "sportscourt", 1, "Games and the greats."),
+        new TriviaCategory("business",  "Business",   "building2",   3, "Companies and the brands behind them."),
     };
 
     public static TriviaCategory Named(string id) => All.FirstOrDefault(c => c.Id == id) ?? All[0];

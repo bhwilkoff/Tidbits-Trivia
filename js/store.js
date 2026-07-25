@@ -44,13 +44,14 @@ export const CATEGORIES = [
   { id: 'screen', name: 'Film & TV', symbol: '🎬', colorIndex: 0, blurb: 'The big and small screen.' },
   { id: 'music', name: 'Music', symbol: '🎵', colorIndex: 2, blurb: 'From Bach to beats.' },
   { id: 'sports', name: 'Sports', symbol: '🏆', colorIndex: 1, blurb: 'Games and the greats.' },
+  { id: 'business', name: 'Business', symbol: '🏢', colorIndex: 3, blurb: 'Companies and the brands behind them.' },
 ];
 export const catColor = (c) => POPS[c.colorIndex % POPS.length];
 
 // Knowledge-cartography math — mirror of Core/Store/ProgressStats.swift.
 // Seven domains (every category but "mixed"); gentle triangular level curve.
 export const PROGRESS = {
-  domains: ['history', 'science', 'geography', 'arts', 'screen', 'music', 'sports'],
+  domains: ['history', 'science', 'geography', 'arts', 'screen', 'music', 'sports', 'business'],
   wedgeCorrect: 15,
   wedgeAccuracy: 0.60,
   threshold: (level) => 5 * level * (level + 1) / 2,

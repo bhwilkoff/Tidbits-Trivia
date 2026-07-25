@@ -72,7 +72,7 @@ your streak and favorites at home on each.
 
 ## What's New (v1.0)
 The first release of Tidbits — thousands of Wikipedia-built questions, the Daily
-Tidbit, four modes, eight categories, pass-and-play trivia night, and
+Tidbit, four modes, nine categories, pass-and-play trivia night, and
 create-a-quiz from any topic. Learn something every day.
 
 ## tvOS notes

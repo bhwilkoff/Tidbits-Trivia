@@ -12,7 +12,7 @@ enum ProgressMath {
     /// except "mixed" (a mixed game isn't a single domain, so it earns no
     /// wedge; this is what nudges players toward specific subjects they avoid —
     /// the breadth incentive that fights corpus bias).
-    static let domainIDs = ["history", "science", "geography", "arts", "screen", "music", "sports"]
+    static let domainIDs = ["history", "science", "geography", "arts", "screen", "music", "sports", "business"]
 
     /// A domain earns its Pie wedge at a small mastery bar: enough cumulative
     /// correct answers AND a non-lucky accuracy. Adds-only — a wedge, once

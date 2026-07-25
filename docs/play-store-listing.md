@@ -50,7 +50,7 @@ Tidbits is also on the web, iPhone, iPad, and Apple TV — same game everywhere.
 
 ## Release notes (v1.0)
 First release — thousands of Wikipedia-built questions, the Daily Tidbit, four
-modes, eight categories, and create-a-quiz from any topic. Learn something every
+modes, nine categories, and create-a-quiz from any topic. Learn something every
 day.
 
 ## Graphic assets needed (see branding/)

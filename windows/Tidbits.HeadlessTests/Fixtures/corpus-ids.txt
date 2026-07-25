@@ -58932,7 +58932,6 @@ src:cloze:Danai_Gurira
 src:describe:Bodies_Bodies_Bodies
 src:cloze:Bodies_Bodies_Bodies
 src:describe:Rain_Phoenix
-src:cloze:Rain_Phoenix
 src:describe:Nancy_Kerrigan
 src:cloze:Nancy_Kerrigan
 src:describe:Talia_Balsam
@@ -59105,7 +59104,6 @@ src:cloze:Vincent_Regan
 src:describe:Jessica_Henwick
 src:cloze:Jessica_Henwick
 src:describe:Judd_Hirsch
-src:cloze:Judd_Hirsch
 src:describe:Len_Wiseman
 src:cloze:Len_Wiseman
 src:cloze:Legion_(2010_film)
@@ -59113,7 +59111,6 @@ src:cloze:2.0_(film)
 src:describe:Anna_Yamada
 src:describe:Die_Hard_2
 src:describe:The_Machinist
-src:cloze:The_Machinist
 src:describe:Bigg_Boss_(Hindi_TV_series)
 src:describe:Daniel_Henney
 src:cloze:Daniel_Henney
@@ -59194,7 +59191,6 @@ src:describe:Shin_Se-kyung
 src:cloze:Shin_Se-kyung
 src:describe:Evil_Dead_II
 src:describe:Josh_Andrés_Rivera
-src:cloze:Josh_Andrés_Rivera
 src:describe:Sophie_Rundle
 src:cloze:Sophie_Rundle
 src:describe:Suzuka_Nakamoto
@@ -65086,7 +65082,6 @@ src:describe:AJ_Styles
 src:describe:Bianca_Belair
 src:cloze:Bianca_Belair
 src:describe:Andrey_Arshavin
-src:cloze:Andrey_Arshavin
 src:describe:Justin_Jefferson
 src:cloze:Justin_Jefferson
 src:describe:Emre_Can
@@ -65098,7 +65093,6 @@ src:describe:Moise_Kean
 src:cloze:Moise_Kean
 src:describe:Fabio_Grosso
 src:cloze:Fabio_Grosso
-src:cloze:Naomi_(wrestler)
 src:describe:Douglas_Costa
 src:cloze:Douglas_Costa
 src:describe:Pétanque
@@ -67220,7 +67214,6 @@ src:describe:Eddie_the_Eagle
 src:cloze:Richard_Wright_(musician)
 src:describe:Naoki_Urasawa
 src:cloze:Naoki_Urasawa
-src:cloze:Uriah_Heep_(band)
 src:describe:Yungblud
 src:describe:Fiona_Apple
 src:cloze:Fiona_Apple

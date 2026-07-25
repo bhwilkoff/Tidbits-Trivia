@@ -33806,7 +33806,6 @@ chron:P571:274607216937
 chron:P571:584170425878
 chron:P571:408946511223
 chron:P571:510010270439
-chron:P571:956561591914
 chron:P571:799244963545
 chron:P571:54381103478
 chron:P571:677523519379
@@ -35120,7 +35119,6 @@ fact:P569:Q16979983
 fact:P569:Q314924
 fact:P569:Q241026
 fact:P570:Q241026
-fact:P577:Q51770
 fact:P571:Q700867
 fact:P577:Q700867
 fact:P569:Q24817523
@@ -35906,7 +35904,6 @@ fact:P569:Q23761458
 fact:P569:Q218800
 fact:P571:Q1457
 fact:P577:Q725552
-fact:P569:Q43669
 fact:P570:Q43669
 fact:P571:Q1142831
 fact:P569:Q65345
@@ -45031,7 +45028,6 @@ rel:P170:Q583810
 rel:P17:Q894
 rel:P175:Q2607675
 rel:P170:Q2607675
-rel:P175:Q51661554
 rel:P112:Q12807
 rel:P170:Q1135966
 rel:P17:Q51976
@@ -45053,7 +45049,6 @@ rel:P61:Q61233
 rel:P17:Q1900
 rel:P112:Q1900
 rel:P175:Q55080312
-rel:P17:Q271839
 rel:P17:Q2714
 rel:P17:Q105086394
 rel:P17:Q2636005
@@ -48415,8 +48410,6 @@ chron:P571:785823410686
 chron:P571:636075271154
 chron:P571:274118411186
 chron:P571:64967813665
-chron:P571:30375369241
-chron:P571:386692891584
 chron:P571:982165102642
 chron:P571:24189695503
 chron:P571:323168440006
@@ -51291,7 +51284,6 @@ src:describe:Isabel_Perón
 src:cloze:Isabel_Perón
 src:describe:Jyotirao_Phule
 src:describe:Erkan_Baş
-src:cloze:Erkan_Baş
 src:describe:Eric_Adams
 src:cloze:Eric_Adams
 src:describe:Hasan-i_Sabbah
@@ -51299,7 +51291,6 @@ src:describe:Izz_ad-Din_al-Qassam
 src:describe:Joseph_Bonaparte
 src:describe:Antonio_Inoki
 src:describe:Austro-Prussian_War
-src:cloze:Austro-Prussian_War
 src:describe:Ilhan_Omar
 src:cloze:Ilhan_Omar
 src:describe:Mars_(mythology)
@@ -51330,7 +51321,6 @@ src:cloze:Albert_II_of_Belgium
 src:describe:Lindsey_Graham
 src:cloze:Lindsey_Graham
 src:describe:Serdar_Berdimuhamedow
-src:cloze:Serdar_Berdimuhamedow
 src:describe:Týr
 src:cloze:Týr
 src:describe:Rustem_Umerov
@@ -51348,7 +51338,6 @@ src:cloze:Jorge_Rafael_Videla
 src:describe:Erich_Ludendorff
 src:cloze:Erich_Ludendorff
 src:describe:Edward_V
-src:cloze:Edward_V
 src:describe:February_28_incident
 src:describe:Antonio_López_de_Santa_Anna
 src:describe:House_of_Bonaparte

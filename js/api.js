@@ -10,8 +10,15 @@ const COLS = ['id', 'prompt', 'options', 'correctIndex', 'categoryID', 'difficul
 function rowToQuestion(r) {
   const q = {};
   COLS.forEach((c, i) => (q[c] = r[i]));
-  q.templateID = 'corpus';
-  if (r[9]) q.image = r[9];   // Picture ID (Q7): 10th element = image URL
+  // Mirrors JSONQuestionSource.swift: the id's first colon segment identifies
+  // the generation template (src/rel/wd/... for corpus+picture rows, or the
+  // game-type prefix — match/order/odd/... — for the other shaped types).
+  q.templateID = (r[0] || '').split(':')[0] || 'json';
+  // 10th element is type-disambiguated: a string is Picture ID's Commons image
+  // URL, an array is the corpus's Wikipedia-category tags — the two shapes
+  // never coexist in the same file, so one index serves both.
+  if (typeof r[9] === 'string' && r[9]) q.image = r[9];
+  if (Array.isArray(r[9])) q.tags = r[9];
   return q;
 }
 
@@ -139,8 +146,14 @@ export const Corpus = {
       if ((q.id || '').startsWith('src:continent:')) continue;
       if ((q.difficulty || 2) <= 1) continue;
       const title = (q.sourceTitle || '').toLowerCase(), prompt = (q.prompt || '').toLowerCase(), explanation = (q.explanation || '').toLowerCase();
+      const tags = (q.tags || []).map((tg) => tg.toLowerCase());
       let s = 0;
-      for (const t of tokens) { if (title.includes(t)) s += 2; if (prompt.includes(t)) s += 1; if (explanation.includes(t)) s += 1; }
+      for (const t of tokens) {
+        if (tags.some((tg) => tg.includes(t))) s += 3;
+        if (title.includes(t)) s += 2;
+        if (prompt.includes(t)) s += 1;
+        if (explanation.includes(t)) s += 1;
+      }
       if (s > 0) scored.push([q, s]);
     }
     scored.sort((a, b) => b[1] - a[1]);
@@ -229,7 +242,7 @@ function makeJsonSet(filename, parseRow = rowToQuestion) {
       const hits = this.questions.filter((q) => {
         const ans = ((q.options && q.options[q.correctIndex]) || '').toLowerCase();
         if (tokens.some((t) => ans.includes(t))) return false;
-        const hay = `${q.prompt} ${q.sourceTitle} ${q.explanation || ''}`.toLowerCase();
+        const hay = `${q.prompt} ${q.sourceTitle} ${q.explanation || ''} ${(q.tags || []).join(' ')}`.toLowerCase();
         return tokens.some((t) => hay.includes(t));
       });
       for (let i = hits.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [hits[i], hits[j]] = [hits[j], hits[i]]; }

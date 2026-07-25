@@ -17,6 +17,7 @@ public sealed record Question
     [JsonPropertyName("sourceTitle")] public string SourceTitle { get; init; } = "";
     [JsonPropertyName("sourceURL")] public string? SourceUrl { get; init; }
     [JsonPropertyName("templateID")] public string TemplateId { get; init; } = "";
+    [JsonPropertyName("tags")] public IReadOnlyList<string> Tags { get; init; } = []; // Wikipedia-category topic keywords
     [JsonPropertyName("imageURL")] public string? ImageUrl { get; init; }        // Picture ID
     [JsonPropertyName("closest")] public ClosestSpec? Closest { get; init; }     // Closest Call
     [JsonPropertyName("ordering")] public IReadOnlyList<string>? Ordering { get; init; } // items in CORRECT order

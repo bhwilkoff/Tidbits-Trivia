@@ -63,7 +63,8 @@ public sealed class CorpusDatabase
             var prompt = q.Prompt.ToLowerInvariant();
             var title = q.SourceTitle.ToLowerInvariant();
             var explanationPre = q.Explanation.ToLowerInvariant();
-            if (tokens.Any(t => prompt.Contains(t) || title.Contains(t) || explanationPre.Contains(t)))
+            var tagsPre = q.Tags.Select(tg => tg.ToLowerInvariant()).ToList();
+            if (tokens.Any(t => prompt.Contains(t) || title.Contains(t) || explanationPre.Contains(t) || tagsPre.Any(tg => tg.Contains(t))))
             {
                 matched.Add(q);
                 if (matched.Count >= 400) break;
@@ -80,7 +81,8 @@ public sealed class CorpusDatabase
             var title = q.SourceTitle.ToLowerInvariant();
             var prompt = q.Prompt.ToLowerInvariant();
             var explanation = q.Explanation.ToLowerInvariant();
-            var score = tokens.Sum(t => (title.Contains(t) ? 2 : 0) + (prompt.Contains(t) ? 1 : 0) + (explanation.Contains(t) ? 1 : 0));
+            var tags = q.Tags.Select(tg => tg.ToLowerInvariant()).ToList();
+            var score = tokens.Sum(t => (tags.Any(tg => tg.Contains(t)) ? 3 : 0) + (title.Contains(t) ? 2 : 0) + (prompt.Contains(t) ? 1 : 0) + (explanation.Contains(t) ? 1 : 0));
             scored.Add((q, score));
         }
 

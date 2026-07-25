@@ -15,6 +15,7 @@ nonisolated struct Question: Identifiable, Hashable, Codable, Sendable {
     let sourceTitle: String    // Wikipedia article title
     let sourceURL: URL?
     let templateID: String
+    var tags: [String] = []    // Wikipedia-category-derived topic keywords for Create search
     var imageURL: URL? = nil   // Picture ID (Q7): the Commons image to identify
     var closest: ClosestSpec? = nil   // Closest Call (M5): numeric estimation
     var ordering: [String]? = nil     // Ordering (Q4): the items in CORRECT order

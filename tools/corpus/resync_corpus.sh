@@ -18,10 +18,13 @@ c = sqlite3.connect(p)
 c.execute("""CREATE TABLE questions (id TEXT PRIMARY KEY, prompt TEXT,
   option0 TEXT, option1 TEXT, option2 TEXT, option3 TEXT, correct_index INTEGER,
   category_id TEXT, difficulty INTEGER, explanation TEXT, source_title TEXT, source_url TEXT,
-  template_id TEXT)""")
+  template_id TEXT, tags TEXT)""")
 # template_id mirrors JSONQuestionSource.swift's convention: the id's first colon segment.
-c.executemany("INSERT OR REPLACE INTO questions VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
-  [(q[0],q[1],q[2][0],q[2][1],q[2][2],q[2][3],q[3],q[4],q[5],q[6],q[7],q[8],q[0].split(':')[0]) for q in rows])
+# tags (10th element, optional) is a Wikipedia-category keyword list -- stored pipe-joined
+# since sqlite has no array type; CorpusDatabase.swift splits it back on load.
+c.executemany("INSERT OR REPLACE INTO questions VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+  [(q[0],q[1],q[2][0],q[2][1],q[2][2],q[2][3],q[3],q[4],q[5],q[6],q[7],q[8],q[0].split(':')[0],
+    '|'.join(q[9]) if len(q) > 9 and q[9] else '') for q in rows])
 c.commit(); print('   corpus.sqlite:', c.execute('select count(*) from questions').fetchone()[0], 'rows'); c.close()
 PY
 

@@ -59,6 +59,7 @@ data class Question(
     val explanation: String,
     val sourceTitle: String,
     val sourceUrl: String,
+    val tags: List<String> = emptyList(), // Wikipedia-category-derived topic keywords for Create search
     val imageUrl: String? = null,   // Picture ID (Q7): Commons image to identify
     val closest: ClosestSpec? = null, // Closest Call (M5)
     val ordering: List<String>? = null, // Ordering (Q4): items in CORRECT order
@@ -262,6 +263,7 @@ private object CorpusRowSerializer : KSerializer<Question> {
             explanation = a[6].jsonPrimitive.content,
             sourceTitle = a[7].jsonPrimitive.content,
             sourceUrl = a[8].jsonPrimitive.content,
+            tags = if (a.size > 9) a[9].jsonArray.map { it.jsonPrimitive.content } else emptyList(),
         )
     }
 }
@@ -316,7 +318,11 @@ object Corpus {
             if (q.id.startsWith("src:continent:")) return@mapNotNull null
             if (q.difficulty <= 1) return@mapNotNull null
             val title = q.sourceTitle.lowercase(); val prompt = q.prompt.lowercase(); val explanation = q.explanation.lowercase()
-            val score = tokens.sumOf { (if (title.contains(it)) 2 else 0) + (if (prompt.contains(it)) 1 else 0) + (if (explanation.contains(it)) 1 else 0) }
+            val tagsLower = q.tags.map { it.lowercase() }
+            val score = tokens.sumOf {
+                (if (tagsLower.any { tag -> tag.contains(it) }) 3 else 0) +
+                (if (title.contains(it)) 2 else 0) + (if (prompt.contains(it)) 1 else 0) + (if (explanation.contains(it)) 1 else 0)
+            }
             if (score > 0) q to score else null
         }.sortedByDescending { it.second }.map { it.first }
         return diversifyByCategory(ranked, limit)

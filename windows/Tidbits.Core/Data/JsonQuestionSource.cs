@@ -34,7 +34,7 @@ public sealed class JsonQuestionSource
         {
             var ans = q.CorrectAnswer.ToLowerInvariant();
             if (tokens.Any(t => ans.Contains(t))) return false;
-            var hay = (q.Prompt + " " + q.SourceTitle + " " + q.Explanation).ToLowerInvariant();
+            var hay = (q.Prompt + " " + q.SourceTitle + " " + q.Explanation + " " + string.Join(' ', q.Tags)).ToLowerInvariant();
             return tokens.Any(t => hay.Contains(t));
         }).ToList();
         return QueryHelpers.Shuffle(hits).Take(limit).ToList();

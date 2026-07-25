@@ -59,13 +59,18 @@ public static class PositionalQuestionParser
             {
                 var correct = IntOf(r[3]) ?? -1;
                 if (arr2.Length < 2 || correct < 0 || correct >= arr2.Length || !IsString(r[4])) return null;
-                var image = r.Length >= 10 ? StrOrNull(r[9]) : null;
+                // The 10th element is type-disambiguated: a string is Picture ID's
+                // Commons image URL, an array is the corpus's Wikipedia-category
+                // tags -- the two shapes never coexist in the same file.
+                var image = r.Length >= 10 && IsString(r[9]) ? StrOrNull(r[9]) : null;
+                var tags = r.Length >= 10 && IsStringArray(r[9]) ? StrArr(r[9]) : [];
                 return new Question
                 {
                     Id = id, Prompt = prompt, Options = arr2, CorrectIndex = correct,
                     CategoryId = r[4].GetString()!, Difficulty = IntOf(r[5]) ?? 3,
                     Explanation = StrOr(r[6]), SourceTitle = StrOr(r[7]),
                     SourceUrl = StrOrNull(r[8]), TemplateId = template, ImageUrl = image,
+                    Tags = tags,
                 };
             }
             if (arr2.Length < 2 || !IsString(r[4])) return null;

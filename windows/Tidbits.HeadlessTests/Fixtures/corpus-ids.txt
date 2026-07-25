@@ -58924,7 +58924,6 @@ src:cloze:Carol_Vorderman
 src:describe:Thomas_Sadoski
 src:cloze:Thomas_Sadoski
 src:describe:Jason_Mantzoukas
-src:cloze:Jason_Mantzoukas
 src:describe:Legends_of_Tomorrow
 src:describe:Koki_Uchiyama
 src:describe:Danai_Gurira
@@ -59179,7 +59178,6 @@ src:cloze:Jeff_Cohen_(actor)
 src:describe:For_a_Few_Dollars_More
 src:cloze:For_a_Few_Dollars_More
 src:describe:Scary_Movie_2
-src:cloze:Scary_Movie_2
 src:describe:Daniel_Gillies
 src:cloze:Daniel_Gillies
 src:describe:Julia_Carpenter
@@ -69193,7 +69191,6 @@ src:cloze:Hellsing
 src:describe:Alice_in_Borderland
 src:cloze:Alice_in_Borderland
 src:describe:W._E._B._Du_Bois
-src:cloze:W._E._B._Du_Bois
 src:describe:Henrik_Ibsen
 src:cloze:Henrik_Ibsen
 src:describe:Missak_Manouchian

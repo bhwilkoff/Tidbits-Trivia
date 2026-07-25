@@ -69075,9 +69075,7 @@ src:cloze:20th_Century_Boys
 src:describe:Pierluigi_Collina
 src:cloze:Pierluigi_Collina
 src:describe:Kevin_O'Leary
-src:cloze:Kevin_O'Leary
 src:describe:Helena_Blavatsky
-src:cloze:Helena_Blavatsky
 src:describe:Harry_Potter_and_the_Goblet_of_Fire
 src:describe:Black_Butler
 src:cloze:Black_Butler

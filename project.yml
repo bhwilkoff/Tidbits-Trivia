@@ -73,8 +73,14 @@ targets:
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         # Mac App Store requires App Sandbox — a separate entitlements file
         # (TidbitsTrivia-macOS.entitlements) carries the sandbox + network-client +
-        # user-selected-files scopes the Mac shell needs; the default
-        # TidbitsTrivia.entitlements (iOS/tvOS) stays Game-Center-only.
+        # user-selected-files scopes the Mac shell needs, PLUS Sign in with
+        # Apple. The default TidbitsTrivia.entitlements (iOS/tvOS) carries
+        # Game Center + Sign in with Apple (added 2026-07-27 — it was
+        # Game-Center-only for a while after Sign in with Apple shipped on
+        # iOS/tvOS, which is exactly why tvOS's flow could complete the Apple
+        # ID UI but never actually persist a signed-in session: the OS won't
+        # grant a runtime capability the app's own compiled entitlements
+        # don't declare, even if the shared App ID supports it).
         "CODE_SIGN_ENTITLEMENTS[sdk=macosx*]": "TidbitsTrivia/TidbitsTrivia-macOS.entitlements"
     info:
       # Explicit Info.plist (xcodegen fills the standard CFBundle* keys) so we

@@ -175,20 +175,28 @@ struct SettingsView_tvOS: View {
     private var gameplaySection: some View {
         VStack(alignment: .leading, spacing: 20) {
             sectionHeader("Gameplay")
-            TVRecordsCard(fill: TVTheme.panel) {
-                VStack(alignment: .leading, spacing: 16) {
-                    HStack {
-                        Text("Review questions").font(.system(size: 30, weight: .bold, design: .rounded)).foregroundStyle(TVTheme.text)
-                        Spacer()
-                        Button(reviewEnabled ? "On" : "Off") { reviewEnabled.toggle() }
-                            .buttonStyle(TVChipStyle(accent: Tidbits.Palette.blue, selected: reviewEnabled))
-                            .focused($focus, equals: .gameplayToggle)
-                    }
-                    Text("Occasionally re-asks questions you've missed, spaced out, so they stick. Turn off to only ever see new questions.")
-                        .font(.system(size: 24, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
-                        .fixedSize(horizontal: false, vertical: true)
+            // NOT a TVRecordsCard: that wrapper makes the whole card its own
+            // focusable region (for scroll continuity on read-only info cards
+            // elsewhere on this page), which OVERLAPS the real "On/Off" button
+            // below and makes it unreachable/inconsistent — a static panel
+            // background here leaves the button as the section's one, unambiguous
+            // focus target (the reported "Review questions is not possible to
+            // access" bug).
+            VStack(alignment: .leading, spacing: 16) {
+                HStack {
+                    Text("Review questions").font(.system(size: 30, weight: .bold, design: .rounded)).foregroundStyle(TVTheme.text)
+                    Spacer()
+                    Button(reviewEnabled ? "On" : "Off") { reviewEnabled.toggle() }
+                        .buttonStyle(TVChipStyle(accent: Tidbits.Palette.blue, selected: reviewEnabled))
+                        .focused($focus, equals: .gameplayToggle)
                 }
+                Text("Occasionally re-asks questions you've missed, spaced out, so they stick. Turn off to only ever see new questions.")
+                    .font(.system(size: 24, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+                    .fixedSize(horizontal: false, vertical: true)
             }
+            .padding(28)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(TVTheme.panel))
         }
         .focusSection()
     }

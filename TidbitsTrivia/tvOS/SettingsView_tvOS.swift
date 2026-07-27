@@ -2,12 +2,21 @@
 import SwiftUI
 import SwiftData
 import AuthenticationServices
+import UIKit
 
-/// tvOS Settings — parity with the iOS sheet, ten-foot and focus-driven.
-/// Native Form works on tvOS and gives free focus + section semantics
-/// (native-platform-first). Haptics is n/a on Apple TV; the rest mirrors iOS:
-/// Review toggle (its home, moved off the cluttered home header), reset,
-/// Game Center status, attribution.
+/// tvOS Settings — ten-foot, dark-first, and built from the SAME hand-rolled
+/// idiom as every other tvOS screen (ContentView_tvOS / RecordsView_tvOS):
+/// ZStack + TVTheme.bg + ScrollView + TVRecordsCard panels + custom
+/// ButtonStyles. This deliberately does NOT use `Form`/`List`/`NavigationStack`
+/// — those render as a translucent system list that looks like a web settings
+/// page next to the rest of the app, and (per an App Store rejection,
+/// Guideline 2.1(a)) the SwiftUI `SignInWithAppleButton` embedded in a Form
+/// row could silently swallow the Siri Remote's select click. The sign-in
+/// control here is a plain, always-focusable `Button` that drives
+/// `ASAuthorizationController` directly (see `TVAppleSignInCoordinator`
+/// below), and both success AND failure are surfaced — a failed/cancelled
+/// sign-in used to fail silently, which is exactly what "no action occurred"
+/// looks like from the remote.
 struct SettingsView_tvOS: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
@@ -16,8 +25,12 @@ struct SettingsView_tvOS: View {
     @Environment(EntitlementStore.self) private var entitlement
     @AppStorage(GameSettings.reviewKey) private var reviewEnabled = true
     @State private var confirmReset = false
-    @State private var appleNonce = ""
     @State private var showPaywall = false
+    @State private var showLeaderboard = false
+    @State private var appleCoordinator: TVAppleSignInCoordinator?
+    @FocusState private var focus: SettingsFocus?
+
+    private enum SettingsFocus: Hashable { case appleSignIn, gameplayToggle }
 
     private var version: String {
         let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
@@ -27,91 +40,255 @@ struct SettingsView_tvOS: View {
 
     var body: some View {
         ZStack {
-            // The Form is transparent in a tvOS fullScreenCover — back it with the
-            // opaque dark-first background so the home screen doesn't bleed through.
             TVTheme.bg.ignoresSafeArea()
-            NavigationStack {
-                Form {
-                Section("Profile") {
-                    if let p = identity.profile {
-                        HStack(spacing: 20) {
-                            Circle().fill(Color(hue: PlayerIdentity.avatarHue(p.avatarSeed), saturation: 0.55, brightness: 0.85))
-                                .overlay(Text(PlayerIdentity.initials(p.name)).font(.system(size: 26, weight: .black, design: .rounded)).foregroundStyle(.black))
-                                .frame(width: 64, height: 64)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(p.name).font(.headline)
-                                Text("Rating \(Int(p.rating.value)) · \(p.streak.current)-day streak").foregroundStyle(.secondary)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 44) {
+                    Text("SETTINGS")
+                        .font(.system(size: 64, weight: .black, design: .rounded))
+                        .foregroundStyle(TVTheme.text)
+                    profileSection
+                    gameplaySection
+                    clubSection
+                    leaderboardSection
+                    gameCenterSection
+                    dataSection
+                    aboutSection
+                }
+                .padding(.horizontal, 90)
+                .padding(.vertical, 60)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .onExitCommand { dismiss() }   // Menu button leaves Settings (modal: allowed)
+        .confirmationDialog("Reset all records?", isPresented: $confirmReset, titleVisibility: .visible) {
+            Button("Reset Everything", role: .destructive) { resetAll() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This permanently deletes your scores, streaks, and review list.")
+        }
+        .fullScreenCover(isPresented: $showPaywall) { ClubPaywallView_tvOS() }
+        .fullScreenCover(isPresented: $showLeaderboard) { LeaderboardView_tvOS() }
+    }
+
+    // MARK: Profile + Sign in with Apple
+
+    private var profileSection: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            sectionHeader("Profile")
+            if let p = identity.profile {
+                TVRecordsCard(fill: TVTheme.panel) {
+                    VStack(alignment: .leading, spacing: 24) {
+                        HStack(spacing: 24) {
+                            Circle()
+                                .fill(Color(hue: PlayerIdentity.avatarHue(p.avatarSeed), saturation: 0.55, brightness: 0.85))
+                                .overlay(
+                                    Text(PlayerIdentity.initials(p.name))
+                                        .font(.system(size: 30, weight: .black, design: .rounded))
+                                        .foregroundStyle(.black)
+                                )
+                                .frame(width: 84, height: 84)
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text(p.name).font(.system(size: 34, weight: .bold, design: .rounded)).foregroundStyle(TVTheme.text)
+                                Text("Rating \(Int(p.rating.value)) · \(p.streak.current)-day streak")
+                                    .font(.system(size: 26, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
                             }
+                            Spacer()
                         }
-                        LabeledContent("Games played", value: "\(p.stats.gamesPlayed)")
-                        LabeledContent("Live nights", value: "\(p.stats.liveNights)")
-                        if identity.signedIn {
-                            Label("Signed in — records sync to every device", systemImage: "checkmark.seal.fill").foregroundStyle(.secondary)
-                            Button("Sign out") { Task { await identity.signOut() } }
-                        } else {
-                            SignInWithAppleButton(.signIn) { req in
-                                appleNonce = AppleNonce.random(); req.requestedScopes = [.email, .fullName]; req.nonce = AppleNonce.sha256(appleNonce)
-                            } onCompletion: { result in
-                                if case .success(let auth) = result, let c = auth.credential as? ASAuthorizationAppleIDCredential,
-                                   let d = c.identityToken, let t = String(data: d, encoding: .utf8) {
-                                    let name = [c.fullName?.givenName, c.fullName?.familyName].compactMap { $0 }.joined(separator: " ")
-                                    Task { await identity.linkApple(idToken: t, rawNonce: appleNonce, appleName: name.isEmpty ? nil : name, appleEmail: c.email) }
-                                }
-                            }
-                            .signInWithAppleButtonStyle(.white).frame(height: 60)
+                        HStack(spacing: 40) {
+                            profileStat("Games played", "\(p.stats.gamesPlayed)")
+                            profileStat("Live nights", "\(p.stats.liveNights)")
                         }
-                    } else {
-                        Text("Setting up your profile…").foregroundStyle(.secondary)
                     }
                 }
-                Section {
-                    Toggle("Review questions", isOn: $reviewEnabled)
-                } header: {
-                    Text("Gameplay")
-                } footer: {
-                    Text("Occasionally re-asks questions you've missed, spaced out, so they stick. Turn off to only ever see new questions.")
-                }
-                Section("Tidbits Club") {
-                    Button { showPaywall = true } label: {
-                        Label(entitlement.isClub ? "Tidbits Club — Member" : "Join Tidbits Club",
-                              systemImage: entitlement.isClub ? "star.circle.fill" : "star.circle")
-                    }
-                }
-                Section("Leaderboard") {   // Wave E: cross-venue / season standings
-                    NavigationLink("Cross-venue standings") { LeaderboardView_tvOS() }
-                }
-                Section("Game Center") {
-                    HStack {
-                        Text("Status")
-                        Spacer()
-                        Text(gameCenter.isAuthenticated ? "Signed in" : "Not signed in")
-                            .foregroundStyle(.secondary)
-                    }
-                    if gameCenter.isAuthenticated {
-                        Button("Leaderboards & Achievements") { gameCenter.showDashboard() }
-                    }
-                }
-                Section("Data") {
-                    Button("Reset Seen Questions") { QuestionProvider.shared.resetSeen() }
-                    Button("Reset All Records", role: .destructive) { confirmReset = true }
-                }
-                Section("About") {
-                    LabeledContent("Version", value: version)
-                    Text("Questions from Wikipedia, available under CC BY-SA. Tidbits is a learning game — every question is a door to learn more.")
-                        .foregroundStyle(.secondary)
-                }
-                }
-                .navigationTitle("Settings")
-                .confirmationDialog("Reset all records?", isPresented: $confirmReset, titleVisibility: .visible) {
-                    Button("Reset Everything", role: .destructive) { resetAll() }
-                    Button("Cancel", role: .cancel) {}
-                } message: {
-                    Text("This permanently deletes your scores, streaks, and review list.")
+                signInArea
+            } else {
+                TVRecordsCard(fill: TVTheme.panel) {
+                    Text("Setting up your profile…").font(.system(size: 28, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
                 }
             }
         }
-        .onExitCommand { dismiss() }
-        .fullScreenCover(isPresented: $showPaywall) { ClubPaywallView_tvOS() }
+        .focusSection()
+    }
+
+    private func profileStat(_ label: String, _ value: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(value).font(.system(size: 32, weight: .black, design: .rounded).monospacedDigit()).foregroundStyle(TVTheme.text)
+            Text(label.uppercased()).font(.system(size: 20, weight: .bold, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+        }
+    }
+
+    /// The one piece App Review actually flagged: an UNMISTAKABLE visual
+    /// difference between signed-in (a filled mint badge) and signed-out (the
+    /// real Sign in with Apple button, plus any error IN FULL VIEW — never
+    /// silently dropped).
+    @ViewBuilder private var signInArea: some View {
+        if identity.signedIn {
+            HStack(spacing: 20) {
+                HStack(spacing: 14) {
+                    Image(systemName: "checkmark.seal.fill").font(.system(size: 26, weight: .bold))
+                    Text("Signed in — records sync to every device").font(.system(size: 25, weight: .bold, design: .rounded))
+                }
+                .foregroundStyle(Tidbits.Palette.mint)
+                .padding(.horizontal, 26).padding(.vertical, 14)
+                .background(Capsule().fill(Tidbits.Palette.mint.opacity(0.16)))
+                Spacer()
+                Button("Sign out") { Task { await identity.signOut() } }
+                    .buttonStyle(TVChipStyle(accent: Tidbits.Palette.coral, selected: false))
+            }
+        } else {
+            VStack(alignment: .leading, spacing: 16) {
+                Button {
+                    let coordinator = TVAppleSignInCoordinator(identity: identity)
+                    appleCoordinator = coordinator
+                    coordinator.start()
+                } label: {
+                    HStack(spacing: 18) {
+                        Image(systemName: "apple.logo").font(.system(size: 32, weight: .medium))
+                        Text("Sign in with Apple").font(.system(size: 32, weight: .semibold, design: .rounded))
+                    }
+                    .foregroundStyle(.black)
+                    .padding(.horizontal, 48).padding(.vertical, 22)
+                }
+                .buttonStyle(TVAppleSignInButtonStyle())
+                .focused($focus, equals: .appleSignIn)
+                if let e = identity.authError {
+                    HStack(spacing: 12) {
+                        Image(systemName: "exclamationmark.triangle.fill").font(.system(size: 22, weight: .bold))
+                        Text(e).font(.system(size: 24, weight: .medium, design: .rounded)).fixedSize(horizontal: false, vertical: true)
+                    }
+                    .foregroundStyle(Tidbits.Palette.coral)
+                }
+            }
+        }
+    }
+
+    // MARK: Gameplay
+
+    private var gameplaySection: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            sectionHeader("Gameplay")
+            TVRecordsCard(fill: TVTheme.panel) {
+                VStack(alignment: .leading, spacing: 16) {
+                    HStack {
+                        Text("Review questions").font(.system(size: 30, weight: .bold, design: .rounded)).foregroundStyle(TVTheme.text)
+                        Spacer()
+                        Button(reviewEnabled ? "On" : "Off") { reviewEnabled.toggle() }
+                            .buttonStyle(TVChipStyle(accent: Tidbits.Palette.blue, selected: reviewEnabled))
+                            .focused($focus, equals: .gameplayToggle)
+                    }
+                    Text("Occasionally re-asks questions you've missed, spaced out, so they stick. Turn off to only ever see new questions.")
+                        .font(.system(size: 24, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+        .focusSection()
+    }
+
+    // MARK: Tidbits Club
+
+    private var clubSection: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            sectionHeader("Tidbits Club")
+            Button { showPaywall = true } label: {
+                HStack(spacing: 24) {
+                    Image(systemName: entitlement.isClub ? "star.circle.fill" : "star.circle")
+                        .font(.system(size: 42, weight: .black))
+                    Text(entitlement.isClub ? "Tidbits Club — Member" : "Join Tidbits Club")
+                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                    Spacer()
+                    Image(systemName: "chevron.right").font(.system(size: 24, weight: .bold))
+                }
+                .foregroundStyle(.white)
+                .padding(32)
+                .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(TVAtlasCardStyle())
+        }
+        .focusSection()
+    }
+
+    // MARK: Leaderboard
+
+    private var leaderboardSection: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            sectionHeader("Leaderboard")
+            Button { showLeaderboard = true } label: {
+                HStack(spacing: 24) {
+                    Image(systemName: "trophy.fill").font(.system(size: 36, weight: .black)).foregroundStyle(Tidbits.Palette.yellow)
+                    Text("Cross-venue standings").font(.system(size: 30, weight: .bold, design: .rounded)).foregroundStyle(TVTheme.text)
+                    Spacer()
+                    Image(systemName: "chevron.right").font(.system(size: 24, weight: .bold)).foregroundStyle(TVTheme.textSoft)
+                }
+                .padding(32)
+                .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(TVChipStyle(accent: Tidbits.Palette.grape, selected: false))
+        }
+        .focusSection()
+    }
+
+    // MARK: Game Center
+
+    private var gameCenterSection: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            sectionHeader("Game Center")
+            TVRecordsCard(fill: TVTheme.panel) {
+                HStack {
+                    Text("Status").font(.system(size: 28, weight: .bold, design: .rounded)).foregroundStyle(TVTheme.text)
+                    Spacer()
+                    Text(gameCenter.isAuthenticated ? "Signed in" : "Not signed in")
+                        .font(.system(size: 26, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+                }
+            }
+            if gameCenter.isAuthenticated {
+                Button("Leaderboards & Achievements") { gameCenter.showDashboard() }
+                    .buttonStyle(TVChipStyle(accent: Tidbits.Palette.blue, selected: false))
+            }
+        }
+        .focusSection()
+    }
+
+    // MARK: Data
+
+    private var dataSection: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            sectionHeader("Data")
+            HStack(spacing: 24) {
+                Button("Reset Seen Questions") { QuestionProvider.shared.resetSeen() }
+                    .buttonStyle(TVChipStyle(accent: Tidbits.Palette.blue, selected: false))
+                Button("Reset All Records", role: .destructive) { confirmReset = true }
+                    .buttonStyle(TVChipStyle(accent: Tidbits.Palette.coral, selected: false))
+            }
+        }
+        .focusSection()
+    }
+
+    // MARK: About
+
+    private var aboutSection: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            sectionHeader("About")
+            TVRecordsCard(fill: TVTheme.panel) {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        Text("Version").font(.system(size: 26, weight: .bold, design: .rounded)).foregroundStyle(TVTheme.text)
+                        Spacer()
+                        Text(version).font(.system(size: 26, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+                    }
+                    Text("Questions from Wikipedia, available under CC BY-SA. Tidbits is a learning game — every question is a door to learn more.")
+                        .font(.system(size: 23, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+        .focusSection()
+    }
+
+    private func sectionHeader(_ title: String) -> some View {
+        Text(title.uppercased())
+            .font(.system(size: 24, weight: .heavy, design: .rounded))
+            .foregroundStyle(TVTheme.textSoft)
     }
 
     private func resetAll() {
@@ -124,8 +301,82 @@ struct SettingsView_tvOS: View {
     }
 }
 
+// MARK: - Sign in with Apple, driven directly (never wrapped in Form/List)
+
+/// Drives `ASAuthorizationController` by hand instead of the SwiftUI
+/// `SignInWithAppleButton` wrapper. On tvOS that wrapper embeds a UIKit
+/// `ASAuthorizationAppleIDButton` inside a representable; nested inside a
+/// `Form` row it can end up NOT forwarding the Siri Remote's select click to
+/// the button's own target-action (the row's own selection handling wins) —
+/// indistinguishable, from the remote, from "nothing happened," which matches
+/// the App Store rejection exactly. A plain `Button` + `ButtonStyle` is
+/// guaranteed focusable/clickable (it's the same pattern every other tvOS
+/// screen in this app uses), and this coordinator owns the request end to end.
+@MainActor
+final class TVAppleSignInCoordinator: NSObject, ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
+    private var rawNonce = ""
+    private let identity: PlayerIdentityStore
+
+    init(identity: PlayerIdentityStore) {
+        self.identity = identity
+    }
+
+    func start() {
+        identity.reportAuthError(nil)
+        rawNonce = AppleNonce.random()
+        let request = ASAuthorizationAppleIDProvider().createRequest()
+        request.requestedScopes = [.email, .fullName]
+        request.nonce = AppleNonce.sha256(rawNonce)
+        let controller = ASAuthorizationController(authorizationRequests: [request])
+        controller.delegate = self
+        controller.presentationContextProvider = self
+        controller.performRequests()
+    }
+
+    nonisolated func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
+        MainActor.assumeIsolated {
+            let scene = UIApplication.shared.connectedScenes.first { $0.activationState == .foregroundActive } as? UIWindowScene
+            return scene?.windows.first { $0.isKeyWindow } ?? ASPresentationAnchor()
+        }
+    }
+
+    func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
+        guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential,
+              let data = credential.identityToken, let token = String(data: data, encoding: .utf8) else {
+            identity.reportAuthError("Apple didn't return an identity token — please try again.")
+            return
+        }
+        let name = [credential.fullName?.givenName, credential.fullName?.familyName].compactMap { $0 }.joined(separator: " ")
+        Task { await identity.linkApple(idToken: token, rawNonce: rawNonce, appleName: name.isEmpty ? nil : name, appleEmail: credential.email) }
+    }
+
+    func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
+        if (error as? ASAuthorizationError)?.code == .canceled { return }   // user backed out — no error nag
+        identity.reportAuthError("Apple sign-in failed: \((error as NSError).localizedDescription)")
+    }
+}
+
+/// White pill + Apple logo, matching Apple's Sign in with Apple HIG — the
+/// same focus-scale-and-glow treatment as every other tvOS button style here.
+struct TVAppleSignInButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View { Inner(configuration: configuration) }
+    struct Inner: View {
+        let configuration: Configuration
+        @Environment(\.isFocused) private var focused
+        var body: some View {
+            configuration.label
+                .background(RoundedRectangle(cornerRadius: 18).fill(Color.white))
+                .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(Tidbits.Palette.blue.opacity(focused ? 0.9 : 0), lineWidth: 5))
+                .scaleEffect(focused ? 1.05 : 1.0)
+                .shadow(color: .white.opacity(focused ? 0.35 : 0), radius: 24, y: 8)
+                .animation(.easeOut(duration: 0.18), value: focused)
+        }
+    }
+}
+
 /// Wave E: the cross-venue / season leaderboard on the TV — reuses the shared Core fetcher.
 struct LeaderboardView_tvOS: View {
+    @Environment(\.dismiss) private var dismiss
     @State private var overall: [LeaderboardRow] = []
     @State private var venues: [(venue: String, rows: [LeaderboardRow])] = []
     @State private var friends: [PlayerIdentity.Friend] = []
@@ -159,6 +410,7 @@ struct LeaderboardView_tvOS: View {
             }
         }
         .navigationTitle("Leaderboard")
+        .onExitCommand { dismiss() }   // presented via fullScreenCover from Settings (modal: allowed)
         .task { await load() }
     }
 

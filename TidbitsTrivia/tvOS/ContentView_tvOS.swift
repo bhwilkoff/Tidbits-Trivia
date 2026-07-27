@@ -167,6 +167,7 @@ struct ContentView_tvOS: View {
                 showExpeditions = true
             }
             if DebugHooks.openLinkWall { openLinkWall() }
+            if DebugHooks.openSettings { showSettings = true }
         }
         // A friend's Game Center challenge accepted at runtime → launch the mode.
         .onChange(of: gameCenter.pendingChallengeMode) { _, m in

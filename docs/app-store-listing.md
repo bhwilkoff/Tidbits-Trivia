@@ -42,6 +42,34 @@ confirm both actually have it set (don't assume from "macOS passed" —
 verify directly in App Store Connect, since a reviewer not flagging it
 this pass isn't proof it's configured).
 
+**Ratchet (2026-07-27): Guideline 2.1(a) — tvOS Settings, "no action
+occurred when we tapped to sign in with Sign in with Apple."** Root
+cause was architectural, not a one-line bug: `SettingsView_tvOS` was the
+ONLY tvOS screen using system `Form`/`List`/`NavigationStack` instead of
+this app's hand-rolled `TVTheme`/`TVRecordsCard`/custom-`ButtonStyle`
+idiom every other tvOS screen uses — the SwiftUI `SignInWithAppleButton`
+(which wraps a UIKit `ASAuthorizationAppleIDButton` in a representable)
+embedded in a `Form` row can have its Siri Remote select click swallowed
+by the row's own selection handling, and the `onCompletion` handler only
+matched `.success`, so a failed/cancelled auth (very plausible on a
+review device without an Apple ID signed into the TV) failed completely
+silently — indistinguishable from "nothing happened" either way. Fixed
+by rebuilding the page from scratch in the app's real tvOS idiom (no
+Form/List/NavigationStack) and replacing the SwiftUI wrapper with a
+plain `Button` that drives `ASAuthorizationController` directly via a
+coordinator (`TVAppleSignInCoordinator`), handling BOTH success and
+failure and surfacing `identity.authError` visibly (mirroring the
+already-correct macOS `SettingsView_macOS` pattern, which iOS's
+`ProfileView` was ALSO missing — worth the same fix there if iOS ever
+sees a similar report). Also fixed the reported "dark text on dark
+background" / "looks like a webpage" complaint as part of the same
+rewrite (explicit `TVTheme.text`/`textSoft` everywhere, never inherited
+`.primary`/`.secondary`), and made signed-in vs signed-out an
+unmistakable visual difference (a filled mint checkmark-seal badge vs.
+the real white Apple-HIG sign-in pill) per the reviewer's own note.
+`TIDBITS_SETTINGS=1` env hook added for headless-simulator screenshot
+verification (this dev box has no GUI Simulator window).
+
 ## App Name (≤30 chars)
 `Tidbits: Wikipedia Trivia` (25)
 

@@ -28,6 +28,7 @@ struct SettingsView_tvOS: View {
     @State private var showPaywall = false
     @State private var showLeaderboard = false
     @State private var appleCoordinator: TVAppleSignInCoordinator?
+    @State private var signingIn = false
     @FocusState private var focus: SettingsFocus?
 
     private enum SettingsFocus: Hashable { case appleSignIn, gameplayToggle }
@@ -138,19 +139,26 @@ struct SettingsView_tvOS: View {
         } else {
             VStack(alignment: .leading, spacing: 16) {
                 Button {
+                    print("[AppleSignIn/tvOS] button action fired")
                     let coordinator = TVAppleSignInCoordinator(identity: identity)
+                    coordinator.onStateChange = { signingIn = $0 }
                     appleCoordinator = coordinator
                     coordinator.start()
                 } label: {
                     HStack(spacing: 18) {
-                        Image(systemName: "apple.logo").font(.system(size: 32, weight: .medium))
-                        Text("Sign in with Apple").font(.system(size: 32, weight: .semibold, design: .rounded))
+                        if signingIn {
+                            ProgressView().tint(.black)
+                        } else {
+                            Image(systemName: "apple.logo").font(.system(size: 32, weight: .medium))
+                        }
+                        Text(signingIn ? "Signing in…" : "Sign in with Apple").font(.system(size: 32, weight: .semibold, design: .rounded))
                     }
                     .foregroundStyle(.black)
                     .padding(.horizontal, 48).padding(.vertical, 22)
                 }
                 .buttonStyle(TVAppleSignInButtonStyle())
                 .focused($focus, equals: .appleSignIn)
+                .disabled(signingIn)
                 if let e = identity.authError {
                     HStack(spacing: 12) {
                         Image(systemName: "exclamationmark.triangle.fill").font(.system(size: 22, weight: .bold))
@@ -321,7 +329,16 @@ final class TVAppleSignInCoordinator: NSObject, ASAuthorizationControllerDelegat
         self.identity = identity
     }
 
+    /// Flips true the moment `.performRequests()` is called, false once the
+    /// delegate calls back (success OR failure) — read by the button so a tap
+    /// gives IMMEDIATE visible feedback ("Signing in…") distinct from "did the
+    /// tap even register." Also gives future test passes a second checkpoint:
+    /// if this never goes true, the tap itself isn't reaching `start()`.
+    var onStateChange: ((Bool) -> Void)?
+
     func start() {
+        print("[AppleSignIn/tvOS] start() — requesting Apple ID authorization")
+        onStateChange?(true)
         identity.reportAuthError(nil)
         rawNonce = AppleNonce.random()
         let request = ASAuthorizationAppleIDProvider().createRequest()
@@ -336,22 +353,36 @@ final class TVAppleSignInCoordinator: NSObject, ASAuthorizationControllerDelegat
     nonisolated func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
         MainActor.assumeIsolated {
             let scene = UIApplication.shared.connectedScenes.first { $0.activationState == .foregroundActive } as? UIWindowScene
-            return scene?.windows.first { $0.isKeyWindow } ?? ASPresentationAnchor()
+            let anchor = scene?.windows.first { $0.isKeyWindow }
+            print("[AppleSignIn/tvOS] presentationAnchor — foreground scene found: \(scene != nil), key window found: \(anchor != nil)")
+            return anchor ?? ASPresentationAnchor()
         }
     }
 
     func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
+        print("[AppleSignIn/tvOS] didCompleteWithAuthorization — credential type: \(type(of: authorization.credential))")
+        onStateChange?(false)
         guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential,
               let data = credential.identityToken, let token = String(data: data, encoding: .utf8) else {
+            print("[AppleSignIn/tvOS] no identityToken on the credential — aborting")
             identity.reportAuthError("Apple didn't return an identity token — please try again.")
             return
         }
+        print("[AppleSignIn/tvOS] identityToken decoded (\(token.count) chars), email present: \(credential.email != nil), fullName present: \(credential.fullName != nil) — calling linkApple")
         let name = [credential.fullName?.givenName, credential.fullName?.familyName].compactMap { $0 }.joined(separator: " ")
-        Task { await identity.linkApple(idToken: token, rawNonce: rawNonce, appleName: name.isEmpty ? nil : name, appleEmail: credential.email) }
+        Task {
+            await identity.linkApple(idToken: token, rawNonce: rawNonce, appleName: name.isEmpty ? nil : name, appleEmail: credential.email)
+            print("[AppleSignIn/tvOS] linkApple returned — identity.signedIn is now \(identity.signedIn), authError: \(identity.authError ?? "none")")
+        }
     }
 
     func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
-        if (error as? ASAuthorizationError)?.code == .canceled { return }   // user backed out — no error nag
+        print("[AppleSignIn/tvOS] didCompleteWithError — \(error)")
+        onStateChange?(false)
+        if (error as? ASAuthorizationError)?.code == .canceled {
+            print("[AppleSignIn/tvOS] user cancelled — no error nag shown")
+            return
+        }
         identity.reportAuthError("Apple sign-in failed: \((error as NSError).localizedDescription)")
     }
 }

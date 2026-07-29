@@ -130,9 +130,10 @@ struct ClubHubView: View {
         return "Today's board is waiting — 16 facts, 4 hidden groups."
     }
 
-    private var weakSpotSubtitle: String {
-        WeakSpotArena.previewLine(in: modelContext) ?? "A round built entirely from the questions you've missed."
-    }
+    /// Member copy, NOT `previewLine()`. Those lines are written to SELL ("… — Club turns
+    /// misses like this into a round"), which is exactly wrong aimed at someone who already
+    /// paid: inside the door, Club is just features.
+    private var weakSpotSubtitle: String { "A round built entirely from the questions you've missed." }
 
     private var marathonSubtitle: String {
         if let run = marathonRuns.first { return "Question \(run.currentIndex + 1) of \(run.total) — resume where you left off." }
@@ -147,7 +148,9 @@ struct ClubHubView: View {
     }
 
     private var storySubtitle: String {
-        StoryArchive.previewLine(in: modelContext) ?? "Every story behind every answer you've unlocked."
+        let n = StoryArchive.count(in: modelContext)
+        return n == 0 ? "Every story you unlock, kept here forever."
+                      : "\(n) stor\(n == 1 ? "y" : "ies") collected — searchable, forever."
     }
 
     private var atlasSubtitle: String { "What you actually know, by domain, over time." }

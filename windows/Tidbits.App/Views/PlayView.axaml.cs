@@ -174,15 +174,16 @@ public partial class PlayView : UserControl
 
         stack.Children.Add(new TextBlock { Text = "PLAY", Classes = { "section-header" }, Margin = new Avalonia.Thickness(0, 8, 0, 0) });
         Row("Link Wall", "Today's board — 16 facts, 4 hidden groups.", OpenLinkWallAsync);
-        Row("Weak-Spot Arena",
-            WeakSpotArena.PreviewLine(data.Records) ?? "A round built entirely from the questions you've missed.",
-            StartWeakSpotAsync);
+        // Member copy, NOT PreviewLine() — those lines are written to SELL.
+        Row("Weak-Spot Arena", "A round built entirely from the questions you've missed.", StartWeakSpotAsync);
         Row("Marathon", marathonSub, () => OpenMarathonAsync());
         Row("Expeditions", "Multi-week campaigns through one domain.", OpenExpeditionsAsync);
 
         stack.Children.Add(new TextBlock { Text = "YOUR RECORD", Classes = { "section-header" }, Margin = new Avalonia.Thickness(0, 8, 0, 0) });
+        int stories = StoryArchive.Count(data.Records);
         Row("Story Archive",
-            StoryArchive.PreviewLine(data.Records) ?? "Every story behind every answer you've unlocked.",
+            stories == 0 ? "Every story you unlock, kept here forever."
+                         : $"{stories} stor{(stories == 1 ? "y" : "ies")} collected — searchable, forever.",
             () => StoryArchiveDialog.ShowAsync(data.Records, q => _ = StartReaskAsync(q)));
         Row("Knowledge Atlas", "What you actually know, by domain, over time.",
             () => KnowledgeAtlasDialog.ShowAsync(data.Records, cat => _ = StartCategoryRoundAsync(cat)));

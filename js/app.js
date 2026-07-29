@@ -2745,6 +2745,14 @@ function clubHubLaunchRow(action, icon, title, subtitle) {
     <span class="chev">›</span></button>`;
 }
 
+// Member copy, NOT previewLine() — those lines are written to SELL, which is exactly wrong
+// aimed at someone who already paid.
+function storyHubSubtitle() {
+  const n = StoryArchive.count();
+  return n === 0 ? 'Every story you unlock, kept here forever.'
+                 : `${n} stor${n === 1 ? 'y' : 'ies'} collected — searchable, forever.`;
+}
+
 function clubHub() {
   const run = Marathon.inProgress();
   const runs = Marathon.history();
@@ -2758,11 +2766,11 @@ function clubHub() {
     </div>
     <h2 class="section">Play</h2>
     ${clubHubRow('#/linkwall', ICON.grid, 'Link Wall', "Today's board — 16 facts, 4 hidden groups.")}
-    ${clubHubLaunchRow('weakspot', ICON.target, 'Weak-Spot Arena', WeakSpotArena.previewLine() || 'A round built entirely from the questions you\'ve missed.')}
+    ${clubHubLaunchRow('weakspot', ICON.target, 'Weak-Spot Arena', 'A round built entirely from the questions you\'ve missed.')}
     ${clubHubLaunchRow('marathon', ICON.flag, 'Marathon', marathonSub)}
     ${clubHubRow('#/expeditions', ICON.compass, 'Expeditions', 'Multi-week campaigns through one domain.')}
     <h2 class="section">Your record</h2>
-    ${clubHubRow('#/archive', ICON.book, 'Story Archive', StoryArchive.previewLine() || "Every story behind every answer you've unlocked.")}
+    ${clubHubRow('#/archive', ICON.book, 'Story Archive', storyHubSubtitle())}
     ${clubHubRow('#/atlas', ICON.map, 'Knowledge Atlas', 'What you actually know, by domain, over time.')}
     ${clubHubRow('#/marathon', ICON.flame, 'Marathon History', runs.length ? `${runs.length} run${runs.length === 1 ? '' : 's'} on record.` : 'Your finished runs, kept forever.')}
     <dialog id="marathon-dlg" class="night-dlg">

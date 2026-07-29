@@ -461,8 +461,9 @@ private fun ClubHubScreen(
 
         Text("PLAY", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = fade)
         ClubHubRow(Icons.Filled.GridView, "Link Wall", "Today's board — 16 facts, 4 hidden groups.", Pops.mint, onLinkWall)
+        // Member copy, NOT previewLine() — those lines are written to SELL.
         ClubHubRow(Icons.Filled.TrackChanges, "Weak-Spot Arena",
-            WeakSpotArena.previewLine(store) ?: "A round built entirely from the questions you've missed.", Pops.coral) {
+            "A round built entirely from the questions you've missed.", Pops.coral) {
             val round = WeakSpotArena.build(store)
             if (round.questions.size >= WeakSpotArena.PLAYABLE_FLOOR) onPlayWeakSpot(round.questions, round.reasons)
             else showWeakSpotEmpty = true
@@ -473,8 +474,10 @@ private fun ClubHubScreen(
         ClubHubRow(Icons.Filled.Map, "Expeditions", "Multi-week campaigns through one domain.", Pops.grape, onExpeditions)
 
         Text("YOUR RECORD", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = fade)
+        val stories = StoryArchive.count(store)
         ClubHubRow(Icons.Filled.Book, "Story Archive",
-            StoryArchive.previewLine(store) ?: "Every story behind every answer you've unlocked.", Pops.blue, onArchive)
+            if (stories == 0) "Every story you unlock, kept here forever."
+            else "$stories stor${if (stories == 1) "y" else "ies"} collected — searchable, forever.", Pops.blue, onArchive)
         ClubHubRow(Icons.Filled.ShowChart, "Knowledge Atlas", "What you actually know, by domain, over time.", Pops.mint, onAtlas)
         ClubHubRow(Icons.Filled.EmojiEvents, "Marathon History",
             if (history.isEmpty()) "Your finished runs, kept forever."

@@ -76,78 +76,129 @@ public partial class PlayView : UserControl
         BuildVersus();
         BuildDaily();
         BuildPresets();
-        BuildWeakSpot();
-        BuildMarathonCard();
-        BuildExpeditionsCard();
-        BuildLinkWallCard();
+        BuildClubDoor();
     }
 
     // MARK: - Tidbits Club: Weak-Spot Arena (docs/CLUB-FEATURES-BUILD.md "Feature 1")
 
-    /// A round built entirely from the player's own miss history — Club-gated, never a
-    /// free Customize pick and never a remembered/random default (the `Offered` array
-    /// above never lists it). Members launch it; non-members see a real preview (a
-    /// genuine missed fact when one exists, else an honest static line) and the
-    /// existing Club paywall — never a blank wall.
-    private void BuildWeakSpot()
+
+    // MARK: - Tidbits Club: the ONE door (rule R-CLUB-1, docs/iOS-DESIGN.md 5.2a)
+
+    /// The app's only Club entry point. Members open the hub — all six features in one
+    /// place, no locks, no price; everyone else opens the paywall, which is now the only
+    /// surface in the app allowed to make an offer. Deliberately a quiet card at the end of
+    /// the Play column, not four Club cards scattered through it.
+    private void BuildClubDoor()
     {
+        if (ClubDoorPanel is null) return;
         var data = GameData.Shared.Value;
         bool isClub = data.Entitlement.IsClub;
-        var subtitle = isClub
-            ? GameMode.WeakSpot.Blurb()
-            : WeakSpotArena.PreviewLine(data.Records)
-              ?? "Your misses, turned into a round you can actually close.";
 
-        var titleRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, VerticalAlignment = VerticalAlignment.Center };
-        titleRow.Children.Add(new TextBlock { Text = "WEAK-SPOT ARENA", Classes = { "body-strong" } });
-        if (!isClub)
+        var textStack = new StackPanel { Spacing = 3, VerticalAlignment = VerticalAlignment.Center, MaxWidth = 460 };
+        textStack.Children.Add(new TextBlock { Text = "TIDBITS CLUB", Classes = { "body-strong" } });
+        textStack.Children.Add(new TextBlock
         {
-            titleRow.Children.Add(new Border
-            {
-                Background = new SolidColorBrush(Color.Parse("#FF5C35")),
-                CornerRadius = new Avalonia.CornerRadius(6),
-                Padding = new Avalonia.Thickness(7, 2),
-                Child = new TextBlock { Text = "CLUB", FontSize = 11, FontWeight = Avalonia.Media.FontWeight.Black, Foreground = Brushes.White },
-            });
-        }
-
-        var textStack = new StackPanel { Spacing = 3, VerticalAlignment = VerticalAlignment.Center, MaxWidth = 440 };
-        textStack.Children.Add(titleRow);
-        textStack.Children.Add(new TextBlock { Text = subtitle, Classes = { "caption" }, TextWrapping = TextWrapping.Wrap });
+            Text = isClub
+                ? "Your six Club features, all in one place."
+                : "Six optional extras for getting better. Everything else in Tidbits is free.",
+            Classes = { "caption" },
+            TextWrapping = TextWrapping.Wrap,
+        });
 
         var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
         grid.Children.Add(textStack);
-
         var action = new Button
         {
-            Content = isClub ? "Play" : "Join Club",
-            Classes = { "accent", "compact" },
+            Content = isClub ? "Open" : "See what's inside",
+            Classes = { "compact" },
             VerticalAlignment = VerticalAlignment.Center,
         };
-        action.Click += (_, _) => OnWeakSpotAction();
+        action.Click += (_, _) => OnClubDoorAction();
         Grid.SetColumn(action, 1);
         grid.Children.Add(action);
 
-        WeakSpotPanel.Content = new Border { Classes = { "card" }, Child = grid };
+        ClubDoorPanel.Content = new Border { Classes = { "card" }, Child = grid };
     }
 
-    /// Members launch the arena directly; everyone else sees the existing paywall
-    /// (the app's established modal idiom — FAContentDialog, never an interstitial).
-    private async void OnWeakSpotAction()
+    private async void OnClubDoorAction()
     {
         var data = GameData.Shared.Value;
         if (!data.Entitlement.IsClub)
         {
-            var dialog = new FAContentDialog
+            var paywall = new FAContentDialog
             {
                 Content = new ScrollViewer { Content = new ClubPaywallView(), MaxWidth = 520, MaxHeight = 640 },
                 CloseButtonText = "Close",
             };
-            await dialog.ShowAsync();
-            BuildWeakSpot(); // reflect a purchase/restore made from inside the dialog
+            await paywall.ShowAsync();
+            BuildClubDoor(); // reflect a purchase/restore made from inside the dialog
             return;
         }
-        await StartWeakSpotAsync();
+        await ShowClubHubAsync();
+    }
+
+    /// The member hub. Each row closes the dialog first: a round replaces the Play view's
+    /// content (GameHost), so it must never start underneath an open FAContentDialog.
+    private async Task ShowClubHubAsync()
+    {
+        var data = GameData.Shared.Value;
+        var run = Marathon.InProgress(data.Records);
+        var history = Marathon.History(data.Records);
+        var marathonSub = run is not null
+            ? $"Question {run.CurrentIndex + 1} of {run.Total} — resume where you left off."
+            : (history.Count > 0
+                ? $"{(int)Math.Round(history[0].Accuracy * 100)}% on your last run. Start another."
+                : "200 questions, graded by domain. Stop and resume anytime.");
+
+        var stack = new StackPanel { Spacing = 8, MinWidth = 460 };
+        stack.Children.Add(new TextBlock
+        {
+            Text = "Everything below is yours. The rest of Tidbits stays free for everyone.",
+            Classes = { "caption" }, TextWrapping = TextWrapping.Wrap,
+        });
+
+        FAContentDialog? hub = null;
+        void Row(string title, string subtitle, Func<Task> open)
+        {
+            var text = new StackPanel { Spacing = 2, VerticalAlignment = VerticalAlignment.Center, MaxWidth = 340 };
+            text.Children.Add(new TextBlock { Text = title, Classes = { "body-strong" } });
+            text.Children.Add(new TextBlock { Text = subtitle, Classes = { "caption" }, TextWrapping = TextWrapping.Wrap });
+            var g = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
+            g.Children.Add(text);
+            var b = new Button { Content = "Open", Classes = { "compact" }, VerticalAlignment = VerticalAlignment.Center };
+            b.Click += (_, _) => { hub?.Hide(); _ = open(); };
+            Grid.SetColumn(b, 1);
+            g.Children.Add(b);
+            stack.Children.Add(new Border { Classes = { "card" }, Child = g });
+        }
+
+        stack.Children.Add(new TextBlock { Text = "PLAY", Classes = { "section-header" }, Margin = new Avalonia.Thickness(0, 8, 0, 0) });
+        Row("Link Wall", "Today's board — 16 facts, 4 hidden groups.", OpenLinkWallAsync);
+        Row("Weak-Spot Arena",
+            WeakSpotArena.PreviewLine(data.Records) ?? "A round built entirely from the questions you've missed.",
+            StartWeakSpotAsync);
+        Row("Marathon", marathonSub, () => OpenMarathonAsync());
+        Row("Expeditions", "Multi-week campaigns through one domain.", OpenExpeditionsAsync);
+
+        stack.Children.Add(new TextBlock { Text = "YOUR RECORD", Classes = { "section-header" }, Margin = new Avalonia.Thickness(0, 8, 0, 0) });
+        Row("Story Archive",
+            StoryArchive.PreviewLine(data.Records) ?? "Every story behind every answer you've unlocked.",
+            () => StoryArchiveDialog.ShowAsync(data.Records, q => _ = StartReaskAsync(q)));
+        Row("Knowledge Atlas", "What you actually know, by domain, over time.",
+            () => KnowledgeAtlasDialog.ShowAsync(data.Records, cat => _ = StartCategoryRoundAsync(cat)));
+        Row("Marathon History",
+            history.Count == 0 ? "Your finished runs, kept forever."
+                               : $"{history.Count} run{(history.Count == 1 ? "" : "s")} on record.",
+            () => MarathonHistoryDialog.ShowAsync(data.Records));
+
+        hub = new FAContentDialog
+        {
+            Title = "Tidbits Club",
+            Content = new ScrollViewer { Content = stack, MaxHeight = 620 },
+            CloseButtonText = "Close",
+        };
+        await hub.ShowAsync();
+        BuildClubDoor();
     }
 
     /// Builds a fresh round from the current miss history and launches it — rebuilt
@@ -175,7 +226,7 @@ public partial class PlayView : UserControl
 
         var engine = data.NewEngine();
         var vm = new GameViewModel(engine, data.Records);
-        vm.Closed += () => { GameHost.Content = null; Landing.IsVisible = true; BuildWeakSpot(); };
+        vm.Closed += () => { GameHost.Content = null; Landing.IsVisible = true; BuildClubDoor(); };
         vm.PlayAgainRequested += () => _ = StartWeakSpotAsync();
         Landing.IsVisible = false;
         GameHost.Content = new GameView { DataContext = vm };
@@ -184,84 +235,13 @@ public partial class PlayView : UserControl
 
     // MARK: - Tidbits Club: Marathon (docs/CLUB-FEATURES-BUILD.md "Feature 3")
 
-    /// A 200-question graded endurance run that RESUMES ACROSS SESSIONS — Club-
-    /// gated, never a free Customize pick (the `Offered` array above never lists
-    /// it). Members launch/resume; non-members see a real preview (their last
-    /// run's accuracy once they have Club history, else an honest static pitch —
-    /// Marathon is Club-only end to end, so there's no free-tier sample) and the
-    /// existing Club paywall — never a blank wall.
-    private void BuildMarathonCard()
-    {
-        var data = GameData.Shared.Value;
-        bool isClub = data.Entitlement.IsClub;
-        var run = Marathon.InProgress(data.Records);
-        var subtitle = isClub
-            ? (run is not null
-                ? $"Question {run.CurrentIndex + 1} of {run.Total} — tap to resume"
-                : Marathon.PreviewLine(data.Records) ?? GameMode.Marathon.Blurb())
-            : "See exactly where you stand — e.g. Geography 91% · History 64% — across a 200-question run you can pause and resume anytime.";
-
-        var titleRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, VerticalAlignment = VerticalAlignment.Center };
-        titleRow.Children.Add(new TextBlock { Text = "MARATHON", Classes = { "body-strong" } });
-        if (!isClub)
-        {
-            titleRow.Children.Add(new Border
-            {
-                Background = new SolidColorBrush(Color.Parse("#FF5C35")),
-                CornerRadius = new Avalonia.CornerRadius(6),
-                Padding = new Avalonia.Thickness(7, 2),
-                Child = new TextBlock { Text = "CLUB", FontSize = 11, FontWeight = Avalonia.Media.FontWeight.Black, Foreground = Brushes.White },
-            });
-        }
-        else if (run is not null)
-        {
-            titleRow.Children.Add(new Border
-            {
-                Background = new SolidColorBrush(Color.Parse("#13B6C9")),
-                CornerRadius = new Avalonia.CornerRadius(6),
-                Padding = new Avalonia.Thickness(7, 2),
-                Child = new TextBlock { Text = "RESUME", FontSize = 11, FontWeight = Avalonia.Media.FontWeight.Black, Foreground = Brushes.White },
-            });
-        }
-
-        var textStack = new StackPanel { Spacing = 3, VerticalAlignment = VerticalAlignment.Center, MaxWidth = 440 };
-        textStack.Children.Add(titleRow);
-        textStack.Children.Add(new TextBlock { Text = subtitle, Classes = { "caption" }, TextWrapping = TextWrapping.Wrap });
-
-        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
-        grid.Children.Add(textStack);
-
-        var action = new Button
-        {
-            Content = isClub ? (run is not null ? "Resume" : "Play") : "Join Club",
-            Classes = { "accent", "compact" },
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-        action.Click += (_, _) => OnMarathonAction();
-        Grid.SetColumn(action, 1);
-        grid.Children.Add(action);
-
-        MarathonPanel.Content = new Border { Classes = { "card" }, Child = grid };
-    }
 
     /// Members with a run in progress get a Resume/Start-over choice (an
     /// FAContentDialog); with no run, they launch straight into a fresh one.
     /// Non-members see the existing paywall — never a blank wall.
-    private async void OnMarathonAction()
+    private async Task OpenMarathonAsync()
     {
         var data = GameData.Shared.Value;
-        if (!data.Entitlement.IsClub)
-        {
-            var dialog = new FAContentDialog
-            {
-                Content = new ScrollViewer { Content = new ClubPaywallView(), MaxWidth = 520, MaxHeight = 640 },
-                CloseButtonText = "Close",
-            };
-            await dialog.ShowAsync();
-            BuildMarathonCard(); // reflect a purchase/restore made from inside the dialog
-            return;
-        }
-
         var run = Marathon.InProgress(data.Records);
         if (run is not null)
         {
@@ -299,14 +279,14 @@ public partial class PlayView : UserControl
             // Edge case only (a run already at its full length without having
             // been finished) — close it out rather than show a blank round.
             Marathon.Finish(data.Records, run);
-            BuildMarathonCard();
+            BuildClubDoor();
             return;
         }
 
         var questions = data.Sources.Corpus.Questions(remainingIds);
         var engine = data.NewEngine();
         var vm = new GameViewModel(engine, data.Records, run);
-        vm.Closed += () => { GameHost.Content = null; Landing.IsVisible = true; BuildMarathonCard(); };
+        vm.Closed += () => { GameHost.Content = null; Landing.IsVisible = true; BuildClubDoor(); };
         vm.PlayAgainRequested += () => _ = StartMarathonAsync(startOver: true);
         Landing.IsVisible = false;
         GameHost.Content = new GameView { DataContext = vm };
@@ -315,55 +295,12 @@ public partial class PlayView : UserControl
 
     // MARK: - Tidbits Club: Expeditions (docs/CLUB-FEATURES-BUILD.md "Feature 5")
 
-    /// A multi-week structured campaign through one domain — Club-marked, but UNLIKE
-    /// Weak-Spot/Marathon this card's action ALWAYS opens the hub (never the paywall
-    /// directly): the hub + a campaign's map are a real preview reachable by
-    /// everyone, and only tapping Play on a stage is Club-gated
-    /// (docs/CLUB-FEATURES-BUILD.md "Feature 5" — "never a blank wall").
-    private void BuildExpeditionsCard()
-    {
-        var data = GameData.Shared.Value;
-        bool isClub = data.Entitlement.IsClub;
-        var available = Expeditions.Available(data.Records);
-        int started = available.Count(a => a.Progress is not null);
-        var subtitle = started > 0
-            ? $"{started} of {available.Count} expeditions underway."
-            : Expeditions.PreviewLine();
 
-        var titleRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, VerticalAlignment = VerticalAlignment.Center };
-        titleRow.Children.Add(new TextBlock { Text = "EXPEDITIONS", Classes = { "body-strong" } });
-        if (!isClub)
-        {
-            titleRow.Children.Add(new Border
-            {
-                Background = new SolidColorBrush(Color.Parse("#FF5C35")),
-                CornerRadius = new Avalonia.CornerRadius(6),
-                Padding = new Avalonia.Thickness(7, 2),
-                Child = new TextBlock { Text = "CLUB", FontSize = 11, FontWeight = Avalonia.Media.FontWeight.Black, Foreground = Brushes.White },
-            });
-        }
-
-        var textStack = new StackPanel { Spacing = 3, VerticalAlignment = VerticalAlignment.Center, MaxWidth = 440 };
-        textStack.Children.Add(titleRow);
-        textStack.Children.Add(new TextBlock { Text = subtitle, Classes = { "caption" }, TextWrapping = TextWrapping.Wrap });
-
-        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
-        grid.Children.Add(textStack);
-
-        // Always "Open" — the hub is a real preview reachable by everyone.
-        var action = new Button { Content = "Open", Classes = { "accent", "compact" }, VerticalAlignment = VerticalAlignment.Center };
-        action.Click += (_, _) => OnExpeditionsAction();
-        Grid.SetColumn(action, 1);
-        grid.Children.Add(action);
-
-        ExpeditionsPanel.Content = new Border { Classes = { "card" }, Child = grid };
-    }
-
-    private async void OnExpeditionsAction()
+    private async Task OpenExpeditionsAsync()
     {
         var data = GameData.Shared.Value;
         await ExpeditionsDialog.ShowAsync(data.Records, StartExpeditionStage);
-        BuildExpeditionsCard(); // reflect progress/certificates changed while the dialog was open
+        BuildClubDoor(); // reflect progress/certificates changed while the dialog was open
     }
 
     /// Launches one stage as a NORMAL Classic round with a difficulty-banded custom
@@ -380,7 +317,7 @@ public partial class PlayView : UserControl
         var vm = new GameViewModel(engine, data.Records, expeditionStage: (expedition, stageIndex));
         vm.Closed += () =>
         {
-            GameHost.Content = null; Landing.IsVisible = true; BuildExpeditionsCard();
+            GameHost.Content = null; Landing.IsVisible = true; BuildClubDoor();
             _ = ExpeditionsDialog.ShowAsync(data.Records, StartExpeditionStage, openExpeditionId: expedition.Id);
         };
         vm.PlayAgainRequested += () => StartExpeditionStage(expedition, stageIndex); // retry the SAME stage
@@ -391,96 +328,45 @@ public partial class PlayView : UserControl
 
     // MARK: - Tidbits Club: Link Wall (docs/CLUB-FEATURES-BUILD.md "Feature 6")
 
-    /// A NYT-Connections-style SECOND daily — Club-marked, sitting right next to the
-    /// free Daily Tidbit above (which this never touches). Members open straight into
-    /// today's board (or its result, if already played); non-members see a real
-    /// preview — today's easiest group's actual label, generated fresh from the
-    /// bundled corpus (public content, not a nag) — and the existing Club paywall,
-    /// never a blank wall.
-    private void BuildLinkWallCard()
+
+    /// Opens straight into today's board (the FAContentDialog board/result swap).
+    private async Task OpenLinkWallAsync()
     {
         var data = GameData.Shared.Value;
-        bool isClub = data.Entitlement.IsClub;
-        var day = QuestionProvider.DayKey();
-        var puzzle = LinkWall.Puzzle(day, LinkWallMatchQuestions());
-        var todayResult = data.Records.LinkWall.GetValueOrDefault(day);
-
-        string subtitle;
-        if (isClub)
-        {
-            subtitle = todayResult switch
-            {
-                { Completed: true, Won: true } => "Solved today's wall — see the recap.",
-                { Completed: true, Won: false } => "See today's groups.",
-                { Completed: false } => "In progress — tap to keep going.",
-                _ => "4 groups of 4. One guess at a time, 4 mistakes allowed.",
-            };
-        }
-        else
-        {
-            var previewLabel = puzzle?.Groups.OrderBy(g => g.Difficulty).FirstOrDefault()?.Label;
-            subtitle = previewLabel is not null
-                ? $"Today's board includes \"{previewLabel}\" — find all four groups."
-                : "A second daily: 16 facts, 4 hidden groups. Find them all.";
-        }
-
-        var titleRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, VerticalAlignment = VerticalAlignment.Center };
-        titleRow.Children.Add(new TextBlock { Text = "LINK WALL", Classes = { "body-strong" } });
-        if (!isClub)
-        {
-            titleRow.Children.Add(new Border
-            {
-                Background = new SolidColorBrush(Color.Parse("#FF5C35")),
-                CornerRadius = new Avalonia.CornerRadius(6),
-                Padding = new Avalonia.Thickness(7, 2),
-                Child = new TextBlock { Text = "CLUB", FontSize = 11, FontWeight = Avalonia.Media.FontWeight.Black, Foreground = Brushes.White },
-            });
-        }
-
-        var textStack = new StackPanel { Spacing = 3, VerticalAlignment = VerticalAlignment.Center, MaxWidth = 440 };
-        textStack.Children.Add(titleRow);
-        textStack.Children.Add(new TextBlock { Text = subtitle, Classes = { "caption" }, TextWrapping = TextWrapping.Wrap });
-
-        var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
-        grid.Children.Add(textStack);
-
-        var action = new Button
-        {
-            Content = isClub ? "Play" : "Join Club",
-            Classes = { "accent", "compact" },
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-        action.Click += (_, _) => OnLinkWallAction();
-        Grid.SetColumn(action, 1);
-        grid.Children.Add(action);
-
-        LinkWallPanel.Content = new Border { Classes = { "card" }, Child = grid };
-    }
-
-    /// Members open straight into today's board (the FAContentDialog board/result
-    /// swap); non-members see the existing paywall — never a blank wall.
-    private async void OnLinkWallAction()
-    {
-        var data = GameData.Shared.Value;
-        if (!data.Entitlement.IsClub)
-        {
-            var dialog = new FAContentDialog
-            {
-                Content = new ScrollViewer { Content = new ClubPaywallView(), MaxWidth = 520, MaxHeight = 640 },
-                CloseButtonText = "Close",
-            };
-            await dialog.ShowAsync();
-            BuildLinkWallCard(); // reflect a purchase/restore made from inside the dialog
-            return;
-        }
         await LinkWallDialog.ShowAsync(data.Records, LinkWallMatchQuestions(), QuestionProvider.DayKey());
-        BuildLinkWallCard(); // reflect today's progress/result changed while the dialog was open
+        BuildClubDoor(); // reflect today's progress/result changed while the dialog was open
     }
 
     /// The bundled match.json rows Link Wall's generator draws from — the same
     /// enrichment source that already powers the free Match-Up mode.
     private static List<Question> LinkWallMatchQuestions() =>
         GameData.Shared.Value.Sources.Enrich(GameMode.Matching).Questions("mixed", new HashSet<string>(), 100_000);
+
+    /// "Re-ask this" from the Story Archive — a one-question drill on the stored snapshot.
+    private Task StartReaskAsync(Question question)
+    {
+        var data = GameData.Shared.Value;
+        var engine = data.NewEngine();
+        var vm = new GameViewModel(engine, data.Records);
+        vm.Closed += () => { GameHost.Content = null; Landing.IsVisible = true; BuildClubDoor(); };
+        Landing.IsVisible = false;
+        GameHost.Content = new GameView { DataContext = vm };
+        engine.StartCustom(GameMode.Classic, TriviaCategory.Named("mixed"), new List<Question> { question });
+        return Task.CompletedTask;
+    }
+
+    /// A Knowledge Atlas domain row is a door: launch a full round in that category.
+    private Task StartCategoryRoundAsync(TriviaCategory category)
+    {
+        var data = GameData.Shared.Value;
+        var engine = data.NewEngine();
+        var vm = new GameViewModel(engine, data.Records);
+        vm.Closed += () => { GameHost.Content = null; Landing.IsVisible = true; BuildClubDoor(); };
+        Landing.IsVisible = false;
+        GameHost.Content = new GameView { DataContext = vm };
+        engine.Start(GameMode.Classic, category);
+        return Task.CompletedTask;
+    }
 
     /// Saved Custom Mix presets ("My Mix") — each replays its modes + category,
     /// or can be removed. Parity with the web/Mac presets list.

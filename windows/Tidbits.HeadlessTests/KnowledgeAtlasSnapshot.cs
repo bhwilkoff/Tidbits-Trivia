@@ -60,43 +60,6 @@ public class KnowledgeAtlasSnapshot
     // that's never a blank wall. `StoreWithHistory` only seeds the DataContext-bound
     // dashboard list below the card (mirrors StoryArchiveSnapshot's StoreWithOneGame).
 
-    [AvaloniaFact]
-    public void Records_shows_the_knowledge_atlas_card_for_a_member()
-    {
-        using var _ = new EnvVarScope("TIDBITS_CLUB", "1");
-        var store = StoreWithHistory(new[] { G("history", 8, 10, 1) });
-        var win = new Window { Width = 900, Height = 1000, Content = new RecordsView { DataContext = new RecordsViewModel(store) } };
-        win.Show();
-        Dispatcher.UIThread.RunJobs();
-
-        var texts = TextsOf(win);
-        Assert.Contains("KNOWLEDGE ATLAS", texts);
-        var buttons = win.GetVisualDescendants().OfType<Button>().Where(b => (b.Content as string) == "Open").ToList();
-        Assert.NotEmpty(buttons);
-
-        win.CaptureRenderedFrame()!.Save(Path.Combine(Art(), "records-knowledge-atlas-member.png"));
-    }
-
-    [AvaloniaFact]
-    public void Records_shows_the_club_chip_and_a_real_or_honest_preview_for_a_non_member()
-    {
-        using var _ = new EnvVarScope("TIDBITS_CLUB", "0");
-        var store = StoreWithHistory(new[] { G("history", 9, 10, 1), G("science", 2, 10, 1) });
-        var win = new Window { Width = 900, Height = 1000, Content = new RecordsView { DataContext = new RecordsViewModel(store) } };
-        win.Show();
-        Dispatcher.UIThread.RunJobs();
-
-        var texts = TextsOf(win);
-        Assert.Contains("KNOWLEDGE ATLAS", texts);
-        Assert.Contains("CLUB", texts); // non-member -> chip
-        var buttons = win.GetVisualDescendants().OfType<Button>().Where(b => (b.Content as string) == "Join Club").ToList();
-        Assert.NotEmpty(buttons);
-        // Never a blank wall: some subtitle line renders regardless of local history.
-        Assert.Contains(texts, t => t is not null && t.Contains("Club", StringComparison.Ordinal));
-
-        win.CaptureRenderedFrame()!.Save(Path.Combine(Art(), "records-knowledge-atlas-non-member.png"));
-    }
-
     // MARK: - Atlas rendering (KnowledgeAtlasUi — pure, headless-testable)
 
     [AvaloniaFact]

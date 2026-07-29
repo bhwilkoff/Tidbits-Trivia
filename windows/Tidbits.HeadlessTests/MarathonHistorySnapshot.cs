@@ -72,47 +72,6 @@ public class MarathonHistorySnapshot
     }
 
     [AvaloniaFact]
-    public async Task Records_shows_the_marathon_history_card_for_a_member()
-    {
-        using var _ = new EnvVarScope("TIDBITS_CLUB", "1");
-        var store = await StoreWithOneGame();
-
-        var win = new Window { Width = 900, Height = 900, Content = new RecordsView { DataContext = new RecordsViewModel(store) } };
-        win.Show();
-        Dispatcher.UIThread.RunJobs();
-        ScrollToBottom(win);
-
-        var texts = TextsOf(win);
-        Assert.Contains("MARATHON HISTORY", texts);
-        Assert.DoesNotContain("CLUB", texts); // member -> no chip
-        var buttons = win.GetVisualDescendants().OfType<Button>().Where(b => (b.Content as string) == "Open").ToList();
-        Assert.NotEmpty(buttons);
-
-        win.CaptureRenderedFrame()!.Save(Path.Combine(Art(), "records-marathon-history-member.png"));
-    }
-
-    [AvaloniaFact]
-    public async Task Records_shows_the_club_chip_and_an_honest_pitch_for_a_non_member()
-    {
-        using var _ = new EnvVarScope("TIDBITS_CLUB", "0");
-        var store = await StoreWithOneGame();
-
-        var win = new Window { Width = 900, Height = 900, Content = new RecordsView { DataContext = new RecordsViewModel(store) } };
-        win.Show();
-        Dispatcher.UIThread.RunJobs();
-        ScrollToBottom(win);
-
-        var texts = TextsOf(win);
-        Assert.Contains("MARATHON HISTORY", texts);
-        Assert.Contains("CLUB", texts);
-        var buttons = win.GetVisualDescendants().OfType<Button>().Where(b => (b.Content as string) == "Join Club").ToList();
-        Assert.NotEmpty(buttons);
-        Assert.Contains(texts, t => t is not null && t.Contains("Club", StringComparison.Ordinal));
-
-        win.CaptureRenderedFrame()!.Save(Path.Combine(Art(), "records-marathon-history-non-member.png"));
-    }
-
-    [AvaloniaFact]
     public void History_list_shows_the_empty_pitch_with_no_runs()
     {
         var content = MarathonUi.BuildHistoryList(Array.Empty<MarathonScore>(), _ => { });

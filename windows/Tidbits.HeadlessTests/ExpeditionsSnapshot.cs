@@ -49,48 +49,6 @@ public class ExpeditionsSnapshot
 
     // MARK: - Home/Play entry-point card
 
-    [AvaloniaFact]
-    public void Play_home_renders_the_expeditions_card_for_a_member()
-    {
-        using var _ = new EnvVarScope("TIDBITS_CLUB", "1");
-        var view = new PlayView();
-        var win = new Window { Width = 900, Height = 1000, Content = view };
-        win.Show();
-        Dispatcher.UIThread.RunJobs();
-
-        var texts = TextsOf(win);
-        Assert.Contains("EXPEDITIONS", texts);
-        Assert.DoesNotContain("CLUB", texts); // member -> no chip
-        var buttons = win.GetVisualDescendants().OfType<Button>().Where(b => (b.Content as string) == "Open").ToList();
-        Assert.NotEmpty(buttons);
-
-        ScrollToEnd(win);
-        win.CaptureRenderedFrame()!.Save(Path.Combine(Art(), "home-expeditions-member.png"));
-    }
-
-    /// Non-member: the CLUB chip on the CARD, but the action is STILL "Open" — the
-    /// hub is a real preview reachable by everyone, never gated at the card level
-    /// (docs/CLUB-FEATURES-BUILD.md "Feature 5": "always opens the hub, never the
-    /// paywall directly").
-    [AvaloniaFact]
-    public void Play_home_renders_the_expeditions_card_with_a_club_chip_but_still_opens_for_a_non_member()
-    {
-        using var _ = new EnvVarScope("TIDBITS_CLUB", "0");
-        var view = new PlayView();
-        var win = new Window { Width = 900, Height = 1000, Content = view };
-        win.Show();
-        Dispatcher.UIThread.RunJobs();
-
-        var texts = TextsOf(win);
-        Assert.Contains("EXPEDITIONS", texts);
-        Assert.Contains("CLUB", texts);
-        var buttons = win.GetVisualDescendants().OfType<Button>().Where(b => (b.Content as string) == "Open").ToList();
-        Assert.NotEmpty(buttons); // NOT "Join Club" -- the hub always opens
-
-        ScrollToEnd(win);
-        win.CaptureRenderedFrame()!.Save(Path.Combine(Art(), "home-expeditions-non-member.png"));
-    }
-
     // MARK: - Hub (ExpeditionsUi.BuildHub — pure, headless-testable)
 
     [AvaloniaFact]

@@ -54,48 +54,6 @@ public class LinkWallSnapshot
 
     // MARK: - Home/Play entry-point card
 
-    [AvaloniaFact]
-    public void Play_home_renders_the_link_wall_card_for_a_member()
-    {
-        using var _ = new EnvVarScope("TIDBITS_CLUB", "1");
-        var view = new PlayView();
-        var win = new Window { Width = 900, Height = 1200, Content = view };
-        win.Show();
-        Dispatcher.UIThread.RunJobs();
-
-        var texts = TextsOf(win);
-        Assert.Contains("LINK WALL", texts);
-        Assert.DoesNotContain("CLUB", texts); // no chip for a member
-        var buttons = win.GetVisualDescendants().OfType<Button>().Where(b => (b.Content as string) == "Play").ToList();
-        Assert.NotEmpty(buttons);
-
-        ScrollToEnd(win);
-        win.CaptureRenderedFrame()!.Save(Path.Combine(Art(), "home-linkwall-member.png"));
-    }
-
-    [AvaloniaFact]
-    public void Play_home_renders_a_club_chip_and_a_real_preview_for_a_non_member_never_a_blank_wall()
-    {
-        using var _ = new EnvVarScope("TIDBITS_CLUB", "0");
-        var view = new PlayView();
-        var win = new Window { Width = 900, Height = 1200, Content = view };
-        win.Show();
-        Dispatcher.UIThread.RunJobs();
-
-        var texts = TextsOf(win);
-        Assert.Contains("LINK WALL", texts);
-        Assert.Contains("CLUB", texts);
-        // A real preview line — either today's actual easiest group label, or the
-        // honest static fallback — never blank/empty.
-        Assert.Contains(texts, t => t is not null &&
-            (t.Contains("Today's board includes") || t.Contains("second daily")));
-        var buttons = win.GetVisualDescendants().OfType<Button>().Where(b => (b.Content as string) == "Join Club").ToList();
-        Assert.NotEmpty(buttons);
-
-        ScrollToEnd(win);
-        win.CaptureRenderedFrame()!.Save(Path.Combine(Art(), "home-linkwall-non-member.png"));
-    }
-
     // MARK: - The board (LinkWallUi.BuildBoard — pure, headless-testable)
 
     [AvaloniaFact]

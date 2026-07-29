@@ -74,21 +74,9 @@
                                Text="{Binding TotalGames, StringFormat='See all {0} games ›'}"/>
                 </Button>
 
-                <!-- Story Archive (Club — docs/CLUB-FEATURES-BUILD.md "Feature 2"): a
-                     "see all" destination off the dashboard (R-REC-1), built in
-                     code-behind since it reads live entitlement state, not the VM. -->
-                <ContentControl x:Name="StoryArchivePanel" Margin="0,4,0,0"/>
-
-                <!-- Marathon History (Club — docs/CLUB-FEATURES-BUILD.md "Feature 3"):
-                     the permanent record of every completed run (R-REC-1), in addition
-                     to the Play card's own in-game "See Marathon history" link. -->
-                <ContentControl x:Name="MarathonHistoryPanel" Margin="0,4,0,0"/>
-
-                <!-- Knowledge Atlas (Club — docs/CLUB-FEATURES-BUILD.md "Feature 4"): a
-                     transparent, INTERPRETED 12-month layer over the same rows the free
-                     Topic Levels/Pie below already read (R-MON-1) — every domain row a
-                     tap-to-play door, never a passive stats wall. -->
-                <ContentControl x:Name="KnowledgeAtlasPanel" Margin="0,4,0,0"/>
+                <!-- Story Archive / Marathon History / Knowledge Atlas moved into the Club
+                     hub (R-CLUB-1) — Records is free-tier only, so nothing here leads
+                     to an offer. -->
 
                 <!-- Knowledge (hidden until a specific-category game is played) -->
                 <StackPanel IsVisible="{Binding HasDomains}" Spacing="8">
@@ -196,10 +184,5 @@
     <!-- Story Archive "Re-ask this" — overlays the dashboard while a 1-question
          drill plays (mirrors LeaderboardView's DuelGameHost), so re-asking doesn't
          need a nested dialog stacked on the archive's own FAContentDialog. -->
-    <ContentControl x:Name="ReaskHost"/>
-    <!-- Knowledge Atlas domain play — overlays the dashboard while a full round
-         plays (mirrors ReaskHost above), so tapping a domain doesn't need a nested
-         dialog stacked on the atlas's own FAContentDialog. -->
-    <ContentControl x:Name="AtlasHost"/>
     </Panel>
 </UserControl>

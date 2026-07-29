@@ -7,6 +7,45 @@
 > `docs/ROADMAP.md`, `docs/DATA-CONTRACT.md`. Detailed per-round history is in
 > `ARCHIVE.md`.
 
+## Current state (2026-07-29) — SHIP 1.6.59 (99)
+
+**Two App Review rejections fixed + Tidbits Club consolidated behind ONE door on all six platforms.**
+
+**App Review 1.6.52 (96), fixed in 1.6.57:**
+- **5.1.1(v) account deletion** — "Delete Account" in Profile/Account on iOS, macOS,
+  tvOS, always visible (Tidbits provisions a real anonymous account for everyone).
+  `PlayerIdentityStore.deleteAccount()` drops every account-keyed RTDB node, then the
+  Identity Toolkit user, then local SwiftData/UserDefaults/Keychain, then re-bootstraps.
+  Needed an `emailOwners/$key` rules change — a delete writes null, which the old write
+  rule denied. **RULES NEED A `firebase deploy`** (owner).
+- **2.1(a) purchase error** — `Product.products(for:)` now retried 3x (it can return an
+  EMPTY array, not an error, before the store's first sync); an empty plan list is a
+  recoverable state with Try Again; real StoreKit error text replaces the generic
+  message; tvOS stopped stacking the paywall as a second `.fullScreenCover`.
+- Also restored the **Sign in with Apple entitlement**, which `xcodegen generate` had
+  been silently wiping (it was hand-added to the GENERATED file). Now in project.yml.
+
+**R-CLUB-1 — Tidbits Club has exactly one door (owner directive, 1.6.58/59):**
+Club used to surface as SEVEN visible locks (4 Home cards + 3 Records rows) plus a
+Settings row. Now: one quiet Home row → members get a hub with all six features,
+non-members get the unchanged paywall. Records is free-tier only. Shipped **all six**
+(iOS/macOS/tvOS/web/Android/Windows). Rule in iOS-DESIGN §5.2a-c + Decision 048.
+
+**Verified per platform, not just compiled:** iOS 26.5 + tvOS 26.5 simulators, Chrome
+for web, a Pixel 9 emulator for Android, 395 tests + windows-latest CI for Windows.
+Verification caught two real bugs — the tvOS hub's solid-teal rows (grey-on-cyan
+subtitles, eight shouting rows) and every hub reusing the non-member `previewLine()`
+copy, which pitches Club at someone who already paid.
+
+**Shipped:** Apple 1.6.59 (99) uploaded to App Store Connect (iOS + tvOS + mac, all
+green). Android vc77, Windows MSIX 1.6.59.0, web auto-deploys on push.
+
+**Owner-gated next:** deploy the RTDB rules; select build 99 in App Store Connect and
+reply to App Review with a screen recording of the account-deletion flow (they ask for
+it by name on any 5.1.1(v) resubmission).
+
+---
+
 ## Current state (2026-07-19) — SHIP 1.6.46
 
 **Daily global board brought to ALL SIX platforms + version bump 1.6.46 + shipped.**

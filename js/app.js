@@ -307,16 +307,13 @@ function viewHome() {
       <button class="btn btn-quiet" data-customize>${ICON.sliders}<span>Customize</span></button>
     </div>
     ${dailyBanner()}
-    ${linkWallCard()}
     <button class="banner card night-banner-cta" data-night-open><div><div class="banner-title">TRIVIA NIGHT</div>
       <div class="muted">Host or join a night of mixed rounds.</div></div><span class="chev">›</span></button>
-    ${weakSpotCard()}
-    ${marathonCard()}
-    ${expeditionCard()}
     <h2 class="section">More ways to play</h2>
     <div class="home-tiles">
       <button class="tile card mp" data-multiplayer><span class="tile-ico">${ICON.globe}</span><span class="tile-name">Online Multiplayer</span><span class="tile-sub">Play vs CPU now</span></button>
     </div>
+    ${clubDoorCard()}
     <dialog id="mp-dlg" class="night-dlg">
       <div class="night-form">
         <h2>Online Multiplayer</h2>
@@ -375,17 +372,6 @@ function viewHome() {
         </div>
       </div>
     </dialog>
-    <dialog id="marathon-dlg" class="night-dlg">
-      <div class="night-form">
-        <h2>Marathon in progress</h2>
-        <p class="muted">${marathonResumeMessage()}</p>
-        <div class="night-actions">
-          <button type="button" class="btn" data-marathon-cancel>Cancel</button>
-          <button type="button" class="btn" data-marathon-startover>Start Over</button>
-          <button type="button" class="btn btn-primary" data-marathon-resume>Resume</button>
-        </div>
-      </div>
-    </dialog>
     ${appsPromo()}`;
 }
 
@@ -422,50 +408,7 @@ function dailyBanner() {
     <div class="muted"><u data-daily-board>See how the world did</u> · <u>Play previous days</u></div></div><span class="chev">›</span></button>`;
 }
 
-// Tidbits Club EXCLUSIVE — Link Wall (docs/CLUB-FEATURES-BUILD.md "Feature 6"): a
-// NYT-Connections-style SECOND daily, right by the free Daily card above — clearly
-// a second, distinct habit, never a replacement for it. Doesn't need match.json
-// loaded just to render the card (only completion state, which is local); the
-// puzzle itself is built lazily when #/linkwall actually opens. Non-members see a
-// real, concrete (if generic) preview + a CLUB chip — tapping routes to the
-// existing #/club paywall, never a blank wall (mirrors weakSpotCard/marathonCard).
-function linkWallCard() {
-  const club = Entitlement.isClub;
-  let subtitle;
-  if (club) {
-    const result = LinkWallLog.result(dayKey());
-    if (result && result.completed) {
-      subtitle = result.won
-        ? `Solved in ${result.guessHistory.length} guess${result.guessHistory.length === 1 ? '' : 'es'} — new wall tomorrow.`
-        : "Didn't solve it today — new wall tomorrow.";
-    } else if (result && result.guessHistory.length) {
-      subtitle = 'In progress — tap to keep going.';
-    } else {
-      subtitle = "16 tiles, 4 hidden groups — today's second daily.";
-    }
-  } else {
-    subtitle = LinkWall.previewLine();
-  }
-  const chip = club ? '' : '<span class="club-chip">CLUB</span>';
-  return `<button class="banner card linkwall-banner" data-linkwall>
-    <div><div class="banner-title">${ICON.grid} LINK WALL ${chip}</div>
-    <div class="muted">${h(subtitle)}</div></div><span class="chev">›</span></button>`;
-}
 
-// Tidbits Club EXCLUSIVE — Weak-Spot Arena (docs/CLUB-FEATURES-BUILD.md "Feature 1").
-// Home entry point, never the free Customize grid / Surprise-Me. Non-members see a
-// real preview (a genuine missed fact if one exists locally, else an honest static
-// line) + a CLUB chip; tapping routes to the existing #/club paywall — never a
-// blank wall. Members launch the arena directly.
-function weakSpotCard() {
-  const club = Entitlement.isClub;
-  const preview = club ? null : WeakSpotArena.previewLine();
-  const subtitle = club ? 'Turn your misses into a round.' : (preview || 'Your misses, turned into a round you can actually close.');
-  const chip = club ? '' : '<span class="club-chip">CLUB</span>';
-  return `<button class="banner card weakspot-banner" data-weakspot>
-    <div><div class="banner-title">${ICON.target} WEAK-SPOT ARENA ${chip}</div>
-    <div class="muted">${h(subtitle)}</div></div><span class="chev">›</span></button>`;
-}
 
 // Members launch the arena directly (built from their own local misses);
 // everyone else goes to the existing paywall route (rule 6 — never a blank wall).
@@ -489,29 +432,6 @@ function renderWeakSpotEmpty() {
   $('[data-back]').addEventListener('click', render);
 }
 
-// Tidbits Club EXCLUSIVE — Marathon (docs/CLUB-FEATURES-BUILD.md "Feature 3").
-// Home entry point, distinct from the quick-mode cards (it's a commitment, not a
-// 2-minute round). Shows a RESUME chip + true position when a run is in
-// progress. Non-members see a real, concrete illustration + a CLUB chip; tapping
-// routes to the existing #/club paywall — never a blank wall.
-function marathonCard() {
-  const club = Entitlement.isClub;
-  const run = club ? Marathon.inProgress() : null;
-  const runs = club ? Marathon.history() : [];
-  let subtitle;
-  if (club) {
-    if (run) subtitle = `Question ${run.currentIndex + 1} of ${run.ids.length} — tap to resume`;
-    else if (runs[0]) subtitle = `${Math.round(marathonAccuracy(runs[0]) * 100)}% on your last run — tap to start a new one`;
-    else subtitle = 'Play it across as many sittings as you like — we’ll keep your place.';
-  } else {
-    subtitle = Marathon.previewLine();
-  }
-  const chip = club ? '' : '<span class="club-chip">CLUB</span>';
-  const resume = (club && run) ? '<span class="resume-chip">RESUME</span>' : '';
-  return `<button class="banner card marathon-banner" data-marathon>
-    <div><div class="banner-title">${ICON.flag} MARATHON ${chip}${resume}</div>
-    <div class="muted">${h(subtitle)}</div></div><span class="chev">›</span></button>`;
-}
 
 function marathonResumeMessage() {
   const run = Marathon.inProgress();
@@ -546,24 +466,6 @@ function startMarathonRound(startOver) {
   startGame('marathon', catById('mixed'), { custom: remaining, marathonRun: run, marathonOffset: run.currentIndex });
 }
 
-// Tidbits Club EXCLUSIVE — Expedition (docs/CLUB-FEATURES-BUILD.md "Feature 5").
-// Home entry point. Unlike Weak-Spot/Marathon, the hub AND an expedition's map
-// are a REAL preview reachable by EVERYONE (the campaigns are curated CONTENT,
-// not player data, so there's nothing to hide behind a generic sell line) — so
-// this card always opens #/expeditions; only tapping Play on a stage is
-// Club-gated (see bindExpeditionMap).
-function expeditionCard() {
-  const club = Entitlement.isClub;
-  const active = Expeditions.all.find((e) => Expeditions.progress(e.id));
-  const activeProgress = active ? Expeditions.progress(active.id) : null;
-  const subtitle = active
-    ? `${active.title}: stage ${Math.min(activeProgress.currentStageIndex + 1, active.stages.length)} of ${active.stages.length} — tap to continue`
-    : Expeditions.previewLine();
-  const chip = club ? '' : '<span class="club-chip">CLUB</span>';
-  return `<a href="#/expeditions" class="banner card expedition-banner" style="text-decoration:none">
-    <div><div class="banner-title">${ICON.compass} EXPEDITIONS ${chip}</div>
-    <div class="muted">${h(subtitle)}</div></div><span class="chev">›</span></a>`;
-}
 
 // Tidbits Club EXCLUSIVE — Expedition (docs/CLUB-FEATURES-BUILD.md "Feature 5").
 // The hub: pick a campaign (progress-aware subtitle), plus a Completed shelf.
@@ -715,45 +617,8 @@ function renderExpeditionStageResult() {
   $('[data-expedition-retry]')?.addEventListener('click', () => { game = null; startExpeditionStage(expedition.id, stage.index); });
 }
 
-// Tidbits Club EXCLUSIVE — Story Archive (docs/CLUB-FEATURES-BUILD.md "Feature 2").
-// A Records "see all" destination (R-REC-1); Club-marked, canonical at #/archive.
-function storyArchiveRow() {
-  const club = Entitlement.isClub;
-  const n = StoryArchive.count();
-  const sub = club ? `${n} stor${n === 1 ? 'y' : 'ies'} kept, searchable forever` : 'Every fact you unlock, kept forever';
-  return `<a href="#/archive" class="card pad" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;margin-bottom:14px">
-    ${ICON.book}<span style="flex:1"><b>Story Archive</b>${club ? '' : ' <span class="club-chip">CLUB</span>'}
-      <div class="muted" style="font-size:.85em">${h(sub)}</div></span><span class="chev">›</span></a>`;
-}
 
-// Tidbits Club EXCLUSIVE — Marathon (docs/CLUB-FEATURES-BUILD.md "Feature 3"). A
-// Records destination (mirrors storyArchiveRow); canonical at #/marathon.
-function marathonHistoryRow() {
-  const club = Entitlement.isClub;
-  const runs = club ? Marathon.history() : [];
-  const sub = club
-    ? (runs.length ? `${runs.length} run${runs.length === 1 ? '' : 's'} played — best ${Math.max(...runs.map((s) => Math.round(marathonAccuracy(s) * 100)))}%` : 'Play it across as many sittings as you like — we’ll keep your place.')
-    : 'A 200-question test of everything, graded by domain.';
-  return `<a href="#/marathon" class="card pad" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;margin-bottom:14px">
-    ${ICON.flag}<span style="flex:1"><b>Marathon</b>${club ? '' : ' <span class="club-chip">CLUB</span>'}
-      <div class="muted" style="font-size:.85em">${h(sub)}</div></span><span class="chev">›</span></a>`;
-}
 
-// Tidbits Club EXCLUSIVE — Knowledge Atlas (docs/CLUB-FEATURES-BUILD.md "Feature
-// 4"). A Records destination (mirrors storyArchiveRow/marathonHistoryRow;
-// R-REC-1); Club-marked, canonical at #/atlas. Does NOT gate or duplicate the
-// free Topic Levels / Pie sections already on Records — this is the additive
-// deeper 12-month interpreted layer.
-function atlasRow() {
-  const club = Entitlement.isClub;
-  const n = club ? KnowledgeAtlas.domains().length : 0;
-  const sub = club
-    ? (n ? `${n} domain${n === 1 ? '' : 's'} mapped over the last 12 months` : 'A map of what you actually know, by domain')
-    : 'A map of what you actually know, by domain, over time';
-  return `<a href="#/atlas" class="card pad" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;margin-bottom:14px">
-    ${ICON.map}<span style="flex:1"><b>Knowledge Atlas</b>${club ? '' : ' <span class="club-chip">CLUB</span>'}
-      <div class="muted" style="font-size:.85em">${h(sub)}</div></span><span class="chev">›</span></a>`;
-}
 
 // The trap to avoid (design spec): "five analytics screens reads as a Sporcle
 // stats page." So EVERY domain row here is a tap target that launches a real
@@ -1180,16 +1045,6 @@ function bindHome() {
     dailyDlg.close();
     startGame('daily', catById('mixed'), { dailyDay: b.dataset.dailyDay });
   }));
-  $('[data-weakspot]').addEventListener('click', openWeakSpot);
-  $('[data-marathon]').addEventListener('click', openMarathon);
-  $('[data-linkwall]').addEventListener('click', () => {
-    if (!Entitlement.isClub) { location.hash = '#/club'; return; }
-    location.hash = '#/linkwall';
-  });
-  const marathonDlg = $('#marathon-dlg');
-  $('[data-marathon-cancel]').addEventListener('click', () => marathonDlg.close());
-  $('[data-marathon-resume]').addEventListener('click', () => { marathonDlg.close(); startMarathonRound(false); });
-  $('[data-marathon-startover]').addEventListener('click', () => { marathonDlg.close(); startMarathonRound(true); });
 
   // Trivia Night dialog (native <dialog showModal> — focus trap + ESC free).
   let nightPreset = 1;
@@ -1618,10 +1473,6 @@ function viewRecords() {
     ${profileCard()}
     <a href="#/leaderboard" class="card pad" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;margin-bottom:14px">${ICON.globe}<span style="flex:1;font-weight:700">Leaderboard</span><span class="chev">›</span></a>
     <a href="#/duels" class="card pad" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;margin-bottom:14px"><span style="flex:1;font-weight:700">Duels</span><span class="chev">›</span></a>
-    ${storyArchiveRow()}
-    ${marathonHistoryRow()}
-    ${atlasRow()}
-    <a href="#/club" class="card pad" style="display:flex;align-items:center;gap:10px;text-decoration:none;margin-bottom:14px;background:${Entitlement.isClub ? 'var(--color-surface)' : '#2D5BFF'};color:${Entitlement.isClub ? 'inherit' : '#fff'}">⭐️<span style="flex:1;font-weight:800">${Entitlement.isClub ? 'Tidbits Club — Member' : 'Join Tidbits Club'}</span><span class="chev">›</span></a>
     <div class="banner card daily"><div><div class="muted">DAY STREAK</div><div class="big">${Identity.profile?.streak?.current || 0} days</div></div><div class="muted">best ${Identity.profile?.streak?.longest || 0} 🔥</div></div>
     <div class="stat-row">
       ${statBox(lt.games, 'Games', '#8B5CF6')}${statBox(lt.acc + '%', 'Accuracy', '#2D5BFF')}${statBox(lt.correct, 'Correct', '#2FCB8A')}
@@ -2859,15 +2710,77 @@ async function shareLinkWall() {
 // Tidbits Club — the web promo/join surface (MONETIZATION §4a, rule 6). Sells the tier
 // without ever gating the free game. Web pays via a Merchant of Record (best margin);
 // R-MON-2: "already a member?" is SIGN IN, never a code field.
+// R-CLUB-1 (docs/iOS-DESIGN.md §5.2a — the rule is cross-platform): the app's ONE Club
+// entry point. Deliberately quiet, and placed BELOW the free surfaces. Club used to
+// surface as four cards here plus three "see all" rows in Records; the count of visible
+// locks, not the real free/paid ratio, is what reads as the size of the paywall.
+function clubDoorCard() {
+  const club = Entitlement.isClub;
+  return `<a href="#/club" class="card row" style="display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;margin-top:6px">
+    <span>${ICON.check}</span>
+    <span style="flex:1">
+      <b>Tidbits Club</b>
+      <span class="muted" style="display:block;font-size:.9em">${club
+        ? 'Your six Club features, all in one place.'
+        : 'Six optional extras for getting better. Everything else in Tidbits is free.'}</span>
+    </span><span class="chev">›</span></a>`;
+}
+
+// The member view of #/club: the hub. Non-members get the paywall below, unchanged —
+// it is the only surface in the app allowed to make an offer (R-CLUB-1).
+function clubHubRow(href, icon, title, subtitle) {
+  return `<a href="${href}" class="card row" style="display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;margin-bottom:10px">
+    <span style="width:1.5em;display:flex;align-items:center;justify-content:center">${icon}</span>
+    <span style="flex:1"><b>${h(title)}</b>
+      <span class="muted" style="display:block;font-size:.9em">${h(subtitle)}</span></span>
+    <span class="chev">›</span></a>`;
+}
+
+// A hub row that starts a round instead of navigating (Weak-Spot, Marathon).
+function clubHubLaunchRow(action, icon, title, subtitle) {
+  return `<button class="card row" data-club-${action} style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;margin-bottom:10px;font:inherit;color:inherit">
+    <span style="width:1.5em;display:flex;align-items:center;justify-content:center">${icon}</span>
+    <span style="flex:1"><b>${h(title)}</b>
+      <span class="muted" style="display:block;font-size:.9em">${h(subtitle)}</span></span>
+    <span class="chev">›</span></button>`;
+}
+
+function clubHub() {
+  const run = Marathon.inProgress();
+  const runs = Marathon.history();
+  const marathonSub = run ? `Question ${run.currentIndex + 1} of ${run.total} — resume where you left off.`
+    : (runs.length ? `${Math.round((runs[0].correct / runs[0].total) * 100)}% on your last run. Start another.`
+                   : '200 questions, graded by domain. Stop and resume anytime.');
+  return `<div style="max-width:640px;margin:0 auto;padding:8px 0">
+    <div class="card pad" style="--tint:#2FCB8A;margin-bottom:16px">
+      <h1 class="view-heading">You're a member</h1>
+      <p class="muted">Everything below is yours. The rest of Tidbits stays free for everyone.</p>
+    </div>
+    <h2 class="section">Play</h2>
+    ${clubHubRow('#/linkwall', ICON.grid, 'Link Wall', "Today's board — 16 facts, 4 hidden groups.")}
+    ${clubHubLaunchRow('weakspot', ICON.target, 'Weak-Spot Arena', WeakSpotArena.previewLine() || 'A round built entirely from the questions you\'ve missed.')}
+    ${clubHubLaunchRow('marathon', ICON.flag, 'Marathon', marathonSub)}
+    ${clubHubRow('#/expeditions', ICON.compass, 'Expeditions', 'Multi-week campaigns through one domain.')}
+    <h2 class="section">Your record</h2>
+    ${clubHubRow('#/archive', ICON.book, 'Story Archive', StoryArchive.previewLine() || "Every story behind every answer you've unlocked.")}
+    ${clubHubRow('#/atlas', ICON.map, 'Knowledge Atlas', 'What you actually know, by domain, over time.')}
+    ${clubHubRow('#/marathon', ICON.flame, 'Marathon History', runs.length ? `${runs.length} run${runs.length === 1 ? '' : 's'} on record.` : 'Your finished runs, kept forever.')}
+    <dialog id="marathon-dlg" class="night-dlg">
+      <div class="night-form">
+        <h2>Marathon in progress</h2>
+        <p class="muted">${marathonResumeMessage()}</p>
+        <div class="night-actions">
+          <button type="button" class="btn" data-marathon-cancel>Cancel</button>
+          <button type="button" class="btn" data-marathon-startover>Start Over</button>
+          <button type="button" class="btn btn-primary" data-marathon-resume>Resume</button>
+        </div>
+      </div>
+    </dialog>
+  </div>`;
+}
+
 function viewClub() {
-  if (Entitlement.isClub) {
-    return `<div style="max-width:640px;margin:0 auto;padding:8px 0">
-      <div class="card pad" style="text-align:center;--tint:#2FCB8A">
-        <div style="font-size:2.4em">✅</div>
-        <h1 class="view-heading">You're a Club member</h1>
-        <p class="muted">Thanks for backing Tidbits. Every Club feature is yours across all your devices.</p>
-      </div></div>`;
-  }
+  if (Entitlement.isClub) return clubHub();   // R-CLUB-1: members get the hub, not a receipt
   const pillars = CLUB.pillars.map(([icon, title, blurb]) =>
     `<div style="display:flex;gap:12px;align-items:flex-start;padding:8px 0">
        <div style="font-size:1.4em;width:1.6em;text-align:center">${icon}</div>
@@ -2902,6 +2815,17 @@ function bindClub() {
     const url = b.dataset.checkout;
     if (url) window.open(url, '_blank', 'noopener');   // MoR hosted checkout
   }));
+  // The member hub's launchers (R-CLUB-1) — these used to live on Home.
+  const ws = app.querySelector('[data-club-weakspot]');
+  if (ws) ws.addEventListener('click', openWeakSpot);
+  const mt = app.querySelector('[data-club-marathon]');
+  if (mt) mt.addEventListener('click', openMarathon);
+  const dlg = app.querySelector('#marathon-dlg');
+  if (dlg) {
+    app.querySelector('[data-marathon-cancel]').addEventListener('click', () => dlg.close());
+    app.querySelector('[data-marathon-resume]').addEventListener('click', () => { dlg.close(); startMarathonRound(false); });
+    app.querySelector('[data-marathon-startover]').addEventListener('click', () => { dlg.close(); startMarathonRound(true); });
+  }
 }
 
 async function renderDailyBoard() {

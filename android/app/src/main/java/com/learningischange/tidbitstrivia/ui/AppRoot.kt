@@ -75,6 +75,7 @@ sealed interface Route {
     data object Duels : Route          // L5: async friend duels
     data object Party : Route
     data object ClubPaywall : Route    // Tidbits Club join surface (CLUB-MARKETING.md)
+    data object ClubHub : Route        // R-CLUB-1: the member view of the ONE Club door
     data object StoryArchive : Route   // Tidbits Club EXCLUSIVE — Story Archive (Feature 2)
     data object MarathonHistory : Route // Tidbits Club EXCLUSIVE — Marathon History (Feature 3)
     data object KnowledgeAtlas : Route // Tidbits Club EXCLUSIVE — Knowledge Atlas (Feature 4)
@@ -154,10 +155,6 @@ fun AppRoot(
                         onPlay = { mode, cat -> backStack.add(Route.Game(mode, cat)) },
                         onPlayMix = { modes, cat -> backStack.add(Route.Game(Mode.MIX, cat, mixModes = modes)) },
                         onPlayDaily = { day -> backStack.add(Route.Game(Mode.DAILY, Category.byId("mixed"), dailyDay = day)) },
-                        onPlayWeakSpot = { qs, reasons -> backStack.add(Route.Game(Mode.WEAK_SPOT, Category.byId("mixed"), qs, "Weak-Spot Arena", weakSpotReasons = reasons)) },
-                        onPlayMarathon = { backStack.add(Route.Game(Mode.MARATHON, Category.byId("mixed"), label = "Marathon")) },
-                        onExpeditions = { backStack.add(Route.ExpeditionHub) },
-                        onLinkWall = { backStack.add(Route.LinkWall) },
                         onVersus = { id -> backStack.add(Route.Versus(id)) },
                         onQuickMatch = { backStack.add(Route.OnlineMatch) },
                         onNight = { backStack.add(Route.NightSetup) },
@@ -165,7 +162,18 @@ fun AppRoot(
                         onJoinNight = { ensureNearby(); backStack.add(Route.NightJoin) },
                         onCreate = { backStack.clear(); backStack.add(Route.Create) },
                         onSettings = { backStack.add(Route.Settings) },
-                        onClub = { backStack.add(Route.ClubPaywall) },
+                        onClub = { backStack.add(if (Entitlement.isClub) Route.ClubHub else Route.ClubPaywall) },
+                    )
+                    is Route.ClubHub -> ClubHubScreen(
+                        store = store,
+                        onBack = { backStack.removeLastOrNull() },
+                        onPlayWeakSpot = { qs, reasons -> backStack.add(Route.Game(Mode.WEAK_SPOT, Category.byId("mixed"), qs, "Weak-Spot Arena", weakSpotReasons = reasons)) },
+                        onPlayMarathon = { backStack.add(Route.Game(Mode.MARATHON, Category.byId("mixed"), label = "Marathon")) },
+                        onExpeditions = { backStack.add(Route.ExpeditionHub) },
+                        onLinkWall = { backStack.add(Route.LinkWall) },
+                        onArchive = { backStack.add(Route.StoryArchive) },
+                        onAtlas = { backStack.add(Route.KnowledgeAtlas) },
+                        onMarathonHistory = { backStack.add(Route.MarathonHistory) },
                     )
                     is Route.NightSetup -> NightSetupScreen(
                         onStartSolo = { rounds, cat, label -> backStack.removeAt(backStack.lastIndex); backStack.add(Route.Game(Mode.BAR_TRIVIA, cat, label = label, nightRounds = rounds)) },
@@ -266,10 +274,6 @@ private fun HomeScreen(
     onPlay: (Mode, Category) -> Unit,
     onPlayMix: (List<Mode>, Category) -> Unit,
     onPlayDaily: (String) -> Unit,
-    onPlayWeakSpot: (List<Question>, Map<String, String>) -> Unit,
-    onPlayMarathon: () -> Unit,
-    onExpeditions: () -> Unit,
-    onLinkWall: () -> Unit,
     onVersus: (String) -> Unit,
     onQuickMatch: () -> Unit,
     onNight: () -> Unit,
@@ -283,8 +287,6 @@ private fun HomeScreen(
     var showNight by remember { mutableStateOf(false) }
     var showDailyArchive by remember { mutableStateOf(false) }
     var showMultiplayer by remember { mutableStateOf(false) }
-    var showWeakSpotEmpty by remember { mutableStateOf(false) }
-    var showMarathonChoice by remember { mutableStateOf(false) }
     val (qpMode, qpCat) = store.quickPlay()
     val firstRun = !store.hasQuickPlayHistory()
     val fade = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
@@ -358,13 +360,6 @@ private fun HomeScreen(
             }
         }
 
-        // Link Wall — Tidbits Club EXCLUSIVE (docs/CLUB-FEATURES-BUILD.md "Feature 6"):
-        // a NYT-Connections-style SECOND daily, right next to the free Daily Tidbit card
-        // (which stays completely untouched above). Members launch today's board;
-        // non-members see a real preview + a CLUB chip and tap through to the existing
-        // paywall — never a blank wall.
-        LinkWallCard(isClub = Entitlement.isClub) { if (Entitlement.isClub) onLinkWall() else onClub() }
-
         // Trivia Night — one unified entry → host/join sheet.
         ChunkyCard(fill = Pops.coral, onClick = { showNight = true }) {
             Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -378,42 +373,6 @@ private fun HomeScreen(
             }
         }
 
-        // Weak-Spot Arena — Tidbits Club EXCLUSIVE (docs/CLUB-FEATURES-BUILD.md
-        // "Feature 1"). Its OWN Home entry point, never the free Customize grid /
-        // Surprise-Me / remembered default. Members launch a round built from
-        // their own misses; non-members see a real preview + a CLUB chip and tap
-        // through to the existing paywall — never a blank wall.
-        WeakSpotCard(isClub = Entitlement.isClub, previewLine = if (Entitlement.isClub) null else WeakSpotArena.previewLine(store)) {
-            if (Entitlement.isClub) {
-                val round = WeakSpotArena.build(store)
-                if (round.questions.size >= WeakSpotArena.PLAYABLE_FLOOR) onPlayWeakSpot(round.questions, round.reasons)
-                else showWeakSpotEmpty = true
-            } else onClub()
-        }
-
-        // Marathon — Tidbits Club EXCLUSIVE (docs/CLUB-FEATURES-BUILD.md "Feature 3").
-        // Its OWN Home entry point, distinct from the quick-mode cards (it's a
-        // commitment, not a 2-minute round). Members with a run in progress get the
-        // Resume/Start-Over choice; with no run, they launch straight into a fresh
-        // one. Non-members see a real preview + a CLUB chip and tap through to the
-        // existing paywall — never a blank wall.
-        val marathonRun = remember(Entitlement.isClub) { if (Entitlement.isClub) Marathon.inProgress(store) else null }
-        val marathonHistory = remember(Entitlement.isClub) { if (Entitlement.isClub) Marathon.history(store) else emptyList() }
-        MarathonCard(isClub = Entitlement.isClub, run = marathonRun, subtitle = marathonSubtitle(Entitlement.isClub, marathonRun, marathonHistory)) {
-            when {
-                !Entitlement.isClub -> onClub()
-                marathonRun != null -> showMarathonChoice = true
-                else -> onPlayMarathon()
-            }
-        }
-
-        // Expeditions — Tidbits Club EXCLUSIVE (docs/CLUB-FEATURES-BUILD.md "Feature 5").
-        // UNLIKE the other Club cards above: the hub list AND an expedition's stage map
-        // are curated CONTENT, a real preview reachable by EVERYONE — only tapping Play
-        // on a stage is Club-gated. So this card always opens the hub, never the
-        // paywall directly (mirrors Apple/web).
-        ExpeditionsCard(store = store, isClub = Entitlement.isClub, onClick = onExpeditions)
-
         Text("More ways to play", fontWeight = FontWeight.Bold, fontSize = 20.sp)
         Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
             HomeTile(Icons.Filled.Group, "Pass & Play", Pops.grape, Modifier.weight(1f), onParty)
@@ -421,6 +380,12 @@ private fun HomeScreen(
             // Quick Match row is the honest v1 slot.
             HomeTile(Icons.Filled.Public, "Online Multiplayer", Pops.blue, Modifier.weight(1f)) { showMultiplayer = true }
         }
+
+        // R-CLUB-1 (docs/iOS-DESIGN.md §5.2a — the rule is cross-platform): the app's ONE
+        // Club entry point, quiet and BELOW the free surfaces. Club used to surface as four
+        // cards here plus three in Records; the count of visible locks, not the real
+        // free/paid ratio, is what reads as the size of the paywall.
+        ClubDoorCard(isClub = Entitlement.isClub, onClick = onClub)
         Spacer(Modifier.height(24.dp))
     }
 
@@ -435,33 +400,131 @@ private fun HomeScreen(
         onDismiss = { showMultiplayer = false },
         onPickBot = { id -> showMultiplayer = false; onVersus(id) },
         onQuickMatch = { showMultiplayer = false; onQuickMatch() })
-    // Below the floor of true misses (and no domain history to fill from either) —
-    // the honest empty state (universal-feature-states), never the generic error.
+}
+
+// R-CLUB-1 (docs/iOS-DESIGN.md §5.2a — the rule is cross-platform): the app's ONE Club
+// entry point on Home. Deliberately quiet — a single row below the free surfaces, not four
+// locked cards. Members see a member line instead of a price, so the door stops selling
+// once they're in.
+@Composable
+private fun ClubDoorCard(isClub: Boolean, onClick: () -> Unit) {
+    ChunkyCard(fill = MaterialTheme.colorScheme.surface, onClick = onClick) {
+        Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Filled.Star, null, tint = Pops.blue, modifier = Modifier.size(26.dp))
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text("Tidbits Club", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Text(
+                    if (isClub) "Your six Club features, all in one place."
+                    else "Six optional extras for getting better. Everything else in Tidbits is free.",
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                )
+            }
+            Icon(Icons.Filled.KeyboardArrowRight, null, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+        }
+    }
+}
+
+// The member view of the Club door: every Club feature in one place, with its live state.
+// Non-members never reach here (Home routes them to ClubPaywallScreen), so nothing carries
+// a lock, a CLUB chip, or a price.
+@Composable
+private fun ClubHubScreen(
+    store: Store,
+    onBack: () -> Unit,
+    onPlayWeakSpot: (List<Question>, Map<String, String>) -> Unit,
+    onPlayMarathon: () -> Unit,
+    onExpeditions: () -> Unit,
+    onLinkWall: () -> Unit,
+    onArchive: () -> Unit,
+    onAtlas: () -> Unit,
+    onMarathonHistory: () -> Unit,
+) {
+    var showWeakSpotEmpty by remember { mutableStateOf(false) }
+    var showMarathonChoice by remember { mutableStateOf(false) }
+    val run = remember { Marathon.inProgress(store) }
+    val history = remember { Marathon.history(store) }
+    val fade = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            TextButton(onClick = onBack) { Text("‹ Back") }
+            Text("Tidbits Club", fontWeight = FontWeight.Black, fontSize = 26.sp)
+        }
+        ChunkyCard(fill = MaterialTheme.colorScheme.surface) {
+            Column(Modifier.padding(18.dp)) {
+                Text("You're a member", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Text("Everything below is yours. The rest of Tidbits stays free for everyone.", fontSize = 13.sp, color = fade)
+            }
+        }
+
+        Text("PLAY", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = fade)
+        ClubHubRow(Icons.Filled.GridView, "Link Wall", "Today's board — 16 facts, 4 hidden groups.", Pops.mint, onLinkWall)
+        ClubHubRow(Icons.Filled.TrackChanges, "Weak-Spot Arena",
+            WeakSpotArena.previewLine(store) ?: "A round built entirely from the questions you've missed.", Pops.coral) {
+            val round = WeakSpotArena.build(store)
+            if (round.questions.size >= WeakSpotArena.PLAYABLE_FLOOR) onPlayWeakSpot(round.questions, round.reasons)
+            else showWeakSpotEmpty = true
+        }
+        ClubHubRow(Icons.Filled.DirectionsRun, "Marathon", marathonHubSubtitle(run, history), Pops.blue) {
+            if (run != null) showMarathonChoice = true else onPlayMarathon()
+        }
+        ClubHubRow(Icons.Filled.Map, "Expeditions", "Multi-week campaigns through one domain.", Pops.grape, onExpeditions)
+
+        Text("YOUR RECORD", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = fade)
+        ClubHubRow(Icons.Filled.Book, "Story Archive",
+            StoryArchive.previewLine(store) ?: "Every story behind every answer you've unlocked.", Pops.blue, onArchive)
+        ClubHubRow(Icons.Filled.ShowChart, "Knowledge Atlas", "What you actually know, by domain, over time.", Pops.mint, onAtlas)
+        ClubHubRow(Icons.Filled.EmojiEvents, "Marathon History",
+            if (history.isEmpty()) "Your finished runs, kept forever."
+            else "${history.size} run${if (history.size == 1) "" else "s"} on record.", Pops.yellow, onMarathonHistory)
+        Spacer(Modifier.height(24.dp))
+    }
+
     if (showWeakSpotEmpty) AlertDialog(
         onDismissRequest = { showWeakSpotEmpty = false },
         title = { Text("Not enough misses yet") },
         text = { Text("Play a few rounds first — your misses become your arena.") },
         confirmButton = { TextButton(onClick = { showWeakSpotEmpty = false }) { Text("OK") } },
     )
-    // Marathon: a run is already in progress — offer Resume (continue the SAME fixed
-    // id list) or Start Over (discard it and draw a fresh 200). Start Over calls
-    // Marathon.startNew BEFORE navigating so GameScreen resolves the fresh run.
-    if (showMarathonChoice) {
-        val run = remember { Marathon.inProgress(store) }
-        AlertDialog(
-            onDismissRequest = { showMarathonChoice = false },
-            title = { Text("Marathon in progress") },
-            text = { Text(run?.let { "Question ${it.currentIndex + 1} of ${it.total} — resume where you left off, or start a fresh run." } ?: "") },
-            confirmButton = { TextButton(onClick = { showMarathonChoice = false; onPlayMarathon() }) { Text("Resume") } },
-            dismissButton = {
-                Row {
-                    TextButton(onClick = { showMarathonChoice = false; Marathon.startNew(store); onPlayMarathon() }) { Text("Start Over") }
-                    TextButton(onClick = { showMarathonChoice = false }) { Text("Cancel") }
-                }
-            },
-        )
+    if (showMarathonChoice) AlertDialog(
+        onDismissRequest = { showMarathonChoice = false },
+        title = { Text("Marathon in progress") },
+        text = { Text(run?.let { "Question ${it.currentIndex + 1} of ${it.total} — resume where you left off, or start a fresh run." } ?: "") },
+        confirmButton = { TextButton(onClick = { showMarathonChoice = false; onPlayMarathon() }) { Text("Resume") } },
+        dismissButton = {
+            Row {
+                TextButton(onClick = { showMarathonChoice = false; Marathon.startNew(store); onPlayMarathon() }) { Text("Start Over") }
+                TextButton(onClick = { showMarathonChoice = false }) { Text("Cancel") }
+            }
+        },
+    )
+}
+
+@Composable
+private fun ClubHubRow(icon: ImageVector, title: String, subtitle: String, tint: Color, onClick: () -> Unit) {
+    ChunkyCard(fill = MaterialTheme.colorScheme.surface, onClick = onClick) {
+        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(icon, null, tint = tint, modifier = Modifier.size(24.dp))
+            Spacer(Modifier.width(14.dp))
+            Column(Modifier.weight(1f)) {
+                Text(title, fontWeight = FontWeight.Bold, fontSize = 17.sp)
+                Text(subtitle, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+            }
+            Icon(Icons.Filled.KeyboardArrowRight, null, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+        }
     }
 }
+
+/// A member's real state — never a pitch (the hub is behind the paywall already).
+private fun marathonHubSubtitle(run: MarathonRun?, history: List<MarathonScore>): String {
+    if (run != null) return "Question ${run.currentIndex + 1} of ${run.total} — resume where you left off."
+    val last = history.firstOrNull()
+    if (last != null) return "${(last.accuracy * 100).roundToInt()}% on your last run. Start another."
+    return "200 questions, graded by domain. Stop and resume anytime."
+}
+
 
 private fun marathonSubtitle(isClub: Boolean, run: MarathonRun?, history: List<MarathonScore>): String {
     if (!isClub) return Marathon.previewLine()
@@ -1526,20 +1589,17 @@ private fun RecordsScreen(store: Store, onOpenArchive: () -> Unit, onOpenMaratho
         // the searchable library directly; non-members get a real preview + a CLUB chip
         // and land on the paywall — never a blank wall (R-MON-1: the free in-moment story
         // reveal, right after answering, is untouched by this surface).
-        StoryArchiveCard(store = store, isClub = Entitlement.isClub, onClick = { if (Entitlement.isClub) onOpenArchive() else onClub() })
 
         // Marathon History — Tidbits Club EXCLUSIVE (docs/CLUB-FEATURES-BUILD.md
         // "Feature 3"), a permanent record of every completed 200-Q run — reachable
         // from Records in addition to the Home card's own post-game "See Marathon
         // history" link.
-        MarathonHistoryCard(store = store, isClub = Entitlement.isClub, onClick = { if (Entitlement.isClub) onOpenMarathonHistory() else onClub() })
 
         // Knowledge Atlas — Tidbits Club EXCLUSIVE (docs/CLUB-FEATURES-BUILD.md "Feature
         // 4"), a "see all" destination off Records (R-REC-1). ADDITIVE: this does NOT
         // gate or duplicate the free Topic Levels / Pie sections just below — every
         // domain row inside the Atlas itself is a tap-to-play door, never a passive
         // readout (R-MON-1).
-        KnowledgeAtlasCard(store = store, isClub = Entitlement.isClub, onClick = { if (Entitlement.isClub) onOpenAtlas() else onClub() })
 
         val prog = remember { store.progress() }
         val explored = prog.count { it.total > 0 }

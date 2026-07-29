@@ -6,14 +6,22 @@ and the playbook are in `docs/STORE-SCREENSHOTS.md`.
 Each folder is upload-ready: files are numbered in listing order, so select all
 and drag into the store's screenshot slot.
 
-| Folder | Store | Slot | Size |
-|---|---|---|---|
-| `ios-iphone-6.9/` | App Store | iPhone 6.9" | 1320×2868 |
-| `ios-ipad-13/` | App Store | iPad 13" | 2064×2752 |
-| `tvos/` | App Store | Apple TV | 3840×2160 |
-| `macos/` | App Store | Mac | 2880×1800 |
-| `android-phone/` | Google Play | Phone | 1280×2856 |
-| `android-tablet/` | Google Play | 10" tablet | 1600×2560 |
-| `windows/` | Microsoft Store | Desktop | 3840×2160 |
+| Folder | Store | Slot | Size | Status |
+|---|---|---|---|---|
+| `ios-iphone-6.9/` | App Store | iPhone 6.9" | 1320×2868 | ✅ |
+| `ios-ipad-13/` | App Store | iPad 13" | 2064×2752 | ✅ |
+| `tvos/` | App Store | Apple TV | 3840×2160 | ✅ |
+| `macos/` | App Store | Mac | 2880×1800 | ⏳ not yet captured — see docs/STORE-SCREENSHOTS.md §2 |
+| `android-phone/` | Google Play | Phone | 1280×2856 | ✅ |
+| `android-tablet/` | Google Play | 10" tablet | 1600×2560 | ✅ |
+| `windows/` | Microsoft Store | Desktop | 3840×2160 | ⏳ not yet captured |
 
 Every frame shows a FREE feature (rule R-SHOT-1) — no Club surface, no paywall.
+
+## Known blemish
+
+`android-phone/05-records.png` and `android-tablet/05-records.png` show a
+**0-day streak beside 24 games**. The seeder writes the identity streak, but
+Android's `PlayerIdentity.bootstrap()` re-applies a remote profile
+asynchronously and overwrites it. Harmless but incoherent — re-shoot once that
+ordering is fixed, or crop the streak card out.

@@ -20,9 +20,15 @@ leads with premium features tells the opposite story, and it is the story a
 shopper believes before they ever install. The free game is the product; Club is
 a layer some people buy later.
 
-*How to apply:* capture with the Club flags OFF (never `TIDBITS_CLUB=1`), and
-scroll so the Home Club row sits below the fold. If a Club surface appears in a
-frame, that frame is rejected and re-shot.
+*How to apply:* capture with the Club flags OFF (never `TIDBITS_CLUB=1`) — the
+capture script refuses to run if one is set. No Club *feature* may appear.
+
+**One deliberate exception:** the Home shot shows the single quiet Club row,
+because it is part of Home and cannot be scrolled out of a simulator capture.
+That is acceptable — and arguably load-bearing — because the row's own copy is
+*"Six optional extras for getting better. Everything else in Tidbits is free."*
+It states the pitch rather than undermining it. A Club row is fine; a Club
+*feature*, a lock icon, a CLUB chip or a price is not.
 
 ### R-SHOT-2: the first three slots carry the pitch
 
@@ -138,7 +144,19 @@ frame comes back useless.
 - **Windows** renders through `windows-repl.yml` (there is no local Windows box —
   Decision 045). Run the workflow, download the artifact, drop the PNGs in
   `branding/store-screenshots/windows/`.
-- **macOS** drives the real app on this Mac, so it needs a logged-in desktop
-  session. It pins the window to 1440×900 and captures that region only — it
-  never captures the whole screen, so nothing else on the desktop leaks into a
-  store listing.
+- **macOS is not yet working.** The leg exists but its first run produced
+  unusable frames, for two reasons worth fixing before the next attempt:
+  1. It captures a screen *region* (`screencapture -R`), so any other window
+     sitting in that rectangle — in the failing run, the Android emulator —
+     lands in the frame. It must capture the app's window by id
+     (`screencapture -l <windowid>`) instead.
+  2. The ad-hoc-signed build cannot read the keychain item the real signed app
+     created, so macOS raises a "Tidbits wants to use your confidential
+     information" password prompt on top of the app. Either sign with a real
+     development identity, or run with a keychain item the ad-hoc build owns.
+
+  Until both are fixed, capture the Mac set by hand or skip the Mac slot.
+
+- **Windows** is also outstanding. The Avalonia headless harness renders *test*
+  views; the six store screens need their own headless render cases before
+  `windows-repl.yml` can produce an upload-ready set.

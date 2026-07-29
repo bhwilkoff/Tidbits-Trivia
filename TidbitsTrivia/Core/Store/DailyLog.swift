@@ -43,6 +43,10 @@ enum DailyLog {
         UserDefaults.standard.set(map, forKey: key)
     }
 
+    /// Wipe every recorded day. Only for account deletion (App Store 5.1.1(v)) — the
+    /// deleted account's play history must not survive on the device either.
+    static func clear() { UserDefaults.standard.removeObject(forKey: key) }
+
     /// The archive: today first, then the previous days, newest → oldest.
     static func recentDays(_ count: Int = archiveDays) -> [(day: String, score: Int?)] {
         let cal = Calendar.current

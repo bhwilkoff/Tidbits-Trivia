@@ -309,6 +309,86 @@ final class PlayerIdentityStore {
         }
     }
 
+    // MARK: - Account deletion (App Store 5.1.1(v))
+
+    /// Permanently delete this player's account and every record keyed to it, then return the
+    /// app to a brand-new anonymous identity. Offered on every platform's Settings/Profile
+    /// surface — App Review 5.1.1(v) requires an in-app path from "I have an account" to
+    /// "it's gone", with no support ticket and no website detour.
+    ///
+    /// Order matters: the RTDB nodes go first (the auth token dies with the user), the
+    /// Identity Toolkit account last. Each node delete is best-effort — a single 403 on a
+    /// stale leaderboard row must not strand the caller with a half-deleted account — but the
+    /// auth delete is authoritative and its failure IS reported.
+    ///
+    /// Local state (SwiftData records) is the caller's to wipe; `resetLocalState()` covers the
+    /// UserDefaults/Keychain half so the two halves can't drift.
+    func deleteAccount() async -> Bool {
+        deleteError = nil
+        let key = profileId
+        let authUid = await db.uid
+
+        // 1. Public + account-keyed records.
+        if let key {
+            try? await db.delete(PlayerIdentity.publicPath(key))
+            try? await db.delete("dailyLog/\(key)")
+            try? await db.delete("emailOwners/\(key)")
+        }
+        // 2. Records keyed by the AUTH uid (private bucket, push registry, boards).
+        if let authUid {
+            try? await db.delete(PlayerIdentity.privatePath(authUid))
+            try? await db.delete("pushTokens/\(authUid)")
+            for day in DailyLog.all().keys {
+                try? await db.delete("dailyBoard/\(day)/\(authUid)")
+            }
+            let index = await LeaderboardAPI.index()
+            for (season, venues) in index {
+                for venue in venues {
+                    try? await db.delete(PlayerIdentity.standingPath(season: season, venue: venue, uid: authUid))
+                }
+            }
+            // A duel record is SHARED with the opponent — drop only my own slot, never theirs.
+            for duel in await DuelStore.shared.mine() {
+                try? await db.delete("duels/\(duel.id)/players/\(authUid)")
+                try? await db.delete("duelInbox/\(authUid)/\(duel.id)")
+            }
+        }
+
+        // 3. The credential itself. This is the one that must succeed.
+        do {
+            let fresh = try await db.deleteAccount()
+            watchTask?.cancel(); watchTask = nil
+            resetLocalState()
+            profileId = fresh
+            let profileForDevice = Self.newProfile(name: Self.suggestedName())
+            profile = profileForDevice
+            try? await db.put(PlayerIdentity.publicPath(fresh), profileForDevice)
+            watch(fresh)
+            loaded = true
+            return true
+        } catch {
+            deleteError = "Couldn't delete your account. \((error as NSError).localizedDescription)"
+            print("[Identity] account deletion failed: \(error)")
+            return false
+        }
+    }
+
+    /// Surfaced to the delete-account UI so a failure is VISIBLE rather than a silent no-op.
+    private(set) var deleteError: String?
+
+    /// Forget everything this device remembers about the deleted account.
+    private func resetLocalState() {
+        EntitlementStore.shared.clearOnSignOut()
+        signedIn = false
+        UserDefaults.standard.set(false, forKey: "tidbits.identity.signedIn")
+        Self.persistEmail(nil)
+        friends = []
+        UserDefaults.standard.removeObject(forKey: "tidbits.friends")
+        UserDefaults.standard.removeObject(forKey: "tidbits.duels")
+        DailyLog.clear()
+        authError = nil
+    }
+
     /// Update the public display name.
     func rename(_ name: String) async {
         guard let uid = profileId, var p = profile else { return }

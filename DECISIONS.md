@@ -1543,3 +1543,52 @@ cannot resolve an email-keyed entitlement. Windows sign-in + the Avalonia
 `StoreContext` IAP spike are the critical path and the only items not verifiable
 on the Mac head (Decision 045). Enroll in the Apple Small Business Program
 immediately — free, 15-day activation, halves year-one subscription commission.
+
+---
+
+## 048 — Account deletion is a launch requirement on every platform, and the
+## account we must delete is the ANONYMOUS one too
+
+**Every platform that lets a player sign in must offer in-app account deletion,
+and the delete has to reach the anonymous account Tidbits provisions for
+everybody — not just the Sign-in-with-Apple one.**
+
+**Why:** App Review rejected tvOS 1.6.52 (96) under Guideline 5.1.1(v) — "supports
+account creation but does not include an option to initiate account deletion."
+The trap is that we read that guideline as being about *sign-in*, and Tidbits'
+sign-in is optional. But `PlayerIdentityStore.bootstrap()` creates a real Firebase
+Identity Toolkit user for every player on first launch and writes
+`players/{uid}` — a server-side account holding a name, rating, streak, Daily
+history, and standings. That is an account by Apple's definition and by any
+reasonable privacy one. Offering deletion only to signed-in players would have
+left the majority of records undeletable, and gating the button behind sign-in
+would also have hidden it from a reviewer who never signs in.
+
+A second trap sits in the security rules: a Firebase delete is a write of `null`,
+so a `.write` rule phrased as `newData.val() === auth.token.email` (which
+`emailOwners/$key` was) silently **denies the owner's own delete**. Any rule that
+validates the shape of the new value must also spell out the delete case.
+
+**How to apply:**
+- Put "Delete Account" in the Profile/Account section of Settings on every
+  platform, **always visible**, never behind sign-in, and never a link out to a
+  website (5.1.1(v) forbids a support-ticket or web-only flow for anyone outside
+  a highly-regulated industry).
+- Delete in this order: account-keyed nodes → auth-uid-keyed nodes →
+  `emailOwners` (the ownership proof other rules read — drop it LAST) → the
+  Identity Toolkit user (`accounts:delete`, which invalidates the token) → local
+  SwiftData/UserDefaults/Keychain → re-bootstrap a fresh anonymous identity.
+- Shared records are not yours to delete: a duel drops only *your* player slot,
+  never the whole node, or you erase the opponent's game.
+- Every node delete is best-effort; only the auth delete is authoritative and
+  reported. A stale leaderboard row must not strand a player mid-deletion.
+- Record a screen recording of the flow in App Store Connect → App Review
+  Information → Notes. Review asks for it by name on any 5.1.1(v) re-submission.
+
+**Related:** the same submission was rejected under 2.1(a) for a purchase error.
+One StoreKit `Product.products(for:)` attempt is not enough — it can return an
+empty array (not an error) before the store's first sync, most visibly on tvOS
+where the paywall is often the process's first App Store traffic. Retry it, and
+make an empty product list a **recoverable** state with a Try Again control, never
+a bare error string. And never stack the paywall as a second `.fullScreenCover`
+on tvOS: StoreKit then has to present its sheet third in a modal stack.

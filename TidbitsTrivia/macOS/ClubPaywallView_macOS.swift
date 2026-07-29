@@ -86,13 +86,15 @@ struct ClubPaywallView_macOS: View {
         .frame(maxWidth: .infinity, alignment: .leading).padding(16).chunkyCard(fill: Tidbits.Palette.surface)
     }
 
-    private var plans: some View {
+    @ViewBuilder private var plans: some View {
         VStack(spacing: 12) {
-            if store.loadFailed {
-                Text("Couldn't load plans. Check your connection and try again.")
-                    .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft).multilineTextAlignment(.center).padding()
-            } else if store.products.isEmpty {
+            if store.loading && store.products.isEmpty {
                 ProgressView().padding()
+            } else if store.products.isEmpty {
+                // A store that didn't answer is a RECOVERABLE state, never a dead end.
+                Text(store.lastError ?? "The App Store didn't send the plans back. This usually clears on a second try.")
+                    .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft).multilineTextAlignment(.center).padding()
+                Button("Try Again") { Task { await store.loadProducts() } }
             } else {
                 ForEach(store.products, id: \.id) { product in planButton(product) }
             }
@@ -166,7 +168,7 @@ struct ClubPaywallView_macOS: View {
         case .success:   message = nil
         case .pending:   message = "Your purchase is pending approval. Club unlocks once it's approved."
         case .cancelled: break
-        case .failed:    message = "That didn't go through. No charge was made — try again."
+        case .failed:    message = store.lastError ?? "That didn't go through. No charge was made — try again."
         }
         busy = nil
     }

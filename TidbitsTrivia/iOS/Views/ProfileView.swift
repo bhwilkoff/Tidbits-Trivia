@@ -1,5 +1,6 @@
 #if os(iOS)
 import SwiftUI
+import SwiftData
 import AuthenticationServices
 
 /// The player's portable Tidbits identity, rendered native-iOS (chunky sticker cards).
@@ -9,10 +10,14 @@ struct ProfileView: View {
     @Environment(PlayerIdentityStore.self) private var identity
     @Environment(GameCenterManager.self) private var gameCenter
     @Environment(EntitlementStore.self) private var entitlement
+    @Environment(\.modelContext) private var modelContext
     @State private var showPaywall = false
     @State private var editingName = false
     @State private var draftName = ""
     @State private var appleNonce = ""
+    @State private var confirmDelete = false
+    @State private var deleting = false
+    @State private var deleted = false
 
     var body: some View {
         ScrollView {
@@ -45,6 +50,7 @@ struct ProfileView: View {
                         .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.blue, textColor: .white))
                     }
                     saveProgress
+                    deleteAccountSection
                 }
                 .padding(Tidbits.Metric.pad)
             } else {
@@ -66,6 +72,61 @@ struct ProfileView: View {
             Text("This is the name other players and venues see on leaderboards.")
         }
         .sheet(isPresented: $showPaywall) { ClubPaywallView() }
+        .alert("Delete your Tidbits account?", isPresented: $confirmDelete) {
+            Button("Delete Account", role: .destructive) { Task { await deleteAccount() } }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This permanently deletes your Tidbits account and everything stored with it — your profile, rating, streak, Daily history, leaderboard standings, and friends list. It can't be undone.")
+        }
+    }
+
+    /// App Store 5.1.1(v): an app that supports account creation must offer account DELETION
+    /// in-app — not a deactivation, not a support email, not a website. Shown whether or not
+    /// the player has signed in with Apple, because Tidbits provisions a real (anonymous)
+    /// account for every player and that account holds their records too.
+    @ViewBuilder private var deleteAccountSection: some View {
+        VStack(spacing: 8) {
+            Button(role: .destructive) {
+                confirmDelete = true
+            } label: {
+                HStack(spacing: 8) {
+                    if deleting { ProgressView() }
+                    Text(deleting ? "Deleting…" : "Delete Account")
+                }
+                .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.coral))
+            .disabled(deleting)
+            Text("Permanently deletes your account and all of its data — profile, rating, streak, Daily history, standings, and friends.")
+                .font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft)
+                .multilineTextAlignment(.center)
+            if deleted {
+                Text("Your account was deleted. This device is signed out and starting fresh.")
+                    .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.ink)
+                    .multilineTextAlignment(.center)
+            }
+            if let e = identity.deleteError {
+                Text(e).font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.coral)
+                    .multilineTextAlignment(.center)
+            }
+        }
+        .padding(.top, 18)
+    }
+
+    /// Server-side account + every local trace of it. The local wipe runs on success only —
+    /// a failed remote delete must leave the player exactly where they were.
+    private func deleteAccount() async {
+        deleting = true; deleted = false
+        if await identity.deleteAccount() {
+            try? modelContext.delete(model: GameRecord.self)
+            try? modelContext.delete(model: MissedFact.self)
+            try? modelContext.delete(model: DailyStreak.self)
+            try? modelContext.delete(model: CalibrationTally.self)
+            try? modelContext.save()
+            QuestionProvider.shared.resetSeen()
+            deleted = true
+        }
+        deleting = false
     }
 
     private func header(_ p: PlayerIdentity.Profile) -> some View {

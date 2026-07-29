@@ -86,6 +86,18 @@ enum DebugHooks {
         ProcessInfo.processInfo.environment["TIDBITS_LINKWALL"] == "1"
     }
 
+    /// TIDBITS_PROFILE=1 → push Profile inside Settings on open (iOS). Profile owns Sign in
+    /// with Apple and Delete Account, so both stay verifiable without a tap.
+    static var openProfile: Bool {
+        ProcessInfo.processInfo.environment["TIDBITS_PROFILE"] == "1"
+    }
+
+    /// TIDBITS_NO_GAMECENTER=1 → never call `GKLocalPlayer.authenticateHandler`, so GameKit's
+    /// full-screen sign-in sheet can't cover the app during simulator screenshots.
+    static var skipGameCenter: Bool {
+        ProcessInfo.processInfo.environment["TIDBITS_NO_GAMECENTER"] == "1"
+    }
+
     /// TIDBITS_SETTINGS=1 opens Settings on launch — same screenshot/
     /// simulator observability idiom as the flags above (tvOS has no GUI
     /// Simulator window on this dev box to tap through to it manually).

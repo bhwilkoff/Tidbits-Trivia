@@ -24,6 +24,17 @@ final class StoreKitStore {
 
     private(set) var products: [StoreKit.Product] = []
     private(set) var loadFailed = false
+    /// True while `loadProducts()` is in flight (including its retries) so the paywall can
+    /// show a spinner instead of flashing the failure copy at a store that just hasn't
+    /// answered yet.
+    private(set) var loading = false
+    /// The last real StoreKit failure, in Apple's own words. Shown verbatim to the player —
+    /// a generic "that didn't go through" is indistinguishable from a broken app (App Review
+    /// 2.1(a): "an error message displayed when we attempted to purchase the plans").
+    private(set) var lastError: String?
+    /// Whether this device/account is allowed to buy at all (parental controls, managed
+    /// devices). Not an error — a different, explanatory state.
+    var canMakePayments: Bool { StoreKit.AppStore.canMakePayments }
     private var updates: Task<Void, Never>?
 
     /// Wire the local entitlement check into the shared gate and start listening for
@@ -38,22 +49,49 @@ final class StoreKitStore {
 
     /// Load the three products for display in the paywall. Sorted lifetime → annual → monthly
     /// so the best-value framing reads top-down.
+    ///
+    /// **Retried.** `Product.products(for:)` is documented to fail transiently, and on a cold
+    /// launch it can return an EMPTY array (not an error) before the store finishes its first
+    /// sync — most visibly on tvOS, where the paywall is often the first App Store traffic the
+    /// process makes. One attempt is why App Review saw an error message where a price list
+    /// belonged; three attempts with a short backoff is the documented remedy.
     func loadProducts() async {
-        do {
-            let loaded = try await StoreKit.Product.products(for: Self.clubProductIDs)
-            let order: [String: Int] = [Product.lifetime.rawValue: 0, Product.annual.rawValue: 1, Product.monthly.rawValue: 2]
-            products = loaded.sorted { (order[$0.id] ?? 9) < (order[$1.id] ?? 9) }
-            loadFailed = products.isEmpty
-        } catch {
-            loadFailed = true
+        guard !loading else { return }
+        loading = true
+        defer { loading = false }
+        lastError = nil
+        for attempt in 0..<3 {
+            do {
+                let loaded = try await StoreKit.Product.products(for: Self.clubProductIDs)
+                if !loaded.isEmpty {
+                    let order: [String: Int] = [Product.lifetime.rawValue: 0, Product.annual.rawValue: 1, Product.monthly.rawValue: 2]
+                    products = loaded.sorted { (order[$0.id] ?? 9) < (order[$1.id] ?? 9) }
+                    loadFailed = false
+                    return
+                }
+                print("[StoreKit] products(for:) returned 0 of \(Self.clubProductIDs.count) — attempt \(attempt + 1)")
+            } catch {
+                lastError = Self.describe(error)
+                print("[StoreKit] products(for:) failed on attempt \(attempt + 1): \(error)")
+            }
+            if attempt < 2 { try? await Task.sleep(nanoseconds: UInt64(600_000_000 << attempt)) }
         }
+        loadFailed = products.isEmpty
     }
 
     enum PurchaseOutcome { case success, pending, cancelled, failed }
 
     /// Buy a Club product. On success the transaction is finished and the entitlement gate
     /// refreshes, so the UI lights up immediately.
+    ///
+    /// Any failure records `lastError` in StoreKit's own words. The paywall shows it verbatim
+    /// so "can't connect to the App Store" reads as what it is instead of as a broken app.
     func purchase(_ product: StoreKit.Product) async -> PurchaseOutcome {
+        lastError = nil
+        guard canMakePayments else {
+            lastError = "Purchases are turned off for this Apple Account (Screen Time or a device restriction)."
+            return .failed
+        }
         do {
             switch try await product.purchase() {
             case .success(let verification):
@@ -62,14 +100,40 @@ final class StoreKitStore {
                     await EntitlementStore.shared.refresh()
                     return .success
                 }
+                lastError = "The App Store couldn't verify that purchase. No charge was made."
                 return .failed                        // unverified — do not grant
             case .pending: return .pending            // e.g. Ask to Buy — grant later via updates
             case .userCancelled: return .cancelled
-            @unknown default: return .failed
+            @unknown default:
+                lastError = "The App Store returned an unexpected result. No charge was made."
+                return .failed
             }
         } catch {
+            lastError = Self.describe(error)
+            print("[StoreKit] purchase(\(product.id)) failed: \(error)")
             return .failed
         }
+    }
+
+    /// StoreKit's own wording where it has some, plus the two cases whose raw text is useless
+    /// to a player. Never returns an empty string.
+    private static func describe(_ error: Error) -> String {
+        if let skError = error as? StoreKitError {
+            switch skError {
+            case .networkError:
+                return "Couldn't reach the App Store. Check your connection and try again."
+            case .userCancelled:
+                return "Purchase cancelled."
+            case .notAvailableInStorefront:
+                return "Tidbits Club isn't available in your App Store region yet."
+            case .notEntitled:
+                return "This Apple Account isn't able to make this purchase."
+            default:
+                break
+            }
+        }
+        let message = (error as NSError).localizedDescription
+        return message.isEmpty ? "The App Store couldn't complete that. No charge was made." : message
     }
 
     /// Restore Purchases — force a sync from the App Store, then re-check. Needed because

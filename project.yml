@@ -38,6 +38,15 @@ targets:
       path: TidbitsTrivia/TidbitsTrivia.entitlements
       properties:
         com.apple.developer.game-center: true
+        # Sign in with Apple MUST be declared here, not hand-added to the
+        # .entitlements file — xcodegen REGENERATES that file from this block, so a
+        # hand-edit is silently wiped on the next `xcodegen generate`. That is exactly
+        # how it went missing before (commit ef27972 added it to the generated file;
+        # the next regen dropped it, and the OS won't grant a runtime capability the
+        # app's own compiled entitlements don't declare — tvOS could complete Apple's
+        # sign-in UI but never persist a session). Same class as the macOS
+        # settings-clobber ratchet: config lives in project.yml, never in generated output.
+        com.apple.developer.applesignin: [Default]
     # Local StoreKit config so IAP purchases work in the simulator without App Store
     # Connect (the products still ship for real via App Store Connect at go-live).
     scheme:

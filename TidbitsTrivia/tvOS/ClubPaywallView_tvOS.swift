@@ -11,6 +11,11 @@ import StoreKit
 /// R-MON-2: purchase is via StoreKit only. There is no sign-in surface here (Settings owns
 /// that) — the web note points back there, never a code/QR field.
 struct ClubPaywallView_tvOS: View {
+    /// Set when the paywall is shown INLINE (Settings swaps its own content rather than
+    /// stacking a second `.fullScreenCover` — see `SettingsView_tvOS`). nil means "I'm a
+    /// modal, dismiss me."
+    var onClose: (() -> Void)? = nil
+
     @Environment(EntitlementStore.self) private var entitlement
     @Environment(\.dismiss) private var dismiss
     @State private var store = StoreKitStore.shared
@@ -18,7 +23,7 @@ struct ClubPaywallView_tvOS: View {
     @State private var message: String? = nil
     @FocusState private var focus: PWFocus?
 
-    private enum PWFocus: Hashable { case plan(Int), restore }
+    private enum PWFocus: Hashable { case plan(Int), restore, retry }
 
     // The pitch (§4a "The pitch, in one sentence") — play + keep. Kept verbatim from iOS.
     private let pillars: [(String, String, String)] = [
@@ -51,7 +56,7 @@ struct ClubPaywallView_tvOS: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
-        .onExitCommand { dismiss() }   // Menu button leaves the paywall (modal: allowed)
+        .onExitCommand { if let onClose { onClose() } else { dismiss() } }   // Menu leaves the paywall
         .defaultFocus($focus, .plan(0))
         .task { await store.loadProducts() }
     }
@@ -96,13 +101,19 @@ struct ClubPaywallView_tvOS: View {
         }
     }
 
-    private var plans: some View {
+    @ViewBuilder private var plans: some View {
         VStack(alignment: .leading, spacing: 16) {
-            if store.loadFailed {
-                Text("Couldn't load plans. Check your connection and try again.")
-                    .font(.system(size: 25, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
-            } else if store.products.isEmpty {
+            if store.loading && store.products.isEmpty {
                 ProgressView().tint(.white)
+            } else if store.products.isEmpty {
+                // A store that didn't answer is a RECOVERABLE state, never a dead end — the
+                // retry button is what App Review 2.1(a) found missing behind the error text.
+                Text(store.lastError ?? "The App Store didn't send the plans back. This usually clears on a second try.")
+                    .font(.system(size: 25, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+                    .fixedSize(horizontal: false, vertical: true)
+                Button("Try Again") { Task { await store.loadProducts() } }
+                    .buttonStyle(TVChipStyle(accent: Tidbits.Palette.blue, selected: false))
+                    .focused($focus, equals: .retry)
             } else {
                 ForEach(Array(store.products.enumerated()), id: \.element.id) { i, product in
                     planButton(product, index: i)
@@ -177,7 +188,7 @@ struct ClubPaywallView_tvOS: View {
         case .success:   message = nil
         case .pending:   message = "Your purchase is pending approval. Club unlocks once it's approved."
         case .cancelled: break
-        case .failed:    message = "That didn't go through. No charge was made — try again."
+        case .failed:    message = store.lastError ?? "That didn't go through. No charge was made — try again."
         }
         busy = nil
     }

@@ -13,6 +13,9 @@ struct SettingsView_macOS: View {
     @Environment(\.modelContext) private var modelContext
     @AppStorage(GameSettings.reviewKey) private var reviewEnabled = true
     @State private var confirmReset = false
+    @State private var confirmDelete = false
+    @State private var deleting = false
+    @State private var deleted = false
     @State private var editingName = false
     @State private var draftName = ""
     @State private var appleNonce = ""
@@ -90,6 +93,23 @@ struct SettingsView_macOS: View {
                 Button("Reset Seen Questions") { QuestionProvider.shared.resetSeen() }
                 Button("Reset All Records…", role: .destructive) { confirmReset = true }
             }
+            // App Store 5.1.1(v): an app that supports account creation must offer account
+            // DELETION in-app — not a deactivation, not a support email, not a website. Shown
+            // whether or not the player signed in with Apple, because Tidbits provisions a
+            // real (anonymous) account for every player and that account holds records too.
+            Section("Account") {
+                Button(deleting ? "Deleting…" : "Delete Account…", role: .destructive) { confirmDelete = true }
+                    .disabled(deleting)
+                Text("Permanently deletes your Tidbits account and all of its data — profile, rating, streak, Daily history, standings, and friends.")
+                    .font(.caption).foregroundStyle(.secondary)
+                if deleted {
+                    Label("Your account was deleted. This Mac is signed out and starting fresh.", systemImage: "checkmark.circle.fill")
+                        .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                }
+                if let e = identity.deleteError {
+                    Text(e).font(.caption).foregroundStyle(.red).fixedSize(horizontal: false, vertical: true)
+                }
+            }
             Section("About") {
                 LabeledContent("Version", value: version)
                 Link("Wikipedia", destination: URL(string: "https://www.wikipedia.org")!)
@@ -112,7 +132,24 @@ struct SettingsView_macOS: View {
         } message: {
             Text("The name other players and venues see on leaderboards.")
         }
+        .confirmationDialog("Delete your Tidbits account?", isPresented: $confirmDelete) {
+            Button("Delete Account", role: .destructive) { Task { await deleteAccount() } }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This permanently deletes your Tidbits account and everything stored with it — your profile, rating, streak, Daily history, leaderboard standings, and friends list. It can't be undone.")
+        }
         .sheet(isPresented: $showPaywall) { ClubPaywallView_macOS() }
+    }
+
+    /// Server-side account + every local trace of it. The local wipe runs on success only —
+    /// a failed remote delete must leave the player exactly where they were.
+    private func deleteAccount() async {
+        deleting = true; deleted = false
+        if await identity.deleteAccount() {
+            resetAll()
+            deleted = true
+        }
+        deleting = false
     }
 
     /// A deterministic seeded avatar — shared shape with the iOS profile.

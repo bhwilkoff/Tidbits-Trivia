@@ -159,6 +159,7 @@ struct HomeView: View {
             if launch == nil, let ap = DebugHooks.autoplay {
                 start(LaunchRequest(mode: ap.mode, category: ap.category, mixModes: DebugHooks.mixModes))
             }
+            if DebugHooks.openSettings || DebugHooks.openProfile { showSettings = true }
             if DebugHooks.openParty { showParty = true }
             if DebugHooks.openNightHost { hostLaunch = NightLaunchRequest(plan: .quick, category: .named("mixed")) }
             if DebugHooks.openCustomize { showCustomize = true }

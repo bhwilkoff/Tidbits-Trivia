@@ -67,7 +67,7 @@
     },
     "emailOwners": {
       "$key": {
-        ".write": "auth != null && auth.token.email_verified === true && newData.val() === auth.token.email && (!data.exists() || data.val() === auth.token.email)"
+        ".write": "auth != null && auth.token.email_verified === true && ((newData.exists() && newData.val() === auth.token.email && (!data.exists() || data.val() === auth.token.email)) || (!newData.exists() && data.val() === auth.token.email))"
       }
     },
     "dailyBoard": {

@@ -58,6 +58,11 @@ final class GameCenterManager {
     /// Set ONCE at app launch. GameKit calls the handler several times during
     /// init; on a not-signed-in device it hands back a view controller to present.
     func authenticate() {
+        // TIDBITS_NO_GAMECENTER=1 — skip auth entirely. On a headless dev box (no GUI
+        // Simulator to click with) GameKit's full-screen "Welcome to Game Center" sheet sits
+        // on top of the app and makes every `simctl io screenshot` useless. No-op in
+        // production; this is the flag that keeps tvOS screens observable.
+        guard !DebugHooks.skipGameCenter else { return }
         GKLocalPlayer.local.authenticateHandler = { [weak self] viewController, error in
             guard let self else { return }
             if let viewController {

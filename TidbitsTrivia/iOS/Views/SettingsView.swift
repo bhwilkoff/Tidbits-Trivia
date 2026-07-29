@@ -12,6 +12,9 @@ struct SettingsView: View {
     @AppStorage(Haptics.defaultsKey) private var hapticsEnabled = true
     @AppStorage(GameSettings.reviewKey) private var reviewEnabled = true
     @State private var confirmReset = false
+    /// TIDBITS_PROFILE=1 pushes Profile on open — the surface that owns Sign in with Apple and
+    /// (App Store 5.1.1(v)) Delete Account, so both stay screenshot-verifiable from the CLI.
+    @State private var path: [String] = DebugHooks.openProfile ? ["profile"] : []
 
     private var version: String {
         let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
@@ -20,10 +23,10 @@ struct SettingsView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             Form {
                 Section {
-                    NavigationLink { ProfileView() } label: {
+                    NavigationLink(value: "profile") {
                         HStack(spacing: 12) {
                             if let p = identity.profile {
                                 Avatar(seed: p.avatarSeed, initials: ProfileView.initials(p.name)).frame(width: 44, height: 44)
@@ -72,6 +75,7 @@ struct SettingsView: View {
                         .font(.footnote).foregroundStyle(.secondary)
                 }
             }
+            .navigationDestination(for: String.self) { _ in ProfileView() }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }

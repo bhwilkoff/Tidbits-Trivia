@@ -25,13 +25,16 @@ struct SettingsView_tvOS: View {
     @Environment(EntitlementStore.self) private var entitlement
     @AppStorage(GameSettings.reviewKey) private var reviewEnabled = true
     @State private var confirmReset = false
+    @State private var confirmDelete = false
+    @State private var deleting = false
+    @State private var deleted = false
     @State private var showPaywall = false
     @State private var showLeaderboard = false
     @State private var appleCoordinator: TVAppleSignInCoordinator?
     @State private var signingIn = false
     @FocusState private var focus: SettingsFocus?
 
-    private enum SettingsFocus: Hashable { case appleSignIn, gameplayToggle }
+    private enum SettingsFocus: Hashable { case appleSignIn, gameplayToggle, deleteAccount }
 
     private var version: String {
         let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
@@ -40,6 +43,19 @@ struct SettingsView_tvOS: View {
     }
 
     var body: some View {
+        // Settings is ITSELF a `.fullScreenCover` (ContentView_tvOS). Presenting the paywall
+        // as a second, nested cover put StoreKit's purchase sheet third in a modal stack —
+        // the classic tvOS "already presenting" race, and the shape of the App Review 2.1(a)
+        // purchase failure. Swapping content inside this cover keeps the stack one deep, so
+        // StoreKit always has a clean window to present into.
+        if showPaywall {
+            ClubPaywallView_tvOS(onClose: { showPaywall = false })
+        } else {
+            settingsBody
+        }
+    }
+
+    private var settingsBody: some View {
         ZStack {
             TVTheme.bg.ignoresSafeArea()
             ScrollView {
@@ -67,8 +83,17 @@ struct SettingsView_tvOS: View {
         } message: {
             Text("This permanently deletes your scores, streaks, and review list.")
         }
-        .fullScreenCover(isPresented: $showPaywall) { ClubPaywallView_tvOS() }
         .fullScreenCover(isPresented: $showLeaderboard) { LeaderboardView_tvOS() }
+        // TIDBITS_PAYWALL=1 with TIDBITS_SETTINGS=1 opens the Club paywall on the SAME path
+        // App Review took (Settings → "Join Tidbits Club"), so that path stays screenshot-
+        // verifiable on a dev box with no GUI Simulator to click a remote in.
+        .task { if DebugHooks.showPaywall { showPaywall = true } }
+        .confirmationDialog("Delete your Tidbits account?", isPresented: $confirmDelete, titleVisibility: .visible) {
+            Button("Delete Account", role: .destructive) { Task { await deleteAccount() } }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This permanently deletes your Tidbits account and everything stored with it — your profile, rating, streak, Daily history, leaderboard standings, and friends list. It can't be undone.")
+        }
     }
 
     // MARK: Profile + Sign in with Apple
@@ -102,6 +127,7 @@ struct SettingsView_tvOS: View {
                     }
                 }
                 signInArea
+                deleteAccountArea
             } else {
                 TVRecordsCard(fill: TVTheme.panel) {
                     Text("Setting up your profile…").font(.system(size: 28, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
@@ -166,6 +192,43 @@ struct SettingsView_tvOS: View {
                     }
                     .foregroundStyle(Tidbits.Palette.coral)
                 }
+            }
+        }
+    }
+
+    /// App Store 5.1.1(v): an app that supports account creation must offer account DELETION
+    /// in-app — not a deactivation, not a support email, not a website. Shown whether or not
+    /// the player has signed in with Apple, because Tidbits provisions a real (anonymous)
+    /// account for every player and that account holds their records too.
+    @ViewBuilder private var deleteAccountArea: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 20) {
+                Button {
+                    confirmDelete = true
+                } label: {
+                    HStack(spacing: 14) {
+                        if deleting { ProgressView().tint(.white) }
+                        else { Image(systemName: "trash.fill").font(.system(size: 24, weight: .bold)) }
+                        Text(deleting ? "Deleting…" : "Delete Account")
+                            .font(.system(size: 26, weight: .bold, design: .rounded))
+                    }
+                }
+                .buttonStyle(TVChipStyle(accent: Tidbits.Palette.coral, selected: false))
+                .focused($focus, equals: .deleteAccount)
+                .disabled(deleting)
+                Spacer()
+            }
+            Text("Permanently deletes your Tidbits account and all of its data — profile, rating, streak, Daily history, standings, and friends.")
+                .font(.system(size: 22, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+                .fixedSize(horizontal: false, vertical: true)
+            if deleted {
+                Text("Your account was deleted. This device is signed out and starting fresh.")
+                    .font(.system(size: 24, weight: .semibold, design: .rounded)).foregroundStyle(Tidbits.Palette.mint)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            if let e = identity.deleteError {
+                Text(e).font(.system(size: 24, weight: .medium, design: .rounded)).foregroundStyle(Tidbits.Palette.coral)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }
@@ -305,6 +368,18 @@ struct SettingsView_tvOS: View {
         Text(title.uppercased())
             .font(.system(size: 24, weight: .heavy, design: .rounded))
             .foregroundStyle(TVTheme.textSoft)
+    }
+
+    /// Server-side account + every local trace of it. The local wipe runs on success only —
+    /// a failed remote delete must leave the player exactly where they were.
+    private func deleteAccount() async {
+        deleting = true; deleted = false
+        let ok = await identity.deleteAccount()
+        if ok {
+            resetAll()
+            deleted = true
+        }
+        deleting = false
     }
 
     private func resetAll() {

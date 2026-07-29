@@ -134,6 +134,27 @@ actor FirebaseRTDB {
         return uid ?? ""
     }
 
+    /// Permanently delete the CURRENT auth account (Identity Toolkit `accounts:delete`) and
+    /// drop the local session, then return to a fresh anonymous one. App Store 5.1.1(v)
+    /// requires an in-app account deletion, and deleting the RTDB records without deleting
+    /// the auth user would leave a real credential behind that can sign back in.
+    ///
+    /// Callers MUST delete the account's database nodes first — the token dies with the user.
+    @discardableResult
+    func deleteAccount() async throws -> String {
+        let token = try await validToken()
+        var req = URLRequest(url: URL(string: "https://identitytoolkit.googleapis.com/v1/accounts:delete?key=\(config.apiKey)")!)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpBody = try JSONSerialization.data(withJSONObject: ["idToken": token])
+        let (_, resp) = try await session.data(for: req)
+        try Self.check(resp)
+        Keychain.delete(Self.refreshKey)
+        idToken = nil; refreshToken = nil; uid = nil; expiry = .distantPast
+        try await signUpAnonymous()
+        return uid ?? ""
+    }
+
     private func signInWithIdp(postBody: String, linkTo idToken: String?) async throws -> IdpResponse {
         var body: [String: Any] = ["postBody": postBody, "requestUri": "http://localhost",
                                    "returnSecureToken": true, "returnIdpCredential": true]

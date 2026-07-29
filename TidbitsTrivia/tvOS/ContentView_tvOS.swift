@@ -174,6 +174,7 @@ struct ContentView_tvOS: View {
                 openClub()
             }
             if DebugHooks.openLinkWall { openLinkWall() }
+            if DebugHooks.openNightSetup { showNightSetup = true }
             // TIDBITS_PAYWALL=1 opens the paywall on the real path App Review takes
             // (Home → Tidbits Club), one cover deep — never stacked under Settings.
             if DebugHooks.showPaywall { showClubPaywall = true }

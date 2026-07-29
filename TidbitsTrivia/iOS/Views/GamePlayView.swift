@@ -78,8 +78,13 @@ struct GamePlayView: View {
             // Screenshot/CI autopilot — no-op unless TIDBITS_AUTOPILOT=1. Disabled
             // in a networked night (the host paces it; autopilot would fight that).
             guard DebugHooks.autopilot, live == nil else { return }
+            // A step budget parks the app on a chosen phase for a screenshot
+            // (docs/STORE-SCREENSHOTS.md §2); nil runs the round to completion.
+            var stepsLeft = DebugHooks.autopilotSteps
             while game.phase != .finished && game.phase != .idle {
+                if let n = stepsLeft, n <= 0 { return }
                 try? await Task.sleep(for: .seconds(0.9))
+                if stepsLeft != nil { stepsLeft! -= 1 }
                 switch game.phase {
                 case .playing:
                     // Shape-driven so it also drives a Trivia Night (mixed shapes).
@@ -96,7 +101,8 @@ struct GamePlayView: View {
                     }
                     if game.mode == .stake && game.currentStake == 0,
                        let tier = game.stakeTiers.first(where: { $0.remaining > 0 }) { game.setStake(tier.value) }
-                    game.submit(0)
+                    // Option 0 is the harness default; the store scorecard needs a real score.
+                    game.submit(DebugHooks.autopilotCorrect ? (game.current?.correctIndex ?? 0) : 0)
                 case .reveal:  game.advance()
                 default:       break
                 }

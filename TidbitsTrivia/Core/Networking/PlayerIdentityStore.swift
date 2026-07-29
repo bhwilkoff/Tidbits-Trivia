@@ -389,6 +389,18 @@ final class PlayerIdentityStore {
         authError = nil
     }
 
+    /// Screenshot seeding only (`TIDBITS_SEED_RECORDS`): give the local profile a plausible
+    /// streak + stats so the Records store shot doesn't read "0 days" next to 24 games.
+    /// Local-only — never written to the shared plane.
+    func seedForScreenshots(streak: Int, longest: Int, games: Int, correct: Int, answered: Int) {
+        guard var p = profile else { return }
+        p.streak = .init(current: streak, longest: longest, lastPlayedDay: PlayerIdentity.todayString(), freezes: 1)
+        p.stats = .init(gamesPlayed: games, questionsAnswered: answered, correct: correct,
+                        liveNights: 2, venuesVisited: 1)
+        p.rating = .init(value: 1180, games: games, provisional: false)
+        profile = p
+    }
+
     /// Update the public display name.
     func rename(_ name: String) async {
         guard let uid = profileId, var p = profile else { return }

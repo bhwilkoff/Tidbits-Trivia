@@ -22,6 +22,28 @@ enum DebugHooks {
         ProcessInfo.processInfo.environment["TIDBITS_AUTOPILOT"] == "1"
     }
 
+    /// TIDBITS_AUTOPILOT_CORRECT=1 → autopilot submits the RIGHT answer instead of option 0.
+    /// The store scorecard shot otherwise advertises ~28% accuracy, which is an artefact of
+    /// the test harness rather than the game (docs/STORE-SCREENSHOTS.md §2).
+    static var autopilotCorrect: Bool {
+        ProcessInfo.processInfo.environment["TIDBITS_AUTOPILOT_CORRECT"] == "1"
+    }
+
+    /// TIDBITS_AUTOPILOT_STEPS=<n> → autopilot takes exactly N actions and then STOPS,
+    /// parking the app on whatever phase it reached. Plain autopilot advances every 0.9s,
+    /// which is far too tight to catch the reveal with a `sleep` — so the store-screenshot
+    /// run uses STEPS=1 to submit one answer and hold on the reveal for as long as the
+    /// capture needs (docs/STORE-SCREENSHOTS.md §2). nil = run to completion.
+    static var autopilotSteps: Int? {
+        ProcessInfo.processInfo.environment["TIDBITS_AUTOPILOT_STEPS"].flatMap(Int.init)
+    }
+
+    /// TIDBITS_NIGHT_SETUP=1 → open the Trivia Night setup surface on launch (the store
+    /// screenshot for the night; distinct from TIDBITS_NIGHT_HOST, which starts hosting).
+    static var openNightSetup: Bool {
+        ProcessInfo.processInfo.environment["TIDBITS_NIGHT_SETUP"] == "1"
+    }
+
     /// TIDBITS_TAB="records"|"create"|"play" → open straight to a tab.
     static var initialTab: AppStore.Tab? {
         ProcessInfo.processInfo.environment["TIDBITS_TAB"]
@@ -174,6 +196,13 @@ enum DebugHooks {
         ProcessInfo.processInfo.environment["TIDBITS_NIGHT_HOST"] == "1"
     }
 
+    /// TIDBITS_SKIP_ONBOARD=1 → treat onboarding as already done. A fresh simulator install
+    /// otherwise opens on the walkthrough, so the Home and Create store shots both came back
+    /// as the same "All of Wikipedia, as trivia" card (docs/STORE-SCREENSHOTS.md §2).
+    static var skipOnboarding: Bool {
+        ProcessInfo.processInfo.environment["TIDBITS_SKIP_ONBOARD"] == "1"
+    }
+
     /// TIDBITS_ONBOARD=1 → force the first-run walkthrough (for screenshots).
     static var forceOnboarding: Bool {
         ProcessInfo.processInfo.environment["TIDBITS_ONBOARD"] == "1"
@@ -184,6 +213,15 @@ enum DebugHooks {
     /// unless the env var is set AND the store is empty (never touches real data).
     static var seedRecords: Int? {
         ProcessInfo.processInfo.environment["TIDBITS_SEED_RECORDS"].flatMap(Int.init)
+    }
+
+    /// Records reads the IDENTITY streak, not the legacy per-device one — so a seeded run
+    /// needs both, and this half has to survive `bootstrap()` replacing the profile.
+    @MainActor
+    static func applyIdentitySeed(_ n: Int) {
+        PlayerIdentityStore.shared.seedForScreenshots(
+            streak: 12, longest: 27, games: n,
+            correct: (7 * n * 3) / 4, answered: 7 * n)
     }
 
     @MainActor
@@ -208,5 +246,10 @@ enum DebugHooks {
         }
         context.insert(DailyStreak(current: 5, best: 12, lastPlayedDay: "2026-07-03"))
         try? context.save()
+        // Records shows the IDENTITY streak, not this legacy per-device one — seed it too,
+        // or the store screenshot reads "0 days" beside a full game history.
+        // Bootstrap is async and replaces `profile` wholesale, so seeding here alone gets
+        // clobbered — the app entry re-applies this once bootstrap has settled.
+        applyIdentitySeed(n)
     }
 }

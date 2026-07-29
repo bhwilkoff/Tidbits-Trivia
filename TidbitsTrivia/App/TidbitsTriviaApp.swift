@@ -21,6 +21,9 @@ struct TidbitsTriviaApp: App {
 
     init() {
         URLCache.shared = URLCache(memoryCapacity: 50_000_000, diskCapacity: 200_000_000)
+        // Before the first render: a fresh simulator install otherwise opens on the
+        // first-run walkthrough, which is what the Home + Create store shots came back as.
+        if DebugHooks.skipOnboarding { UserDefaults.standard.set(true, forKey: "tidbits.hasOnboarded") }
     }
 
     var body: some Scene {
@@ -38,6 +41,7 @@ struct TidbitsTriviaApp: App {
                     gameCenter.authenticate()
                     StoreKitStore.shared.start()                   // install the local (StoreKit) Club check + listen for renewals
                     await PlayerIdentityStore.shared.bootstrap()   // stable uid → portable profile
+                    if let n = DebugHooks.seedRecords, n > 0 { DebugHooks.applyIdentitySeed(n) }
                     await EntitlementStore.shared.refresh()        // Club status (local store || web entitlement)
                 }
                 #if os(macOS)

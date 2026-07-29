@@ -156,6 +156,7 @@ struct HomeView: View {
             }
             if DebugHooks.openSettings || DebugHooks.openProfile { showSettings = true }
             if DebugHooks.openParty { showParty = true }
+            if DebugHooks.openNightSetup { showNightSetup = true }
             if DebugHooks.openNightHost { hostLaunch = NightLaunchRequest(plan: .quick, category: .named("mixed")) }
             if DebugHooks.openCustomize { showCustomize = true }
             if DebugHooks.openMultiplayer { showMultiplayer = true }

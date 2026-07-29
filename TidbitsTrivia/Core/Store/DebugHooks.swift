@@ -31,6 +31,10 @@ enum DebugHooks {
     /// TIDBITS_PAYWALL=1 → present the Club paywall on launch (screenshot observability).
     static var showPaywall: Bool { ProcessInfo.processInfo.environment["TIDBITS_PAYWALL"] == "1" }
 
+    /// TIDBITS_CLUB_HUB=1 → open the Club hub on launch (R-CLUB-1's one door). Combine with
+    /// TIDBITS_CLUB=1, since non-members are routed to the paywall instead.
+    static var openClubHub: Bool { ProcessInfo.processInfo.environment["TIDBITS_CLUB_HUB"] == "1" }
+
     /// TIDBITS_CLUB=1 → force `EntitlementStore.isClub` true. Pre-launch there are no
     /// real purchases, so this is how every Club feature gets verified
     /// (docs/CLUB-FEATURES-BUILD.md gating convention).

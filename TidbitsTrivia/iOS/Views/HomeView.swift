@@ -11,6 +11,7 @@ struct HomeView: View {
     @Environment(EntitlementStore.self) private var entitlement
     @State private var launch: LaunchRequest?
     @State private var showClubPaywall = false
+    @State private var showClubHub = false
     @State private var showCustomize = false
     @State private var showNightSheet = false
     @State private var showNightSetup = false
@@ -28,17 +29,9 @@ struct HomeView: View {
     @AppStorage("tidbits.hasOnboarded") private var hasOnboarded = false
     // Marathon (Club — docs/CLUB-FEATURES-BUILD.md "Feature 3").
     @Query private var marathonRuns: [MarathonRun]
-    @Query(sort: \MarathonScore.date, order: .reverse) private var marathonHistory: [MarathonScore]
     @State private var showMarathonChoice = false
-    @State private var showMarathonHistory = false
-    // Expeditions (Club — docs/CLUB-FEATURES-BUILD.md "Feature 5").
-    @Query private var expeditionProgress: [ExpeditionProgress]
-    @State private var showExpeditions = false
-    // Link Wall (Club — docs/CLUB-FEATURES-BUILD.md "Feature 6", STAGED —
-    // iOS-reference-first). Sorted desc + filtered by day rather than a
-    // predicate-init'd @Query, so HomeView's existing memberwise init stays
-    // untouched (rows accumulate, one per day, never deleted).
-    @Query(sort: \LinkWallResult.date, order: .reverse) private var linkWallResults: [LinkWallResult]
+    // Link Wall (Club — docs/CLUB-FEATURES-BUILD.md "Feature 6"). Launched from the Club
+    // hub (R-CLUB-1); Home still owns the cover so the board isn't stacked under a sheet.
     @State private var showLinkWall = false
 
     private var showOnboarding: Binding<Bool> {
@@ -58,12 +51,11 @@ struct HomeView: View {
                     if DailyLog.playedToday { showDailyArchive = true }
                     else { start(LaunchRequest(mode: .daily, category: .named("mixed")), remember: false) }
                 }
-                LinkWallCard(isClub: entitlement.isClub, todayResult: linkWallToday, previewLabel: linkWallPreviewLabel) { openLinkWall() }
                 TriviaNightCard { showNightSheet = true }
-                WeakSpotCard(isClub: entitlement.isClub, previewLine: weakSpotPreviewLine) { openWeakSpot() }
-                MarathonCard(isClub: entitlement.isClub, run: marathonRuns.first, subtitle: marathonSubtitle) { openMarathon() }
-                ExpeditionsCard(isClub: entitlement.isClub, subtitle: expeditionSubtitle) { showExpeditions = true }
                 moreWaysSection
+                // R-CLUB-1 (iOS-DESIGN §5.2a): ONE Club door for the whole app. Members go
+                // to the hub; everyone else to the paywall. No other surface may offer Club.
+                ClubDoorCard(isClub: entitlement.isClub) { openClub() }
                 Button { showLiveJoin = true } label: {
                     HStack(spacing: 6) {
                         Image(systemName: "qrcode.viewfinder").font(.system(size: 15, weight: .bold))
@@ -135,8 +127,11 @@ struct HomeView: View {
         }
         .sheet(isPresented: $showLiveJoin) { LiveJoinView(initialCode: liveJoinCode) }
         .sheet(isPresented: $showClubPaywall) { ClubPaywallView() }
-        .sheet(isPresented: $showMarathonHistory) { MarathonHistoryView() }
-        .sheet(isPresented: $showExpeditions) { ExpeditionsView() }
+        .sheet(isPresented: $showClubHub) {
+            ClubHubView(onStartWeakSpot: { showClubHub = false; openWeakSpot() },
+                        onStartMarathon: { showClubHub = false; openMarathon() },
+                        onOpenLinkWall: { showClubHub = false; openLinkWall() })
+        }
         .fullScreenCover(isPresented: $showLinkWall) {
             LinkWallView(day: QuestionProvider.dayKey()) { showLinkWall = false }
         }
@@ -175,8 +170,12 @@ struct HomeView: View {
             if DebugHooks.openMarathon {
                 start(LaunchRequest(mode: .marathon, category: .named("mixed")), remember: false)
             }
-            if DebugHooks.openExpedition || DebugHooks.expeditionMapPreview != nil || DebugHooks.expeditionAutoplay != nil {
-                showExpeditions = true
+            // R-CLUB-1: every Club surface is reached through the hub, so the per-feature
+            // hooks open the hub and let it route (it carries the same flags).
+            if DebugHooks.openExpedition || DebugHooks.expeditionMapPreview != nil
+                || DebugHooks.expeditionAutoplay != nil
+                || DebugHooks.openStoryArchive || DebugHooks.openAtlas || DebugHooks.openClubHub {
+                openClub()
             }
             if DebugHooks.openLinkWall { openLinkWall() }
         }
@@ -203,10 +202,11 @@ struct HomeView: View {
         launch = req
     }
 
-    /// A genuine one-line sample from the player's own misses (MONETIZATION §4a:
-    /// "a real preview, never a nag") — nil once they're a member (no sell needed).
-    private var weakSpotPreviewLine: String? {
-        entitlement.isClub ? nil : WeakSpotArena.previewLine(in: modelContext)
+    /// R-CLUB-1 (iOS-DESIGN §5.2a): the app's ONE Club entry point. Members get the hub —
+    /// six features, no locks, no upsell. Everyone else gets the paywall, which is now the
+    /// only surface in the app allowed to make an offer.
+    private func openClub() {
+        if entitlement.isClub { showClubHub = true } else { showClubPaywall = true }
     }
 
     /// Club members launch the arena directly; everyone else sees the existing
@@ -217,19 +217,6 @@ struct HomeView: View {
         } else {
             showClubPaywall = true
         }
-    }
-
-    /// Today's Link Wall row, if any — `nil` for a not-yet-played day, present
-    /// (possibly `completed`) once a guess has been submitted.
-    private var linkWallToday: LinkWallResult? {
-        linkWallResults.first { $0.day == QuestionProvider.dayKey() }
-    }
-
-    /// A real preview for non-members — today's easiest (yellow) group's
-    /// label, straight off the actual generator (MONETIZATION §4a: "a real
-    /// preview, never a nag"). Never reveals the group's members/why.
-    private var linkWallPreviewLabel: String? {
-        LinkWall.puzzle(for: QuestionProvider.dayKey())?.groups.first?.label
     }
 
     /// Club members launch (or resume) today's board directly; everyone else
@@ -248,29 +235,6 @@ struct HomeView: View {
         } else {
             start(LaunchRequest(mode: .marathon, category: .named("mixed")), remember: false)
         }
-    }
-
-    /// A real, concrete subtitle in every state — never a nag (MONETIZATION
-    /// §4a). Members see their true position or their real last-run number;
-    /// non-members see a specific illustration of the domain scorecard (there's
-    /// no free-tier Marathon data to sample from, unlike Weak-Spot/Story Archive).
-    private var marathonSubtitle: String {
-        if entitlement.isClub {
-            if let run = marathonRuns.first { return "Question \(run.currentIndex + 1) of \(run.total) — tap to resume" }
-            if let last = marathonHistory.first { return "\(Int(last.accuracy * 100))% on your last run — tap to start a new one" }
-            return "200 questions. Play it across as many sittings as you like — we'll keep your place."
-        }
-        return "See exactly where you stand — e.g. Geography 91% · History 64% — across a 200-question run you can pause and resume anytime."
-    }
-
-    /// A real preview even for non-members — the expeditions themselves are
-    /// curated content, not player data, so there's nothing to hide behind a
-    /// generic sell line (MONETIZATION §4a).
-    private var expeditionSubtitle: String {
-        if let active = expeditionProgress.first, let exp = Expedition.named(active.expeditionID) {
-            return "\(exp.title): stage \(active.currentStageIndex + 1) of \(exp.stageCount) — tap to continue"
-        }
-        return "Multi-week campaigns through a single subject — pick one, and go at your own pace."
     }
 
     private var header: some View {
@@ -753,217 +717,36 @@ private struct TriviaNightCard: View {
 
 // MARK: - Weak-Spot Arena card (Club — docs/CLUB-FEATURES-BUILD.md "Feature 1")
 
-private struct WeakSpotCard: View {
+/// R-CLUB-1 (iOS-DESIGN §5.2a): the app's ONE Club entry point. Deliberately QUIET —
+/// a single row below the free surfaces, not a hero and not four locked cards. Members
+/// see a member badge instead of a price, so the door stops selling once they're in.
+private struct ClubDoorCard: View {
     let isClub: Bool
-    /// A real sample from the player's own misses, shown to non-members instead
-    /// of a generic sell line (MONETIZATION §4a: "a real preview, never a nag").
-    let previewLine: String?
-    let action: () -> Void
-
-    private var subtitle: String {
-        if isClub { return "Turn your misses into a round." }
-        return previewLine ?? "Your misses, turned into a round you can actually close."
-    }
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 14) {
-                Image(systemName: "scope")
-                    .font(.system(size: 30, weight: .black))
-                    .foregroundStyle(Tidbits.Palette.grape.legibleForeground)
-                VStack(alignment: .leading, spacing: 3) {
-                    HStack(spacing: 6) {
-                        Text("WEAK-SPOT ARENA")
-                            .font(Tidbits.TypeRamp.l2)
-                            .foregroundStyle(Tidbits.Palette.grape.legibleForeground)
-                        if !isClub {
-                            Text("CLUB")
-                                .font(.system(size: 11, weight: .black, design: .rounded))
-                                .foregroundStyle(Tidbits.Palette.grape)
-                                .padding(.horizontal, 7).padding(.vertical, 3)
-                                .background(Capsule().fill(Color.white.opacity(0.92)))
-                        }
-                    }
-                    Text(subtitle)
-                        .font(Tidbits.TypeRamp.l5)
-                        .foregroundStyle(Tidbits.Palette.grape.legibleForeground.opacity(0.85))
-                        .multilineTextAlignment(.leading)
-                        .lineLimit(2)
-                }
-                Spacer(minLength: 0)
-                Image(systemName: "chevron.right.circle.fill")
-                    .font(.system(size: 26, weight: .bold))
-                    .foregroundStyle(Tidbits.Palette.grape.legibleForeground)
-            }
-            .padding(18)
-            .chunkyCard(fill: Tidbits.Palette.grape)
-        }
-        .buttonStyle(.plain)
-        .padding(.trailing, Tidbits.Metric.shadowOffset)
-    }
-}
-
-// MARK: - Marathon card (Club — docs/CLUB-FEATURES-BUILD.md "Feature 3")
-
-private struct MarathonCard: View {
-    let isClub: Bool
-    /// Non-nil = a run is in progress (drives the "Resume" framing).
-    let run: MarathonRun?
-    let subtitle: String
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             HStack(spacing: 14) {
-                Image(systemName: "flag.checkered")
-                    .font(.system(size: 30, weight: .black))
-                    .foregroundStyle(Tidbits.Palette.teal.legibleForeground)
-                VStack(alignment: .leading, spacing: 3) {
-                    HStack(spacing: 6) {
-                        Text("MARATHON")
-                            .font(Tidbits.TypeRamp.l2)
-                            .foregroundStyle(Tidbits.Palette.teal.legibleForeground)
-                        if !isClub {
-                            Text("CLUB")
-                                .font(.system(size: 11, weight: .black, design: .rounded))
-                                .foregroundStyle(Tidbits.Palette.teal)
-                                .padding(.horizontal, 7).padding(.vertical, 3)
-                                .background(Capsule().fill(Color.white.opacity(0.92)))
-                        }
-                        if run != nil {
-                            Text("RESUME")
-                                .font(.system(size: 11, weight: .black, design: .rounded))
-                                .foregroundStyle(.white)
-                                .padding(.horizontal, 7).padding(.vertical, 3)
-                                .background(Capsule().fill(Tidbits.Palette.coral))
-                        }
-                    }
-                    Text(subtitle)
-                        .font(Tidbits.TypeRamp.l5)
-                        .foregroundStyle(Tidbits.Palette.teal.legibleForeground.opacity(0.85))
-                        .multilineTextAlignment(.leading)
-                        .lineLimit(2)
+                Image(systemName: isClub ? "star.circle.fill" : "star.circle")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundStyle(Tidbits.Palette.blue).frame(width: 30)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Tidbits Club").font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                    Text(isClub ? "Your six Club features, all in one place."
+                                : "Six optional extras for getting better. Everything else in Tidbits is free.")
+                        .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                        .fixedSize(horizontal: false, vertical: true).multilineTextAlignment(.leading)
                 }
                 Spacer(minLength: 0)
-                Image(systemName: "chevron.right.circle.fill")
-                    .font(.system(size: 26, weight: .bold))
-                    .foregroundStyle(Tidbits.Palette.teal.legibleForeground)
+                Image(systemName: "chevron.right").font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(Tidbits.Palette.inkSoft)
             }
-            .padding(18)
-            .chunkyCard(fill: Tidbits.Palette.teal)
+            .padding(16).frame(maxWidth: .infinity, alignment: .leading)
+            .chunkyCard(fill: Tidbits.Palette.surface)
         }
         .buttonStyle(.plain)
-        .padding(.trailing, Tidbits.Metric.shadowOffset)
     }
 }
-
-// MARK: - Expeditions card (Club — docs/CLUB-FEATURES-BUILD.md "Feature 5")
-
-private struct ExpeditionsCard: View {
-    let isClub: Bool
-    let subtitle: String
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 14) {
-                Image(systemName: "figure.run")
-                    .font(.system(size: 30, weight: .black))
-                    .foregroundStyle(Tidbits.Palette.pink.legibleForeground)
-                VStack(alignment: .leading, spacing: 3) {
-                    HStack(spacing: 6) {
-                        Text("EXPEDITIONS")
-                            .font(Tidbits.TypeRamp.l2)
-                            .foregroundStyle(Tidbits.Palette.pink.legibleForeground)
-                        if !isClub {
-                            Text("CLUB")
-                                .font(.system(size: 11, weight: .black, design: .rounded))
-                                .foregroundStyle(Tidbits.Palette.pink)
-                                .padding(.horizontal, 7).padding(.vertical, 3)
-                                .background(Capsule().fill(Color.white.opacity(0.92)))
-                        }
-                    }
-                    Text(subtitle)
-                        .font(Tidbits.TypeRamp.l5)
-                        .foregroundStyle(Tidbits.Palette.pink.legibleForeground.opacity(0.85))
-                        .multilineTextAlignment(.leading)
-                        .lineLimit(2)
-                }
-                Spacer(minLength: 0)
-                Image(systemName: "chevron.right.circle.fill")
-                    .font(.system(size: 26, weight: .bold))
-                    .foregroundStyle(Tidbits.Palette.pink.legibleForeground)
-            }
-            .padding(18)
-            .chunkyCard(fill: Tidbits.Palette.pink)
-        }
-        .buttonStyle(.plain)
-        .padding(.trailing, Tidbits.Metric.shadowOffset)
-    }
-}
-
-// MARK: - Link Wall card (Club — docs/CLUB-FEATURES-BUILD.md "Feature 6", STAGED)
-
-private struct LinkWallCard: View {
-    let isClub: Bool
-    /// Non-nil once a guess has been submitted today — `completed` flips the
-    /// subtitle to the outcome; the card never re-offers a finished day.
-    let todayResult: LinkWallResult?
-    /// Non-members see today's easiest group's real label instead of a nag.
-    let previewLabel: String?
-    let action: () -> Void
-
-    private var subtitle: String {
-        if isClub {
-            if let r = todayResult {
-                if r.completed { return r.won ? "Solved today's wall — see the recap." : "See today's groups." }
-                return "In progress — tap to keep going."
-            }
-            return "4 groups of 4. One guess at a time, 4 mistakes allowed."
-        }
-        if let previewLabel { return "Today's board includes \"\(previewLabel)\" — find all four groups." }
-        return "A second daily: 16 facts, 4 hidden groups. Find them all."
-    }
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 14) {
-                Image(systemName: "square.grid.3x3.fill")
-                    .font(.system(size: 30, weight: .black))
-                    .foregroundStyle(Tidbits.Palette.mint.legibleForeground)
-                VStack(alignment: .leading, spacing: 3) {
-                    HStack(spacing: 6) {
-                        Text("LINK WALL")
-                            .font(Tidbits.TypeRamp.l2)
-                            .foregroundStyle(Tidbits.Palette.mint.legibleForeground)
-                        if !isClub {
-                            Text("CLUB")
-                                .font(.system(size: 11, weight: .black, design: .rounded))
-                                .foregroundStyle(Tidbits.Palette.mint)
-                                .padding(.horizontal, 7).padding(.vertical, 3)
-                                .background(Capsule().fill(Color.white.opacity(0.92)))
-                        }
-                    }
-                    Text(subtitle)
-                        .font(Tidbits.TypeRamp.l5)
-                        .foregroundStyle(Tidbits.Palette.mint.legibleForeground.opacity(0.85))
-                        .multilineTextAlignment(.leading)
-                        .lineLimit(2)
-                }
-                Spacer(minLength: 0)
-                Image(systemName: "chevron.right.circle.fill")
-                    .font(.system(size: 26, weight: .bold))
-                    .foregroundStyle(Tidbits.Palette.mint.legibleForeground)
-            }
-            .padding(18)
-            .chunkyCard(fill: Tidbits.Palette.mint)
-        }
-        .buttonStyle(.plain)
-        .padding(.trailing, Tidbits.Metric.shadowOffset)
-    }
-}
-
-// MARK: - Mode chip (used in the Customize sheet)
 
 private struct ModeChip: View {
     let mode: GameMode

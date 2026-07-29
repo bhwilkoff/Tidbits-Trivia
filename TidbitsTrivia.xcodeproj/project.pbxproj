@@ -7,12 +7,15 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		00F30902867F9FA5463A6C5D /* ClubHubView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8DD872E110D6DFFC258366A /* ClubHubView_tvOS.swift */; };
+		015B035720728357EED1A9BD /* ClubHubView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89DACDE13C98A519ABB433A9 /* ClubHubView.swift */; };
 		02F153022C6FAD01DE261FB5 /* LiveNight.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AD18ED3C40BFC78AFD8FB0C /* LiveNight.swift */; };
 		03FB04C17EDA45D30AC911F4 /* QuestionProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B9A918292A8BD08D5EEAFA6 /* QuestionProvider.swift */; };
 		0608CF492FA14F91750D1B69 /* SettingsView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4534F27C4206B9640778460 /* SettingsView_tvOS.swift */; };
 		063A735FDB19BA8567164F51 /* GameContainerView_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BE19D7C519BC6A5BAFC9A2E /* GameContainerView_macOS.swift */; };
 		07F487AB68095E656B266582 /* DailyBoard.swift in Sources */ = {isa = PBXBuildFile; fileRef = F906D7ECECC6433E45E0C10C /* DailyBoard.swift */; };
 		087E3615408F7F05DD5FD733 /* LivePlayerClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5F5C716CAEEA33AF734ED56 /* LivePlayerClient.swift */; };
+		0CC4D137DE4EB9EFCECC73F0 /* ClubHubView_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE29816C3FBC08D77D0649E6 /* ClubHubView_macOS.swift */; };
 		0E0A3E02FDD6CEB760974C4B /* NightTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12852A694244CCEEC20EB41B /* NightTransport.swift */; };
 		103775A7AAFF0719F1B10843 /* MacLivePrint_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F2347D320A2FB5AA7C4D34E /* MacLivePrint_macOS.swift */; };
 		11697E55857894F38D742127 /* ProgressStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A73FA1930578863B642985C /* ProgressStats.swift */; };
@@ -223,6 +226,7 @@
 		8635E2E7CD914F8DFE8136CC /* TidbitsTrivia.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = TidbitsTrivia.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		87C84D46C3E146D385DE739A /* PlayerProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerProfile.swift; sourceTree = "<group>"; };
 		89A31C82C50C6EB1DA9AE9A4 /* GameCenterManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameCenterManager.swift; sourceTree = "<group>"; };
+		89DACDE13C98A519ABB433A9 /* ClubHubView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClubHubView.swift; sourceTree = "<group>"; };
 		8ABB74709F8489A6CFF15FEC /* MacLiveHostNet_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacLiveHostNet_macOS.swift; sourceTree = "<group>"; };
 		8B74659353899C33ECD4009F /* VersusView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VersusView_tvOS.swift; sourceTree = "<group>"; };
 		8B9A918292A8BD08D5EEAFA6 /* QuestionProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuestionProvider.swift; sourceTree = "<group>"; };
@@ -240,11 +244,13 @@
 		ABC3E5834F087B503EF2FE95 /* NightView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightView_tvOS.swift; sourceTree = "<group>"; };
 		ABD7AE7120AC1ABEC5FBFE9B /* PlayerIdentityStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerIdentityStore.swift; sourceTree = "<group>"; };
 		ACBB11A0D029110390E8A92A /* Marathon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Marathon.swift; sourceTree = "<group>"; };
+		AE29816C3FBC08D77D0649E6 /* ClubHubView_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClubHubView_macOS.swift; sourceTree = "<group>"; };
 		B0A8539762A2F6FB3C251DE6 /* KnowledgeAtlasView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnowledgeAtlasView_tvOS.swift; sourceTree = "<group>"; };
 		B1C1A6AE174DDC149D5EE7BB /* SeededRNG.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeededRNG.swift; sourceTree = "<group>"; };
 		B28DFC34456277E5235F2C3B /* ExpeditionModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExpeditionModels.swift; sourceTree = "<group>"; };
 		B5C5D511CC45CC8C0B84A985 /* MacLiveHost_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacLiveHost_macOS.swift; sourceTree = "<group>"; };
 		B87EE4E2D9F044824CAA43F0 /* Keychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keychain.swift; sourceTree = "<group>"; };
+		B8DD872E110D6DFFC258366A /* ClubHubView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClubHubView_tvOS.swift; sourceTree = "<group>"; };
 		BADC61A185827BBE0B9857AA /* thisorthat.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = thisorthat.json; sourceTree = "<group>"; };
 		BBBCC4B7D87BC1E404EBC4B8 /* StoryArchiveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoryArchiveView.swift; sourceTree = "<group>"; };
 		BCB14B0E2B13CCA2DDA250ED /* TriviaCategory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TriviaCategory.swift; sourceTree = "<group>"; };
@@ -288,7 +294,7 @@
 		FD70222B5EE4C4145E4D1F84 /* NightSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightSetupView.swift; sourceTree = "<group>"; };
 		FDDD2AC4DB9C421C5849B8F6 /* GameView_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView_macOS.swift; sourceTree = "<group>"; };
 		FFC46D4CE8D03186C064C759 /* Question.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Question.swift; sourceTree = "<group>"; };
-		"TEMP_FB18CD6D-66D7-47B4-9A29-B7D0A4F07A16" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
+		"TEMP_1A706590-20AB-4573-B2A5-1E05CC09A8EC" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -386,6 +392,7 @@
 		9C80BC1ACB6D042C74E3BD48 /* macOS */ = {
 			isa = PBXGroup;
 			children = (
+				AE29816C3FBC08D77D0649E6 /* ClubHubView_macOS.swift */,
 				4E9A2D7CADBC8BAA081F9BEC /* ClubPaywallView_macOS.swift */,
 				D3D542C8E636DF4AF26303CB /* ContentView_macOS.swift */,
 				20C99D0A7197E787FDEFA569 /* CreateView_macOS.swift */,
@@ -458,6 +465,7 @@
 		B7FF0BD6F715F7F0F08BD521 /* tvOS */ = {
 			isa = PBXGroup;
 			children = (
+				B8DD872E110D6DFFC258366A /* ClubHubView_tvOS.swift */,
 				4793DE7531EE4E40F6A11F40 /* ClubPaywallView_tvOS.swift */,
 				C23D07A7744AE72B2935CB2F /* ContentView_tvOS.swift */,
 				5CE0D5EBCCBDED5D292DBFEB /* ExpeditionsView_tvOS.swift */,
@@ -536,6 +544,7 @@
 		E75C4A5D189196AE2932A113 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				89DACDE13C98A519ABB433A9 /* ClubHubView.swift */,
 				6C0F302F16700A6CD3D85710 /* ClubPaywallView.swift */,
 				96283977862FC546F8219011 /* CreateQuizView.swift */,
 				770E593F52F5DB070F1B2591 /* DailyBoardView.swift */,
@@ -591,10 +600,10 @@
 			path = TidbitsTrivia;
 			sourceTree = "<group>";
 		};
-		"TEMP_20DA3EBB-C3F1-4636-A498-98298E7F6E9D" /* Tidbits-Trivia */ = {
+		"TEMP_B35E2B80-D42E-4278-8FE2-AF8057FE0223" /* Tidbits-Trivia */ = {
 			isa = PBXGroup;
 			children = (
-				"TEMP_FB18CD6D-66D7-47B4-9A29-B7D0A4F07A16" /* AppVersion.xcconfig */,
+				"TEMP_1A706590-20AB-4573-B2A5-1E05CC09A8EC" /* AppVersion.xcconfig */,
 			);
 			path = "Tidbits-Trivia";
 			sourceTree = "<group>";
@@ -688,6 +697,9 @@
 				A890E6E26C94D878187A9F28 /* AppleSignIn.swift in Sources */,
 				720B221EF4EDD7A3044FB807 /* BonjourTransport.swift in Sources */,
 				220CABC0B501E1FF8A0E7453 /* BotOpponent.swift in Sources */,
+				015B035720728357EED1A9BD /* ClubHubView.swift in Sources */,
+				0CC4D137DE4EB9EFCECC73F0 /* ClubHubView_macOS.swift in Sources */,
+				00F30902867F9FA5463A6C5D /* ClubHubView_tvOS.swift in Sources */,
 				FCA53A1ECF749DE54BC9B584 /* ClubPaywallView.swift in Sources */,
 				693509DA4B5DB7311F11B26A /* ClubPaywallView_macOS.swift in Sources */,
 				63C147C7DD1F826DB75EF5E1 /* ClubPaywallView_tvOS.swift in Sources */,
@@ -814,7 +826,7 @@
 /* Begin XCBuildConfiguration section */
 		296659EF0549868336801823 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_FB18CD6D-66D7-47B4-9A29-B7D0A4F07A16" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_1A706590-20AB-4573-B2A5-1E05CC09A8EC" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -935,7 +947,7 @@
 		};
 		E6F711EEEE2896F84FE9AB98 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_FB18CD6D-66D7-47B4-9A29-B7D0A4F07A16" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_1A706590-20AB-4573-B2A5-1E05CC09A8EC" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;

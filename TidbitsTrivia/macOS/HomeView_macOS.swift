@@ -23,13 +23,12 @@ struct HomeView_macOS: View {
     @State private var showNightSetup = false
     @State private var showMultiplayer = false
     @State private var showClubPaywall = false
+    @State private var showClubHub = false
     // Marathon (Club — docs/CLUB-FEATURES-BUILD.md "Feature 3").
     @Query private var marathonRuns: [MarathonRun]
     @Query(sort: \MarathonScore.date, order: .reverse) private var marathonHistory: [MarathonScore]
     @State private var showMarathonChoice = false
-    // Expeditions (Club — docs/CLUB-FEATURES-BUILD.md "Feature 5").
-    @Query private var expeditionProgress: [ExpeditionProgress]
-    @State private var showExpeditions = false
+
     // Link Wall (Club — docs/CLUB-FEATURES-BUILD.md "Feature 6"). Sorted desc
     // + filtered by day rather than a predicate-init'd @Query, so this view's
     // existing memberwise init stays untouched (rows accumulate, one per day).
@@ -43,12 +42,11 @@ struct HomeView_macOS: View {
                 quickPlayHero
                 quickActionsRow
                 dailyCard
-                linkWallCard
                 triviaNightCard
-                weakSpotCard
-                marathonCard
-                expeditionsCard
                 onlineCard
+                // R-CLUB-1: ONE Club door for the whole app (was four locked cards here
+                // plus three more in Records).
+                clubDoorCard
             }
             .padding(24)
             .frame(maxWidth: 720, alignment: .leading)
@@ -74,8 +72,12 @@ struct HomeView_macOS: View {
         .sheet(isPresented: $showMultiplayer) {
             MultiplayerSheet_macOS(recentAccuracy: 0.6, onPickBot: onVersus)
         }
-        .sheet(isPresented: $showExpeditions) {
-            ExpeditionsHubView_macOS(onPlayStage: onExpedition)
+        .sheet(isPresented: $showClubHub) {
+            ClubHubView_macOS(onStartWeakSpot: { onPlay(LaunchRequest(mode: .weakSpot, category: .named("mixed"))) },
+                              onStartMarathon: { openMarathon() },
+                              onOpenLinkWall: { openLinkWall() },
+                              onExpedition: onExpedition,
+                              onPlay: onPlay)
         }
         .sheet(isPresented: $showLinkWall) {
             LinkWallView_macOS(day: QuestionProvider.dayKey())
@@ -94,8 +96,11 @@ struct HomeView_macOS: View {
         }
         .task {
             if DebugHooks.openMarathon { onPlay(LaunchRequest(mode: .marathon, category: .named("mixed"))) }
-            if DebugHooks.openExpedition || DebugHooks.expeditionMapPreview != nil || DebugHooks.expeditionAutoplay != nil {
-                showExpeditions = true
+            // R-CLUB-1: the per-feature hooks open the hub, which routes from there.
+            if DebugHooks.openExpedition || DebugHooks.expeditionMapPreview != nil
+                || DebugHooks.expeditionAutoplay != nil
+                || DebugHooks.openStoryArchive || DebugHooks.openAtlas || DebugHooks.openClubHub {
+                openClub()
             }
             if DebugHooks.openLinkWall { openLinkWall() }
         }
@@ -226,120 +231,40 @@ struct HomeView_macOS: View {
         .buttonStyle(.plain)
     }
 
-    // MARK: - Link Wall (Club — docs/CLUB-FEATURES-BUILD.md "Feature 6")
-
-    /// Today's Link Wall row, if any — `nil` for a not-yet-played day, present
-    /// (possibly `completed`) once a guess has been submitted.
-    private var linkWallToday: LinkWallResult? {
-        linkWallResults.first { $0.day == QuestionProvider.dayKey() }
-    }
-
-    /// A real preview for non-members — today's easiest (yellow) group's
-    /// label, straight off the actual generator (MONETIZATION §4a: "a real
-    /// preview, never a nag"). Never reveals the group's members/why.
-    private var linkWallPreviewLabel: String? {
-        LinkWall.puzzle(for: QuestionProvider.dayKey())?.groups.first?.label
-    }
-
-    /// Club members launch (or resume) today's board directly; everyone else
-    /// sees the existing paywall — never a blank wall.
-    private func openLinkWall() {
-        if entitlement.isClub { showLinkWall = true } else { showClubPaywall = true }
-    }
-
-    private var linkWallSubtitle: String {
-        if entitlement.isClub {
-            if let r = linkWallToday {
-                if r.completed { return r.won ? "Solved today's wall — see the recap." : "See today's groups." }
-                return "In progress — click to keep going."
-            }
-            return "4 groups of 4. One guess at a time, 4 mistakes allowed."
-        }
-        if let linkWallPreviewLabel { return "Today's board includes \"\(linkWallPreviewLabel)\" — find all four groups." }
-        return "A second daily: 16 facts, 4 hidden groups. Find them all."
-    }
-
-    private var linkWallCard: some View {
-        Button(action: openLinkWall) {
-            HStack(spacing: 14) {
-                Image(systemName: "square.grid.3x3.fill").font(.system(size: 26, weight: .black))
-                VStack(alignment: .leading, spacing: 3) {
-                    HStack(spacing: 6) {
-                        Text("LINK WALL").font(Tidbits.TypeRamp.l2)
-                        if !entitlement.isClub {
-                            Text("CLUB")
-                                .font(.system(size: 11, weight: .black, design: .rounded))
-                                .foregroundStyle(Tidbits.Palette.mint)
-                                .padding(.horizontal, 7).padding(.vertical, 3)
-                                .background(Capsule().fill(Color.white.opacity(0.92)))
-                        }
-                    }
-                    Text(linkWallSubtitle).font(Tidbits.TypeRamp.l5).opacity(0.9).lineLimit(2)
+    /// R-CLUB-1: the Mac's ONE Club entry point — a quiet row below the free surfaces,
+    /// not four locked cards. Members get the hub; everyone else the paywall.
+    private var clubDoorCard: some View {
+        Button { openClub() } label: {
+            HStack(spacing: 12) {
+                Image(systemName: entitlement.isClub ? "star.circle.fill" : "star.circle")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundStyle(Tidbits.Palette.blue).frame(width: 26)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Tidbits Club").font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                    Text(entitlement.isClub ? "Your six Club features, all in one place."
+                                            : "Six optional extras for getting better. Everything else in Tidbits is free.")
+                        .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                        .fixedSize(horizontal: false, vertical: true).multilineTextAlignment(.leading)
                 }
                 Spacer(minLength: 0)
-                Image(systemName: "chevron.right.circle.fill").font(.system(size: 24, weight: .bold))
+                Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(Tidbits.Palette.inkSoft)
             }
-            .foregroundStyle(Tidbits.Palette.mint.legibleForeground)
-            .padding(18).frame(maxWidth: .infinity, alignment: .leading)
-            .chunkyCard(fill: Tidbits.Palette.mint)
+            .padding(14).frame(maxWidth: .infinity, alignment: .leading)
+            .chunkyCard(fill: Tidbits.Palette.surface)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }
 
-    // MARK: - Weak-Spot Arena (Club — docs/CLUB-FEATURES-BUILD.md "Feature 1")
-
-    /// A real sample from the player's own misses, shown to non-members instead
-    /// of a generic sell line (MONETIZATION §4a: "a real preview, never a nag").
-    private var weakSpotPreviewLine: String? {
-        entitlement.isClub ? nil : WeakSpotArena.previewLine(in: modelContext)
+    private func openClub() {
+        if entitlement.isClub { showClubHub = true } else { showClubPaywall = true }
     }
 
-    private var weakSpotSubtitle: String {
-        if entitlement.isClub { return "Turn your misses into a round." }
-        return weakSpotPreviewLine ?? "Your misses, turned into a round you can actually close."
-    }
-
-    /// Club members launch the arena directly; everyone else sees the existing
-    /// paywall (never a blank wall — CLAUDE.md "gating + verification convention").
-    private func openWeakSpot() {
-        if entitlement.isClub { onPlay(LaunchRequest(mode: .weakSpot, category: .named("mixed"))) }
-        else { showClubPaywall = true }
-    }
-
-    private var weakSpotCard: some View {
-        Button(action: openWeakSpot) {
-            HStack(spacing: 14) {
-                Image(systemName: "scope").font(.system(size: 26, weight: .black))
-                VStack(alignment: .leading, spacing: 3) {
-                    HStack(spacing: 6) {
-                        Text("WEAK-SPOT ARENA").font(Tidbits.TypeRamp.l2)
-                        if !entitlement.isClub {
-                            Text("CLUB")
-                                .font(.system(size: 11, weight: .black, design: .rounded))
-                                .foregroundStyle(Tidbits.Palette.grape)
-                                .padding(.horizontal, 7).padding(.vertical, 3)
-                                .background(Capsule().fill(Color.white.opacity(0.92)))
-                        }
-                    }
-                    Text(weakSpotSubtitle).font(Tidbits.TypeRamp.l5).opacity(0.9).lineLimit(2)
-                }
-                Spacer(minLength: 0)
-                Image(systemName: "chevron.right.circle.fill").font(.system(size: 24, weight: .bold))
-            }
-            .foregroundStyle(Tidbits.Palette.grape.legibleForeground)
-            .padding(18).frame(maxWidth: .infinity, alignment: .leading)
-            .chunkyCard(fill: Tidbits.Palette.grape)
-        }
-        .buttonStyle(.plain)
-    }
-
-    // MARK: - Marathon (Club — docs/CLUB-FEATURES-BUILD.md "Feature 3")
-
-    /// Members with a run in progress get the Resume/Start Over choice; with
-    /// no run, they launch straight into a fresh one. Non-members see the
-    /// existing paywall — never a blank wall.
+    /// Members with a run in progress get the Resume / Start Over choice; with no run they
+    /// go straight into a fresh one. Driven from the hub (R-CLUB-1), but Home owns the
+    /// dialog + the launch because a game replaces the window root.
     private func openMarathon() {
-        guard entitlement.isClub else { showClubPaywall = true; return }
         if marathonRuns.first != nil {
             showMarathonChoice = true
         } else {
@@ -347,91 +272,7 @@ struct HomeView_macOS: View {
         }
     }
 
-    /// A real, concrete subtitle in every state — never a nag (MONETIZATION
-    /// §4a). Members see their true position or their real last-run number;
-    /// non-members see a specific illustration of the domain scorecard (there's
-    /// no free-tier Marathon data to sample from, unlike Weak-Spot/Story Archive).
-    private var marathonSubtitle: String {
-        if entitlement.isClub {
-            if let run = marathonRuns.first { return "Question \(run.currentIndex + 1) of \(run.total) — click to resume" }
-            if let last = marathonHistory.first { return "\(Int(last.accuracy * 100))% on your last run — click to start a new one" }
-            return "200 questions. Play it across as many sittings as you like — we'll keep your place."
-        }
-        return "See exactly where you stand — e.g. Geography 91% · History 64% — across a 200-question run you can pause and resume anytime."
-    }
+    private func openLinkWall() { showLinkWall = true }
 
-    private var marathonCard: some View {
-        Button(action: openMarathon) {
-            HStack(spacing: 14) {
-                Image(systemName: "flag.checkered").font(.system(size: 26, weight: .black))
-                VStack(alignment: .leading, spacing: 3) {
-                    HStack(spacing: 6) {
-                        Text("MARATHON").font(Tidbits.TypeRamp.l2)
-                        if !entitlement.isClub {
-                            Text("CLUB")
-                                .font(.system(size: 11, weight: .black, design: .rounded))
-                                .foregroundStyle(Tidbits.Palette.teal)
-                                .padding(.horizontal, 7).padding(.vertical, 3)
-                                .background(Capsule().fill(Color.white.opacity(0.92)))
-                        }
-                        if marathonRuns.first != nil {
-                            Text("RESUME")
-                                .font(.system(size: 11, weight: .black, design: .rounded))
-                                .foregroundStyle(.white)
-                                .padding(.horizontal, 7).padding(.vertical, 3)
-                                .background(Capsule().fill(Tidbits.Palette.coral))
-                        }
-                    }
-                    Text(marathonSubtitle).font(Tidbits.TypeRamp.l5).opacity(0.9).lineLimit(2)
-                }
-                Spacer(minLength: 0)
-                Image(systemName: "chevron.right.circle.fill").font(.system(size: 24, weight: .bold))
-            }
-            .foregroundStyle(Tidbits.Palette.teal.legibleForeground)
-            .padding(18).frame(maxWidth: .infinity, alignment: .leading)
-            .chunkyCard(fill: Tidbits.Palette.teal)
-        }
-        .buttonStyle(.plain)
-    }
-
-    // MARK: - Expeditions (Club — docs/CLUB-FEATURES-BUILD.md "Feature 5")
-
-    /// A real preview even for non-members — the expeditions themselves are
-    /// curated content, not player data, so there's nothing to hide behind a
-    /// generic sell line (MONETIZATION §4a). The card always opens the hub
-    /// (never the paywall directly); only tapping Play on a stage is gated.
-    private var expeditionSubtitle: String {
-        if let active = expeditionProgress.first, let exp = Expedition.named(active.expeditionID) {
-            return "\(exp.title): stage \(active.currentStageIndex + 1) of \(exp.stageCount) — click to continue"
-        }
-        return "Multi-week campaigns through a single subject — pick one, and go at your own pace."
-    }
-
-    private var expeditionsCard: some View {
-        Button { showExpeditions = true } label: {
-            HStack(spacing: 14) {
-                Image(systemName: "figure.run").font(.system(size: 26, weight: .black))
-                VStack(alignment: .leading, spacing: 3) {
-                    HStack(spacing: 6) {
-                        Text("EXPEDITIONS").font(Tidbits.TypeRamp.l2)
-                        if !entitlement.isClub {
-                            Text("CLUB")
-                                .font(.system(size: 11, weight: .black, design: .rounded))
-                                .foregroundStyle(Tidbits.Palette.pink)
-                                .padding(.horizontal, 7).padding(.vertical, 3)
-                                .background(Capsule().fill(Color.white.opacity(0.92)))
-                        }
-                    }
-                    Text(expeditionSubtitle).font(Tidbits.TypeRamp.l5).opacity(0.9).lineLimit(2)
-                }
-                Spacer(minLength: 0)
-                Image(systemName: "chevron.right.circle.fill").font(.system(size: 24, weight: .bold))
-            }
-            .foregroundStyle(Tidbits.Palette.pink.legibleForeground)
-            .padding(18).frame(maxWidth: .infinity, alignment: .leading)
-            .chunkyCard(fill: Tidbits.Palette.pink)
-        }
-        .buttonStyle(.plain)
-    }
 }
 #endif

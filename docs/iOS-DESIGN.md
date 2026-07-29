@@ -158,6 +158,38 @@ the Customize sheet, never on Home.
 second tap target. Surprise + Customize are two equal-weight secondary
 buttons beneath it.
 
+### Tidbits Club has exactly one door (rule R-CLUB-1, 2026-07-29)
+
+5.2a **The app shows AT MOST ONE Club entry point, and it lives on
+Home.** One quiet `Tidbits Club` row beneath the free surfaces. Every
+Club feature — Link Wall, Weak-Spot Arena, Marathon, Expeditions, Story
+Archive, Knowledge Atlas — is reached **from inside** that door, never
+from Home, Records, or anywhere else directly.
+
+*Why:* four Club cards on Home plus three Club "see all" rows in Records
+made a mostly-free app read as a mostly-paywalled one, and made every
+screen feel like a sales pitch (owner directive, 2026-07-29: *"the whole
+point of Tidbits Trivia is that we are the world's best trivia app with
+the least amount behind a paywall"*). The count of visible locks — not
+the actual free/paid ratio — is what a player perceives as the size of
+the paywall. Seven locks read as a freemium funnel; one reads as an
+optional extra. This rule also protects the learning charter: a player
+who opens Tidbits should meet the game, not an offer.
+
+5.2b **The door's destination is entitlement-dependent, and it is the
+ONLY place a Club offer may appear.** Members get `ClubHubView` (the
+six features, each with its live state). Non-members get
+`ClubPaywallView` unchanged. No other surface may present the paywall,
+show a "Club" badge, or gate a tap behind an upsell — if a feature needs
+a lock icon somewhere else, the bug is that the feature is in the wrong
+place.
+
+5.2c **Records is free-tier only** (amends R-REC-1 §5.4). Story
+Archive, Knowledge Atlas and Marathon History move into the Club hub.
+Records keeps the streak card, lifetime stats, recent games, Your
+knowledge, calibration, personal bests and facts to review — all free,
+all unlocked, no chevron that leads to an offer.
+
 ### Records — a dashboard, not a ledger (rule R-REC-1)
 
 5.3 **Records summarizes; it never dumps.** Records is

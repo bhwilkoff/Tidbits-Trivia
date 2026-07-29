@@ -206,3 +206,26 @@ test — colliding with another surface's verb? 12.3 Ten-foot test — does
 every glyph read at 29pt+ from the couch, and can the remote reach and
 scroll every surface? 12.4 Parity — `PARITY.md` updated same change set;
 name the sibling rule mirrored or inverted.
+
+---
+
+## R-CLUB-1 — Tidbits Club has exactly one door (2026-07-29)
+
+The app shows **at most one Club entry point, and it lives on Home**. Every Club
+feature is reached from inside that door — never from Home, Records, Settings, or
+anywhere else directly. Members get the Club hub; non-members get the paywall,
+which is the only surface in the app allowed to make an offer.
+
+**Why:** four Club cards on Home plus three Club "see all" rows in Records made a
+mostly-FREE app read as a mostly-paywalled one (owner directive, 2026-07-29:
+*"the whole point of Tidbits Trivia is that we are the world's best trivia app
+with the least amount behind a paywall"*). The count of visible locks — not the
+real free/paid ratio — is what a player perceives as the size of the paywall.
+
+**How to apply:** see `docs/iOS-DESIGN.md` §5.2a–§5.2c for the full rule. The
+principle is identical on every platform; only the idiom differs.
+
+tvOS idiom: one quiet `clubHero` row on the home column, below the free
+surfaces. The hub is a single `.fullScreenCover`, and its sub-surfaces SWAP
+its content rather than stacking a second cover — modal-over-modal is the
+trap that broke StoreKit's purchase sheet (Decision 048).

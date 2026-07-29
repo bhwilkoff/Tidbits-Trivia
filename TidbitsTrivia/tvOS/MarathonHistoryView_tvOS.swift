@@ -9,6 +9,11 @@ import SwiftData
 /// (`RecordsView_tvOS`) and from the scorecard's own "See Marathon history"
 /// link (`TVMarathonResultsView`).
 struct TVMarathonHistoryView: View {
+    /// Set when this view is shown INLINE by the Club hub (which swaps its own content
+    /// rather than stacking a nested `.fullScreenCover` — see `ClubHubView_tvOS`). nil means
+    /// "I'm a modal, dismiss me."
+    var onClose: (() -> Void)? = nil
+
     @Query(sort: \MarathonScore.date, order: .reverse) private var scores: [MarathonScore]
     @Environment(\.dismiss) private var dismiss
     @State private var detail: MarathonScore?
@@ -38,7 +43,7 @@ struct TVMarathonHistoryView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
-        .onExitCommand { dismiss() }
+        .onExitCommand { if let onClose { onClose() } else { dismiss() } }
         .fullScreenCover(item: $detail) { s in
             TVMarathonResultsView(score: s, onDone: { detail = nil }, isHistorical: true)
         }

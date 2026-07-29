@@ -13,6 +13,11 @@ import SwiftData
 /// presenting the game, the same dismiss-then-relaunch shape as
 /// `TVDailyArchive`/`TVMarathonChoiceView`.
 struct KnowledgeAtlasView_tvOS: View {
+    /// Set when this view is shown INLINE by the Club hub (which swaps its own content
+    /// rather than stacking a nested `.fullScreenCover` — see `ClubHubView_tvOS`). nil means
+    /// "I'm a modal, dismiss me."
+    var onClose: (() -> Void)? = nil
+
     let onPlay: (LaunchRequest) -> Void
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -50,7 +55,7 @@ struct KnowledgeAtlasView_tvOS: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
-        .onExitCommand { dismiss() }
+        .onExitCommand { if let onClose { onClose() } else { dismiss() } }
     }
 
     private var emptyState: some View {

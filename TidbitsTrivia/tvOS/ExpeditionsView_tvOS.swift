@@ -8,6 +8,11 @@ import SwiftData
 /// real preview. Only actually PLAYING the current stage is Club-gated
 /// (never a blank wall — `ClubPaywallView_tvOS` as a `.fullScreenCover`).
 struct TVExpeditionsHubView: View {
+    /// Set when this view is shown INLINE by the Club hub (which swaps its own content
+    /// rather than stacking a nested `.fullScreenCover` — see `ClubHubView_tvOS`). nil means
+    /// "I'm a modal, dismiss me."
+    var onClose: (() -> Void)? = nil
+
     /// Bubbles all the way up to `ContentView_tvOS`, which launches
     /// `TVGameContainer` via its own `.fullScreenCover(item:)`.
     let onPlayStage: (Expedition, Int) -> Void
@@ -58,7 +63,7 @@ struct TVExpeditionsHubView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
-        .onExitCommand { dismiss() }
+        .onExitCommand { if let onClose { onClose() } else { dismiss() } }
         .fullScreenCover(item: $detail) { expedition in
             TVExpeditionMapView(expedition: expedition, isClub: entitlement.isClub,
                                 progress: progress(for: expedition), hasCertificate: hasCertificate(expedition)) { stageIndex in

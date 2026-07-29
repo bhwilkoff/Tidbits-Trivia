@@ -13,19 +13,13 @@ struct RecordsView: View {
     private var toReview: [MissedFact]
     @Query(sort: \CalibrationTally.tierValue, order: .reverse) private var calibration: [CalibrationTally]
     @Query(sort: \SeenStory.lastSeen, order: .reverse) private var seenStories: [SeenStory]
-    @Query(sort: \MarathonScore.date, order: .reverse) private var marathonScores: [MarathonScore]
     @Environment(PlayerIdentityStore.self) private var identity
-    @Environment(EntitlementStore.self) private var entitlement
     @Environment(\.modelContext) private var modelContext
 
     @State private var recap: GameRecord?
     @State private var drillDomain: String?
     @State private var bestsMode: GameMode?
     @State private var showAllGames = false
-    @State private var showStoryArchive = false
-    @State private var showMarathonHistory = false
-    @State private var showAtlas = false
-    @State private var showClubPaywall = false
 
     var body: some View {
         ScrollView {
@@ -36,9 +30,9 @@ struct RecordsView: View {
                     streakCard
                     lifetimeRow
                     historySection
-                    storyArchiveSection
-                    marathonHistorySection
-                    atlasSection
+                    // Story Archive / Marathon History / Knowledge Atlas moved into the
+                    // Club hub (R-CLUB-1, iOS-DESIGN §5.2c) — Records is free-tier only,
+                    // so nothing here leads to an offer.
                     progressSection
                     badgesSection
                     if calibration.contains(where: { $0.total > 0 }) { calibrationSection }
@@ -60,14 +54,6 @@ struct RecordsView: View {
         }
         .sheet(isPresented: $showAllGames) {
             AllGamesSheet(records: records) { recap = $0 }
-        }
-        .sheet(isPresented: $showStoryArchive) { StoryArchiveView() }
-        .sheet(isPresented: $showMarathonHistory) { MarathonHistoryView() }
-        .sheet(isPresented: $showAtlas) { KnowledgeAtlasView() }
-        .sheet(isPresented: $showClubPaywall) { ClubPaywallView() }
-        .task {
-            if DebugHooks.openStoryArchive { openStoryArchive() }
-            if DebugHooks.openAtlas { openAtlas() }
         }
     }
 
@@ -143,178 +129,6 @@ struct RecordsView: View {
         .padding(14)
         .chunkyCard(fill: Tidbits.Palette.bgDeep)
         .padding(.trailing, Tidbits.Metric.shadowOffset)
-    }
-
-    // MARK: Story Archive (Club — docs/CLUB-FEATURES-BUILD.md "Feature 2")
-
-    // A single Club-marked "see all" entry into the searchable story library
-    // (R-REC-1: the dashboard stays a row, not the archive itself).
-    private var storyArchiveSection: some View {
-        Button(action: openStoryArchive) {
-            HStack(spacing: 14) {
-                Image(systemName: "books.vertical.fill")
-                    .font(.system(size: 30, weight: .black))
-                    .foregroundStyle(Tidbits.Palette.teal.legibleForeground)
-                VStack(alignment: .leading, spacing: 3) {
-                    HStack(spacing: 6) {
-                        Text("STORY ARCHIVE")
-                            .font(Tidbits.TypeRamp.l2)
-                            .foregroundStyle(Tidbits.Palette.teal.legibleForeground)
-                        if !entitlement.isClub {
-                            Text("CLUB")
-                                .font(.system(size: 11, weight: .black, design: .rounded))
-                                .foregroundStyle(Tidbits.Palette.teal)
-                                .padding(.horizontal, 7).padding(.vertical, 3)
-                                .background(Capsule().fill(Color.white.opacity(0.92)))
-                        }
-                    }
-                    Text(storyArchiveSubtitle)
-                        .font(Tidbits.TypeRamp.l5)
-                        .foregroundStyle(Tidbits.Palette.teal.legibleForeground.opacity(0.85))
-                        .multilineTextAlignment(.leading)
-                        .lineLimit(2)
-                }
-                Spacer(minLength: 0)
-                Image(systemName: "chevron.right.circle.fill")
-                    .font(.system(size: 26, weight: .bold))
-                    .foregroundStyle(Tidbits.Palette.teal.legibleForeground)
-            }
-            .padding(18)
-            .chunkyCard(fill: Tidbits.Palette.teal)
-        }
-        .buttonStyle(.plain)
-        .padding(.trailing, Tidbits.Metric.shadowOffset)
-    }
-
-    private var storyArchiveSubtitle: String {
-        if entitlement.isClub {
-            return seenStories.isEmpty
-                ? "Every story you unlock, kept here forever."
-                : "\(seenStories.count) stor\(seenStories.count == 1 ? "y" : "ies") collected — searchable, forever."
-        }
-        return StoryArchive.previewLine(in: modelContext)
-            ?? "Club keeps every story you unlock, searchable forever."
-    }
-
-    /// Members open the archive directly; everyone else sees the existing
-    /// paywall with a real preview — never a blank wall.
-    private func openStoryArchive() {
-        if entitlement.isClub { showStoryArchive = true } else { showClubPaywall = true }
-    }
-
-    // MARK: Marathon History (Club — docs/CLUB-FEATURES-BUILD.md "Feature 3")
-
-    // The permanent record of every completed 200-Q run — reachable from
-    // Records (in addition to the Home card's own "See Marathon history" link).
-    private var marathonHistorySection: some View {
-        Button(action: openMarathonHistory) {
-            HStack(spacing: 14) {
-                Image(systemName: "flag.checkered")
-                    .font(.system(size: 30, weight: .black))
-                    .foregroundStyle(Tidbits.Palette.teal.legibleForeground)
-                VStack(alignment: .leading, spacing: 3) {
-                    HStack(spacing: 6) {
-                        Text("MARATHON HISTORY")
-                            .font(Tidbits.TypeRamp.l2)
-                            .foregroundStyle(Tidbits.Palette.teal.legibleForeground)
-                        if !entitlement.isClub {
-                            Text("CLUB")
-                                .font(.system(size: 11, weight: .black, design: .rounded))
-                                .foregroundStyle(Tidbits.Palette.teal)
-                                .padding(.horizontal, 7).padding(.vertical, 3)
-                                .background(Capsule().fill(Color.white.opacity(0.92)))
-                        }
-                    }
-                    Text(marathonHistorySubtitle)
-                        .font(Tidbits.TypeRamp.l5)
-                        .foregroundStyle(Tidbits.Palette.teal.legibleForeground.opacity(0.85))
-                        .multilineTextAlignment(.leading)
-                        .lineLimit(2)
-                }
-                Spacer(minLength: 0)
-                Image(systemName: "chevron.right.circle.fill")
-                    .font(.system(size: 26, weight: .bold))
-                    .foregroundStyle(Tidbits.Palette.teal.legibleForeground)
-            }
-            .padding(18)
-            .chunkyCard(fill: Tidbits.Palette.teal)
-        }
-        .buttonStyle(.plain)
-        .padding(.trailing, Tidbits.Metric.shadowOffset)
-    }
-
-    private var marathonHistorySubtitle: String {
-        if entitlement.isClub {
-            return marathonScores.isEmpty
-                ? "200 questions. Play it across as many sittings as you like — we'll keep your place."
-                : "\(marathonScores.count) run\(marathonScores.count == 1 ? "" : "s") played — best \(Int((marathonScores.map(\.accuracy).max() ?? 0) * 100))%."
-        }
-        return "See exactly where you stand across a 200-question run, by domain — Club keeps every run forever."
-    }
-
-    /// Members open the history list directly; everyone else sees the
-    /// existing paywall — never a blank wall.
-    private func openMarathonHistory() {
-        if entitlement.isClub { showMarathonHistory = true } else { showClubPaywall = true }
-    }
-
-    // MARK: Knowledge Atlas (Club — docs/CLUB-FEATURES-BUILD.md "Feature 4")
-
-    // Additive, deeper 12-month layer over the SAME rows the free Topic
-    // Levels / Pie already read (R-MON-1) — never a gate on those free
-    // surfaces. Every row in the Atlas itself is a tap-to-play door.
-    private var atlasSection: some View {
-        Button(action: openAtlas) {
-            HStack(spacing: 14) {
-                Image(systemName: "map.fill")
-                    .font(.system(size: 30, weight: .black))
-                    .foregroundStyle(Tidbits.Palette.teal.legibleForeground)
-                VStack(alignment: .leading, spacing: 3) {
-                    HStack(spacing: 6) {
-                        Text("KNOWLEDGE ATLAS")
-                            .font(Tidbits.TypeRamp.l2)
-                            .foregroundStyle(Tidbits.Palette.teal.legibleForeground)
-                        if !entitlement.isClub {
-                            Text("CLUB")
-                                .font(.system(size: 11, weight: .black, design: .rounded))
-                                .foregroundStyle(Tidbits.Palette.teal)
-                                .padding(.horizontal, 7).padding(.vertical, 3)
-                                .background(Capsule().fill(Color.white.opacity(0.92)))
-                        }
-                    }
-                    Text(atlasSubtitle)
-                        .font(Tidbits.TypeRamp.l5)
-                        .foregroundStyle(Tidbits.Palette.teal.legibleForeground.opacity(0.85))
-                        .multilineTextAlignment(.leading)
-                        .lineLimit(2)
-                }
-                Spacer(minLength: 0)
-                Image(systemName: "chevron.right.circle.fill")
-                    .font(.system(size: 26, weight: .bold))
-                    .foregroundStyle(Tidbits.Palette.teal.legibleForeground)
-            }
-            .padding(18)
-            .chunkyCard(fill: Tidbits.Palette.teal)
-        }
-        .buttonStyle(.plain)
-        .padding(.trailing, Tidbits.Metric.shadowOffset)
-    }
-
-    private var atlasSubtitle: String {
-        if entitlement.isClub {
-            let mapped = KnowledgeAtlas.domains(in: modelContext).count
-            return mapped == 0
-                ? "Play across a few domains and your Atlas fills in."
-                : "\(mapped) domain\(mapped == 1 ? "" : "s") mapped over 12 months — tap one to play it."
-        }
-        return KnowledgeAtlas.previewLine(in: modelContext)
-            ?? "Club maps everything you know and where it's drifting."
-    }
-
-    /// Members open the atlas directly; everyone else sees the existing
-    /// paywall with a real preview — never a blank wall.
-    private func openAtlas() {
-        if entitlement.isClub { showAtlas = true } else { showClubPaywall = true }
     }
 
     // MARK: Calibration (F1) — from Stake rounds

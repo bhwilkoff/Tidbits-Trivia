@@ -7,6 +7,9 @@ import SwiftData
 enum TVTheme {
     static let bg = Color(hex: 0x0E0C0B)
     static let panel = Color(hex: 0x1C1916)
+    /// One step up from `panel` — the fill a focused row lifts to. Brightness is reserved
+    /// for focus (tvOS-DESIGN), so this is the ONLY lighter surface in the palette.
+    static let panelFocused = Color(hex: 0x2E2823)
     static let text = Color.white
     static let textSoft = Color(hex: 0xB9AE9F)
 }
@@ -32,22 +35,20 @@ struct ContentView_tvOS: View {
     @State private var showCustomize = false
     @State private var showDailyArchive = false
     @State private var showClubPaywall = false
+    @State private var showClubHub = false
     @State private var versusBot: BotProfile?
     @State private var showQuickMatch = false
     @Environment(\.modelContext) private var modelContext
     @FocusState private var primaryFocused: Bool
     // Marathon (Club — docs/CLUB-FEATURES-BUILD.md "Feature 3").
     @Query private var marathonRuns: [MarathonRun]
-    @Query(sort: \MarathonScore.date, order: .reverse) private var marathonHistory: [MarathonScore]
     @State private var showMarathonChoice = false
-    // Expeditions (Club — docs/CLUB-FEATURES-BUILD.md "Feature 5").
-    @Query private var expeditionProgress: [ExpeditionProgress]
-    @State private var showExpeditions = false
+    // Expeditions (Club — docs/CLUB-FEATURES-BUILD.md "Feature 5"). Reached from the Club
+    // hub (R-CLUB-1); ContentView still owns the stage launch.
     @State private var expeditionLaunch: TVExpeditionStageLaunch?
     // Link Wall (Club — docs/CLUB-FEATURES-BUILD.md "Feature 6"). Sorted desc
     // + filtered by day rather than a predicate-init'd @Query, so this view's
     // existing memberwise init stays untouched (rows accumulate, one per day).
-    @Query(sort: \LinkWallResult.date, order: .reverse) private var linkWallResults: [LinkWallResult]
     @State private var showLinkWall = false
 
     /// Launch a game and (unless Daily) remember it as the Quick Play default.
@@ -65,12 +66,10 @@ struct ContentView_tvOS: View {
                     quickPlayHero
                     quickActionsRow
                     dailyHero
-                    linkWallHero
                     nightHero
-                    weakSpotHero
-                    marathonHero
-                    expeditionsHero
                     multiplayerPanel
+                    // R-CLUB-1: ONE Club door for the whole app.
+                    clubHero
                 }
                 .padding(.horizontal, 90)
                 .padding(.vertical, 60)
@@ -119,6 +118,17 @@ struct ContentView_tvOS: View {
         }
         .fullScreenCover(isPresented: $showSettings) { SettingsView_tvOS() }
         .fullScreenCover(isPresented: $showClubPaywall) { ClubPaywallView_tvOS() }
+        .fullScreenCover(isPresented: $showClubHub) {
+            ClubHubView_tvOS(onStartWeakSpot: { showClubHub = false; launch = LaunchRequest(mode: .weakSpot, category: .named("mixed")) },
+                             onStartMarathon: { showClubHub = false; openMarathon() },
+                             onOpenLinkWall: { showClubHub = false; openLinkWall() },
+                             onPlayExpeditionStage: { expedition, stageIndex in
+                                 showClubHub = false
+                                 expeditionLaunch = TVExpeditionStageLaunch(expedition: expedition, stageIndex: stageIndex)
+                             },
+                             onPlay: { req in showClubHub = false; launch = req },
+                             onClose: { showClubHub = false })
+        }
         .fullScreenCover(isPresented: $showMarathonChoice) {
             TVMarathonChoiceView(
                 run: marathonRuns.first,
@@ -129,12 +139,6 @@ struct ContentView_tvOS: View {
                     launch = LaunchRequest(mode: .marathon, category: .named("mixed"))
                 },
                 onCancel: { showMarathonChoice = false })
-        }
-        .fullScreenCover(isPresented: $showExpeditions) {
-            TVExpeditionsHubView(onPlayStage: { expedition, stageIndex in
-                showExpeditions = false
-                expeditionLaunch = TVExpeditionStageLaunch(expedition: expedition, stageIndex: stageIndex)
-            })
         }
         .fullScreenCover(item: $expeditionLaunch) { launch in
             TVGameContainer(mode: .classic, category: .named(launch.stage.categoryID),
@@ -163,10 +167,16 @@ struct ContentView_tvOS: View {
             if launch == nil, DebugHooks.openMarathon {
                 launch = LaunchRequest(mode: .marathon, category: .named("mixed"))
             }
-            if DebugHooks.openExpedition || DebugHooks.expeditionMapPreview != nil || DebugHooks.expeditionAutoplay != nil {
-                showExpeditions = true
+            // R-CLUB-1: the per-feature hooks open the hub, which routes from there.
+            if DebugHooks.openExpedition || DebugHooks.expeditionMapPreview != nil
+                || DebugHooks.expeditionAutoplay != nil
+                || DebugHooks.openStoryArchive || DebugHooks.openAtlas || DebugHooks.openClubHub {
+                openClub()
             }
             if DebugHooks.openLinkWall { openLinkWall() }
+            // TIDBITS_PAYWALL=1 opens the paywall on the real path App Review takes
+            // (Home → Tidbits Club), one cover deep — never stacked under Settings.
+            if DebugHooks.showPaywall { showClubPaywall = true }
             if DebugHooks.openSettings { showSettings = true }
         }
         // A friend's Game Center challenge accepted at runtime → launch the mode.
@@ -247,121 +257,43 @@ struct ContentView_tvOS: View {
         .focusSection()
     }
 
-    // MARK: - Link Wall (Club — docs/CLUB-FEATURES-BUILD.md "Feature 6")
+    // MARK: - Tidbits Club (rule R-CLUB-1) — the app's ONE Club entry point
 
-    /// Today's Link Wall row, if any — `nil` for a not-yet-played day, present
-    /// (possibly `completed`) once a guess has been submitted.
-    private var linkWallToday: LinkWallResult? {
-        linkWallResults.first { $0.day == QuestionProvider.dayKey() }
-    }
-
-    /// A real preview for non-members — today's easiest (yellow) group's
-    /// label, straight off the actual generator (MONETIZATION §4a: "a real
-    /// preview, never a nag"). Never reveals the group's members/why.
-    private var linkWallPreviewLabel: String? {
-        LinkWall.puzzle(for: QuestionProvider.dayKey())?.groups.first?.label
-    }
-
-    /// Club members launch (or resume) today's board directly; everyone else
-    /// see the existing paywall — never a blank wall.
-    private func openLinkWall() {
-        if entitlement.isClub { showLinkWall = true } else { showClubPaywall = true }
-    }
-
-    private var linkWallSubtitle: String {
-        if entitlement.isClub {
-            if let r = linkWallToday {
-                if r.completed { return r.won ? "Solved today's wall — see the recap." : "See today's groups." }
-                return "In progress — press to keep going."
-            }
-            return "4 groups of 4. One guess at a time, 4 mistakes allowed."
-        }
-        if let linkWallPreviewLabel { return "Today's board includes \"\(linkWallPreviewLabel)\" — find all four groups." }
-        return "A second daily: 16 facts, 4 hidden groups. Find them all."
-    }
-
-    private var linkWallHero: some View {
-        Button(action: openLinkWall) {
+    /// Was four locked heroes here plus three "see all" rows in Records. One quiet door,
+    /// below the free surfaces: members go to `ClubHubView_tvOS`, everyone else to the
+    /// paywall. Nothing else in the app may offer Club.
+    private var clubHero: some View {
+        Button { openClub() } label: {
             HStack(spacing: 28) {
-                Image(systemName: "square.grid.3x3.fill").font(.system(size: 52, weight: .black))
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack(spacing: 16) {
-                        Text("LINK WALL").font(.system(size: 40, weight: .black, design: .rounded))
-                        if !entitlement.isClub {
-                            Text("CLUB")
-                                .font(.system(size: 22, weight: .black, design: .rounded))
-                                .padding(.horizontal, 14).padding(.vertical, 6)
-                                .background(Capsule().fill(.white.opacity(0.92)))
-                                .foregroundStyle(Tidbits.Palette.mint)
-                        }
-                    }
-                    Text(linkWallSubtitle)
-                        .font(.system(size: 29, weight: .medium, design: .rounded))
-                        .foregroundStyle(.black.opacity(0.75))
-                        .lineLimit(2)
+                Image(systemName: entitlement.isClub ? "star.circle.fill" : "star.circle")
+                    .font(.system(size: 44, weight: .black)).foregroundStyle(Tidbits.Palette.blue).frame(width: 60)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Tidbits Club").font(.system(size: 36, weight: .bold, design: .rounded))
+                        .foregroundStyle(TVTheme.text)
+                    Text(entitlement.isClub ? "Your six Club features, all in one place."
+                                            : "Six optional extras for getting better. Everything else in Tidbits is free.")
+                        .font(.system(size: 26, weight: .medium, design: .rounded))
+                        .foregroundStyle(TVTheme.textSoft).fixedSize(horizontal: false, vertical: true)
+                        .multilineTextAlignment(.leading)
                 }
-                Spacer()
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right").font(.system(size: 26, weight: .bold))
+                    .foregroundStyle(TVTheme.textSoft)
             }
-            .foregroundStyle(.black)
-            .padding(40)
-            .frame(maxWidth: .infinity)
+            .padding(30).frame(maxWidth: .infinity, alignment: .leading)
         }
-        .buttonStyle(TVLinkWallHeroStyle())
+        .buttonStyle(TVAtlasCardStyle())
     }
 
-    // MARK: - Weak-Spot Arena (Club — docs/CLUB-FEATURES-BUILD.md "Feature 1")
-
-    /// A real sample from the player's own misses, shown to non-members instead
-    /// of a generic sell line (MONETIZATION §4a: "a real preview, never a nag").
-    private var weakSpotPreviewLine: String? {
-        entitlement.isClub ? nil : WeakSpotArena.previewLine(in: modelContext)
+    private func openClub() {
+        if entitlement.isClub { showClubHub = true } else { showClubPaywall = true }
     }
 
-    /// Club members launch the arena directly (never remembered as the Quick
-    /// Play default — `AppStore.rememberSelection` already excludes it);
-    /// everyone else sees the existing paywall (never a blank wall).
-    private func openWeakSpot() {
-        if entitlement.isClub { launch = LaunchRequest(mode: .weakSpot, category: .named("mixed")) }
-        else { showClubPaywall = true }
-    }
+    private func openLinkWall() { showLinkWall = true }
 
-    private var weakSpotHero: some View {
-        Button(action: openWeakSpot) {
-            HStack(spacing: 28) {
-                Image(systemName: "scope").font(.system(size: 52, weight: .black))
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack(spacing: 16) {
-                        Text("WEAK-SPOT ARENA").font(.system(size: 40, weight: .black, design: .rounded))
-                        if !entitlement.isClub {
-                            Text("CLUB")
-                                .font(.system(size: 22, weight: .black, design: .rounded))
-                                .padding(.horizontal, 14).padding(.vertical, 6)
-                                .background(Capsule().fill(.white.opacity(0.92)))
-                                .foregroundStyle(Tidbits.Palette.grape)
-                        }
-                    }
-                    Text(entitlement.isClub ? "Turn your misses into a round." : (weakSpotPreviewLine ?? "Your misses, turned into a round you can actually close."))
-                        .font(.system(size: 29, weight: .medium, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.9))
-                        .lineLimit(2)
-                }
-                Spacer()
-            }
-            .foregroundStyle(.white)
-            .padding(40)
-            .frame(maxWidth: .infinity)
-        }
-        .buttonStyle(TVWeakSpotHeroStyle())
-    }
-
-    // MARK: - Marathon (Club — docs/CLUB-FEATURES-BUILD.md "Feature 3")
-
-    /// Members with a run in progress get the focusable Resume/Start Over
-    /// choice (never a pointer `confirmationDialog` — ten-foot needs a
-    /// focusable screen, tvos-platform-patterns); with no run, they launch
-    /// straight into a fresh one. Non-members see the existing paywall.
+    /// Members with a run in progress get the Resume / Start Over choice; with no run they
+    /// go straight into a fresh one. Driven from the hub, but ContentView owns the launch.
     private func openMarathon() {
-        guard entitlement.isClub else { showClubPaywall = true; return }
         if marathonRuns.first != nil {
             showMarathonChoice = true
         } else {
@@ -369,98 +301,7 @@ struct ContentView_tvOS: View {
         }
     }
 
-    /// A real, concrete subtitle in every state — never a nag. Members see
-    /// their true position or their real last-run number; non-members see a
-    /// specific illustration of the domain scorecard.
-    private var marathonSubtitle: String {
-        if entitlement.isClub {
-            if let run = marathonRuns.first { return "Question \(run.currentIndex + 1) of \(run.total) — press to resume" }
-            if let last = marathonHistory.first { return "\(Int(last.accuracy * 100))% on your last run — press to start a new one" }
-            return "200 questions. Play it across as many sittings as you like — we'll keep your place."
-        }
-        return "See exactly where you stand — e.g. Geography 91% · History 64% — across a 200-question run you can pause and resume anytime."
-    }
 
-    private var marathonHero: some View {
-        Button(action: openMarathon) {
-            HStack(spacing: 28) {
-                Image(systemName: "flag.checkered").font(.system(size: 52, weight: .black))
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack(spacing: 16) {
-                        Text("MARATHON").font(.system(size: 40, weight: .black, design: .rounded))
-                        if !entitlement.isClub {
-                            Text("CLUB")
-                                .font(.system(size: 22, weight: .black, design: .rounded))
-                                .padding(.horizontal, 14).padding(.vertical, 6)
-                                .background(Capsule().fill(.white.opacity(0.92)))
-                                .foregroundStyle(Tidbits.Palette.teal)
-                        }
-                        if marathonRuns.first != nil {
-                            Text("RESUME")
-                                .font(.system(size: 22, weight: .black, design: .rounded))
-                                .padding(.horizontal, 14).padding(.vertical, 6)
-                                .background(Capsule().fill(Tidbits.Palette.coral))
-                                .foregroundStyle(.white)
-                        }
-                    }
-                    Text(marathonSubtitle)
-                        .font(.system(size: 29, weight: .medium, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.9))
-                        .lineLimit(2)
-                }
-                Spacer()
-            }
-            .foregroundStyle(.white)
-            .padding(40)
-            .frame(maxWidth: .infinity)
-        }
-        .buttonStyle(TVMarathonHeroStyle())
-    }
-
-    // MARK: - Expeditions (Club — docs/CLUB-FEATURES-BUILD.md "Feature 5")
-
-    /// A real preview even for non-members — the expeditions themselves are
-    /// curated content, not player data, so there's nothing to hide behind a
-    /// generic sell line (MONETIZATION §4a). The hero always opens the hub
-    /// (never the paywall directly); only pressing Play on a stage is gated.
-    private var expeditionSubtitle: String {
-        if let active = expeditionProgress.first, let exp = Expedition.named(active.expeditionID) {
-            return "\(exp.title): stage \(active.currentStageIndex + 1) of \(exp.stageCount) — press to continue"
-        }
-        return "Multi-week campaigns through a single subject — pick one, and go at your own pace."
-    }
-
-    private var expeditionsHero: some View {
-        Button { showExpeditions = true } label: {
-            HStack(spacing: 28) {
-                Image(systemName: "figure.run").font(.system(size: 52, weight: .black))
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack(spacing: 16) {
-                        Text("EXPEDITIONS").font(.system(size: 40, weight: .black, design: .rounded))
-                        if !entitlement.isClub {
-                            Text("CLUB")
-                                .font(.system(size: 22, weight: .black, design: .rounded))
-                                .padding(.horizontal, 14).padding(.vertical, 6)
-                                .background(Capsule().fill(.white.opacity(0.92)))
-                                .foregroundStyle(Tidbits.Palette.pink)
-                        }
-                    }
-                    Text(expeditionSubtitle)
-                        .font(.system(size: 29, weight: .medium, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.9))
-                        .lineLimit(2)
-                }
-                Spacer()
-            }
-            .foregroundStyle(.white)
-            .padding(40)
-            .frame(maxWidth: .infinity)
-        }
-        .buttonStyle(TVExpeditionHeroStyle())
-    }
-
-    // Online Multiplayer (Decision 038): v0 Play-vs-CPU chips; the Quick Match
-    // line is the honest v1 slot. Bots are ALWAYS labeled CPU.
     private var multiplayerPanel: some View {
         VStack(alignment: .leading, spacing: 24) {
             HStack(spacing: 28) {

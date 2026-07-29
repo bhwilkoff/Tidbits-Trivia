@@ -22,13 +22,11 @@ struct SettingsView_tvOS: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(GameCenterManager.self) private var gameCenter
     @Environment(PlayerIdentityStore.self) private var identity
-    @Environment(EntitlementStore.self) private var entitlement
     @AppStorage(GameSettings.reviewKey) private var reviewEnabled = true
     @State private var confirmReset = false
     @State private var confirmDelete = false
     @State private var deleting = false
     @State private var deleted = false
-    @State private var showPaywall = false
     @State private var showLeaderboard = false
     @State private var appleCoordinator: TVAppleSignInCoordinator?
     @State private var signingIn = false
@@ -43,19 +41,6 @@ struct SettingsView_tvOS: View {
     }
 
     var body: some View {
-        // Settings is ITSELF a `.fullScreenCover` (ContentView_tvOS). Presenting the paywall
-        // as a second, nested cover put StoreKit's purchase sheet third in a modal stack —
-        // the classic tvOS "already presenting" race, and the shape of the App Review 2.1(a)
-        // purchase failure. Swapping content inside this cover keeps the stack one deep, so
-        // StoreKit always has a clean window to present into.
-        if showPaywall {
-            ClubPaywallView_tvOS(onClose: { showPaywall = false })
-        } else {
-            settingsBody
-        }
-    }
-
-    private var settingsBody: some View {
         ZStack {
             TVTheme.bg.ignoresSafeArea()
             ScrollView {
@@ -65,7 +50,6 @@ struct SettingsView_tvOS: View {
                         .foregroundStyle(TVTheme.text)
                     profileSection
                     gameplaySection
-                    clubSection
                     leaderboardSection
                     gameCenterSection
                     dataSection
@@ -84,10 +68,6 @@ struct SettingsView_tvOS: View {
             Text("This permanently deletes your scores, streaks, and review list.")
         }
         .fullScreenCover(isPresented: $showLeaderboard) { LeaderboardView_tvOS() }
-        // TIDBITS_PAYWALL=1 with TIDBITS_SETTINGS=1 opens the Club paywall on the SAME path
-        // App Review took (Settings → "Join Tidbits Club"), so that path stays screenshot-
-        // verifiable on a dev box with no GUI Simulator to click a remote in.
-        .task { if DebugHooks.showPaywall { showPaywall = true } }
         .confirmationDialog("Delete your Tidbits account?", isPresented: $confirmDelete, titleVisibility: .visible) {
             Button("Delete Account", role: .destructive) { Task { await deleteAccount() } }
             Button("Cancel", role: .cancel) {}
@@ -260,29 +240,6 @@ struct SettingsView_tvOS: View {
             .padding(28)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(TVTheme.panel))
-        }
-        .focusSection()
-    }
-
-    // MARK: Tidbits Club
-
-    private var clubSection: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            sectionHeader("Tidbits Club")
-            Button { showPaywall = true } label: {
-                HStack(spacing: 24) {
-                    Image(systemName: entitlement.isClub ? "star.circle.fill" : "star.circle")
-                        .font(.system(size: 42, weight: .black))
-                    Text(entitlement.isClub ? "Tidbits Club — Member" : "Join Tidbits Club")
-                        .font(.system(size: 32, weight: .bold, design: .rounded))
-                    Spacer()
-                    Image(systemName: "chevron.right").font(.system(size: 24, weight: .bold))
-                }
-                .foregroundStyle(.white)
-                .padding(32)
-                .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(TVAtlasCardStyle())
         }
         .focusSection()
     }

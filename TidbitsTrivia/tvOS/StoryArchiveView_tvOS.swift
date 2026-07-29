@@ -14,6 +14,11 @@ import SwiftData
 /// Got it) + domain chips over the focusable list — the same idiom the
 /// type-answer round uses to avoid text entry (recall, not typing).
 struct StoryArchiveView_tvOS: View {
+    /// Set when this view is shown INLINE by the Club hub (which swaps its own content
+    /// rather than stacking a nested `.fullScreenCover` — see `ClubHubView_tvOS`). nil means
+    /// "I'm a modal, dismiss me."
+    var onClose: (() -> Void)? = nil
+
     @Query(sort: \SeenStory.lastSeen, order: .reverse) private var stories: [SeenStory]
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -69,7 +74,7 @@ struct StoryArchiveView_tvOS: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
-        .onExitCommand { dismiss() }
+        .onExitCommand { if let onClose { onClose() } else { dismiss() } }
         .fullScreenCover(item: $detail) { story in
             StoryDetailView_tvOS(story: story, onFavorite: { toggleFavorite(story) },
                                   onReask: { q in detail = nil; reaskQuestion = q })

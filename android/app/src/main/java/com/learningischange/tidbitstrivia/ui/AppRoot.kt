@@ -115,6 +115,11 @@ fun AppRoot(
     }
     LaunchedEffect(Unit) {
         com.learningischange.tidbitstrivia.data.PlayerIdentity.bootstrap()   // stable uid → portable profile
+        // bootstrap() replaces `profile` wholesale, so the MainActivity seed gets clobbered —
+        // re-apply it here or the Records store shot reads "0 days" beside 24 games.
+        com.learningischange.tidbitstrivia.data.ScreenshotHooks.seedRecords?.let {
+            com.learningischange.tidbitstrivia.data.PlayerIdentity.seedForScreenshots(streak = 12, longest = 27, games = it)
+        }
         if (!Corpus.loaded) runCatching { Corpus.load(context) }
         if (!Pictures.loaded) runCatching { Pictures.load(context) }
         if (!ThisOrThat.loaded) runCatching { ThisOrThat.load(context) }
@@ -130,6 +135,25 @@ fun AppRoot(
 
     // Deep-link inbox (parity with iOS .onOpenURL): MainActivity hands the
     // parsed host here; we route then mark consumed. Unknown links open Home.
+    // Store-screenshot hooks (docs/STORE-SCREENSHOTS.md §2) — drive Android to a known
+    // screen without a tap, exactly as the Apple capture run does.
+    LaunchedEffect(corpusReady) {
+        if (!corpusReady) return@LaunchedEffect
+        val h = com.learningischange.tidbitstrivia.data.ScreenshotHooks
+        h.initialTab?.let { tab ->
+            backStack.clear()
+            backStack.add(when (tab) { "records" -> Route.Records; "create" -> Route.Create; else -> Route.Home })
+        }
+        h.autoplay?.let { (mode, cat) ->
+            val m = runCatching { Mode.valueOf(mode.uppercase()) }.getOrNull()
+                ?: Mode.entries.firstOrNull { it.name.replace("_", "").equals(mode, ignoreCase = true) }
+                ?: Mode.CLASSIC
+            backStack.add(Route.Game(m, Category.byId(cat)))
+        }
+        if (h.openParty) backStack.add(Route.Party)
+        if (h.openNightSetup) backStack.add(Route.NightSetup)
+    }
+
     LaunchedEffect(deepLink) {
         when (deepLink) {
             null -> {}
@@ -994,6 +1018,24 @@ private fun GameScreen(route: Route.Game, store: Store, onDone: () -> Unit) {
     var marathonPersisted by remember { mutableIntStateOf(0) }
     val marathonQuestions = remember(marathonRun) { marathonRun?.let { Marathon.resumeQuestions(it) } }
     val game = remember { GameState(route.mode, route.category, store, marathonQuestions ?: route.custom, route.label, route.nightRounds, dailyDay = route.dailyDay, mixModes = route.mixModes, initialWeakSpotReasons = route.weakSpotReasons) }
+    // Store-screenshot autopilot — the Kotlin mirror of the Apple loop
+    // (docs/STORE-SCREENSHOTS.md §2). No-op unless the DEBUG intent extras are set.
+    LaunchedEffect(Unit) {
+        val h = com.learningischange.tidbitstrivia.data.ScreenshotHooks
+        if (!h.autopilot) return@LaunchedEffect
+        var stepsLeft = h.autopilotSteps
+        while (game.phase != GamePhase.FINISHED && game.phase != GamePhase.ERROR) {
+            if (stepsLeft != null && stepsLeft <= 0) return@LaunchedEffect
+            kotlinx.coroutines.delay(900)
+            if (stepsLeft != null) stepsLeft -= 1
+            when (game.phase) {
+                GamePhase.PLAYING -> game.submit(if (h.autopilotCorrect) (game.current?.correctIndex ?: 0) else 0)
+                GamePhase.REVEAL -> game.advance()
+                GamePhase.ROUND_INTRO -> game.startRound()
+                else -> {}
+            }
+        }
+    }
     LaunchedEffect(Unit) {
         val run = marathonRun
         if (route.mode == Mode.MARATHON && run != null && marathonQuestions.isNullOrEmpty()) {

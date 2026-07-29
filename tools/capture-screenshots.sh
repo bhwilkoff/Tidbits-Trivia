@@ -2,7 +2,7 @@
 # Autonomous store-screenshot capture. See docs/STORE-SCREENSHOTS.md for the screen set
 # (§1) and the rules this enforces (§2).
 #
-#   tools/capture-screenshots.sh <ios|ipad|tvos|android|android-tablet|all>
+#   tools/capture-screenshots.sh <ios|ipad|tvos|macos|android|android-tablet|all>
 #
 # Every shot is driven by the DebugHooks env family, so nothing here needs a tap. Output:
 #   branding/store-screenshots/<platform>/NN-name.png   (numbered in listing order)
@@ -112,7 +112,56 @@ capture_apple_phoneish() {  # <sim> <sdkdir> <outdir> <w> <h> <include_create>
   return 0
 }
 
-PLATFORM="${1:?usage: capture-screenshots.sh <ios|ipad|tvos|android|android-tablet|all>}"
+
+# macOS runs the real app on this Mac (there is no Mac "simulator"). The window is pinned
+# to 1440x900 and ONLY that region is captured — nothing else on the desktop can leak into
+# a store listing. Needs a logged-in desktop session.
+MAC_APP=""
+mac_launch() {  # mac_launch [ENV=V ...]
+  osascript -e 'tell application "TidbitsTrivia" to quit' >/dev/null 2>&1
+  pkill -f "TidbitsTrivia.app/Contents/MacOS/TidbitsTrivia" >/dev/null 2>&1
+  sleep 2
+  env "$@" TIDBITS_NO_GAMECENTER=1 TIDBITS_SKIP_ONBOARD=1 \
+    "$MAC_APP/Contents/MacOS/TidbitsTrivia" >/dev/null 2>&1 &
+  sleep 12
+  osascript -e 'tell application "System Events" to tell process "TidbitsTrivia"
+      set position of window 1 to {0, 45}
+      set size of window 1 to {1440, 900}
+    end tell' >/dev/null 2>&1
+  sleep 3
+}
+
+run_macos() {
+  echo "== Mac =="
+  local out="$ROOT/branding/store-screenshots/macos"; mkdir -p "$out"
+  echo "  building…"
+  xcodebuild build -project TidbitsTrivia.xcodeproj -scheme TidbitsTrivia \
+    -destination 'platform=macOS' -configuration Debug -derivedDataPath "$DERIVED" \
+    CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO ENABLE_APP_SANDBOX=NO 2>&1 \
+    | grep -E "error:|BUILD FAILED" | head -5
+  MAC_APP=$(find "$DERIVED/Build/Products/Debug" -maxdepth 1 -name "TidbitsTrivia.app" | head -1)
+  [ -n "$MAC_APP" ] || { echo "  ✗ no Mac .app built"; return 1; }
+  # Restricted entitlements (game-center, applesignin) can't be ad-hoc signed; the store
+  # screens need neither, and signing WITH them makes launchd refuse the process.
+  codesign -s - --force --deep "$MAC_APP" >/dev/null 2>&1
+
+  mac_shot() {  # mac_shot <NN-name> [ENV=V ...]
+    local name="$1"; shift
+    mac_launch "$@"
+    screencapture -x -o -R0,45,1440,900 "$out/$name.png"
+    if verify "$out/$name.png" 2880 1800; then echo "  ✓ $name"; else fail "$name"; fi
+  }
+  mac_shot "01-home"
+  mac_shot "02-question"    TIDBITS_AUTOPLAY=classic:mixed
+  mac_shot "03-reveal"      TIDBITS_AUTOPLAY=classic:mixed TIDBITS_AUTOPILOT=1 TIDBITS_AUTOPILOT_CORRECT=1 TIDBITS_AUTOPILOT_STEPS=1
+  mac_shot "04-results"     TIDBITS_AUTOPLAY=daily:mixed TIDBITS_AUTOPILOT=1 TIDBITS_AUTOPILOT_CORRECT=1
+  mac_shot "05-records"     TIDBITS_TAB=records TIDBITS_SEED_RECORDS=24
+  mac_shot "06-trivia-night" TIDBITS_TAB=live
+  mac_shot "08-create"      TIDBITS_TAB=create
+  osascript -e 'tell application "TidbitsTrivia" to quit' >/dev/null 2>&1
+}
+
+PLATFORM="${1:?usage: capture-screenshots.sh <ios|ipad|tvos|macos|android|android-tablet|all>}"
 
 run_ios() {
   echo "== iPhone 6.9\" =="
@@ -145,18 +194,21 @@ run_android() {  # run_android <avd> <outdir> <w> <h>
   "$ADB" wait-for-device
   until [ "$("$ADB" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1" ]; do sleep 3; done
   (cd android && ./gradlew installDebug -q >/dev/null 2>&1)
-  shoot_android "$out" "01-home"         "$3" "$4" 30
-  shoot_android "$out" "02-question"     "$3" "$4" 24 --es tidbits_autoplay "classic:mixed"
-  shoot_android "$out" "03-reveal"       "$3" "$4" 26 --es tidbits_autoplay "classic:mixed" --ez tidbits_autopilot true --ei tidbits_autopilot_steps 1
-  shoot_android "$out" "04-daily"        "$3" "$4" 24 --es tidbits_autoplay "daily:mixed"
-  shoot_android "$out" "05-records"      "$3" "$4" 24 --es tidbits_tab records --ei tidbits_seed_records 24
-  shoot_android "$out" "06-trivia-night" "$3" "$4" 22 --ez tidbits_night_setup true
-  shoot_android "$out" "07-pass-and-play" "$3" "$4" 22 --ez tidbits_party true
-  shoot_android "$out" "08-create"       "$3" "$4" 30 --es tidbits_autocreate "Ancient Rome"
+  local SKIP=(--ez tidbits_skip_onboard true)
+  shoot_android "$out" "01-home"          "$3" "$4" 32 "${SKIP[@]}"
+  shoot_android "$out" "02-question"      "$3" "$4" 26 "${SKIP[@]}" --es tidbits_autoplay classic:mixed
+  shoot_android "$out" "03-reveal"        "$3" "$4" 28 "${SKIP[@]}" --es tidbits_autoplay classic:mixed --ez tidbits_autopilot true --ez tidbits_autopilot_correct true --ei tidbits_autopilot_steps 1
+  shoot_android "$out" "04-results"       "$3" "$4" 44 "${SKIP[@]}" --es tidbits_autoplay daily:mixed --ez tidbits_autopilot true --ez tidbits_autopilot_correct true
+  "$ADB" shell pm clear "$BUNDLE_ANDROID" >/dev/null 2>&1   # the seeder only seeds an EMPTY store
+  shoot_android "$out" "05-records"       "$3" "$4" 30 "${SKIP[@]}" --es tidbits_tab records --ei tidbits_seed_records 24
+  shoot_android "$out" "06-trivia-night"  "$3" "$4" 26 "${SKIP[@]}" --ez tidbits_night_setup true
+  shoot_android "$out" "07-pass-and-play" "$3" "$4" 26 "${SKIP[@]}" --ez tidbits_party true
+  shoot_android "$out" "08-create"        "$3" "$4" 26 "${SKIP[@]}" --es tidbits_tab create
 }
 
 case "$PLATFORM" in
   ios) run_ios ;;
+  macos) run_macos ;;
   ipad) run_ipad ;;
   tvos) run_tvos ;;
   android) run_android Pixel_9_Pro "$ROOT/branding/store-screenshots/android-phone" 1280 2856 ;;

@@ -35,6 +35,24 @@ object PlayerIdentity {
     var profileId: String? = null; private set
     var profile: Profile? by mutableStateOf(null); private set
     var friends: List<Friend> by mutableStateOf(emptyList()); private set
+
+    /** Screenshot seeding only (docs/STORE-SCREENSHOTS.md §2): give the local profile a
+     *  plausible streak + stats so the Records store shot doesn't read "0 days" beside a
+     *  full game history. Local-only — never written to the shared plane. */
+    fun seedForScreenshots(streak: Int, longest: Int, games: Int) {
+        // On the emulator bootstrap() can leave `profile` null (no reachable backend), and a
+        // `?: return` here silently produced the "0 days" Records shot. Synthesize one.
+        val p = profile ?: Profile(
+            name = "Player", createdAt = System.currentTimeMillis(), avatarSeed = "seed",
+            rating = Rating(), streak = Streak(), stats = Stats(),
+        )
+        profile = p.copy(
+            rating = Rating(value = 1180.0, games = games, provisional = false),
+            streak = Streak(current = streak, longest = longest, lastPlayedDay = today(), freezes = 1),
+            stats = Stats(gamesPlayed = games, questionsAnswered = games * 7,
+                          correct = games * 7 * 3 / 4, liveNights = 2, venuesVisited = 1),
+        )
+    }
     /// True once promoted from anonymous via a federated sign-in (records roam + survive
     /// session loss). The Firebase SDK persists the session, so this is authoritative.
     var signedIn: Boolean by mutableStateOf(false); private set

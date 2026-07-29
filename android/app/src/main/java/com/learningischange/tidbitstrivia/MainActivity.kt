@@ -17,6 +17,28 @@ import com.learningischange.tidbitstrivia.data.Marathon
 import com.learningischange.tidbitstrivia.ui.AppRoot
 import com.learningischange.tidbitstrivia.ui.theme.AppTheme
 
+/** Synthetic history so the Records store shot isn't an empty state. Only ever writes into
+ *  an EMPTY store, so it can never touch a real player's data (mirrors Apple's seeder). */
+private fun seedRecordsForScreenshots(store: com.learningischange.tidbitstrivia.data.Store, n: Int) {
+    if (!BuildConfig.DEBUG || store.records().isNotEmpty()) return
+    val modes = listOf("classic", "timeAttack", "survival", "stake", "sweep", "oddOneOut", "ladder")
+    val cats = listOf("history", "science", "geography", "arts", "screen", "music", "sports", "business", "mixed")
+    val now = System.currentTimeMillis()
+    for (i in 0 until n) {
+        val total = 7 + (i % 4)
+        val correct = maxOf(1, total - (i % 5))
+        store.addRecord(
+            com.learningischange.tidbitstrivia.data.Store.Rec(
+                mode = modes[i % modes.size], categoryId = cats[i % cats.size],
+                score = 40 + (i * 37) % 120, correct = correct, total = total,
+                maxStreak = correct, day = "", at = now - i * 3_600_000L,
+            ),
+            countsForStreak = false,
+        )
+    }
+    com.learningischange.tidbitstrivia.data.PlayerIdentity.seedForScreenshots(streak = 12, longest = 27, games = n)
+}
+
 /** Single Activity, Compose-only, edge-to-edge. */
 class MainActivity : ComponentActivity() {
     // Deep-link route parsed from the launching/new intent, drained by AppRoot.
@@ -28,6 +50,12 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         val store = (application as AppNameApplication).container.store
         deepLink.value = routeFor(intent)
+        // DEBUG-only store-screenshot hooks (docs/STORE-SCREENSHOTS.md §2) — the Kotlin
+        // mirror of Apple's DebugHooks family, so an Android capture run is as autonomous
+        // as the Apple ones instead of relying on blind `adb input tap` coordinates.
+        com.learningischange.tidbitstrivia.data.ScreenshotHooks.apply(intent)
+        if (com.learningischange.tidbitstrivia.data.ScreenshotHooks.skipOnboarding) store.setOnboarded(true)
+        com.learningischange.tidbitstrivia.data.ScreenshotHooks.seedRecords?.let { seedRecordsForScreenshots(store, it) }
         // DEBUG-only env hook (no-op in release): `--ez tidbits_club_debug true` forces
         // Entitlement.isClub so Club features (Weak-Spot Arena, etc.) are verifiable on
         // the emulator pre-launch, with no real purchase (docs/CLUB-FEATURES-BUILD.md).

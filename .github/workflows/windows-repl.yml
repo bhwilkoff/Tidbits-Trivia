@@ -101,5 +101,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows-repl-artifacts
-          path: windows/artifacts/*.png
+          path: windows/artifacts/**/*.png
           if-no-files-found: warn

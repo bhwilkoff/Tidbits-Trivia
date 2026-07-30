@@ -382,6 +382,13 @@ final class PlayerIdentityStore {
     /// the store refuses to re-bootstrap over it. Screenshot runs only.
     private var screenshotSeeded = false
 
+    /// The streak the UI should DISPLAY. Normally the profile's, but a screenshot seed pins
+    /// it — assigning `profile` kept losing a race with the bootstrap/record write-backs, and
+    /// an override nothing else writes is immune to that ordering by construction.
+    /// Every Records surface reads this instead of `profile?.streak`.
+    private(set) var seededStreak: PlayerIdentity.Streak?
+    var displayStreak: PlayerIdentity.Streak { seededStreak ?? profile?.streak ?? .init(current: 0, longest: 0, lastPlayedDay: "", freezes: 0) }
+
     /// Forget everything this device remembers about the deleted account.
     private func resetLocalState() {
         EntitlementStore.shared.clearOnSignOut()
@@ -400,6 +407,7 @@ final class PlayerIdentityStore {
     /// Local-only — never written to the shared plane.
     func seedForScreenshots(streak: Int, longest: Int, games: Int, correct: Int, answered: Int) {
         screenshotSeeded = true
+        seededStreak = .init(current: streak, longest: longest, lastPlayedDay: PlayerIdentity.todayString(), freezes: 1)
         var p = profile ?? Self.newProfile(name: Self.suggestedName())
         p.streak = .init(current: streak, longest: longest, lastPlayedDay: PlayerIdentity.todayString(), freezes: 1)
         p.stats = .init(gamesPlayed: games, questionsAnswered: answered, correct: correct,

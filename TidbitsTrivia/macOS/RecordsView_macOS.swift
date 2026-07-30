@@ -91,11 +91,11 @@ struct RecordsView_macOS: View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text("DAY STREAK").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.ink.opacity(0.7))
-                Text("\(identity.profile?.streak.current ?? 0) days").font(.system(size: 30, weight: .black, design: .rounded))
+                Text("\(identity.displayStreak.current) days").font(.system(size: 30, weight: .black, design: .rounded))
                     .foregroundStyle(Tidbits.Palette.ink)
             }
             Spacer()
-            Text("best \(identity.profile?.streak.longest ?? 0)").font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+            Text("best \(identity.displayStreak.longest)").font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
             Image(systemName: "flame.fill").font(.system(size: 28, weight: .black)).foregroundStyle(Tidbits.Palette.coral)
         }
         .padding(20)

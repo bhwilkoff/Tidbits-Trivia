@@ -153,6 +153,14 @@ final class GameEngine {
         triedLoad = true
         reset()
         var qs = await QuestionProvider.shared.questions(mode: mode, category: category, dailyDay: dailyDay)
+        // Store-screenshot runs must never roll dice (R-SHOT-3, docs/STORE-SCREENSHOTS.md):
+        // a random draw put a Holocaust question in the reveal slot of a listing. No-op in
+        // production — TIDBITS_SCREENED is never set there.
+        if DebugHooks.screenedQuestions {
+            let pool = CorpusDatabase.shared.questions(categoryID: "mixed", excluding: [], limit: 6000)
+            let screened = ScreenshotQuestions.pick(from: pool, count: max(qs.count, 1))
+            if !screened.isEmpty { qs = screened }
+        }
         if !review.isEmpty { qs = Self.weave(fresh: qs, review: review) }
         questions = qs
         QuestionProvider.shared.markSeen(qs.map(\.id))

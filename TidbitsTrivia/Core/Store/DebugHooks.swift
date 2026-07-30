@@ -22,6 +22,13 @@ enum DebugHooks {
         ProcessInfo.processInfo.environment["TIDBITS_AUTOPILOT"] == "1"
     }
 
+    /// TIDBITS_SCREENED=1 → the autoplay round draws from `ScreenshotQuestions.pick` instead
+    /// of the normal random corpus draw (rule R-SHOT-3). A random draw put a Holocaust
+    /// question in the reveal slot of a store listing; screenshot runs must never roll dice.
+    static var screenedQuestions: Bool {
+        ProcessInfo.processInfo.environment["TIDBITS_SCREENED"] == "1"
+    }
+
     /// TIDBITS_AUTOPILOT_CORRECT=1 → autopilot submits the RIGHT answer instead of option 0.
     /// The store scorecard shot otherwise advertises ~28% accuracy, which is an artefact of
     /// the test harness rather than the game (docs/STORE-SCREENSHOTS.md §2).

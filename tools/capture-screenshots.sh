@@ -62,7 +62,7 @@ reinstall() {  # a clean slate so TIDBITS_SEED_RECORDS (empty-store-only) actual
 shoot_apple() {  # shoot_apple <sim-udid> <outdir> <NN-name> <w> <h> <settle> [ENV=V ...]
   local sim="$1" out="$2" name="$3" w="$4" h="$5" settle="$6"; shift 6
   xcrun simctl terminate "$sim" "$BUNDLE_APPLE" >/dev/null 2>&1
-  local env_args=(SIMCTL_CHILD_TIDBITS_NO_GAMECENTER=1 SIMCTL_CHILD_TIDBITS_SKIP_ONBOARD=1)
+  local env_args=(SIMCTL_CHILD_TIDBITS_NO_GAMECENTER=1 SIMCTL_CHILD_TIDBITS_SKIP_ONBOARD=1 SIMCTL_CHILD_TIDBITS_SCREENED=1)
   for kv in "$@"; do env_args+=("SIMCTL_CHILD_${kv}"); done
   env "${env_args[@]}" xcrun simctl launch "$sim" "$BUNDLE_APPLE" >/dev/null 2>&1
   sleep "$settle"
@@ -123,7 +123,7 @@ mac_launch() {  # mac_launch [ENV=V ...]
   osascript -e 'tell application "TidbitsTrivia" to quit' >/dev/null 2>&1
   pkill -f "shots/Build/Products/Debug/TidbitsTrivia.app" >/dev/null 2>&1
   sleep 2
-  env "$@" TIDBITS_NO_GAMECENTER=1 TIDBITS_SKIP_ONBOARD=1 \
+  env "$@" TIDBITS_NO_GAMECENTER=1 TIDBITS_SKIP_ONBOARD=1 TIDBITS_SCREENED=1 \
     "$MAC_APP/Contents/MacOS/TidbitsTrivia" >/dev/null 2>&1 &
   sleep 13
   osascript -e 'tell application "System Events" to tell process "TidbitsTrivia"
@@ -209,7 +209,7 @@ run_android() {  # run_android <avd> <outdir> <w> <h>
   "$ADB" wait-for-device
   until [ "$("$ADB" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1" ]; do sleep 3; done
   (cd android && ./gradlew installDebug -q >/dev/null 2>&1)
-  local SKIP=(--ez tidbits_skip_onboard true)
+  local SKIP=(--ez tidbits_skip_onboard true --ez tidbits_screened true)
   shoot_android "$out" "01-home"          "$3" "$4" 32 "${SKIP[@]}"
   shoot_android "$out" "02-question"      "$3" "$4" 26 "${SKIP[@]}" --es tidbits_autoplay classic:mixed
   shoot_android "$out" "03-reveal"        "$3" "$4" 28 "${SKIP[@]}" --es tidbits_autoplay classic:mixed --ez tidbits_autopilot true --ez tidbits_autopilot_correct true --ei tidbits_autopilot_steps 1

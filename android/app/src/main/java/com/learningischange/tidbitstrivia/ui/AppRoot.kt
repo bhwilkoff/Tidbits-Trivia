@@ -372,7 +372,7 @@ private fun HomeScreen(
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
                     Text("DAILY TIDBIT", fontWeight = FontWeight.Black, fontSize = 20.sp, color = Ink)
-                    val dayStreak = PlayerIdentity.profile?.streak?.current ?: 0
+                    val dayStreak = PlayerIdentity.displayStreak.current
                     if (todayScore != null) {
                         Text("Done for today — you scored $todayScore.${if (dayStreak >= 2) " 🔥 $dayStreak-day streak kept alive." else ""} New set tomorrow.", color = Ink.copy(alpha = 0.75f), fontSize = 13.sp)
                         Text("Play previous days", color = Ink, fontSize = 13.sp, fontWeight = FontWeight.Bold)
@@ -1541,7 +1541,7 @@ private fun ResultsScreen(game: GameState, onPlayAgain: (() -> Unit)?, onDone: (
         Button(onClick = {
             val filled = Math.round(acc * 7 / 100.0).toInt().coerceIn(0, 7)
             val meter = "▰".repeat(filled) + "▱".repeat(7 - filled)
-            val dayStreak = PlayerIdentity.profile?.streak?.current ?: 0
+            val dayStreak = PlayerIdentity.displayStreak.current
             val streak = if (dayStreak >= 2) "\n🔥 $dayStreak-day streak" else if (game.maxStreak >= 3) "\n🔥 Best run ${game.maxStreak}" else ""
             val text = "🧠 Tidbits — ${game.mode.title}\n${game.score} pts · ${game.correctCount}/$total\n$meter $acc%\n$grid$streak\nPlay at https://tidbitstrivia.com"
             context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, text) }, "Share"))
@@ -1611,8 +1611,8 @@ private fun RecordsScreen(store: Store, onOpenArchive: () -> Unit, onOpenMaratho
         }
         ChunkyCard(fill = Pops.yellow) {
             Row(Modifier.padding(18.dp).fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Column { Text("DAY STREAK", color = Ink.copy(alpha = 0.7f), fontSize = 12.sp); Text("${PlayerIdentity.profile?.streak?.current ?: 0} days", fontWeight = FontWeight.Black, fontSize = 26.sp, color = Ink) }
-                Text("best ${PlayerIdentity.profile?.streak?.longest ?: 0} 🔥", color = Ink, fontWeight = FontWeight.Bold)
+                Column { Text("DAY STREAK", color = Ink.copy(alpha = 0.7f), fontSize = 12.sp); Text("${PlayerIdentity.displayStreak.current} days", fontWeight = FontWeight.Black, fontSize = 26.sp, color = Ink) }
+                Text("best ${PlayerIdentity.displayStreak.longest} 🔥", color = Ink, fontWeight = FontWeight.Bold)
             }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -1657,7 +1657,7 @@ private fun RecordsScreen(store: Store, onOpenArchive: () -> Unit, onOpenMaratho
         val totalQ = records.sumOf { it.total }
         val badges = BadgeMath.badges(
             games = records.size,
-            longestStreak = PlayerIdentity.profile?.streak?.longest ?: 0,
+            longestStreak = PlayerIdentity.displayStreak.longest,
             mastered = mastered,
             lifetimeAccuracy = if (totalQ > 0) records.sumOf { it.correct } * 100 / totalQ else 0,
             liveNights = PlayerIdentity.profile?.stats?.liveNights ?: 0)

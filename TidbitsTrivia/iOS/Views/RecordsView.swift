@@ -72,14 +72,14 @@ struct RecordsView: View {
         HStack(spacing: 16) {
             VStack(alignment: .leading, spacing: 2) {
                 Text("DAY STREAK").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.ink.opacity(0.7))
-                Text("\(identity.profile?.streak.current ?? 0) days")
+                Text("\(identity.displayStreak.current) days")
                     .font(.system(size: 30, weight: .black, design: .rounded))
                     .foregroundStyle(Tidbits.Palette.ink)
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 2) {
                 Text("BEST").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.ink.opacity(0.7))
-                Text("\(identity.profile?.streak.longest ?? 0)").font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
+                Text("\(identity.displayStreak.longest)").font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
             }
             Image(systemName: "flame.fill").font(.system(size: 32, weight: .black)).foregroundStyle(Tidbits.Palette.coral)
         }
@@ -195,7 +195,7 @@ struct RecordsView: View {
         let acc = lifetime.total > 0 ? Int(Double(lifetime.correct) / Double(lifetime.total) * 100) : 0
         let mastered = domains.filter { $0.hasWedge }.count
         let badges = BadgeMath.badges(games: records.count,
-                                      longestStreak: identity.profile?.streak.longest ?? 0,
+                                      longestStreak: identity.displayStreak.longest,
                                       mastered: mastered, lifetimeAccuracy: acc,
                                       liveNights: identity.profile?.stats.liveNights ?? 0)
         return Group {

@@ -103,12 +103,12 @@ struct RecordsView_tvOS: View {
                 Image(systemName: "flame.fill").font(.system(size: 56, weight: .black)).foregroundStyle(Tidbits.Palette.coral)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("DAY STREAK").font(.system(size: 24, weight: .bold, design: .rounded)).foregroundStyle(.black.opacity(0.7))
-                    Text("\(identity.profile?.streak.current ?? 0) days").font(.system(size: 48, weight: .black, design: .rounded)).foregroundStyle(.black)
+                    Text("\(identity.displayStreak.current) days").font(.system(size: 48, weight: .black, design: .rounded)).foregroundStyle(.black)
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 2) {
                     Text("BEST").font(.system(size: 24, weight: .bold, design: .rounded)).foregroundStyle(.black.opacity(0.7))
-                    Text("\(identity.profile?.streak.longest ?? 0)").font(.system(size: 48, weight: .black, design: .rounded)).foregroundStyle(.black)
+                    Text("\(identity.displayStreak.longest)").font(.system(size: 48, weight: .black, design: .rounded)).foregroundStyle(.black)
                 }
             }
         }

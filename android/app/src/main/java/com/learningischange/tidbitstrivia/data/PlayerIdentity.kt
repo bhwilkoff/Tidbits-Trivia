@@ -36,10 +36,17 @@ object PlayerIdentity {
     var profile: Profile? by mutableStateOf(null); private set
     var friends: List<Friend> by mutableStateOf(emptyList()); private set
 
+    /** The streak the UI should DISPLAY. Normally the profile's, but a screenshot seed pins
+     *  it — assigning `profile` kept losing a race with bootstrap's write-back, and an
+     *  override nothing else writes is immune to that ordering by construction. */
+    var seededStreak: Streak? by mutableStateOf(null); private set
+    val displayStreak: Streak get() = seededStreak ?: profile?.streak ?: Streak()
+
     /** Screenshot seeding only (docs/STORE-SCREENSHOTS.md §2): give the local profile a
      *  plausible streak + stats so the Records store shot doesn't read "0 days" beside a
      *  full game history. Local-only — never written to the shared plane. */
     fun seedForScreenshots(streak: Int, longest: Int, games: Int) {
+        seededStreak = Streak(current = streak, longest = longest, lastPlayedDay = today(), freezes = 1)
         // On the emulator bootstrap() can leave `profile` null (no reachable backend), and a
         // `?: return` here silently produced the "0 days" Records shot. Synthesize one.
         val p = profile ?: Profile(

@@ -43,6 +43,11 @@ object ScreenshotHooks {
     var openNightSetup = false
         private set
 
+    /** Draw the autoplay round from ScreenshotQuestions instead of a random corpus pull
+     *  (rule R-SHOT-3) — a random draw put a Holocaust question in a listing's reveal slot. */
+    var screened = false
+        private set
+
     /** Treat the first-run walkthrough as already seen — a fresh install otherwise opens on it. */
     var skipOnboarding = false
         private set
@@ -61,5 +66,6 @@ object ScreenshotHooks {
         if (intent.hasExtra("tidbits_party")) openParty = intent.getBooleanExtra("tidbits_party", false)
         if (intent.hasExtra("tidbits_night_setup")) openNightSetup = intent.getBooleanExtra("tidbits_night_setup", false)
         if (intent.hasExtra("tidbits_skip_onboard")) skipOnboarding = intent.getBooleanExtra("tidbits_skip_onboard", false)
+        if (intent.hasExtra("tidbits_screened")) screened = intent.getBooleanExtra("tidbits_screened", false)
     }
 }

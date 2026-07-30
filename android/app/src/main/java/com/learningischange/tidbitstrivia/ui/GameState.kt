@@ -204,6 +204,12 @@ class GameState(
     suspend fun restart() = start()
 
     private suspend fun loadStandard(): List<Question> {
+        // Store-screenshot runs must never roll dice (R-SHOT-3, docs/STORE-SCREENSHOTS.md):
+        // a random draw put a Holocaust question in a listing's reveal slot. Inert in release.
+        if (ScreenshotHooks.screened) {
+            val screened = ScreenshotQuestions.pick(Corpus.pull("mixed", emptySet(), 6000), mode.count)
+            if (screened.isNotEmpty()) return screened
+        }
         var pulled = Corpus.pull(category.id, store.seenSet, mode.count)
         if (pulled.size < mode.count) {
             val topic = if (category.id == "mixed") "popular" else category.name

@@ -127,6 +127,9 @@ public class StoreScreenshots
             // about 313 m."), which read as filler in the differentiator slot.
             .Where(q => (q.Explanation ?? "").Contains(" is a ") || (q.Explanation ?? "").Contains(" was a "))
             .Where(q => !q.Prompt.StartsWith("In what year", StringComparison.OrdinalIgnoreCase))
+            // The older test fixture still has 2,313 explanations with a body blank the
+            // corpus repair could not resolve — never let one into a listing.
+            .Where(q => !(q.Explanation ?? "").Contains("____"))
             .Where(q => q.Prompt.Length >= 70)                       // the narrative prompts read best
             .OrderBy(q => q.Id, StringComparer.Ordinal)              // stable across runs
             .ToList();

@@ -256,8 +256,20 @@ is the repeatable Pass A.
   actually want) while the question pack prints from the COCKPIT, where
   `host.Questions` is the draw the room is really being asked. Printing a pack
   at build time would hand the host a different set of questions.
-- [ ] A.3b **Video round** in the Live builder — audio rounds play from the
-  cockpit but neither audio nor video can be AUTHORED as a round type.
+- [x] A.3b(i) **Video had nowhere to appear** — SHIPPED 1.6.68, and the bigger
+  half of this item. Windows already had `AvPlayer.SetVideoSink`,
+  `VideoFrameSink` AND `VideoSurface` — but **nothing was wired between them**,
+  so a host could play a clip, hear it, and never see a picture on any surface.
+  The projector now owns a `VideoSurface` above every other layer (while a clip
+  plays it IS the big screen), attaches the sink on load, hides again on
+  EndReached/Stopped so the last frame doesn't freeze over the next question, and
+  detaches BEFORE disposing (LibVLC writes frames from its own thread). No-ops
+  where the natives are absent, which is CI and this Mac.
+- [ ] A.3b(ii) **Authoring** a media round in the builder — still open, and NOT a
+  small UI addition: a Windows `NightRound` is `{Kind, Count}` with nowhere to
+  hold custom questions or clip paths, so macOS's "pick files → each becomes a
+  name-it question" needs a persisted-shape change to `LiveEvent` (which existing
+  saved events must survive). Worth owner scoping rather than improvising.
 - [x] A.4 Live host: **Remove team** — SHIPPED 1.6.64. `LiveNightHost.RemoveTeam`
   zeroes the score and drops the team from standings/projector/export, matching
   `MergeTeams`' shape: the RTDB node is SHARED with that player's client, so

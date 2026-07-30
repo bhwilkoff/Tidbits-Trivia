@@ -9,6 +9,7 @@ public partial class ProjectorView : UserControl
 {
     private string _qrCode = "";
     private readonly Avalonia.Threading.DispatcherTimer _tick;
+    private VideoFrameSink? _sink;
 
     public ProjectorView()
     {
@@ -16,7 +17,41 @@ public partial class ProjectorView : UserControl
         _tick = new Avalonia.Threading.DispatcherTimer(
             TimeSpan.FromSeconds(1), Avalonia.Threading.DispatcherPriority.Normal, (_, _) => RefreshCountdown());
         _tick.Start();
-        DetachedFromVisualTree += (_, _) => _tick.Stop();
+        AttachedToVisualTree += (_, _) => AttachVideo();
+        DetachedFromVisualTree += (_, _) =>
+        {
+            _tick.Stop();
+            // Detach before disposing: LibVLC writes frames from its own thread, and a sink
+            // freed while the player still holds it is a use-after-free on the big screen.
+            GameData.Shared.Value.Av.SetVideoSink(null);
+            Video.Sink = null;
+            _sink?.Dispose();
+            _sink = null;
+        };
+    }
+
+    /// Route the question clip's picture into this window. The projector is the ONLY
+    /// surface that should show video — the cockpit is the host's private view, and a clip
+    /// mirrored there would just be a second thing to look away from.
+    private void AttachVideo()
+    {
+        if (_sink is not null) return;
+        var av = GameData.Shared.Value.Av;
+        if (!av.Available) return;                 // no LibVLC natives (e.g. headless CI)
+        _sink = new VideoFrameSink();
+        _sink.FrameArrived += () => Video.IsVisible = true;
+        Video.Sink = _sink;
+        av.SetVideoSink(_sink);
+
+        // Hide again when the clip ends or is stopped, or the last frame stays frozen on
+        // the big screen over the next question. These fire on a LibVLC thread.
+        if (av.ClipPlayer is { } clip)
+        {
+            void Hide(object? _, EventArgs __) =>
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => Video.IsVisible = false);
+            clip.EndReached += Hide;
+            clip.Stopped += Hide;
+        }
     }
 
     private void RefreshCountdown()

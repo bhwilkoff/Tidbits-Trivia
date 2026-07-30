@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Tidbits.App.ViewModels"
+             xmlns:views="using:Tidbits.App.Views"
              x:Class="Tidbits.App.Views.ProjectorView"
              x:DataType="vm:LiveHostViewModel">
     <Panel Background="#0A0A12">
@@ -94,5 +95,11 @@
                 </StackPanel>
             </StackPanel>
         </Viewbox>
+
+        <!-- Wave B video question (§6.3). The clip's picture is routed into a
+             VideoFrameSink and drawn here, above every other layer: while a clip plays it
+             IS the big screen. Windows had the sink and the surface but nothing wired them
+             together, so video played audio-only with no picture anywhere. -->
+        <views:VideoSurface x:Name="Video" IsVisible="False"/>
     </Panel>
 </UserControl>

@@ -48,6 +48,25 @@ public class WindowsAuditTest
         finally { Application.Current.RequestedThemeVariant = ThemeVariant.Default; }
     }
 
+    /// Pass D — Settings carries the account + destructive surfaces, so it gets its own
+    /// both-themes render rather than riding on the shell's landing page.
+    [AvaloniaTheory]
+    [InlineData("light")]
+    [InlineData("dark")]
+    public void Settings_renders_in_both_themes(string theme)
+    {
+        Application.Current!.RequestedThemeVariant =
+            theme == "dark" ? ThemeVariant.Dark : ThemeVariant.Light;
+        try
+        {
+            var win = new Window { Width = 900, Height = 800, Content = new SettingsView() };
+            win.Show();
+            Dispatcher.UIThread.RunJobs();
+            win.CaptureRenderedFrame()!.Save(Path.Combine(Art(), $"settings-{theme}.png"));
+        }
+        finally { Application.Current.RequestedThemeVariant = ThemeVariant.Default; }
+    }
+
     /// Pass C — 820 is the floor (the nav is compact and the content column is genuinely
     /// tight). Anything that clips or overflows shows up here first.
     [AvaloniaTheory]

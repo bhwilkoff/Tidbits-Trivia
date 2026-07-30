@@ -1,79 +1,106 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
              x:Class="Tidbits.App.Views.SettingsView">
+    <!-- WINDOWS-DESIGN §5/§7: Settings is a stack of FluentAvalonia SettingsExpander rows —
+         the Windows 11 Settings idiom — not hand-rolled bold TextBlock headers over
+         StackPanels. Header + Description + a Footer control per row is what a Windows user
+         expects to read and tab through. -->
     <ScrollViewer>
-        <StackPanel Margin="36,32" Spacing="22" MaxWidth="600" HorizontalAlignment="Left">
-            <TextBlock Text="Settings" Classes="view-heading"/>
+        <StackPanel Margin="36,32" Spacing="4" MaxWidth="720" HorizontalAlignment="Left">
+            <TextBlock Text="Settings" Classes="view-heading" Margin="0,0,0,14"/>
 
-            <StackPanel Spacing="10">
-                <TextBlock Text="Profile" FontSize="18" FontWeight="Bold"/>
-                <StackPanel Orientation="Horizontal" Spacing="14" VerticalAlignment="Center">
-                    <Border x:Name="AvatarCircle" Width="52" Height="52" CornerRadius="26"/>
-                    <TextBox x:Name="NameBox" Watermark="Your name" MinWidth="200" MaxLength="24"
-                             LostFocus="OnNameCommitted"/>
-                    <Button Content="Shuffle avatar" Click="OnShuffleAvatar" Padding="14,8"/>
-                </StackPanel>
-                <TextBlock Text="Your name and avatar show on the leaderboard and when you join a live night."
-                           FontSize="13" Opacity="0.65" TextWrapping="Wrap"/>
-            </StackPanel>
+            <ui:FASettingsExpander Header="Profile"
+                                 Description="Your name and avatar show on the leaderboard and when you join a live night."
+                                 IsExpanded="True">
+                <ui:FASettingsExpanderItem Content="Display name">
+                    <ui:FASettingsExpanderItem.Footer>
+                        <TextBox x:Name="NameBox" PlaceholderText="Your name" MinWidth="220" MaxLength="24"
+                                 LostFocus="OnNameCommitted"/>
+                    </ui:FASettingsExpanderItem.Footer>
+                </ui:FASettingsExpanderItem>
+                <ui:FASettingsExpanderItem Content="Avatar">
+                    <ui:FASettingsExpanderItem.Footer>
+                        <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                            <Border x:Name="AvatarCircle" Width="36" Height="36" CornerRadius="18"/>
+                            <Button Content="Shuffle" Click="OnShuffleAvatar" Padding="14,6"/>
+                        </StackPanel>
+                    </ui:FASettingsExpanderItem.Footer>
+                </ui:FASettingsExpanderItem>
+            </ui:FASettingsExpander>
 
-            <StackPanel x:Name="AccountSection" Spacing="8">
-                <TextBlock Text="Account" FontSize="18" FontWeight="Bold"/>
-                <TextBlock x:Name="AccountStatus" FontSize="14" TextWrapping="Wrap"/>
-                <StackPanel Orientation="Horizontal" Spacing="10">
-                    <Button x:Name="SignInButton" Content="Sign in with Google"
-                            Click="OnSignIn" Padding="14,8"/>
-                    <Button x:Name="SignInAppleButton" Content="Sign in with Apple"
-                            Click="OnSignInApple" Padding="14,8"/>
-                    <Button x:Name="SignOutButton" Content="Sign out" IsVisible="False"
-                            Click="OnSignOut" Padding="14,8"/>
-                </StackPanel>
-                <TextBlock Text="Signing in keeps your records, streak and standings on one profile across every device you play on — phone, computer and the web."
-                           FontSize="13" Opacity="0.65" TextWrapping="Wrap"/>
-                <TextBlock x:Name="AccountError" IsVisible="False" FontSize="13"
-                           Foreground="#C4442E" TextWrapping="Wrap"/>
-            </StackPanel>
+            <ui:FASettingsExpander x:Name="AccountSection" Header="Account" IsExpanded="True"
+                                 Description="Signing in keeps your records, streak and standings on one profile across every device you play on — phone, computer and the web.">
+                <ui:FASettingsExpander.Footer>
+                    <TextBlock x:Name="AccountStatus" FontSize="13" Opacity="0.8" TextWrapping="Wrap" MaxWidth="260"/>
+                </ui:FASettingsExpander.Footer>
+                <ui:FASettingsExpanderItem Content="Sign in">
+                    <ui:FASettingsExpanderItem.Footer>
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <Button x:Name="SignInButton" Content="Sign in with Google" Click="OnSignIn" Padding="14,8"/>
+                            <Button x:Name="SignInAppleButton" Content="Sign in with Apple" Click="OnSignInApple" Padding="14,8"/>
+                            <Button x:Name="SignOutButton" Content="Sign out" IsVisible="False" Click="OnSignOut" Padding="14,8"/>
+                        </StackPanel>
+                    </ui:FASettingsExpanderItem.Footer>
+                </ui:FASettingsExpanderItem>
+                <ui:FASettingsExpanderItem IsVisible="False" x:Name="AccountErrorRow">
+                    <ui:FAInfoBar x:Name="AccountError" Severity="Error" IsOpen="True" IsClosable="False"
+                                Margin="0,4"/>
+                </ui:FASettingsExpanderItem>
+            </ui:FASettingsExpander>
 
-            <StackPanel Spacing="8">
-                <TextBlock Text="Tidbits Club" FontSize="18" FontWeight="Bold"/>
-                <Button x:Name="ClubButton" Content="Join Tidbits Club" Click="OnOpenClub"
-                        HorizontalAlignment="Left" Padding="14,8"/>
-                <TextBlock Text="Ranked seasons, a knowledge atlas, a story archive, and expeditions — the whole game stays free."
-                           FontSize="13" Opacity="0.65" TextWrapping="Wrap"/>
-            </StackPanel>
+            <ui:FASettingsExpander Header="Tidbits Club"
+                                 Description="Ranked seasons, a knowledge atlas, a story archive, and expeditions — the whole game stays free.">
+                <ui:FASettingsExpander.Footer>
+                    <Button x:Name="ClubButton" Content="Join Tidbits Club" Click="OnOpenClub" Padding="14,8"/>
+                </ui:FASettingsExpander.Footer>
+            </ui:FASettingsExpander>
 
-            <StackPanel Spacing="6">
-                <TextBlock Text="Gameplay" FontSize="18" FontWeight="Bold"/>
-                <ToggleSwitch x:Name="ReviewToggle" Content="Review questions" IsCheckedChanged="OnReviewToggled"/>
-                <TextBlock Text="Occasionally re-asks questions you've missed, spaced out, so they stick."
-                           FontSize="13" Opacity="0.65" TextWrapping="Wrap"/>
-            </StackPanel>
+            <ui:FASettingsExpander Header="Review questions"
+                                 Description="Occasionally re-asks questions you've missed, spaced out, so they stick.">
+                <ui:FASettingsExpander.Footer>
+                    <ToggleSwitch x:Name="ReviewToggle" IsCheckedChanged="OnReviewToggled"/>
+                </ui:FASettingsExpander.Footer>
+            </ui:FASettingsExpander>
 
-            <StackPanel Spacing="8">
-                <TextBlock Text="Data" FontSize="18" FontWeight="Bold"/>
-                <Button Content="Reset seen questions" Click="OnResetSeen" HorizontalAlignment="Left"/>
-                <Button Content="Reset all records" Click="OnResetRecords" HorizontalAlignment="Left"/>
-                <TextBlock x:Name="DataStatus" IsVisible="False" FontSize="13" Foreground="#1E9E6A"/>
-            </StackPanel>
+            <ui:FASettingsExpander Header="Data"
+                                 Description="Clear what this device remembers about your play.">
+                <ui:FASettingsExpanderItem Content="Seen questions"
+                                         Description="Lets already-answered questions come round again.">
+                    <ui:FASettingsExpanderItem.Footer>
+                        <Button Content="Reset" Click="OnResetSeen" Padding="14,6"/>
+                    </ui:FASettingsExpanderItem.Footer>
+                </ui:FASettingsExpanderItem>
+                <ui:FASettingsExpanderItem Content="All records"
+                                         Description="Deletes scores, streaks and your review list.">
+                    <ui:FASettingsExpanderItem.Footer>
+                        <Button Content="Reset all…" Click="OnResetRecords" Padding="14,6"/>
+                    </ui:FASettingsExpanderItem.Footer>
+                </ui:FASettingsExpanderItem>
+                <ui:FASettingsExpanderItem IsVisible="False" x:Name="DataStatusRow">
+                    <ui:FAInfoBar x:Name="DataStatus" Severity="Success" IsOpen="True" IsClosable="False" Margin="0,4"/>
+                </ui:FASettingsExpanderItem>
+            </ui:FASettingsExpander>
 
             <!-- Parity with macOS/iOS Settings (Decision 048). Shown whether or not the
                  player signed in, because Tidbits provisions a real (anonymous) account for
                  everyone and that account holds their records too. -->
-            <StackPanel Spacing="8">
-                <TextBlock Text="Delete account" FontSize="18" FontWeight="Bold"/>
-                <Button x:Name="DeleteAccountButton" Content="Delete account…" Click="OnDeleteAccount"
-                        HorizontalAlignment="Left"/>
-                <TextBlock Text="Permanently deletes your Tidbits account and all of its data — profile, rating, streak, Daily history, standings and friends."
-                           FontSize="13" Opacity="0.65" TextWrapping="Wrap"/>
-                <TextBlock x:Name="DeleteStatus" IsVisible="False" FontSize="13" TextWrapping="Wrap"/>
-            </StackPanel>
+            <ui:FASettingsExpander Header="Delete account"
+                                 Description="Permanently deletes your Tidbits account and all of its data — profile, rating, streak, Daily history, standings and friends.">
+                <ui:FASettingsExpander.Footer>
+                    <Button x:Name="DeleteAccountButton" Content="Delete account…" Click="OnDeleteAccount" Padding="14,8"/>
+                </ui:FASettingsExpander.Footer>
+                <ui:FASettingsExpanderItem IsVisible="False" x:Name="DeleteStatusRow">
+                    <ui:FAInfoBar x:Name="DeleteStatus" IsOpen="True" IsClosable="False" Margin="0,4"/>
+                </ui:FASettingsExpanderItem>
+            </ui:FASettingsExpander>
 
-            <StackPanel Spacing="6">
-                <TextBlock Text="About" FontSize="18" FontWeight="Bold"/>
-                <TextBlock x:Name="VersionText" FontSize="14"/>
-                <TextBlock Text="Content from Wikipedia, available under CC BY-SA. Tidbits is a learning game — every question is a door to learn more."
-                           FontSize="13" Opacity="0.65" TextWrapping="Wrap"/>
-            </StackPanel>
+            <ui:FASettingsExpander Header="About"
+                                 Description="Content from Wikipedia, available under CC BY-SA. Tidbits is a learning game — every question is a door to learn more.">
+                <ui:FASettingsExpander.Footer>
+                    <TextBlock x:Name="VersionText" FontSize="13" Opacity="0.8"/>
+                </ui:FASettingsExpander.Footer>
+            </ui:FASettingsExpander>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

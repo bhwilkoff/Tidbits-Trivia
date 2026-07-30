@@ -207,7 +207,16 @@ hard-coded `#FF5C35` beside it stays saturated — two adjacent CTAs disagreeing
 `Button.accent` pins the brand token (+ white) in both themes; Fluent's derived
 accent still drives focus rings and selection, which IS correct there. And on a
 coral surface the accent button is invisible — use the inverse treatment (white
-chip, coral label), as the Daily hero row does.
+chip, coral label), as the Daily hero row does. This applies to EVERY accent
+surface, not just buttons — a switched-on `ToggleSwitch` washed out the same
+way until it was pinned too.
+
+5.6 **Settings is `FASettingsExpander` rows**, not bold `TextBlock` headers over
+`StackPanel`s — Header + Description + a Footer control per row is the Windows 11
+Settings shape. Status messages use `FAInfoBar`. Any row carrying an ACCOUNT
+affordance ships `IsExpanded="True"`: sign-in hidden behind a chevron reads as
+"this app has no account", which is exactly what the iPhone got wrong.
+(FluentAvalonia 3 prefixes these `FA…`; the unprefixed WinUI names do not resolve.)
 
 6.3a **The projector must never hijack the only display.** Auto-
 fullscreen is correct ONLY when a non-primary `Screen` exists. With a

@@ -261,9 +261,17 @@ is the repeatable Pass A.
 - [x] A.5 Versus **Rematch** — FALSE gap. It rides `GameView`'s "Play again"
   (`player.PlayAgainRequested += () => StartVersus(bot)`). Both now recorded in
   the audit tool's KNOWN_SYNONYMS so they stop being re-flagged.
-- [ ] E.1 Settings is a hand-rolled `StackPanel` stack with bold `TextBlock`
-  headers rather than FluentAvalonia `SettingsExpander` rows — works, but is not
-  the native Windows settings idiom (§5, §7).
+- [x] E.1 Settings now uses **`FASettingsExpander` rows** (Header + Description +
+  Footer control), the Windows 11 Settings idiom, instead of bold `TextBlock`
+  headers over `StackPanel`s. Status messages ride `FAInfoBar` rather than
+  coloured `TextBlock`s. **Account is `IsExpanded="True"`** on purpose: burying
+  sign-in behind a chevron is the same discoverability mistake the iPhone had.
+  NOTE the v3 API is FA-prefixed (`FASettingsExpander`/`FASettingsExpanderItem`/
+  `FAInfoBar`) — the unprefixed WinUI names do not resolve.
+- [x] D.3 **ToggleSwitch washed out in dark mode** — found by giving Settings its
+  own both-themes render. Same §5.5 defect as `Button.accent`: a switched-on
+  toggle is an accent surface, so FluentAvalonia's derived accent lightened it to
+  salmon while every coral beside it stayed saturated. Pinned.
 - [x] G.2 **No `AutomationProperties.Name` anywhere** — SHIPPED 1.6.64. Named
   all eight icon-only controls (▲/▼ reorder in the Live builder and the Ordering
   answer shape, ✕ delete on rounds/saved events/saved sets, × on SFX pads).

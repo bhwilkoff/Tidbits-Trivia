@@ -58,6 +58,13 @@
             <Setter Property="Background" Value="#66FF5C35"/>
             <Setter Property="Foreground" Value="#99FFFFFF"/>
         </Style>
+        <!-- Same §5.5 rule, different control: a switched-on ToggleSwitch is an accent
+             surface too, so it washed out to salmon in dark theme while every coral
+             beside it stayed saturated. Pin the "on" fill in both themes. -->
+        <Style Selector="ToggleSwitch:checked /template/ Border#SwitchKnobBounds">
+            <Setter Property="Background" Value="#FF5C35"/>
+            <Setter Property="BorderBrush" Value="#FF5C35"/>
+        </Style>
 
         <Style Selector="Button.chunky">
             <Setter Property="Padding" Value="24,13"/>

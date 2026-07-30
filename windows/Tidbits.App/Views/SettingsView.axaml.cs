@@ -81,8 +81,8 @@ public partial class SettingsView : UserControl
             SignOutButton.IsVisible = false;
         }
 
-        AccountError.IsVisible = a.AuthError is { Length: > 0 };
-        AccountError.Text = a.AuthError ?? "";
+        AccountErrorRow.IsVisible = a.AuthError is { Length: > 0 };
+        AccountError.Message = a.AuthError ?? "";
     }
 
     private async void OnSignIn(object? sender, RoutedEventArgs e)
@@ -193,12 +193,11 @@ public partial class SettingsView : UserControl
             GameData.Shared.Value.Records.ResetAll();
             GameData.Shared.Value.Provider.ResetSeen();
         }
-        DeleteStatus.IsVisible = true;
-        DeleteStatus.Text = ok
+        DeleteStatusRow.IsVisible = true;
+        DeleteStatus.Severity = ok ? FAInfoBarSeverity.Success : FAInfoBarSeverity.Error;
+        DeleteStatus.Message = ok
             ? "Your account was deleted. This PC is signed out and starting fresh."
             : account.DeleteError ?? "Couldn't delete your account.";
-        DeleteStatus.Foreground = new Avalonia.Media.SolidColorBrush(
-            Avalonia.Media.Color.Parse(ok ? "#1E9E6A" : "#D13438"));
         DeleteAccountButton.IsEnabled = true;
         DeleteAccountButton.Content = "Delete account…";
         RefreshAccount();
@@ -226,7 +225,7 @@ public partial class SettingsView : UserControl
 
     private void ShowStatus(string text)
     {
-        DataStatus.Text = text;
-        DataStatus.IsVisible = true;
+        DataStatus.Message = text;
+        DataStatusRow.IsVisible = true;
     }
 }

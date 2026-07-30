@@ -38,6 +38,8 @@ KNOWN_SYNONYMS = {
     "+30s": "+30",
     "reset all records": "Reset All Records",
     "host live →": "Host this event",
+    "rematch": "Play again",          # Versus rematch rides GameView's Play again
+    "resolve tie": "Break tie",       # one dialog on Windows, not two verbs
 }
 
 # Deliberately absent — Apple frameworks with no Windows twin (see WINDOWS-PARITY

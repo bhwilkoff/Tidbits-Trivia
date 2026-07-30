@@ -2,6 +2,7 @@ using System;
 using System.ComponentModel;
 using System.Linq;
 using Avalonia;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
@@ -213,6 +214,8 @@ public partial class GameView : UserControl
             };
             var up = new Button { Content = "▲", Margin = new Thickness(6, 0, 0, 0), Padding = new Thickness(12, 8), IsEnabled = idx > 0 };
             var down = new Button { Content = "▼", Margin = new Thickness(6, 0, 0, 0), Padding = new Thickness(12, 8), IsEnabled = idx < order.Count - 1 };
+            AutomationProperties.SetName(up, $"Move {order[i]} up");
+            AutomationProperties.SetName(down, $"Move {order[i]} down");
             up.Click += (_, _) => engine.MoveOrderItem(idx, up: true);
             down.Click += (_, _) => engine.MoveOrderItem(idx, up: false);
             Grid.SetColumn(up, 1); Grid.SetColumn(down, 2);

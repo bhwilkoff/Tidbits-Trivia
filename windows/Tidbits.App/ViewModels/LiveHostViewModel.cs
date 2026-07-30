@@ -129,6 +129,7 @@ public sealed class LiveHostViewModel : ObservableObject
     public void ToggleHidden(string uid) => Host.ToggleHidden(uid);
     public bool IsHidden(string uid) => Host.IsHidden(uid);
     public Task MergeTeams(string intoUid, string fromUid) => Host.MergeTeams(intoUid, fromUid);
+    public Task RemoveTeam(string uid) => Host.RemoveTeam(uid);   // drop a duplicate/departed team (macOS parity)
     public void AddPaperTeam(string name) => Host.AddPaperTeam(name); // in-room paper team (3.29)
 
     // Free-text review (3.21) — accept a borderline typed answer.

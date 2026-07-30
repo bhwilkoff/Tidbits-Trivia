@@ -10,6 +10,7 @@ using Xunit;
 
 namespace Tidbits.HeadlessTests;
 
+[Collection("EnvSensitive")]
 public class DomainDrillTest
 {
     [AvaloniaFact]

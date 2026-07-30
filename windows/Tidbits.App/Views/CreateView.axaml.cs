@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
@@ -110,6 +111,7 @@ public partial class CreateView : UserControl
             Grid.SetColumn(play, 1);
             grid.Children.Add(play);
             var del = new Button { Content = "✕", Padding = new Avalonia.Thickness(10, 7), Margin = new Avalonia.Thickness(8, 0, 0, 0) };
+            AutomationProperties.SetName(del, $"Delete saved set {set.Label}");
             del.Click += (_, _) => { GameData.Shared.Value.SavedSets.Remove(set.Id); BuildSaved(); };
             Grid.SetColumn(del, 2);
             grid.Children.Add(del);

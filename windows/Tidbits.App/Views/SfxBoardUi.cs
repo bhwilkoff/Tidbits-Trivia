@@ -39,6 +39,7 @@ public static class SfxBoardUi
             play.Click += (_, _) => onPlay?.Invoke(pad.Path);
             row.Children.Add(play);
             var del = new Button { Content = "×", Padding = new Avalonia.Thickness(8, 10), Background = Brushes.Transparent, Opacity = 0.6 };
+            Avalonia.Automation.AutomationProperties.SetName(del, $"Remove sound {pad.Label}");
             del.Click += (_, _) => onRemove?.Invoke(pad.Path);
             row.Children.Add(del);
             pill.Child = row;

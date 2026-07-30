@@ -87,9 +87,9 @@ public sealed class LiveNightHost : ObservableObject
     {
         get
         {
-            var net = Net.JoinedList();
-            if (_paperScores.Count == 0) return net;
-            var paper = _paperScores.Select(kv => new LiveHostNet.Joined(kv.Key, _paperNames[kv.Key], kv.Value));
+            var net = Net.JoinedList().Where(j => !_removed.Contains(j.Id));
+            var paper = _paperScores.Where(kv => !_removed.Contains(kv.Key))
+                .Select(kv => new LiveHostNet.Joined(kv.Key, _paperNames[kv.Key], kv.Value));
             return net.Concat(paper)
                 .OrderByDescending(j => j.Score).ThenBy(j => j.Name, StringComparer.Ordinal).ToList();
         }
@@ -168,6 +168,24 @@ public sealed class LiveNightHost : ObservableObject
         _hidden.Add(fromUid);
         Notify();
     }
+
+    /// Drop a team from the night entirely (macOS `session.removeTeam`) — the fix for a
+    /// duplicate join or a team that walked out. Zeroes the score and hides the row, which is
+    /// the same shape [MergeTeams] uses: the RTDB node is SHARED with that player's client, so
+    /// deleting it outright would strand them mid-night rather than simply un-scoring them.
+    public async Task RemoveTeam(string uid)
+    {
+        if (string.IsNullOrEmpty(uid)) return;
+        await Net.SetScore(uid, 0);
+        _removed.Add(uid);
+        _hidden.Add(uid);
+        Notify();
+    }
+
+    private readonly HashSet<string> _removed = new();
+
+    /// Teams the host dropped — excluded from standings, the projector and the CSV export.
+    public bool IsRemoved(string uid) => _removed.Contains(uid);
 
     /// Standings with hidden team names replaced by "(hidden)" — projector-safe.
     public IReadOnlyList<LiveHostNet.Joined> ModeratedStandings =>

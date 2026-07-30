@@ -242,14 +242,24 @@ is the repeatable Pass A.
 - [ ] A.3 Live builder: **Video round**, **Answer sheet (teams)**, **Question
   pack (host)** — the printable host materials + the video round type. Audio
   rounds play from the cockpit but cannot be authored in the builder.
-- [ ] A.4 Live host: **Remove team**, **Resolve tie** (Windows has "Break tie";
-  the resolve step is not exposed).
-- [ ] A.5 Versus: **Rematch**.
+- [x] A.4 Live host: **Remove team** — SHIPPED 1.6.64. `LiveNightHost.RemoveTeam`
+  zeroes the score and drops the team from standings/projector/export, matching
+  `MergeTeams`' shape: the RTDB node is SHARED with that player's client, so
+  deleting it outright would strand them mid-night rather than un-score them.
+  Cockpit dialog defaults to Cancel and says plainly that it does not kick them.
+  *Resolve tie* was a FALSE gap — Windows does it in one "Break tie" dialog
+  rather than macOS's two verbs.
+- [x] A.5 Versus **Rematch** — FALSE gap. It rides `GameView`'s "Play again"
+  (`player.PlayAgainRequested += () => StartVersus(bot)`). Both now recorded in
+  the audit tool's KNOWN_SYNONYMS so they stop being re-flagged.
 - [ ] E.1 Settings is a hand-rolled `StackPanel` stack with bold `TextBlock`
   headers rather than FluentAvalonia `SettingsExpander` rows — works, but is not
   the native Windows settings idiom (§5, §7).
-- [ ] G.2 **No `AutomationProperties.Name` anywhere** — Narrator reads nothing
-  for icon-only/custom-drawn controls.
+- [x] G.2 **No `AutomationProperties.Name` anywhere** — SHIPPED 1.6.64. Named
+  all eight icon-only controls (▲/▼ reorder in the Live builder and the Ordering
+  answer shape, ✕ delete on rounds/saved events/saved sets, × on SFX pads).
+  `AccessibleNamesTest` is now a source-scan gate: write `Content = "✕"` without
+  a name nearby and the build fails. It found two the manual grep missed.
 - [ ] F.* Window model (projector single/dual monitor, hot-plug, taskbar
   progress) — **UNVERIFIABLE from this Mac**; headless has no real `Screens`.
   Owner verification on real hardware is the only check.

@@ -13,6 +13,7 @@ namespace Tidbits.HeadlessTests;
 /// `SelectionChanged`. FANavigationView can settle on the first item without raising the
 /// event, which shipped a Windows build whose whole right-hand side stayed blank until the
 /// user clicked the sidebar. Assert the landing content exists with NO interaction at all.
+[Collection("EnvSensitive")]
 public class ShellLandingTest
 {
     [AvaloniaFact]

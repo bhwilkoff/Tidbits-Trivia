@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
@@ -92,14 +93,17 @@ public partial class LiveView : UserControl
                 : $"{idx + 1}. {r.Kind.Title()} · {r.Count} questions";
             row.Children.Add(new TextBlock { Text = label, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center, TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis });
             var up = new Button { Content = "▲", Padding = new Avalonia.Thickness(7, 2), FontSize = 11, IsEnabled = idx > 0 };
+            AutomationProperties.SetName(up, $"Move round {idx + 1} up");
             up.Click += (_, _) => MoveRound(idx, -1);
             Grid.SetColumn(up, 1);
             row.Children.Add(up);
             var down = new Button { Content = "▼", Padding = new Avalonia.Thickness(7, 2), FontSize = 11, IsEnabled = idx < _rounds.Count - 1, Margin = new Avalonia.Thickness(4, 0, 0, 0) };
+            AutomationProperties.SetName(down, $"Move round {idx + 1} down");
             down.Click += (_, _) => MoveRound(idx, +1);
             Grid.SetColumn(down, 2);
             row.Children.Add(down);
             var del = new Button { Content = "✕", Padding = new Avalonia.Thickness(8, 2), FontSize = 12, Margin = new Avalonia.Thickness(4, 0, 0, 0) };
+            AutomationProperties.SetName(del, $"Remove round {idx + 1}");
             del.Click += (_, _) => { _rounds.RemoveAt(idx); if (idx < _notes.Count) _notes.RemoveAt(idx); RebuildBuilderRounds(); };
             Grid.SetColumn(del, 3);
             row.Children.Add(del);
@@ -219,6 +223,7 @@ public partial class LiveView : UserControl
             Grid.SetColumn(host, 1);
             grid.Children.Add(host);
             var del = new Button { Content = "✕", Padding = new Avalonia.Thickness(10, 7), Margin = new Avalonia.Thickness(8, 0, 0, 0) };
+            AutomationProperties.SetName(del, $"Delete saved event {e.Name}");
             del.Click += (_, _) => { GameData.Shared.Value.LiveEvents.Remove(e.Id); BuildSavedEvents(); };
             Grid.SetColumn(del, 2);
             grid.Children.Add(del);

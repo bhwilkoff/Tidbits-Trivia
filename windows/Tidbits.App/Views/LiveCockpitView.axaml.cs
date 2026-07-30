@@ -275,6 +275,37 @@ public partial class LiveCockpitView : UserControl
             await vm.BreakTie(w.Id);
     }
 
+    /// Drop a team from the night (macOS parity — the per-team "Remove team"). Destructive and
+    /// mid-night, so it names the team in the confirm and defaults to Cancel.
+    private async void OnRemoveTeam(object? sender, RoutedEventArgs e)
+    {
+        if (Vm is not { } vm || vm.Host.Standings.Count == 0) return;
+        var teams = new System.Collections.Generic.List<Tidbits.Core.Networking.LiveHostNet.Joined>(vm.Host.Standings);
+        var pick = new ComboBox
+        {
+            ItemsSource = teams, SelectedIndex = 0, MinWidth = 260,
+            ItemTemplate = new Avalonia.Controls.Templates.FuncDataTemplate<Tidbits.Core.Networking.LiveHostNet.Joined>(
+                (t, _) => new TextBlock { Text = $"{t.Name} ({t.Score})" }),
+        };
+        var panel = new StackPanel { Spacing = 8, MinWidth = 300 };
+        panel.Children.Add(new TextBlock
+        {
+            Text = "Removes the team from the standings, the big screen and the export. "
+                 + "Their phone stays connected — this un-scores them, it doesn't kick them.",
+            TextWrapping = TextWrapping.Wrap, Opacity = 0.75,
+        });
+        panel.Children.Add(pick);
+        var dlg = new FAContentDialog
+        {
+            Title = "Remove a team", Content = panel,
+            PrimaryButtonText = "Remove team", CloseButtonText = "Cancel",
+            DefaultButton = FAContentDialogButton.Close,
+        };
+        if (await dlg.ShowAsync() == FAContentDialogResult.Primary
+            && pick.SelectedItem is Tidbits.Core.Networking.LiveHostNet.Joined t)
+            await vm.RemoveTeam(t.Id);
+    }
+
     /// Add an in-room paper team to the standings (host scores it with −/+).
     private async void OnAddPaperTeam(object? sender, RoutedEventArgs e)
     {

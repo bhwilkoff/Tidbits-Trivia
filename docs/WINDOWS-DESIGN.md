@@ -200,6 +200,21 @@ projectors connect/disconnect mid-night; on display change, re-query
 never vanish off-screen. Remember the chosen monitor. All big-screen
 text scales by viewport fraction (§5.3).
 
+6.3a **The projector must never hijack the only display.** Auto-
+fullscreen is correct ONLY when a non-primary `Screen` exists. With a
+single monitor, open a normal **decorated, resizable** window the host
+can drag onto the projector themselves — a chromeless fullscreen
+window on the primary display covers the cockpit with no title bar,
+no taskbar entry, and no way out. Always `ShowInTaskbar`, and always
+bind **Esc to leave fullscreen** so the big screen is never a trap.
+
+6.3b **Cockpit control rows WRAP.** The transport (back/reveal/next/
+skip/lock) and night-management (tie-break/merge/export/print/
+projector/end) groups are a dozen buttons; in a non-wrapping
+`StackPanel` they clip or collide the moment the window is anything
+but maximised. Use `WrapPanel` per group so they reflow onto another
+line. A control the host cannot reach mid-night is a broken night.
+
 6.4 **Join** is unchanged for players (phones hit
 `tidbitstrivia.com/live/CODE`); the cockpit shows the join QR + code.
 Windows also **registers `tidbitstrivia://` + the https join link** so
@@ -224,7 +239,11 @@ A Records inline dump instead of the bounded dashboard (§4.1). 7.7
 Full-width button next to another control in a row (§5.4). 7.8
 Hand-added shadow padding at a card call site (§5.2). 7.9 Fixed-pt
 big-screen text (§5.3). 7.10 Projector window that vanishes when the
-display is unplugged (§6.3). 7.11 Win32 interop leaking into
+display is unplugged (§6.3), or goes fullscreen-chromeless on a
+single-monitor machine (§6.3a). 7.13 A non-wrapping cockpit control
+row (§6.3b). 7.14 A detail pane that stays blank until the user
+clicks the nav — the landing surface renders on load, never as a
+side effect of `SelectionChanged` (§2.1). 7.11 Win32 interop leaking into
 `Tidbits.Core` (§0.2). 7.12 Shipping "done" on the macOS Avalonia head
 without a headless PNG + `windows-latest` CI check (§0.5, §8).
 

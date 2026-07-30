@@ -11,12 +11,15 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
-        // Select the first item once loaded (DataContext is set by then, so the
-        // SelectionChanged handler can resolve the section).
         Loaded += (_, _) =>
         {
             if (Nav.SelectedItem is null && Nav.MenuItems.Count > 0)
                 Nav.SelectedItem = Nav.MenuItems[0];
+            // Render the landing surface DIRECTLY rather than waiting for SelectionChanged.
+            // FANavigationView can settle on the first item on its own without ever raising
+            // the event, which left the detail pane blank until the user clicked the sidebar.
+            if (ContentHost.Content is null)
+                Navigate((Nav.SelectedItem as FANavigationViewItem)?.Tag as string ?? "play");
             // Deep-link inbox: route a launch URL once shown (external entry points
             // never touch the nav directly — they land here and the root consumes them).
             var target = Tidbits.Core.Networking.DeepLink.Parse(Program.LaunchUrl);
@@ -34,13 +37,16 @@ public partial class MainWindow : Window
 
     private void OnNavSelectionChanged(object? sender, FANavigationViewSelectionChangedEventArgs e)
     {
-        if (DataContext is not MainWindowViewModel vm)
-            return;
-
         string tag = e.IsSettingsSelected
             ? "settings"
             : (e.SelectedItem as FANavigationViewItem)?.Tag as string ?? "play";
+        Navigate(tag);
+    }
 
+    /// Swap the detail pane. Only the section-frame fallback needs the view model, so a
+    /// missing DataContext must never cost the app its whole right-hand side.
+    private void Navigate(string tag)
+    {
         // Play + Records are real surfaces now; the other tabs are still frames.
         if (tag == "play")
         {
@@ -69,7 +75,7 @@ public partial class MainWindow : Window
         {
             ContentHost.Content = new LiveView();
         }
-        else if (vm.Sections.TryGetValue(tag, out var section))
+        else if (DataContext is MainWindowViewModel vm && vm.Sections.TryGetValue(tag, out var section))
         {
             ContentHost.Content = new SectionFrameView { DataContext = section };
         }

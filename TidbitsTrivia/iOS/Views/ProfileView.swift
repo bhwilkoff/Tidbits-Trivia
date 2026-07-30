@@ -208,19 +208,32 @@ struct ProfileView: View {
                 Text("Sign in so your records follow you to any device.")
                     .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft).multilineTextAlignment(.center)
                 SignInWithAppleButton(.signIn) { request in
+                    identity.reportAuthError(nil)
                     appleNonce = AppleNonce.random()
                     request.requestedScopes = [.email, .fullName]
                     request.nonce = AppleNonce.sha256(appleNonce)
                 } onCompletion: { result in
-                    if case .success(let auth) = result,
-                       let cred = auth.credential as? ASAuthorizationAppleIDCredential,
-                       let data = cred.identityToken, let token = String(data: data, encoding: .utf8) {
+                    // Never drop a failure on the floor: a silent onCompletion is exactly what
+                    // made tvOS sign-in look broken to App Review.
+                    switch result {
+                    case .success(let auth):
+                        guard let cred = auth.credential as? ASAuthorizationAppleIDCredential,
+                              let data = cred.identityToken, let token = String(data: data, encoding: .utf8) else {
+                            identity.reportAuthError("Apple didn't return an identity token — please try again."); return
+                        }
                         let name = [cred.fullName?.givenName, cred.fullName?.familyName].compactMap { $0 }.joined(separator: " ")
                         Task { await identity.linkApple(idToken: token, rawNonce: appleNonce, appleName: name.isEmpty ? nil : name, appleEmail: cred.email) }
+                    case .failure(let err):
+                        if (err as? ASAuthorizationError)?.code == .canceled { return }
+                        identity.reportAuthError("Apple sign-in failed: \((err as NSError).localizedDescription)")
                     }
                 }
                 .signInWithAppleButtonStyle(.black)
                 .frame(height: 48)
+                if let e = identity.authError {
+                    Text(e).font(Tidbits.TypeRamp.l5).foregroundStyle(.red)
+                        .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
+                }
             }
             .padding(.top, 10)
         }

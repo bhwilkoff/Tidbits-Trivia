@@ -192,6 +192,28 @@ Still open, with HONEST reasons:
 - [x] 3.51 Leaderboard read + defendable titles — shipped as 2.25 (LeaderboardApi + a top-level Leaderboard nav → season overall + per-venue, CHAMPION on #1, signed-in player's row highlighted). Now paired with the 3.50 write side = the complete moat
 - [x] 3.52 Social graph — `FriendStore` (Core, JSON, dedup-by-uid, private/local) + a "Friends" section leading the Leaderboard (added people ranked by public standing, "—" if unranked) + the join-wrap "Add the people you played with" list (co-players captured at night-end → one-tap Add, flips to "Added ✓"). Store + friends-section + VM add/isFriend tests; PNG
 
+## Owner parity report 2026-07-30 (all four fixed, 1.6.62)
+- [x] P.1 **Shell landing was blank** — the detail pane only rendered as a side
+  effect of `SelectionChanged`, and FANavigationView settles on the first item
+  without raising it, so the whole right-hand side stayed empty until the user
+  clicked the sidebar. `MainWindow` now renders the landing surface directly on
+  `Loaded`, and only the section-frame fallback needs the view model. Locked in
+  by `ShellLandingTest` (asserts `ContentHost.Content` is a `PlayView` with NO
+  interaction) — WINDOWS-DESIGN §7.14.
+- [x] P.2 **Play home showed 14 Dailies** — every other platform shows today's
+  Tidbit plus an archive link. `BuildDaily` now renders TODAY only and puts the
+  other 13 days behind "Previous Tidbits" (`DailyArchiveDialog`, sharing one row
+  builder in `DailyUi`). Trivia Night + Pass & Play are back above the fold.
+- [x] P.3 **Cockpit buttons did not flow** — 13 controls in two non-wrapping
+  `StackPanel`s clipped at any non-maximised width. Both groups are `WrapPanel`s
+  now; PNG-verified reflowing at 720/1000/1400 — WINDOWS-DESIGN §6.3b.
+- [x] P.4 **Projector did not open as a separate window** — it went chromeless
+  FULLSCREEN on the primary display when no second monitor existed, burying the
+  cockpit with no title bar, no taskbar entry, and no way out. Auto-fullscreen is
+  now gated on a real non-primary `Screen`; otherwise it opens as a normal
+  decorated, resizable, taskbar-visible window. Esc always leaves fullscreen —
+  WINDOWS-DESIGN §6.3a.
+
 ## Deferred (⏳/🔒 — not built on Mac either; carry as honest gaps)
 Named show-formats (Jeopardy/Feud/Wheel), multi-venue org hierarchy,
 OBS/streaming out, analytics dashboard, venue directory, paywall/pricing.

@@ -244,19 +244,17 @@ same change set — that's what keeps "fully supported channel" honest.
 
 | Feature | Web | iOS | tvOS | Android | Notes |
 |---|---|---|---|---|---|
-> **Audit 2026-06-30: this entire section was fictional.** A code grep
-> found NO auth/account/biometric/sync on web, iOS, tvOS, OR Android —
-> no `ASAuthorization`/SiwA, no Credential Manager, no CloudKit, no
-> Face ID / BiometricPrompt, no account or deletion path anywhere. The
-> only "identity" that exists is Game Center (`GKLocalPlayer`, Apple).
-> Cells corrected to 🔮. This is a whole-app future subsystem, not an
-> Android-specific gap.
+> **Audit 2026-06-30: this entire section was fictional** (no SiwA, no
+> Credential Manager, no account or deletion path anywhere; the only
+> "identity" was Game Center). **Superseded 2026-07-30** — the portable
+> identity spine shipped, and with it real Sign in with Apple and real
+> account deletion. Cells below are the CURRENT state.
 
-| Sign in with Apple | 🔮 | 🔮 | 🔮 | 🚫 | Not built on any platform (no SiwA code). Gates only sync, also unbuilt. Android would use Google instead |
-| Sign in with Google | 🔮 | 🔮 | 🚫 | 🔮 | Was falsely ✅ on Android — no Credential Manager code exists. Future, when sync ships |
-| Email/password | 🔮 | 🔮 | 🚫 | 🔮 | No auth backend yet. tvOS would stay SiwA-only (password entry on a remote is hostile) |
-| Biometric gate for sensitive actions | n/a | 🔮 | n/a | 🔮 | Was falsely ✅ — no Face ID / BiometricPrompt code on either platform. Nothing sensitive to gate until accounts exist |
-| Account deletion | 🔮 | 🔮 | 🔮 | 🔮 | Store-review requirement that activates **only once sign-in exists**; no account system today |
+| Sign in with Apple | ✅ | ✅ | ✅ | 🚫 | Shipped. **iOS/macOS/tvOS surface it in Settings** — iOS put it only inside Profile until 2026-07-30, so a phone showed a Game Center section and no way to sign in (owner-reported). Android uses Google instead |
+| Sign in with Google | 🔮 | 🚫 | 🚫 | 🔮 | Not built. Apple platforms stay SiwA-only |
+| Email/password | 🚫 | 🚫 | 🚫 | 🚫 | Deliberately not offered — federated sign-in only (password entry on a TV remote is hostile, and there is no password to leak) |
+| Biometric gate for sensitive actions | n/a | 🔮 | n/a | 🔮 | Still unbuilt; nothing gated on it |
+| Account deletion | ✅ | ✅ | ✅ | ✅ | App Store 5.1.1(v). In-app, deletes the real (even anonymous) account. iOS also exposes it in **Settings → Delete account** as of 2026-07-30, not only inside Profile (Decision 048) |
 
 Sign-in is **optional and would gate only sync** — every browse/use verb
 works signed-out on every platform (see `per-ecosystem-sync-islands`).

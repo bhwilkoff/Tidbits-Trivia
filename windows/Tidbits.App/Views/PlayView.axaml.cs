@@ -466,57 +466,21 @@ public partial class PlayView : UserControl
         var log = GameData.Shared.Value.Daily;
         var today = QuestionProvider.DayKey();
 
-        for (int i = 0; i < 14; i++)
+        // TODAY only. The other 13 days live behind "Previous Tidbits" — rendering all
+        // fourteen inline made the home read as a wall of Dailies and pushed Quick Play
+        // off the fold, which no other platform does.
+        DailyPanel.Children.Add(DailyUi.BuildRow(DateTime.Now.Date, today, log, StartDaily));
+
+        var archive = new Button
         {
-            var date = DateTime.Now.Date.AddDays(-i);
-            var day = QuestionProvider.DayKey(date);
-            bool isToday = day == today;
-            var result = log.Result(day);
-            var label = isToday ? "Today" : date.ToString("ddd, MMM d");
-
-            var row = new Border
-            {
-                Background = isToday && result is null ? new SolidColorBrush(Color.Parse("#FF5C35")) : null,
-                CornerRadius = new Avalonia.CornerRadius(10),
-                BorderBrush = result is not null || !isToday ? new SolidColorBrush(Color.Parse("#22808080")) : null,
-                BorderThickness = new Avalonia.Thickness(isToday && result is null ? 0 : 1),
-                Padding = new Avalonia.Thickness(16, 12), Margin = new Avalonia.Thickness(0, 0, 0, 6),
-            };
-            var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
-            bool heroToday = isToday && result is null;
-            var labelBlock = new TextBlock
-            {
-                Text = label, FontWeight = Avalonia.Media.FontWeight.SemiBold, VerticalAlignment = VerticalAlignment.Center,
-            };
-            if (heroToday) labelBlock.Foreground = Brushes.White; // else inherit the themed default
-            grid.Children.Add(labelBlock);
-
-            if (result is not null)
-            {
-                var done = new TextBlock
-                {
-                    Text = $"{result.Correct}/{result.Total} · {result.Score} pts", VerticalAlignment = VerticalAlignment.Center,
-                    Opacity = 0.75, FontSize = 13,
-                };
-                Grid.SetColumn(done, 1);
-                grid.Children.Add(done);
-            }
-            else
-            {
-                var d = day;
-                var play = new Button
-                {
-                    Content = isToday ? "Play today's Tidbit" : "Play",
-                    Padding = new Avalonia.Thickness(16, 8),
-                    Classes = { "accent" },
-                };
-                play.Click += (_, _) => StartDaily(d);
-                Grid.SetColumn(play, 1);
-                grid.Children.Add(play);
-            }
-            row.Child = grid;
-            DailyPanel.Children.Add(row);
-        }
+            Content = "Previous Tidbits",
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Padding = new Avalonia.Thickness(0),
+            Background = Brushes.Transparent,
+            BorderThickness = new Avalonia.Thickness(0),
+        };
+        archive.Click += (_, _) => _ = DailyArchiveDialog.ShowAsync(log, StartDaily);
+        DailyPanel.Children.Add(archive);
     }
 
     private async void StartDaily(string day)

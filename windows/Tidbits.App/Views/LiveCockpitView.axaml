@@ -68,41 +68,43 @@
             </StackPanel>
         </Grid>
 
-        <!-- Timer row: live countdown + start/extend/clear -->
-        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8" Margin="0,0,0,10" VerticalAlignment="Center">
+        <!-- Timer row: live countdown + start/extend/clear. WrapPanel per §6.3b — these
+             clip the moment the window is anything but maximised. -->
+        <WrapPanel Grid.Row="2" Margin="0,0,0,4" VerticalAlignment="Center">
             <TextBlock x:Name="CountdownText" FontSize="20" FontWeight="Black" Foreground="#FF5C35"
-                       MinWidth="52" VerticalAlignment="Center"/>
-            <Button Content="30s" Click="OnTimer30" Padding="12,7"/>
-            <Button Content="60s" Click="OnTimer60" Padding="12,7"/>
-            <Button Content="+15" Click="OnAdd15" Padding="12,7"/>
-            <Button Content="+30" Click="OnAdd30" Padding="12,7"/>
-            <Button Content="Clear" Click="OnClearTimer" Padding="12,7"/>
+                       MinWidth="52" VerticalAlignment="Center" Margin="0,0,8,6"/>
+            <Button Content="30s" Click="OnTimer30" Padding="12,7" Margin="0,0,8,6"/>
+            <Button Content="60s" Click="OnTimer60" Padding="12,7" Margin="0,0,8,6"/>
+            <Button Content="+15" Click="OnAdd15" Padding="12,7" Margin="0,0,8,6"/>
+            <Button Content="+30" Click="OnAdd30" Padding="12,7" Margin="0,0,8,6"/>
+            <Button Content="Clear" Click="OnClearTimer" Padding="12,7" Margin="0,0,8,6"/>
             <Border IsVisible="{Binding IsLocked}" Background="#FF5C35" CornerRadius="6" Padding="10,4"
-                    VerticalAlignment="Center">
+                    VerticalAlignment="Center" Margin="0,0,8,6">
                 <TextBlock Text="LOCKED" Foreground="White" FontWeight="Black" FontSize="12"/>
             </Border>
-        </StackPanel>
+        </WrapPanel>
 
-        <!-- Controls -->
-        <Grid Grid.Row="3" ColumnDefinitions="*,Auto">
-            <StackPanel Orientation="Horizontal" Spacing="10">
-                <Button Content="‹ Back" Click="OnBack" Padding="14,10" IsEnabled="{Binding CanGoBack}"/>
-                <Button Content="Reveal" Click="OnReveal" Classes="accent" Padding="20,10" FontWeight="Bold"/>
-                <Button Content="Next" Click="OnNext" Padding="20,10"/>
-                <Button Content="Skip ›" Click="OnSkip" Padding="14,10"/>
-                <Button Content="Lock" Click="OnLock" Padding="20,10"/>
-                <ToggleButton Content="Standings on big screen" IsChecked="{Binding HoldStandings, Mode=OneWay}" Click="OnToggleHold" Padding="14,10"/>
-                <Button Content="🔊 Audio" Click="OnAudio" Padding="14,10"/>
-            </StackPanel>
-            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
+        <!-- Controls: transport, then night management. Two WrapPanels rather than one row
+             so the groups stay legible while each reflows independently (§6.3b). -->
+        <StackPanel Grid.Row="3" Spacing="2">
+            <WrapPanel>
+                <Button Content="‹ Back" Click="OnBack" Padding="14,10" IsEnabled="{Binding CanGoBack}" Margin="0,0,10,6"/>
+                <Button Content="Reveal" Click="OnReveal" Classes="accent" Padding="20,10" FontWeight="Bold" Margin="0,0,10,6"/>
+                <Button Content="Next" Click="OnNext" Padding="20,10" Margin="0,0,10,6"/>
+                <Button Content="Skip ›" Click="OnSkip" Padding="14,10" Margin="0,0,10,6"/>
+                <Button Content="Lock" Click="OnLock" Padding="20,10" Margin="0,0,10,6"/>
+                <ToggleButton Content="Standings on big screen" IsChecked="{Binding HoldStandings, Mode=OneWay}" Click="OnToggleHold" Padding="14,10" Margin="0,0,10,6"/>
+                <Button Content="🔊 Audio" Click="OnAudio" Padding="14,10" Margin="0,0,10,6"/>
+            </WrapPanel>
+            <WrapPanel>
                 <Button Content="Break tie" Click="OnBreakTie" Padding="16,10" IsVisible="{Binding HasTie}"
-                        Classes="accent"/>
-                <Button Content="Merge teams" Click="OnMergeTeams" Padding="16,10"/>
-                <Button Content="Export CSV" Click="OnExportCsv" Padding="16,10"/>
-                <Button Content="Print" Click="OnPrintStandings" Padding="16,10"/>
-                <Button Content="Show on projector" Click="OnProjector" Padding="16,10"/>
-                <Button Content="End night" Click="OnClose" Padding="16,10"/>
-            </StackPanel>
-        </Grid>
+                        Classes="accent" Margin="0,0,10,6"/>
+                <Button Content="Merge teams" Click="OnMergeTeams" Padding="16,10" Margin="0,0,10,6"/>
+                <Button Content="Export CSV" Click="OnExportCsv" Padding="16,10" Margin="0,0,10,6"/>
+                <Button Content="Print" Click="OnPrintStandings" Padding="16,10" Margin="0,0,10,6"/>
+                <Button Content="Show on projector" Click="OnProjector" Padding="16,10" Margin="0,0,10,6"/>
+                <Button Content="End night" Click="OnClose" Padding="16,10" Margin="0,0,10,6"/>
+            </WrapPanel>
+        </StackPanel>
     </Grid>
 </UserControl>

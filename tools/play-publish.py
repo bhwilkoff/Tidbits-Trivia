@@ -69,9 +69,22 @@ def main():
         print(f"track '{args.track}' → versionCode {vc} ({status}"
               + (f", rollout {args.rollout}" if args.rollout and not args.draft else "") + ")")
 
-        edits.commit(packageName=pkg, editId=edit_id).execute()
+        # Some apps (any with an open policy issue — e.g. after a rejection) refuse an edit that
+        # is auto-sent for review: the API returns 400 and names this exact parameter. Committing
+        # with it staged instead, then "Send for review" in the Console, is the ONLY path back.
+        try:
+            edits.commit(packageName=pkg, editId=edit_id).execute()
+            sent = True
+        except HttpError as e:
+            if "changesNotSentForReview" not in str(e):
+                raise
+            edits.commit(packageName=pkg, editId=edit_id,
+                         changesNotSentForReview=True).execute()
+            sent = False
         print(f"✓ committed. versionCode {vc} is now '{status}' on the '{args.track}' track"
-              + ("" if args.draft else " — Play review then rollout.") )
+              + ("" if args.draft else (" — Play review then rollout." if sent else
+                 "\n  NOT yet sent for review: Play refused to auto-submit this edit."
+                 "\n  Finish in Play Console → Publishing overview → Send changes for review.")))
     except HttpError as e:
         raise SystemExit(f"Play API error: {e.status_code if hasattr(e,'status_code') else ''} {e}")
 

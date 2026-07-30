@@ -302,18 +302,42 @@ struct GamePlayView: View {
             VStack(spacing: 8) {
                 ForEach(Array(m.keys.enumerated()), id: \.offset) { i, key in
                     let matched = game.matchedValue(forKey: i)
-                    Button { game.selectMatchKey(i) } label: {
-                        HStack {
-                            Text(key).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
-                                .frame(maxWidth: .infinity, alignment: .leading)
+                    // Same partial-credit rule as ordering: at reveal, say which pairs were
+                    // right and what the right answer was, rather than leaving the player to
+                    // diff their own grid against the explanation.
+                    let graded = !live
+                    let truth = i < m.values.count ? m.values[i] : nil
+                    let right = graded && matched != nil && matched == truth
+                    let row = HStack {
+                        Text(key).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        if graded && !right, let truth {
+                            Text(truth).font(Tidbits.TypeRamp.l5)
+                                .foregroundStyle(Tidbits.Palette.coral)
+                        } else {
                             Text(matched ?? "tap a value →").font(Tidbits.TypeRamp.l5)
                                 .foregroundStyle(matched != nil ? Tidbits.Palette.ink : Tidbits.Palette.inkSoft)
                         }
-                        .padding(.horizontal, 14).padding(.vertical, 12)
-                        .chunkyCard(fill: game.matchSelectedKey == i ? game.mode.accent.opacity(0.22) : Tidbits.Palette.surface)
-                        .padding(.trailing, Tidbits.Metric.shadowOffset)
+                        if graded {
+                            Text(right ? "✓" : "✕")
+                                .font(.system(size: 15, weight: .black, design: .rounded))
+                                .foregroundStyle(right ? Tidbits.Palette.mint : Tidbits.Palette.coral)
+                        }
                     }
-                    .buttonStyle(.plain).disabled(!live)
+                    .padding(.horizontal, 14).padding(.vertical, 12)
+                    .chunkyCard(fill: graded ? (right ? Tidbits.Palette.mint.opacity(0.22)
+                                                      : Tidbits.Palette.coral.opacity(0.18))
+                                : (game.matchSelectedKey == i ? game.mode.accent.opacity(0.22)
+                                                              : Tidbits.Palette.surface))
+                    .padding(.trailing, Tidbits.Metric.shadowOffset)
+                    // Only a Button while playing. A DISABLED button dims its whole content,
+                    // which turned the graded tint muddy brown and the key text grey — the
+                    // feedback was there but unreadable.
+                    if live {
+                        Button { game.selectMatchKey(i) } label: { row }.buttonStyle(.plain)
+                    } else {
+                        row
+                    }
                 }
             }
             LazyVGrid(columns: cols, spacing: 8) {
@@ -341,13 +365,28 @@ struct GamePlayView: View {
 
     private func orderingPanel() -> some View {
         let live = game.phase == .playing
+        // The correct rank of each item, so the reveal can say WHICH ones were misplaced.
+        // Ordering is partial-credit; without this the player is handed a score and their own
+        // unmarked list, and has to diff it against the explanation by eye to learn anything.
+        let rank: [String: Int] = game.current?.ordering.map {
+            Dictionary(uniqueKeysWithValues: $0.enumerated().map { ($0.element, $0.offset) })
+        } ?? [:]
         return VStack(spacing: 10) {
             ForEach(Array(game.currentOrder.enumerated()), id: \.element) { idx, item in
+                let correctIdx = rank[item]
+                let placed = !live && correctIdx != nil
+                let right = placed && correctIdx == idx
                 HStack(spacing: 10) {
                     Text("\(idx + 1)").font(.system(size: 16, weight: .black, design: .rounded))
                         .foregroundStyle(Tidbits.Palette.inkSoft).frame(width: 22)
                     Text(item).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
                         .frame(maxWidth: .infinity, alignment: .leading)
+                    if placed {
+                        // Right where it belongs, or the position it should have taken.
+                        Text(right ? "✓" : "→ \(correctIdx! + 1)")
+                            .font(.system(size: 15, weight: .black, design: .rounded))
+                            .foregroundStyle(right ? Tidbits.Palette.mint : Tidbits.Palette.coral)
+                    }
                     if live {
                         Button { game.moveOrderItem(idx, up: true) } label: { Image(systemName: "chevron.up") }
                             .disabled(idx == 0)
@@ -358,7 +397,9 @@ struct GamePlayView: View {
                 .font(.system(size: 17, weight: .bold))
                 .foregroundStyle(Tidbits.Palette.ink)
                 .padding(.horizontal, 14).padding(.vertical, 12)
-                .chunkyCard(fill: Tidbits.Palette.surface)
+                .chunkyCard(fill: placed ? (right ? Tidbits.Palette.mint.opacity(0.22)
+                                                  : Tidbits.Palette.coral.opacity(0.18))
+                                         : Tidbits.Palette.surface)
                 .padding(.trailing, Tidbits.Metric.shadowOffset)
             }
             if live {

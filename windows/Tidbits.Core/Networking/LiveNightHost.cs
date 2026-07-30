@@ -33,6 +33,11 @@ public sealed class LiveNightHost : ObservableObject
     public bool SpeedBonus { get; set; }
     public int? WagerRoundIndex { get; set; } // Wave A: which round is the final wager (RoundIndex), null = none
     public IReadOnlyList<string> RoundNotes { get; set; } = new List<string>(); // Wave A per-round host notes
+    public IReadOnlyList<int> RoundTimers { get; set; } = new List<int>();      // Wave A per-round countdown (0 = untimed)
+
+    /// The authored countdown for the round now on screen, or 0 when untimed.
+    public int RoundTimerSeconds =>
+        RoundIndex >= 0 && RoundIndex < RoundTimers.Count ? RoundTimers[RoundIndex] : 0;
 
     /// The host's private note for the current round (null if none) — cockpit-only.
     public string? CurrentRoundNote =>
@@ -245,6 +250,7 @@ public sealed class LiveNightHost : ObservableObject
         if (HostPlays) await Net.JoinAsHost(string.IsNullOrEmpty(HostName) ? "Host" : HostName);
         Index = 0; Revealed = false; HostChoice = null; Locked = false; CurrentStage = Stage.Playing;
         PrepareQuestion();
+        ArmRoundTimer();
         await Net.SetState("live");
         await Net.Publish(BuildPub());
         Notify();
@@ -287,7 +293,7 @@ public sealed class LiveNightHost : ObservableObject
         Revealed = false; HostChoice = null; Locked = false; _deadline = null;
         Index++;
         if (Current is null) await End();
-        else { PrepareQuestion(); await Net.Publish(BuildPub()); }
+        else { PrepareQuestion(); ArmRoundTimer(); await Net.Publish(BuildPub()); }
         Notify();
     }
 
@@ -298,7 +304,7 @@ public sealed class LiveNightHost : ObservableObject
         Revealed = false; HostChoice = null; Locked = false; _deadline = null;
         Index++;
         if (Current is null) await End();
-        else { PrepareQuestion(); await Net.Publish(BuildPub()); }
+        else { PrepareQuestion(); ArmRoundTimer(); await Net.Publish(BuildPub()); }
         Notify();
     }
 
@@ -308,12 +314,24 @@ public sealed class LiveNightHost : ObservableObject
         if (CurrentStage != Stage.Playing || Index <= 0) return;
         Revealed = false; HostChoice = null; Locked = false; _deadline = null;
         Index--;
+        // No ArmRoundTimer here on purpose: going back means the host is fixing something,
+        // and dropping a fresh countdown on a re-ask would rush the room mid-correction.
         PrepareQuestion();
         await Net.Publish(BuildPub());
         Notify();
     }
 
     public bool CanGoBack => CurrentStage == Stage.Playing && Index > 0;
+
+    /// Wave A: arm the countdown from the round the new question belongs to (0 = untimed,
+    /// which leaves the deadline cleared so the host can still start one by hand). Set
+    /// directly rather than via StartTimer so it costs no extra publish — the caller
+    /// publishes the pub right after.
+    private void ArmRoundTimer()
+    {
+        var secs = RoundTimerSeconds;
+        _deadline = secs > 0 ? NowMs() + secs * 1000L : null;
+    }
 
     /// Live countdown (3.23) — the host starts/extends a per-question answer
     /// deadline, published so join clients + the projector tick it down.

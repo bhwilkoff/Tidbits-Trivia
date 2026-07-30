@@ -265,12 +265,19 @@ is the repeatable Pass A.
   EndReached/Stopped so the last frame doesn't freeze over the next question, and
   detaches BEFORE disposing (LibVLC writes frames from its own thread). No-ops
   where the natives are absent, which is CI and this Mac.
-- [ ] A.6 **Per-round timer (Wave A)** — NEW, found by the second audit run. macOS
-  authors a countdown per round in the builder (No timer / 30 / 45 / 60 / 90 /
-  120s); Windows `NightRound` has no `TimerSeconds` at all, so the cockpit's
-  30s/60s/+15/+30 buttons are the only clock and the host must start it by hand
-  every round. Additive to the persisted shape (nullable int, defaults null), so
-  lower risk than A.3b(ii) — but it also has to reach the cockpit to auto-start.
+- [x] A.6 **Per-round timer (Wave A)** — SHIPPED 1.6.69. The builder authors a
+  countdown per round (No timer / 30 / 45 / 60 / 90 / 120s) and the host arms it
+  automatically as each question comes up.
+  **It rides `LiveEvent.RoundTimers`, index-aligned like `RoundNotes` — NOT
+  `NightRound`.** `NightRound` is the wire type serialised to every joiner, Apple
+  pins its `CodingKeys` to `{kind, count}`, and `tools/night-wire` has golden
+  coverage on it; adding a field there would have put a key on the wire for a
+  purely host-side authoring concern. macOS makes the same split (its
+  `timerSeconds` lives on the Mac-only `LiveRound`, not the shared type).
+  Armed on Start and Next but deliberately NOT on GoBack — going back means the
+  host is fixing something, and a fresh clock would rush the room mid-correction.
+  Tests cover the wire shape staying clean and a legacy saved event with no
+  `roundTimers` key still decoding.
 - [ ] A.3b(ii) **Authoring** a media round in the builder — still open, and NOT a
   small UI addition: a Windows `NightRound` is `{Kind, Count}` with nowhere to
   hold custom questions or clip paths, so macOS's "pick files → each becomes a

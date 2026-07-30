@@ -59,12 +59,17 @@ public partial class LiveView : UserControl
     // The rounds being composed for a custom event (+ an index-aligned host note).
     private readonly System.Collections.Generic.List<NightRound> _rounds = new();
     private readonly System.Collections.Generic.List<string> _notes = new();
+    private readonly System.Collections.Generic.List<int> _timers = new();   // per-round countdown, 0 = untimed
+    private static readonly int[] TimerChoices = { 0, 30, 45, 60, 90, 120 };
+    private static int TimerIndex(int seconds) => System.Math.Max(0, System.Array.IndexOf(TimerChoices, seconds));
+    private static int TimerSeconds(int index) => index >= 0 && index < TimerChoices.Length ? TimerChoices[index] : 0;
 
     private void OnAddRound(object? sender, RoutedEventArgs e)
     {
         if (RoundModeBox.SelectedItem is not GameMode mode || RoundCountBox.SelectedItem is not int count) return;
         _rounds.Add(new NightRound { Kind = mode, Count = count });
         _notes.Add(RoundNoteBox.Text?.Trim() ?? "");
+        _timers.Add(0);
         RoundNoteBox.Text = "";
         RebuildBuilderRounds();
     }
@@ -76,6 +81,7 @@ public partial class LiveView : UserControl
         if (index < 0 || index >= _rounds.Count || target < 0 || target >= _rounds.Count) return;
         (_rounds[index], _rounds[target]) = (_rounds[target], _rounds[index]);
         (_notes[index], _notes[target]) = (_notes[target], _notes[index]);
+        (_timers[index], _timers[target]) = (_timers[target], _timers[index]);
         RebuildBuilderRounds();
     }
 
@@ -87,25 +93,43 @@ public partial class LiveView : UserControl
             int idx = i;
             var r = _rounds[i];
             var note = idx < _notes.Count ? _notes[idx] : "";
-            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto,Auto"), Margin = new Avalonia.Thickness(0, 0, 0, 2) };
+            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto,Auto,Auto"), Margin = new Avalonia.Thickness(0, 0, 0, 2) };
             var label = note.Length > 0
                 ? $"{idx + 1}. {r.Kind.Title()} · {r.Count} questions  📝 {note}"
                 : $"{idx + 1}. {r.Kind.Title()} · {r.Count} questions";
             row.Children.Add(new TextBlock { Text = label, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center, TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis });
+            // Wave A per-round countdown (macOS parity). "No timer" is first and the
+            // default: a pub quiz that silently starts a clock on every round would change
+            // how the room plays without the host asking for it.
+            var timer = new ComboBox
+            {
+                ItemsSource = new[] { "No timer", "30s", "45s", "60s", "90s", "120s" },
+                SelectedIndex = TimerIndex(idx < _timers.Count ? _timers[idx] : 0),
+                MinWidth = 96, FontSize = 12,
+            };
+            Avalonia.Automation.AutomationProperties.SetName(timer, $"Countdown for round {idx + 1}");
+            timer.SelectionChanged += (_, _) =>
+            {
+                while (_timers.Count <= idx) _timers.Add(0);
+                _timers[idx] = TimerSeconds(timer.SelectedIndex);
+            };
+            Grid.SetColumn(timer, 1);
+            row.Children.Add(timer);
+
             var up = new Button { Content = "▲", Padding = new Avalonia.Thickness(7, 2), FontSize = 11, IsEnabled = idx > 0 };
             AutomationProperties.SetName(up, $"Move round {idx + 1} up");
             up.Click += (_, _) => MoveRound(idx, -1);
-            Grid.SetColumn(up, 1);
+            Grid.SetColumn(up, 2);
             row.Children.Add(up);
             var down = new Button { Content = "▼", Padding = new Avalonia.Thickness(7, 2), FontSize = 11, IsEnabled = idx < _rounds.Count - 1, Margin = new Avalonia.Thickness(4, 0, 0, 0) };
             AutomationProperties.SetName(down, $"Move round {idx + 1} down");
             down.Click += (_, _) => MoveRound(idx, +1);
-            Grid.SetColumn(down, 2);
+            Grid.SetColumn(down, 3);
             row.Children.Add(down);
             var del = new Button { Content = "✕", Padding = new Avalonia.Thickness(8, 2), FontSize = 12, Margin = new Avalonia.Thickness(4, 0, 0, 0) };
             AutomationProperties.SetName(del, $"Remove round {idx + 1}");
-            del.Click += (_, _) => { _rounds.RemoveAt(idx); if (idx < _notes.Count) _notes.RemoveAt(idx); RebuildBuilderRounds(); };
-            Grid.SetColumn(del, 3);
+            del.Click += (_, _) => { _rounds.RemoveAt(idx); if (idx < _notes.Count) _notes.RemoveAt(idx); if (idx < _timers.Count) _timers.RemoveAt(idx); RebuildBuilderRounds(); };
+            Grid.SetColumn(del, 4);
             row.Children.Add(del);
             BuilderRounds.Children.Add(row);
         }
@@ -156,6 +180,7 @@ public partial class LiveView : UserControl
         Weekday = WeekdayBox.SelectedIndex >= 1 ? WeekdayBox.SelectedIndex - 1 : (int?)null,
         WagerFinalRound = WagerFinalCheck.IsChecked == true,
         RoundNotes = new System.Collections.Generic.List<string>(_notes),
+        RoundTimers = new System.Collections.Generic.List<int>(_timers),
     };
 
     private void OnHostEvent(object? sender, RoutedEventArgs e)
@@ -263,6 +288,7 @@ public partial class LiveView : UserControl
             LeadCaptureUrl = branding?.LeadCaptureUrl,
             WagerRoundIndex = branding?.WagerFinalRound == true ? System.Math.Max(0, plan.Rounds.Count - 1) : null,
             RoundNotes = branding?.RoundNotes ?? new System.Collections.Generic.List<string>(),
+            RoundTimers = branding?.RoundTimers ?? new System.Collections.Generic.List<int>(),
         };
         var vm = new LiveHostViewModel(host);
         Setup.IsVisible = false;

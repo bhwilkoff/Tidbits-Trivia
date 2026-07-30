@@ -21,6 +21,11 @@ public sealed record LiveEvent
     [JsonPropertyName("weekday")] public int? Weekday { get; init; } // Wave D recurring (0=Sun..6=Sat), null = one-off
     [JsonPropertyName("wagerFinal")] public bool WagerFinalRound { get; init; } // Wave A final wager round
     [JsonPropertyName("roundNotes")] public IReadOnlyList<string> RoundNotes { get; init; } = new List<string>(); // Wave A per-round host notes (index-aligned)
+    // Wave A per-round countdown, index-aligned, 0 = untimed. Deliberately on the EVENT and
+    // not on NightRound: NightRound is the wire type serialized to every joiner, Apple pins
+    // its CodingKeys to {kind, count}, and there is golden coverage on it. The timer is a
+    // host authoring concern — joiners already learn the deadline from the published pub.
+    [JsonPropertyName("roundTimers")] public IReadOnlyList<int> RoundTimers { get; init; } = new List<int>();
 
     [JsonIgnore] public int TotalQuestions => Rounds.Sum(r => r.Count);
     [JsonIgnore] public bool IsRecurring => Weekday is >= 0 and <= 6;

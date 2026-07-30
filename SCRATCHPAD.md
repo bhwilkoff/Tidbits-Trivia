@@ -1255,3 +1255,26 @@ One-line-per-round; full detail in `ARCHIVE.md`.
   Mac has no Windows machine with two displays, and headless has no real
   `Screens`; the single-monitor branch is the one that was broken and is now
   logic-gated, but real hardware is the only true check.
+
+- **2026-07-30 — macOS→Windows parity audit playbook + first full run (1.6.63).**
+  *State found:* owner reported "a number of issues on the first real-PC test,
+  both design and functionality" and asked for a systematic parity audit.
+  *Work done:* root-caused WHY the existing checks missed everything — they
+  render one view, at one comfortable width, in one theme, with no interaction,
+  on a one-monitor machine. Wrote `docs/WINDOWS-PARITY-AUDIT.md` organised by
+  **failure class** (7 passes A–G) rather than by feature list, plus
+  `tools/audit_windows_parity.py` for the repeatable Pass A and
+  `WindowsAuditTest` (whole shell at 820/1000/1440, both themes, asserts the
+  detail pane is populated). *Fixed:* account deletion (absent on Windows while
+  all four other platforms ship it — full `accounts:delete` + ordered node
+  deletion twin of Swift), the brand CTA inverting in dark mode
+  (`Classes="accent"` fell through to FluentAvalonia's LIGHTENED derived accent),
+  the accent-on-accent button that fix exposed, and the total absence of app
+  accelerators (Ctrl+N / Ctrl+,). Added WINDOWS-DESIGN §5.5.
+  *State left:* 1.6.63; 409 tests + `windows-latest` green after recapturing the
+  MCQ-reveal baseline (drift verified as ONLY the Next button, rows 459–503).
+  **Open + tracked, not fixed:** onboarding, video round + printable host
+  materials, remove team / resolve tie, Versus rematch, Settings not using
+  `SettingsExpander`, no `AutomationProperties` anywhere. **Pass F (window model:
+  projector single/dual monitor, hot-plug, taskbar progress) is UNVERIFIABLE from
+  this Mac** — owner hardware is the only check.

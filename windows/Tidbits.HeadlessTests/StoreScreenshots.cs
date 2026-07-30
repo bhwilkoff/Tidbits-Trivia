@@ -89,11 +89,11 @@ public class StoreScreenshots
     }
 
 
-    /// Terms that must never appear in a store screenshot. A random corpus draw put a
-    /// Holocaust question — "the official Nazi code name for the murder of all Jews within
-    /// reach" — into the reveal slot, the single most-viewed frame in the listing. The corpus
-    /// legitimately contains hard history; a marketing asset is not the place for it, and a
-    /// random draw will surface it again eventually.
+    /// Terms that keep a question out of a STORE SCREENSHOT — not out of the app. A random
+    /// draw put a Holocaust question into the reveal slot, the most-viewed frame in a listing.
+    /// The owner has ruled that question fine in the app (2026-07-30); the corpus covers hard
+    /// history on purpose. This is a listing decision only: a thumbnail is seen out of context
+    /// by people who have not chosen to play.
     private static readonly string[] Unsafe =
     {
         "nazi", "holocaust", "genocide", "massacre", "atrocit", "murder", "killed", "killing",

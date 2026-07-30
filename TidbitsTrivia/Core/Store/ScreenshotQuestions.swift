@@ -3,11 +3,12 @@ import Foundation
 /// The screened question set used by store-screenshot runs (docs/STORE-SCREENSHOTS.md,
 /// rule R-SHOT-3: **a store frame is never a random draw**).
 ///
-/// This exists because a random corpus draw put a Holocaust question — *"the official Nazi
-/// code name for the murder of all Jews within reach"*, with three other genocides as the
-/// wrong answers — into the reveal slot, which is the single most-viewed frame in a store
-/// listing. The corpus legitimately contains hard history; a marketing asset is not where it
-/// belongs, and a random draw will surface it again eventually.
+/// Why: a random corpus draw put a Holocaust question into the reveal slot — the single
+/// most-viewed frame in a store listing. **The owner has ruled that question fine in the app**
+/// (2026-07-30), and it is: the corpus covers hard history on purpose and that is not a
+/// content problem. This is purely a *listing* decision — a storefront thumbnail is seen
+/// out of context by people who have not chosen to play, so the set is curated rather than
+/// rolled. Nothing here implies the underlying question should change.
 ///
 /// Screening alone wasn't enough either, so the selection also:
 ///  - requires a Wikipedia-lead-style explanation, because a restatement ("The elevation of
@@ -23,9 +24,9 @@ import Foundation
 /// Kept in Core so the Kotlin/C# mirrors screen against the SAME word list — the whole point
 /// is that no platform's listing can regress independently.
 enum ScreenshotQuestions {
-    /// Terms that disqualify a question from a store screenshot. Deliberately broad: a false
-    /// positive costs one candidate out of thousands, a false negative ships genocide in a
-    /// marketing asset.
+    /// Terms that keep a question out of a STORE SCREENSHOT (not out of the app). Broad on
+    /// purpose: a false positive costs one candidate out of thousands, and the whole point is
+    /// that a thumbnail is seen without context.
     static let disqualifying = [
         "nazi", "holocaust", "genocide", "massacre", "atrocit", "murder", "killed", "killing",
         "war crime", "execut", "slaver", "slave", "rape", "assassin", "terror", "suicide",

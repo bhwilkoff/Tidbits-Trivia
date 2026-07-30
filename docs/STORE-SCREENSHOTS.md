@@ -35,11 +35,13 @@ It states the pitch rather than undermining it. A Club row is fine; a Club
 **Gameplay screenshots use a screened, deterministic question set — never whatever
 the corpus hands back.**
 
-*Why:* a random draw put a Holocaust question into the Windows reveal slot — *"the
-official Nazi code name for the murder of all Jews within reach"*, with three
-other genocides as the wrong answers. That is the single most-viewed frame in a
-listing. The corpus legitimately contains hard history; a marketing asset is not
-where it belongs, and a random draw will surface it again eventually.
+*Why:* a random draw put a Holocaust question into the Windows reveal slot, the
+single most-viewed frame in a listing. **The owner has ruled that question fine
+in the app** (2026-07-30) — the corpus covers hard history on purpose, and that is
+not a content problem. This rule is a *listing* decision only: a storefront
+thumbnail is seen out of context by people who have not chosen to play, so the
+set is curated rather than rolled. It implies nothing about the questions
+themselves, and the blocklist must never be reused as an in-app filter.
 
 *How to apply:* the Windows renders (`StoreScreenshots.SafeQuestions`) exclude a
 blocklist of atrocity/violence terms across prompt, options and explanation;

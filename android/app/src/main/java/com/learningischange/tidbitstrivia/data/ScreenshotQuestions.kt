@@ -7,9 +7,10 @@ package com.learningischange.tidbitstrivia.data
  * list and the selection rules are deliberately identical so no platform's listing can
  * regress on its own.
  *
- * This exists because a random corpus draw put a Holocaust question — "the official Nazi
- * code name for the murder of all Jews within reach", with three other genocides as the
- * wrong answers — into the reveal slot, the single most-viewed frame in a store listing.
+ * Why: a random draw put a Holocaust question into the reveal slot, the single most-viewed
+ * frame in a store listing. The owner has ruled that question fine IN THE APP (2026-07-30) —
+ * the corpus covers hard history on purpose. This is purely a listing decision: a storefront
+ * thumbnail is seen out of context by people who have not chosen to play.
  *
  * Screening alone wasn't enough: the selection also requires a Wikipedia-lead-style
  * explanation (a restatement teaches nothing in the slot whose whole job is showing you
@@ -17,8 +18,8 @@ package com.learningischange.tidbitstrivia.data
  * id-ordered pool produced ten near-identical "which was born first?" questions).
  */
 object ScreenshotQuestions {
-    /** Broad on purpose: a false positive costs one candidate out of thousands, a false
-     *  negative ships genocide in a marketing asset. */
+    /** Keeps a question out of a STORE SCREENSHOT, not out of the app. Broad on purpose: a
+     *  false positive costs one candidate out of thousands. */
     private val DISQUALIFYING = listOf(
         "nazi", "holocaust", "genocide", "massacre", "atrocit", "murder", "killed", "killing",
         "war crime", "execut", "slaver", "slave", "rape", "assassin", "terror", "suicide",

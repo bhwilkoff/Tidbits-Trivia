@@ -27,13 +27,13 @@ the single quiet Club row on Home, whose own copy says the rest of the app is fr
    macOS the seed sat *after* an awaited network `bootstrap()` that outlasted the
    capture; it now runs before. tvOS never called the record seeder at all, which
    is why its Records frame was empty once the pre-shot wipe landed.
-2. ~~`____` gap in revealed explanations~~ — repaired in the shared data by
-   `tools/corpus/fix_cloze_explanations.py` (with a `--check` gate). ~24,000
-   affected rows across corpus/picture/typeanswer JSON **and** the Apple
-   `corpus.sqlite`, which is what the app actually reads. 1,173 remain, all
-   genuinely ambiguous (the cloze blanked a sub-word of a multi-word answer and
-   which token went is unrecoverable) — a visible gap is better than a
-   plausible-but-wrong fact.
+2. ~~`____` gap in revealed explanations~~ — **fully repaired, zero remaining.**
+   Two passes: `tools/corpus/fix_cloze_explanations.py` restored ~24,000 rows
+   locally, and `tools/corpus/refetch_redacted_explanations.py` rebuilt the 4,229
+   it could not resolve by refetching the real Wikipedia lead sentence for 3,223
+   subjects. Both have `--check` gates. Covers corpus/picture/typeanswer JSON on
+   every platform mirror **and** the Apple `corpus.sqlite`, which is what the app
+   actually reads.
 3. ~~Apple/Android gameplay frames were random draws~~ — `ScreenshotQuestions`
    (Swift + Kotlin mirrors of the Windows screening) is now wired into every
    capture via `TIDBITS_SCREENED` / `--ez tidbits_screened`, so no platform can

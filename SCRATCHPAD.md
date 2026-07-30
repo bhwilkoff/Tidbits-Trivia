@@ -1229,3 +1229,29 @@ One-line-per-round; full detail in `ARCHIVE.md`.
   (26.8MB) and verified but **not uploaded** — the Play resubmission is the
   owner's call. Web and Windows still read `corpus.json` deliberately (desktop
   and browser have no per-process heap cap worth working around).
+
+- **2026-07-30 — Owner parity report: iOS sign-in + four Windows breaks (1.6.62).**
+  *State found:* owner reported Sign in with Apple missing on iPhone (only Game
+  Center visible), and four Windows issues.
+  *Work done:* **iOS** — the report was accurate: Settings had a Game Center
+  section and NO account section, with the Apple button buried one tap deeper in
+  Profile, while macOS and tvOS both put sign-in in Settings. Added an Account
+  section (state, Sign in with Apple, sign out) plus Delete account, mirroring
+  `SettingsView_macOS`. Both surfaces now report a failed sign-in instead of
+  swallowing it — the silent-`onCompletion` bug that got tvOS rejected. Verified
+  on the iPhone 17 Pro simulator. Corrected PARITY.md §4, which still carried the
+  2026-06-30 "this section was fictional" audit and claimed SiwA was unbuilt
+  everywhere. **Windows** — all four fixed and PNG-verified (details + rule
+  numbers in `docs/WINDOWS-PARITY.md` "Owner parity report 2026-07-30"): blank
+  detail pane on launch (§7.14, now covered by `ShellLandingTest`), 14 inline
+  Dailies (today + `DailyArchiveDialog`), non-wrapping cockpit buttons (§6.3b),
+  and a projector that went chromeless-fullscreen over the primary display on a
+  single-monitor machine (§6.3a). Design doc first: WINDOWS-DESIGN gained
+  §6.3a/§6.3b + anti-patterns 7.13/7.14.
+  *State left:* 1.6.62 — Apple build 102, Windows MSIX 1.6.62.0, Android already
+  1.6.62 (vc80) in Play review. 403 Windows tests + `windows-latest` CI green;
+  iOS/tvOS/macOS all compile. Apple cloud build + Windows Store submission
+  dispatched. **Unverifiable here:** the projector's second-monitor path — this
+  Mac has no Windows machine with two displays, and headless has no real
+  `Screens`; the single-monitor branch is the one that was broken and is now
+  logic-gated, but real hardware is the only true check.

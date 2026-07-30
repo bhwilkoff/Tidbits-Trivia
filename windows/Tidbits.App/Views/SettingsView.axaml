@@ -56,6 +56,18 @@
                 <TextBlock x:Name="DataStatus" IsVisible="False" FontSize="13" Foreground="#1E9E6A"/>
             </StackPanel>
 
+            <!-- Parity with macOS/iOS Settings (Decision 048). Shown whether or not the
+                 player signed in, because Tidbits provisions a real (anonymous) account for
+                 everyone and that account holds their records too. -->
+            <StackPanel Spacing="8">
+                <TextBlock Text="Delete account" FontSize="18" FontWeight="Bold"/>
+                <Button x:Name="DeleteAccountButton" Content="Delete account…" Click="OnDeleteAccount"
+                        HorizontalAlignment="Left"/>
+                <TextBlock Text="Permanently deletes your Tidbits account and all of its data — profile, rating, streak, Daily history, standings and friends."
+                           FontSize="13" Opacity="0.65" TextWrapping="Wrap"/>
+                <TextBlock x:Name="DeleteStatus" IsVisible="False" FontSize="13" TextWrapping="Wrap"/>
+            </StackPanel>
+
             <StackPanel Spacing="6">
                 <TextBlock Text="About" FontSize="18" FontWeight="Bold"/>
                 <TextBlock x:Name="VersionText" FontSize="14"/>

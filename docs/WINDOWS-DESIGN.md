@@ -200,6 +200,15 @@ projectors connect/disconnect mid-night; on display change, re-query
 never vanish off-screen. Remember the chosen monitor. All big-screen
 text scales by viewport fraction (§5.3).
 
+5.5 **The brand CTA is PINNED; an accent button never sits on an accent
+surface.** FluentAvalonia derives a lighter accent for the dark theme, so a
+`Classes="accent"` button washes out to salmon-with-black-text while any
+hard-coded `#FF5C35` beside it stays saturated — two adjacent CTAs disagreeing.
+`Button.accent` pins the brand token (+ white) in both themes; Fluent's derived
+accent still drives focus rings and selection, which IS correct there. And on a
+coral surface the accent button is invisible — use the inverse treatment (white
+chip, coral label), as the Daily hero row does.
+
 6.3a **The projector must never hijack the only display.** Auto-
 fullscreen is correct ONLY when a non-primary `Screen` exists. With a
 single monitor, open a normal **decorated, resizable** window the host

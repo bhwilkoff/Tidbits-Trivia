@@ -214,6 +214,46 @@ Still open, with HONEST reasons:
   decorated, resizable, taskbar-visible window. Esc always leaves fullscreen —
   WINDOWS-DESIGN §6.3a.
 
+## Full macOS→Windows audit 2026-07-30 (playbook: docs/WINDOWS-PARITY-AUDIT.md)
+First systematic run of all seven passes. `python3 tools/audit_windows_parity.py`
+is the repeatable Pass A.
+
+**Fixed this pass (1.6.63):**
+- [x] A.1 **Account deletion** — absent on Windows while iOS/macOS/tvOS/Android
+  all ship it (Decision 048). Added `FirebaseRtdb.DeleteAccount()`
+  (Identity Toolkit `accounts:delete`) + `AccountIdentity.DeleteAccount()` in the
+  SAME node order as Swift (account-keyed → uid-keyed → `emailOwners` LAST →
+  credential), plus a Settings section with an `FAContentDialog` confirm that
+  reports failure instead of silently leaving the account alive.
+- [x] D.1 **Brand CTA broke in dark mode** — `Classes="accent"` fell through to
+  FluentAvalonia's derived accent, which LIGHTENS for dark theme: the Quick Play
+  hero rendered salmon-with-black-text while the hard-coded coral Daily row right
+  beneath it stayed saturated. `Button.accent` now pins the brand token in both
+  themes (WINDOWS-DESIGN §5.5).
+- [x] D.2 **Accent-on-accent** — fixing D.1 made the Daily hero's "Play today's
+  Tidbit" coral-on-coral, i.e. invisible as a button. Inverse treatment (white
+  chip, coral label) on coloured surfaces (§5.5).
+- [x] G.1 **No app accelerators** — macOS has menu commands; Windows had none.
+  Ctrl+N (new game) and Ctrl+, (settings) on `MainWindow`.
+
+**Open, tracked (NOT fixed this pass):**
+- [ ] A.2 Onboarding — macOS has a first-run walkthrough (`MacHomeSheets`
+  "Get started"); Windows drops the player straight into Play.
+- [ ] A.3 Live builder: **Video round**, **Answer sheet (teams)**, **Question
+  pack (host)** — the printable host materials + the video round type. Audio
+  rounds play from the cockpit but cannot be authored in the builder.
+- [ ] A.4 Live host: **Remove team**, **Resolve tie** (Windows has "Break tie";
+  the resolve step is not exposed).
+- [ ] A.5 Versus: **Rematch**.
+- [ ] E.1 Settings is a hand-rolled `StackPanel` stack with bold `TextBlock`
+  headers rather than FluentAvalonia `SettingsExpander` rows — works, but is not
+  the native Windows settings idiom (§5, §7).
+- [ ] G.2 **No `AutomationProperties.Name` anywhere** — Narrator reads nothing
+  for icon-only/custom-drawn controls.
+- [ ] F.* Window model (projector single/dual monitor, hot-plug, taskbar
+  progress) — **UNVERIFIABLE from this Mac**; headless has no real `Screens`.
+  Owner verification on real hardware is the only check.
+
 ## Deferred (⏳/🔒 — not built on Mac either; carry as honest gaps)
 Named show-formats (Jeopardy/Feud/Wheel), multi-venue org hierarchy,
 OBS/streaming out, analytics dashboard, venue directory, paywall/pricing.

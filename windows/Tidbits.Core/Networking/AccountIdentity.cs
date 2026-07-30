@@ -133,6 +133,63 @@ public sealed class AccountIdentity(FirebaseRtdb db, ITokenStore tokens, Windows
                   ?? PlayerIdentity.Profile.New(SuggestedName());
     }
 
+    /// Set when [DeleteAccount] fails, so the UI can say WHY instead of silently doing nothing.
+    public string? DeleteError { get; private set; }
+
+    /// Permanently delete this player's account and its data, then start fresh.
+    ///
+    /// Twin of Swift `PlayerIdentityStore.deleteAccount()`, and deliberately in the SAME order
+    /// (Decision 048): account-keyed nodes, then auth-uid-keyed nodes, then `emailOwners` LAST
+    /// because other rules read it as the ownership proof, then the credential itself. Every
+    /// node delete is best-effort — a stale standings row must not strand a player mid-deletion
+    /// — but the credential delete is authoritative and is what this returns on.
+    ///
+    /// Shared records are not ours to delete: a duel drops only OUR player slot, never the
+    /// whole node, or the opponent loses their game too.
+    public async Task<bool> DeleteAccount()
+    {
+        DeleteError = null;
+        var key = ProfileId;
+        var authUid = db.Uid;
+
+        if (key is not null)
+        {
+            await Swallow(db.Delete(PlayerIdentity.PublicPath(key)));
+            await Swallow(db.Delete($"dailyLog/{key}"));
+        }
+        if (authUid is not null)
+        {
+            await Swallow(db.Delete(PlayerIdentity.PrivatePath(authUid)));
+            await Swallow(db.Delete($"pushTokens/{authUid}"));
+        }
+        // LAST of the nodes — the ownership proof other rules read.
+        if (key is not null) await Swallow(db.Delete($"emailOwners/{key}"));
+
+        try
+        {
+            var fresh = await db.DeleteAccount();
+            tokens.Delete(EmailKey);
+            SignedIn = false;
+            AccountEmail = null;
+            AuthError = null;
+            ProfileId = fresh;
+            var profile = PlayerIdentity.Profile.New(SuggestedName());
+            Profile = profile;
+            await Swallow(db.Put(PlayerIdentity.PublicPath(fresh), profile));
+            return true;
+        }
+        catch (Exception ex)
+        {
+            DeleteError = $"Couldn't delete your account. {ex.Message}";
+            return false;
+        }
+    }
+
+    private static async Task Swallow(Task t)
+    {
+        try { await t; } catch { /* best-effort: never strand the player mid-deletion */ }
+    }
+
     /// The shared tail of ANY federated sign-in (Google or Apple): re-key the profile onto
     /// the verified email and merge this device's anonymous play into the account record.
     /// Kept in one place so the two providers can never drift — that convergence is the

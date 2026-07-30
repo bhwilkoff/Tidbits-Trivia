@@ -167,6 +167,44 @@ public partial class SettingsView : UserControl
         ShowStatus("Seen-questions history cleared.");
     }
 
+    /// Account deletion (Decision 048) — the same in-app, irreversible delete the Apple
+    /// platforms ship. Confirmed through an FAContentDialog with Cancel as the default, and
+    /// it reports failure instead of silently leaving the account alive.
+    private async void OnDeleteAccount(object? sender, RoutedEventArgs e)
+    {
+        var dialog = new FAContentDialog
+        {
+            Title = "Delete your account?",
+            Content = "This cannot be undone. Your profile, rating, streak, Daily history, "
+                    + "standings and friends are permanently deleted.",
+            PrimaryButtonText = "Delete account",
+            CloseButtonText = "Cancel",
+            DefaultButton = FAContentDialogButton.Close,
+        };
+        if (await dialog.ShowAsync() != FAContentDialogResult.Primary) return;
+
+        DeleteAccountButton.IsEnabled = false;
+        DeleteAccountButton.Content = "Deleting…";
+        var account = GameData.Shared.Value.Account;
+        bool ok = await account.DeleteAccount();
+        if (ok)
+        {
+            // Local records are part of "all of its data".
+            GameData.Shared.Value.Records.ResetAll();
+            GameData.Shared.Value.Provider.ResetSeen();
+        }
+        DeleteStatus.IsVisible = true;
+        DeleteStatus.Text = ok
+            ? "Your account was deleted. This PC is signed out and starting fresh."
+            : account.DeleteError ?? "Couldn't delete your account.";
+        DeleteStatus.Foreground = new Avalonia.Media.SolidColorBrush(
+            Avalonia.Media.Color.Parse(ok ? "#1E9E6A" : "#D13438"));
+        DeleteAccountButton.IsEnabled = true;
+        DeleteAccountButton.Content = "Delete account…";
+        RefreshAccount();
+        RefreshProfile();
+    }
+
     /// Reset-all is destructive + irreversible, so confirm first (iOS/web parity —
     /// and basic data safety: an accidental click must not wipe scores/streaks).
     private async void OnResetRecords(object? sender, RoutedEventArgs e)

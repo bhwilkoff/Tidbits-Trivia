@@ -157,6 +157,26 @@ public sealed class FirebaseRtdb
         return Uid ?? "";
     }
 
+    /// Delete the CREDENTIAL itself (Identity Toolkit `accounts:delete`), then start a fresh
+    /// anonymous session so the app still works afterwards. Returns the new uid.
+    ///
+    /// Twin of Swift `FirebaseRTDB.deleteAccount()`. This is the authoritative step of account
+    /// deletion — the RTDB node deletes around it are best-effort, but if this throws the
+    /// account still exists and the caller MUST report failure rather than claim success.
+    public async Task<string> DeleteAccount()
+    {
+        await EnsureAuth();
+        var body = JsonSerializer.Serialize(new Dictionary<string, string> { ["idToken"] = _idToken ?? "" });
+        using var resp = await _http.PostAsync(
+            $"https://identitytoolkit.googleapis.com/v1/accounts:delete?key={_config.ApiKey}",
+            new StringContent(body, Encoding.UTF8, "application/json"));
+        Check(resp);
+        _tokens.Delete(RefreshKey);
+        _idToken = null; _refreshToken = null; Uid = null; _expiry = DateTime.MinValue;
+        await SignUpAnonymous();
+        return Uid ?? "";
+    }
+
     private async Task<IdpResponse> SignInWithIdp(string postBody, string? linkTo)
     {
         var body = new Dictionary<string, object>

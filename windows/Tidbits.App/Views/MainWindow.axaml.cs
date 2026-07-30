@@ -1,5 +1,7 @@
 using System.Linq;
 using Avalonia.Controls;
+using Avalonia.Input;
+using CommunityToolkit.Mvvm.Input;
 using FluentAvalonia.UI.Controls;
 using Tidbits.App.ViewModels;
 
@@ -25,6 +27,28 @@ public partial class MainWindow : Window
             var target = Tidbits.Core.Networking.DeepLink.Parse(Program.LaunchUrl);
             Route(target);
         };
+
+        // App-level accelerators — the Windows twin of the macOS menu commands (Ctrl+N new
+        // game, Ctrl+, settings). Windows users reach for these; without them the app is
+        // pointer-only for its two most common verbs.
+        KeyBindings.Add(new KeyBinding
+        {
+            Gesture = new KeyGesture(Key.N, KeyModifiers.Control),
+            Command = new RelayCommand(() => Select("play")),
+        });
+        KeyBindings.Add(new KeyBinding
+        {
+            Gesture = new KeyGesture(Key.OemComma, KeyModifiers.Control),
+            Command = new RelayCommand(() => { Nav.IsSettingsVisible = true; Navigate("settings"); }),
+        });
+    }
+
+    /// Select a nav item by tag (keeps the sidebar highlight and the content in step).
+    private void Select(string tag)
+    {
+        foreach (var item in Nav.MenuItems.OfType<FANavigationViewItem>())
+            if (item.Tag as string == tag) { Nav.SelectedItem = item; return; }
+        Navigate(tag);
     }
 
     /// Select the nav tab a deep link routes to (no-op for None).

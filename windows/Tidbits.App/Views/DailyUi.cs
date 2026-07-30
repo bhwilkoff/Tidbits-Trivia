@@ -58,12 +58,25 @@ public static class DailyUi
         }
         else
         {
+            // An accent button on an ACCENT surface disappears — brand coral on brand coral.
+            // On the hero row use the inverse treatment (white chip, coral label); elsewhere
+            // the row is neutral, so the normal accent CTA is right.
             var play = new Button
             {
                 Content = isToday ? "Play today's Tidbit" : "Play",
                 Padding = new Avalonia.Thickness(16, 8),
-                Classes = { "accent" },
             };
+            if (heroToday)
+            {
+                play.Background = Brushes.White;
+                play.Foreground = new SolidColorBrush(Color.Parse("#FF5C35"));
+                play.BorderBrush = Brushes.White;
+                play.FontWeight = FontWeight.SemiBold;
+            }
+            else
+            {
+                play.Classes.Add("accent");
+            }
             play.Click += (_, _) => onPlay(day);
             Grid.SetColumn(play, 1);
             grid.Children.Add(play);

@@ -32,6 +32,33 @@
                  padding at a call site. Kept subtle so it reads native on Fluent. -->
             <Setter Property="BoxShadow" Value="0 1 8 0 #1A000000"/>
         </Style>
+        <!-- §5.1 The brand CTA. FluentAvalonia derives a LIGHTER accent for the dark
+             theme (AccentFillColorDefaultBrush -> Light1/2/3), which washed the Quick
+             Play hero out to salmon-with-black-text while the hard-coded coral Daily
+             row directly beneath it stayed saturated — two adjacent CTAs disagreeing.
+             The brand primary is a FIXED token on every platform (#FF5C35 + white), so
+             pin it here. Fluent's derived accent still drives focus rings and selection,
+             which is the correct native behaviour for those. -->
+        <Style Selector="Button.accent /template/ ContentPresenter">
+            <Setter Property="Background" Value="#FF5C35"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#FF5C35"/>
+        </Style>
+        <Style Selector="Button.accent:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#E64A22"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#E64A22"/>
+        </Style>
+        <Style Selector="Button.accent:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="#CC3E1B"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#CC3E1B"/>
+        </Style>
+        <Style Selector="Button.accent:disabled /template/ ContentPresenter">
+            <Setter Property="Background" Value="#66FF5C35"/>
+            <Setter Property="Foreground" Value="#99FFFFFF"/>
+        </Style>
+
         <Style Selector="Button.chunky">
             <Setter Property="Padding" Value="24,13"/>
             <Setter Property="FontWeight" Value="Bold"/>

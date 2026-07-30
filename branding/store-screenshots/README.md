@@ -20,16 +20,21 @@ and drag into the store's screenshot slot.
 Every frame shows a FREE feature (R-SHOT-1). The one Club element that appears is
 the single quiet Club row on Home, whose own copy says the rest of the app is free.
 
-## Known blemishes
+## Previously-known blemishes — all fixed
 
-1. **`05-records.png` on Android and macOS reads a 0-day streak** beside a full
-   game history. Records shows the identity streak, and on those platforms
-   something re-applies a remote profile over the seeded value. Cosmetic and
-   incoherent — re-shoot once the ordering is fixed, or crop the streak card.
-2. **Reveal frames show a `____` gap in the explanation** (e.g. *"AS Roma — ____
-   (Rome Sport Association) is a professional football club…"*). The answer term
-   is blanked in the explanation even after the reveal, where there is nothing
-   left to spoil. That is real app behaviour on every platform, not a screenshot
-   artefact — worth fixing in the app.
-3. **Apple and Android gameplay frames are random draws** (R-SHOT-3). These
-   committed ones are reviewed and clean; **eyeball any re-run before upload.**
+1. ~~0-day streak on the Android/macOS Records frames~~ — the store now exposes
+   `displayStreak`, an override nothing else writes. The real cause was that on
+   macOS the seed sat *after* an awaited network `bootstrap()` that outlasted the
+   capture; it now runs before. tvOS never called the record seeder at all, which
+   is why its Records frame was empty once the pre-shot wipe landed.
+2. ~~`____` gap in revealed explanations~~ — repaired in the shared data by
+   `tools/corpus/fix_cloze_explanations.py` (with a `--check` gate). ~24,000
+   affected rows across corpus/picture/typeanswer JSON **and** the Apple
+   `corpus.sqlite`, which is what the app actually reads. 1,173 remain, all
+   genuinely ambiguous (the cloze blanked a sub-word of a multi-word answer and
+   which token went is unrecoverable) — a visible gap is better than a
+   plausible-but-wrong fact.
+3. ~~Apple/Android gameplay frames were random draws~~ — `ScreenshotQuestions`
+   (Swift + Kotlin mirrors of the Windows screening) is now wired into every
+   capture via `TIDBITS_SCREENED` / `--ez tidbits_screened`, so no platform can
+   regress on its own.

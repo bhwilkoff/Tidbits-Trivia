@@ -49,10 +49,11 @@ show you learn something; and take at most one question per category and per
 prompt-shape, because a purely id-ordered pool produced ten near-identical "which
 was born first?" questions.
 
-**The Apple and Android sets still draw at random.** The committed frames were
-reviewed and are clean, but a re-run can surface atrocity content, so **every
-re-run must be eyeballed before upload**. Porting a screened set to those
-platforms (a `TIDBITS_SCREENSHOT_QIDS` hook) is the durable fix.
+**Every platform now screens.** `Core/Store/ScreenshotQuestions.swift` and its
+Kotlin mirror apply the same word list and selection rules as the Windows
+renders, wired behind `TIDBITS_SCREENED` (Apple) and `--ez tidbits_screened`
+(Android) and set for every capture. Still eyeball a re-run — the screen is a
+blocklist, not a judgement — but it is no longer a dice roll.
 
 ### R-SHOT-2: the first three slots carry the pitch
 

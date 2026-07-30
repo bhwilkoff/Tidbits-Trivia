@@ -40,8 +40,13 @@ struct TidbitsTriviaApp: App {
                 .task {
                     gameCenter.authenticate()
                     StoreKitStore.shared.start()                   // install the local (StoreKit) Club check + listen for renewals
-                    await PlayerIdentityStore.shared.bootstrap()   // stable uid → portable profile
+                    // Seed BEFORE bootstrap: on macOS the awaited network bootstrap can take
+                    // longer than a screenshot capture waits, so a seed placed after it had
+                    // simply not run yet and Records rendered "0 days". Seeding first also
+                    // short-circuits bootstrap entirely for screenshot runs (it returns early
+                    // once seeded), which makes the capture deterministic and offline.
                     if let n = DebugHooks.seedRecords, n > 0 { DebugHooks.applyIdentitySeed(n) }
+                    await PlayerIdentityStore.shared.bootstrap()   // stable uid → portable profile
                     await EntitlementStore.shared.refresh()        // Club status (local store || web entitlement)
                 }
                 #if os(macOS)

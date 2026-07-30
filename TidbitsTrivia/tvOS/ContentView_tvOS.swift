@@ -148,6 +148,7 @@ struct ContentView_tvOS: View {
             LinkWallView_tvOS(day: QuestionProvider.dayKey()) { showLinkWall = false }
         }
         .task {
+            DebugHooks.seedRecordsIfRequested(modelContext)
             if launch == nil, nightLaunch == nil, let ap = DebugHooks.autoplay {
                 // Trivia Night needs a plan, not a bare category — autoplay it with
                 // a quick preset so screenshots/CI can drive the whole night.

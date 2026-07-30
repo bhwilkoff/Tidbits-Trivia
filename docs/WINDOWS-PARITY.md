@@ -237,8 +237,15 @@ is the repeatable Pass A.
   Ctrl+N (new game) and Ctrl+, (settings) on `MainWindow`.
 
 **Open, tracked (NOT fixed this pass):**
-- [ ] A.2 Onboarding — macOS has a first-run walkthrough (`MacHomeSheets`
-  "Get started"); Windows drops the player straight into Play.
+- [x] A.2 **First-run onboarding** — SHIPPED 1.6.67. `OnboardingDialog` is the
+  twin of `OnboardingSheet_macOS`: one compact pass (three numbered points, then
+  "Get started"), NOT a multi-page carousel — the Mac shows all three at once and
+  a desktop window has the room. Gated on the new `GameSettings.HasOnboarded`,
+  written on dismissal by ANY means, so pressing Esc doesn't make it reappear
+  next launch. Fired after deep-link routing so a shared link still lands where
+  it should. Points use **numbered brand badges, not icon-font glyphs** — Win10
+  ships Segoe MDL2 Assets and Win11 Segoe Fluent Icons and the codepoints don't
+  all agree, so a glyph that looks right on one renders as tofu on the other.
 - [x] A.3a **Printable host materials** — SHIPPED 1.6.65. `LiveExport
   .AnswerSheetHtml` (numbered blank lines per round) + `.QuestionPackHtml`
   (every question with its answer, grouped by round), both HTML → default

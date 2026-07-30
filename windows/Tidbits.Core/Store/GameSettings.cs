@@ -15,7 +15,12 @@ public sealed class GameSettings
     public string? LastMode { get; set; }
     public string? LastCategoryId { get; set; }
 
-    private sealed record Data(bool ReviewEnabled = true, string? LastMode = null, string? LastCategoryId = null);
+    /// First-run onboarding (macOS `tidbits.hasOnboarded`). Defaults FALSE so an existing
+    /// install with no key set sees the walkthrough once, same as the Mac.
+    public bool HasOnboarded { get; set; }
+
+    private sealed record Data(bool ReviewEnabled = true, string? LastMode = null,
+                               string? LastCategoryId = null, bool HasOnboarded = false);
 
     public GameSettings(string path)
     {
@@ -30,6 +35,7 @@ public sealed class GameSettings
                     ReviewEnabled = d.ReviewEnabled;
                     LastMode = d.LastMode;
                     LastCategoryId = d.LastCategoryId;
+                    HasOnboarded = d.HasOnboarded;
                 }
             }
         }
@@ -42,7 +48,7 @@ public sealed class GameSettings
         {
             var dir = Path.GetDirectoryName(_path);
             if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
-            File.WriteAllText(_path, JsonSerializer.Serialize(new Data(ReviewEnabled, LastMode, LastCategoryId)));
+            File.WriteAllText(_path, JsonSerializer.Serialize(new Data(ReviewEnabled, LastMode, LastCategoryId, HasOnboarded)));
         }
         catch { /* best-effort */ }
     }

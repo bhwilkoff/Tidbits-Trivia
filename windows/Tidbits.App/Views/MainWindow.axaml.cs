@@ -26,6 +26,9 @@ public partial class MainWindow : Window
             // never touch the nav directly — they land here and the root consumes them).
             var target = Tidbits.Core.Networking.DeepLink.Parse(Program.LaunchUrl);
             Route(target);
+            // First-run walkthrough (macOS parity). After routing, so a deep link still lands
+            // where it should and the dialog simply sits over it.
+            _ = OnboardingDialog.ShowIfFirstRunAsync();
         };
 
         // App-level accelerators — the Windows twin of the macOS menu commands (Ctrl+N new

@@ -29,6 +29,7 @@ final class PlayerIdentityStore {
     /// Ensure identity: stable anon uid → load/create profile → link native ids.
     /// Idempotent; safe to call at launch and again after Game Center authenticates.
     func bootstrap() async {
+        if screenshotSeeded { return }   // never clobber a screenshot seed
         do {
             let uid = try await db.ensureAuth()
             // Prefer the token's email; fall back to the persisted one so an Apple session
@@ -376,6 +377,11 @@ final class PlayerIdentityStore {
     /// Surfaced to the delete-account UI so a failure is VISIBLE rather than a silent no-op.
     private(set) var deleteError: String?
 
+    /// Set once `seedForScreenshots` runs. Something after the seed was replacing `profile`
+    /// again (the macOS Records shot kept reading "0 days" beside 24 games), so once seeded
+    /// the store refuses to re-bootstrap over it. Screenshot runs only.
+    private var screenshotSeeded = false
+
     /// Forget everything this device remembers about the deleted account.
     private func resetLocalState() {
         EntitlementStore.shared.clearOnSignOut()
@@ -393,7 +399,8 @@ final class PlayerIdentityStore {
     /// streak + stats so the Records store shot doesn't read "0 days" next to 24 games.
     /// Local-only — never written to the shared plane.
     func seedForScreenshots(streak: Int, longest: Int, games: Int, correct: Int, answered: Int) {
-        guard var p = profile else { return }
+        screenshotSeeded = true
+        var p = profile ?? Self.newProfile(name: Self.suggestedName())
         p.streak = .init(current: streak, longest: longest, lastPlayedDay: PlayerIdentity.todayString(), freezes: 1)
         p.stats = .init(gamesPlayed: games, questionsAnswered: answered, correct: correct,
                         liveNights: 2, venuesVisited: 1)

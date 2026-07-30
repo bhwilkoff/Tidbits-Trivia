@@ -88,6 +88,69 @@ public class StoreScreenshots
         Dispatcher.UIThread.RunJobs();
     }
 
+
+    /// Terms that must never appear in a store screenshot. A random corpus draw put a
+    /// Holocaust question — "the official Nazi code name for the murder of all Jews within
+    /// reach" — into the reveal slot, the single most-viewed frame in the listing. The corpus
+    /// legitimately contains hard history; a marketing asset is not the place for it, and a
+    /// random draw will surface it again eventually.
+    private static readonly string[] Unsafe =
+    {
+        "nazi", "holocaust", "genocide", "massacre", "atrocit", "murder", "killed", "killing",
+        "war crime", "execut", "slaver", "slave", "rape", "assassin", "terror", "suicide",
+        "famine", "lynch", "torture", "concentration camp", "ethnic cleansing", "bomb",
+        "casualt", "died", "death", "deaths", "fatal", "shot dead", "abuse",
+    };
+
+    private static bool IsSafe(Question q)
+    {
+        var haystack = (q.Prompt + " " + string.Join(" ", q.Options) + " " + (q.Explanation ?? "")).ToLowerInvariant();
+        return !Unsafe.Any(haystack.Contains);
+    }
+
+    /// A deterministic, screened, VARIED set of real corpus questions for the gameplay
+    /// shots. Screening alone wasn't enough: ordering the safe pool by id produced ten
+    /// near-identical "which of these was born first?" questions, which advertises a
+    /// one-note app. So this also requires a story (the differentiator), prefers the
+    /// narrative-length prompts, and takes at most one question per category and per
+    /// prompt-shape.
+    private static List<Question> SafeQuestions(QuestionSources src, int count)
+    {
+        var candidates = src.Corpus.Questions("mixed", new HashSet<string>(), 8000)
+            .Where(IsSafe)
+            // The reveal slot sells "you LEARN here", so the question needs a real story —
+            // not a restatement. A first pass surfaced "In what year was <film> released?"
+            // whose whole explanation was "<film>: 2023", which differentiates nothing.
+            .Where(q => (q.Explanation ?? "").Length >= 80)
+            // " is a " / " was a " picks the Wikipedia-lead-style explanations (the ones that
+            // actually teach you something) over the restatements ("The elevation of X is
+            // about 313 m."), which read as filler in the differentiator slot.
+            .Where(q => (q.Explanation ?? "").Contains(" is a ") || (q.Explanation ?? "").Contains(" was a "))
+            .Where(q => !q.Prompt.StartsWith("In what year", StringComparison.OrdinalIgnoreCase))
+            .Where(q => q.Prompt.Length >= 70)                       // the narrative prompts read best
+            .OrderBy(q => q.Id, StringComparer.Ordinal)              // stable across runs
+            .ToList();
+
+        var chosen = new List<Question>();
+        var usedCategories = new HashSet<string>();
+        var usedShapes = new HashSet<string>();
+        // Two passes: first one-per-category for maximum spread, then fill by shape only.
+        foreach (var pass in new[] { true, false })
+        {
+            foreach (var q in candidates)
+            {
+                if (chosen.Count == count) break;
+                if (chosen.Contains(q)) continue;
+                var shape = new string(q.Prompt.Take(24).ToArray()).ToLowerInvariant();
+                if (!usedShapes.Add(shape)) continue;
+                if (pass && !usedCategories.Add(q.CategoryId)) { usedShapes.Remove(shape); continue; }
+                chosen.Add(q);
+            }
+        }
+        Assert.True(chosen.Count == count, $"only {chosen.Count} varied screened questions available, need {count}");
+        return chosen;
+    }
+
     private static QuestionSources Sources() =>
         QuestionSources.LoadFromDirectory(Path.Combine(AppContext.BaseDirectory, "Fixtures"));
 
@@ -121,12 +184,15 @@ public class StoreScreenshots
     public async Task Shot_02_question_and_03_reveal()
     {
         var win = Shell();
-        var engine = NewEngine();
-        await engine.Start(GameMode.Classic, TriviaCategory.Named("mixed"));
+        var src = Sources();
+        var engine = NewEngine(src);
+        engine.StartCustom(GameMode.Classic, TriviaCategory.Named("mixed"), SafeQuestions(src, 10));
+        Dispatcher.UIThread.RunJobs();
         var vm = new GameViewModel(engine);
         HostGame(win, vm);
 
         Assert.Equal(GameEngine.Phase.Playing, engine.CurrentPhase);
+        Assert.True(IsSafe(engine.Current!), "the question shot must be screened");
         Save(win, "02-question");
 
         // The reveal + its "story behind the answer" is the differentiator (R-SHOT-2), so it
@@ -141,8 +207,12 @@ public class StoreScreenshots
     public async Task Shot_04_results()
     {
         var win = Shell();
-        var engine = NewEngine();
-        await engine.Start(GameMode.Classic, TriviaCategory.Named("mixed"));
+        var src = Sources();
+        var engine = NewEngine(src);
+        // The scorecard lists every question under "Tough ones you nailed", so the WHOLE
+        // round has to be screened, not just the first question.
+        engine.StartCustom(GameMode.Classic, TriviaCategory.Named("mixed"), SafeQuestions(src, 10));
+        Dispatcher.UIThread.RunJobs();
         var vm = new GameViewModel(engine);
         HostGame(win, vm);
         await PlayToEnd(engine);

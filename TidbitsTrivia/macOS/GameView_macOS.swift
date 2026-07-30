@@ -44,6 +44,27 @@ struct GameView_macOS: View {
                 .frame(maxWidth: .infinity)
             }
         }
+        .task {
+            // Store-screenshot autopilot (docs/STORE-SCREENSHOTS.md §2) — the Mac game view
+            // had none, so the reveal + results shots came back as unanswered questions.
+            guard DebugHooks.autopilot else { return }
+            var stepsLeft = DebugHooks.autopilotSteps
+            while game.phase != .finished && game.phase != .idle {
+                if let n = stepsLeft, n <= 0 { return }
+                try? await Task.sleep(for: .seconds(0.9))
+                if stepsLeft != nil { stepsLeft! -= 1 }
+                switch game.phase {
+                case .playing:
+                    if game.current?.closest != nil { game.submitGuess(); break }
+                    if game.current?.ordering != nil { game.submitOrder(); break }
+                    if game.current?.matching != nil { game.submitMatch(); break }
+                    if game.current?.accepted != nil { game.typedText = game.current?.correctAnswer ?? ""; game.submitText(); break }
+                    game.submit(DebugHooks.autopilotCorrect ? (game.current?.correctIndex ?? 0) : 0)
+                case .reveal: game.advance()
+                default: break
+                }
+            }
+        }
         .background(Tidbits.Palette.bg)
         .navigationTitle(game.mode.title)
     }

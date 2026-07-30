@@ -113,51 +113,66 @@ capture_apple_phoneish() {  # <sim> <sdkdir> <outdir> <w> <h> <include_create>
 }
 
 
-# macOS runs the real app on this Mac (there is no Mac "simulator"). The window is pinned
-# to 1440x900 and ONLY that region is captured — nothing else on the desktop can leak into
-# a store listing. Needs a logged-in desktop session.
+# macOS runs the real app on this Mac (there is no Mac "simulator"). Captures the app's
+# WINDOW BY ID via tools/mac_window_id.py, not a screen rectangle — a first attempt used
+# `-R` and the Android emulator window landed in several frames. Needs a desktop session.
 MAC_APP=""
+WINID_PY="$ROOT/build/shots/winid/bin/python"
+
 mac_launch() {  # mac_launch [ENV=V ...]
   osascript -e 'tell application "TidbitsTrivia" to quit' >/dev/null 2>&1
-  pkill -f "TidbitsTrivia.app/Contents/MacOS/TidbitsTrivia" >/dev/null 2>&1
+  pkill -f "shots/Build/Products/Debug/TidbitsTrivia.app" >/dev/null 2>&1
   sleep 2
   env "$@" TIDBITS_NO_GAMECENTER=1 TIDBITS_SKIP_ONBOARD=1 \
     "$MAC_APP/Contents/MacOS/TidbitsTrivia" >/dev/null 2>&1 &
-  sleep 12
+  sleep 13
   osascript -e 'tell application "System Events" to tell process "TidbitsTrivia"
       set position of window 1 to {0, 45}
-      set size of window 1 to {1440, 900}
+      set size of window 1 to {1280, 800}
     end tell' >/dev/null 2>&1
+  osascript -e 'tell application "TidbitsTrivia" to activate' >/dev/null 2>&1
+  # The ad-hoc signature can't read the keychain item the real signed app created, so macOS
+  # raises a "Tidbits wants to use your confidential information" prompt. Window-id capture
+  # excludes it from the frame, but dismiss it so it can't hold focus.
+  osascript -e 'tell application "System Events" to if exists (process "SecurityAgent") then keystroke return' >/dev/null 2>&1
   sleep 3
+}
+
+mac_shot() {  # mac_shot <outdir> <NN-name> [ENV=V ...]
+  local out="$1" name="$2"; shift 2
+  mac_launch "$@"
+  local wid; wid=$("$WINID_PY" "$ROOT/tools/mac_window_id.py" 2>/dev/null)
+  if [ -z "$wid" ]; then fail "$name (no app window found)"; return; fi
+  screencapture -x -o -l "$wid" "$out/$name.png"
+  if verify "$out/$name.png" 2560 1600; then echo "  ✓ $name"; else fail "$name"; fi
 }
 
 run_macos() {
   echo "== Mac =="
   local out="$ROOT/branding/store-screenshots/macos"; mkdir -p "$out"
+  # A tiny venv just for the window-id lookup (Quartz isn't in the system python3).
+  if [ ! -x "$WINID_PY" ]; then
+    python3 -m venv "$ROOT/build/shots/winid" >/dev/null 2>&1
+    "$ROOT/build/shots/winid/bin/pip" install -q pyobjc-framework-Quartz >/dev/null 2>&1
+  fi
   echo "  building…"
   xcodebuild build -project TidbitsTrivia.xcodeproj -scheme TidbitsTrivia \
     -destination 'platform=macOS' -configuration Debug -derivedDataPath "$DERIVED" \
     CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO ENABLE_APP_SANDBOX=NO 2>&1 \
     | grep -E "error:|BUILD FAILED" | head -5
   MAC_APP=$(find "$DERIVED/Build/Products/Debug" -maxdepth 1 -name "TidbitsTrivia.app" | head -1)
-  [ -n "$MAC_APP" ] || { echo "  ✗ no Mac .app built"; return 1; }
-  # Restricted entitlements (game-center, applesignin) can't be ad-hoc signed; the store
-  # screens need neither, and signing WITH them makes launchd refuse the process.
+  [ -n "$MAC_APP" ] || { echo "  x no Mac .app built"; return 1; }
+  # Restricted entitlements (game-center, applesignin) can't be ad-hoc signed, and signing
+  # WITH them makes launchd refuse the process. The store screens need neither.
   codesign -s - --force --deep "$MAC_APP" >/dev/null 2>&1
 
-  mac_shot() {  # mac_shot <NN-name> [ENV=V ...]
-    local name="$1"; shift
-    mac_launch "$@"
-    screencapture -x -o -R0,45,1440,900 "$out/$name.png"
-    if verify "$out/$name.png" 2880 1800; then echo "  ✓ $name"; else fail "$name"; fi
-  }
-  mac_shot "01-home"
-  mac_shot "02-question"    TIDBITS_AUTOPLAY=classic:mixed
-  mac_shot "03-reveal"      TIDBITS_AUTOPLAY=classic:mixed TIDBITS_AUTOPILOT=1 TIDBITS_AUTOPILOT_CORRECT=1 TIDBITS_AUTOPILOT_STEPS=1
-  mac_shot "04-results"     TIDBITS_AUTOPLAY=daily:mixed TIDBITS_AUTOPILOT=1 TIDBITS_AUTOPILOT_CORRECT=1
-  mac_shot "05-records"     TIDBITS_TAB=records TIDBITS_SEED_RECORDS=24
-  mac_shot "06-trivia-night" TIDBITS_TAB=live
-  mac_shot "08-create"      TIDBITS_TAB=create
+  mac_shot "$out" "01-home"
+  mac_shot "$out" "02-question"     TIDBITS_AUTOPLAY=classic:mixed
+  mac_shot "$out" "03-reveal"       TIDBITS_AUTOPLAY=classic:mixed TIDBITS_AUTOPILOT=1 TIDBITS_AUTOPILOT_CORRECT=1 TIDBITS_AUTOPILOT_STEPS=1
+  mac_shot "$out" "04-results"      TIDBITS_AUTOPLAY=daily:mixed TIDBITS_AUTOPILOT=1 TIDBITS_AUTOPILOT_CORRECT=1
+  mac_shot "$out" "05-records"      TIDBITS_TAB=records TIDBITS_SEED_RECORDS=24
+  mac_shot "$out" "06-trivia-night" TIDBITS_TAB=live
+  mac_shot "$out" "08-create"       TIDBITS_TAB=create
   osascript -e 'tell application "TidbitsTrivia" to quit' >/dev/null 2>&1
 }
 

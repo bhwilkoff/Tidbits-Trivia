@@ -126,12 +126,66 @@ def process(path: pathlib.Path, expl_i: int, ans_i: int, check_only: bool) -> in
     return 0
 
 
+# The Apple app reads a PRE-BAKED SQLite, not the JSON — fixing only the JSON left the app
+# still showing a gap, which is how this was caught. Its answer is option{correct_index}.
+SQLITE = ROOT / "TidbitsTrivia" / "Resources" / "corpus.sqlite"
+
+
+def process_sqlite(path: pathlib.Path, check_only: bool) -> int:
+    if not path.exists():
+        return 0
+    import sqlite3
+    con = sqlite3.connect(path)
+    cur = con.cursor()
+    rows = cur.execute(
+        "SELECT id, explanation, option0, option1, option2, option3, correct_index "
+        "FROM questions WHERE instr(explanation, '____') > 0"
+    ).fetchall()
+
+    updates, deferred = [], 0
+    for qid, expl, o0, o1, o2, o3, ci in rows:
+        answer = [o0, o1, o2, o3][ci] or ""
+        after = restore(answer, expl or "")
+        if "____" in after:
+            # Single-word answers are unambiguous; multi-word ones stay (see the note above).
+            if len(answer.split()) == 1 and answer:
+                head, sep, tail = after.partition("____")
+                while sep:
+                    token = answer if (not head.strip() or head.rstrip().endswith((".", ":", "\u2014"))) else answer.lower()
+                    after = head + token + tail
+                    head, sep, tail = after.partition("____")
+            if "____" in after:
+                deferred += 1
+                continue
+        if after == (expl or "") or after != after.strip() or "  " in after:
+            deferred += 1
+            continue
+        updates.append((after, qid))
+
+    label = f"{path.parent.name}/{path.name}"
+    if check_only:
+        if updates:
+            print(f"FAIL {label}: {len(updates)} explanation(s) still redacted")
+            con.close()
+            return 1
+        print(f"OK   {label}: no fixable redactions ({deferred} deferred)")
+        con.close()
+        return 0
+
+    cur.executemany("UPDATE questions SET explanation = ? WHERE id = ?", updates)
+    con.commit()
+    con.close()
+    print(f"{label}: restored {len(updates)} ({deferred} deferred)")
+    return 0
+
+
 def main() -> int:
     check_only = "--check" in sys.argv
     worst = 0
     for name, expl_i, ans_i in DATASETS:
         for d in MIRROR_DIRS:
             worst = max(worst, process(d / name, expl_i, ans_i, check_only))
+    worst = max(worst, process_sqlite(SQLITE, check_only))
     return worst
 
 

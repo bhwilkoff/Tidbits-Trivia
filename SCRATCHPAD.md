@@ -1204,3 +1204,28 @@ One-line-per-round; full detail in `ARCHIVE.md`.
   *State left:* awaiting Microsoft cert (hours–3 business days, auto-publishes);
   owner TODO = rotate the Partner Center client secret. Every future Windows ship
   is now `gh workflow run windows-store.yml -f submit=true -f commit=true`.
+
+- **2026-07-30 — Android: the Play "crashes after opening" rejection (vc75).**
+  *State found:* Play rejected version code 75 (1.6.52) under Broken
+  Functionality; the app is otherwise mid-resubmission across stores.
+  *Work done:* got into Play Console and traced the rejection to its evidence —
+  the reviewer's attachment is only the stock Android crash dialog
+  (`IN_APP_EXPERIENCE-1871.png`, in Gmail, not the Console), **Android vitals
+  reports zero user crashes**, and no pre-launch report exists. Reproduction
+  failed on Android 11 and 16, release and debug, with and without network, with
+  and without `largeHeap`, under 3,000 monkey events, and via the exact Play
+  delivery form (bundletool split APKs). Measured instead: decoding
+  `corpus.json` into 128,670 `Question` objects cost **230MB resident / 299MB
+  peak** inside `Corpus.search()` — every emulator here has a 512MB largeHeap
+  cap, mid-range hardware ships 256MB. Rewrote `Corpus` to query the same
+  prebuilt `corpus.sqlite` the Apple apps ship (rows verified byte-identical and
+  in the same order), keyed the on-device copy on `versionCode`, and pushed the
+  search filters into SQL → **74MB resident / 96MB peak**. Daily picks still
+  match the apple/web/android goldens exactly; unit tests green; a game plays and
+  reveals; 5,000 monkey events on the split-APK install leave the heap at 29MB.
+  Logged **Decision 049** and updated the corpus tooling so a regen maintains
+  both SQLite copies instead of resurrecting the Android JSON.
+  *State left:* shipped as **1.6.62 (80)**, commit 8a379ca, pushed; AAB built
+  (26.8MB) and verified but **not uploaded** — the Play resubmission is the
+  owner's call. Web and Windows still read `corpus.json` deliberately (desktop
+  and browser have no per-process heap cap worth working around).

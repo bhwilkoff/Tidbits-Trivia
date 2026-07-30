@@ -265,6 +265,12 @@ is the repeatable Pass A.
   EndReached/Stopped so the last frame doesn't freeze over the next question, and
   detaches BEFORE disposing (LibVLC writes frames from its own thread). No-ops
   where the natives are absent, which is CI and this Mac.
+- [ ] A.6 **Per-round timer (Wave A)** — NEW, found by the second audit run. macOS
+  authors a countdown per round in the builder (No timer / 30 / 45 / 60 / 90 /
+  120s); Windows `NightRound` has no `TimerSeconds` at all, so the cockpit's
+  30s/60s/+15/+30 buttons are the only clock and the host must start it by hand
+  every round. Additive to the persisted shape (nullable int, defaults null), so
+  lower risk than A.3b(ii) — but it also has to reach the cockpit to auto-start.
 - [ ] A.3b(ii) **Authoring** a media round in the builder — still open, and NOT a
   small UI addition: a Windows `NightRound` is `{Kind, Count}` with nowhere to
   hold custom questions or clip paths, so macOS's "pick files → each becomes a

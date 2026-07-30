@@ -40,6 +40,16 @@ KNOWN_SYNONYMS = {
     "host live →": "Host this event",
     "rematch": "Play again",          # Versus rematch rides GameView's Play again
     "resolve tie": "Break tie",       # one dialog on Windows, not two verbs
+    "answer sheet (teams)": "Print answer sheet",
+    "question pack (host)": "Question pack",
+    "reset seen questions": "Seen questions",   # a "Reset" button on a named row
+    "gameplay": "Review questions",             # the single setting IS the row header now
+    "rename": "Your name",                      # an editable name box, not a Rename button
+    "reset to default": "Brand color",          # clearing the hex box IS the reset
+    "one-off (not recurring)": "One-off",   # the weekday combo's first item
+    "new quick play": "Quick Play",             # plus the Ctrl+N accelerator
+    "delete your tidbits account?": "Delete your account?",
+    "reset everything?": "Reset all records?",
 }
 
 # Deliberately absent — Apple frameworks with no Windows twin (see WINDOWS-PARITY
@@ -69,9 +79,13 @@ WIN_LABEL_PATTERNS = [
     r'Title\s*=\s*"([^"]+)"',
     r'Header\s*=\s*"([^"]+)"',
     r'PlaceholderText\s*=\s*"([^"]+)"',
+    r'Watermark\s*=\s*"([^"]+)"',        # the pre-PlaceholderText spelling, still in places
     r'PrimaryButtonText\s*=\s*"([^"]+)"',
     r'CloseButtonText\s*=\s*"([^"]+)"',
 ]
+
+
+ITEMS_SOURCE = re.compile(r'ItemsSource\s*=\s*new\[\]\s*\{([^}]*)\}')
 
 
 def windows_labels() -> set[str]:
@@ -85,6 +99,11 @@ def windows_labels() -> set[str]:
         for pat in WIN_LABEL_PATTERNS:
             for m in re.findall(pat, s):
                 out.add(m.strip().rstrip("…").rstrip(":").strip().lower())
+        # A ComboBox's choices are user-facing labels too, and they are written as an array
+        # literal rather than an attribute — which is how "One-off" read as missing.
+        for block in ITEMS_SOURCE.findall(s):
+            for item in re.findall(r'"([^"]+)"', block):
+                out.add(item.strip().rstrip("…").rstrip(":").strip().lower())
     return out
 
 

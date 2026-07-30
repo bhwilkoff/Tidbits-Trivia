@@ -47,6 +47,21 @@ Marathon · Weak Spot · Mix
 
 ---
 
+## Round 2 — Apple TV (tvOS 26 sim), 2026-07-30
+
+| # | Severity | Finding | Status |
+|---|---|---|---|
+| Q11 | **Bug** | **Closest Call was barely playable on a remote.** tvOS correctly swaps the iPhone slider for steppers, but they were `±spec.step` and `±step×10` — so a year question spanning 1000–2025 offered only ±1 and ±10, i.e. ~100 presses to cross the range. The slider hides this completely on iPhone, so it can only surface by playing the mode on a TV. | **Fixed** — steps now scale to the RANGE (≈20 presses end to end) with a middle tier: ±1 / ±10 / ±50. Verified on the sim |
+| Q12 | Content | "Name as many of **The Beatles' studio albums**" filed under ARTS & LIT; should be MUSIC. Same class as Q4. | Noted — corpus categorisation |
+| Q13 | Harness | The crash detector cried wolf a **second** time: `simctl spawn kill -0 <pid>` reported all 47 tvOS cases dead while every screen rendered. Replaced with "is there a `.ips` crash report newer than the launch" — the only signal here that means what it says. | Fixed |
+
+### tvOS verified working
+Home (focus ring on Quick Play) · Enumerate + Type Answer correctly use the **self-marking**
+idiom ("name them in your head, then reveal") rather than remote text entry · Ordering and
+Matching reveal feedback legible at ten feet · dark theme throughout.
+
+---
+
 ## Still to do
 
 - [ ] Round 1 review is **partial**: ~12 of 47 captures examined in depth; the rest are

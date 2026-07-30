@@ -42,19 +42,24 @@ shot() {
   xcrun simctl terminate "$SIM" "$BUNDLE" >/dev/null 2>&1
   local env_args=()
   for kv in "$@"; do env_args+=("SIMCTL_CHILD_${kv%%=*}=${kv#*=}"); done
-  # Onboarding would sit over every single capture.
-  local pid
-  pid=$(env "${env_args[@]}" SIMCTL_CHILD_TIDBITS_SKIP_ONBOARD=1 \
-    xcrun simctl launch "$SIM" "$BUNDLE" 2>/dev/null | grep -oE '[0-9]+$')
+  # Onboarding would sit over every single capture. On tvOS the Game Center sign-in
+  # overlay ALSO covers the whole screen on launch and ate an entire capture run.
+  [ "$PLATFORM" = "tvos" ] && env_args+=("SIMCTL_CHILD_TIDBITS_NO_GAMECENTER=1")
+  # Mark the moment, so a crash report written AFTER the launch is unambiguous.
+  local stamp; stamp="$OUT/.stamp"; : > "$stamp"
+  env "${env_args[@]}" SIMCTL_CHILD_TIDBITS_SKIP_ONBOARD=1 \
+    xcrun simctl launch "$SIM" "$BUNDLE" >/dev/null 2>&1
   sleep "$settle"
   xcrun simctl io "$SIM" screenshot "$OUT/$name.png" >/dev/null 2>&1
-  # A dead PID means the case CRASHED — that is a finding, not a bad screenshot. Check the
-  # actual pid simctl handed back; `launchctl list` does not reliably list simulator apps
-  # and reported every case as dead on the first run.
-  if [ -z "$pid" ]; then
-    echo "  $name  <-- launch returned no pid"
-  elif ! xcrun simctl spawn "$SIM" kill -0 "$pid" 2>/dev/null; then
-    echo "  $name  <-- CRASHED (pid $pid gone)"
+  # Look for a crash REPORT newer than the launch. Two earlier attempts got this wrong and
+  # cried wolf on every healthy screen: `launchctl list` does not list simulator apps, and
+  # `simctl spawn kill -0` does not report the app's liveness either. A .ips written after
+  # the stamp is the only signal here that means what it says.
+  local crash
+  crash=$(find ~/Library/Logs/DiagnosticReports -name "TidbitsTrivia*.ips" \
+            -newer "$stamp" 2>/dev/null | head -1)
+  if [ -n "$crash" ]; then
+    echo "  $name  <-- CRASHED ($(basename "$crash"))"
   else
     echo "  $name"
   fi

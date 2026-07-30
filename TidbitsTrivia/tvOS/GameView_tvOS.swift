@@ -544,15 +544,24 @@ struct TVGamePlayView: View {
     private func closestPanel(_ spec: ClosestSpec) -> some View {
         let live = game.phase == .playing
         let fine = max(spec.step, 1)
-        let coarse = max(fine * 10, 10)
+        // The coarse step has to scale with the RANGE, not just the fine step. A year
+        // question spans 1000...2025 with step 1, and a fixed fine*10 coarse meant ~100
+        // remote presses to cross it — the iPhone's slider hides this entirely, so it only
+        // shows up by actually playing the mode on a TV (QA-SWEEP-LOG Q12). Target roughly
+        // 20 presses end to end, and add a middle tier when even that leaves a long tail.
+        let span = max(spec.max - spec.min, fine)
+        let coarse = max(fine * 10, Self.niceStep(span / 20))
+        let mid = coarse > fine * 10 ? fine * 10 : nil
         return VStack(spacing: 26) {
             Text(closestFmt(game.currentGuess, spec))
                 .font(.system(size: 70, weight: .black, design: .rounded)).foregroundStyle(.white)
                 .contentTransition(.numericText())
             HStack(spacing: 20) {
                 stepButton(-coarse, "−\(Int(coarse))", live: live).focused($focus, equals: .closestSlider)
+                if let mid { stepButton(-mid, "−\(Int(mid))", live: live) }
                 stepButton(-fine, "−\(Int(fine))", live: live)
                 stepButton(fine, "+\(Int(fine))", live: live)
+                if let mid { stepButton(mid, "+\(Int(mid))", live: live) }
                 stepButton(coarse, "+\(Int(coarse))", live: live)
             }
             if live {
@@ -562,6 +571,14 @@ struct TVGamePlayView: View {
             }
         }
         .frame(maxWidth: 1000)
+    }
+
+    /// Round a raw step up to a readable 1/2/5 x 10^n — "+50" reads on a TV, "+51.25" does not.
+    private static func niceStep(_ raw: Double) -> Double {
+        guard raw > 1 else { return 1 }
+        let mag = pow(10, (log10(raw)).rounded(.down))
+        let n = raw / mag
+        return mag * (n < 1.5 ? 1 : (n < 3.5 ? 2 : (n < 7.5 ? 5 : 10)))
     }
 
     private func stepButton(_ delta: Double, _ label: String, live: Bool) -> some View {

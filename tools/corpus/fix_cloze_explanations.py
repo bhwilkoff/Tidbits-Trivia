@@ -45,7 +45,7 @@ DATASETS = [
 MIRROR_DIRS = [
     ROOT / "assets",
     ROOT / "TidbitsTrivia" / "Resources",
-    ROOT / "android" / "app" / "src" / "main" / "assets",
+    ROOT / "android" / "app" / "src" / "main" / "assets",   # picture/typeanswer only; corpus is SQLite here
     ROOT / "windows" / "Tidbits.HeadlessTests" / "Fixtures",
 ]
 
@@ -128,7 +128,12 @@ def process(path: pathlib.Path, expl_i: int, ans_i: int, check_only: bool) -> in
 
 # The Apple app reads a PRE-BAKED SQLite, not the JSON — fixing only the JSON left the app
 # still showing a gap, which is how this was caught. Its answer is option{correct_index}.
-SQLITE = ROOT / "TidbitsTrivia" / "Resources" / "corpus.sqlite"
+# Apple AND Android both read a prebuilt SQLite (Android switched after the 180MB
+# in-RAM corpus OOM'd Play review devices), so both copies must be repaired.
+SQLITES = [
+    ROOT / "TidbitsTrivia" / "Resources" / "corpus.sqlite",
+    ROOT / "android" / "app" / "src" / "main" / "assets" / "corpus.sqlite",
+]
 
 
 def process_sqlite(path: pathlib.Path, check_only: bool) -> int:
@@ -185,7 +190,8 @@ def main() -> int:
     for name, expl_i, ans_i in DATASETS:
         for d in MIRROR_DIRS:
             worst = max(worst, process(d / name, expl_i, ans_i, check_only))
-    worst = max(worst, process_sqlite(SQLITE, check_only))
+    for db in SQLITES:
+        worst = max(worst, process_sqlite(db, check_only))
     return worst
 
 

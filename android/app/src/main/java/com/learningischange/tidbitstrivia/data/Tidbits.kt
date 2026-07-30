@@ -239,69 +239,101 @@ object Scoring {
     }
 }
 
-// ---- Corpus (bundled JSON asset, in-memory) ----
+// ---- Corpus (bundled SQLite asset, queried not loaded) ----
 
-// corpus.json rows are plain positional 9-element JSON arrays (not keyed objects).
-// This serializer decodes ONE row's JsonElement at a time (via the streaming
-// JsonDecoder) so Corpus.load never materializes a JsonElement tree for the
-// whole ~131k-row/42MB corpus — that whole-tree materialization (the old
-// Json.parseToJsonElement(text) call) was the OOM on a stock (non-largeHeap)
-// device heap; the OOM was swallowed by the caller's runCatching, so every game
-// mode silently showed "No questions yet" instead of crashing loudly.
-@OptIn(ExperimentalSerializationApi::class)
-private object CorpusRowSerializer : KSerializer<Question> {
-    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("CorpusRow")
-    override fun serialize(encoder: Encoder, value: Question): Unit =
-        throw UnsupportedOperationException("corpus rows are read-only")
-    override fun deserialize(decoder: Decoder): Question {
-        val a = (decoder as JsonDecoder).decodeJsonElement().jsonArray
-        return Question(
-            id = a[0].jsonPrimitive.content, prompt = a[1].jsonPrimitive.content,
-            options = a[2].jsonArray.map { it.jsonPrimitive.content },
-            correctIndex = a[3].jsonPrimitive.content.toInt(),
-            categoryId = a[4].jsonPrimitive.content,
-            difficulty = a[5].jsonPrimitive.content.toInt(),
-            explanation = a[6].jsonPrimitive.content,
-            sourceTitle = a[7].jsonPrimitive.content,
-            sourceUrl = a[8].jsonPrimitive.content,
-            tags = if (a.size > 9) a[9].jsonArray.map { it.jsonPrimitive.content } else emptyList(),
-        )
-    }
-}
-private object CorpusQuestionListSerializer : KSerializer<List<Question>> by ListSerializer(CorpusRowSerializer)
-
-@Serializable
-private data class CorpusFile(
-    @Serializable(with = CorpusQuestionListSerializer::class)
-    val questions: List<Question> = emptyList(),
-)
-
+/**
+ * The 128,670-question corpus, backed by the SAME prebuilt `corpus.sqlite` the Apple apps ship
+ * (byte-identical rows, same order), queried per request instead of held in RAM.
+ *
+ * Why: decoding corpus.json into 128,670 `Question` objects cost ~180MB of Java heap. The app
+ * needed `android:largeHeap` just to open, sat at 230MB resident, and peaked at 299MB inside
+ * [search] — so any device whose largeHeap cap is 256MB died mid-session. That is what Google
+ * Play review hit on version code 75 ("the app opens, but it keeps crashing"), and it is the
+ * same OOM class that once made every mode silently show "No questions yet".
+ *
+ * Only the `id`s stay resident (~13MB): both the Daily rank and Marathon need the whole id
+ * space, and ranking streams nothing useful.
+ */
 object Corpus {
-    private var all: List<Question> = emptyList()
-    private var byCat: Map<String, List<Question>> = emptyMap()
+    private var db: android.database.sqlite.SQLiteDatabase? = null
+    private var ids: List<String> = emptyList()
     var loaded = false; private set
-    val count get() = all.size
-    private val streamingJson = Json { ignoreUnknownKeys = true }
+    val count get() = ids.size
 
-    @OptIn(ExperimentalSerializationApi::class)
+    private const val COLS = "id,prompt,option0,option1,option2,option3,correct_index," +
+        "category_id,difficulty,explanation,source_title,source_url,tags"
+
     suspend fun load(context: Context) = withContext(Dispatchers.IO) {
         if (loaded) return@withContext
-        all = context.assets.open("corpus.json").use { streamingJson.decodeFromStream<CorpusFile>(it) }.questions
-        byCat = all.groupBy { it.categoryId }
+        val file = java.io.File(context.filesDir, "corpus.sqlite")
+        // Re-install whenever the app version moves: a shipped corpus update would otherwise be
+        // invisible forever, because the copy already on disk still exists.
+        val stamp = java.io.File(context.filesDir, "corpus.stamp")
+        val want = com.learningischange.tidbitstrivia.BuildConfig.VERSION_CODE.toString()
+        if (!file.exists() || file.length() == 0L || runCatching { stamp.readText() }.getOrNull() != want) {
+            install(context, file)
+            runCatching { stamp.writeText(want) }
+        }
+        val opened = android.database.sqlite.SQLiteDatabase.openDatabase(
+            file.path, null, android.database.sqlite.SQLiteDatabase.OPEN_READONLY,
+        )
+        db = opened
+        ids = opened.rawQuery("SELECT id FROM questions", null).use { c ->
+            ArrayList<String>(c.count).apply { while (c.moveToNext()) add(c.getString(0)) }
+        }
         loaded = true
-        android.util.Log.d("Corpus", "loaded ${all.size} questions")
+        android.util.Log.d("Corpus", "opened ${ids.size} questions")
+    }
+
+    /** SQLite needs a real file, so the asset is copied out of the APK once. The copy also gets
+     *  the one index the shared database lacks — `category_id`, which every [pull] filters on. */
+    private fun install(context: Context, target: java.io.File) {
+        val tmp = java.io.File(target.parentFile, "corpus.sqlite.tmp")
+        tmp.delete()
+        context.assets.open("corpus.sqlite").use { input ->
+            tmp.outputStream().use { out -> input.copyTo(out, 1 shl 16) }
+        }
+        android.database.sqlite.SQLiteDatabase.openDatabase(
+            tmp.path, null, android.database.sqlite.SQLiteDatabase.OPEN_READWRITE,
+        ).use { it.execSQL("CREATE INDEX IF NOT EXISTS idx_questions_category ON questions(category_id)") }
+        check(tmp.renameTo(target)) { "could not install corpus.sqlite" }
+    }
+
+    private fun map(c: android.database.Cursor) = Question(
+        id = c.getString(0), prompt = c.getString(1) ?: "",
+        options = listOf(c.getString(2) ?: "", c.getString(3) ?: "", c.getString(4) ?: "", c.getString(5) ?: ""),
+        correctIndex = c.getInt(6), categoryId = c.getString(7) ?: "", difficulty = c.getInt(8),
+        explanation = c.getString(9) ?: "", sourceTitle = c.getString(10) ?: "",
+        sourceUrl = c.getString(11) ?: "",
+        tags = c.getString(12)?.takeIf { it.isNotEmpty() }?.split('|') ?: emptyList(),
+    )
+
+    private fun query(sql: String, args: Array<String>? = null): List<Question> {
+        val d = db ?: return emptyList()
+        return runCatching {
+            d.rawQuery(sql, args).use { c ->
+                ArrayList<Question>(c.count).apply { while (c.moveToNext()) add(map(c)) }
+            }
+        }.getOrDefault(emptyList())
     }
 
     fun pull(categoryId: String, seen: Set<String>, limit: Int): List<Question> {
-        val src = if (categoryId == "mixed") all else (byCat[categoryId] ?: emptyList())
-        return src.filter { it.id !in seen }.shuffled().take(limit)
+        // Over-fetch by the seen count so they can be dropped without a second round trip;
+        // SQL RANDOM() is what the old in-memory .shuffled() did.
+        val want = (limit + seen.size).toString()
+        val rows = if (categoryId == "mixed")
+            query("SELECT $COLS FROM questions ORDER BY RANDOM() LIMIT ?", arrayOf(want))
+        else
+            query("SELECT $COLS FROM questions WHERE category_id=? ORDER BY RANDOM() LIMIT ?", arrayOf(categoryId, want))
+        return rows.filter { it.id !in seen }.take(limit)
     }
 
-    fun byId(id: String): Question? = all.firstOrNull { it.id == id }
+    fun byId(id: String): Question? =
+        query("SELECT $COLS FROM questions WHERE id=? LIMIT 1", arrayOf(id)).firstOrNull()
 
     /** Every question id — the Marathon seeded-pick pool (docs/CLUB-FEATURES-BUILD.md
      *  "Feature 3"); mirrors Apple's `CorpusDatabase.shared.orderedIDs(categoryID: "mixed")`. */
-    fun allIds(): List<String> = all.map { it.id }
+    fun allIds(): List<String> = ids
 
     /** Create feature: real, already-vetted corpus questions matching the topic's
      *  words (prompt + Wikipedia source title). Grounded generation's retrieval
@@ -309,15 +341,27 @@ object Corpus {
     fun search(topic: String, limit: Int): List<Question> {
         val tokens = topic.lowercase().split(Regex("[^a-z0-9]+")).filter { it.length >= 3 }
         if (tokens.isEmpty()) return emptyList()
-        val ranked = all.mapNotNull { q ->
+        // Narrow to rows that mention a token at all before scoring in Kotlin. LIKE is
+        // ASCII-case-insensitive in SQLite and the tokens are [a-z0-9] by construction, so this
+        // matches what the old full scan found. The cap stops a common word ("history") from
+        // materialising a big slice of the corpus — the caller only ever takes a handful, so a
+        // deeper candidate pool would not change what ships.
+        val clause = tokens.joinToString(" OR ") {
+            "(prompt LIKE ? OR source_title LIKE ? OR explanation LIKE ? OR tags LIKE ?)"
+        }
+        val args = tokens.flatMap { t -> List(4) { "%$t%" } }.toTypedArray()
+        // The two owner rules (drop the repetitive "which continent" template and the
+        // trivially-easy tier) push down into SQL; the answer-giveaway rule needs answerText.
+        val candidates = query(
+            "SELECT $COLS FROM questions WHERE difficulty > 1 " +
+                "AND id NOT LIKE 'src:continent:%' AND ($clause) LIMIT 6000",
+            args,
+        )
+        val ranked = candidates.mapNotNull { q ->
             // Drop questions whose ANSWER is/contains the topic — the player typed it,
             // so that's a giveaway ("Chicago" → answer "Chicago"). Keep ones ABOUT it.
             val answer = q.answerText.lowercase()
             if (tokens.any { answer.contains(it) }) return@mapNotNull null
-            // Diversity (owner): drop the "which continent is X on" template — easy,
-            // repetitive, non-educational — and the trivially-easy tier.
-            if (q.id.startsWith("src:continent:")) return@mapNotNull null
-            if (q.difficulty <= 1) return@mapNotNull null
             val title = q.sourceTitle.lowercase(); val prompt = q.prompt.lowercase(); val explanation = q.explanation.lowercase()
             val tagsLower = q.tags.map { it.lowercase() }
             val score = tokens.sumOf {
@@ -352,8 +396,13 @@ object Corpus {
     fun daily(dayKey: String, count: Int): List<Question> {
         // Canonical hash-rank selection (Decision 037) — the SAME 7 on every
         // platform (mirrors DailyPick.swift + engine.js pickDaily exactly).
-        val byId = all.associateBy { it.id }
-        return pickDailyIds(all.map { it.id }, dayKey, "mixed", count).mapNotNull { byId[it] }
+        val picked = pickDailyIds(ids, dayKey, "mixed", count)
+        if (picked.isEmpty()) return emptyList()
+        val rows = query(
+            "SELECT $COLS FROM questions WHERE id IN (${picked.joinToString(",") { "?" }})",
+            picked.toTypedArray(),
+        ).associateBy { it.id }
+        return picked.mapNotNull { rows[it] }   // keep the ranked order, not SQL's
     }
 }
 

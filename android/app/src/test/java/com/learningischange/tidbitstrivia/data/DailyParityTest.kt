@@ -27,7 +27,10 @@ class DailyParityTest {
     }
 
     @Test fun writeGoldenPicks() {
-        val corpus = Json.parseToJsonElement(File(repo, "android/app/src/main/assets/corpus.json").readText()).jsonObject
+        // The repo-root copy, not the app's asset: Android now ships corpus.sqlite (the same
+        // rows in the same order) so the app never holds the corpus in RAM. The daily rank is
+        // computed from ids alone, so the shared JSON remains the right golden source.
+        val corpus = Json.parseToJsonElement(File(repo, "assets/corpus.json").readText()).jsonObject
         val rows = corpus["questions"]!!.jsonArray
         val ids = rows.map { it.jsonArray[0].jsonPrimitive.content }
         assertTrue("corpus too small: ${ids.size}", ids.size > 100)

@@ -18,13 +18,14 @@ every bundled set inherits the fixes. Dry-run by default; pass --apply to write.
 
 Usage: python3 recategorize_and_clean.py [--apply]
 """
-import argparse, hashlib, json, os, re, sys
+import argparse, hashlib, json, os, re, shutil, sys
 
 sys.path.insert(0, os.path.dirname(__file__))
 import gen_picture as gp  # subject_description() + _classify()
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 CORPUS = os.path.join(ROOT, "assets", "corpus.json")
+ANDROID_SQLITE = "android/app/src/main/assets/corpus.sqlite"
 
 # Per-category domain detectors over a person's description. A category is
 # "supported" if its pattern matches; priority order breaks ties when the
@@ -98,12 +99,14 @@ def main():
     body = json.dumps(qs, ensure_ascii=False, separators=(",", ":"))
     ver = hashlib.md5(body.encode()).hexdigest()[:12]
     payload = f'{{"version":"{ver}","count":{len(qs)},"questions":{body}}}'
-    for p in (CORPUS, os.path.join(ROOT, "android/app/src/main/assets/corpus.json")):
-        open(p, "w").write(payload)
+    open(CORPUS, "w").write(payload)
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), "sources"))
     import build_corpus
     build_corpus.write_sqlite(qs, build_corpus.IOS_SQLITE)
-    print(f"\nwrote corpus.json (web/Android) + corpus.sqlite (iOS), version {ver}")
+    # Android reads the SAME prebuilt SQLite as Apple, not corpus.json: 128k decoded Question
+    # objects cost ~180MB of Java heap and OOM'd mid-session on 256MB-largeHeap devices.
+    shutil.copyfile(build_corpus.IOS_SQLITE, os.path.join(ROOT, ANDROID_SQLITE))
+    print(f"\nwrote corpus.json (web) + corpus.sqlite (Apple/Android), version {ver}")
     print("now rerun gen_*.py so every bundled set inherits the fixes")
 
 

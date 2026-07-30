@@ -1592,3 +1592,51 @@ where the paywall is often the process's first App Store traffic. Retry it, and
 make an empty product list a **recoverable** state with a Try Again control, never
 a bare error string. And never stack the paywall as a second `.fullScreenCover`
 on tvOS: StoreKit then has to present its sheet third in a modal stack.
+
+## 049 — A bundled corpus is queried, never loaded: RAM is a shipping constraint,
+## and "works on my emulator" hides it
+
+**Rule:** any client that ships the full ~128k-question corpus reads it from the
+prebuilt `corpus.sqlite` and queries per request. No client decodes the corpus
+into objects and holds them. Apple already did this (`CorpusDatabase`); Android
+now does too, off the **same** database file.
+
+**Why:** Google Play rejected version code 75 under the Broken Functionality
+policy — "the app opens, but it keeps crashing." There was no stack trace: the
+reviewer's evidence is the stock Android crash dialog, Android vitals showed
+**zero** user crashes, and the build could not be made to crash on Android 11 or
+16, release or debug, with or without network, or under 3,000 monkey events.
+
+Measurement found it where reproduction could not. Decoding `corpus.json` into
+128,670 `Question` objects cost ~180MB of Java heap:
+
+| | before | after |
+|---|---|---|
+| resident after load | 230 MB | 74 MB |
+| peak during `Corpus.search` | **299 MB** | 96 MB |
+
+The app needed `android:largeHeap` merely to open. A 299MB peak survives a
+512MB largeHeap cap (every emulator image on hand) and dies on the 256MB cap
+that mid-range hardware ships — which is exactly "opens, then crashes," and
+exactly why no local device reproduced it.
+
+**How to apply:**
+- Ship `corpus.sqlite`, not `corpus.json`, to any memory-constrained client.
+  Copy it out of the APK once (SQLite needs a real file) and key that copy on
+  the app version, or a corpus update stays invisible behind the copy on disk.
+- Keep only the `id` space resident (~13MB) — the Daily rank and Marathon need
+  it, and nothing else does.
+- Push filters into SQL, then score the narrowed candidate set in code. The old
+  `search` called `.lowercase()` five times per row across all 128,670 rows;
+  that transient garbage was most of the 299MB spike.
+- **An emulator's heap cap is not the device's.** `largeHeap` is a smell, not a
+  fix: it converts a memory bug into one that only appears on hardware you do
+  not own. Measure `Java Heap` in `dumpsys meminfo` against the *smallest*
+  supported cap, not the one that happens to be booted.
+- This is the second OOM on this exact path (the first made every mode silently
+  show "No questions yet"). Holding the corpus in RAM is the recurring defect;
+  querying it is the ratchet.
+
+**Not changed:** the web app (browser-managed) and Windows (a desktop with GBs
+free) still read `corpus.json`. The constraint is a phone's per-process heap
+cap, not the file.

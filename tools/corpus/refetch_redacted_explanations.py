@@ -46,10 +46,15 @@ JSON_SETS = [
 MIRROR_DIRS = [
     ROOT / "assets",
     ROOT / "TidbitsTrivia" / "Resources",
-    ROOT / "android" / "app" / "src" / "main" / "assets",
+    ROOT / "android" / "app" / "src" / "main" / "assets",   # picture/typeanswer only; corpus is SQLite here
     ROOT / "windows" / "Tidbits.HeadlessTests" / "Fixtures",
 ]
-SQLITE = ROOT / "TidbitsTrivia" / "Resources" / "corpus.sqlite"
+# Apple AND Android both read a prebuilt SQLite (Android switched after the 180MB
+# in-RAM corpus OOM'd Play review devices), so both copies must be repaired.
+SQLITES = [
+    ROOT / "TidbitsTrivia" / "Resources" / "corpus.sqlite",
+    ROOT / "android" / "app" / "src" / "main" / "assets" / "corpus.sqlite",
+]
 
 
 def title_of(url: str) -> str:
@@ -73,9 +78,11 @@ def collect_titles() -> set[str]:
             for r in rows_of(json.loads(p.read_text())):
                 if "____" in (r[ei] or "") and ui < len(r):
                     titles.add(title_of(r[ui]))
-    if SQLITE.exists():
+    for db in SQLITES:
+        if not db.exists():
+            continue
         import sqlite3
-        con = sqlite3.connect(SQLITE)
+        con = sqlite3.connect(db)
         for (url,) in con.execute(
             "SELECT source_url FROM questions WHERE instr(explanation,'____')>0"
         ):
@@ -166,11 +173,11 @@ def apply_json(path: pathlib.Path, ei: int, ui: int, cache: dict, check_only: bo
     return fixed, missing
 
 
-def apply_sqlite(cache: dict, check_only: bool) -> tuple[int, int]:
-    if not SQLITE.exists():
+def apply_sqlite(path: pathlib.Path, cache: dict, check_only: bool) -> tuple[int, int]:
+    if not path.exists():
         return 0, 0
     import sqlite3
-    con = sqlite3.connect(SQLITE)
+    con = sqlite3.connect(path)
     rows = con.execute(
         "SELECT id, source_url FROM questions WHERE instr(explanation,'____')>0"
     ).fetchall()
@@ -211,11 +218,12 @@ def main() -> int:
                 print(f"  {d.name}/{name}: {'would fix' if check_only else 'fixed'} {f}, no lead for {m}")
             total_fixed += f
             total_missing += m
-    f, m = apply_sqlite(cache, check_only)
-    if f or m:
-        print(f"  Resources/corpus.sqlite: {'would fix' if check_only else 'fixed'} {f}, no lead for {m}")
-    total_fixed += f
-    total_missing += m
+    for db in SQLITES:
+        f, m = apply_sqlite(db, cache, check_only)
+        if f or m:
+            print(f"  {db.parent.name}/{db.name}: {'would fix' if check_only else 'fixed'} {f}, no lead for {m}")
+        total_fixed += f
+        total_missing += m
 
     print(f"\n{'repairable' if check_only else 'repaired'}: {total_fixed}; still without a usable lead: {total_missing}")
     if check_only and total_fixed:

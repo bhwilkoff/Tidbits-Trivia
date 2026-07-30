@@ -27,7 +27,8 @@ because the point is to catch a mode that renders or plays wrong.
 
 | Q7 | **Bug** | **Ordering and Matching gave NO reveal feedback.** Both are partial-credit modes, yet the reveal re-rendered the player's own grid unmarked — the only way to learn what you got wrong was to read the explanation and diff it by eye. Every MCQ mode colours correct/incorrect. Verified the scoring itself was right (ordering is inversion-based: 3 of 6 inversions → 40×0.5 = +20). | **Fixed (iOS)** — each row now marks ✓ / the position it should have had, mint/coral tinted |
 | Q8 | Regression I caused | Tinting the Matching rows turned them muddy brown with grey text: they are `Button`s with `.disabled(!live)`, and SwiftUI's disabled dimming compounds any fill. Now rendered as a plain view at reveal. | Fixed |
-| Q9 | **Open** | macOS and tvOS have their own game views and **the same missing ordering/matching reveal feedback**. Needs the same fix + a visual check on each. | Next round |
+| Q9 | **Bug** | macOS and tvOS had the **same missing ordering/matching reveal feedback** (separate game views). | **Fixed** — tvOS verified on the Apple TV sim (green ✓ / dark-red "→ N", legible at ten feet); macOS code-mirrored + builds, **not visually verified this round** |
+| Q10 | Harness | The tvOS sim showed the **Game Center sign-in overlay** across the first capture attempt. `TIDBITS_NO_GAMECENTER=1` suppresses it — needed for every tvOS run. | Fixed in the run recipe |
 
 ### Harness defects found in the harness itself
 - `launchctl list` does **not** reliably list simulator apps — it reported all 6 of
@@ -54,7 +55,10 @@ Marathon · Weak Spot · Mix
       streak, "Tough ones you nailed" + the reflection prompt) and Stake (15 on chips)
       both correct. Score SCALES differ hugely between modes (2,825 vs 15) and are
       presented identically; Records separates by mode, so noted not filed.
-- [ ] Mirror the Q7 reveal-feedback fix to macOS + tvOS (Q9).
+- [x] Mirrored the Q7 reveal-feedback fix to macOS + tvOS (Q9).
+- [ ] **Visually verify the macOS reveal** — code-mirrored and building, but this round only
+      confirmed iOS and tvOS on simulators. macOS needs a real run.
 - [ ] iPad sweep (`tools/qa-sweep.sh ipad`) — layout at a different size class.
-- [ ] tvOS sweep — focus engine, the 10-foot ramp, self-marking modes.
+- [ ] Full tvOS sweep (`tools/qa-sweep.sh tvos`, with TIDBITS_NO_GAMECENTER=1) — focus
+      engine, the 10-foot ramp, self-marking modes. Only ordering/matching seen so far.
 - [ ] Android + Windows equivalents.

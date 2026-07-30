@@ -294,12 +294,26 @@ struct GameView_macOS: View {
 
     @ViewBuilder
     private func orderingPanel(_ q: Question) -> some View {
-        VStack(spacing: 8) {
+        // Ordering is partial-credit, so the reveal has to say WHICH items were misplaced —
+        // otherwise the player gets a score and their own unmarked list and has to diff it
+        // against the explanation by eye (iOS parity, QA-SWEEP-LOG Q7).
+        let rank: [String: Int] = q.ordering.map {
+            Dictionary(uniqueKeysWithValues: $0.enumerated().map { ($0.element, $0.offset) })
+        } ?? [:]
+        return VStack(spacing: 8) {
             ForEach(Array(game.currentOrder.enumerated()), id: \.offset) { i, item in
+                let correctIdx = rank[item]
+                let graded = game.phase != .playing && correctIdx != nil
+                let right = graded && correctIdx == i
                 HStack(spacing: 10) {
                     Text("\(i + 1)").font(.system(size: 15, weight: .black, design: .rounded))
                         .foregroundStyle(Tidbits.Palette.inkSoft).frame(width: 20)
                     Text(item).font(Tidbits.TypeRamp.l3).frame(maxWidth: .infinity, alignment: .leading)
+                    if graded {
+                        Text(right ? "✓" : "→ \(correctIdx! + 1)")
+                            .font(.system(size: 14, weight: .black, design: .rounded))
+                            .foregroundStyle(right ? Tidbits.Palette.mint : Tidbits.Palette.coral)
+                    }
                     if game.phase == .playing {
                         Button { game.moveOrderItem(i, up: true) } label: { Image(systemName: "chevron.up") }
                             .buttonStyle(.bordered).disabled(i == 0)
@@ -308,7 +322,10 @@ struct GameView_macOS: View {
                     }
                 }
                 .padding(12)
-                .background(RoundedRectangle(cornerRadius: 12).fill(Tidbits.Palette.surface))
+                .background(RoundedRectangle(cornerRadius: 12).fill(
+                    graded ? (right ? Tidbits.Palette.mint.opacity(0.22)
+                                    : Tidbits.Palette.coral.opacity(0.18))
+                           : Tidbits.Palette.surface))
                 .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Tidbits.Palette.border, lineWidth: 2))
             }
             if game.phase == .playing {
@@ -326,18 +343,39 @@ struct GameView_macOS: View {
         if let m = q.matching {
             VStack(alignment: .leading, spacing: 12) {
                 ForEach(Array(m.keys.enumerated()), id: \.offset) { i, key in
-                    Button { game.selectMatchKey(i) } label: {
-                        HStack {
-                            Text(key).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
-                            Spacer()
-                            Text(game.matchedValue(forKey: i) ?? "—")
+                    let graded = game.phase != .playing
+                    let truth = i < m.values.count ? m.values[i] : nil
+                    let matched = game.matchedValue(forKey: i)
+                    let right = graded && matched != nil && matched == truth
+                    let row = HStack {
+                        Text(key).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                        Spacer()
+                        if graded && !right, let truth {
+                            Text(truth).font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.coral)
+                        } else {
+                            Text(matched ?? "—")
                                 .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
                         }
-                        .padding(12)
-                        .background(RoundedRectangle(cornerRadius: 12).fill(game.matchSelectedKey == i ? Tidbits.Palette.yellow.opacity(0.4) : Tidbits.Palette.surface))
-                        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Tidbits.Palette.border, lineWidth: 2))
+                        if graded {
+                            Text(right ? "✓" : "✕")
+                                .font(.system(size: 14, weight: .black, design: .rounded))
+                                .foregroundStyle(right ? Tidbits.Palette.mint : Tidbits.Palette.coral)
+                        }
                     }
-                    .buttonStyle(.plain).disabled(game.phase == .reveal)
+                    .padding(12)
+                    .background(RoundedRectangle(cornerRadius: 12).fill(
+                        graded ? (right ? Tidbits.Palette.mint.opacity(0.22)
+                                        : Tidbits.Palette.coral.opacity(0.18))
+                               : (game.matchSelectedKey == i ? Tidbits.Palette.yellow.opacity(0.4)
+                                                             : Tidbits.Palette.surface)))
+                    .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Tidbits.Palette.border, lineWidth: 2))
+                    // Plain view once graded: a DISABLED button dims its content, which turned
+                    // the graded tint muddy and the key text grey on iOS.
+                    if graded {
+                        row
+                    } else {
+                        Button { game.selectMatchKey(i) } label: { row }.buttonStyle(.plain)
+                    }
                 }
                 Text("Pick a row, then its match:").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 8)], spacing: 8) {

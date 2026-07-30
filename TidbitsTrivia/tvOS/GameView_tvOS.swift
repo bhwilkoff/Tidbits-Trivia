@@ -356,12 +356,26 @@ struct TVGamePlayView: View {
     /// Ordering at ten feet — focusable per-row ↑/↓ + a Submit button.
     private func orderingPanel() -> some View {
         let live = game.phase == .playing
+        // Partial-credit mode: the reveal must show WHICH items were misplaced (iOS/macOS
+        // parity, QA-SWEEP-LOG Q7). At ten feet a tint alone is not enough, so the target
+        // position is spelled out.
+        let rank: [String: Int] = game.current?.ordering.map {
+            Dictionary(uniqueKeysWithValues: $0.enumerated().map { ($0.element, $0.offset) })
+        } ?? [:]
         return VStack(spacing: 16) {
             ForEach(Array(game.currentOrder.enumerated()), id: \.element) { idx, item in
+                let correctIdx = rank[item]
+                let graded = !live && correctIdx != nil
+                let right = graded && correctIdx == idx
                 HStack(spacing: 24) {
                     Text("\(idx + 1)").font(.system(size: 28, weight: .black, design: .rounded)).foregroundStyle(TVTheme.textSoft).frame(width: 44)
                     Text(item).font(.system(size: 31, weight: .bold, design: .rounded)).foregroundStyle(.white)
                         .frame(maxWidth: .infinity, alignment: .leading)
+                    if graded {
+                        Text(right ? "✓" : "→ \(correctIdx! + 1)")
+                            .font(.system(size: 27, weight: .black, design: .rounded))
+                            .foregroundStyle(right ? Tidbits.Palette.mint : Tidbits.Palette.coral)
+                    }
                     if live {
                         Button { game.moveOrderItem(idx, up: true) } label: { Image(systemName: "chevron.up") }
                             .buttonStyle(TVChipStyle(accent: Tidbits.Palette.blue, selected: false)).disabled(idx == 0)
@@ -371,7 +385,10 @@ struct TVGamePlayView: View {
                     }
                 }
                 .padding(.horizontal, 28).padding(.vertical, 14)
-                .background(RoundedRectangle(cornerRadius: 16).fill(TVTheme.panel))
+                .background(RoundedRectangle(cornerRadius: 16).fill(
+                    graded ? (right ? Tidbits.Palette.mint.opacity(0.30)
+                                    : Tidbits.Palette.coral.opacity(0.26))
+                           : TVTheme.panel))
             }
             if live {
                 Button("Submit Order") { game.submitOrder() }
@@ -387,17 +404,40 @@ struct TVGamePlayView: View {
         let live = game.phase == .playing
         return VStack(spacing: 18) {
             ForEach(Array(m.keys.enumerated()), id: \.offset) { i, key in
+                let truth = i < m.values.count ? m.values[i] : nil
+                let matched = game.matchedValue(forKey: i)
+                let right = !live && matched != nil && matched == truth
                 HStack(spacing: 20) {
-                    Button { game.selectMatchKey(i) } label: {
+                    if live {
+                        Button { game.selectMatchKey(i) } label: {
+                            HStack {
+                                Text(key).font(.system(size: 29, weight: .bold, design: .rounded)).foregroundStyle(.white)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                Text(matched ?? "—").font(.system(size: 27, weight: .medium, design: .rounded))
+                                    .foregroundStyle(matched != nil ? game.mode.accent : TVTheme.textSoft)
+                            }.frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(TVChipStyle(accent: game.mode.accent, selected: game.matchSelectedKey == i))
+                        .focused($focus, equals: .matchKey(i))
+                    } else {
+                        // Graded: show the RIGHT value where it was missed. A plain row, not a
+                        // disabled button — a disabled tvOS chip dims its whole content, and at
+                        // ten feet that is the difference between readable and not.
                         HStack {
                             Text(key).font(.system(size: 29, weight: .bold, design: .rounded)).foregroundStyle(.white)
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                            Text(game.matchedValue(forKey: i) ?? "—").font(.system(size: 27, weight: .medium, design: .rounded))
-                                .foregroundStyle(game.matchedValue(forKey: i) != nil ? game.mode.accent : TVTheme.textSoft)
-                        }.frame(maxWidth: .infinity)
+                            Text(right ? (matched ?? "—") : (truth ?? "—"))
+                                .font(.system(size: 27, weight: .bold, design: .rounded))
+                                .foregroundStyle(right ? Tidbits.Palette.mint : Tidbits.Palette.coral)
+                            Text(right ? "✓" : "✕")
+                                .font(.system(size: 27, weight: .black, design: .rounded))
+                                .foregroundStyle(right ? Tidbits.Palette.mint : Tidbits.Palette.coral)
+                        }
+                        .padding(.horizontal, 28).padding(.vertical, 16)
+                        .frame(maxWidth: .infinity)
+                        .background(RoundedRectangle(cornerRadius: 16).fill(
+                            right ? Tidbits.Palette.mint.opacity(0.30) : Tidbits.Palette.coral.opacity(0.26)))
                     }
-                    .buttonStyle(TVChipStyle(accent: game.mode.accent, selected: game.matchSelectedKey == i))
-                    .focused($focus, equals: .matchKey(i)).disabled(!live)
                 }
             }
             HStack(spacing: 18) {

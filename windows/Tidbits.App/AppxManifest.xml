@@ -31,7 +31,7 @@
   <Identity
     Name="LearningisChangeInc.TidbitsTrivia"
     Publisher="CN=2DCA50F2-F930-495C-BFC0-422E60C371ED"
-    Version="1.6.64.0" />
+    Version="1.6.65.0" />
 
   <Properties>
     <DisplayName>Tidbits Trivia</DisplayName>

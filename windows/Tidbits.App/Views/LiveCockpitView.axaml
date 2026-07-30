@@ -54,10 +54,12 @@
                                 <Button Grid.Column="1" Content="Hide" Click="OnToggleHide" Tag="{Binding Id}"
                                         Padding="7,1" MinWidth="0" FontSize="11" Opacity="0.7"/>
                                 <Button Grid.Column="2" Content="−" Click="OnScoreDown" Tag="{Binding Id}"
+                                        AutomationProperties.Name="{Binding Name, StringFormat='Subtract a point from {0}'}"
                                         Padding="7,1" MinWidth="0" FontWeight="Bold" Margin="4,0,0,0"/>
                                 <TextBlock Grid.Column="3" Text="{Binding Score}" FontWeight="Bold"
                                            MinWidth="26" TextAlignment="Center" VerticalAlignment="Center" Margin="4,0"/>
                                 <Button Grid.Column="4" Content="+" Click="OnScoreUp" Tag="{Binding Id}"
+                                        AutomationProperties.Name="{Binding Name, StringFormat='Add a point to {0}'}"
                                         Padding="7,1" MinWidth="0" FontWeight="Bold"/>
                             </Grid>
                         </DataTemplate>
@@ -102,7 +104,8 @@
                 <Button Content="Merge teams" Click="OnMergeTeams" Padding="16,10" Margin="0,0,10,6"/>
                 <Button Content="Remove team" Click="OnRemoveTeam" Padding="16,10" Margin="0,0,10,6"/>
                 <Button Content="Export CSV" Click="OnExportCsv" Padding="16,10" Margin="0,0,10,6"/>
-                <Button Content="Print" Click="OnPrintStandings" Padding="16,10" Margin="0,0,10,6"/>
+                <Button Content="Print standings" Click="OnPrintStandings" Padding="16,10" Margin="0,0,10,6"/>
+                <Button Content="Question pack" Click="OnPrintPack" Padding="16,10" Margin="0,0,10,6"/>
                 <Button Content="Show on projector" Click="OnProjector" Padding="16,10" Margin="0,0,10,6"/>
                 <Button Content="End night" Click="OnClose" Padding="16,10" Margin="0,0,10,6"/>
             </WrapPanel>

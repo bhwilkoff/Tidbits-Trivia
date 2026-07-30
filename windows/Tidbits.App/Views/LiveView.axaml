@@ -46,6 +46,7 @@
                     <Button Content="Host this event" Click="OnHostEvent" Classes="accent" Padding="16,10"/>
                     <Button Content="Preview solo" Click="OnPreviewEvent" Padding="16,10"/>
                     <Button Content="Save event" Click="OnSaveEvent" Padding="16,10"/>
+                    <Button Content="Print answer sheet" Click="OnPrintAnswerSheet" Padding="16,10"/>
                 </StackPanel>
 
                 <TextBlock x:Name="SavedEventsHeader" Text="Saved events" FontSize="16" FontWeight="Bold"

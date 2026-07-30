@@ -358,6 +358,30 @@ public partial class LiveCockpitView : UserControl
         await writer.WriteAsync(vm.StandingsCsv());
     }
 
+    /// The host's question pack for the night IN PROGRESS — printed from the cockpit rather
+    /// than the builder because a saved event stores only {kind, count}: a pack drawn at build
+    /// time would list different questions than the room is actually being asked.
+    private async void OnPrintPack(object? sender, RoutedEventArgs e)
+    {
+        if (Vm is not { } vm || vm.Host.Questions.Count == 0) return;
+        var html = Tidbits.Core.Networking.LiveExport.QuestionPackHtml(vm.Host.Title, vm.Host.Questions);
+        await OpenPrintable(html, $"tidbits-pack-{vm.Host.Code}.html");
+    }
+
+    /// Write a print-ready page to temp and hand it to the default browser, which is where
+    /// Windows users print or save-as-PDF from.
+    private async System.Threading.Tasks.Task OpenPrintable(string html, string fileName)
+    {
+        var path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), fileName);
+        try
+        {
+            await System.IO.File.WriteAllTextAsync(path, html);
+            var top = TopLevel.GetTopLevel(this);
+            if (top?.Launcher is { } launcher) await launcher.LaunchUriAsync(new Uri(new Uri("file://"), path));
+        }
+        catch { /* best-effort */ }
+    }
+
     /// Print standings — write a print-ready HTML sheet and open it in the default
     /// browser (which prints / saves to PDF). The $0 printable fallback.
     private async void OnPrintStandings(object? sender, RoutedEventArgs e)

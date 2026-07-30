@@ -239,9 +239,18 @@ is the repeatable Pass A.
 **Open, tracked (NOT fixed this pass):**
 - [ ] A.2 Onboarding — macOS has a first-run walkthrough (`MacHomeSheets`
   "Get started"); Windows drops the player straight into Play.
-- [ ] A.3 Live builder: **Video round**, **Answer sheet (teams)**, **Question
-  pack (host)** — the printable host materials + the video round type. Audio
-  rounds play from the cockpit but cannot be authored in the builder.
+- [x] A.3a **Printable host materials** — SHIPPED 1.6.65. `LiveExport
+  .AnswerSheetHtml` (numbered blank lines per round) + `.QuestionPackHtml`
+  (every question with its answer, grouped by round), both HTML → default
+  browser → print/save-PDF, the path `StandingsHtml` already used.
+  **The two live in DIFFERENT places on Windows than on macOS, on purpose:** a
+  saved Windows `LiveEvent` stores only `{kind, count}`, so the answer sheet
+  prints from the BUILDER (plan-only, before the night — the contingency hosts
+  actually want) while the question pack prints from the COCKPIT, where
+  `host.Questions` is the draw the room is really being asked. Printing a pack
+  at build time would hand the host a different set of questions.
+- [ ] A.3b **Video round** in the Live builder — audio rounds play from the
+  cockpit but neither audio nor video can be AUTHORED as a round type.
 - [x] A.4 Live host: **Remove team** — SHIPPED 1.6.64. `LiveNightHost.RemoveTeam`
   zeroes the score and drops the team from standings/projector/export, matching
   `MergeTeams`' shape: the RTDB node is SHARED with that player's client, so

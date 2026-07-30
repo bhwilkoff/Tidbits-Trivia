@@ -183,6 +183,23 @@ public partial class LiveView : UserControl
         engine.StartNight(plan, cat, questions);
     }
 
+    /// The teams' blank answer sheet — printable BEFORE the night from the plan alone
+    /// (round titles + counts), which is the Wi-Fi-dies contingency hosts actually want.
+    private async void OnPrintAnswerSheet(object? sender, RoutedEventArgs e)
+    {
+        var ev = CurrentEvent();
+        if (ev.Rounds.Count == 0) return;
+        var html = Tidbits.Core.Networking.LiveExport.AnswerSheetHtml(ev.Name, ev.Rounds);
+        var path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "tidbits-answer-sheet.html");
+        try
+        {
+            await System.IO.File.WriteAllTextAsync(path, html);
+            var top = TopLevel.GetTopLevel(this);
+            if (top?.Launcher is { } launcher) await launcher.LaunchUriAsync(new Uri(new Uri("file://"), path));
+        }
+        catch { /* best-effort */ }
+    }
+
     private void OnSaveEvent(object? sender, RoutedEventArgs e)
     {
         if (_rounds.Count == 0) { StatusText.Text = "Add at least one round first."; StatusText.IsVisible = true; return; }

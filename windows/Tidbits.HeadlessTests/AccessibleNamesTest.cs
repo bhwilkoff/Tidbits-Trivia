@@ -22,8 +22,10 @@ public class AccessibleNamesTest
     {
         var root = RepoRoot();
         var offenders = new List<string>();
-        foreach (var file in Directory.EnumerateFiles(
-                     Path.Combine(root, "windows", "Tidbits.App"), "*.cs", SearchOption.AllDirectories))
+        var appDir = Path.Combine(root, "windows", "Tidbits.App");
+        var sources = Directory.EnumerateFiles(appDir, "*.cs", SearchOption.AllDirectories)
+            .Concat(Directory.EnumerateFiles(appDir, "*.axaml", SearchOption.AllDirectories));
+        foreach (var file in sources)
         {
             if (file.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}") ||
                 file.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}")) continue;
@@ -37,7 +39,8 @@ public class AccessibleNamesTest
                 // The name may be set on any nearby line (the control is usually named right
                 // before or after its Click handler is wired).
                 var window = string.Join('\n', lines.Skip(System.Math.Max(0, i - 4)).Take(10));
-                if (!window.Contains("AutomationProperties.SetName"))
+                if (!window.Contains("AutomationProperties.SetName")
+                    && !window.Contains("AutomationProperties.Name"))
                     offenders.Add($"{Path.GetFileName(file)}:{i + 1}  {lines[i].Trim()}");
             }
         }

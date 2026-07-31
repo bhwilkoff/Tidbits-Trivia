@@ -1,0 +1,130 @@
+# Common trivia topics, seeded from Wikipedia's most-viewed/most-searched index.
+# Format: <domain>\t<topic>.  Used by coverage.py to measure whether the corpus
+# can actually serve a great quiz for each one BEFORE we promise it can.
+history	World War II
+history	Ancient Egypt
+history	Roman Empire
+history	American Civil War
+history	French Revolution
+history	Cold War
+history	Ancient Greece
+history	Vikings
+history	Renaissance
+history	Industrial Revolution
+history	Titanic
+history	Apollo 11
+history	Berlin Wall
+history	Silk Road
+history	Samurai
+science	Human body
+science	Periodic table
+science	Solar System
+science	Dinosaurs
+science	Black holes
+science	Evolution
+science	DNA
+science	Climate change
+science	Volcanoes
+science	Vaccines
+science	Artificial intelligence
+science	Quantum physics
+science	Antibiotics
+science	Marie Curie
+science	Albert Einstein
+science	Isaac Newton
+science	Charles Darwin
+geography	Mount Everest
+geography	Amazon rainforest
+geography	Sahara
+geography	Great Barrier Reef
+geography	Nile
+geography	Antarctica
+geography	Japan
+geography	Iceland
+geography	Grand Canyon
+geography	Capital cities
+geography	Flags of the world
+geography	Time zones
+screen	Star Wars
+screen	Marvel Cinematic Universe
+screen	Harry Potter
+screen	The Lord of the Rings
+screen	Disney
+screen	Pixar
+screen	James Bond
+screen	Studio Ghibli
+screen	The Simpsons
+screen	Friends
+screen	Game of Thrones
+screen	Breaking Bad
+screen	Stranger Things
+screen	Alfred Hitchcock
+screen	Academy Awards
+music	The Beatles
+music	Taylor Swift
+music	Beyonce
+music	Queen band
+music	Michael Jackson
+music	Hip hop
+music	Jazz
+music	Classical music
+music	Eurovision
+music	Bob Dylan
+music	Elvis Presley
+music	Mozart
+music	Nirvana
+sports	Olympic Games
+sports	FIFA World Cup
+sports	Formula One
+sports	NBA
+sports	Tennis
+sports	Cricket
+sports	Super Bowl
+sports	Tour de France
+sports	Muhammad Ali
+sports	Michael Jordan
+sports	Serena Williams
+sports	Chess
+arts	Vincent van Gogh
+arts	Leonardo da Vinci
+arts	Shakespeare
+arts	Greek mythology
+arts	Norse mythology
+arts	Impressionism
+arts	Jane Austen
+arts	Charles Dickens
+arts	Frida Kahlo
+arts	Sherlock Holmes
+arts	Poetry
+arts	Architecture
+food	Coffee
+food	Chocolate
+food	Pizza
+food	Wine
+food	Sushi
+food	Spices
+food	Cheese
+food	Tea
+tech	Internet
+tech	Video games
+tech	Apple Inc
+tech	Space exploration
+tech	Cryptography
+tech	Robotics
+tech	Social media
+tech	Electric cars
+nature	Cats
+nature	Dogs
+nature	Sharks
+nature	Birds
+nature	Insects
+nature	Whales
+nature	Trees
+nature	Mushrooms
+nature	Bees
+misc	Human anatomy
+misc	Languages
+misc	Money
+misc	Board games
+misc	Fashion
+misc	Medicine

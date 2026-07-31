@@ -3037,11 +3037,19 @@ function drawHost() {
   if (!nhRoot) return;
   const st = nhStandings();
   const standings = `<div class="nh-stand"><div class="muted">STANDINGS</div>${st.length ? st.map((t, i) =>
-    `<div class="nh-row"><span>${i === 0 ? '👑 ' : ''}${h(t.name)}</span><b>${t.score}</b></div>`).join('') :
+    `<div class="nh-row"><span>${t.score === Math.max(...st.map(x => x.score)) ? '👑 ' : ''}${h(t.name)}</span><b>${t.score}</b></div>`).join('') :
     '<div class="muted">Players appear here as they join.</div>'}</div>`;
 
   if (NH.stage === 'ended') {
-    nhRoot.innerHTML = `<div class="nh-card"><h1>${st[0] ? h(st[0].name) + ' wins!' : "That's a night!"}</h1>${standings}
+    // A tie is a real outcome — sorting by score and naming st[0] "the winner"
+    // reported an arbitrary sort order as a victory (mirrors Core/StandingsOutcome).
+    const nhTop = st.length ? Math.max(...st.map(t => t.score)) : 0;
+    const nhWon = st.filter(t => t.score === nhTop).map(t => t.name);
+    const nhHead = !nhWon.length ? "That's a night!"
+      : nhWon.length === 1 ? h(nhWon[0]) + ' wins!'
+      : nhWon.length === st.length ? "It's a tie!"
+      : 'Tie \u2014 ' + nhWon.map(h).join(' &amp; ');
+    nhRoot.innerHTML = `<div class="nh-card"><h1>${nhHead}</h1>${standings}
       <button class="btn btn-primary" id="nh-done">Done</button></div>`;
     nhRoot.querySelector('#nh-done').addEventListener('click', closeNightHost);
     return;

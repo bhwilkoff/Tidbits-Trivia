@@ -178,10 +178,20 @@ private fun PartyAnswer(text: String, state: AnswerVisual, enabled: Boolean, onC
 @Composable
 private fun Scoreboard(names: List<String>, scores: IntArray, corrects: IntArray, qTotal: Int, onRematch: () -> Unit, onShare: () -> Unit, onDone: () -> Unit) {
     val ranked = names.indices.sortedByDescending { scores[it] }
+    // A tie is a real outcome of a shared question set: identical play earns
+    // identical scores, so naming the first-sorted player "the winner" reported
+    // an arbitrary sort order as a victory.
+    val topScore = scores.maxOrNull() ?: 0
+    val winners = names.indices.filter { scores[it] == topScore }
+    val headline = when {
+        winners.size == 1 -> "\uD83C\uDFC6 ${names[winners.first()]} wins!"
+        winners.size == names.size -> "\uD83E\uDD1D It's a tie!"
+        else -> "\uD83E\uDD1D Tie \u2014 ${winners.joinToString(" & ") { names[it] }}"
+    }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        Text("🏆 ${names[ranked.first()]} wins!", fontWeight = FontWeight.Black, fontSize = 26.sp, textAlign = TextAlign.Center)
+        Text(headline, fontWeight = FontWeight.Black, fontSize = 26.sp, textAlign = TextAlign.Center)
         ranked.forEachIndexed { rank, p ->
-            Surface(shape = RoundedCornerShape(18.dp), color = if (rank == 0) Pops.yellow.copy(alpha = 0.25f) else MaterialTheme.colorScheme.surface, border = BorderStroke(2.5.dp, Ink), modifier = Modifier.fillMaxWidth()) {
+            Surface(shape = RoundedCornerShape(18.dp), color = if (scores[p] == topScore) Pops.yellow.copy(alpha = 0.25f) else MaterialTheme.colorScheme.surface, border = BorderStroke(2.5.dp, Ink), modifier = Modifier.fillMaxWidth()) {
                 Row(Modifier.padding(16.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("${rank + 1}", fontWeight = FontWeight.Black, fontSize = 20.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                     Column(Modifier.weight(1f)) {

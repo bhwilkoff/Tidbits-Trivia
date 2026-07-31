@@ -35,7 +35,7 @@
         <!-- Scoreboard -->
         <ScrollViewer x:Name="Scoreboard" IsVisible="False">
             <StackPanel Margin="36,36" Spacing="12" MaxWidth="480" HorizontalAlignment="Center">
-                <TextBlock Text="Final scores" FontSize="26" FontWeight="Black" HorizontalAlignment="Center"/>
+                <TextBlock x:Name="WinnerLine" Text="Final scores" FontSize="26" FontWeight="Black" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"/>
                 <StackPanel x:Name="ScoreList" Spacing="8"/>
                 <Button Content="Done" Click="OnDone" HorizontalAlignment="Center" Padding="26,11" Margin="0,8,0,0"/>
             </StackPanel>

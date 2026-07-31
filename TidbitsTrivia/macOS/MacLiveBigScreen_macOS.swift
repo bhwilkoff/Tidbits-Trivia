@@ -334,10 +334,11 @@ struct LiveBigScreen_macOS: View {
     private func standings(_ s: LiveHostSession) -> some View {
         let rows = unifiedStandings(s)
         return VStack(spacing: 20) {
+            let outcome = StandingsOutcome.headline(rows.map { ($0.name, $0.score) }, empty: "")
             if let winner = rows.first, winner.score > 0 {
                 HStack(spacing: 16) {
                     Image(systemName: "party.popper.fill").font(.system(size: 40)).foregroundStyle(Tidbits.Palette.coral)
-                    Text("\(winner.name) wins!").font(.system(size: 60, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink).lineLimit(1).minimumScaleFactor(0.4)
+                    Text(outcome).font(.system(size: 60, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink).lineLimit(1).minimumScaleFactor(0.4)
                     Image(systemName: "party.popper.fill").font(.system(size: 40)).foregroundStyle(Tidbits.Palette.coral).scaleEffect(x: -1)
                 }
                 .symbolEffect(.bounce, options: reduceMotion ? .nonRepeating : .repeating)

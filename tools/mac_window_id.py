@@ -28,8 +28,22 @@ end tell
 '''
 
 
+def raise_app():
+    """Bring Tidbits to the front before any capture.
+
+    `-R` is window-SCOPED but not window-CONTENT: a bounds capture grabs whatever
+    pixels occupy that rectangle, so an editor or terminal sitting on top of the
+    app window lands in the frame exactly as a full-screen grab would. Activating
+    first is what actually makes the rectangle show the app.
+    """
+    subprocess.run(["osascript", "-e", 'tell application "Tidbits" to activate'],
+                   capture_output=True, text=True)
+    subprocess.run(["sleep", "1"])
+
+
 def bounds_fallback():
     """x,y,w,h of the app window, or "" — usable as `screencapture -R<x,y,w,h>`."""
+    raise_app()
     out = subprocess.run(["osascript", "-e", BOUNDS_SCRIPT],
                          capture_output=True, text=True).stdout.strip()
     return out

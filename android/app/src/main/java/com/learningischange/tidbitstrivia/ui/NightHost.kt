@@ -186,7 +186,17 @@ fun NightHostScreen(rounds: List<Pair<String, Int>>, category: Category, store: 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         when (stage) {
             "ended" -> {
-                Text(standings.firstOrNull()?.let { "${it.second} wins!" } ?: "That's a night!", fontSize = 28.sp, fontWeight = FontWeight.Black, color = ink)
+                val topScore = standings.maxOfOrNull { it.third }
+                val won = standings.filter { it.third == topScore }.map { it.second }
+                Text(
+                    when {
+                        won.isEmpty() -> "That's a night!"
+                        won.size == 1 -> "${won.first()} wins!"
+                        won.size == standings.size -> "It's a tie!"
+                        else -> "Tie \u2014 ${won.joinToString(" & ")}"
+                    },
+                    fontSize = 28.sp, fontWeight = FontWeight.Black, color = ink
+                )
                 StandingsList(standings, ink)
                 Button(onClick = { onDone() }, colors = ButtonDefaults.buttonColors(containerColor = Pops.coral, contentColor = Color.White)) { Text("Done") }
             }

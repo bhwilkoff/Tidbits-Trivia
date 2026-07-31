@@ -2353,7 +2353,7 @@ private fun ExpeditionRow(expedition: Expedition, progress: ExpeditionProgress?,
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
                 Text(expedition.title.uppercase(), fontWeight = FontWeight.Black, fontSize = 18.sp, color = onAccent(col))
-                Text(subtitle, fontSize = 13.sp, color = onAccent(col).copy(alpha = 0.85f), maxLines = 2)
+                Text(subtitle, fontSize = 13.sp, color = onAccent(col).copy(alpha = 0.85f), maxLines = 3)
             }
             Icon(Icons.Filled.KeyboardArrowRight, null, tint = onAccent(col))
         }

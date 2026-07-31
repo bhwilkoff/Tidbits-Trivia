@@ -26,6 +26,8 @@ struct ContentView_macOS: View {
     @State private var nightLaunch: NightLaunchRequest?
     /// A Play-vs-CPU match — also replaces the window root.
     @State private var versusBot: BotProfile?
+    /// Local pass-and-play (2–4 at one Mac) — also replaces the window root.
+    @State private var showParty = false
     /// A Tidbits Live event being previewed solo — replaces the window root.
     @State private var livePreview: LiveEvent?
     /// A Tidbits Live event being HOSTED (the emcee cockpit) — replaces the root.
@@ -50,6 +52,9 @@ struct ContentView_macOS: View {
             } else if let versusBot {
                 VersusContainer_macOS(bot: versusBot) { self.versusBot = nil }
                     .transition(.opacity)
+            } else if showParty {
+                PartyContainer_macOS { showParty = false }
+                    .transition(.opacity)
             } else if let livePreview {
                 LivePreviewContainer_macOS(event: livePreview) { self.livePreview = nil }
                     .transition(.opacity)
@@ -70,6 +75,7 @@ struct ContentView_macOS: View {
         .animation(.snappy(duration: 0.2), value: customGame?.id)
         .animation(.snappy(duration: 0.2), value: nightLaunch?.id)
         .animation(.snappy(duration: 0.2), value: versusBot?.id)
+        .animation(.snappy(duration: 0.2), value: showParty)
         .animation(.snappy(duration: 0.2), value: livePreview?.id)
         .animation(.snappy(duration: 0.2), value: liveHost?.id)
         .animation(.snappy(duration: 0.2), value: expeditionLaunch?.id)
@@ -81,6 +87,7 @@ struct ContentView_macOS: View {
             if launch == nil, let ap = DebugHooks.autoplay {
                 start(LaunchRequest(mode: ap.mode, category: ap.category, mixModes: DebugHooks.mixModes))
             }
+            if !showParty, DebugHooks.openParty { showParty = true }
             if versusBot == nil, let vb = DebugHooks.versusBot {
                 versusBot = vb == "house" ? .house(playerAccuracy: 0.6) : (BotProfile.presets.first { $0.id == vb } ?? .regular)
             }
@@ -139,6 +146,7 @@ struct ContentView_macOS: View {
             NavigationStack(path: $path) {
                 switch section ?? .play {
                 case .play:    HomeView_macOS(onPlay: start, onNight: { nightLaunch = $0 }, onVersus: { versusBot = $0 },
+                                              onParty: { showParty = true },
                                               onExpedition: { expedition, stageIndex in
                                                   expeditionLaunch = ExpeditionStageLaunch_macOS(expedition: expedition, stageIndex: stageIndex)
                                               })

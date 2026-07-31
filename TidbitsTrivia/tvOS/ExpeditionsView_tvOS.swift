@@ -94,7 +94,7 @@ struct TVExpeditionsHubView: View {
             Image(systemName: expedition.symbol).font(.system(size: 44, weight: .black))
             VStack(alignment: .leading, spacing: 6) {
                 Text(expedition.title.uppercased()).font(.system(size: 33, weight: .black, design: .rounded))
-                Text(subtitle).font(.system(size: 24, weight: .medium, design: .rounded)).opacity(0.9).lineLimit(2)
+                Text(subtitle).font(.system(size: 24, weight: .medium, design: .rounded)).opacity(0.9).lineLimit(3)
             }
             Spacer(minLength: 0)
         }

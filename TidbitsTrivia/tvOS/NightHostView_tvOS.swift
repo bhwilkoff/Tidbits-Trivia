@@ -161,7 +161,7 @@ struct TVNightHostView: View {
 
     private var ended: some View {
         VStack(spacing: 30) {
-            Text(host.standings.first.map { "\($0.name) wins!" } ?? "That's a night!")
+            Text(StandingsOutcome.headline(host.standings.map { ($0.name, $0.score) }, empty: "That's a night!"))
                 .font(.system(size: 56, weight: .black, design: .rounded)).foregroundStyle(.white)
             standings.frame(maxWidth: 640)
             Button("Done") { Task { await host.close(); dismiss() } }

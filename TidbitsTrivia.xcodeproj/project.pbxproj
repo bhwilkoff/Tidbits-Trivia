@@ -107,6 +107,7 @@
 		A890E6E26C94D878187A9F28 /* AppleSignIn.swift in Sources */ = {isa = PBXBuildFile; fileRef = 408C9FD599A9680A1E35AE12 /* AppleSignIn.swift */; };
 		A93C3882E397A32AEE50B0FE /* LiveRoom.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BB92F967027E59F005CB86D /* LiveRoom.swift */; };
 		AD2E45CD70618846B0546B96 /* ContentView_iOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E0122AFA7F2570D4CCDD4BA /* ContentView_iOS.swift */; };
+		AF315C17D8A40D23AD75A794 /* StandingsOutcome.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD22A030E767FF54F1498CFD /* StandingsOutcome.swift */; };
 		B0A240BB11DEDEDCE5B142EE /* MacLiveBigScreen_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FC902EC3B5DFAB094A962AF /* MacLiveBigScreen_macOS.swift */; };
 		B0A9BD87C5B11C8B3EA379C9 /* Question.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFC46D4CE8D03186C064C759 /* Question.swift */; };
 		B60770C2C79E6CC6D4EA52AC /* JSONQuestionSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5641E998849F8570AF1C8387 /* JSONQuestionSource.swift */; };
@@ -125,6 +126,7 @@
 		CAC06905ECB9FC605B7CAD4F /* SettingsView_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD6B7F4DD192AF52DC23B7F1 /* SettingsView_macOS.swift */; };
 		CB06D72CCB303461DA6ED15C /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = B87EE4E2D9F044824CAA43F0 /* Keychain.swift */; };
 		CCA8AF2E7F7567E5B153E60F /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B2FEBFB29C12A172EADB66F /* SettingsView.swift */; };
+		D015E592AAAEA586171489E6 /* MacParty_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDABF75DD5513F57A37A6C25 /* MacParty_macOS.swift */; };
 		D28850D4B46D40A2897B334F /* QuickMatchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F69A4F5B18F41A84998E9E3D /* QuickMatchView.swift */; };
 		D408A3818D906999A4AD99DC /* NightClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0B1B4D9BA126D3D5E585A00 /* NightClient.swift */; };
 		D555AF5E6F6D4E64929FC464 /* DailyBoardContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56D864166DCE99D76AD6FD72 /* DailyBoardContent.swift */; };
@@ -265,6 +267,8 @@
 		C72A2CD5C4B8BDED3AE57AAC /* DailyPick.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyPick.swift; sourceTree = "<group>"; };
 		CA542678A72946CB1805D926 /* Expeditions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Expeditions.swift; sourceTree = "<group>"; };
 		CB9BC2DDC68229C08A32FF1E /* VersusContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VersusContainerView.swift; sourceTree = "<group>"; };
+		CD22A030E767FF54F1498CFD /* StandingsOutcome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StandingsOutcome.swift; sourceTree = "<group>"; };
+		CDABF75DD5513F57A37A6C25 /* MacParty_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacParty_macOS.swift; sourceTree = "<group>"; };
 		CDC047AE9E00DBB79A4FD169 /* Haptics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Haptics.swift; sourceTree = "<group>"; };
 		CEF7F47459CB6ABD7AD6F3FA /* LinkWallView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkWallView_tvOS.swift; sourceTree = "<group>"; };
 		CF5CC9559B7356814F9FE1D4 /* NightLiveContainer_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightLiveContainer_tvOS.swift; sourceTree = "<group>"; };
@@ -298,7 +302,7 @@
 		FD70222B5EE4C4145E4D1F84 /* NightSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightSetupView.swift; sourceTree = "<group>"; };
 		FDDD2AC4DB9C421C5849B8F6 /* GameView_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView_macOS.swift; sourceTree = "<group>"; };
 		FFC46D4CE8D03186C064C759 /* Question.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Question.swift; sourceTree = "<group>"; };
-		"TEMP_B1EA40D2-D076-4948-9310-6D0C494D69C5" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
+		"TEMP_9B5EDAB9-B493-4B48-BFBC-AFCE27EC086B" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -381,6 +385,7 @@
 				F3AE68F153F8C298960BFD36 /* Player.swift */,
 				D85FC9EA0ED55C307CC3525F /* PlayerRecord.swift */,
 				FFC46D4CE8D03186C064C759 /* Question.swift */,
+				CD22A030E767FF54F1498CFD /* StandingsOutcome.swift */,
 				BCB14B0E2B13CCA2DDA250ED /* TriviaCategory.swift */,
 			);
 			path = Models;
@@ -415,6 +420,7 @@
 				56419A8DE7AAB1006563AA47 /* MacLiveModel_macOS.swift */,
 				4F2347D320A2FB5AA7C4D34E /* MacLivePrint_macOS.swift */,
 				3A477F73E1AD5B4430586D51 /* MacNight_macOS.swift */,
+				CDABF75DD5513F57A37A6C25 /* MacParty_macOS.swift */,
 				DDD3021F86143D7BF5E4B79B /* MacVersus_macOS.swift */,
 				AB761A12169AF965742B8C0F /* MarathonHistoryView_macOS.swift */,
 				C72378B7C5C86DDDB6C4CC26 /* RecordsView_macOS.swift */,
@@ -606,10 +612,10 @@
 			path = TidbitsTrivia;
 			sourceTree = "<group>";
 		};
-		"TEMP_C27AA83E-01CF-4E16-BA77-132A399C2407" /* Tidbits-Trivia */ = {
+		"TEMP_0447A314-EE34-4D05-BD02-D91DE1551517" /* Tidbits-Trivia */ = {
 			isa = PBXGroup;
 			children = (
-				"TEMP_B1EA40D2-D076-4948-9310-6D0C494D69C5" /* AppVersion.xcconfig */,
+				"TEMP_9B5EDAB9-B493-4B48-BFBC-AFCE27EC086B" /* AppVersion.xcconfig */,
 			);
 			path = "Tidbits-Trivia";
 			sourceTree = "<group>";
@@ -770,6 +776,7 @@
 				7763E984206A3E69A81D607D /* MacLiveModel_macOS.swift in Sources */,
 				103775A7AAFF0719F1B10843 /* MacLivePrint_macOS.swift in Sources */,
 				725A6441BCC94D56C76ECCB9 /* MacNight_macOS.swift in Sources */,
+				D015E592AAAEA586171489E6 /* MacParty_macOS.swift in Sources */,
 				5D88C36FF619036EF741CF8E /* MacVersus_macOS.swift in Sources */,
 				9B444302313F743A58B7F7CF /* Marathon.swift in Sources */,
 				63CECA92C2926FD857387B02 /* MarathonHistoryView_macOS.swift in Sources */,
@@ -814,6 +821,7 @@
 				CCA8AF2E7F7567E5B153E60F /* SettingsView.swift in Sources */,
 				CAC06905ECB9FC605B7CAD4F /* SettingsView_macOS.swift in Sources */,
 				0608CF492FA14F91750D1B69 /* SettingsView_tvOS.swift in Sources */,
+				AF315C17D8A40D23AD75A794 /* StandingsOutcome.swift in Sources */,
 				E24C72A3A025A4A52B050A04 /* StoreKitStore.swift in Sources */,
 				188124E453FCD7699CDE5105 /* StoryArchive.swift in Sources */,
 				13B6096EC8BAF18675A19CBF /* StoryArchiveView.swift in Sources */,
@@ -834,7 +842,7 @@
 /* Begin XCBuildConfiguration section */
 		296659EF0549868336801823 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_B1EA40D2-D076-4948-9310-6D0C494D69C5" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_9B5EDAB9-B493-4B48-BFBC-AFCE27EC086B" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -955,7 +963,7 @@
 		};
 		E6F711EEEE2896F84FE9AB98 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_B1EA40D2-D076-4948-9310-6D0C494D69C5" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_9B5EDAB9-B493-4B48-BFBC-AFCE27EC086B" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;

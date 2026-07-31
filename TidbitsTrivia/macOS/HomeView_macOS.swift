@@ -11,6 +11,9 @@ struct HomeView_macOS: View {
     let onPlay: (LaunchRequest) -> Void
     let onNight: (NightLaunchRequest) -> Void
     let onVersus: (BotProfile) -> Void
+    /// Local pass-and-play (2–4 at one Mac) — bubbles up so the container
+    /// swaps the window root, same as Versus.
+    let onParty: () -> Void
     /// Expedition stage play only (docs/CLUB-FEATURES-BUILD.md "Feature 5") —
     /// bubbles to `ContentView_macOS`, which swaps the window root.
     let onExpedition: (Expedition, Int) -> Void
@@ -43,6 +46,7 @@ struct HomeView_macOS: View {
                 quickActionsRow
                 dailyCard
                 triviaNightCard
+                passAndPlayCard
                 onlineCard
                 // R-CLUB-1: ONE Club door for the whole app (was four locked cards here
                 // plus three more in Records).
@@ -191,6 +195,25 @@ struct HomeView_macOS: View {
             }
             .padding(18).frame(maxWidth: .infinity, alignment: .leading)
             .chunkyCard(fill: Tidbits.Palette.yellow)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var passAndPlayCard: some View {
+        Button(action: onParty) {
+            HStack(spacing: 14) {
+                Image(systemName: "person.2.fill").font(.system(size: 26, weight: .black))
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("PASS & PLAY").font(Tidbits.TypeRamp.l2)
+                    Text("2-4 players take turns at one Mac - same questions, fair and square.")
+                        .font(Tidbits.TypeRamp.l5).opacity(0.9)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right.circle.fill").font(.system(size: 24, weight: .bold))
+            }
+            .foregroundStyle(Tidbits.Palette.grape.legibleForeground)
+            .padding(18).frame(maxWidth: .infinity, alignment: .leading)
+            .chunkyCard(fill: Tidbits.Palette.grape)
         }
         .buttonStyle(.plain)
     }

@@ -122,6 +122,35 @@ there unnoticed.
 
 ---
 
+## Round 7 — deep per-feature pass (Pass & Play · Trivia Night · Club), 2026-07-31
+
+Not "does the screen render" but "does the feature do what it claims". Driven by
+playing each feature to completion rather than screenshotting a launch state.
+
+| # | Severity | Finding | Status |
+|---|---|---|---|
+| Q22 | **Missing feature** | **macOS had no Pass & Play at all.** Windows shipped it (WINDOWS-PARITY 1.4), iOS and Android shipped it, and the Mac — the other desktop, and the likeliest shared-desk machine in the set — had only Versus-vs-CPU. Not a stale matrix cell: there was no Mac code path. | **Built** — `macOS/MacParty_macOS.swift` reusing Core verbatim (GameEngine/Player/QuestionProvider), rebuilt as a Mac shell: window-root swap (not a sheet, so the split-view toolbar can't bleed through), `CompactButtonStyle` + `.keyboardShortcut`, grape Home card. Verified end-to-end on the real app: setup → handoff → play → turn score → next player → ranked scoreboard |
+| Q23 | **Bug (all platforms)** | **A tie was announced as a win.** Every board sorted by score and called element 0 "the winner", so two level players produced "Player 1 wins!" — an arbitrary sort order reported as a victory. Ties are NOT an edge case here: Pass & Play deals ONE shared question set, so identical play genuinely finishes level (the Mac run proved it — both players scored exactly 1,169). It also mis-highlighted, tinting only the first row gold. Present on **6 surfaces**: Pass & Play (iOS/macOS/Android/Windows) and Trivia Night standings (web/iOS/tvOS/macOS big screen/Android host + live). | **Fixed everywhere** — one shared rule per stack (`Core/Models/StandingsOutcome.swift`, `Tidbits.Core/Store/StandingsOutcome.cs`, mirrored inline in JS/Kotlin): 1 leader → "X wins!"; all level → "It's a tie!"; partial → "Tie — A & B"; and EVERY leader is highlighted. 6 new Windows tests pin it (443 green) |
+| Q24 | Polish | **Expedition subtitles truncated mid-word** ("…to the dot-c…", "…how we know what…") under a `lineLimit(2)`, with half the screen empty below. | **Fixed** — 3 lines on iOS/macOS/tvOS/Android rows (Windows/web already wrapped freely) |
+| Q25 | Harness | **The Q21 capture fix was incomplete.** `screencapture -R<bounds>` is window-SCOPED but not window-CONTENT — it grabs whatever pixels occupy that rectangle, so an editor sitting on top of the app window landed in the frame exactly as a full-screen grab would (it happened twice this round; both captures were deleted immediately). | **Fixed properly** — pyobjc/Quartz installed, so captures use `screencapture -l <windowid>`, which reads the window's own content and is immune to occlusion AND to the keychain dialog. `tools/mac_window_id.py` also activates the app before any bounds fallback |
+
+### Verified as genuinely implementing their claim (not just rendering)
+- **Weak-Spot Arena (Club F1)** — played a Classic round answering wrong to create real
+  miss history, then launched the Arena: it drew back a question actually missed, captioned
+  "Missed 25 sec. ago · ×1". The transparency claim is real.
+- **Marathon (Club F3)** — hard-quit mid-run via `simctl terminate`, relaunched: the hub
+  reported "Question 4 of 5 — resume where you left off". Resumability holds across a cold kill.
+- **Link Wall (Club F6)** — a well-formed 4×4 with four clean groups (elements H/Fe/Al/Cu ·
+  operas Orpheus/L'Orfeo/Nabucco/Nixon in China · leaders Gandhi/Churchill/Mandela/de Gaulle ·
+  films A Trip to the Moon/Frankenstein/Koyaanisqatsi/Aguirre), 4-mistake budget, Shuffle +
+  Deselect All + Submit.
+- **Knowledge Atlas (Club F4)** — percentages match their own fractions (22/27→81%, 23/26→88%,
+  15/24→63%), bars proportional, every domain row a door into a round.
+- **Expeditions (Club F5)** — the row DOES report "Stage N of M — tap to continue" once a
+  campaign is started; the plain subtitle in a fresh state is correct, not a missing feature.
+- **Pass & Play fairness** — two players on the same dealt set with identical play scored
+  identically, which is the "same questions, fair and square" promise actually holding.
+
 ## Still to do
 
 - [ ] Round 1 review is **partial**: ~12 of 47 captures examined in depth; the rest are

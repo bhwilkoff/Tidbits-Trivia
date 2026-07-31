@@ -214,7 +214,7 @@ struct NightHostView: View {
     private var ended: some View {
         ScrollView {
             VStack(spacing: 16) {
-                Text(host.standings.first.map { "\($0.name) wins!" } ?? "That's a night!")
+                Text(StandingsOutcome.headline(host.standings.map { ($0.name, $0.score) }, empty: "That's a night!"))
                     .font(Tidbits.TypeRamp.l1).foregroundStyle(Tidbits.Palette.ink).multilineTextAlignment(.center)
                 standingsCard
                 Button("Done") { Task { await host.close(); dismiss() } }

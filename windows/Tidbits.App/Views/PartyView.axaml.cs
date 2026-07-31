@@ -72,15 +72,21 @@ public partial class PartyView : UserControl
         ScoreList.Children.Clear();
         var ranked = _names.Zip(_scores, (name, score) => (name, score))
             .OrderByDescending(p => p.score).ToList();
+        // A tie is a real outcome of a shared question set: identical play earns
+        // identical scores, so highlighting only the first-sorted row reported an
+        // arbitrary sort order as a victory.
+        var entries = ranked.Select(p => (Name: p.name, Score: p.score)).ToList();
+        int topScore = ranked.Count == 0 ? 0 : ranked.Max(p => p.score);
+        WinnerLine.Text = Tidbits.Core.Store.StandingsOutcome.Headline(entries, "Final scores");
         for (int i = 0; i < ranked.Count; i++)
         {
             var row = new Border
             {
-                Background = new SolidColorBrush(Color.Parse(i == 0 ? "#FF5C35" : "#0F808080")),
+                Background = new SolidColorBrush(Color.Parse(ranked[i].score == topScore ? "#FF5C35" : "#0F808080")),
                 CornerRadius = new Avalonia.CornerRadius(10), Padding = new Avalonia.Thickness(16, 12),
             };
             var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto") };
-            bool win = i == 0;
+            bool win = ranked[i].score == topScore;
             grid.Children.Add(new TextBlock { Text = $"{i + 1}", FontWeight = FontWeight.Black, Foreground = win ? Brushes.White : null, Margin = new Avalonia.Thickness(0, 0, 12, 0) });
             var name = new TextBlock { Text = ranked[i].name, FontWeight = FontWeight.SemiBold, Foreground = win ? Brushes.White : null };
             Grid.SetColumn(name, 1);

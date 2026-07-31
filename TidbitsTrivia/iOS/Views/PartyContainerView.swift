@@ -220,7 +220,7 @@ private struct PartyScoreboardView: View {
         ScrollView {
             VStack(spacing: 18) {
                 Text("🏆").font(.system(size: 56))
-                Text("\(players.first?.name ?? "Winner") wins!")
+                Text(headline)
                     .font(.system(size: 30, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
                 ForEach(Array(players.enumerated()), id: \.element.id) { rank, p in
                     HStack(spacing: 14) {
@@ -231,7 +231,7 @@ private struct PartyScoreboardView: View {
                         Text("\(p.score)").font(.system(size: 22, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
                     }
                     .padding(16)
-                    .chunkyCard(fill: rank == 0 ? Tidbits.Palette.yellow : Tidbits.Palette.surface)
+                    .chunkyCard(fill: isTop(p) ? Tidbits.Palette.yellow : Tidbits.Palette.surface)
                     .padding(.trailing, Tidbits.Metric.shadowOffset)
                 }
                 ShareLink(item: shareText) {
@@ -247,9 +247,15 @@ private struct PartyScoreboardView: View {
         }
     }
 
+    /// Ties are announced by the shared rule (Core/StandingsOutcome) so the
+    /// Pass & Play board and a hosted Trivia Night never disagree.
+    private var entries: [(name: String, score: Int)] { players.map { ($0.name, $0.score) } }
+    private func isTop(_ p: Player) -> Bool { StandingsOutcome.isTop(p.score, in: entries) }
+    private var headline: String { StandingsOutcome.headline(entries, empty: "Winner") }
+
     private var shareText: String {
         let line = players.map { "\($0.name): \($0.score)" }.joined(separator: " · ")
-        return "🧠 Tidbits Pass & Play — \(players.first?.name ?? "") took the crown!\n\(line)\nTrivia from all of Wikipedia."
+        return "🧠 Tidbits Pass & Play — \(headline)\n\(line)\nTrivia from all of Wikipedia."
     }
 }
 #endif

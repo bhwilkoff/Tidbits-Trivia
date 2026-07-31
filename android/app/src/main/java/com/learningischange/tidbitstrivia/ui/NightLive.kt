@@ -145,10 +145,21 @@ private fun HostControls(live: LiveNight) {
 private fun NightStandings(live: LiveNight, onExit: () -> Unit) {
     val ranked = live.players.sortedByDescending { it.score }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        val winner = ranked.firstOrNull()
-        Text(if (winner != null) "🏆 ${winner.name} wins!" else "That's a wrap", fontWeight = FontWeight.Black, fontSize = 26.sp, textAlign = TextAlign.Center)
+        // A tie is a real outcome; naming the first-sorted player "the winner"
+        // reported an arbitrary sort order as a victory (Core/StandingsOutcome).
+        val topScore = ranked.maxOfOrNull { it.score }
+        val won = ranked.filter { it.score == topScore }.map { it.name }
+        Text(
+            when {
+                won.isEmpty() -> "That's a wrap"
+                won.size == 1 -> "\uD83C\uDFC6 ${won.first()} wins!"
+                won.size == ranked.size -> "\uD83E\uDD1D It's a tie!"
+                else -> "\uD83E\uDD1D Tie \u2014 ${won.joinToString(" & ")}"
+            },
+            fontWeight = FontWeight.Black, fontSize = 26.sp, textAlign = TextAlign.Center
+        )
         ranked.forEachIndexed { rank, p ->
-            NightCard(fill = if (rank == 0) Pops.yellow.copy(alpha = 0.25f) else MaterialTheme.colorScheme.surface) {
+            NightCard(fill = if (p.score == topScore) Pops.yellow.copy(alpha = 0.25f) else MaterialTheme.colorScheme.surface) {
                 Row(Modifier.padding(16.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("${rank + 1}", fontWeight = FontWeight.Black, fontSize = 20.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                     Text(p.name + if (p.isHost) " · host" else "", fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.weight(1f))

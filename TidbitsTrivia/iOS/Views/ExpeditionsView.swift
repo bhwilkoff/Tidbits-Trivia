@@ -134,7 +134,7 @@ private struct ExpeditionRow: View {
                     .font(Tidbits.TypeRamp.l5)
                     .foregroundStyle(domainColor.legibleForeground.opacity(0.85))
                     .multilineTextAlignment(.leading)
-                    .lineLimit(2)
+                    .lineLimit(3)
             }
             Spacer(minLength: 0)
             Image(systemName: "chevron.right.circle.fill")

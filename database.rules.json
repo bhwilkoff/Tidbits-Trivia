@@ -125,6 +125,13 @@
         }
       }
     },
+    "quizzes": {
+      "$id": {
+        ".read": true,
+        ".write": "auth != null && (!data.exists() || data.child('by').val() === auth.uid)",
+        ".validate": "newData.hasChildren(['v','id','t','by','at','qs'])"
+      }
+    },
     "duelInbox": {
       "$uid": {
         ".read": "auth != null && auth.uid === $uid",

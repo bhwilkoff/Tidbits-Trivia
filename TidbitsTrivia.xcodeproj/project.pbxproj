@@ -57,6 +57,7 @@
 		2EF467D5E5DB3E3B82354C1D /* GameContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A77D01159167F1BE602ABED /* GameContainerView.swift */; };
 		3060CC023C2D2EF02413C15C /* VersusView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B74659353899C33ECD4009F /* VersusView_tvOS.swift */; };
 		319FA58A47071FE9048A8597 /* PlayerProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87C84D46C3E146D385DE739A /* PlayerProfile.swift */; };
+		380551E8B65279B2E1F96B6F /* SavedQuiz.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FC360671CC6D3DB7BBFC2D7 /* SavedQuiz.swift */; };
 		3944456B4B345D9CBBDC9594 /* match.json in Resources */ = {isa = PBXBuildFile; fileRef = 6C78FEA628F8D5DC705D414E /* match.json */; };
 		396E6A2004F751CA0ADC7CB7 /* ResultsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C60A815D0EFF35CF18DAB26 /* ResultsView.swift */; };
 		3DC20F18033FF99581974B52 /* MacLiveHost_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5C5D511CC45CC8C0B84A985 /* MacLiveHost_macOS.swift */; };
@@ -113,6 +114,7 @@
 		80FE712A2D805B40834439C2 /* DelightfulQuizGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 161521EA893E91207502AEC2 /* DelightfulQuizGenerator.swift */; };
 		820B047479D40955420CBB7A /* ExpeditionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA61D1D2032AFB58899B45EC /* ExpeditionsView.swift */; };
 		822891D7170B156CB45A51CF /* NightHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61CF6B570C9884F8DF3645CD /* NightHost.swift */; };
+		852E1F05DA16FB9C880AB7B4 /* SavedQuiz.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FC360671CC6D3DB7BBFC2D7 /* SavedQuiz.swift */; };
 		858E669761891D2756E986B2 /* GameEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F41E5C0BFBB0360DCD3015A /* GameEngine.swift */; };
 		859FAE7091E80AC483E8A7A6 /* DailyBoardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 770E593F52F5DB070F1B2591 /* DailyBoardView.swift */; };
 		86818718BDF8BEC23B2A9B36 /* MarathonResultsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03F6BD7D78D033E5D2D14D8B /* MarathonResultsView.swift */; };
@@ -163,6 +165,7 @@
 		B0A9BD87C5B11C8B3EA379C9 /* Question.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFC46D4CE8D03186C064C759 /* Question.swift */; };
 		B1135209012A9E351660D7B8 /* ExpeditionCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 058D7E35AB40F632148F5D3A /* ExpeditionCatalogTests.swift */; };
 		B1AC1CC30B54905053BF07AB /* StandingsOutcomeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE1DBCF26F2ADAFFC54DECC3 /* StandingsOutcomeTests.swift */; };
+		B38EB23E5779A29B9E8CE009 /* SavedQuizTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 546628EE9EF43830BA6691DA /* SavedQuizTests.swift */; };
 		B60770C2C79E6CC6D4EA52AC /* JSONQuestionSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5641E998849F8570AF1C8387 /* JSONQuestionSource.swift */; };
 		B726DC9ED39E20DD9B3F5FD1 /* GameSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BFCD6FF44ED08F84EBBD05E /* GameSettings.swift */; };
 		B72DA2D151B3156C162753C6 /* LiveJoinView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C50D6874040B1114294A708 /* LiveJoinView.swift */; };
@@ -275,6 +278,7 @@
 		528E49FC6DA146ECC87302BC /* corpus.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = corpus.json; sourceTree = "<group>"; };
 		531FA815FBA5B3972C916774 /* ExpeditionsView_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExpeditionsView_macOS.swift; sourceTree = "<group>"; };
 		536B676053104B866A65587A /* LiveNightHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveNightHost.swift; sourceTree = "<group>"; };
+		546628EE9EF43830BA6691DA /* SavedQuizTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedQuizTests.swift; sourceTree = "<group>"; };
 		557D060B0D805B39D4D7425C /* HomeView_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView_macOS.swift; sourceTree = "<group>"; };
 		56419A8DE7AAB1006563AA47 /* MacLiveModel_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacLiveModel_macOS.swift; sourceTree = "<group>"; };
 		5641E998849F8570AF1C8387 /* JSONQuestionSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONQuestionSource.swift; sourceTree = "<group>"; };
@@ -285,6 +289,7 @@
 		5A93A382E53A195B8965DBF8 /* ScoringTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoringTests.swift; sourceTree = "<group>"; };
 		5CE0D5EBCCBDED5D292DBFEB /* ExpeditionsView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExpeditionsView_tvOS.swift; sourceTree = "<group>"; };
 		5D05686E294B018C5E1F2C16 /* FirebaseRTDB.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseRTDB.swift; sourceTree = "<group>"; };
+		5FC360671CC6D3DB7BBFC2D7 /* SavedQuiz.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedQuiz.swift; sourceTree = "<group>"; };
 		5FC902EC3B5DFAB094A962AF /* MacLiveBigScreen_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacLiveBigScreen_macOS.swift; sourceTree = "<group>"; };
 		61CF6B570C9884F8DF3645CD /* NightHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightHost.swift; sourceTree = "<group>"; };
 		655168DF8FE110D6336394D2 /* WikipediaClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WikipediaClient.swift; sourceTree = "<group>"; };
@@ -388,7 +393,7 @@
 		FD70222B5EE4C4145E4D1F84 /* NightSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightSetupView.swift; sourceTree = "<group>"; };
 		FDDD2AC4DB9C421C5849B8F6 /* GameView_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView_macOS.swift; sourceTree = "<group>"; };
 		FFC46D4CE8D03186C064C759 /* Question.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Question.swift; sourceTree = "<group>"; };
-		"TEMP_BFFA1832-55B2-4B8D-8B32-694A809FBC3C" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
+		"TEMP_B2F1E53A-DA43-4885-B59A-81769FBE595A" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -471,6 +476,7 @@
 				F3AE68F153F8C298960BFD36 /* Player.swift */,
 				D85FC9EA0ED55C307CC3525F /* PlayerRecord.swift */,
 				FFC46D4CE8D03186C064C759 /* Question.swift */,
+				5FC360671CC6D3DB7BBFC2D7 /* SavedQuiz.swift */,
 				CD22A030E767FF54F1498CFD /* StandingsOutcome.swift */,
 				BCB14B0E2B13CCA2DDA250ED /* TriviaCategory.swift */,
 			);
@@ -496,6 +502,7 @@
 				E2E52F53D6F7AE7E65D91781 /* KnowledgeAtlasTests.swift */,
 				B5D6E0E49066C4E751BEE4EA /* MarathonTests.swift */,
 				35112E7C75835527816E665E /* README.md */,
+				546628EE9EF43830BA6691DA /* SavedQuizTests.swift */,
 				5A93A382E53A195B8965DBF8 /* ScoringTests.swift */,
 				487DEB563357A9E7CB28882E /* SeededRNGTests.swift */,
 				CE1DBCF26F2ADAFFC54DECC3 /* StandingsOutcomeTests.swift */,
@@ -720,10 +727,10 @@
 			path = TidbitsTrivia;
 			sourceTree = "<group>";
 		};
-		"TEMP_EDD621B1-76BD-476E-B005-3D698D39E7EF" /* Tidbits-Trivia */ = {
+		"TEMP_21239F18-EEEB-4BB2-BE94-D546FA3CC562" /* Tidbits-Trivia */ = {
 			isa = PBXGroup;
 			children = (
-				"TEMP_BFFA1832-55B2-4B8D-8B32-694A809FBC3C" /* AppVersion.xcconfig */,
+				"TEMP_B2F1E53A-DA43-4885-B59A-81769FBE595A" /* AppVersion.xcconfig */,
 			);
 			path = "Tidbits-Trivia";
 			sourceTree = "<group>";
@@ -900,6 +907,8 @@
 				24899B3672D82D416ACC1FC9 /* Question.swift in Sources */,
 				13D1BE7A3105DCFDE360143B /* QuestionProvider.swift in Sources */,
 				1EF9F7CE12246AEBCFD1C57B /* RecordsStore.swift in Sources */,
+				852E1F05DA16FB9C880AB7B4 /* SavedQuiz.swift in Sources */,
+				B38EB23E5779A29B9E8CE009 /* SavedQuizTests.swift in Sources */,
 				A6E898C9A8B577B25B697EE0 /* Scoring.swift in Sources */,
 				621DA73F99F492318523F3D0 /* ScoringTests.swift in Sources */,
 				4E10B93B4D3648C3C18A074B /* ScreenshotQuestions.swift in Sources */,
@@ -1032,6 +1041,7 @@
 				F7DD1CB273A01818674027BF /* RecordsView_macOS.swift in Sources */,
 				C8F2A4B8CAC81B530D5A6D7D /* RecordsView_tvOS.swift in Sources */,
 				396E6A2004F751CA0ADC7CB7 /* ResultsView.swift in Sources */,
+				380551E8B65279B2E1F96B6F /* SavedQuiz.swift in Sources */,
 				868239CDDF1A55B51710E012 /* Scoring.swift in Sources */,
 				04EF040204788DE4625DAF9D /* ScreenshotQuestions.swift in Sources */,
 				16F7B6BE37EAC0372AE1AB55 /* SeededRNG.swift in Sources */,
@@ -1059,7 +1069,7 @@
 /* Begin XCBuildConfiguration section */
 		296659EF0549868336801823 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_BFFA1832-55B2-4B8D-8B32-694A809FBC3C" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_B2F1E53A-DA43-4885-B59A-81769FBE595A" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -1224,7 +1234,7 @@
 		};
 		E6F711EEEE2896F84FE9AB98 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_BFFA1832-55B2-4B8D-8B32-694A809FBC3C" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_B2F1E53A-DA43-4885-B59A-81769FBE595A" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;

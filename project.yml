@@ -51,12 +51,8 @@ targets:
     # Connect (the products still ship for real via App Store Connect at go-live).
     scheme:
       storeKitConfiguration: TidbitsTrivia/Resources/Tidbits.storekit
-    # NOTE: an XCTest target hosting SKTestSession purchase tests
-    # (TidbitsTriviaTests/ClubPurchaseTests.swift) is written and ready, but a hosted-
-    # unit-test build under this Xcode-beta/XcodeGen combo hits a "Multiple commands produce
-    # TidbitsTrivia.swiftmodule" collision (the app module builds twice). Needs a focused
-    # config pass (likely: put the Core in a framework, or the app-as-host TEST_HOST wiring).
-    # Deferred so the app stays clean-building; the test file is kept for that pass.
+      testTargets:
+        - TidbitsTriviaTests
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.learningischange.tidbitstrivia
@@ -139,3 +135,23 @@ targets:
         # DEVELOPMENT_TEAM is filled in (see the OWNER checklist).
         Release:
           CODE_SIGNING_ALLOWED: YES
+
+  # Core unit tests. NOT a hosted test bundle: hosting the universal app made the
+  # app module build twice ("Multiple commands produce TidbitsTrivia.swiftmodule"),
+  # which is why an earlier attempt was abandoned. Compiling Core/ straight into the
+  # bundle sidesteps that by construction — and Core is exactly the platform-agnostic
+  # 60-70% the universal target exists to share, so it is the right thing under test.
+  # macOS-only because these are pure-logic tests: no simulator boot, no app install,
+  # so `xcodebuild test -destination platform=macOS` runs in seconds and is CI-cheap.
+  TidbitsTriviaTests:
+    type: bundle.unit-test
+    supportedDestinations: [macOS]
+    sources:
+      - path: TidbitsTriviaTests
+      - path: TidbitsTrivia/Core
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.learningischange.tidbitstrivia.CoreTests
+        GENERATE_INFOPLIST_FILE: YES
+        CODE_SIGNING_ALLOWED: NO
+        SWIFT_VERSION: "6.0"

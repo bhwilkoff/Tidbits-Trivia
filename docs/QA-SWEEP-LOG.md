@@ -151,6 +151,37 @@ playing each feature to completion rather than screenshotting a launch state.
 - **Pass & Play fairness** — two players on the same dealt set with identical play scored
   identically, which is the "same questions, fair and square" promise actually holding.
 
+## Apple test suite — added 2026-07-31
+
+The Apple side had **no test target at all** while Windows carried 443 tests, so
+every Core regression could only be caught by driving a simulator by hand. That
+was not an oversight: `project.yml` carried a note that a hosted test target hit
+`Multiple commands produce TidbitsTrivia.swiftmodule` and had been deferred.
+
+Fixed by not hosting the app — the bundle compiles `TidbitsTrivia/Core/` directly,
+which sidesteps the double-build by construction, runs on the macOS destination
+(no simulator boot, no app install) and finishes in well under a second.
+
+**82 tests in 10 suites**, green. Run with `tools/test-apple.sh`; gated in CI by
+`.github/workflows/apple-tests.yml`. Details and coverage table in
+`TidbitsTriviaTests/README.md`.
+
+Two things the work surfaced:
+
+- **A real layering violation.** `Core/LiveNightHost.swift` instantiated
+  `LiveHostNet`, which lived in `macOS/MacLiveHostNet_macOS.swift` — Core reaching
+  into a per-platform folder, which CLAUDE.md forbids. It only ever compiled
+  because the universal target builds every folder for every platform. The file
+  had **zero** `#if os()` guards, imported only Foundation, and its own doc comment
+  already said "Platform-agnostic (Core)" — it was simply misfiled. Moved to
+  `Core/Networking/LiveHostNet.swift`.
+- **One test failure that was mine, not the app's.** The Atlas reported a domain
+  from a single answered question, which looked like the sample floor being
+  ignored. Reading the implementation, `sampleFloor` deliberately guards the
+  *trajectory arrow* ("don't **flag** a domain with <8 answers") while the row
+  itself always shows its own visible sample size. The test was rewritten to pin
+  the real contract rather than "fixing" correct code.
+
 ## Still to do
 
 - [ ] Round 1 review is **partial**: ~12 of 47 captures examined in depth; the rest are

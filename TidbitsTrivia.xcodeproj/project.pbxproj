@@ -9,30 +9,45 @@
 /* Begin PBXBuildFile section */
 		00F30902867F9FA5463A6C5D /* ClubHubView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8DD872E110D6DFFC258366A /* ClubHubView_tvOS.swift */; };
 		015B035720728357EED1A9BD /* ClubHubView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89DACDE13C98A519ABB433A9 /* ClubHubView.swift */; };
+		02E828A85BD849666CCA6D6B /* LinkWallModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5762EC669C200A7DB6B30036 /* LinkWallModels.swift */; };
 		02F153022C6FAD01DE261FB5 /* LiveNight.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AD18ED3C40BFC78AFD8FB0C /* LiveNight.swift */; };
 		03FB04C17EDA45D30AC911F4 /* QuestionProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B9A918292A8BD08D5EEAFA6 /* QuestionProvider.swift */; };
+		045C8A23CC31B3DBE5725CE1 /* LivePlayerClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5F5C716CAEEA33AF734ED56 /* LivePlayerClient.swift */; };
 		04EF040204788DE4625DAF9D /* ScreenshotQuestions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A1E96A2E9C52465F028B999 /* ScreenshotQuestions.swift */; };
+		057A58BF61DB4274C23EF48E /* BotOpponent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DC6C8D9CA86356D95539EA4 /* BotOpponent.swift */; };
 		0608CF492FA14F91750D1B69 /* SettingsView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4534F27C4206B9640778460 /* SettingsView_tvOS.swift */; };
 		063A735FDB19BA8567164F51 /* GameContainerView_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BE19D7C519BC6A5BAFC9A2E /* GameContainerView_macOS.swift */; };
 		07F487AB68095E656B266582 /* DailyBoard.swift in Sources */ = {isa = PBXBuildFile; fileRef = F906D7ECECC6433E45E0C10C /* DailyBoard.swift */; };
+		07FB78FA59931A8322DA0685 /* NightLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = D50CC8FE4C2A40751C616B5F /* NightLink.swift */; };
 		087E3615408F7F05DD5FD733 /* LivePlayerClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5F5C716CAEEA33AF734ED56 /* LivePlayerClient.swift */; };
+		0C6D96BE8945A6155F7CB216 /* DailyBoard.swift in Sources */ = {isa = PBXBuildFile; fileRef = F906D7ECECC6433E45E0C10C /* DailyBoard.swift */; };
 		0CC4D137DE4EB9EFCECC73F0 /* ClubHubView_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE29816C3FBC08D77D0649E6 /* ClubHubView_macOS.swift */; };
 		0E0A3E02FDD6CEB760974C4B /* NightTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12852A694244CCEEC20EB41B /* NightTransport.swift */; };
+		0EA1937A1AF5FC265F9C22C9 /* AppStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F619B1D3BB620DD1304475A /* AppStore.swift */; };
 		103775A7AAFF0719F1B10843 /* MacLivePrint_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F2347D320A2FB5AA7C4D34E /* MacLivePrint_macOS.swift */; };
 		11697E55857894F38D742127 /* ProgressStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A73FA1930578863B642985C /* ProgressStats.swift */; };
 		11CCA7505B02468A02988A0C /* closest.json in Resources */ = {isa = PBXBuildFile; fileRef = 1241A5F7969CF344FFE75DA6 /* closest.json */; };
 		13B6096EC8BAF18675A19CBF /* StoryArchiveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBBCC4B7D87BC1E404EBC4B8 /* StoryArchiveView.swift */; };
+		13D1BE7A3105DCFDE360143B /* QuestionProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B9A918292A8BD08D5EEAFA6 /* QuestionProvider.swift */; };
 		13F99AC4E453D3A6059DE7D1 /* LinkWallView_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51C3040890ACDE207CFCC5DD /* LinkWallView_macOS.swift */; };
 		154A589A9053D9ECF66EE341 /* typeanswer.json in Resources */ = {isa = PBXBuildFile; fileRef = 39FBC9BD13DA4CCB86AC1EF4 /* typeanswer.json */; };
 		157E84B3984C8AF6BB3E4900 /* PlayerRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = D85FC9EA0ED55C307CC3525F /* PlayerRecord.swift */; };
+		15EF954644D36101B40E6F95 /* MarathonModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = C67A9AF36A215C29ACBDCB34 /* MarathonModels.swift */; };
+		15F6F08027F1BC6102209F9C /* JSONQuestionSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5641E998849F8570AF1C8387 /* JSONQuestionSource.swift */; };
+		168110901BA6736D730778BC /* WeakSpotArena.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D5272B06F897F6B017FEF9A /* WeakSpotArena.swift */; };
 		16F7B6BE37EAC0372AE1AB55 /* SeededRNG.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1C1A6AE174DDC149D5EE7BB /* SeededRNG.swift */; };
 		188124E453FCD7699CDE5105 /* StoryArchive.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A3ADC850DC68E721197BEF7 /* StoryArchive.swift */; };
+		18B47BD796292B3DC18D6C05 /* DailyBoardContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56D864166DCE99D76AD6FD72 /* DailyBoardContent.swift */; };
+		198C29B58A69766EB3E7A687 /* BonjourTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83FF1890FBAD38C220D2C1BE /* BonjourTransport.swift */; };
 		1AF69F25D46C426A9FC750F9 /* MarathonModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = C67A9AF36A215C29ACBDCB34 /* MarathonModels.swift */; };
 		1D19BE6624BBA688681353EE /* ContentView_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3D542C8E636DF4AF26303CB /* ContentView_macOS.swift */; };
 		1E61B04B5E7AB5ABD7297B54 /* MacHomeSheets_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38E2048C670779462804BFCD /* MacHomeSheets_macOS.swift */; };
+		1EF9F7CE12246AEBCFD1C57B /* RecordsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7633D27702A6874F7D8993DF /* RecordsStore.swift */; };
 		220CABC0B501E1FF8A0E7453 /* BotOpponent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DC6C8D9CA86356D95539EA4 /* BotOpponent.swift */; };
+		230B3D9580023BD009E3689C /* StandingsOutcome.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD22A030E767FF54F1498CFD /* StandingsOutcome.swift */; };
 		2408B044D1E138A30B5F47C9 /* StoryArchiveView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = F095B6F381392A0BC1A36D25 /* StoryArchiveView_tvOS.swift */; };
 		24804CB812FA16ED5E34BEF9 /* Design.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB6E2342A764B8401C9516E9 /* Design.swift */; };
+		24899B3672D82D416ACC1FC9 /* Question.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFC46D4CE8D03186C064C759 /* Question.swift */; };
 		254A5D097C6BED08159370E5 /* AppStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F619B1D3BB620DD1304475A /* AppStore.swift */; };
 		263C354095054FECCB304CBA /* TemplateEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = E48988FC967EF362B69C2FB5 /* TemplateEngine.swift */; };
 		274F21E30264310543E14DB4 /* TidbitsTriviaApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35F518DED9832731B1294DD3 /* TidbitsTriviaApp.swift */; };
@@ -40,102 +55,149 @@
 		28AAE6455B9F7263B190550A /* ExpeditionModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = B28DFC34456277E5235F2C3B /* ExpeditionModels.swift */; };
 		2C425CEED9EE0A5D60AA7131 /* VersusContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB9BC2DDC68229C08A32FF1E /* VersusContainerView.swift */; };
 		2EF467D5E5DB3E3B82354C1D /* GameContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A77D01159167F1BE602ABED /* GameContainerView.swift */; };
-		3001AF8CCB35B3795BF889C9 /* MacLiveHostNet_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8ABB74709F8489A6CFF15FEC /* MacLiveHostNet_macOS.swift */; };
 		3060CC023C2D2EF02413C15C /* VersusView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B74659353899C33ECD4009F /* VersusView_tvOS.swift */; };
+		319FA58A47071FE9048A8597 /* PlayerProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87C84D46C3E146D385DE739A /* PlayerProfile.swift */; };
 		3944456B4B345D9CBBDC9594 /* match.json in Resources */ = {isa = PBXBuildFile; fileRef = 6C78FEA628F8D5DC705D414E /* match.json */; };
 		396E6A2004F751CA0ADC7CB7 /* ResultsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C60A815D0EFF35CF18DAB26 /* ResultsView.swift */; };
 		3DC20F18033FF99581974B52 /* MacLiveHost_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5C5D511CC45CC8C0B84A985 /* MacLiveHost_macOS.swift */; };
 		3DDD98934D198791F4C9C508 /* oddoneout.json in Resources */ = {isa = PBXBuildFile; fileRef = DEB3E620FB0E374A393778E4 /* oddoneout.json */; };
+		40F5AD7B54E6F618D49F0288 /* StoreKitStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE188995F9ED70842837541F /* StoreKitStore.swift */; };
 		4315DD5CB6A3D517984B9388 /* KnowledgeAtlasView_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C85EFA6D9DAE294C88AC8C8 /* KnowledgeAtlasView_macOS.swift */; };
+		434B25D5500951E78CF34139 /* NightClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0B1B4D9BA126D3D5E585A00 /* NightClient.swift */; };
 		43F0592341213B6BF4FAAB6F /* MarathonHistoryView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14AA2A3084196AB3E011E800 /* MarathonHistoryView_tvOS.swift */; };
 		43F36ECB879791F4A899B1AF /* CreateQuizView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96283977862FC546F8219011 /* CreateQuizView.swift */; };
 		43F8B1E0DFD953763387E1D7 /* NightPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = A485FF3BF7BA5BCFEC4FBC2E /* NightPlan.swift */; };
 		453B198C89878F4FC0690176 /* NightView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABC3E5834F087B503EF2FE95 /* NightView_tvOS.swift */; };
+		4592DA857BAF15E222D84EEB /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = B87EE4E2D9F044824CAA43F0 /* Keychain.swift */; };
+		45D676DDC1C9261796BF0AF0 /* PlayerRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = D85FC9EA0ED55C307CC3525F /* PlayerRecord.swift */; };
 		46C78F229E1F5ABC0888E25F /* NightSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD70222B5EE4C4145E4D1F84 /* NightSetupView.swift */; };
 		476021C7C87B8F571D3D5108 /* difficulty.json in Resources */ = {isa = PBXBuildFile; fileRef = 0C8075B00F30AAE8E925FF05 /* difficulty.json */; };
 		47EC13554A9F7DAAAC0104A3 /* PartyContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F18495176F588DF9E5C7907E /* PartyContainerView.swift */; };
 		4A06D62E81F226D6F37CE02F /* GameKitTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B6C1AB3D2D712041E246473 /* GameKitTransport.swift */; };
+		4A3EAEF16196D111B88D7FC1 /* TestStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C0AB1A0FF832F0B5E868CE5 /* TestStore.swift */; };
+		4E10B93B4D3648C3C18A074B /* ScreenshotQuestions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A1E96A2E9C52465F028B999 /* ScreenshotQuestions.swift */; };
 		4E1DDB93B46A5CC413B608F5 /* NightContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40995246A8957880F31323EB /* NightContainerView.swift */; };
+		4EFBA55B78466540AE7E0254 /* DailyPickTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0B204070D7875807133085F /* DailyPickTests.swift */; };
 		4F92081B7F2AFB470A7DC5C2 /* RecordsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C18E4CA3BD148F09E1BE077 /* RecordsView.swift */; };
 		512F6230D9E8F7A314AFF0ED /* RecordsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7633D27702A6874F7D8993DF /* RecordsStore.swift */; };
+		5252D372F50463681F70CDF1 /* ProgressStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A73FA1930578863B642985C /* ProgressStats.swift */; };
+		5371D05BA70CE2FBB3EABC47 /* FirebaseRTDB.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D05686E294B018C5E1F2C16 /* FirebaseRTDB.swift */; };
 		563B7C1B43D0FCF86A3ACC0A /* DebugHooks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BD01942F33620E5D75A8E7D /* DebugHooks.swift */; };
 		5808AF1DB91BBC0BC7D59DFD /* DailyPick.swift in Sources */ = {isa = PBXBuildFile; fileRef = C72A2CD5C4B8BDED3AE57AAC /* DailyPick.swift */; };
+		58127A3061F995345DD90E19 /* KnowledgeAtlas.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15D2DD9B6E12000D5130175D /* KnowledgeAtlas.swift */; };
 		58D69F6CD06518853ACBCE55 /* NightProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2188212D23A7B95BDD7D6ED6 /* NightProtocol.swift */; };
 		5B37FF3AF882A4CAD88CE62D /* GameComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 337562191FABFA21A46484FA /* GameComponents.swift */; };
+		5B838192AE2C410B06306AAD /* LiveHostNet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A6236DA6CAC7451F433FB4B /* LiveHostNet.swift */; };
 		5D88C36FF619036EF741CF8E /* MacVersus_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDD3021F86143D7BF5E4B79B /* MacVersus_macOS.swift */; };
+		621DA73F99F492318523F3D0 /* ScoringTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A93A382E53A195B8965DBF8 /* ScoringTests.swift */; };
 		63C147C7DD1F826DB75EF5E1 /* ClubPaywallView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4793DE7531EE4E40F6A11F40 /* ClubPaywallView_tvOS.swift */; };
 		63CECA92C2926FD857387B02 /* MarathonHistoryView_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB761A12169AF965742B8C0F /* MarathonHistoryView_macOS.swift */; };
 		693509DA4B5DB7311F11B26A /* ClubPaywallView_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E9A2D7CADBC8BAA081F9BEC /* ClubPaywallView_macOS.swift */; };
+		6B8BB536DD7FC4B333A85660 /* CorpusDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB24F551656B187A42C81D44 /* CorpusDatabase.swift */; };
 		6C6BC38059EF80F78C963AEA /* picture.json in Resources */ = {isa = PBXBuildFile; fileRef = 6E8760FF39E12021DC07BE8F /* picture.json */; };
 		6C9D92D2B561B399BA7CCC96 /* DailyLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F4B8062B92DE4C27229C1D2 /* DailyLog.swift */; };
 		6CF073BFB022FF600B3B9428 /* GamePlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE92745D6860E623628A0CBC /* GamePlayView.swift */; };
+		6DF52432AAF23BC44DCB7DFB /* AppleSignIn.swift in Sources */ = {isa = PBXBuildFile; fileRef = 408C9FD599A9680A1E35AE12 /* AppleSignIn.swift */; };
 		6EA4710E34FA1FA74BF98299 /* HomeView_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 557D060B0D805B39D4D7425C /* HomeView_macOS.swift */; };
 		7051BF4D2CFDDEB46EC57971 /* Haptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDC047AE9E00DBB79A4FD169 /* Haptics.swift */; };
 		720B221EF4EDD7A3044FB807 /* BonjourTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83FF1890FBAD38C220D2C1BE /* BonjourTransport.swift */; };
+		723A5B7BA18B8624F1671930 /* NightTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12852A694244CCEEC20EB41B /* NightTransport.swift */; };
 		725A6441BCC94D56C76ECCB9 /* MacNight_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A477F73E1AD5B4430586D51 /* MacNight_macOS.swift */; };
 		7763E984206A3E69A81D607D /* MacLiveModel_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56419A8DE7AAB1006563AA47 /* MacLiveModel_macOS.swift */; };
 		78068FB172485742F7C68313 /* DifficultyOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C0424A46E0A825EA0A8EFE2 /* DifficultyOverlay.swift */; };
+		7829B382458C60FA73A55BBA /* KnowledgeAtlasTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2E52F53D6F7AE7E65D91781 /* KnowledgeAtlasTests.swift */; };
 		7B6E1EBA8BCCEA6735C6B8C1 /* KnowledgeAtlasView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0A8539762A2F6FB3C251DE6 /* KnowledgeAtlasView_tvOS.swift */; };
+		7BEF89D4F92471FF5AAAAA23 /* CatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CA7DA990CEB2FE0395EE03D /* CatalogTests.swift */; };
 		7E457DE11CD8D820A503C8EB /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 3C266F600F75F40E459D2276 /* PrivacyInfo.xcprivacy */; };
+		80FE712A2D805B40834439C2 /* DelightfulQuizGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 161521EA893E91207502AEC2 /* DelightfulQuizGenerator.swift */; };
 		820B047479D40955420CBB7A /* ExpeditionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA61D1D2032AFB58899B45EC /* ExpeditionsView.swift */; };
 		822891D7170B156CB45A51CF /* NightHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61CF6B570C9884F8DF3645CD /* NightHost.swift */; };
+		858E669761891D2756E986B2 /* GameEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F41E5C0BFBB0360DCD3015A /* GameEngine.swift */; };
 		859FAE7091E80AC483E8A7A6 /* DailyBoardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 770E593F52F5DB070F1B2591 /* DailyBoardView.swift */; };
 		86818718BDF8BEC23B2A9B36 /* MarathonResultsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03F6BD7D78D033E5D2D14D8B /* MarathonResultsView.swift */; };
 		868239CDDF1A55B51710E012 /* Scoring.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EBCE6DDE7254EB4010E1679 /* Scoring.swift */; };
+		872E4C7608D1C10EE7E97E55 /* TemplateEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = E48988FC967EF362B69C2FB5 /* TemplateEngine.swift */; };
 		87D2A2B94B2CE47C7ADB8348 /* GameView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5C9D9266531ECD27156562D /* GameView_tvOS.swift */; };
 		8821E8F3C0AAF0F3DF606FEA /* NightHostView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D490C60AA88C077AEEE3BDB3 /* NightHostView.swift */; };
 		8932DF2335A76D131E937272 /* NightLiveContainer_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF5CC9559B7356814F9FE1D4 /* NightLiveContainer_tvOS.swift */; };
+		8E8C16999F3A5924F5FBDD5C /* ExpeditionModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = B28DFC34456277E5235F2C3B /* ExpeditionModels.swift */; };
+		8FEC83200ED76BBB38273F3F /* DifficultyOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C0424A46E0A825EA0A8EFE2 /* DifficultyOverlay.swift */; };
 		918AE96520BD2A89643D6E20 /* TriviaCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCB14B0E2B13CCA2DDA250ED /* TriviaCategory.swift */; };
 		92153A2172FBD8BD36DE55C5 /* thisorthat.json in Resources */ = {isa = PBXBuildFile; fileRef = BADC61A185827BBE0B9857AA /* thisorthat.json */; };
 		92B4788F3A0CAC7DE68FB848 /* CorpusDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB24F551656B187A42C81D44 /* CorpusDatabase.swift */; };
+		97A5EC2FF3339D75AB069F0F /* SeededRNGTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 487DEB563357A9E7CB28882E /* SeededRNGTests.swift */; };
 		97C9CBF5EDE6A048468DB3FA /* corpus.json in Resources */ = {isa = PBXBuildFile; fileRef = 528E49FC6DA146ECC87302BC /* corpus.json */; };
+		98AD7858869E89901DE42612 /* Expeditions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA542678A72946CB1805D926 /* Expeditions.swift */; };
+		98F5FB5598E175D257EA4E4A /* DailyPick.swift in Sources */ = {isa = PBXBuildFile; fileRef = C72A2CD5C4B8BDED3AE57AAC /* DailyPick.swift */; };
 		993D207E535FB4211789CC3F /* KnowledgeAtlasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25AEBF6364C0E452829EA2C6 /* KnowledgeAtlasView.swift */; };
 		9B22CE4581A58C784D66DDB1 /* GameMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C55D3DCAE5E46980D666B83 /* GameMode.swift */; };
 		9B444302313F743A58B7F7CF /* Marathon.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACBB11A0D029110390E8A92A /* Marathon.swift */; };
+		9BC13E8DDA240167ECDD04E1 /* LinkWall.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D78A8CAF758B68B28B38A7A /* LinkWall.swift */; };
 		9BD52794E3B9893E95300BD5 /* corpus.sqlite in Resources */ = {isa = PBXBuildFile; fileRef = E8F18E88BA37F77E6313144F /* corpus.sqlite */; };
 		9D608A68BC182843C652E305 /* WeakSpotArena.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D5272B06F897F6B017FEF9A /* WeakSpotArena.swift */; };
 		9E05CBE2403049F68DAB9527 /* enumerate.json in Resources */ = {isa = PBXBuildFile; fileRef = EDE7E258003BBD004F3BD314 /* enumerate.json */; };
 		9EA492C785F5F4ED0BFB78FF /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BFD0D04EAFA9DBEB25F3A8E /* OnboardingView.swift */; };
 		A1403E3981ED0841F64C86B6 /* KnowledgeAtlas.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15D2DD9B6E12000D5130175D /* KnowledgeAtlas.swift */; };
 		A196A0BBE89D112E62E0577E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 73D5D7FD07809D194BF90B30 /* Assets.xcassets */; };
+		A258EFA181259798F1331D1E /* GameCenterManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89A31C82C50C6EB1DA9AE9A4 /* GameCenterManager.swift */; };
 		A288654C00A9D1A45DE29B16 /* LinkWallModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5762EC669C200A7DB6B30036 /* LinkWallModels.swift */; };
+		A3AB3395EC3EA1DFA7EB378B /* Design.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB6E2342A764B8401C9516E9 /* Design.swift */; };
+		A3CEE805C4A1AB9149A32621 /* NightPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = A485FF3BF7BA5BCFEC4FBC2E /* NightPlan.swift */; };
+		A4ACFCF2CE8E113EAC7715F8 /* Player.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3AE68F153F8C298960BFD36 /* Player.swift */; };
 		A4E1EFF1535F0273FCC53974 /* LiveJoinView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = F45A86C8863F908B3F7D4E7C /* LiveJoinView_tvOS.swift */; };
+		A53908C2BE765A50E0A405A3 /* GameSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BFCD6FF44ED08F84EBBD05E /* GameSettings.swift */; };
 		A568F41813C80C5C76184DBD /* ExpeditionsView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CE0D5EBCCBDED5D292DBFEB /* ExpeditionsView_tvOS.swift */; };
 		A690ED15A1D8831CF3E58CB8 /* Player.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3AE68F153F8C298960BFD36 /* Player.swift */; };
+		A6E898C9A8B577B25B697EE0 /* Scoring.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EBCE6DDE7254EB4010E1679 /* Scoring.swift */; };
+		A72807CF2123AE85304058D5 /* PlayerIdentityStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABD7AE7120AC1ABEC5FBFE9B /* PlayerIdentityStore.swift */; };
 		A74816658D2E10418725EA17 /* EntitlementStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9D9143D640112C9717AB8A0 /* EntitlementStore.swift */; };
 		A7BDC3D377EC8267B055AAB0 /* GameEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F41E5C0BFBB0360DCD3015A /* GameEngine.swift */; };
 		A890E6E26C94D878187A9F28 /* AppleSignIn.swift in Sources */ = {isa = PBXBuildFile; fileRef = 408C9FD599A9680A1E35AE12 /* AppleSignIn.swift */; };
+		A932712C398115691CFEABA8 /* LiveNight.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AD18ED3C40BFC78AFD8FB0C /* LiveNight.swift */; };
 		A93C3882E397A32AEE50B0FE /* LiveRoom.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BB92F967027E59F005CB86D /* LiveRoom.swift */; };
 		AD2E45CD70618846B0546B96 /* ContentView_iOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E0122AFA7F2570D4CCDD4BA /* ContentView_iOS.swift */; };
+		AD4102CDC0F6D0A1D25CFEB8 /* Haptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDC047AE9E00DBB79A4FD169 /* Haptics.swift */; };
 		AF315C17D8A40D23AD75A794 /* StandingsOutcome.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD22A030E767FF54F1498CFD /* StandingsOutcome.swift */; };
 		B0A240BB11DEDEDCE5B142EE /* MacLiveBigScreen_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FC902EC3B5DFAB094A962AF /* MacLiveBigScreen_macOS.swift */; };
 		B0A9BD87C5B11C8B3EA379C9 /* Question.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFC46D4CE8D03186C064C759 /* Question.swift */; };
+		B1135209012A9E351660D7B8 /* ExpeditionCatalogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 058D7E35AB40F632148F5D3A /* ExpeditionCatalogTests.swift */; };
+		B1AC1CC30B54905053BF07AB /* StandingsOutcomeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE1DBCF26F2ADAFFC54DECC3 /* StandingsOutcomeTests.swift */; };
 		B60770C2C79E6CC6D4EA52AC /* JSONQuestionSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5641E998849F8570AF1C8387 /* JSONQuestionSource.swift */; };
 		B726DC9ED39E20DD9B3F5FD1 /* GameSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BFCD6FF44ED08F84EBBD05E /* GameSettings.swift */; };
 		B72DA2D151B3156C162753C6 /* LiveJoinView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C50D6874040B1114294A708 /* LiveJoinView.swift */; };
+		B77025BADE5DD73528A2631F /* TriviaCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCB14B0E2B13CCA2DDA250ED /* TriviaCategory.swift */; };
 		B904426EC4451D3EAC20C3DE /* ReadableColumn.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A5044939EEF01931A37AE40 /* ReadableColumn.swift */; };
 		BAE653DC19291745458BE180 /* NightLiveContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80062C51298B935C19365672 /* NightLiveContainer.swift */; };
+		BB68CB411568894E3E2370AC /* GameKitTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B6C1AB3D2D712041E246473 /* GameKitTransport.swift */; };
 		BB92BF0EBF1C44BE1C208050 /* CreateView_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20C99D0A7197E787FDEFA569 /* CreateView_macOS.swift */; };
+		BBA4AC6248466AF90AE17FFC /* DebugHooks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BD01942F33620E5D75A8E7D /* DebugHooks.swift */; };
 		BBC2E4E732EC174398C58820 /* FirebaseRTDB.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D05686E294B018C5E1F2C16 /* FirebaseRTDB.swift */; };
+		BC0183EE6D8B463266F65204 /* BotOpponentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A62DAFF2EB8A8B635C5D432 /* BotOpponentTests.swift */; };
 		BFFC359435DBA3FF985509D1 /* QuickMatchView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D57E4D59AAC3B3F125BEF6C /* QuickMatchView_tvOS.swift */; };
 		C0DE632706A625B3AFF44EF8 /* NightLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = D50CC8FE4C2A40751C616B5F /* NightLink.swift */; };
 		C14316B09F51547B38E6122A /* Tidbits.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 56E40CBB48B92E62CC1C8835 /* Tidbits.storekit */; };
 		C1CE3FD5EE584830FD356C93 /* PlayerIdentityStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABD7AE7120AC1ABEC5FBFE9B /* PlayerIdentityStore.swift */; };
+		C1DE024CBF206CDDE8F875FB /* LiveRoom.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BB92F967027E59F005CB86D /* LiveRoom.swift */; };
 		C2723A2D30FE2EB6BE44304D /* LinkWallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C89A5FB7DDBE19EDD404584 /* LinkWallView.swift */; };
+		C5D34E16C6CAD80BCE7BD4D7 /* Marathon.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACBB11A0D029110390E8A92A /* Marathon.swift */; };
 		C8F2A4B8CAC81B530D5A6D7D /* RecordsView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = F705319E1E9AC235B5D005C4 /* RecordsView_tvOS.swift */; };
+		CA9E6D28721A01D2CC785AC7 /* StoryArchive.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A3ADC850DC68E721197BEF7 /* StoryArchive.swift */; };
 		CAC06905ECB9FC605B7CAD4F /* SettingsView_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD6B7F4DD192AF52DC23B7F1 /* SettingsView_macOS.swift */; };
 		CB06D72CCB303461DA6ED15C /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = B87EE4E2D9F044824CAA43F0 /* Keychain.swift */; };
 		CCA8AF2E7F7567E5B153E60F /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B2FEBFB29C12A172EADB66F /* SettingsView.swift */; };
 		D015E592AAAEA586171489E6 /* MacParty_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDABF75DD5513F57A37A6C25 /* MacParty_macOS.swift */; };
+		D2440B13212768315B590D70 /* MarathonTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5D6E0E49066C4E751BEE4EA /* MarathonTests.swift */; };
 		D28850D4B46D40A2897B334F /* QuickMatchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F69A4F5B18F41A84998E9E3D /* QuickMatchView.swift */; };
 		D408A3818D906999A4AD99DC /* NightClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0B1B4D9BA126D3D5E585A00 /* NightClient.swift */; };
 		D555AF5E6F6D4E64929FC464 /* DailyBoardContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56D864166DCE99D76AD6FD72 /* DailyBoardContent.swift */; };
 		D751C2B5E565D427A253A414 /* NightHostView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12E5CDEC65BAF3D58483A913 /* NightHostView_tvOS.swift */; };
 		D78451DA6D74E2BA65EB56C8 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AAEF55F4DD8DEA37D200C32 /* HomeView.swift */; };
 		D7B57E08EBBAC3A1B5739CE8 /* LiveNightHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 536B676053104B866A65587A /* LiveNightHost.swift */; };
+		D8D97964017343DB3E8F832B /* GameMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C55D3DCAE5E46980D666B83 /* GameMode.swift */; };
 		DBD1FB837209844C69941F61 /* ExpeditionsView_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 531FA815FBA5B3972C916774 /* ExpeditionsView_macOS.swift */; };
 		DC5D5FF2CCEAABBD906B5034 /* PushNotifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75304BB2E262AD6046E5D812 /* PushNotifications.swift */; };
 		DD17E6E2BBC121F9A5B69E32 /* order.json in Resources */ = {isa = PBXBuildFile; fileRef = 79A5D10D9EBC4D0950DE13CF /* order.json */; };
+		DD2CA3B51CDF571AC686C272 /* LiveHostNet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A6236DA6CAC7451F433FB4B /* LiveHostNet.swift */; };
 		DDAE2BFD39B5E8A515B31DD2 /* Expeditions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA542678A72946CB1805D926 /* Expeditions.swift */; };
 		DE08D346BADC5C8CF182B6F6 /* MacLiveBuilder_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F7402F193E045320CDADBE8 /* MacLiveBuilder_macOS.swift */; };
 		DF28093A48DE5460E1A7691C /* DelightfulQuizGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 161521EA893E91207502AEC2 /* DelightfulQuizGenerator.swift */; };
@@ -144,17 +206,26 @@
 		E6770F1D60EEB51BCEDD54B3 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8BAC363A3AF3ACE88A58A9AB /* LaunchScreen.storyboard */; };
 		E75013E2AC2F2501BDCABD62 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 413749E137B330C67EFBC726 /* ProfileView.swift */; };
 		E8237474767AEB4E4F7CE3E7 /* StoryArchiveView_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = F17A18347A60D32B1B27BC00 /* StoryArchiveView_macOS.swift */; };
+		E839F9D0B29619B6DE3EE31F /* WeakSpotArenaTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D23AA83F3E24D89232F483D /* WeakSpotArenaTests.swift */; };
 		EAC2294177981789AC4770B7 /* GameView_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDDD2AC4DB9C421C5849B8F6 /* GameView_macOS.swift */; };
 		EE10E44A0A8622D1D3AE45D8 /* LinkWall.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D78A8CAF758B68B28B38A7A /* LinkWall.swift */; };
 		EE8626F023BDE890D701F4B1 /* ContentView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = C23D07A7744AE72B2935CB2F /* ContentView_tvOS.swift */; };
+		F357CEEE739CD7D0C4E66056 /* DailyLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F4B8062B92DE4C27229C1D2 /* DailyLog.swift */; };
+		F3A4B7E171B4665A63062BBA /* LiveNightHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 536B676053104B866A65587A /* LiveNightHost.swift */; };
+		F6C851290CF3B431E6789D47 /* EntitlementStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9D9143D640112C9717AB8A0 /* EntitlementStore.swift */; };
+		F70F0BC5ECEF59B42BE49CB7 /* NightHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61CF6B570C9884F8DF3645CD /* NightHost.swift */; };
+		F7D633F9009C8A3D2F3CBFE7 /* SeededRNG.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1C1A6AE174DDC149D5EE7BB /* SeededRNG.swift */; };
 		F7DD1CB273A01818674027BF /* RecordsView_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = C72378B7C5C86DDDB6C4CC26 /* RecordsView_macOS.swift */; };
 		F9ED0FF0EFF1E6F9408D6C46 /* PlayerProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87C84D46C3E146D385DE739A /* PlayerProfile.swift */; };
 		FC6C3246C07842892F682C5D /* GameCenterManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89A31C82C50C6EB1DA9AE9A4 /* GameCenterManager.swift */; };
 		FCA53A1ECF749DE54BC9B584 /* ClubPaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C0F302F16700A6CD3D85710 /* ClubPaywallView.swift */; };
+		FD630AA82C8D968F0C690213 /* NightProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2188212D23A7B95BDD7D6ED6 /* NightProtocol.swift */; };
+		FE4FFC4B2E71782A861DED18 /* WikipediaClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 655168DF8FE110D6336394D2 /* WikipediaClient.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		03F6BD7D78D033E5D2D14D8B /* MarathonResultsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarathonResultsView.swift; sourceTree = "<group>"; };
+		058D7E35AB40F632148F5D3A /* ExpeditionCatalogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExpeditionCatalogTests.swift; sourceTree = "<group>"; };
 		0A3ADC850DC68E721197BEF7 /* StoryArchive.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoryArchive.swift; sourceTree = "<group>"; };
 		0BFCD6FF44ED08F84EBBD05E /* GameSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameSettings.swift; sourceTree = "<group>"; };
 		0BFD0D04EAFA9DBEB25F3A8E /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
@@ -174,8 +245,10 @@
 		20C99D0A7197E787FDEFA569 /* CreateView_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateView_macOS.swift; sourceTree = "<group>"; };
 		2188212D23A7B95BDD7D6ED6 /* NightProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightProtocol.swift; sourceTree = "<group>"; };
 		25AEBF6364C0E452829EA2C6 /* KnowledgeAtlasView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnowledgeAtlasView.swift; sourceTree = "<group>"; };
+		2A6236DA6CAC7451F433FB4B /* LiveHostNet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveHostNet.swift; sourceTree = "<group>"; };
 		2AD18ED3C40BFC78AFD8FB0C /* LiveNight.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveNight.swift; sourceTree = "<group>"; };
 		2C50D6874040B1114294A708 /* LiveJoinView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveJoinView.swift; sourceTree = "<group>"; };
+		2D23AA83F3E24D89232F483D /* WeakSpotArenaTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeakSpotArenaTests.swift; sourceTree = "<group>"; };
 		337562191FABFA21A46484FA /* GameComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameComponents.swift; sourceTree = "<group>"; };
 		35F518DED9832731B1294DD3 /* TidbitsTriviaApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TidbitsTriviaApp.swift; sourceTree = "<group>"; };
 		38E2048C670779462804BFCD /* MacHomeSheets_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacHomeSheets_macOS.swift; sourceTree = "<group>"; };
@@ -189,7 +262,9 @@
 		40995246A8957880F31323EB /* NightContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightContainerView.swift; sourceTree = "<group>"; };
 		413749E137B330C67EFBC726 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		4793DE7531EE4E40F6A11F40 /* ClubPaywallView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClubPaywallView_tvOS.swift; sourceTree = "<group>"; };
+		487DEB563357A9E7CB28882E /* SeededRNGTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeededRNGTests.swift; sourceTree = "<group>"; };
 		4BB92F967027E59F005CB86D /* LiveRoom.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveRoom.swift; sourceTree = "<group>"; };
+		4CA7DA990CEB2FE0395EE03D /* CatalogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatalogTests.swift; sourceTree = "<group>"; };
 		4E7FAFB9A435F25FF322EC97 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		4E9A2D7CADBC8BAA081F9BEC /* ClubPaywallView_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClubPaywallView_macOS.swift; sourceTree = "<group>"; };
 		4F2347D320A2FB5AA7C4D34E /* MacLivePrint_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacLivePrint_macOS.swift; sourceTree = "<group>"; };
@@ -204,6 +279,7 @@
 		56E40CBB48B92E62CC1C8835 /* Tidbits.storekit */ = {isa = PBXFileReference; path = Tidbits.storekit; sourceTree = "<group>"; };
 		5762EC669C200A7DB6B30036 /* LinkWallModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkWallModels.swift; sourceTree = "<group>"; };
 		5A73FA1930578863B642985C /* ProgressStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressStats.swift; sourceTree = "<group>"; };
+		5A93A382E53A195B8965DBF8 /* ScoringTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScoringTests.swift; sourceTree = "<group>"; };
 		5CE0D5EBCCBDED5D292DBFEB /* ExpeditionsView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExpeditionsView_tvOS.swift; sourceTree = "<group>"; };
 		5D05686E294B018C5E1F2C16 /* FirebaseRTDB.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseRTDB.swift; sourceTree = "<group>"; };
 		5FC902EC3B5DFAB094A962AF /* MacLiveBigScreen_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacLiveBigScreen_macOS.swift; sourceTree = "<group>"; };
@@ -221,6 +297,7 @@
 		7A77D01159167F1BE602ABED /* GameContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameContainerView.swift; sourceTree = "<group>"; };
 		7AAEF55F4DD8DEA37D200C32 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		7B6C1AB3D2D712041E246473 /* GameKitTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameKitTransport.swift; sourceTree = "<group>"; };
+		7C0AB1A0FF832F0B5E868CE5 /* TestStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestStore.swift; sourceTree = "<group>"; };
 		7C55D3DCAE5E46980D666B83 /* GameMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameMode.swift; sourceTree = "<group>"; };
 		7C60A815D0EFF35CF18DAB26 /* ResultsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultsView.swift; sourceTree = "<group>"; };
 		7D5272B06F897F6B017FEF9A /* WeakSpotArena.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeakSpotArena.swift; sourceTree = "<group>"; };
@@ -233,12 +310,12 @@
 		87C84D46C3E146D385DE739A /* PlayerProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerProfile.swift; sourceTree = "<group>"; };
 		89A31C82C50C6EB1DA9AE9A4 /* GameCenterManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameCenterManager.swift; sourceTree = "<group>"; };
 		89DACDE13C98A519ABB433A9 /* ClubHubView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClubHubView.swift; sourceTree = "<group>"; };
-		8ABB74709F8489A6CFF15FEC /* MacLiveHostNet_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacLiveHostNet_macOS.swift; sourceTree = "<group>"; };
 		8B74659353899C33ECD4009F /* VersusView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VersusView_tvOS.swift; sourceTree = "<group>"; };
 		8B9A918292A8BD08D5EEAFA6 /* QuestionProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuestionProvider.swift; sourceTree = "<group>"; };
 		8BAC363A3AF3ACE88A58A9AB /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		8E0122AFA7F2570D4CCDD4BA /* ContentView_iOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView_iOS.swift; sourceTree = "<group>"; };
 		96283977862FC546F8219011 /* CreateQuizView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateQuizView.swift; sourceTree = "<group>"; };
+		9A62DAFF2EB8A8B635C5D432 /* BotOpponentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotOpponentTests.swift; sourceTree = "<group>"; };
 		9BE19D7C519BC6A5BAFC9A2E /* GameContainerView_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameContainerView_macOS.swift; sourceTree = "<group>"; };
 		9C0424A46E0A825EA0A8EFE2 /* DifficultyOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DifficultyOverlay.swift; sourceTree = "<group>"; };
 		9C85EFA6D9DAE294C88AC8C8 /* KnowledgeAtlasView_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnowledgeAtlasView_macOS.swift; sourceTree = "<group>"; };
@@ -249,12 +326,15 @@
 		AB761A12169AF965742B8C0F /* MarathonHistoryView_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarathonHistoryView_macOS.swift; sourceTree = "<group>"; };
 		ABC3E5834F087B503EF2FE95 /* NightView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightView_tvOS.swift; sourceTree = "<group>"; };
 		ABD7AE7120AC1ABEC5FBFE9B /* PlayerIdentityStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerIdentityStore.swift; sourceTree = "<group>"; };
+		AC1A4F6522DE74B26703EF55 /* TidbitsTriviaTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = TidbitsTriviaTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACBB11A0D029110390E8A92A /* Marathon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Marathon.swift; sourceTree = "<group>"; };
 		AE29816C3FBC08D77D0649E6 /* ClubHubView_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClubHubView_macOS.swift; sourceTree = "<group>"; };
 		B0A8539762A2F6FB3C251DE6 /* KnowledgeAtlasView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnowledgeAtlasView_tvOS.swift; sourceTree = "<group>"; };
+		B0B204070D7875807133085F /* DailyPickTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyPickTests.swift; sourceTree = "<group>"; };
 		B1C1A6AE174DDC149D5EE7BB /* SeededRNG.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeededRNG.swift; sourceTree = "<group>"; };
 		B28DFC34456277E5235F2C3B /* ExpeditionModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExpeditionModels.swift; sourceTree = "<group>"; };
 		B5C5D511CC45CC8C0B84A985 /* MacLiveHost_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacLiveHost_macOS.swift; sourceTree = "<group>"; };
+		B5D6E0E49066C4E751BEE4EA /* MarathonTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarathonTests.swift; sourceTree = "<group>"; };
 		B87EE4E2D9F044824CAA43F0 /* Keychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keychain.swift; sourceTree = "<group>"; };
 		B8DD872E110D6DFFC258366A /* ClubHubView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClubHubView_tvOS.swift; sourceTree = "<group>"; };
 		BADC61A185827BBE0B9857AA /* thisorthat.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = thisorthat.json; sourceTree = "<group>"; };
@@ -270,6 +350,7 @@
 		CD22A030E767FF54F1498CFD /* StandingsOutcome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StandingsOutcome.swift; sourceTree = "<group>"; };
 		CDABF75DD5513F57A37A6C25 /* MacParty_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacParty_macOS.swift; sourceTree = "<group>"; };
 		CDC047AE9E00DBB79A4FD169 /* Haptics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Haptics.swift; sourceTree = "<group>"; };
+		CE1DBCF26F2ADAFFC54DECC3 /* StandingsOutcomeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StandingsOutcomeTests.swift; sourceTree = "<group>"; };
 		CEF7F47459CB6ABD7AD6F3FA /* LinkWallView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkWallView_tvOS.swift; sourceTree = "<group>"; };
 		CF5CC9559B7356814F9FE1D4 /* NightLiveContainer_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightLiveContainer_tvOS.swift; sourceTree = "<group>"; };
 		D2BE9E793BFE4E52464B69A2 /* TidbitsTrivia.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TidbitsTrivia.entitlements; sourceTree = "<group>"; };
@@ -281,6 +362,7 @@
 		DD6B7F4DD192AF52DC23B7F1 /* SettingsView_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView_macOS.swift; sourceTree = "<group>"; };
 		DDD3021F86143D7BF5E4B79B /* MacVersus_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacVersus_macOS.swift; sourceTree = "<group>"; };
 		DEB3E620FB0E374A393778E4 /* oddoneout.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = oddoneout.json; sourceTree = "<group>"; };
+		E2E52F53D6F7AE7E65D91781 /* KnowledgeAtlasTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnowledgeAtlasTests.swift; sourceTree = "<group>"; };
 		E48988FC967EF362B69C2FB5 /* TemplateEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplateEngine.swift; sourceTree = "<group>"; };
 		E5F5C716CAEEA33AF734ED56 /* LivePlayerClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LivePlayerClient.swift; sourceTree = "<group>"; };
 		E8F18E88BA37F77E6313144F /* corpus.sqlite */ = {isa = PBXFileReference; lastKnownFileType = file; path = corpus.sqlite; sourceTree = "<group>"; };
@@ -302,7 +384,7 @@
 		FD70222B5EE4C4145E4D1F84 /* NightSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightSetupView.swift; sourceTree = "<group>"; };
 		FDDD2AC4DB9C421C5849B8F6 /* GameView_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView_macOS.swift; sourceTree = "<group>"; };
 		FFC46D4CE8D03186C064C759 /* Question.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Question.swift; sourceTree = "<group>"; };
-		"TEMP_9B5EDAB9-B493-4B48-BFBC-AFCE27EC086B" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
+		"TEMP_9E6A054E-2DAF-4091-B9A8-26636F5B7591" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -399,6 +481,24 @@
 			path = Views;
 			sourceTree = "<group>";
 		};
+		9828ADE8A21E672F1583A239 /* TidbitsTriviaTests */ = {
+			isa = PBXGroup;
+			children = (
+				9A62DAFF2EB8A8B635C5D432 /* BotOpponentTests.swift */,
+				4CA7DA990CEB2FE0395EE03D /* CatalogTests.swift */,
+				B0B204070D7875807133085F /* DailyPickTests.swift */,
+				058D7E35AB40F632148F5D3A /* ExpeditionCatalogTests.swift */,
+				E2E52F53D6F7AE7E65D91781 /* KnowledgeAtlasTests.swift */,
+				B5D6E0E49066C4E751BEE4EA /* MarathonTests.swift */,
+				5A93A382E53A195B8965DBF8 /* ScoringTests.swift */,
+				487DEB563357A9E7CB28882E /* SeededRNGTests.swift */,
+				CE1DBCF26F2ADAFFC54DECC3 /* StandingsOutcomeTests.swift */,
+				7C0AB1A0FF832F0B5E868CE5 /* TestStore.swift */,
+				2D23AA83F3E24D89232F483D /* WeakSpotArenaTests.swift */,
+			);
+			path = TidbitsTriviaTests;
+			sourceTree = "<group>";
+		};
 		9C80BC1ACB6D042C74E3BD48 /* macOS */ = {
 			isa = PBXGroup;
 			children = (
@@ -416,7 +516,6 @@
 				5FC902EC3B5DFAB094A962AF /* MacLiveBigScreen_macOS.swift */,
 				7F7402F193E045320CDADBE8 /* MacLiveBuilder_macOS.swift */,
 				B5C5D511CC45CC8C0B84A985 /* MacLiveHost_macOS.swift */,
-				8ABB74709F8489A6CFF15FEC /* MacLiveHostNet_macOS.swift */,
 				56419A8DE7AAB1006563AA47 /* MacLiveModel_macOS.swift */,
 				4F2347D320A2FB5AA7C4D34E /* MacLivePrint_macOS.swift */,
 				3A477F73E1AD5B4430586D51 /* MacNight_macOS.swift */,
@@ -450,6 +549,7 @@
 			isa = PBXGroup;
 			children = (
 				FF71A0DFDC39CF49A192B4DC /* TidbitsTrivia */,
+				9828ADE8A21E672F1583A239 /* TidbitsTriviaTests */,
 				FA76000DC80AB168773EFB11 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -535,6 +635,7 @@
 				5D05686E294B018C5E1F2C16 /* FirebaseRTDB.swift */,
 				7B6C1AB3D2D712041E246473 /* GameKitTransport.swift */,
 				B87EE4E2D9F044824CAA43F0 /* Keychain.swift */,
+				2A6236DA6CAC7451F433FB4B /* LiveHostNet.swift */,
 				2AD18ED3C40BFC78AFD8FB0C /* LiveNight.swift */,
 				536B676053104B866A65587A /* LiveNightHost.swift */,
 				E5F5C716CAEEA33AF734ED56 /* LivePlayerClient.swift */,
@@ -589,6 +690,7 @@
 			isa = PBXGroup;
 			children = (
 				8635E2E7CD914F8DFE8136CC /* TidbitsTrivia.app */,
+				AC1A4F6522DE74B26703EF55 /* TidbitsTriviaTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -612,10 +714,10 @@
 			path = TidbitsTrivia;
 			sourceTree = "<group>";
 		};
-		"TEMP_0447A314-EE34-4D05-BD02-D91DE1551517" /* Tidbits-Trivia */ = {
+		"TEMP_75956281-2039-4A1F-86CA-F5086A515B53" /* Tidbits-Trivia */ = {
 			isa = PBXGroup;
 			children = (
-				"TEMP_9B5EDAB9-B493-4B48-BFBC-AFCE27EC086B" /* AppVersion.xcconfig */,
+				"TEMP_9E6A054E-2DAF-4091-B9A8-26636F5B7591" /* AppVersion.xcconfig */,
 			);
 			path = "Tidbits-Trivia";
 			sourceTree = "<group>";
@@ -623,6 +725,23 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		BFAE826B0F97466D6333BB38 /* TidbitsTriviaTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7D6751EC9C24F6D04CEC8A73 /* Build configuration list for PBXNativeTarget "TidbitsTriviaTests" */;
+			buildPhases = (
+				704CF395121B5E93C66911DD /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = TidbitsTriviaTests;
+			packageProductDependencies = (
+			);
+			productName = TidbitsTriviaTests;
+			productReference = AC1A4F6522DE74B26703EF55 /* TidbitsTriviaTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		DEFDE096B37961267A8BC8DE /* TidbitsTrivia */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 701625062D82A707EB9093E2 /* Build configuration list for PBXNativeTarget "TidbitsTrivia" */;
@@ -650,6 +769,10 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
+					BFAE826B0F97466D6333BB38 = {
+						DevelopmentTeam = L2G756LY8N;
+						ProvisioningStyle = Automatic;
+					};
 					DEFDE096B37961267A8BC8DE = {
 						DevelopmentTeam = L2G756LY8N;
 						ProvisioningStyle = Automatic;
@@ -671,6 +794,7 @@
 			projectRoot = "";
 			targets = (
 				DEFDE096B37961267A8BC8DE /* TidbitsTrivia */,
+				BFAE826B0F97466D6333BB38 /* TidbitsTriviaTests */,
 			);
 		};
 /* End PBXProject section */
@@ -701,6 +825,83 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		704CF395121B5E93C66911DD /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0EA1937A1AF5FC265F9C22C9 /* AppStore.swift in Sources */,
+				6DF52432AAF23BC44DCB7DFB /* AppleSignIn.swift in Sources */,
+				198C29B58A69766EB3E7A687 /* BonjourTransport.swift in Sources */,
+				057A58BF61DB4274C23EF48E /* BotOpponent.swift in Sources */,
+				BC0183EE6D8B463266F65204 /* BotOpponentTests.swift in Sources */,
+				7BEF89D4F92471FF5AAAAA23 /* CatalogTests.swift in Sources */,
+				6B8BB536DD7FC4B333A85660 /* CorpusDatabase.swift in Sources */,
+				0C6D96BE8945A6155F7CB216 /* DailyBoard.swift in Sources */,
+				18B47BD796292B3DC18D6C05 /* DailyBoardContent.swift in Sources */,
+				F357CEEE739CD7D0C4E66056 /* DailyLog.swift in Sources */,
+				98F5FB5598E175D257EA4E4A /* DailyPick.swift in Sources */,
+				4EFBA55B78466540AE7E0254 /* DailyPickTests.swift in Sources */,
+				BBA4AC6248466AF90AE17FFC /* DebugHooks.swift in Sources */,
+				80FE712A2D805B40834439C2 /* DelightfulQuizGenerator.swift in Sources */,
+				A3AB3395EC3EA1DFA7EB378B /* Design.swift in Sources */,
+				8FEC83200ED76BBB38273F3F /* DifficultyOverlay.swift in Sources */,
+				F6C851290CF3B431E6789D47 /* EntitlementStore.swift in Sources */,
+				B1135209012A9E351660D7B8 /* ExpeditionCatalogTests.swift in Sources */,
+				8E8C16999F3A5924F5FBDD5C /* ExpeditionModels.swift in Sources */,
+				98AD7858869E89901DE42612 /* Expeditions.swift in Sources */,
+				5371D05BA70CE2FBB3EABC47 /* FirebaseRTDB.swift in Sources */,
+				A258EFA181259798F1331D1E /* GameCenterManager.swift in Sources */,
+				858E669761891D2756E986B2 /* GameEngine.swift in Sources */,
+				BB68CB411568894E3E2370AC /* GameKitTransport.swift in Sources */,
+				D8D97964017343DB3E8F832B /* GameMode.swift in Sources */,
+				A53908C2BE765A50E0A405A3 /* GameSettings.swift in Sources */,
+				AD4102CDC0F6D0A1D25CFEB8 /* Haptics.swift in Sources */,
+				15F6F08027F1BC6102209F9C /* JSONQuestionSource.swift in Sources */,
+				4592DA857BAF15E222D84EEB /* Keychain.swift in Sources */,
+				58127A3061F995345DD90E19 /* KnowledgeAtlas.swift in Sources */,
+				7829B382458C60FA73A55BBA /* KnowledgeAtlasTests.swift in Sources */,
+				9BC13E8DDA240167ECDD04E1 /* LinkWall.swift in Sources */,
+				02E828A85BD849666CCA6D6B /* LinkWallModels.swift in Sources */,
+				DD2CA3B51CDF571AC686C272 /* LiveHostNet.swift in Sources */,
+				A932712C398115691CFEABA8 /* LiveNight.swift in Sources */,
+				F3A4B7E171B4665A63062BBA /* LiveNightHost.swift in Sources */,
+				045C8A23CC31B3DBE5725CE1 /* LivePlayerClient.swift in Sources */,
+				C1DE024CBF206CDDE8F875FB /* LiveRoom.swift in Sources */,
+				C5D34E16C6CAD80BCE7BD4D7 /* Marathon.swift in Sources */,
+				15EF954644D36101B40E6F95 /* MarathonModels.swift in Sources */,
+				D2440B13212768315B590D70 /* MarathonTests.swift in Sources */,
+				434B25D5500951E78CF34139 /* NightClient.swift in Sources */,
+				F70F0BC5ECEF59B42BE49CB7 /* NightHost.swift in Sources */,
+				07FB78FA59931A8322DA0685 /* NightLink.swift in Sources */,
+				A3CEE805C4A1AB9149A32621 /* NightPlan.swift in Sources */,
+				FD630AA82C8D968F0C690213 /* NightProtocol.swift in Sources */,
+				723A5B7BA18B8624F1671930 /* NightTransport.swift in Sources */,
+				A4ACFCF2CE8E113EAC7715F8 /* Player.swift in Sources */,
+				A72807CF2123AE85304058D5 /* PlayerIdentityStore.swift in Sources */,
+				319FA58A47071FE9048A8597 /* PlayerProfile.swift in Sources */,
+				45D676DDC1C9261796BF0AF0 /* PlayerRecord.swift in Sources */,
+				5252D372F50463681F70CDF1 /* ProgressStats.swift in Sources */,
+				24899B3672D82D416ACC1FC9 /* Question.swift in Sources */,
+				13D1BE7A3105DCFDE360143B /* QuestionProvider.swift in Sources */,
+				1EF9F7CE12246AEBCFD1C57B /* RecordsStore.swift in Sources */,
+				A6E898C9A8B577B25B697EE0 /* Scoring.swift in Sources */,
+				621DA73F99F492318523F3D0 /* ScoringTests.swift in Sources */,
+				4E10B93B4D3648C3C18A074B /* ScreenshotQuestions.swift in Sources */,
+				F7D633F9009C8A3D2F3CBFE7 /* SeededRNG.swift in Sources */,
+				97A5EC2FF3339D75AB069F0F /* SeededRNGTests.swift in Sources */,
+				230B3D9580023BD009E3689C /* StandingsOutcome.swift in Sources */,
+				B1AC1CC30B54905053BF07AB /* StandingsOutcomeTests.swift in Sources */,
+				40F5AD7B54E6F618D49F0288 /* StoreKitStore.swift in Sources */,
+				CA9E6D28721A01D2CC785AC7 /* StoryArchive.swift in Sources */,
+				872E4C7608D1C10EE7E97E55 /* TemplateEngine.swift in Sources */,
+				4A3EAEF16196D111B88D7FC1 /* TestStore.swift in Sources */,
+				B77025BADE5DD73528A2631F /* TriviaCategory.swift in Sources */,
+				168110901BA6736D730778BC /* WeakSpotArena.swift in Sources */,
+				E839F9D0B29619B6DE3EE31F /* WeakSpotArenaTests.swift in Sources */,
+				FE4FFC4B2E71782A861DED18 /* WikipediaClient.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		B5F5198A3750468F0D272617 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -762,6 +963,7 @@
 				C2723A2D30FE2EB6BE44304D /* LinkWallView.swift in Sources */,
 				13F99AC4E453D3A6059DE7D1 /* LinkWallView_macOS.swift in Sources */,
 				E07DEEEDDFBA2E548F8CDD65 /* LinkWallView_tvOS.swift in Sources */,
+				5B838192AE2C410B06306AAD /* LiveHostNet.swift in Sources */,
 				B72DA2D151B3156C162753C6 /* LiveJoinView.swift in Sources */,
 				A4E1EFF1535F0273FCC53974 /* LiveJoinView_tvOS.swift in Sources */,
 				02F153022C6FAD01DE261FB5 /* LiveNight.swift in Sources */,
@@ -771,7 +973,6 @@
 				1E61B04B5E7AB5ABD7297B54 /* MacHomeSheets_macOS.swift in Sources */,
 				B0A240BB11DEDEDCE5B142EE /* MacLiveBigScreen_macOS.swift in Sources */,
 				DE08D346BADC5C8CF182B6F6 /* MacLiveBuilder_macOS.swift in Sources */,
-				3001AF8CCB35B3795BF889C9 /* MacLiveHostNet_macOS.swift in Sources */,
 				3DC20F18033FF99581974B52 /* MacLiveHost_macOS.swift in Sources */,
 				7763E984206A3E69A81D607D /* MacLiveModel_macOS.swift in Sources */,
 				103775A7AAFF0719F1B10843 /* MacLivePrint_macOS.swift in Sources */,
@@ -842,7 +1043,7 @@
 /* Begin XCBuildConfiguration section */
 		296659EF0549868336801823 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_9B5EDAB9-B493-4B48-BFBC-AFCE27EC086B" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_9E6A054E-2DAF-4091-B9A8-26636F5B7591" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -903,6 +1104,28 @@
 			};
 			name = Release;
 		};
+		32B09FD44238A0CD171A24DA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGNING_ALLOWED = NO;
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.learningischange.tidbitstrivia.CoreTests;
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = macosx;
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "";
+			};
+			name = Debug;
+		};
 		8B4A0D2ABD6D2C8D01595D74 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -931,6 +1154,28 @@
 				TARGETED_DEVICE_FAMILY = "1,2,3";
 			};
 			name = Debug;
+		};
+		B497917CC06911F80D6D1DB3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGNING_ALLOWED = NO;
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.learningischange.tidbitstrivia.CoreTests;
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = macosx;
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "";
+			};
+			name = Release;
 		};
 		B73DF143584EF79E06C0A4F4 /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -963,7 +1208,7 @@
 		};
 		E6F711EEEE2896F84FE9AB98 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_9B5EDAB9-B493-4B48-BFBC-AFCE27EC086B" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_9E6A054E-2DAF-4091-B9A8-26636F5B7591" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -1039,6 +1284,15 @@
 			buildConfigurations = (
 				8B4A0D2ABD6D2C8D01595D74 /* Debug */,
 				B73DF143584EF79E06C0A4F4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		7D6751EC9C24F6D04CEC8A73 /* Build configuration list for PBXNativeTarget "TidbitsTriviaTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				32B09FD44238A0CD171A24DA /* Debug */,
+				B497917CC06911F80D6D1DB3 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

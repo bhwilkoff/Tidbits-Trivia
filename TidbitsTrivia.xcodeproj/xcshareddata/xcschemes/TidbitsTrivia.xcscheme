@@ -39,6 +39,17 @@
          </BuildableReference>
       </MacroExpansion>
       <Testables>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "BFAE826B0F97466D6333BB38"
+               BuildableName = "TidbitsTriviaTests.xctest"
+               BlueprintName = "TidbitsTriviaTests"
+               ReferencedContainer = "container:TidbitsTrivia.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
       <CommandLineArguments>
       </CommandLineArguments>

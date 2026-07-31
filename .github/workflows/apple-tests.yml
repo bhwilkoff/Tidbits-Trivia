@@ -1,0 +1,45 @@
+name: Apple Core tests
+
+# The Apple side had no test target at all while Windows carried 443 tests, so
+# Core regressions could only be caught by driving a simulator by hand. These are
+# pure-logic tests over the platform-agnostic Core — macOS-only, no simulator
+# boot, no app install — so the whole suite runs in seconds on every push.
+on:
+  push:
+    paths:
+      - 'TidbitsTrivia/Core/**'
+      - 'TidbitsTriviaTests/**'
+      - 'project.yml'
+      - '.github/workflows/apple-tests.yml'
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      # The pbxproj is generated, never hand-edited (the macOS config-clobber
+      # ratchet) — so CI regenerates it rather than trusting the committed copy.
+      - name: Generate the project
+        run: xcodegen generate
+
+      - name: Run Core tests
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project TidbitsTrivia.xcodeproj \
+            -scheme TidbitsTrivia \
+            -destination 'platform=macOS' \
+            -only-testing:TidbitsTriviaTests \
+            CODE_SIGNING_ALLOWED=NO \
+            | xcbeautify || xcodebuild test \
+            -project TidbitsTrivia.xcodeproj \
+            -scheme TidbitsTrivia \
+            -destination 'platform=macOS' \
+            -only-testing:TidbitsTriviaTests \
+            CODE_SIGNING_ALLOWED=NO

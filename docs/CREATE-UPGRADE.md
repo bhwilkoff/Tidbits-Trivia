@@ -7,39 +7,52 @@ shareable**; working on all six platforms. Multi-loop by design.
 
 ---
 
-## Wave 0 — MEASURE FIRST (done 2026-07-31)
+## Wave 0 — MEASURE FIRST, then CORRECT THE MEASUREMENT (2026-07-31)
 
-`tools/create/topics.txt` (127 topics, Wikipedia most-viewed seeded, 11 domains) +
-`tools/create/coverage.py`, which applies the SHIPPED relevance rule (QA-SWEEP-LOG
-Q26–Q28) and reports what a player would really get.
+`tools/create/topics.txt` (127 topics, Wikipedia most-viewed seeded) +
+`tools/create/coverage.py`.
 
-```
-topics: 127   can fill 8: 109   THIN: 18   median pool: 46
-```
+**First pass concluded the corpus was thin on popular topics (Beyoncé 0, van Gogh 3,
+The Beatles 5). That conclusion was WRONG** — and the owner was right to push back: a
+QRank-seeded corpus cannot plausibly be thin on Beyoncé. Investigating it found THREE
+REAL SHIPPED BUGS in Create's search, which my measurement had faithfully reproduced.
 
-**The finding that sets the architecture:** the corpus is Wikipedia-derived *breadth*,
-so it is thinnest exactly where public interest is highest — the most-searched topics
-are the worst served.
+### B1 — `LIMIT 400` truncates BEFORE ranking (severe)
 
-| Topic | Pool | Topic | Pool |
-|---|---|---|---|
-| Beyonce | **0** | Vincent van Gogh | 3 |
-| Great Barrier Reef | 1 | Black holes | 4 |
-| The Simpsons | 2 | The Beatles | **5** |
-| Time zones | 2 | Vaccines | 6 |
-| Space exploration | 2 | Isaac Newton | 7 |
+`CorpusDatabase.search` pre-filters with an OR clause capped at 400 rows, then ranks.
+When any token is a common substring the cap is exhausted by noise before a genuine
+match is ever seen. Measured for "van gogh" (3,310 OR-matches, 20 genuine):
 
-Thin by domain: tech 4/8, science 4/17, geography 3/12 — arts/music/screen headline
-names (Beatles, van Gogh, Beyoncé, Simpsons) are the sharpest misses.
+| Cap | Rows returned | Genuine "van gogh" rows surviving |
+|---|---|---|
+| **400 (shipped)** | 400 | **0** |
+| 4000 | 3310 | 20 |
+| none | 3310 | 20 |
 
-**Consequence:** live generation must become a **first-class path, not a fallback**.
-Today `CreateQuizView` only calls Wikipedia when the corpus returns <3 — which is why
-"The Beatles" silently yields a 5-question corpus quiz instead of a great 8-question
-one. The right rule is *blend*: corpus questions are pre-vetted and instant, live
-questions cover the long tail; a topic should draw from both and be judged on the
-QUALITY of the final set, not on which source it came from.
+So typing "Vincent van Gogh" returns **none** of the 20 real van Gogh questions. The
+relevance fix in Q26–Q28 was necessary but sits *downstream* of this truncation.
 
----
+### B2 — no diacritic folding
+
+`beyonce` → **0** rows. `beyoncé` → **22** rows. The corpus has Beyoncé questions; a
+user typing the unaccented spelling (i.e. nearly everyone) gets nothing.
+
+### B3 — 3-letter stopwords blow up the candidate set
+
+The token filter keeps anything ≥3 chars, so "the" survives — and "the" matches almost
+every row, guaranteeing B1's truncation for any topic containing it ("The Beatles",
+"The Simpsons"). "van" behaves the same way.
+
+### Corrected picture
+
+The corpus is **rich** on these topics — The Beatles has 109 matching rows, Grand
+Canyon 1,683, van Gogh 3,310 (20 precise). The 18 "thin" topics were mostly an
+artefact of B1–B3, so the coverage table from the first pass must be re-run after the
+fixes and is NOT a basis for planning.
+
+**Wave 1 is therefore B1+B2+B3, not blended sourcing.** The earlier conclusion that
+"live generation must become first-class" was premised on a corpus shortage that does
+not exist; revisit it only after re-measuring.
 
 ## Waves (each its own loop tick)
 

@@ -41,6 +41,12 @@ struct ContentView_iOS: View {
                 store.selectedTab = .play
             case .topic, .category:
                 store.selectedTab = .play
+            case .quiz(let id):
+                // Create owns saved quizzes, so a share link lands there and the
+                // view picks the id up from the store (never mutate nav from
+                // outside the view tree).
+                store.pendingSharedQuizID = id
+                store.selectedTab = .create
             }
         }
     }

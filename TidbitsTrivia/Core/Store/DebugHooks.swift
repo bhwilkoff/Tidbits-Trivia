@@ -83,6 +83,13 @@ enum DebugHooks {
         ProcessInfo.processInfo.environment["TIDBITS_PLAY_SAVED"] == "1"
     }
 
+    /// TIDBITS_SHARED_QUIZ="<id>" → act as if `tidbitstrivia://quiz/<id>` arrived.
+    /// The OS confirmation dialog on `simctl openurl` can't be dismissed from the
+    /// CLI, so this exercises everything downstream of delivery.
+    static var sharedQuizID: String? {
+        ProcessInfo.processInfo.environment["TIDBITS_SHARED_QUIZ"]
+    }
+
     /// TIDBITS_PARTY=1 → open Pass & Play on launch (combine with AUTOPILOT
     /// to drive the whole party flow to the scoreboard for screenshots).
     /// TIDBITS_CUSTOMIZE=1 opens the Customize sheet on launch (screenshots).

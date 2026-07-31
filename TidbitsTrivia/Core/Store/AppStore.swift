@@ -8,6 +8,15 @@ import SwiftUI
 final class AppStore {
     enum Tab: String, CaseIterable { case play, records, create }
 
+    /// A shared quiz id waiting to be opened (`tidbitstrivia://quiz/<id>`). Set by the
+
+    /// deep-link inbox and CLEARED by the view that consumes it, so a link never
+
+    /// re-opens on the next visit to the tab.
+
+    var pendingSharedQuizID: String?
+
+
     var selectedTab: Tab = .play
     var playPath = NavigationPath()
     var recordsPath = NavigationPath()
@@ -111,6 +120,9 @@ enum DeepLink: Equatable, Sendable {
     case daily
     case topic(String)
     case category(String)
+    /// A shared quiz: `tidbitstrivia://quiz/<id>`, twin of the canonical
+    /// `https://tidbitstrivia.com/quiz/<id>` (docs/QUIZ-CONTRACT.md §5).
+    case quiz(String)
 }
 
 /// A request to launch a game with a given mode + category. Shared by the

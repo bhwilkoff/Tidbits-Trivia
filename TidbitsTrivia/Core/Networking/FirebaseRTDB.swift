@@ -229,6 +229,18 @@ actor FirebaseRTDB {
         return try JSONDecoder().decode(T.self, from: data)
     }
 
+    /// Read raw JSON, the mirror of `putJSON`. A saved quiz decodes itself from the
+    /// contract bytes (docs/QUIZ-CONTRACT.md), so routing it through a Decodable
+    /// would mean a SECOND representation of a format that is already frozen.
+    /// Returns nil when the path holds nothing.
+    func getJSON(_ path: String) async throws -> Data? {
+        let token = try await validToken()
+        let (data, resp) = try await session.data(from: restURL(path, token: token))
+        try Self.check(resp)
+        if data.isEmpty || String(data: data, encoding: .utf8) == "null" { return nil }
+        return data
+    }
+
     private func write<T: Encodable>(_ path: String, _ value: T, method: String) async throws {
         try await writeJSON(path, JSONEncoder().encode(value), method: method)
     }

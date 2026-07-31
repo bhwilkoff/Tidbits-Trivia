@@ -34,7 +34,10 @@ nonisolated struct SavedQuiz: Identifiable, Hashable, Sendable {
     let id: String
     var title: String
     let topic: String
-    let creatorID: String
+    /// `var` because publishing stamps the authenticated uid: the RTDB rules only
+    /// let `by === auth.uid` overwrite a quiz, so a locally-created quiz saved as
+    /// "local" must carry the real uid once it is shared.
+    var creatorID: String
     let creatorName: String
     let createdAt: Date
     var mode: String

@@ -121,6 +121,14 @@ targets:
         NSLocalNetworkUsageDescription: "Tidbits uses your local network so phones in the room can act as buzzers for the TV — no internet required."
         NSBonjourServices:
           - "_tidbits-buzz._tcp"
+        # Custom URL scheme. Without this NOTHING is registered to deliver a
+        # tidbits:// link, so .onOpenURL never fires for a custom scheme and every
+        # link the app emits (daily / topic / category, and now quiz) dead-ends at
+        # the launcher. Found when a share link failed with
+        # LSApplicationWorkspaceErrorDomain 115. DEEP_LINKS.md names the scheme.
+        CFBundleURLTypes:
+          - CFBundleURLName: com.learningischange.tidbitstrivia
+            CFBundleURLSchemes: [tidbits, tidbitstrivia]
         UILaunchStoryboardName: LaunchScreen
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false

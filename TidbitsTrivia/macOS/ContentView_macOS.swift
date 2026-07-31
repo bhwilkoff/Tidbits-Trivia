@@ -178,6 +178,9 @@ struct ContentView_macOS: View {
                 launch = LaunchRequest(mode: .daily, category: .named("mixed"))
             case .topic, .category:
                 section = .play
+            case .quiz(let id):
+                store.pendingSharedQuizID = id
+                section = .create
             }
         }
     }

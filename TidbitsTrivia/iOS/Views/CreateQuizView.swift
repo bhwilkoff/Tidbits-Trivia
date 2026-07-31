@@ -16,6 +16,13 @@ struct CreateQuizView: View {
     @State private var playingQuizID: String?
     @State private var playing = false
     @State private var shortfall: Int = 0
+    @State private var shareURL: URL?
+    @State private var incoming: SavedQuiz?
+    @State private var incomingState: IncomingState = .idle
+
+    /// Opening a shared link has real states, and "gone" is NOT "couldn't load":
+    /// telling someone with a working link that it was deleted stops them retrying.
+    enum IncomingState: Equatable { case idle, loading, notFound, failed(String), ready }
     @FocusState private var topicFocused: Bool
     @State private var stageIndex = 0
 
@@ -49,10 +56,24 @@ struct CreateQuizView: View {
             CustomGameContainer(topic: topic.isEmpty ? "Custom" : topic,
                                 questions: generated, quizID: playingQuizID)
         }
+        .sheet(item: $shareURL) { url in
+            ShareSheet(items: [url])
+        }
+        .sheet(item: $incoming) { quiz in
+            SharedQuizSheet(quiz: quiz, onPlay: { playShared(quiz) })
+        }
+        .onChange(of: store.pendingSharedQuizID) { _, id in
+            if let id { openShared(id) }
+        }
+        .task(id: store.pendingSharedQuizID) {
+            if let id = store.pendingSharedQuizID { openShared(id) }
+        }
         .task {
             if let t = DebugHooks.autoCreate, topic.isEmpty {
                 topic = t
                 generate()
+            } else if let shared = DebugHooks.sharedQuizID {
+                openShared(shared)
             } else if DebugHooks.playSavedQuiz, let newest = saved.first {
                 play(newest)
             }
@@ -160,7 +181,8 @@ struct CreateQuizView: View {
                 ForEach(shelf) { record in
                     SavedQuizRow(record: record,
                                  onPlay: { play(record) },
-                                 onDelete: { QuizStore.delete(id: record.quizID, in: modelContext) })
+                                 onDelete: { QuizStore.delete(id: record.quizID, in: modelContext) },
+                                 onShare: { share(record) })
                 }
             }
         }
@@ -181,6 +203,53 @@ struct CreateQuizView: View {
         playingQuizID = quiz.id
         topic = quiz.topic
         playing = true
+    }
+
+    /// Fetch a shared quiz, keep it, and offer to play. Keeping on arrival is
+    /// deliberate: a link someone sent you should end up on your shelf, not vanish
+    /// when you close the sheet.
+    private func openShared(_ id: String) {
+        store.pendingSharedQuizID = nil          // consume once
+        guard QuizStore.quiz(id: id, in: modelContext) == nil else {
+            if let mine = QuizStore.quiz(id: id, in: modelContext) { incoming = mine }
+            return
+        }
+        incomingState = .loading
+        Task {
+            switch await QuizSharing.fetch(id: id) {
+            case .found(let quiz):
+                QuizStore.save(quiz, in: modelContext)
+                incomingState = .ready
+                incoming = quiz
+            case .notFound:
+                incomingState = .notFound
+                error = "That link doesn’t point at a quiz any more. It may have been deleted by whoever made it."
+            case .failed(let message):
+                incomingState = .failed(message)
+                error = message
+            }
+        }
+    }
+
+    /// Publish, then hand the link to the system share sheet. A share that quietly
+    /// does nothing is worse than one that admits it failed.
+    private func share(_ record: SavedQuizRecord) {
+        guard let quiz = record.quiz else { return }
+        Task {
+            do {
+                if let url = try await QuizSharing.publish(quiz, in: modelContext) {
+                    shareURL = url
+                }
+            } catch {
+                self.error = "Couldn’t share that quiz just now. Check your connection and try again."
+            }
+        }
+    }
+
+    private func playShared(_ quiz: SavedQuiz) {
+        incoming = nil
+        guard let record = QuizStore.record(id: quiz.id, in: modelContext) else { return }
+        play(record)
     }
 
     private func generate() {
@@ -308,6 +377,7 @@ private struct SavedQuizRow: View {
     let record: SavedQuizRecord
     let onPlay: () -> Void
     let onDelete: () -> Void
+    var onShare: () -> Void = {}
     @State private var confirmingDelete = false
 
     var body: some View {
@@ -333,6 +403,7 @@ private struct SavedQuizRow: View {
         }
         .buttonStyle(.plain)
         .contextMenu {
+            Button { onShare() } label: { Label("Share", systemImage: "square.and.arrow.up") }
             Button(role: .destructive) { confirmingDelete = true } label: {
                 Label("Delete", systemImage: "trash")
             }
@@ -381,6 +452,65 @@ struct AllQuizzesView: View {
         }
         .background(Tidbits.Palette.bg.ignoresSafeArea())
         .navigationTitle("Your quizzes")
+    }
+}
+
+
+
+/// `sheet(item:)` needs Identifiable; URL isn't. Wrapping it here keeps the share
+/// flow to one line at the call site.
+extension URL: @retroactive Identifiable {
+    public var id: String { absoluteString }
+}
+
+/// The system share sheet. UIActivityViewController rather than SwiftUI's
+/// ShareLink because the URL only exists AFTER the publish round trip completes —
+/// ShareLink needs its payload up front.
+private struct ShareSheet: UIViewControllerRepresentable {
+    let items: [Any]
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: items, applicationActivities: nil)
+    }
+    func updateUIViewController(_ vc: UIActivityViewController, context: Context) {}
+}
+
+/// What you see when someone sends you a quiz. It is already saved to your shelf by
+/// the time this appears — a link a friend sent shouldn't evaporate when you close
+/// the sheet.
+private struct SharedQuizSheet: View {
+    let quiz: SavedQuiz
+    let onPlay: () -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        VStack(spacing: 18) {
+            Spacer()
+            Image(systemName: "sparkles.rectangle.stack.fill")
+                .font(.system(size: 46, weight: .bold))
+                .foregroundStyle(Tidbits.Palette.grape)
+            Text(quiz.title)
+                .font(.system(size: 30, weight: .black, design: .rounded))
+                .foregroundStyle(Tidbits.Palette.ink)
+                .multilineTextAlignment(.center)
+            Text(subtitle)
+                .font(Tidbits.TypeRamp.l5)
+                .foregroundStyle(Tidbits.Palette.inkSoft)
+            Text("Saved to your quizzes.")
+                .font(Tidbits.TypeRamp.l5)
+                .foregroundStyle(Tidbits.Palette.inkSoft)
+            Spacer()
+            Button(action: onPlay) { Text("Play this quiz") }
+                .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.grape, textColor: .white))
+            Button("Later") { dismiss() }
+                .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.ink))
+        }
+        .padding(24)
+        .background(Tidbits.Palette.bg.ignoresSafeArea())
+    }
+
+    private var subtitle: String {
+        let by = quiz.creatorName.isEmpty ? "" : "Made by \(quiz.creatorName) · "
+        return "\(by)\(quiz.questionCount) questions"
     }
 }
 

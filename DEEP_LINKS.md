@@ -6,7 +6,14 @@ every web view, Apple `View`, and Android `composable(...)` reads
 from the same table.
 
 **Production domain: `https://tidbitstrivia.com`** (GitHub Pages, apex via
-`CNAME`). Custom scheme: `tidbits://`. Today Tidbits emits only the canonical
+`CNAME`). Custom scheme: `tidbits://` (and `tidbitstrivia://`, both registered).
+
+> **2026-07-31:** neither was actually registered until now — `CFBundleURLTypes`
+> was absent from the generated Info.plist, so `.onOpenURL` never fired for a
+> custom scheme and every `daily` / `topic` / `category` link dead-ended at the
+> launcher with `LSApplicationWorkspaceErrorDomain 115`. The handler had been
+> written and shipped; nothing was listening. Found by opening a share link on the
+> simulator. Declared in `project.yml` (never the generated pbxproj). Today Tidbits emits only the canonical
 site link (shared with every score) and reserves `/item/{id}` for sharable
 question/fact twins; it has **no accounts or OAuth**, so the profile / settings
 / OAuth rows below are reserved patterns, wired only if those features land.

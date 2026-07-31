@@ -155,3 +155,54 @@ extension SavedQuiz {
                        setLookup: { set, id in Self.bundledSets[set]?.question(id: id) })
     }
 }
+
+// MARK: - Sharing (docs/QUIZ-CONTRACT.md §5)
+
+/// Publishing and fetching a shared quiz. Mirrors the web's `publishQuiz` /
+/// `fetchSharedQuiz`, and writes the SAME `quiz.v1` bytes — a quiz shared from an
+/// iPhone has to open on the web and on Windows, which is the whole point.
+enum QuizSharing {
+
+    /// The canonical link target on every platform. The web app is the one surface
+    /// someone without the app can open, so it is what we hand out.
+    static func shareURL(for id: String) -> URL? {
+        URL(string: "https://tidbitstrivia.com/#/quiz/\(id)")
+    }
+
+    /// What a fetch actually came back with. "Gone" and "couldn't load" are
+    /// DIFFERENT: telling someone with a working link that the quiz was deleted
+    /// stops them retrying something transient.
+    enum FetchResult: Sendable {
+        case found(SavedQuiz)
+        case notFound
+        case failed(String)
+    }
+
+    /// Publish so anyone with the link can play it. EXPLICIT — a quiz you never
+    /// share never leaves your account. The creator is stamped at publish time so
+    /// the rules (`by === auth.uid`) let only its author overwrite it later.
+    @discardableResult
+    static func publish(_ quiz: SavedQuiz, in context: ModelContext) async throws -> URL? {
+        let uid = try await FirebaseRTDB.shared.ensureAuth()
+        var stamped = quiz
+        stamped.creatorID = uid
+        guard let json = stamped.jsonData() else { return nil }
+        try await FirebaseRTDB.shared.putJSON("quizzes/\(quiz.id)", json)
+        QuizStore.markShared(id: quiz.id, in: context)
+        return shareURL(for: quiz.id)
+    }
+
+    static func fetch(id: String) async -> FetchResult {
+        do {
+            guard let json = try await FirebaseRTDB.shared.getJSON("quizzes/\(id)") else {
+                return .notFound
+            }
+            guard let quiz = SavedQuiz(jsonData: json) else {
+                return .failed("This quiz is in a format this version can’t read.")
+            }
+            return .found(quiz)
+        } catch {
+            return .failed("Couldn’t reach the quiz. Check your connection and try again.")
+        }
+    }
+}

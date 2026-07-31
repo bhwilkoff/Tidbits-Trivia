@@ -227,6 +227,12 @@ export const Corpus = {
     return out;
   },
 
+  // Look up by ID — a saved quiz's refs resolve through here.
+  question(id) {
+    if (!this._byID) this._byID = new Map(this.questions.map((q) => [q.id, q]));
+    return this._byID.get(id) || null;
+  },
+
   get count() { return this.questions.length; },
 };
 
@@ -290,6 +296,12 @@ function makeJsonSet(filename, parseRow = rowToQuestion) {
         this.loaded = true;
         console.log(`[Tidbits] ${filename} v${data.version} · ${this.questions.length} questions`);
       } catch (e) { console.warn('[Tidbits]', filename, 'unavailable', e); }
+    },
+    // Look up by ID — what a saved quiz needs to turn its set-refs back into
+    // questions (docs/QUIZ-CONTRACT.md). Built on first use; these sets are small.
+    question(id) {
+      if (!this._byID) this._byID = new Map(this.questions.map((q) => [q.id, q]));
+      return this._byID.get(id) || null;
     },
     pull(categoryID, seen, limit) {
       const src = categoryID === 'mixed' ? this.questions : (this.byCategory[categoryID] || []);

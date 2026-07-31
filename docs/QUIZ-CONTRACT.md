@@ -187,12 +187,22 @@ not left as a second format:
 | Shareable | no | yes |
 | Cap | 20, silently truncating | none |
 
-**Migration rule:** on first load after the upgrade, convert each saved set to a
-`quiz.v1` object — `label` becomes `t` and `tp`, `savedAt` becomes `at`, and each
+**Migration rule:** on first load after the upgrade — and **after the corpus has
+finished loading** — convert each saved set to a `quiz.v1` object — `label` becomes `t` and `tp`, `savedAt` becomes `at`, and each
 stored question becomes a **ref if its ID resolves in the corpus, inline otherwise**.
 That last part matters: a naive conversion would inline all of them and turn a 400-byte
 quiz into a 40 KB one. Keep the old key until the converted list is written, then
 delete it — a half-finished migration must not lose the player's quizzes.
 
 Nothing else reads `tidbits.savedSets` after that, and no other platform ever adopts
-it.
+it. Two details that only showed up when the migration ran in a real browser:
+
+- **Wait for the corpus.** Run the migration before `Corpus.load()` resolves and every
+  ID lookup misses, so every question inlines — the 40 KB outcome above, arrived at
+  silently. A headless test with a stubbed corpus passes happily through this bug,
+  because a stub cannot represent "not ready yet".
+- **Never rewrite an unresolvable ID.** Inline it with the original ID intact. An
+  earlier version prefixed `live:`, which destroyed the only information a later pass
+  could have used to turn it back into a ref.
+
+RTDB rules for `quizzes/` were deployed 2026-07-31, so publishing is unblocked.

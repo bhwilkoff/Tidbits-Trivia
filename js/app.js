@@ -2,6 +2,7 @@
 // Apple AppStore + GameEngine + views. Vanilla JS, no framework, no build.
 
 import { Corpus, Pictures, ThisOrThat, ClosestCall, Ordering, Matching, TypeAnswer, OddOneOut, Enumerate, Difficulty, matchesAccepted, Wikipedia, DailyBoard } from './api.js';
+import { allQuizzes, deleteQuiz, saveCreated, resolveForPlay, migrateLegacySavedSets, getQuiz } from './quizstore.js';
 import { Store, CATEGORIES, catColor, catById, MODES, NIGHT, STAKE_BUDGET, dayKey, APP_STORES, SITE_URL, CLUB, WeakSpotArena, StoryArchive, answerTextOf, Marathon, marathonAccuracy, KnowledgeAtlas, Expeditions, LinkWall, LinkWallLog } from './store.js';
 import { Scoring } from './engine.js';
 import { BOTS, houseBot, botById, VsMatch } from './bots.js';
@@ -44,6 +45,10 @@ async function boot() {
   Identity.bootstrap().then(() => { syncDailyLog(); Entitlement.refresh(); });   // + Club status
   Identity.onChange(() => { Entitlement.refresh(); const t = location.hash; if (t.startsWith('#/profile') || t.startsWith('#/records')) render(); });
   try { await Corpus.load(); } catch (e) { /* live fallback still works */ }
+  // Migrate off the pre-contract saved-sets format (QUIZ-CONTRACT §7) AFTER the
+  // corpus is loaded: run earlier, every id lookup misses and every question gets
+  // inlined, which is how a 400-byte quiz becomes a 40KB one.
+  migrateLegacySavedSets().then((n) => { if (n) render(); });
   if (!location.hash) location.hash = '#/play';
   // ?expedition=<id> — jump straight to a campaign's map (open convenience,
   // mirrors Apple's TIDBITS_EXPEDITION_MAP verification hook).
@@ -1095,7 +1100,7 @@ function bindHome() {
 // ---------------- Create ----------------
 function viewCreate() {
   const sugg = ['Space exploration', 'Ancient Rome', 'Jazz', 'Volcanoes', 'The Olympics', 'Marie Curie'];
-  const saved = getSavedSets();
+  const saved = allQuizzes();
   return `
     <h1 class="page-title">Create a quiz</h1>
     <p class="muted">Pick any subject. We'll pull a varied set — different kinds of questions across categories — from the corpus and Wikipedia.</p>
@@ -1106,11 +1111,13 @@ function viewCreate() {
     </div>
     <h2 class="section">Need a spark?</h2>
     <div class="chips wrap">${sugg.map((s) => `<button class="chip" data-sugg="${h(s)}">${h(s)}</button>`).join('')}</div>
-    ${saved.length ? `<h2 class="section">Your saved sets</h2>
-      <div class="saved-sets">${saved.map((set, i) => `<div class="card saved-set">
-        <button class="saved-play" data-play-set="${i}"><b>${h(set.label)}</b><span class="muted">${set.questions.length} questions · saved ${new Date(set.savedAt).toLocaleDateString()}</span></button>
-        <button class="saved-del icon-btn" data-del-set="${i}" aria-label="Delete set">✕</button>
-      </div>`).join('')}</div>` : ''}`;
+    <h2 class="section">Your quizzes</h2>
+    ${saved.length
+      ? `<div class="saved-sets">${saved.map((q) => `<div class="card saved-set">
+        <button class="saved-play" data-play-quiz="${h(q.id)}"><b>${h(q.title)}</b><span class="muted">${q.entries.length} questions · saved ${new Date(q.createdAt).toLocaleDateString()}</span></button>
+        <button class="saved-del icon-btn" data-del-quiz="${h(q.id)}" aria-label="Delete quiz">✕</button>
+      </div>`).join('')}</div>`
+      : `<p class="muted">Quizzes you make are saved here automatically, ready to replay.</p>`}`;
 }
 // Build a varied Create set (owner: multiple modes AND categories, not 8
 // near-identical questions). Diversity-capped MCQ from the corpus + a couple of
@@ -1138,8 +1145,10 @@ function bindCreate() {
     try {
       const qs = await buildCreateSet(topic);
       if (qs.length >= 3) {
-        maybeOfferSave(topic, qs);
-        startGame('mix', catById('mixed'), { custom: qs, label: topic });
+        // Every created quiz is saved automatically — the player never has to
+        // notice a Save button to keep what they made.
+        const quiz = saveCreated({ questions: qs, topic, creatorID: 'local', creatorName: '' });
+        startGame('mix', catById('mixed'), { custom: qs, label: topic, quizID: quiz.id });
       } else { err.textContent = `Couldn't build a good quiz for “${topic}”. Try a broader or more famous subject.`; err.hidden = false; }
     } catch { err.textContent = 'Network trouble reaching Wikipedia. Try again.'; err.hidden = false; }
     btn.textContent = 'Generate Quiz'; btn.disabled = false;
@@ -1148,28 +1157,30 @@ function bindCreate() {
   $('#topic').addEventListener('keydown', (e) => { if (e.key === 'Enter') run(); });
   app.querySelectorAll('[data-sugg]').forEach((b) =>
     b.addEventListener('click', () => { $('#topic').value = b.dataset.sugg; run(); }));
-  app.querySelectorAll('[data-play-set]').forEach((b) =>
+  app.querySelectorAll('[data-play-quiz]').forEach((b) =>
     b.addEventListener('click', () => {
-      const set = getSavedSets()[+b.dataset.playSet]; if (!set) return;
-      startGame('mix', catById('mixed'), { custom: set.questions, label: set.label });
+      const quiz = getQuiz(b.dataset.playQuiz); if (!quiz) return;
+      // A quiz can legitimately come up short (an older corpus, a set this build
+      // lacks), so say so rather than silently padding it with other questions.
+      const r = resolveForPlay(quiz);
+      if (!r.isPlayable) {
+        const err = $('#create-err');
+        err.textContent = `This quiz needs questions your version doesn't have yet. Try creating it again from “${quiz.topic}”.`;
+        err.hidden = false;
+        return;
+      }
+      startGame('mix', catById('mixed'), { custom: r.questions, label: quiz.title, quizID: quiz.id });
     }));
-  app.querySelectorAll('[data-del-set]').forEach((b) =>
-    b.addEventListener('click', () => { deleteSavedSet(+b.dataset.delSet); render(); }));
+  app.querySelectorAll('[data-del-quiz]').forEach((b) =>
+    b.addEventListener('click', () => { deleteQuiz(b.dataset.delQuiz); render(); }));
 }
 
-// ---- Saved question sets (owner; future: share with other players) ----
-function getSavedSets() { try { return JSON.parse(localStorage.getItem('tidbits.savedSets') || '[]'); } catch { return []; } }
-function saveSet(label, questions) {
-  const list = getSavedSets().filter((s) => s.label.toLowerCase() !== label.toLowerCase());
-  list.unshift({ label, questions, savedAt: Date.now() });
-  localStorage.setItem('tidbits.savedSets', JSON.stringify(list.slice(0, 20)));
-}
-function deleteSavedSet(i) { const l = getSavedSets(); l.splice(i, 1); localStorage.setItem('tidbits.savedSets', JSON.stringify(l)); }
-function maybeOfferSave(label, questions) {
-  // Non-blocking: remember the last built set so the player can save it from
-  // the results screen (a Save button is added there).
-  window._lastCreated = { label, questions };
-}
+// ---- Saved quizzes ----
+// The pre-contract `tidbits.savedSets` helpers are GONE. They stored full question
+// text keyed by a label, web-only and unshareable; js/quizstore.js replaces them and
+// migrateLegacySavedSets() converts anything a returning player already had
+// (docs/QUIZ-CONTRACT.md §7). Nothing may write that key again — a writer left
+// behind would keep resurrecting the old format on every render.
 
 // Canonical cross-platform wire question (matches Android WireQuestion + the
 // night wire): categoryId / sourceUrl / imageUrl casing, so a web-hosted online
@@ -2408,15 +2419,17 @@ function renderResults() {
       ${missed.length ? `<h2 class="section">Tidbits to remember</h2>${missed.map((a) => `<div class="card pad"><b>${h(a.q.prompt)}</b><div class="ans">Answer: ${h(a.q.options[a.q.correctIndex])}</div><p class="muted">${h(a.q.explanation)}</p></div>`).join('')}` : ''}
       ${nailed.length ? `<h2 class="section">Tough ones you nailed</h2>${nailed.map((a, i) => `<div class="card pad"><b>${h(a.q.prompt)}</b><div class="ans">You got it: ${h(a.q.options[a.q.correctIndex] || '')}</div><button class="btn btn-text" data-hdyk="${i}" style="padding:6px 0;color:var(--color-accent);text-align:left">How did you know that? · Share ›</button></div>`).join('')}` : ''}
       <button class="btn btn-blue btn-full" data-share>Share Score</button>
-      ${game._custom ? '<button class="btn btn-full" data-save-set>Save this set</button>' : ''}
+      ${game._custom && !game.quizID ? '<button class="btn btn-full" data-save-set>Save this quiz</button>' : ''}
       ${game.mode.id === 'daily' ? '' : '<button class="btn btn-primary btn-full" data-again>Play Again</button>'}
       <button class="btn btn-text btn-full" data-done>Done</button>
     </div>`;
   $('[data-share]').addEventListener('click', () => shareResult(s, grid));
   const saveBtn = $('[data-save-set]');
   if (saveBtn) saveBtn.addEventListener('click', () => {
-    const label = (game.label || 'My set').trim();
-    saveSet(label, game._custom);
+    // Goes through the contract store, not the retired tidbits.savedSets key —
+    // writing there would resurrect the legacy format the migration just cleared.
+    saveCreated({ questions: game._custom, topic: (game.label || 'My quiz').trim(),
+                  creatorID: 'local', creatorName: '' });
     saveBtn.textContent = 'Saved ✓'; saveBtn.disabled = true;
   });
   const again = $('[data-again]');

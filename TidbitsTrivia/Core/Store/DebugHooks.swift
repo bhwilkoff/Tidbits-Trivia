@@ -90,6 +90,13 @@ enum DebugHooks {
         ProcessInfo.processInfo.environment["TIDBITS_SHARED_QUIZ"]
     }
 
+    /// TIDBITS_CREATE=1 → open Create on launch. On tvOS the surface is several
+    /// focus-moves down the home screen, and driving the remote from the CLI is far
+    /// less reliable than saying which screen you want.
+    static var openCreate: Bool {
+        ProcessInfo.processInfo.environment["TIDBITS_CREATE"] == "1"
+    }
+
     /// TIDBITS_PARTY=1 → open Pass & Play on launch (combine with AUTOPILOT
     /// to drive the whole party flow to the scoreboard for screenshots).
     /// TIDBITS_CUSTOMIZE=1 opens the Customize sheet on launch (screenshots).

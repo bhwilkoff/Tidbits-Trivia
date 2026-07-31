@@ -14,6 +14,9 @@ struct TVGameContainer: View {
     /// the campaign + stage this round belongs to. nil for every other launch.
     var expedition: Expedition? = nil
     var expeditionStageIndex: Int? = nil
+    /// A saved/created quiz plays its OWN questions rather than drawing fresh ones —
+    /// the whole promise of a saved quiz is that it's the same quiz every time.
+    var customQuestions: [Question]? = nil
     @Environment(AppStore.self) private var store
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
@@ -87,7 +90,12 @@ struct TVGameContainer: View {
         }
         .task {
             if game.phase == .idle {
-                if mode == .weakSpot {
+                // A saved/created quiz plays its OWN questions. This has to come
+                // FIRST: every branch below draws a fresh round, which is exactly
+                // what a saved quiz must never do.
+                if let customQuestions, customQuestions.count >= 2 {
+                    game.startCustom(mode: mode, category: category, questions: customQuestions)
+                } else if mode == .weakSpot {
                     startWeakSpot()
                 } else if mode == .marathon {
                     startMarathon()

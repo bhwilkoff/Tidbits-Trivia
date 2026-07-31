@@ -40,6 +40,7 @@
 		18B47BD796292B3DC18D6C05 /* DailyBoardContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56D864166DCE99D76AD6FD72 /* DailyBoardContent.swift */; };
 		198C29B58A69766EB3E7A687 /* BonjourTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83FF1890FBAD38C220D2C1BE /* BonjourTransport.swift */; };
 		1AF69F25D46C426A9FC750F9 /* MarathonModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = C67A9AF36A215C29ACBDCB34 /* MarathonModels.swift */; };
+		1B055AE96AD0429057AC21C2 /* QRCode.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE1CAB6500E259D0B280D569 /* QRCode.swift */; };
 		1D19BE6624BBA688681353EE /* ContentView_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3D542C8E636DF4AF26303CB /* ContentView_macOS.swift */; };
 		1E61B04B5E7AB5ABD7297B54 /* MacHomeSheets_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38E2048C670779462804BFCD /* MacHomeSheets_macOS.swift */; };
 		1EF9F7CE12246AEBCFD1C57B /* RecordsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7633D27702A6874F7D8993DF /* RecordsStore.swift */; };
@@ -161,6 +162,7 @@
 		A890E6E26C94D878187A9F28 /* AppleSignIn.swift in Sources */ = {isa = PBXBuildFile; fileRef = 408C9FD599A9680A1E35AE12 /* AppleSignIn.swift */; };
 		A932712C398115691CFEABA8 /* LiveNight.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AD18ED3C40BFC78AFD8FB0C /* LiveNight.swift */; };
 		A93C3882E397A32AEE50B0FE /* LiveRoom.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BB92F967027E59F005CB86D /* LiveRoom.swift */; };
+		A9D5CBF36A492279BC03C701 /* CreateView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 291E5E7B3AF4CFD66CB24426 /* CreateView_tvOS.swift */; };
 		AD2E45CD70618846B0546B96 /* ContentView_iOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E0122AFA7F2570D4CCDD4BA /* ContentView_iOS.swift */; };
 		AD4102CDC0F6D0A1D25CFEB8 /* Haptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDC047AE9E00DBB79A4FD169 /* Haptics.swift */; };
 		AF315C17D8A40D23AD75A794 /* StandingsOutcome.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD22A030E767FF54F1498CFD /* StandingsOutcome.swift */; };
@@ -173,6 +175,7 @@
 		B726DC9ED39E20DD9B3F5FD1 /* GameSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BFCD6FF44ED08F84EBBD05E /* GameSettings.swift */; };
 		B72DA2D151B3156C162753C6 /* LiveJoinView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C50D6874040B1114294A708 /* LiveJoinView.swift */; };
 		B77025BADE5DD73528A2631F /* TriviaCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCB14B0E2B13CCA2DDA250ED /* TriviaCategory.swift */; };
+		B8AC1D5D9F7FDB50326C8E70 /* QRCode.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE1CAB6500E259D0B280D569 /* QRCode.swift */; };
 		B904426EC4451D3EAC20C3DE /* ReadableColumn.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A5044939EEF01931A37AE40 /* ReadableColumn.swift */; };
 		BAE653DC19291745458BE180 /* NightLiveContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80062C51298B935C19365672 /* NightLiveContainer.swift */; };
 		BB68CB411568894E3E2370AC /* GameKitTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B6C1AB3D2D712041E246473 /* GameKitTransport.swift */; };
@@ -255,6 +258,7 @@
 		2188212D23A7B95BDD7D6ED6 /* NightProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightProtocol.swift; sourceTree = "<group>"; };
 		25AEBF6364C0E452829EA2C6 /* KnowledgeAtlasView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnowledgeAtlasView.swift; sourceTree = "<group>"; };
 		28A55E8D91A214E7AB369F1A /* QuizStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuizStore.swift; sourceTree = "<group>"; };
+		291E5E7B3AF4CFD66CB24426 /* CreateView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateView_tvOS.swift; sourceTree = "<group>"; };
 		2A6236DA6CAC7451F433FB4B /* LiveHostNet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveHostNet.swift; sourceTree = "<group>"; };
 		2AD18ED3C40BFC78AFD8FB0C /* LiveNight.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveNight.swift; sourceTree = "<group>"; };
 		2C50D6874040B1114294A708 /* LiveJoinView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveJoinView.swift; sourceTree = "<group>"; };
@@ -341,6 +345,7 @@
 		ABD7AE7120AC1ABEC5FBFE9B /* PlayerIdentityStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerIdentityStore.swift; sourceTree = "<group>"; };
 		AC1A4F6522DE74B26703EF55 /* TidbitsTriviaTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = TidbitsTriviaTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACBB11A0D029110390E8A92A /* Marathon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Marathon.swift; sourceTree = "<group>"; };
+		AE1CAB6500E259D0B280D569 /* QRCode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRCode.swift; sourceTree = "<group>"; };
 		AE29816C3FBC08D77D0649E6 /* ClubHubView_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClubHubView_macOS.swift; sourceTree = "<group>"; };
 		B0A8539762A2F6FB3C251DE6 /* KnowledgeAtlasView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnowledgeAtlasView_tvOS.swift; sourceTree = "<group>"; };
 		B0B204070D7875807133085F /* DailyPickTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyPickTests.swift; sourceTree = "<group>"; };
@@ -398,7 +403,7 @@
 		FD70222B5EE4C4145E4D1F84 /* NightSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightSetupView.swift; sourceTree = "<group>"; };
 		FDDD2AC4DB9C421C5849B8F6 /* GameView_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView_macOS.swift; sourceTree = "<group>"; };
 		FFC46D4CE8D03186C064C759 /* Question.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Question.swift; sourceTree = "<group>"; };
-		"TEMP_6540A401-BFAD-4067-9270-03016F27DB1A" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
+		"TEMP_8212ACD7-5EBB-496F-BA4F-D54CD09DF695" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -599,6 +604,7 @@
 				B8DD872E110D6DFFC258366A /* ClubHubView_tvOS.swift */,
 				4793DE7531EE4E40F6A11F40 /* ClubPaywallView_tvOS.swift */,
 				C23D07A7744AE72B2935CB2F /* ContentView_tvOS.swift */,
+				291E5E7B3AF4CFD66CB24426 /* CreateView_tvOS.swift */,
 				5CE0D5EBCCBDED5D292DBFEB /* ExpeditionsView_tvOS.swift */,
 				F5C9D9266531ECD27156562D /* GameView_tvOS.swift */,
 				B0A8539762A2F6FB3C251DE6 /* KnowledgeAtlasView_tvOS.swift */,
@@ -641,6 +647,7 @@
 			isa = PBXGroup;
 			children = (
 				AB6E2342A764B8401C9516E9 /* Design.swift */,
+				AE1CAB6500E259D0B280D569 /* QRCode.swift */,
 			);
 			path = Design;
 			sourceTree = "<group>";
@@ -734,10 +741,10 @@
 			path = TidbitsTrivia;
 			sourceTree = "<group>";
 		};
-		"TEMP_41AA2DD1-7FB3-4392-98B9-19D17033DDAF" /* Tidbits-Trivia */ = {
+		"TEMP_8CAD9153-4CE2-4A94-B9DE-B4F7C6153DFD" /* Tidbits-Trivia */ = {
 			isa = PBXGroup;
 			children = (
-				"TEMP_6540A401-BFAD-4067-9270-03016F27DB1A" /* AppVersion.xcconfig */,
+				"TEMP_8212ACD7-5EBB-496F-BA4F-D54CD09DF695" /* AppVersion.xcconfig */,
 			);
 			path = "Tidbits-Trivia";
 			sourceTree = "<group>";
@@ -911,6 +918,7 @@
 				319FA58A47071FE9048A8597 /* PlayerProfile.swift in Sources */,
 				45D676DDC1C9261796BF0AF0 /* PlayerRecord.swift in Sources */,
 				5252D372F50463681F70CDF1 /* ProgressStats.swift in Sources */,
+				1B055AE96AD0429057AC21C2 /* QRCode.swift in Sources */,
 				24899B3672D82D416ACC1FC9 /* Question.swift in Sources */,
 				13D1BE7A3105DCFDE360143B /* QuestionProvider.swift in Sources */,
 				79690AC6DDFD2F89912F8106 /* QuizStore.swift in Sources */,
@@ -956,6 +964,7 @@
 				92B4788F3A0CAC7DE68FB848 /* CorpusDatabase.swift in Sources */,
 				43F36ECB879791F4A899B1AF /* CreateQuizView.swift in Sources */,
 				BB92BF0EBF1C44BE1C208050 /* CreateView_macOS.swift in Sources */,
+				A9D5CBF36A492279BC03C701 /* CreateView_tvOS.swift in Sources */,
 				07F487AB68095E656B266582 /* DailyBoard.swift in Sources */,
 				D555AF5E6F6D4E64929FC464 /* DailyBoardContent.swift in Sources */,
 				859FAE7091E80AC483E8A7A6 /* DailyBoardView.swift in Sources */,
@@ -1040,6 +1049,7 @@
 				E75013E2AC2F2501BDCABD62 /* ProfileView.swift in Sources */,
 				11697E55857894F38D742127 /* ProgressStats.swift in Sources */,
 				DC5D5FF2CCEAABBD906B5034 /* PushNotifications.swift in Sources */,
+				B8AC1D5D9F7FDB50326C8E70 /* QRCode.swift in Sources */,
 				B0A9BD87C5B11C8B3EA379C9 /* Question.swift in Sources */,
 				03FB04C17EDA45D30AC911F4 /* QuestionProvider.swift in Sources */,
 				D28850D4B46D40A2897B334F /* QuickMatchView.swift in Sources */,
@@ -1079,7 +1089,7 @@
 /* Begin XCBuildConfiguration section */
 		296659EF0549868336801823 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_6540A401-BFAD-4067-9270-03016F27DB1A" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_8212ACD7-5EBB-496F-BA4F-D54CD09DF695" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -1244,7 +1254,7 @@
 		};
 		E6F711EEEE2896F84FE9AB98 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_6540A401-BFAD-4067-9270-03016F27DB1A" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_8212ACD7-5EBB-496F-BA4F-D54CD09DF695" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;

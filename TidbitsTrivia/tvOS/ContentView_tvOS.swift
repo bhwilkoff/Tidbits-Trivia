@@ -4,6 +4,15 @@ import SwiftData
 
 // MARK: - tvOS palette (dark-first; reserve brightness for focus)
 
+/// A created/saved quiz on its way to the game container. Identifiable so it can
+/// drive `fullScreenCover(item:)` — the questions are carried rather than re-drawn,
+/// because a saved quiz must be the SAME quiz every time.
+struct TVCustomLaunch: Identifiable {
+    let id = UUID()
+    let title: String
+    let questions: [Question]
+}
+
 enum TVTheme {
     static let bg = Color(hex: 0x0E0C0B)
     static let panel = Color(hex: 0x1C1916)
@@ -38,6 +47,8 @@ struct ContentView_tvOS: View {
     @State private var showClubHub = false
     @State private var versusBot: BotProfile?
     @State private var showQuickMatch = false
+    @State private var showCreate = false
+    @State private var customLaunch: TVCustomLaunch?
     @Environment(\.modelContext) private var modelContext
     @FocusState private var primaryFocused: Bool
     // Marathon (Club — docs/CLUB-FEATURES-BUILD.md "Feature 3").
@@ -68,6 +79,7 @@ struct ContentView_tvOS: View {
                     dailyHero
                     nightHero
                     multiplayerPanel
+                    createPanel
                     // R-CLUB-1: ONE Club door for the whole app.
                     clubHero
                 }
@@ -76,6 +88,7 @@ struct ContentView_tvOS: View {
             }
         }
         .defaultFocus($primaryFocused, true)
+        .task { if DebugHooks.openCreate { showCreate = true } }
         .fullScreenCover(isPresented: $showCustomize) {
             TVCustomizePicker(initialMode: store.quickPlay.mode) { mode, cat in
                 showCustomize = false; play(mode, cat)
@@ -89,6 +102,15 @@ struct ContentView_tvOS: View {
         }
         .fullScreenCover(isPresented: $showQuickMatch) {
             TVQuickMatchContainer()
+        }
+        .fullScreenCover(isPresented: $showCreate) {
+            CreateView_tvOS { title, questions in
+                showCreate = false
+                customLaunch = TVCustomLaunch(title: title, questions: questions)
+            }
+        }
+        .fullScreenCover(item: $customLaunch) { req in
+            TVGameContainer(mode: .mix, category: .named("mixed"), customQuestions: req.questions)
         }
         .fullScreenCover(isPresented: $showDailyArchive) {
             TVDailyArchive { day in
@@ -303,6 +325,27 @@ struct ContentView_tvOS: View {
         }
     }
 
+
+    /// Create earns a home-screen panel rather than a tab, because tvOS has no tab
+    /// bar here — the home IS the map. Copy leads with the shelf, since on a TV most
+    /// quizzes arrive from a phone rather than being typed in the room.
+    private var createPanel: some View {
+        Button { showCreate = true } label: {
+            HStack(spacing: 28) {
+                Image(systemName: "sparkles").font(.system(size: 52, weight: .black))
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("CREATE").font(.system(size: 40, weight: .black, design: .rounded))
+                    Text("Build a quiz on any subject — and play the ones you made on your phone.")
+                        .font(.body).foregroundStyle(TVTheme.textSoft)
+                        .frame(maxWidth: 900, alignment: .leading)
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(34)
+        }
+        .buttonStyle(.card)
+        .focusSection()
+    }
 
     private var multiplayerPanel: some View {
         VStack(alignment: .leading, spacing: 24) {

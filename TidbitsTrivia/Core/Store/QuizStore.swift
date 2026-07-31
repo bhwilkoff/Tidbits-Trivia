@@ -206,3 +206,81 @@ enum QuizSharing {
         }
     }
 }
+
+// MARK: - Account sync (docs/QUIZ-CONTRACT.md §4)
+
+/// Sync a player's own quizzes across their devices via
+/// `playersPrivate/{uid}/quizzes/{id}` — the bucket the rules already scope to
+/// `auth.uid == $uid`, so this needed no rules change.
+///
+/// **Local stays the source of truth.** Sync is additive and merge-guarded: a quiz is
+/// only ever created or deleted, never edited in place by a remote writer, so two
+/// devices cannot clobber each other. That is what makes "make it on your phone, play
+/// it on the TV" safe without a conflict resolver.
+enum QuizSync {
+
+    /// Push anything local that the account bucket doesn't have yet.
+    ///
+    /// Only uploads what's missing rather than rewriting everything: re-PUTting an
+    /// unchanged quiz would be pure noise, and on a metered connection a shelf of
+    /// twenty quizzes is twenty needless writes.
+    @discardableResult
+    static func push(in context: ModelContext) async -> Int {
+        guard let uid = try? await FirebaseRTDB.shared.ensureAuth() else { return 0 }
+        let local = await MainActor.run { QuizStore.all(in: context).compactMap(\.quiz) }
+        guard !local.isEmpty else { return 0 }
+        let remoteIDs = await remoteIndex(uid: uid)
+        var pushed = 0
+        for quiz in local where !remoteIDs.contains(quiz.id) {
+            guard let json = quiz.jsonData() else { continue }
+            if (try? await FirebaseRTDB.shared.putJSON("playersPrivate/\(uid)/quizzes/\(quiz.id)", json)) != nil {
+                pushed += 1
+            }
+        }
+        return pushed
+    }
+
+    /// Pull anything in the account bucket this device doesn't have.
+    ///
+    /// A quiz you deleted here is NOT resurrected on the next pull, because deletion
+    /// removes it from the bucket too (see `delete`). Pull-without-delete would make
+    /// "remove this quiz" impossible to express on a synced shelf.
+    @discardableResult
+    static func pull(in context: ModelContext) async -> Int {
+        guard let uid = try? await FirebaseRTDB.shared.ensureAuth() else { return 0 }
+        guard let data = try? await FirebaseRTDB.shared.getJSON("playersPrivate/\(uid)/quizzes"),
+              let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return 0 }
+        var added = 0
+        for (_, raw) in obj {
+            guard let wire = raw as? [String: Any], let quiz = SavedQuiz(wire: wire) else { continue }
+            let alreadyHave = await MainActor.run { QuizStore.record(id: quiz.id, in: context) != nil }
+            if alreadyHave { continue }
+            await MainActor.run { QuizStore.save(quiz, in: context) }
+            added += 1
+        }
+        return added
+    }
+
+    /// Delete locally AND from the account bucket, so it doesn't come back on the
+    /// next pull. Local-only deletion on a synced shelf is a bug that looks like a
+    /// haunting.
+    static func delete(id: String, in context: ModelContext) async {
+        await MainActor.run { QuizStore.delete(id: id, in: context) }
+        guard let uid = try? await FirebaseRTDB.shared.ensureAuth() else { return }
+        try? await FirebaseRTDB.shared.delete("playersPrivate/\(uid)/quizzes/\(id)")
+    }
+
+    /// Both directions, newest wins by existence. Safe to call on every appearance.
+    @discardableResult
+    static func sync(in context: ModelContext) async -> (pushed: Int, pulled: Int) {
+        let pulled = await pull(in: context)
+        let pushed = await push(in: context)
+        return (pushed, pulled)
+    }
+
+    private static func remoteIndex(uid: String) async -> Set<String> {
+        guard let data = try? await FirebaseRTDB.shared.getJSON("playersPrivate/\(uid)/quizzes"),
+              let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return [] }
+        return Set(obj.keys)
+    }
+}

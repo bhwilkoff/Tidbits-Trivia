@@ -124,7 +124,7 @@ tested deterministically.
 | Layer | Where | Purpose |
 |---|---|---|
 | Local | SwiftData (Apple) · Room (Android) · `localStorage` (web) · JSON file (Windows) | Your quizzes work offline and before sign-in |
-| Account | RTDB `playersPrivate/{uid}/quizzes/{id}` | Sync across your own devices |
+| Account | RTDB `playersPrivate/{uid}/quizzes/{id}` | Sync across your own devices — **shipped** (`QuizSync`), no rules change needed since the bucket is already scoped to `auth.uid` |
 | Shared | RTDB `quizzes/{id}` | Public read, so a share link opens for anyone |
 
 **Local is the source of truth for your own quizzes.** Sync is additive and
@@ -156,6 +156,10 @@ the display name the author attached.
 
 Canonical (per `DEEP_LINKS.md`): `https://tidbitstrivia.com/quiz/<id>`
 Native twin: `tidbitstrivia://quiz/<id>`
+
+On **tvOS the QR code IS the share**: there is no clipboard worth using, no share
+sheet and no browser, so the screen itself is the transport and a phone in the room
+does the rest. Every other platform hands over a URL.
 
 The web app is the canonical link target on every platform, so a quiz shared into a
 group chat opens for people who don't have the app — the whole point of the mechanic.

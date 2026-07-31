@@ -97,6 +97,14 @@ enum DebugHooks {
         ProcessInfo.processInfo.environment["TIDBITS_CREATE"] == "1"
     }
 
+    /// TIDBITS_TV_SHARE=1 → open the newest saved quiz's detail and publish it, so
+    /// the QR panel can actually be seen. The tvOS simulator takes no synthesised
+    /// remote presses, and a QR that has never been rendered is a QR nobody has
+    /// checked scans.
+    static var tvShareNewest: Bool {
+        ProcessInfo.processInfo.environment["TIDBITS_TV_SHARE"] == "1"
+    }
+
     /// TIDBITS_PARTY=1 → open Pass & Play on launch (combine with AUTOPILOT
     /// to drive the whole party flow to the scoreboard for screenshots).
     /// TIDBITS_CUSTOMIZE=1 opens the Customize sheet on launch (screenshots).

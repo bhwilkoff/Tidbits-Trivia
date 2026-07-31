@@ -227,3 +227,29 @@ it. Two details that only showed up when the migration ran in a real browser:
   could have used to turn it back into a ref.
 
 RTDB rules for `quizzes/` were deployed 2026-07-31, so publishing is unblocked.
+
+---
+
+## 8. Open: the tvOS anonymous uid does not appear to be stable
+
+Found 2026-07-31 while verifying the tvOS QR share. Publishing a quiz succeeds the
+first time and then fails with a bare **HTTP 401** on every later attempt.
+
+The `quizzes/$id` rule allows a write when `!data.exists() || data.child('by').val()
+=== auth.uid`. So a 401 on the *second* publish means the current uid no longer
+matches the one that wrote the node — i.e. **the anonymous uid changed between app
+launches**.
+
+One contributing bug is fixed: `publish` stamped the authenticated uid onto the
+outgoing JSON but not the local record, which therefore kept `by: "local"` forever
+and could never tell whether it owned the published copy. That is now persisted.
+
+**What is NOT yet explained** is why the uid appears to change at all. The likely
+suspect is Decision 017 — tvOS can only write to `Library/Caches`, `tmp` and App
+Group containers, so a refresh token written anywhere else is silently lost and every
+launch mints a fresh anonymous user.
+
+If that is what is happening, it reaches far past Create: **records, streaks,
+entitlements, the Daily log and quiz sync are all keyed on that uid**, and none of
+them would stick on an Apple TV across launches. That deserves its own investigation
+rather than a fix bolted onto this feature.

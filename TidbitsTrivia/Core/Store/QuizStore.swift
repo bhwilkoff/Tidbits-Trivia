@@ -188,6 +188,11 @@ enum QuizSharing {
         stamped.creatorID = uid
         guard let json = stamped.jsonData() else { return nil }
         try await FirebaseRTDB.shared.putJSON("quizzes/\(quiz.id)", json)
+        // Persist the stamped owner LOCALLY too. Writing it only to the outgoing
+        // JSON left the local record saying `by: "local"` forever, so the app could
+        // never tell whether it owned the published copy — and a re-publish then
+        // failed the `by === auth.uid` rule with a bare 401.
+        QuizStore.save(stamped, in: context)
         QuizStore.markShared(id: quiz.id, in: context)
         return shareURL(for: quiz.id)
     }

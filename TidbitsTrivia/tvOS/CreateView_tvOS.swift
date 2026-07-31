@@ -66,6 +66,7 @@ struct CreateView_tvOS: View {
             // TIDBITS_AUTOCREATE drives generation without the remote — the tvOS
             // simulator doesn't take synthesised button presses from the CLI.
             if let t = DebugHooks.autoCreate, topic.isEmpty { topic = t; generate(t) }
+            if DebugHooks.tvShareNewest, let newest = saved.first { detail = newest }
             let result = await QuizSync.sync(in: modelContext)
             if result.pulled > 0 {
                 syncNote = "\(result.pulled) quiz\(result.pulled == 1 ? "" : "zes") from your other devices"
@@ -244,17 +245,24 @@ private struct TVQuizDetail: View {
                     Text("\(record.questionCount) questions")
                         .font(.body).foregroundStyle(TVTheme.textSoft)
                     Spacer().frame(height: 10)
-                    Button("Play", action: onPlay).buttonStyle(.card).focused($playFocused)
-                    Button(isSharing ? "Sharing…" : "Share", action: share)
+                    // `.card` sizes to its label, so a bare Button in a narrow column
+                    // collapses to a clipped pill — at ten feet the verbs were
+                    // unreadable and the focus ring had nothing to sit on. Each label
+                    // gets a real target: full column width and a ten-foot height.
+                    Button(action: onPlay) { detailLabel("Play") }
+                        .buttonStyle(.card).focused($playFocused)
+                    Button(action: share) { detailLabel(isSharing ? "Sharing…" : "Share") }
                         .buttonStyle(.card).disabled(isSharing)
-                    Button("Delete") { confirmingDelete = true }.buttonStyle(.card)
-                    Button("Back") { dismiss() }.buttonStyle(.card)
+                    Button { confirmingDelete = true } label: { detailLabel("Delete") }
+                        .buttonStyle(.card)
+                    Button { dismiss() } label: { detailLabel("Back") }
+                        .buttonStyle(.card)
                     if let shareError {
                         Text(shareError).font(.caption).foregroundStyle(TVTheme.textSoft)
                             .frame(maxWidth: 480, alignment: .leading)
                     }
                 }
-                .frame(maxWidth: 520, alignment: .leading)
+                .frame(width: 460, alignment: .leading)
 
                 if let shareURL { qrPanel(shareURL) }
                 Spacer(minLength: 0)
@@ -262,7 +270,10 @@ private struct TVQuizDetail: View {
             .padding(.horizontal, 90)
             .padding(.vertical, 70)
         }
-        .task { playFocused = true }
+        .task {
+            playFocused = true
+            if DebugHooks.tvShareNewest { share() }
+        }
         .alert("Delete \u{201C}\(record.title)\u{201D}?", isPresented: $confirmingDelete) {
             Button("Delete", role: .destructive) {
                 let id = record.quizID
@@ -274,6 +285,13 @@ private struct TVQuizDetail: View {
         } message: {
             Text("This removes it from your account, on every device.")
         }
+    }
+
+    /// One shape for every verb in the column, so focus moves between equals.
+    private func detailLabel(_ text: String) -> some View {
+        Text(text)
+            .font(.headline)
+            .frame(maxWidth: .infinity, minHeight: 76)
     }
 
     /// The QR IS the share on tvOS. Big, high-contrast, on white — a code rendered on
@@ -305,7 +323,11 @@ private struct TVQuizDetail: View {
             do {
                 shareURL = try await QuizSharing.publish(quiz, in: modelContext)
             } catch {
+                // Surface the real cause on screen: a TV has no console anyone will
+                // read, so an invisible failure is an undiagnosable one (CLAUDE.md
+                // debugging philosophy — render the numbers you need).
                 shareError = "Couldn't share that just now. Check the network and try again."
+                print("[Tidbits] tvOS share failed: \(error)")
             }
             isSharing = false
         }

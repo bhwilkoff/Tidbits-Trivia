@@ -94,13 +94,33 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
     /// how many topic words hit (source-title hits weighted). This is grounded
     /// generation's retrieval baseline — no live API, no hallucination, every
     /// device (docs/CREATE-QUESTION-GEN-PLAYBOOK.md).
+    /// Words too common to narrow anything — they made the pre-filter match
+    /// nearly the whole corpus, crowding out real hits before ranking.
+    private static let stopwords: Set<String> = [
+        "the", "and", "for", "with", "from", "that", "this", "his", "her", "its",
+        "was", "were", "are", "who", "what", "which", "how", "why", "all", "any",
+    ]
+
     func search(topic: String, limit: Int) -> [Question] {
-        let tokens = topic.lowercased().split { !$0.isLetter && !$0.isNumber }.map(String.init).filter { $0.count >= 3 }
+        // Stopwords are dropped, not merely short words: the >=3 rule kept "the",
+        // which matches nearly every row and so GUARANTEED the pre-filter cap below
+        // to fill with noise for any topic containing it ("The Beatles", "The
+        // Simpsons"). Falls back to the raw tokens if a topic is nothing but
+        // stopwords, so a query is never left empty.
+        let rawTokens = topic.lowercased().split { !$0.isLetter && !$0.isNumber }.map(String.init).filter { $0.count >= 3 }
+        let kept = rawTokens.filter { !Self.stopwords.contains($0) }
+        let tokens = kept.isEmpty ? rawTokens : kept
         guard !tokens.isEmpty else { return [] }
         return queue.sync {
             guard let db else { return [] }
             let clause = tokens.map { _ in "(lower(prompt) LIKE ? OR lower(source_title) LIKE ? OR lower(explanation) LIKE ? OR lower(tags) LIKE ?)" }.joined(separator: " OR ")
-            let sql = "SELECT * FROM questions WHERE \(clause) LIMIT 400"
+            // The cap applies BEFORE the ranking below, so it must be generous
+            // enough to contain the genuine matches. At 400 it did not: "van gogh"
+            // OR-matches 3,310 rows holding 20 real ones, and exactly ZERO of the
+            // 20 survived the cut — typing "Vincent van Gogh" returned none of the
+            // real van Gogh questions. 4000 covers the measured worst case; the
+            // ranking still trims to `limit`.
+            let sql = "SELECT * FROM questions WHERE \(clause) LIMIT 4000"
             var stmt: OpaquePointer?
             defer { sqlite3_finalize(stmt) }
             guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return [] }

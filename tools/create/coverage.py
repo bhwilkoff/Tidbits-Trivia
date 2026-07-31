@@ -14,9 +14,14 @@ import sqlite3, sys, csv, collections
 DB = "TidbitsTrivia/Resources/corpus.sqlite"
 TARGET = 8
 
+STOPWORDS = {"the","and","for","with","from","that","this","his","her","its",
+             "was","were","are","who","what","which","how","why","all","any"}
+
 def tokens(topic):
     t = "".join(c if (c.isalnum()) else " " for c in topic.lower()).split()
-    return [x for x in t if len(x) >= 3]
+    raw = [x for x in t if len(x) >= 3]
+    kept = [x for x in raw if x not in STOPWORDS]
+    return kept or raw
 
 def coverage(cur, topic, target=TARGET):
     toks = tokens(topic)

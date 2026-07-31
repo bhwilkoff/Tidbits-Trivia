@@ -54,6 +54,26 @@ fixes and is NOT a basis for planning.
 "live generation must become first-class" was premised on a corpus shortage that does
 not exist; revisit it only after re-measuring.
 
+## Wave 1 — B1 + B3 fixed (2026-07-31)
+
+- **B1 fixed**: pre-filter cap 400 -> 4000, so genuine matches survive to the ranker.
+- **B3 fixed**: stopword list; "the" no longer floods the candidate set (falls back to
+  the raw tokens if a topic is nothing but stopwords).
+- `coverage.py` now mirrors the shipped rule. Re-measured: **111/127 can fill 8**
+  (was 109); "The Beatles" and "The Simpsons" both cleared — screen is now 0 thin.
+
+**B2 (diacritics) still open** and needs a *data-plane* change, not a hack: a folded
+`search_text` column written by the corpus build tool, so `beyonce` matches `Beyoncé`
+on every platform identically. Do NOT approximate this with prefix trimming.
+
+**Newly understood, and NOT a bug:** the residual thinness on person-topics like
+Vincent van Gogh is the **answer-giveaway rule** — Create deliberately drops questions
+whose ANSWER is the typed topic, and for a painter most questions are "who painted X?".
+20 genuine van Gogh rows become 3 after that filter. This is a real design tension to
+decide, not a defect: a quiz *about* van Gogh that never answers "van Gogh" is honest
+but thin. Options for Wave 2: allow giveaway questions when the pool would otherwise
+starve, or prefer them last rather than excluding them.
+
 ## Waves (each its own loop tick)
 
 - **W1 — Blended sourcing.** Corpus + live in one ranked pool; target N always met or

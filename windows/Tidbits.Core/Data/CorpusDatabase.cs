@@ -71,7 +71,7 @@ public sealed class CorpusDatabase
             }
         }
 
-        var scored = new List<(Question q, int score)>();
+        var scored = new List<(Question q, int score, int matchedTokens)>();
         foreach (var q in matched)
         {
             var answer = q.CorrectAnswer.ToLowerInvariant();
@@ -83,10 +83,21 @@ public sealed class CorpusDatabase
             var explanation = q.Explanation.ToLowerInvariant();
             var tags = q.Tags.Select(tg => tg.ToLowerInvariant()).ToList();
             var score = tokens.Sum(t => (tags.Any(tg => tg.Contains(t)) ? 3 : 0) + (title.Contains(t) ? 2 : 0) + (prompt.Contains(t) ? 1 : 0) + (explanation.Contains(t) ? 1 : 0));
-            scored.Add((q, score));
+            // How many of the typed words this row matched AT ALL. Scoring alone
+            // is not enough: Diversify round-robins by CATEGORY afterwards, so a
+            // one-word coincidence gets PROMOTED to fill a lane. Measured on the
+            // shipping corpus, "Marie Curie" has 15 real two-word matches (all
+            // science) against 211 one-word hits across 7 categories, 189 of
+            // which never mention Curie.
+            var matchedTokens = tokens.Count(t => tags.Any(tg => tg.Contains(t)) || title.Contains(t) || prompt.Contains(t) || explanation.Contains(t));
+            scored.Add((q, score, matchedTokens));
         }
 
-        var ranked = scored.OrderByDescending(s => s.score).Select(s => s.q).ToList();
+        // Keep only rows matching the MOST typed words, then rank within that
+        // tier. Single-word topics are unaffected (every row ties at 1).
+        var bestMatched = scored.Count == 0 ? 0 : scored.Max(s => s.matchedTokens);
+        var ranked = scored.Where(s => s.matchedTokens == bestMatched)
+                           .OrderByDescending(s => s.score).Select(s => s.q).ToList();
         return Diversify(ranked, limit);
     }
 
@@ -122,6 +133,14 @@ public sealed class CorpusDatabase
                     if (outp.Count >= limit) break;
                 }
             }
+        }
+        // The per-category cap is an ANTI-MONOPOLY rule, not a quota: a genuinely
+        // single-domain relevant pool must not starve the set ("Marie Curie" is
+        // all science — capping at 3 turned a requested 8-question quiz into 4).
+        if (outp.Count < limit)
+        {
+            var taken = outp.Select(q => q.Id).ToHashSet();
+            outp.AddRange(ranked.Where(q => !taken.Contains(q.Id)).Take(limit - outp.Count));
         }
         return QueryHelpers.Shuffle(outp);
     }

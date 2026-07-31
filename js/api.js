@@ -76,6 +76,16 @@ function diversify(ranked, limit) {
       if (lane.length) { out.push(lane.shift()); added = true; if (out.length >= limit) break; }
     }
   }
+  // The per-category cap is an ANTI-MONOPOLY rule, not a quota: when the
+  // relevant pool is genuinely single-domain it must not starve the set
+  // ("Marie Curie" is all science — capping at 3 turned a requested 8 into 4).
+  if (out.length < limit) {
+    const taken = new Set(out.map((q) => q.id));
+    for (const q of ranked) {
+      if (out.length >= limit) break;
+      if (!taken.has(q.id)) { out.push(q); taken.add(q.id); }
+    }
+  }
   // Shuffle so the quiz doesn't march category-by-category.
   for (let i = out.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [out[i], out[j]] = [out[j], out[i]]; }
   return out;
@@ -154,13 +164,26 @@ export const Corpus = {
         if (prompt.includes(t)) s += 1;
         if (explanation.includes(t)) s += 1;
       }
-      if (s > 0) scored.push([q, s]);
+      // How many of the typed words this row matched AT ALL. Scoring alone was
+      // not enough: `diversify` round-robins by CATEGORY afterwards, so a
+      // one-word coincidence got PROMOTED to fill a lane. Measured on the
+      // shipping corpus, "Marie Curie" has 15 real two-word matches (all
+      // science) against 211 one-word hits across 7 categories, 189 of which
+      // never mention Curie — the generated quiz led with Marie de' Medici.
+      const matched = tokens.filter((t) =>
+        tags.some((tg) => tg.includes(t)) || title.includes(t) || prompt.includes(t) || explanation.includes(t)
+      ).length;
+      if (s > 0) scored.push([q, s, matched]);
     }
-    scored.sort((a, b) => b[1] - a[1]);
+    // Keep only the rows matching the MOST typed words, then rank within that
+    // tier. Single-word topics are unaffected (every row ties at 1).
+    const bestMatched = scored.reduce((m, x) => Math.max(m, x[2]), 0);
+    const relevant = scored.filter((x) => x[2] === bestMatched);
+    relevant.sort((a, b) => b[1] - a[1]);
     // Cap per-category so a topic dense in one domain (a city with sports teams
     // → 8 sports-player questions) can't monopolize the set; round-robin across
     // categories for a genuinely varied quiz.
-    return diversify(scored.map((x) => x[0]), limit);
+    return diversify(relevant.map((x) => x[0]), limit);
   },
 
   get count() { return this.questions.length; },

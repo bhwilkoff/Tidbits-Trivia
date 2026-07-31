@@ -112,7 +112,7 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
                 sqlite3_bind_text(stmt, idx, like, -1, Self.transientDestructor); idx += 1
                 sqlite3_bind_text(stmt, idx, like, -1, Self.transientDestructor); idx += 1
             }
-            var scored: [(Question, Int)] = []
+            var scored: [(Question, Int, Int)] = []
             while sqlite3_step(stmt) == SQLITE_ROW {
                 guard let q = Self.row(stmt) else { continue }
                 // The player typed the topic, so a question whose ANSWER is (or
@@ -131,9 +131,29 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
                     acc + (tags.contains { $0.contains(token) } ? 3 : 0)
                     + (title.contains(token) ? 2 : 0) + (prompt.contains(token) ? 1 : 0) + (explanation.contains(token) ? 1 : 0)
                 }
-                scored.append((q, score))
+                // How many of the typed words this row matched AT ALL. The SQL
+                // clause is an OR (a row need match only one token), so for a
+                // multi-word topic this is what separates "about the subject"
+                // from "shares a common word with it".
+                let matched = tokens.filter { token in
+                    tags.contains { $0.contains(token) } || title.contains(token)
+                        || prompt.contains(token) || explanation.contains(token)
+                }.count
+                scored.append((q, score, matched))
             }
-            let ranked = scored.sorted { $0.1 > $1.1 }.map { $0.0 }
+            // Keep only the rows matching the MOST of the typed words, then rank
+            // and diversify within that tier.
+            //
+            // Without this, `diversify` round-robins by CATEGORY over the whole
+            // OR-matched pool, so a one-word coincidence gets PROMOTED to fill a
+            // category lane. Measured on the shipping corpus: "Marie Curie" has
+            // 15 genuine two-word matches (all science) but 211 one-word hits
+            // across 7 categories, 189 of which never mention Curie — so the
+            // generated quiz led with "In what year was Marie de' Medici born?".
+            // Single-word topics are unaffected (every row ties at 1).
+            let bestMatched = scored.map(\.2).max() ?? 0
+            let relevant = scored.filter { $0.2 == bestMatched }
+            let ranked = relevant.sorted { $0.1 > $1.1 }.map { $0.0 }
             return Self.diversify(ranked, limit: limit)
         }
     }
@@ -160,6 +180,15 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
                     if out.count >= limit { break }
                 }
             }
+        }
+        // The per-category cap is an ANTI-MONOPOLY rule, not a quota: when the
+        // relevant pool is genuinely single-domain it must not starve the set.
+        // ("Marie Curie" matches 15 questions, all science — capping at 3 turned
+        // a requested 8-question quiz into 4.) Top up from the ranked remainder
+        // so diversity is preferred where it exists and never costs length.
+        if out.count < limit {
+            let taken = Set(out.map(\.id))
+            out.append(contentsOf: ranked.filter { !taken.contains($0.id) }.prefix(limit - out.count))
         }
         return out.shuffled()
     }

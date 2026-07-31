@@ -151,6 +151,26 @@ playing each feature to completion rather than screenshotting a launch state.
 - **Pass & Play fairness** — two players on the same dealt set with identical play scored
   identically, which is the "same questions, fair and square" promise actually holding.
 
+## Round 8 — Create, played not screenshotted, 2026-07-31
+
+| # | Severity | Finding | Status |
+|---|---|---|---|
+| Q26 | **Bug (all platforms)** | **Create built a quiz about the wrong subject.** Typing "Marie Curie" produced "In what year was Marie de' Medici born?". The corpus search ORs its tokens (a row need match only ONE typed word), and while the score does favour multi-word hits, `diversify` then round-robins by CATEGORY — so a one-word coincidence in an under-filled lane is *promoted over* a genuine match. Measured on the shipping corpus: "Marie Curie" has **15** real two-word matches (all science) against **211** one-word hits across 7 categories, **189 of which never mention Curie**. | **Fixed on 5 platforms** — rank by DISTINCT matched-token count and keep only the best tier, then rank/diversify within it (Swift/Kotlin/JS/C#; single-word topics unaffected, every row ties at 1) |
+| Q27 | **Bug the Q26 fix exposed** | With relevance fixed the pool is usually single-domain, and `diversify`'s per-category cap (`max(2, ceil(limit/3))` = 3) then **starved** the set: a requested 8-question quiz came back as 4. The anti-monopoly rule was tuned for the noisy pool it was hiding. | **Fixed** — the cap is a preference, not a quota: after the round-robin, top up from the ranked remainder. Diversity is still preferred wherever it exists, and never costs length |
+| Q28 | **Bug (same class, second code path)** | The first fix only covered `CorpusDatabase.search`. The shaped-question path (`JSONQuestionSource.searchMatch`, feeding Picture/This-or-That/Closest Call into every Create set) took **any** token match and then `.shuffled()` with no ranking at all — so the topped-up quiz led with "In what year did Jean-Marie Le Pen die?". Found only by re-playing after the first fix. | **Fixed** — same matched-token tier, Swift + Kotlin |
+
+**Verified after the fix** by playing the generated set: "Marie Curie" now yields 8
+questions, on topic, e.g. "In what year was Radium discovered?" and "Element 88 on
+the periodic table, this silvery-white alkaline earth metal turns black when exposed
+to air and glows via radioluminescence as it radioactively decays — which element?"
+
+Regression cover added on both stacks that have suites: `CreateRelevanceTests.swift`
+(Apple, now **87** tests) and `CreateRelevanceTest.cs` (Windows, now **447**).
+
+**Also confirmed working:** Create's live-generation path end to end — topic →
+Wikipedia fetch → playable quiz, with the reveal, the "Now you know" explanation and
+the source link all correct.
+
 ## Apple test suite — added 2026-07-31
 
 The Apple side had **no test target at all** while Windows carried 443 tests, so

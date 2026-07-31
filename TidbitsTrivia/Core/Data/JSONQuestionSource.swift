@@ -43,13 +43,21 @@ nonisolated final class JSONQuestionSource: @unchecked Sendable {
     func searchMatch(topic: String, limit: Int) -> [Question] {
         let tokens = topic.lowercased().split { !$0.isLetter && !$0.isNumber }.map(String.init).filter { $0.count >= 3 }
         guard !tokens.isEmpty else { return [] }
-        let hits = all.filter { q in
+        // Rank by how many of the typed words a row matches, and keep only the
+        // best tier. Matching ANY token and then shuffling made a one-word
+        // coincidence exactly as likely as a real hit — "Marie Curie" surfaced
+        // "In what year did Jean-Marie Le Pen die?" off the shared word "marie".
+        // Same rule as CorpusDatabase.search; single-word topics are unaffected.
+        let scored: [(Question, Int)] = all.compactMap { q in
             let ans = q.correctAnswer.lowercased()
-            if tokens.contains(where: { ans.contains($0) }) { return false }
+            if tokens.contains(where: { ans.contains($0) }) { return nil }
             let hay = (q.prompt + " " + q.sourceTitle + " " + q.explanation).lowercased()
-            return tokens.contains { hay.contains($0) }
+            let matched = tokens.filter { hay.contains($0) }.count
+            return matched > 0 ? (q, matched) : nil
         }
-        return Array(hits.shuffled().prefix(limit))
+        guard let bestMatched = scored.map(\.1).max() else { return [] }
+        let relevant = scored.filter { $0.1 == bestMatched }.map(\.0)
+        return Array(relevant.shuffled().prefix(limit))
     }
 
     private static func num(_ v: Any) -> Double? { (v as? NSNumber)?.doubleValue }

@@ -368,9 +368,24 @@ object Corpus {
                 (if (tagsLower.any { tag -> tag.contains(it) }) 3 else 0) +
                 (if (title.contains(it)) 2 else 0) + (if (prompt.contains(it)) 1 else 0) + (if (explanation.contains(it)) 1 else 0)
             }
-            if (score > 0) q to score else null
-        }.sortedByDescending { it.second }.map { it.first }
-        return diversifyByCategory(ranked, limit)
+            // How many of the typed words this row matched AT ALL. Scoring alone
+            // was not enough: diversifyByCategory round-robins by CATEGORY after,
+            // so a one-word coincidence got PROMOTED to fill a lane. Measured on
+            // the shipping corpus, "Marie Curie" has 15 real two-word matches
+            // (all science) against 211 one-word hits across 7 categories, 189
+            // of which never mention Curie.
+            val matched = tokens.count {
+                tagsLower.any { tag -> tag.contains(it) } || title.contains(it) ||
+                    prompt.contains(it) || explanation.contains(it)
+            }
+            if (score > 0) Triple(q, score, matched) else null
+        }
+        // Keep only rows matching the MOST typed words, then rank within that
+        // tier. Single-word topics are unaffected (every row ties at 1).
+        val bestMatched = ranked.maxOfOrNull { it.third } ?: 0
+        val relevant = ranked.filter { it.third == bestMatched }
+            .sortedByDescending { it.second }.map { it.first }
+        return diversifyByCategory(relevant, limit)
     }
 
     /** Round-robin a ranked list across categories, capping any one domain — the
@@ -389,6 +404,13 @@ object Corpus {
             for (lane in lanes.values) {
                 if (lane.isNotEmpty()) { out.add(lane.removeAt(0)); progressed = true; if (out.size >= limit) break }
             }
+        }
+        // The per-category cap is an ANTI-MONOPOLY rule, not a quota: a genuinely
+        // single-domain relevant pool must not starve the set ("Marie Curie" is
+        // all science — capping at 3 turned a requested 8-question quiz into 4).
+        if (out.size < limit) {
+            val taken = out.map { it.id }.toHashSet()
+            out.addAll(ranked.filter { it.id !in taken }.take(limit - out.size))
         }
         return out.shuffled()
     }
@@ -509,12 +531,18 @@ class JsonQuestionSet(private val asset: String) {
     fun searchMatch(topic: String, limit: Int): List<Question> {
         val tokens = topic.lowercase().split(Regex("[^a-z0-9]+")).filter { it.length >= 3 }
         if (tokens.isEmpty()) return emptyList()
-        return all.filter { q ->
+        // Rank by matched-word count and keep the best tier. Matching ANY token
+        // then shuffling made a one-word coincidence exactly as likely as a real
+        // hit — "Marie Curie" surfaced "In what year did Jean-Marie Le Pen die?".
+        val scored = all.mapNotNull { q ->
             val ans = q.answerText.lowercase()
-            if (tokens.any { ans.contains(it) }) return@filter false
+            if (tokens.any { ans.contains(it) }) return@mapNotNull null
             val hay = "${q.prompt} ${q.sourceTitle} ${q.explanation}".lowercase()
-            tokens.any { hay.contains(it) }
-        }.shuffled().take(limit)
+            val matched = tokens.count { hay.contains(it) }
+            if (matched > 0) q to matched else null
+        }
+        val bestMatched = scored.maxOfOrNull { it.second } ?: return emptyList()
+        return scored.filter { it.second == bestMatched }.map { it.first }.shuffled().take(limit)
     }
 }
 

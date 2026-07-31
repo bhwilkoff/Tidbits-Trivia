@@ -95,6 +95,23 @@ are genuinely unswept rather than passing.
 
 ---
 
+## Round 5 — Windows (Avalonia headless, Mac head), 2026-07-30
+
+New `AllModesSweep` renders **every** game mode, not just Classic. The pre-existing
+`GameSnapshot` covered Classic alone, which is precisely the blind spot that let the
+Android bug (Q17) live: MCQ buttons drawn over every non-MCQ shape are invisible in a
+Classic-only snapshot.
+
+**Result: no findings.** All 15 modes reach `Playing` and render their own answer surface —
+Ordering shows its move controls and Submit with no stray MCQ buttons, Type Answer shows
+only the text field. Windows branches the shapes correctly where Android did not. 437 tests
+green.
+
+The sweep is now a permanent gate on Windows, so the Android class of bug cannot appear
+there unnoticed.
+
+---
+
 ## Still to do
 
 - [ ] Round 1 review is **partial**: ~12 of 47 captures examined in depth; the rest are

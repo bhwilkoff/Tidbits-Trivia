@@ -10,8 +10,16 @@ namespace Tidbits.Core.Data;
 public sealed class CorpusDatabase
 {
     private readonly List<Question> _all;
+    /// Built once at construction: a saved quiz resolves its refs through here, and
+    /// scanning 128k rows per ref would be the wrong shape entirely.
+    private readonly Dictionary<string, Question> _byId;
 
-    public CorpusDatabase(IEnumerable<Question> questions) => _all = questions.ToList();
+    public CorpusDatabase(IEnumerable<Question> questions)
+    {
+        _all = questions.ToList();
+        _byId = new Dictionary<string, Question>(_all.Count);
+        foreach (var q in _all) _byId[q.Id] = q;
+    }
 
     public static CorpusDatabase Load(Stream corpusJson) => new(PositionalQuestionParser.Load(corpusJson));
 
@@ -38,6 +46,9 @@ public sealed class CorpusDatabase
     }
 
     /// Fetch specific questions by id, returned in the SAME order as `ids`.
+    /// <summary>Look up one question by ID — a saved quiz's refs resolve here.</summary>
+    public Question? Question(string id) => _byId.TryGetValue(id, out var q) ? q : null;
+
     public List<Question> Questions(IReadOnlyList<string> ids)
     {
         if (ids.Count == 0) return [];

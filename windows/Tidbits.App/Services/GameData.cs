@@ -15,6 +15,10 @@ public sealed class GameData
     public GameSettings Settings { get; }
     public DailyLog Daily { get; }
     public SavedSetsStore SavedSets { get; }
+    /// Saved quizzes on the shared `quiz.v1` contract (docs/QUIZ-CONTRACT.md).
+    /// Supersedes SavedSets, which is web-and-Windows-only and unshareable; the
+    /// migration below converts anything a returning player already had.
+    public QuizStore Quizzes { get; }
     public PresetsStore Presets { get; }
     public Tidbits.Core.Networking.LiveEventStore LiveEvents { get; }
     public Tidbits.Core.Networking.FriendStore Friends { get; }
@@ -53,6 +57,7 @@ public sealed class GameData
         Settings = new GameSettings(Path.Combine(appDir, "settings.json"));
         Daily = new DailyLog(Path.Combine(appDir, "daily.json"));
         SavedSets = new SavedSetsStore(Path.Combine(appDir, "saved-sets.json"));
+        Quizzes = new QuizStore(Path.Combine(appDir, "quizzes"));
         Presets = new PresetsStore(Path.Combine(appDir, "presets.json"));
         LiveEvents = new Tidbits.Core.Networking.LiveEventStore(Path.Combine(appDir, "live-events.json"));
         Friends = new Tidbits.Core.Networking.FriendStore(Path.Combine(appDir, "friends.json"));

@@ -10,8 +10,17 @@ namespace Tidbits.Core.Data;
 public sealed class JsonQuestionSource
 {
     private readonly List<Question> _all;
+    private readonly Dictionary<string, Question> _byId;
 
-    public JsonQuestionSource(IEnumerable<Question> questions) => _all = questions.ToList();
+    public JsonQuestionSource(IEnumerable<Question> questions)
+    {
+        _all = questions.ToList();
+        _byId = new Dictionary<string, Question>(_all.Count);
+        foreach (var q in _all) _byId[q.Id] = q;
+    }
+
+    /// <summary>Look up by ID — what a saved quiz's set-ref resolves through.</summary>
+    public Question? Question(string id) => _byId.TryGetValue(id, out var q) ? q : null;
 
     public static JsonQuestionSource Load(Stream json) => new(PositionalQuestionParser.Load(json));
 

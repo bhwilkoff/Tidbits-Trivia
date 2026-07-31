@@ -14,6 +14,29 @@ public sealed class QuestionSources
     public JsonQuestionSource Enrich(GameMode m) =>
         Enrichment.TryGetValue(m, out var s) ? s : new JsonQuestionSource(Array.Empty<Question>());
 
+    /// The bundled sets by their CONTRACT name (docs/QUIZ-CONTRACT.md). A saved
+    /// quiz's set-ref names its set precisely because a bare ID is ambiguous — these
+    /// share the corpus "src:" namespace.
+    private static readonly IReadOnlyDictionary<string, GameMode> ContractSets =
+        new Dictionary<string, GameMode>
+        {
+            ["picture"] = GameMode.PictureId,
+            ["thisorthat"] = GameMode.ThisOrThat,
+            ["closest"] = GameMode.ClosestCall,
+            ["order"] = GameMode.Ordering,
+            ["match"] = GameMode.Matching,
+            ["typeanswer"] = GameMode.TypeAnswer,
+            ["oddoneout"] = GameMode.OddOneOut,
+            ["enumerate"] = GameMode.Enumerate,
+        };
+
+    /// <summary>Every contract set name, for callers that must try them all.</summary>
+    public static IEnumerable<string> ContractSetNames => ContractSets.Keys;
+
+    /// <summary>Look up one bundled-set question by contract set name + id.</summary>
+    public Question? Question(string set, string id) =>
+        ContractSets.TryGetValue(set, out var mode) ? Enrich(mode).Question(id) : null;
+
     public static QuestionSources LoadFromDirectory(string dir)
     {
         var enrichment = new Dictionary<GameMode, JsonQuestionSource>

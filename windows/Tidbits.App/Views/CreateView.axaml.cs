@@ -19,6 +19,13 @@ public partial class CreateView : UserControl
     public CreateView()
     {
         InitializeComponent();
+        // Migrate off the pre-contract saved-sets format (QUIZ-CONTRACT §7) before
+        // listing, so a returning player's sets appear in the new shelf rather than
+        // silently vanishing. Safe here: the sources are already loaded by the time
+        // any view is constructed, which is the ordering the web version got wrong.
+        var data = GameData.Shared.Value;
+        if (QuizMigration.Run(data.SavedSets, data.Quizzes, data.Sources) > 0)
+            data.SavedSets.Clear();
         BuildSaved();
     }
 
@@ -40,10 +47,11 @@ public partial class CreateView : UserControl
             return;
         }
 
-        _lastQuestions = questions;
-        _lastLabel = topic;
-        SaveBtn.Content = $"Save “{topic}” ({questions.Count})";
-        SaveBtn.IsVisible = true;
+        // Every created quiz is saved automatically — the player never has to notice
+        // a Save button to keep what they made.
+        var gd = GameData.Shared.Value;
+        gd.Quizzes.SaveCreated(questions, topic, gd.Rtdb.Uid ?? "local", gd.PlayerName);
+        BuildSaved();
         Play(questions);
     }
 
@@ -72,15 +80,21 @@ public partial class CreateView : UserControl
         if (questions.Count == 0) { Status("No valid questions found in that CSV."); return; }
 
         var label = System.IO.Path.GetFileNameWithoutExtension(file.Name);
-        GameData.Shared.Value.SavedSets.Add(string.IsNullOrWhiteSpace(label) ? "Imported" : label, questions);
-        Status($"Imported {questions.Count} questions — saved as a set below.");
+        var gdi = GameData.Shared.Value;
+        gdi.Quizzes.SaveCreated(questions, string.IsNullOrWhiteSpace(label) ? "Imported" : label,
+                                gdi.Rtdb.Uid ?? "local", gdi.PlayerName);
+        Status($"Imported {questions.Count} questions — saved below.");
         BuildSaved();
     }
 
+    /// Retained only for the CSV-import path; Create itself auto-saves. It writes to
+    /// the CONTRACT store, never the legacy one the migration just cleared -- a
+    /// writer left behind would resurrect the old format on the next launch.
     private void OnSaveSet(object? sender, RoutedEventArgs e)
     {
         if (_lastQuestions is not { Count: > 0 }) return;
-        GameData.Shared.Value.SavedSets.Add(_lastLabel, _lastQuestions);
+        var gd = GameData.Shared.Value;
+        gd.Quizzes.SaveCreated(_lastQuestions, _lastLabel, gd.Rtdb.Uid ?? "local", gd.PlayerName);
         SaveBtn.IsVisible = false;
         BuildSaved();
     }
@@ -89,11 +103,24 @@ public partial class CreateView : UserControl
     private void BuildSaved()
     {
         SavedPanel.Children.Clear();
-        var sets = GameData.Shared.Value.SavedSets.All;
-        SavedHeader.IsVisible = sets.Count > 0;
-        foreach (var s in sets)
+        var data = GameData.Shared.Value;
+        var quizzes = data.Quizzes.All();
+        SavedHeader.IsVisible = true;
+        SavedHeader.Text = "Your quizzes";
+        if (quizzes.Count == 0)
         {
-            var set = s;
+            // The empty line teaches the mechanic on first run rather than leaving a
+            // blank wall (universal-feature-states).
+            SavedPanel.Children.Add(new TextBlock
+            {
+                Text = "Quizzes you make are saved here automatically, ready to replay.",
+                Opacity = 0.72, TextWrapping = Avalonia.Media.TextWrapping.Wrap, FontSize = 14,
+            });
+            return;
+        }
+        foreach (var q in quizzes)
+        {
+            var set = q;
             var row = new Border
             {
                 Background = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#0F808080")),
@@ -102,17 +129,30 @@ public partial class CreateView : UserControl
             var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto") };
             grid.Children.Add(new TextBlock
             {
-                Text = $"{set.Label} · {set.Count} Qs", FontWeight = Avalonia.Media.FontWeight.SemiBold,
+                Text = $"{set.Title} · {set.QuestionCount} Qs", FontWeight = Avalonia.Media.FontWeight.SemiBold,
                 VerticalAlignment = VerticalAlignment.Center,
             });
             var play = new Button { Content = "Play", Padding = new Avalonia.Thickness(14, 7), Margin = new Avalonia.Thickness(8, 0, 0, 0) };
             play.Classes.Add("accent");
-            play.Click += (_, _) => Play(new List<Question>(set.Questions));
+            play.Click += (_, _) =>
+            {
+                // A quiz can legitimately come up short (an older corpus, a set this
+                // build lacks), so say so rather than padding it with other questions.
+                var r = QuizStore.ResolveForPlay(set, data.Sources.Corpus, data.Sources);
+                if (!r.IsPlayable)
+                {
+                    Status($"This quiz needs questions your version doesn't have yet. Try creating it again from “{set.Topic}”.");
+                    return;
+                }
+                if (!r.IsComplete)
+                    Status($"{r.Missing} of this quiz's {set.QuestionCount} questions aren't in your version yet.");
+                Play(r.Questions);
+            };
             Grid.SetColumn(play, 1);
             grid.Children.Add(play);
             var del = new Button { Content = "✕", Padding = new Avalonia.Thickness(10, 7), Margin = new Avalonia.Thickness(8, 0, 0, 0) };
-            AutomationProperties.SetName(del, $"Delete saved set {set.Label}");
-            del.Click += (_, _) => { GameData.Shared.Value.SavedSets.Remove(set.Id); BuildSaved(); };
+            AutomationProperties.SetName(del, $"Delete quiz {set.Title}");
+            del.Click += (_, _) => { data.Quizzes.Delete(set.Id); BuildSaved(); };
             Grid.SetColumn(del, 2);
             grid.Children.Add(del);
             row.Child = grid;

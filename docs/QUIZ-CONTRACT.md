@@ -189,17 +189,18 @@ their friend deleted the quiz, and stops them retrying something transient.
 
 ---
 
-## 7. Migration: the web's existing `tidbits.savedSets`
+## 7. Migration: the pre-contract saved sets (web AND Windows)
 
-Web already shipped a partial version of this mechanic (PARITY row "Create — varied
-retrieval… + saved sets", 2026-07-03). It is **not** compatible and must be migrated,
-not left as a second format:
+**Two** platforms already shipped a partial version of this mechanic — web
+(`tidbits.savedSets` in localStorage) and Windows (`saved-sets.json` via
+`SavedSetsStore`). Neither is compatible, and both must be migrated rather than left
+as a second format:
 
-| | `tidbits.savedSets` (old) | `quiz.v1` (this contract) |
+| | pre-contract saved sets (old) | `quiz.v1` (this contract) |
 |---|---|---|
 | Identity | `label` string, deduped case-insensitively | random 10-char `id` |
 | Questions | **full question objects inline** | refs, inline only for live-generated |
-| Portability | web only | six platforms |
+| Portability | web / Windows only, and not even between them | six platforms |
 | Shareable | no | yes |
 | Cap | 20, silently truncating | none |
 

@@ -47,6 +47,15 @@ public sealed class SavedSetsStore
         return set;
     }
 
+    /// Drop everything. Used once by the quiz migration: leaving the legacy file in
+    /// place would make every launch re-scan it, and a later write would resurrect
+    /// the pre-contract format (docs/QUIZ-CONTRACT.md §7).
+    public void Clear()
+    {
+        _sets.Clear();
+        Save();
+    }
+
     public void Remove(string id)
     {
         _sets.RemoveAll(s => s.Id == id);

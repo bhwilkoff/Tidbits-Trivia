@@ -2594,6 +2594,7 @@ private fun CreateScreen(onPlay: (List<Question>, String) -> Unit) {
     var topic by remember { mutableStateOf("") }
     var working by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
+    var saved by remember { mutableStateOf(com.learningischange.tidbitstrivia.data.QuizStore.all()) }
     val scope = rememberCoroutineScope()
     val suggestions = listOf("Space exploration", "Ancient Rome", "Jazz", "Volcanoes", "The Olympics", "Marie Curie")
     fun generate(t: String) {
@@ -2610,7 +2611,17 @@ private fun CreateScreen(onPlay: (List<Question>, String) -> Unit) {
             if (mcq.size < 3) { val gen = Wikipedia.generate(topicT, "mixed", 8); if (gen.size >= 3) { mcq = gen; shaped.clear() } }
             val qs = (mcq + shaped).shuffled().take(8)
             working = false
-            if (qs.size >= 3) onPlay(qs, topicT) else error = "Couldn't build a good quiz for “$topicT”. Try a broader subject."
+            if (qs.size >= 3) {
+                // Every created quiz is saved automatically — the player never has to
+                // notice a Save button to keep what they made.
+                com.learningischange.tidbitstrivia.data.QuizStore.saveCreated(
+                    qs, topicT,
+                    creatorId = com.learningischange.tidbitstrivia.data.PlayerIdentity.profileId ?: "local",
+                    creatorName = com.learningischange.tidbitstrivia.data.PlayerIdentity.profile?.name ?: "",
+                )
+                saved = com.learningischange.tidbitstrivia.data.QuizStore.all()
+                onPlay(qs, topicT)
+            } else error = "Couldn't build a good quiz for “$topicT”. Try a broader subject."
         }
     }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -2625,6 +2636,73 @@ private fun CreateScreen(onPlay: (List<Question>, String) -> Unit) {
         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             items(suggestions, key = { it }) { s -> AssistChip(onClick = { topic = s; generate(s) }, label = { Text(s) }) }
         }
+
+        // Every created quiz is kept. The empty line teaches the mechanic on first
+        // run instead of leaving a blank wall (universal-feature-states).
+        Text("Your quizzes", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+        if (saved.isEmpty()) {
+            Text(
+                "Quizzes you make are saved here automatically, ready to replay.",
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+            )
+        } else {
+            saved.forEach { quiz ->
+                SavedQuizRow(
+                    quiz = quiz,
+                    onPlay = {
+                        // A quiz can legitimately come up short (an older corpus, a
+                        // set this build lacks), so say so rather than padding it.
+                        val r = com.learningischange.tidbitstrivia.data.QuizStore.resolveForPlay(quiz)
+                        if (r.isPlayable) onPlay(r.questions, quiz.title)
+                        else error = "This quiz needs questions your version doesn't have yet. Try creating it again from “${quiz.topic}”."
+                    },
+                    onDelete = {
+                        com.learningischange.tidbitstrivia.data.QuizStore.delete(quiz.id)
+                        saved = com.learningischange.tidbitstrivia.data.QuizStore.all()
+                    },
+                )
+            }
+        }
+    }
+}
+
+/** One row on the Create tab's quiz shelf. Delete lives behind an overflow icon so
+ *  the row's primary tap target stays "play this". */
+@Composable
+private fun SavedQuizRow(
+    quiz: com.learningischange.tidbitstrivia.data.SavedQuiz,
+    onPlay: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    var confirming by remember { mutableStateOf(false) }
+    ChunkyCard(onClick = onPlay) {
+        Row(
+            Modifier.padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(quiz.title, fontWeight = FontWeight.Bold, fontSize = 18.sp, maxLines = 1)
+                Text(
+                    "${quiz.questionCount} questions",
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    fontSize = 14.sp,
+                )
+            }
+            IconButton(onClick = { confirming = true }) {
+                Icon(Icons.Filled.Delete, contentDescription = "Delete quiz")
+            }
+            Icon(Icons.Filled.PlayArrow, contentDescription = null, tint = Pops.grape)
+        }
+    }
+    if (confirming) {
+        AlertDialog(
+            onDismissRequest = { confirming = false },
+            title = { Text("Delete “${quiz.title}”?") },
+            text = { Text("This can't be undone.") },
+            confirmButton = { TextButton(onClick = { confirming = false; onDelete() }) { Text("Delete") } },
+            dismissButton = { TextButton(onClick = { confirming = false }) { Text("Cancel") } },
+        )
     }
 }
 

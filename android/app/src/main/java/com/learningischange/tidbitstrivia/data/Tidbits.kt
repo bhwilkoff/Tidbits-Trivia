@@ -274,9 +274,27 @@ object Corpus {
             install(context, file)
             runCatching { stamp.writeText(want) }
         }
-        val opened = android.database.sqlite.SQLiteDatabase.openDatabase(
+        var opened = android.database.sqlite.SQLiteDatabase.openDatabase(
             file.path, null, android.database.sqlite.SQLiteDatabase.OPEN_READONLY,
         )
+        // Self-heal a corpus whose SCHEMA is older than this build's queries.
+        //
+        // The version-code stamp only catches a corpus whose CONTENT changed on a
+        // ship that remembered to bump. When `search_text` was added, an existing
+        // install kept its old file and every Create query died with
+        // "no such column: search_text" -- so Create returned nothing, for every
+        // topic, for every upgrading user. Checking the columns we actually query
+        // makes that unrecoverable-by-the-user state impossible regardless of
+        // version bookkeeping.
+        if (!hasExpectedSchema(opened)) {
+            android.util.Log.w("Corpus", "bundled corpus schema is stale — reinstalling")
+            opened.close()
+            install(context, file)
+            runCatching { stamp.writeText(want) }
+            opened = android.database.sqlite.SQLiteDatabase.openDatabase(
+                file.path, null, android.database.sqlite.SQLiteDatabase.OPEN_READONLY,
+            )
+        }
         db = opened
         ids = opened.rawQuery("SELECT id FROM questions", null).use { c ->
             ArrayList<String>(c.count).apply { while (c.moveToNext()) add(c.getString(0)) }
@@ -284,6 +302,24 @@ object Corpus {
         loaded = true
         android.util.Log.d("Corpus", "opened ${ids.size} questions")
     }
+
+    /** Every column the app's queries reference. A corpus missing any of them is
+     *  older than this build and must be replaced, not queried. */
+    private val REQUIRED_COLUMNS = setOf(
+        "id", "prompt", "option0", "option1", "option2", "option3", "correct_index",
+        "category_id", "difficulty", "explanation", "source_title", "source_url",
+        "tags", "search_text",
+    )
+
+    private fun hasExpectedSchema(db: android.database.sqlite.SQLiteDatabase): Boolean =
+        runCatching {
+            db.rawQuery("PRAGMA table_info(questions)", null).use { c ->
+                val have = HashSet<String>()
+                val nameIdx = c.getColumnIndex("name")
+                while (c.moveToNext()) have.add(c.getString(nameIdx))
+                have.containsAll(REQUIRED_COLUMNS)
+            }
+        }.getOrDefault(false)
 
     /** SQLite needs a real file, so the asset is copied out of the APK once. The copy also gets
      *  the one index the shared database lacks — `category_id`, which every [pull] filters on. */
@@ -449,6 +485,20 @@ object Corpus {
         return out.shuffled()
     }
 
+    /** Look up one question by ID — a saved quiz's refs resolve through here
+     *  (docs/QUIZ-CONTRACT.md). */
+    fun question(id: String): Question? =
+        query("SELECT $COLS FROM questions WHERE id = ? LIMIT 1", arrayOf(id)).firstOrNull()
+
+    /** Batched lookup: a 20-question quiz would otherwise be 20 round trips. */
+    fun questions(ids: List<String>): Map<String, Question> {
+        if (ids.isEmpty()) return emptyMap()
+        return query(
+            "SELECT $COLS FROM questions WHERE id IN (${ids.joinToString(",") { "?" }})",
+            ids.toTypedArray(),
+        ).associateBy { it.id }
+    }
+
     fun daily(dayKey: String, count: Int): List<Question> {
         // Canonical hash-rank selection (Decision 037) — the SAME 7 on every
         // platform (mirrors DailyPick.swift + engine.js pickDaily exactly).
@@ -468,7 +518,12 @@ object Corpus {
 class JsonQuestionSet(private val asset: String) {
     private var all: List<Question> = emptyList()
     private var byCat: Map<String, List<Question>> = emptyMap()
+    /** Look up by ID — what a saved quiz needs to turn its set-refs back into
+     *  questions (docs/QUIZ-CONTRACT.md). */
+    private var byId: Map<String, Question> = emptyMap()
     var loaded = false; private set
+
+    fun question(id: String): Question? = byId[id]
 
     suspend fun load(context: Context) = withContext(Dispatchers.IO) {
         if (loaded) return@withContext
@@ -550,6 +605,7 @@ class JsonQuestionSet(private val asset: String) {
                 }
             }
             byCat = all.groupBy { it.categoryId }
+            byId = all.associateBy { it.id }
             loaded = true
         }
         Unit

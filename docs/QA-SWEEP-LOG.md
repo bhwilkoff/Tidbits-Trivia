@@ -80,6 +80,21 @@ I have not seen on iPad would be guessing; each needs a look first.
 
 ---
 
+## Round 4 — Android (Pixel 9 Pro emulator), 2026-07-30
+
+| # | Severity | Finding | Status |
+|---|---|---|---|
+| Q17 | **Bug** | **Every non-MCQ question also rendered four MCQ buttons.** `q.options.forEachIndexed { ... AnswerButton }` ran unconditionally, so an Ordering question drew its four items a second time below the ordering panel — and they were **tappable**, calling `game.submit(i)` and scoring the question as an MCQ, bypassing the mode entirely. iOS branches these shapes with `else if`; Android never did. | **Fixed** — buttons render only for a plain MCQ. Verified on the emulator |
+| Q18 | Harness | **The first Android sweep was worthless and said it passed.** The debug build carries `applicationIdSuffix ".debug"`, so `am start` on the release id failed with a bare "Error type 3" — and because a failed launch is not a crash, all 28 "captures" were the launcher and every one reported healthy. The package is now resolved from the device, and each shot asserts the app is actually **foreground** rather than merely uncrashed. | Fixed |
+
+### Android verified working
+Closest Call (slider, correct range) · the 15 modes launch · Records/Create/Home/Party/
+Night setup. **Not covered:** Club, paywall, atlas, link wall, expeditions, marathon, versus,
+multiplayer, settings, profile — Android's `ScreenshotHooks` has no hooks for these, so they
+are genuinely unswept rather than passing.
+
+---
+
 ## Still to do
 
 - [ ] Round 1 review is **partial**: ~12 of 47 captures examined in depth; the rest are

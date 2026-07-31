@@ -1239,7 +1239,16 @@ internal fun PlayingScreen(game: GameState, match: VsMatch? = null, onlineRoster
         }
         q.enumerate?.let { spec -> if (live) EnumeratePanel(game, spec) }
         val answersLocked = !live || (game.mode == Mode.STAKE && game.currentStake == 0)
-        q.options.forEachIndexed { i, opt -> AnswerButton(opt, game.answerState(i), !answersLocked) { game.submit(i) } }
+        // MCQ buttons ONLY for a plain multiple-choice question. An Ordering question keeps
+        // its items in `options`, so rendering these unconditionally drew the four items a
+        // second time BELOW the ordering panel — and they were tappable, calling submit(i)
+        // and scoring the question as an MCQ, bypassing the mode entirely. Same for the
+        // other shapes that carry options. iOS branches these with else-if; Android did not.
+        val plainMcq = q.closest == null && q.ordering == null && q.matching == null &&
+            q.accepted == null && q.enumerate == null
+        if (plainMcq) {
+            q.options.forEachIndexed { i, opt -> AnswerButton(opt, game.answerState(i), !answersLocked) { game.submit(i) } }
+        }
         if (game.awaitingReveal) {
             ChunkyCard(fill = Pops.blue.copy(alpha = 0.14f)) {
                 Text("Locked in — waiting for the host…", Modifier.padding(16.dp).fillMaxWidth(),

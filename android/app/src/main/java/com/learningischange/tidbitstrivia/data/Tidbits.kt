@@ -338,8 +338,17 @@ object Corpus {
     /** Create feature: real, already-vetted corpus questions matching the topic's
      *  words (prompt + Wikipedia source title). Grounded generation's retrieval
      *  baseline — no live API, no hallucination (docs/CREATE-QUESTION-GEN-PLAYBOOK.md). */
+    /** Words too common to narrow anything — they made the pre-filter match nearly
+     *  the whole corpus, crowding out real hits before ranking. Mirrors Swift/JS/C#. */
+    private val STOPWORDS = setOf("the", "and", "for", "with", "from", "that", "this", "his", "her", "its", "was", "were", "are", "who", "what", "which", "how", "why", "all", "any")
+
     fun search(topic: String, limit: Int): List<Question> {
-        val tokens = topic.lowercase().split(Regex("[^a-z0-9]+")).filter { it.length >= 3 }
+        // Stopwords are dropped, not merely short words: the >=3 rule kept "the",
+        // which matches nearly every row and crowds real hits out of the capped
+        // pre-filter before ranking ("The Beatles", "The Simpsons"). Mirrors Swift.
+        val rawTokens = topic.lowercase().split(Regex("[^a-z0-9]+")).filter { it.length >= 3 }
+        val keptTokens = rawTokens.filter { it !in STOPWORDS }
+        val tokens = keptTokens.ifEmpty { rawTokens }
         if (tokens.isEmpty()) return emptyList()
         // Narrow to rows that mention a token at all before scoring in Kotlin. LIKE is
         // ASCII-case-insensitive in SQLite and the tokens are [a-z0-9] by construction, so this

@@ -74,6 +74,24 @@ decide, not a defect: a quiz *about* van Gogh that never answers "van Gogh" is h
 but thin. Options for Wave 2: allow giveaway questions when the pool would otherwise
 starve, or prefer them last rather than excluding them.
 
+## Wave 2 — B1/B3 mirrored to every platform (2026-07-31)
+
+Create now behaves the same everywhere, which it did not after Wave 1 (Swift only):
+
+| Platform | B1 pre-filter cap | B3 stopwords |
+|---|---|---|
+| Apple (Swift) | 400 -> 4000 | added |
+| Android (Kotlin) | already 6000 | added |
+| Windows (C#) | 400 -> 4000 | added |
+| Web (JS) | in-memory, no cap | added |
+
+Android's cap was already 6000, so B1 never bit there — worth noting because it means
+the Android and Apple Create results genuinely differed before this pass, which is
+exactly the class of drift `cross-platform-parity-discipline` exists to catch.
+
+Verified: Android `assembleDebug` green, Windows 447 tests green, `js/api.js`
+syntax-checked, Apple builds green.
+
 ## Waves (each its own loop tick)
 
 - **W1 — Blended sourcing.** Corpus + live in one ranked pool; target N always met or

@@ -58,6 +58,8 @@ async function idbSet(key, val) {
 // Round-robin a scored, already-ranked list across categories, capping how many
 // come from any one domain — the anti-monopoly rule for Create (owner: too many
 // sports/geography questions when a topic is dense in one category).
+const STOPWORDS = new Set(['the', 'and', 'for', 'with', 'from', 'that', 'this', 'his', 'her', 'its', 'was', 'were', 'are', 'who', 'what', 'which', 'how', 'why', 'all', 'any']);
+
 function diversify(ranked, limit) {
   const perCat = Math.max(2, Math.ceil(limit / 3));   // ~1/3 of the set, min 2
   const byCat = new Map();
@@ -143,7 +145,12 @@ export const Corpus = {
   // (prompt + Wikipedia source title). Grounded generation's retrieval baseline —
   // no hallucination (docs/CREATE-QUESTION-GEN-PLAYBOOK.md).
   search(topic, limit) {
-    const tokens = topic.toLowerCase().split(/[^a-z0-9]+/).filter((t) => t.length >= 3);
+    // Stopwords are dropped, not merely short words: the >=3 rule kept "the",
+    // which matches nearly every row and crowds real hits out before ranking
+    // ("The Beatles", "The Simpsons"). Mirrors Swift/Kotlin/C#.
+    const rawTokens = topic.toLowerCase().split(/[^a-z0-9]+/).filter((t) => t.length >= 3);
+    const keptTokens = rawTokens.filter((t) => !STOPWORDS.has(t));
+    const tokens = keptTokens.length ? keptTokens : rawTokens;
     if (!tokens.length) return [];
     const scored = [];
     for (const q of this.questions) {

@@ -67,7 +67,10 @@ public sealed class CorpusDatabase
             if (tokens.Any(t => prompt.Contains(t) || title.Contains(t) || explanationPre.Contains(t) || tagsPre.Any(tg => tg.Contains(t))))
             {
                 matched.Add(q);
-                if (matched.Count >= 400) break;
+                // The cap applies BEFORE ranking, so it must contain the genuine
+                // matches. At 400, "van gogh" lost all 20 real rows to substring
+                // noise. Mirrors the Swift fix.
+                if (matched.Count >= 4000) break;
             }
         }
 

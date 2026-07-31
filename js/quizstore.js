@@ -6,7 +6,8 @@
 // there'd be a fifth representation to keep in step with the four stacks.
 
 import { Corpus, Pictures, ThisOrThat, ClosestCall, Ordering, Matching, TypeAnswer, OddOneOut, Enumerate } from './api.js';
-import { quizToJSON, quizFromJSON, makeQuiz, cleanTitle, resolveQuiz } from './quiz.js';
+import { quizToJSON, quizFromJSON, quizToWire, quizFromWire, makeQuiz, cleanTitle, resolveQuiz } from './quiz.js';
+import { FirebaseNet } from './firebase.js';
 
 const KEY = 'tidbits.quizzes';
 const LEGACY_KEY = 'tidbits.savedSets';
@@ -94,6 +95,55 @@ export function legacyEntry(q, lookup) {
   return [q.id || '', q.prompt || '', q.options || ['', '', '', ''],
           q.correctIndex || 0, q.categoryID || 'mixed', q.difficulty || 3,
           q.explanation || '', q.sourceTitle || '', q.sourceURL || ''];
+}
+
+/** The canonical link target for a quiz on every platform (QUIZ-CONTRACT §5). */
+export function quizShareURL(id) {
+  return `${location.origin}${location.pathname.replace(/index\.html$/, '')}#/quiz/${id}`;
+}
+
+/**
+ * Publish so anyone with the link can play it. EXPLICIT — a quiz you never share
+ * never leaves your account. The creator is stamped at publish time so the rules
+ * (`by === auth.uid`) allow only its author to overwrite it later.
+ */
+export async function publishQuiz(quiz) {
+  const uid = await FirebaseNet.ensureUid();
+  const wire = quizToWire({ ...quiz, creatorID: uid || quiz.creatorID || 'local' });
+  await FirebaseNet.publishQuiz(quiz.id, wire);
+  // Remember locally that it is out there, so the UI can say "Shared" without a
+  // network round trip.
+  const list = readAll();
+  const mine = list.find((q) => q.id === quiz.id);
+  if (mine) { mine.creatorID = wire.by; writeAll(list); }
+  return quizShareURL(quiz.id);
+}
+
+/**
+ * Fetch a shared quiz by id.
+ *
+ * Returns `{ quiz }` on success, `{ notFound: true }` when the id really isn't
+ * there, and `{ error }` when the lookup FAILED. Collapsing the last two into null
+ * told someone with a working link that their friend had deleted the quiz, when the
+ * truth was a network blip or a stale cached module -- a wrong explanation is worse
+ * than an honest "couldn't load", because it stops them retrying.
+ */
+export async function fetchSharedQuiz(id) {
+  try {
+    const wire = await FirebaseNet.loadQuiz(id);
+    if (!wire) return { notFound: true };
+    const quiz = quizFromWire(wire);
+    return quiz ? { quiz } : { error: 'This quiz is in a format this version can\u2019t read.' };
+  } catch (e) {
+    console.warn('[Tidbits] shared quiz lookup failed', e);
+    return { error: 'Couldn\u2019t reach the quiz. Check your connection and try again.' };
+  }
+}
+
+/** Keep a shared quiz you were given, so it joins your own shelf. */
+export function keepSharedQuiz(quiz) {
+  if (getQuiz(quiz.id)) return quiz;      // already yours
+  return saveQuiz(quiz);
 }
 
 /** Where a legacy question's ID still resolves today. */

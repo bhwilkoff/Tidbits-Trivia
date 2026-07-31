@@ -10,8 +10,27 @@ import { FIREBASE_CONFIG } from './firebase-config.js';
 const SDK = 'https://www.gstatic.com/firebasejs/10.12.2';
 let _app, _db, _auth, _uid, _fns;
 
+// In-flight guard. The old check was `if (_db) return _fns`, but `_db` is assigned
+// near the START of initialisation and `_fns` only at the END, so a SECOND caller
+// arriving in between got `undefined` back and every `const { db } = await ensure()`
+// threw "Cannot destructure property 'db'". Nothing hit it while Firebase was only
+// used from user-initiated actions, long after bootstrap — a share link is the first
+// thing that calls it at page load, concurrently with Identity.bootstrap().
+let _ensuring = null;
+
 async function ensure() {
-  if (_db) return _fns;
+  if (_fns) return _fns;
+  if (_ensuring) return _ensuring;
+  _ensuring = ensureOnce();
+  try {
+    return await _ensuring;
+  } catch (e) {
+    _ensuring = null;         // let a later caller retry rather than wedging forever
+    throw e;
+  }
+}
+
+async function ensureOnce() {
   const [app, db, auth] = await Promise.all([
     import(`${SDK}/firebase-app.js`),
     import(`${SDK}/firebase-database.js`),
@@ -100,6 +119,20 @@ export const FirebaseNet = {
   async removeFriend(uid, friendUid) {
     const { db } = await ensure();
     await db.remove(db.ref(_db, `playersPrivate/${uid}/friends/${friendUid}`));
+  },
+
+  // Saved quizzes (docs/QUIZ-CONTRACT.md §4/§5). Publishing is an EXPLICIT user
+  // action, not a side effect of saving: a quiz you never share never leaves your
+  // account. The bucket is world-readable so a share link opens for someone who
+  // doesn't have the app -- which is the entire point of the mechanic.
+  async publishQuiz(id, wire) {
+    const { db } = await ensure();
+    await db.set(db.ref(_db, `quizzes/${id}`), wire);
+  },
+  async loadQuiz(id) {
+    const { db } = await ensure();
+    const snap = await db.get(db.ref(_db, `quizzes/${id}`));
+    return snap.exists() ? snap.val() : null;
   },
 
   // L5 async friend duels: a duel = one shared question set, both players answer on their own time.

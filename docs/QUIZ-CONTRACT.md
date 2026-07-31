@@ -159,6 +159,22 @@ Native twin: `tidbitstrivia://quiz/<id>`
 
 The web app is the canonical link target on every platform, so a quiz shared into a
 group chat opens for people who don't have the app — the whole point of the mechanic.
+That makes `#/quiz/<id>` the one route that must work with **no account, no install
+and no local state**, which is exactly why it is the first thing in the app ever to
+touch Firebase at page load. Verified end to end against the live database.
+
+Its states are all real states, and "gone" is NOT the same as "couldn't load":
+
+| State | What it says |
+|---|---|
+| Loading | "Opening quiz…" |
+| Not found | the link no longer points at a quiz — offer to make one |
+| **Failed** | "Couldn't reach the quiz" **plus a Try again** |
+| Playable but short | "N of these M questions aren't in your version yet" |
+| Too few to play | offer to make a quiz on the same topic instead |
+
+Collapsing *failed* into *not found* tells someone with a perfectly good link that
+their friend deleted the quiz, and stops them retrying something transient.
 
 ---
 

@@ -2,7 +2,8 @@
 // Apple AppStore + GameEngine + views. Vanilla JS, no framework, no build.
 
 import { Corpus, Pictures, ThisOrThat, ClosestCall, Ordering, Matching, TypeAnswer, OddOneOut, Enumerate, Difficulty, matchesAccepted, Wikipedia, DailyBoard } from './api.js';
-import { allQuizzes, deleteQuiz, saveCreated, resolveForPlay, migrateLegacySavedSets, getQuiz } from './quizstore.js';
+import { allQuizzes, deleteQuiz, saveCreated, resolveForPlay, migrateLegacySavedSets, getQuiz,
+         publishQuiz, fetchSharedQuiz, keepSharedQuiz, quizShareURL } from './quizstore.js';
 import { Store, CATEGORIES, catColor, catById, MODES, NIGHT, STAKE_BUDGET, dayKey, APP_STORES, SITE_URL, CLUB, WeakSpotArena, StoryArchive, answerTextOf, Marathon, marathonAccuracy, KnowledgeAtlas, Expeditions, LinkWall, LinkWallLog } from './store.js';
 import { Scoring } from './engine.js';
 import { BOTS, houseBot, botById, VsMatch } from './bots.js';
@@ -74,6 +75,10 @@ async function boot() {
 
 // ---------------- Top-level render ----------------
 function render() {
+  // A shared quiz: #/quiz/<id>. The web is the canonical link target on EVERY
+  // platform (QUIZ-CONTRACT §5), so this has to work for someone who has never
+  // opened the app before -- no account, no install.
+  if (location.hash.startsWith('#/quiz/')) { openSharedQuiz(location.hash.split('/')[2] || ''); return; }
   // Tidbits Live player: #/live or #/live/CODE — a self-managing overlay.
   if (location.hash.startsWith('#/live')) { openLive(location.hash.split('/')[2] || ''); return; }
   closeLive(); // idempotent teardown when the hash leaves #/live
@@ -1115,6 +1120,7 @@ function viewCreate() {
     ${saved.length
       ? `<div class="saved-sets">${saved.map((q) => `<div class="card saved-set">
         <button class="saved-play" data-play-quiz="${h(q.id)}"><b>${h(q.title)}</b><span class="muted">${q.entries.length} questions · saved ${new Date(q.createdAt).toLocaleDateString()}</span></button>
+        <button class="saved-share icon-btn" data-share-quiz="${h(q.id)}" aria-label="Share quiz">↗</button>
         <button class="saved-del icon-btn" data-del-quiz="${h(q.id)}" aria-label="Delete quiz">✕</button>
       </div>`).join('')}</div>`
       : `<p class="muted">Quizzes you make are saved here automatically, ready to replay.</p>`}`;
@@ -1171,8 +1177,88 @@ function bindCreate() {
       }
       startGame('mix', catById('mixed'), { custom: r.questions, label: quiz.title, quizID: quiz.id });
     }));
+  app.querySelectorAll('[data-share-quiz]').forEach((b) =>
+    b.addEventListener('click', () => {
+      const quiz = getQuiz(b.dataset.shareQuiz); if (quiz) shareQuiz(quiz, b);
+    }));
   app.querySelectorAll('[data-del-quiz]').forEach((b) =>
     b.addEventListener('click', () => { deleteQuiz(b.dataset.delQuiz); render(); }));
+}
+
+
+// ---- A shared quiz (#/quiz/<id>) ----
+// Every state here is a real state, not an afterthought (universal-feature-states):
+// loading, not-found, too-few-questions-in-this-build, and playable-but-short each
+// say something true rather than showing a blank card.
+async function openSharedQuiz(id) {
+  if (!id) { location.hash = '#/create'; return; }
+  renderLoading('Opening quiz…');
+  const res = await fetchSharedQuiz(id);
+  // "Deleted" and "couldn't load" need DIFFERENT words: telling someone with a
+  // working link that the quiz is gone stops them retrying a transient failure.
+  if (res.notFound || res.error) {
+    app.innerHTML = `<div class="view">
+      <h1 class="page-title">${res.notFound ? 'Quiz not found' : 'Couldn\u2019t open this quiz'}</h1>
+      <p class="muted">${res.notFound
+        ? "This link doesn't point at a quiz any more. It may have been deleted by whoever made it."
+        : h(res.error)}</p>
+      ${res.error ? '<button class="btn btn-primary btn-full" data-retry>Try again</button>' : ''}
+      <button class="btn ${res.error ? '' : 'btn-primary'} btn-full" data-make>Make your own quiz</button>
+    </div>`;
+    const retry = $('[data-retry]');
+    if (retry) retry.addEventListener('click', () => openSharedQuiz(id));
+    $('[data-make]').addEventListener('click', () => { location.hash = '#/create'; });
+    return;
+  }
+  const quiz = res.quiz;
+  const r = resolveForPlay(quiz);
+  const short = r.missing > 0;
+  app.innerHTML = `<div class="view">
+    <h1 class="page-title">${h(quiz.title)}</h1>
+    <p class="muted">${quiz.creatorName ? `Made by ${h(quiz.creatorName)} · ` : ''}${quiz.entries.length} questions</p>
+    ${short ? `<div class="card pad"><p class="muted">${r.missing} of these ${quiz.entries.length} questions aren't in your version yet, so you'll play ${r.questions.length}.</p></div>` : ''}
+    ${r.isPlayable
+      ? `<button class="btn btn-primary btn-full" data-play-shared>Play this quiz</button>
+         <button class="btn btn-full" data-keep>Save to my quizzes</button>`
+      : `<div class="card pad"><p class="muted">This quiz needs questions your version doesn't have yet. Try making one on the same subject instead.</p></div>
+         <button class="btn btn-primary btn-full" data-remake>Make a quiz about ${h(quiz.topic || 'this')}</button>`}
+    <button class="btn btn-text btn-full" data-done>Back</button>
+  </div>`;
+  const play = $('[data-play-shared]');
+  if (play) play.addEventListener('click', () => {
+    keepSharedQuiz(quiz);            // playing it is keeping it
+    startGame('mix', catById('mixed'), { custom: r.questions, label: quiz.title, quizID: quiz.id });
+  });
+  const keep = $('[data-keep]');
+  if (keep) keep.addEventListener('click', () => {
+    keepSharedQuiz(quiz); keep.textContent = 'Saved ✓'; keep.disabled = true;
+  });
+  const remake = $('[data-remake]');
+  if (remake) remake.addEventListener('click', () => {
+    location.hash = '#/create';
+    setTimeout(() => { const t = $('#topic'); if (t) { t.value = quiz.topic || ''; } }, 50);
+  });
+  $('[data-done]').addEventListener('click', () => { location.hash = '#/create'; });
+}
+
+// Share a quiz: publish it, then hand over the link. Web Share where available,
+// clipboard otherwise — the same fallback chain the rest of the app uses.
+async function shareQuiz(quiz, btn) {
+  const label = btn.textContent;
+  btn.textContent = 'Sharing…'; btn.disabled = true;
+  try {
+    const url = await publishQuiz(quiz);
+    const text = `${quiz.title} — a Tidbits quiz`;
+    if (navigator.share) { await navigator.share({ title: quiz.title, text, url }); }
+    else { await navigator.clipboard.writeText(url); }
+    btn.textContent = navigator.share ? label : 'Link copied ✓';
+  } catch (e) {
+    // A share that silently does nothing is worse than one that admits it failed.
+    btn.textContent = 'Couldn\u2019t share — try again';
+    console.warn('[Tidbits] share failed', e);
+  }
+  btn.disabled = false;
+  setTimeout(() => { btn.textContent = label; }, 2500);
 }
 
 // ---- Saved quizzes ----

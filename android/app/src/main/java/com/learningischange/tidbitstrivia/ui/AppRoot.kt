@@ -152,6 +152,24 @@ fun AppRoot(
         }
         if (h.openParty) backStack.add(Route.Party)
         if (h.openNightSetup) backStack.add(Route.NightSetup)
+        // Map the generic screenshot/QA destination hook onto a route. Named
+        // surfaces only — an unknown value is ignored rather than crashing a
+        // capture run mid-sweep.
+        when (h.openRoute) {
+            "clubHub" -> backStack.add(Route.ClubHub)
+            "paywall" -> backStack.add(Route.ClubPaywall)
+            "atlas" -> backStack.add(Route.KnowledgeAtlas)
+            "linkWall" -> backStack.add(Route.LinkWall)
+            "expeditions" -> backStack.add(Route.ExpeditionHub)
+            "storyArchive" -> backStack.add(Route.StoryArchive)
+            "marathonHistory" -> backStack.add(Route.MarathonHistory)
+            "settings" -> backStack.add(Route.Settings)
+            "profile" -> backStack.add(Route.Profile)
+            "leaderboard" -> backStack.add(Route.Leaderboard)
+            "duels" -> backStack.add(Route.Duels)
+            "online" -> backStack.add(Route.OnlineMatch)
+            else -> Unit
+        }
     }
 
     LaunchedEffect(deepLink) {

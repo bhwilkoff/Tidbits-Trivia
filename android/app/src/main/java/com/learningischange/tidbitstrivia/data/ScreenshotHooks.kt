@@ -52,6 +52,19 @@ object ScreenshotHooks {
     var skipOnboarding = false
         private set
 
+    /**
+     * "clubHub" | "paywall" | "atlas" | "linkWall" | "expeditions" | "storyArchive" |
+     * "marathonHistory" | "settings" | "profile" | "leaderboard" | "duels" | "online" —
+     * push that destination on launch.
+     *
+     * ONE string rather than a boolean per surface: the previous set covered only Party
+     * and Night setup, so ~10 Club/account screens had no hook at all and the Android
+     * sweep silently skipped them — they read as "not covered" in the QA log rather than
+     * as passing. A single mapped extra means a new destination costs one line here.
+     */
+    var openRoute: String? = null
+        private set
+
     fun apply(intent: Intent) {
         if (!BuildConfig.DEBUG) return
         intent.getStringExtra("tidbits_autoplay")?.let { raw ->
@@ -67,5 +80,6 @@ object ScreenshotHooks {
         if (intent.hasExtra("tidbits_night_setup")) openNightSetup = intent.getBooleanExtra("tidbits_night_setup", false)
         if (intent.hasExtra("tidbits_skip_onboard")) skipOnboarding = intent.getBooleanExtra("tidbits_skip_onboard", false)
         if (intent.hasExtra("tidbits_screened")) screened = intent.getBooleanExtra("tidbits_screened", false)
+        intent.getStringExtra("tidbits_open")?.let { openRoute = it }
     }
 }

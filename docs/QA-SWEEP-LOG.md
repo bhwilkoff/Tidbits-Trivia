@@ -189,6 +189,30 @@ Both verified as genuinely implemented, not shells:
 |---|---|---|---|
 | Q29 | Not a bug | The floating **"Search your stories"** pill looked like a compositing fault (card text bleeding through illegibly). It is SwiftUI's **native `.searchable()`**, which on the iOS 26 baseline renders as a bottom-aligned floating pill with Liquid Glass — the bleed-through is Apple's material showing content scrolling beneath, i.e. the intended appearance, exaggerated by a static screenshot. CLAUDE.md mandates exactly this 26-era API, so "fixing" it would mean fighting the platform. | **Closed — by design.** Same discipline as the Atlas sample-floor test: verify the contract before changing correct code |
 
+## Round 11 — closing the Android coverage gap, 2026-07-31 (final tick)
+
+The longest-standing honest gap in this log: ~10 Android Club/account surfaces had
+**no `ScreenshotHooks` entry**, so the Android sweep skipped them entirely. They were
+recorded as "not covered" rather than passing — correct, but it stayed unfixed for
+several rounds because each round found louder bugs first.
+
+**Fixed structurally, not one-off.** The hook family had a boolean per surface
+(`tidbits_party`, `tidbits_night_setup`), which is why it stopped at two. Replaced with
+ONE mapped string extra, `--es tidbits_open <route>`, so a new destination costs a single
+line. Unknown values are ignored rather than crashing a capture run mid-sweep.
+
+**Swept all 12 previously-unreachable surfaces** — clubHub · paywall · atlas · linkWall ·
+expeditions · storyArchive · marathonHistory · settings · profile · leaderboard · duels ·
+online. Every one launches, holds foreground, and logs no `FATAL EXCEPTION`.
+
+**Scope of that claim, stated precisely:** this is the launch/render gate (the app really
+reaches the screen and survives), not a deep per-feature review of each Android surface.
+It closes "genuinely unswept" — it does not by itself promise Android feature parity in
+behaviour, which is still carried by `PARITY.md`.
+
+Stale checkboxes in "Still to do" below corrected: the macOS reveal (Round 6), iPad
+(Round 3), tvOS (Round 2) and Android/Windows (Rounds 4/5) sweeps had all been done.
+
 ## Apple test suite — added 2026-07-31
 
 The Apple side had **no test target at all** while Windows carried 443 tests, so
@@ -229,9 +253,9 @@ Two things the work surfaced:
       both correct. Score SCALES differ hugely between modes (2,825 vs 15) and are
       presented identically; Records separates by mode, so noted not filed.
 - [x] Mirrored the Q7 reveal-feedback fix to macOS + tvOS (Q9).
-- [ ] **Visually verify the macOS reveal** — code-mirrored and building, but this round only
+- [x] **Visually verify the macOS reveal** — done in Round 6 (Q19) — code-mirrored and building, but this round only
       confirmed iOS and tvOS on simulators. macOS needs a real run.
-- [ ] iPad sweep (`tools/qa-sweep.sh ipad`) — layout at a different size class.
-- [ ] Full tvOS sweep (`tools/qa-sweep.sh tvos`, with TIDBITS_NO_GAMECENTER=1) — focus
+- [x] iPad sweep — done in Round 3 (Q14/Q16) — layout at a different size class.
+- [x] Full tvOS sweep — done in Round 2 (Q11/Q13) — focus
       engine, the 10-foot ramp, self-marking modes. Only ordering/matching seen so far.
-- [ ] Android + Windows equivalents.
+- [x] Android (Round 4, Q17/Q18) + Windows (Round 5) equivalents.

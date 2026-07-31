@@ -62,6 +62,20 @@ Matching reveal feedback legible at ten feet · dark theme throughout.
 
 ---
 
+## Round 3 — iPad Pro 13-inch (iOS 26 sim), 2026-07-30
+
+| # | Severity | Finding | Status |
+|---|---|---|---|
+| Q14 | **Bug** | **The iPad was a stretched iPhone.** iPhone-first horizontal padding is right at 390pt and wrong at 1032pt: option buttons spanned the full screen with their answer text stranded at the far left, the HUD stretched edge to edge, and two-thirds of the display sat empty. Home had it too, so it is systemic rather than one view. | **Fixed** — new `.readableColumn()` (760pt, centred) + **iOS-DESIGN §2.2a**; applied to the game screen, its HUD, and Home. Verified on the sim |
+| Q15 | Harness | The sweep picked an **iOS 18.5 iPad** against the app's iOS 26 floor, and simctl reported it only as `Invalid parameter not satisfying: installURL`. The device picker now requires a runtime ≥ 26. | Fixed |
+
+### Still stretched (modifier ready, not yet applied)
+Records · Create · Settings · Profile · and the dialog surfaces. Applying
+`.readableColumn()` blind to views I have not seen on iPad would be guessing; each needs
+a look first.
+
+---
+
 ## Still to do
 
 - [ ] Round 1 review is **partial**: ~12 of 47 captures examined in depth; the rest are

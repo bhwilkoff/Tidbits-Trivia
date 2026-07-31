@@ -55,6 +55,7 @@ struct GamePlayView: View {
                     }
                     .padding(.horizontal, Tidbits.Metric.pad)
                     .padding(.bottom, 24)
+                    .readableColumn()          // §2.2a — not a stretched phone layout on iPad
                     // Stable per-question identity so the prompt AND the four
                     // option buttons swap as ONE atomic subtree on advance —
                     // not an in-place diff that mutates the reused buttons a
@@ -136,6 +137,7 @@ struct GamePlayView: View {
         .padding(.horizontal, Tidbits.Metric.pad)
         .padding(.top, 6)
         .padding(.bottom, 12)
+        .readableColumn()          // §2.2a — the HUD tracks the content column
     }
 
     private var progressLabel: String {

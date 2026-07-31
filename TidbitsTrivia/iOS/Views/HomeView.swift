@@ -68,6 +68,7 @@ struct HomeView: View {
                 .buttonStyle(.plain)
             }
             .padding(.horizontal, Tidbits.Metric.pad)
+            .readableColumn()          // §2.2a
             .padding(.bottom, 32)
         }
         .background(Tidbits.Palette.bg.ignoresSafeArea())

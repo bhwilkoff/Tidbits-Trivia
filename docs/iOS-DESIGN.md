@@ -78,6 +78,16 @@ three `Tab`s, one `NavigationStack` per tab. iPad regular-width adopts
 current build is the plain tab bar). Views adapt via
 `@Environment(\.horizontalSizeClass)`, **never `UIDevice` checks**.
 
+2.2a **Content gets a readable column on regular width.** iPhone-first
+padding (`Tidbits.Metric.pad`) is correct at 390pt and wrong at 1032pt:
+on an iPad Pro it stretches option buttons the full width of the screen
+with the answer text stranded at the far left, and leaves two-thirds of
+the display empty. Every scrolling surface caps its content with
+`.readableColumn()` (760pt, centred) so a tap target stays a
+sensible size and a line of text stays a readable measure. This is the
+iPad twin of the macOS window-width rule — a stretched phone layout is
+the anti-pattern, not a free adaptation.
+
 2.3 **One `NavigationPath` per tab, owned by `AppStore`**
 (`store.playPath` / `recordsPath` / `createPath`). Views never construct
 a `NavigationLink(destination:)` to a shared screen; they append to the

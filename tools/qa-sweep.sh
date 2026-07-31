@@ -29,8 +29,15 @@ case "$PLATFORM" in
   *) echo "unknown platform: $PLATFORM"; exit 1 ;;
 esac
 
-SIM=$(xcrun simctl list devices available | grep -m1 "$DEVICE_MATCH" | sed -E 's/.*\(([0-9A-F-]{36})\).*/\1/')
-[ -n "$SIM" ] || { echo "no simulator matching '$DEVICE_MATCH'"; exit 1; }
+# Pick a device on a runtime that actually satisfies the deployment target. Matching the
+# first name hit picked an iOS 18.5 iPad against an iOS 26 floor, and the failure surfaced
+# as a bare "Invalid parameter not satisfying: installURL" from simctl.
+SIM=$(xcrun simctl list devices available \
+  | awk -v want="$DEVICE_MATCH" '
+      /^-- /   { ver = $0; sub(/^-- [A-Za-z]+ /, "", ver); sub(/ --$/, "", ver); major = int(ver) }
+      index($0, want) && major >= 26 { print; exit }' \
+  | sed -E 's/.*\(([0-9A-F-]{36})\).*/\1/')
+[ -n "$SIM" ] || { echo "no simulator matching '$DEVICE_MATCH' on a runtime >= 26"; exit 1; }
 echo "simulator: $DEVICE_MATCH ($SIM)"
 xcrun simctl boot "$SIM" 2>/dev/null
 xcrun simctl bootstatus "$SIM" -b >/dev/null 2>&1

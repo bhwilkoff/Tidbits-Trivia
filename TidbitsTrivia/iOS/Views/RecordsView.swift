@@ -41,6 +41,7 @@ struct RecordsView: View {
                 }
             }
             .padding(.horizontal, Tidbits.Metric.pad)
+            .readableColumn(alignment: .leading)   // §2.2a — aligns with the nav title
             .padding(.vertical, 18)
         }
         .background(Tidbits.Palette.bg.ignoresSafeArea())

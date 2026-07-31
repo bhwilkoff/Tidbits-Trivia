@@ -69,10 +69,14 @@ Matching reveal feedback legible at ten feet · dark theme throughout.
 | Q14 | **Bug** | **The iPad was a stretched iPhone.** iPhone-first horizontal padding is right at 390pt and wrong at 1032pt: option buttons spanned the full screen with their answer text stranded at the far left, the HUD stretched edge to edge, and two-thirds of the display sat empty. Home had it too, so it is systemic rather than one view. | **Fixed** — new `.readableColumn()` (760pt, centred) + **iOS-DESIGN §2.2a**; applied to the game screen, its HUD, and Home. Verified on the sim |
 | Q15 | Harness | The sweep picked an **iOS 18.5 iPad** against the app's iOS 26 floor, and simctl reported it only as `Invalid parameter not satisfying: installURL`. The device picker now requires a runtime ≥ 26. | Fixed |
 
-### Still stretched (modifier ready, not yet applied)
-Records · Create · Settings · Profile · and the dialog surfaces. Applying
-`.readableColumn()` blind to views I have not seen on iPad would be guessing; each needs
-a look first.
+| Q16 | Polish | Constraining Records left its **system `navigationTitle` orphaned** flush-left while the content centred beneath it. A nav title lives in the navigation bar and no content modifier can move it. | **Fixed** — `.readableColumn(alignment:)`; surfaces under a system title pass `.leading` so the column aligns with it, surfaces that own their heading (game, Home) stay centred |
+
+### Applied so far
+Game screen + its HUD · Home (centred) · Records · Create (leading, under a nav title).
+
+### Still stretched
+Settings · Profile · and the dialog surfaces. Applying `.readableColumn()` blind to views
+I have not seen on iPad would be guessing; each needs a look first.
 
 ---
 

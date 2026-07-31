@@ -112,6 +112,16 @@ there unnoticed.
 
 ---
 
+## Round 6 — macOS (real app, no simulator), 2026-07-30
+
+| # | Severity | Finding | Status |
+|---|---|---|---|
+| Q19 | Verification | The Q9 ordering-reveal fix **does render on macOS** — a coral row carrying "→ 1" beside the explanation. Q9 is now visually confirmed on all three Apple platforms rather than build-verified on one. | Closed |
+| Q20 | Harness | An unattended macOS run hits a **keychain prompt** ("Tidbits wants to use … tidbits.fb.anonRefresh"), which blocks automation. It is an artefact of the UNSIGNED local build — the keychain ACL does not match, so the OS asks. A signed build does not prompt, so this is a QA constraint, not a shipping bug. Do not chase it as one. | Recorded |
+| Q21 | **My error** | When the window-id helper failed (pyobjc/`Quartz` not installed), I fell back to a **full-screen capture**, which swept the developer's terminal and an emulator into the frame. Deleted immediately. `tools/mac_window_id.py` now falls back to AppleScript window **bounds** (`screencapture -R`), so a capture is always window-scoped — which is what the file's own docstring already warned about. | Fixed |
+
+---
+
 ## Still to do
 
 - [ ] Round 1 review is **partial**: ~12 of 47 captures examined in depth; the rest are

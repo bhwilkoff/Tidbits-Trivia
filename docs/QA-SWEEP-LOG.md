@@ -171,6 +171,24 @@ Regression cover added on both stacks that have suites: `CreateRelevanceTests.sw
 Wikipedia fetch → playable quiz, with the reveal, the "Now you know" explanation and
 the source link all correct.
 
+## Round 9 — Online Multiplayer + Story Archive, 2026-07-31
+
+Both verified as genuinely implemented, not shells:
+
+- **Online Multiplayer** — every bot is visibly labelled CPU (the honesty rule),
+  and each blurb matches its real `categorySkill` offsets (Rae sports+film, Tina
+  history, Ace science). **Quick Match is not a dead end**: real GameKit
+  matchmaking with host/join transports plus a "sign in to Game Center" state and
+  a "couldn't find a match" state. The two-device gate still stands for a live
+  human-vs-human run.
+- **Story Archive** — real stories drawn from actual play history, with ✓/✗ marks
+  matching what was answered, relative timestamps, favourite stars, All/Favorites/
+  Missed/Got-it chips, domain chips and text search.
+
+| # | Severity | Finding | Status |
+|---|---|---|---|
+| Q29 | Legibility | The floating **"Search your stories"** pill sits over the scrolling list with a translucent fill, and the card text behind it bleeds through as unreadable noise rather than being cleanly occluded or blurred. Same class as the `legibility-check-compositing` lesson — a compositing fault, not a text-colour one. | **Open** — next iteration; check the same floating-search treatment on macOS/Android/Windows before fixing, since it is likely shared |
+
 ## Apple test suite — added 2026-07-31
 
 The Apple side had **no test target at all** while Windows carried 443 tests, so

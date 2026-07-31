@@ -203,7 +203,9 @@ struct SavedQuizGoldenTests {
         #expect(Int(quiz.createdAt.timeIntervalSince1970 * 1000) == 1_753_900_000_000)
         #expect(quiz.entries.count == 3)
         #expect(quiz.entries[0] == .ref("src:desc:Q1"))
-        #expect(quiz.entries[2] == .ref("pic:0007"))
+        // The fixture's third entry is a SET ref precisely because a bare id is
+        // ambiguous across the corpus and the bundled sets.
+        #expect(quiz.entries[2] == .setRef(set: "picture", id: "src:describe:Ornette_Coleman"))
         guard case .inline(let inline) = quiz.entries[1] else {
             Issue.record("entry 1 must be inline"); return
         }

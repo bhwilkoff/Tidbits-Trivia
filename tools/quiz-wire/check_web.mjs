@@ -32,7 +32,7 @@ check('mode', quiz.mode, 'mix');
 check('entry count', quiz.entries.length, 3);
 check('entry 0 is a ref', quiz.entries[0], 'src:desc:Q1');
 check('entry 1 is inline', Array.isArray(quiz.entries[1]), true);
-check('entry 2 is a ref', quiz.entries[2], 'pic:0007');
+check('entry 2 is a SET ref', quiz.entries[2], { i: 'src:describe:Ornette_Coleman', s: 'picture' });
 
 console.log('re-encode is byte-identical (sorted keys, no drift)');
 check('round trip', quizToJSON(quiz), text);
@@ -40,13 +40,26 @@ check('round trip', quizToJSON(quiz), text);
 console.log('resolution degrades honestly');
 const r = resolveQuiz(quiz, (id) => (id === 'src:desc:Q1' ? { id, prompt: 'p' } : null));
 check('resolved count', r.questions.length, 2);      // the ref + the inline
-check('missing count', r.missing, 1);                // pic:0007 unresolvable
+check('missing count', r.missing, 1);                // the set ref is unresolvable
 check('not complete', r.isComplete, false);
 check('inline survived without a corpus', r.questions[1].prompt,
       'Which Texan city did the group form in?');
 
 const none = resolveQuiz(quiz, () => null);
 check('below the floor is not playable', none.isPlayable, false);
+
+console.log('a set ref never falls back to the colliding corpus row');
+// The corpus holds a DIFFERENT question under this exact id -- serving it would be
+// the silent substitution the contract forbids.
+// Entry 0 IS a corpus ref, so it legitimately resolves; only the SET ref must not.
+const collide = resolveQuiz(quiz,
+  () => ({ id: 'x', prompt: 'THE WRONG TEXT QUESTION' }),
+  () => null);
+check('set ref left missing, not filled from the corpus', collide.missing, 1);
+check('only the corpus ref + inline resolved', collide.questions.length, 2);
+const viaSet = resolveQuiz(quiz, () => null,
+  (set, id) => (set === 'picture' ? { id, prompt: 'Who is this?', image: 'x.jpg' } : null));
+check('set ref resolves from its own set', viaSet.questions.some((q) => q.prompt === 'Who is this?'), true);
 
 console.log('ids and titles');
 let seed = 42;
@@ -63,7 +76,7 @@ check('long title capped', cleanTitle('x'.repeat(200)).length, 60);
 console.log('lenient decoding — these objects outlive the app that wrote them');
 const withUnknown = quizFromJSON(JSON.stringify({ ...JSON.parse(text), fromV2: { a: 1 } }));
 check('unknown keys ignored', withUnknown.entries.length, 3);
-const withJunk = quizFromJSON(JSON.stringify({ ...JSON.parse(text), qs: ['src:a', 42, ['short'], 'pic:b'] }));
+const withJunk = quizFromJSON(JSON.stringify({ ...JSON.parse(text), qs: ['src:a', 42, ['short'], { s: 'picture' }, 'pic:b'] }));
 check('malformed entries skipped', withJunk.entries.length, 2);
 check('no id is rejected', quizFromJSON('{"by":"u","qs":[]}'), null);
 

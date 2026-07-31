@@ -12,7 +12,7 @@ enum TestStore {
         GameRecord.self, MissedFact.self, DailyStreak.self, CalibrationTally.self, SeenStory.self,
         MarathonRun.self, MarathonScore.self,
         ExpeditionProgress.self, ExpeditionCertificate.self,
-        LinkWallResult.self,
+        LinkWallResult.self, SavedQuizRecord.self,
     ])
 
     /// A fresh, isolated context per test — no cross-test bleed.

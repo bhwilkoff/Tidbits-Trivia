@@ -50,7 +50,9 @@ class SavedQuizTest {
         assertEquals(1753900000000L, quiz.createdAtMs)
         assertEquals(3, quiz.entries.size)
         assertEquals("src:desc:Q1", (quiz.entries[0] as QuizEntry.Ref).id)
-        assertEquals("pic:0007", (quiz.entries[2] as QuizEntry.Ref).id)
+        val setRef = quiz.entries[2] as QuizEntry.SetRef
+        assertEquals("picture", setRef.set)
+        assertEquals("src:describe:Ornette_Coleman", setRef.id)
         val inline = (quiz.entries[1] as QuizEntry.Inline).question
         assertEquals("Which Texan city did the group form in?", inline.prompt)
         assertEquals(listOf("Houston", "Dallas", "Austin", "El Paso"), inline.options)
@@ -81,12 +83,45 @@ class SavedQuizTest {
     @Test
     fun `corpus questions become refs and live ones inline`() {
         val quiz = SavedQuiz.from(
-            listOf(q("src:desc:Q1"), q("live:abc"), q("pic:0007")),
+            listOf(q("src:desc:Q1"), q("live:abc")),
             topic = "Jazz", creatorId = "uid-1", creatorName = "Ben",
         )
         assertTrue(quiz.entries[0] is QuizEntry.Ref)
         assertTrue(quiz.entries[1] is QuizEntry.Inline)
-        assertTrue(quiz.entries[2] is QuizEntry.Ref)
+    }
+
+    /** A question's SHAPE identifies its set, so provenance survives without being
+     *  threaded through every call site. */
+    @Test
+    fun `a bundled question is saved as a set ref not a bare ref`() {
+        val picture = q("src:describe:Tito").copy(imageUrl = "https://example.org/p.jpg")
+        val quiz = SavedQuiz.from(
+            listOf(picture, q("src:desc:Q1")),
+            topic = "Jazz", creatorId = "uid-1", creatorName = "Ben",
+        )
+        assertEquals("picture", (quiz.entries[0] as QuizEntry.SetRef).set)
+        assertTrue(quiz.entries[1] is QuizEntry.Ref)
+    }
+
+    /** The regression: the corpus holds a DIFFERENT question under the same ID, and
+     *  it must never be served in the bundled question's place. */
+    @Test
+    fun `a set ref never falls back to the colliding corpus row`() {
+        val quiz = SavedQuiz.fromJson(fixtureText())!!
+        val r = quiz.resolve(lookup = { q(it) })
+        assertEquals(1, r.missing)          // the set ref stays missing
+        assertEquals(2, r.questions.size)   // corpus ref + inline only
+    }
+
+    @Test
+    fun `a set ref resolves from its own set`() {
+        val quiz = SavedQuiz.fromJson(fixtureText())!!
+        val r = quiz.resolve(
+            lookup = { null },
+            setLookup = { set, id -> if (set == "picture") q(id).copy(prompt = "Who is this?") else null },
+        )
+        assertEquals(1, r.missing)          // only the corpus ref, which has no lookup here
+        assertTrue(r.questions.any { it.prompt == "Who is this?" })
     }
 
     /** A quiz must stay small enough to sync and share for free — refs are what make
@@ -112,8 +147,8 @@ class SavedQuizTest {
 
     @Test
     fun `a malformed entry is skipped not fatal`() {
-        val quiz = SavedQuiz.fromJson("""{"id":"abc","by":"u","qs":["src:a",42,["short"],"pic:b"]}""")
-        assertEquals(2, quiz!!.entries.size)
+        val quiz = SavedQuiz.fromJson("""{"id":"abc","by":"u","qs":["src:a",42,["short"],{"s":"picture"},"pic:b"]}""")
+        assertEquals(2, quiz!!.entries.size)   // the set-ref missing its `i` is skipped
     }
 
     @Test

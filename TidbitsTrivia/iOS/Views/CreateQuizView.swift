@@ -7,11 +7,15 @@ import SwiftData
 /// promise made tangible — the same engine that fills the corpus.
 struct CreateQuizView: View {
     @Environment(AppStore.self) private var store
+    @Environment(\.modelContext) private var modelContext
+    @Query(sort: \SavedQuizRecord.createdAt, order: .reverse) private var saved: [SavedQuizRecord]
     @State private var topic = ""
     @State private var isWorking = false
     @State private var error: String?
     @State private var generated: [Question] = []
+    @State private var playingQuizID: String?
     @State private var playing = false
+    @State private var shortfall: Int = 0
     @FocusState private var topicFocused: Bool
     @State private var stageIndex = 0
 
@@ -26,6 +30,7 @@ struct CreateQuizView: View {
                 inputCard
                 if let error { errorBanner(error) }
                 suggestionsSection
+                savedSection
             }
             .padding(.horizontal, Tidbits.Metric.pad)
             .readableColumn(alignment: .leading)   // §2.2a — aligns with the nav title
@@ -41,12 +46,15 @@ struct CreateQuizView: View {
             }
         }
         .fullScreenCover(isPresented: $playing) {
-            CustomGameContainer(topic: topic.isEmpty ? "Custom" : topic, questions: generated)
+            CustomGameContainer(topic: topic.isEmpty ? "Custom" : topic,
+                                questions: generated, quizID: playingQuizID)
         }
         .task {
             if let t = DebugHooks.autoCreate, topic.isEmpty {
                 topic = t
                 generate()
+            } else if DebugHooks.playSavedQuiz, let newest = saved.first {
+                play(newest)
             }
         }
     }
@@ -114,6 +122,67 @@ struct CreateQuizView: View {
         }
     }
 
+
+    /// Every quiz you make is kept — the owner's rule is "all created quizzes should
+    /// be saved to your account", so this is automatic, not a Save button you might
+    /// miss. The empty line teaches the mechanic on first run instead of leaving a
+    /// blank wall (universal-feature-states).
+    /// R-REC-1 keeps a dashboard shelf to 3 rows with a "see all" escape hatch.
+    private var shelf: [SavedQuizRecord] { Array(saved.prefix(3)) }
+
+    @ViewBuilder
+    private var savedHeader: some View {
+        HStack {
+            Text("Your quizzes")
+                .font(Tidbits.TypeRamp.l2)
+                .foregroundStyle(Tidbits.Palette.ink)
+            Spacer()
+            if saved.count > 3 {
+                NavigationLink {
+                    AllQuizzesView()
+                } label: {
+                    Text("See all")
+                        .font(Tidbits.TypeRamp.l5)
+                        .foregroundStyle(Tidbits.Palette.grape)
+                }
+            }
+        }
+    }
+
+    private var savedSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            savedHeader
+            if saved.isEmpty {
+                Text("Quizzes you make are saved here automatically, ready to replay.")
+                    .font(Tidbits.TypeRamp.l5)
+                    .foregroundStyle(Tidbits.Palette.inkSoft)
+            } else {
+                ForEach(shelf) { record in
+                    SavedQuizRow(record: record,
+                                 onPlay: { play(record) },
+                                 onDelete: { QuizStore.delete(id: record.quizID, in: modelContext) })
+                }
+            }
+        }
+    }
+
+    /// Replaying resolves the quiz's refs against what THIS build ships. A quiz can
+    /// legitimately come up short (an older corpus, a set this platform lacks), so
+    /// the shortfall is surfaced rather than silently padded with other questions.
+    private func play(_ record: SavedQuizRecord) {
+        guard let quiz = record.quiz else { return }
+        let resolution = quiz.resolveAgainstBundle()
+        guard resolution.isPlayable else {
+            error = "This quiz needs questions your version doesn't have yet. Try creating it again from \u{201C}\(quiz.topic)\u{201D}."
+            return
+        }
+        shortfall = resolution.missing
+        generated = resolution.questions
+        playingQuizID = quiz.id
+        topic = quiz.topic
+        playing = true
+    }
+
     private func generate() {
         let q = topic.trimmingCharacters(in: .whitespaces)
         guard q.count >= 2, !isWorking else { return }
@@ -149,6 +218,15 @@ struct CreateQuizView: View {
             isWorking = false
             if result.count >= 3 {
                 generated = result
+                // Every created quiz is saved to the account automatically — the
+                // player never has to notice a Save button to keep what they made.
+                let quiz = SavedQuiz.from(
+                    questions: result, topic: q, mode: "mix",
+                    creatorID: PlayerIdentityStore.shared.profileId ?? "local",
+                    creatorName: PlayerIdentityStore.shared.profile?.name ?? "")
+                QuizStore.save(quiz, in: modelContext)
+                playingQuizID = quiz.id
+                shortfall = 0
                 playing = true
             } else {
                 error = "Couldn't build a good quiz for \u{201C}\(q)\u{201D}. Try a broader or more famous subject."
@@ -183,6 +261,9 @@ private struct FlowChips: View {
 struct CustomGameContainer: View {
     let topic: String
     let questions: [Question]
+    /// Set when this round came from a saved quiz, so the play is counted against
+    /// it. Play counts are LOCAL metadata — they never rewrite the quiz payload.
+    var quizID: String? = nil
     @Environment(AppStore.self) private var store
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
@@ -213,8 +294,94 @@ struct CustomGameContainer: View {
         guard !recorded else { recorded = true; return }
         recorded = true
         RecordsStore.record(game.summary, in: modelContext)
+        if let quizID { QuizStore.markPlayed(id: quizID, in: modelContext) }
     }
     private func replay() { recorded = false; game.startCustom(mode: .mix, category: .named("mixed"), questions: questions) }
     private func close() { game.quit(); dismiss() }
 }
+
+
+/// One row on the Create tab's quiz shelf. Chunky-card system per iOS-DESIGN §5;
+/// destructive delete lives in a context menu rather than a visible button, so the
+/// row's primary tap target stays "play this".
+private struct SavedQuizRow: View {
+    let record: SavedQuizRecord
+    let onPlay: () -> Void
+    let onDelete: () -> Void
+    @State private var confirmingDelete = false
+
+    var body: some View {
+        Button(action: onPlay) {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(record.title)
+                        .font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                        .lineLimit(1)
+                    Text(subtitle)
+                        .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                        .lineLimit(1)
+                }
+                Spacer(minLength: 8)
+                Image(systemName: "play.circle.fill")
+                    .font(.system(size: 26))
+                    .foregroundStyle(Tidbits.Palette.grape)
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .chunkyCard()
+            .padding(.trailing, Tidbits.Metric.shadowOffset)
+        }
+        .buttonStyle(.plain)
+        .contextMenu {
+            Button(role: .destructive) { confirmingDelete = true } label: {
+                Label("Delete", systemImage: "trash")
+            }
+        }
+        .confirmationDialog("Delete \u{201C}\(record.title)\u{201D}?", isPresented: $confirmingDelete,
+                            titleVisibility: .visible) {
+            Button("Delete", role: .destructive, action: onDelete)
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This can't be undone.")
+        }
+    }
+
+    /// Question count first — it is what tells you how long the quiz is. The play
+    /// count only appears once it means something.
+    private var subtitle: String {
+        var parts = ["\(record.questionCount) questions"]
+        if record.playCount == 1 { parts.append("played once") }
+        else if record.playCount > 1 { parts.append("played \(record.playCount)x") }
+        return parts.joined(separator: " \u{00B7} ")
+    }
+}
+
+/// The full shelf, reached from "See all". Records-as-dashboard rule R-REC-1 keeps
+/// the Create tab to 3 rows; everything lives here.
+struct AllQuizzesView: View {
+    @Environment(\.modelContext) private var modelContext
+    @Query(sort: \SavedQuizRecord.createdAt, order: .reverse) private var saved: [SavedQuizRecord]
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 10) {
+                if saved.isEmpty {
+                    Text("No saved quizzes yet.")
+                        .font(Tidbits.TypeRamp.l4).foregroundStyle(Tidbits.Palette.inkSoft)
+                } else {
+                    ForEach(saved) { record in
+                        SavedQuizRow(record: record, onPlay: {},
+                                     onDelete: { QuizStore.delete(id: record.quizID, in: modelContext) })
+                    }
+                }
+            }
+            .padding(.horizontal, Tidbits.Metric.pad)
+            .readableColumn(alignment: .leading)
+            .padding(.vertical, 18)
+        }
+        .background(Tidbits.Palette.bg.ignoresSafeArea())
+        .navigationTitle("Your quizzes")
+    }
+}
+
 #endif

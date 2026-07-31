@@ -5,14 +5,21 @@ using System.Text.Json;
 namespace Tidbits.Core.Models;
 
 /// <summary>
-/// One entry in a quiz's ordered question list: either a REF (a corpus/bundled-set
-/// question ID) or an INLINE question in corpus.json row shape.
+/// One entry in a quiz's ordered question list: a CORPUS ref (a bare string on the
+/// wire), a BUNDLED-SET ref (carrying which set it came from), or an INLINE question.
+///
+/// SetRef exists because a bare ID is genuinely ambiguous: the bundled sets share the
+/// corpus "src:" namespace, and 166 of 200 sampled Picture ID rows have an ID that
+/// ALSO exists in the corpus as a different question shape. Resolving corpus-first
+/// therefore served a text question in place of a saved picture question.
 /// </summary>
-public readonly record struct QuizEntry(string? Ref, InlineQuestion? Inline)
+public readonly record struct QuizEntry(string? Ref, string? Set, InlineQuestion? Inline)
 {
-    public static QuizEntry OfRef(string id) => new(id, null);
-    public static QuizEntry OfInline(InlineQuestion q) => new(null, q);
-    public bool IsRef => Ref is not null;
+    public static QuizEntry OfRef(string id) => new(id, null, null);
+    public static QuizEntry OfSetRef(string set, string id) => new(id, set, null);
+    public static QuizEntry OfInline(InlineQuestion q) => new(null, null, q);
+    public bool IsRef => Ref is not null && Set is null;
+    public bool IsSetRef => Set is not null;
 }
 
 /// <summary>
@@ -119,6 +126,22 @@ public sealed class SavedQuiz
     public static bool IsLiveGenerated(Question q)
         => q.Id.StartsWith("live:") || q.TemplateId == "live";
 
+    /// Which bundled set a question came from, or null for a plain corpus row.
+    /// Derived from the question's SHAPE rather than threaded through from the call
+    /// site, so it stays correct no matter which surface built the set.
+    public static string? BundledSetName(Question q)
+    {
+        if (q.ImageUrl is not null) return "picture";
+        if (q.Closest is not null) return "closest";
+        if (q.Ordering is not null) return "order";
+        if (q.Matching is not null) return "match";
+        if (q.Accepted is not null) return "typeanswer";
+        if (q.Enumerate is not null) return "enumerate";
+        if (q.Id.StartsWith("tot:")) return "thisorthat";
+        if (q.Id.StartsWith("odd:")) return "oddoneout";
+        return null;
+    }
+
     public static SavedQuiz From(IEnumerable<Question> questions, string topic, string creatorId,
                                  string creatorName, string? title = null, string mode = "mix",
                                  string? id = null, long? createdAtMs = null) => new()
@@ -130,23 +153,36 @@ public sealed class SavedQuiz
         CreatorName = creatorName,
         CreatedAtMs = createdAtMs ?? DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
         Mode = mode,
-        Entries = questions.Select(q => IsLiveGenerated(q)
-            ? QuizEntry.OfInline(new InlineQuestion(q.Id, q.Prompt, q.Options, q.CorrectIndex,
-                q.CategoryId, q.Difficulty, q.Explanation, q.SourceTitle, q.SourceUrl ?? ""))
-            : QuizEntry.OfRef(q.Id)).ToList(),
+        Entries = questions.Select(q =>
+        {
+            if (IsLiveGenerated(q))
+                return QuizEntry.OfInline(new InlineQuestion(q.Id, q.Prompt, q.Options, q.CorrectIndex,
+                    q.CategoryId, q.Difficulty, q.Explanation, q.SourceTitle, q.SourceUrl ?? ""));
+            var set = BundledSetName(q);
+            return set is not null ? QuizEntry.OfSetRef(set, q.Id) : QuizEntry.OfRef(q.Id);
+        }).ToList(),
     };
 
     /// Resolve in order, keeping inline questions verbatim. <paramref name="lookup"/>
     /// returns null for an ID this build can't resolve. Never substitutes a different
     /// question — a shared quiz that quietly changes content is worse than one that
     /// admits it is incomplete.
-    public QuizResolution Resolve(Func<string, Question?> lookup)
+    public QuizResolution Resolve(Func<string, Question?> lookup,
+                                  Func<string, string, Question?>? setLookup = null)
     {
         var outQ = new List<Question>();
         int missing = 0;
         foreach (var e in Entries)
         {
-            if (e.IsRef)
+            if (e.IsSetRef)
+            {
+                // Deliberately does NOT fall back to the corpus: the corpus holds a
+                // DIFFERENT question under this ID, and serving it would be the silent
+                // substitution the contract forbids. Better to be one short.
+                var q = setLookup?.Invoke(e.Set!, e.Ref!);
+                if (q is not null) outQ.Add(q); else missing++;
+            }
+            else if (e.IsRef)
             {
                 var q = lookup(e.Ref!);
                 if (q is not null) outQ.Add(q); else missing++;
@@ -183,6 +219,14 @@ public sealed class SavedQuiz
             w.WriteStartArray("qs");
             foreach (var e in Entries)
             {
+                if (e.IsSetRef)
+                {
+                    w.WriteStartObject();          // keys sorted: i before s
+                    w.WriteString("i", e.Ref!);
+                    w.WriteString("s", e.Set!);
+                    w.WriteEndObject();
+                    continue;
+                }
                 if (e.IsRef) { w.WriteStringValue(e.Ref!); continue; }
                 var i = e.Inline!;
                 w.WriteStartArray();
@@ -231,6 +275,16 @@ public sealed class SavedQuiz
                 {
                     var s = raw.GetString()!;
                     if (s.Length > 0) entries.Add(QuizEntry.OfRef(s));
+                }
+                else if (raw.ValueKind == JsonValueKind.Object)
+                {
+                    if (raw.TryGetProperty("s", out var setEl) && setEl.ValueKind == JsonValueKind.String
+                        && raw.TryGetProperty("i", out var idEl2) && idEl2.ValueKind == JsonValueKind.String)
+                    {
+                        var set = setEl.GetString()!;
+                        var qid = idEl2.GetString()!;
+                        if (set.Length > 0 && qid.Length > 0) entries.Add(QuizEntry.OfSetRef(set, qid));
+                    }
                 }
                 else
                 {

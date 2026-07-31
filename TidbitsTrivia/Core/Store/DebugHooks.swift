@@ -75,6 +75,14 @@ enum DebugHooks {
         ProcessInfo.processInfo.environment["TIDBITS_AUTOCREATE"]
     }
 
+    /// TIDBITS_PLAY_SAVED=1 → replay the most recently saved quiz on launch. This is
+    /// the only way to exercise `resolveAgainstBundle` against the REAL bundled
+    /// corpus: the logic-only test bundle has no corpus.sqlite, so refs resolving
+    /// correctly is a simulator-only check.
+    static var playSavedQuiz: Bool {
+        ProcessInfo.processInfo.environment["TIDBITS_PLAY_SAVED"] == "1"
+    }
+
     /// TIDBITS_PARTY=1 → open Pass & Play on launch (combine with AUTOPILOT
     /// to drive the whole party flow to the scoreboard for screenshots).
     /// TIDBITS_CUSTOMIZE=1 opens the Customize sheet on launch (screenshots).

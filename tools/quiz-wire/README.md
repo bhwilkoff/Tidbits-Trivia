@@ -7,7 +7,14 @@ one object:
 1. a plain corpus **ref** (`src:desc:Q1`),
 2. an **inline** live-generated MCQ, in `corpus.json` row shape, with an apostrophe
    and a URL in it so escaping is covered,
-3. a bundled-set **ref** (`pic:0007`).
+3. a bundled-set **ref** (`{"i":"src:describe:Ornette_Coleman","s":"picture"}`).
+
+Entry 3 is the one that matters most. The bundled sets share the corpus `src:`
+namespace -- 166 of 200 sampled Picture ID rows have an ID that ALSO exists in the
+corpus as a *different question shape* -- so a bare ID is ambiguous and resolving it
+corpus-first silently served a text question in place of a saved picture question.
+A stack that decodes this entry as a plain ref, or that falls back to the corpus when
+its set lookup misses, reintroduces that bug.
 
 Keys are in sorted order because every writer emits sorted keys — two devices saving
 the same quiz must produce byte-identical output, which is what makes the "created or

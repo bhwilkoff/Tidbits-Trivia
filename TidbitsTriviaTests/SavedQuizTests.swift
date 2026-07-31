@@ -233,3 +233,83 @@ struct SavedQuizGoldenTests {
         #expect(inline.sourceURL.contains("Destiny's_Child"))
     }
 }
+
+/// The bundled sets share the corpus `src:` namespace — 166 of 200 sampled Picture
+/// ID rows have an ID that ALSO exists in the corpus as a different question shape.
+/// A bare ref is therefore ambiguous, and resolving it corpus-first silently served
+/// a text question in place of a saved picture question. Found by replaying a quiz
+/// on the simulator and watching question 1 lose its photograph.
+@Suite("Set-qualified refs")
+struct QuizSetRefTests {
+
+    private func corpusQ(_ id: String) -> Question {
+        Question(id: id, prompt: "text form of \(id)", options: ["a", "b", "c", "d"],
+                 correctIndex: 0, categoryID: "music", difficulty: 3, explanation: "e",
+                 sourceTitle: "t", sourceURL: nil, templateID: "src")
+    }
+
+    private func pictureQ(_ id: String) -> Question {
+        var q = corpusQ(id)
+        q = Question(id: id, prompt: "Who is this?", options: ["a", "b", "c", "d"],
+                     correctIndex: 0, categoryID: "music", difficulty: 3, explanation: "e",
+                     sourceTitle: "t", sourceURL: nil, templateID: "src",
+                     tags: [], imageURL: URL(string: "https://example.org/p.jpg"))
+        return q
+    }
+
+    /// A question's SHAPE identifies its set, so provenance survives without being
+    /// threaded through every call site.
+    @Test func aQuestionsShapeIdentifiesItsBundledSet() {
+        #expect(pictureQ("src:describe:X").bundledSetName == "picture")
+        #expect(corpusQ("src:describe:X").bundledSetName == nil)
+    }
+
+    @Test func aBundledQuestionIsSavedAsASetRefNotABareRef() {
+        let quiz = SavedQuiz.from(questions: [pictureQ("src:describe:Tito"), corpusQ("src:desc:Q1")],
+                                  topic: "Jazz", creatorID: "u", creatorName: "B")
+        #expect(quiz.entries[0] == .setRef(set: "picture", id: "src:describe:Tito"))
+        #expect(quiz.entries[1] == .ref("src:desc:Q1"))
+    }
+
+    /// The regression itself: the corpus holds a DIFFERENT question under the same
+    /// ID, and it must never be served in the bundled question's place.
+    @Test func aSetRefNeverFallsBackToTheCollidingCorpusRow() {
+        let id = "src:describe:Tito"
+        let quiz = SavedQuiz.from(questions: [pictureQ(id)], topic: "Jazz",
+                                  creatorID: "u", creatorName: "B")
+        // Corpus has the id; the picture set does not. Being one short is CORRECT.
+        let r = quiz.resolve(lookup: { _ in self.corpusQ(id) }, setLookup: { _, _ in nil })
+        #expect(r.questions.isEmpty)
+        #expect(r.missing == 1)
+    }
+
+    @Test func aSetRefResolvesFromItsOwnSet() {
+        let id = "src:describe:Tito"
+        let quiz = SavedQuiz.from(questions: [pictureQ(id)], topic: "Jazz",
+                                  creatorID: "u", creatorName: "B")
+        let r = quiz.resolve(lookup: { _ in self.corpusQ(id) },
+                             setLookup: { set, qid in set == "picture" ? self.pictureQ(qid) : nil })
+        #expect(r.questions.count == 1)
+        #expect(r.questions[0].prompt == "Who is this?")
+        #expect(r.questions[0].imageURL != nil)
+        #expect(r.isComplete)
+    }
+
+    @Test func setRefsRoundTripThroughTheWire() throws {
+        let quiz = SavedQuiz.from(questions: [pictureQ("src:describe:Tito"), corpusQ("src:desc:Q1")],
+                                  topic: "Jazz", creatorID: "u", creatorName: "B", id: "aaaaaaaaaa")
+        let data = try #require(quiz.jsonData())
+        let decoded = try #require(SavedQuiz(jsonData: data))
+        #expect(decoded.entries == quiz.entries)
+    }
+
+    /// The bare-string form stays the common case, so a corpus-only quiz is still
+    /// the compact thing the contract promises.
+    @Test func corpusRefsRemainBareStringsOnTheWire() throws {
+        let quiz = SavedQuiz.from(questions: [corpusQ("src:desc:Q1")], topic: "Jazz",
+                                  creatorID: "u", creatorName: "B", id: "aaaaaaaaaa")
+        let data = try #require(quiz.jsonData())
+        let json = String(decoding: data, as: UTF8.self)
+        #expect(json.contains("\"qs\":[\"src:desc:Q1\"]"))
+    }
+}

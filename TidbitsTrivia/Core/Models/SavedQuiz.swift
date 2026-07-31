@@ -13,10 +13,21 @@ import Foundation
 /// the shared fixture in `tools/quiz-wire/golden/`.
 nonisolated struct SavedQuiz: Identifiable, Hashable, Sendable {
 
-    /// One entry in the ordered question list. A string is a corpus/bundled-set ID;
-    /// an array is an inline `corpus.json` row (see `InlineQuestion`).
+    /// One entry in the ordered question list.
+    ///
+    /// - `ref`     — a CORPUS question ID (a bare string on the wire; the common case)
+    /// - `setRef`  — a BUNDLED-SET question, carrying which set it came from
+    /// - `inline`  — a live-generated MCQ, in `corpus.json` row shape
+    ///
+    /// `setRef` exists because a bare ID is genuinely ambiguous: the bundled sets
+    /// share the corpus `src:` namespace, and 166 of 200 sampled Picture ID rows
+    /// have an ID that ALSO exists in the corpus as a different question shape. A
+    /// saved picture question therefore came back as a text question with the same
+    /// four options — the exact silent substitution §1 forbids. Caught on the
+    /// simulator by replaying a quiz and seeing question 1 lose its photograph.
     enum Entry: Hashable, Sendable {
         case ref(String)
+        case setRef(set: String, id: String)
         case inline(InlineQuestion)
     }
 
@@ -65,7 +76,9 @@ nonisolated struct SavedQuiz: Identifiable, Hashable, Sendable {
             createdAt: createdAt,
             mode: mode,
             entries: questions.map { q in
-                q.isLiveGenerated ? .inline(InlineQuestion(q)) : .ref(q.id)
+                if q.isLiveGenerated { return .inline(InlineQuestion(q)) }
+                if let set = q.bundledSetName { return .setRef(set: set, id: q.id) }
+                return .ref(q.id)
             }
         )
     }
@@ -96,13 +109,19 @@ nonisolated struct SavedQuiz: Identifiable, Hashable, Sendable {
     /// Resolve in order, keeping inline questions verbatim. `lookup` returns nil for
     /// an ID this build can't resolve. Never substitutes a different question — a
     /// shared quiz that quietly changes content is worse than an incomplete one.
-    func resolve(lookup: (String) -> Question?) -> Resolution {
+    func resolve(lookup: (String) -> Question?,
+                 setLookup: (String, String) -> Question? = { _, _ in nil }) -> Resolution {
         var out: [Question] = []
         var missing = 0
         for entry in entries {
             switch entry {
             case .ref(let id):
                 if let q = lookup(id) { out.append(q) } else { missing += 1 }
+            case .setRef(let set, let id):
+                // Deliberately does NOT fall back to the corpus: the corpus holds a
+                // DIFFERENT question under this ID, and serving it would be the
+                // silent substitution the contract forbids. Better to be one short.
+                if let q = setLookup(set, id) { out.append(q) } else { missing += 1 }
             case .inline(let i):
                 out.append(i.question())
             }
@@ -180,11 +199,29 @@ extension Question {
     /// `nonisolated` because the project defaults to MainActor isolation and the
     /// codec runs off the main actor.
     nonisolated var isLiveGenerated: Bool { id.hasPrefix("live:") || templateID == "live" }
+
+    /// Which bundled set this question came from, or nil for a plain corpus row.
+    ///
+    /// Derived from the question's SHAPE rather than threaded through from the call
+    /// site, so it stays correct no matter which surface built the set. The shaped
+    /// payloads are mutually exclusive by construction, and the two shapes with no
+    /// payload of their own (This-or-That, Odd-one-out) own their ID prefix.
+    nonisolated var bundledSetName: String? {
+        if imageURL != nil { return "picture" }
+        if closest != nil { return "closest" }
+        if ordering != nil { return "order" }
+        if matching != nil { return "match" }
+        if accepted != nil { return "typeanswer" }
+        if enumerate != nil { return "enumerate" }
+        if id.hasPrefix("tot:") { return "thisorthat" }
+        if id.hasPrefix("odd:") { return "oddoneout" }
+        return nil
+    }
 }
 
 // MARK: - Wire codec (docs/QUIZ-CONTRACT.md §2)
 
-extension SavedQuiz {
+nonisolated extension SavedQuiz {
 
     /// Terse keys because this object rides in share URLs and RTDB. Renaming one is
     /// a breaking change; readers must ignore keys they don't know.
@@ -201,6 +238,7 @@ extension SavedQuiz {
             "qs": entries.map { entry -> Any in
                 switch entry {
                 case .ref(let r): return r
+                case .setRef(let set, let id): return ["s": set, "i": id]
                 case .inline(let i): return i.row
                 }
             },
@@ -224,6 +262,9 @@ extension SavedQuiz {
         self.mode = wire["m"] as? String ?? "mix"
         self.entries = qs.compactMap { raw in
             if let s = raw as? String { return s.isEmpty ? nil : .ref(s) }
+            if let o = raw as? [String: Any], let set = o["s"] as? String, let id = o["i"] as? String {
+                return set.isEmpty || id.isEmpty ? nil : .setRef(set: set, id: id)
+            }
             if let row = raw as? [Any], let i = InlineQuestion(row: row) { return .inline(i) }
             return nil
         }

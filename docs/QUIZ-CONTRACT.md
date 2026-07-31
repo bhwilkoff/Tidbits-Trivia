@@ -25,8 +25,26 @@ Each entry is type-disambiguated — the same trick `corpus.json` already uses f
 
 | Entry type | Meaning |
 |---|---|
-| **string** | A question ID resolvable from the bundled corpus or a bundled set |
+| **string** | A CORPUS question ID |
+| **object** | A BUNDLED-SET question: `{"i": "<id>", "s": "<set>"}` |
 | **array** | An INLINE question, in the exact `corpus.json` row shape |
+
+### Why a bundled-set ref carries its set
+
+A bare ID is **ambiguous**. The bundled sets share the corpus `src:` namespace: of
+200 sampled Picture ID rows, **166 have an ID that also exists in the corpus as a
+different question shape**. Resolving corpus-first therefore returned a text question
+in place of a saved picture question — the exact silent substitution this section
+forbids, and invisible unless you replay a quiz and notice the photograph is gone.
+
+Two rules follow, and both are pinned by tests on all four stacks:
+
+1. A question from a bundled set is saved as `{"i","s"}`, never as a bare string.
+   Which set is derived from the question's **shape** (it has an image → `picture`, a
+   `closest` spec → `closest`, and so on), so provenance survives without being
+   threaded through every call site.
+2. A set ref that its own set can't resolve is **left missing**. It must never fall
+   back to the corpus, because the corpus is exactly where the wrong question lives.
 
 ### Why inline exists, and why it is narrow
 
@@ -69,7 +87,9 @@ content is worse than one that admits it is incomplete.
   "bn": "Ben",              // creator's display name at save time (denormalised)
   "at": 1753900000000,      // created, ms since epoch (UTC)
   "m":  "mix",              // game mode: mix | classic | timeAttack | survival | stake
-  "qs": [ "src:desc:Q1339", [ /* corpus row */ ] ]
+  "qs": [ "src:desc:Q1339",                       // corpus ref
+          {"i": "src:describe:Ornette_Coleman", "s": "picture"},   // bundled-set ref
+          [ /* corpus row */ ] ]                  // inline (live-generated)
 }
 ```
 

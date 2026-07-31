@@ -43,11 +43,22 @@ data class SavedQuiz(
     /** Resolve refs in order, keeping inline questions verbatim. [lookup] returns null
      *  for an ID this build can't resolve. Never substitutes a different question — a
      *  shared quiz that quietly changes content is worse than an incomplete one. */
-    fun resolve(lookup: (String) -> Question?): QuizResolution {
+    /** `setLookup` comes FIRST so the trailing-lambda idiom (`quiz.resolve { ... }`)
+     *  still binds to `lookup`, the one every caller needs. With the obvious ordering
+     *  a trailing lambda silently became the SET lookup and every corpus ref resolved
+     *  to nothing — a quiz that looked empty for no visible reason. */
+    fun resolve(
+        setLookup: (String, String) -> Question? = { _, _ -> null },
+        lookup: (String) -> Question?,
+    ): QuizResolution {
         val out = mutableListOf<Question>()
         var missing = 0
         for (e in entries) when (e) {
             is QuizEntry.Ref -> lookup(e.id)?.let { out.add(it) } ?: missing++
+            // Deliberately does NOT fall back to the corpus: the corpus holds a
+            // DIFFERENT question under this ID, and serving it would be the silent
+            // substitution the contract forbids. Better to be one short.
+            is QuizEntry.SetRef -> setLookup(e.set, e.id)?.let { out.add(it) } ?: missing++
             is QuizEntry.Inline -> out.add(e.question.toQuestion())
         }
         return QuizResolution(out, missing)
@@ -68,6 +79,10 @@ data class SavedQuiz(
         put("qs", buildJsonArray {
             for (e in entries) when (e) {
                 is QuizEntry.Ref -> add(JsonPrimitive(e.id))
+                is QuizEntry.SetRef -> add(buildJsonObject {   // keys sorted: i before s
+                    put("i", JsonPrimitive(e.id))
+                    put("s", JsonPrimitive(e.set))
+                })
                 is QuizEntry.Inline -> add(e.question.toRow())
             }
         })
@@ -105,6 +120,21 @@ data class SavedQuiz(
          *  from a bundled file, so it is the only thing a quiz has to carry inline. */
         fun isLiveGenerated(q: Question): Boolean = q.id.startsWith("live:")
 
+        /** Which bundled set a question came from, or null for a plain corpus row.
+         *  Derived from the question's SHAPE rather than threaded through from the
+         *  call site, so it stays correct no matter which surface built the set. */
+        fun bundledSetName(q: Question): String? = when {
+            q.imageUrl != null -> "picture"
+            q.closest != null -> "closest"
+            q.ordering != null -> "order"
+            q.matching != null -> "match"
+            q.accepted != null -> "typeanswer"
+            q.enumerate != null -> "enumerate"
+            q.id.startsWith("tot:") -> "thisorthat"
+            q.id.startsWith("odd:") -> "oddoneout"
+            else -> null
+        }
+
         fun from(
             questions: List<Question>,
             topic: String,
@@ -123,7 +153,11 @@ data class SavedQuiz(
             createdAtMs = createdAtMs,
             mode = mode,
             entries = questions.map {
-                if (isLiveGenerated(it)) QuizEntry.Inline(InlineQuestion.of(it)) else QuizEntry.Ref(it.id)
+                when {
+                    isLiveGenerated(it) -> QuizEntry.Inline(InlineQuestion.of(it))
+                    else -> bundledSetName(it)
+                        ?.let { set -> QuizEntry.SetRef(set, it.id) } ?: QuizEntry.Ref(it.id)
+                }
             },
         )
 
@@ -145,6 +179,10 @@ data class SavedQuiz(
                 val prim = raw as? JsonPrimitive
                 if (prim != null && prim.isString) {
                     prim.content.takeIf { it.isNotEmpty() }?.let { QuizEntry.Ref(it) }
+                } else if (raw is JsonObject) {
+                    val set = (raw["s"] as? JsonPrimitive)?.takeIf { it.isString }?.content
+                    val qid = (raw["i"] as? JsonPrimitive)?.takeIf { it.isString }?.content
+                    if (!set.isNullOrEmpty() && !qid.isNullOrEmpty()) QuizEntry.SetRef(set, qid) else null
                 } else {
                     (raw as? JsonArray)?.let { InlineQuestion.fromRow(it) }?.let { QuizEntry.Inline(it) }
                 }
@@ -170,6 +208,14 @@ data class SavedQuiz(
  *  or an INLINE question in corpus.json row shape. */
 sealed interface QuizEntry {
     data class Ref(val id: String) : QuizEntry
+
+    /** A BUNDLED-SET question, carrying which set it came from. Exists because a bare
+     *  ID is genuinely ambiguous: the bundled sets share the corpus `src:` namespace,
+     *  and 166 of 200 sampled Picture ID rows have an ID that ALSO exists in the corpus
+     *  as a different question shape, so resolving corpus-first served a text question
+     *  in place of a saved picture question. */
+    data class SetRef(val set: String, val id: String) : QuizEntry
+
     data class Inline(val question: InlineQuestion) : QuizEntry
 }
 

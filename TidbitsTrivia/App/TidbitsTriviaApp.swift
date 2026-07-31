@@ -115,7 +115,7 @@ struct TidbitsTriviaApp: App {
         let schema = Schema([GameRecord.self, MissedFact.self, DailyStreak.self, CalibrationTally.self, SeenStory.self,
                              MarathonRun.self, MarathonScore.self,
                              ExpeditionProgress.self, ExpeditionCertificate.self,
-                             LinkWallResult.self])
+                             LinkWallResult.self, SavedQuizRecord.self])
         #if os(tvOS)
         // Application Support is NOT writable on real Apple TV (Decision 017;
         // the simulator is lenient and won't catch it). Persist in Caches,

@@ -55,6 +55,26 @@ function questionFromRow(r) {
   };
 }
 
+// Which bundled set a question came from, or null for a plain corpus row. Derived
+// from the question's SHAPE rather than threaded through from the call site, so it
+// stays correct no matter which surface built the set.
+export function bundledSetName(q) {
+  if (q.image || q.imageURL) return 'picture';
+  if (q.closest) return 'closest';
+  if (q.ordering) return 'order';
+  if (q.matching) return 'match';
+  if (q.accepted) return 'typeanswer';
+  if (q.enumerate) return 'enumerate';
+  if ((q.id || '').startsWith('tot:')) return 'thisorthat';
+  if ((q.id || '').startsWith('odd:')) return 'oddoneout';
+  return null;
+}
+
+function isSetRef(e) {
+  return e && typeof e === 'object' && !Array.isArray(e)
+    && typeof e.s === 'string' && e.s && typeof e.i === 'string' && e.i;
+}
+
 function isValidRow(r) {
   return Array.isArray(r) && r.length >= 9
     && typeof r[0] === 'string' && typeof r[1] === 'string'
@@ -76,7 +96,11 @@ export function makeQuiz({ questions, topic, title, mode = 'mix', creatorID, cre
     creatorName: creatorName || '',
     createdAt,
     mode,
-    entries: questions.map((q) => (isLiveGenerated(q) ? inlineRow(q) : q.id)),
+    entries: questions.map((q) => {
+      if (isLiveGenerated(q)) return inlineRow(q);
+      const set = bundledSetName(q);
+      return set ? { i: q.id, s: set } : q.id;
+    }),
   };
 }
 
@@ -107,6 +131,7 @@ export function quizFromWire(w) {
   const entries = [];
   for (const raw of w.qs) {
     if (typeof raw === 'string' && raw) entries.push(raw);
+    else if (isSetRef(raw)) entries.push({ i: raw.i, s: raw.s });
     else if (isValidRow(raw)) entries.push(raw);
   }
   return {
@@ -125,8 +150,21 @@ export function quizFromWire(w) {
 // that is what makes the merge guard in QUIZ-CONTRACT §4 ("created or deleted, never
 // edited in place") checkable rather than aspirational.
 export function quizToJSON(quiz) {
-  const w = quizToWire(quiz);
-  return JSON.stringify(w, Object.keys(w).sort());
+  return canonicalJSON(quizToWire(quiz));
+}
+
+// Sorts keys at EVERY level. An array replacer (`JSON.stringify(w, keys.sort())`)
+// looks equivalent but filters object keys by name globally, so it silently deleted
+// the `i`/`s` keys inside a set-ref entry -- the golden caught it the moment the
+// fixture gained one.
+function canonicalJSON(v) {
+  if (Array.isArray(v)) return `[${v.map(canonicalJSON).join(',')}]`;
+  if (v && typeof v === 'object') {
+    const body = Object.keys(v).sort()
+      .map((k) => `${JSON.stringify(k)}:${canonicalJSON(v[k])}`).join(',');
+    return `{${body}}`;
+  }
+  return JSON.stringify(v);
 }
 
 export function quizFromJSON(text) {
@@ -136,12 +174,18 @@ export function quizFromJSON(text) {
 // Resolve refs in order against the local corpus. `lookup` returns null/undefined for
 // an ID this build can't resolve. Never substitutes a different question — a shared
 // quiz that quietly changes content is worse than one that admits it is incomplete.
-export function resolveQuiz(quiz, lookup) {
+export function resolveQuiz(quiz, lookup, setLookup = () => null) {
   const questions = [];
   let missing = 0;
   for (const entry of quiz.entries) {
     if (typeof entry === 'string') {
       const q = lookup(entry);
+      if (q) questions.push(q); else missing++;
+    } else if (isSetRef(entry)) {
+      // Deliberately does NOT fall back to the corpus: the corpus holds a DIFFERENT
+      // question under this ID, and serving it would be the silent substitution the
+      // contract forbids. Better to be one short.
+      const q = setLookup(entry.s, entry.i);
       if (q) questions.push(q); else missing++;
     } else {
       questions.push(questionFromRow(entry));

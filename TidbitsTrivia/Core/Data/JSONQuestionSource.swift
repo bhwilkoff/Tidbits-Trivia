@@ -16,6 +16,7 @@ nonisolated final class JSONQuestionSource: @unchecked Sendable {
     static let enumerate = JSONQuestionSource(resource: "enumerate")
 
     private let all: [Question]
+    private let byID: [String: Question]
 
     init(resource: String) {
         guard let url = Bundle.main.url(forResource: resource, withExtension: "json"),
@@ -23,13 +24,21 @@ nonisolated final class JSONQuestionSource: @unchecked Sendable {
               let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let rows = root["questions"] as? [[Any]] else {
             all = []
+            byID = [:]
             return
         }
         all = rows.compactMap(Self.parse)
+        byID = Dictionary(all.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
     }
 
     var isAvailable: Bool { !all.isEmpty }
     var count: Int { all.count }
+
+    /// Look up by ID — what a saved quiz needs to turn its refs back into questions
+    /// (docs/QUIZ-CONTRACT.md). Built once in `init` rather than cached lazily: these
+    /// sources are shared `static let` singletons, so a mutable cache would be
+    /// exactly the nonisolated global shared state Swift 6 rejects.
+    func question(id: String) -> Question? { byID[id] }
 
     func questions(categoryID: String, excluding seen: Set<String>, limit: Int) -> [Question] {
         let pool = all.filter {

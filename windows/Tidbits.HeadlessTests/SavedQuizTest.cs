@@ -49,7 +49,9 @@ public class SavedQuizTest
         Assert.Equal(3, quiz.Entries.Count);
         Assert.Equal("src:desc:Q1", quiz.Entries[0].Ref);
         Assert.False(quiz.Entries[1].IsRef);
-        Assert.Equal("pic:0007", quiz.Entries[2].Ref);
+        Assert.True(quiz.Entries[2].IsSetRef);
+        Assert.Equal("picture", quiz.Entries[2].Set);
+        Assert.Equal("src:describe:Ornette_Coleman", quiz.Entries[2].Ref);
         Assert.Equal("Which Texan city did the group form in?", quiz.Entries[1].Inline!.Prompt);
         Assert.Equal(new[] { "Houston", "Dallas", "Austin", "El Paso" }, quiz.Entries[1].Inline!.Options);
         Assert.Equal(0, quiz.Entries[1].Inline!.CorrectIndex);
@@ -84,11 +86,43 @@ public class SavedQuizTest
     [Fact]
     public void Corpus_questions_become_refs_and_live_ones_inline()
     {
-        var quiz = SavedQuiz.From([Q("src:desc:Q1"), Q("live:abc", "live"), Q("pic:0007")],
-                                  "Jazz", "uid-1", "Ben");
+        var quiz = SavedQuiz.From([Q("src:desc:Q1"), Q("live:abc", "live")], "Jazz", "uid-1", "Ben");
         Assert.True(quiz.Entries[0].IsRef);
         Assert.False(quiz.Entries[1].IsRef);
-        Assert.True(quiz.Entries[2].IsRef);
+        Assert.False(quiz.Entries[1].IsSetRef);
+    }
+
+    /// A question's SHAPE identifies its set, so provenance survives without being
+    /// threaded through every call site.
+    [Fact]
+    public void A_bundled_question_is_saved_as_a_set_ref_not_a_bare_ref()
+    {
+        var picture = Q("src:describe:Tito") with { ImageUrl = "https://example.org/p.jpg" };
+        var quiz = SavedQuiz.From([picture, Q("src:desc:Q1")], "Jazz", "uid-1", "Ben");
+        Assert.True(quiz.Entries[0].IsSetRef);
+        Assert.Equal("picture", quiz.Entries[0].Set);
+        Assert.True(quiz.Entries[1].IsRef);
+    }
+
+    /// The regression: the corpus holds a DIFFERENT question under the same ID, and
+    /// it must never be served in the bundled question's place.
+    [Fact]
+    public void A_set_ref_never_falls_back_to_the_colliding_corpus_row()
+    {
+        var quiz = SavedQuiz.FromJson(FixtureText())!;
+        var r = quiz.Resolve(id => Q(id), setLookup: null);
+        Assert.Equal(1, r.Missing);                       // the set ref stays missing
+        Assert.Equal(2, r.Questions.Count);               // corpus ref + inline only
+    }
+
+    [Fact]
+    public void A_set_ref_resolves_from_its_own_set()
+    {
+        var quiz = SavedQuiz.FromJson(FixtureText())!;
+        var r = quiz.Resolve(_ => null,
+            (set, id) => set == "picture" ? Q(id) with { Prompt = "Who is this?" } : null);
+        Assert.Equal(1, r.Missing);   // only the corpus ref, which has no lookup here
+        Assert.Contains(r.Questions, q => q.Prompt == "Who is this?");
     }
 
     /// A quiz must stay small enough to sync and share for free — refs are what make
@@ -116,8 +150,8 @@ public class SavedQuizTest
     public void A_malformed_entry_is_skipped_not_fatal()
     {
         var quiz = SavedQuiz.FromJson(
-            "{\"id\":\"abc\",\"by\":\"u\",\"qs\":[\"src:a\",42,[\"short\"],\"pic:b\"]}");
-        Assert.Equal(2, quiz!.Entries.Count);
+            "{\"id\":\"abc\",\"by\":\"u\",\"qs\":[\"src:a\",42,[\"short\"],{\"s\":\"picture\"},\"pic:b\"]}");
+        Assert.Equal(2, quiz!.Entries.Count);   // the set-ref missing its `i` is skipped
     }
 
     [Fact]
@@ -160,7 +194,7 @@ public class SavedQuizTest
         var r = quiz!.Resolve(_ => null);
         Assert.Single(r.Questions);
         Assert.Equal("Which Texan city did the group form in?", r.Questions[0].Prompt);
-        Assert.Equal(2, r.Missing);
+        Assert.Equal(2, r.Missing);   // the corpus ref and the set ref
     }
 
     // MARK: ids and titles

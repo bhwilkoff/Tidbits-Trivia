@@ -187,7 +187,7 @@ Both verified as genuinely implemented, not shells:
 
 | # | Severity | Finding | Status |
 |---|---|---|---|
-| Q29 | Legibility | The floating **"Search your stories"** pill sits over the scrolling list with a translucent fill, and the card text behind it bleeds through as unreadable noise rather than being cleanly occluded or blurred. Same class as the `legibility-check-compositing` lesson — a compositing fault, not a text-colour one. | **Open** — next iteration; check the same floating-search treatment on macOS/Android/Windows before fixing, since it is likely shared |
+| Q29 | Not a bug | The floating **"Search your stories"** pill looked like a compositing fault (card text bleeding through illegibly). It is SwiftUI's **native `.searchable()`**, which on the iOS 26 baseline renders as a bottom-aligned floating pill with Liquid Glass — the bleed-through is Apple's material showing content scrolling beneath, i.e. the intended appearance, exaggerated by a static screenshot. CLAUDE.md mandates exactly this 26-era API, so "fixing" it would mean fighting the platform. | **Closed — by design.** Same discipline as the Atlas sample-floor test: verify the contract before changing correct code |
 
 ## Apple test suite — added 2026-07-31
 

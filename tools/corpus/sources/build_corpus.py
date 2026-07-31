@@ -28,18 +28,44 @@ ANDROID_JSON = os.path.join(ROOT, "android", "app", "src", "main", "assets", "co
 IOS_SQLITE = os.path.join(ROOT, "TidbitsTrivia", "Resources", "corpus.sqlite")
 
 
+def fold(s):
+    """Lowercase + strip diacritics, so a search for "beyonce" finds "Beyoncé".
+    Mirrored by Swift/Kotlin/C#/JS `fold` — all five must agree or a topic returns
+    different questions per platform."""
+    import unicodedata
+    return "".join(ch for ch in unicodedata.normalize("NFKD", s)
+                   if not unicodedata.combining(ch)).lower()
+
+
 def write_sqlite(rows, path):
-    """iOS reads corpus.sqlite (12-col questions table — see DATA-CONTRACT)."""
+    """Apple + Android read corpus.sqlite (15-col questions table — DATA-CONTRACT).
+
+    This is the ONE writer. It previously emitted only 12 columns while
+    resync_corpus.sh emitted 14, so whichever ran last decided whether the shipped
+    corpus had `tags` at all — and Create's scoring weights tags highest.
+    """
     import sqlite3 as s3
     if os.path.exists(path):
         os.remove(path)
     c = s3.connect(path)
     c.execute("""CREATE TABLE questions (id TEXT PRIMARY KEY, prompt TEXT,
         option0 TEXT, option1 TEXT, option2 TEXT, option3 TEXT, correct_index INTEGER,
-        category_id TEXT, difficulty INTEGER, explanation TEXT, source_title TEXT, source_url TEXT)""")
-    c.executemany("INSERT OR REPLACE INTO questions VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
-                  [(r[0], r[1], r[2][0], r[2][1], r[2][2], r[2][3], r[3], r[4], r[5], r[6], r[7], r[8])
-                   for r in rows])
+        category_id TEXT, difficulty INTEGER, explanation TEXT, source_title TEXT, source_url TEXT,
+        template_id TEXT, tags TEXT, search_text TEXT)""")
+
+    def out(r):
+        # template_id mirrors JSONQuestionSource.swift: the id's first colon segment.
+        # tags (10th element, optional) is pipe-joined — sqlite has no array type.
+        # search_text is SPARSE: only rows whose folded text actually differs carry
+        # it (~9% of rows, 3.3MB); dense would cost ~35MB of app bundle for nothing.
+        tags = "|".join(r[9]) if len(r) > 9 and r[9] else ""
+        hay = " ".join([r[1] or "", r[7] or "", r[6] or "", tags.replace("|", " ")])
+        folded = fold(hay)
+        return (r[0], r[1], r[2][0], r[2][1], r[2][2], r[2][3], r[3], r[4], r[5], r[6], r[7], r[8],
+                r[0].split(":")[0], tags, folded if folded != hay.lower() else "")
+
+    c.executemany("INSERT OR REPLACE INTO questions VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                  [out(r) for r in rows])
     c.commit(); c.close()
 
 CONTINENT = {  # P30 target QID -> display name

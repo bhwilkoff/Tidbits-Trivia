@@ -340,13 +340,19 @@ object Corpus {
      *  baseline — no live API, no hallucination (docs/CREATE-QUESTION-GEN-PLAYBOOK.md). */
     /** Words too common to narrow anything — they made the pre-filter match nearly
      *  the whole corpus, crowding out real hits before ranking. Mirrors Swift/JS/C#. */
+    /** Lowercase + strip diacritics, so "beyonce" finds "Beyoncé". Mirrors the corpus
+     *  build's `search_text` and the Swift/C#/JS `fold` — all must agree or a topic
+     *  returns different questions per platform. */
+    fun fold(s: String): String = java.text.Normalizer.normalize(s, java.text.Normalizer.Form.NFKD)
+        .replace(Regex("\\p{M}+"), "").lowercase()
+
     private val STOPWORDS = setOf("the", "and", "for", "with", "from", "that", "this", "his", "her", "its", "was", "were", "are", "who", "what", "which", "how", "why", "all", "any")
 
     fun search(topic: String, limit: Int): List<Question> {
         // Stopwords are dropped, not merely short words: the >=3 rule kept "the",
         // which matches nearly every row and crowds real hits out of the capped
         // pre-filter before ranking ("The Beatles", "The Simpsons"). Mirrors Swift.
-        val rawTokens = topic.lowercase().split(Regex("[^a-z0-9]+")).filter { it.length >= 3 }
+        val rawTokens = fold(topic).split(Regex("[^a-z0-9]+")).filter { it.length >= 3 }
         val keptTokens = rawTokens.filter { it !in STOPWORDS }
         val tokens = keptTokens.ifEmpty { rawTokens }
         if (tokens.isEmpty()) return emptyList()
@@ -355,10 +361,14 @@ object Corpus {
         // matches what the old full scan found. The cap stops a common word ("history") from
         // materialising a big slice of the corpus — the caller only ever takes a handful, so a
         // deeper candidate pool would not change what ships.
+        // search_text is the folded mirror of the four text columns, present only where
+        // folding changes something. It is what makes "beyonce" find "Beyoncé":
+        // SQL LIKE cannot strip diacritics, so without it every accented subject was
+        // invisible to Create (measured: 0 results for Beyonce, Bjork, Dvorak).
         val clause = tokens.joinToString(" OR ") {
-            "(prompt LIKE ? OR source_title LIKE ? OR explanation LIKE ? OR tags LIKE ?)"
+            "(prompt LIKE ? OR source_title LIKE ? OR explanation LIKE ? OR tags LIKE ? OR search_text LIKE ?)"
         }
-        val args = tokens.flatMap { t -> List(4) { "%$t%" } }.toTypedArray()
+        val args = tokens.flatMap { t -> List(5) { "%$t%" } }.toTypedArray()
         // The two owner rules (drop the repetitive "which continent" template and the
         // trivially-easy tier) push down into SQL; the answer-giveaway rule needs answerText.
         val candidates = query(
@@ -366,13 +376,12 @@ object Corpus {
                 "AND id NOT LIKE 'src:continent:%' AND ($clause) LIMIT 6000",
             args,
         )
-        val ranked = candidates.mapNotNull { q ->
-            // Drop questions whose ANSWER is/contains the topic — the player typed it,
-            // so that's a giveaway ("Chicago" → answer "Chicago"). Keep ones ABOUT it.
-            val answer = q.answerText.lowercase()
-            if (tokens.any { answer.contains(it) }) return@mapNotNull null
-            val title = q.sourceTitle.lowercase(); val prompt = q.prompt.lowercase(); val explanation = q.explanation.lowercase()
-            val tagsLower = q.tags.map { it.lowercase() }
+        val scoredAll = candidates.mapNotNull { q ->
+            // Folded, not merely lowercased: the tokens are folded, so an accented row
+            // would score 0 against them and be dropped by the `score > 0` gate — the
+            // pre-filter would surface it and the ranker would throw it straight away.
+            val title = fold(q.sourceTitle); val prompt = fold(q.prompt); val explanation = fold(q.explanation)
+            val tagsLower = q.tags.map { fold(it) }
             val score = tokens.sumOf {
                 (if (tagsLower.any { tag -> tag.contains(it) }) 3 else 0) +
                 (if (title.contains(it)) 2 else 0) + (if (prompt.contains(it)) 1 else 0) + (if (explanation.contains(it)) 1 else 0)
@@ -389,12 +398,28 @@ object Corpus {
             }
             if (score > 0) Triple(q, score, matched) else null
         }
-        // Keep only rows matching the MOST typed words, then rank within that
-        // tier. Single-word topics are unaffected (every row ties at 1).
-        val bestMatched = ranked.maxOfOrNull { it.third } ?: 0
-        val relevant = ranked.filter { it.third == bestMatched }
+        // A question whose ANSWER is/contains the topic is a giveaway ("Chicago" →
+        // answer "Chicago") and is held in RESERVE rather than dropped: for a person
+        // most good questions answer with their name (17 of the 20 real van Gogh
+        // questions do), so a hard drop starved the pool below a full quiz.
+        val (giveaways, clean) = scoredAll.partition { (q, _, _) ->
+            val answer = fold(q.answerText)
+            tokens.any { answer.contains(it) }
+        }
+        var out = diversifyByCategory(topTier(clean), limit)
+        if (out.size < limit) {
+            val taken = out.map { it.id }.toSet()
+            out = out + topTier(giveaways).filter { it.id !in taken }.take(limit - out.size)
+        }
+        return out
+    }
+
+    /** Keep only rows matching the MOST typed words, then rank within that tier.
+     *  Single-word topics are unaffected (every row ties at 1). */
+    private fun topTier(scored: List<Triple<Question, Int, Int>>): List<Question> {
+        val bestMatched = scored.maxOfOrNull { it.third } ?: return emptyList()
+        return scored.filter { it.third == bestMatched }
             .sortedByDescending { it.second }.map { it.first }
-        return diversifyByCategory(relevant, limit)
     }
 
     /** Round-robin a ranked list across categories, capping any one domain — the

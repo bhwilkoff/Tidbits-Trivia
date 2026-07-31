@@ -121,3 +121,60 @@ a `coverage.py` re-run.
 - Relevance rule (Q26–Q28): matched-token tier; diversity is a preference, never a quota.
 - R-SHOT-3: screened questions for store captures.
 - No new blank walls — `universal-feature-states` for every list/empty/error.
+
+---
+
+## Wave 3 log — the retrieval bugs (2026-07-31)
+
+Two rules were making Create return the wrong questions, or none. Both are fixed on
+all four stacks and pinned by tests.
+
+### B4 — the answer-giveaway rule starved real subjects
+
+Create dropped any question whose ANSWER contained the typed topic. Correct for a
+place ("Chicago" → answer "Chicago"), badly wrong for a PERSON: 17 of the 20 genuine
+van Gogh questions answer "Vincent van Gogh", so the rule deleted the subject's own
+best material and the quiz could not be filled.
+
+Giveaways are now held in RESERVE rather than dropped, and used only to fill the tail
+when the clean pool would otherwise starve. A player asking about a place still never
+sees the giveaway; a player asking about a person gets a full quiz.
+
+### B2 — diacritics made a whole class of subjects invisible
+
+`LIKE` cannot strip accents, so "Beyonce" matched **0** of 22 Beyoncé rows, "Bjork" 0
+of 8, "Dvorak" 0 of 10. Fixed at the DATA PLANE, not with a per-platform hack:
+
+- The corpus build writes a **sparse folded `search_text` column** — only the 9.1% of
+  rows whose folded text actually differs carry it. Measured: **+3.3 MB**. A dense
+  column would have cost ~35 MB of app bundle for identical behaviour.
+- Apple + Android (SQL-backed) OR that column into the pre-filter; web + Windows hold
+  the corpus in RAM and fold at compare time, so `corpus.json` needs no new field.
+- Scoring folds too — otherwise the pre-filter surfaces an accented row and the ranker
+  immediately discards it for scoring 0 against folded tokens.
+
+### Two structural hazards found while fixing the above
+
+- **Two sqlite writers had diverged.** `build_corpus.write_sqlite` emitted 12 columns
+  while `resync_corpus.sh` emitted 14, so whichever ran last decided whether the
+  shipped corpus had `tags` at all — and Create weights tags highest. Now ONE writer;
+  resync calls it, and it also writes the Android copy.
+- **Windows never received the Wave 2 stopword fix** (only the cap change), so "The
+  Beatles" flooded its pool with "the" while the other three platforms didn't. The
+  same topic produced two different quizzes. Fixed and pinned by `FoldingTest`.
+
+### Measured result
+
+| | Before Wave 3 | After |
+|---|---|---|
+| Topics that can fill 8 questions | 111/127 | **121/127** |
+| "Beyonce" | 0 questions | 15 |
+| "Bjork" / "Dvorak" | 0 / 0 | 8 / 10 |
+| Music domain thin topics | 1 | **0** |
+
+Remaining thin (6): Great Barrier Reef, Robotics, Black holes, Vaccines, Vincent van
+Gogh, Cryptography. These are genuine corpus gaps, not retrieval bugs — they are W1's
+job (blend live generation), not more ranking work.
+
+Verification: Apple 90 tests / 12 suites, Windows 456, Android `assembleDebug`, web
+`node --check`; Apple app rebuilt for iOS + macOS + tvOS.

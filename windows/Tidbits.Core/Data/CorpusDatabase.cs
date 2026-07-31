@@ -60,10 +60,13 @@ public sealed class CorpusDatabase
         var matched = new List<Question>();
         foreach (var q in _all)
         {
-            var prompt = q.Prompt.ToLowerInvariant();
-            var title = q.SourceTitle.ToLowerInvariant();
-            var explanationPre = q.Explanation.ToLowerInvariant();
-            var tagsPre = q.Tags.Select(tg => tg.ToLowerInvariant()).ToList();
+            // Folded, not merely lowercased, so "beyonce" finds "Beyoncé". Windows
+            // holds the corpus in RAM, so it folds here rather than reading the sparse
+            // search_text column the SQL-backed platforms need for the same result.
+            var prompt = QueryHelpers.Fold(q.Prompt);
+            var title = QueryHelpers.Fold(q.SourceTitle);
+            var explanationPre = QueryHelpers.Fold(q.Explanation);
+            var tagsPre = q.Tags.Select(QueryHelpers.Fold).ToList();
             if (tokens.Any(t => prompt.Contains(t) || title.Contains(t) || explanationPre.Contains(t) || tagsPre.Any(tg => tg.Contains(t))))
             {
                 matched.Add(q);
@@ -75,16 +78,15 @@ public sealed class CorpusDatabase
         }
 
         var scored = new List<(Question q, int score, int matchedTokens)>();
+        var giveaways = new List<(Question q, int score, int matchedTokens)>();
         foreach (var q in matched)
         {
-            var answer = q.CorrectAnswer.ToLowerInvariant();
-            if (tokens.Any(t => answer.Contains(t))) continue;      // answer would give it away
             if (q.Id.StartsWith("src:continent:")) continue;        // repetitive template
             if (q.Difficulty <= 1) continue;                        // trivially easy
-            var title = q.SourceTitle.ToLowerInvariant();
-            var prompt = q.Prompt.ToLowerInvariant();
-            var explanation = q.Explanation.ToLowerInvariant();
-            var tags = q.Tags.Select(tg => tg.ToLowerInvariant()).ToList();
+            var title = QueryHelpers.Fold(q.SourceTitle);
+            var prompt = QueryHelpers.Fold(q.Prompt);
+            var explanation = QueryHelpers.Fold(q.Explanation);
+            var tags = q.Tags.Select(QueryHelpers.Fold).ToList();
             var score = tokens.Sum(t => (tags.Any(tg => tg.Contains(t)) ? 3 : 0) + (title.Contains(t) ? 2 : 0) + (prompt.Contains(t) ? 1 : 0) + (explanation.Contains(t) ? 1 : 0));
             // How many of the typed words this row matched AT ALL. Scoring alone
             // is not enough: Diversify round-robins by CATEGORY afterwards, so a
@@ -93,15 +95,34 @@ public sealed class CorpusDatabase
             // science) against 211 one-word hits across 7 categories, 189 of
             // which never mention Curie.
             var matchedTokens = tokens.Count(t => tags.Any(tg => tg.Contains(t)) || title.Contains(t) || prompt.Contains(t) || explanation.Contains(t));
-            scored.Add((q, score, matchedTokens));
+            // A question whose ANSWER is/contains the topic is a giveaway ("Chicago"
+            // -> answer "Chicago"), held in RESERVE rather than dropped: for a person
+            // most good questions answer with their name (17 of the 20 real van Gogh
+            // questions do), so a hard drop starved the pool below a full quiz.
+            var answer = QueryHelpers.Fold(q.CorrectAnswer);
+            if (tokens.Any(t => answer.Contains(t))) giveaways.Add((q, score, matchedTokens));
+            else scored.Add((q, score, matchedTokens));
         }
 
-        // Keep only rows matching the MOST typed words, then rank within that
-        // tier. Single-word topics are unaffected (every row ties at 1).
-        var bestMatched = scored.Count == 0 ? 0 : scored.Max(s => s.matchedTokens);
-        var ranked = scored.Where(s => s.matchedTokens == bestMatched)
-                           .OrderByDescending(s => s.score).Select(s => s.q).ToList();
-        return Diversify(ranked, limit);
+        var outp = Diversify(TopTier(scored), limit);
+        if (outp.Count < limit)
+        {
+            var taken = outp.Select(q => q.Id).ToHashSet();
+            outp.AddRange(TopTier(giveaways).Where(q => !taken.Contains(q.Id)).Take(limit - outp.Count));
+        }
+        return outp;
+    }
+
+    /// <summary>
+    /// Keep only rows matching the MOST typed words, then rank within that tier.
+    /// Single-word topics are unaffected (every row ties at 1).
+    /// </summary>
+    private static List<Question> TopTier(List<(Question q, int score, int matchedTokens)> scored)
+    {
+        if (scored.Count == 0) return new List<Question>();
+        var best = scored.Max(s => s.matchedTokens);
+        return scored.Where(s => s.matchedTokens == best)
+                     .OrderByDescending(s => s.score).Select(s => s.q).ToList();
     }
 
     /// Round-robin a ranked list across categories, capping any one domain (the

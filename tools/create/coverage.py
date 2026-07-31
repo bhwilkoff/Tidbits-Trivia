@@ -9,7 +9,11 @@ the rows matching the MOST typed words. Reports what a player would really get.
 Run this BEFORE promising "every created quiz is full of incredible questions" —
 it is the difference between a claim and a measurement.
 """
-import sqlite3, sys, csv, collections
+import sqlite3, sys, csv, collections, unicodedata
+
+def fold(s):
+    """Lowercase + strip diacritics — mirrors the shipped `fold` on all four stacks."""
+    return "".join(c for c in unicodedata.normalize("NFKD", s) if not unicodedata.combining(c)).lower()
 
 DB = "TidbitsTrivia/Resources/corpus.sqlite"
 TARGET = 8
@@ -18,7 +22,7 @@ STOPWORDS = {"the","and","for","with","from","that","this","his","her","its",
              "was","were","are","who","what","which","how","why","all","any"}
 
 def tokens(topic):
-    t = "".join(c if (c.isalnum()) else " " for c in topic.lower()).split()
+    t = "".join(c if (c.isalnum()) else " " for c in fold(topic)).split()
     raw = [x for x in t if len(x) >= 3]
     kept = [x for x in raw if x not in STOPWORDS]
     return kept or raw
@@ -28,29 +32,42 @@ def coverage(cur, topic, target=TARGET):
     if not toks:
         return None
     clause = " OR ".join(
-        "(lower(prompt) LIKE ? OR lower(source_title) LIKE ? OR lower(explanation) LIKE ? OR lower(tags) LIKE ?)"
+        "(lower(prompt) LIKE ? OR lower(source_title) LIKE ? OR lower(explanation) LIKE ? OR lower(tags) LIKE ? OR search_text LIKE ?)"
         for _ in toks)
     args = []
     for t in toks:
-        args += [f"%{t}%"] * 4
+        args += [f"%{t}%"] * 5
     cur.execute(
         f"SELECT id,prompt,option0,option1,option2,option3,correct_index,category_id,difficulty,"
         f"explanation,source_title,tags FROM questions WHERE {clause} LIMIT 4000", args)
-    best, rows = 0, []
+    rows, reserve = [], []
     for r in cur.fetchall():
         (qid, prompt, o0, o1, o2, o3, ci, cat, diff, expl, title, tags) = r
-        answer = [o0, o1, o2, o3][ci or 0]
-        if answer and any(t in answer.lower() for t in toks):
-            continue                      # answer gives the topic away
         if qid.startswith("src:continent:") or (diff or 2) <= 1:
             continue                      # repetitive template / trivially easy
-        hay = " ".join(x or "" for x in (prompt, title, expl, tags)).lower()
+        hay = fold(" ".join(x or "" for x in (prompt, title, expl, tags)))
         m = sum(1 for t in toks if t in hay)
         if not m:
             continue
-        best = max(best, m)
-        rows.append((m, cat, diff))
-    rows = [r for r in rows if r[0] == best]
+        answer = [o0, o1, o2, o3][ci or 0]
+        # An answer that IS the topic is held in reserve, not dropped: for a person
+        # most good questions answer with their name, so a hard drop starved the
+        # pool. Reserve fills only the tail when the clean pool is short.
+        if answer and any(t in fold(answer) for t in toks):
+            reserve.append((m, cat, diff))
+        else:
+            rows.append((m, cat, diff))
+
+    def top_tier(rs):
+        if not rs:
+            return []
+        b = max(x[0] for x in rs)
+        return [x for x in rs if x[0] == b]
+
+    rows = top_tier(rows)
+    if len(rows) < target:
+        rows = rows + top_tier(reserve)[: target - len(rows)]
+    best = max((x[0] for x in rows), default=0)
     cats = collections.Counter(c for _, c, _ in rows)
     return {
         "topic": topic, "pool": len(rows), "tokens": len(toks), "matched": best,

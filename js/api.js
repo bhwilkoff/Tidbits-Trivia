@@ -55,10 +55,38 @@ async function idbSet(key, val) {
   } catch { /* best-effort cache */ }
 }
 
+// Lowercase + strip diacritics, so "beyonce" finds "Beyoncé". Mirrors the corpus
+// build's sparse search_text column and the Swift/Kotlin/C# `fold` — all must agree
+// or the same topic returns different questions per platform.
+const _foldCache = new Map();
+function fold(s) {
+  if (!s) return '';
+  // Fast path: a pure-ASCII string folds to its lowercase form, so the ~91% of rows
+  // with no diacritics never pay for NFKD and never enter the cache. That matters —
+  // caching every corpus string would hold a second copy of the whole 54MB corpus in
+  // memory, which is the exact failure mode that got Android rejected once.
+  if (!/[^\x00-\x7F]/.test(s)) return s.toLowerCase();
+  let f = _foldCache.get(s);
+  if (f === undefined) {
+    f = s.normalize('NFKD').replace(/\p{M}+/gu, '').toLowerCase();
+    _foldCache.set(s, f);
+  }
+  return f;
+}
+
 // Round-robin a scored, already-ranked list across categories, capping how many
 // come from any one domain — the anti-monopoly rule for Create (owner: too many
 // sports/geography questions when a topic is dense in one category).
+
 const STOPWORDS = new Set(['the', 'and', 'for', 'with', 'from', 'that', 'this', 'his', 'her', 'its', 'was', 'were', 'are', 'who', 'what', 'which', 'how', 'why', 'all', 'any']);
+
+// Keep only the rows matching the MOST typed words, then rank within that tier.
+// Single-word topics are unaffected (every row ties at 1).
+function topTier(scored) {
+  if (!scored.length) return [];
+  const best = scored.reduce((m, x) => Math.max(m, x[2]), 0);
+  return scored.filter((x) => x[2] === best).sort((a, b) => b[1] - a[1]).map((x) => x[0]);
+}
 
 function diversify(ranked, limit) {
   const perCat = Math.max(2, Math.ceil(limit / 3));   // ~1/3 of the set, min 2
@@ -148,22 +176,21 @@ export const Corpus = {
     // Stopwords are dropped, not merely short words: the >=3 rule kept "the",
     // which matches nearly every row and crowds real hits out before ranking
     // ("The Beatles", "The Simpsons"). Mirrors Swift/Kotlin/C#.
-    const rawTokens = topic.toLowerCase().split(/[^a-z0-9]+/).filter((t) => t.length >= 3);
+    const rawTokens = fold(topic).split(/[^a-z0-9]+/).filter((t) => t.length >= 3);
     const keptTokens = rawTokens.filter((t) => !STOPWORDS.has(t));
     const tokens = keptTokens.length ? keptTokens : rawTokens;
     if (!tokens.length) return [];
     const scored = [];
+    const giveaways = [];
     for (const q of this.questions) {
-      // Drop questions whose ANSWER is/contains the topic — the player typed it,
-      // so that's a giveaway ("Chicago" → answer "Chicago"). Keep ones ABOUT it.
-      const answer = ((q.options && q.options[q.correctIndex]) || '').toLowerCase();
-      if (tokens.some((t) => answer.includes(t))) continue;
       // Diversity (owner): drop the "which continent is X on" template — easy,
       // repetitive, and doesn't teach anything — and the trivially-easy tier.
       if ((q.id || '').startsWith('src:continent:')) continue;
       if ((q.difficulty || 2) <= 1) continue;
-      const title = (q.sourceTitle || '').toLowerCase(), prompt = (q.prompt || '').toLowerCase(), explanation = (q.explanation || '').toLowerCase();
-      const tags = (q.tags || []).map((tg) => tg.toLowerCase());
+      // Folded, not merely lowercased: the tokens are folded, so an accented row
+      // would score 0 against them and be dropped by the `s > 0` gate.
+      const title = fold(q.sourceTitle), prompt = fold(q.prompt), explanation = fold(q.explanation);
+      const tags = (q.tags || []).map(fold);
       let s = 0;
       for (const t of tokens) {
         if (tags.some((tg) => tg.includes(t))) s += 3;
@@ -180,17 +207,24 @@ export const Corpus = {
       const matched = tokens.filter((t) =>
         tags.some((tg) => tg.includes(t)) || title.includes(t) || prompt.includes(t) || explanation.includes(t)
       ).length;
-      if (s > 0) scored.push([q, s, matched]);
+      if (s <= 0) continue;
+      // A question whose ANSWER is/contains the topic is a giveaway ("Chicago" →
+      // answer "Chicago") and is held in RESERVE, not dropped: for a person most
+      // good questions answer with their name (17 of the 20 real van Gogh
+      // questions do), so a hard drop starved the pool below a full quiz.
+      const answer = fold((q.options && q.options[q.correctIndex]) || '');
+      if (tokens.some((t) => answer.includes(t))) giveaways.push([q, s, matched]);
+      else scored.push([q, s, matched]);
     }
-    // Keep only the rows matching the MOST typed words, then rank within that
-    // tier. Single-word topics are unaffected (every row ties at 1).
-    const bestMatched = scored.reduce((m, x) => Math.max(m, x[2]), 0);
-    const relevant = scored.filter((x) => x[2] === bestMatched);
-    relevant.sort((a, b) => b[1] - a[1]);
     // Cap per-category so a topic dense in one domain (a city with sports teams
     // → 8 sports-player questions) can't monopolize the set; round-robin across
     // categories for a genuinely varied quiz.
-    return diversify(relevant.map((x) => x[0]), limit);
+    const out = diversify(topTier(scored), limit);
+    if (out.length < limit) {
+      const taken = new Set(out.map((q) => q.id));
+      out.push(...topTier(giveaways).filter((q) => !taken.has(q.id)).slice(0, limit - out.length));
+    }
+    return out;
   },
 
   get count() { return this.questions.length; },

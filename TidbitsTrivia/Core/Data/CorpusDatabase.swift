@@ -96,6 +96,13 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
     /// device (docs/CREATE-QUESTION-GEN-PLAYBOOK.md).
     /// Words too common to narrow anything — they made the pre-filter match
     /// nearly the whole corpus, crowding out real hits before ranking.
+    /// Lowercase + strip diacritics, so "beyonce" finds "Beyoncé". Mirrored by the
+    /// corpus build (`search_text`), Kotlin, C# and JS — all four must agree or a
+    /// topic returns different questions per platform.
+    static func fold(_ s: String) -> String {
+        s.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: nil)
+    }
+
     private static let stopwords: Set<String> = [
         "the", "and", "for", "with", "from", "that", "this", "his", "her", "its",
         "was", "were", "are", "who", "what", "which", "how", "why", "all", "any",
@@ -107,13 +114,17 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
         // to fill with noise for any topic containing it ("The Beatles", "The
         // Simpsons"). Falls back to the raw tokens if a topic is nothing but
         // stopwords, so a query is never left empty.
-        let rawTokens = topic.lowercased().split { !$0.isLetter && !$0.isNumber }.map(String.init).filter { $0.count >= 3 }
+        let rawTokens = Self.fold(topic).split { !$0.isLetter && !$0.isNumber }.map(String.init).filter { $0.count >= 3 }
         let kept = rawTokens.filter { !Self.stopwords.contains($0) }
         let tokens = kept.isEmpty ? rawTokens : kept
         guard !tokens.isEmpty else { return [] }
         return queue.sync {
             guard let db else { return [] }
-            let clause = tokens.map { _ in "(lower(prompt) LIKE ? OR lower(source_title) LIKE ? OR lower(explanation) LIKE ? OR lower(tags) LIKE ?)" }.joined(separator: " OR ")
+            // search_text is the folded mirror of the four text columns, populated
+            // only where folding changes something. It is what makes "beyonce"
+            // find "Beyoncé": SQL LIKE cannot strip diacritics, so without it every
+            // accented subject was invisible to Create (measured: 0 results).
+            let clause = tokens.map { _ in "(lower(prompt) LIKE ? OR lower(source_title) LIKE ? OR lower(explanation) LIKE ? OR lower(tags) LIKE ? OR search_text LIKE ?)" }.joined(separator: " OR ")
             // The cap applies BEFORE the ranking below, so it must be generous
             // enough to contain the genuine matches. At 400 it did not: "van gogh"
             // OR-matches 3,310 rows holding 20 real ones, and exactly ZERO of the
@@ -127,26 +138,34 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
             var idx: Int32 = 1
             for t in tokens {
                 let like = "%\(t)%"
-                sqlite3_bind_text(stmt, idx, like, -1, Self.transientDestructor); idx += 1
-                sqlite3_bind_text(stmt, idx, like, -1, Self.transientDestructor); idx += 1
-                sqlite3_bind_text(stmt, idx, like, -1, Self.transientDestructor); idx += 1
-                sqlite3_bind_text(stmt, idx, like, -1, Self.transientDestructor); idx += 1
+                for _ in 0..<5 {
+                    sqlite3_bind_text(stmt, idx, like, -1, Self.transientDestructor); idx += 1
+                }
             }
             var scored: [(Question, Int, Int)] = []
+            var giveaways: [(Question, Int, Int)] = []
             while sqlite3_step(stmt) == SQLITE_ROW {
                 guard let q = Self.row(stmt) else { continue }
                 // The player typed the topic, so a question whose ANSWER is (or
                 // contains) the topic is a giveaway ("Chicago" → answer "Chicago").
-                // Keep only questions that are ABOUT the topic but answer with
-                // something else.
-                let answer = q.correctAnswer.lowercased()
-                if tokens.contains(where: { answer.contains($0) }) { continue }
+                // Prefer questions that are ABOUT the topic but answer with
+                // something else — but hold the giveaways in reserve rather than
+                // dropping them. For a PERSON the rule is far too broad: of the 20
+                // real van Gogh questions, 17 answer "Vincent van Gogh", so a
+                // hard drop left 3 and the quiz could not be filled. Reserved rows
+                // are only used when the clean pool would otherwise starve.
+                let answer = Self.fold(q.correctAnswer)
+                let isGiveaway = tokens.contains(where: { answer.contains($0) })
                 // Diversity (owner): drop the "which continent is X on" template —
                 // easy, repetitive, non-educational — and the trivially-easy tier.
                 if q.id.hasPrefix("src:continent:") { continue }
                 if q.difficulty <= 1 { continue }
-                let title = q.sourceTitle.lowercased(), prompt = q.prompt.lowercased(), explanation = q.explanation.lowercased()
-                let tags = q.tags.map { $0.lowercased() }
+                // Folded, not merely lowercased: the tokens are folded, so an
+                // accented row would score 0 against them and be dropped by the
+                // `score > 0` gate — the pre-filter would surface it and the
+                // ranker would immediately throw it away.
+                let title = Self.fold(q.sourceTitle), prompt = Self.fold(q.prompt), explanation = Self.fold(q.explanation)
+                let tags = q.tags.map { Self.fold($0) }
                 let score = tokens.reduce(0) { acc, token in
                     acc + (tags.contains { $0.contains(token) } ? 3 : 0)
                     + (title.contains(token) ? 2 : 0) + (prompt.contains(token) ? 1 : 0) + (explanation.contains(token) ? 1 : 0)
@@ -159,7 +178,8 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
                     tags.contains { $0.contains(token) } || title.contains(token)
                         || prompt.contains(token) || explanation.contains(token)
                 }.count
-                scored.append((q, score, matched))
+                if isGiveaway { giveaways.append((q, score, matched)) }
+                else { scored.append((q, score, matched)) }
             }
             // Keep only the rows matching the MOST of the typed words, then rank
             // and diversify within that tier.
@@ -171,11 +191,24 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
             // across 7 categories, 189 of which never mention Curie — so the
             // generated quiz led with "In what year was Marie de' Medici born?".
             // Single-word topics are unaffected (every row ties at 1).
-            let bestMatched = scored.map(\.2).max() ?? 0
-            let relevant = scored.filter { $0.2 == bestMatched }
-            let ranked = relevant.sorted { $0.1 > $1.1 }.map { $0.0 }
-            return Self.diversify(ranked, limit: limit)
+            let ranked = Self.rankTopTier(scored)
+            var out = Self.diversify(ranked, limit: limit)
+            // Starvation top-up: a thin clean pool is worth less to the player than
+            // a full quiz, so the reserved giveaways fill the tail — ranked the same
+            // way, and only as far as `limit`.
+            if out.count < limit {
+                let taken = Set(out.map(\.id))
+                out.append(contentsOf: Self.rankTopTier(giveaways)
+                    .filter { !taken.contains($0.id) }.prefix(limit - out.count))
+            }
+            return out
         }
+    }
+
+    /// Keep only the rows matching the MOST of the typed words, then rank by score.
+    private static func rankTopTier(_ scored: [(Question, Int, Int)]) -> [Question] {
+        guard let bestMatched = scored.map(\.2).max() else { return [] }
+        return scored.filter { $0.2 == bestMatched }.sorted { $0.1 > $1.1 }.map { $0.0 }
     }
 
     /// Round-robin a ranked list across categories, capping any one domain — the

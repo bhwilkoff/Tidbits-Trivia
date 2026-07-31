@@ -54,3 +54,34 @@ struct CreateRelevanceTests {
         #expect(Set(got.map(\.id)).count == got.count)
     }
 }
+
+/// Diacritic folding is a CROSS-STACK contract: the corpus build writes a folded
+/// `search_text` column, and Swift/Kotlin/C#/JS each fold at compare time. If any
+/// one of them disagrees, the same topic returns different questions per platform.
+/// Before this existed, "Beyonce" matched 0 of the 22 Beyoncé rows, "Bjork" 0 of 8,
+/// "Dvorak" 0 of 10 — a whole class of subjects was invisible to Create.
+@Suite("Diacritic folding")
+struct FoldingTests {
+
+    @Test func accentsAreStrippedAndCaseIsLowered() {
+        #expect(CorpusDatabase.fold("Beyoncé") == "beyonce")
+        #expect(CorpusDatabase.fold("Björk") == "bjork")
+        #expect(CorpusDatabase.fold("Antonín Dvořák") == "antonin dvorak")
+        #expect(CorpusDatabase.fold("Zürich") == "zurich")
+        #expect(CorpusDatabase.fold("Chloë") == "chloe")
+    }
+
+    /// Folding must be idempotent and a no-op on plain ASCII — the 91% fast path
+    /// the web reader relies on to avoid caching a second copy of the corpus.
+    @Test func plainAsciiIsUnchangedApartFromCase() {
+        #expect(CorpusDatabase.fold("The Beatles") == "the beatles")
+        #expect(CorpusDatabase.fold(CorpusDatabase.fold("Beyoncé")) == "beyonce")
+    }
+
+    /// Both directions must work: the player may type the accent or omit it, and
+    /// the corpus may carry it or not.
+    @Test func foldingMatchesInEitherDirection() {
+        #expect(CorpusDatabase.fold("Beyoncé").contains(CorpusDatabase.fold("beyonce")))
+        #expect(CorpusDatabase.fold("BEYONCÉ") == CorpusDatabase.fold("beyoncé"))
+    }
+}

@@ -10,4 +10,10 @@
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- QueryHelpers (tokenizing + diacritic folding) is an internal detail of the
+         Core, but it encodes a CROSS-STACK contract that must be pinned by tests. -->
+    <InternalsVisibleTo Include="Tidbits.HeadlessTests" />
+  </ItemGroup>
+
 </Project>

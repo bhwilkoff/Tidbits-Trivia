@@ -230,7 +230,7 @@ RTDB rules for `quizzes/` were deployed 2026-07-31, so publishing is unblocked.
 
 ---
 
-## 8. Open: the tvOS anonymous uid does not appear to be stable
+## 8. OPEN BUG: the tvOS anonymous uid changes on every launch
 
 Found 2026-07-31 while verifying the tvOS QR share. Publishing a quiz succeeds the
 first time and then fails with a bare **HTTP 401** on every later attempt.
@@ -244,12 +244,39 @@ One contributing bug is fixed: `publish` stamped the authenticated uid onto the
 outgoing JSON but not the local record, which therefore kept `by: "local"` forever
 and could never tell whether it owned the published copy. That is now persisted.
 
-**What is NOT yet explained** is why the uid appears to change at all. The likely
-suspect is Decision 017 — tvOS can only write to `Library/Caches`, `tmp` and App
-Group containers, so a refresh token written anywhere else is silently lost and every
-launch mints a fresh anonymous user.
+### Confirmed by measurement
 
-If that is what is happening, it reaches far past Create: **records, streaks,
-entitlements, the Daily log and quiz sync are all keyed on that uid**, and none of
-them would stick on an Apple TV across launches. That deserves its own investigation
-rather than a fix bolted onto this feature.
+Two consecutive launches on the tvOS 26 simulator, uid printed on screen:
+
+| Launch | uid |
+|---|---|
+| 1 | `OwyaJJEedk…` |
+| 2 | `hns9Zbye1V…` |
+
+The refresh token is stored in the Keychain, and **tvOS has no persistent local
+keychain** — items live only for the app's lifetime. So every launch signs up a
+brand-new anonymous user.
+
+**This reaches far past Create.** Records sync, streaks, Club entitlement, the Daily
+log, standings, friends, duels and quiz sync are ALL keyed on that uid. On an Apple
+TV, none of them survive a relaunch.
+
+### Attempted fix — did NOT work
+
+`kSecAttrSynchronizable` (iCloud Keychain) is Apple's documented answer, and it is in
+the tree now, tvOS-only. It did **not** fix the simulator: uids were still different
+across launches (`uGAziE5MJoWg` → `A3DV7gazzAMO`). Most likely the simulator has no
+signed-in Apple Account, so there is no iCloud Keychain to sync to — meaning this may
+still be correct on real hardware, but **it is unverified and must not be assumed**.
+
+### The likely real fix
+
+Decision 017 already establishes that tvOS can only write to `Library/Caches`, `tmp`
+and **App Group containers**, and the app already uses an App Group for its SwiftData
+store. Persisting the refresh token to a file there would not depend on iCloud at all.
+The obvious objection — a credential in a plain file — is the same one the Windows
+port answered with DPAPI, so it needs an equivalent answer here rather than being
+waved through.
+
+Verify any fix the same way this bug was found: print the uid on two consecutive cold
+launches and compare. Do not accept "it builds".

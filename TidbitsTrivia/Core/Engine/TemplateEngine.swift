@@ -11,12 +11,24 @@ nonisolated struct TemplateEngine: Sendable {
 
     // MARK: Quality gates
 
-    static func isUsable(_ s: WikipediaClient.Summary) -> Bool {
+    static func isUsable(_ s: WikipediaClient.Summary) -> Bool { isUsable(s, relaxed: false) }
+
+    /// `relaxed` is the LIVE path (Create), where the fame floor means something
+    /// different. Sweeping the corpus, a 600-character intro is a free notability
+    /// proxy over millions of candidates. Sweeping the results of a topic the
+    /// PLAYER typed, it is just a rejection: the REST summary endpoint returns a
+    /// lead paragraph, not a full article, so measured across the most-viewed
+    /// Wikipedia topics only 1–13 of 35 results cleared 600 — and a topic needs
+    /// four to produce anything at all. Notability is already established by the
+    /// player asking for it.
+    static func isUsable(_ s: WikipediaClient.Summary, relaxed: Bool) -> Bool {
         guard s.type != "disambiguation" else { return false }
         guard let d = s.description, d.count >= 6, d.count <= 90 else { return false }
-        // Fame floor: a long intro is a strong, free notability proxy. Obscure
-        // stubs ("X is an American actor.") are short — and unfun to be quizzed on.
-        guard let e = s.extract, e.count >= 600 else { return false }
+        // 120, not 200: Folarin Balogun's whole REST summary is 137 characters and
+        // is a perfectly good clue ("…plays as a striker for Ligue 1 club Monaco
+        // and the United States national team"). The richness check downstream is
+        // what rejects a content-free clue; length is a poor proxy for it here.
+        guard let e = s.extract, e.count >= (relaxed ? 120 : 600) else { return false }
         let lowerTitle = s.title.lowercased()
         if lowerTitle.hasPrefix("list of") || lowerTitle.contains("(disambiguation)") { return false }
         if (e).lowercased().contains("may refer to") { return false }
@@ -50,18 +62,30 @@ nonisolated struct TemplateEngine: Sendable {
 
     // MARK: Generation
 
+    /// `distractors` defaults to `pool`, and separating them is what makes live
+    /// Create work at all. The SUBJECT of a question must be about the topic the
+    /// player typed, which leaves only a handful of articles — and a handful can
+    /// never supply three same-class siblings, so every question was dropped for
+    /// want of options (measured: "Jalen Brunson" reduced to 4 usable articles,
+    /// 2 of them people, and produced nothing). A distractor does not have to be
+    /// about the topic; it only has to be a plausible wrong answer of the same
+    /// kind, so it can be drawn from the whole search result, which is
+    /// thematically adjacent by construction.
     static func makeQuestions(
-        pool: [WikipediaClient.Summary], categoryID: String, count: Int, seed: UInt64
+        pool: [WikipediaClient.Summary], categoryID: String, count: Int, seed: UInt64,
+        relaxed: Bool = false, distractors: [WikipediaClient.Summary]? = nil
     ) -> [Question] {
-        let usable = pool.filter(isUsable)
-        guard usable.count >= 4 else { return [] }
+        let usable = pool.filter { isUsable($0, relaxed: relaxed) }
+        guard usable.count >= (relaxed ? 1 : 4) else { return [] }
+        let dPool = (distractors ?? pool).filter { isUsable($0, relaxed: relaxed) }
         var rng = SeededRNG(seed: seed)
         let subjects = usable.shuffled(using: &rng)
         var questions: [Question] = []
         var gi = 0
         for subject in subjects {
             if questions.count >= count { break }
-            if let q = build(subject, pool: usable, categoryID: categoryID, gi: gi, rng: &rng) {
+            if let q = build(subject, pool: dPool, categoryID: categoryID, gi: gi,
+                             relaxed: relaxed, rng: &rng) {
                 questions.append(q)
             }
             gi += 1
@@ -71,7 +95,7 @@ nonisolated struct TemplateEngine: Sendable {
 
     private static func build(
         _ s: WikipediaClient.Summary, pool: [WikipediaClient.Summary],
-        categoryID: String, gi: Int, rng: inout SeededRNG
+        categoryID: String, gi: Int, relaxed: Bool, rng: inout SeededRNG
     ) -> Question? {
         let n = shapeRotation.count
         let person = isPerson(s)
@@ -79,7 +103,7 @@ nonisolated struct TemplateEngine: Sendable {
             let shape = shapeRotation[(gi + off) % n]
             let bank = shape == "describe" ? (person ? stems["describe_person"]! : stems["describe_thing"]!) : stems[shape]!
             let stem = bank[(gi / n) % bank.count]
-            if let (prompt, options, answer) = builder(shape, s, pool, stem, &rng) {
+            if let (prompt, options, answer) = builder(shape, s, pool, stem, relaxed, &rng) {
                 // Never ship a question whose answer leaks into the prompt.
                 if leaks(answer, in: prompt) { continue }
                 if prompt.count > 320 || hasForeignScript(prompt) { continue }
@@ -98,7 +122,7 @@ nonisolated struct TemplateEngine: Sendable {
 
     private static func builder(
         _ shape: String, _ s: WikipediaClient.Summary, _ pool: [WikipediaClient.Summary],
-        _ stem: String, _ rng: inout SeededRNG
+        _ stem: String, _ relaxed: Bool, _ rng: inout SeededRNG
     ) -> (String, [String], String)? {
         switch shape {
         case "describe":
@@ -107,7 +131,7 @@ nonisolated struct TemplateEngine: Sendable {
                   c.count >= 30, informativeTokens(c) >= 2 else { return nil }
             let cl = c.replacingOccurrences(of: #"[.\s]+$"#, with: "", options: .regularExpression)
                 .trimmingCharacters(in: .whitespaces)
-            let ds = titleDistractors(s, pool, &rng); guard ds.count == 3 else { return nil }
+            let ds = titleDistractors(s, pool, relaxed, &rng); guard ds.count == 3 else { return nil }
             let ans = displayTitle(s.title)
             return (String(format: stem, cl), [ans] + ds, ans)
         case "cloze":
@@ -125,7 +149,7 @@ nonisolated struct TemplateEngine: Sendable {
                 }
             }
             guard let cz = clozed, cz.count >= 30, informativeTokens(cz) >= 2 else { return nil }
-            let ds = titleDistractors(s, pool, &rng); guard ds.count == 3 else { return nil }
+            let ds = titleDistractors(s, pool, relaxed, &rng); guard ds.count == 3 else { return nil }
             return (String(format: stem, cz), [bare] + ds, bare)
         default: return nil
         }
@@ -141,7 +165,12 @@ nonisolated struct TemplateEngine: Sendable {
     // Decided by the type HEAD-NOUN (typeKey), not a loose word match — a novel
     // "by American author X" must NOT read as a person.
     static let personTypeKeys: Set<String> = Set("actor actress musician writer scientist athlete director painter singer composer poet novelist author journalist sculptor architect engineer politician philosopher economist historian activist explorer inventor dancer comedian model conductor pianist guitarist rapper businessman entrepreneur king queen emperor empress monarch president general admiral saint pope sultan tsar duke earl baron knight prince princess priest bishop rabbi imam nun monk lawyer diplomat soldier aristocrat theologian".split(separator: " ").map(String.init))
-    static let leadRE = try! NSRegularExpression(pattern: #"^\s*((?:[A-Z][\w’'.\-]*)(?:[ \-]+(?:of|the|and|de|von|van|al|da|di)?\s*[A-Z][\w’'.\-]*)*)\s*(?:\([^)]*\))?\s+(?:was|is|were|are)\s+(?:a|an|the)\s+(.+)$"#)
+    // The `(?:,[^,]{0,80},)?` clause is an APPOSITIVE between the name and the
+    // verb, and without it a large share of Wikipedia leads simply do not parse:
+    // "Jalen Marquis Brunson, nicknamed \"Captain Clutch\", is an American
+    // professional basketball player…" failed both the describe and the cloze
+    // shape, so a topic with four perfectly good usable articles produced nothing.
+    static let leadRE = try! NSRegularExpression(pattern: #"^\s*((?:[A-Z][\w’'.\-]*)(?:[ \-]+(?:of|the|and|de|von|van|al|da|di)?\s*[A-Z][\w’'.\-]*)*)\s*(?:\([^)]*\))?\s*(?:,[^,]{0,80},)?\s*(?:was|is|were|are)\s+(?:a|an|the)\s+(.+)$"#)
     static let properRE = try! NSRegularExpression(pattern: #"\b[A-Z][A-Za-z’'\-]{2,}\b"#)
     static let yearRE = try! NSRegularExpression(pattern: #"\b(?:1\d{3}|20\d{2})\b"#)
 
@@ -228,25 +257,49 @@ nonisolated struct TemplateEngine: Sendable {
         return typeFold[last] ?? last
     }
 
-    private static func typedDistractors(_ s: WikipediaClient.Summary, _ pool: [WikipediaClient.Summary], _ rng: inout SeededRNG, value: (WikipediaClient.Summary) -> String?, exclude: String, lengthMatch: Int?) -> [String] {
-        guard let kt = typeKey(s) else { return [] }
-        var seen = Set<String>()
-        let cands = pool.compactMap { c -> (Int, String)? in
-            guard c.title != s.title, typeKey(c) == kt,
-                  let v0 = value(c)?.trimmingCharacters(in: .whitespaces),
-                  !v0.isEmpty, v0.caseInsensitiveCompare(exclude) != .orderedSame,
-                  seen.insert(v0.lowercased()).inserted else { return nil }
-            return (lengthMatch.map { -abs(v0.count - $0) } ?? 0, v0)
-        }.sorted { $0.0 > $1.0 }
-        guard cands.count >= 3 else { return [] }
-        return Array(Array(cands.prefix(max(9, 8)).map(\.1)).shuffled(using: &rng).prefix(3))
+    /// The coarse kind of thing a subject is. Exact `typeKey` equality is right
+    /// when drawing from a whole corpus, where there are always more footballers.
+    /// A Create topic supplies at most 35 articles and they are deliberately
+    /// heterogeneous — measured, a topic's usable results typically split as
+    /// `subgenre:1, series:1, internet:1, genre:1`, so three same-type siblings
+    /// never existed and every question was dropped for want of distractors.
+    /// Matching on the coarse class keeps options plausible (all people, all
+    /// works) without demanding a sibling that a 35-article pool cannot hold.
+    static let workTypes: Set<String> = Set("film movie series show sitcom season episode album song single novel book poem play opera musical game franchise character comic manga anime documentary".split(separator: " ").map(String.init))
+    static let placeTypes: Set<String> = Set("settlement peak country state province region district county island river lake sea ocean desert park building bridge stadium airport museum palace castle".split(separator: " ").map(String.init))
+
+    static func coarseClass(_ s: WikipediaClient.Summary) -> String {
+        if isPerson(s) { return "person" }
+        guard let k = typeKey(s) else { return "thing" }
+        if workTypes.contains(k) { return "work" }
+        if placeTypes.contains(k) { return "place" }
+        return "thing"
     }
 
-    private static func titleDistractors(_ s: WikipediaClient.Summary, _ pool: [WikipediaClient.Summary], _ rng: inout SeededRNG) -> [String] {
-        typedDistractors(s, pool, &rng, value: { displayTitle($0.title) }, exclude: displayTitle(s.title), lengthMatch: nil)
+    private static func typedDistractors(_ s: WikipediaClient.Summary, _ pool: [WikipediaClient.Summary], _ relaxed: Bool, _ rng: inout SeededRNG, value: (WikipediaClient.Summary) -> String?, exclude: String, lengthMatch: Int?) -> [String] {
+        func gather(_ matches: (WikipediaClient.Summary) -> Bool) -> [String] {
+            var seen = Set<String>()
+            let cands = pool.compactMap { c -> (Int, String)? in
+                guard c.title != s.title, matches(c),
+                      let v0 = value(c)?.trimmingCharacters(in: .whitespaces),
+                      !v0.isEmpty, v0.caseInsensitiveCompare(exclude) != .orderedSame,
+                      seen.insert(v0.lowercased()).inserted else { return nil }
+                return (lengthMatch.map { -abs(v0.count - $0) } ?? 0, v0)
+            }.sorted { $0.0 > $1.0 }
+            guard cands.count >= 3 else { return [] }
+            return Array(Array(cands.prefix(max(9, 8)).map(\.1)).shuffled(using: &rng).prefix(3))
+        }
+        if let kt = typeKey(s) {
+            let exact = gather { typeKey($0) == kt }
+            if !exact.isEmpty { return exact }
+        }
+        guard relaxed else { return [] }
+        let kc = coarseClass(s)
+        return gather { coarseClass($0) == kc }
     }
-    private static func descDistractors(_ s: WikipediaClient.Summary, _ pool: [WikipediaClient.Summary], _ rng: inout SeededRNG) -> [String] {
-        typedDistractors(s, pool, &rng, value: { $0.description }, exclude: s.description ?? "", lengthMatch: (s.description ?? "").count)
+
+    private static func titleDistractors(_ s: WikipediaClient.Summary, _ pool: [WikipediaClient.Summary], _ relaxed: Bool, _ rng: inout SeededRNG) -> [String] {
+        typedDistractors(s, pool, relaxed, &rng, value: { displayTitle($0.title) }, exclude: displayTitle(s.title), lengthMatch: nil)
     }
 
     // MARK: Helpers

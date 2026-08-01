@@ -52,7 +52,7 @@ nonisolated final class JSONQuestionSource: @unchecked Sendable {
     func searchMatch(topic: String, limit: Int) -> [Question] {
         let tokens = CorpusDatabase.topicTokens(topic)
         guard !tokens.isEmpty else { return [] }
-        let phrase = tokens.joined(separator: " ")
+        let phrase = CorpusDatabase.topicPhrase(topic)
         // The SAME relevance floor the corpus search uses, for the same reason: a
         // picture round that shows the wrong subject is worse than no picture
         // round. Substring matching alone surfaced "In what year did Jean-Marie

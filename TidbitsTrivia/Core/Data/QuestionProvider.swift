@@ -177,9 +177,37 @@ final class QuestionProvider {
                 if diag { print("DIAG\t\(topic)\tsearch=0") }
                 return []
             }
-            let summaries = await WikipediaClient.shared.summaries(for: titles)
+            // Wikipedia's search returns what is RELATED to the topic, not what is
+            // about it: "Zendaya" brings back Tom Holland, Law Roach and Dune. A
+            // question about Dune in a Zendaya quiz is the same unintended-question
+            // failure the corpus ranker was just fixed for, so an article earns its
+            // place only if it actually names the topic. There is no fallback to
+            // the unfiltered set: a short quiz about the right subject is the
+            // point, and the whole set is what produced Tom Holland questions in a
+            // Zendaya quiz. The article the player asked for always qualifies —
+            // its own title is part of the haystack.
+            let all = await WikipediaClient.shared.summaries(for: titles)
+            let tokens = CorpusDatabase.topicTokens(topic)
+            let phrase = CorpusDatabase.topicPhrase(topic)
+            // The whole PHRASE, not each word separately. Requiring only the words
+            // let "Albert Einstein" through Bob Einstein, whose summary happens to
+            // name his brother Albert; and the same different-person guard the
+            // corpus ranker uses is needed here too, or "Denver" fetches John
+            // Denver straight from Wikipedia after the corpus correctly refused him.
+            let selfSubject = all.contains { CorpusDatabase.flattened($0.title) == phrase }
+            let guardNames = tokens.count == 1 && selfSubject
+            let summaries = all.filter { s in
+                let subject = CorpusDatabase.flattened(s.title)
+                if guardNames, subject != phrase, subject.split(separator: " ").count == 2,
+                   CorpusDatabase.containsWord(subject, phrase) {
+                    return false
+                }
+                let hay = CorpusDatabase.fold(s.title + " " + (s.extract ?? "") + " " + (s.description ?? ""))
+                return CorpusDatabase.containsWord(hay, phrase)
+            }
             if diag {
-                let usable = summaries.filter(TemplateEngine.isUsable)
+                print("DIAG\t\(topic)\tontopic=\(summaries.count)/\(all.count)")
+                let usable = summaries.filter { TemplateEngine.isUsable($0, relaxed: true) }
                 var types: [String: Int] = [:]
                 for u in usable { types[TemplateEngine.typeKey(u) ?? "nil", default: 0] += 1 }
                 print("DIAG\t\(topic)\tsearch=\(titles.count)\tsummaries=\(summaries.count)"
@@ -196,7 +224,8 @@ final class QuestionProvider {
                 if ai.count >= min(count, 3) { return ai }
             }
             let templated = TemplateEngine.makeQuestions(
-                pool: summaries, categoryID: category.id, count: count, seed: topic.stableSeed)
+                pool: summaries, categoryID: category.id, count: count,
+                seed: topic.stableSeed, relaxed: true, distractors: all)
             if diag { print("DIAG\t\(topic)\ttemplate_questions=\(templated.count)") }
             return templated
         } catch {

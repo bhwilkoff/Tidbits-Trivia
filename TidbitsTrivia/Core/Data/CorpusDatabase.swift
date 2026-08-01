@@ -134,10 +134,38 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
     /// row titles, so "A.I. Artificial Intelligence" and "Artificial intelligence"
     /// reduce to the same subject.
     nonisolated static func topicTokens(_ s: String) -> [String] {
-        let raw = fold(s).split { !$0.isLetter && !$0.isNumber }.map(String.init).filter { $0.count >= 3 }
+        let raw = fold(stripParens(s)).split { !$0.isLetter && !$0.isNumber }
+            .map(String.init).filter { $0.count >= 3 }
         let kept = raw.filter { !stopwords.contains($0) }
         return kept.isEmpty ? raw : kept
     }
+
+    /// Wikipedia disambiguators are not part of what the player means. "Backrooms
+    /// (film)" and "Masters of the Universe (2026 film)" are how the article is
+    /// titled, not how anyone asks for it — and treating them as topic words made
+    /// the phrase "masters universe 2026 film", which appears nowhere on earth.
+    nonisolated static func stripParens(_ s: String) -> String {
+        var out = ""
+        var depth = 0
+        for c in s {
+            if c == "(" || c == "[" { depth += 1; continue }
+            if c == ")" || c == "]" { depth = max(0, depth - 1); continue }
+            if depth == 0 { out.append(c) }
+        }
+        return out.trimmingCharacters(in: .whitespaces)
+    }
+
+    /// Punctuation flattened to single spaces, nothing dropped. Phrase matching
+    /// needs the STOPWORDS kept and in order — "masters of the universe" is the
+    /// phrase; the significant-token list can never reconstruct it — and it needs
+    /// the parenthetical kept on ROW titles, where it carries the meaning
+    /// ("Dangerous (Michael Jackson album)" is how that row says whose album it is).
+    nonisolated static func flattened(_ s: String) -> String {
+        fold(s).split { !$0.isLetter && !$0.isNumber }.joined(separator: " ")
+    }
+
+    /// The typed topic as a matchable phrase: disambiguator removed, order kept.
+    nonisolated static func topicPhrase(_ s: String) -> String { flattened(stripParens(s)) }
 
     /// Wikipedia categories are the row's `tags`, and only SOME of them mean the
     /// row is about the topic. "Albums produced by Michael Jackson" does.
@@ -190,9 +218,9 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
     nonisolated static func tier(title: String, prompt: String, tags: [String],
                                  tokens: [String], phrase: String, guardNames: Bool) -> Int? {
         let fTitle = fold(title)
-        let subject = topicTokens(title).joined(separator: " ")
+        let subject = flattened(title)
         if subject == phrase { return 3 }
-        if containsWord(fTitle, phrase) {
+        if containsWord(subject, phrase) {
             // When the typed word is ITSELF a subject in this corpus, a bare
             // two-word title that merely contains it is a DIFFERENT named thing:
             // "Bob Denver", "Denver Pyle", "Samuel Adams". The player typed the
@@ -216,7 +244,7 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
         // stopwords, so a query is never left empty.
         let tokens = Self.topicTokens(topic)
         guard !tokens.isEmpty else { return [] }
-        let phrase = tokens.joined(separator: " ")
+        let phrase = Self.topicPhrase(topic)
         return queue.sync {
             guard let db else { return [] }
             // Is the typed word itself a subject here? That single fact is what
@@ -313,10 +341,13 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
         defer { sqlite3_finalize(stmt) }
         let sql = "SELECT source_title FROM questions WHERE lower(source_title) LIKE ? GROUP BY source_title LIMIT 800"
         guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return false }
-        sqlite3_bind_text(stmt, 1, "%\(phrase)%", -1, transientDestructor)
+        // The phrase can carry stopwords and spaces the stored title punctuates
+        // differently, so bind the FIRST significant word and compare properly per
+        // row — a LIKE on the whole phrase silently matched nothing.
+        sqlite3_bind_text(stmt, 1, "%\(phrase.split(separator: " ").first.map(String.init) ?? phrase)%", -1, transientDestructor)
         while sqlite3_step(stmt) == SQLITE_ROW {
             let title = text(stmt, 0)
-            if topicTokens(title).joined(separator: " ") == phrase { return true }
+            if flattened(title) == phrase { return true }
         }
         return false
     }

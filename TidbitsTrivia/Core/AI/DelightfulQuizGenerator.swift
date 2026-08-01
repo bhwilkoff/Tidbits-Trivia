@@ -35,12 +35,14 @@ enum DelightfulQuizGenerator {
                          summaries: [WikipediaClient.Summary],
                          categoryID: String,
                          count: Int) async -> [Question] {
+        let diag = ProcessInfo.processInfo.environment["TIDBITS_CREATE_DIAG"] == "1"
         #if canImport(FoundationModels) && !os(tvOS)
         if #available(iOS 26.0, macOS 26.0, *),
            case .available = SystemLanguageModel.default.availability {
             let usable = summaries.filter {
                 ($0.extract?.count ?? 0) > 80 && $0.type != "disambiguation"
             }
+            if diag { print("DIAG\tAI-USABLE\t\(topic)\t\(usable.count)") }
             var out: [Question] = []
             let instructions = Instructions("""
             You are a witty trivia writer for a fun, learning-oriented game. Given a \
@@ -50,17 +52,36 @@ enum DelightfulQuizGenerator {
             subject's name (or any part of it) in the question. Give the correct answer \
             and three plausible wrong answers of the SAME kind as the answer.
             """)
+            // Fail fast. `availability == .available` is not a promise that a
+            // generation will succeed: measured on the iOS 26 simulator every call
+            // threw SensitiveContentAnalysisML 15 → ModelManagerError 1001 (the
+            // guardrail asset is not installed there), and the old loop paid for
+            // thirty sequential sessions before falling back. Any device missing an
+            // asset behaves the same way, so stop after a run of failures rather
+            // than making the player wait for a fallback we already know we need.
+            var consecutiveFailures = 0
             for s in usable {
                 guard let extract = s.extract else { continue }
+                if consecutiveFailures >= 2 {
+                    if diag { print("DIAG\tAI-BAILED\t\(topic)\tafter \(consecutiveFailures) failures") }
+                    break
+                }
                 do {
                     let session = LanguageModelSession(instructions: instructions)
                     let response = try await session.respond(
                         to: "Subject: \(s.title)\nSummary: \(extract)\n\nWrite the question now.",
                         generating: GeneratedQuestion.self)
+                    consecutiveFailures = 0
                     if let q = question(from: response.content, summary: s, categoryID: categoryID) {
                         out.append(q)
                     }
                 } catch {
+                    consecutiveFailures += 1
+                    if diag {
+                        let flat = "\(error)".replacingOccurrences(of: "\n", with: " ")
+                            .replacingOccurrences(of: "  ", with: " ")
+                        print("DIAG\tAI-ERROR\t\(s.title)\t\(flat.prefix(600))")
+                    }
                     continue   // skip this one; another summary or the fallback covers it
                 }
                 if out.count >= count { break }

@@ -158,6 +158,12 @@ def audit(games, rows):
                         f"answer is the only `{shapes[ci]}` among {other[0]}: {opts}")
                 lens = [len(str(o)) for o in opts]
                 others = [l for i, l in enumerate(lens) if i != ci]
+                # Individually noticeable, but NOT a pattern a player can play:
+                # measured over all 128,638 corpus MCQs the answer is the single
+                # longest option 24.2% of the time, against a 25% chance baseline,
+                # and only 0.23% are this extreme. Kept as a per-question smell,
+                # deliberately not treated as a systematic tell worth a risky
+                # distractor-swap across the corpus.
                 if others and lens[ci] > 2.5 * max(others) and lens[ci] > 25:
                     add("D3", "unfair", qid,
                         f"answer {lens[ci]} chars vs longest distractor {max(others)}: {opts}")
@@ -168,7 +174,15 @@ def audit(games, rows):
                         f"prompt contains its own answer '{ans}': {prompt[:80]}")
 
         # E — experience
-        if not (r.get("explanation") or "").strip():
+        #
+        # Name as Many is exempt: its reveal card renders the whole set with the
+        # ones you named marked and the ones you missed left blank ("You named 3
+        # of 4"), which IS the learning payload for that mode. The rule flagged
+        # all 81 of them as missing a "learn the fact" string, I read the live
+        # panel, concluded the missed items were never shown, and rewrote it —
+        # then the screenshot showed the reveal card doing it already, one card
+        # down. Verify on screen before believing an audit about the screen.
+        if r["mode"] != "enumerate" and not (r.get("explanation") or "").strip():
             add("E1", "quality", qid, f"no explanation: {prompt[:70]}")
         if len(prompt) > 220:
             add("E2", "quality", qid, f"{len(prompt)}-char prompt: {prompt[:70]}...")

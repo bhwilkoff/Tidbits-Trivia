@@ -233,3 +233,40 @@ final class QuestionProvider {
         return f.string(from: date)
     }
 }
+
+// MARK: - Create: one assembly path for every Apple surface
+
+extension QuestionProvider {
+
+    /// Build a Create set for `topic`, targeting `count` questions.
+    ///
+    /// This lived three times over (iOS, macOS, tvOS) with the same logic copied by
+    /// hand, which is how a fix lands on one surface and not the others. It also
+    /// carried a real bug: live generation only kicked in when the corpus returned
+    /// FEWER THAN THREE, so a topic with six corpus questions silently delivered six
+    /// and said nothing — the six thin topics in `coverage.py` were all in that band.
+    ///
+    /// Now the corpus is used first (it's vetted and instant) and live generation
+    /// TOPS UP the shortfall rather than only rescuing a near-total miss.
+    @MainActor
+    func createSet(topic: String, count: Int = 8) async -> [Question] {
+        // Shape variety first: a couple of topic-matched non-MCQ questions so the set
+        // mixes kinds, not just categories.
+        var shaped: [Question] = []
+        for src in [JSONQuestionSource.picture, .thisOrThat, .closestCall] {
+            shaped.append(contentsOf: src.searchMatch(topic: topic, limit: 1))
+        }
+        let mcq = CorpusDatabase.shared.search(topic: topic, limit: max(4, count - shaped.count))
+        var result = mcq + shaped
+
+        if result.count < count {
+            // Top up from live Wikipedia. Deduped by id because a live question can
+            // legitimately restate a corpus one for the same subject.
+            let have = Set(result.map(\.id))
+            let live = await liveQuestions(topic: topic, category: .named("mixed"),
+                                           count: count - result.count + 2)
+            result += live.filter { !have.contains($0.id) }
+        }
+        return Array(result.shuffled().prefix(count))
+    }
+}

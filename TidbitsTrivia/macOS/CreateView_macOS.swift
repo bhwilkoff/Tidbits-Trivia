@@ -184,16 +184,7 @@ struct CreateView_macOS: View {
             }
         }
         Task {
-            var shaped: [Question] = []
-            for src in [JSONQuestionSource.picture, .thisOrThat, .closestCall] {
-                shaped.append(contentsOf: src.searchMatch(topic: q, limit: 1))
-            }
-            var mcq = CorpusDatabase.shared.search(topic: q, limit: max(4, 8 - shaped.count))
-            if mcq.count < 3 {
-                let gen = await QuestionProvider.shared.liveQuestions(topic: q, category: .named("mixed"), count: 8)
-                if gen.count >= 3 { mcq = gen; shaped = [] }
-            }
-            let result = Array((mcq + shaped).shuffled().prefix(8))
+            let result = await QuestionProvider.shared.createSet(topic: q)
             isWorking = false
             if result.count >= 3 {
                 // Every created quiz is saved automatically — no Save button to miss.

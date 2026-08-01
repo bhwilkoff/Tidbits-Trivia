@@ -1138,9 +1138,17 @@ async function buildCreateSet(topic) {
     try { shaped.push(...await src.searchMatch(topic, 1)); } catch { /* source optional */ }
   }
   const mcqNeeded = Math.max(4, 8 - shaped.length);
-  let mcq = Corpus.search(topic, mcqNeeded);
-  if (mcq.length < 3) { const gen = await Wikipedia.generate(topic, 'mixed', 8); if (gen.length >= 3) return gen; }
-  const set = [...mcq, ...shaped].slice(0, 8);
+  const mcq = Corpus.search(topic, mcqNeeded);
+  let set = [...mcq, ...shaped];
+  if (set.length < 8) {
+    // Top up rather than only rescuing a near-total miss. Live generation used to
+    // fire ONLY when the corpus returned fewer than three, so a topic with six
+    // silently delivered six — every thin topic in coverage.py sat in that band.
+    const have = new Set(set.map((q) => q.id));
+    const gen = await Wikipedia.generate(topic, 'mixed', 8 - set.length + 2);
+    set = set.concat(gen.filter((q) => !have.has(q.id)));
+  }
+  set = set.slice(0, 8);
   for (let i = set.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [set[i], set[j]] = [set[j], set[i]]; }
   return set;
 }

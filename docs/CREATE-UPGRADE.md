@@ -62,9 +62,11 @@ not exist; revisit it only after re-measuring.
 - `coverage.py` now mirrors the shipped rule. Re-measured: **111/127 can fill 8**
   (was 109); "The Beatles" and "The Simpsons" both cleared — screen is now 0 thin.
 
-**B2 (diacritics) still open** and needs a *data-plane* change, not a hack: a folded
-`search_text` column written by the corpus build tool, so `beyonce` matches `Beyoncé`
-on every platform identically. Do NOT approximate this with prefix trimming.
+**B2 (diacritics) FIXED** in Wave 3, at the data plane rather than with a hack: the
+corpus build writes a folded `search_text` column, so `beyonce` matches `Beyoncé`
+identically on every platform. Sparse — only the 9.1% of rows whose folded text
+actually differs carry it (+3.3 MB; dense would have cost ~35 MB of bundle for the
+same behaviour). See the Wave 3 log below.
 
 **Newly understood, and NOT a bug:** the residual thinness on person-topics like
 Vincent van Gogh is the **answer-giveaway rule** — Create deliberately drops questions
@@ -94,19 +96,26 @@ syntax-checked, Apple builds green.
 
 ## Waves (each its own loop tick)
 
-- **W1 — Blended sourcing.** Corpus + live in one ranked pool; target N always met or
-  an honest "we could only find K". Re-measure with `coverage.py` after.
-- **W2 — Multiple question + game types.** A created quiz should be able to mix MCQ,
+- **W1 — Blended sourcing.** ✅ SHIPPED 2026-07-31. Live generation used to fire ONLY
+  when the corpus returned fewer than THREE, so a topic with six corpus questions
+  silently delivered six — every thin topic in `coverage.py` sat in exactly that band
+  (5–6). Live now TOPS UP the shortfall, deduped by id. On Apple the assembly moved
+  into `QuestionProvider.createSet`, because it had been hand-copied across iOS,
+  macOS and tvOS — which is how a fix lands on one surface and not the others.
+- **W2 — Multiple question + game types.** ✅ SHIPPED 2026-07-31 (see the W2 log at the end).
+  Original note: A created quiz should be able to mix MCQ,
   Closest Call, Ordering, Match-Up, Type-Answer, Odd-One-Out, Picture — and to be
   played as Classic / Time Attack / Survival / Stake. Today Create hardcodes `.classic`.
 - **W3 — Apple Intelligence question selection.** `DelightfulQuizGenerator` already
   uses `FoundationModels` to WRITE questions; extend it to RANK/curate a candidate set
   (hook quality, difficulty spread, no near-duplicates). Apple-only; the other
   platforms need a deterministic fallback ranker so sets stay comparable.
-- **W4 — Saved quizzes (the new mechanic).** Persist a created quiz to the account:
+- **W4 — Saved quizzes (the new mechanic).** ✅ SHIPPED on all six platforms.
+  Original note: Persist a created quiz to the account:
   SwiftData/Room/localStorage locally + the shared player bucket for sync. Replay,
   rename, delete.
-- **W5 — Sharing.** A quiz gets a canonical URL (`/quiz/<id>`) with a deep-link twin
+- **W5 — Sharing.** ✅ SHIPPED on all six platforms (tvOS via QR).
+  Original note: A quiz gets a canonical URL (`/quiz/<id>`) with a deep-link twin
   per DEEP_LINKS.md, so a created quiz opens natively on any platform and on the web.
 - **W6 — Parity + polish.** All six platforms, PARITY.md row, per-platform design docs.
 
@@ -208,3 +217,13 @@ a FIXED set of questions, so any mode that draws its own (daily, marathon, weak-
 expedition) would silently ignore the very questions the quiz exists to preserve. An
 unknown mode from a newer build falls back to mix rather than refusing to play, per
 the contract's evolution rules.
+
+
+---
+
+## Doc hygiene note (2026-07-31)
+
+`B2 (diacritics) still open` sat in this file for hours after B2 was fixed, because
+the wave list and the wave logs were updated separately. A doc that claims an open
+bug which is actually closed is worse than no doc — it sends the next person chasing
+something that isn't there. When a wave ships, update the LIST as well as the log.

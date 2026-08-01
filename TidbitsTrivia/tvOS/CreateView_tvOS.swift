@@ -204,16 +204,7 @@ struct CreateView_tvOS: View {
         error = nil
         isWorking = true
         Task {
-            var shaped: [Question] = []
-            for src in [JSONQuestionSource.picture, .thisOrThat, .closestCall] {
-                shaped.append(contentsOf: src.searchMatch(topic: q, limit: 1))
-            }
-            var mcq = CorpusDatabase.shared.search(topic: q, limit: max(4, 8 - shaped.count))
-            if mcq.count < 3 {
-                let gen = await QuestionProvider.shared.liveQuestions(topic: q, category: .named("mixed"), count: 8)
-                if gen.count >= 3 { mcq = gen; shaped = [] }
-            }
-            let result = Array((mcq + shaped).shuffled().prefix(8))
+            let result = await QuestionProvider.shared.createSet(topic: q)
             isWorking = false
             guard result.count >= 3 else {
                 error = "Couldn't build a good quiz for \u{201C}\(q)\u{201D}. Try a broader subject."

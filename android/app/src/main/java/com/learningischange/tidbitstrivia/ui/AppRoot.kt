@@ -2629,9 +2629,17 @@ private fun CreateScreen(onPlay: (List<Question>, String) -> Unit) {
             val topicT = t.trim()
             val shaped = mutableListOf<Question>()
             for (src in listOf(Pictures, ThisOrThat, ClosestCall)) shaped += src.searchMatch(topicT, 1)
-            var mcq = Corpus.search(topicT, maxOf(4, 8 - shaped.size))
-            if (mcq.size < 3) { val gen = Wikipedia.generate(topicT, "mixed", 8); if (gen.size >= 3) { mcq = gen; shaped.clear() } }
-            val qs = (mcq + shaped).shuffled().take(8)
+            val mcq = Corpus.search(topicT, maxOf(4, 8 - shaped.size))
+            var pool = mcq + shaped
+            if (pool.size < 8) {
+                // Top up rather than only rescuing a near-total miss: live generation
+                // used to fire ONLY below three, so a topic with six silently
+                // delivered six.
+                val have = pool.map { it.id }.toSet()
+                pool = pool + Wikipedia.generate(topicT, "mixed", 8 - pool.size + 2)
+                    .filter { it.id !in have }
+            }
+            val qs = pool.shuffled().take(8)
             working = false
             if (qs.size >= 3) {
                 // Every created quiz is saved automatically — the player never has to

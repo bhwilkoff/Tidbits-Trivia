@@ -676,6 +676,18 @@ direction is reasonably inferable, make the call and keep going.
 Reserve clarifying questions for actually blocked decisions only
 the user can make.
 
+**Context is never a reason to stop.** Do not end a loop, defer a
+finding, or narrow scope because the context window is filling —
+it is summarized automatically and the work continues in the next
+one. Keep going, or `/compact`. A long task ends when there is
+nothing left worth finding, which is a judgement about the WORK:
+on this repo, "found something significant this tick" has meant
+the answer is no. (2026-08-01: a `/loop` was ended for this reason
+after finding a real bug on every single tick, and had to be
+restarted.) The one legitimate caution is a large irreversible
+change made in a hurry — do it carefully, or do it next tick;
+don't stop.
+
 **Verify before declaring done.** If you can run the app, run it.
 If you can't directly observe the result, build an offline sim
 that produces a PNG you can `Read`. Type checks and tests confirm

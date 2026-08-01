@@ -161,6 +161,49 @@ struct CreateTopicDriftTests {
                      topic: "The Beatles") != nil)
     }
 
+    /// A prompt occurrence inside a DIFFERENT proper name is not a match. Typing
+    /// "Denver" matched "Written by Bill Danoff, Taffy Nivert and John Denver";
+    /// typing "Michael Jackson" matched a Glenda Jackson biopic and a film
+    /// starring Samuel L. Jackson.
+    @Test func aNameInsideSomeoneElsesNameIsNotAMatch() {
+        let denver = CorpusDatabase.topicTokens("Denver")
+        #expect(!CorpusDatabase.promptHasWord(
+            "Written by Bill Danoff and John Denver", "denver", topic: denver))
+        #expect(CorpusDatabase.promptHasWord(
+            "before Denver drafted him in 2024", "denver", topic: denver))
+        #expect(CorpusDatabase.promptHasWord(
+            "this Denver-based budget carrier", "denver", topic: denver))
+        let mj = CorpusDatabase.topicTokens("Michael Jackson")
+        #expect(!CorpusDatabase.promptHasWord(
+            "marked Glenda Jackson's final role", "jackson", topic: mj))
+        #expect(CorpusDatabase.promptHasWord(
+            "Michael Jackson's seventh studio album", "jackson", topic: mj))
+    }
+
+    /// The second half of the rule: a capitalised predecessor the player TYPED is
+    /// fine, or "John Lennon and Paul McCartney" would stop matching McCartney.
+    @Test func aCapitalisedPredecessorTheUserTypedIsStillAMatch() {
+        #expect(CorpusDatabase.promptHasWord(
+            "Written by John Lennon and Paul McCartney", "mccartney",
+            topic: CorpusDatabase.topicTokens("Paul McCartney")))
+    }
+
+    /// Identity ignores the disambiguator. The corpus titles the rapper "Drake
+    /// (musician)", so nothing was titled plainly "Drake", the topic was never its
+    /// own subject, the different-person guard never armed — and typing "Drake"
+    /// returned Nick Drake, Tim Drake and Drake & Josh.
+    @Test func aDisambiguatedTitleStillCountsAsTheSubject() {
+        #expect(tier("Drake (musician)", topic: "Drake") == 3)
+        #expect(tier("Nick Drake", topic: "Drake", guardNames: true) == nil)
+        #expect(tier("Drake & Josh", topic: "Drake", guardNames: true) == nil)
+    }
+
+    /// …while CONTAINMENT still reads the full title, where the parenthetical
+    /// carries real meaning.
+    @Test func containmentStillSeesTheDisambiguator() {
+        #expect(tier("Dangerous (Michael Jackson album)", topic: "Michael Jackson") == 2)
+    }
+
     /// A row whose title is exactly the topic outranks one that merely contains it.
     @Test func theSubjectItselfOutranksAContainingTitle() {
         #expect(tier("Denver", topic: "Denver") == 3)

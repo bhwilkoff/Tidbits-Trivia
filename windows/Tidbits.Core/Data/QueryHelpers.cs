@@ -61,6 +61,42 @@ internal static class QueryHelpers
         }
     }
 
+    /// Does `token` occur in the prompt as ITSELF, rather than as part of someone
+    /// else's name? Word-bounded matching is not enough inside prose: "Denver"
+    /// matched "...and John Denver", "Michael Jackson" matched a Glenda Jackson
+    /// biopic. The tell is the word before it — Capitalized and not itself part of
+    /// the typed topic means a different proper name. That second half keeps "John
+    /// Lennon and Paul McCartney" matching for "Paul McCartney". A possessive is
+    /// still the name ("Jackson's"). Mirrors Swift PromptHasWord.
+    public static bool PromptHasWord(string raw, string token, IReadOnlyList<string> topic)
+    {
+        static string BareOf(string w)
+        {
+            var b = new string(w.Where(c => char.IsLetterOrDigit(c) || c == '\'' || c == '\u2019').ToArray());
+            foreach (var suffix in new[] { "'s", "\u2019s" })
+                if (b.EndsWith(suffix, StringComparison.Ordinal)) b = b[..^suffix.Length];
+            return Fold(new string(b.Where(char.IsLetterOrDigit).ToArray()));
+        }
+        var words = raw.Split(new[] { ' ', '\n', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+        string? previous = null;
+        foreach (var w in words)
+        {
+            if (BareOf(w) == token)
+            {
+                if (previous is { Length: > 0 } p && char.IsUpper(p[0])
+                    && !topic.Contains(Fold(new string(p.Where(char.IsLetterOrDigit).ToArray()))))
+                {
+                    previous = w;
+                    continue;
+                }
+                return true;
+            }
+            previous = w;
+        }
+        // Hyphenated or punctuated forms ("Denver-based") the split cannot see.
+        return ContainsWord(Fold(raw), token) && !words.Any(w => BareOf(w) == token);
+    }
+
     /// A Wikipedia disambiguator is not part of what the player means:
     /// "Backrooms (film)", "Masters of the Universe (2026 film)".
     public static string StripParens(string s)
@@ -151,7 +187,10 @@ internal static class QueryHelpers
     {
         var fTitle = Fold(title);
         var subject = Flatten(title);
-        if (subject == phrase) return 3;
+        // Identity ignores the disambiguator — "Drake (musician)" IS Drake, and the
+        // corpus has no row titled plainly "Drake", so without this the guard never
+        // armed and typing "Drake" returned Nick Drake and Drake & Josh.
+        if (subject == phrase || Flatten(StripParens(title)) == phrase) return 3;
         if (ContainsWord(subject, phrase))
         {
             // When the typed word is itself a subject here, a bare two-word title
@@ -164,8 +203,7 @@ internal static class QueryHelpers
         if (requirePhrase) return ContainsWord(Fold(prompt), phrase) ? 0 : null;
         var need = tokens.Count <= 2 ? tokens.Count : tokens.Count - 1;
         if (tokens.Count(t => ContainsWord(fTitle, t)) >= need) return 1;
-        var read = fTitle + " " + Fold(prompt);
-        if (tokens.Count(t => ContainsWord(read, t)) >= need) return 0;
+        if (tokens.Count(t => ContainsWord(fTitle, t) || PromptHasWord(prompt, t, tokens)) >= need) return 0;
         if (HasAgentiveTag(tags.Select(Fold), phrase)) return -1;
         return null;
     }

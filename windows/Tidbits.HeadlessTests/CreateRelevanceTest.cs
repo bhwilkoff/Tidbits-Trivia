@@ -159,6 +159,41 @@ public class CreateTopicDriftTest
         Assert.NotNull(Tier("Abbey Road", "The Beatles", prompt: "the beatles recorded it here"));
     }
 
+    /// A prompt occurrence inside a DIFFERENT proper name is not a match: "Denver"
+    /// matched "...and John Denver", "Michael Jackson" a Glenda Jackson biopic.
+    [Fact]
+    public void A_name_inside_someone_elses_name_is_not_a_match()
+    {
+        var denver = QueryHelpers.Tokenize("Denver");
+        Assert.False(QueryHelpers.PromptHasWord("Written by Bill Danoff and John Denver", "denver", denver));
+        Assert.True(QueryHelpers.PromptHasWord("before Denver drafted him in 2024", "denver", denver));
+        Assert.True(QueryHelpers.PromptHasWord("this Denver-based budget carrier", "denver", denver));
+        var mj = QueryHelpers.Tokenize("Michael Jackson");
+        Assert.False(QueryHelpers.PromptHasWord("marked Glenda Jackson's final role", "jackson", mj));
+        Assert.True(QueryHelpers.PromptHasWord("Michael Jackson's seventh studio album", "jackson", mj));
+    }
+
+    /// ...and a capitalised predecessor the player TYPED is still a match.
+    [Fact]
+    public void A_capitalised_predecessor_the_user_typed_is_still_a_match()
+        => Assert.True(QueryHelpers.PromptHasWord("Written by John Lennon and Paul McCartney",
+            "mccartney", QueryHelpers.Tokenize("Paul McCartney")));
+
+    /// Identity ignores the disambiguator: the corpus titles the rapper "Drake
+    /// (musician)", so the guard never armed and "Drake" returned Nick Drake.
+    [Fact]
+    public void A_disambiguated_title_still_counts_as_the_subject()
+    {
+        Assert.Equal(3, Tier("Drake (musician)", "Drake"));
+        Assert.Null(Tier("Nick Drake", "Drake", guardNames: true));
+        Assert.Null(Tier("Drake & Josh", "Drake", guardNames: true));
+    }
+
+    /// ...while CONTAINMENT still reads the full title.
+    [Fact]
+    public void Containment_still_sees_the_disambiguator()
+        => Assert.Equal(2, Tier("Dangerous (Michael Jackson album)", "Michael Jackson"));
+
     [Fact]
     public void The_subject_itself_outranks_a_containing_title()
     {

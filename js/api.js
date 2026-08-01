@@ -100,6 +100,35 @@ function containsWord(text, token) {
   }
 }
 
+// Does `token` occur in the prompt as ITSELF, rather than as part of someone else's
+// name? Word-bounded matching is not enough inside prose: "Denver" matched "...and
+// John Denver", "Michael Jackson" matched a Glenda Jackson biopic. The tell is the
+// word before it — Capitalized and not itself part of the typed topic means a
+// different proper name. That second half keeps "John Lennon and Paul McCartney"
+// matching for "Paul McCartney". A possessive is still the name ("Jackson's").
+function promptHasWord(raw, token, topic) {
+  const bareOf = (w) => {
+    let b = [...String(w)].filter((c) => /[\p{L}\p{N}'’]/u.test(c)).join('');
+    for (const suffix of ["'s", '\u2019s']) if (b.endsWith(suffix)) b = b.slice(0, -suffix.length);
+    return fold([...b].filter((c) => /[\p{L}\p{N}]/u.test(c)).join(''));
+  };
+  const words = String(raw || '').split(/[ \n\t]+/).filter(Boolean);
+  let previous = null;
+  for (const w of words) {
+    if (bareOf(w) === token) {
+      if (previous && /\p{Lu}/u.test(previous[0])
+          && !topic.includes(fold([...previous].filter((c) => /[\p{L}\p{N}]/u.test(c)).join('')))) {
+        previous = w;
+        continue;
+      }
+      return true;
+    }
+    previous = w;
+  }
+  // Hyphenated or punctuated forms ("Denver-based") the split cannot see.
+  return containsWord(fold(raw || ''), token) && !words.some((w) => bareOf(w) === token);
+}
+
 // A Wikipedia disambiguator is not part of what the player means:
 // "Backrooms (film)", "Masters of the Universe (2026 film)".
 function stripParens(s) {
@@ -179,7 +208,10 @@ function hasAgentiveTag(tags, phrase) {
 function tierOf(title, prompt, tags, tokens, phrase, guardNames, requirePhrase = false) {
   const fTitle = fold(title || '');
   const subject = flattened(title || '');
-  if (subject === phrase) return 3;
+  // Identity ignores the disambiguator — "Drake (musician)" IS Drake, and the corpus
+  // has no row titled plainly "Drake", so without this the guard never armed and
+  // typing "Drake" returned Nick Drake, Tim Drake and Drake & Josh.
+  if (subject === phrase || flattened(stripParens(title || '')) === phrase) return 3;
   if (containsWord(subject, phrase)) {
     // When the typed word is itself a subject here, a bare two-word title that
     // merely contains it is a DIFFERENT named thing: "Bob Denver".
@@ -191,8 +223,7 @@ function tierOf(title, prompt, tags, tokens, phrase, guardNames, requirePhrase =
   if (requirePhrase) return containsWord(fold(prompt || ''), phrase) ? 0 : null;
   const need = tokens.length <= 2 ? tokens.length : tokens.length - 1;
   if (tokens.filter((t) => containsWord(fTitle, t)).length >= need) return 1;
-  const read = fTitle + ' ' + fold(prompt || '');
-  if (tokens.filter((t) => containsWord(read, t)).length >= need) return 0;
+  if (tokens.filter((t) => containsWord(fTitle, t) || promptHasWord(prompt || '', t, tokens)).length >= need) return 0;
   if (hasAgentiveTag((tags || []).map(fold), phrase)) return -1;
   return null;
 }
@@ -312,7 +343,8 @@ export const Corpus = {
     // Denver" is someone else. "Potter" is not, so "Harry Potter" is the best
     // reading of it.
     const guardNames = tokens.length === 1
-      && this.questions.some((q) => flattened(q.sourceTitle) === phrase);
+      && this.questions.some((q) => flattened(q.sourceTitle) === phrase
+        || flattened(stripParens(q.sourceTitle || '')) === phrase);
     const requirePhrase = phraseIsRequired(topic);
     const scored = [];
     const giveaways = [];

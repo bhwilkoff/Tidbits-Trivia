@@ -110,6 +110,52 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
         "was", "were", "are", "who", "what", "which", "how", "why", "all", "any",
     ]
 
+    /// Does `token` occur in the prompt as ITSELF, rather than as part of someone
+    /// else's name?
+    ///
+    /// Word-bounded matching is not enough inside prose. Typing "Denver" matched
+    /// "Written by Bill Danoff, Taffy Nivert and John Denver"; typing "Michael
+    /// Jackson" matched a film "starring Samuel L. Jackson" (whose co-star is
+    /// Michael Ealy) and a Glenda Jackson biopic. The word is right; the person is
+    /// not.
+    ///
+    /// The tell is the word before it. If that word is Capitalized and is NOT
+    /// itself part of the typed topic, the match belongs to a different proper
+    /// name. The second half of that test is what keeps "Written by John Lennon
+    /// and Paul McCartney" matching for "Paul McCartney" — there "McCartney" is
+    /// preceded by "Paul", which the player typed.
+    nonisolated static func promptHasWord(_ raw: String, _ token: String, topic tokens: [String]) -> Bool {
+        let words = raw.split { $0 == " " || $0 == "\n" || $0 == "\t" }.map(String.init)
+        var previous: String? = nil
+        for w in words {
+            // A POSSESSIVE is still the name: without stripping it, "Glenda
+            // Jackson's" read as the word "jacksons", missed the check entirely,
+            // and fell through to plain matching — so a Glenda Jackson biopic
+            // survived in a Michael Jackson quiz.
+            var bare = w.filter { $0.isLetter || $0.isNumber || $0 == "'" || $0 == "\u{2019}" }
+            for suffix in ["'s", "\u{2019}s"] where bare.hasSuffix(suffix) {
+                bare = String(bare.dropLast(suffix.count))
+            }
+            let folded = fold(bare.filter { $0.isLetter || $0.isNumber })
+            if folded == token {
+                if let p = previous, let first = p.first, first.isUppercase,
+                   !tokens.contains(fold(p.filter { $0.isLetter || $0.isNumber })) {
+                    previous = w
+                    continue        // part of a different proper name
+                }
+                return true
+            }
+            previous = w
+        }
+        // Fall back to plain word matching for hyphenated or punctuated forms
+        // ("Denver-based") that the word split above cannot see.
+        return containsWord(fold(raw), token) && !words.contains { w in
+            var b = w.filter { $0.isLetter || $0.isNumber || $0 == "'" || $0 == "\u{2019}" }
+            for suffix in ["'s", "\u{2019}s"] where b.hasSuffix(suffix) { b = String(b.dropLast(suffix.count)) }
+            return fold(b.filter { $0.isLetter || $0.isNumber }) == token
+        }
+    }
+
     /// Word-bounded containment — the single most load-bearing line in Create.
     ///
     /// Plain `contains` matched the typed word INSIDE longer words, which is how
@@ -240,7 +286,13 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
                                  requirePhrase: Bool = false) -> Int? {
         let fTitle = fold(title)
         let subject = flattened(title)
-        if subject == phrase { return 3 }
+        // Identity ignores the disambiguator — "Drake (musician)" IS Drake. The
+        // corpus has no row titled plainly "Drake", so without this the topic was
+        // never its own subject, the different-person guard never armed, and
+        // typing "Drake" returned Nick Drake, Tim Drake and Drake & Josh.
+        // Containment below still uses the FULL title, where the parenthetical
+        // carries real meaning ("Dangerous (Michael Jackson album)").
+        if subject == phrase || flattened(stripParens(title)) == phrase { return 3 }
         if containsWord(subject, phrase) {
             // When the typed word is ITSELF a subject in this corpus, a bare
             // two-word title that merely contains it is a DIFFERENT named thing:
@@ -254,8 +306,9 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
         if requirePhrase { return containsWord(fold(prompt), phrase) ? 0 : nil }
         let need = tokens.count <= 2 ? tokens.count : tokens.count - 1
         if tokens.filter({ containsWord(fTitle, $0) }).count >= need { return 1 }
-        let read = fTitle + " " + fold(prompt)
-        if tokens.filter({ containsWord(read, $0) }).count >= need { return 0 }
+        if tokens.filter({ containsWord(fTitle, $0) || promptHasWord(prompt, $0, topic: tokens) }).count >= need {
+            return 0
+        }
         if hasAgentiveTag(tags.map(fold), phrase: phrase) { return -1 }
         return nil
     }
@@ -367,6 +420,14 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
         }
     }
 
+    /// Is this topic its own subject in the corpus? Public so the shape sources
+    /// (picture / this-or-that / closest) can arm the SAME different-person guard —
+    /// without it a closest-call round answered "In what year did John Denver die?"
+    /// for a player who typed Denver, after the corpus ranker had refused him.
+    func isOwnSubject(phrase: String) -> Bool {
+        queue.sync { db.map { Self.isOwnSubject($0, phrase: phrase) } ?? false }
+    }
+
     /// Does some row's SUBJECT reduce to exactly this topic? Titles only, grouped,
     /// so it stays cheap — the pre-filter scan is the expensive part, not this.
     private static func isOwnSubject(_ db: OpaquePointer, phrase: String) -> Bool {
@@ -380,7 +441,7 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
         sqlite3_bind_text(stmt, 1, "%\(phrase.split(separator: " ").first.map(String.init) ?? phrase)%", -1, transientDestructor)
         while sqlite3_step(stmt) == SQLITE_ROW {
             let title = text(stmt, 0)
-            if flattened(title) == phrase { return true }
+            if flattened(title) == phrase || flattened(stripParens(title)) == phrase { return true }
         }
         return false
     }

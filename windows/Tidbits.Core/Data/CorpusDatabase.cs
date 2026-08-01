@@ -76,7 +76,9 @@ public sealed class CorpusDatabase
         // the different-person guard: "Denver" is a place in this corpus, so "Bob
         // Denver" is someone else. "Potter" is not a subject, so "Harry Potter" is
         // the best reading of it.
-        var guardNames = tokens.Count == 1 && _all.Any(q => QueryHelpers.Flatten(q.SourceTitle) == phrase);
+        var guardNames = tokens.Count == 1 && _all.Any(q =>
+            QueryHelpers.Flatten(q.SourceTitle) == phrase
+            || QueryHelpers.Flatten(QueryHelpers.StripParens(q.SourceTitle)) == phrase);
         var requirePhrase = QueryHelpers.PhraseIsRequired(topic);
 
         // WHERE (prompt LIKE %t% OR title LIKE %t%) for any token, LIMIT 400 (pre-filter).

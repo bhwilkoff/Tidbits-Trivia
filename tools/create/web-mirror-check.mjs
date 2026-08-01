@@ -6,12 +6,12 @@ const src = fs.readFileSync('js/api.js', 'utf8');
 // exported) by evaluating just their definitions.
 const names = ['fold', 'isWordChar', 'containsWord', 'stripParens', 'flattened',
                'topicPhrase', 'phraseIsRequired', 'topicTokens', 'hasAgentiveTag',
-               'tierOf', 'STOPWORDS', '_foldCache'];
+               'promptHasWord', 'tierOf', 'STOPWORDS', '_foldCache'];
 const start = src.indexOf('const _foldCache');
 const end = src.indexOf('function fillByTier');
 const block = src.slice(start, end);
 const mod = new Function(block + '\nreturn {' + names.filter(n => block.includes(n)).join(',') + '};')();
-const { containsWord, topicPhrase, topicTokens, tierOf, phraseIsRequired } = mod;
+const { containsWord, topicPhrase, topicTokens, tierOf, phraseIsRequired, promptHasWord } = mod;
 
 let fails = 0;
 const ok = (cond, label) => { if (!cond) { console.log('FAIL', label); fails++; } };
@@ -58,5 +58,31 @@ ok(!phraseIsRequired('Denver'), 'denver no phrase requirement');
 ok(tier('Abbey Road', { topic: 'The Beatles', prompt: 'the beatles recorded it here' }) !== null,
    'abbey road still admitted');
 
-console.log(fails === 0 ? 'web mirror OK (28/28)' : `${fails} FAILURES`);
+// Identity ignores the disambiguator: the corpus titles the rapper "Drake
+// (musician)", so the guard never armed and "Drake" returned Nick Drake.
+ok(tier('Drake (musician)', { topic: 'Drake' }) === 3, 'drake musician is drake');
+ok(tier('Nick Drake', { topic: 'Drake', guard: true }) === null, 'nick drake rejected');
+ok(tier('Drake & Josh', { topic: 'Drake', guard: true }) === null, 'drake and josh rejected');
+// ...while CONTAINMENT still reads the full title.
+ok(tier('Dangerous (Michael Jackson album)', { topic: 'Michael Jackson' }) === 2,
+   'containment sees the disambiguator');
+
+// A prompt occurrence inside a DIFFERENT proper name is not a match. "Denver"
+// matched "...and John Denver"; "Michael Jackson" matched a Glenda Jackson biopic.
+const T = (t) => topicTokens(t);
+ok(!promptHasWord('Written by Bill Danoff and John Denver', 'denver', T('Denver')),
+   'john denver rejected in prose');
+ok(promptHasWord('before Denver drafted him in 2024', 'denver', T('Denver')),
+   'plain denver accepted');
+ok(promptHasWord('this Denver-based budget carrier', 'denver', T('Denver')),
+   'hyphenated denver accepted');
+ok(!promptHasWord("marked Glenda Jackson's final role", 'jackson', T('Michael Jackson')),
+   'glenda jackson rejected');
+ok(promptHasWord("Michael Jackson's seventh studio album", 'jackson', T('Michael Jackson')),
+   'possessive of the topic accepted');
+// ...and the second half of the rule: a capitalised predecessor the player TYPED.
+ok(promptHasWord('Written by John Lennon and Paul McCartney', 'mccartney', T('Paul McCartney')),
+   'paul mccartney still matches');
+
+console.log(fails === 0 ? 'web mirror OK (38/38)' : `${fails} FAILURES`);
 process.exit(fails ? 1 : 0);

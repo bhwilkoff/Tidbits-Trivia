@@ -60,6 +60,24 @@ def strip_parens(s):
     return out.strip()
 
 
+# A disambiguator that is a pure TYPE descriptor carries no information the player
+# needs: "(film)", "(river)", "(1927 song)", "(political units)". One that NAMES
+# something does: "(Taylor Swift song)", "(Michael Jackson album)", "(Bach)",
+# "(Brooklyn)". Stripping the second kind removes the only visible mention of the
+# subject — "In what year was Cruel Summer first released?" is ambiguous (Bananarama
+# had one too), where "Cruel Summer (Taylor Swift song)" was merely ugly.
+ALLOWED_CAPS = {"TV", "EP", "US", "UK", "EU", "UN", "BBC", "HBO", "NBC", "DVD", "CD"}
+
+
+def is_type_descriptor(inner):
+    words = inner.split()
+    if words and re.fullmatch(r"\d{4}", words[0]):
+        words = words[1:]
+    if not words:
+        return False
+    return all(w.islower() or w.upper() in ALLOWED_CAPS or not w.isalpha() for w in words)
+
+
 def leaks_answer(title, answer):
     """Does the disambiguator name (part of) the answer?"""
     inner = " ".join(re.findall(r"\(([^)]*)\)", title))
@@ -114,6 +132,11 @@ def main():
             dropped += 1
             if len(examples["dropped"]) < 5:
                 examples["dropped"].append(f"{prompt}  ->  {answer}")
+            continue
+
+        # Past the leak check, only a pure TYPE descriptor may be stripped.
+        if not all(is_type_descriptor(x) for x in re.findall(r"\(([^()]*)\)", title)):
+            keep.append(r)
             continue
 
         others = by_family[family(qid)].get(new_prompt)

@@ -404,6 +404,37 @@ object Corpus {
         }
     }
 
+    /** Does `token` occur in the prompt as ITSELF, rather than as part of someone
+     *  else's name? Word-bounded matching is not enough inside prose: "Denver"
+     *  matched "...and John Denver", "Michael Jackson" matched a Glenda Jackson
+     *  biopic. The tell is the word before it — Capitalized and not itself part of
+     *  the typed topic means a different proper name. That second half is what
+     *  keeps "John Lennon and Paul McCartney" matching for "Paul McCartney".
+     *  A possessive is still the name ("Jackson's"). Mirrors Swift promptHasWord. */
+    fun promptHasWord(raw: String, token: String, topic: List<String>): Boolean {
+        fun bareOf(w: String): String {
+            var b = w.filter { it.isLetterOrDigit() || it == '\'' || it == '\u2019' }
+            for (suffix in listOf("'s", "\u2019s")) if (b.endsWith(suffix)) b = b.dropLast(suffix.length)
+            return fold(b.filter { it.isLetterOrDigit() })
+        }
+        val words = raw.split(' ', '\n', '\t').filter { it.isNotEmpty() }
+        var previous: String? = null
+        for (w in words) {
+            if (bareOf(w) == token) {
+                val p = previous
+                if (p != null && p.firstOrNull()?.isUpperCase() == true &&
+                    fold(p.filter { it.isLetterOrDigit() }) !in topic) {
+                    previous = w
+                    continue
+                }
+                return true
+            }
+            previous = w
+        }
+        // Hyphenated or punctuated forms ("Denver-based") the split cannot see.
+        return containsWord(fold(raw), token) && words.none { bareOf(it) == token }
+    }
+
     /** A Wikipedia disambiguator is not part of what the player means:
      *  "Backrooms (film)", "Masters of the Universe (2026 film)". */
     fun stripParens(s: String): String {
@@ -487,7 +518,10 @@ object Corpus {
              requirePhrase: Boolean = false): Int? {
         val fTitle = fold(title)
         val subject = flattened(title)
-        if (subject == phrase) return 3
+        // Identity ignores the disambiguator — "Drake (musician)" IS Drake, and
+        // the corpus has no row titled plainly "Drake", so without this the guard
+        // never armed and typing "Drake" returned Nick Drake and Drake & Josh.
+        if (subject == phrase || flattened(stripParens(title)) == phrase) return 3
         if (containsWord(subject, phrase)) {
             // When the typed word is itself a subject here, a bare two-word title
             // that merely contains it is a DIFFERENT named thing: "Bob Denver".
@@ -499,8 +533,7 @@ object Corpus {
         if (requirePhrase) return if (containsWord(fold(prompt), phrase)) 0 else null
         val need = if (tokens.size <= 2) tokens.size else tokens.size - 1
         if (tokens.count { containsWord(fTitle, it) } >= need) return 1
-        val read = "$fTitle ${fold(prompt)}"
-        if (tokens.count { containsWord(read, it) } >= need) return 0
+        if (tokens.count { containsWord(fTitle, it) || promptHasWord(prompt, it, tokens) } >= need) return 0
         if (hasAgentiveTag(tags.map { fold(it) }, phrase)) return -1
         return null
     }
@@ -517,7 +550,8 @@ object Corpus {
             arrayOf("%$head%"),
         ).use { c ->
             while (c.moveToNext()) {
-                if (flattened(c.getString(0) ?: "") == phrase) return true
+                val t = c.getString(0) ?: ""
+                if (flattened(t) == phrase || flattened(stripParens(t)) == phrase) return true
             }
         }
         return false

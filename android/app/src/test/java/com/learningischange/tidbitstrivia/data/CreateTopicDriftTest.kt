@@ -116,6 +116,37 @@ class CreateTopicDriftTest {
         assertNotNull(tier("Abbey Road", "The Beatles", prompt = "the beatles recorded it here"))
     }
 
+    /** A prompt occurrence inside a DIFFERENT proper name is not a match: "Denver"
+     *  matched "...and John Denver", "Michael Jackson" a Glenda Jackson biopic. */
+    @Test fun aNameInsideSomeoneElsesNameIsNotAMatch() {
+        val denver = Corpus.topicTokens("Denver")
+        assertFalse(Corpus.promptHasWord("Written by Bill Danoff and John Denver", "denver", denver))
+        assertTrue(Corpus.promptHasWord("before Denver drafted him in 2024", "denver", denver))
+        assertTrue(Corpus.promptHasWord("this Denver-based budget carrier", "denver", denver))
+        val mj = Corpus.topicTokens("Michael Jackson")
+        assertFalse(Corpus.promptHasWord("marked Glenda Jackson's final role", "jackson", mj))
+        assertTrue(Corpus.promptHasWord("Michael Jackson's seventh studio album", "jackson", mj))
+    }
+
+    /** ...and a capitalised predecessor the player TYPED is still a match. */
+    @Test fun aCapitalisedPredecessorTheUserTypedIsStillAMatch() {
+        assertTrue(Corpus.promptHasWord("Written by John Lennon and Paul McCartney",
+            "mccartney", Corpus.topicTokens("Paul McCartney")))
+    }
+
+    /** Identity ignores the disambiguator: the corpus titles the rapper "Drake
+     *  (musician)", so the guard never armed and "Drake" returned Nick Drake. */
+    @Test fun aDisambiguatedTitleStillCountsAsTheSubject() {
+        assertEquals(3, tier("Drake (musician)", "Drake"))
+        assertNull(tier("Nick Drake", "Drake", guardNames = true))
+        assertNull(tier("Drake & Josh", "Drake", guardNames = true))
+    }
+
+    /** ...while CONTAINMENT still reads the full title. */
+    @Test fun containmentStillSeesTheDisambiguator() {
+        assertEquals(2, tier("Dangerous (Michael Jackson album)", "Michael Jackson"))
+    }
+
     @Test fun theSubjectItselfOutranksAContainingTitle() {
         assertEquals(3, tier("Denver", "Denver"))
         assertEquals(2, tier("Denver International Airport", "Denver"))

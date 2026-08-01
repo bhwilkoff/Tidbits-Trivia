@@ -57,6 +57,10 @@ nonisolated final class JSONQuestionSource: @unchecked Sendable {
         // showing the wrong subject is worse than no picture round.
         guard tokens.contains(where: { !CorpusDatabase.isStopword($0) }) else { return [] }
         let phrase = CorpusDatabase.topicPhrase(topic)
+        // The shape sources need the same different-person guard as the corpus
+        // ranker, and for the same reason: typing "Denver" produced a closest-call
+        // round asking what year John Denver died.
+        let guardNames = tokens.count == 1 && CorpusDatabase.shared.isOwnSubject(phrase: phrase)
         // The SAME relevance floor the corpus search uses, for the same reason: a
         // picture round that shows the wrong subject is worse than no picture
         // round. Substring matching alone surfaced "In what year did Jean-Marie
@@ -67,7 +71,7 @@ nonisolated final class JSONQuestionSource: @unchecked Sendable {
             if tokens.contains(where: { CorpusDatabase.containsWord(ans, $0) }) { return nil }
             guard let tier = CorpusDatabase.tier(
                 title: q.sourceTitle, prompt: q.prompt, tags: q.tags,
-                tokens: tokens, phrase: phrase, guardNames: false) else { return nil }
+                tokens: tokens, phrase: phrase, guardNames: guardNames) else { return nil }
             return (q, tier)
         }
         guard let best = scored.map(\.1).max() else { return [] }

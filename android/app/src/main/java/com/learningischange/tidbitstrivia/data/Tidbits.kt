@@ -384,14 +384,134 @@ object Corpus {
 
     private val STOPWORDS = setOf("the", "and", "for", "with", "from", "that", "this", "his", "her", "its", "was", "were", "are", "who", "what", "which", "how", "why", "all", "any")
 
+    private fun isWordChar(c: Char) = c.isLetterOrDigit()
+
+    /** Word-bounded containment — the single most load-bearing rule in Create.
+     *  Plain `contains` matched the typed word INSIDE longer words, so "Ansel Adams"
+     *  returned Hansel and Gretel, "Harry Kane" returned Spokane, "India" returned
+     *  Indianapolis. Mirrors Swift `CorpusDatabase.containsWord`. */
+    fun containsWord(text: String, token: String): Boolean {
+        if (token.isEmpty()) return false
+        var from = 0
+        while (true) {
+            val i = text.indexOf(token, from)
+            if (i < 0) return false
+            val end = i + token.length
+            val beforeOk = i == 0 || !isWordChar(text[i - 1])
+            val afterOk = end == text.length || !isWordChar(text[end])
+            if (beforeOk && afterOk) return true
+            from = i + 1
+        }
+    }
+
+    /** A Wikipedia disambiguator is not part of what the player means:
+     *  "Backrooms (film)", "Masters of the Universe (2026 film)". */
+    fun stripParens(s: String): String {
+        val out = StringBuilder()
+        var depth = 0
+        for (c in s) {
+            when {
+                c == '(' || c == '[' -> depth++
+                c == ')' || c == ']' -> depth = maxOf(0, depth - 1)
+                depth == 0 -> out.append(c)
+            }
+        }
+        return out.toString().trim()
+    }
+
+    /** Punctuation flattened to single spaces, nothing dropped — phrase matching
+     *  needs the stopwords kept and in order ("masters of the universe"), and needs
+     *  the parenthetical kept on ROW titles, where it carries the meaning. */
+    fun flattened(s: String): String =
+        fold(s).split(Regex("[^\\p{L}\\p{N}]+")).filter { it.isNotEmpty() }.joinToString(" ")
+
+    fun topicPhrase(s: String): String = flattened(stripParens(s))
+
+    fun topicTokens(s: String): List<String> {
+        val raw = flattened(stripParens(s)).split(" ").filter { it.length >= 3 }
+        val kept = raw.filter { it !in STOPWORDS }
+        return kept.ifEmpty { raw }
+    }
+
+    /** Wikipedia categories mean "about" only in their agentive form. "Albums
+     *  produced by Michael Jackson" makes a Thriller question an MJ question;
+     *  "Actresses from Denver" does not make a Kristin Cavallari birth-year
+     *  question a Denver question. Mirrors Swift `hasAgentiveTag`. */
+    fun hasAgentiveTag(tags: List<String>, phrase: String): Boolean {
+        for (t in tags) {
+            for (prep in listOf("by ", "of ")) {
+                var from = 0
+                while (true) {
+                    val i = t.indexOf(prep, from)
+                    if (i < 0) break
+                    var rest = t.substring(i + prep.length)
+                    if (rest.startsWith("the ")) rest = rest.substring(4)
+                    if (rest.startsWith(phrase)) {
+                        val after = rest.substring(phrase.length)
+                        if (after.isEmpty() || !isWordChar(after[0])) return true
+                    }
+                    from = i + prep.length
+                }
+            }
+        }
+        return false
+    }
+
+    /** Relevance TIER, or null to REJECT. A floor, not just a ranking: a topic the
+     *  corpus knows nothing about must fall through to live generation rather than
+     *  produce eight confident strangers. Mirrors Swift `CorpusDatabase.tier`.
+     *
+     *   3 the row's subject IS the topic
+     *   2 the whole typed phrase appears, word-bounded, in the title
+     *   1 every typed word appears, word-bounded, in the title
+     *   0 every typed word appears in the prompt the player reads
+     *  -1 an agentive tag only — a real connection the question never shows
+     *
+     *  The OPTIONS are deliberately not consulted: that made the topic match as a
+     *  DISTRACTOR ("Zlatan Ibrahimović" returned a picture of Neymar) because the
+     *  giveaway rule had already removed every row where it was the right answer. */
+    fun tier(title: String, prompt: String, tags: List<String>,
+             tokens: List<String>, phrase: String, guardNames: Boolean): Int? {
+        val fTitle = fold(title)
+        val subject = flattened(title)
+        if (subject == phrase) return 3
+        if (containsWord(subject, phrase)) {
+            // When the typed word is itself a subject here, a bare two-word title
+            // that merely contains it is a DIFFERENT named thing: "Bob Denver".
+            if (guardNames && subject.split(" ").size == 2) return null
+            return 2
+        }
+        val need = if (tokens.size <= 2) tokens.size else tokens.size - 1
+        if (tokens.count { containsWord(fTitle, it) } >= need) return 1
+        val read = "$fTitle ${fold(prompt)}"
+        if (tokens.count { containsWord(read, it) } >= need) return 0
+        if (hasAgentiveTag(tags.map { fold(it) }, phrase)) return -1
+        return null
+    }
+
+    /** Does some row's SUBJECT reduce to exactly this topic? That single fact is
+     *  what licenses the different-person guard: "Denver" is a place in this
+     *  corpus, so "Bob Denver" is someone else; "Potter" is not, so "Harry Potter"
+     *  is the best reading of it. */
+    private fun isOwnSubject(phrase: String): Boolean {
+        val head = phrase.split(" ").firstOrNull() ?: return false
+        val d = db ?: return false
+        d.rawQuery(
+            "SELECT source_title FROM questions WHERE source_title LIKE ? GROUP BY source_title LIMIT 800",
+            arrayOf("%$head%"),
+        ).use { c ->
+            while (c.moveToNext()) {
+                if (flattened(c.getString(0) ?: "") == phrase) return true
+            }
+        }
+        return false
+    }
+
     fun search(topic: String, limit: Int): List<Question> {
-        // Stopwords are dropped, not merely short words: the >=3 rule kept "the",
-        // which matches nearly every row and crowds real hits out of the capped
-        // pre-filter before ranking ("The Beatles", "The Simpsons"). Mirrors Swift.
-        val rawTokens = fold(topic).split(Regex("[^a-z0-9]+")).filter { it.length >= 3 }
-        val keptTokens = rawTokens.filter { it !in STOPWORDS }
-        val tokens = keptTokens.ifEmpty { rawTokens }
+        val tokens = topicTokens(topic)
         if (tokens.isEmpty()) return emptyList()
+        val phrase = topicPhrase(topic)
+        val guardNames = tokens.size == 1 && isOwnSubject(phrase)
         // Narrow to rows that mention a token at all before scoring in Kotlin. LIKE is
         // ASCII-case-insensitive in SQLite and the tokens are [a-z0-9] by construction, so this
         // matches what the old full scan found. The cap stops a common word ("history") from
@@ -407,32 +527,30 @@ object Corpus {
         val args = tokens.flatMap { t -> List(5) { "%$t%" } }.toTypedArray()
         // The two owner rules (drop the repetitive "which continent" template and the
         // trivially-easy tier) push down into SQL; the answer-giveaway rule needs answerText.
+        // 6,000 was not enough once relevance became strict: a common word like
+        // "art" OR-matches ~19,500 rows and the genuine ones sit past the cap in
+        // rowid order. The cap is now only a runaway guard.
         val candidates = query(
             "SELECT $COLS FROM questions WHERE difficulty > 1 " +
-                "AND id NOT LIKE 'src:continent:%' AND ($clause) LIMIT 6000",
+                "AND id NOT LIKE 'src:continent:%' AND ($clause) LIMIT 25000",
             args,
         )
         val scoredAll = candidates.mapNotNull { q ->
+            // The relevance FLOOR, before any ranking.
+            val t = tier(q.sourceTitle, q.prompt, q.tags, tokens, phrase, guardNames)
+                ?: return@mapNotNull null
             // Folded, not merely lowercased: the tokens are folded, so an accented row
-            // would score 0 against them and be dropped by the `score > 0` gate — the
-            // pre-filter would surface it and the ranker would throw it straight away.
+            // would score 0 against them — the pre-filter would surface it and the
+            // ranker would throw it straight away.
             val title = fold(q.sourceTitle); val prompt = fold(q.prompt); val explanation = fold(q.explanation)
             val tagsLower = q.tags.map { fold(it) }
             val score = tokens.sumOf {
-                (if (tagsLower.any { tag -> tag.contains(it) }) 3 else 0) +
-                (if (title.contains(it)) 2 else 0) + (if (prompt.contains(it)) 1 else 0) + (if (explanation.contains(it)) 1 else 0)
+                (if (tagsLower.any { tag -> containsWord(tag, it) }) 3 else 0) +
+                (if (containsWord(title, it)) 2 else 0) +
+                (if (containsWord(prompt, it)) 1 else 0) +
+                (if (containsWord(explanation, it)) 1 else 0)
             }
-            // How many of the typed words this row matched AT ALL. Scoring alone
-            // was not enough: diversifyByCategory round-robins by CATEGORY after,
-            // so a one-word coincidence got PROMOTED to fill a lane. Measured on
-            // the shipping corpus, "Marie Curie" has 15 real two-word matches
-            // (all science) against 211 one-word hits across 7 categories, 189
-            // of which never mention Curie.
-            val matched = tokens.count {
-                tagsLower.any { tag -> tag.contains(it) } || title.contains(it) ||
-                    prompt.contains(it) || explanation.contains(it)
-            }
-            if (score > 0) Triple(q, score, matched) else null
+            Triple(q, score, t)
         }
         // A question whose ANSWER is/contains the topic is a giveaway ("Chicago" →
         // answer "Chicago") and is held in RESERVE rather than dropped: for a person
@@ -440,22 +558,28 @@ object Corpus {
         // questions do), so a hard drop starved the pool below a full quiz.
         val (giveaways, clean) = scoredAll.partition { (q, _, _) ->
             val answer = fold(q.answerText)
-            tokens.any { answer.contains(it) }
+            tokens.any { containsWord(answer, it) }
         }
-        var out = diversifyByCategory(topTier(clean), limit)
+        var out = fillByTier(clean, limit)
         if (out.size < limit) {
             val taken = out.map { it.id }.toSet()
-            out = out + topTier(giveaways).filter { it.id !in taken }.take(limit - out.size)
+            out = out + fillByTier(giveaways, limit).filter { it.id !in taken }.take(limit - out.size)
         }
         return out
     }
 
-    /** Keep only rows matching the MOST typed words, then rank within that tier.
-     *  Single-word topics are unaffected (every row ties at 1). */
-    private fun topTier(scored: List<Triple<Question, Int, Int>>): List<Question> {
-        val bestMatched = scored.maxOfOrNull { it.third } ?: return emptyList()
-        return scored.filter { it.third == bestMatched }
-            .sortedByDescending { it.second }.map { it.first }
+    /** Take from the highest occupied relevance tier first, diversifying INSIDE it.
+     *  Diversifying across tiers is what promoted a one-word coincidence into a
+     *  category lane — "Ansel Adams" returned exactly one row per category (Samuel
+     *  Adams, Hansel and Gretel, Phil Anselmo, Davante Adams…). Mirrors Swift. */
+    private fun fillByTier(scored: List<Triple<Question, Int, Int>>, limit: Int): List<Question> {
+        val out = mutableListOf<Question>()
+        for (t in listOf(3, 2, 1, 0, -1)) {
+            if (out.size >= limit) break
+            val lane = scored.filter { it.third == t }.sortedByDescending { it.second }.map { it.first }
+            out.addAll(diversifyByCategory(lane, limit - out.size))
+        }
+        return out.take(limit)
     }
 
     /** Round-robin a ranked list across categories, capping any one domain — the

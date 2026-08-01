@@ -80,12 +80,120 @@ function fold(s) {
 
 const STOPWORDS = new Set(['the', 'and', 'for', 'with', 'from', 'that', 'this', 'his', 'her', 'its', 'was', 'were', 'are', 'who', 'what', 'which', 'how', 'why', 'all', 'any']);
 
-// Keep only the rows matching the MOST typed words, then rank within that tier.
-// Single-word topics are unaffected (every row ties at 1).
-function topTier(scored) {
-  if (!scored.length) return [];
-  const best = scored.reduce((m, x) => Math.max(m, x[2]), 0);
-  return scored.filter((x) => x[2] === best).sort((a, b) => b[1] - a[1]).map((x) => x[0]);
+const isWordChar = (c) => /[\p{L}\p{N}]/u.test(c);
+
+// Word-bounded containment — the single most load-bearing rule in Create. Plain
+// `includes` matched the typed word INSIDE longer words, so "Ansel Adams" returned
+// Hansel and Gretel, "Harry Kane" returned Spokane, "India" returned Indianapolis.
+// Mirrors Swift `containsWord`.
+function containsWord(text, token) {
+  if (!token) return false;
+  let from = 0;
+  for (;;) {
+    const i = text.indexOf(token, from);
+    if (i < 0) return false;
+    const end = i + token.length;
+    const beforeOk = i === 0 || !isWordChar(text[i - 1]);
+    const afterOk = end === text.length || !isWordChar(text[end]);
+    if (beforeOk && afterOk) return true;
+    from = i + 1;
+  }
+}
+
+// A Wikipedia disambiguator is not part of what the player means:
+// "Backrooms (film)", "Masters of the Universe (2026 film)".
+function stripParens(s) {
+  let out = '', depth = 0;
+  for (const c of String(s || '')) {
+    if (c === '(' || c === '[') { depth++; continue; }
+    if (c === ')' || c === ']') { depth = Math.max(0, depth - 1); continue; }
+    if (depth === 0) out += c;
+  }
+  return out.trim();
+}
+
+// Punctuation flattened to single spaces, nothing dropped — phrase matching needs
+// the stopwords kept and in order ("masters of the universe"), and needs the
+// parenthetical kept on ROW titles, where it carries the meaning.
+function flattened(s) {
+  return fold(String(s || '')).split(/[^\p{L}\p{N}]+/u).filter(Boolean).join(' ');
+}
+
+// The typed topic as a matchable phrase: disambiguator removed, order kept.
+function topicPhrase(s) { return flattened(stripParens(s)); }
+
+function topicTokens(s) {
+  const raw = flattened(stripParens(s)).split(' ').filter((t) => t.length >= 3);
+  const kept = raw.filter((t) => !STOPWORDS.has(t));
+  return kept.length ? kept : raw;
+}
+
+// Wikipedia categories mean "about" only in their agentive form. "Albums produced
+// by Michael Jackson" makes a Thriller question an MJ question; "Actresses from
+// Denver" does not make a Kristin Cavallari birth-year question a Denver question.
+function hasAgentiveTag(tags, phrase) {
+  for (const t of tags) {
+    for (const prep of ['by ', 'of ']) {
+      let from = 0;
+      for (;;) {
+        const i = t.indexOf(prep, from);
+        if (i < 0) break;
+        let rest = t.slice(i + prep.length);
+        if (rest.startsWith('the ')) rest = rest.slice(4);
+        if (rest.startsWith(phrase)) {
+          const after = rest.slice(phrase.length);
+          if (!after.length || !isWordChar(after[0])) return true;
+        }
+        from = i + prep.length;
+      }
+    }
+  }
+  return false;
+}
+
+// Relevance TIER, or null to REJECT. A floor, not just a ranking: a topic the
+// corpus knows nothing about must fall through to live generation rather than
+// produce eight confident strangers. Mirrors Swift `tier`.
+//
+//   3 the row's subject IS the topic
+//   2 the whole typed phrase appears, word-bounded, in the title
+//   1 every typed word appears, word-bounded, in the title
+//   0 every typed word appears in the prompt the player reads
+//  -1 an agentive tag only — a real connection the question never shows
+//
+// The OPTIONS are deliberately not consulted: that made the topic match as a
+// DISTRACTOR ("Zlatan Ibrahimović" returned a picture of Neymar) because the
+// giveaway rule had already removed every row where it was the right answer.
+function tierOf(title, prompt, tags, tokens, phrase, guardNames) {
+  const fTitle = fold(title || '');
+  const subject = flattened(title || '');
+  if (subject === phrase) return 3;
+  if (containsWord(subject, phrase)) {
+    // When the typed word is itself a subject here, a bare two-word title that
+    // merely contains it is a DIFFERENT named thing: "Bob Denver".
+    if (guardNames && subject.split(' ').length === 2) return null;
+    return 2;
+  }
+  const need = tokens.length <= 2 ? tokens.length : tokens.length - 1;
+  if (tokens.filter((t) => containsWord(fTitle, t)).length >= need) return 1;
+  const read = fTitle + ' ' + fold(prompt || '');
+  if (tokens.filter((t) => containsWord(read, t)).length >= need) return 0;
+  if (hasAgentiveTag((tags || []).map(fold), phrase)) return -1;
+  return null;
+}
+
+// Take from the highest occupied relevance tier first, diversifying INSIDE it.
+// Diversifying across tiers is what promoted a one-word coincidence into a
+// category lane — "Ansel Adams" returned exactly one row per category (Samuel
+// Adams, Hansel and Gretel, Phil Anselmo, Davante Adams…).
+function fillByTier(scored, limit) {
+  const out = [];
+  for (const t of [3, 2, 1, 0, -1]) {
+    if (out.length >= limit) break;
+    const lane = scored.filter((x) => x[2] === t).sort((a, b) => b[1] - a[1]).map((x) => x[0]);
+    out.push(...diversify(lane, limit - out.length));
+  }
+  return out.slice(0, limit);
 }
 
 function diversify(ranked, limit) {
@@ -176,10 +284,15 @@ export const Corpus = {
     // Stopwords are dropped, not merely short words: the >=3 rule kept "the",
     // which matches nearly every row and crowds real hits out before ranking
     // ("The Beatles", "The Simpsons"). Mirrors Swift/Kotlin/C#.
-    const rawTokens = fold(topic).split(/[^a-z0-9]+/).filter((t) => t.length >= 3);
-    const keptTokens = rawTokens.filter((t) => !STOPWORDS.has(t));
-    const tokens = keptTokens.length ? keptTokens : rawTokens;
+    const tokens = topicTokens(topic);
     if (!tokens.length) return [];
+    const phrase = topicPhrase(topic);
+    // Is the typed word itself a subject here? That single fact is what licenses
+    // the different-person guard: "Denver" is a place in this corpus, so "Bob
+    // Denver" is someone else. "Potter" is not, so "Harry Potter" is the best
+    // reading of it.
+    const guardNames = tokens.length === 1
+      && this.questions.some((q) => flattened(q.sourceTitle) === phrase);
     const scored = [];
     const giveaways = [];
     for (const q of this.questions) {
@@ -189,14 +302,17 @@ export const Corpus = {
       if ((q.difficulty || 2) <= 1) continue;
       // Folded, not merely lowercased: the tokens are folded, so an accented row
       // would score 0 against them and be dropped by the `s > 0` gate.
+      // The relevance FLOOR, applied before any ranking.
+      const matched = tierOf(q.sourceTitle, q.prompt, q.tags, tokens, phrase, guardNames);
+      if (matched === null) continue;
       const title = fold(q.sourceTitle), prompt = fold(q.prompt), explanation = fold(q.explanation);
       const tags = (q.tags || []).map(fold);
       let s = 0;
       for (const t of tokens) {
-        if (tags.some((tg) => tg.includes(t))) s += 3;
-        if (title.includes(t)) s += 2;
-        if (prompt.includes(t)) s += 1;
-        if (explanation.includes(t)) s += 1;
+        if (tags.some((tg) => containsWord(tg, t))) s += 3;
+        if (containsWord(title, t)) s += 2;
+        if (containsWord(prompt, t)) s += 1;
+        if (containsWord(explanation, t)) s += 1;
       }
       // How many of the typed words this row matched AT ALL. Scoring alone was
       // not enough: `diversify` round-robins by CATEGORY afterwards, so a
@@ -204,25 +320,22 @@ export const Corpus = {
       // shipping corpus, "Marie Curie" has 15 real two-word matches (all
       // science) against 211 one-word hits across 7 categories, 189 of which
       // never mention Curie — the generated quiz led with Marie de' Medici.
-      const matched = tokens.filter((t) =>
-        tags.some((tg) => tg.includes(t)) || title.includes(t) || prompt.includes(t) || explanation.includes(t)
-      ).length;
-      if (s <= 0) continue;
+
       // A question whose ANSWER is/contains the topic is a giveaway ("Chicago" →
       // answer "Chicago") and is held in RESERVE, not dropped: for a person most
       // good questions answer with their name (17 of the 20 real van Gogh
       // questions do), so a hard drop starved the pool below a full quiz.
       const answer = fold((q.options && q.options[q.correctIndex]) || '');
-      if (tokens.some((t) => answer.includes(t))) giveaways.push([q, s, matched]);
+      if (tokens.some((t) => containsWord(answer, t))) giveaways.push([q, s, matched]);
       else scored.push([q, s, matched]);
     }
     // Cap per-category so a topic dense in one domain (a city with sports teams
     // → 8 sports-player questions) can't monopolize the set; round-robin across
     // categories for a genuinely varied quiz.
-    const out = diversify(topTier(scored), limit);
+    const out = fillByTier(scored, limit);
     if (out.length < limit) {
       const taken = new Set(out.map((q) => q.id));
-      out.push(...topTier(giveaways).filter((q) => !taken.has(q.id)).slice(0, limit - out.length));
+      out.push(...fillByTier(giveaways, limit).filter((q) => !taken.has(q.id)).slice(0, limit - out.length));
     }
     return out;
   },

@@ -52,3 +52,94 @@ public class CreateRelevanceTest
     public void Diversify_of_an_empty_pool_is_empty()
         => Assert.Empty(CorpusDatabase.Diversify([], 8));
 }
+
+/// The relevance FLOOR, measured by play-testing the 984 most-viewed Wikipedia
+/// articles through the shipped Apple assembly on the simulator: 49.8% of every
+/// question Create served was about something other than what the player typed.
+/// Each case below is one of the measured failures. Mirrors the Swift
+/// CreateTopicDriftTests and tools/create/web-mirror-check.mjs — if these three
+/// disagree, the same topic returns a different quiz per platform.
+public class CreateTopicDriftTest
+{
+    static int? Tier(string title, string topic, string prompt = "",
+                     string[]? tags = null, bool guardNames = false)
+        => QueryHelpers.Tier(title, prompt, tags ?? [], QueryHelpers.Tokenize(topic),
+                             QueryHelpers.TopicPhrase(topic), guardNames);
+
+    [Fact]
+    public void A_word_inside_a_longer_word_is_not_a_match()
+    {
+        Assert.True(QueryHelpers.ContainsWord("art deco", "art"));
+        Assert.False(QueryHelpers.ContainsWord("mozart", "art"));
+        Assert.False(QueryHelpers.ContainsWord("hansel and gretel", "ansel"));
+        Assert.False(QueryHelpers.ContainsWord("spokane washington", "kane"));
+        Assert.False(QueryHelpers.ContainsWord("indianapolis", "india"));
+    }
+
+    [Fact]
+    public void A_topic_the_corpus_does_not_know_is_rejected_rather_than_approximated()
+    {
+        Assert.Null(Tier("Spokane, Washington", "Harry Kane"));
+        Assert.Null(Tier("Butane", "Harry Kane"));
+        Assert.Null(Tier("Harry Potter and the Cursed Child", "Harry Kane"));
+    }
+
+    [Fact]
+    public void A_different_person_whose_name_contains_the_place_is_rejected()
+    {
+        Assert.Null(Tier("Bob Denver", "Denver", guardNames: true));
+        Assert.Null(Tier("Denver Pyle", "Denver", guardNames: true));
+        Assert.NotNull(Tier("Denver International Airport", "Denver", guardNames: true));
+    }
+
+    /// ...and only then. "Potter" is not a subject in its own right, so a player
+    /// typing it means Harry Potter and must not be left with nothing.
+    [Fact]
+    public void The_surname_guard_does_not_fire_when_the_word_is_not_its_own_subject()
+        => Assert.NotNull(Tier("Harry Potter", "Potter"));
+
+    [Fact]
+    public void Only_agentive_category_tags_admit_a_row()
+    {
+        Assert.NotNull(Tier("Thriller (album)", "Michael Jackson",
+                            tags: ["Albums produced by Michael Jackson"]));
+        Assert.Null(Tier("Kristin Cavallari", "Denver", tags: ["Actresses from Denver"]));
+        Assert.Null(Tier("Neil Sedaka", "Abraham Lincoln",
+                         tags: ["Abraham Lincoln High School (Brooklyn) alumni"]));
+    }
+
+    [Fact]
+    public void An_agentive_tag_ranks_below_a_title_match()
+    {
+        var byTag = Tier("Bad (album)", "Michael Jackson",
+                         tags: ["Albums produced by Michael Jackson"]);
+        var byTitle = Tier("Dangerous (Michael Jackson album)", "Michael Jackson");
+        Assert.NotNull(byTag);
+        Assert.NotNull(byTitle);
+        Assert.True(byTag < byTitle);
+    }
+
+    [Fact]
+    public void A_disambiguator_is_not_a_topic_word()
+    {
+        Assert.Equal("masters of the universe",
+                     QueryHelpers.TopicPhrase("Masters of the Universe (2026 film)"));
+        Assert.DoesNotContain("film", QueryHelpers.Tokenize("Backrooms (film)"));
+    }
+
+    /// The phrase keeps its stopwords and its order — the significant-token list
+    /// can never reconstruct "masters of the universe".
+    [Fact]
+    public void The_phrase_survives_stopword_removal()
+    {
+        Assert.Equal("world war ii", QueryHelpers.TopicPhrase("World War II"));
+        Assert.Equal(3, Tier("Masters of the Universe", "Masters of the Universe (2026 film)"));
+    }
+
+    [Fact]
+    public void The_subject_itself_outranks_a_containing_title()
+    {
+        Assert.Equal(3, Tier("Denver", "Denver"));
+        Assert.Equal(2, Tier("Denver International Airport", "Denver"));
+    }
+}

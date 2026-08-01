@@ -34,11 +34,118 @@ internal static class QueryHelpers
     /// the raw tokens when a topic is nothing but stopwords, so a query is never empty.
     public static List<string> Tokenize(string topic)
     {
-        var raw = Regex.Split(Fold(topic), @"[^\p{L}\p{N}]+")
+        var raw = Flatten(StripParens(topic)).Split(' ')
                        .Where(t => t.Length >= 3)
                        .ToList();
         var kept = raw.Where(t => !Stopwords.Contains(t)).ToList();
         return kept.Count > 0 ? kept : raw;
+    }
+
+    /// Word-bounded containment — the single most load-bearing rule in Create.
+    /// Plain Contains matched the typed word INSIDE longer words, so "Ansel Adams"
+    /// returned Hansel and Gretel, "Harry Kane" returned Spokane, "India" returned
+    /// Indianapolis. Mirrors Swift CorpusDatabase.ContainsWord.
+    public static bool ContainsWord(string text, string token)
+    {
+        if (string.IsNullOrEmpty(token)) return false;
+        int from = 0;
+        while (true)
+        {
+            int i = text.IndexOf(token, from, StringComparison.Ordinal);
+            if (i < 0) return false;
+            int end = i + token.Length;
+            bool beforeOk = i == 0 || !char.IsLetterOrDigit(text[i - 1]);
+            bool afterOk = end == text.Length || !char.IsLetterOrDigit(text[end]);
+            if (beforeOk && afterOk) return true;
+            from = i + 1;
+        }
+    }
+
+    /// A Wikipedia disambiguator is not part of what the player means:
+    /// "Backrooms (film)", "Masters of the Universe (2026 film)".
+    public static string StripParens(string s)
+    {
+        var sb = new StringBuilder(s.Length);
+        int depth = 0;
+        foreach (var c in s)
+        {
+            if (c is '(' or '[') { depth++; continue; }
+            if (c is ')' or ']') { depth = Math.Max(0, depth - 1); continue; }
+            if (depth == 0) sb.Append(c);
+        }
+        return sb.ToString().Trim();
+    }
+
+    /// Punctuation flattened to single spaces, nothing dropped — phrase matching
+    /// needs the stopwords kept and in order ("masters of the universe"), and needs
+    /// the parenthetical kept on ROW titles, where it carries the meaning.
+    public static string Flatten(string s) =>
+        string.Join(' ', Regex.Split(Fold(s), @"[^\p{L}\p{N}]+").Where(t => t.Length > 0));
+
+    /// The typed topic as a matchable phrase: disambiguator removed, order kept.
+    public static string TopicPhrase(string s) => Flatten(StripParens(s));
+
+    /// Wikipedia categories mean "about" only in their agentive form. "Albums
+    /// produced by Michael Jackson" makes a Thriller question an MJ question;
+    /// "Actresses from Denver" does not make a Kristin Cavallari birth-year
+    /// question a Denver question. Mirrors Swift HasAgentiveTag.
+    public static bool HasAgentiveTag(IEnumerable<string> tags, string phrase)
+    {
+        foreach (var t in tags)
+        {
+            foreach (var prep in new[] { "by ", "of " })
+            {
+                int from = 0;
+                while (true)
+                {
+                    int i = t.IndexOf(prep, from, StringComparison.Ordinal);
+                    if (i < 0) break;
+                    var rest = t[(i + prep.Length)..];
+                    if (rest.StartsWith("the ", StringComparison.Ordinal)) rest = rest[4..];
+                    if (rest.StartsWith(phrase, StringComparison.Ordinal))
+                    {
+                        var after = rest[phrase.Length..];
+                        if (after.Length == 0 || !char.IsLetterOrDigit(after[0])) return true;
+                    }
+                    from = i + prep.Length;
+                }
+            }
+        }
+        return false;
+    }
+
+    /// Relevance TIER, or null to REJECT. A floor, not just a ranking: a topic the
+    /// corpus knows nothing about must fall through to live generation rather than
+    /// produce eight confident strangers. Mirrors Swift CorpusDatabase.Tier.
+    ///
+    ///  3 the row's subject IS the topic
+    ///  2 the whole typed phrase appears, word-bounded, in the title
+    ///  1 every typed word appears, word-bounded, in the title
+    ///  0 every typed word appears in the prompt the player reads
+    /// -1 an agentive tag only — a real connection the question never shows
+    ///
+    /// The OPTIONS are deliberately not consulted: that made the topic match as a
+    /// DISTRACTOR ("Zlatan Ibrahimovic" returned a picture of Neymar) because the
+    /// giveaway rule had already removed every row where it was the right answer.
+    public static int? Tier(string title, string prompt, IReadOnlyList<string> tags,
+                            IReadOnlyList<string> tokens, string phrase, bool guardNames)
+    {
+        var fTitle = Fold(title);
+        var subject = Flatten(title);
+        if (subject == phrase) return 3;
+        if (ContainsWord(subject, phrase))
+        {
+            // When the typed word is itself a subject here, a bare two-word title
+            // that merely contains it is a DIFFERENT named thing: "Bob Denver".
+            if (guardNames && subject.Split(' ').Length == 2) return null;
+            return 2;
+        }
+        var need = tokens.Count <= 2 ? tokens.Count : tokens.Count - 1;
+        if (tokens.Count(t => ContainsWord(fTitle, t)) >= need) return 1;
+        var read = fTitle + " " + Fold(prompt);
+        if (tokens.Count(t => ContainsWord(read, t)) >= need) return 0;
+        if (HasAgentiveTag(tags.Select(Fold), phrase)) return -1;
+        return null;
     }
 
     public static List<T> Shuffle<T>(List<T> list)

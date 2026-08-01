@@ -66,6 +66,12 @@ public sealed class CorpusDatabase
     {
         var tokens = QueryHelpers.Tokenize(topic);
         if (tokens.Count == 0) return [];
+        var phrase = QueryHelpers.TopicPhrase(topic);
+        // Is the typed word itself a subject here? That single fact is what licenses
+        // the different-person guard: "Denver" is a place in this corpus, so "Bob
+        // Denver" is someone else. "Potter" is not a subject, so "Harry Potter" is
+        // the best reading of it.
+        var guardNames = tokens.Count == 1 && _all.Any(q => QueryHelpers.Flatten(q.SourceTitle) == phrase);
 
         // WHERE (prompt LIKE %t% OR title LIKE %t%) for any token, LIMIT 400 (pre-filter).
         var matched = new List<Question>();
@@ -84,7 +90,10 @@ public sealed class CorpusDatabase
                 // The cap applies BEFORE ranking, so it must contain the genuine
                 // matches. At 400, "van gogh" lost all 20 real rows to substring
                 // noise. Mirrors the Swift fix.
-                if (matched.Count >= 4000) break;
+                // 4,000 was not enough once relevance became strict: a common word
+                // like "art" matches ~19,500 rows and the genuine ones sit past the
+                // cap. The cap is now only a runaway guard.
+                if (matched.Count >= 25000) break;
             }
         }
 
@@ -98,42 +107,49 @@ public sealed class CorpusDatabase
             var prompt = QueryHelpers.Fold(q.Prompt);
             var explanation = QueryHelpers.Fold(q.Explanation);
             var tags = q.Tags.Select(QueryHelpers.Fold).ToList();
-            var score = tokens.Sum(t => (tags.Any(tg => tg.Contains(t)) ? 3 : 0) + (title.Contains(t) ? 2 : 0) + (prompt.Contains(t) ? 1 : 0) + (explanation.Contains(t) ? 1 : 0));
-            // How many of the typed words this row matched AT ALL. Scoring alone
-            // is not enough: Diversify round-robins by CATEGORY afterwards, so a
-            // one-word coincidence gets PROMOTED to fill a lane. Measured on the
-            // shipping corpus, "Marie Curie" has 15 real two-word matches (all
-            // science) against 211 one-word hits across 7 categories, 189 of
-            // which never mention Curie.
-            var matchedTokens = tokens.Count(t => tags.Any(tg => tg.Contains(t)) || title.Contains(t) || prompt.Contains(t) || explanation.Contains(t));
+            // The relevance FLOOR, applied before any ranking.
+            var tier = QueryHelpers.Tier(q.SourceTitle, q.Prompt, q.Tags, tokens, phrase, guardNames);
+            if (tier is null) continue;
+            var score = tokens.Sum(t => (tags.Any(tg => QueryHelpers.ContainsWord(tg, t)) ? 3 : 0)
+                                      + (QueryHelpers.ContainsWord(title, t) ? 2 : 0)
+                                      + (QueryHelpers.ContainsWord(prompt, t) ? 1 : 0)
+                                      + (QueryHelpers.ContainsWord(explanation, t) ? 1 : 0));
+            var matchedTokens = tier.Value;
             // A question whose ANSWER is/contains the topic is a giveaway ("Chicago"
             // -> answer "Chicago"), held in RESERVE rather than dropped: for a person
             // most good questions answer with their name (17 of the 20 real van Gogh
             // questions do), so a hard drop starved the pool below a full quiz.
             var answer = QueryHelpers.Fold(q.CorrectAnswer);
-            if (tokens.Any(t => answer.Contains(t))) giveaways.Add((q, score, matchedTokens));
+            if (tokens.Any(t => QueryHelpers.ContainsWord(answer, t))) giveaways.Add((q, score, matchedTokens));
             else scored.Add((q, score, matchedTokens));
         }
 
-        var outp = Diversify(TopTier(scored), limit);
+        var outp = FillByTier(scored, limit);
         if (outp.Count < limit)
         {
             var taken = outp.Select(q => q.Id).ToHashSet();
-            outp.AddRange(TopTier(giveaways).Where(q => !taken.Contains(q.Id)).Take(limit - outp.Count));
+            outp.AddRange(FillByTier(giveaways, limit).Where(q => !taken.Contains(q.Id)).Take(limit - outp.Count));
         }
         return outp;
     }
 
     /// <summary>
-    /// Keep only rows matching the MOST typed words, then rank within that tier.
-    /// Single-word topics are unaffected (every row ties at 1).
+    /// Take from the highest occupied relevance tier first, diversifying INSIDE it.
+    /// Diversifying across tiers is what promoted a one-word coincidence into a
+    /// category lane — "Ansel Adams" returned exactly one row per category (Samuel
+    /// Adams, Hansel and Gretel, Phil Anselmo, Davante Adams...). Mirrors Swift.
     /// </summary>
-    private static List<Question> TopTier(List<(Question q, int score, int matchedTokens)> scored)
+    private static List<Question> FillByTier(List<(Question q, int score, int tier)> scored, int limit)
     {
-        if (scored.Count == 0) return new List<Question>();
-        var best = scored.Max(s => s.matchedTokens);
-        return scored.Where(s => s.matchedTokens == best)
-                     .OrderByDescending(s => s.score).Select(s => s.q).ToList();
+        var outp = new List<Question>();
+        foreach (var t in new[] { 3, 2, 1, 0, -1 })
+        {
+            if (outp.Count >= limit) break;
+            var lane = scored.Where(s => s.tier == t)
+                             .OrderByDescending(s => s.score).Select(s => s.q).ToList();
+            outp.AddRange(Diversify(lane, limit - outp.Count));
+        }
+        return outp.Take(limit).ToList();
     }
 
     /// Round-robin a ranked list across categories, capping any one domain (the

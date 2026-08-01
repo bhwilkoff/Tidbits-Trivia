@@ -635,7 +635,13 @@ object Corpus {
         val out = mutableListOf<Question>()
         for (t in listOf(3, 2, 1, 0)) {
             if (out.size >= limit) break
-            val lane = scored.filter { it.third == t }.sortedByDescending { it.second }.map { it.first }
+            // Score THEN id: Swift's sort is not stable, so a score-only sort let
+            // tied rows come out in different orders per platform, and the
+            // per-category cap then kept a different SET.
+            val lane = scored.filter { it.third == t }
+                .sortedWith(compareByDescending<Triple<Question, Int, Int>> { it.second }
+                    .thenBy { it.first.id })
+                .map { it.first }
             out.addAll(diversifyByCategory(lane, limit - out.size))
         }
         return out.take(limit)

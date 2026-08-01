@@ -460,12 +460,21 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
         return false
     }
 
+    /// Sorted by score and then by ID, never by score alone. Swift's sort is not
+    /// stable and JavaScript's is, so rows tied on score came out in different
+    /// orders on different platforms — and since `diversify` caps each category,
+    /// a different order means a different SET survives. Found by diffing what the
+    /// simulator and the real js/api.js actually select for the same topic: they
+    /// agreed on 11 of 12 topics and differed by one question on "India".
+    ///
     /// Take from the highest occupied relevance tier first, diversifying inside it.
     private static func fillByTier(_ scored: [(Question, Int, Int)], limit: Int) -> [Question] {
         var out: [Question] = []
         for tier in [3, 2, 1, 0] {
             if out.count >= limit { break }
-            let lane = scored.filter { $0.2 == tier }.sorted { $0.1 > $1.1 }.map { $0.0 }
+            let lane = scored.filter { $0.2 == tier }
+                .sorted { $0.1 != $1.1 ? $0.1 > $1.1 : $0.0.id < $1.0.id }
+                .map { $0.0 }
             out.append(contentsOf: diversify(lane, limit: limit - out.count))
         }
         return Array(out.prefix(limit))

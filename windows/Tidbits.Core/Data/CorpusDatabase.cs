@@ -153,8 +153,12 @@ public sealed class CorpusDatabase
         foreach (var t in new[] { 3, 2, 1, 0 })
         {
             if (outp.Count >= limit) break;
+            // Score THEN id: Swift's sort is not stable, so a score-only sort let
+            // tied rows come out in different orders per platform, and the
+            // per-category cap then kept a different SET.
             var lane = scored.Where(s => s.tier == t)
-                             .OrderByDescending(s => s.score).Select(s => s.q).ToList();
+                             .OrderByDescending(s => s.score).ThenBy(s => s.q.Id, StringComparer.Ordinal)
+                             .Select(s => s.q).ToList();
             outp.AddRange(Diversify(lane, limit - outp.Count));
         }
         return outp.Take(limit).ToList();

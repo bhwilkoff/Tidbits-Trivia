@@ -110,6 +110,15 @@ enum DebugHooks {
         ProcessInfo.processInfo.environment["TIDBITS_CREATE_SWEEP"]
     }
 
+    /// TIDBITS_CREATE_SWEEP_SEARCH_ONLY=1 → emit ONLY `CorpusDatabase.search`, with
+    /// no shape-source questions mixed in. The shape sets reuse corpus IDs
+    /// (`src:describe:K._R._Narayanan` is both a corpus row and a picture row), so a
+    /// cross-stack diff cannot tell which source a question came from — this makes
+    /// the ranker comparable against the other engines on its own terms.
+    static var createSweepSearchOnly: Bool {
+        ProcessInfo.processInfo.environment["TIDBITS_CREATE_SWEEP_SEARCH_ONLY"] == "1"
+    }
+
     static var createSweepCorpusOnly: Bool {
         ProcessInfo.processInfo.environment["TIDBITS_CREATE_SWEEP_CORPUS_ONLY"] == "1"
     }

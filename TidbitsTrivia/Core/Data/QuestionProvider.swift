@@ -317,12 +317,14 @@ extension QuestionProvider {
             // because SQLite could no longer allocate. The app searches once at a
             // time and never hit this; the measurement tool did, and a measurement
             // tool that silently under-reports is worse than none.
+            let searchOnly = DebugHooks.createSweepSearchOnly
             let qs: [Question]
             if corpusOnly {
                 qs = autoreleasepool {
-                    CorpusDatabase.shared.search(topic: topic, limit: 8)
-                        + [JSONQuestionSource.picture, .thisOrThat, .closestCall]
-                            .flatMap { $0.searchMatch(topic: topic, limit: 1) }
+                    let mcq = CorpusDatabase.shared.search(topic: topic, limit: 8)
+                    guard !searchOnly else { return mcq }
+                    return mcq + [JSONQuestionSource.picture, .thisOrThat, .closestCall]
+                        .flatMap { $0.searchMatch(topic: topic, limit: 1) }
                 }
             } else {
                 qs = await createSet(topic: topic)

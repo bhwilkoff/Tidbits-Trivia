@@ -238,7 +238,12 @@ function fillByTier(scored, limit) {
   const out = [];
   for (const t of [3, 2, 1, 0]) {
     if (out.length >= limit) break;
-    const lane = scored.filter((x) => x[2] === t).sort((a, b) => b[1] - a[1]).map((x) => x[0]);
+    // Score THEN id: Swift's sort is not stable, so a score-only sort let tied rows
+    // come out in different orders per platform, and the per-category cap then kept
+    // a different SET.
+    const lane = scored.filter((x) => x[2] === t)
+      .sort((a, b) => (b[1] - a[1]) || (a[0].id < b[0].id ? -1 : a[0].id > b[0].id ? 1 : 0))
+      .map((x) => x[0]);
     out.push(...diversify(lane, limit - out.length));
   }
   return out.slice(0, limit);

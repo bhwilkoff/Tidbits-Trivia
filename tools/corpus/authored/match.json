@@ -1,5 +1,5 @@
 {
- "count": 22,
+ "count": 30,
  "questions": [
   [
    "match:sports:c07ef87a07a8d0",
@@ -474,6 +474,166 @@
    "Magna Carta → England · U.S. Constitution → United States · Declaration of the Rights of Man → France · Code of Hammurabi → Babylon",
    "Historical document",
    "https://en.wikipedia.org/wiki/Historical_document"
+  ],
+  [
+   "match:business:99561fce75f99a",
+   "Match each company to its founder.",
+   [
+    "Amazon",
+    "Tesla Motors",
+    "Alibaba Group",
+    "Virgin Group"
+   ],
+   [
+    "Jeff Bezos",
+    "Martin Eberhard",
+    "Jack Ma",
+    "Richard Branson"
+   ],
+   "business",
+   "Amazon → Jeff Bezos · Tesla Motors → Martin Eberhard · Alibaba Group → Jack Ma · Virgin Group → Richard Branson",
+   "",
+   ""
+  ],
+  [
+   "match:business:abe6f27ceaa733",
+   "Match each company to its founder.",
+   [
+    "Standard Oil",
+    "Patagonia",
+    "Walmart",
+    "IKEA"
+   ],
+   [
+    "John D. Rockefeller",
+    "Yvon Chouinard",
+    "Sam Walton",
+    "Ingvar Kamprad"
+   ],
+   "business",
+   "Standard Oil → John D. Rockefeller · Patagonia → Yvon Chouinard · Walmart → Sam Walton · IKEA → Ingvar Kamprad",
+   "",
+   ""
+  ],
+  [
+   "match:business:ecf112daa1bb30",
+   "Match each company to the country it was founded in.",
+   [
+    "Nokia",
+    "Samsung",
+    "Nestlé",
+    "Unilever"
+   ],
+   [
+    "Finland",
+    "South Korea",
+    "Switzerland",
+    "Netherlands"
+   ],
+   "business",
+   "Nokia → Finland · Samsung → South Korea · Nestlé → Switzerland · Unilever → Netherlands",
+   "",
+   ""
+  ],
+  [
+   "match:business:4ae7e9aad888f1",
+   "Match each company to the country it was founded in.",
+   [
+    "Ryanair",
+    "Aldi",
+    "Zara",
+    "Ferrari"
+   ],
+   [
+    "Ireland",
+    "Germany",
+    "Spain",
+    "Italy"
+   ],
+   "business",
+   "Ryanair → Ireland · Aldi → Germany · Zara → Spain · Ferrari → Italy",
+   "",
+   ""
+  ],
+  [
+   "match:business:edd59a38a239ba",
+   "Match each brand to what it makes.",
+   [
+    "Rolex",
+    "Michelin",
+    "Kodak",
+    "Wedgwood"
+   ],
+   [
+    "watches",
+    "tyres",
+    "photographic film",
+    "pottery"
+   ],
+   "business",
+   "Rolex → watches · Michelin → tyres · Kodak → photographic film · Wedgwood → pottery",
+   "",
+   ""
+  ],
+  [
+   "match:business:8e07bad1f98043",
+   "Match each company to the industry it works in.",
+   [
+    "Maersk",
+    "Schlumberger",
+    "Bloomberg",
+    "Deere & Company"
+   ],
+   [
+    "container shipping",
+    "oilfield services",
+    "financial data",
+    "farm machinery"
+   ],
+   "business",
+   "Maersk → container shipping · Schlumberger → oilfield services · Bloomberg → financial data · Deere & Company → farm machinery",
+   "",
+   ""
+  ],
+  [
+   "match:business:0e107777f77f3b",
+   "Match each airline to its home country.",
+   [
+    "Qantas",
+    "Cathay Pacific",
+    "Lufthansa",
+    "Aeroflot"
+   ],
+   [
+    "Australia",
+    "Hong Kong",
+    "Germany",
+    "Russia"
+   ],
+   "business",
+   "Qantas → Australia · Cathay Pacific → Hong Kong · Lufthansa → Germany · Aeroflot → Russia",
+   "",
+   ""
+  ],
+  [
+   "match:business:e0e097a157cb1c",
+   "Match each company to the product it became known for.",
+   [
+    "Gillette",
+    "Dyson",
+    "Lego",
+    "Bic"
+   ],
+   [
+    "safety razors",
+    "vacuum cleaners",
+    "plastic bricks",
+    "ballpoint pens"
+   ],
+   "business",
+   "Gillette → safety razors · Dyson → vacuum cleaners · Lego → plastic bricks · Bic → ballpoint pens",
+   "",
+   ""
   ]
  ]
 }

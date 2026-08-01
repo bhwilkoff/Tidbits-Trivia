@@ -156,6 +156,14 @@ def main():
         return
     print()
     for rel, rows in built.items():
+        if rel == "match.json":
+            # Match Up rounds are NOT appended to the artifact from here. They
+            # live in tools/corpus/authored/match.json, which gen_match.py merges
+            # — appending straight to assets/match.json meant the next
+            # `gen_match.py` run silently deleted them, exactly the way the
+            # original 22 authored rounds were lost.
+            print(f"{rel:18} skipped — merged by gen_match.py from authored/match.json")
+            continue
         added, total = append(rel, rows)
         print(f"{rel:18} appended {added}, now {total} rows")
 

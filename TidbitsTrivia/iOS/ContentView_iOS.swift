@@ -31,6 +31,14 @@ struct ContentView_iOS: View {
         // A sheet set during the first layout pass gets swallowed; a short-delayed task
         // presents it reliably (screenshot observability only).
         .task { if DebugHooks.showPaywall { try? await Task.sleep(for: .milliseconds(400)); showPaywall = true } }
+        .task {
+            // A relevance sweep is a headless run that happens to need the app: it
+            // wants the bundled corpus and the shipped assembly, not the UI.
+            if let path = DebugHooks.createSweepPath {
+                await QuestionProvider.shared.sweepCreate(
+                    path: path, corpusOnly: DebugHooks.createSweepCorpusOnly)
+            }
+        }
         .sheet(isPresented: $showPaywall) { ClubPaywallView().environment(EntitlementStore.shared) }
     }
 

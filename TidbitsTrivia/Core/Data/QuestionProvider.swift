@@ -170,20 +170,35 @@ final class QuestionProvider {
     /// Live generation from any Wikipedia topic — powers "create a quiz on
     /// the fly" and the corpus fallback.
     func liveQuestions(topic: String, category: TriviaCategory, count: Int) async -> [Question] {
+        let diag = ProcessInfo.processInfo.environment["TIDBITS_CREATE_DIAG"] == "1"
         do {
             let titles = try await WikipediaClient.shared.search(topic, limit: 35)
-            guard !titles.isEmpty else { return [] }
+            guard !titles.isEmpty else {
+                if diag { print("DIAG\t\(topic)\tsearch=0") }
+                return []
+            }
             let summaries = await WikipediaClient.shared.summaries(for: titles)
+            if diag {
+                let usable = summaries.filter(TemplateEngine.isUsable)
+                var types: [String: Int] = [:]
+                for u in usable { types[TemplateEngine.typeKey(u) ?? "nil", default: 0] += 1 }
+                print("DIAG\t\(topic)\tsearch=\(titles.count)\tsummaries=\(summaries.count)"
+                      + "\tusable=\(usable.count)\tai=\(DelightfulQuizGenerator.isAvailable)"
+                      + "\ttypes=\(types.sorted { $0.value > $1.value }.prefix(4).map { "\($0.key):\($0.value)" }.joined(separator: ","))")
+            }
             // Apple Intelligence (Foundation Models) writes delightful, grounded
             // questions on-device when available; otherwise fall back to the
             // template engine so Create works on every platform/device.
             if DelightfulQuizGenerator.isAvailable {
                 let ai = await DelightfulQuizGenerator.generate(
                     topic: topic, summaries: summaries, categoryID: category.id, count: count)
+                if diag { print("DIAG\t\(topic)\tai_questions=\(ai.count)") }
                 if ai.count >= min(count, 3) { return ai }
             }
-            return TemplateEngine.makeQuestions(
+            let templated = TemplateEngine.makeQuestions(
                 pool: summaries, categoryID: category.id, count: count, seed: topic.stableSeed)
+            if diag { print("DIAG\t\(topic)\ttemplate_questions=\(templated.count)") }
+            return templated
         } catch {
             return []
         }
@@ -248,6 +263,39 @@ extension QuestionProvider {
     ///
     /// Now the corpus is used first (it's vetted and instant) and live generation
     /// TOPS UP the shortfall rather than only rescuing a near-total miss.
+    /// Run the REAL Create assembly over a file of topics and print each set.
+    ///
+    /// The corpus can be interrogated from a script; what the player receives
+    /// cannot — it is the bundled database, the shape sources and the assembly
+    /// order acting together. This drives all of that on a simulator or device and
+    /// prints one line per question, which is how the "Denver returns John Denver"
+    /// class of bug gets caught at the scale of a thousand topics rather than the
+    /// handful anyone would type by hand.
+    @MainActor
+    func sweepCreate(path: String, corpusOnly: Bool) async {
+        guard let text = try? String(contentsOfFile: path, encoding: .utf8) else {
+            print("SWEEP-ERROR missing \(path)"); return
+        }
+        let topics = text.split(separator: "\n").map(String.init)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty && !$0.hasPrefix("#") }
+        print("SWEEP-BEGIN topics=\(topics.count) corpus=\(corpusCount) corpusOnly=\(corpusOnly)")
+        for topic in topics {
+            let qs = corpusOnly
+                ? CorpusDatabase.shared.search(topic: topic, limit: 8)
+                    + [JSONQuestionSource.picture, .thisOrThat, .closestCall]
+                        .flatMap { $0.searchMatch(topic: topic, limit: 1) }
+                : await createSet(topic: topic)
+            print("SWEEP-TOPIC\t\(topic)\t\(qs.count)")
+            for q in qs {
+                // Tab-separated so the reader can split without guessing where the
+                // prompt ends — prompts contain every other punctuation mark.
+                print("SWEEP-Q\t\(topic)\t\(q.id)\t\(q.sourceTitle)\t\(q.categoryID)\t\(q.prompt)\t\(q.correctAnswer)")
+            }
+        }
+        print("SWEEP-END")
+    }
+
     @MainActor
     func createSet(topic: String, count: Int = 8) async -> [Question] {
         // Shape variety first: a couple of topic-matched non-MCQ questions so the set

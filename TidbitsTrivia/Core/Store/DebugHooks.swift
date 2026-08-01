@@ -97,6 +97,23 @@ enum DebugHooks {
         ProcessInfo.processInfo.environment["TIDBITS_CREATE"] == "1"
     }
 
+    /// TIDBITS_CREATE_SWEEP="<path>" → run Create's real assembly over every topic
+    /// in that file and print the resulting question set, then exit.
+    ///
+    /// Relevance can be reasoned about against `corpus.sqlite` from a script, but
+    /// what the PLAYER gets is decided by the shipped Swift — the bundled corpus,
+    /// the shape sources, the live top-up and the assembly order together. This
+    /// runs hundreds of topics through exactly that, on the simulator, in one
+    /// launch. `TIDBITS_CREATE_SWEEP_CORPUS_ONLY=1` skips the live top-up so a
+    /// sweep measures the offline floor instead of the network.
+    static var createSweepPath: String? {
+        ProcessInfo.processInfo.environment["TIDBITS_CREATE_SWEEP"]
+    }
+
+    static var createSweepCorpusOnly: Bool {
+        ProcessInfo.processInfo.environment["TIDBITS_CREATE_SWEEP_CORPUS_ONLY"] == "1"
+    }
+
     /// TIDBITS_TV_SHARE=1 → open the newest saved quiz's detail and publish it, so
     /// the QR panel can actually be seen. The tvOS simulator takes no synthesised
     /// remote presses, and a QR that has never been rendered is a QR nobody has

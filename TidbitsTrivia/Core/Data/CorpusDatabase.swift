@@ -108,18 +108,122 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
         "was", "were", "are", "who", "what", "which", "how", "why", "all", "any",
     ]
 
+    /// Word-bounded containment — the single most load-bearing line in Create.
+    ///
+    /// Plain `contains` matched the typed word INSIDE longer words, which is how
+    /// "Ansel Adams" returned Hansel and Gretel and Phil Anselmo, "Harry Kane"
+    /// returned Spokane and Butane, and "India" returned Indianapolis. Measured
+    /// across the 984 most-viewed Wikipedia articles, substring matching alone
+    /// accounted for 1,444 off-topic questions.
+    nonisolated static func containsWord(_ text: String, _ token: String) -> Bool {
+        guard !token.isEmpty else { return false }
+        var from = text.startIndex
+        while let r = text.range(of: token, range: from..<text.endIndex) {
+            let beforeOK = r.lowerBound == text.startIndex
+                || !isWordChar(text[text.index(before: r.lowerBound)])
+            let afterOK = r.upperBound == text.endIndex || !isWordChar(text[r.upperBound])
+            if beforeOK && afterOK { return true }
+            from = text.index(after: r.lowerBound)
+        }
+        return false
+    }
+
+    private static func isWordChar(_ c: Character) -> Bool { c.isLetter || c.isNumber }
+
+    /// Fold + split into the significant words. Shared by the typed topic AND by
+    /// row titles, so "A.I. Artificial Intelligence" and "Artificial intelligence"
+    /// reduce to the same subject.
+    nonisolated static func topicTokens(_ s: String) -> [String] {
+        let raw = fold(s).split { !$0.isLetter && !$0.isNumber }.map(String.init).filter { $0.count >= 3 }
+        let kept = raw.filter { !stopwords.contains($0) }
+        return kept.isEmpty ? raw : kept
+    }
+
+    /// Wikipedia categories are the row's `tags`, and only SOME of them mean the
+    /// row is about the topic. "Albums produced by Michael Jackson" does.
+    /// "Actresses from Denver" does not — it is where she happens to be from, and
+    /// a Kristin Cavallari birth-year question in a Denver quiz is exactly the
+    /// "questions the user didn't ask for" the owner reported.
+    ///
+    /// The preposition carries it: `by`/`of` are agentive or possessive, while
+    /// `from`/`in`/`at` are incidental. A tag that merely BEGINS with the topic is
+    /// not enough either — that admitted "Abraham Lincoln High School (Brooklyn)
+    /// alumni" (a Lincoln quiz asking Neil Sedaka's birth year).
+    nonisolated static func hasAgentiveTag(_ tags: [String], phrase: String) -> Bool {
+        for t in tags {
+            for prep in ["by ", "of "] {
+                var from = t.startIndex
+                while let r = t.range(of: prep, range: from..<t.endIndex) {
+                    var rest = t[r.upperBound...]
+                    if rest.hasPrefix("the ") { rest = rest.dropFirst(4) }
+                    if rest.hasPrefix(phrase) {
+                        let after = rest.dropFirst(phrase.count)
+                        if after.isEmpty || !isWordChar(after[after.startIndex]) { return true }
+                    }
+                    from = r.upperBound
+                }
+            }
+        }
+        return false
+    }
+
+    /// How relevant one row is to the typed topic, or `nil` to REJECT it outright.
+    ///
+    /// This is a floor, not just a ranking. Before it existed the ranker kept the
+    /// best of whatever the OR-prefilter dragged in, so a topic the corpus knows
+    /// nothing about still produced eight confident, unrelated questions instead
+    /// of deferring to live generation.
+    ///
+    ///  3  the row's subject IS the topic
+    ///  2  the whole typed phrase appears, word-bounded, in the title
+    ///  1  every typed word appears, word-bounded, in the title
+    ///  0  every typed word appears in the prompt the player reads
+    /// -1  an agentive tag only — a real connection the question never shows
+    ///
+    /// The OPTIONS are deliberately not consulted. Measured on the simulator over
+    /// the 120 most-viewed articles, that one inclusion produced the worst results
+    /// in the whole sweep: typing "Zlatan Ibrahimović" returned a picture of
+    /// Neymar, "Zendaya" returned Michelle Yeoh, "Christian Pulisic" returned
+    /// Peyton Manning. The topic was matching as a DISTRACTOR — and because the
+    /// giveaway rule had already set aside every row where the topic was the
+    /// correct answer, the only rows left were the ones where it was wrong.
+    nonisolated static func tier(title: String, prompt: String, tags: [String],
+                                 tokens: [String], phrase: String, guardNames: Bool) -> Int? {
+        let fTitle = fold(title)
+        let subject = topicTokens(title).joined(separator: " ")
+        if subject == phrase { return 3 }
+        if containsWord(fTitle, phrase) {
+            // When the typed word is ITSELF a subject in this corpus, a bare
+            // two-word title that merely contains it is a DIFFERENT named thing:
+            // "Bob Denver", "Denver Pyle", "Samuel Adams". The player typed the
+            // place; they did not type the actor.
+            if guardNames, subject.split(separator: " ").count == 2 { return nil }
+            return 2
+        }
+        let need = tokens.count <= 2 ? tokens.count : tokens.count - 1
+        if tokens.filter({ containsWord(fTitle, $0) }).count >= need { return 1 }
+        let read = fTitle + " " + fold(prompt)
+        if tokens.filter({ containsWord(read, $0) }).count >= need { return 0 }
+        if hasAgentiveTag(tags.map(fold), phrase: phrase) { return -1 }
+        return nil
+    }
+
     func search(topic: String, limit: Int) -> [Question] {
         // Stopwords are dropped, not merely short words: the >=3 rule kept "the",
         // which matches nearly every row and so GUARANTEED the pre-filter cap below
         // to fill with noise for any topic containing it ("The Beatles", "The
         // Simpsons"). Falls back to the raw tokens if a topic is nothing but
         // stopwords, so a query is never left empty.
-        let rawTokens = Self.fold(topic).split { !$0.isLetter && !$0.isNumber }.map(String.init).filter { $0.count >= 3 }
-        let kept = rawTokens.filter { !Self.stopwords.contains($0) }
-        let tokens = kept.isEmpty ? rawTokens : kept
+        let tokens = Self.topicTokens(topic)
         guard !tokens.isEmpty else { return [] }
+        let phrase = tokens.joined(separator: " ")
         return queue.sync {
             guard let db else { return [] }
+            // Is the typed word itself a subject here? That single fact is what
+            // licenses the different-person guard below: "Denver" is a place in
+            // this corpus, so "Bob Denver" is someone else. "Potter" is not a
+            // subject, so "Harry Potter" is the best reading of it.
+            let guardNames = tokens.count == 1 && Self.isOwnSubject(db, phrase: phrase)
             // search_text is the folded mirror of the four text columns, populated
             // only where folding changes something. It is what makes "beyonce"
             // find "Beyoncé": SQL LIKE cannot strip diacritics, so without it every
@@ -129,9 +233,11 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
             // enough to contain the genuine matches. At 400 it did not: "van gogh"
             // OR-matches 3,310 rows holding 20 real ones, and exactly ZERO of the
             // 20 survived the cut — typing "Vincent van Gogh" returned none of the
-            // real van Gogh questions. 4000 covers the measured worst case; the
-            // ranking still trims to `limit`.
-            let sql = "SELECT * FROM questions WHERE \(clause) LIMIT 4000"
+            // real van Gogh questions. 4,000 was not enough either once relevance
+            // became strict: a common word like "art" OR-matches 19,509 rows and
+            // the genuine `Art` ones sit past 4,000 in rowid order. The cap is now
+            // only a runaway guard.
+            let sql = "SELECT * FROM questions WHERE \(clause) LIMIT 25000"
             var stmt: OpaquePointer?
             defer { sqlite3_finalize(stmt) }
             guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return [] }
@@ -146,6 +252,17 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
             var giveaways: [(Question, Int, Int)] = []
             while sqlite3_step(stmt) == SQLITE_ROW {
                 guard let q = Self.row(stmt) else { continue }
+                // Diversity (owner): drop the "which continent is X on" template —
+                // easy, repetitive, non-educational — and the trivially-easy tier.
+                if q.id.hasPrefix("src:continent:") { continue }
+                if q.difficulty <= 1 { continue }
+                // A relevance FLOOR, applied before any ranking. Rows that do not
+                // clear it are gone, even if nothing better exists — a topic the
+                // corpus does not know should fall through to live generation, not
+                // be answered with eight confident strangers.
+                guard let tier = Self.tier(title: q.sourceTitle, prompt: q.prompt,
+                                           tags: q.tags, tokens: tokens, phrase: phrase,
+                                           guardNames: guardNames) else { continue }
                 // The player typed the topic, so a question whose ANSWER is (or
                 // contains) the topic is a giveaway ("Chicago" → answer "Chicago").
                 // Prefer questions that are ABOUT the topic but answer with
@@ -155,60 +272,64 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
                 // hard drop left 3 and the quiz could not be filled. Reserved rows
                 // are only used when the clean pool would otherwise starve.
                 let answer = Self.fold(q.correctAnswer)
-                let isGiveaway = tokens.contains(where: { answer.contains($0) })
-                // Diversity (owner): drop the "which continent is X on" template —
-                // easy, repetitive, non-educational — and the trivially-easy tier.
-                if q.id.hasPrefix("src:continent:") { continue }
-                if q.difficulty <= 1 { continue }
+                let isGiveaway = tokens.contains { Self.containsWord(answer, $0) }
                 // Folded, not merely lowercased: the tokens are folded, so an
-                // accented row would score 0 against them and be dropped by the
-                // `score > 0` gate — the pre-filter would surface it and the
-                // ranker would immediately throw it away.
-                let title = Self.fold(q.sourceTitle), prompt = Self.fold(q.prompt), explanation = Self.fold(q.explanation)
+                // accented row would score 0 against them and be dropped — the
+                // pre-filter would surface it and the ranker throw it away.
+                let title = Self.fold(q.sourceTitle), prompt = Self.fold(q.prompt)
+                let explanation = Self.fold(q.explanation)
                 let tags = q.tags.map { Self.fold($0) }
                 let score = tokens.reduce(0) { acc, token in
-                    acc + (tags.contains { $0.contains(token) } ? 3 : 0)
-                    + (title.contains(token) ? 2 : 0) + (prompt.contains(token) ? 1 : 0) + (explanation.contains(token) ? 1 : 0)
+                    acc + (tags.contains { Self.containsWord($0, token) } ? 3 : 0)
+                    + (Self.containsWord(title, token) ? 2 : 0)
+                    + (Self.containsWord(prompt, token) ? 1 : 0)
+                    + (Self.containsWord(explanation, token) ? 1 : 0)
                 }
-                // How many of the typed words this row matched AT ALL. The SQL
-                // clause is an OR (a row need match only one token), so for a
-                // multi-word topic this is what separates "about the subject"
-                // from "shares a common word with it".
-                let matched = tokens.filter { token in
-                    tags.contains { $0.contains(token) } || title.contains(token)
-                        || prompt.contains(token) || explanation.contains(token)
-                }.count
-                if isGiveaway { giveaways.append((q, score, matched)) }
-                else { scored.append((q, score, matched)) }
+                if isGiveaway { giveaways.append((q, score, tier)) }
+                else { scored.append((q, score, tier)) }
             }
-            // Keep only the rows matching the MOST of the typed words, then rank
-            // and diversify within that tier.
-            //
-            // Without this, `diversify` round-robins by CATEGORY over the whole
-            // OR-matched pool, so a one-word coincidence gets PROMOTED to fill a
-            // category lane. Measured on the shipping corpus: "Marie Curie" has
-            // 15 genuine two-word matches (all science) but 211 one-word hits
-            // across 7 categories, 189 of which never mention Curie — so the
-            // generated quiz led with "In what year was Marie de' Medici born?".
-            // Single-word topics are unaffected (every row ties at 1).
-            let ranked = Self.rankTopTier(scored)
-            var out = Self.diversify(ranked, limit: limit)
+            // Fill strictly by tier: exhaust the rows that ARE about the topic
+            // before touching the ones merely connected to it, and diversify only
+            // WITHIN a tier. Diversifying across tiers is what promoted a
+            // one-word coincidence into a category lane — measured on the shipping
+            // corpus, "Ansel Adams" returned exactly one row per category (Samuel
+            // Adams, Hansel and Gretel, Phil Anselmo, Davante Adams…).
+            var out = Self.fillByTier(scored, limit: limit)
             // Starvation top-up: a thin clean pool is worth less to the player than
-            // a full quiz, so the reserved giveaways fill the tail — ranked the same
-            // way, and only as far as `limit`.
+            // a full quiz, so the reserved giveaways fill the tail.
             if out.count < limit {
                 let taken = Set(out.map(\.id))
-                out.append(contentsOf: Self.rankTopTier(giveaways)
+                out.append(contentsOf: Self.fillByTier(giveaways, limit: limit)
                     .filter { !taken.contains($0.id) }.prefix(limit - out.count))
             }
             return out
         }
     }
 
-    /// Keep only the rows matching the MOST of the typed words, then rank by score.
-    private static func rankTopTier(_ scored: [(Question, Int, Int)]) -> [Question] {
-        guard let bestMatched = scored.map(\.2).max() else { return [] }
-        return scored.filter { $0.2 == bestMatched }.sorted { $0.1 > $1.1 }.map { $0.0 }
+    /// Does some row's SUBJECT reduce to exactly this topic? Titles only, grouped,
+    /// so it stays cheap — the pre-filter scan is the expensive part, not this.
+    private static func isOwnSubject(_ db: OpaquePointer, phrase: String) -> Bool {
+        var stmt: OpaquePointer?
+        defer { sqlite3_finalize(stmt) }
+        let sql = "SELECT source_title FROM questions WHERE lower(source_title) LIKE ? GROUP BY source_title LIMIT 800"
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return false }
+        sqlite3_bind_text(stmt, 1, "%\(phrase)%", -1, transientDestructor)
+        while sqlite3_step(stmt) == SQLITE_ROW {
+            let title = text(stmt, 0)
+            if topicTokens(title).joined(separator: " ") == phrase { return true }
+        }
+        return false
+    }
+
+    /// Take from the highest occupied relevance tier first, diversifying inside it.
+    private static func fillByTier(_ scored: [(Question, Int, Int)], limit: Int) -> [Question] {
+        var out: [Question] = []
+        for tier in [3, 2, 1, 0, -1] {
+            if out.count >= limit { break }
+            let lane = scored.filter { $0.2 == tier }.sorted { $0.1 > $1.1 }.map { $0.0 }
+            out.append(contentsOf: diversify(lane, limit: limit - out.count))
+        }
+        return Array(out.prefix(limit))
     }
 
     /// Round-robin a ranked list across categories, capping any one domain — the

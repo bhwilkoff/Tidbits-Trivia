@@ -97,6 +97,10 @@ def kind_map(rows):
             continue
         _, d = e.split(":", 1)
         d = d.strip()
+        # ONLY the first sentence. The explanation field does double duty — the
+        # player-facing reveal and the machine-readable subject description — and
+        # fix_hollow_reveals.py appends a Wikipedia sentence to it.
+        d = re.split(r"(?<=[.!?])\s", d, maxsplit=1)[0].strip()
         if not d or len(d) <= 8 or d[0].isdigit():
             continue
         for n, rx in KINDS:

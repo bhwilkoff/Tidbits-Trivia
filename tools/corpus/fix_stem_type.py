@@ -71,7 +71,10 @@ KINDS = [
     ("event", r"\b(battle|siege|massacre|storming|liberation|invasion|landing|"
               r"uprising|revolution|coup|rebellion|shooting|bombing|earthquake|"
               r"eruption|hurricane|disaster|crash|attack|assassination|raid|"
-              r"hijacking|riot|protest|election|treaty)\b"),
+              r"hijacking|riot|protest|election|treaty|"
+              # A tournament happens somewhere, the same as a battle does.
+              r"world cup|tournament|championship|olympics|games\b|regatta|"
+              r"festival|summit|conference|expo)\b"),
     ("org",   r"\b(website|web service|online service|platform|app\b|"
               r"company|corporation|conglomerate|manufacturer|retailer|airline|brand|"
               r"club|team|university|bank|studio|publisher|broadcaster|agency|institute|"

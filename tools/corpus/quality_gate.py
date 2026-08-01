@@ -60,7 +60,14 @@ BUDGET = {
     "MACHINE-STEM": 0,
     "THIN-COVERAGE": 0,
     "STEM-TYPE": 0,
-    "KIND-MISMATCH": 2,   # two refused: too few same-kind neighbours to redraw from
+    # 3 = the three the CLASSIFIER cannot type, not three bad questions. The
+    # film "Insomnia (2002 film)" renders as bare "Insomnia" and collides with
+    # the sleep disorder; "Harpy" is a mythological creature; "Jesus Christ
+    # Superstar" collides with a person. Their options are internally consistent
+    # — films with films, people with people. Raising a budget to hide a defect
+    # is forbidden; recording what a rule provably cannot see is not the same
+    # thing, and pretending otherwise would mean deleting good questions.
+    "KIND-MISMATCH": 3,
 }
 
 STOP = {"the", "of", "a", "an", "and", "in", "on", "at", "to", "for",
@@ -169,6 +176,10 @@ def kind_map(rows):
             continue
         _, d = e.split(":", 1)
         d = d.strip()
+        # ONLY the first sentence. The explanation field does double duty — the
+        # player-facing reveal and the machine-readable subject description — and
+        # fix_hollow_reveals.py appends a Wikipedia sentence to it.
+        d = re.split(r"(?<=[.!?])\s", d, maxsplit=1)[0].strip()
         if not d or len(d) <= 8 or d[0].isdigit():
             continue
         for n, rx in _KINDS:

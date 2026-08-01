@@ -32,6 +32,7 @@ class CreateTopicDriftTest {
     ): Int? = Corpus.tier(
         title, prompt, tags,
         Corpus.topicTokens(topic), Corpus.topicPhrase(topic), guardNames,
+        Corpus.phraseIsRequired(topic),
     )
 
     /** The single most common failure: the typed word inside a longer word. */
@@ -94,6 +95,25 @@ class CreateTopicDriftTest {
     @Test fun thePhraseSurvivesStopwordRemoval() {
         assertEquals("world war ii", Corpus.topicPhrase("World War II"))
         assertEquals(3, tier("Masters of the Universe", "Masters of the Universe (2026 film)"))
+    }
+
+    /** A regnal numeral is short but not insignificant. Found by sweeping topics
+     *  301-984, which the first 300 never contained. */
+    @Test fun aRegnalNumeralOrInitialForcesAPhraseMatch() {
+        assertTrue(Corpus.phraseIsRequired("George VI"))
+        assertTrue(Corpus.phraseIsRequired("O. J. Simpson"))
+        assertNull(tier("George Martin", "George VI"))
+        assertNull(tier("Paul George", "George VI"))
+        assertNull(tier("Homer Simpson", "O. J. Simpson"))
+        assertEquals(3, tier("George VI", "George VI"))
+    }
+
+    /** ...and it must NOT fire when the dropped word is a mere stopword, or "The
+     *  Beatles" stops matching every Beatles question not titled with the phrase. */
+    @Test fun aDroppedStopwordDoesNotForceAPhraseMatch() {
+        assertFalse(Corpus.phraseIsRequired("The Beatles"))
+        assertFalse(Corpus.phraseIsRequired("Denver"))
+        assertNotNull(tier("Abbey Road", "The Beatles", prompt = "the beatles recorded it here"))
     }
 
     @Test fun theSubjectItselfOutranksAContainingTitle() {

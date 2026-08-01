@@ -190,9 +190,30 @@ public sealed class QuestionProvider
             _wiki ??= new Networking.WikipediaClient();
             var titles = await _wiki.Search(topic, 30);
             if (titles.Count == 0) return new();
-            var summaries = await _wiki.Summaries(titles);
+            var all = await _wiki.Summaries(titles);
+            // Wikipedia's search returns what is RELATED to the topic, not what is
+            // about it: "Zendaya" brings back Tom Holland, Law Roach and Dune. An
+            // article earns its place only if it names the topic — the whole PHRASE,
+            // since requiring only the words let "Albert Einstein" through Bob
+            // Einstein, whose summary happens to name his brother Albert. And the
+            // same different-person guard the corpus ranker uses is needed here, or
+            // "Denver" fetches John Denver straight from Wikipedia after the corpus
+            // correctly refused him.
+            var tokens = Data.QueryHelpers.Tokenize(topic);
+            var phrase = Data.QueryHelpers.TopicPhrase(topic);
+            var guardNames = tokens.Count == 1
+                && all.Any(x => Data.QueryHelpers.Flatten(x.Title) == phrase);
+            var onTopic = all.Where(x =>
+            {
+                var subject = Data.QueryHelpers.Flatten(x.Title);
+                if (guardNames && subject != phrase && subject.Split(' ').Length == 2
+                    && Data.QueryHelpers.ContainsWord(subject, phrase)) return false;
+                var hay = Data.QueryHelpers.Fold($"{x.Title} {x.Extract} {x.Description}");
+                return Data.QueryHelpers.ContainsWord(hay, phrase);
+            }).ToList();
             var seed = Engine.StableSeed.Of($"{topic}:{count}");
-            return Engine.TemplateEngine.MakeQuestions(summaries, category.Id, count, seed);
+            return Engine.TemplateEngine.MakeQuestions(onTopic, category.Id, count, seed,
+                relaxed: true, distractors: all);
         }
         catch { return new(); }
     }

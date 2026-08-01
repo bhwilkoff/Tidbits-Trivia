@@ -72,13 +72,17 @@ export const Scoring = {
 };
 
 // --- Template engine for live Wikipedia generation ---
-const isUsable = (s) => {
+// `relaxed` is the LIVE path (Create), where the fame floor means something
+// different. Sweeping the corpus, a 600-character intro is a free notability proxy
+// over millions of candidates. Sweeping the results of a topic the PLAYER typed it
+// is just a rejection — Folarin Balogun's whole summary is 137 characters and makes
+// a perfectly good clue, and a topic needs four usable articles to produce anything.
+// Notability is already established by the player asking. Mirrors Swift/Kotlin.
+const isUsable = (s, relaxed = false) => {
   if (s.type === 'disambiguation') return false;
   const d = s.description, e = s.extract;
   if (!d || d.length < 6 || d.length > 90) return false;
-  // Fame floor: a long intro is a strong, free notability proxy. Obscure stubs
-  // ("X is an American actor.") are short — and unfun to be quizzed on.
-  if (!e || e.length < 600) return false;
+  if (!e || e.length < (relaxed ? 120 : 600)) return false;
   const lt = (s.title || '').toLowerCase();
   if (lt.startsWith('list of') || lt.includes('(disambiguation)')) return false;
   if ((e || '').toLowerCase().includes('may refer to')) return false;
@@ -186,22 +190,48 @@ function typeKey(subject) {
   const k = toks[toks.length - 1];
   return TYPE_FOLD[k] || k;
 }
-function typedDistractors(subject, pool, rnd, valueFn, exclude, lengthMatch) {
-  const kt = typeKey(subject); if (!kt) return [];
-  const excl = (exclude || '').toLowerCase(); const seen = new Set(); const cands = [];
-  for (const c of pool) {
-    if (c.title === subject.title || typeKey(c) !== kt) continue;
-    const v = (valueFn(c) || '').trim();
-    if (!v || v.toLowerCase() === excl || seen.has(v.toLowerCase())) continue;
-    seen.add(v.toLowerCase());
-    cands.push({ v, lenPen: lengthMatch != null ? -Math.abs(v.length - lengthMatch) : 0 });
-  }
-  if (cands.length < 3) return [];
-  cands.sort((a, b) => b.lenPen - a.lenPen);
-  return shuffle(cands.slice(0, Math.max(9, 8)), rnd).slice(0, 3).map((x) => x.v);
+// The coarse kind of thing a subject is. Exact typeKey equality is right when
+// drawing from a whole corpus, where there are always more footballers. A Create
+// topic supplies at most 35 articles and they are deliberately heterogeneous —
+// measured, a topic's usable results split as `subgenre:1, series:1, internet:1,
+// genre:1`, so three same-type siblings never existed and every question was
+// dropped for want of distractors.
+const WORK_TYPES = new Set('film movie series show sitcom season episode album song single novel book poem play opera musical game franchise character comic manga anime documentary'.split(' '));
+const PLACE_TYPES = new Set('settlement peak country state province region district county island river lake sea ocean desert park building bridge stadium airport museum palace castle'.split(' '));
+
+function coarseClass(s) {
+  if (isPerson(s)) return 'person';
+  const k = typeKey(s);
+  if (!k) return 'thing';
+  if (WORK_TYPES.has(k)) return 'work';
+  if (PLACE_TYPES.has(k)) return 'place';
+  return 'thing';
 }
-const titleDistractors = (s, pool, rnd) => typedDistractors(s, pool, rnd, (c) => stripParens(c.title), stripParens(s.title), null);
-const descDistractors = (s, pool, rnd) => typedDistractors(s, pool, rnd, (c) => c.description, s.description, (s.description || '').length);
+
+function typedDistractors(subject, pool, relaxed, rnd, valueFn, exclude, lengthMatch) {
+  const gather = (matches) => {
+    const excl = (exclude || '').toLowerCase(); const seen = new Set(); const cands = [];
+    for (const c of pool) {
+      if (c.title === subject.title || !matches(c)) continue;
+      const v = (valueFn(c) || '').trim();
+      if (!v || v.toLowerCase() === excl || seen.has(v.toLowerCase())) continue;
+      seen.add(v.toLowerCase());
+      cands.push({ v, lenPen: lengthMatch != null ? -Math.abs(v.length - lengthMatch) : 0 });
+    }
+    if (cands.length < 3) return [];
+    cands.sort((a, b) => b.lenPen - a.lenPen);
+    return shuffle(cands.slice(0, Math.max(9, 8)), rnd).slice(0, 3).map((x) => x.v);
+  };
+  const kt = typeKey(subject);
+  if (kt) {
+    const exact = gather((c) => typeKey(c) === kt);
+    if (exact.length) return exact;
+  }
+  if (!relaxed) return [];
+  const kc = coarseClass(subject);
+  return gather((c) => coarseClass(c) === kc);
+}
+const titleDistractors = (s, pool, relaxed, rnd) => typedDistractors(s, pool, relaxed, rnd, (c) => stripParens(c.title), stripParens(s.title), null);
 
 function difficulty(s) {
   // Above the fame floor (600), a longer intro = more famous = easier.
@@ -239,7 +269,12 @@ function isPerson(s) {
 }
 
 // Leading proper-noun run (the full birth name, which differs from the title).
-const LEAD = /^\s*((?:[A-Z][\w’'.\-]*)(?:[ \-]+(?:of|the|and|de|von|van|al|da|di)?\s*[A-Z][\w’'.\-]*)*)\s*(?:\([^)]*\))?\s+(?:was|is|were|are)\s+(?:a|an|the)\s+(.+)$/;
+// The `(?:,[^,]{0,80},)?` clause is an APPOSITIVE between the name and the verb,
+// and without it a large share of Wikipedia leads simply do not parse: "Jalen
+// Marquis Brunson, nicknamed "Captain Clutch", is an American professional
+// basketball player…" failed both shapes, so a topic with four perfectly good
+// usable articles produced nothing.
+const LEAD = /^\s*((?:[A-Z][\w’'.\-]*)(?:[ \-]+(?:of|the|and|de|von|van|al|da|di)?\s*[A-Z][\w’'.\-]*)*)\s*(?:\([^)]*\))?\s*(?:,[^,]{0,80},)?\s*(?:was|is|were|are)\s+(?:a|an|the)\s+(.+)$/;
 
 function blankName(text, title) {
   const esc = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -271,14 +306,14 @@ const STEMS = {
 };
 const SHAPE_ROTATION = ['describe', 'cloze', 'describe', 'describe', 'cloze'];
 
-function buildShape(shape, s, pool, stem, rnd) {
+function buildShape(shape, s, pool, stem, relaxed, rnd) {
   const fmt = (v) => stem.replace('%s', v);
   if (shape === 'describe') {
     // FIRST sentence only — a 2-sentence clue reads awkwardly under "Name this …?".
     const c = reframe(cleanClue(firstSentence(s.extract || '')), s);
     if (!c || c.length < 30 || informativeTokens(c) < 2) return null;
     const clue = c.replace(/[.\s]+$/, '').trim();
-    const ds = titleDistractors(s, pool, rnd); if (ds.length !== 3) return null;
+    const ds = titleDistractors(s, pool, relaxed, rnd); if (ds.length !== 3) return null;
     const ans = stripParens(s.title); return { prompt: fmt(clue), options: [ans, ...ds], answer: ans };
   }
   if (shape === 'cloze') {
@@ -290,15 +325,23 @@ function buildShape(shape, s, pool, stem, rnd) {
     }
     if (!clozed) { const m = sent.match(LEAD); if (m) { const i = sent.indexOf(m[1]); clozed = sent.slice(0, i) + '_____' + sent.slice(i + m[1].length); } }
     if (!clozed || clozed.length < 30 || informativeTokens(clozed) < 2) return null;
-    const ds = titleDistractors(s, pool, rnd); if (ds.length !== 3) return null;
+    const ds = titleDistractors(s, pool, relaxed, rnd); if (ds.length !== 3) return null;
     return { prompt: fmt(clozed), options: [bare, ...ds], answer: bare };
   }
   return null;
 }
 
-export function makeQuestions(pool, categoryID, count, seed) {
-  const usable = pool.filter(isUsable);
-  if (usable.length < 4) return [];
+// `distractors` defaults to `pool`, and separating them is what makes live Create
+// work at all. The SUBJECT of a question must be about the topic the player typed,
+// which leaves only a handful of articles — and a handful can never supply three
+// same-class siblings, so every question was dropped for want of options ("Jalen
+// Brunson" reduced to 4 usable articles, 2 of them people, and produced nothing).
+// A distractor only has to be a plausible wrong answer of the same kind, so it
+// comes from the whole search result, which is thematically adjacent already.
+export function makeQuestions(pool, categoryID, count, seed, relaxed = false, distractors = null) {
+  const usable = pool.filter((s) => isUsable(s, relaxed));
+  if (usable.length < (relaxed ? 1 : 4)) return [];
+  const dPool = (distractors || pool).filter((s) => isUsable(s, relaxed));
   const rnd = seededRng(seed);
   const subjects = shuffle(usable, rnd);
   const out = [];
@@ -311,7 +354,7 @@ export function makeQuestions(pool, categoryID, count, seed) {
       const shape = SHAPE_ROTATION[(gi + off) % n];
       const bank = shape === 'describe' ? (person ? STEMS.describe_person : STEMS.describe_thing) : STEMS[shape];
       const stem = bank[Math.floor(gi / n) % bank.length];
-      const built = buildShape(shape, s, usable, stem, rnd);
+      const built = buildShape(shape, s, dPool, stem, relaxed, rnd);
       if (built) {
         // Never ship a question whose answer leaks into the prompt.
         if (leaks(built.answer, built.prompt)) continue;

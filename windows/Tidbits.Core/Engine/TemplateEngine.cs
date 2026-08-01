@@ -14,13 +14,21 @@ public static class TemplateEngine
 {
     // MARK: Quality gates
 
-    public static bool IsUsable(WikipediaClient.Summary s)
+    public static bool IsUsable(WikipediaClient.Summary s) => IsUsable(s, false);
+
+    /// `relaxed` is the LIVE path (Create), where the fame floor means something
+    /// different. Sweeping the corpus, a 600-character intro is a free notability
+    /// proxy over millions of candidates. Sweeping the results of a topic the
+    /// PLAYER typed it is just a rejection — Folarin Balogun's whole summary is
+    /// 137 characters and makes a perfectly good clue, and a topic needs four
+    /// usable articles to produce anything. Mirrors Swift/Kotlin/JS.
+    public static bool IsUsable(WikipediaClient.Summary s, bool relaxed)
     {
         if (s.Type == "disambiguation") return false;
         var d = s.Description;
         if (d is null || d.Length < 6 || d.Length > 90) return false;
         var e = s.Extract;
-        if (e is null || e.Length < 600) return false; // fame floor
+        if (e is null || e.Length < (relaxed ? 120 : 600)) return false;
         var lowerTitle = s.Title.ToLowerInvariant();
         if (lowerTitle.StartsWith("list of") || lowerTitle.Contains("(disambiguation)")) return false;
         if (e.ToLowerInvariant().Contains("may refer to")) return false;
@@ -39,10 +47,19 @@ public static class TemplateEngine
 
     // MARK: Generation
 
-    public static List<Question> MakeQuestions(IReadOnlyList<WikipediaClient.Summary> pool, string categoryId, int count, ulong seed)
+    /// `distractors` defaults to `pool`, and separating them is what makes live
+    /// Create work at all. The SUBJECT of a question must be about the topic the
+    /// player typed, which leaves only a handful of articles — and a handful can
+    /// never supply three same-class siblings, so every question was dropped for
+    /// want of options ("Jalen Brunson" reduced to 4 usable articles, 2 of them
+    /// people, and produced nothing). A distractor only has to be a plausible wrong
+    /// answer of the same kind, so it comes from the whole search result.
+    public static List<Question> MakeQuestions(IReadOnlyList<WikipediaClient.Summary> pool, string categoryId, int count, ulong seed,
+        bool relaxed = false, IReadOnlyList<WikipediaClient.Summary>? distractors = null)
     {
-        var usable = pool.Where(IsUsable).ToList();
-        if (usable.Count < 4) return new();
+        var usable = pool.Where(x => IsUsable(x, relaxed)).ToList();
+        if (usable.Count < (relaxed ? 1 : 4)) return new();
+        var dPool = (distractors ?? pool).Where(x => IsUsable(x, relaxed)).ToList();
         var rng = new SeededRng(seed);
         var subjects = Shuffle(usable, ref rng);
         var questions = new List<Question>();
@@ -50,14 +67,14 @@ public static class TemplateEngine
         foreach (var subject in subjects)
         {
             if (questions.Count >= count) break;
-            var q = Build(subject, usable, categoryId, gi, ref rng);
+            var q = Build(subject, dPool, categoryId, gi, relaxed, ref rng);
             if (q is not null) questions.Add(q);
             gi++;
         }
         return questions;
     }
 
-    private static Question? Build(WikipediaClient.Summary s, List<WikipediaClient.Summary> pool, string categoryId, int gi, ref SeededRng rng)
+    private static Question? Build(WikipediaClient.Summary s, List<WikipediaClient.Summary> pool, string categoryId, int gi, bool relaxed, ref SeededRng rng)
     {
         int n = ShapeRotation.Length;
         bool person = IsPerson(s);
@@ -66,7 +83,7 @@ public static class TemplateEngine
             var shape = ShapeRotation[(gi + off) % n];
             var bank = shape == "describe" ? (person ? Stems["describe_person"] : Stems["describe_thing"]) : Stems[shape];
             var stem = bank[(gi / n) % bank.Length];
-            var built = Builder(shape, s, pool, stem, ref rng);
+            var built = Builder(shape, s, pool, stem, relaxed, ref rng);
             if (built is not { } b) continue;
             var (prompt, options, answer) = b;
             if (Leaks(answer, prompt)) continue;                 // answer must not leak into the prompt
@@ -91,7 +108,7 @@ public static class TemplateEngine
         return null;
     }
 
-    private static (string, List<string>, string)? Builder(string shape, WikipediaClient.Summary s, List<WikipediaClient.Summary> pool, string stem, ref SeededRng rng)
+    private static (string, List<string>, string)? Builder(string shape, WikipediaClient.Summary s, List<WikipediaClient.Summary> pool, string stem, bool relaxed, ref SeededRng rng)
     {
         switch (shape)
         {
@@ -100,7 +117,7 @@ public static class TemplateEngine
                 var reframed = Reframe(CleanClue(FirstSentence(s.Extract ?? "")), s.Title);
                 if (reframed is not { } c || c.Length < 30 || InformativeTokens(c) < 2) return null;
                 var cl = Regex.Replace(c, @"[.\s]+$", "").Trim();
-                var ds = TitleDistractors(s, pool, ref rng);
+                var ds = TitleDistractors(s, pool, relaxed, ref rng);
                 if (ds.Count != 3) return null;
                 var ans = DisplayTitle(s.Title);
                 var opts = new List<string> { ans };
@@ -126,7 +143,7 @@ public static class TemplateEngine
                     if (m.Success) clozed = sent.Substring(0, m.Groups[1].Index) + "_____" + sent.Substring(m.Groups[1].Index + m.Groups[1].Length);
                 }
                 if (clozed is not { } cz || cz.Length < 30 || InformativeTokens(cz) < 2) return null;
-                var ds = TitleDistractors(s, pool, ref rng);
+                var ds = TitleDistractors(s, pool, relaxed, ref rng);
                 if (ds.Count != 3) return null;
                 var opts = new List<string> { bare };
                 opts.AddRange(ds);
@@ -166,7 +183,12 @@ public static class TemplateEngine
         CommonWords.Concat(TypeLeading).Concat(TypeNouns).Concat(Nationalities)
             .Concat(new[] { "this", "the", "a", "an", "was", "is", "were", "are", "best", "known", "famous", "noted", "also", "who", "which", "that", "based", "located", "near", "former" }));
 
-    private static readonly Regex LeadRE = new(@"^\s*((?:[A-Z][\w’'.\-]*)(?:[ \-]+(?:of|the|and|de|von|van|al|da|di)?\s*[A-Z][\w’'.\-]*)*)\s*(?:\([^)]*\))?\s+(?:was|is|were|are)\s+(?:a|an|the)\s+(.+)$", RegexOptions.Compiled);
+    // The `(?:,[^,]{0,80},)?` clause is an APPOSITIVE between the name and the verb,
+    // and without it a large share of Wikipedia leads simply do not parse: "Jalen
+    // Marquis Brunson, nicknamed "Captain Clutch", is an American professional
+    // basketball player..." failed both shapes, so a topic with four perfectly good
+    // usable articles produced nothing.
+    private static readonly Regex LeadRE = new(@"^\s*((?:[A-Z][\w’'.\-]*)(?:[ \-]+(?:of|the|and|de|von|van|al|da|di)?\s*[A-Z][\w’'.\-]*)*)\s*(?:\([^)]*\))?\s*(?:,[^,]{0,80},)?\s*(?:was|is|were|are)\s+(?:a|an|the)\s+(.+)$", RegexOptions.Compiled);
     private static readonly Regex ProperRE = new(@"\b[A-Z][A-Za-z’'\-]{2,}\b", RegexOptions.Compiled);
     private static readonly Regex YearRE = new(@"\b(?:1\d{3}|20\d{2})\b", RegexOptions.Compiled);
     private static readonly Regex ParenRE = new(@"\s*\(([^()]*)\)", RegexOptions.Compiled);
@@ -240,29 +262,58 @@ public static class TemplateEngine
 
     // MARK: Distractors (typed siblings)
 
-    private static List<string> TypedDistractors(WikipediaClient.Summary s, List<WikipediaClient.Summary> pool, ref SeededRng rng,
-        System.Func<WikipediaClient.Summary, string?> value, string exclude, int? lengthMatch)
+    /// The coarse kind of thing a subject is. Exact TypeKey equality is right when
+    /// drawing from a whole corpus, where there are always more footballers. A
+    /// Create topic supplies at most 35 articles and they are deliberately
+    /// heterogeneous — measured, a topic's usable results split as
+    /// `subgenre:1, series:1, internet:1, genre:1`, so three same-type siblings
+    /// never existed and every question was dropped for want of distractors.
+    private static readonly HashSet<string> WorkTypes = new("film movie series show sitcom season episode album song single novel book poem play opera musical game franchise character comic manga anime documentary".Split(' '));
+    private static readonly HashSet<string> PlaceTypes = new("settlement peak country state province region district county island river lake sea ocean desert park building bridge stadium airport museum palace castle".Split(' '));
+
+    public static string CoarseClass(WikipediaClient.Summary s)
     {
-        var kt = TypeKey(s);
-        if (kt is null) return new();
-        var seen = new HashSet<string>();
-        var cands = new List<(int score, string val)>();
-        foreach (var c in pool)
-        {
-            if (c.Title == s.Title || TypeKey(c) != kt) continue;
-            var v0 = value(c)?.Trim();
-            if (string.IsNullOrEmpty(v0) || string.Equals(v0, exclude, System.StringComparison.OrdinalIgnoreCase)) continue;
-            if (!seen.Add(v0!.ToLowerInvariant())) continue;
-            int score = lengthMatch is { } lm ? -System.Math.Abs(v0.Length - lm) : 0;
-            cands.Add((score, v0));
-        }
-        if (cands.Count < 3) return new();
-        var top = cands.OrderByDescending(t => t.score).Take(System.Math.Max(9, 8)).Select(t => t.val).ToList();
-        return Shuffle(top, ref rng).Take(3).ToList();
+        if (IsPerson(s)) return "person";
+        var k = TypeKey(s);
+        if (k is null) return "thing";
+        if (WorkTypes.Contains(k)) return "work";
+        if (PlaceTypes.Contains(k)) return "place";
+        return "thing";
     }
 
-    private static List<string> TitleDistractors(WikipediaClient.Summary s, List<WikipediaClient.Summary> pool, ref SeededRng rng) =>
-        TypedDistractors(s, pool, ref rng, c => DisplayTitle(c.Title), DisplayTitle(s.Title), null);
+    private static List<string> TypedDistractors(WikipediaClient.Summary s, List<WikipediaClient.Summary> pool, bool relaxed, ref SeededRng rng,
+        System.Func<WikipediaClient.Summary, string?> value, string exclude, int? lengthMatch)
+    {
+        List<string> Gather(System.Func<WikipediaClient.Summary, bool> matches, ref SeededRng r)
+        {
+            var seen = new HashSet<string>();
+            var cands = new List<(int score, string val)>();
+            foreach (var c in pool)
+            {
+                if (c.Title == s.Title || !matches(c)) continue;
+                var v0 = value(c)?.Trim();
+                if (string.IsNullOrEmpty(v0) || string.Equals(v0, exclude, System.StringComparison.OrdinalIgnoreCase)) continue;
+                if (!seen.Add(v0!.ToLowerInvariant())) continue;
+                int score = lengthMatch is { } lm ? -System.Math.Abs(v0.Length - lm) : 0;
+                cands.Add((score, v0));
+            }
+            if (cands.Count < 3) return new();
+            var top = cands.OrderByDescending(t => t.score).Take(System.Math.Max(9, 8)).Select(t => t.val).ToList();
+            return Shuffle(top, ref r).Take(3).ToList();
+        }
+        var kt = TypeKey(s);
+        if (kt is not null)
+        {
+            var exact = Gather(c => TypeKey(c) == kt, ref rng);
+            if (exact.Count > 0) return exact;
+        }
+        if (!relaxed) return new();
+        var kc = CoarseClass(s);
+        return Gather(c => CoarseClass(c) == kc, ref rng);
+    }
+
+    private static List<string> TitleDistractors(WikipediaClient.Summary s, List<WikipediaClient.Summary> pool, bool relaxed, ref SeededRng rng) =>
+        TypedDistractors(s, pool, relaxed, ref rng, c => DisplayTitle(c.Title), DisplayTitle(s.Title), null);
 
     // MARK: Clue cleaning
 

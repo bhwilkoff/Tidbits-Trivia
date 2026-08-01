@@ -122,6 +122,18 @@ function flattened(s) {
 // The typed topic as a matchable phrase: disambiguator removed, order kept.
 function topicPhrase(s) { return flattened(stripParens(s)); }
 
+// Did the topic lose MEANINGFUL words to the >=3-character rule? "George VI"
+// reduces to the single token `george`, so every George matched — measured, it
+// returned George Martin, George Mallory, George Eliot and Paul George; "O. J.
+// Simpson" reduced to `simpson` and returned Homer and Bart. A regnal numeral or
+// an initial is short but not insignificant, and the tell is that the phrase still
+// holds a non-stopword the token list threw away. Does NOT fire for "The Beatles",
+// where the dropped word is a stopword.
+function phraseIsRequired(topic) {
+  const significant = topicPhrase(topic).split(' ').filter((w) => w && !STOPWORDS.has(w));
+  return significant.length > topicTokens(topic).length;
+}
+
 function topicTokens(s) {
   const raw = flattened(stripParens(s)).split(' ').filter((t) => t.length >= 3);
   const kept = raw.filter((t) => !STOPWORDS.has(t));
@@ -164,7 +176,7 @@ function hasAgentiveTag(tags, phrase) {
 // The OPTIONS are deliberately not consulted: that made the topic match as a
 // DISTRACTOR ("Zlatan Ibrahimović" returned a picture of Neymar) because the
 // giveaway rule had already removed every row where it was the right answer.
-function tierOf(title, prompt, tags, tokens, phrase, guardNames) {
+function tierOf(title, prompt, tags, tokens, phrase, guardNames, requirePhrase = false) {
   const fTitle = fold(title || '');
   const subject = flattened(title || '');
   if (subject === phrase) return 3;
@@ -174,6 +186,9 @@ function tierOf(title, prompt, tags, tokens, phrase, guardNames) {
     if (guardNames && subject.split(' ').length === 2) return null;
     return 2;
   }
+  // A numeral or an initial was dropped as "too short", so the surviving tokens
+  // name the wrong thing — only the phrase above could be trusted.
+  if (requirePhrase) return containsWord(fold(prompt || ''), phrase) ? 0 : null;
   const need = tokens.length <= 2 ? tokens.length : tokens.length - 1;
   if (tokens.filter((t) => containsWord(fTitle, t)).length >= need) return 1;
   const read = fTitle + ' ' + fold(prompt || '');
@@ -293,6 +308,7 @@ export const Corpus = {
     // reading of it.
     const guardNames = tokens.length === 1
       && this.questions.some((q) => flattened(q.sourceTitle) === phrase);
+    const requirePhrase = phraseIsRequired(topic);
     const scored = [];
     const giveaways = [];
     for (const q of this.questions) {
@@ -303,7 +319,7 @@ export const Corpus = {
       // Folded, not merely lowercased: the tokens are folded, so an accented row
       // would score 0 against them and be dropped by the `s > 0` gate.
       // The relevance FLOOR, applied before any ranking.
-      const matched = tierOf(q.sourceTitle, q.prompt, q.tags, tokens, phrase, guardNames);
+      const matched = tierOf(q.sourceTitle, q.prompt, q.tags, tokens, phrase, guardNames, requirePhrase);
       if (matched === null) continue;
       const title = fold(q.sourceTitle), prompt = fold(q.prompt), explanation = fold(q.explanation);
       const tags = (q.tags || []).map(fold);
@@ -526,7 +542,25 @@ export const Wikipedia = {
   async generate(topic, categoryID, count) {
     const titles = await this.search(topic, 35);
     if (!titles.length) return [];
-    const sums = await this.summaries(titles);
-    return makeQuestions(sums, categoryID, count, stableSeed(topic));
+    const all = await this.summaries(titles);
+    // Wikipedia's search returns what is RELATED to the topic, not what is about
+    // it: "Zendaya" brings back Tom Holland, Law Roach and Dune. An article earns
+    // its place only if it names the topic — the whole PHRASE, since requiring only
+    // the words let "Albert Einstein" through Bob Einstein, whose summary happens to
+    // name his brother Albert. And the same different-person guard the corpus ranker
+    // uses is needed here, or "Denver" fetches John Denver straight from Wikipedia
+    // after the corpus correctly refused him.
+    const tokens = topicTokens(topic);
+    const phrase = topicPhrase(topic);
+    const guardNames = tokens.length === 1
+      && all.some((s) => flattened(s.title) === phrase);
+    const onTopic = all.filter((s) => {
+      const subject = flattened(s.title);
+      if (guardNames && subject !== phrase && subject.split(' ').length === 2
+          && containsWord(subject, phrase)) return false;
+      return containsWord(
+        fold(`${s.title} ${s.extract || ''} ${s.description || ''}`), phrase);
+    });
+    return makeQuestions(onTopic, categoryID, count, stableSeed(topic), true, all);
   },
 };

@@ -427,6 +427,18 @@ object Corpus {
 
     fun topicPhrase(s: String): String = flattened(stripParens(s))
 
+    /** Did the topic lose MEANINGFUL words to the >=3-character rule?
+     *  "George VI" reduces to the single token `george`, so every George matched —
+     *  measured, it returned George Martin, George Mallory, George Eliot and Paul
+     *  George; "O. J. Simpson" reduced to `simpson` and returned Homer and Bart.
+     *  A regnal numeral or an initial is short but not insignificant, and the tell
+     *  is that the phrase still holds a non-stopword the token list threw away.
+     *  Does NOT fire for "The Beatles", where the dropped word is a stopword. */
+    fun phraseIsRequired(topic: String): Boolean {
+        val significant = topicPhrase(topic).split(" ").filter { it.isNotEmpty() && it !in STOPWORDS }
+        return significant.size > topicTokens(topic).size
+    }
+
     fun topicTokens(s: String): List<String> {
         val raw = flattened(stripParens(s)).split(" ").filter { it.length >= 3 }
         val kept = raw.filter { it !in STOPWORDS }
@@ -471,7 +483,8 @@ object Corpus {
      *  DISTRACTOR ("Zlatan Ibrahimović" returned a picture of Neymar) because the
      *  giveaway rule had already removed every row where it was the right answer. */
     fun tier(title: String, prompt: String, tags: List<String>,
-             tokens: List<String>, phrase: String, guardNames: Boolean): Int? {
+             tokens: List<String>, phrase: String, guardNames: Boolean,
+             requirePhrase: Boolean = false): Int? {
         val fTitle = fold(title)
         val subject = flattened(title)
         if (subject == phrase) return 3
@@ -481,6 +494,9 @@ object Corpus {
             if (guardNames && subject.split(" ").size == 2) return null
             return 2
         }
+        // A numeral or an initial was dropped as "too short", so the surviving
+        // tokens name the wrong thing — only the phrase above could be trusted.
+        if (requirePhrase) return if (containsWord(fold(prompt), phrase)) 0 else null
         val need = if (tokens.size <= 2) tokens.size else tokens.size - 1
         if (tokens.count { containsWord(fTitle, it) } >= need) return 1
         val read = "$fTitle ${fold(prompt)}"
@@ -512,6 +528,7 @@ object Corpus {
         if (tokens.isEmpty()) return emptyList()
         val phrase = topicPhrase(topic)
         val guardNames = tokens.size == 1 && isOwnSubject(phrase)
+        val requirePhrase = phraseIsRequired(topic)
         // Narrow to rows that mention a token at all before scoring in Kotlin. LIKE is
         // ASCII-case-insensitive in SQLite and the tokens are [a-z0-9] by construction, so this
         // matches what the old full scan found. The cap stops a common word ("history") from
@@ -537,7 +554,7 @@ object Corpus {
         )
         val scoredAll = candidates.mapNotNull { q ->
             // The relevance FLOOR, before any ranking.
-            val t = tier(q.sourceTitle, q.prompt, q.tags, tokens, phrase, guardNames)
+            val t = tier(q.sourceTitle, q.prompt, q.tags, tokens, phrase, guardNames, requirePhrase)
                 ?: return@mapNotNull null
             // Folded, not merely lowercased: the tokens are folded, so an accented row
             // would score 0 against them — the pre-filter would surface it and the
@@ -886,19 +903,44 @@ object Wikipedia {
     suspend fun generate(topic: String, categoryId: String, count: Int): List<Question> = withContext(Dispatchers.IO) {
         val titles = search(topic, 35)
         if (titles.isEmpty()) return@withContext emptyList()
-        TemplateEngine.make(summaries(titles), categoryId, count, stableSeed(topic))
+        val all = summaries(titles)
+        // Wikipedia's search returns what is RELATED to the topic, not what is about
+        // it: "Zendaya" brings back Tom Holland, Law Roach and Dune. An article earns
+        // its place only if it names the topic — the whole PHRASE, since requiring
+        // only the words let "Albert Einstein" through Bob Einstein, whose summary
+        // happens to name his brother Albert. And the same different-person guard the
+        // corpus ranker uses is needed here, or "Denver" fetches John Denver straight
+        // from Wikipedia after the corpus correctly refused him.
+        val tokens = Corpus.topicTokens(topic)
+        val phrase = Corpus.topicPhrase(topic)
+        val selfSubject = all.any { Corpus.flattened(it.title) == phrase }
+        val guardNames = tokens.size == 1 && selfSubject
+        val onTopic = all.filter { sm ->
+            val subject = Corpus.flattened(sm.title)
+            if (guardNames && subject != phrase && subject.split(" ").size == 2 &&
+                Corpus.containsWord(subject, phrase)) return@filter false
+            Corpus.containsWord(
+                Corpus.fold(sm.title + " " + (sm.extract ?: "") + " " + (sm.description ?: "")), phrase)
+        }
+        TemplateEngine.make(onTopic, categoryId, count, stableSeed(topic),
+                            relaxed = true, distractors = all)
     }
 
     private fun enc(s: String) = java.net.URLEncoder.encode(s, "UTF-8")
 }
 
 object TemplateEngine {
-    private fun usable(s: Wikipedia.Summary): Boolean {
+    /** `relaxed` is the LIVE path (Create), where the fame floor means something
+     *  different. Sweeping the corpus, a 600-character intro is a free notability
+     *  proxy over millions of candidates. Sweeping the results of a topic the
+     *  PLAYER typed it is just a rejection — Folarin Balogun's whole summary is
+     *  137 characters and makes a perfectly good clue, and a topic needs four
+     *  usable articles to produce anything. Notability is already established by
+     *  the player asking. Mirrors Swift TemplateEngine.isUsable(_:relaxed:). */
+    private fun usable(s: Wikipedia.Summary, relaxed: Boolean = false): Boolean {
         val d = s.description; val e = s.extract
         if (d == null || d.length < 6 || d.length > 90) return false
-        // Fame floor: a long intro is a strong, free notability proxy. Obscure
-        // stubs ("X is an American actor.") are short — and unfun to be quizzed on.
-        if (e == null || e.length < 600) return false
+        if (e == null || e.length < (if (relaxed) 120 else 600)) return false
         val lt = s.title.lowercase()
         if (lt.startsWith("list of") || lt.contains("(disambiguation)")) return false
         if ((e).lowercase().contains("may refer to")) return false
@@ -996,9 +1038,20 @@ object TemplateEngine {
     )
     private val SHAPE_ROTATION = listOf("describe", "cloze", "describe", "describe", "cloze")
 
-    fun make(pool: List<Wikipedia.Summary>, categoryId: String, count: Int, seed: Long): List<Question> {
-        val usableList = pool.filter { usable(it) }
-        if (usableList.size < 4) return emptyList()
+    /** `distractors` defaults to `pool`, and separating them is what makes live
+     *  Create work at all. The SUBJECT of a question must be about the topic the
+     *  player typed, which leaves only a handful of articles — and a handful can
+     *  never supply three same-class siblings, so every question was dropped for
+     *  want of options ("Jalen Brunson" reduced to 4 usable articles, 2 of them
+     *  people, and produced nothing). A distractor does not have to be about the
+     *  topic; it only has to be a plausible wrong answer of the same kind, so it
+     *  comes from the whole search result, which is thematically adjacent by
+     *  construction. Mirrors Swift TemplateEngine.makeQuestions. */
+    fun make(pool: List<Wikipedia.Summary>, categoryId: String, count: Int, seed: Long,
+             relaxed: Boolean = false, distractors: List<Wikipedia.Summary>? = null): List<Question> {
+        val usableList = pool.filter { usable(it, relaxed) }
+        if (usableList.size < (if (relaxed) 1 else 4)) return emptyList()
+        val dPool = (distractors ?: pool).filter { usable(it, relaxed) }
         val rng = SeededRng(seed)
         val subjects = usableList.shuffledWith(rng)
         val out = mutableListOf<Question>()
@@ -1011,7 +1064,7 @@ object TemplateEngine {
                 val shape = SHAPE_ROTATION[(gi + off) % n]
                 val bank = if (shape == "describe") (if (person) STEMS["describe_person"]!! else STEMS["describe_thing"]!!) else STEMS[shape]!!
                 val stem = bank[(gi / n) % bank.size]
-                val built = buildShape(shape, s, usableList, stem, rng)
+                val built = buildShape(shape, s, dPool, stem, relaxed, rng)
                 if (built != null) {
                     // Never ship a question whose answer leaks into the prompt.
                     if (leaks(built.third, built.first)) continue
@@ -1051,23 +1104,45 @@ object TemplateEngine {
         return TYPE_FOLD[last] ?: last
     }
 
-    private fun typedDistractors(s: Wikipedia.Summary, pool: List<Wikipedia.Summary>, rng: SeededRng, value: (Wikipedia.Summary) -> String?, exclude: String, lengthMatch: Int?): List<String> {
-        val kt = typeKey(s) ?: return emptyList()
-        val seen = mutableSetOf<String>()
-        val cands = pool.mapNotNull { c ->
-            if (c.title == s.title || typeKey(c) != kt) return@mapNotNull null
-            val v = value(c)?.trim() ?: return@mapNotNull null
-            if (v.isEmpty() || v.equals(exclude, true) || !seen.add(v.lowercase())) return@mapNotNull null
-            val lenPen = if (lengthMatch != null) -kotlin.math.abs(v.length - lengthMatch) else 0
-            Pair(v, lenPen)
-        }.sortedByDescending { it.second }
-        if (cands.size < 3) return emptyList()
-        return cands.take(9).map { it.first }.shuffledWith(rng).take(3)
+    /** The coarse kind of thing a subject is. Exact typeKey equality is right when
+     *  drawing from a whole corpus, where there are always more footballers. A
+     *  Create topic supplies at most 35 articles and they are deliberately
+     *  heterogeneous — measured, a topic's usable results split as
+     *  `subgenre:1, series:1, internet:1, genre:1`, so three same-type siblings
+     *  never existed and every question was dropped for want of distractors. */
+    private val WORK_TYPES = "film movie series show sitcom season episode album song single novel book poem play opera musical game franchise character comic manga anime documentary".split(" ").toSet()
+    private val PLACE_TYPES = "settlement peak country state province region district county island river lake sea ocean desert park building bridge stadium airport museum palace castle".split(" ").toSet()
+
+    private fun coarseClass(s: Wikipedia.Summary): String {
+        if (isPerson(s)) return "person"
+        val k = typeKey(s) ?: return "thing"
+        return when (k) { in WORK_TYPES -> "work"; in PLACE_TYPES -> "place"; else -> "thing" }
     }
-    private fun titleDistractors(s: Wikipedia.Summary, pool: List<Wikipedia.Summary>, rng: SeededRng) =
-        typedDistractors(s, pool, rng, { stripParens(it.title) }, stripParens(s.title), null)
-    private fun descDistractors(s: Wikipedia.Summary, pool: List<Wikipedia.Summary>, rng: SeededRng) =
-        typedDistractors(s, pool, rng, { it.description }, s.description ?: "", (s.description ?: "").length)
+
+    private fun typedDistractors(s: Wikipedia.Summary, pool: List<Wikipedia.Summary>, relaxed: Boolean, rng: SeededRng, value: (Wikipedia.Summary) -> String?, exclude: String, lengthMatch: Int?): List<String> {
+        fun gather(matches: (Wikipedia.Summary) -> Boolean): List<String> {
+            val seen = mutableSetOf<String>()
+            val cands = pool.mapNotNull { c ->
+                if (c.title == s.title || !matches(c)) return@mapNotNull null
+                val v = value(c)?.trim() ?: return@mapNotNull null
+                if (v.isEmpty() || v.equals(exclude, true) || !seen.add(v.lowercase())) return@mapNotNull null
+                val lenPen = if (lengthMatch != null) -kotlin.math.abs(v.length - lengthMatch) else 0
+                Pair(v, lenPen)
+            }.sortedByDescending { it.second }
+            if (cands.size < 3) return emptyList()
+            return cands.take(9).map { it.first }.shuffledWith(rng).take(3)
+        }
+        val kt = typeKey(s)
+        if (kt != null) {
+            val exact = gather { typeKey(it) == kt }
+            if (exact.isNotEmpty()) return exact
+        }
+        if (!relaxed) return emptyList()
+        val kc = coarseClass(s)
+        return gather { coarseClass(it) == kc }
+    }
+    private fun titleDistractors(s: Wikipedia.Summary, pool: List<Wikipedia.Summary>, relaxed: Boolean, rng: SeededRng) =
+        typedDistractors(s, pool, relaxed, rng, { stripParens(it.title) }, stripParens(s.title), null)
 
     // --- Describe-shape helpers (mirror of generate_corpus.py) ---
     private val MONTHS = "january february march april may june july august september october november december".split(" ").toSet()
@@ -1075,7 +1150,12 @@ object TemplateEngine {
     private val NATIONALITIES = "polish french american british english german italian russian japanese chinese spanish dutch canadian australian indian brazilian mexican swedish norwegian danish finnish greek roman egyptian persian turkish irish scottish welsh austrian swiss belgian portuguese hungarian czech romanian korean vietnamese thai argentine chilean colombian peruvian israeli iranian iraqi syrian lebanese moroccan nigerian kenyan ethiopian ukrainian serbian croatian bulgarian icelandic".split(" ").toSet()
     private val CLUE_GENERIC = COMMON_WORDS + TYPE_LEADING + TYPE_NOUNS + NATIONALITIES +
         "this the a an was is were are best known famous noted also who which that based located near former".split(" ").toSet()
-    private val LEAD = Regex("^\\s*((?:[A-Z][\\w’'.\\-]*)(?:[ \\-]+(?:of|the|and|de|von|van|al|da|di)?\\s*[A-Z][\\w’'.\\-]*)*)\\s*(?:\\([^)]*\\))?\\s+(?:was|is|were|are)\\s+(?:a|an|the)\\s+(.+)$")
+    // The `(?:,[^,]{0,80},)?` clause is an APPOSITIVE between the name and the
+    // verb, and without it a large share of Wikipedia leads simply do not parse:
+    // "Jalen Marquis Brunson, nicknamed \"Captain Clutch\", is an American
+    // professional basketball player…" failed both shapes, so a topic with four
+    // perfectly good usable articles produced nothing.
+    private val LEAD = Regex("^\\s*((?:[A-Z][\\w’'.\\-]*)(?:[ \\-]+(?:of|the|and|de|von|van|al|da|di)?\\s*[A-Z][\\w’'.\\-]*)*)\\s*(?:\\([^)]*\\))?\\s*(?:,[^,]{0,80},)?\\s*(?:was|is|were|are)\\s+(?:a|an|the)\\s+(.+)$")
     private val PROPER = Regex("\\b[A-Z][A-Za-z’'\\-]{2,}\\b")
     private val YEAR_RE = Regex("\\b(?:1\\d{3}|20\\d{2})\\b")
     // Decided by the type HEAD-NOUN (typeKey), not a loose word match — a novel
@@ -1124,14 +1204,14 @@ object TemplateEngine {
     }
 
     // Returns (prompt, options, answer) or null if this subject can't fill the shape.
-    private fun buildShape(shape: String, s: Wikipedia.Summary, pool: List<Wikipedia.Summary>, stem: String, rng: SeededRng): Triple<String, List<String>, String>? {
+    private fun buildShape(shape: String, s: Wikipedia.Summary, pool: List<Wikipedia.Summary>, stem: String, relaxed: Boolean, rng: SeededRng): Triple<String, List<String>, String>? {
         when (shape) {
             "describe" -> {
                 // FIRST sentence only — a 2-sentence clue reads awkwardly under "Name this …?".
                 val c = reframe(cleanClue(firstSentence(s.extract ?: "")), s.title)
                 if (c == null || c.length < 30 || informativeTokens(c) < 2) return null
                 val clue = c.replace(Regex("[.\\s]+$"), "").trim()
-                val ds = titleDistractors(s, pool, rng); if (ds.size != 3) return null
+                val ds = titleDistractors(s, pool, relaxed, rng); if (ds.size != 3) return null
                 val ans = stripParens(s.title); return Triple(stem.format(clue), listOf(ans) + ds, ans)
             }
             "cloze" -> {
@@ -1146,7 +1226,7 @@ object TemplateEngine {
                     if (m != null) { val r = m.groups[1]!!.range; clozed = sent.substring(0, r.first) + "_____" + sent.substring(r.last + 1) }
                 }
                 if (clozed == null || clozed.length < 30 || informativeTokens(clozed) < 2) return null
-                val ds = titleDistractors(s, pool, rng); if (ds.size != 3) return null
+                val ds = titleDistractors(s, pool, relaxed, rng); if (ds.size != 3) return null
                 return Triple(stem.format(clozed), listOf(bare) + ds, bare)
             }
         }

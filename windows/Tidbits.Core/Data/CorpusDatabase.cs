@@ -72,6 +72,7 @@ public sealed class CorpusDatabase
         // Denver" is someone else. "Potter" is not a subject, so "Harry Potter" is
         // the best reading of it.
         var guardNames = tokens.Count == 1 && _all.Any(q => QueryHelpers.Flatten(q.SourceTitle) == phrase);
+        var requirePhrase = QueryHelpers.PhraseIsRequired(topic);
 
         // WHERE (prompt LIKE %t% OR title LIKE %t%) for any token, LIMIT 400 (pre-filter).
         var matched = new List<Question>();
@@ -108,7 +109,7 @@ public sealed class CorpusDatabase
             var explanation = QueryHelpers.Fold(q.Explanation);
             var tags = q.Tags.Select(QueryHelpers.Fold).ToList();
             // The relevance FLOOR, applied before any ranking.
-            var tier = QueryHelpers.Tier(q.SourceTitle, q.Prompt, q.Tags, tokens, phrase, guardNames);
+            var tier = QueryHelpers.Tier(q.SourceTitle, q.Prompt, q.Tags, tokens, phrase, guardNames, requirePhrase);
             if (tier is null) continue;
             var score = tokens.Sum(t => (tags.Any(tg => QueryHelpers.ContainsWord(tg, t)) ? 3 : 0)
                                       + (QueryHelpers.ContainsWord(title, t) ? 2 : 0)

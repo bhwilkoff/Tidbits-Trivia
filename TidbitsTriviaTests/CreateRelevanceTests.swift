@@ -67,7 +67,8 @@ struct CreateTopicDriftTests {
         CorpusDatabase.tier(title: title, prompt: prompt, tags: tags,
                             tokens: CorpusDatabase.topicTokens(topic),
                             phrase: CorpusDatabase.topicPhrase(topic),
-                            guardNames: guardNames)
+                            guardNames: guardNames,
+                            requirePhrase: CorpusDatabase.phraseIsRequired(topic))
     }
 
     /// The single most common failure: the typed word inside a longer word.
@@ -133,6 +134,31 @@ struct CreateTopicDriftTests {
     @Test func thePhraseSurvivesStopwordRemoval() {
         #expect(CorpusDatabase.topicPhrase("World War II") == "world war ii")
         #expect(tier("Masters of the Universe", topic: "Masters of the Universe (2026 film)") == 3)
+    }
+
+    /// A regnal numeral is short but not insignificant. "George VI" reduced to the
+    /// single token `george` and returned George Martin, George Mallory, George
+    /// Eliot and Paul George; "O. J. Simpson" reduced to `simpson` and returned
+    /// Homer, Bart and Marge. Found by sweeping topics 301–984, which the first
+    /// 300 never contained.
+    @Test func aRegnalNumeralOrInitialForcesAPhraseMatch() {
+        #expect(CorpusDatabase.phraseIsRequired("George VI"))
+        #expect(CorpusDatabase.phraseIsRequired("O. J. Simpson"))
+        #expect(tier("George Martin", topic: "George VI") == nil)
+        #expect(tier("Paul George", topic: "George VI") == nil)
+        #expect(tier("Homer Simpson", topic: "O. J. Simpson") == nil)
+        #expect(tier("George VI", topic: "George VI") == 3)
+        #expect(tier("O. J. Simpson", topic: "O. J. Simpson") == 3)
+    }
+
+    /// …and it must NOT fire when the dropped word is a mere stopword, or "The
+    /// Beatles" would stop matching every Beatles question that isn't titled with
+    /// the full phrase.
+    @Test func aDroppedStopwordDoesNotForceAPhraseMatch() {
+        #expect(!CorpusDatabase.phraseIsRequired("The Beatles"))
+        #expect(!CorpusDatabase.phraseIsRequired("Denver"))
+        #expect(tier("Abbey Road", prompt: "the beatles recorded it here",
+                     topic: "The Beatles") != nil)
     }
 
     /// A row whose title is exactly the topic outranks one that merely contains it.

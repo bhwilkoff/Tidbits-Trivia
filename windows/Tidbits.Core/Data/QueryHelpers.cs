@@ -85,6 +85,20 @@ internal static class QueryHelpers
     /// The typed topic as a matchable phrase: disambiguator removed, order kept.
     public static string TopicPhrase(string s) => Flatten(StripParens(s));
 
+    /// Did the topic lose MEANINGFUL words to the >=3-character rule? "George VI"
+    /// reduces to the single token `george`, so every George matched — measured, it
+    /// returned George Martin, George Mallory, George Eliot and Paul George; "O. J.
+    /// Simpson" reduced to `simpson` and returned Homer and Bart. A regnal numeral
+    /// or an initial is short but not insignificant, and the tell is that the phrase
+    /// still holds a non-stopword the token list threw away. Does NOT fire for "The
+    /// Beatles", where the dropped word is a stopword.
+    public static bool PhraseIsRequired(string topic)
+    {
+        var significant = TopicPhrase(topic).Split(' ')
+            .Where(w => w.Length > 0 && !Stopwords.Contains(w)).Count();
+        return significant > Tokenize(topic).Count;
+    }
+
     /// Wikipedia categories mean "about" only in their agentive form. "Albums
     /// produced by Michael Jackson" makes a Thriller question an MJ question;
     /// "Actresses from Denver" does not make a Kristin Cavallari birth-year
@@ -128,7 +142,8 @@ internal static class QueryHelpers
     /// DISTRACTOR ("Zlatan Ibrahimovic" returned a picture of Neymar) because the
     /// giveaway rule had already removed every row where it was the right answer.
     public static int? Tier(string title, string prompt, IReadOnlyList<string> tags,
-                            IReadOnlyList<string> tokens, string phrase, bool guardNames)
+                            IReadOnlyList<string> tokens, string phrase, bool guardNames,
+                            bool requirePhrase = false)
     {
         var fTitle = Fold(title);
         var subject = Flatten(title);
@@ -140,6 +155,9 @@ internal static class QueryHelpers
             if (guardNames && subject.Split(' ').Length == 2) return null;
             return 2;
         }
+        // A numeral or an initial was dropped as "too short", so the surviving
+        // tokens name the wrong thing — only the phrase above could be trusted.
+        if (requirePhrase) return ContainsWord(Fold(prompt), phrase) ? 0 : null;
         var need = tokens.Count <= 2 ? tokens.Count : tokens.Count - 1;
         if (tokens.Count(t => ContainsWord(fTitle, t)) >= need) return 1;
         var read = fTitle + " " + Fold(prompt);

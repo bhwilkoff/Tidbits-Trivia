@@ -167,6 +167,24 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
     /// The typed topic as a matchable phrase: disambiguator removed, order kept.
     nonisolated static func topicPhrase(_ s: String) -> String { flattened(stripParens(s)) }
 
+    /// Did the topic lose MEANINGFUL words to the ≥3-character rule?
+    ///
+    /// "George VI" reduces to the single token `george`, so every George in the
+    /// corpus matched it — measured across the top 1,000, that topic returned
+    /// George Martin, George Mallory, George Eliot and Paul George. "O. J.
+    /// Simpson" reduces to `simpson` and returned Homer, Bart and Marge.
+    ///
+    /// A regnal numeral or an initial is short but not insignificant, and the tell
+    /// is that the phrase still holds a non-stopword the token list threw away.
+    /// When that happens the loose token match is worthless and only the phrase
+    /// itself can be trusted. Crucially this does NOT fire for "The Beatles",
+    /// where the dropped word is a stopword and the loose match is still right.
+    nonisolated static func phraseIsRequired(_ topic: String) -> Bool {
+        let significant = topicPhrase(topic).split(separator: " ")
+            .map(String.init).filter { !stopwords.contains($0) }
+        return significant.count > topicTokens(topic).count
+    }
+
     /// Wikipedia categories are the row's `tags`, and only SOME of them mean the
     /// row is about the topic. "Albums produced by Michael Jackson" does.
     /// "Actresses from Denver" does not — it is where she happens to be from, and
@@ -216,7 +234,8 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
     /// giveaway rule had already set aside every row where the topic was the
     /// correct answer, the only rows left were the ones where it was wrong.
     nonisolated static func tier(title: String, prompt: String, tags: [String],
-                                 tokens: [String], phrase: String, guardNames: Bool) -> Int? {
+                                 tokens: [String], phrase: String, guardNames: Bool,
+                                 requirePhrase: Bool = false) -> Int? {
         let fTitle = fold(title)
         let subject = flattened(title)
         if subject == phrase { return 3 }
@@ -228,6 +247,9 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
             if guardNames, subject.split(separator: " ").count == 2 { return nil }
             return 2
         }
+        // A numeral or an initial was dropped as "too short", so the surviving
+        // tokens name the wrong thing — only the phrase above could be trusted.
+        if requirePhrase { return containsWord(fold(prompt), phrase) ? 0 : nil }
         let need = tokens.count <= 2 ? tokens.count : tokens.count - 1
         if tokens.filter({ containsWord(fTitle, $0) }).count >= need { return 1 }
         let read = fTitle + " " + fold(prompt)
@@ -252,6 +274,7 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
             // this corpus, so "Bob Denver" is someone else. "Potter" is not a
             // subject, so "Harry Potter" is the best reading of it.
             let guardNames = tokens.count == 1 && Self.isOwnSubject(db, phrase: phrase)
+            let requirePhrase = Self.phraseIsRequired(topic)
             // search_text is the folded mirror of the four text columns, populated
             // only where folding changes something. It is what makes "beyonce"
             // find "Beyoncé": SQL LIKE cannot strip diacritics, so without it every
@@ -290,7 +313,8 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
                 // be answered with eight confident strangers.
                 guard let tier = Self.tier(title: q.sourceTitle, prompt: q.prompt,
                                            tags: q.tags, tokens: tokens, phrase: phrase,
-                                           guardNames: guardNames) else { continue }
+                                           guardNames: guardNames,
+                                           requirePhrase: requirePhrase) else { continue }
                 // The player typed the topic, so a question whose ANSWER is (or
                 // contains) the topic is a giveaway ("Chicago" → answer "Chicago").
                 // Prefer questions that are ABOUT the topic but answer with

@@ -64,7 +64,8 @@ public class CreateTopicDriftTest
     static int? Tier(string title, string topic, string prompt = "",
                      string[]? tags = null, bool guardNames = false)
         => QueryHelpers.Tier(title, prompt, tags ?? [], QueryHelpers.Tokenize(topic),
-                             QueryHelpers.TopicPhrase(topic), guardNames);
+                             QueryHelpers.TopicPhrase(topic), guardNames,
+                             QueryHelpers.PhraseIsRequired(topic));
 
     [Fact]
     public void A_word_inside_a_longer_word_is_not_a_match()
@@ -134,6 +135,28 @@ public class CreateTopicDriftTest
     {
         Assert.Equal("world war ii", QueryHelpers.TopicPhrase("World War II"));
         Assert.Equal(3, Tier("Masters of the Universe", "Masters of the Universe (2026 film)"));
+    }
+
+    /// A regnal numeral is short but not insignificant. Found by sweeping topics
+    /// 301-984, which the first 300 never contained.
+    [Fact]
+    public void A_regnal_numeral_or_initial_forces_a_phrase_match()
+    {
+        Assert.True(QueryHelpers.PhraseIsRequired("George VI"));
+        Assert.True(QueryHelpers.PhraseIsRequired("O. J. Simpson"));
+        Assert.Null(Tier("George Martin", "George VI"));
+        Assert.Null(Tier("Paul George", "George VI"));
+        Assert.Null(Tier("Homer Simpson", "O. J. Simpson"));
+        Assert.Equal(3, Tier("George VI", "George VI"));
+    }
+
+    /// ...and it must NOT fire when the dropped word is a mere stopword.
+    [Fact]
+    public void A_dropped_stopword_does_not_force_a_phrase_match()
+    {
+        Assert.False(QueryHelpers.PhraseIsRequired("The Beatles"));
+        Assert.False(QueryHelpers.PhraseIsRequired("Denver"));
+        Assert.NotNull(Tier("Abbey Road", "The Beatles", prompt: "the beatles recorded it here"));
     }
 
     [Fact]

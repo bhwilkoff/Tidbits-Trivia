@@ -13,7 +13,7 @@ Row shape: [id, prompt, keys(4), values(4 — parallel/correct), category,
 
 Usage: python3 gen_match.py
 """
-import argparse, hashlib, json, os, re, unicodedata
+import argparse, collections, hashlib, json, os, re, unicodedata
 
 # id-prefix -> (prompt, key-noun, value-noun). key = source title, value = answer.
 # The key noun has to be true of every key the relation actually yields, not of
@@ -29,6 +29,13 @@ RELATIONS = {
     "wd:author:":     ("Match each work to its author.", "work", "author"),
     "wd:composer:":   ("Match each work to its composer.", "work", "composer"),
     "wd:director:":   ("Match each title to its director.", "title", "director"),
+    # Four relations the corpus already holds that this never touched. Without
+    # them Match Up had 11 sports / 8 business / 13 history rows against a 6-pair
+    # round, so a player's THIRD round in those categories ran 65% on-category.
+    "rel:P17:":       ("Match each of these to its country.", "subject", "country"),
+    "rel:P112:":      ("Match each organization to its founder.", "organization", "founder"),
+    "rel:P175:":      ("Match each song to the artist who performed it.", "song", "artist"),
+    "rel:P170:":      ("Match each work to its creator.", "work", "creator"),
 }
 PER_RELATION = 60
 
@@ -50,6 +57,11 @@ GENERIC_VALUES = {
 # real fix is the categorizer; until then a prompt that says "Match each place to
 # its currency" must not be handed a game platform.
 NON_PLACE_KEYS = {"Roblox"}
+
+
+# Shared function words say nothing about a pair.
+_STOPWORDS = {"the", "of", "a", "an", "and", "in", "on", "at", "to", "for",
+              "de", "la", "le", "el", "s", "is", "was", "or"}
 
 
 def _fold(s):
@@ -80,6 +92,14 @@ def name_overlap(key, val):
     if not kw or not vw:
         return False
     if kw.issubset(vw) or vw.issubset(kw):
+        return True
+    # Any shared SIGNIFICANT word gives the pair away, not just a whole-side
+    # containment: "Trader Joe's -> Joe Coulombe" and "Manchester United ->
+    # Manchester" were slipping through because neither side contains the other
+    # and the stem rule below needs four characters ("joe" is three). Stopwords
+    # are excluded or "Mausoleum of Qin Shi Huang -> People's Republic of China"
+    # would be rejected for sharing the word "of".
+    if (kw & vw) - _STOPWORDS:
         return True
     # Whole-word containment alone misses the adjectival form, which is just as
     # free to read off: "Russia -> Russian ruble", "India -> Indian rupee",
@@ -139,21 +159,39 @@ def main():
         # Most recognizable first, so a round is playable. Stable within a rank,
         # so the output stays deterministic across runs.
         pairs.sort(key=lambda p: p[3])   # (row difficulty, pageview rank)
-        # Non-overlapping groups of 4.
-        made = 0
-        for i in range(0, len(pairs) - 3, 4):
-            grp = pairs[i:i + 4]
-            if len({g[1] for g in grp}) < 4:   # values must be distinct to link cleanly
-                continue
-            keys = [g[0] for g in grp]
-            vals = [g[1] for g in grp]
-            cat = grp[0][2]
-            expl = " · ".join(f"{k} → {v}" for k, v in zip(keys, vals))
-            out.append([f"match:{prefix.strip(':').split(':')[-1]}:{i}:{keys[0]}",
-                        prompt, keys, vals, cat, expl, "", ""])
-            made += 1
-            if made >= PER_RELATION:
-                break
+        # Rounds are built by round-robin over the VALUE buckets, within one
+        # category, so the four values in a round are distinct by construction and
+        # the round never mixes categories.
+        #
+        # This used to take four CONSECUTIVE pairs and discard the group whenever
+        # two shared a value. That works for capital-of, where every country has
+        # its own answer, and fails completely for country-of or creator-of, where
+        # dozens of subjects legitimately share one — it threw away nearly every
+        # candidate and the four relations above produced ZERO rounds.
+        by_cat = collections.defaultdict(lambda: collections.defaultdict(list))
+        for key, val, cat, rank in pairs:
+            by_cat[cat][val].append((rank, key))
+        # The cap is per (relation, CATEGORY). Sharing one budget across
+        # categories let whichever sorted first consume the whole 60 and starved
+        # the rest — screen fell to 27 rounds that way.
+        for cat, byval in sorted(by_cat.items()):
+            made = 0
+            for bucket in byval.values():
+                bucket.sort()
+            values = sorted(byval, key=lambda v: byval[v][0])
+            while made < PER_RELATION:
+                live = [v for v in values if byval[v]]
+                if len(live) < 4:
+                    break
+                grp = [(byval[v].pop(0)[1], v) for v in live[:4]]
+                keys = [k for k, _ in grp]
+                vals = [v for _, v in grp]
+                expl = " · ".join(f"{k} → {v}" for k, v in grp)
+                out.append([
+                    f"match:{prefix.strip(':').split(':')[-1]}:{cat}:{made}:{keys[0]}",
+                    prompt, keys, vals, cat, expl, "", "",
+                ])
+                made += 1
 
     # Hand-authored rounds the Wikidata relations cannot produce — "Match each NBA
     # legend to the team he is most associated with", "Match each famous battle to

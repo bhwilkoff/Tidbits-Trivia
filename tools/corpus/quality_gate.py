@@ -49,7 +49,7 @@ BUDGET = {
     "DUP-OPTION": 0,
     "BROKEN-SHAPE": 0,
     "PLACEHOLDER": 0,
-    "ERA-SPREAD": 445,          # measured 2026-08-01; the open content project
+    "ERA-SPREAD": 0,            # 401 repaired by occupation+era; 44 unrepairable, dropped
     "MACHINE-STEM": 0,
     "THIN-COVERAGE": 0,
 }

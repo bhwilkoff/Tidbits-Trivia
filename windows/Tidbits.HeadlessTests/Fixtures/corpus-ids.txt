@@ -1,5 +1,4 @@
 src:describe:Matti_Nykänen
-src:cloze:Matti_Nykänen
 src:describe:North_Yemen_civil_war
 src:cloze:Eleftherios_Venizelos
 src:describe:Himyar
@@ -638,7 +637,6 @@ src:cloze:Catherine_Helen_Spence
 src:describe:Edwin_Thumboo
 src:describe:Adelaide_Anne_Procter
 src:cloze:Adelaide_Anne_Procter
-src:describe:Bao_Zhao
 src:describe:Dox_(poet)
 src:describe:Susanna_Centlivre
 src:describe:Wu_Zuguang
@@ -720,7 +718,6 @@ src:describe:Francisco_Javier_Arana
 src:cloze:Johann_Most
 src:describe:Davíð_Oddsson
 src:describe:William_Wentworth
-src:describe:Aratus_of_Sicyon
 src:cloze:Clements_Markham
 src:describe:Duck
 src:cloze:Duck
@@ -904,7 +901,6 @@ src:describe:James_Reese_Europe
 src:cloze:James_Reese_Europe
 src:describe:Marie_Lloyd
 src:describe:Adrian_Willaert
-src:describe:Gilles_Binchois
 src:describe:Spacewar!
 src:describe:Amy_Lowell
 src:cloze:Amy_Lowell
@@ -1019,7 +1015,6 @@ src:describe:Henri_Cartan
 src:cloze:Henri_Cartan
 src:describe:Alvin_E._Roth
 src:describe:Horace_Bénédict_de_Saussure
-src:describe:Liu_Hui
 src:describe:Ingrid_Daubechies
 src:cloze:Ingrid_Daubechies
 src:describe:Karen_Uhlenbeck
@@ -1041,7 +1036,6 @@ src:describe:Irene_Worth
 src:cloze:Irene_Worth
 src:cloze:Graham_Kennedy
 src:describe:Jack_Kramer
-src:describe:Barbad
 src:describe:Peter_Maxwell_Davies
 src:cloze:Peter_Maxwell_Davies
 src:describe:Alcman
@@ -1188,7 +1182,6 @@ src:cloze:Daniel_Mendoza
 src:cloze:Keith_Miller
 src:describe:Stephen_Schwartz
 src:cloze:Stephen_Schwartz
-src:describe:George_Szell
 src:describe:Carly_Patterson
 src:cloze:Carly_Patterson
 src:describe:GoldenEye_007
@@ -1202,8 +1195,6 @@ src:describe:Cousin_Bette
 src:cloze:Cousin_Bette
 src:describe:Irawati_Karve
 src:cloze:Irawati_Karve
-src:describe:Maitreyi
-src:describe:Aratus
 src:cloze:You_Can't_Take_It_with_You_(play)
 src:describe:Jerry_Fodor
 src:cloze:Jerry_Fodor
@@ -1327,8 +1318,6 @@ src:describe:Raqqa
 src:describe:Lion_Rock
 src:describe:Rudy_Hartono
 src:describe:Helen_Wills
-src:describe:Pérotin
-src:describe:Johannes_Ockeghem
 src:describe:Richard_Prince
 src:cloze:Richard_Prince
 src:cloze:Marlon_James_(novelist)
@@ -1508,7 +1497,6 @@ src:describe:Joseph_Karo
 src:describe:Tilman_Riemenschneider
 src:describe:William_Lyon_Mackenzie
 src:cloze:William_Lyon_Mackenzie
-src:describe:Nicole_Oresme
 src:describe:Jacob_Lawrence
 src:cloze:Jacob_Lawrence
 src:describe:Drowning_Girl
@@ -1644,7 +1632,6 @@ src:cloze:Chris_Burden
 src:describe:Thomas_Eakins
 src:cloze:Thomas_Eakins
 src:describe:W._S._Gilbert
-src:describe:Abhinavagupta
 src:describe:Faith_Ringgold
 src:describe:Frederic_Remington
 src:cloze:Frederic_Remington
@@ -1961,7 +1948,6 @@ src:cloze:Tomi_Ungerer
 src:describe:Rex_Stout
 src:cloze:Rex_Stout
 src:describe:Ford_Madox_Ford
-src:describe:Simonides_of_Ceos
 src:cloze:Walter_White_(activist)
 src:describe:Dionysios_Solomos
 src:cloze:Dionysios_Solomos
@@ -2076,7 +2062,6 @@ src:cloze:Georg_Christoph_Lichtenberg
 src:describe:Nevil_Shute
 src:cloze:Nevil_Shute
 src:describe:Ralph_H._Baer
-src:describe:Zeami_Motokiyo
 src:describe:Patrick_Moore
 src:cloze:Patrick_Moore
 src:describe:Christine_Hakim
@@ -2679,7 +2664,6 @@ src:describe:Maria_Goeppert_Mayer
 src:describe:John_Horton_Conway
 src:cloze:John_Horton_Conway
 src:describe:Arthur_Compton
-src:describe:Dionysius_Exiguus
 src:describe:Gladys_West
 src:describe:Milutin_Milanković
 src:describe:Dziga_Vertov
@@ -2995,8 +2979,6 @@ src:describe:Nancy_Mitford
 src:cloze:Nancy_Mitford
 src:describe:Friedrich_Schleiermacher
 src:describe:Nude_Descending_a_Staircase,_No._2
-src:describe:Ariwara_no_Narihira
-src:cloze:Ariwara_no_Narihira
 src:describe:Vasily_Vereshchagin
 src:cloze:Vasily_Vereshchagin
 src:describe:The_Burial_of_the_Count_of_Orgaz
@@ -3069,7 +3051,6 @@ src:describe:Joseph_Stilwell
 src:cloze:Joseph_Stilwell
 src:describe:Huseyn_Suhrawardy
 src:cloze:Huseyn_Suhrawardy
-src:describe:Lepidus
 src:describe:Goat
 src:describe:Helminthiasis
 src:cloze:Helminthiasis
@@ -3205,7 +3186,6 @@ src:cloze:Henry_H._Arnold
 src:describe:Kalākaua
 src:describe:David_I_of_Scotland
 src:describe:John_C._Breckinridge
-src:describe:John_Dudley,_1st_Duke_of_Northumberland
 src:describe:Fall_of_Tenochtitlan
 src:describe:Thomas_Babington_Macaulay
 src:describe:Red_Cloud
@@ -3411,7 +3391,6 @@ src:describe:Olaudah_Equiano
 src:describe:Giovanni_Bellini
 src:describe:Juliusz_Słowacki
 src:cloze:Juliusz_Słowacki
-src:describe:Apollonius_of_Tyana
 src:describe:Christina_Rossetti
 src:cloze:Christina_Rossetti
 src:describe:Constantine_VII
@@ -3792,8 +3771,6 @@ src:describe:H._L._Mencken
 src:describe:Elizabeth_Barrett_Browning
 src:describe:Grant_Morrison
 src:cloze:Grant_Morrison
-src:describe:Benvenuto_Cellini
-src:cloze:Benvenuto_Cellini
 src:describe:Elfriede_Jelinek
 src:cloze:Elfriede_Jelinek
 src:describe:Martha_Nussbaum
@@ -4086,8 +4063,6 @@ src:describe:Seamus_Heaney
 src:cloze:Seamus_Heaney
 src:describe:Jonathan_Franzen
 src:cloze:Jonathan_Franzen
-src:describe:Al-Ma'arri
-src:cloze:Al-Ma'arri
 src:describe:Viktor_Vasnetsov
 src:describe:Kathy_Reichs
 src:cloze:Kathy_Reichs
@@ -4774,7 +4749,6 @@ src:describe:John_Dee
 src:cloze:John_Dee
 src:describe:Philip_Pullman
 src:cloze:Philip_Pullman
-src:describe:Yue_Fei
 src:cloze:Gharial
 wd:continent:Q3140
 wd:continent:Q23408
@@ -5553,7 +5527,6 @@ src:cloze:Ophelia_(painting)
 src:describe:Roy_Lichtenstein
 src:cloze:Roy_Lichtenstein
 src:describe:Nâzım_Hikmet
-src:describe:Cato_the_Younger
 src:cloze:Space_Invaders
 src:describe:Syed_Ahmad_Khan
 src:describe:Francis_Fukuyama
@@ -5846,7 +5819,6 @@ src:describe:David_Irving
 src:cloze:David_Irving
 src:cloze:Rebecca_(novel)
 src:cloze:Glenn_Greenwald
-src:describe:Zeno_of_Citium
 src:cloze:Donkey_Kong_(1981_video_game)
 src:describe:Eugene_O'Neill
 src:describe:Bill_O'Reilly_(political_commentator)
@@ -6057,8 +6029,6 @@ src:cloze:Jacob_Zuma
 src:describe:Huey_Long
 src:describe:Zia-ul-Haq
 src:cloze:Zia-ul-Haq
-src:describe:Sima_Yi
-src:cloze:Sima_Yi
 src:describe:Pratibha_Patil
 src:describe:Pranab_Mukherjee
 src:cloze:Pranab_Mukherjee
@@ -6560,7 +6530,6 @@ src:describe:G._K._Chesterton
 src:cloze:G._K._Chesterton
 src:describe:Sense_and_Sensibility
 src:describe:American_Gothic
-src:describe:Marcus_Vipsanius_Agrippa
 src:describe:W._Somerset_Maugham
 src:cloze:W._Somerset_Maugham
 src:describe:Alan_Moore
@@ -7691,7 +7660,6 @@ src:describe:Slavoj_Žižek
 src:cloze:Slavoj_Žižek
 src:describe:Anton_LaVey
 src:cloze:Anton_LaVey
-src:describe:Marcus_Junius_Brutus
 src:cloze:Rudolf_Steiner
 src:describe:Atlas_Shrugged
 src:cloze:Atlas_Shrugged
@@ -31529,10 +31497,6 @@ chron:P569:163322560211
 chron:P569:989148940537
 chron:P569:94127220786
 chron:P569:259293672277
-chron:P569:827032376171
-chron:P569:591105995132
-chron:P569:710092470373
-chron:P569:948150399402
 chron:P569:136887102615
 chron:P569:843670659794
 chron:P569:970036122421
@@ -31660,7 +31624,6 @@ class:Q4964182:755091694442
 class:Q4964182:299303756326
 class:Q4964182:962254145344
 class:Q4964182:253139796037
-class:Q4964182:776533337484
 class:Q4964182:813548825936
 class:Q4964182:86183767688
 class:Q4964182:200899647599
@@ -31795,11 +31758,9 @@ class:Q170790:196821842499
 class:Q170790:932449457915
 class:Q170790:307307457268
 class:Q170790:254960903246
-class:Q170790:449134916116
 class:Q170790:561663130020
 class:Q170790:3707178447
 class:Q170790:77003582283
-class:Q170790:191655467161
 class:Q170790:427904895777
 class:Q170790:974905398743
 class:Q170790:326804436844
@@ -31873,7 +31834,6 @@ class:Q42973:479337629001
 class:Q42973:193786868407
 class:Q42973:363179770115
 class:Q42973:671708722003
-class:Q42973:938761098549
 class:Q42973:586746682767
 class:Q42973:100785450953
 class:Q42973:226747809922
@@ -31890,7 +31850,6 @@ class:Q42973:517670442036
 class:Q1281618:808804656991
 class:Q1281618:631015649596
 class:Q1281618:676813716696
-class:Q1281618:981685449740
 class:Q1281618:932973575701
 class:Q1281618:413485703402
 class:Q1281618:614297947156
@@ -31906,7 +31865,6 @@ class:Q1281618:623685959607
 class:Q1281618:583962277771
 class:Q1281618:765010855915
 class:Q1281618:258429868517
-class:Q1281618:142087752054
 class:Q1281618:266972647015
 class:Q1281618:933948626687
 class:Q1281618:664835145204
@@ -81877,8 +81835,6 @@ chron:P569:133000528343
 chron:P569:329331142051
 chron:P569:464215389982
 chron:P569:842078669410
-chron:P569:856753295371
-chron:P569:614312674769
 chron:P569:540416976361
 chron:P569:555054004380
 chron:P569:819831431655

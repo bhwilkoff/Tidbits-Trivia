@@ -108,6 +108,24 @@ public static class TemplateEngine
         return null;
     }
 
+    /// "Which %@?" only reads as a question when the clue is a bare noun phrase.
+    /// Give it a clue carrying a finite relative clause and it becomes a fragment:
+    /// "Which British politician who has served as Chancellor of the Exchequer
+    /// under Andy Burnham since 20 July 2026?" — read off a live-generated quiz on
+    /// the simulator. "Name this ..." is grammatical either way, so the stem steps
+    /// aside rather than the clue being thrown away. Mirrors Swift Grammatical.
+    public static string Grammatical(string stem, string clue)
+    {
+        // Matched EXACTLY, not by prefix: the cloze bank also starts a stem with
+        // "Which" ("Which name completes this? ...") and that is already a whole
+        // question. Rewriting it would replace a working cloze with nonsense.
+        if (stem != "Which %@?") return stem;
+        var c = " " + clue.ToLowerInvariant() + " ";
+        foreach (var rel in new[] { " who ", " whom ", " that ", " which ", " whose ", " where " })
+            if (c.Contains(rel, System.StringComparison.Ordinal)) return "Name this %@.";
+        return stem;
+    }
+
     private static (string, List<string>, string)? Builder(string shape, WikipediaClient.Summary s, List<WikipediaClient.Summary> pool, string stem, bool relaxed, ref SeededRng rng)
     {
         switch (shape)
@@ -122,7 +140,7 @@ public static class TemplateEngine
                 var ans = DisplayTitle(s.Title);
                 var opts = new List<string> { ans };
                 opts.AddRange(ds);
-                return (Fill(stem, cl), opts, ans);
+                return (Fill(Grammatical(stem, cl), cl), opts, ans);
             }
             case "cloze":
             {

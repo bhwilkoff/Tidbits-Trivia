@@ -222,6 +222,36 @@ struct CreateTopicDriftTests {
     }
 }
 
+/// Live generation writes the questions for every topic the corpus does not cover,
+/// and those were read off the simulator rather than assumed correct.
+@Suite("Live question grammar")
+struct LiveGrammarTests {
+
+    /// "Which X?" is a question only when X is a bare noun phrase. Read off a
+    /// live-generated Andy Burnham quiz: "Which British politician who has served
+    /// as Chancellor of the Exchequer under Andy Burnham since 20 July 2026?"
+    @Test func aRelativeClauseTurnsWhichIntoAFragment() {
+        #expect(TemplateEngine.grammatical("Which %@?", for: "British politician who has served as Chancellor")
+                == "Name this %@.")
+        #expect(TemplateEngine.grammatical("Which %@?", for: "series that aired on HBO")
+                == "Name this %@.")
+    }
+
+    /// A bare noun phrase keeps the shorter stem.
+    @Test func aBareNounPhraseKeepsWhich() {
+        #expect(TemplateEngine.grammatical("Which %@?", for: "fictional character in the Toy Story franchise")
+                == "Which %@?")
+    }
+
+    /// The cloze bank starts a stem with "Which" too, and it is already a whole
+    /// question — rewriting it would replace a working cloze with nonsense.
+    @Test func theClozeStemIsNeverRewritten() {
+        #expect(TemplateEngine.grammatical("Which name completes this? \u{201C}%@\u{201D}",
+                                           for: "a politician who has served")
+                == "Which name completes this? \u{201C}%@\u{201D}")
+    }
+}
+
 /// Diacritic folding is a CROSS-STACK contract: the corpus build writes a folded
 /// `search_text` column, and Swift/Kotlin/C#/JS each fold at compare time. If any
 /// one of them disagrees, the same topic returns different questions per platform.

@@ -306,15 +306,37 @@ const STEMS = {
 };
 const SHAPE_ROTATION = ['describe', 'cloze', 'describe', 'describe', 'cloze'];
 
+// "Which %s?" only reads as a question when the clue is a bare noun phrase. Give it
+// a clue carrying a finite relative clause and it becomes a fragment: "Which British
+// politician who has served as Chancellor of the Exchequer under Andy Burnham since
+// 20 July 2026?" — read off a live-generated quiz on the simulator. "Name this ..."
+// is grammatical either way, so the stem steps aside.
+function grammatical(stem, clue) {
+  // Matched EXACTLY, not by prefix: the cloze bank also starts a stem with "Which"
+  // ("Which name completes this? …") and that is already a whole question.
+  // Rewriting it would replace a working cloze with nonsense.
+  if (stem !== 'Which %s?') return stem;
+  const c = ' ' + String(clue).toLowerCase() + ' ';
+  for (const rel of [' who ', ' whom ', ' that ', ' which ', ' whose ', ' where ']) {
+    if (c.includes(rel)) return 'Name this %s.';
+  }
+  return stem;
+}
+
 function buildShape(shape, s, pool, stem, relaxed, rnd) {
+  // Only the DESCRIBE stems are rewritten. The cloze bank contains "Which name
+  // completes this? …", which starts with "Which" but is already a whole question —
+  // rewriting it would replace a working cloze with a nonsense "Name this".
   const fmt = (v) => stem.replace('%s', v);
+  const fmtDescribe = (v) => grammatical(stem, v).replace('%s', v);
   if (shape === 'describe') {
     // FIRST sentence only — a 2-sentence clue reads awkwardly under "Name this …?".
     const c = reframe(cleanClue(firstSentence(s.extract || '')), s);
     if (!c || c.length < 30 || informativeTokens(c) < 2) return null;
     const clue = c.replace(/[.\s]+$/, '').trim();
     const ds = titleDistractors(s, pool, relaxed, rnd); if (ds.length !== 3) return null;
-    const ans = stripParens(s.title); return { prompt: fmt(clue), options: [ans, ...ds], answer: ans };
+    const ans = stripParens(s.title);
+    return { prompt: fmtDescribe(clue), options: [ans, ...ds], answer: ans };
   }
   if (shape === 'cloze') {
     const sent = cleanClue(firstSentence(s.extract || '')); const bare = stripParens(s.title); let clozed = null;

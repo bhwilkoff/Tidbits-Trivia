@@ -133,7 +133,7 @@ nonisolated struct TemplateEngine: Sendable {
                 .trimmingCharacters(in: .whitespaces)
             let ds = titleDistractors(s, pool, relaxed, &rng); guard ds.count == 3 else { return nil }
             let ans = displayTitle(s.title)
-            return (String(format: stem, cl), [ans] + ds, ans)
+            return (String(format: grammatical(stem, for: cl), cl), [ans] + ds, ans)
         case "cloze":
             let sent = cleanClue(firstSentence(of: s.extract ?? ""))
             let bare = displayTitle(s.title)
@@ -153,6 +153,25 @@ nonisolated struct TemplateEngine: Sendable {
             return (String(format: stem, cz), [bare] + ds, bare)
         default: return nil
         }
+    }
+
+    /// "Which %@?" only reads as a question when the clue is a bare noun phrase.
+    /// Give it a clue carrying a finite relative clause and it becomes a fragment:
+    /// "Which British politician who has served as Chancellor of the Exchequer
+    /// under Andy Burnham since 20 July 2026?" — read off a live-generated quiz on
+    /// the simulator. "Name this …" is grammatical with either shape, so the stem
+    /// steps aside rather than the clue being thrown away.
+    static func grammatical(_ stem: String, for clue: String) -> String {
+        // Matched EXACTLY, not by prefix: the cloze bank also starts a stem with
+        // "Which" ("Which name completes this? …") and that one is already a whole
+        // question. Rewriting it would replace a working cloze with nonsense.
+        guard stem == "Which %@?" else { return stem }
+        let c = " " + clue.lowercased() + " "
+        for relative in [" who ", " whom ", " that ", " which ", " whose ", " where "]
+        where c.contains(relative) {
+            return "Name this %@."
+        }
+        return stem
     }
 
     // MARK: Describe-shape helpers (mirror of generate_corpus.py)

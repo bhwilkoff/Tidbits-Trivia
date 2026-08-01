@@ -85,5 +85,19 @@ ok(promptHasWord("Michael Jackson's seventh studio album", 'jackson', T('Michael
 ok(promptHasWord('Written by John Lennon and Paul McCartney', 'mccartney', T('Paul McCartney')),
    'paul mccartney still matches');
 
-console.log(fails === 0 ? 'web mirror OK (38/38)' : `${fails} FAILURES`);
+// Live-question grammar: "Which X?" is a question only when X is a bare noun
+// phrase. Read off a live Andy Burnham quiz: "Which British politician who has
+// served as Chancellor of the Exchequer under Andy Burnham since 20 July 2026?"
+const eng = fs.readFileSync('js/engine.js', 'utf8');
+const gs = eng.indexOf('function grammatical');
+const grammatical = new Function(eng.slice(gs, eng.indexOf('function buildShape')) +
+                                 '\nreturn grammatical;')();
+ok(grammatical('Which %s?', 'British politician who has served as Chancellor') === 'Name this %s.',
+   'relative clause rewrites Which');
+ok(grammatical('Which %s?', 'fictional character in the Toy Story franchise') === 'Which %s?',
+   'bare noun phrase keeps Which');
+ok(grammatical('Which name completes this? “%s”', 'a politician who has served')
+   === 'Which name completes this? “%s”', 'cloze stem never rewritten');
+
+console.log(fails === 0 ? 'web mirror OK (41/41)' : `${fails} FAILURES`);
 process.exit(fails ? 1 : 0);

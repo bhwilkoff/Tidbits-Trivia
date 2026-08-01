@@ -1197,6 +1197,18 @@ object TemplateEngine {
     // "Jalen Marquis Brunson, nicknamed \"Captain Clutch\", is an American
     // professional basketball player…" failed both shapes, so a topic with four
     // perfectly good usable articles produced nothing.
+    /** "Which %@?" only reads as a question when the clue is a bare noun phrase. Give it a clue carrying a finite relative clause and it becomes a fragment: "Which British politician who has served as Chancellor of the Exchequer under Andy Burnham since 20 July 2026?" — read off a live-generated quiz on the simulator. "Name this ..." is grammatical either way, so the stem steps aside. Mirrors Swift `grammatical`. */
+    fun grammatical(stem: String, clue: String): String {
+        // Matched EXACTLY, not by prefix: the cloze bank also starts a stem with
+        // "Which" ("Which name completes this? ...") and that is already a whole
+        // question. Rewriting it would replace a working cloze with nonsense.
+        if (stem != "Which %s?") return stem
+        val c = " " + clue.lowercase() + " "
+        for (rel in listOf(" who ", " whom ", " that ", " which ", " whose ", " where "))
+            if (c.contains(rel)) return "Name this %s."
+        return stem
+    }
+
     private val LEAD = Regex("^\\s*((?:[A-Z][\\w’'.\\-]*)(?:[ \\-]+(?:of|the|and|de|von|van|al|da|di)?\\s*[A-Z][\\w’'.\\-]*)*)\\s*(?:\\([^)]*\\))?\\s*(?:,[^,]{0,80},)?\\s*(?:was|is|were|are)\\s+(?:a|an|the)\\s+(.+)$")
     private val PROPER = Regex("\\b[A-Z][A-Za-z’'\\-]{2,}\\b")
     private val YEAR_RE = Regex("\\b(?:1\\d{3}|20\\d{2})\\b")
@@ -1254,7 +1266,8 @@ object TemplateEngine {
                 if (c == null || c.length < 30 || informativeTokens(c) < 2) return null
                 val clue = c.replace(Regex("[.\\s]+$"), "").trim()
                 val ds = titleDistractors(s, pool, relaxed, rng); if (ds.size != 3) return null
-                val ans = stripParens(s.title); return Triple(stem.format(clue), listOf(ans) + ds, ans)
+                val ans = stripParens(s.title)
+                return Triple(grammatical(stem, clue).format(clue), listOf(ans) + ds, ans)
             }
             "cloze" -> {
                 val sent = cleanClue(firstSentence(s.extract ?: "")); val bare = stripParens(s.title); var clozed: String? = null

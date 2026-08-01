@@ -80,6 +80,28 @@ MODE_SHAPE = {
 UNBOUNDED = {"timeAttack", "survival"}
 
 
+# Birth years for the corpus's people, loaded once from the enrichment file when
+# it is beside the sweep. Absent it, the era rule simply does not fire.
+_YEARS = None
+
+
+def _birth_year(name):
+    global _YEARS
+    if _YEARS is None:
+        _YEARS = {}
+        try:
+            import pathlib
+            root = pathlib.Path(__file__).resolve().parents[2]
+            ents = json.loads((root / "assets" / "enrich.json").read_text())["entities"]
+            for t, e in ents.items():
+                b = e.get("numbers", {}).get("birth_year")
+                if b:
+                    _YEARS[t.replace("_", " ")] = int(b["value"])
+        except Exception:
+            _YEARS = {}
+    return _YEARS.get(name)
+
+
 def load(path):
     games, rows = collections.OrderedDict(), []
     meta = {}
@@ -173,6 +195,21 @@ def audit(games, rows):
                     add("D4", "unfair", qid,
                         f"prompt contains its own answer '{ans}': {prompt[:80]}")
 
+        # D5 — every option is a person, but they are centuries apart.
+        #
+        # Found by LOOKING at the longest prompt rather than counting it: a clue
+        # about a living Russian-British activist sat beside Amin al-Husseini,
+        # Lazarus of Bethany and Titus. The era in the clue eliminates three
+        # options before any knowledge is applied. Measured over the corpus, 445
+        # of 4,858 MCQs whose four options are all dated people (9.2%) span more
+        # than 400 years — the worst is 4,314. Reported, not yet fixed: the fix is
+        # era-aware distractor selection at generation time.
+        if opts and not is_shaped and 0 <= ci < len(opts):
+            yrs = [_birth_year(str(o)) for o in opts]
+            if all(yrs) and max(yrs) - min(yrs) > 400:
+                add("D5", "unfair", qid,
+                    f"options span {max(yrs) - min(yrs)} years: {opts}")
+
         # E — experience
         #
         # Name as Many is exempt: its reveal card renders the whole set with the
@@ -184,7 +221,13 @@ def audit(games, rows):
         # down. Verify on screen before believing an audit about the screen.
         if r["mode"] != "enumerate" and not (r.get("explanation") or "").strip():
             add("E1", "quality", qid, f"no explanation: {prompt[:70]}")
-        if len(prompt) > 220:
+        # 220 was a guess and it was wrong. The LONGEST prompt in the corpus (289
+        # chars, src:describe:Vladimir_Kara-Murza) was rendered on an iPhone 17 Pro
+        # via TIDBITS_QUESTION: it wraps cleanly inside the card with all four
+        # options still on screen and nothing truncated. Median prompt is 41 chars,
+        # p90 is 191. Raised to a length the card genuinely cannot hold, so the
+        # rule stops reporting 131 well-written clues as a defect.
+        if len(prompt) > 340:
             add("E2", "quality", qid, f"{len(prompt)}-char prompt: {prompt[:70]}...")
         for o in opts:
             if len(str(o)) > 90:

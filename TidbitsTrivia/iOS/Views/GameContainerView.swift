@@ -112,6 +112,16 @@ struct GameContainerView: View {
                     ? RecordsStore.dueReview(in: modelContext, limit: 30) : []
                 if category.id != "mixed" { review = review.filter { $0.categoryID == category.id } }
                 review = Array(review.prefix(2))
+                // TIDBITS_QUESTION forces an exact set of corpus rows, so a
+                // specific question can be looked at on screen. No-op in
+                // production; the env var is never set there.
+                if let ids = DebugHooks.forcedQuestionIDs {
+                    let forced = CorpusDatabase.shared.questions(ids: ids)
+                    if !forced.isEmpty {
+                        game.startCustom(mode: mode, category: category, questions: forced)
+                        return
+                    }
+                }
                 await game.start(mode: mode, category: category, review: review, dailyDay: dailyDay)
             }
         }

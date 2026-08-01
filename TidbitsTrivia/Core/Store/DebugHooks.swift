@@ -145,6 +145,19 @@ enum DebugHooks {
         ProcessInfo.processInfo.environment["TIDBITS_PLAYTHROUGH"].flatMap(Int.init)
     }
 
+    /// TIDBITS_QUESTION="<id>[,<id>…]" → start a game containing exactly those
+    /// corpus rows, so a specific question can be LOOKED AT.
+    ///
+    /// The audit can say "131 prompts are over 220 characters"; it cannot say
+    /// whether any of them overflows, truncates or simply reads long, and driving
+    /// a random round until the one you care about turns up is not a plan. This
+    /// makes "does this row render" a one-command question.
+    static var forcedQuestionIDs: [String]? {
+        guard let raw = ProcessInfo.processInfo.environment["TIDBITS_QUESTION"] else { return nil }
+        let ids = raw.split(separator: ",").map(String.init)
+        return ids.isEmpty ? nil : ids
+    }
+
     /// TIDBITS_PLAYTHROUGH_STYLE=correct|wrong|timeout → how the playthrough plays.
     /// Auditing only the happy path misses whole classes of bug (the tie, the
     /// zero, the round that ends on question one), so the losing outcomes get

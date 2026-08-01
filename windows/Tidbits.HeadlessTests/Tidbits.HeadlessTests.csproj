@@ -29,6 +29,9 @@
     <Content Include="Fixtures\**" CopyToOutputDirectory="PreserveNewest" />
     <!-- The shared corpus (link, not a copy in git) — Windows is another consumer of assets/. -->
     <Content Include="..\..\assets\corpus.json" Link="Fixtures\corpus.json" CopyToOutputDirectory="PreserveNewest" />
+    <!-- The Create golden, captured from the shipped Apple ranker. Linked, not
+         copied, so it cannot drift from tools/create/golden/. -->
+    <Content Include="..\..\tools\create\golden\search.txt" Link="Fixtures\create-golden.txt" CopyToOutputDirectory="PreserveNewest" />
     <!-- Full shared data under Data/ so GameData.Shared (app path) resolves in tests too. -->
     <Content Include="..\..\assets\*.json" Link="Data\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>

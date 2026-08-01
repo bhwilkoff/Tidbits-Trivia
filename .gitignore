@@ -97,3 +97,8 @@ __pycache__/
 
 # Claude Code local overrides (personal, not team-shared)
 .claude/settings.local.json
+# Build-time link target: the csproj links assets/corpus.json here, so a copy in
+# the source tree is a stale 42MB duplicate nothing reads (measured: 131,092 rows
+# against the shipped 128,638).
+windows/Tidbits.HeadlessTests/Fixtures/corpus.json
+windows/Tidbits.HeadlessTests/Fixtures/create-golden.txt

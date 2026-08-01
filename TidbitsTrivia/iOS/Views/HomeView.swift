@@ -10,6 +10,10 @@ struct HomeView: View {
     @Environment(GameCenterManager.self) private var gameCenter
     @Environment(EntitlementStore.self) private var entitlement
     @State private var launch: LaunchRequest?
+    // TIDBITS_MARATHON_GAMES: how many rendered games are left to play, and where
+    // in the mode x category grid we are. Verification only; nil in production.
+    @State private var marathonRemaining: Int? = DebugHooks.marathonGames
+    @State private var marathonIndex = 0
     @State private var showClubPaywall = false
     @State private var showClubHub = false
     @State private var showCustomize = false
@@ -81,6 +85,20 @@ struct HomeView: View {
         }
         .fullScreenCover(item: $launch) { req in
             GameContainerView(mode: req.mode, category: req.category, dailyDay: req.dailyDay, mixModes: req.mixModes)
+        }
+        // A rendered marathon: when one game's cover closes, open the next
+        // combination straight away, so a thousand games play through the real
+        // views in one session instead of a thousand app launches.
+        .onChange(of: launch == nil) { _, closed in
+            guard closed, let left = marathonRemaining, left > 0 else { return }
+            marathonRemaining = left - 1
+            let next = DebugHooks.marathonCombination(at: marathonIndex)
+            marathonIndex += 1
+            print("MARATHON-GAME\t\(marathonIndex)\t\(next.mode.rawValue)\t\(next.category.id)")
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(400))
+                start(LaunchRequest(mode: next.mode, category: next.category), remember: false)
+            }
         }
         .sheet(isPresented: $showDailyArchive) {
             DailyArchiveSheet { day in
@@ -162,6 +180,13 @@ struct HomeView: View {
             if DebugHooks.openNightSetup { showNightSetup = true }
             if DebugHooks.openNightHost { hostLaunch = NightLaunchRequest(plan: .quick, category: .named("mixed")) }
             if DebugHooks.openCustomize { showCustomize = true }
+            if let left = DebugHooks.marathonGames, left > 0, launch == nil {
+                let first = DebugHooks.marathonCombination(at: 0)
+                marathonIndex = 1
+                marathonRemaining = left - 1
+                print("MARATHON-GAME\t1\t\(first.mode.rawValue)\t\(first.category.id)")
+                start(LaunchRequest(mode: first.mode, category: first.category), remember: false)
+            }
             if DebugHooks.openMultiplayer { showMultiplayer = true }
             if let vb = DebugHooks.versusBot {
                 versusBot = vb == "house" ? .house(playerAccuracy: recentAccuracy)

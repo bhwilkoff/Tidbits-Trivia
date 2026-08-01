@@ -145,6 +145,35 @@ enum DebugHooks {
         ProcessInfo.processInfo.environment["TIDBITS_PLAYTHROUGH"].flatMap(Int.init)
     }
 
+    /// TIDBITS_MARATHON_GAMES=<n> → play N games back to back THROUGH THE REAL
+    /// VIEWS, walking the mode x category grid, without relaunching the app.
+    ///
+    /// `TIDBITS_PLAYTHROUGH` drives the engine and finishes a thousand games in
+    /// minutes, which tests the RULES and renders nothing. It cannot see a clipped
+    /// option, an empty panel, a reveal that scrolls off. This one goes through
+    /// GamePlayView and ResultsView at the autopilot's real pace, so every screen
+    /// is drawn and can be photographed — a thousand games takes hours, and that
+    /// is the point of it.
+    static var marathonGames: Int? {
+        ProcessInfo.processInfo.environment["TIDBITS_MARATHON_GAMES"].flatMap(Int.init)
+    }
+
+    /// The nth (mode, category) of the rendered marathon — the same odometer the
+    /// engine sweep walks, so the two runs cover the grid in the same order and
+    /// their findings line up game for game.
+    static func marathonCombination(at index: Int) -> (mode: GameMode, category: TriviaCategory) {
+        let modes = playSweepModes, cats = playSweepCategories
+        return (modes[index % modes.count], cats[(index / modes.count) % cats.count])
+    }
+
+    /// TIDBITS_AUTOPILOT_DELAY=<seconds> → override the autopilot's 0.9s step.
+    /// The default is tuned so a human can watch; a long unattended run can go
+    /// faster without skipping a single rendered frame.
+    static var autopilotDelay: Double {
+        ProcessInfo.processInfo.environment["TIDBITS_AUTOPILOT_DELAY"]
+            .flatMap(Double.init) ?? 0.9
+    }
+
     /// TIDBITS_QUESTION="<id>[,<id>…]" → start a game containing exactly those
     /// corpus rows, so a specific question can be LOOKED AT.
     ///

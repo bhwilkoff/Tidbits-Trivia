@@ -92,6 +92,15 @@ struct GameContainerView: View {
                     ResultsView(summary: game.summary, onPlayAgain: playAgainAction, onDone: close,
                                 weakSpotGapsClosed: weakSpotGapsClosed)
                         .onAppear(perform: persistIfNeeded)
+                        // A rendered marathon dismisses itself so the next game
+                        // can start, but only after the results screen has been
+                        // on screen long enough to photograph — the scorecard is
+                        // one of the surfaces being audited, not a transition.
+                        .task {
+                            guard DebugHooks.marathonGames != nil else { return }
+                            try? await Task.sleep(for: .seconds(max(1.0, DebugHooks.autopilotDelay * 3)))
+                            close()
+                        }
                 }
             }
         }

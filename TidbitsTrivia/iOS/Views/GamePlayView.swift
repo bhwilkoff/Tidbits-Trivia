@@ -84,7 +84,7 @@ struct GamePlayView: View {
             var stepsLeft = DebugHooks.autopilotSteps
             while game.phase != .finished && game.phase != .idle {
                 if let n = stepsLeft, n <= 0 { return }
-                try? await Task.sleep(for: .seconds(0.9))
+                try? await Task.sleep(for: .seconds(DebugHooks.autopilotDelay))
                 if stepsLeft != nil { stepsLeft! -= 1 }
                 switch game.phase {
                 case .playing:

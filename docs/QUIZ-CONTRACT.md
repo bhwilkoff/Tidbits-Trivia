@@ -230,7 +230,7 @@ RTDB rules for `quizzes/` were deployed 2026-07-31, so publishing is unblocked.
 
 ---
 
-## 8. OPEN BUG: the tvOS anonymous uid changes on every launch
+## 8. FIXED: the tvOS anonymous uid changed on every launch
 
 Found 2026-07-31 while verifying the tvOS QR share. Publishing a quiz succeeds the
 first time and then fails with a bare **HTTP 401** on every later attempt.
@@ -261,7 +261,7 @@ brand-new anonymous user.
 log, standings, friends, duels and quiz sync are ALL keyed on that uid. On an Apple
 TV, none of them survive a relaunch.
 
-### Attempted fix — did NOT work
+### First attempt — did NOT work
 
 `kSecAttrSynchronizable` (iCloud Keychain) is Apple's documented answer, and it is in
 the tree now, tvOS-only. It did **not** fix the simulator: uids were still different
@@ -269,14 +269,29 @@ across launches (`uGAziE5MJoWg` → `A3DV7gazzAMO`). Most likely the simulator h
 signed-in Apple Account, so there is no iCloud Keychain to sync to — meaning this may
 still be correct on real hardware, but **it is unverified and must not be assumed**.
 
-### The likely real fix
+### The fix that worked
 
-Decision 017 already establishes that tvOS can only write to `Library/Caches`, `tmp`
-and **App Group containers**, and the app already uses an App Group for its SwiftData
-store. Persisting the refresh token to a file there would not depend on iCloud at all.
-The obvious objection — a credential in a plain file — is the same one the Windows
-port answered with DPAPI, so it needs an equivalent answer here rather than being
-waved through.
+The keychain is still asked first (it costs nothing and may work on a TV signed into
+an Apple Account), then tvOS falls back to a **file in `Library/Caches`** — one of the
+few writable locations per Decision 017, and where the SwiftData store already lives.
+An App Group would be tidier, but the app has no App Group entitlement and
+`groupContainer:` *traps* rather than throws without one.
 
-Verify any fix the same way this bug was found: print the uid on two consecutive cold
-launches and compare. Do not accept "it builds".
+Verified the same way the bug was found — two cold launches, uid printed on screen:
+
+| Launch | uid |
+|---|---|
+| 1 | `75gbojbejZRy` |
+| 2 | `75gbojbejZRy` |
+
+And end to end: a quiz created on tvOS survived a relaunch and then published
+successfully, which is the 401 that started this. The QR was decoded out of the
+screenshot with Vision to confirm it is genuinely scannable, not merely QR-shaped:
+`https://tidbitstrivia.com/#/quiz/zfdvtyhb72`.
+
+**The tradeoff, stated plainly:** this is a refresh token in a plaintext file. It sits
+in the app's own sandbox container where no other app can read it, and if Caches is
+purged the player gets a new anonymous uid — exactly today's behaviour, so the failure
+mode is no worse than the bug was. A device-bound encrypted store is the right
+follow-up (the Windows port answered the same question with DPAPI). It was not a
+reason to keep shipping a broken identity.

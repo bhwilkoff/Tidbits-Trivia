@@ -403,7 +403,7 @@
 		FD70222B5EE4C4145E4D1F84 /* NightSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightSetupView.swift; sourceTree = "<group>"; };
 		FDDD2AC4DB9C421C5849B8F6 /* GameView_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView_macOS.swift; sourceTree = "<group>"; };
 		FFC46D4CE8D03186C064C759 /* Question.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Question.swift; sourceTree = "<group>"; };
-		"TEMP_435551F5-9760-4539-BD2B-2ED038331DE1" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
+		"TEMP_0E96D828-3A02-4747-ABAE-A03D04823F83" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -741,10 +741,10 @@
 			path = TidbitsTrivia;
 			sourceTree = "<group>";
 		};
-		"TEMP_C8EFAC25-2FF5-496F-99B8-544E61EC5FB2" /* Tidbits-Trivia */ = {
+		"TEMP_EB72D284-2FA6-4288-8F25-7E16A6D1924C" /* Tidbits-Trivia */ = {
 			isa = PBXGroup;
 			children = (
-				"TEMP_435551F5-9760-4539-BD2B-2ED038331DE1" /* AppVersion.xcconfig */,
+				"TEMP_0E96D828-3A02-4747-ABAE-A03D04823F83" /* AppVersion.xcconfig */,
 			);
 			path = "Tidbits-Trivia";
 			sourceTree = "<group>";
@@ -1089,7 +1089,7 @@
 /* Begin XCBuildConfiguration section */
 		296659EF0549868336801823 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_435551F5-9760-4539-BD2B-2ED038331DE1" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_0E96D828-3A02-4747-ABAE-A03D04823F83" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -1254,7 +1254,7 @@
 		};
 		E6F711EEEE2896F84FE9AB98 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_435551F5-9760-4539-BD2B-2ED038331DE1" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_0E96D828-3A02-4747-ABAE-A03D04823F83" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;

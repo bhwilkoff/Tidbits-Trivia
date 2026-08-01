@@ -25,6 +25,9 @@ Each rule below is here because a real question in this app hit it:
                   created?" — a Wikidata property name left in the prose.
   THIN-COVERAGE   a mode x category the bundle cannot fill, which silently
                   serves a different category and says nothing.
+  KIND-MISMATCH   an option that is a different KIND of thing from the answer —
+                  "European hornet" among Myrtle, Nerium and Date palm, for a
+                  clue about a shrub. Nobody needs the fact to solve that.
   STEM-TYPE       "In which country is Russo-Ukrainian war?" — one Wikidata
                   property mapped to one stem and applied to every kind of
                   subject. The second question of this session's first playtest
@@ -57,6 +60,7 @@ BUDGET = {
     "MACHINE-STEM": 0,
     "THIN-COVERAGE": 0,
     "STEM-TYPE": 0,
+    "KIND-MISMATCH": 2,   # two refused: too few same-kind neighbours to redraw from
 }
 
 STOP = {"the", "of", "a", "an", "and", "in", "on", "at", "to", "for",
@@ -140,6 +144,40 @@ def birth_years():
     return out
 
 
+# Same vocabulary the repair uses (tools/corpus/fix_kind_distractors.py); the
+# two must not drift, or the gate flags rows the repair cannot see.
+_KINDS = [
+    ("plant",    r"\b(plant|shrub|tree|flower|grass|fern|moss|herb|vine|flowering plant|conifer|palm|cactus)\b"),
+    ("animal",   r"\b(insect|bird|mammal|fish|reptile|amphibian|spider|beetle|wasp|hornet|moth|butterfly|dinosaur|crustacean|mollusc|primate)\b"),
+    ("person",   r"\b(born \d{4}|politician|footballer|actor|actress|singer|writer|player|physicist|philosopher|emperor|monarch|composer|director)\b"),
+    ("place",    r"\b(country|city|town|village|island|river|mountain|region|province|capital|lake|desert|county|municipality)\b"),
+    ("work",     r"\b(film|movie|song|album|novel|book|poem|series|sitcom|anime|video game|painting|opera|symphony|manga|sculpture)\b"),
+    ("org",      r"\b(company|corporation|club|team|university|bank|airline|band|agency|organisation|organization|brand)\b"),
+    ("event",    r"\b(battle|war\b|siege|revolution|treaty|massacre|disaster|earthquake|eruption|pandemic|election)\b"),
+    ("chemical", r"\b(chemical element|compound|molecule|protein|enzyme|mineral|isotope)\b"),
+    ("disease",  r"\b(disease|disorder|syndrome|infection|cancer|virus|bacterium)\b"),
+]
+_KINDS = [(n, re.compile(p, re.I)) for n, p in _KINDS]
+
+
+def kind_map(rows):
+    """name -> kind, only where the name means exactly one thing."""
+    seen = collections.defaultdict(set)
+    for q in rows:
+        e = q[6] or ""
+        if ":" not in e or "\u2192" in e:
+            continue
+        _, d = e.split(":", 1)
+        d = d.strip()
+        if not d or len(d) <= 8 or d[0].isdigit():
+            continue
+        for n, rx in _KINDS:
+            if rx.search(d):
+                seen[q[7]].add(n)
+                break
+    return {k: next(iter(v)) for k, v in seen.items() if len(v) == 1}
+
+
 def check():
     """rule -> list of human-readable violations."""
     bad = collections.defaultdict(list)
@@ -147,6 +185,7 @@ def check():
 
     # ---- the corpus itself -------------------------------------------------
     rows_all = load("corpus.json")
+    kinds = kind_map(rows_all)
     # Subject descriptions, for the stem-type check.
     subject_desc = {}
     for q in rows_all:
@@ -179,6 +218,12 @@ def check():
         ys = [years.get(str(o)) for o in opts]
         if len(opts) >= 4 and all(ys) and max(ys) - min(ys) > 400:
             bad["ERA-SPREAD"].append(f"{q[0]}: {max(ys) - min(ys)}y {opts}")
+        if len(opts) >= 4:
+            ka = kinds.get(str(opts[ci]))
+            odd = [str(o) for i, o in enumerate(opts)
+                   if i != ci and kinds.get(str(o)) and ka and kinds[str(o)] != ka]
+            if ka and odd:
+                bad["KIND-MISMATCH"].append(f"{q[0]}: {odd} among {ka}s — {opts}")
 
     # ---- the shape sources -------------------------------------------------
     for name, (mode, per_round, cat_i, shape_i) in SHAPE_FILES.items():

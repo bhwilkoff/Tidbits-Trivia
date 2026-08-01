@@ -25,13 +25,61 @@ def display_name(title):
     return s.split(",")[0].strip()
 
 
-# metric -> (prompt builder, domain min, max, step, tolerance, unit, value filter)
+# Wikidata's `inception` covers companies, bands, TV series, poems, territories
+# and concentration camps alike, and one verb cannot carry all of them. The old
+# stem asked "In what year was X founded or created?" of every one — which reads
+# as machine output at best ("Sir Gawain and the Green Knight founded or
+# created?"), and at worst puts a brochure verb on Auschwitz. The category is the
+# only type signal these rows have, so it picks the verb.
+_INCEPTION_VERB = {
+    "business":  "founded",
+    "sports":    "founded",     # clubs and leagues
+    "music":     "formed",      # bands
+    "screen":    "first released",
+    "arts":      "created",
+    "history":   "established",
+    "geography": "established",
+    "science":   "established",
+}
+
+# The category alone is not enough, because some of them are simply wrong:
+# Netflix and Manchester United are both filed under `music` in the corpus, so a
+# category-only rule produced "In what year was Netflix formed?". The one-line
+# description in the corpus explanation ("American video streaming service",
+# "Association football club in England", "Australian rock band") is a far better
+# type signal, so it decides first and the category is the fallback.
+_DESC_VERB = [
+    ("formed",         ("band", "duo", "trio", "quartet", "musical group", "girl group", "boy band")),
+    ("founded",        ("company", "corporation", "service", "manufacturer", "retailer", "airline",
+                        "bank", "brand", "business", "firm", "startup", "club", "team", "publisher",
+                        "studio", "network", "chain", "conglomerate", "automaker", "brewery")),
+    ("first released", ("film", "movie", "video game", "album", "single", "song", "series",
+                        "sitcom", "television", "tv ")),
+    ("written",        ("novel", "poem", "romance", "play", "book", "epic", "essay", "manuscript")),
+    ("established",    ("territory", "region", "state", "province", "city", "camp", "university",
+                        "college", "museum", "organisation", "organization", "agency", "institute")),
+]
+
+
+def inception_verb(desc, cat):
+    d = (desc or "").lower()
+    for verb, keys in _DESC_VERB:
+        if any(k in d for k in keys):
+            return verb
+    return _INCEPTION_VERB.get(cat, "established")
+
+
+def inception_stem(name, cat, desc=""):
+    return f"In what year was {name} {inception_verb(desc, cat)}?"
+
+
+# metric -> (prompt builder(name, cat), domain min, max, step, tolerance, unit, value filter)
 METRICS = {
-    "birth_year":  (lambda n: f"In what year was {n} born?",            1000, 2025, 1, 40, "", lambda v: 1000 <= v <= 2025),
-    "death_year":  (lambda n: f"In what year did {n} die?",             1000, 2025, 1, 40, "", lambda v: 1000 <= v <= 2025),
-    "inception":   (lambda n: f"In what year was {n} founded or created?", 1000, 2025, 1, 40, "", lambda v: 1000 <= v <= 2025),
-    "atomic_number": (lambda n: f"What is the atomic number of {n}?",   1, 118, 1, 6, "", lambda v: 1 <= v <= 118),
-    "elevation":   (lambda n: f"How high is {n} above sea level?",      0, 9000, 10, 700, "m", lambda v: 0 < v <= 9000),
+    "birth_year":  (lambda n, c, d: f"In what year was {n} born?",         1000, 2025, 1, 40, "", lambda v: 1000 <= v <= 2025),
+    "death_year":  (lambda n, c, d: f"In what year did {n} die?",          1000, 2025, 1, 40, "", lambda v: 1000 <= v <= 2025),
+    "inception":   (inception_stem,                                     1000, 2025, 1, 40, "", lambda v: 1000 <= v <= 2025),
+    "atomic_number": (lambda n, c, d: f"What is the atomic number of {n}?", 1, 118, 1, 6, "", lambda v: 1 <= v <= 118),
+    "elevation":   (lambda n, c, d: f"How high is {n} above sea level?",   0, 9000, 10, 700, "m", lambda v: 0 < v <= 9000),
 }
 
 
@@ -46,12 +94,16 @@ def main():
     qs = corpus["questions"] if isinstance(corpus, dict) else corpus
     enrich = json.load(open(args.enrich))["entities"]
 
-    cat_of, url_of = {}, {}
+    cat_of, url_of, desc_of = {}, {}, {}
     for q in qs:
         if "/wiki/" not in q[8]:
             continue
         t = q[8].split("/wiki/")[-1]
         cat_of.setdefault(t, q[4]); url_of.setdefault(t, q[8])
+        # "Netflix: American video streaming service" -> the part after the colon
+        # is a one-line type description, which is what picks the inception verb.
+        if q[6] and ":" in q[6]:
+            desc_of.setdefault(t, q[6].split(":", 1)[1].strip())
 
     out, counts = [], {}
     for t, ent in enrich.items():
@@ -79,7 +131,7 @@ def main():
             is_year = metric.endswith("year") or metric == "inception"
             disp = (str(int(v)) if is_year else f"{int(v):,}") + ((" " + unit) if unit else "")
             out.append([
-                f"closest:{metric}:{t}", prompt_fn(name), v, lo, hi, step, tol, unit,
+                f"closest:{metric}:{t}", prompt_fn(name, cat, desc_of.get(t, '')), v, lo, hi, step, tol, unit,
                 cat, f"{name}: {disp}.", name, url_of.get(t, ""),
             ])
 

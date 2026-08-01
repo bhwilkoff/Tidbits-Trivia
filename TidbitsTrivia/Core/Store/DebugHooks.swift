@@ -123,6 +123,48 @@ enum DebugHooks {
         ProcessInfo.processInfo.environment["TIDBITS_CREATE_SWEEP_CORPUS_ONLY"] == "1"
     }
 
+    /// TIDBITS_PLAY_SWEEP=<n> → play N real games across every mode x category and
+    /// print each delivered question as JSON, then exit.
+    ///
+    /// The Create sweep audits ONE surface. A player meets the corpus through
+    /// fourteen modes and nine categories, and the things that spoil a round —
+    /// a duplicated distractor, a shape-less "Closest Call", a round that comes
+    /// up four questions short — are properties of the assembled ROUND, not of any
+    /// row. This drives the shipped assembly at that scale so they are measurable.
+    static var playSweepGames: Int? {
+        ProcessInfo.processInfo.environment["TIDBITS_PLAY_SWEEP"].flatMap(Int.init)
+    }
+
+    /// TIDBITS_PLAYTHROUGH=<n> → actually PLAY n games to their results screen,
+    /// answering correctly, and report anything the game got wrong about it.
+    /// Distinct from TIDBITS_PLAY_SWEEP, which only assembles rounds and inspects
+    /// the questions — it never submits an answer, so it cannot see a right answer
+    /// marked wrong, a round that will not end, or a score that disagrees with the
+    /// play.
+    static var playthroughGames: Int? {
+        ProcessInfo.processInfo.environment["TIDBITS_PLAYTHROUGH"].flatMap(Int.init)
+    }
+
+    /// TIDBITS_PLAY_SWEEP_MODES / _CATS → restrict the sweep grid (comma-separated
+    /// raw values). Default is the fourteen modes and nine categories the mode and
+    /// category pickers actually offer.
+    static var playSweepModes: [GameMode] {
+        let picker: [GameMode] = [.classic, .timeAttack, .survival, .stake, .sweep,
+                                  .pictureId, .thisOrThat, .closestCall, .ordering,
+                                  .matching, .typeAnswer, .oddOneOut, .ladder, .enumerate]
+        guard let raw = ProcessInfo.processInfo.environment["TIDBITS_PLAY_SWEEP_MODES"] else { return picker }
+        let picked = raw.split(separator: ",").compactMap { GameMode(rawValue: String($0)) }
+        return picked.isEmpty ? picker : picked
+    }
+
+    static var playSweepCategories: [TriviaCategory] {
+        guard let raw = ProcessInfo.processInfo.environment["TIDBITS_PLAY_SWEEP_CATS"] else {
+            return TriviaCategory.all
+        }
+        let picked = raw.split(separator: ",").map { TriviaCategory.named(String($0)) }
+        return picked.isEmpty ? TriviaCategory.all : picked
+    }
+
     /// TIDBITS_TV_SHARE=1 → open the newest saved quiz's detail and publish it, so
     /// the QR panel can actually be seen. The tvOS simulator takes no synthesised
     /// remote presses, and a QR that has never been rendered is a QR nobody has
@@ -136,6 +178,17 @@ enum DebugHooks {
     /// TIDBITS_CUSTOMIZE=1 opens the Customize sheet on launch (screenshots).
     static var openCustomize: Bool {
         ProcessInfo.processInfo.environment["TIDBITS_CUSTOMIZE"] == "1"
+    }
+
+    /// TIDBITS_CUSTOMIZE_PICK="mode:category" → open Customize with that mode and
+    /// category already selected. TIDBITS_AUTOPLAY would launch the game instead,
+    /// and what needs looking at here is the PICKER — whether a combination the
+    /// bundle cannot fill is visibly marked as such before the player commits.
+    static var customizePick: (mode: GameMode, category: TriviaCategory)? {
+        guard let raw = ProcessInfo.processInfo.environment["TIDBITS_CUSTOMIZE_PICK"] else { return nil }
+        let parts = raw.split(separator: ":").map(String.init)
+        guard let mode = GameMode(rawValue: parts.first ?? "") else { return nil }
+        return (mode, TriviaCategory.named(parts.count > 1 ? parts[1] : "mixed"))
     }
 
     /// TIDBITS_DAILY_ARCHIVE=1 opens the Previous Tidbits archive on launch.

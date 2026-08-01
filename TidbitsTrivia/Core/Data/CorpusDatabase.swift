@@ -34,6 +34,24 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
         }
     }
 
+    /// How many questions carry this category. Feeds the picker's coverage check —
+    /// a mode x category combination the bundle cannot fill gets assembled out of
+    /// other categories, and the player should be told that before they pick, not
+    /// discover it mid-round.
+    func count(categoryID: String) -> Int {
+        guard categoryID != "mixed" else { return count }
+        return queue.sync {
+            guard let db else { return 0 }
+            var stmt: OpaquePointer?
+            defer { sqlite3_finalize(stmt) }
+            guard sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM questions WHERE category_id = ?",
+                                     -1, &stmt, nil) == SQLITE_OK else { return 0 }
+            sqlite3_bind_text(stmt, 1, categoryID, -1, Self.transientDestructor)
+            guard sqlite3_step(stmt) == SQLITE_ROW else { return 0 }
+            return Int(sqlite3_column_int(stmt, 0))
+        }
+    }
+
     /// Fetch up to `limit` random questions in a category, excluding ids
     /// the player has already seen. `categoryID == "mixed"` spans all.
     func questions(categoryID: String, excluding seen: Set<String>, limit: Int) -> [Question] {

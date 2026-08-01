@@ -72,7 +72,11 @@ final class QuestionProvider {
         }
         if mode == .ladder {
             // Pull a pool, sort by the F3 derived difficulty, then span easy→hard.
-            var pool = CorpusDatabase.shared.questions(categoryID: "mixed", excluding: seen, limit: 80)
+            // The pool has to come from the PICKED category: this asked for "mixed"
+            // regardless, so a Ladder run in Geography delivered whatever share of
+            // the mixed corpus happens to be geography — measured over 800 Ladder
+            // questions, 13% of them matched the category the player chose.
+            var pool = CorpusDatabase.shared.questions(categoryID: category.id, excluding: seen, limit: 80)
             pool.sort { DifficultyOverlay.shared.difficulty(for: $0) < DifficultyOverlay.shared.difficulty(for: $1) }
             guard pool.count >= need else { return pool }
             return (0..<need).map { pool[$0 * (pool.count - 1) / max(1, need - 1)] }
@@ -88,6 +92,41 @@ final class QuestionProvider {
             pulled.append(contentsOf: live)
         }
         return Array(pulled.prefix(need))
+    }
+
+    /// The bundled source a mode draws from, or nil when it rides the corpus.
+    static func source(for mode: GameMode) -> JSONQuestionSource? {
+        switch mode {
+        case .pictureId:   return .picture
+        case .thisOrThat:  return .thisOrThat
+        case .closestCall: return .closestCall
+        case .ordering:    return .ordering
+        case .matching:    return .matching
+        case .typeAnswer:  return .typeAnswer
+        case .oddOneOut:   return .oddOneOut
+        case .enumerate:   return .enumerate
+        default:           return nil
+        }
+    }
+
+    /// How many questions this mode can draw from the player's OWN picked category.
+    ///
+    /// `filled()` deliberately relaxes to the whole pool rather than strand a
+    /// player mid-round, which is the right behaviour — but it is silent, and
+    /// silence here reads as a lie: measured over 1,260 games, picking Business
+    /// with any of the seven bundled-shape modes returned a round with ZERO
+    /// business questions in it, because none of those sources has a single
+    /// business row. The picker uses this to say so before the player commits.
+    static func coverage(mode: GameMode, categoryID: String) -> Int {
+        guard categoryID != "mixed" else { return .max }
+        if let src = source(for: mode) { return src.count(categoryID: categoryID) }
+        return CorpusDatabase.shared.count(categoryID: categoryID)
+    }
+
+    /// Whether a round of `mode` in `categoryID` can actually be filled from that
+    /// category. False means the round will be assembled from other categories.
+    static func canFill(mode: GameMode, categoryID: String) -> Bool {
+        coverage(mode: mode, categoryID: categoryID) >= mode.questionCount
     }
 
     /// Build a Trivia Night ("bar trivia") question stream from a plan: for each
@@ -300,6 +339,67 @@ extension QuestionProvider {
     /// prints one line per question, which is how the "Denver returns John Denver"
     /// class of bug gets caught at the scale of a thousand topics rather than the
     /// handful anyone would type by hand.
+    /// Play `games` real games across every mode x category and print each question
+    /// as JSON, so the whole delivered experience can be audited off-device.
+    ///
+    /// This calls the SAME `questions(mode:category:)` the game engine calls and
+    /// marks the results seen exactly as `GameEngine.start` does — so the pool
+    /// depletes across the run the way it does for a real player, and a mode that
+    /// only under-fills once you have played a while shows up here rather than in
+    /// a review. The Create sweep proved the point for one surface; this is the
+    /// same instrument pointed at the modes themselves.
+    @MainActor
+    func sweepPlay(games: Int, modes: [GameMode], categories: [TriviaCategory]) async {
+        print("PLAY-BEGIN games=\(games) modes=\(modes.count) cats=\(categories.count) corpus=\(corpusCount)")
+        for g in 0..<games {
+            // Odometer order: the category advances once the mode list wraps, so
+            // `modes.count * categories.count` consecutive games cover every
+            // combination exactly once. An earlier version added `g` to the
+            // category index intending to decorrelate the two, and instead made the
+            // stride 15 against a 9-long list — gcd 3, so each mode only ever saw
+            // three of the nine categories and 84 of the 126 combinations were
+            // never played at all.
+            let mode = modes[g % modes.count]
+            let cat = categories[(g / modes.count) % categories.count]
+            let qs = await questions(mode: mode, category: cat)
+            markSeen(qs.map(\.id))
+            print("PLAY-GAME\t\(g)\t\(mode.rawValue)\t\(cat.id)\t\(qs.count)\t\(mode.questionCount)")
+            for (i, q) in qs.enumerated() {
+                print("PLAY-Q\t\(Self.playJSON(game: g, mode: mode, cat: cat, index: i, q: q))")
+            }
+        }
+        print("PLAY-END")
+    }
+
+    /// One question as a single JSON line. Built with JSONSerialization rather than
+    /// string interpolation because prompts and options contain every quoting and
+    /// punctuation character the corpus has ever seen.
+    nonisolated static func playJSON(game: Int, mode: GameMode, cat: TriviaCategory,
+                                     index: Int, q: Question) -> String {
+        var obj: [String: Any] = [
+            "game": game, "mode": mode.rawValue, "cat": cat.id, "i": index,
+            "id": q.id, "prompt": q.prompt, "options": q.options,
+            "correct": q.correctIndex, "answer": q.correctAnswer,
+            "explanation": q.explanation, "difficulty": q.difficulty,
+            "title": q.sourceTitle, "qcat": q.categoryID, "template": q.templateID,
+        ]
+        // The shape fields are what make a mode that mode — a Closest Call question
+        // with no `closest` spec renders as a plain MCQ, which is the mode-purity bug
+        // class this sweep exists to catch. Emit them so the auditor can check.
+        if let c = q.closest {
+            obj["closest"] = ["answer": c.answer, "min": c.min, "max": c.max,
+                              "step": c.step, "tolerance": c.tolerance, "unit": c.unit]
+        }
+        if let o = q.ordering { obj["ordering"] = o }
+        if let m = q.matching { obj["matching"] = ["keys": m.keys, "values": m.values] }
+        if let a = q.accepted { obj["accepted"] = a }
+        if let e = q.enumerate { obj["enumerate"] = e.groups }
+        if let u = q.imageURL { obj["image"] = u.absoluteString }
+        guard let data = try? JSONSerialization.data(withJSONObject: obj),
+              let s = String(data: data, encoding: .utf8) else { return "{}" }
+        return s
+    }
+
     @MainActor
     func sweepCreate(path: String, corpusOnly: Bool) async {
         guard let text = try? String(contentsOfFile: path, encoding: .utf8) else {

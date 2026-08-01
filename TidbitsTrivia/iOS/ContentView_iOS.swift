@@ -38,6 +38,15 @@ struct ContentView_iOS: View {
                 await QuestionProvider.shared.sweepCreate(
                     path: path, corpusOnly: DebugHooks.createSweepCorpusOnly)
             }
+            if let games = DebugHooks.playthroughGames {
+                await PlaySweep.run(games: games, modes: DebugHooks.playSweepModes,
+                                    categories: DebugHooks.playSweepCategories)
+            }
+            if let games = DebugHooks.playSweepGames {
+                await QuestionProvider.shared.sweepPlay(
+                    games: games, modes: DebugHooks.playSweepModes,
+                    categories: DebugHooks.playSweepCategories)
+            }
         }
         .sheet(isPresented: $showPaywall) { ClubPaywallView().environment(EntitlementStore.shared) }
     }

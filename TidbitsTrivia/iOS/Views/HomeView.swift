@@ -96,7 +96,9 @@ struct HomeView: View {
         }
         .fullScreenCover(isPresented: $showParty) { PartyContainerView() }
         .sheet(isPresented: $showCustomize) {
-            CustomizeSheet(initial: store.quickPlay,
+            CustomizeSheet(initial: DebugHooks.customizePick
+                             .map { LaunchRequest(mode: $0.mode, category: $0.category) }
+                             ?? store.quickPlay,
                            presets: store.presets,
                            onStart: { req in showCustomize = false; start(req) },
                            onSave: { store.savePreset($0) },
@@ -455,13 +457,22 @@ private struct CustomizeSheet: View {
 
     var body: some View {
         NavigationStack {
+            ScrollViewReader { proxy in
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
                     modeSection
-                    categorySection
+                    categorySection.id("category")
                     if !presets.isEmpty { presetsSection }
                 }
                 .padding(20)
+            }
+            // With every mode shown, the category grid sits well below the fold, and
+            // this dev box has no GUI simulator to scroll — so a run that asked for a
+            // specific combination scrolls to the thing it asked about.
+            .task {
+                guard DebugHooks.customizePick != nil else { return }
+                try? await Task.sleep(for: .milliseconds(300))
+                proxy.scrollTo("category", anchor: .top)
             }
             .background(Tidbits.Palette.bg.ignoresSafeArea())
             .navigationTitle("Customize a game")
@@ -492,6 +503,7 @@ private struct CustomizeSheet: View {
                 }
                 Button("Cancel", role: .cancel) {}
             }
+        }
         }
         .presentationDetents([.large])
     }
@@ -530,12 +542,21 @@ private struct CustomizeSheet: View {
         }
     }
 
+    /// The mode whose coverage the category grid reflects. A Custom Mix spans
+    /// several, so it is only honest to dim a category none of them can fill.
+    private var coverageModes: [GameMode] { modes.isEmpty ? [.classic] : Array(modes) }
+
+    private func canFill(_ c: TriviaCategory) -> Bool {
+        coverageModes.contains { QuestionProvider.canFill(mode: $0, categoryID: c.id) }
+    }
+
     private var categorySection: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Category").font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
             LazyVGrid(columns: grid, alignment: .leading, spacing: 10) {
                 ForEach(TriviaCategory.all) { c in
                     let on = category.id == c.id
+                    let thin = !canFill(c)
                     Button { category = c } label: {
                         Text(c.name)
                             .font(Tidbits.TypeRamp.l3)
@@ -545,9 +566,20 @@ private struct CustomizeSheet: View {
                             .padding(.horizontal, 12).padding(.vertical, 11)
                             .background(Capsule().fill(on ? c.color : Tidbits.Palette.surface))
                             .overlay(Capsule().strokeBorder(Tidbits.Palette.border, lineWidth: 2.5))
+                            // Dimmed, not disabled: the round still plays, it just
+                            // won't be the category you asked for. Taking the choice
+                            // away would be a worse answer than telling the truth.
+                            .opacity(thin && !on ? 0.45 : 1)
                     }
                     .buttonStyle(.plain)
                 }
+            }
+            if !canFill(category) {
+                Text("\(category.name) has no \(coverageModes.count == 1 ? coverageModes[0].title : "questions") "
+                     + "for this mode yet — you'll get a mixed round.")
+                    .font(Tidbits.TypeRamp.l5)
+                    .foregroundStyle(Tidbits.Palette.inkSoft)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }

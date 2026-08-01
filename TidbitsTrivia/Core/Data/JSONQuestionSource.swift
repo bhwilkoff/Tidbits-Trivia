@@ -34,6 +34,11 @@ nonisolated final class JSONQuestionSource: @unchecked Sendable {
     var isAvailable: Bool { !all.isEmpty }
     var count: Int { all.count }
 
+    /// How many rows carry this category — see `CorpusDatabase.count(categoryID:)`.
+    func count(categoryID: String) -> Int {
+        categoryID == "mixed" ? all.count : all.count { $0.categoryID == categoryID }
+    }
+
     /// Look up by ID — what a saved quiz needs to turn its refs back into questions
     /// (docs/QUIZ-CONTRACT.md). Built once in `init` rather than cached lazily: these
     /// sources are shared `static let` singletons, so a mutable cache would be

@@ -103,7 +103,12 @@ def main():
     payload = f'{{"version":"{version}","count":{len(out)},"questions":{body}}}'
     res_copy = os.path.join(os.path.dirname(__file__), "..", "..", "TidbitsTrivia", "Resources", "order.json")
     and_copy = os.path.join(os.path.dirname(__file__), "..", "..", "android", "app", "src", "main", "assets", "order.json")
-    for path in (args.out, res_copy, and_copy):
+    # `--out /tmp/x.json` reads as "write somewhere harmless so I can look",
+    # and it did not: these tracked copies were written regardless, so a safety
+    # check that generated to a temp file silently replaced the iOS and Android
+    # copies. Only the default --out touches the mirrors now.
+    _mirrors = [res_copy, and_copy] if args.out == ap.get_default('out') else []
+    for path in [args.out] + _mirrors:
         with open(path, "w") as f:
             f.write(payload)
     print(f"wrote {len(out)} ordering questions (version {version})")

@@ -89,13 +89,46 @@ struct GamePlayView: View {
                 switch game.phase {
                 case .playing:
                     // Shape-driven so it also drives a Trivia Night (mixed shapes).
-                    if game.current?.closest != nil { game.submitGuess(); break }
-                    if game.current?.ordering != nil { game.submitOrder(); break }
-                    if game.current?.matching != nil { game.submitMatch(); break }
+                    //
+                    // With TIDBITS_AUTOPILOT_CORRECT these actually SOLVE the
+                    // board first. They used to submit whatever was on screen —
+                    // an untouched slider, a shuffled list, no links at all — so
+                    // Closest Call, In Order and Match Up rendered their
+                    // everything-is-wrong state on every single question. A
+                    // rendered marathon watching four of fourteen modes lose on
+                    // purpose is watching the wrong thing.
+                    if let spec = game.current?.closest {
+                        if DebugHooks.autopilotCorrect { game.setGuess(spec.answer) }
+                        game.submitGuess(); break
+                    }
+                    if let order = game.current?.ordering {
+                        if DebugHooks.autopilotCorrect {
+                            // `moveOrderItem` is all a player has, so sort through it.
+                            for target in order.indices {
+                                guard let at = game.currentOrder.firstIndex(of: order[target]) else { continue }
+                                var pos = at
+                                while pos > target { game.moveOrderItem(pos, up: true); pos -= 1 }
+                            }
+                        }
+                        game.submitOrder(); break
+                    }
+                    if let m = game.current?.matching {
+                        if DebugHooks.autopilotCorrect {
+                            for (i, want) in m.values.enumerated() {
+                                guard let v = game.matchValues.firstIndex(of: want) else { continue }
+                                game.selectMatchKey(i)
+                                game.assignMatchValue(v)
+                            }
+                        }
+                        game.submitMatch(); break
+                    }
                     if game.current?.accepted != nil { game.typedText = game.current?.correctAnswer ?? ""; game.submitText(); break }
                     if game.current?.enumerate != nil {
                         let names = game.current?.enumerate?.displayNames ?? []
-                        if game.enumNamed.count < 3, names.indices.contains(game.enumNamed.count) {
+                        // Naming three of nine and stopping is a screenshot pose,
+                        // not a playthrough — a correct run fills the set.
+                        let target = DebugHooks.autopilotCorrect ? names.count : 3
+                        if game.enumNamed.count < target, names.indices.contains(game.enumNamed.count) {
                             game.submitEnumGuess(names[game.enumNamed.count])
                         } else { game.finishEnum() }
                         break

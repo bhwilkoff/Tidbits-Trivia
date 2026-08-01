@@ -47,7 +47,11 @@ public sealed class QuestionProvider
                 return Filled(_src.Enrich(mode), category, need, new HashSet<string>());
             case GameMode.Ladder:
             {
-                var pool = _src.Corpus.Questions("mixed", _seen, 80);
+                // The pool must come from the PICKED category: this asked for
+                // "mixed" regardless, so a Ladder run in Geography delivered
+                // whatever share of the mixed corpus happens to be geography —
+                // measured on the shipped Apple build, 13%.
+                var pool = _src.Corpus.Questions(category.Id, _seen, 80);
                 pool.Sort((a, b) => _src.Difficulty.DifficultyFor(a).CompareTo(_src.Difficulty.DifficultyFor(b)));
                 if (pool.Count < need) return pool;
                 return Enumerable.Range(0, need)

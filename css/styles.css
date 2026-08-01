@@ -88,6 +88,9 @@ body {
   padding: 10px 16px; border-radius: 999px; background: var(--color-surface);
   border: 2.5px solid var(--color-border); color: var(--color-ink); }
 .chip.on { background: var(--color-accent); color: #fff; }
+/* A category this mode has no questions for. Dimmed, not disabled: the round
+   still plays, it just won't be the category you asked for. */
+.chip.thin:not(.on) { opacity: 0.45; }
 
 /* ---- Category grid ---- */
 .cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }

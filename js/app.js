@@ -376,6 +376,7 @@ function viewHome() {
         <div class="chips" id="cust-cats">
           ${CATEGORIES.map((c) => `<button type="button" class="chip" data-ccat="${c.id}">${h(c.name)}</button>`).join('')}
         </div>
+        <p class="muted" id="cust-cat-note" hidden></p>
         <div id="cust-presets"></div>
         <div class="night-actions">
           <button type="button" class="btn" data-cust-save>Save preset</button>
@@ -993,6 +994,7 @@ function renderCustModes() {
     if (custModes.includes(m)) { if (custModes.length > 1) custModes = custModes.filter((x) => x !== m); }
     else custModes = ALL_MODES.filter((x) => custModes.includes(x) || x === m);
     renderCustModes();
+    markCustCat();   // which categories a mode can fill changes with the mode
   }));
   const more = $('[data-more-modes]'); if (more) more.textContent = custShowAll ? 'Show fewer modes' : 'Show all modes';
   // One mode shows its blurb; several explain the mix.
@@ -1003,7 +1005,44 @@ function renderCustModes() {
   const startBtn = $('[data-cust-start]');
   if (startBtn) startBtn.textContent = custModes.length > 1 ? `Start the Mix (${custModes.length})` : 'Start';
 }
-function markCustCat() { $('#cust-cats').querySelectorAll('[data-ccat]').forEach((c) => c.classList.toggle('on', c.dataset.ccat === custCat)); }
+// Which bundled set a mode draws from, or null when it rides the corpus.
+// Mirrors Swift `QuestionProvider.source(for:)`.
+function modeSource(modeID) {
+  return { pictureId: Pictures, thisOrThat: ThisOrThat, closestCall: ClosestCall,
+           ordering: Ordering, matching: Matching, typeAnswer: TypeAnswer,
+           oddOneOut: OddOneOut, enumerate: Enumerate }[modeID] || null;
+}
+
+// Can a round of this mode actually be filled from this category? False means it
+// will be assembled from OTHER categories — Business has zero rows in every
+// bundled shape set, so Business + Picture ID is a round with no business in it.
+// Mirrors Swift `QuestionProvider.canFill(mode:categoryID:)`.
+function canFillCat(modeID, catID) {
+  if (catID === 'mixed') return true;
+  const mode = MODES[modeID];
+  if (!mode) return true;
+  const src = modeSource(modeID);
+  const have = src ? src.countIn(catID) : Corpus.countIn(catID);
+  return have >= mode.count;
+}
+
+function markCustCat() {
+  // Any picked mode that can fill it is enough — a Custom Mix spans several.
+  const modes = custModes.length ? custModes : ['classic'];
+  $('#cust-cats').querySelectorAll('[data-ccat]').forEach((c) => {
+    c.classList.toggle('on', c.dataset.ccat === custCat);
+    // Dimmed, not disabled: the round still plays, it just is not the category
+    // you asked for, and removing the choice is worse than telling the truth.
+    c.classList.toggle('thin', !modes.some((m) => canFillCat(m, c.dataset.ccat)));
+  });
+  const note = $('#cust-cat-note');
+  if (note) {
+    const ok = modes.some((m) => canFillCat(m, custCat));
+    note.textContent = ok ? ''
+      : `${catById(custCat).name} has no questions for this mode yet — you'll get a mixed round.`;
+    note.hidden = ok;
+  }
+}
 function renderCustPresets() {
   const ps = getPresets();
   const el = $('#cust-presets');
@@ -1862,7 +1901,10 @@ class Game {
     }
     else if (this.mode.id === 'ladder') {
       await Difficulty.load();
-      const pool = Corpus.pull('mixed', Store._seen, 80).sort((a, b) => Difficulty.get(a.sourceTitle) - Difficulty.get(b.sourceTitle));
+      // The pool must come from the PICKED category: this asked for 'mixed'
+      // regardless, so a Ladder run in Geography delivered whatever share of the
+      // mixed corpus happens to be geography — measured, 13%.
+      const pool = Corpus.pull(this.category.id, Store._seen, 80).sort((a, b) => Difficulty.get(a.sourceTitle) - Difficulty.get(b.sourceTitle));
       const need = this.mode.count;
       qs = pool.length >= need ? Array.from({ length: need }, (_, i) => pool[Math.floor(i * (pool.length - 1) / Math.max(1, need - 1))]) : pool;
     }

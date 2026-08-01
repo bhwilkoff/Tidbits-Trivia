@@ -285,6 +285,12 @@ function diversify(ranked, limit) {
 export const Corpus = {
   questions: [], byCategory: {}, loaded: false,
 
+  /// How many questions carry this category — see `makeJsonSet.countIn`.
+  countIn(categoryID) {
+    return categoryID === 'mixed' ? this.questions.length
+      : (this.byCategory[categoryID] || []).length;
+  },
+
   async load() {
     if (this.loaded) return;
     // Network-first so corpus updates always propagate; IndexedDB is only an
@@ -475,6 +481,14 @@ function makeJsonSet(filename, parseRow = rowToQuestion) {
     question(id) {
       if (!this._byID) this._byID = new Map(this.questions.map((q) => [q.id, q]));
       return this._byID.get(id) || null;
+    },
+    // How many rows carry this category — feeds the picker's coverage check.
+    // A mode x category the bundle cannot fill gets assembled out of OTHER
+    // categories, and the player should be told before they pick, not discover
+    // it mid-round (Business has zero rows in every one of these sets).
+    countIn(categoryID) {
+      return categoryID === 'mixed' ? this.questions.length
+        : (this.byCategory[categoryID] || []).length;
     },
     pull(categoryID, seen, limit) {
       const src = categoryID === 'mixed' ? this.questions : (this.byCategory[categoryID] || []);

@@ -161,7 +161,11 @@ class GameState(
             // A REPLAYABLE recall drill — ignore the seen-set (pass emptySet).
             mode == Mode.ENUMERATE -> filled(EnumerateSet, mode.count, emptySet())
             mode == Mode.LADDER -> {
-                val pool = Corpus.pull("mixed", store.seenSet, 80).sortedBy { Difficulty.get(it.sourceTitle) }
+                // The pool must come from the PICKED category: this asked for
+                // "mixed" regardless, so a Ladder run in Geography delivered
+                // whatever share of the mixed corpus happens to be geography —
+                // measured on the shipped Apple build, 13%.
+                val pool = Corpus.pull(category.id, store.seenSet, 80).sortedBy { Difficulty.get(it.sourceTitle) }
                 val need = mode.count
                 if (pool.size >= need) (0 until need).map { pool[it * (pool.size - 1) / maxOf(1, need - 1)] } else pool
             }

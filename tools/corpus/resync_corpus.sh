@@ -43,4 +43,11 @@ echo "--- 4. refresh Windows test fixtures"
 python3 -c "import json; open('windows/Tidbits.HeadlessTests/Fixtures/corpus-ids.txt','w').write('\n'.join(q[0] for q in json.load(open('assets/corpus.json'))['questions'])+'\n')"
 cp "$G/apple.txt" windows/Tidbits.HeadlessTests/Fixtures/daily-golden.txt
 
+echo "--- 5. assert every question file is identical across platforms"
+# Not assumed — asserted. The three copies silently drifted on 2026-08-01 when a
+# generator invoked with --out to a temp path wrote its mirrors anyway, and the
+# app, the tests and 126 playthroughs all stayed green because each was reading a
+# different one of them.
+python3 tools/corpus/check_mirrors.py
+
 echo "--- done. corpus + sqlite + golden + fixtures all resynced."

@@ -101,13 +101,29 @@ def kind_map(rows):
         # player-facing reveal and the machine-readable subject description — and
         # fix_hollow_reveals.py appends a Wikipedia sentence to it.
         d = re.split(r"(?<=[.!?])\s", d, maxsplit=1)[0].strip()
+        # A quoted word is being MENTIONED, not used as a type. "Vespa: Italian
+        # scooter... Italian for 'wasp'" typed a scooter brand as an animal.
+        d = re.sub(r"[\"'\u2018\u2019\u201c\u201d][^\"'\u2018\u2019\u201c\u201d]{1,30}"
+                   r"[\"'\u2018\u2019\u201c\u201d]", " ", d)
         if not d or len(d) <= 8 or d[0].isdigit():
             continue
         for n, rx in KINDS:
             if rx.search(d):
                 seen[q[7]].add(n)
                 break
-    return {name: next(iter(ks)) for name, ks in seen.items() if len(ks) == 1}
+
+    # A bare name is ambiguous when the corpus ALSO holds a parenthetical twin:
+    # "Vespa" the wasp beside "Vespa (brand)"; "Puma" the cat beside "Puma
+    # (brand)"; "Insomnia" the disorder beside "Insomnia (2002 film)". The option
+    # renders as the bare name, so the kind lookup silently picks the wrong
+    # subject and calls a scooter maker an animal. Drop those names rather than
+    # guess which one is meant.
+    titles = {q[7] for q in rows if q[7]}
+    ambiguous = {t for t in titles if any(
+        o != t and o.startswith(t + " (") for o in titles)}
+    ambiguous |= {t.split(" (")[0] for t in titles if " (" in t}
+    return {name: next(iter(ks)) for name, ks in seen.items()
+            if len(ks) == 1 and name not in ambiguous}
 
 
 def main():

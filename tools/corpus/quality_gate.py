@@ -180,13 +180,29 @@ def kind_map(rows):
         # player-facing reveal and the machine-readable subject description — and
         # fix_hollow_reveals.py appends a Wikipedia sentence to it.
         d = re.split(r"(?<=[.!?])\s", d, maxsplit=1)[0].strip()
+        # A quoted word is being MENTIONED, not used as a type. "Vespa: Italian
+        # scooter... Italian for 'wasp'" typed a scooter brand as an animal.
+        d = re.sub(r"[\"'\u2018\u2019\u201c\u201d][^\"'\u2018\u2019\u201c\u201d]{1,30}"
+                   r"[\"'\u2018\u2019\u201c\u201d]", " ", d)
         if not d or len(d) <= 8 or d[0].isdigit():
             continue
         for n, rx in _KINDS:
             if rx.search(d):
                 seen[q[7]].add(n)
                 break
-    return {k: next(iter(v)) for k, v in seen.items() if len(v) == 1}
+
+    # A bare name is ambiguous when the corpus ALSO holds a parenthetical twin:
+    # "Vespa" the wasp beside "Vespa (brand)"; "Puma" the cat beside "Puma
+    # (brand)"; "Insomnia" the disorder beside "Insomnia (2002 film)". The option
+    # renders as the bare name, so the kind lookup silently picks the wrong
+    # subject and calls a scooter maker an animal. Drop those names rather than
+    # guess which one is meant.
+    titles = {q[7] for q in rows if q[7]}
+    ambiguous = {t for t in titles if any(
+        o != t and o.startswith(t + " (") for o in titles)}
+    ambiguous |= {t.split(" (")[0] for t in titles if " (" in t}
+    return {k: next(iter(v)) for k, v in seen.items()
+            if len(v) == 1 and k not in ambiguous}
 
 
 def check():
@@ -204,6 +220,12 @@ def check():
         if ":" in e and "\u2192" not in e:
             _, d = e.split(":", 1)
             d = d.strip()
+            # First sentence only — same reason as kind_map. Reading the whole
+            # enriched reveal matched "flight-test programme" and flagged a
+            # fighter jet's question, while the REPAIR (which reads the same
+            # field) could see nothing typeable in it. The gate and the repair
+            # must read the same text or they argue forever.
+            d = re.split(r"(?<=[.!?])\s", d, maxsplit=1)[0].strip()
             if d and not d[0].isdigit() and len(d) > 8:
                 subject_desc.setdefault(q[7], d)
 

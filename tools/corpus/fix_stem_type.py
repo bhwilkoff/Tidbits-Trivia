@@ -80,7 +80,12 @@ KINDS = [
               r"club|team|university|bank|studio|publisher|broadcaster|agency|institute|"
               r"organisation|organization|party\b|band\b|label\b|airline)\b"),
     ("work",  r"\b(film|movie|song|album|single|novel|book|poem|series|sitcom|anime|"
-              r"video game|manga|painting|opera|symphony|musical|anthem|sculpture)\b"),
+              r"video game|manga|painting|opera|symphony|musical|anthem|sculpture|"
+              # A machine is FROM a country, not IN one: "In which country is
+              # Dassault Rafale?" of a fighter jet.
+              r"aircraft|fighter|airliner|jet\b|helicopter|rocket|missile|tank\b|"
+              r"car\b|automobile|locomotive|ship\b|submarine|spacecraft|satellite|"
+              r"rifle|pistol|firearm|engine|processor|console)\b"),
     ("person", r"\b(born \d{4}|politician|footballer|actor|actress|singer|writer|player|"
                r"physicist|philosopher|emperor|monarch|composer|director|journalist)\b"),
 ]

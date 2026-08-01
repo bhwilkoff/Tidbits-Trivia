@@ -12,21 +12,22 @@ description — so once the clue is good, the reveal is a rerun. In an app whose
 stated purpose is that the reveal turns a miss into a curiosity door, half the
 corpus closes the door.
 
-This takes a sentence from the subject's cached Wikipedia lead that the prompt
-has NOT already used, and appends it. It only reaches what is cached:
+This takes a sentence from the subject's Wikipedia lead that the prompt has NOT
+already used, and appends it.
 
-    3,016 of 63,104 hollow questions (4.8%), across 1,297 subjects.
-
-The other ~60,000 need lead paragraphs fetched for ~31,000 subjects, which
-`tools/corpus/sources/fetch_prose.py` already knows how to do. Doing the reachable
-part first is deliberate — it proves the shape of the repair end to end before
-anyone spends a long network run on the rest.
+The first version read `tools/corpus/cache/articles/`, reached 4.8%, and left a
+note that the rest needed a ~31,000-subject network fetch. It did not: Stage C of
+the corpus pipeline already stored lead prose for **61,400 subjects** in
+`corpus_source.sqlite`, covering 97.8% of the hollow set. The fetch had been done
+months ago. Check what the pipeline already has before proposing to go and get
+it.
 
     python3 tools/corpus/fix_hollow_reveals.py [--apply]
 """
 import argparse
 import collections
 import glob
+import sqlite3
 import json
 import pathlib
 import re
@@ -36,6 +37,7 @@ import unicodedata
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 CORPUS = ROOT / "assets" / "corpus.json"
 CACHE = ROOT / "tools" / "corpus" / "cache" / "articles"
+SOURCE_DB = ROOT / "tools" / "corpus" / "corpus_source.sqlite"
 
 STOP = {"the", "of", "a", "an", "and", "in", "on", "at", "to", "for", "de", "la",
         "le", "el", "s", "is", "was", "were", "are", "by", "with", "from", "as",
@@ -56,8 +58,19 @@ def sig(s):
 
 
 def leads():
-    """title -> [sentences] from the cached article lead."""
+    """title -> [sentences] from the article lead.
+
+    Stage C's `prose` table first (61,400 subjects), then the JSON article cache
+    for anything it misses.
+    """
     out = {}
+    if SOURCE_DB.exists():
+        db = sqlite3.connect(f"file:{SOURCE_DB}?mode=ro", uri=True)
+        for title, text in db.execute(
+                "select title, lead from prose where lead is not null and length(lead) > 80"):
+            parts = re.split(r"(?<=[.!?])\s+(?=[A-Z])", text)
+            out[title] = [x.strip() for x in parts if 40 <= len(x.strip()) <= MAX_CHARS]
+        db.close()
     for p in glob.glob(str(CACHE / "*.json")):
         try:
             d = json.load(open(p))

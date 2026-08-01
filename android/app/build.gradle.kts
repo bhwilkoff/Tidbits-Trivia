@@ -77,6 +77,16 @@ android {
     packaging {
         resources { excludes += setOf("/META-INF/{AL2.0,LGPL2.1}", "/META-INF/LICENSE*") }
     }
+
+    // The Create golden test ranks the WHOLE 56MB corpus on the JVM (that is the
+    // point — it re-applies the rules `search` pushes into SQL, so SQL stays a pure
+    // optimisation). org.json builds the entire tree in memory, which the default
+    // test heap cannot hold.
+    testOptions {
+        unitTests.all {
+            it.maxHeapSize = "3g"
+        }
+    }
 }
 
 kotlin {
@@ -118,4 +128,8 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.coroutines.test)
+    // android.jar's org.json is a stub that throws "not mocked" on the JVM. The
+    // Create golden test parses the real corpus, so it needs a real implementation
+    // ahead of the stub. Test-only: the app keeps using the platform's org.json.
+    testImplementation("org.json:json:20240303")
 }

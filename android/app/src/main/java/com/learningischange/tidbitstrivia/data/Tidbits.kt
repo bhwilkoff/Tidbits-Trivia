@@ -594,7 +594,36 @@ object Corpus {
                 "AND id NOT LIKE 'src:continent:%' AND ($clause) LIMIT 25000",
             args,
         )
+        return rank(candidates, topic, limit, isOwnSubject(phrase))
+    }
+
+    /** The whole Create ranking POLICY, over an already-fetched candidate list.
+     *
+     *  Split out so it can be exercised on the JVM. `search` reaches straight into
+     *  Android SQLite, which left Kotlin the one engine of the four that could not
+     *  be held to `tools/create/golden/search.txt` — its pure helpers were tested,
+     *  the query and assembly around them were not.
+     *
+     *  The two owner rules (drop the repetitive "which continent" template and the
+     *  trivially-easy tier) are applied HERE as well as in the SQL. That is
+     *  deliberate duplication: it makes SQL a pure optimisation, so feeding this
+     *  function every row in the corpus produces exactly what feeding it the
+     *  pre-filtered subset does — which is what makes the golden test meaningful. */
+    fun rank(
+        candidates: List<Question>,
+        topic: String,
+        limit: Int,
+        ownSubject: Boolean,
+    ): List<Question> {
+        val tokens = topicTokens(topic)
+        if (tokens.isEmpty()) return emptyList()
+        if (tokens.none { it !in STOPWORDS }) return emptyList()
+        val phrase = topicPhrase(topic)
+        val guardNames = tokens.size == 1 && ownSubject
+        val requirePhrase = phraseIsRequired(topic)
         val scoredAll = candidates.mapNotNull { q ->
+            if (q.difficulty <= 1) return@mapNotNull null
+            if (q.id.startsWith("src:continent:")) return@mapNotNull null
             // The relevance FLOOR, before any ranking.
             val t = tier(q.sourceTitle, q.prompt, q.tags, tokens, phrase, guardNames, requirePhrase)
                 ?: return@mapNotNull null
@@ -626,6 +655,13 @@ object Corpus {
         }
         return out
     }
+
+    /** Does any of these rows have the topic as its SUBJECT? The JVM analogue of
+     *  the `isOwnSubject` title query, for callers that already hold the rows. */
+    fun ownSubject(candidates: List<Question>, phrase: String): Boolean =
+        candidates.any {
+            flattened(it.sourceTitle) == phrase || flattened(stripParens(it.sourceTitle)) == phrase
+        }
 
     /** Take from the highest occupied relevance tier first, diversifying INSIDE it.
      *  Diversifying across tiers is what promoted a one-word coincidence into a

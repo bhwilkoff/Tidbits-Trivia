@@ -204,7 +204,10 @@ def audit(games, rows):
         # of 4,858 MCQs whose four options are all dated people (9.2%) span more
         # than 400 years — the worst is 4,314. Reported, not yet fixed: the fix is
         # era-aware distractor selection at generation time.
-        if opts and not is_shaped and 0 <= ci < len(opts):
+        # Four or more only. A binary "which came first?" between an 8th-century
+        # monk and a 14th-century mathematician spans 865 years BY DESIGN — that
+        # is the question, not a defect, and reporting it buried the real ones.
+        if opts and not is_shaped and len(opts) >= 4 and 0 <= ci < len(opts):
             yrs = [_birth_year(str(o)) for o in opts]
             if all(yrs) and max(yrs) - min(yrs) > 400:
                 add("D5", "unfair", qid,

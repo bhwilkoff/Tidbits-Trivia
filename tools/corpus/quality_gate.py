@@ -25,6 +25,10 @@ Each rule below is here because a real question in this app hit it:
                   created?" — a Wikidata property name left in the prose.
   THIN-COVERAGE   a mode x category the bundle cannot fill, which silently
                   serves a different category and says nothing.
+  STEM-TYPE       "In which country is Russo-Ukrainian war?" — one Wikidata
+                  property mapped to one stem and applied to every kind of
+                  subject. The second question of this session's first playtest
+                  was "In which country is Germanwings Flight 9525?".
 
 Thresholds are the count that ships TODAY, so the gate locks in progress and
 fails on regression. Lower them as content improves; never raise one to make a
@@ -52,6 +56,7 @@ BUDGET = {
     "ERA-SPREAD": 0,            # 401 repaired by occupation+era; 44 unrepairable, dropped
     "MACHINE-STEM": 0,
     "THIN-COVERAGE": 0,
+    "STEM-TYPE": 0,
 }
 
 STOP = {"the", "of", "a", "an", "and", "in", "on", "at", "to", "for",
@@ -68,6 +73,21 @@ MACHINE = re.compile(
     r"founded or created|\bwikidata\b|\bqid\b|\bQ\d{4,}\b|"
     r"significant event|subclass of|\bP\d{2,4}:", re.I)
 PLACEHOLDER = re.compile(r"%@|%\d*\$?[sd]|\{\}|\bnil\b|Optional\(|\bNaN\b|\bundefined\b")
+
+# "In which country is X?" only parses when X is a PLACE. Asked of an event, an
+# organization or a song it is not a hard question, it is a broken sentence.
+# The repaired forms end in "based?" / "take place?" and must not match — `.+`
+# happily swallowed "Juventus FC based", so the first run of this rule failed on
+# the 407 questions it had just fixed.
+LOCATIVE_STEM = re.compile(r"^In which country is (?!.*\b(?:based|take place|located)\?$).+\?$")
+NOT_A_PLACE = re.compile(
+    r"\b(crash|disaster|flight|accident|battle|war\b|massacre|attack|siege|earthquake|"
+    r"eruption|hurricane|shooting|bombing|riot|protest|revolution|election|treaty|"
+    r"uprising|offensive|campaign|landing|genocide|famine|pandemic|coup|rebellion|"
+    r"company|corporation|conglomerate|manufacturer|retailer|airline|brand|club|team|"
+    r"university|bank|studio|publisher|broadcaster|agency|band\b|"
+    r"film|movie|song|album|single|novel|book|poem|series|sitcom|anime|video game|"
+    r"manga|painting|opera|symphony|musical|anthem)\b", re.I)
 
 SHAPE_FILES = {
     "picture.json":    ("pictureId", 10, 4, 9),    # (mode, per-round, cat idx, shape idx)
@@ -126,8 +146,21 @@ def check():
     years = birth_years()
 
     # ---- the corpus itself -------------------------------------------------
-    for q in load("corpus.json"):
+    rows_all = load("corpus.json")
+    # Subject descriptions, for the stem-type check.
+    subject_desc = {}
+    for q in rows_all:
+        e = q[6] or ""
+        if ":" in e and "\u2192" not in e:
+            _, d = e.split(":", 1)
+            d = d.strip()
+            if d and not d[0].isdigit() and len(d) > 8:
+                subject_desc.setdefault(q[7], d)
+
+    for q in rows_all:
         prompt, opts, ci = q[1], q[2], q[3]
+        if LOCATIVE_STEM.match(prompt or "") and NOT_A_PLACE.search(subject_desc.get(q[7], "")):
+            bad["STEM-TYPE"].append(f"{q[0]}: {prompt[:70]}")
         if PLACEHOLDER.search(prompt or ""):
             bad["PLACEHOLDER"].append(f"{q[0]}: {prompt[:70]}")
         if MACHINE.search(prompt or ""):

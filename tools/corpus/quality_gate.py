@@ -25,6 +25,10 @@ Each rule below is here because a real question in this app hit it:
                   created?" — a Wikidata property name left in the prose.
   THIN-COVERAGE   a mode x category the bundle cannot fill, which silently
                   serves a different category and says nothing.
+  CITY-LANGUAGE   "Which of these is an official language of Thessaloniki?" —
+                  a country-level fact asked of a city, so the city's name gives
+                  it away. Kept only where the city genuinely differs from its
+                  country (Dakar -> Wolof in French-speaking Senegal).
   KIND-MISMATCH   an option that is a different KIND of thing from the answer —
                   "European hornet" among Myrtle, Nerium and Date palm, for a
                   clue about a shrub. Nobody needs the fact to solve that.
@@ -67,6 +71,7 @@ BUDGET = {
     # — films with films, people with people. Raising a budget to hide a defect
     # is forbidden; recording what a rule provably cannot see is not the same
     # thing, and pretending otherwise would mean deleting good questions.
+    "CITY-LANGUAGE": 2,   # Dakar and Asmara: the city really does differ
     "KIND-MISMATCH": 3,
 }
 
@@ -83,6 +88,10 @@ STOP = {"the", "of", "a", "an", "and", "in", "on", "at", "to", "for",
 MACHINE = re.compile(
     r"founded or created|\bwikidata\b|\bqid\b|\bQ\d{4,}\b|"
     r"significant event|subclass of|\bP\d{2,4}:", re.I)
+# A city or sub-national unit that is not itself a state.
+CITY_DESC = re.compile(r"\b(city|town|village|county|municipality|district|borough|"
+                       r"commune|prefecture|parish|neighborhood)\b(?!.*\b(country|"
+                       r"sovereign|kingdom|republic|empire|nation)\b)", re.I)
 PLACEHOLDER = re.compile(r"%@|%\d*\$?[sd]|\{\}|\bnil\b|Optional\(|\bNaN\b|\bundefined\b")
 
 # "In which country is X?" only parses when X is a PLACE. Asked of an event, an
@@ -233,6 +242,8 @@ def check():
         prompt, opts, ci = q[1], q[2], q[3]
         if LOCATIVE_STEM.match(prompt or "") and NOT_A_PLACE.search(subject_desc.get(q[7], "")):
             bad["STEM-TYPE"].append(f"{q[0]}: {prompt[:70]}")
+        if "official language of" in (prompt or "") and CITY_DESC.search(subject_desc.get(q[7], "")):
+            bad["CITY-LANGUAGE"].append(f"{q[0]}: {prompt[:70]}")
         if PLACEHOLDER.search(prompt or ""):
             bad["PLACEHOLDER"].append(f"{q[0]}: {prompt[:70]}")
         if MACHINE.search(prompt or ""):

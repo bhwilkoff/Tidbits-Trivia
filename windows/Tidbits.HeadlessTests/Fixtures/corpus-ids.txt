@@ -447,7 +447,6 @@ src:describe:Mikhail_Tal
 src:describe:Wilhelm_Reich
 src:cloze:Wilhelm_Reich
 wd:author:Q44973
-wd:author:Q1500229
 wd:author:Q5195547
 wd:author:Q2067597
 src:describe:Moringa_oleifera
@@ -572,7 +571,6 @@ src:describe:Ali_al-Sajjad
 src:describe:Arnold_Palmer
 src:describe:Bhagavata_Purana
 wd:composer:Q2608920
-wd:composer:Q1779432
 wd:author:Q674999
 wd:author:Q5552630
 wd:capital:Q862404
@@ -849,7 +847,6 @@ wd:composer:Q277463
 wd:composer:Q1113979
 wd:author:Q1180721
 wd:author:Q3813385
-wd:composer:Q1475933
 wd:composer:Q613618
 wd:author:Q1306656
 wd:author:Q473389
@@ -993,9 +990,7 @@ src:describe:Carlos_Castaneda
 src:describe:Fethullah_Gülen
 wd:author:Q579507
 wd:composer:Q871513
-wd:composer:Q223520
 wd:author:Q874601
-wd:composer:Q275815
 src:describe:Hong_Chengchou
 src:describe:Andrew_Fisher
 src:cloze:Andrew_Fisher
@@ -1436,7 +1431,6 @@ src:describe:Book_of_Mormon
 src:describe:Watchmen
 src:describe:Ned_Kelly
 src:cloze:Jacques_Lacan
-wd:composer:Q284448
 wd:composer:Q965040
 wd:capital:Q808575
 wd:composer:Q1146706
@@ -1566,7 +1560,6 @@ src:cloze:Aida
 src:cloze:Eckhart_Tolle
 wd:director:Q690583
 wd:composer:Q690583
-wd:composer:Q1054060
 wd:capital:Q14624218
 wd:author:Q335645
 src:describe:Pontiac_(Odawa_leader)
@@ -1891,7 +1884,6 @@ src:describe:Alexander_Litvinenko
 src:cloze:Alexander_Litvinenko
 src:describe:Manneken_Pis
 wd:author:Q230230
-wd:composer:Q1811459
 wd:author:Q1087628
 wd:capital:Q150056
 wd:author:Q1193229
@@ -2037,18 +2029,15 @@ src:describe:Earth,_Wind_&_Fire
 src:describe:Ozymandias
 src:describe:Turandot
 src:cloze:Turandot
-wd:composer:Q651383
 wd:author:Q739529
 wd:director:Q706373
 wd:composer:Q706373
 wd:author:Q55815
 wd:author:Q1609780
 wd:author:Q884005
-wd:composer:Q223337
 wd:capital:Q216752
 wd:composer:Q1330443
 wd:director:Q743203
-wd:composer:Q240279
 wd:author:Q3039787
 src:describe:Cretan_War_(1645–1669)
 src:describe:Lady_Mary_Wortley_Montagu
@@ -2208,7 +2197,6 @@ src:cloze:Thérèse_of_Lisieux
 wd:director:Q1076605
 wd:composer:Q1076605
 wd:composer:Q1487396
-wd:composer:Q270853
 wd:capital:Q2622868
 wd:director:Q722281
 wd:currency:Q816814
@@ -2919,7 +2907,6 @@ src:describe:Pattie_Boyd
 src:cloze:Pattie_Boyd
 src:describe:Piers_Morgan
 wd:author:Q3178967
-wd:author:Q442
 wd:author:Q622303
 wd:author:Q1754273
 wd:author:Q2657795
@@ -3203,8 +3190,6 @@ src:cloze:Jana_Gana_Mana
 src:describe:Sudha_Murty
 src:describe:Carmen
 wd:composer:Q1215463
-wd:composer:Q171405
-wd:composer:Q261140
 wd:capital:Q1250763
 wd:author:Q830643
 wd:composer:Q471240
@@ -4702,7 +4687,6 @@ wd:capital:Q769680
 wd:author:Q856274
 wd:director:Q1127828
 wd:composer:Q1127828
-wd:composer:Q11985
 wd:composer:Q303508
 wd:author:Q2008338
 wd:author:Q1193736
@@ -5930,7 +5914,6 @@ src:describe:Fatima
 src:describe:Charles_Bronson_(prisoner)
 src:describe:Józef_Ignacy_Kraszewski
 wd:composer:Q192023
-wd:composer:Q253716
 wd:director:Q14655473
 wd:author:Q492207
 wd:capital:Q316390
@@ -13703,7 +13686,6 @@ wd:director:Q23567
 wd:composer:Q23567
 wd:director:Q2744
 wd:composer:Q2744
-wd:author:Q4509219
 wd:director:Q108813842
 wd:capital:Q244
 wd:currency:Q244
@@ -70238,7 +70220,6 @@ wd:director:Q117842634
 wd:composer:Q117842634
 wd:author:Q85987403
 wd:director:Q117663112
-wd:author:Q163297
 wd:director:Q329434
 wd:composer:Q329434
 wd:director:Q116027468
@@ -71152,7 +71133,6 @@ wd:director:Q121810
 wd:composer:Q121810
 wd:director:Q217627
 wd:composer:Q217627
-wd:composer:Q12016
 wd:author:Q4166495
 wd:author:Q7766706
 wd:director:Q63352785
@@ -71679,7 +71659,6 @@ wd:author:Q206400
 wd:director:Q60771449
 wd:director:Q123179308
 wd:composer:Q123179308
-wd:composer:Q11989
 wd:director:Q272595
 wd:composer:Q272595
 wd:director:Q632670
@@ -72029,7 +72008,6 @@ wd:author:Q161138
 wd:author:Q19610143
 wd:director:Q269331
 wd:composer:Q269331
-wd:author:Q193034
 wd:composer:Q663583
 wd:director:Q218281
 wd:composer:Q218281
@@ -72155,7 +72133,6 @@ wd:director:Q730888
 wd:composer:Q730888
 wd:director:Q681962
 wd:composer:Q681962
-wd:composer:Q207875
 wd:author:Q188718
 wd:director:Q188718
 wd:composer:Q188718
@@ -72422,7 +72399,6 @@ wd:director:Q171711
 wd:composer:Q171711
 wd:director:Q30895665
 wd:composer:Q30895665
-wd:author:Q1196780
 wd:director:Q11070218
 wd:director:Q641362
 wd:composer:Q641362
@@ -73944,7 +73920,6 @@ wd:composer:Q1345077
 wd:capital:Q150981
 wd:director:Q244257
 wd:composer:Q244257
-wd:composer:Q188709
 wd:director:Q22575835
 wd:composer:Q22575835
 wd:director:Q177930
@@ -74129,7 +74104,6 @@ wd:director:Q85323361
 wd:composer:Q85323361
 wd:director:Q470916
 wd:composer:Q470916
-wd:author:Q753894
 wd:author:Q95047
 wd:director:Q19264035
 wd:composer:Q19264035
@@ -99444,7 +99418,6 @@ wd:director:Q54093632
 wd:composer:Q54093632
 wd:director:Q20814649
 wd:composer:Q20814649
-wd:composer:Q12008
 wd:director:Q100377303
 wd:composer:Q100377303
 wd:director:Q15965953
@@ -99650,7 +99623,6 @@ wd:composer:Q28234671
 wd:director:Q59456966
 wd:director:Q54497595
 wd:composer:Q54497595
-wd:author:Q1798059
 wd:director:Q2037169
 wd:director:Q121066362
 wd:composer:Q121066362
@@ -100425,7 +100397,6 @@ wd:continent:Q487829
 wd:continent:Q31747
 wd:continent:Q147909
 wd:continent:Q28025
-wd:continent:Q214102
 wd:continent:Q598
 wd:continent:Q47700
 wd:continent:Q56037
@@ -123222,7 +123193,6 @@ wd:director:Q110652727
 wd:composer:Q110652727
 wd:director:Q1758468
 wd:composer:Q1758468
-wd:composer:Q207732
 wd:director:Q698644
 wd:composer:Q698644
 wd:director:Q27343
@@ -124010,7 +123980,6 @@ wd:composer:Q260379
 wd:director:Q239296
 wd:composer:Q239296
 wd:capital:Q154401
-wd:currency:Q154401
 wd:director:Q115804740
 wd:composer:Q1132439
 wd:director:Q841274
@@ -125075,7 +125044,6 @@ wd:composer:Q19895421
 wd:author:Q813935
 wd:director:Q80155482
 wd:composer:Q80155482
-wd:author:Q641423
 wd:director:Q123024677
 wd:director:Q474573
 wd:composer:Q474573

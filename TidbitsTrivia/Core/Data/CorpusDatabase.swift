@@ -103,6 +103,8 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
         s.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: nil)
     }
 
+    nonisolated static func isStopword(_ w: String) -> Bool { stopwords.contains(w) }
+
     private static let stopwords: Set<String> = [
         "the", "and", "for", "with", "from", "that", "this", "his", "her", "its",
         "was", "were", "are", "who", "what", "which", "how", "why", "all", "any",
@@ -266,6 +268,13 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
         // stopwords, so a query is never left empty.
         let tokens = Self.topicTokens(topic)
         guard !tokens.isEmpty else { return [] }
+        // A topic made of nothing but stopwords cannot be searched for. "From (TV
+        // series)" reduces to the word `from`, which then matched every row
+        // containing it — measured, that topic returned Notes from Underground,
+        // Spider-Man: Far From Home and From Dusk till Dawn. The corpus has no way
+        // to tell these apart, so it says so and live generation takes the topic,
+        // where Wikipedia's own search does know what "From (TV series)" is.
+        guard tokens.contains(where: { !Self.stopwords.contains($0) }) else { return [] }
         let phrase = Self.topicPhrase(topic)
         return queue.sync {
             guard let db else { return [] }

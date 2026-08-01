@@ -52,6 +52,10 @@ nonisolated final class JSONQuestionSource: @unchecked Sendable {
     func searchMatch(topic: String, limit: Int) -> [Question] {
         let tokens = CorpusDatabase.topicTokens(topic)
         guard !tokens.isEmpty else { return [] }
+        // Same rule as the corpus search: a topic that is nothing but stopwords
+        // ("From") matches everything containing that word, and a picture round
+        // showing the wrong subject is worse than no picture round.
+        guard tokens.contains(where: { !CorpusDatabase.isStopword($0) }) else { return [] }
         let phrase = CorpusDatabase.topicPhrase(topic)
         // The SAME relevance floor the corpus search uses, for the same reason: a
         // picture round that shows the wrong subject is worse than no picture

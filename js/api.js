@@ -301,6 +301,11 @@ export const Corpus = {
     // ("The Beatles", "The Simpsons"). Mirrors Swift/Kotlin/C#.
     const tokens = topicTokens(topic);
     if (!tokens.length) return [];
+    // A topic made of nothing but stopwords cannot be searched for. "From (TV
+    // series)" reduces to the word `from`, which matched every row containing it —
+    // Notes from Underground, Spider-Man: Far From Home, From Dusk till Dawn. The
+    // corpus says so and live generation takes the topic instead.
+    if (!tokens.some((t) => !STOPWORDS.has(t))) return [];
     const phrase = topicPhrase(topic);
     // Is the typed word itself a subject here? That single fact is what licenses
     // the different-person guard: "Denver" is a place in this corpus, so "Bob

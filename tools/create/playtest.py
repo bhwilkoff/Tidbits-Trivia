@@ -31,8 +31,23 @@ def fold(s):
     return "".join(c for c in unicodedata.normalize("NFKD", s or "") if not unicodedata.combining(c)).lower()
 
 
+def strip_parens(s):
+    out, depth = "", 0
+    for c in s or "":
+        if c in "([":
+            depth += 1
+        elif c in ")]":
+            depth = max(0, depth - 1)
+        elif depth == 0:
+            out += c
+    return out.strip()
+
+
 def tokens(topic):
-    t = "".join(c if c.isalnum() else " " for c in fold(topic)).split()
+    # Mirrors the shipped `topicTokens`: a Wikipedia disambiguator is not part of
+    # what the player means, so it must not count as a topic word here either —
+    # otherwise "Toy Story (franchise)" reports every Toy Story film as drift.
+    t = "".join(c if c.isalnum() else " " for c in fold(strip_parens(topic))).split()
     raw = [x for x in t if len(x) >= 3]
     kept = [x for x in raw if x not in STOPWORDS]
     return kept or raw

@@ -85,6 +85,10 @@ internal static class QueryHelpers
     /// The typed topic as a matchable phrase: disambiguator removed, order kept.
     public static string TopicPhrase(string s) => Flatten(StripParens(s));
 
+    /// Is any typed word actually searchable, or is the topic all stopwords?
+    public static bool HasSignificantWord(IReadOnlyList<string> tokens) =>
+        tokens.Any(t => !Stopwords.Contains(t));
+
     /// Did the topic lose MEANINGFUL words to the >=3-character rule? "George VI"
     /// reduces to the single token `george`, so every George matched — measured, it
     /// returned George Martin, George Mallory, George Eliot and Paul George; "O. J.

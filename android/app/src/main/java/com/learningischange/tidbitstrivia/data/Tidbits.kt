@@ -526,6 +526,11 @@ object Corpus {
     fun search(topic: String, limit: Int): List<Question> {
         val tokens = topicTokens(topic)
         if (tokens.isEmpty()) return emptyList()
+        // A topic made of nothing but stopwords cannot be searched for. "From (TV
+        // series)" reduces to the word `from`, which matched every row containing
+        // it — Notes from Underground, Spider-Man: Far From Home, From Dusk till
+        // Dawn. The corpus says so and live generation takes the topic instead.
+        if (tokens.none { it !in STOPWORDS }) return emptyList()
         val phrase = topicPhrase(topic)
         val guardNames = tokens.size == 1 && isOwnSubject(phrase)
         val requirePhrase = phraseIsRequired(topic)

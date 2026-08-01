@@ -154,24 +154,22 @@
    "https://en.wikipedia.org/wiki/Summer_Olympic_Games"
   ],
   [
-   "match:sports:c700cc54916f76",
+   "match:authored:3fcc2e62a63bb0",
    "Match each soccer club to the city where it plays.",
    [
-    "Manchester United",
-    "Real Madrid",
-    "Bayern Munich",
     "Juventus",
-    "Paris Saint-Germain"
+    "Arsenal",
+    "Ajax",
+    "Benfica"
    ],
    [
-    "Manchester",
-    "Madrid",
-    "Munich",
     "Turin",
-    "Paris"
+    "London",
+    "Amsterdam",
+    "Lisbon"
    ],
    "sports",
-   "Manchester United → Manchester · Real Madrid → Madrid · Bayern Munich → Munich · Juventus → Turin · Paris Saint-Germain → Paris",
+   "Juventus → Turin · Arsenal → London · Ajax → Amsterdam · Benfica → Lisbon",
    "Manchester United F.C.",
    "https://en.wikipedia.org/wiki/Manchester_United_F.C."
   ],
@@ -434,24 +432,22 @@
    "https://en.wikipedia.org/wiki/Timeline_of_historic_inventions"
   ],
   [
-   "match:history:0e91255ec8de07",
+   "match:authored:6488976a6024ec",
    "Match each revolution or independence movement to its country.",
    [
-    "French Revolution",
-    "American Revolution",
-    "Russian Revolution",
-    "Cuban Revolution",
-    "Haitian Revolution"
+    "Easter Rising",
+    "Velvet Revolution",
+    "Carnation Revolution",
+    "Meiji Restoration"
    ],
    [
-    "France",
-    "United States",
-    "Russia",
-    "Cuba",
-    "Haiti"
+    "Ireland",
+    "Czechoslovakia",
+    "Portugal",
+    "Japan"
    ],
    "history",
-   "French Revolution → France · American Revolution → United States · Russian Revolution → Russia · Cuban Revolution → Cuba · Haitian Revolution → Haiti",
+   "Easter Rising → Ireland · Velvet Revolution → Czechoslovakia · Carnation Revolution → Portugal · Meiji Restoration → Japan",
    "Revolution",
    "https://en.wikipedia.org/wiki/Revolution"
   ],

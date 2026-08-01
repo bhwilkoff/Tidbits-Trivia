@@ -1,0 +1,479 @@
+{
+ "count": 22,
+ "questions": [
+  [
+   "match:sports:c07ef87a07a8d0",
+   "Match each Olympic sprinter to the country they represented.",
+   [
+    "Usain Bolt",
+    "Carl Lewis",
+    "Andre De Grasse",
+    "Linford Christie",
+    "Cathy Freeman"
+   ],
+   [
+    "Jamaica",
+    "United States",
+    "Canada",
+    "Great Britain",
+    "Australia"
+   ],
+   "sports",
+   "Usain Bolt → Jamaica · Carl Lewis → United States · Andre De Grasse → Canada · Linford Christie → Great Britain · Cathy Freeman → Australia",
+   "Usain Bolt",
+   "https://en.wikipedia.org/wiki/Usain_Bolt"
+  ],
+  [
+   "match:sports:e784c6beeed9de",
+   "Match each NBA legend to the team he is most associated with.",
+   [
+    "Michael Jordan",
+    "Larry Bird",
+    "Magic Johnson",
+    "Tim Duncan",
+    "Dirk Nowitzki"
+   ],
+   [
+    "Chicago Bulls",
+    "Boston Celtics",
+    "Los Angeles Lakers",
+    "San Antonio Spurs",
+    "Dallas Mavericks"
+   ],
+   "sports",
+   "Michael Jordan → Chicago Bulls · Larry Bird → Boston Celtics · Magic Johnson → Los Angeles Lakers · Tim Duncan → San Antonio Spurs · Dirk Nowitzki → Dallas Mavericks",
+   "Michael Jordan",
+   "https://en.wikipedia.org/wiki/Michael_Jordan"
+  ],
+  [
+   "match:sports:ca6a9fff824684",
+   "Match each footballer to their national team.",
+   [
+    "Lionel Messi",
+    "Cristiano Ronaldo",
+    "Kylian Mbappe",
+    "Neymar",
+    "Harry Kane"
+   ],
+   [
+    "Argentina",
+    "Portugal",
+    "France",
+    "Brazil",
+    "England"
+   ],
+   "sports",
+   "Lionel Messi → Argentina · Cristiano Ronaldo → Portugal · Kylian Mbappe → France · Neymar → Brazil · Harry Kane → England",
+   "Lionel Messi",
+   "https://en.wikipedia.org/wiki/Lionel_Messi"
+  ],
+  [
+   "match:sports:ad8a65a84e0c40",
+   "Match each athlete to their sport.",
+   [
+    "Serena Williams",
+    "Tiger Woods",
+    "Wayne Gretzky",
+    "Michael Phelps",
+    "Muhammad Ali"
+   ],
+   [
+    "Tennis",
+    "Golf",
+    "Ice hockey",
+    "Swimming",
+    "Boxing"
+   ],
+   "sports",
+   "Serena Williams → Tennis · Tiger Woods → Golf · Wayne Gretzky → Ice hockey · Michael Phelps → Swimming · Muhammad Ali → Boxing",
+   "Serena Williams",
+   "https://en.wikipedia.org/wiki/Serena_Williams"
+  ],
+  [
+   "match:sports:42cbc882d3a192",
+   "Match each tennis Grand Slam tournament to the city or country where it is held.",
+   [
+    "Wimbledon",
+    "US Open",
+    "French Open",
+    "Australian Open"
+   ],
+   [
+    "London",
+    "New York",
+    "Paris",
+    "Melbourne"
+   ],
+   "sports",
+   "Wimbledon → London · US Open → New York · French Open → Paris · Australian Open → Melbourne",
+   "Grand Slam (tennis)",
+   "https://en.wikipedia.org/wiki/Grand_Slam_(tennis)"
+  ],
+  [
+   "match:sports:a143dcad0581f4",
+   "Match each NFL quarterback to the team he won a Super Bowl with.",
+   [
+    "Tom Brady",
+    "Patrick Mahomes",
+    "Peyton Manning",
+    "Aaron Rodgers",
+    "Joe Montana"
+   ],
+   [
+    "New England Patriots",
+    "Kansas City Chiefs",
+    "Indianapolis Colts",
+    "Green Bay Packers",
+    "San Francisco 49ers"
+   ],
+   "sports",
+   "Tom Brady → New England Patriots · Patrick Mahomes → Kansas City Chiefs · Peyton Manning → Indianapolis Colts · Aaron Rodgers → Green Bay Packers · Joe Montana → San Francisco 49ers",
+   "Tom Brady",
+   "https://en.wikipedia.org/wiki/Tom_Brady"
+  ],
+  [
+   "match:sports:2d3bf5f0f0a6ee",
+   "Match each Summer Olympic Games to the city that hosted it.",
+   [
+    "2020 (held 2021) Olympics",
+    "2016 Olympics",
+    "2012 Olympics",
+    "2008 Olympics",
+    "2004 Olympics"
+   ],
+   [
+    "Tokyo",
+    "Rio de Janeiro",
+    "London",
+    "Beijing",
+    "Athens"
+   ],
+   "sports",
+   "2020 (held 2021) Olympics → Tokyo · 2016 Olympics → Rio de Janeiro · 2012 Olympics → London · 2008 Olympics → Beijing · 2004 Olympics → Athens",
+   "Summer Olympic Games",
+   "https://en.wikipedia.org/wiki/Summer_Olympic_Games"
+  ],
+  [
+   "match:sports:c700cc54916f76",
+   "Match each soccer club to the city where it plays.",
+   [
+    "Manchester United",
+    "Real Madrid",
+    "Bayern Munich",
+    "Juventus",
+    "Paris Saint-Germain"
+   ],
+   [
+    "Manchester",
+    "Madrid",
+    "Munich",
+    "Turin",
+    "Paris"
+   ],
+   "sports",
+   "Manchester United → Manchester · Real Madrid → Madrid · Bayern Munich → Munich · Juventus → Turin · Paris Saint-Germain → Paris",
+   "Manchester United F.C.",
+   "https://en.wikipedia.org/wiki/Manchester_United_F.C."
+  ],
+  [
+   "match:sports:db5b301f68a578",
+   "Match each racing driver or event to its motorsport.",
+   [
+    "Lewis Hamilton",
+    "Indianapolis 500",
+    "Daytona 500",
+    "Valentino Rossi"
+   ],
+   [
+    "Formula One",
+    "IndyCar racing",
+    "NASCAR",
+    "MotoGP motorcycle racing"
+   ],
+   "sports",
+   "Lewis Hamilton → Formula One · Indianapolis 500 → IndyCar racing · Daytona 500 → NASCAR · Valentino Rossi → MotoGP motorcycle racing",
+   "Lewis Hamilton",
+   "https://en.wikipedia.org/wiki/Lewis_Hamilton"
+  ],
+  [
+   "match:sports:e3006af397cb81",
+   "Match each MLB player to the team he is most associated with.",
+   [
+    "Derek Jeter",
+    "David Ortiz",
+    "Tony Gwynn",
+    "Ken Griffey Jr.",
+    "Cal Ripken Jr."
+   ],
+   [
+    "New York Yankees",
+    "Boston Red Sox",
+    "San Diego Padres",
+    "Seattle Mariners",
+    "Baltimore Orioles"
+   ],
+   "sports",
+   "Derek Jeter → New York Yankees · David Ortiz → Boston Red Sox · Tony Gwynn → San Diego Padres · Ken Griffey Jr. → Seattle Mariners · Cal Ripken Jr. → Baltimore Orioles",
+   "Derek Jeter",
+   "https://en.wikipedia.org/wiki/Derek_Jeter"
+  ],
+  [
+   "match:sports:cd68d726d49256",
+   "Match each football stadium to the club that calls it home.",
+   [
+    "Camp Nou",
+    "Old Trafford",
+    "Anfield",
+    "Santiago Bernabeu",
+    "Allianz Arena"
+   ],
+   [
+    "FC Barcelona",
+    "Manchester United",
+    "Liverpool",
+    "Real Madrid",
+    "Bayern Munich"
+   ],
+   "sports",
+   "Camp Nou → FC Barcelona · Old Trafford → Manchester United · Anfield → Liverpool · Santiago Bernabeu → Real Madrid · Allianz Arena → Bayern Munich",
+   "Camp Nou",
+   "https://en.wikipedia.org/wiki/Camp_Nou"
+  ],
+  [
+   "match:history:a9d00b34f2c11a",
+   "Match each ancient wonder or landmark to the civilization that built it.",
+   [
+    "Great Pyramid of Giza",
+    "Colosseum",
+    "Parthenon",
+    "Great Wall",
+    "Machu Picchu"
+   ],
+   [
+    "Ancient Egypt",
+    "Ancient Rome",
+    "Ancient Greece",
+    "Ancient China",
+    "Inca Empire"
+   ],
+   "history",
+   "Great Pyramid of Giza → Ancient Egypt · Colosseum → Ancient Rome · Parthenon → Ancient Greece · Great Wall → Ancient China · Machu Picchu → Inca Empire",
+   "Ancient history",
+   "https://en.wikipedia.org/wiki/Ancient_history"
+  ],
+  [
+   "match:history:140f2aa2360da0",
+   "Match each U.S. President to the war fought during his time in office.",
+   [
+    "Abraham Lincoln",
+    "Franklin D. Roosevelt",
+    "Woodrow Wilson",
+    "Lyndon B. Johnson",
+    "James K. Polk"
+   ],
+   [
+    "American Civil War",
+    "World War II",
+    "World War I",
+    "Vietnam War",
+    "Mexican-American War"
+   ],
+   "history",
+   "Abraham Lincoln → American Civil War · Franklin D. Roosevelt → World War II · Woodrow Wilson → World War I · Lyndon B. Johnson → Vietnam War · James K. Polk → Mexican-American War",
+   "President of the United States",
+   "https://en.wikipedia.org/wiki/President_of_the_United_States"
+  ],
+  [
+   "match:history:52d20fa320f9fc",
+   "Match each historical figure to the country they led.",
+   [
+    "Winston Churchill",
+    "Charles de Gaulle",
+    "Mahatma Gandhi",
+    "Nelson Mandela",
+    "Otto von Bismarck"
+   ],
+   [
+    "United Kingdom",
+    "France",
+    "India",
+    "South Africa",
+    "Germany"
+   ],
+   "history",
+   "Winston Churchill → United Kingdom · Charles de Gaulle → France · Mahatma Gandhi → India · Nelson Mandela → South Africa · Otto von Bismarck → Germany",
+   "Head of state",
+   "https://en.wikipedia.org/wiki/Head_of_state"
+  ],
+  [
+   "match:history:f5fda903b74396",
+   "Match each major event to the year it occurred.",
+   [
+    "Fall of the Berlin Wall",
+    "End of World War II",
+    "Declaration of Independence signed",
+    "First Moon landing",
+    "Christopher Columbus reaches the Americas"
+   ],
+   [
+    "1989",
+    "1945",
+    "1776",
+    "1969",
+    "1492"
+   ],
+   "history",
+   "Fall of the Berlin Wall → 1989 · End of World War II → 1945 · Declaration of Independence signed → 1776 · First Moon landing → 1969 · Christopher Columbus reaches the Americas → 1492",
+   "Timeline of world history",
+   "https://en.wikipedia.org/wiki/Timeline_of_world_history"
+  ],
+  [
+   "match:history:dc3e020cecf715",
+   "Match each explorer to the region they are famous for exploring or reaching.",
+   [
+    "Christopher Columbus",
+    "Marco Polo",
+    "Ferdinand Magellan",
+    "Roald Amundsen",
+    "Vasco da Gama"
+   ],
+   [
+    "The Caribbean",
+    "China",
+    "The first circumnavigation",
+    "The South Pole",
+    "Sea route to India"
+   ],
+   "history",
+   "Christopher Columbus → The Caribbean · Marco Polo → China · Ferdinand Magellan → The first circumnavigation · Roald Amundsen → The South Pole · Vasco da Gama → Sea route to India",
+   "Age of Discovery",
+   "https://en.wikipedia.org/wiki/Age_of_Discovery"
+  ],
+  [
+   "match:history:39558436fe895b",
+   "Match each famous battle to the war it was part of.",
+   [
+    "Battle of Gettysburg",
+    "Battle of Hastings",
+    "Battle of Waterloo",
+    "D-Day (Normandy landings)",
+    "Battle of the Somme"
+   ],
+   [
+    "American Civil War",
+    "Norman Conquest",
+    "Napoleonic Wars",
+    "World War II",
+    "World War I"
+   ],
+   "history",
+   "Battle of Gettysburg → American Civil War · Battle of Hastings → Norman Conquest · Battle of Waterloo → Napoleonic Wars · D-Day (Normandy landings) → World War II · Battle of the Somme → World War I",
+   "List of battles",
+   "https://en.wikipedia.org/wiki/List_of_battles"
+  ],
+  [
+   "match:history:ec9fd39042b820",
+   "Match each treaty or agreement to what it accomplished.",
+   [
+    "Treaty of Versailles",
+    "Magna Carta",
+    "Declaration of Independence",
+    "Emancipation Proclamation"
+   ],
+   [
+    "Ended World War I",
+    "Limited the English king's power",
+    "Founded the United States",
+    "Freed enslaved people in the Confederacy"
+   ],
+   "history",
+   "Treaty of Versailles → Ended World War I · Magna Carta → Limited the English king's power · Declaration of Independence → Founded the United States · Emancipation Proclamation → Freed enslaved people in the Confederacy",
+   "Treaty",
+   "https://en.wikipedia.org/wiki/Treaty"
+  ],
+  [
+   "match:history:40909d0243e498",
+   "Match each U.S. President to the number of his presidency.",
+   [
+    "George Washington",
+    "Abraham Lincoln",
+    "Theodore Roosevelt",
+    "John F. Kennedy"
+   ],
+   [
+    "1st President",
+    "16th President",
+    "26th President",
+    "35th President"
+   ],
+   "history",
+   "George Washington → 1st President · Abraham Lincoln → 16th President · Theodore Roosevelt → 26th President · John F. Kennedy → 35th President",
+   "List of presidents of the United States",
+   "https://en.wikipedia.org/wiki/List_of_presidents_of_the_United_States"
+  ],
+  [
+   "match:history:d21206c5f9a46d",
+   "Match each invention or achievement to the person credited with it.",
+   [
+    "Telephone",
+    "Printing press",
+    "Practical light bulb",
+    "Theory of general relativity",
+    "First powered airplane"
+   ],
+   [
+    "Alexander Graham Bell",
+    "Johannes Gutenberg",
+    "Thomas Edison",
+    "Albert Einstein",
+    "Wright brothers"
+   ],
+   "history",
+   "Telephone → Alexander Graham Bell · Printing press → Johannes Gutenberg · Practical light bulb → Thomas Edison · Theory of general relativity → Albert Einstein · First powered airplane → Wright brothers",
+   "Timeline of historic inventions",
+   "https://en.wikipedia.org/wiki/Timeline_of_historic_inventions"
+  ],
+  [
+   "match:history:0e91255ec8de07",
+   "Match each revolution or independence movement to its country.",
+   [
+    "French Revolution",
+    "American Revolution",
+    "Russian Revolution",
+    "Cuban Revolution",
+    "Haitian Revolution"
+   ],
+   [
+    "France",
+    "United States",
+    "Russia",
+    "Cuba",
+    "Haiti"
+   ],
+   "history",
+   "French Revolution → France · American Revolution → United States · Russian Revolution → Russia · Cuban Revolution → Cuba · Haitian Revolution → Haiti",
+   "Revolution",
+   "https://en.wikipedia.org/wiki/Revolution"
+  ],
+  [
+   "match:history:4ee4f1a13c8036",
+   "Match each historic document to the country that produced it.",
+   [
+    "Magna Carta",
+    "U.S. Constitution",
+    "Declaration of the Rights of Man",
+    "Code of Hammurabi"
+   ],
+   [
+    "England",
+    "United States",
+    "France",
+    "Babylon"
+   ],
+   "history",
+   "Magna Carta → England · U.S. Constitution → United States · Declaration of the Rights of Man → France · Code of Hammurabi → Babylon",
+   "Historical document",
+   "https://en.wikipedia.org/wiki/Historical_document"
+  ]
+ ]
+}

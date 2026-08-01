@@ -72,6 +72,9 @@
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="tidbits"/>
+                <!-- Apple registers both; matching here keeps ONE share link shape
+                     working no matter which platform emitted it. -->
+                <data android:scheme="tidbitstrivia"/>
             </intent-filter>
 
             <meta-data

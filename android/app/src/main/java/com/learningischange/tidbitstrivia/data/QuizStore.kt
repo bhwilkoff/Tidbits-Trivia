@@ -2,6 +2,12 @@ package com.learningischange.tidbitstrivia.data
 
 import android.content.Context
 import android.content.SharedPreferences
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 
 /**
  * Local persistence for saved quizzes (docs/QUIZ-CONTRACT.md §4).
@@ -78,3 +84,40 @@ object QuizStore {
         )
     }
 }
+
+// ---- Wire <-> Firebase map bridging ------------------------------------------------
+//
+// The RTDB SDK wants Maps/Lists, but the quiz format is frozen as JSON and mirrored on
+// four stacks. Converting at the edge keeps ONE representation: nothing else in the app
+// ever sees a quiz-shaped Kotlin object on the wire.
+
+/** Contract JSON -> the Map/List tree the RTDB SDK writes. */
+fun jsonToMap(json: String): Any? = unwrap(Json.parseToJsonElement(json))
+
+private fun unwrap(e: JsonElement): Any? = when (e) {
+    is JsonObject -> e.mapValues { unwrap(it.value) }
+    is JsonArray -> e.map { unwrap(it) }
+    is JsonPrimitive -> when {
+        e.isString -> e.content
+        e.content == "true" -> true
+        e.content == "false" -> false
+        e.content.toLongOrNull() != null -> e.content.toLong()
+        else -> e.content.toDoubleOrNull() ?: e.content
+    }
+    else -> null
+}
+
+/** The Map/List tree RTDB returns -> contract JSON. */
+fun mapToJson(value: Any?): String = wrap(value).toString()
+
+private fun wrap(v: Any?): JsonElement = when (v) {
+    null -> JsonNull
+    is Map<*, *> -> JsonObject(v.entries.associate { it.key.toString() to wrap(it.value) })
+    is List<*> -> JsonArray(v.map { wrap(it) })
+    is Boolean -> JsonPrimitive(v)
+    is Number -> JsonPrimitive(v)
+    else -> JsonPrimitive(v.toString())
+}
+
+/** The canonical link target on every platform (QUIZ-CONTRACT §5). */
+fun quizShareUrl(id: String): String = "https://tidbitstrivia.com/#/quiz/$id"

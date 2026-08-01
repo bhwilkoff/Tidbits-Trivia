@@ -180,7 +180,23 @@ fun AppRoot(
             "party" -> { backStack.clear(); backStack.add(Route.Home); backStack.add(Route.Party) }
             "create" -> { backStack.clear(); backStack.add(Route.Create) }
             "settings" -> { backStack.clear(); backStack.add(Route.Home); backStack.add(Route.Settings) }
-            else -> { backStack.clear(); backStack.add(Route.Home) }
+            else -> {
+                // A shared quiz: "quiz/<id>". Fetch it, KEEP it (a link a friend sent
+                // shouldn't evaporate), and land on Create where the shelf lives.
+                val id = deepLink.removePrefix("quiz/").takeIf { deepLink.startsWith("quiz/") && it.isNotBlank() }
+                backStack.clear()
+                backStack.add(Route.Home)
+                if (id != null) {
+                    backStack.add(Route.Create)
+                    runCatching {
+                        com.learningischange.tidbitstrivia.net.FirebaseNet.loadQuizJson(id)
+                    }.getOrNull()?.let { json ->
+                        com.learningischange.tidbitstrivia.data.SavedQuiz.fromJson(json)?.let {
+                            com.learningischange.tidbitstrivia.data.QuizStore.save(it)
+                        }
+                    }
+                }
+            }
         }
         if (deepLink != null) onDeepLinkConsumed()
     }
@@ -2596,6 +2612,11 @@ private fun CreateScreen(onPlay: (List<Question>, String) -> Unit) {
     var error by remember { mutableStateOf<String?>(null) }
     var saved by remember { mutableStateOf(com.learningischange.tidbitstrivia.data.QuizStore.all()) }
     val scope = rememberCoroutineScope()
+    val ctx = LocalContext.current
+    // Re-read on every appearance, not just first composition. A quiz that arrives
+    // from a share link is written AFTER this screen composes, so a remembered list
+    // showed the shelf without it — the link looked like it had done nothing.
+    LaunchedEffect(Unit) { saved = com.learningischange.tidbitstrivia.data.QuizStore.all() }
     val suggestions = listOf("Space exploration", "Ancient Rome", "Jazz", "Volcanoes", "The Olympics", "Marie Curie")
     fun generate(t: String) {
         if (t.trim().length < 2 || working) return
@@ -2660,6 +2681,33 @@ private fun CreateScreen(onPlay: (List<Question>, String) -> Unit) {
                         com.learningischange.tidbitstrivia.data.QuizStore.delete(quiz.id)
                         saved = com.learningischange.tidbitstrivia.data.QuizStore.all()
                     },
+                    onShare = {
+                        scope.launch {
+                            // Publish, THEN hand the link to the system chooser. A
+                            // share that silently does nothing is worse than one that
+                            // admits it failed.
+                            val url = runCatching {
+                                val uid = com.learningischange.tidbitstrivia.net.FirebaseNet.ensureAuth()
+                                val stamped = quiz.copy(creatorId = uid)
+                                com.learningischange.tidbitstrivia.net.FirebaseNet
+                                    .publishQuiz(stamped.id, stamped.toJson())
+                                // Persist the stamped owner locally too, or a later
+                                // re-share fails the `by === auth.uid` rule.
+                                com.learningischange.tidbitstrivia.data.QuizStore.save(stamped)
+                                com.learningischange.tidbitstrivia.data.quizShareUrl(stamped.id)
+                            }.getOrNull()
+                            if (url == null) {
+                                error = "Couldn't share that just now. Check your connection and try again."
+                            } else {
+                                val send = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(android.content.Intent.EXTRA_SUBJECT, quiz.title)
+                                    putExtra(android.content.Intent.EXTRA_TEXT, "${quiz.title} — a Tidbits quiz\n$url")
+                                }
+                                ctx.startActivity(android.content.Intent.createChooser(send, "Share quiz"))
+                            }
+                        }
+                    },
                 )
             }
         }
@@ -2673,6 +2721,7 @@ private fun SavedQuizRow(
     quiz: com.learningischange.tidbitstrivia.data.SavedQuiz,
     onPlay: () -> Unit,
     onDelete: () -> Unit,
+    onShare: () -> Unit = {},
 ) {
     var confirming by remember { mutableStateOf(false) }
     ChunkyCard(onClick = onPlay) {
@@ -2688,6 +2737,9 @@ private fun SavedQuizRow(
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                     fontSize = 14.sp,
                 )
+            }
+            IconButton(onClick = onShare) {
+                Icon(Icons.Filled.Share, contentDescription = "Share quiz")
             }
             IconButton(onClick = { confirming = true }) {
                 Icon(Icons.Filled.Delete, contentDescription = "Delete quiz")

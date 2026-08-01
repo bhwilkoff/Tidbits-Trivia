@@ -43,6 +43,25 @@ object FirebaseNet {
         return u
     }
 
+    // ---- Saved quizzes (docs/QUIZ-CONTRACT.md §4/§5) ----
+    // Publishing is an EXPLICIT user action, not a side effect of saving: a quiz you
+    // never share never leaves your account. The bucket is world-readable so a share
+    // link opens for someone who doesn't have the app, which is the whole point.
+
+    suspend fun publishQuiz(id: String, wireJson: String) {
+        // The contract JSON goes up VERBATIM as a map, so every stack writes the same
+        // shape. Serialising a Kotlin data class here would create a second
+        // representation of a format that already has four implementations.
+        val map = com.learningischange.tidbitstrivia.data.jsonToMap(wireJson)
+        db.getReference("quizzes/$id").setValue(map).await()
+    }
+
+    suspend fun loadQuizJson(id: String): String? {
+        val snap = db.getReference("quizzes/$id").get().await()
+        if (!snap.exists()) return null
+        return com.learningischange.tidbitstrivia.data.mapToJson(snap.value)
+    }
+
     // ---- Portable player identity (players/{uid}) — see PlayerIdentity.kt ----
 
     suspend fun loadProfile(uid: String): com.learningischange.tidbitstrivia.data.PlayerIdentity.Profile? {

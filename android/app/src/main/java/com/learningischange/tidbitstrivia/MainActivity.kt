@@ -100,11 +100,33 @@ class MainActivity : ComponentActivity() {
     // launch via these same intents.
     private fun routeFor(intent: Intent?): String? {
         val uri = intent?.data ?: return null
+
+        // A shared quiz carries an ID, so it can't collapse to a bare token:
+        //   tidbits://quiz/<id>  ·  tidbitstrivia://quiz/<id>
+        //   https://tidbitstrivia.com/#/quiz/<id>
+        // The https form puts the route in the FRAGMENT, which no intent filter can
+        // match on — the filter matches the host and the fragment is parsed here.
+        quizIdFrom(uri)?.let { return "quiz/$it" }
+
         val token = when (uri.scheme) {
-            "tidbits" -> uri.host
+            "tidbits", "tidbitstrivia" -> uri.host
             "https" -> uri.pathSegments.firstOrNull()
             else -> null
         }?.lowercase()
         return token?.takeIf { it in setOf("daily", "night", "party", "create", "settings") }
+    }
+
+    private fun quizIdFrom(uri: android.net.Uri): String? {
+        if ((uri.scheme == "tidbits" || uri.scheme == "tidbitstrivia") && uri.host == "quiz") {
+            return uri.pathSegments.firstOrNull()?.takeIf { it.isNotBlank() }
+        }
+        if (uri.scheme == "https") {
+            // Web canonical: .../#/quiz/<id>
+            val frag = uri.fragment ?: return uri.pathSegments
+                .takeIf { it.size >= 2 && it[0] == "quiz" }?.get(1)
+            val parts = frag.trim('/').split('/')
+            if (parts.size >= 2 && parts[0] == "quiz") return parts[1].takeIf { it.isNotBlank() }
+        }
+        return null
     }
 }

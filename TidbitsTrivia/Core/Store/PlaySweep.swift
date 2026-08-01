@@ -25,17 +25,25 @@ enum PlaySweep {
     /// Answering correctly is the high-signal run: if a game marks the right
     /// answer wrong, or scores it zero, or refuses to end, that is a defect the
     /// player meets on their best turn, not their worst.
-    static func run(games: Int, modes: [GameMode], categories: [TriviaCategory]) async {
-        print("PLAYTHROUGH-BEGIN games=\(games)")
+    static func run(games: Int, modes: [GameMode], categories: [TriviaCategory],
+                    style: Style = .correct) async {
+        print("PLAYTHROUGH-BEGIN games=\(games) style=\(style.rawValue)")
         for g in 0..<games {
             let mode = modes[g % modes.count]
             let cat = categories[(g / modes.count) % categories.count]
-            await playOne(index: g, mode: mode, category: cat)
+            await playOne(index: g, mode: mode, category: cat, style: style)
         }
         print("PLAYTHROUGH-END")
     }
 
-    private static func playOne(index g: Int, mode: GameMode, category: TriviaCategory) async {
+    /// How the harness plays. A game only audited on its happy path hides a whole
+    /// class of defect — the tie, the zero, the round that ends on the first
+    /// question. `wrong` answers everything incorrectly; `timeout` answers nothing
+    /// at all, which is what a player who puts the phone down produces.
+    enum Style: String { case correct, wrong, timeout }
+
+    private static func playOne(index g: Int, mode: GameMode, category: TriviaCategory,
+                                style: Style) async {
         let engine = GameEngine()
         await engine.start(mode: mode, category: category)
 
@@ -58,7 +66,11 @@ enum PlaySweep {
             case .playing:
                 guard let q = engine.current else { engine.advance(); continue }
                 expectedCorrect += 1
-                answerCorrectly(engine, q)
+                switch style {
+                case .correct: answerCorrectly(engine, q)
+                case .wrong:   answerWrongly(engine, q)
+                case .timeout: timeoutCurrent(engine, q)
+                }
                 // Every shape resolves to `.reveal`; if it did not, the submit path
                 // silently refused the answer and the round would stall here.
                 if engine.phase == .playing {
@@ -67,11 +79,17 @@ enum PlaySweep {
                     return
                 }
                 if let a = engine.lastAnswer, a.isCorrect { answeredCorrectly += 1 }
-                else {
+                if style == .correct, engine.lastAnswer?.isCorrect == false {
                     // The player gave the documented-correct answer and the game
                     // called it wrong. This is the defect worth finding.
                     print("PLAY-WRONG\t\(g)\t\(mode.rawValue)\t\(category.id)\t\(q.id)"
                           + "\t\(shapeName(q))\t\(q.correctAnswer)\t\(q.prompt.prefix(80))")
+                }
+                if style == .wrong, engine.lastAnswer?.isCorrect == true {
+                    // Every option was avoided and it still scored a hit — the
+                    // question has more than one correct answer, or none.
+                    print("PLAY-FALSEHIT\t\(g)\t\(mode.rawValue)\t\(category.id)\t\(q.id)"
+                          + "\t\(shapeName(q))\t\(q.prompt.prefix(80))")
                 }
             case .reveal:
                 engine.advance()
@@ -130,6 +148,46 @@ enum PlaySweep {
             }
             engine.submit(q.correctIndex)
         }
+    }
+
+    /// Answer everything wrong, on purpose. Drives the losing outcome of every
+    /// mode — Survival ending on question one, a results screen with nothing
+    /// right, Stake spending chips on misses.
+    private static func answerWrongly(_ engine: GameEngine, _ q: Question) {
+        if let spec = q.closest {
+            // Far outside tolerance, and clamped into the slider's own domain so
+            // this stays a guess a player could actually make.
+            let far = spec.answer + spec.tolerance * 4
+            engine.setGuess(far > spec.max ? spec.min : far)
+            engine.submitGuess()
+        } else if q.ordering != nil {
+            engine.submitOrder()      // the board starts deliberately shuffled
+        } else if q.matching != nil {
+            engine.submitMatch()      // nothing linked
+        } else if q.accepted != nil {
+            engine.typedText = "zzz not the answer"
+            engine.submitText()
+        } else if q.enumerate != nil {
+            engine.finishEnum()       // named nothing
+        } else {
+            if engine.mode == .stake, engine.currentStake == 0,
+               let tier = engine.stakeTiers.first(where: { $0.remaining > 0 }) {
+                engine.setStake(tier.value)
+            }
+            let wrong = q.options.indices.first { $0 != q.correctIndex } ?? 0
+            engine.submit(wrong)
+        }
+    }
+
+    /// Answer nothing — what a player who puts the phone down produces. Mirrors
+    /// the engine's own `forceTimeoutSubmit`, which is private to it.
+    private static func timeoutCurrent(_ engine: GameEngine, _ q: Question) {
+        if q.closest != nil { engine.submitGuess() }
+        else if q.ordering != nil { engine.submitOrder() }
+        else if q.matching != nil { engine.submitMatch() }
+        else if q.accepted != nil { engine.typedText = ""; engine.submitText() }
+        else if q.enumerate != nil { engine.finishEnum() }
+        else { engine.submit(nil) }
     }
 
     private static func shapeName(_ q: Question) -> String {

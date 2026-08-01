@@ -2131,7 +2131,12 @@ class Game {
     let inv = 0;
     for (let i = 0; i < this.currentOrder.length; i++) for (let j = i + 1; j < this.currentOrder.length; j++) if (rank[this.currentOrder[i]] > rank[this.currentOrder[j]]) inv++;
     const maxInv = correct.length * (correct.length - 1) / 2;
-    const pts = maxInv === 0 ? 0 : Math.round(40 * (1 - inv / maxInv));
+    // Partial credit measured ABOVE CHANCE.
+    // The old rule paid 40 * (1 - inversions/maxInversions), which starts a shuffled board at half marks: measured by playing every mode to lose, a player who never touched the board scored 93-154 of a possible 240.
+    // The random baseline is now the zero.
+    // Still adds-only (Decision 022).
+    const share = maxInv === 0 ? 0 : 1 - inv / maxInv;
+    const pts = maxInv === 0 ? 0 : Math.round(40 * Math.max(0, (share - 0.5) / 0.5));
     const perfect = inv === 0;
     this.lastOrderPoints = pts;
     const taken = (Date.now() - this.qStart) / 1000;

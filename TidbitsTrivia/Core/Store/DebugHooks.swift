@@ -145,6 +145,14 @@ enum DebugHooks {
         ProcessInfo.processInfo.environment["TIDBITS_PLAYTHROUGH"].flatMap(Int.init)
     }
 
+    /// TIDBITS_PLAYTHROUGH_STYLE=correct|wrong|timeout → how the playthrough plays.
+    /// Auditing only the happy path misses whole classes of bug (the tie, the
+    /// zero, the round that ends on question one), so the losing outcomes get
+    /// driven too.
+    static var playthroughStyle: String {
+        ProcessInfo.processInfo.environment["TIDBITS_PLAYTHROUGH_STYLE"] ?? "correct"
+    }
+
     /// TIDBITS_PLAY_SWEEP_MODES / _CATS → restrict the sweep grid (comma-separated
     /// raw values). Default is the fourteen modes and nine categories the mode and
     /// category pickers actually offer.

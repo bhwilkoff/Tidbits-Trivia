@@ -391,7 +391,12 @@ public sealed class GameEngine : ObservableObject
                 if (rank.TryGetValue(CurrentOrder[i], out var a) && rank.TryGetValue(CurrentOrder[j], out var b) && a > b)
                     inversions++;
         var maxInv = correct.Count * (correct.Count - 1) / 2;
-        var pts = maxInv == 0 ? 0 : (int)Math.Round(40.0 * (1 - (double)inversions / maxInv));
+        // Partial credit measured ABOVE CHANCE.
+        // The old rule paid 40 * (1 - inversions/maxInversions), which starts a shuffled board at half marks: measured by playing every mode to lose, a player who never touched the board scored 93-154 of a possible 240.
+        // The random baseline is now the zero.
+        // Still adds-only (Decision 022).
+        var share = maxInv == 0 ? 0 : 1 - (double)inversions / maxInv;
+        var pts = maxInv == 0 ? 0 : (int)Math.Round(40.0 * Math.Max(0, (share - 0.5) / 0.5));
         LastOrderPoints = pts;
         var perfect = inversions == 0;
         var taken = (DateTime.UtcNow - _questionStart).TotalSeconds;

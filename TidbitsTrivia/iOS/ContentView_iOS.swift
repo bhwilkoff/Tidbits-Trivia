@@ -40,7 +40,8 @@ struct ContentView_iOS: View {
             }
             if let games = DebugHooks.playthroughGames {
                 await PlaySweep.run(games: games, modes: DebugHooks.playSweepModes,
-                                    categories: DebugHooks.playSweepCategories)
+                                    categories: DebugHooks.playSweepCategories,
+                                    style: PlaySweep.Style(rawValue: DebugHooks.playthroughStyle) ?? .correct)
             }
             if let games = DebugHooks.playSweepGames {
                 await QuestionProvider.shared.sweepPlay(

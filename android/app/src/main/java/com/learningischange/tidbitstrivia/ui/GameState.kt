@@ -443,7 +443,12 @@ class GameState(
         for (i in currentOrder.indices) for (j in i + 1 until currentOrder.size)
             if ((rank[currentOrder[i]] ?: 0) > (rank[currentOrder[j]] ?: 0)) inv++
         val maxInv = correct.size * (correct.size - 1) / 2
-        val pts = if (maxInv == 0) 0 else Math.round(40.0 * (1 - inv.toDouble() / maxInv)).toInt()
+        // Partial credit measured ABOVE CHANCE.
+        // The old rule paid 40 * (1 - inversions/maxInversions), which starts a shuffled board at half marks: measured by playing every mode to lose, a player who never touched the board scored 93-154 of a possible 240.
+        // The random baseline is now the zero.
+        // Still adds-only (Decision 022).
+        val share = if (maxInv == 0) 0.0 else 1 - inv.toDouble() / maxInv
+        val pts = if (maxInv == 0) 0 else Math.round(40.0 * maxOf(0.0, (share - 0.5) / 0.5)).toInt()
         val perfect = inv == 0
         lastOrderPoints = pts
         val taken = (now() - qStart) / 1000.0

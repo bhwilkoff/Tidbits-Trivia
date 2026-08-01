@@ -403,6 +403,24 @@ final class GameEngine {
         currentOrder.swapAt(index, target)
     }
 
+    /// Partial credit for an arrangement, measured ABOVE CHANCE.
+    ///
+    /// The old rule paid `40 * (1 - inversions/maxInversions)`, which sounds fair
+    /// and is not: a shuffled board already has about half its pairs in the right
+    /// relative order, so it starts at half marks. Measured by playing every mode
+    /// to lose, a player who never touched the board scored 93–154 of a possible
+    /// 240 — In Order paid more for doing nothing than most modes pay for playing
+    /// well, and its scores could not be compared with any other mode's.
+    ///
+    /// Now the random baseline is the zero: half the pairs right earns nothing,
+    /// and everything above that is scaled back up to the full 40. Still
+    /// adds-only — the floor is 0, never negative (Decision 022).
+    static func orderPoints(inversions: Int, maxInversions: Int) -> Int {
+        guard maxInversions > 0 else { return 0 }
+        let share = 1 - Double(inversions) / Double(maxInversions)   // 1 = perfect, ~0.5 = chance
+        return Int((Double(40) * max(0, (share - 0.5) / 0.5)).rounded())
+    }
+
     /// Lock in the arrangement — partial credit by inversion count (adds-only).
     func submitOrder() {
         guard phase == .playing, let q = current, let correct = q.ordering else { return }
@@ -415,7 +433,7 @@ final class GameEngine {
             }
         }
         let maxInv = correct.count * (correct.count - 1) / 2
-        let pts = maxInv == 0 ? 0 : Int((Double(40) * (1 - Double(inversions) / Double(maxInv))).rounded())
+        let pts = Self.orderPoints(inversions: inversions, maxInversions: maxInv)
         lastOrderPoints = pts
         let perfect = inversions == 0
         let taken = Date().timeIntervalSince(questionStart)

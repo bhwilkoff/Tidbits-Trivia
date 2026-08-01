@@ -4,6 +4,7 @@
 import { Corpus, Pictures, ThisOrThat, ClosestCall, Ordering, Matching, TypeAnswer, OddOneOut, Enumerate, Difficulty, matchesAccepted, Wikipedia, DailyBoard } from './api.js';
 import { allQuizzes, deleteQuiz, saveCreated, resolveForPlay, migrateLegacySavedSets, getQuiz,
          publishQuiz, fetchSharedQuiz, keepSharedQuiz, quizShareURL } from './quizstore.js';
+import { PLAYABLE_MODES, MODE_LABELS, playableMode } from './quiz.js';
 import { Store, CATEGORIES, catColor, catById, MODES, NIGHT, STAKE_BUDGET, dayKey, APP_STORES, SITE_URL, CLUB, WeakSpotArena, StoryArchive, answerTextOf, Marathon, marathonAccuracy, KnowledgeAtlas, Expeditions, LinkWall, LinkWallLog } from './store.js';
 import { Scoring } from './engine.js';
 import { BOTS, houseBot, botById, VsMatch } from './bots.js';
@@ -1111,6 +1112,8 @@ function viewCreate() {
     <p class="muted">Pick any subject. We'll pull a varied set — different kinds of questions across categories — from the corpus and Wikipedia.</p>
     <div class="card pad">
       <input id="topic" class="input" placeholder="e.g. The Renaissance" autocomplete="off">
+      <label class="muted" for="create-mode" style="display:block;margin:10px 0 4px">Play it as</label>
+      <select id="create-mode" class="input">${PLAYABLE_MODES.map((m) => `<option value="${m}">${h(MODE_LABELS[m])}</option>`).join('')}</select>
       <button id="gen" class="btn btn-grape btn-full">Generate Quiz</button>
       <div id="create-err" class="error" hidden></div>
     </div>
@@ -1153,8 +1156,9 @@ function bindCreate() {
       if (qs.length >= 3) {
         // Every created quiz is saved automatically — the player never has to
         // notice a Save button to keep what they made.
-        const quiz = saveCreated({ questions: qs, topic, creatorID: 'local', creatorName: '' });
-        startGame('mix', catById('mixed'), { custom: qs, label: topic, quizID: quiz.id });
+        const mode = ($('#create-mode') || {}).value || 'mix';
+        const quiz = saveCreated({ questions: qs, topic, creatorID: 'local', creatorName: '', mode });
+        startGame(mode, catById('mixed'), { custom: qs, label: topic, quizID: quiz.id });
       } else { err.textContent = `Couldn't build a good quiz for “${topic}”. Try a broader or more famous subject.`; err.hidden = false; }
     } catch { err.textContent = 'Network trouble reaching Wikipedia. Try again.'; err.hidden = false; }
     btn.textContent = 'Generate Quiz'; btn.disabled = false;
@@ -1175,7 +1179,9 @@ function bindCreate() {
         err.hidden = false;
         return;
       }
-      startGame('mix', catById('mixed'), { custom: r.questions, label: quiz.title, quizID: quiz.id });
+      // A quiz saved as Survival must replay as Survival — the mode was recorded
+      // and then ignored before this.
+      startGame(playableMode(quiz.mode), catById('mixed'), { custom: r.questions, label: quiz.title, quizID: quiz.id });
     }));
   app.querySelectorAll('[data-share-quiz]').forEach((b) =>
     b.addEventListener('click', () => {

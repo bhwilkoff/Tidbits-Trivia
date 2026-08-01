@@ -2613,6 +2613,7 @@ private fun CreateScreen(onPlay: (List<Question>, String) -> Unit) {
     var saved by remember { mutableStateOf(com.learningischange.tidbitstrivia.data.QuizStore.all()) }
     val scope = rememberCoroutineScope()
     val ctx = LocalContext.current
+    var playMode by remember { mutableStateOf("mix") }
     // Re-read on every appearance, not just first composition. A quiz that arrives
     // from a share link is written AFTER this screen composes, so a remembered list
     // showed the shelf without it — the link looked like it had done nothing.
@@ -2639,6 +2640,7 @@ private fun CreateScreen(onPlay: (List<Question>, String) -> Unit) {
                     qs, topicT,
                     creatorId = com.learningischange.tidbitstrivia.data.PlayerIdentity.profileId ?: "local",
                     creatorName = com.learningischange.tidbitstrivia.data.PlayerIdentity.profile?.name ?: "",
+                    mode = playMode,
                 )
                 saved = com.learningischange.tidbitstrivia.data.QuizStore.all()
                 onPlay(qs, topicT)
@@ -2653,6 +2655,17 @@ private fun CreateScreen(onPlay: (List<Question>, String) -> Unit) {
             if (working) { CircularProgressIndicator(Modifier.size(20.dp), color = Color.White, strokeWidth = 2.dp); Spacer(Modifier.width(10.dp)); Text("Building your quiz…") } else Text("Generate Quiz")
         }
         error?.let { Text(it, color = accentText(Pops.coral)) }
+        Text("Play it as", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            items(com.learningischange.tidbitstrivia.data.SavedQuiz.PLAYABLE_MODES, key = { it }) { m ->
+                FilterChip(
+                    selected = playMode == m,
+                    onClick = { playMode = m },
+                    label = { Text(com.learningischange.tidbitstrivia.data.SavedQuiz.modeLabel(m)) },
+                )
+            }
+        }
+
         Text("Need a spark?", fontWeight = FontWeight.Bold, fontSize = 20.sp)
         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             items(suggestions, key = { it }) { s -> AssistChip(onClick = { topic = s; generate(s) }, label = { Text(s) }) }
@@ -2674,7 +2687,9 @@ private fun CreateScreen(onPlay: (List<Question>, String) -> Unit) {
                         // A quiz can legitimately come up short (an older corpus, a
                         // set this build lacks), so say so rather than padding it.
                         val r = com.learningischange.tidbitstrivia.data.QuizStore.resolveForPlay(quiz)
-                        if (r.isPlayable) onPlay(r.questions, quiz.title)
+                        // A quiz saved as Survival must replay as Survival — the mode
+                        // was recorded and then ignored before this.
+                        if (r.isPlayable) { playMode = com.learningischange.tidbitstrivia.data.SavedQuiz.playableMode(quiz.mode); onPlay(r.questions, quiz.title) }
                         else error = "This quiz needs questions your version doesn't have yet. Try creating it again from “${quiz.topic}”."
                     },
                     onDelete = {

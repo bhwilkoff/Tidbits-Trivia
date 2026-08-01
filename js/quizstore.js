@@ -60,8 +60,8 @@ export function renameQuiz(id, title) {
 }
 
 /** Build and store in one step — every created quiz is kept automatically. */
-export function saveCreated({ questions, topic, creatorID, creatorName }) {
-  return saveQuiz(makeQuiz({ questions, topic, creatorID, creatorName }));
+export function saveCreated({ questions, topic, creatorID, creatorName, mode = 'mix' }) {
+  return saveQuiz(makeQuiz({ questions, topic, creatorID, creatorName, mode }));
 }
 
 /**

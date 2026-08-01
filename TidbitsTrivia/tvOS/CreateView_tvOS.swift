@@ -20,13 +20,16 @@ import SwiftData
 /// Quizzes made on a phone appear here because the shelf syncs through the account
 /// bucket (QuizSync) — which is what makes a TV shelf worth having at all.
 struct CreateView_tvOS: View {
-    let onPlay: (String, [Question]) -> Void
+    /// Carries the MODE too: a saved quiz replays as the game it was saved as, and
+    /// the tvOS container would otherwise default every round to mix.
+    let onPlay: (String, [Question], GameMode) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \SavedQuizRecord.createdAt, order: .reverse) private var saved: [SavedQuizRecord]
 
     @State private var topic = ""
+    @State private var playMode: GameMode = .mix
     @State private var isWorking = false
     @State private var error: String?
     @State private var detail: SavedQuizRecord?
@@ -48,6 +51,7 @@ struct CreateView_tvOS: View {
                     if isWorking { workingRow } else { chipGrid }
                     if let error { errorRow(error) }
                     typeRow
+                    modeRow
                     shelf
                 }
                 .padding(.horizontal, 90)
@@ -112,6 +116,26 @@ struct CreateView_tvOS: View {
                 }
                 .buttonStyle(.card)
                 .focused($firstChipFocused, equals: index == 0)
+            }
+        }
+    }
+
+    /// Focusable chips rather than a Picker — on tvOS focus IS the selection model,
+    /// and a menu-style Picker is a fiddly two-step with a remote.
+    private var modeRow: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Play it as").font(.title3).foregroundStyle(TVTheme.text)
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 300), spacing: 20)], alignment: .leading, spacing: 20) {
+                ForEach(SavedQuiz.playableModes, id: \.self) { m in
+                    Button { playMode = m } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: playMode == m ? "checkmark.circle.fill" : "circle")
+                            Text(SavedQuiz.modeLabel(m))
+                        }
+                        .font(.headline).frame(maxWidth: .infinity, minHeight: 74)
+                    }
+                    .buttonStyle(.card)
+                }
             }
         }
     }
@@ -196,12 +220,12 @@ struct CreateView_tvOS: View {
                 return
             }
             let quiz = SavedQuiz.from(
-                questions: result, topic: q, mode: "mix",
+                questions: result, topic: q, mode: playMode.rawValue,
                 creatorID: PlayerIdentityStore.shared.profileId ?? "local",
                 creatorName: PlayerIdentityStore.shared.profile?.name ?? "")
             QuizStore.save(quiz, in: modelContext)
             Task { await QuizSync.push(in: modelContext) }   // available on the phone too
-            onPlay(q, result)
+            onPlay(q, result, playMode)
         }
     }
 
@@ -215,7 +239,7 @@ struct CreateView_tvOS: View {
         }
         QuizStore.markPlayed(id: quiz.id, in: modelContext)
         detail = nil
-        onPlay(quiz.title, resolution.questions)
+        onPlay(quiz.title, resolution.questions, quiz.gameMode)
     }
 }
 

@@ -8,6 +8,10 @@
                 <TextBlock Text="Generate a quiz on any topic — real, vetted questions from the whole of Wikipedia."
                            FontSize="15" Opacity="0.72" TextWrapping="Wrap"/>
                 <TextBox x:Name="TopicBox" Watermark="e.g. The Renaissance" FontSize="16" Padding="14,12" Margin="0,6,0,0"/>
+                <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                    <TextBlock Text="Play it as" Classes="caption" VerticalAlignment="Center"/>
+                    <ComboBox x:Name="ModeBox" MinWidth="180" SelectedIndex="0"/>
+                </StackPanel>
                 <StackPanel Orientation="Horizontal" Spacing="10">
                     <Button x:Name="GenBtn" Content="Generate Quiz" Click="OnGenerate"
                             Classes="accent" Padding="24,13" FontWeight="Bold"/>

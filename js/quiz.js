@@ -16,6 +16,21 @@
 export const ID_ALPHABET = '23456789abcdefghjkmnpqrstvwxyz';
 export const ID_LENGTH = 10;
 
+// The modes a created quiz can be played as. Deliberately a SUBSET: a saved quiz
+// deals a FIXED set of questions, so any mode that draws its own (daily, marathon,
+// weakSpot) would silently ignore the very questions the quiz exists to preserve.
+export const PLAYABLE_MODES = ['mix', 'classic', 'timeAttack', 'survival', 'stake'];
+export const MODE_LABELS = {
+  mix: 'Mixed shapes', classic: 'Classic', timeAttack: 'Time Attack',
+  survival: 'Survival', stake: 'Stake',
+};
+
+// An unknown mode from a newer build must still PLAY rather than refuse — these
+// objects outlive the version that wrote them (QUIZ-CONTRACT §6).
+export function playableMode(m) {
+  return PLAYABLE_MODES.includes(m) ? m : 'mix';
+}
+
 // Below this a quiz isn't worth playing; above it we play and say so.
 export const MINIMUM_PLAYABLE = 3;
 

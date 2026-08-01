@@ -11,6 +11,7 @@ struct TVCustomLaunch: Identifiable {
     let id = UUID()
     let title: String
     let questions: [Question]
+    let mode: GameMode
 }
 
 enum TVTheme {
@@ -104,13 +105,13 @@ struct ContentView_tvOS: View {
             TVQuickMatchContainer()
         }
         .fullScreenCover(isPresented: $showCreate) {
-            CreateView_tvOS { title, questions in
+            CreateView_tvOS { title, questions, mode in
                 showCreate = false
-                customLaunch = TVCustomLaunch(title: title, questions: questions)
+                customLaunch = TVCustomLaunch(title: title, questions: questions, mode: mode)
             }
         }
         .fullScreenCover(item: $customLaunch) { req in
-            TVGameContainer(mode: .mix, category: .named("mixed"), customQuestions: req.questions)
+            TVGameContainer(mode: req.mode, category: .named("mixed"), customQuestions: req.questions)
         }
         .fullScreenCover(isPresented: $showDailyArchive) {
             TVDailyArchive { day in

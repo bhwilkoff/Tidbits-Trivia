@@ -98,6 +98,24 @@ data class SavedQuiz(
         const val ID_ALPHABET = "23456789abcdefghjkmnpqrstvwxyz"
         const val ID_LENGTH = 10
 
+        /** The modes a created quiz can be played as. Deliberately a SUBSET: a saved
+         *  quiz deals a FIXED set of questions, so any mode that draws its own
+         *  (daily, marathon, weakSpot) would silently ignore the very questions the
+         *  quiz exists to preserve. */
+        val PLAYABLE_MODES = listOf("mix", "classic", "timeAttack", "survival", "stake")
+
+        fun modeLabel(m: String): String = when (m) {
+            "classic" -> "Classic"
+            "timeAttack" -> "Time Attack"
+            "survival" -> "Survival"
+            "stake" -> "Stake"
+            else -> "Mixed shapes"
+        }
+
+        /** An unknown mode from a newer build must still PLAY rather than refuse —
+         *  these objects outlive the version that wrote them (QUIZ-CONTRACT §6). */
+        fun playableMode(m: String): String = if (m in PLAYABLE_MODES) m else "mix"
+
         /** Below this a quiz isn't worth playing; above it we play and say so. */
         const val MINIMUM_PLAYABLE = 3
 

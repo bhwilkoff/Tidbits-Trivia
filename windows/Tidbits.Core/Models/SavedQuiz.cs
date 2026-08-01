@@ -91,6 +91,28 @@ public sealed class SavedQuiz
     /// Below this a quiz isn't worth playing; above it we play and say so.
     public const int MinimumPlayable = 3;
 
+    /// The modes a created quiz can be played as. Deliberately a SUBSET of GameMode:
+    /// a saved quiz deals a FIXED set of questions, so any mode that draws its own
+    /// (daily, marathon, weakSpot) would silently ignore the very questions the quiz
+    /// exists to preserve.
+    public static readonly IReadOnlyList<GameMode> PlayableModes =
+        [GameMode.Mix, GameMode.Classic, GameMode.TimeAttack, GameMode.Survival, GameMode.Stake];
+
+    public static string ModeLabel(GameMode m) => m switch
+    {
+        GameMode.Classic => "Classic",
+        GameMode.TimeAttack => "Time Attack",
+        GameMode.Survival => "Survival",
+        GameMode.Stake => "Stake",
+        _ => "Mixed shapes",
+    };
+
+    /// The stored `m` as a GameMode. An unknown mode from a newer build must still
+    /// PLAY rather than refuse — these objects outlive the version that wrote them.
+    public GameMode PlayMode =>
+        Enum.TryParse<GameMode>(Mode, ignoreCase: true, out var g) && PlayableModes.Contains(g)
+            ? g : GameMode.Mix;
+
     public required string Id { get; init; }
     public required string Title { get; set; }
     public required string Topic { get; init; }

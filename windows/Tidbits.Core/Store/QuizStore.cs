@@ -74,9 +74,10 @@ public sealed class QuizStore
     }
 
     /// <summary>Build and store in one step — every created quiz is kept automatically.</summary>
-    public SavedQuiz SaveCreated(IEnumerable<Question> questions, string topic, string creatorId, string creatorName)
+    public SavedQuiz SaveCreated(IEnumerable<Question> questions, string topic, string creatorId,
+                                string creatorName, string mode = "mix")
     {
-        var quiz = SavedQuiz.From(questions, topic, creatorId, creatorName);
+        var quiz = SavedQuiz.From(questions, topic, creatorId, creatorName, mode: mode);
         Save(quiz);
         return quiz;
     }

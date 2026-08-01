@@ -55,8 +55,15 @@ object QuizStore {
     }
 
     /** Build and store in one step — every created quiz is kept automatically. */
-    fun saveCreated(questions: List<Question>, topic: String, creatorId: String, creatorName: String): SavedQuiz {
-        val quiz = SavedQuiz.from(questions, topic = topic, creatorId = creatorId, creatorName = creatorName)
+    fun saveCreated(
+        questions: List<Question>,
+        topic: String,
+        creatorId: String,
+        creatorName: String,
+        mode: String = "mix",
+    ): SavedQuiz {
+        val quiz = SavedQuiz.from(questions, topic = topic, creatorId = creatorId,
+                                  creatorName = creatorName, mode = mode)
         save(quiz)
         return quiz
     }

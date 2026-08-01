@@ -19,6 +19,9 @@ struct CreateView_macOS: View {
     /// doesn't exist until the publish round trip completes.
     @State private var shareNote: String?
     @State private var topic = ""
+    /// The mode this quiz plays as. Rides with the quiz (`m` in the contract), so a
+    /// shared quiz arrives as the game its author meant.
+    @State private var playMode: GameMode = .mix
     @State private var isWorking = false
     @State private var error: String?
     @State private var stageIndex = 0
@@ -34,6 +37,7 @@ struct CreateView_macOS: View {
                 Text("Pick any subject. We'll pull it straight from Wikipedia and build you a quiz.")
                     .font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
                 inputCard
+                modePicker
                 if let error { errorBanner(error) }
                 if let shareNote {
                     Label(shareNote, systemImage: "checkmark.circle.fill")
@@ -102,6 +106,20 @@ struct CreateView_macOS: View {
     /// Every quiz you make is kept — the owner's rule is "all created quizzes should
     /// be saved to your account", so this is automatic. The empty line teaches the
     /// mechanic on first run rather than leaving a blank wall.
+    /// A created quiz is a fixed set of questions, so the mode is a real choice: the
+    /// same eight questions play very differently as Survival than as Time Attack.
+    private var modePicker: some View {
+        HStack(spacing: 12) {
+            Text("Play it as").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+            Picker("Mode", selection: $playMode) {
+                ForEach(SavedQuiz.playableModes, id: \.self) { m in
+                    Text(SavedQuiz.modeLabel(m)).tag(m)
+                }
+            }
+            .labelsHidden().frame(maxWidth: 220)
+        }
+    }
+
     private var savedSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Your quizzes").font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
@@ -130,6 +148,9 @@ struct CreateView_macOS: View {
             return
         }
         QuizStore.markPlayed(id: quiz.id, in: modelContext)
+        // Honour the mode the quiz was saved with, not whatever the picker happens
+        // to show — a quiz saved as Survival must replay as Survival.
+        playMode = quiz.gameMode
         onPlayCustom(quiz.title, resolution.questions)
     }
 
@@ -177,7 +198,7 @@ struct CreateView_macOS: View {
             if result.count >= 3 {
                 // Every created quiz is saved automatically — no Save button to miss.
                 let quiz = SavedQuiz.from(
-                    questions: result, topic: q, mode: "mix",
+                    questions: result, topic: q, mode: playMode.rawValue,
                     creatorID: PlayerIdentityStore.shared.profileId ?? "local",
                     creatorName: PlayerIdentityStore.shared.profile?.name ?? "")
                 QuizStore.save(quiz, in: modelContext)

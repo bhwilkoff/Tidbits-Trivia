@@ -178,3 +178,33 @@ job (blend live generation), not more ranking work.
 
 Verification: Apple 90 tests / 12 suites, Windows 456, Android `assembleDebug`, web
 `node --check`; Apple app rebuilt for iOS + macOS + tvOS.
+
+
+---
+
+## W2 complete — multiple game types (2026-07-31)
+
+The wire had reserved `m` for this from the start, and every surface wrote `"mix"`
+and then **ignored it on replay**. So a quiz's mode was recorded and thrown away: a
+quiz saved as Survival replayed as a mixed round. That was a live bug, not a missing
+feature.
+
+All six surfaces now let you choose when creating, and honour the stored mode when
+replaying — so a **shared** quiz arrives as the game its author meant. The same eight
+questions play very differently as Survival than as Time Attack, which is what makes
+this a feature rather than a dropdown.
+
+| Surface | Picker idiom |
+|---|---|
+| iOS | menu `Picker` |
+| macOS | inline `Picker` beside the input |
+| tvOS | focusable chips — focus IS the selection model there |
+| Android | M3 `FilterChip` row |
+| Web | `<select>` |
+| Windows | `ComboBox` |
+
+`playableModes` is deliberately a **subset** of the full mode list. A saved quiz deals
+a FIXED set of questions, so any mode that draws its own (daily, marathon, weak-spot,
+expedition) would silently ignore the very questions the quiz exists to preserve. An
+unknown mode from a newer build falls back to mix rather than refusing to play, per
+the contract's evolution rules.

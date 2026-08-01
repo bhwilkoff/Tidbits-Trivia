@@ -27,8 +27,15 @@ public partial class CreateView : UserControl
         var data = GameData.Shared.Value;
         if (QuizMigration.Run(data.SavedSets, data.Quizzes, data.Sources) > 0)
             data.SavedSets.Clear();
+        // A created quiz is a fixed set of questions, so the mode is a real choice:
+        // the same eight play very differently as Survival than as Time Attack.
+        foreach (var m in SavedQuiz.PlayableModes) ModeBox.Items.Add(SavedQuiz.ModeLabel(m));
+        ModeBox.SelectedIndex = 0;
         BuildSaved();
     }
+
+    private GameMode SelectedMode =>
+        SavedQuiz.PlayableModes[System.Math.Max(0, ModeBox.SelectedIndex)];
 
     private async void OnGenerate(object? sender, RoutedEventArgs e)
     {
@@ -51,7 +58,8 @@ public partial class CreateView : UserControl
         // Every created quiz is saved automatically — the player never has to notice
         // a Save button to keep what they made.
         var gd = GameData.Shared.Value;
-        gd.Quizzes.SaveCreated(questions, topic, gd.Rtdb.Uid ?? "local", gd.PlayerName);
+        gd.Quizzes.SaveCreated(questions, topic, gd.Rtdb.Uid ?? "local", gd.PlayerName,
+                               SelectedMode.ToString());
         BuildSaved();
         Play(questions);
     }
@@ -147,7 +155,8 @@ public partial class CreateView : UserControl
                 }
                 if (!r.IsComplete)
                     Status($"{r.Missing} of this quiz's {set.QuestionCount} questions aren't in your version yet.");
-                Play(r.Questions);
+                // A quiz saved as Survival must replay as Survival.
+                Play(r.Questions, set.PlayMode);
             };
             Grid.SetColumn(play, 1);
             grid.Children.Add(play);
@@ -191,15 +200,15 @@ public partial class CreateView : UserControl
         }
     }
 
-    private void Play(IReadOnlyList<Question> questions)
+    private void Play(IReadOnlyList<Question> questions, GameMode mode = GameMode.Classic)
     {
         var engine = GameData.Shared.Value.NewEngine();
         var vm = new GameViewModel(engine, GameData.Shared.Value.Records);
         vm.Closed += () => { GameHost.Content = null; Landing.IsVisible = true; };
-        vm.PlayAgainRequested += () => Play(questions);
+        vm.PlayAgainRequested += () => Play(questions, mode);
         Landing.IsVisible = false;
         GameHost.Content = new GameView { DataContext = vm };
-        engine.StartCustom(GameMode.Classic, TriviaCategory.Named("mixed"), new List<Question>(questions));
+        engine.StartCustom(mode, TriviaCategory.Named("mixed"), new List<Question>(questions));
     }
 
     private void Status(string text)

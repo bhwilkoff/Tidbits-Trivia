@@ -291,3 +291,33 @@ nonisolated extension SavedQuiz {
         self.init(wire: obj)
     }
 }
+
+// MARK: - Game mode (docs/QUIZ-CONTRACT.md §2, the `m` field)
+
+nonisolated extension SavedQuiz {
+
+    /// The modes a created quiz can be played as. Deliberately a SUBSET of GameMode:
+    /// a saved quiz deals a FIXED set of questions, so any mode that draws its own
+    /// (daily, marathon, weakSpot, expedition) is meaningless here and would silently
+    /// ignore the very questions the quiz exists to preserve.
+    static let playableModes: [GameMode] = [.mix, .classic, .timeAttack, .survival, .stake]
+
+    /// The stored `m` string as a GameMode. Falls back to `.mix` — an unknown mode
+    /// from a newer build must still PLAY rather than refuse, because these objects
+    /// outlive the version that wrote them (§6).
+    var gameMode: GameMode {
+        GameMode(rawValue: mode).flatMap { Self.playableModes.contains($0) ? $0 : nil } ?? .mix
+    }
+
+    /// Human label for a picker row.
+    static func modeLabel(_ m: GameMode) -> String {
+        switch m {
+        case .mix: "Mixed shapes"
+        case .classic: "Classic"
+        case .timeAttack: "Time Attack"
+        case .survival: "Survival"
+        case .stake: "Stake"
+        default: m.rawValue
+        }
+    }
+}

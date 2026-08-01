@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace Tidbits.Core.Networking;
 
-public enum DeepLinkKind { None, Play, Daily, Records, Create, Leaderboard, Live }
+public enum DeepLinkKind { None, Play, Daily, Records, Create, Leaderboard, Live, Quiz }
 
 /// A parsed deep link — the nav destination + an optional live room code.
 public sealed record DeepLinkTarget(DeepLinkKind Kind, string? Code = null)
@@ -13,6 +13,7 @@ public sealed record DeepLinkTarget(DeepLinkKind Kind, string? Code = null)
     {
         DeepLinkKind.Records => "records",
         DeepLinkKind.Create => "create",
+        DeepLinkKind.Quiz => "create",   // a shared quiz lands where the shelf lives
         DeepLinkKind.Leaderboard => "leaderboard",
         DeepLinkKind.Live => "live",
         _ => "play", // Play + Daily land on the Play tab
@@ -40,7 +41,12 @@ public static class DeepLink
         }
         else
         {
-            var segs = uri.AbsolutePath.Trim('/').Split('/', StringSplitOptions.RemoveEmptyEntries);
+            // The web canonical for a quiz puts the route in the FRAGMENT
+            // (tidbitstrivia.com/#/quiz/<id>), so the path is empty and the id would
+            // be lost if only AbsolutePath were read.
+            var frag = uri.Fragment.TrimStart('#').Trim('/');
+            var source = frag.Length > 0 ? frag : uri.AbsolutePath.Trim('/');
+            var segs = source.Split('/', StringSplitOptions.RemoveEmptyEntries);
             head = segs.Length > 0 ? segs[0] : "";
             tail = segs.Length > 1 ? segs[1] : "";
         }
@@ -48,6 +54,8 @@ public static class DeepLink
         return head.ToLowerInvariant() switch
         {
             "live" => new(DeepLinkKind.Live, RoomCode(tail)),
+            // Carries an id, so unlike the other routes it can't collapse to a token.
+            "quiz" => tail.Length > 0 ? new(DeepLinkKind.Quiz, tail) : new(DeepLinkKind.None),
             "daily" => new(DeepLinkKind.Daily),
             "records" => new(DeepLinkKind.Records),
             "create" => new(DeepLinkKind.Create),

@@ -246,6 +246,28 @@ public sealed class FirebaseRtdb
         return JsonSerializer.Deserialize<T>(s, Wire.Json);
     }
 
+    /// Read the RAW JSON at `path` (null if absent). A saved quiz decodes itself from
+    /// the frozen contract bytes (docs/QUIZ-CONTRACT.md), so routing it through a
+    /// typed Deserialize would create a SECOND representation of a format that
+    /// already has four implementations.
+    public async Task<string?> GetJson(string path)
+    {
+        var token = await ValidToken();
+        using var resp = await _http.GetAsync(RestUrl(path, token));
+        Check(resp);
+        var s = await resp.Content.ReadAsStringAsync();
+        return (s.Length == 0 || s == "null") ? null : s;
+    }
+
+    /// Write RAW JSON to `path` — the mirror of GetJson, same reasoning.
+    public async Task PutJson(string path, string json)
+    {
+        var token = await ValidToken();
+        using var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+        using var resp = await _http.PutAsync(RestUrl(path, token), content);
+        Check(resp);
+    }
+
     /// Read a value together with its RTDB ETag, for a compare-and-set transaction
     /// (optimistic concurrency — the matchmaking queue claim, 2.21).
     public async Task<(T? Value, string ETag)> GetWithEtag<T>(string path)

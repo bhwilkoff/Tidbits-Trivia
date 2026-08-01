@@ -16,6 +16,10 @@ struct CreateQuizView: View {
     @State private var playingQuizID: String?
     @State private var playing = false
     @State private var shortfall: Int = 0
+    /// The mode this round plays as. Set from the picker when creating, and from the
+    /// quiz's own `m` when replaying — a quiz saved as Survival must replay as
+    /// Survival, not as the mixed round every surface used to hardcode.
+    @State private var playMode: GameMode = .mix
     @State private var shareURL: URL?
     @State private var incoming: SavedQuiz?
     @State private var incomingState: IncomingState = .idle
@@ -54,7 +58,7 @@ struct CreateQuizView: View {
         }
         .fullScreenCover(isPresented: $playing) {
             CustomGameContainer(topic: topic.isEmpty ? "Custom" : topic,
-                                questions: generated, quizID: playingQuizID)
+                                questions: generated, quizID: playingQuizID, mode: playMode)
         }
         .sheet(item: $shareURL) { url in
             ShareSheet(items: [url])
@@ -97,6 +101,7 @@ struct CreateQuizView: View {
                 .padding(14)
                 .background(RoundedRectangle(cornerRadius: 12).fill(Tidbits.Palette.bg))
                 .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Tidbits.Palette.border, lineWidth: 2.5))
+            modePicker
             if isWorking {
                 progressCard
             } else {
@@ -108,6 +113,24 @@ struct CreateQuizView: View {
         .padding(16)
         .chunkyCard()
         .padding(.trailing, Tidbits.Metric.shadowOffset)
+    }
+
+    /// A created quiz is a fixed set of questions, so the mode is a genuine choice
+    /// rather than a detail: the same eight questions play very differently as
+    /// Survival than as Time Attack. It rides with the quiz (`m` in the contract), so
+    /// a shared quiz arrives as the game its author meant.
+    private var modePicker: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("How do you want to play it?")
+                .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+            Picker("Mode", selection: $playMode) {
+                ForEach(SavedQuiz.playableModes, id: \.self) { m in
+                    Text(SavedQuiz.modeLabel(m)).tag(m)
+                }
+            }
+            .pickerStyle(.menu)
+            .tint(Tidbits.Palette.ink)
+        }
     }
 
     /// Generation is a single opaque async call, so an honest indeterminate bar
@@ -200,6 +223,7 @@ struct CreateQuizView: View {
         }
         shortfall = resolution.missing
         generated = resolution.questions
+        playMode = quiz.gameMode
         playingQuizID = quiz.id
         topic = quiz.topic
         playing = true
@@ -290,7 +314,7 @@ struct CreateQuizView: View {
                 // Every created quiz is saved to the account automatically — the
                 // player never has to notice a Save button to keep what they made.
                 let quiz = SavedQuiz.from(
-                    questions: result, topic: q, mode: "mix",
+                    questions: result, topic: q, mode: playMode.rawValue,
                     creatorID: PlayerIdentityStore.shared.profileId ?? "local",
                     creatorName: PlayerIdentityStore.shared.profile?.name ?? "")
                 QuizStore.save(quiz, in: modelContext)
@@ -333,6 +357,7 @@ struct CustomGameContainer: View {
     /// Set when this round came from a saved quiz, so the play is counted against
     /// it. Play counts are LOCAL metadata — they never rewrite the quiz payload.
     var quizID: String? = nil
+    var mode: GameMode = .mix
     @Environment(AppStore.self) private var store
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
@@ -355,7 +380,7 @@ struct CustomGameContainer: View {
             }
         }
         .onAppear {
-            if !started { started = true; game.startCustom(mode: .mix, category: .named("mixed"), questions: questions) }
+            if !started { started = true; game.startCustom(mode: mode, category: .named("mixed"), questions: questions) }
         }
     }
 
@@ -365,7 +390,7 @@ struct CustomGameContainer: View {
         RecordsStore.record(game.summary, in: modelContext)
         if let quizID { QuizStore.markPlayed(id: quizID, in: modelContext) }
     }
-    private func replay() { recorded = false; game.startCustom(mode: .mix, category: .named("mixed"), questions: questions) }
+    private func replay() { recorded = false; game.startCustom(mode: mode, category: .named("mixed"), questions: questions) }
     private func close() { game.quit(); dismiss() }
 }
 

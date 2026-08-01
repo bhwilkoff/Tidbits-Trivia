@@ -1,4 +1,5 @@
 using Tidbits.Core.Data;
+using Tidbits.Core.Networking;
 using Tidbits.Core.Models;
 
 namespace Tidbits.Core.Store;
@@ -155,5 +156,57 @@ public static class QuizMigration
         return QuizEntry.OfInline(new InlineQuestion(
             q.Id, q.Prompt, q.Options, q.CorrectIndex, q.CategoryId,
             q.Difficulty, q.Explanation, q.SourceTitle, q.SourceUrl ?? ""));
+    }
+}
+
+/// <summary>
+/// Publishing and fetching a shared quiz (docs/QUIZ-CONTRACT.md §5). Writes the SAME
+/// quiz.v1 bytes as every other stack — a quiz shared from Windows has to open on a
+/// phone and on the web, which is the whole point.
+/// </summary>
+public static class QuizSharing
+{
+    /// The canonical link target on every platform: the web app is the one surface
+    /// someone without the app can open.
+    public static string ShareUrl(string id) => $"https://tidbitstrivia.com/#/quiz/{id}";
+
+    /// What a fetch came back with. "Gone" and "couldn't load" are DIFFERENT: telling
+    /// someone with a working link that the quiz was deleted stops them retrying
+    /// something transient.
+    public abstract record FetchResult
+    {
+        public sealed record Found(SavedQuiz Quiz) : FetchResult;
+        public sealed record NotFound : FetchResult;
+        public sealed record Failed(string Message) : FetchResult;
+    }
+
+    /// Publish so anyone with the link can play it. EXPLICIT — a quiz you never share
+    /// never leaves your account. The creator is stamped at publish time so the rules
+    /// (`by === auth.uid`) let only its author overwrite it later, and the stamped
+    /// copy is saved back LOCALLY or a re-share fails that same rule.
+    public static async Task<string?> Publish(SavedQuiz quiz, FirebaseRtdb rtdb, QuizStore store)
+    {
+        var uid = await rtdb.EnsureAuth();
+        quiz.CreatorId = uid;
+        await rtdb.PutJson($"quizzes/{quiz.Id}", quiz.ToJson());
+        store.Save(quiz);
+        return ShareUrl(quiz.Id);
+    }
+
+    public static async Task<FetchResult> Fetch(string id, FirebaseRtdb rtdb)
+    {
+        try
+        {
+            var json = await rtdb.GetJson($"quizzes/{id}");
+            if (json is null) return new FetchResult.NotFound();
+            var quiz = SavedQuiz.FromJson(json);
+            return quiz is null
+                ? new FetchResult.Failed("This quiz is in a format this version can't read.")
+                : new FetchResult.Found(quiz);
+        }
+        catch
+        {
+            return new FetchResult.Failed("Couldn't reach the quiz. Check your connection and try again.");
+        }
     }
 }

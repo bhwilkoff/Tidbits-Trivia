@@ -94,7 +94,10 @@ public sealed class SavedQuiz
     public required string Id { get; init; }
     public required string Title { get; set; }
     public required string Topic { get; init; }
-    public required string CreatorId { get; init; }
+    /// Settable because publishing stamps the authenticated uid: the RTDB rules only
+    /// let `by === auth.uid` overwrite a quiz, so a locally-created quiz saved as
+    /// "local" must carry the real uid once it is shared.
+    public required string CreatorId { get; set; }
     public required string CreatorName { get; init; }
     public required long CreatedAtMs { get; init; }
     public required string Mode { get; set; }

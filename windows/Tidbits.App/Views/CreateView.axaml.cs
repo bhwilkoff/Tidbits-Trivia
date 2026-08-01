@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.Input.Platform;   // SetTextAsync is an extension method on IClipboard
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Tidbits.App.Services;
@@ -126,7 +127,7 @@ public partial class CreateView : UserControl
                 Background = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#0F808080")),
                 CornerRadius = new Avalonia.CornerRadius(10), Padding = new Avalonia.Thickness(14, 10),
             };
-            var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto") };
+            var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto,Auto") };
             grid.Children.Add(new TextBlock
             {
                 Text = $"{set.Title} · {set.QuestionCount} Qs", FontWeight = Avalonia.Media.FontWeight.SemiBold,
@@ -150,10 +151,40 @@ public partial class CreateView : UserControl
             };
             Grid.SetColumn(play, 1);
             grid.Children.Add(play);
+            var share = new Button { Content = "Share", Padding = new Avalonia.Thickness(14, 7), Margin = new Avalonia.Thickness(8, 0, 0, 0) };
+            AutomationProperties.SetName(share, $"Share quiz {set.Title}");
+            share.Click += async (_, _) =>
+            {
+                share.IsEnabled = false;
+                var label = share.Content;
+                share.Content = "Sharing…";
+                try
+                {
+                    var url = await QuizSharing.Publish(set, data.Rtdb, data.Quizzes);
+                    if (url is not null)
+                    {
+                        // Windows has no share sheet worth invoking from Avalonia, so
+                        // the clipboard IS the share — same choice as the Mac.
+                        var top = TopLevel.GetTopLevel(this);
+                        if (top?.Clipboard is { } cb) await cb.SetTextAsync(url);
+                        Status("Link copied — anyone can play it.");
+                    }
+                }
+                catch
+                {
+                    // A share that silently does nothing is worse than one that admits
+                    // it failed.
+                    Status("Couldn't share that just now. Check your connection and try again.");
+                }
+                share.Content = label;
+                share.IsEnabled = true;
+            };
+            Grid.SetColumn(share, 2);
+            grid.Children.Add(share);
             var del = new Button { Content = "✕", Padding = new Avalonia.Thickness(10, 7), Margin = new Avalonia.Thickness(8, 0, 0, 0) };
             AutomationProperties.SetName(del, $"Delete quiz {set.Title}");
             del.Click += (_, _) => { data.Quizzes.Delete(set.Id); BuildSaved(); };
-            Grid.SetColumn(del, 2);
+            Grid.SetColumn(del, 3);
             grid.Children.Add(del);
             row.Child = grid;
             SavedPanel.Children.Add(row);

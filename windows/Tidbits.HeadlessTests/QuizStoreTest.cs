@@ -144,3 +144,36 @@ public class QuizStoreTest : IDisposable
         Assert.Equal("src:cloze:Himyar", entry.Inline!.Id);
     }
 }
+
+/// Deep links for a shared quiz. The web canonical puts the route in the FRAGMENT,
+/// which is easy to lose — reading only AbsolutePath drops the id silently.
+public class QuizDeepLinkTest
+{
+    [Theory]
+    [InlineData("tidbitstrivia://quiz/k7m3qp9x2r", "k7m3qp9x2r")]
+    [InlineData("https://tidbitstrivia.com/#/quiz/k7m3qp9x2r", "k7m3qp9x2r")]
+    [InlineData("https://tidbitstrivia.com/quiz/k7m3qp9x2r", "k7m3qp9x2r")]
+    public void A_quiz_link_yields_its_id(string url, string id)
+    {
+        var t = Tidbits.Core.Networking.DeepLink.Parse(url);
+        Assert.Equal(Tidbits.Core.Networking.DeepLinkKind.Quiz, t.Kind);
+        Assert.Equal(id, t.Code);
+    }
+
+    /// A quiz link with no id is not a quiz link — better None than a Quiz target
+    /// the app then can't act on.
+    [Fact]
+    public void A_quiz_link_with_no_id_is_not_a_quiz()
+        => Assert.Equal(Tidbits.Core.Networking.DeepLinkKind.None,
+                        Tidbits.Core.Networking.DeepLink.Parse("tidbitstrivia://quiz").Kind);
+
+    /// The routes that already worked must keep working.
+    [Fact]
+    public void Existing_routes_are_unaffected()
+    {
+        Assert.Equal(Tidbits.Core.Networking.DeepLinkKind.Live,
+                     Tidbits.Core.Networking.DeepLink.Parse("tidbitstrivia://live/2NRE").Kind);
+        Assert.Equal(Tidbits.Core.Networking.DeepLinkKind.Daily,
+                     Tidbits.Core.Networking.DeepLink.Parse("https://tidbitstrivia.com/daily").Kind);
+    }
+}

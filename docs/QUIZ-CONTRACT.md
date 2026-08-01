@@ -289,9 +289,21 @@ successfully, which is the 401 that started this. The QR was decoded out of the
 screenshot with Vision to confirm it is genuinely scannable, not merely QR-shaped:
 `https://tidbitstrivia.com/#/quiz/zfdvtyhb72`.
 
-**The tradeoff, stated plainly:** this is a refresh token in a plaintext file. It sits
-in the app's own sandbox container where no other app can read it, and if Caches is
-purged the player gets a new anonymous uid — exactly today's behaviour, so the failure
-mode is no worse than the bug was. A device-bound encrypted store is the right
-follow-up (the Windows port answered the same question with DPAPI). It was not a
-reason to keep shipping a broken identity.
+**No plaintext, on any platform** (owner call, 2026-07-31). The token is sealed with
+AES-GCM under a device-local key held in the Keychain, so what sits on disk is
+ciphertext with nothing usable beside it. The layering:
+
+- Keychain holds the key → the token decrypts → identity is stable across launches.
+- Keychain does NOT hold it → the seal is **skipped entirely** and nothing is written.
+  The player gets a fresh anonymous uid, which is the original bug's behaviour — but
+  no credential is ever readable at rest.
+
+The security floor therefore never depends on the keychain working; only the
+convenience does. `set` fails CLOSED: if the key can't be stored, it writes nothing
+rather than degrading to plaintext.
+
+**Measured honestly:** in the tvOS *simulator* the seal-key `SecItemAdd` fails (the
+same reason the token keychain doesn't persist there), so no file is written and the
+uid still rotates between launches. On hardware with a working keychain both
+properties hold. This is the correct trade — an identity that rotates is a bug; a
+readable refresh token on disk is a vulnerability, and the second is worse.

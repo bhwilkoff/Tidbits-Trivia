@@ -1,5 +1,6 @@
 import Foundation
 import Security
+import CryptoKit
 
 /// Minimal Keychain string store — used to persist the Firebase anonymous refresh
 /// token so the player's `uid` (hence their portable profile) survives relaunches.
@@ -31,25 +32,61 @@ enum Keychain {
     #endif
 
     #if os(tvOS)
-    /// The tvOS fallback: a file in Caches.
+    /// The tvOS fallback: an ENCRYPTED file in Caches.
     ///
-    /// Measured: even with `kSecAttrSynchronizable`, two cold launches produced
-    /// different uids, so the keychain alone cannot be relied on here. Decision 017
-    /// establishes Caches as one of the few writable locations on tvOS (Application
-    /// Support crashes on device), and the SwiftData store already lives there.
+    /// Why a fallback exists at all: measured on the tvOS 26 simulator, two cold
+    /// launches produced different uids even with `kSecAttrSynchronizable`, so the
+    /// keychain alone could not be relied on. Decision 017 makes Caches one of the
+    /// few writable locations (Application Support crashes on device).
     ///
-    /// **The tradeoff, stated plainly:** this is a refresh token in a plaintext file.
-    /// It sits inside the app's own sandbox container, which no other app can read,
-    /// and Caches may be purged under storage pressure — in which case the player
-    /// gets a new anonymous uid, which is exactly today's behaviour, so the failure
-    /// mode is no worse than the bug. What it buys is that records, streaks, Club
-    /// entitlement, the Daily log and quiz sync stop silently belonging to a
-    /// different person on every launch. A device-bound encrypted store would be
-    /// better and is the right follow-up (the Windows port answered the same
-    /// question with DPAPI); it is not a reason to keep shipping a broken identity.
+    /// **Never plaintext.** The token is sealed with AES-GCM under a key that lives
+    /// in the Keychain, so what sits on disk is ciphertext with no usable material
+    /// beside it. The layering is deliberate:
+    ///
+    /// - Keychain persists (real hardware) → the key survives → the token decrypts →
+    ///   identity is stable, which is the whole point of the fallback.
+    /// - Keychain does NOT persist → the key is gone → the ciphertext is inert and is
+    ///   discarded, and the player gets a fresh anonymous uid. That is the ORIGINAL
+    ///   bug's behaviour, but with no credential ever readable at rest.
+    ///
+    /// So the security floor never depends on the keychain working; only the
+    /// convenience does. A stolen disk image yields nothing either way.
+    nonisolated private static let sealKeyAccount = "tb-seal-key-v1"
+
+    /// The AES key, minted once and kept in the Keychain. Deliberately NOT
+    /// synchronizable: a device-local key means the ciphertext is useless off this
+    /// device, and the token it protects is device-scoped anyway.
+    nonisolated private static func sealKey() -> SymmetricKey? {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrAccount as String: sealKeyAccount,
+            kSecAttrSynchronizable as String: false,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne,
+        ]
+        var out: CFTypeRef?
+        if SecItemCopyMatching(query as CFDictionary, &out) == errSecSuccess, let d = out as? Data {
+            return SymmetricKey(data: d)
+        }
+        // Mint one. If the keychain won't hold it, return nil rather than falling back
+        // to writing plaintext — no token at rest beats a readable token at rest.
+        let fresh = SymmetricKey(size: .bits256)
+        let raw = fresh.withUnsafeBytes { Data($0) }
+        var add: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrAccount as String: sealKeyAccount,
+            kSecAttrSynchronizable as String: false,
+            kSecValueData as String: raw,
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock,
+        ]
+        SecItemDelete(add as CFDictionary)
+        add[kSecReturnData as String] = nil
+        return SecItemAdd(add as CFDictionary, nil) == errSecSuccess ? fresh : nil
+    }
+
     nonisolated private static func fileURL(_ key: String) -> URL? {
         FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first?
-            .appendingPathComponent("tb-\(key).token")
+            .appendingPathComponent("tb-\(key).sealed")
     }
     #endif
 
@@ -68,8 +105,10 @@ enum Keychain {
         add[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
         SecItemAdd(add as CFDictionary, nil)
         #if os(tvOS)
-        if let url = fileURL(key) {
-            try? Data(value.utf8).write(to: url, options: [.atomic])
+        // Seal, or write NOTHING. A failed seal must never degrade to plaintext.
+        if let url = fileURL(key), let k = sealKey(),
+           let sealed = try? AES.GCM.seal(Data(value.utf8), using: k).combined {
+            try? sealed.write(to: url, options: [.atomic, .completeFileProtection])
         }
         #endif
     }
@@ -85,8 +124,10 @@ enum Keychain {
         }
         #if os(tvOS)
         // The keychain miss is the NORMAL path on tvOS, not an error.
-        if let url = fileURL(key), let data = try? Data(contentsOf: url) {
-            return String(data: data, encoding: .utf8)
+        if let url = fileURL(key), let blob = try? Data(contentsOf: url), let k = sealKey(),
+           let box = try? AES.GCM.SealedBox(combined: blob),
+           let opened = try? AES.GCM.open(box, using: k) {
+            return String(data: opened, encoding: .utf8)
         }
         #endif
         return nil

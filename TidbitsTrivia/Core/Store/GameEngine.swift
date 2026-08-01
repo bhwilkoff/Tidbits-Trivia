@@ -263,6 +263,15 @@ final class GameEngine {
             ticker?.cancel()
             return
         }
+        // A rendered marathon photographs the screen but has no idea what is ON
+        // it — a flagged frame could not be tied back to the question that
+        // produced it. Emitting each question as it is PRESENTED means every
+        // question the player actually saw gets content-audited, not just the
+        // one frame in sixty that is kept. No-op outside the marathon.
+        if DebugHooks.marathonGames != nil, let q = current {
+            let json = QuestionProvider.playJSON(game: -1, mode: mode, cat: category, index: index, q: q)
+            print("SHOWN\t\(json)")
+        }
         chosenIndex = nil
         currentStake = 0
         if let spec = current?.closest { currentGuess = ((spec.min + spec.max) / 2).rounded() }

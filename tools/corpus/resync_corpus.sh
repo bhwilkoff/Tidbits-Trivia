@@ -50,4 +50,9 @@ echo "--- 5. assert every question file is identical across platforms"
 # different one of them.
 python3 tools/corpus/check_mirrors.py
 
+echo "--- 6. question quality gate"
+# Reporting is not a gate. This one FAILS, so a resync cannot land a question
+# that should never ship.
+python3 tools/corpus/quality_gate.py
+
 echo "--- done. corpus + sqlite + golden + fixtures all resynced."

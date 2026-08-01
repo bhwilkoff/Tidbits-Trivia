@@ -5709,7 +5709,6 @@ src:cloze:Horseshoe_crab
 src:describe:Autumn
 src:describe:Larry_Fink
 src:cloze:Larry_Fink
-src:describe:War_of_1812
 src:cloze:War_of_1812
 src:describe:Garry_Kasparov
 src:cloze:Hoysala_Kingdom
@@ -6208,7 +6207,6 @@ src:describe:Luis_Carlos_Galán
 src:describe:Min_Aung_Hlaing
 src:describe:Bruce_McLaren
 src:cloze:Bruce_McLaren
-src:describe:Ramón_Valdés
 src:describe:Kathy_Griffin
 src:cloze:Kathy_Griffin
 src:describe:Mel_Blanc
@@ -7269,7 +7267,6 @@ wd:author:Q130295
 wd:director:Q216006
 wd:composer:Q216006
 wd:author:Q857823
-wd:capital:Q34617
 wd:currency:Q34617
 src:describe:Gordon_Brown
 src:cloze:Gordon_Brown
@@ -9840,7 +9837,6 @@ wd:composer:Q616439
 wd:director:Q13619743
 wd:composer:Q13619743
 wd:capital:Q42834
-wd:currency:Q42834
 wd:director:Q219150
 wd:composer:Q219150
 wd:director:Q116055757
@@ -13521,7 +13517,6 @@ wd:composer:Q106536181
 wd:capital:Q25231
 wd:currency:Q25231
 wd:capital:Q17167
-wd:currency:Q17167
 wd:capital:Q27306
 wd:currency:Q27306
 wd:director:Q590252
@@ -66688,7 +66683,6 @@ src:describe:Alesha_Dixon
 src:cloze:Alesha_Dixon
 src:describe:Fast_Car
 src:cloze:Fast_Car
-src:describe:AT&T
 src:describe:Vodafone
 src:cloze:Vodafone
 src:describe:Ace_of_Base

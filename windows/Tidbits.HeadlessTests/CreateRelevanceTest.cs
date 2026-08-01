@@ -99,26 +99,33 @@ public class CreateTopicDriftTest
     public void The_surname_guard_does_not_fire_when_the_word_is_not_its_own_subject()
         => Assert.NotNull(Tier("Harry Potter", "Potter"));
 
+    /// No Wikipedia category admits a row on its own any more — not the incidental
+    /// kind, and not the agentive kind, which was the last source of drift.
     [Fact]
-    public void Only_agentive_category_tags_admit_a_row()
+    public void No_category_tag_admits_a_row_on_its_own()
     {
-        Assert.NotNull(Tier("Thriller (album)", "Michael Jackson",
-                            tags: ["Albums produced by Michael Jackson"]));
+        Assert.Null(Tier("Thriller (album)", "Michael Jackson",
+                         tags: ["Albums produced by Michael Jackson"]));
         Assert.Null(Tier("Kristin Cavallari", "Denver", tags: ["Actresses from Denver"]));
         Assert.Null(Tier("Neil Sedaka", "Abraham Lincoln",
                          tags: ["Abraham Lincoln High School (Brooklyn) alumni"]));
     }
 
+    /// A tag connection is real but INVISIBLE, so it no longer admits a row —
+    /// "Rod Stewart" produced Britt Ekland's height off a "Partners of" tag.
     [Fact]
-    public void An_agentive_tag_ranks_below_a_title_match()
+    public void An_agentive_tag_alone_no_longer_admits_a_row()
     {
-        var byTag = Tier("Bad (album)", "Michael Jackson",
-                         tags: ["Albums produced by Michael Jackson"]);
-        var byTitle = Tier("Dangerous (Michael Jackson album)", "Michael Jackson");
-        Assert.NotNull(byTag);
-        Assert.NotNull(byTitle);
-        Assert.True(byTag < byTitle);
+        Assert.Null(Tier("Bad (album)", "Michael Jackson",
+                         tags: ["Albums produced by Michael Jackson"]));
+        Assert.Null(Tier("Britt Ekland", "Rod Stewart", tags: ["Partners of Rod Stewart"]));
     }
+
+    /// ...while the same album survives when the question NAMES him.
+    [Fact]
+    public void The_same_row_survives_when_the_prompt_names_the_topic()
+        => Assert.Equal(0, Tier("Bad (album)", "Michael Jackson",
+                                prompt: "Michael Jackson's seventh studio album"));
 
     [Fact]
     public void A_disambiguator_is_not_a_topic_word()

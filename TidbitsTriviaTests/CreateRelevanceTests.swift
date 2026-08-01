@@ -102,24 +102,35 @@ struct CreateTopicDriftTests {
         #expect(tier("Harry Potter", topic: "Potter", guardNames: false) != nil)
     }
 
-    /// Wikipedia categories mean "about" only in their agentive form.
-    @Test func onlyAgentiveCategoryTagsAdmitARow() {
+    /// No Wikipedia category admits a row on its own any more — not the incidental
+    /// kind ("Actresses from Denver", which put a Kristin Cavallari birth-year
+    /// question in a Denver quiz), and not the agentive kind either, which was the
+    /// last measurable source of drift.
+    @Test func noCategoryTagAdmitsARowOnItsOwn() {
         #expect(tier("Thriller (album)", tags: ["Albums produced by Michael Jackson"],
-                     topic: "Michael Jackson") != nil)
+                     topic: "Michael Jackson") == nil)
         #expect(tier("Kristin Cavallari", tags: ["Actresses from Denver"],
                      topic: "Denver") == nil)
         #expect(tier("Neil Sedaka", tags: ["Abraham Lincoln High School (Brooklyn) alumni"],
                      topic: "Abraham Lincoln") == nil)
     }
 
-    /// A tag connection is real but INVISIBLE — the question never says so — and
-    /// must rank below anything the player can actually see the topic in.
-    @Test func anAgentiveTagRanksBelowATitleMatch() {
-        let byTag = tier("Bad (album)", tags: ["Albums produced by Michael Jackson"],
-                         topic: "Michael Jackson")
-        let byTitle = tier("Dangerous (Michael Jackson album)", topic: "Michael Jackson")
-        #expect(byTag != nil && byTitle != nil)
-        #expect(byTag! < byTitle!)
+    /// A tag connection is real but INVISIBLE — the question never says so — so it
+    /// no longer admits a row at all. It was the last measurable source of drift:
+    /// "Rod Stewart" produced Britt Ekland's height off a "Partners of Rod
+    /// Stewart" tag, and "Vajiralongkorn" produced seven questions about his wives
+    /// and daughters, none of which name him.
+    @Test func anAgentiveTagAloneNoLongerAdmitsARow() {
+        #expect(tier("Bad (album)", tags: ["Albums produced by Michael Jackson"],
+                     topic: "Michael Jackson") == nil)
+        #expect(tier("Britt Ekland", tags: ["Partners of Rod Stewart"],
+                     topic: "Rod Stewart") == nil)
+    }
+
+    /// …while the same album still comes through when the question NAMES him.
+    @Test func theSameRowSurvivesWhenThePromptNamesTheTopic() {
+        #expect(tier("Bad (album)", prompt: "Michael Jackson's seventh studio album",
+                     topic: "Michael Jackson") == 0)
     }
 
     /// A Wikipedia disambiguator is not part of what the player means.

@@ -71,7 +71,8 @@ nonisolated final class JSONQuestionSource: @unchecked Sendable {
             if tokens.contains(where: { CorpusDatabase.containsWord(ans, $0) }) { return nil }
             guard let tier = CorpusDatabase.tier(
                 title: q.sourceTitle, prompt: q.prompt, tags: q.tags,
-                tokens: tokens, phrase: phrase, guardNames: guardNames) else { return nil }
+                tokens: tokens, phrase: phrase, guardNames: guardNames,
+                requirePhrase: CorpusDatabase.phraseIsRequired(topic)) else { return nil }
             return (q, tier)
         }
         guard let best = scored.map(\.1).max() else { return [] }

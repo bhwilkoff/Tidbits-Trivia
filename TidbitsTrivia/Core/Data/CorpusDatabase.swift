@@ -306,10 +306,24 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
         if requirePhrase { return containsWord(fold(prompt), phrase) ? 0 : nil }
         let need = tokens.count <= 2 ? tokens.count : tokens.count - 1
         if tokens.filter({ containsWord(fTitle, $0) }).count >= need { return 1 }
-        if tokens.filter({ containsWord(fTitle, $0) || promptHasWord(prompt, $0, topic: tokens) }).count >= need {
-            return 0
+        // The cheap word test gates the expensive one: `promptHasWord` folds every
+        // word of the prompt, and almost no candidate row contains the token at
+        // all. Without this gate a Create search folded millions of words.
+        let fPrompt = fold(prompt)
+        let visible = tokens.filter {
+            containsWord(fTitle, $0)
+                || (containsWord(fPrompt, $0) && promptHasWord(prompt, $0, topic: tokens))
         }
-        if hasAgentiveTag(tags.map(fold), phrase: phrase) { return -1 }
+        if visible.count >= need { return 0 }
+        // An agentive tag ("Albums produced by Michael Jackson") is a real
+        // connection, but an INVISIBLE one: the question never says so. Admitting
+        // it as a last resort was the last measurable source of drift across the
+        // 984 most-viewed topics — typing "Rod Stewart" produced Britt Ekland's
+        // height and Penny Lancaster's birth year off a "Partners of Rod Stewart"
+        // tag, and "Vajiralongkorn" produced seven questions about his wives and
+        // daughters, none of which name him. A question the player cannot connect
+        // to what they typed IS the complaint, and live generation fills better
+        // than a stranger does. The tag still contributes to SCORING above.
         return nil
     }
 
@@ -449,7 +463,7 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
     /// Take from the highest occupied relevance tier first, diversifying inside it.
     private static func fillByTier(_ scored: [(Question, Int, Int)], limit: Int) -> [Question] {
         var out: [Question] = []
-        for tier in [3, 2, 1, 0, -1] {
+        for tier in [3, 2, 1, 0] {
             if out.count >= limit { break }
             let lane = scored.filter { $0.2 == tier }.sorted { $0.1 > $1.1 }.map { $0.0 }
             out.append(contentsOf: diversify(lane, limit: limit - out.count))

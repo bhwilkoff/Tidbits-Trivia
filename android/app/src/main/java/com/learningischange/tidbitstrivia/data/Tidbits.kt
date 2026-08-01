@@ -534,7 +534,10 @@ object Corpus {
         val need = if (tokens.size <= 2) tokens.size else tokens.size - 1
         if (tokens.count { containsWord(fTitle, it) } >= need) return 1
         if (tokens.count { containsWord(fTitle, it) || promptHasWord(prompt, it, tokens) } >= need) return 0
-        if (hasAgentiveTag(tags.map { fold(it) }, phrase)) return -1
+        // An agentive tag is a real connection but an INVISIBLE one: the question
+        // never says so. It was the last measurable source of drift — "Rod Stewart"
+        // produced Britt Ekland's height off a "Partners of Rod Stewart" tag. The
+        // tag still contributes to SCORING above.
         return null
     }
 
@@ -630,7 +633,7 @@ object Corpus {
      *  Adams, Hansel and Gretel, Phil Anselmo, Davante Adams…). Mirrors Swift. */
     private fun fillByTier(scored: List<Triple<Question, Int, Int>>, limit: Int): List<Question> {
         val out = mutableListOf<Question>()
-        for (t in listOf(3, 2, 1, 0, -1)) {
+        for (t in listOf(3, 2, 1, 0)) {
             if (out.size >= limit) break
             val lane = scored.filter { it.third == t }.sortedByDescending { it.second }.map { it.first }
             out.addAll(diversifyByCategory(lane, limit - out.size))

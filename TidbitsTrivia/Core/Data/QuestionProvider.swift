@@ -310,11 +310,23 @@ extension QuestionProvider {
             .filter { !$0.isEmpty && !$0.hasPrefix("#") }
         print("SWEEP-BEGIN topics=\(topics.count) corpus=\(corpusCount) corpusOnly=\(corpusOnly)")
         for topic in topics {
-            let qs = corpusOnly
-                ? CorpusDatabase.shared.search(topic: topic, limit: 8)
-                    + [JSONQuestionSource.picture, .thisOrThat, .closestCall]
-                        .flatMap { $0.searchMatch(topic: topic, limit: 1) }
-                : await createSet(topic: topic)
+            // One pool per topic. `fold` bridges to NSString, so a long
+            // back-to-back run accumulates autoreleased objects that never drain
+            // inside an async loop — measured, the sweep began returning ZERO for
+            // topics that return eight in isolation once it passed ~600 of them,
+            // because SQLite could no longer allocate. The app searches once at a
+            // time and never hit this; the measurement tool did, and a measurement
+            // tool that silently under-reports is worse than none.
+            let qs: [Question]
+            if corpusOnly {
+                qs = autoreleasepool {
+                    CorpusDatabase.shared.search(topic: topic, limit: 8)
+                        + [JSONQuestionSource.picture, .thisOrThat, .closestCall]
+                            .flatMap { $0.searchMatch(topic: topic, limit: 1) }
+                }
+            } else {
+                qs = await createSet(topic: topic)
+            }
             print("SWEEP-TOPIC\t\(topic)\t\(qs.count)")
             for q in qs {
                 // Tab-separated so the reader can split without guessing where the

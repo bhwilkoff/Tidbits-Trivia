@@ -32,7 +32,7 @@ ok(tier('Bob Denver', { topic: 'Denver', guard: true }) === null, 'bob denver');
 ok(tier('Denver Pyle', { topic: 'Denver', guard: true }) === null, 'denver pyle');
 ok(tier('Denver International Airport', { topic: 'Denver', guard: true }) !== null, 'denver airport');
 ok(tier('Harry Potter', { topic: 'Potter' }) !== null, 'potter unguarded');
-ok(tier('Thriller (album)', { tags: ['Albums produced by Michael Jackson'], topic: 'Michael Jackson' }) !== null, 'mj tag');
+ok(tier('Thriller (album)', { tags: ['Albums produced by Michael Jackson'], topic: 'Michael Jackson' }) === null, 'tag alone no longer admits');
 ok(tier('Kristin Cavallari', { tags: ['Actresses from Denver'], topic: 'Denver' }) === null, 'denver from-tag');
 ok(tier('Neil Sedaka', { tags: ['Abraham Lincoln High School (Brooklyn) alumni'], topic: 'Abraham Lincoln' }) === null, 'lincoln school');
 ok(topicPhrase('Masters of the Universe (2026 film)') === 'masters of the universe', 'disambiguator');
@@ -40,9 +40,10 @@ ok(!topicTokens('Backrooms (film)').includes('film'), 'no film token');
 ok(topicPhrase('World War II') === 'world war ii', 'phrase keeps stopwords');
 ok(tier('Denver', { topic: 'Denver' }) === 3, 'denver tier3');
 ok(tier('Denver International Airport', { topic: 'Denver' }) === 2, 'airport tier2');
-const byTag = tier('Bad (album)', { tags: ['Albums produced by Michael Jackson'], topic: 'Michael Jackson' });
-const byTitle = tier('Dangerous (Michael Jackson album)', { topic: 'Michael Jackson' });
-ok(byTag < byTitle, 'tag ranks below title');
+ok(tier('Britt Ekland', { tags: ['Partners of Rod Stewart'], topic: 'Rod Stewart' }) === null,
+   'partners-of tag rejected');
+ok(tier('Bad (album)', { topic: 'Michael Jackson', prompt: "Michael Jackson's seventh studio album" }) === 0,
+   'same row survives when the prompt names him');
 
 // A regnal numeral is short but not insignificant — "George VI" reduced to the
 // single token `george` and returned George Martin, George Eliot and Paul George.

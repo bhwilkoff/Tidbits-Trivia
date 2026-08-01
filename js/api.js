@@ -224,7 +224,9 @@ function tierOf(title, prompt, tags, tokens, phrase, guardNames, requirePhrase =
   const need = tokens.length <= 2 ? tokens.length : tokens.length - 1;
   if (tokens.filter((t) => containsWord(fTitle, t)).length >= need) return 1;
   if (tokens.filter((t) => containsWord(fTitle, t) || promptHasWord(prompt || '', t, tokens)).length >= need) return 0;
-  if (hasAgentiveTag((tags || []).map(fold), phrase)) return -1;
+  // An agentive tag is a real connection but an INVISIBLE one: the question never
+  // says so. It was the last measurable source of drift — "Rod Stewart" produced
+  // Britt Ekland's height off a "Partners of Rod Stewart" tag. The tag still scores.
   return null;
 }
 
@@ -234,7 +236,7 @@ function tierOf(title, prompt, tags, tokens, phrase, guardNames, requirePhrase =
 // Adams, Hansel and Gretel, Phil Anselmo, Davante Adams…).
 function fillByTier(scored, limit) {
   const out = [];
-  for (const t of [3, 2, 1, 0, -1]) {
+  for (const t of [3, 2, 1, 0]) {
     if (out.length >= limit) break;
     const lane = scored.filter((x) => x[2] === t).sort((a, b) => b[1] - a[1]).map((x) => x[0]);
     out.push(...diversify(lane, limit - out.length));

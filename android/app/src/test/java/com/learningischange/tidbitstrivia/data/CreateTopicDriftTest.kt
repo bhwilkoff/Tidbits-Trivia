@@ -65,23 +65,28 @@ class CreateTopicDriftTest {
         assertNotNull(tier("Harry Potter", "Potter"))
     }
 
-    /** Wikipedia categories mean "about" only in their agentive form. */
-    @Test fun onlyAgentiveCategoryTagsAdmitARow() {
-        assertNotNull(tier("Thriller (album)", "Michael Jackson",
+    /** No Wikipedia category admits a row on its own any more — not the incidental
+     *  kind, and not the agentive kind, which was the last source of drift. */
+    @Test fun noCategoryTagAdmitsARowOnItsOwn() {
+        assertNull(tier("Thriller (album)", "Michael Jackson",
             tags = listOf("Albums produced by Michael Jackson")))
         assertNull(tier("Kristin Cavallari", "Denver", tags = listOf("Actresses from Denver")))
         assertNull(tier("Neil Sedaka", "Abraham Lincoln",
             tags = listOf("Abraham Lincoln High School (Brooklyn) alumni")))
     }
 
-    /** A tag connection is real but INVISIBLE — the question never says so — and
-     *  must rank below anything the player can actually see the topic in. */
-    @Test fun anAgentiveTagRanksBelowATitleMatch() {
-        val byTag = tier("Bad (album)", "Michael Jackson",
-            tags = listOf("Albums produced by Michael Jackson"))
-        val byTitle = tier("Dangerous (Michael Jackson album)", "Michael Jackson")
-        assertNotNull(byTag); assertNotNull(byTitle)
-        assertTrue(byTag!! < byTitle!!)
+    /** A tag connection is real but INVISIBLE, so it no longer admits a row —
+     *  "Rod Stewart" produced Britt Ekland's height off a "Partners of" tag. */
+    @Test fun anAgentiveTagAloneNoLongerAdmitsARow() {
+        assertNull(tier("Bad (album)", "Michael Jackson",
+            tags = listOf("Albums produced by Michael Jackson")))
+        assertNull(tier("Britt Ekland", "Rod Stewart", tags = listOf("Partners of Rod Stewart")))
+    }
+
+    /** ...while the same album survives when the question NAMES him. */
+    @Test fun theSameRowSurvivesWhenThePromptNamesTheTopic() {
+        assertEquals(0, tier("Bad (album)", "Michael Jackson",
+            prompt = "Michael Jackson's seventh studio album"))
     }
 
     @Test fun aDisambiguatorIsNotATopicWord() {

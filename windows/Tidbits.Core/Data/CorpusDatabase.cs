@@ -150,7 +150,7 @@ public sealed class CorpusDatabase
     private static List<Question> FillByTier(List<(Question q, int score, int tier)> scored, int limit)
     {
         var outp = new List<Question>();
-        foreach (var t in new[] { 3, 2, 1, 0, -1 })
+        foreach (var t in new[] { 3, 2, 1, 0 })
         {
             if (outp.Count >= limit) break;
             var lane = scored.Where(s => s.tier == t)

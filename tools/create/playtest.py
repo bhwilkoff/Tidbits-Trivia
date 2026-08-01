@@ -294,8 +294,17 @@ def drift(row, toks, topic, has_exact):
         return "invisible"
     if not any(word_in(t, hay) for t in toks):
         return "substr"
-    if has_exact and " ".join(tokens(row["title"])) != " ".join(toks):
-        if PERSONISH.match(" ".join(tokens(row["title"]))) and any(word_in(t, f_title) for t in toks):
+    # A ROW title keeps its disambiguator — that is what the shipped rule does,
+    # because the parenthetical carries meaning there ("Dangerous (Michael Jackson
+    # album)"). Stripping it here reported "Estado Novo (Portugal)" as a two-word
+    # personal name and flagged every Toy Story film as drift on the franchise.
+    subject = " ".join(x for x in re.split(r"[^a-z0-9]+", f_title) if x)
+    # Compare against the whole typed phrase, not the significant tokens: "He-Man"
+    # reduces to the token "man", and comparing to that called the He-Man rows
+    # themselves drift.
+    topic_flat = " ".join(x for x in re.split(r"[^a-z0-9]+", fold(strip_parens(topic))) if x)
+    if has_exact and subject not in (topic_flat, " ".join(toks)):
+        if PERSONISH.match(subject) and any(word_in(t, f_title) for t in toks):
             return "entity"
     return ""
 

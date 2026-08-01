@@ -204,7 +204,10 @@ internal static class QueryHelpers
         var need = tokens.Count <= 2 ? tokens.Count : tokens.Count - 1;
         if (tokens.Count(t => ContainsWord(fTitle, t)) >= need) return 1;
         if (tokens.Count(t => ContainsWord(fTitle, t) || PromptHasWord(prompt, t, tokens)) >= need) return 0;
-        if (HasAgentiveTag(tags.Select(Fold), phrase)) return -1;
+        // An agentive tag is a real connection but an INVISIBLE one: the question
+        // never says so. It was the last measurable source of drift — "Rod Stewart"
+        // produced Britt Ekland's height off a "Partners of Rod Stewart" tag. The
+        // tag still contributes to SCORING above.
         return null;
     }
 

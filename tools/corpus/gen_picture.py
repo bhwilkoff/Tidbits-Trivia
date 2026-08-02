@@ -21,6 +21,9 @@ main corpus contract is untouched and Picture mode loads its own set.
 Usage: python3 gen_picture.py
 """
 import argparse, hashlib, json, os, re, urllib.parse
+import sys
+sys.path.insert(0, __import__('os').path.dirname(__file__))
+import genguard
 
 # --- Type-aware stem construction --------------------------------------------
 # Classify the subject from its description, then ask the RIGHT question (a
@@ -173,6 +176,7 @@ def main():
     ap.add_argument("--corpus", default="../../assets/corpus.json")
     ap.add_argument("--enrich", default="../../assets/enrich.json")
     ap.add_argument("--out", default="../../assets/picture.json")
+    genguard.add_args(ap)
     args = ap.parse_args()
 
     corpus = json.load(open(args.corpus))
@@ -203,6 +207,10 @@ def main():
             q[0].replace("corpus:", "picture:", 1), stem, options, correct,
             q[4], q[5], q[6], q[7], q[8], ent["image"],
         ])
+
+    out = genguard.merge('picture', out, args.out,
+
+                         regenerate=args.regenerate, prune=args.prune)
 
     body = json.dumps(out, ensure_ascii=False, separators=(",", ":"))
     version = hashlib.md5(body.encode()).hexdigest()[:12]

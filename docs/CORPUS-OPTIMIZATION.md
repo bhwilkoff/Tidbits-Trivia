@@ -139,7 +139,11 @@ verified on a rendered screen before it counts as done.
 - Every question file stays byte-identical across the three platform mirrors
   (`check_mirrors.py`).
 - The five-engine daily golden and the Create golden stay green.
-- `authored/` content is never deleted by a generator
-  (`generated-files-hide-authored-content`).
+- `authored/` content is never deleted by a generator — enforced now rather than
+  remembered: every `gen_*.py` writes through `genguard.merge`, so a re-run keeps
+  every shipped row and adds only new ids (Decision 051). Before that guard,
+  re-running the seven shape generators would have deleted 2,896 rows, reverted
+  12,856 to their pre-repair text, and revived 864 that prune commits removed.
+  `tools/corpus/test_genguard.py` proves it against the real artifacts, in CI.
 - A schema change lands in ALL readers in the same change set, or the mirrors
   diverge silently.

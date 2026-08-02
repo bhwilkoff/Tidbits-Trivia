@@ -12,6 +12,9 @@ Row shape: [id, prompt, answer, accepted(list), category, explanation, title, ur
 Usage: python3 gen_typeanswer.py
 """
 import argparse, hashlib, json, os, re, urllib.parse
+import sys
+sys.path.insert(0, __import__('os').path.dirname(__file__))
+import genguard
 
 
 def norm(s):
@@ -33,6 +36,7 @@ def main():
     ap.add_argument("--corpus", default="../../assets/corpus.json")
     ap.add_argument("--enrich", default="../../assets/enrich.json")
     ap.add_argument("--out", default="../../assets/typeanswer.json")
+    genguard.add_args(ap)
     args = ap.parse_args()
 
     qs = json.load(open(args.corpus))["questions"]
@@ -62,6 +66,10 @@ def main():
             q[0].replace(q[0].split(":")[0] + ":", "type:", 1), q[1], answer, acc,
             q[4], q[6], q[7], q[8],
         ])
+
+    out = genguard.merge('typeanswer', out, args.out,
+
+                         regenerate=args.regenerate, prune=args.prune)
 
     body = json.dumps(out, ensure_ascii=False, separators=(",", ":"))
     version = hashlib.md5(body.encode()).hexdigest()[:12]

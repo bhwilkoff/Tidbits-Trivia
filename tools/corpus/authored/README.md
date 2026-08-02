@@ -17,8 +17,14 @@ cleanly, the app built, and every test passed.
 
 `gen_match.py` merges its file automatically (by id, so it is idempotent).
 
-**`gen_oddoneout.py` and `gen_enumerate.py` do NOT yet merge theirs — do not run
-them without wiring that up first, or you will drop the rows listed above.**
-Regenerating `oddoneout.json` today would also replace 156 geography rows whose
-ids have drifted since they were built, so it needs a deliberate pass rather than
-a casual re-run.
+`gen_oddoneout.py` and `gen_enumerate.py` still do not read theirs — and no
+longer need to. Every generator now writes through `genguard.merge`, which keeps
+the shipped artifact and adds only what is new, and all 125 authored rows are
+already in the shipped artifacts. The protection no longer depends on each
+generator remembering to merge a particular file: it is a property of how the
+artifact is written.
+
+This directory is still the right home for authored rows. It is what a
+FROM-SCRATCH rebuild would read, and it is the only place the authorship is
+legible — `assets/oddoneout.json` cannot tell you which of its rows a human
+wrote.

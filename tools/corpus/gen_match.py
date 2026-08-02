@@ -14,6 +14,9 @@ Row shape: [id, prompt, keys(4), values(4 — parallel/correct), category,
 Usage: python3 gen_match.py
 """
 import argparse, collections, hashlib, json, os, re, unicodedata
+import sys
+sys.path.insert(0, __import__('os').path.dirname(__file__))
+import genguard
 
 # id-prefix -> (prompt, key-noun, value-noun). key = source title, value = answer.
 # The key noun has to be true of every key the relation actually yields, not of
@@ -122,6 +125,7 @@ def main():
     ap.add_argument("--corpus", default="../../assets/corpus.json")
     ap.add_argument("--difficulty", default="../../assets/difficulty.json")
     ap.add_argument("--out", default="../../assets/match.json")
+    genguard.add_args(ap)
     args = ap.parse_args()
 
     qs = json.load(open(args.corpus))["questions"]
@@ -209,6 +213,10 @@ def main():
         have = {q[0] for q in out}
         out += [r for r in authored if r[0] not in have]
         print(f"merged {len(authored)} authored rounds")
+
+    out = genguard.merge('match', out, args.out,
+
+                         regenerate=args.regenerate, prune=args.prune)
 
     body = json.dumps(out, ensure_ascii=False, separators=(",", ":"))
     version = hashlib.md5(body.encode()).hexdigest()[:12]

@@ -15,6 +15,9 @@ Row shape: [id, prompt, answer, min, max, step, tolerance, unit, category,
 Usage: python3 gen_closest.py
 """
 import argparse, hashlib, json, os, re, urllib.parse
+import sys
+sys.path.insert(0, __import__('os').path.dirname(__file__))
+import genguard
 
 PER_BUCKET = 160  # cap per (category, metric) so one fact type can't dominate
 
@@ -88,6 +91,7 @@ def main():
     ap.add_argument("--corpus", default="../../assets/corpus.json")
     ap.add_argument("--enrich", default="../../assets/enrich.json")
     ap.add_argument("--out", default="../../assets/closest.json")
+    genguard.add_args(ap)
     args = ap.parse_args()
 
     corpus = json.load(open(args.corpus))
@@ -134,6 +138,10 @@ def main():
                 f"closest:{metric}:{t}", prompt_fn(name, cat, desc_of.get(t, '')), v, lo, hi, step, tol, unit,
                 cat, f"{name}: {disp}.", name, url_of.get(t, ""),
             ])
+
+    out = genguard.merge('closest', out, args.out,
+
+                         regenerate=args.regenerate, prune=args.prune)
 
     body = json.dumps(out, ensure_ascii=False, separators=(",", ":"))
     version = hashlib.md5(body.encode()).hexdigest()[:12]

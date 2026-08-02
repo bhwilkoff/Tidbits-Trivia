@@ -14,6 +14,9 @@ Row shape: [id, prompt, options(4), correctIndex, category, difficulty,
 Usage: python3 gen_oddoneout.py
 """
 import argparse, hashlib, json, os
+import sys
+sys.path.insert(0, __import__('os').path.dirname(__file__))
+import genguard
 
 PER_MAJORITY = 40   # questions per majority continent
 MERGE = {"Insular Oceania": "Oceania"}
@@ -24,6 +27,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--corpus", default="../../assets/corpus.json")
     ap.add_argument("--out", default="../../assets/oddoneout.json")
+    genguard.add_args(ap)
     args = ap.parse_args()
 
     qs = json.load(open(args.corpus))["questions"]
@@ -75,6 +79,10 @@ def main():
             made += 1
             if made >= PER_MAJORITY:
                 break
+
+    out = genguard.merge('oddoneout', out, args.out,
+
+                         regenerate=args.regenerate, prune=args.prune)
 
     body = json.dumps(out, ensure_ascii=False, separators=(",", ":"))
     version = hashlib.md5(body.encode()).hexdigest()[:12]

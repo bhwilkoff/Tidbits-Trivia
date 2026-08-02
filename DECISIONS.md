@@ -1773,3 +1773,50 @@ being migrated. This one was designed carefully, mirrored across five engines,
 locked by a golden — and none of it needed to exist. The cost of asking was one
 question; the cost of not asking was a day of work and a permanently more
 complicated codebase.
+
+## 051 — A generator's output is not the shipped artifact; re-running one is additive
+
+**The rule:** every `gen_*.py` writes through `genguard.merge`. The shipped
+artifact wins for any row that already exists, the generator contributes only
+rows whose id is new, and rows a prune commit deliberately removed are suppressed
+by `tombstones.json`.
+
+**Why:** a generator is written once, when its output IS the artifact. From the
+second run onward that is false. `assets/<shape>.json` has since been edited in
+place by dozens of repair scripts, has hand-authored rounds that exist nowhere
+else, and has had rows removed on purpose. The generator knows about none of it.
+
+Measured on 2026-08-02 by regenerating all seven shapes to a scratch path and
+diffing against what ships:
+
+| | rows |
+|---|---|
+| deleted — the generator no longer produces them | 2,896 |
+| reverted to pre-repair text | 12,856 |
+| revived after a prune commit removed them | 864 |
+
+That is not a hypothetical. `gen_typeanswer.py` would have restored
+
+    shipped   1883 (TV series) - 1883 is an American Western drama miniseries...
+    regen     1883 (TV series) is an American Western drama miniseries...
+
+undoing the fix for the payoff panel that read like it was scraped, and
+`gen_closest.py` would have reverted the bounds fix on 2,506 rows. The 2026-08-01
+loss of 22 authored Match-Up rounds was the same failure, caught only because
+someone counted the rounds afterwards.
+
+The seed for `tombstones.json` came from git history, and the discriminator
+matters: a commit that removed ids **while adding none** is a deliberate prune;
+one that does both is ordinary generator drift. `order:arts:13:Zeno_of_Elea`
+carries its index in its id and churns on every run, so treating all 13,885
+ever-removed ids as intentional would have blocked legitimate content. Filtering
+to pure-removal commits gives 864, each traceable to a named commit.
+
+**How to apply:** when a script's output overwrites a file that anything else
+edits, the script is no longer the author of that file and must merge rather than
+write. Ask what has touched the artifact since the generator last ran — if the
+answer is "repair scripts, humans, and prune commits," a blind rewrite destroys
+all three. `--regenerate` and `--prune` remain available for when the destruction
+is the point; they are flags, not the default. Verified by
+`tools/corpus/test_genguard.py`, which runs the real generators against copies of
+the real artifacts and asserts nothing is lost, reverted or resurrected.

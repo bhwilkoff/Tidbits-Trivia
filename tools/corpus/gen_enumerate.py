@@ -19,7 +19,11 @@ Row shape: [id, prompt, groups, category, seconds, source_url]
 
 Usage: python3 gen_enumerate.py
 """
+import argparse
 import hashlib, json, os, shutil
+import sys
+sys.path.insert(0, __import__('os').path.dirname(__file__))
+import genguard
 
 MERGE = {"Insular Oceania": "Oceania"}
 MIN_COUNTRIES = 10          # only continents big enough to be a satisfying list
@@ -98,6 +102,7 @@ HARDCODED = [
 
 
 def main():
+    args = genguard.add_args(argparse.ArgumentParser()).parse_args()
     qs = json.load(open(CORPUS))["questions"]
     enrich = json.load(open(ENRICH)).get("entities", {})
 
@@ -150,6 +155,9 @@ def main():
     for prompt, cat, entries, url in HARDCODED:
         groups = [[name] + aliases for name, aliases in entries]
         out.append([pid(prompt), prompt, groups, cat.lower(), SECONDS, url])
+
+    out = genguard.merge('enumerate', out, OUT,
+                         regenerate=args.regenerate, prune=args.prune)
 
     payload = {"version": hashlib.sha1(json.dumps(out).encode()).hexdigest()[:12],
                "count": len(out), "questions": out}

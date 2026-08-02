@@ -33,3 +33,15 @@ jobs:
 
       - name: No question that should never ship
         run: python3 tools/corpus/quality_gate.py
+
+      # A gate that stops FIRING is indistinguishable from a corpus that got
+      # clean. NATIONALITY-FREE went blind exactly once, when a dedupe pass
+      # dropped the reveal its check reads, and only a planted defect caught it.
+      - name: Every gate rule still fires
+        run: python3 tools/corpus/test_quality_gate.py
+
+      # Re-running a generator used to delete 2,896 rows, revert 12,856 to their
+      # pre-repair text and revive 864 a prune commit removed. It is additive now
+      # and this is what keeps it that way.
+      - name: A generator re-run is additive
+        run: python3 tools/corpus/test_genguard.py

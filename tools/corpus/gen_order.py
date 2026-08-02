@@ -14,6 +14,9 @@ Row shape: [id, prompt, names_in_correct_order, years, category, explanation,
 Usage: python3 gen_order.py
 """
 import argparse, hashlib, json, os, re, urllib.parse
+import sys
+sys.path.insert(0, __import__('os').path.dirname(__file__))
+import genguard
 
 GROUP = 4
 MIN_GAP = 6          # adjacent years in a group must differ by >= this
@@ -35,6 +38,7 @@ def main():
     ap.add_argument("--corpus", default="../../assets/corpus.json")
     ap.add_argument("--enrich", default="../../assets/enrich.json")
     ap.add_argument("--out", default="../../assets/order.json")
+    genguard.add_args(ap)
     args = ap.parse_args()
 
     corpus = json.load(open(args.corpus))
@@ -97,6 +101,10 @@ def main():
             made += 1
             if made >= PER_CATEGORY:
                 break
+
+    out = genguard.merge('order', out, args.out,
+
+                         regenerate=args.regenerate, prune=args.prune)
 
     body = json.dumps(out, ensure_ascii=False, separators=(",", ":"))
     version = hashlib.md5(body.encode()).hexdigest()[:12]

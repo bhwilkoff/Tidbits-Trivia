@@ -16,6 +16,9 @@ compact column order as corpus.json. No image column.
 Usage: python3 gen_thisorthat.py
 """
 import argparse, hashlib, json, os, re, urllib.parse
+import sys
+sys.path.insert(0, __import__('os').path.dirname(__file__))
+import genguard
 
 YEAR_MARGIN = 8
 SIZE_RATIO = 1.4
@@ -34,6 +37,7 @@ def main():
     ap.add_argument("--corpus", default="../../assets/corpus.json")
     ap.add_argument("--enrich", default="../../assets/enrich.json")
     ap.add_argument("--out", default="../../assets/thisorthat.json")
+    genguard.add_args(ap)
     args = ap.parse_args()
 
     corpus = json.load(open(args.corpus))
@@ -124,6 +128,10 @@ def main():
                lambda x, y: ratio_ok(x, y, 50),
                "Which is bigger by area?",
                lambda a, b: f"{b[1]} ({num(b[3])} km²) is larger than {a[1]} ({num(a[3])} km²).")
+
+    out = genguard.merge('thisorthat', out, args.out,
+
+                         regenerate=args.regenerate, prune=args.prune)
 
     body = json.dumps(out, ensure_ascii=False, separators=(",", ":"))
     version = hashlib.md5(body.encode()).hexdigest()[:12]

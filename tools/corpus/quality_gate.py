@@ -25,6 +25,16 @@ Each rule below is here because a real question in this app hit it:
                   created?" — a Wikidata property name left in the prose.
   THIN-COVERAGE   a mode x category the bundle cannot fill, which silently
                   serves a different category and says nothing.
+  CATEGORY-SKEW   a category grew past the share it had when Decision 050 was
+                  written. "Mixed Bag" is only as mixed as the corpus, and the
+                  corpus is 31% Film & TV against 2.4% Business — so a new
+                  player, whose default is Mixed Bag, gets one film question in
+                  three and one business question in forty. Found by generating
+                  60 days of Daily sets and noticing 9 of them put 4+ of 7 in one
+                  category; the picker turned out to be innocent (a uniform draw
+                  over this corpus does that 18% of the time). This is a
+                  REGRESSION GUARD, not a target: lowering a ceiling is the
+                  improvement. See Decision 050 for why the draw was not changed.
   GOLDEN-STALE    the Create search golden names a question id the corpus no
                   longer contains. That golden is the six-platform contract
                   ("the same topic returns the same quiz everywhere") and the
@@ -146,6 +156,7 @@ BUDGET = {
     # Ascending happens by chance in 1/24 of four-option sets, and 4.2% is what
     # the corpus shows. Anything materially above that means someone sorted.
     "NUMERIC-SORTED": 0,
+    "CATEGORY-SKEW": 0,
     "GOLDEN-STALE": 0,
     "NATIONALITY-FREE": 0,
     "SLIDER-FARMABLE": 0,
@@ -549,6 +560,21 @@ def check():
                    if i != ci and kinds.get(str(o)) and ka and kinds[str(o)] != ka]
             if ka and odd:
                 bad["KIND-MISMATCH"].append(f"{q[0]}: {odd} among {ka}s — {opts}")
+
+    # Ceilings measured 2026-08-02 (Decision 050), each a little above the share
+    # of the day so ordinary content work does not trip it.
+    SHARE_CEILING = {"screen": 0.325, "geography": 0.195, "music": 0.135,
+                     "history": 0.115, "sports": 0.105, "arts": 0.105,
+                     "science": 0.080}
+    cat_counts = collections.Counter(q[4] for q in rows_all)
+    cat_total = sum(cat_counts.values())
+    if cat_total:
+        for cat, ceiling in SHARE_CEILING.items():
+            share = cat_counts.get(cat, 0) / cat_total
+            if share > ceiling:
+                bad["CATEGORY-SKEW"].append(
+                    f"{cat} is {share:.1%} of the corpus, ceiling {ceiling:.1%}"
+                    " — grow another category rather than raising this")
 
     golden = ROOT / "tools" / "create" / "golden" / "search.txt"
     if golden.exists():

@@ -178,3 +178,20 @@ it was in shared Core logic rather than content.
 - **A screenshot only proves what is INSTALLED.** `xcodebuild build` does not
   install; a capture after a rebuild showed the old chip and looked like the edit
   had failed. `simctl install` before launching, or read the previous build.
+
+## Generate the surface you cannot sit and watch (added 2026-08-02)
+
+The Daily is one set of seven per day; you cannot read a year of it on a
+simulator. Generate it instead and audit the sequence.
+
+- **Sixty days of Daily sets** exposed that 9 of 60 put four or more of seven
+  questions in ONE category, three of them at five-of-seven Film & TV. The
+  picker was innocent — a uniform 7-draw over this corpus does that 18% of the
+  time — so the finding was upstream: the corpus is 31% Film & TV and 2.4%
+  Business, and "Mixed Bag" is only as mixed as what it draws from. Decision 050;
+  guarded against worsening by `CATEGORY-SKEW`.
+- **Check whether the thing you want to change is a live contract.** The shared
+  Daily leaderboard posts a 7-char marks string aligned to `pickDaily`'s ORDER,
+  so changing the draw desynchronises marks from already-shipped clients on the
+  same day. Five determinism mirrors and a board migration is not a same-tick
+  change; measuring it, recording why, and fencing the regression is.

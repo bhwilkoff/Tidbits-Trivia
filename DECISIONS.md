@@ -1640,3 +1640,51 @@ exactly why no local device reproduced it.
 **Not changed:** the web app (browser-managed) and Windows (a desktop with GBs
 free) still read `corpus.json`. The constraint is a phone's per-process heap
 cap, not the file.
+
+---
+
+## 050 — "Mixed Bag" is only as mixed as the corpus, and the corpus is 31% Film & TV
+
+**Rule:** the Daily and every Mixed Bag round draw uniformly from the corpus, so
+their category balance IS the corpus's category balance. Treat the corpus's
+per-category share as a product surface, not a byproduct of how much Wikipedia
+happens to exist about each subject. Do not "fix" the balance by changing
+`pickDaily` without reading the compatibility note below.
+
+**Why:** measured 2026-08-02 over the 60 Daily sets from 2026-08-02 onward.
+Nine of 60 days (15%) put four or more of their seven questions in ONE category,
+including three days at five of seven Film & TV. That looked like a picker bug
+and is not: a uniform 7-draw over this corpus produces 4-in-one 18% of the time,
+so the Daily is behaving exactly as specified. The skew is upstream:
+
+    screen     39,734  31.0%          arts       11,878   9.3%
+    geography  23,603  18.4%          science     8,786   6.9%
+    music      15,795  12.3%          business    3,047   2.4%
+    history    13,114  10.2%
+    sports     12,189   9.5%
+
+A player whose default is Mixed Bag — which is every new player — gets roughly
+one film question in three and one business question in forty. For an app whose
+subtitle is "Trivia from the whole of Wikipedia", that reads as a film quiz with
+guests.
+
+**Why it was NOT fixed in the same pass:** `pickDaily` takes ids and no
+categories, so balancing it changes the signature in five determinism-critical
+mirrors (js/engine.js, windows/Tidbits.Core/Engine/DailyPick.cs, Android
+Tidbits.kt, tools/aggregate_dailyboard.py, and the Swift Core copy). Worse, the
+shared Daily leaderboard posts a 7-char marks string **aligned to pickDaily's
+order**: clients on the old algorithm and clients on the new one would compute
+different sets for the same day and their marks would no longer line up on the
+same board. That is a live, shipped, cross-device contract — it needs a version
+key on the board rows, not an in-place algorithm swap.
+
+**How to apply:**
+- Prefer fixing the SUPPLY (generate more business/science rows) over changing
+  the draw. It needs no determinism change and no board migration.
+- If the draw is changed anyway, it is a new function beside `pickDaily`, keyed
+  into the board rows so old and new clients can be told apart, with the daily
+  golden regenerated across all four engines in the same change set.
+- `CATEGORY-SKEW` in the quality gate holds today's shares as a ceiling. It is a
+  regression guard, not a target: it exists so a corpus pass cannot quietly make
+  the largest category larger. Lowering the ceiling is the improvement; raising
+  it needs a line in this decision saying why.

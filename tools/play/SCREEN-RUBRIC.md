@@ -324,3 +324,23 @@ Thessaloniki, Maya Plisetskaya, Pontius Pilate) because those rules need a
 subject the classifier can type. If a corpus change ever makes one of them
 untypeable the test goes BLIND and says so — which is correct: a plant that
 quietly stops working is the same failure as a rule that quietly stops seeing.
+
+## Local green is not CI green (added 2026-08-02)
+
+Four workflows were failing. Three were mine and none had shown up locally.
+
+- **A row that PARSES is not a row that FITS.** Index 9 of a corpus row is a tags
+  ARRAY; a generated batch padded it with "" and shipped 1,464 rows that the
+  gate, the mirrors and the Apple suite all accepted. Only Android's
+  `getJSONArray(9)` threw. `ROW-SCHEMA` now derives the schema from the corpus's
+  own majority per field and fails anything that does not match.
+- **`grep` for the fixture filename before changing it.** Two Windows tests read
+  `tools/daily-parity/golden`; adding the v2 days updated one. The other kept
+  asserting v1 output against a `v2:` line.
+- **A workflow that has never passed is not a regression — check its history
+  first.** Apple Core tests had failed ten times over two days on macos-15, whose
+  Xcode 16.4 cannot build this project's macOS 26 target. The sibling workflow had
+  been on macos-26 with an explicit xcode-select since it was written.
+- **Run what CI runs.** `tools/test-apple.sh` passes locally because
+  DEVELOPER_DIR points at Xcode-beta on a macOS 26 box. The same command on the
+  runner image cannot work, and nothing local would ever tell you.

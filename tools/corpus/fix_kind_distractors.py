@@ -30,6 +30,7 @@ import re
 import sys
 import unicodedata
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 CORPUS = ROOT / "assets" / "corpus.json"
 RNG = random.Random(20260801)      # deterministic; three mirrors must agree
@@ -37,25 +38,6 @@ RNG = random.Random(20260801)      # deterministic; three mirrors must agree
 STOP = {"the", "of", "a", "an", "and", "in", "on", "at", "to", "for", "de",
         "la", "le", "el", "s", "is", "was", "or"}
 
-KINDS = [
-    ("plant",    r"\b(plant|shrub|tree|flower|grass|fern|moss|herb|vine|"
-                 r"flowering plant|conifer|palm|cactus)\b"),
-    ("animal",   r"\b(insect|bird|mammal|fish|reptile|amphibian|spider|beetle|wasp|"
-                 r"hornet|moth|butterfly|dinosaur|crustacean|mollusc|primate)\b"),
-    ("person",   r"\b(born \d{4}|politician|footballer|actor|actress|singer|writer|"
-                 r"player|physicist|philosopher|emperor|monarch|composer|director)\b"),
-    ("place",    r"\b(country|city|town|village|island|river|mountain|region|province|"
-                 r"capital|lake|desert|county|municipality)\b"),
-    ("work",     r"\b(film|movie|song|album|novel|book|poem|series|sitcom|anime|"
-                 r"video game|painting|opera|symphony|manga|sculpture)\b"),
-    ("org",      r"\b(company|corporation|club|team|university|bank|airline|band|"
-                 r"agency|organisation|organization|brand)\b"),
-    ("event",    r"\b(battle|war\b|siege|revolution|treaty|massacre|disaster|"
-                 r"earthquake|eruption|pandemic|election)\b"),
-    ("chemical", r"\b(chemical element|compound|molecule|protein|enzyme|mineral|isotope)\b"),
-    ("disease",  r"\b(disease|disorder|syndrome|infection|cancer|virus|bacterium)\b"),
-]
-KINDS = [(n, re.compile(p, re.I)) for n, p in KINDS]
 
 
 def fold(s):
@@ -80,50 +62,16 @@ def descriptions(rows):
     return out
 
 
-def kind_map(rows):
-    """name -> kind, but ONLY where the name means one thing.
+# The type classifier lives in quality_gate.py and is imported, not copied. Two
+# copies is what let this file keep matching a noun anywhere in the description
+# for a full session after the gate had been fixed. The gate is the source of
+# truth because it is the thing that blocks a ship.
+from quality_gate import readable_description, _KINDS   # noqa: E402
 
-    The kind is looked up by option TEXT, and a title is not a unique key: the
-    film Insomnia was typed as a disease because the word is also a subject in
-    its own right. A misread ANSWER kind is the dangerous case — it would
-    replace three perfectly good distractors with wrong-kind ones — so any name
-    that two different subjects describe differently is dropped rather than
-    guessed at.
-    """
-    seen = collections.defaultdict(set)
-    for q in rows:
-        e = q[6] or ""
-        if ":" not in e or "→" in e:
-            continue
-        _, d = e.split(":", 1)
-        d = d.strip()
-        # ONLY the first sentence. The explanation field does double duty — the
-        # player-facing reveal and the machine-readable subject description — and
-        # fix_hollow_reveals.py appends a Wikipedia sentence to it.
-        d = re.split(r"(?<=[.!?])\s", d, maxsplit=1)[0].strip()
-        # A quoted word is being MENTIONED, not used as a type. "Vespa: Italian
-        # scooter... Italian for 'wasp'" typed a scooter brand as an animal.
-        d = re.sub(r"[\"'\u2018\u2019\u201c\u201d][^\"'\u2018\u2019\u201c\u201d]{1,30}"
-                   r"[\"'\u2018\u2019\u201c\u201d]", " ", d)
-        if not d or len(d) <= 8 or d[0].isdigit():
-            continue
-        for n, rx in KINDS:
-            if rx.search(d):
-                seen[q[7]].add(n)
-                break
 
-    # A bare name is ambiguous when the corpus ALSO holds a parenthetical twin:
-    # "Vespa" the wasp beside "Vespa (brand)"; "Puma" the cat beside "Puma
-    # (brand)"; "Insomnia" the disorder beside "Insomnia (2002 film)". The option
-    # renders as the bare name, so the kind lookup silently picks the wrong
-    # subject and calls a scooter maker an animal. Drop those names rather than
-    # guess which one is meant.
-    titles = {q[7] for q in rows if q[7]}
-    ambiguous = {t for t in titles if any(
-        o != t and o.startswith(t + " (") for o in titles)}
-    ambiguous |= {t.split(" (")[0] for t in titles if " (" in t}
-    return {name: next(iter(ks)) for name, ks in seen.items()
-            if len(ks) == 1 and name not in ambiguous}
+# kind_map is imported, not redefined. This file kept its own copy for one
+# session after the gate's was fixed, and the two silently disagreed.
+from quality_gate import kind_map                                  # noqa: E402,F401
 
 
 def main():

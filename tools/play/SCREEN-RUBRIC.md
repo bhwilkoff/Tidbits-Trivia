@@ -75,3 +75,32 @@ The only layer that sees meaning. Work down it deliberately:
 When reading finds something the machine missed, the finding is not the
 deliverable — **the new rule is**. Add it to `quality_gate.py` if it can be
 decided from the data, or to this list if it needs a person.
+
+## The reveal panel (added 2026-08-01, from reading a Sweep round)
+
+Read the reveal as a person who just got the question wrong and wants to know
+why. Two failures found this way, both invisible to every counter that existed:
+
+- **The description slot must describe.** "Brandon Spikes: 1987." and
+  "Matthew Perry: 1969." — 29,020 rows opened the payoff with a bare year. The
+  reason it survived so long is instructive: every classifier in `tools/corpus`
+  skipped these rows on `not d[0].isdigit()`, so the one field the player reads
+  was the one field no machine checked. Now gated by `STUB-REVEAL`.
+- **A reveal is rendered VERBATIM** (`Text(q.explanation)` on iOS, `h(q.explanation)`
+  on web). Before calling a reveal malformed, check whether the damage is in the
+  data or in the tool that is reading it. 1,648 reveals looked broken under the
+  "Subject: description" split and read perfectly on screen — the first colon was
+  simply inside the text ("Parthia (Old Persian: Parθava...)"). The classifiers
+  were the ones reading garbage, not the players.
+
+## Invariants that look like bugs (do not "fix" these)
+
+A rendered screen can make a deliberate choice look like sloppiness. Check the
+data before changing it.
+
+- **Numeric options are shuffled, not sorted.** 2011 / 2016 / 2019 / 2015 looks
+  unfinished, and every other quiz app orders its numbers. Do not. Distractors
+  here are generated AROUND the answer, so sorting puts the answer in a middle
+  slot 80.8% of the time against 25% chance — an ordered list would be worth
+  three times chance to a player who noticed. Gated by `NUMERIC-SORTED`, which
+  watches the RATE (ascending happens by chance in 1 set of 24).

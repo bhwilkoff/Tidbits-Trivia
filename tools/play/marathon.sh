@@ -54,6 +54,15 @@ export SIMCTL_CHILD_TIDBITS_AUTOPILOT_CORRECT=1
 export SIMCTL_CHILD_TIDBITS_AUTOPILOT_DELAY="$DELAY"
 export SIMCTL_CHILD_TIDBITS_SKIP_ONBOARD=1
 export SIMCTL_CHILD_TIDBITS_NO_GAMECENTER=1
+# The marathon walks DebugHooks.playSweepModes, so restricting it means passing
+# the restriction THROUGH to the app — setting it only in this shell walked the
+# full fourteen and quietly ignored the request.
+if [ -n "${TIDBITS_PLAY_SWEEP_MODES:-}" ]; then
+  export SIMCTL_CHILD_TIDBITS_PLAY_SWEEP_MODES="$TIDBITS_PLAY_SWEEP_MODES"
+fi
+if [ -n "${TIDBITS_PLAY_SWEEP_CATS:-}" ]; then
+  export SIMCTL_CHILD_TIDBITS_PLAY_SWEEP_CATS="$TIDBITS_PLAY_SWEEP_CATS"
+fi
 DEVELOPER_DIR=$DEV xcrun simctl launch --console-pty "$UDID" "$BUNDLE" > "$CONSOLE" 2>&1 &
 APP_PID=$!
 

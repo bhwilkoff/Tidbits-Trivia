@@ -28,6 +28,11 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 CORPUS = ROOT / "assets" / "corpus.json"
 
 STEM = "official language of"
+
+# Rows the differs-from-its-country test clears only because the corpus records
+# an INCOMPLETE language list for the country. Auckland answers English, and the
+# corpus knows New Zealand only through Maori. Judged by reading, not inferred.
+JUDGED_GIVEAWAY = {"rel:P37:Q37100"}
 # A city or sub-national unit, and NOT a sovereign state in its own right.
 CITY = re.compile(r"\b(city|town|village|county|municipality|district|borough|"
                   r"commune|prefecture|parish|neighborhood)\b", re.I)
@@ -96,12 +101,19 @@ def main():
         if STEM not in (q[1] or "") or not q[2] or not (0 <= q[3] < len(q[2])):
             continue
         d = desc.get(q[7], "")
-        if not CITY.search(d) or SOVEREIGN.search(d):
+        # The subject's own NAME settles it when the description does not. Once
+        # descriptions became full prose, "Inca Empire" and "Federal Republic of
+        # Central America" were read as cities because their leads mention the
+        # cities they contained. Asking an empire its official language is a
+        # perfectly good question; asking Auckland is not.
+        if SOVEREIGN.search(q[7] or "") or not CITY.search(d) or SOVEREIGN.search(d):
             continue
         m = IN_COUNTRY.search(d.rstrip("."))
         country = m.group(1).strip() if m else None
         answer = str(q[2][q[3]])
-        if country and _same_language(answer, country, country_langs.get(country, set())):
+        if q[0] in JUDGED_GIVEAWAY:
+            drop.add(q[0])
+        elif country and _same_language(answer, country, country_langs.get(country, set())):
             drop.add(q[0])
         elif country and country_langs.get(country):
             kept.append((q[1][:52], answer, country, sorted(country_langs[country])[:3]))

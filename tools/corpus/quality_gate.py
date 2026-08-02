@@ -25,6 +25,20 @@ Each rule below is here because a real question in this app hit it:
                   created?" — a Wikidata property name left in the prose.
   THIN-COVERAGE   a mode x category the bundle cannot fill, which silently
                   serves a different category and says nothing.
+  NUMERIC-SORTED  numeric options presented in ascending order. This rule guards
+                  a NON-obvious invariant: sorting them looks tidier and every
+                  other quiz app does it, but distractors here are generated
+                  AROUND the answer, so sorting lands the answer in a middle slot
+                  80.8% of the time against 25% chance. Ordered years would hand
+                  the player a heuristic worth three times chance. Measured
+                  2026-08-01 after a rendered Sweep round showed 2011/2016/2019/
+                  2015 and the shuffle looked like a bug. It is not a bug.
+  STUB-REVEAL     a reveal whose description is a bare number — "Matthew Perry:
+                  1969." Found by rendering a Sweep round and reading the payoff
+                  panel. 29,020 rows did this, and for 2,425 the number WAS the
+                  whole reveal. Every classifier in tools/corpus skipped them on
+                  `d[0].isdigit()`, so the field the player reads was the one
+                  field no machine checked.
   CITY-LANGUAGE   "Which of these is an official language of Thessaloniki?" —
                   a country-level fact asked of a city, so the city's name gives
                   it away. Kept only where the city genuinely differs from its
@@ -71,7 +85,15 @@ BUDGET = {
     # — films with films, people with people. Raising a budget to hide a defect
     # is forbidden; recording what a rule provably cannot see is not the same
     # thing, and pretending otherwise would mean deleting good questions.
-    "CITY-LANGUAGE": 2,   # Dakar and Asmara: the city really does differ
+    # Dakar -> Wolof, Asmara -> Arabic, Nuuk -> Greenlandic: three cities whose
+    # official language really is not their country's, which is the interesting
+    # question this rule exists to protect. Auckland -> English looked like a
+    # fourth and was not; it is dropped by id in fix_city_language.py.
+    # Ascending happens by chance in 1/24 of four-option sets, and 4.2% is what
+    # the corpus shows. Anything materially above that means someone sorted.
+    "NUMERIC-SORTED": 0,
+    "STUB-REVEAL": 0,
+    "CITY-LANGUAGE": 3,
     "KIND-MISMATCH": 3,
 }
 
@@ -162,10 +184,20 @@ def birth_years():
 
 # Same vocabulary the repair uses (tools/corpus/fix_kind_distractors.py); the
 # two must not drift, or the gate flags rows the repair cannot see.
+# "1969." / "c. 1450" / "-44 BCE" standing where a description should be.
+NUMERIC_OPT = re.compile(r"^-?\d[\d,]*(?:\.\d+)?$")
+
+STUB_DESC = re.compile(
+    r"^\s*(?:c\.\s*)?-?\d{1,4}(?:\s*(?:BCE?|AD|CE))?\s*[.,;]?\s*$", re.I)
+
+SOVEREIGN_NAME = re.compile(
+    r"\b(empire|republic|kingdom|caliphate|sultanate|duchy|confederation|"
+    r"kaganate|khanate|dynasty|state)\b", re.I)
+
 _KINDS = [
     ("plant",    r"\b(plant|shrub|tree|flower|grass|fern|moss|herb|vine|flowering plant|conifer|palm|cactus)\b"),
     ("animal",   r"\b(insect|bird|mammal|fish|reptile|amphibian|spider|beetle|wasp|hornet|moth|butterfly|dinosaur|crustacean|mollusc|primate)\b"),
-    ("person",   r"\b(born \d{4}|politician|footballer|actor|actress|singer|writer|player|physicist|philosopher|emperor|monarch|composer|director)\b"),
+    ("person",   r"\b(born \d{4}|politician|footballer|actor|actress|singer|writer|player|physicist|philosopher|emperor|monarch|composer|director|mathematician|musician|scientist|chemist|biologist|astronomer|economist|historian|archaeologist|psychologist|linguist|botanist|zoologist|geologist|primatologist|engineer|architect|painter|sculptor|poet|novelist|playwright|screenwriter|journalist|editor|dancer|choreographer|conductor|guitarist|pianist|violinist|drummer|rapper|filmmaker|producer|presenter|broadcaster|comedian|activist|entrepreneur|magnate|philanthropist|explorer|astronaut|physician|surgeon|nurse|lawyer|judge|professor|teacher|leader|statesman|king|queen|sultan|caliph|tsar|premier|president|chancellor|dictator|revolutionary|general|admiral|soldier|athlete|swimmer|boxer|cyclist|wrestler|jockey|manager|coach|quarterback|midfielder|goalkeeper|striker|winger|batsman|bowler|author|artist|commentator|illustrator|cartoonist|animator|designer|inventor|banker|songwriter|novelist|essayist|critic|theologian|missionary|aviator|racer|pilot|spy|outlaw|chief|saint|prophet|rabbi|imam|bishop|pope|cardinal|abbot|monk|nun)\b"),
     ("place",    r"\b(country|city|town|village|island|river|mountain|region|province|capital|lake|desert|county|municipality)\b"),
     ("work",     r"\b(film|movie|song|album|novel|book|poem|series|sitcom|anime|video game|painting|opera|symphony|manga|sculpture)\b"),
     ("org",      r"\b(company|corporation|club|team|university|bank|airline|band|agency|organisation|organization|brand)\b"),
@@ -176,28 +208,89 @@ _KINDS = [
 _KINDS = [(n, re.compile(p, re.I)) for n, p in _KINDS]
 
 
+# A description is only readable as a TYPE when two things hold, and both were
+# discovered by rendering reveals and reading them (2026-08-01):
+#
+#   1. The explanation actually has the "Subject: description" shape. For 2,650
+#      rows the first colon is INSIDE the text — "Parthia (Old Persian: Parθava;
+#      ...) is a historical region" — so splitting on it fed every classifier
+#      here the fragment "Parθava; Middle Persian" as Parthia's description.
+#      Those reveals are fine for the player; the app renders the explanation
+#      verbatim. It is the classifiers that were reading garbage.
+#
+#   2. The description is a terse Wikidata one-liner ("American actress
+#      (born 1989)"), not a Wikipedia lead sentence. A lead sentence names many
+#      nouns in passing — "a German Waffen-SS tank commander during the Second
+#      World War" typed Michael Wittmann as an EVENT. Skipping prose costs
+#      coverage; misreading it costs correct distractors, which is worse.
+# A Wikidata description is a NOUN PHRASE: "American mathematician (1918-2020)",
+# "Country in Oceania", "Sculpture by Anish Kapoor in Chicago". It contains no
+# finite verb. A Wikipedia lead sentence always does. Testing for "is/was a" was
+# too weak — "It was ADAPTED into a 1988 film" typed Dian Fossey as a work,
+# "Born in New York City" typed William F. Buckley Jr. as a place. Rejecting a
+# prose sentence costs coverage; misreading one costs correct distractors.
+PROSE = re.compile(r"\b(?:is|was|are|were|has|had|have|been|became|begin|began|"
+                   r"begun|won|win|released|adapted|founded|formed|died|starred|"
+                   r"appeared|wrote|written|played|serves|served|includes|"
+                   r"consists|contains|features|remains|made|took|held|ran|"
+                   r"grew|rose|led|joined|left|moved|settled|returned)\b"
+                   r"|\(born\s|^Born\b|^It\b|^Its\b|^They\b|^He\b|^She\b", re.I)
+
+
+def readable_description(expl, subject):
+    """The subject's TYPE, or None when the field cannot be trusted to carry it."""
+    if not expl or ":" not in expl or "\u2192" in expl:
+        return None
+    head, rest = expl.split(":", 1)
+    if head.strip() != (subject or "").strip():
+        return None
+    d = re.split(r"(?<=[.!?])\s", rest.strip(), maxsplit=1)[0].strip()
+    if not d or len(d) <= 8 or len(d) > 120 or d[0].isdigit() or PROSE.search(d):
+        return None
+    # The TYPE lives in the head noun phrase. A Wikidata description opens with
+    # what the thing IS and then qualifies it, so anything after the first
+    # bracket, comma or relative pronoun is about the subject's LIFE, not its
+    # kind. Matching the whole string typed Katherine Johnson ("American
+    # mathematician (1918-2020)", elsewhere "...at the space AGENCY") as an org,
+    # and Dian Fossey as a WORK because another row named her book. Truncating
+    # here can only ever match less, never more.
+    # "(born 1938)" is a person and nothing else. A bare year RANGE is not: the
+    # first version of this rule accepted "(1918-2020)" and promptly typed
+    # Nine Years' War (1688-1697), Cao Wei (220-266) and the soap opera
+    # Neighbours (1985-2022) as people, which is how KIND-MISMATCH went from
+    # 598 to 1,509. Dates bound things that end, not only people.
+    if re.search(r"\(born\s+\d{3,4}\)", d):
+        return "PERSON-BY-DATES"
+    return re.split(r"\s*[(\[,;]|\s+(?:who|which|that|known|best|famous|based)\s",
+                    d, maxsplit=1)[0].strip()
+
+
 def kind_map(rows):
     """name -> kind, only where the name means exactly one thing."""
-    seen = collections.defaultdict(set)
+    # One subject, one description. kind_map used to union the kinds of EVERY
+    # row that named a subject, so a single row whose description wandered
+    # decided the type: Bob Kane came out a WORK, William F. Buckley Jr. a
+    # PLACE, Penicillin a PERSON. Take the description the corpus states most
+    # often for that subject and classify only that.
+    canon = collections.defaultdict(collections.Counter)
     for q in rows:
-        e = q[6] or ""
-        if ":" not in e or "\u2192" in e:
+        d = readable_description(q[6] or "", q[7])
+        if d:
+            canon[q[7]][d] += 1
+
+    seen = collections.defaultdict(set)
+    for subject, counts in canon.items():
+        d = counts.most_common(1)[0][0]
+        if d == "PERSON-BY-DATES":
+            seen[subject].add("person")
             continue
-        _, d = e.split(":", 1)
-        d = d.strip()
-        # ONLY the first sentence. The explanation field does double duty — the
-        # player-facing reveal and the machine-readable subject description — and
-        # fix_hollow_reveals.py appends a Wikipedia sentence to it.
-        d = re.split(r"(?<=[.!?])\s", d, maxsplit=1)[0].strip()
         # A quoted word is being MENTIONED, not used as a type. "Vespa: Italian
         # scooter... Italian for 'wasp'" typed a scooter brand as an animal.
         d = re.sub(r"[\"'\u2018\u2019\u201c\u201d][^\"'\u2018\u2019\u201c\u201d]{1,30}"
                    r"[\"'\u2018\u2019\u201c\u201d]", " ", d)
-        if not d or len(d) <= 8 or d[0].isdigit():
-            continue
         for n, rx in _KINDS:
             if rx.search(d):
-                seen[q[7]].add(n)
+                seen[subject].add(n)
                 break
 
     # A bare name is ambiguous when the corpus ALSO holds a parenthetical twin:
@@ -238,12 +331,27 @@ def check():
             if d and not d[0].isdigit() and len(d) > 8:
                 subject_desc.setdefault(q[7], d)
 
+    # This one is a RATE, not a row count: ascending is chance 1-in-24, so a
+    # handful of ascending sets is normal and only the proportion is evidence.
+    numeric_total, numeric_sorted = [0], [0]
     for q in rows_all:
         prompt, opts, ci = q[1], q[2], q[3]
         if LOCATIVE_STEM.match(prompt or "") and NOT_A_PLACE.search(subject_desc.get(q[7], "")):
             bad["STEM-TYPE"].append(f"{q[0]}: {prompt[:70]}")
-        if "official language of" in (prompt or "") and CITY_DESC.search(subject_desc.get(q[7], "")):
+        # A sovereign entity named as one is not a city, whatever its lead
+        # paragraph mentions. Same test as fix_city_language.py — the gate and
+        # the repair have to agree or the budget drifts to cover the difference.
+        if ("official language of" in (prompt or "")
+                and CITY_DESC.search(subject_desc.get(q[7], ""))
+                and not SOVEREIGN_NAME.search(q[7] or "")):
             bad["CITY-LANGUAGE"].append(f"{q[0]}: {prompt[:70]}")
+        if opts and len(opts) >= 4 and all(NUMERIC_OPT.match(str(o).strip()) for o in opts):
+            vals = [float(str(o).replace(",", "")) for o in opts]
+            numeric_total[0] += 1
+            if vals == sorted(vals):
+                numeric_sorted[0] += 1
+        if STUB_DESC.match((q[6] or "").split(":", 1)[-1].strip()):
+            bad["STUB-REVEAL"].append(f"{q[0]}: {(q[6] or '')[:60]}")
         if PLACEHOLDER.search(prompt or ""):
             bad["PLACEHOLDER"].append(f"{q[0]}: {prompt[:70]}")
         if MACHINE.search(prompt or ""):
@@ -268,6 +376,13 @@ def check():
                    if i != ci and kinds.get(str(o)) and ka and kinds[str(o)] != ka]
             if ka and odd:
                 bad["KIND-MISMATCH"].append(f"{q[0]}: {odd} among {ka}s — {opts}")
+
+    if numeric_total[0]:
+        rate = numeric_sorted[0] / numeric_total[0]
+        if rate > 0.08:                      # chance is 1/24 = 4.2%
+            bad["NUMERIC-SORTED"].append(
+                f"{rate:.1%} of {numeric_total[0]} numeric option sets are ascending "
+                f"(chance is 4.2%) — someone sorted them; see the rule note")
 
     # ---- the shape sources -------------------------------------------------
     for name, (mode, per_round, cat_i, shape_i) in SHAPE_FILES.items():

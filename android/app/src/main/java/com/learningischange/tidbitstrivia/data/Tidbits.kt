@@ -337,6 +337,30 @@ object Corpus {
         android.util.Log.d("Corpus", "opened ${ids.size} questions")
     }
 
+    /** `questions.tags` stores INTERNED ids: 426,806 tag instances are only
+     *  53,147 distinct strings, and inlining the text cost 11.2 MB of every APK
+     *  to repeat "American male film actors" nineteen hundred times. Resolved
+     *  here so `Question.tags` means what it always meant. Loaded once, lazily —
+     *  the play path builds Questions, so this must not be a per-row query. */
+    private var tagTable: Map<Int, String>? = null
+
+    private fun loadTagTable(): Map<Int, String> {
+        val d = db ?: return emptyMap()
+        return runCatching {
+            val out = HashMap<Int, String>(60000)
+            d.rawQuery("SELECT id, name FROM tag_names", null).use { c ->
+                while (c.moveToNext()) out[c.getInt(0)] = c.getString(1) ?: ""
+            }
+            out as Map<Int, String>
+        }.getOrDefault(emptyMap())
+    }
+
+    private fun tagNames(stored: String?): List<String> {
+        if (stored.isNullOrEmpty()) return emptyList()
+        val table = tagTable ?: loadTagTable().also { tagTable = it }
+        return stored.split('|').mapNotNull { table[it.toIntOrNull() ?: return@mapNotNull null] }
+    }
+
     /** A blank `source_url` means "derive it from the title" — 80% of rows are
      *  exactly wiki/<source_title>, and storing that repeats 4.7 MB in every APK
      *  to say what the reader can rebuild. Without this the reveal loses its
@@ -356,6 +380,9 @@ object Corpus {
         "category_id", "difficulty", "explanation", "source_title", "source_url",
         "tags", "search_text",
     )
+
+    /** Tags are interned, so a corpus without this table cannot resolve them. */
+    private const val TAG_TABLE = "tag_names"
 
     private fun hasExpectedSchema(db: android.database.sqlite.SQLiteDatabase): Boolean =
         runCatching {
@@ -387,7 +414,7 @@ object Corpus {
         correctIndex = c.getInt(6), categoryId = c.getString(7) ?: "", difficulty = c.getInt(8),
         explanation = c.getString(9) ?: "", sourceTitle = c.getString(10) ?: "",
         sourceUrl = wikiUrl(c.getString(11), c.getString(10)),
-        tags = c.getString(12)?.takeIf { it.isNotEmpty() }?.split('|') ?: emptyList(),
+        tags = tagNames(c.getString(12)),
     )
 
     private fun query(sql: String, args: Array<String>? = null): List<Question> {

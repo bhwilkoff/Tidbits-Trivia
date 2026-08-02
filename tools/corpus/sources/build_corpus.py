@@ -50,6 +50,11 @@ def write_sqlite(rows, path):
     if os.path.exists(path):
         os.remove(path)
     c = s3.connect(path)
+    # Tags are 426,806 instances of 53,159 distinct strings — 11.2 MB of every
+    # app bundle spent writing "American male film actors" 1,900 times. Interned:
+    # questions.tags holds pipe-joined INTEGER ids and tag_names resolves them.
+    # The readers already split on "|", so only the resolution step is new.
+    c.execute("CREATE TABLE tag_names (id INTEGER PRIMARY KEY, name TEXT NOT NULL)")
     c.execute("""CREATE TABLE questions (id TEXT PRIMARY KEY, prompt TEXT,
         option0 TEXT, option1 TEXT, option2 TEXT, option3 TEXT, correct_index INTEGER,
         category_id TEXT, difficulty INTEGER, explanation TEXT, source_title TEXT, source_url TEXT,
@@ -61,13 +66,27 @@ def write_sqlite(rows, path):
     def derived_url(title):
         return WIKI_PREFIX + urllib.parse.quote(str(title or "").replace(" ", "_"))
 
+    tag_id = {}
+
+    def intern(names):
+        ids = []
+        for n in names:
+            i = tag_id.get(n)
+            if i is None:
+                i = len(tag_id) + 1
+                tag_id[n] = i
+            ids.append(str(i))
+        return "|".join(ids)
+
     def out(r):
         # template_id mirrors JSONQuestionSource.swift: the id's first colon segment.
         # tags (10th element, optional) is pipe-joined — sqlite has no array type.
         # search_text is SPARSE: only rows whose folded text actually differs carry
         # it (~9% of rows, 3.3MB); dense would cost ~35MB of app bundle for nothing.
-        tags = "|".join(r[9]) if len(r) > 9 and r[9] else ""
-        hay = " ".join([r[1] or "", r[7] or "", r[6] or "", tags.replace("|", " ")])
+        names = r[9] if len(r) > 9 and r[9] else []
+        tags = intern(names)
+        # search_text still folds the tag TEXT — it is a haystack, not a key.
+        hay = " ".join([r[1] or "", r[7] or "", r[6] or "", " ".join(names)])
         folded = fold(hay)
         url = "" if r[8] == derived_url(r[7]) else r[8]
         return (r[0], r[1], r[2][0], r[2][1], r[2][2], r[2][3], r[3], r[4], r[5], r[6], r[7], url,
@@ -75,6 +94,8 @@ def write_sqlite(rows, path):
 
     c.executemany("INSERT OR REPLACE INTO questions VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                   [out(r) for r in rows])
+    c.executemany("INSERT INTO tag_names VALUES (?,?)",
+                  [(i, n) for n, i in tag_id.items()])
     c.commit()
     # Reclaim the free pages the delete-and-rewrite leaves behind; this is a
     # shipped artifact, not a working database.

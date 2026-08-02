@@ -55,9 +55,24 @@ verified on a rendered screen before it counts as done.
 
 1. **Dedupe.** Drop the 7,800 duplicate rows. Pure loss of nothing; no schema
    change, no client change. *(do first — it shrinks everything downstream)*
-2. **Intern the tags.** A `tags` string table plus integer refs: 11.0 MB of text
-   becomes 1.4 MB of table + 1.2 MB of refs. Saves ~8.4 MB. Touches every reader
-   (Swift, Kotlin, C#, JS) and the sqlite schema.
+2. **Intern the tags.** — DONE for the app bundles. `questions.tags` holds
+   pipe-joined INTEGER ids and a new `tag_names` table resolves them; the readers
+   already split on `|`, so only resolution is new. 426,806 instances are just
+   **53,147 distinct** strings — the corpus was writing "American male film
+   actors" nineteen hundred times.
+
+   | | before | after |
+   |---|---|---|
+   | tags column | 11.2 MB | 2.2 MB (+1.4 MB table) |
+   | **corpus.sqlite** | **62.9 MB** | **50.0 MB** |
+
+   Proven by the tag round-trip (5,000 rows resolve to exactly the names in
+   corpus.json, 0 mismatches) and by Create parity passing UNCHANGED — Apple
+   ranks from sqlite, the web from JSON, tags score at the highest weight, and
+   the two still select identically.
+
+   The web does not carry tags at all now (the shards drop them), so this is a
+   bundle-size win for Apple and Android.
 3. **Derive the sourceURL.** — DONE for the app bundles. `build_corpus.py` stores
    `""` when the url is exactly `wiki/<source_title>`, which is 80% of rows, and
    the Swift and Kotlin readers rebuild it. Followed by `VACUUM`, since a shipped

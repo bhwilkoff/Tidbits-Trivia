@@ -597,6 +597,33 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
         return URL(string: "https://en.wikipedia.org/wiki/" + slug)
     }
 
+    /// `questions.tags` stores INTERNED ids — 426,806 tag instances are only
+    /// 53,147 distinct strings, and writing the text inline cost 11.2 MB of every
+    /// app bundle to repeat "American male film actors" nineteen hundred times.
+    /// Resolved here so `Question.tags` means exactly what it always meant; the
+    /// JSON path (corpus.json) still carries the names directly.
+    private static let tagTable: [Int32: String] = {
+        guard let db = shared.db else { return [:] }
+        var out: [Int32: String] = [:]
+        var stmt: OpaquePointer?
+        defer { sqlite3_finalize(stmt) }
+        guard sqlite3_prepare_v2(db, "SELECT id, name FROM tag_names", -1, &stmt, nil) == SQLITE_OK
+        else { return [:] }
+        while sqlite3_step(stmt) == SQLITE_ROW {
+            if let n = sqlite3_column_text(stmt, 1) {
+                out[sqlite3_column_int(stmt, 0)] = String(cString: n)
+            }
+        }
+        return out
+    }()
+
+    private static func tagNames(_ stored: String) -> [String] {
+        guard !stored.isEmpty else { return [] }
+        return stored.split(separator: "|").compactMap { part in
+            Int32(part).flatMap { tagTable[$0] }
+        }
+    }
+
     private static func row(_ stmt: OpaquePointer?) -> Question? {
         // Column order matches the generator schema (tools/corpus).
         let id = text(stmt, 0)
@@ -613,7 +640,7 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
             sourceTitle: text(stmt, 10),
             sourceURL: Self.sourceURL(stored: text(stmt, 11), title: text(stmt, 10)),
             templateID: text(stmt, 12),
-            tags: text(stmt, 13).split(separator: "|").map(String.init)
+            tags: Self.tagNames(text(stmt, 13))
         )
     }
 }

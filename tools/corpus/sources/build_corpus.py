@@ -19,7 +19,9 @@ wd:currency / wd:elemSymbol / wd:author rows for Matching (Q5).
 
 Run AFTER enrich_subjects.py + fetch_prose.py. Usage: python3 build_corpus.py
 """
-import argparse, hashlib, json, os, re, sqlite3
+import argparse, hashlib, json, os, re, sqlite3, urllib.parse
+
+WIKI_PREFIX = "https://en.wikipedia.org/wiki/"
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 DB = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "corpus_source.sqlite"))
@@ -53,6 +55,12 @@ def write_sqlite(rows, path):
         category_id TEXT, difficulty INTEGER, explanation TEXT, source_title TEXT, source_url TEXT,
         template_id TEXT, tags TEXT, search_text TEXT)""")
 
+    # 80% of source_urls are exactly wiki/<source_title>. Storing them costs 4.7 MB
+    # of every app bundle to repeat a string the reader can rebuild. Only the
+    # exceptions are stored; a blank means "derive it".
+    def derived_url(title):
+        return WIKI_PREFIX + urllib.parse.quote(str(title or "").replace(" ", "_"))
+
     def out(r):
         # template_id mirrors JSONQuestionSource.swift: the id's first colon segment.
         # tags (10th element, optional) is pipe-joined — sqlite has no array type.
@@ -61,12 +69,17 @@ def write_sqlite(rows, path):
         tags = "|".join(r[9]) if len(r) > 9 and r[9] else ""
         hay = " ".join([r[1] or "", r[7] or "", r[6] or "", tags.replace("|", " ")])
         folded = fold(hay)
-        return (r[0], r[1], r[2][0], r[2][1], r[2][2], r[2][3], r[3], r[4], r[5], r[6], r[7], r[8],
+        url = "" if r[8] == derived_url(r[7]) else r[8]
+        return (r[0], r[1], r[2][0], r[2][1], r[2][2], r[2][3], r[3], r[4], r[5], r[6], r[7], url,
                 r[0].split(":")[0], tags, folded if folded != hay.lower() else "")
 
     c.executemany("INSERT OR REPLACE INTO questions VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                   [out(r) for r in rows])
-    c.commit(); c.close()
+    c.commit()
+    # Reclaim the free pages the delete-and-rewrite leaves behind; this is a
+    # shipped artifact, not a working database.
+    c.execute("VACUUM")
+    c.close()
 
 CONTINENT = {  # P30 target QID -> display name
     "Q15": "Africa", "Q46": "Europe", "Q48": "Asia", "Q49": "North America",

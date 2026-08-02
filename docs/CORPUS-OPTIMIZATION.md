@@ -58,8 +58,17 @@ verified on a rendered screen before it counts as done.
 2. **Intern the tags.** A `tags` string table plus integer refs: 11.0 MB of text
    becomes 1.4 MB of table + 1.2 MB of refs. Saves ~8.4 MB. Touches every reader
    (Swift, Kotlin, C#, JS) and the sqlite schema.
-3. **Derive the sourceURL.** Store only the 22,244 that differ from
-   `wiki/<subject>`; synthesise the rest at read time. Saves ~4 MB.
+3. **Derive the sourceURL.** — DONE for the app bundles. `build_corpus.py` stores
+   `""` when the url is exactly `wiki/<source_title>`, which is 80% of rows, and
+   the Swift and Kotlin readers rebuild it. Followed by `VACUUM`, since a shipped
+   artifact should not carry the free pages of the rewrite that made it.
+
+   **corpus.sqlite 62.9 MB -> 58.5 MB, in BOTH the Apple bundle and the APK.**
+
+   Verified by reproducing the original url for 4,000 sampled rows: 4,000 exact,
+   0 mismatches. The rebuild is not optional — without it the reveal loses its
+   "Read on Wikipedia" link, which is the door out of the app into the subject.
+   That regression already happened once on the web shards and was caught there.
 4. **Shard the web corpus.** — DONE. `assets/web/shard-NN.json` × 64, built by
    `build_web_shards.py` and rebuilt by the resync. Each category's rows are
    dealt round-robin so a shard carries the corpus's exact mix; one shard is a

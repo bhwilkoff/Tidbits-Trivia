@@ -337,6 +337,18 @@ object Corpus {
         android.util.Log.d("Corpus", "opened ${ids.size} questions")
     }
 
+    /** A blank `source_url` means "derive it from the title" — 80% of rows are
+     *  exactly wiki/<source_title>, and storing that repeats 4.7 MB in every APK
+     *  to say what the reader can rebuild. Without this the reveal loses its
+     *  "Read on Wikipedia" link. */
+    fun wikiUrl(stored: String?, title: String?): String {
+        if (!stored.isNullOrEmpty()) return stored
+        val t = title.orEmpty()
+        if (t.isEmpty()) return ""
+        return "https://en.wikipedia.org/wiki/" +
+            java.net.URLEncoder.encode(t.replace(' ', '_'), "UTF-8").replace("+", "%20")
+    }
+
     /** Every column the app's queries reference. A corpus missing any of them is
      *  older than this build and must be replaced, not queried. */
     private val REQUIRED_COLUMNS = setOf(
@@ -374,7 +386,7 @@ object Corpus {
         options = listOf(c.getString(2) ?: "", c.getString(3) ?: "", c.getString(4) ?: "", c.getString(5) ?: ""),
         correctIndex = c.getInt(6), categoryId = c.getString(7) ?: "", difficulty = c.getInt(8),
         explanation = c.getString(9) ?: "", sourceTitle = c.getString(10) ?: "",
-        sourceUrl = c.getString(11) ?: "",
+        sourceUrl = wikiUrl(c.getString(11), c.getString(10)),
         tags = c.getString(12)?.takeIf { it.isNotEmpty() }?.split('|') ?: emptyList(),
     )
 

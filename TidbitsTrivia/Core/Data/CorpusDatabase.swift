@@ -584,6 +584,19 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
         return String(cString: c)
     }
 
+    /// A blank `source_url` means "derive it from the title" — 80% of rows are
+    /// exactly wiki/<source_title>, and storing that repeats 4.7 MB in every app
+    /// bundle to say what the reader can rebuild. Without this rebuild the reveal
+    /// silently loses its "Read on Wikipedia" link, which is the door out of the
+    /// app into the real subject.
+    private static func sourceURL(stored: String, title: String) -> URL? {
+        if !stored.isEmpty { return URL(string: stored) }
+        guard !title.isEmpty else { return nil }
+        let slug = title.replacingOccurrences(of: " ", with: "_")
+            .addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? title
+        return URL(string: "https://en.wikipedia.org/wiki/" + slug)
+    }
+
     private static func row(_ stmt: OpaquePointer?) -> Question? {
         // Column order matches the generator schema (tools/corpus).
         let id = text(stmt, 0)
@@ -598,7 +611,7 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
             difficulty: Int(sqlite3_column_int(stmt, 8)),
             explanation: text(stmt, 9),
             sourceTitle: text(stmt, 10),
-            sourceURL: URL(string: text(stmt, 11)),
+            sourceURL: Self.sourceURL(stored: text(stmt, 11), title: text(stmt, 10)),
             templateID: text(stmt, 12),
             tags: text(stmt, 13).split(separator: "|").map(String.init)
         )

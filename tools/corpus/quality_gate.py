@@ -663,8 +663,12 @@ def check():
         # A sovereign entity named as one is not a city, whatever its lead
         # paragraph mentions. Same test as fix_city_language.py — the gate and
         # the repair have to agree or the budget drifts to cover the difference.
+        # Read the description through the same noun-phrase guard kind_map uses.
+        # subject_desc takes any first sentence, so "Scotland: Its capital CITY is
+        # Edinburgh..." — prose, not a type — read as a city and flagged a country.
+        _city_desc = readable_description(q[6] or "", q[7]) or ""
         if ("official language of" in (prompt or "")
-                and CITY_DESC.search(subject_desc.get(q[7], ""))
+                and CITY_DESC.search(_city_desc)
                 and not SOVEREIGN_NAME.search(q[7] or "")):
             bad["CITY-LANGUAGE"].append(f"{q[0]}: {prompt[:70]}")
         if opts and len(opts) >= 4 and all(NUMERIC_OPT.match(str(o).strip()) for o in opts):

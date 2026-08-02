@@ -561,10 +561,14 @@ def check():
             if ka and odd:
                 bad["KIND-MISMATCH"].append(f"{q[0]}: {odd} among {ka}s — {opts}")
 
-    # Ceilings measured 2026-08-02 (Decision 050), each a little above the share
-    # of the day so ordinary content work does not trip it.
-    SHARE_CEILING = {"screen": 0.325, "geography": 0.195, "music": 0.135,
-                     "history": 0.115, "sports": 0.105, "arts": 0.105,
+    # Ceilings re-measured 2026-08-02 after the date-padding prune (Decision 050,
+    # "Amended"). SCREEN came DOWN 32.5% -> 30.5%, which is the improvement;
+    # GEOGRAPHY went UP 19.5% -> 21.5% without gaining a single row, because it
+    # held fewer date questions than everyone else and 18,004 of theirs went. A
+    # ceiling that rises for that reason is honest; one that rises because a
+    # category grew is the thing this rule exists to stop.
+    SHARE_CEILING = {"screen": 0.305, "geography": 0.215, "music": 0.125,
+                     "history": 0.100, "sports": 0.095, "arts": 0.095,
                      "science": 0.080}
     cat_counts = collections.Counter(q[4] for q in rows_all)
     cat_total = sum(cat_counts.values())

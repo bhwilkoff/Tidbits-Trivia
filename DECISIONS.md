@@ -1688,3 +1688,28 @@ key on the board rows, not an in-place algorithm swap.
   regression guard, not a target: it exists so a corpus pass cannot quietly make
   the largest category larger. Lowering the ceiling is the improvement; raising
   it needs a line in this decision saying why.
+
+**Amended 2026-08-02 — the supply fix, and what it could and could not reach.**
+The decision above preferred growing the thin categories over changing the draw.
+Half of that turned out to be impossible from the existing pipeline: the Stage C
+source holds 1,197 unused SCIENCE subjects with prose, and **zero** unused
+business ones. Business cannot be grown from what has already been fetched, so
+"generate more business rows" is not a plan until a new fetch is scoped.
+
+What was available instead was the oversupply, and it was worse than a balance
+problem. Bare date questions — "In what year was Donald Glover born?" — were
+29,353 rows, **22.9% of the corpus**, and at that density **41% of ten-question
+rounds carried three or more of them** while only 7% carried none. That is the
+most repetitive thing in the app and exactly the "dry padding" the quality steer
+names. `prune_date_padding.py` dropped 18,004: every row whose reveal was empty
+(2,347 — a dry prompt with no payoff cannot teach anything) and, of the rest, all
+but the top 40% by subject QRank. Rounds with 3+ date questions fell to **7.6%**
+and rounds with none rose to **33.5%**.
+
+**The ceilings moved, and only one direction of that is good news.** SCREEN came
+down 31.0% -> 29.8%, which is the improvement. GEOGRAPHY rose 18.4% -> 21.1%
+**without gaining a single row** — it simply held fewer date questions than
+everyone else. A ceiling that rises because a neighbour shrank is honest; one
+that rises because a category grew is the thing `CATEGORY-SKEW` exists to stop.
+The corpus is 128,146 -> 110,142 rows and the largest category is smaller than it
+was, which is the direction that matters.

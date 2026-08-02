@@ -108,9 +108,31 @@ verified on a rendered screen before it counts as done.
    server-side. Publishing them (or the seven questions) would take the Daily to
    a few KB, at the cost of the web trusting a published set instead of
    computing it — a contract change worth its own decision.
-5. **Enrich what the player sees**, not the schema: the reveals that still say
-   nothing, and picture-round images. Enrichment that does not reach the screen
-   is more bytes for no gain.
+5. **Enrich what the player sees**, not the schema. — Reveals done as far as the
+   source allows.
+
+   | | rows | share |
+   |---|---|---|
+   | hollow at session start | 63,104 | 49.1% |
+   | hollow at the start of this pass | 2,825 | 2.5% |
+   | **hollow now** | **1,611** | **1.5%** |
+
+   Two moves: re-running `fix_hollow_reveals.py` found 584 rows whose cached
+   prose had become usable as the corpus changed, and
+   `fetch_hollow_prose.py` retrieved 450 new leads from the Wikipedia REST
+   summary endpoint for subjects Stage C never fetched (186 had none usable —
+   disambiguation pages, stubs, redirects).
+
+   **The remaining 1,611 are correctly hollow and no fetch will fix them.**
+   The delight pass wrote these PROMPTS from the subject's lead paragraph, so
+   the lead is exhausted:
+
+       prompt  Stalked ones anchored to the seafloor are nicknamed 'sea lilies'
+       lead    ...commonly called sea lilies, while the unstalked forms...
+
+   Enriching those needs a DIFFERENT source — a later section, or a fact the
+   summary does not carry — not more of the same. Picture-round images remain
+   open.
 
 ## Rules this pass must not break
 

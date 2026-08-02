@@ -2,3 +2,6 @@
 2026-07-02 src:describe:Red,_White_&_Royal_Blue num:P2046:Q4991540 src:cloze:George_Headley wd:director:Q488041 rel:P170:Q1065786 src:describe:Deutsche_Telekom biz:inception:4aa503717135
 2026-12-31 chron:P571:108448983018 chron:P571:536825712598 src:cloze:Virupaksha_(film) chron:P571:673245276648 sup:P1082:867572100384 src:describe:The_Junior_Team chron:P571:616850212486
 2027-02-28 chron:P571:659156415772 sup:P1082:923006091162 src:cloze:Scarlett_Johansson src:describe:Ocean's_Thirteen src:cloze:Najwa_Nimri chron:P569:523585914880 src:cloze:Andromeda_(mythology)
+v2:2026-09-01 chron:P571:650473317215 src:cloze:Michael_Biehn src:describe:Hyperthermia src:cloze:Nora_Ephron sup:P1082:540779081876 rel:P112:Q7501150 src:cloze:AC/DC
+v2:2026-09-02 biz:country:0b566e8dc2b9 wd:composer:Q1150596 src:cloze:Pericarditis src:describe:Francisco_Javier_Arana wd:director:Q13923 src:describe:Ludwig_Kaiser wd:author:Q190126
+v2:2027-01-15 src:cloze:Ohio wd:author:Q1147583 wd:composer:Q486609 biz:industry:ac80d013118c num:P2048:Q20976280 src:cloze:Clements_Markham wd:director:Q7278417

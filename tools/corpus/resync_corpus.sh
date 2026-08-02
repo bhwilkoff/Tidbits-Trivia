@@ -41,15 +41,23 @@ done
 
 echo "--- 3. regenerate Daily golden (Apple swiftc + web node) and verify parity"
 sqlite3 TidbitsTrivia/Resources/corpus.sqlite "SELECT id FROM questions" > /tmp/rc-ids.txt
+# v2 (Decision 050) balances across categories, so the picker needs each id's
+# category as well. Same ORDER BY id, so every engine walks the same list.
+sqlite3 -separator $'\t' TidbitsTrivia/Resources/corpus.sqlite \
+  "SELECT id, category_id FROM questions" > /tmp/rc-cats.tsv
 DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer xcrun swiftc -swift-version 6 \
   TidbitsTrivia/Core/Engine/SeededRNG.swift TidbitsTrivia/Core/Engine/DailyPick.swift \
   tools/daily-parity/apple_pick.swift -o /tmp/rc-apple >/dev/null 2>&1
-/tmp/rc-apple /tmp/rc-ids.txt "$G/apple.txt"
+/tmp/rc-apple /tmp/rc-ids.txt "$G/apple.txt" /tmp/rc-cats.tsv
 cp js/engine.js /tmp/rc-engine.mjs
 node tools/daily-parity/web_pick.mjs /tmp/rc-engine.mjs assets/corpus.json "$G/web.txt"
 diff "$G/apple.txt" "$G/web.txt" >/dev/null && echo "   PASS: apple == web daily golden" \
   || { echo "   FAIL: apple != web"; exit 1; }
-cp "$G/apple.txt" "$G/android.txt"   # identical algorithm+corpus; Android CI re-verifies
+# NOT a blanket copy any more: the Android golden is written by a real Gradle
+# unit test (DailyParityTest), and overwriting it here would hide a Kotlin mirror
+# that had silently stopped matching — which is exactly what the v2 rollout
+# caught. Copy only when Android has never run.
+[ -s "$G/android.txt" ] || cp "$G/apple.txt" "$G/android.txt"
 
 echo "--- 4. refresh Windows test fixtures"
 python3 -c "import json; open('windows/Tidbits.HeadlessTests/Fixtures/corpus-ids.txt','w').write('\n'.join(q[0] for q in json.load(open('assets/corpus.json'))['questions'])+'\n')"

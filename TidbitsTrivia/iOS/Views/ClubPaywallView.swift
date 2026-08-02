@@ -85,7 +85,10 @@ struct ClubPaywallView: View {
                 ProgressView().padding()
             } else if store.products.isEmpty {
                 // A store that didn't answer is a RECOVERABLE state, never a dead end.
-                Text(store.lastError ?? "The App Store didn't send the plans back. This usually clears on a second try.")
+                Text(store.lastError
+                     ?? (store.returnedEmpty
+                         ? "The App Store hasn't published the plans for this build yet."
+                         : "The App Store didn't send the plans back. This usually clears on a second try."))
                     .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft).multilineTextAlignment(.center).padding()
                 Button("Try Again") { Task { await store.loadProducts() } }
                     .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.ink))

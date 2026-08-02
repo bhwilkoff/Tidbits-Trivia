@@ -55,11 +55,18 @@ final class StoreKitStore {
     /// sync — most visibly on tvOS, where the paywall is often the first App Store traffic the
     /// process makes. One attempt is why App Review saw an error message where a price list
     /// belonged; three attempts with a short backoff is the documented remedy.
+    /// Set when the store answered SUCCESSFULLY with an empty list. That is a
+    /// different failure from an error and has different causes, and the paywall
+    /// showed the same sentence for both — so the one signal that tells you which
+    /// problem you have was the one thing the screen did not say.
+    private(set) var returnedEmpty = false
+
     func loadProducts() async {
         guard !loading else { return }
         loading = true
         defer { loading = false }
         lastError = nil
+        returnedEmpty = false
         for attempt in 0..<3 {
             do {
                 let loaded = try await StoreKit.Product.products(for: Self.clubProductIDs)
@@ -69,7 +76,27 @@ final class StoreKitStore {
                     loadFailed = false
                     return
                 }
-                print("[StoreKit] products(for:) returned 0 of \(Self.clubProductIDs.count) — attempt \(attempt + 1)")
+                returnedEmpty = true
+                // An EMPTY result is not an error: StoreKit reached the App Store
+                // and the App Store had nothing to return for these ids. On a
+                // build that is not running under Xcode's StoreKit configuration
+                // (TestFlight, or any device build launched outside Xcode) the
+                // causes are all App Store Connect side. Printed in full because
+                // the difference is invisible from the UI.
+                print("""
+                [StoreKit] products(for:) returned 0 of \(Self.clubProductIDs.count) \
+                — attempt \(attempt + 1). NOT an error: the store answered with an \
+                empty list. Check, in order:
+                  1. Agreements, Tax, and Banking — the PAID APPLICATIONS agreement \
+                     must be Active. Until it is, App Store Connect returns NOTHING \
+                     for every product, which looks exactly like this.
+                  2. Each product's state — "Ready to Submit" or approved. \
+                     "Missing Metadata" products are not returned.
+                  3. The ids match App Store Connect exactly: \
+                     \(Self.clubProductIDs.joined(separator: ", "))
+                  4. Xcode's StoreKit configuration file only applies when the app \
+                     is launched BY Xcode. TestFlight always uses App Store Connect.
+                """)
             } catch {
                 lastError = Self.describe(error)
                 print("[StoreKit] products(for:) failed on attempt \(attempt + 1): \(error)")

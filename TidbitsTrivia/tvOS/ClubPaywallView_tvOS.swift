@@ -108,7 +108,10 @@ struct ClubPaywallView_tvOS: View {
             } else if store.products.isEmpty {
                 // A store that didn't answer is a RECOVERABLE state, never a dead end — the
                 // retry button is what App Review 2.1(a) found missing behind the error text.
-                Text(store.lastError ?? "The App Store didn't send the plans back. This usually clears on a second try.")
+                Text(store.lastError
+                     ?? (store.returnedEmpty
+                         ? "The App Store hasn't published the plans for this build yet."
+                         : "The App Store didn't send the plans back. This usually clears on a second try."))
                     .font(.system(size: 25, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
                     .fixedSize(horizontal: false, vertical: true)
                 Button("Try Again") { Task { await store.loadProducts() } }

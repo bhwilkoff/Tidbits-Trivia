@@ -27,6 +27,18 @@ echo "--- 2. sync corpus.json copies (iOS Resources, Android assets)"
 cp assets/corpus.json TidbitsTrivia/Resources/corpus.json
 cp assets/corpus.json android/app/src/main/assets/corpus.json
 
+# ...and every shape source. This step used to copy corpus.json alone, so any
+# repair that touched oddoneout.json / match.json / picture.json left the Apple
+# and Android mirrors behind. Step 5 reported the drift and step 2 never fixed
+# it, which makes the check a tripwire rather than a pipeline. Copy what the
+# check asserts.
+for f in oddoneout match order thisorthat picture typeanswer closest enumerate difficulty; do
+  [ -f "assets/$f.json" ] || continue
+  cp "assets/$f.json" "TidbitsTrivia/Resources/$f.json"
+  cp "assets/$f.json" "android/app/src/main/assets/$f.json"
+done
+[ -f assets/enrich.json ] && cp assets/enrich.json android/app/src/main/assets/enrich.json
+
 echo "--- 3. regenerate Daily golden (Apple swiftc + web node) and verify parity"
 sqlite3 TidbitsTrivia/Resources/corpus.sqlite "SELECT id FROM questions" > /tmp/rc-ids.txt
 DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer xcrun swiftc -swift-version 6 \

@@ -49,6 +49,18 @@ APP="$(find ~/Library/Developer/Xcode/DerivedData -name 'TidbitsTrivia.app' \
 # earlier: the bundle still carried the pre-repair sqlite, so the screenshots
 # were arguing about old data. Refuse to run rather than read the wrong corpus
 # confidently.
+# An unresolvable mode name is a typo, not a filter. Fail before spending 20
+# minutes rendering the wrong three modes.
+if [ -n "${TIDBITS_PLAY_SWEEP_MODES:-}" ]; then
+  _known="classic,timeAttack,survival,stake,sweep,pictureId,thisOrThat,closestCall,ordering,matching,typeAnswer,oddOneOut,ladder,enumerate"
+  for _m in $(echo "$TIDBITS_PLAY_SWEEP_MODES" | tr ',' ' '); do
+    case ",$_known," in
+      *",$_m,"*) ;;
+      *) echo "FAIL: unknown mode '$_m'. Known: $_known" >&2; exit 2 ;;
+    esac
+  done
+fi
+
 if [ -f "$APP/corpus.sqlite" ] && [ "assets/corpus.json" -nt "$APP/corpus.sqlite" ]; then
   echo "FAIL: stale bundle — assets/corpus.json is newer than the bundled corpus.sqlite." >&2
   echo "      Rebuild the app first; otherwise these frames show the previous corpus." >&2

@@ -25,6 +25,16 @@ Each rule below is here because a real question in this app hit it:
                   created?" — a Wikidata property name left in the prose.
   THIN-COVERAGE   a mode x category the bundle cannot fill, which silently
                   serves a different category and says nothing.
+  ODD-ONE-KIND    an Odd One Out set whose options are not all the same KIND.
+                  In a mode that asks "which doesn't belong", a difference in
+                  type IS an answer, so the set has two answers and the app marks
+                  the obvious one wrong. Found by rendering a round: "Three of
+                  these were created by Marta Kauffman" offered two shows and two
+                  fictional characters; "created by Leonardo da Vinci" offered
+                  three paintings and Sherlock Holmes; and one set answered
+                  Livingston Island with the Mona Lisa sitting among three
+                  countries. Wikidata's `creator` spans works and characters
+                  alike, which is how a true relation produced a free question.
   DOUBLED-STEM    a stem verb repeated — "In which country is Nike, Inc. based
                   based based based?", which shipped on 1,022 questions. The
                   cause was a repair in this directory that was not idempotent:
@@ -99,6 +109,7 @@ BUDGET = {
     # Ascending happens by chance in 1/24 of four-option sets, and 4.2% is what
     # the corpus shows. Anything materially above that means someone sorted.
     "NUMERIC-SORTED": 0,
+    "ODD-ONE-KIND": 0,
     "DOUBLED-STEM": 0,
     "STUB-REVEAL": 0,
     "CITY-LANGUAGE": 3,
@@ -200,6 +211,21 @@ NUMERIC_OPT = re.compile(r"^-?\d[\d,]*(?:\.\d+)?$")
 
 STUB_DESC = re.compile(
     r"^\s*(?:c\.\s*)?-?\d{1,4}(?:\s*(?:BCE?|AD|CE))?\s*[.,;]?\s*$", re.I)
+
+# A fictional character is a kind of its own, and the corpus says so in prose
+# even when the description slot holds something else (Ross Geller's holds the
+# actor's name). This one signal reads the whole explanation.
+CHARACTER = re.compile(r"\bis a fictional\b|\bfictional character\b"
+                       r"|\bmain characters? of\b|\bis a character\b"
+                       r"|\btitular character\b", re.I)
+
+
+def option_kind(name, kinds, raw_expl):
+    name = str(name)
+    if CHARACTER.search(raw_expl.get(name, "")):
+        return "character"
+    return kinds.get(name)
+
 
 SOVEREIGN_NAME = re.compile(
     r"\b(empire|republic|kingdom|caliphate|sultanate|duchy|confederation|"
@@ -338,7 +364,22 @@ def kind_map(rows):
     titles = {q[7] for q in rows if q[7]}
     ambiguous = {t for t in titles if any(
         o != t and o.startswith(t + " (") for o in titles)}
-    ambiguous |= {t.split(" (")[0] for t in titles if " (" in t}
+    # A bare name is ambiguous when MORE THAN ONE subject claims it, not merely
+    # because some subject carries a parenthetical. The blanket version dropped
+    # "Amazon" as ambiguous even though "Amazon (company)" is its only claimant,
+    # which mattered the moment noise-only parentheticals were stripped from the
+    # options: every simplified cell would have stopped resolving to a type and
+    # the gate would have quietly lost coverage rather than reported it.
+    claimants = collections.defaultdict(set)
+    for t in titles:
+        claimants[t.split(" (")[0]].add(t)
+    ambiguous |= {b for b, owners in claimants.items() if len(owners) > 1}
+    # A bare name whose sole claimant is a parenthetical title inherits its kind.
+    for b, owners in claimants.items():
+        if len(owners) == 1 and b not in seen:
+            only = next(iter(owners))
+            if only != b and only in seen:
+                seen[b] = seen[only]
     return {k: next(iter(v)) for k, v in seen.items()
             if len(v) == 1 and k not in ambiguous}
 
@@ -351,6 +392,10 @@ def check():
     # ---- the corpus itself -------------------------------------------------
     rows_all = load("corpus.json")
     kinds = kind_map(rows_all)
+    raw_expl = {}
+    for _q in rows_all:
+        if _q[7] and _q[6]:
+            raw_expl.setdefault(_q[7], _q[6])
     # Subject descriptions, for the stem-type check.
     subject_desc = {}
     for q in rows_all:
@@ -438,6 +483,14 @@ def check():
                 bad["MACHINE-STEM"].append(f"{r[0]}: {str(r[1])[:70]}")
             if shape_i is not None and (len(r) <= shape_i or not r[shape_i]):
                 bad["BROKEN-SHAPE"].append(f"{r[0]}: {mode} row has no shape payload")
+            # Odd One Out only works when the ONLY way to spot the outlier is the
+            # fact. Options of mixed type hand the player a second answer.
+            if name == "oddoneout.json" and len(r) > 2 and r[2]:
+                ks = {option_kind(o, kinds, raw_expl) for o in r[2]}
+                ks.discard(None)
+                if len(ks) > 1:
+                    bad["ODD-ONE-KIND"].append(
+                        f"{r[0]}: {sorted(ks)} — {[str(o) for o in r[2]]}")
         # Match Up: neither side may give the other away.
         if name == "match.json":
             for r in rows:

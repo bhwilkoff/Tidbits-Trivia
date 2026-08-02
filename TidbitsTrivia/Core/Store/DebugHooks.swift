@@ -203,7 +203,18 @@ enum DebugHooks {
                                   .pictureId, .thisOrThat, .closestCall, .ordering,
                                   .matching, .typeAnswer, .oddOneOut, .ladder, .enumerate]
         guard let raw = ProcessInfo.processInfo.environment["TIDBITS_PLAY_SWEEP_MODES"] else { return picker }
-        let picked = raw.split(separator: ",").compactMap { GameMode(rawValue: String($0)) }
+        let names = raw.split(separator: ",").map { String($0) }
+        let picked = names.compactMap { GameMode(rawValue: $0) }
+        // Say so when a name does not resolve. Passing "matchUp,inOrder" (the
+        // real cases are `matching` and `ordering`) silently walked three modes
+        // instead of five, and the run LOOKED like a clean sweep of the board
+        // modes. A harness that quietly narrows its own coverage reports success
+        // it did not earn.
+        let unknown = names.filter { GameMode(rawValue: $0) == nil }
+        if !unknown.isEmpty {
+            print("MARATHON-BAD-MODE\t\(unknown.joined(separator: ","))\tknown: "
+                  + picker.map(\.rawValue).joined(separator: ","))
+        }
         return picked.isEmpty ? picker : picked
     }
 

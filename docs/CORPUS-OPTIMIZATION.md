@@ -60,10 +60,30 @@ verified on a rendered screen before it counts as done.
    (Swift, Kotlin, C#, JS) and the sqlite schema.
 3. **Derive the sourceURL.** Store only the 22,244 that differ from
    `wiki/<subject>`; synthesise the rest at read time. Saves ~4 MB.
-4. **Shard the web corpus.** The web should fetch what a session needs, not the
-   corpus: a small `index.json` (ids + category + difficulty, enough for the
-   Daily pick and mode/category counts) plus per-category shards fetched on
-   demand. Target: **first play under 1 MB**.
+4. **Shard the web corpus.** — DONE. `assets/web/shard-NN.json` × 64, built by
+   `build_web_shards.py` and rebuilt by the resync. Each category's rows are
+   dealt round-robin so a shard carries the corpus's exact mix; one shard is a
+   representative corpus, not a slice.
+
+   | path | before | after |
+   |---|---|---|
+   | Quick Play / any mode | 13 MB gzip | **200 KB** |
+   | Daily | 13 MB gzip | 13 MB (ranks every id — see below) |
+   | Create search | 13 MB gzip | 13 MB (reads every prompt) |
+
+   Two paths still need every row and now say so: `daily()` ranks the whole id
+   space (a shard would compute a different seven than iOS, Android, Windows and
+   the cron, which is exactly what the daily golden exists to catch), and Create
+   search reads every prompt. Both call `loadFull()` explicitly.
+
+   `countIn()` reads the MANIFEST rather than what is loaded, so a shard-loaded
+   client still reports the real per-category totals instead of claiming the
+   corpus is 64x smaller than it is.
+
+   NEXT for the Daily: the cron already computes the day's seven ids
+   server-side. Publishing them (or the seven questions) would take the Daily to
+   a few KB, at the cost of the web trusting a published set instead of
+   computing it — a contract change worth its own decision.
 5. **Enrich what the player sees**, not the schema: the reveals that still say
    nothing, and picture-round images. Enrichment that does not reach the screen
    is more bytes for no gain.

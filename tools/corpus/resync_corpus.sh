@@ -83,6 +83,12 @@ python3 tools/corpus/quality_gate.py
 echo "--- 6b. every gate rule can still see the defect it names"
 python3 tools/corpus/test_quality_gate.py | tail -3
 
+# Derived, web-only: the play path fetches ONE ~200 KB shard instead of the whole
+# 13 MB corpus. Stale shards would serve deleted questions, so they are rebuilt
+# with everything else.
+echo "--- 6c. rebuild the web shards"
+python3 tools/corpus/build_web_shards.py | tail -2
+
 echo "--- 7. the topics the app SUGGESTS still return a playable quiz"
 tools/create/check_suggestions.sh
 

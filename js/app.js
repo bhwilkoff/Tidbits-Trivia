@@ -1177,6 +1177,7 @@ async function buildCreateSet(topic) {
     try { shaped.push(...await src.searchMatch(topic, 1)); } catch { /* source optional */ }
   }
   const mcqNeeded = Math.max(4, 8 - shaped.length);
+  await Corpus.loadFull();   // search reads every prompt
   const mcq = Corpus.search(topic, mcqNeeded);
   let set = [...mcq, ...shaped];
   if (set.length < 8) {
@@ -1861,7 +1862,13 @@ class Game {
     let qs;
     if (this._custom) qs = this._custom;
     else if (this.mode.id === 'barTrivia') qs = await this._loadNight();
-    else if (this.mode.id === 'daily') qs = Corpus.daily(this.dailyDay || dayKey(), 7);
+    else if (this.mode.id === 'daily') {
+      // The Daily ranks EVERY id, so a shard would produce a different seven
+      // than the other platforms. This is the one play path that pays for the
+      // full corpus.
+      await Corpus.loadFull();
+      qs = Corpus.daily(this.dailyDay || dayKey(), 7);
+    }
     else if (this.mode.id === 'mix') qs = this._loadMix();
     else if (this.mode.id === 'pictureId') {
       await Pictures.load();
@@ -2614,6 +2621,7 @@ function renderResults() {
 // comparable across every player. This layers on the Daily — it never replaces the streak.
 async function submitDailyBoardResult(s) {
   const day = dayKey();
+  await Corpus.loadFull();
   const qids = Corpus.daily(day, 7).map((q) => q.id);
   const byId = new Map(s.answered.map((a) => [a.q.id, a]));
   const marks = qids.map((id) => (byId.get(id)?.correct ? '1' : '0')).join('');

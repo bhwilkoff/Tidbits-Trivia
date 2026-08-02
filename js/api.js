@@ -20,6 +20,13 @@ function rowToQuestion(r) {
   // never coexist in the same file, so one index serves both.
   if (typeof r[9] === 'string' && r[9]) q.image = r[9];
   if (Array.isArray(r[9])) q.tags = r[9];
+  // The web shards drop a sourceURL that is just wiki/<subject> — 80% of rows —
+  // and the client rebuilds it. Without this the reveal loses its "Read on
+  // Wikipedia" link, which is the door out of the app into the actual subject.
+  if (!q.sourceURL && q.sourceTitle) {
+    q.sourceURL = 'https://en.wikipedia.org/wiki/'
+      + encodeURIComponent(String(q.sourceTitle).replace(/ /g, '_'));
+  }
   return q;
 }
 
@@ -284,16 +291,59 @@ function diversify(ranked, limit) {
 }
 
 export const Corpus = {
-  questions: [], byCategory: {}, loaded: false,
+  questions: [], byCategory: {}, loaded: false, full: false, manifest: null,
 
-  /// How many questions carry this category — see `makeJsonSet.countIn`.
+  /// How many questions carry this category.
+  ///
+  /// Reads the MANIFEST, not what is loaded. A shard holds 1/64th of the corpus
+  /// and the count is shown to the player ("2,431 questions in Science"); a
+  /// shard-loaded client must not claim the corpus is 64x smaller than it is.
   countIn(categoryID) {
+    const per = this.manifest?.perCategory;
+    if (per) return categoryID === 'mixed' ? this.manifest.total : (per[categoryID] || 0);
     return categoryID === 'mixed' ? this.questions.length
       : (this.byCategory[categoryID] || []).length;
   },
 
-  async load() {
+  /// ONE stratified shard — enough to play any mode in any category.
+  ///
+  /// The full corpus is 13 MB gzipped and gets parsed into 111,599 objects
+  /// before the first question appears; that is the pattern Play rejected on
+  /// Android (Decision 049). A shard is ~200 KB and carries the corpus's exact
+  /// category mix, so a round drawn from it is indistinguishable from a round
+  /// drawn from the whole thing. `loadFull()` is still there for the two paths
+  /// that genuinely need every row.
+  async loadShard() {
     if (this.loaded) return;
+    try {
+      const m = await (await fetch('assets/web/manifest.json', { cache: 'no-cache' })).json();
+      this.manifest = m;
+      const pick = Math.floor(Math.random() * m.shards);
+      const name = `assets/web/shard-${String(pick).padStart(2, '0')}.json`;
+      const data = await (await fetch(name, { cache: 'no-cache' })).json();
+      this.ingest(data.questions);
+      this.version = data.version;
+      console.log(`[Tidbits] shard ${pick} · ${this.questions.length} questions of ${m.total}`);
+      return;
+    } catch (e) {
+      console.warn('[Tidbits] shard load failed, falling back to the full corpus', e);
+    }
+    await this.loadFull();
+  },
+
+  ingest(rows) {
+    this.questions = rows.map(rowToQuestion);
+    this.byCategory = {};
+    for (const q of this.questions) (this.byCategory[q.categoryID] ||= []).push(q);
+    this.loaded = true;
+  },
+
+  async load() { return this.loadShard(); },
+
+  /// Every row. Needed by the Daily (the pick ranks the whole id space) and by
+  /// Create search (which reads prompts and tags across the corpus).
+  async loadFull() {
+    if (this.full) return;
     // Network-first so corpus updates always propagate; IndexedDB is only an
     // offline fallback, keyed on the corpus content version (no stale cache).
     let data;
@@ -310,10 +360,8 @@ export const Corpus = {
       if (v) data = await idbGet('corpus:' + v);
     }
     if (!data) throw new Error('corpus unavailable');
-    this.questions = data.questions.map(rowToQuestion);
-    this.byCategory = {};
-    for (const q of this.questions) (this.byCategory[q.categoryID] ||= []).push(q);
-    this.loaded = true;
+    this.ingest(data.questions);
+    this.full = true;
     // Observability: confirm WHICH corpus is live (open DevTools console). If
     // this version doesn't match the latest assets/corpus.json, you're on a
     // stale cache — hard-refresh to pick up the new service worker.
@@ -331,7 +379,11 @@ export const Corpus = {
 
   // The canonical cross-platform Daily (Decision 037): identical 7 on
   // iOS/tvOS/Android/web via the shared hash-rank pick — see engine.js.
+  /// Requires loadFull(): the pick ranks EVERY id, so a shard would compute a
+  /// different seven than iOS, Android, Windows and the cron. The daily golden
+  /// exists to catch exactly that divergence.
   daily(dayKey, count) {
+    if (!this.full) console.warn('[Tidbits] daily() needs loadFull() — call it first');
     const byId = new Map(this.questions.map((q) => [q.id, q]));
     return pickDailyBalanced(this.questions.map((q) => q.id),
                              this.questions.map((q) => q.categoryId),

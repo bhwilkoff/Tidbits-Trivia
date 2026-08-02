@@ -61,9 +61,15 @@ if [ -n "${TIDBITS_PLAY_SWEEP_MODES:-}" ]; then
   done
 fi
 
-if [ -f "$APP/corpus.sqlite" ] && [ "assets/corpus.json" -nt "$APP/corpus.sqlite" ]; then
-  echo "FAIL: stale bundle — assets/corpus.json is newer than the bundled corpus.sqlite." >&2
-  echo "      Rebuild the app first; otherwise these frames show the previous corpus." >&2
+# Compare CONTENT, not timestamps. The first version compared mtimes, and a
+# `git rebase` — which rewrites every checked-out file — made it refuse a
+# perfectly fresh bundle. A guard that cries wolf is one people learn to work
+# around, which is worse than not having it.
+if [ -f "$APP/corpus.json" ] \
+   && [ "$(shasum -a 256 "$APP/corpus.json" | cut -d' ' -f1)" \
+        != "$(shasum -a 256 assets/corpus.json | cut -d' ' -f1)" ]; then
+  echo "FAIL: stale bundle — the app's corpus.json differs from assets/corpus.json." >&2
+  echo "      Rebuild and reinstall; otherwise these frames show a different corpus." >&2
   exit 2
 fi
 DEVELOPER_DIR=$DEV xcrun simctl terminate "$UDID" "$BUNDLE" 2>/dev/null || true

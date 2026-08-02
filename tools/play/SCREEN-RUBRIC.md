@@ -233,3 +233,31 @@ whether the answer is right.
   comparison class over more true phrasings (assigned by a stable hash of the row
   id, so every platform agrees) took it to 4.5%. `PROMPT-REPETITION` caps any one
   prompt at 1% of the corpus.
+
+## Read the reveal as typesetting, not just as content (added 2026-08-02)
+
+Scanning all 110,140 reveals for things wrong as TYPOGRAPHY found what reading
+220 prompts had not:
+
+    Arkansas ( , AR-kən-saw) is a landlocked state...
+    Delaware (  DEL-ə-wair) is a state in the Mid-Atlantic...
+    Ottawa (; Canadian French: [ɔtawɑ]) is the capital...
+
+An IPA transcription was stripped out of the Wikipedia lead and left its
+delimiters behind. None of it changes a fact; it is the difference between a
+payoff that looks written and one that looks scraped. `REVEAL-TYPOGRAPHY`.
+
+Also: 30 prompts opened lowercase ("plutonium is denoted by which symbol?") —
+a template dropped an element name, lowercase by convention, into the first slot.
+`LOWERCASE-PROMPT`, with an allowance for iPhone/eBay/macOS.
+
+**Two traps this pass, both mine:**
+- The shape-source sweep would have appended a full stop to OPTION text —
+  "Yesterday (song)." on an answer card — because it treated every long cell as
+  prose. 24,269 "fixes" became 88 once it stopped adding stops to option cells.
+  A cleanup script must know which cells the player reads as sentences.
+- The cleanup was not idempotent: collapsing "(; " exposes a
+  space-before-punctuation the earlier rule already passed, so one run left 8
+  rows dirty and the gate caught them. It now iterates to a fixed point. This is
+  the second non-idempotent repair this session; the first shipped "based based
+  based based" to 1,022 questions.

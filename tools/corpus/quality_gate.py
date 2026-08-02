@@ -40,6 +40,20 @@ Each rule below is here because a real question in this app hit it:
                   earliest" covered 7,526 rows between them. Seeing the same
                   sentence twice in a round reads as a bug, not as two questions.
                   The rule caps any single prompt at 1% of the corpus.
+  REVEAL-TYPOGRAPHY
+                  the payoff panel showing scraping residue: "Arkansas ( ,
+                  AR-kən-saw)", "Delaware (  DEL-ə-wair)" — an IPA transcription
+                  was stripped out of the Wikipedia lead and left its delimiters
+                  behind. Also a doubled space or a space before a comma. None of
+                  it changes a fact; it is the difference between a payoff that
+                  looks written and one that looks scraped.
+  LOWERCASE-PROMPT
+                  a prompt that opens with a lowercase letter: "plutonium is
+                  denoted by which symbol?". Found by reading 220 served prompts
+                  and scanning for the ones that do not start like a sentence —
+                  a template dropped an element name, which is lowercase by
+                  convention, into the first slot. Brands that are genuinely
+                  lowercase (iPhone, eBay, macOS) are allowed for.
   TERSE-STEM      a comparison asked as a headline fragment rather than a
                   sentence: "Most people of the four — which one?" (not
                   English), "Longest of the four — which one?" (longest WHAT?).
@@ -194,6 +208,8 @@ BUDGET = {
     "NUMERIC-SORTED": 0,
     "PRESENT-TENSE-PAST": 0,
     "PROMPT-REPETITION": 0,
+    "REVEAL-TYPOGRAPHY": 0,
+    "LOWERCASE-PROMPT": 0,
     "TERSE-STEM": 0,
     "NUMBER-AGREEMENT": 0,
     "MISSING-ARTICLE": 0,
@@ -305,6 +321,9 @@ PRESENT_TEMPLATES = ("What currency is used in ", "In which country is ",
                      "What is the capital of ", "What is the official language of ",
                      "Which of these is an official language of ",
                      "On which continent is ")
+
+LOWERCASE_OK = ("iPhone", "iPad", "iPod", "iMac", "iTunes", "eBay", "macOS",
+                "iOS", "tvOS", "watchOS", "von ", "de ", "van ")
 
 TERSE_STEM = re.compile(r"of the four \u2014 which one\?$")
 SYMBOL_BACKWARDS = re.compile(r"^On the periodic table, .+ is which symbol\?$")
@@ -627,10 +646,16 @@ def check():
                     and not re.search(r"\bthe\s+" + re.escape(_subj) + r"\b",
                                       prompt, re.I)):
                 bad["MISSING-ARTICLE"].append(f"{q[0]}: {prompt[:66]}")
+        if prompt and prompt[0].islower() and not prompt.startswith(LOWERCASE_OK):
+            bad["LOWERCASE-PROMPT"].append(f"{q[0]}: {prompt[:58]}")
         if TERSE_STEM.search(prompt or "") or SYMBOL_BACKWARDS.match(prompt or ""):
             bad["TERSE-STEM"].append(f"{q[0]}: {(prompt or '')[:60]}")
         if DOUBLED_VERB.search(prompt or ""):
             bad["DOUBLED-STEM"].append(f"{q[0]}: {(prompt or '')[:70]}")
+        _rev = (q[6] or "")
+        if _rev and (re.search(r"\(\s*[,;]", _rev) or re.search(r"[ \t]{2,}", _rev)
+                     or re.search(r"\s+[,.;:]", _rev) or re.search(r"\s+[)\]]", _rev)):
+            bad["REVEAL-TYPOGRAPHY"].append(f"{q[0]}: {_rev[:58]}")
         if STUB_DESC.match((q[6] or "").split(":", 1)[-1].strip()):
             bad["STUB-REVEAL"].append(f"{q[0]}: {(q[6] or '')[:60]}")
         if PLACEHOLDER.search(prompt or ""):

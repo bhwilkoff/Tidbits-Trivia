@@ -165,3 +165,16 @@ it was in shared Core logic rather than content.
 - **Native behaviour is not a defect.** Content passing under the iOS 26 floating
   tab bar looks like a clipping bug and is the Liquid Glass design; `TabView`
   applies the bottom inset itself. Check the platform before "fixing" it.
+
+## What the app OFFERS must work (added 2026-08-02)
+
+- **Tap the app's own suggestions.** "Space exploration" was the first chip under
+  "Need a spark?" on five platforms, and the shipped ranker returned ONE
+  question for it — about robotics. A new player's first tap produced a
+  one-question quiz on the wrong subject. Nothing checked it because the chips
+  are hardcoded per platform while the ranker reads the corpus, so dropping or
+  re-categorising rows can starve a chip that worked when it was chosen. Now
+  `tools/create/check_suggestions.sh`, run by the corpus resync.
+- **A screenshot only proves what is INSTALLED.** `xcodebuild build` does not
+  install; a capture after a rebuild showed the old chip and looked like the edit
+  had failed. `simctl install` before launching, or read the previous build.

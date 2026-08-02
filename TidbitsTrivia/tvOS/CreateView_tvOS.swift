@@ -39,7 +39,7 @@ struct CreateView_tvOS: View {
 
     /// Ten-foot suggestions: broad, recognisable subjects that fill a quiz. Typing is
     /// the fallback, so these have to be genuinely good rather than decorative.
-    private let suggestions = ["Space exploration", "Ancient Rome", "Jazz", "Volcanoes",
+    private let suggestions = ["The Solar System", "Ancient Rome", "Jazz", "Volcanoes",
                                "The Olympics", "Marie Curie", "Dinosaurs", "The Beatles"]
 
     var body: some View {

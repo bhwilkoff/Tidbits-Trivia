@@ -27,7 +27,7 @@ struct CreateView_macOS: View {
     @State private var stageIndex = 0
     @FocusState private var topicFocused: Bool
 
-    private let suggestions = ["Space exploration", "Ancient Rome", "Jazz", "Volcanoes", "The Olympics", "Marie Curie"]
+    private let suggestions = ["The Solar System", "Ancient Rome", "Jazz", "Volcanoes", "The Olympics", "Marie Curie"]
     private let stages = ["Searching Wikipedia…", "Pulling out the facts…",
                           "Writing your questions…", "Double-checking the answers…"]
 

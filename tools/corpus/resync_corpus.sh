@@ -67,4 +67,10 @@ echo "--- 6. question quality gate"
 # that should never ship.
 python3 tools/corpus/quality_gate.py
 
+# A corpus change can starve a Create suggestion that worked when it was chosen.
+# "Space exploration" was the first chip on five platforms and returned ONE
+# question, about robotics.
+echo "--- 7. the topics the app SUGGESTS still return a playable quiz"
+tools/create/check_suggestions.sh
+
 echo "--- done. corpus + sqlite + golden + fixtures all resynced."

@@ -1144,7 +1144,7 @@ function bindHome() {
 
 // ---------------- Create ----------------
 function viewCreate() {
-  const sugg = ['Space exploration', 'Ancient Rome', 'Jazz', 'Volcanoes', 'The Olympics', 'Marie Curie'];
+  const sugg = ['The Solar System', 'Ancient Rome', 'Jazz', 'Volcanoes', 'The Olympics', 'Marie Curie'];
   const saved = allQuizzes();
   return `
     <h1 class="page-title">Create a quiz</h1>

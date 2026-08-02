@@ -30,7 +30,7 @@ struct CreateQuizView: View {
     @FocusState private var topicFocused: Bool
     @State private var stageIndex = 0
 
-    private let suggestions = ["Space exploration", "Ancient Rome", "Jazz", "Volcanoes", "The Olympics", "Marie Curie"]
+    private let suggestions = ["The Solar System", "Ancient Rome", "Jazz", "Volcanoes", "The Olympics", "Marie Curie"]
     private let stages = ["Searching Wikipedia…", "Pulling out the facts…",
                           "Writing your questions…", "Double-checking the answers…"]
 

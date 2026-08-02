@@ -2618,7 +2618,7 @@ private fun CreateScreen(onPlay: (List<Question>, String) -> Unit) {
     // from a share link is written AFTER this screen composes, so a remembered list
     // showed the shelf without it — the link looked like it had done nothing.
     LaunchedEffect(Unit) { saved = com.learningischange.tidbitstrivia.data.QuizStore.all() }
-    val suggestions = listOf("Space exploration", "Ancient Rome", "Jazz", "Volcanoes", "The Olympics", "Marie Curie")
+    val suggestions = listOf("The Solar System", "Ancient Rome", "Jazz", "Volcanoes", "The Olympics", "Marie Curie")
     fun generate(t: String) {
         if (t.trim().length < 2 || working) return
         working = true; error = null

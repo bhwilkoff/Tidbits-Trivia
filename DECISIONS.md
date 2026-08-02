@@ -1713,3 +1713,38 @@ everyone else. A ceiling that rises because a neighbour shrank is honest; one
 that rises because a category grew is the thing `CATEGORY-SKEW` exists to stop.
 The corpus is 128,146 -> 110,142 rows and the largest category is smaller than it
 was, which is the direction that matters.
+
+**Amended 2026-08-02 (second) — the balanced draw, and the version key it needs.**
+The owner asked for the draw change, so here is the design and its live-data
+hazard, stated before any client ships it.
+
+`pickDailyBalanced(ids, cats, day, categoryId, count)` keeps the existing FNV
+ranking — so WHICH question a category contributes is unchanged and still
+unpredictable — and then takes the best-ranked unused id from each category in
+turn. Category order is itself hashed from the day, so no category is
+permanently first. Measured over the 60 days from 2026-09-01: days with 4+ of 7
+questions in one category go **13/60 -> 0/60**, and a set spans **7.0 of 8**
+categories on average.
+
+**The hazard is not the algorithm, it is the board.** Two players on different
+versions answer DIFFERENT QUESTIONS, so ranking them against each other is
+meaningless — and the 7-char marks string is aligned to the pick ORDER, so a
+silent change also mis-indexes every per-question percentage the board publishes.
+The cron recomputes qids server-side and submissions carry only `marks`, so
+nothing today would notice.
+
+So the version is on the wire:
+- `DAILY_SET_V1 = 1` (uniform), `DAILY_SET_V2 = 2` (balanced), switching at
+  `DAILY_V2_FROM = 2026-09-01` and never retroactively — yesterday's board must
+  keep resolving to the set it was actually played with.
+- Submissions carry `qv`. Boards are published PER VERSION for the transition, and
+  a client reads the board matching its own `qv`. Players on different app
+  versions see different boards for a period, which is honest; ranking them
+  together would not be.
+
+**Status:** the algorithm is implemented and byte-identical in js/engine.js and
+tools/aggregate_dailyboard.py, verified over 20 days. Still to do: the Swift,
+Kotlin and C# mirrors, the `qv` field on submission and board, per-version
+publishing in the cron, and the daily golden extended to cover a v2 day. Until
+all of those land, `dailySetVersion` returns V1 for every day the app can
+currently reach, so nothing changes for players yet.

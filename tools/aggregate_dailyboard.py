@@ -51,6 +51,50 @@ def pick_daily(ids, day, category_id, count):
     return ranked_ids[:count]
 
 
+# The Daily set VERSION. Two players on different versions answer DIFFERENT
+# questions, so ranking them together is meaningless and their marks strings —
+# which are aligned to the pick order — index different questions. The version is
+# therefore on the wire, and boards are published per version.
+DAILY_SET_V1 = 1
+DAILY_SET_V2 = 2
+DAILY_V2_FROM = "2026-09-01"
+
+
+def daily_set_version(day):
+    return DAILY_SET_V2 if day >= DAILY_V2_FROM else DAILY_SET_V1
+
+
+def pick_daily_balanced(ids, cats, day, category_id, count):
+    """Byte-identical to pickDailyBalanced in js/engine.js.
+
+    Same FNV ranking, then the best unused id from each category in turn, so the
+    seven questions span seven categories instead of following the corpus's own
+    29%-Film-&-TV shape (Decision 050).
+    """
+    ranked = sorted(zip(ids, cats),
+                    key=lambda p: (fnv1a64(f"daily:{day}:{category_id}:{p[0]}"), p[0]))
+    by_cat = {}
+    for i, c in ranked:
+        by_cat.setdefault(c, []).append(i)
+    order = sorted(by_cat, key=lambda c: (fnv1a64(f"dailycat:{day}:{c}"), c))
+
+    out = []
+    rnd = 0
+    while len(out) < count:
+        progressed = False
+        for c in order:
+            bucket = by_cat[c]
+            if rnd < len(bucket):
+                out.append(bucket[rnd])
+                progressed = True
+                if len(out) == count:
+                    break
+        if not progressed:
+            break
+        rnd += 1
+    return out
+
+
 def summarize_day(players, qids):
     """players: {uid: {name, avatarSeed, score, correct, marks, ...}} -> the published shape.
 

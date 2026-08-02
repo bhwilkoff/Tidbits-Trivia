@@ -310,3 +310,17 @@ Three things it found in its first run:
 16 rules need input this harness does not plant (shape-source rows, corpus-wide
 rates). They are listed by name in COVERED_ELSEWHERE with what they would need,
 so the coverage gap is visible rather than implied.
+
+## Coverage of the gate self-test (2026-08-02)
+
+21 of 27 rules are now proven to fire by planting a known-bad row and running the
+real gate against it. The six that are not are rate rules — they cannot be
+tripped by a single row by construction, which is what makes them rate rules —
+plus THIN-COVERAGE and GOLDEN-STALE, both proven by hand with the measurement in
+their commits.
+
+Six of the plants name REAL subjects (Fiji, Bob Kane, Kingdom of Navarre,
+Thessaloniki, Maya Plisetskaya, Pontius Pilate) because those rules need a
+subject the classifier can type. If a corpus change ever makes one of them
+untypeable the test goes BLIND and says so — which is correct: a plant that
+quietly stops working is the same failure as a rule that quietly stops seeing.

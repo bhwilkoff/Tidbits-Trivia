@@ -7,9 +7,9 @@ rule was not disabled and its budget was not raised — it simply could not see.
 A rule that has never been shown to FIRE is a rule nobody has tested. This plants
 one known-bad row per rule into a copy of the real corpus, runs the real gate
 against it, and asserts the rule reports at least one hit. Rules whose input is
-not a corpus row (THIN-COVERAGE, BROKEN-SHAPE, GOLDEN-STALE, CATEGORY-SKEW,
-SLIDER-FARMABLE, ODD-ONE-KIND, UNANSWERABLE-TYPEIN, READ-OFF) are listed as
-covered elsewhere rather than silently skipped — see COVERED_ELSEWHERE.
+not a single row — a corpus-wide RATE, or a signal from enrich.json — are listed
+by name in COVERED_ELSEWHERE with what they would need, so the coverage gap is
+visible rather than implied.
 
     python3 tools/corpus/test_quality_gate.py
 
@@ -65,27 +65,66 @@ PLANTED = {
     "MISSING-ARTICLE": ["test:article", "On which continent is Peace River?",
                         ["North America", "Europe", "Asia", "Africa"], 0, "geography", 2,
                         "Peace River: River in Canada.", "Peace River"],
+    # These six need subjects the classifier already knows, so they name REAL
+    # ones. If a rename ever makes one untypeable the test goes BLIND and says
+    # so, which is the point — a plant that quietly stops working is the same
+    # failure as a rule that quietly stops seeing.
+    "KIND-MISMATCH": ["test:kind", "Which of these is an island nation?",
+                      ["Fiji", "Bob Kane", "Nauru", "Spain"], 0, "geography", 2,
+                      "Fiji: Country in Oceania.", "Fiji"],
+    "STEM-TYPE": ["test:stemtype", "In which country is American Psycho?",
+                  ["France", "Spain", "Italy", "Greece"], 0, "screen", 2,
+                  "American Psycho: Horror novel.", "American Psycho"],
+    "PRESENT-TENSE-PAST": ["test:tense", "What is the capital of the Kingdom of Navarre?",
+                           ["Pamplona", "Madrid", "Lisbon", "Paris"], 0, "history", 2,
+                           "Kingdom of Navarre: Former kingdom.", "Kingdom of Navarre"],
+    "CITY-LANGUAGE": ["test:citylang",
+                      "Which of these is an official language of Thessaloniki?",
+                      ["Greek", "Danish", "Polish", "Czech"], 0, "geography", 2,
+                      "Thessaloniki: Second-largest city in Greece.", "Thessaloniki"],
+    "NATIONALITY-FREE": ["test:nat", "This Russian dancer is world famous — who?",
+                         ["Maya Plisetskaya", "Anne Rice", "Susan Sontag",
+                          "Coretta Scott King"], 0, "arts", 2,
+                         "Maya Plisetskaya: Russian ballerina.", "Maya Plisetskaya"],
+    "ERA-SPREAD": ["test:era", "Which of these people is best known?",
+                   ["Bob Kane", "Pontius Pilate", "Anne Rice", "Susan Sontag"], 0,
+                   "history", 2, "Bob Kane: American comic book artist.", "Bob Kane"],
+}
+
+# Shape-source rules. Each plants one row into the named file; the file's real
+# rows are kept so THIN-COVERAGE stays satisfied.
+PLANTED_SHAPES = {
+    "ODD-ONE-KIND": ("oddoneout.json",
+                     ["test:oddkind", "Which of these is the odd one out?",
+                      ["Fiji", "Nauru", "Spain", "Bob Kane"], 3, "geography", 2,
+                      "Bob Kane is a person among three countries.", "", ""]),
+    "UNANSWERABLE-TYPEIN": ("typeanswer.json",
+                            ["test:typein", 'Who is this — "Swedish actress"?',
+                             "Ingrid Bergman", [], "screen", 2,
+                             "Ingrid Bergman: Swedish actress.", "Ingrid Bergman"]),
+    "READ-OFF": ("match.json",
+                 ["test:readoff", "Match each country to its currency.",
+                  ["Singapore", "Japan", "Peru", "Chad"],
+                  ["Singapore dollar", "Yen", "Sol", "Franc"], "geography",
+                  "Singapore → Singapore dollar", "", ""]),
+    "BROKEN-SHAPE": ("picture.json",
+                     ["test:broken", "Who is this?",
+                      ["A", "B", "C", "D"], 0, "screen", 2,
+                      "A: Test.", "A", "", ""]),
 }
 
 # Rules whose trigger is not a single corpus row. Named so the coverage gap is
 # visible rather than implied.
 COVERED_ELSEWHERE = {
+    # The four RATE rules cannot be tripped by one row by construction — that is
+    # what makes them rate rules — and each was proven by hand when it was
+    # written, with the measurement in its commit.
     "THIN-COVERAGE": "needs a mode x category the shape files cannot fill",
-    "BROKEN-SHAPE": "needs a malformed shape-source row",
-    "ODD-ONE-KIND": "needs an oddoneout.json row",
-    "UNANSWERABLE-TYPEIN": "needs a typeanswer.json row",
-    "READ-OFF": "needs a match.json row",
     "GOLDEN-STALE": "proven by hand 2026-08-02 (planted a missing id)",
     "CATEGORY-SKEW": "proven by hand 2026-08-02 (lowered the screen ceiling)",
     "SLIDER-FARMABLE": "rate over closest.json, proven by the pre-fix 61.7%",
     "NUMERIC-SORTED": "rate over all numeric sets, not one row",
     "PROMPT-REPETITION": "share of the whole corpus, not one row",
-    "ERA-SPREAD": "needs enrich.json birth years for the planted subject",
-    "KIND-MISMATCH": "needs the planted subjects to carry descriptions",
-    "STEM-TYPE": "needs a subject description the classifier can read",
-    "CITY-LANGUAGE": "needs a city description and a country language set",
-    "NATIONALITY-FREE": "needs four described subjects with nationalities",
-    "PRESENT-TENSE-PAST": "needs Wikidata's historical-country class",
 }
 
 
@@ -101,9 +140,17 @@ def main():
 
     with tempfile.TemporaryDirectory() as tmp:
         tmpdir = pathlib.Path(tmp)
+        shaped = {f for f, _ in PLANTED_SHAPES.values()}
         for f in ASSETS.iterdir():
-            if f.name != "corpus.json":
+            if f.name != "corpus.json" and f.name not in shaped:
                 (tmpdir / f.name).symlink_to(f)
+        for fname in shaped:
+            d = json.loads((ASSETS / fname).read_text())
+            extra = [list(row) for f, row in PLANTED_SHAPES.values() if f == fname]
+            srows = d["questions"] + extra
+            b = json.dumps(srows, ensure_ascii=False, separators=(",", ":"))
+            (tmpdir / fname).write_text(
+                f'{{"version":"{d["version"]}","count":{len(srows)},"questions":{b}}}')
         body = json.dumps(rows + planted, ensure_ascii=False, separators=(",", ":"))
         (tmpdir / "corpus.json").write_text(
             f'{{"version":"{corpus["version"]}","count":{len(rows)+len(planted)},'
@@ -121,7 +168,7 @@ def main():
 
     failures = []
     print(f"{'rule':22}{'planted':>9}{'seen':>7}   status")
-    for rule in sorted(PLANTED):
+    for rule in sorted(set(PLANTED) | set(PLANTED_SHAPES)):
         n = found.get(rule)
         ok = n is not None and n >= 1
         print(f"{rule:22}{1:>9}{n if n is not None else '-':>7}   {'ok' if ok else 'BLIND'}")

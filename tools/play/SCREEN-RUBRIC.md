@@ -215,3 +215,21 @@ whether the answer is right.
   Adding "the" made a number disagreement audible that "is Andaman Islands" had
   hidden. A repair that only half reads the sentence leaves it half wrong; the
   gate rule for it says so in as many words. `NUMBER-AGREEMENT`.
+
+## Say what is being compared (added 2026-08-02)
+
+- **A headline fragment is not a question.** "Most people of the four — which
+  one?" is not English; "Longest of the four — which one?" does not say longest
+  WHAT. 3,692 rows, while the same question type was already phrased properly
+  elsewhere in the corpus. The dimension came from the row id's Wikidata
+  property, never guessed from the fragment. `TERSE-STEM`.
+- **The prompt should not say less than its own reveal.** These rows answered
+  "has the greatest population of the four (23.9 million)" under a prompt that
+  never mentioned population. When the answer panel is more specific than the
+  question, the question is the thing to fix.
+- **Count how often a round repeats a SENTENCE.** Four phrasings of "founded
+  earliest" covered 7,526 rows, so a ten-question draw showed one prompt twice
+  7.4% of the time — which reads as a bug, not as two questions. Spreading each
+  comparison class over more true phrasings (assigned by a stable hash of the row
+  id, so every platform agrees) took it to 4.5%. `PROMPT-REPETITION` caps any one
+  prompt at 1% of the corpus.

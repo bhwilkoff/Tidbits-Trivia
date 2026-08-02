@@ -33,6 +33,21 @@ Each rule below is here because a real question in this app hit it:
                   polity the corpus knows. The test reads the DESCRIPTION, never
                   the name — plenty of live places are called a Kingdom, and
                   Indore State is historical where Washington State is not.
+  PROMPT-REPETITION
+                  one prompt text used so often that a round shows it twice.
+                  Measured 2026-08-02: a ten-question draw repeated a prompt
+                  VERBATIM 7.4% of the time, because four phrasings of "founded
+                  earliest" covered 7,526 rows between them. Seeing the same
+                  sentence twice in a round reads as a bug, not as two questions.
+                  The rule caps any single prompt at 1% of the corpus.
+  TERSE-STEM      a comparison asked as a headline fragment rather than a
+                  sentence: "Most people of the four — which one?" (not
+                  English), "Longest of the four — which one?" (longest WHAT?).
+                  3,692 rows, while the SAME question type was already phrased
+                  properly elsewhere in the corpus. The reveal states the
+                  dimension out loud — "has the greatest population of the four
+                  (23.9 million)" — so a prompt saying less than its own answer
+                  panel is the defect.
   NUMBER-AGREEMENT
                   a singular verb with a plural subject: "In which country is the
                   Andaman Islands?". This one was INTRODUCED by the fix above —
@@ -178,6 +193,8 @@ BUDGET = {
     # the corpus shows. Anything materially above that means someone sorted.
     "NUMERIC-SORTED": 0,
     "PRESENT-TENSE-PAST": 0,
+    "PROMPT-REPETITION": 0,
+    "TERSE-STEM": 0,
     "NUMBER-AGREEMENT": 0,
     "MISSING-ARTICLE": 0,
     "CATEGORY-SKEW": 0,
@@ -288,6 +305,9 @@ PRESENT_TEMPLATES = ("What currency is used in ", "In which country is ",
                      "What is the capital of ", "What is the official language of ",
                      "Which of these is an official language of ",
                      "On which continent is ")
+
+TERSE_STEM = re.compile(r"of the four \u2014 which one\?$")
+SYMBOL_BACKWARDS = re.compile(r"^On the periodic table, .+ is which symbol\?$")
 
 PLURAL_SUBJECT = re.compile(
     r"\b(Islands|Mountains|Alps|Andes|Himalayas|Rockies|Pyrenees|Balkans|"
@@ -607,6 +627,8 @@ def check():
                     and not re.search(r"\bthe\s+" + re.escape(_subj) + r"\b",
                                       prompt, re.I)):
                 bad["MISSING-ARTICLE"].append(f"{q[0]}: {prompt[:66]}")
+        if TERSE_STEM.search(prompt or "") or SYMBOL_BACKWARDS.match(prompt or ""):
+            bad["TERSE-STEM"].append(f"{q[0]}: {(prompt or '')[:60]}")
         if DOUBLED_VERB.search(prompt or ""):
             bad["DOUBLED-STEM"].append(f"{q[0]}: {(prompt or '')[:70]}")
         if STUB_DESC.match((q[6] or "").split(":", 1)[-1].strip()):
@@ -654,6 +676,13 @@ def check():
                 bad["CATEGORY-SKEW"].append(
                     f"{cat} is {share:.1%} of the corpus, ceiling {ceiling:.1%}"
                     " — grow another category rather than raising this")
+
+    prompt_counts = collections.Counter(q[1] or "" for q in rows_all)
+    if rows_all:
+        for _p, _n in prompt_counts.most_common(6):
+            if _n / len(rows_all) > 0.01:
+                bad["PROMPT-REPETITION"].append(
+                    f"{_n} rows ({_n/len(rows_all):.1%}) share one prompt: {_p[:48]}")
 
     golden = ROOT / "tools" / "create" / "golden" / "search.txt"
     if golden.exists():

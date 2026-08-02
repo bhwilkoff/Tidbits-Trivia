@@ -25,6 +25,27 @@ Each rule below is here because a real question in this app hit it:
                   created?" — a Wikidata property name left in the prose.
   THIN-COVERAGE   a mode x category the bundle cannot fill, which silently
                   serves a different category and says nothing.
+  PRESENT-TENSE-PAST
+                  a present-tense template asked of a subject the corpus itself
+                  describes as historical: "What currency is used in the Songhai
+                  Empire?" (fell 1591), "What is the capital of Alodia?". Five
+                  templates written for present-day places, applied to every
+                  polity the corpus knows. The test reads the DESCRIPTION, never
+                  the name — plenty of live places are called a Kingdom, and
+                  Indore State is historical where Washington State is not.
+  NUMBER-AGREEMENT
+                  a singular verb with a plural subject: "In which country is the
+                  Andaman Islands?". This one was INTRODUCED by the fix above —
+                  adding the missing article made the disagreement audible where
+                  "is Andaman Islands" had hidden it. A repair that only half
+                  reads the sentence leaves it half wrong.
+  MISSING-ARTICLE a template dropped a subject title into a slot where English
+                  wants "the": "On which continent is Peace River?",
+                  "Approximately what is the elevation of Appalachian
+                  Mountains?". Found by reading rendered prompts. The list of
+                  names is deliberately short — matching every "Sudan" and
+                  "Valley" would produce "the Sudan" and "the Death Valley",
+                  which is worse than the defect it fixes.
   CATEGORY-SKEW   a category grew past the share it had when Decision 050 was
                   written. "Mixed Bag" is only as mixed as the corpus, and the
                   corpus is 31% Film & TV against 2.4% Business — so a new
@@ -156,6 +177,9 @@ BUDGET = {
     # Ascending happens by chance in 1/24 of four-option sets, and 4.2% is what
     # the corpus shows. Anything materially above that means someone sorted.
     "NUMERIC-SORTED": 0,
+    "PRESENT-TENSE-PAST": 0,
+    "NUMBER-AGREEMENT": 0,
+    "MISSING-ARTICLE": 0,
     "CATEGORY-SKEW": 0,
     "GOLDEN-STALE": 0,
     "NATIONALITY-FREE": 0,
@@ -256,6 +280,28 @@ def birth_years():
 # Same vocabulary the repair uses (tools/corpus/fix_kind_distractors.py); the
 # two must not drift, or the gate flags rows the repair cannot see.
 # "1969." / "c. 1450" / "-44 BCE" standing where a description should be.
+HISTORICAL_DESC = re.compile(
+    r"\b(former|historical|defunct|extinct|dissolved|abolished)\b"
+    r"|\(\s*c?\.?\s*\d{3,4}\s*[-\u2013]\s*\d{3,4}\s*\)"
+    r"|\bwas a\b|\bwere a\b", re.I)
+PRESENT_TEMPLATES = ("What currency is used in ", "In which country is ",
+                     "What is the capital of ", "What is the official language of ",
+                     "Which of these is an official language of ",
+                     "On which continent is ")
+
+PLURAL_SUBJECT = re.compile(
+    r"\b(Islands|Mountains|Alps|Andes|Himalayas|Rockies|Pyrenees|Balkans|"
+    r"Highlands|Everglades|Badlands|Netherlands|Philippines|Bahamas|Maldives|"
+    r"Seychelles|Comoros|Falklands)$")
+
+TAKES_THE = re.compile(
+    r"(?:^|\s)(?:Mountains|Islands|Alps|Andes|Himalayas|Rockies|Pyrenees|"
+    r"Balkans|Highlands|Everglades|Badlands|Netherlands|Philippines|Bahamas|"
+    r"Maldives|Seychelles|United States|United Kingdom|Soviet Union)$"
+    r"|\b(?:Sea|Ocean|Gulf|Strait|Channel|River|Desert|Range|Peninsula|"
+    r"Archipelago|Delta|Basin|Empire|Republic|Federation|Union)$")
+ARTICLE_PREP = r"\b(?:of|in|is|to|for|from|across|near|along|around|through)\s+"
+
 DOUBLED_VERB = re.compile(
     r"\b(based|located|situated|headquartered|founded|set|born|made)\s+\1\b", re.I)
 
@@ -476,6 +522,17 @@ def check():
     # ---- the corpus itself -------------------------------------------------
     rows_all = load("corpus.json")
     kinds = kind_map(rows_all)
+    # Wikidata Q3024240 = "historical country" — on the Kingdom of Navarre, not
+    # on France. Stated as data rather than sniffed from prose.
+    HISTORICAL_TITLES = set()
+    _src = ROOT / "tools" / "corpus" / "corpus_source.sqlite"
+    if _src.exists():
+        import sqlite3 as _sq
+        _db = _sq.connect(f"file:{_src}?mode=ro", uri=True)
+        HISTORICAL_TITLES = {t for t, p31 in _db.execute("select title, p31 from subject")
+                             if p31 and "Q3024240" in p31}
+        _db.close()
+
     nationality = {}
     for _q in rows_all:
         _d = readable_description(_q[6] or "", _q[7])
@@ -532,6 +589,24 @@ def check():
                     if len(_known) == len(_others) and all(k != _want for k in _known):
                         bad["NATIONALITY-FREE"].append(
                             f"{q[0]}: {_want} answer, distractors {sorted(set(_known))}")
+        _subj = q[7] or ""
+        if _subj and prompt and (_subj in HISTORICAL_TITLES
+                                 or HISTORICAL_DESC.search(raw_expl.get(_subj, ""))):
+            for _pres in PRESENT_TEMPLATES:
+                if prompt.startswith(_pres):
+                    bad["PRESENT-TENSE-PAST"].append(f"{q[0]}: {prompt[:66]}")
+                    break
+        if _subj and prompt and PLURAL_SUBJECT.search(_subj):
+            for _sing in ("In which country is ", "In which country was ",
+                          "On which continent is ", "On which continent was "):
+                if prompt.startswith(_sing):
+                    bad["NUMBER-AGREEMENT"].append(f"{q[0]}: {prompt[:64]}")
+                    break
+        if _subj and TAKES_THE.search(_subj) and prompt:
+            if (re.search(ARTICLE_PREP + re.escape(_subj) + r"\b", prompt)
+                    and not re.search(r"\bthe\s+" + re.escape(_subj) + r"\b",
+                                      prompt, re.I)):
+                bad["MISSING-ARTICLE"].append(f"{q[0]}: {prompt[:66]}")
         if DOUBLED_VERB.search(prompt or ""):
             bad["DOUBLED-STEM"].append(f"{q[0]}: {(prompt or '')[:70]}")
         if STUB_DESC.match((q[6] or "").split(":", 1)[-1].strip()):

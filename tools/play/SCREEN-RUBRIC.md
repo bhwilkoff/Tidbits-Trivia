@@ -195,3 +195,23 @@ simulator. Generate it instead and audit the sequence.
   so changing the draw desynchronises marks from already-shipped clients on the
   same day. Five determinism mirrors and a board migration is not a same-tick
   change; measuring it, recording why, and fencing the regression is.
+
+## Read the prompt as a sentence (added 2026-08-02)
+
+Three defect classes came out of one rendered geography round, and none of them
+is about facts — they are about English. Read the prompt aloud before checking
+whether the answer is right.
+
+- **"Approximately what is the elevation of Appalachian Mountains?"** A template
+  dropped a title into a slot that wanted "the". 608 prompts. The fix list must
+  stay short: matching every "Sudan" and "Valley" yields "the Sudan" and "the
+  Death Valley", which is worse than the defect. `MISSING-ARTICLE`.
+- **"What currency is used in the Songhai Empire?"** — which fell in 1591. 769
+  prompts asked a present-tense template of a historical subject. Prose-sniffing
+  caught 528; Wikidata's Q3024240 ("historical country") caught the rest exactly,
+  because it is on the Kingdom of Navarre and not on France. Prefer the
+  structural signal to the adjective. `PRESENT-TENSE-PAST`.
+- **"In which country is the Andaman Islands?"** — introduced BY the article fix.
+  Adding "the" made a number disagreement audible that "is Andaman Islands" had
+  hidden. A repair that only half reads the sentence leaves it half wrong; the
+  gate rule for it says so in as many words. `NUMBER-AGREEMENT`.

@@ -284,3 +284,29 @@ against 13 subjects labelled by hand.
 
 **A gate rule reading zero is evidence only if the classifier under it is sound.**
 Check the rule against a case you can see before believing its silence.
+
+## Test the rules, not just the data (added 2026-08-02)
+
+`tools/corpus/test_quality_gate.py` plants one known-bad row per rule into a copy
+of the real corpus, runs the real gate against it, and asserts the rule reports a
+hit. It exists because KIND-MISMATCH read 0 for a whole session while looking at
+a free question — the rule was not disabled and its budget was not raised, it
+simply could not see. **A rule that has never been shown to FIRE is a rule nobody
+has tested.**
+
+Three things it found in its first run:
+
+- Two rules reported BLIND and both times the TEST was wrong, not the rule.
+  `MACHINE` looks for a Wikidata property with its colon ("P31:"), and
+  `PLACEHOLDER` looks for format specifiers, not the word TODO. Check the
+  harness against the rule before believing it.
+- "TODO" in a shipped prompt genuinely IS a defect the rule did not cover, so the
+  pattern was widened — the test was wrong about the rule and the rule was wrong
+  about the world.
+- Widening it to `\bXXX\b` then flagged 15 legitimate questions, because xXx is a
+  Vin Diesel film franchise. An editing marker that is also a real title is not a
+  signal. The gate failed loudly instead of me quietly "fixing" 15 good rows.
+
+16 rules need input this harness does not plant (shape-source rows, corpus-wide
+rates). They are listed by name in COVERED_ELSEWHERE with what they would need,
+so the coverage gap is visible rather than implied.

@@ -178,13 +178,18 @@ build pass.
 import argparse
 import collections
 import json
+import os
 import pathlib
 import re
 import sys
 import unicodedata
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
-A = ROOT / "assets"
+# Overridable so test_quality_gate.py can run the REAL gate against a corpus with
+# a planted defect. A rule that has never been shown to fire is a rule nobody has
+# tested — KIND-MISMATCH read 0 for a whole session while looking at a free
+# question, because the classifier under it was wrong.
+A = pathlib.Path(os.environ.get("TIDBITS_ASSETS") or (ROOT / "assets"))
 
 # rule -> how many known instances are tolerated. Every one of these should be
 # trending to zero; a PR that raises a number is doing the wrong thing.
@@ -248,7 +253,17 @@ MACHINE = re.compile(
 CITY_DESC = re.compile(r"\b(city|town|village|county|municipality|district|borough|"
                        r"commune|prefecture|parish|neighborhood)\b(?!.*\b(country|"
                        r"sovereign|kingdom|republic|empire|nation)\b)", re.I)
-PLACEHOLDER = re.compile(r"%@|%\d*\$?[sd]|\{\}|\bnil\b|Optional\(|\bNaN\b|\bundefined\b")
+PLACEHOLDER = re.compile(
+    r"%@|%\d*\$?[sd]|\{\}|\bnil\b|Optional\(|\bNaN\b|\bundefined\b"
+    # Editing markers. Added 2026-08-02 after test_quality_gate.py planted a
+    # "TODO" prompt expecting this rule to catch it and the rule did not — the
+    # test was wrong about the pattern, and the pattern was wrong about the
+    # defect. Both are fixed.
+    r"|\bTODO\b|\bFIXME\b|\bPLACEHOLDER\b")
+# NOT \bXXX\b: xXx is a Vin Diesel film franchise, and adding it flagged 15
+# legitimate questions ("Who directed XXX: Return of Xander Cage?"). NOT \bTBD\b
+# for the same reason — an editing marker that is also a real title is not a
+# signal. The gate self-test caught this the moment the pattern was widened.
 
 # "In which country is X?" only parses when X is a PLACE. Asked of an event, an
 # organization or a song it is not a hard question, it is a broken sentence.

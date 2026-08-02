@@ -70,6 +70,11 @@ python3 tools/corpus/quality_gate.py
 # A corpus change can starve a Create suggestion that worked when it was chosen.
 # "Space exploration" was the first chip on five platforms and returned ONE
 # question, about robotics.
+# A rule that cannot see its own planted defect protects nothing. KIND-MISMATCH
+# read 0 for a session while looking at a free question.
+echo "--- 6b. every gate rule can still see the defect it names"
+python3 tools/corpus/test_quality_gate.py | tail -3
+
 echo "--- 7. the topics the app SUGGESTS still return a playable quiz"
 tools/create/check_suggestions.sh
 

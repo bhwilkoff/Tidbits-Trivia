@@ -15,6 +15,7 @@ visible rather than implied.
 
 Exits non-zero if any rule fails to notice its own planted defect.
 """
+import collections
 import json
 import os
 import pathlib
@@ -62,6 +63,12 @@ PLANTED = {
     "NUMBER-AGREEMENT": ["test:number", "In which country is the Andaman Islands?",
                          ["India", "Spain", "Italy", "Greece"], 0, "geography", 2,
                          "Andaman Islands: Archipelago.", "Andaman Islands"],
+    # Index 9 is a TAGS ARRAY. A generated batch padded it with "" and shipped
+    # 1,464 rows that every local check accepted and Android's CreateGoldenTest
+    # threw on in CI, because it calls getJSONArray(9).
+    "ROW-SCHEMA": ["test:schema", "Which of these is a test row?",
+                   ["A", "B", "C", "D"], 0, "science", 2,
+                   "A: A test subject.", "A", "", ""],
     "MISSING-ARTICLE": ["test:article", "On which continent is Peace River?",
                         ["North America", "Europe", "Asia", "Africa"], 0, "geography", 2,
                         "Peace River: River in Canada.", "Peace River"],
@@ -221,9 +228,23 @@ def main():
     rows = corpus["questions"]
     width = max(len(r) for r in rows)
 
+    # Pad to the corpus's OWN schema, not with "". Padding blindly is the very
+    # defect ROW-SCHEMA exists to catch, and doing it here made every plant trip
+    # that rule and drowned the one row that was supposed to.
+    schema = []
+    for i in range(width):
+        types = collections.Counter(type(q[i]).__name__ for q in rows if len(q) > i)
+        schema.append(types.most_common(1)[0][0])
+    blank = {"list": [], "str": "", "int": 0, "float": 0.0, "NoneType": None}
+
     planted = []
-    for row in PLANTED.values():
-        r = list(row) + [""] * (width - len(row))
+    for name, row in PLANTED.items():
+        r = list(row)
+        while len(r) < width:
+            r.append(blank.get(schema[len(r)], ""))
+        # ...except the ROW-SCHEMA plant, which must violate it on purpose.
+        if name == "ROW-SCHEMA":
+            r[9] = ""
         planted.append(r)
 
     with tempfile.TemporaryDirectory() as tmp:

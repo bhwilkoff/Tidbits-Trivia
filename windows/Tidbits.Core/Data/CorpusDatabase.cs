@@ -45,6 +45,18 @@ public sealed class CorpusDatabase
                    .ToList();
     }
 
+    /// Ids WITH their category, in the same stable order, for the balanced Daily
+    /// pick (Decision 050 v2). OrderedIds cannot serve it: spreading a set across
+    /// categories needs to know which category each id belongs to.
+    public List<(string Id, string Category)> OrderedIdsWithCategory(string categoryId)
+    {
+        var whole = categoryId is "mixed" or "";
+        return _all.Where(q => whole || q.CategoryId == categoryId)
+                   .OrderBy(q => q.Id, Utf8Ordinal.Instance)
+                   .Select(q => (q.Id, q.CategoryId))
+                   .ToList();
+    }
+
     /// Fetch specific questions by id, returned in the SAME order as `ids`.
     /// <summary>Look up one question by ID — a saved quiz's refs resolve here.</summary>
     public Question? Question(string id) => _byId.TryGetValue(id, out var q) ? q : null;

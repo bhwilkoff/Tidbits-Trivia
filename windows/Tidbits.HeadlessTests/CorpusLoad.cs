@@ -27,13 +27,23 @@ public class CorpusLoad
     [Fact]
     public void Daily_matches_golden_end_to_end_through_the_loader()
     {
-        var ids = LoadCorpus().OrderedIds("mixed");
+        var corpus = LoadCorpus();
+        var ids = corpus.OrderedIds("mixed");
         Assert.True(ids.Count > 100);
+        // TWO tests read this golden — this one and DailyParityGolden. Adding the
+        // v2 days updated only the other, and CI caught this one asserting v1
+        // output against a "v2:" line. A shared fixture has to be honoured
+        // everywhere it is read.
+        var rows = corpus.OrderedIdsWithCategory("mixed");
+        var cats = rows.Select(r => r.Category).ToList();
         foreach (var line in File.ReadAllLines(Path.Combine(AppContext.BaseDirectory, "Fixtures", "daily-golden.txt")))
         {
             if (line.Length == 0) continue;
             var parts = line.Split(' ');
-            var got = DailyPick.Pick(ids, parts[0], "mixed", 7).ToArray();
+            var day = parts[0];
+            var got = day.StartsWith("v2:", StringComparison.Ordinal)
+                ? DailyPick.PickBalanced(ids, cats, day[3..], "mixed", 7).ToArray()
+                : DailyPick.Pick(ids, day, "mixed", 7).ToArray();
             Assert.Equal(parts.Skip(1).ToArray(), got);
         }
     }

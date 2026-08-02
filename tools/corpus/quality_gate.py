@@ -16,6 +16,14 @@ Each rule below is here because a real question in this app hit it:
                   the answer is inside the question.
   ANSWER-IN-PROMPT "Headquartered in Dallas's Whitacre Tower ... AT&T".
   DUP-OPTION      the same option twice in one set of four.
+  ROW-SCHEMA      a corpus row whose fields are not the shapes every other row
+                  uses. Index 8 is a source URL and index 9 is a TAGS ARRAY; a
+                  generated batch padded both with "" to reach the row width, so
+                  1,464 rows carried a string where a list belongs. Every local
+                  check passed — the gate, the mirrors, the Apple suite — and
+                  Android's CreateGoldenTest, which calls getJSONArray(9), threw
+                  on every one of them in CI. A row that parses is not a row that
+                  fits.
   BROKEN-SHAPE    a mode's question with no shape payload, so Closest Call
                   silently renders as a plain MCQ.
   PLACEHOLDER     unresolved %@ / nil / Optional( in a prompt.
@@ -197,6 +205,7 @@ BUDGET = {
     "READ-OFF": 0,
     "ANSWER-IN-PROMPT": 0,      # the 6 that existed were dropped, not budgeted
     "DUP-OPTION": 0,
+    "ROW-SCHEMA": 0,
     "BROKEN-SHAPE": 0,
     "PLACEHOLDER": 0,
     "ERA-SPREAD": 0,            # 401 repaired by occupation+era; 44 unrepairable, dropped
@@ -628,6 +637,25 @@ def check():
     # This one is a RATE, not a row count: ascending is chance 1-in-24, so a
     # handful of ascending sets is normal and only the proportion is evidence.
     numeric_total, numeric_sorted = [0], [0]
+    # The row schema, derived from the corpus's own majority rather than
+    # hard-coded, so it tracks the format instead of arguing with it.
+    if rows_all:
+        arity = collections.Counter(len(q) for q in rows_all).most_common(1)[0][0]
+        want = []
+        for i in range(arity):
+            t = collections.Counter(type(q[i]).__name__ for q in rows_all if len(q) > i)
+            want.append(t.most_common(1)[0][0])
+        for q in rows_all:
+            if len(q) != arity:
+                bad["ROW-SCHEMA"].append(f"{q[0]}: {len(q)} fields, expected {arity}")
+                continue
+            for i, expected in enumerate(want):
+                got = type(q[i]).__name__
+                if got != expected and q[i] is not None:
+                    bad["ROW-SCHEMA"].append(
+                        f"{q[0]}: field {i} is {got}, expected {expected}")
+                    break
+
     for q in rows_all:
         prompt, opts, ci = q[1], q[2], q[3]
         if LOCATIVE_STEM.match(prompt or "") and NOT_A_PLACE.search(subject_desc.get(q[7], "")):

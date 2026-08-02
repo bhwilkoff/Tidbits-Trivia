@@ -38,6 +38,7 @@ import pathlib
 import random
 import re
 import sys
+import urllib.parse
 import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
@@ -135,6 +136,14 @@ def merge(rows):
     return by
 
 
+def wiki_url(name):
+    """Index 8 is the source URL and index 9 is a TAGS ARRAY — the row schema, not
+    free padding. The first version padded both with "" to reach the row width,
+    which shipped 1,464 rows whose index 9 was a string; Android's CreateGoldenTest
+    calls getJSONArray(9) and threw on every one of them."""
+    return "https://en.wikipedia.org/wiki/" + urllib.parse.quote(name.replace(" ", "_"))
+
+
 def stem(shape, name, i):
     """Several true phrasings per shape, picked by hash — PROMPT-REPETITION caps
     any single prompt at 1% of the corpus, and one stem over thousands of rows
@@ -198,7 +207,7 @@ def build(by):
             RNG.shuffle(opts)
             qid = f"biz:{shape}:" + hashlib.sha1(name.encode()).hexdigest()[:12]
             rows.append([qid, stem(shape, name, 0), opts, opts.index(answer),
-                         "business", 2, reveal, name, ""])
+                         "business", 2, reveal, name, wiki_url(name), []])
 
         if c["inception"] and inception_used < MAX_INCEPTION_ROWS:
             y = int(c["inception"])
@@ -210,7 +219,8 @@ def build(by):
                     RNG.shuffle(opts)
                     qid = "biz:inception:" + hashlib.sha1(name.encode()).hexdigest()[:12]
                     rows.append([qid, stem("inception", name, 0), opts,
-                                 opts.index(str(y)), "business", 2, reveal, name, ""])
+                                 opts.index(str(y)), "business", 2, reveal, name,
+                                 wiki_url(name), []])
                     inception_used += 1
     return rows
 
@@ -238,7 +248,7 @@ def main():
     have = {q[0] for q in data["questions"]}
     fresh = [r for r in rows if r[0] not in have]
     width = max(len(q) for q in data["questions"])
-    fresh = [r + [""] * (width - len(r)) for r in fresh]
+    assert all(len(r) == width for r in fresh), "generated rows must match the row width"
     out = data["questions"] + fresh
     body = json.dumps(out, ensure_ascii=False, separators=(",", ":"))
     CORPUS.write_text(

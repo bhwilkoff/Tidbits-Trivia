@@ -16,9 +16,24 @@ on:
 
 jobs:
   test:
-    runs-on: macos-15
+    # macos-15 ships Xcode 16.4, whose macOS SDK is 15.x — and this project's
+    # deployment target is macOS 26 (the iOS 26 / macOS 26 / tvOS 26 baseline).
+    # xcodebuild refused every run for days with "My Mac's macOS 15.7.7 doesn't
+    # match TidbitsTriviaTests's macOS 26.0 deployment target". appstore-build.yml
+    # already ran on macos-26 and selected Xcode explicitly; this workflow never
+    # got the same treatment.
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
+
+      - name: Select Xcode 26
+        run: |
+          XC="$(ls -d /Applications/Xcode_26.*.app 2>/dev/null | sort -V | tail -1)"
+          [ -n "$XC" ] || { echo "no Xcode 26 on this image"; ls -d /Applications/Xcode*.app; exit 1; }
+          echo "Selected Xcode: $XC"
+          sudo xcode-select -s "$XC"
+          echo "DEVELOPER_DIR=$XC/Contents/Developer" >> "$GITHUB_ENV"
+          "$XC/Contents/Developer/usr/bin/xcodebuild" -version
 
       - name: Install XcodeGen
         run: brew install xcodegen

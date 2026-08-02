@@ -33,12 +33,21 @@ class DailyParityTest {
         val corpus = Json.parseToJsonElement(File(repo, "assets/corpus.json").readText()).jsonObject
         val rows = corpus["questions"]!!.jsonArray
         val ids = rows.map { it.jsonArray[0].jsonPrimitive.content }
+        val cats = rows.map { it.jsonArray[4].jsonPrimitive.content }   // v2 needs categories
         assertTrue("corpus too small: ${ids.size}", ids.size > 100)
         val out = StringBuilder()
         for (day in days) {
             val picked = pickDailyIds(ids, day, "mixed", 7)
             assertTrue("picked ${picked.size} for $day", picked.size == 7)
             out.append(day).append(' ').append(picked.joinToString(" ")).append('\n')
+        }
+        // v2 days (Decision 050). Listed separately from `days` because the
+        // golden proves the FUNCTIONS agree, not the date dispatch.
+        for (day in listOf("2026-09-01", "2026-09-02", "2027-01-15")) {
+            val picked = pickDailyBalancedIds(ids, cats, day, "mixed", 7)
+            assertTrue("v2 picked ${picked.size} for $day", picked.size == 7)
+            out.append("v2:").append(day).append(' ')
+               .append(picked.joinToString(" ")).append('\n')
         }
         File(repo, "tools/daily-parity/golden/android.txt").writeText(out.toString())
     }

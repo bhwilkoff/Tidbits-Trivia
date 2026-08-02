@@ -8,12 +8,16 @@ G=tools/daily-parity/golden
 
 echo "--- apple (DailyPick.swift against corpus.sqlite ids)"
 sqlite3 TidbitsTrivia/Resources/corpus.sqlite "SELECT id FROM questions" > /tmp/daily-parity-ids.txt
+# v2 (Decision 050) balances across categories, so the pickers need each id's
+# category as well. Same ORDER BY id, so every engine walks the same list.
+sqlite3 -separator $'\t' TidbitsTrivia/Resources/corpus.sqlite \
+  "SELECT id, category_id FROM questions" > /tmp/daily-parity-cats.tsv
 DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer xcrun swiftc -swift-version 6 \
   TidbitsTrivia/Core/Engine/SeededRNG.swift \
   TidbitsTrivia/Core/Engine/DailyPick.swift \
   tools/daily-parity/apple_pick.swift \
   -o /tmp/daily-parity-apple
-/tmp/daily-parity-apple /tmp/daily-parity-ids.txt "$G/apple.txt"
+/tmp/daily-parity-apple /tmp/daily-parity-ids.txt "$G/apple.txt" /tmp/daily-parity-cats.tsv
 
 echo "--- web (engine.js pickDaily against assets/corpus.json)"
 cp js/engine.js /tmp/tidbits-engine-copy.mjs

@@ -107,6 +107,31 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
         }
     }
 
+    /// Ids WITH their category, for the balanced Daily pick (Decision 050 v2).
+    /// `orderedIDs` cannot serve it: spreading a set across categories needs to
+    /// know which category each id belongs to, and looking that up per id would
+    /// be 111k round trips.
+    func orderedIDsWithCategory(categoryID: String) -> [(id: String, category: String)] {
+        queue.sync {
+            guard let db else { return [] }
+            let whole = categoryID == "mixed" || categoryID.isEmpty
+            let sql = whole
+                ? "SELECT id, category_id FROM questions ORDER BY id"
+                : "SELECT id, category_id FROM questions WHERE category_id = ? ORDER BY id"
+            var stmt: OpaquePointer?
+            defer { sqlite3_finalize(stmt) }
+            guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return [] }
+            if !whole { sqlite3_bind_text(stmt, 1, categoryID, -1, Self.transientDestructor) }
+            var out: [(id: String, category: String)] = []
+            while sqlite3_step(stmt) == SQLITE_ROW {
+                guard let i = sqlite3_column_text(stmt, 0),
+                      let c = sqlite3_column_text(stmt, 1) else { continue }
+                out.append((String(cString: i), String(cString: c)))
+            }
+            return out
+        }
+    }
+
     /// Topic search for the Create feature: real, already-vetted corpus questions
     /// whose prompt or Wikipedia source title match the topic's words. Ranked by
     /// how many topic words hit (source-title hits weighted). This is grounded

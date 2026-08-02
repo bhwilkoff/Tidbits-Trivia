@@ -206,6 +206,49 @@ fun pickDailyIds(ids: List<String>, day: String, categoryId: String, count: Int)
     ids.sortedWith(compareBy({ dailyRank(day, categoryId, it) }, { it }))
         .take(count)
 
+/** Decision 050 v2: spread the day's set across categories instead of drawing
+ *  uniformly, so a corpus that is 29% Film & TV does not make 15% of Dailies
+ *  four-of-seven one category. Same FNV ranking — which question a category
+ *  contributes is unchanged — then the best unused id from each category in
+ *  turn, with the category ORDER itself hashed from the day.
+ *  Keep byte-identical with DailyPick.pickBalanced, engine.js
+ *  pickDailyBalanced and aggregate_dailyboard.pick_daily_balanced. */
+fun pickDailyBalancedIds(
+    ids: List<String>, cats: List<String>, day: String, categoryId: String, count: Int
+): List<String> {
+    val ranked = ids.indices
+        .sortedWith(compareBy({ dailyRank(day, categoryId, ids[it]) }, { ids[it] }))
+    val byCat = LinkedHashMap<String, MutableList<String>>()
+    for (i in ranked) byCat.getOrPut(cats[i]) { mutableListOf() }.add(ids[i])
+    val order = byCat.keys.sortedWith(
+        compareBy({ stableSeed("dailycat:$day:$it").toULong() }, { it }))
+
+    val out = mutableListOf<String>()
+    var round = 0
+    while (out.size < count) {
+        var progressed = false
+        for (c in order) {
+            val bucket = byCat[c] ?: continue
+            if (round < bucket.size) {
+                out.add(bucket[round]); progressed = true
+                if (out.size == count) break
+            }
+        }
+        if (!progressed) break            // fewer ids than `count`
+        round++
+    }
+    return out
+}
+
+/** v1 until this day, v2 from it — never retroactively, so an archived day keeps
+ *  resolving to the set it was actually played with. */
+const val DAILY_SET_V1 = 1
+const val DAILY_SET_V2 = 2
+const val DAILY_V2_FROM = "2026-09-01"
+
+fun dailySetVersion(day: String): Int =
+    if (day >= DAILY_V2_FROM) DAILY_SET_V2 else DAILY_SET_V1
+
 fun stableSeed(s: String): Long {
     var h = -0x340d631b7bdddcdbL // 0xCBF29CE484222325 FNV offset
     // Mask to an unsigned byte: Kotlin's Byte is SIGNED, so a bare toLong()

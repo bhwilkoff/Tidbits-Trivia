@@ -10,9 +10,11 @@ import json
 import sys
 
 sys.path.insert(0, "tools")
-from aggregate_dailyboard import pick_daily  # the picker the cron actually uses
+from aggregate_dailyboard import pick_daily, pick_daily_balanced  # the pickers the cron uses
 
 DAYS = ["2026-07-01", "2026-07-02", "2026-12-31", "2027-02-28"]
+# v2 days (Decision 050) — the golden tests the FUNCTIONS, not the date dispatch.
+DAYS_V2 = ["2026-09-01", "2026-09-02", "2027-01-15"]
 
 
 def main():
@@ -20,13 +22,16 @@ def main():
     with open(corpus_path) as f:
         corpus = json.load(f)
     ids = [q[0] for q in corpus["questions"]]  # compact rows: index 0 = id
+    cats = [q[4] for q in corpus["questions"]]  # index 4 = category, for v2
     if len(ids) < 100:
         print(f"FAIL: only {len(ids)} ids", file=sys.stderr)
         sys.exit(1)
     with open(out_path, "w") as f:
         for day in DAYS:
             f.write(f"{day} {' '.join(pick_daily(ids, day, 'mixed', 7))}\n")
-    print(f"cron: {len(DAYS)} days written")
+        for day in DAYS_V2:
+            f.write(f"v2:{day} {' '.join(pick_daily_balanced(ids, cats, day, 'mixed', 7))}\n")
+    print(f"cron: {len(DAYS) + len(DAYS_V2)} days written")
 
 
 if __name__ == "__main__":

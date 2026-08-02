@@ -128,6 +128,94 @@ COVERED_ELSEWHERE = {
 }
 
 
+# --- rate rules -------------------------------------------------------------
+# These cannot be tripped by one row against the REAL corpus, which is what I
+# wrongly called "impossible by construction". They trip fine against a MINIMAL
+# corpus where the planted rows dominate the rate. The assertion changes from
+# "the gate otherwise passed" to "the target rule fired" — other rules failing on
+# a 20-row corpus is expected and ignored.
+RATE_CASES = {
+    "NUMERIC-SORTED": "every numeric option set ascending",
+    "PROMPT-REPETITION": "one prompt on a fifth of the corpus",
+    "CATEGORY-SKEW": "screen far past its ceiling",
+    "THIN-COVERAGE": "a category with no shape rows at all",
+    "GOLDEN-STALE": "a golden id the corpus does not contain",
+    "SLIDER-FARMABLE": "closest rows one fixed guess wins",
+}
+
+
+def _mini_row(i, prompt, opts, cat="screen"):
+    return [f"mini:{i}", prompt, opts, 0, cat, 2, f"Thing {i}: A test subject.",
+            f"Thing {i}", ""]
+
+
+def rate_rule_fixture(tmpdir):
+    """A 20-row corpus that trips every rate rule at once."""
+    rows = []
+    # NUMERIC-SORTED: ascending numeric sets, far past the 8% ceiling.
+    for i in range(8):
+        rows.append(_mini_row(i, f"Which year did thing {i} happen?",
+                              ["1900", "1910", "1920", "1930"]))
+    # PROMPT-REPETITION: one prompt over 1% of the corpus.
+    for i in range(8, 12):
+        rows.append(_mini_row(i, "Which of these four is the oldest?",
+                              ["Alpha", "Beta", "Gamma", "Delta"]))
+    # CATEGORY-SKEW: everything above is `screen`, so screen is ~100%.
+    for i in range(12, 20):
+        rows.append(_mini_row(i, f"Who made thing {i}?",
+                              ["Ann", "Ben", "Cal", "Dee"]))
+    (tmpdir / "corpus.json").write_text(
+        '{"version":"test","count":%d,"questions":%s}'
+        % (len(rows), json.dumps(rows, ensure_ascii=False)))
+
+    # THIN-COVERAGE: an empty shape file has no category at all.
+    for name in ("oddoneout.json", "match.json", "picture.json", "order.json",
+                 "thisorthat.json", "typeanswer.json", "enumerate.json"):
+        (tmpdir / name).write_text('{"version":"test","count":0,"questions":[]}')
+    # SLIDER-FARMABLE: every answer inside one tolerance band of 1950.
+    closest = [[f"closest:birth_year:T{i}", f"In what year was T{i} born?",
+                1950 + (i % 3), 1900, 2020, 1, 40, "", "screen",
+                f"T{i}: A test subject.", f"T{i}", ""] for i in range(20)]
+    (tmpdir / "closest.json").write_text(
+        '{"version":"test","count":%d,"questions":%s}'
+        % (len(closest), json.dumps(closest, ensure_ascii=False)))
+    # GOLDEN-STALE: a golden naming an id the mini corpus cannot contain.
+    gdir = tmpdir / "_golden"
+    gdir.mkdir()
+    (gdir / "search.txt").write_text("Test Topic\tsrc:cloze:Not_In_This_Corpus\n")
+    return gdir
+
+
+def check_rate_rules():
+    with tempfile.TemporaryDirectory() as tmp:
+        tmpdir = pathlib.Path(tmp)
+        for f in ASSETS.iterdir():
+            if not (tmpdir / f.name).exists() and f.suffix == ".json":
+                if f.name in ("enrich.json", "difficulty.json"):
+                    (tmpdir / f.name).symlink_to(f)
+        gdir = rate_rule_fixture(tmpdir)
+
+        real_golden = ROOT / "tools" / "create" / "golden" / "search.txt"
+        backup = real_golden.read_text() if real_golden.exists() else None
+        try:
+            if backup is not None:
+                real_golden.write_text((gdir / "search.txt").read_text())
+            env = dict(os.environ, TIDBITS_ASSETS=str(tmpdir))
+            out = subprocess.run(
+                [sys.executable, str(ROOT / "tools/corpus/quality_gate.py"), "--report"],
+                capture_output=True, text=True, env=env).stdout
+        finally:
+            if backup is not None:
+                real_golden.write_text(backup)
+
+    seen = {}
+    for line in out.splitlines():
+        parts = line.split()
+        if len(parts) >= 3 and parts[1].isdigit():
+            seen[parts[0]] = int(parts[1])
+    return seen
+
+
 def main():
     corpus = json.loads((ASSETS / "corpus.json").read_text())
     rows = corpus["questions"]
@@ -172,6 +260,15 @@ def main():
         n = found.get(rule)
         ok = n is not None and n >= 1
         print(f"{rule:22}{1:>9}{n if n is not None else '-':>7}   {'ok' if ok else 'BLIND'}")
+        if not ok:
+            failures.append(rule)
+
+    rate_seen = check_rate_rules()
+    print(f"\n{'rate rule':22}{'seen':>7}   status")
+    for rule, what in sorted(RATE_CASES.items()):
+        n = rate_seen.get(rule, 0)
+        ok = n >= 1
+        print(f"{rule:22}{n:>7}   {'ok' if ok else 'BLIND'}   ({what})")
         if not ok:
             failures.append(rule)
 

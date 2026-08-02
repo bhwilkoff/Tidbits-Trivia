@@ -147,6 +147,13 @@ def main():
     data = json.loads(CORPUS.read_text())
     rows = data["questions"]
     desc_of = descriptions(rows)
+    all_desc = {}
+    for r in rows:
+        e = r[6] or ""
+        if ":" in e and "→" not in e and r[7]:
+            first = re.split(r"(?<=[.!?])\s", e.split(":", 1)[1].strip(), maxsplit=1)[0]
+            if len(first) > 8 and not first[0].isdigit():
+                all_desc.setdefault(r[7], set()).add(first)
     kind_of = kinds(desc_of)
 
     changed = collections.Counter()
@@ -169,7 +176,21 @@ def main():
             drop.add(q[0])
             continue
         if k not in STEMS:
-            continue                      # a place, or a kind we cannot tell
+            # The GATE flags this row when the description says the subject is
+            # not a place, using its own NOT_A_PLACE test. When the two
+            # classifiers disagree the gate wins, because the gate is what blocks
+            # a ship — and a company asked "In which country is X?" reads wrong
+            # whether or not this file can name its kind.
+            from quality_gate import NOT_A_PLACE
+            # Check EVERY description the corpus carries for this subject, not
+            # just the one this row happens to hold. "BNP Paribas: France." is a
+            # country-relation row whose description slot holds the ANSWER, so
+            # this file saw a place while the gate saw "French banking group"
+            # from another row and flagged it.
+            if any(NOT_A_PLACE.search(x) for x in all_desc.get(q[7], ())):
+                k = "org"
+            else:
+                continue                  # a place, or a kind we cannot tell
         new = STEMS[k].format(k=subject, the=article(subject, k))
         if new != q[1]:
             if len(examples) < 8:

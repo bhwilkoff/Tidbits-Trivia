@@ -425,9 +425,14 @@ _KINDS = [
     ("chemical", r"\b(chemical elements?|compounds?|molecules?|proteins?|enzymes?|minerals?|isotopes?|alkaloids?|acids?|oxides?|hormones?|vitamins?|drugs?|medications?|antibiotics?|steroids?|salts?)\b"),
     ("plant",    r"\b(plants?|shrubs?|trees?|flowers?|grass(?:es)?|ferns?|mosses?|herbs?|vines?|conifers?|palms?|cacti|cactus)\b"),
     ("animal",   r"\b(insects?|birds?|mammals?|fish|reptiles?|amphibians?|spiders?|beetles?|wasps?|hornets?|moths?|butterfly|butterflies|dinosaurs?|crustaceans?|molluscs?|primates?)\b"),
-    ("person",   r"\b(born \d{4}|politician|footballer|actor|actress|singer|writer|player|physicist|philosopher|emperor|monarch|composer|director|mathematician|musician|scientist|chemist|biologist|astronomer|economist|historian|archaeologist|psychologist|linguist|botanist|zoologist|geologist|primatologist|engineer|architect|painter|sculptor|poet|novelist|playwright|screenwriter|journalist|editor|dancer|choreographer|conductor|guitarist|pianist|violinist|drummer|rapper|filmmaker|producer|presenter|broadcaster|comedian|activist|entrepreneur|magnate|philanthropist|explorer|astronaut|physician|surgeon|nurse|lawyer|judge|professor|teacher|leader|statesman|king|queen|sultan|caliph|tsar|premier|president|chancellor|dictator|revolutionary|general|admiral|soldier|athlete|swimmer|boxer|cyclist|wrestler|jockey|manager|coach|quarterback|midfielder|goalkeeper|striker|winger|batsman|bowler|author|artist|commentator|illustrator|cartoonist|animator|designer|inventor|banker|songwriter|novelist|essayist|critic|theologian|missionary|aviator|racer|pilot|spy|outlaw|chief|saint|prophet|rabbi|imam|bishop|pope|cardinal|abbot|monk|nun)\b"),
+    ("person",   r"\b(born \d{4}|politician|footballer|actor|actress|singer|writer|player|physicist|philosopher|emperor|monarch|composer|director|mathematician|musician|scientist|chemist|biologist|astronomer|economist|historian|archaeologist|psychologist|linguist|botanist|zoologist|geologist|primatologist|engineer|architect|painter|sculptor|poet|novelist|playwright|screenwriter|journalist|editor|dancer|choreographer|conductor|guitarist|pianist|violinist|drummer|rapper|filmmaker|(?<!software )(?<!hardware )producer|presenter|broadcaster|comedian|activist|entrepreneur|magnate|philanthropist|explorer|astronaut|physician|surgeon|nurse|lawyer|judge|professor|teacher|leader|statesman|king|queen|sultan|caliph|tsar|premier|president|chancellor|dictator|revolutionary|general|admiral|soldier|athlete|swimmer|boxer|cyclist|wrestler|jockey|manager|coach|quarterback|midfielder|goalkeeper|striker|winger|batsman|bowler|author|artist|commentator|illustrator|cartoonist|animator|designer|inventor|banker|songwriter|novelist|essayist|critic|theologian|missionary|aviator|racer|pilot|spy|outlaw|chief|saint|prophet|rabbi|imam|bishop|pope|cardinal|abbot|monk|nun)\b"),
     ("place",    r"\b(country|city|town|village|island|river|mountain|region|province|capital|lake|desert|county|municipality)\b"),
-    ("work",     r"\b(film|movie|song|album|novel|book|poem|series|sitcom|anime|video game|painting|opera|symphony|manga|sculpture)\b"),
+    # "video game" is a WORK, but "video game COMPANY" is an org — Nintendo and
+    # Sega were typed by their product rather than by what they are. A narrow
+    # lookahead beats reordering the whole list: three attempts at reordering each
+    # fixed two subjects and broke another, which is what overfitting to a small
+    # label set looks like.
+    ("work",     r"\b(film|movie|song|album|novel|book|poem|series|sitcom|anime|video game(?![^.]{0,48}?(?:compan|publish|studio|developer|maker|giant))|painting|opera|symphony|manga|sculpture)\b"),
     ("org",      r"\b(company|corporation|club|team|university|bank|airline|band|agency|organisation|organization|brand)\b"),
     ("event",    r"\b(battle|war\b|siege|revolution|treaty|massacre|disaster|earthquake|eruption|pandemic|election)\b"),
     ("disease",  r"\b(diseases?|disorders?|syndromes?|infections?|cancers?|viruses?|virus|bacteri(?:um|a))\b(?!-)"),
@@ -460,7 +465,7 @@ PROSE = re.compile(r"\b(?:is|was|are|were|has|had|have|been|became|begin|began|"
                    r"begun|won|win|released|adapted|founded|formed|died|starred|"
                    r"appeared|wrote|written|played|serves|served|includes|"
                    r"consists|contains|features|remains|made|took|held|ran|"
-                   r"grew|rose|led|joined|left|moved|settled|returned)\b"
+                   r"grew|rose|led|joined|left|moved|settled|returned|operates?|produces?|manufactures?|sells?|employs?|owns?|runs?|provides?|offers?|serves?)\b"
                    r"|\(born\s|^Born\b|^It\b|^Its\b|^They\b|^He\b|^She\b", re.I)
 
 
@@ -667,7 +672,11 @@ def check():
                     and not re.search(r"\bthe\s+" + re.escape(_subj) + r"\b",
                                       prompt, re.I)):
                 bad["MISSING-ARTICLE"].append(f"{q[0]}: {prompt[:66]}")
-        if prompt and prompt[0].islower() and not prompt.startswith(LOWERCASE_OK):
+        # A prompt may open lowercase when the SUBJECT does — easyJet, id
+        # Software, iPhone. Capitalising a proper noun is a defect of its own.
+        _subj_lower = (q[7] or "")[:1].islower() and prompt.startswith((q[7] or "\0"))
+        if (prompt and prompt[0].islower() and not prompt.startswith(LOWERCASE_OK)
+                and not _subj_lower):
             bad["LOWERCASE-PROMPT"].append(f"{q[0]}: {prompt[:58]}")
         if TERSE_STEM.search(prompt or "") or SYMBOL_BACKWARDS.match(prompt or ""):
             bad["TERSE-STEM"].append(f"{q[0]}: {(prompt or '')[:60]}")

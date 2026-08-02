@@ -3,7 +3,7 @@
 // CorpusDatabase + WikipediaClient. All network goes through here.
 
 import { makeQuestions, stableSeed, seededRng, shuffle, pickDaily,
-         dailySetVersion, DAILY_SET_V2 } from './engine.js';
+         pickDailyBalanced } from './engine.js';
 
 const ACTION = 'https://en.wikipedia.org/w/api.php';
 const COLS = ['id', 'prompt', 'options', 'correctIndex', 'categoryID', 'difficulty', 'explanation', 'sourceTitle', 'sourceURL'];
@@ -333,7 +333,9 @@ export const Corpus = {
   // iOS/tvOS/Android/web via the shared hash-rank pick — see engine.js.
   daily(dayKey, count) {
     const byId = new Map(this.questions.map((q) => [q.id, q]));
-    return pickDaily(this.questions.map((q) => q.id), dayKey, 'mixed', count)
+    return pickDailyBalanced(this.questions.map((q) => q.id),
+                             this.questions.map((q) => q.categoryId),
+                             dayKey, 'mixed', count)
       .map((id) => byId.get(id)).filter(Boolean);
   },
 
@@ -541,20 +543,10 @@ export const DailyBoard = {
   // The published board for a day, or null if the cron hasn't published it yet
   // (e.g. nobody has played today, or it's the current in-progress day).
   async results(dayKey) {
-    // Read the board matching THIS client's question-set version (Decision 050).
-    // v1 keeps the original path so shipped clients are unaffected; v2 sits
-    // beside it. Falling back to v1 on a v2 day would show a board built from a
-    // different set of questions.
-    const paths = dailySetVersion(dayKey) === DAILY_SET_V2
-      ? [`data/dailyboard/${dayKey}-v2.json`, `data/dailyboard/${dayKey}.json`]
-      : [`data/dailyboard/${dayKey}.json`];
-    for (const path of paths) {
-      try {
-        const r = await fetch(path, { cache: 'no-cache' });
-        if (r.ok) return await r.json();
-      } catch { /* try the next path */ }
-    }
-    return null;
+    try {
+      const r = await fetch(`data/dailyboard/${dayKey}.json`, { cache: 'no-cache' });
+      return r.ok ? await r.json() : null;
+    } catch { return null; }
   },
 
   // Your percentile from the published histogram: the share of players you strictly

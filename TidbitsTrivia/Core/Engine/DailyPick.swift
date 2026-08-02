@@ -20,21 +20,8 @@ enum DailyPick {
         "daily:\(day):\(categoryID):\(id)".stableSeed
     }
 
-    /// The Daily question-set VERSION. Two players on different versions answer
-    /// DIFFERENT QUESTIONS, so ranking them on one board is meaningless — and the
-    /// 7-char marks string is aligned to this pick's ORDER, so a silent change
-    /// also mis-indexes every per-question percentage the board publishes. The
-    /// version therefore rides the wire; see Decision 050.
-    nonisolated static let setV1 = 1
-    nonisolated static let setV2 = 2
-
-    /// v2 applies from this day and never retroactively: yesterday's board must
-    /// keep resolving to the set it was actually played with.
-    nonisolated static let v2From = "2026-09-01"
-
-    nonisolated static func setVersion(for day: String) -> Int { day >= v2From ? setV2 : setV1 }
-
-    /// Spread the day's set across categories instead of drawing uniformly.
+    /// THE Daily pick. Spreads the day's set across categories instead of
+    /// drawing uniformly.
     /// Byte-identical to `pickDailyBalanced` in js/engine.js and
     /// `pick_daily_balanced` in tools/aggregate_dailyboard.py.
     static func pickBalanced(ids: [(id: String, category: String)], day: String,

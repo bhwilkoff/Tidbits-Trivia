@@ -12,21 +12,7 @@ public static class DailyPick
     public static ulong Rank(string day, string categoryId, string id) =>
         StableSeed.Of($"daily:{day}:{categoryId}:{id}");
 
-    /// The Daily question-set VERSION. Two players on different versions answer
-    /// DIFFERENT QUESTIONS, so one board cannot rank them together — and the
-    /// 7-char marks string is aligned to this pick's ORDER, so a silent change
-    /// also mis-indexes every per-question percentage published. Decision 050.
-    public const int SetV1 = 1;
-    public const int SetV2 = 2;
-
-    /// v2 applies from this day and never retroactively: an archived day keeps
-    /// resolving to the set it was actually played with.
-    public const string V2From = "2026-09-01";
-
-    public static int SetVersion(string day) =>
-        string.CompareOrdinal(day, V2From) >= 0 ? SetV2 : SetV1;
-
-    /// Spread the day's set across categories instead of drawing uniformly, so a
+    /// THE Daily pick. Spreads the day's set across categories, so a
     /// corpus that is 29% Film and TV does not make 15% of Dailies four-of-seven
     /// one category. Same FNV ranking — which question a category contributes is
     /// unchanged — then the best unused id from each category in turn, with the

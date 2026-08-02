@@ -240,15 +240,6 @@ fun pickDailyBalancedIds(
     return out
 }
 
-/** v1 until this day, v2 from it — never retroactively, so an archived day keeps
- *  resolving to the set it was actually played with. */
-const val DAILY_SET_V1 = 1
-const val DAILY_SET_V2 = 2
-const val DAILY_V2_FROM = "2026-09-01"
-
-fun dailySetVersion(day: String): Int =
-    if (day >= DAILY_V2_FROM) DAILY_SET_V2 else DAILY_SET_V1
-
 fun stableSeed(s: String): Long {
     var h = -0x340d631b7bdddcdbL // 0xCBF29CE484222325 FNV offset
     // Mask to an unsigned byte: Kotlin's Byte is SIGNED, so a bare toLong()

@@ -30,9 +30,9 @@ public class CorpusLoad
         var corpus = LoadCorpus();
         var ids = corpus.OrderedIds("mixed");
         Assert.True(ids.Count > 100);
-        // TWO tests read this golden — this one and DailyParityGolden. Adding the
-        // v2 days updated only the other, and CI caught this one asserting v1
-        // output against a "v2:" line. A shared fixture has to be honoured
+        // TWO tests read this golden — this one and DailyParityGolden. When the
+        // pick changed, updating only the other left this one asserting the old
+        // output and CI caught it. A shared fixture has to be honoured
         // everywhere it is read.
         var rows = corpus.OrderedIdsWithCategory("mixed");
         var cats = rows.Select(r => r.Category).ToList();
@@ -40,10 +40,7 @@ public class CorpusLoad
         {
             if (line.Length == 0) continue;
             var parts = line.Split(' ');
-            var day = parts[0];
-            var got = day.StartsWith("v2:", StringComparison.Ordinal)
-                ? DailyPick.PickBalanced(ids, cats, day[3..], "mixed", 7).ToArray()
-                : DailyPick.Pick(ids, day, "mixed", 7).ToArray();
+            var got = DailyPick.PickBalanced(ids, cats, parts[0], "mixed", 7).ToArray();
             Assert.Equal(parts.Skip(1).ToArray(), got);
         }
     }

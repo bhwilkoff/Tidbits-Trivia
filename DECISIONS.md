@@ -1748,3 +1748,28 @@ Kotlin and C# mirrors, the `qv` field on submission and board, per-version
 publishing in the cron, and the daily golden extended to cover a v2 day. Until
 all of those land, `dailySetVersion` returns V1 for every day the app can
 currently reach, so nothing changes for players yet.
+
+**Amended 2026-08-02 (third) — the version key is gone; there is one Daily pick.**
+The owner confirmed the app has not launched: nobody is playing. The published
+boards hold seven rows across three days, all dev submissions.
+
+Every argument for the v1/v2 machinery was about protecting a LIVE field —
+clients on different builds computing different sets for the same day, marks
+strings indexing the wrong question list, a board ranking players on unequal
+sets. With no field, that migration was pure complexity: a version constant in
+five engines, a dispatch on every call site, a second published board per day,
+and a fallback path in every client read.
+
+So it is deleted. `pickDailyBalanced` is simply THE Daily pick, on every
+platform, for every day. The uniform `pickDaily` stays because the Link Wall uses
+it as a general pick-N-by-day-hash utility — that is a different feature, not a
+legacy path.
+
+**Every day in the golden now spans 7 categories with a maximum of 1 repeat**,
+where the uniform draw put 4+ of 7 in one category on 15% of days.
+
+**How to apply:** before building a migration, check whether anything is actually
+being migrated. This one was designed carefully, mirrored across five engines,
+locked by a golden — and none of it needed to exist. The cost of asking was one
+question; the cost of not asking was a day of work and a permanently more
+complicated codebase.

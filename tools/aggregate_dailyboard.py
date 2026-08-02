@@ -51,19 +51,6 @@ def pick_daily(ids, day, category_id, count):
     return ranked_ids[:count]
 
 
-# The Daily set VERSION. Two players on different versions answer DIFFERENT
-# questions, so ranking them together is meaningless and their marks strings —
-# which are aligned to the pick order — index different questions. The version is
-# therefore on the wire, and boards are published per version.
-DAILY_SET_V1 = 1
-DAILY_SET_V2 = 2
-DAILY_V2_FROM = "2026-09-01"
-
-
-def daily_set_version(day):
-    return DAILY_SET_V2 if day >= DAILY_V2_FROM else DAILY_SET_V1
-
-
 def pick_daily_balanced(ids, cats, day, category_id, count):
     """Byte-identical to pickDailyBalanced in js/engine.js.
 
@@ -95,7 +82,7 @@ def pick_daily_balanced(ids, cats, day, category_id, count):
     return out
 
 
-def summarize_day(players, qids, want_qv=DAILY_SET_V1):
+def summarize_day(players, qids):
     """players: {uid: {name, avatarSeed, score, correct, marks, ...}} -> the published shape.
 
     Per-question accuracy tracks each question's seen/hit counts, so it generalizes if the
@@ -105,13 +92,6 @@ def summarize_day(players, qids, want_qv=DAILY_SET_V1):
     q_hits, q_seen = [0] * DAILY_COUNT, [0] * DAILY_COUNT
     for uid, p in players.items():
         if not isinstance(p, dict):
-            continue
-        # A row with no `qv` predates the field and is therefore v1 — which is
-        # what every already-shipped client writes. Rows from a DIFFERENT version
-        # answered different questions, so they belong on a different board:
-        # mixing them would rank players on unequal sets and index one client's
-        # marks against another's question list.
-        if int(p.get("qv", DAILY_SET_V1)) != want_qv:
             continue
         score = int(p.get("score", 0))
         rows.append({
@@ -130,8 +110,7 @@ def summarize_day(players, qids, want_qv=DAILY_SET_V1):
     n = len(rows)
     top = sorted(rows, key=lambda r: (-r["score"], -r["correct"], r["name"]))[:TOP_CAP]
     per_q = [round(q_hits[i] / q_seen[i], 4) if q_seen[i] else 0.0 for i in range(DAILY_COUNT)]
-    return {"qids": qids, "qv": want_qv, "n": n, "hist": hist,
-            "perQ": per_q, "top": top}
+    return {"qids": qids, "n": n, "hist": hist, "perQ": per_q, "top": top}
 
 
 def write_json(path, obj):
@@ -179,20 +158,13 @@ def main():
     days = sorted(k for k in data.keys() if isinstance(data.get(k), dict))
     recent = days[-KEEP_DAYS:]
     for day in recent:
-        # v1 stays at {day}.json — the path every shipped client already reads.
-        # v2, when it exists, is published BESIDE it so a client can fetch the
-        # board matching its own qv. Publishing one merged board would rank
-        # players who answered different questions against each other.
-        v1_qids = pick_daily(all_ids, day, "mixed", DAILY_COUNT) if all_ids else []
-        summary = summarize_day(data[day], v1_qids, want_qv=DAILY_SET_V1)
+        # One board per day: the Daily pick spreads across categories for
+        # everyone (Decision 050), so there is one question set and one field.
+        qids = pick_daily_balanced(all_ids, cats, day, "mixed", DAILY_COUNT) \
+            if all_ids and cats else []
+        summary = summarize_day(data[day], qids)
         summary["day"] = day
         write_json(f"{args.out}/{day}.json", summary)
-
-        if daily_set_version(day) == DAILY_SET_V2 and all_ids and cats:
-            v2_qids = pick_daily_balanced(all_ids, cats, day, "mixed", DAILY_COUNT)
-            v2 = summarize_day(data[day], v2_qids, want_qv=DAILY_SET_V2)
-            v2["day"] = day
-            write_json(f"{args.out}/{day}-v2.json", v2)
 
     index = {"latest": days[-1] if days else None, "days": days[-30:]}
     write_json(f"{args.out}/index.json", index)

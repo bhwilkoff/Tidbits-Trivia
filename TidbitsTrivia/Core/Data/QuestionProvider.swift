@@ -300,24 +300,15 @@ final class QuestionProvider {
         // (different shuffle algorithms + pools + seed strings); DailyPick is
         // order-independent, so only the shared id set matters.
         let count = GameMode.daily.questionCount
-        // v2 (Decision 050) spreads the set across categories; v1 draws
-        // uniformly and so inherits the corpus's own 29%-Film-&-TV shape. The
-        // version is a function of the DAY, never of the build, so the archive
-        // keeps resolving old days to the set they were actually played with.
-        if DailyPick.setVersion(for: day) == DailyPick.setV2 {
-            let rows = CorpusDatabase.shared.orderedIDsWithCategory(categoryID: category.id)
-            guard rows.count >= count else {
-                return await liveQuestions(topic: "On this day", category: category, count: count)
-            }
-            let picked = DailyPick.pickBalanced(ids: rows, day: day,
-                                                categoryID: category.id, count: count)
-            return CorpusDatabase.shared.questions(ids: picked)
-        }
-        let ids = CorpusDatabase.shared.orderedIDs(categoryID: category.id)
-        guard ids.count >= count else {
+        // Decision 050: spread the set across categories. A uniform draw over a
+        // corpus that is 29% Film & TV put 4+ of 7 questions in ONE category on
+        // 15% of days.
+        let rows = CorpusDatabase.shared.orderedIDsWithCategory(categoryID: category.id)
+        guard rows.count >= count else {
             return await liveQuestions(topic: "On this day", category: category, count: count)
         }
-        let picked = DailyPick.pick(ids: ids, day: day, categoryID: category.id, count: count)
+        let picked = DailyPick.pickBalanced(ids: rows, day: day,
+                                            categoryID: category.id, count: count)
         return CorpusDatabase.shared.questions(ids: picked)
     }
 

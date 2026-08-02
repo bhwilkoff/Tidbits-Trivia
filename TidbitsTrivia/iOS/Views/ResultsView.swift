@@ -49,8 +49,11 @@ struct ResultsView: View {
     /// The player's 7-char hit string aligned to the shared pickDaily order (for the board's
     /// per-question row). Computed once here from the summary.
     private var todayMarks: String {
-        let ids = CorpusDatabase.shared.orderedIDs(categoryID: "mixed")
-        let qids = DailyPick.pick(ids: ids, day: QuestionProvider.dayKey(), categoryID: "mixed", count: GameMode.daily.questionCount)
+        // MUST match dailyQuestions' pick — the marks string is aligned to it.
+        let rows = CorpusDatabase.shared.orderedIDsWithCategory(categoryID: "mixed")
+        let qids = DailyPick.pickBalanced(ids: rows, day: QuestionProvider.dayKey(),
+                                          categoryID: "mixed",
+                                          count: GameMode.daily.questionCount)
         return DailyBoard.marks(answered: summary.answered, qids: qids)
     }
 

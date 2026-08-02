@@ -40,21 +40,12 @@ public class DailyParityGolden
             var day = parts[0];
             var expected = parts.Skip(1).ToArray();
 
-            string[] got;
-            if (day.StartsWith("v2:", StringComparison.Ordinal))
-            {
-                day = day[3..];
-                got = DailyPick.PickBalanced(ids, Cats(), day, "mixed", 7).ToArray();
-                seenV2++;
-            }
-            else
-            {
-                got = DailyPick.Pick(ids, day, "mixed", 7).ToArray();
-            }
+            var got = DailyPick.PickBalanced(ids, Cats(), day, "mixed", 7).ToArray();
+            seenV2++;
             Assert.Equal(expected, got);
         }
-        // The golden carries v2 days; if this file ever stops seeing them the
-        // C# mirror has silently dropped out of the contract.
-        Assert.True(seenV2 > 0, "golden has no v2 days — the C# mirror is unverified");
+        // If this file ever stops checking days, the C# mirror is unverified and
+        // should say so rather than pass quietly.
+        Assert.True(seenV2 > 0, "golden had no days — the C# mirror is unverified");
     }
 }

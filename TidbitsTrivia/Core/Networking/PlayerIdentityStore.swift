@@ -162,8 +162,11 @@ final class PlayerIdentityStore {
         guard summary.mode == .daily, summary.dailyDay == nil else { return }   // today only
         guard let profile, let authUid = await db.uid else { return }
         let day = QuestionProvider.dayKey()
-        let allIDs = CorpusDatabase.shared.orderedIDs(categoryID: "mixed")
-        let qids = DailyPick.pick(ids: allIDs, day: day, categoryID: "mixed", count: GameMode.daily.questionCount)
+        // MUST match dailyQuestions' pick, or the marks string indexes a
+        // different question list than the one the player answered.
+        let allRows = CorpusDatabase.shared.orderedIDsWithCategory(categoryID: "mixed")
+        let qids = DailyPick.pickBalanced(ids: allRows, day: day, categoryID: "mixed",
+                                          count: GameMode.daily.questionCount)
         let ms = Int(summary.answered.reduce(0.0) { $0 + $1.secondsTaken } * 1000)
         let entry = DailyBoard.Entry(name: profile.name,
                                      avatarSeed: profile.avatarSeed,
@@ -171,8 +174,7 @@ final class PlayerIdentityStore {
                                      correct: summary.correct,
                                      marks: DailyBoard.marks(answered: summary.answered, qids: qids),
                                      ms: ms,
-                                     at: Int(Date().timeIntervalSince1970 * 1000),
-                                     qv: DailyPick.setVersion(for: day))
+                                     at: Int(Date().timeIntervalSince1970 * 1000))
         try? await db.put("dailyBoard/\(day)/\(authUid)", entry)
     }
 

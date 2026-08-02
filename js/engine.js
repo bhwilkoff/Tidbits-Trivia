@@ -42,24 +42,8 @@ export function fnv1a64(str) {
   return h;
 }
 
-// The Daily question-set VERSION. v1 is the original uniform draw; v2 spreads the
-// set across categories. It is on the wire (submissions carry `qv`, boards are
-// published per version) because two players on different versions are answering
-// DIFFERENT QUESTIONS, and ranking them against each other would be meaningless —
-// the marks string is aligned to pickDaily's order, so a silent change also
-// corrupts every per-question percentage the board publishes.
-export const DAILY_SET_V1 = 1;
-export const DAILY_SET_V2 = 2;
-
-// v2 takes effect on this day and never retroactively: yesterday's board must
-// keep resolving to the set it was actually played with.
-export const DAILY_V2_FROM = '2026-09-01';
-
-export function dailySetVersion(day) {
-  return day >= DAILY_V2_FROM ? DAILY_SET_V2 : DAILY_SET_V1;
-}
-
-/** Spread the day's set across categories instead of drawing uniformly.
+/** THE Daily pick. Spreads the day's set across categories instead of drawing
+ * uniformly.
  *
  * Decision 050: a uniform draw over a corpus that is 29% Film & TV puts 4+ of 7
  * questions in ONE category on 15% of days. This keeps the same deterministic

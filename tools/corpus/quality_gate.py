@@ -25,6 +25,26 @@ Each rule below is here because a real question in this app hit it:
                   created?" — a Wikidata property name left in the prose.
   THIN-COVERAGE   a mode x category the bundle cannot fill, which silently
                   serves a different category and says nothing.
+  SLIDER-FARMABLE a Closest Call slider that pays a player who never moves it.
+                  2,500 rows shared one 1000..2025 track, and since nearly every
+                  subject is modern the answer sat at a median 0.93 of it —
+                  "always guess 1985" scored 61.7% of the mode. Found by
+                  rendering "In what year did Carole Lombard die?" and noticing
+                  the player is asked to drag through a millennium. The rule
+                  checks the two free strategies: one fixed guess for every
+                  question, and leaving the slider where it opens.
+  UNANSWERABLE-TYPEIN
+                  a free-text question whose clue cannot produce one answer.
+                  Found by rendering a Type Answer round: 'Who is this —
+                  "Swedish actress (1915-1982)"?' over an empty text field. In
+                  multiple choice a bare description is dull; with a text field
+                  there is nothing to pick from. The worst were not close calls
+                  ("What is this — 'Medical condition'?", "'U.S. state'?"), and
+                  268 of the 474 named a description that does not identify a
+                  unique subject even inside this corpus. The second half is the
+                  fill-in-the-blank generator blanking EVERY occurrence of an
+                  answer word: "Luna moth" turned "the American moon moth" into
+                  "the American moon ____". One blank is a clue; two is damage.
   ODD-ONE-KIND    an Odd One Out set whose options are not all the same KIND.
                   In a mode that asks "which doesn't belong", a difference in
                   type IS an answer, so the set has two answers and the app marks
@@ -109,6 +129,8 @@ BUDGET = {
     # Ascending happens by chance in 1/24 of four-option sets, and 4.2% is what
     # the corpus shows. Anything materially above that means someone sorted.
     "NUMERIC-SORTED": 0,
+    "SLIDER-FARMABLE": 0,
+    "UNANSWERABLE-TYPEIN": 0,
     "ODD-ONE-KIND": 0,
     "DOUBLED-STEM": 0,
     "STUB-REVEAL": 0,
@@ -215,6 +237,22 @@ STUB_DESC = re.compile(
 # A fictional character is a kind of its own, and the corpus says so in prose
 # even when the description slot holds something else (Ross Geller's holds the
 # actor's name). This one signal reads the whole explanation.
+BARE_DESC = re.compile(r'^(?:Who|What) is this\s*[\u2014-]\s*'
+                       r'["\u201c\u201d][^"\u201c\u201d]{4,120}["\u201c\u201d]\s*\?$')
+
+
+def typein_verdict(prompt):
+    """Why a free-text clue cannot be answered, or None. Mirrors
+    fix_typeanswer_clues.py — see that file for what each shape looked like."""
+    p = str(prompt or "")
+    if BARE_DESC.match(p):
+        return "bare description as the whole clue"
+    blanks = len(re.findall(r"_{2,}", p))
+    if p.startswith("Fill in the blank:") and blanks > 1:
+        return f"{blanks} blanks"
+    return None
+
+
 CHARACTER = re.compile(r"\bis a fictional\b|\bfictional character\b"
                        r"|\bmain characters? of\b|\bis a character\b"
                        r"|\btitular character\b", re.I)
@@ -460,6 +498,23 @@ def check():
             if ka and odd:
                 bad["KIND-MISMATCH"].append(f"{q[0]}: {odd} among {ka}s — {opts}")
 
+    closest = load("closest.json") or []
+    if closest:
+        def _scores(guess, rs):
+            return sum(1 for r in rs if abs(guess - r[2]) <= r[6])
+        yr = [r for r in closest if len(r) > 6 and 1000 <= r[2] <= 2025
+              and isinstance(r[6], (int, float))]
+        if yr:
+            best = max(range(1000, 2026), key=lambda g: _scores(g, yr))
+            rate = _scores(best, yr) / len(yr)
+            if rate > 0.20:
+                bad["SLIDER-FARMABLE"].append(
+                    f"one fixed guess ({best}) scores {rate:.1%} of year sliders")
+            mid = sum(1 for r in yr if abs((r[3] + r[4]) / 2 - r[2]) <= r[6]) / len(yr)
+            if mid > 0.20:
+                bad["SLIDER-FARMABLE"].append(
+                    f"never moving the slider scores {mid:.1%} of year sliders")
+
     if numeric_total[0]:
         rate = numeric_sorted[0] / numeric_total[0]
         if rate > 0.08:                      # chance is 1/24 = 4.2%
@@ -485,6 +540,19 @@ def check():
                 bad["BROKEN-SHAPE"].append(f"{r[0]}: {mode} row has no shape payload")
             # Odd One Out only works when the ONLY way to spot the outlier is the
             # fact. Options of mixed type hand the player a second answer.
+            # STUB-REVEAL, in the files corpus.json does not own. Checking only
+            # corpus rows let "Whitney Houston: 2012." keep rendering in Closest
+            # Call, which carries its own explanation cell.
+            for cell in r:
+                if isinstance(cell, str) and ":" in cell and "\u2192" not in cell:
+                    d = cell.split(":", 1)[1].strip()
+                    if STUB_DESC.match(re.split(r"(?<=[.!?])\s", d, maxsplit=1)[0].strip()):
+                        bad["STUB-REVEAL"].append(f"{r[0]}: {cell[:56]}")
+                        break
+            if name == "typeanswer.json":
+                v = typein_verdict(r[1])
+                if v:
+                    bad["UNANSWERABLE-TYPEIN"].append(f"{r[0]}: {v} — {str(r[1])[:52]}")
             if name == "oddoneout.json" and len(r) > 2 and r[2]:
                 ks = {option_kind(o, kinds, raw_expl) for o in r[2]}
                 ks.discard(None)

@@ -73,6 +73,54 @@ def leads():
     return out
 
 
+def repair_shape_sources(apply):
+    """The same defect, in the files corpus.json does not own.
+
+    The first version of this script walked corpus.json alone and the gate went
+    green, so "Whitney Houston: 2012." kept rendering in Closest Call — that mode
+    carries its OWN explanation cell. A rule that names one file checks one file.
+    Every subject here already has a real description in corpus.json; borrow it.
+    """
+    rows = json.loads(CORPUS.read_text())["questions"]
+    good = {}
+    for q in rows:
+        subj, d = split_desc(q[6] or "")
+        if subj and d and not STUB.match(first_sentence(d)):
+            good.setdefault(subj, d)
+
+    total = 0
+    for name in ("closest.json", "oddoneout.json", "match.json", "order.json",
+                 "thisorthat.json", "picture.json", "typeanswer.json",
+                 "enumerate.json"):
+        path = ROOT / "assets" / name
+        if not path.exists():
+            continue
+        data = json.loads(path.read_text())
+        srows = data["questions"]
+        touched = 0
+        for r in srows:
+            for i, cell in enumerate(r):
+                if not isinstance(cell, str) or ":" not in cell or "\u2192" in cell:
+                    continue
+                subj, d = split_desc(cell)
+                if d is None or not STUB.match(first_sentence(d)):
+                    continue
+                rest = d[len(first_sentence(d)):].strip()
+                # A real sentence already follows; or corpus.json knows this
+                # subject; or say nothing rather than say a year.
+                r[i] = (f"{subj}: {rest}" if rest
+                        else f"{subj}: {good[subj]}" if subj in good else "")
+                touched += 1
+        if touched and apply:
+            b = json.dumps(srows, ensure_ascii=False, separators=(",", ":"))
+            path.write_text(
+                f'{{"version":"{data["version"]}","count":{len(srows)},"questions":{b}}}')
+        if touched:
+            print(f"   {name}: {touched} bare-number reveals repaired")
+        total += touched
+    return total
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--apply", action="store_true")
@@ -130,6 +178,10 @@ def main():
         print("   refusals by category:", dict(by_cat.most_common()))
     for b, n in examples:
         print(f"\n   was: {b}\n   now: {n}")
+
+    print("shape sources:")
+    shaped = repair_shape_sources(a.apply)
+    print(f"   total in shape sources: {shaped}")
 
     if not a.apply:
         print("\n(dry run — pass --apply to write, then run resync_corpus.sh)")

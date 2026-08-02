@@ -104,3 +104,25 @@ data before changing it.
   slot 80.8% of the time against 25% chance — an ordered list would be worth
   three times chance to a player who noticed. Gated by `NUMERIC-SORTED`, which
   watches the RATE (ascending happens by chance in 1 set of 24).
+
+## Modes with an input surface (added 2026-08-01)
+
+A text field and a slider fail differently from a list of options, and the
+failures are only visible once the surface is on screen.
+
+- **A free-text clue must produce ONE answer.** In multiple choice a weak clue is
+  dull because the options carry the question. With a text field there is nothing
+  to pick from: 'Who is this — "Swedish actress (1915-1982)"?' and
+  'What is this — "U.S. state"?' were shipped as type-ins. Gated by
+  `UNANSWERABLE-TYPEIN`.
+- **Read a slider's BOUNDS, not just its question.** "In what year did Carole
+  Lombard die?" ran 1000..2025 — the 20th century was 9% of the track. Measuring
+  that annoyance found a scoring bug: the answer sat at a median 0.93 of the
+  range, so one fixed guess of 1985 scored 61.7% of the mode. Gated by
+  `SLIDER-FARMABLE`, which tests the two free strategies (one fixed guess for
+  every question; never moving the slider off where it opens).
+- **Ask which FILE the thing on screen came from.** The bare-number reveal was
+  repaired in corpus.json and the gate went green, and "Whitney Houston: 2012."
+  kept rendering — Closest Call carries its own explanation cell. A rule that
+  names one file checks one file. Both the repair and the rule now walk every
+  question file.

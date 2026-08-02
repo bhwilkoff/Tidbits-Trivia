@@ -82,10 +82,15 @@ def sig(s):
 # "shrub of the dogbane family" offering Myrtle, Nerium, Date palm and European
 # HORNET. Three plants and an insect — nobody needs to know the fact.
 SUBJECT_KIND = [
-    ("plant",   r"\b(plant|shrub|tree|flower|grass|fern|moss|herb|vine|genus of plants|"
-                r"flowering plant|conifer|palm|cactus)\b"),
-    ("animal",  r"\b(insect|bird|mammal|fish|reptile|amphibian|spider|beetle|wasp|hornet|"
-                r"moth|butterfly|species of animal|genus of|dinosaur|crustacean|mollusc)\b"),
+    # Plurals matter: "Genus of flowering plants" failed `flowering plant\b`
+    # because of the trailing s, and then matched the ANIMAL pattern's bare
+    # "genus of" — so Eucalyptus was an animal. "Genus of" belongs to neither
+    # kingdom and is gone.
+    ("plant",   r"\b(plants?|shrubs?|trees?|flowers?|grass|ferns?|moss|herbs?|vines?|"
+                r"flowering plants?|conifers?|palms?|cactus|cacti)\b"),
+    ("animal",  r"\b(insects?|birds?|mammals?|fish|reptiles?|amphibians?|spiders?|beetles?|"
+                r"wasps?|hornets?|moths?|butterfl(?:y|ies)|species of animal|dinosaurs?|"
+                r"crustaceans?|molluscs?)\b"),
     ("person",  r"\b(born \d{4}|\(\d{4}[–-]|politician|footballer|actor|actress|singer|"
                 r"writer|player|physicist|philosopher|emperor|monarch|composer|director)\b"),
     ("place",   r"\b(country|city|town|village|island|river|mountain|region|province|"
@@ -140,6 +145,14 @@ def load():
         if ":" in e and "→" not in e:
             _, d = e.split(":", 1)
             d = d.strip()
+            # First sentence only. This tool never got the truncation the gate and
+            # the repairs did, so once fix_hollow_reveals appended a Wikipedia
+            # sentence it began classifying on the PROSE: "To Pimp a Butterfly"
+            # became an animal (the word "Butterfly" in its own title) and Robert
+            # Muldoon an event (the word "War" in his biography).
+            d = re.split(r"(?<=[.!?])\s", d, maxsplit=1)[0].strip()
+            d = re.sub(r"[\"'\u2018\u2019\u201c\u201d][^\"'\u2018\u2019\u201c\u201d]{1,30}"
+                       r"[\"'\u2018\u2019\u201c\u201d]", " ", d)
             if d and len(d) > 8 and not d[0].isdigit():
                 desc.setdefault(q[7], d)
     for name, d in desc.items():
@@ -147,6 +160,31 @@ def load():
         if m:
             occ[name] = m.group(1).lower()
     return rows, years, occ, desc
+
+
+# Occupations that belong to the same walk of life. A domain mismatch only
+# eliminates a distractor when the two are in DIFFERENT families: a ski jumper
+# among three politicians is a giveaway, an actor among a comedian and a magician
+# is not. Without this, "This South Korean actor-turned-businessman..." counted
+# Criss Angel, Art Carney and Spike Milligan as all discardable — three
+# entertainers beside an entertainer.
+FAMILY = {}
+for _fam, _members in {
+    "stage": {"actor", "actress", "singer", "musician", "composer", "rapper",
+              "film director", "filmmaker", "screenwriter"},
+    "page":  {"novelist", "poet", "writer", "author", "playwright", "philosopher",
+              "journalist", "painter", "sculptor", "architect"},
+    "field": {"ski jumper", "footballer", "basketball player", "baseball player",
+              "tennis player", "golfer", "boxer", "sprinter", "swimmer", "cyclist",
+              "athlete", "racing driver"},
+    "state": {"politician", "president", "prime minister", "king", "queen",
+              "emperor", "monarch", "general"},
+    "lab":   {"physicist", "chemist", "biologist", "mathematician", "astronomer",
+              "engineer", "inventor", "economist"},
+    "trade": {"businessman", "entrepreneur"},
+}.items():
+    for _m in _members:
+        FAMILY[_m] = _fam
 
 
 def eliminable(q, years, occ, desc):
@@ -166,7 +204,7 @@ def eliminable(q, years, occ, desc):
         if ya and yo and abs(ya - yo) > 400:
             reasons.append("era")
         oa, oo = occ.get(answer), occ.get(o)
-        if oa and oo and oa != oo:
+        if oa and oo and FAMILY.get(oa, oa) != FAMILY.get(oo, oo):
             reasons.append("domain")
         ka, ko = subject_kind(answer, desc), subject_kind(o, desc)
         if ka and ko and ka != ko:

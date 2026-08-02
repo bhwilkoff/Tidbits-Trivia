@@ -25,6 +25,13 @@ Each rule below is here because a real question in this app hit it:
                   created?" — a Wikidata property name left in the prose.
   THIN-COVERAGE   a mode x category the bundle cannot fill, which silently
                   serves a different category and says nothing.
+  DOUBLED-STEM    a stem verb repeated — "In which country is Nike, Inc. based
+                  based based based?", which shipped on 1,022 questions. The
+                  cause was a repair in this directory that was not idempotent:
+                  fix_stem_type.py captures everything before the "?" as the
+                  subject, so each run re-appended the verb it added last time.
+                  The rule names only stem verbs, because "Duran Duran", "Bora
+                  Bora" and "6 ft 3 in in her prime" are real prompts.
   NUMERIC-SORTED  numeric options presented in ascending order. This rule guards
                   a NON-obvious invariant: sorting them looks tidier and every
                   other quiz app does it, but distractors here are generated
@@ -92,6 +99,7 @@ BUDGET = {
     # Ascending happens by chance in 1/24 of four-option sets, and 4.2% is what
     # the corpus shows. Anything materially above that means someone sorted.
     "NUMERIC-SORTED": 0,
+    "DOUBLED-STEM": 0,
     "STUB-REVEAL": 0,
     "CITY-LANGUAGE": 3,
     "KIND-MISMATCH": 3,
@@ -185,6 +193,9 @@ def birth_years():
 # Same vocabulary the repair uses (tools/corpus/fix_kind_distractors.py); the
 # two must not drift, or the gate flags rows the repair cannot see.
 # "1969." / "c. 1450" / "-44 BCE" standing where a description should be.
+DOUBLED_VERB = re.compile(
+    r"\b(based|located|situated|headquartered|founded|set|born|made)\s+\1\b", re.I)
+
 NUMERIC_OPT = re.compile(r"^-?\d[\d,]*(?:\.\d+)?$")
 
 STUB_DESC = re.compile(
@@ -263,6 +274,31 @@ def readable_description(expl, subject):
         return "PERSON-BY-DATES"
     return re.split(r"\s*[(\[,;]|\s+(?:who|which|that|known|best|famous|based)\s",
                     d, maxsplit=1)[0].strip()
+
+
+def copula_type(expl, subject):
+    """The predicate of "<Subject> is/was a/an <predicate>", or None.
+
+    readable_description deliberately refuses prose, because a lead sentence
+    names many nouns in passing. But one prose shape IS a type statement: the
+    sentence whose grammatical subject is the subject itself. "Royal Enfield is
+    an Indian motorcycle manufacturer" says what Royal Enfield is; "The battle
+    helped the British East India Company" does not say what the Battle of
+    Plassey is, and refiled it as BUSINESS when a tool read it as one.
+
+    Only the copula form counts, and only when the sentence opens with the
+    subject's own name.
+    """
+    if not expl or ":" not in expl or "\u2192" in expl or not subject:
+        return None
+    head, rest = expl.split(":", 1)
+    if head.strip() != subject.strip():
+        return None
+    d = re.split(r"(?<=[.!?])\s", rest.strip(), maxsplit=1)[0].strip()
+    lead = re.escape(subject.split(" (")[0])
+    m = re.match(rf"{lead}\b[^.]{{0,60}}?\b(?:is|was|are|were)\s+(?:a|an|the)\s+(.{{6,90}})",
+                 d, re.I)
+    return m.group(1).strip() if m else None
 
 
 def kind_map(rows):
@@ -350,6 +386,8 @@ def check():
             numeric_total[0] += 1
             if vals == sorted(vals):
                 numeric_sorted[0] += 1
+        if DOUBLED_VERB.search(prompt or ""):
+            bad["DOUBLED-STEM"].append(f"{q[0]}: {(prompt or '')[:70]}")
         if STUB_DESC.match((q[6] or "").split(":", 1)[-1].strip()):
             bad["STUB-REVEAL"].append(f"{q[0]}: {(q[6] or '')[:60]}")
         if PLACEHOLDER.search(prompt or ""):

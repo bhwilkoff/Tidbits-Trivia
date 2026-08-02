@@ -99,6 +99,14 @@ STEMS = {
 }
 OLD = re.compile(r"^In which country is (.+)\?$")
 
+# The capture group grabs everything up to the "?", which on an ALREADY-rewritten
+# prompt includes the verb this script appended last time: "Nike, Inc. based" ->
+# "In which country is Nike, Inc. based based?". Running it four times shipped
+# "In which country is Nike, Inc. based based based based?" to 1,022 questions.
+# A repair that is not idempotent is a repair that damages the corpus every time
+# anyone re-runs the pipeline.
+TRAILING_VERB = re.compile(r"(?:\s+(?:based|from|located|situated|headquartered))+$", re.I)
+
 
 def descriptions(rows):
     desc = {}
@@ -148,7 +156,7 @@ def main():
         m = OLD.match(q[1] or "")
         if not m:
             continue
-        subject = m.group(1)
+        subject = TRAILING_VERB.sub("", m.group(1)).strip()
         k = kind_of.get(q[7])
         d = desc_of.get(q[7], "")
         if SPANNING.search(d) and not re.search(r"\b(battle|siege|storming)\b", d, re.I):

@@ -36,6 +36,9 @@ import pathlib
 import re
 import sys
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from quality_gate import readable_description, copula_type                      # noqa: E402
+
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 CORPUS = ROOT / "assets" / "corpus.json"
 
@@ -115,13 +118,19 @@ def descriptions(rows):
     """
     out = {}
     for q in rows:
-        expl = q[6] or ""
-        if ":" not in expl:
-            continue
-        title, desc = expl.split(":", 1)
-        desc = desc.strip()
-        if desc and not desc[0].isdigit() and "→" not in expl and len(desc) > 12:
-            out.setdefault(q[7] or title.strip(), desc)
+        # Same guard the gate uses: the description slot is only trustworthy as a
+        # TYPE when the explanation really has the "Subject: description" shape
+        # AND the description is a noun phrase. Reading prose refiled the Battle
+        # of Plassey as BUSINESS, because its lead mentions the East India
+        # Company. A repair that miscategorises is worse than one that abstains.
+        d = readable_description(q[6] or "", q[7])
+        if d == "PERSON-BY-DATES":
+            d = None
+        # A Wikidata one-liner if there is one; otherwise the predicate of a
+        # sentence that is genuinely ABOUT this subject.
+        d = d or copula_type(q[6] or "", q[7])
+        if d and len(d) > 12:
+            out.setdefault(q[7], d)
     return out
 
 

@@ -43,6 +43,17 @@ DEVELOPER_DIR=$DEV xcrun simctl bootstatus "$UDID" -b >/dev/null 2>&1 || \
 APP="$(find ~/Library/Developer/Xcode/DerivedData -name 'TidbitsTrivia.app' \
         -path '*Debug-iphonesimulator*' -print -quit 2>/dev/null || true)"
 [ -n "$APP" ] || { echo "FAIL: no built TidbitsTrivia.app"; exit 1; }
+
+# A rendered pass is only evidence about the corpus INSIDE the bundle. On
+# 2026-08-01 a run "confirmed" a reveal defect that had been repaired 90 minutes
+# earlier: the bundle still carried the pre-repair sqlite, so the screenshots
+# were arguing about old data. Refuse to run rather than read the wrong corpus
+# confidently.
+if [ -f "$APP/corpus.sqlite" ] && [ "assets/corpus.json" -nt "$APP/corpus.sqlite" ]; then
+  echo "FAIL: stale bundle — assets/corpus.json is newer than the bundled corpus.sqlite." >&2
+  echo "      Rebuild the app first; otherwise these frames show the previous corpus." >&2
+  exit 2
+fi
 DEVELOPER_DIR=$DEV xcrun simctl terminate "$UDID" "$BUNDLE" 2>/dev/null || true
 DEVELOPER_DIR=$DEV xcrun simctl uninstall "$UDID" "$BUNDLE" 2>/dev/null || true
 DEVELOPER_DIR=$DEV xcrun simctl install "$UDID" "$APP"

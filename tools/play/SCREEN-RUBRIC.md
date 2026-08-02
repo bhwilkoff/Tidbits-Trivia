@@ -146,3 +146,22 @@ stem and ask what it rules out before you ask whether the answer is right.
   constraints in tools/corpus are cumulative: same category, same kind, same era,
   no word shared with the prompt, nothing already on screen. Check the set the
   player will see, not each swap in isolation.
+
+## The surfaces around play (added 2026-08-02)
+
+Reading Records after a game found a bug six sweeps of gameplay could not, and
+it was in shared Core logic rather than content.
+
+- **Play a round, then read what the app SAYS you did.** A 10/10 Mixed Bag round
+  left "Your knowledge" reading "You've explored 0 of 8 domains" with no rows.
+  Domain progress was summarised from each ROUND's category, and a Mixed Bag
+  round is filed under "mixed", which is no domain — so the default mode credited
+  nothing, on all four platforms that show the section, and every badge keyed on
+  mastery stayed dark forever. The per-answer categories were already stored;
+  only the wrong field was being read.
+- **A number that should have moved and didn't is a bug, even when nothing looks
+  broken.** Nothing on that screen was misaligned, truncated or empty-stated. It
+  was internally consistent and wrong.
+- **Native behaviour is not a defect.** Content passing under the iOS 26 floating
+  tab bar looks like a clipping bug and is the Liquid Glass design; `TabView`
+  applies the bottom inset itself. Check the platform before "fixing" it.

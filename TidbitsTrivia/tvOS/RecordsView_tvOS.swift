@@ -174,7 +174,7 @@ struct RecordsView_tvOS: View {
     // MARK: Progress — The Pie (breadth) + Topic Levels (depth)
 
     private var domains: [DomainProgress] {
-        DomainProgress.summarize(records.map { ($0.categoryID, $0.correct, $0.total) })
+        DomainProgress.summarize(records: records)
     }
 
     private var progressSection: some View {

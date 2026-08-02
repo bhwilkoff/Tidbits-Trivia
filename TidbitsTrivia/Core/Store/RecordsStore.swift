@@ -89,7 +89,7 @@ enum RecordsStore {
             gc.report(GameCenterManager.Achievement.streak7, percent: min(100, Double(streak.current) / 7 * 100))
             gc.report(GameCenterManager.Achievement.streak30, percent: min(100, Double(streak.current) / 30 * 100))
         }
-        let domains = DomainProgress.summarize(records.map { ($0.categoryID, $0.correct, $0.total) })
+        let domains = DomainProgress.summarize(records: records)
         gc.report(GameCenterManager.Achievement.fullPie,
                   percent: Double(DomainProgress.wedgesEarned(domains)) / Double(ProgressMath.domainIDs.count) * 100)
         if summary.mode == .stake {

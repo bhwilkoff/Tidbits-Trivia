@@ -172,7 +172,7 @@ struct RecordsView: View {
     // MARK: Progress — per-domain levels, now tappable to drill in
 
     private var domains: [DomainProgress] {
-        DomainProgress.summarize(records.map { ($0.categoryID, $0.correct, $0.total) })
+        DomainProgress.summarize(records: records)
     }
 
     private var progressSection: some View {

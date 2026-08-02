@@ -136,7 +136,7 @@ struct RecordsView_macOS: View {
     }
 
     private var domains: [DomainProgress] {
-        DomainProgress.summarize(records.map { ($0.categoryID, $0.correct, $0.total) }).filter { $0.total > 0 }
+        DomainProgress.summarize(records: records).filter { $0.total > 0 }
     }
 
     private var knowledgeSection: some View {

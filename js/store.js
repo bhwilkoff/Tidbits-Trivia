@@ -187,9 +187,25 @@ export const Store = {
   progress() {
     const recs = this.records();
     return PROGRESS.domains.map((id) => {
-      const mine = recs.filter((r) => r.categoryID === id);
-      const correct = mine.reduce((s, r) => s + r.correct, 0);
-      const total = mine.reduce((s, r) => s + r.total, 0);
+      // Count the QUESTIONS answered in this domain, not the rounds filed under
+      // it. A Mixed Bag round carries categoryID "mixed", which matches no
+      // domain, so a player whose games were all Mixed Bag — the default — read
+      // "explored 0 of 8 domains" forever and never earned a badge keyed on
+      // mastery. Rounds saved before per-answer detail existed were
+      // single-category, so their own category is the right fallback.
+      let correct = 0, total = 0;
+      for (const r of recs) {
+        const answers = r.answers || [];
+        if (answers.length) {
+          for (const a of answers) {
+            if ((a.cat || a.categoryID) !== id) continue;
+            total += 1;
+            if (a.correct) correct += 1;
+          }
+        } else if (r.categoryID === id) {
+          correct += r.correct; total += r.total;
+        }
+      }
       const acc = total ? correct / total : 0;
       const level = PROGRESS.level(correct);
       const lo = PROGRESS.threshold(level), hi = PROGRESS.threshold(level + 1);

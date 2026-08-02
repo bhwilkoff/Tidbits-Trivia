@@ -19,7 +19,17 @@
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 
-TOPICS="${1:-tools/create/parity-topics.txt}"
+# --regenerate rewrites tools/create/golden/search.txt from the Apple capture.
+# The README documented this flag; the script never implemented it, so the flag
+# was read as the TOPICS filename and node tried to open "--regenerate". Nobody
+# noticed because nothing regenerated the golden until a corpus change made it
+# stale and the Windows CreateGoldenTest went red.
+REGEN=0
+ARGS=()
+for a in "$@"; do
+  if [ "$a" = "--regenerate" ]; then REGEN=1; else ARGS+=("$a"); fi
+done
+TOPICS="${ARGS[0]:-tools/create/parity-topics.txt}"
 DEV="${DEVELOPER_DIR:-/Applications/Xcode-beta.app/Contents/Developer}"
 SIM="${TIDBITS_SIM:-iPhone 17 Pro}"
 WORK="$(mktemp -d)"
@@ -55,6 +65,27 @@ for _ in $(seq 1 120); do grep -q "SWEEP-END" "$WORK/apple.out" 2>/dev/null && b
 kill $SWEEP 2>/dev/null || true
 tr -d '\r' < "$WORK/apple.out" | awk -F'\t' '/SWEEP-Q/{a[$2]=a[$2]" "$3} END{for(t in a) print t"\t"a[t]}' \
   > "$WORK/apple.txt"
+
+if [ "$REGEN" = "1" ]; then
+  echo "--- regenerating tools/create/golden/search.txt from the Apple capture"
+  python3 - "$WORK/apple.txt" "$TOPICS" <<'PYGOLD'
+import pathlib, sys
+caught = {}
+for line in pathlib.Path(sys.argv[1]).read_text().splitlines():
+    if "\t" not in line:
+        continue
+    t, ids = line.split("\t", 1)
+    caught[t.strip()] = sorted({i for i in ids.split() if i})
+# Topics that correctly return NOTHING stay in the file on purpose: a golden
+# listing only the topics with results would pass a regression that answered
+# "Harry Kane" with Spokane again.
+topics = [t.strip() for t in pathlib.Path(sys.argv[2]).read_text().splitlines() if t.strip()]
+out = pathlib.Path("tools/create/golden/search.txt")
+out.write_text("".join(f"{t}\t{' '.join(caught.get(t, []))}\n" for t in topics))
+empty = sum(1 for t in topics if not caught.get(t))
+print(f"    wrote {len(topics)} topics ({empty} correctly empty)")
+PYGOLD
+fi
 
 python3 - "$WORK/web.txt" "$WORK/apple.txt" <<'PY'
 import pathlib, sys

@@ -25,6 +25,14 @@ Each rule below is here because a real question in this app hit it:
                   created?" — a Wikidata property name left in the prose.
   THIN-COVERAGE   a mode x category the bundle cannot fill, which silently
                   serves a different category and says nothing.
+  GOLDEN-STALE    the Create search golden names a question id the corpus no
+                  longer contains. That golden is the six-platform contract
+                  ("the same topic returns the same quiz everywhere") and the
+                  Windows CreateGoldenTest links it directly, so dropping corpus
+                  rows silently invalidates it. It went stale for three ticks
+                  because the corpus resync regenerates the DAILY golden and not
+                  this one, and only the Apple test suite was being run. Fix by
+                  re-running tools/create/parity.sh --regenerate.
   NATIONALITY-FREE
                   the prompt names a nationality, the answer holds it, and EVERY
                   distractor is a different one — so the clue is decorative.
@@ -138,6 +146,7 @@ BUDGET = {
     # Ascending happens by chance in 1/24 of four-option sets, and 4.2% is what
     # the corpus shows. Anything materially above that means someone sorted.
     "NUMERIC-SORTED": 0,
+    "GOLDEN-STALE": 0,
     "NATIONALITY-FREE": 0,
     "SLIDER-FARMABLE": 0,
     "UNANSWERABLE-TYPEIN": 0,
@@ -540,6 +549,21 @@ def check():
                    if i != ci and kinds.get(str(o)) and ka and kinds[str(o)] != ka]
             if ka and odd:
                 bad["KIND-MISMATCH"].append(f"{q[0]}: {odd} among {ka}s — {opts}")
+
+    golden = ROOT / "tools" / "create" / "golden" / "search.txt"
+    if golden.exists():
+        known = {q[0] for q in rows_all}
+        missing = set()
+        for line in golden.read_text().splitlines():
+            if "\t" not in line:
+                continue
+            for qid in line.split("\t", 1)[1].split():
+                if qid and qid not in known:
+                    missing.add(qid)
+        if missing:
+            bad["GOLDEN-STALE"].append(
+                f"{len(missing)} id(s) gone from the corpus, e.g. {sorted(missing)[:3]}"
+                " — run tools/create/parity.sh --regenerate")
 
     closest = load("closest.json") or []
     if closest:

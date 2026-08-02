@@ -1420,8 +1420,19 @@ class Store(context: Context) {
     // Topic Levels (depth) + The Pie (breadth) — SOLO-BACKLOG M3 + M4
     // (mirror of Core/Store/ProgressStats.swift).
     fun progress(): List<DomainProgress> = ProgressMath.domains.map { id ->
-        val mine = records().filter { it.categoryId == id }
-        val correct = mine.sumOf { it.correct }; val total = mine.sumOf { it.total }
+        // Per ANSWER, not per round: a Mixed Bag round is filed under "mixed",
+        // which is no domain, so the default mode credited nothing and the
+        // screen read "explored 0 of 8 domains" no matter how much you played.
+        // Rounds with no stored answers predate that detail and were
+        // single-category, so their own category is the right fallback.
+        var correct = 0; var total = 0
+        for (r in records()) {
+            if (r.answers.isEmpty()) {
+                if (r.categoryId == id) { correct += r.correct; total += r.total }
+            } else {
+                for (a in r.answers) if (a.categoryId == id) { total++; if (a.correct) correct++ }
+            }
+        }
         val acc = if (total == 0) 0.0 else correct.toDouble() / total
         val level = ProgressMath.level(correct)
         val lo = ProgressMath.threshold(level); val hi = ProgressMath.threshold(level + 1)

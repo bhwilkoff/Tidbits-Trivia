@@ -1,3 +1,5 @@
+using Tidbits.Core.Models;
+
 namespace Tidbits.Core.Store;
 
 /// Derived knowledge-cartography over game history — Topic Levels (depth) + The Pie
@@ -36,6 +38,37 @@ public sealed record DomainProgress(string CategoryId, int Correct, int Total)
     public double LevelProgress => ProgressMath.LevelProgress(Correct);
     public int NextLevelCorrect => ProgressMath.Threshold(Level + 1);
     public bool HasWedge => Correct >= ProgressMath.WedgeCorrect && Accuracy >= ProgressMath.WedgeAccuracy;
+
+    /// <summary>
+    /// Domain progress from the questions actually ANSWERED, not from each
+    /// round's own category. A Mixed Bag round is filed under "mixed", which
+    /// matches no domain, so summarizing by the round credited the default mode
+    /// to nothing: the screen read "explored 0 of 8 domains" however much you
+    /// played, and every badge keyed on mastery stayed dark. Rounds with no
+    /// stored answers predate that detail and were single-category, so their own
+    /// category is the right fallback.
+    /// </summary>
+    public static List<DomainProgress> Summarize(IEnumerable<GameRecord> records)
+    {
+        var rows = new List<(string CategoryId, bool Correct)>();
+        foreach (var r in records)
+        {
+            if (r.Answers is { Count: > 0 })
+            {
+                foreach (var a in r.Answers) rows.Add((a.CategoryId, a.Correct));
+            }
+            else
+            {
+                for (var i = 0; i < r.Correct; i++) rows.Add((r.CategoryId, true));
+                for (var i = 0; i < r.Total - r.Correct; i++) rows.Add((r.CategoryId, false));
+            }
+        }
+        return ProgressMath.DomainIds.Select(domain =>
+        {
+            var mine = rows.Where(x => x.CategoryId == domain).ToList();
+            return new DomainProgress(domain, mine.Count(x => x.Correct), mine.Count);
+        }).ToList();
+    }
 
     public static List<DomainProgress> Summarize(IEnumerable<(string CategoryId, int Correct, int Total)> rows)
     {

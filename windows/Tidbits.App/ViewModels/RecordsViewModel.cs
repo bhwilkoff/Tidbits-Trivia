@@ -91,7 +91,7 @@ public sealed class RecordsViewModel
             .Select(grp => new BestRow(grp.Key, grp.First().Mode.Title(), grp.Max(g => g.Score), grp.Count()))
             .OrderByDescending(b => b.Best).ToList();
 
-        var domainProgress = DomainProgress.Summarize(games.Select(g => (g.CategoryId, g.Correct, g.Total)));
+        var domainProgress = DomainProgress.Summarize(games);
 
         // The Pie (breadth): one wedge per non-Mixed domain, filled when mastered.
         var wedgeById = domainProgress.ToDictionary(d => d.CategoryId, d => d.HasWedge);

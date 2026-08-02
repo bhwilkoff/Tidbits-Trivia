@@ -41,7 +41,7 @@ enum WeakSpotArena {
 
         if trueMissCount < trueMissFloor {
             let records = (try? context.fetch(FetchDescriptor<GameRecord>())) ?? []
-            let weakestDomains = DomainProgress.summarize(records.map { ($0.categoryID, $0.correct, $0.total) })
+            let weakestDomains = DomainProgress.summarize(records: records)
                 .filter { $0.total >= 3 }
                 .sorted { $0.accuracy < $1.accuracy }
             for domain in weakestDomains {

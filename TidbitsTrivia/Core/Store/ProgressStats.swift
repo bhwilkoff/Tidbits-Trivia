@@ -55,6 +55,43 @@ struct DomainProgress: Identifiable, Sendable, Hashable {
     /// Aggregate per-game (category, correct, total) rows into one row per
     /// domain, in the canonical domain order. Rows for "mixed" or unknown
     /// categories are ignored (they don't map to a single domain).
+    /// Domain progress from the questions actually ANSWERED, not from the round's
+    /// own category.
+    ///
+    /// A Mixed Bag round carries categoryID "mixed", which matches no domain, so
+    /// summarizing by the record's category credited it to nothing: a player who
+    /// scored 10/10 in Mixed Bag — the default mode — still read "You've explored
+    /// 0 of 8 domains", and every badge keyed on `mastered` stayed dark forever.
+    /// Each answer already records the category of ITS question; use that.
+    /// Records saved before answers were stored fall back to the round category,
+    /// which is right for the single-category rounds those were.
+    static func summarize(records: [GameRecord]) -> [DomainProgress] {
+        var rows: [(categoryID: String, correct: Bool)] = []
+        for r in records {
+            let details = r.answers
+            if details.isEmpty {
+                // Saved before per-answer detail existed. Those rounds were
+                // single-category, so the round's own category is correct.
+                rows.append(contentsOf: Array(repeating: (r.categoryID, true), count: r.correct))
+                rows.append(contentsOf: Array(repeating: (r.categoryID, false),
+                                              count: max(0, r.total - r.correct)))
+            } else {
+                rows.append(contentsOf: details.map { ($0.categoryID, $0.correct) })
+            }
+        }
+        return summarize(answers: rows)
+    }
+
+    static func summarize(answers rows: [(categoryID: String, correct: Bool)]) -> [DomainProgress] {
+        ProgressMath.domainIDs.map { domain in
+            let mine = rows.filter { $0.categoryID == domain }
+            return DomainProgress(
+                categoryID: domain,
+                correct: mine.filter(\.correct).count,
+                total: mine.count)
+        }
+    }
+
     static func summarize(_ rows: [(categoryID: String, correct: Int, total: Int)]) -> [DomainProgress] {
         ProgressMath.domainIDs.map { domain in
             let mine = rows.filter { $0.categoryID == domain }

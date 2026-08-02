@@ -25,6 +25,15 @@ Each rule below is here because a real question in this app hit it:
                   created?" — a Wikidata property name left in the prose.
   THIN-COVERAGE   a mode x category the bundle cannot fill, which silently
                   serves a different category and says nothing.
+  NATIONALITY-FREE
+                  the prompt names a nationality, the answer holds it, and EVERY
+                  distractor is a different one — so the clue is decorative.
+                  Found by rendering "Who is this American painter?" over Claude
+                  Monet, Bob Ross, Caravaggio and Raphael. English/Scottish/Welsh
+                  count as British (nobody eliminates Benedict Arnold from an
+                  "English inventor" question because Wikidata says British), and
+                  a hyphenated origin in the prompt is two claims, so both are
+                  exempt.
   SLIDER-FARMABLE a Closest Call slider that pays a player who never moves it.
                   2,500 rows shared one 1000..2025 track, and since nearly every
                   subject is modern the answer sat at a median 0.93 of it —
@@ -129,6 +138,7 @@ BUDGET = {
     # Ascending happens by chance in 1/24 of four-option sets, and 4.2% is what
     # the corpus shows. Anything materially above that means someone sorted.
     "NUMERIC-SORTED": 0,
+    "NATIONALITY-FREE": 0,
     "SLIDER-FARMABLE": 0,
     "UNANSWERABLE-TYPEIN": 0,
     "ODD-ONE-KIND": 0,
@@ -251,6 +261,22 @@ def typein_verdict(prompt):
     if p.startswith("Fill in the blank:") and blanks > 1:
         return f"{blanks} blanks"
     return None
+
+
+_NATIONS = ("American|British|English|French|Italian|German|Spanish|Dutch|Russian|"
+            "Japanese|Chinese|Indian|Canadian|Australian|Swedish|Norwegian|Danish|"
+            "Polish|Greek|Irish|Scottish|Mexican|Brazilian|Argentine|Austrian|Swiss|"
+            "Belgian|Portuguese|Turkish|Korean|Egyptian|Nigerian|Israeli|Iranian|"
+            "Hungarian|Czech|Finnish|Romanian|Ukrainian|Welsh|Colombian|Chilean|"
+            "Cuban|Peruvian|Vietnamese|Thai|Indonesian|Filipino|Pakistani")
+NAT_IN_PROMPT = re.compile(r"\bthis\s+(" + _NATIONS + r")\b", re.I)
+NAT_IN_DESC = re.compile(r"^(" + _NATIONS + r")\b", re.I)
+NAT_HYPHEN = re.compile(r"\bthis\s+\w+-\w+", re.I)
+_NAT_FAMILY = {"english": "british", "scottish": "british", "welsh": "british"}
+
+
+def _nat_family(n):
+    return _NAT_FAMILY.get(n.lower(), n.lower())
 
 
 CHARACTER = re.compile(r"\bis a fictional\b|\bfictional character\b"
@@ -430,6 +456,13 @@ def check():
     # ---- the corpus itself -------------------------------------------------
     rows_all = load("corpus.json")
     kinds = kind_map(rows_all)
+    nationality = {}
+    for _q in rows_all:
+        _d = readable_description(_q[6] or "", _q[7])
+        if _d and _d != "PERSON-BY-DATES":
+            _m = NAT_IN_DESC.match(_d)
+            if _m:
+                nationality.setdefault(_q[7], _nat_family(_m.group(1)))
     raw_expl = {}
     for _q in rows_all:
         if _q[7] and _q[6]:
@@ -469,6 +502,16 @@ def check():
             numeric_total[0] += 1
             if vals == sorted(vals):
                 numeric_sorted[0] += 1
+        if opts and len(opts) >= 4 and 0 <= ci < len(opts):
+            _m = NAT_IN_PROMPT.search(prompt or "")
+            if _m and not NAT_HYPHEN.search(prompt or ""):
+                _want = _nat_family(_m.group(1))
+                if nationality.get(str(opts[ci])) == _want:
+                    _others = [str(o) for i, o in enumerate(opts) if i != ci]
+                    _known = [nationality[o] for o in _others if o in nationality]
+                    if len(_known) == len(_others) and all(k != _want for k in _known):
+                        bad["NATIONALITY-FREE"].append(
+                            f"{q[0]}: {_want} answer, distractors {sorted(set(_known))}")
         if DOUBLED_VERB.search(prompt or ""):
             bad["DOUBLED-STEM"].append(f"{q[0]}: {(prompt or '')[:70]}")
         if STUB_DESC.match((q[6] or "").split(":", 1)[-1].strip()):

@@ -38,7 +38,6 @@ src:describe:Yesterday_(song)
 src:cloze:Jean-Baptiste_Lully
 src:describe:Dan_Rather
 src:describe:The_Yellow_Wallpaper
-src:describe:Johann_Heinrich_Pestalozzi
 src:cloze:Johann_Heinrich_Pestalozzi
 src:describe:Cloud_Gate
 src:describe:William_Tyndale
@@ -1006,7 +1005,6 @@ src:describe:George_Grey
 src:cloze:George_Grey
 src:describe:Fernão_Mendes_Pinto
 src:describe:Staphylococcus_aureus
-src:describe:Nicholas_Georgescu-Roegen
 src:describe:Rosalyn_Sussman_Yalow
 src:describe:Anania_Shirakatsi
 src:cloze:Anania_Shirakatsi
@@ -1063,11 +1061,9 @@ src:describe:Frances_Sargent_Osgood
 src:describe:The_Little_Foxes
 src:describe:Edith_Hamilton
 src:describe:Huolongjing
-src:describe:Imtiaz_Ali_Taj
 src:cloze:He_Jiankui
 src:describe:Phan_Bội_Châu
 src:cloze:Phan_Bội_Châu
-src:describe:Ernst_Kaltenbrunner
 src:describe:George_Mallory
 src:describe:War_in_Darfur
 src:describe:Paekche
@@ -1144,7 +1140,6 @@ src:describe:Central_African_Bush_War
 src:describe:Common_sunflower
 src:cloze:King_cobra
 src:describe:John_Cockcroft
-src:describe:Jaroslav_Heyrovský
 src:describe:Clarence_Birdseye
 src:cloze:Clarence_Birdseye
 src:describe:David_Brewster
@@ -1893,7 +1888,6 @@ src:describe:Wei_Qing
 src:describe:Amanita_muscaria
 src:describe:Felix_Klein
 src:cloze:Ronald_Coase
-src:describe:Vladimir_Shukhov
 src:describe:Jean-Pierre_Serre
 src:cloze:Jean-Pierre_Serre
 src:cloze:Ian_Stevenson
@@ -2747,7 +2741,6 @@ src:describe:Professional_wrestling
 src:describe:Mondelez_International
 src:describe:Shein
 src:describe:The_Prodigy
-src:describe:Bugatti_Automobiles
 src:cloze:Destiny's_Child
 src:describe:Deutschlandlied
 src:cloze:Marc_Chagall
@@ -2825,8 +2818,6 @@ src:cloze:Janet_Frame
 src:cloze:Karl_Kraus_(writer)
 src:describe:Itō_Noe
 src:cloze:Itō_Noe
-src:describe:Wilhelm_Busch
-src:cloze:Wilhelm_Busch
 src:describe:William_Styron
 src:describe:Gene_Wolfe
 src:cloze:Gene_Wolfe
@@ -4115,7 +4106,6 @@ wd:composer:Q202698
 wd:author:Q682733
 wd:capital:Q289577
 wd:elemSymbol:86560641574782
-src:describe:Léon_Degrelle
 src:cloze:Léon_Degrelle
 src:describe:James_Longstreet
 src:cloze:James_Longstreet
@@ -4174,7 +4164,6 @@ src:cloze:Christoph_Willibald_Gluck
 src:cloze:Carl_Perkins
 src:describe:Songs_in_the_Key_of_Life
 src:describe:The_Martian_Chronicles
-src:describe:Antonio_Canova
 src:describe:Dean_Koontz
 src:cloze:Dean_Koontz
 src:cloze:Kinky_Boots_(musical)
@@ -5002,7 +4991,6 @@ src:describe:Merv_Griffin
 src:describe:Flannery_O'Connor
 src:cloze:Flannery_O'Connor
 src:cloze:Parsifal
-src:cloze:Robert_Capa
 src:describe:Liliʻuokalani
 src:describe:Harriet_Beecher_Stowe
 src:cloze:Harriet_Beecher_Stowe
@@ -5042,7 +5030,6 @@ src:describe:Butterfly
 src:cloze:Butterfly
 src:describe:Tupolev_Tu-22M
 src:describe:Clonazepam
-src:cloze:Jaroslav_Heyrovský
 src:describe:Michael_Kremer
 src:cloze:Edwin_McMillan
 src:describe:Nice
@@ -5999,7 +5986,6 @@ src:describe:Northern_Cyprus
 src:cloze:Tyreek_Hill
 src:describe:Tonya_Harding
 src:cloze:Avery_Brundage
-src:describe:MCOT
 src:describe:Jimmy_Page
 src:describe:Sony
 src:describe:Audi
@@ -6467,7 +6453,6 @@ wd:director:Q57270
 wd:composer:Q57270
 wd:director:Q623051
 wd:composer:Q623051
-src:cloze:Ernst_Kaltenbrunner
 src:describe:Ferdinand_VII
 src:cloze:Ferdinand_VII
 src:describe:Ted_Williams
@@ -7112,8 +7097,6 @@ src:cloze:Tyra_Banks
 src:describe:Keeping_Up_with_the_Kardashians
 src:describe:Vidya_Balan
 src:cloze:Vidya_Balan
-src:describe:Raymond_Burr
-src:cloze:Raymond_Burr
 src:describe:Full_Metal_Jacket
 src:cloze:Full_Metal_Jacket
 src:describe:Gene_Tierney
@@ -7886,7 +7869,6 @@ src:cloze:Charles_Trenet
 src:cloze:Steve_Reich
 src:cloze:Ray_William_Johnson
 src:describe:Kama_Sutra
-src:describe:Carl_Jung
 src:describe:Anthony_Bourdain
 src:cloze:Eugène_Viollet-le-Duc
 src:describe:Alexander_Herzen
@@ -13244,7 +13226,6 @@ src:cloze:Harry_Potter_and_the_Philosopher's_Stone
 src:describe:Antoni_Gaudí
 src:cloze:Antoni_Gaudí
 src:cloze:Hogwarts_Legacy
-src:describe:Thomas_Aquinas
 src:describe:Old_Testament
 src:cloze:Old_Testament
 wd:continent:Q1408
@@ -13444,7 +13425,6 @@ src:cloze:Mortal_Kombat_1
 src:cloze:Virus
 src:cloze:Simon_Cowell
 src:describe:Melania_Trump
-src:cloze:Carl_Jung
 wd:continent:Q1397
 wd:continent:Q188712
 wd:continent:Q983
@@ -16256,7 +16236,6 @@ src:cloze:Hydrogen
 src:describe:Oxygen
 src:cloze:Oxygen
 src:describe:Edward_Teller
-src:describe:Archimedes
 src:describe:Dolph_Lundgren
 src:cloze:Dolph_Lundgren
 src:describe:Ringo_Starr
@@ -16863,7 +16842,6 @@ src:cloze:Seventeen_(South_Korean_band)
 src:describe:Shizuko_Kasagi
 src:cloze:Shizuko_Kasagi
 src:cloze:Shane_MacGowan
-src:cloze:LVMH
 src:describe:Peso_Pluma
 src:describe:Robbie_Williams
 src:cloze:Robbie_Williams
@@ -52294,7 +52272,6 @@ src:cloze:Jerry_Buss
 src:describe:Ernest_Lawrence
 src:cloze:Ernest_Lawrence
 src:describe:Special_relativity
-src:describe:Mikoyan_MiG-35
 src:describe:Litre
 src:cloze:Litre
 src:cloze:Computer_programming
@@ -52584,8 +52561,6 @@ src:describe:Airbus_A400M_Atlas
 src:cloze:Airbus_A400M_Atlas
 src:describe:Moose
 src:describe:Airbus_A220
-src:describe:Émile_Durkheim
-src:cloze:Émile_Durkheim
 src:describe:Amygdala
 src:describe:European_goldfinch
 src:describe:Columbidae
@@ -53154,7 +53129,6 @@ src:cloze:Diethyl_ether
 src:describe:Chard
 src:describe:Vein
 src:cloze:Vein
-src:describe:Jan_Hus
 src:describe:Nikolai_Patrushev
 src:cloze:Nikolai_Patrushev
 src:describe:Paracelsus
@@ -53478,7 +53452,6 @@ src:describe:Wildebeest
 src:cloze:Wildebeest
 src:describe:Genital_wart
 src:cloze:Genital_wart
-src:describe:Baykar_Bayraktar_TB2
 src:cloze:Baykar_Bayraktar_TB2
 src:describe:Audit
 src:describe:Ficus
@@ -54109,8 +54082,6 @@ src:describe:Chives
 src:cloze:Chives
 src:describe:De_Havilland_Mosquito
 src:cloze:De_Havilland_Mosquito
-src:describe:Jan_Kaczkowski
-src:cloze:Jan_Kaczkowski
 src:describe:Ryōkichi_Yatabe
 src:cloze:Ryōkichi_Yatabe
 src:describe:Chondrichthyes
@@ -65977,16 +65948,12 @@ src:describe:Ian_Watkins
 src:cloze:Ian_Watkins
 src:describe:Fito_Páez
 src:cloze:Fito_Páez
-src:describe:Rolex
-src:cloze:Rolex
 src:describe:New_Kids_on_the_Block
 src:cloze:New_Kids_on_the_Block
 src:describe:Brenda_Lee
 src:describe:Kana_Hanazawa
 src:describe:Kirk_Hammett
 src:cloze:Kirk_Hammett
-src:describe:Roxette
-src:cloze:Roxette
 src:describe:Brandi_Carlile
 src:cloze:Brandi_Carlile
 src:describe:Cliff_Burton
@@ -66239,7 +66206,6 @@ src:cloze:Suzi_Quatro
 src:describe:Robert_Johnson
 src:cloze:Robert_Johnson
 src:describe:Pentatonix
-src:cloze:Pentatonix
 src:describe:Hulu
 src:cloze:Hulu
 src:describe:Charlie_Watts
@@ -66746,7 +66712,6 @@ src:cloze:Bebe_Buell
 src:describe:John_Coltrane
 src:cloze:John_Coltrane
 src:describe:Diageo
-src:cloze:Diageo
 src:describe:Tame_Impala
 src:cloze:Tame_Impala
 src:describe:Vince_Clarke
@@ -66916,8 +66881,6 @@ src:describe:Hope_Sandoval
 src:cloze:Hope_Sandoval
 src:describe:Masaharu_Fukuyama
 src:describe:Noriyuki_Higashiyama
-src:describe:BlackBerry_Limited
-src:cloze:BlackBerry_Limited
 src:describe:Johnny_Mathis
 src:cloze:Johnny_Mathis
 src:describe:Matt_Bellamy
@@ -67094,8 +67057,6 @@ src:cloze:Ado_(singer)
 src:describe:John_Deere
 src:describe:Kim_Wilde
 src:describe:Richard_Kruspe
-src:describe:B'z
-src:cloze:B'z
 src:cloze:Cruel_Summer_(Taylor_Swift_song)
 src:describe:Ezra_Koenig
 src:cloze:Ezra_Koenig
@@ -67297,7 +67258,6 @@ src:describe:Seiko_Matsuda
 src:describe:Mark_Lanegan
 src:cloze:Mark_Lanegan
 src:describe:Juan_Gabriel
-src:describe:The_Corrs
 src:describe:Bon_Iver
 src:cloze:Bon_Iver
 src:describe:Taeyang
@@ -67515,8 +67475,6 @@ src:describe:Maren_Morris
 src:cloze:Maren_Morris
 src:describe:Roxy_Music
 src:cloze:Roxy_Music
-src:describe:TotalEnergies
-src:cloze:TotalEnergies
 src:describe:Babyface_(musician)
 src:describe:VMware
 src:cloze:VMware
@@ -67714,7 +67672,6 @@ src:cloze:ITC_Limited
 src:describe:Paul_Weller
 src:cloze:Paul_Weller
 src:describe:Adani_Group
-src:cloze:Adani_Group
 src:describe:Pankaj_Udhas
 src:cloze:Pankaj_Udhas
 src:describe:Wilson_Phillips
@@ -68019,7 +67976,6 @@ src:describe:Michela_Murgia
 src:cloze:Michela_Murgia
 src:describe:Brandon_Sanderson
 src:cloze:Brandon_Sanderson
-src:describe:Frank_Lloyd_Wright
 src:describe:Tom_Clancy
 src:describe:Maxim_Gorky
 src:describe:Fairy_tale
@@ -68946,8 +68902,6 @@ src:describe:Spawn_(character)
 src:describe:Sussanne_Khan
 src:cloze:Sussanne_Khan
 src:describe:Legend_of_the_Galactic_Heroes
-src:describe:Auguste_Rodin
-src:cloze:Auguste_Rodin
 src:describe:Titian
 src:describe:Raja_Ram_Mohan_Roy
 src:describe:Mirabai
@@ -69239,7 +69193,6 @@ src:describe:Shashi_Tharoor
 src:cloze:Shashi_Tharoor
 src:cloze:Walter_Scott
 src:describe:Sugawara_no_Michizane
-src:cloze:Sugawara_no_Michizane
 src:describe:Flappy_Bird
 src:cloze:Flappy_Bird
 src:describe:Ballad
@@ -69345,7 +69298,6 @@ src:cloze:Outlast
 src:describe:Abraham_Van_Helsing
 src:cloze:Abraham_Van_Helsing
 src:describe:Booker_T._Washington
-src:cloze:Booker_T._Washington
 src:describe:Vera-Ellen
 src:describe:Li_Bai
 src:describe:Insomniacs_After_School
@@ -94372,7 +94324,6 @@ src:describe:Ayesha_Takia
 src:describe:Selvaraghavan
 src:cloze:Selvaraghavan
 src:describe:Clark_Olofsson
-src:cloze:Clark_Olofsson
 src:describe:Kairi_Sane
 src:cloze:Kairi_Sane
 src:describe:Masataka_Kubota
@@ -96852,7 +96803,6 @@ src:cloze:Leonardo_(company)
 src:cloze:Primus_(band)
 src:describe:Kim_Hyun-joong
 src:cloze:Kim_Hyun-joong
-src:describe:Kahoot!
 src:describe:Daisuke_Sakuma
 src:cloze:Daisuke_Sakuma
 src:describe:Everybody_Wants_to_Rule_the_World
@@ -97339,7 +97289,6 @@ src:cloze:Beat_It
 src:describe:Fidelity_Investments
 src:describe:Oxxxymiron
 src:describe:Novartis
-src:cloze:Novartis
 src:describe:D'arcy_Wretzky
 src:cloze:D'arcy_Wretzky
 src:describe:Billlie
@@ -97472,9 +97421,6 @@ src:describe:Rockabilly
 src:cloze:Rockabilly
 src:describe:Guy_Chambers
 src:cloze:Guy_Chambers
-src:describe:Klarna
-src:cloze:Klarna
-src:describe:DJI
 src:describe:The_Human_League
 src:cloze:The_Human_League
 src:describe:Drum_and_bass
@@ -97681,7 +97627,6 @@ src:describe:Paint_It_Black
 src:cloze:Paint_It_Black
 src:describe:Dr._Luke
 src:cloze:Dr._Luke
-src:describe:Dm-drogerie_markt
 src:cloze:Dm-drogerie_markt
 src:cloze:Sade_(band)
 src:describe:Diana_Gurtskaya
@@ -114807,7 +114752,6 @@ src:cloze:Kemalism
 src:describe:Nepalese_royal_massacre
 src:describe:Putinism
 src:cloze:Putinism
-src:describe:Grigory_Orlov
 src:cloze:Grigory_Orlov
 src:describe:Chiune_Sugihara
 src:describe:Al-Aqsa_Martyrs'_Brigades
@@ -115264,7 +115208,6 @@ src:cloze:Ranulph_Fiennes
 src:describe:Pavlo_Skoropadsky
 src:cloze:Democratic_Left_Party_(Turkey)
 src:describe:Alois_Brunner
-src:cloze:Alois_Brunner
 src:describe:Alexander_Van_der_Bellen
 src:cloze:Alexander_Van_der_Bellen
 src:describe:War_of_the_Fourth_Coalition
@@ -115586,7 +115529,6 @@ src:cloze:John_Stith_Pemberton
 src:cloze:Collard_(plant)
 src:describe:Peyronie's_disease
 src:cloze:Peyronie's_disease
-src:describe:Alberto_Santos-Dumont
 src:describe:Galago
 src:describe:Lamiaceae
 src:cloze:Lamiaceae
@@ -115709,7 +115651,6 @@ src:describe:Romano_Prodi
 src:cloze:Romano_Prodi
 src:describe:Jet_lag
 src:cloze:Jet_lag
-src:describe:IAI_Kfir
 src:describe:Scandium
 src:cloze:Scandium
 src:describe:Mikoyan-Gurevich_MiG-19
@@ -120801,8 +120742,6 @@ src:describe:Jess_Glynne
 src:cloze:Jess_Glynne
 src:describe:Big_Time_Rush_(group)
 src:cloze:Big_Time_Rush_(group)
-src:describe:Leica_Camera
-src:cloze:Leica_Camera
 src:describe:Neneh_Cherry
 src:describe:Rubén_Blades
 src:cloze:KC_and_the_Sunshine_Band
@@ -120815,7 +120754,6 @@ src:describe:Marimba
 src:cloze:Marimba
 src:describe:This_Is_Me..._Now
 src:cloze:Michael_Lockwood_(guitarist)
-src:describe:Logitech
 src:cloze:Jim_Gordon_(musician)
 src:describe:Emma_Kok
 src:cloze:Emma_Kok
@@ -121413,7 +121351,6 @@ src:describe:Fly_Me_to_the_Moon
 src:describe:Paco_de_Lucía
 src:describe:Dermot_Kennedy
 src:cloze:Dermot_Kennedy
-src:describe:Sui_Generis
 src:cloze:Sui_Generis
 src:describe:Melanie_Thornton
 src:cloze:Melanie_Thornton
@@ -121742,7 +121679,6 @@ src:cloze:Houses_of_the_Holy
 src:describe:OceanGate
 src:describe:Billy_Porter
 src:cloze:Billy_Porter
-src:describe:Dschinghis_Khan
 src:describe:Pino_D'Angiò
 src:describe:Asking_Alexandria
 src:cloze:Asking_Alexandria
@@ -122141,8 +122077,6 @@ src:describe:Terence_McKenna
 src:cloze:Terence_McKenna
 src:describe:Antonio_Machado
 src:describe:Henry_Dunant
-src:describe:V._C._Andrews
-src:cloze:V._C._Andrews
 src:describe:Gabriela_Mistral
 src:describe:Michael_Buffer
 src:cloze:Michael_Buffer
@@ -122307,7 +122241,6 @@ src:cloze:Hanya_Yanagihara
 src:describe:Hi-Fi_Rush
 src:cloze:Hi-Fi_Rush
 src:cloze:Drifters_(manga)
-src:describe:Pierre_Bergé
 src:cloze:Pierre_Bergé
 src:describe:Ravidas
 src:cloze:Ravidas
@@ -126302,7 +126235,6 @@ src:describe:Ruthenium
 src:cloze:Ruthenium
 src:describe:Acesulfame_potassium
 src:describe:Galápagos_tortoise
-src:describe:Hawker_Siddeley_Harrier
 src:describe:Esomeprazole
 src:describe:Tomatillo
 src:cloze:Tomatillo
@@ -127601,7 +127533,6 @@ src:cloze:Bill_Medley
 src:describe:Bellator_MMA
 src:describe:The_Lumineers
 src:cloze:The_Lumineers
-src:describe:McFly
 src:cloze:McFly
 src:describe:Tatra_(company)
 src:cloze:Tatra_(company)
@@ -127634,8 +127565,6 @@ src:describe:Müslüm_Gürses
 src:cloze:Müslüm_Gürses
 src:describe:Future_Nostalgia
 src:cloze:Future_Nostalgia
-src:describe:The_Shadows
-src:cloze:The_Shadows
 src:describe:Trevor_Horn
 src:cloze:Trevor_Horn
 src:describe:Patrick_Fiori
@@ -127672,8 +127601,6 @@ src:describe:Lisa_Stansfield
 src:cloze:Lisa_Stansfield
 src:describe:Motionless_in_White
 src:cloze:Motionless_in_White
-src:describe:Lordi
-src:cloze:Lordi
 src:describe:Trans-Siberian_Orchestra
 src:cloze:Jung_Jin-young_(singer)
 src:describe:D'Angelo

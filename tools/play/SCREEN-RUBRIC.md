@@ -126,3 +126,23 @@ failures are only visible once the surface is on screen.
   kept rendering — Closest Call carries its own explanation cell. A rule that
   names one file checks one file. Both the repair and the rule now walk every
   question file.
+
+## Does the clue's own wording eliminate the distractors? (added 2026-08-01)
+
+A prompt that states an attribute has made a promise about the options. Read the
+stem and ask what it rules out before you ask whether the answer is right.
+
+- **Nationality.** "Who is this American painter?" over Claude Monet, Bob Ross,
+  Caravaggio and Raphael. One American among a Frenchman and two Italians — the
+  player needs nothing but the adjective. Gated by `NATIONALITY-FREE`, which
+  fires only when EVERY distractor's nationality is known and different, since
+  one odd nationality among four does not decide a question.
+- **The families matter more than the list.** English, Scottish and Welsh are
+  British for this purpose; a hyphenated origin ("this Italian-American
+  physicist") is two claims and exempt. Without those two exceptions the rule
+  flagged 2,402 questions instead of 192, and would have rewritten good ones.
+- **A repair must satisfy the OTHER rules too.** Swapping in same-nationality
+  distractors pushed KIND-MISMATCH from 0 to 46 and broke an era spread. The
+  constraints in tools/corpus are cumulative: same category, same kind, same era,
+  no word shared with the prompt, nothing already on screen. Check the set the
+  player will see, not each swap in isolation.

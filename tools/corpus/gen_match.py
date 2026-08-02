@@ -34,7 +34,11 @@ RELATIONS = {
     # round, so a player's THIRD round in those categories ran 65% on-category.
     "rel:P17:":       ("Match each of these to its country.", "subject", "country"),
     "rel:P112:":      ("Match each organization to its founder.", "organization", "founder"),
-    "rel:P175:":      ("Match each song to the artist who performed it.", "song", "artist"),
+    # NOT "song ... artist": Wikidata's `performer` covers an ACTOR playing a
+    # role as well as a musician playing a track, so the round rendered as "Match
+    # each song to the artist who performed it" over Rocket Raccoon, Scarecrow and
+    # Shazam — characters and their voice actors. Found by reading the screen.
+    "rel:P175:":      ("Match each role or song to its performer.", "work", "performer"),
     "rel:P170:":      ("Match each work to its creator.", "work", "creator"),
 }
 PER_RELATION = 60

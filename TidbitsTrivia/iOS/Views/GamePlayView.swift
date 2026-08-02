@@ -27,6 +27,7 @@ struct GamePlayView: View {
             if let versus { VersusStrip(match: versus, game: game) }
             hud
             if let q = game.current {
+                ScrollViewReader { scroll in
                 ScrollView {
                     VStack(spacing: 18) {
                         if game.mode == .barTrivia, let round = game.currentRound { roundBanner(round) }
@@ -47,7 +48,7 @@ struct GamePlayView: View {
                         if game.phase == .reveal {
                             if game.awaitingReveal { lockedBeat }
                             else {
-                                reveal(for: q)
+                                reveal(for: q).id("reveal")
                                 if let live { NightStandingsCard(live: live) }
                                 if let versus { VersusRevealCard(match: versus) }
                             }
@@ -64,6 +65,18 @@ struct GamePlayView: View {
                     .id(game.index)
                 }
                 .scrollBounceBehavior(.basedOnSize)
+                // Bring the reveal into view when it appears. Found by reading a
+                // rendered Match Up round: with four pairs, four value chips and a
+                // four-line explanation, the last line of the payoff sat behind
+                // the Next bar until the player thought to scroll. The reveal is
+                // the point of the mode; it should not have to be hunted for.
+                .onChange(of: game.phase) { _, phase in
+                    guard phase == .reveal, !game.awaitingReveal else { return }
+                    withAnimation(.easeOut(duration: 0.25)) {
+                        scroll.scrollTo("reveal", anchor: .bottom)
+                    }
+                }
+            }
             }
             Spacer(minLength: 0)
             if let live {

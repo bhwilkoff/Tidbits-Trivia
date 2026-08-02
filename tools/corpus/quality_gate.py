@@ -158,6 +158,12 @@ Each rule below is here because a real question in this app hit it:
                   it away. Kept only where the city genuinely differs from its
                   country (Dakar -> Wolof in French-speaking Senegal).
   KIND-MISMATCH   an option that is a different KIND of thing from the answer —
+                  LIMIT: an option the corpus does not describe cannot be typed,
+                  so it is never flagged. "This form of cancer..." kept "Vocal
+                  cords" (no description at all) and "Hypertrophy" ("Increase in
+                  the size of biological cells", which matches no kind) after the
+                  repair swapped its one typeable distractor. The rule sees what
+                  the corpus states, and silence is not agreement.
                   "European hornet" among Myrtle, Nerium and Date palm, for a
                   clue about a shrub. Nobody needs the fact to solve that.
   STEM-TYPE       "In which country is Russo-Ukrainian war?" — one Wikidata
@@ -401,15 +407,15 @@ SOVEREIGN_NAME = re.compile(
     r"kaganate|khanate|dynasty|state)\b", re.I)
 
 _KINDS = [
-    ("plant",    r"\b(plant|shrub|tree|flower|grass|fern|moss|herb|vine|flowering plant|conifer|palm|cactus)\b"),
-    ("animal",   r"\b(insect|bird|mammal|fish|reptile|amphibian|spider|beetle|wasp|hornet|moth|butterfly|dinosaur|crustacean|mollusc|primate)\b"),
+    ("chemical", r"\b(chemical elements?|compounds?|molecules?|proteins?|enzymes?|minerals?|isotopes?|alkaloids?|acids?|oxides?|hormones?|vitamins?|drugs?|medications?|antibiotics?|steroids?|salts?)\b"),
+    ("plant",    r"\b(plants?|shrubs?|trees?|flowers?|grass(?:es)?|ferns?|mosses?|herbs?|vines?|conifers?|palms?|cacti|cactus)\b"),
+    ("animal",   r"\b(insects?|birds?|mammals?|fish|reptiles?|amphibians?|spiders?|beetles?|wasps?|hornets?|moths?|butterfly|butterflies|dinosaurs?|crustaceans?|molluscs?|primates?)\b"),
     ("person",   r"\b(born \d{4}|politician|footballer|actor|actress|singer|writer|player|physicist|philosopher|emperor|monarch|composer|director|mathematician|musician|scientist|chemist|biologist|astronomer|economist|historian|archaeologist|psychologist|linguist|botanist|zoologist|geologist|primatologist|engineer|architect|painter|sculptor|poet|novelist|playwright|screenwriter|journalist|editor|dancer|choreographer|conductor|guitarist|pianist|violinist|drummer|rapper|filmmaker|producer|presenter|broadcaster|comedian|activist|entrepreneur|magnate|philanthropist|explorer|astronaut|physician|surgeon|nurse|lawyer|judge|professor|teacher|leader|statesman|king|queen|sultan|caliph|tsar|premier|president|chancellor|dictator|revolutionary|general|admiral|soldier|athlete|swimmer|boxer|cyclist|wrestler|jockey|manager|coach|quarterback|midfielder|goalkeeper|striker|winger|batsman|bowler|author|artist|commentator|illustrator|cartoonist|animator|designer|inventor|banker|songwriter|novelist|essayist|critic|theologian|missionary|aviator|racer|pilot|spy|outlaw|chief|saint|prophet|rabbi|imam|bishop|pope|cardinal|abbot|monk|nun)\b"),
     ("place",    r"\b(country|city|town|village|island|river|mountain|region|province|capital|lake|desert|county|municipality)\b"),
     ("work",     r"\b(film|movie|song|album|novel|book|poem|series|sitcom|anime|video game|painting|opera|symphony|manga|sculpture)\b"),
     ("org",      r"\b(company|corporation|club|team|university|bank|airline|band|agency|organisation|organization|brand)\b"),
     ("event",    r"\b(battle|war\b|siege|revolution|treaty|massacre|disaster|earthquake|eruption|pandemic|election)\b"),
-    ("chemical", r"\b(chemical element|compound|molecule|protein|enzyme|mineral|isotope)\b"),
-    ("disease",  r"\b(disease|disorder|syndrome|infection|cancer|virus|bacterium)\b"),
+    ("disease",  r"\b(diseases?|disorders?|syndromes?|infections?|cancers?|viruses?|virus|bacteri(?:um|a))\b(?!-)"),
 ]
 _KINDS = [(n, re.compile(p, re.I)) for n, p in _KINDS]
 

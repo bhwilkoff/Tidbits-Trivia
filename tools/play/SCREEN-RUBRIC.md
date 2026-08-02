@@ -261,3 +261,26 @@ a template dropped an element name, lowercase by convention, into the first slot
   rows dirty and the gate caught them. It now iterates to a fixed point. This is
   the second non-idempotent repair this session; the first shipped "based based
   based based" to 1,022 questions.
+
+## A classifier that agrees with itself is not the same as one that is right
+
+"This form of cancer... what is it?" rendered against Tsetse fly, Vocal cords and
+Hypertrophy. KIND-MISMATCH read 0 — because "Tsetse fly: Genus of
+DISEASE-spreading insects" matched the disease pattern, so the fly and the cancer
+agreed and the rule stayed silent on a free question. Two substring traps in one
+description:
+
+- **`\bdisease\b` matched "disease-spreading".** A hyphen compound is a
+  modifier, not the type. Now excluded.
+- **`\binsect\b` never matched "insects".** The animal and plant vocabularies had
+  no plurals at all.
+
+Fixing both exposed 338 mismatches that had been hidden, and widening `chemical`
+(alkaloid, drug, medication, acid...) and moving it AHEAD of plant and animal
+exposed 96 more: "Theobromine: Bitter alkaloid of the cacao PLANT" and
+"Theophylline: Drug used to treat respiratory DISEASES" were both typed by what
+they come from or treat rather than by what they are. 434 repaired, validated
+against 13 subjects labelled by hand.
+
+**A gate rule reading zero is evidence only if the classifier under it is sound.**
+Check the rule against a case you can see before believing its silence.

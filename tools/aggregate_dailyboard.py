@@ -95,7 +95,7 @@ def pick_daily_balanced(ids, cats, day, category_id, count):
     return out
 
 
-def summarize_day(players, qids):
+def summarize_day(players, qids, want_qv=DAILY_SET_V1):
     """players: {uid: {name, avatarSeed, score, correct, marks, ...}} -> the published shape.
 
     Per-question accuracy tracks each question's seen/hit counts, so it generalizes if the
@@ -105,6 +105,13 @@ def summarize_day(players, qids):
     q_hits, q_seen = [0] * DAILY_COUNT, [0] * DAILY_COUNT
     for uid, p in players.items():
         if not isinstance(p, dict):
+            continue
+        # A row with no `qv` predates the field and is therefore v1 — which is
+        # what every already-shipped client writes. Rows from a DIFFERENT version
+        # answered different questions, so they belong on a different board:
+        # mixing them would rank players on unequal sets and index one client's
+        # marks against another's question list.
+        if int(p.get("qv", DAILY_SET_V1)) != want_qv:
             continue
         score = int(p.get("score", 0))
         rows.append({
@@ -123,7 +130,8 @@ def summarize_day(players, qids):
     n = len(rows)
     top = sorted(rows, key=lambda r: (-r["score"], -r["correct"], r["name"]))[:TOP_CAP]
     per_q = [round(q_hits[i] / q_seen[i], 4) if q_seen[i] else 0.0 for i in range(DAILY_COUNT)]
-    return {"qids": qids, "n": n, "hist": hist, "perQ": per_q, "top": top}
+    return {"qids": qids, "qv": want_qv, "n": n, "hist": hist,
+            "perQ": per_q, "top": top}
 
 
 def write_json(path, obj):
@@ -145,6 +153,17 @@ def load_ids(corpus_file):
     return [str(x) for x in data]
 
 
+def load_cats(corpus_file):
+    """Categories parallel to load_ids, for the v2 balanced pick."""
+    if not corpus_file:
+        return None
+    with open(corpus_file) as f:
+        data = json.load(f)
+    if isinstance(data, dict) and "questions" in data:
+        return [str(q[4]) for q in data["questions"]]
+    return None
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--input", help="RTDB-shaped JSON dump (offline test) instead of a live read")
@@ -155,13 +174,25 @@ def main():
     data = fetch_board(args.input)
     all_ids = load_ids(args.corpus)
 
+    cats = load_cats(args.corpus)
+
     days = sorted(k for k in data.keys() if isinstance(data.get(k), dict))
     recent = days[-KEEP_DAYS:]
     for day in recent:
-        qids = pick_daily(all_ids, day, "mixed", DAILY_COUNT) if all_ids else []
-        summary = summarize_day(data[day], qids)
+        # v1 stays at {day}.json — the path every shipped client already reads.
+        # v2, when it exists, is published BESIDE it so a client can fetch the
+        # board matching its own qv. Publishing one merged board would rank
+        # players who answered different questions against each other.
+        v1_qids = pick_daily(all_ids, day, "mixed", DAILY_COUNT) if all_ids else []
+        summary = summarize_day(data[day], v1_qids, want_qv=DAILY_SET_V1)
         summary["day"] = day
         write_json(f"{args.out}/{day}.json", summary)
+
+        if daily_set_version(day) == DAILY_SET_V2 and all_ids and cats:
+            v2_qids = pick_daily_balanced(all_ids, cats, day, "mixed", DAILY_COUNT)
+            v2 = summarize_day(data[day], v2_qids, want_qv=DAILY_SET_V2)
+            v2["day"] = day
+            write_json(f"{args.out}/{day}-v2.json", v2)
 
     index = {"latest": days[-1] if days else None, "days": days[-30:]}
     write_json(f"{args.out}/index.json", index)

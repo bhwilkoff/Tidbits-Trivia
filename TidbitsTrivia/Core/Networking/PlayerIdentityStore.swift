@@ -171,7 +171,8 @@ final class PlayerIdentityStore {
                                      correct: summary.correct,
                                      marks: DailyBoard.marks(answered: summary.answered, qids: qids),
                                      ms: ms,
-                                     at: Int(Date().timeIntervalSince1970 * 1000))
+                                     at: Int(Date().timeIntervalSince1970 * 1000),
+                                     qv: DailyPick.setVersion(for: day))
         try? await db.put("dailyBoard/\(day)/\(authUid)", entry)
     }
 

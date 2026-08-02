@@ -16,7 +16,15 @@ nonisolated enum DailyBoard {
     /// has played, or it's the current in-progress hour). Never surface an error — an
     /// absent board just means "check back after the hourly refresh".
     static func results(day: String) async -> Board? {
-        await fetch("\(base)/\(day).json")
+        // Read the board matching THIS client's question-set version. v1 keeps
+        // the original path so every already-shipped client is unaffected; v2 is
+        // published beside it. Falling back to the v1 path on a v2 day would
+        // show a board built from a different set of questions.
+        if DailyPick.setVersion(for: day) == DailyPick.setV2 {
+            let v2: Board? = await fetch("\(base)/\(day)-v2.json")
+            if let v2 { return v2 }
+        }
+        return await fetch("\(base)/\(day).json")
     }
 
     /// Your percentile from the published histogram: the share of players you strictly
@@ -65,6 +73,13 @@ nonisolated enum DailyBoard {
     }
 
     /// The row a client writes to `dailyBoard/{day}/{uid}`.
+    ///
+    /// `qv` is the question-set version (Decision 050). Two clients on different
+    /// versions answered DIFFERENT QUESTIONS, so one board cannot rank them
+    /// together — and `marks` is aligned to the pick ORDER, so without `qv` the
+    /// aggregator would index one client's marks against another's question list
+    /// and publish per-question percentages that are quietly wrong. A row with no
+    /// `qv` is v1, which is what every already-shipped client writes.
     struct Entry: Encodable, Sendable {
         let name: String
         let avatarSeed: String
@@ -73,5 +88,6 @@ nonisolated enum DailyBoard {
         let marks: String
         let ms: Int
         let at: Int
+        let qv: Int
     }
 }

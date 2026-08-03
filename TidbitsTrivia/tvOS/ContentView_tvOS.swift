@@ -40,6 +40,7 @@ struct ContentView_tvOS: View {
     @State private var hostLaunch: NightLaunchRequest?
     @State private var showJoinNight = false
     @State private var showRecords = false
+    @State private var sharedItemID: TVSharedItemID?
     /// Same key as macOS, so a household that already saw the walkthrough on one Apple
     /// device does not get it again on another once iCloud syncs defaults.
     @AppStorage("tidbits.hasOnboarded") private var hasOnboarded = false
@@ -67,6 +68,25 @@ struct ContentView_tvOS: View {
     @State private var showLinkWall = false
 
     /// Launch a game and (unless Daily) remember it as the Quick Play default.
+    /// Consume the deep-link inbox. The TV has no tab bar and no navigation stack, so a
+    /// link resolves to "present the right cover", which is what every other tvOS entry
+    /// point does too.
+    private func handleInbox() {
+        for link in store.drainInbox() {
+            switch link {
+            case .daily:
+                launch = LaunchRequest(mode: .daily, category: .named("mixed"))
+            case .topic, .category:
+                break   // the Play screen IS the home surface here; nothing to navigate to
+            case .quiz(let id):
+                store.pendingSharedQuizID = id
+                showCreate = true          // Create owns saved quizzes on tvOS too
+            case .item(let id):
+                sharedItemID = TVSharedItemID(id: id)
+            }
+        }
+    }
+
     private func play(_ mode: GameMode, _ category: TriviaCategory) {
         store.rememberSelection(mode: mode, category: category)
         launch = LaunchRequest(mode: mode, category: category)
@@ -93,6 +113,16 @@ struct ContentView_tvOS: View {
         }
         .defaultFocus($primaryFocused, true)
         .task { if DebugHooks.openCreate { showCreate = true } }
+        // Deep links land in the store inbox (App.onOpenURL) and are consumed HERE.
+        // tvOS registered `tidbits://` from day one (one Info.plist serves the whole
+        // universal target) and posted every link into the inbox — but nothing ever
+        // drained it, so a Top Shelf / Siri / QR link launched the app and then did
+        // nothing at all. iOS and macOS have always had this; the TV never did.
+        .onChange(of: store.inbox) { _, _ in handleInbox() }
+        .onAppear {
+            if let id = DebugHooks.openItemID { store.post(.item(id)) }
+            handleInbox()
+        }
         .fullScreenCover(isPresented: $showCustomize) {
             TVCustomizePicker(initialMode: store.quickPlay.mode) { mode, cat in
                 showCustomize = false; play(mode, cat)
@@ -143,6 +173,7 @@ struct ContentView_tvOS: View {
             RecordsView_tvOS(onPlay: { req in showRecords = false; launch = req })
         }
         .fullScreenCover(isPresented: $showSettings) { SettingsView_tvOS() }
+        .fullScreenCover(item: $sharedItemID) { SharedItemView_tvOS(id: $0.id) }
         // First run. A cover rather than a sheet: tvOS has no partial presentation, and
         // the walkthrough should own the screen once and never again.
         .fullScreenCover(isPresented: Binding(get: { !hasOnboarded && !DebugHooks.skipOnboarding },
@@ -788,5 +819,10 @@ struct TVCategoryStyle: ButtonStyle {
                 .animation(.easeOut(duration: 0.18), value: focused)
         }
     }
+}
+
+/// `fullScreenCover(item:)` needs an Identifiable, and a bare String isn't one.
+struct TVSharedItemID: Identifiable {
+    let id: String
 }
 #endif

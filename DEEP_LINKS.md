@@ -49,7 +49,7 @@ server-side routes exist.
 |---|---|---|
 | **Web** | Nowhere — URLs are the routing (+ `404.html` forwarder on static hosts) | `js/app.js::init()` reads `location.search` + `pathname` |
 | **iOS / iPadOS** | `Info.plist` `CFBundleURLTypes` (custom scheme) + Associated Domains entitlement (Universal Links) | `App.scene.onOpenURL` — fires for BOTH custom and Universal Links on iOS 17+ → post to the intent inbox |
-| **tvOS** | `Info.plist` `CFBundleURLTypes` — custom scheme ONLY (no Safari on tvOS → no Universal Links; the scheme is what Top Shelf + Siri use) | same `.onOpenURL` → same inbox (universal target) |
+| **tvOS** | `Info.plist` `CFBundleURLTypes` — custom scheme ONLY (no Safari on tvOS → no Universal Links; the scheme is what Top Shelf + Siri use) | same `.onOpenURL` → same inbox (universal target) → **and `ContentView_tvOS` must DRAIN it.** It didn't until 2026-08-03: registration and posting were both fine, so every link launched the app and silently did nothing. Registering a scheme is half the job; something has to consume the inbox. |
 | **Android** | `AndroidManifest.xml` `<intent-filter android:autoVerify="true">` per scheme + path-prefix | `MainActivity.onCreate` + `onNewIntent` → `handleDeepLink(intent)` switches by `uri.scheme` |
 
 **Android manifest audit**: EVERY host/path the app emits anywhere

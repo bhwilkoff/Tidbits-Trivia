@@ -473,6 +473,10 @@ _TYPE_FAMILY = {
         "historical region", "department", "county", "prefecture", "canton",
         "federal state", "autonomous region", "dependent territory",
     },
+    "person": {
+        "human", "human biblical figure", "biblical figure",
+        "human who may be fictional", "legendary figure",
+    },
     "landform": {
         "island", "archipelago", "mountain", "volcano", "stratovolcano",
         "river", "lake", "sea", "desert", "peninsula", "valley",

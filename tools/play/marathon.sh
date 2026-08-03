@@ -76,6 +76,20 @@ DEVELOPER_DIR=$DEV xcrun simctl terminate "$UDID" "$BUNDLE" 2>/dev/null || true
 DEVELOPER_DIR=$DEV xcrun simctl uninstall "$UDID" "$BUNDLE" 2>/dev/null || true
 DEVELOPER_DIR=$DEV xcrun simctl install "$UDID" "$APP"
 
+# The .app carries the question files from BUILD time, and this script does not
+# build. Render after a corpus change without rebuilding and every screenshot is
+# of the OLD data while looking perfectly current — which happened: an ordering
+# round rendered with the retired "Put these in order — earliest first." prompt
+# minutes after it had been replaced. Same trap tools/create/parity.sh had.
+for f in corpus.json order.json match.json oddoneout.json typeanswer.json \
+         closest.json picture.json thisorthat.json enumerate.json; do
+  if [ -f "$APP/$f" ] && [ -f "assets/$f" ] && ! cmp -s "$APP/$f" "assets/$f"; then
+    echo "FAIL: the built app's $f differs from assets/$f — rebuild before rendering," >&2
+    echo "      or every frame you read will be of the previous corpus." >&2
+    exit 1
+  fi
+done
+
 echo "--- $GAMES games through the real views, ${DELAY}s per step, shots -> $OUT"
 export SIMCTL_CHILD_TIDBITS_MARATHON_GAMES="$GAMES"
 export SIMCTL_CHILD_TIDBITS_AUTOPILOT=1

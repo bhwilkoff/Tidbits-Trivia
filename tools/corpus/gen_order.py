@@ -52,22 +52,38 @@ def main():
         t = q[8].split("/wiki/")[-1]
         cat_of.setdefault(t, q[4]); url_of.setdefault(t, q[8])
 
-    # Per category, collect (name, year, title); prefer birth_year then inception.
+    # Per (category, DATE KIND). Mixing birth_year with inception is what made
+    # "earliest" mean two different things inside one round:
+    #
+    #     Jean-Philippe Rameau · Jean-Baptiste Lully · Johann Pachelbel · L'Orfeo
+    #
+    # Three composers ordered by BIRTH and an opera ordered by its PREMIERE, under
+    # a prompt that never says which. 247 of 737 rounds mixed a person with a
+    # non-person that way. Each round now uses one date kind, and the prompt says
+    # so, because the mode has exactly one prompt for all 853 rounds and it was
+    # carrying no information at all.
+    DATE_PROMPT = {
+        "birth_year": "Put these people in order of birth — earliest first.",
+        "inception": "Put these in order of when they began — earliest first.",
+    }
     by_cat = {}
     for t, ent in enrich.items():
         if t not in cat_of:
             continue
         nums = ent.get("numbers", {})
-        n = nums.get("birth_year") or nums.get("inception")
-        if not n:
+        for field in ("birth_year", "inception"):
+            n = nums.get(field)
+            if n:
+                break
+        else:
             continue
         name = display_name(t)
         if len(name) < 3 or name.replace(".", "").isdigit():
             continue
-        by_cat.setdefault(cat_of[t], []).append((name, int(n["value"]), t))
+        by_cat.setdefault((cat_of[t], field), []).append((name, int(n["value"]), t))
 
     out = []
-    for cat, items in by_cat.items():
+    for (cat, field), items in sorted(by_cat.items()):
         # Unique by name, sorted by year.
         seen, uniq = set(), []
         for it in sorted(items, key=lambda x: x[1]):
@@ -95,7 +111,7 @@ def main():
             years = [g[1] for g in grp]
             expl = " → ".join(f"{g[0]} ({yr(g[1])})" for g in grp)
             out.append([
-                f"order:{cat}:{start}:{grp[0][2]}", "Put these in order — earliest first.",
+                f"order:{cat}:{field}:{start}:{grp[0][2]}", DATE_PROMPT[field],
                 names, years, cat, expl, names[0], url_of.get(grp[0][2], ""),
             ])
             made += 1

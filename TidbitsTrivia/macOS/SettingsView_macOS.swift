@@ -36,6 +36,10 @@ struct SettingsView_macOS: View {
                             Text("\(p.streak.current)-day streak · \(p.stats.gamesPlayed) games").font(.caption).foregroundStyle(.secondary)
                         }
                         Spacer()
+                        // L4 cosmetics. The Mac is a pointer platform, so this is a labelled
+                        // button rather than iOS's tap-the-avatar affordance — an unlabelled
+                        // click target with no hover cue is invisible here.
+                        Button("Shuffle Color") { Task { await identity.rerollAvatar() } }
                         Button("Rename…") { draftName = p.name; editingName = true }
                     }
                     let acc = p.stats.questionsAnswered > 0 ? p.stats.correct * 100 / p.stats.questionsAnswered : 0

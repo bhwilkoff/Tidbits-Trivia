@@ -38,6 +38,7 @@ struct RecordsView_macOS: View {
                     // Story Archive / Marathon History / Knowledge Atlas moved into the
                     // Club hub (R-CLUB-1, iOS-DESIGN §5.2c) — Records is free-tier only.
                     knowledgeSection
+                    badgesSection
                     if calibration.contains(where: { $0.total > 0 }) { calibrationSection }
                     bestsSection
                     if !toReview.isEmpty { reviewSection }
@@ -172,6 +173,50 @@ struct RecordsView_macOS: View {
                 bar(fraction: d.levelProgress, fill: cat.color)
                 Text("\(d.correct) correct · \(remaining) more to Level \(d.level + 1)")
                     .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+            }
+        }
+        .padding(14).chunkyCard()
+    }
+
+    // L4 levelable badges — the same shared `BadgeMath` tiers as web/iOS/Windows. Core
+    // already compiled here; only the Mac surface was missing. Hidden until one is
+    // earned, because an all-zero wall teaches nothing.
+    @ViewBuilder private var badgesSection: some View {
+        let lifetime = records.reduce(into: (correct: 0, total: 0)) { $0.correct += $1.correct; $0.total += $1.total }
+        let acc = lifetime.total > 0 ? Int(Double(lifetime.correct) / Double(lifetime.total) * 100) : 0
+        let mastered = domains.filter { $0.hasWedge }.count
+        let badges = BadgeMath.badges(games: records.count,
+                                      longestStreak: identity.displayStreak.longest,
+                                      mastered: mastered, lifetimeAccuracy: acc,
+                                      liveNights: identity.profile?.stats.liveNights ?? 0)
+        if badges.contains(where: { $0.tier > 0 }) {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Badges").font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
+                Text("Milestones that level up as you play — depth, consistency, and range.")
+                    .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                    .fixedSize(horizontal: false, vertical: true)
+                ForEach(badges) { badgeRow($0) }
+            }
+        }
+    }
+
+    private func badgeRow(_ b: LevelableBadge) -> some View {
+        HStack(spacing: 12) {
+            Text(b.tier > 0 ? "\(b.tier)" : "·").font(.system(size: 17, weight: .black, design: .rounded))
+                .foregroundStyle(.white).frame(width: 34, height: 34)
+                .background(Circle().fill(b.tier > 0 ? Tidbits.Palette.coral : Tidbits.Palette.inkSoft))
+                .overlay(Circle().strokeBorder(Tidbits.Palette.border, lineWidth: 2.5))
+            VStack(alignment: .leading, spacing: 5) {
+                HStack {
+                    Text(b.name).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                    Spacer()
+                    Text("Tier \(b.tier)/\(b.maxTier)").font(.system(size: 13, weight: .black, design: .rounded))
+                        .foregroundStyle(.white).padding(.horizontal, 9).padding(.vertical, 3)
+                        .background(Capsule().fill(Tidbits.Palette.blue))
+                        .overlay(Capsule().strokeBorder(Tidbits.Palette.border, lineWidth: 2))
+                }
+                bar(fraction: b.progress, fill: Tidbits.Palette.coral)
+                Text(b.detail).font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
             }
         }
         .padding(14).chunkyCard()

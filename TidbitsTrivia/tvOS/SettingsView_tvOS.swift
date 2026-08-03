@@ -104,6 +104,23 @@ struct SettingsView_tvOS: View {
                             profileStat("Games played", "\(p.stats.gamesPlayed)")
                             profileStat("Live nights", "\(p.stats.liveNights)")
                         }
+                        // L4 cosmetics, ten-foot idiom: iOS re-rolls the avatar on a TAP of
+                        // the circle, which the remote cannot do. A focusable Button is the
+                        // tvOS equivalent — and `.plain` would destroy focusability here
+                        // (tvOS-DESIGN, the load-bearing inversion).
+                        Button {
+                            Task { await identity.rerollAvatar() }
+                        } label: {
+                            HStack(spacing: 14) {
+                                Image(systemName: "paintpalette.fill").font(.system(size: 24, weight: .bold))
+                                Text("Shuffle avatar color").font(.system(size: 26, weight: .bold, design: .rounded))
+                            }
+                        }
+                        // TVChipStyle, not `.borderless`: unfocused borderless renders the
+                        // label at the panel's own contrast, and on a dark ten-foot surface
+                        // that read as disabled next to the chip-styled Delete Account
+                        // right below it. Same style = same legibility.
+                        .buttonStyle(TVChipStyle(accent: Tidbits.Palette.grape, selected: false))
                     }
                 }
                 signInArea

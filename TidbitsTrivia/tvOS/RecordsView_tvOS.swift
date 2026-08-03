@@ -39,6 +39,7 @@ struct RecordsView_tvOS: View {
                         // Story Archive / Marathon History / Knowledge Atlas moved into the
                         // Club hub (R-CLUB-1, iOS-DESIGN §5.2c) — Records is free-tier only.
                         progressSection
+                        badgesSection
                         if calibration.contains(where: { $0.total > 0 }) { calibrationSection }
                         bestsSection
                         if !toReview.isEmpty { reviewSection }
@@ -217,6 +218,61 @@ struct RecordsView_tvOS: View {
                     }
                     .frame(height: 18)
                     Text("\(d.correct) correct · \(remaining) more to Level \(d.level + 1)")
+                        .font(.system(size: 22, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+                }
+            }
+        }
+    }
+
+    // MARK: Badges (L4)
+
+    /// The same `BadgeMath` tiers as web/iOS/Windows — Core already compiled here, only
+    /// the ten-foot surface was missing, which is why PARITY's tvOS cell was false.
+    /// Hidden until one badge is earned: an all-zero wall teaches nothing.
+    @ViewBuilder private var badgesSection: some View {
+        let lifetime = records.reduce(into: (correct: 0, total: 0)) { $0.correct += $1.correct; $0.total += $1.total }
+        let acc = lifetime.total > 0 ? Int(Double(lifetime.correct) / Double(lifetime.total) * 100) : 0
+        let mastered = domains.filter { $0.hasWedge }.count
+        let badges = BadgeMath.badges(games: records.count,
+                                      longestStreak: identity.displayStreak.longest,
+                                      mastered: mastered, lifetimeAccuracy: acc,
+                                      liveNights: identity.profile?.stats.liveNights ?? 0)
+        if badges.contains(where: { $0.tier > 0 }) {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Badges").font(.system(size: 40, weight: .heavy, design: .rounded)).foregroundStyle(TVTheme.text)
+                Text("Milestones that level up as you play — depth, consistency, and range.")
+                    .font(.system(size: 27, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+                    .fixedSize(horizontal: false, vertical: true)
+                ForEach(badges) { badgeRow($0) }
+            }
+        }
+    }
+
+    private func badgeRow(_ b: LevelableBadge) -> some View {
+        TVRecordsCard(fill: TVTheme.panel) {
+            HStack(spacing: 24) {
+                Text(b.tier > 0 ? "\(b.tier)" : "·")
+                    .font(.system(size: 32, weight: .black, design: .rounded))
+                    .foregroundStyle(.white).frame(width: 64, height: 64)
+                    .background(Circle().fill(b.tier > 0 ? Tidbits.Palette.coral : Color.white.opacity(0.18)))
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack {
+                        Text(b.name).font(.system(size: 31, weight: .bold, design: .rounded)).foregroundStyle(.white)
+                        Spacer()
+                        Text("Tier \(b.tier)/\(b.maxTier)")
+                            .font(.system(size: 24, weight: .black, design: .rounded))
+                            .foregroundStyle(Tidbits.Palette.blue.legibleForeground)
+                            .padding(.horizontal, 18).padding(.vertical, 6)
+                            .background(Capsule().fill(Tidbits.Palette.blue))
+                    }
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
+                            Capsule().fill(Color.white.opacity(0.12))
+                            Capsule().fill(Tidbits.Palette.coral).frame(width: max(10, geo.size.width * b.progress))
+                        }
+                    }
+                    .frame(height: 18)
+                    Text(b.detail)
                         .font(.system(size: 22, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
                 }
             }

@@ -139,8 +139,15 @@ Legend: ✅ done+verified · 🔨 in progress · ⏳ queued · 🚫 n/a (with re
 | 5 Expedition | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | — Friend Streaks (deferred: owner free/Club split, R-MON-4) | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 6 Link Wall | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| 7 Expedition | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| 8 Ranked Seasons | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
+| — Ranked Seasons (deferred: owner free/Club split, R-MON-4) | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
+
+> **2026-08-03 correction:** this matrix carried a second `7 Expedition` row reading ⏳
+> on all six while row 5 above it read ✅ on all six — the build-order table numbers
+> Expedition 7 and the matrix numbers it 5, and the duplicate never got reconciled.
+> Expedition IS shipped everywhere (PARITY.md has the evidence). Removed, so the only
+> ⏳ rows left are the two the OWNER has to scope: Friend Streaks and Ranked Seasons,
+> both social, both blocked on the free-vs-Club split R-MON-4 requires — not on build
+> effort. Nothing else in this tracker is unbuilt.
 
 > Note: the `.weakSpot` GameMode + `WeakSpotArena` generator live in the shared Apple
 > `Core/`, so macOS/tvOS already COMPILE it — only their per-platform Home entry point +

@@ -12,12 +12,17 @@ cd "$(dirname "$0")/.."
 PROJECT_FLAG=(-project "TidbitsTrivia.xcodeproj")   # or (-workspace "Foo.xcworkspace")
 SCHEME="TidbitsTrivia"                              # the shipping scheme
 XCCONFIG="AppVersion.xcconfig"                      # where MARKETING_VERSION / CURRENT_PROJECT_VERSION live
-PLATFORMS="ios tvos"                               # what `all` builds
+# What `all` builds. macOS was NOT in this list until 2026-08-03, while the workflow's
+# dropdown offered "all" alongside ios/tvos/mac — so `-f platform=all` shipped two of the
+# three Apple platforms, reported SUCCESS, and left the Mac build silently behind. It was
+# only caught by reading the log for "[mac]" and finding nothing. If a flag is called
+# `all` it has to mean all; a partial `all` that exits 0 is worse than no flag.
+PLATFORMS="ios tvos mac"                           # what `all` builds
 BID_FILTER="tidbitstrivia"                         # grep token that matches THIS app's bundle ids
 TEAM="${ASC_TEAM_ID:-L2G756LY8N}"
 # =========================================================
 
-PLATFORM="${1:?usage: submit-appstore.sh <ios|tvos|all>}"
+PLATFORM="${1:?usage: submit-appstore.sh <ios|tvos|mac|all>}"
 if [ "$PLATFORM" = "all" ]; then for p in $PLATFORMS; do "$0" "$p"; done; exit 0; fi
 case "$PLATFORM" in
   ios)  DEST="generic/platform=iOS" ;;

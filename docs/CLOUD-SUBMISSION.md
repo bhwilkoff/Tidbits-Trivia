@@ -12,6 +12,15 @@ built in the cloud. This is the build/submit PIPELINE; listing copy lives in
 
 ---
 
+> **2026-08-03 — `all` did not mean all.** `tools/submit-appstore.sh` defined
+> `PLATFORMS="ios tvos"`, so `gh workflow run appstore-build.yml -f platform=all`
+> built and uploaded iOS and tvOS, **skipped macOS entirely, and exited 0**. The
+> workflow's own dropdown offers `all, ios, tvos, mac`, so "all" reads as all four
+> Apple platforms. It was caught only by grepping the run log for `[mac]` and
+> finding nothing — the run was green either way. Fixed: `all` now includes `mac`.
+> **When a ship command reports success, check WHAT it shipped, not just that it
+> passed.**
+
 ## Apple App Store (iOS + tvOS) — DEFAULT
 
 1. **Bump the version + push.** Edit `AppVersion.xcconfig` (`MARKETING_VERSION` and

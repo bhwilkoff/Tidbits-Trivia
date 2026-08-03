@@ -228,7 +228,7 @@ Bump `AppVersion.xcconfig` + `android/app/build.gradle.kts` + run
 | Platform | Command | Where it lands |
 |---|---|---|
 | Web | *(automatic on push to `main`)* | tidbitstrivia.com |
-| iOS · tvOS · macOS | `gh workflow run appstore-build.yml -f platform=all` | App Store Connect |
+| iOS · tvOS · macOS | `gh workflow run appstore-build.yml -f platform=all` | App Store Connect (all three — `all` excluded macOS until 2026-08-03; fixed) |
 | Android | `git tag v<version>-android && git push --tags` | Play **Internal** track |
 | Windows | `gh workflow run windows-store.yml -f submit=true` | Partner Center **draft** |
 | Windows (publish) | `… -f submit=true -f commit=true` | **Public** on the Store |

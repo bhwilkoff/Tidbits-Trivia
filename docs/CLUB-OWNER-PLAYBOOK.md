@@ -1,5 +1,10 @@
 # Tidbits Club — Owner Go-Live Playbook
 
+> **2026-08-03: `docs/OWNER-PLAYBOOK.md` is now the single owner-facing page** —
+> it folds this document together with the push keys, the Firebase rules deploy,
+> the Play signing fingerprint, Game Center and the open product decisions, ordered
+> by what unblocks what. This file stays as the Club-specific detail it links to.
+
 ## ⚡ Setup progress — 2026-07-23 (driven by Claude via Chrome)
 
 **DONE (products created + configured):**

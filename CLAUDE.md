@@ -735,6 +735,8 @@ discover drift, fix the Current State section first, then work.
 
 ## Current state
 
-See `SCRATCHPAD.md` for active milestone + open questions. See
+See `docs/OWNER-PLAYBOOK.md` for every step blocked on the OWNER (accounts,
+keys, signatures, product decisions) — one page, ordered by what unblocks
+what. See `SCRATCHPAD.md` for active milestone + open questions. See
 `DECISIONS.md` for architecture decisions. See `PARITY.md` for
 feature parity across web / iOS / tvOS / Android.

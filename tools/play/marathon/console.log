@@ -1,0 +1,608 @@
+CoreData: error: Failed to stat path '/Users/bhwilkoff/Library/Developer/CoreSimulator/Devices/42CDD338-8E89-4386-9CD6-61663AF79286/data/Containers/Data/Application/7FE5BD12-1E09-4941-80BE-6FF22AF83A74/Library/Application Support/default.store', errno 2 / No such file or directory.
+CoreData: error: Executing as effective user 501
+CoreData: error:   Sandbox access to file-write-create denied
+CoreData: error: Failed to statfs file; errno 2 / No such file or directory.
+CoreData: error: Information for file system
+CoreData: error: ---------------------------
+CoreData: error:   File system type: 		0
+CoreData: error:   File system flags: 		0
+CoreData: error:   Total data blocks: 		0
+CoreData: error:   Free data blocks: 		0
+CoreData: error:   Free blocks for nonsuperuser:	0
+CoreData: error:   Total i-nodes: 			0
+CoreData: error:   File system ID: 		0, 0
+CoreData: error:   Free i-nodes: 			0
+CoreData: error:   Owner UID: 			0
+CoreData: error:   Filesystem type name: 		
+CoreData: error:   Mount on name: 			
+CoreData: error:   Mount from name: 		
+CoreData: error: Failed to stat path '/Users/bhwilkoff/Library/Developer/CoreSimulator/Devices/42CDD338-8E89-4386-9CD6-61663AF79286/data/Containers/Data/Application/7FE5BD12-1E09-4941-80BE-6FF22AF83A74/Library/Application Support', errno 2 / No such file or directory.
+CoreData: error: Executing as effective user 501
+CoreData: error:   Sandbox access to file-write-create denied
+CoreData: error: Failed to statfs file; errno 2 / No such file or directory.
+CoreData: error: Information for file system
+CoreData: error: ---------------------------
+CoreData: error:   File system type: 		0
+CoreData: error:   File system flags: 		0
+CoreData: error:   Total data blocks: 		0
+CoreData: error:   Free data blocks: 		0
+CoreData: error:   Free blocks for nonsuperuser:	0
+CoreData: error:   Total i-nodes: 			0
+CoreData: error:   File system ID: 		0, 0
+CoreData: error:   Free i-nodes: 			0
+CoreData: error:   Owner UID: 			0
+CoreData: error:   Filesystem type name: 		
+CoreData: error:   Mount on name: 			
+CoreData: error:   Mount from name: 		
+CoreData: error: Executing as effective user 501
+CoreData: error: Information for /Users/bhwilkoff/Library/Developer/CoreSimulator/Devices/42CDD338-8E89-4386-9CD6-61663AF79286/data/Containers/Data/Application/7FE5BD12-1E09-4941-80BE-6FF22AF83A74/Library
+CoreData: error: ---------------------------
+CoreData: error:   File Device ID: 	0
+CoreData: error:   Device ID: 		16777233
+CoreData: error:   File Size: 		160 bytes
+CoreData: error:   File inode: 		660494673
+CoreData: error:   File user ID: 		501
+CoreData: error:   File group ID: 		20
+CoreData: error:   File Permissions: 	
+CoreData: error: d
+CoreData: error:   755
+CoreData: error:   file is not a symbolic link
+CoreData: error:   Sandbox access to file-write-create allowed
+CoreData: error: Information for file system
+CoreData: error: ---------------------------
+CoreData: error:   File system type: 		0x1a
+CoreData: error:   File system flags: 		0x4909080
+CoreData: error:   MNT_JOURNALED
+CoreData: error:   Total data blocks: 		120691733
+CoreData: error:   Free data blocks: 		6553620
+CoreData: error:   Free blocks for nonsuperuser:	6553620
+CoreData: error:   Total i-nodes: 			265834497
+CoreData: error:   File system ID: 		0x1000011, 0x1a
+CoreData: error:   Free i-nodes: 			262144800
+CoreData: error:   Owner UID: 			0
+CoreData: error:   Filesystem type name: 		apfs
+CoreData: error:   Mount on name: 			/System/Volumes/Data
+CoreData: error:   Mount from name: 		/dev/disk3s5
+CoreData: error: Executing as effective user 501
+CoreData: error: Information for /Users/bhwilkoff/Library/Developer/CoreSimulator/Devices/42CDD338-8E89-4386-9CD6-61663AF79286/data/Containers/Data/Application/7FE5BD12-1E09-4941-80BE-6FF22AF83A74
+CoreData: error: ---------------------------
+CoreData: error:   File Device ID: 	0
+CoreData: error:   Device ID: 		16777233
+CoreData: error:   File Size: 		224 bytes
+CoreData: error:   File inode: 		660494671
+CoreData: error:   File user ID: 		501
+CoreData: error:   File group ID: 		20
+CoreData: error:   File Permissions: 	
+CoreData: error: d
+CoreData: error:   755
+CoreData: error:   file is not a symbolic link
+CoreData: error:   Sandbox access to file-write-create allowed
+CoreData: error: Executing as effective user 501
+CoreData: error: Information for /Users/bhwilkoff/Library/Developer/CoreSimulator/Devices/42CDD338-8E89-4386-9CD6-61663AF79286/data/Containers/Data/Application
+CoreData: error: ---------------------------
+CoreData: error:   File Device ID: 	0
+CoreData: error:   Device ID: 		16777233
+CoreData: error:   File Size: 		4768 bytes
+CoreData: error:   File inode: 		656126573
+CoreData: error:   File user ID: 		501
+CoreData: error:   File group ID: 		20
+CoreData: error:   File Permissions: 	
+CoreData: error: d
+CoreData: error:   755
+CoreData: error:   file is not a symbolic link
+CoreData: error:   Sandbox access to file-write-create allowed
+CoreData: error: Executing as effective user 501
+CoreData: error: Information for /Users/bhwilkoff/Library/Developer/CoreSimulator/Devices/42CDD338-8E89-4386-9CD6-61663AF79286/data/Containers/Data
+CoreData: error: ---------------------------
+CoreData: error:   File Device ID: 	0
+CoreData: error:   Device ID: 		16777233
+CoreData: error:   File Size: 		192 bytes
+CoreData: error:   File inode: 		656126255
+CoreData: error:   File user ID: 		501
+CoreData: error:   File group ID: 		20
+CoreData: error:   File Permissions: 	
+CoreData: error: d
+CoreData: error:   755
+CoreData: error:   file is not a symbolic link
+CoreData: error:   Sandbox access to file-write-create allowed
+CoreData: error: Executing as effective user 501
+CoreData: error: Information for /Users/bhwilkoff/Library/Developer/CoreSimulator/Devices/42CDD338-8E89-4386-9CD6-61663AF79286/data/Containers
+CoreData: error: ---------------------------
+CoreData: error:   File Device ID: 	0
+CoreData: error:   Device ID: 		16777233
+CoreData: error:   File Size: 		224 bytes
+CoreData: error:   File inode: 		656126234
+CoreData: error:   File user ID: 		501
+CoreData: error:   File group ID: 		20
+CoreData: error:   File Permissions: 	
+CoreData: error: d
+CoreData: error:   755
+CoreData: error:   file is not a symbolic link
+CoreData: error:   Sandbox access to file-write-create allowed
+CoreData: error: Executing as effective user 501
+CoreData: error: Information for /Users/bhwilkoff/Library/Developer/CoreSimulator/Devices/42CDD338-8E89-4386-9CD6-61663AF79286/data
+CoreData: error: ---------------------------
+CoreData: error:   File Device ID: 	0
+CoreData: error:   Device ID: 		16777233
+CoreData: error:   File Size: 		416 bytes
+CoreData: error:   File inode: 		630781115
+CoreData: error:   File user ID: 		501
+CoreData: error:   File group ID: 		20
+CoreData: error:   File Permissions: 	
+CoreData: error: d
+CoreData: error:   775
+CoreData: error:   file is not a symbolic link
+CoreData: error:   Sandbox access to file-write-create allowed
+CoreData: error: Executing as effective user 501
+CoreData: error: Information for /Users/bhwilkoff/Library/Developer/CoreSimulator/Devices/42CDD338-8E89-4386-9CD6-61663AF79286
+CoreData: error: ---------------------------
+CoreData: error:   File Device ID: 	0
+CoreData: error:   Device ID: 		16777233
+CoreData: error:   File Size: 		160 bytes
+CoreData: error:   File inode: 		611190735
+CoreData: error:   File user ID: 		501
+CoreData: error:   File group ID: 		20
+CoreData: error:   File Permissions: 	
+CoreData: error: d
+CoreData: error:   755
+CoreData: error:   file is not a symbolic link
+CoreData: error:   Sandbox access to file-write-create allowed
+CoreData: error: Executing as effective user 501
+CoreData: error: Information for /Users/bhwilkoff/Library/Developer/CoreSimulator/Devices
+CoreData: error: ---------------------------
+CoreData: error:   File Device ID: 	0
+CoreData: error:   Device ID: 		16777233
+CoreData: error:   File Size: 		2752 bytes
+CoreData: error:   File inode: 		455621335
+CoreData: error:   File user ID: 		501
+CoreData: error:   File group ID: 		20
+CoreData: error:   File Permissions: 	
+CoreData: error: d
+CoreData: error:   755
+CoreData: error:   file is not a symbolic link
+CoreData: error:   Sandbox access to file-write-create allowed
+CoreData: error: Executing as effective user 501
+CoreData: error: Information for /Users/bhwilkoff/Library/Developer/CoreSimulator
+CoreData: error: ---------------------------
+CoreData: error:   File Device ID: 	0
+CoreData: error:   Device ID: 		16777233
+CoreData: error:   File Size: 		160 bytes
+CoreData: error:   File inode: 		455621227
+CoreData: error:   File user ID: 		501
+CoreData: error:   File group ID: 		20
+CoreData: error:   File Permissions: 	
+CoreData: error: d
+CoreData: error:   755
+CoreData: error:   file is not a symbolic link
+CoreData: error:   Sandbox access to file-write-create allowed
+CoreData: error: Executing as effective user 501
+CoreData: error: Information for /Users/bhwilkoff/Library/Developer
+CoreData: error: ---------------------------
+CoreData: error:   File Device ID: 	0
+CoreData: error:   Device ID: 		16777233
+CoreData: error:   File Size: 		224 bytes
+CoreData: error:   File inode: 		455616985
+CoreData: error:   File user ID: 		501
+CoreData: error:   File group ID: 		20
+CoreData: error:   File Permissions: 	
+CoreData: error: d
+CoreData: error:   755
+CoreData: error:   file is not a symbolic link
+CoreData: error:   Sandbox access to file-write-create allowed
+CoreData: error: Executing as effective user 501
+CoreData: error: Information for /Users/bhwilkoff/Library
+CoreData: error: ---------------------------
+CoreData: error:   File Device ID: 	0
+CoreData: error:   Device ID: 		16777233
+CoreData: error:   File Size: 		3872 bytes
+CoreData: error:   File inode: 		256579
+CoreData: error:   File user ID: 		501
+CoreData: error:   File group ID: 		20
+CoreData: error:   File Permissions: 	
+CoreData: error: d
+CoreData: error:   700
+CoreData: error:   file is not a symbolic link
+CoreData: error:   Sandbox access to file-write-create allowed
+CoreData: error: Executing as effective user 501
+CoreData: error: Information for /Users/bhwilkoff
+CoreData: error: ---------------------------
+CoreData: error:   File Device ID: 	0
+CoreData: error:   Device ID: 		16777233
+CoreData: error:   File Size: 		2272 bytes
+CoreData: error:   File inode: 		256572
+CoreData: error:   File user ID: 		501
+CoreData: error:   File group ID: 		20
+CoreData: error:   File Permissions: 	
+CoreData: error: d
+CoreData: error:   750
+CoreData: error:   file is not a symbolic link
+CoreData: error:   Sandbox access to file-write-create allowed
+CoreData: error: Executing as effective user 501
+CoreData: error: Information for /Users
+CoreData: error: ---------------------------
+CoreData: error:   File Device ID: 	0
+CoreData: error:   Device ID: 		16777233
+CoreData: error:   File Size: 		160 bytes
+CoreData: error:   File inode: 		14549
+CoreData: error:   File user ID: 		0
+CoreData: error:   File group ID: 		80
+CoreData: error:   File Permissions: 	
+CoreData: error: d
+CoreData: error:   755
+CoreData: error:   file is not a symbolic link
+CoreData: error:   Sandbox access to file-write-create denied
+CoreData: error: Executing as effective user 501
+CoreData: error: Information for /
+CoreData: error: ---------------------------
+CoreData: error:   File Device ID: 	0
+CoreData: error:   Device ID: 		16777233
+CoreData: error:   File Size: 		736 bytes
+CoreData: error:   File inode: 		2
+CoreData: error:   File user ID: 		0
+CoreData: error:   File group ID: 		0
+CoreData: error:   File Permissions: 	
+CoreData: error: d
+CoreData: error:   755
+CoreData: error:   file is not a symbolic link
+CoreData: error:   Sandbox access to file-write-create denied
+CoreData: error: Logging status information for directory path: /Users/bhwilkoff/Library/Developer/CoreSimulator/Devices/42CDD338-8E89-4386-9CD6-61663AF79286/data/Containers/Data/Application/7FE5BD12-1E09-4941-80BE-6FF22AF83A74/Library/Application Support
+CoreData: error: Executing as effective user 501
+CoreData: error: Information for /
+CoreData: error:   File Device ID: 	0
+CoreData: error:   Device ID: 		16777233
+CoreData: error:   File Size: 		736 bytes
+CoreData: error:   File inode: 		2
+CoreData: error:   File user ID: 		0
+CoreData: error:   File group ID: 		0
+CoreData: error:   File Permissions: 	
+CoreData: error: d
+CoreData: error:   755
+CoreData: error:   component is not a symbolic link
+CoreData: error:   component is readable
+CoreData: error:   component is not writeable with errno 30
+CoreData: error: Information for /Users
+CoreData: error:   File Device ID: 	0
+CoreData: error:   Device ID: 		16777233
+CoreData: error:   File Size: 		160 bytes
+CoreData: error:   File inode: 		14549
+CoreData: error:   File user ID: 		0
+CoreData: error:   File group ID: 		80
+CoreData: error:   File Permissions: 	
+CoreData: error: d
+CoreData: error:   755
+CoreData: error:   component is not a symbolic link
+CoreData: error:   component is readable
+CoreData: error:   component is not writeable with errno 13
+CoreData: error: Information for /Users/bhwilkoff
+CoreData: error:   File Device ID: 	0
+CoreData: error:   Device ID: 		16777233
+CoreData: error:   File Size: 		2272 bytes
+CoreData: error:   File inode: 		256572
+CoreData: error:   File user ID: 		501
+CoreData: error:   File group ID: 		20
+CoreData: error:   File Permissions: 	
+CoreData: error: d
+CoreData: error:   750
+CoreData: error:   component is not a symbolic link
+CoreData: error:   component is readable
+CoreData: error:   component is writeable
+CoreData: error: Information for /Users/bhwilkoff/Library
+CoreData: error:   File Device ID: 	0
+CoreData: error:   Device ID: 		16777233
+CoreData: error:   File Size: 		3872 bytes
+CoreData: error:   File inode: 		256579
+CoreData: error:   File user ID: 		501
+CoreData: error:   File group ID: 		20
+CoreData: error:   File Permissions: 	
+CoreData: error: d
+CoreData: error:   700
+CoreData: error:   component is not a symbolic link
+CoreData: error:   component is readable
+CoreData: error:   component is writeable
+CoreData: error: Information for /Users/bhwilkoff/Library/Developer
+CoreData: error:   File Device ID: 	0
+CoreData: error:   Device ID: 		16777233
+CoreData: error:   File Size: 		224 bytes
+CoreData: error:   File inode: 		455616985
+CoreData: error:   File user ID: 		501
+CoreData: error:   File group ID: 		20
+CoreData: error:   File Permissions: 	
+CoreData: error: d
+CoreData: error:   755
+CoreData: error:   component is not a symbolic link
+CoreData: error:   component is readable
+CoreData: error:   component is writeable
+CoreData: error: Information for /Users/bhwilkoff/Library/Developer/CoreSimulator
+CoreData: error:   File Device ID: 	0
+CoreData: error:   Device ID: 		16777233
+CoreData: error:   File Size: 		160 bytes
+CoreData: error:   File inode: 		455621227
+CoreData: error:   File user ID: 		501
+CoreData: error:   File group ID: 		20
+CoreData: error:   File Permissions: 	
+CoreData: error: d
+CoreData: error:   755
+CoreData: error:   component is not a symbolic link
+CoreData: error:   component is readable
+CoreData: error:   component is writeable
+CoreData: error: Information for /Users/bhwilkoff/Library/Developer/CoreSimulator/Devices
+CoreData: error:   File Device ID: 	0
+CoreData: error:   Device ID: 		16777233
+CoreData: error:   File Size: 		2752 bytes
+CoreData: error:   File inode: 		455621335
+CoreData: error:   File user ID: 		501
+CoreData: error:   File group ID: 		20
+CoreData: error:   File Permissions: 	
+CoreData: error: d
+CoreData: error:   755
+CoreData: error:   component is not a symbolic link
+CoreData: error:   component is readable
+CoreData: error:   component is writeable
+CoreData: error: Information for /Users/bhwilkoff/Library/Developer/CoreSimulator/Devices/42CDD338-8E89-4386-9CD6-61663AF79286
+CoreData: error:   File Device ID: 	0
+CoreData: error:   Device ID: 		16777233
+CoreData: error:   File Size: 		160 bytes
+CoreData: error:   File inode: 		611190735
+CoreData: error:   File user ID: 		501
+CoreData: error:   File group ID: 		20
+CoreData: error:   File Permissions: 	
+CoreData: error: d
+CoreData: error:   755
+CoreData: error:   component is not a symbolic link
+CoreData: error:   component is readable
+CoreData: error:   component is writeable
+CoreData: error: Information for /Users/bhwilkoff/Library/Developer/CoreSimulator/Devices/42CDD338-8E89-4386-9CD6-61663AF79286/data
+CoreData: error:   File Device ID: 	0
+CoreData: error:   Device ID: 		16777233
+CoreData: error:   File Size: 		416 bytes
+CoreData: error:   File inode: 		630781115
+CoreData: error:   File user ID: 		501
+CoreData: error:   File group ID: 		20
+CoreData: error:   File Permissions: 	
+CoreData: error: d
+CoreData: error:   775
+CoreData: error:   component is not a symbolic link
+CoreData: error:   component is readable
+CoreData: error:   component is writeable
+CoreData: error: Information for /Users/bhwilkoff/Library/Developer/CoreSimulator/Devices/42CDD338-8E89-4386-9CD6-61663AF79286/data/Containers
+CoreData: error:   File Device ID: 	0
+CoreData: error:   Device ID: 		16777233
+CoreData: error:   File Size: 		224 bytes
+CoreData: error:   File inode: 		656126234
+CoreData: error:   File user ID: 		501
+CoreData: error:   File group ID: 		20
+CoreData: error:   File Permissions: 	
+CoreData: error: d
+CoreData: error:   755
+CoreData: error:   component is not a symbolic link
+CoreData: error:   component is readable
+CoreData: error:   component is writeable
+CoreData: error: Information for /Users/bhwilkoff/Library/Developer/CoreSimulator/Devices/42CDD338-8E89-4386-9CD6-61663AF79286/data/Containers/Data
+CoreData: error:   File Device ID: 	0
+CoreData: error:   Device ID: 		16777233
+CoreData: error:   File Size: 		192 bytes
+CoreData: error:   File inode: 		656126255
+CoreData: error:   File user ID: 		501
+CoreData: error:   File group ID: 		20
+CoreData: error:   File Permissions: 	
+CoreData: error: d
+CoreData: error:   755
+CoreData: error:   component is not a symbolic link
+CoreData: error:   component is readable
+CoreData: error:   component is writeable
+CoreData: error: Information for /Users/bhwilkoff/Library/Developer/CoreSimulator/Devices/42CDD338-8E89-4386-9CD6-61663AF79286/data/Containers/Data/Application
+CoreData: error:   File Device ID: 	0
+CoreData: error:   Device ID: 		16777233
+CoreData: error:   File Size: 		4768 bytes
+CoreData: error:   File inode: 		656126573
+CoreData: error:   File user ID: 		501
+CoreData: error:   File group ID: 		20
+CoreData: error:   File Permissions: 	
+CoreData: error: d
+CoreData: error:   755
+CoreData: error:   component is not a symbolic link
+CoreData: error:   component is readable
+CoreData: error:   component is writeable
+CoreData: error: Information for /Users/bhwilkoff/Library/Developer/CoreSimulator/Devices/42CDD338-8E89-4386-9CD6-61663AF79286/data/Containers/Data/Application/7FE5BD12-1E09-4941-80BE-6FF22AF83A74
+CoreData: error:   File Device ID: 	0
+CoreData: error:   Device ID: 		16777233
+CoreData: error:   File Size: 		224 bytes
+CoreData: error:   File inode: 		660494671
+CoreData: error:   File user ID: 		501
+CoreData: error:   File group ID: 		20
+CoreData: error:   File Permissions: 	
+CoreData: error: d
+CoreData: error:   755
+CoreData: error:   component is not a symbolic link
+CoreData: error:   component is readable
+CoreData: error:   component is writeable
+CoreData: error: Information for /Users/bhwilkoff/Library/Developer/CoreSimulator/Devices/42CDD338-8E89-4386-9CD6-61663AF79286/data/Containers/Data/Application/7FE5BD12-1E09-4941-80BE-6FF22AF83A74/Library
+CoreData: error:   File Device ID: 	0
+CoreData: error:   Device ID: 		16777233
+CoreData: error:   File Size: 		160 bytes
+CoreData: error:   File inode: 		660494673
+CoreData: error:   File user ID: 		501
+CoreData: error:   File group ID: 		20
+CoreData: error:   File Permissions: 	
+CoreData: error: d
+CoreData: error:   755
+CoreData: error:   component is not a symbolic link
+CoreData: error:   component is readable
+CoreData: error:   component is writeable
+CoreData: error: Failed to stat path '/Users/bhwilkoff/Library/Developer/CoreSimulator/Devices/42CDD338-8E89-4386-9CD6-61663AF79286/data/Containers/Data/Application/7FE5BD12-1E09-4941-80BE-6FF22AF83A74/Library/Application Support', errno 2 / No such file or directory.
+CoreData: error:   Sandbox access to file-write-create denied
+CoreData: error: addPersistentStoreWithType:configuration:URL:options:error: returned error NSCocoaErrorDomain (512)
+CoreData: error: userInfo:
+CoreData: error: 	reason : Failed to create file; code = 2
+CoreData: error: storeType: SQLite
+CoreData: error: configuration: default
+CoreData: error: URL: file:///Users/bhwilkoff/Library/Developer/CoreSimulator/Devices/42CDD338-8E89-4386-9CD6-61663AF79286/data/Containers/Data/Application/7FE5BD12-1E09-4941-80BE-6FF22AF83A74/Library/Application%20Support/default.store
+CoreData: annotation: options:
+CoreData: annotation: 	NSMigratePersistentStoresAutomaticallyOption : 1
+CoreData: annotation: 	NSInferMappingModelAutomaticallyOption : 1
+CoreData: annotation: 	NSPersistentStoreRemoteChangeNotificationOptionKey : 1
+CoreData: annotation: 	NSPersistentHistoryTrackingKey : 1
+CoreData: error: <NSPersistentStoreCoordinator: 0x103cf7b00>: Attempting recovery from error encountered during addPersistentStore: 0x103c50a80 Error Domain=NSCocoaErrorDomain Code=512 "The file couldn’t be saved." UserInfo={reason=Failed to create file; code = 2}
+CoreData: error: During recovery, parent directory path reported as missing
+CoreData: error: Recovery attempt while adding <NSPersistentStoreDescription: 0x103c50a80> (type: SQLite, url: file:///Users/bhwilkoff/Library/Developer/CoreSimulator/Devices/42CDD338-8E89-4386-9CD6-61663AF79286/data/Containers/Data/Application/7FE5BD12-1E09-4941-80BE-6FF22AF83A74/Library/Application%20Support/default.store) was successful!
+MARATHON-GAME	1	classic	mixed
+SHOWN	{"cat":"mixed","correct":2,"difficulty":1,"i":0,"prompt":"In what year was Alina Kabaeva born?","answer":"1983","options":["1982","1979","1983","1987"],"mode":"classic","id":"fact:P569:Q254220","game":-1,"title":"Alina Kabaeva","template":"fact","qcat":"history","explanation":"Alina Kabaeva: From 2007 to 2014, Kabaeva was a State Duma deputy from the United Russia Party."}
+SHOWN	{"id":"src:cloze:Peter_Pan_(1953_film)","prompt":"Based on J.M. Barrie's 1904 play, this 1953 Disney animated fantasy follows Wendy Darling and her brothers as they're whisked off with an eternally youthful boy to a magical island — what film is it?","template":"src","qcat":"screen","difficulty":2,"correct":1,"game":-1,"options":["Sunset Boulevard","Peter Pan","Nomadland","Ring"],"explanation":"Peter Pan (1953 film) is a 1953 American animated adventure fantasy film produced by Walt Disney Productions and released by RKO Radio Pictures.","title":"Peter Pan (1953 film)","cat":"mixed","i":1,"answer":"Peter Pan","mode":"classic"}
+SHOWN	{"explanation":"Tammy Wynette (born 1942) is the earliest of the four.","prompt":"Who among these was born first?","mode":"classic","title":"Tammy Wynette","options":["Ol' Dirty Bastard","Son Ho-jun","Tammy Wynette","Ángela Aguilar"],"qcat":"music","game":-1,"correct":2,"cat":"mixed","i":2,"answer":"Tammy Wynette","difficulty":3,"template":"chron","id":"chron:P569:372235363205"}
+SHOWN	{"title":"Manifesto","id":"src:describe:Manifesto","explanation":"Manifesto: Written declaration of principles and intentions. A manifesto is a written declaration of the intentions, motives, or views of the issuer, be it an individual, group, political party, or government.","i":3,"prompt":"What term describes a written declaration of an individual's, group's, or government's intentions and views — one that, when tied to religious belief, is instead called a creed or confession of faith?","game":-1,"options":["Manifesto","Essay","Short story","Novel"],"answer":"Manifesto","qcat":"arts","mode":"classic","template":"src","difficulty":4,"cat":"mixed","correct":0}
+SHOWN	{"difficulty":1,"options":["1232","1225","1219","1234"],"answer":"1225","qcat":"arts","prompt":"In what year was Thomas Aquinas born?","id":"fact:P569:Q9438","mode":"classic","correct":1,"cat":"mixed","title":"Thomas Aquinas","explanation":"Thomas Aquinas: Thomas was a proponent of natural theology and the father of a school of thought (encompassing both theology and philosophy) known as Thomism.","game":-1,"template":"fact","i":4}
+SHOWN	{"id":"src:describe:Dinah","prompt":"In the Book of Genesis, who is identified as the seventh child and only named daughter of Jacob and his wife Leah?","template":"src","qcat":"history","difficulty":4,"correct":1,"game":-1,"options":["Mélanie Joly","Dinah","Elizabeth II","Cleopatra"],"explanation":"Dinah: Daughter of Jacob in Hebrew Bible.","title":"Dinah","cat":"mixed","i":5,"answer":"Dinah","mode":"classic"}
+SHOWN	{"explanation":"All Along the Watchtower (released 1967) is the earliest of the four.","prompt":"Which of these came out first?","mode":"classic","title":"All Along the Watchtower","options":["All Along the Watchtower","The Final Countdown","Idol","Everybody Wants to Rule the World"],"qcat":"music","game":-1,"correct":0,"cat":"mixed","i":6,"answer":"All Along the Watchtower","difficulty":5,"template":"chron","id":"chron:P577:489925948528"}
+SHOWN	{"title":"Ur","id":"chron:P571:440300172659","explanation":"Ur (founded 3800 BC) is the earliest of the four.","i":7,"prompt":"Which one below was established earliest?","game":-1,"options":["Persepolis","Ctesiphon","Ur","Machu Picchu"],"answer":"Ur","qcat":"geography","mode":"classic","template":"chron","difficulty":3,"cat":"mixed","correct":2}
+SHOWN	{"difficulty":3,"options":["Guatemala City","Tripoli, Libya","Taipei","Luanda"],"answer":"Tripoli, Libya","qcat":"geography","prompt":"Which of these four has been around longest?","id":"chron:P571:49503585290","mode":"classic","correct":1,"cat":"mixed","title":"Tripoli, Libya","explanation":"Tripoli, Libya (founded 601 BC) is the earliest of the four.","game":-1,"template":"chron","i":8}
+SHOWN	{"id":"wd:director:Q733677","prompt":"Who directed Match Point?","template":"wd","qcat":"screen","difficulty":2,"correct":0,"game":-1,"options":["Woody Allen","David Twohy","Steven Spielberg","Gore Verbinski"],"explanation":"Match Point → Woody Allen. It was produced and filmed in London after Allen had difficulty finding financial support for the film in New York.","title":"Match Point","cat":"mixed","i":9,"answer":"Woody Allen","mode":"classic"}
+MARATHON-GAME	2	timeAttack	mixed
+SHOWN	{"game":-1,"id":"sup:P2046:558334322711","i":0,"correct":3,"qcat":"geography","cat":"mixed","title":"Tucson, Arizona","mode":"timeAttack","options":["Tegucigalpa","Cheyenne, Wyoming","St. Augustine, Florida","Tucson, Arizona"],"answer":"Tucson, Arizona","prompt":"Which of these is the largest by area?","explanation":"Tucson, Arizona has the greatest area of the four (599 km2).","difficulty":3,"template":"sup"}
+SHOWN	{"answer":"Ancient Rome","mode":"timeAttack","game":-1,"prompt":"Which of these four has been around longest?","options":["Ancient Rome","Republic of Texas","Second French Empire","French First Republic"],"title":"Ancient Rome","id":"chron:P571:718766434513","cat":"mixed","correct":0,"qcat":"history","difficulty":2,"explanation":"Ancient Rome (founded 753 BC) is the earliest of the four.","template":"chron","i":1}
+SHOWN	{"qcat":"screen","template":"src","difficulty":4,"i":2,"correct":1,"answer":"Yoo Ji-tae","cat":"mixed","prompt":"A former fashion model turned South Korean actor, he rose to fame in 'Attack the Gas Station' before starring in Park Chan-wook's 2003 revenge thriller 'Oldboy' — who is he?","explanation":"Yoo Ji-tae: South Korean actor (born 1976)","id":"src:describe:Yoo_Ji-tae","options":["Jeremy Swift","Yoo Ji-tae","Upendra","Ahmed Best"],"game":-1,"mode":"timeAttack","title":"Yoo Ji-tae"}
+SHOWN	{"qcat":"business","template":"src","difficulty":3,"i":3,"correct":0,"answer":"DNS (retail company)","cat":"mixed","prompt":"This Russian retail chain, which also manufactures its own laptops, tablets, and smartphones, became the country's 6th-largest retailer in 2019 — name the company?","explanation":"DNS (retail company) is the owner of a Russian retail chain specialising in the sale of computers, electronics, and household goods, and also a manufacturer of computer hardware including laptops, tablets and smartphones.","id":"src:cloze:DNS_(retail_company)","options":["DNS (retail company)","Costco","Zara","Walmart"],"game":-1,"mode":"timeAttack","title":"DNS (retail company)"}
+SHOWN	{"qcat":"history","template":"src","difficulty":2,"i":4,"correct":0,"answer":"Charon","cat":"mixed","prompt":"This ferryman of Greek mythology transported souls across the river bordering the underworld, demanding a coin as payment, and even once carried living heroes like Heracles across. Who is he?","explanation":"Charon: Ferryman of Hades in Greek mythology. In Greek mythology, Charon or Kharon (KAIR-on, -⁠ən; Ancient Greek: Χάρων Ancient Greek pronunciation: [kʰá.rɔːn]) is the ferryman of the Greek underworld.","id":"src:describe:Charon","options":["Charon","Shiva","Rama","Zeus"],"game":-1,"mode":"timeAttack","title":"Charon"}
+SHOWN	{"i":5,"id":"rel:P17:Q188938","cat":"mixed","prompt":"In which country is Djerba?","qcat":"geography","template":"rel","explanation":"Djerba: Tunisia. The island had a population of 139,544 at the 2004 census, which rose to 163,726 at the 2014 census.","difficulty":2,"mode":"timeAttack","options":["Tunisia","Spain","Russia","Sweden"],"answer":"Tunisia","game":-1,"correct":0,"title":"Djerba"}
+SHOWN	{"id":"sup:P1082:907918726661","cat":"mixed","options":["North Carolina","Minnesota","Rhode Island","Ohio"],"prompt":"Which of these four has the most people?","answer":"Ohio","difficulty":2,"i":6,"explanation":"Ohio has the greatest population of the four (11.5 million).","title":"Ohio","correct":3,"mode":"timeAttack","qcat":"geography","template":"sup","game":-1}
+SHOWN	{"cat":"mixed","mode":"timeAttack","title":"2024 FIFA Beach Soccer World Cup","answer":"2024 FIFA Beach Soccer World Cup","explanation":"2024 FIFA Beach Soccer World Cup: International football competition. The tournament was initially set to take place from 16 to 26 November 2023.","qcat":"sports","id":"src:describe:2024_FIFA_Beach_Soccer_World_Cup","correct":0,"game":-1,"template":"src","i":7,"options":["2024 FIFA Beach Soccer World Cup","2023 Cricket World Cup","2023 Indian Premier League","2005 Formula One World Championship"],"prompt":"Held every two years and hosted by the United Arab Emirates, this was the 12th edition of the top international tournament for football played on sand — which event?","difficulty":3}
+SHOWN	{"cat":"mixed","explanation":"Derby County F.C. (founded 1884) is the earliest of the four.","title":"Derby County F.C.","game":-1,"mode":"timeAttack","prompt":"Which of these four came first?","i":8,"correct":1,"id":"chron:P571:877980691676","options":["C.F. Pachuca","Derby County F.C.","CF Montréal","D.C. United"],"qcat":"sports","template":"chron","difficulty":3,"answer":"Derby County F.C."}
+SHOWN	{"template":"fact","i":9,"answer":"1990","difficulty":1,"title":"Klay Thompson","mode":"timeAttack","cat":"mixed","correct":2,"id":"fact:P569:Q29342","game":-1,"qcat":"sports","prompt":"In what year was Klay Thompson born?","options":["1987","1993","1990","1991"],"explanation":"Klay Thompson: Klay Alexander Thompson (born February 8, 1990) is an American professional basketball player for the Dallas Mavericks of the National Basketball Association (NBA)."}
+SHOWN	{"answer":"Benzoic acid","mode":"timeAttack","game":-1,"prompt":"Found naturally in many plants and abbreviated \"Bz,\" this white crystalline compound is the simplest of the aromatic carboxylic acids and lends its salts to the world of food preservatives — what is it?","options":["Nicotinic acid","Benzoic acid","Methylene blue","Toluene"],"title":"Benzoic acid","id":"src:cloze:Benzoic_acid","cat":"mixed","correct":1,"qcat":"science","difficulty":3,"explanation":"Benzoic acid is a white or colorless crystalline organic compound with the formula C6H5COOH, whose structure consists of a benzene ring (C6H6) with a carboxyl (C(=O)OH) substituent.","template":"src","i":10}
+SHOWN	{"i":11,"id":"fact:P569:Q230015","cat":"mixed","prompt":"In what year was Jennie Garth born?","qcat":"screen","template":"fact","explanation":"Jennie Garth: Jennifer Eve \"Jennie\" Garth (born April 3, 1972) is an American actress.","difficulty":1,"mode":"timeAttack","options":["1972","1978","1970","1965"],"answer":"1972","game":-1,"correct":0,"title":"Jennie Garth"}
+SHOWN	{"id":"src:cloze:Jonathan_Kuminga","cat":"mixed","options":["Michael Jordan","LeBron James","Jonathan Kuminga","Kobe Bryant"],"prompt":"A five-star recruit who reclassified to join the G League Ignite instead of college, this Congolese forward was picked seventh by the Golden State Warriors in 2021 and won a title as a rookie — who is he?","answer":"Jonathan Kuminga","difficulty":3,"i":12,"explanation":"Jonathan Kuminga (born October 6, 2002) is a Congolese professional basketball player who last played for the Atlanta Hawks of the National Basketball Association (NBA).","title":"Jonathan Kuminga","correct":2,"mode":"timeAttack","qcat":"sports","template":"src","game":-1}
+SHOWN	{"cat":"mixed","mode":"timeAttack","title":"EastEnders","answer":"Julia Smith","explanation":"EastEnders: Julia Smith. EastEnders is a British television soap opera created by Julia Smith and Tony Holland which has been broadcast on BBC One since February 1985.","qcat":"screen","id":"rel:P170:Q607514","correct":1,"game":-1,"template":"rel","i":13,"options":["Peter Jackson","Julia Smith","Melvil Dewey","Matt Stone"],"prompt":"Who created EastEnders?","difficulty":2}
+SHOWN	{"cat":"mixed","explanation":"Heroes (American TV series) → Lisa Coleman. Heroes is an American superhero drama television series created by Tim Kring that aired on NBC for four seasons from September 25, 2006, to February 8, 2010.","title":"Heroes (American TV series)","game":-1,"mode":"timeAttack","prompt":"Who composed the score for Heroes (American TV series)?","i":14,"correct":0,"id":"wd:composer:Q83401","options":["Lisa Coleman","John Debney","John Lunn","Samuel Cohen"],"qcat":"music","template":"wd","difficulty":3,"answer":"Lisa Coleman"}
+SHOWN	{"template":"sup","i":15,"answer":"Montreal","difficulty":2,"title":"Montreal","mode":"timeAttack","cat":"mixed","correct":1,"id":"sup:P1082:702039650105","game":-1,"qcat":"geography","prompt":"Which one below has the biggest population?","options":["Marseille","Montreal","Timișoara","Frankfurt"],"explanation":"Montreal has the greatest population of the four (1.6 million)."}
+SHOWN	{"id":"chron:P571:208721606627","cat":"mixed","options":["Messina","Syracuse, Sicily","Classical Athens","Rhodes"],"prompt":"Which of these four is the oldest?","answer":"Rhodes","difficulty":2,"i":16,"explanation":"Rhodes (founded 1600 BC) is the earliest of the four.","title":"Rhodes","correct":3,"mode":"timeAttack","qcat":"geography","template":"chron","game":-1}
+SHOWN	{"cat":"mixed","mode":"timeAttack","title":"The Old Guard (2020 film)","answer":"Gina Prince-Bythewood","explanation":"The Old Guard (2020 film) → Gina Prince-Bythewood.","qcat":"screen","id":"wd:director:Q65065595","correct":2,"game":-1,"template":"wd","i":17,"options":["Sergio Leone","Zack Snyder","Gina Prince-Bythewood","Eli Roth"],"prompt":"Who directed The Old Guard?","difficulty":3}
+SHOWN	{"cat":"mixed","explanation":"Bengal has the greatest area of the four (236,322 km2).","title":"Bengal","game":-1,"mode":"timeAttack","prompt":"Which of these covers the most land?","i":18,"correct":1,"id":"sup:P2046:384233240571","options":["Bohemia","Bengal","Lower Austria","Silesia"],"qcat":"geography","template":"sup","difficulty":3,"answer":"Bengal"}
+SHOWN	{"i":19,"id":"src:describe:Passiflora_caerulea","cat":"mixed","prompt":"Also called the blue passionflower, this South American vine climbs via tendrils to 10 metres, bears fragrant blue-white blooms with a fringed coronal filament, and produces an edible but not particularly tasty orange fruit — which plant is it?","qcat":"science","template":"src","explanation":"Passiflora caerulea: Species of flowering plant in the passion flower family.","difficulty":3,"mode":"timeAttack","options":["Passiflora caerulea","Artemisia vulgaris","Morning glory","Spathiphyllum"],"answer":"Passiflora caerulea","game":-1,"correct":0,"title":"Passiflora caerulea"}
+SHOWN	{"answer":"Qajar Iran","mode":"timeAttack","game":-1,"prompt":"Which of these four was founded earliest?","options":["Republic of Texas","Qajar Iran","Zaire","United Arab Republic"],"title":"Qajar Iran","id":"chron:P571:263859742835","cat":"mixed","correct":1,"qcat":"history","difficulty":3,"explanation":"Qajar Iran (founded 1789) is the earliest of the four. The Guarded Domains of Iran, commonly known as Qajar Iran, was the Iranian state under the rule of the Qajar dynasty, which lasted from 1789 to 1925.","template":"chron","i":20}
+SHOWN	{"cat":"mixed","mode":"timeAttack","title":"Helsinki","answer":"Helsinki","explanation":"Helsinki (founded 1550) is the earliest of the four. Helsinki, until about 1930 known in English by its Swedish name of Helsingfors, is the capital and most populous city in Finland.","qcat":"geography","id":"chron:P571:435954722260","correct":3,"game":-1,"template":"chron","i":21,"options":["George Town, Penang","Melbourne","Kuantan","Helsinki"],"prompt":"Which of these four dates back furthest?","difficulty":2}
+SHOWN	{"id":"src:cloze:Life_of_Pi","cat":"mixed","options":["The Legend of Sleepy Hollow","Finnegans Wake","Life of Pi","Emma (novel)"],"prompt":"In this 2001 Canadian novel, an Indian boy survives 227 days adrift in a lifeboat with a Bengal tiger named Richard Parker after a shipwreck — what is it?","answer":"Life of Pi","difficulty":3,"i":22,"explanation":"Life of Pi is a Canadian philosophical novel by Yann Martel published in 2001.","title":"Life of Pi","correct":2,"mode":"timeAttack","qcat":"arts","template":"src","game":-1}
+SHOWN	{"i":23,"id":"src:describe:Aloe_vera","cat":"mixed","prompt":"A succulent from the Arabian Peninsula, this popular potted plant stores a soothing gel of acemannan in its leaves — alongside a toxic compound called aloin. What is it?","qcat":"science","template":"src","explanation":"Aloe vera: Species of plant. It is widely distributed, and is considered an invasive species in many world regions.","difficulty":2,"mode":"timeAttack","options":["Aloe vera","Agave","Eggplant","Withania somnifera"],"answer":"Aloe vera","game":-1,"correct":0,"title":"Aloe vera"}
+SHOWN	{"cat":"mixed","explanation":"MATLAB (Matrix Laboratory) is a proprietary multi-paradigm programming language and numeric computing environment developed by MathWorks.","title":"MATLAB","game":-1,"mode":"timeAttack","prompt":"Developed by MathWorks, this proprietary programming language and numeric computing environment is built around matrix manipulation, and pairs with an add-on called Simulink for graphical simulation and model-based design. What software is this?","i":24,"correct":3,"id":"src:cloze:MATLAB","options":["C++","Python","C (programming language)","MATLAB"],"qcat":"science","template":"src","difficulty":3,"answer":"MATLAB"}
+MARATHON-GAME	3	survival	mixed
+SHOWN	{"cat":"mixed","mode":"survival","title":"Bobby Cannavale","answer":"1970","explanation":"Bobby Cannavale ( kan-uh-VAH-lee; born May 3, 1970) is an American actor.","qcat":"screen","id":"fact:P569:Q428819","correct":2,"game":-1,"template":"fact","i":0,"options":["1966","1977","1970","1965"],"prompt":"In what year was Bobby Cannavale born?","difficulty":1}
+SHOWN	{"title":"Ecclesiastes","correct":3,"mode":"survival","i":1,"explanation":"Ecclesiastes: Book of the Hebrew Bible (450–180 BCE)","game":-1,"id":"src:describe:Ecclesiastes","template":"src","difficulty":2,"cat":"mixed","prompt":"This book of Hebrew wisdom literature opens with 'Vanity of vanities! All is futile!', its main body voiced by a speaker called Kohelet — which book of the Bible?","options":["Book of Sirach","Book of Job","Song of Songs","Ecclesiastes"],"qcat":"history","answer":"Ecclesiastes"}
+SHOWN	{"options":["Winnie-the-Pooh","Doomsday","Peter Pan (character)","Gilgamesh"],"game":-1,"prompt":"Created by Dan Jurgens in 1992, this DC supervillain is best known for killing Superman in a landmark storyline and later appeared on film in 'Batman v Superman: Dawn of Justice' — who is he?","cat":"mixed","correct":1,"qcat":"arts","title":"Doomsday (DC Comics)","explanation":"Doomsday (DC Comics) is a supervillain appearing in American comic books published by DC Comics.","id":"src:cloze:Doomsday_(DC_Comics)","answer":"Doomsday","template":"src","difficulty":4,"mode":"survival","i":2}
+SHOWN	{"cat":"mixed","prompt":"Who composed the score for Dawn of the Dead?","correct":2,"game":-1,"i":3,"id":"wd:composer:Q749011","explanation":"Dawn of the Dead (2004 film) → Tyler Bates.","difficulty":3,"qcat":"music","options":["Carter Burwell","Jay Wadley","Tyler Bates","John Williams"],"template":"wd","answer":"Tyler Bates","mode":"survival","title":"Dawn of the Dead (2004 film)"}
+SHOWN	{"options":["powertrain technology","petroleum industry","mining industry","mass surveillance"],"game":-1,"prompt":"Which industry does Sinopec belong to?","cat":"mixed","correct":1,"qcat":"business","title":"Sinopec","explanation":"Sinopec: Chinese oil and gas company.","id":"biz:industry:24bb93f8de9e","answer":"petroleum industry","template":"biz","difficulty":2,"mode":"survival","i":4}
+SHOWN	{"cat":"mixed","correct":0,"difficulty":2,"i":5,"prompt":"Which one below started first?","answer":"London","options":["London","Jakarta","Tokyo","Shanghai"],"mode":"survival","id":"chron:P571:653482757810","game":-1,"title":"London","template":"chron","qcat":"geography","explanation":"London (founded 47) is the earliest of the four."}
+SHOWN	{"options":["De Officiis","An Enquiry Concerning Human Understanding","New Testament","Constitution of India"],"game":-1,"prompt":"After his \"Treatise\" \"fell dead-born from the press,\" David Hume reworked his ideas into this shorter, punchier 1748 book to win the public over. What work is it?","cat":"mixed","correct":1,"qcat":"arts","title":"An Enquiry Concerning Human Understanding","explanation":"An Enquiry Concerning Human Understanding: 1748 book by David Hume. It was a revision of an earlier effort, Hume's A Treatise of Human Nature, published anonymously in London in 1739–40.","id":"src:describe:An_Enquiry_Concerning_Human_Understanding","answer":"An Enquiry Concerning Human Understanding","template":"src","difficulty":4,"mode":"survival","i":6}
+SHOWN	{"title":"Amur","correct":2,"mode":"survival","i":7,"explanation":"Amur: Major river in the Russian Far East and Northeast Asia.","game":-1,"id":"src:describe:Amur","template":"src","difficulty":3,"cat":"mixed","prompt":"Forming the natural border between the Russian Far East and Northeast China, this 2,824-kilometer waterway is home to the kaluga, one of the largest freshwater fish on Earth. What river is it?","options":["Amu Darya","Danube","Amur","Nile"],"qcat":"geography","answer":"Amur"}
+SHOWN	{"options":["Walter White (Breaking Bad)","Chris Redfield","James T. Kirk","Derek Shepherd"],"game":-1,"prompt":"Which of these people was born first?","cat":"mixed","correct":0,"qcat":"screen","title":"Walter White (Breaking Bad)","explanation":"Walter White (Breaking Bad) (born 1958) is the earliest of the four.","id":"chron:P569:164918167886","answer":"Walter White (Breaking Bad)","template":"chron","difficulty":2,"mode":"survival","i":8}
+SHOWN	{"cat":"mixed","prompt":"In what year was Marta born?","correct":3,"game":-1,"i":9,"id":"fact:P569:Q228616","explanation":"Marta (footballer): Regarded by many as the greatest female footballer of all time, she has been named FIFA World Player of the Year six times.","difficulty":1,"qcat":"sports","options":["1990","1988","1984","1986"],"template":"fact","answer":"1986","mode":"survival","title":"Marta (footballer)"}
+SHOWN	{"options":["Africa","Europe","North America","Asia"],"game":-1,"prompt":"On which continent was the Austrian Empire?","cat":"mixed","correct":1,"qcat":"geography","title":"Austrian Empire","explanation":"Austrian Empire is in Europe. It remained part of the Holy Roman Empire until the latter's dissolution in 1806.","id":"wd:continent:Q131964","answer":"Europe","template":"wd","difficulty":1,"mode":"survival","i":10}
+SHOWN	{"cat":"mixed","correct":0,"difficulty":2,"i":11,"prompt":"In which country is Lecce?","answer":"Italy","options":["Italy","Belgium","United States","United Kingdom"],"mode":"survival","id":"rel:P17:Q13386","game":-1,"title":"Lecce","template":"rel","qcat":"geography","explanation":"Lecce: Italy. Lecce ( LETCH-ay, Italian: [ˈlettʃe]) is a city and comune (municipality) in the region of Apulia in southern Italy, and the capital of the province of Lecce."}
+SHOWN	{"options":["Jean-Pierre Papin","Arda Turan","Dayot Upamecano","Manuel Pellegrini"],"game":-1,"prompt":"Born in 1998, this French footballer plays as a centre-back for Bundesliga giants Bayern Munich and for the France national team — name this player?","cat":"mixed","correct":2,"qcat":"sports","title":"Dayot Upamecano","explanation":"Dayot Upamecano (born 27 October 1998) is a French professional footballer who plays as a centre-back for Bundesliga club Bayern Munich and the France national team.","id":"src:cloze:Dayot_Upamecano","answer":"Dayot Upamecano","template":"src","difficulty":1,"mode":"survival","i":12}
+SHOWN	{"title":"North Asia","correct":0,"mode":"survival","i":13,"explanation":"The area of North Asia is about 13 million km². Topographically, the region is dominated by the Eurasian Plate, except for its eastern part, which lies on the North American, Amurian, and Okhotsk Plates.","game":-1,"id":"num:P2046:Q27329","template":"num","difficulty":4,"cat":"mixed","prompt":"Roughly how large is North Asia by area?","options":["13 million km²","9 million km²","6 million km²","10 million km²"],"qcat":"geography","answer":"13 million km²"}
+SHOWN	{"options":["Mike Portnoy","Jack Cassidy","Izzy Stradlin","Stephen Stills"],"game":-1,"prompt":"This Broadway performer won both a Tony and a Grammy for his role in 'She Loves Me' and fathered two future teen idols — who was he?","cat":"mixed","correct":1,"qcat":"music","title":"Jack Cassidy","explanation":"Jack Cassidy: American actor, singer and director (1927–1976)","id":"src:describe:Jack_Cassidy","answer":"Jack Cassidy","template":"src","difficulty":3,"mode":"survival","i":14}
+SHOWN	{"cat":"mixed","prompt":"Who directed Spider-Man?","correct":3,"game":-1,"i":15,"id":"wd:director:Q484442","explanation":"Spider-Man (2002 film) → Sam Raimi.","difficulty":1,"qcat":"screen","options":["Hayao Miyazaki","Art Wolff","Paul Thomas Anderson","Sam Raimi"],"template":"wd","answer":"Sam Raimi","mode":"survival","title":"Spider-Man (2002 film)"}
+SHOWN	{"options":["1.65 m","2.32 m","2.64 m","2.08 m"],"game":-1,"prompt":"About how tall is Dustin Hoffman?","cat":"mixed","correct":0,"qcat":"screen","title":"Dustin Hoffman","explanation":"The height of Dustin Hoffman is about 1.65 m. Dustin Lee Hoffman (born August 8, 1937) is an American actor and filmmaker.","id":"num:P2048:Q42930","answer":"1.65 m","template":"num","difficulty":3,"mode":"survival","i":16}
+SHOWN	{"cat":"mixed","correct":3,"difficulty":2,"i":17,"prompt":"Born into a leading family of the Bengali Renaissance, this actress made her screen debut at 14 in Satyajit Ray's 'The World of Apu' and later received India's Padma Bhushan — who is she?","answer":"Sharmila Tagore","options":["Kate Walsh","Amandla Stenberg","Valerie Bertinelli","Sharmila Tagore"],"mode":"survival","id":"src:describe:Sharmila_Tagore","game":-1,"title":"Sharmila Tagore","template":"src","qcat":"screen","explanation":"Sharmila Tagore: Indian actress (born 1944)"}
+SHOWN	{"options":["Carbon dioxide","Water","Dopamine","Fentanyl"],"game":-1,"prompt":"Synthesized from L-DOPA in the brain and kidneys, this catecholamine acts as a neurotransmitter and drives a major brain pathway tied to reward and motivation — what is it?","cat":"mixed","correct":2,"qcat":"science","title":"Dopamine","explanation":"Dopamine: Organic chemical that functions both as a hormone and a neurotransmitter.","id":"src:describe:Dopamine","answer":"Dopamine","template":"src","difficulty":2,"mode":"survival","i":18}
+SHOWN	{"title":"Ruskin Bond","correct":2,"mode":"survival","i":19,"explanation":"Ruskin Bond (born 19 May 1934) is an Indian author and poet.","game":-1,"id":"src:cloze:Ruskin_Bond","template":"src","difficulty":3,"cat":"mixed","prompt":"This Indian author's debut novel won the John Llewellyn Rhys Prize in 1956, launching a career that produced more than 500 stories, essays, and novels — who is he?","options":["Sinterklaas","Yasunari Kawabata","Ruskin Bond","Frantz Fanon"],"qcat":"arts","answer":"Ruskin Bond"}
+SHOWN	{"options":["1972","1974","1982","1979"],"game":-1,"prompt":"In what year was The Wall first released?","cat":"mixed","correct":3,"qcat":"music","title":"The Wall","explanation":"The Wall is the eleventh studio album by the English rock band Pink Floyd, released on 30 November 1979 by Harvest\/EMI and Columbia\/CBS Records.","id":"fact:P577:Q151114","answer":"1979","template":"fact","difficulty":1,"mode":"survival","i":20}
+SHOWN	{"cat":"mixed","prompt":"Largest of the four by area — which one?","correct":0,"game":-1,"i":21,"id":"sup:P2046:104730377728","explanation":"South India has the greatest area of the four (635,780 km2).","difficulty":3,"qcat":"geography","options":["South India","Masuria","North India","Silesia"],"template":"sup","answer":"South India","mode":"survival","title":"South India"}
+SHOWN	{"options":["Hogan's Heroes","Pose","The Chase (British game show)","The Six Million Dollar Man"],"game":-1,"prompt":"After a NASA test flight crash, this ABC series turned astronaut Steve Austin into a secret agent with bionic strength, speed, and vision — based on Martin Caidin's 1972 novel 'Cyborg.' What is it?","cat":"mixed","correct":3,"qcat":"screen","title":"The Six Million Dollar Man","explanation":"The Six Million Dollar Man: American sci-fi action-adventure television series (1973–1978)","id":"src:describe:The_Six_Million_Dollar_Man","answer":"The Six Million Dollar Man","template":"src","difficulty":3,"mode":"survival","i":22}
+SHOWN	{"cat":"mixed","correct":0,"difficulty":2,"i":23,"prompt":"Set in a medieval European-style dark fantasy world, this manga follows the swordsman Guts on a quest for revenge against his former friend Griffith — name the series?","answer":"Berserk","options":["Berserk","Attack on Titan","The Rose of Versailles","Fullmetal Alchemist"],"mode":"survival","id":"src:cloze:Berserk_(manga)","game":-1,"title":"Berserk (manga)","template":"src","qcat":"arts","explanation":"Berserk (manga) is a Japanese manga series created by Kentaro Miura."}
+SHOWN	{"options":["Phú Quốc","Lampedusa","Sakhalin","Capri"],"game":-1,"prompt":"Which one below is largest in area?","cat":"mixed","correct":2,"qcat":"geography","title":"Sakhalin","explanation":"Sakhalin has the greatest area of the four (72,492 km2).","id":"sup:P2046:180370985734","answer":"Sakhalin","template":"sup","difficulty":2,"mode":"survival","i":24}
+SHOWN	{"cat":"mixed","prompt":"Founded in 1925 in Sousse, Tunisia, this football club plays in a red shirt with a star and white shorts — colors the French colonial authorities once tried to ban — which club?","correct":2,"game":-1,"i":25,"id":"src:describe:Étoile_Sportive_du_Sahel","explanation":"Étoile Sportive du Sahel: Association football club in Tunisia. The club is currently playing in the Tunisian Ligue Professionnelle 1, the Tunisian top-flight football league.","difficulty":4,"qcat":"sports","options":["Tractor S.C.","Bradford City A.F.C.","Étoile Sportive du Sahel","Manchester City F.C."],"template":"src","answer":"Étoile Sportive du Sahel","mode":"survival","title":"Étoile Sportive du Sahel"}
+SHOWN	{"cat":"mixed","explanation":"Girl Meets World: Michael Jacobs. Girl Meets World is an American comedy television series created by Michael Jacobs and April Kelly that premiered on Disney Channel on June 27, 2014.","title":"Girl Meets World","game":-1,"mode":"survival","prompt":"Who created Girl Meets World?","i":26,"correct":3,"id":"rel:P170:Q15070536","options":["Ramanand Sagar","Bill Watterson","Glen Keane","Michael Jacobs"],"qcat":"screen","template":"rel","difficulty":3,"answer":"Michael Jacobs"}
+SHOWN	{"cat":"mixed","correct":0,"difficulty":1,"i":27,"prompt":"This American model and actress collected an unusual hat trick of titles in 2012: Miss Rhode Island USA, Miss USA, and then Miss Universe — who is she?","answer":"Olivia Culpo","options":["Olivia Culpo","Katheryn Winnick","Hande Erçel","Becky G"],"mode":"survival","id":"src:describe:Olivia_Culpo","game":-1,"title":"Olivia Culpo","template":"src","qcat":"screen","explanation":"Olivia Culpo: American model (born 1992)"}
+SHOWN	{"answer":"Václav Vorlíček","mode":"survival","game":-1,"prompt":"Who directed Three Wishes for Cinderella?","options":["George Tillman, Jr.","Simon West","Václav Vorlíček","Victor Salva"],"title":"Three Wishes for Cinderella (1973 film)","id":"wd:director:Q140447","cat":"mixed","correct":2,"qcat":"screen","difficulty":3,"explanation":"Three Wishes for Cinderella (1973 film) → Václav Vorlíček.","template":"wd","i":28}
+SHOWN	{"cat":"mixed","correct":1,"difficulty":2,"i":29,"prompt":"Who created Boys Over Flowers?","answer":"Yōko Kamio","options":["Gary David Goldberg","Yōko Kamio","Catherine Reitman","Jon Favreau"],"mode":"survival","id":"rel:P170:Q482653","game":-1,"title":"Boys Over Flowers (2009 TV series)","template":"rel","qcat":"screen","explanation":"Boys Over Flowers (2009 TV series): Yōko Kamio. It aired for 25 episodes on KBS2 from January 5 to March 31, 2009."}
+SHOWN	{"id":"src:describe:Barbara_Bach","cat":"mixed","options":["Catherine Bell","Kimberly Williams-Paisley","Barbara Bach","Sayaka Kanda"],"prompt":"This retired American model-actress played Bond girl Anya Amasova in The Spy Who Loved Me and later married former Beatles drummer Ringo Starr — who is she?","answer":"Barbara Bach","difficulty":2,"i":30,"explanation":"Barbara Bach: American actress (born 1946)","title":"Barbara Bach","correct":2,"mode":"survival","qcat":"screen","template":"src","game":-1}
+SHOWN	{"cat":"mixed","prompt":"Who directed Videodrome?","correct":1,"game":-1,"i":31,"id":"wd:director:Q747551","explanation":"Videodrome → David Cronenberg. Videodrome is a 1983 Canadian science fiction body horror film written and directed by David Cronenberg and starring James Woods, Sonja Smits, and Debbie Harry.","difficulty":3,"qcat":"screen","options":["James Foley","David Cronenberg","Andrei Tarkovsky","Ruben Fleischer"],"template":"wd","answer":"David Cronenberg","mode":"survival","title":"Videodrome"}
+SHOWN	{"cat":"mixed","explanation":"Jane Austen: English novelist (1775–1817)","title":"Jane Austen","game":-1,"mode":"survival","prompt":"Writing major novels before she turned 22, this English author used wit and irony to critique the marriage-bound lives of the landed gentry — who is she?","i":32,"correct":0,"id":"src:describe:Jane_Austen","options":["Jane Austen","Agatha Christie","Helen Keller","Katherine Schwarzenegger"],"qcat":"arts","template":"src","difficulty":2,"answer":"Jane Austen"}
+SHOWN	{"cat":"mixed","correct":0,"difficulty":3,"i":33,"prompt":"Which of these sits at the highest elevation?","answer":"Bogotá","options":["Bogotá","Minsk","Kinshasa","Bamako"],"mode":"survival","id":"sup:P2044:227864551066","game":-1,"title":"Bogotá","template":"sup","qcat":"geography","explanation":"Bogotá has the greatest elevation of the four (2.6 km)."}
+SHOWN	{"id":"src:cloze:Sakhalin","cat":"mixed","options":["Montserrat","Ireland","Crete","Sakhalin"],"prompt":"Separating the Sea of Okhotsk from the Sea of Japan, this is the largest island belonging to Russia, lying just north of Japan's Hokkaido. What island is it?","answer":"Sakhalin","difficulty":2,"i":34,"explanation":"Sakhalin is an island in Northeast Asia which is a part of Russia.","title":"Sakhalin","correct":3,"mode":"survival","qcat":"geography","template":"src","game":-1}
+SHOWN	{"cat":"mixed","prompt":"Who directed Fiddler on the Roof?","correct":0,"game":-1,"i":35,"id":"wd:director:Q934036","explanation":"Fiddler on the Roof (film) → Norman Jewison. It stars Chaim Topol, Norma Crane, Leonard Frey, Molly Picon, Paul Mann, Rosalind Harris, Michèle Marsh, Neva Small and Paul Michael Glaser.","difficulty":3,"qcat":"screen","options":["Norman Jewison","Brian Helgeland","Nick Cassavetes","Mike Rianda"],"template":"wd","answer":"Norman Jewison","mode":"survival","title":"Fiddler on the Roof (film)"}
+SHOWN	{"cat":"mixed","explanation":"Ayelet Zurer: Israeli actress (born 1969)","title":"Ayelet Zurer","game":-1,"mode":"survival","prompt":"This Israeli actress won Best Actress honors at home before Hollywood roles in 'Munich,' 'Man of Steel,' and 'Ben-Hur,' plus a recurring turn as Wilson Fisk's wife in Marvel's 'Daredevil' — who is she?","i":36,"correct":2,"id":"src:describe:Ayelet_Zurer","options":["Parvathy Thiruvothu","Heather Thomas","Ayelet Zurer","Kim Raver"],"qcat":"screen","template":"src","difficulty":3,"answer":"Ayelet Zurer"}
+SHOWN	{"cat":"mixed","correct":0,"difficulty":2,"i":37,"prompt":"Born in 2003, this Italian winger plays his club football for Leeds United while also turning out for Italy's national team — who is he?","answer":"Wilfried Gnonto","options":["Wilfried Gnonto","Trevor Francis","Roberto Martínez","Takehiro Tomiyasu"],"mode":"survival","id":"src:cloze:Wilfried_Gnonto","game":-1,"title":"Wilfried Gnonto","template":"src","qcat":"sports","explanation":"Wilfried Gnonto (Italian; born 5 November 2003) is an Italian professional footballer who plays as a winger for Premier League club Leeds United and the Italy national team."}
+SHOWN	{"id":"chron:P569:351382864284","cat":"mixed","options":["Arsène Lupin","Tarzan","Jack Reacher","Hercule Poirot"],"prompt":"Which of these four was born earliest?","answer":"Hercule Poirot","difficulty":2,"i":38,"explanation":"Hercule Poirot (born 1870) is the earliest of the four. Hercule Poirot (UK:, US:) is a recurring fictional Belgian detective created by the English writer Agatha Christie.","title":"Hercule Poirot","correct":3,"mode":"survival","qcat":"arts","template":"chron","game":-1}
+SHOWN	{"cat":"mixed","prompt":"Which of these four dates back furthest?","correct":2,"game":-1,"i":39,"id":"chron:P571:608407271183","explanation":"Berkshire Hathaway (founded 1955) is the earliest of the four.","difficulty":2,"qcat":"business","options":["Warner Bros. Pictures","The Vanguard Group","Berkshire Hathaway","Shopify"],"template":"chron","answer":"Berkshire Hathaway","mode":"survival","title":"Berkshire Hathaway"}
+SHOWN	{"cat":"mixed","explanation":"John Marshall Harlan (June 1, 1833 - October 14, 1911) was an American lawyer and politician who served as an associate justice of the Supreme Court of the United States from 1877 until his death in 1911.","title":"John Marshall Harlan","game":-1,"mode":"survival","prompt":"Nicknamed \"The Great Dissenter,\" this Kentucky-born justice broke from his colleagues in cases like Plessy v. Ferguson — and decades later the Court came around to his view. Who was he?","i":40,"correct":0,"id":"src:cloze:John_Marshall_Harlan","options":["John Marshall Harlan","John Marshall","Thurgood Marshall","Rutherford B. Hayes"],"qcat":"history","template":"src","difficulty":5,"answer":"John Marshall Harlan"}
+SHOWN	{"cat":"mixed","correct":3,"difficulty":3,"i":41,"prompt":"This form of governance bases decisions on evidence, efficiency, and scientific expertise rather than democratic deliberation — what is it called?","answer":"Technocracy","options":["Zionism","Fascism","Democracy","Technocracy"],"mode":"survival","id":"src:cloze:Technocracy","game":-1,"title":"Technocracy","template":"src","qcat":"history","explanation":"Technocracy is an expert-based type of governance."}
+SHOWN	{"id":"fact:P570:Q935","cat":"mixed","options":["1729","1728","1727","1736"],"prompt":"In what year did Isaac Newton die?","answer":"1727","difficulty":1,"i":42,"explanation":"Isaac Newton: Newton contributed to and refined the scientific method, and his work is considered the most influential in bringing forth modern science.","title":"Isaac Newton","correct":2,"mode":"survival","qcat":"science","template":"fact","game":-1}
+SHOWN	{"cat":"mixed","prompt":"A pioneer of minimal music, this American composer built early works on 'phase shifting,' letting repeated phrases drift out of sync to create new patterns — who is he?","correct":2,"game":-1,"i":43,"id":"src:describe:Steve_Reich","explanation":"Steve Reich: American composer (born 1936)","difficulty":5,"qcat":"music","options":["John Adams","Arvo Pärt","Steve Reich","Aphex Twin"],"template":"src","answer":"Steve Reich","mode":"survival","title":"Steve Reich"}
+SHOWN	{"cat":"mixed","explanation":"John Wick (film) → Chad Stahelski. John Wick is a 2014 American action thriller film directed by Chad Stahelski and written by Derek Kolstad.","title":"John Wick (film)","game":-1,"mode":"survival","prompt":"Who directed John Wick?","i":44,"correct":2,"id":"wd:director:Q15732802","options":["Mark Cendrowski","James Cameron","Chad Stahelski","Lana Wachowski"],"qcat":"screen","template":"wd","difficulty":1,"answer":"Chad Stahelski"}
+SHOWN	{"cat":"mixed","correct":2,"difficulty":3,"i":45,"prompt":"Who directed The Lion in Winter?","answer":"Anthony Harvey","options":["Allen Hughes","Stefen Fangmeier","Anthony Harvey","Jan de Bont"],"mode":"survival","id":"wd:director:Q1195311","game":-1,"title":"The Lion in Winter (1968 film)","template":"wd","qcat":"screen","explanation":"The Lion in Winter (1968 film) → Anthony Harvey."}
+SHOWN	{"id":"rel:P175:Q889867","cat":"mixed","options":["The Pogues","Alan Silvestri","Richard Robbins","Nirvana"],"prompt":"Who is the performer of Fairytale of New York?","answer":"The Pogues","difficulty":3,"i":46,"explanation":"Fairytale of New York: The Pogues. It was originally released as a single on 23 November 1987 and later featured on the Pogues' 1988 album If I Should Fall from Grace with God.","title":"Fairytale of New York","correct":0,"mode":"survival","qcat":"music","template":"rel","game":-1}
+SHOWN	{"cat":"mixed","prompt":"In what year did Madame de Pompadour die?","correct":1,"game":-1,"i":47,"id":"fact:P570:Q188965","explanation":"Madame de Pompadour: Pompadour took charge of the king's schedule and was a valued aide and advisor, despite her frail health and many political enemies.","difficulty":1,"qcat":"history","options":["1761","1764","1756","1763"],"template":"fact","answer":"1764","mode":"survival","title":"Madame de Pompadour"}
+SHOWN	{"cat":"mixed","explanation":"Alp Arslan: Sultan of the Seljuk Empire from 1063 to 1072.","title":"Alp Arslan","game":-1,"mode":"survival","prompt":"The second sultan of the Seljuk Empire, this ruler's decisive 1071 victory over the Byzantines at Manzikert opened Anatolia to Turkoman settlement — who is he?","i":48,"correct":2,"id":"src:describe:Alp_Arslan","options":["Napoleon","Alexander the Great","Alp Arslan","Genghis Khan"],"qcat":"history","template":"src","difficulty":2,"answer":"Alp Arslan"}
+SHOWN	{"cat":"mixed","correct":1,"difficulty":2,"i":49,"prompt":"In what year was Law and Justice founded?","answer":"2001","options":["1998","2001","2004","1997"],"mode":"survival","id":"fact:P571:Q156874","game":-1,"title":"Law and Justice","template":"fact","qcat":"history","explanation":"Law and Justice (Polish: Prawo i Sprawiedliwość, PiS) is a right-wing populist and national-conservative political party in Poland."}
+SHOWN	{"id":"fact:P571:Q1353939","cat":"mixed","options":["2001","2003","2002","2005"],"prompt":"In what year was Etsy founded?","answer":"2005","difficulty":2,"i":50,"explanation":"Etsy: Etsy, Inc. is an American e-commerce company focused on handmade or vintage items and craft supplies.","title":"Etsy","correct":3,"mode":"survival","qcat":"music","template":"fact","game":-1}
+SHOWN	{"cat":"mixed","prompt":"This English actor had lead TV roles in The White Queen and Condor, and film roles including Red Riding Hood and The Host — who is he?","correct":3,"game":-1,"i":51,"id":"src:cloze:Max_Irons","explanation":"Max Irons (born 17 October 1985) is an English actor.","difficulty":3,"qcat":"screen","options":["Richard Widmark","Billy Boyd","James Avery","Max Irons"],"template":"src","answer":"Max Irons","mode":"survival","title":"Max Irons"}
+SHOWN	{"cat":"mixed","explanation":"The area of Everglades National Park is about 1.5 million km².","title":"Everglades National Park","game":-1,"mode":"survival","prompt":"Roughly how large is Everglades National Park by area?","i":52,"correct":1,"id":"num:P2046:Q274131","options":["2,219,791 km²","6,107 km²","1,886,068 km²","148,016 km²"],"qcat":"geography","template":"num","difficulty":5,"answer":"6,107 km²"}
+SHOWN	{"cat":"mixed","correct":0,"difficulty":1,"i":53,"prompt":"In which country is Milan?","answer":"Italy","options":["Italy","Rwanda","Thailand","Poland"],"mode":"survival","id":"rel:P17:Q490","game":-1,"title":"Milan","template":"rel","qcat":"geography","explanation":"Milan: Italy. Milan is the regional capital of Lombardy, in northern Italy, and the seat of the Metropolitan City of Milan."}
+SHOWN	{"id":"src:cloze:Gianluca_Scamacca","cat":"mixed","options":["Matthijs de Ligt","Paul Mullin","Gianluca Scamacca","Oleksandr Zinchenko"],"prompt":"This Italian striker has played for Sassuolo, West Ham, and now Atalanta, after loan spells at four different clubs including one in the Netherlands — who is he?","answer":"Gianluca Scamacca","difficulty":2,"i":54,"explanation":"Gianluca Scamacca (born 1 January 1999) is an Italian professional footballer who plays as a striker for Serie A club Atalanta and the Italy national team.","title":"Gianluca Scamacca","correct":2,"mode":"survival","qcat":"sports","template":"src","game":-1}
+SHOWN	{"cat":"mixed","prompt":"Which of these four began earliest?","correct":3,"game":-1,"i":55,"id":"chron:P571:146680192099","explanation":"Black Hand (Serbia) (founded 1911) is the earliest of the four. The society formed to unite all of the territories with a South Slavic majority that were not then ruled by either Serbia or Montenegro.","difficulty":4,"qcat":"history","options":["Moro Islamic Liberation Front","Al-Quds Brigades","Al-Qaeda","Black Hand"],"template":"chron","answer":"Black Hand","mode":"survival","title":"Black Hand (Serbia)"}
+SHOWN	{"cat":"mixed","explanation":"The elevation of Capri is about 589 m. Administratively, Capri is part of the Metropolitan City of Naples within the Campania region.","title":"Capri","game":-1,"mode":"survival","prompt":"Approximately what is the elevation of Capri?","i":56,"correct":1,"id":"num:P2044:Q173292","options":["758 m","589 m","850 m","424 m"],"qcat":"geography","template":"num","difficulty":4,"answer":"589 m"}
+SHOWN	{"cat":"mixed","correct":1,"difficulty":2,"i":57,"prompt":"Which of these is a novelist?","answer":"Brandon Sanderson","options":["Neil deGrasse Tyson","Brandon Sanderson","Francisco Ferrer","Paul Cézanne"],"mode":"survival","id":"class:Q6625963:1089203481","game":-1,"title":"Brandon Sanderson","template":"class","qcat":"arts","explanation":"Brandon Sanderson is a novelist. Brandon Winn Sanderson (born December 19, 1975) is an American author of high fantasy, science fiction, and young adult books."}
+SHOWN	{"id":"num:P2044:Q3542","cat":"mixed","options":["200 m","250 m","272 m","2,209 m"],"prompt":"Approximately what is the elevation of the Niger River?","answer":"200 m","difficulty":4,"i":58,"explanation":"The elevation of Niger River is about 200 m. The Niger River ( NY-jər; French: (le) fleuve Niger [(lə) flœv niʒɛʁ]) is the main river of West Africa, extending about 4,180 kilometres (2,600 miles).","title":"Niger River","correct":0,"mode":"survival","qcat":"geography","template":"num","game":-1}
+SHOWN	{"cat":"mixed","prompt":"In what year was Tomohisa Yamashita born?","correct":2,"game":-1,"i":59,"id":"fact:P569:Q313654","explanation":"Tomohisa Yamashita: Yamashita joined the Japanese talent agency Johnny & Associates as a trainee in 1996 and made his small acting debut for NHK's Shonentachi (1998).","difficulty":1,"qcat":"screen","options":["1980","1981","1985","1984"],"template":"fact","answer":"1985","mode":"survival","title":"Tomohisa Yamashita"}
+SHOWN	{"cat":"mixed","explanation":"The Walking Dead: Daryl Dixon → David Zabel. Norman Reedus reprises his role as Daryl Dixon from the original The Walking Dead series.","title":"The Walking Dead: Daryl Dixon","game":-1,"mode":"survival","prompt":"Who wrote The Walking Dead: Daryl Dixon?","i":60,"correct":0,"id":"wd:author:Q116148366","options":["David Zabel","E. M. Forster","William Butler Yeats","Pliny the Elder"],"qcat":"arts","template":"wd","difficulty":2,"answer":"David Zabel"}
+SHOWN	{"cat":"mixed","correct":0,"difficulty":1,"i":61,"prompt":"A former bus driver turned union leader, he served as Hugo Chávez's vice president before taking the top job in Venezuela in 2013 — who is he?","answer":"Nicolás Maduro","options":["Nicolás Maduro","Jair Bolsonaro","Hassan Rouhani","Juan Guaidó"],"mode":"survival","id":"src:describe:Nicolás_Maduro","game":-1,"title":"Nicolás Maduro","template":"src","qcat":"history","explanation":"Nicolás Maduro: President of Venezuela from 2013 to 2026."}
+SHOWN	{"id":"src:cloze:Sharper_(film)","cat":"mixed","options":["Ayothi","Breakfast on Pluto","Michael Clayton","Sharper"],"prompt":"Released in theaters by A24 in February 2023 before streaming on Apple TV+, this crime thriller stars Julianne Moore, Sebastian Stan and John Lithgow — which movie?","answer":"Sharper","difficulty":3,"i":62,"explanation":"Sharper (film) is a 2023 American crime thriller film directed by Benjamin Caron and written by Brian Gatewood and Alessandro Tanaka.","title":"Sharper (film)","correct":3,"mode":"survival","qcat":"screen","template":"src","game":-1}
+SHOWN	{"cat":"mixed","prompt":"England's rugby captain from 2018 to 2023, this Saracens fly-half is renowned for his goal-kicking and has scored more than 1,200 international points — who is he?","correct":3,"game":-1,"i":63,"id":"src:describe:Owen_Farrell","explanation":"Owen Farrell: England international rugby union player (born 1991)","difficulty":2,"qcat":"sports","options":["Roberto Canessa","Antoine Dupont","Faf de Klerk","Owen Farrell"],"template":"src","answer":"Owen Farrell","mode":"survival","title":"Owen Farrell"}
+SHOWN	{"cat":"mixed","explanation":"Real Madrid CF: Association football club in Spain.","title":"Real Madrid CF","game":-1,"mode":"survival","prompt":"Founded in 1902 and granted its royal title by King Alfonso XIII in 1920, this all-white-kitted Spanish giant plays at the Santiago Bernabéu — which club?","i":64,"correct":0,"id":"src:describe:Real_Madrid_CF","options":["Real Madrid CF","Al-Nassr FC","Inter Miami CF","Manchester City F.C."],"qcat":"sports","template":"src","difficulty":1,"answer":"Real Madrid CF"}
+SHOWN	{"cat":"mixed","correct":1,"difficulty":2,"i":65,"prompt":"Which of these four is biggest by area?","answer":"Cologne","options":["Dresden","Cologne","Leipzig","Münster"],"mode":"survival","id":"sup:P2046:727682340450","game":-1,"title":"Cologne","template":"sup","qcat":"geography","explanation":"Cologne has the greatest area of the four (405 km2)."}
+SHOWN	{"id":"fact:P571:Q297879","cat":"mixed","options":["1981","1987","1984","1985"],"prompt":"In what year was ASML founded?","answer":"1984","difficulty":2,"i":66,"explanation":"ASML: During 1997, ASML began studying the potential shift to EUV.","title":"ASML","correct":2,"mode":"survival","qcat":"music","template":"fact","game":-1}
+SHOWN	{"cat":"mixed","prompt":"This English actress played Mel Owen on a long-running BBC soap across two separate stints, and Rebecca Mitchell in the drama Hotel Babylon — who is she?","correct":2,"game":-1,"i":67,"id":"src:describe:Tamzin_Outhwaite","explanation":"Tamzin Outhwaite: English actress and dancer (born 1970)","difficulty":3,"qcat":"screen","options":["Olympia Dukakis","Susan Dey","Tamzin Outhwaite","Anna Magnani"],"template":"src","answer":"Tamzin Outhwaite","mode":"survival","title":"Tamzin Outhwaite"}
+SHOWN	{"cat":"mixed","explanation":"Monaco (founded 1297) is the earliest of the four.","title":"Monaco","game":-1,"mode":"survival","prompt":"Which of these was founded earliest?","i":68,"correct":0,"id":"chron:P571:706486378308","options":["Monaco","Italy","Trinidad and Tobago","Greece"],"qcat":"geography","template":"chron","difficulty":2,"answer":"Monaco"}
+SHOWN	{"cat":"mixed","correct":1,"difficulty":4,"i":69,"prompt":"Which one below started first?","answer":"Rafael Advanced Defense Systems","options":["Berkshire Hathaway","Rafael Advanced Defense Systems","OLX","MediaTek"],"mode":"survival","id":"chron:P571:824023821281","game":-1,"title":"Rafael Advanced Defense Systems","template":"chron","qcat":"business","explanation":"Rafael Advanced Defense Systems (founded 1948) is the earliest of the four."}
+SHOWN	{"id":"src:cloze:Shubman_Gill","cat":"mixed","options":["MS Dhoni","Shubman Gill","Virat Kohli","Rohit Sharma"],"prompt":"This Indian cricketer became the fastest ever to 2,000 ODI runs and, at just 23, the youngest to notch an ODI double century — and now captains India in Tests. Who is he?","answer":"Shubman Gill","difficulty":1,"i":70,"explanation":"Shubman Gill (born 8 September 1999) is an Indian international cricketer who plays for the India national team.","title":"Shubman Gill","correct":1,"mode":"survival","qcat":"sports","template":"src","game":-1}
+SHOWN	{"cat":"mixed","prompt":"Approximately what is the elevation of Erbil?","correct":1,"game":-1,"i":71,"id":"num:P2044:Q132754","explanation":"The elevation of Erbil is about 420 m. Erbil is described as the region's cultural, economic, industrial, educational and medical hub.","difficulty":4,"qcat":"geography","options":["332 m","420 m","300 m","543 m"],"template":"num","answer":"420 m","mode":"survival","title":"Erbil"}
+SHOWN	{"cat":"mixed","explanation":"Karachi has the greatest population of the four (23.5 million).","title":"Karachi","game":-1,"mode":"survival","prompt":"Which of these four is the most populous?","i":72,"correct":2,"id":"sup:P1082:984448567104","options":["Abu Dhabi","Buenos Aires","Karachi","Cape Town"],"qcat":"geography","template":"sup","difficulty":2,"answer":"Karachi"}
+SHOWN	{"cat":"mixed","correct":0,"difficulty":4,"i":73,"prompt":"Traced to Gustav Fechner's 1854 sensory-judgment theories and Wilhelm Wundt's founding of the first dedicated research lab in Leipzig in 1879 — this is the origin story of which scientific field?","answer":"History of psychology","options":["History of psychology","History of Palestine","Windows 10 version history","Casualties of the Russo-Ukrainian war"],"mode":"survival","id":"src:cloze:History_of_psychology","game":-1,"title":"History of psychology","template":"src","qcat":"history","explanation":"History of psychology is defined as \"the scientific study of behavior and mental processes\"."}
+SHOWN	{"id":"rel:P175:Q382289","cat":"mixed","options":["Kevin Kiner","Bram van der Vlugt","Li Bingbing","Vishal–Shekhar"],"prompt":"Who is the performer of Star Wars: The Clone Wars?","answer":"Kevin Kiner","difficulty":3,"i":74,"explanation":"Star Wars: The Clone Wars (film): Kevin Kiner. Star Wars: The Clone Wars is a 2008 American animated space opera film directed by Dave Filoni and produced by Lucasfilm Animation.","title":"Star Wars: The Clone Wars (film)","correct":0,"mode":"survival","qcat":"screen","template":"rel","game":-1}
+SHOWN	{"cat":"mixed","prompt":"Which of these four spans the most territory?","correct":0,"game":-1,"i":75,"id":"sup:P2046:593936423195","explanation":"Machu Picchu has the greatest area of the four (325.92 km2).","difficulty":2,"qcat":"geography","options":["Machu Picchu","Ctesiphon","Tyre, Lebanon","Petra"],"template":"sup","answer":"Machu Picchu","mode":"survival","title":"Machu Picchu"}
+SHOWN	{"cat":"mixed","explanation":"The Austro-Hungarian krone is the official currency of Kingdom of Hungary. The Kingdom of Hungary was a monarchy in Central Europe that existed for nearly a millennium, from 1000 to 1946.","title":"Kingdom of Hungary","game":-1,"mode":"survival","prompt":"Which country uses the Austro-Hungarian krone as its official currency?","i":76,"correct":3,"id":"rev:P38:Q171150","options":["Seychelles","Tonga","South Korea","Kingdom of Hungary"],"qcat":"history","template":"rev","difficulty":1,"answer":"Kingdom of Hungary"}
+SHOWN	{"cat":"mixed","correct":3,"difficulty":5,"i":77,"prompt":"Which of these was founded earliest?","answer":"Anuradhapura kingdom","options":["Tiwanaku polity","Chagatai Khanate","Socialist Republic of Romania","Anuradhapura kingdom"],"mode":"survival","id":"chron:P571:243816530885","game":-1,"title":"Anuradhapura kingdom","template":"chron","qcat":"history","explanation":"Anuradhapura kingdom (founded 377 BC) is the earliest of the four."}
+SHOWN	{"id":"rel:P17:Q815470","cat":"mixed","options":["United States","Bangladesh","India","Thailand"],"prompt":"In which country is Golden Triangle (Southeast Asia)?","answer":"Thailand","difficulty":2,"i":78,"explanation":"Golden Triangle (Southeast Asia): Thailand. The name \"Golden Triangle\" was coined by Marshall Green, a U.S.","title":"Golden Triangle (Southeast Asia)","correct":3,"mode":"survival","qcat":"geography","template":"rel","game":-1}
+SHOWN	{"cat":"mixed","prompt":"The first true freshman to win the Heisman Trophy, this dual-threat Texas A&M quarterback was later drafted by the Cleveland Browns — who is he?","correct":2,"game":-1,"i":79,"id":"src:describe:Johnny_Manziel","explanation":"Johnny Manziel: American football player (born 1992)","difficulty":1,"qcat":"sports","options":["Joe Flacco","Mike McDaniel","Johnny Manziel","Travis Kelce"],"template":"src","answer":"Johnny Manziel","mode":"survival","title":"Johnny Manziel"}
+SHOWN	{"cat":"mixed","explanation":"Leo (2023 Indian film) → Lokesh Kanagaraj. Leo (also marketed as Leo: Bloody Sweet) is a 2023 Indian Tamil-language action thriller film directed by Lokesh Kanagaraj.","title":"Leo (2023 Indian film)","game":-1,"mode":"survival","prompt":"Who directed Leo (2023 Indian film)?","i":80,"correct":3,"id":"wd:director:Q116536092","options":["Rian Johnson","Ti West","Ruben Östlund","Lokesh Kanagaraj"],"qcat":"screen","template":"wd","difficulty":1,"answer":"Lokesh Kanagaraj"}
+SHOWN	{"cat":"mixed","correct":0,"difficulty":2,"i":81,"prompt":"This British actor won a BAFTA TV Award for Murdered by My Father, another for Sherwood, and a Children's Emmy for Sweet Tooth — who is he?","answer":"Adeel Akhtar","options":["Adeel Akhtar","Masato Sakai","Ben Hardy","Kim Seon-ho"],"mode":"survival","id":"src:describe:Adeel_Akhtar","game":-1,"title":"Adeel Akhtar","template":"src","qcat":"screen","explanation":"Adeel Akhtar: British actor (born 1980)"}
+SHOWN	{"id":"src:cloze:Reptile_(film)","cat":"mixed","options":["Ponniyin Selvan: I","Pretty Woman","Reptile","Meet Joe Black"],"prompt":"Benicio del Toro not only stars in this 2023 crime thriller alongside Justin Timberlake and Alicia Silverstone — he also helped write its story and screenplay. Which Grant Singer debut is it?","answer":"Reptile","difficulty":1,"i":82,"explanation":"Reptile (film) is a 2023 American crime thriller film directed by Grant Singer in his feature-film directorial debut, from a screenplay he co-wrote with Benjamin Brewer and Benicio del Toro, and a story he co-wrote with Brewer.","title":"Reptile (film)","correct":2,"mode":"survival","qcat":"music","template":"src","game":-1}
+SHOWN	{"cat":"mixed","prompt":"After singing lead on a soft-rock hit called 'Let Me Love You Tonight' and playing guitar in Rodney Crowell's backing band, this musician found his commercial peak in country music with the breakthrough album 'When I Call Your Name' — who is he?","correct":3,"game":-1,"i":83,"id":"src:describe:Vince_Gill","explanation":"Vince Gill: American musician (born 1957)","difficulty":2,"qcat":"music","options":["Joey Ramone","Pete Burns","Jay Kay","Vince Gill"],"template":"src","answer":"Vince Gill","mode":"survival","title":"Vince Gill"}
+SHOWN	{"cat":"mixed","explanation":"Lee Seung-gi (Korean: 이승기; Hanja: 李昇基; born January 13, 1987) is a South Korean singer, actor, host, lyricist and entertainer.","title":"Lee Seung-gi","game":-1,"mode":"survival","prompt":"In what year was Lee Seung-gi born?","i":84,"correct":3,"id":"fact:P569:Q483571","options":["1991","1989","1983","1987"],"qcat":"screen","template":"fact","difficulty":1,"answer":"1987"}
+SHOWN	{"game":-1,"mode":"survival","options":["Qin dynasty","Seljuk Empire","Parthian Empire","Timurid Empire"],"explanation":"Parthian Empire (founded 247 BC) is the earliest of the four.","difficulty":2,"cat":"mixed","answer":"Parthian Empire","title":"Parthian Empire","template":"chron","correct":2,"id":"chron:P571:423280364031","qcat":"history","i":85,"prompt":"Which one below started first?"}
+SHOWN	{"id":"src:cloze:AliExpress","cat":"mixed","options":["YouTube Kids","AliExpress","PayPal","YouTube Premium"],"prompt":"Once the most-visited e-commerce site in Russia and the 10th most popular site in Brazil, which Alibaba-owned marketplace lets independent sellers reach buyers worldwide?","answer":"AliExpress","difficulty":2,"i":86,"explanation":"AliExpress is an online retail service based in China and owned by the Alibaba Group.","title":"AliExpress","correct":1,"mode":"survival","qcat":"business","template":"src","game":-1}
+SHOWN	{"prompt":"Performing under a different surname than her birth one, this English pop singer's cover of a Supremes classic topped the US charts in 1987, and she remains the most-charted British female solo act of the 1980s — who is she?","mode":"survival","template":"src","explanation":"Kim Wilde: English pop singer (born 1960)","title":"Kim Wilde","game":-1,"correct":1,"id":"src:describe:Kim_Wilde","i":87,"answer":"Kim Wilde","options":["Sheila E.","Kim Wilde","Mina (Italian singer)","Michelle Visage"],"qcat":"music","cat":"mixed","difficulty":3}
+SHOWN	{"cat":"mixed","explanation":"Szeged is the third largest city of Hungary, the largest city and regional centre of the Southern Great Plain and the county seat of Csongrd-Csand county.","title":"Szeged","game":-1,"mode":"survival","prompt":"Serving as county seat of Csongrád-Csanád, this city anchors Hungary's Southern Great Plain region and ranks as the country's third-biggest — which city?","i":88,"correct":2,"id":"src:cloze:Szeged","options":["Sarnath","Debrecen","Szeged","Paramaribo"],"qcat":"geography","template":"src","difficulty":4,"answer":"Szeged"}
+SHOWN	{"game":-1,"mode":"survival","options":["Flag of the United States","Flag of the Philippines","Flag of China","Flag of Greece"],"explanation":"Flag of the United States (founded 1777) is the earliest of the four.","difficulty":2,"cat":"mixed","answer":"Flag of the United States","title":"Flag of the United States","template":"chron","correct":0,"id":"chron:P571:997083533679","qcat":"geography","i":89,"prompt":"Which of these four began earliest?"}
+SHOWN	{"id":"fact:P571:Q22","cat":"mixed","options":["826","873","817","843"],"prompt":"In what year was Scotland founded?","answer":"843","difficulty":1,"i":90,"explanation":"Scotland: Its capital city is Edinburgh, whilst Glasgow is the largest and the most populous of the cities of Scotland.","title":"Scotland","correct":3,"mode":"survival","qcat":"geography","template":"fact","game":-1}
+SHOWN	{"prompt":"Officially named for the Custodian of the Two Holy Mosques, this football knockout competition is the second-oldest of its kind in its home country, after the now-defunct Crown Prince tournament — which competition?","mode":"survival","template":"src","explanation":"King's Cup (Saudi Arabia): Football tournament.","title":"King's Cup (Saudi Arabia)","game":-1,"correct":0,"id":"src:describe:King's_Cup_(Saudi_Arabia)","i":91,"answer":"King's Cup","options":["King's Cup","Cricket World Cup","Africa Cup of Nations","Commonwealth Games"],"qcat":"sports","cat":"mixed","difficulty":3}
+SHOWN	{"cat":"mixed","explanation":"B. R. Ambedkar: Ambedkar served as Law and Justice minister in the first cabinet of Jawaharlal Nehru.","title":"B. R. Ambedkar","game":-1,"mode":"survival","prompt":"In what year did B. R. Ambedkar die?","i":92,"correct":0,"id":"fact:P570:Q231690","options":["1956","1959","1953","1964"],"qcat":"science","template":"fact","difficulty":1,"answer":"1956"}
+SHOWN	{"game":-1,"mode":"survival","options":["Potassium cyanide","Prussian blue","Hydrogen cyanide","Hydrogen sulfide"],"explanation":"Hydrogen cyanide (also called prussic acid) is a chemical compound with the formula HCN and structural formula HCN.","difficulty":3,"cat":"mixed","answer":"Hydrogen cyanide","title":"Hydrogen cyanide","template":"src","correct":2,"id":"src:cloze:Hydrogen_cyanide","qcat":"science","i":93,"prompt":"Also called prussic acid, this highly toxic and flammable liquid boils just above room temperature at 25.6 degrees Celsius. It is produced industrially as a precursor to many chemical compounds, particularly potassium cyanide and adiponitrile. What is it?"}
+SHOWN	{"id":"src:describe:Jennie_Garth","cat":"mixed","options":["Aimee Lou Wood","Sanya Malhotra","Leni Riefenstahl","Jennie Garth"],"prompt":"She played Kelly Taylor across the Beverly Hills, 90210 franchise and a lead role on a mid-2000s sitcom, then wrote a memoir titled 'Deep Thoughts from a Hollywood Blonde.' Who is this actress?","answer":"Jennie Garth","difficulty":2,"i":94,"explanation":"Jennie Garth: American actress (born 1972)","title":"Jennie Garth","correct":3,"mode":"survival","qcat":"screen","template":"src","game":-1}
+SHOWN	{"prompt":"Dubbed 'Korea's Mayakovsky' and later 'the Pushkin of Korea,' this Soviet-born poet is hailed as the founding father of North Korean poetry for his lyrical epic, socialist-realist style. Who was he?","mode":"survival","template":"src","explanation":"Cho Ki-chon: North Korean poet (1913–1951)","title":"Cho Ki-chon","game":-1,"correct":2,"id":"src:describe:Cho_Ki-chon","i":95,"answer":"Cho Ki-chon","options":["Susan Sontag","Havelock Ellis","Cho Ki-chon","Junpei Gomikawa"],"qcat":"arts","cat":"mixed","difficulty":5}
+SHOWN	{"cat":"mixed","explanation":"FC Basel (founded 1893) is the earliest of the four.","title":"FC Basel","game":-1,"mode":"survival","prompt":"Which one below was established earliest?","i":96,"correct":1,"id":"chron:P571:236270322849","options":["Fluminense FC","FC Basel","Malmö FF","Sporting CP"],"qcat":"sports","template":"chron","difficulty":3,"answer":"FC Basel"}
+SHOWN	{"game":-1,"mode":"survival","options":["1994","1989","1992","1991"],"explanation":"Sean O'Malley (fighter): Sean Daniel O'Malley (born October 24, 1994) is an American professional mixed martial artist.","difficulty":1,"cat":"mixed","answer":"1994","title":"Sean O'Malley (fighter)","template":"fact","correct":0,"id":"fact:P569:Q45189135","qcat":"sports","i":97,"prompt":"In what year was Sean O'Malley born?"}
+SHOWN	{"id":"src:cloze:Luke_Bracey","cat":"mixed","options":["Manobala","Jon Heder","Kel Mitchell","Luke Bracey"],"prompt":"This Australian actor's first screen role came on the soap opera Home and Away, before he went on to star in the 2015 remake of Point Break and the war film Hacksaw Ridge. Who is he?","answer":"Luke Bracey","difficulty":2,"i":98,"explanation":"Luke Bracey (born 26 April 1989) is an Australian actor.","title":"Luke Bracey","correct":3,"mode":"survival","qcat":"screen","template":"src","game":-1}
+MARATHON-GAME	4	stake	mixed
+SHOWN	{"cat":"mixed","mode":"stake","title":"The Marriage of Figaro","answer":"The Marriage of Figaro","explanation":"The Marriage of Figaro (founded 1785) is the earliest of the four. It premiered at the Burgtheater in Vienna on 1 May 1786.","qcat":"arts","id":"chron:P571:969048668153","correct":1,"game":-1,"template":"chron","i":0,"options":["Nabucco","The Marriage of Figaro","La traviata","Il trovatore"],"prompt":"Which of these four was founded earliest?","difficulty":3}
+SHOWN	{"game":-1,"mode":"stake","options":["Sharleen Spiteri","Imelda Marcos","St. Vincent","Nancy Wilson"],"explanation":"Nancy Wilson (rock musician) (born March 16, 1954) is an American musician.","difficulty":2,"cat":"mixed","answer":"Nancy Wilson","title":"Nancy Wilson (rock musician)","template":"src","correct":3,"id":"src:cloze:Nancy_Wilson_(rock_musician)","qcat":"music","i":1,"prompt":"This guitarist and singer joined her older sister in a rock band considered the first hard-rock act fronted by women to hit it big, with hits like Magic Man — who is she?"}
+SHOWN	{"cat":"mixed","explanation":"Gilda Radner is a comedian. Gilda Susan Radner (June 28, 1946 – May 20, 1989) was an American actress and comedian.","title":"Gilda Radner","game":-1,"mode":"stake","prompt":"Which of these four is a comedian?","i":2,"correct":0,"id":"class:Q245068:277784768558","options":["Gilda Radner","J. J. Abrams","Don Pardo","Bob Hoskins"],"qcat":"screen","template":"class","difficulty":2,"answer":"Gilda Radner"}
+SHOWN	{"prompt":"Which of these four is highest above sea level?","mode":"stake","template":"sup","explanation":"Saarbrücken has the greatest elevation of the four (190 m).","title":"Saarbrücken","game":-1,"correct":1,"id":"sup:P2044:539123723451","i":3,"answer":"Saarbrücken","options":["Tomsk","Saarbrücken","Turku","Boston"],"qcat":"geography","cat":"mixed","difficulty":3}
+SHOWN	{"id":"wd:composer:Q46992827","cat":"mixed","options":["Reza Safinia","Aytekin Ataş","Jon Ekstrand","Danny Elfman"],"prompt":"Who composed the score for Warrior?","answer":"Reza Safinia","difficulty":2,"i":4,"explanation":"Warrior (TV series) → Reza Safinia.","title":"Warrior (TV series)","correct":0,"mode":"stake","qcat":"music","template":"wd","game":-1}
+SHOWN	{"game":-1,"mode":"stake","options":["Taylor Swift","Sinéad O'Connor","Selena Gomez","070 Shake"],"explanation":"070 Shake: American rapper (born 1997)","difficulty":2,"cat":"mixed","answer":"070 Shake","title":"070 Shake","template":"src","correct":3,"id":"src:describe:070_Shake","qcat":"music","i":5,"prompt":"Real name Danielle Balbuena, this rapper's guest verse on Raye's 2022 hit 'Escapism' topped the UK Singles Chart and won Song of the Year at the Brit Awards — who is she?"}
+SHOWN	{"cat":"mixed","explanation":"Robert E. Lee (January 19, 1807 - October 12, 1870) was a Confederate general whose early actions in the American Civil War led to his appointment as the overall commander of the Confederate States Army near the end of the war.","title":"Robert E. Lee","game":-1,"mode":"stake","prompt":"A top West Point graduate and Army engineer for 32 years, this son of Revolutionary War officer \"Light Horse Harry\" went on to command the Army of Northern Virginia until its surrender in 1865 — who was he?","i":6,"correct":1,"id":"src:cloze:Robert_E._Lee","options":["Jefferson Davis","Robert E. Lee","James Longstreet","Stonewall Jackson"],"qcat":"history","template":"src","difficulty":2,"answer":"Robert E. Lee"}
+SHOWN	{"prompt":"Which one below was established earliest?","mode":"stake","template":"chron","explanation":"Pandya dynasty (founded 300 BC) is the earliest of the four.","title":"Pandya dynasty","game":-1,"correct":2,"id":"chron:P571:856869544868","i":7,"answer":"Pandya dynasty","options":["Kingdom of Hungary","Ayutthaya Kingdom","Pandya dynasty","West Germany"],"qcat":"history","cat":"mixed","difficulty":4}
+MARATHON-GAME	5	sweep	mixed
+SHOWN	{"template":"src","game":-1,"title":"Kenan Thompson","prompt":"The longest-tenured cast member in Saturday Night Live history, he first became known as an original cast member of Nickelodeon's All That — who is he?","cat":"mixed","qcat":"screen","options":["Seo In-guk","Jay Leno","Teruyuki Kagawa","Kenan Thompson"],"correct":3,"mode":"sweep","explanation":"Kenan Thompson: American actor and comedian (born 1978)","id":"src:describe:Kenan_Thompson","answer":"Kenan Thompson","i":0,"difficulty":2}
+SHOWN	{"options":["2.07 m","1.65 m","2.64 m","2.29 m"],"qcat":"sports","prompt":"About how tall is Saina Nehwal?","title":"Saina Nehwal","game":-1,"answer":"1.65 m","difficulty":4,"template":"num","i":1,"correct":1,"id":"num:P2048:Q464311","explanation":"The height of Saina Nehwal is about 1.65 m. Saina Nehwal (born 17 March 1990) is an Indian former badminton player.","cat":"mixed","mode":"sweep"}
+SHOWN	{"options":["Paul Scholes","Ruben Loftus-Cheek","Roméo Lavia","Eusébio"],"qcat":"sports","prompt":"Spending his entire career at Manchester United, this midfielder won more Premier League titles than any other English player — who is he?","title":"Paul Scholes","game":-1,"answer":"Paul Scholes","difficulty":2,"template":"src","i":2,"correct":0,"id":"src:describe:Paul_Scholes","explanation":"Paul Scholes: English footballer (born 1974)","cat":"mixed","mode":"sweep"}
+SHOWN	{"options":["Matt Lanter","Johnny Simmons","Clifton Collins Jr.","Tseng Jing-hua"],"qcat":"screen","prompt":"This American actor played 'Young Neil' in both 'Scott Pilgrim vs. the World' and its 2023 follow-up, and also portrayed Brad Hayes in 'The Perks of Being a Wallflower' — who is he?","title":"Johnny Simmons","game":-1,"answer":"Johnny Simmons","difficulty":4,"template":"src","i":3,"correct":1,"id":"src:describe:Johnny_Simmons","explanation":"Johnny Simmons: American actor.","cat":"mixed","mode":"sweep"}
+SHOWN	{"options":["Nicolò Barella","Nicolas Pépé","Aaron Ramsey","Jorge Sampaoli"],"qcat":"sports","prompt":"This Argentine manager led Chile to their first-ever Copa América title in 2015, having previously won three league titles with a Santiago club — who is he?","title":"Jorge Sampaoli","game":-1,"answer":"Jorge Sampaoli","difficulty":2,"template":"src","i":4,"correct":3,"id":"src:describe:Jorge_Sampaoli","explanation":"Jorge Sampaoli: Argentine football manager (born 1960)","cat":"mixed","mode":"sweep"}
+SHOWN	{"options":["Czech Republic","France","Norway","Spain"],"qcat":"geography","prompt":"In which country is Louvre?","title":"Louvre","game":-1,"answer":"France","difficulty":1,"template":"rel","i":5,"correct":1,"id":"rel:P17:Q19675","explanation":"Louvre: France. The Louvre (French: Musée du Louvre [myze dy luvʁ]) is a national art museum in Paris, France.","cat":"mixed","mode":"sweep"}
+SHOWN	{"options":["Austria-Hungary","United Kingdom of Great Britain and Ireland","Czechoslovakia","Polish–Lithuanian Commonwealth"],"qcat":"geography","prompt":"Which of these is the largest by area?","title":"Polish–Lithuanian Commonwealth","game":-1,"answer":"Polish–Lithuanian Commonwealth","difficulty":2,"template":"sup","i":6,"correct":3,"id":"sup:P2046:757400852585","explanation":"Polish–Lithuanian Commonwealth has the greatest area of the four (865,000 km2).","cat":"mixed","mode":"sweep"}
+SHOWN	{"options":["Syrian civil war","American Civil War","Lebanese Civil War","Spanish Civil War"],"qcat":"history","prompt":"Fueled in part by the country's religious mosaic of Christians, Sunnis, Shias, and Druze, which 1975–1990 conflict killed an estimated 150,000 and drove nearly a million people into exile?","title":"Lebanese Civil War","game":-1,"answer":"Lebanese Civil War","difficulty":2,"template":"src","i":7,"correct":2,"id":"src:cloze:Lebanese_Civil_War","explanation":"Lebanese Civil War was a multifaceted armed conflict that took place from 1975 to 1990.","cat":"mixed","mode":"sweep"}
+SHOWN	{"options":["Belize dollar","Deutsche Mark","Nicaraguan córdoba","Artsakh dram"],"qcat":"geography","prompt":"What currency is used in Germany?","title":"Germany","game":-1,"answer":"Deutsche Mark","difficulty":1,"template":"wd","i":8,"correct":1,"id":"wd:currency:Q183","explanation":"Germany → Deutsche Mark. Germany, officially the Federal Republic of Germany, is a country in Western and Central Europe.","cat":"mixed","mode":"sweep"}
+SHOWN	{"options":["Martin Scorsese","James Cameron","Roman Polanski","Peter Jackson"],"qcat":"screen","prompt":"Who directed The Age of Innocence?","title":"The Age of Innocence (1993 film)","game":-1,"answer":"Martin Scorsese","difficulty":2,"template":"wd","i":9,"correct":0,"id":"wd:director:Q1125442","explanation":"The Age of Innocence (1993 film) → Martin Scorsese.","cat":"mixed","mode":"sweep"}
+SHOWN	{"options":["Ismail Haniyeh","Keir Starmer","Mahmoud Abbas","Hosni Mubarak"],"qcat":"history","prompt":"Known by the kunya Abu Mazen, this Fatah politician has served as the second president of Palestine and the Palestinian Authority since 2005 — who is he?","title":"Mahmoud Abbas","game":-1,"answer":"Mahmoud Abbas","difficulty":1,"template":"src","i":10,"correct":2,"id":"src:cloze:Mahmoud_Abbas","explanation":"Mahmoud Abbas (born 15 November 1935), also known by the kunya Abu Mazen, is a Palestinian politician who has been serving as the second president of Palestine and the Palestinian National Authority (PNA) since 2005.","cat":"mixed","mode":"sweep"}
+SHOWN	{"options":["1978","1974","1980","1968"],"qcat":"history","prompt":"In what year was C. Joseph Vijay born?","title":"C. Joseph Vijay","game":-1,"answer":"1974","difficulty":1,"template":"fact","i":11,"correct":1,"id":"fact:P569:Q528496","explanation":"C. Joseph Vijay: Following a stint as a child actor in the 1980s, Vijay made his debut as a leading man in Naalaiya Theerpu (1992), directed by his father S.","cat":"mixed","mode":"sweep"}
+MARATHON-GAME	6	pictureId	mixed
+com.learningischange.tidbitstrivia: 31063

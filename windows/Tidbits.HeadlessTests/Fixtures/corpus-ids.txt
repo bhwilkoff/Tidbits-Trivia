@@ -71,7 +71,6 @@ src:describe:Pigeonhole_principle
 src:describe:Rendang
 src:cloze:Rendang
 src:describe:Australopithecus_afarensis
-src:describe:Medieval_literature
 src:describe:Springbok
 src:cloze:Springbok
 src:describe:Red_wolf
@@ -79,7 +78,6 @@ src:cloze:Red_wolf
 src:describe:Dimethylformamide
 src:cloze:Dimethylformamide
 src:describe:Jack_Parsons
-src:describe:Tarantula_hawk
 src:cloze:Nitrogen_fixation
 src:describe:Last_of_the_Summer_Wine
 src:describe:New_Hampshire
@@ -205,11 +203,7 @@ src:describe:Wolfman_Jack
 src:describe:The_Honeymooners
 src:describe:Laverne_&_Shirley
 src:cloze:Laverne_&_Shirley
-src:describe:Cilicia
-src:cloze:Cilicia
 src:describe:Palace_of_Fontainebleau
-src:describe:Sutton_Hoo
-src:cloze:Sutton_Hoo
 src:cloze:Satchel_Paige
 src:describe:Alternative_rock
 src:describe:Parsifal
@@ -222,7 +216,6 @@ src:cloze:Evita_(musical)
 src:describe:Jean-François_Champollion
 src:describe:Dingo
 src:cloze:Robert_Edwards_(physiologist)
-src:cloze:Aldrin
 src:cloze:Bert_Williams
 src:cloze:Thomas_Beecham
 src:cloze:George_Herriman
@@ -353,7 +346,6 @@ src:describe:Herbert_Kitchener,_1st_Earl_Kitchener
 src:cloze:Anastas_Mikoyan
 src:describe:Mahajanapadas
 src:cloze:Mahajanapadas
-src:cloze:Sabiha_Gökçen
 src:describe:Indigo_dye
 src:cloze:Indigo_dye
 src:describe:Mourning_dove
@@ -485,7 +477,6 @@ src:describe:Uri_Geller
 src:cloze:Uri_Geller
 src:describe:Mississippi
 src:describe:Mariana_Islands
-src:describe:Samaria
 src:describe:Kerguelen_Islands
 src:describe:Somerset
 src:cloze:Somerset
@@ -572,12 +563,10 @@ wd:composer:Q2608920
 wd:author:Q674999
 wd:author:Q5552630
 wd:capital:Q862404
-src:describe:Diarmait_mac_Cerbaill
 src:describe:Thomas_Playford_IV
 src:cloze:Thomas_Playford_IV
 src:describe:Ieremia_Tabai
 src:describe:Leslie_Goonewardene
-src:describe:Teriitaria_II
 src:describe:Peter_Force
 src:cloze:Peter_Force
 src:describe:Olive
@@ -712,7 +701,6 @@ wd:author:Q2712800
 wd:author:Q15147779
 src:describe:Richard_Seddon
 src:cloze:Richard_Seddon
-src:describe:Maravi
 src:describe:Francisco_Javier_Arana
 src:cloze:Johann_Most
 src:describe:Davíð_Oddsson
@@ -743,10 +731,8 @@ src:describe:Carmen_Rosales
 src:cloze:Carmen_Rosales
 src:describe:Angela_James
 src:cloze:Bill_O'Reilly_(cricketer)
-src:describe:The_Feast_of_the_Gods
 src:describe:Colley_Cibber
 src:cloze:Colley_Cibber
-src:describe:Plautilla_Nelli
 src:describe:Florian_Znaniecki
 src:cloze:Florian_Znaniecki
 src:describe:Utagawa_Toyokuni
@@ -791,7 +777,6 @@ wd:continent:Q808575
 wd:continent:Q219737
 src:describe:Walter_Model
 src:describe:Michel_Ney
-src:describe:Third_Servile_War
 src:describe:Centrism
 src:cloze:Centrism
 src:describe:Right-wing_populism
@@ -853,8 +838,6 @@ src:describe:Luís_Vaz_de_Torres
 src:cloze:Rowland_Hill
 src:describe:Rainilaiarivony
 src:cloze:Jay_Cooke
-src:describe:Cunobeline
-src:cloze:Cunobeline
 src:describe:Spyros_Kyprianou
 src:cloze:Spyros_Kyprianou
 src:describe:Hubert_Maga
@@ -892,7 +875,6 @@ src:cloze:Joke_Silva
 src:describe:Anne_V._Coates
 src:cloze:Anne_V._Coates
 src:describe:June_Mathis
-src:describe:Sunyani
 src:cloze:Bob_Simpson_(cricketer)
 src:cloze:George_Headley
 src:describe:Guantanamera
@@ -906,7 +888,6 @@ src:cloze:Amy_Lowell
 src:describe:M._F._K._Fisher
 src:describe:William_Thornton
 src:cloze:William_Thornton
-src:describe:Jacopo_della_Quercia
 src:describe:Mary_Midgley
 src:cloze:Mary_Midgley
 src:describe:Helen_Garner
@@ -974,8 +955,6 @@ src:describe:Rockefeller_Center
 src:describe:USS_Arizona
 src:cloze:USS_Arizona
 src:describe:Namma_Metro
-src:describe:Balochistan
-src:cloze:Balochistan
 src:describe:Wasim_Akram
 src:cloze:AB_de_Villiers
 src:describe:Despacito
@@ -991,7 +970,6 @@ src:describe:Andrew_Fisher
 src:cloze:Andrew_Fisher
 src:describe:Mairead_Maguire
 src:describe:Nyuserre_Ini
-src:cloze:Osorkon_I
 src:describe:Jim_Lehrer
 src:cloze:Jim_Lehrer
 src:describe:Siege_of_Turin
@@ -1060,14 +1038,11 @@ src:cloze:Ninette_de_Valois
 src:describe:Frances_Sargent_Osgood
 src:describe:The_Little_Foxes
 src:describe:Edith_Hamilton
-src:describe:Huolongjing
 src:cloze:He_Jiankui
 src:describe:Phan_Bội_Châu
 src:cloze:Phan_Bội_Châu
 src:describe:George_Mallory
 src:describe:War_in_Darfur
-src:describe:Paekche
-src:cloze:Paekche
 src:describe:Miklós_Horthy
 src:describe:Classical_liberalism
 src:describe:Pholcidae
@@ -1168,8 +1143,6 @@ src:describe:Martita_Hunt
 src:cloze:Martita_Hunt
 src:describe:Pearl_White
 src:cloze:Pearl_White
-src:describe:Daqing
-src:cloze:Daqing
 src:describe:Buru
 src:cloze:Benbulbin
 src:describe:Daniel_Mendoza
@@ -1446,7 +1419,6 @@ src:describe:Unbihexium
 src:describe:Richard_Cantillon
 src:describe:E._F._Schumacher
 src:describe:Michael_E._Mann
-src:describe:Gallstone
 src:describe:Charles_F._Kettering
 src:describe:Nicolas_Steno
 src:describe:Henri_Lebesgue
@@ -1723,8 +1695,6 @@ src:describe:Jan_Karol_Chodkiewicz
 src:cloze:Ramesses_VI
 src:describe:Guillermo_Endara
 src:cloze:Guillermo_Endara
-src:describe:Sālote_Tupou_III
-src:cloze:Sālote_Tupou_III
 src:describe:William_Tubman
 src:cloze:William_Tubman
 src:describe:Funmilayo_Ransome-Kuti
@@ -1903,8 +1873,6 @@ src:cloze:Jacqueline_Susann
 src:describe:Marie_Dressler
 src:describe:Samar
 src:describe:Alor_Setar
-src:describe:Tibesti_Mountains
-src:cloze:Tibesti_Mountains
 src:describe:W._C._Handy
 src:cloze:W._C._Handy
 src:cloze:Trans-Europe_Express_(album)
@@ -1934,8 +1902,6 @@ src:describe:Robert_Southey
 src:cloze:Robert_Southey
 src:describe:Ama_Ata_Aidoo
 src:cloze:Ama_Ata_Aidoo
-src:describe:Lavinia_Fontana
-src:cloze:Lavinia_Fontana
 src:describe:Khachatur_Abovian
 src:describe:Tomi_Ungerer
 src:cloze:Tomi_Ungerer
@@ -2032,7 +1998,6 @@ src:describe:Totila
 src:cloze:Totila
 src:cloze:Nguyễn_Khánh
 src:describe:Shehu_Shagari
-src:describe:Mentuhotep_II
 src:describe:Canaan_Banana
 src:describe:Louis-Eugène_Cavaignac
 src:cloze:Louis-Eugène_Cavaignac
@@ -2101,8 +2066,6 @@ src:describe:Barbara_Hepworth
 src:cloze:Barbara_Hepworth
 src:describe:Alvin_Plantinga
 src:cloze:Alvin_Plantinga
-src:describe:The_Corrections
-src:cloze:The_Corrections
 src:describe:Junot_Díaz
 src:cloze:Junot_Díaz
 src:describe:Samuel_Richardson
@@ -2370,7 +2333,6 @@ src:describe:Josef_von_Sternberg
 src:describe:Hanoi
 src:describe:Erode
 src:cloze:Erode
-src:cloze:Kingdom_of_Kandy
 src:describe:Alf_Ramsey
 src:cloze:Alf_Ramsey
 src:describe:Curly_Lambeau
@@ -2489,7 +2451,6 @@ src:cloze:Violeta_Chamorro
 src:describe:René-Robert_Cavelier,_Sieur_de_La_Salle
 src:cloze:René-Robert_Cavelier,_Sieur_de_La_Salle
 src:describe:Henri_de_La_Tour_d'Auvergne,_Viscount_of_Turenne
-src:describe:Flower_war
 src:describe:Daniel_arap_Moi
 src:cloze:Daniel_arap_Moi
 src:cloze:David_Farragut
@@ -2560,7 +2521,6 @@ src:describe:Paolo_Uccello
 src:cloze:Charles_Murray_(political_scientist)
 src:describe:Glengarry_Glen_Ross
 src:cloze:Glengarry_Glen_Ross
-src:cloze:Photorealism
 src:describe:John_Betjeman
 src:cloze:John_Betjeman
 src:cloze:Achromatopsia
@@ -2705,8 +2665,6 @@ src:cloze:Sue_Grafton
 src:describe:Utamaro
 src:describe:Colleen_McCullough
 src:cloze:Lillian_Hellman
-src:describe:Polykleitos
-src:cloze:Polykleitos
 src:describe:Sharaku
 src:describe:Giant_panda
 src:describe:Gottlieb_Daimler
@@ -2897,7 +2855,6 @@ src:cloze:Buenaventura_Durruti
 src:describe:David_Scott
 src:cloze:Sultanate_of_Bijapur
 src:cloze:Walter_Bonatti
-src:cloze:Northern_War_of_1655–1660
 src:describe:Nur_Muhammad_Taraki
 src:describe:Jean-François_de_Galaup,_comte_de_Lapérouse
 src:describe:Constantine_II_of_Scotland
@@ -2931,7 +2888,6 @@ src:cloze:John_Banville
 src:describe:Robert_Donat
 src:cloze:Robert_Donat
 src:cloze:Niagara_River
-src:describe:Sierra_Madre_Occidental
 src:describe:Cuttack
 src:describe:Kollam
 src:describe:Althea_Gibson
@@ -2975,7 +2931,6 @@ src:cloze:Vasily_Vereshchagin
 src:describe:The_Burial_of_the_Count_of_Orgaz
 src:describe:Martial
 src:describe:Gregory_of_Narek
-src:describe:The_Tale_of_Peter_Rabbit
 src:cloze:Northern_Expedition
 src:describe:De_Stijl
 src:cloze:De_Stijl
@@ -3294,7 +3249,6 @@ src:cloze:David_Hasselhoff
 src:describe:Colorado
 src:cloze:Delaware
 src:describe:Developing_country
-src:describe:Kingdom_of_England
 src:describe:Pitcairn_Islands
 src:cloze:Vermont
 src:describe:Kelvin_Kiptum
@@ -3322,8 +3276,6 @@ src:cloze:Sargon_II
 src:describe:Louis,_Grand_Condé
 src:describe:Jean-Bertrand_Aristide
 src:cloze:Jean-Bertrand_Aristide
-src:describe:Cisplatine_War
-src:cloze:Cisplatine_War
 src:describe:Konstantinos_Karamanlis
 src:cloze:Hamster
 src:describe:Helicobacter_pylori
@@ -3459,7 +3411,6 @@ src:describe:Sirimavo_Bandaranaike
 src:describe:Paul_Keating
 src:cloze:Paul_Keating
 src:cloze:James_Connolly
-src:describe:Thutmose_I
 src:describe:Wild_boar
 src:cloze:HIV
 src:describe:Esther_Duflo
@@ -3970,8 +3921,6 @@ src:cloze:Amrita_Pritam
 src:describe:Fiorello_La_Guardia
 src:describe:John_Howard
 src:cloze:John_Howard
-src:describe:The_Anarchy
-src:cloze:The_Anarchy
 src:cloze:Robert_Mueller
 src:describe:Samuel_de_Champlain
 src:cloze:Giovanni_Giolitti
@@ -4061,7 +4010,6 @@ src:cloze:Tony_Kushner
 src:describe:Mary_Cassatt
 src:cloze:Mary_Cassatt
 src:describe:Anastas_Mikoyan
-src:describe:Sabiha_Gökçen
 src:cloze:Annie_Leibovitz
 src:cloze:Hebrides
 wd:continent:Q273874
@@ -4267,7 +4215,6 @@ src:cloze:Fernando_Henrique_Cardoso
 src:describe:David_IV
 src:describe:Platypus
 src:cloze:Joseph_Stiglitz
-src:describe:Aristarchus_of_Samos
 src:describe:Abdus_Salam
 src:describe:Rob_Paulsen
 src:cloze:Rob_Paulsen
@@ -4375,7 +4322,6 @@ src:describe:Samia_Suluhu_Hassan
 src:cloze:Samia_Suluhu_Hassan
 src:describe:Wangarĩ_Maathai
 src:describe:Sherman's_March_to_the_Sea
-src:describe:Horemheb
 src:describe:Narai
 src:describe:H._H._Asquith
 src:describe:George_B._McClellan
@@ -4527,7 +4473,6 @@ src:describe:Adolf_Galland
 src:describe:Michel_Temer
 src:cloze:Michel_Temer
 src:describe:Sierra_Leone_Civil_War
-src:describe:Artemisia_I_of_Caria
 src:describe:Eleftherios_Venizelos
 src:describe:Jean_Chrétien
 src:cloze:Jean_Chrétien
@@ -4643,7 +4588,6 @@ src:cloze:Angela_James
 src:describe:The_Mamas_&_the_Papas
 src:cloze:The_Mamas_&_the_Papas
 src:describe:Strange_Case_of_Dr_Jekyll_and_Mr_Hyde
-src:cloze:Plautilla_Nelli
 src:cloze:Mary_Mapes_Dodge
 src:cloze:Agness_Underwood
 wd:capital:Q769680
@@ -4904,7 +4848,6 @@ src:cloze:Adah_Isaacs_Menken
 src:describe:Florida
 src:cloze:Florida
 src:describe:Kremlin
-src:cloze:Nidaros
 src:cloze:Jack_Kramer
 src:describe:Taylor_Hawkins
 src:describe:Kate_Moss
@@ -5179,8 +5122,6 @@ src:cloze:Christine_Sinclair
 src:cloze:My_Bloody_Valentine_(band)
 src:describe:Tim_Minchin
 src:cloze:Tim_Minchin
-src:describe:Glencore
-src:cloze:Glencore
 src:describe:Les_Paul
 src:cloze:Purple_Rain_(album)
 src:cloze:Simon_Fuller
@@ -6109,8 +6050,6 @@ src:cloze:Michigan
 src:describe:Arc_de_Triomphe
 src:describe:Polish–Lithuanian_Commonwealth
 src:describe:Western_Wall
-src:describe:Vättern
-src:cloze:Vättern
 src:describe:Mauricio_Pochettino
 src:describe:Mohammed_Shami
 src:describe:Rachin_Ravindra
@@ -6275,7 +6214,6 @@ src:describe:Maria_Callas
 src:describe:The_Pianist_(2002_film)
 src:describe:Sofia_Richie
 src:cloze:North_Carolina
-src:cloze:Eastern_Europe
 src:describe:Jonestown
 src:describe:Sahara
 src:cloze:Sahara
@@ -6549,8 +6487,6 @@ src:cloze:Adolph_Zukor
 src:describe:Alhambra
 src:describe:Parthenon
 src:cloze:Parthenon
-src:describe:Caucasus
-src:cloze:Caucasus
 src:cloze:Virginia
 src:describe:Strasbourg
 src:cloze:Querétaro_(city)
@@ -9665,7 +9601,6 @@ src:describe:10_Things_I_Hate_About_You
 src:describe:Frozen_2
 src:cloze:Toulouse
 src:describe:Zagreb
-src:describe:São_Tomé_and_Príncipe
 src:describe:Arturo_Vidal
 src:cloze:Arturo_Vidal
 src:describe:Odell_Beckham_Jr.
@@ -12179,8 +12114,6 @@ src:describe:Sophie_Marceau
 src:describe:Chad_Michael_Murray
 src:cloze:Chad_Michael_Murray
 src:cloze:True_Beauty_(South_Korean_TV_series)
-src:describe:Togo
-src:cloze:Togo
 src:cloze:Wrocław
 src:describe:Denver
 src:describe:Michael_Owen
@@ -17915,7 +17848,6 @@ src:cloze:Napoleon_(2023_film)
 src:describe:Zendaya
 src:cloze:Zendaya
 src:cloze:Yellowstone_(TV_series)
-src:cloze:Elemental_(2023_film)
 src:describe:Nicolas_Cage
 src:describe:Breaking_Bad
 src:cloze:Breaking_Bad
@@ -24649,10 +24581,8 @@ rel:P170:Q35791
 rel:P17:Q161387
 rel:P112:Q124179
 rel:P61:Q407535
-rel:P17:Q1829
 rel:P17:Q182477
 rel:P112:Q182477
-rel:P17:Q41304
 rel:P37:Q41304
 rel:P17:Q27586
 rel:P17:Q18419
@@ -24945,7 +24875,6 @@ rel:P17:Q16567
 rel:P17:Q41621
 rel:P17:Q19689
 rel:P17:Q204853
-rel:P17:Q83224
 rel:P17:Q282428
 rel:P37:Q282428
 rel:P17:Q192534
@@ -25089,7 +25018,6 @@ rel:P170:Q945030
 rel:P17:Q503308
 rel:P112:Q503308
 rel:P17:Q47716
-rel:P17:Q83404
 rel:P17:Q9679
 rel:P17:Q183536
 rel:P112:Q183536
@@ -25947,7 +25875,6 @@ rel:P17:Q118821
 rel:P61:Q9289
 rel:P61:Q10435
 rel:P61:Q10488
-rel:P17:Q161325
 rel:P61:Q1920746
 rel:P17:Q2063130
 rel:P17:Q751347
@@ -26318,7 +26245,6 @@ rel:P37:Q8733
 rel:P17:Q44302
 rel:P112:Q1489
 rel:P17:Q43332
-rel:P17:Q117
 rel:P37:Q117
 rel:P17:Q1726
 rel:P170:Q64349029
@@ -26394,7 +26320,6 @@ rel:P170:Q30611820
 rel:P17:Q39671
 rel:P17:Q192055
 rel:P17:Q8686
-rel:P17:Q1993476
 rel:P170:Q85800564
 rel:P17:Q3392
 rel:P17:Q128910
@@ -26497,7 +26422,6 @@ rel:P17:Q43512
 rel:P37:Q971
 rel:P17:Q24639
 rel:P112:Q24639
-rel:P17:Q3711
 rel:P17:Q8690
 rel:P170:Q8690
 rel:P61:Q6199
@@ -26568,7 +26492,6 @@ rel:P17:Q24826
 rel:P17:Q87
 rel:P170:Q101096725
 rel:P17:Q631047
-rel:P17:Q42976
 rel:P170:Q1181286
 rel:P17:Q160746
 rel:P17:Q16635
@@ -27184,7 +27107,6 @@ sup:P1082:409118891267
 sup:P1082:243056658470
 sup:P1082:559371801601
 sup:P1082:817734414804
-sup:P1082:836333796484
 sup:P1082:161693030200
 sup:P1082:525073287154
 sup:P1082:167874902591
@@ -27759,7 +27681,6 @@ sup:P2046:706019442429
 sup:P2046:510988634626
 sup:P2046:977834147688
 sup:P2046:986665521876
-sup:P2046:264178441345
 sup:P2046:338678317545
 sup:P2046:835424616971
 sup:P2046:960706958504
@@ -27770,7 +27691,6 @@ sup:P2046:798445884031
 sup:P2046:703468661615
 sup:P2046:554674526217
 sup:P2046:826914571317
-sup:P2046:250821347058
 sup:P2046:762447987740
 sup:P2046:750562669387
 sup:P2046:255605296072
@@ -27804,7 +27724,6 @@ sup:P2046:528212371803
 sup:P2046:512390830219
 sup:P2046:403107164092
 sup:P2046:263525334662
-sup:P2046:623408361575
 sup:P2046:882763345330
 sup:P2046:336495977371
 sup:P2046:104464988060
@@ -28794,8 +28713,6 @@ chron:P571:614008116362
 chron:P571:609087162464
 chron:P571:309604231369
 chron:P571:421540918397
-chron:P571:495530256545
-chron:P571:252240609517
 chron:P571:29909285488
 chron:P571:289197792688
 chron:P571:387735934748
@@ -28855,7 +28772,6 @@ chron:P571:576080925901
 chron:P571:445812626364
 chron:P571:525034468695
 chron:P571:152670520856
-chron:P571:314008393470
 chron:P571:124050897469
 chron:P571:779789720652
 chron:P571:116734729408
@@ -28905,7 +28821,6 @@ chron:P571:283696512065
 chron:P571:931000560290
 chron:P571:174320285626
 chron:P571:211588334874
-chron:P571:156138692373
 chron:P571:858966336433
 chron:P571:928694681316
 chron:P571:578228494873
@@ -29057,7 +28972,6 @@ chron:P571:534082950589
 chron:P571:311972738126
 chron:P571:373825603125
 chron:P571:178431124066
-chron:P571:124953842762
 chron:P571:360300734686
 chron:P571:877400014172
 chron:P571:636823196388
@@ -29345,9 +29259,7 @@ chron:P577:539805062404
 chron:P577:283166062298
 chron:P577:717756601134
 chron:P577:776119302984
-chron:P577:893026401115
 chron:P577:197500439060
-chron:P577:531228163527
 chron:P577:733144851238
 chron:P577:990415579753
 chron:P577:218865884932
@@ -29385,7 +29297,6 @@ chron:P577:636425707179
 chron:P577:860356118042
 chron:P577:646055189610
 chron:P577:340645579151
-chron:P577:77292623766
 chron:P577:299858319049
 chron:P577:214938784563
 chron:P577:973679877555
@@ -29552,10 +29463,6 @@ chron:P569:974815348143
 chron:P569:941558051658
 chron:P569:695954437363
 chron:P569:555197336555
-chron:P569:92481095681
-chron:P569:949716182383
-chron:P569:503165147811
-chron:P569:500124726537
 chron:P569:895130088898
 chron:P569:439982403756
 chron:P569:590633203533
@@ -30020,7 +29927,6 @@ rev:P36:Q44754
 rev:P36:Q230791
 rev:P36:Q335088
 rev:P36:Q402145
-rev:P36:Q449639
 rev:P36:Q30
 rev:P36:Q668
 rev:P36:Q17
@@ -30209,7 +30115,6 @@ rev:P36:Q133356
 rev:P38:Q13474305
 rev:P38:Q230791
 rev:P38:Q148540
-rev:P38:Q402145
 rev:P38:Q801
 rev:P38:Q17
 rev:P38:Q148
@@ -37230,14 +37135,12 @@ rel:P37:Q37024
 rel:P17:Q56039
 rel:P176:Q193487
 rel:P170:Q498438
-rel:P17:Q200855
 rel:P17:Q4970
 rel:P170:Q110885430
 rel:P17:Q216022
 rel:P61:Q1089
 rel:P37:Q484195
 rel:P17:Q12191
-rel:P17:Q200464
 rel:P112:Q200464
 rel:P17:Q178925
 rel:P175:Q685785
@@ -37399,7 +37302,6 @@ rel:P112:Q16499972
 rel:P175:Q719748
 rel:P170:Q719748
 rel:P61:Q42385
-rel:P17:Q151005
 rel:P175:Q429828
 rel:P170:Q429828
 rel:P61:Q122043
@@ -37459,7 +37361,6 @@ rel:P170:Q210311
 rel:P170:Q42220769
 rel:P17:Q208694
 rel:P17:Q844271
-rel:P17:Q83969
 rel:P17:Q39420
 rel:P175:Q119981579
 rel:P61:Q1128
@@ -38952,7 +38853,6 @@ rel:P175:Q2991452
 rel:P175:Q4775712
 rel:P170:Q4775712
 rel:P175:Q1493554
-rel:P17:Q5332
 rel:P17:Q2795
 rel:P17:Q815470
 rel:P17:Q5469
@@ -39205,12 +39105,10 @@ rel:P175:Q19264035
 rel:P17:Q94950
 rel:P17:Q204220
 rel:P170:Q55190027
-rel:P17:Q178510
 rel:P17:Q7024
 rel:P37:Q7024
 rel:P17:Q43509
 rel:P175:Q5306893
-rel:P17:Q44763
 rel:P17:Q185068
 rel:P37:Q185068
 rel:P175:Q20762695
@@ -40496,8 +40394,6 @@ sup:P2044:541543605042
 sup:P2044:501101050431
 sup:P2044:782299045365
 sup:P2044:164599559306
-sup:P2044:97913083025
-sup:P2044:24080675727
 sup:P2044:164069297987
 sup:P2044:414330235356
 sup:P2044:324566638861
@@ -40705,7 +40601,6 @@ sup:P2044:837522316449
 sup:P2044:136235755202
 sup:P2044:914740324122
 sup:P2044:278445478393
-sup:P2044:704454596521
 sup:P2044:813767175766
 sup:P2044:245321443620
 sup:P2044:899497028386
@@ -40811,8 +40706,6 @@ sup:P2043:773509828404
 sup:P2043:945425672660
 sup:P2043:903532222385
 sup:P2043:100947005179
-sup:P2043:950933270347
-sup:P2043:814994236672
 sup:P2043:988278366165
 sup:P2043:521839821936
 sup:P2043:71853062239
@@ -41172,7 +41065,6 @@ chron:P571:910444562669
 chron:P571:995769324884
 chron:P571:975522859312
 chron:P571:743044695483
-chron:P571:170165229389
 chron:P571:977571845261
 chron:P571:772333735037
 chron:P571:835129460473
@@ -41521,7 +41413,6 @@ chron:P571:848619173852
 chron:P571:53250813267
 chron:P571:640446118166
 chron:P571:708398467042
-chron:P571:617804469804
 chron:P571:453609526173
 chron:P571:880031213224
 chron:P571:130594908924
@@ -41630,9 +41521,6 @@ chron:P571:274510498585
 chron:P571:964329579481
 chron:P571:676558688389
 chron:P571:474544806767
-chron:P571:433945358439
-chron:P571:488751013751
-chron:P571:364408562786
 chron:P571:784564494935
 chron:P571:360069804272
 chron:P571:387614247915
@@ -42249,7 +42137,6 @@ chron:P577:206620219834
 chron:P577:204143541303
 chron:P577:221969618742
 chron:P577:361684498188
-chron:P577:101456468401
 chron:P577:163756135850
 chron:P577:586121473849
 chron:P577:822317432772
@@ -43567,7 +43454,6 @@ src:cloze:Hammurabi
 src:describe:French_and_Indian_War
 src:describe:Phil_McGraw
 src:cloze:Phil_McGraw
-src:describe:Wessex
 src:describe:Lucrezia_Borgia
 src:describe:Alauddin_Khalji
 src:cloze:Alauddin_Khalji
@@ -43609,8 +43495,6 @@ src:cloze:Diya_Kumari
 src:describe:Hussein,_King_of_Hejaz
 src:describe:Inanna
 src:cloze:Inanna
-src:describe:Kingdom_of_Hungary
-src:cloze:Kingdom_of_Hungary
 src:cloze:Hindu_deities
 src:describe:Pepin_the_Short
 src:describe:Eris_(mythology)
@@ -43679,8 +43563,6 @@ src:describe:Mahmud_II
 src:describe:Hebrews
 src:cloze:Hebrews
 src:describe:Pargalı_Ibrahim_Pasha
-src:describe:Shōwa_era
-src:cloze:Shōwa_era
 src:describe:Free_will
 src:describe:Prayer
 src:cloze:Prayer
@@ -43689,8 +43571,6 @@ src:describe:Picts
 src:cloze:Picts
 src:describe:Battle_of_Brunanburh
 src:cloze:Battle_of_Brunanburh
-src:describe:Melchizedek
-src:cloze:Melchizedek
 src:describe:Jan_Žižka
 src:describe:Neolithic_Revolution
 src:describe:Civic_Platform
@@ -43842,7 +43722,6 @@ src:describe:Jack_Kemp
 src:cloze:Jack_Kemp
 src:describe:Syngman_Rhee
 src:cloze:Syngman_Rhee
-src:describe:Republic_of_Rose_Island
 src:describe:Sadiq_Khan
 src:cloze:Sadiq_Khan
 src:describe:John_Spencer,_8th_Earl_Spencer
@@ -43876,7 +43755,6 @@ src:cloze:Lyudmila_Pavlichenko
 src:describe:Boris_Nadezhdin
 src:cloze:Boris_Nadezhdin
 src:describe:Periyar
-src:describe:Second_Italo-Ethiopian_War
 src:describe:Esau
 src:cloze:Esau
 src:describe:Eknath_Shinde
@@ -43892,8 +43770,6 @@ src:describe:Hakeem_Jeffries
 src:cloze:Hakeem_Jeffries
 src:describe:Arab_Revolt
 src:describe:Destruction_of_the_Kakhovka_Dam
-src:describe:Juche
-src:cloze:Juche
 src:describe:Jean-Paul_Marat
 src:cloze:Jean-Paul_Marat
 src:describe:Isidor_Straus
@@ -43932,7 +43808,6 @@ src:describe:John_Demjanjuk
 src:describe:Patroclus
 src:describe:Emine_Erdoğan
 src:cloze:Emine_Erdoğan
-src:describe:Kingdom_of_Bohemia
 src:describe:Unitarianism
 src:cloze:Unitarianism
 src:describe:Chiang_Ching-kuo
@@ -43980,7 +43855,6 @@ src:cloze:Hun_Sen
 src:describe:Sigurd
 src:describe:R/place
 src:cloze:R/place
-src:describe:Time_of_Troubles
 src:describe:Nikolai_Yezhov
 src:cloze:Nikolai_Yezhov
 src:describe:Daedalus
@@ -44028,8 +43902,6 @@ src:describe:Rheinmetall
 src:cloze:Rheinmetall
 src:describe:Boris_Godunov
 src:cloze:Boris_Godunov
-src:describe:Majapahit
-src:cloze:Majapahit
 src:describe:American_Indian_Wars
 src:describe:Xi_Zhongxun
 src:cloze:Xi_Zhongxun
@@ -44086,7 +43958,6 @@ src:describe:Władysław_II_Jagiełło
 src:describe:Amalek
 src:cloze:Amalek
 src:describe:Vercingetorix
-src:describe:Second_Congo_War
 src:describe:Subrata_Roy
 src:cloze:Subrata_Roy
 src:describe:Committee_of_Union_and_Progress
@@ -44156,7 +44027,6 @@ src:cloze:Salomé_Zourabichvili
 src:describe:Walter_Mondale
 src:cloze:Walter_Mondale
 src:describe:Frederik_IX
-src:describe:Kingdom_of_Sardinia
 src:describe:Liu_Shaoqi
 src:cloze:Liu_Shaoqi
 src:describe:Erba_Massacre
@@ -44180,7 +44050,6 @@ src:describe:Matthias_Corvinus
 src:describe:Oichi
 src:cloze:Oichi
 src:describe:Hololive_Production
-src:describe:Kingdom_of_Bavaria
 src:describe:Mikhail_Kutuzov
 src:cloze:Mikhail_Kutuzov
 src:describe:Klemens_von_Metternich
@@ -44233,7 +44102,6 @@ src:describe:D.C._sniper_attacks
 src:describe:Ayuko_Kato
 src:describe:Andrei_Troshev
 src:cloze:Andrei_Troshev
-src:describe:Democratic_Kampuchea
 src:describe:Mohammad_Azharuddin
 src:cloze:Mohammad_Azharuddin
 src:describe:Pannonian_Avars
@@ -44248,8 +44116,6 @@ src:describe:Tacitus
 src:describe:Hiroshi_Fujioka
 src:describe:Jigme_Khesar_Namgyel_Wangchuck
 src:cloze:Jigme_Khesar_Namgyel_Wangchuck
-src:describe:Empire_of_Brazil
-src:describe:Reiwa_era
 src:cloze:Ashraf_Ghani
 src:describe:Abdurrahman_Wahid
 src:describe:Lori_Lightfoot
@@ -44258,7 +44124,6 @@ src:describe:Decembrist_revolt
 src:describe:Witold_Pilecki
 src:describe:Maria_Theresa_of_Spain
 src:cloze:Maria_Theresa_of_Spain
-src:describe:India–Pakistan_war_of_1965
 src:describe:Dupont_de_Ligonnès_murders_and_disappearance
 src:describe:Charles_Spencer,_9th_Earl_Spencer
 src:describe:Josep_Borrell
@@ -44268,7 +44133,6 @@ src:cloze:David_Livingstone
 src:describe:Jeanine_Pirro
 src:cloze:Jeanine_Pirro
 src:describe:Khojaly_massacre
-src:describe:Taishō_era
 src:describe:Omar_Bradley
 src:cloze:Omar_Bradley
 src:describe:Illyrians
@@ -44349,8 +44213,6 @@ src:describe:Oskar_Lafontaine
 src:cloze:Oskar_Lafontaine
 src:cloze:Ganymede_(mythology)
 src:describe:Timothy_Laurence
-src:describe:Early_Christianity
-src:describe:Goryeo–Khitan_War
 src:describe:Amr_ibn_Hisham
 src:describe:Odoacer
 src:describe:Josh_Hawley
@@ -44418,10 +44280,8 @@ src:describe:Mark_Phillips
 src:cloze:Mark_Phillips
 src:describe:Italian_fascism
 src:describe:Battle_of_Puebla
-src:describe:Yazidism
 src:describe:Herod_Antipas
 src:describe:Rama_I
-src:describe:Italo-Turkish_War
 src:describe:Bar_Kokhba_Revolt
 src:describe:Agape
 src:cloze:Agape
@@ -44533,7 +44393,6 @@ src:describe:The_Republicans_(France)
 src:describe:Lady_of_the_Lake
 src:describe:Fusako_Shigenobu
 src:cloze:Fusako_Shigenobu
-src:describe:Phoney_War
 src:describe:Ashok_Gehlot
 src:cloze:Ashok_Gehlot
 src:describe:Satya_Pal_Malik
@@ -44585,8 +44444,6 @@ src:describe:Delilah
 src:describe:John_Paul_Jones
 src:describe:Warlord_Era
 src:cloze:Warlord_Era
-src:describe:Candomblé
-src:cloze:Candomblé
 src:describe:Kronstadt_rebellion
 src:cloze:New_Order_(Indonesia)
 src:describe:Maccabean_Revolt
@@ -46954,8 +46811,6 @@ src:describe:Przewalski's_horse
 src:describe:Colitis
 src:cloze:Colitis
 src:describe:Rubus_idaeus
-src:describe:Armadillo
-src:cloze:Armadillo
 src:describe:Losartan
 src:describe:Permutation
 src:describe:Presa_Canario
@@ -47125,8 +46980,6 @@ src:describe:Turritopsis_dohrnii
 src:describe:Transient_ischemic_attack
 src:describe:Literacy
 src:describe:Gaur
-src:describe:Hawk
-src:cloze:Hawk
 src:describe:Yucca
 src:cloze:Yucca
 src:cloze:Horacio_Pagani_(auto_executive)
@@ -49502,7 +49355,6 @@ src:cloze:Red_Notice_(film)
 src:describe:Bill_Goldberg
 src:describe:Steven_Soderbergh
 src:cloze:Steven_Soderbergh
-src:cloze:Underworld_(film_series)
 src:describe:Tomohisa_Yamashita
 src:cloze:Tomohisa_Yamashita
 src:describe:Olena_Zelenska
@@ -51642,7 +51494,6 @@ src:describe:James_Mason
 src:cloze:James_Mason
 src:cloze:Devotion_(2022_film)
 src:cloze:Jarhead_(film)
-src:describe:Austin_Powers
 src:describe:Maleficent:_Mistress_of_Evil
 src:describe:Siddharth_Anand
 src:cloze:Siddharth_Anand
@@ -52025,7 +51876,6 @@ src:describe:Ram_Pothineni
 src:describe:Lee_Ji-ah
 src:describe:Lloyd_Bridges
 src:cloze:Geoffrey_Lewis_(actor)
-src:describe:Ultraman
 src:describe:Yang_Mi
 src:describe:Julio_Cortázar
 src:cloze:Julio_Cortázar
@@ -52689,7 +52539,6 @@ src:describe:Debbie_Allen
 src:cloze:Debbie_Allen
 src:describe:Kelly_Rutherford
 src:cloze:Kelly_Rutherford
-src:describe:Devil_May_Cry
 src:describe:Hank_Green
 src:cloze:Hank_Green
 src:describe:Randhir_Kapoor
@@ -52795,8 +52644,6 @@ src:describe:Ian_McDiarmid
 src:cloze:Ian_McDiarmid
 src:describe:What_Women_Want
 src:cloze:What_Women_Want
-src:describe:Arrowverse
-src:cloze:Arrowverse
 src:describe:Matthias_Schoenaerts
 src:cloze:Matthias_Schoenaerts
 src:describe:Krista_Allen
@@ -52984,7 +52831,6 @@ src:describe:Mihai_Eminescu
 src:cloze:Mihai_Eminescu
 src:describe:Melissa_Satta
 src:cloze:Melissa_Satta
-src:describe:Umamusume:_Pretty_Derby
 src:describe:Claim_to_Fame
 src:cloze:Claim_to_Fame
 src:describe:Salim_Khan
@@ -53139,7 +52985,6 @@ src:describe:Marilu_Henner
 src:cloze:Marilu_Henner
 src:describe:Kaatera
 src:cloze:Kaatera
-src:describe:Alvin_and_the_Chipmunks
 src:describe:Christopher_McDonald
 src:cloze:Christopher_McDonald
 src:describe:Jessica_Tandy
@@ -53574,8 +53419,6 @@ src:describe:Song_Seung-heon
 src:cloze:Song_Seung-heon
 src:describe:Madison_Iseman
 src:cloze:Madison_Iseman
-src:describe:The_Last_of_Us
-src:cloze:The_Last_of_Us
 src:describe:Garik_Kharlamov
 src:describe:Gōki_Maeda
 src:describe:Fred_Gwynne
@@ -53867,8 +53710,6 @@ src:describe:Ritu_Arya
 src:cloze:Ritu_Arya
 src:describe:Lio_Tipton
 src:describe:The_SpongeBob_SquarePants_Movie
-src:describe:Monster_High
-src:cloze:Monster_High
 src:describe:Julie_Delpy
 src:cloze:Julie_Delpy
 src:describe:Tati_Gabrielle
@@ -53944,7 +53785,6 @@ src:describe:Dominic_Toretto
 src:cloze:Dominic_Toretto
 src:describe:Doris_Roberts
 src:cloze:Doris_Roberts
-src:describe:Total_Drama
 src:describe:Park_So-dam
 src:cloze:Park_So-dam
 src:describe:Lorenza_Izzo
@@ -54304,8 +54144,6 @@ src:describe:Cheryl_Ladd
 src:describe:Huma_Qureshi
 src:cloze:Huma_Qureshi
 src:cloze:Station_Eleven_(miniseries)
-src:describe:Mazinger_Z
-src:cloze:Mazinger_Z
 src:describe:Kaito_Ishikawa
 src:cloze:A_Streetcar_Named_Desire_(1951_film)
 src:cloze:Bill_Lawrence_(TV_producer)
@@ -55071,8 +54909,6 @@ src:describe:Smokey_and_the_Bandit
 src:describe:Maggie_Cheung
 src:describe:J._B._Smoove
 src:cloze:J._B._Smoove
-src:describe:The_Land_Before_Time
-src:cloze:The_Land_Before_Time
 src:describe:Michelle_Buteau
 src:cloze:Michelle_Buteau
 src:describe:The_Human_Centipede_3_(Final_Sequence)
@@ -55085,8 +54921,6 @@ src:cloze:Kermit_the_Frog
 src:describe:The_Sims
 src:cloze:The_Sims
 src:cloze:DuckTales_(1987_TV_series)
-src:describe:Angry_Birds
-src:cloze:Angry_Birds
 src:cloze:Arthur_(TV_series)
 src:describe:Metroid
 src:cloze:Metroid
@@ -55182,7 +55016,6 @@ src:describe:Ulaanbaatar
 src:cloze:Ulaanbaatar
 src:describe:Auckland
 src:cloze:Auckland
-src:describe:Antigua_and_Barbuda
 src:describe:American_frontier
 src:describe:Pittsburgh
 src:cloze:Pittsburgh
@@ -55231,8 +55064,6 @@ src:describe:Chhattisgarh
 src:cloze:Chhattisgarh
 src:describe:Gaul
 src:cloze:Gaul
-src:describe:Tropic_of_Cancer
-src:cloze:Tropic_of_Cancer
 src:describe:Montserrat
 src:cloze:Montserrat
 src:describe:Hesse
@@ -55326,7 +55157,6 @@ src:describe:Normandy
 src:describe:Himachal_Pradesh
 src:describe:Haryana
 src:cloze:Haryana
-src:describe:Danish_Realm
 src:describe:Wellington
 src:cloze:Wellington
 src:cloze:Arctic_Circle
@@ -55380,7 +55210,6 @@ src:describe:Jaipur
 src:cloze:Jaipur
 src:describe:South_Dakota
 src:describe:Gran_Colombia
-src:describe:Sahel
 src:describe:Sochi
 src:cloze:Sochi
 src:describe:Dutch_Republic
@@ -55423,8 +55252,6 @@ src:describe:Atacama_Desert
 src:cloze:Pondicherry
 src:describe:Guernsey
 src:cloze:Guernsey
-src:describe:French_Fifth_Republic
-src:cloze:French_Fifth_Republic
 src:describe:Merdeka_118
 src:describe:Sapporo
 src:cloze:Sapporo
@@ -55491,8 +55318,6 @@ src:describe:Phnom_Penh
 src:cloze:Phnom_Penh
 src:describe:Sápmi
 src:cloze:Sápmi
-src:describe:Sint_Maarten
-src:cloze:Sint_Maarten
 src:describe:Nagaland
 src:cloze:Nagaland
 src:describe:Bergamo
@@ -55628,8 +55453,6 @@ src:describe:Como
 src:cloze:Como
 src:describe:Baja_California
 src:describe:The_Shard
-src:describe:Melanesia
-src:cloze:Melanesia
 src:describe:Rimini
 src:cloze:Rimini
 src:describe:Essex
@@ -55694,7 +55517,6 @@ src:describe:Annecy
 src:cloze:Annecy
 src:describe:Negev
 src:cloze:Negev
-src:describe:Islamic_Republic_of_Afghanistan
 src:describe:Antilles
 src:cloze:Antilles
 src:describe:7_World_Trade_Center
@@ -55861,7 +55683,6 @@ src:cloze:Hindu_Kush
 src:describe:Cave_of_the_Patriarchs
 src:cloze:Flag_of_Venezuela
 src:describe:Centre_Pompidou
-src:describe:Khwarazm
 src:describe:Göttingen
 src:cloze:Göttingen
 src:describe:Antakya
@@ -56123,7 +55944,6 @@ src:describe:Leagues_Cup
 src:cloze:Leagues_Cup
 src:describe:Tadej_Pogačar
 src:cloze:Tadej_Pogačar
-src:describe:AFA_Liga_Profesional_de_Fútbol
 src:describe:Charles_Oliveira
 src:cloze:Charles_Oliveira
 src:describe:Burnley_F.C.
@@ -56548,7 +56368,6 @@ src:describe:2034_FIFA_World_Cup
 src:cloze:Squash_(sport)
 src:cloze:George_Russell_(racing_driver)
 src:describe:Manute_Bol
-src:describe:FC_Zenit_Saint_Petersburg
 src:describe:Tony_Bellew
 src:cloze:Tony_Bellew
 src:describe:Rocky_Johnson
@@ -56591,7 +56410,6 @@ src:describe:Claudio_Ranieri
 src:cloze:Claudio_Ranieri
 src:describe:Gabriel_Martinelli
 src:cloze:Gabriel_Martinelli
-src:describe:Raja_CA
 src:describe:Raphaël_Varane
 src:cloze:Raphaël_Varane
 src:describe:The_Iron_Sheik
@@ -56925,7 +56743,6 @@ src:cloze:Mark_Cavendish
 src:describe:Middlesbrough_F.C.
 src:describe:Masahiro_Tanaka
 src:describe:Daichi_Kamada
-src:describe:2023_Campeonato_Brasileiro_Série_A
 src:describe:Gonçalo_Ramos
 src:cloze:Gonçalo_Ramos
 src:describe:Tommy_Tuberville
@@ -56950,7 +56767,6 @@ src:describe:Lauren_James
 src:cloze:Lauren_James
 src:describe:Federico_Chiesa
 src:cloze:Federico_Chiesa
-src:describe:1978_FIFA_World_Cup
 src:describe:Dušan_Tadić
 src:cloze:Dušan_Tadić
 src:describe:Nicolas_Jarry
@@ -57253,8 +57069,6 @@ src:describe:Deshaun_Watson
 src:cloze:Deshaun_Watson
 src:describe:David_Trezeguet
 src:cloze:David_Trezeguet
-src:describe:BSC_Young_Boys
-src:cloze:BSC_Young_Boys
 src:describe:Luka_Romero
 src:cloze:Luka_Romero
 src:describe:Sami_Khedira
@@ -57420,7 +57234,6 @@ src:cloze:Derrick_Lewis
 src:describe:Lisandro_Martínez
 src:cloze:Lisandro_Martínez
 src:describe:Petra_Kvitová
-src:describe:UEFA_Intertoto_Cup
 src:describe:Mitchell_Starc
 src:describe:2021_Copa_América
 src:describe:Wim_Hof
@@ -57447,7 +57260,6 @@ src:describe:2022–23_FA_Cup
 src:describe:Shinji_Kagawa
 src:describe:Jaap_Stam
 src:cloze:Jaap_Stam
-src:describe:Cruz_Azul
 src:describe:Samoa_Joe
 src:describe:Julian_Draxler
 src:cloze:Julian_Draxler
@@ -57461,7 +57273,6 @@ src:describe:Emre_Can
 src:cloze:Emre_Can
 src:describe:Capoeira
 src:cloze:Capoeira
-src:describe:Monaco_Grand_Prix
 src:describe:Moise_Kean
 src:cloze:Moise_Kean
 src:describe:Fabio_Grosso
@@ -57614,7 +57425,6 @@ src:cloze:Jan_Oblak
 src:cloze:Rhythmic_gymnastics
 src:describe:DeMar_DeRozan
 src:cloze:DeMar_DeRozan
-src:describe:CONCACAF_Nations_League
 src:describe:Duane_Martin
 src:cloze:Duane_Martin
 src:describe:Karl-Heinz_Rummenigge
@@ -57710,7 +57520,6 @@ src:describe:Ollie_Watkins
 src:cloze:Ollie_Watkins
 src:describe:Gary_Payton
 src:describe:Marvin_Harrison
-src:describe:Frosinone_Calcio
 src:describe:Papu_Gómez
 src:cloze:Papu_Gómez
 src:describe:Micah_Parsons
@@ -57785,7 +57594,6 @@ src:describe:Yoshihiro_Akiyama
 src:describe:Christian_Cage
 src:cloze:Christian_Cage
 src:describe:Wigan_Athletic_F.C.
-src:describe:2023–24_Ligue_1
 src:describe:Shoki_Murakami
 src:describe:Kyokushin
 src:describe:Josef_Martínez
@@ -57845,8 +57653,6 @@ src:describe:Héctor_Bellerín
 src:cloze:Héctor_Bellerín
 src:describe:Fernando_Santos_(footballer,_born_1954)
 src:cloze:Fernando_Santos_(footballer,_born_1954)
-src:describe:AS_Saint-Étienne
-src:cloze:AS_Saint-Étienne
 src:describe:Steve_McMichael
 src:cloze:Steve_McMichael
 src:describe:Kevin_Holland
@@ -57871,7 +57677,6 @@ src:cloze:Houssem_Aouar
 src:describe:Beatriz_Haddad_Maia
 src:cloze:Beatriz_Haddad_Maia
 src:describe:2022–23_NFL_playoffs
-src:describe:Palermo_FC
 src:describe:Holly_Holm
 src:cloze:Holly_Holm
 src:describe:Carlos_Vela
@@ -57886,7 +57691,6 @@ src:cloze:Mathys_Tel
 src:describe:Börje_Salming
 src:cloze:Börje_Salming
 src:describe:Mike_Rotunda
-src:describe:European_Men's_Handball_Championship
 src:describe:Phil_Heath
 src:cloze:Phil_Heath
 src:describe:Davide_Frattesi
@@ -57919,7 +57723,6 @@ src:cloze:Jeff_Green_(basketball)
 src:describe:Radu_Drăgușin
 src:cloze:Radu_Drăgușin
 src:cloze:Anthony_Gordon_(footballer)
-src:describe:Serie_C
 src:describe:Giovanni_Simeone
 src:describe:CeeDee_Lamb
 src:cloze:CeeDee_Lamb
@@ -57949,7 +57752,6 @@ src:describe:Dani_Olmo
 src:cloze:Dani_Olmo
 src:describe:Jose_Altuve
 src:cloze:Jose_Altuve
-src:describe:2023_FIA_World_Endurance_Championship
 src:describe:Barcelona_S.C.
 src:describe:Iñaki_Williams
 src:cloze:Iñaki_Williams
@@ -58032,7 +57834,6 @@ src:describe:Julius_Randle
 src:cloze:Julius_Randle
 src:describe:Vincenzo_Montella
 src:cloze:Vincenzo_Montella
-src:describe:2023–24_FIS_Alpine_Ski_World_Cup
 src:describe:Dejan_Kulusevski
 src:cloze:Dejan_Kulusevski
 src:cloze:João_Pedro_(footballer,_born_2001)
@@ -58159,7 +57960,6 @@ src:describe:Tacko_Fall
 src:cloze:Tacko_Fall
 src:describe:Thomas_Partey
 src:cloze:Thomas_Partey
-src:describe:2023–24_EFL_Cup
 src:describe:FK_Partizan
 src:describe:Corbin_Carroll
 src:cloze:Corbin_Carroll
@@ -58191,7 +57991,6 @@ src:cloze:Bradley_Walsh
 src:describe:1962_FIFA_World_Cup
 src:describe:Andrew_Flintoff
 src:cloze:Andrew_Flintoff
-src:describe:KRC_Genk
 src:describe:Jey_Uso
 src:describe:JJ_Redick
 src:cloze:JJ_Redick
@@ -58276,7 +58075,6 @@ src:cloze:Qarabağ_FK
 src:describe:Keshav_Maharaj
 src:cloze:Keshav_Maharaj
 src:describe:Rampage_Jackson
-src:describe:2024_CONCACAF_Champions_Cup
 src:describe:Eben_Etzebeth
 src:cloze:Eben_Etzebeth
 src:describe:2022–23_UEFA_Champions_League_knockout_phase
@@ -58317,7 +58115,6 @@ src:cloze:Leon_Goretzka
 src:cloze:Noah_Okafor
 src:describe:Federico_Gatti
 src:cloze:Federico_Gatti
-src:describe:1950_FIFA_World_Cup
 src:describe:Johor_Darul_Ta'zim_F.C.
 src:describe:Paolo_Rossi
 src:cloze:Paolo_Rossi
@@ -58330,8 +58127,6 @@ src:describe:Virender_Sehwag
 src:cloze:Virender_Sehwag
 src:describe:Darvin_Ham
 src:describe:Yusei_Kikuchi
-src:describe:Skiing
-src:cloze:Skiing
 src:describe:Nick_Foles
 src:cloze:Nick_Foles
 src:describe:Deniz_Undav
@@ -58424,7 +58219,6 @@ src:describe:Igor_Tudor
 src:cloze:Igor_Tudor
 src:describe:Hwang_Hee-chan
 src:cloze:Hwang_Hee-chan
-src:describe:Mumbai_City_FC
 src:describe:Hannibal_Mejbri
 src:describe:José_Luis_Mendilibar
 src:cloze:José_Luis_Mendilibar
@@ -58458,7 +58252,6 @@ src:cloze:DK_Metcalf
 src:describe:Marc-André_Leclerc
 src:cloze:Marc-André_Leclerc
 src:describe:Deebo_Samuel
-src:describe:2022–23_Serie_B
 src:describe:Raphaël_Guerreiro
 src:cloze:Raphaël_Guerreiro
 src:describe:Adam_Johnson_(footballer)
@@ -58577,7 +58370,6 @@ src:cloze:Desmond_Ridder
 src:describe:Rubens_Barrichello
 src:cloze:Rubens_Barrichello
 src:describe:1934_FIFA_World_Cup
-src:describe:US_Lecce
 src:describe:Ben_Brereton_Díaz
 src:describe:Braxton_Berrios
 src:cloze:Braxton_Berrios
@@ -58589,7 +58381,6 @@ src:describe:Luke_Shaw
 src:cloze:Luke_Shaw
 src:describe:Drew_Lock
 src:cloze:Drew_Lock
-src:describe:Liga_de_Primera
 src:describe:America's_Cup
 src:cloze:America's_Cup
 src:describe:Kentucky_Derby
@@ -61318,8 +61109,6 @@ src:describe:The_Marriage_of_Figaro
 src:describe:Cristóbal_Balenciaga
 src:cloze:Antigone_(Sophocles_play)
 src:cloze:Republic_(Plato)
-src:describe:Ranking_of_Kings
-src:cloze:Ranking_of_Kings
 src:describe:Francis_Xavier
 src:describe:Uncle_Sam
 src:cloze:Uncle_Sam
@@ -61365,8 +61154,6 @@ src:describe:Toni_Morrison
 src:cloze:Toni_Morrison
 src:describe:Sophocles
 src:describe:Jemima_Goldsmith
-src:describe:The_Silent_Service
-src:cloze:The_Silent_Service
 src:describe:Brawl_Stars
 src:cloze:Brawl_Stars
 src:describe:Catherine_Tate
@@ -61575,7 +61362,6 @@ src:describe:Boba_Fett
 src:cloze:Boba_Fett
 src:describe:Flowers_in_the_Attic
 src:cloze:Flowers_in_the_Attic
-src:describe:Chiikawa
 src:describe:John_Keats
 src:cloze:John_Keats
 src:describe:Robin_(character)
@@ -61615,7 +61401,6 @@ src:describe:The_Giver
 src:describe:Václav_Havel
 src:cloze:Václav_Havel
 src:describe:On_the_Origin_of_Species
-src:describe:The_Café_Terrace_and_Its_Goddesses
 src:describe:Spider-Punk
 src:cloze:Spider-Punk
 src:describe:The_Man_in_the_High_Castle
@@ -61920,8 +61705,6 @@ src:cloze:William_James
 src:cloze:God_of_War_(2005_video_game)
 src:describe:Pope_Leo_XIII
 src:cloze:Pope_Leo_XIII
-src:describe:Call_of_the_Night
-src:cloze:Call_of_the_Night
 src:describe:The_Lion,_the_Witch_and_the_Wardrobe
 src:cloze:Shōgun_(novel)
 src:describe:Graham_Hancock
@@ -62008,7 +61791,6 @@ src:describe:Paul_Heyman
 src:cloze:Paul_Heyman
 src:describe:Fyodor_Konyukhov
 src:cloze:Fyodor_Konyukhov
-src:describe:Food_Wars!:_Shokugeki_no_Soma
 src:describe:Kiumars_Pourahmad
 src:cloze:Kiumars_Pourahmad
 src:describe:Lisa_Brennan-Jobs
@@ -62100,8 +61882,6 @@ src:cloze:Abraham_Van_Helsing
 src:describe:Booker_T._Washington
 src:describe:Vera-Ellen
 src:describe:Li_Bai
-src:describe:Insomniacs_After_School
-src:cloze:Insomniacs_After_School
 src:describe:Katniss_Everdeen
 src:cloze:Katniss_Everdeen
 src:describe:Masaba_Gupta
@@ -62158,7 +61938,6 @@ src:describe:Darkseid
 src:cloze:Darkseid
 src:describe:Kiran_Rao
 src:cloze:Kiran_Rao
-src:describe:Chibi_Maruko-chan
 src:describe:Paul_Klee
 src:cloze:Paul_Klee
 src:describe:Eugene_Onegin
@@ -62184,7 +61963,6 @@ src:describe:Parmenides
 src:describe:José_Saramago
 src:cloze:José_Saramago
 src:cloze:Decadent_movement
-src:cloze:Metamorphosis_(manga)
 src:describe:Stendhal
 src:describe:The_Kybalion
 src:describe:12_Rules_for_Life
@@ -62274,8 +62052,6 @@ src:cloze:Candy_Candy
 src:describe:Blenheim_Palace
 src:cloze:Blenheim_Palace
 src:describe:The_Girl_I_Like_Forgot_Her_Glasses
-src:describe:God_of_War_III
-src:cloze:God_of_War_III
 src:describe:Vera_Wang
 src:cloze:Vera_Wang
 src:describe:Matt_Lauer
@@ -70031,7 +69807,6 @@ sup:P2046:201491618961
 sup:P2046:434060645144
 sup:P2046:900037043511
 sup:P2046:23201547872
-sup:P2046:530462871609
 sup:P2046:338623841458
 sup:P2046:150400789850
 sup:P2046:805588760422
@@ -70983,7 +70758,6 @@ chron:P571:425758417646
 chron:P571:530182121280
 chron:P571:8979549671
 chron:P571:286984810642
-chron:P571:77239075986
 chron:P571:448004123668
 chron:P571:622280589607
 chron:P571:278649323738
@@ -71376,7 +71150,6 @@ chron:P571:915883401294
 chron:P571:272253840560
 chron:P571:889091407201
 chron:P571:574997742908
-chron:P571:476861323570
 chron:P571:87937532591
 chron:P571:391125314179
 chron:P571:322450232521
@@ -71546,7 +71319,6 @@ chron:P571:638718797442
 chron:P571:951905662686
 chron:P571:860623560500
 chron:P571:112096631492
-chron:P571:790771459269
 chron:P571:525323522518
 chron:P571:438287372227
 chron:P571:794340410895
@@ -71639,7 +71411,6 @@ chron:P571:141179197084
 chron:P571:666462986820
 chron:P571:592463006611
 chron:P571:864749406695
-chron:P571:770745593087
 chron:P571:443519001555
 chron:P571:806772807199
 chron:P571:268123914621
@@ -71657,7 +71428,6 @@ chron:P571:119214997921
 chron:P571:889978280471
 chron:P571:511843053684
 chron:P571:596771968091
-chron:P571:128851254657
 chron:P571:892833529218
 chron:P571:645014766829
 chron:P571:60676883760
@@ -71826,7 +71596,6 @@ chron:P577:976825604282
 chron:P577:416140499292
 chron:P577:762951225242
 chron:P577:478722470560
-chron:P577:556096372102
 chron:P577:27987581228
 chron:P577:77997780323
 chron:P577:182689640120
@@ -72020,10 +71789,6 @@ chron:P569:478313625357
 chron:P569:17650677833
 chron:P569:377334208405
 chron:P569:461695392248
-chron:P569:664570236419
-chron:P569:763729456886
-chron:P569:490734324809
-chron:P569:2126630388
 chron:P569:252837277018
 chron:P569:223837575890
 chron:P569:412153071617
@@ -72443,7 +72208,6 @@ sup:P1082:402906261744
 sup:P1082:385059095087
 sup:P1082:705723308571
 sup:P1082:385175924170
-sup:P1082:568608529325
 sup:P1082:517588860010
 sup:P1082:404181063935
 sup:P1082:116263988168
@@ -73257,8 +73021,6 @@ chron:P571:577807209121
 chron:P571:718766434513
 chron:P571:506014584266
 chron:P571:825168182456
-chron:P571:689182480873
-chron:P571:877996757041
 chron:P571:728645606271
 chron:P571:715436580332
 chron:P571:298204754292
@@ -73584,7 +73346,6 @@ chron:P571:532772542895
 chron:P571:729935169915
 chron:P571:978451781340
 chron:P571:445380570695
-chron:P571:424516385867
 chron:P571:128983952555
 chron:P571:879949583914
 chron:P571:687484143687
@@ -73665,8 +73426,6 @@ chron:P571:859381040894
 chron:P571:187934350769
 chron:P571:269700452813
 chron:P571:218825205524
-chron:P571:613702793193
-chron:P571:100890546688
 chron:P571:806461651114
 chron:P571:9700223747
 chron:P571:445092900835
@@ -73941,7 +73700,6 @@ chron:P569:672345036162
 chron:P569:471872578199
 chron:P569:637190161440
 chron:P569:779760833066
-chron:P569:175740133759
 chron:P569:22597775509
 chron:P569:993769004122
 chron:P569:440466464605
@@ -74208,7 +73966,6 @@ rel:P37:Q6500483
 rel:P17:Q146695
 rel:P175:Q1141252
 rel:P170:Q65056669
-rel:P17:Q19566
 rel:P17:Q104599603
 rel:P17:Q123677610
 rel:P175:Q177329
@@ -74357,7 +74114,6 @@ rel:P61:Q1888
 rel:P17:Q1101443
 rel:P17:Q1052347
 rel:P170:Q1052347
-rel:P17:Q156711
 rel:P175:Q578320
 rel:P17:Q2721482
 rel:P112:Q2721482
@@ -74411,7 +74167,6 @@ rel:P17:Q131574
 rel:P17:Q56037
 rel:P175:Q116028
 rel:P170:Q116028
-rel:P17:Q465627
 rel:P17:Q2112
 rel:P17:Q29272
 rel:P17:Q2357517
@@ -74929,7 +74684,6 @@ rel:P170:Q250036
 rel:P17:Q19449
 rel:P17:Q717798
 rel:P112:Q717798
-rel:P17:Q766437
 rel:P175:Q636142
 rel:P61:Q1100
 rel:P112:Q274591
@@ -76587,7 +76341,6 @@ sup:P2044:476711470630
 sup:P2044:726480874433
 sup:P2044:482517819992
 sup:P2044:395181321745
-sup:P2044:979627656546
 sup:P2044:984048311884
 sup:P2044:703849519127
 sup:P2044:21913064838
@@ -76780,7 +76533,6 @@ chron:P571:463893496290
 chron:P571:847885628734
 chron:P571:484290325982
 chron:P571:293271706252
-chron:P571:936995922250
 chron:P571:516404708349
 chron:P571:265197933728
 chron:P571:463576740997
@@ -77203,7 +76955,6 @@ chron:P571:620431662096
 chron:P571:699257817825
 chron:P571:412754644086
 chron:P571:791275646931
-chron:P571:24360490352
 chron:P571:830767873689
 chron:P571:366128757250
 chron:P571:916352024513
@@ -78760,8 +78511,6 @@ chron:P569:799506766374
 chron:P569:929390740086
 chron:P569:268191007485
 chron:P569:506833368281
-chron:P569:42723990896
-chron:P569:212680972094
 chron:P569:72253919734
 chron:P569:917931898347
 chron:P569:644878212038
@@ -78975,11 +78724,9 @@ class:Q1930187:875234029282
 class:Q1930187:233396471137
 class:Q1930187:471273536249
 rev:P36:Q179293
-rev:P36:Q188586
 rev:P36:Q2895
 rev:P36:Q217196
 rev:P38:Q179293
-rev:P38:Q188586
 rev:P38:Q217196
 rev:P37:Q217196
 num:P2046:Q37701
@@ -79491,10 +79238,8 @@ src:describe:Pax_Romana
 src:describe:Rhodesian_Bush_War
 src:describe:John_Mearsheimer
 src:cloze:John_Mearsheimer
-src:describe:War_of_the_First_Coalition
 src:describe:Ryu_Matsumoto
 src:describe:Pope_Gregory_I
-src:describe:Peshmerga
 src:describe:Andy_Beshear
 src:cloze:Andy_Beshear
 src:describe:Charles_Michel
@@ -79529,7 +79274,6 @@ src:describe:Ante_Pavelić
 src:describe:Zipporah
 src:cloze:Zipporah
 src:cloze:History_of_religion
-src:describe:Second_Opium_War
 src:describe:Louis_XI
 src:cloze:Louis_XI
 src:describe:Thutmose_III
@@ -79538,7 +79282,6 @@ src:cloze:Hélène_Carrère_d'Encausse
 src:describe:Joseph_P._Kennedy_Jr.
 src:describe:Víctor_Jara
 src:cloze:Víctor_Jara
-src:describe:Enlightened_absolutism
 src:describe:Ron_Paul
 src:cloze:Ron_Paul
 src:describe:Edmund_Ironside
@@ -79553,8 +79296,6 @@ src:describe:Hemedti
 src:describe:Emilio_Aguinaldo
 src:cloze:Emilio_Aguinaldo
 src:describe:Hamad_bin_Isa_Al_Khalifa
-src:describe:Pan-Africanism
-src:cloze:Pan-Africanism
 src:describe:Mongkut
 src:describe:Markus_Söder
 src:cloze:Markus_Söder
@@ -79581,11 +79322,8 @@ src:describe:Umar_ibn_Abd_al-Aziz
 src:describe:Toyoko_kids
 src:cloze:Toyoko_kids
 src:describe:Nur_al-Din_Zengi
-src:describe:Chaco_War
-src:cloze:Chaco_War
 src:describe:Pierre_Laval
 src:cloze:Pierre_Laval
-src:describe:Taiwan_under_Japanese_rule
 src:describe:Priyanka_Gandhi
 src:describe:Seti_I
 src:cloze:Seti_I
@@ -79597,7 +79335,6 @@ src:describe:Eos
 src:describe:Belisarius
 src:describe:Yaël_Braun-Pivet
 src:cloze:Yaël_Braun-Pivet
-src:describe:War_of_the_Austrian_Succession
 src:describe:Kang_Kamch'an
 src:cloze:Kang_Kamch'an
 src:describe:Walter_Ulbricht
@@ -79757,7 +79494,6 @@ src:describe:Zuzana_Čaputová
 src:cloze:Zuzana_Čaputová
 src:describe:Katie_Porter
 src:cloze:Katie_Porter
-src:describe:Modernity
 src:describe:Nabataeans
 src:cloze:Nabataeans
 src:describe:Tokugawa_Yoshimune
@@ -79776,7 +79512,6 @@ src:describe:Almohad_Caliphate
 src:cloze:Almohad_Caliphate
 src:describe:Dominique_de_Villepin
 src:describe:Edi_Rama
-src:describe:War_in_the_Vendée
 src:describe:Vasily_Arkhipov
 src:describe:Sigismund_III_Vasa
 src:describe:Ahmet_Davutoğlu
@@ -79792,7 +79527,6 @@ src:describe:Li_Mu
 src:cloze:Li_Mu
 src:describe:Gretchen_Whitmer
 src:cloze:Gretchen_Whitmer
-src:describe:Congo_Free_State
 src:describe:Ivan_Mazepa
 src:describe:Ulf_Kristersson
 src:cloze:Ulf_Kristersson
@@ -79818,7 +79552,6 @@ src:cloze:Charan_Singh
 src:describe:South_by_Southwest
 src:cloze:South_by_Southwest
 src:describe:Cristero_War
-src:describe:Lapland_War
 src:describe:Evan_Ryan
 src:cloze:Evan_Ryan
 src:describe:Karel_Schwarzenberg
@@ -79849,8 +79582,6 @@ src:describe:Vitellius
 src:cloze:Vitellius
 src:describe:Ekşi_Sözlük
 src:describe:Miguel_Primo_de_Rivera
-src:describe:Göktürks
-src:cloze:Göktürks
 src:describe:Fatih_Erbakan
 src:cloze:Fatih_Erbakan
 src:describe:Terah
@@ -79858,7 +79589,6 @@ src:cloze:Terah
 src:describe:César_Gaviria
 src:describe:Hu_Chunhua
 src:cloze:Hu_Chunhua
-src:describe:War_of_the_Third_Coalition
 src:describe:Caroline_van_der_Plas
 src:cloze:Caroline_van_der_Plas
 src:describe:Mehriban_Aliyeva
@@ -79910,7 +79640,6 @@ src:describe:Dominic_Raab
 src:describe:Pieter_Omtzigt
 src:cloze:Pieter_Omtzigt
 src:describe:Charles_Q._Brown_Jr.
-src:describe:Second_Balkan_War
 src:describe:Dido
 src:cloze:Dido
 src:describe:Marcelo_Rebelo_de_Sousa
@@ -79992,7 +79721,6 @@ src:describe:Charles_Taylor_(Liberian_politician)
 src:describe:Makiko_Tanaka
 src:describe:Fumimaro_Konoe
 src:describe:Anglo-Zulu_War
-src:describe:Karamanids
 src:describe:Siege_of_Syracuse_(213–212_BC)
 src:describe:Aslan_Maskhadov
 src:describe:Fruit_of_the_Holy_Spirit
@@ -80010,7 +79738,6 @@ src:cloze:Mao_Anying
 src:describe:Hubert_Humphrey
 src:describe:Harald_Quandt
 src:describe:Miriam
-src:describe:Mishnah
 src:describe:Martin_Sellner
 src:cloze:Martin_Sellner
 src:describe:Miao_Poya
@@ -80040,7 +79767,6 @@ src:describe:Jamie_Raskin
 src:cloze:Jamie_Raskin
 src:describe:Klaus_Iohannis
 src:cloze:Klaus_Iohannis
-src:describe:Red_Terror
 src:describe:Y._S._Rajasekhara_Reddy
 src:cloze:Y._S._Rajasekhara_Reddy
 src:describe:Sarah_Churchill,_Duchess_of_Marlborough
@@ -80073,9 +79799,6 @@ src:describe:Roh_Tae-woo
 src:cloze:Roh_Tae-woo
 src:describe:Chris_Sununu
 src:cloze:Chris_Sununu
-src:describe:Sheba
-src:cloze:Sheba
-src:describe:Al-Quds_Brigades
 src:describe:Taro_Yamamoto
 src:describe:Gennady_Zyuganov
 src:cloze:Gennady_Zyuganov
@@ -80087,12 +79810,8 @@ src:describe:Velupillai_Prabhakaran
 src:cloze:Velupillai_Prabhakaran
 src:describe:Kathleen_Cavendish,_Marchioness_of_Hartington
 src:cloze:Kathleen_Cavendish,_Marchioness_of_Hartington
-src:describe:Third_Way
-src:cloze:Third_Way
-src:describe:Contras
 src:describe:Saif_al-Islam_Gaddafi
 src:cloze:Saif_al-Islam_Gaddafi
-src:describe:Football_War
 src:describe:Société_Générale
 src:describe:Bill_Richardson
 src:cloze:Bill_Richardson
@@ -80106,8 +79825,6 @@ src:describe:Helena,_mother_of_Constantine_I
 src:describe:Khmelnytsky_Uprising
 src:describe:Esat_Oktay_Yıldıran
 src:cloze:Esat_Oktay_Yıldıran
-src:describe:Classical_radicalism
-src:cloze:Classical_radicalism
 src:describe:Francisco_de_Miranda
 src:describe:Sviatlana_Tsikhanouskaya
 src:cloze:Sviatlana_Tsikhanouskaya
@@ -80155,7 +79872,6 @@ src:cloze:Alparslan_Türkeş
 src:describe:Sterling_Hayden
 src:describe:Genrikh_Yagoda
 src:cloze:Genrikh_Yagoda
-src:describe:War_of_the_Sixth_Coalition
 src:describe:Battle_of_al-Qadisiyyah
 src:cloze:Battle_of_Saipan
 src:describe:Alexander_Zakharchenko
@@ -80236,8 +79952,6 @@ src:cloze:Jacaranda
 src:describe:Yakovlev_MC-21
 src:describe:Cluster_headache
 src:cloze:Cluster_headache
-src:describe:Clam
-src:cloze:Clam
 src:describe:Amorphophallus_titanum
 src:cloze:Amorphophallus_titanum
 src:describe:Historiography
@@ -80253,8 +79967,6 @@ src:describe:Grace_Hopper
 src:cloze:Grace_Hopper
 src:describe:Aloe
 src:cloze:Aloe
-src:describe:Raven
-src:cloze:Raven
 src:describe:Porpoise
 src:cloze:Porpoise
 src:describe:Stingray
@@ -80737,8 +80449,6 @@ src:describe:Clementine
 src:cloze:Clementine
 src:describe:Mating
 src:cloze:Mating
-src:describe:Poultry
-src:cloze:Poultry
 src:describe:Éamon_de_Valera
 src:cloze:Éamon_de_Valera
 src:describe:Toe
@@ -80852,7 +80562,6 @@ src:describe:Aldebaran
 src:describe:Dalmatian_dog
 src:describe:Niobium
 src:cloze:Niobium
-src:describe:Pubis
 src:describe:Hawker_Hurricane
 src:describe:Choline
 src:cloze:Choline
@@ -81002,8 +80711,6 @@ src:describe:Anemone
 src:cloze:Anemone
 src:describe:Nitrogen_oxide
 src:describe:Pilatus_PC-12
-src:describe:Skunk
-src:cloze:Skunk
 src:describe:Butyric_acid
 src:describe:Celâl_Şengör
 src:cloze:Celâl_Şengör
@@ -81152,8 +80859,6 @@ src:describe:David_Hornsby
 src:cloze:David_Hornsby
 src:cloze:Jonathan_Bennett_(actor)
 src:cloze:Elio_(film)
-src:describe:Mass_Effect
-src:cloze:Mass_Effect
 src:describe:Tamori
 src:cloze:Belle_(2021_film)
 src:describe:Nicholas_Lyndhurst
@@ -81248,8 +80953,6 @@ src:describe:Land_of_Bad
 src:cloze:Land_of_Bad
 src:cloze:Forever_(2014_TV_series)
 src:cloze:Hitman_(2007_film)
-src:describe:Our_Gang
-src:cloze:Our_Gang
 src:describe:Heavenly_Creatures
 src:cloze:Heavenly_Creatures
 src:cloze:Radio_(2003_film)
@@ -81875,8 +81578,6 @@ src:cloze:Bianca_Lawson
 src:cloze:Dark_City_(1998_film)
 src:describe:Rob_Brydon
 src:cloze:Rob_Brydon
-src:describe:Anpanman
-src:cloze:Anpanman
 src:describe:Jo_Byeong-kyu
 src:cloze:Jo_Byeong-kyu
 src:describe:Denise_Crosby
@@ -81906,7 +81607,6 @@ src:cloze:Ronny_Chieng
 src:describe:Dichen_Lachman
 src:cloze:Dichen_Lachman
 src:describe:True_to_Love
-src:describe:G.I._Joe
 src:cloze:Brimstone_(2016_film)
 src:describe:Tears_of_the_Sun
 src:cloze:Tears_of_the_Sun
@@ -81999,8 +81699,6 @@ src:describe:Elena_Kampouris
 src:cloze:Elena_Kampouris
 src:describe:Max_Irons
 src:cloze:Max_Irons
-src:describe:My_Little_Pony
-src:cloze:My_Little_Pony
 src:describe:James_Avery
 src:cloze:James_Avery
 src:describe:Lucky_Hank
@@ -82497,8 +82195,6 @@ src:describe:Joséphine_Jobert
 src:cloze:Joséphine_Jobert
 src:describe:Jack_Klugman
 src:cloze:Jack_Klugman
-src:describe:Otoko_wa_Tsurai_yo
-src:cloze:Otoko_wa_Tsurai_yo
 src:describe:Ghoomer
 src:describe:Good_Luck_to_You,_Leo_Grande
 src:cloze:Good_Luck_to_You,_Leo_Grande
@@ -82844,7 +82540,6 @@ src:describe:The_Brokenwood_Mysteries
 src:cloze:The_Brokenwood_Mysteries
 src:describe:Main_Hoon_Na
 src:cloze:The_Newsroom_(American_TV_series)
-src:describe:Spy_Kids
 src:describe:Rakesh_Roshan
 src:cloze:Rakesh_Roshan
 src:cloze:The_Poseidon_Adventure_(1972_film)
@@ -83230,8 +82925,6 @@ src:cloze:Nick_Stahl
 src:describe:Nitesh_Pandey
 src:cloze:Nitesh_Pandey
 src:cloze:Shrek_(character)
-src:describe:Donkey_Kong
-src:cloze:Donkey_Kong
 src:describe:Alaya_F
 src:describe:Sideways
 src:cloze:Sideways
@@ -83506,7 +83199,6 @@ src:describe:Ellie_Leach
 src:cloze:Ellie_Leach
 src:describe:David_Yates
 src:cloze:David_Yates
-src:describe:Marvel_Cinematic_Universe:_Phase_Three
 src:describe:Full_Circle_(miniseries)
 src:cloze:Full_Circle_(miniseries)
 src:describe:The_Simpsons_Movie
@@ -83928,8 +83620,6 @@ src:cloze:Corinth_(modern_city)
 src:describe:Braunau_am_Inn
 src:cloze:Braunau_am_Inn
 src:describe:Wuppertal
-src:describe:Karabakh
-src:cloze:Karabakh
 src:describe:Ulm_Minster
 src:describe:Wolfsburg
 src:cloze:Wolfsburg
@@ -83943,7 +83633,6 @@ src:cloze:Sulawesi
 src:describe:Tolyatti
 src:describe:Bloemfontein
 src:cloze:Bloemfontein
-src:describe:Kingdom_of_Sicily
 src:describe:Camelot
 src:cloze:Camelot
 src:describe:Alanya
@@ -83953,8 +83642,6 @@ src:cloze:Tiraspol
 src:describe:Hollywood_Sign
 src:describe:Kiruna
 src:cloze:Kiruna
-src:describe:Styria
-src:cloze:Styria
 src:describe:Nagpur
 src:cloze:Nagpur
 src:describe:New_Taipei_City
@@ -83973,7 +83660,6 @@ src:describe:33_Thomas_Street
 src:cloze:33_Thomas_Street
 src:describe:Erfurt
 src:cloze:Erfurt
-src:cloze:Central_Africa
 src:describe:Phú_Quốc
 src:cloze:Phú_Quốc
 src:describe:Simferopol
@@ -84033,8 +83719,6 @@ src:describe:Apennine_Mountains
 src:cloze:Apennine_Mountains
 src:describe:Vltava
 src:cloze:Vltava
-src:describe:Champa
-src:cloze:Champa
 src:describe:Bielefeld
 src:cloze:Bielefeld
 src:describe:Ryugyong_Hotel
@@ -84067,7 +83751,6 @@ src:describe:Bamberg
 src:cloze:Bamberg
 src:describe:The_Clock_Towers
 src:describe:Aurangabad
-src:describe:Hindustan
 src:describe:Kutaisi
 src:cloze:Kutaisi
 src:describe:Luzon
@@ -84089,11 +83772,8 @@ src:describe:Kramatorsk
 src:cloze:Palatine_Hill
 src:describe:Bukovina
 src:cloze:Bukovina
-src:describe:Hofburg
-src:cloze:Hofburg
 src:describe:Puerto_Vallarta
 src:cloze:Puerto_Vallarta
-src:describe:Commonwealth_of_England
 src:cloze:Brest,_France
 src:describe:Sierra_Nevada
 src:cloze:Sierra_Nevada
@@ -84139,7 +83819,6 @@ src:cloze:Surat
 src:describe:Taranto
 src:describe:Chimborazo
 src:cloze:Chimborazo
-src:describe:East_Turkestan
 src:describe:Devil's_Island
 src:describe:Ferrara
 src:describe:Plzeň
@@ -84148,8 +83827,6 @@ src:describe:The_New_Capital
 src:cloze:Vinnytsia
 src:describe:Perpignan
 src:cloze:Perpignan
-src:describe:Bir_Tawil
-src:describe:Karelia
 src:describe:Yalta
 src:cloze:Yalta
 src:describe:Old_World
@@ -84161,8 +83838,6 @@ src:describe:Xiamen
 src:describe:Dhaka_Metro_Rail
 src:describe:Nîmes
 src:cloze:Nîmes
-src:describe:Savoy
-src:cloze:Savoy
 src:describe:Limerick
 src:describe:Amritsar
 src:cloze:Amritsar
@@ -84212,7 +83887,6 @@ src:describe:Guwahati
 src:cloze:Guwahati
 src:describe:Parma
 src:cloze:Parma
-src:describe:Germania
 src:describe:Maribor
 src:cloze:Maribor
 src:describe:Caen
@@ -84224,7 +83898,6 @@ src:describe:Ouagadougou
 src:cloze:Ouagadougou
 src:cloze:Jackson,_Mississippi
 src:describe:Tyrrhenian_Sea
-src:describe:Gascony
 src:describe:Chittagong
 src:describe:Gabe_Vincent
 src:cloze:Gabe_Vincent
@@ -84257,8 +83930,6 @@ src:cloze:Giovani_Lo_Celso
 src:describe:Rafael_van_der_Vaart
 src:cloze:Rafael_van_der_Vaart
 src:describe:Brescia_Calcio
-src:describe:Sepak_takraw
-src:cloze:Sepak_takraw
 src:describe:Paolo_Di_Canio
 src:cloze:Paolo_Di_Canio
 src:describe:Sauce_Gardner
@@ -84274,17 +83945,13 @@ src:cloze:Wissam_Ben_Yedder
 src:describe:Charlton_Athletic_F.C.
 src:describe:Aidan_O'Connell
 src:cloze:Aidan_O'Connell
-src:describe:2021–22_UEFA_Europa_Conference_League
 src:describe:Jalen_Rose
 src:cloze:Jalen_Rose
 src:describe:Empoli_FC
-src:describe:Archery
-src:cloze:Archery
 src:describe:Claudio_Bravo
 src:cloze:Claudio_Bravo
 src:describe:Yelena_Isinbayeva
 src:cloze:Yelena_Isinbayeva
-src:describe:Finalissima
 src:describe:Clark_Hunt
 src:describe:André_Villas-Boas
 src:describe:Sachiya_Yamasaki
@@ -84405,7 +84072,6 @@ src:cloze:Sacha_Boey
 src:describe:Tony_Gwynn
 src:describe:Andoni_Iraola
 src:cloze:Andoni_Iraola
-src:describe:SEA_Games
 src:describe:Norm_Nixon
 src:cloze:Norm_Nixon
 src:describe:2021–22_Serie_A
@@ -84481,7 +84147,6 @@ src:describe:Jean-Clair_Todibo
 src:cloze:Jean-Clair_Todibo
 src:cloze:Ben_White_(footballer)
 src:describe:Jerry_Lawler
-src:describe:Ludo
 src:describe:Robin_Gosens
 src:cloze:Robin_Gosens
 src:describe:2023_UEFA_Super_Cup
@@ -84537,14 +84202,12 @@ src:describe:Tilak_Varma
 src:cloze:Tilak_Varma
 src:describe:Hugo_Ekitike
 src:cloze:Hugo_Ekitike
-src:describe:Eerste_Divisie
 src:describe:Auston_Matthews
 src:cloze:Auston_Matthews
 src:describe:Chris_Weidman
 src:cloze:Chris_Weidman
 src:describe:Chris_Smalling
 src:cloze:Chris_Smalling
-src:describe:HNK_Hajduk_Split
 src:describe:Siya_Kolisi
 src:cloze:Siya_Kolisi
 src:describe:Islam_Slimani
@@ -84568,7 +84231,6 @@ src:cloze:Richard_Gasquet
 src:describe:Kostas_Antetokounmpo
 src:cloze:Kostas_Antetokounmpo
 src:describe:Evan_Longoria
-src:describe:Independiente_del_Valle
 src:describe:2022_NBA_playoffs
 src:cloze:2022_NBA_playoffs
 src:describe:Chris_Eubank
@@ -84612,7 +84274,6 @@ src:describe:Jack_Harbaugh
 src:cloze:Jack_Harbaugh
 src:describe:Malick_Thiaw
 src:cloze:Malick_Thiaw
-src:describe:3._Liga
 src:describe:Kyle_Juszczyk
 src:cloze:Kyle_Juszczyk
 src:describe:John_du_Pont
@@ -84631,7 +84292,6 @@ src:describe:Danny_Amendola
 src:cloze:Danny_Amendola
 src:describe:Mario_Kempes
 src:cloze:Mario_Kempes
-src:describe:Alianza_Lima
 src:describe:Satoshi_Nakajima
 src:describe:Jahmyr_Gibbs
 src:cloze:Jahmyr_Gibbs
@@ -84720,7 +84380,6 @@ src:describe:Gabe_Kapler
 src:cloze:Gabe_Kapler
 src:describe:Hsieh_Su-wei
 src:cloze:Hsieh_Su-wei
-src:describe:Allsvenskan
 src:describe:Tiquinho_Soares
 src:describe:Emile_Smith_Rowe
 src:cloze:Emile_Smith_Rowe
@@ -84773,8 +84432,6 @@ src:describe:2023_LigaPro_Serie_A
 src:describe:Kawasaki_Frontale
 src:describe:Rashee_Rice
 src:cloze:Rashee_Rice
-src:describe:Paragliding
-src:cloze:Paragliding
 src:describe:Andrea_Cambiaso
 src:cloze:Andrea_Cambiaso
 src:describe:Nick_Nurse
@@ -84839,7 +84496,6 @@ src:cloze:Diego_Godín
 src:describe:Cody_Bellinger
 src:cloze:Cody_Bellinger
 src:describe:2022_Finalissima
-src:describe:UEFA_European_Championship_qualifying
 src:describe:Zhou_Guanyu
 src:cloze:Zhou_Guanyu
 src:describe:Bristol_City_F.C.
@@ -84877,7 +84533,6 @@ src:cloze:Toni_Kukoč
 src:describe:Femke_Broeders-Bol
 src:describe:Josh_Emmett
 src:cloze:Josh_Emmett
-src:describe:Surfing
 src:describe:Jerry_Sandusky
 src:cloze:Jerry_Sandusky
 src:describe:Ernesto_Valverde
@@ -84902,7 +84557,6 @@ src:cloze:Geraint_Thomas
 src:describe:Adrian_Griffin
 src:describe:Damon_Hill
 src:cloze:Damon_Hill
-src:describe:Campeonato_Carioca
 src:describe:Natalia_Molchanova
 src:cloze:Natalia_Molchanova
 src:describe:Ausar_Thompson
@@ -84938,7 +84592,6 @@ src:cloze:Wanderlei_Silva
 src:describe:Mikel_John_Obi
 src:describe:Tai_Tuivasa
 src:cloze:Tai_Tuivasa
-src:describe:2019_FIFA_U-20_World_Cup
 src:describe:Delonte_West
 src:cloze:Delonte_West
 src:describe:Lindsey_Heaps
@@ -84981,7 +84634,6 @@ src:describe:Nico_Paz
 src:cloze:Nico_Paz
 src:describe:Salomón_Rondón
 src:cloze:Salomón_Rondón
-src:describe:2022–23_Formula_E_World_Championship
 src:cloze:Sprint_(running)
 src:describe:The_International_(esports)
 src:cloze:Rodrigo_Riquelme_(footballer,_born_2000)
@@ -85020,7 +84672,6 @@ src:describe:Jesé
 src:cloze:Jesé
 src:describe:Joe_Calzaghe
 src:cloze:Joe_Calzaghe
-src:describe:Levante_UD
 src:describe:Otto_Wallin
 src:cloze:Otto_Wallin
 src:describe:Justin_Tucker
@@ -85047,8 +84698,6 @@ src:describe:Yuto_Akihiro
 src:describe:Dhruv_Jurel
 src:cloze:Dhruv_Jurel
 src:describe:Billy_Gunn
-src:describe:Dodgeball
-src:cloze:Dodgeball
 src:describe:2022–23_EFL_Cup
 src:describe:Tahith_Chong
 src:cloze:Tahith_Chong
@@ -85082,8 +84731,6 @@ src:cloze:Thibaut_Pinot
 src:describe:Persib_Bandung
 src:describe:Sheffield_F.C.
 src:cloze:Sheffield_F.C.
-src:describe:Breakdancing
-src:cloze:Breakdancing
 src:cloze:Jeffrey_Jordan
 src:describe:Richard_Petty
 src:cloze:Anthony_Modeste_(French_footballer)
@@ -85091,8 +84738,6 @@ src:describe:A'ja_Wilson
 src:cloze:A'ja_Wilson
 src:describe:Leonardo_Campana
 src:cloze:Leonardo_Campana
-src:describe:Ranji_Trophy
-src:cloze:Ranji_Trophy
 src:describe:Neil_Warnock
 src:cloze:Neil_Warnock
 src:describe:Sean_Taylor
@@ -85126,12 +84771,10 @@ src:describe:Yoshi_Tsutsugo
 src:cloze:Yoshi_Tsutsugo
 src:describe:James_Wiseman
 src:cloze:James_Wiseman
-src:describe:EFL_Trophy
 src:describe:Enes_Kanter_Freedom
 src:describe:Ted_DiBiase
 src:describe:Alessandro_Bastoni
 src:cloze:Alessandro_Bastoni
-src:describe:Liga_AUF_Uruguaya
 src:describe:Frank_Reich
 src:cloze:Frank_Reich
 src:describe:AEW_Revolution_(2023)
@@ -85156,7 +84799,6 @@ src:describe:800_metres
 src:cloze:800_metres
 src:describe:Iago_Aspas
 src:cloze:Iago_Aspas
-src:describe:2018–19_Premier_League
 src:describe:Fred_VanVleet
 src:describe:Marat_Safin
 src:cloze:Marat_Safin
@@ -85168,9 +84810,6 @@ src:describe:Rachel_Daly
 src:cloze:Rachel_Daly
 src:describe:Shivon_Zilis
 src:cloze:Shivon_Zilis
-src:describe:Top_14
-src:cloze:Top_14
-src:describe:SA20
 src:describe:Luiz_Gustavo
 src:cloze:Luiz_Gustavo
 src:describe:Austin_Rivers
@@ -85323,7 +84962,6 @@ src:describe:Devo
 src:cloze:Devo
 src:describe:Myleene_Klass
 src:cloze:Myleene_Klass
-src:describe:Acer_Inc.
 src:describe:Egor_Kreed
 src:describe:Amy_Madigan
 src:cloze:Amy_Madigan
@@ -85704,7 +85342,6 @@ src:describe:Natalie_Merchant
 src:cloze:Natalie_Merchant
 src:describe:K.d._lang
 src:cloze:K.d._lang
-src:describe:Texas_Instruments
 src:describe:Mariya_Takeuchi
 src:cloze:Lamb_of_God_(band)
 src:describe:Banco_Bilbao_Vizcaya_Argentaria
@@ -85959,7 +85596,6 @@ src:describe:Ray-Ban
 src:cloze:Ray-Ban
 src:describe:Don_Toliver
 src:describe:Rie_Tanaka
-src:describe:Micro-Star_International
 src:describe:Yorushika
 src:cloze:Yorushika
 src:describe:Abarth
@@ -86167,7 +85803,6 @@ src:describe:Black_Widow_(Natasha_Romanova)
 src:cloze:Black_Widow_(Natasha_Romanova)
 src:describe:Mary_Berry
 src:describe:Margaret_of_Valois
-src:describe:A_Sign_of_Affection
 src:describe:Grand_Theft_Auto:_Vice_City_Stories
 src:describe:S.T.A.L.K.E.R._2:_Heart_of_Chornobyl
 src:describe:Kristen_Johnston
@@ -86230,7 +85865,6 @@ src:describe:Thomas_Pynchon
 src:describe:How_to_Win_Friends_and_Influence_People
 src:describe:Ivan_Bunin
 src:cloze:Ivan_Bunin
-src:describe:Divinity:_Original_Sin_II
 src:describe:The_Call_of_Cthulhu
 src:cloze:The_Call_of_Cthulhu
 src:describe:The_Cask_of_Amontillado
@@ -86335,8 +85969,6 @@ src:describe:Robyn_Crawford
 src:cloze:Robyn_Crawford
 src:describe:Sonny_Barger
 src:describe:Street_Fighter_II
-src:describe:Scum's_Wish
-src:cloze:Scum's_Wish
 src:describe:Batman:_Arkham_City
 src:describe:Paolo_Gucci
 src:cloze:Paolo_Gucci
@@ -86466,8 +86098,6 @@ src:describe:Dayananda_Saraswati
 src:cloze:Dayananda_Saraswati
 src:cloze:Princess_Märtha_Louise_of_Norway
 src:describe:The_Red_and_the_Black
-src:describe:Ouran_High_School_Host_Club
-src:cloze:Ouran_High_School_Host_Club
 src:describe:Mimar_Sinan
 src:describe:Super_Mario_Odyssey
 src:describe:Fallout_76
@@ -86790,8 +86420,6 @@ src:describe:Ginny_Weasley
 src:cloze:Ginny_Weasley
 src:describe:Doyle_Brunson
 src:cloze:Doyle_Brunson
-src:describe:Soul_Eater
-src:cloze:Soul_Eater
 src:describe:Doctor_Octopus
 src:describe:Isambard_Kingdom_Brunel
 src:describe:Atelier_Ryza:_Ever_Darkness_&_the_Secret_Hideout
@@ -86804,7 +86432,6 @@ src:cloze:Cesar_Millan
 src:describe:Guru_Granth_Sahib
 src:describe:Red_Rising
 src:cloze:Red_Rising
-src:describe:Ao_Haru_Ride
 src:describe:The_Social_Contract
 src:describe:The_Lost_Books_of_the_Bible_and_the_Forgotten_Books_of_Eden
 src:describe:L'Origine_du_monde
@@ -88676,7 +88303,6 @@ sup:P2046:879375593255
 sup:P2046:201946591873
 sup:P2046:53651196314
 sup:P2046:750777409913
-sup:P2046:986321875687
 sup:P2046:511305885286
 sup:P2046:318041358684
 sup:P2046:32718599955
@@ -89116,8 +88742,6 @@ src:cloze:Vedanta
 src:describe:Abiy_Ahmed
 src:cloze:Abiy_Ahmed
 src:describe:Augustus_II_the_Strong
-src:describe:Livonian_War
-src:cloze:Livonian_War
 src:describe:Mariano_Rajoy
 src:cloze:Mariano_Rajoy
 src:describe:Will_Hurd
@@ -89184,8 +88808,6 @@ src:describe:European_mole
 src:cloze:European_mole
 src:describe:Folie_à_deux
 src:cloze:Folie_à_deux
-src:describe:Mandible
-src:cloze:Mandible
 src:cloze:Smart_city
 src:describe:Potassium_carbonate
 src:cloze:Potassium_carbonate
@@ -89302,7 +88924,6 @@ src:cloze:Bob_Denver
 src:describe:Tom_Clancy's_Ghost_Recon
 src:cloze:Tom_Clancy's_Ghost_Recon
 src:cloze:Joe_Thomas_(actor)
-src:describe:Hotel_Transylvania
 src:describe:Not_Dead_Yet
 src:cloze:David_Ayer
 src:describe:Love,_Simon
@@ -89627,7 +89248,6 @@ src:describe:Travis_Hunter
 src:describe:Charly_Alcaraz
 src:cloze:Charly_Alcaraz
 src:describe:Marion_Jones
-src:describe:Liga_FPD
 src:describe:Doug_Flutie
 src:cloze:Doug_Flutie
 src:describe:Alberto_Del_Rio
@@ -89640,12 +89260,10 @@ src:cloze:Patrik_Schick
 src:describe:Matheus_Cunha
 src:cloze:Matheus_Cunha
 src:describe:Carlito_(wrestler)
-src:describe:Pro_Bowl
 src:cloze:André_Silva_(footballer,_born_1995)
 src:describe:Jong_Tae-se
 src:describe:Teemu_Pukki
 src:cloze:Teemu_Pukki
-src:describe:2022_Asia_Cup
 src:cloze:David_Lee_(basketball)
 src:describe:Diogo_Dalot
 src:cloze:Diogo_Dalot
@@ -89697,7 +89315,6 @@ src:describe:Andros_Townsend
 src:cloze:Andros_Townsend
 src:describe:Half_marathon
 src:cloze:Half_marathon
-src:describe:2016–17_Premier_League
 src:describe:Vladimir_Guerrero
 src:cloze:Vladimir_Guerrero
 src:describe:John_Laurinaitis
@@ -89715,7 +89332,6 @@ src:cloze:Niklas_Süle
 src:describe:José_Benavidez_Jr.
 src:describe:FC_Metz
 src:describe:AC_ChievoVerona
-src:describe:1999–2000_UEFA_Champions_League
 src:describe:Kerem_Demirbay
 src:cloze:Kerem_Demirbay
 src:describe:Ron_Rivera
@@ -89776,7 +89392,6 @@ src:describe:George_Ezra
 src:cloze:George_Ezra
 src:describe:But_Here_We_Are
 src:cloze:But_Here_We_Are
-src:describe:Grab_Holdings
 src:describe:Apink
 src:cloze:Apink
 src:describe:Gregory_Porter
@@ -90196,7 +89811,6 @@ rel:P175:Q1146291
 rel:P170:Q1146291
 rel:P175:Q30276412
 rel:P175:Q1051419
-rel:P17:Q105278
 rel:P112:Q105278
 rel:P17:Q28842253
 rel:P17:Q1475070
@@ -90270,7 +89884,6 @@ rel:P112:Q18327813
 rel:P170:Q677403
 rel:P17:Q286801
 rel:P37:Q3108185
-rel:P17:Q5384
 rel:P175:Q929855
 rel:P170:Q929855
 rel:P17:Q646741
@@ -90592,7 +90205,6 @@ rel:P170:Q7734937
 rel:P170:Q6333769
 rel:P112:Q2261392
 rel:P17:Q8476
-rel:P17:Q182135
 rel:P17:Q334845
 rel:P175:Q951483
 rel:P17:Q116549214
@@ -90702,7 +90314,6 @@ rel:P17:Q116652301
 rel:P17:Q844417
 rel:P175:Q24034534
 rel:P17:Q187471
-rel:P17:Q219697
 rel:P17:Q49242
 rel:P170:Q652724
 rel:P175:Q105988888
@@ -90774,7 +90385,6 @@ rel:P170:Q582763
 rel:P170:Q622946
 rel:P17:Q186702
 rel:P170:Q586400
-rel:P17:Q180773
 rel:P17:Q485496
 rel:P17:Q300518
 rel:P170:Q752365
@@ -91348,7 +90958,6 @@ rel:P170:Q1076696
 rel:P175:Q546425
 rel:P175:Q276546
 rel:P17:Q2620016
-rel:P17:Q93358
 rel:P17:Q6231
 rel:P175:Q27955792
 rel:P170:Q27955792
@@ -91359,7 +90968,6 @@ rel:P170:Q104901351
 rel:P17:Q497777
 rel:P17:Q319841
 rel:P17:Q3746183
-rel:P17:Q223933
 rel:P175:Q2357164
 rel:P17:Q171224
 rel:P17:Q104880107
@@ -91400,7 +91008,6 @@ rel:P170:Q592909
 rel:P17:Q189429
 rel:P175:Q716565
 rel:P170:Q716565
-rel:P17:Q644960
 rel:P17:Q860129
 rel:P170:Q860129
 rel:P175:Q285929
@@ -91503,7 +91110,6 @@ rel:P17:Q18820013
 rel:P17:Q2386334
 rel:P17:Q17581
 rel:P17:Q5721568
-rel:P17:Q734004
 rel:P17:Q107337981
 rel:P17:Q23165
 rel:P37:Q550374
@@ -93978,7 +93584,6 @@ chron:P571:319237799287
 chron:P571:435868578663
 chron:P571:475862387236
 chron:P571:487718135135
-chron:P571:235453370712
 chron:P571:577806967637
 chron:P571:374661211729
 chron:P571:994455367844
@@ -94405,7 +94010,6 @@ chron:P571:639444079830
 chron:P571:360338868155
 chron:P571:913670830668
 chron:P571:345733783897
-chron:P571:956345150643
 chron:P571:685657012079
 chron:P571:798366980045
 chron:P571:986891497150
@@ -94595,9 +94199,6 @@ chron:P571:476592124557
 chron:P571:244587371284
 chron:P571:457854519509
 chron:P571:789104150435
-chron:P571:311828346029
-chron:P571:141216019256
-chron:P571:874536345231
 chron:P571:978709277511
 chron:P571:394100734463
 chron:P571:625823357871
@@ -96026,7 +95627,6 @@ chron:P569:181970545590
 chron:P569:518418986806
 chron:P569:775694306612
 chron:P569:510298225098
-chron:P569:605939432537
 chron:P569:566542273236
 chron:P569:723022964408
 chron:P569:224800168919
@@ -96052,10 +95652,6 @@ chron:P569:964261067746
 chron:P569:644763054112
 chron:P569:791149047780
 chron:P569:871668441322
-chron:P569:442454563161
-chron:P569:4385687518
-chron:P569:709974317446
-chron:P569:862974419973
 chron:P569:72106366033
 chron:P569:361573506847
 chron:P569:34875150792
@@ -96342,7 +95938,6 @@ rev:P36:Q193152
 rev:P36:Q159631
 rev:P36:Q156418
 rev:P36:Q218023
-rev:P36:Q199442
 rev:P36:Q185488
 rev:P36:Q457167
 rev:P36:Q153080
@@ -96787,7 +96382,6 @@ src:cloze:Djemal_Pasha
 src:describe:Kais_Saied
 src:cloze:Kais_Saied
 src:describe:Thabo_Mbeki
-src:describe:Republicanism
 src:describe:Bhima
 src:cloze:Bhima
 src:describe:Abdul_Hamid_I
@@ -96891,8 +96485,6 @@ src:describe:Wang_Jian_(Qin)
 src:describe:William_Calley
 src:describe:Abbé_Pierre
 src:cloze:Abbé_Pierre
-src:describe:Haitian_Vodou
-src:cloze:Haitian_Vodou
 src:describe:Jeremiah_Joseph_O'Keefe
 src:cloze:Jeremiah_Joseph_O'Keefe
 src:describe:Zagreus
@@ -96928,8 +96520,6 @@ src:describe:Thomas_Seymour,_1st_Baron_Seymour_of_Sudeley
 src:describe:Curtis_LeMay
 src:describe:Longinus
 src:cloze:Longinus
-src:describe:Unitarian_Universalism
-src:cloze:Unitarian_Universalism
 src:cloze:Battle_of_Haldighati
 src:describe:Frederick_William_IV
 src:cloze:Frederick_William_IV
@@ -96943,8 +96533,6 @@ src:describe:Æthelflæd
 src:describe:Macky_Sall
 src:cloze:Macky_Sall
 src:cloze:New_Democratic_Party
-src:describe:Batavian_Republic
-src:cloze:Batavian_Republic
 src:describe:Marie-Agnes_Strack-Zimmermann
 src:cloze:Marie-Agnes_Strack-Zimmermann
 src:describe:Tomáš_Masaryk
@@ -96961,8 +96549,6 @@ src:describe:Putinism
 src:cloze:Putinism
 src:cloze:Grigory_Orlov
 src:describe:Chiune_Sugihara
-src:describe:Al-Aqsa_Martyrs'_Brigades
-src:cloze:Al-Aqsa_Martyrs'_Brigades
 src:describe:Roberto_Vannacci
 src:cloze:Roberto_Vannacci
 src:cloze:Austrian_People's_Party
@@ -97001,7 +96587,6 @@ src:describe:Rui_Matsukawa
 src:describe:Ryutaro_Hashimoto
 src:describe:John_Hunyadi
 src:cloze:Angles_(tribe)
-src:describe:Caucasian_War
 src:describe:Mehdi_Bakeri
 src:cloze:Mehdi_Bakeri
 src:describe:Ceres_(mythology)
@@ -97043,8 +96628,6 @@ src:cloze:Devendra_Fadnavis
 src:describe:Automobiles_Alpine
 src:describe:Jang_Song-thaek
 src:cloze:Jang_Song-thaek
-src:describe:Libertarian_socialism
-src:cloze:Libertarian_socialism
 src:describe:Duryodhana
 src:cloze:Duryodhana
 src:describe:Duchy_of_Warsaw
@@ -97067,7 +96650,6 @@ src:describe:Grant_Shapps
 src:describe:Pietro_Badoglio
 src:describe:Oscar_II
 src:cloze:Battle_of_Talas
-src:describe:Neo-fascism
 src:describe:Mustafa_II
 src:cloze:Mustafa_II
 src:describe:Stateira_(wife_of_Alexander_the_Great)
@@ -97106,7 +96688,6 @@ src:cloze:Alexander_Bortnikov
 src:describe:Red_Sea_crisis
 src:describe:Battle_of_Carrhae
 src:describe:William_Pitt_the_Younger
-src:describe:Utopian_socialism
 src:describe:Rose_Hanbury
 src:describe:Anton_Drexler
 src:cloze:Anton_Drexler
@@ -97157,7 +96738,6 @@ src:cloze:Masoud_Barzani
 src:describe:Hezekiah
 src:cloze:Hezekiah
 src:describe:Houari_Boumédiène
-src:describe:Battle_of_Las_Navas_de_Tolosa
 src:describe:13th_Dalai_Lama
 src:describe:Ernst_Thälmann
 src:cloze:Ernst_Thälmann
@@ -97221,15 +96801,11 @@ src:describe:Paolo_Villaggio
 src:cloze:Paolo_Villaggio
 src:describe:Mojtaba_Khamenei
 src:cloze:Mojtaba_Khamenei
-src:describe:Ashikaga_shogunate
-src:describe:Tetrarchy
-src:cloze:Tetrarchy
 src:describe:Mikhail_Frunze
 src:cloze:Mikhail_Frunze
 src:describe:Artaxerxes_I
 src:cloze:Artaxerxes_I
 src:describe:Fall_of_Jericho
-src:cloze:Conservatism_in_the_United_States
 src:describe:Shinjirō_Koizumi
 src:cloze:Shinjirō_Koizumi
 src:describe:Operation_Enduring_Freedom
@@ -97288,14 +96864,12 @@ src:describe:Edgars_Rinkēvičs
 src:cloze:Edgars_Rinkēvičs
 src:describe:Lady_Mountbatten
 src:describe:Siege_of_Bastogne
-src:cloze:Late_antiquity
 src:describe:Jimmy_Doolittle
 src:describe:Boutros_Boutros-Ghali
 src:cloze:Boutros_Boutros-Ghali
 src:describe:Assassination_of_Uthman
 src:describe:Mazi_Melesa_Pilip
 src:cloze:Mazi_Melesa_Pilip
-src:describe:Ōnin_War
 src:describe:Samadhi
 src:cloze:Samadhi
 src:describe:Tajikistani_Civil_War
@@ -97341,7 +96915,6 @@ src:cloze:Letitia_James
 src:describe:Mito_Kakizawa
 src:describe:N._Biren_Singh
 src:cloze:N._Biren_Singh
-src:describe:Portuguese_Colonial_War
 src:describe:George_Osborne
 src:cloze:George_Osborne
 src:describe:Manuel_Azaña
@@ -97359,17 +96932,12 @@ src:cloze:Lisa_Franchetti
 src:describe:Josiah
 src:cloze:Josiah
 src:describe:Rashtriya_Janata_Dal
-src:describe:Umbanda
-src:cloze:Umbanda
-src:describe:Liberation_of_Paris
-src:cloze:Liberation_of_Paris
 src:describe:Katie_Hopkins
 src:cloze:Katie_Hopkins
 src:describe:History_of_KFC
 src:describe:Christian_Democracy_(Italy)
 src:cloze:National_People's_Party_(India)
 src:describe:Vilasrao_Deshmukh
-src:describe:High_Middle_Ages
 src:describe:Trinamool_Congress
 src:describe:Mithridates_VI_Eupator
 src:describe:Mike_Vining
@@ -97381,7 +96949,6 @@ src:describe:Engelbert_Dollfuss
 src:cloze:Engelbert_Dollfuss
 src:describe:Youth_Pledge
 src:describe:Arachne
-src:describe:Malacca_Sultanate
 src:describe:Félix_Faure
 src:cloze:Félix_Faure
 src:describe:Jeju_uprising
@@ -97394,8 +96961,6 @@ src:describe:Kōdai-in
 src:cloze:Kōdai-in
 src:describe:Carlism
 src:cloze:Carlism
-src:describe:Heptarchy
-src:cloze:Heptarchy
 src:describe:Theodor_Eicke
 src:cloze:Theodor_Eicke
 src:describe:Mikhail_Prokhorov
@@ -97424,7 +96989,6 @@ src:describe:Francesco_Lollobrigida
 src:cloze:Francesco_Lollobrigida
 src:describe:Frederick_W._Smith
 src:cloze:Frederick_W._Smith
-src:cloze:Khatyn_massacre
 src:describe:Zog_I
 src:cloze:Flávio_Dino
 src:describe:Ramesses_III
@@ -97434,7 +96998,6 @@ src:cloze:Chrystia_Freeland
 src:describe:Western_Bloc
 src:describe:Michał_Kołodziejczak
 src:cloze:Michał_Kołodziejczak
-src:describe:Psalms_in_Islam
 src:describe:Siege_of_Jadotville
 src:cloze:Siege_of_Jadotville
 src:describe:Tsuyama_massacre
@@ -97448,12 +97011,9 @@ src:cloze:Mohammad_Shtayyeh
 src:describe:Paul_Cushing_Child
 src:describe:Death_of_Conrad_Roy
 src:cloze:Death_of_Conrad_Roy
-src:describe:Fascist_Italy
 src:describe:Arthur_Balfour
 src:describe:José_María_Aznar
 src:cloze:José_María_Aznar
-src:describe:Dissident
-src:cloze:Dissident
 src:describe:Falange_Española
 src:cloze:Falange_Española
 src:describe:Marcelo_Ebrard
@@ -97531,8 +97091,6 @@ src:cloze:Naja
 src:describe:Hornbill
 src:cloze:Hornbill
 src:cloze:Longhorn_beetle
-src:describe:Torso
-src:cloze:Torso
 src:describe:Brachydactyly_type_D
 src:describe:Frequency_illusion
 src:cloze:Frequency_illusion
@@ -97561,8 +97119,6 @@ src:describe:Hjalmar_Schacht
 src:cloze:Hjalmar_Schacht
 src:describe:Caiman
 src:describe:Indian_cobra
-src:describe:Neck
-src:cloze:Neck
 src:describe:Rubidium
 src:cloze:Rubidium
 src:describe:Behçet's_disease
@@ -97707,8 +97263,6 @@ src:describe:Kwashiorkor
 src:cloze:Kwashiorkor
 src:describe:Α-Pyrrolidinopentiophenone
 src:describe:Nevus
-src:describe:Sphincter
-src:cloze:Sphincter
 src:describe:Methylamine
 src:cloze:Methylamine
 src:describe:John_Stith_Pemberton
@@ -97722,8 +97276,6 @@ src:cloze:Lamiaceae
 src:describe:Per_mille
 src:describe:Harmonia_axyridis
 src:cloze:Harmonia_axyridis
-src:describe:Kite_(bird)
-src:cloze:Kite_(bird)
 src:describe:Vitis_vinifera
 src:cloze:Vitis_vinifera
 src:describe:Boomslang
@@ -97744,10 +97296,7 @@ src:describe:Japanese_amberjack
 src:describe:Hypersensitivity
 src:describe:Colugo
 src:cloze:Colugo
-src:describe:Quantitative_research
 src:describe:Crane_fly
-src:describe:Shellfish
-src:cloze:Shellfish
 src:describe:Coumarin
 src:cloze:Coumarin
 src:describe:Populus_tremula
@@ -97839,8 +97388,6 @@ src:describe:Scandium
 src:describe:Mikoyan-Gurevich_MiG-19
 src:describe:Monstera
 src:describe:Dogue_de_Bordeaux
-src:describe:Conch
-src:cloze:Conch
 src:describe:Sedative
 src:cloze:Sedative
 src:describe:Accipitridae
@@ -97873,8 +97420,6 @@ src:describe:Ageing
 src:cloze:Ageing
 src:describe:Cytoskeleton
 src:cloze:Cytoskeleton
-src:describe:Pheasant
-src:cloze:Pheasant
 src:describe:Piracetam
 src:cloze:Piracetam
 src:describe:Prunus
@@ -97885,7 +97430,6 @@ src:describe:José_María_Arguedas
 src:cloze:José_María_Arguedas
 src:describe:Alaska_pollock
 src:describe:Nymphaea
-src:describe:Earwax
 src:describe:Georges_Lemaître
 src:cloze:Georges_Lemaître
 src:describe:Ajwain
@@ -97944,8 +97488,6 @@ src:describe:Mistletoe
 src:cloze:Mistletoe
 src:describe:Pseudomonas
 src:cloze:Pseudomonas
-src:describe:Surveying
-src:cloze:Surveying
 src:describe:Cholecystitis
 src:cloze:Cholecystitis
 src:describe:Tom_Lehrer
@@ -97985,8 +97527,6 @@ src:cloze:Rigel
 src:describe:Flagellum
 src:cloze:Flagellum
 src:describe:Celiac_plexus
-src:describe:Gastronomy
-src:cloze:Gastronomy
 src:describe:Situs_inversus
 src:cloze:Situs_inversus
 src:describe:Mycoplasma_pneumoniae
@@ -98149,7 +97689,6 @@ src:describe:Wernicke_encephalopathy
 src:describe:Tasuku_Honjo
 src:describe:Perl
 src:cloze:Perl
-src:describe:Seminal_vesicles
 src:cloze:Estrous_cycle
 src:describe:Claude_Shannon
 src:describe:Cyclamen
@@ -98238,7 +97777,6 @@ src:cloze:Metabolic_syndrome
 src:describe:Midbrain
 src:cloze:Midbrain
 src:describe:Alcohol_withdrawal_syndrome
-src:describe:Wireless
 src:describe:Kamov_Ka-27
 src:cloze:Kamov_Ka-27
 src:describe:Antler
@@ -98254,8 +97792,6 @@ src:cloze:Bacillus_anthracis
 src:describe:Vipera_ammodytes
 src:cloze:Turkey_vulture
 src:describe:Dorothy_Vaughan
-src:describe:Mussel
-src:cloze:Mussel
 src:describe:Sputum
 src:cloze:Sputum
 src:describe:Alexander_Grothendieck
@@ -98540,8 +98076,6 @@ src:cloze:Kim_Hieora
 src:describe:Ayothi
 src:describe:Mathew_Thomas
 src:cloze:Mathew_Thomas
-src:describe:Wizarding_World
-src:cloze:Wizarding_World
 src:cloze:Breakfast_on_Pluto_(film)
 src:describe:Vanitha_Vijayakumar
 src:cloze:Vanitha_Vijayakumar
@@ -98777,8 +98311,6 @@ src:describe:4_Blocks
 src:cloze:4_Blocks
 src:describe:Kenneth_Ma
 src:cloze:Kenneth_Ma
-src:describe:Golgo_13
-src:cloze:Golgo_13
 src:describe:Go_Won-hee
 src:describe:Emily_Beecham
 src:cloze:Emily_Beecham
@@ -98894,8 +98426,6 @@ src:cloze:Kim_Joo-hyuk
 src:cloze:The_Oval_(TV_series)
 src:describe:Samantha_Bond
 src:cloze:Samantha_Bond
-src:describe:Aurora_Teagarden
-src:cloze:Aurora_Teagarden
 src:describe:Dunja_Hayali
 src:cloze:Dunja_Hayali
 src:cloze:The_Pink_Panther_(2006_film)
@@ -100060,8 +99590,6 @@ src:describe:Pichaikkaran
 src:describe:This_Boy's_Life
 src:describe:The_Young_Pope
 src:cloze:The_Young_Pope
-src:describe:Battlestar_Galactica
-src:cloze:Battlestar_Galactica
 src:cloze:Paul_King_(director)
 src:describe:Joan_Chen
 src:cloze:Joan_Chen
@@ -100080,7 +99608,6 @@ src:describe:The_Green_Elephant
 src:cloze:The_Green_Elephant
 src:describe:Maziar_Lorestani
 src:cloze:Maziar_Lorestani
-src:describe:Marvel_Cinematic_Universe:_Phase_One
 src:describe:Kappei_Yamaguchi
 src:describe:The_Princess_Diaries_2:_Royal_Engagement
 src:cloze:The_Princess_Diaries_2:_Royal_Engagement
@@ -100163,7 +99690,6 @@ src:describe:Shining_Vale
 src:cloze:Shining_Vale
 src:describe:Yuki_Kashiwagi
 src:cloze:Christopher_Lloyd_(TV_producer)
-src:describe:Aqua_Teen_Hunger_Force
 src:describe:Sven_Martinek
 src:cloze:Sven_Martinek
 src:describe:Miki_Mizuno
@@ -100237,7 +99763,6 @@ src:describe:Ol_Parker
 src:cloze:Ol_Parker
 src:describe:Saints_Row
 src:cloze:Saints_Row
-src:describe:Dr._Slump
 src:describe:Fuwa-chan
 src:describe:Susan_Sullivan
 src:describe:Oksana_Akinshina
@@ -100670,7 +100195,6 @@ src:cloze:Pleasantville_(film)
 src:describe:Leonid_Kuravlyov
 src:cloze:Sasha_Mitchell
 src:cloze:Priya_Prakash_Varrier
-src:describe:Guitar_Hero
 src:describe:David_Garrett
 src:describe:Come_Come_Everybody
 src:cloze:Tomer_Capone
@@ -101320,7 +100844,6 @@ src:cloze:The_400_Blows
 src:cloze:Phenomenon_(film)
 src:cloze:Picnic_at_Hanging_Rock_(film)
 src:describe:Katsuhiro_Otomo
-src:describe:Scooby-Doo,_Where_Are_You!
 src:describe:John_Mills
 src:cloze:Fallen_(1998_film)
 src:cloze:The_Witches_(1990_film)
@@ -101341,14 +100864,11 @@ src:cloze:Dalton_Trumbo
 src:describe:Karen_Takizawa
 src:describe:Brian_Williams
 src:cloze:Brian_Williams
-src:describe:Bobobo-bo_Bo-bobo
-src:cloze:Bobobo-bo_Bo-bobo
 src:describe:Deborah_Falconer
 src:cloze:Deborah_Falconer
 src:describe:Kathar_Basha_Endra_Muthuramalingam
 src:describe:They_Call_Me_Trinity
 src:cloze:They_Call_Me_Trinity
-src:describe:Adventure_Time:_Distant_Lands
 src:describe:Kang_Ki-young
 src:cloze:Kang_Ki-young
 src:describe:Diego_Boneta
@@ -101440,8 +100960,6 @@ src:describe:Sucre
 src:cloze:Mount_Paektu
 src:describe:Mulhouse
 src:cloze:Mulhouse
-src:describe:Masuria
-src:cloze:Masuria
 src:describe:Asmara
 src:describe:Dannebrog
 src:describe:Bodh_Gaya
@@ -101481,8 +100999,6 @@ src:describe:Moselle
 src:cloze:Moselle
 src:describe:Monrovia
 src:cloze:Monrovia
-src:describe:Iraqi_Kurdistan
-src:cloze:Iraqi_Kurdistan
 src:describe:Greenwich
 src:describe:Yenisei
 src:cloze:Yenisei
@@ -101581,7 +101097,6 @@ src:describe:Prora
 src:cloze:City_of_Westminster
 src:describe:Boracay
 src:cloze:Boracay
-src:describe:Livonia
 src:describe:Scythia
 src:cloze:Scythia
 src:describe:Kamianets-Podilskyi
@@ -101598,8 +101113,6 @@ src:cloze:Belém
 src:describe:Rhodes_(city)
 src:describe:Przemyśl
 src:cloze:Przemyśl
-src:describe:Hegra
-src:cloze:Hegra
 src:describe:Taichung
 src:describe:Kozhikode
 src:cloze:Kozhikode
@@ -101621,7 +101134,6 @@ src:describe:Jodhpur
 src:cloze:Jodhpur
 src:describe:Attica
 src:describe:Yellow_Sea
-src:describe:East_Francia
 src:describe:Adjara
 src:describe:Turan
 src:describe:Lund
@@ -101656,8 +101168,6 @@ src:describe:Brindisi
 src:describe:Arnhem
 src:cloze:Arnhem
 src:cloze:Kansas_City,_Kansas
-src:describe:Aquitaine
-src:cloze:Aquitaine
 src:cloze:Wilmington,_Delaware
 src:describe:Bering_Sea
 src:cloze:Bering_Sea
@@ -101668,8 +101178,6 @@ src:describe:Cabo_San_Lucas
 src:cloze:Komodo_(island)
 src:cloze:Tortuga_(Haiti)
 src:describe:Ahvaz
-src:describe:Ctesiphon
-src:cloze:Ctesiphon
 src:cloze:São_Miguel_Island
 src:describe:Sarnath
 src:cloze:Sarnath
@@ -101693,8 +101201,6 @@ src:cloze:Iron_pillar_of_Delhi
 src:cloze:Flag_of_Belarus
 src:describe:Kufa
 src:cloze:Kufa
-src:describe:Macaronesia
-src:cloze:Macaronesia
 src:describe:Sifan_Hassan
 src:cloze:Sifan_Hassan
 src:describe:Koji_Uehara
@@ -101807,7 +101313,6 @@ src:describe:Peter_Bosz
 src:cloze:Peter_Bosz
 src:describe:Bill_Parcells
 src:cloze:Bill_Parcells
-src:describe:2017–18_Premier_League
 src:describe:Savinho
 src:describe:Recopa_Sudamericana
 src:describe:Gianluca_Lapadula
@@ -101816,8 +101321,6 @@ src:describe:Reid_Flair
 src:describe:Jadeveon_Clowney
 src:cloze:Jadeveon_Clowney
 src:cloze:Mark_Thatcher
-src:describe:Mountaineering
-src:cloze:Mountaineering
 src:describe:Kyoji_Horiguchi
 src:cloze:Kyoji_Horiguchi
 src:describe:Keiji_Takahashi
@@ -101960,7 +101463,6 @@ src:describe:Léon_Marchand
 src:cloze:Léon_Marchand
 src:describe:Tyronn_Lue
 src:cloze:Tyronn_Lue
-src:describe:UEFA_Women's_Euro_2022
 src:describe:Anthony_Pettis
 src:cloze:Anthony_Pettis
 src:describe:Chelsea_Green
@@ -102038,7 +101540,6 @@ src:cloze:Justin_Thomas
 src:describe:Teddy_Sheringham
 src:cloze:Teddy_Sheringham
 src:describe:Nagoya_Grampus
-src:cloze:Mountain_West_Conference
 src:describe:Bhuvneshwar_Kumar
 src:cloze:Bhuvneshwar_Kumar
 src:describe:Rafael_dos_Anjos
@@ -102061,7 +101562,6 @@ src:describe:Amélie_Mauresmo
 src:cloze:Amélie_Mauresmo
 src:describe:Leonard_Fournette
 src:cloze:Leonard_Fournette
-src:describe:LigaPro_Serie_A
 src:describe:Marcelo_Martins_Moreno
 src:cloze:Marcelo_Martins_Moreno
 src:describe:Al-Rayyan_SC
@@ -102071,7 +101571,6 @@ src:cloze:Kai_Sotto
 src:describe:Jimmy_Floyd_Hasselbaink
 src:cloze:Jimmy_Floyd_Hasselbaink
 src:describe:Vitória_S.C.
-src:describe:2023–24_Serie_B
 src:describe:David_Justice
 src:cloze:David_Justice
 src:describe:Claudio_Caniggia
@@ -102157,14 +101656,12 @@ src:cloze:Frank_de_Boer
 src:describe:Rocky_Aoki
 src:describe:Krzysztof_Piątek
 src:cloze:Krzysztof_Piątek
-src:describe:CONMEBOL_Pre-Olympic_Tournament
 src:describe:Yoann_Gourcuff
 src:cloze:Yoann_Gourcuff
 src:describe:Tejashwi_Yadav
 src:cloze:Tejashwi_Yadav
 src:describe:Lee_Corso
 src:cloze:Lee_Corso
-src:describe:Melbourne_City_FC
 src:describe:Elimination_Chamber_(2023)
 src:cloze:Elimination_Chamber_(2023)
 src:describe:Mohammad_Amir
@@ -102227,7 +101724,6 @@ src:cloze:Sergio_Canales
 src:describe:Relay_race
 src:cloze:Relay_race
 src:describe:Fortuna_Düsseldorf
-src:cloze:National_League_South
 src:describe:Edy_Tavares
 src:cloze:Edy_Tavares
 src:describe:Emile_Griffith
@@ -102273,7 +101769,6 @@ src:describe:Yudai_Baba
 src:describe:2017_Champions_Trophy
 src:describe:Ha-seong_Kim
 src:cloze:Ha-seong_Kim
-src:describe:SK_Sturm_Graz
 src:describe:Cris_Cyborg
 src:describe:Denis_Shapovalov
 src:cloze:Denis_Shapovalov
@@ -102342,8 +101837,6 @@ src:describe:Cody_Zeller
 src:cloze:Cody_Zeller
 src:describe:Mats_Wilander
 src:cloze:Mats_Wilander
-src:describe:Skateboarding
-src:cloze:Skateboarding
 src:describe:Zoey_Stark
 src:cloze:Zoey_Stark
 src:describe:Nayef_Aguerd
@@ -102385,10 +101878,8 @@ src:describe:Bryan_Gil
 src:cloze:Bryan_Gil
 src:describe:Steve_Garvey
 src:cloze:Steve_Garvey
-src:describe:Airsoft
 src:describe:Iliman_Ndiaye
 src:cloze:Iliman_Ndiaye
-src:describe:Superbike_World_Championship
 src:describe:Martina_Voss-Tecklenburg
 src:describe:Baron_Corbin
 src:cloze:Baron_Corbin
@@ -102396,11 +101887,8 @@ src:describe:DeSean_Jackson
 src:cloze:DeSean_Jackson
 src:describe:Lewis_Dunk
 src:cloze:Lewis_Dunk
-src:describe:Al_Wehda_FC
-src:cloze:Al_Wehda_FC
 src:describe:Jacob_Fatu
 src:cloze:Jacob_Fatu
-src:cloze:2023_World_Artistic_Gymnastics_Championships
 src:describe:Oscar_Schmidt
 src:cloze:Oscar_Schmidt
 src:describe:Craig_Kimbrel
@@ -102523,14 +102011,12 @@ src:cloze:Harry_Brook
 src:describe:Hideaki_Wakui
 src:describe:Dejan_Lovren
 src:cloze:Dejan_Lovren
-src:describe:Inter-Cities_Fairs_Cup
 src:describe:Matt_Busby
 src:cloze:Matt_Busby
 src:describe:Lou_Holtz
 src:cloze:Lou_Holtz
 src:describe:Hiromi_(comedian)
 src:cloze:Hiromi_(comedian)
-src:describe:2003–04_FA_Premier_League
 src:describe:Dayana_Yastremska
 src:cloze:Dayana_Yastremska
 src:describe:Roxanne_Perez
@@ -102540,7 +102026,6 @@ src:cloze:Goran_Dragić
 src:describe:Rui_Patrício
 src:cloze:Rui_Patrício
 src:describe:Jermaine_O'Neal
-src:describe:Deportivo_Cali
 src:describe:Nikita_Mazepin
 src:cloze:Nikita_Mazepin
 src:describe:Demarai_Gray
@@ -102567,7 +102052,6 @@ src:describe:Taylor_Heinicke
 src:cloze:Taylor_Heinicke
 src:describe:Jailton_Almeida
 src:cloze:Jailton_Almeida
-src:describe:2024_NASCAR_Cup_Series
 src:describe:Ahmed_Musa
 src:cloze:Ahmed_Musa
 src:describe:Vágner_Love
@@ -102635,7 +102119,6 @@ src:describe:Matías_Almeyda
 src:cloze:Matías_Almeyda
 src:describe:Keith_Tkachuk
 src:cloze:Keith_Tkachuk
-src:cloze:Club_Atlético_Tigre
 src:describe:Paulo_Futre
 src:cloze:Paulo_Futre
 src:describe:Khalil_Mack
@@ -102717,7 +102200,6 @@ src:describe:Leon_Bailey
 src:cloze:Leon_Bailey
 src:describe:Chris_Chelios
 src:cloze:Chris_Chelios
-src:describe:UEFA_European_Under-19_Championship
 src:describe:Anwar_El_Ghazi
 src:cloze:Anwar_El_Ghazi
 src:describe:Jaxon_Smith-Njigba
@@ -103419,8 +102901,6 @@ src:cloze:Sui_Generis
 src:describe:Melanie_Thornton
 src:cloze:Melanie_Thornton
 src:cloze:Survivor_(band)
-src:describe:I.O.I
-src:cloze:I.O.I
 src:describe:Frontier_Airlines
 src:cloze:Frontier_Airlines
 src:describe:Napalm_Death
@@ -103542,7 +103022,6 @@ src:cloze:Vengaboys
 src:describe:Stefflon_Don
 src:describe:Kerry_King
 src:cloze:Kerry_King
-src:describe:Momoland
 src:describe:Cha_Cha_Slide
 src:describe:The8
 src:describe:Rod_Wave
@@ -103700,7 +103179,6 @@ src:cloze:Safaree_Samuels
 src:describe:Alexander_Scriabin
 src:cloze:Armaan_Malik
 src:describe:Dance_the_Night
-src:describe:Geely_Auto
 src:describe:Dan_Fogelberg
 src:describe:Francis_Magalona
 src:describe:Miyu_Tomita
@@ -103742,8 +103220,6 @@ src:describe:Alex_Wagner
 src:cloze:Alex_Wagner
 src:describe:Gran_Turismo_7
 src:cloze:Gran_Turismo_7
-src:describe:Kamisama_Kiss
-src:cloze:Kamisama_Kiss
 src:cloze:Lords_of_the_Fallen_(2023_video_game)
 src:describe:Beyond:_Two_Souls
 src:describe:Ghostwire:_Tokyo
@@ -104127,8 +103603,6 @@ src:describe:Gabriela_Mistral
 src:describe:Michael_Buffer
 src:cloze:Michael_Buffer
 src:cloze:Quicksilver_(Marvel_Comics)
-src:describe:The_Prince_of_Tennis
-src:cloze:The_Prince_of_Tennis
 src:describe:The_Song_of_Achilles
 src:cloze:The_Song_of_Achilles
 src:describe:Remnant_2
@@ -104166,8 +103640,6 @@ src:cloze:Diary
 src:describe:Vaikom_Muhammad_Basheer
 src:cloze:Vaikom_Muhammad_Basheer
 src:cloze:Merrily_We_Roll_Along_(musical)
-src:describe:God_Emperor_of_Dune
-src:cloze:God_Emperor_of_Dune
 src:describe:Milady_de_Winter
 src:describe:Edward_Mordake
 src:cloze:Edward_Mordake
@@ -104223,7 +103695,6 @@ src:describe:Anna_dePeyster
 src:cloze:Anna_dePeyster
 src:describe:The_Sorcerer's_Apprentice
 src:cloze:The_Sorcerer's_Apprentice
-src:describe:Oishinbo
 src:describe:Anselm_Kiefer
 src:cloze:Anselm_Kiefer
 src:describe:Joël_Dicker
@@ -104306,7 +103777,6 @@ src:cloze:Malevolent_Spirits:_Mononogatari
 src:describe:Jon_Krakauer
 src:cloze:Jon_Krakauer
 src:cloze:Raphael_(Teenage_Mutant_Ninja_Turtles)
-src:cloze:Red_Dragon_(novel)
 src:describe:Amir_Khusrau
 src:describe:Sea_of_Stars
 src:cloze:Sea_of_Stars
@@ -104321,7 +103791,6 @@ src:cloze:Gluck_(painter)
 src:describe:The_Son_of_Man
 src:cloze:The_Son_of_Man
 src:describe:Star_Wars:_The_Old_Republic
-src:describe:Speed_Racer
 src:describe:Call_of_Duty:_Advanced_Warfare
 src:describe:Édouard-Henri_Avril
 src:cloze:Édouard-Henri_Avril
@@ -104394,8 +103863,6 @@ src:describe:Cheryl_Burke
 src:describe:Nikos_Kazantzakis
 src:describe:Bauyrzhan_Momyshuly
 src:describe:Robin_Windsor
-src:describe:A_Couple_of_Cuckoos
-src:cloze:A_Couple_of_Cuckoos
 src:cloze:Leonardo_(Teenage_Mutant_Ninja_Turtles)
 src:describe:Strabo
 src:describe:Gérard_Louis-Dreyfus
@@ -104475,8 +103942,6 @@ src:describe:Walter_Schellenberg
 src:cloze:Walter_Schellenberg
 src:describe:Discourse
 src:cloze:Discourse
-src:describe:Remembrance_of_Earth's_Past
-src:cloze:Remembrance_of_Earth's_Past
 src:describe:Eliezer_Yudkowsky
 src:cloze:Eliezer_Yudkowsky
 src:describe:Derek_Draper
@@ -104577,8 +104042,6 @@ src:cloze:Sojourner_Truth
 src:describe:Hans_Holbein_the_Younger
 src:describe:Emmanuelle
 src:describe:Jim_Garrison
-src:describe:Sakamoto_Days
-src:cloze:Sakamoto_Days
 src:describe:Walter_Isaacson
 src:cloze:Walter_Isaacson
 src:describe:Feyd-Rautha
@@ -106765,7 +106228,6 @@ rel:P17:Q706748
 rel:P17:Q311394
 rel:P112:Q496810
 rel:P17:Q331790
-rel:P17:Q846967
 rel:P17:Q127892
 rel:P170:Q13646556
 rel:P17:Q632404
@@ -106951,11 +106413,9 @@ rel:P112:Q926806
 rel:P17:Q2001966
 rel:P175:Q20501302
 rel:P170:Q20501302
-rel:P17:Q14751
 rel:P112:Q1022860
 rel:P17:Q694107
 rel:P112:Q694107
-rel:P17:Q382593
 rel:P37:Q382593
 rel:P17:Q483152
 rel:P17:Q178405
@@ -107606,8 +107066,6 @@ src:cloze:Tom_Cotton
 src:describe:Ultranationalism
 src:cloze:Ultranationalism
 src:describe:Ten-Day_War
-src:describe:Tartessos
-src:cloze:Tartessos
 src:describe:C._N._Annadurai
 src:cloze:C._N._Annadurai
 src:describe:Dito_Ariotedjo
@@ -107654,7 +107112,6 @@ src:describe:Byron_Donalds
 src:cloze:Byron_Donalds
 src:describe:Matthias_Erzberger
 src:cloze:Matthias_Erzberger
-src:describe:Khrushchev_thaw
 src:describe:Hu_Haifeng
 src:cloze:Hu_Haifeng
 src:describe:Sandro_Pertini
@@ -107745,7 +107202,6 @@ src:describe:First_Republic_of_Armenia
 src:describe:Ashraf_Marwan
 src:describe:Topfreedom
 src:cloze:Topfreedom
-src:describe:King_David_Hotel_bombing
 src:describe:Margaret_of_Anjou
 src:cloze:Margaret_of_Anjou
 src:describe:Guido_Crosetto
@@ -107781,21 +107237,16 @@ src:describe:Igor_Sechin
 src:cloze:Igor_Sechin
 src:describe:Farabundo_Martí_National_Liberation_Front
 src:cloze:Farabundo_Martí_National_Liberation_Front
-src:describe:Hay'at_Tahrir_al-Sham
-src:cloze:Hay'at_Tahrir_al-Sham
 src:describe:Anurag_Thakur
 src:cloze:Anurag_Thakur
 src:describe:Fridtjof_Nansen
 src:cloze:Fridtjof_Nansen
 src:describe:First_Battle_of_Fallujah
-src:describe:Castellammarese_War
-src:cloze:Castellammarese_War
 src:describe:Fallas
 src:cloze:Fallas
 src:describe:Yuriko_Koike
 src:cloze:Yuriko_Koike
 src:describe:Philippe_de_Villiers
-src:describe:Mediastinum
 src:describe:Becquerel
 src:cloze:Becquerel
 src:describe:Bystander_effect
@@ -107918,8 +107369,6 @@ src:describe:Niall_Ferguson
 src:describe:Coleus_amboinicus
 src:cloze:Coleus_amboinicus
 src:cloze:Kilogram-force
-src:describe:Grumman_F4F_Wildcat
-src:cloze:Grumman_F4F_Wildcat
 src:describe:Margaret_Mead
 src:cloze:Margaret_Mead
 src:describe:Gardenia
@@ -108008,7 +107457,6 @@ src:describe:Swoosie_Kurtz
 src:cloze:Swoosie_Kurtz
 src:describe:Amanda_Tapping
 src:cloze:Amanda_Tapping
-src:describe:Ben_10:_Omniverse
 src:describe:Fares_Fares
 src:cloze:Fares_Fares
 src:describe:RoboCop_3
@@ -108135,7 +107583,6 @@ src:cloze:The_Legend_of_Maula_Jatt
 src:describe:Vivek_Agnihotri
 src:cloze:Vivek_Agnihotri
 src:describe:Meisa_Kuroki
-src:describe:Fireman_Sam
 src:describe:Aparna_Das
 src:cloze:Aparna_Das
 src:describe:Diane_Neal
@@ -108328,8 +107775,6 @@ src:describe:Kazlaser
 src:cloze:Kazlaser
 src:describe:Tracy_Spiridakos
 src:describe:Beverly_Hills_Cop_II
-src:describe:The_Wild_Thornberrys
-src:cloze:The_Wild_Thornberrys
 src:describe:Julian_Fellowes
 src:describe:David_Oakes
 src:cloze:David_Oakes
@@ -108350,7 +107795,6 @@ src:cloze:Fire_in_the_Sky
 src:describe:Kiran_Rathod
 src:cloze:Kiran_Rathod
 src:describe:Gia
-src:describe:Umineko_When_They_Cry
 src:describe:Elinor_Donahue
 src:describe:The_Partridge_Family
 src:cloze:The_Partridge_Family
@@ -108403,7 +107847,6 @@ src:cloze:Ellen_Travolta
 src:cloze:Cujo_(film)
 src:describe:Karthikeya_2
 src:cloze:Karthikeya_2
-src:describe:Works_based_on_the_Amityville_haunting
 src:describe:The_White_Princess_(miniseries)
 src:cloze:The_White_Princess_(miniseries)
 src:describe:Michelle_Gomez
@@ -108427,8 +107870,6 @@ src:cloze:Meteor_Garden_(2018_TV_series)
 src:cloze:Crawl_(2019_film)
 src:describe:Atul_Agnihotri
 src:cloze:Atul_Agnihotri
-src:describe:Macross
-src:cloze:Macross
 src:describe:Tomoya_Nakamura
 src:describe:Ryan_Thomas
 src:cloze:Ryan_Thomas
@@ -108486,7 +107927,6 @@ src:describe:Parinaz_Izadyar
 src:cloze:Parinaz_Izadyar
 src:describe:Mikey_Day
 src:cloze:Mikey_Day
-src:describe:Tiny_Toon_Adventures
 src:describe:Okaasan_to_Issho
 src:cloze:Okaasan_to_Issho
 src:describe:Lesley_Sharp
@@ -108610,7 +108050,6 @@ src:describe:Brendan_Cowell
 src:cloze:Brendan_Cowell
 src:describe:Zhou_Xun
 src:cloze:Zhou_Xun
-src:describe:Jurassic_World_Camp_Cretaceous
 src:describe:Keshia_Knight_Pulliam
 src:cloze:Keshia_Knight_Pulliam
 src:describe:The_Retirement_Plan
@@ -108692,7 +108131,6 @@ src:cloze:Zagros_Mountains
 src:describe:Ebro
 src:cloze:Ebro
 src:describe:Burgas
-src:cloze:Aksai_Chin
 src:describe:Aswan
 src:describe:Paestum
 src:describe:Piacenza
@@ -108702,8 +108140,6 @@ src:describe:Oradea
 src:cloze:Oradea
 src:describe:Cremona
 src:cloze:Cremona
-src:describe:Persis
-src:cloze:Persis
 src:cloze:Sforza_Castle
 src:describe:Tiwanaku
 src:cloze:Tiwanaku
@@ -108721,18 +108157,13 @@ src:cloze:Kitakyushu
 src:describe:Mardin
 src:describe:Conakry
 src:cloze:Conakry
-src:describe:Kowloon
-src:cloze:Kowloon
 src:describe:Kabylia
 src:cloze:Kish_Island
-src:cloze:Dearborn,_Michigan
 src:describe:Osijek
 src:describe:Roatán
 src:cloze:Roatán
 src:describe:Bielsko-Biała
 src:describe:Kuban
-src:describe:National_Gallery
-src:cloze:National_Gallery
 src:describe:Merano
 src:cloze:Merano
 src:describe:Yaoundé
@@ -108788,7 +108219,6 @@ src:describe:Shareef_O'Neal
 src:cloze:Shareef_O'Neal
 src:describe:Rico_Verhoeven
 src:cloze:Rico_Verhoeven
-src:describe:Four_Hills_Tournament
 src:describe:David_Haye
 src:cloze:David_Haye
 src:describe:Andrew_McCutchen
@@ -108801,8 +108231,6 @@ src:describe:Francesco_Farioli
 src:cloze:Francesco_Farioli
 src:describe:Mike_Budenholzer
 src:cloze:Mike_Budenholzer
-src:describe:Ski_jumping
-src:cloze:Ski_jumping
 src:describe:Marco_Rose
 src:cloze:Marco_Rose
 src:describe:2023_Copa_do_Brasil
@@ -108881,7 +108309,6 @@ src:cloze:Rade_Krunić
 src:describe:Sparta_Rotterdam
 src:describe:Esporte_Clube_Vitória
 src:cloze:Esporte_Clube_Vitória
-src:describe:Tug_of_war
 src:describe:Sébastien_Chabal
 src:cloze:Sébastien_Chabal
 src:describe:JD_McDonagh
@@ -108934,7 +108361,6 @@ src:describe:Mikel_Oyarzabal
 src:cloze:Mikel_Oyarzabal
 src:describe:WrestleMania_32
 src:cloze:WrestleMania_32
-src:cloze:K_League_1
 src:describe:Bryan_Zaragoza
 src:cloze:Bryan_Zaragoza
 src:describe:Ish_Smith
@@ -108960,7 +108386,6 @@ src:describe:Stephon_Gilmore
 src:cloze:Stephon_Gilmore
 src:describe:Dixie_Dean
 src:cloze:Dixie_Dean
-src:cloze:National_League_(English_football)
 src:describe:Andy_Dalton
 src:cloze:Andy_Dalton
 src:describe:Roman_Safiullin
@@ -108969,7 +108394,6 @@ src:describe:Miloš_Teodosić
 src:cloze:Miloš_Teodosić
 src:describe:An_Se-young
 src:cloze:An_Se-young
-src:describe:2022–23_CAF_Champions_League
 src:describe:Julianna_Peña
 src:describe:Fear_Factory
 src:cloze:Fear_Factory
@@ -108988,8 +108412,6 @@ src:cloze:Nita_Strauss
 src:describe:Ozuna
 src:describe:Subways_of_Your_Mind
 src:cloze:Subways_of_Your_Mind
-src:describe:Lolly_Talk
-src:cloze:Lolly_Talk
 src:describe:Betty_Buckley
 src:cloze:Betty_Buckley
 src:describe:Sly_Stone
@@ -109238,7 +108660,6 @@ src:describe:Jack_Dunphy
 src:cloze:Jack_Dunphy
 src:describe:Elisabeth_Murdoch_(businesswoman)
 src:cloze:Elisabeth_Murdoch_(businesswoman)
-src:describe:Record_of_Lodoss_War
 src:describe:Fire_&_Blood_(novel)
 src:cloze:Fire_&_Blood_(novel)
 src:describe:Marek_Czyż
@@ -109311,7 +108732,6 @@ src:cloze:Kristen_Doute
 src:describe:Soldier_Boy
 src:cloze:Soldier_Boy
 src:describe:Death_in_Venice
-src:describe:Land_of_the_Lustrous
 src:cloze:The_Zone_of_Interest_(novel)
 src:describe:Leigh-Anne_Pinnock
 src:cloze:Leigh-Anne_Pinnock
@@ -109336,7 +108756,6 @@ src:cloze:Kate_Garraway
 src:describe:Isabelle_Ithurburu
 src:cloze:Nick_Clooney
 src:cloze:Emmanuel_Carrère
-src:describe:Alice:_Madness_Returns
 src:cloze:James_Dougherty_(police_officer)
 src:cloze:Misery_(novel)
 src:describe:Jacques_Attali

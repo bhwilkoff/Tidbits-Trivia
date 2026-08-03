@@ -55,6 +55,26 @@ UDID="$(DEVELOPER_DIR=$DEV xcrun simctl list devices available \
 DEVELOPER_DIR=$DEV xcrun simctl bootstatus "$UDID" -b >/dev/null 2>&1 || \
   DEVELOPER_DIR=$DEV xcrun simctl boot "$UDID" >/dev/null 2>&1 || true
 DEVELOPER_DIR=$DEV xcrun simctl terminate "$UDID" com.learningischange.tidbitstrivia 2>/dev/null || true
+
+# This script runs whatever is ALREADY INSTALLED — it never builds. So after a
+# corpus change the Apple side reads the OLD corpus.sqlite while the web side
+# reads the new corpus.json, and the comparison is meaningless in both
+# directions: it can report a false PASS, and on 2026-08-02 it reported a false
+# FAIL (apple returning src:describe:Huolongjing, an id present in neither file).
+# Compare the installed bundle's corpus against the repo's and refuse to run on a
+# stale one, rather than printing a number that means nothing.
+INSTALLED="$(DEVELOPER_DIR=$DEV xcrun simctl get_app_container "$UDID" \
+             com.learningischange.tidbitstrivia 2>/dev/null || true)"
+if [ -n "$INSTALLED" ] && [ -f "$INSTALLED/corpus.sqlite" ]; then
+  if ! cmp -s "$INSTALLED/corpus.sqlite" TidbitsTrivia/Resources/corpus.sqlite; then
+    echo "FAIL: the app installed on $SIM carries a different corpus than the repo."
+    echo "      Rebuild and reinstall before trusting this comparison:"
+    echo "        DEVELOPER_DIR=$DEV xcodebuild build -project TidbitsTrivia.xcodeproj \\"
+    echo "          -scheme TidbitsTrivia -destination 'platform=iOS Simulator,name=$SIM'"
+    echo "        xcrun simctl install \"$UDID\" <path to TidbitsTrivia.app>"
+    exit 1
+  fi
+fi
 SIMCTL_CHILD_TIDBITS_CREATE_SWEEP="$(cd "$(dirname "$TOPICS")" && pwd)/$(basename "$TOPICS")" \
 SIMCTL_CHILD_TIDBITS_CREATE_SWEEP_CORPUS_ONLY=1 \
 SIMCTL_CHILD_TIDBITS_CREATE_SWEEP_SEARCH_ONLY=1 \

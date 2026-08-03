@@ -27,6 +27,14 @@ Each rule below is here because a real question in this app hit it:
   BROKEN-SHAPE    a mode's question with no shape payload, so Closest Call
                   silently renders as a plain MCQ.
   PLACEHOLDER     unresolved %@ / nil / Optional( in a prompt.
+  FAME-TELL       the answer is an order of magnitude more obscure than every
+                  distractor, so the round is solvable by picking the only name
+                  you do not recognise. Found by playing: a clue naming a
+                  Congolese forward taken 7th in 2021 offered Michael Jordan,
+                  LeBron James, Jonathan Kuminga and Kobe Bryant. Measured on
+                  QRank, the answer was the LEAST famous option 40.3% of the
+                  time against a 25% baseline. Most of that gap is too small to
+                  see; this fires only on the tail a player can actually read.
   ERA-SPREAD      four dated people spanning 400+ years, so the era in the clue
                   eliminates three options before any knowledge is applied.
   MACHINE-STEM    "In what year was Sir Gawain and the Green Knight founded or
@@ -241,6 +249,8 @@ BUDGET = {
     "ODD-ONE-KIND": 0,
     "DOUBLED-STEM": 0,
     "STUB-REVEAL": 0,
+    # 971 repaired with occupation peers; 581 with no peer pool were dropped.
+    "FAME-TELL": 0,
     "CITY-LANGUAGE": 3,
     "KIND-MISMATCH": 3,
 }
@@ -599,12 +609,17 @@ def check():
     # Wikidata Q3024240 = "historical country" — on the Kingdom of Navarre, not
     # on France. Stated as data rather than sniffed from prose.
     HISTORICAL_TITLES = set()
+    qrank = {}
     _src = ROOT / "tools" / "corpus" / "corpus_source.sqlite"
     if _src.exists():
         import sqlite3 as _sq
         _db = _sq.connect(f"file:{_src}?mode=ro", uri=True)
         HISTORICAL_TITLES = {t for t, p31 in _db.execute("select title, p31 from subject")
                              if p31 and "Q3024240" in p31}
+        # QRank: how often a subject's Wikipedia page is actually read. The only
+        # fame signal available, and the one FAME-TELL is measured in.
+        qrank = {t: q for t, q in _db.execute(
+            "select title, qrank from subject where qrank is not null") if q}
         _db.close()
 
     nationality = {}
@@ -738,6 +753,18 @@ def check():
         ys = [years.get(str(o)) for o in opts]
         if len(opts) >= 4 and all(ys) and max(ys) - min(ys) > 400:
             bad["ERA-SPREAD"].append(f"{q[0]}: {max(ys) - min(ys)}y {opts}")
+        # 10x, not "least famous". The answer sits below its distractors in 40% of
+        # rounds simply because trivia asks about less-famous things, and at a
+        # small gap no player can tell. An order of magnitude is what reads on
+        # screen as "the one name I don't know."
+        if len(opts) >= 4 and qrank:
+            _rk = [qrank.get(str(o)) for o in opts]
+            if all(_rk) and min(_rk[i] for i in range(len(opts))
+                                if i != ci) / _rk[ci] >= 10:
+                bad["FAME-TELL"].append(
+                    f"{q[0]}: {opts[ci]!r} is "
+                    f"{min(_rk[i] for i in range(len(opts)) if i != ci) / _rk[ci]:.0f}x "
+                    f"more obscure than every distractor {opts}")
         if len(opts) >= 4:
             ka = kinds.get(str(opts[ci]))
             odd = [str(o) for i, o in enumerate(opts)

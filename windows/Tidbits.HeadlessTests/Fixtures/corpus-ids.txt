@@ -1580,7 +1580,6 @@ src:describe:Bob_Fitzsimmons
 src:describe:Don_Hutson
 src:describe:Herbert_Chapman
 src:cloze:Herbert_Chapman
-src:describe:José_Afonso
 src:describe:Ambient_1:_Music_for_Airports
 src:cloze:Stardust_(1927_song)
 src:cloze:Katherine_Dunham
@@ -2834,8 +2833,6 @@ src:describe:Sha'Carri_Richardson
 src:cloze:Aston_Martin
 src:describe:Volvo_Cars
 src:describe:Foxconn
-src:describe:Reliance_Industries
-src:cloze:Reliance_Industries
 src:describe:Pattie_Boyd
 src:cloze:Pattie_Boyd
 src:describe:Piers_Morgan
@@ -15547,7 +15544,6 @@ src:describe:Christina_Aguilera
 src:cloze:Christina_Aguilera
 src:describe:Malala_Yousafzai
 src:cloze:Malala_Yousafzai
-src:cloze:Rabindranath_Tagore
 src:describe:Alexander_Pushkin
 src:describe:Tetris
 src:cloze:Tetris
@@ -45992,7 +45988,6 @@ src:describe:European_hedgehog
 src:describe:Flamingo
 src:cloze:Flamingo
 src:describe:Cucumis_melo
-src:describe:Mitsubishi_F-2
 src:describe:Ketone
 src:cloze:Ketone
 src:describe:Tagetes
@@ -58926,7 +58921,6 @@ src:cloze:Fast_Car
 src:describe:Vodafone
 src:cloze:Vodafone
 src:describe:Ace_of_Base
-src:cloze:Ace_of_Base
 src:describe:The_Pussycat_Dolls
 src:cloze:The_Pussycat_Dolls
 src:describe:Amir_Tataloo
@@ -80406,7 +80400,6 @@ src:describe:Amanita
 src:describe:Muscovy_duck
 src:describe:Erik_Erikson
 src:describe:Ramón_Tamames
-src:cloze:Ramón_Tamames
 src:describe:Areca_catechu
 src:describe:European_perch
 src:describe:Korsakoff_syndrome
@@ -82473,7 +82466,6 @@ src:cloze:Case_39
 src:describe:Ayesha_Takia
 src:describe:Selvaraghavan
 src:cloze:Selvaraghavan
-src:describe:Clark_Olofsson
 src:describe:Kairi_Sane
 src:cloze:Kairi_Sane
 src:describe:Masataka_Kubota
@@ -85366,7 +85358,6 @@ src:describe:Cheng_Xiao
 src:cloze:Cheng_Xiao
 src:describe:The_Sisters_of_Mercy
 src:cloze:The_Sisters_of_Mercy
-src:describe:Mitsubishi_Heavy_Industries
 src:describe:Yahritza_y_su_Esencia
 src:describe:Al_Bano_and_Romina_Power
 src:describe:Ángela_Aguilar
@@ -102989,8 +102980,6 @@ src:describe:Yuichi_Nakamaru
 src:describe:Yui_Horie
 src:describe:Barış_Akarsu
 src:cloze:Barış_Akarsu
-src:describe:Atlassian
-src:cloze:Atlassian
 src:describe:Peter_Hook
 src:cloze:Peter_Hook
 src:describe:Cedella_Marley

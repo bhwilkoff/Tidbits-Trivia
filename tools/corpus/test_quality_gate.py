@@ -89,10 +89,19 @@ PLANTED = {
                       "Which of these is an official language of Thessaloniki?",
                       ["Greek", "Danish", "Polish", "Czech"], 0, "geography", 2,
                       "Thessaloniki: Second-largest city in Greece.", "Thessaloniki"],
-    "NATIONALITY-FREE": ["test:nat", "This Russian dancer is world famous — who?",
-                         ["Maya Plisetskaya", "Anne Rice", "Susan Sontag",
-                          "Coretta Scott King"], 0, "arts", 2,
-                         "Maya Plisetskaya: Russian ballerina.", "Maya Plisetskaya"],
+    # Two plants: the nationality ADJECTIVE and the COUNTRY name. The second is
+    # the shape found by playing — "served as Turkey's defense minister" over
+    # Debs, Dean, Akar and Aquino — which the adjective-only pattern never saw.
+    "NATIONALITY-FREE": [
+        ["test:nat", "This Russian dancer is world famous — who?",
+         ["Maya Plisetskaya", "Anne Rice", "Susan Sontag",
+          "Coretta Scott King"], 0, "arts", 2,
+         "Maya Plisetskaya: Russian ballerina.", "Maya Plisetskaya"],
+        ["test:nat2", "Who served as Russia's most famous prima ballerina?",
+         ["Maya Plisetskaya", "Anne Rice", "Susan Sontag",
+          "Coretta Scott King"], 0, "arts", 2,
+         "Maya Plisetskaya: Russian ballerina.", "Maya Plisetskaya"],
+    ],
     "ERA-SPREAD": ["test:era", "Which of these people is best known?",
                    ["Bob Kane", "Pontius Pilate", "Anne Rice", "Susan Sontag"], 0,
                    "history", 2, "Bob Kane: American comic book artist.", "Bob Kane"],
@@ -239,13 +248,18 @@ def main():
 
     planted = []
     for name, row in PLANTED.items():
-        r = list(row)
-        while len(r) < width:
-            r.append(blank.get(schema[len(r)], ""))
-        # ...except the ROW-SCHEMA plant, which must violate it on purpose.
-        if name == "ROW-SCHEMA":
-            r[9] = ""
-        planted.append(r)
+        # A rule may plant SEVERAL rows when it has more than one way to fire.
+        # NATIONALITY-FREE reads both "this Turkish general" and "Turkey's
+        # defense minister", and one plant would leave whichever branch it does
+        # not use unprotected — which is how the country form came to be missed.
+        for one in (row if isinstance(row[0], list) else [row]):
+            r = list(one)
+            while len(r) < width:
+                r.append(blank.get(schema[len(r)], ""))
+            # ...except the ROW-SCHEMA plant, which must violate it on purpose.
+            if name == "ROW-SCHEMA":
+                r[9] = ""
+            planted.append(r)
 
     with tempfile.TemporaryDirectory() as tmp:
         tmpdir = pathlib.Path(tmp)
@@ -279,8 +293,11 @@ def main():
     print(f"{'rule':22}{'planted':>9}{'seen':>7}   status")
     for rule in sorted(set(PLANTED) | set(PLANTED_SHAPES)):
         n = found.get(rule)
-        ok = n is not None and n >= 1
-        print(f"{rule:22}{1:>9}{n if n is not None else '-':>7}   {'ok' if ok else 'BLIND'}")
+        row = PLANTED.get(rule)
+        count = len(row) if (row and isinstance(row[0], list)) else 1
+        ok = n is not None and n >= count
+        print(f"{rule:22}{count:>9}{n if n is not None else '-':>7}   "
+              f"{'ok' if ok else 'BLIND'}")
         if not ok:
             failures.append(rule)
 

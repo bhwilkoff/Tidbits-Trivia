@@ -421,6 +421,48 @@ _NATIONS = ("American|British|English|French|Italian|German|Spanish|Dutch|Russia
             "Hungarian|Czech|Finnish|Romanian|Ukrainian|Welsh|Colombian|Chilean|"
             "Cuban|Peruvian|Vietnamese|Thai|Indonesian|Filipino|Pakistani")
 NAT_IN_PROMPT = re.compile(r"\bthis\s+(" + _NATIONS + r")\b", re.I)
+
+# A prompt can fix the nationality without ever using the adjective. Found by
+# playing: "This retired four-star general served as TURKEY'S defense minister
+# from 2018 to 2023" over Eugene V. Debs, John Dean, Hulusi Akar and Benigno
+# Aquino III — the only Turkish name is the answer, and NAT_IN_PROMPT saw
+# nothing because the prompt says "Turkey's", not "this Turkish".
+_COUNTRY_NAT = {
+    "United States": "american", "America": "american", "Britain": "british",
+    "United Kingdom": "british", "England": "british", "Scotland": "british",
+    "Wales": "british", "France": "french", "Italy": "italian",
+    "Germany": "german", "Spain": "spanish", "Netherlands": "dutch",
+    "Russia": "russian", "Japan": "japanese", "China": "chinese",
+    "India": "indian", "Canada": "canadian", "Australia": "australian",
+    "Sweden": "swedish", "Norway": "norwegian", "Denmark": "danish",
+    "Poland": "polish", "Greece": "greek", "Ireland": "irish",
+    "Mexico": "mexican", "Brazil": "brazilian", "Argentina": "argentine",
+    "Austria": "austrian", "Switzerland": "swiss", "Belgium": "belgian",
+    "Portugal": "portuguese", "Turkey": "turkish", "Egypt": "egyptian",
+    "Nigeria": "nigerian", "Israel": "israeli", "Iran": "iranian",
+    "Hungary": "hungarian", "Romania": "romanian", "Ukraine": "ukrainian",
+    "Colombia": "colombian", "Chile": "chilean", "Cuba": "cuban",
+    "Peru": "peruvian", "Vietnam": "vietnamese", "Thailand": "thai",
+    "Indonesia": "indonesian", "Philippines": "filipino", "Pakistan": "pakistani",
+}
+COUNTRY_IN_PROMPT = re.compile(
+    r"\b(" + "|".join(sorted(_COUNTRY_NAT, key=len, reverse=True))
+    + r")(?:\u2019s|'s)?\b")
+
+
+def prompt_nationality(prompt):
+    """The nationality a prompt PINS DOWN, or None. One definition, read by both
+    this gate and fix_nationality_distractors.py — they had separate copies of
+    the adjective pattern, which is how the country form came to be missed by
+    both at once."""
+    p = str(prompt or "")
+    if NAT_HYPHEN.search(p):
+        return None            # "this Italian-American physicist" is two claims
+    m = NAT_IN_PROMPT.search(p)
+    if m:
+        return _nat_family(m.group(1))
+    m = COUNTRY_IN_PROMPT.search(p)
+    return _COUNTRY_NAT[m.group(1)] if m else None
 NAT_IN_DESC = re.compile(r"^(" + _NATIONS + r")\b", re.I)
 NAT_HYPHEN = re.compile(r"\bthis\s+\w+-\w+", re.I)
 _NAT_FAMILY = {"english": "british", "scottish": "british", "welsh": "british"}
@@ -713,9 +755,8 @@ def check():
             if vals == sorted(vals):
                 numeric_sorted[0] += 1
         if opts and len(opts) >= 4 and 0 <= ci < len(opts):
-            _m = NAT_IN_PROMPT.search(prompt or "")
-            if _m and not NAT_HYPHEN.search(prompt or ""):
-                _want = _nat_family(_m.group(1))
+            _want = prompt_nationality(prompt)
+            if _want:
                 if nationality.get(str(opts[ci])) == _want:
                     _others = [str(o) for i, o in enumerate(opts) if i != ci]
                     _known = [nationality[o] for o in _others if o in nationality]

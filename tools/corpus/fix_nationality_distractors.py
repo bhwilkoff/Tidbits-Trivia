@@ -43,7 +43,8 @@ import unicodedata
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from quality_gate import readable_description, kind_map           # noqa: E402
+from quality_gate import (readable_description, kind_map,        # noqa: E402
+                          prompt_nationality)
 
 CORPUS = ROOT / "assets" / "corpus.json"
 ENRICH = ROOT / "assets" / "enrich.json"
@@ -55,9 +56,11 @@ NATIONS = ("American|British|English|French|Italian|German|Spanish|Dutch|Russian
            "Belgian|Portuguese|Turkish|Korean|Egyptian|Nigerian|Israeli|Iranian|"
            "Hungarian|Czech|Finnish|Romanian|Ukrainian|Welsh|Colombian|Chilean|"
            "Cuban|Peruvian|Vietnamese|Thai|Indonesian|Filipino|Pakistani")
-IN_PROMPT = re.compile(r"\bthis\s+(" + NATIONS + r")\b", re.I)
 IN_DESC = re.compile(r"^(" + NATIONS + r")\b", re.I)
-HYPHENATED = re.compile(r"\bthis\s+\w+-\w+", re.I)
+# The PROMPT side is quality_gate.prompt_nationality — it used to be a second
+# copy of `\bthis\s+(NATIONS)\b` here, and when a prompt turned out to pin the
+# nationality by COUNTRY name instead ("Turkey's defense minister"), both copies
+# missed it and neither could tell the other. One definition, two readers.
 FAMILY = {"english": "british", "scottish": "british", "welsh": "british"}
 
 STOP = {"the", "of", "a", "an", "and", "in", "on", "at", "to", "for", "de",
@@ -130,10 +133,9 @@ def main():
         if not opts or len(opts) < 4 or not (0 <= ci < len(opts)):
             continue
         prompt = q[1] or ""
-        m = IN_PROMPT.search(prompt)
-        if not m or HYPHENATED.search(prompt):
+        want = prompt_nationality(prompt)
+        if not want:
             continue
-        want = family(m.group(1))
         if nat.get(str(opts[ci])) != want:
             continue
         others = [(i, str(o)) for i, o in enumerate(opts) if i != ci]

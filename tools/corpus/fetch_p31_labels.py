@@ -1,6 +1,6 @@
 """Fetch English labels for the Wikidata types the Match Up generator groups by.
 
-`gen_match.py` had one relation it could not name. Every other relation says what
+`gen_match.py` had four relations whose keys are not one kind of thing. Every other relation says what
 its keys ARE — "Match each work to its author", "Match each place to its capital"
 — but `rel:P17:` (country-of) shipped as:
 
@@ -46,8 +46,12 @@ def wanted():
            db.execute("select title, p31 from subject")}
     db.close()
     rows = json.loads(CORPUS.read_text())["questions"]
+    # Every relation whose keys are not one kind of thing, not just country-of.
+    # "Match each work to its creator" was asked with Skynet as a key (a fictional
+    # AI, not a work) and "Match each organization to its founder" with a CITY.
+    prefixes = ("rel:P17:", "rel:P170:", "rel:P175:", "rel:P112:")
     return sorted({p31[r[7]] for r in rows
-                   if r[0].startswith("rel:P17:") and r[7] in p31 and p31[r[7]]})
+                   if r[0].startswith(prefixes) and r[7] in p31 and p31[r[7]]})
 
 
 def fetch(qids):
@@ -75,7 +79,7 @@ def main():
     a = ap.parse_args()
 
     qids = wanted()
-    print(f"Wikidata types used as a country-of key: {len(qids):,}")
+    print(f"Wikidata types used as a key by a typed relation: {len(qids):,}")
     if not a.fetch:
         print("(pass --fetch to retrieve their labels)")
         return 0

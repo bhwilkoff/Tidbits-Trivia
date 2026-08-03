@@ -35,7 +35,23 @@ import genguard
 #
 # Grouping by Wikidata type instead makes the round coherent AND nameable, at the
 # cost of the rounds whose type has fewer than four distinct countries.
-TYPED_RELATION = "rel:P17:"
+# prefix -> the VALUE noun. These four relations apply to more than one kind of
+# key, so each round is grouped by the key's Wikidata type and the prompt names
+# it. Found by playing, one per relation:
+#
+#   P17  country   "Match each of these to its country."
+#                  Serie C · Chelsea F.C. · TSG 1899 Hoffenheim · 2017 WBC
+#   P170 creator   "Match each WORK to its creator." over SKYNET, which is a
+#                  fictional AI, not a work.
+#   P112 founder   "Match each ORGANIZATION to its founder." over a CITY.
+#   P175 performer already carried a warning in its own prompt ("role or song"),
+#                  which is a noun doing the job a type should do.
+TYPED_RELATIONS = {
+    "rel:P17:": "country",
+    "rel:P170:": "creator",
+    "rel:P112:": "founder",
+    "rel:P175:": "performer",
+}
 
 # Type labels that must not become a prompt.
 #
@@ -53,6 +69,15 @@ TYPED_RELATION = "rel:P17:"
 #
 # A label naming a country ("municipality of Romania") also leaks the answer, and
 # that is caught per-round below rather than by name.
+# Wikidata's label is an ontology term, not always the word a player uses.
+# Rewritten, not excluded, because the TYPE is right and only the wording is off.
+TYPE_LABEL_REWRITE = {
+    "fictional human": "fictional character",
+    "musical work/composition": "musical work",
+    "human biblical figure": "biblical figure",
+    "big city": "city",
+}
+
 BAD_TYPE_LABEL = (
     "country", "aspect of history", "occurrence", "human settlement",
     "first-level administrative division", "historical ethnic group",
@@ -228,7 +253,7 @@ def main():
         by_cat = collections.defaultdict(lambda: collections.defaultdict(list))
         for key, val, cat, rank in pairs:
             lane = cat
-            if prefix == TYPED_RELATION:
+            if prefix in TYPED_RELATIONS:
                 ty = p31_of.get(key)
                 if not ty or ty not in type_label:
                     continue
@@ -286,7 +311,10 @@ def main():
                         # "Match each football club to its country." A round of four
                         # football clubs can say so; a round of a manga, a statue, an
                         # art school and a novel could only say "these".
-                        round_prompt = "Match each %s to its country." % type_label[lane[1]]
+                        _tl = type_label[lane[1]]
+                        _tl = TYPE_LABEL_REWRITE.get(_tl, _tl)
+                        round_prompt = "Match each %s to its %s." % (
+                            _tl, TYPED_RELATIONS[prefix])
                         rid = f"match:{rel}:{lane[1]}:{cat}:{made}:{keys[0]}"
                     else:
                         round_prompt = prompt

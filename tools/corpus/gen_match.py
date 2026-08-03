@@ -25,6 +25,41 @@ import genguard
 # book to its author" was asked of LazyTown, Ozymandias and Hansel and Gretel;
 # "Match each film to its director" of Glee and Final Fantasy VII. A prompt that
 # misdescribes its own contents reads as a mistake even when the pairing is right.
+# The one relation whose keys are NOT a single kind. Every other relation yields
+# one type by construction (an element has a symbol, a work has an author), but
+# "country of" applies to a football club, a battle, a manga and a statue alike,
+# so the prompt shipped as "Match each of these to its country." and the rounds
+# mixed types: 304 of 324 of them, including
+#
+#     Anne of Green Gables · Bauhaus · Naruto · Manneken Pis
+#
+# Grouping by Wikidata type instead makes the round coherent AND nameable, at the
+# cost of the rounds whose type has fewer than four distinct countries.
+TYPED_RELATION = "rel:P17:"
+
+# Type labels that must not become a prompt.
+#
+# TAUTOLOGY: any label containing "country" gives "Match each historical country
+# to its country."
+#
+# JARGON: Wikidata's ontology words are not English a player reads — "aspect of
+# history", "occurrence", "human settlement", "first-level administrative
+# division". They describe a database, not a thing.
+#
+# TONE: "Match each massacre to its country", "...each genocide...", "...each
+# terrorist attack..." turn atrocities into a matching puzzle. The facts belong
+# in the corpus and these questions are askable in prose; the MATCHING GRID is
+# what makes them flippant, so the exclusion is about the shape, not the subject.
+#
+# A label naming a country ("municipality of Romania") also leaks the answer, and
+# that is caught per-round below rather than by name.
+BAD_TYPE_LABEL = (
+    "country", "aspect of history", "occurrence", "human settlement",
+    "first-level administrative division", "historical ethnic group",
+    "type of sport", "rapid transit", "disputed territory",
+    "genocide", "massacre", "mass murder", "terrorist attack",
+)
+
 RELATIONS = {
     "wd:capital:":    ("Match each place to its capital.", "place", "capital"),
     "wd:currency:":   ("Match each place to its currency.", "place", "currency"),
@@ -139,6 +174,20 @@ def main():
     diff = json.load(open(args.difficulty))["difficulty"]
 
     out = []
+    # country-of is the one relation whose keys are not one kind of thing, so it
+    # is grouped by Wikidata TYPE and names that type in the prompt. See the note
+    # on TYPED_RELATION below.
+    p31_of, type_label = {}, {}
+    _src = os.path.join(os.path.dirname(__file__), "corpus_source.sqlite")
+    _lab = os.path.join(os.path.dirname(__file__), "p31_labels.json")
+    if os.path.exists(_src) and os.path.exists(_lab):
+        import sqlite3
+        _db = sqlite3.connect("file:%s?mode=ro" % _src, uri=True)
+        p31_of = {t: (v or "").split(",")[0]
+                  for t, v in _db.execute("select title, p31 from subject")}
+        _db.close()
+        type_label = json.load(open(_lab))
+
     for prefix, (prompt, _kn, _vn) in RELATIONS.items():
         # Collect deduped (key, value, category) pairs for this relation.
         pairs, seen = [], set()
@@ -178,28 +227,75 @@ def main():
         # candidate and the four relations above produced ZERO rounds.
         by_cat = collections.defaultdict(lambda: collections.defaultdict(list))
         for key, val, cat, rank in pairs:
-            by_cat[cat][val].append((rank, key))
+            lane = cat
+            if prefix == TYPED_RELATION:
+                ty = p31_of.get(key)
+                if not ty or ty not in type_label:
+                    continue
+                _lab = type_label[ty].lower()
+                if any(b in _lab for b in BAD_TYPE_LABEL):
+                    continue
+                lane = (cat, ty)
+            by_cat[lane][val].append((rank, key))
         # The cap is per (relation, CATEGORY). Sharing one budget across
         # categories let whichever sorted first consume the whole 60 and starved
         # the rest — screen fell to 27 rounds that way.
-        for cat, byval in sorted(by_cat.items()):
-            made = 0
-            for bucket in byval.values():
-                bucket.sort()
-            values = sorted(byval, key=lambda v: byval[v][0])
-            while made < PER_RELATION:
-                live = [v for v in values if byval[v]]
-                if len(live) < 4:
+        # The cap stays per (relation, CATEGORY) even when a relation is split
+        # into type lanes, so grouping by type changes what a round CONTAINS
+        # without changing how many of them each category gets. Budgeting per lane
+        # instead took geography from 270 rounds to 430, purely because city, big
+        # city, island, region and river are all geography.
+        # The cap is per (relation, CATEGORY) even when a relation is split into
+        # type lanes: grouping by type changes what a round CONTAINS, not how many
+        # each category gets. Budgeting per LANE took geography from 270 rounds to
+        # 430 purely because city, big city, island, region and river are all
+        # geography; dividing the budget evenly instead capped every lane at two
+        # and cut country-of from 324 rounds to 102. Round-robin across the lanes
+        # spends the category's whole budget without letting the alphabetically
+        # first type eat it.
+        lanes = sorted(by_cat.items(), key=lambda kv: str(kv[0]))
+        for cat in sorted({(l[0] if isinstance(l, tuple) else l) for l, _ in lanes}):
+            mine = [(l, bv) for l, bv in lanes
+                    if (l[0] if isinstance(l, tuple) else l) == cat]
+            for _, byval in mine:
+                for bucket in byval.values():
+                    bucket.sort()
+            order = {id(bv): sorted(bv, key=lambda v: bv[v][0]) for _, bv in mine}
+            made, live_lanes = 0, list(mine)
+            while made < PER_RELATION and live_lanes:
+                progressed = False
+                for lane, byval in list(live_lanes):
+                    if made >= PER_RELATION:
+                        break
+                    values = order[id(byval)]
+                    live = [v for v in values if byval[v]]
+                    if len(live) < 4:
+                        live_lanes.remove((lane, byval))
+                        continue
+                    grp = [(byval[v].pop(0)[1], v) for v in live[:4]]
+                    keys = [k for k, _ in grp]
+                    vals = [v for _, v in grp]
+                    # "Match each municipality of Romania to its country" hands
+                    # the answer to any round that includes Romania.
+                    if isinstance(lane, tuple) and any(
+                            v.lower() in type_label[lane[1]].lower() for v in vals):
+                        continue
+                    expl = " \u00b7 ".join(f"{k} \u2192 {v}" for k, v in grp)
+                    rel = prefix.strip(":").split(":")[-1]
+                    if isinstance(lane, tuple):
+                        # "Match each football club to its country." A round of four
+                        # football clubs can say so; a round of a manga, a statue, an
+                        # art school and a novel could only say "these".
+                        round_prompt = "Match each %s to its country." % type_label[lane[1]]
+                        rid = f"match:{rel}:{lane[1]}:{cat}:{made}:{keys[0]}"
+                    else:
+                        round_prompt = prompt
+                        rid = f"match:{rel}:{cat}:{made}:{keys[0]}"
+                    out.append([rid, round_prompt, keys, vals, cat, expl, "", ""])
+                    made += 1
+                    progressed = True
+                if not progressed:
                     break
-                grp = [(byval[v].pop(0)[1], v) for v in live[:4]]
-                keys = [k for k, _ in grp]
-                vals = [v for _, v in grp]
-                expl = " · ".join(f"{k} → {v}" for k, v in grp)
-                out.append([
-                    f"match:{prefix.strip(':').split(':')[-1]}:{cat}:{made}:{keys[0]}",
-                    prompt, keys, vals, cat, expl, "", "",
-                ])
-                made += 1
 
     # Hand-authored rounds the Wikidata relations cannot produce — "Match each NBA
     # legend to the team he is most associated with", "Match each famous battle to

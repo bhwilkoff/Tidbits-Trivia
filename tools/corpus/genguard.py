@@ -66,7 +66,14 @@ def add_tombstones(shape, ids, reason):
 
 
 def merge(shape, generated, out_path, *, regenerate=False, prune=False):
-    """Return the rows to write, and print exactly what the merge protected."""
+    """Return the rows to write, and print exactly what the merge protected.
+
+    A `--prune` run writes tombstones ONLY when it is writing the real artifact.
+    Redirecting `--out` to a scratch path to see what a prune WOULD do used to
+    record 447 tombstones for the live shape anyway — the same trap as the
+    generators writing their platform mirrors regardless of `--out`. A flag that
+    means "show me" must not mutate shared state.
+    """
     shipped = _rows(out_path)
     by_id = {r[0]: r for r in shipped}
     gen_by_id = {r[0]: r for r in generated}
@@ -98,7 +105,11 @@ def merge(shape, generated, out_path, *, regenerate=False, prune=False):
               f"(e.g. {revived[0]})")
 
     if prune and shipped_only:
-        add_tombstones(shape, shipped_only, f"pruned by gen_{shape}.py --prune")
+        real = ROOT / "assets" / f"{shape}.json"
+        if pathlib.Path(out_path).resolve() == real.resolve():
+            add_tombstones(shape, shipped_only, f"pruned by gen_{shape}.py --prune")
+        else:
+            print(f"    (scratch --out: NOT recording {len(shipped_only):,} tombstones)")
     return out
 
 

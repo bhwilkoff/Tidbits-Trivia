@@ -702,6 +702,12 @@ def check():
     qrank, qrank_p31, qrank_labels = {}, {}, {}
     _src = ROOT / "tools" / "corpus" / "corpus_source.sqlite"
     _facts = ROOT / "tools" / "corpus" / "subject_facts.json"
+    # TIDBITS_NO_SOURCE_DB=1 forces the committed-export path — what CI actually
+    # runs, since the database is a 150 MB gitignored artifact. Without a way to
+    # exercise this locally, a rule that reads the database directly passes here
+    # and goes blind there, which happened twice: FAME-TELL, then ODD-ONE-KIND.
+    if os.environ.get("TIDBITS_NO_SOURCE_DB") == "1":
+        _src = _src.with_name("__absent__")
     if _src.exists():
         import sqlite3 as _sq
         _db = _sq.connect(f"file:{_src}?mode=ro", uri=True)
@@ -721,6 +727,10 @@ def check():
         _f = json.loads(_facts.read_text())
         HISTORICAL_TITLES = set(_f["historical"])
         qrank = _f["qrank"]
+        qrank_p31 = _f.get("p31", {})
+        _lf = ROOT / "tools" / "corpus" / "p31_labels.json"
+        if _lf.exists():
+            qrank_labels = json.loads(_lf.read_text())
     else:
         sys.exit(f"FATAL: neither {_src.name} nor {_facts.name} is present, so "
                  f"PRESENT-TENSE-PAST and FAME-TELL cannot run. Regenerate with "

@@ -102,6 +102,16 @@ PLANTED = {
           "Coretta Scott King"], 0, "arts", 2,
          "Maya Plisetskaya: Russian ballerina.", "Maya Plisetskaya"],
     ],
+    # The round that started the rule: every distractor is >=14x more famous than
+    # the answer, so the clue is decoration. Kuminga 706,461 against Jordan
+    # 16,168,531 / LeBron 14,877,821 / Kobe 10,178,518 on QRank.
+    "FAME-TELL": ["test:fame",
+                  "A five-star recruit who reclassified to join the G League "
+                  "Ignite, this forward was picked seventh in 2021 — who is he?",
+                  ["Michael Jordan", "LeBron James", "Jonathan Kuminga",
+                   "Kobe Bryant"], 2, "sports", 2,
+                  "Jonathan Kuminga: Congolese basketball player.",
+                  "Jonathan Kuminga"],
     "ERA-SPREAD": ["test:era", "Which of these people is best known?",
                    ["Bob Kane", "Pontius Pilate", "Anne Rice", "Susan Sontag"], 0,
                    "history", 2, "Bob Kane: American comic book artist.", "Bob Kane"],
@@ -296,26 +306,41 @@ def main():
         env = dict(os.environ, TIDBITS_ASSETS=str(tmpdir))
         out = subprocess.run([sys.executable, str(ROOT / "tools/corpus/quality_gate.py"),
                               "--report"], capture_output=True, text=True, env=env).stdout
+        # Again WITHOUT the source database, which is what CI has. A rule that
+        # reads it directly rather than through subject_facts.json passes on this
+        # machine and reports 0 there — indistinguishable from a clean corpus.
+        # Both FAME-TELL and ODD-ONE-KIND shipped that way before this ran here.
+        ci_out = subprocess.run(
+            [sys.executable, str(ROOT / "tools/corpus/quality_gate.py"), "--report"],
+            capture_output=True, text=True,
+            env=dict(env, TIDBITS_NO_SOURCE_DB="1")).stdout
 
-    found = {}
-    for line in out.splitlines():
-        parts = line.split()
-        if len(parts) >= 3 and parts[1].isdigit():
-            found[parts[0]] = int(parts[1])
+    def counts(text):
+        d = {}
+        for line in text.splitlines():
+            parts = line.split()
+            if len(parts) >= 3 and parts[1].isdigit():
+                d[parts[0]] = int(parts[1])
+        return d
+
+    found, found_ci = counts(out), counts(ci_out)
 
     failures = []
-    print(f"{'rule':22}{'planted':>9}{'seen':>7}   status")
+    print(f"{'rule':22}{'planted':>9}{'seen':>7}{'no-db':>7}   status")
     for rule in sorted(set(PLANTED) | set(PLANTED_SHAPES)):
         n = found.get(rule)
+        n_ci = found_ci.get(rule)
         row = PLANTED.get(rule)
         if row is None:
             shaped = PLANTED_SHAPES.get(rule)
             row = shaped[1] if shaped else None
         count = len(row) if (row and isinstance(row[0], list)) else 1
         ok = n is not None and n >= count
-        print(f"{rule:22}{count:>9}{n if n is not None else '-':>7}   "
-              f"{'ok' if ok else 'BLIND'}")
-        if not ok:
+        ok_ci = n_ci is not None and n_ci >= count
+        print(f"{rule:22}{count:>9}{n if n is not None else '-':>7}"
+              f"{n_ci if n_ci is not None else '-':>7}   "
+              f"{'ok' if (ok and ok_ci) else ('BLIND in CI' if ok else 'BLIND')}")
+        if not (ok and ok_ci):
             failures.append(rule)
 
     rate_seen = check_rate_rules()

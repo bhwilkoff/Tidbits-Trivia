@@ -53,15 +53,26 @@ def main():
     qrank = {t: q for t, q in db.execute(
         "select title, qrank from subject where qrank is not null")
         if q and t in used}
-    historical = sorted(t for t, p in db.execute("select title, p31 from subject")
-                        if p and HISTORICAL_STATE in p)
+    historical, p31 = [], {}
+    for t, p in db.execute("select title, p31 from subject"):
+        if not p:
+            continue
+        if HISTORICAL_STATE in p:
+            historical.append(t)
+        if t in used:
+            p31[t] = p.split(",")[0]
     db.close()
 
-    OUT.write_text(json.dumps({"qrank": qrank, "historical": historical},
+    # p31 too: ODD-ONE-KIND reads the Wikidata TYPE through type_family() to see
+    # a city among three countries, and it shipped blind in CI for exactly one
+    # commit because that lookup lived only in the database. Same mistake as
+    # FAME-TELL, caught the same way — by the self-test, in CI.
+    OUT.write_text(json.dumps({"qrank": qrank, "historical": sorted(historical),
+                               "p31": p31},
                               ensure_ascii=False, separators=(",", ":"),
                               sort_keys=True))
     print(f"wrote {OUT.relative_to(ROOT)}: {len(qrank):,} qranks, "
-          f"{len(historical):,} historical titles, "
+          f"{len(p31):,} types, {len(historical):,} historical titles, "
           f"{OUT.stat().st_size / 1024 / 1024:.1f} MB")
     return 0
 

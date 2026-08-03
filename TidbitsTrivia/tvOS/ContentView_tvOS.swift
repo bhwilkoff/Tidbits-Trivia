@@ -40,6 +40,9 @@ struct ContentView_tvOS: View {
     @State private var hostLaunch: NightLaunchRequest?
     @State private var showJoinNight = false
     @State private var showRecords = false
+    /// Same key as macOS, so a household that already saw the walkthrough on one Apple
+    /// device does not get it again on another once iCloud syncs defaults.
+    @AppStorage("tidbits.hasOnboarded") private var hasOnboarded = false
     @State private var showSettings = false
     @State private var showNightSetup = false
     @State private var showCustomize = false
@@ -140,6 +143,12 @@ struct ContentView_tvOS: View {
             RecordsView_tvOS(onPlay: { req in showRecords = false; launch = req })
         }
         .fullScreenCover(isPresented: $showSettings) { SettingsView_tvOS() }
+        // First run. A cover rather than a sheet: tvOS has no partial presentation, and
+        // the walkthrough should own the screen once and never again.
+        .fullScreenCover(isPresented: Binding(get: { !hasOnboarded && !DebugHooks.skipOnboarding },
+                                              set: { if !$0 { hasOnboarded = true } })) {
+            OnboardingView_tvOS { hasOnboarded = true }
+        }
         .fullScreenCover(isPresented: $showClubPaywall) { ClubPaywallView_tvOS() }
         .fullScreenCover(isPresented: $showClubHub) {
             ClubHubView_tvOS(onStartWeakSpot: { showClubHub = false; launch = LaunchRequest(mode: .weakSpot, category: .named("mixed")) },

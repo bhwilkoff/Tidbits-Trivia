@@ -73,6 +73,7 @@ async function boot() {
     return;
   }
   render();
+  maybeShowOnboarding();
 }
 
 // ---------------- Top-level render ----------------
@@ -1347,6 +1348,68 @@ async function lookupSharedItem(id) {
 
 /** The canonical shape from DEEP_LINKS.md — every platform's per-question share uses it. */
 function itemURL(id) { return `${SITE_URL}/item/${encodeURIComponent(id)}`; }
+
+/**
+ * First-run walkthrough (PARITY: "3-card play/learn/compete"). The same three cards as
+ * iOS + Android, in the web's own idiom: a native `<dialog showModal>` — focus trap and
+ * ESC for free (CLAUDE.md "modern web APIs first"), not a hand-rolled overlay.
+ *
+ * The order is deliberate and matches the native copy: play, then LEARN, then compete.
+ * Learning is the point, not a side effect.
+ */
+const ONBOARDED_KEY = 'tidbits.onboarded';
+const ONBOARD_SLIDES = [
+  { icon: '🌍', color: 'var(--color-accent)', title: 'All of Wikipedia, as trivia',
+    body: "Thousands of questions built from real Wikipedia facts — and you can spin up a quiz on any topic you like." },
+  { icon: '💡', color: '#FFC93C', title: 'Learn something every round',
+    body: "Miss one? We show you the fact and the article. Missed questions quietly come back so they actually stick." },
+  { icon: '🎉', color: '#8B5CF6', title: 'Solo or together',
+    body: "Chase your own best score, keep a daily streak, or share a quiz with a friend." },
+];
+
+function maybeShowOnboarding() {
+  if (localStorage.getItem(ONBOARDED_KEY) === '1') return;
+  // Never in front of a shared link: someone arriving on a quiz or an item was sent
+  // somewhere specific, and a walkthrough in the way is a toll booth.
+  if (location.hash.startsWith('#/quiz/') || location.hash.startsWith('#/item/')
+      || location.hash.startsWith('#/live')) return;
+  let page = 0;
+  const dlg = document.createElement('dialog');
+  dlg.className = 'night-dlg';
+  dlg.id = 'onboard-dlg';
+  document.body.appendChild(dlg);
+
+  const paint = () => {
+    const s = ONBOARD_SLIDES[page];
+    const last = page === ONBOARD_SLIDES.length - 1;
+    dlg.innerHTML = `<div class="night-form" style="text-align:center;gap:16px">
+      <div aria-hidden="true" style="font-size:44px;line-height:1;width:104px;height:104px;margin:6px auto 0;
+        display:flex;align-items:center;justify-content:center;border-radius:999px;
+        background:${s.color};border:4px solid var(--color-border)">${s.icon}</div>
+      <h2 style="font-size:1.5rem">${h(s.title)}</h2>
+      <p class="body" style="color:var(--color-ink);opacity:.75">${h(s.body)}</p>
+      <div aria-hidden="true" style="display:flex;gap:8px;justify-content:center">${
+        ONBOARD_SLIDES.map((_, i) => `<span style="width:9px;height:9px;border-radius:999px;background:${
+          i === page ? 'var(--color-primary)' : 'var(--color-border)'};opacity:${i === page ? 1 : .3}"></span>`).join('')}</div>
+      <button class="btn btn-primary btn-full" data-onboard-next>${last ? 'Start Playing' : 'Next'}</button>
+      ${last ? '' : '<button class="btn btn-text btn-full" data-onboard-skip>Skip</button>'}
+    </div>`;
+    dlg.querySelector('[data-onboard-next]').addEventListener('click', () => {
+      if (last) finish(); else { page++; paint(); }
+    });
+    dlg.querySelector('[data-onboard-skip]')?.addEventListener('click', finish);
+  };
+  const finish = () => {
+    localStorage.setItem(ONBOARDED_KEY, '1');
+    dlg.close();
+    dlg.remove();
+  };
+  // ESC closes a native dialog, and a walkthrough dismissed that way is still done —
+  // re-showing it on the next load would be nagging, not helpfulness.
+  dlg.addEventListener('close', () => { localStorage.setItem(ONBOARDED_KEY, '1'); dlg.remove(); });
+  paint();
+  dlg.showModal();
+}
 
 async function openSharedQuiz(id) {
   if (!id) { location.hash = '#/create'; return; }

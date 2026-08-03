@@ -1621,6 +1621,17 @@ class Store(context: Context) {
             .apply()
     }
 
+    /** Account deletion: everything on this device that belonged to the deleted account.
+     *  Wider than `resetAllRecords()` — that is a user-chosen tidy-up that keeps the Daily
+     *  history, and a deleted account must not leave its Daily results behind for whoever
+     *  picks the phone up next. Preference flags (haptics, dynamic color, onboarding) are
+     *  device settings, not account data, so they stay. */
+    fun clearAccountData() {
+        resetAllRecords()
+        prefs.edit().remove("daily_results").remove("seen").apply()
+        seen.clear()
+    }
+
     /** Reads one miss entry regardless of format: `{id: {"n": count, "t": lastSeenMs}}`
      *  (current) or a bare int (legacy, pre-Weak-Spot-Arena — treated as lastSeen=0,
      *  i.e. sorts as the oldest gap). */

@@ -205,12 +205,22 @@ function viewProfile() {
 // Federated sign-in makes records durable + roam across devices (docs/PLAYER-IDENTITY-CONTRACT.md).
 function authBlock() {
   if (Identity.signedIn) {
-    return `<div class="card pad" style="margin-top:16px;text-align:center"><div class="muted">✓ Signed in${Identity.email ? ' as ' + h(Identity.email) : ''}</div><div class="muted" style="font-size:.8rem">Your records are saved and follow you to every device.</div><button data-signout style="margin-top:12px;padding:8px 18px;font-weight:700;border:2px solid #231E1A;border-radius:12px;background:#fff;cursor:pointer">Sign out</button></div>`;
+    return `<div class="card pad" style="margin-top:16px;text-align:center"><div class="muted">✓ Signed in${Identity.email ? ' as ' + h(Identity.email) : ''}</div><div class="muted" style="font-size:.8rem">Your records are saved and follow you to every device.</div><button data-signout style="margin-top:12px;padding:8px 18px;font-weight:700;border:2px solid #231E1A;border-radius:12px;background:#fff;cursor:pointer">Sign out</button></div>${deleteAccountBlock()}`;
   }
   const btn = (id, label) => `<button data-signin="${id}" style="flex:1;padding:14px;font-weight:800;border:2.5px solid #231E1A;border-radius:14px;background:#fff;box-shadow:3px 3px 0 #231E1A;cursor:pointer">${label}</button>`;
   return `<div style="margin-top:18px">
     <div class="muted" style="text-align:center;margin-bottom:10px;font-weight:700">Save your progress — sign in so your records follow you to any device.</div>
-    <div style="display:flex;gap:10px" id="signin-row">${btn('google.com', 'Continue with Google')}${btn('apple.com', 'Continue with Apple')}</div></div>`;
+    <div style="display:flex;gap:10px" id="signin-row">${btn('google.com', 'Continue with Google')}${btn('apple.com', 'Continue with Apple')}</div></div>${deleteAccountBlock()}`;
+}
+
+// Account deletion (App Store 5.1.1(v) / Play's equivalent), shown whether or not the
+// player signed in — Tidbits provisions a real anonymous account for everyone, and that
+// account is what holds their rating, streak and board rows. Quiet, but never hidden:
+// the requirement is that it is findable, not that it is prominent.
+function deleteAccountBlock() {
+  return `<div style="margin-top:22px;text-align:center">
+    <button data-delete-account style="padding:8px 18px;font-weight:700;border:2px solid #C0392B;border-radius:12px;background:#fff;color:#C0392B;cursor:pointer">Delete account</button>
+    <div class="muted" style="font-size:.78rem;margin-top:6px">Permanently removes your profile, rating, streak and board entries.</div></div>`;
 }
 function bindProfile() {
   app.querySelector('[data-back]')?.addEventListener('click', () => { if (history.length > 1) history.back(); else location.hash = '#/records'; });
@@ -223,6 +233,17 @@ function bindProfile() {
     if (!confirm('Sign out? Your records stay saved to your account — sign in again to bring them back.')) return;
     try { await Identity.signOut(); Entitlement.clearOnSignOut(); render(); }
     catch (e) { console.error('[identity] sign-out error', e); alert('Sign-out didn’t complete. Please try again.'); }
+  });
+  app.querySelector('[data-delete-account]')?.addEventListener('click', async (ev) => {
+    if (!confirm('Delete your account?\n\nYour profile, rating, streak, saved records and leaderboard entries are permanently removed. This cannot be undone.')) return;
+    const btn = ev.currentTarget;
+    btn.disabled = true; btn.textContent = 'Deleting…';
+    const ok = await Identity.deleteAccount();
+    Entitlement.clearOnSignOut();
+    render();
+    // A failed delete must SAY so — a silent no-op is the thing App Review rejects.
+    if (!ok) alert(Identity.deleteError || 'Couldn’t delete your account. Please try again.');
+    else alert('Your account has been deleted. You’re playing as a new anonymous player.');
   });
   app.querySelectorAll('[data-signin]').forEach((b) => b.addEventListener('click', async () => {
     const row = document.getElementById('signin-row');

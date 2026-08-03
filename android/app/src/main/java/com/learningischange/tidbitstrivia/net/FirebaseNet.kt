@@ -94,6 +94,23 @@ object FirebaseNet {
         return auth.signInAnonymously().await().user!!.uid
     }
 
+    /** Delete a node outright. Account deletion only — a `removeValue()` IS the delete the
+     *  rules see (emailOwners/$key had to be taught to permit it). */
+    suspend fun removePath(path: String) {
+        db.getReference(path).removeValue().await()
+    }
+
+    /** Delete the credential itself, then return to a fresh anonymous session so the app
+     *  still has a uid to write with. Play's user-data policy and App Store 5.1.1(v) both
+     *  want the account actually gone, not just signed out of. Throws so the UI can SAY it
+     *  failed — a delete affordance that silently no-ops is the thing review rejects. */
+    suspend fun deleteAuthUser(): String {
+        auth.currentUser?.delete()?.await()
+        val u = auth.signInAnonymously().await().user!!.uid
+        uid = u
+        return u
+    }
+
     /** Ownership proof for the email-keyed profile — the players/{key} write rule requires
      *  emailOwners/{key} to match auth.token.email. */
     suspend fun setEmailOwner(accountKey: String, email: String) {

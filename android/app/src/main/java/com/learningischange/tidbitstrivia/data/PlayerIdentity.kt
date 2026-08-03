@@ -259,6 +259,80 @@ object PlayerIdentity {
         watch(uid)                                              // (B) re-point to the fresh anon
     }
 
+    /** Surfaced to the delete-account UI so a failure is VISIBLE rather than a silent no-op. */
+    var deleteError: String? by mutableStateOf(null); private set
+
+    /** Delete the account for real — Play's user-data policy and App Store 5.1.1(v) ask the
+     *  same thing, and it applies whether or not the player ever signed in, because Tidbits
+     *  provisions a real anonymous account for everyone and that account holds their rating,
+     *  streak and board rows. Mirror of Swift PlayerIdentityStore.deleteAccount() / JS
+     *  Identity.deleteAccount().
+     *
+     *  The node deletes are best-effort; the credential delete is not. An orphaned node
+     *  nobody can read is untidy, but a credential that survives is an account that was not
+     *  deleted, so only THAT failure is reported. */
+    suspend fun deleteAccount(store: Store): Boolean {
+        deleteError = null
+        val key = profileId
+        val authUid = FirebaseNet.uid()
+        suspend fun drop(path: String) { runCatching { FirebaseNet.removePath(path) } }
+
+        if (key != null) {
+            drop("players/$key"); drop("dailyLog/$key"); drop("emailOwners/$key")
+        }
+        if (authUid != null) {
+            drop("playersPrivate/$authUid")
+            drop("pushTokens/$authUid")
+            store.allDaily().keys.forEach { drop("dailyBoard/$it/$authUid") }
+            leaderboardIndex().forEach { (season, venues) ->
+                venues.forEach { drop("standings/$season/$it/$authUid") }
+            }
+            // A duel record is SHARED with the opponent — drop only my own slot, never theirs.
+            Duels.trackedIds().forEach { id ->
+                drop("duels/$id/players/$authUid"); drop("duelInbox/$authUid/$id")
+            }
+        }
+
+        return try {
+            val fresh = FirebaseNet.deleteAuthUser()
+            unwatch?.invoke(); unwatch = null
+            resetLocalState(store)
+            profileId = fresh
+            val p = newProfile()
+            profile = p
+            runCatching { FirebaseNet.saveProfile(fresh, p) }
+            watch(fresh)
+            true
+        } catch (e: Exception) {
+            deleteError = "Couldn't delete your account. ${e.message ?: e}"
+            android.util.Log.e("Identity", "account deletion failed", e)
+            false
+        }
+    }
+
+    /** Forget everything this device remembers about the deleted account. */
+    private fun resetLocalState(store: Store) {
+        Entitlement.clearOnSignOut()
+        signedIn = false
+        friends = emptyList()
+        Duels.clearLocal()
+        store.clearAccountData()
+    }
+
+    /** {season: [venue, ...]} from the static leaderboard the hourly cron commits — a player
+     *  can only hold a standing under a venue listed there, so it is the whole search space. */
+    private suspend fun leaderboardIndex(): Map<String, List<String>> = kotlinx.coroutines.withContext(Dispatchers.IO) {
+        runCatching {
+            val txt = java.net.URL("https://tidbitstrivia.com/data/leaderboard/index.json")
+                .openStream().bufferedReader().use { it.readText() }
+            val o = org.json.JSONObject(txt)
+            o.keys().asSequence().associateWith { s ->
+                val arr = o.optJSONArray(s) ?: org.json.JSONArray()
+                (0 until arr.length()).map { arr.getString(it) }
+            }
+        }.getOrDefault(emptyMap())
+    }
+
     fun rename(name: String) {
         val p = profile ?: return; val uid = profileId ?: return
         val t = name.trim().take(24); if (t.isEmpty()) return

@@ -179,6 +179,69 @@ export const Identity = {
     } catch {}
   },
 
+  // Delete the account for real — App Store 5.1.1(v) and Play both require it, and the
+  // requirement applies whether or not the player ever signed in, because Tidbits
+  // provisions a real anonymous account for everyone. Mirror of Swift
+  // PlayerIdentityStore.deleteAccount() / Kotlin deleteAccount(): every account-keyed
+  // node, then the credential, then the local state, then a fresh anonymous identity.
+  //
+  // The node deletes are best-effort and the credential delete is not: a node the rules
+  // refuse still leaves an orphan row nobody can read, but a credential that survives is
+  // an account that was not deleted, so THAT failure is surfaced.
+  deleteError: null,
+  async deleteAccount() {
+    this.deleteError = null;
+    const key = this.profileId;
+    const authUid = this.authUid;
+    const drop = async (path) => { try { await FirebaseNet.removePath(path); } catch {} };
+
+    if (key) {
+      await drop(`players/${key}`);
+      await drop(`dailyLog/${key}`);
+      await drop(`emailOwners/${key}`);
+    }
+    if (authUid) {
+      await drop(`playersPrivate/${authUid}`);
+      await drop(`pushTokens/${authUid}`);
+      for (const day of Object.keys(readLocal('tidbits.daily.results', {}))) {
+        await drop(`dailyBoard/${day}/${authUid}`);
+      }
+      for (const [season, venues] of Object.entries(await leaderboardIndex())) {
+        for (const venue of venues) await drop(`standings/${season}/${venue}/${authUid}`);
+      }
+      // A duel record is SHARED with the opponent — drop only my own slot, never theirs.
+      for (const id of readLocal('tidbits.duels', [])) {
+        await drop(`duels/${id}/players/${authUid}`);
+        await drop(`duelInbox/${authUid}/${id}`);
+      }
+    }
+
+    try {
+      const fresh = await FirebaseNet.deleteAuthUser();
+      if (this._profileUnsub) { try { this._profileUnsub(); } catch {} this._profileUnsub = null; }
+      this._resetLocalState();
+      this.profileId = fresh;
+      this.profile = newProfile();
+      try { await FirebaseNet.saveProfile(fresh, this.profile); } catch {}
+      this._watch(fresh);
+      this._save(); this._emit();
+      return true;
+    } catch (err) {
+      this.deleteError = `Couldn't delete your account. ${err?.message || err}`;
+      console.error('[Identity] account deletion failed', err);
+      return false;
+    }
+  },
+
+  // Forget everything this device remembers about the deleted account.
+  _resetLocalState() {
+    this._friends = {};
+    for (const k of ['tidbits.friends', 'tidbits.duels', 'tidbits.daily.results', 'tidbits.records',
+                     'tidbits.dailyboard.score', 'tidbits.dailyboard.marks', LS_KEY]) {
+      try { localStorage.removeItem(k); } catch {}
+    }
+  },
+
   // Sign out → back to a fresh anonymous profile on this device. The account's records
   // stay saved in the cloud; signing in again (same provider) restores + merges them.
   async signOut() {
@@ -197,6 +260,20 @@ export const Identity = {
   },
   _save() { try { localStorage.setItem(LS_KEY, JSON.stringify(this.profile)); } catch {} },
 };
+
+// Account deletion reads the two local registries directly rather than importing Store /
+// Duels — duels.js already imports THIS module, so a static import would be a cycle, and
+// the registries are the same localStorage keys either way.
+function readLocal(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key) || 'null') ?? fallback; } catch { return fallback; }
+}
+
+// {season: [venue, ...]} from the static leaderboard the hourly cron commits. A player can
+// only have a standing under a venue that appears here, so this is the full search space.
+async function leaderboardIndex() {
+  try { return await fetch('data/leaderboard/index.json', { cache: 'no-cache' }).then((r) => r.json()) || {}; }
+  catch { return {}; }
+}
 
 function newProfile() {
   return {

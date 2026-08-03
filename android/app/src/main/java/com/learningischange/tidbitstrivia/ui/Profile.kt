@@ -61,7 +61,9 @@ import kotlin.math.abs
 fun ProfileScreen(onBack: () -> Unit, onLeaderboard: () -> Unit = {}, onDuels: () -> Unit = {}, onClub: () -> Unit = {}) {
     val p = PlayerIdentity.profile
     var editing by remember { mutableStateOf(false) }
+    var confirmDelete by remember { mutableStateOf(false) }
     var draft by remember { mutableStateOf("") }
+    val ctx = LocalContext.current
     val ink = MaterialTheme.colorScheme.onSurface
     val soft = ink.copy(alpha = 0.6f)
 
@@ -144,6 +146,19 @@ fun ProfileScreen(onBack: () -> Unit, onLeaderboard: () -> Unit = {}, onDuels: (
                 }
             }, modifier = Modifier.fillMaxWidth()) { Text("Continue with Google", fontWeight = FontWeight.Bold) }
         }
+
+        // Account deletion sits with the account, on every platform. Shown whether or not
+        // the player signed in — the anonymous account IS an account, and it holds their
+        // rating, streak and board rows.
+        Spacer(Modifier.height(10.dp))
+        TextButton(onClick = { confirmDelete = true }, modifier = Modifier.fillMaxWidth()) {
+            Text("Delete account", color = Pops.coral)
+        }
+    }
+
+    if (confirmDelete) {
+        val store = remember(ctx) { com.learningischange.tidbitstrivia.data.Store(ctx) }
+        DeleteAccountConfirm(store) { confirmDelete = false }
     }
 
     if (editing) {

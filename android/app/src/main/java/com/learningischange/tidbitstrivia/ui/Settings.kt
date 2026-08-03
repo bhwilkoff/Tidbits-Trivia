@@ -31,6 +31,7 @@ fun SettingsScreen(store: Store, dynamicColor: Boolean, onDynamicColor: (Boolean
     var review by remember { mutableStateOf(store.reviewEnabled()) }
     var dyn by remember { mutableStateOf(dynamicColor) }
     var confirmReset by remember { mutableStateOf(false) }
+    var confirmDelete by remember { mutableStateOf(false) }
     var resetSeenDone by remember { mutableStateOf(false) }
     val version = remember {
         runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull() ?: "—"
@@ -55,6 +56,10 @@ fun SettingsScreen(store: Store, dynamicColor: Boolean, onDynamicColor: (Boolean
             ToggleRow("Use system colors", "Tint the app with your wallpaper palette (Material You).", dyn) { dyn = it; onDynamicColor(it) }
         }
 
+        Section("Account")
+        ActionRow("Delete Account", "Permanently remove your profile, rating, streak and board entries.",
+            destructive = true) { confirmDelete = true }
+
         Section("Data")
         ActionRow("Reset Seen Questions", if (resetSeenDone) "Done — every question is back in rotation." else "Re-open the whole question bank from the start.") {
             store.resetSeen(); resetSeenDone = true
@@ -77,6 +82,8 @@ fun SettingsScreen(store: Store, dynamicColor: Boolean, onDynamicColor: (Boolean
         }
         Spacer(Modifier.height(24.dp))
     }
+
+    if (confirmDelete) DeleteAccountConfirm(store) { confirmDelete = false }
 
     if (confirmReset) {
         AlertDialog(

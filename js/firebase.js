@@ -163,6 +163,26 @@ export const FirebaseNet = {
     await db.remove(db.ref(_db, `duelInbox/${uid}/${duelId}`));
   },
 
+  // Delete a node outright. Used only by account deletion, where a `set(null)` IS the
+  // delete the rules see (docs: emailOwners/$key had to be taught to allow it).
+  async removePath(path) {
+    const { db } = await ensure();
+    await db.remove(db.ref(_db, path));
+  },
+
+  // Delete the credential itself, then return to a fresh anonymous session so the app
+  // still has a uid to write with. App Store 5.1.1(v) and Play both require the account
+  // to actually go, not just be signed out of. Throws so the UI can SAY it failed —
+  // Apple rejects a delete affordance that silently no-ops.
+  async deleteAuthUser() {
+    const { auth } = await ensure();
+    const user = _auth.currentUser;
+    if (user) await auth.deleteUser(user);
+    const cred = await auth.signInAnonymously(_auth);
+    _uid = cred.user.uid;
+    return _uid;
+  },
+
   // Sign out of the federated account and return to a FRESH anonymous session (new uid).
   // The account's records stay in players/{accountUid}; signing back in restores them.
   async signOutUser() {

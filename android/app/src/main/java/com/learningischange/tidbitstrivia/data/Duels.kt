@@ -22,6 +22,16 @@ object Duels {
         ids.clear()
         ids.addAll((prefs?.getString("ids", "") ?: "").split(",").filter { it.isNotBlank() })
     }
+    /** The duel ids this device is tracking — account deletion drops MY slot in each. */
+    fun trackedIds(): List<String> = ids.toList()
+
+    /** Account deletion: forget the duels this device remembers. The shared duel record
+     *  itself is the opponent's too, so only my slot in it is removed (by the caller). */
+    fun clearLocal() {
+        ids.clear()
+        prefs?.edit()?.remove("ids")?.apply()
+    }
+
     private fun track(id: String) {
         if (ids.contains(id)) return
         ids.add(0, id); while (ids.size > 40) ids.removeAt(ids.lastIndex)

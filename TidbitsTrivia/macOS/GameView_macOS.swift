@@ -381,7 +381,15 @@ struct GameView_macOS: View {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 8)], spacing: 8) {
                     ForEach(Array(game.matchValues.enumerated()), id: \.offset) { vi, val in
                         Button { game.assignMatchValue(vi) } label: {
-                            Text(val).font(Tidbits.TypeRamp.l5).frame(maxWidth: .infinity).padding(.vertical, 10)
+                            // Same missing horizontal padding as the iOS panel this was
+                            // built from — and worse here, because the grid is
+                            // .adaptive(minimum: 120) so a chip can be narrower still.
+                            // Without it a long value fills the chip edge to edge instead
+                            // of wrapping inside it.
+                            Text(val).font(Tidbits.TypeRamp.l5)
+                                .multilineTextAlignment(.center)
+                                .frame(maxWidth: .infinity)
+                                .padding(.horizontal, 10).padding(.vertical, 10)
                                 .background(RoundedRectangle(cornerRadius: 10).fill(Tidbits.Palette.bgDeep))
                                 .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Tidbits.Palette.border, lineWidth: 2))
                         }

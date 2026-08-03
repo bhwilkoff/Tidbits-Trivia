@@ -291,6 +291,25 @@ history row is `GameHistoryRow`; every domain row is `topicRow`; every
 answer line is `AnswerRow`. A variant folds back into the canonical cell
 with a parameter, never a bespoke second layout.
 
+7.4 **A text chip declares HORIZONTAL padding, not just vertical.**
+`.frame(maxWidth: .infinity)` sets the box; it does not inset the text,
+so without `.padding(.horizontal, …)` a long string fills the chip and
+touches the border on both sides. This is §7.2 applied to grid chips
+rather than row cards, and it was violated in the Match Up value grid on
+iOS AND macOS: the chips carried `.padding(.vertical, 12)` alone.
+
+Measured with the shipped font (`NSFont.systemFont(ofSize: 15, weight:
+.bold)`) against the real 181pt chip on iPhone 17 Pro, **61 of the
+corpus's 2,042 Match Up values rendered edge to edge** — "Eastern
+Caribbean dollar" at 180.8pt in a 181pt chip has 0.2pt to spare, and
+"Corneliu Zelea Codreanu" at 180.4pt was the one caught on screen. Just
+enough to fit on one line is exactly the case that looks broken: a value
+too long to fit (205.9pt "Charles XIV John of Sweden") wraps and looks
+fine, so the defect hides in the values that *barely* fit.
+
+Horizontal padding is also what makes the wrap happen — it is a
+correctness fix, not a cosmetic one.
+
 ---
 
 ## §8 — Typography & density (binding)

@@ -392,8 +392,16 @@ struct GamePlayView: View {
                 ForEach(Array(game.matchValues.enumerated()), id: \.offset) { j, val in
                     let used = game.matchAssign.contains(j)
                     Button { game.assignMatchValue(j) } label: {
+                        // Horizontal padding is what makes a long value WRAP instead of
+                        // filling the chip edge to edge: with none, "Corneliu Zelea
+                        // Codreanu" rendered as one line touching the 2.5pt border on
+                        // both sides while "Charles XIV John of Sweden" wrapped cleanly.
+                        // The key rows above always had .horizontal 14; only the value
+                        // chips were missing it.
                         Text(val).font(.system(size: 15, weight: .bold))
-                            .frame(maxWidth: .infinity).padding(.vertical, 12)
+                            .multilineTextAlignment(.center)
+                            .frame(maxWidth: .infinity)
+                            .padding(.horizontal, 10).padding(.vertical, 12)
                             .foregroundStyle(Tidbits.Palette.ink)
                             .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Tidbits.Palette.bgDeep))
                             .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Tidbits.Palette.border, lineWidth: 2.5))

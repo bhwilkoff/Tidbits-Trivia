@@ -27,6 +27,10 @@ public sealed class JsonQuestionSource
     public bool IsAvailable => _all.Count > 0;
     public int Count => _all.Count;
 
+    /// How many rows carry this category — feeds the picker's coverage check.
+    public int CountIn(string categoryId) =>
+        categoryId == "mixed" ? _all.Count : _all.Count(q => q.CategoryId == categoryId);
+
     public List<Question> Questions(string categoryId, ISet<string> seen, int limit)
     {
         var pool = _all.Where(q => (categoryId == "mixed" || q.CategoryId == categoryId) && !seen.Contains(q.Id)).ToList();

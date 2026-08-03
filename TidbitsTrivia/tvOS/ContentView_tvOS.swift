@@ -544,18 +544,26 @@ private struct TVCustomizePicker: View {
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 36) {
                                 ForEach(TriviaCategory.all) { cat in
+                                    // Coverage disclosure (the rule iOS + web already carry):
+                                    // a mode x category the bundle cannot fill still PLAYS —
+                                    // assembled from other categories — and saying nothing
+                                    // reads as a lie. The card says what you'll actually get.
+                                    let thin = !QuestionProvider.canFill(mode: selectedMode, categoryID: cat.id)
                                     Button { onPlay(selectedMode, cat) } label: {
                                         VStack(alignment: .leading, spacing: 16) {
                                             Image(systemName: cat.symbol).font(.system(size: 44, weight: .black)).foregroundStyle(.white)
                                             Spacer()
                                             Text(cat.name).font(.system(size: 30, weight: .heavy, design: .rounded)).foregroundStyle(.white)
-                                            Text(cat.blurb).font(.system(size: 23, weight: .medium, design: .rounded)).foregroundStyle(.white.opacity(0.8))
+                                            Text(thin ? "No \(selectedMode.title) questions yet — you'll get a mixed round." : cat.blurb)
+                                                .font(.system(size: 23, weight: .medium, design: .rounded)).foregroundStyle(.white.opacity(0.8))
                                                 .lineLimit(2)
                                         }
                                         .padding(28)
                                         .frame(width: 320, height: 300, alignment: .leading)
                                     }
-                                    .buttonStyle(TVCategoryStyle(accent: cat.color))
+                                    // Dimmed, never disabled — on a TV a disabled card is a
+                                    // focus dead end, which is worse than an honest one.
+                                    .buttonStyle(TVCategoryStyle(accent: thin ? cat.color.opacity(0.45) : cat.color))
                                 }
                             }
                             .padding(.vertical, 30)

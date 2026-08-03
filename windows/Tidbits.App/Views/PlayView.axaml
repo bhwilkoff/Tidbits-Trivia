@@ -30,6 +30,12 @@
                     <TextBlock Text="Category:" VerticalAlignment="Center" Opacity="0.7"/>
                     <ComboBox x:Name="CategoryPicker" MinWidth="150"/>
                 </StackPanel>
+                <!-- Coverage disclosure: a mode this category cannot fill still plays,
+                     assembled from other categories, and silence about that reads as a
+                     lie (the rule iOS + web already carry). Collapsed when it doesn't
+                     apply, which after the 2026-08-01 content pass is nearly always. -->
+                <TextBlock x:Name="CoverageNote" Classes="caption" TextWrapping="Wrap"
+                           IsVisible="False" Margin="0,-4,0,0"/>
 
                 <!-- Daily Tidbit (play-once) + Previous Tidbits archive -->
                 <TextBlock Text="Daily Tidbit" Classes="section-header" Margin="0,12,0,0"/>

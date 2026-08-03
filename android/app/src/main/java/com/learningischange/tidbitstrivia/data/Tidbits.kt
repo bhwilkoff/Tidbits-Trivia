@@ -426,6 +426,22 @@ object Corpus {
         }.getOrDefault(emptyList())
     }
 
+    /** How many corpus rows carry this category — feeds the picker's coverage check.
+     *  Cached, because the picker asks once per chip on every recomposition. */
+    private val catCounts = mutableMapOf<String, Int>()
+    fun countIn(categoryId: String): Int {
+        if (categoryId == "mixed") return Int.MAX_VALUE
+        catCounts[categoryId]?.let { return it }
+        val db = db ?: return 0
+        val n = runCatching {
+            db.rawQuery("SELECT COUNT(*) FROM questions WHERE category_id=?", arrayOf(categoryId)).use { c ->
+                if (c.moveToFirst()) c.getInt(0) else 0
+            }
+        }.getOrDefault(0)
+        catCounts[categoryId] = n
+        return n
+    }
+
     fun pull(categoryId: String, seen: Set<String>, limit: Int): List<Question> {
         // Over-fetch by the seen count so they can be dropped without a second round trip;
         // SQL RANDOM() is what the old in-memory .shuffled() did.
@@ -916,6 +932,10 @@ class JsonQuestionSet(private val asset: String) {
         Unit
     }
 
+    /** How many rows carry this category — feeds the picker's coverage check. */
+    fun countIn(categoryId: String): Int =
+        if (categoryId == "mixed") all.size else (byCat[categoryId]?.size ?: 0)
+
     fun pull(categoryId: String, seen: Set<String>, limit: Int): List<Question> {
         val src = if (categoryId == "mixed") all else (byCat[categoryId] ?: emptyList())
         return src.filter { it.id !in seen }.shuffled().take(limit)
@@ -938,6 +958,41 @@ class JsonQuestionSet(private val asset: String) {
         }
         val bestMatched = scored.maxOfOrNull { it.second } ?: return emptyList()
         return scored.filter { it.second == bestMatched }.map { it.first }.shuffled().take(limit)
+    }
+}
+
+/**
+ * Coverage disclosure (the rule iOS + web already carry). A mode x category the bundle
+ * cannot fill still PLAYS — `GameState.filled` assembles it from other categories rather
+ * than showing an error — and saying nothing about that reads as a lie. The picker uses
+ * this to tell the player before they commit, dimming rather than disabling: the round is
+ * still worth playing, it just won't be the category they asked for.
+ */
+object Coverage {
+    /** Rows of `mode` available in `categoryId`. `mixed` always fills. */
+    fun rows(mode: Mode, categoryId: String): Int {
+        if (categoryId == "mixed") return Int.MAX_VALUE
+        val set = setFor(mode) ?: return Corpus.countIn(categoryId)
+        return set.countIn(categoryId)
+    }
+
+    fun canFill(mode: Mode, categoryId: String) = rows(mode, categoryId) >= mode.count
+
+    /** A Custom Mix spans several modes, so it is only honest to dim a category NONE of
+     *  them can fill. */
+    fun canFillAny(modes: Collection<Mode>, categoryId: String) =
+        modes.ifEmpty { listOf(Mode.CLASSIC) }.any { canFill(it, categoryId) }
+
+    private fun setFor(mode: Mode): JsonQuestionSet? = when (mode) {
+        Mode.PICTURE_ID -> Pictures
+        Mode.THIS_OR_THAT -> ThisOrThat
+        Mode.CLOSEST_CALL -> ClosestCall
+        Mode.ORDERING -> OrderingSet
+        Mode.MATCHING -> MatchingSet
+        Mode.TYPE_ANSWER -> TypeAnswerSet
+        Mode.ODD_ONE_OUT -> OddOneOutSet
+        Mode.ENUMERATE -> EnumerateSet
+        else -> null
     }
 }
 

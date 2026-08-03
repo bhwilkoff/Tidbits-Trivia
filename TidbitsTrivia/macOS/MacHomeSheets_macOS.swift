@@ -71,8 +71,17 @@ struct CustomizeSheet_macOS: View {
                     section("Category") {
                         LazyVGrid(columns: grid, alignment: .leading, spacing: 10) {
                             ForEach(TriviaCategory.all) { c in
+                                // Dimmed, not disabled: the round still plays, it just won't be
+                                // the category you asked for. Removing the choice is a worse
+                                // answer than telling the truth (same rule as iOS + web).
                                 chip(c.name, c.symbol, on: category.id == c.id, accent: c.color) { category = c }
+                                    .opacity(canFill(c) || category.id == c.id ? 1 : 0.45)
                             }
+                        }
+                        if !canFill(category) {
+                            Text("\(category.name) has no questions for this mode yet — you'll get a mixed round.")
+                                .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                                .fixedSize(horizontal: false, vertical: true)
                         }
                     }
                     if !presets.isEmpty {
@@ -128,6 +137,13 @@ struct CustomizeSheet_macOS: View {
     private var suggestedName: String {
         modes.count == 1 ? "\(category.name) \(modes.first?.title ?? "")" : "\(category.name) Mix"
     }
+    /// A Custom Mix spans several modes, so it is only honest to dim a category NONE of
+    /// them can fill (mirror of iOS `HomeView.canFill`).
+    private func canFill(_ c: TriviaCategory) -> Bool {
+        let ms = modes.isEmpty ? [GameMode.classic] : Array(modes)
+        return ms.contains { QuestionProvider.canFill(mode: $0, categoryID: c.id) }
+    }
+
     private var modeBlurb: String {
         if modes.count == 1, let m = modes.first { return "\(m.title): \(m.blurb)" }
         return "Custom Mix: questions drawn from all \(modes.count) selected modes, shuffled together."

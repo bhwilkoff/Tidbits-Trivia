@@ -56,6 +56,7 @@ import com.learningischange.tidbitstrivia.ui.theme.onAccent
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
+import com.learningischange.tidbitstrivia.data.Coverage
 
 sealed interface Route {
     data object Home : Route
@@ -899,7 +900,20 @@ private fun CustomizeSheet(store: Store, initial: Pair<Mode, Category>, onDismis
             }
             Text("Category", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = fade)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Category.all.forEach { c -> FilterChip(selected = cat.id == c.id, onClick = { cat = c }, label = { Text(c.name) }) }
+                // Coverage disclosure (iOS + web already carry it): a mode x category the
+                // bundle cannot fill still plays, assembled from other categories, and
+                // silence about that reads as a lie. Dimmed, never disabled — taking the
+                // choice away is a worse answer than telling the truth.
+                Category.all.forEach { c ->
+                    val thin = !Coverage.canFillAny(modes, c.id)
+                    FilterChip(selected = cat.id == c.id, onClick = { cat = c },
+                        label = { Text(c.name) },
+                        modifier = Modifier.alpha(if (thin && cat.id != c.id) 0.45f else 1f))
+                }
+            }
+            if (!Coverage.canFillAny(modes, cat.id)) {
+                Text("${cat.name} has no questions for this mode yet — you'll get a mixed round.",
+                    fontSize = 13.sp, color = fade)
             }
             if (presets.isNotEmpty()) {
                 Text("My presets", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = fade)

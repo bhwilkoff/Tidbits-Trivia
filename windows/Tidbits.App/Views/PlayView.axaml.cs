@@ -29,6 +29,21 @@ public partial class PlayView : UserControl
         GameMode.Matching, GameMode.Enumerate, GameMode.PictureId,
     };
 
+    /// Name the modes the chosen category cannot fill. Windows picks the mode by BUTTON
+    /// rather than a chip grid, so there is no per-chip dimming to do — the honest
+    /// equivalent is one line naming what you'd actually get.
+    private void RefreshCoverageNote()
+    {
+        var cat = CategoryPicker.SelectedItem as TriviaCategory;
+        var sources = GameData.Shared.Value.Sources;
+        if (cat is null) { CoverageNote.IsVisible = false; return; }
+        var thin = Offered.Where(m => !sources.CanFill(m, cat.Id)).Select(m => m.Title()).ToList();
+        if (thin.Count == 0) { CoverageNote.IsVisible = false; return; }
+        CoverageNote.Text = $"{cat.Name} has no {string.Join(", ", thin)} questions yet — "
+            + (thin.Count == 1 ? "that mode" : "those modes") + " will play a mixed round.";
+        CoverageNote.IsVisible = true;
+    }
+
     public PlayView()
     {
         InitializeComponent();
@@ -36,6 +51,7 @@ public partial class PlayView : UserControl
         CategoryPicker.ItemTemplate = new FuncDataTemplate<TriviaCategory>((c, _) =>
             new TextBlock { Text = c?.Name ?? "" });
         CategoryPicker.SelectedIndex = 0; // Mixed Bag
+        CategoryPicker.SelectionChanged += (_, _) => RefreshCoverageNote();
 
         foreach (var m in Offered)
         {

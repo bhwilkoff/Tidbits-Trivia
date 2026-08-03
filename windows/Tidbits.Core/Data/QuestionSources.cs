@@ -14,6 +14,19 @@ public sealed class QuestionSources
     public JsonQuestionSource Enrich(GameMode m) =>
         Enrichment.TryGetValue(m, out var s) ? s : new JsonQuestionSource(Array.Empty<Question>());
 
+    /// Coverage disclosure (the rule iOS + web already carry, ported here). A mode x
+    /// category the bundle cannot fill still PLAYS — it is assembled from other
+    /// categories — and saying nothing about that reads as a lie. The picker uses this to
+    /// say so before the player commits, dimming rather than disabling: the round is
+    /// still worth playing, it just won't be the category they asked for.
+    public int Coverage(GameMode mode, string categoryId) =>
+        categoryId == "mixed" ? int.MaxValue
+        : Enrichment.TryGetValue(mode, out var set) ? set.CountIn(categoryId)
+        : Corpus.CountIn(categoryId);
+
+    public bool CanFill(GameMode mode, string categoryId) =>
+        Coverage(mode, categoryId) >= mode.QuestionCount();
+
     /// The bundled sets by their CONTRACT name (docs/QUIZ-CONTRACT.md). A saved
     /// quiz's set-ref names its set precisely because a bare ID is ambiguous — these
     /// share the corpus "src:" namespace.

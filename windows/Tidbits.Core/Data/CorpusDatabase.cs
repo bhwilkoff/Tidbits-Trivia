@@ -26,6 +26,18 @@ public sealed class CorpusDatabase
     public bool IsAvailable => _all.Count > 0;
     public int Count => _all.Count;
 
+    /// How many rows carry this category — feeds the picker's coverage check. Cached,
+    /// because the picker asks once per chip on every selection change.
+    private readonly Dictionary<string, int> _catCounts = new();
+    public int CountIn(string categoryId)
+    {
+        if (categoryId == "mixed") return int.MaxValue;
+        if (_catCounts.TryGetValue(categoryId, out var n)) return n;
+        n = _all.Count(q => q.CategoryId == categoryId);
+        _catCounts[categoryId] = n;
+        return n;
+    }
+
     /// Up to `limit` random questions in a category, excluding seen ids. "mixed" = all.
     public List<Question> Questions(string categoryId, ISet<string> seen, int limit)
     {

@@ -50,8 +50,23 @@ def wanted():
     # "Match each work to its creator" was asked with Skynet as a key (a fictional
     # AI, not a work) and "Match each organization to its founder" with a CITY.
     prefixes = ("rel:P17:", "rel:P170:", "rel:P175:", "rel:P112:")
-    return sorted({p31[r[7]] for r in rows
-                   if r[0].startswith(prefixes) and r[7] in p31 and p31[r[7]]})
+    want = {p31[r[7]] for r in rows
+            if r[0].startswith(prefixes) and r[7] in p31 and p31[r[7]]}
+
+    # Also every OPTION of the shapes whose fairness depends on the options being
+    # one kind. Odd One Out is the strict case: if the outlier is a different kind
+    # from the other three, it is spotted without knowing the fact, which is the
+    # whole premise of the mode.
+    for shape in ("oddoneout", "order", "thisorthat"):
+        f = ROOT / "assets" / f"{shape}.json"
+        if not f.exists():
+            continue
+        for r in json.loads(f.read_text())["questions"]:
+            for o in (r[2] if isinstance(r[2], list) else []):
+                t = p31.get(str(o))
+                if t:
+                    want.add(t)
+    return sorted(want)
 
 
 def fetch(qids):

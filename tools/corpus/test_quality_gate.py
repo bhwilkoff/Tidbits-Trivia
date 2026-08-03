@@ -110,10 +110,20 @@ PLANTED = {
 # Shape-source rules. Each plants one row into the named file; the file's real
 # rows are kept so THIN-COVERAGE stays satisfied.
 PLANTED_SHAPES = {
-    "ODD-ONE-KIND": ("oddoneout.json",
-                     ["test:oddkind", "Which of these is the odd one out?",
-                      ["Fiji", "Nauru", "Spain", "Bob Kane"], 3, "geography", 2,
-                      "Bob Kane is a person among three countries.", "", ""]),
+    # Two plants, two branches. The first is caught by kind_map (a PERSON among
+    # countries); the second only by the Wikidata type family, because kind_map
+    # calls Amsterdam and Botswana both "place" and saw nothing wrong with 97
+    # shipped rounds that put a city, an island or a volcano among three
+    # countries.
+    "ODD-ONE-KIND": ("oddoneout.json", [
+        ["test:oddkind", "Which of these is the odd one out?",
+         ["Fiji", "Nauru", "Spain", "Bob Kane"], 3, "geography", 2,
+         "Bob Kane is a person among three countries.", "", ""],
+        ["test:oddkind2", "Which of these is the odd one out?",
+         ["Botswana", "Burkina Faso", "Amsterdam", "Burundi"], 2, "geography", 2,
+         "Amsterdam is in Europe \u2014 the other three are all in Africa.",
+         "Amsterdam", ""],
+    ]),
     "UNANSWERABLE-TYPEIN": ("typeanswer.json",
                             ["test:typein", 'Who is this — "Swedish actress"?',
                              "Ingrid Bergman", [], "screen", 2,
@@ -269,7 +279,11 @@ def main():
                 (tmpdir / f.name).symlink_to(f)
         for fname in shaped:
             d = json.loads((ASSETS / fname).read_text())
-            extra = [list(row) for f, row in PLANTED_SHAPES.values() if f == fname]
+            extra = []
+            for f, row in PLANTED_SHAPES.values():
+                if f != fname:
+                    continue
+                extra += [list(x) for x in (row if isinstance(row[0], list) else [row])]
             srows = d["questions"] + extra
             b = json.dumps(srows, ensure_ascii=False, separators=(",", ":"))
             (tmpdir / fname).write_text(
@@ -294,6 +308,9 @@ def main():
     for rule in sorted(set(PLANTED) | set(PLANTED_SHAPES)):
         n = found.get(rule)
         row = PLANTED.get(rule)
+        if row is None:
+            shaped = PLANTED_SHAPES.get(rule)
+            row = shaped[1] if shaped else None
         count = len(row) if (row and isinstance(row[0], list)) else 1
         ok = n is not None and n >= count
         print(f"{rule:22}{count:>9}{n if n is not None else '-':>7}   "

@@ -450,6 +450,43 @@ COUNTRY_IN_PROMPT = re.compile(
     + r")(?:\u2019s|'s)?\b")
 
 
+# Wikidata types are far finer than a player's sense of "kind": Fiji is an
+# "island country" and Chad a "sovereign state", and nobody spots one among the
+# other. These families are what a player would actually distinguish, and they
+# are matched on the WHOLE label — an earlier substring version filed "U.S.
+# state" under country because it contains "state".
+_TYPE_FAMILY = {
+    "country": {
+        "sovereign state", "country", "island country", "historical country",
+        "federal republic", "constitutional monarchy", "microstate",
+        "city-state", "commonwealth realm", "republic", "kingdom", "empire",
+        "nation state", "unitary state", "federation",
+    },
+    "city": {
+        "city", "big city", "metropolis", "port city", "human settlement",
+        "town", "capital city", "city or town", "college town", "ancient city",
+        "municipality", "commune", "village", "borough",
+    },
+    "subdivision": {
+        "u.s. state", "first-level administrative division", "province",
+        "state of the united states", "region", "cultural region",
+        "historical region", "department", "county", "prefecture", "canton",
+        "federal state", "autonomous region", "dependent territory",
+    },
+    "landform": {
+        "island", "archipelago", "mountain", "volcano", "stratovolcano",
+        "river", "lake", "sea", "desert", "peninsula", "valley",
+        "mountain range", "island group", "bay", "glacier",
+    },
+}
+_FAMILY_OF = {label: fam for fam, labels in _TYPE_FAMILY.items() for label in labels}
+
+
+def type_family(label):
+    """A player-visible KIND for a Wikidata type label, or the label itself."""
+    return _FAMILY_OF.get(str(label or "").strip().lower(), str(label or "").lower())
+
+
 def prompt_nationality(prompt):
     """The nationality a prompt PINS DOWN, or None. One definition, read by both
     this gate and fix_nationality_distractors.py — they had separate copies of
@@ -662,7 +699,7 @@ def check():
     # with nothing to report, so this reads the committed export when the database
     # is absent, and dies when it has neither.
     HISTORICAL_TITLES = set()
-    qrank = {}
+    qrank, qrank_p31, qrank_labels = {}, {}, {}
     _src = ROOT / "tools" / "corpus" / "corpus_source.sqlite"
     _facts = ROOT / "tools" / "corpus" / "subject_facts.json"
     if _src.exists():
@@ -674,7 +711,12 @@ def check():
         # fame signal available, and the one FAME-TELL is measured in.
         qrank = {t: q for t, q in _db.execute(
             "select title, qrank from subject where qrank is not null") if q}
+        qrank_p31 = {t: (v or "").split(",")[0] for t, v in
+                     _db.execute("select title, p31 from subject") if v}
         _db.close()
+        _lf = ROOT / "tools" / "corpus" / "p31_labels.json"
+        if _lf.exists():
+            qrank_labels = json.loads(_lf.read_text())
     elif _facts.exists():
         _f = json.loads(_facts.read_text())
         HISTORICAL_TITLES = set(_f["historical"])
@@ -933,6 +975,23 @@ def check():
                 v = typein_verdict(r[1])
                 if v:
                     bad["UNANSWERABLE-TYPEIN"].append(f"{r[0]}: {v} — {str(r[1])[:52]}")
+            # The outlier must be findable ONLY by the fact. If it is a different
+            # KIND from the other three, it is spotted on sight: 97 rounds put a
+            # city, an island, a river or a volcano among three countries
+            # ("Botswana · Burkina Faso · AMSTERDAM · Burundi"). kind_map is too
+            # coarse to see this — it calls Amsterdam and Botswana both places —
+            # so this reads the Wikidata type through type_family().
+            if (name == "oddoneout.json" and len(r) > 3 and r[2]
+                    and len(r[2]) == 4 and isinstance(r[3], int)
+                    and 0 <= r[3] < 4 and qrank_p31):
+                _f = [type_family(qrank_labels.get(qrank_p31[str(o)], qrank_p31[str(o)]))
+                      if str(o) in qrank_p31 else None for o in r[2]]
+                if all(_f):
+                    _oth = [_f[i] for i in range(4) if i != r[3]]
+                    if len(set(_oth)) == 1 and _f[r[3]] != _oth[0]:
+                        bad["ODD-ONE-KIND"].append(
+                            f"{r[0]}: {r[2][r[3]]!r} is a {_f[r[3]]}, the other "
+                            f"three are all {_oth[0]} — {r[2]}")
             if name == "oddoneout.json" and len(r) > 2 and r[2]:
                 ks = {option_kind(o, kinds, raw_expl) for o in r[2]}
                 ks.discard(None)

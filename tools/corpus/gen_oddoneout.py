@@ -13,7 +13,7 @@ Row shape: [id, prompt, options(4), correctIndex, category, difficulty,
 
 Usage: python3 gen_oddoneout.py
 """
-import argparse, hashlib, json, os
+import argparse, hashlib, json, os, sqlite3
 import sys
 sys.path.insert(0, __import__('os').path.dirname(__file__))
 import genguard
@@ -32,6 +32,35 @@ def main():
 
     qs = json.load(open(args.corpus))["questions"]
 
+    # The pool is built from wd:continent rows, and the SUBJECT of one of those is
+    # not always a country — "On which continent is Amsterdam?" puts a city in it.
+    # The mode's whole premise is that the outlier can only be found by knowing the
+    # fact, so an option of a different KIND hands it over:
+    #
+    #     Botswana · Burkina Faso · AMSTERDAM · Burundi
+    #     Djibouti · Egypt · THURSTON ISLAND · Equatorial Guinea
+    #     Connecticut · Costa Rica · MAUNA KEA · Cuba
+    #
+    # 97 shipped rounds were free that way. Keep only subjects Wikidata types as a
+    # country; when the type is unknown the subject is kept, since the historical
+    # states this corpus is full of are legitimate options.
+    _here = os.path.dirname(__file__)
+    _src, _labs = os.path.join(_here, "corpus_source.sqlite"), os.path.join(_here, "p31_labels.json")
+    is_country = None
+    if os.path.exists(_src) and os.path.exists(_labs):
+        import sys as _sys
+        _sys.path.insert(0, _here)
+        from quality_gate import type_family
+        _db = sqlite3.connect("file:%s?mode=ro" % _src, uri=True)
+        _p31 = {t: (v or "").split(",")[0] for t, v in _db.execute("select title, p31 from subject")}
+        _db.close()
+        _lab = json.load(open(_labs))
+        def is_country(title):
+            t = _p31.get(title)
+            if not t:
+                return True                    # unknown type: keep
+            return type_family(_lab.get(t, t)) == "country"
+
     # country -> continent (deduped), and continent -> [countries]
     cont_of, by_cont, url_of = {}, {}, {}
     for q in qs:
@@ -40,6 +69,8 @@ def main():
         country, cont = q[7], q[2][q[3]]
         cont = MERGE.get(cont, cont)
         if country in cont_of:
+            continue
+        if is_country and not is_country(country):
             continue
         cont_of[country] = cont
         by_cont.setdefault(cont, []).append(country)

@@ -608,9 +608,15 @@ def check():
     kinds = kind_map(rows_all)
     # Wikidata Q3024240 = "historical country" — on the Kingdom of Navarre, not
     # on France. Stated as data rather than sniffed from prose.
+    # The 150 MB corpus_source.sqlite is gitignored, so on CI neither of these
+    # existed and PRESENT-TENSE-PAST and FAME-TELL reported 0 found and PASSED.
+    # A rule that cannot see its input must not be indistinguishable from a rule
+    # with nothing to report, so this reads the committed export when the database
+    # is absent, and dies when it has neither.
     HISTORICAL_TITLES = set()
     qrank = {}
     _src = ROOT / "tools" / "corpus" / "corpus_source.sqlite"
+    _facts = ROOT / "tools" / "corpus" / "subject_facts.json"
     if _src.exists():
         import sqlite3 as _sq
         _db = _sq.connect(f"file:{_src}?mode=ro", uri=True)
@@ -621,6 +627,15 @@ def check():
         qrank = {t: q for t, q in _db.execute(
             "select title, qrank from subject where qrank is not null") if q}
         _db.close()
+    elif _facts.exists():
+        _f = json.loads(_facts.read_text())
+        HISTORICAL_TITLES = set(_f["historical"])
+        qrank = _f["qrank"]
+    else:
+        sys.exit(f"FATAL: neither {_src.name} nor {_facts.name} is present, so "
+                 f"PRESENT-TENSE-PAST and FAME-TELL cannot run. Regenerate with "
+                 f"tools/corpus/export_subject_facts.py — a gate that cannot see "
+                 f"its input must not report a pass.")
 
     nationality = {}
     for _q in rows_all:

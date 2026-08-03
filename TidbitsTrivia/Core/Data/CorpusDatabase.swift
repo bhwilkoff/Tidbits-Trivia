@@ -19,6 +19,16 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
         if sqlite3_open_v2(url.path, &db, SQLITE_OPEN_READONLY, nil) != SQLITE_OK {
             db = nil
         }
+        // Load the tag table HERE, while the connection has no live statement.
+        // It used to be a lazy `static let` first touched from `row()` — which
+        // runs inside the `sqlite3_step` loop of a search — so the very first
+        // Create search prepared and stepped a second statement on the same
+        // connection midway through iterating the first. That perturbed the outer
+        // iteration: the same topic on the same binary returned a different SET
+        // and a different ORDER on every launch (measured on "Cape Verde", 4 runs,
+        // 4 different results), which made a Create quiz unreproducible and the
+        // cross-platform golden flap.
+        if let db { Self.tagTable = Self.loadTagTable(db) }
     }
 
     var isAvailable: Bool { db != nil }
@@ -465,6 +475,11 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
             // one-word coincidence into a category lane — measured on the shipping
             // corpus, "Ansel Adams" returned exactly one row per category (Samuel
             // Adams, Hansel and Gretel, Phil Anselmo, Davante Adams…).
+            if ProcessInfo.processInfo.environment["TIDBITS_RANK_DIAG"] != nil {
+                for (q, s, t) in scored.sorted(by: { $0.0.id < $1.0.id }) {
+                    print("RANK-DIAG\t\(q.id)\ttier=\(t)\tscore=\(s)\tcat=\(q.categoryID)")
+                }
+            }
             var out = Self.fillByTier(scored, limit: limit)
             // Starvation top-up: a thin clean pool is worth less to the player than
             // a full quiz, so the reserved giveaways fill the tail.
@@ -555,7 +570,19 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
             let taken = Set(out.map(\.id))
             out.append(contentsOf: ranked.filter { !taken.contains($0.id) }.prefix(limit - out.count))
         }
-        return out.shuffled()
+        // NO shuffle here. This used to end `return out.shuffled()` in all four
+        // engines, to stop a quiz marching category-by-category — which the
+        // round-robin above already prevents, so it bought nothing. What it cost
+        // was the SET: `search` fills its last slot with
+        // `fillByTier(giveaways, limit:).prefix(1)`, and taking the prefix of a
+        // SHUFFLED list picks a random giveaway. Measured on "Cape Verde", the
+        // same binary returned a different eighth question on nearly every launch
+        // (sup:P1082 / sup:P2046 / wd:currency rotating), so the same topic did
+        // not produce the same quiz twice and the cross-platform golden could
+        // never settle — it failed on Windows CI as a set difference.
+        // Selection must be deterministic; if presentation order should vary, it
+        // varies where the quiz is presented, not where it is chosen.
+        return out
     }
 
     /// Fetch specific questions by id, returned in the SAME order as `ids`.
@@ -602,8 +629,12 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
     /// app bundle to repeat "American male film actors" nineteen hundred times.
     /// Resolved here so `Question.tags` means exactly what it always meant; the
     /// JSON path (corpus.json) still carries the names directly.
-    private static let tagTable: [Int32: String] = {
-        guard let db = shared.db else { return [:] }
+    /// Written exactly once, from `init()`, before the connection has ever been
+    /// queried — so every later read is of a finished table from one thread's
+    /// perspective. It is NOT lazy on purpose: see the note in `init()`.
+    nonisolated(unsafe) private static var tagTable: [Int32: String] = [:]
+
+    private static func loadTagTable(_ db: OpaquePointer) -> [Int32: String] {
         var out: [Int32: String] = [:]
         var stmt: OpaquePointer?
         defer { sqlite3_finalize(stmt) }
@@ -615,7 +646,7 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
             }
         }
         return out
-    }()
+    }
 
     private static func tagNames(_ stored: String) -> [String] {
         guard !stored.isEmpty else { return [] }

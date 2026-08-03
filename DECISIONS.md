@@ -1820,3 +1820,47 @@ all three. `--regenerate` and `--prune` remain available for when the destructio
 is the point; they are flags, not the default. Verified by
 `tools/corpus/test_genguard.py`, which runs the real generators against copies of
 the real artifacts and asserts nothing is lost, reverted or resurrected.
+
+## 052 — Selection is deterministic; only presentation may be random
+
+**The rule:** the Create ranker chooses questions deterministically. Nothing
+between scoring and the returned set may shuffle. If a quiz should not march
+category-by-category, that is the round-robin's job, and if presentation order
+should vary it varies where the quiz is presented — never where it is chosen.
+
+**Why:** `diversify()` ended with `out.shuffled()` in all four engines, with the
+comment "so the quiz doesn't march category-by-category." The interleave directly
+above it already guarantees that, so the shuffle bought nothing. What it cost was
+the SET, because `search()` fills its final slot with
+
+    fillByTier(giveaways, limit: limit).filter { !taken }.prefix(limit - out.count)
+
+and the prefix of a SHUFFLED list is a random pick. Measured on "Cape Verde" —
+the same binary, the same corpus, four consecutive launches:
+
+    run 1  ... sup:P1082:79467431324
+    run 2  ... sup:P2046:637120502540
+    run 3  ... sup:P1082:79467431324
+    run 4  ... wd:currency:Q1011
+
+The same topic did not produce the same quiz twice. That is a product defect
+first — a Create quiz was not reproducible — and only incidentally a test
+problem: `tools/create/parity.sh` flapped between 49/0 and 48/1 with the
+differing ids rotating, and Windows CI failed on it as a set difference
+(`Cape Verde: +[sup:P1082:79467431324] -[wd:currency:Q1011]`).
+
+Finding it took two wrong hypotheses, both killed by measurement rather than
+argument. The `LIMIT 25000` with no `ORDER BY` looked like the cause until the
+topic turned out to match 486 rows. A lazily-initialised `tagTable` that prepared
+a second statement mid-`sqlite3_step` looked like the cause until fixing it left
+the output just as unstable. What settled it was a `TIDBITS_RANK_DIAG` dump of
+every scored candidate: identical across runs, seven candidates for a limit of
+eight — which pointed straight at the top-up path rather than at scoring.
+
+**How to apply:** randomness inside a selection pipeline is only safe at the very
+end of it. The moment a shuffled list is truncated, filtered, or capped, the
+shuffle stops being cosmetic and starts choosing content. When a cross-platform
+golden flaps, suspect nondeterminism in the thing being measured before
+suspecting the measurement — three of the four engines here were "correct" and
+all four were unreproducible. The diagnostic stays, env-gated, because the class
+recurs: a selection bug is invisible in any single run.

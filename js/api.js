@@ -285,8 +285,13 @@ function diversify(ranked, limit) {
       if (!taken.has(q.id)) { out.push(q); taken.add(q.id); }
     }
   }
-  // Shuffle so the quiz doesn't march category-by-category.
-  for (let i = out.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [out[i], out[j]] = [out[j], out[i]]; }
+  // NO shuffle here. All four engines used to end this function with one, to stop
+  // a quiz marching category-by-category -- which the round-robin above already
+  // prevents. What it cost was the SET: search fills its last slot by taking the
+  // prefix of this list, and the prefix of a SHUFFLED list is a random pick.
+  // Measured on "Cape Verde": the same binary returned a different eighth
+  // question on nearly every launch, so the same topic never produced the same
+  // quiz twice and the cross-platform golden could not settle.
   return out;
 }
 

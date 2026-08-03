@@ -71,6 +71,10 @@ echo "--- 5. assert every question file is identical across platforms"
 python3 tools/corpus/check_mirrors.py
 
 echo "--- 6. question quality gate"
+# Two rules read the 150 MB gitignored source database, so on a CI checkout they
+# saw nothing and passed. Export the ~1 MB of facts they actually need first, or
+# the gate is weaker in the one place it runs on every push than it is here.
+python3 tools/corpus/export_subject_facts.py
 # Reporting is not a gate. This one FAILS, so a resync cannot land a question
 # that should never ship.
 python3 tools/corpus/quality_gate.py

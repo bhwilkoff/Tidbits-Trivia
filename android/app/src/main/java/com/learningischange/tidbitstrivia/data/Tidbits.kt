@@ -780,7 +780,14 @@ object Corpus {
             val taken = out.map { it.id }.toHashSet()
             out.addAll(ranked.filter { it.id !in taken }.take(limit - out.size))
         }
-        return out.shuffled()
+        // NO shuffle here. All four engines used to end this function with one, to stop
+        // a quiz marching category-by-category -- which the round-robin above already
+        // prevents. What it cost was the SET: search fills its last slot by taking the
+        // prefix of this list, and the prefix of a SHUFFLED list is a random pick.
+        // Measured on "Cape Verde": the same binary returned a different eighth
+        // question on nearly every launch, so the same topic never produced the same
+        // quiz twice and the cross-platform golden could not settle.
+        return out
     }
 
     /** Look up one question by ID — a saved quiz's refs resolve through here

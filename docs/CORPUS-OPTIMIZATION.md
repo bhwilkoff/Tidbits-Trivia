@@ -131,8 +131,23 @@ verified on a rendered screen before it counts as done.
        lead    ...commonly called sea lilies, while the unstalked forms...
 
    Enriching those needs a DIFFERENT source — a later section, or a fact the
-   summary does not carry — not more of the same. Picture-round images remain
-   open.
+   summary does not carry — not more of the same.
+
+   **Picture-round images — MEASURED 2026-08-03, and they are fine.** This line
+   read "picture-round images remain open", which is an unknown, not a finding.
+   All 5,721 rows carry an image and every one is a `commons.wikimedia.org`
+   `Special:FilePath` URL (0 missing, 0 other hosts). A 60-row random sample
+   HEAD-checked against live Commons returned **60/60 HTTP 200 with an
+   `image/*` content type**.
+
+   Two things worth writing down for whoever checks this next. Commons
+   rate-limits hard: eight parallel HEADs got **90 of 120 rejected with 429**,
+   which reads exactly like 75% dead images if you don't look at the error. One
+   request per second, serially, with a real `User-Agent` naming the app and a
+   contact, returns clean. And the check belongs at ~1 minute for 60 rows, not
+   in the gate — a network probe cannot be a build gate without making the build
+   depend on someone else's uptime (`gate-blind-in-ci`: a check that cannot see
+   its input must die, not report clean).
 
 ## Rules this pass must not break
 

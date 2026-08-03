@@ -191,6 +191,9 @@ struct ContentView_macOS: View {
                 // A single shared question belongs to no sidebar section — it is a thing
                 // someone sent you, so it opens as a sheet over wherever you were.
                 store.pendingItemID = id
+            case .surprise:
+                section = .play
+                launch = store.surpriseMe()
             }
         }
     }

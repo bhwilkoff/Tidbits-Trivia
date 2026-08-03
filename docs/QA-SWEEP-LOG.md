@@ -244,10 +244,32 @@ Two things the work surfaced:
   itself always shows its own visible sample size. The test was rewritten to pin
   the real contract rather than "fixing" correct code.
 
+## Round 12 — the Round 1 backlog, finished, 2026-08-03 (build 1.6.72)
+
+Round 1's own "still to do" was *"~12 of 47 captures examined in depth; the rest are
+captured and awaiting review"*, and it stayed that way for four days — the captures live
+in `/tmp`, so they were long gone. Re-swept (`tools/qa-sweep.sh ios`, 47 PNGs) and read
+**all 47**, not the loud ones.
+
+| # | Severity | Finding | Status |
+|---|---|---|---|
+| Q30 | **Bug** | **An Ordering round asked for people in order of birth and listed "Bill O'Reilly (1905)" among baseball figures.** That is `Bill_O'Reilly_(cricketer)`; the generators' `display_name()` strips every parenthetical, so a player who knows the broadcaster (born 1949) puts him last and is marked wrong. **Knowing more makes you likelier to get it wrong**, which is the worst thing a trivia question can do. Measured: **120 Ordering + 121 This-or-That rows** carry a name whose Wikipedia title was disambiguated. | **Fixed** — `fix_display_disambiguators.py` restores the qualifier, and both generators keep it now. A parenthetical with a DIGIT is still stripped: "Pinocchio (1940 film)" in a "which came first?" pair hands over the answer — the mirror image of this bug, and the reason Odd One Out had brackets REMOVED (a3eb5b0). Brackets leak there; their absence misleads here |
+| Q31 | Content | "Waging 83 campaigns against the Cumans… which Grand Prince of Kiev…" is filed **ARTS & LIT**. Same class as Q4 (William Penn, also ARTS & LIT) — a ruler in the arts bucket. A regex over reveals finds 112 `arts` rows mentioning a ruler, but most are false positives (a novel that mentions an emperor), so the real number needs the SUBJECT's occupation, not the prose. | Noted, unmeasured — recorded rather than guessed |
+| Q32 | None | Q5 (Enumerate prompts had no terminal punctuation) is **gone** — "…as you can." now ends in a period. Q7/Q9 (Ordering + Matching reveal feedback) verified present and correct on iPhone: green ✓ per row and a "+40" award that matches the inversion scoring. | Confirmed fixed |
+
+**Everything else rendered correctly**: 15 modes mid-question, 9 reveals, 3 results
+screens, 20 feature screens — no blank views, no clipped prompts, no crash. The results
+screens agree with themselves (Sweep 12/12 · 100% · 12 best streak · twelve 🟢 in the
+spoiler-free grid).
+
+**Method note worth keeping:** this sweep ran while another launch was driving the SAME
+simulator, and the second launch's screenshot showed the first's screen. One driver per
+simulator — the CLAUDE.md "boot ONE at a time" rule applies to *driving*, not just booting.
+
 ## Still to do
 
-- [ ] Round 1 review is **partial**: ~12 of 47 captures examined in depth; the rest are
-      captured and awaiting review.
+- [x] Round 1 review — **finished in Round 12 above** (re-swept and all 47 read; found
+      the Ordering disambiguator bug that the first 12 captures had missed).
 - [x] Re-ran `results-*` at 30s — Classic (FLAWLESS, 2,825, 10/10, spoiler-free grid,
       streak, "Tough ones you nailed" + the reflection prompt) and Stake (15 on chips)
       both correct. Score SCALES differ hugely between modes (2,825 vs 15) and are

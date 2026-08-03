@@ -347,7 +347,7 @@ iPad/tablet/desktop second, phones rarely).
 |---|---|---|
 | Top Shelf extension | ⏳ | The marquee surface when your icon is focused on the TV home screen; reads an App Group snapshot the app refreshes via `BGAppRefreshTask` |
 | Siri "Up Next" via NSUserActivity | ⏳ | System watchlist integration — tiny code surface |
-| App Intents voice launches ("surprise me") | ⏳ | Pairs with any random/serendipity verb |
+| App Intents voice launches ("surprise me") | ✅ | **2026-08-03.** Two intents, no more: `SurpriseMeIntent` ("Surprise me in Tidbits" / "Play a random round in Tidbits") and `PlayDailyIntent`. An intent that can't be said in one breath won't be, and a Shortcuts list of near-duplicates is worse than a short one. Both `openAppWhenRun` — a trivia round is not a background task. The plumbing is the interesting part: an intent runs BEFORE the scene exists on a cold launch and has no reference to `AppStore`, so it writes to `IntentInbox` (UserDefaults-backed, consumed on read) and the root drains that into the same deep-link inbox every other external entry point uses. Shared by iOS + tvOS; `DeepLink.surprise` is handled on iOS, macOS and tvOS. Building it also fixed a real gap: `tidbits://daily` on iOS only switched TABS and left you to find the card — macOS has started the round from that same link all along. |
 | Focus-driven UI (no pointer, no touch) | ✅ | The defining constraint — see `tvos-platform-patterns` |
 | Idle screensaver / ambient mode | 🔮 | Lean-back idiom; opt-in, never over playback |
 | Layered parallax app icon (imagestack) | ⏳ | tvOS icons are layered; see `branding/README.md` |

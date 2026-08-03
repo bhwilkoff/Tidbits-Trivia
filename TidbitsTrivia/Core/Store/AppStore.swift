@@ -20,6 +20,11 @@ final class AppStore {
     /// discipline as the quiz id — set by the deep-link inbox, cleared by the view.
     var pendingItemID: String?
 
+    /// A round an external entry point asked for (a Siri "surprise me", `tidbits://daily`).
+    /// Set by the deep-link inbox, CONSUMED by the Play surface — the router never starts
+    /// a game itself, and a request that stayed set would replay on every return to Play.
+    var pendingLaunch: LaunchRequest?
+
 
     var selectedTab: Tab = .play
     var playPath = NavigationPath()
@@ -131,6 +136,9 @@ enum DeepLink: Equatable, Sendable {
     /// `https://tidbitstrivia.com/item/<id>` (DEEP_LINKS.md). What the per-question
     /// "how did YOU know that?" share hands out.
     case item(String)
+    /// "Surprise me" — a random mode in a random category. Reached from Siri /
+    /// Shortcuts (`SurpriseMeIntent`), not from a URL.
+    case surprise
 }
 
 /// A request to launch a game with a given mode + category. Shared by the

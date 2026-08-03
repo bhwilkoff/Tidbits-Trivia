@@ -83,6 +83,8 @@ struct ContentView_tvOS: View {
                 showCreate = true          // Create owns saved quizzes on tvOS too
             case .item(let id):
                 sharedItemID = TVSharedItemID(id: id)
+            case .surprise:
+                launch = store.surpriseMe()
             }
         }
     }
@@ -121,6 +123,8 @@ struct ContentView_tvOS: View {
         .onChange(of: store.inbox) { _, _ in handleInbox() }
         .onAppear {
             if let id = DebugHooks.openItemID { store.post(.item(id)) }
+            // An App Intent runs before the scene exists on a cold launch (see IntentInbox).
+            if let fromIntent = IntentInbox.take() { store.post(fromIntent) }
             handleInbox()
         }
         .fullScreenCover(isPresented: $showCustomize) {

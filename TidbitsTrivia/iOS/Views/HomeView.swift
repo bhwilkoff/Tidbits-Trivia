@@ -171,7 +171,17 @@ struct HomeView: View {
         .fullScreenCover(isPresented: showOnboarding) {
             OnboardingView { hasOnboarded = true }
         }
+        // A round an external entry point asked for (Siri "surprise me", tidbits://daily).
+        // Consumed here, on the surface that owns starting games — the router only ever
+        // sets it. Cleared on read, or it would replay every time Play comes back.
+        // Keyed on the id STRING: LaunchRequest can't be Equatable (TriviaCategory's
+        // conformance is MainActor-isolated and this type is nonisolated), and the id is
+        // already the stable identity SwiftUI uses for it elsewhere.
+        .onChange(of: store.pendingLaunch?.id) { _, _ in
+            if let req = store.pendingLaunch { store.pendingLaunch = nil; start(req, remember: false) }
+        }
         .task {
+            if let req = store.pendingLaunch { store.pendingLaunch = nil; start(req, remember: false) }
             if launch == nil, let ap = DebugHooks.autoplay {
                 start(LaunchRequest(mode: ap.mode, category: ap.category, mixModes: DebugHooks.mixModes))
             }

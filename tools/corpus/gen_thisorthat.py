@@ -26,10 +26,21 @@ PER_BUCKET = 70
 
 
 def display_name(title):
+    """The name a card shows.
+
+    Keeps a NON-NUMERIC parenthetical. Wikipedia only adds one when the bare title is
+    genuinely ambiguous, and stripping it produced "Bill O'Reilly" in a birth-order round
+    of baseball figures — the cricketer born 1905, not the broadcaster born 1949, so
+    knowing more made you likelier to get it wrong. A parenthetical with a DIGIT is still
+    stripped: "Pinocchio (1940 film)" in a "which came first?" pair hands over the answer.
+    See tools/corpus/fix_display_disambiguators.py.
+    """
     s = urllib.parse.unquote(title).replace("_", " ")
-    s = re.sub(r"\s*\([^)]*\)", "", s)   # drop "(disambiguation)"
-    s = s.split(",")[0]                   # drop ", Greece"
-    return s.strip()
+    m = re.search(r"\(([^)]*)\)", s)
+    qual = m.group(1).strip() if m else ""
+    s = re.sub(r"\s*\([^)]*\)", "", s)
+    s = s.split(",")[0].strip()
+    return f"{s} ({qual})" if qual and not re.search(r"\d", qual) else s
 
 
 def main():

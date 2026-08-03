@@ -60,10 +60,17 @@ struct ContentView_iOS: View {
 
     private func handleInbox() {
         if let id = DebugHooks.openItemID { store.pendingItemID = id }
+        // An App Intent runs before the scene exists on a cold launch, so it leaves its
+        // request in IntentInbox rather than touching the router (see IntentInbox).
+        if let fromIntent = IntentInbox.take() { store.post(fromIntent) }
         for link in store.drainInbox() {
             switch link {
             case .daily:
                 store.selectedTab = .play
+                // Previously this only switched TABS: `tidbits://daily` landed you on Home
+                // and left you to find the card. macOS has started the round from the same
+                // link all along.
+                store.pendingLaunch = LaunchRequest(mode: .daily, category: .named("mixed"))
             case .topic, .category:
                 store.selectedTab = .play
             case .quiz(let id):
@@ -76,6 +83,9 @@ struct ContentView_iOS: View {
                 // A single shared question belongs to no tab — it is a thing someone
                 // sent you, so it opens over wherever you were and dismisses back.
                 store.pendingItemID = id
+            case .surprise:
+                store.selectedTab = .play
+                store.pendingLaunch = store.surpriseMe()
             }
         }
     }

@@ -7,6 +7,58 @@
 > `docs/ROADMAP.md`, `docs/DATA-CONTRACT.md`. Detailed per-round history is in
 > `ARCHIVE.md`.
 
+## Current state (2026-08-03) — 1.6.73 (111 / vc84)
+
+**A single session working the documented backlog: every ⏳ in PARITY that was a
+BUILD task is now ✅, and four of them turned out to be documentation that was
+wrong rather than work that was missing.**
+
+Shipped (10 commits, all pushed):
+
+1. **Over half of Odd One Out vanished from a saved quiz.** `bundledSetName`
+   matched `odd:`/`tot:`, but a shape owns EVERY prefix its generators emit —
+   `oddrel:` is 590 of 1,094 rows, `biztot:` is every business pair. Those read
+   as plain corpus refs and resolved against a corpus that does not hold them.
+   Fixed + tested on all four stacks.
+2. **Delete Account on web + Android** — the last two platforms that couldn't,
+   though Play requires it as much as App Review does. Verified end to end
+   against live Firebase.
+3. **Push: both missing client legs + the opt-out NO platform had built** (the
+   contract required one; iOS didn't have it either). Turning it off deletes the
+   token node — a local flag would leave the cron still sending.
+4. **The `/item/{id}` twin DEEP_LINKS reserved a month ago**, built end to end on
+   five surfaces. Found three real bugs doing it, including a web id index built
+   over a 1,700-row shard that survived the `loadFull()` replacing it with
+   111,000 — which silently broke saved-quiz ref resolution too.
+5. **Badges + avatar shuffle on tvOS and macOS** — the PARITY cells were wrong in
+   BOTH directions (tvOS ✅/Android ⏳ when the truth was the reverse).
+6. **First-run onboarding on web + tvOS**, each in its own idiom.
+7. **tvOS never drained the deep-link inbox.** The scheme was registered from day
+   one and every link was posted — and nothing consumed it, so Top Shelf / Siri /
+   QR links launched the app and did nothing.
+8. **Coverage disclosure on the four remaining pickers** (Android compile-only —
+   the emulator wedged repeatedly on this box).
+9. **App Intents** ("Surprise me in Tidbits", "Play the Daily"), which also fixed
+   `tidbits://daily` on iOS only switching TABS.
+10. **Read all 47 QA captures** (Round 1's own unfinished review) and found the
+    worst kind of trivia bug: an Ordering round listing "Bill O'Reilly (1905)" —
+    the cricketer — where knowing the broadcaster makes you order it WRONG. 241
+    rows fixed; the generators keep the disambiguator now.
+
+**Corrections to the docs themselves** (each was a false or stale claim, not a
+build gap): the Club tracker's duplicate "7 Expedition ⏳" row under a "5
+Expedition ✅" row; "era spread — Open, measured, NOT fixed" when it had been
+fixed the same day and is now a gate rule at budget zero; the badges/avatar cells;
+Siri "Up Next", which is the Apple TV app's VIDEO queue and can never apply to a
+trivia app — now 🚫 with the reason instead of a ⏳ nobody could close.
+
+**Still open, and all of it needs the owner, not effort:** Ranked Seasons +
+Friend Streaks (R-MON-4's free-vs-Club split), the store/financial setup rows,
+the Daily published-set contract change, tvOS Top Shelf (needs an extension
+target + brand art) and the layered tvOS icon (art).
+
+---
+
 ## Current state (2026-07-29) — SHIP 1.6.59 (99)
 
 **Two App Review rejections fixed + Tidbits Club consolidated behind ONE door on all six platforms.**

@@ -1603,6 +1603,10 @@ class Store(context: Context) {
     fun setOnboarded(v: Boolean) = prefs.edit().putBoolean("hasOnboarded", v).apply()
     fun hapticsEnabled(): Boolean = prefs.getBoolean("hapticsEnabled", true)
     fun setHapticsEnabled(v: Boolean) = prefs.edit().putBoolean("hapticsEnabled", v).apply()
+    /** docs/PUSH-CONTRACT.md: the reminder opt-out. Defaults ON so the switch reflects the
+     *  state a granted permission implies; turning it off deletes the token node. */
+    fun remindersEnabled(): Boolean = prefs.getBoolean("remindersEnabled", true)
+    fun setRemindersEnabled(v: Boolean) = prefs.edit().putBoolean("remindersEnabled", v).apply()
     fun dynamicColorEnabled(): Boolean = prefs.getBoolean("dynamicColor", false)
     fun setDynamicColorEnabled(v: Boolean) = prefs.edit().putBoolean("dynamicColor", v).apply()
 

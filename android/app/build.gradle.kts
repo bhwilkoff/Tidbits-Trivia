@@ -101,6 +101,7 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.database)
     implementation(libs.firebase.auth)
+    implementation(libs.firebase.messaging)   // docs/PUSH-CONTRACT.md — the FCM leg
     implementation(libs.credentials)
     implementation(libs.credentials.play.services)
     implementation(libs.googleid)

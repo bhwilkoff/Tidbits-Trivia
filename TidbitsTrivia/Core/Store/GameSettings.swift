@@ -12,4 +12,14 @@ enum GameSettings {
         UserDefaults.standard.object(forKey: reviewKey) == nil
             ? true : UserDefaults.standard.bool(forKey: reviewKey)
     }
+
+    /// The push opt-out (docs/PUSH-CONTRACT.md; App Store 4.5.4 requires one in-app).
+    /// Default ON so the switch reflects what a granted permission implies — turning it
+    /// off is what deletes the token node, and the node is what a send actually needs.
+    static let remindersKey = "tidbits.remindersEnabled"
+
+    static var remindersEnabled: Bool {
+        UserDefaults.standard.object(forKey: remindersKey) == nil
+            ? true : UserDefaults.standard.bool(forKey: remindersKey)
+    }
 }

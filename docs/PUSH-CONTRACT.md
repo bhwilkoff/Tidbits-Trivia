@@ -1,6 +1,7 @@
 # Push notifications — "the appointment" ($0 data contract)
 
-**Status: BUILDING (2026-07-19).** The return-trigger every async global mode
+**Status: CLIENTS COMPLETE (2026-08-03); sending is owner-gated on the
+secrets in §Owner setup.** The return-trigger every async global mode
 depends on (MONETIZATION §4c: "async lives or dies on the return trigger").
 Verified $0 on all three platforms from a GitHub Actions cron — **no card, no
 always-on server.** The only unavoidable cost is the $99/yr Apple membership
@@ -107,6 +108,25 @@ modes add rundle-danger and duel-turn pushes. The cron reads `pushTokens` +
 - ✅ `tools/send_reminders.py` + `.github/workflows/reminders.yml` written
   (inert until the owner secrets above exist — the workflow no-ops cleanly when
   secrets are absent).
-- ✅ iOS token capture (`NotificationManager` + app-delegate hook + prompt after
-  a Daily) — build-verified. **Entitlement is an owner step (§Owner setup 2).**
-- ⏳ Android + web client token capture (mechanical per this contract).
+- ✅ iOS token capture (`PushManager` + app-delegate hook + prompt after a Daily)
+  — build-verified. **Entitlement is an owner step (§Owner setup 2).**
+- ✅ **Android token capture (2026-08-03)** — `notifications/PushTokens` (runtime
+  POST_NOTIFICATIONS ask after a Daily, `FirebaseMessaging.getToken()`,
+  `pushTokens/{authUid}/android`) + `AppFirebaseMessagingService.onNewToken` for
+  rotation + the `firebase-messaging` dependency and manifest service, which had
+  been sitting commented out as "goes here when push ships".
+- ✅ **Web token capture (2026-08-03)** — `js/push.js` subscribes through the
+  existing service worker and stores the whole `PushSubscription` blob (what
+  pywebpush wants back); `sw.js` gained `push` + `notificationclick` handlers
+  (cache bumped to v57). Inert until the owner pastes the VAPID public key —
+  with the placeholder in place the toggle does not render at all, because a
+  switch that silently does nothing is worse than no switch.
+- ✅ **The in-app opt-out now exists on all three** (it was required by §Client
+  behavior and had never been built on ANY platform): iOS Settings →
+  Notifications, Android Settings → Notifications, web Records → Settings.
+  Turning it off **deletes the token node** — a local flag would leave the cron
+  still reminding you — and the launch-time re-upload checks the same flag, or
+  the next launch would quietly restore the token the player just deleted.
+- Verified: iOS toggle screenshot-verified on the 17 Pro simulator, web toggle
+  rendered + `enable()` proven to no-op cleanly with the placeholder key,
+  Android compiles clean.

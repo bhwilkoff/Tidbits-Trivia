@@ -163,6 +163,14 @@ export const FirebaseNet = {
     await db.remove(db.ref(_db, `duelInbox/${uid}/${duelId}`));
   },
 
+  // Push token registry (docs/PUSH-CONTRACT.md) — owner-only, keyed by the AUTH uid,
+  // because a token is per-device and a device authenticates as a uid. The web stores the
+  // whole PushSubscription blob, which is what pywebpush needs back.
+  async setPushToken(uid, platform, value) {
+    const { db } = await ensure();
+    await db.set(db.ref(_db, `pushTokens/${uid}/${platform}`), value);
+  },
+
   // Delete a node outright. Used only by account deletion, where a `set(null)` IS the
   // delete the rules see (docs: emailOwners/$key had to be taught to allow it).
   async removePath(path) {

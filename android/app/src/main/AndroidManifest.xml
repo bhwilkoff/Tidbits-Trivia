@@ -4,6 +4,9 @@
 
     <!-- Trivia Night local multiplayer (DNS-SD discovery + TCP sockets; Wi-Fi Aware). -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- docs/PUSH-CONTRACT.md: "your Daily is ready". Requested with context after a
+         Daily, never on cold launch. API 33+ only; below that it is install-granted. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE"/>
@@ -82,8 +85,9 @@
                 android:resource="@xml/shortcuts"/>
         </activity>
 
-        <!-- Firebase Messaging service goes here when push ships -->
-        <!--
+        <!-- docs/PUSH-CONTRACT.md, the FCM leg. The service exists to catch a ROTATED
+             token; the display of a notification is FCM's own default for a message with
+             a notification payload, which is what the cron sends. -->
         <service
             android:name=".notifications.AppFirebaseMessagingService"
             android:exported="false">
@@ -91,7 +95,6 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT"/>
             </intent-filter>
         </service>
-        -->
 
     </application>
 

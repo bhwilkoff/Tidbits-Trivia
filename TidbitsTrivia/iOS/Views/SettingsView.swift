@@ -12,6 +12,7 @@ struct SettingsView: View {
     @Environment(PlayerIdentityStore.self) private var identity
     @AppStorage(Haptics.defaultsKey) private var hapticsEnabled = true
     @AppStorage(GameSettings.reviewKey) private var reviewEnabled = true
+    @AppStorage(GameSettings.remindersKey) private var remindersEnabled = true
     @State private var confirmReset = false
     @State private var appleNonce = ""
     @State private var confirmDelete = false
@@ -94,6 +95,22 @@ struct SettingsView: View {
                     Text("Gameplay")
                 } footer: {
                     Text("Occasionally re-asks questions you've missed, spaced out, so they stick. Turn off to only ever see new questions.")
+                }
+                // docs/PUSH-CONTRACT.md + App Store 4.5.4: reminders need an in-app
+                // opt-out. Turning it OFF deletes the token node, which is what actually
+                // stops a send — a local flag would leave the cron still reminding you.
+                Section {
+                    Toggle("Daily reminder", isOn: $remindersEnabled)
+                        .onChange(of: remindersEnabled) { _, on in
+                            Task {
+                                if on { await PushManager.shared.requestIfNeeded() }
+                                else { await identity.clearPushToken(platform: "ios") }
+                            }
+                        }
+                } header: {
+                    Text("Notifications")
+                } footer: {
+                    Text("One notification a day, only if you haven't played your Daily yet.")
                 }
                 Section("Game Center") {
                     HStack {

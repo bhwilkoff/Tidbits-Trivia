@@ -19,6 +19,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.learningischange.tidbitstrivia.data.Store
+import com.learningischange.tidbitstrivia.notifications.PushTokens
+import kotlinx.coroutines.launch
 import com.learningischange.tidbitstrivia.ui.theme.Ink
 import com.learningischange.tidbitstrivia.ui.theme.Pops
 
@@ -32,6 +34,8 @@ fun SettingsScreen(store: Store, dynamicColor: Boolean, onDynamicColor: (Boolean
     var dyn by remember { mutableStateOf(dynamicColor) }
     var confirmReset by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
+    var reminders by remember { mutableStateOf(store.remindersEnabled()) }
+    val scope = rememberCoroutineScope()
     var resetSeenDone by remember { mutableStateOf(false) }
     val version = remember {
         runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull() ?: "—"
@@ -54,6 +58,20 @@ fun SettingsScreen(store: Store, dynamicColor: Boolean, onDynamicColor: (Boolean
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             Section("Appearance")
             ToggleRow("Use system colors", "Tint the app with your wallpaper palette (Material You).", dyn) { dyn = it; onDynamicColor(it) }
+        }
+
+        Section("Notifications")
+        // The in-app opt-out push has to have (docs/PUSH-CONTRACT.md; App Store 4.5.4's
+        // rule, applied on Play too). Turning it off deletes the token node, which is what
+        // actually stops a send — a local flag would leave the cron still reminding you.
+        ToggleRow("Daily reminder", "One notification a day, only if you haven't played your Daily yet.",
+            reminders) { want ->
+            reminders = want
+            if (want) {
+                (context as? android.app.Activity)?.let { PushTokens.requestIfNeeded(it) }
+                scope.launch { PushTokens.uploadTokenIfAllowed(context) }
+            } else scope.launch { PushTokens.disable() }
+            store.setRemindersEnabled(want)
         }
 
         Section("Account")

@@ -1543,6 +1543,14 @@ private fun AnswerButton(text: String, state: AnswerVisual, enabled: Boolean, on
 private fun ResultsScreen(game: GameState, onPlayAgain: (() -> Unit)?, onDone: () -> Unit, duelId: String? = null) {
     val context = LocalContext.current
     if (duelId != null) LaunchedEffect(duelId) { com.learningischange.tidbitstrivia.data.Duels.submit(duelId, game.score) }   // L5: submit my duel score
+    // Push (docs/PUSH-CONTRACT.md): ask for notifications WITH CONTEXT — right after a
+    // Daily, where "your Daily is ready tomorrow" means something — never on cold launch.
+    if (game.mode == Mode.DAILY) LaunchedEffect(Unit) {
+        (context as? android.app.Activity)?.let {
+            com.learningischange.tidbitstrivia.notifications.PushTokens.requestIfNeeded(it)
+        }
+        com.learningischange.tidbitstrivia.notifications.PushTokens.uploadTokenIfAllowed(context)
+    }
     val total = game.answered.size
     val acc = if (total == 0) 0 else game.correctCount * 100 / total
     val grid = game.answered.joinToString("") { if (it.chosen == null) "⚫️" else if (it.correct) "🟢" else "🔴" }

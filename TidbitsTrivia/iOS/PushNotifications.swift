@@ -20,7 +20,12 @@ final class PushManager: NSObject, ObservableObject, UIApplicationDelegate {
     var hasAsked: Bool { UserDefaults.standard.bool(forKey: askedKey) }
 
     /// Ask for permission if we never have, then register. Call after a Daily completes.
+    ///
+    /// The opt-out is checked HERE rather than at the call sites: a player who turned
+    /// reminders off in Settings would otherwise be re-registered by the next Daily, and
+    /// the token node they deleted would come straight back.
     func requestIfNeeded() async {
+        guard GameSettings.remindersEnabled else { return }
         guard !hasAsked else { await registerIfAuthorized(); return }
         UserDefaults.standard.set(true, forKey: askedKey)
         let granted = (try? await UNUserNotificationCenter.current()

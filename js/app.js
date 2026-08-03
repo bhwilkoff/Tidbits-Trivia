@@ -12,6 +12,7 @@ import { FirebaseNet } from './firebase.js';
 import { openLive, closeLive } from './live.js';
 import { Identity, avatarHue, initialsOf } from './identity.js';
 import { Entitlement } from './entitlement.js';
+import { Push } from './push.js';
 import { Duels } from './duels.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -1484,7 +1485,20 @@ function settingsSection() {
   const on = Store.reviewEnabled();
   return `<h2 class="section">Settings</h2>
     <label class="card row review-toggle"><span><b>Review questions</b><div class="muted">Re-ask questions you've missed, spaced out, so they stick. Off = only new questions.</div></span>
-      <input type="checkbox" id="review-toggle" ${on ? 'checked' : ''}></label>`;
+      <input type="checkbox" id="review-toggle" ${on ? 'checked' : ''}></label>
+    ${reminderToggle()}`;
+}
+
+// The in-app opt-out push needs to have (App Store 4.5.4's rule, and plain courtesy on the
+// web). Hidden entirely where it cannot work — an unsupported browser or an unconfigured
+// VAPID key would otherwise render a switch that silently does nothing.
+function reminderToggle() {
+  if (!Push.supported || !Push.configured) return '';
+  const denied = Push.permission === 'denied';
+  return `<label class="card row review-toggle"><span><b>Daily reminder</b><div class="muted">${
+    denied ? 'Blocked in your browser settings — turn notifications back on for this site first.'
+           : 'One notification a day, only if you haven\'t played your Daily yet.'}</div></span>
+    <input type="checkbox" id="reminder-toggle" ${denied ? 'disabled' : ''}></label>`;
 }
 function profileCard() {
   const p = Identity.profile;
@@ -1823,6 +1837,16 @@ function bindRecords() {
   app.querySelectorAll('[data-best]').forEach((b) => b.addEventListener('click', () => openBests(b.dataset.best)));
   app.querySelector('[data-all-games]')?.addEventListener('click', openAllGames);
   const rt = $('#review-toggle'); if (rt) rt.addEventListener('change', (e) => Store.setReviewEnabled(e.target.checked));
+  const pt = $('#reminder-toggle');
+  if (pt) {
+    // The switch reflects the REAL subscription, which is async, so it starts off and
+    // corrects itself — never the other way round, or an off state reads as a broken opt-out.
+    Push.isSubscribed().then((sub) => { pt.checked = sub; });
+    pt.addEventListener('change', async (e) => {
+      if (e.target.checked) { const ok = await Push.enable(); e.target.checked = ok; }
+      else await Push.disable();
+    });
+  }
 }
 
 // ---------------- Game engine ----------------
@@ -2616,6 +2640,11 @@ function renderResults() {
   $('[data-done]').addEventListener('click', quitGame);
   app.querySelectorAll('[data-hdyk]').forEach((b) => b.addEventListener('click', () => shareHDYK(nailed[+b.dataset.hdyk])));
   if (game.mode.id === 'daily' && !game.dailyDay) submitDailyBoardResult(s);   // today's Daily → the global board (archive replays don't count)
+  // Push (docs/PUSH-CONTRACT.md): ask for notifications WITH CONTEXT, right after a Daily,
+  // where "your Daily is ready" means something — never on load. Asked at most once
+  // unprompted; the Settings toggle is the way back in after that.
+  if (game.mode.id === 'daily' && !Push.hasAsked) Push.enable();
+  else Push.refresh();
   if (game._duelId) {   // L5: submit my score to the duel + show the outcome
     const duelId = game._duelId, myScore = s.score;
     Duels.submit(duelId, myScore).then(async () => {

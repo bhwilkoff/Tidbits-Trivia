@@ -111,6 +111,11 @@ object FirebaseNet {
         return u
     }
 
+    /** Push token registry (docs/PUSH-CONTRACT.md) — owner-only, keyed by the auth uid. */
+    suspend fun setPushToken(uid: String, platform: String, token: String) {
+        db.getReference("pushTokens/$uid/$platform").setValue(token).await()
+    }
+
     /** Ownership proof for the email-keyed profile — the players/{key} write rule requires
      *  emailOwners/{key} to match auth.token.email. */
     suspend fun setEmailOwner(accountKey: String, email: String) {

@@ -259,6 +259,25 @@ object PlayerIdentity {
         watch(uid)                                              // (B) re-point to the fresh anon
     }
 
+    /** Push (docs/PUSH-CONTRACT.md): store this device's FCM token under the owner-only
+     *  `pushTokens/{authUid}/android` node. Keyed by the AUTH uid because a token is
+     *  per-device, and a device authenticates as a uid. */
+    fun savePushToken(token: String, platform: String) {
+        if (token.isEmpty()) return
+        scope.launch {
+            val uid = FirebaseNet.uid() ?: return@launch
+            runCatching { FirebaseNet.setPushToken(uid, platform, token) }
+        }
+    }
+
+    /** Reminders off — delete the token node (the in-app opt-out the contract requires). */
+    fun clearPushToken(platform: String) {
+        scope.launch {
+            val uid = FirebaseNet.uid() ?: return@launch
+            runCatching { FirebaseNet.removePath("pushTokens/$uid/$platform") }
+        }
+    }
+
     /** Surfaced to the delete-account UI so a failure is VISIBLE rather than a silent no-op. */
     var deleteError: String? by mutableStateOf(null); private set
 

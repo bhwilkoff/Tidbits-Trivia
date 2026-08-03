@@ -16,6 +16,8 @@ import com.learningischange.tidbitstrivia.data.Expeditions
 import com.learningischange.tidbitstrivia.data.Marathon
 import com.learningischange.tidbitstrivia.ui.AppRoot
 import com.learningischange.tidbitstrivia.ui.theme.AppTheme
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 
 /** Synthetic history so the Records store shot isn't an empty state. Only ever writes into
  *  an EMPTY store, so it can never touch a real player's data (mirrors Apple's seeder). */
@@ -74,6 +76,13 @@ class MainActivity : ComponentActivity() {
         // (docs/CLUB-FEATURES-BUILD.md "Feature 5").
         if (BuildConfig.DEBUG && intent.hasExtra("expedition_force_pass")) {
             Expeditions.debugForcePass = intent.getBooleanExtra("expedition_force_pass", false)
+        }
+        // Push (docs/PUSH-CONTRACT.md): re-upload the FCM token on every launch when
+        // notifications are already allowed, which is also what catches a rotated token on a
+        // device that never opens the messaging service. The PROMPT is not here — it fires
+        // after a Daily, where the ask has a reason.
+        lifecycleScope.launch {
+            com.learningischange.tidbitstrivia.notifications.PushTokens.uploadTokenIfAllowed(this@MainActivity)
         }
         setContent {
             var dynamic by remember { mutableStateOf(store.dynamicColorEnabled()) }

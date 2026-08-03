@@ -134,9 +134,16 @@ def main():
             # Years read without a thousands separator (1822, not 1,822).
             is_year = metric.endswith("year") or metric == "inception"
             disp = (str(int(v)) if is_year else f"{int(v):,}") + ((" " + unit) if unit else "")
+            # The reveal must say what the subject IS, not repeat the number the
+            # player just guessed. Writing "KFC: 1930." here is what STUB-REVEAL
+            # exists to catch, and a repair script had been rewriting these after
+            # the fact -- so every regeneration re-introduced 63 of them.
+            _d = (desc_of.get(t) or "").strip()
+            if not _d:
+                continue
             out.append([
                 f"closest:{metric}:{t}", prompt_fn(name, cat, desc_of.get(t, '')), v, lo, hi, step, tol, unit,
-                cat, f"{name}: {disp}.", name, url_of.get(t, ""),
+                cat, f"{name}: {_d}", name, url_of.get(t, ""),
             ])
 
     out = genguard.merge('closest', out, args.out,

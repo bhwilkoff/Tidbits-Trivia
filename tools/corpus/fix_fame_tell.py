@@ -130,6 +130,30 @@ def main():
             if m:
                 nationality.setdefault(r[7], qg._nat_family(m.group(1)))
 
+    # Non-people have no occupation, so they fall back to Wikidata TYPE (p31)
+    # with a size ceiling — exactly what restore_fame_dropped.py works out: p31
+    # for a person is "human" (23,487 subjects, useless) but for a place it is
+    # "mountain range" (40) and for a series "television series". Without this,
+    # 80 of the 95 rounds flagged in the BRIGHT direction were TV shows and
+    # places nothing could repair.
+    import sqlite3 as _sq
+    _db = _sq.connect(f"file:{SOURCE_DB}?mode=ro", uri=True)
+    p31_of = {t: (v or "") for t, v in _db.execute("select title, p31 from subject")}
+    _db.close()
+    by_type = collections.defaultdict(list)
+    for t, v in p31_of.items():
+        if t not in sub:
+            continue
+        for ty in v.split(","):
+            if ty:
+                by_type[ty].append((sub[t][0], t))
+    kinds = qg.kind_map(rows)
+    raw_expl = {}
+    for r in rows:
+        if r[7] and r[6]:
+            raw_expl.setdefault(r[7], r[6])
+    MAX_TYPE = 500
+
     by_occ = collections.defaultdict(list)
     for t, (q, p106, g) in sub.items():
         for occ in p106.split(","):
@@ -147,7 +171,13 @@ def main():
         if any(x is None for x in ranks) or not ranks[r[3]]:
             continue
         ideal = ranks[r[3]]
-        if min(ranks[i] for i in range(4) if i != r[3]) / ideal < a.threshold:
+        others = [ranks[i] for i in range(4) if i != r[3]]
+        # BOTH directions. The rule started as "the answer is the only name you
+        # don't recognise" and the mirror image is just as readable on screen:
+        # 'Lost in Space' against My Happy Ending, The Conners and The Knockout
+        # is answerable by picking the only show you HAVE heard of. Found by
+        # rendering a Film & TV round after the dim direction was already clean.
+        if min(others) / ideal < a.threshold and ideal / max(others) < a.threshold:
             continue
 
         ans = str(opts[r[3]])
@@ -184,6 +214,25 @@ def main():
                         continue
                 if t not in got or rarity < got[t][1]:
                     got[t] = (q, rarity)
+        if len(got) < 3 and not p106:
+            want_kind = qg.option_kind(ans, kinds, raw_expl)
+            for ty in p31_of.get(ans, "").split(","):
+                pool = by_type.get(ty, ())
+                if not ty or len(pool) > MAX_TYPE:
+                    continue
+                for q, t in pool:
+                    if t == ans or not (ideal / 5 <= q <= ideal * 5) or t in text:
+                        continue
+                    if want_nat and nationality.get(t) and nationality[t] != want_nat:
+                        continue
+                    if want_kind and qg.option_kind(t, kinds, raw_expl) != want_kind:
+                        continue
+                    if anchor is not None:
+                        y = years.get(t)
+                        if y is None or abs(y - anchor) > 200:
+                            continue
+                    if t not in got or len(pool) < got[t][1]:
+                        got[t] = (q, len(pool))
         if len(got) < 3:
             skipped += 1
             unrepairable.append(r[0])

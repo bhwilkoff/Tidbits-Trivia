@@ -299,15 +299,21 @@ NOT_A_PLACE = re.compile(
     r"film|movie|song|album|single|novel|book|poem|series|sitcom|anime|video game|"
     r"manga|painting|opera|symphony|musical|anthem)\b", re.I)
 
+# (mode, per-round, cat idx, shape idx, REVEAL idx). The reveal index is stated
+# because STUB-REVEAL used to scan EVERY string cell in the row looking for
+# "Something: 1987." — which flags any subject whose NAME carries a colon and a
+# number. "Space: 1999" and "Egashira 2:50" are television and a comedian, and
+# both were reported as stub reveals off their ANSWER cell while their actual
+# reveals ("British science fiction TV series (1975-1977)") were fine.
 SHAPE_FILES = {
-    "picture.json":    ("pictureId", 10, 4, 9),    # (mode, per-round, cat idx, shape idx)
-    "thisorthat.json": ("thisOrThat", 10, 4, None),
-    "closest.json":    ("closestCall", 8, 8, None),
-    "order.json":      ("ordering", 6, 4, None),
-    "match.json":      ("matching", 6, 4, None),
-    "typeanswer.json": ("typeAnswer", 8, 4, None),
-    "oddoneout.json":  ("oddOneOut", 8, 4, None),
-    "enumerate.json":  ("enumerate", 3, 3, None),
+    "picture.json":    ("pictureId", 10, 4, 9, 6),
+    "thisorthat.json": ("thisOrThat", 10, 4, None, 6),
+    "closest.json":    ("closestCall", 8, 8, None, 9),
+    "order.json":      ("ordering", 6, 4, None, 5),
+    "match.json":      ("matching", 6, 4, None, 5),
+    "typeanswer.json": ("typeAnswer", 8, 4, None, 5),
+    "oddoneout.json":  ("oddOneOut", 8, 4, None, 6),
+    "enumerate.json":  ("enumerate", 3, 3, None, None),
 }
 CATEGORIES = ["history", "science", "geography", "arts", "screen", "music",
               "sports", "business"]
@@ -774,12 +780,14 @@ def check():
         # screen as "the one name I don't know."
         if len(opts) >= 4 and qrank:
             _rk = [qrank.get(str(o)) for o in opts]
-            if all(_rk) and min(_rk[i] for i in range(len(opts))
-                                if i != ci) / _rk[ci] >= 10:
-                bad["FAME-TELL"].append(
-                    f"{q[0]}: {opts[ci]!r} is "
-                    f"{min(_rk[i] for i in range(len(opts)) if i != ci) / _rk[ci]:.0f}x "
-                    f"more obscure than every distractor {opts}")
+            if all(_rk):
+                _o = [_rk[i] for i in range(len(opts)) if i != ci]
+                _dim, _bright = min(_o) / _rk[ci], _rk[ci] / max(_o)
+                if _dim >= 10 or _bright >= 10:
+                    _how = (f"{_dim:.0f}x more obscure than" if _dim >= 10
+                            else f"{_bright:.0f}x more famous than")
+                    bad["FAME-TELL"].append(
+                        f"{q[0]}: {opts[ci]!r} is {_how} every distractor {opts}")
         if len(opts) >= 4:
             ka = kinds.get(str(opts[ci]))
             odd = [str(o) for i, o in enumerate(opts)
@@ -853,7 +861,7 @@ def check():
                 f"(chance is 4.2%) — someone sorted them; see the rule note")
 
     # ---- the shape sources -------------------------------------------------
-    for name, (mode, per_round, cat_i, shape_i) in SHAPE_FILES.items():
+    for name, (mode, per_round, cat_i, shape_i, reveal_i) in SHAPE_FILES.items():
         rows = load(name)
         if not rows:
             bad["BROKEN-SHAPE"].append(f"{name} is missing or empty")
@@ -872,13 +880,14 @@ def check():
             # fact. Options of mixed type hand the player a second answer.
             # STUB-REVEAL, in the files corpus.json does not own. Checking only
             # corpus rows let "Whitney Houston: 2012." keep rendering in Closest
-            # Call, which carries its own explanation cell.
-            for cell in r:
-                if isinstance(cell, str) and ":" in cell and "\u2192" not in cell:
+            # Call, which carries its own explanation cell. Read the declared
+            # reveal cell, not every cell.
+            if reveal_i is not None and len(r) > reveal_i and isinstance(r[reveal_i], str):
+                cell = r[reveal_i]
+                if ":" in cell and "\u2192" not in cell:
                     d = cell.split(":", 1)[1].strip()
                     if STUB_DESC.match(re.split(r"(?<=[.!?])\s", d, maxsplit=1)[0].strip()):
                         bad["STUB-REVEAL"].append(f"{r[0]}: {cell[:56]}")
-                        break
             if name == "typeanswer.json":
                 v = typein_verdict(r[1])
                 if v:

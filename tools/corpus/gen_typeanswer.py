@@ -15,6 +15,7 @@ import argparse, hashlib, json, os, re, urllib.parse
 import sys
 sys.path.insert(0, __import__('os').path.dirname(__file__))
 import genguard
+import quality_gate as qg
 
 
 def norm(s):
@@ -52,6 +53,13 @@ def main():
         title = q[8].split("/wiki/")[-1]
         answer = q[2][q[3]]
         if not answer_is_subject(answer, title) or title in seen:
+            continue
+        # A free-text clue that is only the subject's bare description cannot be
+        # answered: "Who is this — 'American politician (1939-1987)'?" names no
+        # fact to reason from. Asked through the GATE's own predicate rather than
+        # a second copy of the rule, so the generator cannot drift away from what
+        # the gate will reject (it produced 129 of these on a re-run).
+        if qg.typein_verdict(q[1]):
             continue
         seen.add(title)
         # Accepted set: canonical answer, de-underscored title, Wikidata aliases.

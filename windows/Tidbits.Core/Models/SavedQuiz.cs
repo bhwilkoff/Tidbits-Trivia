@@ -154,6 +154,18 @@ public sealed class SavedQuiz
     /// Which bundled set a question came from, or null for a plain corpus row.
     /// Derived from the question's SHAPE rather than threaded through from the call
     /// site, so it stays correct no matter which surface built the set.
+    /// The ID prefixes owned by the two shapes that carry no payload of their own.
+    /// A shape owns MORE than one, because later generators added their own:
+    /// `oddrel:` is 590 of the 1,094 shipped Odd-one-out rows and `biztot:` is every
+    /// business pair. Matching only `odd:` / `tot:` sent them down the plain-corpus-ref
+    /// path, where resolving cannot find them and the question vanishes from a saved
+    /// or shared quiz.
+    public static readonly Dictionary<string, string> SetsByIdPrefix = new()
+    {
+        ["tot"] = "thisorthat", ["biztot"] = "thisorthat",
+        ["odd"] = "oddoneout", ["oddrel"] = "oddoneout",
+    };
+
     public static string? BundledSetName(Question q)
     {
         if (q.ImageUrl is not null) return "picture";
@@ -162,9 +174,8 @@ public sealed class SavedQuiz
         if (q.Matching is not null) return "match";
         if (q.Accepted is not null) return "typeanswer";
         if (q.Enumerate is not null) return "enumerate";
-        if (q.Id.StartsWith("tot:")) return "thisorthat";
-        if (q.Id.StartsWith("odd:")) return "oddoneout";
-        return null;
+        var prefix = q.Id.Split(':')[0];
+        return SetsByIdPrefix.TryGetValue(prefix, out var set) ? set : null;
     }
 
     public static SavedQuiz From(IEnumerable<Question> questions, string topic, string creatorId,

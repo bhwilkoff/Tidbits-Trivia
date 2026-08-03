@@ -7,7 +7,7 @@
 import { readFileSync } from 'node:fs';
 import {
   quizFromJSON, quizToJSON, makeQuizID, cleanTitle, resolveQuiz, makeQuiz,
-  ID_ALPHABET,
+  ID_ALPHABET, bundledSetName,
 } from '../../js/quiz.js';
 
 let failures = 0;
@@ -60,6 +60,17 @@ check('only the corpus ref + inline resolved', collide.questions.length, 2);
 const viaSet = resolveQuiz(quiz, () => null,
   (set, id) => (set === 'picture' ? { id, prompt: 'Who is this?', image: 'x.jpg' } : null));
 check('set ref resolves from its own set', viaSet.questions.some((q) => q.prompt === 'Who is this?'), true);
+
+console.log('a payload-less shape owns EVERY prefix its generators emit');
+// `oddrel:` is 590 of the 1,094 shipped Odd-one-out rows and `biztot:` is every
+// business pair. Matching only `odd:` / `tot:` made them plain corpus refs, which
+// resolve against a corpus that does not hold them -- the question just vanished.
+check('tot', bundledSetName({ id: 'tot:first:A|B' }), 'thisorthat');
+check('biztot', bundledSetName({ id: 'biztot:3M|AMD' }), 'thisorthat');
+check('odd', bundledSetName({ id: 'odd:geo:1' }), 'oddoneout');
+check('oddrel', bundledSetName({ id: 'oddrel:P170:12' }), 'oddoneout');
+check('a longer word starting the same way is not that set',
+      bundledSetName({ id: 'total:recall:1' }), null);
 
 console.log('ids and titles');
 let seed = 42;

@@ -203,6 +203,19 @@ extension Question {
     /// codec runs off the main actor.
     nonisolated var isLiveGenerated: Bool { id.hasPrefix("live:") || templateID == "live" }
 
+    /// The ID prefixes owned by the two shapes that carry no payload of their own.
+    ///
+    /// A shape owns MORE than one prefix, because later generators added their own:
+    /// `oddrel:` (Odd-one-out derived from the corpus's 1:1 relations) is 590 of the
+    /// 1,094 shipped rows and `biztot:` is every business pair. Matching only `odd:`
+    /// / `tot:` sent them down the plain-corpus-ref path, where resolving looks them
+    /// up in the corpus, does not find them, and the question vanishes from a saved
+    /// or shared quiz.
+    nonisolated static let setsByIDPrefix: [String: String] = [
+        "tot": "thisorthat", "biztot": "thisorthat",
+        "odd": "oddoneout", "oddrel": "oddoneout",
+    ]
+
     /// Which bundled set this question came from, or nil for a plain corpus row.
     ///
     /// Derived from the question's SHAPE rather than threaded through from the call
@@ -216,9 +229,7 @@ extension Question {
         if matching != nil { return "match" }
         if accepted != nil { return "typeanswer" }
         if enumerate != nil { return "enumerate" }
-        if id.hasPrefix("tot:") { return "thisorthat" }
-        if id.hasPrefix("odd:") { return "oddoneout" }
-        return nil
+        return Question.setsByIDPrefix[String(id.prefix(while: { $0 != ":" }))]
     }
 }
 

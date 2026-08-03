@@ -1,4 +1,4 @@
-CoreData: error: Failed to stat path '/Users/bhwilkoff/Library/Developer/CoreSimulator/Devices/42CDD338-8E89-4386-9CD6-61663AF79286/data/Containers/Data/Application/B55EF83B-1DF7-4A48-81D5-1EFC494B4C70/Library/Application Support/default.store', errno 2 / No such file or directory.
+CoreData: error: Failed to stat path '/Users/bhwilkoff/Library/Developer/CoreSimulator/Devices/42CDD338-8E89-4386-9CD6-61663AF79286/data/Containers/Data/Application/06961D46-58D8-4450-9457-1C45C60D70D1/Library/Application Support/default.store', errno 2 / No such file or directory.
 CoreData: error: Executing as effective user 501
 CoreData: error:   Sandbox access to file-write-create denied
 CoreData: error: Failed to statfs file; errno 2 / No such file or directory.
@@ -16,7 +16,7 @@ CoreData: error:   Owner UID: 			0
 CoreData: error:   Filesystem type name: 		
 CoreData: error:   Mount on name: 			
 CoreData: error:   Mount from name: 		
-CoreData: error: Failed to stat path '/Users/bhwilkoff/Library/Developer/CoreSimulator/Devices/42CDD338-8E89-4386-9CD6-61663AF79286/data/Containers/Data/Application/B55EF83B-1DF7-4A48-81D5-1EFC494B4C70/Library/Application Support', errno 2 / No such file or directory.
+CoreData: error: Failed to stat path '/Users/bhwilkoff/Library/Developer/CoreSimulator/Devices/42CDD338-8E89-4386-9CD6-61663AF79286/data/Containers/Data/Application/06961D46-58D8-4450-9457-1C45C60D70D1/Library/Application Support', errno 2 / No such file or directory.
 CoreData: error: Executing as effective user 501
 CoreData: error:   Sandbox access to file-write-create denied
 CoreData: error: Failed to statfs file; errno 2 / No such file or directory.
@@ -35,12 +35,12 @@ CoreData: error:   Filesystem type name:
 CoreData: error:   Mount on name: 			
 CoreData: error:   Mount from name: 		
 CoreData: error: Executing as effective user 501
-CoreData: error: Information for /Users/bhwilkoff/Library/Developer/CoreSimulator/Devices/42CDD338-8E89-4386-9CD6-61663AF79286/data/Containers/Data/Application/B55EF83B-1DF7-4A48-81D5-1EFC494B4C70/Library
+CoreData: error: Information for /Users/bhwilkoff/Library/Developer/CoreSimulator/Devices/42CDD338-8E89-4386-9CD6-61663AF79286/data/Containers/Data/Application/06961D46-58D8-4450-9457-1C45C60D70D1/Library
 CoreData: error: ---------------------------
 CoreData: error:   File Device ID: 	0
 CoreData: error:   Device ID: 		16777233
 CoreData: error:   File Size: 		160 bytes
-CoreData: error:   File inode: 		660601331
+CoreData: error:   File inode: 		660616450
 CoreData: error:   File user ID: 		501
 CoreData: error:   File group ID: 		20
 CoreData: error:   File Permissions: 	
@@ -54,22 +54,22 @@ CoreData: error:   File system type: 		0x1a
 CoreData: error:   File system flags: 		0x4909080
 CoreData: error:   MNT_JOURNALED
 CoreData: error:   Total data blocks: 		120691733
-CoreData: error:   Free data blocks: 		6489972
-CoreData: error:   Free blocks for nonsuperuser:	6489972
-CoreData: error:   Total i-nodes: 			263277147
+CoreData: error:   Free data blocks: 		5297915
+CoreData: error:   Free blocks for nonsuperuser:	5297915
+CoreData: error:   Total i-nodes: 			215595377
 CoreData: error:   File system ID: 		0x1000011, 0x1a
-CoreData: error:   Free i-nodes: 			259598880
+CoreData: error:   Free i-nodes: 			211916600
 CoreData: error:   Owner UID: 			0
 CoreData: error:   Filesystem type name: 		apfs
 CoreData: error:   Mount on name: 			/System/Volumes/Data
 CoreData: error:   Mount from name: 		/dev/disk3s5
 CoreData: error: Executing as effective user 501
-CoreData: error: Information for /Users/bhwilkoff/Library/Developer/CoreSimulator/Devices/42CDD338-8E89-4386-9CD6-61663AF79286/data/Containers/Data/Application/B55EF83B-1DF7-4A48-81D5-1EFC494B4C70
+CoreData: error: Information for /Users/bhwilkoff/Library/Developer/CoreSimulator/Devices/42CDD338-8E89-4386-9CD6-61663AF79286/data/Containers/Data/Application/06961D46-58D8-4450-9457-1C45C60D70D1
 CoreData: error: ---------------------------
 CoreData: error:   File Device ID: 	0
 CoreData: error:   Device ID: 		16777233
 CoreData: error:   File Size: 		224 bytes
-CoreData: error:   File inode: 		660601329
+CoreData: error:   File inode: 		660616448
 CoreData: error:   File user ID: 		501
 CoreData: error:   File group ID: 		20
 CoreData: error:   File Permissions: 	
@@ -245,7 +245,7 @@ CoreData: error: d
 CoreData: error:   755
 CoreData: error:   file is not a symbolic link
 CoreData: error:   Sandbox access to file-write-create denied
-CoreData: error: Logging status information for directory path: /Users/bhwilkoff/Library/Developer/CoreSimulator/Devices/42CDD338-8E89-4386-9CD6-61663AF79286/data/Containers/Data/Application/B55EF83B-1DF7-4A48-81D5-1EFC494B4C70/Library/Application Support
+CoreData: error: Logging status information for directory path: /Users/bhwilkoff/Library/Developer/CoreSimulator/Devices/42CDD338-8E89-4386-9CD6-61663AF79286/data/Containers/Data/Application/06961D46-58D8-4450-9457-1C45C60D70D1/Library/Application Support
 CoreData: error: Executing as effective user 501
 CoreData: error: Information for /
 CoreData: error:   File Device ID: 	0
@@ -403,11 +403,11 @@ CoreData: error:   755
 CoreData: error:   component is not a symbolic link
 CoreData: error:   component is readable
 CoreData: error:   component is writeable
-CoreData: error: Information for /Users/bhwilkoff/Library/Developer/CoreSimulator/Devices/42CDD338-8E89-4386-9CD6-61663AF79286/data/Containers/Data/Application/B55EF83B-1DF7-4A48-81D5-1EFC494B4C70
+CoreData: error: Information for /Users/bhwilkoff/Library/Developer/CoreSimulator/Devices/42CDD338-8E89-4386-9CD6-61663AF79286/data/Containers/Data/Application/06961D46-58D8-4450-9457-1C45C60D70D1
 CoreData: error:   File Device ID: 	0
 CoreData: error:   Device ID: 		16777233
 CoreData: error:   File Size: 		224 bytes
-CoreData: error:   File inode: 		660601329
+CoreData: error:   File inode: 		660616448
 CoreData: error:   File user ID: 		501
 CoreData: error:   File group ID: 		20
 CoreData: error:   File Permissions: 	
@@ -416,11 +416,11 @@ CoreData: error:   755
 CoreData: error:   component is not a symbolic link
 CoreData: error:   component is readable
 CoreData: error:   component is writeable
-CoreData: error: Information for /Users/bhwilkoff/Library/Developer/CoreSimulator/Devices/42CDD338-8E89-4386-9CD6-61663AF79286/data/Containers/Data/Application/B55EF83B-1DF7-4A48-81D5-1EFC494B4C70/Library
+CoreData: error: Information for /Users/bhwilkoff/Library/Developer/CoreSimulator/Devices/42CDD338-8E89-4386-9CD6-61663AF79286/data/Containers/Data/Application/06961D46-58D8-4450-9457-1C45C60D70D1/Library
 CoreData: error:   File Device ID: 	0
 CoreData: error:   Device ID: 		16777233
 CoreData: error:   File Size: 		160 bytes
-CoreData: error:   File inode: 		660601331
+CoreData: error:   File inode: 		660616450
 CoreData: error:   File user ID: 		501
 CoreData: error:   File group ID: 		20
 CoreData: error:   File Permissions: 	
@@ -429,28 +429,98 @@ CoreData: error:   755
 CoreData: error:   component is not a symbolic link
 CoreData: error:   component is readable
 CoreData: error:   component is writeable
-CoreData: error: Failed to stat path '/Users/bhwilkoff/Library/Developer/CoreSimulator/Devices/42CDD338-8E89-4386-9CD6-61663AF79286/data/Containers/Data/Application/B55EF83B-1DF7-4A48-81D5-1EFC494B4C70/Library/Application Support', errno 2 / No such file or directory.
+CoreData: error: Failed to stat path '/Users/bhwilkoff/Library/Developer/CoreSimulator/Devices/42CDD338-8E89-4386-9CD6-61663AF79286/data/Containers/Data/Application/06961D46-58D8-4450-9457-1C45C60D70D1/Library/Application Support', errno 2 / No such file or directory.
 CoreData: error:   Sandbox access to file-write-create denied
 CoreData: error: addPersistentStoreWithType:configuration:URL:options:error: returned error NSCocoaErrorDomain (512)
 CoreData: error: userInfo:
 CoreData: error: 	reason : Failed to create file; code = 2
 CoreData: error: storeType: SQLite
 CoreData: error: configuration: default
-CoreData: error: URL: file:///Users/bhwilkoff/Library/Developer/CoreSimulator/Devices/42CDD338-8E89-4386-9CD6-61663AF79286/data/Containers/Data/Application/B55EF83B-1DF7-4A48-81D5-1EFC494B4C70/Library/Application%20Support/default.store
+CoreData: error: URL: file:///Users/bhwilkoff/Library/Developer/CoreSimulator/Devices/42CDD338-8E89-4386-9CD6-61663AF79286/data/Containers/Data/Application/06961D46-58D8-4450-9457-1C45C60D70D1/Library/Application%20Support/default.store
 CoreData: annotation: options:
 CoreData: annotation: 	NSMigratePersistentStoresAutomaticallyOption : 1
 CoreData: annotation: 	NSInferMappingModelAutomaticallyOption : 1
 CoreData: annotation: 	NSPersistentStoreRemoteChangeNotificationOptionKey : 1
 CoreData: annotation: 	NSPersistentHistoryTrackingKey : 1
-CoreData: error: <NSPersistentStoreCoordinator: 0x10158c200>: Attempting recovery from error encountered during addPersistentStore: 0x101454a80 Error Domain=NSCocoaErrorDomain Code=512 "The file couldn’t be saved." UserInfo={reason=Failed to create file; code = 2}
+CoreData: error: <NSPersistentStoreCoordinator: 0x10318c200>: Attempting recovery from error encountered during addPersistentStore: 0x103054a80 Error Domain=NSCocoaErrorDomain Code=512 "The file couldn’t be saved." UserInfo={reason=Failed to create file; code = 2}
 CoreData: error: During recovery, parent directory path reported as missing
-CoreData: error: Recovery attempt while adding <NSPersistentStoreDescription: 0x101454a80> (type: SQLite, url: file:///Users/bhwilkoff/Library/Developer/CoreSimulator/Devices/42CDD338-8E89-4386-9CD6-61663AF79286/data/Containers/Data/Application/B55EF83B-1DF7-4A48-81D5-1EFC494B4C70/Library/Application%20Support/default.store) was successful!
-MARATHON-GAME	1	ordering	mixed
-SHOWN	{"correct":0,"prompt":"Put these in order of when they began — earliest first.","explanation":"Porgy and Bess (1934) → Bluegrass music (1940) → Musique concrète (1948) → Bee Gees (1958)","id":"order:music:inception:25:Porgy_and_Bess","options":["Porgy and Bess","Bluegrass music","Musique concrète","Bee Gees"],"ordering":["Porgy and Bess","Bluegrass music","Musique concrète","Bee Gees"],"game":-1,"mode":"ordering","answer":"Porgy and Bess","template":"order","cat":"mixed","i":0,"difficulty":3,"title":"Porgy and Bess","qcat":"music"}
-SHOWN	{"prompt":"Put these people in order of birth — earliest first.","answer":"Wilhelm Furtwängler","qcat":"music","title":"Wilhelm Furtwängler","i":1,"game":-1,"explanation":"Wilhelm Furtwängler (1886) → Blind Lemon Jefferson (1893) → Hoagy Carmichael (1899) → Bob Wills (1905)","id":"order:music:birth_year:45:Wilhelm_Furtwängler","ordering":["Wilhelm Furtwängler","Blind Lemon Jefferson","Hoagy Carmichael","Bob Wills"],"cat":"mixed","correct":0,"template":"order","options":["Wilhelm Furtwängler","Blind Lemon Jefferson","Hoagy Carmichael","Bob Wills"],"mode":"ordering","difficulty":3}
-SHOWN	{"correct":0,"prompt":"Put these people in order of birth — earliest first.","explanation":"Roscoe Arbuckle (1887) → Hattie McDaniel (1893) → Indiana Jones (1899) → Henry Fonda (1905)","id":"order:screen:birth_year:25:Roscoe_Arbuckle","options":["Roscoe Arbuckle","Hattie McDaniel","Indiana Jones","Henry Fonda"],"ordering":["Roscoe Arbuckle","Hattie McDaniel","Indiana Jones","Henry Fonda"],"game":-1,"mode":"ordering","answer":"Roscoe Arbuckle","template":"order","cat":"mixed","i":2,"difficulty":3,"title":"Roscoe Arbuckle","qcat":"screen"}
-SHOWN	{"prompt":"Put these people in order of birth — earliest first.","answer":"Gregory of Narek","qcat":"arts","title":"Gregory of Narek","i":3,"game":-1,"explanation":"Gregory of Narek (951) → Zhou Bangyan (1056) → Avempace (1095) → Heloise (1101)","id":"order:arts:birth_year:24:Gregory_of_Narek","ordering":["Gregory of Narek","Zhou Bangyan","Avempace","Heloise"],"cat":"mixed","correct":0,"template":"order","options":["Gregory of Narek","Zhou Bangyan","Avempace","Heloise"],"mode":"ordering","difficulty":3}
-SHOWN	{"correct":0,"prompt":"Put these people in order of birth — earliest first.","explanation":"Don Budge (1915) → Maurice Richard (1921) → Ferenc Puskás (1927) → Garrincha (1933)","id":"order:sports:birth_year:37:Don_Budge","options":["Don Budge","Maurice Richard","Ferenc Puskás","Garrincha"],"ordering":["Don Budge","Maurice Richard","Ferenc Puskás","Garrincha"],"game":-1,"mode":"ordering","answer":"Don Budge","template":"order","cat":"mixed","i":4,"difficulty":3,"title":"Don Budge","qcat":"sports"}
-SHOWN	{"prompt":"Put these people in order of birth — earliest first.","answer":"Xiang Yu","qcat":"history","title":"Xiang Yu","i":5,"game":-1,"explanation":"Xiang Yu (232 BC) → Tiberius Gracchus (162 BC) → Wei Qing (150 BC) → Ptolemy XII Auletes (117 BC)","id":"order:history:birth_year:30:Xiang_Yu","ordering":["Xiang Yu","Tiberius Gracchus","Wei Qing","Ptolemy XII Auletes"],"cat":"mixed","correct":0,"template":"order","options":["Xiang Yu","Tiberius Gracchus","Wei Qing","Ptolemy XII Auletes"],"mode":"ordering","difficulty":3}
-MARATHON-GAME	2	ordering	history
-com.learningischange.tidbitstrivia: 33023
+CoreData: error: Recovery attempt while adding <NSPersistentStoreDescription: 0x103054a80> (type: SQLite, url: file:///Users/bhwilkoff/Library/Developer/CoreSimulator/Devices/42CDD338-8E89-4386-9CD6-61663AF79286/data/Containers/Data/Application/06961D46-58D8-4450-9457-1C45C60D70D1/Library/Application%20Support/default.store) was successful!
+MARATHON-GAME	1	thisOrThat	mixed
+SHOWN	{"correct":0,"mode":"thisOrThat","explanation":"Fantasia on a Theme by Thomas Tallis (1910) came before Serialism (1923).","difficulty":2,"options":["Fantasia on a Theme by Thomas Tallis","Serialism"],"cat":"mixed","i":0,"template":"tot","answer":"Fantasia on a Theme by Thomas Tallis","game":-1,"id":"tot:first:Fantasia_on_a_Theme_by_Thomas_Tallis|Serialism","title":"Fantasia on a Theme by Thomas Tallis \/ Serialism","qcat":"music","prompt":"Which came first?"}
+SHOWN	{"template":"tot","game":-1,"title":"Polykleitos \/ Shen Buhai","difficulty":2,"prompt":"Which came first?","i":1,"answer":"Polykleitos","correct":0,"options":["Polykleitos","Shen Buhai"],"explanation":"Polykleitos (490 BC) came before Shen Buhai (385 BC).","qcat":"arts","id":"tot:first:Polykleitos|Shen_Buhai","mode":"thisOrThat","cat":"mixed"}
+SHOWN	{"i":2,"options":["Luxembourg City","Province of North Carolina"],"difficulty":2,"qcat":"geography","id":"tot:bigger:Luxembourg_City|Province_of_North_Carolina","game":-1,"correct":1,"answer":"Province of North Carolina","cat":"mixed","prompt":"Which has the bigger population?","title":"Luxembourg City \/ Province of North Carolina","mode":"thisOrThat","explanation":"Province of North Carolina (~21,270) has more people than Luxembourg City (~15,091).","template":"tot"}
+SHOWN	{"i":3,"answer":"Francoist Spain","game":-1,"id":"tot:bigger:Kingdom_of_Asturias|Francoist_Spain","prompt":"Which is bigger by area?","options":["Kingdom of Asturias","Francoist Spain"],"correct":1,"title":"Kingdom of Asturias \/ Francoist Spain","qcat":"history","explanation":"Francoist Spain (504,030 km²) is larger than Kingdom of Asturias (60,000 km²).","mode":"thisOrThat","template":"tot","cat":"mixed","difficulty":2}
+SHOWN	{"i":4,"options":["John Wilkes Booth","Ellen Terry"],"difficulty":2,"qcat":"screen","id":"tot:first:John_Wilkes_Booth|Ellen_Terry","game":-1,"correct":0,"answer":"John Wilkes Booth","cat":"mixed","prompt":"Which came first?","title":"John Wilkes Booth \/ Ellen Terry","mode":"thisOrThat","explanation":"John Wilkes Booth (1838) came before Ellen Terry (1847).","template":"tot"}
+SHOWN	{"prompt":"Which came first?","qcat":"music","i":5,"answer":"L'Orfeo","explanation":"L'Orfeo (1607) came before Hudson's Bay Company (1670).","template":"tot","mode":"thisOrThat","difficulty":2,"id":"tot:first:L'Orfeo|Hudson's_Bay_Company","options":["L'Orfeo","Hudson's Bay Company"],"correct":0,"cat":"mixed","title":"L'Orfeo \/ Hudson's Bay Company","game":-1}
+SHOWN	{"i":6,"options":["AC Milan","Inter Milan"],"difficulty":2,"qcat":"sports","id":"tot:first:AC_Milan|Inter_Milan","game":-1,"correct":0,"answer":"AC Milan","cat":"mixed","prompt":"Which came first?","title":"AC Milan \/ Inter Milan","mode":"thisOrThat","explanation":"AC Milan (1899) came before Inter Milan (1908).","template":"tot"}
+SHOWN	{"template":"tot","game":-1,"title":"Liga MX \/ Super Bowl","difficulty":2,"prompt":"Which came first?","i":7,"answer":"Liga MX","correct":0,"options":["Liga MX","Super Bowl"],"explanation":"Liga MX (1943) came before Super Bowl (1967).","qcat":"sports","id":"tot:first:Liga_MX|Super_Bowl","mode":"thisOrThat","cat":"mixed"}
+SHOWN	{"i":8,"options":["Dundee","Coventry"],"difficulty":2,"qcat":"geography","id":"tot:bigger:Dundee|Coventry","game":-1,"correct":1,"answer":"Coventry","cat":"mixed","prompt":"Which is bigger by area?","title":"Dundee \/ Coventry","mode":"thisOrThat","explanation":"Coventry (98,640,000 km²) is larger than Dundee (67,339,690 km²).","template":"tot"}
+SHOWN	{"i":9,"answer":"Gospel music","game":-1,"id":"tot:first:Gospel_music|Amazing_Grace","prompt":"Which came first?","options":["Gospel music","Amazing Grace"],"correct":0,"title":"Gospel music \/ Amazing Grace","qcat":"music","explanation":"Gospel music (1600) came before Amazing Grace (1772).","mode":"thisOrThat","template":"tot","cat":"mixed","difficulty":2}
+MARATHON-GAME	2	thisOrThat	history
+SHOWN	{"cat":"history","answer":"Francoist Spain","explanation":"Francoist Spain (~35,563,535) has more people than Democratic Republic of Afghanistan (~15,540,000).","game":-1,"prompt":"Which has the bigger population?","i":0,"title":"Democratic Republic of Afghanistan \/ Francoist Spain","template":"tot","mode":"thisOrThat","difficulty":2,"qcat":"history","id":"tot:bigger:Democratic_Republic_of_Afghanistan|Francoist_Spain","options":["Democratic Republic of Afghanistan","Francoist Spain"],"correct":1}
+SHOWN	{"qcat":"history","game":-1,"i":1,"difficulty":2,"options":["Parhae","Kingdom of Scotland"],"template":"tot","explanation":"Parhae (698) came before Kingdom of Scotland (843).","mode":"thisOrThat","correct":0,"id":"tot:first:Parhae|Kingdom_of_Scotland","cat":"history","prompt":"Which came first?","answer":"Parhae","title":"Parhae \/ Kingdom of Scotland"}
+SHOWN	{"i":2,"answer":"Nyuserre Ini","game":-1,"id":"tot:first:Nyuserre_Ini|Mentuhotep_II","prompt":"Which came first?","options":["Nyuserre Ini","Mentuhotep II"],"correct":0,"title":"Nyuserre Ini \/ Mentuhotep II","qcat":"history","explanation":"Nyuserre Ini (2500 BC) came before Mentuhotep II (2100 BC).","mode":"thisOrThat","template":"tot","cat":"history","difficulty":2}
+SHOWN	{"qcat":"history","game":-1,"i":3,"difficulty":2,"options":["Imperial House of Japan","Mahajanapadas"],"template":"tot","explanation":"Imperial House of Japan (660 BC) came before Mahajanapadas (600 BC).","mode":"thisOrThat","correct":0,"id":"tot:first:Imperial_House_of_Japan|Mahajanapadas","cat":"history","prompt":"Which came first?","answer":"Imperial House of Japan","title":"Imperial House of Japan \/ Mahajanapadas"}
+SHOWN	{"prompt":"Which came first?","qcat":"history","i":4,"answer":"Paekche","explanation":"Paekche (18 BC) came before Cao Wei (220).","template":"tot","mode":"thisOrThat","difficulty":2,"id":"tot:first:Paekche|Cao_Wei","options":["Paekche","Cao Wei"],"correct":0,"cat":"history","title":"Paekche \/ Cao Wei","game":-1}
+SHOWN	{"qcat":"history","game":-1,"i":5,"difficulty":2,"options":["Sennacherib","Aratus of Sicyon"],"template":"tot","explanation":"Sennacherib (745 BC) came before Aratus of Sicyon (271 BC).","mode":"thisOrThat","correct":0,"id":"tot:first:Sennacherib|Aratus_of_Sicyon","cat":"history","prompt":"Which came first?","answer":"Sennacherib","title":"Sennacherib \/ Aratus of Sicyon"}
+SHOWN	{"i":6,"answer":"Djedkare Isesi","game":-1,"id":"tot:first:Djedkare_Isesi|Hagar","prompt":"Which came first?","options":["Djedkare Isesi","Hagar"],"correct":0,"title":"Djedkare Isesi \/ Hagar","qcat":"history","explanation":"Djedkare Isesi (2500 BC) came before Hagar (2000 BC).","mode":"thisOrThat","template":"tot","cat":"history","difficulty":2}
+SHOWN	{"qcat":"history","game":-1,"i":7,"difficulty":2,"options":["Kingdom of Scotland","Pechenegs"],"template":"tot","explanation":"Kingdom of Scotland (843) came before Pechenegs (860).","mode":"thisOrThat","correct":0,"id":"tot:first:Kingdom_of_Scotland|Pechenegs","cat":"history","prompt":"Which came first?","answer":"Kingdom of Scotland","title":"Kingdom of Scotland \/ Pechenegs"}
+SHOWN	{"prompt":"Which came first?","qcat":"history","i":8,"answer":"Himyar","explanation":"Himyar (110 BC) came before Paekche (18 BC).","template":"tot","mode":"thisOrThat","difficulty":2,"id":"tot:first:Himyar|Paekche","options":["Himyar","Paekche"],"correct":0,"cat":"history","title":"Himyar \/ Paekche","game":-1}
+SHOWN	{"qcat":"history","game":-1,"i":9,"difficulty":2,"options":["Buckingham Palace","Kingdom of Scotland"],"template":"tot","explanation":"Kingdom of Scotland (78,782 km²) is larger than Buckingham Palace (20 km²).","mode":"thisOrThat","correct":1,"id":"tot:bigger:Buckingham_Palace|Kingdom_of_Scotland","cat":"history","prompt":"Which is bigger by area?","answer":"Kingdom of Scotland","title":"Buckingham Palace \/ Kingdom of Scotland"}
+MARATHON-GAME	3	thisOrThat	science
+SHOWN	{"answer":"Royal Society","game":-1,"title":"Royal Society \/ Pigeonhole principle","cat":"science","template":"tot","id":"tot:first:Royal_Society|Pigeonhole_principle","options":["Royal Society","Pigeonhole principle"],"correct":0,"difficulty":2,"explanation":"Royal Society (1660) came before Pigeonhole principle (1834).","i":0,"prompt":"Which came first?","mode":"thisOrThat","qcat":"science"}
+SHOWN	{"prompt":"Which came first?","game":-1,"title":"Madhava of Sangamagrama \/ Jamshid al-Kashi","explanation":"Madhava of Sangamagrama (1340) came before Jamshid al-Kashi (1380).","i":1,"mode":"thisOrThat","cat":"science","difficulty":2,"answer":"Madhava of Sangamagrama","qcat":"science","id":"tot:first:Madhava_of_Sangamagrama|Jamshid_al-Kashi","options":["Madhava of Sangamagrama","Jamshid al-Kashi"],"correct":0,"template":"tot"}
+SHOWN	{"prompt":"Which came first?","game":-1,"title":"Jan Baptist van Helmont \/ Nicolas Steno","explanation":"Jan Baptist van Helmont (1577) came before Nicolas Steno (1638).","i":2,"mode":"thisOrThat","cat":"science","difficulty":2,"answer":"Jan Baptist van Helmont","qcat":"science","id":"tot:first:Jan_Baptist_van_Helmont|Nicolas_Steno","options":["Jan Baptist van Helmont","Nicolas Steno"],"correct":0,"template":"tot"}
+SHOWN	{"prompt":"Which came first?","game":-1,"title":"Du Shi \/ Ma Jun","explanation":"Du Shi (50 BC) came before Ma Jun (200).","i":3,"mode":"thisOrThat","cat":"science","difficulty":2,"answer":"Du Shi","qcat":"science","id":"tot:first:Du_Shi|Ma_Jun_(mechanical_engineer)","options":["Du Shi","Ma Jun"],"correct":0,"template":"tot"}
+SHOWN	{"prompt":"Which came first?","game":-1,"title":"Li Shizhen \/ John Napier","explanation":"Li Shizhen (1517) came before John Napier (1550).","i":4,"mode":"thisOrThat","cat":"science","difficulty":2,"answer":"Li Shizhen","qcat":"science","id":"tot:first:Li_Shizhen|John_Napier","options":["Li Shizhen","John Napier"],"correct":0,"template":"tot"}
+SHOWN	{"prompt":"Which came first?","game":-1,"title":"MATLAB \/ R","explanation":"MATLAB (1984) came before R (1993).","i":5,"mode":"thisOrThat","cat":"science","difficulty":2,"answer":"MATLAB","qcat":"science","id":"tot:first:MATLAB|R_(programming_language)","options":["MATLAB","R"],"correct":0,"template":"tot"}
+SHOWN	{"prompt":"Which is bigger by area?","game":-1,"title":"Telescopium \/ Coma Berenices","explanation":"Coma Berenices (386 km²) is larger than Telescopium (252 km²).","i":6,"mode":"thisOrThat","cat":"science","difficulty":2,"answer":"Coma Berenices","qcat":"science","id":"tot:bigger:Telescopium|Coma_Berenices","options":["Telescopium","Coma Berenices"],"correct":1,"template":"tot"}
+SHOWN	{"prompt":"Which came first?","game":-1,"title":"SQL \/ C++","explanation":"SQL (1974) came before C++ (1983).","i":7,"mode":"thisOrThat","cat":"science","difficulty":2,"answer":"SQL","qcat":"science","id":"tot:first:SQL|C++","options":["SQL","C++"],"correct":0,"template":"tot"}
+SHOWN	{"prompt":"Which came first?","game":-1,"title":"SQL \/ Haskell","explanation":"SQL (1974) came before Haskell (1990).","i":8,"mode":"thisOrThat","cat":"science","difficulty":2,"answer":"SQL","qcat":"science","id":"tot:first:SQL|Haskell","options":["SQL","Haskell"],"correct":0,"template":"tot"}
+SHOWN	{"prompt":"Which came first?","game":-1,"title":"Royal Society \/ Fermi paradox","explanation":"Royal Society (1660) came before Fermi paradox (1950).","i":9,"mode":"thisOrThat","cat":"science","difficulty":2,"answer":"Royal Society","qcat":"science","id":"tot:first:Royal_Society|Fermi_paradox","options":["Royal Society","Fermi paradox"],"correct":0,"template":"tot"}
+MARATHON-GAME	4	thisOrThat	geography
+SHOWN	{"id":"tot:bigger:Ohio|North_Vietnam","qcat":"geography","explanation":"North Vietnam (~23,800,000) has more people than Ohio (~11,536,504).","i":0,"difficulty":2,"prompt":"Which has the bigger population?","template":"tot","mode":"thisOrThat","options":["Ohio","North Vietnam"],"game":-1,"correct":1,"answer":"North Vietnam","cat":"geography","title":"Ohio \/ North Vietnam"}
+SHOWN	{"mode":"thisOrThat","prompt":"Which is bigger by area?","options":["Kuching","Gyeongju"],"id":"tot:bigger:Kuching|Gyeongju","difficulty":2,"title":"Kuching \/ Gyeongju","qcat":"geography","template":"tot","correct":1,"game":-1,"answer":"Gyeongju","explanation":"Gyeongju (1,324,390,000 km²) is larger than Kuching (431,020,000 km²).","cat":"geography","i":1}
+SHOWN	{"answer":"Platonic Academy","game":-1,"title":"Platonic Academy \/ Thessaloniki","cat":"geography","template":"tot","id":"tot:first:Platonic_Academy|Thessaloniki","options":["Platonic Academy","Thessaloniki"],"correct":0,"difficulty":2,"explanation":"Platonic Academy (387 BC) came before Thessaloniki (315 BC).","i":2,"prompt":"Which came first?","mode":"thisOrThat","qcat":"geography"}
+SHOWN	{"answer":"Homs","game":-1,"title":"Homs \/ Tangier","cat":"geography","template":"tot","id":"tot:first:Homs|Tangier","options":["Homs","Tangier"],"correct":0,"difficulty":2,"explanation":"Homs (2000 BC) came before Tangier (401 BC).","i":3,"prompt":"Which came first?","mode":"thisOrThat","qcat":"geography"}
+SHOWN	{"answer":"Everglades National Park","game":-1,"title":"Gyeongbokgung \/ Everglades National Park","cat":"geography","template":"tot","id":"tot:bigger:Gyeongbokgung|Everglades_National_Park","options":["Gyeongbokgung","Everglades National Park"],"correct":1,"difficulty":2,"explanation":"Everglades National Park (1,508,538 km²) is larger than Gyeongbokgung (432,703 km²).","i":4,"prompt":"Which is bigger by area?","mode":"thisOrThat","qcat":"geography"}
+SHOWN	{"answer":"Mainz","game":-1,"title":"Mainz \/ Cambridge","cat":"geography","template":"tot","id":"tot:first:Mainz|Cambridge","options":["Mainz","Cambridge"],"correct":0,"difficulty":2,"explanation":"Mainz (12 BC) came before Cambridge (1).","i":5,"prompt":"Which came first?","mode":"thisOrThat","qcat":"geography"}
+SHOWN	{"answer":"Annapolis","game":-1,"title":"Whitehorse \/ Annapolis","cat":"geography","template":"tot","id":"tot:bigger:Whitehorse|Annapolis,_Maryland","options":["Whitehorse","Annapolis"],"correct":1,"difficulty":2,"explanation":"Annapolis (~33,195) has more people than Whitehorse (~23,276).","i":6,"prompt":"Which has the bigger population?","mode":"thisOrThat","qcat":"geography"}
+SHOWN	{"answer":"Bradford","game":-1,"title":"Maghreb \/ Bradford","cat":"geography","template":"tot","id":"tot:bigger:Maghreb|Bradford","options":["Maghreb","Bradford"],"correct":1,"difficulty":2,"explanation":"Bradford (64,361,204 km²) is larger than Maghreb (6,045,741 km²).","i":7,"prompt":"Which is bigger by area?","mode":"thisOrThat","qcat":"geography"}
+SHOWN	{"answer":"Gotland","game":-1,"title":"Raqqa \/ Gotland","cat":"geography","template":"tot","id":"tot:bigger:Raqqa|Gotland","options":["Raqqa","Gotland"],"correct":1,"difficulty":2,"explanation":"Gotland (2,968 km²) is larger than Raqqa (1,962 km²).","i":8,"prompt":"Which is bigger by area?","mode":"thisOrThat","qcat":"geography"}
+SHOWN	{"answer":"Pont du Gard","game":-1,"title":"Pont du Gard \/ Funan","cat":"geography","template":"tot","id":"tot:first:Pont_du_Gard|Funan","options":["Pont du Gard","Funan"],"correct":0,"difficulty":2,"explanation":"Pont du Gard (50) came before Funan (68).","i":9,"prompt":"Which came first?","mode":"thisOrThat","qcat":"geography"}
+MARATHON-GAME	5	thisOrThat	arts
+SHOWN	{"mode":"thisOrThat","prompt":"Which came first?","options":["Almagest","Ecclesiastical History of the English People"],"id":"tot:first:Almagest|Ecclesiastical_History_of_the_English_People","difficulty":2,"title":"Almagest \/ Ecclesiastical History of the English People","qcat":"arts","template":"tot","correct":0,"game":-1,"answer":"Almagest","explanation":"Almagest (148) came before Ecclesiastical History of the English People (720).","cat":"arts","i":0}
+SHOWN	{"prompt":"Which came first?","game":-1,"title":"Maitreyi \/ Xenophanes","explanation":"Maitreyi (1000 BC) came before Xenophanes (570 BC).","i":1,"mode":"thisOrThat","cat":"arts","difficulty":2,"answer":"Maitreyi","qcat":"arts","id":"tot:first:Maitreyi|Xenophanes","options":["Maitreyi","Xenophanes"],"correct":0,"template":"tot"}
+SHOWN	{"prompt":"Which came first?","game":-1,"title":"Bhagavata Purana \/ The Tale of Igor's Campaign","explanation":"Bhagavata Purana (1000) came before The Tale of Igor's Campaign (1185).","i":2,"mode":"thisOrThat","cat":"arts","difficulty":2,"answer":"Bhagavata Purana","qcat":"arts","id":"tot:first:Bhagavata_Purana|The_Tale_of_Igor's_Campaign","options":["Bhagavata Purana","The Tale of Igor's Campaign"],"correct":0,"template":"tot"}
+SHOWN	{"id":"tot:first:Rigveda|Capitoline_Wolf","cat":"arts","template":"tot","correct":0,"game":-1,"title":"Rigveda \/ Capitoline Wolf","answer":"Rigveda","i":3,"qcat":"arts","explanation":"Rigveda (1500 BC) came before Capitoline Wolf (500 BC).","options":["Rigveda","Capitoline Wolf"],"difficulty":2,"prompt":"Which came first?","mode":"thisOrThat"}
+SHOWN	{"id":"tot:first:Saint_Patrick|Augustine_of_Canterbury","cat":"arts","template":"tot","correct":0,"game":-1,"title":"Saint Patrick \/ Augustine of Canterbury","answer":"Saint Patrick","i":4,"qcat":"arts","explanation":"Saint Patrick (385) came before Augustine of Canterbury (550).","options":["Saint Patrick","Augustine of Canterbury"],"difficulty":2,"prompt":"Which came first?","mode":"thisOrThat"}
+SHOWN	{"id":"tot:first:Gospel_of_Luke|Almagest","cat":"arts","template":"tot","correct":0,"game":-1,"title":"Gospel of Luke \/ Almagest","answer":"Gospel of Luke","i":5,"qcat":"arts","explanation":"Gospel of Luke (85) came before Almagest (148).","options":["Gospel of Luke","Almagest"],"difficulty":2,"prompt":"Which came first?","mode":"thisOrThat"}
+SHOWN	{"id":"tot:first:Wujing_Zongyao|Ghent_Altarpiece","cat":"arts","template":"tot","correct":0,"game":-1,"title":"Wujing Zongyao \/ Ghent Altarpiece","answer":"Wujing Zongyao","i":6,"qcat":"arts","explanation":"Wujing Zongyao (1044) came before Ghent Altarpiece (1432).","options":["Wujing Zongyao","Ghent Altarpiece"],"difficulty":2,"prompt":"Which came first?","mode":"thisOrThat"}
+SHOWN	{"id":"tot:first:Bhagavata_Purana|Ghent_Altarpiece","cat":"arts","template":"tot","correct":0,"game":-1,"title":"Bhagavata Purana \/ Ghent Altarpiece","answer":"Bhagavata Purana","i":7,"qcat":"arts","explanation":"Bhagavata Purana (1000) came before Ghent Altarpiece (1432).","options":["Bhagavata Purana","Ghent Altarpiece"],"difficulty":2,"prompt":"Which came first?","mode":"thisOrThat"}
+SHOWN	{"id":"tot:first:Martial|Buddhaghosa","cat":"arts","template":"tot","correct":0,"game":-1,"title":"Martial \/ Buddhaghosa","answer":"Martial","i":8,"qcat":"arts","explanation":"Martial (40) came before Buddhaghosa (401).","options":["Martial","Buddhaghosa"],"difficulty":2,"prompt":"Which came first?","mode":"thisOrThat"}
+SHOWN	{"id":"tot:first:Marcus_Junius_Brutus|Saint_Patrick","cat":"arts","template":"tot","correct":0,"game":-1,"title":"Marcus Junius Brutus \/ Saint Patrick","answer":"Marcus Junius Brutus","i":9,"qcat":"arts","explanation":"Marcus Junius Brutus (85 BC) came before Saint Patrick (385).","options":["Marcus Junius Brutus","Saint Patrick"],"difficulty":2,"prompt":"Which came first?","mode":"thisOrThat"}
+MARATHON-GAME	6	thisOrThat	screen
+SHOWN	{"prompt":"Which came first?","game":-1,"title":"Joseph Grimaldi \/ John Wilkes Booth","explanation":"Joseph Grimaldi (1778) came before John Wilkes Booth (1838).","i":0,"mode":"thisOrThat","cat":"screen","difficulty":2,"answer":"Joseph Grimaldi","qcat":"screen","id":"tot:first:Joseph_Grimaldi|John_Wilkes_Booth","options":["Joseph Grimaldi","John Wilkes Booth"],"correct":0,"template":"tot"}
+SHOWN	{"id":"tot:first:William_Kempe|John_Wilkes_Booth","qcat":"screen","explanation":"William Kempe (1560) came before John Wilkes Booth (1838).","i":1,"difficulty":2,"prompt":"Which came first?","template":"tot","mode":"thisOrThat","options":["William Kempe","John Wilkes Booth"],"game":-1,"correct":0,"answer":"William Kempe","cat":"screen","title":"William Kempe \/ John Wilkes Booth"}
+SHOWN	{"mode":"thisOrThat","prompt":"Which came first?","options":["MrBeast","Spock"],"id":"tot:first:MrBeast|Spock","difficulty":2,"title":"MrBeast \/ Spock","qcat":"screen","template":"tot","correct":0,"game":-1,"answer":"MrBeast","explanation":"MrBeast (1998) came before Spock (2230).","cat":"screen","i":2}
+SHOWN	{"mode":"thisOrThat","prompt":"Which came first?","options":["Buffalo Bill","Marie Dressler"],"id":"tot:first:Buffalo_Bill|Marie_Dressler","difficulty":2,"title":"Buffalo Bill \/ Marie Dressler","qcat":"screen","template":"tot","correct":0,"game":-1,"answer":"Buffalo Bill","explanation":"Buffalo Bill (1846) came before Marie Dressler (1868).","cat":"screen","i":3}
+SHOWN	{"mode":"thisOrThat","prompt":"Which came first?","options":["Joseph Grimaldi","Henry Irving"],"id":"tot:first:Joseph_Grimaldi|Henry_Irving","difficulty":2,"title":"Joseph Grimaldi \/ Henry Irving","qcat":"screen","template":"tot","correct":0,"game":-1,"answer":"Joseph Grimaldi","explanation":"Joseph Grimaldi (1778) came before Henry Irving (1838).","cat":"screen","i":4}
+SHOWN	{"mode":"thisOrThat","prompt":"Which came first?","options":["Konstantin Stanislavski","Adolph Zukor"],"id":"tot:first:Konstantin_Stanislavski|Adolph_Zukor","difficulty":2,"title":"Konstantin Stanislavski \/ Adolph Zukor","qcat":"screen","template":"tot","correct":0,"game":-1,"answer":"Konstantin Stanislavski","explanation":"Konstantin Stanislavski (1863) came before Adolph Zukor (1873).","cat":"screen","i":5}
+SHOWN	{"mode":"thisOrThat","prompt":"Which came first?","options":["Bugs Bunny","Goku"],"id":"tot:first:Bugs_Bunny|Goku","difficulty":2,"title":"Bugs Bunny \/ Goku","qcat":"screen","template":"tot","correct":0,"game":-1,"answer":"Bugs Bunny","explanation":"Bugs Bunny (1940) came before Goku (1984).","cat":"screen","i":6}
+SHOWN	{"mode":"thisOrThat","prompt":"Which came first?","options":["The Horse in Motion","Pinocchio"],"id":"tot:first:The_Horse_in_Motion|Pinocchio_(1940_film)","difficulty":2,"title":"The Horse in Motion \/ Pinocchio","qcat":"screen","template":"tot","correct":0,"game":-1,"answer":"The Horse in Motion","explanation":"The Horse in Motion (1878) came before Pinocchio (1930).","cat":"screen","i":7}
+SHOWN	{"mode":"thisOrThat","prompt":"Which came first?","options":["Zeami Motokiyo","William Kempe"],"id":"tot:first:Zeami_Motokiyo|William_Kempe","difficulty":2,"title":"Zeami Motokiyo \/ William Kempe","qcat":"screen","template":"tot","correct":0,"game":-1,"answer":"Zeami Motokiyo","explanation":"Zeami Motokiyo (1363) came before William Kempe (1560).","cat":"screen","i":8}
+SHOWN	{"mode":"thisOrThat","prompt":"Which came first?","options":["Henry Irving","Elsie de Wolfe"],"id":"tot:first:Henry_Irving|Elsie_de_Wolfe","difficulty":2,"title":"Henry Irving \/ Elsie de Wolfe","qcat":"screen","template":"tot","correct":0,"game":-1,"answer":"Henry Irving","explanation":"Henry Irving (1838) came before Elsie de Wolfe (1865).","cat":"screen","i":9}
+MARATHON-GAME	7	thisOrThat	music
+SHOWN	{"id":"tot:first:Tin_Pan_Alley|Suite_bergamasque","qcat":"music","explanation":"Tin Pan Alley (1885) came before Suite bergamasque (1905).","i":0,"difficulty":2,"prompt":"Which came first?","template":"tot","mode":"thisOrThat","options":["Tin Pan Alley","Suite bergamasque"],"game":-1,"correct":0,"answer":"Tin Pan Alley","cat":"music","title":"Tin Pan Alley \/ Suite bergamasque"}
+SHOWN	{"id":"tot:first:Johann_Pachelbel|Christoph_Willibald_Gluck","cat":"music","template":"tot","correct":0,"game":-1,"title":"Johann Pachelbel \/ Christoph Willibald Gluck","answer":"Johann Pachelbel","i":1,"qcat":"music","explanation":"Johann Pachelbel (1653) came before Christoph Willibald Gluck (1714).","options":["Johann Pachelbel","Christoph Willibald Gluck"],"difficulty":2,"prompt":"Which came first?","mode":"thisOrThat"}
+SHOWN	{"prompt":"Which came first?","game":-1,"title":"Maple Leaf Rag \/ Fantasia on a Theme by Thomas Tallis","explanation":"Maple Leaf Rag (1897) came before Fantasia on a Theme by Thomas Tallis (1910).","i":2,"mode":"thisOrThat","cat":"music","difficulty":2,"answer":"Maple Leaf Rag","qcat":"music","id":"tot:first:Maple_Leaf_Rag|Fantasia_on_a_Theme_by_Thomas_Tallis","options":["Maple Leaf Rag","Fantasia on a Theme by Thomas Tallis"],"correct":0,"template":"tot"}
+SHOWN	{"prompt":"Which came first?","game":-1,"title":"Giacomo Meyerbeer \/ Charles Gounod","explanation":"Giacomo Meyerbeer (1791) came before Charles Gounod (1818).","i":3,"mode":"thisOrThat","cat":"music","difficulty":2,"answer":"Giacomo Meyerbeer","qcat":"music","id":"tot:first:Giacomo_Meyerbeer|Charles_Gounod","options":["Giacomo Meyerbeer","Charles Gounod"],"correct":0,"template":"tot"}
+SHOWN	{"prompt":"Which came first?","game":-1,"title":"L'Orfeo \/ Spirituals","explanation":"L'Orfeo (1607) came before Spirituals (1790).","i":4,"mode":"thisOrThat","cat":"music","difficulty":2,"answer":"L'Orfeo","qcat":"music","id":"tot:first:L'Orfeo|Spirituals","options":["L'Orfeo","Spirituals"],"correct":0,"template":"tot"}
+SHOWN	{"prompt":"Which came first?","game":-1,"title":"Manchester United F.C. \/ Johnson & Johnson","explanation":"Manchester United F.C. (1878) came before Johnson & Johnson (1886).","i":5,"mode":"thisOrThat","cat":"music","difficulty":2,"answer":"Manchester United F.C.","qcat":"music","id":"tot:first:Manchester_United_F.C.|Johnson_&_Johnson","options":["Manchester United F.C.","Johnson & Johnson"],"correct":0,"template":"tot"}
+SHOWN	{"prompt":"Which came first?","game":-1,"title":"L'Orfeo \/ Guinness","explanation":"L'Orfeo (1607) came before Guinness (1759).","i":6,"mode":"thisOrThat","cat":"music","difficulty":2,"answer":"L'Orfeo","qcat":"music","id":"tot:first:L'Orfeo|Guinness","options":["L'Orfeo","Guinness"],"correct":0,"template":"tot"}
+SHOWN	{"prompt":"Which came first?","game":-1,"title":"Barbad \/ Gilles Binchois","explanation":"Barbad (600) came before Gilles Binchois (1400).","i":7,"mode":"thisOrThat","cat":"music","difficulty":2,"answer":"Barbad","qcat":"music","id":"tot:first:Barbad|Gilles_Binchois","options":["Barbad","Gilles Binchois"],"correct":0,"template":"tot"}
+SHOWN	{"prompt":"Which came first?","game":-1,"title":"Bedřich Smetana \/ Charles Santley","explanation":"Bedřich Smetana (1824) came before Charles Santley (1834).","i":8,"mode":"thisOrThat","cat":"music","difficulty":2,"answer":"Bedřich Smetana","qcat":"music","id":"tot:first:Bedřich_Smetana|Charles_Santley","options":["Bedřich Smetana","Charles Santley"],"correct":0,"template":"tot"}
+SHOWN	{"difficulty":2,"qcat":"music","answer":"Western Union","i":9,"id":"tot:first:Western_Union|HSBC","options":["Western Union","HSBC"],"game":-1,"explanation":"Western Union (1851) came before HSBC (1865).","cat":"music","correct":0,"template":"tot","prompt":"Which came first?","mode":"thisOrThat","title":"Western Union \/ HSBC"}
+MARATHON-GAME	8	thisOrThat	sports
+com.learningischange.tidbitstrivia: 38213

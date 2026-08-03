@@ -266,6 +266,19 @@ struct QuizSetRefTests {
         #expect(corpusQ("src:describe:X").bundledSetName == nil)
     }
 
+    /// A payload-less shape owns its ID prefix — and owns EVERY prefix its
+    /// generators emit. `oddrel:` is 590 of 1,094 shipped Odd-one-out rows and
+    /// `biztot:` is every business pair; both used to read as plain corpus refs,
+    /// so they resolved against a corpus that does not hold them and disappeared.
+    @Test func laterGeneratorPrefixesBelongToTheSameSet() {
+        #expect(corpusQ("tot:first:A|B").bundledSetName == "thisorthat")
+        #expect(corpusQ("biztot:3M|AMD").bundledSetName == "thisorthat")
+        #expect(corpusQ("odd:geo:1").bundledSetName == "oddoneout")
+        #expect(corpusQ("oddrel:P170:12").bundledSetName == "oddoneout")
+        // A prefix that merely STARTS with an owned one is not that set.
+        #expect(corpusQ("total:recall:1").bundledSetName == nil)
+    }
+
     @Test func aBundledQuestionIsSavedAsASetRefNotABareRef() {
         let quiz = SavedQuiz.from(questions: [pictureQ("src:describe:Tito"), corpusQ("src:desc:Q1")],
                                   topic: "Jazz", creatorID: "u", creatorName: "B")

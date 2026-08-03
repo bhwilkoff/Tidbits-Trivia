@@ -141,6 +141,17 @@ data class SavedQuiz(
         /** Which bundled set a question came from, or null for a plain corpus row.
          *  Derived from the question's SHAPE rather than threaded through from the
          *  call site, so it stays correct no matter which surface built the set. */
+        /** The ID prefixes owned by the two shapes that carry no payload of their
+         *  own. A shape owns MORE than one, because later generators added their
+         *  own: `oddrel:` is 590 of the 1,094 shipped Odd-one-out rows and
+         *  `biztot:` is every business pair. Matching only `odd:` / `tot:` sent
+         *  them down the plain-corpus-ref path, where resolving cannot find them
+         *  and the question vanishes from a saved or shared quiz. */
+        val SETS_BY_ID_PREFIX = mapOf(
+            "tot" to "thisorthat", "biztot" to "thisorthat",
+            "odd" to "oddoneout", "oddrel" to "oddoneout",
+        )
+
         fun bundledSetName(q: Question): String? = when {
             q.imageUrl != null -> "picture"
             q.closest != null -> "closest"
@@ -148,9 +159,7 @@ data class SavedQuiz(
             q.matching != null -> "match"
             q.accepted != null -> "typeanswer"
             q.enumerate != null -> "enumerate"
-            q.id.startsWith("tot:") -> "thisorthat"
-            q.id.startsWith("odd:") -> "oddoneout"
-            else -> null
+            else -> SETS_BY_ID_PREFIX[q.id.substringBefore(':')]
         }
 
         fun from(

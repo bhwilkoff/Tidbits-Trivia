@@ -73,6 +73,16 @@ function questionFromRow(r) {
 // Which bundled set a question came from, or null for a plain corpus row. Derived
 // from the question's SHAPE rather than threaded through from the call site, so it
 // stays correct no matter which surface built the set.
+// The ID prefixes owned by the two shapes that carry no payload of their own. A
+// shape owns MORE than one, because later generators added their own: `oddrel:` is
+// 590 of the 1,094 shipped Odd-one-out rows and `biztot:` is every business pair.
+// Matching only `odd:` / `tot:` sent them down the plain-corpus-ref path, where
+// resolving cannot find them and the question vanishes from a saved or shared quiz.
+export const SETS_BY_ID_PREFIX = {
+  tot: 'thisorthat', biztot: 'thisorthat',
+  odd: 'oddoneout', oddrel: 'oddoneout',
+};
+
 export function bundledSetName(q) {
   if (q.image || q.imageURL) return 'picture';
   if (q.closest) return 'closest';
@@ -80,9 +90,7 @@ export function bundledSetName(q) {
   if (q.matching) return 'match';
   if (q.accepted) return 'typeanswer';
   if (q.enumerate) return 'enumerate';
-  if ((q.id || '').startsWith('tot:')) return 'thisorthat';
-  if ((q.id || '').startsWith('odd:')) return 'oddoneout';
-  return null;
+  return SETS_BY_ID_PREFIX[(q.id || '').split(':')[0]] || null;
 }
 
 function isSetRef(e) {

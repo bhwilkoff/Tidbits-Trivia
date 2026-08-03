@@ -130,9 +130,14 @@ def build(subs, enrich):
             continue
         a, b = name_of(ta), name_of(tb)
         first = 0 if ya < yb else 1
+        # The reveal has to state the claim: "3M (1902) and AMD (1969)." names two
+        # years and no answer, which is exactly no help to the player who missed it.
+        early, late = ((a, ya), (b, yb)) if first == 0 else ((b, yb), (a, ya))
         out["thisorthat.json"].append([
-            f"biztot:{ta}|{tb}", "Which came first?", [a, b], first, "business", 2,
-            f"{a} ({ya}) and {b} ({yb}).", f"{a} / {b}", subs[ta]["url"],
+            f"biztot:{ta}|{tb}", "Which company was founded first?", [a, b], first,
+            "business", 2,
+            f"{early[0]} ({early[1]}) was founded before {late[0]} ({late[1]}).",
+            f"{a} / {b}", subs[ta]["url"],
         ])
     quads = [dated[i:i + 4] for i in range(0, len(dated) - 3, 4)]
     for qi, quad in enumerate(quads):

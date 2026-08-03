@@ -227,4 +227,19 @@ public class SavedQuizTest
     [Fact]
     public void A_quiz_with_no_title_falls_back_to_its_topic()
         => Assert.Equal("Volcanoes", SavedQuiz.From([Q("src:desc:Q1")], "Volcanoes", "uid-1", "Ben").Title);
+
+    /// A payload-less shape owns its ID prefix — and owns EVERY prefix its generators
+    /// emit. `oddrel:` is 590 of the 1,094 shipped Odd-one-out rows and `biztot:` is
+    /// every business pair; both used to read as plain corpus refs, so they resolved
+    /// against a corpus that does not hold them and disappeared from the quiz.
+    [Fact]
+    public void Later_generator_prefixes_belong_to_the_same_bundled_set()
+    {
+        Assert.Equal("thisorthat", SavedQuiz.BundledSetName(Q("tot:first:A|B")));
+        Assert.Equal("thisorthat", SavedQuiz.BundledSetName(Q("biztot:3M|AMD")));
+        Assert.Equal("oddoneout", SavedQuiz.BundledSetName(Q("odd:geo:1")));
+        Assert.Equal("oddoneout", SavedQuiz.BundledSetName(Q("oddrel:P170:12")));
+        // A prefix that merely STARTS with an owned one is not that set.
+        Assert.Null(SavedQuiz.BundledSetName(Q("total:recall:1")));
+    }
 }

@@ -99,13 +99,19 @@ def main():
     # Which came first (earlier year = smaller value = index 0)
     def yr(v):
         return f"{abs(int(v))} {'BC' if v < 0 else 'AD'}" if v < 0 else str(int(v))
+    # The two date fields already build separate pairs, so a round never compares
+    # a birth to a founding — but both shipped under "Which came first?", which
+    # says neither what is being compared nor, for two people, even the right
+    # pronoun. Rendered: "Which came first? Maitreyi / Xenophanes", asked of two
+    # philosophers. Naming the dimension costs nothing and the generator already
+    # knows which one it is.
     emit_pairs(gather("birth_year"), "first",
                lambda x, y: abs(x - y) >= YEAR_MARGIN,
-               "Which came first?",
-               lambda a, b: f"{a[1]} ({yr(a[3])}) came before {b[1]} ({yr(b[3])}).")
+               "Who was born first?",
+               lambda a, b: f"{a[1]} ({yr(a[3])}) was born before {b[1]} ({yr(b[3])}).")
     emit_pairs(gather("inception"), "first",
                lambda x, y: abs(x - y) >= YEAR_MARGIN,
-               "Which came first?",
+               "Which began first?",
                lambda a, b: f"{a[1]} ({yr(a[3])}) came before {b[1]} ({yr(b[3])}).")
 
     # Size comparisons (larger value = index 1). enrich.py now takes the max

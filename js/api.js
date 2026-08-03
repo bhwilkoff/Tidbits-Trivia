@@ -340,6 +340,11 @@ export const Corpus = {
     this.questions = rows.map(rowToQuestion);
     this.byCategory = {};
     for (const q of this.questions) (this.byCategory[q.categoryID] ||= []).push(q);
+    // The id index is built lazily and cached, and since sharding it can be built over
+    // a 1,700-row SAMPLE and then survive the loadFull() that replaces `questions` with
+    // all 111,000. Any lookup after that missed — a saved quiz's refs, a shared item —
+    // and reported the row as retired. Invalidate here, where `questions` changes.
+    this._byID = null;
     this.loaded = true;
   },
 

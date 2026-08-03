@@ -81,6 +81,10 @@ function render() {
   // platform (QUIZ-CONTRACT §5), so this has to work for someone who has never
   // opened the app before -- no account, no install.
   if (location.hash.startsWith('#/quiz/')) { openSharedQuiz(location.hash.split('/')[2] || ''); return; }
+  // A shared single question: #/item/<id>. DEEP_LINKS.md reserves /item/{id} as the
+  // canonical twin every platform's per-question share points at, and the web is the
+  // LANDING half of that twin — it has to open for someone with no app and no account.
+  if (location.hash.startsWith('#/item/')) { openSharedItem(decodeURIComponent(location.hash.slice('#/item/'.length))); return; }
   // Tidbits Live player: #/live or #/live/CODE — a self-managing overlay.
   if (location.hash.startsWith('#/live')) { openLive(location.hash.split('/')[2] || ''); return; }
   closeLive(); // idempotent teardown when the hash leaves #/live
@@ -1266,6 +1270,84 @@ function bindCreate() {
 // Every state here is a real state, not an afterthought (universal-feature-states):
 // loading, not-found, too-few-questions-in-this-build, and playable-but-short each
 // say something true rather than showing a blank card.
+/**
+ * The landing twin for a shared question (DEEP_LINKS.md "canonical-twin rule").
+ *
+ * It shows the FACT, not the quiz: someone arriving here was sent a thing worth
+ * knowing by a friend, and making them guess it first would be a puzzle they did not
+ * ask for and cannot lose gracefully. The answer, the explanation and the door out to
+ * the source are the payload; playing is the invitation underneath it.
+ */
+async function openSharedItem(id) {
+  if (!id) { location.hash = '#/'; return; }
+  renderLoading('Opening…');
+  const found = await lookupSharedItem(id);
+  if (!found) {
+    app.innerHTML = `${header(currentTab())}<main class="main"><div class="view">
+      <h1 class="page-title">Not found</h1>
+      <p class="muted">This link doesn\u2019t point at a question any more \u2014 it may have been retired from the bank since it was shared.</p>
+      <button class="btn btn-primary btn-full" data-play-any>Play Tidbits</button>
+    </div></main>`;
+    $('[data-play-any]').addEventListener('click', () => { location.hash = '#/'; });
+    document.title = 'Tidbits Trivia';
+    return;
+  }
+  const q = found;
+  const answer = (q.options && q.options[q.correctIndex]) || q.answer || '';
+  const cat = catById(q.categoryID);
+  // Keeps the app header: a stranger who followed this link has nowhere else to go
+  // otherwise, and the nav IS the invitation.
+  app.innerHTML = `${header(currentTab())}<main class="main"><div class="view">
+    <p class="muted" style="text-transform:uppercase;letter-spacing:.06em;font-weight:800;font-size:.75rem">
+      ${h(cat ? cat.name : 'Tidbits')}</p>
+    <h1 class="page-title" style="margin-top:2px">${h(q.prompt)}</h1>
+    <div class="card pad" style="margin-top:14px">
+      <div class="muted" style="font-size:.75rem;font-weight:800;letter-spacing:.06em">ANSWER</div>
+      <div style="font-weight:900;font-size:1.4rem;margin:2px 0 10px">${h(answer)}</div>
+      ${q.explanation ? `<p class="body" style="margin:0">${h(q.explanation)}</p>` : ''}
+      ${q.sourceURL ? `<p style="margin:12px 0 0"><a href="${h(q.sourceURL)}" target="_blank" rel="noopener">Read on Wikipedia \u2197</a></p>` : ''}
+    </div>
+    <button class="btn btn-primary btn-full" style="margin-top:16px" data-play-item>Play Tidbits</button>
+    <button class="btn btn-text btn-full" data-copy-item>Copy link</button>
+  </div></main>`;
+  $('[data-play-item]').addEventListener('click', () => { location.hash = '#/'; });
+  $('[data-copy-item]').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(itemURL(q.id)); toast('Link copied'); } catch { toast('Copy failed'); }
+  });
+  document.title = `${q.sourceTitle || 'Tidbits Trivia'} — Tidbits`;
+}
+
+// An id can live in the corpus or in any bundled shape set, and the shards mean the
+// corpus in memory is a SAMPLE — so a miss has to fall back to the full file before it
+// is reported as "retired", or a perfectly good link would 404 on a stratified shard.
+async function lookupSharedItem(id) {
+  // The prefix usually names the set outright — ask that one first so a shape link never
+  // waits on the corpus. `src:` is absent on purpose: Picture ID shares that namespace.
+  const byPrefix = {
+    tot: ThisOrThat, biztot: ThisOrThat, odd: OddOneOut, oddrel: OddOneOut,
+    closest: ClosestCall, order: Ordering, bizorder: Ordering,
+    match: Matching, type: TypeAnswer, enum: Enumerate, enumrel: Enumerate,
+  }[(id || '').split(':')[0]];
+  if (byPrefix) {
+    try { await byPrefix.load(); } catch {}
+    const q = byPrefix.question?.(id);
+    if (q) return q;
+  }
+  const sets = [Corpus, Pictures, ThisOrThat, ClosestCall, Ordering, Matching, TypeAnswer, OddOneOut, Enumerate];
+  for (const s of sets) {
+    try { await s.load(); } catch {}
+    const q = s.question?.(id);
+    if (q) return q;
+  }
+  // A corpus id can be outside the loaded shard, so a miss falls back to the full file
+  // before it is reported as retired — otherwise a perfectly good link 404s on a shard.
+  try { await Corpus.loadFull(); } catch { return null; }
+  return Corpus.question(id) || null;
+}
+
+/** The canonical shape from DEEP_LINKS.md — every platform's per-question share uses it. */
+function itemURL(id) { return `${SITE_URL}/item/${encodeURIComponent(id)}`; }
+
 async function openSharedQuiz(id) {
   if (!id) { location.hash = '#/create'; return; }
   renderLoading('Opening quiz…');
@@ -3092,7 +3174,7 @@ async function renderDailyBoard() {
 async function shareHDYK(a) {
   if (!a) return;
   const answer = a.q.options[a.q.correctIndex] || '';
-  const text = `I knew "${a.q.prompt}" on Tidbits Trivia — it's ${answer}. How did YOU know that? 🧠`;
+  const text = `I knew "${a.q.prompt}" on Tidbits Trivia — it's ${answer}. How did YOU know that? 🧠\n${itemURL(a.q.id)}`;
   try { if (navigator.share) { await navigator.share({ text }); return; } } catch {}
   try { await navigator.clipboard.writeText(text); toast('Copied — go start a conversation!'); } catch { toast('Share failed'); }
 }

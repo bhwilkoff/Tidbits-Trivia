@@ -16,6 +16,10 @@ final class AppStore {
 
     var pendingSharedQuizID: String?
 
+    /// A shared QUESTION id waiting to be shown (`tidbits://item/<id>`). Same inbox
+    /// discipline as the quiz id — set by the deep-link inbox, cleared by the view.
+    var pendingItemID: String?
+
 
     var selectedTab: Tab = .play
     var playPath = NavigationPath()
@@ -123,6 +127,10 @@ enum DeepLink: Equatable, Sendable {
     /// A shared quiz: `tidbitstrivia://quiz/<id>`, twin of the canonical
     /// `https://tidbitstrivia.com/quiz/<id>` (docs/QUIZ-CONTRACT.md §5).
     case quiz(String)
+    /// A shared single question: `tidbits://item/<id>`, twin of the canonical
+    /// `https://tidbitstrivia.com/item/<id>` (DEEP_LINKS.md). What the per-question
+    /// "how did YOU know that?" share hands out.
+    case item(String)
 }
 
 /// A request to launch a game with a given mode + category. Shared by the

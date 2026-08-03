@@ -128,3 +128,52 @@ private fun wrap(v: Any?): JsonElement = when (v) {
 
 /** The canonical link target on every platform (QUIZ-CONTRACT §5). */
 fun quizShareUrl(id: String): String = "https://tidbitstrivia.com/#/quiz/$id"
+
+/** The question behind a shared `item/<id>` link, or null when it no longer ships.
+ *  Corpus first, bundled shape sets as the fallback — the same order resolveForPlay
+ *  uses, because the two share the `src:` namespace. Null is a real answer, not a
+ *  failure: rows get retired, and saying the link is dead beats an empty card.
+ *
+ *  SUSPENDING on purpose: the sets load lazily from assets, and a synchronous version
+ *  reported a perfectly good `oddrel:` link as retired simply because nothing had
+ *  opened Odd One Out yet on that launch. A deep link is usually the FIRST thing the
+ *  process does, so "not loaded yet" is the normal case here, not the edge one. */
+suspend fun sharedItem(context: android.content.Context, id: String): Question? {
+    if (id.isBlank()) return null
+
+    // The id's prefix usually names its set outright, and asking that set FIRST is what
+    // keeps a deep link fast: opening corpus.sqlite on a cold start is a ~60s first-run
+    // cost (measured on a Pixel 9 emulator), and a shape row never needed it.
+    val prefix = id.substringBefore(':')
+    setForIdPrefix(prefix)?.let { set ->
+        runCatching { set.load(context) }
+        set.question(id)?.let { return it }
+    }
+    runCatching { Corpus.load(context) }
+    Corpus.question(id)?.let { return it }
+    for (set in listOf(Pictures, ThisOrThat, ClosestCall, OrderingSet, MatchingSet,
+                       TypeAnswerSet, OddOneOutSet, EnumerateSet)) {
+        runCatching { set.load(context) }
+        set.question(id)?.let { return it }
+    }
+    return null
+}
+
+/** Prefixes that name exactly one shape set. `src:` and friends are deliberately absent —
+ *  Picture ID shares the corpus namespace, so those ids have to try both. */
+private fun setForIdPrefix(prefix: String): JsonQuestionSet? = when (prefix) {
+    "tot", "biztot" -> ThisOrThat
+    "odd", "oddrel" -> OddOneOutSet
+    "closest" -> ClosestCall
+    "order", "bizorder" -> OrderingSet
+    "match" -> MatchingSet
+    "type" -> TypeAnswerSet
+    "enum", "enumrel" -> EnumerateSet
+    else -> null
+}
+
+/** The canonical twin for a single QUESTION (DEEP_LINKS.md). Every platform's per-question
+ *  share points here and the web app renders it, so a share lands somewhere meaningful for a
+ *  recipient who has never installed anything. */
+fun itemUrl(id: String): String =
+    "https://tidbitstrivia.com/item/" + java.net.URLEncoder.encode(id, "UTF-8")

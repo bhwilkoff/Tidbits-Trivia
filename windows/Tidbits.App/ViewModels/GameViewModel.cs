@@ -107,7 +107,8 @@ public sealed class GameViewModel : ObservableObject, IDisposable
 
     /// The conversation-starter share for a nailed question (web/iOS parity).
     public static string HowDidYouKnowText(AnsweredQuestion a) =>
-        $"I knew \"{a.Question.Prompt}\" on Tidbits Trivia — it's {a.Question.CorrectAnswer}. How did YOU know that?";
+        $"I knew \"{a.Question.Prompt}\" on Tidbits Trivia — it's {a.Question.CorrectAnswer}. How did YOU know that?\n"
+        + ShareText.ItemUrl(a.Question.Id);
     public bool CanPlayAgain => Summary.Mode != GameMode.Daily;
 
     // Day-streak surfacing at the results moment (read after the record write).

@@ -66,6 +66,7 @@ struct TidbitsTriviaApp: App {
                     case "topic": store.post(.topic(url.lastPathComponent))
                     case "category": store.post(.category(url.lastPathComponent))
                     case "quiz": store.post(.quiz(url.lastPathComponent))
+                    case "item": store.post(.item(url.lastPathComponent))
                     default: break
                     }
                 }

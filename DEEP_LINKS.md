@@ -13,9 +13,9 @@ from the same table.
 > custom scheme and every `daily` / `topic` / `category` link dead-ended at the
 > launcher with `LSApplicationWorkspaceErrorDomain 115`. The handler had been
 > written and shipped; nothing was listening. Found by opening a share link on the
-> simulator. Declared in `project.yml` (never the generated pbxproj). Today Tidbits emits only the canonical
-site link (shared with every score) and reserves `/item/{id}` for sharable
-question/fact twins; it has **no accounts or OAuth**, so the profile / settings
+> simulator. Declared in `project.yml` (never the generated pbxproj). Tidbits emits the canonical
+site link with every score, and (since 2026-08-03) the `/item/{id}` twin with every
+per-question share; it has **no accounts or OAuth**, so the profile / settings
 / OAuth rows below are reserved patterns, wired only if those features land.
 
 ## URL shapes
@@ -27,7 +27,7 @@ prefix lists, and a flat structure makes the lists short.
 | Resource | URL shape | Owner |
 |---|---|---|
 | Public profile | `https://tidbitstrivia.com/u/{username}` | Web renders; iOS + Android open the in-app view |
-| Single item detail | `https://tidbitstrivia.com/item/{id}` | All platforms render in-app; web is the landing twin |
+| Single item detail | `https://tidbitstrivia.com/item/{id}` | **SHIPPED 2026-08-03.** Web renders the landing twin (`#/item/{id}`, reached from a clean path by the existing `404.html` forwarder); iOS + macOS open a sheet, Android a screen. Emitted by the per-question "how did YOU know that?" share on web, iOS, Android and Windows |
 | Settings deep entry | `https://tidbitstrivia.com/settings/{section}` | All; web routes via `?view=settings&section=...` |
 | OAuth callback | `tidbits://oauth/callback?...` | Custom scheme only — never HTTPS (provider redirects break otherwise) |
 

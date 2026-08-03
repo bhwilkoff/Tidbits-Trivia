@@ -69,6 +69,8 @@ sealed interface Route {
     data object NightLive : Route
     data class LiveRoom(val code: String, val name: String) : Route
     data class LiveHost(val rounds: List<Pair<String, Int>>, val category: Category) : Route
+    /** A shared single question: `tidbits://item/<id>` (DEEP_LINKS.md). */
+    data class SharedItem(val id: String) : Route
     data object Settings : Route
     data object Profile : Route
     data object Leaderboard : Route   // Wave E: cross-venue / season standings
@@ -183,9 +185,13 @@ fun AppRoot(
             else -> {
                 // A shared quiz: "quiz/<id>". Fetch it, KEEP it (a link a friend sent
                 // shouldn't evaporate), and land on Create where the shelf lives.
+                // A shared single question: "item/<id>". No fetch — it is a row this
+                // build either ships or doesn't, and the screen says which.
+                val itemId = deepLink.removePrefix("item/").takeIf { deepLink.startsWith("item/") && it.isNotBlank() }
                 val id = deepLink.removePrefix("quiz/").takeIf { deepLink.startsWith("quiz/") && it.isNotBlank() }
                 backStack.clear()
                 backStack.add(Route.Home)
+                if (itemId != null) backStack.add(Route.SharedItem(itemId))
                 if (id != null) {
                     backStack.add(Route.Create)
                     runCatching {
@@ -273,6 +279,9 @@ fun AppRoot(
                     is Route.Game -> GameScreen(r, store) { backStack.removeAt(backStack.lastIndex) }
                     is Route.Versus -> VersusScreen(r.botId, store) { backStack.removeAt(backStack.lastIndex) }
                     is Route.OnlineMatch -> OnlineMatchScreen(store) { backStack.removeAt(backStack.lastIndex) }
+                    is Route.SharedItem -> SharedItemScreen(r.id,
+                        onBack = { backStack.removeLastOrNull() },
+                        onPlay = { backStack.clear(); backStack.add(Route.Home) })
                     is Route.Settings -> SettingsScreen(store, dynamicColor, onDynamicColor, onProfile = { backStack.add(Route.Profile) })
                     is Route.Profile -> ProfileScreen(onBack = { backStack.removeLastOrNull() }, onLeaderboard = { backStack.add(Route.Leaderboard) }, onDuels = { backStack.add(Route.Duels) }, onClub = { backStack.add(Route.ClubPaywall) })
                     is Route.Leaderboard -> LeaderboardScreen(onBack = { backStack.removeLastOrNull() })
@@ -1621,7 +1630,10 @@ private fun ResultsScreen(game: GameState, onPlayAgain: (() -> Unit)?, onDone: (
                         Text(a.q.prompt, fontWeight = FontWeight.Bold)
                         Text("You got it: ${a.q.answerText}", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                         TextButton(onClick = {
-                            val text = "I knew \"${a.q.prompt}\" on Tidbits Trivia — it's ${a.q.answerText}. How did YOU know that? 🧠"
+                            // Carries the canonical /item/{id} twin (DEEP_LINKS.md) — without it
+                            // the recipient gets a fact they can't follow anywhere.
+                            val text = "I knew \"${a.q.prompt}\" on Tidbits Trivia — it's ${a.q.answerText}. How did YOU know that? 🧠\n" +
+                                com.learningischange.tidbitstrivia.data.itemUrl(a.q.id)
                             context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, text) }, "Share"))
                         }, contentPadding = PaddingValues(0.dp)) { Text("How did you know that? · Share", color = Pops.blue) }
                     }

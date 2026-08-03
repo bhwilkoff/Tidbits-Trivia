@@ -50,9 +50,16 @@ struct ContentView_iOS: View {
             }
         }
         .sheet(isPresented: $showPaywall) { ClubPaywallView().environment(EntitlementStore.shared) }
+        // sheet(item:) not isPresented: — the id and the presentation must arrive in the
+        // same state change, or a second link races the first sheet's dismissal.
+        .sheet(item: Binding(get: { store.pendingItemID.map(SharedItemID.init) },
+                             set: { store.pendingItemID = $0?.id })) { item in
+            SharedItemView(id: item.id)
+        }
     }
 
     private func handleInbox() {
+        if let id = DebugHooks.openItemID { store.pendingItemID = id }
         for link in store.drainInbox() {
             switch link {
             case .daily:
@@ -65,8 +72,17 @@ struct ContentView_iOS: View {
                 // outside the view tree).
                 store.pendingSharedQuizID = id
                 store.selectedTab = .create
+            case .item(let id):
+                // A single shared question belongs to no tab — it is a thing someone
+                // sent you, so it opens over wherever you were and dismisses back.
+                store.pendingItemID = id
             }
         }
     }
+}
+
+/// `sheet(item:)` needs an Identifiable, and a bare String isn't one.
+private struct SharedItemID: Identifiable {
+    let id: String
 }
 #endif

@@ -301,6 +301,14 @@ enum DebugHooks {
         ProcessInfo.processInfo.environment["TIDBITS_NO_GAMECENTER"] == "1"
     }
 
+    /// TIDBITS_ITEM=<id> opens the shared-question sheet on launch — the same thing
+    /// `tidbits://item/<id>` does. `simctl openurl` puts iOS's "Open in Tidbits?" prompt
+    /// in the way and this dev box has no GUI Simulator window to tap it, so a deep link
+    /// is otherwise unverifiable from the CLI (docs/DEEP_LINKS.md).
+    static var openItemID: String? {
+        ProcessInfo.processInfo.environment["TIDBITS_ITEM"]
+    }
+
     /// TIDBITS_SETTINGS=1 opens Settings on launch — same screenshot/
     /// simulator observability idiom as the flags above (tvOS has no GUI
     /// Simulator window on this dev box to tap through to it manually).

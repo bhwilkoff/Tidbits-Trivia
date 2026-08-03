@@ -13,6 +13,11 @@ public static class ShareText
 {
     public const string SiteUrl = "https://tidbitstrivia.com";
 
+    /// The canonical twin for a single question (DEEP_LINKS.md): every platform's
+    /// per-question share points here, and the WEB app renders it — so a share lands
+    /// somewhere meaningful for a recipient who has never installed anything.
+    public static string ItemUrl(string id) => $"{SiteUrl}/item/{Uri.EscapeDataString(id)}";
+
     /// One glyph per answered question: 🟢 correct · 🔴 wrong · ⚫️ timed out.
     public static string Grid(GameSummary s) =>
         string.Concat(s.Answered.Select(a =>

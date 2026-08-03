@@ -139,6 +139,12 @@ struct ContentView_macOS: View {
         .sheet(isPresented: Binding(get: { !hasOnboarded }, set: { if !$0 { hasOnboarded = true } })) {
             OnboardingSheet_macOS { hasOnboarded = true }
         }
+        // sheet(item:) not isPresented: — the id and the presentation must arrive in the
+        // same state change, or a second link races the first sheet's dismissal.
+        .sheet(item: Binding(get: { store.pendingItemID.map(SharedItemID_macOS.init) },
+                             set: { store.pendingItemID = $0?.id })) { item in
+            SharedItemView_macOS(id: item.id)
+        }
     }
 
     @ViewBuilder private var detail: some View {
@@ -181,6 +187,10 @@ struct ContentView_macOS: View {
             case .quiz(let id):
                 store.pendingSharedQuizID = id
                 section = .create
+            case .item(let id):
+                // A single shared question belongs to no sidebar section — it is a thing
+                // someone sent you, so it opens as a sheet over wherever you were.
+                store.pendingItemID = id
             }
         }
     }
@@ -248,5 +258,10 @@ struct TidbitsCommands: Commands {
                 .disabled(newGame == nil)
         }
     }
+}
+
+/// `sheet(item:)` needs an Identifiable, and a bare String isn't one.
+private struct SharedItemID_macOS: Identifiable {
+    let id: String
 }
 #endif

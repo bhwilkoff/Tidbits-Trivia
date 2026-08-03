@@ -169,6 +169,14 @@ enum QuizSharing {
         URL(string: "https://tidbitstrivia.com/#/quiz/\(id)")
     }
 
+    /// The canonical twin for a single QUESTION (DEEP_LINKS.md). Every platform's
+    /// per-question share points here and the web app renders it, so a share lands
+    /// somewhere meaningful for a recipient who has never installed anything.
+    static func itemURL(for id: String) -> URL? {
+        let escaped = id.addingPercentEncoding(withAllowedCharacters: .alphanumerics) ?? id
+        return URL(string: "https://tidbitstrivia.com/item/\(escaped)")
+    }
+
     /// What a fetch actually came back with. "Gone" and "couldn't load" are
     /// DIFFERENT: telling someone with a working link that the quiz was deleted
     /// stops them retrying something transient.

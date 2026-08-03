@@ -116,6 +116,11 @@ class MainActivity : ComponentActivity() {
         // The https form puts the route in the FRAGMENT, which no intent filter can
         // match on — the filter matches the host and the fragment is parsed here.
         quizIdFrom(uri)?.let { return "quiz/$it" }
+        // A shared single question carries an id too: tidbits://item/<id> and the
+        // canonical https://tidbitstrivia.com/item/<id> (DEEP_LINKS.md). The https form
+        // is a real PATH here, not a fragment, so the existing host-wide App Link filter
+        // already matches it — no new intent-filter, and nothing emitted goes undeclared.
+        itemIdFrom(uri)?.let { return "item/$it" }
 
         val token = when (uri.scheme) {
             "tidbits", "tidbitstrivia" -> uri.host
@@ -123,6 +128,17 @@ class MainActivity : ComponentActivity() {
             else -> null
         }?.lowercase()
         return token?.takeIf { it in setOf("daily", "night", "party", "create", "settings") }
+    }
+
+    private fun itemIdFrom(uri: android.net.Uri): String? {
+        if ((uri.scheme == "tidbits" || uri.scheme == "tidbitstrivia") && uri.host == "item") {
+            return uri.pathSegments.firstOrNull()?.takeIf { it.isNotBlank() }
+        }
+        if (uri.scheme == "https") {
+            return uri.pathSegments.takeIf { it.size >= 2 && it[0] == "item" }?.get(1)
+                ?.takeIf { it.isNotBlank() }
+        }
+        return null
     }
 
     private fun quizIdFrom(uri: android.net.Uri): String? {

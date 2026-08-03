@@ -176,7 +176,7 @@ struct ResultsView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(a.question.prompt).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
                     Text("You got it: \(a.question.correctAnswer)").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
-                    ShareLink(item: "I knew \"\(a.question.prompt)\" on Tidbits Trivia — it's \(a.question.correctAnswer). How did YOU know that? 🧠") {
+                    ShareLink(item: Self.howDidYouKnowText(a)) {
                         Label("How did you know that? · Share", systemImage: "square.and.arrow.up")
                             .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.blue)
                     }
@@ -247,6 +247,15 @@ struct ResultsView: View {
         case 0.5..<0.8: return "Nicely done"
         default: return "Good run"
         }
+    }
+
+    /// The conversation-starter share for a nailed question, carrying the canonical
+    /// `/item/{id}` twin (DEEP_LINKS.md) — without it the recipient gets a fact they
+    /// can't follow anywhere, which is the opposite of the door-out this app is for.
+    static func howDidYouKnowText(_ a: AnsweredQuestion) -> String {
+        let line = "I knew \"\(a.question.prompt)\" on Tidbits Trivia — it's \(a.question.correctAnswer). How did YOU know that? 🧠"
+        guard let url = QuizSharing.itemURL(for: a.question.id) else { return line }
+        return "\(line)\n\(url.absoluteString)"
     }
 
     private var shareText: String {

@@ -31,6 +31,33 @@ three items that turned out to be already finished.
 
 ---
 
+# ✅ VERIFIED STATE — 2026-08-04, read from the APIs
+
+Everything below was queried live (App Store Connect API via `tools/asc.py`, the
+Firebase CLI, the live Worker, DNS), because this page kept going stale. Several
+items I had listed as "to do" were already **done by you**:
+
+| Item | Verified state |
+|---|---|
+| Apple app, all 3 platforms | **1.6.73 WAITING_FOR_REVIEW** — submitted 2026-08-04 |
+| `club.lifetime` IAP | **WAITING_FOR_REVIEW** — submitted with the build |
+| `club.annual` / `club.monthly` | **READY_TO_SUBMIT** — review notes ✅ and review screenshots ✅ (asset state COMPLETE), but **not attached to any submission** |
+| Game Center leaderboards | **Both created** — `tidbits.classic.high`, `tidbits.daily.streak` |
+| Game Center achievements | **0 of 9 created** |
+| App ID capabilities | `APPLE_ID_AUTH`, `GAME_CENTER`, `IN_APP_PURCHASE` enabled. **PUSH_NOTIFICATIONS and ASSOCIATED_DOMAINS are NOT** |
+| Web / Play / Microsoft | web live; Play not public (internal only); Microsoft in certification |
+
+**The one that needs a decision, not a click:** the two subscriptions are fully
+prepared but were not included in today's submission — its items are the app
+version only. They can't be added to a submission that is already
+WAITING_FOR_REVIEW, and creating a *second* in-flight submission risks disturbing
+the review you just started. **Recommendation: leave the review alone; attach the
+two subscriptions to the next version submission after this one resolves.** If
+they're approved without the subs, monthly/yearly simply can't be bought on Apple
+until the next release — the lifetime tier still can.
+
+---
+
 # Block A — the three that are actually blocking money
 
 ### A1 🔑 Lemon Squeezy webhook — **one secret left, and it's the last thing blocking money**
@@ -277,3 +304,28 @@ section.
    screenshots and submit them (A2).
 4. **Any spare 45 minutes:** the three push keys (B1–B3).
 5. **Answer D1** and two more features get built.
+
+---
+
+# The Universal Links problem, measured
+
+`apple-app-site-association` now exists and serves 200 — but with
+**`Content-Type: application/octet-stream`**, and Apple requires
+**`application/json`**. GitHub Pages serves extensionless files as octet-stream
+and gives no header control, and DNS is on WordPress.com nameservers pointing
+straight at GitHub's IPs, so there is no proxy in front to fix it.
+
+So iOS Universal Links cannot work as currently hosted, independent of the
+Associated Domains capability. Three ways out, in the order I'd pick them:
+
+1. **Move DNS to Cloudflare** (free) and proxy the apex. A Transform Rule or a
+   Worker route can then serve that one path as `application/json`. Also buys
+   header control for everything else. Owner-level: it's a nameserver change.
+2. **Serve the site from Cloudflare Pages** instead of GitHub Pages. Bigger move.
+3. **Accept it.** The custom scheme (`tidbits://`) works today and an https link
+   opens Safari, which renders the web twin — the degraded path is genuinely fine.
+   Universal Links stay a ⏳ row.
+
+I would take (1) when there's an appetite for a DNS change, and (3) until then.
+This is the only launch item where the blocker is infrastructure rather than a
+click.

@@ -17,7 +17,11 @@ set -uo pipefail
 cd "$(dirname "$0")/.."
 
 PLATFORM="${1:-ios}"
-OUT="${2:-/tmp/tidbits-qa/$PLATFORM}"
+# Default to build/qa/ (gitignored, but SURVIVES) rather than /tmp. Round 1's 47
+# captures were written to /tmp, and by the time anyone came back to finish reviewing
+# them they were gone — so the review was re-run from scratch. A capture you cannot
+# return to is a capture you have to take twice.
+OUT="${2:-build/qa/$(date +%F)-$PLATFORM}"
 mkdir -p "$OUT"
 export DEVELOPER_DIR="${DEVELOPER_DIR:-/Applications/Xcode-beta.app/Contents/Developer}"
 BUNDLE=com.learningischange.tidbitstrivia

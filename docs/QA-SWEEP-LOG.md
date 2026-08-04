@@ -4,6 +4,11 @@ Driven by `tools/qa-sweep.sh <ios|ipad|tvos> [outdir]`, which launches the app o
 case with the `DebugHooks` env family, screenshots it, and reports a crash when the pid
 simctl handed back is gone. ~47 captures per platform.
 
+**Captures land in `build/qa/<date>-<platform>/`** — gitignored, but durable. They used
+to default to `/tmp`, and Round 1's 47 captures were gone by the time anyone came back to
+finish reviewing them, so the review had to be re-run from scratch (Round 12). A capture
+you cannot return to is a capture you have to take twice.
+
 This is a **playability + completeness** pass, not the store capture
 (`tools/capture-screenshots.sh`) — it draws real questions rather than the screened set,
 because the point is to catch a mode that renders or plays wrong.

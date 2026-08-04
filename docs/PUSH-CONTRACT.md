@@ -79,10 +79,18 @@ until these are done:
 2. **iOS Push capability** — enable Push Notifications on the App ID (adds the
    `aps-environment` entitlement). *Do this before adding the entitlement to
    `project.yml`, or the signed cloud build breaks.*
-3. **FCM service account** — Firebase console → Service accounts → generate key →
-   secret `FCM_SERVICE_ACCOUNT` (also used for the RTDB admin read).
-4. **VAPID keypair** (web) — `web-push generate-vapid-keys`; public key into
-   `js/`, private into secret `VAPID_PRIVATE_KEY` (+ `VAPID_SUBJECT` mailto).
+3. **FCM service account** — the KEY IS CREATED (2026-08-03, via
+   `gcloud iam service-accounts keys create` against
+   `firebase-adminsdk-fbsvc@tidbits-trivia-f2ddb`), but storing it as the
+   `FCM_SERVICE_ACCOUNT` repo secret is the one step the sandbox refuses to let
+   an agent perform — writing a service-account JSON into a secret store is
+   blocked by policy, twice, deliberately. One owner command finishes it; the
+   path is in `docs/OWNER-PLAYBOOK.md` §B2.
+4. **VAPID keypair** (web) — **DONE 2026-08-03.** Generated with
+   `npx web-push generate-vapid-keys`; the public half is wired into
+   `js/push.js` (it is not a secret — it ships to every browser) and
+   `VAPID_PRIVATE_KEY` + `VAPID_SUBJECT` are set as repo secrets. The web
+   reminder toggle now renders, verified in Chrome.
 5. Deploy the `pushTokens` rule (DONE — see below).
 
 ## Client behavior (all platforms)

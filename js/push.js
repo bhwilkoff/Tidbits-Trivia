@@ -10,7 +10,7 @@ import { FirebaseNet } from './firebase.js';
 
 // `web-push generate-vapid-keys` → public half here, private half into the
 // VAPID_PRIVATE_KEY repo secret. The public key is not a secret; it ships to every client.
-export const VAPID_PUBLIC_KEY = 'TODO_GENERATE_VAPID_KEYPAIR';
+export const VAPID_PUBLIC_KEY = 'BNp_S4TZjp3uYefy6lEkSTI3NApBQ_r3cp7cf95BxEdmiiwXkEdq08jtnZueeQFHFMO_f5IzuUBaCVfgglQMaho';
 
 const ASKED_KEY = 'tidbits.push.asked';
 

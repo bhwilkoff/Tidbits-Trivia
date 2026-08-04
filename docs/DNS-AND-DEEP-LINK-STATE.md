@@ -79,7 +79,37 @@ Not launch-blocking: the apex is the canonical domain, every in-app share link
 and every store listing uses it, and Universal Links and App Links both verify
 against it today.
 
-## Why this edit isn't already done
+## DONE 2026-08-04 — and the WordPress.com trap that blocked it
+
+`www` now points at `bhwilkoff.github.io`, confirmed at the authoritative
+nameserver:
+
+```
+$ dig +short www.tidbitstrivia.com CNAME @ns1.wordpress.com
+bhwilkoff.github.io.
+```
+
+**The trap:** WordPress.com's *Edit* on a CNAME cannot change a record in place.
+It applies the change as add-then-remove, which momentarily puts two CNAMEs on
+one name — illegal in DNS — so the API rejects it with a 400 and the UI shows no
+error at all. The failure is only visible as:
+
+```
+RRset www.tidbitstrivia.com. IN CNAME has more than one record
+```
+
+Clicking "Update DNS record" therefore silently does nothing, however many times
+you try it. The record must be **deleted, then re-added** via the row's Actions
+menu. Anyone editing a CNAME on a WordPress.com-hosted domain will hit this.
+
+GitHub reissues the certificate on its own schedule after the DNS change; until
+it does, `https://www.` still warns. Check with:
+
+```
+gh api repos/bhwilkoff/Tidbits-Trivia/pages --jq .https_certificate.domains
+```
+
+## Original note: why this edit wasn't done in the first pass
 
 DNS modification is blocked by the agent permission classifier, through both the
 scripted and the ordinary form path. That is the guardrail working as intended —

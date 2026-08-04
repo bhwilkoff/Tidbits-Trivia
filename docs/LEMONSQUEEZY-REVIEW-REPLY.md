@@ -146,10 +146,16 @@ than promised:
 between 503 and 401 for ~20 seconds as Cloudflare rolls the new version across the
 edge. A single 503 immediately after setting a secret is propagation, not a fault.
 
+**`order_refunded` is now subscribed** (2026-08-04) — the webhook listens for
+**14 events**, verified after a fresh page load, and the Worker revokes on it.
+That closes the "a refunded lifetime purchase keeps access forever" hole.
+
 **Still open on the money path:** the store is in **test mode** pending their
-review, so nothing can be charged for real yet. And `order_refunded` is
-deliberately NOT subscribed, because the Worker doesn't handle it — a refunded
-*lifetime* purchase will not currently revoke access. Worth adding before volume.
+review, so nothing can be charged for real yet. Note that Lemon Squeezy scopes
+webhooks **per mode** — the banner says outright that these only fire for
+test-mode data. Re-check that the endpoint and all 14 events exist in **live**
+mode the moment the application is approved, or the first real purchase will
+grant nothing.
 
 ## Not yet answered, if they push further
 

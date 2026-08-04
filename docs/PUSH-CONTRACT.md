@@ -78,9 +78,11 @@ until these are done:
 1. **APNs `.p8` Auth Key** — Apple Developer → Keys → new key with APNs enabled.
    Secrets: `APNS_AUTH_KEY_P8`, `APNS_KEY_ID`, `APNS_TEAM_ID`,
    `APNS_BUNDLE_ID=com.learningischange.tidbitstrivia`.
-2. **iOS Push capability** — enable Push Notifications on the App ID (adds the
-   `aps-environment` entitlement). *Do this before adding the entitlement to
-   `project.yml`, or the signed cloud build breaks.*
+2. **iOS Push capability** — **DONE 2026-08-04.** Enabled on the App ID via the
+   App Store Connect API (`POST /v1/bundleIdCapabilities`, PUSH_NOTIFICATIONS),
+   and only THEN was `aps-environment` added to `project.yml`. That order is the
+   whole point of this being a separate step: an entitlement the App ID does not
+   carry makes the signed cloud build fail to provision.
 3. **FCM service account** — **DONE 2026-08-04.** Key created with
    `gcloud iam service-accounts keys create` against
    `firebase-adminsdk-fbsvc@tidbits-trivia-f2ddb` and stored as the

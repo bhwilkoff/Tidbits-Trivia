@@ -47,6 +47,14 @@ targets:
         # sign-in UI but never persist a session). Same class as the macOS
         # settings-clobber ratchet: config lives in project.yml, never in generated output.
         com.apple.developer.applesignin: [Default]
+        # Push + Universal Links. Both App ID capabilities were enabled on 2026-08-04
+        # BEFORE these lines existed — that order is load-bearing: an entitlement the
+        # App ID does not carry makes the signed cloud build fail to provision, which
+        # is why PUSH-CONTRACT §Owner-setup spells it out as three separate steps.
+        aps-environment: production
+        com.apple.developer.associated-domains:
+          - applinks:tidbitstrivia.com
+          - applinks:www.tidbitstrivia.com
     # Local StoreKit config so IAP purchases work in the simulator without App Store
     # Connect (the products still ship for real via App Store Connect at go-live).
     scheme:

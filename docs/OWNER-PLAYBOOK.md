@@ -33,13 +33,13 @@ three items that turned out to be already finished.
 
 # ⏳ WHAT IS ACTUALLY LEFT — 2026-08-04 (verified against each API)
 
-Four items. **None of them block launch.** Everything else is done and measured.
+Two items left (was four). **None of them block launch.** Everything else is done and measured.
 
 | # | Item | Why it isn't done | Effort |
 |---|---|---|---|
-| 1 | `www` CNAME → `bhwilkoff.github.io` | DNS edits are blocked by the agent permission classifier — correctly so | 1 record, ~2 min |
+| 1 | ~~`www` CNAME~~ **DONE 2026-08-04** | Record now points at `bhwilkoff.github.io`. GitHub still has to reissue the cert to cover `www` — automatic, but on its own schedule | watch, no action |
 | 2 | APNs `.p8` auth key | Not exposed by the App Store Connect API at all (`v1/apnsKeys` → 404). Developer-portal only | ~3 min |
-| 3 | Lemon Squeezy `order_refunded` event | The LS session is logged out. Code already handles it | 1 checkbox |
+| 3 | ~~LS `order_refunded`~~ **DONE 2026-08-04** | Webhook now listens for 14 events. **But LS scopes webhooks per mode** — this is the test-mode hook; live mode needs its own once the application is approved | recheck at go-live |
 | 4 | The two Club subscriptions | `READY_TO_SUBMIT`. **Deliberately parked** — see below | judgement call |
 
 **On #1** — this is the `https://www.` certificate warning; full diagnosis and the

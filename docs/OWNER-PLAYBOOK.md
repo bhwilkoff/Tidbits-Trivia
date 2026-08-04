@@ -31,6 +31,39 @@ three items that turned out to be already finished.
 
 ---
 
+# ⏳ WHAT IS ACTUALLY LEFT — 2026-08-04 (verified against each API)
+
+Four items. **None of them block launch.** Everything else is done and measured.
+
+| # | Item | Why it isn't done | Effort |
+|---|---|---|---|
+| 1 | `www` CNAME → `bhwilkoff.github.io` | DNS edits are blocked by the agent permission classifier — correctly so | 1 record, ~2 min |
+| 2 | APNs `.p8` auth key | Not exposed by the App Store Connect API at all (`v1/apnsKeys` → 404). Developer-portal only | ~3 min |
+| 3 | Lemon Squeezy `order_refunded` event | The LS session is logged out. Code already handles it | 1 checkbox |
+| 4 | The two Club subscriptions | `READY_TO_SUBMIT`. **Deliberately parked** — see below | judgement call |
+
+**On #1** — this is the `https://www.` certificate warning; full diagnosis and the
+exact record in `docs/DNS-AND-DEEP-LINK-STATE.md`. The Cloudflare migration that
+was going to be item #1 turned out to be **unnecessary**: Apple's CDN already
+accepts our association file despite the `octet-stream` content type, verified by
+reading it back out of Apple's own CDN.
+
+**On #4** — iOS, macOS and tvOS 1.6.73 are all `WAITING_FOR_REVIEW` right now.
+Attaching IAPs to an in-flight version pulls the whole build back out of the
+queue. The cheap play is to attach them to the *next* version. That is a
+sequencing choice, not a blocker, so it is yours to make rather than mine.
+
+## Verified green, 2026-08-04
+
+- Apple: iOS + macOS + tvOS **1.6.73 all WAITING_FOR_REVIEW**
+- Web, `assetlinks.json`, AASA, `support.html` — all HTTP 200
+- Worker rejects an unsigned webhook with 401; refunds revoke
+- Universal Links verified **by Apple's CDN**; App Links verified **by Google's
+  Digital Asset Links API** — both read back, not inferred
+- CI green across Android, Apple Core tests, and the Pages deploy
+
+---
+
 # ✅ DONE 2026-08-04 (second pass — via the ASC API + Play Console)
 
 - **PUSH_NOTIFICATIONS + ASSOCIATED_DOMAINS enabled** on the App ID, then

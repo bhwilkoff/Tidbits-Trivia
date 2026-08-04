@@ -121,3 +121,23 @@ The contract is identical everywhere; each client (a) computes the set with its
 existing `pickDaily`, (b) plays them through its existing game loop, (c) writes
 the one row, (d) fetches the static JSON and renders rank + board. Web is the
 reference implementation. Status tracked in `PARITY.md`.
+
+## The published question set (2026-08-03)
+
+`tools/publish_daily.py` writes `data/daily/{day}.json` — the day's seven FULL rows,
+~4 KB — on the same hourly cron as the board. The web reads it instead of
+downloading the 13 MB corpus just to work out which seven they are.
+
+**It is a cache, never an authority.** `Corpus.dailyPublished()` returns null on any
+doubt — a miss, a malformed file, the wrong day, the wrong count — and the caller
+falls back to `loadFull()` + the local computation, which is exactly what it did
+before. The published rows are produced by the SAME picker as every client (proved
+byte-identical against `js/engine.js`), and the five-engine daily golden still
+governs: if the published set ever diverged, the golden is what catches it.
+
+**A three-day window, not one file.** The cron runs in UTC; a client's `dayKey()` is
+its LOCAL date. Publishing a single day would 404 for everyone west of UTC for part
+of every day — correct, but it would silently fall back to 13 MB and undo the point.
+
+Measured in Chrome on a cold load: the Daily plays from **4,249 bytes** with
+`Corpus.full === false` throughout.

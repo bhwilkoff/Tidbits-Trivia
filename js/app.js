@@ -2053,11 +2053,16 @@ class Game {
     if (this._custom) qs = this._custom;
     else if (this.mode.id === 'barTrivia') qs = await this._loadNight();
     else if (this.mode.id === 'daily') {
-      // The Daily ranks EVERY id, so a shard would produce a different seven
-      // than the other platforms. This is the one play path that pays for the
-      // full corpus.
-      await Corpus.loadFull();
-      qs = Corpus.daily(this.dailyDay || dayKey(), 7);
+      // The Daily ranks EVERY id, so a shard would produce a different seven than the
+      // other platforms — which is why this was the one play path that paid 13 MB for the
+      // full corpus. The cron publishes the day's seven as ~4 KB of static JSON; take that
+      // when it's there, and fall back to computing locally whenever it isn't.
+      const day = this.dailyDay || dayKey();
+      qs = await Corpus.dailyPublished(day, 7);
+      if (!qs) {
+        await Corpus.loadFull();
+        qs = Corpus.daily(day, 7);
+      }
     }
     else if (this.mode.id === 'mix') qs = this._loadMix();
     else if (this.mode.id === 'pictureId') {

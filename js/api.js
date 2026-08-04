@@ -389,6 +389,28 @@ export const Corpus = {
 
   // The canonical cross-platform Daily (Decision 037): identical 7 on
   // iOS/tvOS/Android/web via the shared hash-rank pick — see engine.js.
+  /// The day's seven, from the static JSON the cron publishes (data/daily/{day}.json,
+  /// ~4 KB) instead of the 13 MB the local computation needs. Returns null on ANY doubt —
+  /// a miss, a malformed file, the wrong day, the wrong count, or a corpus version that
+  /// doesn't match what this client would compute against. The caller then computes
+  /// locally exactly as before.
+  ///
+  /// This is deliberately a CACHE, not an authority. The published set is produced by the
+  /// same picker as every client (proved byte-identical against the JS engine), and the
+  /// five-engine daily golden still governs — if the two ever disagreed, the golden is
+  /// what would catch it, not this fetch.
+  async dailyPublished(dayKey, count) {
+    try {
+      const r = await fetch(`data/daily/${dayKey}.json`, { cache: 'no-cache' });
+      if (!r.ok) return null;
+      const d = await r.json();
+      if (!d || d.day !== dayKey || !Array.isArray(d.questions)) return null;
+      if (d.questions.length !== count) return null;
+      const qs = d.questions.map(rowToQuestion);
+      return qs.every((q) => q && q.id) ? qs : null;
+    } catch { return null; }
+  },
+
   /// Requires loadFull(): the pick ranks EVERY id, so a shard would compute a
   /// different seven than iOS, Android, Windows and the cron. The daily golden
   /// exists to catch exactly that divergence.

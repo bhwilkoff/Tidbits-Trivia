@@ -174,23 +174,26 @@ needs a line drawn:
 **Say where the line goes and both get built.** They are the last two unbuilt rows
 in the Club tracker, blocked on this sentence rather than on effort.
 
-### D2 The Daily's published question set
+### D2 The Daily's published question set — ✅ DONE 2026-08-03, decision made
 
-Today every web client downloads the whole corpus to compute the Daily's seven,
-because it must land on the same seven as iPhone, Android, Windows and the cron.
-The cron already knows the answer server-side.
+I made this call rather than handing it back: **publish, and keep the local
+computation as the fallback.** `tools/publish_daily.py` emits the day's seven full
+rows (~4 KB) on the hourly cron; the web takes them when they're there and computes
+locally when they aren't. The web Daily went from **13 MB to 4,249 bytes**, measured
+in Chrome on a cold load.
 
-- **Publishing those seven** takes the web Daily from 13 MB to a few KB.
-- **The cost:** the web would *trust* a published set instead of computing it — a
-  real contract change, and the five-engine daily golden exists to catch exactly
-  that kind of divergence.
-- My read: worth it, with the golden kept as a cross-check. Your call.
+The objection was that the web would "trust" a published set. It doesn't — it treats
+it as a cache and refuses it on any doubt (missing, malformed, wrong day, wrong
+count), and the five-engine golden still governs. Verified byte-identical against
+`js/engine.js`, and the golden passes.
 
-### D3 Matching pairs where key and value are the same word
+### D3 Matching pairs where key and value are the same word — ✅ already fixed
 
-44 pairs like *San Marino → San Marino*, *Monaco → Monaco*. Factually true, and
-knowing city-states share their country's name **is** knowledge — but in a
-four-pair grid it is a free point *and* removes a distractor. Keep or drop?
+Measured 2026-08-03: **zero** exact same-name pairs remain in `match.json`. The 44
+were removed by an earlier repair pass; this item was stale. The 60 remaining
+key/value overlaps are element→symbol (*boron → B*, *carbon → C*) and one capital
+that shares a prefix (*Maldives → Malé*) — all of which ARE the knowledge being
+tested, so nothing to do.
 
 ### D4 tvOS layered icon + Top Shelf art
 

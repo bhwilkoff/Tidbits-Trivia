@@ -1,7 +1,9 @@
 # Push notifications — "the appointment" ($0 data contract)
 
-**Status: CLIENTS COMPLETE (2026-08-03); sending is owner-gated on the
-secrets in §Owner setup.** The return-trigger every async global mode
+**Status: ANDROID + WEB SENDING ARE LIVE (2026-08-04). iOS is still gated on the
+APNs `.p8`, which only Apple's Developer portal can issue.** The cron skips any
+leg whose secret is absent, so it sends on two legs today and picks up the third
+the moment the APNs secrets exist. The return-trigger every async global mode
 depends on (MONETIZATION §4c: "async lives or dies on the return trigger").
 Verified $0 on all three platforms from a GitHub Actions cron — **no card, no
 always-on server.** The only unavoidable cost is the $99/yr Apple membership
@@ -79,13 +81,11 @@ until these are done:
 2. **iOS Push capability** — enable Push Notifications on the App ID (adds the
    `aps-environment` entitlement). *Do this before adding the entitlement to
    `project.yml`, or the signed cloud build breaks.*
-3. **FCM service account** — the KEY IS CREATED (2026-08-03, via
+3. **FCM service account** — **DONE 2026-08-04.** Key created with
    `gcloud iam service-accounts keys create` against
-   `firebase-adminsdk-fbsvc@tidbits-trivia-f2ddb`), but storing it as the
-   `FCM_SERVICE_ACCOUNT` repo secret is the one step the sandbox refuses to let
-   an agent perform — writing a service-account JSON into a secret store is
-   blocked by policy, twice, deliberately. One owner command finishes it; the
-   path is in `docs/OWNER-PLAYBOOK.md` §B2.
+   `firebase-adminsdk-fbsvc@tidbits-trivia-f2ddb` and stored as the
+   `FCM_SERVICE_ACCOUNT` repo secret. This one key does double duty: FCM send
+   **and** the cron's admin read of the private `pushTokens` tree.
 4. **VAPID keypair** (web) — **DONE 2026-08-03.** Generated with
    `npx web-push generate-vapid-keys`; the public half is wired into
    `js/push.js` (it is not a secret — it ships to every browser) and

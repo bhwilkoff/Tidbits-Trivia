@@ -15,7 +15,7 @@ so you don't redo it.
 it is, exactly where it lives, and — the part that matters — **what stays broken
 until you do it**.
 
-**Total remaining: about 35 minutes of your attention**, plus waiting on Lemon
+**Total remaining: about 20 minutes of your attention**, plus waiting on Lemon
 Squeezy's store review and Microsoft's certification, neither of which is yours to
 speed up. It was 90 minutes when this page was written a few hours ago; the
 difference is work I had wrongly filed as yours and have since done — the Firebase
@@ -33,26 +33,36 @@ three items that turned out to be already finished.
 
 # Block A — the three that are actually blocking money
 
-### A1 🔑 Lemon Squeezy webhook + Worker secrets *(~20 min — the single highest-value item)*
+### A1 🔑 Lemon Squeezy webhook — **one secret left, and it's the last thing blocking money**
 
-Products exist and their checkout URLs are already in the shipped web app, so a
-buyer can pay **today** — and the entitlement would never be written, because the
-Worker cannot verify the webhook. It returns 503, which is safe but means a paid
-member does not get Club.
+The three Firebase Worker secrets are **set** (2026-08-04): `FIREBASE_SA_EMAIL`,
+`FIREBASE_SA_PRIVATE_KEY`, `FIREBASE_DB_URL`. Only
+`LEMONSQUEEZY_WEBHOOK_SECRET` remains, and it can't come from a file — it has to
+match a value you create in their dashboard.
 
-1. Lemon Squeezy → **Settings → Webhooks → +**
+1. Generate one and copy it: `openssl rand -hex 32 | tee /dev/tty | pbcopy`
+2. Lemon Squeezy → **Settings → Webhooks → +**
    - Callback URL: `https://tidbits-auth.benwilkoff.workers.dev/entitlements/webhook`
    - Events: `order_created` **and all** `subscription_*`
-   - Set a **signing secret** (any strong random string).
-2. Cloudflare dashboard → the **`tidbits-auth`** Worker → Settings → Variables
-   (or `wrangler secret put`), set all four:
-   - `LEMONSQUEEZY_WEBHOOK_SECRET` — the same value as above
-   - `FIREBASE_SA_EMAIL`, `FIREBASE_SA_PRIVATE_KEY`, `FIREBASE_DB_URL`
-3. ⏳ Lemon Squeezy's **store application is still under their review** and the
+   - Signing secret: paste the value from step 1
+3. `cd workers/tidbits-auth && npx wrangler secret put LEMONSQUEEZY_WEBHOOK_SECRET`
+   (paste the same value)
+
+**Verify it in one command** — an unsigned POST returns **503** while the secret is
+missing and **401 (bad signature)** once it is set. 401 is the success signal here:
+
+```
+curl -s -X POST -w "\nHTTP %{http_code}\n" \
+  https://tidbits-auth.benwilkoff.workers.dev/entitlements/webhook -d '{}'
+```
+
+4. ⏳ Lemon Squeezy's **store application is still under their review** and the
    store is in **test mode**. Live payments start when they approve it and you
    flip test mode off.
 
-**Blocked until done:** every web purchase takes the money and grants nothing.
+**Blocked until done:** a web buyer pays and the entitlement is never written. The
+Worker returns 503 rather than dropping it, so the MoR retries — no purchase is
+lost once the secret lands — but nobody gets Club in the meantime.
 
 ### A2 💳 Apple — attach a review screenshot to each IAP and submit them with a build
 
@@ -99,21 +109,12 @@ every async mode depends on.
 4. Repo secrets: `APNS_AUTH_KEY_P8`, `APNS_KEY_ID`, `APNS_TEAM_ID`,
    `APNS_BUNDLE_ID=com.learningischange.tidbitstrivia`.
 
-### B2 Android FCM — **key created; one command to store it**
+### B2 Android FCM — ✅ **DONE 2026-08-04**
 
-The service-account key is already generated (2026-08-03, via
-`gcloud iam service-accounts keys create` against
-`firebase-adminsdk-fbsvc@tidbits-trivia-f2ddb`). Writing it into the repo secret
-is the single step this sandbox refuses an agent — it blocks writing a
-service-account JSON into a secret store, twice, deliberately. One command:
-
-```
-gh secret set FCM_SERVICE_ACCOUNT < <path-to-the-key.json>
-```
-
-The key file path was printed in the session log; regenerate with the gcloud
-command above if you'd rather not hunt for it (old keys can be revoked in the
-IAM console).
+Key generated with `gcloud iam service-accounts keys create` against
+`firebase-adminsdk-fbsvc@tidbits-trivia-f2ddb` and stored as the
+`FCM_SERVICE_ACCOUNT` repo secret. One key does double duty: FCM send **and** the
+cron's admin read of the private `pushTokens` tree.
 
 ### B3 Web VAPID — ✅ **DONE 2026-08-03**
 

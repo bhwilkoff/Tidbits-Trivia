@@ -26,6 +26,10 @@ on:
       - 'sitemap.xml'
       - 'CNAME'
       - '.nojekyll'
+      # .well-known IS copied by the staging step below, but it was never a TRIGGER —
+      # so an assetlinks/AASA change on its own deployed nothing and looked like the
+      # file simply didn't work.
+      - '.well-known/**'
       - 'css/**'
       - 'js/**'
       - 'assets/**'

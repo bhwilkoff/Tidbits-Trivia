@@ -63,6 +63,14 @@ export function mapEvent(event) {
     return paid ? { email, grant: true, until: null, source: 'web' } : null;
   }
 
+  // A refunded one-time purchase has to REVOKE, and this was the one hole in the
+  // lifecycle: a lifetime grant has `until: null`, so nothing else can ever expire
+  // it. A subscription that lapses stops being renewed and times out on its own; a
+  // refunded Founding Member would have kept Club forever, for free.
+  if (name === 'order_refunded') {
+    return { email, grant: false, until: null, source: 'web' };
+  }
+
   // Subscription lifecycle.
   if (name.startsWith('subscription_')) {
     const status = attrs.status;                    // active | on_trial | paused | past_due | unpaid | cancelled | expired
@@ -77,7 +85,7 @@ export function mapEvent(event) {
     return { email, grant, until: Number.isNaN(until) ? null : until, source: 'web' };
   }
 
-  return null;   // refunds, disputes, etc. — handled later if needed
+  return null;   // disputes and everything else — ignored, ack 200
 }
 
 /**

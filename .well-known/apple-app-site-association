@@ -1,0 +1,15 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["L2G756LY8N.com.learningischange.tidbitstrivia"],
+        "components": [
+          { "/": "/item/*", "comment": "a shared question — the canonical twin of tidbits://item/<id>" },
+          { "/": "/quiz/*", "comment": "a shared quiz (docs/QUIZ-CONTRACT.md §5)" },
+          { "/": "/live/*", "comment": "join a Tidbits Live room by code" },
+          { "/": "/daily", "comment": "today's Daily" }
+        ]
+      }
+    ]
+  }
+}

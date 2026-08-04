@@ -40,6 +40,25 @@ test('mapEvent grants lifetime on a paid one-time order', () => {
   assert.deepEqual(d, { email: 'a@b.com', grant: true, until: null, source: 'web' });
 });
 
+test('mapEvent REVOKES on a refunded one-time order', () => {
+  // The hole this closes: a lifetime grant carries `until: null`, so nothing else in
+  // the lifecycle can ever expire it. A lapsed subscription times out on its own; a
+  // refunded Founding Member would otherwise have kept Club forever, for free.
+  const d = mapEvent({ meta: { event_name: 'order_refunded' },
+    data: { attributes: { user_email: 'a@b.com', status: 'refunded' } } });
+  assert.deepEqual(d, { email: 'a@b.com', grant: false, until: null, source: 'web' });
+});
+
+test('a refund applied over an existing lifetime grant actually ends it', () => {
+  const now = 1_800_000_000_000;
+  const lifetime = applyDecision(null, { email: 'a@b.com', grant: true, until: null, source: 'web' }, now);
+  assert.equal(lifetime.tier, 'club');
+  assert.equal(lifetime.until, null);            // lifetime: no expiry
+  const revoked = applyDecision(lifetime, { email: 'a@b.com', grant: false, until: null, source: 'web' }, now);
+  assert.ok(revoked.until !== null && revoked.until <= now,
+    'a revoke must set `until` into the past, not leave it null');
+});
+
 test('mapEvent grants a subscription until its renewal', () => {
   const renews = '2027-07-21T00:00:00.000Z';
   const d = mapEvent({ meta: { event_name: 'subscription_created' },
@@ -61,7 +80,10 @@ test('mapEvent keeps a cancelled sub until its end date, then revokes on expiry'
 });
 
 test('mapEvent ignores irrelevant or malformed events', () => {
-  assert.equal(mapEvent({ meta: { event_name: 'order_refunded' }, data: { attributes: { user_email: 'a@b.com' } } }), null);
+  // `order_refunded` used to be asserted here as "ignored". That assertion was
+  // pinning the bug rather than the contract — see the revoke test above. A dispute
+  // is still ignored: it is a bank-side hold, not a decided outcome.
+  assert.equal(mapEvent({ meta: { event_name: 'dispute_created' }, data: { attributes: { user_email: 'a@b.com' } } }), null);
   assert.equal(mapEvent({ meta: { event_name: 'order_created' }, data: { attributes: {} } }), null);   // no email
   assert.equal(mapEvent({}), null);
   assert.equal(mapEvent(null), null);

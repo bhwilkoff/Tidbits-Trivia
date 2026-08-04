@@ -67,7 +67,20 @@ After Create, add a localization (**English (U.S.)**):
 
 ---
 
-## 3. Achievements (×9)
+## 3. Achievements (×9) — ✅ CREATED 2026-08-04
+
+All nine exist in App Store Connect with English localizations, created by
+`tools/gc_achievements.py` from the tables below rather than by hand. The script is
+idempotent — it skips anything already present — so a re-run after a partial
+failure is safe. Verified: the nine `vendorIdentifier`s read back from the API
+match the nine ids the shipped app reports, exactly.
+
+**Images are NOT attached.** Game Center art goes through a three-step
+reserve/upload/commit asset flow the script doesn't implement; the achievements are
+valid and submittable without it, and `branding/gamecenter/` holds the 512×512
+files for whoever adds them.
+
+### The original spec (kept — it is what the script encodes)
 
 ASC → **Features → Game Center → Achievements → +**. Per achievement: a create
 step, then an English localization. **Points total = 285** (Apple's cap is 1000).

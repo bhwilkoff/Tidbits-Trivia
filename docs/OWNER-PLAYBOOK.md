@@ -31,6 +31,23 @@ three items that turned out to be already finished.
 
 ---
 
+# ✅ DONE 2026-08-04 (second pass — via the ASC API + Play Console)
+
+- **PUSH_NOTIFICATIONS + ASSOCIATED_DOMAINS enabled** on the App ID, then
+  `aps-environment` and `associated-domains` added to `project.yml`. That order
+  matters; the reverse breaks the signed build. iOS/tvOS/macOS all build.
+- **All 9 Game Center achievements created + localized** (`tools/gc_achievements.py`,
+  idempotent). Their 9 vendor ids match the 9 the shipped app reports, exactly.
+  Both leaderboards already existed. Images not attached (separate asset flow).
+- **Android App Links fixed** — assetlinks.json was missing the **Play App Signing**
+  fingerprint and carried only the upload key, so links verified only for locally
+  built installs. Both are live now, and Google's Digital Asset Links API reads
+  both back.
+- **`order_refunded` now revokes** (deployed + proven against the live Worker).
+- **`apple-app-site-association` created** and deploying.
+
+---
+
 # ✅ VERIFIED STATE — 2026-08-04, read from the APIs
 
 Everything below was queried live (App Store Connect API via `tools/asc.py`, the

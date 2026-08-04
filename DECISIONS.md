@@ -1864,3 +1864,35 @@ golden flaps, suspect nondeterminism in the thing being measured before
 suspecting the measurement — three of the four engines here were "correct" and
 all four were unreproducible. The diagnostic stays, env-gated, because the class
 recurs: a selection bug is invisible in any single run.
+
+---
+
+## 053 — Friend Streaks and Ranked Seasons: R-MON-4 had already decided this
+
+**The split is: keep the seat free, sell the view of it.** Concretely —
+
+| | Free forever | Tidbits Club |
+|---|---|---|
+| **Friend Streaks** | keeping a mutual streak with any friend, seeing its count, the at-risk nudge | the rivalry view — head-to-head accuracy over time, the archive of past streaks and how each one ended |
+| **Ranked Seasons** | a seat every season, ranked play, your tier, promotion and relegation, the live board | season autopsy, rundle history archive, opponent scouting, defendable-title records |
+
+**Why:** these two sat unbuilt for weeks as "needs an owner decision on the
+free/Club split", and re-reading `MONETIZATION.md` R-MON-4 shows the decision had
+already been made in general terms and only needed applying: *"Never gate a seat;
+gate the view from the seat. Playing, ranking, and being ranked are always free.
+Understanding, scouting, archiving, curating, and configuring are Club."* There was
+no new question — only an unapplied rule. A blocked item that is actually an
+un-applied rule is the most expensive kind, because nobody re-reads the rule.
+
+The one judgement R-MON-4 does not settle outright is **streak insurance** — a
+"freeze" that saves a mutual streak. It was tempting as a Club perk, and it is
+rejected: a freeze changes the OUTCOME, so selling it is pay-to-win in a social
+feature, and it would mean a paying member's streak survives while their free
+friend's dies on the same missed day. Solo streak freezes are already free for
+everyone; mutual ones stay free too. Club gets the history, not the outcome.
+
+**How to apply:** when building either feature, the test is the one the monetization
+doc already states — *would removing this help the free user?* If the free user
+loses something they relied on, it is not a Club feature. Everything above the line
+ADDS a way to look back at play that already happened; nothing above it changes what
+happens.

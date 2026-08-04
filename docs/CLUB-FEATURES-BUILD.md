@@ -137,9 +137,9 @@ Legend: ✅ done+verified · 🔨 in progress · ⏳ queued · 🚫 n/a (with re
 | 3 Marathon | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 4 Knowledge Atlas | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 5 Expedition | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| — Friend Streaks (deferred: owner free/Club split, R-MON-4) | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
+| — Friend Streaks (UNBLOCKED 2026-08-03 — Decision 053) | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | 6 Link Wall | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| — Ranked Seasons (deferred: owner free/Club split, R-MON-4) | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
+| — Ranked Seasons (UNBLOCKED 2026-08-03 — Decision 053) | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 
 > **2026-08-03 correction:** this matrix carried a second `7 Expedition` row reading ⏳
 > on all six while row 5 above it read ✅ on all six — the build-order table numbers

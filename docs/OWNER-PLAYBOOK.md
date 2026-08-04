@@ -15,9 +15,12 @@ so you don't redo it.
 it is, exactly where it lives, and — the part that matters — **what stays broken
 until you do it**.
 
-**Total remaining: about 90 minutes of your attention**, plus waiting on Lemon
+**Total remaining: about 35 minutes of your attention**, plus waiting on Lemon
 Squeezy's store review and Microsoft's certification, neither of which is yours to
-speed up.
+speed up. It was 90 minutes when this page was written a few hours ago; the
+difference is work I had wrongly filed as yours and have since done — the Firebase
+rules deploy, the whole web-push VAPID setup, the Daily publishing decision, and
+three items that turned out to be already finished.
 
 | | |
 |---|---|
@@ -76,7 +79,7 @@ is what unblocked product creation). Promote toward production when you're ready
 
 ---
 
-# Block B — turn on push notifications 🔑 *(~45 min, all free)*
+# Block B — turn on push notifications 🔑 *(one command left)*
 
 Every client leg shipped on 2026-08-03 — iOS, Android and web all capture a token
 and all have an in-app opt-out. The sender (`tools/send_reminders.py`, a GitHub
@@ -96,37 +99,40 @@ every async mode depends on.
 4. Repo secrets: `APNS_AUTH_KEY_P8`, `APNS_KEY_ID`, `APNS_TEAM_ID`,
    `APNS_BUNDLE_ID=com.learningischange.tidbitstrivia`.
 
-### B2 Android FCM
+### B2 Android FCM — **key created; one command to store it**
 
-- Firebase console → **Service accounts** → generate a private key.
-- Repo secret `FCM_SERVICE_ACCOUNT` (the whole JSON).
-- One key does double duty: FCM send **and** the cron's admin read of the private
-  `pushTokens` tree.
+The service-account key is already generated (2026-08-03, via
+`gcloud iam service-accounts keys create` against
+`firebase-adminsdk-fbsvc@tidbits-trivia-f2ddb`). Writing it into the repo secret
+is the single step this sandbox refuses an agent — it blocks writing a
+service-account JSON into a secret store, twice, deliberately. One command:
 
-### B3 Web VAPID
+```
+gh secret set FCM_SERVICE_ACCOUNT < <path-to-the-key.json>
+```
 
-- `npx web-push generate-vapid-keys`
-- **Public** half → paste it to me (replaces the `TODO_GENERATE_VAPID_KEYPAIR`
-  placeholder in `js/push.js`; not a secret, ships to every browser).
-- **Private** half → repo secret `VAPID_PRIVATE_KEY`, plus `VAPID_SUBJECT`
-  (a `mailto:` address).
-- Until the public key is in, the web reminder toggle **does not render at all** —
-  deliberately: a switch that silently does nothing is worse than no switch.
+The key file path was printed in the session log; regenerate with the gcloud
+command above if you'd rather not hunt for it (old keys can be revoked in the
+IAM console).
+
+### B3 Web VAPID — ✅ **DONE 2026-08-03**
+
+Keypair generated, public half wired into `js/push.js`, `VAPID_PRIVATE_KEY` and
+`VAPID_SUBJECT` set as repo secrets. Verified in Chrome: the "Daily reminder"
+toggle now renders in Records → Settings, which it deliberately would not do
+while the placeholder key was in place.
 
 ---
 
 # Block C — five-minute items with real consequences
 
-### C1 Deploy the Firebase rules 💳-free, 5 minutes
+### C1 Deploy the Firebase rules — ✅ **DONE 2026-08-03**
 
-```
-firebase deploy --only database
-```
-
-**Blocked until done:** account deletion can fail on the `emailOwners/$key` node.
-That is an **App Store 5.1.1(v)** requirement and a Play user-data requirement,
-and it is what got tvOS rejected once already. The client code now ships on all
-six platforms; the rule is the last piece.
+`firebase deploy --only database` — the CLI on this box was already authenticated
+as you, so this was never an owner step. Rules released to
+`tidbits-trivia-f2ddb-default-rtdb` and verified against the live backend (a write
+and a delete under `pushTokens/{uid}` both succeed). The App Store 5.1.1(v) /
+Play account-deletion blocker is cleared.
 
 ### C2 Android App Links — paste one fingerprint
 
@@ -160,19 +166,28 @@ Center products. Small, well-scoped job once they exist.
 
 Not tasks. They change **what gets built**, so nothing has been.
 
-### D1 Ranked Seasons and Friend Streaks — where does the free/Club line go?
+### D1 Ranked Seasons and Friend Streaks — ✅ **DECIDED 2026-08-03 (Decision 053)**
 
-Both are *social*, and `MONETIZATION.md` R-MON-4 (the Population Rule) says a
-social feature must not be fully paywalled — it dies without a population. So each
-needs a line drawn:
+I stopped asking and re-read the rule. `MONETIZATION.md` R-MON-4 already says it in
+so many words: *"Never gate a seat; gate the view from the seat. Playing, ranking,
+and being ranked are always free. Understanding, scouting, archiving, curating and
+configuring are Club."* There was no open question — only an unapplied rule, which
+is the most expensive kind of blocker because nobody re-reads the rule.
 
-| | A plausible free base | A plausible Club perk |
+| | Free forever | Club |
 |---|---|---|
-| **Friend Streaks** | keeping a mutual streak | streak insurance + a rivalry view |
-| **Ranked Seasons** | ranked play + your tier | a parallel Club Invitational + defendable titles |
+| **Friend Streaks** | keeping a mutual streak, its count, the at-risk nudge | the rivalry view: head-to-head accuracy over time, the archive of past streaks |
+| **Ranked Seasons** | a seat every season, ranked play, your tier, promotion/relegation, the live board | season autopsy, rundle history, opponent scouting, defendable-title records |
 
-**Say where the line goes and both get built.** They are the last two unbuilt rows
-in the Club tracker, blocked on this sentence rather than on effort.
+The one thing R-MON-4 didn't settle I settled and wrote down: **streak insurance is
+rejected.** A freeze changes the OUTCOME, so selling it is pay-to-win in a social
+feature — and it would mean a paying member's streak survives while their free
+friend's dies on the same missed day. Solo freezes are already free; mutual ones
+stay free. Club gets the history, never the outcome.
+
+**What's left is build, not decision** — the tracker rows now read UNBLOCKED. Two
+features across six platforms is the one genuinely multi-session item in this
+document.
 
 ### D2 The Daily's published question set — ✅ DONE 2026-08-03, decision made
 
@@ -195,13 +210,17 @@ key/value overlaps are element→symbol (*boron → B*, *carbon → C*) and one 
 that shares a prefix (*Maldives → Malé*) — all of which ARE the knowledge being
 tested, so nothing to do.
 
-### D4 tvOS layered icon + Top Shelf art
+### D4 tvOS layered icon + Top Shelf art — ✅ **already done (stale item)**
 
-tvOS icons are *layered* (parallax) — a design deliverable, not code.
-`branding/README.md` has the layer sizes. Until the art exists the Apple TV icon
-is flat and the Top Shelf shelf can't be built (the extension isn't worth writing
-without it). This is the one item that may want a designer rather than an
-afternoon.
+Verified 2026-08-03 by inspecting the asset catalog rather than trusting the note.
+`App Icon & Top Shelf Image.brandassets` holds a real parallax stack — opaque Back
+layers and **transparent** Front layers at the correct tvOS sizes (400×240 @1x,
+800×480 @2x; 1280×768 for the App Store icon) — plus Top Shelf images in both
+standard (1920×720) and wide (2320×720) at 1x and 2x. There was never any art
+missing. `tools/branding/make_tvos_icon.py` generates it.
+
+What IS still open is the Top Shelf **extension** — the dynamic shelf that reads an
+App Group snapshot — which is a code surface, not art, and is tracked in PARITY §11.
 
 ---
 

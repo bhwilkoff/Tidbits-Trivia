@@ -20,6 +20,7 @@ on:
       - 'privacy.html'
       - 'terms.html'
       - 'support.html'
+      - 'refunds.html'
       - 'manifest.json'
       - 'sw.js'
       - 'robots.txt'
@@ -58,12 +59,25 @@ jobs:
       - name: Stage web files only
         run: |
           mkdir -p _site
-          for item in index.html 404.html privacy.html terms.html support.html manifest.json sw.js \
+          for item in index.html 404.html privacy.html terms.html support.html refunds.html \
+                      manifest.json sw.js \
                       robots.txt sitemap.xml CNAME .nojekyll css js assets branding data \
                       .well-known; do
             [ -e "$item" ] && cp -r "$item" _site/
           done
           test -f _site/index.html   # fail loudly if the site root is missing
+
+          # This allowlist is copy-only: a page added to the repo but not to the list
+          # is silently 404 while every LINK to it deploys fine. That is exactly how
+          # refunds.html shipped as a dead link. Any root .html must be staged.
+          missing=""
+          for f in *.html; do
+            [ -e "_site/$f" ] || missing="$missing $f"
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::Root page(s) not staged — add them to the allowlist AND the paths: trigger:$missing"
+            exit 1
+          fi
           echo "Staged $(du -sh _site | cut -f1) across $(find _site -type f | wc -l | tr -d ' ') files"
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

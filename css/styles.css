@@ -20,6 +20,7 @@
   --bw: 3px;
   --shadow: 5px;
   --pad: 16px;
+  --content: 680px;   /* the reading measure — header and content share it */
   --font: ui-rounded, "SF Pro Rounded", "Hiragino Maru Gothic ProN", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
@@ -311,7 +312,21 @@ body {
 
 /* ---- Larger screens ---- */
 @media (min-width: 720px) {
-  .main, .results, .game { max-width: 680px; margin: 0 auto; width: 100%; }
+  /* .main and .results ARE the scroll containers (body is overflow:hidden, so
+     nothing else scrolls). Capping their WIDTH also capped the wheel target, so
+     on a wide window the page ignored the wheel everywhere outside the column.
+     Centre the content with padding instead and leave the scroll box full-width:
+     same 680px reading measure, but the whole viewport scrolls and the scrollbar
+     sits at the window edge where it belongs. */
+  .main, .results {
+    width: 100%; max-width: none; margin: 0;
+    padding-inline: max(var(--pad), calc((100% - var(--content)) / 2));
+  }
+  /* .game is a flex layout, not a scroll container — centring the box is right. */
+  .game { max-width: var(--content); margin: 0 auto; width: 100%; }
+  /* The header was left out of this rule, so the wordmark and nav sat against the
+     window edges while the content was centred — the visible misalignment. */
+  .topbar { max-width: calc(var(--content) + var(--pad) * 2); margin: 0 auto; width: 100%; }
   .cat-grid { grid-template-columns: repeat(3, 1fr); }
 }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }

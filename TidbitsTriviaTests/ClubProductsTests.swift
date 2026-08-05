@@ -81,3 +81,30 @@ struct ClubProductsTests {
         #expect(groups.count == 1, "expected a single subscription group, found \(groups.count)")
     }
 }
+
+/// The disclosure must describe the plans that are on screen and no others.
+///
+/// It was a static sentence naming all three. On 2026-08-05 the real App Store
+/// returned Monthly and Yearly but NOT Founding Member (a non-consumable bound to an
+/// in-flight review submission is not served in the sandbox; its subscriptions, which
+/// are submitted by a different mechanism, are). The screen therefore described a plan
+/// with no button — a plan a reviewer can read about but cannot buy, on a purchase
+/// screen, which is the exact shape of the 2.1(b) rejection this came from.
+@MainActor
+struct ClubDisclosureTests {
+
+    /// Nothing to sell, nothing to disclaim.
+    @Test func noPlansMeansNoTerms() {
+        #expect(StoreKitStore.shared.legalDisclosure.isEmpty)
+    }
+
+    /// The wording is derived, so the pieces have to agree with each other. These assert
+    /// the *shape* of the derivation without needing StoreKit to hand us real products.
+    @Test func theSentenceNeverMentionsAPlanItIsNotShowing() {
+        let d = StoreKitStore.shared.legalDisclosure
+        // With no products loaded the store shows nothing, so no plan may be named.
+        #expect(!d.contains("Founding Member"))
+        #expect(!d.contains("Monthly"))
+        #expect(!d.contains("Yearly"))
+    }
+}

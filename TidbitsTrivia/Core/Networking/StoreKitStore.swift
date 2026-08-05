@@ -61,6 +61,42 @@ final class StoreKitStore {
     /// problem you have was the one thing the screen did not say.
     private(set) var returnedEmpty = false
 
+    /// The renewal terms, built from the plans ACTUALLY on screen rather than from the
+    /// three we hope are there.
+    ///
+    /// Apple requires the terms beside the purchase controls, so this text used to be a
+    /// static sentence naming all three plans. That is wrong whenever the store returns a
+    /// subset — and it does: an IAP bound to an in-flight review submission is not served
+    /// in the sandbox while its subscriptions, which are submitted by a different
+    /// mechanism, are. On 2026-08-05 the real store returned Monthly and Yearly but not
+    /// Founding Member, so the screen described a plan with no button. A plan a reviewer
+    /// can read about but cannot buy, on a purchase screen, is the exact shape of the
+    /// 2.1(b) rejection this came from. The sentence now follows the buttons.
+    ///
+    /// Empty when nothing loaded — there are no terms to state for nothing.
+    var legalDisclosure: String {
+        let ids = Set(products.map(\.id))
+        let subs = [
+            ids.contains(Product.monthly.rawValue) ? "Monthly" : nil,
+            ids.contains(Product.annual.rawValue) ? "Yearly" : nil,
+        ].compactMap { $0 }
+
+        var parts: [String] = []
+        if !subs.isEmpty {
+            let one = subs.count == 1
+            parts.append("""
+            \(subs.joined(separator: " and ")) \(one ? "is an auto-renewable subscription" : "are auto-renewable subscriptions") \
+            at the \(one ? "price" : "prices") shown above. Payment is charged to your Apple Account at purchase \
+            confirmation. \(one ? "It renews" : "Each renews") automatically unless auto-renewal is turned off at least \
+            24 hours before the current period ends; manage or cancel anytime in your Apple Account settings.
+            """)
+        }
+        if ids.contains(Product.lifetime.rawValue) {
+            parts.append("Founding Member is a one-time purchase for lifetime access — it does not renew.")
+        }
+        return parts.joined(separator: " ")
+    }
+
     func loadProducts() async {
         guard !loading else { return }
         loading = true

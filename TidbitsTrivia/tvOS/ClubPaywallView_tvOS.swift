@@ -166,7 +166,7 @@ struct ClubPaywallView_tvOS: View {
     /// than as tappable links.
     private var legalFooter: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Monthly and Yearly are auto-renewable subscriptions at the prices shown above. Payment is charged to your Apple Account at purchase confirmation. Each renews automatically unless auto-renewal is turned off at least 24 hours before the current period ends; manage or cancel anytime in your Apple Account settings. Founding Member is a one-time purchase for lifetime access — it does not renew.")
+            Text(store.legalDisclosure)
                 .font(.system(size: 20, weight: .medium, design: .rounded)).foregroundStyle(TVTheme.textSoft)
             Text("Terms of Use and Privacy Policy: tidbitstrivia.com/terms.html · tidbitstrivia.com/privacy.html")
                 .font(.system(size: 20, weight: .semibold, design: .rounded)).foregroundStyle(TVTheme.textSoft)

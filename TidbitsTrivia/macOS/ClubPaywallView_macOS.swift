@@ -142,7 +142,7 @@ struct ClubPaywallView_macOS: View {
     /// Policy links must appear in the binary next to the purchase controls.
     private var legalFooter: some View {
         VStack(spacing: 10) {
-            Text("Monthly and Yearly are auto-renewable subscriptions at the prices shown above. Payment is charged to your Apple Account at purchase confirmation. Each renews automatically unless auto-renewal is turned off at least 24 hours before the current period ends; manage or cancel anytime in your Apple Account settings. Founding Member is a one-time purchase for lifetime access — it does not renew.")
+            Text(store.legalDisclosure)
                 .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft).multilineTextAlignment(.center)
             HStack(spacing: 18) {
                 Link("Terms of Use", destination: URL(string: "https://tidbitstrivia.com/terms.html")!)

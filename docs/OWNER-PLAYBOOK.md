@@ -1,3 +1,36 @@
+# LAUNCH STATUS — 2026-08-04, read from each store's own console
+
+| Platform | Version | State |
+|---|---|---|
+| **Windows** | 1.6.73 | **LIVE in the Microsoft Store** |
+| **Web** | (continuous) | **LIVE** — tidbitstrivia.com |
+| **iOS / macOS / tvOS** | 1.6.73 | All three `WAITING_FOR_REVIEW` |
+| **Android** | 1.6.73 | Pushed to Play production 2026-08-04 (was 1.6.62) |
+
+**Correction:** this doc previously said the Windows submission was "in
+certification". Partner Center says the product is live and on Submission 2.
+Docs drift; consoles don't.
+
+**All four platforms are on 1.6.73.** Windows shipped at 1.6.73 on 2026-08-03,
+Apple's in-review build is 1.6.73, and Android — which was 11 versions behind at
+1.6.62 — was brought up. Apple was deliberately NOT re-cut: introducing 1.6.74
+would pull three in-review platforms back out of the queue to change a number.
+
+## Outstanding — exactly two
+
+1. **Lemon Squeezy store review.** The store is in test mode until they approve,
+   so no real web charge can settle. Reply pack ready:
+   `docs/LEMONSQUEEZY-REVIEW-REPLY.md`.
+2. **Apple's two subscriptions.** `club.monthly` + `club.annual` are
+   `READY_TO_SUBMIT` — fully configured, never submitted — while
+   `club.lifetime` is `WAITING_FOR_REVIEW`. Until they go in, the three-plan
+   paywall has one purchasable plan on Apple.
+
+Everything else is done. Refund policy published at `/refunds.html` and linked
+from the paywall, apps footer, terms and support.
+
+---
+
 # Owner playbook — everything only you can do
 
 **Written 2026-08-03 against 1.6.73.** One page for every step blocked on *you*

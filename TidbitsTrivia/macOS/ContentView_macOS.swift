@@ -12,6 +12,12 @@ struct ContentView_macOS: View {
     @Environment(AppStore.self) private var store
     @Environment(\.modelContext) private var modelContext
     @State private var section: SidebarSection? = .play
+    /// TIDBITS_PAYWALL=1 — mirrors the tvOS hook. The Mac is the only surface here that
+    /// can answer "does the REAL App Store return our plans": StoreKit's sandbox needs
+    /// actual hardware, so a simulator can only ever exercise the local .storekit file.
+    /// Launched outside Xcode, this opens the paywall on the same path App Review takes
+    /// and `loadProducts()` prints what App Store Connect actually returned.
+    @State private var diagPaywall = false
     @State private var path = NavigationPath()
     /// The active game. When set, the game surface REPLACES the split view as
     /// the window root (macOS-DESIGN §B2).
@@ -79,6 +85,7 @@ struct ContentView_macOS: View {
         .animation(.snappy(duration: 0.2), value: livePreview?.id)
         .animation(.snappy(duration: 0.2), value: liveHost?.id)
         .animation(.snappy(duration: 0.2), value: expeditionLaunch?.id)
+        .sheet(isPresented: $diagPaywall) { ClubPaywallView_macOS() }
         .onChange(of: store.inbox) { _, _ in handleInbox() }
         .onAppear { handleInbox() }
         .task {
@@ -103,6 +110,7 @@ struct ContentView_macOS: View {
             } else if let tab = DebugHooks.initialTab {
                 section = SidebarSection(rawValue: tab.rawValue)
             }
+            if DebugHooks.showPaywall { diagPaywall = true }
         }
     }
 

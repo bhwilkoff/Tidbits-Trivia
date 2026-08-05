@@ -1003,7 +1003,7 @@ function appsPromo() {
       <h2 class="section">Get Tidbits everywhere</h2>
       <p class="muted">Same trivia, native on every screen — play online here anytime.</p>
       <div class="store-row">${APP_STORES.map(card).join('')}</div>
-      <p class="apps-foot muted"><a href="/support.html">Support</a> · <a href="/privacy.html">Privacy</a> · tidbitstrivia.com</p>
+      <p class="apps-foot muted"><a href="/support.html">Support</a> · <a href="/privacy.html">Privacy</a> · <a href="/refunds.html">Refunds</a> · tidbitstrivia.com</p>
     </section>`;
 }
 
@@ -3183,7 +3183,7 @@ function viewClub() {
     ${billingNote}
     <p class="muted" style="text-align:center;font-size:.85em;margin-top:12px">Bought Tidbits Club already? <a href="#/profile" style="color:var(--color-accent);font-weight:700">Sign in with the same email</a> — it's already yours.</p>
     <p class="muted" style="text-align:center;font-size:.78em;margin-top:16px;line-height:1.5">Tidbits Club Monthly and Yearly are auto-renewing subscriptions at the prices shown. Each renews automatically at the end of its period unless you cancel first; cancel anytime from your purchase-confirmation email. Founding Member is a one-time purchase for lifetime access — it does not renew.</p>
-    <p class="muted" style="text-align:center;font-size:.8em;margin-top:8px"><a href="/terms.html" style="color:var(--color-accent);font-weight:700">Terms of Use</a> · <a href="/privacy.html" style="color:var(--color-accent);font-weight:700">Privacy Policy</a></p>
+    <p class="muted" style="text-align:center;font-size:.8em;margin-top:8px"><a href="/terms.html" style="color:var(--color-accent);font-weight:700">Terms of Use</a> · <a href="/privacy.html" style="color:var(--color-accent);font-weight:700">Privacy Policy</a> · <a href="/refunds.html" style="color:var(--color-accent);font-weight:700">Refunds</a></p>
   </div>`;
 }
 function bindClub() {

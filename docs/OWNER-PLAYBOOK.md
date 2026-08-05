@@ -33,12 +33,19 @@ three items that turned out to be already finished.
 
 # ⏳ WHAT IS ACTUALLY LEFT — 2026-08-04 (verified against each API)
 
-Two items left (was four). **None of them block launch.** Everything else is done and measured.
+One item left (was four). **It does not block launch.**
+
+> **Heads-up — the reminders cron is now ARMED.** `tools/send_reminders.py` exits
+> early when `FCM_SERVICE_ACCOUNT` is missing, which is what kept
+> `.github/workflows/reminders.yml` inert. All seven push secrets now exist, so
+> the daily 16:47 UTC run will send **real notifications** to anyone in the
+> `pushTokens` registry who hasn't played that day. There is no dry-run flag. If
+> you want to inspect before it fires, disable the workflow or add a guard first. Everything else is done and measured.
 
 | # | Item | Why it isn't done | Effort |
 |---|---|---|---|
 | 1 | ~~`www` CNAME~~ **DONE 2026-08-04** | Record now points at `bhwilkoff.github.io`. GitHub still has to reissue the cert to cover `www` — automatic, but on its own schedule | watch, no action |
-| 2 | APNs `.p8` auth key | Not exposed by the App Store Connect API at all (`v1/apnsKeys` → 404). Developer-portal only | ~3 min |
+| 2 | ~~APNs auth key~~ **DONE 2026-08-04** | No new key needed — APNs was enabled on the EXISTING `QT5PJV96B7` key, so the `.p8` already on disk works. Proven against Apple: `BadDeviceToken`, not `InvalidProviderToken` | none |
 | 3 | ~~LS `order_refunded`~~ **DONE 2026-08-04** | Webhook now listens for 14 events. **But LS scopes webhooks per mode** — this is the test-mode hook; live mode needs its own once the application is approved | recheck at go-live |
 | 4 | The two Club subscriptions | `READY_TO_SUBMIT`. **Deliberately parked** — see below | judgement call |
 

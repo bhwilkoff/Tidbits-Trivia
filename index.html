@@ -52,10 +52,20 @@
           // serves it from HTTP cache up to 24h, so a new worker never installs
           // and the app stays frozen on a stale corpus). Force an update check,
           // and reload once when a new worker takes control.
+          // Whether THIS page was already being served by a worker. On a first
+          // visit it is false: sw.js activates with clients.claim(), so it takes
+          // over the open page and fires controllerchange immediately. Reloading
+          // on that made every first visit load twice — a visible flash, most
+          // obviously under the onboarding dialog, which only shows on a first
+          // visit. There is nothing stale to discard then: this page just fetched
+          // everything from the network. Only an UPDATE (a worker replacing an
+          // older one) is worth a reload.
+          const hadController = !!navigator.serviceWorker.controller;
           const reg = await navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' });
           reg.update();
           let reloaded = false;
           navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!hadController) return;
             if (reloaded) return; reloaded = true; location.reload();
           });
         } catch (e) { /* no-op */ }

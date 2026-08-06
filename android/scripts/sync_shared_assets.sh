@@ -22,5 +22,9 @@ if [ ! -d "$SHARED" ]; then
 fi
 
 mkdir -p "$TARGET"
-rsync -a --delete "$SHARED/" "$TARGET/"
+# corpus.json is EXCLUDED: Android reads the corpus from corpus.sqlite only
+# (Decision 049 — the in-RAM JSON corpus is what OOM'd version code 75). Shipping
+# it anyway added 55MB of dead weight to every install, which is real storage
+# pressure on the low-end devices review runs on and buys nothing.
+rsync -a --delete --exclude 'corpus.json' "$SHARED/" "$TARGET/"
 echo "✓  synced $SHARED → $TARGET"

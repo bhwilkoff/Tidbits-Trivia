@@ -1,0 +1,44 @@
+# Actions' hosted-runner fleet sometimes refuses to start our jobs — "The job was not
+# acquired by Runner of type hosted even after multiple attempts". Not one step of ours
+# runs; the run just fails ~15 minutes later. The 2026-08-06 Actions major outage took
+# out three scheduled runs here that way. An hourly cron heals itself on the next tick,
+# but a daily one (reminders) loses a whole day, so this sweeper re-runs the jobs that
+# never started. Conservative by construction — see tools/retry_infra_failures.py and
+# Decision 054: a run is only re-run when none of our steps ever executed, so there is
+# no side effect to repeat.
+name: Retry infrastructure failures
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+    inputs:
+      lookback_hours:
+        description: "How far back to sweep for never-started runs"
+        required: false
+        default: "12"
+      dry_run:
+        description: "Report what would be re-run, without re-running it (1 = dry run)"
+        required: false
+        default: "0"
+
+permissions:
+  contents: read
+  actions: write   # rerun-failed-jobs; the repo default token is read-only
+
+concurrency:
+  group: "retry-infra-failures"
+  cancel-in-progress: false
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Re-run the runs that never started
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LOOKBACK_HOURS: ${{ github.event.inputs.lookback_hours || '12' }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || '0' }}
+        run: python3 tools/retry_infra_failures.py

@@ -1896,3 +1896,43 @@ doc already states — *would removing this help the free user?* If the free use
 loses something they relied on, it is not a Club feature. Everything above the line
 ADDS a way to look back at play that already happened; nothing above it changes what
 happens.
+
+## 054 — A run that never started is not a failure to read; it is a failure to retry
+*Date: 2026-08-06*
+
+When a scheduled run fails and **not one of our steps ever executed**, that is
+GitHub's hosted-runner fleet declining to start the job, not our code breaking.
+`.github/workflows/retry-infra-failures.yml` sweeps for exactly those runs every 30
+minutes and re-runs their failed jobs. Every other failure is left alone, loudly.
+
+**Why:** on 2026-08-06 an Actions **major outage** (githubstatus incident opened
+15:22 UTC) took out three scheduled runs — `Daily reminders`, `Aggregate Daily
+board`, `Aggregate leaderboard`. Each sat ~15 minutes and died with a single
+annotation:
+
+    The job was not acquired by Runner of type hosted even after multiple attempts
+
+The API shape is unambiguous: the job carries `"steps": []` and an empty
+`runner_name`, or a lone failed `Set up job`. Nothing of ours ran, so nothing of
+ours was at fault — and nothing of ours needs to be made idempotent before retrying,
+because **there was no side effect to repeat**. The cost of not retrying is uneven
+and that unevenness is the whole argument: `Aggregate leaderboard` is hourly and
+heals itself on the next tick, so a miss is invisible; `Daily reminders` runs once
+at 16:47 UTC, so the same miss silently costs **every reminder for a whole day**.
+
+**How to apply:** the gate is "did any step of ours reach a conclusion", never a
+match on the annotation text — GitHub rewords those. Keep the four conditions in
+`tools/retry_infra_failures.py` conservative, and in particular keep these two:
+**never retry a `cancelled` run** (that is a human or a concurrency group, and
+retrying fights whoever cancelled it), and **never retry when a later run of the
+same workflow already succeeded** (the hourly crons self-heal; re-running a stale
+one is waste). Verify changes with `DRY_RUN=1` against real history before pushing —
+swept across six weeks it flags only the genuine never-started runs and ignores
+every real code failure. A sweeper cron is itself dropped during an outage, so the
+lookback is 12 hours, not one tick: it must heal a backlog after the incident ends,
+not only while it is happening.
+
+**Consequences:** this repo's default `GITHUB_TOKEN` is read-only, so the workflow
+requests `actions: write` explicitly — an explicit `permissions:` block overrides
+the repo default. Failures that survive the sweep are now signal: if a run failed
+and was not re-run, our code failed.

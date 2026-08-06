@@ -837,6 +837,29 @@ object Corpus {
 // shape as corpus.json; Picture ID also carries a 10th element (image URL). ----
 
 class JsonQuestionSet(private val asset: String) {
+    companion object {
+        /** Set once in Application.onCreate, like Billing/QuizStore/Duels/Entitlement.
+         *  Lets [ensure] load a set at the moment a mode needs it, without threading a
+         *  Context through GameState's six call sites. */
+        private var app: Context? = null
+        fun init(context: Context) { app = context.applicationContext }
+    }
+
+    /** Load on FIRST USE rather than at app boot.
+     *
+     *  Loading every set at launch cost 17.5MB of JSON through readText() +
+     *  parseToJsonElement() — a full DOM before any mapping — and those assets grew
+     *  2.5x between the last two Play builds (typeanswer.json alone 4.27MB -> 13.72MB).
+     *  That is the OOM class Decision 049 fixed for the corpus, re-formed around the
+     *  shape sets, and Play rejected version code 85 for it with the same sentence it
+     *  used for 75: "the app opens, but it keeps crashing."
+     *
+     *  A no-op once loaded, so repeated calls in a round cost nothing. */
+    suspend fun ensure() {
+        if (loaded) return
+        app?.let { runCatching { load(it) } }
+    }
+
     private var all: List<Question> = emptyList()
     private var byCat: Map<String, List<Question>> = emptyMap()
     /** Look up by ID — what a saved quiz needs to turn its set-refs back into

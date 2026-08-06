@@ -124,14 +124,11 @@ fun AppRoot(
             com.learningischange.tidbitstrivia.data.PlayerIdentity.seedForScreenshots(streak = 12, longest = 27, games = it)
         }
         if (!Corpus.loaded) runCatching { Corpus.load(context) }
-        if (!Pictures.loaded) runCatching { Pictures.load(context) }
-        if (!ThisOrThat.loaded) runCatching { ThisOrThat.load(context) }
-        if (!ClosestCall.loaded) runCatching { ClosestCall.load(context) }
-        if (!OrderingSet.loaded) runCatching { OrderingSet.load(context) }
-        if (!MatchingSet.loaded) runCatching { MatchingSet.load(context) }
-        if (!TypeAnswerSet.loaded) runCatching { TypeAnswerSet.load(context) }
-        if (!OddOneOutSet.loaded) runCatching { OddOneOutSet.load(context) }
-        if (!EnumerateSet.loaded) runCatching { EnumerateSet.load(context) }
+        // The shape sets are NOT loaded here any more — GameState.filled() loads each one
+        // when its mode is played (JsonQuestionSet.ensure). Loading all eight at boot put
+        // 17.5MB of JSON through a full-DOM parse on the launch path and is what Play
+        // rejected version code 85 for. Corpus stays: it is sqlite-backed, keeps only ids,
+        // and Daily/Ladder/Classic need it on the first screen.
         if (!Difficulty.loaded) runCatching { Difficulty.load(context) }
         corpusReady = true
     }

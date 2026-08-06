@@ -180,7 +180,7 @@ class GameState(
     }
 
     /** One mode's questions, the same way start() sources each mode (for MIX). */
-    private fun sourceFor(m: Mode, need: Int): List<Question> = when (m) {
+    private suspend fun sourceFor(m: Mode, need: Int): List<Question> = when (m) {
         Mode.PICTURE_ID -> filled(Pictures, need)
         Mode.THIS_OR_THAT -> filled(ThisOrThat, need)
         Mode.CLOSEST_CALL -> filled(ClosestCall, need)
@@ -195,7 +195,12 @@ class GameState(
     /** Never-empty per-type pull: picked category → whole type pool ("mixed") →
      *  Classic corpus backstop, so a coverage hole (e.g. sports×matching = 0 rows)
      *  plays a full round instead of the ERROR screen. Keeps the MODE pure. */
-    private fun filled(set: JsonQuestionSet, need: Int, seen: Set<String> = store.seenSet): List<Question> {
+    private suspend fun filled(set: JsonQuestionSet, need: Int, seen: Set<String> = store.seenSet): List<Question> {
+        // Load the set HERE, the moment a mode actually needs it. Loading all of them at
+        // boot is what put 17.5MB of JSON on the launch path (see JsonQuestionSet.ensure).
+        // A set that is not loaded pulls nothing, which is the documented
+        // "No questions yet" bug — so this must run before the pull, not beside it.
+        set.ensure()
         var qs = set.pull(category.id, seen, need)
         if (qs.size < need && category.id != "mixed") {
             val have = seen + qs.map { it.id }.toSet()
@@ -244,16 +249,21 @@ class GameState(
         return all
     }
 
-    /** Source `count` questions of one TYPE — same loaders the standard game uses. */
+    /** Source `count` questions of one TYPE — same loaders the standard game uses.
+     *
+     *  Trivia Night builds its rounds here, straight from the sets, BYPASSING filled() —
+     *  so each set is loaded here too. Miss this and a night round of any shape comes
+     *  back empty now that nothing is preloaded at boot (`also` is inline, so the
+     *  suspend call is legal inside it). */
     private suspend fun sourceType(kind: String, count: Int, seen: Set<String>): List<Question> = when (kind) {
-        "pictureId" -> Pictures.pull(category.id, seen, count)
-        "thisOrThat" -> ThisOrThat.pull(category.id, seen, count)
-        "closestCall" -> ClosestCall.pull(category.id, seen, count)
-        "ordering" -> OrderingSet.pull(category.id, seen, count)
-        "matching" -> MatchingSet.pull(category.id, seen, count)
-        "typeAnswer" -> TypeAnswerSet.pull(category.id, seen, count)
-        "oddOneOut" -> OddOneOutSet.pull("mixed", seen, count)
-        "enumerate" -> EnumerateSet.pull("mixed", emptySet(), count)
+        "pictureId" -> Pictures.also { it.ensure() }.pull(category.id, seen, count)
+        "thisOrThat" -> ThisOrThat.also { it.ensure() }.pull(category.id, seen, count)
+        "closestCall" -> ClosestCall.also { it.ensure() }.pull(category.id, seen, count)
+        "ordering" -> OrderingSet.also { it.ensure() }.pull(category.id, seen, count)
+        "matching" -> MatchingSet.also { it.ensure() }.pull(category.id, seen, count)
+        "typeAnswer" -> TypeAnswerSet.also { it.ensure() }.pull(category.id, seen, count)
+        "oddOneOut" -> OddOneOutSet.also { it.ensure() }.pull("mixed", seen, count)
+        "enumerate" -> EnumerateSet.also { it.ensure() }.pull("mixed", emptySet(), count)
         else -> {
             var pulled = Corpus.pull(category.id, seen, count)
             if (pulled.size < count) {

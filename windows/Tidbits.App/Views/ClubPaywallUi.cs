@@ -20,8 +20,17 @@ public static class ClubPaywallUi
     public const string PitchHeadline = "Get better, not just play more";
     public const string PitchBody =
         "Ranked seasons, a map of everything you know, and a library of every fact you've learned.";
+    // Shown whenever the store gateway returns no products. That is NOT only the Mac head and
+    // the unpackaged .exe: `WindowsStoreGateway` does not exist yet, so `NoStoreGateway` ships
+    // inside the MSIX too and this is what every Microsoft Store customer sees. The previous
+    // copy — "Tidbits Club is available in the Microsoft Store edition of this app" — was
+    // therefore shown TO people already running the Store edition, telling them to go get the
+    // thing they had. A dead end that reads as a lie. Name the route that actually works today:
+    // buy on the web, sign in here (Class B in EntitlementStore — the remote entitlement read,
+    // which is live and does unlock Club on Windows right now).
     public const string EmptyStateNote =
-        "Tidbits Club is available in the Microsoft Store edition of this app.";
+        "In-app purchase isn't available here yet. Get Club at tidbitstrivia.com, then sign in " +
+        "below with the same account and it unlocks here.";
     public const string WebNote =
         "Already a member from the web or another device? Just sign in — your Club unlocks everywhere.";
     public const string MemberHeadline = "You're a Club member";
@@ -136,7 +145,12 @@ public static class ClubPaywallUi
     private static Control Plans(IReadOnlyList<StoreProductInfo> products, string? busyProductId, Action<string> onPurchase)
     {
         var panel = new StackPanel { Spacing = 10 };
-        panel.Children.Add(new TextBlock { Text = "Choose a plan", Classes = { "section-header" } });
+        // "Choose a plan" over a note saying you cannot choose one here is its own small lie.
+        panel.Children.Add(new TextBlock
+        {
+            Text = products.Count == 0 ? "Getting Club" : "Choose a plan",
+            Classes = { "section-header" },
+        });
 
         // NoStoreGateway (Mac head / unpackaged .exe) reports no products — a calm note,
         // never an empty/blank plan list (universal-feature-states).

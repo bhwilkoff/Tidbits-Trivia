@@ -163,6 +163,26 @@ gh workflow run windows-store.yml -f submit=true -f commit=true
 `submit` defaults to **false** and `commit` defaults to **false** (draft),
 because an accidental publish reaches real users and cannot be un-shipped.
 
+### Step 4 is not optional, and skipping it is SILENT
+
+**A run without `-f commit=true` succeeds while shipping nothing.** Between
+2026-07-20 and 2026-08-03 four green runs did exactly that. Each one:
+
+1. **deleted the previous uncommitted draft** (`Deleting existing Submission`),
+2. uploaded a fresh package, then
+3. printed `Skipping submission commit.` and exited 0.
+
+Net effect: the Store served **1.6.45** for three weeks while the repo moved to
+1.6.73, and every run in the Actions list was a green check. The owner found it,
+not the pipeline. The workflow now states the outcome in the run summary and
+raises a warning annotation whenever a run did not actually submit — but the rule
+is simpler than that: **`-f submit=true -f commit=true` or it did not ship.**
+
+Confirm the real thing afterwards in Partner Center → **Manage packages**, which
+shows the version that is actually live. A committed submission logs
+`Submission Status - Certification` and `Submission commit success!`; a draft logs
+`Skipping submission commit.`
+
 ---
 
 ## §3 — Beta testing (the TestFlight analogue)
@@ -278,3 +298,43 @@ Once §1.3 is done:
 3. Verify an external open with a REAL link on a REAL Windows box — the
    deep-link parser and inbox (0.4) already exist and are unit-tested; the
    only unverified part is the OS handing the URL over.
+
+---
+
+## §7 — Tidbits Club on Windows: what works, and the one OWNER blocker
+
+Audited 2026-08-07. Club is **half-wired on Windows**, and the two halves fail for
+different reasons.
+
+**Works today — the web purchase.** `EntitlementStore` Class B is live: buy Club at
+tidbitstrivia.com, sign in on Windows with the same verified-email account, and the
+remote `entitlements/{accountKey}` read unlocks Club. Nothing blocks this path.
+
+**Does NOT work — in-app purchase.** Two independent gaps:
+
+1. **`WindowsStoreGateway` does not exist.** `IStoreGateway` is the seam and
+   `NoStoreGateway` (returns "unknown / no products") is the ONLY implementation, so
+   it ships inside the MSIX too. The real `Windows.Services.Store.StoreContext` edge
+   was scoped as "Phase 3" and never built — and it cannot simply be added, because
+   both `Tidbits.App` and `Tidbits.Core` target plain `net10.0`; WinRT needs a
+   `net10.0-windows10.0.x` TFM, which is a build-system change to a packaging
+   pipeline that is currently working. Do it deliberately, gate it on
+   `windows-latest`, not in a hurry.
+
+2. **The three add-ons cannot be submitted — OWNER ACTION.** `club.lifetime`,
+   `club.annual` and `club.monthly` exist on Store ID 9NRKS9LDRCWC and every section
+   of each is **Complete** (properties, pricing — lifetime is 79.99 USD, age ratings,
+   store listing). They are all still `Not submitted`, and the Submit button is
+   **disabled**, with one blocker:
+
+   > ❌ You need to update your tax and payout information before you can charge money.
+
+   That is account-level tax and banking setup in Partner Center → Payout and tax. It
+   is the Windows analogue of Apple's Paid Applications Agreement, it is financial and
+   identity information, and it is the owner's to complete. **Until it is done, no
+   amount of client work makes Store IAP function** — the products do not exist to the
+   Store, so `GetProductsAsync` would return empty even with a perfect gateway.
+
+**So the honest sequence is:** owner completes tax/payout → submit the three add-ons →
+build `WindowsStoreGateway` behind a Windows TFM → ship. Until then the paywall tells
+Store customers the truth and routes them to the web purchase + sign-in (which works).

@@ -50,10 +50,19 @@ Also shipped in vc88:
 - **enrich.json (2.8MB) + README.md dropped** from the Android assets — no Kotlin opens
   either; same class as the 55MB corpus.json removed in vc86. APK 29.1 → 28.4MB.
 
-**Open, owner's call:** Play's *Sign in details* declaration says nothing in the app is
-restricted. Club content now sits behind a paywall, which is Google's own "Yes" bullet
+**Shipped to production 2026-08-07:** vc88 uploaded via `tools/submit-play.sh --no-bump
+--track production`, then sent for review from the Console. The CLI cannot finish the job
+here — **Managed publishing is ON**, so the API can only commit with
+`changesNotSentForReview=True` and every publish needs the "Submit N changes for review"
+click. The pending list held **14** rows; all were legitimate first-launch configuration
+that had piled up precisely because earlier submissions were rejected. Verified the staged
+versionCode through the API before clicking (the Console row only shows the version NAME,
+which is shared across builds).
+
+**Open, owner's call — deliberately left to review:** Play's *Sign in details* declaration
+says nothing in the app is restricted. Club content now sits behind a paywall, which is Google's own "Yes" bullet
 ("payments, such as one-time products, memberships, subscriptions"). Left as-is —
-changing a compliance declaration is not mine to make — but it should be revisited.
+owner's decision was to ship as-is and let review rule on it.
 
 ## Current state (2026-08-07) — 1.6.73 (112) tvOS in review, iOS + macOS held
 

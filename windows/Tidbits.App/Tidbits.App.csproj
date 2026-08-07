@@ -13,6 +13,15 @@
          framework path (they all pass an explicit output dir). -->
     <TargetFramework Condition="$([MSBuild]::IsOSPlatform('Windows'))">net10.0-windows10.0.19041.0</TargetFramework>
     <TargetFramework Condition="!$([MSBuild]::IsOSPlatform('Windows'))">net10.0</TargetFramework>
+    <!-- A `net10.0-windows10.0.x` TFM makes the SDK default RuntimeIdentifiers to the UWP-era
+         `win10-x64;win10-x86;win10-arm;win10-arm64` list, which .NET 5+ deleted — every one of
+         them then fails NETSDK1083 ("RuntimeIdentifier 'win10-x64' is not recognized") before a
+         line of our code compiles. Naming the modern RID explicitly overrides that list. -->
+    <RuntimeIdentifiers Condition="$([MSBuild]::IsOSPlatform('Windows'))">win-x64</RuntimeIdentifiers>
+    <!-- Do not let the TFM silently raise the OS floor above what AppxManifest advertises
+         (Windows.Desktop MinVersion 10.0.17763.0). 19041 is the SDK we compile against;
+         17763 stays the minimum we run on. -->
+    <TargetPlatformMinVersion Condition="$([MSBuild]::IsOSPlatform('Windows'))">10.0.17763.0</TargetPlatformMinVersion>
     <Nullable>enable</Nullable>
     <!-- Marketing version, kept in lockstep with AppVersion.xcconfig by
          tools/stamp_msix_version.py. Surfaces in Settings > About via

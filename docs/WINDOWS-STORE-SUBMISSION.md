@@ -329,6 +329,20 @@ remote `entitlements/{accountKey}` read unlocks Club. Nothing blocks this path.
 
    > ❌ You need to update your tax and payout information before you can charge money.
 
+   **Where that page is** (it is not under the product, which is why it looks missing):
+   the gear icon at top-right → **Account settings** → left nav → *Payout and tax*.
+
+   **…and it is ACCOUNT-OWNER ONLY.** Signed in as the CI Entra admin
+   (`tidbits-admin@benwilkoffgmail.onmicrosoft.com`, the identity created in §1.1 and
+   granted Manager(Windows)), Account settings shows only Overview / My learning
+   profile / My access / User management / Programs / Agreements / Organization
+   profile — **there is no "Payout and tax" node at all**, Programs → Windows offers
+   only "AppDev developer agreements", and the Earnings workspace has just Earnings
+   and Reports. The Manager role does not carry payout/tax. Sign in as the **original
+   Microsoft account (personal MSA) that registered the developer account** and the
+   node appears. Note too that the blocker message on the add-on submission is plain
+   text, not a link — it names the problem and gives you no way to reach the fix.
+
    That is account-level tax and banking setup in Partner Center → Payout and tax. It
    is the Windows analogue of Apple's Paid Applications Agreement, it is financial and
    identity information, and it is the owner's to complete. **Until it is done, no

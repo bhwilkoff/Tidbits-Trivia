@@ -26,5 +26,8 @@ mkdir -p "$TARGET"
 # (Decision 049 — the in-RAM JSON corpus is what OOM'd version code 75). Shipping
 # it anyway added 55MB of dead weight to every install, which is real storage
 # pressure on the low-end devices review runs on and buys nothing.
-rsync -a --delete --exclude 'corpus.json' "$SHARED/" "$TARGET/"
+# enrich.json (2.8MB) and README.md are the same story: no Kotlin source opens either.
+# enrich.json is a BUILD-TIME input to the generators in tools/corpus, not a runtime asset.
+rsync -a --delete --exclude 'corpus.json' --exclude 'enrich.json' --exclude 'README.md' \
+    "$SHARED/" "$TARGET/"
 echo "✓  synced $SHARED → $TARGET"

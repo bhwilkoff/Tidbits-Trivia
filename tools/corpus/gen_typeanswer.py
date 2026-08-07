@@ -70,6 +70,14 @@ def main():
                 accepted.add(a)
         # keep only reasonably short, distinct accepted strings
         acc = [a for a in accepted if a and len(a) <= 60]
+        # ...but the cap must never be allowed to empty the set. Grading matches against
+        # `accepted` ALONE (TypeMatch.matches / the Swift + JS twins), so a row that loses
+        # every candidate is unanswerable: typing the exact title is scored wrong, on all six
+        # platforms, forever. Five rows shipped that way — all long punctuated titles like
+        # "The Chronicles of Narnia: The Lion, the Witch and the Wardrobe" (61 chars).
+        # The canonical answer is not a candidate to be filtered; it is the answer.
+        if answer not in acc:
+            acc.insert(0, answer)
         out.append([
             q[0].replace(q[0].split(":")[0] + ":", "type:", 1), q[1], answer, acc,
             q[4], q[6], q[7], q[8],

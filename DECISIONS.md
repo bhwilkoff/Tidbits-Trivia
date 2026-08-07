@@ -1946,3 +1946,50 @@ status API means proceed — a status page we cannot read must never block heali
 requests `actions: write` explicitly — an explicit `permissions:` block overrides
 the repo default. Failures that survive the sweep are now signal: if a run failed
 and was not re-run, our code failed.
+
+## 055 — Play Billing rejects a mixed product list, and only a real Play Store says so
+*Date: 2026-08-07*
+
+Query Play Billing **once per product type**. `QueryProductDetailsParams` accepts a
+list, which reads as "put your catalogue in it", but Tidbits Club has a one-time
+product (Founding Member, `INAPP`) and two subscriptions (`SUBS`), and one query
+holding both throws:
+
+    java.lang.IllegalArgumentException: All products should be of the same product type.
+
+synchronously, on the main thread, out of `queryProductDetailsAsync`. `Billing.start`
+runs from `Application.onCreate`, so the process dies moments after launch.
+
+**Why:** this is what Google Play rejected version codes **75 and 85** for, both times
+in the same words — *"Broken Functionality: the app opens, but it keeps crashing."*
+Two rounds of investigation read that sentence as memory pressure and fixed real OOM
+bugs (Decision 049's corpus, then the eager shape sets), and the rejection came back
+anyway, because **the crash was never the memory**. What made it survive three
+investigations is where it does *not* reproduce: an emulator and a Test Lab **virtual**
+device have no Play Billing service to answer the query, so the exception is never
+constructed. It reproduces on any device with a real Play Store. Every local test
+this project could run was structurally blind to it.
+
+**How to apply:** group by type and issue one query per group. More generally, treat
+**the paywall as untrusted code on the launch path** — `Billing`'s scope now carries a
+`CoroutineExceptionHandler` and `start()` is wrapped, so a billing throw sets
+`loadFailed` and leaves the game running. Club going dark is a bad outcome; the app
+dying is a rejected one, and R-MON-2 already says the gate fails open.
+
+**Consequences — the verification rule this actually establishes.** Play's Pre-launch
+report never generated for this app across the internal and closed tracks, so the
+recommendation to "use test tracks to test quality before another review" was
+unfollowable. But the pre-launch report **is** Firebase Test Lab, and Test Lab takes a
+CLI on the free Spark tier:
+
+    tools/testlab-android.sh            # release APK -> Robo across physical devices
+
+That is the check that found this in one run, on `a03su` (Galaxy A03s, Android 13),
+after two rejections and weeks of blind fixes. So: **an Android release is not
+verified until it has run Robo on PHYSICAL Test Lab devices.** A green emulator means
+only that the emulator is green — it cannot see Play Billing, Play Integrity, Play
+Games, real signing, or vendor OS skins. Free-tier quota is a handful of physical
+device-tests per day, so spend them on physical and never on virtual; virtual devices
+add coverage this class of bug is invisible to. Results (`logcat`,
+`data_app_crash_*.txt`, `video.mp4`) land in the GCS bucket the run prints, and the
+crash artifact carries the exact stack — read that, not the Robo pass/fail alone.

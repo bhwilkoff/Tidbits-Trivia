@@ -14,6 +14,7 @@ import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonDecoder
+import java.io.Reader
 import kotlinx.serialization.json.decodeFromStream
 import kotlinx.serialization.json.double
 import kotlinx.serialization.json.int
@@ -836,6 +837,69 @@ object Corpus {
 // ---- Enrichment-built mode sources (E1): a bundled JSON question set, same row
 // shape as corpus.json; Picture ID also carries a 10th element (image URL). ----
 
+/**
+ * Hand each element of the top-level `questions` array to [onRow] as its own JSON text,
+ * without ever holding the whole file or a whole-file DOM.
+ *
+ * Deliberately pure Kotlin over a [Reader] rather than `android.util.JsonReader`: this is the
+ * piece that decides whether every shape mode still has questions, so it has to be runnable —
+ * and therefore testable — off-device. `JsonQuestionSetStreamTest` replays it over every
+ * shipped asset and compares the result against the old whole-file parse.
+ *
+ * Only structural characters are interpreted; each row's actual parsing stays with kotlinx,
+ * so number-vs-string fidelity is exactly what it always was.
+ */
+internal fun forEachQuestionRow(reader: Reader, onRow: (String) -> Unit) {
+    val key = "\"questions\""
+    var matched = 0
+    while (matched < key.length) {
+        val c = reader.read()
+        if (c < 0) return
+        matched = when {
+            c.toChar() == key[matched] -> matched + 1
+            c.toChar() == key[0] -> 1
+            else -> 0
+        }
+    }
+    while (true) {
+        val c = reader.read()
+        if (c < 0) return
+        if (c.toChar() == '[') break
+    }
+
+    val row = StringBuilder()
+    var depth = 0
+    var inString = false
+    var escaped = false
+    while (true) {
+        val r = reader.read()
+        if (r < 0) break
+        val ch = r.toChar()
+        if (depth == 0) {
+            // Between rows: only '[' opens one, ']' closes the questions array.
+            if (ch == '[') { depth = 1; row.setLength(0); row.append(ch) } else if (ch == ']') break
+            continue
+        }
+        row.append(ch)
+        if (inString) {
+            when {
+                escaped -> escaped = false
+                ch == '\\' -> escaped = true
+                ch == '"' -> inString = false
+            }
+        } else {
+            when (ch) {
+                '"' -> inString = true
+                '[', '{' -> depth++
+                ']', '}' -> {
+                    depth--
+                    if (depth == 0) { onRow(row.toString()); row.setLength(0) }
+                }
+            }
+        }
+    }
+}
+
 class JsonQuestionSet(private val asset: String) {
     companion object {
         /** Set once in Application.onCreate, like Billing/QuizStore/Duels/Entitlement.
@@ -872,11 +936,36 @@ class JsonQuestionSet(private val asset: String) {
     suspend fun load(context: Context) = withContext(Dispatchers.IO) {
         if (loaded) return@withContext
         runCatching {
-            val text = context.assets.open(asset).bufferedReader().use { it.readText() }
-            val arr = Json.parseToJsonElement(text).jsonObject["questions"]!!.jsonArray
-            all = arr.map { el ->
-                val a = el.jsonArray
-                if (a[2] is JsonArray && a[2].jsonArray.isNotEmpty() && a[2].jsonArray[0] is JsonArray) {
+            // STREAM the asset — never hold the whole file, and never build a whole-file DOM.
+            //
+            // Deferring these loads off the launch path (below) stopped the app crashing AT BOOT,
+            // but it did not shrink the allocation; it only moved it to "player opens Type It In".
+            // readText() on typeanswer.json is a 13.7MB file -> ~27MB UTF-16 String, and
+            // parseToJsonElement then builds a complete DOM on top of that before a single
+            // Question is mapped. That transient peak is what a 2GB Android Go device cannot
+            // survive, and "the app opens, but it keeps crashing" is the sentence Play rejected
+            // both version code 75 and 85 with.
+            //
+            // [forEachQuestionRow] hands back one row at a time, so the peak becomes a single
+            // row plus the questions actually kept. kotlinx still parses each row, so primitive
+            // fidelity is unchanged — which matters, because the Matching-vs-Ordering branch in
+            // [rowToQuestion] discriminates on `jsonPrimitive.isString` alone.
+            val out = ArrayList<Question>()
+            context.assets.open(asset).use { stream ->
+                forEachQuestionRow(stream.bufferedReader()) { row ->
+                    out.add(rowToQuestion(Json.parseToJsonElement(row).jsonArray))
+                }
+            }
+            all = out
+            byCat = all.groupBy { it.categoryId }
+            byId = all.associateBy { it.id }
+            loaded = true
+        }
+        Unit
+    }
+
+    internal fun rowToQuestion(a: JsonArray): Question {
+        return if (a[2] is JsonArray && a[2].jsonArray.isNotEmpty() && a[2].jsonArray[0] is JsonArray) {
                     // Enumeration (Q8): [id, prompt, groups([[String]]), cat, seconds, url]
                     Question(
                         id = a[0].jsonPrimitive.content, prompt = a[1].jsonPrimitive.content,
@@ -947,12 +1036,6 @@ class JsonQuestionSet(private val asset: String) {
                             a[5].jsonPrimitive.double, a[6].jsonPrimitive.double, a[7].jsonPrimitive.content),
                     )
                 }
-            }
-            byCat = all.groupBy { it.categoryId }
-            byId = all.associateBy { it.id }
-            loaded = true
-        }
-        Unit
     }
 
     /** How many rows carry this category — feeds the picker's coverage check. */

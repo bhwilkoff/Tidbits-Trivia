@@ -1,10 +1,12 @@
 package com.learningischange.tidbitstrivia
 
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
+import androidx.core.view.WindowCompat
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,7 +51,22 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        // Edge-to-edge WITHOUT androidx.activity's enableEdgeToEdge(). Its EdgeToEdgeApi23/26/29
+        // implementations reference Window.setStatusBarColor, Window.setNavigationBarColor and
+        // LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES — all deprecated in Android 15, and all three
+        // are what Play Console's "app uses deprecated APIs for edge-to-edge" flags. Upgrading the
+        // library does not help: activity 1.13.0's EdgeToEdgeApi35 still references them, and R8
+        // keeps every API-level branch because the dispatch is at runtime. These two calls are the
+        // non-deprecated equivalent; the transparent bars themselves come from Theme.AppName
+        // (ignored on API 35+, where edge-to-edge is the enforced default) and the system-bar icon
+        // contrast is set from AppTheme, which is the only place that knows the resolved theme.
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            window.attributes = window.attributes.apply {
+                layoutInDisplayCutoutMode =
+                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+            }
+        }
         val store = (application as AppNameApplication).container.store
         deepLink.value = routeFor(intent)
         // DEBUG-only store-screenshot hooks (docs/STORE-SCREENSHOTS.md §2) — the Kotlin

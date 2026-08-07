@@ -7,6 +7,48 @@
 > `docs/ROADMAP.md`, `docs/DATA-CONTRACT.md`. Detailed per-round history is in
 > `ARCHIVE.md`.
 
+## Current state (2026-08-07b) — Android vc88: the crash was never the memory
+
+**Two Play rejections were read as OOM. They were a Play Billing crash, and no test
+this project could run was capable of seeing it.**
+
+`Billing.loadProducts` put all three Club products into ONE
+`QueryProductDetailsParams`. Founding Member is `INAPP`, the two plans are `SUBS`, and
+Play Billing throws `IllegalArgumentException: All products should be of the same
+product type.` synchronously on the main thread. `Billing.start` runs from
+`Application.onCreate` — so, "the app opens, but it keeps crashing", which is Play's
+exact sentence for version codes 75 AND 85. It does not reproduce on an emulator or a
+Test Lab *virtual* device, because neither has a Play Billing service to answer.
+Decision 055.
+
+Found by running **Firebase Test Lab** ourselves — it is the same engine as the
+Pre-launch report that never generated, and it takes a CLI on the free tier.
+`tools/testlab-android.sh` makes it repeatable. One Robo run on a physical Galaxy A03s
+produced the stack; the virtual device in the same matrix passed.
+
+Also shipped in vc88:
+- **Both Play Console "recommended actions"** (edge-to-edge). `enableEdgeToEdge()` was
+  the source of all three flagged deprecated APIs, and upgrading androidx.activity does
+  NOT help — 1.13.0's `EdgeToEdgeApi35` still references them and R8 keeps every branch.
+  Replaced with `WindowCompat.setDecorFitsSystemWindows` + cutout `ALWAYS` + bar-icon
+  appearance in `AppTheme`. Verified by scanning the shipped DEX: `setStatusBarColor`
+  and `setNavigationBarColor` are gone (1 → 0 each).
+- **Shape sets stream** instead of building a whole-file DOM. Deferring them off the
+  launch path (vc86) moved the 13.7MB `typeanswer.json` allocation, it did not shrink
+  it. `JsonQuestionSetStreamTest` is an EQUIVALENCE test against the parse it replaced,
+  over every shipped asset — the risk in that change is silence, not a crash.
+- **5 unanswerable Type It In questions**, found by that test. A >60-char answer had its
+  whole `accepted` list filtered away, and grading matches `accepted` alone — so typing
+  the exact title scored WRONG. Fixed in `gen_typeanswer.py` and in all three data
+  mirrors, which fixes it on all six platforms at once.
+- **enrich.json (2.8MB) + README.md dropped** from the Android assets — no Kotlin opens
+  either; same class as the 55MB corpus.json removed in vc86. APK 29.1 → 28.4MB.
+
+**Open, owner's call:** Play's *Sign in details* declaration says nothing in the app is
+restricted. Club content now sits behind a paywall, which is Google's own "Yes" bullet
+("payments, such as one-time products, memberships, subscriptions"). Left as-is —
+changing a compliance declaration is not mine to make — but it should be revisited.
+
 ## Current state (2026-08-07) — 1.6.73 (112) tvOS in review, iOS + macOS held
 
 **The repeated tvOS 2.1(b) rejections were never a code problem: the four Club

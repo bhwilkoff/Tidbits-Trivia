@@ -9,10 +9,13 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 
 /**
  * App theme — brand-first by default; dynamic color (Material You)
@@ -40,6 +43,24 @@ fun AppTheme(
         }
         darkTheme -> BrandDarkColors
         else -> BrandLightColors
+    }
+
+    // System-bar icon contrast. MainActivity deliberately does not call enableEdgeToEdge()
+    // (see the comment there — it drags in APIs Android 15 deprecated), so the light/dark
+    // icon appearance it used to set has to be set here instead. This is the better home
+    // anyway: `darkTheme` here is the RESOLVED theme, so a manual override would track too,
+    // where enableEdgeToEdge() only ever read the system setting at onCreate.
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        val activity = view.context as? Activity
+        if (activity != null) {
+            SideEffect {
+                WindowCompat.getInsetsController(activity.window, view).apply {
+                    isAppearanceLightStatusBars = !darkTheme
+                    isAppearanceLightNavigationBars = !darkTheme
+                }
+            }
+        }
     }
 
     MaterialTheme(

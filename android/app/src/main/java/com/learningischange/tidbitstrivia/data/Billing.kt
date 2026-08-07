@@ -16,6 +16,7 @@ import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.PurchasesUpdatedListener
 import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryPurchasesParams
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -52,7 +53,19 @@ object Billing {
 
     private lateinit var appContext: Context
     private var client: BillingClient? = null
-    private val scope = CoroutineScope(Dispatchers.Main)
+    // A paywall must never be able to kill the app. Play Billing throws synchronously out of
+    // its *Async entry points for malformed requests, and this scope runs on Dispatchers.Main,
+    // so without a handler any such throw is a process death on a screen the player did not ask
+    // for — which is precisely how "All products should be of the same product type" turned a
+    // monetization bug into "the app opens, but it keeps crashing" in App Review. Club going
+    // dark is a bad outcome; the game dying is a rejected one. R-MON-2 already says the gate
+    // fails OPEN, and this is the same principle one level down.
+    private val scope = CoroutineScope(
+        Dispatchers.Main + CoroutineExceptionHandler { _, t ->
+            loadFailed = true
+            android.util.Log.e("Billing", "billing failed; Club stays locked, app continues", t)
+        },
+    )
 
     /** The loaded plans for display, sorted lifetime -> annual -> monthly (best-value framing
      *  reads top-down), mirror of `StoreKitStore.products`. */
@@ -72,7 +85,12 @@ object Billing {
     fun start(ctx: Context) {
         appContext = ctx.applicationContext
         Entitlement.localCheck = { localClubEntitled() }
-        connect()
+        // Called from Application.onCreate, so an exception here is a launch-path crash on a
+        // device with a missing or broken Play Store — a class of device App Review does use.
+        runCatching { connect() }.onFailure {
+            loadFailed = true
+            android.util.Log.e("Billing", "Play Billing unavailable; Club stays locked", it)
+        }
     }
 
     private fun connect() {
@@ -98,21 +116,34 @@ object Billing {
     private suspend fun loadProducts() {
         val c = client ?: return
         if (!c.isReady) return
-        val productList = ClubProduct.entries.map { p ->
-            QueryProductDetailsParams.Product.newBuilder()
-                .setProductId(p.id)
-                .setProductType(p.type)
-                .build()
+        // ONE QUERY PER PRODUCT TYPE. Play Billing rejects a mixed product list with
+        //   java.lang.IllegalArgumentException: All products should be of the same product type.
+        // thrown synchronously, on the main thread, out of queryProductDetailsAsync. Club has a
+        // one-time product (Founding Member, INAPP) and two subscriptions (SUBS), so the single
+        // combined query this replaced crashed on every device with a real Play Store — while
+        // passing on emulators and Test Lab VIRTUAL devices, which have no Play Billing service
+        // to answer at all. That is the crash Play rejected version codes 75 and 85 for, and why
+        // neither OOM fix made it go away.
+        val loaded = ArrayList<ProductDetails>()
+        for ((type, products) in ClubProduct.entries.groupBy { it.type }) {
+            val params = QueryProductDetailsParams.newBuilder().setProductList(
+                products.map { p ->
+                    QueryProductDetailsParams.Product.newBuilder()
+                        .setProductId(p.id)
+                        .setProductType(type)
+                        .build()
+                },
+            ).build()
+            val (result, details) = suspendCancellableCoroutine { cont ->
+                c.queryProductDetailsAsync(params) { billingResult, list -> cont.resume(billingResult to list) }
+            }
+            if (result.responseCode != BillingClient.BillingResponseCode.OK) {
+                loadFailed = true
+                return
+            }
+            loaded += details
         }
-        val params = QueryProductDetailsParams.newBuilder().setProductList(productList).build()
-        val (result, details) = suspendCancellableCoroutine { cont ->
-            c.queryProductDetailsAsync(params) { billingResult, list -> cont.resume(billingResult to list) }
-        }
-        if (result.responseCode != BillingClient.BillingResponseCode.OK) {
-            loadFailed = true
-            return
-        }
-        plans = details.mapNotNull(::toPlan).sortedBy { planOrder[it.product] ?: 9 }
+        plans = loaded.mapNotNull(::toPlan).sortedBy { planOrder[it.product] ?: 9 }
         loadFailed = plans.isEmpty()
     }
 

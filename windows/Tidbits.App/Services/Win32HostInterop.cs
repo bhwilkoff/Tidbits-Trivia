@@ -64,6 +64,19 @@ public static class Win32HostInterop
     private static IntPtr Hwnd(Window window) =>
         window.TryGetPlatformHandle()?.Handle ?? IntPtr.Zero;
 
+    /// The main window's HWND, or IntPtr.Zero when there isn't one yet (headless tests, or
+    /// before the shell opens). `StoreContext` needs an owner handle before it will show
+    /// Store purchase UI on desktop — this keeps that lookup here, in the one Win32 seam,
+    /// rather than teaching the store gateway about Avalonia's lifetime.
+    public static IntPtr MainWindowHandle()
+    {
+        if (!OperatingSystem.IsWindows()) return IntPtr.Zero;
+        var lifetime = Avalonia.Application.Current?.ApplicationLifetime
+            as Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime;
+        var window = lifetime?.MainWindow;
+        return window is null ? IntPtr.Zero : Hwnd(window);
+    }
+
     /// Paint the taskbar button. No-op off Windows / before the handle exists.
     public static void SetTaskbarProgress(Window window, TaskbarProgress state, ulong value, ulong max)
     {

@@ -65,11 +65,26 @@ public sealed class GameData
         Duels = new Tidbits.Core.Networking.DuelStore(Path.Combine(appDir, "duels.json"));
         Sfx = new Tidbits.Core.Networking.SfxBoard(Path.Combine(appDir, "sfx-board.json"));
         Account = new Tidbits.Core.Networking.AccountIdentity(Rtdb, new DpapiTokenStore());
-        // NoStoreGateway on the direct-download .exe / Mac head; the WindowsStoreGateway
-        // (Microsoft Store StoreContext) replaces it in the packaged MSIX (Phase 3).
         // ONE instance shared by the entitlement gate and the paywall UI.
-        Store = new Tidbits.Core.Networking.NoStoreGateway();
+        // WindowsStoreGateway only when this process actually has a Store licence context —
+        // i.e. the packaged MSIX. The direct-download .exe and the Mac head have none, and
+        // StoreContext there throws rather than reporting "no", so NoStoreGateway (which
+        // answers "unknown", and therefore fails OPEN) stays the correct choice for them.
+        Store = ResolveStoreGateway();
         Entitlement = new Tidbits.Core.Networking.EntitlementStore(Rtdb, Account, Store);
+    }
+
+    private static Tidbits.Core.Networking.IStoreGateway ResolveStoreGateway()
+    {
+#if WINDOWS
+        try
+        {
+            if (WindowsStoreGateway.IsAvailable)
+                return new WindowsStoreGateway(Win32HostInterop.MainWindowHandle);
+        }
+        catch { /* fall through — a store gateway must never stop the app starting */ }
+#endif
+        return new Tidbits.Core.Networking.NoStoreGateway();
     }
 
     public static GameData FromDirectory(string dir) => new(QuestionSources.LoadFromDirectory(dir));

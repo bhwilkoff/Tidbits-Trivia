@@ -1,7 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net10.0</TargetFramework>
+    <!-- ONE TFM, chosen by the HOST, not multi-targeting.
+         Windows builds get `net10.0-windows…` so `Windows.Services.Store` (WinRT, and the
+         only way to read a Microsoft Store licence or run a purchase) is reachable and the
+         `WINDOWS` symbol is defined. The Mac head stays plain `net10.0`, which is what keeps
+         Decision 045's whole observability story working — headless Skia renders and the 511
+         tests run here, off Windows.
+         Deliberately NOT `<TargetFrameworks>`: no publish in .github/workflows passes a
+         framework flag, and multi-targeting makes that an error. Single TFM per host keeps
+         those commands untouched, and nothing in the workflows or tools hardcodes a
+         framework path (they all pass an explicit output dir). -->
+    <TargetFramework Condition="$([MSBuild]::IsOSPlatform('Windows'))">net10.0-windows10.0.19041.0</TargetFramework>
+    <TargetFramework Condition="!$([MSBuild]::IsOSPlatform('Windows'))">net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <!-- Marketing version, kept in lockstep with AppVersion.xcconfig by
          tools/stamp_msix_version.py. Surfaces in Settings > About via

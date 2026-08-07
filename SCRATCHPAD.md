@@ -26,6 +26,12 @@ Pre-launch report that never generated, and it takes a CLI on the free tier.
 `tools/testlab-android.sh` makes it repeatable. One Robo run on a physical Galaxy A03s
 produced the stack; the virtual device in the same matrix passed.
 
+**Verified on the same device.** vc87 died 4,054ms after process start with a
+`data_app_crash_*` artifact; vc88 shows `Displayed …MainActivity: +3s451ms` and then
+runs 10:15:21 → 10:21:26 under the Robo crawl with no crash artifact, no
+`All products should be`, no ANR and no process death. The `Billing` exception guard
+never had to fire.
+
 Also shipped in vc88:
 - **Both Play Console "recommended actions"** (edge-to-edge). `enableEdgeToEdge()` was
   the source of all three flagged deprecated APIs, and upgrading androidx.activity does

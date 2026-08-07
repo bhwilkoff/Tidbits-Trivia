@@ -4,7 +4,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Tidbits.Core.Networking;
-using Windows.Services.Store;
+// NOT `using Windows.Services.Store;` — WinRT also defines a `StorePurchaseResult`, and an
+// unqualified import makes every mention of ours ambiguous (CS0104). Alias keeps our
+// vocabulary primary and marks each WinRT touch explicitly, which is the point of this file.
+using WinRTStore = Windows.Services.Store;
 
 namespace Tidbits.App.Services;
 
@@ -28,7 +31,7 @@ namespace Tidbits.App.Services;
 public sealed class WindowsStoreGateway : IStoreGateway
 {
     private readonly Func<IntPtr> _ownerWindow;
-    private StoreContext? _context;
+    private WinRTStore.StoreContext? _context;
 
     public WindowsStoreGateway(Func<IntPtr>? ownerWindow = null) =>
         _ownerWindow = ownerWindow ?? (() => IntPtr.Zero);
@@ -39,17 +42,17 @@ public sealed class WindowsStoreGateway : IStoreGateway
     {
         get
         {
-            try { return StoreContext.GetDefault() is not null; }
+            try { return WinRTStore.StoreContext.GetDefault() is not null; }
             catch { return false; }
         }
     }
 
-    private StoreContext? Context
+    private WinRTStore.StoreContext? Context
     {
         get
         {
             if (_context is not null) return _context;
-            try { _context = StoreContext.GetDefault(); } catch { _context = null; }
+            try { _context = WinRTStore.StoreContext.GetDefault(); } catch { _context = null; }
             if (_context is not null)
             {
                 var hwnd = SafeOwnerWindow();
@@ -143,11 +146,11 @@ public sealed class WindowsStoreGateway : IStoreGateway
             var purchase = await product.RequestPurchaseAsync();
             return purchase?.Status switch
             {
-                StorePurchaseStatus.Succeeded => StorePurchaseResult.Success,
-                StorePurchaseStatus.AlreadyPurchased => StorePurchaseResult.AlreadyPurchased,
-                StorePurchaseStatus.NotPurchased => StorePurchaseResult.Cancelled,
-                StorePurchaseStatus.NetworkError => StorePurchaseResult.Failed,
-                StorePurchaseStatus.ServerError => StorePurchaseResult.Failed,
+                WinRTStore.StorePurchaseStatus.Succeeded => StorePurchaseResult.Success,
+                WinRTStore.StorePurchaseStatus.AlreadyPurchased => StorePurchaseResult.AlreadyPurchased,
+                WinRTStore.StorePurchaseStatus.NotPurchased => StorePurchaseResult.Cancelled,
+                WinRTStore.StorePurchaseStatus.NetworkError => StorePurchaseResult.Failed,
+                WinRTStore.StorePurchaseStatus.ServerError => StorePurchaseResult.Failed,
                 _ => StorePurchaseResult.Failed,
             };
         }

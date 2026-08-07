@@ -7,6 +7,34 @@
 > `docs/ROADMAP.md`, `docs/DATA-CONTRACT.md`. Detailed per-round history is in
 > `ARCHIVE.md`.
 
+## Current state (2026-08-07) — 1.6.73 (112) tvOS in review, iOS + macOS held
+
+**The repeated tvOS 2.1(b) rejections were never a code problem: the four Club
+products were split across three concurrent platform submissions, and a reviewer
+can only see the products in the submission they are reviewing.**
+
+State found: tvOS held the subscription group + Annual + Monthly, macOS held
+Founding Member (Lifetime), iOS held nothing but its build. Each review therefore
+found a product it could not test — the 2026-08-05 rejection named the
+subscriptions, the 2026-08-06 rejection named Founding Member. Lifetime's "Add
+for Review" button was greyed out because it was locked inside the pending macOS
+submission, and ASC offers no per-item removal from a submitted submission.
+
+Work done: cancelled all three submissions (owner-authorised), built tvOS 1.6.73
+(112) via `appstore-build.yml`, and consolidated ONE tvOS submission carrying all
+five items — build 112, Founding Member, the Tidbits Club group, Annual, Monthly.
+Added a reviewer note naming all three products. Submitted 2026-08-07; ASC
+confirmed "5 Items Submitted".
+
+Also settled the open question from the previous rejection: the **Paid Apps
+Agreement is Active, effective 2026-08-05 → 2027-03-14** — i.e. it was NOT in
+effect when the 2026-08-04 submissions were created. It is fine now.
+
+State left / next: iOS + macOS 1.6.73 are **Developer Rejected** and deliberately
+held. Do NOT resubmit them until tvOS is approved — once the products are
+approved they are approved app-wide, and both can then resubmit with build 112
+and no product items. Resubmitting either one now re-creates the same race.
+
 ## Current state (2026-08-03) — 1.6.73 (111 / vc84)
 
 **A single session working the documented backlog: every ⏳ in PARITY that was a

@@ -8,6 +8,14 @@
     <!-- Same NETSDK1083 fix as Tidbits.App — the Windows TFM injects deleted win10-* RIDs. -->
     <RuntimeIdentifiers Condition="$([MSBuild]::IsOSPlatform('Windows'))">win-x64</RuntimeIdentifiers>
     <TargetPlatformMinVersion Condition="$([MSBuild]::IsOSPlatform('Windows'))">10.0.17763.0</TargetPlatformMinVersion>
+    <!-- The Windows TFM also switches on MSBuild's Appx/PRI packaging targets, whose
+         ExpandPriContent task ships with Visual Studio and NOT with the dotnet CLI SDK
+         (MSB4062 on windows-latest). We never want them: the MSIX is packed explicitly with
+         makeappx in windows-store.yml, from a staged layout. `None` says "MSBuild does not
+         package this app", which is exactly true. -->
+    <WindowsPackageType Condition="$([MSBuild]::IsOSPlatform('Windows'))">None</WindowsPackageType>
+    <EnableMsixTooling Condition="$([MSBuild]::IsOSPlatform('Windows'))">false</EnableMsixTooling>
+    <EnableDefaultPriItems Condition="$([MSBuild]::IsOSPlatform('Windows'))">false</EnableDefaultPriItems>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>

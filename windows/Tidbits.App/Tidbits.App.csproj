@@ -22,6 +22,14 @@
          (Windows.Desktop MinVersion 10.0.17763.0). 19041 is the SDK we compile against;
          17763 stays the minimum we run on. -->
     <TargetPlatformMinVersion Condition="$([MSBuild]::IsOSPlatform('Windows'))">10.0.17763.0</TargetPlatformMinVersion>
+    <!-- The Windows TFM also switches on MSBuild's Appx/PRI packaging targets, whose
+         ExpandPriContent task ships with Visual Studio and NOT with the dotnet CLI SDK
+         (MSB4062 on windows-latest). We never want them: the MSIX is packed explicitly with
+         makeappx in windows-store.yml, from a staged layout. `None` says "MSBuild does not
+         package this app", which is exactly true. -->
+    <WindowsPackageType Condition="$([MSBuild]::IsOSPlatform('Windows'))">None</WindowsPackageType>
+    <EnableMsixTooling Condition="$([MSBuild]::IsOSPlatform('Windows'))">false</EnableMsixTooling>
+    <EnableDefaultPriItems Condition="$([MSBuild]::IsOSPlatform('Windows'))">false</EnableDefaultPriItems>
     <Nullable>enable</Nullable>
     <!-- Marketing version, kept in lockstep with AppVersion.xcconfig by
          tools/stamp_msix_version.py. Surfaces in Settings > About via

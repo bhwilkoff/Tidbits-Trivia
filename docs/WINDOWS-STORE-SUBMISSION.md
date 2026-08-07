@@ -178,6 +178,35 @@ not the pipeline. The workflow now states the outcome in the run summary and
 raises a warning annotation whenever a run did not actually submit — but the rule
 is simpler than that: **`-f submit=true -f commit=true` or it did not ship.**
 
+### …and step 4 still is not the end: the PUBLISHING HOLD
+
+Committing a submission gets it *certified*, not *live*. A submission carries a
+`targetPublishMode`, and this product's was **"Don't publish this submission until I
+select Publish now."** So 1.6.73 passed certification and then sat at *Update ready to
+publish* indefinitely, one manual click short of users — a second silent stall, layered
+under the `commit=true` one.
+
+**`msstore` cannot fix this.** The `publish` command's entire option set is
+`--inputFile`, `--appId`, `--noCommit`, `--flightId`, `--packageRolloutPercentage` —
+there is no publish-mode flag. The mode is submission metadata inherited from the
+previous submission, so it must be changed **once, in Partner Center**, and it then
+carries forward:
+
+> Product overview → Certification status → **Modify publishing time** →
+> *Publish this submission as soon as it passes certification* → **Apply**
+
+Set to automatic on 2026-08-07. The banner is the tell: "will start publishing **as soon
+as it passes certification**" (good) versus "when you click on **Publish now**" (stalled).
+
+So the full update recipe, end to end:
+
+1. Bump `MARKETING_VERSION` in `AppVersion.xcconfig`, run `tools/stamp_msix_version.py`.
+2. `gh workflow run windows-store.yml -f submit=true -f commit=true`.
+3. Confirm the log says `Submission Status - Certification` and `Submission commit
+   success!` — not `Skipping submission commit.`
+4. Confirm the overview banner says publishing happens automatically.
+5. When certification passes, confirm **Manage packages** shows the new version live.
+
 Confirm the real thing afterwards in Partner Center → **Manage packages**, which
 shows the version that is actually live. A committed submission logs
 `Submission Status - Certification` and `Submission commit success!`; a draft logs

@@ -301,54 +301,64 @@ Once §1.3 is done:
 
 ---
 
-## §7 — Tidbits Club on Windows: what works, and the one OWNER blocker
+## §7 — Tidbits Club on Windows
 
-Audited 2026-08-07. Club is **half-wired on Windows**, and the two halves fail for
-different reasons.
+Audited 2026-08-07, then largely unblocked the same day.
 
 **Works today — the web purchase.** `EntitlementStore` Class B is live: buy Club at
 tidbitstrivia.com, sign in on Windows with the same verified-email account, and the
-remote `entitlements/{accountKey}` read unlocks Club. Nothing blocks this path.
+remote `entitlements/{accountKey}` read unlocks Club. Nothing blocks this path, and it
+is what the paywall's empty state now points at.
 
-**Does NOT work — in-app purchase.** Two independent gaps:
+**In-app purchase — both halves now addressed:**
 
-1. **`WindowsStoreGateway` does not exist.** `IStoreGateway` is the seam and
-   `NoStoreGateway` (returns "unknown / no products") is the ONLY implementation, so
-   it ships inside the MSIX too. The real `Windows.Services.Store.StoreContext` edge
-   was scoped as "Phase 3" and never built — and it cannot simply be added, because
-   both `Tidbits.App` and `Tidbits.Core` target plain `net10.0`; WinRT needs a
-   `net10.0-windows10.0.x` TFM, which is a build-system change to a packaging
-   pipeline that is currently working. Do it deliberately, gate it on
-   `windows-latest`, not in a hurry.
+1. **`WindowsStoreGateway` is built** (`windows/Tidbits.App/Services/`). It was the
+   missing implementation: `NoStoreGateway` had been the only `IStoreGateway`, so it
+   shipped inside the MSIX. Reaching `Windows.Services.Store` needed a Windows TFM, and
+   the csproj now picks one **by host** — `net10.0-windows10.0.19041.0` on Windows,
+   plain `net10.0` on the Mac head so Decision 045's headless observability and the 511
+   tests keep running off Windows. Deliberately not `<TargetFrameworks>`: no publish in
+   `.github/workflows` passes a framework flag, and multi-targeting would break every
+   one of them.
 
-2. **The three add-ons cannot be submitted — OWNER ACTION.** `club.lifetime`,
-   `club.annual` and `club.monthly` exist on Store ID 9NRKS9LDRCWC and every section
-   of each is **Complete** (properties, pricing — lifetime is 79.99 USD, age ratings,
-   store listing). They are all still `Not submitted`, and the Submit button is
-   **disabled**, with one blocker:
+   **Three traps that TFM springs, all fixed in the csproj — read these before touching
+   it:**
+   - `NETSDK1083` — the Windows TFM defaults `RuntimeIdentifiers` to the UWP-era
+     `win10-x64;win10-x86;win10-arm;win10-arm64`, RIDs .NET 5 deleted. Name `win-x64`
+     explicitly.
+   - `MSB4062 ExpandPriContent` — it also switches on MSBuild's Appx/PRI packaging
+     targets, which ship with Visual Studio and NOT the dotnet CLI SDK. Set
+     `WindowsPackageType=None`; the MSIX is packed by `makeappx` in the workflow anyway.
+   - `CS0104` — WinRT defines its own `StorePurchaseResult`, so `using
+     Windows.Services.Store` makes every mention of ours ambiguous and the interface
+     then looks unimplemented. Alias the namespace instead.
 
-   > ❌ You need to update your tax and payout information before you can charge money.
+   Note the gateway queries all product kinds in ONE call. That is correct on WinRT and
+   the **opposite** of Android, where a mixed list throws and crashed two releases
+   (Decision 055). Do not harmonize them.
 
-   **Where that page is** (it is not under the product, which is why it looks missing):
-   the gear icon at top-right → **Account settings** → left nav → *Payout and tax*.
+2. **The three add-ons are submitted.** `club.lifetime` (79.99), `club.annual` (29.99)
+   and `club.monthly` (3.99) went to certification on 2026-08-07 once the owner
+   completed the tax/payout profile. They had sat at `Not submitted` for two weeks
+   behind one disabled button.
 
-   **…and it is ACCOUNT-OWNER ONLY.** Signed in as the CI Entra admin
-   (`tidbits-admin@benwilkoffgmail.onmicrosoft.com`, the identity created in §1.1 and
-   granted Manager(Windows)), Account settings shows only Overview / My learning
-   profile / My access / User management / Programs / Agreements / Organization
-   profile — **there is no "Payout and tax" node at all**, Programs → Windows offers
-   only "AppDev developer agreements", and the Earnings workspace has just Earnings
-   and Reports. The Manager role does not carry payout/tax. Sign in as the **original
-   Microsoft account (personal MSA) that registered the developer account** and the
-   node appears. Note too that the blocker message on the add-on submission is plain
-   text, not a link — it names the problem and gives you no way to reach the fix.
+**The blocker that held #2, and where it hides.** Every add-on section read Complete
+while `Submit to the Store` stayed disabled under:
 
-   That is account-level tax and banking setup in Partner Center → Payout and tax. It
-   is the Windows analogue of Apple's Paid Applications Agreement, it is financial and
-   identity information, and it is the owner's to complete. **Until it is done, no
-   amount of client work makes Store IAP function** — the products do not exist to the
-   Store, so `GetProductsAsync` would return empty even with a perfect gateway.
+> You need to update your tax and payout information before you can charge money.
 
-**So the honest sequence is:** owner completes tax/payout → submit the three add-ons →
-build `WindowsStoreGateway` behind a Windows TFM → ship. Until then the paywall tells
-Store customers the truth and routes them to the web purchase + sign-in (which works).
+That message is **plain text, not a link**. The page is the gear icon (top right) →
+**Account settings** → *Payout and tax* — and it is **ACCOUNT-OWNER ONLY**. Signed in as
+the CI Entra admin from §1.1 (Manager(Windows)), the node does not appear at all:
+Account settings shows only Overview / My learning profile / My access / User management
+/ Programs / Agreements / Organization profile, and the Earnings workspace has just
+Earnings and Reports. Sign in as the **original personal MSA** that registered the
+developer account. When a Partner Center page seems not to exist, check which identity
+is signed in before concluding the feature is missing.
+
+**Still unverifiable from here:** a real purchase. `StoreContext` only returns products
+to a Store-INSTALLED package, so the gateway's live behaviour cannot be exercised on the
+Mac head, in headless tests, or from the direct-download .exe — only by installing the
+certified MSIX from the Store on real Windows. Every path in it degrades to "unknown"
+rather than "no" precisely because that verification gap exists: a plumbing error must
+never un-Club a paying member.

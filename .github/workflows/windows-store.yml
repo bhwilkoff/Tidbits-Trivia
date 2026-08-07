@@ -138,3 +138,30 @@ jobs:
           if ('${{ inputs.commit }}' -ne 'true') { $args += '-nc' }
           if ('${{ inputs.flight }}' -ne '') { $args += @('-f', '${{ inputs.flight }}') }
           msstore @args
+
+      # A green run that shipped nothing is the failure mode this workflow actually had.
+      # Between 2026-07-20 and 2026-08-03 four runs succeeded, each one DELETING the previous
+      # uncommitted draft, uploading a fresh package, and printing "Skipping submission commit"
+      # — so the Store served 1.6.45 while the repo moved to 1.6.73 and every run looked fine.
+      # The outcome is now stated in the run summary and, when nothing shipped, as a warning
+      # annotation on the run itself.
+      - name: Say plainly whether anything shipped
+        if: always()
+        shell: pwsh
+        run: |
+          $submit = '${{ inputs.submit }}' -eq 'true'
+          $commit = '${{ inputs.commit }}' -eq 'true'
+          if (-not $submit) {
+            $verdict = 'PACKAGE ONLY - nothing was sent to the Store.'
+          } elseif (-not $commit) {
+            $verdict = 'DRAFT ONLY - uploaded, but NOT submitted for certification. It will not reach users.'
+          } else {
+            $verdict = 'SUBMITTED for certification.'
+          }
+          "## Windows Store: $verdict" >> $env:GITHUB_STEP_SUMMARY
+          ""                            >> $env:GITHUB_STEP_SUMMARY
+          "- submit: ``$submit``  commit: ``$commit``" >> $env:GITHUB_STEP_SUMMARY
+          if (-not ($submit -and $commit)) {
+            "- To actually ship: ``gh workflow run windows-store.yml -f submit=true -f commit=true``" >> $env:GITHUB_STEP_SUMMARY
+            Write-Output "::warning title=Nothing shipped::$verdict"
+          }

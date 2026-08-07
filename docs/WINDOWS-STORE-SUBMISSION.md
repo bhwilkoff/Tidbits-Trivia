@@ -312,30 +312,38 @@ is what the paywall's empty state now points at.
 
 **In-app purchase — both halves now addressed:**
 
-1. **`WindowsStoreGateway` is built** (`windows/Tidbits.App/Services/`). It was the
-   missing implementation: `NoStoreGateway` had been the only `IStoreGateway`, so it
-   shipped inside the MSIX. Reaching `Windows.Services.Store` needed a Windows TFM, and
-   the csproj now picks one **by host** — `net10.0-windows10.0.19041.0` on Windows,
-   plain `net10.0` on the Mac head so Decision 045's headless observability and the 511
-   tests keep running off Windows. Deliberately not `<TargetFrameworks>`: no publish in
-   `.github/workflows` passes a framework flag, and multi-targeting would break every
-   one of them.
+1. **`WindowsStoreGateway` is WRITTEN but NOT YET COMPILED INTO THE SHIP.**
+   `windows/Tidbits.App/Services/WindowsStoreGateway.cs` exists and is complete, guarded by
+   `#if WINDOWS`. It is inert today because both projects still target plain `net10.0`, so
+   the symbol is never defined and `GameData.ResolveStoreGateway()` falls through to
+   `NoStoreGateway`.
 
-   **Three traps that TFM springs, all fixed in the csproj — read these before touching
-   it:**
-   - `NETSDK1083` — the Windows TFM defaults `RuntimeIdentifiers` to the UWP-era
-     `win10-x64;win10-x86;win10-arm;win10-arm64`, RIDs .NET 5 deleted. Name `win-x64`
-     explicitly.
-   - `MSB4062 ExpandPriContent` — it also switches on MSBuild's Appx/PRI packaging
-     targets, which ship with Visual Studio and NOT the dotnet CLI SDK. Set
-     `WindowsPackageType=None`; the MSIX is packed by `makeappx` in the workflow anyway.
+   **Why it is not switched on: the Windows TFM breaks the build, and the build is the
+   ship.** Reaching `Windows.Services.Store` needs `net10.0-windows10.0.x`. That was tried
+   host-conditionally (Windows gets the Windows TFM, the Mac head keeps `net10.0` so
+   Decision 045's headless observability survives) and gated on `windows-latest` across
+   four runs. Three traps were found and fixed:
+   - `NETSDK1083` — the TFM defaults `RuntimeIdentifiers` to the UWP-era
+     `win10-x64;win10-x86;win10-arm;win10-arm64`, RIDs .NET 5 deleted. Fix: name `win-x64`.
    - `CS0104` — WinRT defines its own `StorePurchaseResult`, so `using
-     Windows.Services.Store` makes every mention of ours ambiguous and the interface
-     then looks unimplemented. Alias the namespace instead.
+     Windows.Services.Store` makes every mention of ours ambiguous and the interface then
+     reads as unimplemented. Fix: alias the namespace.
+   - `MSB4062 ExpandPriContent` — **UNSOLVED.** The TFM also imports MSBuild's Appx/PRI
+     packaging targets, whose task assembly ships with Visual Studio and not with the
+     dotnet CLI SDK. `WindowsPackageType=None`, `EnableMsixTooling=false` and
+     `EnableDefaultPriItems=false` did NOT stop the import.
 
-   Note the gateway queries all product kinds in ONE call. That is correct on WinRT and
-   the **opposite** of Android, where a mixed list throws and crashed two releases
-   (Decision 055). Do not harmonize them.
+   The TFM change was therefore **reverted**, because `windows-store.yml` publishes the
+   same way: leaving it in place would have left every future Windows ship broken to buy a
+   feature that is blocked on certification anyway.
+
+   **Two candidate routes for the next attempt**, in preference order:
+   - Keep hunting the AppX import guard (`AppxPackage=false`, `WindowsAppContainer=false`,
+     or an explicit `Import` exclusion). Cheap to try, one CI round trip each.
+   - Move the gateway into a small `Tidbits.Windows` class library on the Windows TFM and
+     load it by reflection from `GameData` (`IStoreGateway` already lives in Core, which
+     both reference). A plain classlib is far less likely to trip the Appx targets than a
+     `WinExe` carrying an ApplicationManifest, and it keeps `Tidbits.App` on `net10.0`.
 
 2. **The three add-ons are submitted.** `club.lifetime` (79.99), `club.annual` (29.99)
    and `club.monthly` (3.99) went to certification on 2026-08-07 once the owner

@@ -154,7 +154,8 @@ public sealed class WindowsStoreGateway : IStoreGateway
             foreach (var p in await ClubProductsAsync(ctx))
             {
                 var price = p.Price?.FormattedPrice ?? string.Empty;
-                products.Add(new StoreProductInfo(p.InAppOfferToken, p.Title ?? p.InAppOfferToken, price));
+                products.Add(new StoreProductInfo(
+                    p.InAppOfferToken, p.Title ?? p.InAppOfferToken, price, BillingPeriodOf(p)));
             }
             return products;
         }
@@ -162,6 +163,37 @@ public sealed class WindowsStoreGateway : IStoreGateway
         {
             return Array.Empty<StoreProductInfo>();
         }
+    }
+
+    /// The renewal period of a subscription add-on, or null for a one-time product.
+    ///
+    /// This is the payoff of querying subscriptions as `Durable`: the kind does not tell you a
+    /// product recurs, so the ONLY thing separating "$3.99 once" from "$3.99 every month" on the
+    /// paywall is reading it off the SKU here. Derived from the Store (like Apple's StoreKit
+    /// `subscriptionPeriod`) rather than hardcoded per product id, so a plan repriced or
+    /// re-termed in Partner Center cannot leave the app describing it wrongly.
+    private static string? BillingPeriodOf(WinRTStore.StoreProduct product)
+    {
+        foreach (var sku in product.Skus ?? Enumerable.Empty<WinRTStore.StoreSku>())
+        {
+            if (sku is null || !sku.IsSubscription) continue;
+            var info = sku.SubscriptionInfo;
+            if (info is null) continue;
+
+            var unit = info.BillingPeriodUnit switch
+            {
+                WinRTStore.StoreDurationUnit.Day => "day",
+                WinRTStore.StoreDurationUnit.Week => "wk",
+                WinRTStore.StoreDurationUnit.Month => "mo",
+                WinRTStore.StoreDurationUnit.Year => "yr",
+                // An unknown unit must not silently render as a one-time price; say nothing
+                // rather than something false.
+                _ => null,
+            };
+            if (unit is null) return null;
+            return info.BillingPeriod == 1 ? unit : $"{info.BillingPeriod} {unit}";
+        }
+        return null;
     }
 
     public async Task<StorePurchaseResult> PurchaseAsync(string productId)

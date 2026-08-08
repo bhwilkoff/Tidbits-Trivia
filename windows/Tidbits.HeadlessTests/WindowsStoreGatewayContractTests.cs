@@ -67,6 +67,37 @@ public class WindowsStoreGatewayContractTests
         Assert.Equal(typeof(bool), probe!.PropertyType);
     }
 
+    // MARK: - Billing period disclosure
+    //
+    // Microsoft Store queries subscriptions as the "Durable" kind, so the product kind does NOT
+    // reveal that a plan recurs. The only thing standing between a Store customer and "$3.99"
+    // presented as a one-time charge — right next to a genuinely one-time $79.99 — is this
+    // label. Apple (`priceLabel`) and Android (`periodSuffix`) render the same shapes.
+
+    [Fact]
+    public void A_subscription_shows_its_renewal_period()
+    {
+        var monthly = new StoreProductInfo("club.monthly", "Tidbits Club", "$3.99", "mo");
+        var annual = new StoreProductInfo("club.annual", "Tidbits Club", "$29.99", "yr");
+        Assert.Equal("$3.99/mo", monthly.PriceLabel);
+        Assert.Equal("$29.99/yr", annual.PriceLabel);
+    }
+
+    [Fact]
+    public void A_one_time_product_shows_a_bare_price()
+    {
+        // Founding Member does not renew; "/mo" on it would be its own lie.
+        var lifetime = new StoreProductInfo("club.lifetime", "Founding Member", "$79.99");
+        Assert.Equal("$79.99", lifetime.PriceLabel);
+    }
+
+    [Fact]
+    public void An_unusual_period_count_is_spelled_out()
+    {
+        var quarterly = new StoreProductInfo("club.quarterly", "Tidbits Club", "$9.99", "3 mo");
+        Assert.Equal("$9.99/3 mo", quarterly.PriceLabel);
+    }
+
     [Fact]
     public void Club_product_ids_are_the_three_the_Store_carries()
     {

@@ -7,6 +7,28 @@
 > `docs/ROADMAP.md`, `docs/DATA-CONTRACT.md`. Detailed per-round history is in
 > `ARCHIVE.md`.
 
+## Current state (2026-08-08b) — Windows 1.6.76: the plans say that they renew
+
+**1.6.75 was cancelled in certification and replaced by 1.6.76, because making the products
+visible created a disclosure defect that had not existed while the paywall was empty.**
+
+The paywall button rendered `FormattedPrice` — the raw amount every store hands back. So the
+three plans would have read `$79.99` / `$29.99` / `$3.99`, with nothing saying that two of them
+RENEW, next to one that genuinely does not. **The Microsoft Store queries subscriptions as the
+`Durable` kind, so the product kind never reveals recurrence** — the only thing separating
+"$3.99 once" from "$3.99 every month" is reading `StoreSku.SubscriptionInfo` off the SKU.
+
+Fixed by mirroring what every other platform already did (a parity break Windows alone had):
+Apple `priceLabel`, web "per month", Android `periodSuffix`. `StoreProductInfo` gained a
+`BillingPeriod` + a `PriceLabel` that appends it; the gateway derives it from
+`BillingPeriodUnit`/`BillingPeriod` (like StoreKit's `subscriptionPeriod`) rather than
+hardcoding per product id, so a plan re-termed in Partner Center cannot leave the app
+describing it wrongly. An unknown unit renders nothing rather than something false. 520 tests.
+
+**The three add-on ids are CONFIRMED live** — `club.monthly` (Subscription), `club.annual`
+(Subscription), `club.lifetime` (Durable), all "In the Microsoft Store", verified by eye in
+Partner Center because no API can list them ([[store-addon-ids-unverifiable-by-api]]).
+
 ## Current state (2026-08-08) — Windows 1.6.75: Club in-app purchase is wired
 
 **The Microsoft Store add-ons certified, and the gateway that was written-but-inert now

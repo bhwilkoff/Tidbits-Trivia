@@ -25,7 +25,17 @@ public interface IStoreGateway
     Task<StorePurchaseResult> PurchaseAsync(string productId);
 }
 
-public sealed record StoreProductInfo(string Id, string Title, string FormattedPrice);
+/// `BillingPeriod` is the short unit a subscription renews on ("mo", "yr", or "3 mo" when the
+/// count is not 1), and null for a one-time product like Founding Member.
+public sealed record StoreProductInfo(
+    string Id, string Title, string FormattedPrice, string? BillingPeriod = null)
+{
+    /// Price WITH the billing period for subscriptions ("$29.99/yr"); the bare price for a
+    /// one-time product. Store policy — like App Store 3.1.2 and Play's subscriptions policy —
+    /// requires the period be shown before purchase, and every store hands back a raw amount
+    /// only. The Apple (`priceLabel`) and Android (`periodSuffix`) twins render the same shapes.
+    public string PriceLabel => BillingPeriod is null ? FormattedPrice : $"{FormattedPrice}/{BillingPeriod}";
+}
 
 public enum StorePurchaseResult { Success, AlreadyPurchased, Cancelled, Pending, Failed, Unavailable }
 

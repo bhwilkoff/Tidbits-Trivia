@@ -181,7 +181,9 @@ public static class ClubPaywallUi
             var busy = busyProductId == id;
             var btn = new Button
             {
-                Content = busy ? "…" : p.FormattedPrice, Classes = { "accent", "compact" }, IsEnabled = !busy,
+                // PriceLabel, never FormattedPrice: two of the three plans RENEW, and a bare
+                // "$3.99" next to a genuinely one-time "$79.99" reads as a one-time price.
+                Content = busy ? "…" : p.PriceLabel, Classes = { "accent", "compact" }, IsEnabled = !busy,
                 VerticalAlignment = VerticalAlignment.Center,
             };
             btn.Click += (_, _) => onPurchase(id);

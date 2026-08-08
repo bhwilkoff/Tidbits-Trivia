@@ -161,7 +161,23 @@ jobs:
           # publish goes to real users and cannot be un-shipped.
           if ('${{ inputs.commit }}' -ne 'true') { $args += '-nc' }
           if ('${{ inputs.flight }}' -ne '') { $args += @('-f', '${{ inputs.flight }}') }
-          msstore @args
+
+          $out = msstore @args 2>&1 | Tee-Object -Variable captured | Out-String
+          Write-Host $captured
+
+          # msstore replaces the pending submission by DELETING it first — which the Store
+          # refuses once a submission has reached certification. The CLI reports that failure
+          # in the worst possible way: it prints
+          #     Submission in its current state cannot be deleted
+          #     ✅ Existing submission deleted!
+          # a green checkmark on the very next line, and only the later "Error while creating
+          # submission" reveals that nothing shipped. Name the real cause and the manual fix,
+          # because the CLI cannot cancel a certification and no flag exists for it.
+          if ($out -match 'cannot be deleted') {
+            Write-Output "::error title=A submission is already in certification::msstore cannot replace it - the Store refuses to delete a submission once it is certifying, and its '✅ Existing submission deleted!' line is printed even when the delete FAILED. Cancel it by hand first: Partner Center -> Product overview -> Certification status -> Cancel submission. Then re-run this workflow. The in-flight submission was NOT harmed."
+            throw "Cannot replace a submission that is in certification - cancel it in Partner Center first."
+          }
+          if ($LASTEXITCODE -ne 0) { throw "msstore publish failed (exit $LASTEXITCODE)." }
 
       # A green run that shipped nothing is the failure mode this workflow actually had.
       # Between 2026-07-20 and 2026-08-03 four runs succeeded, each one DELETING the previous

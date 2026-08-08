@@ -49,6 +49,31 @@ jobs:
             "$api/v1.0/my/applications/$APP_ID/listinappproducts")
           echo "$body" | jq . || { echo "$body"; exit 1; }
 
+          # KNOWN DEAD END, kept deliberately so nobody re-derives it. The legacy API refuses to
+          # enumerate add-ons AT ALL once one of them is a subscription:
+          #
+          #   {"code":"NotAllowed","message":"API does not support in-app-product type: Subscription"}
+          #
+          # Club has two (club.annual, club.monthly), so this endpoint can never list them. The
+          # error is still informative — reaching it proves auth works AND proves a subscription
+          # add-on exists — but it is NOT a verification of the product ids, so say so plainly
+          # rather than failing in a way that reads as "the add-ons are broken".
+          if echo "$body" | jq -e '.code == "NotAllowed"' >/dev/null 2>&1; then
+            {
+              echo "## Add-on ids: NOT VERIFIABLE from this API"
+              echo ""
+              echo '`'"$(echo "$body" | jq -r .message)"'`'
+              echo ""
+              echo "Auth is fine and a subscription add-on exists — but the legacy Store API"
+              echo "cannot enumerate add-ons when any of them is a subscription, and \`msstore\`"
+              echo "has no add-on commands at all. **Confirm the three product ids by eye in"
+              echo "Partner Center -> Add-ons**: they must be exactly \`club.lifetime\`,"
+              echo "\`club.annual\`, \`club.monthly\` to match ClubProducts."
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::warning title=Add-on ids unverified::The legacy Store API cannot list subscription add-ons. Check them by eye in Partner Center."
+            exit 0
+          fi
+
           echo "$body" | jq -e '.value' >/dev/null 2>&1 || {
             echo "::error title=Unexpected response::No .value array — see the body above."
             exit 1

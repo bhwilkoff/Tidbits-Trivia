@@ -23,6 +23,15 @@
   <ItemGroup>
     <ProjectReference Include="..\Tidbits.App\Tidbits.App.csproj" />
     <ProjectReference Include="..\Tidbits.Core\Tidbits.Core.csproj" />
+    <!-- The Store IAP library is on a Windows TFM, so it cannot be REFERENCED from this
+         net10.0 project — the same wall that forces GameData to load it reflectively. Copy its
+         output in as content instead, so WindowsStoreGatewayContractTests can exercise the real
+         assembly rather than a description of it. -->
+    <!-- SkipGetTargetFrameworkProperties: without it MSBuild rejects the reference outright on
+         TFM compatibility, even though nothing is being compiled against it. -->
+    <ProjectReference Include="..\Tidbits.Windows\Tidbits.Windows.csproj"
+                      ReferenceOutputAssembly="false" SkipGetTargetFrameworkProperties="true"
+                      OutputItemType="Content" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

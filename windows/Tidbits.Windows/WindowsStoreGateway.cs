@@ -1,4 +1,3 @@
-#if WINDOWS
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,15 +8,17 @@ using Tidbits.Core.Networking;
 // vocabulary primary and marks each WinRT touch explicitly, which is the point of this file.
 using WinRTStore = Windows.Services.Store;
 
-namespace Tidbits.App.Services;
+namespace Tidbits.Windows;
 
 /// The real Microsoft Store edge behind `IStoreGateway` — Class A for `EntitlementStore`, the
 /// Windows twin of Apple's `Transaction.currentEntitlements` and Android's Play Billing.
 ///
 /// Per the Windows playbook this file is the ONLY place that touches WinRT: the behaviour lives
 /// in `Tidbits.Core` behind the interface (net10.0, Mac-testable), and everything here is a thin
-/// Windows-guarded translation. Compiled only for the `net10.0-windows…` TFM, which the csproj
-/// selects on a Windows host; the Mac head never sees it and keeps using `NoStoreGateway`.
+/// Windows-guarded translation. It lives in its own `net10.0-windows…` class library because that
+/// TFM cannot go on `Tidbits.App` without breaking every publish (§7) — `GameData` loads this
+/// type reflectively when the assembly is present, and falls back to `NoStoreGateway` when it
+/// is not (the Mac head, the headless tests).
 ///
 /// Two things about `StoreContext` that shape every method below:
 ///
@@ -30,6 +31,17 @@ namespace Tidbits.App.Services;
 ///     comes from `Win32HostInterop`, which is where every other Win32 edge already lives.
 public sealed class WindowsStoreGateway : IStoreGateway
 {
+    // GameData finds this type by NAME, so a rename here would silently un-Club every Store
+    // customer with nothing failing anywhere. Asserting the contract inside the namespace it
+    // describes makes the two move together: change the namespace or the class name without
+    // changing WindowsStoreGatewayContract and this stops compiling.
+    // (Division, not `? "ok" : null` — a const string may legally BE null, so that version
+    // compiled happily when the names disagreed. Constant division by zero is CS0020.)
+    private const int ContractSelfCheck = 1 / (
+        WindowsStoreGatewayContract.TypeName ==
+            nameof(Tidbits) + "." + nameof(Windows) + "." + nameof(WindowsStoreGateway)
+        ? 1 : 0);
+
     private readonly Func<IntPtr> _ownerWindow;
     private WinRTStore.StoreContext? _context;
 
@@ -38,11 +50,19 @@ public sealed class WindowsStoreGateway : IStoreGateway
 
     /// True when this process actually has a Store licence context. Cheap, and the thing
     /// `GameData` checks before preferring this gateway over `NoStoreGateway`.
+    ///
+    /// `Package.Current` is the discriminator, not `StoreContext.GetDefault()`: the latter can
+    /// hand back a context in an unpackaged process and only fail later, one call deeper. A
+    /// process with no package identity throws here, which is the clean "not the MSIX" answer.
     public static bool IsAvailable
     {
         get
         {
-            try { return WinRTStore.StoreContext.GetDefault() is not null; }
+            try
+            {
+                if (global::Windows.ApplicationModel.Package.Current is null) return false;
+                return WinRTStore.StoreContext.GetDefault() is not null;
+            }
             catch { return false; }
         }
     }
@@ -97,33 +117,46 @@ public sealed class WindowsStoreGateway : IStoreGateway
         }
     }
 
+    /// The add-on kinds Club can ship as. A Store **subscription is a Durable add-on** carrying
+    /// `StoreSku.SubscriptionInfo` — "Subscription" is not a product kind and passing it throws.
+    /// So one query covers lifetime AND both plans: the opposite of Play Billing, which THROWS on
+    /// a mixed product list and crashed Android for two releases (Decision 055). Do not
+    /// "harmonize" this with the Android split.
+    private static readonly string[] AddOnKinds = { "Durable", "UnmanagedConsumable", "Consumable" };
+
+    /// Every Club add-on the Store associates with this app, in paywall order.
+    ///
+    /// `GetAssociatedStoreProductsAsync`, NOT `GetStoreProductsAsync`: the latter's second
+    /// argument is Microsoft's **Store IDs** (`9N…`), not the developer-chosen product ids we
+    /// control, so querying it with `ClubProducts.All` matches nothing and returns an empty
+    /// paywall with no error anywhere. The association query returns the app's own add-ons and
+    /// we filter on `InAppOfferToken`, which IS our id.
+    private async Task<IReadOnlyList<WinRTStore.StoreProduct>> ClubProductsAsync(WinRTStore.StoreContext ctx)
+    {
+        var result = await ctx.GetAssociatedStoreProductsAsync(AddOnKinds);
+        if (result?.Products is null) return Array.Empty<WinRTStore.StoreProduct>();
+
+        return result.Products.Values
+            .Where(p => p is not null && ClubProducts.All.Contains(p.InAppOfferToken))
+            // Paywall order is our product list's order (lifetime → annual → monthly), not the
+            // arbitrary order the Store hands back.
+            .OrderBy(p => ClubProducts.All.ToList().IndexOf(p.InAppOfferToken))
+            .ToList();
+    }
+
     public async Task<IReadOnlyList<StoreProductInfo>> GetProductsAsync()
     {
         var ctx = Context;
         if (ctx is null) return Array.Empty<StoreProductInfo>();
         try
         {
-            // Durable (one-time) and Subscription are separate Store product kinds. Unlike Play
-            // Billing — which THROWS on a mixed product list and crashed Android for two
-            // releases (Decision 055) — WinRT takes the kinds together, so one query is correct
-            // here. Do not "harmonize" this with the Android split.
-            var kinds = new[] { "Durable", "UnmanagedConsumable", "Consumable" };
-            var result = await ctx.GetStoreProductsAsync(kinds, ClubProducts.All);
-            if (result?.Products is null) return Array.Empty<StoreProductInfo>();
-
             var products = new List<StoreProductInfo>();
-            foreach (var kv in result.Products)
+            foreach (var p in await ClubProductsAsync(ctx))
             {
-                var p = kv.Value;
-                if (p is null) continue;
                 var price = p.Price?.FormattedPrice ?? string.Empty;
                 products.Add(new StoreProductInfo(p.InAppOfferToken, p.Title ?? p.InAppOfferToken, price));
             }
-            // Paywall order is the product list's order (lifetime → annual → monthly), not the
-            // arbitrary order the Store hands back.
-            return products
-                .OrderBy(p => ClubProducts.All.ToList().IndexOf(p.Id) is var i && i >= 0 ? i : int.MaxValue)
-                .ToList();
+            return products;
         }
         catch
         {
@@ -137,10 +170,8 @@ public sealed class WindowsStoreGateway : IStoreGateway
         if (ctx is null) return StorePurchaseResult.Unavailable;
         try
         {
-            // Purchase by StoreId, which means resolving the developer-chosen id first.
-            var kinds = new[] { "Durable", "UnmanagedConsumable", "Consumable" };
-            var found = await ctx.GetStoreProductsAsync(kinds, new[] { productId });
-            var product = found?.Products?.Values?.FirstOrDefault();
+            var product = (await ClubProductsAsync(ctx))
+                .FirstOrDefault(p => p.InAppOfferToken == productId);
             if (product is null) return StorePurchaseResult.Unavailable;
 
             var purchase = await product.RequestPurchaseAsync();
@@ -160,4 +191,3 @@ public sealed class WindowsStoreGateway : IStoreGateway
         }
     }
 }
-#endif

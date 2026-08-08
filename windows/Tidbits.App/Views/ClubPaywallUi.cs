@@ -20,17 +20,19 @@ public static class ClubPaywallUi
     public const string PitchHeadline = "Get better, not just play more";
     public const string PitchBody =
         "Ranked seasons, a map of everything you know, and a library of every fact you've learned.";
-    // Shown whenever the store gateway returns no products. That is NOT only the Mac head and
-    // the unpackaged .exe: `WindowsStoreGateway` does not exist yet, so `NoStoreGateway` ships
-    // inside the MSIX too and this is what every Microsoft Store customer sees. The previous
-    // copy — "Tidbits Club is available in the Microsoft Store edition of this app" — was
-    // therefore shown TO people already running the Store edition, telling them to go get the
-    // thing they had. A dead end that reads as a lie. Name the route that actually works today:
-    // buy on the web, sign in here (Class B in EntitlementStore — the remote entitlement read,
-    // which is live and does unlock Club on Windows right now).
+    // Shown whenever the store gateway returns no products. Since 1.6.75 that is no longer the
+    // Store edition's normal state — `WindowsStoreGateway` ships in the MSIX and returns the
+    // three real add-ons — so this is now what it always claimed to be: the empty state for the
+    // builds with no Store licence context (the direct-download .exe, the Mac head), plus a
+    // Store customer hitting a transient failure.
+    //
+    // Keep it pointing at the route that works without in-app purchase — buy on the web, sign in
+    // here (EntitlementStore Class B, the remote entitlement read). The copy this replaced said
+    // "Tidbits Club is available in the Microsoft Store edition of this app", which was shown TO
+    // people already running the Store edition, telling them to go get the thing they had.
     public const string EmptyStateNote =
-        "In-app purchase isn't available here yet. Get Club at tidbitstrivia.com, then sign in " +
-        "below with the same account and it unlocks here.";
+        "In-app purchase isn't available in this edition. Get Club at tidbitstrivia.com, then " +
+        "sign in below with the same account and it unlocks here.";
     public const string WebNote =
         "Already a member from the web or another device? Just sign in — your Club unlocks everywhere.";
     public const string MemberHeadline = "You're a Club member";

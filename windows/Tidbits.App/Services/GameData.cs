@@ -74,16 +74,43 @@ public sealed class GameData
         Entitlement = new Tidbits.Core.Networking.EntitlementStore(Rtdb, Account, Store);
     }
 
+    /// Loads `Tidbits.Windows.WindowsStoreGateway` REFLECTIVELY, because it cannot be
+    /// project-referenced: it needs the `net10.0-windows10.0.x` TFM for `Windows.Services.Store`,
+    /// a `net10.0` app may not reference a `net10.0-windows` library, and putting that TFM on
+    /// Tidbits.App broke every Windows publish (MSB4062 — docs/WINDOWS-STORE-SUBMISSION.md §7).
+    /// The MSIX publish drops Tidbits.Windows.dll beside the app; every other build simply has no
+    /// such file and falls through, which is the correct answer for the Mac head, the headless
+    /// tests, and the direct-download .exe alike.
+    ///
+    /// `LoadFrom`, not `Load`: the assembly is deliberately not a reference, so it is absent from
+    /// deps.json and the default resolver would never find it. Its own dependency on
+    /// Tidbits.Core resolves to the copy already loaded, so `IStoreGateway` is the same type.
     private static Tidbits.Core.Networking.IStoreGateway ResolveStoreGateway()
     {
-#if WINDOWS
         try
         {
-            if (WindowsStoreGateway.IsAvailable)
-                return new WindowsStoreGateway(Win32HostInterop.MainWindowHandle);
+            var dll = Path.Combine(AppContext.BaseDirectory,
+                Tidbits.Core.Networking.WindowsStoreGatewayContract.AssemblyFileName);
+            if (OperatingSystem.IsWindows() && File.Exists(dll))
+            {
+                var type = System.Reflection.Assembly.LoadFrom(dll)
+                    .GetType(Tidbits.Core.Networking.WindowsStoreGatewayContract.TypeName);
+                // IsAvailable is the packaged-MSIX check. The .exe and the Mac head have no Store
+                // licence context, and StoreContext there throws rather than reporting "no", so
+                // NoStoreGateway (which answers "unknown", and therefore fails OPEN) is right.
+                var available = type?
+                    .GetProperty(Tidbits.Core.Networking.WindowsStoreGatewayContract.AvailabilityProperty)?
+                    .GetValue(null) as bool?;
+                if (type is not null && available == true &&
+                    Activator.CreateInstance(type, new object?[] { (Func<IntPtr>)Win32HostInterop.MainWindowHandle })
+                        is Tidbits.Core.Networking.IStoreGateway gateway)
+                {
+                    return gateway;
+                }
+            }
         }
         catch { /* fall through — a store gateway must never stop the app starting */ }
-#endif
+
         return new Tidbits.Core.Networking.NoStoreGateway();
     }
 

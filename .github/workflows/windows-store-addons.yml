@@ -1,0 +1,78 @@
+name: Windows Store add-ons (verify Club product ids)
+
+# Reads the Club add-ons back from the Microsoft Store's own API and checks their
+# developer-chosen product ids against ClubProducts in Tidbits.Core.
+#
+#   gh workflow run windows-store-addons.yml
+#
+# WHY THIS EXISTS. The Windows paywall matches `StoreProduct.InAppOfferToken` against
+# `club.lifetime` / `club.annual` / `club.monthly`. If Partner Center created an add-on under
+# any other id, the Store returns no products, the paywall shows its empty state, and NOTHING
+# reports an error — the same shape of silent failure as the AASA/assetlinks class, where the
+# fix was to read the record back from the vendor's own endpoint rather than trust the config
+# (see the `verify-association-at-the-verifier` memory). This is that read-back.
+#
+# `msstore` cannot do this: the CLI has no add-on commands at all. It is the legacy Store
+# submission API, authenticated with the SAME four secrets as windows-store.yml.
+on:
+  workflow_dispatch:
+
+jobs:
+  addons:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: List the add-ons and compare them to ClubProducts
+        shell: bash
+        env:
+          TENANT: ${{ secrets.MSSTORE_TENANT_ID }}
+          CLIENT: ${{ secrets.MSSTORE_CLIENT_ID }}
+          SECRET: ${{ secrets.MSSTORE_CLIENT_SECRET }}
+          APP_ID: ${{ vars.MSSTORE_PRODUCT_ID }}
+        run: |
+          set -euo pipefail
+          api=https://manage.devcenter.microsoft.com
+
+          token=$(curl -sS -X POST "https://login.microsoftonline.com/$TENANT/oauth2/token" \
+            -d grant_type=client_credentials -d "client_id=$CLIENT" \
+            --data-urlencode "client_secret=$SECRET" --data-urlencode "resource=$api" \
+            | jq -r .access_token)
+          if [ -z "$token" ] || [ "$token" = "null" ]; then
+            echo "::error title=Store auth failed::Could not get a token. Same failure mode as §1.1 (AADSTS7000118) — check the Entra app still has Manager(Windows) in Partner Center."
+            exit 1
+          fi
+
+          # listinappproducts returns the add-ons attached to the app; each entry already carries
+          # the developer-chosen productId, so no per-add-on fetch is needed.
+          body=$(curl -sS -H "Authorization: Bearer $token" \
+            "$api/v1.0/my/applications/$APP_ID/listinappproducts")
+          echo "$body" | jq . || { echo "$body"; exit 1; }
+
+          echo "$body" | jq -e '.value' >/dev/null 2>&1 || {
+            echo "::error title=Unexpected response::No .value array — see the body above."
+            exit 1
+          }
+
+          {
+            echo "## Microsoft Store add-ons for $APP_ID"
+            echo ""
+            echo "| productId | type | Store ID |"
+            echo "|---|---|---|"
+            echo "$body" | jq -r '.value[] | "| `\(.productId)` | \(.productType) | `\(.inAppProductId)` |"'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          # The contract: every id the app asks for must exist as an add-on.
+          expected=$(grep -oE '"club\.[a-z]+"' windows/Tidbits.Core/Networking/IStoreGateway.cs \
+            | tr -d '"' | sort -u)
+          actual=$(echo "$body" | jq -r '.value[].productId' | sort -u)
+          echo "Expected (from ClubProducts): $(echo $expected)"
+          echo "Actual   (from the Store):    $(echo $actual)"
+
+          missing=$(comm -23 <(echo "$expected") <(echo "$actual") || true)
+          if [ -n "$missing" ]; then
+            echo "- **MISSING from the Store:** $(echo $missing)" >> "$GITHUB_STEP_SUMMARY"
+            echo "::error title=Club product id mismatch::The app asks the Store for [$(echo $missing)], which no add-on uses. The paywall would be empty with no error."
+            exit 1
+          fi
+          echo "- All three Club product ids exist as add-ons." >> "$GITHUB_STEP_SUMMARY"

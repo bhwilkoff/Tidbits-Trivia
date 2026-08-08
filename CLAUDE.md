@@ -505,6 +505,14 @@ matches a phone/web player on the shared Firebase `live/{code}` +
   `VideoLAN.LibVLC.Mac` + `.Windows` unconditionally shipped a 42MB
   macOS dylib + the 99MB win-x86 tree into the win-x64 MSIX (half of
   211MB). `TrimWindowsPublishBloat` also strips win-x86 + native pdbs.
+- **A platform TFM goes in its OWN library, never on `Tidbits.App`** (Decision 056).
+  `Tidbits.Windows` is the only project on `net10.0-windows10.0.x`, because that TFM
+  turns on MSBuild's Appx/PRI indexing over `@(Content)` — which `Tidbits.App` has —
+  and every publish then dies with `MSB4062 ExpandPriContent`, a task that ships with
+  Visual Studio and not the dotnet CLI. Keep that library **content-free**, load it
+  with `Assembly.LoadFrom` (a `net10.0` project may not reference `net10.0-windows`),
+  and let absence degrade to the inert implementation. `EnableWindowsTargeting=true`
+  keeps it compiling on the Mac head.
 - **`PublishSingleFile` is incompatible with MSIX** — `windows-store.yml`
   publishes multi-file; `windows-build.yml` keeps single-file for the
   direct-download `.exe`. Don't unify them.

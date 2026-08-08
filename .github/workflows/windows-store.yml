@@ -56,11 +56,35 @@ jobs:
           --self-contained -p:PublishSingleFile=false -p:PublishReadyToRun=true
           -o publish/msix
 
+      # The Microsoft Store IAP edge. It is a SEPARATE net10.0-windows library because that TFM
+      # cannot go on Tidbits.App — it turns on MSBuild's Appx/PRI indexing over @(Content) and
+      # every publish then dies with MSB4062 (ExpandPriContent), which ships with Visual Studio
+      # and not the dotnet CLI. See docs/WINDOWS-STORE-SUBMISSION.md §7.
+      #
+      # It is NOT in windows-build.yml: the direct-download .exe has no package identity, so the
+      # gateway would refuse anyway and the 24MB WinRT projection would be pure weight.
+      - name: Publish the Store IAP library (Tidbits.Windows)
+        working-directory: windows
+        run: >
+          dotnet publish Tidbits.Windows/Tidbits.Windows.csproj -c Release
+          --no-self-contained -o publish/winrt
+
       - name: Stage the package layout
         shell: pwsh
         working-directory: windows
         run: |
           Copy-Item Tidbits.App/AppxManifest.xml publish/msix/AppxManifest.xml -Force
+          # Only these three: Tidbits.Core is already in the app publish (the same build), and
+          # copying the library's whole output over the app's would shuffle shared assemblies.
+          # GameData loads Tidbits.Windows.dll with Assembly.LoadFrom, which probes this same
+          # directory for WinRT.Runtime + the SDK projection.
+          $iap = 'Tidbits.Windows.dll', 'WinRT.Runtime.dll', 'Microsoft.Windows.SDK.NET.dll'
+          foreach ($f in $iap) {
+            $src = "publish/winrt/$f"
+            if (-not (Test-Path $src)) { throw "Store IAP payload missing: $f" }
+            Copy-Item $src "publish/msix/$f" -Force
+          }
+          Write-Host "Staged Store IAP payload: $($iap -join ', ')"
           # The manifest references Assets\Windows\*; publish/ doesn't carry them
           # (they're AvaloniaResource, compiled into the dll, not copied out).
           New-Item -ItemType Directory -Force -Path publish/msix/Assets/Windows | Out-Null

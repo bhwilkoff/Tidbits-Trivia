@@ -2,4 +2,5 @@
   <Project Path="Tidbits.App/Tidbits.App.csproj" />
   <Project Path="Tidbits.Core/Tidbits.Core.csproj" />
   <Project Path="Tidbits.HeadlessTests/Tidbits.HeadlessTests.csproj" />
+  <Project Path="Tidbits.Windows/Tidbits.Windows.csproj" />
 </Solution>

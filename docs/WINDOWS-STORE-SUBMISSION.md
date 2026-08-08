@@ -332,70 +332,94 @@ Once §1.3 is done:
 
 ## §7 — Tidbits Club on Windows
 
-Audited 2026-08-07, then largely unblocked the same day.
+**In-app purchase is WIRED as of 1.6.75.** Both halves that blocked it on 2026-08-07 are
+done: the owner completed the tax/payout profile and the three add-ons certified, and
+`WindowsStoreGateway` now actually compiles into the ship.
 
-**Works today — the web purchase.** `EntitlementStore` Class B is live: buy Club at
-tidbitstrivia.com, sign in on Windows with the same verified-email account, and the
-remote `entitlements/{accountKey}` read unlocks Club. Nothing blocks this path, and it
-is what the paywall's empty state now points at.
+### The two purchase routes, and which is which
 
-**In-app purchase — both halves now addressed:**
+- **In-app (Store add-ons)** — `EntitlementStore` Class A. `WindowsStoreGateway` asks
+  `StoreContext` for the app's add-ons and matches `InAppOfferToken` against
+  `ClubProducts` (`club.lifetime` 79.99, `club.annual` 29.99, `club.monthly` 3.99).
+  Works only in the **packaged MSIX**.
+- **Web purchase** — Class B, and still live: buy at tidbitstrivia.com, sign in on Windows
+  with the same verified-email account, the remote `entitlements/{accountKey}` read unlocks
+  Club. This is the route the paywall's empty state names, and the only one the
+  direct-download `.exe` has.
 
-1. **`WindowsStoreGateway` is WRITTEN but NOT YET COMPILED INTO THE SHIP.**
-   `windows/Tidbits.App/Services/WindowsStoreGateway.cs` exists and is complete, guarded by
-   `#if WINDOWS`. It is inert today because both projects still target plain `net10.0`, so
-   the symbol is never defined and `GameData.ResolveStoreGateway()` falls through to
-   `NoStoreGateway`.
+### How the WinRT edge is isolated (do not "simplify" this)
 
-   **Why it is not switched on: the Windows TFM breaks the build, and the build is the
-   ship.** Reaching `Windows.Services.Store` needs `net10.0-windows10.0.x`. That was tried
-   host-conditionally (Windows gets the Windows TFM, the Mac head keeps `net10.0` so
-   Decision 045's headless observability survives) and gated on `windows-latest` across
-   four runs. Three traps were found and fixed:
-   - `NETSDK1083` — the TFM defaults `RuntimeIdentifiers` to the UWP-era
-     `win10-x64;win10-x86;win10-arm;win10-arm64`, RIDs .NET 5 deleted. Fix: name `win-x64`.
-   - `CS0104` — WinRT defines its own `StorePurchaseResult`, so `using
-     Windows.Services.Store` makes every mention of ours ambiguous and the interface then
-     reads as unimplemented. Fix: alias the namespace.
-   - `MSB4062 ExpandPriContent` — **UNSOLVED.** The TFM also imports MSBuild's Appx/PRI
-     packaging targets, whose task assembly ships with Visual Studio and not with the
-     dotnet CLI SDK. `WindowsPackageType=None`, `EnableMsixTooling=false` and
-     `EnableDefaultPriItems=false` did NOT stop the import.
+`Windows.Services.Store` needs a `net10.0-windows10.0.x` TFM. **That TFM cannot go on
+`Tidbits.App`** — it was tried, gated across four `windows-latest` runs, and reverted,
+because it breaks every publish and the publish is the ship:
 
-   The TFM change was therefore **reverted**, because `windows-store.yml` publishes the
-   same way: leaving it in place would have left every future Windows ship broken to buy a
-   feature that is blocked on certification anyway.
+- `NETSDK1083` — the TFM defaults `RuntimeIdentifiers` to the UWP-era
+  `win10-x64;win10-x86;win10-arm;win10-arm64` that .NET 5 deleted. Fix: name `win-x64`.
+- `CS0104` — WinRT defines its own `StorePurchaseResult`, so `using Windows.Services.Store`
+  makes every mention of ours ambiguous and the interface then reads as unimplemented.
+  Fix: alias the namespace (`using WinRTStore = Windows.Services.Store;`).
+- `MSB4062 ExpandPriContent` — the killer. The TFM turns on MSBuild's Appx/PRI targets,
+  whose task assembly ships with Visual Studio and **not** with the dotnet CLI SDK.
+  `WindowsPackageType=None`, `EnableMsixTooling=false` and `EnableDefaultPriItems=false`
+  did not stop it.
 
-   **Two candidate routes for the next attempt**, in preference order:
-   - Keep hunting the AppX import guard (`AppxPackage=false`, `WindowsAppContainer=false`,
-     or an explicit `Import` exclusion). Cheap to try, one CI round trip each.
-   - Move the gateway into a small `Tidbits.Windows` class library on the Windows TFM and
-     load it by reflection from `GameData` (`IStoreGateway` already lives in Core, which
-     both reference). A plain classlib is far less likely to trip the Appx targets than a
-     `WinExe` carrying an ApplicationManifest, and it keeps `Tidbits.App` on `net10.0`.
+**The shape of that last one is what the fix exploits: PRI indexing runs over
+`@(Content)`, and `Tidbits.App` links the shared `assets/*.json` as Content.** So the TFM
+lives in **`windows/Tidbits.Windows/`** — a class library with *no content items*, which
+never runs the task. Keep it that way; adding a `Content` item there re-arms MSB4062.
 
-2. **The three add-ons are submitted.** `club.lifetime` (79.99), `club.annual` (29.99)
-   and `club.monthly` (3.99) went to certification on 2026-08-07 once the owner
-   completed the tax/payout profile. They had sat at `Not submitted` for two weeks
-   behind one disabled button.
+`Tidbits.App` stays on `net10.0` and therefore **cannot reference it** (a `net10.0` project
+may not reference `net10.0-windows`). `GameData.ResolveStoreGateway()` loads it with
+`Assembly.LoadFrom` instead, and falls back to `NoStoreGateway` when the file is absent —
+which is the correct answer for the Mac head, the headless tests, and the `.exe` alike.
 
-**The blocker that held #2, and where it hides.** Every add-on section read Complete
-while `Submit to the Store` stayed disabled under:
+Two strings are all that hold the halves together, so they are defined once in
+`WindowsStoreGatewayContract` (Tidbits.Core) and guarded from both ends:
+- **Compile time** — `WindowsStoreGateway` fails to build (CS0020) if its own namespace and
+  class name stop matching the contract.
+- **Test time** — `WindowsStoreGatewayContractTests` loads the real built assembly and
+  asserts the type, the `IStoreGateway` implementation, the `Func<IntPtr>` constructor and
+  the static `IsAvailable` probe. Runs on the Mac head.
 
-> You need to update your tax and payout information before you can charge money.
+`EnableWindowsTargeting=true` is what lets that library compile on the Mac at all
+(`NETSDK1100` otherwise) — the Windows SDK ref pack is a NuGet download and only has to
+resolve, never run.
 
-That message is **plain text, not a link**. The page is the gear icon (top right) →
-**Account settings** → *Payout and tax* — and it is **ACCOUNT-OWNER ONLY**. Signed in as
-the CI Entra admin from §1.1 (Manager(Windows)), the node does not appear at all:
-Account settings shows only Overview / My learning profile / My access / User management
-/ Programs / Agreements / Organization profile, and the Earnings workspace has just
-Earnings and Reports. Sign in as the **original personal MSA** that registered the
-developer account. When a Partner Center page seems not to exist, check which identity
-is signed in before concluding the feature is missing.
+### Packaging
 
-**Still unverifiable from here:** a real purchase. `StoreContext` only returns products
-to a Store-INSTALLED package, so the gateway's live behaviour cannot be exercised on the
-Mac head, in headless tests, or from the direct-download .exe — only by installing the
-certified MSIX from the Store on real Windows. Every path in it degrades to "unknown"
-rather than "no" precisely because that verification gap exists: a plumbing error must
-never un-Club a paying member.
+`windows-store.yml` publishes the library separately and stages exactly three files into
+the MSIX layout: `Tidbits.Windows.dll`, `WinRT.Runtime.dll`, `Microsoft.Windows.SDK.NET.dll`
+(~25MB, almost all the SDK projection — the price of WinRT). It throws if any is missing.
+
+**`windows-build.yml` deliberately does NOT carry them.** The direct-download `.exe` has no
+package identity, so the gateway refuses anyway and the payload would be dead weight.
+
+### The API traps inside the gateway
+
+- **`GetAssociatedStoreProductsAsync`, NOT `GetStoreProductsAsync`.** The latter's second
+  argument is Microsoft's **Store IDs** (`9N…`), not the developer-chosen product ids —
+  querying it with `ClubProducts.All` matches nothing and returns an empty paywall with no
+  error anywhere. The association query returns the app's own add-ons; filter on
+  `InAppOfferToken`, which IS our id.
+- **A subscription is a `Durable` add-on** carrying `StoreSku.SubscriptionInfo`.
+  "Subscription" is not a product kind. So ONE query covers lifetime and both plans — the
+  exact opposite of Play Billing, which throws on a mixed list and crashed Android for two
+  releases (Decision 055). Do not harmonize them.
+- **Every path degrades to "unknown", never "no".** The gate fails OPEN, so a plumbing
+  error can never un-Club a paying member.
+- **`Package.Current` is the availability probe**, not `StoreContext.GetDefault()` — the
+  latter can hand back a context in an unpackaged process and only fail one call deeper.
+
+### Verifying it
+
+- **Product ids:** `gh workflow run windows-store-addons.yml` reads the add-ons back from
+  the Store's own API and fails if any `ClubProducts` id has no matching add-on. `msstore`
+  has no add-on commands; this is the legacy submission API on the same four secrets. Read
+  the record back from the vendor's endpoint rather than trusting the config — same lesson
+  as AASA/assetlinks.
+- **A real purchase: STILL NOT VERIFIABLE FROM HERE.** `StoreContext` returns products only
+  to a Store-installed package, so this cannot be exercised on the Mac head, in headless
+  tests, on CI, or from the `.exe` — **only by installing the certified MSIX from the Store
+  on real Windows**. Everything above verifies the layers underneath that gap; the purchase
+  itself is an owner check after the update goes live.
+

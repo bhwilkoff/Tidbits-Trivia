@@ -1993,3 +1993,46 @@ device-tests per day, so spend them on physical and never on virtual; virtual de
 add coverage this class of bug is invisible to. Results (`logcat`,
 `data_app_crash_*.txt`, `video.mp4`) land in the GCS bucket the run prints, and the
 crash artifact carries the exact stack — read that, not the Robo pass/fail alone.
+
+## 056 — Isolate a platform TFM in its own library; do not put it on the app
+*Date: 2026-08-08*
+
+When one feature needs a platform-specific target framework, give it a **separate
+class library on that TFM** and load it by reflection. Do not widen the app's TFM to
+reach it.
+
+On Windows, Club's in-app purchase needs `Windows.Services.Store`, which needs
+`net10.0-windows10.0.x`. Putting that TFM on `Tidbits.App` was tried and gated across
+four `windows-latest` runs. Two traps were solvable — `NETSDK1083` (the TFM defaults
+`RuntimeIdentifiers` to the UWP-era `win10-*` RIDs .NET 5 deleted) and `CS0104` (WinRT
+defines its own `StorePurchaseResult`, so an unqualified `using` makes ours ambiguous
+and `IStoreGateway` then reads as unimplemented). The third was not: **`MSB4062
+ExpandPriContent`**, whose task assembly ships with Visual Studio and not with the
+dotnet CLI SDK. `WindowsPackageType=None`, `EnableMsixTooling=false` and
+`EnableDefaultPriItems=false` all failed to stop the import, so the TFM was reverted —
+the same publish backs `windows-store.yml`, and keeping it would have left **every
+future Windows ship broken** to buy a feature that could not go live yet anyway.
+
+**Why:** a TFM is not a local choice. It is inherited by everything the project
+produces — RIDs, MSBuild target imports, the publish path, and which OTHER projects
+may reference it (a `net10.0` test project cannot reference `net10.0-windows`). One
+feature's platform requirement had reached out and taken the whole pipeline hostage.
+Scoping it to a library that produces nothing but a DLL turns a pipeline-wide blast
+radius into one file.
+
+The specific mechanism generalizes: **PRI indexing runs over `@(Content)`**, and
+`Tidbits.App` links the shared `assets/*.json` as Content. A class library carrying no
+content items never runs the task. That is why the split works and why
+`windows/Tidbits.Windows/` must stay content-free.
+
+**How to apply:** put the platform edge in its own library, keep the app on the
+portable TFM, and bridge with `Assembly.LoadFrom` + a fallback that degrades to the
+inert implementation — absence must be an ordinary answer, not an error, because it is
+the normal state on every other build. Reflection removes the compiler from the seam,
+so replace it deliberately: name the assembly and type ONCE (`WindowsStoreGatewayContract`
+in Core), assert it at compile time from the library side (a constant division by zero
+fires CS0020 if the names drift — a `const string` may legally be null, so a
+`? "ok" : null` guard silently passes), and load the real built assembly in a test to
+check the type, interface, constructor and probe. Also set `EnableWindowsTargeting=true`
+so the library still compiles on the non-Windows dev box (Decision 045); a compile error
+is worth catching in seconds rather than a four-minute CI round trip.

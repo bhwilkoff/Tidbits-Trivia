@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The ONLY project in the solution on a Windows TFM, and the only one that may touch
+       WinRT. It exists because `Windows.Services.Store` needs `net10.0-windows10.0.x`, and
+       putting that TFM on Tidbits.App broke every Windows publish with MSB4062
+       (ExpandPriContent) — see docs/WINDOWS-STORE-SUBMISSION.md §7.
+
+       The trap is content-shaped, which is why this project can carry the TFM safely:
+       the Windows TFM turns on MSBuild's Appx/PRI indexing over @(Content), and
+       Tidbits.App links the shared assets/*.json as Content. A class library with NO
+       content items never runs that task. Keep it that way — do not add Content here.
+
+       Tidbits.App does NOT ProjectReference this (a net10.0 app cannot reference a
+       net10.0-windows library). The MSIX publish drops the output next to the app and
+       GameData.ResolveStoreGateway() loads it reflectively. -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <!-- Must match AppxManifest.xml's TargetDeviceFamily MinVersion. The TFM would otherwise
+         default the floor to 19041 and CA1416 would stay quiet about an API that does not
+         exist on the oldest Windows 10 the Store will install this on. Everything used here
+         (StoreContext, GetAssociatedStoreProductsAsync, Package.Current) predates 17763. -->
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <!-- The Windows TFM defaults RuntimeIdentifiers to the UWP-era win10-* RIDs that .NET 5
+         deleted, which fails restore with NETSDK1083. Name the one RID we ship. -->
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <!-- Compile the WinRT edge on the Mac head too (NETSDK1100 without it). The SDK ref pack
+         is a NuGet download, so this only needs to RESOLVE cross-platform — it never runs
+         here. Decision 045 says CI is the gate, but a compile error is worth catching in
+         seconds rather than in a 4-minute windows-latest round trip. -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <!-- Belt and braces: never let the Appx/PRI targets consider this project. -->
+    <WindowsPackageType>None</WindowsPackageType>
+    <EnableMsixTooling>false</EnableMsixTooling>
+    <EnableDefaultPriItems>false</EnableDefaultPriItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Tidbits.Core\Tidbits.Core.csproj" />
+  </ItemGroup>
+
+</Project>

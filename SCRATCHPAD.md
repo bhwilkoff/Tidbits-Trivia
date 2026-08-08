@@ -7,6 +7,59 @@
 > `docs/ROADMAP.md`, `docs/DATA-CONTRACT.md`. Detailed per-round history is in
 > `ARCHIVE.md`.
 
+## Current state (2026-08-08) — Windows 1.6.75: Club in-app purchase is wired
+
+**The Microsoft Store add-ons certified, and the gateway that was written-but-inert now
+actually compiles into the ship.** Both halves of the 2026-08-07 Club-on-Windows blocker
+are closed: the owner completed the tax/payout profile (the disabled `Submit to the Store`
+button), and the `net10.0-windows` TFM problem that had forced a revert is solved.
+
+**How the TFM problem was solved — Decision 056.** `Windows.Services.Store` needs
+`net10.0-windows10.0.x`, and putting that on `Tidbits.App` breaks every publish with
+`MSB4062 ExpandPriContent` (a task that ships with Visual Studio, not the dotnet CLI);
+`WindowsPackageType=None` / `EnableMsixTooling=false` / `EnableDefaultPriItems=false` did
+not stop it, so it was reverted on 08-07. **The trap is content-shaped:** PRI indexing runs
+over `@(Content)`, and `Tidbits.App` links the shared `assets/*.json` as Content. So the TFM
+now lives in **`windows/Tidbits.Windows/`**, a class library with no content items, which
+never runs the task. `Tidbits.App` stays `net10.0` and loads it with `Assembly.LoadFrom`
+(a `net10.0` project may not reference `net10.0-windows`), falling back to `NoStoreGateway`
+when the file is absent — the correct answer for the Mac head, the tests, and the
+direct-download `.exe`.
+
+**A real bug fixed on the way, in code that had never run.** `GetProductsAsync` called
+`GetStoreProductsAsync(kinds, ClubProducts.All)` — but that argument is Microsoft's **Store
+IDs** (`9N…`), not our developer-chosen product ids, so it would have matched nothing and
+shown an empty paywall with no error anywhere. Now `GetAssociatedStoreProductsAsync`,
+filtered on `InAppOfferToken`. Also: `Package.Current` is the availability probe rather than
+`StoreContext.GetDefault()` (which can hand back a context in an unpackaged process and only
+fail one call deeper).
+
+**Guarding a seam with no compiler in it.** Two strings are all that connect the halves, so
+they are defined once in `WindowsStoreGatewayContract` (Core) and checked from both ends: a
+constant division by zero fires CS0020 in `Tidbits.Windows` if its namespace/class name drift
+from the contract (the first attempt used `? "ok" : null`, which passed silently — a `const
+string` may legally be null), and `WindowsStoreGatewayContractTests` loads the real built
+assembly and asserts the type, the interface, the `Func<IntPtr>` ctor and the `IsAvailable`
+probe. `EnableWindowsTargeting=true` lets all of that compile on the Mac.
+
+**Packaging:** `windows-store.yml` publishes the library separately and stages three files
+into the MSIX (`Tidbits.Windows.dll`, `WinRT.Runtime.dll`, `Microsoft.Windows.SDK.NET.dll` —
+~25MB, almost all the WinRT projection), throwing if any is missing. `windows-build.yml`
+deliberately does NOT: the unpackaged `.exe` has no package identity, so the payload would be
+dead weight.
+
+**New: `windows-store-addons.yml`** reads the add-ons back from the Store's own API and fails
+if any `ClubProducts` id has no matching add-on — the read-back-from-the-verifier discipline,
+because a product-id mismatch is otherwise an empty paywall with no error. `msstore` has no
+add-on commands; this is the legacy submission API on the same four secrets.
+
+**THE VERIFICATION GAP, stated plainly:** `StoreContext` returns products only to a
+Store-installed package, so **a real purchase cannot be exercised on the Mac, in headless
+tests, on CI, or from the `.exe`** — only by installing the certified MSIX from the Store on
+real Windows. Everything above verifies the layers underneath it. Every path in the gateway
+degrades to "unknown" rather than "no" precisely because of that gap: the gate fails OPEN, so
+a plumbing error can never un-Club a paying member. **Owner check after it goes live.**
+
 ## Current state (2026-08-07b) — Android vc88: the crash was never the memory
 
 **Two Play rejections were read as OOM. They were a Play Billing crash, and no test

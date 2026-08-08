@@ -40,6 +40,18 @@ public static class ClubProducts
     public static readonly IReadOnlyList<string> All = new[] { Lifetime, Annual, Monthly };
 }
 
+/// The reflection contract between `GameData` and the `Tidbits.Windows` class library. It has to
+/// be reflection rather than a project reference because that library is on the
+/// `net10.0-windows10.0.x` TFM and `Tidbits.App` cannot be (docs/WINDOWS-STORE-SUBMISSION.md §7),
+/// so nothing but these two strings ties the halves together. They live here, once, and both
+/// sides + the packaging test read them — a silent rename is the failure mode this prevents.
+public static class WindowsStoreGatewayContract
+{
+    public const string AssemblyFileName = "Tidbits.Windows.dll";
+    public const string TypeName = "Tidbits.Windows.WindowsStoreGateway";
+    public const string AvailabilityProperty = "IsAvailable";
+}
+
 /// The default gateway on every non-Windows build (the Mac head, headless tests) and any
 /// unpackaged .exe with no Store license context. Reports "unknown / unavailable" — so the
 /// gate fails OPEN and the paywall shows its graceful empty state. The real

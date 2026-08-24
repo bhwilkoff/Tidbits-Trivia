@@ -125,7 +125,7 @@ after a re-run on the device.
 | F1 | App survives a full round (no crash) | app_alive assertion (every run) | ✅ 2026-08-24 (green across 20+ scenario runs incl. 52-question survival) |
 | F2 | Cold launch < ~10s to interactive | frame timestamps | ⬜ |
 | F3 | Long marathon session (memory) | TIDBITS_MARATHON_GAMES=20 on device | ⬜ |
-| F4 | Release config behaves like Debug | TB_CONFIG=Release install + rerun A-row | ⬜ |
+| F4 | Release config behaves like Debug | TB_CONFIG=Release install + rerun A-row | ✅ 2026-08-24 (Release build on-device: classic round, picture round w/ luma gate, night-host lobby all green; `rel-*` dirs) |
 
 ## §3 Findings log (append-only: found → root cause → fix → re-verified)
 

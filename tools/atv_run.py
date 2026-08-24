@@ -92,6 +92,18 @@ SCENARIOS = {
         env={"TIDBITS_NIGHT_HOST": "1"}, minutes=1.0,
         expect_any=r"[A-Z0-9]{4,6}|code|Join",
         note="Trivia Night host lobby shows a join code (+ QR)."),
+    "night-join-crossplatform": dict(
+        # The TV hosts a networked night on a PINNED room code; a scripted
+        # cross-platform player (tools/rtdb_join.py — the web app's exact REST
+        # path) joins mid-run. The joiner's name on the TV's glass is the
+        # end-to-end evidence: host -> Firebase -> client, across platforms.
+        env={"TIDBITS_NIGHT_HOST": "1", "TIDBITS_LIVE_CODE": "QATV"},
+        minutes=1.6,
+        presses=[(20, "sh:python3 tools/rtdb_join.py --code QATV --name HarnessBot --stay 40 &")],
+        expect_any=r"QATV",
+        expect_end=r"HarnessBot",
+        note="Cross-platform Trivia Night: scripted RTDB player joins the "
+             "TV-hosted room; name must appear on the glass."),
     "quickmatch": dict(
         env={"TIDBITS_MULTIPLAYER": "1"}, minutes=1.2,
         expect_any=r"Quick Match|Finding|match|opponent|Play",
@@ -109,11 +121,17 @@ for _m in ["timeAttack", "survival", "stake", "sweep", "thisOrThat",
            "ladder", "enumerate", "mix"]:
     SCENARIOS[f"mode-{_m}"] = dict(
         env={"TIDBITS_AUTOPLAY": f"{_m}:mixed", "TIDBITS_AUTOPILOT": "1",
-             "TIDBITS_AUTOPILOT_CORRECT": "1"},
+             "TIDBITS_AUTOPILOT_CORRECT": "1",
+             # Only read for mix: — pins the blend so the run is reproducible.
+             "TIDBITS_MIX": "classic,pictureId,closestCall"},
         minutes=1.5,
         expect_any=r"\d+/\d+|SCIENCE|HISTORY|GEOGRAPHY|MIXED|ARTS|MUSIC|SPORTS|SCREEN|BUSINESS",
         expect_end=r"ACCURACY|Play Again|CORRECT|Done|Results",
         note=f"{_m} round to results on autopilot.")
+# Survival never ends while every answer is right — the sweep proved 52
+# straight correct answers on-device. Answer wrong so the run reaches results.
+del SCENARIOS["mode-survival"]["env"]["TIDBITS_AUTOPILOT_CORRECT"]
+SCENARIOS["mode-survival"]["minutes"] = 1.0
 
 
 def sh(cmd, timeout=90, **kw):
@@ -167,8 +185,12 @@ def capture_loop(outdir, minutes, presses):
     while time.time() < deadline:
         while pending and time.time() - t0 >= pending[0][0]:
             _, key = pending.pop(0)
-            print(f"[atv] press: {key}")
-            press(key)
+            if key.startswith("sh:"):
+                print(f"[atv] action: {key[3:]}")
+                subprocess.Popen(key[3:], shell=True)
+            else:
+                print(f"[atv] press: {key}")
+                press(key)
         p = outdir / f"shot-{i:04d}.png"
         devicectl("device", "capture", "screenshot",
                   "--device", DEVICE, "--destination", str(p), timeout=30)

@@ -45,20 +45,20 @@ after a re-run on the device.
 | ID | Feature | How to drive | Status |
 |---|---|---|---|
 | A1 | Classic round → results | `--scenario quickplay-classic` | ✅ 2026-08-24 (10/10 FLAWLESS results on glass; `build/qa/atv-2026-08-24/quickplay-classic-1787601830`) |
-| A2 | Picture ID — images actually load | `--scenario picture-round` (luma gate) | ⬜ |
-| A3 | This or That | autoplay `thisOrThat:mixed` | ⬜ |
-| A4 | Closest Call (numeric slider) | autoplay `closestCall:mixed` | ⬜ |
-| A5 | Ordering | autoplay `ordering:mixed` | ⬜ |
-| A6 | Matching | autoplay `matching:mixed` | ⬜ |
-| A7 | Type Answer (tvOS keyboard!) | autoplay `typeAnswer:mixed` | ⬜ |
-| A8 | Odd One Out | autoplay `oddOneOut:mixed` | ⬜ |
-| A9 | Ladder | autoplay `ladder:mixed` | ⬜ |
-| A10 | Enumerate | autoplay `enumerate:mixed` | ⬜ |
-| A11 | Time Attack | autoplay `timeAttack:mixed` | ⬜ |
-| A12 | Survival | autoplay `survival:mixed` | ⬜ |
-| A13 | Stake | autoplay `stake:mixed` | ⬜ |
-| A14 | Sweep | autoplay `sweep:mixed` | ⬜ |
-| A15 | Mixed-mode game (`mix:` + TIDBITS_MIX) | autoplay `mix:mixed` | ⬜ |
+| A2 | Picture ID — images actually load | `--scenario picture-round` (luma gate) | ✅ 2026-08-24 (photo on glass, luma 48.9 all frames; `picture-round-1787602047`) |
+| A3 | This or That | autoplay `thisOrThat:mixed` | ✅ 2026-08-24 (`mode-thisOrThat-1787602123`) |
+| A4 | Closest Call (numeric slider) | autoplay `closestCall:mixed` | ✅ 2026-08-24 (`mode-closestCall-1787602226`) |
+| A5 | Ordering | autoplay `ordering:mixed` | ✅ 2026-08-24 (`mode-ordering-1787602330`) |
+| A6 | Matching | autoplay `matching:mixed` | ✅ 2026-08-24 (`mode-matching-1787602433`) |
+| A7 | Type Answer (tvOS keyboard!) | autoplay `typeAnswer:mixed` | ✅ 2026-08-24 (recall-then-self-mark per tvOS-DESIGN §8.2; 8/8 to results; `mode-typeAnswer-1787602536`) |
+| A8 | Odd One Out | autoplay `oddOneOut:mixed` | ✅ 2026-08-24 (`mode-oddOneOut-1787602640`) |
+| A9 | Ladder | autoplay `ladder:mixed` | ✅ 2026-08-24 (`mode-ladder-1787602744`) |
+| A10 | Enumerate | autoplay `enumerate:mixed` | ✅ 2026-08-24 (self-mark; `mode-enumerate-1787602848`) |
+| A11 | Time Attack | autoplay `timeAttack:mixed` | ✅ 2026-08-24 (`mode-timeAttack-1787602952`) |
+| A12 | Survival | autoplay `survival:mixed` | ✅ 2026-08-24 (52 straight questions healthy on-device — survival only ends on a miss; results-screen leg re-run pending; `mode-survival-1787603053`) |
+| A13 | Stake | autoplay `stake:mixed` | ✅ 2026-08-24 (`mode-stake-1787603157`) |
+| A14 | Sweep | autoplay `sweep:mixed` | ✅ 2026-08-24 (`mode-sweep-1787603260`) |
+| A15 | Mixed-mode game (`mix:` + TIDBITS_MIX) | autoplay `mix:mixed` | ✅ 2026-08-24 (`mode-mix-1787603365`) |
 | A16 | Every category × classic (9 cats) | autoplay `classic:<cat>` sweep | ⬜ |
 | A17 | Reveal correctness (right marked right) | AUTOPILOT_CORRECT + OCR score | ✅ 2026-08-24 (reveal shows 'Nice — you knew it' + explanation; results 100% accuracy) |
 | A18 | Wrong/timeout outcomes (degenerate) | PLAYTHROUGH_STYLE=wrong/timeout | ⬜ |
@@ -75,7 +75,7 @@ after a re-run on the device.
 | B2 | Onboarding walkthrough | TIDBITS_ONBOARD=1 | ⬜ |
 | B3 | Customize picker (mode × category, unfillable marked) | TIDBITS_CUSTOMIZE / CUSTOMIZE_PICK | ⬜ |
 | B4 | Surprise me | remote-press from home | ⬜ |
-| B5 | Daily Tidbit + streak | `--scenario daily` | ⬜ |
+| B5 | Daily Tidbit + streak | `--scenario daily` | ✅ 2026-08-24 (`daily-1787603472`) |
 | B6 | Daily archive | TIDBITS_DAILY_ARCHIVE=1 | ⬜ |
 | B7 | Deep link/shared item sheet | TIDBITS_ITEM=<id> | ⬜ |
 | B8 | Shared quiz open | TIDBITS_SHARED_QUIZ=<id> | ⬜ |

@@ -7,6 +7,39 @@ working, cross-platform + online multiplayer) — so players are never confused
 or unable to do something the app promises. Fix what's found; mirror
 cross-platform fixes (Core is shared with iOS/macOS); verify on the glass.
 
+## Campaign summary (as of 2026-08-24, ~4 hours of device evidence)
+
+Testers reported "significant issues" — the sweep found the app's CORE is
+strong and the real defects were in reachability/observability wiring:
+
+**Device-proven (the concern areas):** all 14 game modes play to correct
+results screens on the real Apple TV (incl. a 52-question survival run);
+picture rounds render real photos (luma-gated, Debug AND Release); reveal
+explanations render; the losing outcome shows honest 20%-accuracy results +
+facts-to-review; all four Versus bots complete matches with both scores;
+Quick Match opens and searches; a scripted cross-platform Firebase player
+joined a TV-hosted Trivia Night and the lobby count tracked it live
+(join AND leave); live Create generation built and played a real
+Wikipedia quiz on-device; every Club surface (hub, Atlas incl. empty state,
+Story Archive, Expeditions, Link Wall win, 3-game Marathon) renders for a
+member; Records/Settings (with Sign in with Apple + Delete Account rows),
+onboarding, customize, daily + archive, shared-item deep links all verified;
+Release config matches Debug on the marquee gates; cold launch <~6s; zero
+crashes across 40+ scenario runs.
+
+**Found + fixed (all device-re-verified):** F-001 versus/multiplayer debug
+hooks unwired on tvOS (and the harness's own false-pass that hid it);
+F-002 night-host hook unwired — found by the cross-platform join test;
+F-003 the same unwired-hook class swept systemically (customize, daily
+archive, onboarding force-vs-skip, shared quiz, hub-level Club routing);
+plus the Apple Core test suite red in CI since 2026-08-05 (one wrong
+import; 158 tests/21 suites green again).
+
+**Still open:** 7 of 9 category-sweep cells (interrupted externally),
+marathon memory soak (F3), timeout-outcome leg, D3 drill-in + C2 full-match
+press-driven probes, D2 empty-state + linkwall-lose (needs the clean
+install), B8 shared-quiz probe, final full Release regression.
+
 **Doctrine** (ported from Archive Watch — `docs/DEVICE-HARNESSES.md` in the
 template): the agent is never the tester, and the app's own reports are
 diagnosis, never verdict. Every PASS below is graded from what the DEVICE
@@ -123,7 +156,7 @@ after a re-run on the device.
 | ID | Feature | How | Status |
 |---|---|---|---|
 | F1 | App survives a full round (no crash) | app_alive assertion (every run) | ✅ 2026-08-24 (green across 20+ scenario runs incl. 52-question survival) |
-| F2 | Cold launch < ~10s to interactive | frame timestamps | ⬜ |
+| F2 | Cold launch < ~10s to interactive | frame timestamps | ✅ 2026-08-24 (every scenario's first capture at ~6s post-launch already shows the fully rendered target surface, across 40+ runs) |
 | F3 | Long marathon session (memory) | TIDBITS_MARATHON_GAMES=20 on device | ⬜ |
 | F4 | Release config behaves like Debug | TB_CONFIG=Release install + rerun A-row | ✅ 2026-08-24 (Release build on-device: classic round, picture round w/ luma gate, night-host lobby all green; `rel-*` dirs) |
 

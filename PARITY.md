@@ -67,7 +67,14 @@
 > `docs/WINDOWS-DESIGN.md`, `docs/WINDOWS-PLAYBOOK.md`, `docs/WINDOWS-RESEARCH.md`,
 > `docs/WINDOWS-STORE-SUBMISSION.md`.
 >
-> **Last audit: 2026-06-30 (Android ↔ Apple, code-verified).** Found 4
+> **Last audit: 2026-08-24 (tvOS, DEVICE-verified on real hardware).** The
+> external-observation campaign (docs/TVOS-TEST-PLAYBOOK.md) device-verified
+> 40+ tvOS rows — all 14 modes, 4 Versus bots, picture rounds, cross-platform
+> RTDB night join, live Create, all Club surfaces, Release config — and found
+> the unwired-debug-hook class (F-001..F-003, fixed + re-verified). tvOS cells
+> claiming ✅ in this file now have glass evidence behind them.
+>
+> **Prior audit: 2026-06-30 (Android ↔ Apple, code-verified).** Found 4
 > false cells (§3b emoji grid, §4 entire auth section, §5 share URLs,
 > §12 adaptive icon) and confirmed the real Android-behind-iOS gaps
 > (onboarding, full Settings + attribution, haptics, pass-and-play).

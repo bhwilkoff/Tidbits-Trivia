@@ -55,7 +55,7 @@ after a re-run on the device.
 | A9 | Ladder | autoplay `ladder:mixed` | ✅ 2026-08-24 (`mode-ladder-1787602744`) |
 | A10 | Enumerate | autoplay `enumerate:mixed` | ✅ 2026-08-24 (self-mark; `mode-enumerate-1787602848`) |
 | A11 | Time Attack | autoplay `timeAttack:mixed` | ✅ 2026-08-24 (`mode-timeAttack-1787602952`) |
-| A12 | Survival | autoplay `survival:mixed` | ✅ 2026-08-24 (52 straight questions healthy on-device — survival only ends on a miss; results-screen leg re-run pending; `mode-survival-1787603053`) |
+| A12 | Survival | autoplay `survival:mixed` | ✅ 2026-08-24 (52 straight questions healthy on-device — survival only ends on a miss; results-screen leg ✅ (mode-survival-1787603702); `mode-survival-1787603053`) |
 | A13 | Stake | autoplay `stake:mixed` | ✅ 2026-08-24 (`mode-stake-1787603157`) |
 | A14 | Sweep | autoplay `sweep:mixed` | ✅ 2026-08-24 (`mode-sweep-1787603260`) |
 | A15 | Mixed-mode game (`mix:` + TIDBITS_MIX) | autoplay `mix:mixed` | ✅ 2026-08-24 (`mode-mix-1787603365`) |
@@ -97,32 +97,32 @@ after a re-run on the device.
 
 | ID | Feature | How | Status |
 |---|---|---|---|
-| D1 | Records dashboard w/ data | `--scenario records` | ⬜ |
+| D1 | Records dashboard w/ data | `--scenario records` | ✅ 2026-08-24 (streak/games/accuracy/history on glass; `records-1787603778`) |
 | D2 | Records empty state (degenerate) | fresh install, no seed | ⬜ |
 | D3 | Game history drill-in (answer detail) | presses from records | ⬜ |
-| D4 | Sign in with Apple (button focusable + fires) | Settings → presses; the Form-swallows-tap trap | ⬜ |
+| D4 | Sign in with Apple (button focusable + fires) | Settings → presses; the Form-swallows-tap trap | 🚧 rendered on glass w/ Delete Account (`settings-1787603822`); focus+fire walk ⬜ |
 | D5 | Sync: a game played on tvOS shows on iOS | cross-device check | ⬜ |
 
 ### E. Create / Club / other surfaces
 
 | ID | Feature | How | Status |
 |---|---|---|---|
-| E1 | Create renders + generates | `--scenario create`, TIDBITS_AUTOCREATE | ⬜ |
+| E1 | Create renders + generates | `--scenario create`, TIDBITS_AUTOCREATE | 🚧 picker renders (`create-1787603857`); live generation ⬜ |
 | E2 | Create → share QR renders | TIDBITS_TV_SHARE=1 | ⬜ |
-| E3 | Club paywall (products or honest empty) | `--scenario paywall` | ⬜ |
+| E3 | Club paywall (products or honest empty) | `--scenario paywall` | ✅ 2026-08-24 (all 3 real products w/ prices $79.99/$29.99/$3.99 on glass; `paywall-1787603899`) |
 | E4 | Club hub + gated features (CLUB=1) | TIDBITS_CLUB_HUB=1 + TIDBITS_CLUB=1 | ⬜ |
 | E5 | Expeditions (map, stage, certificate) | EXPEDITION hooks | ⬜ |
 | E6 | Link Wall (win + lose) | LINKWALL + LINKWALL_AUTOPLAY | ⬜ |
 | E7 | Knowledge Atlas | TIDBITS_ATLAS=1 + CLUB=1 | ⬜ |
 | E8 | Story Archive | TIDBITS_STORY_ARCHIVE=1 | ⬜ |
 | E9 | Marathon | TIDBITS_MARATHON=1 + MARATHON_LEN | ⬜ |
-| E10 | Settings (all rows reachable by focus) | `--scenario settings` + presses | ⬜ |
+| E10 | Settings (all rows reachable by focus) | `--scenario settings` + presses | 🚧 renders w/ profile+account rows (`settings-1787603822`); focus walk ⬜ |
 
 ### F. Stability / honesty
 
 | ID | Feature | How | Status |
 |---|---|---|---|
-| F1 | App survives a full round (no crash) | app_alive assertion (every run) | ⬜ |
+| F1 | App survives a full round (no crash) | app_alive assertion (every run) | ✅ 2026-08-24 (green across 20+ scenario runs incl. 52-question survival) |
 | F2 | Cold launch < ~10s to interactive | frame timestamps | ⬜ |
 | F3 | Long marathon session (memory) | TIDBITS_MARATHON_GAMES=20 on device | ⬜ |
 | F4 | Release config behaves like Debug | TB_CONFIG=Release install + rerun A-row | ⬜ |

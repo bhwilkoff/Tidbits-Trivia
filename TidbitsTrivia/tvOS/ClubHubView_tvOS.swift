@@ -36,6 +36,18 @@ struct ClubHubView_tvOS: View {
     private enum Destination: Hashable { case expeditions, storyArchive, atlas, marathonHistory }
 
     var body: some View {
+        content
+            // Same per-feature routing the iOS/macOS hubs do — the QA harness
+            // found the tvOS hooks stopping at the hub (F-003 class).
+            .task {
+                if DebugHooks.openStoryArchive { open = .storyArchive }
+                if DebugHooks.openAtlas { open = .atlas }
+                if DebugHooks.openExpedition || DebugHooks.expeditionMapPreview != nil
+                    || DebugHooks.expeditionAutoplay != nil { open = .expeditions }
+            }
+    }
+
+    @ViewBuilder private var content: some View {
         switch open {
         case .expeditions:
             TVExpeditionsHubView(onClose: { open = nil },

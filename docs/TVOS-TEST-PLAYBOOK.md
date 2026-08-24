@@ -112,10 +112,10 @@ after a re-run on the device.
 | E3 | Club paywall (products or honest empty) | `--scenario paywall` | ✅ 2026-08-24 (all 3 real products w/ prices $79.99/$29.99/$3.99 on glass; `paywall-1787603899`) |
 | E4 | Club hub + gated features (CLUB=1) | TIDBITS_CLUB_HUB=1 + TIDBITS_CLUB=1 | ✅ hub 2026-08-24 (member state + feature list; `club-hub-*`) |
 | E5 | Expeditions (map, stage, certificate) | EXPEDITION hooks | ⬜ |
-| E6 | Link Wall (win + lose) | LINKWALL + LINKWALL_AUTOPLAY | ⬜ |
-| E7 | Knowledge Atlas | TIDBITS_ATLAS=1 + CLUB=1 | ⬜ |
-| E8 | Story Archive | TIDBITS_STORY_ARCHIVE=1 | ⬜ |
-| E9 | Marathon | TIDBITS_MARATHON=1 + MARATHON_LEN | ⬜ |
+| E6 | Link Wall (win + lose) | LINKWALL + LINKWALL_AUTOPLAY | 🚧 win ✅ 2026-08-24 (SOLVED board + reveal; `linkwall-win-*`); lose leg ⬜ |
+| E7 | Knowledge Atlas | TIDBITS_ATLAS=1 + CLUB=1 | ❌ F-003 (hook stopped at the hub; hub routing wired, re-verify pending) |
+| E8 | Story Archive | TIDBITS_STORY_ARCHIVE=1 | ❌ F-003 (same; re-verify pending) |
+| E9 | Marathon | TIDBITS_MARATHON=1 + MARATHON_LEN | ✅ 2026-08-24 (5-game run to marathon summary; `marathon-*`) |
 | E10 | Settings (all rows reachable by focus) | `--scenario settings` + presses | 🚧 renders w/ profile+account rows (`settings-1787603822`); focus walk ⬜ |
 
 ### F. Stability / honesty

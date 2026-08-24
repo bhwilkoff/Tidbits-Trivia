@@ -1,7 +1,11 @@
 import Foundation
 import Testing
 
-@testable import TidbitsTrivia
+// This bundle compiles Core INTO itself (no app dependency — see project.yml);
+// the module to test against is the bundle's own, exactly like every sibling
+// file. `@testable import TidbitsTrivia` broke the whole suite's build for
+// three weeks of red CI (2026-08-05 → 2026-08-24).
+@testable import TidbitsTriviaTests
 
 /// Regression cover for the tvOS 2.1(b) rejection on 2026-08-05.
 ///

@@ -180,7 +180,7 @@ struct ContentView_tvOS: View {
         .fullScreenCover(item: $sharedItemID) { SharedItemView_tvOS(id: $0.id) }
         // First run. A cover rather than a sheet: tvOS has no partial presentation, and
         // the walkthrough should own the screen once and never again.
-        .fullScreenCover(isPresented: Binding(get: { !hasOnboarded && !DebugHooks.skipOnboarding },
+        .fullScreenCover(isPresented: Binding(get: { (!hasOnboarded || DebugHooks.forceOnboarding) && !DebugHooks.skipOnboarding },
                                               set: { if !$0 { hasOnboarded = true } })) {
             OnboardingView_tvOS { hasOnboarded = true }
         }
@@ -250,6 +250,9 @@ struct ContentView_tvOS: View {
             if hostLaunch == nil, DebugHooks.openNightHost {
                 hostLaunch = NightLaunchRequest(plan: .quick, category: .named("mixed"))
             }
+            if DebugHooks.openCustomize { showCustomize = true }
+            if DebugHooks.openDailyArchive { showDailyArchive = true }
+            if let q = DebugHooks.sharedQuizID { store.post(.quiz(q)) }
             // TIDBITS_PAYWALL=1 opens the paywall on the real path App Review takes
             // (Home → Tidbits Club), one cover deep — never stacked under Settings.
             if DebugHooks.showPaywall { showClubPaywall = true }

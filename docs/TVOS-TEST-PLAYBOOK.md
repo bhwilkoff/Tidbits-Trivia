@@ -91,7 +91,7 @@ after a re-run on the device.
 | C5 | Trivia Night: cross-platform player joins + full night | `--scenario night-join-crossplatform` (tools/rtdb_join.py) | ✅ join leg 2026-08-24 (TV count 1→0 tracks the scripted Firebase player; `night-join-crossplatform` latest); full-night Q&A leg ⬜ |
 | C6 | Join a game by code (player side) | TIDBITS hooks / presses | ⬜ |
 | C7 | Tidbits Live event join | LiveJoinView | ⬜ |
-| C8 | Wire parity goldens still pass (Core) | logic tests + `run_golden` | ⬜ |
+| C8 | Wire parity goldens still pass (Core) | logic tests + `run_golden` | ✅ 2026-08-24 (158 tests / 21 suites green on macOS destination after F-003c import fix) |
 
 ### D. Records / identity
 
@@ -151,6 +151,20 @@ re-run of the same scenario on the device.
   join (`night-join-crossplatform-1787604112`; the prior night-host "pass"
   matched the word 'TIDBIT' on Home). Hook now launches a quick networked
   night; scenarios tightened to lobby chrome. 
+
+- **F-003** (2026-08-24) — OPEN, fixes built. *The unwired-hook class is
+  systemic on tvOS*: an audit found `openCustomize`, `openDailyArchive`,
+  `forceOnboarding`, `sharedQuizID`, `playSavedQuiz` all parsed and ignored
+  (same class as F-001/F-002). Wired the four with tvOS surfaces
+  (customize, daily archive, onboarding, shared quiz); `playSavedQuiz`
+  deferred (needs a saved quiz on device first). Device verification of the
+  four queued.
+- **F-003c** (2026-08-24) — CLOSED. *Apple Core test suite red in CI since
+  2026-08-05*: `ClubProductsTests.swift` alone imported the app module
+  (`@testable import TidbitsTrivia`) in a bundle that deliberately has no
+  app dependency; every sibling imports the bundle's own module. One-line
+  fix → 158 tests / 21 suites green. The workflow only triggers on Core
+  paths, so nothing re-ran it — a standing-red trap worth a CI-health look.
 
 ## §4 The autonomous loop (multi-session)
 

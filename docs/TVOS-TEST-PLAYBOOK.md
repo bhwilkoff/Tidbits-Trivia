@@ -61,7 +61,7 @@ after a re-run on the device.
 | A15 | Mixed-mode game (`mix:` + TIDBITS_MIX) | autoplay `mix:mixed` | ✅ 2026-08-24 (`mode-mix-1787603365`) |
 | A16 | Every category × classic (9 cats) | autoplay `classic:<cat>` sweep | ⬜ |
 | A17 | Reveal correctness (right marked right) | AUTOPILOT_CORRECT + OCR score | ✅ 2026-08-24 (reveal shows 'Nice — you knew it' + explanation; results 100% accuracy) |
-| A18 | Wrong/timeout outcomes (degenerate) | PLAYTHROUGH_STYLE=wrong/timeout | ⬜ |
+| A18 | Wrong/timeout outcomes (degenerate) | PLAYTHROUGH_STYLE=wrong/timeout | 🚧 wrong-leg ✅ 2026-08-24 (2/10, 20% accuracy + facts-to-review render; `degenerate-wrong-*`); timeout leg ⬜ |
 | A19 | Round comes up short / empty (degenerate) | forced thin category | ⬜ |
 | A20 | Resume-after-quit mid-game | kill app mid-round, relaunch | ⬜ |
 | A21 | Explanation on reveal renders | OCR reveal frames | ✅ 2026-08-24 (explanation text OCR'd on reveal frame shot-0001) |
@@ -72,7 +72,7 @@ after a re-run on the device.
 | ID | Feature | How | Status |
 |---|---|---|---|
 | B1 | Home renders (hero/daily/night/records/settings) | `--scenario home` | ✅ 2026-08-24 |
-| B2 | Onboarding walkthrough | TIDBITS_ONBOARD=1 | ⬜ |
+| B2 | Onboarding walkthrough | TIDBITS_ONBOARD=1 | ✅ 2026-08-24 (WELCOME TO TIDBITS walkthrough on glass; `onboarding2-*`; force-beats-skip fix) |
 | B3 | Customize picker (mode × category, unfillable marked) | TIDBITS_CUSTOMIZE / CUSTOMIZE_PICK | ✅ 2026-08-24 (mode+category picker on glass, post-F-003 build; `customize-*`) |
 | B4 | Surprise me | remote-press from home | ⬜ |
 | B5 | Daily Tidbit + streak | `--scenario daily` | ✅ 2026-08-24 (`daily-1787603472`) |
@@ -84,7 +84,7 @@ after a re-run on the device.
 
 | ID | Feature | How | Status |
 |---|---|---|---|
-| C1 | Versus CPU (all four bots) | `--scenario versus-cpu` | ✅ rookie 2026-08-24 (`versus-cpu-1787604258`: match to outcome, both scores); house/regular/ace ⬜ |
+| C1 | Versus CPU (all four bots) | `--scenario versus-cpu` | ✅ rookie 2026-08-24 (`versus-cpu-1787604258`: match to outcome, both scores); house/regular ⬜; ace ✅ 2026-08-24 (`versus-ace-*`: Ace Botsworth 1,627 v 604 to outcome) |
 | C2 | Quick Match: sheet + search + bot fallback | `--scenario quickmatch` | 🚧 sheet opens on device (`quickmatch-1787604396`); full match flow ⬜ |
 | C3 | Quick Match vs REAL cross-platform opponent | web client joins `queue/mixed` (script TBD) | ⬜ |
 | C4 | Trivia Night: host lobby code + QR | `--scenario night-host` | ✅ 2026-08-24 (SCAN TO JOIN lobby on glass, post-F-002 build) |
@@ -110,7 +110,7 @@ after a re-run on the device.
 | E1 | Create renders + generates | `--scenario create`, TIDBITS_AUTOCREATE | 🚧 picker renders (`create-1787603857`); live generation ⬜ |
 | E2 | Create → share QR renders | TIDBITS_TV_SHARE=1 | ⬜ |
 | E3 | Club paywall (products or honest empty) | `--scenario paywall` | ✅ 2026-08-24 (all 3 real products w/ prices $79.99/$29.99/$3.99 on glass; `paywall-1787603899`) |
-| E4 | Club hub + gated features (CLUB=1) | TIDBITS_CLUB_HUB=1 + TIDBITS_CLUB=1 | ⬜ |
+| E4 | Club hub + gated features (CLUB=1) | TIDBITS_CLUB_HUB=1 + TIDBITS_CLUB=1 | ✅ hub 2026-08-24 (member state + feature list; `club-hub-*`) |
 | E5 | Expeditions (map, stage, certificate) | EXPEDITION hooks | ⬜ |
 | E6 | Link Wall (win + lose) | LINKWALL + LINKWALL_AUTOPLAY | ⬜ |
 | E7 | Knowledge Atlas | TIDBITS_ATLAS=1 + CLUB=1 | ⬜ |

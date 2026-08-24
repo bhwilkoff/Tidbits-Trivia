@@ -107,14 +107,14 @@ after a re-run on the device.
 
 | ID | Feature | How | Status |
 |---|---|---|---|
-| E1 | Create renders + generates | `--scenario create`, TIDBITS_AUTOCREATE | 🚧 picker renders (`create-1787603857`); live generation ⬜ |
+| E1 | Create renders + generates | `--scenario create`, TIDBITS_AUTOCREATE | ✅ 2026-08-24 (live Wikipedia generation → playing a real 8-question Volcanoes quiz on device; `create-live2-*`; needs TIDBITS_CREATE=1 + AUTOCREATE together on tvOS) |
 | E2 | Create → share QR renders | TIDBITS_TV_SHARE=1 | ⬜ |
 | E3 | Club paywall (products or honest empty) | `--scenario paywall` | ✅ 2026-08-24 (all 3 real products w/ prices $79.99/$29.99/$3.99 on glass; `paywall-1787603899`) |
 | E4 | Club hub + gated features (CLUB=1) | TIDBITS_CLUB_HUB=1 + TIDBITS_CLUB=1 | ✅ hub 2026-08-24 (member state + feature list; `club-hub-*`) |
-| E5 | Expeditions (map, stage, certificate) | EXPEDITION hooks | ⬜ |
+| E5 | Expeditions (map, stage, certificate) | EXPEDITION hooks | 🚧 list ✅ 2026-08-24 (`expeditions-*`); map/stage/certificate legs ⬜ |
 | E6 | Link Wall (win + lose) | LINKWALL + LINKWALL_AUTOPLAY | 🚧 win ✅ 2026-08-24 (SOLVED board + reveal; `linkwall-win-*`); lose leg ⬜ |
-| E7 | Knowledge Atlas | TIDBITS_ATLAS=1 + CLUB=1 | ❌ F-003 (hook stopped at the hub; hub routing wired, re-verify pending) |
-| E8 | Story Archive | TIDBITS_STORY_ARCHIVE=1 | ❌ F-003 (same; re-verify pending) |
+| E7 | Knowledge Atlas | TIDBITS_ATLAS=1 + CLUB=1 | ✅ 2026-08-24 (real Atlas incl. honest not-enough-history empty state; `atlas2-*`) |
+| E8 | Story Archive | TIDBITS_STORY_ARCHIVE=1 | ✅ 2026-08-24 (archive w/ domain + favorites/missed filters; `story2-*`) |
 | E9 | Marathon | TIDBITS_MARATHON=1 + MARATHON_LEN | ✅ 2026-08-24 (5-game run to marathon summary; `marathon-*`) |
 | E10 | Settings (all rows reachable by focus) | `--scenario settings` + presses | 🚧 renders w/ profile+account rows (`settings-1787603822`); focus walk ⬜ |
 
@@ -152,7 +152,7 @@ re-run of the same scenario on the device.
   matched the word 'TIDBIT' on Home). Hook now launches a quick networked
   night; scenarios tightened to lobby chrome. 
 
-- **F-003** (2026-08-24) — OPEN, fixes built. *The unwired-hook class is
+- **F-003** (2026-08-24) — CLOSED 2026-08-24 (customize/daily-archive/onboarding device-verified on the hook build; hub-level routing verified by atlas2/story2/expeditions; `sharedQuizID` is wired but unprobed pending a saved quiz on the device — tracked by B8, not this finding). *The unwired-hook class is
   systemic on tvOS*: an audit found `openCustomize`, `openDailyArchive`,
   `forceOnboarding`, `sharedQuizID`, `playSavedQuiz` all parsed and ignored
   (same class as F-001/F-002). Wired the four with tvOS surfaces

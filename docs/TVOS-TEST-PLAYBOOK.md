@@ -118,7 +118,7 @@ after a re-run on the device.
 | ID | Feature | How | Status |
 |---|---|---|---|
 | C1 | Versus CPU (all four bots) | `--scenario versus-cpu` | ✅ rookie 2026-08-24 (`versus-cpu-1787604258`: match to outcome, both scores); ✅ ALL FOUR BOTS 2026-08-24 — rookie (`versus-cpu-*`), house (`versus-house-*`), regular/Trivia Tina (`versus-regular-*`), ace (`versus-ace-*`), each to a real outcome screen with both scores |
-| C2 | Quick Match: sheet + search + bot fallback | `--scenario quickmatch` | 🚧 sheet opens on device (`quickmatch-1787604396`); full match flow ⬜ |
+| C2 | Quick Match: sheet + search + bot fallback | `--scenario quickmatch` | 🚧 sheet opens on device (`quickmatch-1787604396`); 🚧 sheet + honest Game Center sign-in gate verified (with GC suppressed the sheet correctly points to Settings → Game Center; `quickmatch-full-*`); GC-enabled search re-run in flight |
 | C3 | Quick Match vs REAL cross-platform opponent | web client joins `queue/mixed` (script TBD) | ⬜ |
 | C4 | Trivia Night: host lobby code + QR | `--scenario night-host` | ✅ 2026-08-24 (SCAN TO JOIN lobby on glass, post-F-002 build) |
 | C5 | Trivia Night: cross-platform player joins + full night | `--scenario night-join-crossplatform` (tools/rtdb_join.py) | ✅ join leg 2026-08-24 (TV count 1→0 tracks the scripted Firebase player; `night-join-crossplatform` latest); full-night Q&A leg ⬜ |
@@ -132,7 +132,7 @@ after a re-run on the device.
 |---|---|---|---|
 | D1 | Records dashboard w/ data | `--scenario records` | ✅ 2026-08-24 (streak/games/accuracy/history on glass; `records-1787603778`) |
 | D2 | Records empty state (degenerate) | fresh install, no seed | ⬜ |
-| D3 | Game history drill-in (answer detail) | presses from records | ⬜ |
+| D3 | Game history drill-in (answer detail) | presses from records | ✅ 2026-08-24 (real remote presses opened a played game's detail — incl. the honest legacy no-per-question-history state; `records-drillin-*`) |
 | D4 | Sign in with Apple (button focusable + fires) | Settings → presses; the Form-swallows-tap trap | 🚧 rendered on glass w/ Delete Account (`settings-1787603822`); focus+fire walk ⬜ |
 | D5 | Sync: a game played on tvOS shows on iOS | cross-device check | ⬜ |
 

@@ -132,8 +132,11 @@ SCENARIOS = {
     "quickmatch-full": dict(
         # Start the search with a real press; a match against the live queue or
         # the bot fallback are BOTH healthy outcomes — the sheet must never
-        # just sit there.
-        env={"TIDBITS_MULTIPLAYER": "1"}, minutes=2.5,
+        # just sit there. Drops the NO_GAMECENTER base flag: Quick Match on
+        # Apple rides Game Center, and with the flag set the sheet correctly
+        # shows its sign-in gate instead (verified 2026-08-24).
+        env={"TIDBITS_MULTIPLAYER": "1"}, drop_env=("TIDBITS_NO_GAMECENTER",),
+        minutes=2.5,
         presses=[(10, "select")],
         expect_seq=[r"Quick Match", r"Searching|Finding|opponent|vs|Round|\d+/\d+"],
         forbid_extra=r"QUICK PLAY",
@@ -223,8 +226,8 @@ def press(key):
         print(f"[atv] press {key} failed: {r.stderr.strip()[-120:]}")
 
 
-def launch(env):
-    full = dict(BASE_ENV)
+def launch(env, drop=()):
+    full = {k: v for k, v in BASE_ENV.items() if k not in drop}
     full.update(env)
     r = devicectl("device", "process", "launch", "--terminate-existing",
                   "--device", DEVICE, "-e", json.dumps(full), BUNDLE, timeout=60)
@@ -338,12 +341,13 @@ def _main():
     print(f"[atv] scenario {name} -> {outdir}")
 
     wake_tv()
-    launch(spec.get("env", {}))
+    drop = spec.get("drop_env", ())
+    launch(spec.get("env", {}), drop)
     time.sleep(6)
     if not app_alive():   # launch-window death retry (Archive Watch: ~2 in 10)
         print("[atv] app died in launch window — one retry")
         wake_tv()
-        launch(spec.get("env", {}))
+        launch(spec.get("env", {}), drop)
         time.sleep(6)
     # Foreground guard: alive is not frontmost. One probe frame; if the home
     # screen owns the glass, wake + relaunch once before burning the capture.
@@ -353,7 +357,7 @@ def _main():
     if probe.exists() and frame_is_home_screen(probe):
         print("[atv] launched but HOME SCREEN owns the glass — wake + relaunch")
         wake_tv()
-        launch(spec.get("env", {}))
+        launch(spec.get("env", {}), drop)
         time.sleep(6)
 
     shots = capture_loop(outdir, spec.get("minutes", 1.0), spec.get("presses"))

@@ -108,8 +108,10 @@ SCENARIOS = {
         env={"TIDBITS_NIGHT_HOST": "1", "TIDBITS_LIVE_CODE": "QATV"},
         minutes=1.6,
         presses=[(20, "sh:python3 tools/rtdb_join.py --code QATV --name HarnessBot --stay 40 > build/qa/rtdb_join.log 2>&1 &")],
-        expect_any=r"QATV|SCAN TO JOIN",
-        expect_end=r"HarnessBot|1 in the room",
+        # The lobby shows a live COUNT; the bot leaves at ~+62s, so the count
+        # must rise to 1 mid-run (and dropping back after the leave is itself
+        # correct behaviour — don't assert on the final frames).
+        expect_seq=[r"SCAN TO JOIN", r"1 in the room"],
         forbid_extra=r"QUICK PLAY",
         note="Cross-platform Trivia Night: scripted RTDB player joins the "
              "TV-hosted room; name must appear on the glass."),

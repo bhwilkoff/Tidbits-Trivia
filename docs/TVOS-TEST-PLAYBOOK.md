@@ -87,8 +87,8 @@ after a re-run on the device.
 | C1 | Versus CPU (all four bots) | `--scenario versus-cpu` | ✅ rookie 2026-08-24 (`versus-cpu-1787604258`: match to outcome, both scores); house/regular/ace ⬜ |
 | C2 | Quick Match: sheet + search + bot fallback | `--scenario quickmatch` | 🚧 sheet opens on device (`quickmatch-1787604396`); full match flow ⬜ |
 | C3 | Quick Match vs REAL cross-platform opponent | web client joins `queue/mixed` (script TBD) | ⬜ |
-| C4 | Trivia Night: host lobby code + QR | `--scenario night-host` | ⬜ |
-| C5 | Trivia Night: cross-platform player joins + full night | RTDB REST joiner script (TBD) + OCR | ⬜ |
+| C4 | Trivia Night: host lobby code + QR | `--scenario night-host` | ✅ 2026-08-24 (SCAN TO JOIN lobby on glass, post-F-002 build) |
+| C5 | Trivia Night: cross-platform player joins + full night | `--scenario night-join-crossplatform` (tools/rtdb_join.py) | ✅ join leg 2026-08-24 (TV count 1→0 tracks the scripted Firebase player; `night-join-crossplatform` latest); full-night Q&A leg ⬜ |
 | C6 | Join a game by code (player side) | TIDBITS hooks / presses | ⬜ |
 | C7 | Tidbits Live event join | LiveJoinView | ⬜ |
 | C8 | Wire parity goldens still pass (Core) | logic tests + `run_golden` | ⬜ |
@@ -145,12 +145,12 @@ re-run of the same scenario on the device.
   expectation loose enough to match the home screen is not an expectation.
   
 
-- **F-002** (2026-08-24) — OPEN, fix built (29e4cd3). *TIDBITS_NIGHT_HOST
+- **F-002** (2026-08-24) — CLOSED 2026-08-24 (fix 29e4cd3, device re-verified: `night-host` shows the SCAN TO JOIN lobby; `night-join-crossplatform` frames 6–15 show "1 in the room" while the scripted RTDB player was joined, dropping back to 0 after it left). *TIDBITS_NIGHT_HOST
   unwired on tvOS* — same class as F-001, caught by the cross-platform join
   test: the TV sat on Home while the scripted RTDB player had no room to
   join (`night-join-crossplatform-1787604112`; the prior night-host "pass"
   matched the word 'TIDBIT' on Home). Hook now launches a quick networked
-  night; scenarios tightened to lobby chrome. Device re-verification queued.
+  night; scenarios tightened to lobby chrome. 
 
 ## §4 The autonomous loop (multi-session)
 

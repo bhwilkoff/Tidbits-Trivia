@@ -63,7 +63,7 @@ after a re-run on the device.
 | A17 | Reveal correctness (right marked right) | AUTOPILOT_CORRECT + OCR score | ✅ 2026-08-24 (reveal shows 'Nice — you knew it' + explanation; results 100% accuracy) |
 | A18 | Wrong/timeout outcomes (degenerate) | PLAYTHROUGH_STYLE=wrong/timeout | 🚧 wrong-leg ✅ 2026-08-24 (2/10, 20% accuracy + facts-to-review render; `degenerate-wrong-*`); timeout leg ⬜ |
 | A19 | Round comes up short / empty (degenerate) | forced thin category | ⬜ |
-| A20 | Resume-after-quit mid-game | kill app mid-round, relaunch | ⬜ |
+| A20 | Resume-after-quit mid-game | kill app mid-round, relaunch | ✅ 2026-08-24 (kill mid-round → clean relaunch to Home, no corruption/crash; `resume-probe.png`. Mid-round resume is not a shipped tvOS feature — parity question noted, not invented) |
 | A21 | Explanation on reveal renders | OCR reveal frames | ✅ 2026-08-24 (explanation text OCR'd on reveal frame shot-0001) |
 | A22 | Focus never traps in a round | remote-press probes | ⬜ |
 
@@ -77,14 +77,14 @@ after a re-run on the device.
 | B4 | Surprise me | remote-press from home | ⬜ |
 | B5 | Daily Tidbit + streak | `--scenario daily` | ✅ 2026-08-24 (`daily-1787603472`) |
 | B6 | Daily archive | TIDBITS_DAILY_ARCHIVE=1 | ✅ 2026-08-24 (Previous Tidbits list w/ dated rows; `daily-archive-*`) |
-| B7 | Deep link/shared item sheet | TIDBITS_ITEM=<id> | ⬜ |
+| B7 | Deep link/shared item sheet | TIDBITS_ITEM=<id> | ✅ 2026-08-24 (real corpus row rendered in the shared-item sheet; `shared-item-*`) |
 | B8 | Shared quiz open | TIDBITS_SHARED_QUIZ=<id> | ⬜ |
 
 ### C. Multiplayer + cross-platform (the reported-risk area)
 
 | ID | Feature | How | Status |
 |---|---|---|---|
-| C1 | Versus CPU (all four bots) | `--scenario versus-cpu` | ✅ rookie 2026-08-24 (`versus-cpu-1787604258`: match to outcome, both scores); house/regular ⬜; ace ✅ 2026-08-24 (`versus-ace-*`: Ace Botsworth 1,627 v 604 to outcome) |
+| C1 | Versus CPU (all four bots) | `--scenario versus-cpu` | ✅ rookie 2026-08-24 (`versus-cpu-1787604258`: match to outcome, both scores); regular ⬜; house ✅ (`versus-house-*`: The House 1,331 v 390) + ace ✅ 2026-08-24 (`versus-ace-*`: Ace Botsworth 1,627 v 604 to outcome) |
 | C2 | Quick Match: sheet + search + bot fallback | `--scenario quickmatch` | 🚧 sheet opens on device (`quickmatch-1787604396`); full match flow ⬜ |
 | C3 | Quick Match vs REAL cross-platform opponent | web client joins `queue/mixed` (script TBD) | ⬜ |
 | C4 | Trivia Night: host lobby code + QR | `--scenario night-host` | ✅ 2026-08-24 (SCAN TO JOIN lobby on glass, post-F-002 build) |

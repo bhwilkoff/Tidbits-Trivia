@@ -92,7 +92,7 @@ after a re-run on the device.
 | A13 | Stake | autoplay `stake:mixed` | ✅ 2026-08-24 (`mode-stake-1787603157`) |
 | A14 | Sweep | autoplay `sweep:mixed` | ✅ 2026-08-24 (`mode-sweep-1787603260`) |
 | A15 | Mixed-mode game (`mix:` + TIDBITS_MIX) | autoplay `mix:mixed` | ✅ 2026-08-24 (`mode-mix-1787603365`) |
-| A16 | Every category × classic (9 cats) | autoplay `classic:<cat>` sweep | 🚧 mixed ✅ (A1) + history ✅ 2026-08-24 (`cat-history-*`); remaining 7 cats interrupted mid-sweep — resume next tick |
+| A16 | Every category × classic (9 cats) | autoplay `classic:<cat>` sweep | 🚧 8/9 ✅ 2026-08-24 (mixed, history, science, geography, music, sports, screen, business — `cat-*` dirs); **arts ❌ F-004** |
 | A17 | Reveal correctness (right marked right) | AUTOPILOT_CORRECT + OCR score | ✅ 2026-08-24 (reveal shows 'Nice — you knew it' + explanation; results 100% accuracy) |
 | A18 | Wrong/timeout outcomes (degenerate) | PLAYTHROUGH_STYLE=wrong/timeout | 🚧 wrong-leg ✅ 2026-08-24 (2/10, 20% accuracy + facts-to-review render; `degenerate-wrong-*`); timeout leg ⬜ |
 | A19 | Round comes up short / empty (degenerate) | forced thin category | ⬜ |
@@ -198,6 +198,17 @@ re-run of the same scenario on the device.
   app dependency; every sibling imports the bundle's own module. One-line
   fix → 158 tests / 21 suites green. The workflow only triggers on Core
   paths, so nothing re-ran it — a standing-red trap worth a CI-health look.
+
+- **F-004** (2026-08-24) — OPEN. *`classic:arts` never takes the screen.*
+  `cat-arts` failed with the app process alive but the tvOS HOME SCREEN on
+  the glass for the whole run (`cat-arts-1787607676`); all 8 other
+  categories pass identically-shaped runs. TriviaCategory id "arts" is
+  valid, so the suspect is the arts round-assembly path (a poisoned row /
+  force-unwrap / empty-set abort in the Core query). Console-attached
+  repro was interrupted (owner using the TV); next device window: re-run
+  the console capture, read the crash, fix, re-verify cat-arts.
+  **This is very plausibly one of the tester-reported issues** — an
+  Arts & Lit game that silently dumps the player to the home screen.
 
 ## §4 The autonomous loop (multi-session)
 

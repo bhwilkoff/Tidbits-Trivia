@@ -111,7 +111,7 @@ after a re-run on the device.
 | B5 | Daily Tidbit + streak | `--scenario daily` | ✅ 2026-08-24 (`daily-1787603472`) |
 | B6 | Daily archive | TIDBITS_DAILY_ARCHIVE=1 | ✅ 2026-08-24 (Previous Tidbits list w/ dated rows; `daily-archive-*`) |
 | B7 | Deep link/shared item sheet | TIDBITS_ITEM=<id> | ✅ 2026-08-24 (real corpus row rendered in the shared-item sheet; `shared-item-*`) |
-| B8 | Shared quiz open | TIDBITS_SHARED_QUIZ=<id> | ⬜ |
+| B8 | Shared quiz open | TIDBITS_SHARED_QUIZ=<id> | 🚧 harness-blocked: the hook is wired (F-003) but a saved quiz's UUID isn't discoverable from outside the app; downstream-of-delivery path is covered by the QuizStore unit tests + the shared-ITEM device probe (B7 ✅) |
 
 ### C. Multiplayer + cross-platform (the reported-risk area)
 
@@ -145,7 +145,7 @@ after a re-run on the device.
 | E3 | Club paywall (products or honest empty) | `--scenario paywall` | ✅ 2026-08-24 (all 3 real products w/ prices $79.99/$29.99/$3.99 on glass; `paywall-1787603899`) |
 | E4 | Club hub + gated features (CLUB=1) | TIDBITS_CLUB_HUB=1 + TIDBITS_CLUB=1 | ✅ hub 2026-08-24 (member state + feature list; `club-hub-*`) |
 | E5 | Expeditions (map, stage, certificate) | EXPEDITION hooks | 🚧 list ✅ 2026-08-24 (`expeditions-*`); map/stage/certificate legs ⬜ |
-| E6 | Link Wall (win + lose) | LINKWALL + LINKWALL_AUTOPLAY | 🚧 win ✅ 2026-08-24 (`linkwall-win-*`); lose leg blocked by per-day board persistence (the win consumed today's board — probe after the D2 clean install) |
+| E6 | Link Wall (win + lose) | LINKWALL + LINKWALL_AUTOPLAY | ✅ 2026-08-24 both legs — win (`linkwall-win-*`: SOLVED + reveal) and lose on the post-clean-install fresh board (`linkwall-lose3-*`: NEXT TIME reveal of all four groups) |
 | E7 | Knowledge Atlas | TIDBITS_ATLAS=1 + CLUB=1 | ✅ 2026-08-24 (real Atlas incl. honest not-enough-history empty state; `atlas2-*`) |
 | E8 | Story Archive | TIDBITS_STORY_ARCHIVE=1 | ✅ 2026-08-24 (archive w/ domain + favorites/missed filters; `story2-*`) |
 | E9 | Marathon | TIDBITS_MARATHON=1 + MARATHON_LEN | ✅ 2026-08-24 (5-game run to marathon summary; `marathon-*`) |

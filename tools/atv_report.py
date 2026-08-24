@@ -27,6 +27,9 @@ for d in sorted(root.iterdir()):
         rows.append((d.name, "⚠ interrupted", f"{shots} frames, no report"))
         continue
     r = json.loads(rep.read_text())
+    if "error" in r:   # a crash-proof report from a runner failure
+        rows.append((d.name, "⚠ runner error", r["error"][:60]))
+        continue
     fails = [k for k, v in r["assertions"].items() if not v["pass"]]
     rows.append((d.name, "✅" if not fails else "❌ " + ",".join(fails),
                  f"{shots} frames"))

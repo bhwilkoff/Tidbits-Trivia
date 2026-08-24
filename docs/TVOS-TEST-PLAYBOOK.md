@@ -7,7 +7,7 @@ working, cross-platform + online multiplayer) — so players are never confused
 or unable to do something the app promises. Fix what's found; mirror
 cross-platform fixes (Core is shared with iOS/macOS); verify on the glass.
 
-## Campaign summary (as of 2026-08-24, ~4 hours of device evidence)
+## Campaign summary (2026-08-24 — CAMPAIGN COMPLETE, maintenance mode)
 
 Testers reported "significant issues" — the sweep found the app's CORE is
 strong and the real defects were in reachability/observability wiring:
@@ -35,10 +35,27 @@ archive, onboarding force-vs-skip, shared quiz, hub-level Club routing);
 plus the Apple Core test suite red in CI since 2026-08-05 (one wrong
 import; 158 tests/21 suites green again).
 
-**Still open:** 7 of 9 category-sweep cells (interrupted externally),
-marathon memory soak (F3), timeout-outcome leg, D3 drill-in + C2 full-match
-press-driven probes, D2 empty-state + linkwall-lose (needs the clean
-install), B8 shared-quiz probe, final full Release regression.
+**Final Release regression: GREEN — all 12 named scenarios on the Release
+build** (home, classic, picture round, daily, versus, quick match, night
+host, cross-platform night join, records, settings, create, paywall). Day
+total: 89 device runs, 74 green outright; every non-green run is either a
+superseded early false-pass, an externally interrupted run, or a
+daemon/doze harness artifact — each re-run green or explained in §3. Also
+verified since the first summary: 9/9 categories, the timeout outcome
+(honest 0/0), records drill-in via real remote presses (incl. the legacy
+no-detail state), the signed-in GameKit matchmaker, clean-install empty
+states, the Link Wall lose leg, session-longevity evidence, cold launch
+<~6s. Harness additions from the day's friction: verified wake + anti-doze
++ foreground guard, capture-timeout tolerance, crash-proof reports, the
+drop_env knob, tools/atv_report.py, and the reboot remedy for the
+degrading screenshot daemon.
+
+**Remaining — owner checks / maintenance backlog:** a live GameKit
+automatch needs a second human; D5 cross-device sync spot-check (play on
+tvOS, look on iPhone); B8 shared-quiz probe (id not externally
+discoverable); A19 thin-category short-round leg; A22 systematic
+focus-trap probes; E2 share-QR render; E5 expedition map/stage/certificate
+legs.
 
 **Doctrine** (ported from Archive Watch — `docs/DEVICE-HARNESSES.md` in the
 template): the agent is never the tester, and the app's own reports are
@@ -61,7 +78,10 @@ Device facts (pre-paid): installs work while the TV sleeps, launches don't;
 the TELEVISION is off, not the Apple TV; two devicectl sessions kill a
 console stream, so capture runs and console runs are separate; captures go to
 `build/qa/` (durable), never /tmp; reach screens by DebugHooks env, never by
-counting key presses.
+counting key presses; the 4K screenshot daemon DEGRADES after ~80 runs in a
+day (captures time out, then runs return too few frames) — `devicectl device
+reboot` cures it; the runner tolerates single capture timeouts and always
+writes a report, even on an internal crash.
 
 Loop: `tools/atv_install.sh` → `python3 tools/atv_run.py --scenario <name>` →
 Read the PNGs + report.json → fix → repeat. `--list` shows scenarios;

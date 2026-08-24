@@ -257,8 +257,16 @@ def capture_loop(outdir, minutes, presses):
                 print(f"[atv] press: {key}")
                 press(key)
         p = outdir / f"shot-{i:04d}.png"
-        devicectl("device", "capture", "screenshot",
-                  "--device", DEVICE, "--destination", str(p), timeout=30)
+        try:
+            devicectl("device", "capture", "screenshot",
+                      "--device", DEVICE, "--destination", str(p), timeout=30)
+        except subprocess.TimeoutExpired:
+            # The 4K screenshot daemon hiccups under pressure (Archive Watch's
+            # jetsam class). One flaky capture must not kill the scenario —
+            # skip the frame, keep the run, say so.
+            print(f"[atv] capture {p.name} timed out — skipping frame")
+            time.sleep(2)
+            continue
         if p.exists():
             shots.append((time.time(), p))
             # The TV dozes during long captures parked on a static screen —

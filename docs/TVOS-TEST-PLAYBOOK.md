@@ -59,7 +59,7 @@ after a re-run on the device.
 | A13 | Stake | autoplay `stake:mixed` | ✅ 2026-08-24 (`mode-stake-1787603157`) |
 | A14 | Sweep | autoplay `sweep:mixed` | ✅ 2026-08-24 (`mode-sweep-1787603260`) |
 | A15 | Mixed-mode game (`mix:` + TIDBITS_MIX) | autoplay `mix:mixed` | ✅ 2026-08-24 (`mode-mix-1787603365`) |
-| A16 | Every category × classic (9 cats) | autoplay `classic:<cat>` sweep | ⬜ |
+| A16 | Every category × classic (9 cats) | autoplay `classic:<cat>` sweep | 🚧 mixed ✅ (A1) + history ✅ 2026-08-24 (`cat-history-*`); remaining 7 cats interrupted mid-sweep — resume next tick |
 | A17 | Reveal correctness (right marked right) | AUTOPILOT_CORRECT + OCR score | ✅ 2026-08-24 (reveal shows 'Nice — you knew it' + explanation; results 100% accuracy) |
 | A18 | Wrong/timeout outcomes (degenerate) | PLAYTHROUGH_STYLE=wrong/timeout | 🚧 wrong-leg ✅ 2026-08-24 (2/10, 20% accuracy + facts-to-review render; `degenerate-wrong-*`); timeout leg ⬜ |
 | A19 | Round comes up short / empty (degenerate) | forced thin category | ⬜ |

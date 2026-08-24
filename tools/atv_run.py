@@ -73,8 +73,13 @@ SCENARIOS = {
         expect_end=r"ACCURACY|Play Again|streak|CORRECT",
         note="Daily Tidbit plays to completion."),
     "versus-cpu": dict(
+        # Tight assertions: the first run of this scenario false-passed by
+        # matching the word "you" on the HOME screen (the hook wasn't wired on
+        # tvOS). The versus HUD's own chrome is the only acceptable evidence.
         env={"TIDBITS_VERSUS": "rookie", "TIDBITS_AUTOPILOT": "1"},
-        minutes=2.0, expect_any=r"Rookie|VERSUS|You",
+        minutes=2.0,
+        expect_any=r"Rookie",
+        expect_end=r"You won|takes it|\d+/\d+ correct",
         note="Versus CPU match runs and shows both scores."),
     "records": dict(
         env={"TIDBITS_TAB": "records", "TIDBITS_SEED_RECORDS": "12"},
@@ -106,7 +111,8 @@ SCENARIOS = {
              "TV-hosted room; name must appear on the glass."),
     "quickmatch": dict(
         env={"TIDBITS_MULTIPLAYER": "1"}, minutes=1.2,
-        expect_any=r"Quick Match|Finding|match|opponent|Play",
+        expect_any=r"Quick Match|Finding|Searching|opponent",
+        forbid_extra=r"QUICK PLAY",   # home-hero text = the sheet never opened
         note="Online multiplayer sheet opens and searches/falls back."),
     "paywall": dict(
         env={"TIDBITS_PAYWALL": "1"}, minutes=0.5,

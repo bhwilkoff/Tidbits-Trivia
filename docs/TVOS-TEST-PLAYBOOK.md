@@ -84,8 +84,8 @@ after a re-run on the device.
 
 | ID | Feature | How | Status |
 |---|---|---|---|
-| C1 | Versus CPU (all four bots) | `--scenario versus-cpu` | ⬜ |
-| C2 | Quick Match: sheet + search + bot fallback | `--scenario quickmatch` | ⬜ |
+| C1 | Versus CPU (all four bots) | `--scenario versus-cpu` | ❌ F-001 (hook unwired; fix built, re-verify pending) |
+| C2 | Quick Match: sheet + search + bot fallback | `--scenario quickmatch` | ❌ F-001 (same unwired-hook class) |
 | C3 | Quick Match vs REAL cross-platform opponent | web client joins `queue/mixed` (script TBD) | ⬜ |
 | C4 | Trivia Night: host lobby code + QR | `--scenario night-host` | ⬜ |
 | C5 | Trivia Night: cross-platform player joins + full night | RTDB REST joiner script (TBD) + OCR | ⬜ |
@@ -133,7 +133,17 @@ Format per entry: **F-###** (date) — symptom · evidence path · root cause ·
 fix commit · device re-verification date. An entry is closed only by a green
 re-run of the same scenario on the device.
 
-(none yet — first sweep in progress)
+- **F-001** (2026-08-24) — OPEN, fix built. *TIDBITS_VERSUS and
+  TIDBITS_MULTIPLAYER were never wired into the tvOS shell*, so the Versus
+  and Quick Match device scenarios silently exercised the HOME screen — and
+  the versus scenario FALSE-PASSED by matching the word "you" in the daily
+  card (`build/qa/atv-2026-08-24/versus-cpu-1787603559`: every frame is
+  Home). Two fixes: (1) hooks wired in `ContentView_tvOS.swift` launch task;
+  (2) scenario assertions tightened to the versus HUD's own chrome
+  ("Rookie", "You won|takes it") and quickmatch now FORBIDS the home hero
+  text. Harness lesson (Archive Watch's wrong-screen rule re-learned): an
+  expectation loose enough to match the home screen is not an expectation.
+  Re-verification pending next install.
 
 ## §4 The autonomous loop (multi-session)
 

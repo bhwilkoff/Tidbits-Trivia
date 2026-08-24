@@ -247,6 +247,18 @@ struct ContentView_tvOS: View {
             // (Home → Tidbits Club), one cover deep — never stacked under Settings.
             if DebugHooks.showPaywall { showClubPaywall = true }
             if DebugHooks.openSettings { showSettings = true }
+            // TIDBITS_VERSUS / TIDBITS_MULTIPLAYER were iOS-only until the device
+            // QA harness found the tvOS scenarios silently exercising the HOME
+            // screen — the hooks parsed fine and set nothing here.
+            if launch == nil, let bot = DebugHooks.versusBot {
+                switch bot {
+                case "rookie":  versusBot = .rookie
+                case "regular": versusBot = .regular
+                case "ace":     versusBot = .ace
+                default:        versusBot = BotProfile.house(playerAccuracy: recentAccuracy)
+                }
+            }
+            if DebugHooks.openMultiplayer { showQuickMatch = true }
         }
         // A friend's Game Center challenge accepted at runtime → launch the mode.
         .onChange(of: gameCenter.pendingChallengeMode) { _, m in

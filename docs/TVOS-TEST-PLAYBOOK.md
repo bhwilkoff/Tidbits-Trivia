@@ -84,7 +84,7 @@ after a re-run on the device.
 
 | ID | Feature | How | Status |
 |---|---|---|---|
-| C1 | Versus CPU (all four bots) | `--scenario versus-cpu` | ✅ rookie 2026-08-24 (`versus-cpu-1787604258`: match to outcome, both scores); regular ⬜; house ✅ (`versus-house-*`: The House 1,331 v 390) + ace ✅ 2026-08-24 (`versus-ace-*`: Ace Botsworth 1,627 v 604 to outcome) |
+| C1 | Versus CPU (all four bots) | `--scenario versus-cpu` | ✅ rookie 2026-08-24 (`versus-cpu-1787604258`: match to outcome, both scores); ✅ ALL FOUR BOTS 2026-08-24 — rookie (`versus-cpu-*`), house (`versus-house-*`), regular/Trivia Tina (`versus-regular-*`), ace (`versus-ace-*`), each to a real outcome screen with both scores |
 | C2 | Quick Match: sheet + search + bot fallback | `--scenario quickmatch` | 🚧 sheet opens on device (`quickmatch-1787604396`); full match flow ⬜ |
 | C3 | Quick Match vs REAL cross-platform opponent | web client joins `queue/mixed` (script TBD) | ⬜ |
 | C4 | Trivia Night: host lobby code + QR | `--scenario night-host` | ✅ 2026-08-24 (SCAN TO JOIN lobby on glass, post-F-002 build) |
@@ -112,7 +112,7 @@ after a re-run on the device.
 | E3 | Club paywall (products or honest empty) | `--scenario paywall` | ✅ 2026-08-24 (all 3 real products w/ prices $79.99/$29.99/$3.99 on glass; `paywall-1787603899`) |
 | E4 | Club hub + gated features (CLUB=1) | TIDBITS_CLUB_HUB=1 + TIDBITS_CLUB=1 | ✅ hub 2026-08-24 (member state + feature list; `club-hub-*`) |
 | E5 | Expeditions (map, stage, certificate) | EXPEDITION hooks | 🚧 list ✅ 2026-08-24 (`expeditions-*`); map/stage/certificate legs ⬜ |
-| E6 | Link Wall (win + lose) | LINKWALL + LINKWALL_AUTOPLAY | 🚧 win ✅ 2026-08-24 (SOLVED board + reveal; `linkwall-win-*`); lose leg ⬜ |
+| E6 | Link Wall (win + lose) | LINKWALL + LINKWALL_AUTOPLAY | 🚧 win ✅ 2026-08-24 (`linkwall-win-*`); lose leg blocked by per-day board persistence (the win consumed today's board — probe after the D2 clean install) |
 | E7 | Knowledge Atlas | TIDBITS_ATLAS=1 + CLUB=1 | ✅ 2026-08-24 (real Atlas incl. honest not-enough-history empty state; `atlas2-*`) |
 | E8 | Story Archive | TIDBITS_STORY_ARCHIVE=1 | ✅ 2026-08-24 (archive w/ domain + favorites/missed filters; `story2-*`) |
 | E9 | Marathon | TIDBITS_MARATHON=1 + MARATHON_LEN | ✅ 2026-08-24 (5-game run to marathon summary; `marathon-*`) |

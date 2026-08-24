@@ -73,10 +73,10 @@ after a re-run on the device.
 |---|---|---|---|
 | B1 | Home renders (hero/daily/night/records/settings) | `--scenario home` | ✅ 2026-08-24 |
 | B2 | Onboarding walkthrough | TIDBITS_ONBOARD=1 | ⬜ |
-| B3 | Customize picker (mode × category, unfillable marked) | TIDBITS_CUSTOMIZE / CUSTOMIZE_PICK | ⬜ |
+| B3 | Customize picker (mode × category, unfillable marked) | TIDBITS_CUSTOMIZE / CUSTOMIZE_PICK | ✅ 2026-08-24 (mode+category picker on glass, post-F-003 build; `customize-*`) |
 | B4 | Surprise me | remote-press from home | ⬜ |
 | B5 | Daily Tidbit + streak | `--scenario daily` | ✅ 2026-08-24 (`daily-1787603472`) |
-| B6 | Daily archive | TIDBITS_DAILY_ARCHIVE=1 | ⬜ |
+| B6 | Daily archive | TIDBITS_DAILY_ARCHIVE=1 | ✅ 2026-08-24 (Previous Tidbits list w/ dated rows; `daily-archive-*`) |
 | B7 | Deep link/shared item sheet | TIDBITS_ITEM=<id> | ⬜ |
 | B8 | Shared quiz open | TIDBITS_SHARED_QUIZ=<id> | ⬜ |
 

@@ -180,7 +180,7 @@ struct ContentView_tvOS: View {
         .fullScreenCover(item: $sharedItemID) { SharedItemView_tvOS(id: $0.id) }
         // First run. A cover rather than a sheet: tvOS has no partial presentation, and
         // the walkthrough should own the screen once and never again.
-        .fullScreenCover(isPresented: Binding(get: { (!hasOnboarded || DebugHooks.forceOnboarding) && !DebugHooks.skipOnboarding },
+        .fullScreenCover(isPresented: Binding(get: { DebugHooks.forceOnboarding || (!hasOnboarded && !DebugHooks.skipOnboarding) },
                                               set: { if !$0 { hasOnboarded = true } })) {
             OnboardingView_tvOS { hasOnboarded = true }
         }

@@ -84,8 +84,8 @@ after a re-run on the device.
 
 | ID | Feature | How | Status |
 |---|---|---|---|
-| C1 | Versus CPU (all four bots) | `--scenario versus-cpu` | ❌ F-001 (hook unwired; fix built, re-verify pending) |
-| C2 | Quick Match: sheet + search + bot fallback | `--scenario quickmatch` | ❌ F-001 (same unwired-hook class) |
+| C1 | Versus CPU (all four bots) | `--scenario versus-cpu` | ✅ rookie 2026-08-24 (`versus-cpu-1787604258`: match to outcome, both scores); house/regular/ace ⬜ |
+| C2 | Quick Match: sheet + search + bot fallback | `--scenario quickmatch` | 🚧 sheet opens on device (`quickmatch-1787604396`); full match flow ⬜ |
 | C3 | Quick Match vs REAL cross-platform opponent | web client joins `queue/mixed` (script TBD) | ⬜ |
 | C4 | Trivia Night: host lobby code + QR | `--scenario night-host` | ⬜ |
 | C5 | Trivia Night: cross-platform player joins + full night | RTDB REST joiner script (TBD) + OCR | ⬜ |
@@ -133,7 +133,7 @@ Format per entry: **F-###** (date) — symptom · evidence path · root cause ·
 fix commit · device re-verification date. An entry is closed only by a green
 re-run of the same scenario on the device.
 
-- **F-001** (2026-08-24) — OPEN, fix built. *TIDBITS_VERSUS and
+- **F-001** (2026-08-24) — CLOSED 2026-08-24 (fix 998c948, device re-verified: `versus-cpu-1787604258` shows a full Rookie match to its outcome screen, `quickmatch-1787604396` shows the real Quick Match sheet). *TIDBITS_VERSUS and
   TIDBITS_MULTIPLAYER were never wired into the tvOS shell*, so the Versus
   and Quick Match device scenarios silently exercised the HOME screen — and
   the versus scenario FALSE-PASSED by matching the word "you" in the daily
@@ -143,7 +143,14 @@ re-run of the same scenario on the device.
   ("Rookie", "You won|takes it") and quickmatch now FORBIDS the home hero
   text. Harness lesson (Archive Watch's wrong-screen rule re-learned): an
   expectation loose enough to match the home screen is not an expectation.
-  Re-verification pending next install.
+  
+
+- **F-002** (2026-08-24) — OPEN, fix built (29e4cd3). *TIDBITS_NIGHT_HOST
+  unwired on tvOS* — same class as F-001, caught by the cross-platform join
+  test: the TV sat on Home while the scripted RTDB player had no room to
+  join (`night-join-crossplatform-1787604112`; the prior night-host "pass"
+  matched the word 'TIDBIT' on Home). Hook now launches a quick networked
+  night; scenarios tightened to lobby chrome. Device re-verification queued.
 
 ## §4 The autonomous loop (multi-session)
 

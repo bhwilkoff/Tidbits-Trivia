@@ -94,8 +94,11 @@ SCENARIOS = {
         expect_any=r"Create|topic|Wikipedia",
         note="Create surface reachable and rendered."),
     "night-host": dict(
+        # Tightened after a false pass on the word 'TIDBIT' (home screen):
+        # only the lobby's own chrome counts.
         env={"TIDBITS_NIGHT_HOST": "1"}, minutes=1.0,
-        expect_any=r"[A-Z0-9]{4,6}|code|Join",
+        expect_any=r"SCAN TO JOIN|TRIVIA NIGHT|in the room",
+        forbid_extra=r"QUICK PLAY",
         note="Trivia Night host lobby shows a join code (+ QR)."),
     "night-join-crossplatform": dict(
         # The TV hosts a networked night on a PINNED room code; a scripted
@@ -104,9 +107,10 @@ SCENARIOS = {
         # end-to-end evidence: host -> Firebase -> client, across platforms.
         env={"TIDBITS_NIGHT_HOST": "1", "TIDBITS_LIVE_CODE": "QATV"},
         minutes=1.6,
-        presses=[(20, "sh:python3 tools/rtdb_join.py --code QATV --name HarnessBot --stay 40 &")],
-        expect_any=r"QATV",
-        expect_end=r"HarnessBot",
+        presses=[(20, "sh:python3 tools/rtdb_join.py --code QATV --name HarnessBot --stay 40 > build/qa/rtdb_join.log 2>&1 &")],
+        expect_any=r"QATV|SCAN TO JOIN",
+        expect_end=r"HarnessBot|1 in the room",
+        forbid_extra=r"QUICK PLAY",
         note="Cross-platform Trivia Night: scripted RTDB player joins the "
              "TV-hosted room; name must appear on the glass."),
     "quickmatch": dict(

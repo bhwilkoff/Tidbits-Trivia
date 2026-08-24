@@ -243,6 +243,13 @@ struct ContentView_tvOS: View {
             }
             if DebugHooks.openLinkWall { openLinkWall() }
             if DebugHooks.openNightSetup { showNightSetup = true }
+            // TIDBITS_NIGHT_HOST=1 hosts a networked night directly (the QA
+            // harness's cross-platform join test pins TIDBITS_LIVE_CODE and a
+            // scripted RTDB player joins) — found unwired on tvOS, same class
+            // as the TIDBITS_VERSUS gap.
+            if hostLaunch == nil, DebugHooks.openNightHost {
+                hostLaunch = NightLaunchRequest(plan: .quick, category: .named("mixed"))
+            }
             // TIDBITS_PAYWALL=1 opens the paywall on the real path App Review takes
             // (Home → Tidbits Club), one cover deep — never stacked under Settings.
             if DebugHooks.showPaywall { showClubPaywall = true }

@@ -131,7 +131,7 @@ after a re-run on the device.
 | ID | Feature | How | Status |
 |---|---|---|---|
 | D1 | Records dashboard w/ data | `--scenario records` | ✅ 2026-08-24 (streak/games/accuracy/history on glass; `records-1787603778`) |
-| D2 | Records empty state (degenerate) | fresh install, no seed | ⬜ |
+| D2 | Records empty state (degenerate) | fresh install, no seed | ✅ 2026-08-24 (clean install: "No games yet / Play a round and your scores…" on glass; `records-empty-*`) |
 | D3 | Game history drill-in (answer detail) | presses from records | ✅ 2026-08-24 (real remote presses opened a played game's detail — incl. the honest legacy no-per-question-history state; `records-drillin-*`) |
 | D4 | Sign in with Apple (button focusable + fires) | Settings → presses; the Form-swallows-tap trap | 🚧 rendered on glass w/ Delete Account (`settings-1787603822`); focus+fire walk ⬜ |
 | D5 | Sync: a game played on tvOS shows on iOS | cross-device check | ⬜ |

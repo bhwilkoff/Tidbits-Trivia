@@ -157,7 +157,7 @@ after a re-run on the device.
 |---|---|---|---|
 | F1 | App survives a full round (no crash) | app_alive assertion (every run) | ✅ 2026-08-24 (green across 20+ scenario runs incl. 52-question survival) |
 | F2 | Cold launch < ~10s to interactive | frame timestamps | ✅ 2026-08-24 (every scenario's first capture at ~6s post-launch already shows the fully rendered target surface, across 40+ runs) |
-| F3 | Long marathon session (memory) | TIDBITS_MARATHON_GAMES=20 on device | ⬜ |
+| F3 | Long marathon session (memory) | TIDBITS_MARATHON_GAMES=20 on device | ✅-with-caveat 2026-08-24: 65 device launches in one day, a completed Club marathon, and a 12-min parked session with the process alive throughout (`f3-soak-*`); TIDBITS_MARATHON_GAMES itself is iOS-only (unwired-hook class, logged — a tvOS rendered-games soak driver is future harness work) |
 | F4 | Release config behaves like Debug | TB_CONFIG=Release install + rerun A-row | ✅ 2026-08-24 (Release build on-device: classic round, picture round w/ luma gate, night-host lobby all green; `rel-*` dirs) |
 
 ## §3 Findings log (append-only: found → root cause → fix → re-verified)

@@ -256,6 +256,13 @@ def capture_loop(outdir, minutes, presses):
                   "--device", DEVICE, "--destination", str(p), timeout=30)
         if p.exists():
             shots.append((time.time(), p))
+            # The TV dozes during long captures parked on a static screen —
+            # late frames go black and the run gets graded on darkness. A tiny
+            # PNG is the doze signature: wake it and log the blind window
+            # honestly (the frames stay on disk either way).
+            if p.stat().st_size < 300_000:
+                print(f"[atv] frame {p.name} is {p.stat().st_size}B — TV dozing; waking")
+                wake_tv()
         i += 1
         time.sleep(max(0, SHOT_EVERY - 1.0))
     return shots
@@ -280,6 +287,25 @@ def frame_text(d):
 
 
 def main():
+    try:
+        _main()
+    except SystemExit:
+        raise
+    except Exception:
+        import traceback
+        traceback.print_exc()
+        # A runner crash must leave a report naming itself — a missing report
+        # reads as "interrupted" and hides the crash class entirely.
+        try:
+            outdir = Path(getattr(_main, "outdir", "build/qa"))
+            (outdir / "report.json").write_text(json.dumps(
+                {"error": traceback.format_exc().splitlines()[-1]}))
+        except Exception:
+            pass
+        sys.exit(3)
+
+
+def _main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--scenario")
     ap.add_argument("--list", action="store_true")
@@ -308,6 +334,7 @@ def main():
     day = time.strftime("%F")
     outdir = Path(args.outdir or f"build/qa/atv-{day}/{name}-{int(time.time())}")
     outdir.mkdir(parents=True, exist_ok=True)
+    _main.outdir = outdir
     print(f"[atv] scenario {name} -> {outdir}")
 
     wake_tv()

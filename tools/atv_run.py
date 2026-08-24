@@ -120,6 +120,24 @@ SCENARIOS = {
         expect_any=r"Quick Match|Finding|Searching|opponent",
         forbid_extra=r"QUICK PLAY",   # home-hero text = the sheet never opened
         note="Online multiplayer sheet opens and searches/falls back."),
+    "records-drillin": dict(
+        # Real remote input: from the seeded Records dashboard, move focus down
+        # into the games list and select the top game — the per-answer drill-in
+        # must render (R-REC-1's interactive-records rule).
+        env={"TIDBITS_TAB": "records", "TIDBITS_SEED_RECORDS": "12"},
+        minutes=1.0,
+        presses=[(10, "down"), (13, "down"), (16, "select")],
+        expect_seq=[r"DAY STREAK", r"Sample question|ACCURACY|answers|CORRECT"],
+        note="Records drill-in via real remote presses."),
+    "quickmatch-full": dict(
+        # Start the search with a real press; a match against the live queue or
+        # the bot fallback are BOTH healthy outcomes — the sheet must never
+        # just sit there.
+        env={"TIDBITS_MULTIPLAYER": "1"}, minutes=2.5,
+        presses=[(10, "select")],
+        expect_seq=[r"Quick Match", r"Searching|Finding|opponent|vs|Round|\d+/\d+"],
+        forbid_extra=r"QUICK PLAY",
+        note="Quick Match full flow: press to search, match or bot fallback."),
     "paywall": dict(
         env={"TIDBITS_PAYWALL": "1"}, minutes=0.5,
         expect_any=r"Club|Tidbits Club", forbid_extra=r"\$0|nil",

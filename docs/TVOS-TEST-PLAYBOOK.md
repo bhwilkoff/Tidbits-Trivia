@@ -118,7 +118,7 @@ after a re-run on the device.
 | A19 | Round comes up short / empty (degenerate) | forced thin category | 🚧 zero-answer outcome renders honestly (timeout-leg2 0/0); thin-category short-round leg ⬜ |
 | A20 | Resume-after-quit mid-game | kill app mid-round, relaunch | ✅ 2026-08-24 (kill mid-round → clean relaunch to Home, no corruption/crash; `resume-probe.png`. Mid-round resume is not a shipped tvOS feature — parity question noted, not invented) |
 | A21 | Explanation on reveal renders | OCR reveal frames | ✅ 2026-08-24 (explanation text OCR'd on reveal frame shot-0001) |
-| A22 | Focus never traps in a round | remote-press probes | ⬜ |
+| A22 | Focus never traps in a round | remote-press probes | ✅ 2026-08-24 (10-press directional storm mid-round via pyatv: game stayed on its question, no exit/strand; `a22-focus-storm-*`) |
 
 ### B. Home + navigation
 

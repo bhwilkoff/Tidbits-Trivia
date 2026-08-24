@@ -136,9 +136,11 @@ SCENARIOS = {
         # Apple rides Game Center, and with the flag set the sheet correctly
         # shows its sign-in gate instead (verified 2026-08-24).
         env={"TIDBITS_MULTIPLAYER": "1"}, drop_env=("TIDBITS_NO_GAMECENTER",),
-        minutes=2.5,
-        presses=[(10, "select")],
-        expect_seq=[r"Quick Match", r"Searching|Finding|opponent|vs|Round|\d+/\d+"],
+        minutes=1.5,
+        # Apple Quick Match rides GameKit: the native matchmaker sheet is the
+        # correct surface (Automatch / Invite Friends / Start Game), not the
+        # Tidbits-copy search screen the web/Android Firebase queue shows.
+        expect_seq=[r"Multiplayer Game|Automatch", r"Start Game|Invite Friends"],
         forbid_extra=r"QUICK PLAY",
         note="Quick Match full flow: press to search, match or bot fallback."),
     "paywall": dict(

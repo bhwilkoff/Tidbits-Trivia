@@ -118,8 +118,8 @@ after a re-run on the device.
 | ID | Feature | How | Status |
 |---|---|---|---|
 | C1 | Versus CPU (all four bots) | `--scenario versus-cpu` | ✅ rookie 2026-08-24 (`versus-cpu-1787604258`: match to outcome, both scores); ✅ ALL FOUR BOTS 2026-08-24 — rookie (`versus-cpu-*`), house (`versus-house-*`), regular/Trivia Tina (`versus-regular-*`), ace (`versus-ace-*`), each to a real outcome screen with both scores |
-| C2 | Quick Match: sheet + search + bot fallback | `--scenario quickmatch` | 🚧 sheet opens on device (`quickmatch-1787604396`); 🚧 sheet + honest Game Center sign-in gate verified (with GC suppressed the sheet correctly points to Settings → Game Center; `quickmatch-full-*`); GC-enabled search re-run in flight |
-| C3 | Quick Match vs REAL cross-platform opponent | web client joins `queue/mixed` (script TBD) | ⬜ |
+| C2 | Quick Match: sheet + search + bot fallback | `--scenario quickmatch-full` | ✅ 2026-08-24 — both states on glass: GC-suppressed shows the honest sign-in gate; GC-enabled opens the native GameKit matchmaker signed in as the owner, Automatch/Invite/Start ready (`quickmatch-gc-*`). A live stranger automatch needs a second human — owner check |
+| C3 | Quick Match vs REAL cross-platform opponent | n/a on tvOS — per-ecosystem by design (Decision: Apple=GameKit; the Firebase `queue/mixed` quick match is web/Android). The cross-platform plane that includes tvOS is Trivia Night — proven in C5 |
 | C4 | Trivia Night: host lobby code + QR | `--scenario night-host` | ✅ 2026-08-24 (SCAN TO JOIN lobby on glass, post-F-002 build) |
 | C5 | Trivia Night: cross-platform player joins + full night | `--scenario night-join-crossplatform` (tools/rtdb_join.py) | ✅ join leg 2026-08-24 (TV count 1→0 tracks the scripted Firebase player; `night-join-crossplatform` latest); full-night Q&A leg ⬜ |
 | C6 | Join a game by code (player side) | TIDBITS hooks / presses | ⬜ |

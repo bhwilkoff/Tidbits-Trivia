@@ -1490,3 +1490,16 @@ One-line-per-round; full detail in `ARCHIVE.md`.
   `SettingsExpander`, no `AutomationProperties` anywhere. **Pass F (window model:
   projector single/dual monitor, hot-plug, taskbar progress) is UNVERIFIABLE from
   this Mac** — owner hardware is the only check.
+
+**2026-08-24 — tvOS QA campaign (external-observation harness).** Found: tester
+reports of "significant issues" on Apple TV; no device harness. Done: ported
+the Archive Watch harness (atv_install/atv_run/atv_see/tbocr/atv_report +
+pyatv wake), built docs/TVOS-TEST-PLAYBOOK.md, ran 90+ device runs — every
+mode/category/bot/surface + cross-platform RTDB night join + full Release
+regression GREEN. Five findings fixed + device-verified: F-001..F-003 (the
+systemic unwired-debug-hook class on tvOS), the 3-week-red Core test suite
+(one wrong import), F-005 (shared-quiz links dead-ended at Create on tvOS AND
+macOS — real player-facing; fixed both). Harness hardened: verified wake,
+anti-doze, foreground guard, capture-timeout tolerance, crash-proof reports,
+reboot remedy. Left: maintenance loop (1800s) working the owner-check backlog
+(live GC automatch, D5 sync spot-check, A19/A22/E5 legs).

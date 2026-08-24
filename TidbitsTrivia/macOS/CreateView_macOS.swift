@@ -69,6 +69,16 @@ struct CreateView_macOS: View {
         .navigationTitle("Create")
         .task {
             if let t = DebugHooks.autoCreate, topic.isEmpty { topic = t; generate() }
+            // F-005 (found on tvOS, mirrored here): a shared-quiz link routed to
+            // Create and was never consumed. Keep-on-arrival — fetch, save, and
+            // the quiz tops the shelf below.
+            if let id = store.pendingSharedQuizID {
+                store.pendingSharedQuizID = nil
+                if QuizStore.record(id: id, in: modelContext) == nil,
+                   case .found(let quiz) = await QuizSharing.fetch(id: id) {
+                    _ = QuizStore.save(quiz, in: modelContext)
+                }
+            }
         }
     }
 

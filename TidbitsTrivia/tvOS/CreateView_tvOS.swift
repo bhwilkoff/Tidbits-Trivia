@@ -26,6 +26,7 @@ struct CreateView_tvOS: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(AppStore.self) private var store
     @Query(sort: \SavedQuizRecord.createdAt, order: .reverse) private var saved: [SavedQuizRecord]
 
     @State private var topic = ""
@@ -71,6 +72,18 @@ struct CreateView_tvOS: View {
             // simulator doesn't take synthesised button presses from the CLI.
             if let t = DebugHooks.autoCreate, topic.isEmpty { topic = t; generate(t) }
             if DebugHooks.tvShareNewest, let newest = saved.first { detail = newest }
+            // F-005: a shared-quiz link (tidbits://quiz/<id>) opened Create and
+            // silently stopped — only iOS consumed pendingSharedQuizID. Mirror
+            // the iOS keep-on-arrival behavior: save it to the shelf, open it.
+            if let id = store.pendingSharedQuizID {
+                store.pendingSharedQuizID = nil
+                if let mine = QuizStore.record(id: id, in: modelContext) {
+                    detail = mine
+                } else if case .found(let quiz) = await QuizSharing.fetch(id: id) {
+                    _ = QuizStore.save(quiz, in: modelContext)
+                    detail = QuizStore.record(id: quiz.id, in: modelContext)
+                }
+            }
             let result = await QuizSync.sync(in: modelContext)
             if result.pulled > 0 {
                 syncNote = "\(result.pulled) quiz\(result.pulled == 1 ? "" : "zes") from your other devices"

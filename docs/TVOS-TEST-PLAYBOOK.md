@@ -131,7 +131,7 @@ after a re-run on the device.
 | B5 | Daily Tidbit + streak | `--scenario daily` | ✅ 2026-08-24 (`daily-1787603472`) |
 | B6 | Daily archive | TIDBITS_DAILY_ARCHIVE=1 | ✅ 2026-08-24 (Previous Tidbits list w/ dated rows; `daily-archive-*`) |
 | B7 | Deep link/shared item sheet | TIDBITS_ITEM=<id> | ✅ 2026-08-24 (real corpus row rendered in the shared-item sheet; `shared-item-*`) |
-| B8 | Shared quiz open | TIDBITS_SHARED_QUIZ=<id> | 🚧 harness-blocked: the hook is wired (F-003) but a saved quiz's UUID isn't discoverable from outside the app; downstream-of-delivery path is covered by the QuizStore unit tests + the shared-ITEM device probe (B7 ✅) |
+| B8 | Shared quiz open | TIDBITS_SHARED_QUIZ=<id> | ✅ 2026-08-24 (unblocked by OCR'ing the share URL's id off the E2 QR panel; found+fixed F-005; `b8-shared-quiz2-*` opens the Ancient Rome detail) |
 
 ### C. Multiplayer + cross-platform (the reported-risk area)
 
@@ -161,7 +161,7 @@ after a re-run on the device.
 | ID | Feature | How | Status |
 |---|---|---|---|
 | E1 | Create renders + generates | `--scenario create`, TIDBITS_AUTOCREATE | ✅ 2026-08-24 (live Wikipedia generation → playing a real 8-question Volcanoes quiz on device; `create-live2-*`; needs TIDBITS_CREATE=1 + AUTOCREATE together on tvOS) |
-| E2 | Create → share QR renders | TIDBITS_TV_SHARE=1 | ⬜ |
+| E2 | Create → share QR renders | TIDBITS_TV_SHARE=1 | ✅ 2026-08-24 (QR drawn — luma 99.6 — with 'Scan to play on your phone' + the live share URL; `e2-share-qr-*`) |
 | E3 | Club paywall (products or honest empty) | `--scenario paywall` | ✅ 2026-08-24 (all 3 real products w/ prices $79.99/$29.99/$3.99 on glass; `paywall-1787603899`) |
 | E4 | Club hub + gated features (CLUB=1) | TIDBITS_CLUB_HUB=1 + TIDBITS_CLUB=1 | ✅ hub 2026-08-24 (member state + feature list; `club-hub-*`) |
 | E5 | Expeditions (map, stage, certificate) | EXPEDITION hooks | 🚧 list ✅ 2026-08-24 (`expeditions-*`); map/stage/certificate legs ⬜ |
@@ -232,6 +232,16 @@ re-run of the same scenario on the device.
   the glass. The tester-visible lesson stands though: if a REAL user's
   launch races the sleep state the same way, they'd see the same dump-to-
   home — worth an eye on cold-launch analytics.
+
+- **F-005** (2026-08-24) — CLOSED same day, mirrored to macOS. *A shared-quiz
+  link on tvOS opened Create and silently stopped* — `pendingSharedQuizID`
+  was consumed only by iOS's CreateQuizView; the tvOS (and macOS) Create
+  views never read it, so `tidbits://quiz/<id>` dead-ended at the topic
+  picker (`b8-shared-quiz-*` — a false pass on the word 'quiz' initially hid
+  it; frame-verification caught it). Fixed with the iOS keep-on-arrival
+  behavior on both platforms; tvOS device-verified (`b8-shared-quiz2-*`
+  opens the quiz detail), macOS destination builds green. One level deeper
+  than F-003's class: hook → store ✓, store → view ✗.
 
 ## §4 The autonomous loop (multi-session)
 

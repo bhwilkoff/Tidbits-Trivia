@@ -157,16 +157,46 @@ def devicectl(*args, timeout=90):
 
 def wake_tv():
     """Installs work while the TV sleeps; launches and screenshots do NOT, and
-    devicectl has no wake verb. pyatv's Companion protocol does."""
+    devicectl has no wake verb. pyatv's Companion protocol does.
+
+    VERIFIED wake: the TV dozes BETWEEN scenarios in a long sweep, and a launch
+    landing in that window is denied ("System is asleep - foreground app launch
+    forbidden") or comes up backgrounded — the app stays alive while the HOME
+    SCREEN owns the glass, which mimics an app bug (F-004 was this). Poll until
+    the Companion actually reports On; give up loudly, never silently."""
+    for attempt in range(3):
+        try:
+            r = sh([PYATV] + PYATV_ARGS + ["power_state"], timeout=40)
+            if "PowerState.On" in r.stdout:
+                return True
+            print("[atv] TV asleep — waking it")
+            sh([PYATV] + PYATV_ARGS + ["turn_on"], timeout=40)
+            for _ in range(8):
+                time.sleep(3)
+                r = sh([PYATV] + PYATV_ARGS + ["power_state"], timeout=40)
+                if "PowerState.On" in r.stdout:
+                    time.sleep(2)   # let the home screen settle before a launch
+                    return True
+        except Exception as e:
+            print(f"[atv] wake attempt {attempt} failed: {e}")
+    print("[atv] WARNING: could not verify the TV awake — launches may background")
+    return False
+
+
+HOME_SCREEN_RX = r"prime video|pluto|fubo|Apple TV\+|Select up for full screen|\d{1,2}:\d{2} [AP]M"
+
+
+def frame_is_home_screen(png):
+    """OCR one frame and report whether the tvOS HOME SCREEN owns the glass —
+    the wrong-screen guard from atv_see.sh, inside the runner. A launched-but-
+    backgrounded app passes app_alive while every capture shows the system UI."""
+    r = sh([OCR, str(png)], timeout=120)
     try:
-        r = sh([PYATV] + PYATV_ARGS + ["power_state"], timeout=40)
-        if "PowerState.On" in r.stdout:
-            return
-        print("[atv] TV asleep — waking it")
-        sh([PYATV] + PYATV_ARGS + ["turn_on"], timeout=40)
-        time.sleep(6)
-    except Exception as e:
-        print(f"[atv] wake attempt failed (continuing): {e}")
+        d = json.loads(r.stdout.splitlines()[0])
+    except Exception:
+        return False
+    txt = " ".join(t["text"] for t in d.get("allText", []))
+    return bool(re.search(HOME_SCREEN_RX, txt, re.I))
 
 
 def press(key):
@@ -267,6 +297,17 @@ def main():
     time.sleep(6)
     if not app_alive():   # launch-window death retry (Archive Watch: ~2 in 10)
         print("[atv] app died in launch window — one retry")
+        wake_tv()
+        launch(spec.get("env", {}))
+        time.sleep(6)
+    # Foreground guard: alive is not frontmost. One probe frame; if the home
+    # screen owns the glass, wake + relaunch once before burning the capture.
+    probe = outdir / "probe-foreground.png"
+    devicectl("device", "capture", "screenshot", "--device", DEVICE,
+              "--destination", str(probe), timeout=30)
+    if probe.exists() and frame_is_home_screen(probe):
+        print("[atv] launched but HOME SCREEN owns the glass — wake + relaunch")
+        wake_tv()
         launch(spec.get("env", {}))
         time.sleep(6)
 

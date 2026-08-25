@@ -1503,3 +1503,10 @@ macOS — real player-facing; fixed both). Harness hardened: verified wake,
 anti-doze, foreground guard, capture-timeout tolerance, crash-proof reports,
 reboot remedy. Left: maintenance loop (1800s) working the owner-check backlog
 (live GC automatch, D5 sync spot-check, A19/A22/E5 legs).
+
+**2026-08-25 ~09:00 — tvOS QA loop handoff doc.** The rolling loop's full
+resume state (rotation position, Chrome multiplayer recipe, harness facts,
+F-006 watch-item, re-arm instructions) now lives in
+docs/RESUME-TVOS-QA-LOOP.md — written for post-compaction pickup. Playbook
+remains the source of truth; nine consecutive laps green; Chrome loop passed
+twice; lap 11 next at home.

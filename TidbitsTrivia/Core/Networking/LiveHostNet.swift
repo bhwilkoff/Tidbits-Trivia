@@ -47,6 +47,12 @@ final class LiveHostNet {
             let meta = LiveRoom.Meta(host: host, createdAt: Self.nowMS(), name: name,
                                      venue: venue, state: "lobby")
             try await db.putJSON("\(LiveRoom.path(code))/meta", try JSONEncoder().encode(meta))
+            // F-006: a room code reused across sessions (host crash-recovery,
+            // or the QA loop's pinned code) inherits the previous night's
+            // answers for matching question ids — a fresh night read
+            // "1 answered" before anyone played. A new session owns a clean
+            // answer ledger; scores/teams persist deliberately (rejoin-safe).
+            try? await db.delete("\(LiveRoom.path(code))/answers")
             self.code = code
             self.hostUid = host
             watchTeams(code)

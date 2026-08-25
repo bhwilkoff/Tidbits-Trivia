@@ -377,8 +377,13 @@ def main():
             da = disp_num(kind, val, scale)
             if any(not separated(da, disp_num(kind, d, scale), SEP_ANS) for d in dvals):
                 continue
-            prompt = cfg["prompt"].format(s=title)
-            expl = f"The {cfg['dim']} of {title} is about {fmt_solo(kind, val)}."
+            # River names take the definite article ("the Nile", "the River
+            # Thames") — the gate has already proven Q4022, so this is safe
+            # where a general title-based rule is not (F-007).
+            disp = title if (cfg["gate"] != "river"
+                             or title.lower().startswith("the ")) else f"the {title}"
+            prompt = cfg["prompt"].format(s=disp)
+            expl = f"The {cfg['dim']} of {disp} is about {fmt_solo(kind, val)}."
             if finalize(rid, prompt, ans_disp, distract_disp, cat,
                         nudge(difficulty(qr), +1), expl, title):
                 perprop[prop] += 1

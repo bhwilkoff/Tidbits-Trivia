@@ -23,7 +23,9 @@ campaign summary at top, §2 inventory, §2b depth audits, §3 findings log.
   also asserted the F-006 "0 answered" invariant on a fresh room).
 - Every tick commits + pushes (`git pull --rebase` first — the dailyboard
   cron races).
-- **Open findings**: **F-007** (corpus quality, found by Chrome pass #6): the num:P2043 river-length template drops "the" ("how long is Nile?"); 32 of 47 rows affected; fix in tools/corpus/sources/gen_numeric.py:99 + genguard-disciplined regeneration (Decision 051), then glass re-verify. Previously: F-006 closed 2026-08-25: rules deny a host
+- **Open findings: NONE.** F-007 closed 2026-08-25 (river articles: generator +
+  fix_river_articles.py + full resync + glass-verified "the Nile").
+  F-006 closed 2026-08-25: rules deny a host
   deleting other uids' answer nodes (v1 impossible), so `LiveHostNet` now
   filters answers with `ts < sessionStartMS` captured in `open()` —
   device-verified ("0 answered" on a fresh room with a stale ledger row).

@@ -275,18 +275,23 @@ re-run of the same scenario on the device.
   "Q1/5 • 0 answered", ChromeBot's live answer flipped it to "1 answered",
   reveal scored green. macOS + iOS mirror builds green (shared Core).
 
-- **F-007** (2026-08-25) — OPEN, corpus quality (found BY the Chrome loop,
-  pass #6 served it live). *The `num:P2043` river-length template drops the
+- **F-007** (2026-08-25) — CLOSED same day (found BY the Chrome loop, pass
+  #6 served it live). *The `num:P2043` river-length template dropped the
   definite article*: "Approximately how long is Nile?" / "is Danube?" /
-  "is Po?" — rivers conventionally take "the". 47 P2043 rows total; 32
-  prompts lack " the " (the rest got it from Wikidata labels like "the
-  Amazon River"; "River Thames" is also article-less). Template source:
-  `tools/corpus/sources/gen_numeric.py` line 99 (`prompt="Approximately
-  how long is {s}?"`, gate="river"). Fix belongs in the GENERATOR + a
-  genguard-disciplined regeneration of every shipped source (Decision 051 —
-  never hand-edit generated output), then re-verify one repaired row on the
-  glass. Check sibling numeric templates (height/elevation gates) for the
-  same class while in there.
+  "is Po?". The existing `fix_missing_article.py` is deliberately head-noun
+  conservative (…River/…Sea only) and could not touch bare river names —
+  but the P2043 gate has already proven Q4022 (river), which makes the
+  aggressive rule safe. Fixed in BOTH places: `gen_numeric.py` now renders
+  river-gated subjects as "the {title}" in prompt + explanation (future
+  regenerations), and the new `tools/corpus/fix_river_articles.py` repaired
+  the 45 shipped rows (prompts AND explanations — some prompts had been
+  articled earlier while their explanations were not). Full
+  `resync_corpus.sh`: quality gates pass, planted defects caught, Apple==web
+  Daily golden parity PASS, suggested topics playable. Rebuilt + installed;
+  glass-verified "how long is the Nile?" on the device (f007-glass run).
+  Sibling numeric templates checked: elevation/area/height/weight gates are
+  geo/person and already covered by the conservative script's head-noun
+  rule; only the river gate had the bare-name class.
 
 Standing loop prompt: work this playbook top to bottom — highest-risk first
 (A-row mechanics, C-row multiplayer), one meaty batch per tick (multiple

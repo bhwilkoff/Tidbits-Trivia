@@ -171,7 +171,7 @@ after a re-run on the device.
 | E7 | Knowledge Atlas | TIDBITS_ATLAS=1 + CLUB=1 | ✅ 2026-08-24 (real Atlas incl. honest not-enough-history empty state; `atlas2-*`) |
 | E8 | Story Archive | TIDBITS_STORY_ARCHIVE=1 | ✅ 2026-08-24 (archive w/ domain + favorites/missed filters; `story2-*`) |
 | E9 | Marathon | TIDBITS_MARATHON=1 + MARATHON_LEN | ✅ 2026-08-24 (5-game run to marathon summary; `marathon-*`) |
-| E10 | Settings (all rows reachable by focus) | `--scenario settings` + presses | 🚧 renders w/ profile+account rows (`settings-1787603822`); focus walk ⬜ |
+| E10 | Settings (all rows reachable by focus) | `--scenario settings` + presses | ✅ 2026-08-24 (12-press focus storm incl. select: stayed on Settings, alive, no strand; profile shows the GC display name; `settings-focus-walk-*`) |
 
 ### F. Stability / honesty
 

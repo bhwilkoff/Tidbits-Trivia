@@ -308,6 +308,10 @@ def main():
         "P1082": lambda q, c: c == "geography",
         "P2046": lambda q, c: c == "geography",
         "P2044": lambda q, c: c == "geography",
+        # P2043 outside geography mixes stored units per ENTRY (animal cm/m,
+        # car mm, asteroid km, all labeled 'm') — a Tokay gecko at "152 m"
+        # beat a humpback whale (F-011). Geography lengths are km-coherent.
+        "P2043": lambda q, c: c == "geography",
         "P2048": lambda q, c: "Q5" in p31_of.get(q, ()),
     }
     for prop, (dim, stems) in SUP.items():

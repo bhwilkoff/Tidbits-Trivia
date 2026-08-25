@@ -50,12 +50,14 @@ states, the Link Wall lose leg, session-longevity evidence, cold launch
 drop_env knob, tools/atv_report.py, and the reboot remedy for the
 degrading screenshot daemon.
 
-**Remaining — owner checks / maintenance backlog:** a live GameKit
-automatch needs a second human; D5 cross-device sync spot-check (play on
-tvOS, look on iPhone); B8 shared-quiz probe (id not externally
-discoverable); A19 thin-category short-round leg; A22 systematic
-focus-trap probes; E2 share-QR render; E5 expedition map/stage/certificate
-legs.
+**Automatable inventory: COMPLETE (2026-08-24 evening).** Every A–F row is
+device-verified or honestly dispositioned; the maintenance loop cleared the
+whole backlog (A19 thin-combo, A22 focus storm, E2 share QR, E5 full
+expedition lifecycle, B8 via the OCR'd share id — which also found and
+fixed F-005 on tvOS AND macOS, with an iOS regression check).
+**Remaining, owner-only:** a live GameKit automatch (needs a second human)
+and the D5 CloudKit records-sync spot-check (play signed-in on the TV, look
+on the iPhone). The share backend's cross-device path is already proven.
 
 **Doctrine** (ported from Archive Watch — `docs/DEVICE-HARNESSES.md` in the
 template): the agent is never the tester, and the app's own reports are
@@ -164,7 +166,7 @@ after a re-run on the device.
 | E2 | Create → share QR renders | TIDBITS_TV_SHARE=1 | ✅ 2026-08-24 (QR drawn — luma 99.6 — with 'Scan to play on your phone' + the live share URL; `e2-share-qr-*`) |
 | E3 | Club paywall (products or honest empty) | `--scenario paywall` | ✅ 2026-08-24 (all 3 real products w/ prices $79.99/$29.99/$3.99 on glass; `paywall-1787603899`) |
 | E4 | Club hub + gated features (CLUB=1) | TIDBITS_CLUB_HUB=1 + TIDBITS_CLUB=1 | ✅ hub 2026-08-24 (member state + feature list; `club-hub-*`) |
-| E5 | Expeditions (map, stage, certificate) | EXPEDITION hooks | ✅ 2026-08-24 list + map (7 stages; `e5-map-*`) + stage pass/advance ("STAGE 1 PASSED… Stage 2 just unlocked"; `e5-stage-*`); certificate = 7-stage completion, a longer-run leg |
+| E5 | Expeditions (map, stage, certificate) | EXPEDITION hooks | ✅ FULL LIFECYCLE 2026-08-24 — list, map, all 7 stages passed and persisted, completion + certificate state ("Completed — play again for another certificate"; `e5-cert2-*`) |
 | E6 | Link Wall (win + lose) | LINKWALL + LINKWALL_AUTOPLAY | ✅ 2026-08-24 both legs — win (`linkwall-win-*`: SOLVED + reveal) and lose on the post-clean-install fresh board (`linkwall-lose3-*`: NEXT TIME reveal of all four groups) |
 | E7 | Knowledge Atlas | TIDBITS_ATLAS=1 + CLUB=1 | ✅ 2026-08-24 (real Atlas incl. honest not-enough-history empty state; `atlas2-*`) |
 | E8 | Story Archive | TIDBITS_STORY_ARCHIVE=1 | ✅ 2026-08-24 (archive w/ domain + favorites/missed filters; `story2-*`) |

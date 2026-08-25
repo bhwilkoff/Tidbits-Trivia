@@ -35,6 +35,17 @@ campaign summary at top, §2 inventory, §2b depth audits, §3 findings log.
 - **Owner-only remainder**: live GameKit automatch (needs a second human);
   D5 CloudKit records-sync spot-check (play signed-in on TV, look on iPhone).
 
+## 1.6.77 SHIP (2026-08-25 afternoon)
+
+Apple: DONE — 1.6.77 (115) in App Store Connect, TestFlight processing.
+OWNER step: select build 115 + Submit for Review for the macOS platform.
+Play: DONE — vc89 completed on the internal track.
+Windows: PARKED after FOUR identical msstore failures ("Uploading Bundle
+to Azure blob: 0% Error while uploading the application package";
+submission delete/create fine each time). Retry tomorrow
+(`gh workflow run windows-store.yml -f submit=true -f commit=true`) or
+pin an older msstore CLI in microsoft/microsoft-store-apppublisher.
+
 ## The per-tick loop shape
 
 ```bash

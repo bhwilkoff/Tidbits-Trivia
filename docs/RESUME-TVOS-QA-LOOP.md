@@ -12,14 +12,14 @@ campaign summary at top, §2 inventory, §2b depth audits, §3 findings log.
 - **Campaign COMPLETE + depth audits COMPLETE** — every A–F row device-verified
   or honestly dispositioned; 5,715/5,715 picture-image URLs live; 200-game
   round-quality sweep clean; all details in the playbook.
-- **Rolling-health mode**: **ELEVEN consecutive full 12-scenario laps green**
-  (roll2–roll12). **Lap 13 is next, starting at `home`**
+- **Rolling-health mode**: **TWELVE consecutive full 12-scenario laps green**
+  (roll2–roll13). **Lap 14 is next, starting at `home`**
   (`--name roll11-<s>`; the newest `rollN-*` dir in `build/qa/atv-<date>/`
   marks rotation position). Rotation order: home, quickplay-classic,
   picture-round, daily, night-host, night-join-crossplatform, versus-ace
   (env form: `--env TIDBITS_VERSUS=ace --env TIDBITS_AUTOPILOT=1 --expect Ace
   --minutes 1.3`), quickmatch, records, settings, create, paywall — then the
-  lap-closing **Chrome multiplayer loop** (below), passed 4× (passes #3–#4
+  lap-closing **Chrome multiplayer loop** (below), passed 5× (passes #3–#5
   also asserted the F-006 "0 answered" invariant on a fresh room).
 - Every tick commits + pushes (`git pull --rebase` first — the dailyboard
   cron races).

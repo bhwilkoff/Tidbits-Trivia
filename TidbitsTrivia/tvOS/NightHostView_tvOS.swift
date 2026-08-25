@@ -11,6 +11,11 @@ struct TVNightHostView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var host: LiveNightHost
     @FocusState private var focus: Field?
+    // F-009 diagnostic: counts Reveal-button action firings; shown on the
+    // glass only under TIDBITS_QA_OVERLAY so OCR can tell "press never
+    // reached the button" from "action fired but reveal() didn't complete".
+    @State private var qaRevealPresses = 0
+    private let qaOverlay = ProcessInfo.processInfo.environment["TIDBITS_QA_OVERLAY"] == "1"
     private enum Field: Hashable { case play, speed, start, lock, reveal, next, opt(Int) }
 
     init(plan: NightPlan, category: TriviaCategory) {
@@ -119,7 +124,7 @@ struct TVNightHostView: View {
                                 Button("Lock") { Task { await host.lock() } }
                                     .buttonStyle(TVChipStyle(accent: Tidbits.Palette.yellow, selected: false)).focused($focus, equals: .lock)
                             }
-                            Button("Reveal") { Task { await host.reveal() } }
+                            Button("Reveal") { qaRevealPresses += 1; Task { await host.reveal() } }
                                 .buttonStyle(TVChipStyle(accent: Tidbits.Palette.blue, selected: false)).focused($focus, equals: .reveal)
                         } else {
                             Button("Next") { Task { await host.next() } }
@@ -128,6 +133,10 @@ struct TVNightHostView: View {
                     }
                     if host.locked && !host.revealed {
                         Text("Answers locked — pencils down!").font(.system(size: 24, weight: .heavy, design: .rounded)).foregroundStyle(Tidbits.Palette.coral)
+                    }
+                    if qaOverlay {
+                        Text("QADBG presses=\(qaRevealPresses) stage=\(String(describing: host.stage)) revealed=\(host.revealed ? 1 : 0) locked=\(host.locked ? 1 : 0)")
+                            .font(.system(size: 22, weight: .bold, design: .monospaced)).foregroundStyle(Tidbits.Palette.yellow)
                     }
                 }
             }

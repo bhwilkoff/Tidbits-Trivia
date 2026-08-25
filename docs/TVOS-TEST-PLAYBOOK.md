@@ -293,26 +293,33 @@ re-run of the same scenario on the device.
   geo/person and already covered by the conservative script's head-noun
   rule; only the river gate had the bare-name class.
 
-- **F-008** (2026-08-25) — OPEN, F-006's sibling on the SCORES ledger.
-  Chrome pass #8's fresh night showed **ChromeBot with 7 points in
-  STANDINGS during Q1, before any reveal** — the score written by pass #7's
-  correct answer persisted under `live/QATV/scores/` and a reused room code
-  displays it in the next session. F-006's fix filters stale ANSWERS by
-  `sessionStartMS`; the scores node needs the same treatment (and scores are
-  host-written, so a clear-on-open may be allowed by rules where deleting
-  answers was not). Same limited player impact (needs code reuse), same fix
-  location (`LiveHostNet`).
+- **F-008** (2026-08-25) — CLOSED same day (Core fix, device-verified
+  twice). *A reused room code showed the previous session's SCORES in a
+  fresh night's standings* (ChromeBot at 7 points during Q1 pre-reveal).
+  Unlike `answers/` (whose delete the rules deny — F-006), the host OWNS
+  `scores/`, so `LiveHostNet.open()` now deletes `scores/` and zeroes the
+  local dict alongside the answers sessionStartMS filter; `teams/` still
+  persists deliberately (rejoin keeps the name). Glass-verified on a fresh
+  QATV night: STANDINGS rows read 0 with the prior session's points still
+  in RTDB history (frames chrome-loop8b-q1b + f009-dbg-reveal). macOS +
+  iOS mirror builds green.
 
-- **F-009** (2026-08-25) — OPEN, investigating. During pass #8 on the fresh
-  1.6.76 build, the host stopped acting on SELECT at the question screen:
-  five companion `select` commands (rc=0) on the visibly focused Reveal
-  button, plus one on Lock, produced no state change, while LEFT/RIGHT moved
-  focus normally (frames chrome-loop8-reveal3/focustest/locktest). The same
-  session's earlier select DID start the night from the lobby, and passes
-  #3–#7 revealed fine — so either a companion-HID select-channel degradation
-  (select and directional ride different paths) or an app-side press-handler
-  wedge. Device rebooted; next: re-run the full Chrome pass — if select
-  works post-reboot, tag this harness-class (reboot cures), not app bug.
+- **F-009** (2026-08-25) — OPEN (intermittent), diagnostic now armed.
+  Twice during pass #8, the host stopped acting on SELECT at the question
+  screen: five companion selects (rc=0) on the visibly focused Reveal, one
+  on Lock — no state change — while LEFT/RIGHT moved focus normally (frames
+  chrome-loop8-reveal3/focustest/locktest). Same session's select DID start
+  the night from the lobby; a device reboot didn't prevent a recurrence,
+  then a later scripted run revealed fine on the first press. Both
+  `reveal()` and `lock()` guard silently on `stage == .playing` — so the
+  question was "press not delivered" vs "action fired but hung": the view
+  now has an env-gated on-glass counter (`TIDBITS_QA_OVERLAY=1` → "QADBG
+  presses=N stage=… revealed=…") that settles it the next time it happens.
+  The armed run showed presses=1 → revealed=1 (path healthy). Loop
+  discipline: host the Chrome-loop nights WITH the overlay env; on a stuck
+  reveal, read the counter before touching anything. Related known flake:
+  the FIRST companion select after idle is often dropped (lobby Start
+  regularly needs one retry) — retry once before investigating.
 
 Standing loop prompt: work this playbook top to bottom — highest-risk first
 (A-row mechanics, C-row multiplayer), one meaty batch per tick (multiple

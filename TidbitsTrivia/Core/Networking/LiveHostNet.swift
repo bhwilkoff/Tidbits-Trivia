@@ -54,12 +54,19 @@ final class LiveHostNet {
             let meta = LiveRoom.Meta(host: host, createdAt: Self.nowMS(), name: name,
                                      venue: venue, state: "lobby")
             try await db.putJSON("\(LiveRoom.path(code))/meta", try JSONEncoder().encode(meta))
-            // F-006: a room code reused across sessions (host crash-recovery,
-            // or the QA loop's pinned code) inherits the previous night's
-            // answers for matching question ids — a fresh night read
-            // "1 answered" before anyone played. A new session owns a clean
-            // answer ledger; scores/teams persist deliberately (rejoin-safe).
+            // F-006/F-008: a room code reused across sessions (host
+            // crash-recovery, or the QA loop's pinned code) inherits the
+            // previous night's answers AND scores — a fresh night read
+            // "1 answered" and showed a team with last session's points
+            // before anyone played. A new session owns a clean answer ledger
+            // and a zeroed scoreboard; the host owns scores/ so this delete
+            // is rules-legal (the answers/ delete is not — rules deny
+            // deleting other uids' nodes — hence the sessionStartMS filter
+            // in applyAnswers). teams/ persists deliberately (rejoin-safe:
+            // the same anon uid keeps its name across a reload).
             try? await db.delete("\(LiveRoom.path(code))/answers")
+            try? await db.delete("\(LiveRoom.path(code))/scores")
+            scores = [:]
             self.code = code
             self.hostUid = host
             watchTeams(code)

@@ -162,7 +162,7 @@ after a re-run on the device.
 
 | ID | Feature | How | Status |
 |---|---|---|---|
-| E1 | Create renders + generates | `--scenario create`, TIDBITS_AUTOCREATE | ✅ 2026-08-24 (live Wikipedia generation → playing a real 8-question Volcanoes quiz on device; `create-live2-*`; needs TIDBITS_CREATE=1 + AUTOCREATE together on tvOS) |
+| E1 | Create renders + generates | `--scenario create`, TIDBITS_AUTOCREATE | ✅ 2026-08-24 (live Wikipedia generation on device for TWO topics — Volcanoes `create-live2-*`, Ancient Egypt `create-egypt-*`; needs TIDBITS_CREATE=1 + AUTOCREATE together on tvOS) |
 | E2 | Create → share QR renders | TIDBITS_TV_SHARE=1 | ✅ 2026-08-24 (QR drawn — luma 99.6 — with 'Scan to play on your phone' + the live share URL; `e2-share-qr-*`) |
 | E3 | Club paywall (products or honest empty) | `--scenario paywall` | ✅ 2026-08-24 (all 3 real products w/ prices $79.99/$29.99/$3.99 on glass; `paywall-1787603899`) |
 | E4 | Club hub + gated features (CLUB=1) | TIDBITS_CLUB_HUB=1 + TIDBITS_CLUB=1 | ✅ hub 2026-08-24 (member state + feature list; `club-hub-*`) |

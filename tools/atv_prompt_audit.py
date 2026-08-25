@@ -96,6 +96,10 @@ def main():
         except subprocess.TimeoutExpired:
             fails.append((qid, "capture timeout"))
             continue
+        if not png.exists():
+            fails.append((qid, "no frame captured"))
+            print(f"  [SKIP] {qid} capture produced no frame", flush=True)
+            continue
         glass = norm(ocr_text(png))
         problems = []
         # The prompt's TAIL is the truncation tell (OCR loses ~nothing on 4K).

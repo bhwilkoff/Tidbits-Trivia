@@ -182,6 +182,13 @@ after a re-run on the device.
 | F3 | Long marathon session (memory) | TIDBITS_MARATHON_GAMES=20 on device | ✅-with-caveat 2026-08-24: 65 device launches in one day, a completed Club marathon, and a 12-min parked session with the process alive throughout (`f3-soak-*`); TIDBITS_MARATHON_GAMES itself is iOS-only (unwired-hook class, logged — a tvOS rendered-games soak driver is future harness work) |
 | F4 | Release config behaves like Debug | TB_CONFIG=Release install + rerun A-row | ✅ 2026-08-24 (Release build on-device: classic round, picture round w/ luma gate, night-host lobby all green; `rel-*` dirs) |
 
+## §2b Depth audits (beyond once-per-feature — the owner's "large scopes" directive)
+
+| Audit | Tool | Result |
+|---|---|---|
+| Longest-prompt legibility on the glass | `tools/atv_prompt_audit.py` | ✅ 2026-08-24: the corpus's 14 longest prompts/options (up to 343 chars) ALL render fully on the device — tails and every option verified by OCR (`prompt-audit-1787621901` + `cronenberg-recheck`). Required wiring TIDBITS_QUESTION on tvOS (was iOS-only). |
+| Picture-image liveness, corpus-wide | `tools/audit_picture_images.py` | 🚧 running — all 5,721 Commons URLs HEAD-checked with a real UA |
+
 ## §3 Findings log (append-only: found → root cause → fix → re-verified)
 
 Format per entry: **F-###** (date) — symptom · evidence path · root cause ·

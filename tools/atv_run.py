@@ -327,6 +327,7 @@ def _main():
     ap.add_argument("--minutes", type=float)
     ap.add_argument("--env", action="append", default=[], help="K=V extra env")
     ap.add_argument("--expect", help="ad-hoc expect_any regex")
+    ap.add_argument("--luma", help="ad-hoc image gate THRESH:FRAMES (e.g. 28:2)")
     ap.add_argument("--name", default=None)
     ap.add_argument("--outdir", default=None)
     args = ap.parse_args()
@@ -345,6 +346,9 @@ def _main():
         spec["minutes"] = args.minutes
     if args.expect:
         spec["expect_any"] = args.expect
+    if args.luma:
+        t, n = args.luma.split(":")
+        spec["min_center_stddev"] = (float(t), int(n))
 
     day = time.strftime("%F")
     outdir = Path(args.outdir or f"build/qa/atv-{day}/{name}-{int(time.time())}")

@@ -101,6 +101,13 @@ struct TVGameContainer: View {
                     startMarathon()
                 } else if let expedition, let stageIndex = expeditionStageIndex {
                     startExpeditionStage(expedition: expedition, stageIndex: stageIndex)
+                } else if let ids = DebugHooks.forcedQuestionIDs,
+                          case let forced = CorpusDatabase.shared.questions(ids: ids),
+                          !forced.isEmpty {
+                    // TIDBITS_QUESTION forces exact corpus rows so a specific
+                    // question can be LOOKED AT on this screen (the legibility
+                    // audit's backbone). Was iOS-only — the unwired-hook class.
+                    game.startCustom(mode: mode, category: category, questions: forced)
                 } else {
                     // Single-category game re-asks only same-category misses (no cross-category leak).
                     var review = (mode.acceptsReview && GameSettings.reviewEnabled)

@@ -72,8 +72,9 @@ def main():
     fails = []
     for i, (qid, prompt, *opts) in enumerate(rows):
         env = {"TIDBITS_SKIP_ONBOARD": "1", "TIDBITS_NO_GAMECENTER": "1",
-               "TIDBITS_QUESTION": qid, "TIDBITS_AUTOPILOT": "1",
-               "TIDBITS_AUTOPILOT_STEPS": "0"}
+               "TIDBITS_AUTOPLAY": "classic:mixed",   # launches the game the
+               "TIDBITS_QUESTION": qid,               # forced row rides in
+               "TIDBITS_AUTOPILOT": "1", "TIDBITS_AUTOPILOT_STEPS": "0"}
         r = sh(["env", f"DEVELOPER_DIR={DD}", "xcrun", "devicectl", "device",
                 "process", "launch", "--terminate-existing", "--device", DEVICE,
                 "-e", json.dumps(env), BUNDLE], timeout=60)

@@ -97,3 +97,5 @@ echo "--- 7. the topics the app SUGGESTS still return a playable quiz"
 tools/create/check_suggestions.sh
 
 echo "--- done. corpus + sqlite + golden + fixtures all resynced."
+echo "REMINDER: assets/corpus.json is a SHELL precache file — bump 'const CACHE'"
+echo "in sw.js in the SAME commit, or the Pages deploy guard will refuse it."

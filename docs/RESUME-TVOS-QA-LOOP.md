@@ -12,14 +12,14 @@ campaign summary at top, §2 inventory, §2b depth audits, §3 findings log.
 - **Campaign COMPLETE + depth audits COMPLETE** — every A–F row device-verified
   or honestly dispositioned; 5,715/5,715 picture-image URLs live; 200-game
   round-quality sweep clean; all details in the playbook.
-- **Rolling-health mode**: **TWENTY-ONE consecutive full 12-scenario laps green**
-  (roll2–roll22). **Lap 23 is next, starting at `home`**
+- **Rolling-health mode**: **TWENTY-TWO consecutive full 12-scenario laps green**
+  (roll2–roll23). **Lap 24 is next, starting at `home`**
   (`--name roll11-<s>`; the newest `rollN-*` dir in `build/qa/atv-<date>/`
   marks rotation position). Rotation order: home, quickplay-classic,
   picture-round, daily, night-host, night-join-crossplatform, versus-ace
   (env form: `--env TIDBITS_VERSUS=ace --env TIDBITS_AUTOPILOT=1 --expect Ace
   --minutes 1.3`), quickmatch, records, settings, create, paywall — then the
-  lap-closing **Chrome multiplayer loop** (below), passed 14×. F-011 closed (348 unit-corrupt superlatives tombstoned; geography gate + km reveals; glass-verified). Open: F-009 only. Host the night WITH
+  lap-closing **Chrome multiplayer loop** (below), passed 15×. F-011 closed (348 unit-corrupt superlatives tombstoned; geography gate + km reveals; glass-verified). Open: F-009 only. Host the night WITH
   --env TIDBITS_QA_OVERLAY=1 (QADBG counter diagnoses F-009); first select
   after idle often drops — retry once. Open: only F-009 (intermittent,
   QADBG overlay armed). F-010 closed: all four join clients reset answer

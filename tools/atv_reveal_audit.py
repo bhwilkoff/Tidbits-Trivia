@@ -39,7 +39,8 @@ def main():
     db = sqlite3.connect("TidbitsTrivia/Resources/corpus.sqlite")
     rows = db.execute("select id, explanation from questions "
                       "where explanation is not null and length(explanation) > 40").fetchall()
-    random.seed(time.strftime("%F"))
+    import os
+    random.seed(os.environ.get("SEED", time.strftime("%F")))
     picks = random.sample(rows, N)
     wake_tv()
     fails = []

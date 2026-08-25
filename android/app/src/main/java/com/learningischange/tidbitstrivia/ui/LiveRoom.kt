@@ -81,7 +81,15 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
             try {
                 FirebaseNet.liveJoin(code, team)
                 joined = true
-                unsubs += FirebaseNet.liveOnMeta(code) { meta = it }
+                unsubs += FirebaseNet.liveOnMeta(code) {
+                    // F-010: a host restart on the same code is a new session whose
+                    // positional qids collide — reset qid-keyed submission state.
+                    val old = meta
+                    if (it != null && old != null && it.createdAt != old.createdAt) {
+                        submittedQid = null; chosen = null; blurred = false
+                    }
+                    meta = it
+                }
                 unsubs += FirebaseNet.liveOnScore(code) { score = it }
                 unsubs += FirebaseNet.liveOnPub(code) { p ->
                     if (p != null && p.qid != pub?.qid) { submittedQid = null; chosen = null; blurred = false }   // Wave C: reset focus flag

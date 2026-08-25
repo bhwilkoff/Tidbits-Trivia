@@ -138,7 +138,21 @@ public sealed class LivePlayerClient
 
     private void ApplyMeta(FirebaseRtdb.StreamEvent ev)
     {
-        if (ev.DataJson is not null) { try { Meta = JsonSerializer.Deserialize<LiveRoom.Meta>(ev.DataJson, Wire.Json); } catch { } }
+        if (ev.DataJson is not null)
+        {
+            try
+            {
+                var m = JsonSerializer.Deserialize<LiveRoom.Meta>(ev.DataJson, Wire.Json);
+                // F-010: a host restart on the same code is a new session whose
+                // positional qids collide — reset qid-keyed submission state.
+                if (m is not null && Meta is not null && m.CreatedAt != Meta.CreatedAt)
+                {
+                    SubmittedQid = null; Chosen = null;
+                }
+                Meta = m;
+            }
+            catch { }
+        }
         RecordIfEnded();
     }
 

@@ -347,7 +347,7 @@ object FirebaseNet {
         val order: List<Int>? = null, val pairs: List<Int>? = null, val list: List<String>? = null,
         val ts: Long = 0,
     )
-    data class LiveMeta(val state: String, val venue: String)
+    data class LiveMeta(val state: String, val venue: String, val createdAt: Long = 0L)
 
     /** True if a Mac host has opened `live/{code}` — the unified "Join a game"
      *  front probes this to tell a hosted Live event from a LAN Trivia Night. */
@@ -389,6 +389,7 @@ object FirebaseNet {
             cb(if (snap.exists()) LiveMeta(
                 state = snap.child("state").getValue(String::class.java) ?: "lobby",
                 venue = snap.child("venue").getValue(String::class.java) ?: "",
+                createdAt = snap.child("createdAt").getValue(Long::class.java) ?: 0L,
             ) else null)
         }
 

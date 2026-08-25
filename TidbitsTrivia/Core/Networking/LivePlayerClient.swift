@@ -118,7 +118,16 @@ final class LivePlayerClient {
         recordIfEnded()
     }
     private func applyMeta(_ ev: FirebaseRTDB.StreamEvent) {
-        if let d = ev.dataJSON, let m = try? JSONDecoder().decode(LiveRoom.Meta.self, from: d) { meta = m }
+        if let d = ev.dataJSON, let m = try? JSONDecoder().decode(LiveRoom.Meta.self, from: d) {
+            // F-010: a host restart on the same code is a NEW session whose
+            // positional qids collide with the old one — qid-keyed submission
+            // state would lock this player out of a question they never
+            // answered. createdAt is the session identity.
+            if let old = meta, old.createdAt != m.createdAt {
+                submittedQid = nil; chosen = nil; blurred = false
+            }
+            meta = m
+        }
         recordIfEnded()
     }
 

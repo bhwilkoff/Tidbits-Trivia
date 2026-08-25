@@ -82,7 +82,17 @@ async function join() {
     S.joined = true; S.joining = false;
     S.liveAnswered = 0; S.liveCorrect = 0; S.talliedQid = null; S.recorded = false;
     try { localStorage.setItem('tidbits.live.code', code); localStorage.setItem('tidbits.live.team', team); } catch { /* private mode */ }
-    unsubs.push(FirebaseNet.liveOnMeta(code, (m) => { S.meta = m; recordIfEnded(); draw(); }));
+    unsubs.push(FirebaseNet.liveOnMeta(code, (m) => {
+      // F-010: a host RESTART on the same code is a new session whose
+      // positional qids (r0q0…) collide with the old one — qid-keyed
+      // submission state would leave this client "Locked in" on a question
+      // it never answered. createdAt is the session identity.
+      if (m && S.meta && m.createdAt !== S.meta.createdAt) {
+        S.submittedQid = null; S.chosen = null; S.local = {}; S.blurred = false;
+        S.liveAnswered = 0; S.liveCorrect = 0; S.talliedQid = null;
+      }
+      S.meta = m; recordIfEnded(); draw();
+    }));
     unsubs.push(FirebaseNet.liveOnScore(code, (v) => { S.score = v; draw(); }));
     unsubs.push(FirebaseNet.liveOnPub(code, (p) => {
       if (p && p.qid !== S.pub?.qid) { S.submittedQid = null; S.chosen = null; S.local = {}; S.blurred = false; }   // Wave C: reset focus flag

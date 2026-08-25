@@ -188,7 +188,7 @@ after a re-run on the device.
 |---|---|---|
 | Longest-prompt legibility on the glass | `tools/atv_prompt_audit.py` | ✅ 2026-08-24: the corpus's 14 longest prompts/options (up to 343 chars) ALL render fully on the device — tails and every option verified by OCR (`prompt-audit-1787621901` + `cronenberg-recheck`). Required wiring TIDBITS_QUESTION on tvOS (was iOS-only). |
 | Picture-image liveness, corpus-wide | `tools/audit_picture_images.py` (8 polite chunks) | ✅ COMPLETE 2026-08-24: **5,715/5,715 URLs verified live, 0 unverified** — from 5,721 originals: 6 rows tombstoned via genguard (Commons file gone, no free replacement), 2 repointed to live Commons portraits (Heyer, Selena), every repair shipped in both copies + device-regressed on the final build incl. the Selena repoint rendering a real photo (`imgchunk-0..8.json`, `picture-round-final-*`, `selena-verify-*`) |
-| Rolling named-scenario health regression | `roll1-*` re-runs on the current build | ✅ TWENTY consecutive full laps green (roll2–roll21, ~22+ hours of continuous rotation) — all 12 named scenarios each lap; the CHROME MULTIPLAYER LOOP has passed THIRTEEN times as the lap-closer (pass #8 took three attempts — the two aborted runs surfaced F-008/F-009/F-010 and verified the F-008 fix; the official run went first-press clean with the QADBG overlay armed) (real browser joins, same question both screens, answer counted, reveal + points back in Chrome; passes #3–#7 also asserted the F-006 invariant). Pass #7 additionally exercised the RECONNECT path: Chrome discarded the background tab mid-night, the reload landed on the prefilled join form (live.js keeps `joined` in memory by design), and ONE tap rejoined straight into the in-progress question with score intact via the persistent anon uid. Enhancement candidate (owner call, not a bug): auto-rejoin on load when sessionStorage says the player was joined |
+| Rolling named-scenario health regression | `roll1-*` re-runs on the current build | ✅ TWENTY-ONE consecutive full laps green (roll2–roll22, ~23+ hours of continuous rotation) — all 12 named scenarios each lap; the CHROME MULTIPLAYER LOOP has passed FOURTEEN times as the lap-closer (pass #14 also caught corpus finding F-011 live) (pass #8 took three attempts — the two aborted runs surfaced F-008/F-009/F-010 and verified the F-008 fix; the official run went first-press clean with the QADBG overlay armed) (real browser joins, same question both screens, answer counted, reveal + points back in Chrome; passes #3–#7 also asserted the F-006 invariant). Pass #7 additionally exercised the RECONNECT path: Chrome discarded the background tab mid-night, the reload landed on the prefilled join form (live.js keeps `joined` in memory by design), and ONE tap rejoined straight into the in-progress question with score intact via the persistent anon uid. Enhancement candidate (owner call, not a bug): auto-rejoin on load when sessionStorage says the player was joined |
 | Focus-storm walks (Settings + Records, presses incl. select/menu) | pyatv press storms during atv_run | ✅ 2026-08-24: Home, Settings, Records all survive 12-press storms incl. select+menu; menu dismisses correctly everywhere (`home-press-storm-*`, `settings-focus-walk-*`, `records-focus-walk-*`) |
 | Reveal explanations on the glass (the learn-something promise) | `tools/atv_reveal_audit.py` — 6 date-seeded rows to REVEAL | ✅ 2026-08-24: 12/12 across two seeds — explanation tails (up to 208ch) OCR-verified on the device reveal (`reveal-audit-1787624316`, `reveal-audit-1787626302`) |
 | Random-picture on-device render (AsyncImage path, arbitrary rows) | `atv_run --luma` over 8 date-seeded random rows | ✅ 2026-08-24: 16/16 across two date-seeded batches — real photos on the glass (luma-gated) on the pruned build + picture-round regression green (`randpic-1..8`, `randpic2-1..8`, `picture-round-postprune-*`) |
@@ -335,6 +335,23 @@ re-run of the same scenario on the device.
   ("1 answered"), host restarted on the same code, the UNTOUCHED tab showed
   the new session's Q1 as answerable and its answer counted ("1 answered"
   frames f010-s1/s2-*). tvOS + Android Kotlin + Windows Core builds green.
+
+- **F-011** (2026-08-25) — OPEN, corpus correctness (found by Chrome pass
+  #14, served live). *A superlative row ships a factually WRONG answer*:
+  `sup:P2043:825187014442` "Which one below has the greatest length?" marks
+  **Tokay gecko** (a ~35 cm lizard) correct over **Humpback whale**, with
+  the reveal claiming "Tokay gecko has the greatest length of the four
+  (152 m)" — the gecko's Wikidata P2043 value is 152 (centimetres) but
+  `gen_facts2.py`'s superlative family compares raw values as if
+  same-unit; its P2043 bounds (0.1, 1.2e7) span river-km to animal-cm and
+  catch nothing. gen_numeric already documents this exact corruption class
+  and gates P2043 to rivers for it; the sup: family (616 sup:P2043 rows)
+  has no such gate. Fix direction (next tick): audit every sup:P2043 row's
+  member values from the fact table for unit coherence, tombstone the
+  incoherent ones (or the family, per the gen_numeric population
+  precedent: a wrong answer is worse than none), fix the generator's gate,
+  resync + sw.js CACHE bump + glass-verify. Check sibling sup: families
+  (P2048 height 14 rows; P2044/P2046/P1082 are geo/count and likely safe).
 
 Standing loop prompt: work this playbook top to bottom — highest-risk first
 (A-row mechanics, C-row multiplayer), one meaty batch per tick (multiple

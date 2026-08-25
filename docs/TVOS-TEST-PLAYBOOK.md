@@ -154,7 +154,7 @@ after a re-run on the device.
 | D2 | Records empty state (degenerate) | fresh install, no seed | ✅ 2026-08-24 (clean install: "No games yet / Play a round and your scores…" on glass; `records-empty-*`) |
 | D3 | Game history drill-in (answer detail) | presses from records | ✅ 2026-08-24 (real remote presses opened a played game's detail — incl. the honest legacy no-per-question-history state; `records-drillin-*`) |
 | D4 | Sign in with Apple (button focusable + fires) | Settings → presses; the Form-swallows-tap trap | 🚧 rendered on glass w/ Delete Account (`settings-1787603822`); focus+fire walk ⬜ |
-| D5 | Sync: a game played on tvOS shows on iOS | cross-device check | ⬜ |
+| D5 | Sync: a game played on tvOS shows on iOS | cross-device check | 🚧 OWNER check remains for CloudKit records sync; the SHARE backend's cross-device path is proven (a TV-created quiz fetched + saved on the iPhone sim via its share id — `ios-f005-check2.png`) |
 
 ### E. Create / Club / other surfaces
 
@@ -240,7 +240,10 @@ re-run of the same scenario on the device.
   picker (`b8-shared-quiz-*` — a false pass on the word 'quiz' initially hid
   it; frame-verification caught it). Fixed with the iOS keep-on-arrival
   behavior on both platforms; tvOS device-verified (`b8-shared-quiz2-*`
-  opens the quiz detail), macOS destination builds green. One level deeper
+  opens the quiz detail), macOS destination builds green; iOS regression-
+  checked on the sim — the incoming sheet saves-and-offers-to-play the
+  TV-created quiz (`ios-f005-check2.png`; note the iOS ENV hook is
+  view-scoped: probe with TIDBITS_TAB=create). One level deeper
   than F-003's class: hook → store ✓, store → view ✗.
 
 ## §4 The autonomous loop (multi-session)

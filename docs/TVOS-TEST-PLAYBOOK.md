@@ -143,8 +143,8 @@ after a re-run on the device.
 | C2 | Quick Match: sheet + search + bot fallback | `--scenario quickmatch-full` | ✅ 2026-08-24 — both states on glass: GC-suppressed shows the honest sign-in gate; GC-enabled opens the native GameKit matchmaker signed in as the owner, Automatch/Invite/Start ready (`quickmatch-gc-*`). A live stranger automatch needs a second human — owner check |
 | C3 | Quick Match vs REAL cross-platform opponent | n/a on tvOS — per-ecosystem by design (Decision: Apple=GameKit; the Firebase `queue/mixed` quick match is web/Android). The cross-platform plane that includes tvOS is Trivia Night — proven in C5 |
 | C4 | Trivia Night: host lobby code + QR | `--scenario night-host` | ✅ 2026-08-24 (SCAN TO JOIN lobby on glass, post-F-002 build) |
-| C5 | Trivia Night: cross-platform player joins + full night | `--scenario night-join-crossplatform` (tools/rtdb_join.py) | ✅ join leg 2026-08-24 (TV count 1→0 tracks the scripted Firebase player; `night-join-crossplatform` latest); full-night Q&A leg ⬜ |
-| C6 | Join a game by code (player side) | TIDBITS hooks / presses | ⬜ |
+| C5 | Trivia Night: cross-platform player joins + full night | scripted RTDB joiner + REAL Chrome web client | ✅ FULL GAME LOOP 2026-08-25: the shipped web app in a real Chrome instance joined the TV-hosted room via tidbitstrivia.com/#/live/QATV ("YOU'RE IN"), the TV counted it ("1 in the room"), the night started with the SAME question on both screens, Chrome's answer bumped the TV to "1 answered", and the TV's reveal propagated back green to Chrome. Evidence: `chrome-join-host-*`, `chrome-join-now.png`, `chrome-night-started.png`, `chrome-answered.png`, `chrome-reveal.png` + Chrome screenshots. Scripted joiner legs also green (10 runs) |
+| C6 | Join a game by code (player side) | web join UI | ✅ 2026-08-25 (the deep link prefilled QATV; team-name + Join flow worked in a real browser — the exact flow a phone player uses) |
 | C7 | Tidbits Live event join | LiveJoinView | ⬜ |
 | C8 | Wire parity goldens still pass (Core) | logic tests + `run_golden` | ✅ 2026-08-24 (158 tests / 21 suites green on macOS destination after F-003c import fix) |
 

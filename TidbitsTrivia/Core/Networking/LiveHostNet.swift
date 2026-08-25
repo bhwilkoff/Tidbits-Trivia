@@ -30,6 +30,12 @@ final class LiveHostNet {
     }
     struct Joined: Identifiable, Hashable { let id: String; let name: String; let score: Int }
 
+    /// F-006: rules deny the host deleting other uids' answer nodes, so a
+    /// reused room code cannot have its stale ledger cleared server-side.
+    /// Instead the host IGNORES answers written before this session opened —
+    /// which protects both the answered-count and reveal scoring.
+    private var sessionStartMS: Int = 0
+
     private var streamTasks: [Task<Void, Never>] = []
     private var answersTask: Task<Void, Never>?
     private var currentQid = ""
@@ -42,6 +48,7 @@ final class LiveHostNet {
     func open(name: String, venue: String = "") async -> String? {
         do {
             let host = try await db.ensureAuth()
+            sessionStartMS = Self.nowMS()
             // TIDBITS_LIVE_CODE pins a known code for deterministic device/CI testing.
             let code = ProcessInfo.processInfo.environment["TIDBITS_LIVE_CODE"] ?? FirebaseRTDB.newRoomCode()
             let meta = LiveRoom.Meta(host: host, createdAt: Self.nowMS(), name: name,
@@ -160,6 +167,9 @@ final class LiveHostNet {
     private func applyAnswers(_ ev: FirebaseRTDB.StreamEvent, qid: String) {
         guard qid == currentQid else { return }
         Self.merge(ev, into: &answers, as: LiveRoom.Answer.self)
+        // Drop pre-session answers (see sessionStartMS). A missing ts is kept:
+        // only provably-stale entries are excluded.
+        answers = answers.filter { $0.value.ts >= sessionStartMS }
     }
 
     /// Fold an RTDB SSE event into a `[uid: T]` dict. Path "/" replaces the whole

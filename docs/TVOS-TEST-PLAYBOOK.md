@@ -115,7 +115,7 @@ after a re-run on the device.
 | A16 | Every category × classic (9 cats) | autoplay `classic:<cat>` sweep | ✅ 9/9 2026-08-24 (all categories to results; arts `cat-arts3-*`: 10/10 Classic • Arts & Lit) |
 | A17 | Reveal correctness (right marked right) | AUTOPILOT_CORRECT + OCR score | ✅ 2026-08-24 (reveal shows 'Nice — you knew it' + explanation; results 100% accuracy) |
 | A18 | Wrong/timeout outcomes (degenerate) | PLAYTHROUGH_STYLE=wrong/timeout | ✅ 2026-08-24 — wrong leg (2/10 + facts-to-review; `degenerate-wrong-*`) AND timeout leg (untouched Time Attack self-advances to an honest 0/0, 0% results screen; `timeout-leg2-*`) |
-| A19 | Round comes up short / empty (degenerate) | forced thin category | 🚧 zero-answer outcome renders honestly (timeout-leg2 0/0); thin-category short-round leg ⬜ |
+| A19 | Round comes up short / empty (degenerate) | forced thin category | ✅ 2026-08-24 — zero-answer outcome honest (`timeout-leg2-*` 0/0) AND the thinnest mode×category combo probed (pictureId:business) fills a complete 10-question round to results (`a19-thin-combo-*`); truly-unfillable combos are marked in the Customize picker before commit |
 | A20 | Resume-after-quit mid-game | kill app mid-round, relaunch | ✅ 2026-08-24 (kill mid-round → clean relaunch to Home, no corruption/crash; `resume-probe.png`. Mid-round resume is not a shipped tvOS feature — parity question noted, not invented) |
 | A21 | Explanation on reveal renders | OCR reveal frames | ✅ 2026-08-24 (explanation text OCR'd on reveal frame shot-0001) |
 | A22 | Focus never traps in a round | remote-press probes | ✅ 2026-08-24 (10-press directional storm mid-round via pyatv: game stayed on its question, no exit/strand; `a22-focus-storm-*`) |

@@ -334,7 +334,10 @@ def main():
                 distract = [subj[m[0]][0] for m in ranked[1:]]
                 rid = f"sup:{prop}:{_h(prop, *sorted(m[0] for m in grp)) % (10**12)}"
                 stem = stems[_h(rid) % len(stems)]
-                expl = f"{wt} has the greatest {dim} of the four ({fmt_val(a, unit_of.get(prop) or '')})."
+                # P2043 geography values are the KILOMETRE figure mislabelled
+                # 'm' at the source (same mislabel gen_numeric documents).
+                sup_unit = "km" if prop == "P2043" else (unit_of.get(prop) or "")
+                expl = f"{wt} has the greatest {dim} of the four ({fmt_val(a, sup_unit)})."
                 if finalize(rid, stem, wt, distract, wcat,
                             nudge(difficulty(wqr), +1), expl, wt):
                     bump("superlative")

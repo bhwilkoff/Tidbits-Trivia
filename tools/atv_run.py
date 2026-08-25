@@ -35,7 +35,9 @@ BASE_ENV = {"TIDBITS_SKIP_ONBOARD": "1", "TIDBITS_NO_GAMECENTER": "1"}
 # Strings that must NEVER appear on the glass in a healthy run. Extend as
 # findings land — every user-visible error string the app can render belongs
 # here unless a scenario is specifically ABOUT that error.
-FORBID_DEFAULT = r"No questions|Couldn.t load|Something went wrong|failed to|Error|couldn.t be"
+# Word-bound: bare "Error" matched inside "terrorists" in a question prompt
+# and failed a healthy run. Question CONTENT can contain any substring.
+FORBID_DEFAULT = r"No questions|Couldn.t load|Something went wrong|failed to|\berror\b|couldn.t be"
 
 # ── Scenario table ─────────────────────────────────────────────────────────────
 # expect_any:  regex must match some frame's OCR text (anywhere).

@@ -188,6 +188,7 @@ after a re-run on the device.
 |---|---|---|
 | Longest-prompt legibility on the glass | `tools/atv_prompt_audit.py` | ✅ 2026-08-24: the corpus's 14 longest prompts/options (up to 343 chars) ALL render fully on the device — tails and every option verified by OCR (`prompt-audit-1787621901` + `cronenberg-recheck`). Required wiring TIDBITS_QUESTION on tvOS (was iOS-only). |
 | Picture-image liveness, corpus-wide | `tools/audit_picture_images.py` | 🚧 running — all 5,721 Commons URLs HEAD-checked with a real UA |
+| Round-quality sweep, 200 games / 3,261 questions | `tools/analyze_play_sweep.py` over TIDBITS_PLAY_SWEEP=200 (shared-Core assembly, iPhone sim host) | ✅ 2026-08-24: every mode delivers its exact round length (stake 5–8 = chip mechanic; survival 99 cap), zero duplicate options, zero player-visible repeats (same prompt+options), zero empty fields, every answer present in its options. `build/qa/play-sweep.jsonl` |
 
 ## §3 Findings log (append-only: found → root cause → fix → re-verified)
 

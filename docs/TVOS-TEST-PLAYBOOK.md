@@ -336,22 +336,25 @@ re-run of the same scenario on the device.
   the new session's Q1 as answerable and its answer counted ("1 answered"
   frames f010-s1/s2-*). tvOS + Android Kotlin + Windows Core builds green.
 
-- **F-011** (2026-08-25) — OPEN, corpus correctness (found by Chrome pass
-  #14, served live). *A superlative row ships a factually WRONG answer*:
-  `sup:P2043:825187014442` "Which one below has the greatest length?" marks
-  **Tokay gecko** (a ~35 cm lizard) correct over **Humpback whale**, with
-  the reveal claiming "Tokay gecko has the greatest length of the four
-  (152 m)" — the gecko's Wikidata P2043 value is 152 (centimetres) but
-  `gen_facts2.py`'s superlative family compares raw values as if
-  same-unit; its P2043 bounds (0.1, 1.2e7) span river-km to animal-cm and
-  catch nothing. gen_numeric already documents this exact corruption class
-  and gates P2043 to rivers for it; the sup: family (616 sup:P2043 rows)
-  has no such gate. Fix direction (next tick): audit every sup:P2043 row's
-  member values from the fact table for unit coherence, tombstone the
-  incoherent ones (or the family, per the gen_numeric population
-  precedent: a wrong answer is worse than none), fix the generator's gate,
-  resync + sw.js CACHE bump + glass-verify. Check sibling sup: families
-  (P2048 height 14 rows; P2044/P2046/P1082 are geo/count and likely safe).
+- **F-011** (2026-08-25) — CLOSED same day (corpus + generator,
+  glass-verified). *A superlative row shipped a factually WRONG answer*:
+  "Which one below has the greatest length?" crowned a Tokay gecko (stored
+  152 — centimetres — labeled 'm') over a humpback whale (16 m).
+  Source audit of the fact table: P2043 outside geography mixes units per
+  ENTRY (animal cm/m, car mm, plane ??, asteroid km — all labeled 'm');
+  geography lengths are km-coherent. Root cause: `gen_facts2.py`'s
+  SUP_KEEP gate map simply had NO P2043 entry, so every category was
+  admitted where the sibling families were geography-gated. Fix:
+  **348 rows tombstoned + pruned** (science 296, mixed-category 48,
+  unknown 4) with the reason recorded in tombstones.json; **268 geography
+  rows kept**; the generator gained the missing geography gate; all 14
+  sup:P2048 height rows audited value-by-value and coherent (kept). Tail
+  fix in the same pass: the surviving reveals printed the km figure as
+  "m" ("Malaita … (160 m)") — generator now formats P2043 superlatives as
+  km and `fix_sup_length_units.py` repaired the 76 shipped small-value
+  rows. Two full resyncs green (quality gates + Apple==web Daily golden),
+  sw.js CACHE v61→v62, Pages deploys green, rebuilt + installed, and the
+  Malaita row glass-verified reading "(160 km)" (run f011-glass2).
 
 Standing loop prompt: work this playbook top to bottom — highest-risk first
 (A-row mechanics, C-row multiplayer), one meaty batch per tick (multiple

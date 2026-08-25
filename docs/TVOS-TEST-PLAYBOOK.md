@@ -293,6 +293,27 @@ re-run of the same scenario on the device.
   geo/person and already covered by the conservative script's head-noun
   rule; only the river gate had the bare-name class.
 
+- **F-008** (2026-08-25) — OPEN, F-006's sibling on the SCORES ledger.
+  Chrome pass #8's fresh night showed **ChromeBot with 7 points in
+  STANDINGS during Q1, before any reveal** — the score written by pass #7's
+  correct answer persisted under `live/QATV/scores/` and a reused room code
+  displays it in the next session. F-006's fix filters stale ANSWERS by
+  `sessionStartMS`; the scores node needs the same treatment (and scores are
+  host-written, so a clear-on-open may be allowed by rules where deleting
+  answers was not). Same limited player impact (needs code reuse), same fix
+  location (`LiveHostNet`).
+
+- **F-009** (2026-08-25) — OPEN, investigating. During pass #8 on the fresh
+  1.6.76 build, the host stopped acting on SELECT at the question screen:
+  five companion `select` commands (rc=0) on the visibly focused Reveal
+  button, plus one on Lock, produced no state change, while LEFT/RIGHT moved
+  focus normally (frames chrome-loop8-reveal3/focustest/locktest). The same
+  session's earlier select DID start the night from the lobby, and passes
+  #3–#7 revealed fine — so either a companion-HID select-channel degradation
+  (select and directional ride different paths) or an app-side press-handler
+  wedge. Device rebooted; next: re-run the full Chrome pass — if select
+  works post-reboot, tag this harness-class (reboot cures), not app bug.
+
 Standing loop prompt: work this playbook top to bottom — highest-risk first
 (A-row mechanics, C-row multiplayer), one meaty batch per tick (multiple
 scenarios, or one finding root-caused AND fixed AND re-verified). Every tick:

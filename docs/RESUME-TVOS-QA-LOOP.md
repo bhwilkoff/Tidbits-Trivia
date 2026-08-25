@@ -46,6 +46,19 @@ submission delete/create fine each time). Retry tomorrow
 (`gh workflow run windows-store.yml -f submit=true -f commit=true`) or
 pin an older msstore CLI in microsoft/microsoft-store-apppublisher.
 
+## RESHAPE (owner, 2026-08-25 ~17:50)
+
+"Are we actually doing something new in each lap?" — repetition hit
+diminishing returns after 22 green laps. Each tick is now THIN smoke
+(3 rotating scenarios; full 12 only after a code change) + ONE DEPTH
+PROBE from the backlog: P1 full-night Chrome playthrough (all 15
+questions to the ended screen; screenshot each new web format), P2 two
+simultaneous browser players, P3 reveal stress-run (F-009), P4
+proactive fact-table audits of sibling generator families (chron:,
+closest bounds, enumerate) via the F-011 technique. Today's finds came
+from VARIATION (F-006/8/10 host-restart, F-007/11 random content), not
+lap repetition — the probes chase that.
+
 ## The per-tick loop shape
 
 ```bash

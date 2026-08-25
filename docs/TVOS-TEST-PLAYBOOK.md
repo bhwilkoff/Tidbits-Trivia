@@ -166,7 +166,7 @@ after a re-run on the device.
 | E2 | Create → share QR renders | TIDBITS_TV_SHARE=1 | ✅ 2026-08-24 (QR drawn — luma 99.6 — with 'Scan to play on your phone' + the live share URL; `e2-share-qr-*`) |
 | E3 | Club paywall (products or honest empty) | `--scenario paywall` | ✅ 2026-08-24 (all 3 real products w/ prices $79.99/$29.99/$3.99 on glass; `paywall-1787603899`) |
 | E4 | Club hub + gated features (CLUB=1) | TIDBITS_CLUB_HUB=1 + TIDBITS_CLUB=1 | ✅ hub 2026-08-24 (member state + feature list; `club-hub-*`) |
-| E5 | Expeditions (map, stage, certificate) | EXPEDITION hooks | ✅ FULL LIFECYCLE 2026-08-24 — list, map, all 7 stages passed and persisted, completion + certificate state ("Completed — play again for another certificate"; `e5-cert2-*`) |
+| E5 | Expeditions (map, stage, certificate) | EXPEDITION hooks | ✅ FULL LIFECYCLE 2026-08-24 — 20th Century: list, map, all 7 stages, completion+certificate (`e5-cert2-*`); Around the World: map + stage-1 pass/unlock too (`exp2-map-*`, `exp2-stage-*`) |
 | E6 | Link Wall (win + lose) | LINKWALL + LINKWALL_AUTOPLAY | ✅ 2026-08-24 both legs — win (`linkwall-win-*`: SOLVED + reveal) and lose on the post-clean-install fresh board (`linkwall-lose3-*`: NEXT TIME reveal of all four groups) |
 | E7 | Knowledge Atlas | TIDBITS_ATLAS=1 + CLUB=1 | ✅ 2026-08-24 (real Atlas incl. honest not-enough-history empty state; `atlas2-*`) |
 | E8 | Story Archive | TIDBITS_STORY_ARCHIVE=1 | ✅ 2026-08-24 (archive w/ domain + favorites/missed filters; `story2-*`) |

@@ -16,6 +16,7 @@ UA = "TidbitsTrivia-QA/1.0 (https://tidbitstrivia.com; contact via site)"
 OUT = next((a.split("=",1)[1] for a in sys.argv if a.startswith("--out=")),
            "build/qa/picture-image-audit.json")
 LIMIT = next((int(a.split("=",1)[1]) for a in sys.argv if a.startswith("--limit=")), None)
+OFFSET = next((int(a.split("=",1)[1]) for a in sys.argv if a.startswith("--offset=")), 0)
 
 
 def check(row):
@@ -39,8 +40,7 @@ def check(row):
 
 def main():
     qs = json.load(open("assets/picture.json"))["questions"]
-    if LIMIT:
-        qs = qs[:LIMIT]
+    qs = qs[OFFSET:OFFSET + LIMIT] if LIMIT else qs[OFFSET:]
     print(f"[audit] {len(qs)} picture URLs")
     bad, unknown, done = [], [], 0
     t0 = time.time()

@@ -30,6 +30,12 @@ for d in sorted(root.iterdir()):
     if "error" in r:   # a crash-proof report from a runner failure
         rows.append((d.name, "⚠ runner error", r["error"][:60]))
         continue
+    if "assertions" not in r:
+        # A depth-audit report ({"checked": N, "fails": [...]}) shares the dir.
+        fl = r.get("fails", [])
+        rows.append((d.name, "✅" if not fl else f"❌ {len(fl)} fails",
+                     f"audit, {r.get('checked','?')} checked"))
+        continue
     fails = [k for k, v in r["assertions"].items() if not v["pass"]]
     rows.append((d.name, "✅" if not fails else "❌ " + ",".join(fails),
                  f"{shots} frames"))

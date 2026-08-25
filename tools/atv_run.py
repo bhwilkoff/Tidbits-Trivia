@@ -71,8 +71,11 @@ SCENARIOS = {
              "(center luminance stddev), not a placeholder or blank."),
     "daily": dict(
         env={"TIDBITS_AUTOPLAY": "daily:mixed", "TIDBITS_AUTOPILOT": "1"},
-        minutes=1.2, expect_any=r"DAILY|Daily|\d+/\d+",
-        expect_end=r"ACCURACY|Play Again|streak|CORRECT",
+        # The daily's in-round glass shows neither the word "Daily" nor N/M
+        # chrome (caught by a healthy run failing the old regex on 08-25);
+        # the results' streak line is the reliable signature.
+        minutes=1.2, expect_any=r"day streak|DAILY|Daily",
+        expect_end=r"day streak|ACCURACY|Play Again|CORRECT",
         note="Daily Tidbit plays to completion."),
     "versus-cpu": dict(
         # Tight assertions: the first run of this scenario false-passed by

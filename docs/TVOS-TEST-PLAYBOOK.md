@@ -321,17 +321,20 @@ re-run of the same scenario on the device.
   the FIRST companion select after idle is often dropped (lobby Start
   regularly needs one retry) — retry once before investigating.
 
-- **F-010** (2026-08-25) — OPEN, web-client sibling of F-006. *A web player
-  who stays on the page across a host session restart is blocked from
-  answering*: `js/live.js` keys its submitted state by qid alone
-  (`submittedQid`/`chosen` in memory), and positional qids (r0q0…) collide
-  across sessions — after the host restarted the night on the same code,
-  the client showed "Locked in — waiting for the reveal" on the NEW
-  session's Q1 with the OLD chosen option highlighted, and would not accept
-  an answer. The HOST correctly showed "0 answered" (F-006 filter). A
-  reload + one-tap rejoin recovers. Fix candidate: key submission state by
-  the session (meta.createdAt) + qid, resetting when the session changes;
-  audit the iOS/Android/Windows join clients for the same qid-only keying.
+- **F-010** (2026-08-25) — CLOSED same day (four-platform fix,
+  browser+device verified). *A player still connected across a host
+  session restart was blocked from answering*: ALL FOUR join clients (web
+  `js/live.js`, Apple `LivePlayerClient.swift`, Android `LiveRoom.kt`,
+  Windows `LivePlayerClient.cs`) keyed submitted state by qid alone, and
+  positional qids (r0q0…) collide across sessions — the client showed
+  "Locked in — waiting for the reveal" on the NEW session's Q1 with the OLD
+  chosen option highlighted. Fix: `meta.createdAt` is the session identity;
+  every client resets `submittedQid`/`chosen` (+ web tally counters) when
+  it changes (Android's `LiveMeta` gained the `createdAt` field). Verified
+  live on the deployed web app: joined, answered session 1's Q1
+  ("1 answered"), host restarted on the same code, the UNTOUCHED tab showed
+  the new session's Q1 as answerable and its answer counted ("1 answered"
+  frames f010-s1/s2-*). tvOS + Android Kotlin + Windows Core builds green.
 
 Standing loop prompt: work this playbook top to bottom — highest-risk first
 (A-row mechanics, C-row multiplayer), one meaty batch per tick (multiple

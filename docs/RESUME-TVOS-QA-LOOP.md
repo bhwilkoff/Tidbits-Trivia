@@ -21,8 +21,9 @@ campaign summary at top, §2 inventory, §2b depth audits, §3 findings log.
   --minutes 1.3`), quickmatch, records, settings, create, paywall — then the
   lap-closing **Chrome multiplayer loop** (below), passed 8×. Host the night WITH
   --env TIDBITS_QA_OVERLAY=1 (QADBG counter diagnoses F-009); first select
-  after idle often drops — retry once. Open: F-009 (intermittent, armed),
-  F-010 (web client keeps qid-keyed answer state across a host restart).
+  after idle often drops — retry once. Open: only F-009 (intermittent,
+  QADBG overlay armed). F-010 closed: all four join clients reset answer
+  state on a meta.createdAt change — verified live in Chrome.
 - Every tick commits + pushes (`git pull --rebase` first — the dailyboard
   cron races).
 - **Open findings: NONE.** F-007 closed 2026-08-25 (river articles: generator +

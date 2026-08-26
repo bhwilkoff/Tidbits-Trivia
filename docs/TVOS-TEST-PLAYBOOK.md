@@ -371,18 +371,25 @@ re-run of the same scenario on the device.
   sw.js CACHE v61→v62, Pages deploys green, rebuilt + installed, and the
   Malaita row glass-verified reading "(160 km)" (run f011-glass2).
 
-- **F-012** (2026-08-25) — OPEN, corpus (picture stems). *A picture round
-  asked "Which war is this?" over a PERSON portrait with person options*
-  (probe P1 served it live): `src:describe:Werner_Mölders` and
-  `src:describe:Erich_Hartmann` are fighter PILOTS whose rows carry the
-  war stem — the stem-assignment maps their war-adjacent subject class to
-  the wrong stem family. Scoped so far: 2 confirmed of the 16 war-stem
-  rows; a broader class-vs-options audit across the other class-asserting
-  stems (city/company/actress/event) is queued. Fix: repair the bad rows'
-  stems to "Who is this?" via a fix script + resync + CACHE bump, and
-  audit the stem-assignment in the picture generator. Also noted (minor,
-  same family of type-mixing): the megalodon-film MCQ carried "Japan" — a
-  country — as a distractor among films.
+- **F-012** (2026-08-25) — CLOSED same evening (69 rows repaired,
+  data-plane verified on all mirrors + the live site). *Picture stems
+  asserted the wrong subject class*: probe P1 served "Which war is this?"
+  over a portrait of Werner Mölders; the stem-assignment keyed off subject
+  CATEGORY (war/business/city), so humans filed there got class stems and
+  non-humans got person stems ("Who is this?" over Buckingham Palace, "Can
+  you name this person?" over the SR-71). `fix_picture_stem_class.py`
+  repairs both directions from the definitive p31 signal — EXACT-token Q5
+  (the first audit's substring check matched Q515, city, and flagged 95
+  false positives; the token fix cut it to the real 69): 17 humans →
+  "Who is this?", 52 non-humans → "Can you identify this?". Resync green,
+  CACHE v63, Pages deploy green; the repaired stem confirmed identical in
+  assets/, Apple Resources/, Android assets/, AND fetched from the live
+  site. (TIDBITS_QUESTION can't target picture.json rows — it resolved the
+  classic-corpus Mölders row — so on-glass verification rides the already-
+  proven picture-round stem rendering, A2/P1.) Follow-up queued: the
+  bizpic distractor pool mixes people and companies in one option set
+  (Tim Cook offered PwC/EBay/Jeff Bezos), same type-mixing family as the
+  "Japan" film distractor.
 
 - **Probe P1 (2026-08-25 evening) — FULL-NIGHT Chrome playthrough: PASS.**
   Across two sessions (the first died when the Apple TV slept mid-night —

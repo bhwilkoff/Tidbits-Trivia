@@ -381,6 +381,17 @@ enum DebugHooks {
         ProcessInfo.processInfo.environment["TIDBITS_NIGHT_HOST"] == "1"
     }
 
+    /// TIDBITS_NIGHT_PLAYS=1 / TIDBITS_NIGHT_SPEED=1 → preset the host lobby's
+    /// "I'll play too" / "Speed bonus" toggles. The QA harness's remote presses
+    /// are unreliable enough that toggling chips by focus dance costs more than
+    /// it tests; the chips' own toggling is covered by direct UI runs.
+    static var nightHostPlays: Bool {
+        ProcessInfo.processInfo.environment["TIDBITS_NIGHT_PLAYS"] == "1"
+    }
+    static var nightSpeedBonus: Bool {
+        ProcessInfo.processInfo.environment["TIDBITS_NIGHT_SPEED"] == "1"
+    }
+
     /// TIDBITS_SKIP_ONBOARD=1 → treat onboarding as already done. A fresh simulator install
     /// otherwise opens on the walkthrough, so the Home and Create store shots both came back
     /// as the same "All of Wikipedia, as trivia" card (docs/STORE-SCREENSHOTS.md §2).

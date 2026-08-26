@@ -51,6 +51,8 @@ final class LiveNightHost {
         self.plan = plan
         self.category = category
         self.title = title
+        if DebugHooks.nightHostPlays { hostPlays = true }
+        if DebugHooks.nightSpeedBonus { speedBonus = true }
     }
 
     // MARK: Read-model the host UI observes

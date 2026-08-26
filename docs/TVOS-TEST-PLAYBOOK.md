@@ -500,6 +500,22 @@ re-run of the same scenario on the device.
   DAILY (7 questions, short timers, streak flame chip, results recorded
   822 with the played round in Records).
 
+- **Probe P7 (2026-08-25 late) — corpus-wide stem-class audit: 29 rows
+  tombstoned.** Extended the F-012 p31 technique to eight class-asserting
+  stem families across ALL 34k+ matched corpus MCQs (person / country /
+  city / company / film / album / band / river). After killing audit
+  artifacts (display-title vs subject-title divergence, "country star"
+  genre matches, "River Plate", deities legitimately answering "who"),
+  two real classes remained: **28 cloze rows whose prompt describes a
+  PERSON but whose answer is the source ARTICLE title** ("this Soviet
+  cosmonaut became the first woman in space" → "Ally McBeal"; "greatest
+  female fighters ever" → "Tampa, Florida") — the cloze generator
+  misattributed person-describing passages to the article subject — and
+  the **rel:P176 "Which company manufactures Buckingham Palace?" →
+  "William IV"** row (92 of 93 P176 rows are fine). All 29 tombstoned +
+  pruned; resync green, CACHE v68. Remaining stem families' disagreement
+  counts were fully explained by artifacts — no further repairs needed.
+
 Standing loop prompt: work this playbook top to bottom — highest-risk first
 (A-row mechanics, C-row multiplayer), one meaty batch per tick (multiple
 scenarios, or one finding root-caused AND fixed AND re-verified). Every tick:

@@ -1356,7 +1356,6 @@ src:describe:Sarcoma
 src:cloze:Sarcoma
 src:describe:Larry_King
 src:describe:Coronation_Street
-src:cloze:Coronation_Street
 src:describe:Sarah_Brightman
 src:describe:Markiplier
 src:describe:Stephen_Hillenburg
@@ -1383,7 +1382,6 @@ src:describe:Pussy_Riot
 src:cloze:Pussy_Riot
 src:describe:Amazing_Grace
 src:cloze:Amazing_Grace
-src:cloze:Gospel_of_Mark
 src:describe:Book_of_Mormon
 src:describe:Watchmen
 src:describe:Ned_Kelly
@@ -6869,7 +6867,6 @@ src:describe:Mainz
 src:describe:Bonaire
 src:cloze:Bonaire
 src:describe:Valletta
-src:cloze:Tampa,_Florida
 src:describe:Landon_Donovan
 src:cloze:Landon_Donovan
 src:describe:Yogi_Berra
@@ -24663,7 +24660,6 @@ rel:P112:Q217583
 rel:P17:Q1204
 rel:P37:Q1204
 rel:P17:Q42182
-rel:P176:Q42182
 rel:P17:Q83497
 rel:P17:Q724
 rel:P112:Q1418
@@ -51041,14 +51037,11 @@ src:cloze:Elizabeth_Perkins
 src:describe:Alanna_Masterson
 src:describe:Weird:_The_Al_Yankovic_Story
 src:describe:Ally_McBeal
-src:cloze:Ally_McBeal
 src:describe:Kevin_Sorbo
 src:cloze:Kevin_Sorbo
 src:describe:Robert_Forster
 src:describe:Remember_the_Titans
-src:cloze:Remember_the_Titans
 src:describe:Geostorm
-src:cloze:Geostorm
 src:describe:Mars_Attacks!
 src:cloze:Home_Alone_(franchise)
 src:describe:H2O:_Just_Add_Water
@@ -51072,7 +51065,6 @@ src:describe:Koki_Uchiyama
 src:describe:Danai_Gurira
 src:cloze:Danai_Gurira
 src:describe:Bodies_Bodies_Bodies
-src:cloze:Bodies_Bodies_Bodies
 src:describe:Rain_Phoenix
 src:describe:Nancy_Kerrigan
 src:cloze:Nancy_Kerrigan
@@ -51122,7 +51114,6 @@ src:cloze:Mike_Vogel
 src:cloze:Origin_(film)
 src:describe:Dr._Quinn,_Medicine_Woman
 src:describe:Moon_Lovers:_Scarlet_Heart_Ryeo
-src:cloze:Moon_Lovers:_Scarlet_Heart_Ryeo
 src:describe:Huey_Lewis
 src:describe:Andrei_Konchalovsky
 src:describe:Stefanie_Powers
@@ -51192,10 +51183,8 @@ src:cloze:Eddie_Marsan
 src:describe:Melora_Hardin
 src:cloze:Melora_Hardin
 src:describe:Below_Deck_Mediterranean
-src:cloze:Below_Deck_Mediterranean
 src:describe:Shota_Sometani
 src:cloze:Toy_Story_(franchise)
-src:cloze:Roman_Holiday
 src:describe:Will_&_Grace
 src:describe:Carl_Reiner
 src:cloze:Carl_Reiner
@@ -51204,7 +51193,6 @@ src:cloze:Franka_Potente
 src:describe:Gabriel_Iglesias
 src:cloze:Gabriel_Iglesias
 src:describe:IOWA
-src:cloze:IOWA
 src:describe:O_Brother,_Where_Art_Thou?
 src:describe:X-Men:_The_Last_Stand
 src:cloze:First_Man_(film)
@@ -51243,7 +51231,6 @@ src:describe:Tron:_Legacy
 src:describe:After_We_Fell
 src:cloze:After_We_Fell
 src:describe:Rocky_II
-src:cloze:Rocky_II
 src:describe:Amy_Jo_Johnson
 src:cloze:Amy_Jo_Johnson
 src:cloze:Cinderella_(1950_film)
@@ -51252,7 +51239,6 @@ src:describe:Ross_Lynch
 src:cloze:Ross_Lynch
 src:describe:Bramayugam
 src:describe:Steel_Magnolias
-src:cloze:Steel_Magnolias
 src:describe:Erik_Per_Sullivan
 src:cloze:Erik_Per_Sullivan
 src:cloze:A_Bridge_Too_Far_(film)
@@ -51261,7 +51247,6 @@ src:cloze:Arielle_Kebbel
 src:describe:Kim_So-yeon
 src:cloze:Kim_So-yeon
 src:describe:Coming_to_America
-src:cloze:Coming_to_America
 src:describe:Megan_Is_Missing
 src:describe:Nicole_Ari_Parker
 src:cloze:Stargate_(film)
@@ -51297,7 +51282,6 @@ src:describe:Julia_Carpenter
 src:cloze:Julia_Carpenter
 src:describe:Oliver_Hardy
 src:describe:Pasión_de_Gavilanes
-src:cloze:Pasión_de_Gavilanes
 src:describe:Shin_Se-kyung
 src:cloze:Shin_Se-kyung
 src:describe:Evil_Dead_II
@@ -51309,7 +51293,6 @@ src:describe:Spirit:_Stallion_of_the_Cimarron
 src:describe:Trigun
 src:cloze:Trigun
 src:describe:The_Babadook
-src:cloze:The_Babadook
 src:describe:White_Men_Can't_Jump
 src:describe:Wilford_Brimley
 src:cloze:Wilford_Brimley
@@ -51318,7 +51301,6 @@ src:describe:Jonathan_Glazer
 src:cloze:Jonathan_Glazer
 src:describe:The_Kissing_Booth
 src:describe:The_Exorcism_of_Emily_Rose
-src:cloze:The_Exorcism_of_Emily_Rose
 src:describe:Lance_Bass
 src:cloze:Lance_Bass
 src:describe:Justin_Chatwin
@@ -51335,7 +51317,6 @@ src:cloze:Good_Night_(2023_film)
 src:describe:Anna_Sawai
 src:cloze:Anna_Sawai
 src:describe:Dredd
-src:cloze:Dredd
 src:cloze:Anil_Sharma_(director)
 src:describe:Jack_Champion
 src:cloze:Jack_Champion
@@ -55235,11 +55216,9 @@ src:cloze:Park_Güell
 src:describe:Tropics
 src:cloze:Tropics
 src:describe:Lübeck
-src:cloze:Lübeck
 src:cloze:Macedonia_(region)
 src:describe:Siena
 src:describe:Essen
-src:cloze:Essen
 src:describe:Fertile_Crescent
 src:describe:Alsace–Lorraine
 src:describe:Nubia
@@ -55257,7 +55236,6 @@ src:cloze:Yorkshire
 src:describe:Cyclades
 src:cloze:Cyclades
 src:describe:Tijuana
-src:cloze:Tijuana
 src:describe:Tianjin
 src:cloze:Tianjin
 src:describe:Mogadishu
@@ -59250,7 +59228,6 @@ src:cloze:Mary_Elizabeth_Mastrantonio
 src:describe:Florence_and_the_Machine
 src:describe:Inditex
 src:describe:Massive_Attack
-src:cloze:Massive_Attack
 src:describe:Quavo
 src:describe:Bobby_Caldwell
 src:cloze:Bobby_Caldwell
@@ -59258,16 +59235,13 @@ src:describe:Mamamoo
 src:cloze:Mamamoo
 src:describe:Killer_Mike
 src:describe:Otokogumi
-src:cloze:Otokogumi
 src:cloze:Perfume_(Japanese_band)
 src:describe:Tori_Kelly
 src:cloze:Tori_Kelly
 src:describe:Chet_Baker
 src:describe:Fearless_(Taylor's_Version)
-src:cloze:Fearless_(Taylor's_Version)
 src:describe:Diplo
 src:describe:The_Pretenders
-src:cloze:The_Pretenders
 src:cloze:Status_Quo_(band)
 src:describe:Damian_Marley
 src:cloze:Damian_Marley
@@ -61099,7 +61073,6 @@ src:describe:Aleksandr_Dugin
 src:cloze:Aleksandr_Dugin
 src:describe:Mary_Richardson_Kennedy
 src:describe:The_Trial
-src:cloze:The_Trial
 src:describe:Doctor_Doom
 src:cloze:Doctor_Doom
 src:describe:La_bohème
@@ -61120,7 +61093,6 @@ src:describe:Evel_Knievel
 src:describe:Trillion_Game
 src:cloze:Trillion_Game
 src:describe:The_Seven_Husbands_of_Evelyn_Hugo
-src:cloze:The_Seven_Husbands_of_Evelyn_Hugo
 src:cloze:Cyrano_de_Bergerac_(play)
 src:describe:Bohemianism
 src:cloze:Bohemianism
@@ -81208,7 +81180,6 @@ src:cloze:Hope_(2013_film)
 src:cloze:Scoop_(Indian_TV_series)
 src:describe:Battleship_Potemkin
 src:cloze:Battleship_Potemkin
-src:describe:Blippi
 src:cloze:Blippi
 src:describe:Eion_Bailey
 src:cloze:Eion_Bailey

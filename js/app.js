@@ -89,7 +89,10 @@ function render() {
   // Tidbits Live player: #/live or #/live/CODE — a self-managing overlay.
   if (location.hash.startsWith('#/live')) { openLive(location.hash.split('/')[2] || ''); return; }
   closeLive(); // idempotent teardown when the hash leaves #/live
-  if (game) return; // game overlay owns the screen
+  if (game) {
+    if (!game._resultsShown) return; // a LIVE game owns the screen
+    game = null;                     // results yield to URL navigation (F-013)
+  }
   if (location.hash.startsWith('#/profile')) {
     app.innerHTML = `<main class="main">${viewProfile()}</main>`;
     bindProfile(); document.title = 'Tidbits Trivia'; return;
@@ -2428,6 +2431,7 @@ class Game {
       }
     }
     if (this._online) { this._online.reportProgress(this.score, true); this._online.renderStandings(); return; }
+    this._resultsShown = true;   // F-013: from here the URL may reclaim the screen
     renderResults();
   }
   _persist() {

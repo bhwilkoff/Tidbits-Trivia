@@ -488,6 +488,15 @@ re-run of the same scenario on the device.
   (#/records only rendered after a reload) — URL-driven state should win
   per WEB-DESIGN; fresh loads route correctly so player impact is minimal.
 
+- **F-013 fix shipped (2026-08-25 late).** `render()`'s "game overlay owns
+  the screen" guard now releases once `finish()` marks the game
+  results-shown — a LIVE game still holds the screen, results yield to URL
+  navigation. CACHE v67, Pages deploy green, and the deployed js/app.js
+  confirmed to carry the fix (fetched no-store from the live site). The
+  first UI re-verification ran against a page loaded under the v66 cache
+  (SW update raced the tab load) so the on-screen confirmation is queued
+  for the next fresh-load web run; the change is one guarded early-return.
+
 Standing loop prompt: work this playbook top to bottom — highest-risk first
 (A-row mechanics, C-row multiplayer), one meaty batch per tick (multiple
 scenarios, or one finding root-caused AND fixed AND re-verified). Every tick:

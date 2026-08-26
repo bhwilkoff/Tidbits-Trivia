@@ -19,7 +19,7 @@ campaign summary at top, §2 inventory, §2b depth audits, §3 findings log.
   picture-round, daily, night-host, night-join-crossplatform, versus-ace
   (env form: `--env TIDBITS_VERSUS=ace --env TIDBITS_AUTOPILOT=1 --expect Ace
   --minutes 1.3`), quickmatch, records, settings, create, paywall — then the
-  lap-closing **Chrome multiplayer loop** (below), passed 15×. F-011 closed (348 unit-corrupt superlatives tombstoned; geography gate + km reveals; glass-verified). F-009 RESOLVED harness-class (warmed press form: power_state select). F-012 closed (69 stems repaired via p31). Open findings: NONE. Follow-up queue: bizpic mixed-type distractor audit; sibling generator-family audits (P4). Host the night WITH
+  lap-closing **Chrome multiplayer loop** (below), passed 15×. F-011 closed (348 unit-corrupt superlatives tombstoned; geography gate + km reveals; glass-verified). F-009 RESOLVED harness-class (warmed press form: power_state select). F-012 closed (69 stems repaired via p31). Open findings: NONE. Probes P1-P4 ALL COMPLETE (full night, two players, press-path characterization, fact-table audits: 77 chron tombstones, 4 enumerate repairs, 28 bizpic rebuilds, closest sane). CACHE at v66. Host the night WITH
   --env TIDBITS_QA_OVERLAY=1 (QADBG counter diagnoses F-009); first select
   after idle often drops — retry once. Open: only F-009 (intermittent,
   QADBG overlay armed). F-010 closed: all four join clients reset answer

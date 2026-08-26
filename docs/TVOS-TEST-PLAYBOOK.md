@@ -453,6 +453,16 @@ re-run of the same scenario on the device.
   in one option set (AOL offered Sergey Brin; Gatorade offered Zuckerberg
   AND Bezos) — repair queued (same-class distractor rebuild).
 
+- **Probe P4 COMPLETE (2026-08-25 evening).** Final leg: the 28 mixed
+  people/company bizpic option sets rebuilt from same-class pools
+  (deterministic md5 seed + coprime stride so distractors don't cluster
+  alphabetically; answers re-indexed; AOL now offers Southwest/Qualcomm/
+  Nike instead of Sergey Brin). Resync green, CACHE v66. P4 totals:
+  chron 77 tombstoned of 11,221 audited; closest 2,721/2,738 sane
+  (17 benign at-bound); enumerate 4 double-count repairs of 185; bizpic
+  28 rebuilds of 76. All four reshaped probes (P1 full night, P2 two
+  players, P3 press-path, P4 fact audits) are done.
+
 Standing loop prompt: work this playbook top to bottom — highest-risk first
 (A-row mechanics, C-row multiplayer), one meaty batch per tick (multiple
 scenarios, or one finding root-caused AND fixed AND re-verified). Every tick:

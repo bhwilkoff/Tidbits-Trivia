@@ -441,6 +441,18 @@ re-run of the same scenario on the device.
   and legitimate. Remaining P4 legs queued: closest bounds, enumerate
   totals, bizpic mixed-type distractors.
 
+- **Probe P4 part 2 (2026-08-25 evening) — closest + enumerate audits.**
+  closest: 2,721 of 2,738 rows fully sane (answer strictly inside bounds,
+  sane steps); the 17 answer-at-bound rows are benign by construction
+  (2025 deaths at the year cap, Oganesson at 118 — noted, kept).
+  enumerate: 181 of 185 clean (the Africa row's 54 countries verified);
+  4 rows accepted the same string twice WITHIN one answer group ("let it
+  be", "english horn", "wall-e", "seat" — double-countable) — repaired by
+  fix_enum_duplicate_answers.py, resync green, CACHE v65. bizpic
+  distractor audit scoped: 28 of 76 bizpic rows mix PEOPLE and COMPANIES
+  in one option set (AOL offered Sergey Brin; Gatorade offered Zuckerberg
+  AND Bezos) — repair queued (same-class distractor rebuild).
+
 Standing loop prompt: work this playbook top to bottom — highest-risk first
 (A-row mechanics, C-row multiplayer), one meaty batch per tick (multiple
 scenarios, or one finding root-caused AND fixed AND re-verified). Every tick:

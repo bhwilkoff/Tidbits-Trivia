@@ -463,6 +463,19 @@ re-run of the same scenario on the device.
   28 rebuilds of 76. All four reshaped probes (P1 full night, P2 two
   players, P3 press-path, P4 fact audits) are done.
 
+- **Probe P5 (2026-08-25 evening) — host-plays-too + speed bonus: PASS.**
+  New env hooks TIDBITS_NIGHT_PLAYS/TIDBITS_NIGHT_SPEED preset the lobby
+  chips (both read ON with zero presses — added after two ticks lost to
+  the focus dance under press-decay). Verified live: the HOST appears in
+  STANDINGS as its own team; the previously-untested hostAnswer path
+  works (host answered on the TV → "1 answered" with revealed=0, then the
+  web player made it "2 answered"); the reveal speed-scored the two teams
+  DIFFERENTLY (BraveBot 4 vs Host 1) with the crown on the leader. Also
+  characterized: with hostPlays ON the default focus is still the Reveal
+  chip — a bare select reveals, answering requires focusing an option
+  first (matches the design: the host paces the room). Evidence
+  p5c-*.png.
+
 Standing loop prompt: work this playbook top to bottom — highest-risk first
 (A-row mechanics, C-row multiplayer), one meaty batch per tick (multiple
 scenarios, or one finding root-caused AND fixed AND re-verified). Every tick:

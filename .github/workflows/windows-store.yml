@@ -140,6 +140,10 @@ jobs:
       - name: Install the Microsoft Store CLI
         if: ${{ inputs.submit }}
         uses: microsoft/microsoft-store-apppublisher@v1.2
+        with:
+          # v0.4.0/v0.4.1 (2026-08-18/20) fail every upload at "Azure blob: 0%";
+          # every successful ship used v0.3.9. Unpin once a fixed release lands.
+          version: v0.3.9
 
       - name: Configure msstore
         if: ${{ inputs.submit }}

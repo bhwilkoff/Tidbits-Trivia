@@ -428,6 +428,19 @@ re-run of the same scenario on the device.
   degrades; expect sleep during long interactive probes regardless of
   press activity (wake + relaunch recovers).
 
+- **Probe P4 part 1 (2026-08-25 evening) — chron: family audit: 77 rows
+  tombstoned.** Re-derived every chron: row's "earliest" claim against the
+  CURRENT source dates (P571/P577/P569) with title-collision filtering
+  (2,276 rows have colliding or since-pruned titles — unverifiable, kept;
+  8,868 verified clean). 77 rows' claims are contradicted by their own
+  options' current values — value drift or title-identity drift since
+  generation (Killing Eve "earliest" over Teen Wolf, Walmart over Levi
+  Strauss, the FICTIONAL Hercule Poirot's 1870 "birth" beating Goethe).
+  Per the wrong-answer precedent all 77 tombstoned + pruned; resync green,
+  CACHE v64. The 178 ancient-negative-year rows (Athens −7000) inspected
+  and legitimate. Remaining P4 legs queued: closest bounds, enumerate
+  totals, bizpic mixed-type distractors.
+
 Standing loop prompt: work this playbook top to bottom — highest-risk first
 (A-row mechanics, C-row multiplayer), one meaty batch per tick (multiple
 scenarios, or one finding root-caused AND fixed AND re-verified). Every tick:

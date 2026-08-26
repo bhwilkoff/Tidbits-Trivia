@@ -476,6 +476,18 @@ re-run of the same scenario on the device.
   first (matches the design: the host paces the room). Evidence
   p5c-*.png.
 
+- **Probe P6 (2026-08-25 evening) — solo WEB game end-to-end: PASS.**
+  tidbitstrivia.com in a fresh tab: Home hero → Quick Play → 10 timed MCQs
+  with reveal cards (explanation + Wikipedia link + points/streak chips) →
+  RESULTS screen fully populated (score 766, 5/10, accuracy, best streak,
+  spoiler-free share dots, day-streak + banked freezes, "Tidbits to
+  remember" with answers and explanations) → Records dashboard fresh-load
+  renders with the game recorded. No layout breaks, dead buttons, or
+  console errors. One LOW finding, **F-013 (open)**: a hash NAVIGATION
+  while the results view is showing changes the URL but not the view
+  (#/records only rendered after a reload) — URL-driven state should win
+  per WEB-DESIGN; fresh loads route correctly so player impact is minimal.
+
 Standing loop prompt: work this playbook top to bottom — highest-risk first
 (A-row mechanics, C-row multiplayer), one meaty batch per tick (multiple
 scenarios, or one finding root-caused AND fixed AND re-verified). Every tick:

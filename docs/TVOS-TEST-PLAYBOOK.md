@@ -321,6 +321,21 @@ re-run of the same scenario on the device.
   the FIRST companion select after idle is often dropped (lobby Start
   regularly needs one retry) — retry once before investigating.
 
+  **F-009 RESOLVED as harness-class (2026-08-25 evening, root cause
+  found during probe P1):** a fresh SINGLE-command pyatv Companion
+  connection frequently DROPS its press (drop rate grew to 100% within a
+  long app session), while a connection that runs a warm-up command first
+  delivers reliably — `atvremote … --protocol companion power_state
+  select` advanced 30+ presses with only occasional single retries where
+  bare `select` had hard-stuck twice (Reveal AND Next). The app's handlers
+  are healthy whenever a press is actually delivered (QADBG proved
+  delivery↔action 1:1), and real Siri remotes don't use this path — so
+  players are unaffected. Ratchet: ALL harness presses now use the warmed
+  form. Related device fact: the Apple TV SLEPT mid-night during a ~5-min
+  idle gap (long-running interactive probes must keep pressing or re-wake;
+  the ~108KB black-frame capture signature also appears when the box
+  sleeps).
+
 - **F-010** (2026-08-25) — CLOSED same day (four-platform fix,
   browser+device verified). *A player still connected across a host
   session restart was blocked from answering*: ALL FOUR join clients (web
@@ -355,6 +370,31 @@ re-run of the same scenario on the device.
   rows. Two full resyncs green (quality gates + Apple==web Daily golden),
   sw.js CACHE v61→v62, Pages deploys green, rebuilt + installed, and the
   Malaita row glass-verified reading "(160 km)" (run f011-glass2).
+
+- **F-012** (2026-08-25) — OPEN, corpus (picture stems). *A picture round
+  asked "Which war is this?" over a PERSON portrait with person options*
+  (probe P1 served it live): `src:describe:Werner_Mölders` and
+  `src:describe:Erich_Hartmann` are fighter PILOTS whose rows carry the
+  war stem — the stem-assignment maps their war-adjacent subject class to
+  the wrong stem family. Scoped so far: 2 confirmed of the 16 war-stem
+  rows; a broader class-vs-options audit across the other class-asserting
+  stems (city/company/actress/event) is queued. Fix: repair the bad rows'
+  stems to "Who is this?" via a fix script + resync + CACHE bump, and
+  audit the stem-assignment in the picture generator. Also noted (minor,
+  same family of type-mixing): the megalodon-film MCQ carried "Japan" — a
+  country — as a distractor among films.
+
+- **Probe P1 (2026-08-25 evening) — FULL-NIGHT Chrome playthrough: PASS.**
+  Across two sessions (the first died when the Apple TV slept mid-night —
+  see F-009 note): round 1 (5 MCQs answered from Chrome, reveals + counts
+  correct), round 1→2 transition, round 2 PICTURE ROUND (real images
+  render in the web view — album art, portrait, text-diagram), round 2→3
+  transition, round 3 CLOSEST WINS (web numeric slider: adjust → Submit →
+  locked-in disabled state), and the ENDED screen on BOTH sides (TV:
+  "STANDINGS / ChromeBot wins!"; web: "THAT'S A WRAP / Final score" +
+  Done). The untouched web client followed the host's session RESTART to
+  the new night and to its end — the F-010 fix observed working live.
+  Evidence: build/qa/atv-2026-08-25/p1-*.png + p1b-*.png.
 
 Standing loop prompt: work this playbook top to bottom — highest-risk first
 (A-row mechanics, C-row multiplayer), one meaty batch per tick (multiple

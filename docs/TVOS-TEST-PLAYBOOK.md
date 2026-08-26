@@ -415,6 +415,19 @@ re-run of the same scenario on the device.
   before the page settles is silently lost — the P2 tab-A join needed the
   page to finish loading.
 
+- **Probe P3 (2026-08-25 evening) — reveal stress-run: press-path fully
+  characterized.** Post-reboot, warmed presses at ~1.5s spacing delivered
+  11 of 12 (QADBG presses=6, position r2q1-revealed after 6 cycles = one
+  silent drop, no wedge). Before the reboot the path had degraded to
+  TOTAL loss — even warmed presses and focus nudges failed at the lobby —
+  confirming delivery decays with cumulative companion connections and a
+  device REBOOT is the reset. New device fact: companion HID presses do
+  NOT reset the box's sleep timer — it slept mid-press-stream (~108KB
+  black frames + PowerState.Off while presses were flowing). Net harness
+  doctrine: warmed presses + retry for normal use; reboot when delivery
+  degrades; expect sleep during long interactive probes regardless of
+  press activity (wake + relaunch recovers).
+
 Standing loop prompt: work this playbook top to bottom — highest-risk first
 (A-row mechanics, C-row multiplayer), one meaty batch per tick (multiple
 scenarios, or one finding root-caused AND fixed AND re-verified). Every tick:

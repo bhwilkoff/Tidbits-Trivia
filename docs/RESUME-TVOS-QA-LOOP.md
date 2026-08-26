@@ -40,11 +40,12 @@ campaign summary at top, §2 inventory, §2b depth audits, §3 findings log.
 Apple: DONE — 1.6.77 (115) in App Store Connect, TestFlight processing.
 OWNER step: select build 115 + Submit for Review for the macOS platform.
 Play: DONE — vc89 completed on the internal track.
-Windows: PARKED after FOUR identical msstore failures ("Uploading Bundle
-to Azure blob: 0% Error while uploading the application package";
-submission delete/create fine each time). Retry tomorrow
-(`gh workflow run windows-store.yml -f submit=true -f commit=true`) or
-pin an older msstore CLI in microsoft/microsoft-store-apppublisher.
+Windows: DONE (2026-08-25 evening) — submitted + committed, status
+reached Certification (run 32928410386). Root cause of the five
+"Azure blob: 0%" failures: msstore CLI v0.4.0/v0.4.1 (released
+2026-08-18/20) broke the upload path and the action installs `latest`;
+fixed by pinning `version: v0.3.9` in windows-store.yml (see the
+windows-store-submission memory). Unpin once a fixed release lands.
 
 ## RESHAPE (owner, 2026-08-25 ~17:50)
 

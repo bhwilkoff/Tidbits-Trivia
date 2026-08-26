@@ -403,6 +403,18 @@ re-run of the same scenario on the device.
   the new night and to its end — the F-010 fix observed working live.
   Evidence: build/qa/atv-2026-08-25/p1-*.png + p1b-*.png.
 
+- **Probe P2 (2026-08-25 evening) — two simultaneous players: PASS.** A
+  browser player (tab) and a scripted RTDB player joined QATV together:
+  lobby read "2 in the room"; both answered Q1 ("2 answered"); reveal
+  scored them apart and the STANDINGS panel ordered them by score with the
+  crown on the leader (1 pt correct browser answer above the 0-pt scripted
+  wrong answer; frame p2-reveal.png). Two observations: (a) two TABS in
+  one browser share the Firebase anon uid and merge into ONE team — the
+  second tab's join renames the team (rejoin-friendly by design; a real
+  second player is a different browser/device); (b) a join click issued
+  before the page settles is silently lost — the P2 tab-A join needed the
+  page to finish loading.
+
 Standing loop prompt: work this playbook top to bottom — highest-risk first
 (A-row mechanics, C-row multiplayer), one meaty batch per tick (multiple
 scenarios, or one finding root-caused AND fixed AND re-verified). Every tick:

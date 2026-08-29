@@ -11,7 +11,9 @@ import Foundation
 import Vision
 import AppKit
 
-struct Line: Codable { let text: String; let x: Double; let y: Double; let h: Double }
+// `w` (box width) is what makes clipping detectable: a line whose box runs to a
+// frame edge is text the layout could not fit, which no app self-report reveals.
+struct Line: Codable { let text: String; let x: Double; let y: Double; let h: Double; let w: Double }
 struct Luma: Codable { let mean: Double; let stddev: Double }
 struct Result: Codable {
     let file: String
@@ -65,7 +67,8 @@ for path in CommandLine.arguments.dropFirst() {
     for obs in request.results ?? [] {
         guard let top = obs.topCandidates(1).first else { continue }
         let b = obs.boundingBox   // normalized, origin bottom-left
-        lines.append(Line(text: top.string, x: b.origin.x, y: b.origin.y, h: b.height))
+        lines.append(Line(text: top.string, x: b.origin.x, y: b.origin.y,
+                          h: b.height, w: b.width))
     }
     func band(_ lo: Double, _ hi: Double) -> [String] {
         lines.filter { $0.y >= lo && $0.y < hi }.sorted { $0.y > $1.y }.map(\.text)

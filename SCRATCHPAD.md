@@ -7,6 +7,33 @@
 > `docs/ROADMAP.md`, `docs/DATA-CONTRACT.md`. Detailed per-round history is in
 > `ARCHIVE.md`.
 
+## Current state (2026-08-29) — real-hardware QA suite on four devices
+
+**Found:** one harness (tvOS). Archive-Watch runs three — `atv_scenario.py`
+(707), `gtv_scenario.py` (340), `ios_scenario.py` (220) — sharing nothing but an
+OCR binary.
+
+**Did:** ported the pattern. New `tools/adb_run.py` (Android), `tools/ios_run.py`
+(iPhone/iPad), `tools/devharness.py` (shared grading spine), `tools/qa_suite.py`
+(fleet runner), `docs/DEVICE-QA-SUITE.md`. ScreenOCR now emits per-line box
+WIDTH so clipped text is detectable at all. Built and installed Tidbits on the
+iPhone 12; rebuilt the 24-day-stale Android debug APK.
+
+Two traps caught, both encoded in the docs so they are not re-diagnosed:
+Android QA hooks are `BuildConfig.DEBUG`-gated, so against the release build all
+six scenarios silently landed on Home **and passed** — the harness was measuring
+nothing while reporting green. And Archive-Watch's clip threshold (x<=0.010)
+called three correctly-rendered Records headings clipped on every frame, because
+our own gutter sits at 0.0099-0.0116; verified against the pixels, recalibrated
+to 0.005.
+
+**Left:** 6/6 green on iPad Pro 12.9, 6/6 on Pixel 8a, home green on iPhone 12,
+tvOS re-verified after the OCR change. **Fire TV / Android TV are blocked on a
+product decision, not on tooling** — Tidbits declares no leanback feature, no TV
+launcher intent and no banner, so those two boxes need a TV *app* before a
+harness means anything. Android paywall prices remain unverifiable off a
+Play-signed build.
+
 ## Current state (2026-08-08b) — Windows 1.6.76: the plans say that they renew
 
 **1.6.75 was cancelled in certification and replaced by 1.6.76, because making the products

@@ -748,3 +748,13 @@ keys, signatures, product decisions) — one page, ordered by what unblocks
 what. See `SCRATCHPAD.md` for active milestone + open questions. See
 `DECISIONS.md` for architecture decisions. See `PARITY.md` for
 feature parity across web / iOS / tvOS / Android.
+
+**Real-hardware QA:** `python3 tools/qa_suite.py` runs the whole fleet (Apple
+TV, iPad 12.9, iPhone 12, Pixel 8a) and grades every scenario from the glass.
+Read `docs/DEVICE-QA-SUITE.md` BEFORE changing a harness or adding a scenario —
+it carries the two rules that decide whether the loop is worth running
+(calibrate thresholds against a real capture, never copy one; an assertion that
+cannot fire is not an assertion) and the known limitations, so they are not
+re-diagnosed. Android needs the **debug** APK installed: the QA hooks are
+`BuildConfig.DEBUG`-gated, and against the release build every scenario silently
+lands on Home and passes.

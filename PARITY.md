@@ -11,6 +11,33 @@
 > including the periodic parity audit — is the
 > `cross-platform-parity-discipline` skill.
 >
+> **Android TV / Fire TV (7th platform) — 2026-08-29:** the SAME Android app
+> now serves TVs. `leanback` and `touchscreen` are declared `required="false"`
+> so one Play listing covers phones, tablets and TVs; a `LEANBACK_LAUNCHER`
+> category makes it visible in the TV launcher (without it the app installs and
+> is invisible), and `res/drawable-xhdpi/tv_banner.png` is the 320x180 banner.
+> Every Android feature is therefore present by construction — the parity
+> question on TV is not *does the feature exist* but **can a remote reach it**,
+> which is a different axis from the table below.
+>
+> That axis is measured, not asserted: `tools/tv_focus_audit.py` walks all 26
+> surfaces, confirms each shows its OWN content (by OCR signature) and that
+> something holds focus which OK can act on. **26/26 on both the Fire TV and
+> the Google TV dongle.** Re-run it after any UI change.
+>
+> TV-specific deltas from the phone build, all `isTv()`-gated so the phone is
+> untouched: a visible focus ring on every card and answer (Compose focuses
+> happily and draws nothing); the first answer option claims focus per question;
+> "Press OK" replaces "Tap"; overscan padding; and **free recall uses the tvOS
+> recall-then-reveal self-mark** instead of a text field, because typing on a
+> remote is a keyboard wall — the same call the Apple TV build made.
+>
+> NOT done: **Fire TV ships through the Amazon Appstore, not Google Play** —
+> a separate console and submission. The Play **Android TV form-factor opt-in
+> is Console-only** (the androidpublisher API has no form-factor resource) and
+> triggers a separate Google TV review, so it is an OWNER step; see
+> `docs/ANDROID-TV-PLAY-SETUP.md`.
+>
 > **macOS (5th platform) — 2026-07-03:** the native Mac app is BUILT and
 > launches (Decision 042/043). Full parity face — Play, Records (R-REC-1
 > dashboard), Create, Settings + ⌘,/⌘N menu commands, Customize (mix +

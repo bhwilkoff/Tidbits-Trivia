@@ -350,8 +350,13 @@ def status(led):
         print(f"\n{len(stuck)} round(s) drew a question but never advanced:")
         for p, c in sorted(stuck):
             print(f"  {p:11s} {c}")
+    # A round that ADVANCED is healthy whether or not it reached a result inside
+    # the watch window. Stake needs two taps per question (confidence, then
+    # answer), so it honestly reaches 2/8 in 78s — reporting that every lap is
+    # noise nobody can act on, which is how a real signal gets ignored.
     unfinished = [(p, c) for p, d in led.items() for c, v in d.items()
-                  if v.get("result") == "OK" and v.get("finished") is False]
+                  if v.get("result") == "OK" and v.get("finished") is False
+                  and v.get("progressed") is not True]
     if unfinished:
         print(f"\n{len(unfinished)} mode(s) drew a question but never reached a result:")
         for p, c in sorted(unfinished):

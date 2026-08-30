@@ -212,7 +212,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--host", default="mac", choices=["mac", "atv"])
     ap.add_argument("--players", default="ipad,iphone,pixel,web")
-    ap.add_argument("--code", default="QALIVE")
+    ap.add_argument("--code", default="QALL")
     ap.add_argument("--start", action="store_true",
                     help="press Start on the host lobby so a question publishes")
     ap.add_argument("--settle", type=float, default=40,
@@ -220,6 +220,13 @@ def main():
     a = ap.parse_args()
 
     code = a.code.upper()
+    # Rooms are FOUR letters (FirebaseRTDB: `(0..<4).map`). The native clients pin
+    # TIDBITS_LIVE_CODE straight through with no length check, so a longer code
+    # "works" on device and is silently unjoinable from the web, whose input is
+    # correctly capped at 4 — every earlier run of this harness used QALIVE /
+    # QANITE / QAFINAL and the web could never have joined any of them.
+    if len(code) != 4 or not code.isalpha():
+        sys.exit(f"--code must be exactly 4 letters (rooms are 4 chars); got {code!r}")
     players = [p for p in a.players.split(",") if p]
     out = qa_dir("multiplayer", f"{a.host}-{code}")
     g = Grader(out, host=a.host, code=code, players=players)
@@ -303,7 +310,7 @@ def main():
             "host published no question — the lobby waits for Start (pass --start)")
 
     # 5. The glass says what a human sees. Capture host + every player.
-    shots, per_dev = [], {}
+    shots, per_dev, retried = [], {}, set()
     for dev in [a.host] + players:
         p = out / f"{dev}.png"
         if shoot(dev, p, code):
@@ -323,8 +330,28 @@ def main():
         lines = len(texts.get(p.name, {}).get("allText", []))
         # Blind first: an unreadable frame must never be graded as a bad screen.
         if lines < 4:
-            g.grade(f"glass.{dev}_readable", False,
-                    f"{lines} OCR lines — screen off/locked, nothing graded")
+            # The iPhone and iPad have no remote wake, so a dark screen is
+            # genuinely UNKNOWN — the device is on the wire, we simply cannot see
+            # its glass. Scoring that as a failure blames a phone for being
+            # asleep. Relaunching wakes it in practice, so it is retried once and
+            # only then reported, as SKIP rather than FAIL.
+            if dev in APPLE and dev not in retried:
+                retried.add(dev)
+                print(f"  [{dev}] dark screen — relaunching to wake it")
+                join(dev, code, out)
+                time.sleep(20)
+                p2 = out / f"{dev}-retry.png"
+                if shoot(dev, p2, code):
+                    t2 = ocr([(dev, p2)])
+                    if len(t2.get(p2.name, {}).get("allText", [])) >= 4:
+                        shots.append((dev, p2))
+                        texts.update(t2)
+                        per_dev[dev] = frame_text(t2.get(p2.name, {}))
+                        g.grade(f"glass.{dev}_readable", True, "readable after a wake relaunch")
+                        continue
+            g.report.setdefault("skipped", []).append(
+                f"{dev}: screen off/locked, no remote wake — on the wire, glass unseen")
+            print(f"  [SKIP] glass.{dev}_readable: screen off/locked, no remote wake")
             continue
         g.grade(f"glass.{dev}_readable", True, f"{lines} OCR lines")
         if dev == a.host:
@@ -345,7 +372,7 @@ def main():
         key = " ".join(re.findall(r"[A-Za-z]{5,}", qtext)[:4])
         for dev in players:
             if dev not in per_dev:
-                continue
+                continue   # unseen glass — already reported as SKIP
             hit = sum(1 for w in key.split() if re.search(re.escape(w), per_dev[dev], re.I))
             need = max(1, len(key.split()) - 1)
             # Ten-foot type OCRs badly: the Fire TV rendered the prompt as

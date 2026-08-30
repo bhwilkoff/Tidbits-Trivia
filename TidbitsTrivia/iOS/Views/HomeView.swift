@@ -146,7 +146,16 @@ struct HomeView: View {
         .fullScreenCover(item: $versusBot) { bot in
             VersusContainerView(bot: bot)
         }
-        .sheet(isPresented: $showLiveJoin) { LiveJoinView(initialCode: liveJoinCode) }
+        // fullScreenCover, NOT a sheet. Being in a live game is a MODE, not a
+        // detail you peek at: on iPad a sheet is a card floating over the Home
+        // screen, so the player answered questions with the tab bar, the
+        // wordmark and "Quick Play" still visible behind them — the game read as
+        // a distraction from the app rather than the thing they were doing.
+        // Every other gameplay surface here is already a fullScreenCover (solo,
+        // Trivia Night, host, Party, Quick Match, Versus); Tidbits Live was the
+        // only one presented as a sheet. It has its own Cancel / xmark / Done,
+        // so it never depended on swipe-to-dismiss.
+        .fullScreenCover(isPresented: $showLiveJoin) { LiveJoinView(initialCode: liveJoinCode) }
         .sheet(isPresented: $showClubPaywall) { ClubPaywallView() }
         .sheet(isPresented: $showClubHub) {
             ClubHubView(onStartWeakSpot: { showClubHub = false; openWeakSpot() },

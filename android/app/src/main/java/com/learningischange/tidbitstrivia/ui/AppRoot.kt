@@ -325,9 +325,12 @@ fun AppRoot(
 @Composable
 private fun BottomBar(current: Route, onSelect: (Route) -> Unit) {
     NavigationBar {
-        NavigationBarItem(current is Route.Home, { onSelect(Route.Home) }, { Icon(Icons.Filled.PlayArrow, null) }, label = { Text("Play") })
-        NavigationBarItem(current is Route.Records, { onSelect(Route.Records) }, { Icon(Icons.Filled.Star, null) }, label = { Text("Records") })
-        NavigationBarItem(current is Route.Create, { onSelect(Route.Create) }, { Icon(Icons.Filled.Add, null) }, label = { Text("Create") })
+        NavigationBarItem(current is Route.Home, { onSelect(Route.Home) }, { Icon(Icons.Filled.PlayArrow, null) },
+            label = { Text("Play") }, modifier = Modifier.tvFocus(RoundedCornerShape(24.dp), shadow = false))
+        NavigationBarItem(current is Route.Records, { onSelect(Route.Records) }, { Icon(Icons.Filled.Star, null) },
+            label = { Text("Records") }, modifier = Modifier.tvFocus(RoundedCornerShape(24.dp), shadow = false))
+        NavigationBarItem(current is Route.Create, { onSelect(Route.Create) }, { Icon(Icons.Filled.Add, null) },
+            label = { Text("Create") }, modifier = Modifier.tvFocus(RoundedCornerShape(24.dp), shadow = false))
     }
 }
 
@@ -364,7 +367,9 @@ private fun HomeScreen(
         store.rememberMix(modes, cat); onPlayMix(modes, cat)
     }
 
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    // .then(tvOverscan()) — TVs crop the outer ~5%; see TvFocus.kt. No-op off TV.
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp).then(tvOverscan()),
+           verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text("TIDBITS", fontSize = 40.sp, fontWeight = FontWeight.Black)
@@ -385,19 +390,21 @@ private fun HomeScreen(
                 }
                 Spacer(Modifier.height(6.dp))
                 Text("${qpMode.title.uppercase()} · ${qpCat.name.uppercase()}", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                Text(if (firstRun) "Tap to play — customize anytime" else "Jump straight into a round",
+                Text(if (firstRun) "${tapVerb()} to play — customize anytime" else "Jump straight into a round",
                     color = Color.White.copy(alpha = 0.85f), fontSize = 13.sp)
             }
         }
 
         // Surprise + Customize — the quiet secondary pair under the hero (R-HOME-1a).
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            OutlinedButton(onClick = { val (m, c) = store.surprise(); play(m, c) }, modifier = Modifier.weight(1f)) {
+            OutlinedButton(onClick = { val (m, c) = store.surprise(); play(m, c) },
+                modifier = Modifier.weight(1f).tvFocus(RoundedCornerShape(20.dp), shadow = false)) {
                 Icon(Icons.Filled.Casino, null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
                 Text("Surprise me", fontWeight = FontWeight.Bold)
             }
-            OutlinedButton(onClick = { showCustomize = true }, modifier = Modifier.weight(1f)) {
+            OutlinedButton(onClick = { showCustomize = true },
+                modifier = Modifier.weight(1f).tvFocus(RoundedCornerShape(20.dp), shadow = false)) {
                 Icon(Icons.Filled.Tune, null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
                 Text("Customize", fontWeight = FontWeight.Bold)
@@ -986,7 +993,9 @@ private fun NightSetupScreen(
 ) {
     var preset by remember { mutableStateOf(1) }
     var cat by remember { mutableStateOf(Category.byId("mixed")) }
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    // .then(tvOverscan()) — TVs crop the outer ~5%; see TvFocus.kt. No-op off TV.
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp).then(tvOverscan()),
+           verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text("Trivia Night", fontSize = 28.sp, fontWeight = FontWeight.Black)
         Text("A night of mixed rounds — every kind of question. Each answer ends on a fact to learn.",
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
@@ -1029,7 +1038,9 @@ private fun NightJoinScreen(initialCode: String, initialName: String, onFound: (
     var probing by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    // .then(tvOverscan()) — TVs crop the outer ~5%; see TvFocus.kt. No-op off TV.
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp).then(tvOverscan()),
+           verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text("Join a game", fontSize = 28.sp, fontWeight = FontWeight.Black)
         Text("Enter a host's code — a Tidbits Live event or a Trivia Night. Works from anywhere.",
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
@@ -1715,7 +1726,7 @@ private fun RecordsScreen(store: Store, onOpenArchive: () -> Unit, onOpenMaratho
             StatBox("${life.first}", "Games", Pops.grape); StatBox("${life.third}%", "Accuracy", Pops.blue); StatBox("${life.second}", "Correct", Pops.mint)
         }
         Text("Your games", fontWeight = FontWeight.Bold, fontSize = 20.sp)
-        Text("Your latest rounds — tap one to see the questions.", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+        Text("Your latest rounds — ${tapVerbLower()} one to see the questions.", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
         // ANDROID-DESIGN §5.3: a bounded preview (3 most recent) + a "See all"
         // drill-in, so Records stays a dashboard, not a 40-card ledger.
         records.take(3).forEach { rec -> GameHistoryRow(rec) { recap = rec } }
@@ -1782,7 +1793,7 @@ private fun RecordsScreen(store: Store, onOpenArchive: () -> Unit, onOpenMaratho
             }
         }
         Text("Personal bests", fontWeight = FontWeight.Bold, fontSize = 20.sp)
-        Text("Tap a mode to scroll your previous attempts.", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+        Text("${tapVerb()} a mode to scroll your previous attempts.", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
         Mode.entries.forEach { m ->
             val attempts = records.filter { it.mode == m.name }
             val b = attempts.maxOfOrNull { it.score } ?: 0
@@ -1929,7 +1940,7 @@ private fun AllGamesDialog(records: List<Store.Rec>, onOpen: (Store.Rec) -> Unit
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text("All games", fontWeight = FontWeight.Black, fontSize = 22.sp)
-            Text("Newest first — tap one to see the questions.", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+            Text("Newest first — ${tapVerbLower()} one to see the questions.", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
             records.forEach { rec -> GameHistoryRow(rec) { onOpen(rec) } }
         }
     }

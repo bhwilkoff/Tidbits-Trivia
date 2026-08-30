@@ -64,14 +64,17 @@ fun isTvDevice(ctx: Context): Boolean {
  * be focusable (any `clickable` is); this only draws the state.
  */
 @Composable
-fun Modifier.tvFocus(shape: Shape, enabled: Boolean = true): Modifier {
+fun Modifier.tvFocus(shape: Shape, enabled: Boolean = true, shadow: Boolean = true): Modifier {
     if (!enabled || !isTv()) return this
     var focused by remember { mutableStateOf(false) }
     val scale by animateFloatAsState(if (focused) 1.045f else 1f, tween(120), label = "tvFocusScale")
     return this
         .onFocusChanged { focused = it.isFocused || it.hasFocus }
         .scale(scale)
-        .shadow(if (focused) 18.dp else 0.dp, shape)
+        // shadow=false for slot-filling items (nav bar): the elevation draws over
+        // the slot's full rectangle rather than the visible pill, which reads as
+        // grey banding behind the label instead of as depth.
+        .shadow(if (focused && shadow) 18.dp else 0.dp, shape)
         // Two-tone ring: a white band with an ink outline. A single white ring
         // disappears on the white answer cards and a single ink ring disappears
         // on the coral and grape ones — Tidbits has no fill this pair loses to.
@@ -88,3 +91,14 @@ fun Modifier.tvFocus(shape: Shape, enabled: Boolean = true): Modifier {
 @Composable
 fun tvOverscan(): Modifier = if (isTv()) Modifier.padding(horizontal = 28.dp, vertical = 20.dp)
                              else Modifier
+
+/**
+ * The pointing verb for the current input device. A TV player has a remote, not
+ * a finger, and "Tap to play" is an instruction they cannot follow.
+ */
+@Composable
+fun tapVerb(): String = if (isTv()) "Press OK" else "Tap"
+
+/** Lowercase form, for mid-sentence use ("… — tap one to see the questions"). */
+@Composable
+fun tapVerbLower(): String = if (isTv()) "press OK on" else "tap"

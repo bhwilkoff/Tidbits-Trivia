@@ -178,8 +178,28 @@ expensive mistake than missing something:
 | 2 | corpus | 16 questions pairing a person clue with a work answer — unanswerable | removed + tombstoned + `CLUE-CROSSED` gate rule |
 | 3 | Android | `sync_shared_assets.sh` would copy the repo's **0-byte** `corpus.sqlite` over Android's real 52MB one via `rsync --delete` | excluded + a guard that refuses an empty source over a non-empty target |
 | 4 | Android | `corpus.json` (54.9MB) and `enrich.json` (2.9MB) shipped in every install while **no Kotlin source opens them** | removed; assets 125MB → 67MB |
-| 5 | harness | the Mac capture graded a terminal window as the app | raise the app before capturing |
-| 6 | harness | the multiplayer host was never woken, and joins were attributed by a name the hook hardcodes | wake step + counted joins |
+| 5 | corpus | `export_json.py` wrote **9 fields for a 10-field row**, blanking the tags on all 110,496 rows — and the Create ranker scores a tag match at 3, above title (2) and prompt (1), so web and Windows were ranking with no tag signal | export resolves tags through `tag_names`; `TAGS-STRIPPED` gate rule |
+| 6 | Apple | `corpus.json` (54.9MB) shipped in the iOS/tvOS/macOS bundle while only `corpus.sqlite` is read | removed; iOS bundle measured at 87MB |
+| 7 | harness | the Mac capture graded a terminal window as the app | raise the app before capturing |
+| 8 | harness | the multiplayer host was never woken, and joins were attributed by a name the hook hardcodes | wake step + counted joins |
+| 9 | harness | the Pixel's reachability probe returned **False while its own evidence said "adb ok"**, so the device was silently skipped | one verdict, one evidence string, full serial matched per line |
+
+### The tags bug is the one worth reading twice
+
+It is the clearest example of why this suite exists. The row still *parsed*, so
+`ROW-SCHEMA`, `check_mirrors`, all 30 gate rules and both mirror counts passed.
+The only thing in the repo that noticed was Android's `CreateGoldenTest`, and
+only because removing 16 questions moved the ranking boundary enough to expose
+it. For "Michael Jackson", Apple sees the tag *"Albums produced by Michael
+Jackson"* and returns **Off the Wall** at score 10; a tagless web ties Beat It
+and Off the Wall at 4 and takes **Beat It** on the id tiebreak. Seven of fifty
+golden topics diverged.
+
+It was also diagnosed wrong twice before being measured — a stale golden
+(regenerating produced a byte-identical file) and the documented unstable-sort
+tie-break (all three languages already sort score-then-id). The third guess,
+Apple's `LIMIT 25000` candidate cap, died on measurement: the diverging topics
+match 136–6,772 rows. **A row that parses is not a row that fits.**
 
 ---
 
@@ -211,7 +231,30 @@ expensive mistake than missing something:
 
 ---
 
-## 7. Re-running it
+## 7. The fleet run
+
+`build/qa/suite-2026-08-30/` — every reachable device, smoke set:
+
+| Device | Result |
+|---|---|
+| Apple TV 4K | 5 pass, 0 fail |
+| iPad Pro 12.9 | 6 pass, 0 fail |
+| iPhone 12 | 6 pass, 0 fail |
+| Fire TV | 5 pass, 0 fail |
+| Google TV dongle | 5 pass, 0 fail |
+| macOS | 4 pass, 0 fail |
+| Web | 6 routes, `#/dailyboard` fix verified live in production |
+
+The Pixel 8a shows the value of the SKIP discipline and its limit: it was
+reported SKIP with the evidence string **"adb ok"** — a probe that returned
+False while saying the device was fine, because it matched a serial *fragment*
+that the real serial continues past. A SKIP is quiet by design, so an untested
+device slipped through a run that otherwise looked complete. The probe now
+returns one verdict and one evidence string that cannot disagree.
+
+---
+
+## 8. Re-running it
 
 ```bash
 python3 tools/qa_suite.py                       # every reachable device, smoke set

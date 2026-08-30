@@ -54,6 +54,17 @@ MODES = ["classic", "timeAttack", "survival", "stake", "sweep", "pictureId",
 # 60-second or endurance modes: they need a longer watch before a result exists.
 LONG_MODES = {"timeAttack", "enumerate", "survival", "stake", "marathon", "ladder", "sweep"}
 
+# Survival ends only on a WRONG answer, so a correct-answering autopilot is
+# immortal and the run can never reach a result. Measured: streak climbed
+# #6 -> #13 -> #21 and kept going. These modes are driven with a fallible
+# autopilot precisely so the end-of-run path gets exercised at all.
+ENDLESS_WHEN_CORRECT = {"survival"}
+
+# Genuinely cannot finish inside any sane watch window — Marathon is 200
+# questions and reached 21 in 78s. Absence of a result screen here is arithmetic,
+# not a defect, so PROGRESS is the assertion instead.
+NO_RESULT_EXPECTED = {"marathon"}
+
 # Feature -> the platforms that actually HAVE it. A uniform list produced false
 # failures: the Mac sidebar is Play/Records/Create/Live, so a "leaderboard" tab
 # was invented by the harness and the app was blamed for not showing it. On Apple,
@@ -115,7 +126,9 @@ def launch(dev, cell):
         env = {"TIDBITS_SKIP_ONBOARD": "1", "TIDBITS_NO_GAMECENTER": "1"}
         if is_mode:
             env |= {"TIDBITS_AUTOPLAY": f"{cell}:mixed", "TIDBITS_AUTOPILOT": "1",
-                    "TIDBITS_AUTOPILOT_CORRECT": "1", "TIDBITS_AUTOPILOT_STEPS": "40"}
+                    "TIDBITS_AUTOPILOT_STEPS": "40"}
+            if cell not in ENDLESS_WHEN_CORRECT:
+                env["TIDBITS_AUTOPILOT_CORRECT"] = "1"
         else:
             env |= {"home": {"TIDBITS_TAB": "play"},
                     "records": {"TIDBITS_TAB": "records"},
@@ -143,7 +156,8 @@ def launch(dev, cell):
     if is_mode:
         args += ["--es", "tidbits_autoplay", f"{cell.lower()}:mixed",
                  "--ez", "tidbits_autopilot", "true",
-                 "--ez", "tidbits_autopilot_correct", "true",
+                 "--ez", "tidbits_autopilot_correct",
+                 "false" if cell in ENDLESS_WHEN_CORRECT else "true",
                  "--ei", "tidbits_autopilot_steps", "40"]
     else:
         args += {"home": ["--es", "tidbits_tab", "play"],
@@ -225,7 +239,8 @@ def run_cell(dev, cell, outdir):
     texts = ocr(shots)
     if OCR_FAILED in texts:
         return {"result": "SKIP", "why": texts[OCR_FAILED][:120]}
-    all_text = " | ".join(frame_text(texts.get(p.name, {})) for _, p in shots)
+    per_frame = [frame_text(texts.get(p.name, {})) for _, p in shots]
+    all_text = " | ".join(per_frame)
     lines = max((len(texts.get(p.name, {}).get("allText", [])) for _, p in shots),
                 default=0)
     if lines < 4:
@@ -238,11 +253,29 @@ def run_cell(dev, cell, outdir):
 
     if cell in MODES:
         played = bool(re.search(QUESTION_RX, all_text))
-        finished = bool(re.search(RESULT_RX, all_text))
         if not played:
             return {"result": "FAIL", "why": "never drew a question",
                     "evidence": all_text[:200]}
-        return {"result": "OK", "finished": finished, "evidence": all_text[:200]}
+
+        # Did the round ADVANCE? A stuck game draws a question and sits there,
+        # which "a question is on screen" cannot distinguish from a healthy one.
+        # Counters are either "n / m" or a Survival streak "#n".
+        def counter(t):
+            n = [int(x) for x in re.findall(r"(\d+)\s*/\s*\d+", t)]
+            n += [int(x) for x in re.findall(r"#(\d+)", t)]
+            return max(n, default=None)
+        first = next((c for c in (counter(t) for t in per_frame) if c is not None), None)
+        last = next((c for c in (counter(t) for t in reversed(per_frame)) if c is not None), None)
+        progressed = None if first is None or last is None else last > first
+
+        finished = bool(re.search(RESULT_RX, all_text))
+        res = {"result": "OK", "finished": finished, "evidence": all_text[:200]}
+        if progressed is not None:
+            res["progressed"] = progressed
+        if cell in NO_RESULT_EXPECTED:
+            res["finished"] = True          # arithmetic, not a defect
+            res["note"] = "endurance mode — graded on progress, not a result screen"
+        return res
 
     return {"result": "OK", "evidence": all_text[:200]}
 
@@ -295,6 +328,12 @@ def status(led):
         print(f"\n{len(fails)} failing cell(s):")
         for p, c, why in sorted(fails):
             print(f"  {p:11s} {c:14s} {why[:80]}")
+    stuck = [(p, c) for p, d in led.items() for c, v in d.items()
+             if v.get("progressed") is False]
+    if stuck:
+        print(f"\n{len(stuck)} round(s) drew a question but never advanced:")
+        for p, c in sorted(stuck):
+            print(f"  {p:11s} {c}")
     unfinished = [(p, c) for p, d in led.items() for c, v in d.items()
                   if v.get("result") == "OK" and v.get("finished") is False]
     if unfinished:

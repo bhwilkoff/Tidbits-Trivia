@@ -54,8 +54,32 @@ MODES = ["classic", "timeAttack", "survival", "stake", "sweep", "pictureId",
 # 60-second or endurance modes: they need a longer watch before a result exists.
 LONG_MODES = {"timeAttack", "enumerate", "survival", "stake", "marathon", "ladder", "sweep"}
 
-FEATURES = ["home", "records", "create", "settings", "leaderboard", "clubhub",
-            "paywall", "atlas", "profile"]
+# Feature -> the platforms that actually HAVE it. A uniform list produced false
+# failures: the Mac sidebar is Play/Records/Create/Live, so a "leaderboard" tab
+# was invented by the harness and the app was blamed for not showing it. On Apple,
+# leaderboards are Game Center reached from Settings (PARITY.md line 251), not a
+# section — an assertion for a surface a platform does not have is as useless as
+# one that cannot fire.
+APPLE_ALL = {"ipad", "iphone", "atv", "mac"}
+ANDROID_ALL = {"pixel", "firetv", "androidtv"}
+EVERYWHERE = APPLE_ALL | ANDROID_ALL
+FEATURES = {
+    "home":     EVERYWHERE,
+    "records":  EVERYWHERE,
+    "create":   EVERYWHERE,
+    "settings": EVERYWHERE,
+    "clubhub":  EVERYWHERE,
+    "paywall":  EVERYWHERE,
+    "atlas":    EVERYWHERE,
+    "profile":  EVERYWHERE,
+    # Android has a Leaderboard route; Apple routes it through Game Center, which
+    # this harness disables (TIDBITS_NO_GAMECENTER) precisely so it never blocks.
+    "leaderboard": ANDROID_ALL,
+    # Android-only routes worth covering.
+    "linkWall":   ANDROID_ALL,
+    "expeditions": ANDROID_ALL,
+    "duels":      ANDROID_ALL,
+}
 
 # A round is PLAYED if the glass shows a question; FINISHED if it shows a result.
 # Both are read from the same frames — a mode that draws and cannot be completed
@@ -242,8 +266,11 @@ def all_cells(only=None):
     for p in plats:
         # The TVs have no pointer, so text entry and free recall are self-marked
         # there; they still play, so they stay in the grid.
-        for c in MODES + FEATURES:
+        for c in MODES:
             out.append((p, c))
+        for c, plats in FEATURES.items():
+            if p in plats:
+                out.append((p, c))
     return out
 
 

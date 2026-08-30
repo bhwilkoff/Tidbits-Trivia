@@ -16,6 +16,7 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import macapp  # noqa: E402
 from devharness import Grader, ocr, qa_dir, sh  # noqa: E402
 
 # Prefer the locally built app: the harness should grade what is about to ship,
@@ -47,46 +48,23 @@ SCENARIOS = {
 }
 
 
+_PID = None
+
+
 def quit_app():
-    sh(["osascript", "-e", f'tell application "{PROC}" to quit'], timeout=20)
-    time.sleep(1)
-    sh(["pkill", "-x", PROC], timeout=10)
-    time.sleep(1)
+    macapp.quit_all()
 
 
 def launch(env):
-    """Launch with env. `open -a` does NOT forward env to a GUI app, so the
-    binary is exec'd directly — which is also what makes the TIDBITS_* hooks
-    reachable at all on the Mac."""
-    e = " ".join(f"{k}={v}" for k, v in env.items())
-    subprocess.Popen(f"{e} '{BIN}' >/dev/null 2>&1 &", shell=True)
-
-
-def window_bounds():
-    """AppleScript is the only bounds source that does not need pyobjc (absent
-    on this box). Returns x,y,w,h or None while the window is still drawing."""
-    r = sh(["osascript", "-e",
-            f'tell application "System Events" to tell process "{PROC}" to '
-            'get {position, size} of front window'], timeout=20)
-    nums = [int(n) for n in re.findall(r"-?\d+", r.stdout)]
-    return tuple(nums[:4]) if len(nums) >= 4 else None
+    """`open -a` does NOT forward env to a GUI app, so the binary is exec'd
+    directly — which is what makes the TIDBITS_* hooks reachable on the Mac, and
+    also why every later call must address the PID rather than the name."""
+    global _PID
+    _PID = macapp.launch(BIN, env)
 
 
 def capture(path, tries=20):
-    for _ in range(tries):
-        # -R is a SCREEN-region grab, not a window grab: without raising the app
-        # first, whatever happens to be in front (a terminal, in the run that
-        # caught this) is captured and its text is graded as the app's.
-        sh(["osascript", "-e", f'tell application "{PROC}" to activate'], timeout=15)
-        time.sleep(0.8)
-        b = window_bounds()
-        if b and b[2] > 200 and b[3] > 200:
-            sh(["screencapture", "-x", "-o", "-R",
-                f"{b[0]},{b[1]},{b[2]},{b[3]}", str(path)], timeout=40)
-            if Path(path).exists() and Path(path).stat().st_size > 5000:
-                return True
-        time.sleep(1.5)
-    return False
+    return macapp.capture(_PID, path, tries=tries) if _PID else False
 
 
 def run(name, outdir):

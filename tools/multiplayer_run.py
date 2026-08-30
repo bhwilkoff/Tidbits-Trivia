@@ -28,6 +28,7 @@ import urllib.request
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import macapp  # noqa: E402
 from devharness import OCR_FAILED, Grader, frame_text, ocr, qa_dir, sh  # noqa: E402
 
 DEVELOPER_DIR = "/Applications/Xcode-beta.app/Contents/Developer"
@@ -159,26 +160,16 @@ def android_shot(dev, path):
     return True
 
 
+_MAC_PID = None
+
+
 def mac_launch(env):
-    sh(["pkill", "-x", "TidbitsTrivia"], timeout=10)
-    time.sleep(1.5)
-    e = " ".join(f"{k}={v}" for k, v in env.items())
-    subprocess.Popen(f"{e} '{MACBIN}' >/dev/null 2>&1 &", shell=True)
+    global _MAC_PID
+    _MAC_PID = macapp.launch(MACBIN, env)
 
 
 def mac_shot(path):
-    # screencapture -R grabs SCREEN pixels, so without raising the app first the
-    # frame is whatever is in front — a terminal, in the run that caught this.
-    sh(["osascript", "-e", 'tell application "TidbitsTrivia" to activate'], timeout=15)
-    time.sleep(0.8)
-    r = sh(["osascript", "-e", 'tell application "System Events" to tell process '
-            '"TidbitsTrivia" to get {position, size} of front window'], timeout=20)
-    n = [int(x) for x in re.findall(r"-?\d+", r.stdout)]
-    if len(n) < 4 or n[2] < 200:
-        return False
-    sh(["screencapture", "-x", "-o", "-R", f"{n[0]},{n[1]},{n[2]},{n[3]}",
-        str(path)], timeout=40)
-    return Path(path).exists()
+    return macapp.capture(_MAC_PID, path) if _MAC_PID else False
 
 
 def web_shot(code, path):

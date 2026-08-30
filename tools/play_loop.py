@@ -25,6 +25,7 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import macapp  # noqa: E402
 from devharness import OCR_FAILED, frame_text, ocr, qa_dir, sh  # noqa: E402
 
 LEDGER = Path("build/qa/coverage.json")
@@ -34,6 +35,7 @@ ADB = str(Path.home() / "Library/Android/sdk/platform-tools/adb")
 APKG = "com.tidbitstrivia.app.debug"
 ACTIVITY = "com.learningischange.tidbitstrivia.MainActivity"
 _DEV_MAC = Path("build/dd-mac/Build/Products/Debug/TidbitsTrivia.app/Contents/MacOS/TidbitsTrivia")
+_MAC_PID = None
 MACBIN = str(_DEV_MAC if _DEV_MAC.exists()
              else Path("/Applications/TidbitsTrivia.app/Contents/MacOS/TidbitsTrivia"))
 
@@ -143,10 +145,8 @@ def launch(dev, cell):
                     "atlas": {"TIDBITS_CLUB": "1", "TIDBITS_ATLAS": "1"},
                     "profile": {"TIDBITS_TAB": "records"}}.get(cell, {})
         if dev == "mac":
-            sh(["pkill", "-x", "TidbitsTrivia"], timeout=10)
-            time.sleep(1.5)
-            e = " ".join(f"{k}={v}" for k, v in env.items())
-            subprocess.Popen(f"{e} '{MACBIN}' >/dev/null 2>&1 &", shell=True)
+            global _MAC_PID
+            _MAC_PID = macapp.launch(MACBIN, env)
             return True
         r = devicectl("device", "process", "launch", "--terminate-existing",
                       "--device", APPLE[dev], "-e", json.dumps(env), BUNDLE)
@@ -186,17 +186,7 @@ def shot(dev, path):
             return False
         return Path(path).exists()
     if dev == "mac":
-        sh(["osascript", "-e", 'tell application "TidbitsTrivia" to activate'], timeout=15)
-        time.sleep(0.6)
-        r = sh(["osascript", "-e", 'tell application "System Events" to tell process '
-                '"TidbitsTrivia" to get {position, size} of front window'], timeout=20)
-        import re as _re
-        n = [int(x) for x in _re.findall(r"-?\d+", r.stdout)]
-        if len(n) < 4 or n[2] < 200:
-            return False
-        sh(["screencapture", "-x", "-o", "-R", f"{n[0]},{n[1]},{n[2]},{n[3]}", str(path)],
-           timeout=40)
-        return Path(path).exists()
+        return macapp.capture(_MAC_PID, path) if _MAC_PID else False
     r = adb(dev, "exec-out", "screencap", "-p", binary=True, timeout=90)
     if not r.stdout:
         return False
@@ -386,7 +376,13 @@ def main():
     print(f"lap: {len(todo)} cells -> {out}\n")
     for p, c in todo:
         t0 = time.time()
-        res = run_cell(p, c, out)
+        try:
+            res = run_cell(p, c, out)
+        except Exception as e:                       # noqa: BLE001
+            # One flaky device call must not take down the lap. An osascript
+            # timeout propagated out of a Mac capture and killed all 18 cells,
+            # losing the whole lap's work along with it.
+            res = {"result": "SKIP", "why": f"{type(e).__name__}: {e}"[:160]}
         res["at"] = int(time.time())
         led.setdefault(p, {})[c] = res
         save(led)          # after EVERY cell, so a killed lap keeps its progress

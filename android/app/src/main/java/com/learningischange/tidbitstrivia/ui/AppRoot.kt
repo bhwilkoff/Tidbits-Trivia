@@ -31,6 +31,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.foundation.focusGroup
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -210,9 +211,26 @@ fun AppRoot(
     BackHandler(enabled = backStack.size > 1) { backStack.removeAt(backStack.lastIndex) }
 
     val showBar = current is Route.Home || current is Route.Records || current is Route.Create
+    // TV: claim focus for the screen we just navigated to. A focus audit of all
+    // 26 surfaces found 20 of them opening with focusable content and ZERO
+    // focused — reachable, but inert, because CENTER has nothing to act on.
+    // Requesting focus on a focusGroup hands it to the group's first focusable
+    // child, so this one place fixes every route instead of twenty screens.
+    //
+    // Route.Game is excluded on purpose: it claims focus per QUESTION (the first
+    // answer option), and a route-level claim would fight it and land the player
+    // on a header chip instead of an answer.
+    val routeFocus = remember { FocusRequester() }
+    val tvRoute = isTv()
+    LaunchedEffect(current, tvRoute) {
+        if (tvRoute && current !is Route.Game) {
+            kotlinx.coroutines.delay(400)   // let the screen finish composing
+            runCatching { routeFocus.requestFocus() }
+        }
+    }
     Box(Modifier.fillMaxSize()) {
         Scaffold(bottomBar = { if (showBar) BottomBar(current) { backStack.clear(); backStack.add(it) } }) { pad ->
-            Box(Modifier.padding(pad).fillMaxSize()) {
+            Box(Modifier.padding(pad).fillMaxSize().focusGroup().focusRequester(routeFocus)) {
                 when (val r = current) {
                     is Route.Home -> HomeScreen(
                         store = store,
@@ -1291,20 +1309,79 @@ internal fun PlayingScreen(game: GameState, match: VsMatch? = null, onlineRoster
         }
         if (game.mode == Mode.SWEEP) SweepGrid(game)
         if (game.mode == Mode.STAKE && live) StakeSelector(game)
-        q.closest?.let { ClosestPanel(game, it) }
-        if (q.ordering != null) OrderingPanel(game)
-        q.matching?.let { MatchingPanel(game, it) }
-        if (q.accepted != null && live) {
-            OutlinedTextField(
-                value = game.typedText, onValueChange = { game.typedText = it },
-                placeholder = { Text("Type your answer…") }, singleLine = true,
-                keyboardActions = KeyboardActions(onDone = { game.submitText() }),
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, capitalization = KeyboardCapitalization.Words),
-                modifier = Modifier.fillMaxWidth())
-            Button(onClick = { game.submitText() }, enabled = game.typedText.isNotBlank(), modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = Pops.mint, contentColor = Ink)) { Text("Submit") }
+        // The bespoke shape panels draw their own controls instead of the MCQ
+        // answer list, so the MCQ first-option requester never reaches them: the
+        // focus audit found closest / ordering / matching / enumerate each
+        // opening with 4-11 focusable controls and ZERO focused. One focusGroup
+        // around the whole panel region hands focus to the first control of
+        // whichever panel is showing, keyed per question like the MCQ path.
+        val panelFocus = remember { FocusRequester() }
+        val tvGame = isTv()
+        val hasPanel = q.closest != null || q.ordering != null || q.matching != null ||
+            q.enumerate != null
+        LaunchedEffect(game.index, game.phase, hasPanel) {
+            if (tvGame && hasPanel) {
+                kotlinx.coroutines.delay(350)
+                runCatching { panelFocus.requestFocus() }
+            }
         }
-        q.enumerate?.let { spec -> if (live) EnumeratePanel(game, spec) }
+        Column(Modifier.focusGroup().focusRequester(panelFocus),
+               verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            q.closest?.let { ClosestPanel(game, it) }
+            if (q.ordering != null) OrderingPanel(game)
+            q.matching?.let { MatchingPanel(game, it) }
+            q.enumerate?.let { spec -> if (live) EnumeratePanel(game, spec) }
+        }
+        if (q.accepted != null && live) {
+            if (isTv()) {
+                // Ten-foot free recall, matching the Apple TV idiom: a text
+                // field on a remote is a keyboard wall, and the audit measured
+                // this one as literally unreachable (0 focusable nodes). Recall
+                // out loud, reveal, mark yourself.
+                var revealed by remember(game.index) { mutableStateOf(false) }
+                val selfFocus = remember(game.index) { FocusRequester() }
+                LaunchedEffect(game.index, revealed) {
+                    kotlinx.coroutines.delay(300); runCatching { selfFocus.requestFocus() }
+                }
+                if (!revealed) {
+                    Text("Say your answer out loud, then reveal it.",
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+                    Button(onClick = { revealed = true },
+                        modifier = Modifier.fillMaxWidth().focusRequester(selfFocus)
+                            .tvFocus(RoundedCornerShape(20.dp), shadow = false),
+                        colors = ButtonDefaults.buttonColors(containerColor = Pops.blue, contentColor = Color.White)) {
+                        Text("Reveal the answer")
+                    }
+                } else {
+                    ChunkyCard(fill = Pops.yellow.copy(alpha = 0.30f)) {
+                        Text(q.answerText, Modifier.padding(16.dp).fillMaxWidth(),
+                            fontWeight = FontWeight.Black, fontSize = 20.sp, textAlign = TextAlign.Center)
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Button(onClick = { game.submitSelfMark(true) },
+                            modifier = Modifier.weight(1f).focusRequester(selfFocus)
+                                .tvFocus(RoundedCornerShape(20.dp), shadow = false),
+                            colors = ButtonDefaults.buttonColors(containerColor = Pops.mint, contentColor = Ink)) {
+                            Text("I got it")
+                        }
+                        Button(onClick = { game.submitSelfMark(false) },
+                            modifier = Modifier.weight(1f).tvFocus(RoundedCornerShape(20.dp), shadow = false),
+                            colors = ButtonDefaults.buttonColors(containerColor = Pops.coral, contentColor = Color.White)) {
+                            Text("I missed it")
+                        }
+                    }
+                }
+            } else {
+                OutlinedTextField(
+                    value = game.typedText, onValueChange = { game.typedText = it },
+                    placeholder = { Text("Type your answer…") }, singleLine = true,
+                    keyboardActions = KeyboardActions(onDone = { game.submitText() }),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, capitalization = KeyboardCapitalization.Words),
+                    modifier = Modifier.fillMaxWidth())
+                Button(onClick = { game.submitText() }, enabled = game.typedText.isNotBlank(), modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Pops.mint, contentColor = Ink)) { Text("Submit") }
+            }
+        }
         val answersLocked = !live || (game.mode == Mode.STAKE && game.currentStake == 0)
         // MCQ buttons ONLY for a plain multiple-choice question. An Ordering question keeps
         // its items in `options`, so rendering these unconditionally drew the four items a

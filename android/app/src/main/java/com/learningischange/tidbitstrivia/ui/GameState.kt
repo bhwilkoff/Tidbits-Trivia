@@ -379,6 +379,30 @@ class GameState(
         finishAnswer()
     }
 
+    /**
+     * TV parity with tvOS: recall-then-reveal self-mark.
+     *
+     * Free-recall answers are typed on phone, web and tablet, but text entry on
+     * a ten-foot screen is a keyboard wall — the Apple TV build has always used
+     * a self-mark here for exactly that reason, and a focus audit confirmed the
+     * Android TV text field is not even reachable by D-pad (0 focusable). The
+     * player recalls out loud, reveals, and marks themselves. Same bookkeeping
+     * as submitText, minus the match the player just performed in their head.
+     */
+    fun submitSelfMark(correct: Boolean) {
+        if (phase != GamePhase.PLAYING) return
+        val q = current ?: return
+        val taken = (now() - qStart) / 1000.0
+        answered.add(Answered(q, if (correct) q.correctIndex else -1, correct, taken))
+        lastCorrect = correct
+        if (correct) {
+            streak++; maxStreak = max(maxStreak, streak)
+            score += Scoring.points(true, taken, mode.perQuestion?.toDouble() ?: 25.0, streak)
+        } else streak = 0
+        typedText = ""
+        finishAnswer()
+    }
+
     // Enumeration (Q8): type a guess; fill the first unfilled group it matches.
     // +1 per fill (count-scored, like Sweep). Returns whether it matched.
     fun submitEnumGuess(text: String): Boolean {

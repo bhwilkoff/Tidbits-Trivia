@@ -226,7 +226,14 @@ def run_cell(dev, cell, outdir, retry=False):
     # (the result). One frame cannot tell "drew a question" from "finished".
     # Time-boxed and long modes cannot reach a result inside ~33s, so watching
     # only that long reported "no result screen" for games that were fine.
-    waits = (9, 11, 13, 20, 25) if cell in LONG_MODES else (9, 11, 13)
+    # The TVs are slow to first paint — the Google TV dongle has 2GB of RAM, and
+    # Fire TV showed a loading screen for >20s before a Daily round appeared. A
+    # schedule tuned to a phone spends its frames on a spinner.
+    slow = dev in ("firetv", "androidtv", "atv")
+    if cell in LONG_MODES:
+        waits = (14, 12, 14, 20, 25) if slow else (9, 11, 13, 20, 25)
+    else:
+        waits = (14, 12, 14, 12) if slow else (9, 11, 13)
     shots = []
     for i, wait in enumerate(waits):
         time.sleep(wait)
@@ -276,9 +283,13 @@ def run_cell(dev, cell, outdir, retry=False):
             n = [int(x) for x in re.findall(r"(\d+)\s*/\s*\d+", t)]
             n += [int(x) for x in re.findall(r"#(\d+)", t)]
             return max(n, default=None)
-        first = next((c for c in (counter(t) for t in per_frame) if c is not None), None)
-        last = next((c for c in (counter(t) for t in reversed(per_frame)) if c is not None), None)
-        progressed = None if first is None or last is None else last > first
+        seen = [c for c in (counter(t) for t in per_frame) if c is not None]
+        # TWO observations minimum. Fire TV spent its first two frames on
+        # "Pulling fresh tidbits…" and only the third showed a counter, so first
+        # and last were the SAME frame — reported as "never advanced" for a round
+        # that was fine. Progress is unmeasurable from one sample, and
+        # unmeasurable is not stuck.
+        progressed = (seen[-1] > seen[0]) if len(seen) >= 2 else None
 
         res = {"result": "OK", "finished": finished, "evidence": all_text[:200]}
         # Progress only has to be shown by a round that did NOT finish. A completed

@@ -51,14 +51,22 @@ MODES = ["classic", "timeAttack", "survival", "stake", "sweep", "pictureId",
          "oddOneOut", "ladder", "enumerate", "mix", "daily", "weakSpot", "marathon"]
 
 # Non-game surfaces that still have to work on every platform.
+# 60-second or endurance modes: they need a longer watch before a result exists.
+LONG_MODES = {"timeAttack", "enumerate", "survival", "stake", "marathon", "ladder", "sweep"}
+
 FEATURES = ["home", "records", "create", "settings", "leaderboard", "clubhub",
             "paywall", "atlas", "profile"]
 
 # A round is PLAYED if the glass shows a question; FINISHED if it shows a result.
 # Both are read from the same frames — a mode that draws and cannot be completed
 # is the failure a screenshot sweep cannot see.
-QUESTION_RX = (r"\d+\s*/\s*\d+|Question|QUESTION|Tap your answer|seconds left|"
-               r"Which |What |Who |How many|Drag|Slide|Type ")
+# Mode-agnostic on purpose. The first version listed interrogatives and a "n/m"
+# counter, and called Survival broken: Survival counts a STREAK ("#20"), and its
+# prompts are statements ("this Japanese actress has played…"), so a working game
+# matched nothing. A trivia question on screen is better identified by a question
+# mark, any progress marker, or reveal chrome than by how the sentence opens.
+QUESTION_RX = (r"\?|#\d+|\d+\s*/\s*\d+|Question|QUESTION|Tap your answer|"
+               r"seconds left|Nice|Not quite|Correct|correct|Drag|Slide|Type ")
 RESULT_RX = (r"Score|SCORE|You got|correct|Correct|Play again|Best|BEST|"
              r"Results|RESULTS|streak|Accuracy|points|POINTS|Done|Finish")
 ERROR_RX = r"No questions|Couldn.t load|Something went wrong|failed to|\berror\b"
@@ -178,8 +186,11 @@ def run_cell(dev, cell, outdir):
     d.mkdir(parents=True, exist_ok=True)
     # Three frames across the round: early (the question), middle, and late
     # (the result). One frame cannot tell "drew a question" from "finished".
+    # Time-boxed and long modes cannot reach a result inside ~33s, so watching
+    # only that long reported "no result screen" for games that were fine.
+    waits = (9, 11, 13, 20, 25) if cell in LONG_MODES else (9, 11, 13)
     shots = []
-    for i, wait in enumerate((9, 11, 13)):
+    for i, wait in enumerate(waits):
         time.sleep(wait)
         p = d / f"{i}.png"
         if shot(dev, p):

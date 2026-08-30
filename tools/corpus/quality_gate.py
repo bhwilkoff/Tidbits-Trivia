@@ -276,6 +276,7 @@ BUDGET = {
     "CATEGORY-SKEW": 0,
     "CLUE-CROSSED": 0,
     "FOUNDED-PERSON": 0,
+    "TAGS-STRIPPED": 0,
     "GOLDEN-STALE": 0,
     "NATIONALITY-FREE": 0,
     "SLIDER-FARMABLE": 0,
@@ -728,6 +729,17 @@ def check():
 
     # ---- the corpus itself -------------------------------------------------
     rows_all = load("corpus.json")
+    # TAGS-STRIPPED: index 9 is a tags array and the Create ranker scores a tag
+    # match at 3, ABOVE title (2) and prompt (1). A row missing it still parses,
+    # so ROW-SCHEMA, check_mirrors and every other rule here passed while web and
+    # Windows ranked with no tag signal at all. Measured: an export that emitted
+    # only nine fields blanked the tags on all 110,496 rows, and the ONLY thing
+    # that noticed was Android's CreateGoldenTest going red.
+    _tagged = sum(1 for q in rows_all if len(q) > 9 and q[9])
+    if rows_all and _tagged < len(rows_all) // 2:
+        bad["TAGS-STRIPPED"].append(
+            f"only {_tagged}/{len(rows_all)} corpus rows carry tags — the export "
+            f"dropped index 9; web and Windows are ranking without tag signal")
     kinds = kind_map(rows_all)
     # Wikidata Q3024240 = "historical country" — on the Kingdom of Navarre, not
     # on France. Stated as data rather than sniffed from prose.

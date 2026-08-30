@@ -16,14 +16,31 @@ def main():
     args = ap.parse_args()
 
     conn = sqlite3.connect(args.db)
+    # tag_names resolves the pipe-joined tag IDs the questions table stores.
+    names = dict(conn.execute("SELECT id, name FROM tag_names"))
     rows = conn.execute(
         "SELECT id,prompt,option0,option1,option2,option3,correct_index,"
-        "category_id,difficulty,explanation,source_title,source_url FROM questions"
+        "category_id,difficulty,explanation,source_title,source_url,tags FROM questions"
     ).fetchall()
     conn.close()
 
+    def tags_of(raw):
+        """Index 9 is a TAGS ARRAY of resolved names, and it is load-bearing: the
+        Create ranker scores a tag match at 3, above title (2) and prompt (1).
+
+        This export used to emit only nine fields. The row still parsed, so every
+        mirror check and the quality gate passed — and web and Windows silently
+        ranked with no tag signal at all, which made them disagree with Apple on
+        broad topics ("Michael Jackson": Apple sees the tag "Albums produced by
+        Michael Jackson" and returns Off the Wall; a tagless web ties at 4 and
+        returns Beat It). One re-export blanked the tags on all 110,496 rows and
+        only CreateGoldenTest noticed. A row that parses is not a row that fits."""
+        return [names[int(t)] for t in (raw or "").split("|")
+                if t.strip().isdigit() and int(t) in names]
+
     questions = [
-        [r[0], r[1], [r[2], r[3], r[4], r[5]], r[6], r[7], r[8], r[9], r[10], r[11]]
+        [r[0], r[1], [r[2], r[3], r[4], r[5]], r[6], r[7], r[8], r[9], r[10], r[11],
+         tags_of(r[12])]
         for r in rows
     ]
     # Content version → lets the web client bust its IndexedDB cache when

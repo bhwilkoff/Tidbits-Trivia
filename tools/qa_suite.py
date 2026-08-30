@@ -74,14 +74,23 @@ def reachable(dev):
             line = next((l for l in r.stdout.splitlines() if uuid in l), "")
             return ("available" in line or "connected" in line, line.strip()[:60] or "not listed")
         if dev in ("pixel", "firetv", "androidtv"):
-            serial = {"pixel": "3B211JEKB14516", "firetv": "10.0.0.139:5555",
+            # The FULL serial, matched on its own line. Keying the Pixel on the
+            # fragment "3B211JEKB14516" made the regex require whitespace right
+            # after it, but the real serial continues
+            # ("adb-3B211JEKB14516-4M5scf._adb-tls-connect._tcp"), so the probe
+            # returned False while its own evidence string said "adb ok" — and a
+            # SKIP is silent, so the Pixel simply went untested with nothing said.
+            serial = {"pixel": "adb-3B211JEKB14516-4M5scf._adb-tls-connect._tcp",
+                      "firetv": "10.0.0.139:5555",
                       "androidtv": "10.0.0.55:5555"}[dev]
             r = sh([ADB, "devices"], timeout=45)
             if serial not in r.stdout and ":" in serial:
                 sh([ADB, "connect", serial], timeout=30)
                 r = sh([ADB, "devices"], timeout=45)
-            return (re.search(rf"{re.escape(serial)}\s+device", r.stdout) is not None,
-                    "adb ok" if serial in r.stdout else "not in adb devices")
+            online = re.search(rf"^{re.escape(serial)}\s+device\b", r.stdout, re.M)
+            # One verdict, one evidence string. They must never disagree.
+            return (online is not None,
+                    "adb: device" if online else "not online in adb devices")
         if dev == "mac":
             ok = Path("/Applications/TidbitsTrivia.app/Contents/MacOS/TidbitsTrivia").exists()
             return (ok, "installed" if ok else "no /Applications/TidbitsTrivia.app")

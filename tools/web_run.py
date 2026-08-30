@@ -18,7 +18,11 @@ from devharness import Grader, ocr, qa_dir, sh  # noqa: E402
 
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 BASE = "https://tidbitstrivia.com"
-ANCHOR = r"Tidbits|Quick Play|Daily|question|round|play"
+# Calibrated against a real capture, not assumed: a question view is full-screen
+# and carries NO site chrome at all — its frame is "1/7 HISTORY <clue> <options>".
+# Anchoring on the wordmark alone called a correctly-rendered Daily "the wrong
+# app". The counter is the question view's own signature.
+ANCHOR = r"Tidbits|Quick Play|Daily|question|round|play|\d+\s*/\s*\d+"
 
 VIEWPORTS = [("narrow", 375, 812), ("wide", 1440, 900)]
 

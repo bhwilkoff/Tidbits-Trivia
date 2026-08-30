@@ -189,6 +189,14 @@ Each rule below is here because a real question in this app hit it:
                   passed all 14 of them, because each one is individually
                   well-formed. "This blue-skinned Imperial military leader ...
                   Who is he?" -> "The Quarry".
+  FOUNDED-PERSON  the chronology reveal saying "Superman (founded 1938)" or
+                  "Buzz Lightyear (founded 1995)". A character is created and a
+                  band is formed; only an organisation is founded. One template
+                  applied its verb to every kind of subject. Found by reading a
+                  sample — the question is answerable, so no construction rule
+                  had any reason to look. The first repair over-matched \bgroup\b
+                  and rewrote "Goldman Sachs (founded 1869)" too, which is why
+                  this reads the subject's own description rather than its name.
   STEM-TYPE       "In which country is Russo-Ukrainian war?" — one Wikidata
                   property mapped to one stem and applied to every kind of
                   subject. The second question of this session's first playtest
@@ -214,6 +222,15 @@ PERSON_CLUE = re.compile(r"\bwho is (she|he)\b|\bwho was (she|he)\b|"
                          r"player|composer|author|heiress|host|model|director|painter)\b",
                          re.I)
 WORK_TITLE = re.compile(r"\((TV series|film|\d{4} film|video game|album|song|band)\)$", re.I)
+
+# FOUNDED-PERSON: the chronology reveal template says "(founded YYYY)" about
+# whatever it is given, including people, characters and bands. Companies and
+# orders ARE founded, so the test reads what the explanation says the subject is.
+FOUNDED_RX = re.compile(r"\(founded \d{3,4}\)")
+NOT_FOUNDABLE = re.compile(r"\bis (a|the) (fictional|archetypal superhero|superhero)\b|"
+                           r"\bfictional character\b|\bis a superhero\b|"
+                           r"\b(are|were|is) an? [A-Za-z\- ]{0,30}\b"
+                           r"(band|duo|trio|girl group|boy band|vocal group|musical group)\b", re.I)
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 # Overridable so test_quality_gate.py can run the REAL gate against a corpus with
@@ -258,6 +275,7 @@ BUDGET = {
     "MISSING-ARTICLE": 0,
     "CATEGORY-SKEW": 0,
     "CLUE-CROSSED": 0,
+    "FOUNDED-PERSON": 0,
     "GOLDEN-STALE": 0,
     "NATIONALITY-FREE": 0,
     "SLIDER-FARMABLE": 0,
@@ -900,6 +918,9 @@ def check():
         # uncompacted sqlite column order instead put this out of range, so the
         # rule silently graded nothing and reported a clean 0 — the exact blind
         # failure the module docstring warns about for KIND-MISMATCH.
+        _expl = q[6] if len(q) > 6 and isinstance(q[6], str) else ""
+        if _expl and FOUNDED_RX.search(_expl) and NOT_FOUNDABLE.search(_expl):
+            bad["FOUNDED-PERSON"].append(f"{q[0]}: {_expl[:78]}")
         _src_title = q[7] if len(q) > 7 and isinstance(q[7], str) else ""
         if _src_title and WORK_TITLE.search(_src_title) and PERSON_CLUE.search(prompt or ""):
             _subject = re.sub(r"\s*\([^)]*\)$", "", _src_title).strip()

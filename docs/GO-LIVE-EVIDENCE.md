@@ -146,11 +146,27 @@ Grand Admiral Thrawn clue answered by "The Quarry", a video game.
 All 16 are removed, tombstoned so no generator revives them, and the class is now
 `CLUE-CROSSED` in the gate at budget 0.
 
-**One measurement worth not repeating:** a "prompt shares no words with its own
-answer" detector flagged 1,068 rows — and they were the *best* questions in the
-corpus, because a good clue deliberately never contains its answer. The narrow
-detector was the correct one. A signal that fires on quality is not a defect
-signal.
+A second sample (seed 42) found a second class: the chronology reveal said
+**"Superman (founded 1938)"**, "Sherlock Holmes (founded 1887)",
+"Buzz Lightyear (founded 1995)", "Led Zeppelin (founded 1968)". One template
+applied one verb to every kind of subject. A character is *created*, a band is
+*formed*; only an organisation is *founded*. 20 characters and 95 bands repaired,
+`FOUNDED-PERSON` added to the gate.
+
+### Two measurements worth not repeating
+
+Both of these looked like large findings and were not, which is the more
+expensive mistake than missing something:
+
+- A "prompt shares no words with its own answer" detector flagged **1,068 rows**
+  — and they were the *best* questions in the corpus, because a good clue
+  deliberately never contains its answer. A signal that fires on quality is not
+  a defect signal.
+- The first `founded` repair matched `\bgroup\b` and `\bband\b` and rewrote
+  **273** rows, turning the correct "Goldman Sachs (founded 1869)" into "formed".
+  Companies really are founded. The repair now reads the subject's own
+  description rather than its name, and the gate rule was tested against
+  Goldman Sachs and the Franciscans to prove it does **not** fire on them.
 
 ---
 

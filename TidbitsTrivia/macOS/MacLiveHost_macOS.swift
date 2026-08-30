@@ -221,6 +221,7 @@ struct LiveHostContainer_macOS: View {
     let onClose: () -> Void
     @Environment(LiveHostCoordinator.self) private var coordinator
     @Environment(\.openWindow) private var openWindow
+    @Environment(\.dismissWindow) private var dismissWindow
     @State private var session: LiveHostSession
     @State private var net = LiveHostNet()
     @State private var lockTask: Task<Void, Never>?   // Wave C: auto-lock at the timer deadline
@@ -229,18 +230,40 @@ struct LiveHostContainer_macOS: View {
         self.event = event; self.onClose = onClose
         _session = State(initialValue: LiveHostSession(event: event))
     }
+    /// The single way a night ends. Extracted so the close button and the
+    /// TIDBITS_LIVE_AUTOCLOSE hook cannot drift apart — an exit path that only
+    /// one of them takes is an exit path nothing tests.
+    private func endNight() {
+        let net = self.net
+        Task { await net.close() }
+        coordinator.session = nil            // clear the projector
+        coordinator.net = nil
+        // ...and CLOSE it. Clearing the session only emptied the projector; the
+        // window stayed open on its idle splash forever, which is what left
+        // stale "The host will start the night shortly" screens behind after
+        // every night. The projector exists to show a session, so it goes when
+        // the session does.
+        dismissWindow(id: "tidbits-bigscreen")
+        onClose()
+    }
+
     var body: some View {
-        LiveHostView_macOS(session: session, net: net) {
-            let net = self.net
-            Task { await net.close() }
-            coordinator.session = nil            // clear the projector
-            coordinator.net = nil
-            onClose()
-        }
+        LiveHostView_macOS(session: session, net: net) { endNight() }
         .onAppear {
             coordinator.session = session          // publish to the big screen (§A1.1)
             coordinator.net = net
             openWindow(id: "tidbits-bigscreen")     // pop the projector window
+        }
+        // TIDBITS_LIVE_AUTOCLOSE=<seconds> → end the night on its own. The close
+        // control is an icon-only Button deep in the view tree, so it has no
+        // accessibility name and cannot be driven from a harness; without this
+        // the projector's teardown was the one part of the fix nothing could
+        // prove. No-op unless the variable is set.
+        .task {
+            guard let raw = ProcessInfo.processInfo.environment["TIDBITS_LIVE_AUTOCLOSE"],
+                  let secs = Double(raw) else { return }
+            try? await Task.sleep(for: .seconds(secs))
+            endNight()
         }
         // Open the networked room and publish the first question.
         .task {

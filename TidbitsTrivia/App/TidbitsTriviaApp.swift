@@ -95,7 +95,19 @@ struct TidbitsTriviaApp: App {
 
         // The Tidbits Live projector output — its own window; drag to the
         // second display. Reads the shared host session (§A1.1/A1.2).
-        WindowGroup(id: "tidbits-bigscreen") {
+        //
+        // `Window`, NOT `WindowGroup`. A WindowGroup permits unlimited instances,
+        // so every `openWindow(id:)` opened ANOTHER projector: hosting three
+        // nights left three windows, macOS restored them all on the next launch,
+        // and a measured session had six stacked up behind the main window. A
+        // projector is a single physical screen — the scene should be singular
+        // too, and `Window` makes `openWindow` focus the existing one instead.
+        //
+        // Restoration is off for the same reason: a projector belongs on screen
+        // only while a night is being hosted. Reopening it at launch, with no
+        // session to show, is how the app came back up on the idle splash
+        // ("The host will start the night shortly") with no host anywhere.
+        Window("Tidbits Live", id: "tidbits-bigscreen") {
             LiveBigScreen_macOS()
                 .environment(liveCoordinator)
                 .tint(Tidbits.Palette.blue)
@@ -104,6 +116,7 @@ struct TidbitsTriviaApp: App {
         .modelContainer(modelContainer)
         .windowResizability(.contentMinSize)   // projector must resize to any display
         .defaultSize(width: 1280, height: 720)
+        .restorationBehavior(.disabled)
         #endif
     }
 

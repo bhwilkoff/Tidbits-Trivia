@@ -7,6 +7,57 @@
 > `docs/ROADMAP.md`, `docs/DATA-CONTRACT.md`. Detailed per-round history is in
 > `ARCHIVE.md`.
 
+## Current state (2026-08-30) — the go-live suite: eight surfaces, six defects
+
+**Found:** macOS and web had NO harness, and cross-device multiplayer had none
+on any platform — so the two surfaces the owner asked about specifically were
+the two nothing could observe. `qa_suite.py` also still claimed Fire TV and
+Android TV had no leanback build, false since that build shipped.
+
+**Did:** added `tools/mac_run.py`, `tools/web_run.py` (375px AND 1440px),
+`tools/multiplayer_run.py`, `tools/question_sample.py`; grew `qa_suite.py` to
+eight rows; wrote `docs/GO-LIVE-EVIDENCE.md`. Added Android's missing
+join-by-code hook (`--es tidbits_live_join`, mirroring `TIDBITS_LIVE_JOIN`)
+without which no harness could put an Android device in a host's room.
+
+**Headline evidence.** Apple TV hosted Trivia Night with iPad + iPhone + Pixel +
+Fire TV all showing the SAME question, matched against the prompt the host
+published to RTDB. Mac hosted Tidbits Live with iPad + iPhone + Pixel + Google TV
+dongle, 4/4 in sync, RESULT OK. `multiplayer_run.py` grades the WIRE
+(`live/{code}`) and the GLASS (a screenshot of each device) separately, because
+either alone can lie.
+
+**Six defects, and how each was found:**
+1. `#/dailyboard` was unreachable — `#/daily`'s prefix match swallowed it. Found
+   by the distinct-screen check; every route pair is now audited.
+2. 16 questions pair a person clue with a work answer ("…Who is she?" → "Servant").
+   Found by READING a stratified sample; all 29 construction rules passed them.
+   Removed + tombstoned + `CLUE-CROSSED`.
+3. The chronology reveal said "Superman (founded 1938)". 20 characters →
+   "created", 95 bands → "formed"; `FOUNDED-PERSON`.
+4. `sync_shared_assets.sh` would rsync the repo's 0-byte `corpus.sqlite` over
+   Android's real 52MB one. Excluded + an empty-source guard.
+5. `corpus.json` shipped in BOTH app bundles (54.9MB each) while no Swift or
+   Kotlin source opens it. Android assets 125MB → 67MB; the iOS bundle is 87MB.
+   `check_mirrors` now reports it as STRAY if it returns.
+6. macOS raised a login-keychain password prompt over the Home screen, and once
+   blocked the Live room from opening. `kSecUseDataProtectionKeychain` added —
+   NOT verified to fix it, see below.
+
+**Left:** the keychain prompt is one-time per signing identity and its dialog is
+owned by SecurityAgent and SURVIVES killing the app, so three "still broken"
+readings were the same orphan re-photographed. Treat the change as hardening and
+confirm on a machine that has never run the app. Billing 8's purchase path is
+still unproven on a Play-signed build; Fire TV still needs its Amazon submission.
+
+**The lesson worth keeping:** two of my own measurements were confidently wrong
+in the expensive direction. A "prompt shares no words with its answer" detector
+flagged 1,068 rows that were the corpus's BEST questions, and the first `founded`
+repair rewrote 273 rows including the correct "Goldman Sachs (founded 1869)".
+Both were caught by reading the output before accepting it. And `CLUE-CROSSED`
+read a clean 0 until its column index was fixed — a rule that cannot fire is not
+an assertion.
+
 ## Current state (2026-08-29) — real-hardware QA suite on four devices
 
 **Found:** one harness (tvOS). Archive-Watch runs three — `atv_scenario.py`

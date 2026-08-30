@@ -111,6 +111,13 @@ RESULT_RX = (r"(?i:score|you got|correct|play again|best|results|streak|accuracy
              r"points|done|finish|flawless|good run|nice run|final)")
 ERROR_RX = r"No questions|Couldn.t load|Something went wrong|failed to|\berror\b"
 
+# The paywall on a DEBUG package cannot load plans: the .debug id is not
+# registered with Play, so Play declines all three product ids and the screen
+# honestly says "Couldn't load". The paywall itself renders correctly — its copy,
+# its plan rows, its Club pitch are all on the glass. adb_run.py already narrows
+# its forbid list for this exact reason; the generic error pattern did not.
+PAYWALL_ERROR_RX = r"No questions|Something went wrong|failed to|couldn.t be"
+
 
 def devicectl(*a, timeout=90):
     return sh(["env", f"DEVELOPER_DIR={DEVELOPER_DIR}", "xcrun", "devicectl"] + list(a),
@@ -246,7 +253,8 @@ def run_cell(dev, cell, outdir, retry=False):
             return run_cell(dev, cell, outdir, retry=True)
         return {"result": "SKIP", "why": f"{lines} OCR lines — screen off/locked"}
 
-    err = re.search(ERROR_RX, all_text, re.I)
+    err = re.search(PAYWALL_ERROR_RX if cell == "paywall" else ERROR_RX,
+                    all_text, re.I)
     if err:
         return {"result": "FAIL", "why": f"error text: {err.group(0)!r}",
                 "evidence": all_text[:200]}

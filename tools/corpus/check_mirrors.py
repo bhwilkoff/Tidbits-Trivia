@@ -35,6 +35,14 @@ MIRRORS = {
     "apple":   ROOT / "TidbitsTrivia" / "Resources",             # iOS/macOS/tvOS
     "android": ROOT / "android" / "app" / "src" / "main" / "assets",
 }
+# corpus.json is a WEB + WINDOWS asset, not a mirror. Apple and Android both read
+# the corpus from corpus.sqlite and neither opens this file — the only Swift and
+# Kotlin references to the name are comments describing a row shape. It was
+# nevertheless bundled in both, at 54.9MB per app: dead weight in every download,
+# on platforms with an OOM history. Shipping it again is a regression, so it is
+# named here rather than left to the "single-home files are fine" skip.
+WEB_ONLY = {"corpus.json", "enrich.json"}
+
 FILES = ["corpus.json", "picture.json", "thisorthat.json", "closest.json",
          "order.json", "match.json", "typeanswer.json", "oddoneout.json",
          "enumerate.json", "difficulty.json", "enrich.json"]
@@ -57,6 +65,13 @@ def main():
     for name in FILES:
         seen = {k: summary(d / name) for k, d in MIRRORS.items()}
         present = {k: v for k, v in seen.items() if v}
+        if name in WEB_ONLY:
+            strays = [k for k in present if k != "assets"]
+            if strays:
+                print(f"STRAY {name:18} bundled into {', '.join(strays)} — "
+                      f"nothing there reads it; remove it from the app bundle")
+                bad += 1
+            continue
         if len(present) < 2:
             continue   # single-home files are fine
         digests = {v[1] for v in present.values()}

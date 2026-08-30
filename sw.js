@@ -1,6 +1,6 @@
 // Tidbits service worker — offline app shell + corpus, with fresh updates.
 // Bump CACHE on every deploy that changes shell/code so the SW re-installs.
-const CACHE = 'tidbits-v68';
+const CACHE = 'tidbits-v69';
 const SHELL = [
   './', 'index.html', 'css/styles.css',
   'js/app.js',

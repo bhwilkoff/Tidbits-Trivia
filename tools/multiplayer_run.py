@@ -234,8 +234,11 @@ def main():
     # "works" on device and is silently unjoinable from the web, whose input is
     # correctly capped at 4 — every earlier run of this harness used QALIVE /
     # QANITE / QAFINAL and the web could never have joined any of them.
-    if len(code) != 4 or not code.isalpha():
-        sys.exit(f"--code must be exactly 4 letters (rooms are 4 chars); got {code!r}")
+    # FOUR characters, alphanumeric — the generator's alphabet includes digits
+    # (real rooms observed: T7ZV, RGW2). An earlier version of this guard demanded
+    # letters only and rejected a code the app itself would have produced.
+    if len(code) != 4 or not code.isalnum():
+        sys.exit(f"--code must be exactly 4 alphanumeric chars (rooms are 4); got {code!r}")
     players = [p for p in a.players.split(",") if p]
     out = qa_dir("multiplayer", f"{a.host}-{code}")
     g = Grader(out, host=a.host, code=code, players=players)

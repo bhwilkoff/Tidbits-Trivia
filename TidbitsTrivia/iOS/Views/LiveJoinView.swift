@@ -9,6 +9,12 @@ import SwiftUI
 struct LiveJoinView: View {
     var initialCode: String = ""
     @Environment(\.dismiss) private var dismiss
+    /// Regular width = iPad (and a wide iPhone in landscape). The live player was
+    /// a phone layout stretched across 12.9 inches: full-bleed question text at a
+    /// ludicrous measure, four options in one tall column, and everything jammed
+    /// against the top with the bottom half of the display empty.
+    @Environment(\.horizontalSizeClass) private var hSize
+    private var isWide: Bool { hSize == .regular }
     @Environment(\.scenePhase) private var scenePhase
     @State private var client = LivePlayerClient()
     @State private var code = ""
@@ -109,7 +115,14 @@ struct LiveJoinView: View {
                         lobbyView
                     }
                 }
-                .padding(20)
+                .padding(isWide ? 32 : 20)
+                // A capped measure, centred. Reading a clue set across the full
+                // width of a 12.9" display is the classic stretched-phone tell.
+                .frame(maxWidth: isWide ? 900 : .infinity)
+                .frame(maxWidth: .infinity)
+                // Centre the column in the window instead of pinning it to the
+                // top over an empty lower half.
+                .centeredInScroll(isWide)
             }
         }
     }
@@ -182,7 +195,9 @@ struct LiveJoinView: View {
         let revealed = p.phase == LiveRoom.Phase.reveal
         VStack(alignment: .leading, spacing: 14) {
             Text("ROUND \(p.round) · \(p.roundTitle.uppercased()) — Q\(p.qNum)/\(p.qTotal)")
-                .font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft)
+                .font(isWide ? .system(size: 16, weight: .heavy, design: .rounded)
+                             : Tidbits.TypeRamp.l6)
+                .foregroundStyle(Tidbits.Palette.inkSoft)
             if let img = p.imageURL, let url = URL(string: img) {
                 AsyncImage(url: url) { phase in
                     if let image = phase.image { image.resizable().scaledToFit() }
@@ -192,7 +207,11 @@ struct LiveJoinView: View {
                 .frame(maxWidth: .infinity, maxHeight: 240)
                 .clipShape(RoundedRectangle(cornerRadius: 14))
             }
-            Text(p.prompt).font(.system(size: 24, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
+            // 24pt is a phone size read at arm's length; a 12.9" iPad is held
+            // further away and usually shared, so the clue carries at 34.
+            Text(p.prompt)
+                .font(.system(size: isWide ? 34 : 24, weight: .black, design: .rounded))
+                .foregroundStyle(Tidbits.Palette.ink)
                 .fixedSize(horizontal: false, vertical: true)
             if let d = p.deadline, !revealed { countdownView(d) }   // Wave A: on-screen timer
             if p.wager == true, !revealed { wagerStepper() }        // Wave A: wager round
@@ -249,7 +268,21 @@ struct LiveJoinView: View {
         } else if p.enumTarget != nil {
             LiveEnumerateAnswer(target: p.enumTarget ?? 0, locked: locked) { l in Task { await client.submit(list: l) } }.id(p.qid)
         } else if let options = p.options, !options.isEmpty {
-            ForEach(Array(options.enumerated()), id: \.offset) { i, opt in optionButton(i, opt, p: p, revealed: revealed) }
+            // Two columns on iPad. Four full-width rows down a 12.9" screen is a
+            // lot of travel for a tap and reads as a phone list that grew; a 2x2
+            // grid is the shape a quiz answer set actually wants at this size.
+            if isWide {
+                LazyVGrid(columns: [GridItem(.flexible(), spacing: 14),
+                                    GridItem(.flexible(), spacing: 14)], spacing: 14) {
+                    ForEach(Array(options.enumerated()), id: \.offset) { i, opt in
+                        optionButton(i, opt, p: p, revealed: revealed)
+                    }
+                }
+            } else {
+                ForEach(Array(options.enumerated()), id: \.offset) { i, opt in
+                    optionButton(i, opt, p: p, revealed: revealed)
+                }
+            }
         } else {
             LiveTextAnswer(locked: locked) { t in Task { await client.submit(text: t) } }.id(p.qid)
         }
@@ -262,9 +295,13 @@ struct LiveJoinView: View {
         let fill: Color = correct ? Tidbits.Palette.mint : wrong ? Color(red: 0.95, green: 0.82, blue: 0.80) : chosen ? Tidbits.Palette.blue.opacity(0.18) : .white
         return Button { Task { await client.submit(choice: i) } } label: {
             HStack(spacing: 12) {
-                Text("\(i + 1)").font(.system(size: 15, weight: .black)).foregroundStyle(.white)
+                Text("\(i + 1)").font(.system(size: isWide ? 19 : 15, weight: .black)).foregroundStyle(.white)
                     .frame(width: 26, height: 26).background(RoundedRectangle(cornerRadius: 8).fill(Tidbits.Palette.ink))
-                Text(opt).font(Tidbits.TypeRamp.l3).foregroundStyle(correct ? .white : Tidbits.Palette.ink).multilineTextAlignment(.leading)
+                Text(opt)
+                    .font(isWide ? .system(size: 24, weight: .semibold, design: .rounded)
+                                 : Tidbits.TypeRamp.l3)
+                    .foregroundStyle(correct ? .white : Tidbits.Palette.ink)
+                    .multilineTextAlignment(.leading)
                 Spacer(minLength: 0)
             }
             .padding(16).frame(maxWidth: .infinity, alignment: .leading).chunkyCard(fill: fill)
@@ -425,3 +462,18 @@ private struct LiveMatchingAnswer: View {
         .disabled(disabled).frame(maxWidth: .infinity)
 }
 #endif
+
+
+private extension View {
+    /// Make the content at least as tall as the scroll container and centre it,
+    /// so a short round sits in the middle of an iPad rather than clinging to the
+    /// top edge with the lower half empty. A no-op on compact width, where the
+    /// content already fills the screen.
+    @ViewBuilder func centeredInScroll(_ active: Bool) -> some View {
+        if active {
+            self.containerRelativeFrame(.vertical, alignment: .center)
+        } else {
+            self
+        }
+    }
+}

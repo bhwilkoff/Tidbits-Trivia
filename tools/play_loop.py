@@ -215,7 +215,7 @@ def wake_tv():
     return False
 
 
-def run_cell(dev, cell, outdir):
+def run_cell(dev, cell, outdir, retry=False):
     """Play/open one cell and read the glass. Returns a result dict."""
     import re
     if dev == "atv" and not wake_tv():
@@ -223,7 +223,7 @@ def run_cell(dev, cell, outdir):
     if not launch(dev, cell):
         return {"result": "FAIL", "why": "launch was refused"}
 
-    d = outdir / dev / cell
+    d = outdir / dev / cell / ("retry" if retry else "first")
     d.mkdir(parents=True, exist_ok=True)
     # Three frames across the round: early (the question), middle, and late
     # (the result). One frame cannot tell "drew a question" from "finished".
@@ -247,6 +247,13 @@ def run_cell(dev, cell, outdir):
     lines = max((len(texts.get(p.name, {}).get("allText", [])) for _, p in shots),
                 default=0)
     if lines < 4:
+        # The iPhone and iPad have no remote wake, so a dark screen is a real
+        # SKIP rather than a failure. But the launch itself tends to wake them:
+        # iphone/classic skipped on a dark screen and the next 17 cells on that
+        # same phone all passed. One retry converts a stale-lock skip into a
+        # verified cell instead of leaving a hole the loop keeps re-visiting.
+        if not retry:
+            return run_cell(dev, cell, outdir, retry=True)
         return {"result": "SKIP", "why": f"{lines} OCR lines — screen off/locked"}
 
     err = re.search(ERROR_RX, all_text, re.I)

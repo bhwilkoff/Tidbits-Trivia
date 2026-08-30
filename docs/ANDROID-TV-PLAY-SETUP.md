@@ -36,8 +36,22 @@ Assets ready in the repo:
 
 | Asset | Where | Notes |
 |---|---|---|
-| TV banner (320x180) | `android/app/src/main/res/drawable-xhdpi/tv_banner.png` | also shipped in the APK |
+| Launcher banner (320x180) | `android/app/src/main/res/drawable-xhdpi/tv_banner.png` | `android:banner`, ships INSIDE the APK |
+| Play listing banner (1280x720) | `build/store/tv_banner_1280x720.png` | store asset — a DIFFERENT thing |
 | TV screenshots (6) | `build/store/tv-screenshots/*.png` | 1920x1080, 16:9, 24-bit RGB |
+
+**The two banners are not the same asset.** The 320x180 drawable is the TV
+launcher tile; Play's listing `tvBanner` must be **1280x720** and rejects the
+320x180 outright ("Invalid dimensions - expected width: [1280]"). Uploading the
+launcher banner to the listing fails, which is how the distinction surfaced.
+
+The whole set has been validated against the live API — staged into an edit,
+uploaded, `edits().validate()` passed, then the edit was **deleted**, so the
+upload path is proven end to end with nothing published:
+
+```bash
+# see the validation block in the wave-5 commit; it stages, validates, rolls back
+```
 
 The capture polls for each screen's own text signature instead of sleeping.
 Two bugs are baked into that decision and should not be re-learned:

@@ -26,7 +26,7 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from devharness import qa_dir, sh   # noqa: E402
+from devharness import ocr, qa_dir, sh   # noqa: E402
 
 ADB = os.path.expanduser("~/Library/Android/sdk/platform-tools/adb")
 DEVICES = {"firetv": "10.0.0.139:5555", "androidtv": "10.0.0.55:5555"}
@@ -34,6 +34,8 @@ PKG = os.environ.get("TIDBITS_ADB_PKG", "com.tidbitstrivia.app.debug")
 ACTIVITY = "com.learningischange.tidbitstrivia.MainActivity"
 
 # (name, extras) — extras are (flag, key, value) triples for `am start`.
+EXPECT = {'home': 'QUICK PLAY|DAILY TIDBIT', 'records': 'Your games|DAY STREAK|No games yet|Personal bests', 'create': 'Create a quiz|Generate Quiz|Play it as', 'settings': 'Haptics|Gameplay|Review questions|Feedback', 'paywall': 'Get better, not just play more|Ranked Seasons', 'clubHub': 'You.re a member|Link Wall|Club', 'atlas': 'Knowledge Atlas|map of what you actually know', 'linkWall': 'Link Wall|hidden groups', 'expeditions': 'Expedition|campaign', 'storyArchive': 'Story Archive|fact you.ve learned', 'marathonHistory': 'Marathon', 'profile': 'Profile|Player|Rating', 'leaderboard': 'Leaderboard|Season|rank', 'duels': 'Duel', 'online': 'Online|Quick Match|opponent', 'party': 'Pass & Play|Party|players', 'nightSetup': 'Trivia Night|round|preset', 'g-classic': '\\d+\\s*/\\s*\\d+', 'g-closest': '\\d+\\s*/\\s*\\d+', 'g-ordering': '\\d+\\s*/\\s*\\d+', 'g-matching': '\\d+\\s*/\\s*\\d+', 'g-typeAnswer': 'Say your answer out loud|Reveal the answer', 'g-enumerate': '\\d+\\s*/\\s*\\d+', 'g-picture': '\\d+\\s*/\\s*\\d+', 'g-thisOrThat': '\\d+\\s*/\\s*\\d+', 'g-oddOneOut': '\\d+\\s*/\\s*\\d+'}
+
 SURFACES = [
     ("home",            [("ez", "tidbits_skip_onboard", "true")]),
     ("records",         [("es", "tidbits_tab", "records"),
@@ -167,7 +169,25 @@ def main():
         if want and name not in want:
             continue
         launch(a.device, extras)
-        time.sleep(7)
+        # WAIT FOR THE SCREEN, do not guess a duration. A fixed 7s sleep read
+        # the Android TV dongle as "ignores intent extras" across 26 surfaces —
+        # it is simply slow (2GB RAM; logcat shows "Skipped 274 frames" and
+        # 5s frame times), and the route had not drawn yet. Atlas was Home at
+        # 10s and Atlas at 18s on the same launch. Polling makes the walk
+        # correct on a fast box and a slow one without a per-device constant.
+        exp = EXPECT.get(name)
+        p0 = outdir / f"{name}-a.png"
+        deadline = time.time() + 40
+        text = ""
+        while time.time() < deadline:
+            time.sleep(2.5)
+            if not shot(a.device, p0):
+                continue
+            for d in ocr([(0, p0)]).values():
+                text = " ".join(t["text"] for t in d.get("allText", []))
+            if not exp or re.search(exp, text, re.I):
+                break
+        ok_screen = (not exp) or bool(re.search(exp, text, re.I))
         x = tree(a.device)
         focusable = x.count('focusable="true"')
         focused = x.count('focused="true"')
@@ -181,9 +201,7 @@ def main():
             x = tree(a.device)
             focusable = x.count('focusable="true"')
             focused = x.count('focused="true"')
-        p0 = outdir / f"{name}-a.png"
         p1 = outdir / f"{name}-b.png"
-        shot(a.device, p0)
         b0 = focused_bounds(x)
         clickable = focused_clickable(x)
         # One D-pad move. The PRIMARY signal is whether the focused element's
@@ -205,9 +223,11 @@ def main():
         # demand movement where there is somewhere to move.
         # Usable = something holds focus AND pressing OK on it does something.
         ok_visible = clickable
-        status = "OK" if (ok_focus and ok_visible) else "FAIL"
+        status = "OK" if (ok_focus and ok_visible and ok_screen) else "FAIL"
         if status == "FAIL":
             reason = []
+            if not ok_screen:
+                reason.append(f"WRONG SCREEN — /{exp}/ not on the glass")
             if not ok_focus:
                 reason.append(f"0 focused of {focusable} focusable")
             if not ok_visible:
@@ -216,9 +236,9 @@ def main():
             bad.append((name, "; ".join(reason)))
         rows.append({"surface": name, "focusable": focusable, "focused": focused,
                      "clickable": clickable, "moved": moved, "delta": delta,
-                     "status": status})
+                     "right_screen": ok_screen, "status": status})
         print(f"  [{status:4s}] {name:16s} focusable={focusable:<3d} focused={focused} "
-              f"clickable={str(clickable):5s} moved={str(moved):5s}")
+              f"clickable={str(clickable):5s} screen={str(ok_screen):5s}")
 
     (outdir / "audit.json").write_text(json.dumps(rows, indent=2))
     print(f"\n  {sum(1 for r in rows if r['status'] == 'OK')}/{len(rows)} surfaces usable by remote")

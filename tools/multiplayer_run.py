@@ -93,7 +93,12 @@ def devicectl(*args, timeout=90):
 
 
 PYATV = str(Path.home() / ".pyatv-venv/bin/atvremote")
-PYATV_ARGS = ["--id", "7A:3F:0C:4E:20:1E", "--protocol", "companion"]
+# The UUID, not the MAC. A second device on this network began
+# advertising as "Ben Bedroom" too, and pyatv then refused every
+# MAC-style --id with "Found more than one Apple TV" — which silently
+# disabled the tvOS wake, so launches failed with "System is asleep -
+# foreground app launch forbidden". The UUID is unique to the Apple TV.
+PYATV_ARGS = ["--id", "783F0C4E-201E-48FF-8C0D-D45595F4433E", "--protocol", "companion"]
 
 
 def press(key):
@@ -211,7 +216,10 @@ def shoot(dev, path, code=None):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--host", default="mac", choices=["mac", "atv"])
+    ap.add_argument("--host", default="mac",
+                    choices=["mac", "atv", "ipad", "iphone", "pixel", "firetv", "androidtv"])
+    ap.add_argument("--game", default="live", choices=["live", "night"],
+                    help="live = Tidbits Live; night = Trivia Night (same RTDB room)")
     ap.add_argument("--players", default="ipad,iphone,pixel,web")
     ap.add_argument("--code", default="QALL")
     ap.add_argument("--start", action="store_true",
@@ -234,12 +242,22 @@ def main():
     print(f"room {code} — host={a.host} players={players}\n  artifacts: {out}")
 
     # 1. Host. The Mac hosts Tidbits Live; the Apple TV hosts Trivia Night.
+    # Trivia Night and Tidbits Live publish to the SAME live/{code} room, so a
+    # joiner does not care which one opened it — that is the whole point of the
+    # unified backend and it is what makes any-host / any-joiner possible.
+    host_env = {"TIDBITS_SKIP_ONBOARD": "1", "TIDBITS_LIVE_CODE": code,
+                ("TIDBITS_NIGHT_HOST" if a.game == "night" else "TIDBITS_LIVE_HOST"): "1"}
     if a.host == "mac":
-        mac_launch({"TIDBITS_LIVE_HOST": "1", "TIDBITS_LIVE_CODE": code})
+        mac_launch(host_env)
+    elif a.host in APPLE:
+        if a.host == "atv":
+            g.grade("atv_awake", wake_tv(), "Companion reports the TV on")
+        apple_launch(a.host, host_env)
     else:
-        g.grade("atv_awake", wake_tv(), "Companion reports the TV on")
-        apple_launch("atv", {"TIDBITS_NIGHT_HOST": "1", "TIDBITS_LIVE_CODE": code,
-                             "TIDBITS_SKIP_ONBOARD": "1"})
+        adb(a.host, "shell", "am", "force-stop", APKG)
+        time.sleep(1)
+        adb(a.host, "shell", "am", "start", "-n", f"{APKG}/{ACTIVITY}",
+            "--ez", "tidbits_skip_onboard", "true", "--ez", "tidbits_night_host", "true")
 
     # 2. The room must exist on the WIRE before anyone is asked to join it.
     tok = anon_token()

@@ -247,6 +247,7 @@ struct ContentView_tvOS: View {
             // harness's cross-platform join test pins TIDBITS_LIVE_CODE and a
             // scripted RTDB player joins) — found unwired on tvOS, same class
             // as the TIDBITS_VERSUS gap.
+            if !showJoinNight, DebugHooks.openLiveJoin != nil { showJoinNight = true }
             if hostLaunch == nil, DebugHooks.openNightHost {
                 hostLaunch = NightLaunchRequest(plan: .quick, category: .named("mixed"))
             }

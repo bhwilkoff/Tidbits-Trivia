@@ -376,6 +376,15 @@ enum DebugHooks {
         ProcessInfo.processInfo.environment["TIDBITS_PARTY"] == "1"
     }
 
+    /// TIDBITS_LIVE_JOIN=<code> → open the JOIN surface on launch. iOS read this
+    /// already; tvOS had no way to reach its join screen without a remote press,
+    /// so the Apple TV could host a night but could never be driven to join one.
+    static var openLiveJoin: String? {
+        guard let c = ProcessInfo.processInfo.environment["TIDBITS_LIVE_JOIN"]?
+                .trimmingCharacters(in: .whitespaces), !c.isEmpty else { return nil }
+        return c
+    }
+
     /// TIDBITS_NIGHT_HOST=1 → open the RTDB Trivia Night host lobby (code + QR).
     static var openNightHost: Bool {
         ProcessInfo.processInfo.environment["TIDBITS_NIGHT_HOST"] == "1"

@@ -156,6 +156,12 @@ fun AppRoot(
         if (h.openParty) backStack.add(Route.Party)
         if (h.openNightSetup) backStack.add(Route.NightSetup)
         h.liveJoin?.let { (code, name) -> backStack.add(Route.LiveRoom(code, name)) }
+        // Same quick plan Apple's TIDBITS_NIGHT_HOST uses: two short rounds of
+        // mixed questions, enough to publish and be joined.
+        if (h.nightHost) {
+            backStack.add(Route.LiveHost(listOf("classic" to 5, "oddoneout" to 5),
+                                         Category.byId("mixed")))
+        }
         // Map the generic screenshot/QA destination hook onto a route. Named
         // surfaces only — an unknown value is ignored rather than crashing a
         // capture run mid-sweep.

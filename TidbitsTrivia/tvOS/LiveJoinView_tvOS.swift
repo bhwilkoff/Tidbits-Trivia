@@ -8,7 +8,12 @@ import SwiftUI
 /// everywhere; the player never has to know which product hosts them.
 struct TVJoinGameContainer: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var code = LivePlayerClient.lastCode
+    // TIDBITS_LIVE_CODE first, then the remembered code. tvOS was the only
+    // platform whose join surface ignored the pinned code, so a harness could
+    // put every other device in a room and never the Apple TV — which is what
+    // made "the TV can join someone else's night" untested rather than working.
+    @State private var code = ProcessInfo.processInfo.environment["TIDBITS_LIVE_CODE"]
+        ?? LivePlayerClient.lastCode
     @State private var name = LivePlayerClient.lastTeam
     @State private var probing = false
     @State private var error: String?
@@ -29,7 +34,14 @@ struct TVJoinGameContainer: View {
         .task {
             // CI/device hook: auto-resolve a known code to verify the flow headless.
             if ProcessInfo.processInfo.environment["TIDBITS_LIVE_AUTOJOIN"] == "1",
-               code.count >= 4, route == .form { await resolve() }
+               code.count >= 4, route == .form {
+                // resolve() refuses an empty team, and a TV has no remembered
+                // one on a fresh install — so the autojoin stopped dead on
+                // "Enter a team name" and the Apple TV silently never joined.
+                // iOS supplies a name here for exactly the same reason.
+                if name.trimmingCharacters(in: .whitespaces).isEmpty { name = "Apple TV" }
+                await resolve()
+            }
         }
     }
 

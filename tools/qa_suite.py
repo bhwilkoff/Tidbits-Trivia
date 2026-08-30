@@ -65,7 +65,7 @@ def reachable(dev):
     try:
         if dev == "atv":
             r = sh([os.path.expanduser("~/.pyatv-venv/bin/atvremote"),
-                    "--id", "7A:3F:0C:4E:20:1E", "--protocol", "companion",
+                    "--id", "783F0C4E-201E-48FF-8C0D-D45595F4433E", "--protocol", "companion",
                     "power_state"], timeout=45)
             return ("PowerState" in r.stdout, r.stdout.strip()[:60] or "no response")
         if dev in ("ipad", "iphone"):

@@ -13,7 +13,7 @@ DEVICE = "C3FBA9DE-4A60-555B-A65F-80D6809A275B"
 BUNDLE = "com.learningischange.tidbitstrivia"
 DD = "/Applications/Xcode-beta.app/Contents/Developer"
 PYATV = str(Path.home() / ".pyatv-venv/bin/atvremote")
-PYATV_ARGS = ["--id", "7A:3F:0C:4E:20:1E", "--protocol", "companion"]
+PYATV_ARGS = ["--id", "783F0C4E-201E-48FF-8C0D-D45595F4433E", "--protocol", "companion"]
 OUTDIR = Path(f"build/qa/atv-{time.strftime('%F')}/reveal-audit-{int(time.time())}")
 OUTDIR.mkdir(parents=True, exist_ok=True)
 

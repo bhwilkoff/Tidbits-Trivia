@@ -43,6 +43,15 @@ object ScreenshotHooks {
     var openNightSetup = false
         private set
 
+    /** Host a Trivia Night straight from launch, on the shared RTDB backend.
+     *  Apple has TIDBITS_NIGHT_HOST on both iOS and tvOS; Android could only
+     *  reach Route.LiveHost by tapping through the setup screen, so it was the
+     *  one platform that could not be DRIVEN as a host — which meant "every
+     *  platform can join every other platform's night" was never actually
+     *  testable in the Android-hosts direction. */
+    var nightHost = false
+        private set
+
     /** Join a Tidbits Live / Trivia Night room by code, as `code to displayName`.
      *  Apple already had TIDBITS_LIVE_JOIN; without the Kotlin mirror the only way to
      *  put an Android device in a host's room was blind tapping, so cross-platform
@@ -85,6 +94,7 @@ object ScreenshotHooks {
         if (intent.hasExtra("tidbits_seed_records")) seedRecords = intent.getIntExtra("tidbits_seed_records", 0).takeIf { it > 0 }
         if (intent.hasExtra("tidbits_party")) openParty = intent.getBooleanExtra("tidbits_party", false)
         if (intent.hasExtra("tidbits_night_setup")) openNightSetup = intent.getBooleanExtra("tidbits_night_setup", false)
+        if (intent.hasExtra("tidbits_night_host")) nightHost = intent.getBooleanExtra("tidbits_night_host", false)
         if (intent.hasExtra("tidbits_skip_onboard")) skipOnboarding = intent.getBooleanExtra("tidbits_skip_onboard", false)
         if (intent.hasExtra("tidbits_screened")) screened = intent.getBooleanExtra("tidbits_screened", false)
         intent.getStringExtra("tidbits_open")?.let { openRoute = it }

@@ -204,7 +204,12 @@ def shot(dev, path):
 
 def wake_tv():
     pyatv = str(Path.home() / ".pyatv-venv/bin/atvremote")
-    args = [pyatv, "--id", "7A:3F:0C:4E:20:1E", "--protocol", "companion"]
+    # The UUID, not the MAC. A second device on this network began
+    # advertising as "Ben Bedroom" too, and pyatv then refused every
+    # MAC-style --id with "Found more than one Apple TV" — which silently
+    # disabled the tvOS wake, so launches failed with "System is asleep -
+    # foreground app launch forbidden". The UUID is unique to the Apple TV.
+    args = [pyatv, "--id", "783F0C4E-201E-48FF-8C0D-D45595F4433E", "--protocol", "companion"]
     for _ in range(3):
         if "PowerState.On" in sh(args + ["power_state"], timeout=40).stdout:
             return True

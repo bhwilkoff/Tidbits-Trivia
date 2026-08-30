@@ -27,7 +27,12 @@ OCR = "/tmp/tbocr"
 SHOT_EVERY = 4.0   # 4K captures pressure the device's screenshot daemon;
                    # 2.5s coincided with jetsam events on Archive Watch
 PYATV = str(Path.home() / ".pyatv-venv/bin/atvremote")
-PYATV_ARGS = ["--id", "7A:3F:0C:4E:20:1E", "--protocol", "companion"]
+# The UUID, not the MAC. A second device on this network began
+# advertising as "Ben Bedroom" too, and pyatv then refused every
+# MAC-style --id with "Found more than one Apple TV" — which silently
+# disabled the tvOS wake, so launches failed with "System is asleep -
+# foreground app launch forbidden". The UUID is unique to the Apple TV.
+PYATV_ARGS = ["--id", "783F0C4E-201E-48FF-8C0D-D45595F4433E", "--protocol", "companion"]
 DEVELOPER_DIR = "/Applications/Xcode-beta.app/Contents/Developer"
 
 BASE_ENV = {"TIDBITS_SKIP_ONBOARD": "1", "TIDBITS_NO_GAMECENTER": "1"}

@@ -14,7 +14,7 @@ import json, re, sqlite3, subprocess, sys, time
 from pathlib import Path
 
 PYATV = str(Path.home() / ".pyatv-venv/bin/atvremote")
-PYATV_ARGS = ["--id", "7A:3F:0C:4E:20:1E", "--protocol", "companion"]
+PYATV_ARGS = ["--id", "783F0C4E-201E-48FF-8C0D-D45595F4433E", "--protocol", "companion"]
 
 TOP = next((int(a.split("=",1)[1]) for a in sys.argv if a.startswith("--top=")), 12)
 DEVICE = "C3FBA9DE-4A60-555B-A65F-80D6809A275B"

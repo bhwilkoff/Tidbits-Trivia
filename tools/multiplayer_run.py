@@ -28,7 +28,7 @@ import urllib.request
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from devharness import Grader, frame_text, ocr, qa_dir, sh  # noqa: E402
+from devharness import OCR_FAILED, Grader, frame_text, ocr, qa_dir, sh  # noqa: E402
 
 DEVELOPER_DIR = "/Applications/Xcode-beta.app/Contents/Developer"
 BUNDLE = "com.learningischange.tidbitstrivia"
@@ -270,9 +270,13 @@ def main():
     # players from the PREVIOUS run are still listed and the join delta counts
     # only whoever is new — which is how a run with all four devices visibly in
     # the room reported "1 new of 4 expected".
+    cleared = True
     try:
         http("DELETE", f"{DB}/live/{code}/teams.json?auth={tok}")
     except Exception as e:                       # noqa: BLE001
+        # RTDB rules do not let an anonymous client delete another player's row,
+        # so this 401s against a room someone else opened.
+        cleared = False
         print(f"  [note] could not clear roster: {e}")
     before = len(room(code, tok, "/teams") or {})
     names = {p: join(p, code, out) for p in players}
@@ -288,8 +292,15 @@ def main():
     teams = room(code, tok, "/teams") or {}
     joined = sorted((t or {}).get("name", "") for t in teams.values() if isinstance(t, dict))
     native = [p for p in players if p != "web"]   # the web needs a team name typed in
-    g.grade("wire.all_joiners_landed", len(teams) - before >= len(native),
-            f"{len(teams) - before} new of {len(native)} expected; teams={joined}")
+    # A DELTA is only meaningful when the roster was actually cleared. When the
+    # clear 401s the previous run's players are still listed, so every joiner
+    # rejoins its existing row and the delta is 0 — which reported "0 new of 4"
+    # for a room whose own roster listed all four.
+    if cleared:
+        ok, ev = len(teams) - before >= len(native), f"{len(teams) - before} new"
+    else:
+        ok, ev = len(teams) >= len(native), f"{len(teams)} present (roster not cleared)"
+    g.grade("wire.all_joiners_landed", ok, f"{ev} of {len(native)} expected; teams={joined}")
 
     if a.start and a.host == "atv":
         press("select")            # the lobby's Start button holds initial focus
@@ -309,6 +320,12 @@ def main():
         else:
             g.grade(f"glass.{dev}_captured", False, "no screenshot — device blind")
     texts = ocr(shots)
+    # Same rule as grade_glass: an OCR failure is not five sleeping devices.
+    if OCR_FAILED in texts:
+        g.grade("ocr_available", False, texts[OCR_FAILED])
+        (out / "wire.json").write_text(json.dumps(
+            {"meta": meta, "teams": teams, "pub": pub}, indent=2))
+        return g.finish()
     for dev, p in shots:
         t = frame_text(texts.get(p.name, {}))
         per_dev[dev] = t
@@ -339,8 +356,19 @@ def main():
             if dev not in per_dev:
                 continue
             hit = sum(1 for w in key.split() if re.search(re.escape(w), per_dev[dev], re.I))
-            g.grade(f"sync.{dev}_same_question", hit >= max(1, len(key.split()) - 1),
-                    f"{hit}/{len(key.split())} keywords of «{qtext[:60]}»")
+            need = max(1, len(key.split()) - 1)
+            # Ten-foot type OCRs badly: the Fire TV rendered the prompt as
+            # "Craganmed doappreoen ghose pesponsibe" while its ANSWER OPTIONS
+            # read cleanly. The options are the published question just as much as
+            # the prompt is, so a device that shows this question's options is on
+            # this question — reading the prompt is not the only way to prove it.
+            opts = [str(o) for o in (pub.get("options") or [])]
+            opt_hits = sum(1 for o in opts
+                           if o and re.search(re.escape(o[:18]), per_dev[dev], re.I))
+            same = hit >= need or opt_hits >= max(2, len(opts) - 1)
+            g.grade(f"sync.{dev}_same_question", same,
+                    f"{hit}/{len(key.split())} prompt keywords, {opt_hits}/{len(opts)} "
+                    f"options of «{qtext[:50]}»")
     else:
         print("  [note] host published no question text — sync check not applicable")
 

@@ -44,9 +44,17 @@ completely inert. A rule that cannot fire is not an assertion.
 | `tools/multiplayer_run.py` | all at once | one hosted room across every device |
 | `tools/qa_suite.py` | the fleet | one matrix; unreachable devices SKIP, never pass |
 | `tools/question_sample.py` | corpus | stratified, seeded sample for **reading** |
-| `tools/corpus/quality_gate.py` | corpus | 29 construction rules over the whole corpus |
+| `tools/corpus/quality_gate.py` | corpus | 31 construction rules over the whole corpus |
 
-Two harness details are load-bearing and easy to get wrong again:
+Three harness details are load-bearing and easy to get wrong again:
+
+- **An OCR failure is not a dark screen.** `ocr()` used to swallow a failed OCR
+  process and return an empty dict, which every frame then graded as
+  "0 OCR lines — SCREEN OFF/LOCKED". On a loaded machine a five-device
+  multiplayer run reported all five devices asleep while their screenshots sat on
+  disk, perfectly readable a minute later. The instrument now reports itself
+  (`ocr_available`) before any claim is made about a device — and says how to
+  rebuild the binary, which lives in `/tmp` and does not survive a reboot.
 
 - **The Mac capture must raise the app first.** `screencapture -R` grabs *screen*
   pixels, not window pixels. Without an `activate`, a terminal in front is
@@ -92,6 +100,17 @@ The Mac hosted "FRIDAY PUB QUIZ", listed all four players on its own scoreboard,
 and published a question. iPad, iPhone, Pixel and the Google TV dongle all showed
 `Which of these four is the eldest?` with the same four options. 4/4 in sync.
 
+### Final confirmation on the shipped state
+
+`build/qa/multiplayer-2026-08-30/mac-QAFINAL-1788103118/` — **RESULT: OK**
+
+Re-run after every corpus change in this pass. The Mac hosted, its scoreboard
+listed all four players, and iPad, iPhone, Pixel 8a and Fire TV each matched
+**4/4 prompt keywords and 4/4 answer options** of:
+
+> "A War Democrat who ran on Lincoln's National Union ticket, he took the
+> presidency after the assassination…"
+
 ### The gap this closed
 
 Android had **no join-by-code hook**, so the only way to put an Android device in
@@ -109,6 +128,15 @@ is exactly as dangerous as a broken feature:
   name-keyed set collapses them. The harness reported the iPad missing while its
   own screenshot showed it in the room. Joins are now **counted**, and per-device
   attribution comes from the glass, which cannot collide.
+- **The sync check read only the prompt.** Ten-foot type OCRs badly: the Fire TV
+  rendered the prompt as "Craganmed doappreoen ghose pesponsibe" while its answer
+  options read cleanly, and the check called that a desync. The options are the
+  published question just as much as the prompt is, so either now proves it.
+- **The join delta was meaningless when the roster clear failed.** RTDB rules do
+  not let an anonymous client delete another player's row, so the clear 401s and
+  the previous run's players are still listed — every joiner rejoins its existing
+  row and the delta is 0. It reported "0 new of 4" for a room whose own roster
+  listed all four. A delta is only asserted when the clear actually happened.
 - **The web "joined" while sitting on the join form.** `#/live/CODE` prefills the
   code and asks for a team name — correct behaviour — but the loose in-room
   pattern matched the form. Only post-join chrome (`YOU'RE IN`, `POINTS`,
@@ -120,7 +148,7 @@ is exactly as dangerous as a broken feature:
 
 ### Construction: the gate is green
 
-`tools/corpus/quality_gate.py` runs **29 rules over all 110,496 shipped
+`tools/corpus/quality_gate.py` runs **31 rules over all 110,496 shipped
 questions** — not a gameplay sample — and passes. Read-off answers, duplicate
 options, fame tells, era spreads, machine stems, broken shapes, prompt
 repetition, category skew: all zero.
@@ -243,14 +271,19 @@ match 136–6,772 rows. **A row that parses is not a row that fits.**
 | Fire TV | 5 pass, 0 fail |
 | Google TV dongle | 5 pass, 0 fail |
 | macOS | 4 pass, 0 fail |
+| Pixel 8a | 6 pass, 0 fail |
 | Web | 6 routes, `#/dailyboard` fix verified live in production |
 
-The Pixel 8a shows the value of the SKIP discipline and its limit: it was
-reported SKIP with the evidence string **"adb ok"** — a probe that returned
-False while saying the device was fine, because it matched a serial *fragment*
-that the real serial continues past. A SKIP is quiet by design, so an untested
-device slipped through a run that otherwise looked complete. The probe now
-returns one verdict and one evidence string that cannot disagree.
+The Pixel 8a shows the value of the SKIP discipline and its limit. On the first
+fleet run it was reported SKIP with the evidence string **"adb ok"** — a probe
+that returned False while saying the device was fine, because it matched a
+serial *fragment* that the real serial continues past. A SKIP is quiet by
+design, so an untested device slipped through a run that otherwise looked
+complete. The probe now returns one verdict and one evidence string that cannot
+disagree, and the Pixel's own 6/6 above is from the re-run.
+
+**Total: 37 device scenarios, 0 failures**, plus two cross-platform multiplayer
+runs and a corpus gate of 31 rules over 110,496 questions.
 
 ---
 

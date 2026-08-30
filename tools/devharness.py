@@ -50,18 +50,46 @@ def qa_dir(platform, name):
     return d
 
 
+# Set by ocr() when the OCR process itself failed. Callers MUST check it before
+# reading a low line count as "the screen was dark".
+OCR_FAILED = "__ocr_failed__"
+
+
 def ocr(shots):
-    """OCR a list of (wall, Path). Batched 20 per process to amortize launch."""
+    """OCR a list of (wall, Path). Batched 20 per process to amortize launch.
+
+    A failed OCR process used to be indistinguishable from a dark screen: the
+    result dict simply came back empty and every frame graded as "0 OCR lines —
+    SCREEN OFF/LOCKED". Measured on a loaded machine, a five-device multiplayer
+    run reported all five devices asleep while their screenshots were on disk and
+    perfectly readable a minute later. An instrument that blames its subject for
+    its own failure is worse than one that stays quiet, so a chunk that yields
+    nothing for files that DO exist is recorded as an instrument failure."""
     out = {}
     paths = [str(p) for _, p in shots]
     for chunk in (paths[k:k + 20] for k in range(0, len(paths), 20)):
-        r = sh([OCR] + chunk, timeout=600)
+        try:
+            r = sh([OCR] + chunk, timeout=600)
+        except (OSError, subprocess.SubprocessError) as e:
+            # OCR lives in /tmp, so it does not survive a reboot. A traceback
+            # here is better than a false "screen off", but a sentence saying
+            # how to get it back is better than either.
+            out[OCR_FAILED] = (f"cannot run {OCR}: {e} — rebuild with "
+                               f"`swiftc -O tools/ScreenOCR/main.swift -o {OCR}`")
+            return out
+        got = 0
         for line in r.stdout.splitlines():
             try:
                 d = json.loads(line)
                 out[d["file"]] = d
+                got += 1
             except json.JSONDecodeError:
                 pass
+        present = [c for c in chunk if Path(c).exists()]
+        if present and got == 0:
+            out[OCR_FAILED] = (f"{OCR} produced nothing for {len(present)} existing "
+                               f"file(s), rc={r.returncode}: "
+                               f"{(r.stderr or r.stdout).strip()[:160]!r}")
     return out
 
 
@@ -102,6 +130,11 @@ class Grader:
         The blind check comes FIRST and gates everything downstream: a null
         result from a blind instrument is indistinguishable from a real absence,
         so an unreadable run must be skipped, never passed."""
+        # The instrument speaks first. "The screen was dark" is a claim about the
+        # DEVICE, and it must not be made when the OCR process is what failed.
+        if OCR_FAILED in texts:
+            self.grade("ocr_available", False, texts[OCR_FAILED])
+            return False
         counts = [len(texts.get(p.name, {}).get("allText", [])) for _, p in shots]
         best = max(counts, default=0)
         readable = best >= MIN_LINES_READABLE

@@ -27,9 +27,19 @@
         android:name="android.permission.NEARBY_WIFI_DEVICES"
         android:usesPermissionFlags="neverForLocation"/>
 
+    <!-- Android TV / Fire TV (Decision: 7th platform). required="false" on BOTH
+         features keeps the ONE app serving phones, tablets and TVs from a single
+         Play listing: a TV has no touchscreen, and declaring touchscreen as
+         required (the implicit default) would exclude every TV from the Store. -->
+    <uses-feature android:name="android.software.leanback" android:required="false"/>
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false"/>
+    <!-- Fire TV ships no Google Play Services; nothing here may hard-require it. -->
+    <uses-feature android:name="android.hardware.gamepad" android:required="false"/>
+
     <application
         android:name=".app.AppNameApplication"
         android:allowBackup="false"
+        android:banner="@drawable/tv_banner"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:enableOnBackInvokedCallback="true"
         android:fullBackupContent="@xml/backup_rules"
@@ -52,6 +62,9 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
+                <!-- Without this the app installs on a TV and is INVISIBLE: the
+                     leanback launcher only lists activities carrying it. -->
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER"/>
             </intent-filter>
 
             <!-- App Links (HTTPS) — autoVerify against

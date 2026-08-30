@@ -31,6 +31,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -1301,7 +1303,23 @@ internal fun PlayingScreen(game: GameState, match: VsMatch? = null, onlineRoster
         val plainMcq = q.closest == null && q.ordering == null && q.matching == null &&
             q.accepted == null && q.enumerate == null
         if (plainMcq) {
-            q.options.forEachIndexed { i, opt -> AnswerButton(opt, game.answerState(i), !answersLocked) { game.submit(i) } }
+            // TV: a game screen opened with SIX focusable nodes and ZERO focused,
+            // so a D-pad player could not answer at all — the options were
+            // reachable but nothing held focus and CENTER did nothing. The first
+            // option claims focus per QUESTION (keyed on index+phase, not once
+            // ever): keying it once would leave later questions unfocused, and
+            // re-firing it unkeyed would yank focus back while the player moves.
+            val firstOption = remember { FocusRequester() }
+            val tv = isTv()
+            LaunchedEffect(game.index, game.phase, answersLocked) {
+                if (tv && !answersLocked) runCatching { firstOption.requestFocus() }
+            }
+            q.options.forEachIndexed { i, opt ->
+                AnswerButton(opt, game.answerState(i), !answersLocked,
+                    focusMod = if (i == 0) Modifier.focusRequester(firstOption) else Modifier) {
+                    game.submit(i)
+                }
+            }
         }
         if (game.awaitingReveal) {
             ChunkyCard(fill = Pops.blue.copy(alpha = 0.14f)) {
@@ -1547,12 +1565,16 @@ private fun StakeSelector(game: GameState) {
 }
 
 @Composable
-private fun AnswerButton(text: String, state: AnswerVisual, enabled: Boolean, onClick: () -> Unit) {
+private fun AnswerButton(text: String, state: AnswerVisual, enabled: Boolean,
+                         focusMod: Modifier = Modifier, onClick: () -> Unit) {
     val bg = when (state) { AnswerVisual.CORRECT -> Pops.mint; AnswerVisual.WRONG -> Pops.coral; else -> MaterialTheme.colorScheme.surface }
     // Ink on the light mint (white-on-mint is ~1.6:1); white on the deeper coral.
     val fg = when (state) { AnswerVisual.CORRECT -> Ink; AnswerVisual.WRONG -> Color.White; else -> MaterialTheme.colorScheme.onSurface }
-    Surface(onClick = onClick, enabled = enabled, shape = RoundedCornerShape(14.dp), color = bg,
-        border = BorderStroke(2.5.dp, Ink), modifier = Modifier.fillMaxWidth().alpha(if (state == AnswerVisual.DIM) 0.45f else 1f)) {
+    val shape = RoundedCornerShape(14.dp)
+    Surface(onClick = onClick, enabled = enabled, shape = shape, color = bg,
+        border = BorderStroke(2.5.dp, Ink),
+        modifier = Modifier.fillMaxWidth().alpha(if (state == AnswerVisual.DIM) 0.45f else 1f)
+            .then(focusMod).tvFocus(shape)) {
         Text(text, Modifier.padding(16.dp), color = fg, fontWeight = FontWeight.Bold, fontSize = 17.sp)
     }
 }
@@ -2816,8 +2838,14 @@ private fun SavedQuizRow(
 
 @Composable
 internal fun ChunkyCard(modifier: Modifier = Modifier, fill: Color = MaterialTheme.colorScheme.surface, onClick: (() -> Unit)? = null, content: @Composable () -> Unit) {
-    val base = modifier.fillMaxWidth().then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
-    Surface(shape = RoundedCornerShape(18.dp), color = fill, border = BorderStroke(2.5.dp, Ink), modifier = base) { content() }
+    val shape = RoundedCornerShape(18.dp)
+    // On TV the focused card is the chrome (see TvFocus.kt); tvFocus is a no-op
+    // on phones and tablets, so this one line serves every form factor.
+    val base = modifier
+        .fillMaxWidth()
+        .then(if (onClick != null) Modifier.tvFocus(shape) else Modifier)
+        .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
+    Surface(shape = shape, color = fill, border = BorderStroke(2.5.dp, Ink), modifier = base) { content() }
 }
 
 /** R-ICON-1: category glyphs come from Material Symbols, not the emoji field. */

@@ -43,21 +43,105 @@ def launch(binary, env=None):
     return p.pid
 
 
+def close_projectors(pid):
+    """Close leftover Tidbits Live projector windows.
+
+    Each hosted night opens one, and macOS restores them all on the next launch —
+    a measured session had six stacked up. They are 1280x720 and they sit OVER
+    the main window's rectangle, so a screen-region grab of the shell captures a
+    projector's idle splash instead."""
+    closed = 0
+    for i, _name, w, h in reversed(_windows(pid)):
+        if (w, h) == PROJECTOR_SIZE:
+            try:
+                _osa('tell application "System Events" to tell '
+                     f'(first process whose unix id is {pid}) to '
+                     f'click button 1 of window {i}')
+                closed += 1
+            except subprocess.SubprocessError:
+                pass
+    return closed
+
+
 def raise_pid(pid):
-    """Bring exactly this process forward. Never by name."""
+    """Bring this process forward AND raise its MAIN window.
+
+    Raising the process alone is not enough: the frontmost window may be a
+    projector, which then covers the shell's rectangle and is what -R captures."""
     try:
         _osa('tell application "System Events" to set frontmost of '
              f'(first process whose unix id is {pid}) to true')
+        idx = main_window_index(pid)
+        if idx is not None:
+            _osa('tell application "System Events" to tell '
+                 f'(first process whose unix id is {pid}) to '
+                 f'perform action "AXRaise" of window {idx}')
         return True
     except subprocess.SubprocessError:
         return False
 
 
+# The Tidbits Live PROJECTOR is its own WindowGroup ("tidbits-bigscreen",
+# defaultSize 1280x720) and macOS restores it across launches — one measured
+# session had SEVEN windows: six restored projectors titled "Tidbits" at
+# 1280x720, plus the real main window titled "Records" at 1180x760. Asking for
+# "front window" photographed a projector and read its idle splash, "TIDBITS
+# LIVE — The host will start the night shortly", as the app ignoring every
+# launch hook. The app was correct throughout.
+PROJECTOR_SIZE = (1280, 720)
+
+
+def _windows(pid):
+    """Every window as (index, name, w, h), 1-based to match AppleScript.
+
+    Delimiters are literal characters, not tab/newline escapes: those become
+    real whitespace inside the AppleScript source and the parse comes back empty.
+    """
+    script = (
+        'tell application "System Events" to tell '
+        f'(first process whose unix id is {pid})\n'
+        '  set out to ""\n'
+        '  repeat with i from 1 to (count of windows)\n'
+        '    set w to window i\n'
+        '    set {ww, hh} to size of w\n'
+        '    set out to out & (i as text) & "~" & (name of w) & "~" & '
+        '(ww as text) & "~" & (hh as text) & "|"\n'
+        '  end repeat\n'
+        '  return out\n'
+        'end tell'
+    )
+    try:
+        r = _osa(script, timeout=25)
+    except subprocess.SubprocessError:
+        return []
+    out = []
+    for rec in r.stdout.strip().split("|"):
+        f = rec.split("~")
+        if len(f) == 4 and f[0].strip().isdigit():
+            out.append((int(f[0]), f[1], int(f[2]), int(f[3])))
+    return out
+
+
+def main_window_index(pid):
+    """The app's MAIN window, never a projector. Projectors are identified by
+    their fixed 1280x720 default; anything else is the shell."""
+    ws = _windows(pid)
+    if not ws:
+        return None
+    for i, name, w, h in ws:
+        if (w, h) != PROJECTOR_SIZE:
+            return i
+    return ws[0][0]      # all projector-sized — fall back rather than guess
+
+
 def bounds(pid):
+    idx = main_window_index(pid)
+    if idx is None:
+        return None
     try:
         r = _osa('tell application "System Events" to tell '
                  f'(first process whose unix id is {pid}) to '
-                 'get {position, size} of front window', timeout=20)
+                 f'get {{position, size}} of window {idx}', timeout=20)
     except subprocess.SubprocessError:
         return None
     n = [int(x) for x in re.findall(r"-?\d+", r.stdout)]
@@ -65,6 +149,7 @@ def bounds(pid):
 
 
 def capture(pid, path, tries=12):
+    close_projectors(pid)
     """Raise, then grab the window's screen region. -R takes SCREEN pixels, so
     the app must be in front or a terminal gets graded as the app."""
     for _ in range(tries):

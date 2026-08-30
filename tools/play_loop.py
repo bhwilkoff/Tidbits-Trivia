@@ -26,7 +26,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import macapp  # noqa: E402
-from devharness import OCR_FAILED, frame_text, ocr, qa_dir, sh  # noqa: E402
+from devharness import (OCR_FAILED, frame_text, frame_darkness, ocr, qa_dir,  # noqa: E402
+                        sh)
 
 LEDGER = Path("build/qa/coverage.json")
 DEVELOPER_DIR = "/Applications/Xcode-beta.app/Contents/Developer"
@@ -258,7 +259,11 @@ def run_cell(dev, cell, outdir, retry=False):
         # verified cell instead of leaving a hole the loop keeps re-visiting.
         if not retry:
             return run_cell(dev, cell, outdir, retry=True)
-        return {"result": "SKIP", "why": f"{lines} OCR lines — screen off/locked"}
+        d = frame_darkness(shots[-1][1])
+        why = (f"{lines} OCR lines; frame is {d[1]}% black (mean luma {d[0]}) — "
+               "display was off at capture time, capture itself succeeded"
+               if d else f"{lines} OCR lines, unreadable")
+        return {"result": "SKIP", "why": why}
 
     err = re.search(PAYWALL_ERROR_RX if cell == "paywall" else ERROR_RX,
                     all_text, re.I)

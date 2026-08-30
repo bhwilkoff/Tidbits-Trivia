@@ -29,7 +29,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import macapp  # noqa: E402
-from devharness import OCR_FAILED, Grader, frame_text, ocr, qa_dir, sh  # noqa: E402
+from devharness import (OCR_FAILED, Grader, frame_text, frame_darkness, ocr,  # noqa: E402
+                        qa_dir, sh)
 
 DEVELOPER_DIR = "/Applications/Xcode-beta.app/Contents/Developer"
 BUNDLE = "com.learningischange.tidbitstrivia"
@@ -349,8 +350,11 @@ def main():
                         per_dev[dev] = frame_text(t2.get(p2.name, {}))
                         g.grade(f"glass.{dev}_readable", True, "readable after a wake relaunch")
                         continue
+            d = frame_darkness(p)
+            detail = (f"{d[1]}% black, mean luma {d[0]}" if d else "unreadable")
             g.report.setdefault("skipped", []).append(
-                f"{dev}: screen off/locked, no remote wake — on the wire, glass unseen")
+                f"{dev}: frame {detail}; capture succeeded, display was off — "
+                "device is on the wire, only its glass is unseen")
             print(f"  [SKIP] glass.{dev}_readable: screen off/locked, no remote wake")
             continue
         g.grade(f"glass.{dev}_readable", True, f"{lines} OCR lines")

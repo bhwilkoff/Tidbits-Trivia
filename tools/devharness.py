@@ -105,6 +105,27 @@ def clipped_lines(d, clip_x=CLIP_X_DEFAULT):
             if t.get("x", 1.0) <= clip_x and t.get("h", 1.0) <= 0.030]
 
 
+def frame_darkness(path):
+    """Mean luma 0-255 and the fraction of near-black pixels.
+
+    "Screen off/locked" was being asserted from an EMPTY OCR result, which is a
+    guess dressed as a finding — the owner rightly challenged it for a phone that
+    was working fine. The frame itself settles it: that capture was 99.97% pure
+    black with content only in the battery corner of the status bar, and
+    devicectl reported no error and saved a valid PNG. Report the measurement,
+    and let a reader draw the conclusion."""
+    try:
+        from PIL import Image
+        g = Image.open(path).convert("L")
+        px = list(g.getdata())
+    except Exception:                            # noqa: BLE001
+        return None
+    if not px:
+        return None
+    dark = sum(1 for v in px if v <= 10) / len(px)
+    return round(sum(px) / len(px), 1), round(dark * 100, 2)
+
+
 class Grader:
     """Collects assertions, prints them as they are decided, and writes a
     machine-comparable report.json. Archive Watch's Android and iOS harnesses

@@ -70,7 +70,7 @@ def text_of(path):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--device", default="androidtv")
-    ap.add_argument("--out", default="build/store/tv-screenshots")
+    ap.add_argument("--out", default="docs/store/android-tv")  # committed: the owner needs these
     a = ap.parse_args()
 
     out = Path(a.out)

@@ -37,8 +37,8 @@ Assets ready in the repo:
 | Asset | Where | Notes |
 |---|---|---|
 | Launcher banner (320x180) | `android/app/src/main/res/drawable-xhdpi/tv_banner.png` | `android:banner`, ships INSIDE the APK |
-| Play listing banner (1280x720) | `build/store/tv_banner_1280x720.png` | store asset — a DIFFERENT thing |
-| TV screenshots (6) | `build/store/tv-screenshots/*.png` | 1920x1080, 16:9, 24-bit RGB |
+| Play listing banner (1280x720) | `docs/store/android-tv/tv_banner_1280x720.png` | store asset — a DIFFERENT thing |
+| TV screenshots (6) | `docs/store/android-tv/0*.png` | 1920x1080, 16:9, 24-bit RGB |
 
 **The two banners are not the same asset.** The 320x180 drawable is the TV
 launcher tile; Play's listing `tvBanner` must be **1280x720** and rejects the

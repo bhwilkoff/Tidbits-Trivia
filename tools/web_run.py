@@ -76,6 +76,19 @@ def main():
             if shoot(a.base + path, w, h, p):
                 shots.append((label, p))
             time.sleep(0.5)
+        # A cold headless Chrome under load can return a blank first paint before
+        # the virtual-time budget expires, which grades as "SCREEN OFF" for a site
+        # that is up — measured once on /#/ during a run with three other jobs on
+        # the machine. Retry the whole route with a longer budget rather than
+        # reporting a live page as dark.
+        if shots and max(len(v.get("allText", []))
+                         for v in ocr(shots).values()) < 4:
+            print("  blank first paint — retrying with a longer budget")
+            shots = []
+            for label, w, h in VIEWPORTS:
+                p = d / f"{label}.png"
+                if shoot(a.base + path, w, h, p, budget=20000):
+                    shots.append((label, p))
         if not shots:
             g.grade(f"{n}.captured", False, "chrome produced no screenshot")
             continue

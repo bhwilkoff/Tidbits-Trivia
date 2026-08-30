@@ -44,7 +44,7 @@ completely inert. A rule that cannot fire is not an assertion.
 | `tools/multiplayer_run.py` | all at once | one hosted room across every device |
 | `tools/qa_suite.py` | the fleet | one matrix; unreachable devices SKIP, never pass |
 | `tools/question_sample.py` | corpus | stratified, seeded sample for **reading** |
-| `tools/corpus/quality_gate.py` | corpus | 31 construction rules over the whole corpus |
+| `tools/corpus/quality_gate.py` | corpus | 32 construction rules over the whole corpus |
 
 Three harness details are load-bearing and easy to get wrong again:
 
@@ -148,7 +148,7 @@ is exactly as dangerous as a broken feature:
 
 ### Construction: the gate is green
 
-`tools/corpus/quality_gate.py` runs **31 rules over all 110,496 shipped
+`tools/corpus/quality_gate.py` runs **32 rules over all 110,496 shipped
 questions** — not a gameplay sample — and passes. Read-off answers, duplicate
 options, fame tells, era spreads, machine stems, broken shapes, prompt
 repetition, category skew: all zero.
@@ -272,7 +272,7 @@ match 136–6,772 rows. **A row that parses is not a row that fits.**
 | Google TV dongle | 5 pass, 0 fail |
 | macOS | 4 pass, 0 fail |
 | Pixel 8a | 6 pass, 0 fail |
-| Web | 6 routes, `#/dailyboard` fix verified live in production |
+| Web | 6 pass, 0 fail (`#/dailyboard` fix verified live in production) |
 
 The Pixel 8a shows the value of the SKIP discipline and its limit. On the first
 fleet run it was reported SKIP with the evidence string **"adb ok"** — a probe
@@ -282,8 +282,8 @@ design, so an untested device slipped through a run that otherwise looked
 complete. The probe now returns one verdict and one evidence string that cannot
 disagree, and the Pixel's own 6/6 above is from the re-run.
 
-**Total: 37 device scenarios, 0 failures**, plus two cross-platform multiplayer
-runs and a corpus gate of 31 rules over 110,496 questions.
+**Total: 43 scenarios across eight surfaces, 0 failures**, plus two cross-platform multiplayer
+runs and a corpus gate of 32 rules over 110,496 questions.
 
 ---
 

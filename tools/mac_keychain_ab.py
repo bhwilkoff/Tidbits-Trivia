@@ -13,6 +13,7 @@ detector works on this machine, and only then does a clean run mean something.
 
     python3 tools/mac_keychain_ab.py
 """
+import json
 import subprocess
 import sys
 import time
@@ -29,22 +30,35 @@ def osa(script, timeout=20):
 
 
 def dialogs():
-    r = osa('tell application "System Events" to count (every window of '
-            '(every process whose name contains "SecurityAgent"))')
-    try:
-        return int(r.stdout.strip())
-    except ValueError:
-        return 0
+    """Capture the WHOLE screen and read it.
+
+    The obvious check — `System Events -> count windows of SecurityAgent` —
+    returns 0 while the dialog is plainly on screen, because that window is not
+    enumerable that way. It produced a confident "zero dialogs" for runs that a
+    full-screen capture shows were prompting, in both directions. The pixels are
+    the only witness that has been right every time."""
+    shot = Path("/tmp/_kcab.png")
+    subprocess.run(["screencapture", "-x", "-o", str(shot)],
+                   capture_output=True, timeout=40)
+    r = subprocess.run(["/tmp/tbocr", str(shot)], capture_output=True,
+                       text=True, timeout=120)
+    for line in r.stdout.splitlines():
+        try:
+            d = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        t = " ".join(x["text"] for x in d.get("allText", []))
+        if "keychain password" in t.lower():
+            return 1
+    return 0
 
 
 def dismiss():
-    osa('tell application "System Events"\n'
-        '  repeat with p in (every process whose name contains "SecurityAgent")\n'
-        '    repeat with w in windows of p\n'
-        '      click button "Deny" of w\n'
-        '    end repeat\n'
-        '  end repeat\n'
-        'end tell')
+    """Escape cancels the password dialog. Clicking "Deny" through System Events
+    cannot work here — the window is not enumerable — and a coordinate click
+    would land on whatever the person is actually doing."""
+    osa("tell application \"System Events\" to key code 53")
+    time.sleep(2)
 
 
 def quit_app():

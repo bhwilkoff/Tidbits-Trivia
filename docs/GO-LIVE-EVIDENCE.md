@@ -233,21 +233,31 @@ match 136–6,772 rows. **A row that parses is not a row that fits.**
 
 ## 6. Open, and honest about it
 
-- **macOS keychain prompt.** The shipped Mac app raised *"Tidbits wants to use
-  your confidential information stored in `tidbits.fb.anonRefresh`… enter the
-  'login' keychain password"* over the Home screen, and in one run it blocked the
-  app from opening its Live room at all. Root cause is the **legacy file-based
-  login keychain**, whose per-item ACL is signature-bound. `Keychain.swift` now
-  sets `kSecUseDataProtectionKeychain` on macOS, which is Apple's documented
-  guidance and removes the ACL mechanism entirely.
+- **macOS keychain prompt — FIXED and proven.** The shipped Mac app raised
+  *"Tidbits wants to use your confidential information stored in
+  `tidbits.fb.anonRefresh`… enter the 'login' keychain password"* over the Home
+  screen, and once blocked it from opening a Live room. Cause: the anonymous
+  session token lived in the **legacy file-based login keychain**, whose per-item
+  ACL is bound to the app's code signature, so any build not on that list had to
+  ask. `Keychain.swift` now uses the **data-protection keychain** (access decided
+  by team identifier, no ACL) and carries an `LAContext` with
+  `interactionNotAllowed`, so a call that *would* prompt returns an error and the
+  app mints a fresh anonymous session instead — the behaviour of a first install.
+  A player who cannot be asked for a password cannot be blocked by one.
 
-  **This fix is not verified to remove the prompt.** The dialog is a *one-time*
-  decision per signing identity, not per launch — once answered it does not
-  recur — so it could not be A/B tested on this machine after the first answer.
-  Worse, the dialog is presented by `SecurityAgent` and **survives killing the
-  app**, so three "the prompt is still there" observations were the same orphaned
-  window being re-photographed. Treat the change as hardening, and confirm on a
-  machine that has never run this app.
+  Proven by A/B on one clean screen, both directions, twice:
+  **shipped → dialog at t+6s; fixed → no dialog in 45s.**
+  `python3 tools/mac_keychain_ab.py` reruns it and prints the verdict.
+
+  The reason this took three attempts to establish is worth keeping: the obvious
+  detector, `System Events → count windows of SecurityAgent`, **returns 0 while
+  the dialog is plainly on screen**. It produced confident "zero dialogs" results
+  in both directions and is why an earlier version of this document called the fix
+  unverified. The dialog is also owned by SecurityAgent, so it outlives the app
+  that raised it — a stale one sat on screen for ~25 minutes and was
+  re-photographed as fresh evidence three separate times. The tool now captures
+  the whole screen and reads the pixels, which is the only witness that has been
+  right every time, and dismisses with Escape rather than a coordinate click.
 
 - **Billing 8 purchase path** is still unproven end-to-end: the debug package
   cannot transact, so one real purchase on a Play-signed build is outstanding.

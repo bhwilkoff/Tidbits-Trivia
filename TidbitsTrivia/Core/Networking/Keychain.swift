@@ -1,6 +1,9 @@
 import Foundation
 import Security
 import CryptoKit
+#if os(macOS)
+import LocalAuthentication
+#endif
 
 /// Minimal Keychain string store — used to persist the Firebase anonymous refresh
 /// token so the player's `uid` (hence their portable profile) survives relaunches.
@@ -117,9 +120,69 @@ enum Keychain {
                                 kSecAttrSynchronizable as String: synchronizable]
         #if os(macOS)
         q[kSecUseDataProtectionKeychain as String] = true
+        // NEVER prompt. This is the load-bearing half of the fix, and it holds
+        // even if some future call reaches the legacy keychain by accident.
+        //
+        // What this token IS: an anonymous session id, so the player keeps their
+        // records across relaunches. What it is NOT: anything worth interrupting a
+        // trivia game for. With UIFail, a keychain read that would have raised
+        // "enter the 'login' keychain password" returns errSecInteractionNotAllowed
+        // instead, the caller sees nil, and the app mints a fresh anonymous session
+        // — the exact behaviour of a first install. A player who cannot be asked
+        // for a password cannot be blocked by one, and the worst case is a new
+        // anonymous id rather than a modal over the Home screen.
+        q[kSecUseAuthenticationContext as String] = noInteraction()
         #endif
         return q
     }
+
+    #if os(macOS)
+    /// An LAContext that refuses to put anything on screen. `kSecUseAuthenticationUI`
+    /// is the old spelling of this and is deprecated since macOS 11. Built fresh per
+    /// call rather than cached: LAContext is not Sendable, so a shared static is a
+    /// Swift 6 concurrency error, and constructing one is cheap.
+    nonisolated private static func noInteraction() -> LAContext {
+        let c = LAContext()
+        c.interactionNotAllowed = true
+        return c
+    }
+    #endif
+
+    #if os(macOS)
+    /// TIDBITS_KEYCHAIN_DIAG=1 → prove, at runtime, that no keychain call this app
+    /// makes can raise a password dialog.
+    ///
+    /// "I could not reproduce it" is not evidence: the dialog is a ONE-TIME
+    /// decision per signing identity and it is owned by SecurityAgent, so it
+    /// outlives the app that raised it and a machine that has already answered it
+    /// stays quiet no matter what the code does. This asks the question directly
+    /// instead — every query already carries `kSecUseAuthenticationUIFail`, so an
+    /// operation that WOULD have prompted reports -25308 rather than prompting.
+    /// Anything other than -25308 is proof that this call cannot block a player.
+    nonisolated static func diagnoseNoPrompt(_ key: String) -> [(String, OSStatus)] {
+        var results: [(String, OSStatus)] = []
+
+        var read = base(key)
+        read[kSecReturnData as String] = true
+        read[kSecMatchLimit as String] = kSecMatchLimitOne
+        var out: CFTypeRef?
+        results.append(("read (data-protection)", SecItemCopyMatching(read as CFDictionary, &out)))
+
+        // Does an orphan still sit in the legacy store? ATTRIBUTES ONLY, deliberately:
+        // reading a legacy item's attributes needs no ACL authorization, while
+        // reading its DATA is exactly what raises the password dialog. An instrument
+        // that could trigger the bug it is measuring is not an instrument.
+        let legacy: [String: Any] = [kSecClass as String: kSecClassGenericPassword,
+                                     kSecAttrAccount as String: key,
+                                     kSecUseDataProtectionKeychain as String: false,
+                                     kSecReturnAttributes as String: true,
+                                     kSecMatchLimit as String: kSecMatchLimitOne]
+        var lout: CFTypeRef?
+        results.append(("legacy orphan present (attributes only)",
+                        SecItemCopyMatching(legacy as CFDictionary, &lout)))
+        return results
+    }
+    #endif
 
     nonisolated static func set(_ value: String, for key: String) {
         SecItemDelete(base(key) as CFDictionary)

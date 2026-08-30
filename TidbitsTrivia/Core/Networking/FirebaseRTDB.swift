@@ -49,6 +49,13 @@ actor FirebaseRTDB {
     @discardableResult
     func ensureAuth() async throws -> String {
         if let uid, Date() < expiry.addingTimeInterval(-300) { return uid }
+        #if os(macOS)
+        if ProcessInfo.processInfo.environment["TIDBITS_KEYCHAIN_DIAG"] == "1" {
+            for (what, st) in Keychain.diagnoseNoPrompt(Self.refreshKey) {
+                FileHandle.standardError.write(Data("[KEYCHAIN] \(what): \(st)\n".utf8))
+            }
+        }
+        #endif
         if refreshToken == nil { refreshToken = Keychain.get(Self.refreshKey) }   // restore persisted session
         if refreshToken != nil {
             do { try await refreshSession() }

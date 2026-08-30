@@ -18,7 +18,11 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from devharness import Grader, ocr, qa_dir, sh  # noqa: E402
 
-APP = "/Applications/TidbitsTrivia.app"
+# Prefer the locally built app: the harness should grade what is about to ship,
+# not the copy in /Applications, which lags. Pointing at /Applications is why a
+# keychain-password dialog kept turning up in Mac runs after the fix landed.
+_DEV = Path("build/dd-mac/Build/Products/Debug/TidbitsTrivia.app")
+APP = str(_DEV if _DEV.exists() else Path("/Applications/TidbitsTrivia.app"))
 BIN = f"{APP}/Contents/MacOS/TidbitsTrivia"
 PROC = "TidbitsTrivia"
 

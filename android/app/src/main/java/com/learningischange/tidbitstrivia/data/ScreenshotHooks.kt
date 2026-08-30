@@ -43,6 +43,13 @@ object ScreenshotHooks {
     var openNightSetup = false
         private set
 
+    /** Join a Tidbits Live / Trivia Night room by code, as `code to displayName`.
+     *  Apple already had TIDBITS_LIVE_JOIN; without the Kotlin mirror the only way to
+     *  put an Android device in a host's room was blind tapping, so cross-platform
+     *  multiplayer was the one feature no harness could actually exercise. */
+    var liveJoin: Pair<String, String>? = null
+        private set
+
     /** Draw the autoplay round from ScreenshotQuestions instead of a random corpus pull
      *  (rule R-SHOT-3) — a random draw put a Holocaust question in a listing's reveal slot. */
     var screened = false
@@ -81,5 +88,9 @@ object ScreenshotHooks {
         if (intent.hasExtra("tidbits_skip_onboard")) skipOnboarding = intent.getBooleanExtra("tidbits_skip_onboard", false)
         if (intent.hasExtra("tidbits_screened")) screened = intent.getBooleanExtra("tidbits_screened", false)
         intent.getStringExtra("tidbits_open")?.let { openRoute = it }
+        intent.getStringExtra("tidbits_live_join")?.takeIf { it.isNotBlank() }?.let { code ->
+            liveJoin = code.trim().uppercase() to
+                (intent.getStringExtra("tidbits_live_name")?.takeIf { it.isNotBlank() } ?: "Android")
+        }
     }
 }

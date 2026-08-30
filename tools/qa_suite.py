@@ -45,10 +45,18 @@ PLATFORMS = {
     "ipad":   {"runner": "tools/ios_run.py", "flag": "ipad",  "smoke": SMOKE + ["clubhub"]},
     "iphone": {"runner": "tools/ios_run.py", "flag": "iphone", "smoke": SMOKE + ["clubhub"]},
     "pixel":  {"runner": "tools/adb_run.py", "flag": "pixel", "smoke": SMOKE + ["atlas"]},
-    # Fire TV and the Android TV dongle are reachable over adb, but Tidbits has
-    # no leanback build — no TV launcher intent, no banner, no leanback feature
-    # in AndroidManifest.xml. A harness for them is meaningless until that app
-    # exists, so they are absent here rather than permanently red.
+    # Fire TV and the Android TV dongle ship the leanback build now (LEANBACK_LAUNCHER,
+    # banner, touchscreen/gamepad not-required), verified 26/26 surfaces by remote, so
+    # they are real rows rather than the absence this table used to describe.
+    "firetv":    {"runner": "tools/adb_run.py", "flag": "firetv",    "smoke": SMOKE},
+    "androidtv": {"runner": "tools/adb_run.py", "flag": "androidtv", "smoke": SMOKE},
+    # The Mac and the web took their own runners rather than a shared one: the Mac
+    # needs window-bounds cropping and the web needs two viewports, and neither is
+    # expressible as "another device" in the adb/devicectl sense.
+    "mac": {"runner": "tools/mac_run.py", "flag": None, "only": True,
+            "smoke": ["home", "records", "create", "live"]},
+    "web": {"runner": "tools/web_run.py", "flag": None, "only": True,
+            "smoke": ["home", "daily", "dailyboard", "leaderboard", "live", "club"]},
 }
 
 
@@ -65,10 +73,22 @@ def reachable(dev):
             uuid = {"ipad": "AC5377E9", "iphone": "B4E756E2"}[dev]
             line = next((l for l in r.stdout.splitlines() if uuid in l), "")
             return ("available" in line or "connected" in line, line.strip()[:60] or "not listed")
-        if dev == "pixel":
+        if dev in ("pixel", "firetv", "androidtv"):
+            serial = {"pixel": "3B211JEKB14516", "firetv": "10.0.0.139:5555",
+                      "androidtv": "10.0.0.55:5555"}[dev]
             r = sh([ADB, "devices"], timeout=45)
-            return ("3B211JEKB14516" in r.stdout, "adb ok" if "3B211JEKB14516" in r.stdout
-                    else "not in adb devices")
+            if serial not in r.stdout and ":" in serial:
+                sh([ADB, "connect", serial], timeout=30)
+                r = sh([ADB, "devices"], timeout=45)
+            return (re.search(rf"{re.escape(serial)}\s+device", r.stdout) is not None,
+                    "adb ok" if serial in r.stdout else "not in adb devices")
+        if dev == "mac":
+            ok = Path("/Applications/TidbitsTrivia.app/Contents/MacOS/TidbitsTrivia").exists()
+            return (ok, "installed" if ok else "no /Applications/TidbitsTrivia.app")
+        if dev == "web":
+            r = sh(["curl", "-s", "-o", "/dev/null", "-w", "%{http_code}",
+                    "https://tidbitstrivia.com/"], timeout=45)
+            return (r.stdout.strip() == "200", f"HTTP {r.stdout.strip()}")
     except Exception as e:
         return (False, f"probe failed: {e}")
     return (False, "unknown device")
@@ -76,7 +96,12 @@ def reachable(dev):
 
 def run_one(dev, scenario, tag):
     cfg = PLATFORMS[dev]
-    cmd = ["python3", cfg["runner"], "--scenario", scenario, "--name", f"{tag}-{scenario}"]
+    # mac/web runners take --only and batch their own scenarios; the device
+    # runners take one --scenario at a time.
+    if cfg.get("only"):
+        cmd = ["python3", cfg["runner"], "--only", scenario]
+    else:
+        cmd = ["python3", cfg["runner"], "--scenario", scenario, "--name", f"{tag}-{scenario}"]
     if cfg["flag"]:
         cmd += ["--device", cfg["flag"]]
     t0 = time.time()

@@ -182,6 +182,13 @@ Each rule below is here because a real question in this app hit it:
                   the corpus states, and silence is not agreement.
                   "European hornet" among Myrtle, Nerium and Date palm, for a
                   clue about a shrub. Nobody needs the fact to solve that.
+  CLUE-CROSSED    a PERSON clue whose answer is the film/series/band the source
+                  article is about — the clue and the answer come from different
+                  articles, so the question cannot be answered at all. Found by
+                  READING a stratified sample; every construction rule above
+                  passed all 14 of them, because each one is individually
+                  well-formed. "This blue-skinned Imperial military leader ...
+                  Who is he?" -> "The Quarry".
   STEM-TYPE       "In which country is Russo-Ukrainian war?" — one Wikidata
                   property mapped to one stem and applied to every kind of
                   subject. The second question of this session's first playtest
@@ -199,6 +206,14 @@ import pathlib
 import re
 import sys
 import unicodedata
+
+# CLUE-CROSSED: a singular-person interrogative, and a source article that is a
+# WORK. "who are they?" is deliberately absent — it is the right question for a band.
+PERSON_CLUE = re.compile(r"\bwho is (she|he)\b|\bwho was (she|he)\b|"
+                         r"\bthis (actress|actor|singer|footballer|midfielder|striker|"
+                         r"player|composer|author|heiress|host|model|director|painter)\b",
+                         re.I)
+WORK_TITLE = re.compile(r"\((TV series|film|\d{4} film|video game|album|song|band)\)$", re.I)
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 # Overridable so test_quality_gate.py can run the REAL gate against a corpus with
@@ -242,6 +257,7 @@ BUDGET = {
     "NUMBER-AGREEMENT": 0,
     "MISSING-ARTICLE": 0,
     "CATEGORY-SKEW": 0,
+    "CLUE-CROSSED": 0,
     "GOLDEN-STALE": 0,
     "NATIONALITY-FREE": 0,
     "SLIDER-FARMABLE": 0,
@@ -868,6 +884,28 @@ def check():
         aw = sig(opts[ci]) - {"who", "what", "when", "where", "which", "why", "how"}
         if aw and aw.issubset(sig(prompt)) and len(fold(opts[ci])) > 3:
             bad["ANSWER-IN-PROMPT"].append(f"{q[0]}: '{opts[ci]}' in {prompt[:60]}")
+        # CLUE-CROSSED: a clue about a PERSON whose answer is a film/series/band.
+        # Found by reading a 40-question sample, not by any existing rule: the
+        # Grand Admiral Thrawn clue ("this blue-skinned Imperial military leader
+        # ... Who is he?") was answered by "The Quarry", a video game. The clue and
+        # the answer come from different articles, so the question is unanswerable
+        # and no amount of knowledge helps.
+        #
+        # Scoped hard, because the loose version of this drowns: "who are they?" is
+        # CORRECT for a band, and rel:P175 rows legitimately ask "who scored this
+        # film?" where the source article is the film and the answer is a person.
+        # It fires only when the answer IS the work the source article is about.
+        # Index 7 in the COMPACT row (id, prompt, options, correct, category,
+        # difficulty, explanation, source_title, source_url, tags). Reading the
+        # uncompacted sqlite column order instead put this out of range, so the
+        # rule silently graded nothing and reported a clean 0 — the exact blind
+        # failure the module docstring warns about for KIND-MISMATCH.
+        _src_title = q[7] if len(q) > 7 and isinstance(q[7], str) else ""
+        if _src_title and WORK_TITLE.search(_src_title) and PERSON_CLUE.search(prompt or ""):
+            _subject = re.sub(r"\s*\([^)]*\)$", "", _src_title).strip()
+            if fold(opts[ci]) == fold(_subject):
+                bad["CLUE-CROSSED"].append(
+                    f"{q[0]}: person clue answered by {opts[ci]!r} — {prompt[:70]}")
         ys = [years.get(str(o)) for o in opts]
         if len(opts) >= 4 and all(ys) and max(ys) - min(ys) > 400:
             bad["ERA-SPREAD"].append(f"{q[0]}: {max(ys) - min(ys)}y {opts}")

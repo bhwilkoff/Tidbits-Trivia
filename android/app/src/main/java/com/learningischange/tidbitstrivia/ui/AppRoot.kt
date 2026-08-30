@@ -155,6 +155,7 @@ fun AppRoot(
         }
         if (h.openParty) backStack.add(Route.Party)
         if (h.openNightSetup) backStack.add(Route.NightSetup)
+        h.liveJoin?.let { (code, name) -> backStack.add(Route.LiveRoom(code, name)) }
         // Map the generic screenshot/QA destination hook onto a route. Named
         // surfaces only — an unknown value is ignored rather than crashing a
         // capture run mid-sweep.

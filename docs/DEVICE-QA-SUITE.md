@@ -20,8 +20,15 @@ Ported from Archive-Watch's three harnesses (2026-08-29). See the memory
 | iPad Pro 12.9 (5th gen) | `tools/ios_run.py --device ipad` | `AC5377E9-6053-51DE-8E65-D88A4E9345FA` | no remote wake |
 | iPhone 12 | `tools/ios_run.py --device iphone` | `B4E756E2-CBFA-5F63-8CEE-21D226637AF7` | no remote wake |
 | Pixel 8a | `tools/adb_run.py --device pixel` | adb `adb-3B211JEKB14516-…_adb-tls-connect._tcp` | **debug build required** |
-| Fire TV (AFTKRT) | — | adb `10.0.0.139:5555` | **no Tidbits TV build exists** |
-| Android TV dongle (onn 4K) | — | adb `10.0.0.55:5555` | **no Tidbits TV build exists** |
+| Fire TV (AFTKRT) | `tools/adb_run.py --device firetv` | adb `10.0.0.139:5555` | leanback build; 26/26 by remote |
+| Android TV dongle (onn 4K) | `tools/adb_run.py --device androidtv` | adb `10.0.0.55:5555` | slow — poll to 40s, never sleep |
+| macOS app | `tools/mac_run.py` | `/Applications/TidbitsTrivia.app` | capture **raises the app first** |
+| Web | `tools/web_run.py` | `https://tidbitstrivia.com` | 375px **and** 1440px |
+
+Cross-device multiplayer has its own runner, because no per-device sweep can see
+a desync: `tools/multiplayer_run.py --host mac|atv --players …` drives one hosted
+room across the whole fleet and grades the **wire** (RTDB `live/{code}`) against
+the **glass** (a screenshot of each device). See `docs/GO-LIVE-EVIDENCE.md`.
 
 Run everything: `python3 tools/qa_suite.py` (smoke set) or `--full`.
 Unreachable devices are reported **SKIP**, never as a pass — silence about an

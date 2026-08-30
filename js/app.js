@@ -59,7 +59,10 @@ async function boot() {
   if (expeditionParam && Expeditions.named(expeditionParam)) location.hash = `#/expeditions/${expeditionParam}`;
   // ?linkwall=1 — open convenience (mirrors ?expedition=<id>), Feature 6.
   if (new URLSearchParams(location.search).get('linkwall') === '1') location.hash = '#/linkwall';
-  if (location.hash.startsWith('#/daily')) {
+  // Prefix order matters: '#/daily' also prefixes '#/dailyboard', so an
+  // unqualified startsWith here swallowed every board link and started the
+  // Daily game instead — the board route below was unreachable.
+  if (location.hash === '#/daily' || location.hash.startsWith('#/daily/')) {
     render();
     if (Store.dailyScore(dayKey()) == null) startGame('daily', catById('mixed'));
     return;

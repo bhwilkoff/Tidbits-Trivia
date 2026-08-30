@@ -90,10 +90,35 @@ enum Keychain {
     }
     #endif
 
+    /// macOS has TWO keychains, and the default is the wrong one.
+    ///
+    /// Without this flag, `SecItemAdd` on macOS writes to the legacy *file-based*
+    /// login keychain, where every item carries an ACL naming the applications
+    /// allowed to read it. Any binary whose signature is not on that list triggers
+    /// the modal *"TidbitsTrivia wants to use your confidential information stored
+    /// in 'tidbits.fb.anonRefresh' in your keychain — enter the 'login' keychain
+    /// password"*. Observed once on the shipped Mac app, over the Home screen and
+    /// before it was usable. It is a ONE-TIME decision per signing identity, not a
+    /// per-launch prompt — it did not recur once answered — but it fires exactly
+    /// when a player first opens a build whose signature is not on the item's ACL,
+    /// which is the worst possible moment for a password demand.
+    ///
+    /// The data-protection keychain is the iOS one. Access is decided by the app's
+    /// team/keychain-access-group, not a per-item ACL, so a re-signed build reads
+    /// its own item silently and that dialog cannot occur. iOS and tvOS already use
+    /// it and the flag is a no-op there.
+    ///
+    /// The two keychains are separate stores, so an existing Mac token is not
+    /// migrated: those players mint one fresh anonymous uid on the next launch,
+    /// which is the same outcome as a reinstall and strictly better than the prompt.
     nonisolated private static func base(_ key: String) -> [String: Any] {
-        [kSecClass as String: kSecClassGenericPassword,
-         kSecAttrAccount as String: key,
-         kSecAttrSynchronizable as String: synchronizable]
+        var q: [String: Any] = [kSecClass as String: kSecClassGenericPassword,
+                                kSecAttrAccount as String: key,
+                                kSecAttrSynchronizable as String: synchronizable]
+        #if os(macOS)
+        q[kSecUseDataProtectionKeychain as String] = true
+        #endif
+        return q
     }
 
     nonisolated static func set(_ value: String, for key: String) {
@@ -137,8 +162,18 @@ enum Keychain {
         SecItemDelete(base(key) as CFDictionary)
         // Also clear any item written by a build that predates the synchronizable
         // switch, so a stale non-syncing token can't shadow the new one.
+        //
+        // NOT on macOS. Without the data-protection flag this query addresses the
+        // legacy login keychain, and DELETING an ACL-protected legacy item raises
+        // the very "enter the login keychain password" dialog this file is trying
+        // to eliminate — measured: moving reads to the data-protection keychain
+        // made this path run on every cold launch, so the prompt survived the fix
+        // and had moved from the read to the cleanup. The orphaned legacy item is
+        // never read again, so leaving it is harmless.
+        #if !os(macOS)
         SecItemDelete([kSecClass as String: kSecClassGenericPassword,
                        kSecAttrAccount as String: key] as CFDictionary)
+        #endif
         #if os(tvOS)
         // Sign-out must clear the file too, or the next launch silently restores the
         // session the player just ended.

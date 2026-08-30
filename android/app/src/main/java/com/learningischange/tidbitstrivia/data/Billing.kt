@@ -27,7 +27,7 @@ import kotlin.coroutines.resume
  * Google Play Billing for Tidbits Club (docs/CLUB-MARKETING.md §3/§4b, MONETIZATION §6/§7).
  * Android's **Class A** — local, offline, Play-attested — source for [Entitlement]: the twin
  * of Apple's `StoreKitStore` (`Transaction.currentEntitlements`) and the Windows
- * `IStoreGateway`/`WindowsStoreGateway`. Play Billing Library 7 (`billing-ktx`), driven through
+ * `IStoreGateway`/`WindowsStoreGateway`. Play Billing Library 8 (`billing-ktx`), driven through
  * the plain callback API and wrapped in suspend functions so the rest of the app never touches
  * `BillingClient` directly.
  *
@@ -134,14 +134,24 @@ object Billing {
                         .build()
                 },
             ).build()
-            val (result, details) = suspendCancellableCoroutine { cont ->
-                c.queryProductDetailsAsync(params) { billingResult, list -> cont.resume(billingResult to list) }
+            // Billing 8 changed this callback's second argument from a bare
+            // List<ProductDetails> to a QueryProductDetailsResult carrying both the
+            // fetched list AND an unfetched list. The unfetched entries are the
+            // interesting half: a product id that Play declines to return is exactly
+            // the "Couldn't load plans" case, and in 7 it was invisible — the list
+            // simply came back short with no way to say which id was missing.
+            val (result, queryResult) = suspendCancellableCoroutine { cont ->
+                c.queryProductDetailsAsync(params) { billingResult, qr -> cont.resume(billingResult to qr) }
             }
             if (result.responseCode != BillingClient.BillingResponseCode.OK) {
                 loadFailed = true
                 return
             }
-            loaded += details
+            queryResult.unfetchedProductList.takeIf { it.isNotEmpty() }?.let { unfetched ->
+                android.util.Log.w("Billing", "Play returned no details for: " +
+                    unfetched.joinToString { it.productId })
+            }
+            loaded += queryResult.productDetailsList
         }
         plans = loaded.mapNotNull(::toPlan).sortedBy { planOrder[it.product] ?: 9 }
         loadFailed = plans.isEmpty()

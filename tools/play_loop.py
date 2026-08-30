@@ -102,8 +102,11 @@ FEATURES = {
 # mark, any progress marker, or reveal chrome than by how the sentence opens.
 QUESTION_RX = (r"\?|#\d+|\d+\s*/\s*\d+|Question|QUESTION|Tap your answer|"
                r"seconds left|Nice|Not quite|Correct|correct|Drag|Slide|Type ")
-RESULT_RX = (r"Score|SCORE|You got|correct|Correct|Play again|Best|BEST|"
-             r"Results|RESULTS|streak|Accuracy|points|POINTS|Done|Finish")
+# Scorecards shout: "0/1 CORRECT", "100% ACCURACY", "FLAWLESS!", "GOOD RUN".
+# The first version listed only Title-case forms and matched those screens purely
+# by accident, through the lowercase "1 day streak" in the share row.
+RESULT_RX = (r"(?i:score|you got|correct|play again|best|results|streak|accuracy|"
+             r"points|done|finish|flawless|good run|nice run|final)")
 ERROR_RX = r"No questions|Couldn.t load|Something went wrong|failed to|\berror\b"
 
 
@@ -252,7 +255,11 @@ def run_cell(dev, cell, outdir):
                 "evidence": all_text[:200]}
 
     if cell in MODES:
-        played = bool(re.search(QUESTION_RX, all_text))
+        # A round that reached a RESULT obviously played. Survival with a fallible
+        # autopilot dies on question 1 and is already on its scorecard by the first
+        # frame ("GOOD RUN — 0/1 CORRECT"), which the question pattern cannot match.
+        finished = bool(re.search(RESULT_RX, all_text))
+        played = finished or bool(re.search(QUESTION_RX, all_text))
         if not played:
             return {"result": "FAIL", "why": "never drew a question",
                     "evidence": all_text[:200]}
@@ -268,9 +275,11 @@ def run_cell(dev, cell, outdir):
         last = next((c for c in (counter(t) for t in reversed(per_frame)) if c is not None), None)
         progressed = None if first is None or last is None else last > first
 
-        finished = bool(re.search(RESULT_RX, all_text))
         res = {"result": "OK", "finished": finished, "evidence": all_text[:200]}
-        if progressed is not None:
+        # Progress only has to be shown by a round that did NOT finish. A completed
+        # round whose first frame was already its last question ("6/6" then
+        # "FLAWLESS 6/6") never advances a counter and is perfectly healthy.
+        if progressed is not None and not finished:
             res["progressed"] = progressed
         if cell in NO_RESULT_EXPECTED:
             res["finished"] = True          # arithmetic, not a defect

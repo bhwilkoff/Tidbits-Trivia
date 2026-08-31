@@ -128,7 +128,8 @@ fun NightHostScreen(rounds: List<Pair<String, Int>>, category: Category, store: 
         val job = scope.launch {
             try {
                 questions = buildNightQuestions(rounds, category.id, emptySet())
-                code = FirebaseNet.liveHostOpen("Trivia Night")
+                code = FirebaseNet.liveHostOpen("Trivia Night",
+                    forceCode = ScreenshotHooks.forcedLiveCode)
                 unsubs += FirebaseNet.liveOnTeams(code) { teams = it }
                 unsubs += FirebaseNet.liveOnScores(code) { scores = it }
             } catch (e: Exception) { error = "Couldn't open a room. Check your connection." }

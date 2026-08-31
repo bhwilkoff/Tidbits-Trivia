@@ -561,6 +561,7 @@ def _run_room(a, code, players, out, g, held):
         adb(a.host, "shell", "am", "start", "-n", f"{APKG}/{ACTIVITY}",
             "--ez", "tidbits_skip_onboard", "true", "--ez", "tidbits_night_host", "true",
             "--es", "tidbits_qa_label", f"HOST {a.game} {code}",
+            "--es", "tidbits_live_code", code,
             *(["--ei", "tidbits_night_autostart", str(max(5, int(a.settle) - 20))]
               if a.game == "night" else []))
 

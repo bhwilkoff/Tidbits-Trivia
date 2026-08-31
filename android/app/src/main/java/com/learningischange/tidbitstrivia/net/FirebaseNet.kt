@@ -435,9 +435,18 @@ object FirebaseNet {
     // The Android app can now HOST a casual Trivia Night on the same backend as
     // Tidbits Live (owner architecture). Mirrors LiveNightHost (Swift) + the web.
 
-    suspend fun liveHostOpen(name: String): String {
+    /** `forceCode` opens a room at a KNOWN code instead of a generated one.
+     *
+     *  Every other platform honours a pinned code; Android always generated its own,
+     *  so a harness could only find the room by reading the code off the host's
+     *  screen — and a leftover room from an earlier run is indistinguishable from the
+     *  current one that way. Eight devices joined a stale room while the host
+     *  published to a fresh one, and both halves looked healthy.
+     *
+     *  Test-only in practice, and inert unless a caller passes it. */
+    suspend fun liveHostOpen(name: String, forceCode: String? = null): String {
         val me = ensureAuth()
-        val code = newCode()
+        val code = forceCode?.takeIf { it.isNotBlank() }?.uppercase() ?: newCode()
         db.getReference("live/$code/meta").setValue(mapOf(
             "host" to me, "createdAt" to System.currentTimeMillis(),
             "name" to name, "venue" to "", "state" to "lobby")).await()

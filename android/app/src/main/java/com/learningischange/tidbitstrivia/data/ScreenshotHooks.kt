@@ -64,6 +64,11 @@ object ScreenshotHooks {
     var screened = false
         private set
 
+    /** `tidbits_live_code` — open the hosted room at THIS code rather than a random
+     *  one, so a run can address the room it just created without guessing. */
+    var forcedLiveCode: String? = null
+        private set
+
     /** `tidbits_night_autostart` (seconds) — begin the night once the room is open,
      *  without waiting for the host's press. A night deliberately sits in a LOBBY
      *  until a human starts it, which is correct product behaviour and is why a whole
@@ -116,6 +121,8 @@ object ScreenshotHooks {
         intent.getStringExtra("tidbits_open")?.let { openRoute = it }
         intent.getStringExtra("tidbits_qa_label")?.takeIf { it.isNotBlank() }
             ?.let { qaLabel = it.take(60) }
+        intent.getStringExtra("tidbits_live_code")?.takeIf { it.isNotBlank() }
+            ?.let { forcedLiveCode = it.trim().uppercase().take(4) }
         if (intent.hasExtra("tidbits_night_autostart"))
             nightAutostart = intent.getIntExtra("tidbits_night_autostart", -1).takeIf { it >= 0 }
         intent.getStringExtra("tidbits_live_join")?.takeIf { it.isNotBlank() }?.let { code ->

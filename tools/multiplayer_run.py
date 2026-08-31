@@ -297,7 +297,16 @@ def web_shot(code, path):
 def join(dev, code, outdir):
     """Put `dev` in the room. Returns the screenshot function for later."""
     name = f"QA-{dev}"
-    if dev == "mac":
+    if dev == "windows":
+        # Windows could HOST and could not JOIN through this harness: `join()` had
+        # branches for mac, APPLE, ANDROID and web, and Windows fell straight through.
+        # The app has had TIDBITS_LIVE_JOIN since the hook-coverage pass; nothing here
+        # ever used it, so the Windows box was listed as a player in every night run
+        # and its screenshot was the bare desktop.
+        winbox.launch({"TIDBITS_SKIP_ONBOARD": "1", "TIDBITS_LIVE_JOIN": code,
+                       "TIDBITS_LIVE_NAME": name,
+                       "TIDBITS_QA_LABEL": f"join {code} {name}"}, wait=16)
+    elif dev == "mac":
         # The Mac could HOST from the very first version of this harness and could
         # never JOIN: `join()` had branches for APPLE, ANDROID and web, and the Mac
         # silently fell through, returning a name without launching anything. It was
@@ -371,7 +380,16 @@ def shoot(dev, path, code=None):
             if again and not again.startswith("com.tidbitstrivia"):
                 print(f"  [{dev}] STILL {again} — the app will not stay in front")
         return android_shot(dev, path)
-    if dev == "mac":
+    if dev == "windows":
+        # Windows could HOST and could not JOIN through this harness: `join()` had
+        # branches for mac, APPLE, ANDROID and web, and Windows fell straight through.
+        # The app has had TIDBITS_LIVE_JOIN since the hook-coverage pass; nothing here
+        # ever used it, so the Windows box was listed as a player in every night run
+        # and its screenshot was the bare desktop.
+        winbox.launch({"TIDBITS_SKIP_ONBOARD": "1", "TIDBITS_LIVE_JOIN": code,
+                       "TIDBITS_LIVE_NAME": name,
+                       "TIDBITS_QA_LABEL": f"join {code} {name}"}, wait=16)
+    elif dev == "mac":
         return mac_shot(path)
     if dev == "web":
         return web_shot(code, path)
@@ -473,10 +491,13 @@ def _run_room(a, code, players, out, g, held):
     # unified backend and it is what makes any-host / any-joiner possible.
     host_env = {"TIDBITS_SKIP_ONBOARD": "1", "TIDBITS_LIVE_CODE": code,
                 "TIDBITS_QA_LABEL": f"HOST {a.game} {code}",
-                # A night waits in a lobby for a human. The grace has to outlast the
-                # joiners' arrival or the first question publishes to an empty room —
-                # settle covers the joins, this fires after them.
-                **({"TIDBITS_NIGHT_AUTOSTART": str(int(a.settle) + 10)}
+                # A night waits in a lobby for a human. The grace must land INSIDE the
+                # settle window: long enough for joiners to arrive, early enough that
+                # the question has published before the wire is read. The first version
+                # used settle+10 and fired ten seconds after the check that was looking
+                # for it, so every Apple host reported "published no question" while
+                # about to publish one.
+                **({"TIDBITS_NIGHT_AUTOSTART": str(max(5, int(a.settle) - 20))}
                    if a.game == "night" else {}),
                 ("TIDBITS_NIGHT_HOST" if a.game == "night" else "TIDBITS_LIVE_HOST"): "1"}
     # A stale Mac binary re-raises a fixed bug and reads as a regression, so say so
@@ -509,7 +530,7 @@ def _run_room(a, code, players, out, g, held):
         adb(a.host, "shell", "am", "start", "-n", f"{APKG}/{ACTIVITY}",
             "--ez", "tidbits_skip_onboard", "true", "--ez", "tidbits_night_host", "true",
             "--es", "tidbits_qa_label", f"HOST {a.game} {code}",
-            *(["--ei", "tidbits_night_autostart", str(int(a.settle) + 10)]
+            *(["--ei", "tidbits_night_autostart", str(max(5, int(a.settle) - 20))]
               if a.game == "night" else []))
 
     # 2. The room must exist on the WIRE before anyone is asked to join it.

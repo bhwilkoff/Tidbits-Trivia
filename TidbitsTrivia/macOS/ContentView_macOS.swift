@@ -30,6 +30,8 @@ struct ContentView_macOS: View {
     @State private var customGame: CustomLaunch?
     /// A solo Trivia Night — also replaces the window root.
     @State private var nightLaunch: NightLaunchRequest?
+    /// "Join a game" — the Mac's player-side surface (MacLiveJoinView_macOS).
+    @State private var joinCode: String?
     /// A Play-vs-CPU match — also replaces the window root.
     @State private var versusBot: BotProfile?
     /// Local pass-and-play (2–4 at one Mac) — also replaces the window root.
@@ -50,6 +52,10 @@ struct ContentView_macOS: View {
                     self.customGame = nil
                 }
                 .transition(.opacity)
+            } else if let joinCode {
+                // Root replacement, not a sheet: a player in someone's game owns the
+                // window, the same rule the in-progress game follows (macOS-DESIGN).
+                MacLiveJoinView_macOS(initialCode: joinCode) { self.joinCode = nil }
             } else if let nightLaunch {
                 NightContainer_macOS(plan: nightLaunch.plan, category: nightLaunch.category) {
                     self.nightLaunch = nil
@@ -107,6 +113,10 @@ struct ContentView_macOS: View {
             // Trivia Night and Tidbits Live publish to the SAME live/{code} room, so a
             // joiner cannot tell which opened it. That is what makes the hook mean the
             // same thing on all six platforms: "host a night other devices can join."
+            // TIDBITS_LIVE_JOIN — join a room by code. Every other platform honoured
+            // this; the Mac had no join surface at all, so it was told to join in every
+            // cross-platform run and landed on its Home screen.
+            if joinCode == nil, let c = DebugHooks.openLiveJoin { joinCode = c }
             if liveHost == nil, DebugHooks.openNightHost {
                 liveHost = await Self.quickNightEvent()
             }

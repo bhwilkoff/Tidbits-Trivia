@@ -1,4 +1,5 @@
 using System;
+using Avalonia;
 using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -108,6 +109,28 @@ public partial class MainWindow : Window
 
         Width = Math.Max(MinWidth, Math.Min(Width, maxW));
         Height = Math.Max(MinHeight, Math.Min(Height, maxH));
+
+        // Size alone is not enough, and this is the half that actually cut content off.
+        // Windows CASCADES each new window down and to the right — measured across six
+        // launches on the dev box, the left edge stepped 26, 52, 104, 156, 208, 260px. A
+        // window as wide as the screen hangs off it at ANY offset, so a correct size clamp
+        // still left 200px of the app past the right edge. That is what the screenshot
+        // showed: QUICK PLAY, "Play today's Tidbit" and the whole Trivia Night row running
+        // off the edge on a build whose size clamp was working.
+        //
+        // WindowStartupLocation=CenterScreen in the XAML is what actually removes the
+        // cascade; this stays as the safety net. Clamping alone was not enough on its own
+        // — measured over three launches it corrected one and missed two, because Windows
+        // repositions the window AFTER Opened fires, so the clamp ran and the cascade then
+        // moved it anyway. Centring decides the position before that race exists.
+        var pos = Position;
+        var w = (int)Math.Round(Width * scale);
+        var h = (int)Math.Round(Height * scale);
+        var x = Math.Max(area.X, Math.Min(pos.X, area.X + area.Width - w));
+        var y = Math.Max(area.Y, Math.Min(pos.Y, area.Y + area.Height - h));
+        if (x != pos.X || y != pos.Y)
+            Position = new PixelPoint(x, y);
+
         ClampApplied = true;
     }
 

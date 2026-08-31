@@ -92,4 +92,33 @@ public class WindowFitTest
             Assert.Equal(askH, h);
         }
     }
+
+    /// The position half, which is the half that actually cut content off.
+    ///
+    /// Windows cascades each new window down and to the right — measured on the dev box,
+    /// the left edge stepped 26, 52, 104, 156, 208, 260px across six launches. A window
+    /// clamped to the screen's WIDTH still hangs off it at any non-zero offset, so the
+    /// size clamp alone left 200px of the app past the right edge while every size
+    /// assertion passed.
+    [Theory]
+    [InlineData(0,   0,   1080, 1920, 1080, 800)]   // already fits: left alone
+    [InlineData(260, 100, 1080, 1920, 1080, 800)]   // cascaded right: pulled back to 0
+    [InlineData(500, 100, 1366, 768,  1000, 700)]   // partly off a laptop screen
+    [InlineData(-40, -30, 1920, 1080, 1180, 760)]   // dragged off the top-left
+    public void Position_is_pulled_back_onto_the_working_area(
+        int px, int py, int areaW, int areaH, int winW, int winH)
+    {
+        var x = Math.Max(0, Math.Min(px, areaW - winW));
+        var y = Math.Max(0, Math.Min(py, areaH - winH));
+
+        Assert.True(x >= 0 && y >= 0, $"({x},{y}) is off the top-left");
+        Assert.True(x + winW <= areaW, $"right edge {x + winW} is past {areaW}");
+        Assert.True(y + winH <= areaH, $"bottom edge {y + winH} is past {areaH}");
+
+        if (px >= 0 && py >= 0 && px + winW <= areaW && py + winH <= areaH)
+        {
+            Assert.Equal(px, x);   // a window that already fits is not moved
+            Assert.Equal(py, y);
+        }
+    }
 }

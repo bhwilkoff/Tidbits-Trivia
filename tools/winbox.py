@@ -397,8 +397,8 @@ def screenshot(local_path, remote_name="tidbits-shot.png"):
     # Clear last run's outputs FIRST. A script that dies early otherwise leaves the
     # previous run's files in place and the harness reads them as THIS run's result —
     # which is how a capture that produced no frames still reported a screen size.
-    ps(f"Remove-Item '{rd}/_shot.txt' -ErrorAction SilentlyContinue; "
-       f"Remove-Item '{rd}/{prefix}-*.png' -ErrorAction SilentlyContinue", timeout=45)
+    ps(f"Remove-Item '{remote_dir()}/_shot.txt','{remote}' "
+       f"-ErrorAction SilentlyContinue", timeout=45)
     run_in_console(f"""
 Add-Type -AssemblyName System.Windows.Forms, System.Drawing
 $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds

@@ -10,7 +10,8 @@
         Icon="/Assets/avalonia-logo.ico"
         Title="Tidbits Trivia"
         TransparencyLevelHint="Mica,AcrylicBlur,None"
-        Width="1180" Height="760" MinWidth="900" MinHeight="680">
+        Width="1180" Height="760" MinWidth="900" MinHeight="680"
+        WindowStartupLocation="CenterScreen">
 
     <Design.DataContext>
         <vm:MainWindowViewModel/>

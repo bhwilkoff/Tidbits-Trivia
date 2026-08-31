@@ -192,6 +192,12 @@ def apple_launch(dev, env, retries=1):
 
 
 def apple_shot(dev, path):
+    # Wake the TV before EVERY capture, not just before a join. This box sleeps
+    # between steps on its own: a run woke it to join, it joined, and by capture time
+    # it was asleep again — reported as "device blind" on a device that was in the
+    # room the whole time. Cheap when it is already awake (a power_state query).
+    if dev == "atv":
+        wake_tv()
     try:
         devicectl("device", "capture", "screenshot", "--device", APPLE[dev],
                   "--destination", str(path), timeout=60)
@@ -725,6 +731,27 @@ def _run_room(a, code, players, out, g, held):
             # post-join chrome counts.
             in_room = bool(re.search(r"YOU.RE IN|Waiting for the host|POINTS|"
                                      r"points|Question \d|\d+\s*/\s*\d+", t))
+        # A TV that has drifted back to its own launcher is READABLE and not in the
+        # room, so the dark-screen recovery above never fired for it: the Apple TV was
+        # graded against "Community Favorites / prime video fubo plutotv". Both TVs do
+        # this on their own — the Fire TV already gets a rejoin on the Android path,
+        # and this is its Apple twin. Rejoin once, recapture, and say that it needed it.
+        if not in_room and dev != a.host and dev not in retried:
+            retried.add(dev)
+            print(f"  [{dev}] readable but not in the room — rejoining {code}")
+            join(dev, code, out)
+            time.sleep(18)
+            p3 = out / f"{dev}-rejoin.png"
+            if shoot(dev, p3, code):
+                t3 = ocr([(dev, p3)])
+                nt = frame_text(t3.get(p3.name, {}))
+                if re.search(r"YOU.RE IN|Waiting for the host|POINTS|points|"
+                             r"Question \d|\d+\s*/\s*\d+", nt):
+                    in_room, t = True, nt
+                    per_dev[dev] = nt
+                    texts.update(t3)
+                    g.report.setdefault("rejoined", []).append(dev)
+
         g.grade(f"glass.{dev}_in_room", in_room, f"«{t[:180]}»")
 
     # 6. The desync check. If the host published a question, the players'

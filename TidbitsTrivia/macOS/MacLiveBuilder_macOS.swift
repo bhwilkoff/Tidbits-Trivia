@@ -10,6 +10,9 @@ import UniformTypeIdentifiers
 struct LiveBuilderView_macOS: View {
     let onPreview: (LiveEvent) -> Void
     let onHost: (LiveEvent) -> Void
+    /// "Join a game" — the player side. The Mac is not only a host: it should be able
+    /// to sit in someone else's night like every other platform.
+    var onJoin: (() -> Void)? = nil
 
     @State private var store = LiveEventStore()
     @State private var selectedID: LiveEvent.ID?
@@ -46,6 +49,24 @@ struct LiveBuilderView_macOS: View {
                 Button { newEvent() } label: { Image(systemName: "plus") }.buttonStyle(.borderless)
             }
             .padding(12)
+
+            // The player-side door. Windows carries the same control on its Live setup
+            // screen ("Join a game with a code"), and the Mac had no equivalent at all:
+            // the join surface existed and was reachable ONLY by a launch hook, so the
+            // harness could drive it and a person could not open it. A feature only a
+            // test can reach is not shipped.
+            if let onJoin {
+                Button {
+                    onJoin()
+                } label: {
+                    Label("Join a game with a code", systemImage: "person.badge.plus")
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .buttonStyle(.borderless)
+                .padding(.horizontal, 12)
+                .padding(.bottom, 10)
+                .help("Join a Trivia Night or Tidbits Live event someone else is hosting")
+            }
             Divider().overlay(Tidbits.Palette.border)
             List(selection: $selectedID) {
                 ForEach(store.events) { ev in

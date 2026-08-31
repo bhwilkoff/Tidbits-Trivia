@@ -165,6 +165,7 @@ struct ContentView_macOS: View {
         // ⌘N (menu bar) → start Quick Play. focusedSceneValue is only live while
         // the shell is on screen, so ⌘N is naturally disabled mid-game.
         .focusedSceneValue(\.newGame, NewGameAction { start(store.quickPlay) })
+        .focusedSceneValue(\.joinGame, JoinGameAction { joinCode = "" })
         .sheet(isPresented: Binding(get: { !hasOnboarded }, set: { if !$0 { hasOnboarded = true } })) {
             OnboardingSheet_macOS { hasOnboarded = true }
         }
@@ -187,7 +188,8 @@ struct ContentView_macOS: View {
                                               })
                 case .records: RecordsView_macOS(onPlay: start)
                 case .create:  CreateView_macOS { topic, qs in customGame = CustomLaunch(topic: topic, questions: qs) }
-                case .live:    LiveBuilderView_macOS(onPreview: { livePreview = $0 }, onHost: { liveHost = $0 })
+                case .live:    LiveBuilderView_macOS(onPreview: { livePreview = $0 }, onHost: { liveHost = $0 },
+                                                     onJoin: { joinCode = "" })
                 }
             }
         }
@@ -280,18 +282,40 @@ struct ExpeditionStageLaunch_macOS: Identifiable {
 /// The shell publishes this so the ⌘N menu command can start a game without
 /// reaching into ContentView's private @State.
 struct NewGameAction { let start: () -> Void }
+struct JoinGameAction { let open: () -> Void }
+struct JoinGameKey: FocusedValueKey { typealias Value = JoinGameAction }
+
 struct NewGameKey: FocusedValueKey { typealias Value = NewGameAction }
 extension FocusedValues {
+    var joinGame: JoinGameAction? {
+        get { self[JoinGameKey.self] }
+        set { self[JoinGameKey.self] = newValue }
+    }
     var newGame: NewGameAction? {
         get { self[NewGameKey.self] }
         set { self[NewGameKey.self] = newValue }
     }
 }
 
-/// Menu-bar commands: ⌘N replaces File ▸ New with "New Quick Play".
+/// Menu-bar commands: ⌘N replaces File ▸ New with "New Quick Play", ⌘J joins a game.
 struct TidbitsCommands: Commands {
     var body: some Commands {
-        CommandGroup(replacing: .newItem) { NewGameMenuItem() }
+        CommandGroup(replacing: .newItem) {
+            NewGameMenuItem()
+            JoinGameMenuItem()
+        }
+    }
+
+    /// A Mac user reaches for the menu bar. The Live section carries the same door as
+    /// a button, but a hosting-only Live screen is not where someone looks when a
+    /// friend reads them a code over the phone.
+    private struct JoinGameMenuItem: View {
+        @FocusedValue(\.joinGame) private var joinGame
+        var body: some View {
+            Button("Join a Game…") { joinGame?.open() }
+                .keyboardShortcut("j", modifiers: .command)
+                .disabled(joinGame == nil)
+        }
     }
     private struct NewGameMenuItem: View {
         @FocusedValue(\.newGame) private var newGame

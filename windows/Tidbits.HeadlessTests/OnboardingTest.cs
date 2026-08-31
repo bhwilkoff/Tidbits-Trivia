@@ -45,4 +45,30 @@ public class OnboardingTest
         Directory.CreateDirectory(dir);
         win.CaptureRenderedFrame()!.Save(Path.Combine(dir, "onboarding.png"));
     }
+
+    /// The walkthrough is a MODAL dialog, so when it is up nothing behind it can be clicked.
+    /// Windows had no way to suppress it while Apple and Android both did, which meant a
+    /// harness launch landed on the walkthrough and then photographed and graded the surface
+    /// behind it — content no click could actually have reached. This is the hook that makes
+    /// a driven launch mean something.
+    [Fact]
+    public void Skip_hook_suppresses_the_walkthrough_without_consuming_the_real_first_run()
+    {
+        var prior = System.Environment.GetEnvironmentVariable("TIDBITS_SKIP_ONBOARD");
+        try
+        {
+            System.Environment.SetEnvironmentVariable("TIDBITS_SKIP_ONBOARD", null);
+            Assert.True(OnboardingDialog.ShouldShow(hasOnboarded: false));   // a real first run
+
+            System.Environment.SetEnvironmentVariable("TIDBITS_SKIP_ONBOARD", "1");
+            Assert.False(OnboardingDialog.ShouldShow(hasOnboarded: false));  // suppressed
+
+            // Suppressing it for a test run must not spend a real person's first run: the
+            // flag is untouched, so the walkthrough still shows the next ordinary launch.
+            var path = Path.Combine(Path.GetTempPath(), $"tidbits-skip-{System.Guid.NewGuid():N}.json");
+            var settings = new Tidbits.Core.Store.GameSettings(path);
+            Assert.False(settings.HasOnboarded);
+        }
+        finally { System.Environment.SetEnvironmentVariable("TIDBITS_SKIP_ONBOARD", prior); }
+    }
 }

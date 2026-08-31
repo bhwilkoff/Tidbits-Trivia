@@ -67,11 +67,26 @@ public static class OnboardingDialog
         }
     }
 
+    /// The decision, split out from the dialog so it is testable: `ShowIfFirstRunAsync` awaits
+    /// a real modal, which a headless test cannot dismiss.
+    public static bool ShouldShow(bool hasOnboarded) =>
+        !hasOnboarded && System.Environment.GetEnvironmentVariable("TIDBITS_SKIP_ONBOARD") != "1";
+
     /// Show once per install. No-ops when already seen, so callers can fire it unconditionally.
+    ///
+    /// TIDBITS_SKIP_ONBOARD=1 suppresses it — the Windows twin of Apple's
+    /// `DebugHooks.skipOnboarding` and Android's `tidbits_skip_onboard`. Windows was the one
+    /// platform without it, and this is a MODAL `FAContentDialog`: it does not merely sit in
+    /// front of the screen under test, it blocks input to it. So a harness launch landed on a
+    /// walkthrough, photographed the surface behind it, and graded content that no click could
+    /// have reached. Every other platform could already be asked to skip it.
+    ///
+    /// Deliberately does NOT write HasOnboarded: suppressing the walkthrough for a test run
+    /// must not consume a real person's first run.
     public static async Task ShowIfFirstRunAsync()
     {
         var settings = GameData.Shared.Value.Settings;
-        if (settings.HasOnboarded) return;
+        if (!ShouldShow(settings.HasOnboarded)) return;
 
         var stack = BuildBody();
 

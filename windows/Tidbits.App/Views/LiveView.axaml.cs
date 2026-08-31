@@ -54,6 +54,25 @@ public partial class LiveView : UserControl
         WeekdayBox.ItemsSource = new[] { "One-off", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
         WeekdayBox.SelectedIndex = 0;
         BuildSavedEvents();
+
+        // TIDBITS_LIVE_HOST=<preset name> — open a real hosted room straight from launch,
+        // the Windows twin of Apple's TIDBITS_NIGHT_HOST and Android's tidbits_night_host.
+        // Without it Windows was the one platform that could not be DRIVEN as a host: every
+        // route into StartHosting is a Click, so a harness could only get here by blind
+        // coordinate tapping. That is why "every platform can host, every platform can join"
+        // had never actually been tested in the Windows-hosts direction — not because it
+        // failed, but because nothing could ask the question.
+        var wantHost = Environment.GetEnvironmentVariable("TIDBITS_LIVE_HOST");
+        if (!string.IsNullOrWhiteSpace(wantHost))
+        {
+            var (name, _, plan) = NightPlan.Presets.FirstOrDefault(
+                x => string.Equals(x.Item1, wantHost, StringComparison.OrdinalIgnoreCase));
+            // Any unrecognised value hosts the first preset rather than silently doing
+            // nothing — a harness that asked for a host and got the setup screen would
+            // grade the setup screen.
+            if (plan is null) (name, _, plan) = NightPlan.Presets[0];
+            Loaded += (_, _) => StartHosting(plan, name);
+        }
     }
 
     // The rounds being composed for a custom event (+ an index-aligned host note).

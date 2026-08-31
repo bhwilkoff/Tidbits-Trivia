@@ -46,8 +46,33 @@ ACTIVITY = "com.learningischange.tidbitstrivia.MainActivity"
 # sits over the window and the host never opens its room, which is what this
 # harness then reports as "the host never created the room".
 _DEV_MAC = Path("build/dd-mac/Build/Products/Debug/TidbitsTrivia.app/Contents/MacOS/TidbitsTrivia")
-MACBIN = str(_DEV_MAC if _DEV_MAC.exists()
-             else Path("/Applications/TidbitsTrivia.app/Contents/MacOS/TidbitsTrivia"))
+_SHIPPED_MAC = Path("/Applications/TidbitsTrivia.app/Contents/MacOS/TidbitsTrivia")
+MACBIN = str(_DEV_MAC if _DEV_MAC.exists() else _SHIPPED_MAC)
+
+
+def mac_binary_is_current():
+    """Refuse to run a Mac build older than the keychain fix.
+
+    The fallback above is only correct while `build/dd-mac` EXISTS. It did not, so
+    every Mac launch quietly used the /Applications copy — dated 2026-08-25, five
+    days older than the data-protection-keychain fix — and the owner got a login
+    keychain password prompt on his own machine, twice, from a defect that had
+    already been fixed and proven.
+
+    A stale binary is the worst kind of wrong: it fails as the ORIGINAL bug, so the
+    obvious reading is that the fix regressed. Checking the mtime against the fix's
+    own source file costs nothing and makes the fallback say when it is unsafe.
+    """
+    src = Path("TidbitsTrivia/Core/Networking/Keychain.swift")
+    binp = Path(MACBIN)
+    if not binp.exists():
+        return False, f"{MACBIN} does not exist — build it with -derivedDataPath build/dd-mac"
+    if src.exists() and binp.stat().st_mtime < src.stat().st_mtime:
+        return False, (f"{MACBIN} predates {src} — it will raise the legacy-keychain "
+                       "password prompt that was already fixed. Rebuild: xcodebuild "
+                       "build -scheme TidbitsTrivia -destination 'platform=macOS' "
+                       "-derivedDataPath build/dd-mac")
+    return True, MACBIN
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 
 API_KEY = "AIzaSyCns8iba6zVqkddEUY_gqoc4eVxz-3BGaA"
@@ -448,7 +473,22 @@ def _run_room(a, code, players, out, g, held):
     # unified backend and it is what makes any-host / any-joiner possible.
     host_env = {"TIDBITS_SKIP_ONBOARD": "1", "TIDBITS_LIVE_CODE": code,
                 "TIDBITS_QA_LABEL": f"HOST {a.game} {code}",
+                # A night waits in a lobby for a human. The grace has to outlast the
+                # joiners' arrival or the first question publishes to an empty room —
+                # settle covers the joins, this fires after them.
+                **({"TIDBITS_NIGHT_AUTOSTART": str(int(a.settle) + 10)}
+                   if a.game == "night" else {}),
                 ("TIDBITS_NIGHT_HOST" if a.game == "night" else "TIDBITS_LIVE_HOST"): "1"}
+    # A stale Mac binary re-raises a fixed bug and reads as a regression, so say so
+    # before the run rather than after the prompt is on the owner's screen.
+    if a.host == "mac" or "mac" in players:
+        cur, why = mac_binary_is_current()
+        if not cur:
+            g.grade("mac_binary_current", False, why)
+            players = [p for p in players if p != "mac"]
+            if a.host == "mac":
+                return g.finish()
+
     if a.host == "windows":
         # TIDBITS_LIVE_HOST takes a PRESET NAME on Windows, not a flag: every route
         # into StartHosting is a Click handler, so the hook picks which night to
@@ -467,7 +507,10 @@ def _run_room(a, code, players, out, g, held):
         adb(a.host, "shell", "am", "force-stop", APKG)
         time.sleep(1)
         adb(a.host, "shell", "am", "start", "-n", f"{APKG}/{ACTIVITY}",
-            "--ez", "tidbits_skip_onboard", "true", "--ez", "tidbits_night_host", "true")
+            "--ez", "tidbits_skip_onboard", "true", "--ez", "tidbits_night_host", "true",
+            "--es", "tidbits_qa_label", f"HOST {a.game} {code}",
+            *(["--ei", "tidbits_night_autostart", str(int(a.settle) + 10)]
+              if a.game == "night" else []))
 
     # 2. The room must exist on the WIRE before anyone is asked to join it.
     #

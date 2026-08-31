@@ -385,6 +385,21 @@ enum DebugHooks {
         return c
     }
 
+    /// TIDBITS_NIGHT_AUTOSTART=<seconds> → after the room is open and this many
+    /// seconds have passed, start the night without waiting for the host's press.
+    ///
+    /// A night deliberately sits in a LOBBY until a human starts it — that is correct
+    /// product behaviour, and it is why a whole matrix of "every platform hosts a
+    /// night" reported `host published no question` on every Apple host. The harness
+    /// could press only the Apple TV's remote; the other four had no way to begin.
+    /// One hook beats four ways to press a button, and the grace period is what makes
+    /// it useful: the joiners need time to land before the first question publishes.
+    static var nightAutostart: TimeInterval? {
+        guard let v = ProcessInfo.processInfo.environment["TIDBITS_NIGHT_AUTOSTART"],
+              let n = TimeInterval(v), n >= 0 else { return nil }
+        return n
+    }
+
     /// TIDBITS_QA_LABEL=<text> → draw a small banner naming what this device is
     /// testing. Six devices on a desk all running Tidbits look identical, so a bench
     /// photograph said nothing about which one was under test, and a device left over

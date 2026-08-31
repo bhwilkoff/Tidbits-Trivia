@@ -66,6 +66,14 @@ struct TVNightHostView: View {
                         .focused($focus, equals: .speed)
                 }
                 Button(host.isOpen ? "Start the Night" : "Opening room…") { Task { await host.start() } }
+                    .task(id: host.isOpen) {
+                        // TIDBITS_NIGHT_AUTOSTART=<seconds> — begin without the press.
+                        // Keyed on isOpen so it fires once the room actually exists;
+                        // starting before that publishes into a room nobody can join.
+                        guard host.isOpen, let wait = DebugHooks.nightAutostart else { return }
+                        try? await Task.sleep(for: .seconds(wait))
+                        await host.start()
+                    }
                     .buttonStyle(TVChipStyle(accent: Tidbits.Palette.coral, selected: false))
                     .focused($focus, equals: .start).disabled(!host.isOpen)
                 Text("Players scan the code or open Tidbits → Join a game. You run the questions with the remote.")

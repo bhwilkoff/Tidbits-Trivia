@@ -64,6 +64,15 @@ object ScreenshotHooks {
     var screened = false
         private set
 
+    /** `tidbits_night_autostart` (seconds) — begin the night once the room is open,
+     *  without waiting for the host's press. A night deliberately sits in a LOBBY
+     *  until a human starts it, which is correct product behaviour and is why a whole
+     *  matrix of "every platform hosts a night" reported "host published no question"
+     *  on every host the harness could not press. One hook beats N ways to press a
+     *  button; the grace period lets the joiners land before the first question. */
+    var nightAutostart: Int? = null
+        private set
+
     /** A small banner naming what this device is testing (`tidbits_qa_label`).
      *  Six devices on a desk all running Tidbits look identical, so a bench photograph
      *  said nothing about which one was under test, and a device left over from an
@@ -107,6 +116,8 @@ object ScreenshotHooks {
         intent.getStringExtra("tidbits_open")?.let { openRoute = it }
         intent.getStringExtra("tidbits_qa_label")?.takeIf { it.isNotBlank() }
             ?.let { qaLabel = it.take(60) }
+        if (intent.hasExtra("tidbits_night_autostart"))
+            nightAutostart = intent.getIntExtra("tidbits_night_autostart", -1).takeIf { it >= 0 }
         intent.getStringExtra("tidbits_live_join")?.takeIf { it.isNotBlank() }?.let { code ->
             liveJoin = code.trim().uppercase() to
                 (intent.getStringExtra("tidbits_live_name")?.takeIf { it.isNotBlank() } ?: "Android")

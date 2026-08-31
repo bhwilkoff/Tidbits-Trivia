@@ -27,8 +27,10 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import com.learningischange.tidbitstrivia.data.ScreenshotHooks
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -229,6 +231,17 @@ fun NightHostScreen(rounds: List<Pair<String, Int>>, category: Category, store: 
                         Text("Fastest correct answers earn +3 / +2 / +1.", color = soft, fontSize = 13.sp)
                     }
                     Switch(checked = speedBonus, onCheckedChange = { speedBonus = it })
+                }
+                // tidbits_night_autostart — begin without the press. Keyed on `code`
+                // so it fires once the room actually exists; starting before that
+                // publishes into a room nobody can join.
+                ScreenshotHooks.nightAutostart?.let { wait ->
+                    LaunchedEffect(code) {
+                        if (code.isNotEmpty()) {
+                            kotlinx.coroutines.delay(wait * 1000L)
+                            start()
+                        }
+                    }
                 }
                 Button(onClick = { start() }, enabled = code.isNotEmpty(), modifier = Modifier.fillMaxWidth().height(52.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Pops.coral, contentColor = Color.White)) {

@@ -42,6 +42,14 @@ struct NightHostView: View {
                 toggleCard(title: "Speed bonus", sub: "Fastest correct answers earn +3 / +2 / +1.",
                            isOn: Binding(get: { host.speedBonus }, set: { host.speedBonus = $0 }))
                 Button(host.isOpen ? "Start the Night" : "Opening room…") { Task { await host.start() } }
+                    .task(id: host.isOpen) {
+                        // TIDBITS_NIGHT_AUTOSTART=<seconds> — begin without the press.
+                        // Keyed on isOpen so it fires once the room actually exists;
+                        // starting before that publishes into a room nobody can join.
+                        guard host.isOpen, let wait = DebugHooks.nightAutostart else { return }
+                        try? await Task.sleep(for: .seconds(wait))
+                        await host.start()
+                    }
                     .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.coral, textColor: .white))
                     .disabled(!host.isOpen)
                 Text("Players scan the code or join at tidbitstrivia.com/live. You run the questions and reveal for everyone.")

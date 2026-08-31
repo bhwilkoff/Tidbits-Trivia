@@ -312,10 +312,25 @@ def shoot(dev, path, code=None):
             # Bring Tidbits forward ONCE and say so. Recovering silently would hide a
             # real background-crash, which looks identical from the outside; recovering
             # loudly keeps the run useful without pretending nothing happened.
-            print(f"  [{dev}] foreground was {top}, not Tidbits — re-foregrounding")
-            adb(dev, "shell", "monkey", "-p", APKG, "-c",
-                "android.intent.category.LAUNCHER", "1")
-            time.sleep(6)
+            print(f"  [{dev}] foreground was {top}, not Tidbits — rejoining {code}")
+            # `am start` with the SAME join intent, not `monkey -c LAUNCHER`. A bare
+            # launcher intent starts the app with no extras, so it opens on Home rather
+            # than in the room — and on the Fire TV it did not even come forward, which
+            # is why the first version of this reported "the app will not stay in
+            # front" when what had happened was that it was never asked to rejoin.
+            if code:
+                android_launch(dev, code, f"QA-{dev}")
+                # POLL for the room, do not guess a duration. A fixed 8s caught the
+                # Android TV on Tidbits' own Home screen — the app had come forward and
+                # the join had not landed yet — which then graded as "not in the room"
+                # and pointed at the wrong thing entirely.
+                for _ in range(10):
+                    time.sleep(3)
+                    if android_top(dev).startswith("com.tidbitstrivia"):
+                        names = [(v or {}).get("name") for v in
+                                 (room(code, anon_token(), "/teams") or {}).values()]
+                        if f"QA-{dev}" in names:
+                            break
             again = android_top(dev)
             if again and not again.startswith("com.tidbitstrivia"):
                 print(f"  [{dev}] STILL {again} — the app will not stay in front")

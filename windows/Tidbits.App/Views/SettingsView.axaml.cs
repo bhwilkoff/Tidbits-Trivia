@@ -39,7 +39,12 @@ public partial class SettingsView : UserControl
     /// Opens the paywall as a FAContentDialog (the app's established modal idiom) — never a
     /// forced interstitial, always Settings-initiated. Sized comfortably for the pitch +
     /// pillars + plans without feeling like a squeezed phone sheet.
-    private async void OnOpenClub(object? sender, RoutedEventArgs e)
+    private async void OnOpenClub(object? sender, RoutedEventArgs e) => await ShowClubAsync();
+
+    /// Split out so a launch hook can open the same dialog the button does — TIDBITS_PAYWALL
+    /// exists because this surface was reachable only by a click, and it is the one carrying
+    /// the renewal disclosure and the Terms/Privacy links that Store policy requires.
+    public async System.Threading.Tasks.Task ShowClubAsync()
     {
         var dialog = new FAContentDialog
         {

@@ -467,14 +467,17 @@ private struct LiveMatchingAnswer: View {
         .buttonStyle(ChunkyButtonStyle(fill: Tidbits.Palette.coral, textColor: .white))
         .disabled(disabled).frame(maxWidth: .infinity)
 }
-#endif
-
 
 private extension View {
-    /// Make the content at least as tall as the scroll container and centre it,
-    /// so a short round sits in the middle of an iPad rather than clinging to the
-    /// top edge with the lower half empty. A no-op on compact width, where the
-    /// content already fills the screen.
+    /// Make the content at least as tall as the scroll container and centre it, so a
+    /// short round sits in the middle of an iPad rather than clinging to the top edge
+    /// with the lower half empty. A no-op on compact width, where the content already
+    /// fills the screen.
+    ///
+    /// INSIDE the `#if os(iOS)`: `import SwiftUI` is itself inside that guard, so this
+    /// sitting after the `#endif` compiled fine for iOS and broke every other Apple
+    /// platform with "cannot find type 'View' in scope" — a file whose whole body is
+    /// iOS-only has no imports at all once the guard is off.
     @ViewBuilder func centeredInScroll(_ active: Bool) -> some View {
         if active {
             self.containerRelativeFrame(.vertical, alignment: .center)
@@ -483,3 +486,4 @@ private extension View {
         }
     }
 }
+#endif

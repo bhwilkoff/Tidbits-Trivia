@@ -62,7 +62,22 @@ public partial class LiveView : UserControl
         // coordinate tapping. That is why "every platform can host, every platform can join"
         // had never actually been tested in the Windows-hosts direction — not because it
         // failed, but because nothing could ask the question.
-        var wantHost = Environment.GetEnvironmentVariable("TIDBITS_LIVE_HOST");
+        // TIDBITS_LIVE_JOIN=<code> — join a room someone ELSE is hosting. The most
+        // consequential of the missing hooks: every other platform could be told to
+        // join, so "every platform joins every other platform's game" had been proven
+        // in every direction except one — nothing could ask Windows to join at all.
+        var joinCode = Services.LaunchHooks.LiveJoin;
+        if (joinCode is not null)
+        {
+            Loaded += (_, _) => JoinAsPlayer(joinCode, Services.LaunchHooks.LiveName);
+            return;
+        }
+
+        // TIDBITS_NIGHT_HOST=1 — host the default night. Apple and Android both had
+        // this; Windows could reach the host seat only through a Click handler.
+        var wantHost = Services.LaunchHooks.NightHost
+            ? NightPlan.Presets[0].Name
+            : Services.LaunchHooks.LiveHost;
         if (!string.IsNullOrWhiteSpace(wantHost))
         {
             var (name, _, plan) = NightPlan.Presets.FirstOrDefault(
@@ -334,10 +349,20 @@ public partial class LiveView : UserControl
         }
     }
 
-    private void OnJoinGame(object? sender, RoutedEventArgs e)
+    private void OnJoinGame(object? sender, RoutedEventArgs e) => JoinAsPlayer(null, null);
+
+    /// Open the player-join surface, optionally pre-filled and auto-submitted.
+    ///
+    /// `code == null` is the ordinary button path: show the form and let the player
+    /// type. With a code, the harness path fills both fields and joins — the same
+    /// code path a person drives, not a parallel one, so what it proves is what a
+    /// person would get.
+    private void JoinAsPlayer(string? code, string? name)
     {
         Setup.IsVisible = false;
-        CockpitHost.Content = new JoinPlayerView { DataContext = new LivePlayerViewModel() };
+        var view = new JoinPlayerView { DataContext = new LivePlayerViewModel() };
+        CockpitHost.Content = view;
+        if (code is not null) view.AutoJoin(code, name);
     }
 
     /// Called by the cockpit's Close to return to setup.

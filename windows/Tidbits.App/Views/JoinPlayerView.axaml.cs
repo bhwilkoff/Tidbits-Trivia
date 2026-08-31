@@ -95,6 +95,24 @@ public partial class JoinPlayerView : UserControl
         await _vm.Join(CodeBox.Text ?? "", TeamBox.Text ?? "");
     }
 
+    /// Fill the form and submit it, for TIDBITS_LIVE_JOIN.
+    ///
+    /// Deliberately drives the SAME fields and the same OnJoin the button does, rather
+    /// than calling the view model directly: a hook that takes a shortcut past the form
+    /// proves the network works and says nothing about whether a person could have got
+    /// there. A blank name is not silently allowed either — the form rejects it, so the
+    /// hook supplies "Windows" the way tvOS supplies "Apple TV".
+    public void AutoJoin(string code, string? name)
+    {
+        CodeBox.Text = code.Trim().ToUpperInvariant();
+        TeamBox.Text = string.IsNullOrWhiteSpace(name) ? "Windows" : name.Trim();
+        // After the visual tree settles, or the click lands on a control that has not
+        // finished attaching and the join quietly never fires.
+        Avalonia.Threading.Dispatcher.UIThread.Post(
+            () => OnJoin(this, new RoutedEventArgs()),
+            Avalonia.Threading.DispatcherPriority.Background);
+    }
+
     /// Options: clickable MCQ buttons while answering; on reveal, colored (correct green /
     /// your-wrong-pick red / others dim). After answering, your pick shows in the brand color.
     private void RebuildOptions()

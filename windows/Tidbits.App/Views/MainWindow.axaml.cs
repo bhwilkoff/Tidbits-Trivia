@@ -34,7 +34,13 @@ public partial class MainWindow : Window
             // view in-process and never navigate the real shell. So a harness on a
             // real desktop could launch the app and nothing else, and every
             // "records" or "create" assertion was really grading the Play screen.
-            var startTab = Environment.GetEnvironmentVariable("TIDBITS_TAB");
+            // TIDBITS_LIVE_HOST / _NIGHT_HOST / _LIVE_JOIN all live on the Live
+            // section, so any of them implies that tab. A harness that asked to host
+            // or join and silently got the Play screen would grade the Play screen.
+            var startTab = Services.LaunchHooks.Tab
+                ?? (Services.LaunchHooks.LiveHost is not null
+                    || Services.LaunchHooks.NightHost
+                    || Services.LaunchHooks.LiveJoin is not null ? "live" : null);
             var tags = Nav.MenuItems.OfType<FANavigationViewItem>().ToList();
             var wanted = tags.FirstOrDefault(i =>
                 string.Equals(i.Tag as string, startTab, StringComparison.OrdinalIgnoreCase));
@@ -47,6 +53,21 @@ public partial class MainWindow : Window
             // never touch the nav directly — they land here and the root consumes them).
             var target = Tidbits.Core.Networking.DeepLink.Parse(Program.LaunchUrl);
             Route(target);
+            // TIDBITS_SETTINGS / TIDBITS_PAYWALL — open those surfaces on launch. Both
+            // are reachable only by a click otherwise, so neither could be photographed
+            // on a real machine; the paywall in particular is the surface carrying the
+            // renewal disclosure and the Terms/Privacy links.
+            if (Services.LaunchHooks.Settings)
+            {
+                Nav.IsSettingsVisible = true;
+                Navigate("settings");
+            }
+            else if (Services.LaunchHooks.Paywall)
+            {
+                Navigate("settings");
+                if (ContentHost.Content is SettingsView sv) _ = sv.ShowClubAsync();
+            }
+
             // First-run walkthrough (macOS parity). After routing, so a deep link still lands
             // where it should and the dialog simply sits over it.
             _ = OnboardingDialog.ShowIfFirstRunAsync();

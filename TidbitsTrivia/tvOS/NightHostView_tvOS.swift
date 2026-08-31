@@ -72,7 +72,14 @@ struct TVNightHostView: View {
                         // starting before that publishes into a room nobody can join.
                         guard host.isOpen, let wait = DebugHooks.nightAutostart else { return }
                         try? await Task.sleep(for: .seconds(wait))
-                        await host.start()
+                        // UNSTRUCTURED, deliberately. `start()` sets stage = .playing
+                        // BEFORE its setState/publish calls, and that swaps this lobby
+                        // out — which cancels the .task running it, killing the publish
+                        // half. The host's own screen then showed ROUND 1/3 Q1/5 with
+                        // every joiner in the standings while live/{code} stayed in
+                        // "lobby" with no pub at all, so the players saw nothing.
+                        // Detaching from the view's lifetime lets the publish finish.
+                        Task { await host.start() }
                     }
                     .buttonStyle(TVChipStyle(accent: Tidbits.Palette.coral, selected: false))
                     .focused($focus, equals: .start).disabled(!host.isOpen)

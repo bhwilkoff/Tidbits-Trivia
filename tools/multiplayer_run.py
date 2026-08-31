@@ -214,13 +214,27 @@ def adb(dev, *args, binary=False, timeout=90):
     return sh(cmd, timeout=timeout)
 
 
+def _q(v):
+    """Quote a value for `adb shell am start`.
+
+    adb re-parses the command line ON THE DEVICE, so an --es value containing a
+    space is split there and every argument after it is silently misread as a new
+    flag. The QA label "HOST night NX01" therefore truncated to "HOST" and threw
+    "night" and "NX01" into the parser, which is why the Android banner only ever
+    showed the first word AND why tidbits_live_code — passed right after it — never
+    reached the app at all. The room came up under a generated code and the run
+    blamed the app.
+    """
+    return "'" + str(v).replace("'", "") + "'"
+
+
 def android_launch(dev, code, name):
     adb(dev, "shell", "am", "force-stop", APKG)
     time.sleep(1)
     r = adb(dev, "shell", "am", "start", "-n", f"{APKG}/{ACTIVITY}",
             "--ez", "tidbits_skip_onboard", "true",
             "--es", "tidbits_live_join", code, "--es", "tidbits_live_name", name,
-            "--es", "tidbits_qa_label", f"join {code} {name}")
+            "--es", "tidbits_qa_label", _q(f"join {code} {name}"))
     return "Error" not in r.stdout + r.stderr
 
 
@@ -560,7 +574,7 @@ def _run_room(a, code, players, out, g, held):
         time.sleep(1)
         adb(a.host, "shell", "am", "start", "-n", f"{APKG}/{ACTIVITY}",
             "--ez", "tidbits_skip_onboard", "true", "--ez", "tidbits_night_host", "true",
-            "--es", "tidbits_qa_label", f"HOST {a.game} {code}",
+            "--es", "tidbits_qa_label", _q(f"HOST {a.game} {code}"),
             "--es", "tidbits_live_code", code,
             *(["--ei", "tidbits_night_autostart", str(max(5, int(a.settle) - 20))]
               if a.game == "night" else []))

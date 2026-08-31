@@ -30,6 +30,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import macapp  # noqa: E402
 import winbox  # noqa: E402
+import webdrive  # noqa: E402
 from devharness import (OCR_FAILED, Grader, frame_text, frame_darkness, ocr,  # noqa: E402
                         qa_dir, sh)
 
@@ -179,25 +180,73 @@ def mac_shot(path):
     return macapp.capture(_MAC_PID, path) if _MAC_PID else False
 
 
+# One browser for the whole run, opened at join time and photographed later — the
+# session has to survive between the two or the join is thrown away.
+_WEB = None
+
+
+def web_join(code, team="QA-web"):
+    """Actually JOIN, rather than just load the page.
+
+    `#/live/CODE` lands on the join FORM with the code filled and the name empty:
+    correct behaviour (you name yourself), and unreachable by `--screenshot`. Every
+    previous run of this harness loaded that URL, photographed the form, and graded
+    the web as "not in the room" — which was true, and was the harness's doing.
+
+    Driven the way a person does it: type into the field, dispatch the input event
+    React-style so the app's state actually updates, press Join. Not via a new
+    auto-join URL parameter — that would be changing the product to make a test
+    pass, and would ship a "join as any name" link for the harness's convenience.
+    """
+    global _WEB
+    try:
+        _WEB = webdrive.Browser()
+        _WEB.goto(f"https://tidbitstrivia.com/#/live/{code}", settle=6)
+        r = _WEB.js("""(() => {
+          const t = document.querySelector('#live-team');
+          const j = document.querySelector('#live-join');
+          if (!t || !j) return 'no-form';
+          const set = Object.getOwnPropertyDescriptor(
+            window.HTMLInputElement.prototype, 'value').set;
+          set.call(t, %r);
+          t.dispatchEvent(new Event('input', {bubbles: true}));
+          j.click();
+          return 'joined';
+        })()""" % team)
+        return r == "joined", r
+    except Exception as e:                            # noqa: BLE001
+        return False, str(e)[:200]
+
+
 def web_shot(code, path):
-    sh([CHROME, "--headless=new", "--disable-gpu", "--hide-scrollbars",
-        "--window-size=390,844", "--virtual-time-budget=12000",
-        f"--screenshot={path}", f"https://tidbitstrivia.com/#/live/{code}"],
-       timeout=90)
-    return Path(path).exists()
+    """Photograph the SAME browser that joined. A fresh headless Chrome would be a
+    different session with none of the join state, which is the trap the old
+    implementation fell into."""
+    if _WEB is None:
+        return False
+    try:
+        return _WEB.screenshot(path)
+    except Exception:                                 # noqa: BLE001
+        return False
 
 
 def join(dev, code, outdir):
     """Put `dev` in the room. Returns the screenshot function for later."""
     name = f"QA-{dev}"
     if dev in APPLE:
+        # TIDBITS_LIVE_NAME, not TIDBITS_PLAYER_NAME: the latter was never read by
+        # anything. Every Apple device joined as its hard-coded default, so the iPhone
+        # and the iPad both showed up as "iOS Tester" — two rows with one name, and a
+        # join count that reported "3 of 4 landed" while all four were in the room.
         apple_launch(dev, {"TIDBITS_LIVE_AUTOJOIN": "1", "TIDBITS_LIVE_CODE": code,
                            "TIDBITS_LIVE_JOIN": code, "TIDBITS_SKIP_ONBOARD": "1",
-                           "TIDBITS_PLAYER_NAME": name})
+                           "TIDBITS_LIVE_NAME": name})
     elif dev in ANDROID:
         android_launch(dev, code, name)
     elif dev == "web":
-        pass                                     # the URL itself is the join
+        ok, why = web_join(code, name)
+        if not ok:
+            print(f"  [note] web join failed: {why}")
     return name
 
 
@@ -440,5 +489,15 @@ def main():
     return g.finish()
 
 
+def _shutdown():
+    global _WEB
+    if _WEB is not None:
+        _WEB.close()
+        _WEB = None
+
+
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    finally:
+        _shutdown()

@@ -39,7 +39,13 @@ struct LiveJoinView: View {
             // CI/device hook: auto-resolve a known room to verify the flow headless.
             if ProcessInfo.processInfo.environment["TIDBITS_LIVE_AUTOJOIN"] == "1",
                !initialCode.isEmpty, !client.joined {
-                code = initialCode; team = "iOS Tester"; await resolve()
+                // TIDBITS_LIVE_NAME first: a hard-coded "iOS Tester" meant the iPhone
+                // and the iPad joined a room under the SAME name — two rows the host
+                // cannot tell apart, and a join count that read "3 of 4 landed" when
+                // all four had. Android's twin (tidbits_live_name) already took a name.
+                code = initialCode
+                team = DebugHooks.liveJoinName ?? "iOS Tester"
+                await resolve()
             }
         }
     }

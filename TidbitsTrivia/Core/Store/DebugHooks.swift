@@ -385,6 +385,20 @@ enum DebugHooks {
         return c
     }
 
+    /// TIDBITS_LIVE_NAME=<name> → the display name to join a room under.
+    ///
+    /// The Kotlin twin (`tidbits_live_name`) existed; Apple's did not, so every Apple
+    /// device joined under whatever profile name the device already had. In a
+    /// multi-device run that made the iPhone and the iPad BOTH "iOS Tester" — two rows
+    /// with one name, indistinguishable in the standings, and a join count that read
+    /// "3 of 4 landed" when all four had. A harness that cannot tell its devices apart
+    /// cannot prove a device joined.
+    static var liveJoinName: String? {
+        guard let n = ProcessInfo.processInfo.environment["TIDBITS_LIVE_NAME"]?
+                .trimmingCharacters(in: .whitespaces), !n.isEmpty else { return nil }
+        return String(n.prefix(24))
+    }
+
     /// TIDBITS_NIGHT_HOST=1 → open the RTDB Trivia Night host lobby (code + QR).
     static var openNightHost: Bool {
         ProcessInfo.processInfo.environment["TIDBITS_NIGHT_HOST"] == "1"

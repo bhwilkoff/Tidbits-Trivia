@@ -39,7 +39,9 @@ struct TVJoinGameContainer: View {
                 // one on a fresh install — so the autojoin stopped dead on
                 // "Enter a team name" and the Apple TV silently never joined.
                 // iOS supplies a name here for exactly the same reason.
-                if name.trimmingCharacters(in: .whitespaces).isEmpty { name = "Apple TV" }
+                if name.trimmingCharacters(in: .whitespaces).isEmpty {
+                    name = DebugHooks.liveJoinName ?? "Apple TV"
+                }
                 await resolve()
             }
         }

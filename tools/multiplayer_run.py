@@ -173,7 +173,16 @@ def apple_launch(dev, env, retries=1):
             continue
         time.sleep(4)
         info = devicectl("device", "info", "processes", "--device", APPLE[dev], timeout=90)
-        if BUNDLE in (info.stdout or ""):
+        # Match the EXECUTABLE PATH, not the bundle id. `devicectl device info
+        # processes` lists paths like
+        #   /private/var/containers/Bundle/Application/<uuid>/TidbitsTrivia.app/TidbitsTrivia
+        # and the bundle id appears zero times in it. Searching for the bundle id
+        # therefore reported "not running" for every Apple device on every launch —
+        # and the retry it triggered relaunched with --terminate-existing, killing a
+        # host that was already up and resetting its autostart clock. A verifier that
+        # cannot pass is worse than no verifier: this one actively broke the runs it
+        # was added to stabilise.
+        if "TidbitsTrivia.app/TidbitsTrivia" in (info.stdout or ""):
             return True
         if attempt < retries:
             print(f"  [{dev}] launch reported success but no process — retrying")
@@ -623,10 +632,25 @@ def _run_room(a, code, players, out, g, held):
         press("select")            # the lobby's Start button holds initial focus
         time.sleep(12)
 
-    pub = room(code, tok, "/pub") or {}
+    # POLL for the first question rather than reading once.
+    #
+    # A night's autostart clock begins when the ROOM opens, and the joins run after
+    # that — eight devices take their own time — so a single read straight after the
+    # settle can land in the gap before the first publish. It did: the iPad was graded
+    # "published no question" and its screenshot, taken moments later in the same run,
+    # showed ROUND 1/3 Q1/5 with all seven joiners in the standings. The wire and the
+    # glass disagreed because the wire was read too early, not because they differed.
+    pub = {}
+    deadline = time.time() + 60
+    while time.time() < deadline:
+        pub = room(code, tok, "/pub") or {}
+        if pub:
+            break
+        time.sleep(5)
     g.grade("wire.host_published", bool(pub),
             f"pub={json.dumps(pub)[:140]}" if pub else
-            "host published no question — the lobby waits for Start (pass --start)")
+            "host published no question in 60s after the settle — the lobby is still "
+            "waiting for Start, and TIDBITS_NIGHT_AUTOSTART did not fire")
 
     # 5. The glass says what a human sees. Capture host + every player.
     shots, per_dev, retried = [], {}, set()

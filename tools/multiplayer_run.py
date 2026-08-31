@@ -311,6 +311,62 @@ def web_join(code, team="QA-web"):
         return False, str(e)[:200]
 
 
+def web_host(preset_click=True):
+    """Host a Trivia Night from the BROWSER. Returns the room code it opened.
+
+    js/app.js is an ES module, so openNightHost is not on `window` and cannot be
+    called directly — the only honest route is the one a person takes: open the
+    Trivia Night dialog, press "Host for others", and read the code the page shows.
+
+    Unlike the Android host, the code is read from the DOM rather than OCR'd off a
+    screenshot, so there is no ambiguity about which room it names. That is the whole
+    reason this direction is worth testing separately: the web is the platform a guest
+    with no app reaches for, and it has never been exercised as a HOST by anything.
+    """
+    global _WEB
+    _WEB = webdrive.Browser()
+    _WEB.goto("https://tidbitstrivia.com/", settle=7)
+    r = _WEB.js("""(() => {
+      const open = document.querySelector('[data-night-open]');
+      if (!open) return 'no-night-entry';
+      open.click();
+      return 'opened';
+    })()""")
+    if r != "opened":
+        return None, f"could not open the Trivia Night dialog: {r}"
+    time.sleep(2)
+    r = _WEB.js("""(() => {
+      const host = document.querySelector('[data-night-host]');
+      if (!host) return 'no-host-button';
+      host.click();
+      return 'hosting';
+    })()""")
+    if r != "hosting":
+        return None, f"could not press Host for others: {r}"
+
+    # The room is opened asynchronously; poll the code the page renders.
+    for _ in range(20):
+        time.sleep(3)
+        code = _WEB.js("(document.querySelector('.nh-code')||{}).textContent || ''")
+        code = (code or "").strip().upper()
+        if len(code) == 4 and code.isalnum():
+            return code, ""
+    return None, "the host overlay never showed a room code"
+
+
+def web_start_night():
+    """Press "Start the Night" in the browser host — the web's equivalent of the
+    autostart hook the native platforms carry."""
+    if _WEB is None:
+        return False
+    return _WEB.js("""(() => {
+      const b = document.querySelector('#nh-start');
+      if (!b || b.disabled) return false;
+      b.click();
+      return true;
+    })()""") is True
+
+
 def web_shot(code, path):
     """Photograph the SAME browser that joined. A fresh headless Chrome would be a
     different session with none of the join state, which is the trap the old
@@ -465,7 +521,7 @@ def code_on_screen(text, tok):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--host", default="mac",
-                    choices=["mac", "atv", "windows",
+                    choices=["mac", "atv", "windows", "web",
                              "ipad", "iphone", "pixel", "firetv", "androidtv"])
     ap.add_argument("--game", default="live", choices=["live", "night"],
                     help="live = Tidbits Live; night = Trivia Night (same RTDB room)")
@@ -554,6 +610,15 @@ def _run_room(a, code, players, out, g, held):
             players = [p for p in players if p != "mac"]
             if a.host == "mac":
                 return g.finish()
+
+    if a.host == "web":
+        # The browser hosts. It generates its own code, but the code is read from the
+        # DOM rather than a screenshot, so it is exact.
+        wcode, why = web_host()
+        if not g.grade("web_host_opened", wcode is not None, why or f"opened {wcode}"):
+            return g.finish()
+        code = wcode
+        print(f"  web is hosting {code}")
 
     if a.host == "windows":
         # TIDBITS_LIVE_HOST takes a PRESET NAME on Windows, not a flag: every route
@@ -677,6 +742,15 @@ def _run_room(a, code, players, out, g, held):
     if a.start and a.host == "atv":
         press("select")            # the lobby's Start button holds initial focus
         time.sleep(12)
+
+    if a.host == "web" and a.game == "night":
+        # No autostart hook on the web; press the button the host would press, after
+        # the joiners are in so the first question does not publish to an empty room.
+        pressed = web_start_night()
+        g.grade("web_pressed_start", pressed,
+                "clicked Start the Night" if pressed
+                else "could not press Start the Night — the button was missing or disabled")
+        time.sleep(6)
 
     # POLL for the first question rather than reading once.
     #

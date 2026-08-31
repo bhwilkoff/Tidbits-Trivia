@@ -33,16 +33,18 @@ import devlease  # noqa: E402
 
 LEDGER = Path("build/qa/night-matrix.json")
 
-# Every platform that can HOST. The web hosts a night too (js/app.js NH.*), but it
-# has no `--host web` path in multiplayer_run yet — recorded here as a known gap
-# rather than silently omitted, because an absent row reads as "not applicable".
-HOSTS = ["windows", "mac", "atv", "ipad", "iphone", "pixel", "firetv", "androidtv"]
-ALL = HOSTS + ["web"]
+# Every platform that can HOST — the web included: js/app.js opens a real RTDB room
+# from the browser, and it is the platform a guest with no app reaches for.
+HOSTS = ["windows", "mac", "atv", "ipad", "iphone", "pixel", "firetv", "androidtv", "web"]
+ALL = HOSTS
 
 # 4 alphanumeric chars — rooms are 4, and a longer code is silently unjoinable from
 # the web, whose input is correctly capped.
 CODES = {"windows": "NW01", "mac": "NM01", "atv": "NA01", "ipad": "NI01",
-         "iphone": "NP01", "pixel": "NX01", "firetv": "NF01", "androidtv": "NT01"}
+         "iphone": "NP01", "pixel": "NX01", "firetv": "NF01", "androidtv": "NT01",
+         # The web generates its own and the run follows it (read from the DOM, not
+         # OCR'd) — this is only the placeholder the run starts from.
+         "web": "NB01"}
 
 
 def ledger():
@@ -121,8 +123,6 @@ def main():
         state = "not run" if not v else ("OK" if v["ok"] else
                                         ("FAIL" if v["finished"] else "unfinished"))
         print(f"  {h:10} {state}")
-    print("  web        HOST UNTESTED — js/app.js can host a night, "
-          "multiplayer_run has no --host web path")
     save(done)
     return 0 if all(done.get(h, {}).get("ok") for h in HOSTS) else 1
 

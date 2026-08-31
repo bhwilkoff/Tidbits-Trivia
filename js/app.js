@@ -2539,6 +2539,16 @@ function versusRevealCard() {
 }
 
 function renderGame() {
+  // `game` is the module-level CURRENT game. A Game built for some other purpose —
+  // the Trivia Night HOST builds one purely to generate its questions and never
+  // assigns it here — still reaches this through load() -> _begin(), and reading
+  // `game.current` off null threw, so `openNightHost` caught it and reported
+  // "Couldn't build the night." The web could not host a night at all: the button
+  // was there, PARITY.md said it worked, and it failed every single time.
+  //
+  // Rendering is for the game the screen is showing. With no such game there is
+  // nothing to draw, and that is not an error.
+  if (!game) return;
   const q = game.current; if (!q) return;
   if (game.phase === 'roundIntro') { renderRoundIntro(); return; }
   const cat = catById(q.categoryID);
@@ -3308,7 +3318,14 @@ async function openNightHost(plan, cat) {
   if (!nhRoot) { nhRoot = document.createElement('div'); nhRoot.className = 'nh-ov'; document.body.appendChild(nhRoot); }
   drawHost();
   try { const g = new Game('barTrivia', cat, { nightPlan: plan }); await g.load(); NH.questions = g.questions || []; }
-  catch { NH.error = 'Couldn’t build the night.'; drawHost(); return; }
+  catch (e) {
+    // Log the cause. A bare `catch {}` here meant the host overlay said
+    // "Couldn't build the night." and NOTHING anywhere said why — not the console,
+    // not an unhandled rejection, nothing. The failure was undiagnosable from
+    // outside the function, which is the one thing an error path must never be.
+    console.error('openNightHost: could not build the night', e);
+    NH.error = 'Couldn’t build the night.'; drawHost(); return;
+  }
   try {
     const r = await FirebaseNet.liveHostOpen('Trivia Night', { onError: (m) => { NH.error = m; } });
     NH.code = r.code;

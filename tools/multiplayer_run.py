@@ -579,10 +579,14 @@ def _run_room(a, code, players, out, g, held):
         meta = room(code, tok, "/meta")
         if meta and not meta.get("_error"):
             break
-    g.grade("host_created_room", bool(meta) and not (meta or {}).get("_error"),
-            f"live/{code}/meta = {json.dumps(meta)[:120]}" if meta
-            else f"live/{code}/meta never appeared after 90s — host never opened it")
-    if not meta or meta.get("_error"):
+    # Do NOT grade yet. Android's night host generates its own code, so the pinned one
+    # legitimately never appears — and grading here recorded a permanent FAIL on a run
+    # that then read the real code off the glass, followed it, and got all eight
+    # joiners into the room. "The host never opened it" was false the moment the
+    # recovery succeeded; a graded assertion that a later step disproves should never
+    # have been written down.
+    opened = bool(meta) and not (meta or {}).get("_error")
+    if not opened:
         # "The host never opened the room" is a symptom, not a diagnosis. The host's
         # own screen says whether it is asleep, on the wrong surface, sitting on a
         # setup step waiting for a press — or hosting under a code of its own.
@@ -596,12 +600,17 @@ def _run_room(a, code, players, out, g, held):
         found = code_on_screen(t, tok)
         if found:
             print(f"  host is hosting {found}, not {code} — following its code")
-            g.grade("host_code_read_from_screen", True,
-                    f"asked for {code}; the host opened {found} and it is live")
+            g.report["host_code_read_from_screen"] = (
+                f"asked for {code}; the host opened {found} — its own generated code")
             code = found
             meta = room(code, tok, "/meta")
-        else:
-            return g.finish()
+            opened = bool(meta) and not (meta or {}).get("_error")
+
+    g.grade("host_created_room", opened,
+            f"live/{code}/meta = {json.dumps(meta)[:120]}" if opened
+            else f"no room found: neither the pinned code nor any code on the host's screen")
+    if not opened:
+        return g.finish()
 
     # 3. Everyone joins.
     #

@@ -29,6 +29,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import macapp  # noqa: E402
+import winbox  # noqa: E402
 from devharness import (OCR_FAILED, Grader, frame_text, frame_darkness, ocr,  # noqa: E402
                         qa_dir, sh)
 
@@ -200,7 +201,17 @@ def join(dev, code, outdir):
     return name
 
 
+def win_shot(path):
+    """The Windows box's real display. Its own module because a Windows capture is
+    a scheduled task in the interactive session, not a command over ssh — from ssh
+    (session 0) it photographs a phantom desktop nobody is looking at."""
+    ok, _ = winbox.screenshot(path, remote_name="mp-shot.png")
+    return ok
+
+
 def shoot(dev, path, code=None):
+    if dev == "windows":
+        return win_shot(path)
     if dev in APPLE:
         return apple_shot(dev, path)
     if dev in ANDROID:
@@ -217,7 +228,8 @@ def shoot(dev, path, code=None):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--host", default="mac",
-                    choices=["mac", "atv", "ipad", "iphone", "pixel", "firetv", "androidtv"])
+                    choices=["mac", "atv", "windows",
+                             "ipad", "iphone", "pixel", "firetv", "androidtv"])
     ap.add_argument("--game", default="live", choices=["live", "night"],
                     help="live = Tidbits Live; night = Trivia Night (same RTDB room)")
     ap.add_argument("--players", default="ipad,iphone,pixel,web")
@@ -250,7 +262,15 @@ def main():
     # unified backend and it is what makes any-host / any-joiner possible.
     host_env = {"TIDBITS_SKIP_ONBOARD": "1", "TIDBITS_LIVE_CODE": code,
                 ("TIDBITS_NIGHT_HOST" if a.game == "night" else "TIDBITS_LIVE_HOST"): "1"}
-    if a.host == "mac":
+    if a.host == "windows":
+        # TIDBITS_LIVE_HOST takes a PRESET NAME on Windows, not a flag: every route
+        # into StartHosting is a Click handler, so the hook picks which night to
+        # host rather than merely asking for one. "1" is not a preset, and the hook
+        # deliberately falls back to the first one rather than silently doing
+        # nothing — a harness that asked for a host must never grade the setup screen.
+        winbox.launch(dict(host_env, TIDBITS_LIVE_HOST="Quick Night",
+                           TIDBITS_TAB="live"), wait=16)
+    elif a.host == "mac":
         mac_launch(host_env)
     elif a.host in APPLE:
         if a.host == "atv":

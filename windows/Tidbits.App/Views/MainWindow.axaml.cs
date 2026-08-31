@@ -13,7 +13,11 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        ClampToScreen();
+        // In Opened, NOT the constructor: a Window has no platform handle until it is
+        // opening, so `Screens` is null in the ctor and the clamp silently did nothing.
+        // It shipped looking correct — the code was there, the unit test passed, and the
+        // window still hung off the right of the display.
+        Opened += (_, _) => ClampToScreen();
 
         Loaded += (_, _) =>
         {
@@ -80,10 +84,21 @@ public partial class MainWindow : Window
     /// WorkingArea, not Bounds: it excludes the taskbar, which is what actually
     /// constrains a window. MinWidth/MinHeight still win — below those the layout
     /// itself breaks, and a window with a scrollbar beats a window with no content.
+    /// True once the clamp has actually run WITH a screen in hand. Exists because the
+    /// bug was not bad arithmetic, it was arithmetic that never executed: no size
+    /// assertion can tell a correct clamp from a skipped one on a display roomy enough
+    /// to fit the asked-for size, which is every CI runner.
+    public bool ClampApplied { get; private set; }
+
     private void ClampToScreen()
     {
-        var screen = Screens.Primary ?? Screens.All.FirstOrDefault();
+        var screen = Screens?.ScreenFromWindow(this)
+                     ?? Screens?.Primary
+                     ?? Screens?.All.FirstOrDefault();
         if (screen is null) return;
+
+        // ScreenFromWindow first: on a multi-monitor desk the window opens on whichever
+        // display Windows put it on, which is not necessarily the primary one.
 
         var area = screen.WorkingArea;
         var scale = screen.Scaling <= 0 ? 1.0 : screen.Scaling;
@@ -93,6 +108,7 @@ public partial class MainWindow : Window
 
         Width = Math.Max(MinWidth, Math.Min(Width, maxW));
         Height = Math.Max(MinHeight, Math.Min(Height, maxH));
+        ClampApplied = true;
     }
 
     /// Select a nav item by tag (keeps the sidebar highlight and the content in step).

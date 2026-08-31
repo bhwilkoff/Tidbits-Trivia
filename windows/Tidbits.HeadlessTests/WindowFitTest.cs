@@ -21,10 +21,42 @@ namespace Tidbits.HeadlessTests;
 [Collection("EnvSensitive")]
 public class WindowFitTest
 {
+    /// SHOWS the window, because that is the bug this class exists for.
+    ///
+    /// The first version of the clamp ran in the constructor, where a Window has no
+    /// platform handle yet — `Screens` is null there, so it returned immediately and did
+    /// nothing. It shipped looking right: the code was present, the arithmetic test below
+    /// passed, and the window still hung off the right of the display. An assertion that
+    /// cannot fire is not an assertion, and one that tests arithmetic the shipped code
+    /// never reaches is the same thing wearing a better disguise.
+    ///
+    /// Showing the window is what makes it real: if the clamp is moved back to a point
+    /// where Screens is unavailable, the window keeps its asked-for 1180 and this fails.
+    [AvaloniaFact]
+    public void Shown_window_fits_the_screen_it_opened_on()
+    {
+        var w = new MainWindow();
+        w.Show();
+
+        // The assertion is that the clamp RAN, not that the result is small. The headless
+        // display is 1920x1280 — roomier than the asked-for 1180x760 — so a size assertion
+        // here passes identically whether the clamp works or was never called, which is how
+        // the first version of this test went green over a window that hung off the screen.
+        // Every CI runner has a roomy display; this is the only form that discriminates.
+        Assert.True(w.ClampApplied,
+            "the window was shown without the clamp ever running — it is back in the "
+            + "constructor, where Screens is null and it silently no-ops");
+
+        var screen = w.Screens?.ScreenFromWindow(w) ?? w.Screens?.Primary;
+        Assert.NotNull(screen);
+        w.Close();
+    }
+
     [AvaloniaFact]
     public void Startup_size_never_exceeds_the_declared_minimum_it_must_respect()
     {
         var w = new MainWindow();
+        w.Show();
 
         // The floor is real: below MinWidth/MinHeight the layout itself breaks, so the
         // clamp must never shrink past it. A window with a scrollbar beats one with no
@@ -33,6 +65,7 @@ public class WindowFitTest
             $"clamped to {w.Width} which is under MinWidth {w.MinWidth}");
         Assert.True(w.Height >= w.MinHeight,
             $"clamped to {w.Height} which is under MinHeight {w.MinHeight}");
+        w.Close();
     }
 
     /// The arithmetic itself, at the resolutions that actually broke — proven here rather

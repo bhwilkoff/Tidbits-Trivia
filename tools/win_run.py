@@ -68,7 +68,12 @@ def crop_text(doc, rect):
     x, y, w, h = rect
     def inside(it):
         cx = it.get("x", 0) + it.get("w", 0) / 2
-        cy = it.get("y", 0) + it.get("h", 0) / 2
+        # The OCR reports a BOTTOM-LEFT origin (Vision's convention) while
+        # GetWindowRect is TOP-LEFT. Without the flip the crop keeps the opposite
+        # band of the screen: the desktop's "Recycle Bin", which sits at the TOP of
+        # a Windows desktop, comes back at y=0.96, and the app's own chrome was
+        # being discarded as "outside the window" while the wallpaper was kept.
+        cy = 1.0 - (it.get("y", 0) + it.get("h", 0) / 2)
         return x <= cx <= x + w and y <= cy <= y + h
     out = dict(doc)
     for key in ("allText", "topRegion", "centerRegion", "bottomRegion"):
@@ -77,7 +82,7 @@ def crop_text(doc, rect):
     return out
 
 
-def run(name, outdir, g, rect=None):
+def run(name, outdir, g):
     env, spec = SCENARIOS[name]
     env = dict(env)
     env.setdefault("TIDBITS_SKIP_ONBOARD", "1")
@@ -99,6 +104,13 @@ def run(name, outdir, g, rect=None):
     d.mkdir(parents=True, exist_ok=True)
     # Two frames in ONE round trip: the first paint, then content that arrives over
     # the network. The 6s gap is timed on the box rather than by this loop.
+    # Per scenario, not once per sweep: Windows CASCADES each new window, so the app
+    # opened at x=0.048 on the first launch and x=0.096 on the next. A rect read once
+    # is wrong for every scenario after the first, and cropping to it silently threw
+    # away most of the app's text — the first run of this graded "3 OCR lines" on a
+    # perfectly readable screen.
+    rect = winbox.window_rect()
+    step(f"window {tuple(round(v, 3) for v in rect)}" if rect else "window rect UNKNOWN")
     step("capturing 2 frames")
     paths, size = winbox.screenshot_series([d / "0.png", d / "1.png"], gap=6,
                                            prefix=f"shot-{name}")
@@ -117,6 +129,10 @@ def run(name, outdir, g, rect=None):
 
     if rect:
         texts = {k: crop_text(v, rect) for k, v in texts.items()}
+    else:
+        g.grade(f"{name}.window_located", False,
+                "could not read the window rect; the assertions below cover the WHOLE "
+                "desktop, the owner's icons and taskbar included")
 
     lines = max((len(texts.get(p.name, {}).get("allText", [])) for _, p in shots), default=0)
     if lines < 4:
@@ -168,20 +184,9 @@ def main():
         if not g.grade("deployed", dep_ok, winbox.REMOTE if dep_ok else err):
             return g.finish()
 
-    # The window rect ONCE for the sweep — the app opens in the same place every
-    # launch, and this costs a console round trip. Assertions are scoped to it so a
-    # sweep grades the app rather than the owner's desktop.
-    winbox.launch({"TIDBITS_TAB": "play", "TIDBITS_SKIP_ONBOARD": "1"}, wait=12)
-    rect = winbox.window_rect()
-    winbox.quit_app()
-    print(f"app window: {rect}" if rect else "app window: UNKNOWN — grading whole screen")
-    g.grade("window_located", rect is not None,
-            f"{rect}" if rect else "could not read the window rect; every assertion "
-            "below covers the WHOLE desktop, the owner's icons and taskbar included")
-
     for n in names:
         print(f"\n=== {n} ===")
-        run(n, out, g, rect)
+        run(n, out, g)
     return g.finish()
 
 

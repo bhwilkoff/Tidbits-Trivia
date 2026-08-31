@@ -13,6 +13,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        ClampToScreen();
 
         Loaded += (_, _) =>
         {
@@ -59,6 +60,39 @@ public partial class MainWindow : Window
             Gesture = new KeyGesture(Key.OemComma, KeyModifiers.Control),
             Command = new RelayCommand(() => { Nav.IsSettingsVisible = true; Navigate("settings"); }),
         });
+    }
+
+    /// Shrink the startup size to fit the display it opens on.
+    ///
+    /// The window asks for 1180x760, matching the Mac's `.defaultSize`. But AppKit
+    /// silently shrinks a window that does not fit the visible frame and Avalonia does
+    /// not, so the same numbers behave differently on the two platforms: on the dev box
+    /// — a 1080x1920 portrait display — the window opened 1180 wide and ~100px of it,
+    /// including the right edge of every screen, was off the display. Measured, not
+    /// guessed: the harness reads the window rect off the box and it came back 1.8%
+    /// wider than the screen.
+    ///
+    /// This matters well beyond one rotated monitor. 1366x768 is the most common
+    /// Windows 10 laptop resolution there is, and 760 plus a title bar does not fit in
+    /// 768 either — so the bottom of every screen was cut off on the cheapest hardware
+    /// the app targets, which is exactly the hardware least likely to be tested on.
+    ///
+    /// WorkingArea, not Bounds: it excludes the taskbar, which is what actually
+    /// constrains a window. MinWidth/MinHeight still win — below those the layout
+    /// itself breaks, and a window with a scrollbar beats a window with no content.
+    private void ClampToScreen()
+    {
+        var screen = Screens.Primary ?? Screens.All.FirstOrDefault();
+        if (screen is null) return;
+
+        var area = screen.WorkingArea;
+        var scale = screen.Scaling <= 0 ? 1.0 : screen.Scaling;
+        // WorkingArea is in PHYSICAL pixels; Width/Height are logical units.
+        var maxW = area.Width / scale;
+        var maxH = area.Height / scale;
+
+        Width = Math.Max(MinWidth, Math.Min(Width, maxW));
+        Height = Math.Max(MinHeight, Math.Min(Height, maxH));
     }
 
     /// Select a nav item by tag (keeps the sidebar highlight and the content in step).

@@ -77,7 +77,7 @@ def crop_text(doc, rect):
     return out
 
 
-def run(name, outdir, g):
+def run(name, outdir, g, rect=None):
     env, spec = SCENARIOS[name]
     env = dict(env)
     env.setdefault("TIDBITS_SKIP_ONBOARD", "1")
@@ -103,8 +103,7 @@ def run(name, outdir, g):
     paths, size = winbox.screenshot_series([d / "0.png", d / "1.png"], gap=6,
                                            prefix=f"shot-{name}")
     shots = [(i, Path(p)) for i, p in enumerate(paths)]
-    rect = winbox.window_rect()      # read during the capture, in the console session
-    step(f"captured {len(shots)} frame(s) at {size}; window {rect}")
+    step(f"captured {len(shots)} frame(s) at {size}")
     winbox.quit_app()
 
     if not shots:
@@ -118,11 +117,6 @@ def run(name, outdir, g):
 
     if rect:
         texts = {k: crop_text(v, rect) for k, v in texts.items()}
-    else:
-        # Say so rather than silently grading the desktop as if it were the app.
-        g.grade(f"{name}.window_located", False,
-                "could not read the app window rect — assertions below cover the "
-                "WHOLE desktop, including the owner's icons and taskbar")
 
     lines = max((len(texts.get(p.name, {}).get("allText", [])) for _, p in shots), default=0)
     if lines < 4:
@@ -174,9 +168,20 @@ def main():
         if not g.grade("deployed", dep_ok, winbox.REMOTE if dep_ok else err):
             return g.finish()
 
+    # The window rect ONCE for the sweep — the app opens in the same place every
+    # launch, and this costs a console round trip. Assertions are scoped to it so a
+    # sweep grades the app rather than the owner's desktop.
+    winbox.launch({"TIDBITS_TAB": "play", "TIDBITS_SKIP_ONBOARD": "1"}, wait=12)
+    rect = winbox.window_rect()
+    winbox.quit_app()
+    print(f"app window: {rect}" if rect else "app window: UNKNOWN — grading whole screen")
+    g.grade("window_located", rect is not None,
+            f"{rect}" if rect else "could not read the window rect; every assertion "
+            "below covers the WHOLE desktop, the owner's icons and taskbar included")
+
     for n in names:
         print(f"\n=== {n} ===")
-        run(n, out, g)
+        run(n, out, g, rect)
     return g.finish()
 
 

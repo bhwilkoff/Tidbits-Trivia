@@ -129,10 +129,31 @@ def wake_tv():
     return False
 
 
-def apple_launch(dev, env):
-    r = devicectl("device", "process", "launch", "--terminate-existing",
-                  "--device", APPLE[dev], "-e", json.dumps(env), BUNDLE, timeout=90)
-    return "Launched application" in (r.stdout + r.stderr)
+def apple_launch(dev, env, retries=1):
+    """Launch, and VERIFY it launched.
+
+    "Launched application" in the output is devicectl reporting that it sent the
+    request, not that the app is running. Straight after a reset the two race: the
+    terminate is still tearing the process down when the launch arrives, the launch
+    reports success, and the device sits on its Home Screen. That is exactly what an
+    iPad did in a six-device run — it was the only one missing from the room, and the
+    harness had nothing to say beyond "the expected words were not on screen".
+    """
+    for attempt in range(retries + 1):
+        r = devicectl("device", "process", "launch", "--terminate-existing",
+                      "--device", APPLE[dev], "-e", json.dumps(env), BUNDLE, timeout=90)
+        if "Launched application" not in (r.stdout + r.stderr):
+            time.sleep(3)
+            continue
+        time.sleep(4)
+        info = devicectl("device", "info", "processes", "--device", APPLE[dev], timeout=90)
+        if BUNDLE in (info.stdout or ""):
+            return True
+        if attempt < retries:
+            print(f"  [{dev}] launch reported success but no process — retrying")
+            time.sleep(3)
+    print(f"  [{dev}] the app is NOT running after {retries + 1} launch attempts")
+    return False
 
 
 def apple_shot(dev, path):
@@ -411,7 +432,14 @@ def main():
         print(f"  [note] could not clear roster: {e}")
     before = len(room(code, tok, "/teams") or {})
     names = {p: join(p, code, out) for p in players}
-    time.sleep(a.settle)
+    # Keep the Windows box awake THROUGH the settle. It locks fast, and a run that
+    # spends 50s waiting for joins then photographs a lock screen wastes the whole
+    # run — the capture is correctly refused, so the host's own glass goes ungraded.
+    settle_end = time.time() + a.settle
+    while time.time() < settle_end:
+        time.sleep(min(20, max(1, settle_end - time.time())))
+        if a.host == "windows" or "windows" in players:
+            winbox.keep_awake()
 
     # 4. The wire says how many really landed.
     #

@@ -68,6 +68,11 @@ public static class ClubPaywallUi
             root.Children.Add(PillarList());
             root.Children.Add(Plans(products, busyProductId, onPurchase));
             root.Children.Add(RestoreRow(onRestore));
+            // Store Policy 10.8.6 / 10.5.1 — the renewal terms and two working links have to be
+            // in the BINARY next to the buy buttons, not only on the web. Apple's twin was added
+            // after a real 2.1(b) rejection; Windows shipped the purchase buttons in 1.6.75
+            // without any of it.
+            root.Children.Add(LegalFooter(products));
             root.Children.Add(new TextBlock
             {
                 Text = WebNote, Classes = { "caption" }, TextWrapping = TextWrapping.Wrap,
@@ -194,6 +199,41 @@ public static class ClubPaywallUi
         }
         return panel;
     }
+
+    /// The renewal sentence + Terms/Privacy links. Follows the buttons deliberately: the
+    /// disclosure describes the plans that are actually on screen, so it has to come after them.
+    private static Control LegalFooter(IReadOnlyList<StoreProductInfo> products)
+    {
+        var panel = new StackPanel { Spacing = 10, HorizontalAlignment = HorizontalAlignment.Center };
+
+        var disclosure = StoreLegal.Disclosure(products);
+        if (!string.IsNullOrEmpty(disclosure))
+            panel.Children.Add(new TextBlock
+            {
+                Text = disclosure, Classes = { "caption" }, TextWrapping = TextWrapping.Wrap,
+                TextAlignment = TextAlignment.Center,
+            });
+
+        var links = new StackPanel
+        {
+            Orientation = Orientation.Horizontal, Spacing = 18,
+            HorizontalAlignment = HorizontalAlignment.Center,
+        };
+        links.Children.Add(Link("Terms of Use", StoreLegal.TermsUrl));
+        links.Children.Add(Link("Privacy Policy", StoreLegal.PrivacyUrl));
+        panel.Children.Add(links);
+        return panel;
+    }
+
+    /// A real hyperlink, not a Button styled blue — `HyperlinkButton` is the Fluent control and
+    /// it is what a screen reader announces as a link.
+    private static Control Link(string text, string url) =>
+        new HyperlinkButton
+        {
+            Content = text,
+            NavigateUri = new Uri(url),
+            Classes = { "caption" },
+        };
 
     private static Control RestoreRow(Action onRestore)
     {

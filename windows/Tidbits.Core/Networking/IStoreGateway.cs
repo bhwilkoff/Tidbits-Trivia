@@ -1,3 +1,5 @@
+using System.Linq;
+
 namespace Tidbits.Core.Networking;
 
 /// The Microsoft Store IAP seam (docs/CLUB-MONETIZATION-BUILD.md Phase 3, MONETIZATION §6).
@@ -35,6 +37,45 @@ public sealed record StoreProductInfo(
     /// requires the period be shown before purchase, and every store hands back a raw amount
     /// only. The Apple (`priceLabel`) and Android (`periodSuffix`) twins render the same shapes.
     public string PriceLabel => BillingPeriod is null ? FormattedPrice : $"{FormattedPrice}/{BillingPeriod}";
+}
+
+/// The legal text a store REQUIRES beside the purchase controls. A pure function of the
+/// loaded products so it unit-tests off Windows, and so it can never describe a plan that is
+/// not actually on the screen — the Apple twin (`StoreKitStore.legalDisclosure`) carries a
+/// comment about exactly that: the real store returned Monthly and Yearly but not Founding
+/// Member, and prose that named a plan with no button is the shape of the 2.1(b) rejection it
+/// came from. Empty when nothing loaded: there are no terms to state for nothing.
+public static class StoreLegal
+{
+    /// Where the two links go. Same pages every other platform links to.
+    public const string TermsUrl   = "https://tidbitstrivia.com/terms.html";
+    public const string PrivacyUrl = "https://tidbitstrivia.com/privacy.html";
+
+    /// Microsoft Store Policy 10.8.6 (recurring billing must be disclosed before purchase).
+    /// Worded for the Microsoft account and Store settings, not Apple's — the requirement is
+    /// the same, the place a customer actually cancels is not.
+    public static string Disclosure(IReadOnlyList<StoreProductInfo> products)
+    {
+        var ids = new HashSet<string>(products.Select(p => p.Id));
+        var subs = new List<string>();
+        if (ids.Contains(ClubProducts.Monthly)) subs.Add("Monthly");
+        if (ids.Contains(ClubProducts.Annual))  subs.Add("Yearly");
+
+        var parts = new List<string>();
+        if (subs.Count > 0)
+        {
+            var one = subs.Count == 1;
+            parts.Add(
+                $"{string.Join(" and ", subs)} {(one ? "is an auto-renewable subscription" : "are auto-renewable subscriptions")} " +
+                $"at the {(one ? "price" : "prices")} shown above. Payment is charged to your Microsoft account at " +
+                $"confirmation of purchase. {(one ? "It renews" : "Each renews")} automatically unless auto-renewal is " +
+                "turned off at least 24 hours before the current period ends; manage or cancel anytime in your " +
+                "Microsoft account under Services & subscriptions.");
+        }
+        if (ids.Contains(ClubProducts.Lifetime))
+            parts.Add("Founding Member is a one-time purchase for lifetime access — it does not renew.");
+        return string.Join(" ", parts);
+    }
 }
 
 public enum StorePurchaseResult { Success, AlreadyPurchased, Cancelled, Pending, Failed, Unavailable }

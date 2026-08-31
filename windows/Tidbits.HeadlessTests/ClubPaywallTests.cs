@@ -139,4 +139,51 @@ public class ClubPaywallTests
 
         win.CaptureRenderedFrame()!.Save(Path.Combine(ArtifactsDir(), "club-paywall-view.png"));
     }
+
+    /// Store Policy 10.8.6 + 10.5.1. This is a COMPLIANCE gate, not a UI preference: the
+    /// purchase buttons shipped on Windows in 1.6.75 with no renewal disclosure and no Terms or
+    /// Privacy link anywhere in the binary, while every other platform carried all three. Apple's
+    /// were added after a real 2.1(b) rejection, so this is the one paywall assertion that must
+    /// fail loudly rather than be quietly relaxed.
+    [AvaloniaFact]
+    public void Subscription_plans_carry_the_renewal_disclosure_and_both_legal_links()
+    {
+        var panel = ClubPaywallUi.BuildPanel(
+            isClub: false,
+            products: new[]
+            {
+                new StoreProductInfo(ClubProducts.Monthly,  "Monthly",         "$3.99",  "mo"),
+                new StoreProductInfo(ClubProducts.Annual,   "Yearly",          "$29.99", "yr"),
+                new StoreProductInfo(ClubProducts.Lifetime, "Founding Member", "$79.99"),
+            },
+            busyProductId: null, message: null, onPurchase: _ => { }, onRestore: () => { });
+
+        var body = string.Join(" ", TextsOf(panel));
+        Assert.Contains("auto-renewable subscriptions", body);
+        Assert.Contains("Microsoft account", body);       // not "Apple Account" — wrong store
+        Assert.Contains("cancel anytime", body);
+        Assert.Contains("does not renew", body);          // the one-time plan is called out too
+
+        var links = panel.GetVisualDescendants().OfType<HyperlinkButton>()
+                         .ToDictionary(l => l.Content as string ?? "", l => l.NavigateUri?.ToString());
+        Assert.Equal(StoreLegal.TermsUrl,   links["Terms of Use"]);
+        Assert.Equal(StoreLegal.PrivacyUrl, links["Privacy Policy"]);
+    }
+
+    /// The disclosure must describe only plans that are ON THE SCREEN. The Apple twin carries a
+    /// comment about the day the real store returned the two subscriptions but not Founding
+    /// Member, leaving prose about a plan with no button — which is what the rejection was.
+    [AvaloniaFact]
+    public void Disclosure_never_describes_a_plan_that_has_no_button()
+    {
+        var monthlyOnly = StoreLegal.Disclosure(new[]
+            { new StoreProductInfo(ClubProducts.Monthly, "Monthly", "$3.99", "mo") });
+        Assert.Contains("Monthly is an auto-renewable subscription", monthlyOnly);
+        Assert.DoesNotContain("Yearly", monthlyOnly);
+        Assert.DoesNotContain("Founding Member", monthlyOnly);
+
+        // Nothing loaded: there are no terms to state for nothing, so the footer stays silent
+        // rather than asserting facts about products the customer cannot see.
+        Assert.Equal("", StoreLegal.Disclosure(Array.Empty<StoreProductInfo>()));
+    }
 }

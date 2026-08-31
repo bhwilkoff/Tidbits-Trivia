@@ -31,12 +31,46 @@ from pathlib import Path
 # the project, and it changes with DHCP.
 HOST = os.environ.get("TIDBITS_WIN_HOST", "")
 KEY = os.path.expanduser(os.environ.get("TIDBITS_WIN_KEY", "~/.ssh/tidbits_win"))
-REMOTE = os.environ.get("TIDBITS_WIN_DIR", "C:/tidbits")
+# HOME-RELATIVE, not "C:/tidbits". scp mangles a Windows drive letter in the
+# destination — "C:/tidbits/" arrives as "/C:/tidbits/" and dest open fails — so
+# the transfer target is relative to the ssh user's home and PowerShell resolves
+# the absolute form itself.
+REMOTE_REL = os.environ.get("TIDBITS_WIN_DIR", "tidbits")
+_REMOTE_ABS = None
+
+
+def remote_dir():
+    """The absolute deploy path, resolved once and cached as a LITERAL.
+
+    Every PowerShell string here is single-quoted so the script survives the trip
+    through zsh/ssh intact — which also means "$env:USERPROFILE\tidbits" would
+    never expand. Ask the box once, then interpolate the real path.
+    """
+    global _REMOTE_ABS
+    if _REMOTE_ABS is None:
+        r = ps('(Join-Path $env:USERPROFILE "' + REMOTE_REL + '")', timeout=45)
+        got = r.stdout.strip()
+        if not got:
+            raise RuntimeError("could not resolve the remote dir: "
+                               + _clean(r.stderr)[:200])
+        _REMOTE_ABS = got.replace("\\", "/")
+    return _REMOTE_ABS
 APP = "Tidbits.App.exe"
 
 SSH_OPTS = ["-o", "BatchMode=yes",            # never prompt for a password
             "-o", "StrictHostKeyChecking=accept-new",
             "-o", "ConnectTimeout=8"]
+
+
+def _clean(err):
+    """OpenSSH prints a multi-line post-quantum advisory and a known-hosts notice
+    on stderr that are not errors. They pushed the ACTUAL failure
+    ("Permission denied (publickey)") out of a truncated view, which is exactly
+    the kind of noise that makes a real message unreadable."""
+    drop = ("post-quantum", "store now", "Permanently added", "This session may be")
+    keep = [l for l in (err or "").splitlines()
+            if l.strip() and not l.startswith("**") and not any(d in l for d in drop)]
+    return "\n".join(keep).strip()
 
 
 def _ssh(*args, timeout=120, check=False):
@@ -45,7 +79,7 @@ def _ssh(*args, timeout=120, check=False):
     cmd = ["ssh", "-i", KEY] + SSH_OPTS + [HOST] + list(args)
     r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
     if check and r.returncode != 0:
-        raise RuntimeError(f"ssh failed ({r.returncode}): {r.stderr.strip()[:300]}")
+        raise RuntimeError(f"ssh failed ({r.returncode}): {_clean(r.stderr)[:300]}")
     return r
 
 
@@ -54,7 +88,13 @@ def ps(script, timeout=180, check=False):
     between zsh, ssh, cmd.exe and PowerShell, which is otherwise a reliable
     source of silent misbehaviour."""
     import base64
-    enc = base64.b64encode(script.encode("utf-16-le")).decode()
+    # $ProgressPreference: PowerShell serialises its progress stream to stderr as
+    # CLIXML over ssh ("Preparing modules for first use…"), which buries the
+    # actual error under a wall of XML. Errors are caught and printed as plain
+    # text for the same reason — a readable failure beats a serialised object.
+    wrapped = ("$ProgressPreference='SilentlyContinue'\n"
+               "try {\n" + script + "\n} catch { \"PSERROR: $($_.Exception.Message)\" }")
+    enc = base64.b64encode(wrapped.encode("utf-16-le")).decode()
     return _ssh("powershell", "-NoProfile", "-NonInteractive",
                 "-EncodedCommand", enc, timeout=timeout, check=check)
 
@@ -69,7 +109,11 @@ def check():
            "\"$($o.Caption)|$($o.Version)|$env:COMPUTERNAME|"
            "$([Environment]::Is64BitOperatingSystem)\"", timeout=45)
     if r.returncode != 0:
-        return False, r.stderr.strip()[:200] or "ssh failed"
+        err = _clean(r.stderr)
+        if "Permission denied" in err:
+            err += ("  — the key is not installed yet. For an ADMIN account it must go in "
+                    "C:\\ProgramData\\ssh\\administrators_authorized_keys, not ~/.ssh/authorized_keys")
+        return False, err[:280] or "ssh failed"
     return True, r.stdout.strip()
 
 
@@ -82,12 +126,23 @@ def publish(local_out="windows/publish/win-x64"):
     """Build on the MAC. The csproj already cross-publishes win-x64 (that is how
     the CI-only pipeline ever worked), so the Windows box does not need the SDK
     just to run the app."""
+    # cwd is already `windows`, so the output path is relative to THAT. An
+    # earlier "../publish/win-x64" wrote a stray tree at the repo root while the
+    # deploy kept shipping the old one — and `dotnet publish` reported success
+    # the whole time, because it had genuinely published, just somewhere else.
+    out_rel = local_out[len("windows/"):] if local_out.startswith("windows/") else local_out
     r = subprocess.run(
         ["dotnet", "publish", "Tidbits.App/Tidbits.App.csproj", "-c", "Release",
          "-r", "win-x64", "--self-contained", "-p:PublishSingleFile=true",
-         "-o", f"../{local_out.split('/', 1)[1]}" if local_out.startswith("windows/") else local_out],
+         "-o", out_rel],
         cwd="windows", capture_output=True, text=True, timeout=1800)
-    return r.returncode == 0, (r.stdout + r.stderr)[-1200:]
+    ok = r.returncode == 0
+    # "publish: ok" must mean the artifact MOVED. It did not, twice.
+    if ok:
+        exe = Path(local_out) / APP
+        if not exe.exists():
+            return False, f"publish reported success but {exe} does not exist"
+    return ok, (r.stdout + r.stderr)[-1200:]
 
 
 def deploy(local_out="windows/publish/win-x64"):
@@ -96,10 +151,100 @@ def deploy(local_out="windows/publish/win-x64"):
     src = Path(local_out)
     if not src.exists():
         return False, f"{src} does not exist — publish first"
-    ps(f"New-Item -ItemType Directory -Force -Path '{REMOTE}' | Out-Null", timeout=60)
+
+    # Refuse to ship a build older than the source. Twice today a stale bundle
+    # was deployed and the app was then blamed for "ignoring" a hook it had never
+    # been compiled with — once on the Apple TV (a six-day-old Release bundle),
+    # once here (a publish 40 minutes older than the edit). The timestamps knew;
+    # nothing was checking them.
+    exe = src / APP
+    if exe.exists():
+        newest, newest_f = 0.0, None
+        for f in Path("windows").rglob("*"):
+            if f.suffix in (".cs", ".axaml", ".csproj") and "/publish/" not in str(f) \
+               and "/bin/" not in str(f) and "/obj/" not in str(f):
+                m = f.stat().st_mtime
+                if m > newest:
+                    newest, newest_f = m, f
+        if newest > exe.stat().st_mtime:
+            import datetime as _dt
+            fmt = lambda t: _dt.datetime.fromtimestamp(t).strftime("%H:%M:%S")
+            return False, (f"STALE BUILD: {APP} is {fmt(exe.stat().st_mtime)} but "
+                           f"{newest_f.name} changed at {fmt(newest)} — run --publish first")
+    ps(f"New-Item -ItemType Directory -Force -Path '{remote_dir()}' | Out-Null", timeout=60)
+    quit_app()          # a running app holds its own files open
     r = subprocess.run(["scp", "-i", KEY] + SSH_OPTS + ["-r", str(src) + "/.",
-                        f"{HOST}:{REMOTE}/"], capture_output=True, text=True, timeout=1800)
+                        f"{HOST}:{REMOTE_REL}/"], capture_output=True, text=True, timeout=1800)
     return r.returncode == 0, r.stderr.strip()[:400]
+
+
+def run_in_console(script, name="TidbitsHarness", timeout=240):
+    """Run PowerShell in the INTERACTIVE console session, not the SSH session.
+
+    This is the load-bearing piece of the whole Windows harness. An SSH session
+    on Windows is **session 0** — the services session, with no visible desktop.
+    Measured on this box: ssh lands in session 0 while the logged-in user is
+    session 1, and `Screen.PrimaryScreen.Bounds` from session 0 reports a phantom
+    1024x768 while the real display is 1920x1080. So a GUI app started over ssh
+    launches where nobody can see it, and a screenshot taken over ssh photographs
+    a blank virtual desktop. The first capture off this box was a pure white
+    1024x768 frame for exactly that reason.
+
+    A scheduled task with an Interactive principal runs in the user's real
+    session. It needs nothing downloaded — no PsExec — and works on stock
+    Windows 10.
+    """
+    remote_ps1 = f"{remote_dir()}/_task.ps1"
+    # Write the script to the box, then run it as an interactive task.
+    import base64
+    b64 = base64.b64encode(script.encode("utf-8")).decode()
+    setup = rf"""
+New-Item -ItemType Directory -Force -Path '{remote_dir()}' | Out-Null
+[IO.File]::WriteAllBytes('{remote_ps1}', [Convert]::FromBase64String('{b64}'))
+Unregister-ScheduledTask -TaskName '{name}' -Confirm:$false -ErrorAction SilentlyContinue
+$a = New-ScheduledTaskAction -Execute 'powershell.exe' `
+     -Argument '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "{remote_ps1}"'
+# whoami, NOT $env:USERDOMAIN\$env:USERNAME. On a workgroup machine
+# USERDOMAIN is literally "WORKGROUP", so that form yields WORKGROUP\benwi,
+# which has no SID and fails with "No mapping between account names and
+# security IDs was done" — an error that names the symptom, not the cause.
+$p = New-ScheduledTaskPrincipal -UserId (whoami) -LogonType Interactive
+Register-ScheduledTask -TaskName '{name}' -Action $a -Principal $p -Force | Out-Null
+Start-ScheduledTask -TaskName '{name}'
+$deadline = (Get-Date).AddSeconds({timeout - 20})
+do {{
+  Start-Sleep -Seconds 2
+  $st = (Get-ScheduledTask -TaskName '{name}').State
+}} while ($st -eq 'Running' -and (Get-Date) -lt $deadline)
+$info = Get-ScheduledTaskInfo -TaskName '{name}'
+Unregister-ScheduledTask -TaskName '{name}' -Confirm:$false -ErrorAction SilentlyContinue
+"TASKRESULT:$($info.LastTaskResult)"
+"""
+    return ps(setup, timeout=timeout)
+
+
+def session_locked():
+    """Is the console session showing the lock screen?
+
+    LogonUI.exe is present exactly while the workstation is locked. This matters
+    because a locked session still runs interactive tasks — so a capture would
+    quietly return a photograph of the LOCK SCREEN and every OCR assertion would
+    be about that, not the app. Reported as a fact, never guessed at."""
+    r = ps("if (Get-Process LogonUI -ErrorAction SilentlyContinue) { 'LOCKED' } "
+           "else { 'UNLOCKED' }", timeout=60)
+    return r.stdout.strip().startswith("LOCKED")
+
+
+def keep_awake():
+    """Reset the idle timer without changing any of the machine's settings.
+
+    The box locks quickly. Rather than editing the owner's screensaver or power
+    policy — which would outlive the test run — this presses a key Windows
+    ignores (F15 has no effect on any app but does count as input) inside the
+    console session."""
+    return run_in_console(
+        "$w = New-Object -ComObject WScript.Shell; $w.SendKeys('{F15}')",
+        name="TidbitsAwake", timeout=90)
 
 
 def launch(env=None, wait=10):
@@ -107,17 +252,20 @@ def launch(env=None, wait=10):
     same PowerShell process so the TIDBITS_* hooks reach the app the same way
     they do on every other platform."""
     sets = "\n".join(f"$env:{k}='{v}'" for k, v in (env or {}).items())
-    r = ps(f"""
+    run_in_console(f"""
 {sets}
 Get-Process Tidbits.App -ErrorAction SilentlyContinue | Stop-Process -Force
 Start-Sleep -Milliseconds 600
-$p = Start-Process -FilePath '{REMOTE}/{APP}' -PassThru
+$p = Start-Process -FilePath '{remote_dir()}/{APP}' -PassThru
 Start-Sleep -Seconds {wait}
-if ($p.HasExited) {{ "EXITED:$($p.ExitCode)" }} else {{ "PID:$($p.Id)" }}
-""", timeout=180)
+"$($p.Id)|$($p.HasExited)" | Out-File -Encoding ascii '{remote_dir()}/_launch.txt'
+""", name="TidbitsLaunch", timeout=max(120, wait * 6))
+    r = ps(f"Get-Content '{remote_dir()}/_launch.txt' -ErrorAction SilentlyContinue", timeout=60)
     out = r.stdout.strip()
-    if out.startswith("PID:"):
-        return int(out.split(":", 1)[1])
+    if "|" in out:
+        pid, exited = out.split("|", 1)
+        if exited.strip().lower().startswith("false"):
+            return int(pid)
     return None
 
 
@@ -127,18 +275,31 @@ def screenshot(local_path, remote_name="tidbits-shot.png"):
     The whole screen, not the window: same reasoning as the Mac, where a
     window-region grab kept catching whatever was in front. What the machine is
     showing is the evidence."""
-    remote = f"{REMOTE}/{remote_name}"
-    r = ps(f"""
+    # Nudge the idle timer first. This box locks quickly, and a sweep that spans
+    # several scenarios would otherwise lock partway through and every capture
+    # after that point would be refused.
+    keep_awake()
+    if session_locked():
+        # Unlocking needs the account password, which this tooling must never
+        # handle. So this is a hard limit, and it is reported as one instead of
+        # returning a photograph of the lock screen for the grader to analyse.
+        return False, ("the console session is LOCKED — a capture here would be the "
+                       "lock screen, not the app. Unlock the machine to see the UI.")
+    remote = f"{remote_dir()}/{remote_name}"
+    # In the CONSOLE session — from ssh (session 0) this captures a phantom
+    # 1024x768 desktop instead of the real 1920x1080 screen.
+    run_in_console(f"""
 Add-Type -AssemblyName System.Windows.Forms, System.Drawing
 $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
 $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
 $g = [System.Drawing.Graphics]::FromImage($bmp)
 $g.CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
 $bmp.Save('{remote}')
-"$($b.Width)x$($b.Height)"
-""", timeout=120)
+"$($b.Width)x$($b.Height)" | Out-File -Encoding ascii '{remote_dir()}/_shot.txt'
+""", name="TidbitsShot", timeout=150)
+    r = ps(f"Get-Content '{remote_dir()}/_shot.txt' -ErrorAction SilentlyContinue", timeout=60)
     if r.returncode != 0:
-        return False, r.stderr.strip()[:200]
+        return False, _clean(r.stderr)[:200]
     got = subprocess.run(["scp", "-i", KEY] + SSH_OPTS +
                          [f"{HOST}:{remote}", str(local_path)],
                          capture_output=True, text=True, timeout=300)
@@ -146,8 +307,8 @@ $bmp.Save('{remote}')
 
 
 def quit_app():
-    ps("Get-Process Tidbits.App -ErrorAction SilentlyContinue | Stop-Process -Force",
-       timeout=60)
+    run_in_console("Get-Process Tidbits.App -ErrorAction SilentlyContinue | "
+                   "Stop-Process -Force", name="TidbitsQuit", timeout=90)
 
 
 def keygen():

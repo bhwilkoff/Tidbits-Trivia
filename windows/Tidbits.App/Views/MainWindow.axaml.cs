@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -20,6 +21,20 @@ public partial class MainWindow : Window
             // Render the landing surface DIRECTLY rather than waiting for SelectionChanged.
             // FANavigationView can settle on the first item on its own without ever raising
             // the event, which left the detail pane blank until the user clicked the sidebar.
+            // TIDBITS_TAB=play|records|leaderboard|create|live — open a section on
+            // launch, the Windows mirror of Apple's DebugHooks.initialTab and
+            // Android's tidbits_tab. Windows had NO navigation hook at all: it was
+            // only ever driven by the headless Avalonia tests, which construct a
+            // view in-process and never navigate the real shell. So a harness on a
+            // real desktop could launch the app and nothing else, and every
+            // "records" or "create" assertion was really grading the Play screen.
+            var startTab = Environment.GetEnvironmentVariable("TIDBITS_TAB");
+            var tags = Nav.MenuItems.OfType<FANavigationViewItem>().ToList();
+            var wanted = tags.FirstOrDefault(i =>
+                string.Equals(i.Tag as string, startTab, StringComparison.OrdinalIgnoreCase));
+            if (wanted is not null)
+                Nav.SelectedItem = wanted;
+
             if (ContentHost.Content is null)
                 Navigate((Nav.SelectedItem as FANavigationViewItem)?.Tag as string ?? "play");
             // Deep-link inbox: route a launch URL once shown (external entry points

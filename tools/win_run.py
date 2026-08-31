@@ -36,20 +36,25 @@ SCENARIOS = {
     "home":        (dict(TIDBITS_TAB="play"),
                     {"expect_any": r"Quick Play|Daily|Play|Start|Surprise"}),
     "records":     (dict(TIDBITS_TAB="records"),
-                    {"expect_any": r"Your games|Personal bests|No games yet|streak|GAMES"}),
+                    # Calibrated against a real capture: a fresh profile shows
+                    # "Compete against your past self", not the games list the
+                    # other platforms' copy uses.
+                    {"expect_any": r"Compete against your past self|Your games|"
+                                   r"Personal bests|No games yet|DAY STREAK"}),
     "create":      (dict(TIDBITS_TAB="create"),
                     {"expect_any": r"Create|quiz|subject|Generate"}),
     "leaderboard": (dict(TIDBITS_TAB="leaderboard"),
                     {"expect_any": r"Leaderboard|standings|season|venue|rank|No standings"}),
-    "settings":    (dict(TIDBITS_SETTINGS="1"),
-                    {"expect_any": r"Settings|Account|Feedback|Gameplay"}),
-    "paywall":     (dict(TIDBITS_PAYWALL="1"),
-                    {"expect_any": r"Club|Get better|Ranked|member|plan"}),
-    "livehost":    (dict(TIDBITS_LIVE_HOST="1", TIDBITS_LIVE_CODE="QWIN"),
-                    {"expect_any": r"QWIN|lobby|players|Start|waiting|SCAN"}),
-    "classic":     (dict(TIDBITS_AUTOPLAY="classic:mixed", TIDBITS_AUTOPILOT="1",
-                         TIDBITS_AUTOPILOT_CORRECT="1"),
-                    {"expect_any": r"\?|\d+\s*/\s*\d+|Correct|Nice"}),
+    "live":        (dict(TIDBITS_TAB="live"),
+                    {"expect_any": r"Live|Host|room|code|join|SCAN"}),
+    # NOTE: Windows reads only TIDBITS_CLUB, TIDBITS_LIVE_CODE,
+    # TIDBITS_MARATHON_LEN and the auth vars, plus TIDBITS_TAB as of this change.
+    # Apple's TIDBITS_SETTINGS / _PAYWALL / _AUTOPLAY / _LIVE_HOST have no Windows
+    # equivalent yet, so scenarios for them are NOT listed here — a scenario whose
+    # hook does not exist grades whatever screen happened to be showing, which is
+    # how the Mac "leaderboard" tab came to be reported as a defect.
+    "club":        (dict(TIDBITS_TAB="play", TIDBITS_CLUB="1"),
+                    {"expect_any": r"Play|Quick Play|Club|Trivia"}),
 }
 
 
@@ -109,6 +114,17 @@ def main():
     names = [n for n in (a.only.split(",") if a.only else SCENARIOS) if n in SCENARIOS]
     out = qa_dir("windows", "sweep")
     g = Grader(out, platform="windows", host=winbox.HOST or "(unset)", scenarios=names)
+
+    # A locked box cannot be photographed, and unlocking needs a password this
+    # tooling must never handle. Say so up front rather than failing scenario by
+    # scenario with the same message.
+    if winbox.HOST:
+        winbox.keep_awake()
+        if winbox.session_locked():
+            g.grade("box_unlocked", False,
+                    "console session is LOCKED — unlock the machine; the harness "
+                    "keeps it awake once it starts unlocked, but cannot unlock it")
+            return g.finish()
 
     ok, why = winbox.check()
     # Reachability is PROBED, never assumed — an unreachable box must not be

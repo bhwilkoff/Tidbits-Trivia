@@ -24,6 +24,7 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import devlease  # noqa: E402
 import devreset  # noqa: E402
 import winbox  # noqa: E402
 from devharness import (OCR_FAILED, Grader, frame_darkness, ocr,  # noqa: E402
@@ -180,6 +181,22 @@ def main():
                     "keeps it awake once it starts unlocked, but cannot unlock it")
             return g.finish()
 
+    # Lease the box for the whole sweep (docs/DEVICE-LEASE.md). Another agent session
+    # shares this bench; a device taken mid-sweep produces a screenshot of someone
+    # else's app and grades as a Tidbits defect.
+    leased, holder = devlease.try_lease("windows", task=f"win sweep: {','.join(names)}")
+    if not g.grade("windows_leased", leased,
+                   "held for this sweep" if leased
+                   else f"in use elsewhere — {holder}; this sweep covers NOTHING"):
+        return g.finish()
+
+    try:
+        return _sweep(a, names, out, g)
+    finally:
+        devlease.release("windows")
+
+
+def _sweep(a, names, out, g):
     ok, why = winbox.check()
     # Reachability is PROBED, never assumed — an unreachable box must not be
     # able to produce a green board.

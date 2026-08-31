@@ -43,8 +43,28 @@ async function syncDailyLog(pushLocal = false) {
   if (changed) render();
 }
 
+/// ?qa=<text> — a small banner naming what this browser is testing, the web twin of
+/// TIDBITS_QA_LABEL / tidbits_qa_label. Six devices on a desk all running Tidbits look
+/// identical, so a bench photograph said nothing about which was under test.
+///
+/// Fixed-position overlay with pointer-events:none, so it can neither shift the layout
+/// being photographed nor swallow a click the harness is about to make. Text is set via
+/// textContent, never innerHTML — this value comes from the URL.
+function qaLabel() {
+  const text = new URLSearchParams(location.search).get('qa');
+  if (!text) return;
+  const el = document.createElement('div');
+  el.textContent = text.slice(0, 60);
+  el.setAttribute('aria-hidden', 'true');
+  el.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
+    'background:#FF5C35;color:#fff;font:700 12px/1.4 system-ui,sans-serif;' +
+    'padding:5px 14px;border-radius:0 0 10px 10px;z-index:99999;pointer-events:none';
+  document.body.appendChild(el);
+}
+
 async function boot() {
   renderLoading('Loading Tidbits…');
+  qaLabel();
   Identity.bootstrap().then(() => { syncDailyLog(); Entitlement.refresh(); });   // + Club status
   Identity.onChange(() => { Entitlement.refresh(); const t = location.hash; if (t.startsWith('#/profile') || t.startsWith('#/records')) render(); });
   try { await Corpus.load(); } catch (e) { /* live fallback still works */ }

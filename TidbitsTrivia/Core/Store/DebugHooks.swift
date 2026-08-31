@@ -385,6 +385,16 @@ enum DebugHooks {
         return c
     }
 
+    /// TIDBITS_QA_LABEL=<text> → draw a small banner naming what this device is
+    /// testing. Six devices on a desk all running Tidbits look identical, so a bench
+    /// photograph said nothing about which one was under test, and a device left over
+    /// from an earlier run was indistinguishable from one in the current run.
+    static var qaLabel: String? {
+        guard let v = ProcessInfo.processInfo.environment["TIDBITS_QA_LABEL"]?
+                .trimmingCharacters(in: .whitespaces), !v.isEmpty else { return nil }
+        return String(v.prefix(60))
+    }
+
     /// TIDBITS_LIVE_NAME=<name> → the display name to join a room under.
     ///
     /// The Kotlin twin (`tidbits_live_name`) existed; Apple's did not, so every Apple

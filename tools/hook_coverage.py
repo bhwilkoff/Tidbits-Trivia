@@ -20,7 +20,7 @@ SOURCES = {
     "apple":   (["TidbitsTrivia"], r'environment\["(TIDBITS_[A-Z_]+)"\]', {".swift"}),
     "android": (["android/app/src/main"], r'"(tidbits_[a-z_]+)"', {".kt"}),
     "windows": (["windows/Tidbits.App", "windows/Tidbits.Core"],
-                r'GetEnvironmentVariable\("(TIDBITS_[A-Z_]+)"\)', {".cs"}),
+                r'(?:GetEnvironmentVariable|Env|Flag)\("(TIDBITS_[A-Z_]+)"\)', {".cs"}),
     "web":     (["js"], r"#/([a-z]+)", {".js"}),
 }
 SKIP = {"bin", "obj", "artifacts", "publish", "node_modules", ".git"}
@@ -28,20 +28,68 @@ SKIP = {"bin", "obj", "artifacts", "publish", "node_modules", ".git"}
 # The canonical hook per capability, in the Apple spelling. Android/Windows names
 # are derived; the web is a route, since its "hook" is the URL.
 CAPABILITIES = [
-    ("open a tab/section",     "TIDBITS_TAB",          "tidbits_tab",          "TIDBITS_TAB",       "home"),
+    # The web's "hook" is the URL, so its column names a ROUTE. The home view is "/",
+    # not a hash route — asking for a route called "home" reported a gap that was only
+    # ever a flaw in this script.
+    ("open a tab/section",     "TIDBITS_TAB",          "tidbits_tab",          "TIDBITS_TAB",       "daily"),
     ("skip the walkthrough",   "TIDBITS_SKIP_ONBOARD", "tidbits_skip_onboard", "TIDBITS_SKIP_ONBOARD", None),
     ("start a round",          "TIDBITS_AUTOPLAY",     "tidbits_autoplay",     "TIDBITS_AUTOPLAY",  "daily"),
     ("answer automatically",   "TIDBITS_AUTOPILOT",    "tidbits_autopilot",    "TIDBITS_AUTOPILOT", None),
-    ("host Tidbits Live",      "TIDBITS_LIVE_HOST",    "tidbits_live_host",    "TIDBITS_LIVE_HOST", "live"),
+    # Android hosts a night, not a Live EVENT (no cockpit/projector on a phone), so its
+    # cell is "-" by design rather than a gap. Marking it NO would be a permanent red
+    # for a feature the platform deliberately does not have.
+    ("host Tidbits Live",      "TIDBITS_LIVE_HOST",    None,                   "TIDBITS_LIVE_HOST", "live"),
     ("host a Trivia Night",    "TIDBITS_NIGHT_HOST",   "tidbits_night_host",   "TIDBITS_NIGHT_HOST", "live"),
     ("join a room by code",    "TIDBITS_LIVE_JOIN",    "tidbits_live_join",    "TIDBITS_LIVE_JOIN", "live"),
     ("join under a set name",  "TIDBITS_LIVE_NAME",    "tidbits_live_name",    "TIDBITS_LIVE_NAME", None),
     ("open Settings",          "TIDBITS_SETTINGS",     "tidbits_open",         "TIDBITS_SETTINGS",  "profile"),
     ("open the Club paywall",  "TIDBITS_PAYWALL",      "tidbits_open",         "TIDBITS_PAYWALL",   None),
-    ("grant Club entitlement", "TIDBITS_CLUB",         "tidbits_club",         "TIDBITS_CLUB",      None),
+    # Android spells this one `tidbits_club_debug`. Guessing the name from the Apple
+    # spelling reported a gap that did not exist — the third false positive this script
+    # produced by assuming a naming convention the platforms never agreed to. Every cell
+    # here is the name the code actually uses, verified by reading it.
+    ("grant Club entitlement", "TIDBITS_CLUB",         "tidbits_club_debug",   "TIDBITS_CLUB",      None),
     ("open Pass & Play",       "TIDBITS_PARTY",        "tidbits_party",        "TIDBITS_PARTY",     None),
     ("seed records",           "TIDBITS_SEED_RECORDS", "tidbits_seed_records", "TIDBITS_SEED_RECORDS", None),
 ]
+
+
+# A hook can be DECLARED and never acted on. On Windows the hooks live in one
+# LaunchHooks.cs, so finding the env-var string there proves only that someone wrote
+# the accessor — the first version of this script reported "yes" for two hooks I had
+# declared and not wired, which is the same "assertion that cannot fire" problem it
+# exists to find, in the instrument itself. So the Windows column additionally
+# requires the ACCESSOR to be referenced somewhere other than its own declaration.
+WINDOWS_ACCESSOR = {
+    "TIDBITS_TAB": "LaunchHooks.Tab",
+    "TIDBITS_SKIP_ONBOARD": "TIDBITS_SKIP_ONBOARD",     # read inline, not via LaunchHooks
+    "TIDBITS_LIVE_HOST": "LaunchHooks.LiveHost",
+    "TIDBITS_NIGHT_HOST": "LaunchHooks.NightHost",
+    "TIDBITS_LIVE_JOIN": "LaunchHooks.LiveJoin",
+    "TIDBITS_LIVE_NAME": "LaunchHooks.LiveName",
+    "TIDBITS_SETTINGS": "LaunchHooks.Settings",
+    "TIDBITS_PAYWALL": "LaunchHooks.Paywall",
+    "TIDBITS_PARTY": "LaunchHooks.Party",
+    "TIDBITS_AUTOPLAY": "LaunchHooks.Autoplay",
+    "TIDBITS_AUTOPILOT": "LaunchHooks.Autopilot",
+    "TIDBITS_SEED_RECORDS": "LaunchHooks.SeedRecords",
+    "TIDBITS_CLUB": "TIDBITS_CLUB",
+}
+
+
+def windows_wired(key):
+    """True when the hook is referenced OUTSIDE its own declaration file."""
+    accessor = WINDOWS_ACCESSOR.get(key)
+    if accessor is None:
+        return False
+    for d in ("windows/Tidbits.App", "windows/Tidbits.Core"):
+        base = ROOT / d
+        for p in base.rglob("*.cs"):
+            if SKIP & set(p.relative_to(base).parts) or p.name == "LaunchHooks.cs":
+                continue
+            if accessor in p.read_text(errors="ignore"):
+                return True
+    return False
 
 
 def harvest(platform):
@@ -73,6 +121,8 @@ def main():
         for c in cols:
             k = keys[c]
             ok = bool(k) and have[c].get(k, 0) > 0
+            if ok and c == "windows":
+                ok = windows_wired(k)
             row.append("  yes   " if ok else ("   -    " if k is None else "   NO   "))
             if k is not None and not ok:
                 gaps.append((label, c, k))

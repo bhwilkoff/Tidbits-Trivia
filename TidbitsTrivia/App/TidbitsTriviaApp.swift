@@ -29,6 +29,7 @@ struct TidbitsTriviaApp: App {
     var body: some Scene {
         WindowGroup {
             RootView()
+                .qaLabel()                                 // TIDBITS_QA_LABEL; absent unless set
                 .environment(store)
                 .environment(gameCenter)
                 #if os(macOS)
@@ -165,5 +166,31 @@ struct RootView: View {
         #else
         ContentView_iOS()
         #endif
+    }
+}
+
+
+/// The QA bench banner (TIDBITS_QA_LABEL).
+///
+/// Applied at the app root so it survives every navigation — a label that disappears
+/// once the harness pushes a screen would be gone exactly when you most want to know
+/// what the device is doing. `overlay`, never a layout change: it must not be able to
+/// move the UI under test, or the thing being photographed is not the shipping layout.
+private extension View {
+    @ViewBuilder func qaLabel() -> some View {
+        if let text = DebugHooks.qaLabel {
+            self.overlay(alignment: .top) {
+                Text(text)
+                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 14).padding(.vertical, 5)
+                    .background(Capsule().fill(Tidbits.Palette.coral))
+                    .padding(.top, 2)
+                    .allowsHitTesting(false)               // never steals a tap under test
+                    .accessibilityHidden(true)
+            }
+        } else {
+            self
+        }
     }
 }

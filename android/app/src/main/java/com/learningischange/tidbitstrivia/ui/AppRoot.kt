@@ -49,6 +49,7 @@ import androidx.compose.ui.text.style.TextAlign
 import com.learningischange.tidbitstrivia.BuildConfig
 import com.learningischange.tidbitstrivia.data.PlayerIdentity
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.unit.sp
 import com.learningischange.tidbitstrivia.data.*
 import com.learningischange.tidbitstrivia.net.FirebaseNet
@@ -236,6 +237,25 @@ fun AppRoot(
         }
     }
     Box(Modifier.fillMaxSize()) {
+        // QA bench banner (tidbits_qa_label) — DEBUG-only via ScreenshotHooks, so it is
+        // absent from every release build. Drawn in the root Box as an overlay rather
+        // than in the Scaffold, so it survives navigation and cannot shift the layout
+        // under test.
+        ScreenshotHooks.qaLabel?.let { qa ->
+            androidx.compose.material3.Surface(
+                color = androidx.compose.ui.graphics.Color(0xFFFF5C35),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(
+                    bottomStart = 10.dp, bottomEnd = 10.dp),
+                modifier = Modifier.align(androidx.compose.ui.Alignment.TopCenter).zIndex(10f),
+            ) {
+                androidx.compose.material3.Text(
+                    qa,
+                    color = androidx.compose.ui.graphics.Color.White,
+                    style = androidx.compose.material3.MaterialTheme.typography.labelMedium,
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 5.dp),
+                )
+            }
+        }
         Scaffold(bottomBar = { if (showBar) BottomBar(current) { backStack.clear(); backStack.add(it) } }) { pad ->
             Box(Modifier.padding(pad).fillMaxSize().focusGroup().focusRequester(routeFocus)) {
                 when (val r = current) {

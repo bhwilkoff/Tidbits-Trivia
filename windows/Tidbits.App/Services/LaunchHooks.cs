@@ -93,6 +93,19 @@ public static class LaunchHooks
     public static int? SeedRecords =>
         int.TryParse(Env("TIDBITS_SEED_RECORDS"), out var n) && n > 0 ? n : null;
 
+    /// TIDBITS_QA_LABEL=<text> — draw a small banner naming what this device is
+    /// testing. Six devices on a desk all running Tidbits look identical, so a bench
+    /// photograph said nothing about which one was under test and a device left over
+    /// from an earlier run was indistinguishable from one in the current one.
+    public static string? QaLabel
+    {
+        get
+        {
+            var v = Env("TIDBITS_QA_LABEL");
+            return v is null ? null : v[..Math.Min(60, v.Length)];
+        }
+    }
+
     /// TIDBITS_SKIP_ONBOARD=1 — suppress the first-run walkthrough. It is a MODAL
     /// dialog, so while it is up it blocks input to the surface under test.
     public static bool SkipOnboarding => Flag("TIDBITS_SKIP_ONBOARD");

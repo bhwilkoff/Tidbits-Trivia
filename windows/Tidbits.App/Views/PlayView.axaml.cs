@@ -93,6 +93,26 @@ public partial class PlayView : UserControl
         BuildDaily();
         BuildPresets();
         BuildClubDoor();
+
+        // Launch hooks. Both surfaces below were reachable ONLY by a click, so neither
+        // could be opened on a real machine — see Services/LaunchHooks.cs and
+        // tools/hook_coverage.py. Loaded, not the constructor: StartGame needs a live
+        // visual tree to swap GameHost's content into.
+        if (Services.LaunchHooks.Party)
+        {
+            Loaded += (_, _) => OnPassAndPlay(this, new RoutedEventArgs());
+        }
+        else if (Services.LaunchHooks.Autoplay is { } ap)
+        {
+            Loaded += (_, _) =>
+            {
+                // An unrecognised mode falls back to Classic rather than doing nothing:
+                // a harness that asked for a round and silently got the Play screen
+                // would grade the Play screen and call it a pass.
+                var mode = GameModeExtensions.FromId(ap.Mode) ?? GameMode.Classic;
+                StartGame(mode, TriviaCategory.Named(ap.Category));
+            };
+        }
     }
 
     // MARK: - Tidbits Club: Weak-Spot Arena (docs/CLUB-FEATURES-BUILD.md "Feature 1")
@@ -545,6 +565,7 @@ public partial class PlayView : UserControl
         };
         // Play Again restarts the exact mode + category that was just played.
         vm.PlayAgainRequested += () => StartGame(vm.Summary.Mode, vm.Summary.Category);
+        vm.StartAutopilot();     // no-op unless TIDBITS_AUTOPILOT is set
         Landing.IsVisible = false;
         GameHost.Content = new GameView { DataContext = vm };
         // Spaced re-asking: weave due missed facts into MCQ games (opt-out via Settings).

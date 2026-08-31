@@ -182,6 +182,47 @@ public sealed class GameViewModel : ObservableObject, IDisposable
 
     public void Submit(int index) => Engine.Submit(index);
     public void Advance() => Engine.Advance();
+
+    /// TIDBITS_AUTOPILOT — answer and advance without a click, so a reveal or a
+    /// scorecard can be photographed on a real machine. The Apple and Android twins
+    /// existed; Windows had no way to get past the first question unattended, which
+    /// meant every screen AFTER question one was unreachable by the harness.
+    ///
+    /// Drives the same Submit/Advance the buttons do rather than reaching into the
+    /// engine: a shortcut past the UI proves the engine works and says nothing about
+    /// whether a person could have got there.
+    ///
+    /// TIDBITS_AUTOPILOT_CORRECT answers correctly instead of always picking option 0,
+    /// which otherwise puts a humiliating score in every screenshot.
+    public void StartAutopilot()
+    {
+        if (!Services.LaunchHooks.Autopilot) return;
+        var correct = Services.LaunchHooks.AutopilotCorrect;
+        var timer = new Avalonia.Threading.DispatcherTimer
+        {
+            // Slower than a person, deliberately: the reveal has to be on screen long
+            // enough for a capture to land on it rather than on the next question.
+            Interval = TimeSpan.FromMilliseconds(1200),
+        };
+        timer.Tick += (_, _) =>
+        {
+            switch (Engine.CurrentPhase)
+            {
+                case GameEngine.Phase.Playing:
+                    var q = Engine.Current;
+                    if (q is null || q.Options.Count == 0) { timer.Stop(); return; }
+                    Submit(correct ? Math.Max(0, q.CorrectIndex) : 0);
+                    break;
+                case GameEngine.Phase.Reveal:
+                    Advance();
+                    break;
+                case GameEngine.Phase.Finished:
+                    timer.Stop();
+                    break;
+            }
+        };
+        timer.Start();
+    }
     public void StartRound() => Engine.StartRound();
     public void Quit() { Engine.Quit(); Closed?.Invoke(); }
     public void PlayAgain() => PlayAgainRequested?.Invoke();

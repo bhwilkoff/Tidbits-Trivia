@@ -15,12 +15,50 @@ namespace Tidbits.App.Views;
 
 public partial class RecordsView : UserControl
 {
+    /// TIDBITS_SEED_RECORDS=<n> — fill Records with n synthetic games so the screen is
+    /// not an empty state. Apple and Android had this; on Windows the only way to see a
+    /// populated Records screen was to actually play n rounds by hand, which meant the
+    /// dashboard, the drill-ins and the badges were photographable only as "No games
+    /// yet".
+    ///
+    /// IN MEMORY ONLY — this deliberately does NOT Save(). A hook that seeds a test run
+    /// must never write fiction into a real person's history, and this is the store the
+    /// live app reads.
+    private static void SeedIfAsked()
+    {
+        if (Services.LaunchHooks.SeedRecords is not { } n) return;
+        var records = GameData.Shared.Value.Records;
+        if (records.Games.Count > 0) return;   // never on top of real history
+
+        var seeded = new System.Collections.Generic.List<Tidbits.Core.Models.GameRecord>();
+        var modes = new[] { "classic", "timeAttack", "survival", "stake", "sweep" };
+        var cats = new[] { "mixed", "history", "science", "arts", "sport" };
+        for (int i = 0; i < n; i++)
+        {
+            // Deterministic, not random: a screenshot set that changes shape run to run
+            // is useless for spotting a layout regression between two captures.
+            int total = 10, correct = 4 + (i * 3) % 7;
+            seeded.Add(new Tidbits.Core.Models.GameRecord
+            {
+                ModeRaw = modes[i % modes.Length],
+                CategoryId = cats[i % cats.Length],
+                Score = correct * 100 + (i % 4) * 25,
+                Correct = correct,
+                Total = total,
+                MaxStreak = 1 + (i * 2) % 6,
+                Date = System.DateTime.UtcNow.AddDays(-i),
+            });
+        }
+        records.SeedForCapture(seeded);
+    }
+
     private static readonly IBrush Green = new SolidColorBrush(Color.Parse("#2FCB8A"));
     private static readonly IBrush Red = new SolidColorBrush(Color.Parse("#FF5C5C"));
 
     public RecordsView()
     {
         InitializeComponent();
+        SeedIfAsked();
         RefreshProfile();
     }
 

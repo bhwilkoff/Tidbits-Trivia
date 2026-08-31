@@ -64,6 +64,13 @@ object ScreenshotHooks {
     var screened = false
         private set
 
+    /** A small banner naming what this device is testing (`tidbits_qa_label`).
+     *  Six devices on a desk all running Tidbits look identical, so a bench photograph
+     *  said nothing about which one was under test, and a device left over from an
+     *  earlier run was indistinguishable from one in the current run. */
+    var qaLabel: String? = null
+        private set
+
     /** Treat the first-run walkthrough as already seen — a fresh install otherwise opens on it. */
     var skipOnboarding = false
         private set
@@ -98,6 +105,8 @@ object ScreenshotHooks {
         if (intent.hasExtra("tidbits_skip_onboard")) skipOnboarding = intent.getBooleanExtra("tidbits_skip_onboard", false)
         if (intent.hasExtra("tidbits_screened")) screened = intent.getBooleanExtra("tidbits_screened", false)
         intent.getStringExtra("tidbits_open")?.let { openRoute = it }
+        intent.getStringExtra("tidbits_qa_label")?.takeIf { it.isNotBlank() }
+            ?.let { qaLabel = it.take(60) }
         intent.getStringExtra("tidbits_live_join")?.takeIf { it.isNotBlank() }?.let { code ->
             liveJoin = code.trim().uppercase() to
                 (intent.getStringExtra("tidbits_live_name")?.takeIf { it.isNotBlank() } ?: "Android")

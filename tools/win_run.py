@@ -24,6 +24,7 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import devreset  # noqa: E402
 import winbox  # noqa: E402
 from devharness import (OCR_FAILED, Grader, frame_darkness, ocr,  # noqa: E402
                         qa_dir)
@@ -86,6 +87,10 @@ def run(name, outdir, g):
     env, spec = SCENARIOS[name]
     env = dict(env)
     env.setdefault("TIDBITS_SKIP_ONBOARD", "1")
+    # Say what this device is testing, on the device. Six machines on a desk all
+    # running Tidbits look identical, and a scenario left over from the previous run
+    # is indistinguishable from the current one by eye.
+    env.setdefault("TIDBITS_QA_LABEL", f"windows · {name}")
 
     # Every step here is a scheduled-task round trip of ~35s, so a silent scenario
     # looks exactly like a hung one. It is: a six-scenario sweep spent thirteen
@@ -94,6 +99,11 @@ def run(name, outdir, g):
     def step(msg):
         print(f"    {time.time() - t0:5.0f}s  {msg}", flush=True)
 
+    # Reset FIRST. Nothing here ever put the app back, so a scenario launched on top
+    # of whatever the last one finished in — mid-round, still in a room, hosting a
+    # night — and could grade the previous scenario's screen.
+    step("resetting")
+    devreset.reset("windows")
     step("launching")
     pid = winbox.launch(env, wait=12)
     if pid is None:

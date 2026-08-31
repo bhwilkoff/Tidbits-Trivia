@@ -53,6 +53,19 @@ public sealed class RecordsStore
     }
 
     public IReadOnlyList<GameRecord> Games => _data.Games;
+
+    /// Append synthetic games IN MEMORY, for TIDBITS_SEED_RECORDS.
+    ///
+    /// Deliberately never calls Save(): a hook that populates a screen for a capture
+    /// must not write fiction into a real person's history, and this is the same store
+    /// the live app reads. Refuses outright if there is already real history, so a
+    /// mis-set variable on the owner's machine cannot mix invented games into their
+    /// records even in memory.
+    public void SeedForCapture(IEnumerable<GameRecord> games)
+    {
+        if (_data.Games.Count > 0) return;
+        _data.Games.AddRange(games);
+    }
     public IReadOnlyList<MissedFact> Missed => _data.Missed;
     public DailyStreak Streak => _data.Streak;
     public IReadOnlyList<CalibrationTally> Calibration =>

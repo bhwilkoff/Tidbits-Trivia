@@ -37,6 +37,14 @@ public partial class MainWindow : Window
             // TIDBITS_LIVE_HOST / _NIGHT_HOST / _LIVE_JOIN all live on the Live
             // section, so any of them implies that tab. A harness that asked to host
             // or join and silently got the Play screen would grade the Play screen.
+            // The QA banner, before anything else: if a later step throws, the device
+            // should still say what it was asked to test rather than looking idle.
+            if (Services.LaunchHooks.QaLabel is { } qa)
+            {
+                QaBannerText.Text = qa;
+                QaBanner.IsVisible = true;
+            }
+
             var startTab = Services.LaunchHooks.Tab
                 ?? (Services.LaunchHooks.LiveHost is not null
                     || Services.LaunchHooks.NightHost

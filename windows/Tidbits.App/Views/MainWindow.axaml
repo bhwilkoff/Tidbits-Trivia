@@ -33,6 +33,19 @@
             <ui:FANavigationViewItem Content="Tidbits Live" Tag="live"/>
         </ui:FANavigationView.MenuItems>
 
-        <ContentControl x:Name="ContentHost"/>
+        <Panel>
+            <ContentControl x:Name="ContentHost"/>
+            <!-- QA banner (TIDBITS_QA_LABEL). Collapsed unless the variable is set, so
+                 it is absent from every shipped build. It exists because six devices on
+                 a desk all running Tidbits look identical, and you cannot tell which one
+                 is testing what by looking at them. -->
+            <Border x:Name="QaBanner" IsVisible="False"
+                    VerticalAlignment="Top" HorizontalAlignment="Center"
+                    Background="#FF5C35" CornerRadius="0,0,10,10"
+                    Padding="16,6" Margin="0,0,0,0" ZIndex="9999">
+                <TextBlock x:Name="QaBannerText" Foreground="White"
+                           FontWeight="Bold" FontSize="13"/>
+            </Border>
+        </Panel>
     </ui:FANavigationView>
 </Window>

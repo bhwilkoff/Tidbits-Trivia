@@ -12,7 +12,14 @@ a re-run skips what already passed:
 
     python3 tools/night_matrix.py                 # continue the matrix
     python3 tools/night_matrix.py --only pixel    # one host
-    python3 tools/night_matrix.py --redo          # ignore the ledger
+    python3 tools/night_matrix.py --redo          # re-run even the passing hosts
+
+A full matrix is ~8 runs at ~8 minutes. That outlives a single background task, so
+drive it one host at a time and let the ledger carry the state between them:
+
+    for h in windows mac atv ipad iphone pixel firetv androidtv; do
+        python3 tools/night_matrix.py --only $h --redo
+    done
 """
 import argparse
 import json
@@ -82,9 +89,14 @@ def main():
     ap.add_argument("--settle", type=float, default=45)
     a = ap.parse_args()
 
-    done = {} if a.redo else ledger()
-    todo = [h for h in (a.only.split(",") if a.only else HOSTS)
-            if h in HOSTS and not (done.get(h, {}).get("ok"))]
+    # --redo re-RUNS; it must not discard what other hosts have already proven.
+    # `done = {}` did exactly that: `save(done)` writes the whole dict, so
+    # `--only windows --redo` would have wiped every other host's result the moment
+    # windows finished. A resumable ledger that silently forgets is worse than none.
+    done = ledger()
+    wanted = a.only.split(",") if a.only else HOSTS
+    todo = [h for h in wanted
+            if h in HOSTS and (a.redo or not done.get(h, {}).get("ok"))]
 
     if not todo:
         print("matrix complete — every host already passed:")

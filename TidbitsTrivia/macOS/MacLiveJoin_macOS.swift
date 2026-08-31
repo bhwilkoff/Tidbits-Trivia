@@ -46,7 +46,16 @@ struct MacLiveJoinView_macOS: View {
             guard let c = DebugHooks.openLiveJoin, !client.joined else { return }
             code = c
             team = DebugHooks.liveJoinName ?? "Mac"
-            await resolve()
+            // Retry the DRIVEN join. A person seeing "couldn't join" should be told
+            // once and left to decide; a hook fires the instant the process launches,
+            // which can be before the host's room has propagated — and a single
+            // attempt then strands the Mac on an error screen while every other
+            // device is in the room. Bounded, so a genuinely wrong code still fails.
+            for attempt in 0..<5 {
+                await resolve()
+                if client.joined { break }
+                if attempt < 4 { try? await Task.sleep(for: .seconds(3)) }
+            }
         }
     }
 

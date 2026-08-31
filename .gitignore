@@ -102,3 +102,6 @@ __pycache__/
 # against the shipped 128,638).
 windows/Tidbits.HeadlessTests/Fixtures/corpus.json
 windows/Tidbits.HeadlessTests/Fixtures/create-golden.txt
+
+# Local win-x64 publish for the Windows dev box (276MB, rebuildable)
+windows/publish/

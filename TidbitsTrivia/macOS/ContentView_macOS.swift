@@ -95,23 +95,26 @@ struct ContentView_macOS: View {
                 start(LaunchRequest(mode: ap.mode, category: ap.category, mixModes: DebugHooks.mixModes))
             }
             if !showParty, DebugHooks.openParty { showParty = true }
-            // TIDBITS_NIGHT_HOST=1 — host a Trivia Night from launch. iOS and tvOS
-            // both consumed this hook; macOS never did, so the Mac was the one
-            // platform that could be driven to host a Live EVENT (TIDBITS_LIVE_HOST)
-            // but not a NIGHT. A matrix run asked the Mac to host and photographed it
-            // sitting on its own Home screen — the app was fine, nothing had asked it.
-            if nightLaunch == nil, DebugHooks.openNightHost {
-                nightLaunch = NightLaunchRequest(plan: .quick, category: .named("mixed"))
+            // TIDBITS_NIGHT_HOST=1 — host a NETWORKED night from launch.
+            //
+            // On the Mac that is the LIVE COCKPIT, not NightContainer. The Mac's
+            // "Trivia Night" is a solo mode (`hostPaced: false`) that never opens a
+            // room, so wiring this hook to it produced a Mac playing by itself while
+            // a matrix run waited for a room that was never going to exist. The
+            // cockpit is the Mac's networked-host idiom — it is the surface with the
+            // join code, the QR, the standings and the projector.
+            //
+            // Trivia Night and Tidbits Live publish to the SAME live/{code} room, so a
+            // joiner cannot tell which opened it. That is what makes the hook mean the
+            // same thing on all six platforms: "host a night other devices can join."
+            if liveHost == nil, DebugHooks.openNightHost {
+                liveHost = await Self.quickNightEvent()
             }
             if versusBot == nil, let vb = DebugHooks.versusBot {
                 versusBot = vb == "house" ? .house(playerAccuracy: 0.6) : (BotProfile.presets.first { $0.id == vb } ?? .regular)
             }
             if liveHost == nil, ProcessInfo.processInfo.environment["TIDBITS_LIVE_HOST"] == "1" {
-                var ev = LiveEvent(name: "Friday Pub Quiz")
-                for (i, fmt) in [GameMode.classic, GameMode.oddOneOut].enumerated() {
-                    ev.rounds.append(await LiveEventStore.buildRound(format: fmt, category: .named(i == 0 ? "history" : "science"), count: 5))
-                }
-                liveHost = ev
+                liveHost = await Self.quickNightEvent(name: "Friday Pub Quiz")
             }
             if ProcessInfo.processInfo.environment["TIDBITS_TAB"] == "live" {
                 section = .live
@@ -212,6 +215,17 @@ struct ContentView_macOS: View {
                 launch = store.surpriseMe()
             }
         }
+    }
+
+    /// The two-round event both host hooks open. Shared so TIDBITS_NIGHT_HOST and
+    /// TIDBITS_LIVE_HOST cannot drift into hosting different things.
+    static func quickNightEvent(name: String = "Quick Night") async -> LiveEvent {
+        var ev = LiveEvent(name: name)
+        for (i, fmt) in [GameMode.classic, GameMode.oddOneOut].enumerated() {
+            ev.rounds.append(await LiveEventStore.buildRound(
+                format: fmt, category: .named(i == 0 ? "history" : "science"), count: 5))
+        }
+        return ev
     }
 }
 

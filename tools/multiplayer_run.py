@@ -272,7 +272,17 @@ def web_shot(code, path):
 def join(dev, code, outdir):
     """Put `dev` in the room. Returns the screenshot function for later."""
     name = f"QA-{dev}"
-    if dev in APPLE:
+    if dev == "mac":
+        # The Mac could HOST from the very first version of this harness and could
+        # never JOIN: `join()` had branches for APPLE, ANDROID and web, and the Mac
+        # silently fell through, returning a name without launching anything. It was
+        # listed as a player in every run and asked to do nothing, then reported as
+        # "device blind" when its screenshot showed the Home screen.
+        mac_launch({"TIDBITS_LIVE_AUTOJOIN": "1", "TIDBITS_LIVE_CODE": code,
+                    "TIDBITS_LIVE_JOIN": code, "TIDBITS_SKIP_ONBOARD": "1",
+                    "TIDBITS_LIVE_NAME": name,
+                    "TIDBITS_QA_LABEL": f"join {code} {name}"})
+    elif dev in APPLE:
         # TIDBITS_LIVE_NAME, not TIDBITS_PLAYER_NAME: the latter was never read by
         # anything. Every Apple device joined as its hard-coded default, so the iPhone
         # and the iPad both showed up as "iOS Tester" — two rows with one name, and a
@@ -341,6 +351,25 @@ def shoot(dev, path, code=None):
     if dev == "web":
         return web_shot(code, path)
     return False
+
+
+def code_on_screen(text, tok):
+    """The 4-char room code the host is actually showing, confirmed against RTDB.
+
+    Every host surface prints its code big — it has to, since that is how people
+    join. Candidates are checked against the backend before being believed: an OCR
+    of a trivia screen is full of 4-character words, and following the wrong one
+    would produce a confident run against a room nobody is in.
+    """
+    seen = set()
+    for w in re.findall(r"\b[A-Z0-9]{4}\b", (text or "").upper()):
+        if w in seen:
+            continue
+        seen.add(w)
+        m = room(w, tok, "/meta")
+        if m and not m.get("_error"):
+            return w
+    return None
 
 
 # ------------------------------------------------------------------- main
@@ -441,6 +470,13 @@ def _run_room(a, code, players, out, g, held):
             "--ez", "tidbits_skip_onboard", "true", "--ez", "tidbits_night_host", "true")
 
     # 2. The room must exist on the WIRE before anyone is asked to join it.
+    #
+    # The code may not be the one we asked for. Android's night host GENERATES its
+    # own — the Pixel opened a perfectly good lobby showing "SCAN TO JOIN XLT6" while
+    # this harness watched live/NX01 and reported "the host never opened it". So when
+    # the pinned code does not appear, READ the code off the host's own screen, which
+    # is exactly what a real host does before telling anyone. That also removes a
+    # per-platform hook the product does not need to grow.
     tok = anon_token()
     deadline, meta = time.time() + 90, None
     while time.time() < deadline:
@@ -452,15 +488,25 @@ def _run_room(a, code, players, out, g, held):
             f"live/{code}/meta = {json.dumps(meta)[:120]}" if meta
             else f"live/{code}/meta never appeared after 90s — host never opened it")
     if not meta or meta.get("_error"):
-        # "The host never opened the room" is a symptom, not a diagnosis. The
-        # host's own screen says whether it is asleep, on the wrong surface, or
-        # sitting on a setup step waiting for a press.
+        # "The host never opened the room" is a symptom, not a diagnosis. The host's
+        # own screen says whether it is asleep, on the wrong surface, sitting on a
+        # setup step waiting for a press — or hosting under a code of its own.
         p = out / f"host-{a.host}-FAILED.png"
+        t = ""
         if shoot(a.host, p, code):
             t = frame_text(ocr([(a.host, p)]).get(p.name, {}))
             print(f"  host glass: «{t[:220]}»")
             g.report["host_glass_on_failure"] = t[:400]
-        return g.finish()
+
+        found = code_on_screen(t, tok)
+        if found:
+            print(f"  host is hosting {found}, not {code} — following its code")
+            g.grade("host_code_read_from_screen", True,
+                    f"asked for {code}; the host opened {found} and it is live")
+            code = found
+            meta = room(code, tok, "/meta")
+        else:
+            return g.finish()
 
     # 3. Everyone joins.
     #

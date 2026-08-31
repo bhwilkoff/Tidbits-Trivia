@@ -95,6 +95,14 @@ struct ContentView_macOS: View {
                 start(LaunchRequest(mode: ap.mode, category: ap.category, mixModes: DebugHooks.mixModes))
             }
             if !showParty, DebugHooks.openParty { showParty = true }
+            // TIDBITS_NIGHT_HOST=1 — host a Trivia Night from launch. iOS and tvOS
+            // both consumed this hook; macOS never did, so the Mac was the one
+            // platform that could be driven to host a Live EVENT (TIDBITS_LIVE_HOST)
+            // but not a NIGHT. A matrix run asked the Mac to host and photographed it
+            // sitting on its own Home screen — the app was fine, nothing had asked it.
+            if nightLaunch == nil, DebugHooks.openNightHost {
+                nightLaunch = NightLaunchRequest(plan: .quick, category: .named("mixed"))
+            }
             if versusBot == nil, let vb = DebugHooks.versusBot {
                 versusBot = vb == "house" ? .house(playerAccuracy: 0.6) : (BotProfile.presets.first { $0.id == vb } ?? .regular)
             }

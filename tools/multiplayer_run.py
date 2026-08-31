@@ -28,6 +28,7 @@ import urllib.request
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import devlease  # noqa: E402
 import devreset  # noqa: E402
 import macapp  # noqa: E402
 import winbox  # noqa: E402
@@ -375,11 +376,41 @@ def main():
     g = Grader(out, host=a.host, code=code, players=players)
     print(f"room {code} — host={a.host} players={players}\n  artifacts: {out}")
 
-    # 0. Put every device BACK first. Nothing used to, so a run launched on top of
-    # whatever the last one left — a device still in the previous room would show up
-    # on the wire and be counted as having joined THIS one.
+    # 0a. LEASE every device first. Another agent session was driving these same TVs
+    # from a different repo: each of us kept finding the other's app in front, each
+    # force-stopped the other's app as part of its own reset, and each diagnosed it as
+    # a bug in its own product. A contended device is SKIPPED and reported, never
+    # stolen — a run that honestly did not cover a device beats one that reports a
+    # tug-of-war as a Tidbits failure.
+    wanted = sorted(set(players + [a.host]))
+    held = []
+    for d in wanted:
+        ok, holder = devlease.try_lease(d, task=f"{a.game} {code} (host={a.host})")
+        if ok:
+            held.append(d)
+        else:
+            print(f"  [skip] {d} is leased by {holder}")
+            g.grade(f"lease.{d}", False, f"not covered this run — leased by {holder}")
+    if a.host not in held:
+        g.grade("host_leased", False, f"cannot run: the host {a.host} is in use elsewhere")
+        return g.finish()
+    players = [p for p in players if p in held]
+
+    try:
+        return _run_room(a, code, players, out, g, held)
+    finally:
+        for d in held:
+            devlease.release(d)
+
+
+def _run_room(a, code, players, out, g, held):
+    import time                                   # noqa: F811  (kept local + explicit)
+
+    # 0b. Put every device BACK. Nothing used to, so a run launched on top of whatever
+    # the last one left — a device still in the previous room would show up on the wire
+    # and be counted as having joined THIS one.
     print("  resetting the bench")
-    devreset.reset_all(sorted(set(players + [a.host])))
+    devreset.reset_all(players + [a.host])
     time.sleep(2)
 
     # 1. Host. The Mac hosts Tidbits Live; the Apple TV hosts Trivia Night.
@@ -455,6 +486,8 @@ def main():
         time.sleep(min(20, max(1, settle_end - time.time())))
         if a.host == "windows" or "windows" in players:
             winbox.keep_awake()
+        for d in held:
+            devlease.renew(d)          # a long run must not expire mid-flight
 
     # 4. The wire says how many really landed.
     #

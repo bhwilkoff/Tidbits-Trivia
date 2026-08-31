@@ -46,8 +46,22 @@ def _path(dev):
     return DIR / f"{dev}.json"
 
 
+def _alive(pid):
+    """Is that process still running? Only meaningful for a lease taken on THIS
+    machine, which is the only kind this bench has."""
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True                     # exists, owned by someone else
+    except (OSError, TypeError):
+        return True                     # unknown: assume held, never steal on a guess
+    return True
+
+
 def read(dev):
-    """The current lease, or None when free/expired."""
+    """The current lease, or None when free / expired / held by a dead process."""
     p = _path(dev)
     try:
         d = json.loads(p.read_text())
@@ -55,6 +69,14 @@ def read(dev):
         return None
     if d.get("expires", 0) < time.time():
         return None                     # expired: treated as free, not stolen
+    # A killed session must not hold the bench for the rest of its TTL. A sweep died
+    # to a timeout without releasing, and the next sweep was refused for four more
+    # minutes with "this sweep covers NOTHING" — correct, and needlessly so.
+    #
+    # Only ever reclaimed from a DEAD pid, never a slow one: the check is "does this
+    # process still exist", not "has it taken too long".
+    if not _alive(d.get("pid")):
+        return None
     return d
 
 

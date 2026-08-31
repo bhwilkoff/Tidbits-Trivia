@@ -47,6 +47,14 @@ def _run(cmd, timeout=60, env=None):
         return False, str(ex)[:200]
 
 
+def _pkill(cmd):
+    """pkill exits 1 when NOTHING matched, which is the state a reset wants. Treating
+    that as a failure made "the app was not running" indistinguishable from "the app
+    could not be stopped" — and a reset that cries wolf is one people stop reading."""
+    ok, out = _run(cmd)
+    return (True, "not running") if not ok and not out else (ok, out)
+
+
 def reset(dev):
     """Stop the app on `dev`. Returns (ok, detail).
 
@@ -56,22 +64,36 @@ def reset(dev):
     screen is a running process, not saved data.
     """
     if dev in APPLE:
-        # terminate, not "launch --terminate-existing": a reset must be able to
-        # leave a device with NOTHING running, or "reset then look" just shows the
-        # app again and proves nothing.
-        return _run(["xcrun", "devicectl", "device", "process", "terminate",
-                     "--device", APPLE[dev], "--bundle-identifier", BUNDLE],
-                    env={"DEVELOPER_DIR": DEVELOPER_DIR})
+        # devicectl terminates by PID, not by bundle id — it takes --pid and nothing
+        # else, so the bundle has to be resolved to a running process first. A reset
+        # that cannot express "stop this app" would have to launch it instead, and
+        # "reset then look" would just show the app again and prove nothing.
+        ok, out = _run(["xcrun", "devicectl", "device", "info", "processes",
+                        "--device", APPLE[dev]],
+                       env={"DEVELOPER_DIR": DEVELOPER_DIR}, timeout=90)
+        if not ok:
+            return False, out[:200]
+        pids = [line.split()[0] for line in out.splitlines()
+                if BUNDLE in line and line.split() and line.split()[0].isdigit()]
+        if not pids:
+            return True, "not running"          # already the state we wanted
+        for pid in pids:
+            ok, out = _run(["xcrun", "devicectl", "device", "process", "terminate",
+                            "--device", APPLE[dev], "--pid", pid],
+                           env={"DEVELOPER_DIR": DEVELOPER_DIR})
+            if not ok:
+                return False, out[:200]
+        return True, f"terminated {len(pids)}"
     if dev in ANDROID:
         return _run([ADB, "-s", ANDROID[dev], "shell", "am", "force-stop", APKG])
     if dev == "mac":
-        return _run(["pkill", "-x", "TidbitsTrivia"])
+        return _pkill(["pkill", "-x", "TidbitsTrivia"])
     if dev == "windows":
         import winbox
         winbox.quit_app()
         return True, "stopped"
     if dev == "web":
-        return _run(["pkill", "-f", "tidbits-cdp-profile"])
+        return _pkill(["pkill", "-f", "tidbits-cdp-profile"])
     return False, f"unknown device {dev!r}"
 
 

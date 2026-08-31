@@ -162,6 +162,21 @@ def android_launch(dev, code, name):
     return "Error" not in r.stdout + r.stderr
 
 
+def android_top(dev):
+    """Which package is actually in FRONT. Returns "" when it cannot be read.
+
+    A capture is only evidence about this app if this app is the one on screen. The
+    Fire TV joined a room correctly on the wire and its screenshot was a film
+    catalogue — some other app had come forward — and all the harness could say was
+    that the expected words were missing, which reads like a Tidbits bug. Naming the
+    top package turns "wrong text" into "the top app is com.amazon.tv.launcher".
+    """
+    r = adb(dev, "shell", "dumpsys", "window", "|", "grep", "-E", "mCurrentFocus")
+    out = (r.stdout or "") + (r.stderr or "")
+    m = re.search(r"([A-Za-z0-9_.]+)/[A-Za-z0-9_.]+", out)
+    return m.group(1) if m else ""
+
+
 def android_shot(dev, path):
     r = adb(dev, "exec-out", "screencap", "-p", binary=True, timeout=90)
     if not r.stdout:
@@ -267,6 +282,22 @@ def shoot(dev, path, code=None):
     if dev in APPLE:
         return apple_shot(dev, path)
     if dev in ANDROID:
+        top = android_top(dev)
+        if top and not top.startswith("com.tidbitstrivia"):
+            # Another app is in front. On this bench that is usually the TV's own
+            # launcher or a media app waking up — the Fire TV joined a room correctly
+            # on the wire while com.archivewatch.app sat on the glass.
+            #
+            # Bring Tidbits forward ONCE and say so. Recovering silently would hide a
+            # real background-crash, which looks identical from the outside; recovering
+            # loudly keeps the run useful without pretending nothing happened.
+            print(f"  [{dev}] foreground was {top}, not Tidbits — re-foregrounding")
+            adb(dev, "shell", "monkey", "-p", APKG, "-c",
+                "android.intent.category.LAUNCHER", "1")
+            time.sleep(6)
+            again = android_top(dev)
+            if again and not again.startswith("com.tidbitstrivia"):
+                print(f"  [{dev}] STILL {again} — the app will not stay in front")
         return android_shot(dev, path)
     if dev == "mac":
         return mac_shot(path)

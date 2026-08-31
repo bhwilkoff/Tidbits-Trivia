@@ -39,8 +39,15 @@ struct TVJoinGameContainer: View {
                 // one on a fresh install — so the autojoin stopped dead on
                 // "Enter a team name" and the Apple TV silently never joined.
                 // iOS supplies a name here for exactly the same reason.
-                if name.trimmingCharacters(in: .whitespaces).isEmpty {
-                    name = DebugHooks.liveJoinName ?? "Apple TV"
+                // The HOOK wins over the remembered name. Preferring the remembered
+                // one meant a TV that had ever joined as "Apple TV" ignored
+                // TIDBITS_LIVE_NAME forever, so it kept showing up in the roster under
+                // a name the run had not asked for — indistinguishable from a stale
+                // joiner left over from an earlier run.
+                if let asked = DebugHooks.liveJoinName {
+                    name = asked
+                } else if name.trimmingCharacters(in: .whitespaces).isEmpty {
+                    name = "Apple TV"
                 }
                 await resolve()
             }

@@ -44,6 +44,8 @@ struct LiveJoinView: View {
                 // cannot tell apart, and a join count that read "3 of 4 landed" when
                 // all four had. Android's twin (tidbits_live_name) already took a name.
                 code = initialCode
+                // Same rule as tvOS: the hook wins over whatever this device joined as
+                // last time, or a device silently keeps an old identity.
                 team = DebugHooks.liveJoinName ?? "iOS Tester"
                 await resolve()
             }

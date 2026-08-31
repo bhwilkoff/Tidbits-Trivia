@@ -306,6 +306,14 @@ def web_shot(code, path):
 def join(dev, code, outdir):
     """Put `dev` in the room. Returns the screenshot function for later."""
     name = f"QA-{dev}"
+    if dev == "atv":
+        # Wake it FIRST. A launch into a sleeping Apple TV is refused outright —
+        # devicectl returns "System is asleep - foreground app launch forbidden" — and
+        # the harness only ever woke the TV when it was the HOST. As a joiner it was
+        # asked to launch into a sleeping box in every run, reported honestly as "the
+        # app is NOT running", and read like a tvOS defect.
+        wake_tv()
+
     if dev == "windows":
         # Windows could HOST and could not JOIN through this harness: `join()` had
         # branches for mac, APPLE, ANDROID and web, and Windows fell straight through.
@@ -389,6 +397,14 @@ def shoot(dev, path, code=None):
             if again and not again.startswith("com.tidbitstrivia"):
                 print(f"  [{dev}] STILL {again} — the app will not stay in front")
         return android_shot(dev, path)
+    if dev == "atv":
+        # Wake it FIRST. A launch into a sleeping Apple TV is refused outright —
+        # devicectl returns "System is asleep - foreground app launch forbidden" — and
+        # the harness only ever woke the TV when it was the HOST. As a joiner it was
+        # asked to launch into a sleeping box in every run, reported honestly as "the
+        # app is NOT running", and read like a tvOS defect.
+        wake_tv()
+
     if dev == "windows":
         # Windows could HOST and could not JOIN through this harness: `join()` had
         # branches for mac, APPLE, ANDROID and web, and Windows fell straight through.

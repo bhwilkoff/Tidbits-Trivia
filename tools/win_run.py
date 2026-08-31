@@ -41,8 +41,14 @@ SCENARIOS = {
                     # Calibrated against a real capture: a fresh profile shows
                     # "Compete against your past self", not the games list the
                     # other platforms' copy uses.
-                    {"expect_any": r"Compete against your past self|Your games|"
-                                   r"Personal bests|No games yet|DAY STREAK"}),
+                    # Calibrated against real captures. "Compete against your past
+                    # self" and "No games yet …" are LIGHT GREY on white and the OCR
+                    # does not read them reliably off this display, so an assertion
+                    # resting on them alone fails on a screen that rendered perfectly.
+                    # "Playing as Player" is high-contrast and Records-specific — the
+                    # nav word "Records" is on every screen and would pass everywhere.
+                    {"expect_any": r"Playing as Player|Compete against your past self|"
+                                   r"Your games|Personal bests|No games yet|DAY STREAK"}),
     "create":      (dict(TIDBITS_TAB="create"),
                     {"expect_any": r"Create|quiz|subject|Generate"}),
     "leaderboard": (dict(TIDBITS_TAB="leaderboard"),
@@ -77,10 +83,28 @@ def crop_text(doc, rect):
         # being discarded as "outside the window" while the wallpaper was kept.
         cy = 1.0 - (it.get("y", 0) + it.get("h", 0) / 2)
         return x <= cx <= x + w and y <= cy <= y + h
+    def rebase(it):
+        """Re-express the box in WINDOW coordinates, not screen ones.
+
+        The clip detector asks whether text starts at the frame gutter. Measured
+        against the SCREEN that is wrong for this app: the window is now exactly
+        screen-width and centred, so its own left gutter coincides with the screen's
+        and the nav's "Play" reads as x=-0.0015 — flagged as clipped on a frame where
+        nothing is clipped. Clipping is a property of the window's layout, so the
+        window is what it has to be measured against.
+        """
+        r = dict(it)
+        r["x"] = (it.get("x", 0) - x) / w
+        r["w"] = it.get("w", 0) / w
+        r["y"] = (it.get("y", 0) - (1.0 - (y + h))) / h
+        r["h"] = it.get("h", 0) / h
+        return r
+
     out = dict(doc)
     for key in ("allText", "topRegion", "centerRegion", "bottomRegion"):
         if isinstance(doc.get(key), list):
-            out[key] = [it for it in doc[key] if isinstance(it, dict) and inside(it)]
+            out[key] = [rebase(it) for it in doc[key]
+                        if isinstance(it, dict) and inside(it)]
     return out
 
 
@@ -91,7 +115,7 @@ def run(name, outdir, g):
     # Say what this device is testing, on the device. Six machines on a desk all
     # running Tidbits look identical, and a scenario left over from the previous run
     # is indistinguishable from the current one by eye.
-    env.setdefault("TIDBITS_QA_LABEL", f"windows · {name}")
+    env.setdefault("TIDBITS_QA_LABEL", f"windows - {name}")
 
     # Every step here is a scheduled-task round trip of ~35s, so a silent scenario
     # looks exactly like a hung one. It is: a six-scenario sweep spent thirteen

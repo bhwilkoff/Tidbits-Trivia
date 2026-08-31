@@ -12,6 +12,40 @@ Companion: `WINDOWS-DESIGN.md` (binding spec), `WINDOWS-PLAYBOOK.md`
 
 ---
 
+## Real-hardware audit (2026-08-31) — a Windows machine joined the bench
+
+The Windows app is now driven on a real Windows 10 Pro box over SSH
+(`docs/WINDOWS-DEVBOX-SETUP.md`), not only through headless renders. Iteration
+moved there; **`windows-latest` CI is still the gate** (Decision 045 unchanged).
+
+Three parity gaps that every previous audit missed, because each needed either a
+real machine or a measurement rather than a checklist:
+
+- **The paywall sold two auto-renewing subscriptions without disclosing renewal**,
+  and carried no Terms of Use or Privacy Policy link anywhere in the binary. Store
+  Policy 10.8.6 / 10.5.1. Apple's equivalent block exists because of a real 2.1(b)
+  rejection. Fixed + gated (`ClubPaywallTests`).
+- **The window opened wider than the display.** It asks for 1180x760, the Mac's
+  numbers — but AppKit shrinks a window that does not fit and Avalonia does not.
+  On a 1366x768 laptop, the most common Windows 10 resolution, the bottom of every
+  screen was cut off. Fixed + gated (`WindowFitTest`).
+- **Create had no topic suggestions** ("Need a spark?"). An empty topic box is a
+  blank-page problem and this is the one screen where the player supplies the
+  subject.
+
+Confirmed AT parity by reading both codebases (`tools/mac_win_parity.py`): all 19
+game modes, Records (review list, drill-ins, badges, calibration), Settings, the
+Live cockpit, the Daily archive, Wikipedia/CC BY-SA attribution.
+
+**Windows hosts Tidbits Live and every platform joins it** — verified on the wire
+(RTDB `live/{code}`) and the glass (a screenshot per device): iPad, iPhone, Pixel,
+Fire TV, Android TV and web all on the same question. Windows also JOINS a
+Mac-hosted room, a direction nothing could previously ask for — every route into
+`StartHosting`/join was a Click handler, so `tools/hook_coverage.py` counted 12
+surfaces the harness could not reach at all. Now 0.
+
+---
+
 ## Status (2026-07-18) — SHIPPED to the Microsoft Store (in certification)
 
 **Windows is a fully supported channel (Decision 046).** First Store submission is

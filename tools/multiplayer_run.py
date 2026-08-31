@@ -180,7 +180,7 @@ def android_launch(dev, code, name):
     r = adb(dev, "shell", "am", "start", "-n", f"{APKG}/{ACTIVITY}",
             "--ez", "tidbits_skip_onboard", "true",
             "--es", "tidbits_live_join", code, "--es", "tidbits_live_name", name,
-            "--es", "tidbits_qa_label", f"join · {code} · {name}")
+            "--es", "tidbits_qa_label", f"join {code} {name}")
     return "Error" not in r.stdout + r.stderr
 
 
@@ -280,7 +280,7 @@ def join(dev, code, outdir):
         apple_launch(dev, {"TIDBITS_LIVE_AUTOJOIN": "1", "TIDBITS_LIVE_CODE": code,
                            "TIDBITS_LIVE_JOIN": code, "TIDBITS_SKIP_ONBOARD": "1",
                            "TIDBITS_LIVE_NAME": name,
-                           "TIDBITS_QA_LABEL": f"join · {code} · {name}"})
+                           "TIDBITS_QA_LABEL": f"join {code} {name}"})
     elif dev in ANDROID:
         android_launch(dev, code, name)
     elif dev == "web":
@@ -418,7 +418,7 @@ def _run_room(a, code, players, out, g, held):
     # joiner does not care which one opened it — that is the whole point of the
     # unified backend and it is what makes any-host / any-joiner possible.
     host_env = {"TIDBITS_SKIP_ONBOARD": "1", "TIDBITS_LIVE_CODE": code,
-                "TIDBITS_QA_LABEL": f"HOST · {a.game} · {code}",
+                "TIDBITS_QA_LABEL": f"HOST {a.game} {code}",
                 ("TIDBITS_NIGHT_HOST" if a.game == "night" else "TIDBITS_LIVE_HOST"): "1"}
     if a.host == "windows":
         # TIDBITS_LIVE_HOST takes a PRESET NAME on Windows, not a flag: every route

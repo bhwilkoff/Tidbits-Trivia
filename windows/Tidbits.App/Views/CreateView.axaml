@@ -22,6 +22,9 @@
                 <Button x:Name="SaveBtn" Content="Save this set" Click="OnSaveSet" IsVisible="False"
                         Padding="18,10" FontWeight="SemiBold" HorizontalAlignment="Left"/>
 
+                <TextBlock Text="Need a spark?" Classes="section-header" Margin="0,14,0,0"/>
+                <WrapPanel x:Name="SparkPanel" Orientation="Horizontal"/>
+
                 <TextBlock x:Name="SavedHeader" Text="Saved sets" Classes="section-header"
                            Margin="0,14,0,0" IsVisible="False"/>
                 <StackPanel x:Name="SavedPanel" Spacing="8"/>

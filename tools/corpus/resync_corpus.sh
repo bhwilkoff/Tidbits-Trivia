@@ -60,7 +60,6 @@ diff "$G/apple.txt" "$G/web.txt" >/dev/null && echo "   PASS: apple == web daily
 [ -s "$G/android.txt" ] || cp "$G/apple.txt" "$G/android.txt"
 
 echo "--- 4. refresh Windows test fixtures"
-python3 -c "import json; open('windows/Tidbits.HeadlessTests/Fixtures/corpus-ids.txt','w').write('\n'.join(q[0] for q in json.load(open('assets/corpus.json'))['questions'])+'\n')"
 cp "$G/apple.txt" windows/Tidbits.HeadlessTests/Fixtures/daily-golden.txt
 
 echo "--- 5. assert every question file is identical across platforms"

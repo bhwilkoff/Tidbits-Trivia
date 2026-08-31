@@ -269,6 +269,103 @@ Start-Sleep -Seconds {wait}
     return None
 
 
+def window_rect():
+    """The app window's bounds as normalised (x, y, w, h) of the screen, or None.
+
+    Filled in by `screenshot_series`, because the rect can only be read from the
+    INTERACTIVE session. Asked over ssh, `MainWindowHandle` comes back as 0 — a
+    session-0 process cannot see a session-1 window handle, the same reason a
+    session-0 screenshot photographs a phantom 1024x768 desktop. It does not error;
+    it reports zero, which reads as "the app has no window".
+
+    Why scope to the window at all: the capture is deliberately the WHOLE desktop
+    (a window-region grab on the Mac kept photographing whatever was in front, and
+    what the machine is showing is the evidence). But grading the whole desktop
+    means grading the owner's desktop — the first clean sweep failed
+    `no_clipped_text` on "Roblox Player", a truncated ICON LABEL behind the app. A
+    defect reported against someone's desktop shortcut is worse than no check.
+
+    So: photograph everything, assert inside the window.
+    """
+    return _LAST_RECT
+
+
+_LAST_RECT = None
+
+
+def screenshot_series(local_paths, gap=6, prefix="frame"):
+    """Capture several frames over time in ONE console round trip.
+
+    Each `run_in_console` costs ~35s of scheduled-task ceremony (register, start,
+    poll at 2s granularity, unregister) and the capture itself is milliseconds. So
+    N separate screenshots cost N x 35s of overhead to photograph something that
+    took N x `gap` seconds to happen. Two frames per scenario is what made a
+    six-scenario sweep take thirteen silent minutes and read as a hang.
+
+    Batching also makes the frames mean more: the gaps are timed ON THE BOX by one
+    script, instead of being whatever the network and the task scheduler happened
+    to add between separate calls.
+    """
+    keep_awake()
+    if session_locked():
+        return [], ("the console session is LOCKED — a capture here would be the "
+                    "lock screen, not the app. Unlock the machine to see the UI.")
+    n = len(local_paths)
+    rd = remote_dir()
+    run_in_console(f"""
+Add-Type -AssemblyName System.Windows.Forms, System.Drawing
+$b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+# The window rect, read HERE because only the interactive session can see it.
+Add-Type @'
+using System;using System.Runtime.InteropServices;
+public struct TbR {{ public int L,T,Rr,B; }}
+public class TbW {{
+  [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out TbR r);
+}}
+'@
+$proc = Get-Process Tidbits.App -ErrorAction SilentlyContinue |
+        Where-Object {{ $_.MainWindowHandle -ne 0 }} | Select-Object -First 1
+if ($proc) {{
+  $wr = New-Object TbR
+  [void][TbW]::GetWindowRect($proc.MainWindowHandle, [ref]$wr)
+  "$($wr.L) $($wr.T) $($wr.Rr) $($wr.B) $($b.Width) $($b.Height)" |
+    Out-File -Encoding ascii '{rd}/_rect.txt'
+}} else {{
+  Remove-Item '{rd}/_rect.txt' -ErrorAction SilentlyContinue
+}}
+for ($i = 0; $i -lt {n}; $i++) {{
+  if ($i -gt 0) {{ Start-Sleep -Seconds {gap} }}
+  $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
+  $g = [System.Drawing.Graphics]::FromImage($bmp)
+  $g.CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
+  $bmp.Save("{rd}/{prefix}-$i.png")
+  $g.Dispose(); $bmp.Dispose()
+}}
+"$($b.Width)x$($b.Height)" | Out-File -Encoding ascii '{rd}/_shot.txt'
+""", name="TidbitsShots", timeout=120 + n * (gap + 4))
+    r = ps(f"Get-Content '{rd}/_shot.txt','{rd}/_rect.txt' -ErrorAction SilentlyContinue",
+           timeout=60)
+    lines = [l.strip() for l in _clean(r.stdout).splitlines() if l.strip()]
+    size = lines[0] if lines else "?"
+    global _LAST_RECT
+    _LAST_RECT = None
+    if len(lines) > 1:
+        try:
+            l, t, rr, b, sw, sh = (int(v) for v in lines[1].split())
+            if sw > 0 and sh > 0 and rr > l and b > t:
+                _LAST_RECT = (l / sw, t / sh, (rr - l) / sw, (b - t) / sh)
+        except ValueError:
+            pass
+    got = []
+    for i, lp in enumerate(local_paths):
+        rc = subprocess.run(["scp", "-i", KEY] + SSH_OPTS +
+                            [f"{HOST}:{rd}/{prefix}-{i}.png", str(lp)],
+                            capture_output=True, text=True, timeout=120)
+        if rc.returncode == 0 and Path(lp).exists():
+            got.append(lp)
+    return got, size
+
+
 def screenshot(local_path, remote_name="tidbits-shot.png"):
     """Photograph the desktop and bring the PNG back.
 

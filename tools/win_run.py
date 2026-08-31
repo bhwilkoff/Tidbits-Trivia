@@ -58,11 +58,38 @@ SCENARIOS = {
 }
 
 
+def crop_text(doc, rect):
+    """Keep only OCR items whose box lies inside the app window.
+
+    The desktop icons live at x < 0.06 and the taskbar at the bottom; the app is a
+    centred window. Without this, `no_clipped_text` reported "Roblox Player" — a
+    truncated desktop shortcut label — as a Tidbits defect.
+    """
+    x, y, w, h = rect
+    def inside(it):
+        cx = it.get("x", 0) + it.get("w", 0) / 2
+        cy = it.get("y", 0) + it.get("h", 0) / 2
+        return x <= cx <= x + w and y <= cy <= y + h
+    out = dict(doc)
+    for key in ("allText", "topRegion", "centerRegion", "bottomRegion"):
+        if isinstance(doc.get(key), list):
+            out[key] = [it for it in doc[key] if isinstance(it, dict) and inside(it)]
+    return out
+
+
 def run(name, outdir, g):
     env, spec = SCENARIOS[name]
     env = dict(env)
     env.setdefault("TIDBITS_SKIP_ONBOARD", "1")
 
+    # Every step here is a scheduled-task round trip of ~35s, so a silent scenario
+    # looks exactly like a hung one. It is: a six-scenario sweep spent thirteen
+    # minutes saying nothing and I killed it twice believing it was stuck.
+    t0 = time.time()
+    def step(msg):
+        print(f"    {time.time() - t0:5.0f}s  {msg}", flush=True)
+
+    step("launching")
     pid = winbox.launch(env, wait=12)
     if pid is None:
         g.grade(f"{name}.launched", False, "the app exited on launch or never started")
@@ -70,15 +97,14 @@ def run(name, outdir, g):
 
     d = outdir / name
     d.mkdir(parents=True, exist_ok=True)
-    shots = []
-    # Two frames: the first paint, then content that arrives over the network.
-    for i, extra in enumerate((0, 6)):
-        if extra:
-            time.sleep(extra)
-        p = d / f"{i}.png"
-        ok, _ = winbox.screenshot(p, remote_name=f"shot-{name}-{i}.png")
-        if ok and p.exists():
-            shots.append((i, p))
+    # Two frames in ONE round trip: the first paint, then content that arrives over
+    # the network. The 6s gap is timed on the box rather than by this loop.
+    step("capturing 2 frames")
+    paths, size = winbox.screenshot_series([d / "0.png", d / "1.png"], gap=6,
+                                           prefix=f"shot-{name}")
+    shots = [(i, Path(p)) for i, p in enumerate(paths)]
+    rect = winbox.window_rect()      # read during the capture, in the console session
+    step(f"captured {len(shots)} frame(s) at {size}; window {rect}")
     winbox.quit_app()
 
     if not shots:
@@ -89,6 +115,14 @@ def run(name, outdir, g):
     if OCR_FAILED in texts:
         g.grade(f"{name}.ocr_available", False, texts[OCR_FAILED][:140])
         return
+
+    if rect:
+        texts = {k: crop_text(v, rect) for k, v in texts.items()}
+    else:
+        # Say so rather than silently grading the desktop as if it were the app.
+        g.grade(f"{name}.window_located", False,
+                "could not read the app window rect — assertions below cover the "
+                "WHOLE desktop, including the owner's icons and taskbar")
 
     lines = max((len(texts.get(p.name, {}).get("allText", [])) for _, p in shots), default=0)
     if lines < 4:

@@ -20,6 +20,7 @@ public partial class CreateView : UserControl
     public CreateView()
     {
         InitializeComponent();
+        BuildSparks();
         // Migrate off the pre-contract saved-sets format (QUIZ-CONTRACT §7) before
         // listing, so a returning player's sets appear in the new shelf rather than
         // silently vanishing. Safe here: the sources are already loaded by the time
@@ -215,5 +216,35 @@ public partial class CreateView : UserControl
     {
         StatusText.Text = text;
         StatusText.IsVisible = true;
+    }
+
+    /// macOS `CreateView_macOS` parity — the topic suggestions. An empty text box asking
+    /// "what do you want to learn?" is a blank-page problem, and this screen is the one place
+    /// in the app where the player has to supply the subject themselves. The Mac opened that
+    /// door and Windows left it shut.
+    ///
+    /// Same six subjects, in the same order, as the Mac list: they are deliberately spread
+    /// across science, history, art, nature, sport and a person, so the row reads as "anything
+    /// at all" rather than as a category menu.
+    private static readonly string[] Sparks =
+        { "The Solar System", "Ancient Rome", "Jazz", "Volcanoes", "The Olympics", "Marie Curie" };
+
+    private void BuildSparks()
+    {
+        foreach (var s in Sparks)
+        {
+            var btn = new Button
+            {
+                Content = s,
+                Padding = new Avalonia.Thickness(14, 9),
+                Margin = new Avalonia.Thickness(0, 0, 8, 8),
+                CornerRadius = new Avalonia.CornerRadius(20),
+            };
+            // Fills the box AND generates, exactly as the Mac does — a suggestion that only
+            // types itself in leaves the player one unexplained step from the thing they asked
+            // for.
+            btn.Click += (_, _) => { TopicBox.Text = s; OnGenerate(btn, new Avalonia.Interactivity.RoutedEventArgs()); };
+            SparkPanel.Children.Add(btn);
+        }
     }
 }

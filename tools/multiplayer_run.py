@@ -628,6 +628,11 @@ def _run_room(a, code, players, out, g, held):
         # nothing — a harness that asked for a host must never grade the setup screen.
         winbox.launch(dict(host_env, TIDBITS_LIVE_HOST="Quick Night",
                            TIDBITS_TAB="live"), wait=16)
+    elif a.host == "web":
+        # Already hosting — web_host() opened the room and read its code from the DOM
+        # before this chain. Falling through to the `else` sent a web host into the
+        # ANDROID launch path and died on KeyError: 'web'.
+        pass
     elif a.host == "mac":
         mac_launch(host_env)
     elif a.host in APPLE:

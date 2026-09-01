@@ -13,6 +13,16 @@
 	     clips (read), and CSV results export (write). Read-write covers both. -->
 	<key>com.apple.security.files.user-selected.read-write</key>
 	<true/>
+	<!-- App-scoped SECURITY bookmarks. Without this, a sandboxed app's
+	     `url.bookmarkData(options: .withSecurityScope)` THROWS, and the audio /
+	     video round stored an empty Data for every clip the host picked: the
+	     round looked complete, the "Play this clip" button appeared, and nothing
+	     ever played. That is the whole of "audio and video rounds that don't do
+	     anything" (owner, 2026-09-01). user-selected.read-write alone only grants
+	     access for the CURRENT launch — it cannot survive a save/reopen, which is
+	     exactly what a saved event needs. -->
+	<key>com.apple.security.files.bookmarks.app-scope</key>
+	<true/>
 	<!-- Same Game Center capability the iOS/tvOS slices use (shared App ID). -->
 	<key>com.apple.developer.game-center</key>
 	<true/>

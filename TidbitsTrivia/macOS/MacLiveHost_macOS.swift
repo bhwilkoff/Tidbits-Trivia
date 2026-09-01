@@ -6,13 +6,6 @@ import UniformTypeIdentifiers
 
 // MARK: - Host session (macOS-DESIGN Part A §A3 — the emcee cockpit)
 
-/// One team in a live event. Score is authoritative on the host's Mac.
-struct LiveTeam: Identifiable, Hashable {
-    let id = UUID()
-    var name: String
-    var score: Int = 0
-}
-
 /// The live hosting session: the host drives pacing + reveal, and OWNS the
 /// score (manual override is first-class — the #1 gap across the field, §A3.2).
 /// v1 is paper-style (teams answer on paper, host marks); networked phone join
@@ -431,17 +424,31 @@ struct LiveHostView_macOS: View {
                     Label("Speed round — fastest correct answers earn a bonus (+3/+2/+1)", systemImage: "bolt.fill")
                         .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.yellow)
                 }
+                // An audio/video round shows either a WORKING play control or an
+                // explicit "unavailable" line — never a Play button that does
+                // nothing, which is what shipped and is what the host discovers
+                // mid-round with a room watching.
                 if let clip = session.currentAudioBookmark {   // Wave B: audio round — play this question's clip
-                    Button { LiveAudioPlayer.shared.openBookmark(clip); LiveAudioPlayer.shared.togglePlay() } label: {
-                        Label("Play this clip", systemImage: "play.circle.fill").font(Tidbits.TypeRamp.l4)
+                    if LiveClip.isPlayable(clip) {
+                        Button { LiveAudioPlayer.shared.openBookmark(clip); LiveAudioPlayer.shared.togglePlay() } label: {
+                            Label("Play this clip", systemImage: "play.circle.fill").font(Tidbits.TypeRamp.l4)
+                        }
+                        .buttonStyle(.bordered).tint(Tidbits.Palette.blue)
+                    } else {
+                        Label("Clip unavailable — re-attach it in the builder", systemImage: "exclamationmark.triangle.fill")
+                            .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.coral)
                     }
-                    .buttonStyle(.bordered).tint(Tidbits.Palette.blue)
                 }
                 if let vid = session.currentVideoBookmark {   // Wave B: video round — play on the big screen
-                    Button { LiveVideoPlayer.shared.openBookmark(vid); LiveVideoPlayer.shared.play() } label: {
-                        Label("Play video on the big screen", systemImage: "play.rectangle.fill").font(Tidbits.TypeRamp.l4)
+                    if LiveClip.isPlayable(vid) {
+                        Button { LiveVideoPlayer.shared.openBookmark(vid); LiveVideoPlayer.shared.play() } label: {
+                            Label("Play video on the big screen", systemImage: "play.rectangle.fill").font(Tidbits.TypeRamp.l4)
+                        }
+                        .buttonStyle(.bordered).tint(Tidbits.Palette.blue)
+                    } else {
+                        Label("Video unavailable — re-attach it in the builder", systemImage: "exclamationmark.triangle.fill")
+                            .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.coral)
                     }
-                    .buttonStyle(.bordered).tint(Tidbits.Palette.blue)
                 }
                 if session.revealed {
                     HStack(spacing: 8) {

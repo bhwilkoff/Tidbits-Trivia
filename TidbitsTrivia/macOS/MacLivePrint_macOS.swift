@@ -9,43 +9,94 @@ import AppKit
 ///   • Answer sheet — the teams' blank sheet (numbered lines to write on).
 enum LivePrint {
     @MainActor static func questionPack(_ event: LiveEvent) {
-        open(makePDF(QuestionPackPage(event: event)), name: "\(event.name) — Question Pack")
+        render(QuestionPackPage(event: event), name: "\(event.name) — Question Pack")
     }
     @MainActor static func answerSheet(_ event: LiveEvent) {
-        open(makePDF(AnswerSheetPage(event: event)), name: "\(event.name) — Answer Sheet")
+        render(AnswerSheetPage(event: event), name: "\(event.name) — Answer Sheet")
     }
     @MainActor static func results(name: String, standings: [LiveTeam]) {
-        open(makePDF(ResultsPage(name: name, standings: standings)), name: "\(name) — Results")
+        render(ResultsPage(name: name, standings: standings), name: "\(name) — Results")
     }
 
-    @MainActor private static func makePDF<V: View>(_ page: V) -> URL? {
-        let renderer = ImageRenderer(content: page.frame(width: 612).background(.white))
+    /// US Letter at 72dpi — the page a pub actually prints on.
+    private static let pageSize = CGSize(width: 612, height: 792)
+
+    /// Render a page view into a PAGINATED PDF.
+    ///
+    /// The first version called `beginPDFPage` exactly once with a media box the
+    /// size of the whole rendered content, so a five-round question pack became a
+    /// single 612 x 3000pt page: Preview showed one endless strip and printing it
+    /// scaled the whole night down to fit one sheet. A host's printable fallback
+    /// that cannot be printed is not a fallback.
+    @MainActor static func makePDF<V: View>(_ page: V, to url: URL) throws -> Int {
+        let renderer = ImageRenderer(content: page.frame(width: pageSize.width).background(.white))
         renderer.isOpaque = true
-        let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("tidbits-live-\(UUID().uuidString.prefix(8)).pdf")
-        var ok = false
-        renderer.render { size, context in
-            var box = CGRect(x: 0, y: 0, width: size.width, height: size.height)
+        var pages = 0
+        var thrown: Error?
+        renderer.render { size, draw in
+            var box = CGRect(origin: .zero, size: pageSize)
             guard let consumer = CGDataConsumer(url: url as CFURL),
-                  let pdf = CGContext(consumer: consumer, mediaBox: &box, nil) else { return }
-            pdf.beginPDFPage(nil)
-            context(pdf)
-            pdf.endPDFPage()
+                  let pdf = CGContext(consumer: consumer, mediaBox: &box, nil) else {
+                thrown = PrintError.couldNotCreatePDF
+                return
+            }
+            // Ceil, and always at least one page: a one-line event still prints.
+            let count = max(1, Int((size.height / pageSize.height).rounded(.up)))
+            for i in 0..<count {
+                pdf.beginPDFPage(nil)
+                pdf.saveGState()
+                // Slide the content up by a page each time, so page i shows the
+                // i-th slice instead of the whole thing squeezed onto one sheet.
+                pdf.translateBy(x: 0, y: CGFloat(i + 1) * pageSize.height - size.height)
+                draw(pdf)
+                pdf.restoreGState()
+                pdf.endPDFPage()
+            }
             pdf.closePDF()
-            ok = true
+            pages = count
         }
-        return ok ? url : nil
+        if let thrown { throw thrown }
+        guard pages > 0 else { throw PrintError.nothingRendered }
+        return pages
     }
 
-    private static func open(_ url: URL?, name: String) {
-        guard let url else { return }
-        NSWorkspace.shared.open(url)
+    enum PrintError: LocalizedError {
+        case couldNotCreatePDF
+        case nothingRendered
+
+        var errorDescription: String? {
+            switch self {
+            case .couldNotCreatePDF: return "Tidbits could not create the PDF."
+            case .nothingRendered:   return "There was nothing to print."
+            }
+        }
+    }
+
+    /// Write to a file NAMED for the document, then open it. The name matters:
+    /// the host is looking at this in Preview beside three other tabs, and
+    /// "tidbits-live-a1b2c3d4.pdf" tells them nothing about which one it is.
+    @MainActor private static func render(_ page: some View, name: String) {
+        let safe = name.replacingOccurrences(of: "/", with: "-")
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("\(safe).pdf")
+        do {
+            _ = try makePDF(page, to: url)
+            NSWorkspace.shared.open(url)
+        } catch {
+            // The old code was `guard let url else { return }` — a print button
+            // that did nothing at all when rendering failed.
+            let alert = NSAlert()
+            alert.messageText = "Could not prepare “\(name)”"
+            alert.informativeText = error.localizedDescription
+            alert.alertStyle = .warning
+            alert.runModal()
+        }
     }
 }
 
 // MARK: - Pages (plain, print-friendly — black on white, no chunky chrome)
 
-private struct QuestionPackPage: View {
+struct QuestionPackPage: View {
     let event: LiveEvent
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -70,7 +121,7 @@ private struct QuestionPackPage: View {
     }
 }
 
-private struct ResultsPage: View {
+struct ResultsPage: View {
     let name: String
     let standings: [LiveTeam]
     var body: some View {
@@ -90,7 +141,7 @@ private struct ResultsPage: View {
     }
 }
 
-private struct AnswerSheetPage: View {
+struct AnswerSheetPage: View {
     let event: LiveEvent
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {

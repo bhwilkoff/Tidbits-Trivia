@@ -179,6 +179,18 @@ struct ContentView_macOS: View {
 
     @ViewBuilder private var detail: some View {
         Group {
+            // TIDBITS_LIVE_AVSELFTEST=1 — prove clip references actually work in THIS
+            // build, on the glass. The failure it checks for is invisible from the
+            // outside: the entitlement is a build-time fact, the old bookmark call
+            // swallowed its error, and the only symptom was a Play button that did
+            // nothing in a bar. No-op in production.
+            if ProcessInfo.processInfo.environment["TIDBITS_LIVE_AVSELFTEST"] == "1" {
+                Text(LiveClip.selfTestSummary())
+                    .font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                    .padding(24)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Tidbits.Palette.bg)
+            } else {
             NavigationStack(path: $path) {
                 switch section ?? .play {
                 case .play:    HomeView_macOS(onPlay: start, onNight: { nightLaunch = $0 }, onVersus: { versusBot = $0 },
@@ -191,6 +203,7 @@ struct ContentView_macOS: View {
                 case .live:    LiveBuilderView_macOS(onPreview: { livePreview = $0 }, onHost: { liveHost = $0 },
                                                      onJoin: { joinCode = "" })
                 }
+            }
             }
         }
         .tint(Tidbits.Palette.blue)

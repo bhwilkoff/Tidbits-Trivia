@@ -60,6 +60,16 @@ struct LiveBuilderView_macOS: View {
             working = ev
             expandedRounds = Set(ev.rounds.prefix(1).map(\.id))
         }
+        // TIDBITS_LIVE_ADDAUDIO=1 — open the audio-round file picker on launch, so a
+        // harness can drive the REAL host path (NSOpenPanel grant -> security-scoped
+        // bookmark -> playback) end to end. Nothing else can reach it: the grant is
+        // what makes a clip work, and no in-process self-test can manufacture one.
+        .task {
+            guard ProcessInfo.processInfo.environment["TIDBITS_LIVE_ADDAUDIO"] == "1" else { return }
+            try? await Task.sleep(for: .seconds(2))
+            addAudioRound()
+            if let last = working.rounds.last { expandedRounds = [last.id] }
+        }
         .sheet(item: $editing) { ctx in
             LiveQuestionEditor_macOS(draft: ctx.draft, format: ctx.format,
                                      onSave: { q in
@@ -577,17 +587,39 @@ struct LiveBuilderView_macOS: View {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.audio, .mp3, .wav, .mpeg4Audio, .aiff]
         panel.allowsMultipleSelection = true
+        // A harness can point the panel at a known folder so it only has to choose
+        // the file; a person never sees this because the variable is unset.
+        if let dir = ProcessInfo.processInfo.environment["TIDBITS_LIVE_CLIPDIR"] {
+            panel.directoryURL = URL(fileURLWithPath: dir)
+        }
         guard panel.runModal() == .OK, !panel.urls.isEmpty else { return }
         var questions: [Question] = []
         var bookmarks: [Data] = []
+        var failures: [String] = []
         for (i, url) in panel.urls.enumerated() {
+            // Make the bookmark FIRST. A clip whose reference cannot be kept must
+            // not become a question: the old code stored an empty Data and the
+            // round played silence with no way to tell.
+            let mark: Data
+            do { mark = try LiveClip.bookmark(for: url) }
+            catch { failures.append(error.localizedDescription); continue }
             let answer = url.deletingPathExtension().lastPathComponent
             questions.append(Question(id: UUID().uuidString, prompt: "Track \(i + 1) — name it",
                                       options: [answer], correctIndex: 0, categoryID: "music", difficulty: 3,
                                       explanation: "", sourceTitle: "", sourceURL: nil, templateID: "audio",
                                       accepted: [answer]))
-            bookmarks.append((try? url.bookmarkData(options: .withSecurityScope)) ?? Data())
+            bookmarks.append(mark)
         }
+        if !failures.isEmpty {
+            let alert = NSAlert()
+            alert.messageText = failures.count == panel.urls.count
+                ? "Tidbits could not attach any of those clips"
+                : "\(failures.count) of \(panel.urls.count) clips could not be attached"
+            alert.informativeText = failures.prefix(3).joined(separator: "\n")
+            alert.alertStyle = .warning
+            alert.runModal()
+        }
+        guard !questions.isEmpty else { return }
         working.rounds.append(LiveRound(title: "Audio round", format: .typeAnswer, categoryID: "music",
                                         questions: questions, audioBookmarks: bookmarks))
     }
@@ -601,14 +633,31 @@ struct LiveBuilderView_macOS: View {
         guard panel.runModal() == .OK, !panel.urls.isEmpty else { return }
         var questions: [Question] = []
         var bookmarks: [Data] = []
+        var failures: [String] = []
         for (i, url) in panel.urls.enumerated() {
+            // Make the bookmark FIRST. A clip whose reference cannot be kept must
+            // not become a question: the old code stored an empty Data and the
+            // round played silence with no way to tell.
+            let mark: Data
+            do { mark = try LiveClip.bookmark(for: url) }
+            catch { failures.append(error.localizedDescription); continue }
             let answer = url.deletingPathExtension().lastPathComponent
             questions.append(Question(id: UUID().uuidString, prompt: "Clip \(i + 1) — name it",
                                       options: [answer], correctIndex: 0, categoryID: "screen", difficulty: 3,
                                       explanation: "", sourceTitle: "", sourceURL: nil, templateID: "video",
                                       accepted: [answer]))
-            bookmarks.append((try? url.bookmarkData(options: .withSecurityScope)) ?? Data())
+            bookmarks.append(mark)
         }
+        if !failures.isEmpty {
+            let alert = NSAlert()
+            alert.messageText = failures.count == panel.urls.count
+                ? "Tidbits could not attach any of those clips"
+                : "\(failures.count) of \(panel.urls.count) clips could not be attached"
+            alert.informativeText = failures.prefix(3).joined(separator: "\n")
+            alert.alertStyle = .warning
+            alert.runModal()
+        }
+        guard !questions.isEmpty else { return }
         working.rounds.append(LiveRound(title: "Video round", format: .typeAnswer, categoryID: "screen",
                                         questions: questions, videoBookmarks: bookmarks))
     }

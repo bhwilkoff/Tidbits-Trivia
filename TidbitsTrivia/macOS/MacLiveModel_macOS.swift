@@ -3,6 +3,17 @@ import SwiftUI
 
 // MARK: - Tidbits Live event model (macOS-DESIGN Part A §A1-A2)
 
+/// One team in a live event. Score is authoritative on the host's Mac.
+///
+/// It lives here, with the other Live model types, rather than in the 1,250-line
+/// cockpit view it used to sit in — the printable results sheet needs it, and a
+/// data type should not require pulling a whole view file into the test target.
+struct LiveTeam: Identifiable, Hashable {
+    let id = UUID()
+    var name: String
+    var score: Int = 0
+}
+
 /// One round of a live event: a named block of questions of a single format.
 /// (v1 stores the questions inline; the Library-≠-Project reference-document
 /// evolution — §A1.3 — is a tracked follow-up.)

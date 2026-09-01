@@ -136,10 +136,10 @@ landscape survey). **The gap is implementation and verification, not research.**
 | L1 | Per-question editor + add/duplicate/delete/reorder (§A2.4 / §6.6) | ✅ | ✅ | Mac: `MacLiveQuestionEditor_macOS.swift`, screenshot read. Windows: `LiveQuestionEditorDialog.cs` + the model change that made it possible; headless PNG read + 3 structural assertions |
 | L2 | Native control pass on builder + cockpit (§5.6 / §5.4) | ✅ | 🟡 | Mac: all 20 cockpit buttons + the builder header are native. Windows: the Live button row now WRAPS (§6.3b, it did not) and uses the type ramp instead of hardcoded sizes; the cockpit is not yet audited |
 | L3 | Room/join code + QR visible in the cockpit | ⏳ | ⏳ | |
-| L4 | Audio round: pick clip → plays on the PA, verified audible | ⏳ | ⏳ | |
-| L5 | Video round: clip plays on the big screen, verified rendered | ⏳ | ⏳ | |
+| L4 | Audio round: pick clip → plays on the PA, verified audible | 🟡 | 🚫 | Mac: three real defects fixed + 6 tests. The panel-GRANT leg is not automatable — see below. Windows has no AV rounds at all. |
+| L5 | Video round: clip plays on the big screen, verified rendered | 🟡 | 🚫 | Same fixes as L4 (shared clip layer); big-screen render still unobserved |
 | L6 | Event export/import as JSON; CSV question-bank import (§A2.5 / §6.7) | ✅ | ✅ | ONE contract (`docs/LIVE-EVENT-FILE.md`), one golden file, **14 tests across both stacks** — 7 Swift + 7 C# against the same bytes. CSV import is Mac-only still. |
-| L7 | Printing: question pack + answer sheet + scoresheet, verified as PDF | ⏳ | ⏳ | |
+| L7 | Printing: question pack + answer sheet + scoresheet, verified as PDF | ✅ | ⏳ | Paginated to US Letter; **5 tests, A/B-proven to fail on the old code** (one page 2,621pt tall) |
 | L8 | Empty/loading/error states on every Live surface | 🟡 | ⏳ | Mac: saved-events empty state + expanded-round empty state; import/export now raise a real alert instead of a silent `try?` |
 | L9 | Every button in builder + cockpit driven and asserted by the harness | ⏳ | ⏳ | |
 | L10 | Cockpit layout: no dead space, controls wrap, reachable at min window | ⏳ | ⏳ | |
@@ -253,3 +253,56 @@ expanded round, both prompts, "Answer: Lydia", and per-question Edit/Duplicate/�
 all render correctly on `windows-latest`. The ▲▼✕📝 tofu seen on the Mac head was
 a font artifact and nothing more — which is exactly why the Mac head is never the
 gate.
+
+
+---
+
+## Tick 4 — 2026-09-01
+
+### Printing was broken in a way no one would notice until it mattered
+
+`LivePrint.makePDF` called `beginPDFPage` **once**, with a media box the size of
+the whole rendered content. A 40-question pack came out as a **single page
+2,621pt tall** — Preview shows an endless strip, and printing it scales the whole
+night onto one sheet. The Wi-Fi-dies fallback could not be printed.
+
+Now paginated to real US Letter (612×792), the file is named for the document
+(it was `tidbits-live-a1b2c3d4.pdf`), and a render failure raises an alert
+instead of the old `guard let url else { return }`.
+
+**Five tests, and I A/B-proved they fail on the pre-fix code** — reverted
+`makePDF`, ran them, got `pageCount → 1` and `page 1 is 2621.0pt tall`, restored
+the fix. A test that has never been seen to fail is not evidence.
+
+### The audio/video root cause — and a hypothesis I had to throw away
+
+Three real defects fixed:
+
+1. **The Mac entitlements had no `files.bookmarks.app-scope`.**
+   `user-selected.read-write` alone grants access for the CURRENT launch only, so
+   a saved event's clips could never survive a reopen.
+2. **`(try? url.bookmarkData(options: .withSecurityScope)) ?? Data()`** at both
+   call sites turned every failure into an EMPTY bookmark. The round looked
+   complete and played silence, with no error anywhere. Now `LiveClip.bookmark`
+   proves a bookmark by resolving it before returning, and the builder reports
+   what failed.
+3. **The cockpit offered "Play this clip" for a dead bookmark.** It now shows
+   "Clip unavailable — re-attach it in the builder".
+
+**I was confidently wrong about #1 being *the* cause, and the A/B caught it.**
+My first self-test wrote its probe file into the app's own temp directory — which
+the sandbox already grants — so it reported OK **with and without** the
+entitlement and proved nothing. That is `gate-blind-in-ci` in my own work, on the
+same day I wrote a gate for it. Rewritten to take an external path, it now fails
+loudly for a non-granted file, which is correct sandbox behaviour.
+
+**What is still NOT proven:** the full host path (NSOpenPanel *grant* → bookmark
+→ playback). A sandboxed panel could not be driven by System Events across five
+attempts, so I stopped rather than rabbit-hole. What IS proven: 6 tests covering
+bookmark round-trip, real WAV decode, and that empty / garbage / vanished
+bookmarks all report unplayable. The remaining leg is Apple-standard behaviour
+plus a now-correct entitlement — but it is untested, and it should be driven by
+hand before this row goes green.
+
+`LiveTeam` moved out of the 1,250-line cockpit view into the model file, so the
+results sheet is testable without pulling a whole view into the test target.

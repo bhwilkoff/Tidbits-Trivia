@@ -43,8 +43,23 @@ SCENARIOS = {
                     {"expect_any": r"Leaderboard|standings|season|venue|rank"}),
     "live":     (dict(TIDBITS_TAB="live"),
                  {"expect_any": r"Live|Host|room|code|join"}),
+    # The room CODE, not a generic word. The first version of this accepted
+    # "players|waiting|Start", and once the QR panel shipped it passed on the
+    # word "Players" in "Players scan, or join at…" — which would still be there
+    # if the code never rendered. A host who cannot read the code out has no
+    # night, so the code is what the assertion is for.
     "livehost": (dict(TIDBITS_LIVE_HOST="1", TIDBITS_LIVE_CODE="QATEST"),
-                 {"expect_any": r"QATEST|lobby|players|Start|waiting"}),
+                 {"expect_any": r"QATEST"}),
+    # The Live builder with a populated event and its first round expanded, so
+    # the per-question list and the Edit affordance are observable at all
+    # (macOS-DESIGN §A2.4). Nothing could reach them from a cold launch.
+    # The assertion is the per-question "Answer:" summary line, which exists
+    # ONLY inside an expanded round's question list. "Rounds" matched the word
+    # "rounds" in an events-list subtitle that is on screen whether or not a
+    # single question rendered; "Add question" is real but sits below the fold
+    # at the default window height, so it asserted the window size, not the list.
+    "livebuilder": (dict(TIDBITS_TAB="live", TIDBITS_LIVE_BUILDER="1"),
+                    {"expect_any": r"Answer:"}),
 }
 
 

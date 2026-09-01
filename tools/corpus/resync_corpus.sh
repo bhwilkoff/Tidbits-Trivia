@@ -23,9 +23,14 @@ for p in ('TidbitsTrivia/Resources/corpus.sqlite',
     print(f'   {p}: {n} rows ({f} with a folded search_text)'); c.close()
 PY
 
-echo "--- 2. sync corpus.json copies (iOS Resources, Android assets)"
-cp assets/corpus.json TidbitsTrivia/Resources/corpus.json
-cp assets/corpus.json android/app/src/main/assets/corpus.json
+echo "--- 2. sync the shape files (iOS Resources, Android assets)"
+# corpus.json is deliberately NOT copied into either app bundle. Both clients
+# read corpus.sqlite; the JSON is the web/build source only. Copying it in cost
+# 51MB per bundle (Android was 125MB before it was removed) — and step 5 then
+# reported the stray THIS step had just created, every single run. Remove any
+# copy a previous run left behind.
+rm -f TidbitsTrivia/Resources/corpus.json android/app/src/main/assets/corpus.json
+rm -f android/app/src/main/assets/enrich.json
 
 # ...and every shape source. This step used to copy corpus.json alone, so any
 # repair that touched oddoneout.json / match.json / picture.json left the Apple
@@ -37,7 +42,6 @@ for f in oddoneout match order thisorthat picture typeanswer closest enumerate d
   cp "assets/$f.json" "TidbitsTrivia/Resources/$f.json"
   cp "assets/$f.json" "android/app/src/main/assets/$f.json"
 done
-[ -f assets/enrich.json ] && cp assets/enrich.json android/app/src/main/assets/enrich.json
 
 echo "--- 3. regenerate Daily golden (Apple swiftc + web node) and verify parity"
 sqlite3 TidbitsTrivia/Resources/corpus.sqlite "SELECT id FROM questions" > /tmp/rc-ids.txt

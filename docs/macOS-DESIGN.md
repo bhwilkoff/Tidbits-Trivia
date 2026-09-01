@@ -85,6 +85,25 @@ round via `DelightfulQuizGenerator`, which the host then edits; (c) hand-
 author. Every generated question lands in the editor for the host to
 approve/fix — automate the mechanical, preserve the editorial judgment.
 
+A2.4 **Every round opens to a question list, and every question opens to an
+editor.** A round row in the builder is expandable: it lists its questions
+(prompt + correct answer + difficulty), and each one opens a full editor —
+prompt, the four options with the correct one picked, category, difficulty,
+explanation, accepted free-text answers, and the format-specific payload
+(numeric closest / ordering / matching / enumeration / picture URL / the
+attached audio-video clip). "Add question" hand-authors a new one in the same
+editor. Reorder + duplicate + delete are per-question, by drag and by menu.
+**Why:** A2.2 already promised "all yielding EDITABLE questions"; without this
+surface the promise was false — a host could add a round and then had no way to
+fix a single bad question in it. That is the difference between a generator and
+an authoring tool, and it is the `learning-orientation-design` gate: automate the
+mechanical, preserve the editorial judgment.
+
+A2.5 **An event round-trips as a file.** Export an event (and import one back)
+as a single self-describing JSON document, plus CSV import for a question bank.
+A host's night is their work product; it must survive a reinstall, move between
+their Mac and their Windows box, and be shareable with a co-host.
+
 A2.3 **Round formats (MVP set), Tidbits-native:** MCQ, True/False, Picture,
 Nearest-Wins (numeric — also the tie-break unit), Ordering, Wager (Stake),
 Poll/Majority. Audio round and Fastest-Finger (speed scoring) are Phase B.
@@ -310,6 +329,30 @@ absolute** — same as iOS-DESIGN §8–§9.
 views (a Combine timer into a `@MainActor` closure can fault into a
 torn-down view on macOS; `macos-platform-patterns`).
 
+5.6 **R-MAC-CTL-1 — the sticker language is for CONTENT; controls are
+native AppKit.** Cream ground, `chunkyCard` panels, the six pops and the type
+ramp stay (§5.1). But anything the host *operates* — buttons, pickers, steppers,
+toggles, text fields, tables, sidebars — uses the stock SwiftUI/AppKit control
+styles (`.bordered`, `.borderedProminent`, `.menu`, `.segmented`,
+`.roundedBorder`, `Table`, `Form`, `.inspector`), at `.controlSize` appropriate
+to a dense work surface. Do NOT use `ChunkyButtonStyle`/`CompactButtonStyle` on
+a Mac work surface.
+
+**Why:** the sticker-book button (heavy black border, hard drop shadow, rounded
+pill) is a ten-foot/touch affordance. On a pointer-and-keyboard Mac it reads as
+a web page embedded in an app — it loses hover, focus ring, default-button
+pulsing, keyboard activation, and Accessibility's control traits, and it sits
+wrong beside the real title bar. Owner directive, 2026-09-01: *"there are lots of
+text and buttons that look foreign within the MacOS and Windows platforms. They
+should be natively designed and polished."*
+
+**How to apply:** the *game* surface (§3) and the *big screen* (§A1.2) are
+content — they keep the sticker language, because there the button IS the
+content and the audience is at a distance. Tidbits Live's builder, cockpit, the
+Records dashboard chrome, and Settings are work surfaces — native controls. When
+in doubt: if a competent Mac developer would reach for `Form`/`Table`/`.bordered`
+here, use it.
+
 ## §6 — Capabilities & submission (binding)
 
 6.1 **Shared with the other Apple platforms** (one ASC record): bundle
@@ -341,7 +384,9 @@ A fill-image hero with a fixed/`maxHeight` frame (§5.2). 7.6 Bare
 `AsyncImage` for picture art (§5.3). 7.7 A Records inline dump — build
 the dashboard, don't port the bug (§4.1). 7.8 A second game engine
 (§3.2). 7.9 Hand-added shadow padding at a `chunkyCard` call site
-(§5.1).
+(§5.1). 7.10 A sticker-book button style on a Mac work surface (§5.6).
+7.11 A generated round the host cannot open and edit question-by-question
+(§A2.4).
 
 ## §8 — The tests (before any surface ships)
 

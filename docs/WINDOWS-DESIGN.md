@@ -239,6 +239,21 @@ Windows also **registers `tidbitstrivia://` + the https join link** so
 a shared link opens the Windows app into a **deep-link inbox** (never
 mutate the router directly — the cross-platform inbox rule).
 
+6.6 **Every round opens to a question list; every question opens to an
+editor** — the mirror of macOS-DESIGN §A2.4. Prompt, the four options with the
+correct one picked, category, difficulty, explanation, accepted free-text
+answers, and the format payload (numeric / ordering / matching / enumeration /
+picture URL / attached clip). "Add question" hand-authors one in the same
+editor; reorder, duplicate and delete are per-question. Windows idiom: a
+`FAContentDialog` editor over the builder, `ListBox` rows with a `CommandBar`.
+A generated round the host cannot fix question-by-question is a generator, not
+an authoring tool.
+
+6.7 **An event round-trips as a file** — export/import one self-describing JSON
+document (byte-compatible with the macOS export, so a host moves a night between
+their Mac and their Windows box), plus CSV import for a question bank. Use the
+storage-provider file picker, never a hand-rolled path box.
+
 6.5 **Toasts** (host): "Team 4 joined," "all teams answered — reveal?",
 timer expired — via `DesktopNotifications.Avalonia`.
 
@@ -262,7 +277,8 @@ single-monitor machine (§6.3a). 7.13 A non-wrapping cockpit control
 row (§6.3b). 7.14 A detail pane that stays blank until the user
 clicks the nav — the landing surface renders on load, never as a
 side effect of `SelectionChanged` (§2.1). 7.11 Win32 interop leaking into
-`Tidbits.Core` (§0.2). 7.12 Shipping "done" on the macOS Avalonia head
+`Tidbits.Core` (§0.2). 7.15 A generated round the host cannot open and edit question-by-question
+(§6.6). 7.12 Shipping "done" on the macOS Avalonia head
 without a headless PNG + `windows-latest` CI check (§0.5, §8).
 
 ---

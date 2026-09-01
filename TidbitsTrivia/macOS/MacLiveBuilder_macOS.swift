@@ -21,6 +21,18 @@ struct LiveBuilderView_macOS: View {
     @State private var newCategory: TriviaCategory = .named("mixed")
     @State private var newCount = 5
     @State private var busy = false
+    @State private var expandedRounds: Set<UUID> = []
+    @State private var editing: EditingQuestion?
+
+    /// The question currently open in the editor sheet. `questionIndex == nil`
+    /// means "a new question being appended to that round".
+    struct EditingQuestion: Identifiable {
+        let id = UUID()
+        let roundIndex: Int
+        let questionIndex: Int?
+        let format: GameMode
+        let draft: QuestionDraft
+    }
 
     private var playableFormats: [GameMode] {
         // .weakSpot / .marathon are personal, Club-gated modes, not shareable
@@ -37,6 +49,31 @@ struct LiveBuilderView_macOS: View {
         .background(Tidbits.Palette.bg)
         .navigationTitle("Tidbits Live")
         .onAppear { if selectedID == nil { newEvent() } }
+        // TIDBITS_LIVE_BUILDER=1 — open the builder on a populated event with its
+        // first round expanded. The question list and the per-question editor are
+        // otherwise unreachable from a cold launch, so nothing could observe them
+        // (`hooks-are-coverage`). No-op in production.
+        .task {
+            guard ProcessInfo.processInfo.environment["TIDBITS_LIVE_BUILDER"] == "1",
+                  working.rounds.isEmpty else { return }
+            let ev = await LiveBuilderView_macOS.demoEvent()
+            working = ev
+            expandedRounds = Set(ev.rounds.prefix(1).map(\.id))
+        }
+        .sheet(item: $editing) { ctx in
+            LiveQuestionEditor_macOS(draft: ctx.draft, format: ctx.format,
+                                     onSave: { q in
+                                         if let qi = ctx.questionIndex,
+                                            working.rounds.indices.contains(ctx.roundIndex),
+                                            working.rounds[ctx.roundIndex].questions.indices.contains(qi) {
+                                             working.rounds[ctx.roundIndex].questions[qi] = q
+                                         } else {
+                                             insertQuestion(q, into: ctx.roundIndex, at: nil)
+                                         }
+                                         editing = nil
+                                     },
+                                     onCancel: { editing = nil })
+        }
     }
 
     // MARK: Event list
@@ -68,6 +105,21 @@ struct LiveBuilderView_macOS: View {
                 .help("Join a Trivia Night or Tidbits Live event someone else is hosting")
             }
             Divider().overlay(Tidbits.Palette.border)
+            if store.events.isEmpty {
+                // universal-feature-states: the saved-events column rendered as a blank
+                // panel with no explanation of what belongs in it.
+                VStack(spacing: 8) {
+                    Image(systemName: "calendar.badge.plus")
+                        .font(.system(size: 26)).foregroundStyle(Tidbits.Palette.inkSoft)
+                    Text("No saved events yet")
+                        .font(Tidbits.TypeRamp.l4).foregroundStyle(Tidbits.Palette.ink)
+                    Text("Build a night on the right, then Save event to keep it and re-run it next week.")
+                        .font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft)
+                        .multilineTextAlignment(.center)
+                }
+                .padding(18)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            } else {
             List(selection: $selectedID) {
                 ForEach(store.events) { ev in
                     VStack(alignment: .leading, spacing: 2) {
@@ -86,6 +138,7 @@ struct LiveBuilderView_macOS: View {
             .onChange(of: selectedID) { _, id in
                 if let id, let ev = store.events.first(where: { $0.id == id }) { working = ev }
             }
+            }
         }
         .frame(width: 240)
     }
@@ -95,41 +148,52 @@ struct LiveBuilderView_macOS: View {
     private var editor: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                TextField("Event name", text: $working.name)
-                    .textFieldStyle(.plain).font(.system(size: 24, weight: .black, design: .rounded))
-                    .foregroundStyle(Tidbits.Palette.ink)
-                TextField("Venue (shown on the big screen)", text: $working.venue)
-                    .textFieldStyle(.roundedBorder).font(Tidbits.TypeRamp.l4)
-                    .frame(maxWidth: 340)
-                HStack(spacing: 8) {   // Wave D: recurring-series scheduling
-                    Image(systemName: "repeat").foregroundStyle(Tidbits.Palette.inkSoft)
-                    Menu {
-                        Button("One-off (not recurring)") { working.weekday = nil }
+                // The event name was a `.plain` TextField styled as a heading, so
+                // it read as a title and nothing said it was editable (§5.6: a
+                // control the host operates gets the native control).
+                LabeledContent("Event name") {
+                    TextField("Friday Pub Quiz", text: $working.name)
+                        .textFieldStyle(.roundedBorder)
+                        .font(.system(size: 20, weight: .semibold))
+                        .frame(maxWidth: 420)
+                }
+                // A Form is the Mac idiom for a block of settings, and it also fixes
+                // the clipped placeholders: the labels carry the explanation, so the
+                // fields no longer need placeholder prose wider than the field.
+                Form {
+                    TextField("Venue", text: $working.venue, prompt: Text("The Anchor"))
+                        .help("Shown on the big screen and printed on the answer sheets")
+                    Picker("Repeats", selection: Binding(get: { working.weekday ?? 0 },
+                                                        set: { working.weekday = $0 == 0 ? nil : $0 })) {
+                        Text("One-off").tag(0)
                         ForEach(1...7, id: \.self) { wd in
-                            Button("Every \(Calendar.current.weekdaySymbols[wd - 1])") { working.weekday = wd }
+                            Text("Every \(Calendar.current.weekdaySymbols[wd - 1])").tag(wd)
                         }
-                    } label: {
-                        Text(working.weekdayName.map { "Every \($0)" } ?? "One-off").font(Tidbits.TypeRamp.l5)
                     }
-                    .menuStyle(.borderlessButton).fixedSize()
                     if let next = working.nextOccurrence {
-                        Text("· next \(next.formatted(.dateTime.weekday(.abbreviated).month().day()))")
-                            .font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft)
+                        LabeledContent("Next night",
+                                       value: next.formatted(.dateTime.weekday(.wide).month().day()))
+                    }
+                    TextField("Sponsor", text: $working.sponsor, prompt: Text("optional"))
+                        .help("Shown as “brought to you by …” in the lobby and between rounds")
+                    TextField("Mailing list", text: $working.leadCaptureURL, prompt: Text("https://…"))
+                        .help("A “join our list” QR is shown at the end of the night")
+                    LabeledContent("Brand accent") {
+                        HStack(spacing: 8) {
+                            ColorPicker("", selection: Binding(
+                                get: { Color(hexString: working.brandHex) ?? Tidbits.Palette.coral },
+                                set: { working.brandHex = $0.hexString }))
+                                .labelsHidden()
+                            if !working.brandHex.isEmpty {
+                                Button("Reset") { working.brandHex = "" }.controlSize(.small)
+                            }
+                            Text("Colours the event title on the big screen")
+                                .font(.footnote).foregroundStyle(.secondary)
+                        }
                     }
                 }
-                TextField("Sponsor (optional — shown as “brought to you by …”)", text: $working.sponsor)   // Wave D: sponsor kit
-                    .textFieldStyle(.roundedBorder).font(Tidbits.TypeRamp.l5).frame(maxWidth: 340)
-                TextField("Mailing-list URL (optional — a “join our list” QR at the end)", text: $working.leadCaptureURL)   // Wave D: lead capture
-                    .textFieldStyle(.roundedBorder).font(Tidbits.TypeRamp.l5).frame(maxWidth: 340)
-                HStack(spacing: 10) {   // Wave D: white-label brand accent
-                    ColorPicker("Brand accent (big-screen title)", selection: Binding(
-                        get: { Color(hexString: working.brandHex) ?? Tidbits.Palette.coral },
-                        set: { working.brandHex = $0.hexString }))
-                        .font(Tidbits.TypeRamp.l5).fixedSize()
-                    if !working.brandHex.isEmpty {
-                        Button("Reset to default") { working.brandHex = "" }.font(Tidbits.TypeRamp.l6)
-                    }
-                }
+                .formStyle(.columns)
+                .frame(maxWidth: 520)
 
                 Text("Rounds").font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
                 if working.rounds.isEmpty {
@@ -143,28 +207,11 @@ struct LiveBuilderView_macOS: View {
                 balanceMeter
 
                 Divider().overlay(Tidbits.Palette.border).padding(.vertical, 4)
-                HStack(spacing: 10) {
-                    Button("Save event") { store.upsert(working); selectedID = working.id }
-                        .buttonStyle(CompactButtonStyle())
-                    Button("Preview solo") { store.upsert(working); onPreview(working) }
-                        .buttonStyle(CompactButtonStyle(fill: Tidbits.Palette.blue, textColor: .white, prominent: true))
-                        .disabled(working.totalQuestions == 0)
-                    Button("Host live →") { store.upsert(working); onHost(working) }
-                        .buttonStyle(CompactButtonStyle(fill: Tidbits.Palette.coral, textColor: .white, prominent: true))
-                        .disabled(working.totalQuestions == 0)
-                    Menu {   // secondary "add a round type" actions — folded out of the primary row to declutter
-                        Button("Import CSV…") { importCSV() }
-                        Button("Audio round…") { addAudioRound() }
-                        Button("Video round…") { addVideoRound() }
-                    } label: { Label("Add round…", systemImage: "plus") }
-                        .menuStyle(.borderlessButton).fixedSize()
-                    Spacer()
-                    Menu {
-                        Button("Question pack (host)") { LivePrint.questionPack(working) }
-                        Button("Answer sheet (teams)") { LivePrint.answerSheet(working) }
-                    } label: { Label("Print…", systemImage: "printer") }
-                        .menuStyle(.borderlessButton).fixedSize()
-                        .disabled(working.totalQuestions == 0)
+                // §5.6: native controls on a work surface. Buttons size to content
+                // and wrap, so the row survives a narrow window instead of clipping.
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 10) { actionButtons }
+                    VStack(alignment: .leading, spacing: 10) { actionButtons }
                 }
             }
             .padding(24)
@@ -173,14 +220,56 @@ struct LiveBuilderView_macOS: View {
         }
     }
 
+    @ViewBuilder private var actionButtons: some View {
+        Button("Save event") { store.upsert(working); selectedID = working.id }
+        Button("Preview solo") { store.upsert(working); onPreview(working) }
+            .disabled(working.totalQuestions == 0)
+        Button("Host live") { store.upsert(working); onHost(working) }
+            .buttonStyle(.borderedProminent)
+            .keyboardShortcut(.return, modifiers: [.command])
+            .disabled(working.totalQuestions == 0)
+        Menu {
+            Button("Import CSV…") { importCSV() }
+            Button("Audio round…") { addAudioRound() }
+            Button("Video round…") { addVideoRound() }
+        } label: { Label("Add round…", systemImage: "plus") }
+            .fixedSize()
+        Menu {
+            Button("Export event…") { exportEvent() }
+            Button("Import event…") { importEvent() }
+        } label: { Label("Event file", systemImage: "doc") }
+            .fixedSize()
+        Menu {
+            Button("Question pack (host)") { LivePrint.questionPack(working) }
+            Button("Answer sheet (teams)") { LivePrint.answerSheet(working) }
+        } label: { Label("Print…", systemImage: "printer") }
+            .fixedSize()
+            .disabled(working.totalQuestions == 0)
+    }
+
     private func roundRow(_ i: Int, _ round: LiveRound) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 12) {
+                Button {
+                    if expandedRounds.contains(round.id) { expandedRounds.remove(round.id) }
+                    else { expandedRounds.insert(round.id) }
+                } label: {
+                    Image(systemName: expandedRounds.contains(round.id) ? "chevron.down" : "chevron.right")
+                        .foregroundStyle(Tidbits.Palette.inkSoft)
+                }
+                .buttonStyle(.borderless)
+                .help("Show this round's questions")
+                .accessibilityLabel(expandedRounds.contains(round.id) ? "Hide questions" : "Show questions")
                 Image(systemName: round.symbol).foregroundStyle(round.format.accent.legibleForeground)
                     .frame(width: 34, height: 34).background(Circle().fill(round.format.accent))
                     .overlay(Circle().strokeBorder(Tidbits.Palette.border, lineWidth: 2.5))
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(round.title).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink).lineLimit(1)
+                    // The round title was display-only, so a host could never rename
+                    // "General Knowledge" to "Round 1 — Warm Up".
+                    TextField("Round title", text: Binding(get: { working.rounds[i].title },
+                                                           set: { working.rounds[i].title = $0 }))
+                        .textFieldStyle(.plain)
+                        .font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink).lineLimit(1)
                     Text("\(round.format.title) · \(TriviaCategory.named(round.categoryID).name) · \(round.questions.count) questions")
                         .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft).lineLimit(1)
                 }
@@ -208,6 +297,7 @@ struct LiveBuilderView_macOS: View {
                 get: { working.rounds[i].hostNote ?? "" },
                 set: { working.rounds[i].hostNote = $0.isEmpty ? nil : $0 }))
                 .textFieldStyle(.roundedBorder).font(Tidbits.TypeRamp.l5)
+            if expandedRounds.contains(round.id) { questionList(i, round) }
         }
         .padding(14).chunkyCard()
         .draggable(round.id.uuidString)   // Wave A: drag-to-reorder (chevrons remain as a fallback)
@@ -216,6 +306,135 @@ struct LiveBuilderView_macOS: View {
                   let from = working.rounds.firstIndex(where: { $0.id.uuidString == idStr }), from != i else { return false }
             withAnimation { working.rounds.move(fromOffsets: IndexSet(integer: from), toOffset: from < i ? i + 1 : i) }
             return true
+        }
+    }
+
+    // MARK: Questions inside a round (§A2.4 — every question opens to an editor)
+
+    @ViewBuilder private func questionList(_ ri: Int, _ round: LiveRound) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Divider().overlay(Tidbits.Palette.border).padding(.vertical, 2)
+            if round.questions.isEmpty {
+                // universal-feature-states: an expanded round with nothing in it must
+                // say so and offer the way out, not render as a blank strip.
+                HStack(spacing: 8) {
+                    Image(systemName: "text.badge.plus").foregroundStyle(Tidbits.Palette.inkSoft)
+                    Text("No questions in this round yet.")
+                        .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                }
+                .padding(.vertical, 6)
+            }
+            ForEach(Array(round.questions.enumerated()), id: \.element.id) { qi, q in
+                questionRow(ri, qi, q, format: round.format)
+            }
+            HStack(spacing: 8) {
+                Button {
+                    editing = EditingQuestion(roundIndex: ri, questionIndex: nil, format: round.format,
+                                              draft: .blank(format: round.format, categoryID: round.categoryID))
+                } label: { Label("Add question", systemImage: "plus") }
+                .controlSize(.small)
+                Button {
+                    Task {
+                        busy = true
+                        let more = await LiveEventStore.buildRound(format: round.format,
+                                                                   category: .named(round.categoryID), count: 1)
+                        if let q = more.questions.first { insertQuestion(q, into: ri, at: nil) }
+                        busy = false
+                    }
+                } label: { Label("Pull one from the corpus", systemImage: "sparkles") }
+                .controlSize(.small)
+                .disabled(busy)
+                Spacer()
+            }
+            .padding(.top, 4)
+        }
+    }
+
+    private func questionRow(_ ri: Int, _ qi: Int, _ q: Question, format: GameMode) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            Text("\(qi + 1).")
+                .font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft)
+                .frame(width: 22, alignment: .trailing)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(q.prompt.isEmpty ? "Untitled question" : q.prompt)
+                    .font(Tidbits.TypeRamp.l4).foregroundStyle(Tidbits.Palette.ink).lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                Text(answerSummary(q, format: format))
+                    .font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft).lineLimit(1)
+            }
+            Spacer(minLength: 8)
+            Text("D\(q.difficulty)")
+                .font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft)
+            Button("Edit") {
+                editing = EditingQuestion(roundIndex: ri, questionIndex: qi, format: format,
+                                          draft: QuestionDraft(q))
+            }
+            .controlSize(.small)
+            Menu {
+                Button("Duplicate") { insertQuestion(q.duplicatedForEditing(), into: ri, at: qi + 1) }
+                Button("Move up") { moveQuestion(ri, from: qi, to: qi - 1) }.disabled(qi == 0)
+                Button("Move down") { moveQuestion(ri, from: qi, to: qi + 1) }
+                    .disabled(qi >= working.rounds[ri].questions.count - 1)
+                Divider()
+                Button("Delete", role: .destructive) { removeQuestion(ri, at: qi) }
+            } label: { Image(systemName: "ellipsis.circle") }
+            .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+            .accessibilityLabel("More actions for question \(qi + 1)")
+        }
+        .padding(.vertical, 4)
+        .contentShape(Rectangle())
+        .onTapGesture(count: 2) {
+            editing = EditingQuestion(roundIndex: ri, questionIndex: qi, format: format, draft: QuestionDraft(q))
+        }
+    }
+
+    /// One line the host can scan to know whether a question is right, without opening it.
+    private func answerSummary(_ q: Question, format: GameMode) -> String {
+        switch format {
+        case .closestCall: return q.closest.map { "Answer: \($0.formattedAnswer)" } ?? "No numeric answer set"
+        case .ordering:    return (q.ordering?.prefix(4).joined(separator: " → ")).map { "Order: \($0)…" } ?? "No items"
+        case .matching:    return "\(q.matching?.keys.count ?? 0) pairs"
+        case .enumerate:   return "\(q.enumerate?.total ?? 0) accepted answers"
+        case .typeAnswer:  return "Accepts: \((q.accepted ?? [q.correctAnswer]).prefix(3).joined(separator: ", "))"
+        default:           return "Answer: \(q.correctAnswer)"
+        }
+    }
+
+    // MARK: Question mutations (keep the AV bookmark arrays index-parallel)
+
+    private func insertQuestion(_ q: Question, into ri: Int, at index: Int?) {
+        guard working.rounds.indices.contains(ri) else { return }
+        let at = index ?? working.rounds[ri].questions.count
+        working.rounds[ri].questions.insert(q, at: min(at, working.rounds[ri].questions.count))
+        // An audio/video round pairs bookmark[i] with question[i]; inserting a
+        // question without a matching slot would silently shift every later clip
+        // onto the wrong question.
+        if working.rounds[ri].audioBookmarks != nil {
+            working.rounds[ri].audioBookmarks?.insert(Data(), at: min(at, working.rounds[ri].audioBookmarks?.count ?? 0))
+        }
+        if working.rounds[ri].videoBookmarks != nil {
+            working.rounds[ri].videoBookmarks?.insert(Data(), at: min(at, working.rounds[ri].videoBookmarks?.count ?? 0))
+        }
+    }
+
+    private func removeQuestion(_ ri: Int, at qi: Int) {
+        guard working.rounds.indices.contains(ri), working.rounds[ri].questions.indices.contains(qi) else { return }
+        working.rounds[ri].questions.remove(at: qi)
+        if working.rounds[ri].audioBookmarks?.indices.contains(qi) == true { working.rounds[ri].audioBookmarks?.remove(at: qi) }
+        if working.rounds[ri].videoBookmarks?.indices.contains(qi) == true { working.rounds[ri].videoBookmarks?.remove(at: qi) }
+    }
+
+    private func moveQuestion(_ ri: Int, from: Int, to: Int) {
+        guard working.rounds.indices.contains(ri) else { return }
+        var qs = working.rounds[ri].questions
+        guard qs.indices.contains(from), qs.indices.contains(to) else { return }
+        qs.swapAt(from, to)
+        working.rounds[ri].questions = qs
+        if var bm = working.rounds[ri].audioBookmarks, bm.indices.contains(from), bm.indices.contains(to) {
+            bm.swapAt(from, to); working.rounds[ri].audioBookmarks = bm
+        }
+        if var bm = working.rounds[ri].videoBookmarks, bm.indices.contains(from), bm.indices.contains(to) {
+            bm.swapAt(from, to); working.rounds[ri].videoBookmarks = bm
         }
     }
 
@@ -282,6 +501,48 @@ struct LiveBuilderView_macOS: View {
         if easy > total * 2 / 3 { return "Mostly easy — add a couple of stumpers for the ringers." }
         if let top = byCat.first, top.value > total / 2 { return "\(top.key.capitalized) dominates — mix in other categories for range." }
         return nil
+    }
+
+    // MARK: Event file round-trip (§A2.5)
+
+    /// Write the working event out as one self-describing JSON document. A host's
+    /// night is their work product: it has to survive a reinstall, move between
+    /// their Mac and their Windows box, and be shareable with a co-host.
+    private func exportEvent() {
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.json]
+        panel.nameFieldStringValue = LiveEventFile.suggestedFilename(for: working)
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do { try LiveEventFile.write(working, to: url) }
+        catch { presentError("Could not export the event", error) }
+    }
+
+    /// Read an event document back. The imported event gets a NEW id so importing
+    /// a co-host's copy adds a night rather than silently overwriting one of yours.
+    private func importEvent() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.json]
+        panel.allowsMultipleSelection = false
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            let ev = try LiveEventFile.read(from: url)
+            working = ev
+            store.upsert(ev)
+            selectedID = ev.id
+            expandedRounds = []
+        } catch {
+            presentError("Could not import that file", error)
+        }
+    }
+
+    /// Import/export failures were silent `try?`s — a host who picked the wrong
+    /// file saw nothing happen and had no way to know why.
+    private func presentError(_ message: String, _ error: Error) {
+        let alert = NSAlert()
+        alert.messageText = message
+        alert.informativeText = error.localizedDescription
+        alert.alertStyle = .warning
+        alert.runModal()
     }
 
     /// Wave A: CSV import — bulk-author a round from a host's question bank.
@@ -370,6 +631,16 @@ struct LiveBuilderView_macOS: View {
         }
         fields.append(cur.trimmingCharacters(in: .whitespaces))
         return fields
+    }
+
+    /// The event the TIDBITS_LIVE_BUILDER hook opens on.
+    static func demoEvent() async -> LiveEvent {
+        var ev = LiveEvent(name: "Friday Pub Quiz", venue: "The Anchor")
+        for (i, fmt) in [GameMode.classic, GameMode.typeAnswer].enumerated() {
+            ev.rounds.append(await LiveEventStore.buildRound(
+                format: fmt, category: .named(i == 0 ? "history" : "music"), count: 5))
+        }
+        return ev
     }
 
     private func newEvent() {

@@ -377,7 +377,10 @@ struct LiveHostView_macOS: View {
                 Button { session.onBreak.toggle() } label: {   // adaptability: intermission hold
                     Label(session.onBreak ? "Resume" : "Hold", systemImage: session.onBreak ? "play.fill" : "pause.fill").font(Tidbits.TypeRamp.l5)
                 }
-                .buttonStyle(CompactButtonStyle(fill: session.onBreak ? Tidbits.Palette.mint : Tidbits.Palette.surface, textColor: Tidbits.Palette.ink))
+                .buttonStyle(.bordered)
+                // Tinted only while the break is ACTIVE. Tinting a bordered button
+                // with the near-white surface colour erases its own label.
+                .tint(session.onBreak ? Tidbits.Palette.mint : Color.accentColor)
                 .keyboardShortcut("b", modifiers: .command)
                 .help(session.onBreak ? "Resume the game" : "Hold — show a 'Back in a moment' slide on the big screen (⌘B)")
                 Menu {   // adaptability: jump to any round/question on the fly
@@ -432,13 +435,13 @@ struct LiveHostView_macOS: View {
                     Button { LiveAudioPlayer.shared.openBookmark(clip); LiveAudioPlayer.shared.togglePlay() } label: {
                         Label("Play this clip", systemImage: "play.circle.fill").font(Tidbits.TypeRamp.l4)
                     }
-                    .buttonStyle(CompactButtonStyle(fill: Tidbits.Palette.blue, textColor: .white))
+                    .buttonStyle(.bordered).tint(Tidbits.Palette.blue)
                 }
                 if let vid = session.currentVideoBookmark {   // Wave B: video round — play on the big screen
                     Button { LiveVideoPlayer.shared.openBookmark(vid); LiveVideoPlayer.shared.play() } label: {
                         Label("Play video on the big screen", systemImage: "play.rectangle.fill").font(Tidbits.TypeRamp.l4)
                     }
-                    .buttonStyle(CompactButtonStyle(fill: Tidbits.Palette.blue, textColor: .white))
+                    .buttonStyle(.bordered).tint(Tidbits.Palette.blue)
                 }
                 if session.revealed {
                     HStack(spacing: 8) {
@@ -458,10 +461,10 @@ struct LiveHostView_macOS: View {
             if !session.revealed, session.current != nil {   // adaptability: extend/clear the countdown live
                 HStack(spacing: 8) {
                     Image(systemName: "timer").foregroundStyle(Tidbits.Palette.inkSoft)
-                    Button("+30s") { session.addTime(30) }.buttonStyle(CompactButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.ink))
-                    Button("+15s") { session.addTime(15) }.buttonStyle(CompactButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.ink))
+                    Button("+30s") { session.addTime(30) }.buttonStyle(.bordered)
+                    Button("+15s") { session.addTime(15) }.buttonStyle(.bordered)
                     if session.deadlineMs != nil {
-                        Button("Clear timer") { session.clearTimer() }.buttonStyle(CompactButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.inkSoft))
+                        Button("Clear timer") { session.clearTimer() }.buttonStyle(.bordered)
                     }
                 }
                 .font(Tidbits.TypeRamp.l6)
@@ -469,7 +472,7 @@ struct LiveHostView_macOS: View {
             Spacer()
             HStack(spacing: 12) {
                 Button { session.previous() } label: { Image(systemName: "chevron.left").font(.system(size: 14, weight: .bold)) }   // adaptability: go back
-                    .buttonStyle(CompactButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.ink))
+                    .buttonStyle(.bordered)
                     .disabled(!session.canGoBack)
                     .keyboardShortcut(.leftArrow, modifiers: .command)
                     .help("Back to the previous question (⌘←)")
@@ -477,26 +480,24 @@ struct LiveHostView_macOS: View {
                     Button(session.locked ? "Answers locked" : "Lock answers") {   // Wave C: manual pencils-down
                         session.locked = true; Task { await net.publish(session.currentPub()) }
                     }
-                    .buttonStyle(CompactButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.ink))
+                    .buttonStyle(.bordered)
                     .disabled(session.locked)
                     Button("Skip") { session.skip() }   // adaptability: skip this question (no score)
-                        .buttonStyle(CompactButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.inkSoft))
+                        .buttonStyle(.bordered)
                         .keyboardShortcut(.rightArrow, modifiers: .command)
                         .help("Skip this question — no score (⌘→)")
                     Button("Reveal answer") { session.reveal() }
-                        .buttonStyle(CompactButtonStyle(fill: Tidbits.Palette.yellow, textColor: Tidbits.Palette.ink, prominent: true))
+                        .buttonStyle(.borderedProminent).tint(Tidbits.Palette.yellow)
                         .keyboardShortcut(.defaultAction)
                 } else {
                     Button(session.index + 1 >= session.questions.count ? "Finish night" : "Next question") { session.next() }
-                        .buttonStyle(CompactButtonStyle(fill: Tidbits.Palette.coral, textColor: .white, prominent: true))
+                        .buttonStyle(.borderedProminent).tint(Tidbits.Palette.coral)
                         .keyboardShortcut(.defaultAction)
                 }
                 Spacer()
                 Text("\(session.index + 1) / \(session.questions.count) · Space to advance").font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft)
             }
-            sfxBar        // Wave B: the stinger board
-            audioClipBar  // Wave B: clip playback to the PA
-            musicBedBar   // Wave B: looping background music
+            showBar       // Wave B: stingers + clip playback + music bed, one wrapping row
             Button("") {   // intuitive: SPACE = advance the show (reveal → next) — the emcee's clicker key.
                 guard !session.onBreak else { return }   // won't fire while a text field is focused (the field takes space)
                 if session.revealed { session.next() } else { session.reveal() }
@@ -506,6 +507,22 @@ struct LiveHostView_macOS: View {
         }
         .padding(28)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+
+    /// The show controls as ONE wrapping row. They used to render as three
+    /// separate left-aligned rows stacked under the transport, which on a real
+    /// cockpit reads as a pile of loose buttons rather than a control surface —
+    /// and the bottom two ran off the panel the moment the window narrowed.
+    /// `Layout`-free: an HStack in a ViewThatFits reflows to two lines instead
+    /// of clipping (the Windows §6.3b rule, which is the same trap).
+    private var showBar: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 10) { sfxBar; Divider().frame(height: 20); audioClipBar; Divider().frame(height: 20); musicBedBar }
+            VStack(alignment: .leading, spacing: 8) {
+                sfxBar
+                HStack(spacing: 10) { audioClipBar; Divider().frame(height: 20); musicBedBar }
+            }
+        }
     }
 
     /// Wave B: the SFX / stinger board — the host fires show sounds through the Mac's output
@@ -524,7 +541,7 @@ struct LiveHostView_macOS: View {
                 Button { LiveSFXBoard.shared.play(s) } label: {
                     Label(s.label, systemImage: s.symbol).font(Tidbits.TypeRamp.l6)
                 }
-                .buttonStyle(CompactButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.ink))
+                .buttonStyle(.bordered)
                 .keyboardShortcut(s.shortcut, modifiers: [])
             }
         }
@@ -535,12 +552,12 @@ struct LiveHostView_macOS: View {
         let audio = LiveAudioPlayer.shared
         return HStack(spacing: 10) {
             Button { pickAudioClip() } label: { Label("Open clip…", systemImage: "music.note.list").font(Tidbits.TypeRamp.l6) }
-                .buttonStyle(CompactButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.ink))
+                .buttonStyle(.bordered)
             if !audio.trackName.isEmpty {
                 Button { audio.togglePlay() } label: { Image(systemName: audio.isPlaying ? "pause.fill" : "play.fill") }
-                    .buttonStyle(CompactButtonStyle(fill: Tidbits.Palette.mint, textColor: .white))
+                    .buttonStyle(.bordered).tint(Tidbits.Palette.mint)
                 Button { audio.stop() } label: { Image(systemName: "stop.fill") }
-                    .buttonStyle(CompactButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.ink))
+                    .buttonStyle(.bordered)
                 Text(audio.trackName).font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft).lineLimit(1)
             }
         }
@@ -558,10 +575,10 @@ struct LiveHostView_macOS: View {
         let bed = LiveMusicBed.shared
         return HStack(spacing: 10) {
             Button { pickMusicBed() } label: { Label("Music bed…", systemImage: "music.quarternote.3").font(Tidbits.TypeRamp.l6) }
-                .buttonStyle(CompactButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.ink))
+                .buttonStyle(.bordered)
             if !bed.trackName.isEmpty {
                 Button { bed.toggle() } label: { Image(systemName: bed.isPlaying ? "pause.fill" : "play.fill") }
-                    .buttonStyle(CompactButtonStyle(fill: Tidbits.Palette.blue, textColor: .white))
+                    .buttonStyle(.bordered).tint(Tidbits.Palette.blue)
                 Image(systemName: "speaker.fill").font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft)
                 Slider(value: Binding(get: { Double(bed.volume) }, set: { bed.volume = Float($0) }), in: 0...1).frame(width: 90)
                 Text(bed.trackName).font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft).lineLimit(1)
@@ -806,11 +823,11 @@ struct LiveHostView_macOS: View {
                 HStack(spacing: 14) {
                     if !session.tiedGroups.isEmpty {
                         Button("Break a tie…") { tieGroup = session.tiedGroups.first ?? []; showTieBreak = true }
-                            .buttonStyle(CompactButtonStyle(fill: Tidbits.Palette.yellow, textColor: Tidbits.Palette.ink))
+                            .buttonStyle(.bordered).tint(Tidbits.Palette.yellow)
                     }
                     Button("Print results") { LivePrint.results(name: session.event.name, standings: session.standings) }
-                        .buttonStyle(CompactButtonStyle(fill: Tidbits.Palette.surface, textColor: Tidbits.Palette.ink))
-                    Button("Done", action: onClose).buttonStyle(CompactButtonStyle(fill: Tidbits.Palette.coral, textColor: .white, prominent: true)).keyboardShortcut(.cancelAction)
+                        .buttonStyle(.bordered)
+                    Button("Done", action: onClose).buttonStyle(.borderedProminent).tint(Tidbits.Palette.coral).keyboardShortcut(.cancelAction)
                 }
                 .padding(.top, 8)
             }

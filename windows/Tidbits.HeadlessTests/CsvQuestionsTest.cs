@@ -1,5 +1,7 @@
+using System;
 using System.Linq;
 using Tidbits.Core.Data;
+using Tidbits.Core.Models;
 using Xunit;
 
 public class CsvQuestionsTest
@@ -115,5 +117,79 @@ public class CsvQuestionsTest
             Assert.Equal(4, q.Options.Distinct().Count());
             Assert.Contains(q.CorrectAnswer, q.Options);
         }
+    }
+
+    // ---- §6.1 export, and the round-trip that proves the halves agree -------
+
+    private static Question Q(string prompt, string correct, string[] others,
+                              string category = "history", int difficulty = 3, string explanation = "")
+    {
+        var opts = new System.Collections.Generic.List<string> { correct };
+        opts.AddRange(others);
+        return new Question
+        {
+            Id = "t-" + prompt.GetHashCode(), Prompt = prompt, Options = opts, CorrectIndex = 0,
+            CategoryId = category, Difficulty = difficulty, Explanation = explanation,
+        };
+    }
+
+    [Fact]
+    public void An_export_always_carries_the_named_header()
+    {
+        var csv = CsvQuestions.Export([Q("A?", "Yes", ["No", "Maybe", "Never"])]);
+        var header = csv.Split('\n')[0];
+        Assert.StartsWith("prompt,correct,", header);
+        foreach (var col in new[] { "optionA", "optionB", "optionC", "optionD",
+                                    "category", "difficulty", "explanation" })
+            Assert.Contains(col, header);
+    }
+
+    [Fact]
+    public void Export_then_import_returns_the_same_questions()
+    {
+        var original = new[]
+        {
+            Q("Which kingdom minted the first coins?", "Lydia", ["Phrygia", "Caria", "Lycia"],
+              "history", 4, "Electrum, c.600 BC."),
+            Q("Name the longest river", "Nile", ["Amazon", "Yangtze", "Danube"], "geography", 2),
+        };
+        var back = CsvQuestions.Parse(CsvQuestions.Export(original));
+
+        Assert.Equal(original.Length, back.Count);
+        for (int i = 0; i < original.Length; i++)
+        {
+            Assert.Equal(original[i].Prompt, back[i].Prompt);
+            Assert.Equal(original[i].CorrectAnswer, back[i].CorrectAnswer);
+            Assert.Equal(original[i].Options.OrderBy(o => o), back[i].Options.OrderBy(o => o));
+            Assert.Equal(original[i].CategoryId, back[i].CategoryId);
+            Assert.Equal(original[i].Difficulty, back[i].Difficulty);
+            Assert.Equal(original[i].Explanation, back[i].Explanation);
+        }
+    }
+
+    [Fact]
+    public void A_prompt_with_commas_and_quotes_survives_the_round_trip()
+    {
+        var tricky = Q("Which city, \"famously\", never sleeps?", "New York, NY",
+                       ["Paris", "Rome", "Oslo"], explanation: "It is a nickname, not a fact.");
+        var back = Assert.Single(CsvQuestions.Parse(CsvQuestions.Export([tricky])));
+        Assert.Equal(tricky.Prompt, back.Prompt);
+        Assert.Equal("New York, NY", back.CorrectAnswer);
+        Assert.Equal(tricky.Explanation, back.Explanation);
+    }
+
+    [Fact]
+    public void The_header_matches_the_one_the_swift_exporter_writes()
+    {
+        // Read from the Swift source rather than restated here: if either side
+        // changes its columns, a bank exported on one machine stops importing on
+        // the other and nothing else in either suite would notice.
+        var swift = System.IO.Path.GetFullPath(System.IO.Path.Combine(
+            AppContext.BaseDirectory, "..", "..", "..", "..", "..",
+            "TidbitsTrivia", "macOS", "MacLiveCSV_macOS.swift"));
+        Assert.True(System.IO.File.Exists(swift), $"cannot find {swift}");
+        var text = System.IO.File.ReadAllText(swift);
+        var ours = CsvQuestions.Export([]).Split('\n')[0].Trim();
+        Assert.Contains(ours, text);
     }
 }

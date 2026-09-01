@@ -130,6 +130,43 @@ public static class CsvQuestions
         };
     }
 
+    /// Write a question bank back out as CSV — LIVE-EVENT-FILE §6.1.
+    ///
+    /// A host revises their bank in a spreadsheet between weeks; the event file is
+    /// Tidbits-to-Tidbits and no use for that. Import used to be a one-way door on
+    /// both platforms.
+    ///
+    /// Always emits the NAMED HEADER, with the same column names the Swift
+    /// exporter writes, so a bank exported on either machine re-imports on the
+    /// other. The Swift suite asserts these names too; if they drift, a Mac export
+    /// stops importing here and nothing else would notice.
+    public static string Export(IReadOnlyList<Question> questions)
+    {
+        var sb = new StringBuilder();
+        sb.Append("prompt,correct,optionA,optionB,optionC,optionD,category,difficulty,explanation\n");
+        foreach (var q in questions)
+        {
+            var opts = q.Options.ToList();
+            while (opts.Count < 4) opts.Add("");
+            var fields = new[]
+            {
+                q.Prompt, q.CorrectAnswer, opts[0], opts[1], opts[2], opts[3],
+                q.CategoryId, q.Difficulty.ToString(), q.Explanation,
+            };
+            sb.Append(string.Join(",", fields.Select(EscapeField))).Append('\n');
+        }
+        return sb.ToString();
+    }
+
+    /// Quote a field that would otherwise break the row, doubling any inner quote
+    /// — the convention SplitCsvLine reads back and every spreadsheet emits.
+    private static string EscapeField(string s)
+    {
+        if (s is null) return "";
+        if (!s.Contains(',') && !s.Contains('"') && !s.Contains('\n') && !s.Contains('\r')) return s;
+        return "\"" + s.Replace("\"", "\"\"") + "\"";
+    }
+
     private static IEnumerable<string> SplitLines(string csv)
     {
         foreach (var line in csv.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n'))

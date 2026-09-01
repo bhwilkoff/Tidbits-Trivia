@@ -571,6 +571,41 @@ public partial class LiveView : UserControl
             ShowStatus($"Added a {kind} round with {questions.Count} clip(s).");
     }
 
+    /// Write the event's authored questions out as CSV a spreadsheet can edit
+    /// (LIVE-EVENT-FILE §6.1) — the door to Excel and back, which the event file
+    /// does not provide.
+    private async void OnExportQuestionsCsv(object? sender, RoutedEventArgs e)
+    {
+        var ev = CurrentEvent();
+        var questions = Enumerable.Range(0, ev.Rounds.Count).SelectMany(ev.QuestionsFor).ToList();
+        if (questions.Count == 0)
+        {
+            ShowStatus("There are no authored questions to export yet. Open a round and add or "
+                     + "pull some first — corpus-sourced rounds are drawn when you host.");
+            return;
+        }
+        var top = TopLevel.GetTopLevel(this);
+        if (top?.StorageProvider is not { } sp) { ShowStatus("This window cannot open a file picker."); return; }
+        try
+        {
+            var file = await sp.SaveFilePickerAsync(new Avalonia.Platform.Storage.FilePickerSaveOptions
+            {
+                Title = "Export questions as CSV",
+                SuggestedFileName = $"{Sanitise(ev.Name)} - questions.csv",
+                DefaultExtension = "csv",
+            });
+            if (file is null) return;
+            await using var stream = await file.OpenWriteAsync();
+            await using var writer = new System.IO.StreamWriter(stream);
+            await writer.WriteAsync(Tidbits.Core.Data.CsvQuestions.Export(questions));
+            ShowStatus($"Exported {questions.Count} question(s) as CSV.");
+        }
+        catch (Exception ex)
+        {
+            ShowStatus($"Could not export the questions: {ex.Message}");
+        }
+    }
+
     /// The host's question pack, printable BEFORE the night — the Wi-Fi-dies
     /// fallback is worth nothing if it can only be produced from a running cockpit.
     ///

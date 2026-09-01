@@ -55,6 +55,7 @@
                     <Button x:Name="PrintPackButton" Content="Print question pack" Click="OnPrintQuestionPack" Padding="16,10" Margin="0,0,8,8"/>
                     <Button Content="Export event…" Click="OnExportEvent" Padding="16,10" Margin="0,0,8,8"/>
                     <Button Content="Import event…" Click="OnImportEvent" Padding="16,10" Margin="0,0,8,8"/>
+                    <Button Content="Export questions as CSV…" Click="OnExportQuestionsCsv" Padding="16,10" Margin="0,0,8,8"/>
                 </WrapPanel>
 
                 <TextBlock x:Name="SavedEventsHeader" Text="Saved events" Classes="section-header"

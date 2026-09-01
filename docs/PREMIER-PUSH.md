@@ -495,3 +495,32 @@ in Excel between weeks. "Export questions as CSV…" now writes the named header
    containing a comma and a quoted phrase is now a test.
 
 Apple suite 218 → 222. Windows CSV suite 2 → 8.
+
+
+---
+
+## Tick 17 — a guard I could not make fail, reported as such
+
+The corpus has **4,261 (prompt, answer) pairs on more than one row** — 11,027
+rows, entirely in the `sup` and `chron` comparison templates, which generate
+several questions differing only in their distractors. "Which of these is the
+largest by area? → Sonora" twice in one night is the same question to the room.
+
+Neither platform de-duped on the ANSWER, only on the question id, so a night
+could serve both. I added the guard: a night now drops a question whose
+(prompt, answer) already appeared, and tops the round up rather than leaving it
+short — a short round is worse than a repeat.
+
+**What the test does NOT prove.** Disabling the guard does not make it fail — not
+at 40 questions, and not at 240, against the real corpus (the fixture is the
+shipped 99,715-row file, verified). `Corpus.Questions` draws a contiguous slice
+and the duplicated rows' ids sit far apart, so two members of one group are
+effectively never in the same pull.
+
+So this is **cheap insurance and a pinned property, not a fix for an observed
+bug** — the honest framing, and the test says so in its own comment. It would
+start earning its keep the moment the corpus gains duplicates in the dense
+templates, or selection changes to random sampling.
+
+Windows full suite after the change: **583 passed, 1 skipped, 0 failed.**
+`windows-repl.yml` run 33565128730: success.

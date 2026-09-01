@@ -74,21 +74,45 @@ public sealed class QuestionProvider
     {
         var all = new List<Question>();
         var picked = new HashSet<string>();
+        // A night must not ask the same thing twice. Tracking IDs alone is not
+        // enough: 4,261 (prompt, answer) pairs appear on MORE THAN ONE corpus row,
+        // because the comparison templates generate several questions that differ
+        // only in their distractors. "Which of these is the largest by area? ->
+        // Sonora" twice in one night is the same question to the room, and the
+        // second one is free.
+        var asked = new HashSet<string>();
+
         for (int ri = 0; ri < plan.Rounds.Count; ri++)
         {
             var round = plan.Rounds[ri];
-            var exclude = new HashSet<string>(_seen);
-            exclude.UnionWith(picked);
-            var qs = await Sourced(round.Kind, category, round.Count, exclude);
-            foreach (var q in qs)
+            int taken = 0;
+            // Ask for more than we need so dropped repeats can be replaced rather
+            // than leaving the round short — a short round is worse than a repeat.
+            for (int attempt = 0; attempt < 3 && taken < round.Count; attempt++)
             {
-                all.Add(q with { RoundIndex = ri });
-                picked.Add(q.Id);
+                var exclude = new HashSet<string>(_seen);
+                exclude.UnionWith(picked);
+                var want = (round.Count - taken) * (attempt == 0 ? 1 : 3);
+                var qs = await Sourced(round.Kind, category, want, exclude);
+                if (qs.Count == 0) break;
+                foreach (var q in qs)
+                {
+                    picked.Add(q.Id);
+                    if (taken >= round.Count) continue;
+                    if (!asked.Add(AskedKey(q))) continue;   // same prompt AND answer
+                    all.Add(q with { RoundIndex = ri });
+                    taken++;
+                }
             }
         }
         MarkSeen(all.Select(q => q.Id));
         return all;
     }
+
+    /// What makes two questions "the same" to the room: the prompt and the answer.
+    /// Distractors do not count — a player who saw the first gets the second free.
+    private static string AskedKey(Question q) =>
+        (q.Prompt ?? "").Trim().ToLowerInvariant() + "\u0000" + (q.CorrectAnswer ?? "").Trim().ToLowerInvariant();
 
     /// Never-empty per-type pull for the category-filtered special types: try the
     /// picked category, relax to the whole type pool ("mixed") to top up short/empty

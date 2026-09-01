@@ -65,9 +65,6 @@ final class QuestionPack {
 
     private struct Pack: Decodable { let v: Int; let q: [PackQuestion] }
 
-    /// Loaded question count, for the on-screen diagnostic strip.
-    var debugCount: Int { load().count }
-
     func question(id: String) -> PackQuestion? {
         _ = load()
         return byID[id]

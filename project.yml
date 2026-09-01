@@ -180,6 +180,15 @@ targets:
     supportedDestinations: [iOS]
     sources:
       - path: TidbitsMessages
+      # The SHARED winner rule, not a copy of it. StandingsOutcome is what stops a
+      # scoreboard sorting by score and calling element 0 "the winner" — on a tie
+      # that reports an arbitrary sort order as a victory. Its own doc says one
+      # helper so every surface agrees, so the extension uses it rather than
+      # becoming the seventh place the rule is written down.
+      #
+      # Safe to pull in alone: pure Foundation, no SwiftData/StoreKit/networking,
+      # so it carries none of Core's weight into the extension.
+      - path: TidbitsTrivia/Core/Models/StandingsOutcome.swift
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.learningischange.tidbitstrivia.Messages
@@ -207,6 +216,35 @@ targets:
         NSExtension:
           NSExtensionPointIdentifier: com.apple.message-payload-provider
           NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).MessagesViewController
+
+  # Renders the iMessage extension's REAL screens at device size so they can be
+  # captured. Messages itself cannot be automated (no simctl tap primitive, and
+  # XCUITest drives only your own app), which left the extension as the one surface
+  # with no observable output at all. Debug-only: never embedded, never archived.
+  TidbitsMsgShots:
+    type: application
+    supportedDestinations: [iOS]
+    sources:
+      - path: TidbitsMsgShots
+      # The SAME files the extension compiles — not copies. A shot that disagrees
+      # with the extension would be worthless as evidence.
+      - path: TidbitsMessages/RoundViews.swift
+      - path: TidbitsMessages/RoundState.swift
+      - path: TidbitsMessages/QuestionPack.swift
+      - path: TidbitsMessages/BubbleImage.swift
+      - path: TidbitsTrivia/Core/Models/StandingsOutcome.swift
+      - path: TidbitsMessages/Resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.learningischange.tidbitstrivia.MsgShots
+        PRODUCT_NAME: TidbitsMsgShots
+        CODE_SIGNING_ALLOWED: NO
+    info:
+      path: TidbitsMsgShots/Info.plist
+      properties:
+        CFBundleDisplayName: Tidbits Shots
+        UIUserInterfaceStyle: Light
+        UILaunchScreen: {}
 
   TidbitsTriviaTests:
     type: bundle.unit-test

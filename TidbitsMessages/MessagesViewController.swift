@@ -18,10 +18,17 @@ final class MessagesViewController: MSMessagesAppViewController {
 
     private var host: UIHostingController<AnyView>?
 
+    /// Set when the player taps "Send another round" on a finished round, and cleared
+    /// the next time the extension becomes active. Without it there is no way out of a
+    /// completed round: `selectedMessage` still points at it, so routing would keep
+    /// returning to the results screen.
+    private var startingNewRound = false
+
     // MARK: - Conversation lifecycle
 
     override func willBecomeActive(with conversation: MSConversation) {
         super.willBecomeActive(with: conversation)
+        startingNewRound = false
         present(conversation: conversation)
     }
 
@@ -48,24 +55,8 @@ final class MessagesViewController: MSMessagesAppViewController {
         let selected = conversation.selectedMessage
         let state = selected?.url.flatMap(RoundState.init(url:))
 
-        // Debug builds only; compiled out of Release. "Sending a round does nothing"
-        // is an invisible-UI bug: every candidate cause (no selected message, a url
-        // that did not survive, a decode that returned nil, a pack that did not load)
-        // looks identical from the outside — you land on the start screen either way.
-        // This strip makes the extension state itself readable on the device, which is
-        // the only way to tell those four apart without guessing.
-        #if DEBUG
-        MsgDiag.text = [
-            "pack \(QuestionPack.shared.debugCount)",
-            "msg \(selected == nil ? "nil" : "yes")",
-            "url \(selected?.url == nil ? "nil" : String(selected!.url!.absoluteString.prefix(28)))",
-            "decode \(state == nil ? "NIL" : "ok q=\(state!.questionIDs.count) p=\(state!.players.count)")",
-            presentationStyle == .compact ? "compact" : "expanded",
-        ].joined(separator: "  ")
-        #endif
-
         let view: AnyView
-        if let state {
+        if let state, !startingNewRound {
             if presentationStyle == .compact {
                 // A live round needs room. Ask for it rather than cramming four
                 // options into the drawer.
@@ -79,6 +70,15 @@ final class MessagesViewController: MSMessagesAppViewController {
                     playerID: localPlayerID(conversation),
                     onSend: { [weak self] updated, caption in
                         self?.send(updated, caption: caption, in: conversation)
+                    },
+                    onPlayAgain: { [weak self] in
+                        guard let self else { return }
+                        // The selected message is still the finished round, so the
+                        // routing above would put us straight back on the results
+                        // screen. This flag is what lets a finished round lead
+                        // anywhere at all.
+                        self.startingNewRound = true
+                        self.present(conversation: conversation)
                     }))
             }
         } else {

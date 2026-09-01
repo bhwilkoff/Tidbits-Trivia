@@ -15,43 +15,23 @@ enum MsgPalette {
     static let mint = Color(red: 0.12, green: 0.62, blue: 0.42)
 }
 
-#if DEBUG
-/// Diagnostic state for `DiagStrip`. Debug-only — see the strip's note below.
-enum MsgDiag {
-    nonisolated(unsafe) static var text: String = ""
-}
-#endif
-
-/// A one-line readout of what the extension actually sees, on screen in Debug builds
-/// and compiled out of Release entirely.
+/// Constrain content to a readable measure and centre it.
 ///
-/// **Why this survives instead of being deleted.** Three bugs in this extension were
-/// invisible from the outside and identical to each other on screen: it ran in dark
-/// mode, `MSMessage.url` was silently stripped in transit, and answers only staged
-/// instead of sending. Each one landed the player on the start screen looking like
-/// "nothing happened". This strip is what told them apart, and an extension is the
-/// worst place to lose an instrument — Messages launches it, so there is no console,
-/// no debugger and no env var to reach it with.
-///
-/// An env var genuinely cannot work here, which is why an earlier version of this
-/// comment argued against a flag at all. A *build configuration* can: the harness
-/// installs Debug, `tools/submit-appstore.sh` ships Release, so the strip is always
-/// readable on a device and can never reach a store build. Verified with
-/// `-showBuildSettings`: `SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG` in Debug,
-/// undefined in Release. `MessagesDiagnosticTests` pins that it stays that way.
-struct DiagStrip: View {
-    var body: some View {
-        #if DEBUG
-        Text(MsgDiag.text)
-            .font(.system(size: 9, weight: .medium, design: .monospaced))
-            .foregroundStyle(.white)
-            .padding(.horizontal, 6).padding(.vertical, 3)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.black.opacity(0.8))
-        #else
-        EmptyView()
-        #endif
+/// The extension's expanded presentation is as wide as the sheet, which on a 13"
+/// iPad is over 2,000 points. Text set edge-to-edge at that width is unreadable —
+/// a line runs to 200 characters against the ~65 a reader can track — and the
+/// screen reads as broken rather than roomy. Phones are unaffected: they are
+/// narrower than the cap, so the frame is a no-op there.
+private struct ReadableColumn: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .frame(maxWidth: 620)
+            .frame(maxWidth: .infinity)     // centre the capped column in the sheet
     }
+}
+
+private extension View {
+    func readableColumn() -> some View { modifier(ReadableColumn()) }
 }
 
 /// The drawer. A few hundred points tall — one line and one button, nothing more.
@@ -64,7 +44,6 @@ struct CompactPromptView: View {
         ZStack {
             MsgPalette.bg.ignoresSafeArea()
             VStack(spacing: 6) {
-                DiagStrip()
                 Text(headline)
                     .font(.system(size: 19, weight: .black, design: .rounded))
                     .foregroundStyle(MsgPalette.ink)
@@ -104,7 +83,6 @@ struct StartRoundView: View {
                 MsgPalette.bg.ignoresSafeArea()
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
-                        DiagStrip()
                         Text("SEND A ROUND")
                             .font(.system(size: 24, weight: .black, design: .rounded))
                             .foregroundStyle(MsgPalette.ink)
@@ -166,6 +144,7 @@ struct StartRoundView: View {
                         .padding(.top, 4)
                     }
                     .padding(20)
+                    .readableColumn()
                 }
             }
         }
@@ -177,6 +156,7 @@ struct RoundView: View {
     let state: RoundState
     let playerID: String
     let onSend: (RoundState, String) -> Void
+    let onPlayAgain: () -> Void
 
     @State private var name = UserDefaults.standard.string(forKey: "tidbits.msg.name") ?? ""
     @State private var joined = false
@@ -193,9 +173,15 @@ struct RoundView: View {
         ZStack {
             MsgPalette.bg.ignoresSafeArea()
             ScrollView {
-                if let q = question {
+                // A finished round is its OWN screen, not the last question with a
+                // full scoreboard under it. Before this, reaching the end left you
+                // looking at question 5 — no result, no winner, and no way to see
+                // the four explanations you had already scrolled past.
+                if state.isFinished {
+                    FinishedRoundView(state: state, playerID: playerID,
+                                      onPlayAgain: onPlayAgain)
+                } else if let q = question {
                     VStack(alignment: .leading, spacing: 14) {
-                        DiagStrip()
                         header(q)
                         if !isPlayer && !joined {
                             joinCard
@@ -207,6 +193,7 @@ struct RoundView: View {
                         scoreboard
                     }
                     .padding(20)
+                    .readableColumn()
                 } else {
                     Text("This round needs a newer version of Tidbits.")
                         .font(.system(size: 15))
@@ -360,4 +347,209 @@ struct RoundView: View {
         }
         .padding(.top, 4)
     }
+}
+
+/// The end of a round: who won, the final scores, and every question's answer.
+///
+/// The recap is the reason this screen is long. A round is five questions delivered
+/// one message at a time, often over hours — by the time it ends, the explanations
+/// from questions one through four have scrolled out of the thread and out of memory.
+/// Showing only the last one (which is what this used to do) throws away four fifths
+/// of the point: the explanation, not the score, is what makes a trivia habit worth
+/// having.
+struct FinishedRoundView: View {
+    let state: RoundState
+    let playerID: String
+    let onPlayAgain: () -> Void
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var celebrated = false
+
+    private var key: (String) -> Int? { { QuestionPack.shared.correctIndex(id: $0) } }
+
+    private var entries: [(name: String, score: Int)] {
+        state.players.map { (name: $0.name, score: state.score($0, correctIndexFor: key)) }
+    }
+
+    /// The SHARED rule, not a local sort. `StandingsOutcome` is what distinguishes a
+    /// win from a tie, and a tie among some players from everyone finishing level —
+    /// including the 0–0 board, which ties rather than crowning whoever the sort
+    /// happened to put first.
+    private var headline: String {
+        StandingsOutcome.headline(entries, empty: "That's a round!")
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            banner
+            scores
+            answers
+            playAgain
+        }
+        .padding(20)
+        .readableColumn()
+    }
+
+    // MARK: - Celebration
+
+    private var banner: some View {
+        VStack(spacing: 6) {
+            Text("ROUND COMPLETE")
+                .font(.system(size: 11, weight: .bold))
+                .foregroundStyle(.white.opacity(0.85))
+                .tracking(1.2)
+            Text(headline)
+                .font(.system(size: 30, weight: .black, design: .rounded))
+                .foregroundStyle(.white)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+            if let mine = myLine {
+                Text(mine)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.9))
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 26)
+        .padding(.horizontal, 16)
+        .background(RoundedRectangle(cornerRadius: 20).fill(MsgPalette.coral))
+        // The celebration is typographic and chromatic, never an emoji: R-ICON-1
+        // rules out emoji chrome, and a burst of confetti in a message thread is
+        // someone else's app.
+        .scaleEffect(celebrated || reduceMotion ? 1 : 0.94)
+        .opacity(celebrated || reduceMotion ? 1 : 0)
+        .animation(.spring(response: 0.45, dampingFraction: 0.7), value: celebrated)
+        .onAppear { celebrated = true }
+    }
+
+    /// "You got 4 of 5" — the local player's own result, which is the thing they came
+    /// back to the thread to find. Absent for a spectator who never joined.
+    private var myLine: String? {
+        guard let me = state.players.first(where: { $0.id == playerID }) else { return nil }
+        return "You got \(state.score(me, correctIndexFor: key)) of \(state.questionIDs.count)"
+    }
+
+    // MARK: - Final scores
+
+    private var scores: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("FINAL SCORES")
+                .font(.system(size: 11, weight: .bold))
+                .foregroundStyle(MsgPalette.inkSoft)
+            VStack(spacing: 0) {
+                ForEach(Array(ranked.enumerated()), id: \.element.player.id) { i, row in
+                    scoreRow(row)
+                    if i < ranked.count - 1 {
+                        Divider().overlay(MsgPalette.ink.opacity(0.08))
+                    }
+                }
+            }
+            .background(RoundedRectangle(cornerRadius: 14).fill(.white))
+        }
+    }
+
+    private struct Row { let player: RoundState.Player; let score: Int; let top: Bool }
+
+    /// Sorted high to low, with EVERY leader marked rather than just the first row.
+    private var ranked: [Row] {
+        state.players
+            .map { p in
+                let s = state.score(p, correctIndexFor: key)
+                return Row(player: p, score: s, top: StandingsOutcome.isTop(s, in: entries))
+            }
+            .sorted { $0.score > $1.score }
+    }
+
+    private func scoreRow(_ row: Row) -> some View {
+        HStack(spacing: 10) {
+            // A leader is marked by weight and colour, not a trophy glyph.
+            Text(row.top ? "WON" : "")
+                .font(.system(size: 9, weight: .black))
+                .foregroundStyle(MsgPalette.coral)
+                .frame(width: 30, alignment: .leading)
+            Text(row.player.name)
+                .font(.system(size: 16, weight: row.top ? .black : .semibold))
+                .foregroundStyle(MsgPalette.ink)
+                .lineLimit(1)
+            Spacer(minLength: 8)
+            Text("\(row.score)")
+                .font(.system(size: 17, weight: .black).monospacedDigit())
+                .foregroundStyle(row.top ? MsgPalette.coral : MsgPalette.ink)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+    }
+
+    // MARK: - The answers
+
+    private var answers: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("THE ANSWERS")
+                .font(.system(size: 11, weight: .bold))
+                .foregroundStyle(MsgPalette.inkSoft)
+            ForEach(Array(state.questionIDs.enumerated()), id: \.offset) { i, qid in
+                if let q = QuestionPack.shared.question(id: qid) {
+                    answerCard(index: i, q: q)
+                }
+            }
+        }
+    }
+
+    private func answerCard(index: Int, q: PackQuestion) -> some View {
+        let mine = state.players.first { $0.id == playerID }?.answers[safe: index] ?? nil
+        let right = mine == q.correctIndex
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text("\(index + 1)")
+                    .font(.system(size: 11, weight: .black))
+                    .foregroundStyle(MsgPalette.inkSoft)
+                Text(q.prompt)
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(MsgPalette.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            HStack(spacing: 6) {
+                // Only claim right/wrong for someone who actually answered. A
+                // spectator, or a player who joined after this question, gets the
+                // answer without a verdict they never earned.
+                if mine != nil {
+                    Text(right ? "Correct" : "Missed")
+                        .font(.system(size: 12, weight: .black))
+                        .foregroundStyle(right ? MsgPalette.mint : MsgPalette.coral)
+                }
+                Text(q.options[q.correctIndex])
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(MsgPalette.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Text(q.explanation)
+                .font(.system(size: 14))
+                .foregroundStyle(MsgPalette.inkSoft)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .background(RoundedRectangle(cornerRadius: 14).fill(.white))
+    }
+
+    // MARK: - Next
+
+    private var playAgain: some View {
+        Button(action: onPlayAgain) {
+            Text("Send another round")
+                .font(.system(size: 17, weight: .bold))
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(RoundedRectangle(cornerRadius: 14).fill(MsgPalette.ink))
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+private extension Array {
+    /// A late joiner's `answers` is sized to the round, but a malformed wire payload
+    /// need not be — decoding takes whatever characters arrived. Indexing it blind
+    /// would crash inside Messages, which is the worst place to trap.
+    subscript(safe i: Int) -> Element? { indices.contains(i) ? self[i] : nil }
 }

@@ -74,6 +74,12 @@ struct StartRoundView: View {
                         TextField("Your name", text: $name)
                             .textFieldStyle(.plain)
                             .font(.system(size: 17, weight: .semibold))
+                            // Explicit, never inherited. This palette is fixed cream
+                            // and ink; a control that takes its colour from the
+                            // environment is one appearance change away from being
+                            // invisible, which is exactly what happened here.
+                            .foregroundStyle(MsgPalette.ink)
+                            .tint(MsgPalette.coral)
                             .padding(12)
                             .background(RoundedRectangle(cornerRadius: 12).fill(.white))
                             .overlay(RoundedRectangle(cornerRadius: 12)
@@ -190,6 +196,8 @@ struct RoundView: View {
                 .foregroundStyle(MsgPalette.ink)
             TextField("Your name", text: $name)
                 .textFieldStyle(.plain)
+                .foregroundStyle(MsgPalette.ink)
+                .tint(MsgPalette.coral)
                 .padding(10)
                 .background(RoundedRectangle(cornerRadius: 10).fill(.white))
                 .overlay(RoundedRectangle(cornerRadius: 10)

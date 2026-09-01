@@ -10,4 +10,4 @@
 // versionName in lockstep with MARKETING_VERSION (android/app/build.gradle.kts).
 
 MARKETING_VERSION = 1.6.80
-CURRENT_PROJECT_VERSION = 116
+CURRENT_PROJECT_VERSION = 117

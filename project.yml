@@ -188,15 +188,22 @@ targets:
         # The iMessage app icon is its OWN asset set with its own sizes — the iOS
         # AppIcon is not valid here and App Store Connect rejects a build missing it.
         ASSETCATALOG_COMPILER_APPICON_NAME: iMessage App Icon
-        # Same light-only rule as the app: Tidbits is a fixed cream design with no
-        # dark variants, and without this a dark-mode phone renders cream-on-white.
-        INFOPLIST_KEY_UIUserInterfaceStyle: Light
     info:
       path: TidbitsMessages/Info.plist
       properties:
         CFBundleDisplayName: Tidbits
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        # Force light, exactly as the app does. An extension does NOT inherit its
+        # host app's appearance, so on a dark-mode device this ran dark: the default
+        # label colour became white, on top of the white field background the design
+        # hardcodes — white-on-white, and the name field looked empty while you typed.
+        #
+        # This MUST live here in the plist properties. It was originally written as
+        # the build setting INFOPLIST_KEY_UIUserInterfaceStyle, which Xcode only
+        # merges when it GENERATES the plist — with an explicit `info.path` like this
+        # target has, the setting is silently ignored and nothing warns.
+        UIUserInterfaceStyle: Light
         NSExtension:
           NSExtensionPointIdentifier: com.apple.message-payload-provider
           NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).MessagesViewController

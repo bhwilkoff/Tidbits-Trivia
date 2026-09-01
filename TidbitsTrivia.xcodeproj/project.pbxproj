@@ -205,6 +205,7 @@
 		C1DE024CBF206CDDE8F875FB /* LiveRoom.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BB92F967027E59F005CB86D /* LiveRoom.swift */; };
 		C2723A2D30FE2EB6BE44304D /* LinkWallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C89A5FB7DDBE19EDD404584 /* LinkWallView.swift */; };
 		C5D34E16C6CAD80BCE7BD4D7 /* Marathon.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACBB11A0D029110390E8A92A /* Marathon.swift */; };
+		C7945BEDE8CABFED83A6B1C4 /* MessagesAppearanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3E807AAB9780367FFC5699F /* MessagesAppearanceTests.swift */; };
 		C8F2A4B8CAC81B530D5A6D7D /* RecordsView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = F705319E1E9AC235B5D005C4 /* RecordsView_tvOS.swift */; };
 		CA9E6D28721A01D2CC785AC7 /* StoryArchive.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A3ADC850DC68E721197BEF7 /* StoryArchive.swift */; };
 		CAA738077B25395A1A8BE9E6 /* SharedItemView_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D8FC57452ABC47173732D7F /* SharedItemView_macOS.swift */; };
@@ -460,6 +461,7 @@
 		F17A18347A60D32B1B27BC00 /* StoryArchiveView_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoryArchiveView_macOS.swift; sourceTree = "<group>"; };
 		F18495176F588DF9E5C7907E /* PartyContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PartyContainerView.swift; sourceTree = "<group>"; };
 		F3AE68F153F8C298960BFD36 /* Player.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Player.swift; sourceTree = "<group>"; };
+		F3E807AAB9780367FFC5699F /* MessagesAppearanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessagesAppearanceTests.swift; sourceTree = "<group>"; };
 		F4534F27C4206B9640778460 /* SettingsView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView_tvOS.swift; sourceTree = "<group>"; };
 		F45A86C8863F908B3F7D4E7C /* LiveJoinView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveJoinView_tvOS.swift; sourceTree = "<group>"; };
 		F5C9D9266531ECD27156562D /* GameView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView_tvOS.swift; sourceTree = "<group>"; };
@@ -471,7 +473,7 @@
 		FD70222B5EE4C4145E4D1F84 /* NightSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightSetupView.swift; sourceTree = "<group>"; };
 		FDDD2AC4DB9C421C5849B8F6 /* GameView_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView_macOS.swift; sourceTree = "<group>"; };
 		FFC46D4CE8D03186C064C759 /* Question.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Question.swift; sourceTree = "<group>"; };
-		"TEMP_D905E125-CB7F-4063-80A5-EB572EE469D5" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
+		"TEMP_A45EECB7-D240-4D6E-B798-D51178AEB098" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -593,6 +595,7 @@
 				058D7E35AB40F632148F5D3A /* ExpeditionCatalogTests.swift */,
 				E2E52F53D6F7AE7E65D91781 /* KnowledgeAtlasTests.swift */,
 				B5D6E0E49066C4E751BEE4EA /* MarathonTests.swift */,
+				F3E807AAB9780367FFC5699F /* MessagesAppearanceTests.swift */,
 				70131ECA7118163962F89E5C /* OrderScoringTests.swift */,
 				12C73B177B0C4929AFBD6BE6 /* QuizStoreTests.swift */,
 				35112E7C75835527816E665E /* README.md */,
@@ -845,10 +848,10 @@
 			path = TidbitsTrivia;
 			sourceTree = "<group>";
 		};
-		"TEMP_8E663339-9A98-4C01-8EEA-1FC04C8D98C2" /* Tidbits-Trivia */ = {
+		"TEMP_1CD464A4-69C8-4256-9020-8AA46E8511D6" /* Tidbits-Trivia */ = {
 			isa = PBXGroup;
 			children = (
-				"TEMP_D905E125-CB7F-4063-80A5-EB572EE469D5" /* AppVersion.xcconfig */,
+				"TEMP_A45EECB7-D240-4D6E-B798-D51178AEB098" /* AppVersion.xcconfig */,
 			);
 			path = "Tidbits-Trivia";
 			sourceTree = "<group>";
@@ -1058,6 +1061,7 @@
 				C5D34E16C6CAD80BCE7BD4D7 /* Marathon.swift in Sources */,
 				15EF954644D36101B40E6F95 /* MarathonModels.swift in Sources */,
 				D2440B13212768315B590D70 /* MarathonTests.swift in Sources */,
+				C7945BEDE8CABFED83A6B1C4 /* MessagesAppearanceTests.swift in Sources */,
 				434B25D5500951E78CF34139 /* NightClient.swift in Sources */,
 				F70F0BC5ECEF59B42BE49CB7 /* NightHost.swift in Sources */,
 				07FB78FA59931A8322DA0685 /* NightLink.swift in Sources */,
@@ -1268,7 +1272,6 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = "iMessage App Icon";
 				INFOPLIST_FILE = TidbitsMessages/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Tidbits;
-				INFOPLIST_KEY_UIUserInterfaceStyle = Light;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1291,7 +1294,6 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = "iMessage App Icon";
 				INFOPLIST_FILE = TidbitsMessages/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Tidbits;
-				INFOPLIST_KEY_UIUserInterfaceStyle = Light;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1310,7 +1312,7 @@
 		};
 		296659EF0549868336801823 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_D905E125-CB7F-4063-80A5-EB572EE469D5" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_A45EECB7-D240-4D6E-B798-D51178AEB098" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -1475,7 +1477,7 @@
 		};
 		E6F711EEEE2896F84FE9AB98 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_D905E125-CB7F-4063-80A5-EB572EE469D5" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_A45EECB7-D240-4D6E-B798-D51178AEB098" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;

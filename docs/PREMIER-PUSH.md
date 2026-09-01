@@ -141,7 +141,7 @@ landscape survey). **The gap is implementation and verification, not research.**
 | L6 | Event export/import as JSON; CSV question-bank import (§A2.5 / §6.7) | ✅ | ✅ | ONE contract (`docs/LIVE-EVENT-FILE.md`), one golden file, **14 tests across both stacks** — 7 Swift + 7 C# against the same bytes. CSV import is Mac-only still. |
 | L7 | Printing: question pack + answer sheet + scoresheet, verified as PDF | ✅ | ✅ | Mac: paginated to US Letter, **5 tests A/B-proven to fail on the old code**. Windows: prints HTML (the browser paginates), and the question pack is now printable from the BUILDER, not only a running cockpit; 3 tests incl. markup escaping |
 | L8 | Empty/loading/error states on every Live surface | 🟡 | ⏳ | Mac: saved-events empty state + expanded-round empty state; import/export now raise a real alert instead of a silent `try?` |
-| L9 | Every button in builder + cockpit driven and asserted by the harness | ⏳ | ⏳ | |
+| L9 | Every button in builder + cockpit driven and asserted by the harness | ⏳ | 🟡 | Measured: **37 Click handlers, 0 named by any test**. `LiveControlsSmokeTest` now pins wiring, labels, enabled-state, hit area, and that an empty-event press SAYS something. Per-handler behaviour still uncovered. |
 | L10 | Cockpit layout: no dead space, controls wrap, reachable at min window | ⏳ | ⏳ | |
 
 ### Rules added this scope
@@ -397,3 +397,33 @@ from a **running cockpit**, which is exactly when a host least needs it. "Print
 question pack" now sits in the builder. A fully corpus-sourced event says so
 rather than printing a lie, and a partly-authored one prints what it has and
 names how many rounds are not in it.
+
+
+---
+
+## Tick 11 — the coverage number nobody had looked at
+
+The Live builder and cockpit carry **37 `Click` handlers between them, and not
+one was named by any test.** Behaviour was well covered — the view models and the
+night logic have hundreds of tests — but nothing asserted that the controls a
+host actually *presses* are wired, labelled and reachable. That is
+`hooks-are-coverage`: a surface nothing can drive reads as a pass.
+
+`LiveControlsSmokeTest` pins the ways a button is "malformed or does not
+function":
+
+- every `Click="OnFoo"` **resolves to a real method** (reflection — for handlers
+  reached through a template this is a runtime blank, not a compile error);
+- no app button renders **blank**;
+- no app button is **disabled on a fresh builder**, where nothing the host does
+  could ever enable it;
+- no button has a **hit area under 8pt**, which is invisible to a pointer and to
+  a screenshot alike;
+- Host / Preview / Save / Print on an **empty event SAY why** nothing happened —
+  silence is indistinguishable from a broken button.
+
+**Its first run failed, on itself.** It flagged `PART_PageUpButton` — a
+`RepeatButton` inside Fluent's ScrollBar template — as an unlabelled button. True,
+and entirely irrelevant. Now scoped to buttons the app declared. Fifth detector
+this session whose first version was wrong; every one caught by looking at the
+hits rather than the count.

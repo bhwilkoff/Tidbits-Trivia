@@ -28,6 +28,7 @@ make a plausible peer. A 500-member ceiling separates "mountain range" (40) from
 Then run tools/corpus/resync_corpus.sh.
 """
 import argparse
+import hashlib
 import collections
 import json
 import pathlib
@@ -37,6 +38,18 @@ import sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import fix_fame_tell as fft                                        # noqa: E402
 import quality_gate as qg                                          # noqa: E402
+
+
+def corpus_version(body: str) -> str:
+    """The content hash export_json.py writes. Recomputed on EVERY write.
+
+    Preserving the old string was a real, shipped bug: three consecutive
+    commits shipped 110,618 -> 110,541 -> 110,512 questions all under version
+    f3c1477ed04a, so every web player who had already cached the corpus kept
+    serving the rows those repairs removed. The web client busts its
+    IndexedDB cache on this string and nothing else."""
+    return hashlib.md5(body.encode()).hexdigest()[:12]
+
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 CORPUS = ROOT / "assets" / "corpus.json"
@@ -161,7 +174,7 @@ def main():
     def write(rs):
         body = json.dumps(rs, ensure_ascii=False, separators=(",", ":"))
         CORPUS.write_text(
-            f'{{"version":"{data["version"]}","count":{len(rs)},"questions":{body}}}')
+            f'{{"version":"{corpus_version(body)}","count":{len(rs)},"questions":{body}}}')
 
     # Re-check against the REAL gate rather than a second copy of its rules, and
     # drop any restored row it objects to. Hand-mirroring KIND-MISMATCH here left

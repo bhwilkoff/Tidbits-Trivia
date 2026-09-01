@@ -43,6 +43,25 @@ for f in oddoneout match order thisorthat picture typeanswer closest enumerate d
   cp "assets/$f.json" "android/app/src/main/assets/$f.json"
 done
 
+echo "--- 2b. assert corpus.json's version hash matches its content"
+python3 - <<'PY2'
+# The web client busts its IndexedDB cache on this string and nothing else, so a
+# content change under an unchanged version never reaches a returning player.
+# That is not hypothetical: 944cbad1, c8d110b7 and 38c80ba7 shipped 110,618 ->
+# 110,541 -> 110,512 questions all under version f3c1477ed04a, because 29 of the
+# fix_*.py repair tools copied the old string forward instead of recomputing it.
+import hashlib, json, sys
+d = json.load(open("assets/corpus.json"))
+body = json.dumps(d["questions"], ensure_ascii=False, separators=(",", ":"))
+want = hashlib.md5(body.encode()).hexdigest()[:12]
+if d["version"] != want:
+    print(f"   VERSION-STALE: corpus.json says {d['version']} but its content hashes to {want}.")
+    print("   Whatever last wrote corpus.json kept the old version. Every web player")
+    print("   who already cached the corpus would keep serving the rows you changed.")
+    sys.exit(1)
+print(f"   ok: version {want} matches content ({len(d['questions']):,} questions)")
+PY2
+
 echo "--- 3. regenerate Daily golden (Apple swiftc + web node) and verify parity"
 sqlite3 TidbitsTrivia/Resources/corpus.sqlite "SELECT id FROM questions" > /tmp/rc-ids.txt
 # v2 (Decision 050) balances across categories, so the picker needs each id's

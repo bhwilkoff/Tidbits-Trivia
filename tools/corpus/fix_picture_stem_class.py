@@ -16,11 +16,24 @@ this?".
 Then run tools/corpus/resync_corpus.sh and bump sw.js CACHE.
 """
 import argparse
+import hashlib
 import json
 import pathlib
 import re
 import sqlite3
 import sys
+
+
+def corpus_version(body: str) -> str:
+    """The content hash export_json.py writes. Recomputed on EVERY write.
+
+    Preserving the old string was a real, shipped bug: three consecutive
+    commits shipped 110,618 -> 110,541 -> 110,512 questions all under version
+    f3c1477ed04a, so every web player who had already cached the corpus kept
+    serving the rows those repairs removed. The web client busts its
+    IndexedDB cache on this string and nothing else."""
+    return hashlib.md5(body.encode()).hexdigest()[:12]
+
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 PICTURE = ROOT / "assets" / "picture.json"
@@ -74,7 +87,7 @@ def main():
     if isinstance(data, dict):
         body = json.dumps(rows, ensure_ascii=False, separators=(",", ":"))
         PICTURE.write_text(
-            f'{{"version":"{data["version"]}","count":{len(rows)},"questions":{body}}}')
+            f'{{"version":"{corpus_version(body)}","count":{len(rows)},"questions":{body}}}')
     else:
         PICTURE.write_text(json.dumps(rows, ensure_ascii=False, separators=(",", ":")))
     print(f"\nwrote {PICTURE}")

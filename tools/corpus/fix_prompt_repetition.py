@@ -30,6 +30,18 @@ import pathlib
 import random
 import sys
 
+
+def corpus_version(body: str) -> str:
+    """The content hash export_json.py writes. Recomputed on EVERY write.
+
+    Preserving the old string was a real, shipped bug: three consecutive
+    commits shipped 110,618 -> 110,541 -> 110,512 questions all under version
+    f3c1477ed04a, so every web player who had already cached the corpus kept
+    serving the rows those repairs removed. The web client busts its
+    IndexedDB cache on this string and nothing else."""
+    return hashlib.md5(body.encode()).hexdigest()[:12]
+
+
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 CORPUS = ROOT / "assets" / "corpus.json"
 
@@ -135,7 +147,7 @@ def main():
         return 0
     body = json.dumps(rows, ensure_ascii=False, separators=(",", ":"))
     CORPUS.write_text(
-        f'{{"version":"{data["version"]}","count":{len(rows)},"questions":{body}}}')
+        f'{{"version":"{corpus_version(body)}","count":{len(rows)},"questions":{body}}}')
     print(f"\nwrote {CORPUS}")
     return 0
 

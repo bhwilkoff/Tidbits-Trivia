@@ -35,6 +35,7 @@ mode well covered.
 Then run tools/corpus/resync_corpus.sh.
 """
 import argparse
+import hashlib
 import collections
 import json
 import pathlib
@@ -44,6 +45,18 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from quality_gate import kind_map                                  # noqa: E402
+
+
+def corpus_version(body: str) -> str:
+    """The content hash export_json.py writes. Recomputed on EVERY write.
+
+    Preserving the old string was a real, shipped bug: three consecutive
+    commits shipped 110,618 -> 110,541 -> 110,512 questions all under version
+    f3c1477ed04a, so every web player who had already cached the corpus kept
+    serving the rows those repairs removed. The web client busts its
+    IndexedDB cache on this string and nothing else."""
+    return hashlib.md5(body.encode()).hexdigest()[:12]
+
 
 CORPUS = ROOT / "assets" / "corpus.json"
 ODDONEOUT = ROOT / "assets" / "oddoneout.json"
@@ -104,7 +117,7 @@ def main():
     keep = [r for r in sets if r[0] not in set(drop)]
     body = json.dumps(keep, ensure_ascii=False, separators=(",", ":"))
     ODDONEOUT.write_text(
-        f'{{"version":"{data["version"]}","count":{len(keep)},"questions":{body}}}')
+        f'{{"version":"{corpus_version(body)}","count":{len(keep)},"questions":{body}}}')
     print(f"\n{len(sets)} -> {len(keep)} rows")
     return 0
 

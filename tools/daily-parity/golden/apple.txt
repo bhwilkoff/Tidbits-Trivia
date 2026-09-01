@@ -1,6 +1,6 @@
 2026-07-01 rel:P17:Q161750 rel:P170:Q1850543 src:cloze:Sean_Payton chron:P571:829129638361 chron:P577:257203917662 src:describe:Bloomberg_L.P. src:describe:Antoni_Porowski
-2026-07-02 src:cloze:George_Headley src:cloze:Mania wd:director:Q488041 num:P2046:Q4991540 src:describe:Red,_White_&_Royal_Blue src:describe:Deutsche_Telekom rel:P17:Q154849
+2026-07-02 src:cloze:George_Headley src:cloze:Mania wd:director:Q488041 chron:P571:69112346009 src:describe:Red,_White_&_Royal_Blue src:describe:Deutsche_Telekom rel:P17:Q154849
 2026-09-01 chron:P571:650473317215 src:cloze:Michael_Biehn src:describe:Hyperthermia src:cloze:Nora_Ephron sup:P1082:540779081876 rel:P112:Q7501150 src:cloze:AC/DC
 2026-12-31 chron:P571:536825712598 chron:P571:616850212486 wd:composer:Q1131761 src:describe:Ernest_Shackleton src:describe:The_Chronicles_of_Narnia src:cloze:Virupaksha_(film) chron:P571:108448983018
-2027-01-15 src:cloze:Ohio wd:author:Q1147583 wd:composer:Q486609 biz:industry:ac80d013118c num:P2048:Q20976280 src:cloze:Clements_Markham wd:director:Q7278417
-2027-02-28 chron:P571:589770995278 src:cloze:Andromeda_(mythology) biz:country:504f1c68f522 src:cloze:Najwa_Nimri chron:P569:116331563327 src:cloze:Scarlett_Johansson num:P2048:Q167240
+2027-01-15 src:cloze:Ohio wd:author:Q1147583 wd:composer:Q486609 biz:industry:ac80d013118c src:cloze:Nick_Bosa src:cloze:Clements_Markham wd:director:Q7278417
+2027-02-28 chron:P571:589770995278 src:cloze:Andromeda_(mythology) biz:country:504f1c68f522 src:cloze:Najwa_Nimri chron:P569:116331563327 src:cloze:Scarlett_Johansson src:describe:Juan_Martín_del_Potro

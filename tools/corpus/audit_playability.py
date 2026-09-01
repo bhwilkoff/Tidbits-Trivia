@@ -136,7 +136,7 @@ def check_repellent(rows, _ctx):
     the pattern that fired so the list can be read and argued with.
     """
     out = []
-    descriptions = _ctx or {}
+    descriptions = (_ctx or {}).get("descriptions", {})
     for r in rows:
         subject = f"{r.src or ''} {r.answer}"
         if (r.src or "") in REPELLENT_KEEP or r.answer in REPELLENT_KEEP:
@@ -197,6 +197,144 @@ def check_self_answering(rows, _ctx):
     return out
 
 
+# Wikidata P31 classes whose members are NOT "founded". A country has no single
+# founding date a player can reason to — unification, independence, the current
+# republic and the current constitution are all defensible answers — and asking
+# "In what year was Italy founded?" is both ill-posed and politically loaded.
+#
+# CITIES are deliberately NOT here: a city genuinely is founded, and "In what year
+# was Bucharest founded?" is a normal quiz question.
+NOT_FOUNDED_CLASSES = {
+    "Q3624078": "sovereign state",
+    "Q6256": "country",
+    "Q5": "person",
+    "Q23442": "island",
+    "Q8502": "mountain",
+    "Q4022": "river",
+    "Q23397": "lake",
+    "Q7365": "star",
+    "Q634": "planet",
+}
+# Q3024240 "historical country" is DELIBERATELY absent. Reading the hits showed it
+# sweeps in dynasties, empires and caliphates — "In what year was the Ming dynasty
+# founded? -> 1368", "Umayyad Caliphate -> 661", "Achaemenid Empire -> 550 BC" —
+# all of which ARE conventionally founded and have textbook dates. The class that
+# is actually broken is the MODERN sovereign state, where "founded" silently means
+# independence, unification, or the current constitution depending on the country.
+# Q1250464 "realm" is out for the same reason: it caught the Chola and Chalukya
+# DYNASTIES, which are founded in the ordinary sense.
+# The construction that matters is PASSIVE — the subject is the thing being
+# founded ("In what year was Italy founded?"). Active voice is ordinary English
+# and ordinary trivia: "This businessman co-founded a ride-hailing company" is a
+# good question about Travis Kalanick, and the first version of this check
+# flagged 1,619 rows that were overwhelmingly exactly that.
+FOUNDED_PASSIVE = re.compile(
+    r"^In what year was (?:the )?(.+?) founded\?$"
+    r"|^(?:The )?(.+?) was founded in (?:which|what) year\?$"
+    r"|^(?:In )?(?:which|what) year was (?:the )?(.+?) founded\?$", re.I)
+FOUNDED_COMPARISON = re.compile(r"\bfounded (?:earliest|first|last|most recently)\b", re.I)
+
+
+def check_founded_misuse(rows, ctx):
+    """"Founded" applied to something that was not founded.
+
+    The owner named this class directly: *"there should be no 'founded' questions
+    for things that weren't founded"*. An earlier pass fixed characters (created)
+    and bands (formed) but never looked at COUNTRIES, which is where the worst of
+    it lives: "In what year was Italy founded?", "In what year was India founded?"
+
+    These are not a wording problem with a rewrite available — a country has no
+    single founding date a player can reason to (unification, independence, the
+    current republic and the current constitution are all defensible) — so they go
+    rather than getting a new verb.
+
+    Cities are excluded on purpose: a city genuinely IS founded.
+    """
+    classes = (ctx or {}).get("p31", {})
+
+    def not_founded(title):
+        for cl in (classes.get(title, "") or "").split(","):
+            if cl in NOT_FOUNDED_CLASSES:
+                return NOT_FOUNDED_CLASSES[cl]
+        return None
+
+    out = []
+    for r in rows:
+        prompt = r.prompt or ""
+        why = None
+        if FOUNDED_PASSIVE.match(prompt):
+            # The subject is the thing being founded.
+            why = not_founded(r.src or "")
+        elif FOUNDED_COMPARISON.search(prompt):
+            # A comparison round claims one OPTION was founded earliest; the claim
+            # is only as sound as what is being compared.
+            why = not_founded(r.answer)
+        if why:
+            out.append((r, why))
+    return out
+
+
+# --- low-interest shapes (the notability pass) -------------------------------
+#
+# A single global notability floor is the WRONG instrument, and the numbers say so:
+# the corpus median subject sits at qrank ~1.0M while Marta Fascina — the question
+# that started this whole scope — sits at 1.66M, ABOVE the median. What actually
+# predicts a dead question is the SHAPE crossed with the subject's fame, and each
+# shape has its own answer. Every floor below was set by reading the rows on both
+# sides of it, never by picking a percentile.
+SHAPE_HEIGHT = re.compile(r"^About how tall is .+\?$")
+SHAPE_ELEVATION = re.compile(r"^Approximately what is the elevation of .+\?$")
+SHAPE_BORN_DIED = re.compile(r"^In what year (?:was|did) .+ (?:born|die)\?$")
+SHAPE_AREA = re.compile(r"^Roughly how large is .+ by area\?$")
+
+# Mountains keep their elevation question; it is the one subject for which
+# "how high is it" is the actual famous fact.
+MOUNTAIN_CLASSES = {"Q8502", "Q54050", "Q207326", "Q1437459"}
+
+BORN_DIED_FLOOR = 3_000_000
+AREA_FLOOR = 5_000_000
+
+
+def check_low_interest_shape(rows, ctx):
+    """Question shapes that no pub room can play, by shape and by subject fame.
+
+    - HEIGHT is removed outright. At the very top of the fame distribution the
+      questions are "About how tall is Lionel Messi?" (1.69 m) and "About how tall
+      is Michael Jordan?" (1.98 m) — an unguessable coin-flip between four
+      centimetre-apart options. If the shape is dead for Messi it is dead.
+    - ELEVATION is removed except for mountains. "Approximately what is the
+      elevation of Canada? -> 487 m" is a country's MEAN elevation, which is not a
+      fact anyone holds.
+    - BORN/DIED and AREA get fame floors, read at the boundary: below 3M the names
+      are Bruno Fernandes and Alba Baptista; above it they are Ben Stiller and
+      Ethan Hawke. Below 5M the areas are Liverpool and Riyadh; above it they are
+      Algeria and Cambodia, which is the only case where "how large by area" works.
+
+    RELEASED / FOUNDED deliberately get NO floor. The boundary read cut *Before
+    Sunrise*, *Point Break*, *Kung Fu Hustle* and "In what year was the YMCA
+    founded?" while keeping *Terrifier 2* — so qrank does not discriminate quality
+    for that shape, and applying a floor there would have destroyed ~970 good
+    questions on a metric that does not measure what it looked like it measured.
+    """
+    rank = (ctx or {}).get("qrank", {})
+    classes = (ctx or {}).get("p31", {})
+    out = []
+    for r in rows:
+        prompt = r.prompt or ""
+        fame = rank.get(r.src or "", 0)
+        if SHAPE_HEIGHT.match(prompt):
+            out.append((r, "a person's height in metres"))
+        elif SHAPE_ELEVATION.match(prompt):
+            cls = set((classes.get(r.src or "", "") or "").split(","))
+            if not (cls & MOUNTAIN_CLASSES):
+                out.append((r, "the mean elevation of a place"))
+        elif SHAPE_BORN_DIED.match(prompt) and fame < BORN_DIED_FLOOR:
+            out.append((r, f"birth/death year of a subject below the recognition floor ({fame:,})"))
+        elif SHAPE_AREA.match(prompt) and fame < AREA_FLOOR:
+            out.append((r, f"area of a place below the recognition floor ({fame:,})"))
+    return out
+
+
 CHECKS = {
     "bare-description": (check_bare_description,
                          "CORPUS-BARE-DESC: a raw Wikidata description used as the whole clue — unanswerable"),
@@ -204,6 +342,10 @@ CHECKS = {
                   "CORPUS-REPELLENT: a topic a host cannot read out to a room"),
     "ambiguous-subject": (check_ambiguous_subject,
                           "CORPUS-AMBIGUOUS: a bare given name with several equally valid referents"),
+    "low-interest-shape": (check_low_interest_shape,
+                           "CORPUS-LOW-INTEREST: a question shape no room can play, or a subject below the recognition floor"),
+    "founded-misuse": (check_founded_misuse,
+                       "CORPUS-FOUNDED-MISUSE: \"founded\" applied to something that was never founded — no single defensible answer"),
     "self-answering": (check_self_answering,
                        "CORPUS-SELF-ANSWERING: the answer is printed inside its own prompt"),
 }
@@ -229,10 +371,13 @@ def main() -> int:
 
     db = sqlite3.connect(CORPUS)
     rows = load(db)
-    descriptions = {}
+    descriptions, p31, qrank = {}, {}, {}
     if SOURCE.exists():
         src = sqlite3.connect(SOURCE)
         descriptions = {t: d or "" for t, d in src.execute("select title, description from prose")}
+        p31 = {t: c or "" for t, c in src.execute("select title, p31 from subject")}
+        qrank = {t: q or 0 for t, q in src.execute("select title, qrank from subject")}
+    ctx = {"descriptions": descriptions, "p31": p31, "qrank": qrank}
     # tombstones.json is keyed by SHAPE ({"corpus": {...}, "match": {...}}) and
     # `genguard` reads it that way; a flat write at the top level silently
     # corrupts every shape's guard.
@@ -245,7 +390,7 @@ def main() -> int:
     to_write: dict[str, str] = {}
     for name in names:
         fn, reason = CHECKS[name]
-        hits = fn(live, descriptions)
+        hits = fn(live, ctx)
         # Some checks return (row, why) pairs.
         pairs = [(h, None) if isinstance(h, Row) else h for h in hits]
         print(f"=== {name}: {len(pairs):,} rows ({100 * len(pairs) / max(len(live), 1):.2f}% of live) ===")

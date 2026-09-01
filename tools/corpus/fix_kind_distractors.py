@@ -22,6 +22,7 @@ one.
 Then run tools/corpus/resync_corpus.sh.
 """
 import argparse
+import hashlib
 import collections
 import json
 import pathlib
@@ -72,6 +73,18 @@ from quality_gate import readable_description, _KINDS   # noqa: E402
 # kind_map is imported, not redefined. This file kept its own copy for one
 # session after the gate's was fixed, and the two silently disagreed.
 from quality_gate import kind_map                                  # noqa: E402,F401
+
+
+def corpus_version(body: str) -> str:
+    """The content hash export_json.py writes. Recomputed on EVERY write.
+
+    Preserving the old string was a real, shipped bug: three consecutive
+    commits shipped 110,618 -> 110,541 -> 110,512 questions all under version
+    f3c1477ed04a, so every web player who had already cached the corpus kept
+    serving the rows those repairs removed. The web client busts its
+    IndexedDB cache on this string and nothing else."""
+    return hashlib.md5(body.encode()).hexdigest()[:12]
+
 
 
 def main():
@@ -157,7 +170,7 @@ def main():
         print("\n(dry run — pass --apply to write, then run resync_corpus.sh)")
         return 0
     body = json.dumps(rows, ensure_ascii=False, separators=(",", ":"))
-    CORPUS.write_text(f'{{"version":"{data["version"]}","count":{len(rows)},"questions":{body}}}')
+    CORPUS.write_text(f'{{"version":"{corpus_version(body)}","count":{len(rows)},"questions":{body}}}')
     print(f"\nwrote {CORPUS}")
     return 0
 

@@ -10,7 +10,20 @@ same-class answers of the OTHER bizpic rows.
 
 Then run tools/corpus/resync_corpus.sh and bump sw.js CACHE.
 """
-import argparse, hashlib, json, pathlib, re, sqlite3, sys
+import argparse
+import hashlib, hashlib, json, pathlib, re, sqlite3, sys
+
+
+def corpus_version(body: str) -> str:
+    """The content hash export_json.py writes. Recomputed on EVERY write.
+
+    Preserving the old string was a real, shipped bug: three consecutive
+    commits shipped 110,618 -> 110,541 -> 110,512 questions all under version
+    f3c1477ed04a, so every web player who had already cached the corpus kept
+    serving the rows those repairs removed. The web client busts its
+    IndexedDB cache on this string and nothing else."""
+    return hashlib.md5(body.encode()).hexdigest()[:12]
+
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 PICTURE = ROOT / "assets" / "picture.json"
@@ -72,7 +85,7 @@ def main():
         print("(dry run — pass --apply)"); return 0
     if isinstance(data, dict):
         body = json.dumps(rows, ensure_ascii=False, separators=(",", ":"))
-        PICTURE.write_text(f'{{"version":"{data["version"]}","count":{len(rows)},"questions":{body}}}')
+        PICTURE.write_text(f'{{"version":"{corpus_version(body)}","count":{len(rows)},"questions":{body}}}')
     else:
         PICTURE.write_text(json.dumps(rows, ensure_ascii=False, separators=(",", ":")))
     print(f"wrote {PICTURE}"); return 0

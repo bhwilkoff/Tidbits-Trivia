@@ -30,6 +30,7 @@ than a wide one.
 Then run tools/corpus/resync_corpus.sh.
 """
 import argparse
+import hashlib
 import bisect
 import collections
 import json
@@ -38,6 +39,18 @@ import random
 import re
 import sys
 import unicodedata
+
+
+def corpus_version(body: str) -> str:
+    """The content hash export_json.py writes. Recomputed on EVERY write.
+
+    Preserving the old string was a real, shipped bug: three consecutive
+    commits shipped 110,618 -> 110,541 -> 110,512 questions all under version
+    f3c1477ed04a, so every web player who had already cached the corpus kept
+    serving the rows those repairs removed. The web client busts its
+    IndexedDB cache on this string and nothing else."""
+    return hashlib.md5(body.encode()).hexdigest()[:12]
+
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 CORPUS = ROOT / "assets" / "corpus.json"
@@ -214,7 +227,7 @@ def main():
         return 0
     kept = [q for q in rows if q[0] not in drop]
     body = json.dumps(kept, ensure_ascii=False, separators=(",", ":"))
-    CORPUS.write_text(f'{{"version":"{data["version"]}","count":{len(kept)},"questions":{body}}}')
+    CORPUS.write_text(f'{{"version":"{corpus_version(body)}","count":{len(kept)},"questions":{body}}}')
     print(f"dropped {len(rows) - len(kept)} unrepairable rows")
     print(f"\nwrote {CORPUS}")
     return 0

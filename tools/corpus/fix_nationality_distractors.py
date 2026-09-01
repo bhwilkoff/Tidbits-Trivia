@@ -33,6 +33,7 @@ other.
 Then run tools/corpus/resync_corpus.sh.
 """
 import argparse
+import hashlib
 import collections
 import json
 import pathlib
@@ -45,6 +46,17 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from quality_gate import (readable_description, kind_map,        # noqa: E402
                           prompt_nationality)
+
+
+def corpus_version(body: str) -> str:
+    """The content hash export_json.py writes. Recomputed on EVERY write.
+
+    Preserving the old string was a real, shipped bug: three consecutive
+    commits shipped 110,618 -> 110,541 -> 110,512 questions all under version
+    f3c1477ed04a, so every web player who had already cached the corpus kept
+    serving the rows those repairs removed. The web client busts its
+    IndexedDB cache on this string and nothing else."""
+    return hashlib.md5(body.encode()).hexdigest()[:12]
 
 CORPUS = ROOT / "assets" / "corpus.json"
 ENRICH = ROOT / "assets" / "enrich.json"
@@ -190,7 +202,7 @@ def main():
     keep = [q for q in rows if q[0] not in drop]
     body = json.dumps(keep, ensure_ascii=False, separators=(",", ":"))
     CORPUS.write_text(
-        f'{{"version":"{data["version"]}","count":{len(keep)},"questions":{body}}}')
+        f'{{"version":"{corpus_version(body)}","count":{len(keep)},"questions":{body}}}')
     print(f"{len(rows)} -> {len(keep)} rows (unrepairable free questions dropped)")
     print(f"\nwrote {CORPUS}")
     return 0

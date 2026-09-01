@@ -4,18 +4,18 @@ Oliver Tree	src:cloze:Oliver_Tree src:describe:Oliver_Tree
 FIFA World Cup	rel:P112:Q982 rel:P17:Q110131094 rel:P17:Q131591 rel:P17:Q132515 rel:P17:Q1477177 rel:P17:Q23758108 rel:P17:Q4630359 rel:P17:Q64979822
 Cape Verde	num:P2046:Q1011 rel:P37:Q1011 src:cloze:Macaronesia src:cloze:Praia src:describe:Bebé src:describe:Natalia_Poklonskaya src:describe:Praia wd:capital:Q1011
 Backrooms (film)	
-Lionel Messi	num:P2048:Q615 src:describe:Miroslav_Klose
+Lionel Messi	src:describe:Miroslav_Klose
 Jalen Brunson	
 Cristiano Ronaldo	src:cloze:Ali_Daei src:describe:Ali_Daei
 Disclosure Day	
-Curaçao	chron:P571:255021767428 num:P2046:Q25279 rel:P37:Q25279 src:describe:1xBet sup:P1082:442891917461 wd:capital:Q25279 wd:currency:Q25279
+Curaçao	chron:P571:255021767428 rel:P37:Q25279 src:describe:1xBet sup:P1082:442891917461 wd:capital:Q25279 wd:currency:Q25279
 List of FIFA World Cup top goalscorers	
 FIFA Men's World Ranking	
 ChatGPT	src:describe:Sam_Altman
 List of FIFA World Cup finals	
 Daveigh Chase	
 Andy Burnham	
-Erling Haaland	num:P2048:Q28967995
+Erling Haaland	
 Kylian Mbappé	src:describe:FIFA_23
 Michael Jackson	src:cloze:Bad_(album) src:cloze:Billie_Jean src:cloze:Dangerous_(Michael_Jackson_album) src:cloze:John_Landis src:cloze:John_Pinette src:cloze:Mekia_Cox src:cloze:Thriller_(song) src:describe:Off_the_Wall
 2026 FIFA World Cup knockout stage	
@@ -24,7 +24,7 @@ Toy Story 5
 2022 FIFA World Cup	rel:P17:Q110131094 rel:P17:Q131591 rel:P17:Q132515 rel:P17:Q1477177 rel:P17:Q23758108 rel:P17:Q64979822 src:cloze:Lionel_Scaloni src:cloze:Waka_Waka_(This_Time_for_Africa)
 Murder of Henry Nowak	
 Masters of the Universe (2026 film)	rel:P170:Q66763559
-Victor Wembanyama	num:P2048:Q72941595
+Victor Wembanyama	
 2030 FIFA World Cup	rel:P17:Q110131094 rel:P17:Q131591 rel:P17:Q132515 rel:P17:Q1477177 rel:P17:Q23758108 rel:P17:Q64979822 src:cloze:Carlos_Queiroz src:cloze:Waka_Waka_(This_Time_for_Africa)
 Zion Suzuki	src:describe:Zion_Suzuki
 Murder of Reagan Simmons-Hancock	
@@ -38,7 +38,7 @@ Inde Navarrette
 Peddi	
 Folarin Balogun	
 Lamine Yamal	
-Denver	num:P2044:Q16554 num:P2044:Q330015 num:P2046:Q330015 src:cloze:Bo_Nix src:cloze:Dynasty_(1981_TV_series) src:cloze:Frontier_Airlines src:cloze:Mike_Shanahan src:describe:The_Lumineers
+Denver	src:cloze:Bo_Nix src:cloze:Drew_Lock src:cloze:Dynasty_(1981_TV_series) src:cloze:Frontier_Airlines src:cloze:Good_Luck_Charlie src:cloze:Mike_Shanahan src:cloze:VF_Corporation src:describe:The_Lumineers
 Michael Jackson	src:cloze:Bad_(album) src:cloze:Billie_Jean src:cloze:Dangerous_(Michael_Jackson_album) src:cloze:John_Landis src:cloze:John_Pinette src:cloze:Mekia_Cox src:cloze:Thriller_(song) src:describe:Off_the_Wall
 The Beatles	rel:P175:Q3293037 src:cloze:A_Hard_Day's_Night_(album) src:cloze:Barbara_Bach src:cloze:Now_and_Then_(Beatles_song) src:cloze:Revolver_(Beatles_album) src:cloze:Stuart_Sutcliffe wd:composer:Q3293037 wd:director:Q88532913
 Drake (musician)	rel:P175:Q17150 src:cloze:Jerry_Trainor src:cloze:Pink_Friday_2 src:cloze:Superhero_Movie src:describe:For_All_the_Dogs src:describe:Huolongjing wd:composer:Q17150 wd:director:Q17150

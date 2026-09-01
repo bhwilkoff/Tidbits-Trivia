@@ -34,8 +34,8 @@ class this scope exists to remove.
 | # | Pass | Status | Evidence |
 |---|---|---|---|
 | 0 | **CLUE-CROSSED (wide)** — one prose clue pasted onto two different subjects | ✅ | `audit_clue_crossed.py`: 248 prompts on >1 subject, 247 losers decided by lead-overlap, 12 lowest-margin read by hand and all correct |
-| 1 | Notability floor — score every subject by recognisability; quarantine the tail | 🔬 | qrank measured: median subject qrank is 1.01M and **half the corpus is less famous than Marta Fascina**. Floor must be per-template, not global — see below |
-| 2 | Birth/death-year questions about non-household names | ⏳ | 6,545 `In what year was X born?` rows exist; interest depends entirely on the subject |
+| 1 | Notability floor — score every subject by recognisability; quarantine the tail | ✅ | Shape-aware, not global: 9,290 rows. Every floor read at its boundary; the released/founded floor was **abandoned** because the read disproved it |
+| 2 | Birth/death-year questions about non-household names | ✅ | 6,499 removed below a 3M qrank floor read at the boundary (below: Bruno Fernandes, Alba Baptista; above: Ben Stiller, Ethan Hawke) |
 | 3 | Missing-context detector (the prompt does not stand alone) | 🟡 | `bare-description` shipped (132 rows); the wider class is still open |
 | 4 | Ambiguous-distractor detector (two options equally defensible) | ⏳ | |
 | 5 | Controversy/repellent screen | ✅ | `repellent` check: 87 rows, **all 94 candidates read in full** before writing |
@@ -205,3 +205,51 @@ the "boot ONE simulator at a time" rule applies to scripts that boot one too.
 polish, audio/video rounds do not exist there at all, and the ▲/▼/✕/📝 glyphs
 render as tofu on the Mac head — which is NOT evidence about Windows and needs
 `windows-repl.yml` to settle.
+
+
+---
+
+## Tick 3 — 2026-09-01
+
+**Scope 1: 9,684 more rows out (109,633 → 100,343).**
+
+| Class | Rows | Why |
+|---|---|---|
+| CORPUS-FOUNDED-MISUSE | 394 | The owner's own example. "In what year was New Zealand founded? → 1986" (that is the Constitution Act), "Japan → 660 BC", "Micronesia → 1947". A modern state has no single founding date a player can reason to. |
+| CORPUS-LOW-INTEREST | 9,290 | 6,499 birth/death years below a 3M recognition floor, 1,450 areas below 5M, 901 person heights, 440 mean elevations. |
+
+**Three times this tick a detector was wrong first, and reading caught it.**
+
+1. `founded-misuse` v1 matched the WORD and returned 1,619 rows that were mostly
+   fine — "This businessman co-founded a ride-hailing company" is a good Travis
+   Kalanick question. The signal is **passive voice**: the subject has to be the
+   thing being founded.
+2. Narrowing still swept in dynasties and empires, which ARE founded — "Ming
+   dynasty → 1368", "Umayyad Caliphate → 661". Dropping the `historical country`
+   and `realm` classes took 587 → 394, and what is left is only modern states.
+3. The **released/founded notability floor was abandoned entirely.** Reading the
+   boundary showed it would cut *Before Sunrise*, *Point Break*, *Kung Fu Hustle*
+   and "In what year was the YMCA founded?" while keeping *Terrifier 2*. qrank
+   does not measure quality for that shape, and applying it would have destroyed
+   ~970 good questions. **Height questions are dead even for Messi and Michael
+   Jordan** — that one is a shape problem, not a fame problem, so all 901 go.
+
+Losses are spread evenly (science 3.2% … sports 14.1%); no category is gutted.
+
+**THE BUG UNDER THE BUG: every corpus repair ever shipped was invisible to
+returning web players.** `fix_kind_distractors.py --apply` wrote new questions
+under the OLD `version` string — and so did **29 of the repair tools**. The web
+client busts its IndexedDB cache on that string and nothing else. Git proves it
+shipped: `944cbad1` → `c8d110b7` → `38c80ba7` shipped **110,618 → 110,541 →
+110,512 questions all under version `f3c1477ed04a`**. Every one of those repairs
+reached a fresh install and no one else.
+
+Fixed in all 29 tools (each now recomputes the hash), corpus.json re-stamped, and
+`resync_corpus.sh` grew a **step 2b that fails** when the version does not match
+the content — so it cannot regress silently a fourth time.
+
+**Windows CI confirmed the render.** `windows-repl.yml` run 33547172791: the
+expanded round, both prompts, "Answer: Lydia", and per-question Edit/Duplicate/✕
+all render correctly on `windows-latest`. The ▲▼✕📝 tofu seen on the Mac head was
+a font artifact and nothing more — which is exactly why the Mac head is never the
+gate.

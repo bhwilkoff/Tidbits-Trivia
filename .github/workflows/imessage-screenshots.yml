@@ -39,11 +39,21 @@ jobs:
 
       - run: pip install pyjwt cryptography
 
+      # The secret is base64, exactly as appstore-build.yml treats it. Passing it
+      # through raw fails with "Unable to load PEM file ... MalformedFraming".
+      - name: Install the ASC API key
+        env:
+          ASC_KEY_P8_B64: ${{ secrets.ASC_KEY_P8 }}
+          KID: ${{ secrets.ASC_KEY_ID }}
+        run: |
+          mkdir -p ~/.appstoreconnect/private_keys
+          printf '%s' "$ASC_KEY_P8_B64" | base64 -d > ~/.appstoreconnect/private_keys/AuthKey_${KID}.p8
+          chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${KID}.p8
+
       - name: Upload
         env:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
-          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
         run: |
           ARGS=""
           [ "${{ inputs.replace }}" = "true" ] && ARGS="$ARGS --replace"

@@ -365,10 +365,10 @@ struct LiveHostView_macOS: View {
             HStack {
                 Button(action: onClose) { Image(systemName: "xmark").font(.system(size: 14, weight: .bold)) }
                     .buttonStyle(.plain).keyboardShortcut(.cancelAction)
-                Text(session.event.name).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                Text(session.event.name).font(.headline).foregroundStyle(Tidbits.Palette.ink)
                 Spacer()
                 Button { session.onBreak.toggle() } label: {   // adaptability: intermission hold
-                    Label(session.onBreak ? "Resume" : "Hold", systemImage: session.onBreak ? "play.fill" : "pause.fill").font(Tidbits.TypeRamp.l5)
+                    Label(session.onBreak ? "Resume" : "Hold", systemImage: session.onBreak ? "play.fill" : "pause.fill").font(.callout)
                 }
                 .buttonStyle(.bordered)
                 // Tinted only while the break is ACTIVE. Tinting a bordered button
@@ -384,45 +384,46 @@ struct LiveHostView_macOS: View {
                             }
                         }
                     }
-                } label: { Label("Jump", systemImage: "list.number").font(Tidbits.TypeRamp.l5) }
-                .menuStyle(.borderlessButton).fixedSize()
+                } label: { Label("Jump", systemImage: "list.number").font(.callout) }
+                .menuStyle(.button).buttonStyle(.bordered).fixedSize()
                 Text("ROUND \(session.roundNumber)/\(session.roundCount) · \(session.roundTitle)")
-                    .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                    .font(.callout).foregroundStyle(Tidbits.Palette.inkSoft)
             }
             if net.isOpen {
                 HStack(spacing: 8) {
                     if let qr = makeLiveQR(liveJoinURL(net.code)) {
                         Image(nsImage: qr).interpolation(.none).resizable().frame(width: 40, height: 40)
                     }
-                    Text("Players scan, or join at tidbitstrivia.com/live").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                    Text("Players scan, or join at tidbitstrivia.com/live").font(.callout).foregroundStyle(Tidbits.Palette.inkSoft)
                     Text("CODE \(net.code)").font(.system(size: 15, weight: .black, design: .monospaced)).foregroundStyle(Tidbits.Palette.ink)
                     if !net.joined.isEmpty {
-                        Text("· \(net.joined.count) joined").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.mint)
+                        Text("· \(net.joined.count) joined").font(.callout).foregroundStyle(Tidbits.Palette.mint)
                     }
                 }
                 .padding(.horizontal, 12).padding(.vertical, 7)
                 .background(RoundedRectangle(cornerRadius: 10).fill(Tidbits.Palette.surface))
-                .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Tidbits.Palette.border, lineWidth: 2))
+                .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .strokeBorder(Tidbits.Palette.border.opacity(0.55), lineWidth: 1))
             }
             if let q = session.current {
                 let inR = session.questionInRound
-                Text("Question \(inR.n) of \(inR.of)").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                Text("Question \(inR.n) of \(inR.of)").font(.callout).foregroundStyle(Tidbits.Palette.inkSoft)
                 Text(q.prompt).font(.system(size: 30, weight: .bold, design: .rounded))
                     .foregroundStyle(Tidbits.Palette.ink).fixedSize(horizontal: false, vertical: true)
                 if let note = session.currentRoundNote, !note.isEmpty {   // Wave A: host prep note (cockpit only)
                     HStack(alignment: .top, spacing: 6) {
                         Image(systemName: "note.text").foregroundStyle(Tidbits.Palette.blue)
-                        Text(note).font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.blue).fixedSize(horizontal: false, vertical: true)
+                        Text(note).font(.callout).foregroundStyle(Tidbits.Palette.blue).fixedSize(horizontal: false, vertical: true)
                     }
                     .padding(8).background(RoundedRectangle(cornerRadius: 8).fill(Tidbits.Palette.blue.opacity(0.12)))
                 }
                 if session.currentRoundIsWager {   // Wave A: wager round indicator
                     Label("Wager round — teams stake points (correct +stake, wrong −stake)", systemImage: "dollarsign.circle.fill")
-                        .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.coral)
+                        .font(.callout).foregroundStyle(Tidbits.Palette.coral)
                 }
                 if session.currentRoundIsSpeed {   // Wave B: speed round indicator
                     Label("Speed round — fastest correct answers earn a bonus (+3/+2/+1)", systemImage: "bolt.fill")
-                        .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.yellow)
+                        .font(.callout).foregroundStyle(Tidbits.Palette.yellow)
                 }
                 // An audio/video round shows either a WORKING play control or an
                 // explicit "unavailable" line — never a Play button that does
@@ -431,37 +432,37 @@ struct LiveHostView_macOS: View {
                 if let clip = session.currentAudioBookmark {   // Wave B: audio round — play this question's clip
                     if LiveClip.isPlayable(clip) {
                         Button { LiveAudioPlayer.shared.openBookmark(clip); LiveAudioPlayer.shared.togglePlay() } label: {
-                            Label("Play this clip", systemImage: "play.circle.fill").font(Tidbits.TypeRamp.l4)
+                            Label("Play this clip", systemImage: "play.circle.fill").font(.body)
                         }
                         .buttonStyle(.bordered).tint(Tidbits.Palette.blue)
                     } else {
                         Label("Clip unavailable — re-attach it in the builder", systemImage: "exclamationmark.triangle.fill")
-                            .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.coral)
+                            .font(.callout).foregroundStyle(Tidbits.Palette.coral)
                     }
                 }
                 if let vid = session.currentVideoBookmark {   // Wave B: video round — play on the big screen
                     if LiveClip.isPlayable(vid) {
                         Button { LiveVideoPlayer.shared.openBookmark(vid); LiveVideoPlayer.shared.play() } label: {
-                            Label("Play video on the big screen", systemImage: "play.rectangle.fill").font(Tidbits.TypeRamp.l4)
+                            Label("Play video on the big screen", systemImage: "play.rectangle.fill").font(.body)
                         }
                         .buttonStyle(.bordered).tint(Tidbits.Palette.blue)
                     } else {
                         Label("Video unavailable — re-attach it in the builder", systemImage: "exclamationmark.triangle.fill")
-                            .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.coral)
+                            .font(.callout).foregroundStyle(Tidbits.Palette.coral)
                     }
                 }
                 if session.revealed {
                     HStack(spacing: 8) {
                         Image(systemName: "checkmark.circle.fill").foregroundStyle(Tidbits.Palette.mint)
-                        Text(q.correctAnswer).font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
+                        Text(q.correctAnswer).font(.title2.weight(.semibold)).foregroundStyle(Tidbits.Palette.ink)
                     }
                     if !q.explanation.isEmpty {
-                        Text(q.explanation).font(Tidbits.TypeRamp.l4).foregroundStyle(Tidbits.Palette.inkSoft)
+                        Text(q.explanation).font(.body).foregroundStyle(Tidbits.Palette.inkSoft)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 } else {
                     Text("Read it out. Reveal the answer when the room is ready.")
-                        .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                        .font(.callout).foregroundStyle(Tidbits.Palette.inkSoft)
                 }
             }
             answerDistribution   // §A3.4: live per-option tally — read the room before revealing
@@ -474,7 +475,7 @@ struct LiveHostView_macOS: View {
                         Button("Clear timer") { session.clearTimer() }.buttonStyle(.bordered)
                     }
                 }
-                .font(Tidbits.TypeRamp.l6)
+                .font(.caption)
             }
             Spacer()
             HStack(spacing: 12) {
@@ -494,7 +495,7 @@ struct LiveHostView_macOS: View {
                         .keyboardShortcut(.rightArrow, modifiers: .command)
                         .help("Skip this question — no score (⌘→)")
                     Button("Reveal answer") { session.reveal() }
-                        .buttonStyle(.borderedProminent).tint(Tidbits.Palette.yellow)
+                        .buttonStyle(.borderedProminent).tint(Tidbits.Palette.coral)
                         .keyboardShortcut(.defaultAction)
                 } else {
                     Button(session.index + 1 >= session.questions.count ? "Finish night" : "Next question") { session.next() }
@@ -502,7 +503,7 @@ struct LiveHostView_macOS: View {
                         .keyboardShortcut(.defaultAction)
                 }
                 Spacer()
-                Text("\(session.index + 1) / \(session.questions.count) · Space to advance").font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft)
+                Text("\(session.index + 1) / \(session.questions.count) · Space to advance").font(.caption).foregroundStyle(Tidbits.Palette.inkSoft)
             }
             showBar       // Wave B: stingers + clip playback + music bed, one wrapping row
             Button("") {   // intuitive: SPACE = advance the show (reveal → next) — the emcee's clicker key.
@@ -541,12 +542,12 @@ struct LiveHostView_macOS: View {
                 ForEach(LiveSFXBoard.availableOutputs(), id: \.id) { dev in
                     Button(dev.name) { LiveSFXBoard.shared.select(deviceID: dev.id, name: dev.name) }
                 }
-            } label: { Label(LiveSFXBoard.shared.outputName, systemImage: "hifispeaker.fill").font(Tidbits.TypeRamp.l6) }
-                .menuStyle(.borderlessButton).fixedSize()
+            } label: { Label(LiveSFXBoard.shared.outputName, systemImage: "hifispeaker.fill").font(.caption) }
+                .menuStyle(.button).buttonStyle(.bordered).fixedSize()
             Divider().frame(height: 20)
             ForEach(LiveSFXBoard.Stinger.allCases) { s in
                 Button { LiveSFXBoard.shared.play(s) } label: {
-                    Label(s.label, systemImage: s.symbol).font(Tidbits.TypeRamp.l6)
+                    Label(s.label, systemImage: s.symbol).font(.caption)
                 }
                 .buttonStyle(.bordered)
                 .keyboardShortcut(s.shortcut, modifiers: [])
@@ -558,14 +559,14 @@ struct LiveHostView_macOS: View {
     private var audioClipBar: some View {
         let audio = LiveAudioPlayer.shared
         return HStack(spacing: 10) {
-            Button { pickAudioClip() } label: { Label("Open clip…", systemImage: "music.note.list").font(Tidbits.TypeRamp.l6) }
+            Button { pickAudioClip() } label: { Label("Open clip…", systemImage: "music.note.list").font(.caption) }
                 .buttonStyle(.bordered)
             if !audio.trackName.isEmpty {
                 Button { audio.togglePlay() } label: { Image(systemName: audio.isPlaying ? "pause.fill" : "play.fill") }
                     .buttonStyle(.bordered).tint(Tidbits.Palette.mint)
                 Button { audio.stop() } label: { Image(systemName: "stop.fill") }
                     .buttonStyle(.bordered)
-                Text(audio.trackName).font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft).lineLimit(1)
+                Text(audio.trackName).font(.caption).foregroundStyle(Tidbits.Palette.inkSoft).lineLimit(1)
             }
         }
     }
@@ -581,14 +582,14 @@ struct LiveHostView_macOS: View {
     private var musicBedBar: some View {
         let bed = LiveMusicBed.shared
         return HStack(spacing: 10) {
-            Button { pickMusicBed() } label: { Label("Music bed…", systemImage: "music.quarternote.3").font(Tidbits.TypeRamp.l6) }
+            Button { pickMusicBed() } label: { Label("Music bed…", systemImage: "music.quarternote.3").font(.caption) }
                 .buttonStyle(.bordered)
             if !bed.trackName.isEmpty {
                 Button { bed.toggle() } label: { Image(systemName: bed.isPlaying ? "pause.fill" : "play.fill") }
                     .buttonStyle(.bordered).tint(Tidbits.Palette.blue)
-                Image(systemName: "speaker.fill").font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft)
+                Image(systemName: "speaker.fill").font(.caption).foregroundStyle(Tidbits.Palette.inkSoft)
                 Slider(value: Binding(get: { Double(bed.volume) }, set: { bed.volume = Float($0) }), in: 0...1).frame(width: 90)
-                Text(bed.trackName).font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft).lineLimit(1)
+                Text(bed.trackName).font(.caption).foregroundStyle(Tidbits.Palette.inkSoft).lineLimit(1)
             }
         }
     }
@@ -605,11 +606,11 @@ struct LiveHostView_macOS: View {
     private var scoreboard: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 10) {
-                Text("Teams").font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                Text("Teams").font(.headline).foregroundStyle(Tidbits.Palette.ink)
                 Spacer()
                 Stepper(value: $session.pointsPerCorrect, in: 1...10) {
                     Text("\(session.pointsPerCorrect) pt\(session.pointsPerCorrect == 1 ? "" : "s")/correct")
-                        .font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft)
+                        .font(.caption).foregroundStyle(Tidbits.Palette.inkSoft)
                 }
                 .fixedSize()
                 Button { exportResultsCSV() } label: { Image(systemName: "square.and.arrow.up") }   // Wave C: data export
@@ -627,24 +628,24 @@ struct LiveHostView_macOS: View {
                 VStack(spacing: 10) {
                     if net.isOpen {
                         HStack {
-                            Text("JOINED").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                            Text("JOINED").font(.callout).foregroundStyle(Tidbits.Palette.inkSoft)
                             Spacer()
                             if session.revealed == false, !net.answers.isEmpty {
-                                Text("\(net.answers.count) answered").font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.mint)
+                                Text("\(net.answers.count) answered").font(.caption).foregroundStyle(Tidbits.Palette.mint)
                             }
                         }
                         if net.joined.isEmpty {
                             Text("Waiting for phones to join with code \(net.code)…")
-                                .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                                .font(.callout).foregroundStyle(Tidbits.Palette.inkSoft)
                         }
                         ForEach(net.joined) { joinedRow($0) }
                         if !session.teams.isEmpty {
                             Divider().overlay(Tidbits.Palette.border).padding(.vertical, 4)
-                            Text("IN-ROOM (PAPER)").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                            Text("IN-ROOM (PAPER)").font(.callout).foregroundStyle(Tidbits.Palette.inkSoft)
                         }
                     } else if session.teams.isEmpty {
                         Text("Add the teams in the room. When you reveal an answer, tap ✓ to award points, or ± to correct any score.")
-                            .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft).padding(.top, 20)
+                            .font(.callout).foregroundStyle(Tidbits.Palette.inkSoft).padding(.top, 20)
                     }
                     ForEach(session.standings) { team in teamRow(team) }
                 }
@@ -687,7 +688,7 @@ struct LiveHostView_macOS: View {
     private func teamRow(_ team: LiveTeam) -> some View {
         HStack(spacing: 8) {
             VStack(alignment: .leading, spacing: 1) {
-                Text(team.name).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink).lineLimit(1)
+                Text(team.name).font(.headline).foregroundStyle(Tidbits.Palette.ink).lineLimit(1)
                 Text("\(team.score)").font(.system(size: 22, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
             }
             Spacer()
@@ -710,7 +711,7 @@ struct LiveHostView_macOS: View {
             } label: { Image(systemName: "ellipsis") }
                 .menuStyle(.borderlessButton).frame(width: 20)
         }
-        .padding(12).chunkyCard()
+        .padding(12).quietCard()
     }
 
     /// A phone/web-joined team: auto-scored on reveal, with ± manual override
@@ -727,7 +728,7 @@ struct LiveHostView_macOS: View {
                         if ans != nil && !session.revealed {
                             Circle().fill(Tidbits.Palette.mint).frame(width: 7, height: 7)
                         }
-                        Text(team.name).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink).lineLimit(1)
+                        Text(team.name).font(.headline).foregroundStyle(Tidbits.Palette.ink).lineLimit(1)
                         if ans?.blurred == true {   // Wave C: left the app during the question — a soft cheat signal
                             Image(systemName: "eye.trianglebadge.exclamationmark.fill").font(.system(size: 13))
                                 .foregroundStyle(Tidbits.Palette.coral).help("Left the app during this question")
@@ -751,12 +752,12 @@ struct LiveHostView_macOS: View {
                 .help(session.blockedTeams.contains(team.id) ? "Hidden from the big screen — tap to show" : "Hide this name from the big screen")
             }
             if session.blockedTeams.contains(team.id) {
-                Text("Hidden from the big screen").font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.coral)
+                Text("Hidden from the big screen").font(.caption).foregroundStyle(Tidbits.Palette.coral)
             }
             if let q, let ans, let typed = submittedText(q, ans) {
                 HStack(spacing: 6) {
                     Image(systemName: "text.quote").font(.system(size: 11)).foregroundStyle(Tidbits.Palette.inkSoft)
-                    Text(typed).font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.ink).italic().lineLimit(2)
+                    Text(typed).font(.callout).foregroundStyle(Tidbits.Palette.ink).italic().lineLimit(2)
                     if session.revealed {
                         Image(systemName: autoMatched(q, ans) ? "checkmark.circle.fill" : "xmark.circle")
                             .foregroundStyle(autoMatched(q, ans) ? Tidbits.Palette.mint : Tidbits.Palette.coral)
@@ -764,7 +765,7 @@ struct LiveHostView_macOS: View {
                 }
             }
         }
-        .padding(12).chunkyCard(fill: Tidbits.Palette.blue.opacity(0.10))
+        .padding(12).quietCard(fill: Tidbits.Palette.blue.opacity(0.08))
     }
 
     /// Whether the shared scorer credits this submission (for the ✓/✗ verdict).
@@ -785,11 +786,11 @@ struct LiveHostView_macOS: View {
             let counts = optionCounts(opts.count)
             let total = max(1, counts.reduce(0, +))
             VStack(alignment: .leading, spacing: 5) {
-                Text("LIVE ANSWERS").font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft)
+                Text("LIVE ANSWERS").font(.caption).foregroundStyle(Tidbits.Palette.inkSoft)
                 ForEach(Array(opts.enumerated()), id: \.offset) { i, opt in
                     let isCorrect = opt == q.correctAnswer
                     HStack(spacing: 8) {
-                        Text(opt).font(Tidbits.TypeRamp.l6).foregroundStyle(isCorrect ? Tidbits.Palette.mint : Tidbits.Palette.ink)
+                        Text(opt).font(.caption).foregroundStyle(isCorrect ? Tidbits.Palette.mint : Tidbits.Palette.ink)
                             .frame(width: 180, alignment: .leading).lineLimit(1)
                         GeometryReader { geo in
                             ZStack(alignment: .leading) {
@@ -799,14 +800,15 @@ struct LiveHostView_macOS: View {
                             }
                         }
                         .frame(height: 14)
-                        Text("\(counts[i])").font(Tidbits.TypeRamp.l6).monospacedDigit()
+                        Text("\(counts[i])").font(.caption).monospacedDigit()
                             .foregroundStyle(Tidbits.Palette.inkSoft).frame(width: 24, alignment: .trailing)
                     }
                 }
             }
             .padding(10)
             .background(RoundedRectangle(cornerRadius: 8).fill(Tidbits.Palette.bg))
-            .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Tidbits.Palette.border, lineWidth: 2))
+            .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .strokeBorder(Tidbits.Palette.border.opacity(0.55), lineWidth: 1))
         }
     }
 
@@ -825,19 +827,19 @@ struct LiveHostView_macOS: View {
         ScrollView {
             VStack(spacing: 16) {
                 Text("Final standings").font(.system(size: 34, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink).padding(.top, 24)
-                Text(session.event.name).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.inkSoft)
+                Text(session.event.name).font(.headline).foregroundStyle(Tidbits.Palette.inkSoft)
                 ForEach(Array(session.standings.enumerated()), id: \.element.id) { i, team in
                     HStack(spacing: 12) {
                         Text("\(i + 1)").font(.system(size: 22, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft).frame(width: 30)
                         if i == 0 { Image(systemName: "crown.fill").foregroundStyle(Tidbits.Palette.yellow) }
-                        Text(team.name).font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
+                        Text(team.name).font(.title2.weight(.semibold)).foregroundStyle(Tidbits.Palette.ink)
                         Spacer()
                         Text("\(team.score)").font(.system(size: 26, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
                     }
                     .padding(16).frame(maxWidth: .infinity)
-                    .chunkyCard(fill: i == 0 ? Tidbits.Palette.yellow : Tidbits.Palette.surface)
+                    .quietCard(fill: i == 0 ? Tidbits.Palette.yellow.opacity(0.35) : Tidbits.Palette.surface)
                 }
-                if session.teams.isEmpty { Text("No teams were scored this night.").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft) }
+                if session.teams.isEmpty { Text("No teams were scored this night.").font(.callout).foregroundStyle(Tidbits.Palette.inkSoft) }
                 HStack(spacing: 14) {
                     if !session.tiedGroups.isEmpty {
                         Button("Break a tie…") { tieGroup = session.tiedGroups.first ?? []; showTieBreak = true }
@@ -883,16 +885,16 @@ struct TieBreakSheet_macOS: View {
             }.pickerStyle(.segmented).labelsHidden()
             if mode == 0 {
                 Text("Ask a number question (e.g. \u{201C}what year did the Eiffel Tower open?\u{201D}). Enter the answer, then each team's guess — closest wins.")
-                    .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft).fixedSize(horizontal: false, vertical: true)
+                    .font(.callout).foregroundStyle(Tidbits.Palette.inkSoft).fixedSize(horizontal: false, vertical: true)
                 HStack {
-                    Text("Correct number").font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                    Text("Correct number").font(.headline).foregroundStyle(Tidbits.Palette.ink)
                     Spacer()
                     TextField("e.g. 1889", text: $target).frame(width: 120).textFieldStyle(.roundedBorder)
                 }
                 Divider().overlay(Tidbits.Palette.border)
                 ForEach(teams) { team in
                     HStack {
-                        Text(team.name).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink).lineLimit(1)
+                        Text(team.name).font(.headline).foregroundStyle(Tidbits.Palette.ink).lineLimit(1)
                         Spacer()
                         TextField("guess", text: Binding(get: { guesses[team.id] ?? "" }, set: { guesses[team.id] = $0 }))
                             .frame(width: 120).textFieldStyle(.roundedBorder)
@@ -912,11 +914,11 @@ struct TieBreakSheet_macOS: View {
                 }
             } else {
                 Text("Phones down. Ask a question aloud — first correct hand wins. Tap the team that won.")
-                    .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft).fixedSize(horizontal: false, vertical: true)
+                    .font(.callout).foregroundStyle(Tidbits.Palette.inkSoft).fixedSize(horizontal: false, vertical: true)
                 ForEach(teams) { team in
                     Button { onPickWinner(team.id); dismiss() } label: {
                         HStack {
-                            Text(team.name).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                            Text(team.name).font(.headline).foregroundStyle(Tidbits.Palette.ink)
                             Spacer()
                             Image(systemName: "crown.fill").foregroundStyle(Tidbits.Palette.yellow)
                         }

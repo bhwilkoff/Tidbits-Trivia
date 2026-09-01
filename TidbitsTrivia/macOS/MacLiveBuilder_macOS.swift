@@ -274,7 +274,7 @@ struct LiveBuilderView_macOS: View {
                 .accessibilityLabel(expandedRounds.contains(round.id) ? "Hide questions" : "Show questions")
                 Image(systemName: round.symbol).foregroundStyle(round.format.accent.legibleForeground)
                     .frame(width: 34, height: 34).background(Circle().fill(round.format.accent))
-                    .overlay(Circle().strokeBorder(Tidbits.Palette.border, lineWidth: 2.5))
+                    .overlay(Circle().strokeBorder(Tidbits.Palette.border.opacity(0.55), lineWidth: 1))
                 VStack(alignment: .leading, spacing: 2) {
                     // The round title was display-only, so a host could never rename
                     // "General Knowledge" to "Round 1 — Warm Up".
@@ -483,7 +483,8 @@ struct LiveBuilderView_macOS: View {
         }
         .padding(12)
         .background(RoundedRectangle(cornerRadius: 12).fill(Tidbits.Palette.bgDeep))
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Tidbits.Palette.border, lineWidth: 2))
+        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
+            .strokeBorder(Tidbits.Palette.border.opacity(0.55), lineWidth: 1))
     }
 
     /// Wave A: a read-only composition meter — shows the host the night's difficulty curve
@@ -514,7 +515,8 @@ struct LiveBuilderView_macOS: View {
             }
             .padding(14)
             .background(RoundedRectangle(cornerRadius: 12).fill(Tidbits.Palette.bgDeep))
-            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Tidbits.Palette.border, lineWidth: 2))
+            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
+            .strokeBorder(Tidbits.Palette.border.opacity(0.55), lineWidth: 1))
         }
     }
 

@@ -60,9 +60,13 @@ public static class LiveExport
     }
 
     /// The host's copy — every question with its answer. Takes the questions the night is
-    /// ACTUALLY serving rather than a fresh draw: on Windows a saved event stores only
-    /// {kind, count}, so printing a pack from the builder would hand the host a different
-    /// set of questions than the room gets.
+    /// ACTUALLY serving rather than a fresh draw, so the paper and the room always agree.
+    ///
+    /// This used to be printable only from the cockpit, because a saved Windows event
+    /// stored {kind, count} and nothing else — a pack printed from the builder would have
+    /// handed the host a different set than the room got. An event that carries its own
+    /// questions (LiveEvent.RoundQuestions) has no such gap, so the builder can print it
+    /// BEFORE the night, which is the whole point of a Wi-Fi-dies fallback.
     public static string QuestionPackHtml(string eventName, IReadOnlyList<Question> questions)
     {
         var body = new StringBuilder();

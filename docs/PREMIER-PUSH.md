@@ -139,7 +139,7 @@ landscape survey). **The gap is implementation and verification, not research.**
 | L4 | Audio round: pick clip → plays on the PA, verified audible | 🟡 | 🚫 | Mac: three real defects fixed + 6 tests. The panel-GRANT leg is not automatable — see below. Windows has no AV rounds at all. |
 | L5 | Video round: clip plays on the big screen, verified rendered | 🟡 | 🚫 | Same fixes as L4 (shared clip layer); big-screen render still unobserved |
 | L6 | Event export/import as JSON; CSV question-bank import (§A2.5 / §6.7) | ✅ | ✅ | ONE contract (`docs/LIVE-EVENT-FILE.md`), one golden file, **14 tests across both stacks** — 7 Swift + 7 C# against the same bytes. CSV import is Mac-only still. |
-| L7 | Printing: question pack + answer sheet + scoresheet, verified as PDF | ✅ | ⏳ | Paginated to US Letter; **5 tests, A/B-proven to fail on the old code** (one page 2,621pt tall) |
+| L7 | Printing: question pack + answer sheet + scoresheet, verified as PDF | ✅ | ✅ | Mac: paginated to US Letter, **5 tests A/B-proven to fail on the old code**. Windows: prints HTML (the browser paginates), and the question pack is now printable from the BUILDER, not only a running cockpit; 3 tests incl. markup escaping |
 | L8 | Empty/loading/error states on every Live surface | 🟡 | ⏳ | Mac: saved-events empty state + expanded-round empty state; import/export now raise a real alert instead of a silent `try?` |
 | L9 | Every button in builder + cockpit driven and asserted by the harness | ⏳ | ⏳ | |
 | L10 | Cockpit layout: no dead space, controls wrap, reachable at min window | ⏳ | ⏳ | |
@@ -370,3 +370,30 @@ Reef recorded at 34.9 million km²). Both make the question unplayable, so both 
 
 99,756 → 99,716. Fourth detector this session whose first version was wrong, and
 the fourth caught by reading rather than by the count.
+
+
+---
+
+## Tick 10 — a clean result, and a limitation that had quietly expired
+
+**`chron` is clean.** The same numeric cross-check that found 40 wrong
+superlatives finds **0 wrong answers in 8,328 checkable `chron` rows** — the
+earlier "P4 audit" pass had already fixed that class. One genuine tie remained
+(Ben Hogan and Sam Snead, both born 1912, under *"which of these four is the
+eldest?"*), removed as `CORPUS-CHRONOLOGY-TIED`. 99,716 → 99,715.
+
+A negative result is worth the tick: it says the chronology template does not
+need the work the superlative template did.
+
+**A stale comment was hiding a feature.** `LiveExport.QuestionPackHtml` carried:
+
+> *"on Windows a saved event stores only {kind, count}, so printing a pack from
+> the builder would hand the host a different set of questions than the room
+> gets."*
+
+True when written, false since this session's `RoundQuestions` change — and the
+builder still had no way to print a pack, so the Wi-Fi-dies fallback existed only
+from a **running cockpit**, which is exactly when a host least needs it. "Print
+question pack" now sits in the builder. A fully corpus-sourced event says so
+rather than printing a lie, and a partly-authored one prints what it has and
+names how many rounds are not in it.

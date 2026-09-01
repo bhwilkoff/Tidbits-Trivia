@@ -571,6 +571,58 @@ public partial class LiveView : UserControl
             ShowStatus($"Added a {kind} round with {questions.Count} clip(s).");
     }
 
+    /// The host's question pack, printable BEFORE the night — the Wi-Fi-dies
+    /// fallback is worth nothing if it can only be produced from a running cockpit.
+    ///
+    /// Only an event whose rounds carry their own questions can print an honest
+    /// pack; a corpus-sourced round draws at host time, so a pack printed now would
+    /// list questions the room never sees. That case says so instead of printing a
+    /// lie.
+    private async void OnPrintQuestionPack(object? sender, RoutedEventArgs e)
+    {
+        var ev = CurrentEvent();
+        if (ev.Rounds.Count == 0) { ShowStatus("Add at least one round first."); return; }
+
+        var unauthored = Enumerable.Range(0, ev.Rounds.Count).Where(i => ev.QuestionsFor(i).Count == 0).ToList();
+        if (unauthored.Count == ev.Rounds.Count)
+        {
+            ShowStatus("This event's rounds are drawn from the corpus when you host, so there is "
+                     + "no pack to print yet. Open a round and add or pull questions first, or "
+                     + "print the pack from the cockpit once the night is running.");
+            return;
+        }
+
+        var questions = new System.Collections.Generic.List<Question>();
+        for (int i = 0; i < ev.Rounds.Count; i++)
+            foreach (var q in ev.QuestionsFor(i))
+                questions.Add(q with { RoundIndex = i });
+
+        var html = Tidbits.Core.Networking.LiveExport.QuestionPackHtml(ev.Name, questions);
+        var path = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+                                          $"{Sanitise(ev.Name)} - question pack.html");
+        try
+        {
+            await System.IO.File.WriteAllTextAsync(path, html);
+            var top = TopLevel.GetTopLevel(this);
+            if (top?.Launcher is { } launcher) await launcher.LaunchUriAsync(new Uri(new Uri("file://"), path));
+            ShowStatus(unauthored.Count == 0
+                ? $"Question pack ready — {questions.Count} questions."
+                : $"Question pack ready — {questions.Count} questions. "
+                  + $"{unauthored.Count} corpus-sourced round(s) are not in it; they are drawn when you host.");
+        }
+        catch (Exception ex)
+        {
+            // A silent catch here is a print button that does nothing.
+            ShowStatus($"Could not prepare the question pack: {ex.Message}");
+        }
+    }
+
+    private static string Sanitise(string name)
+    {
+        foreach (var ch in System.IO.Path.GetInvalidFileNameChars()) name = name.Replace(ch, '-');
+        return string.IsNullOrWhiteSpace(name) ? "Tidbits event" : name;
+    }
+
     /// Export the composed event as the portable document (docs/LIVE-EVENT-FILE.md).
     /// A host's night is their work product: it has to survive a reinstall, move to
     /// their Mac, and be shareable with a co-host.

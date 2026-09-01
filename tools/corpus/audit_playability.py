@@ -394,6 +394,40 @@ def check_list_article_option(rows, ctx):
 
 
 SUP_PROP = re.compile(r"^sup:(P\d+):")
+CHRON_PROP = re.compile(r"^chron:(P\d+):")
+
+
+def check_chronology_tied(rows, ctx):
+    """A chronology question where two options share the extreme date.
+
+    "Which of these four is the eldest? — Ben Hogan / Sam Snead / ..." — both born
+    1912. At year granularity there is no answer, so whichever the row names is
+    arbitrary and the other is marked wrong.
+
+    The claimed-answer-is-not-the-extreme case that `superlative-wrong` finds for
+    `sup` is ALREADY CLEAN for `chron`: 0 of 8,328 checkable rows, because the
+    earlier "P4 audit" pass fixed it. This check is what remains.
+    """
+    numbers = (ctx or {}).get("numbers", {})
+    out = []
+    for r in rows:
+        m = CHRON_PROP.match(r.id or "")
+        if not m:
+            continue
+        prop = m.group(1)
+        opts = [o for o in r.opts if o]
+        vals = [(o, numbers.get(o, {}).get(prop)) for o in opts]
+        if len(vals) < 4 or any(v is None for _, v in vals):
+            continue
+        if len({v[1] for _, v in vals}) > 1:
+            continue
+        nums = {o: v[0] for o, v in vals}
+        lo = min(nums.values())
+        winners = [o for o, v in nums.items() if v == lo]
+        if len(winners) > 1:
+            out.append((r, f"{' and '.join(winners)} share the earliest value"))
+    return out
+
 
 
 def check_superlative_wrong(rows, ctx):
@@ -446,6 +480,8 @@ CHECKS = {
                              "CORPUS-FICTIONAL-CHRONOLOGY: asks when a fictional character was born or founded — no answer a player can reason to"),
     "list-article-option": (check_list_article_option,
                             "CORPUS-LIST-ARTICLE: a Wikimedia list article offered as an answer option"),
+    "chronology-tied": (check_chronology_tied,
+                        "CORPUS-CHRONOLOGY-TIED: two options share the extreme date — whichever is named, the other is marked wrong"),
     "superlative-wrong": (check_superlative_wrong,
                           "CORPUS-SUPERLATIVE-WRONG: the claimed answer is not the extreme — a correct answer is marked wrong"),
     "founded-misuse": (check_founded_misuse,

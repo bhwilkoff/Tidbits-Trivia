@@ -26,6 +26,38 @@ public sealed record LiveEvent
     // its CodingKeys to {kind, count}, and there is golden coverage on it. The timer is a
     // host authoring concern — joiners already learn the deadline from the published pub.
     [JsonPropertyName("roundTimers")] public IReadOnlyList<int> RoundTimers { get; init; } = new List<int>();
+    // Wave-premier: the AUTHORED questions of each round, index-aligned with Rounds.
+    // An empty inner list means "pull this round from the corpus at host time", which
+    // is what every round did before — so old saved events decode unchanged.
+    //
+    // Until this existed a Windows round was {kind, count} and nothing more, which is
+    // precisely why the host could not edit or add a single question: there were no
+    // questions in the model to open (WINDOWS-DESIGN §6.6).
+    [JsonPropertyName("roundQuestions")]
+    public IReadOnlyList<IReadOnlyList<Question>> RoundQuestions { get; init; } = new List<IReadOnlyList<Question>>();
+
+    /// The authored questions of round `i`, or an empty list when that round is still
+    /// corpus-sourced.
+    public IReadOnlyList<Question> QuestionsFor(int i) =>
+        i >= 0 && i < RoundQuestions.Count ? RoundQuestions[i] : [];
+
+    /// True when EVERY round carries its own questions, so the night needs no corpus pull.
+    [JsonIgnore] public bool IsFullyAuthored =>
+        Rounds.Count > 0 && Enumerable.Range(0, Rounds.Count).All(i => QuestionsFor(i).Count > 0);
+
+    /// A copy with round `i`'s questions replaced, keeping `NightRound.Count` in step —
+    /// the round's length IS its count (LIVE-EVENT-FILE §2.5); letting the two disagree
+    /// would build a night that asks for more questions than the host authored.
+    public LiveEvent WithQuestions(int i, IReadOnlyList<Question> questions)
+    {
+        if (i < 0 || i >= Rounds.Count) return this;
+        var rq = Enumerable.Range(0, Rounds.Count)
+                           .Select(k => k == i ? questions : QuestionsFor(k))
+                           .ToList();
+        var rounds = Rounds.Select((r, k) => k == i && questions.Count > 0
+                                       ? r with { Count = questions.Count } : r).ToList();
+        return this with { Rounds = rounds, RoundQuestions = rq };
+    }
 
     [JsonIgnore] public int TotalQuestions => Rounds.Sum(r => r.Count);
     [JsonIgnore] public bool IsRecurring => Weekday is >= 0 and <= 6;

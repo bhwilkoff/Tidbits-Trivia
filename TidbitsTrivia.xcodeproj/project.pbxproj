@@ -87,6 +87,7 @@
 		4A06D62E81F226D6F37CE02F /* GameKitTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B6C1AB3D2D712041E246473 /* GameKitTransport.swift */; };
 		4A3EAEF16196D111B88D7FC1 /* TestStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C0AB1A0FF832F0B5E868CE5 /* TestStore.swift */; };
 		4C05D37BDE638CAEE71A8129 /* TidbitsIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E8461666E0F22E1FC958F2A /* TidbitsIntents.swift */; };
+		4D6C21033792A54867574502 /* MacLiveEventFile_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EEB0B7A61D81B85793EBCBC /* MacLiveEventFile_macOS.swift */; };
 		4E10B93B4D3648C3C18A074B /* ScreenshotQuestions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A1E96A2E9C52465F028B999 /* ScreenshotQuestions.swift */; };
 		4E1DDB93B46A5CC413B608F5 /* NightContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40995246A8957880F31323EB /* NightContainerView.swift */; };
 		4EFBA55B78466540AE7E0254 /* DailyPickTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0B204070D7875807133085F /* DailyPickTests.swift */; };
@@ -151,10 +152,12 @@
 		918AE96520BD2A89643D6E20 /* TriviaCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCB14B0E2B13CCA2DDA250ED /* TriviaCategory.swift */; };
 		92153A2172FBD8BD36DE55C5 /* thisorthat.json in Resources */ = {isa = PBXBuildFile; fileRef = BADC61A185827BBE0B9857AA /* thisorthat.json */; };
 		92B4788F3A0CAC7DE68FB848 /* CorpusDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB24F551656B187A42C81D44 /* CorpusDatabase.swift */; };
+		93EA84B5F642FC717F6E7C3F /* MacLiveEventFile_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EEB0B7A61D81B85793EBCBC /* MacLiveEventFile_macOS.swift */; };
 		97A5EC2FF3339D75AB069F0F /* SeededRNGTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 487DEB563357A9E7CB28882E /* SeededRNGTests.swift */; };
 		98AD7858869E89901DE42612 /* Expeditions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA542678A72946CB1805D926 /* Expeditions.swift */; };
 		98F5FB5598E175D257EA4E4A /* DailyPick.swift in Sources */ = {isa = PBXBuildFile; fileRef = C72A2CD5C4B8BDED3AE57AAC /* DailyPick.swift */; };
 		993D207E535FB4211789CC3F /* KnowledgeAtlasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25AEBF6364C0E452829EA2C6 /* KnowledgeAtlasView.swift */; };
+		99527AACEFF705BD9497A176 /* MacLiveModel_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56419A8DE7AAB1006563AA47 /* MacLiveModel_macOS.swift */; };
 		9B22CE4581A58C784D66DDB1 /* GameMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C55D3DCAE5E46980D666B83 /* GameMode.swift */; };
 		9B444302313F743A58B7F7CF /* Marathon.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACBB11A0D029110390E8A92A /* Marathon.swift */; };
 		9B4DCCCAE51EF70CA6C60DFA /* QuizStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28A55E8D91A214E7AB369F1A /* QuizStore.swift */; };
@@ -170,6 +173,7 @@
 		A288654C00A9D1A45DE29B16 /* LinkWallModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5762EC669C200A7DB6B30036 /* LinkWallModels.swift */; };
 		A3AB3395EC3EA1DFA7EB378B /* Design.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB6E2342A764B8401C9516E9 /* Design.swift */; };
 		A3CEE805C4A1AB9149A32621 /* NightPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = A485FF3BF7BA5BCFEC4FBC2E /* NightPlan.swift */; };
+		A478F1F2C6EAB396BFAC8230 /* LiveEventFileGoldenTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CFACF3B7DD9EA119F7D087D /* LiveEventFileGoldenTests.swift */; };
 		A49642CF7E24E793FBDCDD7D /* pack.json in Resources */ = {isa = PBXBuildFile; fileRef = 5631553A4052245C4AB131A1 /* pack.json */; };
 		A4ACFCF2CE8E113EAC7715F8 /* Player.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3AE68F153F8C298960BFD36 /* Player.swift */; };
 		A4E1EFF1535F0273FCC53974 /* LiveJoinView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = F45A86C8863F908B3F7D4E7C /* LiveJoinView_tvOS.swift */; };
@@ -207,6 +211,7 @@
 		BBA4AC6248466AF90AE17FFC /* DebugHooks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BD01942F33620E5D75A8E7D /* DebugHooks.swift */; };
 		BBC2E4E732EC174398C58820 /* FirebaseRTDB.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D05686E294B018C5E1F2C16 /* FirebaseRTDB.swift */; };
 		BC0183EE6D8B463266F65204 /* BotOpponentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A62DAFF2EB8A8B635C5D432 /* BotOpponentTests.swift */; };
+		BD49A11429C8DAECAF539EFA /* MacLiveModel_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56419A8DE7AAB1006563AA47 /* MacLiveModel_macOS.swift */; };
 		BD5E3492B79E5A46B4A264BB /* MessagesIconTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D8D22A0A212990320469CE /* MessagesIconTests.swift */; };
 		BF93463EC45B91B09C051EB5 /* IntentInbox.swift in Sources */ = {isa = PBXBuildFile; fileRef = 911D668CBB103D9A879A9CE0 /* IntentInbox.swift */; };
 		BFFC359435DBA3FF985509D1 /* QuickMatchView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D57E4D59AAC3B3F125BEF6C /* QuickMatchView_tvOS.swift */; };
@@ -379,6 +384,7 @@
 		655168DF8FE110D6336394D2 /* WikipediaClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WikipediaClient.swift; sourceTree = "<group>"; };
 		6C0F302F16700A6CD3D85710 /* ClubPaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClubPaywallView.swift; sourceTree = "<group>"; };
 		6C78FEA628F8D5DC705D414E /* match.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = match.json; sourceTree = "<group>"; };
+		6CFACF3B7DD9EA119F7D087D /* LiveEventFileGoldenTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveEventFileGoldenTests.swift; sourceTree = "<group>"; };
 		6E8760FF39E12021DC07BE8F /* picture.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = picture.json; sourceTree = "<group>"; };
 		6F4B8062B92DE4C27229C1D2 /* DailyLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyLog.swift; sourceTree = "<group>"; };
 		70131ECA7118163962F89E5C /* OrderScoringTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrderScoringTests.swift; sourceTree = "<group>"; };
@@ -492,7 +498,7 @@
 		FD70222B5EE4C4145E4D1F84 /* NightSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightSetupView.swift; sourceTree = "<group>"; };
 		FDDD2AC4DB9C421C5849B8F6 /* GameView_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView_macOS.swift; sourceTree = "<group>"; };
 		FFC46D4CE8D03186C064C759 /* Question.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Question.swift; sourceTree = "<group>"; };
-		"TEMP_92913700-8910-4240-A66A-38BA93FABCBA" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
+		"TEMP_90F8B866-FDBE-4C9A-8A8C-CE6B92A33683" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -613,6 +619,7 @@
 				B0B204070D7875807133085F /* DailyPickTests.swift */,
 				058D7E35AB40F632148F5D3A /* ExpeditionCatalogTests.swift */,
 				E2E52F53D6F7AE7E65D91781 /* KnowledgeAtlasTests.swift */,
+				6CFACF3B7DD9EA119F7D087D /* LiveEventFileGoldenTests.swift */,
 				B5D6E0E49066C4E751BEE4EA /* MarathonTests.swift */,
 				F3E807AAB9780367FFC5699F /* MessagesAppearanceTests.swift */,
 				D5F412F87DD07A7DEC350B8C /* MessagesFinishTests.swift */,
@@ -882,10 +889,10 @@
 			path = TidbitsTrivia;
 			sourceTree = "<group>";
 		};
-		"TEMP_4ECD91B2-1D8F-4D44-AB47-29980FC39CEB" /* Tidbits-Trivia */ = {
+		"TEMP_0AB6138D-BC98-497C-957E-EBAC9684788F" /* Tidbits-Trivia */ = {
 			isa = PBXGroup;
 			children = (
-				"TEMP_92913700-8910-4240-A66A-38BA93FABCBA" /* AppVersion.xcconfig */,
+				"TEMP_90F8B866-FDBE-4C9A-8A8C-CE6B92A33683" /* AppVersion.xcconfig */,
 			);
 			path = "Tidbits-Trivia";
 			sourceTree = "<group>";
@@ -1084,6 +1091,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				23045F7332DA9849CF5BF57D /* BubbleImage.swift in Sources */,
+				4D6C21033792A54867574502 /* MacLiveEventFile_macOS.swift in Sources */,
+				BD49A11429C8DAECAF539EFA /* MacLiveModel_macOS.swift in Sources */,
 				8CB0EF870B7C118E92804073 /* QuestionPack.swift in Sources */,
 				2ABD93CF87B3EE92C2F2F429 /* RoundState.swift in Sources */,
 				D290CB2B066403CE75C705FF /* RoundViews.swift in Sources */,
@@ -1132,11 +1141,14 @@
 				7829B382458C60FA73A55BBA /* KnowledgeAtlasTests.swift in Sources */,
 				9BC13E8DDA240167ECDD04E1 /* LinkWall.swift in Sources */,
 				02E828A85BD849666CCA6D6B /* LinkWallModels.swift in Sources */,
+				A478F1F2C6EAB396BFAC8230 /* LiveEventFileGoldenTests.swift in Sources */,
 				DD2CA3B51CDF571AC686C272 /* LiveHostNet.swift in Sources */,
 				A932712C398115691CFEABA8 /* LiveNight.swift in Sources */,
 				F3A4B7E171B4665A63062BBA /* LiveNightHost.swift in Sources */,
 				045C8A23CC31B3DBE5725CE1 /* LivePlayerClient.swift in Sources */,
 				C1DE024CBF206CDDE8F875FB /* LiveRoom.swift in Sources */,
+				93EA84B5F642FC717F6E7C3F /* MacLiveEventFile_macOS.swift in Sources */,
+				99527AACEFF705BD9497A176 /* MacLiveModel_macOS.swift in Sources */,
 				C5D34E16C6CAD80BCE7BD4D7 /* Marathon.swift in Sources */,
 				15EF954644D36101B40E6F95 /* MarathonModels.swift in Sources */,
 				D2440B13212768315B590D70 /* MarathonTests.swift in Sources */,
@@ -1439,7 +1451,7 @@
 		};
 		296659EF0549868336801823 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_92913700-8910-4240-A66A-38BA93FABCBA" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_90F8B866-FDBE-4C9A-8A8C-CE6B92A33683" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -1604,7 +1616,7 @@
 		};
 		E6F711EEEE2896F84FE9AB98 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_92913700-8910-4240-A66A-38BA93FABCBA" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_90F8B866-FDBE-4C9A-8A8C-CE6B92A33683" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;

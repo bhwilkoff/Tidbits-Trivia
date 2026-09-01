@@ -34,6 +34,11 @@ public sealed class LiveNightHost : ObservableObject
     public int? WagerRoundIndex { get; set; } // Wave A: which round is the final wager (RoundIndex), null = none
     public IReadOnlyList<string> RoundNotes { get; set; } = new List<string>(); // Wave A per-round host notes
     public IReadOnlyList<int> RoundTimers { get; set; } = new List<int>();      // Wave A per-round countdown (0 = untimed)
+    /// The host's AUTHORED questions per round (index-aligned with the plan). A round
+    /// with an empty list still comes from the corpus, so a half-authored event works.
+    /// Without this the question editor would be theatre: the host edits a question,
+    /// hits Host, and the night pulls a fresh corpus round over the top of their work.
+    public IReadOnlyList<IReadOnlyList<Question>> AuthoredQuestions { get; set; } = new List<IReadOnlyList<Question>>();
 
     /// The authored countdown for the round now on screen, or 0 when untimed.
     public int RoundTimerSeconds =>
@@ -241,11 +246,71 @@ public sealed class LiveNightHost : ObservableObject
         Opening = false; Notify();
     }
 
+    /// The same question build, without a room — for "Preview solo" and for tests.
+    /// Shares one implementation with the live path so a preview can never vet a
+    /// different night than the one the room plays.
+    public static async Task<List<Question>> PreviewQuestions(
+        NightPlan plan, LiveEvent ev, QuestionProvider provider, TriviaCategory category)
+    {
+        var host = new LiveNightHost(plan, category, provider, ev.Name)
+        {
+            AuthoredQuestions = Enumerable.Range(0, plan.Rounds.Count).Select(ev.QuestionsFor).ToList(),
+        };
+        return await host.BuildNightQuestions();
+    }
+
+    /// The night's questions: the host's authored ones where they exist, the corpus
+    /// everywhere else. Rounds are still pulled in ONE provider call so its
+    /// already-seen de-duplication holds across the corpus-sourced rounds.
+    internal async Task<List<Question>> BuildNightQuestions()
+    {
+        bool anyAuthored = _plan.Rounds
+            .Select((_, i) => i < AuthoredQuestions.Count ? AuthoredQuestions[i].Count : 0)
+            .Any(n => n > 0);
+        if (!anyAuthored) return await _provider.NightQuestions(_plan, _category);
+
+        // Ask the provider only for the rounds the host did NOT author, so an event
+        // that is fully authored never touches the corpus at all (and works offline).
+        var sourcedPlan = new NightPlan
+        {
+            Rounds = _plan.Rounds
+                .Select((r, i) => new NightRound
+                {
+                    Kind = r.Kind,
+                    Count = (i < AuthoredQuestions.Count && AuthoredQuestions[i].Count > 0) ? 0 : r.Count,
+                })
+                .Where(r => r.Count > 0).ToList(),
+        };
+        var sourced = sourcedPlan.Rounds.Count > 0
+            ? await _provider.NightQuestions(sourcedPlan, _category)
+            : new List<Question>();
+
+        var out_ = new List<Question>();
+        int sourcedCursor = 0;
+        for (int i = 0; i < _plan.Rounds.Count; i++)
+        {
+            var authored = i < AuthoredQuestions.Count ? AuthoredQuestions[i] : [];
+            if (authored.Count > 0)
+            {
+                out_.AddRange(authored.Select(q => q with { RoundIndex = i }));
+            }
+            else
+            {
+                // The sourced list is round-tagged with ITS OWN indices, which are the
+                // compacted ones — re-tag against the real plan position.
+                int want = _plan.Rounds[i].Count;
+                for (int k = 0; k < want && sourcedCursor < sourced.Count; k++, sourcedCursor++)
+                    out_.Add(sourced[sourcedCursor] with { RoundIndex = i });
+            }
+        }
+        return out_;
+    }
+
     public async Task Start()
     {
         if (!Net.IsOpen) await OpenRoom();
         if (!Net.IsOpen) return;
-        Questions = await _provider.NightQuestions(_plan, _category);
+        Questions = await BuildNightQuestions();
         if (Questions.Count == 0) { ErrorText = "No questions available."; Notify(); return; }
         if (HostPlays) await Net.JoinAsHost(string.IsNullOrEmpty(HostName) ? "Host" : HostName);
         Index = 0; Revealed = false; HostChoice = null; Locked = false; CurrentStage = Stage.Playing;

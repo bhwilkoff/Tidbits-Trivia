@@ -1,5 +1,5 @@
 2026 FIFA World Cup	rel:P17:Q110131094 rel:P17:Q131591 rel:P17:Q132515 rel:P17:Q1477177 rel:P17:Q23758108 rel:P17:Q64979822 src:cloze:Unai_Simón src:cloze:Waka_Waka_(This_Time_for_Africa)
-Obsession (2025 film)	src:cloze:Albert_II_of_Belgium src:cloze:David_Grann src:cloze:Lolita src:cloze:Lolita_(1962_film) src:cloze:Michelangelo_(Teenage_Mutant_Ninja_Turtles) src:describe:David_Livingstone src:describe:Death_in_Venice src:describe:Winfield_Scott
+Obsession (2025 film)	src:cloze:David_Grann src:cloze:Lolita src:cloze:Lolita_(1962_film) src:cloze:Michelangelo_(Teenage_Mutant_Ninja_Turtles) src:cloze:Swarm_(TV_series) src:describe:David_Livingstone src:describe:Death_in_Venice src:describe:Winfield_Scott
 Oliver Tree	src:cloze:Oliver_Tree src:describe:Oliver_Tree
 FIFA World Cup	rel:P112:Q982 rel:P17:Q110131094 rel:P17:Q131591 rel:P17:Q132515 rel:P17:Q1477177 rel:P17:Q23758108 rel:P17:Q4630359 rel:P17:Q64979822
 Cape Verde	num:P2046:Q1011 rel:P37:Q1011 src:cloze:Macaronesia src:cloze:Praia src:describe:Bebé src:describe:Natalia_Poklonskaya src:describe:Praia wd:capital:Q1011

@@ -230,6 +230,13 @@ targets:
       # with the extension would be worthless as evidence.
       - path: TidbitsMessages/RoundViews.swift
       - path: TidbitsMessages/RoundState.swift
+      # The Tidbits Live event MODEL and its portable file format. Both are
+      # macOS-gated because the builder is a Mac surface, but the file is a
+      # cross-platform CONTRACT (docs/LIVE-EVENT-FILE.md) that Windows reads and
+      # writes, so it needs the same golden coverage the night wire has. This
+      # bundle is macOS-only, so the `#if os(macOS)` guards compile through.
+      - path: TidbitsTrivia/macOS/MacLiveModel_macOS.swift
+      - path: TidbitsTrivia/macOS/MacLiveEventFile_macOS.swift
       - path: TidbitsMessages/QuestionPack.swift
       - path: TidbitsMessages/BubbleImage.swift
       - path: TidbitsTrivia/Core/Models/StandingsOutcome.swift
@@ -257,6 +264,13 @@ targets:
       # share one thread. The rest of TidbitsMessages imports Messages/UIKit and
       # cannot build for this macOS-only test bundle.
       - path: TidbitsMessages/RoundState.swift
+      # The Tidbits Live event MODEL and its portable file format. Both are
+      # macOS-gated because the builder is a Mac surface, but the file is a
+      # cross-platform CONTRACT (docs/LIVE-EVENT-FILE.md) that Windows reads and
+      # writes, so it needs the same golden coverage the night wire has. This
+      # bundle is macOS-only, so the `#if os(macOS)` guards compile through.
+      - path: TidbitsTrivia/macOS/MacLiveModel_macOS.swift
+      - path: TidbitsTrivia/macOS/MacLiveEventFile_macOS.swift
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.learningischange.tidbitstrivia.CoreTests

@@ -41,6 +41,9 @@
     <!-- The Create golden, captured from the shipped Apple ranker. Linked, not
          copied, so it cannot drift from tools/create/golden/. -->
     <Content Include="..\..\tools\create\golden\search.txt" Link="Fixtures\create-golden.txt" CopyToOutputDirectory="PreserveNewest" />
+    <!-- The portable Live-event contract golden (docs/LIVE-EVENT-FILE.md §5.1) —
+         linked, not copied, so Windows and Apple assert against the SAME bytes. -->
+    <Content Include="..\..\tools\live-event\golden.tidbitsevent.json" Link="Fixtures\live-event-golden.json" CopyToOutputDirectory="PreserveNewest" />
     <!-- Full shared data under Data/ so GameData.Shared (app path) resolves in tests too. -->
     <Content Include="..\..\assets\*.json" Link="Data\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>

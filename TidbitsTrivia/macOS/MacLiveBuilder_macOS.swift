@@ -513,7 +513,19 @@ struct LiveBuilderView_macOS: View {
         panel.allowedContentTypes = [.json]
         panel.nameFieldStringValue = LiveEventFile.suggestedFilename(for: working)
         guard panel.runModal() == .OK, let url = panel.url else { return }
-        do { try LiveEventFile.write(working, to: url) }
+        do {
+            try LiveEventFile.write(working, to: url)
+            // A dropped clip is told at EXPORT time as well as at import: the host
+            // who made the file is the one who can re-attach the clips.
+            let dropped = LiveEventFile.droppedClipCount(in: working)
+            if dropped > 0 {
+                let alert = NSAlert()
+                alert.messageText = "Exported without \(dropped) clip\(dropped == 1 ? "" : "s")"
+                alert.informativeText = "Audio and video clips point at files on this Mac, so they cannot travel in the event file. Every question came across — re-attach the clips on the other machine."
+                alert.alertStyle = .informational
+                alert.runModal()
+            }
+        }
         catch { presentError("Could not export the event", error) }
     }
 

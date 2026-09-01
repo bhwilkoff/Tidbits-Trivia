@@ -133,12 +133,12 @@ landscape survey). **The gap is implementation and verification, not research.**
 ### Workstream
 | # | Item | macOS | Windows | Evidence |
 |---|---|---|---|---|
-| L1 | Per-question editor + add/duplicate/delete/reorder (§A2.4 / §6.6) | ✅ | ⏳ | Mac: `MacLiveQuestionEditor_macOS.swift`; screenshot shows the expanded round with per-question Edit + ⋯ menu |
-| L2 | Native control pass on builder + cockpit (§5.6 / §5.4) | 🟡 | ⏳ | Mac builder header + action bar done; the COCKPIT is still sticker-styled |
+| L1 | Per-question editor + add/duplicate/delete/reorder (§A2.4 / §6.6) | ✅ | ✅ | Mac: `MacLiveQuestionEditor_macOS.swift`, screenshot read. Windows: `LiveQuestionEditorDialog.cs` + the model change that made it possible; headless PNG read + 3 structural assertions |
+| L2 | Native control pass on builder + cockpit (§5.6 / §5.4) | ✅ | 🟡 | Mac: all 20 cockpit buttons + the builder header are native. Windows: the Live button row now WRAPS (§6.3b, it did not) and uses the type ramp instead of hardcoded sizes; the cockpit is not yet audited |
 | L3 | Room/join code + QR visible in the cockpit | ⏳ | ⏳ | |
 | L4 | Audio round: pick clip → plays on the PA, verified audible | ⏳ | ⏳ | |
 | L5 | Video round: clip plays on the big screen, verified rendered | ⏳ | ⏳ | |
-| L6 | Event export/import as JSON; CSV question-bank import (§A2.5 / §6.7) | 🟡 | ⏳ | Mac: `MacLiveEventFile_macOS.swift` (versioned, AV bookmarks dropped + counted); not yet driven end-to-end |
+| L6 | Event export/import as JSON; CSV question-bank import (§A2.5 / §6.7) | ✅ | ✅ | ONE contract (`docs/LIVE-EVENT-FILE.md`), one golden file, **14 tests across both stacks** — 7 Swift + 7 C# against the same bytes. CSV import is Mac-only still. |
 | L7 | Printing: question pack + answer sheet + scoresheet, verified as PDF | ⏳ | ⏳ | |
 | L8 | Empty/loading/error states on every Live surface | 🟡 | ⏳ | Mac: saved-events empty state + expanded-round empty state; import/export now raise a real alert instead of a silent `try?` |
 | L9 | Every button in builder + cockpit driven and asserted by the harness | ⏳ | ⏳ | |
@@ -166,3 +166,42 @@ previous run left behind.
 audit tools flattened 469 ids to the top level, which would have corrupted every
 shape's `genguard`. Caught before commit; both tools now write under `"corpus"`
 and say why in a comment.
+
+
+---
+
+## Tick 2 — 2026-09-01
+
+**The Windows finding that explains the owner's complaint.** Windows stored a
+round as `NightRound {kind, count}` and pulled its questions from the corpus at
+host time. There were **no questions in the model to open** — which is why "there
+is no ability to edit or add individual questions" was literally true there, and
+why a question editor alone would not have fixed it. `LiveEvent.RoundQuestions`
+(index-aligned, empty = still corpus-sourced, so every saved event decodes
+unchanged) is the change that made an editor possible at all.
+
+**The wiring is tested, not assumed.** `LiveNightHost.BuildNightQuestions` asks
+the provider only for the rounds the host did NOT author, so a fully-authored
+event never touches the corpus (and works offline); the corpus rows are re-tagged
+against their REAL plan position, not the compacted index of the reduced plan.
+Without that, the editor would have been theatre: edit a question, press Host,
+and the night pulls a fresh corpus round over your work. Five tests assert it,
+including the half-authored case.
+
+**Preview and Host share one implementation** (`LiveNightHost.PreviewQuestions`),
+so a preview can never vet a different night than the room plays.
+
+**`docs/LIVE-EVENT-FILE.md` is new and binding.** Neither client exports its
+internal model; both write the contract. `tools/live-event/golden.tidbitsevent.json`
+is asserted by Swift AND C# — decode, round-trip, new-id-on-import, foreign-file
+refusal, forward-version refusal, unknown-key tolerance, and clip-dropping.
+
+**Also fixed:** `tools/create/golden/search.txt` was stale after tick 1's row
+removals (the `GOLDEN-STALE` gate caught it); regenerated, 49 identical / 0
+differing. Three concurrent `parity.sh` runs were fighting over one simulator —
+the "boot ONE simulator at a time" rule applies to scripts that boot one too.
+
+**Open on Windows:** the cockpit itself is not yet audited for §5.6-equivalent
+polish, audio/video rounds do not exist there at all, and the ▲/▼/✕/📝 glyphs
+render as tofu on the Mac head — which is NOT evidence about Windows and needs
+`windows-repl.yml` to settle.

@@ -1,0 +1,80 @@
+{
+  "app" : "Tidbits Trivia (golden)",
+  "droppedClipCount" : 2,
+  "event" : {
+    "brandHex" : "#FF5C35",
+    "createdAt" : "2026-08-01T00:00:00Z",
+    "id" : "11111111-2222-3333-4444-555555555555",
+    "leadCaptureURL" : "https://example.test/list",
+    "name" : "Friday Pub Quiz",
+    "rounds" : [
+      {
+        "categoryID" : "history",
+        "format" : "classic",
+        "hostNote" : "Read the first one slowly.",
+        "id" : "AAAAAAAA-0000-0000-0000-000000000001",
+        "isWager" : null,
+        "isSpeed" : null,
+        "questions" : [
+          {
+            "categoryID" : "history",
+            "correctIndex" : 2,
+            "difficulty" : 3,
+            "explanation" : "Lydia minted the first coins from electrum in the 7th century BC.",
+            "id" : "golden:q1",
+            "options" : [ "Kingdom of Portugal", "Pahlavi Iran", "Lydia", "Soviet Union" ],
+            "prompt" : "This Iron Age kingdom in western Anatolia minted some of the world's oldest coins — which kingdom?",
+            "sourceTitle" : "Lydia",
+            "tags" : [ ],
+            "templateID" : "src"
+          },
+          {
+            "categoryID" : "history",
+            "correctIndex" : 0,
+            "difficulty" : 2,
+            "explanation" : "",
+            "id" : "golden:q2",
+            "options" : [ "1066", "1215", "1415", "1485" ],
+            "prompt" : "In which year was the Battle of Hastings fought?",
+            "sourceTitle" : "Battle of Hastings",
+            "tags" : [ ],
+            "templateID" : "hand"
+          }
+        ],
+        "timerSeconds" : 60,
+        "title" : "Round 1 — Warm Up"
+      },
+      {
+        "categoryID" : "music",
+        "format" : "typeAnswer",
+        "hostNote" : null,
+        "id" : "AAAAAAAA-0000-0000-0000-000000000002",
+        "isSpeed" : true,
+        "isWager" : true,
+        "questions" : [
+          {
+            "accepted" : [ "Bohemian Rhapsody" ],
+            "categoryID" : "music",
+            "correctIndex" : 0,
+            "difficulty" : 2,
+            "explanation" : "",
+            "id" : "golden:q3",
+            "options" : [ "Bohemian Rhapsody" ],
+            "prompt" : "Track 1 — name it",
+            "sourceTitle" : "",
+            "tags" : [ ],
+            "templateID" : "audio"
+          }
+        ],
+        "timerSeconds" : null,
+        "title" : "Round 2 — Name That Tune"
+      }
+    ],
+    "sponsor" : "The Anchor Brewery",
+    "venue" : "The Anchor",
+    "weekday" : 6
+  },
+  "exportedAt" : "2026-09-01T12:00:00Z",
+  "format" : "com.learningischange.tidbits.live-event",
+  "version" : 1
+}

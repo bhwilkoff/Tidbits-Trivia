@@ -94,6 +94,11 @@ public partial class LiveView : UserControl
     private readonly System.Collections.Generic.List<NightRound> _rounds = new();
     private readonly System.Collections.Generic.List<string> _notes = new();
     private readonly System.Collections.Generic.List<int> _timers = new();   // per-round countdown, 0 = untimed
+    // The AUTHORED questions of each round, index-aligned with _rounds. Empty means
+    // "pull from the corpus at host time", which is what every round did before —
+    // and is exactly why a host had nothing to edit (WINDOWS-DESIGN §6.6).
+    private readonly System.Collections.Generic.List<System.Collections.Generic.List<Question>> _questions = new();
+    private readonly System.Collections.Generic.HashSet<int> _expandedRounds = new();
     private static readonly int[] TimerChoices = { 0, 30, 45, 60, 90, 120 };
     private static int TimerIndex(int seconds) => System.Math.Max(0, System.Array.IndexOf(TimerChoices, seconds));
     private static int TimerSeconds(int index) => index >= 0 && index < TimerChoices.Length ? TimerChoices[index] : 0;
@@ -104,6 +109,7 @@ public partial class LiveView : UserControl
         _rounds.Add(new NightRound { Kind = mode, Count = count });
         _notes.Add(RoundNoteBox.Text?.Trim() ?? "");
         _timers.Add(0);
+        _questions.Add(new System.Collections.Generic.List<Question>());
         RoundNoteBox.Text = "";
         RebuildBuilderRounds();
     }
@@ -116,6 +122,8 @@ public partial class LiveView : UserControl
         (_rounds[index], _rounds[target]) = (_rounds[target], _rounds[index]);
         (_notes[index], _notes[target]) = (_notes[target], _notes[index]);
         (_timers[index], _timers[target]) = (_timers[target], _timers[index]);
+        if (index < _questions.Count && target < _questions.Count)
+            (_questions[index], _questions[target]) = (_questions[target], _questions[index]);
         RebuildBuilderRounds();
     }
 
@@ -127,11 +135,29 @@ public partial class LiveView : UserControl
             int idx = i;
             var r = _rounds[i];
             var note = idx < _notes.Count ? _notes[idx] : "";
-            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto,Auto,Auto"), Margin = new Avalonia.Thickness(0, 0, 0, 2) };
+            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto,Auto,Auto"), Margin = new Avalonia.Thickness(0, 0, 0, 2) };
+            bool open = _expandedRounds.Contains(idx);
+            var chevron = new Button
+            {
+                Content = open ? "\u25BE" : "\u25B8", FontSize = 12,
+                Padding = new Avalonia.Thickness(6, 2), Margin = new Avalonia.Thickness(0, 0, 6, 0),
+            };
+            AutomationProperties.SetName(chevron, open ? $"Hide round {idx + 1} questions" : $"Show round {idx + 1} questions");
+            chevron.Click += (_, _) =>
+            {
+                if (!_expandedRounds.Remove(idx)) _expandedRounds.Add(idx);
+                RebuildBuilderRounds();
+            };
+            Grid.SetColumn(chevron, 0);
+            row.Children.Add(chevron);
+            int authored = idx < _questions.Count ? _questions[idx].Count : 0;
+            var countText = authored > 0 ? $"{authored} questions (yours)" : $"{r.Count} questions";
             var label = note.Length > 0
-                ? $"{idx + 1}. {r.Kind.Title()} · {r.Count} questions  📝 {note}"
-                : $"{idx + 1}. {r.Kind.Title()} · {r.Count} questions";
-            row.Children.Add(new TextBlock { Text = label, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center, TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis });
+                ? $"{idx + 1}. {r.Kind.Title()} · {countText}  \U0001F4DD {note}"
+                : $"{idx + 1}. {r.Kind.Title()} · {countText}";
+            var labelBlock = new TextBlock { Text = label, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center, TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis };
+            Grid.SetColumn(labelBlock, 1);
+            row.Children.Add(labelBlock);
             // Wave A per-round countdown (macOS parity). "No timer" is first and the
             // default: a pub quiz that silently starts a clock on every round would change
             // how the room plays without the host asking for it.
@@ -147,28 +173,194 @@ public partial class LiveView : UserControl
                 while (_timers.Count <= idx) _timers.Add(0);
                 _timers[idx] = TimerSeconds(timer.SelectedIndex);
             };
-            Grid.SetColumn(timer, 1);
+            Grid.SetColumn(timer, 2);
             row.Children.Add(timer);
 
             var up = new Button { Content = "▲", Padding = new Avalonia.Thickness(7, 2), FontSize = 11, IsEnabled = idx > 0 };
             AutomationProperties.SetName(up, $"Move round {idx + 1} up");
             up.Click += (_, _) => MoveRound(idx, -1);
-            Grid.SetColumn(up, 2);
+            Grid.SetColumn(up, 3);
             row.Children.Add(up);
             var down = new Button { Content = "▼", Padding = new Avalonia.Thickness(7, 2), FontSize = 11, IsEnabled = idx < _rounds.Count - 1, Margin = new Avalonia.Thickness(4, 0, 0, 0) };
             AutomationProperties.SetName(down, $"Move round {idx + 1} down");
             down.Click += (_, _) => MoveRound(idx, +1);
-            Grid.SetColumn(down, 3);
+            Grid.SetColumn(down, 4);
             row.Children.Add(down);
             var del = new Button { Content = "✕", Padding = new Avalonia.Thickness(8, 2), FontSize = 12, Margin = new Avalonia.Thickness(4, 0, 0, 0) };
             AutomationProperties.SetName(del, $"Remove round {idx + 1}");
-            del.Click += (_, _) => { _rounds.RemoveAt(idx); if (idx < _notes.Count) _notes.RemoveAt(idx); if (idx < _timers.Count) _timers.RemoveAt(idx); RebuildBuilderRounds(); };
-            Grid.SetColumn(del, 4);
+            del.Click += (_, _) =>
+            {
+                _rounds.RemoveAt(idx);
+                if (idx < _notes.Count) _notes.RemoveAt(idx);
+                if (idx < _timers.Count) _timers.RemoveAt(idx);
+                if (idx < _questions.Count) _questions.RemoveAt(idx);
+                _expandedRounds.Clear();   // the indices below this round all shifted
+                RebuildBuilderRounds();
+            };
+            Grid.SetColumn(del, 5);
             row.Children.Add(del);
             BuilderRounds.Children.Add(row);
+            if (open) BuilderRounds.Children.Add(BuildQuestionList(idx));
         }
         RebuildBalance();
     }
+
+    // Test seams. The builder is driven entirely by Click handlers, so a headless
+    // test could otherwise only reach the question list by synthesising pointer
+    // events at guessed coordinates — which asserts the layout, not the feature
+    // (`hooks-are-coverage`). These call the SAME methods the buttons do.
+    public void LoadEventForTesting(LiveEvent ev) => LoadEvent(ev);
+
+    public void ExpandRoundForTesting(int roundIndex)
+    {
+        _expandedRounds.Add(roundIndex);
+        RebuildBuilderRounds();
+    }
+
+    /// Scroll the setup pane so a snapshot shows the ROUNDS rather than the top of
+    /// the page. A PNG that does not contain the thing under test is not evidence.
+    public void ScrollToRoundsForTesting()
+    {
+        Setup.UpdateLayout();
+        BuilderRounds.BringIntoView();
+    }
+
+    /// A round's questions, each opening the editor — WINDOWS-DESIGN §6.6.
+    /// A round with no authored questions says so and offers both ways to fill it,
+    /// rather than rendering as a blank strip (`universal-feature-states`).
+    private Control BuildQuestionList(int roundIndex)
+    {
+        while (_questions.Count <= roundIndex) _questions.Add(new System.Collections.Generic.List<Question>());
+        var qs = _questions[roundIndex];
+        var kind = _rounds[roundIndex].Kind;
+        var panel = new StackPanel { Spacing = 4, Margin = new Avalonia.Thickness(26, 2, 0, 10) };
+
+        if (qs.Count == 0)
+        {
+            panel.Children.Add(new TextBlock
+            {
+                Text = "No questions authored — this round is pulled from the corpus when you host. "
+                     + "Add or pull one to shape it yourself.",
+                FontSize = 12, Opacity = 0.7, TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+            });
+        }
+
+        for (int i = 0; i < qs.Count; i++)
+        {
+            int qi = i;
+            var q = qs[qi];
+            var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto,Auto,Auto") };
+            grid.Children.Add(new TextBlock
+            {
+                Text = $"{qi + 1}.", FontSize = 12, Opacity = 0.6, MinWidth = 22,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+            });
+            var text = new StackPanel { Spacing = 0, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center };
+            text.Children.Add(new TextBlock
+            {
+                Text = string.IsNullOrWhiteSpace(q.Prompt) ? "Untitled question" : q.Prompt,
+                TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis, MaxLines = 2,
+            });
+            text.Children.Add(new TextBlock
+            {
+                Text = AnswerSummary(q, kind), FontSize = 12, Opacity = 0.62,
+                TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis,
+            });
+            Grid.SetColumn(text, 1);
+            grid.Children.Add(text);
+
+            var diff = new TextBlock
+            {
+                Text = $"D{q.Difficulty}", FontSize = 12, Opacity = 0.6,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                Margin = new Avalonia.Thickness(8, 0),
+            };
+            Grid.SetColumn(diff, 2);
+            grid.Children.Add(diff);
+
+            var edit = new Button { Content = "Edit", Padding = new Avalonia.Thickness(12, 4), FontSize = 12 };
+            AutomationProperties.SetName(edit, $"Edit question {qi + 1} of round {roundIndex + 1}");
+            edit.Click += async (_, _) =>
+            {
+                var updated = await LiveQuestionEditorDialog.ShowAsync(q, kind, $"Round {roundIndex + 1}, question {qi + 1}");
+                if (updated is not null) { _questions[roundIndex][qi] = updated; SyncRoundCount(roundIndex); RebuildBuilderRounds(); }
+            };
+            Grid.SetColumn(edit, 3);
+            grid.Children.Add(edit);
+
+            var dup = new Button { Content = "Duplicate", Padding = new Avalonia.Thickness(10, 4), FontSize = 12, Margin = new Avalonia.Thickness(4, 0, 0, 0) };
+            AutomationProperties.SetName(dup, $"Duplicate question {qi + 1} of round {roundIndex + 1}");
+            dup.Click += (_, _) =>
+            {
+                // A fresh id: two rows the UI cannot tell apart is a bug waiting to
+                // happen the moment anything keys on the question id.
+                _questions[roundIndex].Insert(qi + 1, q with { Id = Guid.NewGuid().ToString("N") });
+                SyncRoundCount(roundIndex); RebuildBuilderRounds();
+            };
+            Grid.SetColumn(dup, 4);
+            grid.Children.Add(dup);
+
+            var remove = new Button { Content = "\u2715", Padding = new Avalonia.Thickness(9, 4), FontSize = 12, Margin = new Avalonia.Thickness(4, 0, 0, 0) };
+            AutomationProperties.SetName(remove, $"Remove question {qi + 1} of round {roundIndex + 1}");
+            remove.Click += (_, _) => { _questions[roundIndex].RemoveAt(qi); SyncRoundCount(roundIndex); RebuildBuilderRounds(); };
+            Grid.SetColumn(remove, 5);
+            grid.Children.Add(remove);
+
+            panel.Children.Add(grid);
+        }
+
+        var actions = new WrapPanel { Orientation = Orientation.Horizontal, Margin = new Avalonia.Thickness(0, 6, 0, 0) };
+        var add = new Button { Content = "+ Add question", Padding = new Avalonia.Thickness(12, 5), FontSize = 12, Margin = new Avalonia.Thickness(0, 0, 8, 4) };
+        add.Click += async (_, _) =>
+        {
+            var cat = (CategoryPicker.SelectedItem as TriviaCategory)?.Id ?? "mixed";
+            var made = await LiveQuestionEditorDialog.ShowAsync(
+                LiveQuestionEditorDialog.Blank(kind, cat), kind, $"New question in round {roundIndex + 1}");
+            if (made is not null) { _questions[roundIndex].Add(made); SyncRoundCount(roundIndex); RebuildBuilderRounds(); }
+        };
+        actions.Children.Add(add);
+
+        var pull = new Button { Content = "Pull one from the corpus", Padding = new Avalonia.Thickness(12, 5), FontSize = 12, Margin = new Avalonia.Thickness(0, 0, 8, 4) };
+        pull.Click += async (_, _) =>
+        {
+            var cat = CategoryPicker.SelectedItem as TriviaCategory ?? TriviaCategory.Named("mixed");
+            var plan = new NightPlan { Rounds = new[] { new NightRound { Kind = kind, Count = 1 } } };
+            var pulled = await GameData.Shared.Value.Provider.NightQuestions(plan, cat);
+            if (pulled.Count > 0) { _questions[roundIndex].Add(pulled[0] with { RoundIndex = null }); SyncRoundCount(roundIndex); RebuildBuilderRounds(); }
+        };
+        actions.Children.Add(pull);
+
+        if (qs.Count > 0)
+        {
+            var clear = new Button { Content = "Back to corpus-sourced", Padding = new Avalonia.Thickness(12, 5), FontSize = 12, Margin = new Avalonia.Thickness(0, 0, 8, 4) };
+            AutomationProperties.SetName(clear, $"Clear authored questions in round {roundIndex + 1}");
+            clear.Click += (_, _) => { _questions[roundIndex].Clear(); RebuildBuilderRounds(); };
+            actions.Children.Add(clear);
+        }
+        panel.Children.Add(actions);
+        return panel;
+    }
+
+    /// The round's LENGTH is its count once it is authored (LIVE-EVENT-FILE §2.5).
+    /// Letting the two disagree builds a night that asks for more questions than the
+    /// host wrote.
+    private void SyncRoundCount(int roundIndex)
+    {
+        if (roundIndex < 0 || roundIndex >= _rounds.Count) return;
+        int authored = roundIndex < _questions.Count ? _questions[roundIndex].Count : 0;
+        if (authored > 0) _rounds[roundIndex] = _rounds[roundIndex] with { Count = authored };
+    }
+
+    /// One line the host can scan to know whether a question is right, without opening it.
+    private static string AnswerSummary(Question q, GameMode kind) => kind switch
+    {
+        GameMode.ClosestCall => q.Closest is null ? "No numeric answer set" : $"Answer: {q.Closest.FormattedAnswer}",
+        GameMode.Ordering => q.Ordering is { Count: > 0 } o ? $"Order: {string.Join(" \u2192 ", o.Take(4))}…" : "No items",
+        GameMode.Matching => $"{q.Matching?.Keys.Count ?? 0} pairs",
+        GameMode.Enumerate => $"{q.Enumerate?.Groups.Count ?? 0} accepted answers",
+        GameMode.TypeAnswer => $"Accepts: {string.Join(", ", (q.Accepted ?? new[] { q.CorrectAnswer }).Take(3))}",
+        _ => $"Answer: {q.CorrectAnswer}",
+    };
 
     /// The balance meter — a bar per question type (width ∝ its share) + a variety
     /// verdict, so the host can see the night's mix as they compose it.
@@ -215,7 +407,30 @@ public partial class LiveView : UserControl
         WagerFinalRound = WagerFinalCheck.IsChecked == true,
         RoundNotes = new System.Collections.Generic.List<string>(_notes),
         RoundTimers = new System.Collections.Generic.List<int>(_timers),
+        RoundQuestions = _questions
+            .Select(q => (System.Collections.Generic.IReadOnlyList<Question>)new System.Collections.Generic.List<Question>(q))
+            .ToList(),
     };
+
+    /// Load an event into the builder fields (import, or picking a saved event).
+    private void LoadEvent(LiveEvent ev)
+    {
+        EventNameBox.Text = ev.Name;
+        SponsorBox.Text = ev.Sponsor ?? "";
+        BrandHexBox.Text = ev.BrandHex ?? "";
+        LeadUrlBox.Text = ev.LeadCaptureUrl ?? "";
+        WeekdayBox.SelectedIndex = ev.Weekday is int w and >= 0 and <= 6 ? w + 1 : 0;
+        WagerFinalCheck.IsChecked = ev.WagerFinalRound;
+        _rounds.Clear(); _notes.Clear(); _timers.Clear(); _questions.Clear(); _expandedRounds.Clear();
+        for (int i = 0; i < ev.Rounds.Count; i++)
+        {
+            _rounds.Add(ev.Rounds[i]);
+            _notes.Add(i < ev.RoundNotes.Count ? ev.RoundNotes[i] : "");
+            _timers.Add(i < ev.RoundTimers.Count ? ev.RoundTimers[i] : 0);
+            _questions.Add(ev.QuestionsFor(i).ToList());
+        }
+        RebuildBuilderRounds();
+    }
 
     private void OnHostEvent(object? sender, RoutedEventArgs e)
     {
@@ -230,8 +445,12 @@ public partial class LiveView : UserControl
         if (_rounds.Count == 0) { StatusText.Text = "Add at least one round first."; StatusText.IsVisible = true; return; }
         var data = GameData.Shared.Value;
         var cat = CategoryPicker.SelectedItem as TriviaCategory ?? TriviaCategory.Named("mixed");
-        var plan = CurrentEvent().ToPlan();
-        var questions = await data.Provider.NightQuestions(plan, cat);
+        var ev = CurrentEvent();
+        var plan = ev.ToPlan();
+        // Preview is a rehearsal of the REAL night, so it plays the host's authored
+        // questions — previewing the corpus instead would vet questions the room
+        // will never see.
+        var questions = await LiveNightHost.PreviewQuestions(plan, ev, data.Provider, cat);
         if (questions.Count == 0) { StatusText.Text = "No questions available for that event."; StatusText.IsVisible = true; return; }
         var engine = data.NewEngine();
         var vm = new GameViewModel(engine, records: null); // preview → no records
@@ -264,6 +483,72 @@ public partial class LiveView : UserControl
         if (_rounds.Count == 0) { StatusText.Text = "Add at least one round first."; StatusText.IsVisible = true; return; }
         GameData.Shared.Value.LiveEvents.Save(CurrentEvent());
         BuildSavedEvents();
+    }
+
+    /// Export the composed event as the portable document (docs/LIVE-EVENT-FILE.md).
+    /// A host's night is their work product: it has to survive a reinstall, move to
+    /// their Mac, and be shareable with a co-host.
+    private async void OnExportEvent(object? sender, RoutedEventArgs e)
+    {
+        if (_rounds.Count == 0) { ShowStatus("Add at least one round first."); return; }
+        var top = TopLevel.GetTopLevel(this);
+        if (top?.StorageProvider is not { } sp) { ShowStatus("This window cannot open a file picker."); return; }
+        var ev = CurrentEvent();
+        try
+        {
+            var file = await sp.SaveFilePickerAsync(new Avalonia.Platform.Storage.FilePickerSaveOptions
+            {
+                Title = "Export event",
+                SuggestedFileName = LiveEventFile.SuggestedFileName(ev),
+                DefaultExtension = "json",
+            });
+            if (file is null) return;
+            await using var stream = await file.OpenWriteAsync();
+            await using var writer = new System.IO.StreamWriter(stream);
+            await writer.WriteAsync(LiveEventFile.Encode(ev));
+            ShowStatus($"Exported \u201C{ev.Name}\u201D \u2014 {ev.TotalQuestions} questions across {ev.Rounds.Count} rounds.");
+        }
+        catch (Exception ex)
+        {
+            // A silent catch here is how an export "works" and writes nothing.
+            ShowStatus($"Could not export the event: {ex.Message}");
+        }
+    }
+
+    /// Import an event document back — from this machine, a co-host, or the Mac app.
+    private async void OnImportEvent(object? sender, RoutedEventArgs e)
+    {
+        var top = TopLevel.GetTopLevel(this);
+        if (top?.StorageProvider is not { } sp) { ShowStatus("This window cannot open a file picker."); return; }
+        try
+        {
+            var files = await sp.OpenFilePickerAsync(new Avalonia.Platform.Storage.FilePickerOpenOptions
+            {
+                Title = "Import event", AllowMultiple = false,
+            });
+            if (files.Count == 0) return;
+            await using var stream = await files[0].OpenReadAsync();
+            using var reader = new System.IO.StreamReader(stream);
+            var ev = LiveEventFile.Decode(await reader.ReadToEndAsync());
+            LoadEvent(ev);
+            GameData.Shared.Value.LiveEvents.Save(ev);
+            BuildSavedEvents();
+            ShowStatus($"Imported \u201C{ev.Name}\u201D \u2014 {ev.TotalQuestions} questions across {ev.Rounds.Count} rounds.");
+        }
+        catch (LiveEventFile.FileFormatException ex)
+        {
+            ShowStatus(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            ShowStatus($"Could not import that file: {ex.Message}");
+        }
+    }
+
+    private void ShowStatus(string text)
+    {
+        StatusText.Text = text;
+        StatusText.IsVisible = true;
     }
 
     private void BuildSavedEvents()
@@ -317,6 +602,11 @@ public partial class LiveView : UserControl
             SpeedBonus = SpeedBonusCheck.IsChecked == true,
             HostPlays = HostPlaysCheck.IsChecked == true,
             HostName = string.IsNullOrWhiteSpace(HostNameBox.Text) ? "Host" : HostNameBox.Text!.Trim(),
+            // Without this the editor is theatre: the host edits a question, hits
+            // Host, and the night pulls a fresh corpus round over their work.
+            AuthoredQuestions = branding is null
+                ? new System.Collections.Generic.List<System.Collections.Generic.IReadOnlyList<Question>>()
+                : Enumerable.Range(0, branding.Rounds.Count).Select(branding.QuestionsFor).ToList(),
             Sponsor = branding?.Sponsor,
             BrandHex = branding?.BrandHex,
             LeadCaptureUrl = branding?.LeadCaptureUrl,

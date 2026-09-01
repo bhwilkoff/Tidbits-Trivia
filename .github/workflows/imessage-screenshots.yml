@@ -15,7 +15,7 @@ on:
         required: true
         default: 'status'
         type: choice
-        options: [status, list, upload, dry-run]
+        options: [status, audit, list, upload, dry-run]
       replace:
         description: 'On upload: clear each set first (otherwise a non-empty set is skipped)'
         required: true
@@ -98,6 +98,7 @@ jobs:
 
           case "$MODE" in
             status)  ARGS+=(--status) ;;
+            audit)   ARGS+=(--audit) ;;
             dry-run) ARGS+=(--dry-run) ;;
             upload)  if [ "$REPLACE" = "true" ]; then ARGS+=(--replace); fi ;;
           esac

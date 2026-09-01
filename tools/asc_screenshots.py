@@ -153,6 +153,138 @@ def submit_for_review(app_id, version_id):
     print("SUBMITTED FOR REVIEW")
 
 
+REQUIRED_SHOT_SETS = {
+    "APP_IPHONE_67": "iPhone 6.9\" app screenshots",
+    "APP_IPAD_PRO_3GEN_129": "iPad 13\" app screenshots",
+    "IMESSAGE_APP_IPHONE_67": "iMessage iPhone screenshots",
+    "IMESSAGE_APP_IPAD_PRO_3GEN_129": "iMessage iPad screenshots",
+}
+
+
+def audit(app_id, locale):
+    """Everything App Review checks that this repo can see. Returns an exit code.
+
+    Written after the iMessage ship, where three separate blockers each archived
+    green and only failed at upload or submit. The point is to ask Apple what is
+    missing BEFORE a submission burns a review cycle.
+    """
+    problems, notes = [], []
+
+    vs = versions(app_id)
+    if not vs:
+        return 1
+    ver = vs[0]
+    vid, attrs = ver["id"], ver["attributes"]
+    print(f"version {attrs['versionString']} — {attrs['appStoreState']}")
+
+    full = call(f"v1/appStoreVersions/{vid}?include=build,appStoreVersionLocalizations"
+                "&fields[appStoreVersions]=versionString,appStoreState,releaseType,copyright")
+    inc = full.get("included", [])
+    build = next((i for i in inc if i["type"] == "builds"), None)
+    print(f"  build:            {build['attributes']['version'] if build else 'NONE ATTACHED'}")
+    if not build:
+        problems.append("no build attached to the version")
+    if not full["data"]["attributes"].get("copyright"):
+        notes.append("copyright is empty (optional, but Connect often asks)")
+
+    # --- localisation fields -------------------------------------------------
+    locs = call(f"v1/appStoreVersions/{vid}/appStoreVersionLocalizations?limit=50")
+    loc = next((l for l in locs["data"] if l["attributes"]["locale"] == locale), None)
+    if loc is None:
+        problems.append(f"no {locale} localisation")
+        return report(problems, notes)
+    la = loc["attributes"]
+    for field, required in [("description", True), ("keywords", True),
+                            ("whatsNew", False), ("supportUrl", True),
+                            ("marketingUrl", False), ("promotionalText", False)]:
+        v = la.get(field)
+        mark = "ok " if v else ("MISSING" if required else "-")
+        print(f"  {field:18}{mark}{'' if not v else f'  ({len(v)} chars)'}")
+        if required and not v:
+            problems.append(f"{field} is empty")
+
+    # --- screenshots ---------------------------------------------------------
+    sets = call(f"v1/appStoreVersionLocalizations/{loc['id']}/appScreenshotSets?limit=50")
+    have = {}
+    for st in sets["data"]:
+        shots = call(f"v1/appScreenshotSets/{st['id']}/appScreenshots?limit=50")
+        done = sum(1 for x in shots["data"]
+                   if (x["attributes"].get("assetDeliveryState") or {}).get("state") == "COMPLETE")
+        bad = [x for x in shots["data"]
+               if (x["attributes"].get("assetDeliveryState") or {}).get("errors")]
+        have[st["attributes"]["screenshotDisplayType"]] = (done, len(shots["data"]), bad)
+    for dtype, label in REQUIRED_SHOT_SETS.items():
+        if dtype not in have:
+            problems.append(f"no screenshot set for {dtype} ({label})")
+            print(f"  {dtype:32} MISSING")
+            continue
+        done, total, bad = have[dtype]
+        print(f"  {dtype:32} {done}/{total} delivered"
+              + (f"  {len(bad)} WITH ERRORS" if bad else ""))
+        if total == 0:
+            problems.append(f"{dtype} has no screenshots")
+        elif done < total:
+            problems.append(f"{dtype}: only {done}/{total} finished uploading")
+        if bad:
+            problems.append(f"{dtype}: {len(bad)} screenshots report delivery errors")
+
+    # --- things that block review but live off the version -------------------
+    try:
+        ard = call(f"v1/apps/{app_id}/ageRatingDeclaration")
+        print(f"  age rating:       {'set' if ard.get('data') else 'MISSING'}")
+        if not ard.get("data"):
+            problems.append("no age rating declaration")
+    except SystemExit:
+        notes.append("could not read the age rating declaration (API scope)")
+
+    try:
+        det = call(f"v1/appStoreVersions/{vid}/appStoreReviewDetail")
+        d = (det.get("data") or {}).get("attributes", {})
+        print(f"  review contact:   {d.get('contactEmail') or 'MISSING'}")
+        if not d.get("contactEmail"):
+            problems.append("no App Review contact email")
+        if d.get("demoAccountRequired") and not d.get("demoAccountName"):
+            problems.append("demo account marked required but not supplied")
+    except SystemExit:
+        notes.append("no appStoreReviewDetail record yet (Connect creates it on first submit)")
+
+    if build:
+        b = call(f"v1/builds/{build['id']}?fields[builds]=usesNonExemptEncryption,processingState")
+        enc = b["data"]["attributes"].get("usesNonExemptEncryption")
+        print(f"  encryption decl:  {enc if enc is not None else 'NOT ANSWERED'}")
+        if enc is None:
+            problems.append("export-compliance question unanswered on the build "
+                            "(set ITSAppUsesNonExemptEncryption in the plist to avoid it)")
+
+    # --- the review submission itself ---------------------------------------
+    subs = call(f"v1/reviewSubmissions?filter[app]={app_id}&filter[platform]=IOS&limit=20")
+    live = [r for r in subs["data"]
+            if r["attributes"].get("state") not in {"COMPLETE", "CANCELING"}]
+    for r in live:
+        items = call(f"v1/reviewSubmissions/{r['id']}/items?limit=50")
+        print(f"  review submission {r['attributes']['state']} "
+              f"({len(items['data'])} item(s), submitted={r['attributes'].get('submitted')})")
+        if not items["data"]:
+            problems.append("a review submission exists with NO items")
+    if not live:
+        notes.append("no open review submission")
+
+    return report(problems, notes)
+
+
+def report(problems, notes):
+    print()
+    for n in notes:
+        print(f"  note: {n}")
+    if problems:
+        print(f"\n{len(problems)} BLOCKER(S):")
+        for p in problems:
+            print(f"  - {p}")
+        return 1
+    print("no blockers found")
+    return 0
+
+
 def main():
     global TOK
     ap = argparse.ArgumentParser()
@@ -175,6 +307,8 @@ def main():
                     help="submit the version for App Review")
     ap.add_argument("--status", action="store_true",
                     help="report the version's readiness and exit")
+    ap.add_argument("--audit", action="store_true",
+                    help="full pre-submission audit of the newest version; exits non-zero on a blocker")
     a = ap.parse_args()
 
     if not a.set and not a.list:
@@ -185,6 +319,8 @@ def main():
     if not apps["data"]:
         raise SystemExit(f"no app for bundle {BUNDLE}")
     app_id = apps["data"][0]["id"]
+    if a.audit:
+        raise SystemExit(audit(app_id, a.locale))
     if a.list:
         for v in versions(app_id):
             print(f"  {v['attributes']['versionString']:10} "

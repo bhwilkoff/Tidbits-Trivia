@@ -75,40 +75,70 @@ def upload_bytes(op, data):
         r.read()
 
 
-def editable_version(app_id):
-    """The version currently being prepared, not the one that is already live."""
+EDITABLE = {"PREPARE_FOR_SUBMISSION", "DEVELOPER_REJECTED", "REJECTED",
+            "METADATA_REJECTED", "INVALID_BINARY", "READY_FOR_REVIEW"}
+
+
+def versions(app_id):
     vs = call(f"v1/apps/{app_id}/appStoreVersions?limit=50"
               "&filter[platform]=IOS&fields[appStoreVersions]=versionString,appStoreState")
-    editable = {"PREPARE_FOR_SUBMISSION", "DEVELOPER_REJECTED", "REJECTED",
-                "METADATA_REJECTED", "INVALID_BINARY", "WAITING_FOR_REVIEW",
-                "READY_FOR_REVIEW"}
-    for v in vs["data"]:
-        if v["attributes"]["appStoreState"] in editable:
+    return vs["data"]
+
+
+def editable_version(app_id, create=None):
+    """The version currently being prepared, not the one that is already live.
+
+    A build uploaded to TestFlight does NOT create one of these — that is a separate
+    record, and its absence is why this failed the first time with only a
+    READY_FOR_SALE version to show for it.
+    """
+    for v in versions(app_id):
+        if v["attributes"]["appStoreState"] in EDITABLE:
             return v
-    states = [(v["attributes"]["versionString"], v["attributes"]["appStoreState"])
-              for v in vs["data"][:5]]
-    raise SystemExit(f"no editable iOS version; recent: {states}")
+    if not create:
+        states = [(v["attributes"]["versionString"], v["attributes"]["appStoreState"])
+                  for v in versions(app_id)[:5]]
+        raise SystemExit(
+            f"no editable iOS version; recent: {states}\n"
+            f"pass --create-version X.Y.Z to open one.")
+    made = call("v1/appStoreVersions", method="POST", body={"data": {
+        "type": "appStoreVersions",
+        "attributes": {"platform": "IOS", "versionString": create},
+        "relationships": {"app": {"data": {"type": "apps", "id": app_id}}}}})
+    print(f"created iOS version {create}")
+    return made["data"]
 
 
 def main():
     global TOK
     ap = argparse.ArgumentParser()
-    ap.add_argument("--set", action="append", required=True,
+    ap.add_argument("--set", action="append", default=[],
                     metavar="DISPLAY_TYPE=DIR",
                     help="e.g. IMESSAGE_APP_IPHONE_67=branding/store-screenshots/...")
     ap.add_argument("--locale", default="en-US")
     ap.add_argument("--replace", action="store_true",
                     help="delete the set's existing screenshots first")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--create-version", metavar="X.Y.Z",
+                    help="open a new App Store version if none is editable")
+    ap.add_argument("--list", action="store_true",
+                    help="print the app's iOS versions and exit")
     a = ap.parse_args()
 
+    if not a.set and not a.list:
+        raise SystemExit("nothing to do: pass --set DISPLAY_TYPE=DIR or --list")
     TOK = token()
 
     apps = call(f"v1/apps?filter[bundleId]={BUNDLE}")
     if not apps["data"]:
         raise SystemExit(f"no app for bundle {BUNDLE}")
     app_id = apps["data"][0]["id"]
-    ver = editable_version(app_id)
+    if a.list:
+        for v in versions(app_id):
+            print(f"  {v['attributes']['versionString']:10} "
+                  f"{v['attributes']['appStoreState']}")
+        return
+    ver = editable_version(app_id, create=a.create_version)
     print(f"app {app_id} · version {ver['attributes']['versionString']} "
           f"({ver['attributes']['appStoreState']})")
 

@@ -21,6 +21,17 @@ on:
         default: 'false'
         type: choice
         options: ['false', 'true']
+      create_version:
+        description: 'Open this App Store version if none is editable (e.g. 1.7.0); blank to require one'
+        required: false
+        default: ''
+        type: string
+      list_only:
+        description: 'Just print the app iOS versions and stop'
+        required: true
+        default: 'false'
+        type: choice
+        options: ['false', 'true']
 
 concurrency:
   group: imessage-screenshots
@@ -55,9 +66,14 @@ jobs:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
         run: |
+          if [ "${{ inputs.list_only }}" = "true" ]; then
+            python3 tools/asc_screenshots.py --list
+            exit 0
+          fi
           ARGS=""
           [ "${{ inputs.replace }}" = "true" ] && ARGS="$ARGS --replace"
           [ "${{ inputs.dry_run }}" = "true" ] && ARGS="$ARGS --dry-run"
+          [ -n "${{ inputs.create_version }}" ] && ARGS="$ARGS --create-version ${{ inputs.create_version }}"
           python3 tools/asc_screenshots.py $ARGS \
             --set IMESSAGE_APP_IPHONE_67=branding/store-screenshots/imessage-iphone-6.9 \
             --set IMESSAGE_APP_IPAD_PRO_3GEN_129=branding/store-screenshots/imessage-ipad-13

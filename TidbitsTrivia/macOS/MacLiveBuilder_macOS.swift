@@ -91,7 +91,7 @@ struct LiveBuilderView_macOS: View {
     private var eventList: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
-                Text("Events").font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                Text("Events").font(.headline).foregroundStyle(Tidbits.Palette.ink)
                 Spacer()
                 Button { newEvent() } label: { Image(systemName: "plus") }.buttonStyle(.borderless)
             }
@@ -122,9 +122,9 @@ struct LiveBuilderView_macOS: View {
                     Image(systemName: "calendar.badge.plus")
                         .font(.system(size: 26)).foregroundStyle(Tidbits.Palette.inkSoft)
                     Text("No saved events yet")
-                        .font(Tidbits.TypeRamp.l4).foregroundStyle(Tidbits.Palette.ink)
+                        .font(.body).foregroundStyle(Tidbits.Palette.ink)
                     Text("Build a night on the right, then Save event to keep it and re-run it next week.")
-                        .font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft)
+                        .font(.caption).foregroundStyle(Tidbits.Palette.inkSoft)
                         .multilineTextAlignment(.center)
                 }
                 .padding(18)
@@ -133,12 +133,12 @@ struct LiveBuilderView_macOS: View {
             List(selection: $selectedID) {
                 ForEach(store.events) { ev in
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(ev.name).font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                        Text(ev.name).font(.headline).foregroundStyle(Tidbits.Palette.ink)
                         Text("\(ev.rounds.count) rounds · \(ev.totalQuestions) questions")
-                            .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                            .font(.callout).foregroundStyle(Tidbits.Palette.inkSoft)
                         if let next = ev.nextOccurrence, let day = ev.weekdayName {   // Wave D: recurring series
                             Label("Every \(day) · next \(next.formatted(.dateTime.month().day()))", systemImage: "repeat")
-                                .font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.coral)
+                                .font(.caption).foregroundStyle(Tidbits.Palette.coral)
                         }
                     }
                     .tag(ev.id)
@@ -161,16 +161,15 @@ struct LiveBuilderView_macOS: View {
                 // The event name was a `.plain` TextField styled as a heading, so
                 // it read as a title and nothing said it was editable (§5.6: a
                 // control the host operates gets the native control).
-                LabeledContent("Event name") {
-                    TextField("Friday Pub Quiz", text: $working.name)
-                        .textFieldStyle(.roundedBorder)
-                        .font(.system(size: 20, weight: .semibold))
-                        .frame(maxWidth: 420)
-                }
+
                 // A Form is the Mac idiom for a block of settings, and it also fixes
                 // the clipped placeholders: the labels carry the explanation, so the
                 // fields no longer need placeholder prose wider than the field.
                 Form {
+                    // Every field on this surface is the same control at the same
+                    // size. The event name used to be 20pt semibold directly above
+                    // a 13pt venue field (§5.7).
+                    TextField("Event name", text: $working.name, prompt: Text("Friday Pub Quiz"))
                     TextField("Venue", text: $working.venue, prompt: Text("The Anchor"))
                         .help("Shown on the big screen and printed on the answer sheets")
                     Picker("Repeats", selection: Binding(get: { working.weekday ?? 0 },
@@ -205,9 +204,9 @@ struct LiveBuilderView_macOS: View {
                 .formStyle(.columns)
                 .frame(maxWidth: 520)
 
-                Text("Rounds").font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
+                Text("Rounds").font(.title2.weight(.semibold)).foregroundStyle(Tidbits.Palette.ink)
                 if working.rounds.isEmpty {
-                    Text("No rounds yet — add one below.").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                    Text("No rounds yet — add one below.").font(.callout).foregroundStyle(Tidbits.Palette.inkSoft)
                 }
                 ForEach(Array(working.rounds.enumerated()), id: \.element.id) { i, round in
                     roundRow(i, round)
@@ -282,37 +281,46 @@ struct LiveBuilderView_macOS: View {
                     TextField("Round title", text: Binding(get: { working.rounds[i].title },
                                                            set: { working.rounds[i].title = $0 }))
                         .textFieldStyle(.plain)
-                        .font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink).lineLimit(1)
+                        .font(.headline).foregroundStyle(Tidbits.Palette.ink).lineLimit(1)
                     Text("\(round.format.title) · \(TriviaCategory.named(round.categoryID).name) · \(round.questions.count) questions")
-                        .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft).lineLimit(1)
+                        .font(.callout).foregroundStyle(Tidbits.Palette.inkSoft).lineLimit(1)
                 }
                 Spacer()
+                Button { move(i, up: true) } label: { Image(systemName: "chevron.up") }
+                    .buttonStyle(.borderless).foregroundStyle(.secondary).disabled(i == 0)
+                Button { move(i, up: false) } label: { Image(systemName: "chevron.down") }
+                    .buttonStyle(.borderless).foregroundStyle(.secondary).disabled(i == working.rounds.count - 1)
+                Button(role: .destructive) { working.rounds.remove(at: i) } label: { Image(systemName: "trash") }
+                    .buttonStyle(.borderless).foregroundStyle(.secondary)
+            }
+            // Per-round settings live WITH the round, not in its title bar. Crowding
+            // them into the header pushed the subtitle into an ellipsis and put
+            // three controls where a title belongs (§5.7).
+            HStack(spacing: 8) {
                 Menu {   // Wave A: per-round countdown
                     Button("No timer") { working.rounds[i].timerSeconds = nil }
                     ForEach([30, 45, 60, 90, 120], id: \.self) { s in Button("\(s)s") { working.rounds[i].timerSeconds = s } }
                 } label: { Label(round.timerSeconds.map { "\($0)s" } ?? "Timer", systemImage: "timer") }
-                    .menuStyle(.borderlessButton).fixedSize()
+                    .menuStyle(.button).buttonStyle(.bordered).fixedSize()
                 Toggle(isOn: Binding(   // Wave A: wager round
                     get: { working.rounds[i].isWager ?? false },
                     set: { working.rounds[i].isWager = $0 ? true : nil })) {
                     Label("Wager", systemImage: "dollarsign.circle")
-                }.toggleStyle(.button).font(Tidbits.TypeRamp.l5).fixedSize()
+                }.toggleStyle(.button).font(.callout).fixedSize()
                 Toggle(isOn: Binding(   // Wave B: speed round
                     get: { working.rounds[i].isSpeed ?? false },
                     set: { working.rounds[i].isSpeed = $0 ? true : nil })) {
                     Label("Speed", systemImage: "bolt")
-                }.toggleStyle(.button).font(Tidbits.TypeRamp.l5).fixedSize()
-                Button { move(i, up: true) } label: { Image(systemName: "chevron.up") }.buttonStyle(.borderless).disabled(i == 0)
-                Button { move(i, up: false) } label: { Image(systemName: "chevron.down") }.buttonStyle(.borderless).disabled(i == working.rounds.count - 1)
-                Button { working.rounds.remove(at: i) } label: { Image(systemName: "trash") }.buttonStyle(.borderless)
+                }.toggleStyle(.button).font(.callout).fixedSize()
+                Spacer()
             }
             TextField("Host note (shown in the cockpit)", text: Binding(   // Wave A — its own line, full width
                 get: { working.rounds[i].hostNote ?? "" },
                 set: { working.rounds[i].hostNote = $0.isEmpty ? nil : $0 }))
-                .textFieldStyle(.roundedBorder).font(Tidbits.TypeRamp.l5)
+                .textFieldStyle(.roundedBorder).font(.callout)
             if expandedRounds.contains(round.id) { questionList(i, round) }
         }
-        .padding(14).chunkyCard()
+        .padding(14).quietCard()
         .draggable(round.id.uuidString)   // Wave A: drag-to-reorder (chevrons remain as a fallback)
         .dropDestination(for: String.self) { items, _ in
             guard let idStr = items.first,
@@ -333,7 +341,7 @@ struct LiveBuilderView_macOS: View {
                 HStack(spacing: 8) {
                     Image(systemName: "text.badge.plus").foregroundStyle(Tidbits.Palette.inkSoft)
                     Text("No questions in this round yet.")
-                        .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                        .font(.callout).foregroundStyle(Tidbits.Palette.inkSoft)
                 }
                 .padding(.vertical, 6)
             }
@@ -345,7 +353,7 @@ struct LiveBuilderView_macOS: View {
                     editing = EditingQuestion(roundIndex: ri, questionIndex: nil, format: round.format,
                                               draft: .blank(format: round.format, categoryID: round.categoryID))
                 } label: { Label("Add question", systemImage: "plus") }
-                .controlSize(.small)
+                .buttonStyle(.bordered).controlSize(.small)
                 Button {
                     Task {
                         busy = true
@@ -355,7 +363,7 @@ struct LiveBuilderView_macOS: View {
                         busy = false
                     }
                 } label: { Label("Pull one from the corpus", systemImage: "sparkles") }
-                .controlSize(.small)
+                .buttonStyle(.bordered).controlSize(.small)
                 .disabled(busy)
                 Spacer()
             }
@@ -366,18 +374,18 @@ struct LiveBuilderView_macOS: View {
     private func questionRow(_ ri: Int, _ qi: Int, _ q: Question, format: GameMode) -> some View {
         HStack(alignment: .top, spacing: 8) {
             Text("\(qi + 1).")
-                .font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft)
+                .font(.caption).foregroundStyle(Tidbits.Palette.inkSoft)
                 .frame(width: 22, alignment: .trailing)
             VStack(alignment: .leading, spacing: 1) {
                 Text(q.prompt.isEmpty ? "Untitled question" : q.prompt)
-                    .font(Tidbits.TypeRamp.l4).foregroundStyle(Tidbits.Palette.ink).lineLimit(2)
+                    .font(.body).foregroundStyle(Tidbits.Palette.ink).lineLimit(2)
                     .multilineTextAlignment(.leading)
                 Text(answerSummary(q, format: format))
-                    .font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft).lineLimit(1)
+                    .font(.caption).foregroundStyle(Tidbits.Palette.inkSoft).lineLimit(1)
             }
             Spacer(minLength: 8)
             Text("D\(q.difficulty)")
-                .font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft)
+                .font(.caption).foregroundStyle(Tidbits.Palette.inkSoft)
             Button("Edit") {
                 editing = EditingQuestion(roundIndex: ri, questionIndex: qi, format: format,
                                           draft: QuestionDraft(q))
@@ -392,6 +400,7 @@ struct LiveBuilderView_macOS: View {
                 Button("Delete", role: .destructive) { removeQuestion(ri, at: qi) }
             } label: { Image(systemName: "ellipsis.circle") }
             .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+            .foregroundStyle(.secondary)
             .accessibilityLabel("More actions for question \(qi + 1)")
         }
         .padding(.vertical, 4)
@@ -487,7 +496,7 @@ struct LiveBuilderView_macOS: View {
             let hard = qs.filter { $0.difficulty >= 4 }.count
             let byCat = Dictionary(grouping: qs, by: { $0.categoryID }).mapValues(\.count).sorted { $0.value > $1.value }
             VStack(alignment: .leading, spacing: 8) {
-                Text("Balance").font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink)
+                Text("Balance").font(.headline).foregroundStyle(Tidbits.Palette.ink)
                 GeometryReader { geo in
                     HStack(spacing: 2) {
                         ForEach(Array([(easy, Tidbits.Palette.mint), (med, Tidbits.Palette.blue), (hard, Tidbits.Palette.coral)].enumerated()), id: \.offset) { _, seg in
@@ -496,11 +505,11 @@ struct LiveBuilderView_macOS: View {
                     }
                 }
                 .frame(height: 14).clipShape(Capsule())
-                Text("Easy \(easy) · Medium \(med) · Hard \(hard)").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                Text("Easy \(easy) · Medium \(med) · Hard \(hard)").font(.callout).foregroundStyle(Tidbits.Palette.inkSoft)
                 Text(byCat.prefix(6).map { "\($0.key.capitalized) \($0.value)" }.joined(separator: " · "))
-                    .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                    .font(.callout).foregroundStyle(Tidbits.Palette.inkSoft)
                 if let hint = balanceHint(easy: easy, hard: hard, byCat: byCat, total: qs.count) {
-                    Text(hint).font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.coral)
+                    Text(hint).font(.callout).foregroundStyle(Tidbits.Palette.coral)
                 }
             }
             .padding(14)

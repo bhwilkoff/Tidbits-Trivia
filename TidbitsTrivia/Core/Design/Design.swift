@@ -138,6 +138,21 @@ extension View {
     func chunkyCard(fill: Color = Tidbits.Palette.surface, radius: CGFloat = Tidbits.Metric.radius) -> some View {
         modifier(ChunkyCard(fill: fill, radius: radius))
     }
+
+    /// The WORK-SURFACE container (macOS-DESIGN §5.7): a hairline group, no
+    /// shadow, no heavy border.
+    ///
+    /// `chunkyCard`'s 2.5px frame and hard drop shadow are a touch/ten-foot
+    /// affordance. Wrapped around native Mac controls they were the single
+    /// loudest source of the owner's "it looks like each item was designed
+    /// independently of one another" — a sticker frame holding a system button.
+    /// The game surface and the big screen keep `chunkyCard`; editors use this.
+    func quietCard(fill: Color = Tidbits.Palette.surface, radius: CGFloat = 10) -> some View {
+        self
+            .background(RoundedRectangle(cornerRadius: radius, style: .continuous).fill(fill))
+            .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous)
+                .strokeBorder(Tidbits.Palette.border.opacity(0.55), lineWidth: 1))
+    }
 }
 
 // MARK: - Primary button style (big, tactile, presses into its shadow)

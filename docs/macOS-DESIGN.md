@@ -353,6 +353,47 @@ Records dashboard chrome, and Settings are work surfaces — native controls. Wh
 in doubt: if a competent Mac developer would reach for `Form`/`Table`/`.bordered`
 here, use it.
 
+5.7 **R-MAC-CTL-2 — a work surface uses ONE system, all the way down.**
+Owner directive, 2026-09-01: *"The consistency of font, button, and drop down
+menu styles on the mac app is incredibly haphazard… It looks like each item was
+designed independently of one another."* That was a fair reading of Tidbits Live:
+§5.6 had been applied to the header and the action bar and nowhere else, leaving
+native controls sitting inside sticker cards under display-ramp headings. Half a
+system reads worse than either whole one.
+
+On a Mac work surface (Tidbits Live builder + cockpit, Settings, the Records
+dashboard chrome):
+
+**Type — the system ramp, not `Tidbits.TypeRamp`.** `TypeRamp` is the display
+ramp for the GAME and the big screen: heavy, rounded, sized for distance. A
+document editor uses `.largeTitle` / `.title2` / `.headline` / `.body` /
+`.callout` / `.caption`, so it inherits Dynamic Type and matches the labels
+AppKit draws beside it. Never set a raw `.system(size:)` on a work surface.
+
+**Buttons — exactly three roles, no fourth.**
+`.borderedProminent` for the ONE primary action on the surface;
+`.bordered` for every other command;
+`.borderless` only for an icon-only affordance inside a row (chevron, trash, ⋯).
+No `.toggleStyle(.button)` capsules beside bordered buttons, and no
+`ChunkyButtonStyle`/`CompactButtonStyle` at all (§5.6).
+
+**One accent.** The brand coral marks the primary action and nothing else;
+system blue is left to links, selection and focus, which the OS already owns.
+Two saturated accents in one row read as two apps.
+
+**Containers — a quiet group, not a sticker.** `chunkyCard`'s 2.5px border and
+hard shadow is a touch/ten-foot affordance; wrapped around native controls it is
+the single loudest source of the "designed independently" feeling. Work surfaces
+group with a soft rounded rect (hairline border, no shadow) or `GroupBox`.
+
+**Fields of the same kind are the same size.** The event-name field was 20pt
+semibold directly above a 13pt venue field — same control, same purpose, two
+designs.
+
+**How to apply:** the GAME surface (§3) and the BIG SCREEN (§A1.2) keep the
+sticker language entirely — there the button IS the content and the audience is
+across a room. The line is the surface, not the widget.
+
 ## §6 — Capabilities & submission (binding)
 
 6.1 **Shared with the other Apple platforms** (one ASC record): bundle
@@ -384,7 +425,9 @@ A fill-image hero with a fixed/`maxHeight` frame (§5.2). 7.6 Bare
 `AsyncImage` for picture art (§5.3). 7.7 A Records inline dump — build
 the dashboard, don't port the bug (§4.1). 7.8 A second game engine
 (§3.2). 7.9 Hand-added shadow padding at a `chunkyCard` call site
-(§5.1). 7.10 A sticker-book button style on a Mac work surface (§5.6).
+(§5.1). 7.10 A sticker-book button style on a Mac work surface (§5.6). 7.12 Mixing
+the display ramp, sticker cards or a second accent into a work surface — one
+system all the way down (§5.7).
 7.11 A generated round the host cannot open and edit question-by-question
 (§A2.4).
 

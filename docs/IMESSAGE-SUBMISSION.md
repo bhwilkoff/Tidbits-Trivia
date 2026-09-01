@@ -79,15 +79,42 @@ stripped because it used a custom scheme instead of a universal link; and answer
 required pressing Send because the code used `insertMessage:` rather than
 `sendMessage:`.
 
-## Still to do before submitting
+## Submitted
 
-1. **Remove the diagnostic strip.** `MsgDiag` / `DiagStrip` in
-   `TidbitsMessages/RoundViews.swift` and the block that fills it in
-   `MessagesViewController.present(conversation:)`. It is dev-only and must not ship.
-2. **The four screenshots**, below.
-3. **A build carrying the extension.** The current App Store build is 1.6.80 (116),
-   which predates the extension entirely — TestFlight installs of it will keep
-   replacing dev builds and appear to "lose" the iMessage app.
+**1.7.0 (123) is WAITING_FOR_REVIEW** as of 2026-09-01, with the iMessage extension,
+8 iMessage screenshots (4 iPhone + 4 iPad) and release notes.
+
+The whole ship is a CLI now — no console session:
+
+```bash
+tools/capture-imessage-screenshots.sh all          # render + capture, exact ASC sizes
+gh workflow run appstore-build.yml -f platform=ios # build + upload the binary
+gh workflow run imessage-screenshots.yml \
+  -f mode=upload -f create_version=1.7.0 -f attach_build=123 \
+  -f release_notes="..." -f submit=true
+```
+
+`-f mode=status` reports what a version is still missing (state, attached build,
+per-set screenshot delivery) — worth running before submitting.
+
+### Three blockers, none of which fail at build time
+
+All three archived green and surfaced only at upload or submit:
+
+1. **A new extension target needs its App ID registered.** Signing died with "bundle
+   id not found in App Store Connect: ...Messages (register it first)".
+   `asc_profiles.py` now registers it. Apple rejects `.` and `_` in a bundle id's
+   NAME (the identifier itself is fine).
+2. **The icon set needs `"platform": "ios"`** on its `universal` and `ios-marketing`
+   entries, or actool silently drops them and no `MSMessagesExtensionStoreIconName`
+   is written. `MessagesIconTests` pins it.
+3. **`POST /v1/appStoreVersionSubmissions` is deprecated** (403, "Allowed operation
+   is: DELETE"). Submission is now `reviewSubmissions` -> `reviewSubmissionItems` ->
+   PATCH `submitted: true`.
+
+Also worth knowing: **a TestFlight upload does not open an App Store version.** 1.6.80
+had builds uploaded and no version record at all, which is why the first screenshot
+run found only a READY_FOR_SALE 1.6.73.
 
 ## Review notes worth pre-empting
 

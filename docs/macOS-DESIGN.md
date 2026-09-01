@@ -394,6 +394,39 @@ designs.
 sticker language entirely — there the button IS the content and the audience is
 across a room. The line is the surface, not the widget.
 
+## §A0.4 — Trivia Night and Tidbits Live are TWO PRODUCTS (binding)
+
+Owner directive, 2026-09-01: *"Trivia Night is for everyone, Tidbits Live is for
+hosting pub trivia… I also notice that you have to join a trivia night from the
+Tidbits Live page on the macOS app, which is also confusing the two features."*
+
+They share a backend (`live/{code}`) and that is exactly why they blur. They are
+not the same product and must never be presented as one.
+
+| | **Trivia Night** | **Tidbits Live** |
+|---|---|---|
+| Who | everyone | a host running an event |
+| Host from | ANY device — phone, tablet, TV, Mac, PC | a desktop only (Mac or PC) |
+| What it is | a night of trivia with friends, in the room or across the country | the emcee rig: event builder, cockpit, projector, teams, scoring, printables |
+| Lives on | **Play** — it is a way to play | its own **top-level section** — it is a tool |
+| Prepared? | no, start it now | yes, an event is authored ahead |
+
+A0.4.1 **JOINING is always Trivia Night, never Tidbits Live.** A player with a
+code is joining a night; that they might be joining a night a Live host opened
+is an implementation detail they never see. The join affordance belongs on
+**Play**, beside the other ways to play — putting it on the Tidbits Live page
+told every Mac user those are the same feature.
+
+A0.4.2 **Tidbits Live never appears on a phone, tablet or TV** — not as a locked
+row, not as an upsell. It is desktop-only because the cockpit needs a second
+display, a keyboard and a pointer. A platform that cannot host it does not
+mention it.
+
+A0.4.3 **Each surface says which it is, in the user's terms.** "Host a trivia
+night from any device" vs "Run pub trivia from your Mac". The reason both exist
+should be legible without reading a manual, because a host choosing wrong wastes
+their evening.
+
 ## §6 — Capabilities & submission (binding)
 
 6.1 **Shared with the other Apple platforms** (one ASC record): bundle

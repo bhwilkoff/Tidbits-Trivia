@@ -10,6 +10,8 @@ import SwiftData
 struct HomeView_macOS: View {
     let onPlay: (LaunchRequest) -> Void
     let onNight: (NightLaunchRequest) -> Void
+    /// Open the join-by-code sheet. On Play, not on Tidbits Live (§A0.4.1).
+    let onJoinNight: () -> Void
     let onVersus: (BotProfile) -> Void
     /// Local pass-and-play (2–4 at one Mac) — bubbles up so the container
     /// swaps the window root, same as Versus.
@@ -46,6 +48,7 @@ struct HomeView_macOS: View {
                 quickActionsRow
                 dailyCard
                 triviaNightCard
+                joinNightRow
                 passAndPlayCard
                 onlineCard
                 // R-CLUB-1: ONE Club door for the whole app (was four locked cards here
@@ -224,7 +227,8 @@ struct HomeView_macOS: View {
                 Image(systemName: "party.popper.fill").font(.system(size: 26, weight: .black))
                 VStack(alignment: .leading, spacing: 3) {
                     Text("TRIVIA NIGHT").font(Tidbits.TypeRamp.l2)
-                    Text("A night of mixed rounds — every kind of question.").font(Tidbits.TypeRamp.l5).opacity(0.9)
+                    Text("Mixed rounds with friends — host from any device, or join one with a code.")
+                        .font(Tidbits.TypeRamp.l5).opacity(0.9)
                 }
                 Spacer(minLength: 0)
                 Image(systemName: "chevron.right.circle.fill").font(.system(size: 24, weight: .bold))
@@ -234,6 +238,20 @@ struct HomeView_macOS: View {
             .chunkyCard(fill: Tidbits.Palette.coral)
         }
         .buttonStyle(.plain)
+    }
+
+    /// Joining is a TRIVIA NIGHT action (macOS-DESIGN §A0.4.1). It used to sit on
+    /// the Tidbits Live page, which told every Mac user the two features were one
+    /// — a player with a code is joining a night, and whether a Live host opened
+    /// that night is an implementation detail they never see.
+    private var joinNightRow: some View {
+        Button { onJoinNight() } label: {
+            Label("Join a night with a code", systemImage: "person.badge.plus")
+                .font(.callout)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .buttonStyle(.borderless)
+        .help("Someone else is hosting — join their Trivia Night from here")
     }
 
     private var onlineCard: some View {

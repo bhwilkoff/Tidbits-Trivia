@@ -10,8 +10,9 @@ import UniformTypeIdentifiers
 struct LiveBuilderView_macOS: View {
     let onPreview: (LiveEvent) -> Void
     let onHost: (LiveEvent) -> Void
-    /// "Join a game" — the player side. The Mac is not only a host: it should be able
-    /// to sit in someone else's night like every other platform.
+    /// Retained so the launch hook (`TIDBITS_LIVE_JOIN`) and any future Live-side
+    /// entry can still reach the join sheet — but §A0.4.1 keeps the visible door on
+    /// Play, because joining is a Trivia Night action.
     var onJoin: (() -> Void)? = nil
 
     @State private var store = LiveEventStore()
@@ -97,23 +98,10 @@ struct LiveBuilderView_macOS: View {
             }
             .padding(12)
 
-            // The player-side door. Windows carries the same control on its Live setup
-            // screen ("Join a game with a code"), and the Mac had no equivalent at all:
-            // the join surface existed and was reachable ONLY by a launch hook, so the
-            // harness could drive it and a person could not open it. A feature only a
-            // test can reach is not shipped.
-            if let onJoin {
-                Button {
-                    onJoin()
-                } label: {
-                    Label("Join a game with a code", systemImage: "person.badge.plus")
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .buttonStyle(.borderless)
-                .padding(.horizontal, 12)
-                .padding(.bottom, 10)
-                .help("Join a Trivia Night or Tidbits Live event someone else is hosting")
-            }
+            // JOINING lives on Play, not here (macOS-DESIGN §A0.4.1). A player with
+            // a code is joining a TRIVIA NIGHT; that the night might have been opened
+            // by a Live host is an implementation detail they never see. Having the
+            // door on this page told every Mac user the two features were one.
             Divider().overlay(Tidbits.Palette.border)
             if store.events.isEmpty {
                 // universal-feature-states: the saved-events column rendered as a blank

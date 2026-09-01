@@ -239,6 +239,17 @@ Windows also **registers `tidbitstrivia://` + the https join link** so
 a shared link opens the Windows app into a **deep-link inbox** (never
 mutate the router directly — the cross-platform inbox rule).
 
+6.0 **Trivia Night and Tidbits Live are TWO PRODUCTS** — the mirror of
+macOS-DESIGN §A0.4, and Windows needs it MORE, because the two are currently
+combined on one Live page (presets and the custom-event builder sit together, so
+"host a quick night" and "run a pub quiz" look like one feature with two sizes).
+
+Trivia Night is for everyone and hosts from ANY device; Tidbits Live is the
+desktop-only emcee rig. Joining a night is always Trivia Night: the join
+affordance belongs with Play, not on the Live page. Each entry point says which
+it is in the user's terms — "Host a trivia night from any device" vs "Run pub
+trivia from this PC".
+
 6.6 **Every round opens to a question list; every question opens to an
 editor** — the mirror of macOS-DESIGN §A2.4. Prompt, the four options with the
 correct one picked, category, difficulty, explanation, accepted free-text

@@ -193,7 +193,8 @@ struct ContentView_macOS: View {
             } else {
             NavigationStack(path: $path) {
                 switch section ?? .play {
-                case .play:    HomeView_macOS(onPlay: start, onNight: { nightLaunch = $0 }, onVersus: { versusBot = $0 },
+                case .play:    HomeView_macOS(onPlay: start, onNight: { nightLaunch = $0 },
+                                              onJoinNight: { joinCode = "" }, onVersus: { versusBot = $0 },
                                               onParty: { showParty = true },
                                               onExpedition: { expedition, stageIndex in
                                                   expeditionLaunch = ExpeditionStageLaunch_macOS(expedition: expedition, stageIndex: stageIndex)

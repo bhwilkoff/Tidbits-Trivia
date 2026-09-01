@@ -63,26 +63,31 @@ Capture with `xcrun simctl io <UDID> screenshot <file>.png`, which writes at the
 device's native size (1320×2868 iPhone 6.9", 2064×2752 iPad 13"). Apple publishes no
 separate iMessage dimensions; Connect accepts the device sizes.
 
-## Before you submit — the one unverified thing
+## Verified on device (2026-09-01)
 
-Everything above is verified mechanically: it builds, the bundle is correct, the wire
-format is pinned by tests. **Nobody has played a round.** Driving an iMessage
-extension needs the Messages UI, which the device harnesses in this repo cannot reach
-— they launch apps and photograph screens, they cannot open a conversation and tap a
-bubble.
+A round plays end to end between a real iPhone and iPad on iOS 26: the round sends,
+the bubble opens, questions advance, and the reveal shows the explanation.
 
-Two things need a human before this ships:
+**The iOS 26 relaunch bug does not affect this app.** Tapping the bubble opens the
+extension reliably and repeatedly. That was the open risk that could have killed the
+feature; it is closed by testing rather than by Apple confirming a fix.
 
-1. **Play a round device-to-device.** Send from one device, answer on both, confirm
-   the bubble updates in place rather than stacking.
-2. **The iOS 26 relaunch bug.** Tapping an iMessage-app message a *second* time
-   reportedly fails to launch the app
-   ([thread 799779](https://developer.apple.com/forums/thread/799779); Apple DTS
-   replied Sept 2025 suggesting a beta update, no confirmed fix in the thread). That
-   hits **re-entry**, which is the entire interaction of a turn-based game: every
-   answer after the first requires reopening the bubble. If it reproduces on current
-   iOS 26, this feature is compromised regardless of the code here, and that is a
-   reason to hold the feature rather than ship it and hope.
+Three device-only bugs were found and fixed getting there, all invisible locally:
+the extension ran in dark mode (an extension does not inherit its host app's
+appearance, so the name field was white-on-white); `MSMessage.url` was silently
+stripped because it used a custom scheme instead of a universal link; and answering
+required pressing Send because the code used `insertMessage:` rather than
+`sendMessage:`.
+
+## Still to do before submitting
+
+1. **Remove the diagnostic strip.** `MsgDiag` / `DiagStrip` in
+   `TidbitsMessages/RoundViews.swift` and the block that fills it in
+   `MessagesViewController.present(conversation:)`. It is dev-only and must not ship.
+2. **The four screenshots**, below.
+3. **A build carrying the extension.** The current App Store build is 1.6.80 (116),
+   which predates the extension entirely — TestFlight installs of it will keep
+   replacing dev builds and appear to "lose" the iMessage app.
 
 ## Review notes worth pre-empting
 

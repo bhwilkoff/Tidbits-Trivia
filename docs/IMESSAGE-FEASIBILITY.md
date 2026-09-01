@@ -115,17 +115,43 @@ cross-platform backend rather than a seventh island to maintain. It also sideste
 5,000-character budget for anything ambitious: the message carries a code, and the
 room carries the state.
 
+## 5b. Two things that only surfaced on device
+
+Both were invisible to any amount of local testing, and both are the kind of detail
+that decides whether this works at all.
+
+**`MSMessage.url` must be a universal link.** A custom scheme (`tidbits://round?…`)
+is accepted at send time and then **silently stripped in transit** — the recipient's
+message arrives with `url` nil. Nothing errors; the bubble renders perfectly with its
+image, caption and scoreline, and every tap opens the start screen as though no round
+were attached. Use an https URL on a domain the app claims as an associated domain
+(`https://tidbitstrivia.com/r?…`), which also gives a thread member without the app a
+working tap instead of a dead one.
+
+**`insertMessage:` only stages; `sendMessage:` sends.** `insert` puts the message in
+the Messages input field and the player must press the send arrow — five extra
+deliberate sends per round each. `sendMessage:` (iOS 11+) sends directly, subject to
+Apple's condition: *"The app must be visible and have had a recent touch interaction
+since either last launch or last send"*, which tapping an answer satisfies. Note that
+the secondary sources are **wrong** on this — they state programmatic sending is
+impossible with "no workaround", describing iOS 10 before `sendMessage:` existed. The
+SDK header contradicts them; read
+`Messages.framework/Headers/MSConversation.h` rather than the articles.
+
+A message per turn remains inherent — no server, no background execution, the message
+IS the transport. `MSSession` is what keeps that to one updating bubble instead of one
+per answer.
+
 ## 6. Risks
 
 1. **Memory.** The top risk, with two prior incidents in this codebase. Mitigated by
    SQLite-via-App-Group and a curated subset.
-2. **iOS 26 relaunch bug.** Tapping an iMessage-app message a *second* time fails to
-   launch the app on iPad (and possibly iPhone). Apple DTS replied in Sept 2025
-   suggesting a beta update; the thread shows no confirmed fix
-   ([thread 799779](https://developer.apple.com/forums/thread/799779)). It is a bug,
-   **not** a removal of iMessage app support — but it hits re-entry, which is the core
-   interaction of a turn-based game. **Verify on current iOS 26 hardware before
-   committing.**
+2. ~~**iOS 26 relaunch bug.**~~ **RESOLVED 2026-09-01 — it does not affect this app.**
+   Tested on a real iOS 26 iPad and iPhone: tapping the bubble opens the extension
+   reliably, repeatedly. The forum report
+   ([thread 799779](https://developer.apple.com/forums/thread/799779)) does not
+   reproduce here. This was the risk that could have made the whole feature
+   non-viable, and it is closed by evidence rather than by Apple confirming a fix.
 3. **Apple's investment.** iMessage apps have received little attention since their
    iOS 10 launch. The framework is alive and shipping, but this is not a platform to
    bet a roadmap on.

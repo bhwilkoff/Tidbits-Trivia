@@ -40,6 +40,7 @@ these patterns; invoke the skill when its trigger matches.
 | Designing / building the Windows app | `native-platform-first` + `docs/WINDOWS-DESIGN.md` (binding) + `docs/WINDOWS-PLAYBOOK.md` (Avalonia/FluentAvalonia shell, headless-PNG observability, `windows-latest` IS the box — Decision 045) |
 | Logging an architecture decision | `architectural-decision-log` |
 | User pushback after 3+ iterations of "still broken" | `3d-feature-debug-loop` |
+| Building or extending device/fleet test automation | `docs/AUTONOMOUS-FLEET-TESTING.md` (the METHOD) + `docs/DEVICE-QA-SUITE.md` (this fleet) |
 
 Platform-specific skill triggers:
 
@@ -751,7 +752,9 @@ feature parity across web / iOS / tvOS / Android.
 
 **Real-hardware QA:** `python3 tools/qa_suite.py` runs the whole fleet (Apple
 TV, iPad 12.9, iPhone 12, Pixel 8a) and grades every scenario from the glass.
-Read `docs/DEVICE-QA-SUITE.md` BEFORE changing a harness or adding a scenario —
+Read `docs/AUTONOMOUS-FLEET-TESTING.md` for the METHOD (external-observation doctrine,
+the blind-instrument failure, hooks-are-coverage, wire-vs-glass) and
+`docs/DEVICE-QA-SUITE.md` BEFORE changing a harness or adding a scenario —
 it carries the two rules that decide whether the loop is worth running
 (calibrate thresholds against a real capture, never copy one; an assertion that
 cannot fire is not an assertion) and the known limitations, so they are not

@@ -182,6 +182,10 @@ def audit(app_id, locale):
     inc = full.get("included", [])
     build = next((i for i in inc if i["type"] == "builds"), None)
     print(f"  build:            {build['attributes']['version'] if build else 'NONE ATTACHED'}")
+    rt = full["data"]["attributes"].get("releaseType")
+    print(f"  release:          {rt or 'not set'}"
+          + ("  (goes live automatically once approved)" if rt == "AFTER_APPROVAL"
+             else "  (you release it by hand after approval)" if rt == "MANUAL" else ""))
     if not build:
         problems.append("no build attached to the version")
     if not full["data"]["attributes"].get("copyright"):

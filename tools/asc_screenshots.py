@@ -123,6 +123,14 @@ def main():
                     help="open a new App Store version if none is editable")
     ap.add_argument("--list", action="store_true",
                     help="print the app's iOS versions and exit")
+    ap.add_argument("--attach-build", metavar="N",
+                    help="attach this build number to the version")
+    ap.add_argument("--release-notes", metavar="TEXT",
+                    help="set What's New for the locale")
+    ap.add_argument("--submit", action="store_true",
+                    help="submit the version for App Review")
+    ap.add_argument("--status", action="store_true",
+                    help="report the version's readiness and exit")
     a = ap.parse_args()
 
     if not a.set and not a.list:
@@ -149,6 +157,55 @@ def main():
         have = [l["attributes"]["locale"] for l in locs["data"]]
         raise SystemExit(f"locale {a.locale} not found; have {have}")
     print(f"locale {a.locale} -> {loc['id']}")
+
+    if a.attach_build:
+        builds = call(f"v1/builds?filter[app]={app_id}&limit=50"
+                      f"&filter[version]={a.attach_build}"
+                      "&fields[builds]=version,processingState,expired")
+        usable = [b for b in builds["data"]
+                  if not b["attributes"].get("expired")]
+        if not usable:
+            raise SystemExit(f"build {a.attach_build} not found for this app")
+        b = usable[0]
+        state = b["attributes"]["processingState"]
+        if state != "VALID":
+            # Attaching a build Apple has not finished processing fails with a
+            # confusing relationship error rather than "still processing".
+            raise SystemExit(f"build {a.attach_build} is {state}, not VALID — "
+                             f"wait for processing to finish and re-run")
+        call(f"v1/appStoreVersions/{ver['id']}/relationships/build", method="PATCH",
+             body={"data": {"type": "builds", "id": b["id"]}})
+        print(f"attached build {a.attach_build}")
+
+    if a.release_notes:
+        call(f"v1/appStoreVersionLocalizations/{loc['id']}", method="PATCH", body={"data": {
+            "type": "appStoreVersionLocalizations", "id": loc["id"],
+            "attributes": {"whatsNew": a.release_notes}}})
+        print("set release notes")
+
+    if a.status:
+        v = call(f"v1/appStoreVersions/{ver['id']}"
+                 "?fields[appStoreVersions]=versionString,appStoreState"
+                 "&include=build")
+        att = v.get("included", [])
+        print(f"  state:   {v['data']['attributes']['appStoreState']}")
+        print(f"  build:   {att[0]['attributes']['version'] if att else '(none attached)'}")
+        sets = call(f"v1/appStoreVersionLocalizations/{loc['id']}/appScreenshotSets?limit=50")
+        for st in sets["data"]:
+            shots = call(f"v1/appScreenshotSets/{st['id']}/appScreenshots?limit=50")
+            done = sum(1 for x in shots["data"]
+                       if x["attributes"].get("assetDeliveryState", {}).get("state") == "COMPLETE")
+            print(f"  set {st['attributes']['screenshotDisplayType']:32} "
+                  f"{done}/{len(shots['data'])} delivered")
+        return
+
+    if a.submit:
+        call("v1/appStoreVersionSubmissions", method="POST", body={"data": {
+            "type": "appStoreVersionSubmissions",
+            "relationships": {"appStoreVersion": {"data": {
+                "type": "appStoreVersions", "id": ver["id"]}}}}})
+        print("SUBMITTED FOR REVIEW")
+        return
 
     sets = call(f"v1/appStoreVersionLocalizations/{loc['id']}/appScreenshotSets?limit=50")
     by_type = {s["attributes"]["screenshotDisplayType"]: s["id"] for s in sets["data"]}

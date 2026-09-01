@@ -32,6 +32,28 @@ on:
         default: 'false'
         type: choice
         options: ['false', 'true']
+      status:
+        description: 'Report the version readiness (state, build, screenshot delivery) and stop'
+        required: true
+        default: 'false'
+        type: choice
+        options: ['false', 'true']
+      attach_build:
+        description: 'Attach this build number to the version (e.g. 123); blank to skip'
+        required: false
+        default: ''
+        type: string
+      release_notes:
+        description: "What's New text; blank to leave unchanged"
+        required: false
+        default: ''
+        type: string
+      submit:
+        description: 'Submit the version for App Review (irreversible-ish: withdrawable in Connect)'
+        required: true
+        default: 'false'
+        type: choice
+        options: ['false', 'true']
 
 concurrency:
   group: imessage-screenshots
@@ -71,9 +93,22 @@ jobs:
             exit 0
           fi
           ARGS=""
+          [ "${{ inputs.status }}" = "true" ] && ARGS="$ARGS --status"
+          [ -n "${{ inputs.attach_build }}" ] && ARGS="$ARGS --attach-build ${{ inputs.attach_build }}"
+          [ "${{ inputs.submit }}" = "true" ] && ARGS="$ARGS --submit"
           [ "${{ inputs.replace }}" = "true" ] && ARGS="$ARGS --replace"
           [ "${{ inputs.dry_run }}" = "true" ] && ARGS="$ARGS --dry-run"
           [ -n "${{ inputs.create_version }}" ] && ARGS="$ARGS --create-version ${{ inputs.create_version }}"
-          python3 tools/asc_screenshots.py $ARGS \
-            --set IMESSAGE_APP_IPHONE_67=branding/store-screenshots/imessage-iphone-6.9 \
-            --set IMESSAGE_APP_IPAD_PRO_3GEN_129=branding/store-screenshots/imessage-ipad-13
+          NOTES=$(cat <<'EOF'
+${{ inputs.release_notes }}
+EOF
+)
+          if [ -n "${{ inputs.release_notes }}" ]; then
+            python3 tools/asc_screenshots.py $ARGS --release-notes "$NOTES" \
+              --set IMESSAGE_APP_IPHONE_67=branding/store-screenshots/imessage-iphone-6.9 \
+              --set IMESSAGE_APP_IPAD_PRO_3GEN_129=branding/store-screenshots/imessage-ipad-13
+          else
+            python3 tools/asc_screenshots.py $ARGS \
+              --set IMESSAGE_APP_IPHONE_67=branding/store-screenshots/imessage-iphone-6.9 \
+              --set IMESSAGE_APP_IPAD_PRO_3GEN_129=branding/store-screenshots/imessage-ipad-13
+          fi

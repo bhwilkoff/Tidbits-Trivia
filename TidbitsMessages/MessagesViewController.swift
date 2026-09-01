@@ -45,7 +45,22 @@ final class MessagesViewController: MSMessagesAppViewController {
     // MARK: - Routing
 
     private func present(conversation: MSConversation) {
-        let state = conversation.selectedMessage?.url.flatMap(RoundState.init(url:))
+        let selected = conversation.selectedMessage
+        let state = selected?.url.flatMap(RoundState.init(url:))
+
+        // TEMPORARY, and removed before this ships. "Sending a round does nothing" is
+        // an invisible-UI bug: every candidate cause (no selected message, a url that
+        // did not survive, a decode that returned nil, a pack that did not load) looks
+        // identical from the outside — you land on the start screen either way. This
+        // strip makes the extension state itself readable on the device, which is the
+        // only way to tell those four apart without guessing.
+        MsgDiag.text = [
+            "pack \(QuestionPack.shared.debugCount)",
+            "msg \(selected == nil ? "nil" : "yes")",
+            "url \(selected?.url == nil ? "nil" : String(selected!.url!.absoluteString.prefix(28)))",
+            "decode \(state == nil ? "NIL" : "ok q=\(state!.questionIDs.count) p=\(state!.players.count)")",
+            presentationStyle == .compact ? "compact" : "expanded",
+        ].joined(separator: "  ")
 
         let view: AnyView
         if let state {

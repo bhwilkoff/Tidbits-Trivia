@@ -15,6 +15,25 @@ enum MsgPalette {
     static let mint = Color(red: 0.12, green: 0.62, blue: 0.42)
 }
 
+/// TEMPORARY diagnostic state, removed before ship. See MessagesViewController.
+enum MsgDiag {
+    nonisolated(unsafe) static var text: String = ""
+}
+
+/// A one-line readout of what the extension actually sees. Deliberately ugly and
+/// deliberately always visible in this dev build: a diagnostic behind a flag is a
+/// diagnostic nobody can read on a device driven by Messages.
+struct DiagStrip: View {
+    var body: some View {
+        Text(MsgDiag.text)
+            .font(.system(size: 9, weight: .medium, design: .monospaced))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 6).padding(.vertical, 3)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.black.opacity(0.8))
+    }
+}
+
 /// The drawer. A few hundred points tall — one line and one button, nothing more.
 struct CompactPromptView: View {
     let headline: String
@@ -25,6 +44,7 @@ struct CompactPromptView: View {
         ZStack {
             MsgPalette.bg.ignoresSafeArea()
             VStack(spacing: 6) {
+                DiagStrip()
                 Text(headline)
                     .font(.system(size: 19, weight: .black, design: .rounded))
                     .foregroundStyle(MsgPalette.ink)
@@ -64,6 +84,7 @@ struct StartRoundView: View {
                 MsgPalette.bg.ignoresSafeArea()
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
+                        DiagStrip()
                         Text("SEND A ROUND")
                             .font(.system(size: 24, weight: .black, design: .rounded))
                             .foregroundStyle(MsgPalette.ink)
@@ -154,6 +175,7 @@ struct RoundView: View {
             ScrollView {
                 if let q = question {
                     VStack(alignment: .leading, spacing: 14) {
+                        DiagStrip()
                         header(q)
                         if !isPlayer && !joined {
                             joinCard

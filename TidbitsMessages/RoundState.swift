@@ -45,15 +45,27 @@ struct RoundState: Equatable {
 
     // MARK: - Encoding
 
-    /// `v=1&i=2&q=<id>~<id>…&p=<id8>:<name>:<answers>|…`
+    /// `https://tidbitstrivia.com/r?v=1&i=2&q=<id>~<id>…&p=<id8>:<name>:<answers>|…`
+    ///
+    /// **HTTPS, not a custom scheme.** This was `tidbits://round?…` and it did not
+    /// work: the message arrived with `url` NIL, so every tap opened the start screen
+    /// as though no round were attached. `MSMessage.url` is contracted to be a
+    /// UNIVERSAL LINK — a URL that opens the app, and that Safari can fall back to
+    /// when the recipient does not have it installed. An unregistered custom scheme is
+    /// neither, and the system drops it in transit rather than erroring at send.
+    ///
+    /// tidbitstrivia.com is already an associated domain of the app, so this also
+    /// gives the right behaviour for someone in the thread without Tidbits: the tap
+    /// opens the site instead of doing nothing.
     ///
     /// Deliberately hand-rolled rather than JSON: JSON's braces, quotes and keys are
     /// all percent-encoded in a URL query, which roughly doubles the payload for data
     /// this simple. The budget is the point.
     func encoded() -> String {
         var c = URLComponents()
-        c.scheme = "tidbits"
-        c.host = "round"
+        c.scheme = "https"
+        c.host = "tidbitstrivia.com"
+        c.path = "/r"
         c.queryItems = [
             .init(name: "v", value: String(Self.version)),
             .init(name: "i", value: String(index)),

@@ -8,7 +8,7 @@
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
             <StackPanel Spacing="3" VerticalAlignment="Center">
                 <TextBlock Text="{Binding Host.Code, StringFormat='Join code: {0}'}" FontSize="26" FontWeight="Black" Foreground="#FF5C35"/>
-                <TextBlock Text="tidbitstrivia.com/live" FontSize="13" Opacity="0.6"/>
+                <TextBlock Text="tidbitstrivia.com/live" Classes="caption"/>
                 <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,6,0,0">
                     <TextBlock Text="{Binding Host.PlayerCount}" FontWeight="Bold"/>
                     <TextBlock Text="players ·" Opacity="0.7"/>
@@ -25,12 +25,12 @@
         <Grid Grid.Row="1" ColumnDefinitions="*,220" Margin="0,16">
             <ScrollViewer>
                 <StackPanel Spacing="12">
-                    <TextBlock Text="{Binding Host.RoundTitle}" Opacity="0.6" FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding Host.RoundTitle}" Classes="caption" FontWeight="SemiBold"/>
                     <!-- Host's private per-round note (cockpit-only, never on the projector) -->
                     <Border IsVisible="{Binding HasRoundNote}" Background="#22FFC93C" CornerRadius="8" Padding="10,7">
                         <TextBlock Text="{Binding CurrentRoundNote, StringFormat='📝 {0}'}" TextWrapping="Wrap" FontWeight="SemiBold"/>
                     </Border>
-                    <TextBlock Text="{Binding Host.Current.Prompt}" FontSize="22" FontWeight="Bold" TextWrapping="Wrap"/>
+                    <TextBlock Text="{Binding Host.Current.Prompt}" Classes="section-header" TextWrapping="Wrap"/>
                     <!-- Options with a live answer-distribution bar (built in code-behind
                          so each row can carry a proportional bar + reveal highlight). -->
                     <StackPanel x:Name="OptionsTally" Spacing="6"/>
@@ -44,7 +44,7 @@
                     <TextBlock Text="Standings" FontWeight="Bold" VerticalAlignment="Center"/>
                     <Button Grid.Column="1" Content="+ Paper team" Click="OnAddPaperTeam" FontSize="11" Padding="8,3"/>
                 </Grid>
-                <TextBlock Text="No players yet" FontSize="12" Opacity="0.5"
+                <TextBlock Text="No players yet" Classes="caption"
                            IsVisible="{Binding !Host.PlayerCount}"/>
                 <ItemsControl ItemsSource="{Binding Host.Standings}" x:CompileBindings="False">
                     <ItemsControl.ItemTemplate>
@@ -56,7 +56,7 @@
                                 <Button Grid.Column="2" Content="−" Click="OnScoreDown" Tag="{Binding Id}"
                                         AutomationProperties.Name="{Binding Name, StringFormat='Subtract a point from {0}'}"
                                         Padding="7,1" MinWidth="0" FontWeight="Bold" Margin="4,0,0,0"/>
-                                <TextBlock Grid.Column="3" Text="{Binding Score}" FontWeight="Bold"
+                                <TextBlock Grid.Column="3" Text="{Binding Score}" Classes="tabular" FontWeight="Bold"
                                            MinWidth="26" TextAlignment="Center" VerticalAlignment="Center" Margin="4,0"/>
                                 <Button Grid.Column="4" Content="+" Click="OnScoreUp" Tag="{Binding Id}"
                                         AutomationProperties.Name="{Binding Name, StringFormat='Add a point to {0}'}"

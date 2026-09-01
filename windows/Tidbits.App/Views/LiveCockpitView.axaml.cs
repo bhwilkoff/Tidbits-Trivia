@@ -398,6 +398,21 @@ public partial class LiveCockpitView : UserControl
         catch { /* best-effort */ }
     }
 
+    /// Play the clip attached to the question on screen. Audio goes to the room
+    /// through the routed PA output; a video clip is what the projector shows.
+    ///
+    /// This is the leg that made the round real: Windows could already play a clip
+    /// the host picked ad hoc, but nothing connected an AUTHORED round's clip to
+    /// the question it belongs to.
+    private void OnPlayQuestionClip(object? sender, RoutedEventArgs e)
+    {
+        if (Vm?.CurrentClipPath is not { } path) return;
+        Services.GameData.Shared.Value.Av.PlayClip(path);
+    }
+
+    private void OnStopQuestionClip(object? sender, RoutedEventArgs e) =>
+        Services.GameData.Shared.Value.Av.StopClip();
+
     private ProjectorWindow? _projector;
 
     private void OnProjector(object? sender, RoutedEventArgs e)

@@ -142,4 +142,41 @@ public class AuthoredClipsTest : IDisposable
         Assert.Equal(second, grown.ClipFor(0, 1));
         Assert.Null(grown.ClipFor(0, 2));   // the new question has no clip yet
     }
+
+    [Fact]
+    public async Task The_cockpit_view_model_offers_play_only_when_the_clip_is_there()
+    {
+        // The VM is what the cockpit binds IsVisible to, so these three flags ARE
+        // the difference between a working control, a warning, and nothing at all.
+        var ev = TwoClipEvent(out var first, out _);
+        var host = HostFor(ev);
+        await host.LoadQuestionsOffline();
+        var vm = new Tidbits.App.ViewModels.LiveHostViewModel(host);
+
+        Assert.True(vm.HasClip);
+        Assert.False(vm.ClipMissing);
+        Assert.Equal("one.wav", vm.ClipName);
+
+        File.Delete(first);
+        var vm2 = new Tidbits.App.ViewModels.LiveHostViewModel(host);
+        Assert.False(vm2.HasClip);      // no play button
+        Assert.True(vm2.ClipMissing);   // ...but an explicit warning instead
+    }
+
+    [Fact]
+    public async Task A_plain_round_shows_neither_a_play_button_nor_a_warning()
+    {
+        var ev = new LiveEvent
+        {
+            Name = "Plain",
+            Rounds = [new NightRound { Kind = GameMode.Classic, Count = 1 }],
+            RoundQuestions = [new List<Question> { Q("plain:1") }],
+        };
+        var host = HostFor(ev);
+        await host.LoadQuestionsOffline();
+        var vm = new Tidbits.App.ViewModels.LiveHostViewModel(host);
+        Assert.False(vm.HasClip);
+        Assert.False(vm.ClipMissing);
+        Assert.Equal("", vm.ClipName);
+    }
 }

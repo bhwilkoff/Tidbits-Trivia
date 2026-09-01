@@ -31,6 +31,18 @@
                         <TextBlock Text="{Binding CurrentRoundNote, StringFormat='📝 {0}'}" TextWrapping="Wrap" FontWeight="SemiBold"/>
                     </Border>
                     <TextBlock Text="{Binding Host.Current.Prompt}" Classes="section-header" TextWrapping="Wrap"/>
+                    <!-- The authored clip for THIS question (audio/video round). Either a
+                         working control or an explicit "unavailable" line — never a play
+                         button that does nothing (WINDOWS-DESIGN §6.6). -->
+                    <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding HasClip}">
+                        <Button Content="▶ Play clip" Click="OnPlayQuestionClip" Classes="accent" Padding="14,8"/>
+                        <Button Content="Stop" Click="OnStopQuestionClip" Padding="12,8"/>
+                        <TextBlock Text="{Binding ClipName}" Classes="caption" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <Border IsVisible="{Binding ClipMissing}" Background="#22FF5C35" CornerRadius="8" Padding="10,7">
+                        <TextBlock Text="Clip unavailable — re-attach it in the builder"
+                                   Classes="body-strong" Foreground="#FF5C35" TextWrapping="Wrap"/>
+                    </Border>
                     <!-- Options with a live answer-distribution bar (built in code-behind
                          so each row can carry a proportional bar + reveal highlight). -->
                     <StackPanel x:Name="OptionsTally" Spacing="6"/>

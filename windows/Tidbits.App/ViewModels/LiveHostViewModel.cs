@@ -51,6 +51,14 @@ public sealed class LiveHostViewModel : ObservableObject
     // Reveal choreography (3.38): the correct option index once revealed (else null).
     public int? RevealCorrectIndex => Host.Revealed && Host.Current is { } q ? q.CorrectIndex : null;
     public string? CurrentRoundNote => Host.CurrentRoundNote;
+    /// The clip attached to the question on screen (audio/video round), or null.
+    public string? CurrentClipPath => Host.CurrentClipPath;
+    public bool HasClip => Host.CurrentClipPath is not null;
+    /// The round HAS clips but this question's has moved or been deleted. Shown as
+    /// an explicit warning rather than a play button that does nothing — a host
+    /// discovers a dead control mid-round, with a room watching.
+    public bool ClipMissing => Host.CurrentClipMissing;
+    public string ClipName => Host.CurrentClipPath is { } p ? System.IO.Path.GetFileName(p) : "";
     public bool HasRoundNote => Host.CurrentRoundNote is not null;
     /// The correct option text (shown big on the projector at reveal).
     public string? RevealAnswer => Host.Current is { } q ? LiveScoring.AnswerLine(q) : null;

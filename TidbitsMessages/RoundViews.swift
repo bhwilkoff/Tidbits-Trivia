@@ -15,22 +15,42 @@ enum MsgPalette {
     static let mint = Color(red: 0.12, green: 0.62, blue: 0.42)
 }
 
-/// TEMPORARY diagnostic state, removed before ship. See MessagesViewController.
+#if DEBUG
+/// Diagnostic state for `DiagStrip`. Debug-only — see the strip's note below.
 enum MsgDiag {
     nonisolated(unsafe) static var text: String = ""
 }
+#endif
 
-/// A one-line readout of what the extension actually sees. Deliberately ugly and
-/// deliberately always visible in this dev build: a diagnostic behind a flag is a
-/// diagnostic nobody can read on a device driven by Messages.
+/// A one-line readout of what the extension actually sees, on screen in Debug builds
+/// and compiled out of Release entirely.
+///
+/// **Why this survives instead of being deleted.** Three bugs in this extension were
+/// invisible from the outside and identical to each other on screen: it ran in dark
+/// mode, `MSMessage.url` was silently stripped in transit, and answers only staged
+/// instead of sending. Each one landed the player on the start screen looking like
+/// "nothing happened". This strip is what told them apart, and an extension is the
+/// worst place to lose an instrument — Messages launches it, so there is no console,
+/// no debugger and no env var to reach it with.
+///
+/// An env var genuinely cannot work here, which is why an earlier version of this
+/// comment argued against a flag at all. A *build configuration* can: the harness
+/// installs Debug, `tools/submit-appstore.sh` ships Release, so the strip is always
+/// readable on a device and can never reach a store build. Verified with
+/// `-showBuildSettings`: `SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG` in Debug,
+/// undefined in Release. `MessagesDiagnosticTests` pins that it stays that way.
 struct DiagStrip: View {
     var body: some View {
+        #if DEBUG
         Text(MsgDiag.text)
             .font(.system(size: 9, weight: .medium, design: .monospaced))
             .foregroundStyle(.white)
             .padding(.horizontal, 6).padding(.vertical, 3)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Color.black.opacity(0.8))
+        #else
+        EmptyView()
+        #endif
     }
 }
 

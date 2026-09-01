@@ -117,7 +117,8 @@ def main():
         print(f"\n=== {n} ===")
         shots, spec = run(n, out)
         if not shots:
-            g.grade(f"{n}.captured", False, "no window ever appeared")
+            g.grade(f"{n}.captured", False,
+                    macapp.why_no_window(_PID) if _PID else "the app was never launched")
             continue
         texts = ocr(shots)
         sub = Grader(out, platform="mac")

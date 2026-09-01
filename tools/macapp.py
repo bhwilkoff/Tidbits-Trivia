@@ -52,7 +52,7 @@ def close_projectors(pid):
     projector's idle splash instead."""
     closed = 0
     for i, _name, w, h in reversed(_windows(pid)):
-        if (w, h) == PROJECTOR_SIZE:
+        if _is_projector(w, h):
             try:
                 _osa('tell application "System Events" to tell '
                      f'(first process whose unix id is {pid}) to '
@@ -89,6 +89,23 @@ def raise_pid(pid):
 # LIVE — The host will start the night shortly", as the app ignoring every
 # launch hook. The app was correct throughout.
 PROJECTOR_SIZE = (1280, 720)
+
+
+def _is_projector(w, h):
+    """Is this window the Tidbits Live big screen rather than the app shell?
+
+    It opens at 1280x720 by default, but on a machine with one display it can
+    come up FULL SCREEN — a measured run had it at 2560x1440 as the only window
+    the app reported, sitting over the shell. Matching the default size alone
+    left it open, so `capture` graded the projector's splash (or, once the shell
+    was fully covered, nothing at all) and the run failed with "no window ever
+    appeared" while the app was perfectly healthy.
+
+    16:9 and at least 720p is the projector; the shell is not 16:9.
+    """
+    if (w, h) == PROJECTOR_SIZE:
+        return True
+    return h >= 720 and abs(w / max(h, 1) - 16 / 9) < 0.02
 
 
 def _windows(pid):
@@ -129,7 +146,7 @@ def main_window_index(pid):
     if not ws:
         return None
     for i, name, w, h in ws:
-        if (w, h) != PROJECTOR_SIZE:
+        if not _is_projector(w, h):
             return i
     return ws[0][0]      # all projector-sized — fall back rather than guess
 
@@ -146,6 +163,28 @@ def bounds(pid):
         return None
     n = [int(x) for x in re.findall(r"-?\d+", r.stdout)]
     return tuple(n[:4]) if len(n) >= 4 else None
+
+
+def why_no_window(pid):
+    """Say WHICH failure this was, so a flaky run is diagnosable from the report.
+
+    "no window ever appeared" covered three different causes — a dead process, an
+    app System Events cannot see, and a window too small to grab — and they need
+    different fixes.
+    """
+    try:
+        alive = subprocess.run(["ps", "-p", str(pid)], capture_output=True).returncode == 0
+    except OSError:
+        alive = False
+    if not alive:
+        return "the app process exited before a window appeared"
+    ws = _windows(pid)
+    if not ws:
+        return ("the process is alive but System Events reports NO windows — "
+                "usually the app was exec'd directly and never activated, or "
+                "Accessibility permission is missing for the terminal")
+    sizes = ", ".join(f"{n or '(untitled)'} {w}x{h}" for _, n, w, h in ws)
+    return f"windows exist but none was grabbable: {sizes}"
 
 
 def capture(pid, path, tries=12):

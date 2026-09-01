@@ -40,7 +40,7 @@ these patterns; invoke the skill when its trigger matches.
 | Designing / building the Windows app | `native-platform-first` + `docs/WINDOWS-DESIGN.md` (binding) + `docs/WINDOWS-PLAYBOOK.md` (Avalonia/FluentAvalonia shell, headless-PNG observability, `windows-latest` IS the box — Decision 045) |
 | Logging an architecture decision | `architectural-decision-log` |
 | User pushback after 3+ iterations of "still broken" | `3d-feature-debug-loop` |
-| Building or extending device/fleet test automation | `docs/AUTONOMOUS-FLEET-TESTING.md` (the METHOD) + `docs/DEVICE-QA-SUITE.md` (this fleet) |
+| Building or extending device/fleet test automation | `autonomous-fleet-testing` skill + `docs/AUTONOMOUS-FLEET-TESTING.md` (the METHOD) + `docs/DEVICE-QA-SUITE.md` (this fleet) |
 
 Platform-specific skill triggers:
 

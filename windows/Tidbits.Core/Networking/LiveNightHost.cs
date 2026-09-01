@@ -39,6 +39,41 @@ public sealed class LiveNightHost : ObservableObject
     /// Without this the question editor would be theatre: the host edits a question,
     /// hits Host, and the night pulls a fresh corpus round over the top of their work.
     public IReadOnlyList<IReadOnlyList<Question>> AuthoredQuestions { get; set; } = new List<IReadOnlyList<Question>>();
+    /// The media clip attached to each authored question, index-aligned with
+    /// AuthoredQuestions. Without this the builder's audio/video round would author
+    /// clips the cockpit never sees — the same "looks complete, plays silence"
+    /// failure the macOS build shipped.
+    public IReadOnlyList<IReadOnlyList<string>> AuthoredClips { get; set; } = new List<IReadOnlyList<string>>();
+
+    /// The clip for the question now on screen, or null. Checks the file still
+    /// exists, so the cockpit can show "clip unavailable" rather than a play
+    /// control that does nothing.
+    public string? CurrentClipPath
+    {
+        get
+        {
+            var q = Current;
+            if (q?.RoundIndex is not int ri || ri < 0 || ri >= AuthoredClips.Count) return null;
+            // Position WITHIN the round — the clip list is per-round, not per-night.
+            int pos = Questions.Take(Index).Count(x => x.RoundIndex == ri);
+            var clips = AuthoredClips[ri];
+            if (pos < 0 || pos >= clips.Count) return null;
+            var path = clips[pos];
+            return string.IsNullOrWhiteSpace(path) || !System.IO.File.Exists(path) ? null : path;
+        }
+    }
+
+    /// True when the current round HAS clips but this question's is gone — the
+    /// difference between "no clip round" and "your clip moved", which the host
+    /// needs to tell apart mid-night.
+    public bool CurrentClipMissing
+    {
+        get
+        {
+            if (Current?.RoundIndex is not int ri || ri < 0 || ri >= AuthoredClips.Count) return false;
+            return AuthoredClips[ri].Any(c => !string.IsNullOrWhiteSpace(c)) && CurrentClipPath is null;
+        }
+    }
 
     /// The authored countdown for the round now on screen, or 0 when untimed.
     public int RoundTimerSeconds =>
@@ -244,6 +279,17 @@ public sealed class LiveNightHost : ObservableObject
         Opening = true; ErrorText = null; Notify();
         if (await Net.Open(Title) is null) ErrorText = "Couldn't open a room. Check your connection.";
         Opening = false; Notify();
+    }
+
+    /// Load the night's questions WITHOUT opening a room.
+    ///
+    /// `Start()` opens an RTDB room before it can build questions, so nothing could
+    /// exercise the clip/question wiring without a network. This is the same build,
+    /// stopping short of the room — used by tests and safe for a dry run.
+    public async Task LoadQuestionsOffline()
+    {
+        Questions = await BuildNightQuestions();
+        if (Questions.Count > 0) PrepareQuestion();
     }
 
     /// The same question build, without a room — for "Preview solo" and for tests.

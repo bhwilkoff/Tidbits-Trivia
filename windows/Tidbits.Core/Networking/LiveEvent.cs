@@ -36,6 +36,30 @@ public sealed record LiveEvent
     [JsonPropertyName("roundQuestions")]
     public IReadOnlyList<IReadOnlyList<Question>> RoundQuestions { get; init; } = new List<IReadOnlyList<Question>>();
 
+    // Wave-premier: the media clip attached to each authored question, index-aligned
+    // with RoundQuestions. Plain paths, not macOS's security-scoped bookmarks —
+    // Windows has no sandbox scope to preserve, so a path IS the reference.
+    //
+    // Deliberately NOT part of the portable event document (LIVE-EVENT-FILE §3.1):
+    // a Windows path means nothing on the host's Mac, and writing one anyway makes
+    // a round look complete and play silent.
+    [JsonPropertyName("roundClips")]
+    public IReadOnlyList<IReadOnlyList<string>> RoundClips { get; init; } = new List<IReadOnlyList<string>>();
+
+    /// The clip for question `q` of round `i`, or null when there is none.
+    public string? ClipFor(int i, int q)
+    {
+        if (i < 0 || i >= RoundClips.Count) return null;
+        var clips = RoundClips[i];
+        if (q < 0 || q >= clips.Count) return null;
+        return string.IsNullOrWhiteSpace(clips[q]) ? null : clips[q];
+    }
+
+    /// Does this round carry clips at all? Drives whether the cockpit offers the
+    /// per-question play control for it.
+    public bool RoundHasClips(int i) =>
+        i >= 0 && i < RoundClips.Count && RoundClips[i].Any(c => !string.IsNullOrWhiteSpace(c));
+
     /// The authored questions of round `i`, or an empty list when that round is still
     /// corpus-sourced.
     public IReadOnlyList<Question> QuestionsFor(int i) =>
@@ -56,7 +80,16 @@ public sealed record LiveEvent
                            .ToList();
         var rounds = Rounds.Select((r, k) => k == i && questions.Count > 0
                                        ? r with { Count = questions.Count } : r).ToList();
-        return this with { Rounds = rounds, RoundQuestions = rq };
+        // The clip list must stay the same length as the question list, or clip N
+        // slides onto question N+1 the first time a host deletes one.
+        var rc = Enumerable.Range(0, Rounds.Count).Select(k =>
+        {
+            var existing = k < RoundClips.Count ? RoundClips[k].ToList() : new List<string>();
+            if (k != i) return (IReadOnlyList<string>)existing;
+            while (existing.Count < questions.Count) existing.Add("");
+            return (IReadOnlyList<string>)existing.Take(questions.Count).ToList();
+        }).ToList();
+        return this with { Rounds = rounds, RoundQuestions = rq, RoundClips = rc };
     }
 
     [JsonIgnore] public int TotalQuestions => Rounds.Sum(r => r.Count);

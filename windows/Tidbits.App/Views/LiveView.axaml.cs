@@ -98,6 +98,7 @@ public partial class LiveView : UserControl
     // "pull from the corpus at host time", which is what every round did before —
     // and is exactly why a host had nothing to edit (WINDOWS-DESIGN §6.6).
     private readonly System.Collections.Generic.List<System.Collections.Generic.List<Question>> _questions = new();
+    private readonly System.Collections.Generic.List<System.Collections.Generic.List<string>> _clips = new();
     private readonly System.Collections.Generic.HashSet<int> _expandedRounds = new();
     private static readonly int[] TimerChoices = { 0, 30, 45, 60, 90, 120 };
     private static int TimerIndex(int seconds) => System.Math.Max(0, System.Array.IndexOf(TimerChoices, seconds));
@@ -110,6 +111,7 @@ public partial class LiveView : UserControl
         _notes.Add(RoundNoteBox.Text?.Trim() ?? "");
         _timers.Add(0);
         _questions.Add(new System.Collections.Generic.List<Question>());
+        _clips.Add(new System.Collections.Generic.List<string>());
         RoundNoteBox.Text = "";
         RebuildBuilderRounds();
     }
@@ -124,6 +126,8 @@ public partial class LiveView : UserControl
         (_timers[index], _timers[target]) = (_timers[target], _timers[index]);
         if (index < _questions.Count && target < _questions.Count)
             (_questions[index], _questions[target]) = (_questions[target], _questions[index]);
+        if (index < _clips.Count && target < _clips.Count)
+            (_clips[index], _clips[target]) = (_clips[target], _clips[index]);
         RebuildBuilderRounds();
     }
 
@@ -194,6 +198,7 @@ public partial class LiveView : UserControl
                 if (idx < _notes.Count) _notes.RemoveAt(idx);
                 if (idx < _timers.Count) _timers.RemoveAt(idx);
                 if (idx < _questions.Count) _questions.RemoveAt(idx);
+                if (idx < _clips.Count) _clips.RemoveAt(idx);
                 _expandedRounds.Clear();   // the indices below this round all shifted
                 RebuildBuilderRounds();
             };
@@ -410,6 +415,9 @@ public partial class LiveView : UserControl
         RoundQuestions = _questions
             .Select(q => (System.Collections.Generic.IReadOnlyList<Question>)new System.Collections.Generic.List<Question>(q))
             .ToList(),
+        RoundClips = _clips
+            .Select(c => (System.Collections.Generic.IReadOnlyList<string>)new System.Collections.Generic.List<string>(c))
+            .ToList(),
     };
 
     /// Load an event into the builder fields (import, or picking a saved event).
@@ -421,13 +429,14 @@ public partial class LiveView : UserControl
         LeadUrlBox.Text = ev.LeadCaptureUrl ?? "";
         WeekdayBox.SelectedIndex = ev.Weekday is int w and >= 0 and <= 6 ? w + 1 : 0;
         WagerFinalCheck.IsChecked = ev.WagerFinalRound;
-        _rounds.Clear(); _notes.Clear(); _timers.Clear(); _questions.Clear(); _expandedRounds.Clear();
+        _rounds.Clear(); _notes.Clear(); _timers.Clear(); _questions.Clear(); _clips.Clear(); _expandedRounds.Clear();
         for (int i = 0; i < ev.Rounds.Count; i++)
         {
             _rounds.Add(ev.Rounds[i]);
             _notes.Add(i < ev.RoundNotes.Count ? ev.RoundNotes[i] : "");
             _timers.Add(i < ev.RoundTimers.Count ? ev.RoundTimers[i] : 0);
             _questions.Add(ev.QuestionsFor(i).ToList());
+            _clips.Add(Enumerable.Range(0, ev.QuestionsFor(i).Count).Select(q => ev.ClipFor(i, q) ?? "").ToList());
         }
         RebuildBuilderRounds();
     }
@@ -483,6 +492,83 @@ public partial class LiveView : UserControl
         if (_rounds.Count == 0) { StatusText.Text = "Add at least one round first."; StatusText.IsVisible = true; return; }
         GameData.Shared.Value.LiveEvents.Save(CurrentEvent());
         BuildSavedEvents();
+    }
+
+    /// Build an audio or video round from picked clips — the Windows mirror of
+    /// macOS §A2.4's AV rounds, which Windows had no equivalent of at all.
+    ///
+    /// Each clip becomes a "name it" question whose answer defaults to the file
+    /// name, and the clip path is stored index-aligned with the question. Unlike
+    /// macOS there is no security-scoped bookmark to keep: on Windows the path IS
+    /// the reference.
+    private async void OnAddAudioRound(object? sender, RoutedEventArgs e) => await AddClipRound(video: false);
+    private async void OnAddVideoRound(object? sender, RoutedEventArgs e) => await AddClipRound(video: true);
+
+    private async System.Threading.Tasks.Task AddClipRound(bool video)
+    {
+        var top = TopLevel.GetTopLevel(this);
+        if (top?.StorageProvider is not { } sp) { ShowStatus("This window cannot open a file picker."); return; }
+        var kind = video ? "video" : "audio";
+        var files = await sp.OpenFilePickerAsync(new Avalonia.Platform.Storage.FilePickerOpenOptions
+        {
+            Title = video ? "Choose video clips" : "Choose audio clips",
+            AllowMultiple = true,
+            FileTypeFilter = new[]
+            {
+                new Avalonia.Platform.Storage.FilePickerFileType(video ? "Video" : "Audio")
+                {
+                    Patterns = video
+                        ? new[] { "*.mp4", "*.mov", "*.m4v", "*.mkv", "*.avi", "*.webm" }
+                        : new[] { "*.mp3", "*.m4a", "*.wav", "*.aac", "*.flac", "*.ogg" },
+                },
+            },
+        });
+        if (files.Count == 0) return;
+
+        var questions = new System.Collections.Generic.List<Question>();
+        var clips = new System.Collections.Generic.List<string>();
+        var skipped = new System.Collections.Generic.List<string>();
+        int n = 0;
+        foreach (var f in files)
+        {
+            // A clip Tidbits cannot resolve to a real local path must NOT become a
+            // question: that is exactly how the macOS build ended up with rounds
+            // that looked complete and played silence.
+            var path = f.Path.LocalPath;
+            if (string.IsNullOrEmpty(path) || !System.IO.File.Exists(path))
+            {
+                skipped.Add(f.Name);
+                continue;
+            }
+            n++;
+            var answer = System.IO.Path.GetFileNameWithoutExtension(path);
+            questions.Add(new Question
+            {
+                Id = Guid.NewGuid().ToString("N"),
+                Prompt = video ? $"Clip {n} — name it" : $"Track {n} — name it",
+                Options = [answer],
+                CorrectIndex = 0,
+                CategoryId = video ? "screen" : "music",
+                Difficulty = 3,
+                TemplateId = kind,
+                Accepted = [answer],
+            });
+            clips.Add(path);
+        }
+        if (skipped.Count > 0)
+            ShowStatus($"Skipped {skipped.Count} file(s) Tidbits could not read: {string.Join(", ", skipped.Take(3))}");
+        if (questions.Count == 0) return;
+
+        _rounds.Add(new NightRound { Kind = GameMode.TypeAnswer, Count = questions.Count });
+        _notes.Add(video ? "Play each clip on the projector, then take answers."
+                         : "Play each track through the PA, then take answers.");
+        _timers.Add(0);
+        _questions.Add(questions);
+        _clips.Add(clips);
+        _expandedRounds.Add(_rounds.Count - 1);
+        RebuildBuilderRounds();
+        if (skipped.Count == 0)
+            ShowStatus($"Added a {kind} round with {questions.Count} clip(s).");
     }
 
     /// Export the composed event as the portable document (docs/LIVE-EVENT-FILE.md).
@@ -607,6 +693,13 @@ public partial class LiveView : UserControl
             AuthoredQuestions = branding is null
                 ? new System.Collections.Generic.List<System.Collections.Generic.IReadOnlyList<Question>>()
                 : Enumerable.Range(0, branding.Rounds.Count).Select(branding.QuestionsFor).ToList(),
+            AuthoredClips = branding is null
+                ? new System.Collections.Generic.List<System.Collections.Generic.IReadOnlyList<string>>()
+                : Enumerable.Range(0, branding.Rounds.Count)
+                    .Select(i => (System.Collections.Generic.IReadOnlyList<string>)
+                        Enumerable.Range(0, branding.QuestionsFor(i).Count)
+                                  .Select(q => branding.ClipFor(i, q) ?? "").ToList())
+                    .ToList(),
             Sponsor = branding?.Sponsor,
             BrandHex = branding?.BrandHex,
             LeadCaptureUrl = branding?.LeadCaptureUrl,

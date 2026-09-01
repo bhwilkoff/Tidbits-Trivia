@@ -348,8 +348,9 @@ def main():
                   f"{v['attributes']['appStoreState']}")
         return
     # Changing only the release type is legal on a version already in review.
-    only_release_type = bool(a.release_type) and not (a.set or a.attach_build
-                                                     or a.release_notes or a.submit)
+    uploads = bool(a.set) and not (a.status or a.audit or a.dry_run)
+    only_release_type = bool(a.release_type) and not (
+        uploads or a.attach_build or a.release_notes or a.submit)
     ver = editable_version(app_id, create=a.create_version,
                            allow_in_flight=only_release_type)
     print(f"app {app_id} · version {ver['attributes']['versionString']} "

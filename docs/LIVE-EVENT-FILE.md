@@ -118,3 +118,41 @@ about it.
 byte-for-byte on the fields §2 names. A change to either internal model that
 breaks the golden is a contract break, not a refactor — the same rule the night
 wire and the Daily golden already run under.
+
+
+---
+
+## §6 — The CSV question bank (binding)
+
+A host's own questions arrive as CSV far more often than as an event file, and
+the two clients diverged silently on what a CSV column means.
+
+6.1 **A NAMED HEADER decides.** If the first row starts with `prompt` or
+`question`, columns are mapped by name and their order does not matter.
+Recognised: `prompt`/`question`, `correct`/`answer`/`correctanswer`,
+`optionA…optionD` / `option1…option4` / `wrong1…wrong3` / `a`,`b`,`c`,`d`,
+`category`, `difficulty`, `explanation`/`reveal`/`note`. **Emit a header on every
+export.** It is the only shape that cannot be misread.
+
+6.2 **`correct` may be the answer TEXT or a 1-based INDEX** into the options.
+Both are common in the wild and both must resolve to the same question.
+
+6.3 **Without a header, the two shipped orders are told apart by field 5.**
+An integer 1–4 there means the Windows order
+(`prompt, optionA..D, correct(1-4), [explanation]`); anything else means the
+macOS order (`prompt, correct, wrong1..3, [category], [difficulty],
+[explanation]`).
+
+**Why this rule exists:** before it, a Windows-format CSV imported on the Mac
+read field 1 as the answer. For `…,Phrygia,Lydia,Caria,Lycia,2,…` it marked
+**Phrygia** correct when the answer is **Lydia** — silently, and it marks a
+correct player wrong. In the other direction a macOS-format file imported
+**nothing** on Windows, because field 5 would not parse as 1–4.
+
+6.4 **A row whose answer is not among its options is DROPPED, not guessed.**
+An answer no option matches is a question nobody can get right.
+
+6.5 **The reader tries more than UTF-8.** BOM first, then UTF-16 only when the
+bytes look like it (interleaved NULs), then the 8-bit encodings, rejecting any
+decode containing a NUL or a replacement character. Excel on Windows writes
+UTF-16LE with a BOM; assuming UTF-8 silently imported nothing.

@@ -60,27 +60,115 @@ private static func plausible(_ text: String) -> Bool {
     !text.isEmpty && !text.contains("\0") && !text.contains("\u{FFFD}")
 }
 
+/// Parse a host's CSV question bank, in either of the two shapes Tidbits has
+/// shipped — and prefer a NAMED HEADER over both.
+///
+/// The two clients diverged silently. macOS wrote
+/// `prompt, correct, wrong1, wrong2, wrong3, [category], [difficulty], [explanation]`
+/// and Windows wrote
+/// `prompt, optionA, optionB, optionC, optionD, correct(1-4), [explanation]`.
+/// A Windows-format file imported here marked the FIRST option correct — for
+/// "…,Phrygia,Lydia,Caria,Lycia,2,…" the answer became Phrygia when the truth is
+/// Lydia. Silent, and it marks a correct player wrong. A Mac-format file on
+/// Windows imported nothing at all, because field 5 would not parse as 1-4.
+///
+/// So: a header row decides, whichever order it names. Without one, the shape is
+/// inferred from whether field 5 is an answer INDEX (1-4) or a category word.
 static func parseCSVQuestions(_ text: String) -> [Question] {
+    var rows = text.split(whereSeparator: \.isNewline).map { splitCSVLine(String($0)) }
+    guard !rows.isEmpty else { return [] }
+
+    var header: [String: Int]? = nil
+    if let first = rows.first, isHeaderRow(first) {
+        var map: [String: Int] = [:]
+        for (i, name) in first.enumerated() {
+            map[name.lowercased().trimmingCharacters(in: .whitespaces)] = i
+        }
+        header = map
+        rows.removeFirst()
+    }
+
     var out: [Question] = []
-    for raw in text.split(whereSeparator: \.isNewline) {
-        let f = splitCSVLine(String(raw))
-        guard f.count >= 5, !f[0].isEmpty, !f[1].isEmpty else { continue }
-        if ["prompt", "question"].contains(f[0].lowercased()) { continue }   // header row
-        var opts = [f[1], f[2], f[3], f[4]].filter { !$0.isEmpty }
-        while opts.count < 4 { opts.append("—") }
-        opts = Array(opts.prefix(4)).shuffled()
-        let ci = opts.firstIndex(of: f[1]) ?? 0
-        let cat = (f.count > 5 && !f[5].isEmpty) ? f[5].lowercased() : "mixed"
-        let diff = min(5, max(1, f.count > 6 ? (Int(f[6]) ?? 3) : 3))
-        let expl = f.count > 7 ? f[7] : ""
-        out.append(Question(id: UUID().uuidString, prompt: f[0], options: opts, correctIndex: ci,
-                            categoryID: cat, difficulty: diff, explanation: expl,
-                            sourceTitle: "", sourceURL: nil, templateID: "csv"))
+    for f in rows {
+        guard f.count >= 5, !f[0].isEmpty else { continue }
+        if let q = question(from: f, header: header) { out.append(q) }
     }
     return out
 }
 
-/// Minimal quote-aware CSV line split (handles "commas, in fields").
+private static func isHeaderRow(_ f: [String]) -> Bool {
+    guard let first = f.first?.lowercased() else { return false }
+    return first == "prompt" || first == "question"
+}
+
+private static func value(_ f: [String], _ header: [String: Int]?, _ names: [String]) -> String? {
+    guard let header else { return nil }
+    for n in names {
+        if let i = header[n], f.indices.contains(i) {
+            let v = f[i].trimmingCharacters(in: .whitespaces)
+            if !v.isEmpty { return v }
+        }
+    }
+    return nil
+}
+
+private static func question(from f: [String], header: [String: Int]?) -> Question? {
+    let prompt = f[0].trimmingCharacters(in: .whitespaces)
+    guard !prompt.isEmpty else { return nil }
+
+    var options: [String] = []
+    var correct = ""
+    var category = "mixed"
+    var difficulty = 3
+    var explanation = ""
+
+    if header != nil {
+        // Named columns win, whatever order they came in.
+        let opts = ["optiona", "optionb", "optionc", "optiond", "option1", "option2",
+                    "option3", "option4", "wrong1", "wrong2", "wrong3", "a", "b", "c", "d"]
+            .compactMap { value(f, header, [$0]) }
+        let answer = value(f, header, ["correct", "answer", "correctanswer"]) ?? ""
+        // "correct" may be the answer TEXT or a 1-based index into the options.
+        if let idx = Int(answer), (1...max(opts.count, 4)).contains(idx), opts.indices.contains(idx - 1) {
+            correct = opts[idx - 1]
+            options = opts
+        } else {
+            correct = answer
+            options = ([answer] + opts).filter { !$0.isEmpty }
+        }
+        category = (value(f, header, ["category"]) ?? "mixed").lowercased()
+        difficulty = Int(value(f, header, ["difficulty"]) ?? "") ?? 3
+        explanation = value(f, header, ["explanation", "reveal", "note"]) ?? ""
+    } else {
+        // No header. Field 5 tells the two shipped shapes apart: an answer INDEX
+        // (1-4) means the Windows order, anything else means the macOS order.
+        let fifth = f.count > 5 ? f[5].trimmingCharacters(in: .whitespaces) : ""
+        if let idx = Int(fifth), (1...4).contains(idx) {
+            options = [f[1], f[2], f[3], f[4]].map { $0.trimmingCharacters(in: .whitespaces) }
+            correct = options[idx - 1]
+            explanation = f.count > 6 ? f[6] : ""
+        } else {
+            correct = f[1].trimmingCharacters(in: .whitespaces)
+            options = [f[1], f[2], f[3], f[4]].map { $0.trimmingCharacters(in: .whitespaces) }
+            category = (f.count > 5 && !f[5].isEmpty) ? f[5].lowercased() : "mixed"
+            difficulty = f.count > 6 ? (Int(f[6]) ?? 3) : 3
+            explanation = f.count > 7 ? f[7] : ""
+        }
+    }
+
+    var opts = options.filter { !$0.isEmpty }
+    guard !correct.isEmpty, opts.contains(correct) || opts.isEmpty else { return nil }
+    if opts.isEmpty { opts = [correct] }
+    while opts.count < 4 { opts.append("—") }
+    opts = Array(opts.prefix(4)).shuffled()
+    guard let ci = opts.firstIndex(of: correct) else { return nil }
+
+    return Question(id: UUID().uuidString, prompt: prompt, options: opts, correctIndex: ci,
+                    categoryID: category, difficulty: min(5, max(1, difficulty)),
+                    explanation: explanation.trimmingCharacters(in: .whitespaces),
+                    sourceTitle: "", sourceURL: nil, templateID: "csv")
+}
+
 static func splitCSVLine(_ line: String) -> [String] {
     var fields: [String] = []; var cur = ""; var inQuotes = false
     for ch in line {

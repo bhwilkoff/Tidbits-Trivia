@@ -115,5 +115,70 @@ struct LiveCSVImportTests {
             #expect(LiveCSV.parseCSVQuestions(text).isEmpty)
         }
     }
+
+    // MARK: The two shipped column orders
+
+    /// macOS wrote `prompt, correct, wrong1..3, [category], [difficulty], [explanation]`.
+    private static let macOrder = """
+    Which kingdom minted the first coins?,Lydia,Phrygia,Caria,Lycia,history,3,Electrum c.600BC
+    """
+
+    /// Windows wrote `prompt, optionA..D, correct(1-4), [explanation]`.
+    private static let windowsOrder = """
+    Which kingdom minted the first coins?,Phrygia,Lydia,Caria,Lycia,2,Electrum c.600BC
+    """
+
+    @Test("a Windows-order CSV no longer marks the wrong option correct")
+    func windowsOrderIsUnderstood() throws {
+        // THE BUG: field 1 was read as the answer, so this row imported with
+        // "Phrygia" correct when the answer is Lydia — silently marking a correct
+        // player wrong.
+        let q = try #require(LiveCSV.parseCSVQuestions(Self.windowsOrder).first)
+        #expect(q.correctAnswer == "Lydia", "imported the wrong answer as correct")
+        #expect(Set(q.options) == ["Phrygia", "Lydia", "Caria", "Lycia"])
+    }
+
+    @Test("the macOS order still works")
+    func macOrderStillWorks() throws {
+        let q = try #require(LiveCSV.parseCSVQuestions(Self.macOrder).first)
+        #expect(q.correctAnswer == "Lydia")
+        #expect(q.categoryID == "history")
+        #expect(q.difficulty == 3)
+    }
+
+    @Test("a named header beats both orders, in any column order")
+    func namedHeaderWins() throws {
+        let csv = """
+        question,explanation,difficulty,correct,optionA,optionB,optionC,optionD,category
+        Which kingdom minted the first coins?,Electrum c.600BC,4,Lydia,Phrygia,Lydia,Caria,Lycia,history
+        """
+        let q = try #require(LiveCSV.parseCSVQuestions(csv).first)
+        #expect(q.correctAnswer == "Lydia")
+        #expect(q.difficulty == 4)
+        #expect(q.categoryID == "history")
+        #expect(q.explanation.contains("Electrum"))
+    }
+
+    @Test("a header whose correct column is an INDEX resolves to the answer text")
+    func headerWithIndexAnswer() throws {
+        let csv = """
+        prompt,optionA,optionB,optionC,optionD,correct,explanation
+        Which kingdom minted the first coins?,Phrygia,Lydia,Caria,Lycia,2,Electrum
+        """
+        let q = try #require(LiveCSV.parseCSVQuestions(csv).first)
+        #expect(q.correctAnswer == "Lydia")
+    }
+
+    @Test("a row whose named answer is not among its options is dropped, not guessed")
+    func inconsistentRowIsDropped() {
+        // Importing it anyway would put an answer on the board that no option
+        // matches, so the question can never be answered correctly.
+        let csv = """
+        prompt,correct,wrong1,wrong2,wrong3
+        Which kingdom minted the first coins?,Atlantis,Phrygia,Caria,Lycia
+        """
+        let qs = LiveCSV.parseCSVQuestions(csv)
+        for q in qs { #expect(q.options.contains(q.correctAnswer)) }
+    }
 }
 #endif

@@ -242,6 +242,8 @@ targets:
       - path: TidbitsTrivia/macOS/MacLiveClips_macOS.swift
       # The printable Wi-Fi-dies fallback: it must actually paginate.
       - path: TidbitsTrivia/macOS/MacLivePrint_macOS.swift
+      # CSV import: pure reader + parser, extracted from the builder view.
+      - path: TidbitsTrivia/macOS/MacLiveCSV_macOS.swift
       - path: TidbitsMessages/QuestionPack.swift
       - path: TidbitsMessages/BubbleImage.swift
       - path: TidbitsTrivia/Core/Models/StandingsOutcome.swift
@@ -281,6 +283,8 @@ targets:
       - path: TidbitsTrivia/macOS/MacLiveClips_macOS.swift
       # The printable Wi-Fi-dies fallback: it must actually paginate.
       - path: TidbitsTrivia/macOS/MacLivePrint_macOS.swift
+      # CSV import: pure reader + parser, extracted from the builder view.
+      - path: TidbitsTrivia/macOS/MacLiveCSV_macOS.swift
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.learningischange.tidbitstrivia.CoreTests

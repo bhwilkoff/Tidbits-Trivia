@@ -670,7 +670,18 @@ struct LiveHostView_macOS: View {
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.commaSeparatedText]
         panel.nameFieldStringValue = "\(session.event.name) — results.csv"
-        if panel.runModal() == .OK, let url = panel.url { try? csv.data(using: .utf8)?.write(to: url) }
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            // A `try?` here is a Save button that does nothing when the write fails
+            // — and the host only finds out when the file is not there afterwards.
+            try Data(csv.utf8).write(to: url, options: .atomic)
+        } catch {
+            let alert = NSAlert()
+            alert.messageText = "Could not save the results"
+            alert.informativeText = error.localizedDescription
+            alert.alertStyle = .warning
+            alert.runModal()
+        }
     }
 
     private func teamRow(_ team: LiveTeam) -> some View {

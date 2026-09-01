@@ -427,3 +427,38 @@ function":
 and entirely irrelevant. Now scoped to buttons the app declared. Fifth detector
 this session whose first version was wrong; every one caught by looking at the
 hits rather than the count.
+
+
+---
+
+## Tick 12 — the CSV a host most likely owns could not be imported
+
+Auditing the Mac Live files for the silent-failure pattern (`try?` + bare
+`return`) that produced the AV and print bugs found two more, one of them very
+likely in practice:
+
+**CSV import assumed UTF-8.** Excel on Windows commonly writes **UTF-16LE with a
+BOM**, and older exports are Latin-1. The reader was
+`try? String(contentsOf: url, encoding: .utf8)` with a bare `return`, so the most
+likely CSV a pub host owns imported **nothing at all** — no round, no error, no
+explanation. A CSV that parsed to zero questions was also silent; both now say
+what happened and what to do.
+
+**Results CSV export was `try? csv.data(using:)?.write(to: url)`** — a Save
+button that does nothing when the write fails, discovered only when the file is
+not there afterwards.
+
+**My replacement was wrong twice, and the tests caught both.**
+
+1. UTF-8 decoding of UTF-16LE bytes frequently *succeeds* — a NUL is a valid
+   UTF-8 scalar — so it returned `"p\0r\0o\0m\0p\0t"`: text to the type
+   system, mojibake to a reader, and the UTF-16 branch never ran. Fixed by
+   checking the BOM first and rejecting any decode containing a NUL.
+2. Then Latin-1 broke: a short even-length Latin-1 line decodes as UTF-16LE into
+   perfectly "plausible" CJK mojibake. UTF-16 without a BOM is now only attempted
+   when the bytes actually look like it (interleaved NULs above 20%).
+
+Nine tests, including files genuinely written as UTF-16LE and Latin-1 — the only
+way to know the reader handles them. `LiveCSV` is extracted from the builder view
+for the same reason `LiveTeam` was: it is the piece most worth testing and the
+view drags a whole editor in with it. Apple suite 204 → 213.

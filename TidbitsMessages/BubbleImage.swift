@@ -37,8 +37,12 @@ enum BubbleImage {
             coral.setFill()
             ctx.fill(CGRect(x: 0, y: 0, width: size.width, height: 84))
 
-            draw("TIDBITS", at: CGPoint(x: 28, y: 26),
-                 font: .systemFont(ofSize: 30, weight: .black), color: .white)
+            // CENTRED, not tucked at x=28. Messages draws the app's own icon over the
+            // top-LEFT corner of the bubble, so a left-aligned wordmark sits directly
+            // behind it and the brand reads as a smudge. Centring puts it in clear
+            // space regardless of how large the system draws that icon.
+            drawCentered("TIDBITS", centerX: size.width / 2, y: 26,
+                         font: .systemFont(ofSize: 30, weight: .black), color: .white)
 
             let done = state.isFinished
             let progress = done
@@ -58,14 +62,19 @@ enum BubbleImage {
                  font: .systemFont(ofSize: 20, weight: .semibold),
                  color: UIColor(red: 0.42, green: 0.39, blue: 0.36, alpha: 1))
 
+            // The call to action follows the content instead of sitting at a fixed
+            // y=254. With four or fewer players that left a band of dead space in the
+            // middle of the bubble; with more, the "+N more" line crowded it.
+            var cursor: CGFloat = 190
             if state.players.count > 4 {
-                draw("+\(state.players.count - 4) more", at: CGPoint(x: 28, y: 190),
+                draw("+\(state.players.count - 4) more", at: CGPoint(x: 28, y: cursor),
                      font: .systemFont(ofSize: 17, weight: .medium),
                      color: UIColor(red: 0.42, green: 0.39, blue: 0.36, alpha: 1))
+                cursor += 30
             }
 
             draw(done ? "Tap to see the answers" : "Tap to play",
-                 at: CGPoint(x: 28, y: 254),
+                 at: CGPoint(x: 28, y: cursor + 14),
                  font: .systemFont(ofSize: 21, weight: .bold), color: coral)
         }
     }
@@ -74,5 +83,15 @@ enum BubbleImage {
         (s as NSString).draw(at: p, withAttributes: [
             .font: font, .foregroundColor: color,
         ])
+    }
+
+    /// Draw horizontally centred on `centerX`. Measured rather than guessed — the
+    /// wordmark's width changes with the system font, and a hardcoded offset would
+    /// drift off-centre on a device with a different text size.
+    private static func drawCentered(_ s: String, centerX: CGFloat, y: CGFloat,
+                                     font: UIFont, color: UIColor) {
+        let attrs: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: color]
+        let w = (s as NSString).size(withAttributes: attrs).width
+        (s as NSString).draw(at: CGPoint(x: centerX - w / 2, y: y), withAttributes: attrs)
     }
 }

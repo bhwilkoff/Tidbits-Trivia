@@ -37,7 +37,7 @@ class this scope exists to remove.
 | 1 | Notability floor — score every subject by recognisability; quarantine the tail | ✅ | Shape-aware, not global: 9,290 rows. Every floor read at its boundary; the released/founded floor was **abandoned** because the read disproved it |
 | 2 | Birth/death-year questions about non-household names | ✅ | 6,499 removed below a 3M qrank floor read at the boundary (below: Bruno Fernandes, Alba Baptista; above: Ben Stiller, Ethan Hawke) |
 | 3 | Missing-context detector (the prompt does not stand alone) | ✅ | `bare-description` (132) + `fictional-chronology` (554) + `list-article-option` (33). Two crude versions were discarded first — see below |
-| 4 | Ambiguous-distractor detector (two options equally defensible) | ⏳ | |
+| 4 | Ambiguous-distractor detector (two options equally defensible) | ✅ | No ambiguity found — but the search found 40 outright WRONG answers instead. See tick 9. |
 | 5 | Controversy/repellent screen | ✅ | `repellent` check: 87 rows, **all 94 candidates read in full** before writing |
 | 6 | Read a stratified sample by hand after EVERY bulk pass | ✅ | done for every pass below |
 
@@ -337,3 +337,36 @@ was what caught it.
 **Windows verified on `windows-latest`** (run 33558017525): the builder render
 shows "Audio round… / Video round…" and the round bar **wrapped to a second
 line**, which is §6.3b working rather than being asserted.
+
+
+---
+
+## Tick 9 — the ambiguous-distractor pass found something worse
+
+The hypothesis was "two options are equally defensible". Measured against the
+source's own numbers, that class is **essentially absent**: zero options that
+alias each other, zero superlatives with a tie at the top, and only 2 of 8,818
+where the top two are within 5%. The corpus is not ambiguous.
+
+What the same measurement found instead: **40 superlative questions whose
+claimed answer is not the extreme.**
+
+> *"Which of these covers the most land?"* — claims **New York City** (1,213 km²)
+> over **London** (1,572 km²).
+> *"Which of these four measures longest?"* — claims the **Danube** (2,850) over
+> the **Nile** (6,650).
+> *"Largest of the four by area?"* — claims **Shanghai** (6,341 km²) over
+> **Slovakia** (49,035 km²).
+
+A player who answers correctly is marked **wrong**, which is the worst thing a
+quiz can do to someone. All 40 removed (`CORPUS-SUPERLATIVE-WRONG`).
+
+**The first cut ignored units** and "found" hits like Machu Picchu (32,500
+hectares) beating Sequoia National Park (1,635 km²) — where the claim was
+actually right. Comparing only within a single unit is what makes the check
+sound. Reading the survivors also showed a second failure mode inside the same
+40: sometimes the claim is fine and the SOURCE VALUE is wrong (the Great Barrier
+Reef recorded at 34.9 million km²). Both make the question unplayable, so both go.
+
+99,756 → 99,716. Fourth detector this session whose first version was wrong, and
+the fourth caught by reading rather than by the count.

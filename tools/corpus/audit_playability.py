@@ -393,6 +393,46 @@ def check_list_article_option(rows, ctx):
     return out
 
 
+SUP_PROP = re.compile(r"^sup:(P\d+):")
+
+
+def check_superlative_wrong(rows, ctx):
+    """A superlative question whose claimed answer is not the extreme.
+
+    "Which of these covers the most land? — New York City / London / ..." claims
+    New York City (1,213 km2) over London (1,572 km2). A player who answers
+    correctly is marked WRONG, which is the worst thing a quiz can do.
+
+    Checked against the source's own numbers, comparing only within a single unit.
+    A first pass ignored units and reported 40 hits including "Machu Picchu 32,500"
+    beating "Sequoia National Park 1,635" — hectares against square kilometres.
+    Reading them is also what showed that some rows are broken the OTHER way: the
+    source value itself is wrong (the Great Barrier Reef at 34.9 million km2). Both
+    make the question unplayable, so both go.
+    """
+    numbers = (ctx or {}).get("numbers", {})
+    out = []
+    for r in rows:
+        m = SUP_PROP.match(r.id or "")
+        if not m:
+            continue
+        prop = m.group(1)
+        opts = [o for o in r.opts if o]
+        vals = [(o, numbers.get(o, {}).get(prop)) for o in opts]
+        if len(vals) < 4 or any(v is None for _, v in vals):
+            continue
+        if len({v[1] for _, v in vals}) > 1:   # mixed units — not comparable
+            continue
+        nums = {o: v[0] for o, v in vals}
+        top = max(nums.values())
+        claimed = nums.get(r.answer)
+        if claimed is None or claimed == top:
+            continue
+        winner = next(o for o, v in nums.items() if v == top)
+        out.append((r, f"claims {r.answer} but {winner} is the extreme"))
+    return out
+
+
 CHECKS = {
     "bare-description": (check_bare_description,
                          "CORPUS-BARE-DESC: a raw Wikidata description used as the whole clue — unanswerable"),
@@ -406,6 +446,8 @@ CHECKS = {
                              "CORPUS-FICTIONAL-CHRONOLOGY: asks when a fictional character was born or founded — no answer a player can reason to"),
     "list-article-option": (check_list_article_option,
                             "CORPUS-LIST-ARTICLE: a Wikimedia list article offered as an answer option"),
+    "superlative-wrong": (check_superlative_wrong,
+                          "CORPUS-SUPERLATIVE-WRONG: the claimed answer is not the extreme — a correct answer is marked wrong"),
     "founded-misuse": (check_founded_misuse,
                        "CORPUS-FOUNDED-MISUSE: \"founded\" applied to something that was never founded — no single defensible answer"),
     "self-answering": (check_self_answering,
@@ -433,13 +475,20 @@ def main() -> int:
 
     db = sqlite3.connect(CORPUS)
     rows = load(db)
-    descriptions, p31, qrank = {}, {}, {}
+    descriptions, p31, qrank, numbers = {}, {}, {}, {}
     if SOURCE.exists():
         src = sqlite3.connect(SOURCE)
         descriptions = {t: d or "" for t, d in src.execute("select title, description from prose")}
         p31 = {t: c or "" for t, c in src.execute("select title, p31 from subject")}
         qrank = {t: q or 0 for t, q in src.execute("select title, qrank from subject")}
-    ctx = {"descriptions": descriptions, "p31": p31, "qrank": qrank}
+        titles = dict(src.execute("select qid, title from subject"))
+        numbers = {}
+        for qid, prop, val, unit in src.execute(
+                "select qid, prop, value, unit from fact where value is not null"):
+            t = titles.get(qid)
+            if t:
+                numbers.setdefault(t, {})[prop] = (val, unit or "")
+    ctx = {"descriptions": descriptions, "p31": p31, "qrank": qrank, "numbers": numbers}
     # tombstones.json is keyed by SHAPE ({"corpus": {...}, "match": {...}}) and
     # `genguard` reads it that way; a flat write at the top level silently
     # corrupts every shape's guard.

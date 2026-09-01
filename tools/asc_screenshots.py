@@ -109,6 +109,50 @@ def editable_version(app_id, create=None):
     return made["data"]
 
 
+def submit_for_review(app_id, version_id):
+    """Submit via reviewSubmissions, the current API.
+
+    The obvious endpoint is a trap: POST /v1/appStoreVersionSubmissions answers
+    403 "does not allow 'CREATE'. Allowed operation is: DELETE" — it is deprecated,
+    not broken, and the replacement is a three-step flow. Apple's model is now a
+    review SUBMISSION that carries one or more ITEMS (the version, in-app purchases,
+    and so on) and is then flipped to submitted, which is why one version cannot be
+    sent on its own any more.
+    """
+    open_states = {"READY_FOR_REVIEW", "WAITING_FOR_REVIEW", "IN_REVIEW", "UNRESOLVED_ISSUES"}
+    existing = call(f"v1/reviewSubmissions?filter[app]={app_id}"
+                    "&filter[platform]=IOS&limit=50")
+    sub = next((r for r in existing["data"]
+                if r["attributes"].get("state") in open_states), None)
+    if sub and sub["attributes"]["state"] != "READY_FOR_REVIEW":
+        raise SystemExit(f"a review submission is already {sub['attributes']['state']} — "
+                         f"nothing to do")
+    if sub is None:
+        sub = call("v1/reviewSubmissions", method="POST", body={"data": {
+            "type": "reviewSubmissions",
+            "attributes": {"platform": "IOS"},
+            "relationships": {"app": {"data": {"type": "apps", "id": app_id}}}}})["data"]
+        print(f"opened review submission {sub['id']}")
+
+    items = call(f"v1/reviewSubmissions/{sub['id']}/items?limit=50")
+    already = any((i.get("relationships", {}).get("appStoreVersion", {}).get("data") or {})
+                  .get("id") == version_id for i in items["data"])
+    if not already:
+        call("v1/reviewSubmissionItems", method="POST", body={"data": {
+            "type": "reviewSubmissionItems",
+            "relationships": {
+                "reviewSubmission": {"data": {"type": "reviewSubmissions", "id": sub["id"]}},
+                "appStoreVersion": {"data": {"type": "appStoreVersions", "id": version_id}}}}})
+        print("added the version as a submission item")
+    else:
+        print("version already an item on this submission")
+
+    call(f"v1/reviewSubmissions/{sub['id']}", method="PATCH", body={"data": {
+        "type": "reviewSubmissions", "id": sub["id"],
+        "attributes": {"submitted": True}}})
+    print("SUBMITTED FOR REVIEW")
+
+
 def main():
     global TOK
     ap = argparse.ArgumentParser()
@@ -200,11 +244,7 @@ def main():
         return
 
     if a.submit:
-        call("v1/appStoreVersionSubmissions", method="POST", body={"data": {
-            "type": "appStoreVersionSubmissions",
-            "relationships": {"appStoreVersion": {"data": {
-                "type": "appStoreVersions", "id": ver["id"]}}}}})
-        print("SUBMITTED FOR REVIEW")
+        submit_for_review(app_id, ver["id"])
         return
 
     sets = call(f"v1/appStoreVersionLocalizations/{loc['id']}/appScreenshotSets?limit=50")

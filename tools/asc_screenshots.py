@@ -78,6 +78,11 @@ def upload_bytes(op, data):
 EDITABLE = {"PREPARE_FOR_SUBMISSION", "DEVELOPER_REJECTED", "REJECTED",
             "METADATA_REJECTED", "INVALID_BINARY", "READY_FOR_REVIEW"}
 
+# A version already in review cannot take new screenshots, but releaseType and the
+# review contact CAN still be changed — Apple treats those as release logistics
+# rather than reviewable content.
+IN_FLIGHT = {"WAITING_FOR_REVIEW", "IN_REVIEW", "PENDING_DEVELOPER_RELEASE"}
+
 
 def versions(app_id):
     vs = call(f"v1/apps/{app_id}/appStoreVersions?limit=50"
@@ -85,15 +90,16 @@ def versions(app_id):
     return vs["data"]
 
 
-def editable_version(app_id, create=None):
+def editable_version(app_id, create=None, allow_in_flight=False):
     """The version currently being prepared, not the one that is already live.
 
     A build uploaded to TestFlight does NOT create one of these — that is a separate
     record, and its absence is why this failed the first time with only a
     READY_FOR_SALE version to show for it.
     """
+    allowed = EDITABLE | (IN_FLIGHT if allow_in_flight else set())
     for v in versions(app_id):
-        if v["attributes"]["appStoreState"] in EDITABLE:
+        if v["attributes"]["appStoreState"] in allowed:
             return v
     if not create:
         states = [(v["attributes"]["versionString"], v["attributes"]["appStoreState"])
@@ -101,11 +107,15 @@ def editable_version(app_id, create=None):
         raise SystemExit(
             f"no editable iOS version; recent: {states}\n"
             f"pass --create-version X.Y.Z to open one.")
+    # AFTER_APPROVAL by default: a version that sits approved-but-unreleased waiting
+    # for someone to press a button is a silent stall, and this project has already
+    # lost days to exactly that on the Microsoft Store.
     made = call("v1/appStoreVersions", method="POST", body={"data": {
         "type": "appStoreVersions",
-        "attributes": {"platform": "IOS", "versionString": create},
+        "attributes": {"platform": "IOS", "versionString": create,
+                       "releaseType": "AFTER_APPROVAL"},
         "relationships": {"app": {"data": {"type": "apps", "id": app_id}}}}})
-    print(f"created iOS version {create}")
+    print(f"created iOS version {create} (releaseType AFTER_APPROVAL)")
     return made["data"]
 
 
@@ -316,6 +326,8 @@ def main():
                     help="submit the version for App Review")
     ap.add_argument("--status", action="store_true",
                     help="report the version's readiness and exit")
+    ap.add_argument("--release-type", choices=["AFTER_APPROVAL", "MANUAL"],
+                    help="how the version goes live once approved")
     ap.add_argument("--audit", action="store_true",
                     help="full pre-submission audit of the newest version; exits non-zero on a blocker")
     a = ap.parse_args()
@@ -335,7 +347,11 @@ def main():
             print(f"  {v['attributes']['versionString']:10} "
                   f"{v['attributes']['appStoreState']}")
         return
-    ver = editable_version(app_id, create=a.create_version)
+    # Changing only the release type is legal on a version already in review.
+    only_release_type = bool(a.release_type) and not (a.set or a.attach_build
+                                                     or a.release_notes or a.submit)
+    ver = editable_version(app_id, create=a.create_version,
+                           allow_in_flight=only_release_type)
     print(f"app {app_id} · version {ver['attributes']['versionString']} "
           f"({ver['attributes']['appStoreState']})")
 
@@ -365,6 +381,12 @@ def main():
         call(f"v1/appStoreVersions/{ver['id']}/relationships/build", method="PATCH",
              body={"data": {"type": "builds", "id": b["id"]}})
         print(f"attached build {a.attach_build}")
+
+    if a.release_type:
+        call(f"v1/appStoreVersions/{ver['id']}", method="PATCH", body={"data": {
+            "type": "appStoreVersions", "id": ver["id"],
+            "attributes": {"releaseType": a.release_type}}})
+        print(f"release type -> {a.release_type}")
 
     if a.release_notes:
         call(f"v1/appStoreVersionLocalizations/{loc['id']}", method="PATCH", body={"data": {

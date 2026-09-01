@@ -37,6 +37,12 @@ on:
         required: false
         default: ''
         type: string
+      release_type:
+        description: 'How it goes live once approved'
+        required: false
+        default: ''
+        type: choice
+        options: ['', 'AFTER_APPROVAL', 'MANUAL']
       submit:
         description: 'Submit for App Review (withdrawable in Connect afterwards)'
         required: true
@@ -81,6 +87,7 @@ jobs:
           CREATE_VERSION: ${{ inputs.create_version }}
           ATTACH_BUILD: ${{ inputs.attach_build }}
           RELEASE_NOTES: ${{ inputs.release_notes }}
+          RELEASE_TYPE: ${{ inputs.release_type }}
           SUBMIT: ${{ inputs.submit }}
         run: |
           set -euo pipefail
@@ -95,6 +102,7 @@ jobs:
           if [ -n "$CREATE_VERSION" ]; then ARGS+=(--create-version "$CREATE_VERSION"); fi
           if [ -n "$ATTACH_BUILD" ];   then ARGS+=(--attach-build "$ATTACH_BUILD"); fi
           if [ -n "$RELEASE_NOTES" ];  then ARGS+=(--release-notes "$RELEASE_NOTES"); fi
+          if [ -n "$RELEASE_TYPE" ];   then ARGS+=(--release-type "$RELEASE_TYPE"); fi
 
           case "$MODE" in
             status)  ARGS+=(--status) ;;

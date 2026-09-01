@@ -335,6 +335,64 @@ def check_low_interest_shape(rows, ctx):
     return out
 
 
+# Wikidata classes for things that do not have a birth or a founding date in any
+# sense a player can reason about.
+FICTIONAL_CLASSES = {
+    "Q15632617",   # fictional human
+    "Q95074",      # fictional character
+    "Q3658341",    # literary character
+    "Q15773347",   # film character
+    "Q15632618",   # fictional organism
+    "Q1114461",    # comics character
+    "Q97498056",   # animated character
+}
+WIKIMEDIA_LIST = "Q13406463"
+BIRTH_OR_FOUNDING = re.compile(r"\b(born|founded|established|birth)\b", re.I)
+
+
+def check_fictional_chronology(rows, ctx):
+    """A chronology question about when a FICTIONAL character was born or founded.
+
+    "Which of these people was born first? — Scrooge McDuck / Punisher / Cedric
+    Diggory / Voldemort". A character has a creation date, not a birth date, and
+    whatever Wikidata carries is in-universe canon no player can reason from. An
+    earlier pass fixed the wording for single-subject rows (characters get
+    "created", bands get "formed") but never looked at the COMPARISON template,
+    where the whole question is the chronology.
+
+    Scoped to `chron`. In a `src` prose clue a fictional option is an ordinary
+    distractor, and the KIND-MISMATCH gate already covers those.
+    """
+    classes = (ctx or {}).get("p31", {})
+    out = []
+    for r in rows:
+        if r.tmpl != "chron" or not BIRTH_OR_FOUNDING.search(r.prompt or ""):
+            continue
+        opts = [o for o in r.opts if o]
+        fictional = [o for o in opts
+                     if set((classes.get(o, "") or "").split(",")) & FICTIONAL_CLASSES]
+        if fictional:
+            out.append((r, f"{len(fictional)} of {len(opts)} options are fictional characters"))
+    return out
+
+
+def check_list_article_option(rows, ctx):
+    """A Wikimedia LIST ARTICLE offered as an answer option.
+
+    "Which one below is the oldest? — War and Peace / Rocky / James Bond films /
+    List of Marvel Cinematic Universe films". A list article is a page, not a
+    thing with an age, so the option cannot be reasoned about at all.
+    """
+    classes = (ctx or {}).get("p31", {})
+    out = []
+    for r in rows:
+        bad = [o for o in r.opts
+               if o and WIKIMEDIA_LIST in set((classes.get(o, "") or "").split(","))]
+        if bad:
+            out.append((r, f"list article as an option: {bad[0]}"))
+    return out
+
+
 CHECKS = {
     "bare-description": (check_bare_description,
                          "CORPUS-BARE-DESC: a raw Wikidata description used as the whole clue — unanswerable"),
@@ -344,6 +402,10 @@ CHECKS = {
                           "CORPUS-AMBIGUOUS: a bare given name with several equally valid referents"),
     "low-interest-shape": (check_low_interest_shape,
                            "CORPUS-LOW-INTEREST: a question shape no room can play, or a subject below the recognition floor"),
+    "fictional-chronology": (check_fictional_chronology,
+                             "CORPUS-FICTIONAL-CHRONOLOGY: asks when a fictional character was born or founded — no answer a player can reason to"),
+    "list-article-option": (check_list_article_option,
+                            "CORPUS-LIST-ARTICLE: a Wikimedia list article offered as an answer option"),
     "founded-misuse": (check_founded_misuse,
                        "CORPUS-FOUNDED-MISUSE: \"founded\" applied to something that was never founded — no single defensible answer"),
     "self-answering": (check_self_answering,

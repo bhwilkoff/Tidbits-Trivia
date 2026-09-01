@@ -36,7 +36,7 @@ class this scope exists to remove.
 | 0 | **CLUE-CROSSED (wide)** — one prose clue pasted onto two different subjects | ✅ | `audit_clue_crossed.py`: 248 prompts on >1 subject, 247 losers decided by lead-overlap, 12 lowest-margin read by hand and all correct |
 | 1 | Notability floor — score every subject by recognisability; quarantine the tail | ✅ | Shape-aware, not global: 9,290 rows. Every floor read at its boundary; the released/founded floor was **abandoned** because the read disproved it |
 | 2 | Birth/death-year questions about non-household names | ✅ | 6,499 removed below a 3M qrank floor read at the boundary (below: Bruno Fernandes, Alba Baptista; above: Ben Stiller, Ethan Hawke) |
-| 3 | Missing-context detector (the prompt does not stand alone) | 🟡 | `bare-description` shipped (132 rows); the wider class is still open |
+| 3 | Missing-context detector (the prompt does not stand alone) | ✅ | `bare-description` (132) + `fictional-chronology` (554) + `list-article-option` (33). Two crude versions were discarded first — see below |
 | 4 | Ambiguous-distractor detector (two options equally defensible) | ⏳ | |
 | 5 | Controversy/repellent screen | ✅ | `repellent` check: 87 rows, **all 94 candidates read in full** before writing |
 | 6 | Read a stratified sample by hand after EVERY bulk pass | ✅ | done for every pass below |
@@ -306,3 +306,34 @@ hand before this row goes green.
 
 `LiveTeam` moved out of the 1,250-line cockpit view into the model file, so the
 results sheet is testable without pulling a whole view into the test target.
+
+
+---
+
+## Tick 8 — 2026-09-01
+
+**587 more rows out (100,343 → 99,756).**
+
+| Class | Rows | Why |
+|---|---|---|
+| CORPUS-FICTIONAL-CHRONOLOGY | 554 | *"Which of these people was born first? — Scrooge McDuck / Punisher / Cedric Diggory / Voldemort"*. A character has a creation date, not a birth date; whatever Wikidata holds is in-universe canon nobody can reason from. The earlier pass fixed single-subject wording (characters "created", bands "formed") but never looked at the COMPARISON template, where the chronology **is** the question. |
+| CORPUS-LIST-ARTICLE | 33 | *"Which one below is the oldest? — War and Peace / Rocky / James Bond films / **List of Marvel Cinematic Universe films**"*. A list article is a page, not a thing with an age. |
+
+**Two crude detectors discarded before either was written.** I started from
+"comparison options are different KINDS of thing" and matched regexes over the
+articles' prose descriptions: 949 hits at roughly 30% precision — Goldman Sachs
+vs JPMorgan flagged as mixed, "Ku Klux Klan" typed as a *band*. Switching to
+structured Wikidata `p31` cut it to 558 at ~50%, still not good enough, because
+unlabelled QIDs made four animated films look like four different kinds.
+
+The reframe is the whole finding: the defect was never "mixed kinds", it was
+**birth/founding language applied to fiction**, which the kind-mismatch framing
+was only catching incidentally. Narrowed to that, precision is effectively 100%
+and every sampled row is 4-of-4 fictional. That is three sessions running where
+the first detector was measuring quality rather than defects
+(`detector-that-fires-on-quality`), and the third where reading — not the count —
+was what caught it.
+
+**Windows verified on `windows-latest`** (run 33558017525): the builder render
+shows "Audio round… / Video round…" and the round bar **wrapped to a second
+line**, which is §6.3b working rather than being asserted.

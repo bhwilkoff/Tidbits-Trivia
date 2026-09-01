@@ -153,9 +153,33 @@ final class MessagesViewController: MSMessagesAppViewController {
         message.url = url
         message.summaryText = caption
 
-        conversation.insert(message) { [weak self] error in
-            if error != nil { return }
-            self?.dismiss()
+        // SEND, not insert.
+        //
+        // `insertMessage:` only STAGES a message in the Messages input field — the
+        // player then has to press the send arrow. For a five-question round that is
+        // five extra deliberate sends each, and it makes answering feel like composing
+        // a message rather than tapping a button.
+        //
+        // `sendMessage:` (iOS 11+) sends directly, subject to two conditions in
+        // Apple's header: "The app must be visible and have had a recent touch
+        // interaction since either last launch or last send". Both hold here — the
+        // player just tapped an option, and the extension is on screen.
+        //
+        // A message per turn is still inherent: there is no server and extensions get
+        // no background execution, so the message IS the transport. What changes is
+        // that the turn costs one tap instead of two, and MSSession keeps it to one
+        // bubble rather than one per answer.
+        conversation.send(message) { [weak self] error in
+            guard let self else { return }
+            guard error != nil else {
+                self.dismiss()
+                return
+            }
+            // Fall back to staging. `send` can legitimately refuse — the touch-recency
+            // rule is not something this code can guarantee — and a refused send with
+            // no fallback would drop the player's answer with nothing on screen to say
+            // so. Staged, the worst case is the old behaviour: press send.
+            conversation.insert(message) { _ in self.dismiss() }
         }
     }
 

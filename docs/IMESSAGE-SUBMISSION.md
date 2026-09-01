@@ -89,7 +89,7 @@ The whole ship is a CLI now — no console session. The general method, includin
 ```bash
 tools/capture-imessage-screenshots.sh all          # render + capture, exact ASC sizes
 gh workflow run appstore-build.yml -f platform=ios # build + upload the binary
-gh workflow run imessage-screenshots.yml \
+gh workflow run appstore-submit.yml \
   -f mode=upload -f create_version=1.7.0 -f attach_build=123 \
   -f release_notes="..." -f submit=true
 ```

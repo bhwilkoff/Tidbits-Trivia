@@ -27,7 +27,7 @@ tools/capture-imessage-screenshots.sh all              # iMessage sets
 tools/capture-screenshots.sh ios && tools/capture-screenshots.sh ipad   # app sets
 
 # 4. Open the version, attach the build, set the notes, submit.
-gh workflow run imessage-screenshots.yml \
+gh workflow run appstore-submit.yml \
   -f mode=upload \
   -f create_version=1.7.0 \
   -f attach_build=123 \
@@ -38,13 +38,10 @@ gh workflow run imessage-screenshots.yml \
 Then confirm it actually landed — the tool's own success message is not evidence:
 
 ```bash
-gh workflow run imessage-screenshots.yml -f mode=audit
+gh workflow run appstore-submit.yml -f mode=audit
 ```
 
 `mode=audit` should end with `no blockers found` and a state of `WAITING_FOR_REVIEW`.
-
-> The workflow is named for screenshots because that is what it started as. It now
-> carries the whole submission; the name is the only misleading thing about it.
 
 ---
 
@@ -73,7 +70,7 @@ on the Microsoft Store (see `windows-store-two-silent-stalls`).
 To change it, including on a version already in review:
 
 ```bash
-gh workflow run imessage-screenshots.yml -f mode=status -f release_type=MANUAL
+gh workflow run appstore-submit.yml -f mode=status -f release_type=MANUAL
 ```
 
 Release type is release logistics, not reviewable content, so Apple lets it change
@@ -105,7 +102,7 @@ Deprecated, not broken — and the message never says so. Submitting is now thre
 create a `reviewSubmissions`, add the version as a `reviewSubmissionItems`, then PATCH
 `submitted: true`. Apple's model is a submission carrying one or more items (the
 version, IAPs, and so on), which is also why a version can no longer be sent alone.
-`tools/asc_screenshots.py --submit` does all three.
+`tools/asc_submit.py --submit` does all three.
 
 **3. A new extension or app target needs its App ID registered.**
 Signing dies with `bundle id not found in App Store Connect: ... (register it first)`.
@@ -133,7 +130,7 @@ through raw fails with `Unable to load PEM file ... MalformedFraming`).
 
 ## When something fails
 
-`tools/asc_screenshots.py` prints Apple's error body verbatim rather than a summary.
+`tools/asc_submit.py` prints Apple's error body verbatim rather than a summary.
 Read it. Two of the four traps above were solved by reading the rejection and one by
 reading Apple's format reference; none was solved by guessing.
 

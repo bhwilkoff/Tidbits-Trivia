@@ -7,9 +7,9 @@ console, but an iMessage app needs its OWN sets and Connect refuses the version
 without them ("You must upload an iMessage screenshot").
 
 Runs in CI, not here. The ASC issuer id lives in GitHub secrets and should stay
-there — `.github/workflows/imessage-screenshots.yml` passes it in.
+there — `.github/workflows/appstore-submit.yml` passes it in.
 
-    ASC_KEY_ID=... ASC_ISSUER_ID=... python3 tools/asc_screenshots.py \
+    ASC_KEY_ID=... ASC_ISSUER_ID=... python3 tools/asc_submit.py \
         --set IMESSAGE_APP_IPHONE_67=branding/store-screenshots/imessage-iphone-6.9 \
         --set IMESSAGE_APP_IPAD_PRO_3GEN_129=branding/store-screenshots/imessage-ipad-13
 

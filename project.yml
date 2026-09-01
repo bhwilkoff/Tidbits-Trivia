@@ -55,6 +55,11 @@ targets:
         com.apple.developer.associated-domains:
           - applinks:tidbitstrivia.com
           - applinks:www.tidbitstrivia.com
+    dependencies:
+      # platformFilter keeps the extension out of the tvOS and macOS slices of this
+      # universal target — embedding an iOS-only extension there fails the build.
+      - target: TidbitsMessages
+        platformFilter: iOS
     # Local StoreKit config so IAP purchases work in the simulator without App Store
     # Connect (the products still ship for real via App Store Connect at go-live).
     scheme:
@@ -159,12 +164,54 @@ targets:
   # 60-70% the universal target exists to share, so it is the right thing under test.
   # macOS-only because these are pure-logic tests: no simulator boot, no app install,
   # so `xcodebuild test -destination platform=macOS` runs in seconds and is CI-cheap.
+  # ---------------------------------------------------------------- iMessage
+  # Tidbits in a message thread (docs/IMESSAGE-FEASIBILITY.md). iOS ONLY — the
+  # Messages framework does not exist on tvOS or macOS, so this is a separate target
+  # rather than another slice of the universal app.
+  #
+  # It shares NO code with Core on purpose. Core carries SwiftData, StoreKit and the
+  # networking stack, and an app extension runs under a far tighter memory ceiling
+  # than its host app — this project has already taken a Play rejection from a 299MB
+  # heap peak and a repeat from eagerly parsing JSON at boot. The extension gets a
+  # self-contained model plus an 849KB question pack instead
+  # (tools/gen_imessage_pack.py).
+  TidbitsMessages:
+    type: app-extension.messages
+    supportedDestinations: [iOS]
+    sources:
+      - path: TidbitsMessages
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.learningischange.tidbitstrivia.Messages
+        PRODUCT_NAME: Tidbits
+        INFOPLIST_KEY_CFBundleDisplayName: Tidbits
+        # The iMessage app icon is its OWN asset set with its own sizes — the iOS
+        # AppIcon is not valid here and App Store Connect rejects a build missing it.
+        ASSETCATALOG_COMPILER_APPICON_NAME: iMessage App Icon
+        # Same light-only rule as the app: Tidbits is a fixed cream design with no
+        # dark variants, and without this a dark-mode phone renders cream-on-white.
+        INFOPLIST_KEY_UIUserInterfaceStyle: Light
+    info:
+      path: TidbitsMessages/Info.plist
+      properties:
+        CFBundleDisplayName: Tidbits
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.message-payload-provider
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).MessagesViewController
+
   TidbitsTriviaTests:
     type: bundle.unit-test
     supportedDestinations: [macOS]
     sources:
       - path: TidbitsTriviaTests
       - path: TidbitsTrivia/Core
+      # The iMessage WIRE FORMAT, tested here rather than on a device: it is pure
+      # Foundation, and it is a compatibility surface the moment two app versions
+      # share one thread. The rest of TidbitsMessages imports Messages/UIKit and
+      # cannot build for this macOS-only test bundle.
+      - path: TidbitsMessages/RoundState.swift
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.learningischange.tidbitstrivia.CoreTests

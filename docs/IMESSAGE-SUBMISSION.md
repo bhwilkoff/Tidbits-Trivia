@@ -84,7 +84,7 @@ required pressing Send because the code used `insertMessage:` rather than
 **1.7.0 (123) is WAITING_FOR_REVIEW** as of 2026-09-01, with the iMessage extension,
 8 iMessage screenshots (4 iPhone + 4 iPad) and release notes.
 
-The whole ship is a CLI now — no console session:
+The whole ship is a CLI now — no console session. The general method, including the traps, lives in **`docs/APPLE-SUBMISSION-CLI.md`**; the iMessage-specific shape is:
 
 ```bash
 tools/capture-imessage-screenshots.sh all          # render + capture, exact ASC sizes

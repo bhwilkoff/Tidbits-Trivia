@@ -33,7 +33,7 @@ these patterns; invoke the skill when its trigger matches.
 | Designing/changing shared backend data the clients consume | `shared-data-plane-contract` |
 | Video/audio streaming from hosts you don't control | `resilient-media-streaming` |
 | Sync, sign-in, favorites/progress across devices | `per-ecosystem-sync-islands` |
-| Preparing an Apple store submission (iOS / iPadOS / macOS / tvOS) | `cloud-appstore-submission` + `docs/CLOUD-SUBMISSION.md` (DEFAULT = cloud build `gh workflow run appstore-build.yml`; the beta-macOS dev box can't ship locally) |
+| Preparing an Apple store submission (iOS / iPadOS / macOS / tvOS) | `docs/APPLE-SUBMISSION-CLI.md` FIRST — the FULL ship is CLI now, including creating the version and submitting for review (no Connect session). Plus `cloud-appstore-submission` + `docs/CLOUD-SUBMISSION.md` for the build leg. |
 | Preparing a Play submission (Android AAB) | `play-cli-submission` (CLI-only: the `edits` transaction via `tools/submit-play.sh`) |
 | Preparing a Microsoft Store submission (Windows MSIX) | `docs/WINDOWS-STORE-SUBMISSION.md` (DEFAULT = `gh workflow run windows-store.yml -f submit=true -f commit=true`; bootstrap is one-time and DONE — first submission is in certification) |
 | Designing / building the macOS app | `macos-platform-patterns` FIRST (NavigationSplitView shell, player-as-root, AppKit seams, sandbox) |

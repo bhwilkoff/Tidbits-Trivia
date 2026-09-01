@@ -3,7 +3,6 @@ import Foundation
 import PDFKit
 import SwiftUI
 import Testing
-@testable import TidbitsTrivia
 
 /// The printable fallback — the Wi-Fi-dies contingency (macOS-DESIGN §A5.2).
 ///

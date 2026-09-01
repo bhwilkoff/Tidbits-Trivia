@@ -62,6 +62,28 @@ if d["version"] != want:
 print(f"   ok: version {want} matches content ({len(d['questions']):,} questions)")
 PY2
 
+echo "--- 2c. bump the service-worker CACHE (the web shell serves cache-first)"
+python3 - <<'PY3'
+# sw.js serves the shell CACHE-FIRST, so a changed assets/corpus.json is invisible
+# to anyone who has ever loaded the site until `const CACHE` is bumped. The Pages
+# deploy has a guard for exactly this and it failed six pushes in a row while the
+# corpus was being culled, because the bump is a separate manual act nobody
+# remembers. Resync changes corpus.json, so resync bumps the cache.
+import pathlib, re, subprocess
+p = pathlib.Path("sw.js")
+s = p.read_text()
+m = re.search(r"const CACHE = 'tidbits-v(\d+)';", s)
+if not m:
+    print("   sw.js has no 'const CACHE = tidbits-vN' — not bumping"); raise SystemExit(0)
+# Only bump when corpus.json actually differs from HEAD, so a no-op resync is a no-op.
+changed = subprocess.run(["git", "diff", "--quiet", "HEAD", "--", "assets/corpus.json"]).returncode != 0
+if not changed:
+    print(f"   corpus.json unchanged — CACHE stays {m.group(0)[14:-2]}"); raise SystemExit(0)
+n = int(m.group(1)) + 1
+p.write_text(s.replace(m.group(0), f"const CACHE = 'tidbits-v{n}';"))
+print(f"   corpus.json changed -> CACHE bumped to tidbits-v{n}")
+PY3
+
 echo "--- 3. regenerate Daily golden (Apple swiftc + web node) and verify parity"
 sqlite3 TidbitsTrivia/Resources/corpus.sqlite "SELECT id FROM questions" > /tmp/rc-ids.txt
 # v2 (Decision 050) balances across categories, so the picker needs each id's

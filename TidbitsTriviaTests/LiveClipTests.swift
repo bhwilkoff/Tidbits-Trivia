@@ -2,7 +2,6 @@
 import AVFoundation
 import Foundation
 import Testing
-@testable import TidbitsTrivia
 
 /// The audio/video round's clip references.
 ///

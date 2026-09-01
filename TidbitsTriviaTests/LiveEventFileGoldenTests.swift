@@ -1,7 +1,6 @@
 #if os(macOS)
 import Foundation
 import Testing
-@testable import TidbitsTrivia
 
 /// LIVE-EVENT-FILE §5.1 — the golden document both stacks must round-trip.
 ///

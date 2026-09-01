@@ -1,7 +1,6 @@
 #if os(macOS)
 import Foundation
 import Testing
-@testable import TidbitsTrivia
 
 /// CSV import — the host's own question bank.
 ///

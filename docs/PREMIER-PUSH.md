@@ -462,3 +462,36 @@ Nine tests, including files genuinely written as UTF-16LE and Latin-1 — the on
 way to know the reader handles them. `LiveCSV` is extracted from the builder view
 for the same reason `LiveTeam` was: it is the piece most worth testing and the
 view drags a whole editor in with it. Apple suite 204 → 213.
+
+
+---
+
+## Ticks 13-15 — import/export was a one-way door, and the two clients disagreed
+
+**The column orders had diverged silently.** macOS wrote
+`prompt, correct, wrong1..3, [category], [difficulty], [explanation]`; Windows
+wrote `prompt, optionA..D, correct(1-4), [explanation]`. A Windows CSV on the Mac
+marked **Phrygia** correct when the answer was **Lydia**; a macOS CSV on Windows
+imported **nothing**, every row dropped because field 5 would not parse as 1-4.
+Both now read a named header in any order, both understand both legacy orders,
+and `docs/LIVE-EVENT-FILE.md` §6 is the contract.
+
+**There was no CSV question EXPORT at all.** A host could import a spreadsheet
+and never get their questions back into one — and a pub host revises their bank
+in Excel between weeks. "Export questions as CSV…" now writes the named header
+(§6.1), which is also the only shape the other platform cannot misread.
+
+**Three of my own bugs were caught by tests rather than by shipping:**
+
+1. The existing `Drops_malformed_rows` went red when my Windows heuristic sent
+   `Bad index,a,b,c,d,9,x` down the macOS path, turning it into a question with a
+   *category of "9"*. An integer in field 5 now means the Windows order whatever
+   its value.
+2. The export round-trip failed: the header branch prepended the answer to the
+   option columns that already contained it, giving five options, and `prefix(4)`
+   then dropped a real one.
+3. `splitCSVLine` toggled on every quote and never handled the `""` escape — so
+   the file the exporter had just written could not be read back. A prompt
+   containing a comma and a quoted phrase is now a test.
+
+Apple suite 218 → 222. Windows CSV suite 2 → 8.

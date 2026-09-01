@@ -247,6 +247,9 @@ struct LiveBuilderView_macOS: View {
         Menu {
             Button("Export event…") { exportEvent() }
             Button("Import event…") { importEvent() }
+            Divider()
+            Button("Export questions as CSV…") { exportQuestionsCSV() }
+                .disabled(working.totalQuestions == 0)
         } label: { Label("Event file", systemImage: "doc") }
             .fixedSize()
         Menu {
@@ -565,6 +568,21 @@ struct LiveBuilderView_macOS: View {
         alert.informativeText = error.localizedDescription
         alert.alertStyle = .warning
         alert.runModal()
+    }
+
+    /// Write the event's questions out as a CSV a spreadsheet can edit (§6.1).
+    /// The event file round-trips Tidbits-to-Tidbits; this is the door to Excel
+    /// and back, which is how a host actually revises a bank between weeks.
+    private func exportQuestionsCSV() {
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.commaSeparatedText]
+        panel.nameFieldStringValue = "\(working.name) — questions.csv"
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            try Data(LiveCSV.exportCSV(working.questionStream).utf8).write(to: url, options: .atomic)
+        } catch {
+            presentMessage("Could not export the questions", error.localizedDescription)
+        }
     }
 
     /// Wave A: CSV import — bulk-author a round from a host's question bank.

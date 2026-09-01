@@ -180,5 +180,72 @@ struct LiveCSVImportTests {
         let qs = LiveCSV.parseCSVQuestions(csv)
         for q in qs { #expect(q.options.contains(q.correctAnswer)) }
     }
+
+    // MARK: Export (§6.1) — and the round-trip that proves the halves agree
+
+    private static func q(_ prompt: String, _ correct: String, _ others: [String],
+                          category: String = "history", difficulty: Int = 3,
+                          explanation: String = "") -> Question {
+        Question(id: UUID().uuidString, prompt: prompt, options: [correct] + others,
+                 correctIndex: 0, categoryID: category, difficulty: difficulty,
+                 explanation: explanation, sourceTitle: "", sourceURL: nil, templateID: "test")
+    }
+
+    @Test("an export always carries the named header")
+    func exportHasHeader() throws {
+        // §6.1: the header is the only shape neither client can misread, and it is
+        // what makes an export re-importable on the other platform.
+        let csv = LiveCSV.exportCSV([Self.q("A?", "Yes", ["No", "Maybe", "Never"])])
+        let first = try #require(csv.split(whereSeparator: \.isNewline).first)
+        #expect(first.hasPrefix("prompt,correct,"))
+        #expect(first.contains("category"))
+        #expect(first.contains("difficulty"))
+        #expect(first.contains("explanation"))
+    }
+
+    @Test("export then import returns the same questions")
+    func roundTrips() throws {
+        let original = [
+            Self.q("Which kingdom minted the first coins?", "Lydia", ["Phrygia", "Caria", "Lycia"],
+                   category: "history", difficulty: 4, explanation: "Electrum, c.600 BC."),
+            Self.q("Name the longest river", "Nile", ["Amazon", "Yangtze", "Danube"],
+                   category: "geography", difficulty: 2),
+        ]
+        let back = LiveCSV.parseCSVQuestions(LiveCSV.exportCSV(original))
+
+        #expect(back.count == original.count)
+        for (a, b) in zip(original, back) {
+            #expect(a.prompt == b.prompt)
+            #expect(a.correctAnswer == b.correctAnswer)
+            #expect(Set(a.options) == Set(b.options))
+            #expect(a.categoryID == b.categoryID)
+            #expect(a.difficulty == b.difficulty)
+            #expect(a.explanation == b.explanation)
+        }
+    }
+
+    @Test("a prompt containing commas and quotes survives the round trip")
+    func roundTripsAwkwardText() throws {
+        // The exact text that breaks a naive writer: a comma, a quoted phrase, and
+        // an answer that itself contains a comma.
+        let tricky = Self.q(#"Which city, "famously", never sleeps?"#,
+                            "New York, NY", ["Paris", "Rome", "Oslo"],
+                            explanation: #"It is a nickname, not a fact."#)
+        let back = try #require(LiveCSV.parseCSVQuestions(LiveCSV.exportCSV([tricky])).first)
+        #expect(back.prompt == tricky.prompt)
+        #expect(back.correctAnswer == "New York, NY")
+        #expect(back.explanation == tricky.explanation)
+    }
+
+    @Test("an exported file is re-importable as the Windows reader sees it too")
+    func exportUsesTheSharedHeaderNames() {
+        // The C# suite asserts the same header names; if this drifts, a Mac export
+        // stops importing on Windows and nothing else would notice.
+        let csv = LiveCSV.exportCSV([Self.q("A?", "Yes", ["No", "Maybe", "Never"])])
+        for name in ["prompt", "correct", "optionA", "optionB", "optionC", "optionD",
+                     "category", "difficulty", "explanation"] {
+            #expect(csv.contains(name), "export is missing the \(name) column")
+        }
+    }
 }
 #endif

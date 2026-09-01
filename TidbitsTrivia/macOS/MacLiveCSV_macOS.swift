@@ -134,7 +134,10 @@ private static func question(from f: [String], header: [String: Int]?) -> Questi
             options = opts
         } else {
             correct = answer
-            options = ([answer] + opts).filter { !$0.isEmpty }
+            // Only prepend the answer if the option columns did not already carry
+            // it. Prepending unconditionally gave five options, and the prefix(4)
+            // below then dropped a real one — caught by the export round-trip.
+            options = opts.contains(answer) ? opts : ([answer] + opts).filter { !$0.isEmpty }
         }
         category = (value(f, header, ["category"]) ?? "mixed").lowercased()
         difficulty = Int(value(f, header, ["difficulty"]) ?? "") ?? 3
@@ -169,12 +172,57 @@ private static func question(from f: [String], header: [String: Int]?) -> Questi
                     sourceTitle: "", sourceURL: nil, templateID: "csv")
 }
 
+/// Write a question bank back out as CSV — docs/LIVE-EVENT-FILE.md §6.1.
+///
+/// A host edits their bank in a spreadsheet between weeks; the event file is
+/// Tidbits-to-Tidbits and no use for that. Until now import was a one-way door:
+/// questions could come in from CSV and never go back out.
+///
+/// Always emits the NAMED HEADER. It is the only shape neither client can
+/// misread, and it is what makes an export re-importable on the other platform.
+static func exportCSV(_ questions: [Question]) -> String {
+    var out = "prompt,correct,optionA,optionB,optionC,optionD,category,difficulty,explanation\n"
+    for q in questions {
+        var opts = q.options
+        while opts.count < 4 { opts.append("") }
+        let fields = [q.prompt, q.correctAnswer,
+                      opts[0], opts[1], opts[2], opts[3],
+                      q.categoryID, String(q.difficulty), q.explanation]
+        out += fields.map(escapeCSVField).joined(separator: ",") + "\n"
+    }
+    return out
+}
+
+/// Quote a field that would otherwise break the row, doubling any inner quote —
+/// the same convention `splitCSVLine` reads back.
+static func escapeCSVField(_ s: String) -> String {
+    guard s.contains(",") || s.contains("\"") || s.contains("\n") || s.contains("\r") else { return s }
+    return "\"" + s.replacingOccurrences(of: "\"", with: "\"\"") + "\""
+}
+
 static func splitCSVLine(_ line: String) -> [String] {
-    var fields: [String] = []; var cur = ""; var inQuotes = false
-    for ch in line {
-        if ch == "\"" { inQuotes.toggle() }
-        else if ch == ",", !inQuotes { fields.append(cur.trimmingCharacters(in: .whitespaces)); cur = "" }
-        else { cur.append(ch) }
+    var fields: [String] = []
+    var cur = ""
+    var inQuotes = false
+    var i = line.startIndex
+    while i < line.endIndex {
+        let ch = line[i]
+        if inQuotes {
+            if ch == "\"" {
+                // A doubled quote inside a quoted field is a literal quote — the
+                // convention `escapeCSVField` writes and every spreadsheet emits.
+                let next = line.index(after: i)
+                if next < line.endIndex, line[next] == "\"" { cur.append("\""); i = next }
+                else { inQuotes = false }
+            } else { cur.append(ch) }
+        } else if ch == "\"" {
+            inQuotes = true
+        } else if ch == "," {
+            fields.append(cur.trimmingCharacters(in: .whitespaces)); cur = ""
+        } else {
+            cur.append(ch)
+        }
+        i = line.index(after: i)
     }
     fields.append(cur.trimmingCharacters(in: .whitespaces))
     return fields

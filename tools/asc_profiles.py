@@ -33,12 +33,31 @@ def api(method, path, body=None):
     except urllib.error.HTTPError as e:
         raise SystemExit(f"ASC API {method} {path} -> {e.code}: {e.read().decode()[:400]}")
 
-def bundle_resource_id(identifier):
+PLATFORM_KEY = {"ios": "IOS", "tvos": "IOS", "mac": "MAC_OS"}
+
+
+def bundle_resource_id(identifier, platform="ios"):
+    """The App ID's resource id, registering it if this is the first time we ship it.
+
+    This used to hard-fail with "register it first". That was fine while every bundle
+    id predated the tool, and it stopped being fine the moment a new EXTENSION target
+    appeared: adding the iMessage extension made the archive succeed and then the
+    signing step die on com.learningischange.tidbitstrivia.Messages, with nothing on
+    the machine to fix. A new target is exactly when this runs, so it registers.
+    """
     _, d = api("GET", f"/v1/bundleIds?filter[identifier]={identifier}&limit=20")
     for x in d.get("data", []):
         if x["attributes"]["identifier"] == identifier:
             return x["id"]
-    raise SystemExit(f"bundle id not found in App Store Connect: {identifier} (register it first)")
+
+    print(f"  registering new App ID: {identifier}", file=sys.stderr)
+    _, d = api("POST", "/v1/bundleIds", {"data": {
+        "type": "bundleIds",
+        "attributes": {"identifier": identifier,
+                       # Apple rejects '.' and '_' in the NAME (not the identifier).
+                       "name": identifier.replace(".", " ").replace("_", " "),
+                       "platform": PLATFORM_KEY[platform]}}})
+    return d["data"]["id"]
 
 def main():
     if len(sys.argv) < 4:
@@ -55,7 +74,7 @@ def main():
         for x in d.get("data", []):
             if x["attributes"]["name"] == name:
                 api("DELETE", f"/v1/profiles/{x['id']}")
-        bid = bundle_resource_id(ident)
+        bid = bundle_resource_id(ident, platform)
         body = {"data": {"type": "profiles",
                          "attributes": {"name": name, "profileType": ptype},
                          "relationships": {"bundleId": {"data": {"type": "bundleIds", "id": bid}},

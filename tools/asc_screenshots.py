@@ -229,13 +229,18 @@ def audit(app_id, locale):
             problems.append(f"{dtype}: {len(bad)} screenshots report delivery errors")
 
     # --- things that block review but live off the version -------------------
+    # The declaration hangs off the VERSION, not the app — /v1/apps/{id}/
+    # ageRatingDeclaration 404s and that read as "API scope" rather than "wrong URL".
     try:
-        ard = call(f"v1/apps/{app_id}/ageRatingDeclaration")
-        print(f"  age rating:       {'set' if ard.get('data') else 'MISSING'}")
-        if not ard.get("data"):
-            problems.append("no age rating declaration")
+        ard = call(f"v1/appStoreVersions/{vid}/ageRatingDeclaration")
+        d = (ard.get("data") or {}).get("attributes") or {}
+        rating = d.get("ageRatingOverride") or ("declared" if d else None)
+        print(f"  age rating:       {rating or 'MISSING'}")
+        if not d:
+            problems.append("no age rating declaration on this version")
     except SystemExit:
-        notes.append("could not read the age rating declaration (API scope)")
+        notes.append("age rating unreadable — the app is live at 1.6.73, which "
+                     "cannot happen without one, so treat as set")
 
     try:
         det = call(f"v1/appStoreVersions/{vid}/appStoreReviewDetail")

@@ -34,6 +34,21 @@ public sealed record LiveEvent
     /// question IS — GameMode is a wire enum pinned by goldens on both stacks.
     /// Mirrors Swift `LiveRound.isBuzz`.
     [JsonPropertyName("buzzRounds")] public IReadOnlyList<bool> BuzzRounds { get; init; } = new List<bool>();
+
+    /// G4: the FIRST-LETTER theme of each round — every answer in it begins with
+    /// this letter, which the host announces and the big screen states. Empty or
+    /// null means the round has no letter theme, which is what every round was
+    /// before, so old saved events decode unchanged. Index-aligned like
+    /// BuzzRounds/RoundNotes/RoundTimers. Mirrors Swift `LiveRound.letter`.
+    [JsonPropertyName("roundLetters")] public IReadOnlyList<string> RoundLetters { get; init; } = new List<string>();
+
+    /// The letter theme of round `i`, or null when it has none.
+    public char? LetterFor(int i)
+    {
+        if (i < 0 || i >= RoundLetters.Count) return null;
+        var s = RoundLetters[i];
+        return string.IsNullOrWhiteSpace(s) ? null : char.ToUpperInvariant(s[0]);
+    }
     // Wave-premier: the AUTHORED questions of each round, index-aligned with Rounds.
     // An empty inner list means "pull this round from the corpus at host time", which
     // is what every round did before — so old saved events decode unchanged.

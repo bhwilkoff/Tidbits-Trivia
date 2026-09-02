@@ -327,7 +327,36 @@ struct LiveBuilderView_macOS: View {
                     Label("Buzz", systemImage: "hand.tap")
                 }.toggleStyle(.button).font(.callout).fixedSize()
                     .help("Buzz round — the room races to buzz and the first team answers out loud")
+                Menu {   // G4: first-letter round — every answer begins with the same letter
+                    Button("No letter theme") { working.rounds[i].letter = nil }
+                    Divider()
+                    ForEach(Array("ABCDEFGHIJKLMNOPQRSTUVWXYZ"), id: \.self) { c in
+                        Button(String(c)) { working.rounds[i].letter = String(c) }
+                    }
+                } label: {
+                    Label(round.letter.map { "Letter \($0)" } ?? "Letter", systemImage: "textformat.abc")
+                }
+                .menuStyle(.button).buttonStyle(.bordered).fixedSize()
+                .help("First-letter round — every answer in it begins with the same letter")
                 Spacer()
+            }
+            // G4: a letter theme the round does not actually keep is worse than no
+            // theme — the host announces "B" and the room hears an answer that
+            // isn't one. Name the offenders rather than refusing the edit; a
+            // half-built round is a normal state to be in mid-build.
+            if let l = round.letter, let ch = l.first {
+                let bad = LiveLetterRound.violations(in: round.questions, letter: ch)
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Image(systemName: bad.isEmpty ? "checkmark.circle" : "exclamationmark.triangle")
+                    Text(bad.isEmpty
+                         ? "Every answer begins with \(ch)."
+                         : (bad.count == 1
+                            ? "1 answer does not begin with \(ch): \(bad[0].correctAnswer)"
+                            : "\(bad.count) answers do not begin with \(ch): " + bad.prefix(3).map(\.correctAnswer).joined(separator: ", ") + (bad.count > 3 ? "…" : "")))
+                        .lineLimit(2)
+                }
+                .font(.callout)
+                .foregroundStyle(bad.isEmpty ? Tidbits.Palette.inkSoft : Color.orange)
             }
             TextField("Host note (shown in the cockpit)", text: Binding(   // Wave A — its own line, full width
                 get: { working.rounds[i].hostNote ?? "" },
@@ -380,6 +409,25 @@ struct LiveBuilderView_macOS: View {
                 } label: { Label("Pull one from the corpus", systemImage: "sparkles") }
                 .buttonStyle(.bordered).controlSize(.small)
                 .disabled(busy)
+                // G4: hand-picking eight answers that all begin with B out of a
+                // 98,000-question corpus is not something a host will do, so the
+                // themed round fills itself.
+                if let l = round.letter, let ch = l.first {
+                    Button {
+                        Task {
+                            busy = true
+                            let more = await LiveEventStore.letterQuestions(
+                                format: round.format, category: .named(round.categoryID),
+                                letter: ch, count: 8)
+                            for q in more where !working.rounds[ri].questions.contains(where: { $0.id == q.id }) {
+                                insertQuestion(q, into: ri, at: nil)
+                            }
+                            busy = false
+                        }
+                    } label: { Label("Fill with \(ch) answers", systemImage: "textformat.abc") }
+                    .buttonStyle(.bordered).controlSize(.small)
+                    .disabled(busy)
+                }
                 Spacer()
             }
             .padding(.top, 4)

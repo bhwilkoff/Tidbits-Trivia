@@ -106,7 +106,8 @@ struct LiveBigScreen_macOS: View {
         .animation(showAnim, value: coordinator.session?.finished)
         .overlay {
             if let r = introRound, let s = coordinator.session, !s.finished {
-                roundIntroCard(r, title: s.roundTitle, count: s.questionInRound.of)
+                roundIntroCard(r, title: s.roundTitle, count: s.questionInRound.of,
+                               letter: coordinator.session?.currentRoundLetter)
                     .transition(.opacity).zIndex(10)
             }
         }
@@ -122,7 +123,8 @@ struct LiveBigScreen_macOS: View {
     }
 
     /// A8.3 — the full-screen round announcement ("ROUND 2 · HISTORY · 6 questions").
-    private func roundIntroCard(_ round: Int, title: String, count: Int) -> some View {
+    private func roundIntroCard(_ round: Int, title: String, count: Int,
+                                letter: Character? = nil) -> some View {
         ZStack {
             Tidbits.Palette.ink.ignoresSafeArea()
             VStack(spacing: 18) {
@@ -131,6 +133,15 @@ struct LiveBigScreen_macOS: View {
                     .font(.system(size: 88, weight: .black, design: .rounded)).foregroundStyle(.white)
                     .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
                 Text("\(count) question\(count == 1 ? "" : "s")").font(.system(size: 32, weight: .heavy, design: .rounded)).foregroundStyle(.white.opacity(0.7))
+                // G4: the room must be told the rule, in the one moment the whole
+                // room is looking at the screen. A host who only says it aloud
+                // loses every table that was still ordering drinks.
+                if let letter {
+                    Text(LiveLetterRound.banner(for: letter))
+                        .font(.system(size: 34, weight: .black, design: .rounded))
+                        .foregroundStyle(Tidbits.Palette.coral)
+                        .padding(.top, 6)
+                }
             }
             .padding(60)
         }

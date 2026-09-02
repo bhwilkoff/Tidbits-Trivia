@@ -34,6 +34,12 @@ struct LiveRound: Identifiable, Codable, Hashable {
     /// because it changes how a round is PLAYED, not what a question IS, and
     /// GameMode is a wire enum pinned by goldens on both stacks.
     var isBuzz: Bool? = nil
+    /// G4: a FIRST-LETTER round — every answer in it begins with this letter, which
+    /// the host announces and the big screen states. Same reasoning as `isBuzz`: it
+    /// constrains which questions the round may HOLD, it does not change what a
+    /// question IS, so it is a field rather than a GameMode (which both stacks pin
+    /// with wire goldens). Optional so every saved event still decodes.
+    var letter: String? = nil
     var videoBookmarks: [Data]? = nil   // Wave B: security-scoped bookmarks to each question's video clip (video round; parallel to questions)
 
     var symbol: String { format.symbol }
@@ -108,6 +114,18 @@ final class LiveEventStore {
         let qs = await QuestionProvider.shared.questions(mode: format, category: category)
         return LiveRound(title: format.nightRoundTitle, format: format, categoryID: category.id,
                          questions: Array(qs.prefix(count)))
+    }
+
+    /// G4: questions whose ANSWER begins with `letter`, for a first-letter round.
+    ///
+    /// Separate from `buildRound` because the letter filter runs over the pool
+    /// BEFORE the count is applied — taking the first N and then filtering is how
+    /// a themed round comes back with two questions in it (the same
+    /// truncate-then-select ordering that Decision 052 was written about).
+    static func letterQuestions(format: GameMode, category: TriviaCategory,
+                                letter: Character, count: Int) async -> [Question] {
+        let pool = await QuestionProvider.shared.questions(mode: format, category: category)
+        return LiveLetterRound.candidates(from: pool, letter: letter, limit: count)
     }
 }
 #endif

@@ -74,6 +74,13 @@ final class LiveHostSession {
         let ri = current?.roundIndex ?? 0
         return event.rounds.indices.contains(ri) ? (event.rounds[ri].isWager ?? false) : false
     }
+    /// G4: the first-letter theme of the current round, if it has one — the room
+    /// is told the rule on the big screen, not just by the host saying it once.
+    var currentRoundLetter: Character? {
+        let ri = current?.roundIndex ?? 0
+        guard event.rounds.indices.contains(ri) else { return nil }
+        return event.rounds[ri].letter?.first.map { Character($0.uppercased()) }
+    }
     /// Wave B: is the current round a speed round (fastest-first bonus)?
     var currentRoundIsSpeed: Bool {
         let ri = current?.roundIndex ?? 0

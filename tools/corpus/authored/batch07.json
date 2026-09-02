@@ -1,0 +1,41 @@
+[
+{"subject":"Sagrada Família","cat":"arts","diff":2,
+ "prompt":"Under construction in Barcelona's Eixample district since 1882 and now the tallest church in the world, this basilica was designed by which Catalan architect?",
+ "answer":"Antoni Gaudí","options":["Lluís Domènech i Montaner","Josep Puig i Cadafalch","Ricardo Bofill"],
+ "why":"The Basílica i Temple Expiatori de la Sagrada Família is a Catholic church under construction in the Eixample district of Barcelona. Designed by Catalan architect Antoni Gaudí, it is the tallest church in the world."},
+
+{"subject":"Jupiter","cat":"science","diff":3,
+ "prompt":"The fifth planet from the Sun is a gas giant whose mass exceeds that of every other planet in the Solar System put together — by roughly what factor?",
+ "answer":"About 2.5 times","options":["About 1.2 times","About 10 times","About 50 times"],
+ "why":"Jupiter is the fifth planet from the Sun and the largest in the Solar System, a gas giant with a mass nearly 2.5 times that of all the other planets combined and slightly less than one-thousandth the mass of the Sun."},
+
+{"subject":"Roman numerals","cat":"science","diff":4,
+ "prompt":"Originating in ancient Rome and used across Europe well into the Late Middle Ages, this numeral system works on which principle?",
+ "answer":"Additive","options":["Positional","Binary","Logarithmic"],
+ "why":"Roman numerals are a numeral system that originated in ancient Rome and remained the usual way of writing numbers throughout Europe well into the Late Middle Ages. Like many other ancient numeral systems, they are based on the additive principle."},
+
+{"subject":"Gross domestic product","cat":"business","diff":2,
+ "prompt":"This monetary measure totals the market value of all final goods and services a country produces — over what period, conventionally?",
+ "answer":"A year","options":["A month","A decade","A week"],
+ "why":"Gross domestic product is a monetary measure of the total market value of all final goods and services produced and rendered during a specific period of time, usually a year, by a country or countries."},
+
+{"subject":"2024 Summer Olympics","cat":"sports","diff":4,
+ "prompt":"Branded as Paris 2024, this multi-sport event was officially the Games of which Olympiad?",
+ "answer":"The XXXIII","options":["The XXX","The XXVIII","The XXXV"],
+ "why":"The 2024 Summer Olympics, officially the Games of the XXXIII Olympiad and branded as Paris 2024, were an international multi-sport event held in France."},
+
+{"subject":"Generation X","cat":"history","diff":2,
+ "prompt":"Usually dated from the mid-1960s to around 1980, this demographic cohort comes immediately after which generation?",
+ "answer":"The baby boomers","options":["The Millennials","The Silent Generation","The Greatest Generation"],
+ "why":"Generation X is the demographic cohort following the baby boomers and preceding the Millennials, generally dated from the mid-1960s to the late 1970s or early 1980s."},
+
+{"subject":"Coca-Cola","cat":"business","diff":3,
+ "prompt":"By 2013 this cola was being sold in how many countries and territories worldwide?",
+ "answer":"Over 200","options":["About 50","About 120","Over 300"],
+ "why":"In 2013 Coca-Cola products were sold in over 200 countries and territories worldwide, with consumers drinking more than 1.8 billion company beverage servings each day."},
+
+{"subject":"2022–23 UEFA Champions League","cat":"sports","diff":4,
+ "prompt":"Europe's premier club football tournament had been renamed from the European Champion Clubs' Cup 31 seasons earlier. Counting from the competition's very first edition, which season was 2022–23?",
+ "answer":"The 68th","options":["The 50th","The 60th","The 75th"],
+ "why":"The 2022–23 UEFA Champions League was the 68th season of Europe's premier club football tournament organised by UEFA, and the 31st season since it was renamed from the European Champion Clubs' Cup."}
+]

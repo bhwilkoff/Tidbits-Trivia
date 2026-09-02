@@ -77,6 +77,9 @@ public partial class LiveView : UserControl
     /// and _timers — every add, move and delete below has to keep it that way, or
     /// a host's buzz flag silently lands on a different round.
     private readonly System.Collections.Generic.List<bool> _buzz = new();
+    /// G4: the first-letter theme of each round ("" = none). Index-aligned with
+    /// _rounds, like _buzz/_notes/_timers.
+    private readonly System.Collections.Generic.List<string> _letters = new();
     // The AUTHORED questions of each round, index-aligned with _rounds. Empty means
     // "pull from the corpus at host time", which is what every round did before —
     // and is exactly why a host had nothing to edit (WINDOWS-DESIGN §6.6).
@@ -94,6 +97,7 @@ public partial class LiveView : UserControl
         _notes.Add(RoundNoteBox.Text?.Trim() ?? "");
         _timers.Add(0);
         _buzz.Add(false);
+        _letters.Add("");
         _questions.Add(new System.Collections.Generic.List<Question>());
         _clips.Add(new System.Collections.Generic.List<string>());
         RoundNoteBox.Text = "";
@@ -110,6 +114,8 @@ public partial class LiveView : UserControl
         (_timers[index], _timers[target]) = (_timers[target], _timers[index]);
         if (index < _buzz.Count && target < _buzz.Count)
             (_buzz[index], _buzz[target]) = (_buzz[target], _buzz[index]);
+        if (index < _letters.Count && target < _letters.Count)
+            (_letters[index], _letters[target]) = (_letters[target], _letters[index]);
         if (index < _questions.Count && target < _questions.Count)
             (_questions[index], _questions[target]) = (_questions[target], _questions[index]);
         if (index < _clips.Count && target < _clips.Count)
@@ -125,7 +131,11 @@ public partial class LiveView : UserControl
             int idx = i;
             var r = _rounds[i];
             var note = idx < _notes.Count ? _notes[idx] : "";
-            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto,Auto,Auto"), Margin = new Avalonia.Thickness(0, 0, 0, 2) };
+            // 0 chevron · 1 label · 2 timer · 3 buzz · 4 letter · 5 up · 6 down · 7 delete.
+            // Buzz used to share column 2 with the timer, so Avalonia stacked the two
+            // in one cell and the toggle drew ON TOP of the countdown dropdown. Every
+            // per-round control gets its own column.
+            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto,Auto,Auto,Auto,Auto"), Margin = new Avalonia.Thickness(0, 0, 0, 2) };
             bool open = _expandedRounds.Contains(idx);
             var chevron = new Button
             {
@@ -183,14 +193,34 @@ public partial class LiveView : UserControl
                 while (_buzz.Count <= idx) _buzz.Add(false);
                 _buzz[idx] = buzz.IsChecked == true;
             };
-            Grid.SetColumn(buzz, 2);
+            Grid.SetColumn(buzz, 3);
             row.Children.Add(buzz);
-            Grid.SetColumn(up, 3);
+            // G4: the first-letter theme of this round — every answer in it begins
+            // with the chosen letter. "—" (no theme) is first and the default.
+            var letters = new System.Collections.Generic.List<string> { "\u2014" };
+            for (char c = 'A'; c <= 'Z'; c++) letters.Add(c.ToString());
+            var cur = idx < _letters.Count ? _letters[idx] : "";
+            var letter = new ComboBox
+            {
+                ItemsSource = letters,
+                SelectedIndex = string.IsNullOrEmpty(cur) ? 0 : cur[0] - 'A' + 1,
+                MinWidth = 64, FontSize = 12, Margin = new Avalonia.Thickness(0, 0, 4, 0),
+            };
+            AutomationProperties.SetName(letter, $"First-letter theme for round {idx + 1}");
+            letter.SelectionChanged += (_, _) =>
+            {
+                while (_letters.Count <= idx) _letters.Add("");
+                _letters[idx] = letter.SelectedIndex <= 0 ? "" : letters[letter.SelectedIndex];
+                RebuildBuilderRounds();
+            };
+            Grid.SetColumn(letter, 4);
+            row.Children.Add(letter);
+            Grid.SetColumn(up, 5);
             row.Children.Add(up);
             var down = new Button { Content = "▼", Padding = new Avalonia.Thickness(7, 2), FontSize = 11, IsEnabled = idx < _rounds.Count - 1, Margin = new Avalonia.Thickness(4, 0, 0, 0) };
             AutomationProperties.SetName(down, $"Move round {idx + 1} down");
             down.Click += (_, _) => MoveRound(idx, +1);
-            Grid.SetColumn(down, 4);
+            Grid.SetColumn(down, 6);
             row.Children.Add(down);
             var del = new Button { Content = "✕", Padding = new Avalonia.Thickness(8, 2), FontSize = 12, Margin = new Avalonia.Thickness(4, 0, 0, 0) };
             AutomationProperties.SetName(del, $"Remove round {idx + 1}");
@@ -200,12 +230,13 @@ public partial class LiveView : UserControl
                 if (idx < _notes.Count) _notes.RemoveAt(idx);
                 if (idx < _timers.Count) _timers.RemoveAt(idx);
                 if (idx < _buzz.Count) _buzz.RemoveAt(idx);
+                if (idx < _letters.Count) _letters.RemoveAt(idx);
                 if (idx < _questions.Count) _questions.RemoveAt(idx);
                 if (idx < _clips.Count) _clips.RemoveAt(idx);
                 _expandedRounds.Clear();   // the indices below this round all shifted
                 RebuildBuilderRounds();
             };
-            Grid.SetColumn(del, 5);
+            Grid.SetColumn(del, 7);
             row.Children.Add(del);
             BuilderRounds.Children.Add(row);
             if (open) BuilderRounds.Children.Add(BuildQuestionList(idx));
@@ -223,6 +254,7 @@ public partial class LiveView : UserControl
     /// failure that matters is ALIGNMENT — a flag landing on the wrong round after
     /// a move or a delete — and that is invisible from the rendered row.
     public System.Collections.Generic.IReadOnlyList<bool> BuzzFlagsForTesting => _buzz;
+    public System.Collections.Generic.IReadOnlyList<string> RoundLettersForTesting => _letters;
     public void MoveRoundForTesting(int index, int delta) => MoveRound(index, delta);
 
     public void ExpandRoundForTesting(int roundIndex)
@@ -422,6 +454,7 @@ public partial class LiveView : UserControl
         RoundNotes = new System.Collections.Generic.List<string>(_notes),
         RoundTimers = new System.Collections.Generic.List<int>(_timers),
         BuzzRounds = new System.Collections.Generic.List<bool>(_buzz),
+        RoundLetters = new System.Collections.Generic.List<string>(_letters),
         RoundQuestions = _questions
             .Select(q => (System.Collections.Generic.IReadOnlyList<Question>)new System.Collections.Generic.List<Question>(q))
             .ToList(),
@@ -439,13 +472,14 @@ public partial class LiveView : UserControl
         LeadUrlBox.Text = ev.LeadCaptureUrl ?? "";
         WeekdayBox.SelectedIndex = ev.Weekday is int w and >= 0 and <= 6 ? w + 1 : 0;
         WagerFinalCheck.IsChecked = ev.WagerFinalRound;
-        _rounds.Clear(); _notes.Clear(); _timers.Clear(); _questions.Clear(); _clips.Clear(); _expandedRounds.Clear(); _buzz.Clear();
+        _rounds.Clear(); _notes.Clear(); _timers.Clear(); _questions.Clear(); _clips.Clear(); _expandedRounds.Clear(); _buzz.Clear(); _letters.Clear();
         for (int i = 0; i < ev.Rounds.Count; i++)
         {
             _rounds.Add(ev.Rounds[i]);
             _notes.Add(i < ev.RoundNotes.Count ? ev.RoundNotes[i] : "");
             _timers.Add(i < ev.RoundTimers.Count ? ev.RoundTimers[i] : 0);
             _buzz.Add(i < ev.BuzzRounds.Count && ev.BuzzRounds[i]);
+            _letters.Add(i < ev.RoundLetters.Count ? ev.RoundLetters[i] : "");
             _questions.Add(ev.QuestionsFor(i).ToList());
             _clips.Add(Enumerable.Range(0, ev.QuestionsFor(i).Count).Select(q => ev.ClipFor(i, q) ?? "").ToList());
         }
@@ -575,6 +609,7 @@ public partial class LiveView : UserControl
                          : "Play each track through the PA, then take answers.");
         _timers.Add(0);
         _buzz.Add(false);
+        _letters.Add("");
         _questions.Add(questions);
         _clips.Add(clips);
         _expandedRounds.Add(_rounds.Count - 1);

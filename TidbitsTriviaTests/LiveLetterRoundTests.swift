@@ -1,6 +1,5 @@
 import Testing
 import Foundation
-@testable import TidbitsTrivia
 
 /// G4 — the first-letter round. These pin the judgement calls a host would
 /// otherwise have to explain to the room mid-night.

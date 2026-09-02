@@ -1,0 +1,76 @@
+[
+{"subject":"Greek mythology","cat":"history","diff":3,
+ "prompt":"This body of ancient folklore is today usually absorbed into a broader classical designation alongside which other mythology?",
+ "answer":"Roman","options":["Norse","Egyptian","Celtic"],
+ "why":"Greek mythology is the body of myths originally told by the ancient Greeks, today absorbed alongside Roman mythology into the broader designation of classical mythology."},
+
+{"subject":"Apollo 11","cat":"history","diff":2,
+ "prompt":"The American spaceflight that first landed humans on the Moon flew in July of which year?",
+ "answer":"1969","options":["1957","1961","1972"],
+ "why":"Apollo 11 (July 16-24, 1969) was the American spaceflight that first landed humans on the Moon, and the fifth crewed mission of NASA's Apollo program."},
+
+{"subject":"Agnosticism","cat":"history","diff":3,
+ "prompt":"As a personal attitude this position suspends judgment on the divine, withholding belief — and also withholding what?",
+ "answer":"Disbelief","options":["Doubt","Worship","Ritual"],
+ "why":"Agnosticism is a position that questions the existence of God or the divine. On a psychological level it is a personal attitude that suspends judgment, withholding both belief and disbelief."},
+
+{"subject":"The World's Billionaires","cat":"business","diff":2,
+ "prompt":"This annual ranking lists people estimated to hold a net worth of at least one billion US dollars. Which business magazine compiles it?",
+ "answer":"Forbes","options":["Fortune","The Economist","Bloomberg Businessweek"],
+ "why":"The World's Billionaires is an annual ranking by the American business magazine Forbes of people who are billionaires, estimated to have a net worth of US$1 billion or more."},
+
+{"subject":"States and union territories of India","cat":"geography","diff":4,
+ "prompt":"India is a federal union of 36 subnational entities: 28 states plus how many union territories?",
+ "answer":"8","options":["3","15","22"],
+ "why":"India is a federal union comprising 28 states and 8 union territories, for a total of 36 subnational entities, each subdivided into districts."},
+
+{"subject":"Lord's Prayer","cat":"history","diff":3,
+ "prompt":"This central Christian prayer attributed to Jesus is known by its Latin incipit as what?",
+ "answer":"Pater Noster","options":["Ave Maria","Credo","Gloria"],
+ "why":"The Lord's Prayer, also known by its incipit Our Father (Latin: Pater Noster), is a central Christian prayer attributed to Jesus."},
+
+{"subject":"Tsar Bomba","cat":"history","diff":2,
+ "prompt":"Code-named Ivan and designated AN602, the most powerful weapon ever constructed and tested was a project of which country?",
+ "answer":"The Soviet Union","options":["The United States","The United Kingdom","France"],
+ "why":"The Tsar Bomba (code name Ivan or Vanya, internal designation AN602) is the most powerful nuclear weapon or weapon of any kind ever constructed and tested. It was a project of the Soviet Union."},
+
+{"subject":"Milky Way","cat":"science","diff":3,
+ "prompt":"The galaxy containing our Solar System takes its name from how it appears from Earth. What does it look like in the night sky?",
+ "answer":"A hazy band of light","options":["A single bright star","A dark void","A visible spiral disc"],
+ "why":"The Milky Way is the galaxy that includes the Solar System, with the name describing the galaxy's appearance from Earth: a hazy band of light seen in the night sky."},
+
+{"subject":"Gaslighting","cat":"screen","diff":3,
+ "prompt":"This term for manipulating someone into questioning their own perception of reality became popular in the mid-2010s, but derives from a film of which year?",
+ "answer":"1944","options":["1962","1980","1998"],
+ "why":"Gaslighting is the manipulation of someone into questioning their perception of reality. The term derives from the 1944 film Gaslight and became popular in the mid-2010s."},
+
+{"subject":"German language","cat":"arts","diff":2,
+ "prompt":"A West Germanic language of the Indo-European family, it is spoken mainly in which parts of Europe?",
+ "answer":"Western and Central","options":["Northern and Eastern","Southern only","The Balkans"],
+ "why":"German is a West Germanic language in the Indo-European language family, mainly spoken in Western and Central Europe, where it is the majority and official language of several countries."},
+
+{"subject":"Jack the Ripper","cat":"history","diff":3,
+ "prompt":"This unidentified serial killer was active in 1888 in and around which impoverished London district?",
+ "answer":"Whitechapel","options":["Southwark","Shoreditch","Clerkenwell"],
+ "why":"Jack the Ripper was an unidentified serial killer active in and around the impoverished Whitechapel district of London, England, in 1888."},
+
+{"subject":"Mercury (planet)","cat":"science","diff":4,
+ "prompt":"The smallest planet in the Solar System is rocky with only a trace atmosphere, and its surface gravity is slightly higher than which other planet's?",
+ "answer":"Mars","options":["Venus","Earth","Jupiter"],
+ "why":"Mercury is the first planet from the Sun and the smallest in the Solar System. It is a rocky planet with a trace atmosphere and a surface gravity slightly higher than that of Mars."},
+
+{"subject":"Fukushima nuclear accident","cat":"history","diff":3,
+ "prompt":"The major nuclear accident that began on 11 March 2011 at the Daiichi plant in Ōkuma had what direct cause?",
+ "answer":"An earthquake and tsunami","options":["A typhoon","A volcanic eruption","A landslide"],
+ "why":"On 11 March 2011 a major nuclear accident started at the Fukushima Daiichi Nuclear Power Plant in Ōkuma, Fukushima, Japan. The direct cause was the Tōhoku earthquake and tsunami."},
+
+{"subject":"Bhopal disaster","cat":"history","diff":4,
+ "prompt":"In December 1984 more than 500,000 people near a pesticide plant in Madhya Pradesh were exposed to which highly toxic gas?",
+ "answer":"Methyl isocyanate","options":["Chlorine","Ammonia","Phosgene"],
+ "why":"On 3 December 1984, over 500,000 people in the vicinity of the Union Carbide India Limited pesticide plant in Bhopal, Madhya Pradesh, were exposed to the highly toxic gas methyl isocyanate."},
+
+{"subject":"Michael (archangel)","cat":"history","diff":5,
+ "prompt":"An archangel and warrior of God in three Abrahamic faiths, he also carries a Greek military title meaning brigadier or commander. Which one?",
+ "answer":"Taxiarch","options":["Strategos","Hoplite","Polemarch"],
+ "why":"Michael, also called Archangel Michael or Michael the Taxiarch, is an archangel and the warrior of God in Judaism, Christianity and Islam, additionally venerated as a saint."}
+]

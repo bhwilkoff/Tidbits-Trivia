@@ -153,6 +153,26 @@ landscape survey). **The gap is implementation and verification, not research.**
 
 ---
 
+## Competitor gap list (from docs/COMPETITOR-SCAN.md, 2026-09-02)
+
+The scan is the honest version: most "competitor features" turned out to be
+already shipped, so this is only what is genuinely missing, ranked by how often a
+working host hits it. Sources and the verified have/have-not inventory are in
+docs/COMPETITOR-SCAN.md.
+
+| # | Gap | Seen in | Size | Status |
+|---|---|---|---|---|
+| G2 | Per-ROUND score recap between rounds | QuizXpress, Sporcle, Crowdpurr | S | **DONE 2026-09-02** |
+| G3 | Negative marking (penalise a wrong answer) | QuizXpress | S | open |
+| G1 | Buzzer / fastest-finger round | SpeedQuizzing, QuizXpress | L | open |
+| G7 | Team leader / members joining a named team | Crowdpurr | M | open |
+| G6 | Phone remote for the host (walk the room) | QuizXpress | M | open — the `live/{code}` transport already exists |
+| G4 | First-letter and word-shape rounds | SpeedQuizzing | M | open |
+| G5 | Pick-your-category/difficulty board | QuizXpress | L | open |
+
+Deliberately NOT copied: question-pack marketplaces, a staffed-host network, and
+per-event pricing — see COMPETITOR-SCAN §3.
+
 ## Side-effects fixed in passing
 
 **`tools/corpus/resync_corpus.sh` re-created the strays its own check reports.**

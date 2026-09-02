@@ -19,6 +19,11 @@ final class LiveHostSession {
     var revealed = false
     var scoredIndices: Set<Int> = []   // adaptability: score each question ONCE (so go-back / re-reveal never double-scores)
     var onBreak = false                // adaptability: hold the big screen on an intermission slide (game position preserved)
+    /// Show the standings SO FAR on the big screen, between rounds. A pub host
+    /// reads the scores out after every round; the projector could show a vote
+    /// tally per question and the FINAL table, and nothing in between
+    /// (COMPETITOR-SCAN G2 — QuizXpress, Sporcle and Crowdpurr all do this).
+    var showScores = false
     var finished = false
     var deadlineMs: Int? = nil   // Wave A: epoch-ms countdown deadline for the current timed question
     var locked = false           // Wave C: answers locked ("pencils down") — auto-set at the timer deadline or manually
@@ -274,6 +279,7 @@ struct LiveHostContainer_macOS: View {
             switch want {
             case "reveal":    session.reveal()
             case "break":     session.onBreak = true
+            case "scores":    session.showScores = true
             case "standings": session.finished = true
             default: break
             }
@@ -387,6 +393,12 @@ struct LiveHostView_macOS: View {
                     .buttonStyle(.plain).keyboardShortcut(.cancelAction)
                 Text(session.event.name).font(.headline).foregroundStyle(Tidbits.Palette.ink)
                 Spacer()
+                Button { session.showScores.toggle() } label: {   // G2: scores between rounds
+                    Label(session.showScores ? "Hide scores" : "Scores",
+                          systemImage: "list.number").font(.callout)
+                }
+                .buttonStyle(.bordered)
+                .help("Show the standings so far on the big screen")
                 Button { session.onBreak.toggle() } label: {   // adaptability: intermission hold
                     Label(session.onBreak ? "Resume" : "Hold", systemImage: session.onBreak ? "play.fill" : "pause.fill").font(.callout)
                 }

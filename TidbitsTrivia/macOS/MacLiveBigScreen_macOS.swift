@@ -85,7 +85,8 @@ struct LiveBigScreen_macOS: View {
         ZStack {
             Tidbits.Palette.bg.ignoresSafeArea()
             if let s = coordinator.session {
-                if s.onBreak { breakSlide(s).transition(.opacity) }   // adaptability: intermission hold
+                if s.showScores && !s.finished { standings(s, interim: true).transition(.opacity) }
+                else if s.onBreak { breakSlide(s).transition(.opacity) }   // adaptability: intermission hold
                 else if s.finished { standings(s).transition(.opacity) } else { live(s).transition(.opacity) }
             } else {
                 splash.transition(.opacity)
@@ -402,11 +403,18 @@ struct LiveBigScreen_macOS: View {
         .animation(showAnim, value: rows.prefix(5).map(\.id))   // A8.2 the leaderboard climbs
     }
 
-    private func standings(_ s: LiveHostSession) -> some View {
+    private func standings(_ s: LiveHostSession, interim: Bool = false) -> some View {
         let rows = unifiedStandings(s)
         return VStack(spacing: 20) {
             let outcome = StandingsOutcome.headline(rows.map { ($0.name, $0.score) }, empty: "")
-            if let winner = rows.first, winner.score > 0 {
+            if interim {
+                // Between rounds the headline is the POSITION, not a winner: naming
+                // a champion mid-night is wrong, and the celebration belongs to the
+                // final slide.
+                Text("SCORES AFTER ROUND \(s.roundNumber)")
+                    .font(.system(size: 52, weight: .black, design: .rounded))
+                    .foregroundStyle(Tidbits.Palette.ink)
+            } else if let winner = rows.first, winner.score > 0 {
                 HStack(spacing: 16) {
                     Image(systemName: "party.popper.fill").font(.system(size: 40)).foregroundStyle(Tidbits.Palette.coral)
                     Text(outcome).font(.system(size: 60, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink).lineLimit(1).minimumScaleFactor(0.4)
@@ -424,7 +432,7 @@ struct LiveBigScreen_macOS: View {
             // (universal-feature-states); this one is on a projector.
             if rows.isEmpty {
                 VStack(spacing: 14) {
-                    Text("No teams to rank")
+                    Text(interim ? "No scores yet" : "No teams to rank")
                         .font(.system(size: 40, weight: .black, design: .rounded))
                         .foregroundStyle(Tidbits.Palette.inkSoft)
                     Text("Add teams in the cockpit, or have players scan the code to join.")

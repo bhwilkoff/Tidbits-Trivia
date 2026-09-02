@@ -84,6 +84,12 @@ SCENARIOS = {
                        TIDBITS_LIVE_STATE="break"),
                   {"last_frame_only": True, "projector": True, "expect_none": r"\u2026|\.\.\.",
                    "expect_all": [r"Back in a moment"]}),
+    # G2: the scores the host reads out between rounds.
+    "projscores": (dict(TIDBITS_LIVE_HOST="1", TIDBITS_LIVE_CODE="QATEST",
+                        TIDBITS_LIVE_STATE="scores"),
+                   {"last_frame_only": True, "projector": True,
+                    "expect_none": r"\u2026|\.\.\.",
+                    "expect_all": [r"SCORES AFTER ROUND \d"]}),
     "projstandings": (dict(TIDBITS_LIVE_HOST="1", TIDBITS_LIVE_CODE="QATEST",
                            TIDBITS_LIVE_STATE="standings"),
                       {"last_frame_only": True, "projector": True, "expect_none": r"\u2026|\.\.\.",

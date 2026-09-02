@@ -42,9 +42,16 @@
                 <StackPanel x:Name="DailyPanel" Spacing="8"/>
 
                 <TextBlock Text="Trivia Night" Classes="section-header" Margin="0,12,0,0"/>
-                <TextBlock Text="A themed night of rounds — each round a different question type."
-                           FontSize="13" Opacity="0.7"/>
+                <TextBlock Text="A themed night of rounds — each round a different question type. Host from any device, or join someone else's with a code."
+                           FontSize="13" Opacity="0.7" TextWrapping="Wrap"/>
                 <WrapPanel x:Name="NightPanel"/>
+
+                <!-- WINDOWS-DESIGN 6.0 / macOS-DESIGN A0.4.1 — joining is ALWAYS a Trivia
+                     Night action. This lived on the Tidbits Live page, which read as "you
+                     need the desktop pub-trivia rig to join a friend's night". You do not. -->
+                <Button Content="Join a night with a code" Click="OnJoinNight"
+                        HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                        Padding="18,13" Margin="0,10,0,0" FontWeight="SemiBold"/>
 
                 <Button Content="Pass &amp; Play — 2–4 players, one device" Click="OnPassAndPlay"
                         HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Padding="18,13" Margin="0,12,0,0"

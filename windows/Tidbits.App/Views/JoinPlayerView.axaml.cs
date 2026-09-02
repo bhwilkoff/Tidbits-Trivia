@@ -166,4 +166,14 @@ public partial class JoinPlayerView : UserControl
             OptionsPanel.Children.Add(btn);
         }
     }
+
+    /// Return to whichever surface opened this. Play owns joining now; Tidbits Live
+    /// can still host it, so ask the visual tree rather than assuming a parent.
+    private void OnLeave(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (Avalonia.VisualTree.VisualExtensions.FindAncestorOfType<PlayView>(this) is { } play)
+            play.BackToPlay();
+        else
+            Avalonia.VisualTree.VisualExtensions.FindAncestorOfType<LiveView>(this)?.BackToSetup();
+    }
 }

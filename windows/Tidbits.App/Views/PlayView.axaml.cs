@@ -599,6 +599,23 @@ public partial class PlayView : UserControl
         vm.Start(data.PlayerName);
     }
 
+    /// Join someone else's Trivia Night. Lives on Play, not Tidbits Live: joining
+    /// needs nothing but a code and a device, and putting it on the desktop-only
+    /// emcee page implied otherwise (WINDOWS-DESIGN 6.0).
+    private void OnJoinNight(object? sender, RoutedEventArgs e)
+    {
+        var view = new JoinPlayerView { DataContext = new LivePlayerViewModel() };
+        Landing.IsVisible = false;
+        GameHost.Content = view;
+    }
+
+    /// Called by the join surface's Leave button.
+    public void BackToPlay()
+    {
+        GameHost.Content = null;
+        Landing.IsVisible = true;
+    }
+
     private void OnPassAndPlay(object? sender, RoutedEventArgs e)
     {
         var party = new PartyView();

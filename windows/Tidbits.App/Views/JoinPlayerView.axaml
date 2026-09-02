@@ -11,7 +11,11 @@
                 <TextBlock Text="Enter the 4-letter code from the host's screen." FontSize="14" Opacity="0.7"/>
                 <TextBox x:Name="CodeBox" Watermark="Code (e.g. 2NRE)" FontSize="18" MaxLength="4" Padding="12"/>
                 <TextBox x:Name="TeamBox" Watermark="Your team name" FontSize="16" Padding="12"/>
-                <Button Content="Join" Click="OnJoin" Classes="accent" Padding="26,12" FontWeight="Bold" HorizontalAlignment="Left"/>
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <Button Content="Join" Click="OnJoin" Classes="accent" Padding="26,12" FontWeight="Bold"/>
+                    <!-- There was no way back out of this surface at all. -->
+                    <Button Content="Cancel" Click="OnLeave" Padding="18,12"/>
+                </StackPanel>
                 <TextBlock Text="{Binding Client.ErrorText}" Foreground="#D64545" FontSize="13"
                            IsVisible="{Binding Client.ErrorText, Converter={x:Static ObjectConverters.IsNotNull}}"/>
             </StackPanel>

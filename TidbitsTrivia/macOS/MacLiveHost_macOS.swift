@@ -28,6 +28,10 @@ final class LiveHostSession {
     var deadlineMs: Int? = nil   // Wave A: epoch-ms countdown deadline for the current timed question
     var locked = false           // Wave C: answers locked ("pencils down") — auto-set at the timer deadline or manually
     var blockedTeams: Set<String> = []   // Wave C: networked team uids the host hid from the big screen (a bad name)
+    /// G1: teams that already buzzed this question and got it WRONG. They are
+    /// skipped when resolving the next buzz, which is what "a wrong buzz reopens
+    /// it to the rest" means in practice. Cleared with every question.
+    var buzzedOut: Set<String> = []
     func toggleBlocked(_ uid: String) { if blockedTeams.contains(uid) { blockedTeams.remove(uid) } else { blockedTeams.insert(uid) } }
     /// Points DEDUCTED for a wrong answer, 0 = off (the default, and what every
     /// existing night has played under). QuizXpress offers this and pub hosts use
@@ -49,6 +53,7 @@ final class LiveHostSession {
     func prepare() {
         shuffledOrder = current?.ordering?.shuffled() ?? []
         shuffledValues = current?.matching?.values.shuffled() ?? []
+        buzzedOut = []          // G1: a new question reopens the buzzer to everyone
     }
 
     var questions: [Question] { event.questionStream }
@@ -219,6 +224,7 @@ final class LiveHostSession {
         if !revealed, let d = deadlineMs { p.deadline = d }   // Wave A: the countdown deadline
         if !revealed, locked { p.locked = true }              // Wave C: pencils down — no more answers
         if !revealed, currentRoundIsWager { p.wager = true }  // Wave A: wager round — joiners show a stake input
+        if !revealed, currentRoundIsBuzz { p.buzz = true }    // G1: buzz round — joiners show a BUZZ button
         if revealed {   // Wave A: the story behind the answer — the learning payoff, only at reveal
             let s = q.explanation.trimmingCharacters(in: .whitespacesAndNewlines)
             if !s.isEmpty { p.story = s }
@@ -545,6 +551,25 @@ struct LiveHostView_macOS: View {
                         .buttonStyle(.bordered)
                         .keyboardShortcut(.rightArrow, modifiers: .command)
                         .help("Skip this question — no score (⌘→)")
+                    // G1: the buzz panel. Only on a buzz round, and only once
+                    // somebody has actually buzzed — a control that names nobody is
+                    // noise in a cockpit the host is driving live.
+                    if session.currentRoundIsBuzz, !session.revealed,
+                       let uid = LiveNightHost.firstBuzz(net.answers, excluding: session.buzzedOut) {
+                        let who = net.teams[uid]?.name ?? "Team"
+                        Text("\(who) buzzed").font(.headline).foregroundStyle(Tidbits.Palette.coral)
+                        Button("Correct") {
+                            Task {
+                                await net.setScore(uid, (net.scores[uid] ?? 0) + session.pointsPerCorrect)
+                                session.reveal()
+                            }
+                        }
+                        .buttonStyle(.borderedProminent).tint(Tidbits.Palette.mint)
+                        .help("Award \(session.pointsPerCorrect) and reveal")
+                        Button("Wrong") { session.buzzedOut.insert(uid) }
+                            .buttonStyle(.bordered)
+                            .help("Rule this team out and reopen the buzzer to the rest")
+                    }
                     Button("Reveal answer") { session.reveal() }
                         .buttonStyle(.borderedProminent).tint(Tidbits.Palette.coral)
                         .keyboardShortcut(.defaultAction)

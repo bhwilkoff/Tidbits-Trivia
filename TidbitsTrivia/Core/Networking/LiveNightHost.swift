@@ -132,8 +132,13 @@ final class LiveNightHost {
     /// Lives in Core, not in the Mac cockpit: it is pure shared logic, the test
     /// target compiles Core but not the macOS views, and Windows keeps its twin on
     /// LiveNightHost too (`FirstBuzz`).
-    nonisolated static func firstBuzz(_ answers: [String: LiveRoom.Answer]) -> String? {
-        answers.min { ($0.value.sv ?? $0.value.ts) < ($1.value.sv ?? $1.value.ts) }?.key
+    /// `excluding` are teams that already buzzed and got it WRONG. A wrong buzz
+    /// reopens the question to the rest of the room rather than ending it — that is
+    /// what makes it a pub buzzer and not a single-shot lockout.
+    nonisolated static func firstBuzz(_ answers: [String: LiveRoom.Answer],
+                                      excluding: Set<String> = []) -> String? {
+        answers.filter { !excluding.contains($0.key) }
+               .min { ($0.value.sv ?? $0.value.ts) < ($1.value.sv ?? $1.value.ts) }?.key
     }
 
     func reveal() async {

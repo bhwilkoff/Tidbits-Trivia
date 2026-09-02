@@ -31,6 +31,19 @@ struct BuzzRoundTests {
         #expect(LiveNightHost.firstBuzz(answers) == "b")
     }
 
+    @Test("a wrong buzz reopens it to the rest")
+    func wrongBuzzReopens() {
+        // The pub rule: the first team gets it wrong and the question goes BACK to
+        // the room, rather than ending. Ruling one team out promotes the next.
+        let answers = ["first":  answer(ts: 0, sv: 100),
+                       "second": answer(ts: 0, sv: 200),
+                       "third":  answer(ts: 0, sv: 300)]
+        #expect(LiveNightHost.firstBuzz(answers) == "first")
+        #expect(LiveNightHost.firstBuzz(answers, excluding: ["first"]) == "second")
+        #expect(LiveNightHost.firstBuzz(answers, excluding: ["first", "second"]) == "third")
+        #expect(LiveNightHost.firstBuzz(answers, excluding: ["first", "second", "third"]) == nil)
+    }
+
     @Test("nobody buzzed")
     func empty() {
         #expect(LiveNightHost.firstBuzz([:]) == nil)

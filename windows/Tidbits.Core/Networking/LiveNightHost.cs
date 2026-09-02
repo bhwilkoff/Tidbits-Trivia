@@ -162,11 +162,18 @@ public sealed class LiveNightHost : ObservableObject
     /// Ranked by the SERVER stamp (`OrderKey`), never the handset clock — a buzzer
     /// decided by whose phone runs fast is not a buzzer. Mirrors Swift
     /// `LiveHostSession.firstBuzz`.
-    public static string? FirstBuzz(IReadOnlyDictionary<string, LiveRoom.Answer> answers)
+    /// `excluding` are teams that already buzzed and got it WRONG. A wrong buzz
+    /// reopens the question to the rest of the room rather than ending it — that is
+    /// what makes it a pub buzzer and not a single-shot lockout.
+    public static string? FirstBuzz(IReadOnlyDictionary<string, LiveRoom.Answer> answers,
+                                    IReadOnlySet<string>? excluding = null)
     {
         string? best = null; long bestKey = long.MaxValue;
         foreach (var kv in answers)
+        {
+            if (excluding is not null && excluding.Contains(kv.Key)) continue;
             if (kv.Value.OrderKey < bestKey) { bestKey = kv.Value.OrderKey; best = kv.Key; }
+        }
         return best;
     }
     public int RoundNumber => RoundIndex + 1;
@@ -558,6 +565,7 @@ public sealed class LiveNightHost : ObservableObject
             Locked = Locked && !Revealed ? true : null,
             Deadline = Revealed ? null : _deadline,
             Wager = IsWagerRound ? true : null,
+            Buzz = IsBuzzRound ? true : null,          // G1: joiners show a BUZZ button
         };
     }
 

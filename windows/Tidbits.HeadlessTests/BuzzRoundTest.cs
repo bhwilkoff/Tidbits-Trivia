@@ -39,6 +39,21 @@ public class BuzzRoundTest
     }
 
     [Fact]
+    public void A_wrong_buzz_reopens_it_to_the_rest()
+    {
+        // The pub rule: the first team gets it wrong and the question goes BACK to
+        // the room, rather than ending. Ruling one team out promotes the next.
+        var answers = new Dictionary<string, LiveRoom.Answer>
+        {
+            ["first"] = A(0, 100), ["second"] = A(0, 200), ["third"] = A(0, 300),
+        };
+        Assert.Equal("first", LiveNightHost.FirstBuzz(answers));
+        Assert.Equal("second", LiveNightHost.FirstBuzz(answers, new HashSet<string> { "first" }));
+        Assert.Equal("third", LiveNightHost.FirstBuzz(answers, new HashSet<string> { "first", "second" }));
+        Assert.Null(LiveNightHost.FirstBuzz(answers, new HashSet<string> { "first", "second", "third" }));
+    }
+
+    [Fact]
     public void Nobody_buzzed()
     {
         Assert.Null(LiveNightHost.FirstBuzz(new Dictionary<string, LiveRoom.Answer>()));

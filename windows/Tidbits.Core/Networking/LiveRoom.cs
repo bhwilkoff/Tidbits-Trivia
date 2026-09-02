@@ -77,6 +77,12 @@ public static class LiveRoom
         [JsonPropertyName("story")] public string? Story { get; init; }
         [JsonPropertyName("deadline")] public long? Deadline { get; init; }
         [JsonPropertyName("wager")] public bool? Wager { get; init; }
+
+        /// G1: this is a BUZZ question — the joiner shows one big BUZZ button
+        /// instead of the answer UI, and the first team the SERVER sees wins the
+        /// buzz. Mirrors Swift `Pub.buzz`; null on every non-buzz question so an
+        /// older client never sees it.
+        [JsonPropertyName("buzz")] public bool? Buzz { get; init; }
     }
 
     /// A team as the joining player writes it (`teams/{uid}`).

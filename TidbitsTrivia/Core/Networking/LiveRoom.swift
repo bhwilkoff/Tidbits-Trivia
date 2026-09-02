@@ -47,6 +47,11 @@ enum LiveRoom {
         var story: String? = nil          // Wave A: the "story behind the answer" — the learning payoff, shown ONLY on reveal
         var deadline: Int? = nil          // Wave A: epoch-ms countdown deadline for a timed question (nil = no timer)
         var wager: Bool? = nil            // Wave A: this is a wager question — the joiner shows a wager stepper (0…their score)
+        /// G1: this is a BUZZ question — the joiner shows one big BUZZ button
+        /// instead of the answer UI, and the first team the SERVER sees wins the
+        /// buzz. Published so a joiner knows without being told; nil on every
+        /// non-buzz question, so an older client simply never sees it.
+        var buzz: Bool? = nil
     }
 
     /// Closest Call bounds a joiner needs to render a number input (the answer +

@@ -67,10 +67,26 @@ SCENARIOS = {
                        # The room needs ALL THREE at once: which round it is, the
                        # question, and the code to join. Any one of them missing is a
                        # broken night, so this cannot be an `expect_any`.
-                       "expect_all": [r"ROUND", r"QATEST", r"Answer on your phones"],
+                       "expect_all": [r"ROUND \d", r"QATEST", r"Answer on your phones"],
                        # A truncated question is unreadable to the room. The prompt
                        # was rendering on one line and ending in an ellipsis.
                        "expect_none": r"\u2026|\.\.\."}),
+    # The projector's OTHER states. Each is a different layout and none had ever
+    # been photographed; the truncation bug lived in the only state that had.
+    "projreveal": (dict(TIDBITS_LIVE_HOST="1", TIDBITS_LIVE_CODE="QATEST",
+                        TIDBITS_LIVE_STATE="reveal"),
+                   {"last_frame_only": True, "projector": True, "expect_none": r"\u2026|\.\.\.",
+                    # The room still needs the round line and the code AFTER the
+                    # reveal — this is when the tally and explanation appear and
+                    # push everything else off.
+                    "expect_all": [r"ROUND \d", r"QATEST"]}),
+    "projbreak": (dict(TIDBITS_LIVE_HOST="1", TIDBITS_LIVE_CODE="QATEST",
+                       TIDBITS_LIVE_STATE="break"),
+                  {"last_frame_only": True, "projector": True, "expect_none": r"\u2026|\.\.\.",
+                   "expect_all": [r"Back in a moment"]}),
+    "projstandings": (dict(TIDBITS_LIVE_HOST="1", TIDBITS_LIVE_CODE="QATEST",
+                           TIDBITS_LIVE_STATE="standings"),
+                      {"last_frame_only": True, "projector": True, "expect_none": r"\u2026|\.\.\."}),
     # The Live builder with a populated event and its first round expanded, so
     # the per-question list and the Edit affordance are observable at all
     # (macOS-DESIGN §A2.4). Nothing could reach them from a cold launch.

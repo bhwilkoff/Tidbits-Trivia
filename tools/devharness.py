@@ -200,6 +200,16 @@ class Grader:
         # room can see all of: the round line, the question, and the join code" —
         # it passes on any one of them, which is how a projector whose header had
         # been pushed behind the title bar still graded green.
+        # A scenario that DRIVES THE APP INTO A STATE must be graded on the frame
+        # that has the state, not on the union of every frame. The projector's
+        # reveal proved why: frame 0 is captured before the reveal fires, so its
+        # header was still on screen, and the union passed while the reveal frame
+        # had pushed the header clean off the projector. `last_frame_only` grades
+        # the final capture alone.
+        if spec.get("last_frame_only") and shots:
+            _last = shots[-1][1].name
+            all_text = " ".join(t["text"] for t in texts.get(_last, {}).get("allText", []))
+
         if "expect_all" in spec:
             for rx in spec["expect_all"]:
                 m = re.search(rx, all_text, re.I)

@@ -171,7 +171,6 @@ struct LiveBigScreen_macOS: View {
                     .lineLimit(1).minimumScaleFactor(0.6)   // a long round title shrinks instead of wrapping/overflowing
             }
             if let d = s.deadlineMs, !s.revealed { countdown(deadlineMs: d) }   // Wave A: on-screen timer
-            Spacer()
             VStack(spacing: 12) {
                 if let q = s.current {
                     chromeRow(q, s)   // Wave B: format + difficulty chrome
@@ -192,7 +191,15 @@ struct LiveBigScreen_macOS: View {
                         //
                         // A question the room cannot read, and a join code the room cannot
                         // see, are the two worst failures this surface has.
-                        .frame(maxWidth: 1200, minHeight: 150, maxHeight: 240)
+                        // On REVEAL the slide also carries the vote tally (one row per option) and the
+                        // explanation, roughly 340pt more. Measured on the projector: with the
+                        // question keeping its full band, that pushed the event title, the round
+                        // line and the join code off the screen — the same overflow as the
+                        // truncation fix, in the state the room stares at longest. The question
+                        // has already been read aloud by then, so it yields the space.
+                        .frame(maxWidth: 1200,
+                               minHeight: s.revealed ? 90 : 150,
+                               maxHeight: s.revealed ? 150 : 240)
                         .id(q.id)
                         .transition(.opacity.combined(with: .move(edge: .top)))
                     if LiveVideoPlayer.shared.hasVideo, let vplayer = LiveVideoPlayer.shared.player {   // Wave B: video question
@@ -204,6 +211,11 @@ struct LiveBigScreen_macOS: View {
                     let hasVotes = !(coordinator.net?.answers.isEmpty ?? true)
                     if LiveNightHost.isMCQ(q), hasVotes || s.revealed {
                         voteTally(q, revealed: s.revealed)   // A8: the room watches the votes land
+                            // Same clearance as the explanation: the per-option VOTE
+                            // COUNTS sit at the trailing end of each bar, and the join
+                            // panel overlay was sitting on top of them. "How did the room
+                            // vote" is the point of this panel.
+                            .padding(.trailing, 360)
                     } else if s.revealed {
                         Text(q.correctAnswer)
                             .font(.system(size: 52, weight: .black, design: .rounded)).foregroundStyle(.white)
@@ -226,6 +238,13 @@ struct LiveBigScreen_macOS: View {
                                 .multilineTextAlignment(.center)
                                 .frame(maxWidth: 1100)
                                 .padding(.top, 18)
+                                // Clear the join panel. Moving that panel to an overlay
+                                // stopped it pushing the header off the top, but an
+                                // overlay OCCLUDES: the reveal explanation then ran
+                                // underneath the QR — "...is an Ea", "...since" — and the
+                                // room could not read the payoff. The panel is ~340pt
+                                // wide in the trailing corner.
+                                .padding(.trailing, 360)
                                 .transition(.opacity)
                         }
                     }
@@ -233,7 +252,30 @@ struct LiveBigScreen_macOS: View {
             }
             .animation(showAnim, value: s.revealed)
             .animation(showAnim, value: s.current?.id)
-            Spacer()
+            // The middle takes WHAT IS LEFT between the header and the join panel,
+            // and never more. It used to sit between two Spacers, so on the reveal —
+            // when the vote tally and the explanation appear — the stack grew past
+            // the window, SwiftUI centred the overflow, and the event title, the
+            // round line and the join code went off the top and bottom of the
+            // projector. Measured three times at three different fixed heights
+            // before fixing the structure instead of the numbers.
+            .frame(maxHeight: .infinity)
+        }
+        .padding(48)
+        // The team list and the JOIN PANEL are an OVERLAY, not a stacked row.
+        //
+        // This is what was actually overflowing the projector. The QR panel is
+        // roughly 280pt tall, and in the vertical flow it competed with the
+        // question, the vote tally and the explanation for the window's 720pt. On
+        // the reveal the sum went over, SwiftUI centred the excess, and the event
+        // title and round line went off the top while the explanation was squeezed
+        // to one truncated line. Three different fixed heights were tried against
+        // the symptom before measuring what actually occupied the space.
+        //
+        // As an overlay the panel renders in exactly the same corner — it sat in
+        // empty space already — but contributes NO height, so the slide cannot push
+        // its own header off the screen.
+        .overlay(alignment: .bottom) {
             HStack(alignment: .bottom, spacing: 24) {
                 leaderboard(s)
                 Spacer(minLength: 0)
@@ -241,8 +283,8 @@ struct LiveBigScreen_macOS: View {
                     LiveJoinPanel(code: net.code)
                 }
             }
+            .padding(48)
         }
-        .padding(48)
     }
 
     /// Wave B: the show chrome above each question — what KIND of question and how hard.
@@ -289,7 +331,14 @@ struct LiveBigScreen_macOS: View {
                 HStack(spacing: 14) {
                     Text(opt).font(.system(size: 26, weight: .heavy, design: .rounded))
                         .foregroundStyle(correct ? Tidbits.Palette.mint : Tidbits.Palette.ink)
-                        .frame(width: 300, alignment: .leading).lineLimit(1)
+                        // A fixed 300pt with lineLimit(1) TRUNCATED the option on the
+                        // big screen — measured: the correct answer read "Imperial House
+                        // of Jap…". An answer the room cannot read is the same failure as
+                        // a question it cannot read, and worse on the reveal, because
+                        // this is the moment the answer is announced. Wider, two lines,
+                        // and it shrinks rather than cuts.
+                        .frame(width: 420, alignment: .leading)
+                        .lineLimit(2).minimumScaleFactor(0.55)
                     GeometryReader { geo in
                         ZStack(alignment: .leading) {
                             Capsule().fill(Tidbits.Palette.surface)

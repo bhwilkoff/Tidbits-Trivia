@@ -258,6 +258,26 @@ struct LiveHostContainer_macOS: View {
             try? await Task.sleep(for: .seconds(secs))
             endNight()
         }
+        // TIDBITS_LIVE_STATE=reveal|break|standings — put the PROJECTOR into one of
+        // the states only a host's clicks can reach.
+        //
+        // The projector is what the room reads, and until the truncation bug it had
+        // never been photographed at all. Every one of these states is a separate
+        // layout: the reveal adds the answer capsule, the vote tally and the
+        // explanation; standings is a different slide entirely; break is a third.
+        // The bug that shipped lived in the ONE state nothing could capture, so the
+        // remaining ones get hooks before they are trusted (hooks-are-coverage).
+        // No-op in production.
+        .task {
+            guard let want = ProcessInfo.processInfo.environment["TIDBITS_LIVE_STATE"] else { return }
+            try? await Task.sleep(for: .seconds(3))   // let the room open and publish
+            switch want {
+            case "reveal":    session.reveal()
+            case "break":     session.onBreak = true
+            case "standings": session.finished = true
+            default: break
+            }
+        }
         // Open the networked room and publish the first question.
         .task {
             await net.open(name: event.name, venue: event.venue)

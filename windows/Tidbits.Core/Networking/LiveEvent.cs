@@ -26,6 +26,14 @@ public sealed record LiveEvent
     // its CodingKeys to {kind, count}, and there is golden coverage on it. The timer is a
     // host authoring concern — joiners already learn the deadline from the published pub.
     [JsonPropertyName("roundTimers")] public IReadOnlyList<int> RoundTimers { get; init; } = new List<int>();
+
+    /// G1: which rounds are BUZZ rounds — the room races to buzz and the FIRST team
+    /// answers out loud; a wrong buzz reopens it to the rest (SpeedQuizzing's
+    /// signature format). Index-aligned like RoundNotes/RoundTimers, and a FLAG
+    /// rather than a GameMode because it changes how a round is PLAYED, not what a
+    /// question IS — GameMode is a wire enum pinned by goldens on both stacks.
+    /// Mirrors Swift `LiveRound.isBuzz`.
+    [JsonPropertyName("buzzRounds")] public IReadOnlyList<bool> BuzzRounds { get; init; } = new List<bool>();
     // Wave-premier: the AUTHORED questions of each round, index-aligned with Rounds.
     // An empty inner list means "pull this round from the corpus at host time", which
     // is what every round did before — so old saved events decode unchanged.

@@ -122,6 +122,20 @@ final class LiveNightHost {
     }
 
     /// Show the answer on every device at once, then award points.
+    /// G1: the team that buzzed FIRST, or nil if nobody has.
+    ///
+    /// Ranked by the SERVER stamp, never the handset clock — a buzzer decided by
+    /// whose phone runs fast is not a buzzer, and the speed bonus shipped with
+    /// exactly that bug. `sv` is stamped by Firebase when the write lands; `ts` is
+    /// only the fallback for a client that predates it.
+    ///
+    /// Lives in Core, not in the Mac cockpit: it is pure shared logic, the test
+    /// target compiles Core but not the macOS views, and Windows keeps its twin on
+    /// LiveNightHost too (`FirstBuzz`).
+    nonisolated static func firstBuzz(_ answers: [String: LiveRoom.Answer]) -> String? {
+        answers.min { ($0.value.sv ?? $0.value.ts) < ($1.value.sv ?? $1.value.ts) }?.key
+    }
+
     func reveal() async {
         guard stage == .playing, current != nil, !revealed else { return }
         revealed = true

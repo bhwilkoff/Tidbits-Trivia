@@ -208,9 +208,21 @@ ordering is by ARRIVAL at one clock rather than by five different handsets.
 
 ### The buzz round on top
 
+**Design correction before coding:** the first sketch said "a `buzzIn` round
+format", i.e. a new `GameMode`. Wrong. `GameMode` is a WIRE type pinned by golden
+coverage on both stacks (`AllModesSweep`, `CatalogTests`), it is published to
+every joiner, and adding a case forks all of that. Meanwhile a round already
+carries FLAGS for exactly this kind of modifier — `isWager` (Wave A) and
+`isSpeed` (Wave B) — which round-trip through the event file and are read as
+`currentRoundIsWager` / `currentRoundIsSpeed`. A buzz is the same shape of thing:
+it changes how a round is PLAYED, not what a question IS.
+
+So: `isBuzz` is a round flag. Additive, no wire version bump (LIVE-EVENT-FILE
+§2.4 ignores unknown keys), and any question type can be a buzz round.
+
 With trustworthy ordering, a buzz is a submission with no payload:
 
-  * a `buzzIn` round format; the join surface shows one big BUZZ button
+  * an `isBuzz` ROUND FLAG; the join surface shows one big BUZZ button
   * first `sv` wins; the cockpit shows who buzzed and the host marks it right or
     wrong; a wrong buzz opens it to the rest
   * the projector names the team that buzzed

@@ -151,6 +151,24 @@ public sealed class LiveNightHost : ObservableObject
     public int AnsweredCount => Net.AnsweredCount;
     public int RoundIndex => Current?.RoundIndex ?? 0;
     public bool IsWagerRound => WagerRoundIndex is { } w && Current is not null && RoundIndex == w;
+
+    /// G1: which rounds are buzz rounds (index-aligned, from the event).
+    public IReadOnlyList<bool> BuzzRounds { get; set; } = new List<bool>();
+    public bool IsBuzzRound => Current is not null && RoundIndex >= 0
+                               && RoundIndex < BuzzRounds.Count && BuzzRounds[RoundIndex];
+
+    /// The team that buzzed FIRST, or null if nobody has.
+    ///
+    /// Ranked by the SERVER stamp (`OrderKey`), never the handset clock — a buzzer
+    /// decided by whose phone runs fast is not a buzzer. Mirrors Swift
+    /// `LiveHostSession.firstBuzz`.
+    public static string? FirstBuzz(IReadOnlyDictionary<string, LiveRoom.Answer> answers)
+    {
+        string? best = null; long bestKey = long.MaxValue;
+        foreach (var kv in answers)
+            if (kv.Value.OrderKey < bestKey) { bestKey = kv.Value.OrderKey; best = kv.Key; }
+        return best;
+    }
     public int RoundNumber => RoundIndex + 1;
     public int RoundCount => Math.Max(_plan.Rounds.Count, 1);
     public string RoundTitle => RoundIndex < _plan.Rounds.Count ? _plan.Rounds[RoundIndex].Kind.NightRoundTitle() : "";

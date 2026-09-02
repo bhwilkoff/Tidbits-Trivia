@@ -52,6 +52,7 @@ enum LiveEventFile {
         var hostNote: String?
         var isWager: Bool?
         var isSpeed: Bool?
+        var isBuzz: Bool?
         var questions: [Question]   // the shared Question shape, verbatim (§2.1)
     }
 
@@ -105,7 +106,7 @@ enum LiveEventFile {
                     PortableRound(id: r.id.uuidString, title: r.title,
                                   format: r.format.rawValue, categoryID: r.categoryID,
                                   timerSeconds: r.timerSeconds, hostNote: r.hostNote,
-                                  isWager: r.isWager, isSpeed: r.isSpeed,
+                                  isWager: r.isWager, isSpeed: r.isSpeed, isBuzz: r.isBuzz,
                                   questions: r.questions)
                 }))
         let enc = JSONEncoder()
@@ -142,7 +143,8 @@ enum LiveEventFile {
                       timerSeconds: r.timerSeconds,
                       hostNote: r.hostNote,
                       isWager: r.isWager,
-                      isSpeed: r.isSpeed)
+                      isSpeed: r.isSpeed,
+                      isBuzz: r.isBuzz)
         }
         return event
     }

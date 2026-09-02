@@ -28,6 +28,12 @@ struct LiveRound: Identifiable, Codable, Hashable {
     var isWager: Bool? = nil       // Wave A: a wager round — teams stake points on each question (correct +stake, wrong −stake)
     var audioBookmarks: [Data]? = nil   // Wave B: security-scoped bookmarks to each question's audio clip (audio round; parallel to questions)
     var isSpeed: Bool? = nil            // Wave B: a speed round — correct answers earn a fastest-first bonus
+    /// G1: a BUZZ round — the room races to buzz and the FIRST team gets to answer
+    /// out loud; the host marks it right or wrong and a wrong buzz reopens it to the
+    /// rest (SpeedQuizzing's signature format). A flag rather than a GameMode
+    /// because it changes how a round is PLAYED, not what a question IS, and
+    /// GameMode is a wire enum pinned by goldens on both stacks.
+    var isBuzz: Bool? = nil
     var videoBookmarks: [Data]? = nil   // Wave B: security-scoped bookmarks to each question's video clip (video round; parallel to questions)
 
     var symbol: String { format.symbol }

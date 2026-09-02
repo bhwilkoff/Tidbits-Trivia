@@ -74,6 +74,13 @@ final class LiveHostSession {
         let ri = current?.roundIndex ?? 0
         return event.rounds.indices.contains(ri) ? (event.rounds[ri].isSpeed ?? false) : false
     }
+    /// G1: is the current round a BUZZ round?
+    var currentRoundIsBuzz: Bool {
+        let ri = current?.roundIndex ?? 0
+        return event.rounds.indices.contains(ri) ? (event.rounds[ri].isBuzz ?? false) : false
+    }
+
+
     /// Wave B: the audio clip bookmark for the current question (nil unless it's an audio round).
     var currentAudioBookmark: Data? {
         let ri = current?.roundIndex ?? 0

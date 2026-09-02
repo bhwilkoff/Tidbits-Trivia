@@ -232,6 +232,7 @@ final class LiveHostSession {
         if !revealed, locked { p.locked = true }              // Wave C: pencils down — no more answers
         if !revealed, currentRoundIsWager { p.wager = true }  // Wave A: wager round — joiners show a stake input
         if !revealed, currentRoundIsBuzz { p.buzz = true }    // G1: buzz round — joiners show a BUZZ button
+        if let l = currentRoundLetter { p.letter = String(l) }   // G4: first-letter round — joiners see the rule
         if revealed {   // Wave A: the story behind the answer — the learning payoff, only at reveal
             let s = q.explanation.trimmingCharacters(in: .whitespacesAndNewlines)
             if !s.isEmpty { p.story = s }

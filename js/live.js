@@ -261,6 +261,7 @@ function playHTML() {
 
   return `<div class="live-play">${head}
     <div class="live-round">ROUND ${p.round} · ${esc(p.roundTitle)} — Q${p.qNum}/${p.qTotal}</div>
+    ${p.letter ? `<div class="live-letter">EVERY ANSWER BEGINS WITH ${esc(String(p.letter).toUpperCase()[0])}</div>` : ''}
     ${img}
     <div class="live-q">${esc(p.prompt)}</div>
     ${!revealed && p.deadline ? `<div id="live-timer" data-dl="${p.deadline}" style="font-size:30px;font-weight:900;text-align:center;margin:6px 0;font-variant-numeric:tabular-nums"></div>` : ''}
@@ -346,6 +347,7 @@ function injectStyles() {
   .live-code2{font-family:ui-monospace,monospace;color:#8a8078;font-weight:700;font-size:.8rem}
   .live-score{margin-left:auto;text-align:right;line-height:1}.live-score span{font-weight:900;font-size:1.8rem;color:#231E1A}.live-score small{display:block;color:#8a8078;font-weight:700}
   .live-round{font-weight:800;color:#8a8078;letter-spacing:.03em;margin:8px 0}
+  .live-letter{font-weight:900;color:var(--color-primary,#FF746F);letter-spacing:.04em;margin:-4px 0 8px}
   .live-q{font-weight:900;font-size:1.5rem;line-height:1.25;color:#231E1A;margin:6px 0 20px}
   .live-opts{display:flex;flex-direction:column;gap:12px}
   .live-opt{display:flex;align-items:center;gap:12px;text-align:left;padding:16px;font-size:1.1rem;font-weight:800;color:#231E1A;background:#fff;border:2.5px solid #231E1A;border-radius:16px;box-shadow:4px 4px 0 #231E1A;cursor:pointer}

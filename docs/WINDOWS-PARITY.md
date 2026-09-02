@@ -50,7 +50,7 @@ surfaces the harness could not reach at all. Now 0.
 
 **Windows is a fully supported channel (Decision 046).** First Store submission is
 **in certification** — Store ID `9NRKS9LDRCWC`, MSIX v1.6.45, all 7 Partner Center
-sections Complete, publishing set to auto-go-live on cert pass. **222 tests green**
+sections Complete, publishing set to auto-go-live on cert pass. **626 tests green**
 on `windows-latest`. The one-time bootstrap is DONE; every future ship is
 `gh workflow run windows-store.yml -f submit=true -f commit=true` — see
 `WINDOWS-STORE-SUBMISSION.md` (incl. the two solved first-submission blockers:

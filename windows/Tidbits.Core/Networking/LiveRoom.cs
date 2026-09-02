@@ -83,6 +83,11 @@ public static class LiveRoom
         /// buzz. Mirrors Swift `Pub.buzz`; null on every non-buzz question so an
         /// older client never sees it.
         [JsonPropertyName("buzz")] public bool? Buzz { get; init; }
+        /// G4: this round's FIRST-LETTER theme — every answer in it begins with this
+        /// letter. Published so a player who joined mid-round still knows the rule
+        /// instead of relying on having heard the host say it once. Mirrors Swift
+        /// `Pub.letter`; null on every unthemed round, so an older client never sees it.
+        [JsonPropertyName("letter")] public string? Letter { get; init; }
     }
 
     /// A team as the joining player writes it (`teams/{uid}`).

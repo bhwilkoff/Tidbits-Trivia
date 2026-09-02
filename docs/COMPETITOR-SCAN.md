@@ -92,10 +92,46 @@ declining to guess, not being wrong, and penalising it would punish the table
 whose phone died. Both implementations get this from iterating the ANSWERS rather
 than the teams — an accident of structure, so it is pinned by a test.
 
-### G4. No first-letter / word-shape formats  *(SpeedQuizzing)*
+### G4. First-letter rounds — CLOSED 2026-09-02, all six platforms
 SpeedQuizzing ships First Letter of the Answer, Sequence, Multi Tap, Nearest Wins
-and Wordsnake. We have Sequence (ordering) and Nearest Wins (closest-call); we do
-not have first-letter or word-shape rounds.
+and Wordsnake. We had Sequence (ordering) and Nearest Wins (closest-call);
+**First Letter of the Answer now ships too.** Multi Tap and Wordsnake remain
+deliberately unbuilt — both are free-text word games, and our answer surface is
+multiple choice on every client (see §3).
+
+The host themes a round on a letter and every answer in it begins with that
+letter. The RULE is a pure function written once per stack
+(`Core/Models/LiveLetterRound.swift`, `Tidbits.Core/Networking/LiveLetterRound.cs`),
+pinned by the SAME cases on both — 12 Swift tests, 13 C# tests.
+
+**The judgement calls ARE the feature**, because six stacks have to agree on which
+answers count as a "B" and a host cannot re-litigate it mid-night:
+
+- **Leading articles do not count.** A pub quiz that announces "B" accepts "The
+  Beatles", and a host who has to explain otherwise has lost the room.
+- **Diacritics fold.** The host says "E" and the room writes E, so an accented
+  Édith is an E. Comparing raw characters would put É in a bucket of its own and
+  silently drop the question from every letter.
+- **First LETTER, not first character.** "'Round Midnight" is an R; "2001" is not
+  any letter at all and so belongs to no round.
+- **A repeated ANSWER is never offered twice** — a round that asks for the same
+  answer twice reads as a mistake even when both questions are fair.
+
+A FLAG on the round, not a GameMode — the same reasoning as G1's `isBuzz`: it
+constrains which questions a round may HOLD, not what a question IS, and GameMode
+is a wire enum both stacks pin with goldens.
+
+The builder NAMES the answers that break the theme rather than refusing the edit.
+A half-built round is a normal state to be in mid-build, and a format that fights
+the host is a format they abandon.
+
+Measured against the real corpus rather than assumed: every letter A-Z can fill a
+round (thinnest is X at 67 distinct answers, Q at 99), so no letter is greyed out.
+Eight rows have non-Latin initials (Æ Ł Α Γ); they are excluded from every letter
+rather than mis-bucketed, which is the correct failure.
+
+The joiners render the banner from `pub.letter` so a player who joined MID-ROUND
+still knows the rule instead of relying on having heard the host say it once.
 
 ### G5. No pick-your-category board  *(QuizXpress)*
 QuizXpress supports Jeopardy-style rounds where players choose subject and

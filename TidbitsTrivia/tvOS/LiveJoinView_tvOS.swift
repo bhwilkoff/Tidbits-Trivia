@@ -184,6 +184,11 @@ struct TVLivePlayerView: View {
         VStack(alignment: .leading, spacing: 30) {
             Text("ROUND \(p.round) · \(p.roundTitle.uppercased()) — Q\(p.qNum)/\(p.qTotal)")
                 .font(.system(size: 25, weight: .heavy, design: .rounded)).foregroundStyle(TVTheme.textSoft)
+            if let l = p.letter, let ch = l.first {
+                Text(LiveLetterRound.banner(for: ch))
+                    .font(.system(size: 25, weight: .heavy, design: .rounded))
+                    .foregroundStyle(Tidbits.Palette.coral)
+            }
             if let img = p.imageURL, let url = URL(string: img) {
                 AsyncImage(url: url) { phase in
                     if let image = phase.image { image.resizable().scaledToFit() } else { Color.clear }

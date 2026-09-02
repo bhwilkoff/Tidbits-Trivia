@@ -52,6 +52,11 @@ enum LiveRoom {
         /// buzz. Published so a joiner knows without being told; nil on every
         /// non-buzz question, so an older client simply never sees it.
         var buzz: Bool? = nil
+        /// G4: this round's FIRST-LETTER theme — every answer in it begins with
+        /// this letter. Published so a player who joined mid-round still knows the
+        /// rule instead of relying on having heard the host say it once; nil on
+        /// every unthemed round, so an older client simply never sees it.
+        var letter: String? = nil
     }
 
     /// Closest Call bounds a joiner needs to render a number input (the answer +

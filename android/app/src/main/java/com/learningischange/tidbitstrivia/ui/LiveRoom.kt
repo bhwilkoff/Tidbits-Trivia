@@ -215,6 +215,13 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
                 val revealed = p.phase == "reveal"
                 Text("ROUND ${p.round} · ${p.roundTitle.uppercase()} — Q${p.qNum}/${p.qTotal}",
                     fontSize = 13.sp, fontWeight = FontWeight.Bold, color = soft)
+                // G4: a player who joined mid-round never heard the host announce
+                // the letter, so the rule rides the wire, not the room's memory.
+                p.letter?.firstOrNull()?.let { ch ->
+                    Text("EVERY ANSWER BEGINS WITH ${ch.uppercaseChar()}",
+                        fontSize = 13.sp, fontWeight = FontWeight.Black,
+                        color = MaterialTheme.colorScheme.primary)
+                }
                 Spacer(Modifier.height(10.dp))
                 p.imageUrl?.let { url ->
                     AsyncImage(model = url, contentDescription = null, modifier = Modifier.fillMaxWidth().height(220.dp))

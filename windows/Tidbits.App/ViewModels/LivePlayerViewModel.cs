@@ -43,6 +43,20 @@ public sealed class LivePlayerViewModel : ObservableObject
     /// generic "Answer locked" must stand down or the player is told twice.
     public bool AnswerLocked => Client.HasAnswered && !IsBuzz;
 
+    /// G4: the first-letter rule for this round, or null when it has no theme. A
+    /// player who joined mid-round never heard the host announce it, so it rides
+    /// the wire rather than the room's memory.
+    public string? LetterBanner
+    {
+        get
+        {
+            var l = Client.Pub?.Letter;
+            if (!ShowQuestion || string.IsNullOrWhiteSpace(l)) return null;
+            return LiveLetterRound.Banner(l[0]);
+        }
+    }
+    public bool HasLetter => LetterBanner != null;
+
     // L5 social graph — "add the people you played with" at the wrap.
     public System.Collections.Generic.IReadOnlyList<PlayerIdentity.Friend> Coplayers => Client.Coplayers;
     public bool HasCoplayers => IsEnded && Client.Coplayers.Count > 0;

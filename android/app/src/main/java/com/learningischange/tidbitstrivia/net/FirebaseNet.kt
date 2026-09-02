@@ -344,6 +344,11 @@ object FirebaseNet {
         /** G1: a BUZZ question — one big BUZZ button instead of the answer UI, and
          *  the FIRST buzz the SERVER sees wins. Mirrors Swift `Pub.buzz`. */
         val buzz: Boolean = false,
+        /** G4: this round's FIRST-LETTER theme — every answer in it begins with this
+         *  letter. Published so a player who joined mid-round still knows the rule
+         *  instead of relying on having heard the host say it. Mirrors Swift
+         *  `Pub.letter`; null on every unthemed round. */
+        val letter: String? = null,
     )
     /** A player's submission (any shape) — the host scores it locally on reveal. */
     data class LiveAnswer(

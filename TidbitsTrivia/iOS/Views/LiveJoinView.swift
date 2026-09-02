@@ -206,6 +206,13 @@ struct LiveJoinView: View {
                 .font(isWide ? .system(size: 16, weight: .heavy, design: .rounded)
                              : Tidbits.TypeRamp.l6)
                 .foregroundStyle(Tidbits.Palette.inkSoft)
+            // G4: a player who joined mid-round never heard the host announce the
+            // letter, so the rule rides the wire rather than the room's memory.
+            if let l = p.letter, let ch = l.first {
+                Text(LiveLetterRound.banner(for: ch))
+                    .font(Tidbits.TypeRamp.l6.weight(.heavy))
+                    .foregroundStyle(Tidbits.Palette.coral)
+            }
             if let img = p.imageURL, let url = URL(string: img) {
                 AsyncImage(url: url) { phase in
                     if let image = phase.image { image.resizable().scaledToFit() }

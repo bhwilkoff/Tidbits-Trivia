@@ -33,6 +33,8 @@
 
                 <TextBlock x:Name="CountdownText" Foreground="#FF5C35" FontSize="26" FontWeight="Black"/>
 
+                <TextBlock IsVisible="{Binding HasLetter}" Text="{Binding LetterBanner}"
+                           FontWeight="Black" FontSize="13" Foreground="#FF5C35"/>
                 <TextBlock IsVisible="{Binding ShowQuestion}" Text="{Binding Client.Pub.Prompt}"
                            FontSize="21" FontWeight="Bold" TextWrapping="Wrap"/>
                 <!-- G1: on a buzz round the whole answer UI is ONE button. Big,

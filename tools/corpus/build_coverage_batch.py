@@ -42,6 +42,10 @@ BLOCK = re.compile(
 NOT_A_SUBJECT = re.compile(
     r"^(deaths in|list of|index of|outline of|timeline of|glossary of|"
     r"history of|category:|template:|portal:|wikipedia:)", re.I)
+# A disambiguation page is a list of meanings, not a subject: its lead is
+# literally "XXX may refer to:". The fame rank is real, the subject is not.
+DISAMBIG = re.compile(r"\bmay refer to\b|\bmay also refer to\b|"
+                      r"\bis the name of several\b", re.I)
 
 
 def main():
@@ -76,7 +80,7 @@ def main():
     cand.sort(reverse=True)
     for qr, qid, title in cand[:a.limit]:
         lead, desc = prose[qid]
-        if BLOCK.search(lead or ""):
+        if BLOCK.search(lead or "") or DISAMBIG.search(lead or ""):
             continue
         out.append({"qid": qid, "title": title, "qrank": qr,
                     "lead": (lead or "").strip()[:900],

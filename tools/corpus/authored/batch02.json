@@ -1,0 +1,106 @@
+[
+{"subject":"X (social network)","cat":"business","diff":2,
+ "prompt":"In 2023 this microblogging platform, long famous for its bird logo and for posts nicknamed after a bird call, was renamed by its new owner to a single letter. What had it been called until then?",
+ "answer":"Twitter","options":["Vine","Periscope","Tumblr"],
+ "why":"X, formerly known as Twitter, is an American microblogging and social networking service now headquartered in Bastrop, Texas. Users share short posts commonly known as tweets."},
+
+{"subject":"XXXX (beer)","cat":"business","diff":3,
+ "prompt":"Pronounced 'four-ex' and brewed in Milton, Brisbane by Castlemaine Perkins, this beer is a fixture on tap in Queensland pubs. Name the brand.",
+ "answer":"XXXX","options":["Victoria Bitter","Tooheys","Coopers"],
+ "why":"XXXX, pronounced four-ex, is an Australian beer brewed in Milton, Brisbane by Castlemaine Perkins, now a division of the Japanese company Kirin. It is especially popular in Queensland."},
+
+{"subject":"WhatsApp","cat":"business","diff":2,
+ "prompt":"The instant messaging and VoIP service used for texts, voice notes and video calls across desktop and mobile is owned by which company?",
+ "answer":"Meta Platforms","options":["Alphabet","ByteDance","Tencent"],
+ "why":"WhatsApp Messenger is an American instant messaging and VoIP service owned by Meta Platforms, allowing text, voice and video messages and calls."},
+
+{"subject":"Gmail","cat":"science","diff":3,
+ "prompt":"Google's mailbox provider is the largest email service in the world. Roughly how many users does it have?",
+ "answer":"About 1.8 billion","options":["About 90 million","About 400 million","About 6 billion"],
+ "why":"Gmail is a mailbox provider by Google and the largest email service worldwide, with 1.8 billion users."},
+
+{"subject":"TikTok","cat":"screen","diff":3,
+ "prompt":"Videos on this short-form video platform can run from as little as three seconds up to what maximum length?",
+ "answer":"60 minutes","options":["60 seconds","10 minutes","3 hours"],
+ "why":"TikTok hosts user-submitted videos ranging in duration from three seconds to 60 minutes."},
+
+{"subject":"European Union","cat":"geography","diff":2,
+ "prompt":"How many member states make up the political and economic union covering some 4.2 million square kilometres and over 450 million people?",
+ "answer":"27","options":["15","19","32"],
+ "why":"The European Union is a political and economic union of 27 member states located primarily in Europe, with a total area of 4,233,255 square kilometres and over 450 million people as of 2025."},
+
+{"subject":"VK (service)","cat":"business","diff":3,
+ "prompt":"Russia's largest home-grown social network, originally called VKontakte, is based in which city?",
+ "answer":"Saint Petersburg","options":["Moscow","Kazan","Novosibirsk"],
+ "why":"VK, short for its original name VKontakte, is a Russian online social media and social networking service based in Saint Petersburg."},
+
+{"subject":"Solar System","cat":"science","diff":2,
+ "prompt":"About how long ago did the gravitationally bound system of the Sun and its eight planets form?",
+ "answer":"About 4.6 billion years","options":["About 500 million years","About 1.2 billion years","About 13.8 billion years"],
+ "why":"The Solar System is the gravitationally bound system of the Sun and the masses orbiting it, including its eight planets. It formed about 4.6 billion years ago."},
+
+{"subject":"FIFA World Cup","cat":"sports","diff":2,
+ "prompt":"Held every four years with two wartime exceptions, football's global championship for men's national teams began in which year?",
+ "answer":"1930","options":["1904","1946","1966"],
+ "why":"The FIFA World Cup has been held every four years since the inaugural tournament in 1930, with the exception of the wartime years."},
+
+{"subject":"India national cricket team","cat":"sports","diff":3,
+ "prompt":"Which board governs India's men's national cricket team, a full member of the International Cricket Council?",
+ "answer":"The BCCI","options":["The PCB","The ECB","Cricket Australia"],
+ "why":"The India men's national cricket team is governed by the Board of Control for Cricket in India and is a full member of the International Cricket Council with Test, ODI and T20I status."},
+
+{"subject":"Chernobyl disaster","cat":"history","diff":3,
+ "prompt":"On 26 April 1986 a reactor at a nuclear power plant near Pripyat, Ukraine exploded. Which numbered reactor was it?",
+ "answer":"Reactor 4","options":["Reactor 1","Reactor 2","Reactor 3"],
+ "why":"On 26 April 1986, reactor 4 of the Chernobyl Nuclear Power Plant near Pripyat, Ukraine exploded. It is one of only two nuclear accidents rated at the maximum severity on the International Nuclear Event Scale."},
+
+{"subject":"Freemasonry","cat":"history","diff":2,
+ "prompt":"Considered the oldest existing secular fraternal organisation, with traditions dating to the 14th century, it traces its origins to medieval guilds of which craftsmen?",
+ "answer":"Stonemasons","options":["Blacksmiths","Weavers","Carpenters"],
+ "why":"Freemasonry consists of fraternal groups that trace their origins to medieval guilds of stonemasons, and is considered the oldest existing secular fraternal organisation, with documents and traditions dating back to the 14th century."},
+
+{"subject":"2023–24 UEFA Champions League","cat":"sports","diff":3,
+ "prompt":"Real Madrid beat Borussia Dortmund 2–0 in the 2024 Champions League final. At which stadium was it played?",
+ "answer":"Wembley Stadium","options":["The San Siro","The Stade de France","Estadio da Luz"],
+ "why":"The 2023–24 UEFA Champions League was the 69th season of the competition. Real Madrid defeated Borussia Dortmund 2–0 in the final at Wembley Stadium in London."},
+
+{"subject":"United Nations","cat":"history","diff":2,
+ "prompt":"The charter establishing the global intergovernmental organisation tasked with maintaining international peace and security was signed in which year?",
+ "answer":"1945","options":["1919","1948","1951"],
+ "why":"The United Nations was established by the signing of the Charter of the United Nations on 26 June 1945, with the mission of maintaining international peace and security."},
+
+{"subject":"BTS","cat":"music","diff":2,
+ "prompt":"Formed in 2010 and originally a hip hop group, the South Korean band whose name means 'Bulletproof Boy Scouts' has how many members?",
+ "answer":"Seven","options":["Four","Five","Nine"],
+ "why":"BTS, also known as the Bangtan Boys, is a South Korean boy band formed in 2010 consisting of Jin, Suga, J-Hope, RM, Jimin, V and Jung Kook. Originally a hip hop group, they later expanded their musical style."},
+
+{"subject":"Internet","cat":"science","diff":3,
+ "prompt":"The global network of networks links private, public, academic, business and government networks using which protocol suite?",
+ "answer":"TCP/IP","options":["SMTP","FTP","HTTP"],
+ "why":"The Internet is the global system of interconnected computer networks that uses the Internet protocol suite (TCP/IP) to communicate between networks and devices."},
+
+{"subject":"Telegram (software)","cat":"science","diff":3,
+ "prompt":"This cloud-based messaging service, known for large group chats and channels, launched on iOS in August of which year?",
+ "answer":"2013","options":["2009","2016","2019"],
+ "why":"Telegram launched for iOS on 14 August 2013 and for Android on 20 October 2013, allowing users to exchange messages, share files and hold voice or video calls."},
+
+{"subject":"Seven deadly sins","cat":"arts","diff":4,
+ "prompt":"Pride, greed, wrath, envy, lust, gluttony and sloth were grouped together by early Christian theologians — but the set is not explicitly listed as such in which book?",
+ "answer":"The Bible","options":["The Divine Comedy","The Canterbury Tales","Paradise Lost"],
+ "why":"The seven deadly sins function as a grouping of major vices in Christian teaching. They are not explicitly listed as a set in the Bible, but developed within early Christian theological tradition drawing on various biblical passages."},
+
+{"subject":"Wiki","cat":"science","diff":2,
+ "prompt":"This form of hypertext publication is collaboratively edited and managed by its own audience, working directly through what?",
+ "answer":"A web browser","options":["A command line","A desktop client","Email"],
+ "why":"A wiki is a form of hypertext publication on the internet which is collaboratively edited and managed by its audience directly through a web browser."},
+
+{"subject":"Islam","cat":"history","diff":2,
+ "prompt":"With around two billion adherents, the world's second-largest religion is based on the Quran and the teachings of which figure?",
+ "answer":"Muhammad","options":["Abraham","Moses","Zoroaster"],
+ "why":"Islam is an Abrahamic monotheistic religion based on the Quran and the teachings of Muhammad, with an estimated 2 billion adherents worldwide, making it the second-largest religious population after Christianity."},
+
+{"subject":"The Hollywood Reporter","cat":"screen","diff":3,
+ "prompt":"Founded in 1930 as a daily trade paper and relaunched in 2010 as a weekly large-format magazine, this title covers film, television and theatre. Name it.",
+ "answer":"The Hollywood Reporter","options":["Variety","Billboard","Deadline"],
+ "why":"The Hollywood Reporter is an American digital and print magazine focused on the film, television, theatre and entertainment industries. Founded in 1930 as a daily trade paper, it switched in 2010 to a weekly large-format print magazine with a revamped website."}
+]

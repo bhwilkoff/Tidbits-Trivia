@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Tidbits.App.Services;
@@ -72,6 +73,10 @@ public partial class LiveView : UserControl
     private readonly System.Collections.Generic.List<NightRound> _rounds = new();
     private readonly System.Collections.Generic.List<string> _notes = new();
     private readonly System.Collections.Generic.List<int> _timers = new();   // per-round countdown, 0 = untimed
+    /// G1: which rounds are BUZZ rounds. Index-aligned with _rounds like _notes
+    /// and _timers — every add, move and delete below has to keep it that way, or
+    /// a host's buzz flag silently lands on a different round.
+    private readonly System.Collections.Generic.List<bool> _buzz = new();
     // The AUTHORED questions of each round, index-aligned with _rounds. Empty means
     // "pull from the corpus at host time", which is what every round did before —
     // and is exactly why a host had nothing to edit (WINDOWS-DESIGN §6.6).
@@ -88,6 +93,7 @@ public partial class LiveView : UserControl
         _rounds.Add(new NightRound { Kind = mode, Count = count });
         _notes.Add(RoundNoteBox.Text?.Trim() ?? "");
         _timers.Add(0);
+        _buzz.Add(false);
         _questions.Add(new System.Collections.Generic.List<Question>());
         _clips.Add(new System.Collections.Generic.List<string>());
         RoundNoteBox.Text = "";
@@ -102,6 +108,8 @@ public partial class LiveView : UserControl
         (_rounds[index], _rounds[target]) = (_rounds[target], _rounds[index]);
         (_notes[index], _notes[target]) = (_notes[target], _notes[index]);
         (_timers[index], _timers[target]) = (_timers[target], _timers[index]);
+        if (index < _buzz.Count && target < _buzz.Count)
+            (_buzz[index], _buzz[target]) = (_buzz[target], _buzz[index]);
         if (index < _questions.Count && target < _questions.Count)
             (_questions[index], _questions[target]) = (_questions[target], _questions[index]);
         if (index < _clips.Count && target < _clips.Count)
@@ -161,6 +169,22 @@ public partial class LiveView : UserControl
             var up = new Button { Content = "▲", Padding = new Avalonia.Thickness(7, 2), FontSize = 11, IsEnabled = idx > 0 };
             AutomationProperties.SetName(up, $"Move round {idx + 1} up");
             up.Click += (_, _) => MoveRound(idx, -1);
+            // G1: mark this round a BUZZ round — the room races to buzz and the first
+            // team answers out loud. Per-round, like the Mac builder's Buzz toggle.
+            var buzz = new ToggleButton
+            {
+                Content = "Buzz", FontSize = 11, Padding = new Avalonia.Thickness(8, 2),
+                Margin = new Avalonia.Thickness(4, 0, 4, 0),
+                IsChecked = idx < _buzz.Count && _buzz[idx],
+            };
+            AutomationProperties.SetName(buzz, $"Round {idx + 1} is a buzz round");
+            buzz.Click += (_, _) =>
+            {
+                while (_buzz.Count <= idx) _buzz.Add(false);
+                _buzz[idx] = buzz.IsChecked == true;
+            };
+            Grid.SetColumn(buzz, 2);
+            row.Children.Add(buzz);
             Grid.SetColumn(up, 3);
             row.Children.Add(up);
             var down = new Button { Content = "▼", Padding = new Avalonia.Thickness(7, 2), FontSize = 11, IsEnabled = idx < _rounds.Count - 1, Margin = new Avalonia.Thickness(4, 0, 0, 0) };
@@ -175,6 +199,7 @@ public partial class LiveView : UserControl
                 _rounds.RemoveAt(idx);
                 if (idx < _notes.Count) _notes.RemoveAt(idx);
                 if (idx < _timers.Count) _timers.RemoveAt(idx);
+                if (idx < _buzz.Count) _buzz.RemoveAt(idx);
                 if (idx < _questions.Count) _questions.RemoveAt(idx);
                 if (idx < _clips.Count) _clips.RemoveAt(idx);
                 _expandedRounds.Clear();   // the indices below this round all shifted
@@ -193,6 +218,12 @@ public partial class LiveView : UserControl
     // events at guessed coordinates — which asserts the layout, not the feature
     // (`hooks-are-coverage`). These call the SAME methods the buttons do.
     public void LoadEventForTesting(LiveEvent ev) => LoadEvent(ev);
+
+    /// G1: the buzz flags as the builder currently holds them. Exposed because the
+    /// failure that matters is ALIGNMENT — a flag landing on the wrong round after
+    /// a move or a delete — and that is invisible from the rendered row.
+    public System.Collections.Generic.IReadOnlyList<bool> BuzzFlagsForTesting => _buzz;
+    public void MoveRoundForTesting(int index, int delta) => MoveRound(index, delta);
 
     public void ExpandRoundForTesting(int roundIndex)
     {
@@ -390,6 +421,7 @@ public partial class LiveView : UserControl
         WagerFinalRound = WagerFinalCheck.IsChecked == true,
         RoundNotes = new System.Collections.Generic.List<string>(_notes),
         RoundTimers = new System.Collections.Generic.List<int>(_timers),
+        BuzzRounds = new System.Collections.Generic.List<bool>(_buzz),
         RoundQuestions = _questions
             .Select(q => (System.Collections.Generic.IReadOnlyList<Question>)new System.Collections.Generic.List<Question>(q))
             .ToList(),
@@ -407,12 +439,13 @@ public partial class LiveView : UserControl
         LeadUrlBox.Text = ev.LeadCaptureUrl ?? "";
         WeekdayBox.SelectedIndex = ev.Weekday is int w and >= 0 and <= 6 ? w + 1 : 0;
         WagerFinalCheck.IsChecked = ev.WagerFinalRound;
-        _rounds.Clear(); _notes.Clear(); _timers.Clear(); _questions.Clear(); _clips.Clear(); _expandedRounds.Clear();
+        _rounds.Clear(); _notes.Clear(); _timers.Clear(); _questions.Clear(); _clips.Clear(); _expandedRounds.Clear(); _buzz.Clear();
         for (int i = 0; i < ev.Rounds.Count; i++)
         {
             _rounds.Add(ev.Rounds[i]);
             _notes.Add(i < ev.RoundNotes.Count ? ev.RoundNotes[i] : "");
             _timers.Add(i < ev.RoundTimers.Count ? ev.RoundTimers[i] : 0);
+            _buzz.Add(i < ev.BuzzRounds.Count && ev.BuzzRounds[i]);
             _questions.Add(ev.QuestionsFor(i).ToList());
             _clips.Add(Enumerable.Range(0, ev.QuestionsFor(i).Count).Select(q => ev.ClipFor(i, q) ?? "").ToList());
         }
@@ -541,6 +574,7 @@ public partial class LiveView : UserControl
         _notes.Add(video ? "Play each clip on the projector, then take answers."
                          : "Play each track through the PA, then take answers.");
         _timers.Add(0);
+        _buzz.Add(false);
         _questions.Add(questions);
         _clips.Add(clips);
         _expandedRounds.Add(_rounds.Count - 1);

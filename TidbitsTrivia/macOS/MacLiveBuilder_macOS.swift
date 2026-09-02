@@ -321,6 +321,12 @@ struct LiveBuilderView_macOS: View {
                     set: { working.rounds[i].isSpeed = $0 ? true : nil })) {
                     Label("Speed", systemImage: "bolt")
                 }.toggleStyle(.button).font(.callout).fixedSize()
+                Toggle(isOn: Binding(   // G1: buzz round — first team to buzz answers
+                    get: { working.rounds[i].isBuzz ?? false },
+                    set: { working.rounds[i].isBuzz = $0 ? true : nil })) {
+                    Label("Buzz", systemImage: "hand.tap")
+                }.toggleStyle(.button).font(.callout).fixedSize()
+                    .help("Buzz round — the room races to buzz and the first team answers out loud")
                 Spacer()
             }
             TextField("Host note (shown in the cockpit)", text: Binding(   // Wave A — its own line, full width

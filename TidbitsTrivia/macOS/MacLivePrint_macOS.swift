@@ -102,7 +102,7 @@ struct QuestionPackPage: View {
         VStack(alignment: .leading, spacing: 16) {
             Text(event.name).font(.system(size: 26, weight: .bold))
             if !event.venue.isEmpty { Text(event.venue).font(.system(size: 14, weight: .semibold)) }
-            Text("Host question pack · \(event.rounds.count) rounds · \(event.totalQuestions) questions")
+            Text("Host question pack · " + LiveBuilderView_macOS.summary(rounds: event.rounds.count, questions: event.totalQuestions))
                 .font(.system(size: 12)).foregroundStyle(.secondary)
             ForEach(Array(event.rounds.enumerated()), id: \.element.id) { ri, round in
                 VStack(alignment: .leading, spacing: 8) {

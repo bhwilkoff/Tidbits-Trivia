@@ -49,14 +49,31 @@ struct LiveBuilderView_macOS: View {
         }
         .background(Tidbits.Palette.bg)
         .navigationTitle("Tidbits Live")
-        .onAppear { if selectedID == nil { newEvent() } }
+        .onAppear {
+            // Open the host's most recent night, not a blank draft. Creating one
+            // unconditionally left the saved event visible in the list and an
+            // unrelated empty draft in the editor — same name, nothing selected,
+            // and the two disagreeing ("1 rounds" beside "No rounds yet"). A host
+            // reasonably read that as their event having lost its rounds.
+            guard selectedID == nil,
+                  ProcessInfo.processInfo.environment["TIDBITS_LIVE_BUILDER"] != "1"
+            else { return }
+            if let latest = store.events.first {
+                selectedID = latest.id
+                working = latest
+            } else {
+                newEvent()
+            }
+        }
         // TIDBITS_LIVE_BUILDER=1 — open the builder on a populated event with its
         // first round expanded. The question list and the per-question editor are
         // otherwise unreachable from a cold launch, so nothing could observe them
         // (`hooks-are-coverage`). No-op in production.
         .task {
-            guard ProcessInfo.processInfo.environment["TIDBITS_LIVE_BUILDER"] == "1",
-                  working.rounds.isEmpty else { return }
+            // Not gated on `working.rounds.isEmpty`: onAppear now opens the
+            // host's most recent night, so that guard started failing whenever a
+            // saved event existed and the demo silently never loaded.
+            guard ProcessInfo.processInfo.environment["TIDBITS_LIVE_BUILDER"] == "1" else { return }
             let ev = await LiveBuilderView_macOS.demoEvent()
             working = ev
             expandedRounds = Set(ev.rounds.prefix(1).map(\.id))
@@ -122,7 +139,7 @@ struct LiveBuilderView_macOS: View {
                 ForEach(store.events) { ev in
                     VStack(alignment: .leading, spacing: 2) {
                         Text(ev.name).font(.headline).foregroundStyle(Tidbits.Palette.ink)
-                        Text("\(ev.rounds.count) rounds · \(ev.totalQuestions) questions")
+                        Text(Self.summary(rounds: ev.rounds.count, questions: ev.totalQuestions))
                             .font(.callout).foregroundStyle(Tidbits.Palette.inkSoft)
                         if let next = ev.nextOccurrence, let day = ev.weekdayName {   // Wave D: recurring series
                             Label("Every \(day) · next \(next.formatted(.dateTime.month().day()))", systemImage: "repeat")
@@ -217,12 +234,24 @@ struct LiveBuilderView_macOS: View {
         }
     }
 
+    /// "1 round · 1 question", not "1 rounds · 1 questions".
+    static func summary(rounds: Int, questions: Int) -> String {
+        let r = rounds == 1 ? "1 round" : "\(rounds) rounds"
+        let q = questions == 1 ? "1 question" : "\(questions) questions"
+        return "\(r) · \(q)"
+    }
+
     @ViewBuilder private var actionButtons: some View {
         Button("Save event") { store.upsert(working); selectedID = working.id }
         Button("Preview solo") { store.upsert(working); onPreview(working) }
             .disabled(working.totalQuestions == 0)
         Button("Host live") { store.upsert(working); onHost(working) }
             .buttonStyle(.borderedProminent)
+            // macOS-DESIGN §5.7 — ONE accent. Untinted, this took the system
+            // accent (blue by default) and sat in the same view as the coral
+            // "Add round", so the surface showed two different filled accents
+            // and read as two design systems.
+            .tint(Tidbits.Palette.coral)
             .keyboardShortcut(.return, modifiers: [.command])
             .disabled(working.totalQuestions == 0)
         Menu {
@@ -270,7 +299,7 @@ struct LiveBuilderView_macOS: View {
                                                            set: { working.rounds[i].title = $0 }))
                         .textFieldStyle(.plain)
                         .font(.headline).foregroundStyle(Tidbits.Palette.ink).lineLimit(1)
-                    Text("\(round.format.title) · \(TriviaCategory.named(round.categoryID).name) · \(round.questions.count) questions")
+                    Text("\(round.format.title) · \(TriviaCategory.named(round.categoryID).name) · " + (round.questions.count == 1 ? "1 question" : "\(round.questions.count) questions"))
                         .font(.callout).foregroundStyle(Tidbits.Palette.inkSoft).lineLimit(1)
                 }
                 Spacer()

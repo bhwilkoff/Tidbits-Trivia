@@ -1,0 +1,56 @@
+[
+{"subject":"Microsoft Windows","cat":"science","diff":3,
+ "prompt":"Microsoft groups its proprietary operating system into families: one for personal computers, one for servers, and a third aimed at what kind of system?",
+ "answer":"Embedded systems","options":["Mainframes","Supercomputers","Point-of-sale terminals"],
+ "why":"Windows is grouped into families catering to particular sectors: Windows for personal computers, Windows Server for servers, and Windows IoT for embedded systems."},
+
+{"subject":"AFC Asian Cup","cat":"sports","diff":3,
+ "prompt":"Contested by the senior men's national teams of the Asian Football Confederation, this is the second-oldest continental football championship in the world. Which tournament is older?",
+ "answer":"Copa América","options":["The European Championship","The Africa Cup of Nations","The CONCACAF Gold Cup"],
+ "why":"The AFC Asian Cup determines the continental champion of Asia and is the second-oldest continental football championship in the world, after Copa América."},
+
+{"subject":"Mother's Day","cat":"arts","diff":2,
+ "prompt":"Honouring mothers and maternal bonds, this celebration falls on different dates around the world, but most commonly in which two months?",
+ "answer":"March or May","options":["January or February","July or August","October or November"],
+ "why":"Mother's Day is a celebration honouring the mother of the family, motherhood and maternal bonds. It is celebrated on different days in many parts of the world, most commonly in March or May."},
+
+{"subject":"Chandrayaan-3","cat":"science","diff":3,
+ "prompt":"India's third lunar mission carried a lander named Vikram and a rover, both replacing equivalents lost when the previous mission crashed on landing. What was the rover called?",
+ "answer":"Pragyan","options":["Rohini","Aryabhata","Bhaskara"],
+ "why":"Chandrayaan-3 is the third mission in ISRO's Chandrayaan lunar-exploration programme, consisting of the lander Vikram and the rover Pragyan, replacements for the equivalents on Chandrayaan-2, which crashed on landing."},
+
+{"subject":"Astrological sign","cat":"arts","diff":2,
+ "prompt":"Western astrology divides the Sun's apparent yearly path into twelve equal sectors, counting from the vernal equinox. How many degrees does each sector span?",
+ "answer":"30","options":["12","45","60"],
+ "why":"In Western astrology the astrological signs are the zodiac: twelve 30-degree sectors crossed by the Sun's 360-degree orbital path as seen from Earth, enumerated from the First Point of Aries at the vernal equinox."},
+
+{"subject":"Google Maps","cat":"science","diff":2,
+ "prompt":"Google's web mapping platform offers satellite imagery, live traffic and route planning, plus 360-degree interactive panoramas taken along roads. What is that panorama feature called?",
+ "answer":"Street View","options":["Live View","Earth View","Road View"],
+ "why":"Google Maps offers satellite imagery, aerial photography, street maps, 360-degree interactive panoramic views of streets known as Street View, real-time traffic conditions and route planning."},
+
+{"subject":"Ballon d'Or","cat":"sports","diff":3,
+ "prompt":"Conceived by sports writers Gabriel Hanot and Jacques Ferran, football's Golden Ball award has been presented since 1956 by which French magazine?",
+ "answer":"France Football","options":["L'Équipe","Paris Match","Le Figaro"],
+ "why":"The Ballon d'Or is an annual association football award presented by the French magazine France Football since 1956, honouring the player judged best over the previous season. It was conceived by sports writers Gabriel Hanot and Jacques Ferran."},
+
+{"subject":"Christianity","cat":"history","diff":3,
+ "prompt":"The Gospels present Jesus as the Son of God and say his coming as the messiah had already been prophesied. In which part of the Bible was that prophecy said to appear?",
+ "answer":"The Old Testament","options":["The Book of Revelation","The Acts of the Apostles","The Pauline epistles"],
+ "why":"Christianity is an Abrahamic monotheistic religion based on the Bible and the teachings of Jesus. The Gospels state that Jesus is the Son of God and rose from the dead after his crucifixion, and that his coming as the messiah was prophesied in the Old Testament and chronicled in the New Testament."},
+
+{"subject":"2023 Formula One World Championship","cat":"sports","diff":4,
+ "prompt":"Recognised by the FIA as the highest class of open-wheel motor racing, the 2023 season was which running of the Formula One World Championship?",
+ "answer":"The 74th","options":["The 51st","The 60th","The 88th"],
+ "why":"The 2023 FIA Formula One World Championship was the 74th running of the Formula One World Championship, recognised by the Fédération Internationale de l'Automobile as the highest class of competition for open-wheel racing cars."},
+
+{"subject":"UEFA Euro 2024 qualifying","cat":"sports","diff":4,
+ "prompt":"Germany went straight into Euro 2024 as hosts. How many other national teams did the qualifying tournament, played from March 2023 to March 2024, send through?",
+ "answer":"23","options":["15","19","31"],
+ "why":"The UEFA Euro 2024 qualifying tournament ran from March 2023 to March 2024 to determine the 23 UEFA member men's national teams that would join automatically qualified hosts Germany at the final tournament."},
+
+{"subject":"Raindrop cake","cat":"arts","diff":4,
+ "prompt":"Made from just water and agar and shaped like a giant droplet, this Japanese confection became popular at home in 2014 before drawing attention abroad. What is it called?",
+ "answer":"Raindrop cake","options":["Dorayaki","Taiyaki","Yokan"],
+ "why":"Raindrop cake is a wagashi, a Japanese confection, made of water and agar and resembling a large raindrop. It first became popular in Japan in 2014 and later gained international attention."}
+]

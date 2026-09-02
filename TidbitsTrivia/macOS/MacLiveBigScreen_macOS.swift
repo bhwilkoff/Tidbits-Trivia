@@ -236,7 +236,15 @@ struct LiveBigScreen_macOS: View {
                                 .font(.system(size: 30, weight: .medium, design: .rounded))
                                 .foregroundStyle(Tidbits.Palette.inkSoft)
                                 .multilineTextAlignment(.center)
-                                .frame(maxWidth: 1100)
+                                // Wraps to three lines and shrinks rather than cutting.
+                                // Without this a long payoff truncated —
+                                // "...proscribed by the British government and in 1940 it
+                                // was disp…" — and the explanation is the LEARNING, the
+                                // reason the reveal is on the screen at all. The earlier
+                                // pass here was luck: the scenario draws a random question
+                                // and had happened to land a one-line explanation.
+                                .lineLimit(3).minimumScaleFactor(0.55)
+                                .frame(maxWidth: 1100, minHeight: 90, alignment: .top)
                                 .padding(.top, 18)
                                 // Clear the join panel. Moving that panel to an overlay
                                 // stopped it pushing the header off the top, but an
@@ -407,6 +415,24 @@ struct LiveBigScreen_macOS: View {
                 .symbolEffect(.bounce, options: reduceMotion ? .nonRepeating : .repeating)
             } else {
                 Text("FINAL STANDINGS").font(.system(size: 56, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
+            }
+            // The night's CLIMAX was a blank screen with zero teams: the ForEach
+            // below renders nothing and there was no empty state, so a host who
+            // ends a night before anyone joined — or who ran the whole thing on
+            // paper without adding the teams — puts "FINAL STANDINGS" over an empty
+            // wall in front of the room. Every list gets its empty state
+            // (universal-feature-states); this one is on a projector.
+            if rows.isEmpty {
+                VStack(spacing: 14) {
+                    Text("No teams to rank")
+                        .font(.system(size: 40, weight: .black, design: .rounded))
+                        .foregroundStyle(Tidbits.Palette.inkSoft)
+                    Text("Add teams in the cockpit, or have players scan the code to join.")
+                        .font(.system(size: 28, weight: .semibold, design: .rounded))
+                        .foregroundStyle(Tidbits.Palette.inkSoft)
+                        .multilineTextAlignment(.center)
+                }
+                .padding(.top, 12)
             }
             ForEach(Array(rows.prefix(8).enumerated()), id: \.element.id) { i, team in
                 HStack(spacing: 20) {

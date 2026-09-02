@@ -86,7 +86,11 @@ SCENARIOS = {
                    "expect_all": [r"Back in a moment"]}),
     "projstandings": (dict(TIDBITS_LIVE_HOST="1", TIDBITS_LIVE_CODE="QATEST",
                            TIDBITS_LIVE_STATE="standings"),
-                      {"last_frame_only": True, "projector": True, "expect_none": r"\u2026|\.\.\."}),
+                      {"last_frame_only": True, "projector": True, "expect_none": r"\u2026|\.\.\.",
+                       # This scenario ends a night with NO teams, which is exactly
+                       # the case that rendered a blank wall. The guidance line is
+                       # what proves the empty state is on screen.
+                       "expect_all": [r"FINAL STANDINGS", r"No teams to rank"]}),
     # The Live builder with a populated event and its first round expanded, so
     # the per-question list and the Edit affordance are observable at all
     # (macOS-DESIGN §A2.4). Nothing could reach them from a cold launch.

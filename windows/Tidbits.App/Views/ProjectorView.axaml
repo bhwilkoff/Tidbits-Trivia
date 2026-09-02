@@ -62,6 +62,9 @@
                 <TextBlock Text="{Binding Host.Current.Prompt}" Foreground="White" FontSize="60" FontWeight="Black" TextWrapping="Wrap"/>
                 <!-- Options with reveal choreography: the correct one lights up green
                      on reveal (built in code-behind so each row can recolor). -->
+                <!-- G1: name the buzzing team on the big screen. -->
+                <TextBlock IsVisible="{Binding HasBuzz}" Text="{Binding BuzzBanner}"
+                           Foreground="#FF5C35" FontSize="52" FontWeight="Black" TextWrapping="Wrap"/>
                 <StackPanel x:Name="QOptions"/>
                 <TextBlock IsVisible="{Binding IsReveal}" Foreground="#3FCF8E" FontSize="46" FontWeight="Black"
                            TextWrapping="Wrap" Text="{Binding RevealAnswer, StringFormat='Answer: {0}'}"/>

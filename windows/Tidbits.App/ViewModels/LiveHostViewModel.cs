@@ -63,6 +63,11 @@ public sealed class LiveHostViewModel : ObservableObject
 
     public bool HasBuzz => BuzzUid is not null;
 
+    /// "<team> buzzed!" for the BIG SCREEN. The room needs to see who got there
+    /// first — that is the drama of the format, and without it only the host's
+    /// laptop knows. Mirrors the Mac projector banner.
+    public string BuzzBanner => HasBuzz ? $"{BuzzLabel.Replace(" buzzed", "")} buzzed!" : "";
+
     /// "<team> buzzed" — the host needs the NAME, not a uid, to call on a table.
     public string BuzzLabel
     {
@@ -98,6 +103,7 @@ public sealed class LiveHostViewModel : ObservableObject
         OnPropertyChanged(nameof(BuzzUid));
         OnPropertyChanged(nameof(HasBuzz));
         OnPropertyChanged(nameof(BuzzLabel));
+        OnPropertyChanged(nameof(BuzzBanner));
     }
 
     public void ToggleHold() => HoldStandings = !HoldStandings;

@@ -120,6 +120,9 @@ async function submitAns(fields) {
   catch { S.submittedQid = null; S.chosen = null; S.error = 'Answer didn’t send — tap again.'; draw(); }
 }
 async function pick(i) { S.chosen = i; submitAns({ choice: i }); }
+/// G1: buzz in. An EMPTY payload — on a buzz round the answer is said out loud to
+/// the room, so all the wire needs is who was first, and the server stamps that.
+async function buzz() { submitAns({}); }
 
 // Wave A: the stake input on a wager question — bet 0…your score.
 function wagerHTML() {
@@ -164,6 +167,7 @@ function draw() {
   }
   root.querySelector('#live-x')?.addEventListener('click', () => { location.hash = '#/play'; });
   root.querySelectorAll('[data-opt]').forEach((b) => b.addEventListener('click', () => pick(+b.dataset.opt)));
+  root.querySelector('#live-buzz')?.addEventListener('click', buzz);
   root.querySelectorAll('[data-add]').forEach((b) => b.addEventListener('click', async () => {   // L5 social graph
     await Identity.addFriend(b.dataset.add, b.dataset.name, ''); draw();
   }));
@@ -270,6 +274,16 @@ function playHTML() {
 /** The right answer input for the question type. The host scores each on reveal. */
 function answerHTML(p, revealed) {
   const locked = revealed || S.submittedQid === p.qid || p.locked === true;
+  // G1: on a BUZZ round the whole answer UI is one big button, and the normal
+  // options must be GONE — a player who can both buzz and pick an option has two
+  // ways to answer and the host adjudicates the wrong one. The payload is empty
+  // on purpose: the answer is spoken out loud, so the wire only carries who was
+  // first, ordered by the SERVER stamp.
+  if (p.buzz && !revealed) {
+    return S.submittedQid === p.qid
+      ? '<div class="live-buzzed">Buzzed — wait for the host</div>'
+      : '<button id="live-buzz" class="live-buzz">BUZZ</button>';
+  }
   const L = S.local;
   const submit = locked ? '' : '<button id="live-submit" class="live-go">Submit</button>';
   if (p.options) {
@@ -335,6 +349,11 @@ function injectStyles() {
   .live-q{font-weight:900;font-size:1.5rem;line-height:1.25;color:#231E1A;margin:6px 0 20px}
   .live-opts{display:flex;flex-direction:column;gap:12px}
   .live-opt{display:flex;align-items:center;gap:12px;text-align:left;padding:16px;font-size:1.1rem;font-weight:800;color:#231E1A;background:#fff;border:2.5px solid #231E1A;border-radius:16px;box-shadow:4px 4px 0 #231E1A;cursor:pointer}
+  /* G1: the buzz button is the whole screen's worth of target — the player is
+     racing and watching the big screen, not hunting a small control. */
+  .live-buzz{display:block;width:100%;padding:44px 0;font-size:2.6rem;font-weight:900;letter-spacing:.04em;color:#fff;background:#FF5C35;border:2.5px solid #231E1A;border-radius:20px;box-shadow:5px 5px 0 #231E1A;cursor:pointer}
+  .live-buzz:active{transform:translate(3px,3px);box-shadow:2px 2px 0 #231E1A}
+  .live-buzzed{padding:34px 0;text-align:center;font-size:1.3rem;font-weight:900;color:#128a5b}
   .live-opt:disabled{cursor:default}
   .live-opt.chosen{background:#DDE3FF}
   .live-opt.correct{background:#3CCB8A;color:#fff}

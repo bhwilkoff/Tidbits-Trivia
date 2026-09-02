@@ -228,7 +228,26 @@ struct LiveBigScreen_macOS: View {
                             .padding(.top, 12)
                             .transition(.scale(scale: 0.55).combined(with: .opacity))   // A8.1 the reveal is theatre
                     } else {
+                        // G1: on a buzz round the room needs to SEE who got there
+                        // first — that is the whole drama of the format, and until
+                        // now only the host's laptop knew. Named on the big screen
+                        // the moment it happens.
+                        if s.currentRoundIsBuzz,
+                           let uid = LiveNightHost.firstBuzz(coordinator.net?.answers ?? [:],
+                                                             excluding: s.buzzedOut) {
+                            let who = coordinator.net?.teams[uid]?.name ?? "Team"
+                            Text("\(who) buzzed!")
+                                .font(.system(size: 46, weight: .black, design: .rounded))
+                                .foregroundStyle(Tidbits.Palette.coral)
+                                .lineLimit(2).minimumScaleFactor(0.5)
+                                .frame(maxWidth: 1100)
+                                .transition(.scale(scale: 0.7).combined(with: .opacity))
+                        } else if s.currentRoundIsBuzz {
+                            Text("BUZZ IN").font(.system(size: 26, weight: .semibold, design: .rounded))
+                                .foregroundStyle(Tidbits.Palette.inkSoft)
+                        } else {
                         Text("Answer on your phones").font(.system(size: 26, weight: .semibold, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
+                        }
                     }
                     if s.revealed {   // Wave A: the story behind the answer — the learning payoff on the big screen
                         let story = q.explanation.trimmingCharacters(in: .whitespacesAndNewlines)

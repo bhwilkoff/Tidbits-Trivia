@@ -9,7 +9,7 @@
                            Classes="body" Opacity="0.72" TextWrapping="Wrap"/>
                 <TextBlock Text="Just want to play a night with friends? That is Trivia Night, on the Play page — host it from any device, or join one with a code."
                            Classes="caption" Opacity="0.6" TextWrapping="Wrap"/>
-                <TextBlock Text="Night options" Classes="section-header" Margin="0,10,0,0"/>
+                <TextBlock Text="Host options" Classes="section-header" Margin="0,10,0,0"/>
                 <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
                     <TextBlock Text="Category:" VerticalAlignment="Center" Opacity="0.7"/>
                     <ComboBox x:Name="CategoryPicker" MinWidth="150"/>
@@ -19,11 +19,7 @@
                 <TextBox x:Name="HostNameBox" PlaceholderText="Your team name" MaxWidth="260"
                          HorizontalAlignment="Left" IsEnabled="{Binding #HostPlaysCheck.IsChecked}"/>
 
-                <TextBlock Text="Host a night" Classes="section-header" Margin="0,10,0,0"/>
-                <StackPanel x:Name="PresetsPanel" Spacing="10"/>
-
-                <!-- Build a custom event -->
-                <TextBlock Text="Or build a custom event" Classes="section-header" Margin="0,14,0,0"/>
+                <TextBlock Text="Build a custom event" Classes="section-header" Margin="0,14,0,0"/>
                 <TextBox x:Name="EventNameBox" PlaceholderText="Event name (e.g. Friday Pub Quiz)" MaxWidth="360" HorizontalAlignment="Left"/>
                 <StackPanel Orientation="Horizontal" Spacing="8">
                     <TextBox x:Name="SponsorBox" PlaceholderText="Sponsor (optional)" MinWidth="220"/>

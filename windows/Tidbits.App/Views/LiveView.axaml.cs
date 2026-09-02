@@ -22,28 +22,6 @@ public partial class LiveView : UserControl
             (c, _) => new TextBlock { Text = c?.Name ?? "" });
         CategoryPicker.SelectedIndex = 0; // Mixed Bag
 
-        foreach (var (name, blurb, plan) in NightPlan.Presets)
-        {
-            var p = plan;
-            var btn = new Button
-            {
-                HorizontalAlignment = HorizontalAlignment.Stretch,
-                HorizontalContentAlignment = HorizontalAlignment.Left,
-                Padding = new Avalonia.Thickness(18, 14),
-                Content = new StackPanel
-                {
-                    Spacing = 2,
-                    Children =
-                    {
-                        new TextBlock { Text = name, FontWeight = Avalonia.Media.FontWeight.Bold, FontSize = 16 },
-                        new TextBlock { Text = blurb, FontSize = 12, Opacity = 0.65 },
-                    },
-                },
-            };
-            btn.Click += (_, _) => StartHosting(p, name);
-            PresetsPanel.Children.Add(btn);
-        }
-
         RoundModeBox.ItemsSource = NightPlan.AllKinds;
         RoundModeBox.ItemTemplate = new Avalonia.Controls.Templates.FuncDataTemplate<GameMode>(
             (m, _) => new TextBlock { Text = m.Title() });
@@ -769,31 +747,15 @@ public partial class LiveView : UserControl
     private async void StartHosting(NightPlan plan, string title, LiveEvent? branding = null)
     {
         var data = GameData.Shared.Value;
-        var category = CategoryPicker.SelectedItem as TriviaCategory ?? TriviaCategory.Named("mixed");
-        var host = new LiveNightHost(plan, category, data.Provider, title)
-        {
-            SpeedBonus = SpeedBonusCheck.IsChecked == true,
-            HostPlays = HostPlaysCheck.IsChecked == true,
-            HostName = string.IsNullOrWhiteSpace(HostNameBox.Text) ? "Host" : HostNameBox.Text!.Trim(),
-            // Without this the editor is theatre: the host edits a question, hits
-            // Host, and the night pulls a fresh corpus round over their work.
-            AuthoredQuestions = branding is null
-                ? new System.Collections.Generic.List<System.Collections.Generic.IReadOnlyList<Question>>()
-                : Enumerable.Range(0, branding.Rounds.Count).Select(branding.QuestionsFor).ToList(),
-            AuthoredClips = branding is null
-                ? new System.Collections.Generic.List<System.Collections.Generic.IReadOnlyList<string>>()
-                : Enumerable.Range(0, branding.Rounds.Count)
-                    .Select(i => (System.Collections.Generic.IReadOnlyList<string>)
-                        Enumerable.Range(0, branding.QuestionsFor(i).Count)
-                                  .Select(q => branding.ClipFor(i, q) ?? "").ToList())
-                    .ToList(),
-            Sponsor = branding?.Sponsor,
-            BrandHex = branding?.BrandHex,
-            LeadCaptureUrl = branding?.LeadCaptureUrl,
-            WagerRoundIndex = branding?.WagerFinalRound == true ? System.Math.Max(0, plan.Rounds.Count - 1) : null,
-            RoundNotes = branding?.RoundNotes ?? new System.Collections.Generic.List<string>(),
-            RoundTimers = branding?.RoundTimers ?? new System.Collections.Generic.List<int>(),
-        };
+        var host = NightHostFactory.Create(
+            plan,
+            CategoryPicker.SelectedItem as TriviaCategory ?? TriviaCategory.Named("mixed"),
+            data.Provider,
+            title,
+            SpeedBonusCheck.IsChecked == true,
+            HostPlaysCheck.IsChecked == true,
+            HostNameBox.Text,
+            branding);
         var vm = new LiveHostViewModel(host);
         Setup.IsVisible = false;
         CockpitHost.Content = new LiveCockpitView { DataContext = vm };

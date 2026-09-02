@@ -44,11 +44,30 @@
                 <TextBlock Text="Trivia Night" Classes="section-header" Margin="0,12,0,0"/>
                 <TextBlock Text="A themed night of rounds — each round a different question type. Host from any device, or join someone else's with a code."
                            FontSize="13" Opacity="0.7" TextWrapping="Wrap"/>
+                <TextBlock Text="Play one solo" Classes="body-strong" Margin="0,6,0,0"/>
                 <WrapPanel x:Name="NightPanel"/>
+
+                <TextBlock Text="Host one for a room" Classes="body-strong" Margin="0,10,0,0"/>
+                <TextBlock Text="Players join from their phones with a 4-letter code. Any device can host."
+                           FontSize="13" Opacity="0.7" TextWrapping="Wrap"/>
 
                 <!-- WINDOWS-DESIGN 6.0 / macOS-DESIGN A0.4.1 — joining is ALWAYS a Trivia
                      Night action. This lived on the Tidbits Live page, which read as "you
                      need the desktop pub-trivia rig to join a friend's night". You do not. -->
+                <!-- Hosting a night is a Trivia Night action too: any device can do it.
+                     These lived on the Tidbits Live page, which implied the desktop
+                     emcee rig was required to run one. -->
+                <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,10,0,0">
+                    <TextBlock Text="Category:" VerticalAlignment="Center" Opacity="0.7"/>
+                    <ComboBox x:Name="NightCategoryPicker" MinWidth="150"/>
+                </StackPanel>
+                <CheckBox x:Name="NightSpeedBonusCheck" Content="Speed bonus — fastest correct answers score extra (+3 / +2 / +1)"/>
+                <CheckBox x:Name="NightHostPlaysCheck" Content="I'll play too (answer on this device and be scored)"/>
+                <TextBox x:Name="NightHostNameBox" PlaceholderText="Your team name" MaxWidth="260"
+                         HorizontalAlignment="Left" IsEnabled="{Binding #NightHostPlaysCheck.IsChecked}"/>
+                <StackPanel x:Name="NightPresetsPanel" Spacing="10" Margin="0,4,0,0"/>
+                <TextBlock x:Name="NightStatusText" IsVisible="False" Opacity="0.75" FontSize="13" TextWrapping="Wrap"/>
+
                 <Button Content="Join a night with a code" Click="OnJoinNight"
                         HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
                         Padding="18,13" Margin="0,10,0,0" FontWeight="SemiBold"/>

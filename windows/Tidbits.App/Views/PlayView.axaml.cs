@@ -47,6 +47,7 @@ public partial class PlayView : UserControl
     public PlayView()
     {
         InitializeComponent();
+        BuildNightHosting();
         CategoryPicker.ItemsSource = TriviaCategory.All;
         CategoryPicker.ItemTemplate = new FuncDataTemplate<TriviaCategory>((c, _) =>
             new TextBlock { Text = c?.Name ?? "" });
@@ -602,6 +603,76 @@ public partial class PlayView : UserControl
     /// Join someone else's Trivia Night. Lives on Play, not Tidbits Live: joining
     /// needs nothing but a code and a device, and putting it on the desktop-only
     /// emcee page implied otherwise (WINDOWS-DESIGN 6.0).
+    /// Build the Trivia Night host controls. Mirrors what Tidbits Live used to own
+    /// alone; the host itself is built by the shared NightHostFactory so the two
+    /// products cannot drift.
+    private void BuildNightHosting()
+    {
+        NightCategoryPicker.ItemsSource = TriviaCategory.All;
+        NightCategoryPicker.ItemTemplate = new FuncDataTemplate<TriviaCategory>(
+            (c, _) => new TextBlock { Text = c?.Name ?? "" });
+        NightCategoryPicker.SelectedIndex = 0;
+
+        foreach (var (name, blurb, plan) in NightPlan.Presets)
+        {
+            var p = plan;
+            var btn = new Button
+            {
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                HorizontalContentAlignment = HorizontalAlignment.Left,
+                Padding = new Avalonia.Thickness(18, 14),
+                Content = new StackPanel
+                {
+                    Spacing = 2,
+                    Children =
+                    {
+                        // "Quick Night" already appears above as a SOLO night. Two
+                        // identical labels doing different things on one page is a
+                        // trap; the hosted ones say so.
+                        new TextBlock { Text = $"Host {name}", FontWeight = FontWeight.Bold, FontSize = 16 },
+                        new TextBlock { Text = blurb, FontSize = 12, Opacity = 0.65 },
+                    },
+                },
+            };
+            btn.Click += (_, _) => StartHostingNight(p, name);
+            NightPresetsPanel.Children.Add(btn);
+        }
+    }
+
+    private async void StartHostingNight(NightPlan plan, string title)
+    {
+        var data = GameData.Shared.Value;
+        var host = NightHostFactory.Create(
+            plan,
+            NightCategoryPicker.SelectedItem as TriviaCategory ?? TriviaCategory.Named("mixed"),
+            data.Provider,
+            title,
+            NightSpeedBonusCheck.IsChecked == true,
+            NightHostPlaysCheck.IsChecked == true,
+            NightHostNameBox.Text);
+        var vm = new LiveHostViewModel(host);
+        Landing.IsVisible = false;
+        GameHost.Content = new LiveCockpitView { DataContext = vm };
+        NightStatusText.IsVisible = false;
+        try
+        {
+            await vm.StartHosting();
+            if (!host.IsOpen) FailToHost(host.ErrorText ?? "Couldn't start hosting.");
+        }
+        catch (Exception ex)
+        {
+            FailToHost($"Couldn't start hosting: {ex.Message}");
+        }
+    }
+
+    private void FailToHost(string message)
+    {
+        GameHost.Content = null;
+        Landing.IsVisible = true;
+        NightStatusText.Text = message;
+        NightStatusText.IsVisible = true;
+    }
+
     private void OnJoinNight(object? sender, RoutedEventArgs e)
     {
         var view = new JoinPlayerView { DataContext = new LivePlayerViewModel() };

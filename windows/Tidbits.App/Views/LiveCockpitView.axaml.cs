@@ -428,6 +428,9 @@ public partial class LiveCockpitView : UserControl
     {
         _projector?.Close();
         if (Vm is { } vm) await vm.Close();
-        this.FindAncestorOfType<LiveView>()?.BackToSetup();
+        // The cockpit runs BOTH products now: Play hosts a Trivia Night, Tidbits
+        // Live runs a built event. Ask the tree rather than assuming Live.
+        if (this.FindAncestorOfType<PlayView>() is { } play) play.BackToPlay();
+        else this.FindAncestorOfType<LiveView>()?.BackToSetup();
     }
 }

@@ -73,7 +73,14 @@ class CreateGoldenTest {
 
     @Test fun theRankerSelectsWhatTheAppleRankerSelects() {
         val corpus = loadCorpus()
-        assertTrue("corpus looks wrong: ${corpus.size} rows", corpus.size > 100_000)
+        // Check the parse against the corpus's OWN declared count, not a magic
+        // number. `> 100_000` was a stale bound: quality culls took the corpus to
+        // 99,669 legitimately, and the guard then failed for a corpus that was
+        // completely healthy. Comparing to `count` still catches what this is
+        // actually for — a truncated or half-parsed load — and cannot go stale.
+        val declared = JSONObject(repoFile("assets/corpus.json").readText()).getInt("count")
+        assertEquals("corpus parse is short", declared, corpus.size)
+        assertTrue("corpus looks empty: ${corpus.size} rows", corpus.size > 10_000)
         val expected = golden()
         assertTrue(expected.isNotEmpty())
 

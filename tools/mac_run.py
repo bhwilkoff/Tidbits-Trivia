@@ -43,12 +43,12 @@ SCENARIOS = {
                  {"allow_edge": SIDEBAR_FOOTER, "expect_any": r"Your games|Personal bests|No games yet|streak"}),
     "create":   (dict(TIDBITS_TAB="create"),
                  {"allow_edge": SIDEBAR_FOOTER, "expect_any": r"Create|quiz|round|question"}),
-    # NO "leaderboard" scenario: macOS HAS no leaderboard. The Mac sidebar is
-    # play/records/create/live (ContentView_macOS Section), and LeaderboardView
-    # exists only for iOS and tvOS — so TIDBITS_TAB=leaderboard silently landed on
-    # Play and the scenario graded the WRONG SCREEN. It is a real parity gap, not
-    # a harness bug; tracked in PARITY.md and docs/PREMIER-PUSH.md. Add the
-    # scenario back in the same change that adds the surface.
+    "leaderboard": (dict(TIDBITS_TAB="leaderboard"),
+                    {"allow_edge": SIDEBAR_FOOTER,
+                     # DETAIL-column content only. "Leaderboard" is now a SIDEBAR row, and the
+                     # split view shows the sidebar on every section, so matching it
+                     # would pass while Play was on screen.
+                     "expect_any": r"Resets in|No standings yet|This season"}),
     "live":     (dict(TIDBITS_TAB="live"),
                  {"allow_edge": SIDEBAR_FOOTER, "expect_any": r"Tidbits Live|Event name|Rounds",
                   "expect_none": r"Join a game|Join a night|join one with a code"}),

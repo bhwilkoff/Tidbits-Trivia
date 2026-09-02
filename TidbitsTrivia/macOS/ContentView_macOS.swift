@@ -126,8 +126,14 @@ struct ContentView_macOS: View {
             if liveHost == nil, ProcessInfo.processInfo.environment["TIDBITS_LIVE_HOST"] == "1" {
                 liveHost = await Self.quickNightEvent(name: "Friday Pub Quiz")
             }
-            if ProcessInfo.processInfo.environment["TIDBITS_TAB"] == "live" {
-                section = .live
+            // Resolve against the MAC's sections, not AppStore.Tab. That enum is the
+            // iOS tab set (play/records/create), so every Mac-only section had to be
+            // special-cased — "live" was, and "leaderboard" was not, which meant
+            // TIDBITS_TAB=leaderboard silently opened Play and the QA scenario spent
+            // its life grading the wrong screen while passing.
+            if let raw = ProcessInfo.processInfo.environment["TIDBITS_TAB"],
+               let mac = SidebarSection(rawValue: raw) {
+                section = mac
             } else if let tab = DebugHooks.initialTab {
                 section = SidebarSection(rawValue: tab.rawValue)
             }
@@ -200,6 +206,7 @@ struct ContentView_macOS: View {
                                                   expeditionLaunch = ExpeditionStageLaunch_macOS(expedition: expedition, stageIndex: stageIndex)
                                               })
                 case .records: RecordsView_macOS(onPlay: start)
+                case .leaderboard: LeaderboardView_macOS()
                 case .create:  CreateView_macOS { topic, qs in customGame = CustomLaunch(topic: topic, questions: qs) }
                 case .live:    LiveBuilderView_macOS(onPreview: { livePreview = $0 }, onHost: { liveHost = $0 })
                 }
@@ -257,16 +264,18 @@ struct ContentView_macOS: View {
 /// Sidebar sections = the top-level verbs (the macOS analog of the iOS tab bar).
 /// Settings rides the app menu (⌘,), never a sidebar row.
 enum SidebarSection: String, CaseIterable, Identifiable {
-    case play, records, create, live
+    case play, records, leaderboard, create, live
     var id: String { rawValue }
     var title: String {
         switch self {
-        case .play: "Play"; case .records: "Records"; case .create: "Create"; case .live: "Tidbits Live"
+        case .play: "Play"; case .records: "Records"; case .leaderboard: "Leaderboard"
+        case .create: "Create"; case .live: "Tidbits Live"
         }
     }
     var symbol: String {
         switch self {
-        case .play: "play.fill"; case .records: "chart.bar.fill"; case .create: "sparkles"; case .live: "megaphone.fill"
+        case .play: "play.fill"; case .records: "chart.bar.fill"; case .leaderboard: "trophy.fill"
+        case .create: "sparkles"; case .live: "megaphone.fill"
         }
     }
 }

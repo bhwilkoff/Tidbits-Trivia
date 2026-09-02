@@ -10,6 +10,9 @@ on:
       - 'TidbitsTrivia/Core/**'
       - 'TidbitsTriviaTests/**'
       - 'project.yml'
+      # LiveEventFileGoldenTests round-trips this file from the repo, so a change
+      # to it must trigger the suite that checks it.
+      - 'tools/live-event/**'
       - '.github/workflows/apple-tests.yml'
   pull_request:
   workflow_dispatch:

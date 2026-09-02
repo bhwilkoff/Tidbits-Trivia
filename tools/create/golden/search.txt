@@ -1,8 +1,8 @@
-2026 FIFA World Cup	rel:P17:Q110131094 rel:P17:Q131591 rel:P17:Q132515 rel:P17:Q1477177 rel:P17:Q23758108 rel:P17:Q64979822 src:cloze:Unai_Simón src:cloze:Waka_Waka_(This_Time_for_Africa)
+2026 FIFA World Cup	rel:P17:Q110131094 rel:P17:Q131591 rel:P17:Q132515 rel:P17:Q1477177 rel:P17:Q23758108 rel:P17:Q64979822 src:cloze:Unai_Simón src:describe:FIFA_World_Cup-1
 Obsession (2025 film)	src:cloze:David_Grann src:cloze:Lolita src:cloze:Lolita_(1962_film) src:cloze:Michelangelo_(Teenage_Mutant_Ninja_Turtles) src:cloze:Swarm_(TV_series) src:describe:David_Livingstone src:describe:Death_in_Venice src:describe:Winfield_Scott
 Oliver Tree	src:cloze:Oliver_Tree src:describe:Oliver_Tree
-FIFA World Cup	rel:P112:Q982 rel:P17:Q110131094 rel:P17:Q131591 rel:P17:Q132515 rel:P17:Q1477177 rel:P17:Q23758108 rel:P17:Q4630359 rel:P17:Q64979822
-Cape Verde	num:P2046:Q1011 rel:P37:Q1011 src:cloze:Macaronesia src:cloze:Praia src:describe:Bebé src:describe:Natalia_Poklonskaya src:describe:Praia wd:capital:Q1011
+FIFA World Cup	rel:P17:Q110131094 rel:P17:Q131591 rel:P17:Q132515 rel:P17:Q1477177 rel:P17:Q23758108 rel:P17:Q4630359 rel:P17:Q64979822 src:describe:FIFA_World_Cup-1
+Cape Verde	num:P2046:Q1011 rel:P37:Q1011 src:cloze:Praia src:describe:Bebé src:describe:Natalia_Poklonskaya src:describe:Praia sup:P1082:79467431324 wd:capital:Q1011
 Backrooms (film)	
 Lionel Messi	src:describe:Miroslav_Klose
 Jalen Brunson	
@@ -21,14 +21,14 @@ Michael Jackson	src:cloze:Bad_(album) src:cloze:Billie_Jean src:cloze:Dangerous_
 2026 FIFA World Cup knockout stage	
 Neatsville, Kentucky	
 Toy Story 5	
-2022 FIFA World Cup	rel:P17:Q110131094 rel:P17:Q131591 rel:P17:Q132515 rel:P17:Q1477177 rel:P17:Q23758108 rel:P17:Q64979822 src:cloze:Lionel_Scaloni src:cloze:Waka_Waka_(This_Time_for_Africa)
+2022 FIFA World Cup	rel:P17:Q110131094 rel:P17:Q131591 rel:P17:Q132515 rel:P17:Q1477177 rel:P17:Q23758108 rel:P17:Q64979822 src:cloze:Lionel_Scaloni src:describe:FIFA_World_Cup-1
 Murder of Henry Nowak	
 Masters of the Universe (2026 film)	rel:P170:Q66763559
 Victor Wembanyama	
-2030 FIFA World Cup	rel:P17:Q110131094 rel:P17:Q131591 rel:P17:Q132515 rel:P17:Q1477177 rel:P17:Q23758108 rel:P17:Q64979822 src:cloze:Carlos_Queiroz src:cloze:Waka_Waka_(This_Time_for_Africa)
+2030 FIFA World Cup	rel:P17:Q110131094 rel:P17:Q131591 rel:P17:Q132515 rel:P17:Q1477177 rel:P17:Q23758108 rel:P17:Q64979822 src:cloze:Carlos_Queiroz src:describe:FIFA_World_Cup-1
 Zion Suzuki	src:describe:Zion_Suzuki
 Murder of Reagan Simmons-Hancock	
-Michael (2026 film)	rel:P175:Q1426891 rel:P175:Q2346771 src:cloze:6_Underground_(film) src:cloze:Bad_(album) src:cloze:Damon_Hill src:cloze:Dangerous_(Michael_Jackson_album) src:cloze:The_Neverending_Story wd:director:Q116452897
+Michael (2026 film)	rel:P175:Q1426891 rel:P175:Q2346771 src:cloze:6_Underground_(film) src:cloze:Bad_(album) src:cloze:Dangerous_(Michael_Jackson_album) src:cloze:The_Neverending_Story src:describe:Michael_archangel-1 wd:director:Q116452897
 Supergirl (2026 film)	rel:P170:Q18844732 rel:P170:Q8981293 rel:P175:Q738569 src:cloze:Carl_Lumbly src:cloze:Chris_Wood_(actor) src:cloze:Italia_Ricci src:describe:Helen_Slater wd:composer:Q18844732
 Widow's Bay	
 2026 Iran war	src:describe:Mojtaba_Khamenei
@@ -47,4 +47,4 @@ He-Man	rel:P170:Q550404 rel:P175:Q550404 src:cloze:He-Man src:describe:He-Man
 Winston Churchill	src:cloze:Blenheim_Palace src:cloze:Clement_Attlee src:cloze:Darkest_Hour_(film) src:cloze:The_Ministry_of_Ungentlemanly_Warfare src:describe:Blenheim_Palace src:describe:Joe_Wright
 Harry Kane	
 Ancient Egypt	fact:P571:Q11768 src:cloze:Djoser src:cloze:Ramesses_I src:cloze:Susanna_Hoffs src:describe:Cucumis_melo src:describe:Egyptian_pyramids src:describe:Graffiti src:describe:Tug_of_war
-India	fact:P571:Q2767140 fact:P571:Q6974841 num:P2046:Q668 rel:P112:Q1637622 rel:P112:Q223898 wd:author:Q622303 wd:capital:Q1775277 wd:capital:Q2001966
+India	fact:P571:Q2767140 fact:P571:Q6974841 num:P2046:Q668 rel:P112:Q1637622 rel:P112:Q223898 src:describe:India_national_cricket_team-1 wd:author:Q622303 wd:capital:Q1775277

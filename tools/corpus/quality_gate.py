@@ -989,6 +989,15 @@ def check():
                 bad["PROMPT-REPETITION"].append(
                     f"{_n} rows ({_n/len(rows_all):.1%}) share one prompt: {_p[:48]}")
 
+    # NOTE: this catches only golden ids that VANISHED from the corpus. It cannot
+    # catch an ADDITION that out-ranks an existing pick — a new row never removes
+    # an old id, so the gate reports clean while the ranker's selection changes
+    # underneath it. That is real: batch12 added src:describe:FIFA_World_Cup-1 and
+    # the Windows CreateGoldenTest went red on seven topics while this stayed green.
+    # The backstop is windows-build.yml, which now triggers on assets/*.json and
+    # tools/create/golden/** so a corpus push runs the test that DOES compare
+    # rankings. Regenerate with tools/create/parity.sh --regenerate (it rebuilds
+    # nothing — reinstall the sim app first or it refuses, by design).
     golden = ROOT / "tools" / "create" / "golden" / "search.txt"
     if golden.exists():
         known = {q[0] for q in rows_all}

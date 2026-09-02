@@ -7,7 +7,19 @@ name: Windows build + snapshots
 on:
   workflow_dispatch: {}
   push:
-    paths: ['windows/**', '.github/workflows/windows-build.yml']
+    # The headless suite LINKS these into its test bundle (see
+    # Tidbits.HeadlessTests.csproj) and asserts against them: CreateGoldenTest
+    # ranks the real corpus, CorpusLoad/CoverageTest/AuthoredQuestionsTest read
+    # it, and the two goldens are cross-stack contracts. Without them here a
+    # corpus change cannot trigger the job that checks it, so the break stays
+    # latent until someone happens to touch windows/ — which is exactly how the
+    # stale Create golden reached main.
+    paths:
+      - 'windows/**'
+      - 'assets/*.json'
+      - 'tools/create/golden/**'
+      - 'tools/live-event/**'
+      - '.github/workflows/windows-build.yml'
 
 jobs:
   build:

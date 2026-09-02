@@ -8,6 +8,17 @@ import AppKit
 ///   • Question pack — the host's copy (questions + answers).
 ///   • Answer sheet — the teams' blank sheet (numbered lines to write on).
 enum LivePrint {
+
+    /// "1 round · 1 question", not "1 rounds · 1 questions".
+    ///
+    /// Lives HERE, not on the builder view: the test target compiles this file but
+    /// not the view, so reaching across broke `xcodebuild test` while the app build
+    /// stayed green.
+    static func summary(rounds: Int, questions: Int) -> String {
+        let r = rounds == 1 ? "1 round" : "\(rounds) rounds"
+        let q = questions == 1 ? "1 question" : "\(questions) questions"
+        return "\(r) · \(q)"
+    }
     @MainActor static func questionPack(_ event: LiveEvent) {
         render(QuestionPackPage(event: event), name: "\(event.name) — Question Pack")
     }
@@ -102,7 +113,7 @@ struct QuestionPackPage: View {
         VStack(alignment: .leading, spacing: 16) {
             Text(event.name).font(.system(size: 26, weight: .bold))
             if !event.venue.isEmpty { Text(event.venue).font(.system(size: 14, weight: .semibold)) }
-            Text("Host question pack · " + LiveBuilderView_macOS.summary(rounds: event.rounds.count, questions: event.totalQuestions))
+            Text("Host question pack · " + LivePrint.summary(rounds: event.rounds.count, questions: event.totalQuestions))
                 .font(.system(size: 12)).foregroundStyle(.secondary)
             ForEach(Array(event.rounds.enumerated()), id: \.element.id) { ri, round in
                 VStack(alignment: .leading, spacing: 8) {

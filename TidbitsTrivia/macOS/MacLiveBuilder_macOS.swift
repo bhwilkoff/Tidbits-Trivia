@@ -138,7 +138,7 @@ struct LiveBuilderView_macOS: View {
                 ForEach(store.events) { ev in
                     VStack(alignment: .leading, spacing: 2) {
                         Text(ev.name).font(.headline).foregroundStyle(Tidbits.Palette.ink)
-                        Text(Self.summary(rounds: ev.rounds.count, questions: ev.totalQuestions))
+                        Text(LivePrint.summary(rounds: ev.rounds.count, questions: ev.totalQuestions))
                             .font(.callout).foregroundStyle(Tidbits.Palette.inkSoft)
                         if let next = ev.nextOccurrence, let day = ev.weekdayName {   // Wave D: recurring series
                             Label("Every \(day) · next \(next.formatted(.dateTime.month().day()))", systemImage: "repeat")
@@ -231,13 +231,6 @@ struct LiveBuilderView_macOS: View {
             .frame(maxWidth: 720, alignment: .leading)
             .frame(maxWidth: .infinity, alignment: .topLeading)
         }
-    }
-
-    /// "1 round · 1 question", not "1 rounds · 1 questions".
-    static func summary(rounds: Int, questions: Int) -> String {
-        let r = rounds == 1 ? "1 round" : "\(rounds) rounds"
-        let q = questions == 1 ? "1 question" : "\(questions) questions"
-        return "\(r) · \(q)"
     }
 
     @ViewBuilder private var actionButtons: some View {

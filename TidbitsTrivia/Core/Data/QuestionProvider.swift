@@ -137,17 +137,40 @@ final class QuestionProvider {
     func nightQuestions(plan: NightPlan, category: TriviaCategory) async -> [Question] {
         var all: [Question] = []
         var picked = Set<String>()   // avoid intra-night repeats across rounds
+        // Identity is the ANSWER, not the id. Deduping on the id alone let one
+        // night ask the same thing twice: 4,261 (prompt, answer) pairs sit on more
+        // than one corpus row, and far beyond those, "United States" is the answer
+        // to 1,025 rows and 23,159 answers are used more than once — a 40-question
+        // night repeated an answer 17.1% of the time in simulation over the real
+        // corpus. The room hears "the answer is Asia" twice and the host looks
+        // careless. Windows keys the same way (QuestionProvider.AskedKey).
+        var asked = Set<String>()
         for (ri, round) in plan.rounds.enumerated() {
-            let qs = await sourced(type: round.kind, category: category,
-                                   count: round.count, excluding: seen.union(picked))
-            for var q in qs {
-                q.roundIndex = ri
-                all.append(q)
-                picked.insert(q.id)
+            var taken = 0
+            // Ask for more than we need so a dropped repeat is REPLACED rather
+            // than leaving the round short — a short round is worse than a repeat.
+            for attempt in 0..<3 where taken < round.count {
+                let want = (round.count - taken) * (attempt == 0 ? 1 : 3)
+                let qs = await sourced(type: round.kind, category: category,
+                                       count: want, excluding: seen.union(picked))
+                if qs.isEmpty { break }
+                for var q in qs {
+                    picked.insert(q.id)
+                    guard taken < round.count else { continue }
+                    guard asked.insert(Self.askedKey(q)).inserted else { continue }
+                    q.roundIndex = ri
+                    all.append(q)
+                    taken += 1
+                }
             }
         }
         markSeen(all.map(\.id))
         return all
+    }
+
+    /// What makes two questions "the same" to the room: the answer, however worded.
+    static func askedKey(_ q: Question) -> String {
+        q.correctAnswer.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
 
     /// Never-empty per-type pull for the category-filtered special types: try the

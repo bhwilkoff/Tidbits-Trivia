@@ -1,0 +1,61 @@
+[
+{"subject":"Moon","cat":"science","diff":3,
+ "prompt":"Earth's only natural satellite orbits at an average distance roughly thirty times the width of our planet. About how far is that?",
+ "answer":"384,000 km","options":["38,000 km","3.8 million km","150 million km"],
+ "why":"The Moon is the only natural satellite of Earth, orbiting at an average distance of 384,399 kilometres — roughly 30 times the width of Earth."},
+
+{"subject":"Anime","cat":"arts","diff":2,
+ "prompt":"Outside Japan this word refers specifically to animation produced in Japan, though in Japanese it describes all animation. It is a shortening of which English word?",
+ "answer":"Animation","options":["Animatronic","Animator","Animism"],
+ "why":"Anime is animation originating from Japan; the word derives from a shortening of the English word 'animation'. Outside Japan it refers specifically to Japanese animation, while in Japanese it describes all animation."},
+
+{"subject":"Halloween","cat":"history","diff":3,
+ "prompt":"Observed on 31 October and also called All Hallows' Eve, this celebration falls on the eve of which Western Christian feast?",
+ "answer":"All Hallows' Day","options":["Candlemas","Michaelmas","The Epiphany"],
+ "why":"Halloween, also known as All Hallows' Eve or All Saints' Eve, is observed on 31 October, the eve of the Western Christian feast of All Hallows' Day, at the beginning of Allhallowtide."},
+
+{"subject":"Greek alphabet","cat":"arts","diff":3,
+ "prompt":"In use since about the 8th century BC, this was the earliest known alphabetic script to write vowels systematically as well as consonants. From which earlier alphabet was it derived?",
+ "answer":"Phoenician","options":["Etruscan","Cyrillic","Aramaic"],
+ "why":"The Greek alphabet has been used since the late 9th or early 8th century BC. It was derived from the earlier Phoenician alphabet and is the earliest known alphabetic script to systematically write vowels as well as consonants."},
+
+{"subject":"Sun","cat":"science","diff":3,
+ "prompt":"A sphere of plasma heated to incandescence by nuclear fusion in its core, it radiates mostly visible light and infrared — plus about 10% as what?",
+ "answer":"Ultraviolet","options":["X-rays","Radio waves","Gamma rays"],
+ "why":"The Sun is a massive sphere of hot plasma heated by nuclear fusion in its core, radiating energy mainly as visible light and infrared radiation, with about 10% at ultraviolet energies."},
+
+{"subject":"U.S. state","cat":"geography","diff":1,
+ "prompt":"Each shares sovereignty with the federal government and holds jurisdiction over its own defined territory. How many are bound together in the American political union?",
+ "answer":"50","options":["48","52","13"],
+ "why":"In the United States, a state is a constituent political entity, of which there are 50. Each holds governmental jurisdiction over a separate defined territory where it shares sovereignty with the federal government."},
+
+{"subject":"BRICS","cat":"geography","diff":4,
+ "prompt":"Now grouping Brazil, China, South Africa, Egypt, Ethiopia, India, Indonesia, Iran, Russia and the UAE, this bloc's conceptual origins were set out in 1998 by the foreign minister of which country?",
+ "answer":"Russia","options":["China","Brazil","India"],
+ "why":"BRICS is an intergovernmental organization comprising ten countries. Its conceptual origins were articulated by Russian foreign minister Yevgeny Primakov in 1998."},
+
+{"subject":"Outlook.com","cat":"business","diff":2,
+ "prompt":"Microsoft's free personal email service offers mail, calendar, contacts and tasks through a browser or app. Under what name was it originally known?",
+ "answer":"Hotmail","options":["AOL Mail","Yahoo Mail","Lycos Mail"],
+ "why":"Outlook.com, formerly Hotmail, is a free personal email service offered by Microsoft, providing a webmail interface with mail, calendaring, contacts and tasks services."},
+
+{"subject":"Elizabeth I","cat":"history","diff":2,
+ "prompt":"Reigning from 1558 until her death in 1603, she was the longest-reigning monarch of her royal house — and its last. Which house was it?",
+ "answer":"Tudor","options":["Stuart","Plantagenet","Lancaster"],
+ "why":"Elizabeth I was Queen of England and Ireland from 17 November 1558 until her death in 1603. She was the last and longest-reigning monarch of the House of Tudor, and her reign gave its name to the Elizabethan era."},
+
+{"subject":"Christmas","cat":"history","diff":3,
+ "prompt":"Commemorating the birth of Jesus and observed by billions on 25 December, its liturgical preparation season begins on the first Sunday of what?",
+ "answer":"Advent","options":["Lent","Epiphany","Pentecost"],
+ "why":"Christmas is an annual celebration commemorating the birth of Jesus Christ, observed primarily on December 25. A liturgical feast central to Christianity, its preparation begins on the First Sunday of Advent."},
+
+{"subject":"2023 Rugby World Cup","cat":"sports","diff":2,
+ "prompt":"The tenth edition of rugby union's quadrennial world championship ran from 8 September to 28 October 2023 across nine venues. Which country hosted it?",
+ "answer":"France","options":["England","Japan","South Africa"],
+ "why":"The 2023 Rugby World Cup was the tenth men's Rugby World Cup, the quadrennial world championship for national rugby union teams. It took place in France from 8 September to 28 October 2023 in nine venues across the country."},
+
+{"subject":"Continent","cat":"geography","diff":4,
+ "prompt":"There is no strict scientific test for what counts as one of these large terrestrial regions — a single landmass, or a landmass plus nearby islands. What decides the list instead?",
+ "answer":"Convention","options":["Plate boundaries","Treaty","Population"],
+ "why":"A continent is any of several large terrestrial geographical regions. Continents are generally identified by convention rather than any strict criteria: a continent could be a single large landmass, or a landmass and nearby islands on or beyond its continental shelf."}
+]

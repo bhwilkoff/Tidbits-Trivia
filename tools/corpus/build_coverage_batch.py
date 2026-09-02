@@ -40,7 +40,7 @@ BLOCK = re.compile(
     r"conflict|war crime|invasion of|occupation of|insurgency|militia", re.I)
 # Not subjects: Wikipedia housekeeping and list pages.
 NOT_A_SUBJECT = re.compile(
-    r"^(deaths in|list of|index of|outline of|timeline of|glossary of|"
+    r"^(deaths in|lists? of|index of|outline of|timeline of|glossary of|"
     r"history of|category:|template:|portal:|wikipedia:)", re.I)
 # A disambiguation page is a list of meanings, not a subject: its lead is
 # literally "XXX may refer to:". The fame rank is real, the subject is not.

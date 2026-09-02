@@ -1,0 +1,11 @@
+[
+{"subject":"Anime","cat":"arts","diff":2,
+ "prompt":"Outside Japan this word refers specifically to cartoons made in Japan, though Japanese speakers apply it to the whole medium. It is a clipped form of which English word?",
+ "answer":"Animation","options":["Animatronic","Animator","Animism"],
+ "why":"Anime is animation originating from Japan; the word derives from a shortening of the English word 'animation'. Outside Japan it refers specifically to Japanese animation, while in Japanese it describes all animation."},
+
+{"subject":"BRICS","cat":"geography","diff":4,
+ "prompt":"Now a ten-member bloc including Brazil, China, India and South Africa, its conceptual origins were set out in 1998 by foreign minister Yevgeny Primakov. Which country did he serve?",
+ "answer":"Russia","options":["Egypt","Ethiopia","Indonesia"],
+ "why":"BRICS is an intergovernmental organization comprising ten countries: Brazil, China, South Africa, Egypt, Ethiopia, India, Indonesia, Iran, Russia and the United Arab Emirates. Its conceptual origins were articulated by Russian foreign minister Yevgeny Primakov in 1998."}
+]

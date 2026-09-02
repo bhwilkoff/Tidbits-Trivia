@@ -110,6 +110,24 @@ def kind_of(title, p31, labels):
     return "other"
 
 
+
+def gate_kind_map(rows):
+    """The QUALITY GATE's own notion of kind, not a private one.
+
+    An earlier version of this repair classified subjects with its own regex over
+    p31 labels, and the gate then rejected the result: my classifier and its
+    classifier disagreed, so a "same-kind" swap produced 'Metamorphoses' among
+    what the gate reads as places. Two classifiers is one too many -- ask the
+    component that will judge the answer.
+    """
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "quality_gate", str(Path(__file__).resolve().parent / "quality_gate.py"))
+    qg = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(qg)
+    return qg.kind_map(rows)
+
+
 def main():
     doc = json.loads(CORPUS.read_text())
     qs = doc["questions"]
@@ -152,6 +170,7 @@ def main():
         if fame.get(t, 0) >= FAME_FLOOR and t in cat:
             pool[cat[t]].append((y, t))
 
+    gkind = gate_kind_map(qs)
     repaired, culled, unordered, tied = [], [], [], []
     keep = []
     for q in qs:
@@ -181,6 +200,8 @@ def main():
         cands = [t for y, t in pool.get(q[4], [])
                  if ans_y < y <= ans_y + WINDOW and t != ans_t
                  and kind_of(t, p31, labels) == ans_kind
+                 and (gkind.get(t) is None or gkind.get(ans_t) is None
+                      or gkind.get(t) == gkind.get(ans_t))
                  and ans_fame / FAME_BAND <= max(fame.get(t, 0), 1) <= ans_fame * FAME_BAND]
         if len(cands) < 3:
             culled.append((q[0], q[1], ans_t, ans_y, q[4]))

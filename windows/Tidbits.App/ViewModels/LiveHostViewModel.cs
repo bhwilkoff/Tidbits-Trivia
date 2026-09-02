@@ -37,6 +37,17 @@ public sealed class LiveHostViewModel : ObservableObject
         private set { _holdStandings = value; OnPropertyChanged(nameof(HoldStandings)); OnPropertyChanged(nameof(ShowBigScreenStandings)); OnPropertyChanged(nameof(ShowQuestionScreen)); }
     }
     public bool ShowBigScreenStandings => IsPlaying && HoldStandings;
+
+    /// "SCORES AFTER ROUND 2", not a bare "STANDINGS". A host reading the scores
+    /// out says which round they are for, and the Mac projector names it — this is
+    /// the same slide on both desktops (COMPETITOR-SCAN G2).
+    public string StandingsHeadline => $"SCORES AFTER ROUND {Host.RoundNumber}";
+
+    /// The between-rounds slide with no teams was a TITLE OVER AN EMPTY SCREEN —
+    /// the same blank wall the macOS final standings had. A host who holds the
+    /// scores before anyone has joined, or who runs on paper without adding the
+    /// teams, shows the room nothing and cannot tell whether it is broken.
+    public bool HasNoStandings => RankedStandings.Count == 0;
     public bool ShowQuestionScreen => IsPlaying && !HoldStandings;
     public void ToggleHold() => HoldStandings = !HoldStandings;
 

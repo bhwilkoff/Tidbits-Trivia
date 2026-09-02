@@ -78,4 +78,32 @@ public class ProjectorLongContentSnapshot
             Assert.False(t.TrimEnd().EndsWith("…") || t.TrimEnd().EndsWith("..."),
                          $"truncated on the big screen: {t}");
     }
+
+    [AvaloniaFact]
+    public async Task The_between_rounds_standings_names_the_round()
+    {
+        // COMPETITOR-SCAN G2. Windows already HAD this slide (macOS did not), but it
+        // said a bare "STANDINGS". A host reading scores out says which round they
+        // are for, and the two desktops must say the same thing.
+        var data = GameData.FromDirectory(Path.Combine(AppContext.BaseDirectory, "Data"));
+        var host = new LiveNightHost(NightPlan.Quick, TriviaCategory.Named("mixed"),
+                                     data.Provider, "Friday Pub Quiz");
+        await host.LoadQuestionsOffline();
+        Assert.True(host.Current is not null, "no question loaded — the assertion below could not fire");
+
+        var vm = new LiveHostViewModel(host);
+        vm.ToggleHold();
+        Assert.True(vm.ShowBigScreenStandings, "the standings hold is not showing — nothing to assert about");
+
+        var win = new Window { Width = 1280, Height = 720, Content = new ProjectorView { DataContext = vm } };
+        win.Show();
+        Dispatcher.UIThread.RunJobs();
+        win.CaptureRenderedFrame()!.Save(Path.Combine(ArtifactDir(), "projector-round-scores.png"));
+
+        Assert.Contains(VisibleText(win), t => t.StartsWith("SCORES AFTER ROUND "));
+        // With no teams the slide must SAY so rather than being a title over a blank
+        // wall — the defect the macOS final standings had, found here by parity.
+        Assert.True(vm.HasNoStandings, "expected the no-teams case — otherwise the next assertion cannot fire");
+        Assert.Contains(VisibleText(win), t => t.Contains("No scores yet"));
+    }
 }

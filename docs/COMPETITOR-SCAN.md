@@ -36,13 +36,19 @@ count down points over time. Tidbits has a speed BONUS (+3/+2/+1 on correct
 answers) but no format where the first team to buzz gets the question — the
 single most recognisable pub-quiz mechanic we do not have.
 
-### G2. No per-round score recap  *(QuizXpress, Sporcle, Crowdpurr)*
-QuizXpress shows intermediate scores, round scores and response graphs between
-rounds; Sporcle plays two games a night with standings read out; Crowdpurr's
-projector ranks everyone live. Tidbits shows a vote tally per question and the
-FINAL standings, and nothing in between — searched: no round-score or interim
-standings surface exists. A pub host reads the scores out after every round; ours
-cannot show them.
+### G2. Per-round score recap — CLOSED, and my first reading of it was wrong
+QuizXpress shows intermediate and round scores between rounds; Sporcle reads
+standings out between its two games; Crowdpurr's projector ranks live.
+
+**Correction (2026-09-02):** this was written as a product gap. It was not — it
+was a macOS gap. WINDOWS ALREADY HAD IT: `ShowBigScreenStandings`, a cockpit
+toggle labelled "Standings on big screen", with test coverage in
+`LiveHostControlsTest`. I checked §1's inventory against the macOS code and
+generalised from it, which is exactly the flattering-scan error this document
+opens by warning about. Both platforms now show it, and both name the round.
+
+The lesson for the rest of this list: a gap found on one platform is a PARITY
+question until the other has been read.
 
 ### G3. No negative marking option  *(QuizXpress)*
 QuizXpress can optionally penalise a wrong answer. Tidbits only adds points. This

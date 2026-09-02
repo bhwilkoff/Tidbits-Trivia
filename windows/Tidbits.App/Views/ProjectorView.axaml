@@ -20,7 +20,14 @@
         <!-- Big-screen standings hold (climbing leaderboard between rounds) -->
         <Viewbox IsVisible="{Binding ShowBigScreenStandings}" Margin="120,80" Stretch="Uniform">
             <StackPanel Width="1100" Spacing="16">
-                <TextBlock Text="STANDINGS" Foreground="{Binding BrandBrush}" FontSize="64" FontWeight="Black" HorizontalAlignment="Center"/>
+                <TextBlock Text="{Binding StandingsHeadline}" Foreground="{Binding BrandBrush}" FontSize="64" FontWeight="Black" HorizontalAlignment="Center"/>
+                <StackPanel IsVisible="{Binding HasNoStandings}" Spacing="10" HorizontalAlignment="Center">
+                    <TextBlock Text="No scores yet" Foreground="White" Opacity="0.75"
+                               FontSize="40" FontWeight="Black" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Add teams in the cockpit, or have players scan the code to join."
+                               Foreground="White" Opacity="0.55" FontSize="26"
+                               TextWrapping="Wrap" HorizontalAlignment="Center"/>
+                </StackPanel>
                 <ItemsControl ItemsSource="{Binding RankedStandings}" x:CompileBindings="False">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>

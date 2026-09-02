@@ -162,7 +162,7 @@ docs/COMPETITOR-SCAN.md.
 
 | # | Gap | Seen in | Size | Status |
 |---|---|---|---|---|
-| G2 | Per-ROUND score recap between rounds | QuizXpress, Sporcle, Crowdpurr | S | **DONE 2026-09-02** |
+| G2 | Per-ROUND score recap between rounds | QuizXpress, Sporcle, Crowdpurr | S | **DONE 2026-09-02** — was a macOS-only gap; Windows already had `ShowBigScreenStandings`. Both now name the round |
 | G3 | Negative marking (penalise a wrong answer) | QuizXpress | S | open |
 | G1 | Buzzer / fastest-finger round | SpeedQuizzing, QuizXpress | L | open |
 | G7 | Team leader / members joining a named team | Crowdpurr | M | open |

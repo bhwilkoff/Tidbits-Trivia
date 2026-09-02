@@ -1,6 +1,9 @@
 import Foundation
 import Testing
-@testable import TidbitsTrivia
+// NOT `@testable import TidbitsTrivia`: Core is compiled INTO this bundle, so
+// that module does not exist and CI fails with "unable to resolve module
+// dependency" — while a warm local derived-data build passes.
+@testable import TidbitsTriviaTests
 
 /// A night must not give the same ANSWER twice.
 ///

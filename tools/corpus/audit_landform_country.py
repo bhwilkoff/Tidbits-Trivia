@@ -24,9 +24,23 @@ B. A LANDFORM THAT GENUINELY CROSSES BORDERS, curated. The Nile answered "Sudan"
    the fetch discarded the very fact that a river crosses borders. The generator
    never had a way to know. That is the upstream bug; this is the cleanup.
 
+C. A CITY HAS NO CAPITAL. The same generator followed Wikidata P36 out of a city
+   and landed on its seat-of-government district:
+
+       What is the capital of Beijing?  -> Tongzhou District
+       What is the capital of Kyoto?    -> Nakagyo Ward
+
+   Nobody in a pub knows this, and the question does not parse even if they did.
+   Wrong by construction, like the seas.
+
 Landforms that really do sit in one country keep their questions: the Po is in
 Italy, Loch Ness in the United Kingdom, Mount Ararat in Turkey, the Ozarks in the
 United States. This is not a cull of the type.
+
+Deliberately NOT culled, having been measured: "Which of these is an official
+language of <a US state>?" answered "English" (28 rows). Many states really do
+have official-English statutes, so the answers are mostly right — a weak question
+is not a wrong one, and no rule here should pretend otherwise.
 
     python3 tools/corpus/audit_landform_country.py           # report
     python3 tools/corpus/audit_landform_country.py --write   # tombstones
@@ -43,6 +57,7 @@ TOMBSTONES = ROOT / "tools/corpus/tombstones.json"
 
 SEA_P31 = "Q165"
 STEM = "In which country is "
+CAPITAL_STEM = "What is the capital of "
 
 # Verified by eye: each of these lies in several countries, and the answer the
 # corpus gives is one arbitrary pick — often not the one a room would name.
@@ -60,9 +75,20 @@ def offenders():
     p31 = {t: (p or "") for t, p in con.execute("select title, p31 from subject")}
     con.close()
 
+    labels = json.loads((ROOT / "tools/corpus/p31_labels.json").read_text())
+    city_codes = {c for c, n in labels.items() if "city" in n.lower() or "town" in n.lower()}
+
     rows = json.loads(CORPUS_JSON.read_text())["questions"]
     out = []
     for r in rows:
+        # C. a city has no capital
+        if r[1].startswith(CAPITAL_STEM):
+            subj = r[1][len(CAPITAL_STEM):].rstrip("?").strip()
+            if set(p31.get(subj, "").split(",")) & city_codes:
+                opts = r[2]
+                ans = opts[r[3]] if isinstance(opts, list) and isinstance(r[3], int) and 0 <= r[3] < len(opts) else "?"
+                out.append((r[0], subj, ans, "a city has no capital"))
+            continue
         if not r[1].startswith(STEM):
             continue
         subj = r[7] if len(r) > 7 else ""
@@ -85,7 +111,7 @@ def main() -> int:
     hits = offenders()
     for qid, subj, answer, why in hits:
         print(f"{subj:24} -> {answer:28} {why}")
-    print(f"\n{len(hits)} landform questions with no single country")
+    print(f"\n{len(hits)} question(s) whose subject has no single answer of that kind")
 
     if a.write and hits:
         doc = json.loads(TOMBSTONES.read_text()) if TOMBSTONES.exists() else {}

@@ -1,0 +1,184 @@
+[
+ {
+  "subject": "HTTP cookie",
+  "cat": "science",
+  "diff": 2,
+  "prompt": "Created by a web server and stored by your browser, this small block of data is what lets a site remember your shopping basket or keep you logged in between page loads. What is it called?",
+  "answer": "An HTTP cookie",
+  "options": [
+   "A favicon",
+   "A hyperlink",
+   "A firewall rule"
+  ],
+  "why": "An HTTP cookie is a small block of data a web server creates while a user browses a site, placed on the user's device by the browser, letting servers store stateful information such as items in a basket or whether the user is signed in."
+ },
+ {
+  "subject": "YouTube",
+  "cat": "screen",
+  "diff": 1,
+  "prompt": "Founded in February 2005 by three former PayPal employees and bought by Google the following year, this San Bruno platform is now the second-most-visited website in the world. Which is it?",
+  "answer": "YouTube",
+  "options": [
+   "Vimeo",
+   "Dailymotion",
+   "Twitch"
+  ],
+  "why": "YouTube was founded on 14 February 2005 by Chad Hurley, Jawed Karim and Steve Chen, all former PayPal employees. Headquartered in San Bruno, California, it is the second-most-visited website after Google itself."
+ },
+ {
+  "subject": "YouTube",
+  "cat": "business",
+  "diff": 3,
+  "prompt": "Chad Hurley, Jawed Karim and Steve Chen all worked at which online payments company before founding YouTube in 2005?",
+  "answer": "PayPal",
+  "options": [
+   "eBay",
+   "Western Union",
+   "American Express"
+  ],
+  "why": "All three YouTube founders were former employees of PayPal."
+ },
+ {
+  "subject": "ChatGPT",
+  "cat": "science",
+  "diff": 1,
+  "prompt": "Released by OpenAI in November 2022 and built on generative pre-trained transformers, this chatbot is widely credited with setting off the current AI boom. Name it.",
+  "answer": "ChatGPT",
+  "options": [
+   "Siri",
+   "Alexa",
+   "Watson"
+  ],
+  "why": "ChatGPT is a generative AI chatbot developed by OpenAI, originally released in November 2022, using large language models — specifically generative pre-trained transformers — and it accelerated the ongoing AI boom."
+ },
+ {
+  "subject": "Wikipedia",
+  "cat": "arts",
+  "diff": 1,
+  "prompt": "Founded in 2001 by Jimmy Wales and Larry Sanger and written by volunteers using MediaWiki software, this is the largest and most-read reference work in history. Name it.",
+  "answer": "Wikipedia",
+  "options": [
+   "Encyclopaedia Britannica",
+   "Encarta",
+   "The Oxford English Dictionary"
+  ],
+  "why": "Wikipedia is a free online encyclopedia written and maintained by volunteer Wikipedians through open collaboration on the MediaWiki software. Founded in 2001 by Jimmy Wales and Larry Sanger, it is the largest and most read reference work in history."
+ },
+ {
+  "subject": "Wikipedia",
+  "cat": "business",
+  "diff": 3,
+  "prompt": "Since 2003 Wikipedia has been hosted by which American nonprofit, funded mainly by donations from readers?",
+  "answer": "The Wikimedia Foundation",
+  "options": [
+   "The Mozilla Foundation",
+   "The Internet Archive",
+   "The Linux Foundation"
+  ],
+  "why": "Wikipedia has been hosted since 2003 by the Wikimedia Foundation, an American nonprofit funded mainly by reader donations."
+ },
+ {
+  "subject": "Periodic table",
+  "cat": "science",
+  "diff": 1,
+  "prompt": "Its rows are called periods and its columns are called groups, and it arranges the chemical elements so that their properties recur as atomic number rises. What is this icon of chemistry?",
+  "answer": "The periodic table",
+  "options": [
+   "The electromagnetic spectrum",
+   "The pH scale",
+   "The Mohs hardness scale"
+  ],
+  "why": "The periodic table arranges the chemical elements into rows called periods and columns called groups. It depicts the periodic law: arranged by atomic number, the elements show an approximate recurrence of properties."
+ },
+ {
+  "subject": "Titanic",
+  "cat": "history",
+  "diff": 1,
+  "prompt": "Operated by the White Star Line, this British ocean liner struck an iceberg on her maiden voyage from Southampton to New York and sank in the early hours of 15 April 1912. Name the ship.",
+  "answer": "RMS Titanic",
+  "options": [
+   "RMS Lusitania",
+   "RMS Britannic",
+   "RMS Olympic"
+  ],
+  "why": "RMS Titanic, operated by the White Star Line, sank in the early hours of 15 April 1912 after striking an iceberg on her maiden voyage from Southampton to New York City."
+ },
+ {
+  "subject": "Titanic",
+  "cat": "history",
+  "diff": 3,
+  "prompt": "Roughly 2,208 passengers and crew were aboard RMS Titanic when she sank. Approximately how many of them died?",
+  "answer": "About 1,500",
+  "options": [
+   "About 300",
+   "About 750",
+   "About 2,100"
+  ],
+  "why": "Of the 2,208 passengers and crew aboard, approximately 1,500 died, making it one of the deadliest peacetime sinkings of a single ship."
+ },
+ {
+  "subject": "FC Barcelona",
+  "cat": "sports",
+  "diff": 2,
+  "prompt": "Founded in 1899 by Swiss, Catalan, German and English footballers led by Joan Gamper, this La Liga club plays under the motto 'Mes que un club'. Which club is it?",
+  "answer": "FC Barcelona",
+  "options": [
+   "Real Madrid",
+   "Athletic Bilbao",
+   "Valencia CF"
+  ],
+  "why": "Futbol Club Barcelona was founded in 1899 by a group of Swiss, Catalan, German and English footballers led by Joan Gamper. A symbol of Catalan culture, its motto is 'Mes que un club' — 'More than a club'."
+ },
+ {
+  "subject": "English language",
+  "cat": "arts",
+  "diff": 2,
+  "prompt": "This West Germanic language of the Indo-European family is named after the Angles, a Germanic people who migrated to Britain after the end of Roman rule. Which language?",
+  "answer": "English",
+  "options": [
+   "Dutch",
+   "Frisian",
+   "Danish"
+  ],
+  "why": "English is a West Germanic language of the Indo-European family that emerged in early medieval England. It is named after the Angles, one of the Germanic peoples who migrated to Britain after Roman rule ended."
+ },
+ {
+  "subject": "Indian Premier League",
+  "cat": "sports",
+  "diff": 2,
+  "prompt": "Founded in 2007 and organised by the BCCI, this ten-team Twenty20 competition is the most commercially successful cricket league in the world. Name it.",
+  "answer": "The Indian Premier League",
+  "options": [
+   "The Big Bash League",
+   "The Pakistan Super League",
+   "The Caribbean Premier League"
+  ],
+  "why": "The Indian Premier League is a professional Twenty20 cricket league in India organised by the Board of Control for Cricket in India. Founded in 2007, it features ten city-based franchises and is widely regarded as the world's most commercially successful cricket league."
+ },
+ {
+  "subject": "Instagram",
+  "cat": "screen",
+  "diff": 1,
+  "prompt": "Owned by Meta Platforms, this service lets users post photos and short videos, edit them with filters, sort them by hashtag and tag them with a location. Which platform?",
+  "answer": "Instagram",
+  "options": [
+   "Snapchat",
+   "Pinterest",
+   "Flickr"
+  ],
+  "why": "Instagram is an American photo and short-form video sharing service owned by Meta Platforms, where media can be edited with filters, organised by hashtags and geotagged."
+ },
+ {
+  "subject": "Google Translate",
+  "cat": "science",
+  "diff": 2,
+  "prompt": "Supporting 249 languages and language varieties as of 2026, this Google service uses neural machine translation to convert text, documents and whole websites. Name it.",
+  "answer": "Google Translate",
+  "options": [
+   "DeepL",
+   "Duolingo",
+   "Grammarly"
+  ],
+  "why": "Google Translate is a multilingual neural machine translation service developed by Google for text, documents and websites. As of June 2026 it supports 249 languages and language varieties."
+ }
+]

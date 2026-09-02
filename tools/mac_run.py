@@ -59,6 +59,18 @@ SCENARIOS = {
     # night, so the code is what the assertion is for.
     "livehost": (dict(TIDBITS_LIVE_HOST="1", TIDBITS_LIVE_CODE="QATEST"),
                  {"allow_edge": SIDEBAR_FOOTER, "expect_any": r"QATEST"}),
+    # The PROJECTOR — what the pub's big screen shows. Every other scenario
+    # photographs the host's laptop; this is the only view of the room's screen,
+    # and until now the harness CLOSED it to stop it covering the shell.
+    "liveprojector": (dict(TIDBITS_LIVE_HOST="1", TIDBITS_LIVE_CODE="QATEST"),
+                      {"projector": True,
+                       # The room needs ALL THREE at once: which round it is, the
+                       # question, and the code to join. Any one of them missing is a
+                       # broken night, so this cannot be an `expect_any`.
+                       "expect_all": [r"ROUND", r"QATEST", r"Answer on your phones"],
+                       # A truncated question is unreadable to the room. The prompt
+                       # was rendering on one line and ending in an ellipsis.
+                       "expect_none": r"\u2026|\.\.\."}),
     # The Live builder with a populated event and its first round expanded, so
     # the per-question list and the Edit affordance are observable at all
     # (macOS-DESIGN §A2.4). Nothing could reach them from a cold launch.
@@ -89,8 +101,8 @@ def launch(env):
     _PID = macapp.launch(APP, env)
 
 
-def capture(path, tries=20):
-    return macapp.capture(_PID, path, tries=tries) if _PID else False
+def capture(path, tries=20, projector=False):
+    return macapp.capture(_PID, path, tries=tries, projector=projector) if _PID else False
 
 
 def run(name, outdir):
@@ -106,7 +118,7 @@ def run(name, outdir):
     for i, wait in enumerate((6, 7)):
         time.sleep(wait)
         p = d / f"{i}.png"
-        if capture(p):
+        if capture(p, projector=spec.get("projector", False)):
             shots.append((wait, p))
     return shots, spec
 

@@ -165,6 +165,23 @@ def _windows(pid):
     return out
 
 
+def projector_window_index(pid):
+    """The PROJECTOR window — the thing on the pub's big screen.
+
+    It had no way to be captured at all: `capture` closes projectors so they stop
+    covering the shell, so the one surface the ROOM actually looks at was the one
+    surface nothing could photograph. Prefer the titled instance; the app also
+    reports an untitled twin without the title bar.
+    """
+    ws = [(i, n, w, h) for i, n, w, h in _windows(pid) if _is_projector(w, h)]
+    if not ws:
+        return None
+    for i, name, _w, _h in ws:
+        if name.strip():
+            return i
+    return ws[0][0]
+
+
 def main_window_index(pid):
     """The app's MAIN window: never a projector, and TITLED if there is a choice.
 
@@ -188,8 +205,8 @@ def main_window_index(pid):
     return ws[0][0]
 
 
-def bounds(pid):
-    idx = main_window_index(pid)
+def bounds(pid, projector=False):
+    idx = projector_window_index(pid) if projector else main_window_index(pid)
     if idx is None:
         return None
     try:
@@ -284,16 +301,24 @@ def ensure_onscreen(pid):
         return False
 
 
-def capture(pid, path, tries=12):
-    close_projectors(pid)
+def capture(pid, path, tries=12, projector=False):
+    if not projector:
+        close_projectors(pid)
     """Raise, then grab the window's screen region. -R takes SCREEN pixels, so
     the app must be in front or a terminal gets graded as the app."""
     park_cursor()
     for _ in range(tries):
-        raise_pid(pid)
-        ensure_onscreen(pid)
+        if projector:
+            idx = projector_window_index(pid)
+            if idx is not None:
+                _osa('tell application "System Events" to tell '
+                     f'(first process whose unix id is {pid}) to '
+                     f'perform action "AXRaise" of window {idx}')
+        else:
+            raise_pid(pid)
+            ensure_onscreen(pid)
         time.sleep(0.7)
-        b = bounds(pid)
+        b = bounds(pid, projector=projector)
         if b and b[2] > 200 and b[3] > 200:
             try:
                 subprocess.run(["screencapture", "-x", "-o", "-R",

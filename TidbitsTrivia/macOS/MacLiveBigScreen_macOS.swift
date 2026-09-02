@@ -177,8 +177,22 @@ struct LiveBigScreen_macOS: View {
                     chromeRow(q, s)   // Wave B: format + difficulty chrome
                     Text(q.prompt)
                         .font(.system(size: 56, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
-                        .multilineTextAlignment(.center).lineLimit(5).minimumScaleFactor(0.45)   // a long prompt scales to fit, never overflows the projector
-                        .frame(maxWidth: 1200)
+                        .multilineTextAlignment(.center).lineLimit(5).minimumScaleFactor(0.45)
+                        // The prompt gets a GUARANTEED band of the screen. Both bounds
+                        // are load-bearing, and each was measured on the real projector:
+                        //
+                        //   no minHeight — the VStack squeezed the prompt to one line and
+                        //   it truncated: "...rose from advisor to his father in 2…".
+                        //   lineLimit(5) does not save it, because minimumScaleFactor
+                        //   makes SwiftUI prefer shrinking one line over wrapping.
+                        //
+                        //   no maxHeight (or .fixedSize) — a long prompt wraps but grows
+                        //   without limit, pushing the event title, the round line and the
+                        //   join code off the screen entirely.
+                        //
+                        // A question the room cannot read, and a join code the room cannot
+                        // see, are the two worst failures this surface has.
+                        .frame(maxWidth: 1200, minHeight: 150, maxHeight: 240)
                         .id(q.id)
                         .transition(.opacity.combined(with: .move(edge: .top)))
                     if LiveVideoPlayer.shared.hasVideo, let vplayer = LiveVideoPlayer.shared.player {   // Wave B: video question

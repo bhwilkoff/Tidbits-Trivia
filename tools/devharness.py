@@ -196,6 +196,16 @@ class Grader:
         # to JOIN a night, because joining needs no desktop rig (macOS-DESIGN
         # A0.4.1). Nothing could express that before, so the rule lived only in a
         # doc and drifted back into the UI twice.
+        # EVERY listed pattern must be present. `expect_any` cannot express "the
+        # room can see all of: the round line, the question, and the join code" —
+        # it passes on any one of them, which is how a projector whose header had
+        # been pushed behind the title bar still graded green.
+        if "expect_all" in spec:
+            for rx in spec["expect_all"]:
+                m = re.search(rx, all_text, re.I)
+                self.grade(f"expect_all[{rx}]", bool(m),
+                           f"/{rx}/ " + (f"matched {m.group(0)!r}" if m else "matched NOTHING"))
+
         if "expect_none" in spec:
             m = re.search(spec["expect_none"], all_text, re.I)
             self.grade("expect_none", not m, f"/{spec['expect_none']}/ "

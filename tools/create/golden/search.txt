@@ -40,11 +40,11 @@ Folarin Balogun
 Lamine Yamal	
 Denver	src:cloze:Bo_Nix src:cloze:Drew_Lock src:cloze:Dynasty_(1981_TV_series) src:cloze:Frontier_Airlines src:cloze:Good_Luck_Charlie src:cloze:Mike_Shanahan src:cloze:VF_Corporation src:describe:The_Lumineers
 Michael Jackson	src:cloze:Bad_(album) src:cloze:Billie_Jean src:cloze:Dangerous_(Michael_Jackson_album) src:cloze:John_Landis src:cloze:John_Pinette src:cloze:Mekia_Cox src:cloze:Thriller_(song) src:describe:Off_the_Wall
-The Beatles	rel:P175:Q3293037 src:cloze:A_Hard_Day's_Night_(album) src:cloze:Barbara_Bach src:cloze:Now_and_Then_(Beatles_song) src:cloze:Revolver_(Beatles_album) src:cloze:Stuart_Sutcliffe wd:composer:Q3293037 wd:director:Q88532913
+The Beatles	rel:P175:Q3293037 src:cloze:A_Hard_Day's_Night_(album) src:cloze:Eric_Idle src:cloze:Now_and_Then_(Beatles_song) src:cloze:Revolver_(Beatles_album) src:cloze:Stuart_Sutcliffe wd:composer:Q3293037 wd:director:Q88532913
 Drake (musician)	rel:P175:Q17150 src:cloze:Jerry_Trainor src:cloze:Pink_Friday_2 src:cloze:Superhero_Movie src:describe:For_All_the_Dogs src:describe:Huolongjing wd:composer:Q17150 wd:director:Q17150
 George VI	src:cloze:Peter_Townsend_(RAF_officer) src:describe:Lady_Mountbatten src:describe:Land_Rover src:describe:Lionel_Logue src:describe:Peter_Townsend_(RAF_officer)
 He-Man	rel:P170:Q550404 rel:P175:Q550404 src:cloze:He-Man src:describe:He-Man
 Winston Churchill	src:cloze:Blenheim_Palace src:cloze:Clement_Attlee src:cloze:Darkest_Hour_(film) src:cloze:The_Ministry_of_Ungentlemanly_Warfare src:describe:Blenheim_Palace src:describe:Joe_Wright
 Harry Kane	
-Ancient Egypt	fact:P571:Q11768 src:cloze:Ramesses_I src:cloze:Susanna_Hoffs src:describe:Cucumis_melo src:describe:Djoser src:describe:Egyptian_pyramids src:describe:Graffiti src:describe:Tug_of_war
+Ancient Egypt	fact:P571:Q11768 src:cloze:Djoser src:cloze:Ramesses_I src:cloze:Susanna_Hoffs src:describe:Cucumis_melo src:describe:Egyptian_pyramids src:describe:Graffiti src:describe:Tug_of_war
 India	fact:P571:Q2767140 fact:P571:Q6974841 num:P2046:Q668 rel:P112:Q1637622 rel:P112:Q223898 wd:author:Q622303 wd:capital:Q1775277 wd:capital:Q2001966

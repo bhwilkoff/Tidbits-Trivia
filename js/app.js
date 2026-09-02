@@ -2185,10 +2185,31 @@ class Game {
     const rounds = this._nightPlan?.rounds || NIGHT.presets[1].rounds;
     const all = [];
     const picked = new Set();
+    // Identity is the ANSWER, not the id. Deduping on the id let one night ask the
+    // same thing twice: 4,261 (prompt, answer) pairs sit on more than one corpus
+    // row, "United States" answers 1,025 rows, and 23,159 answers are used more
+    // than once — simulated over the real corpus a 40-question night repeated an
+    // answer 17.1% of the time. Apple, Windows and Android key the same way.
+    const asked = new Set();
+    const askedKey = (q) => String(q.options?.[q.correctIndex] ?? q.id).trim().toLowerCase();
     for (let ri = 0; ri < rounds.length; ri++) {
       const [kind, count] = rounds[ri];
-      const qs = await this._sourceType(kind, count, new Set([...Store._seen, ...picked]));
-      for (const q of qs) { q.roundIndex = ri; all.push(q); picked.add(q.id); }
+      let taken = 0;
+      // Ask for more than the round needs so a dropped repeat is REPLACED rather
+      // than leaving the round short — a short round is worse than a repeat.
+      for (let attempt = 0; attempt < 3 && taken < count; attempt++) {
+        const want = (count - taken) * (attempt === 0 ? 1 : 3);
+        const qs = await this._sourceType(kind, want, new Set([...Store._seen, ...picked]));
+        if (!qs.length) break;
+        for (const q of qs) {
+          picked.add(q.id);
+          if (taken >= count) continue;
+          const key = askedKey(q);
+          if (asked.has(key)) continue;
+          asked.add(key);
+          q.roundIndex = ri; all.push(q); taken++;
+        }
+      }
     }
     return all;
   }

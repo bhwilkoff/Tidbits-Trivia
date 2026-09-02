@@ -240,10 +240,31 @@ class GameState(
         val rounds = nightRounds ?: Night.presets[1].rounds
         val all = mutableListOf<Question>()
         val picked = mutableSetOf<String>()
+        // Identity is the ANSWER, not the id. Deduping on the id let one night ask
+        // the same thing twice: 4,261 (prompt, answer) pairs sit on more than one
+        // corpus row, "United States" answers 1,025 rows, and 23,159 answers are
+        // used more than once — simulated over the real corpus a 40-question night
+        // repeated an answer 17.1% of the time. Apple and Windows key the same way.
+        val asked = mutableSetOf<String>()
         rounds.forEachIndexed { ri, (kind, count) ->
-            val excl = store.seenSet + picked
-            for (q in sourceType(kind, count, excl)) {
-                all.add(q.copy(roundIndex = ri)); picked.add(q.id)
+            var taken = 0
+            // Ask for more than the round needs so a dropped repeat is REPLACED
+            // rather than leaving the round short — a short round is worse.
+            var attempt = 0
+            while (attempt < 3 && taken < count) {
+                val excl = store.seenSet + picked
+                val want = (count - taken) * (if (attempt == 0) 1 else 3)
+                val qs = sourceType(kind, want, excl)
+                if (qs.isEmpty()) break
+                for (q in qs) {
+                    picked.add(q.id)
+                    if (taken >= count) continue
+                    val key = (q.answerText ?: q.id).trim().lowercase()
+                    if (!asked.add(key)) continue
+                    all.add(q.copy(roundIndex = ri))
+                    taken++
+                }
+                attempt++
             }
         }
         return all

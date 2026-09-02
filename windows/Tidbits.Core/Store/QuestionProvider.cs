@@ -99,7 +99,7 @@ public sealed class QuestionProvider
                 {
                     picked.Add(q.Id);
                     if (taken >= round.Count) continue;
-                    if (!asked.Add(AskedKey(q))) continue;   // same prompt AND answer
+                    if (!asked.Add(AskedKey(q))) continue;   // same ANSWER, however worded
                     all.Add(q with { RoundIndex = ri });
                     taken++;
                 }
@@ -109,10 +109,24 @@ public sealed class QuestionProvider
         return all;
     }
 
-    /// What makes two questions "the same" to the room: the prompt and the answer.
-    /// Distractors do not count — a player who saw the first gets the second free.
-    private static string AskedKey(Question q) =>
-        (q.Prompt ?? "").Trim().ToLowerInvariant() + "\u0000" + (q.CorrectAnswer ?? "").Trim().ToLowerInvariant();
+    /// What makes two questions "the same" to the room: THE ANSWER.
+    ///
+    /// This keyed on prompt+answer, which let a night ask the same answer twice
+    /// with different clues — and the corpus makes that likely, not theoretical:
+    /// "United States" is the answer to 1,025 rows, "United Kingdom" 405, "Europe"
+    /// 365, and 23,159 answers are used more than once. Simulated over the real
+    /// corpus, a 40-question night repeated an answer 17.1% of the time and an
+    /// 80-question night 48.1%. A host reading aloud gets "the answer is Asia"
+    /// twice in one night, which is the amateur tell this rig exists to avoid.
+    ///
+    /// Distractors and wording do not count. Dropping to the answer alone is safe
+    /// because a night draws tens of questions from 41,036 distinct answers, and
+    /// the loop above already tops up a round rather than leaving it short.
+    /// Public because it is the RULE, and a rule nothing can assert is not a rule:
+    /// the night-level test cannot reproduce a collision on the fixture corpus, so
+    /// this is where the guarantee is actually pinned.
+    public static string AskedKey(Question q) =>
+        (q.CorrectAnswer ?? "").Trim().ToLowerInvariant();
 
     /// Never-empty per-type pull for the category-filtered special types: try the
     /// picked category, relax to the whole type pool ("mixed") to top up short/empty

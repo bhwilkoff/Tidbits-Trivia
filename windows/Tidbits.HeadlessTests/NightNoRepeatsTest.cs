@@ -93,4 +93,51 @@ public class NightNoRepeatsTest
         Assert.All(qs, q => Assert.NotNull(q.RoundIndex));
         Assert.All(qs, q => Assert.InRange(q.RoundIndex!.Value, 0, 1));
     }
+
+    [Fact]
+    public async Task A_night_never_gives_the_same_ANSWER_twice()
+    {
+        // The older guard keyed on prompt+answer, so a night could ask "the answer
+        // is Asia" twice with two different clues. That is not theoretical: over
+        // the real corpus a 40-question night repeated an answer 17.1% of the time
+        // (80-question: 48.1%), because "United States" answers 1,025 rows and
+        // 23,159 answers are used more than once.
+        //
+        // HONEST NOTE, same as the sibling above: reverting AskedKey does NOT make
+        // this fail, because the fixture corpus never draws a colliding pair. It is
+        // a regression net, not the proof. The proof is Identity_is_the_answer_alone
+        // below, which DOES fail when reverted (verified).
+        var plan = new NightPlan
+        {
+            Rounds = Enumerable.Range(0, 8)
+                .Select(_ => new NightRound { Kind = GameMode.Classic, Count = 10 })
+                .ToList(),
+        };
+        var qs = await Provider().NightQuestions(plan, TriviaCategory.Named("mixed"));
+
+        var answers = qs.Select(q => (q.CorrectAnswer ?? "").Trim().ToLowerInvariant())
+                        .Where(a => a.Length > 0).ToList();
+        var repeated = answers.GroupBy(a => a).Where(g => g.Count() > 1)
+                              .Select(g => g.Key).ToList();
+        Assert.True(repeated.Count == 0,
+            $"the night gives {repeated.Count} answer(s) twice: {string.Join(" / ", repeated.Take(5))}");
+    }
+
+    [Fact]
+    public void Identity_is_the_answer_alone()
+    {
+        // Two questions the room experiences as the same, worded differently. The
+        // old prompt+answer key called these DISTINCT and let both into one night.
+        static Question Q(string id, string prompt, string answer) => new()
+        {
+            Id = id, Prompt = prompt, CategoryId = "mixed",
+            Options = new[] { answer, "x", "y", "z" }, CorrectIndex = 0,
+        };
+        var a = Q("a", "Which of these four came first?", "Asia");
+        var b = Q("b", "Which one below is the oldest?", "asia ");
+        Assert.Equal(QuestionProvider.AskedKey(a), QuestionProvider.AskedKey(b));
+
+        var c = Q("c", "Which of these four came first?", "Europe");
+        Assert.NotEqual(QuestionProvider.AskedKey(a), QuestionProvider.AskedKey(c));
+    }
 }

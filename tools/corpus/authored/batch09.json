@@ -1,0 +1,41 @@
+[
+{"subject":"MacOS","cat":"science","diff":3,
+ "prompt":"Marketed by Apple since 2001 for its line of Mac computers, this proprietary operating system derives from OPENSTEP for Mach and FreeBSD. What kind of system is it?",
+ "answer":"Unix","options":["Linux","DOS-based","Real-time"],
+ "why":"macOS, previously OS X and originally Mac OS X, is a proprietary Unix operating system derived from OPENSTEP for Mach and FreeBSD, marketed and developed by Apple since 2001."},
+
+{"subject":"Mariana Trench","cat":"geography","diff":4,
+ "prompt":"The deepest oceanic trench on Earth lies in the western Pacific and is crescent-shaped. Roughly how long is it?",
+ "answer":"About 2,550 km","options":["About 400 km","About 120 km","About 9,000 km"],
+ "why":"The Mariana Trench is an oceanic trench in the western Pacific Ocean, about 200 kilometres east of the Mariana Islands. It is the deepest oceanic trench on Earth, crescent-shaped and measuring about 2,550 km long."},
+
+{"subject":"Battle of Waterloo","cat":"history","diff":4,
+ "prompt":"Fought on Sunday 18 June 1815, this was the last engagement with Napoleon I. The battlefield sat in a country that no longer exists — which state was it then part of?",
+ "answer":"The United Kingdom of the Netherlands","options":["The Kingdom of Prussia","The Austrian Empire","The First French Empire"],
+ "why":"The Battle of Waterloo was fought on Sunday 18 June 1815 near Waterloo, then in the United Kingdom of the Netherlands and now in Belgium. It was the last engagement with Napoleon I."},
+
+{"subject":"World Baseball Classic","cat":"sports","diff":3,
+ "prompt":"Sanctioned by the World Baseball Softball Confederation, this international tournament is quadrennial. How often is it held?",
+ "answer":"Every four years","options":["Annually","Every two years","Every six years"],
+ "why":"The World Baseball Classic is a quadrennial international baseball tournament sanctioned by the World Baseball Softball Confederation, the sport's global governing body."},
+
+{"subject":"Human Development Index","cat":"geography","diff":3,
+ "prompt":"This composite statistic combines life expectancy and education measures with which third indicator?",
+ "answer":"Per capita income","options":["Population density","Carbon emissions","Employment rate"],
+ "why":"The Human Development Index is a statistical composite index of life expectancy, education (mean and expected years of schooling) and per capita income indicators."},
+
+{"subject":"Wimbledon Championships","cat":"sports","diff":4,
+ "prompt":"Run each year by the All England Lawn Tennis and Croquet Club, this London tournament is staged in collaboration with which governing body?",
+ "answer":"The Lawn Tennis Association","options":["The ITF","The ATP","The MCC"],
+ "why":"The Wimbledon Championships is a tennis tournament organised by the All England Lawn Tennis and Croquet Club in collaboration with the Lawn Tennis Association, held annually in Wimbledon, London."},
+
+{"subject":"IOS","cat":"science","diff":2,
+ "prompt":"Apple's proprietary mobile operating system, originally called iPhone OS, was unveiled in January 2007 alongside which product?",
+ "answer":"The first-generation iPhone","options":["The first iPad","The iPod touch","The Apple Watch"],
+ "why":"iOS, formerly iPhone OS, is a proprietary mobile operating system created by Apple for its iPhone line. It was unveiled in January 2007 alongside the first-generation iPhone and released that June."},
+
+{"subject":"Abraham","cat":"history","diff":2,
+ "prompt":"Originally named Abram, this spiritual patriarch is revered in Judaism and Christianity — and in which third Abrahamic religion?",
+ "answer":"Islam","options":["Buddhism","Hinduism","Sikhism"],
+ "why":"Abraham, originally Abram, is a common spiritual patriarch revered in the Abrahamic religions: Judaism, Christianity and Islam. In Judaism he is the founding father and first Hebrew patriarch."}
+]

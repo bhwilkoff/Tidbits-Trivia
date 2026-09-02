@@ -1,0 +1,51 @@
+[
+{"subject":"Stoicism","cat":"history","diff":3,
+ "prompt":"A philosophical movement and practical guide to living that stressed daily self-discipline, it later flourished under the Roman Empire. In which period of ancient Greece did it begin?",
+ "answer":"The Hellenistic period","options":["The Archaic period","The Mycenaean period","The Minoan period"],
+ "why":"Stoicism is a philosophical movement and practical guide to living emphasising daily self-discipline and moral improvement. It originated in the Hellenistic period of ancient Greece and proliferated well into the Roman Imperial period."},
+
+{"subject":"Bitcoin","cat":"business","diff":3,
+ "prompt":"The first decentralized cryptocurrency was set out in a white paper published under the pseudonym Satoshi Nakamoto. In which year?",
+ "answer":"2008","options":["1998","2004","2013"],
+ "why":"Bitcoin is the first decentralized cryptocurrency, invented in 2008 when an unknown person published a white paper under the pseudonym Satoshi Nakamoto."},
+
+{"subject":"Mars","cat":"science","diff":2,
+ "prompt":"Nicknamed the Red Planet for its orange-red appearance, this desert-like rocky world has a thin atmosphere made primarily of which gas?",
+ "answer":"Carbon dioxide","options":["Nitrogen","Methane","Oxygen"],
+ "why":"Mars is the fourth planet from the Sun, known as the Red Planet for its orange-red appearance. It is a desert-like rocky planet with a tenuous atmosphere that is primarily carbon dioxide."},
+
+{"subject":"Venus","cat":"science","diff":3,
+ "prompt":"Similar in size and mass to Earth, this planet has an atmosphere far thicker and denser than any other rocky body in the Solar System — and none of what?",
+ "answer":"Liquid water","options":["Craters","Mountains","Clouds"],
+ "why":"Venus is the second planet from the Sun. Similar in size and mass to Earth, Venus has no liquid water, and its atmosphere is far thicker and denser than that of any other rocky body in the Solar System."},
+
+{"subject":"Maslow's hierarchy of needs","cat":"science","diff":3,
+ "prompt":"Proposed by an American psychologist to explain what motivates human behaviour, this conceptualisation originally set out how many sets of basic needs?",
+ "answer":"Five","options":["Three","Seven","Twelve"],
+ "why":"Maslow's hierarchy of needs is a conceptualization of the needs or goals that motivate human behaviour, proposed by the American psychologist Abraham Maslow. In his original formulation there are five sets of basic needs."},
+
+{"subject":"Babylon","cat":"geography","diff":3,
+ "prompt":"The main cultural and political centre of ancient Mesopotamia, its ruins lie near Hillah in Iraq, about 85 km south of Baghdad. On which river did it stand?",
+ "answer":"The Euphrates","options":["The Tigris","The Jordan","The Orontes"],
+ "why":"Babylon was an ancient city located on the lower Euphrates river in southern Mesopotamia, within modern-day Hillah, Iraq, about 85 kilometres south of modern-day Baghdad."},
+
+{"subject":"FA Cup","cat":"sports","diff":3,
+ "prompt":"The oldest national football competition in the world, this English knockout tournament was first played in which season?",
+ "answer":"1871–72","options":["1863–64","1888–89","1901–02"],
+ "why":"The Football Association Challenge Cup, commonly known as the FA Cup, is an annual knockout competition in domestic English football. First played during the 1871-72 season, it is the oldest national football competition in the world."},
+
+{"subject":"2022 Asian Games","cat":"sports","diff":4,
+ "prompt":"Officially the 19th Asian Games, this continental multi-sport event was branded for the Chinese city that hosted it. Which city?",
+ "answer":"Hangzhou","options":["Guangzhou","Nanjing","Shenzhen"],
+ "why":"The 2022 Asian Games, officially the 19th Asian Games and also known as Hangzhou 2022, were a continental multi-sport event held in Hangzhou, China."},
+
+{"subject":"Algebraic notation (chess)","cat":"sports","diff":3,
+ "prompt":"Now almost universally used in books and magazines to record chess moves, this standard method identifies every square on the board using what?",
+ "answer":"A coordinate system","options":["Piece symbols alone","Square colours","Diagonal lettering"],
+ "why":"Algebraic notation is the standard method of chess notation for recording and describing moves. It is based on a system of coordinates to uniquely identify each square on the board, and is now almost universally used."},
+
+{"subject":"Key frame","cat":"screen","diff":3,
+ "prompt":"In animation and filmmaking, this drawing or shot takes its name from being measured by position in time on a strip of film. What does it define?",
+ "answer":"The start and end of a smooth transition","options":["The moment a scene changes","The point a sound cue begins","The frame used for colour grading"],
+ "why":"In animation and filmmaking, a key frame is a drawing or shot that defines the starting and ending points of a smooth transition. They are called frames because their position in time is measured in frames on a strip of film."}
+]

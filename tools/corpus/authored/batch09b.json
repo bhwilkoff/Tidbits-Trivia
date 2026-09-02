@@ -1,0 +1,6 @@
+[
+{"subject":"Wimbledon Championships","cat":"sports","diff":4,
+ "prompt":"Run each year by the All England Lawn Tennis and Croquet Club, this London tournament is staged in collaboration with which governing body?",
+ "answer":"The Lawn Tennis Association","options":["The International Tennis Federation","The Marylebone Cricket Club","The Royal and Ancient Golf Club"],
+ "why":"The Wimbledon Championships is a tennis tournament organised by the All England Lawn Tennis and Croquet Club in collaboration with the Lawn Tennis Association, held annually in Wimbledon, London."}
+]

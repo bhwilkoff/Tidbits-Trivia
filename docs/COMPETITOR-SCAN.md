@@ -29,6 +29,13 @@ to be shipped, and a build list that re-proposes them wastes the effort.
 
 Ranked by how often a working pub host would hit them.
 
+**All six remaining gaps re-verified on BOTH desktops on 2026-09-02**, after G2
+turned out to be a macOS-only gap that Windows already filled. Searched both
+codebases for each: negative marking, first-letter formats, a category board, a
+host remote and a team-leader model are absent from macOS AND Windows; the only
+"buzz" hits on either side are sound-effect labels ("BYO clips: applause, buzzer,
+drumroll"), not a buzzer ROUND.
+
 ### G1. No buzzer / fastest-finger round  *(SpeedQuizzing, QuizXpress)*
 SpeedQuizzing's identity is speed: ten seconds an answer, and formats called
 Fastest Fingers and Buzzin'. QuizXpress scores faster answers higher and can
@@ -50,9 +57,15 @@ opens by warning about. Both platforms now show it, and both name the round.
 The lesson for the rest of this list: a gap found on one platform is a PARITY
 question until the other has been read.
 
-### G3. No negative marking option  *(QuizXpress)*
-QuizXpress can optionally penalise a wrong answer. Tidbits only adds points. This
-is a host-preference toggle, cheap to add, and it changes how a wager round plays.
+### G3. Negative marking — CLOSED 2026-09-02, both desktops
+QuizXpress can optionally penalise a wrong answer; Tidbits only added points.
+Shipped on macOS (`wrongAnswerPenalty`, a cockpit stepper) and Windows
+(`WrongAnswerPenalty`, a cycling cockpit button), off by default.
+
+The rule worth stating: only a team that ANSWERED can lose points. Silence is
+declining to guess, not being wrong, and penalising it would punish the table
+whose phone died. Both implementations get this from iterating the ANSWERS rather
+than the teams — an accident of structure, so it is pinned by a test.
 
 ### G4. No first-letter / word-shape formats  *(SpeedQuizzing)*
 SpeedQuizzing ships First Letter of the Answer, Sequence, Multi Tap, Nearest Wins

@@ -29,6 +29,14 @@ final class LiveHostSession {
     var locked = false           // Wave C: answers locked ("pencils down") — auto-set at the timer deadline or manually
     var blockedTeams: Set<String> = []   // Wave C: networked team uids the host hid from the big screen (a bad name)
     func toggleBlocked(_ uid: String) { if blockedTeams.contains(uid) { blockedTeams.remove(uid) } else { blockedTeams.insert(uid) } }
+    /// Points DEDUCTED for a wrong answer, 0 = off (the default, and what every
+    /// existing night has played under). QuizXpress offers this and pub hosts use
+    /// it to stop blind guessing on a four-option question — see COMPETITOR-SCAN
+    /// G3. Only a team that ANSWERED can lose points: staying silent is not wrong,
+    /// it is declining to guess, and penalising it would punish a table whose phone
+    /// died.
+    var wrongAnswerPenalty = 0
+
     /// Points a correct answer is worth this round (host-adjustable; pub default 1).
     var pointsPerCorrect = 1
     /// Per-question display shuffles (fixed once so publish + reveal agree).
@@ -342,6 +350,10 @@ struct LiveHostContainer_macOS: View {
             } else if pts > 0 {
                 if speedRound { speedCorrect.append((uid, ans.ts, pts)) }   // defer — rank by speed below
                 else { await net.setScore(uid, (net.scores[uid] ?? 0) + pts) }
+            } else if session.wrongAnswerPenalty > 0 {
+                // G3: negative marking. This team ANSWERED and got it wrong; a team
+                // that submitted nothing never reaches here, which is the whole point.
+                await net.setScore(uid, (net.scores[uid] ?? 0) - session.wrongAnswerPenalty)
             }
         }
         // Wave B: speed round — base points + a fastest-first bonus (1st correct +3, 2nd +2, 3rd +1).
@@ -640,6 +652,13 @@ struct LiveHostView_macOS: View {
             HStack(spacing: 10) {
                 Text("Teams").font(.headline).foregroundStyle(Tidbits.Palette.ink)
                 Spacer()
+                Stepper(value: $session.wrongAnswerPenalty, in: 0...5) {
+                    Text(session.wrongAnswerPenalty == 0
+                         ? "No penalty"
+                         : "−\(session.wrongAnswerPenalty) pt\(session.wrongAnswerPenalty == 1 ? "" : "s")/wrong")
+                        .font(.callout).foregroundStyle(Tidbits.Palette.inkSoft)
+                }
+                .help("Deduct points for a wrong answer. Teams that do not answer are never penalised.")
                 Stepper(value: $session.pointsPerCorrect, in: 1...10) {
                     Text("\(session.pointsPerCorrect) pt\(session.pointsPerCorrect == 1 ? "" : "s")/correct")
                         .font(.caption).foregroundStyle(Tidbits.Palette.inkSoft)

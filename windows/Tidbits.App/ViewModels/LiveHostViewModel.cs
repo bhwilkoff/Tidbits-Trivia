@@ -51,6 +51,16 @@ public sealed class LiveHostViewModel : ObservableObject
     public bool ShowQuestionScreen => IsPlaying && !HoldStandings;
     public void ToggleHold() => HoldStandings = !HoldStandings;
 
+    /// G3 negative marking, cycled 0 -> 1 -> 2 -> 0 from one control, because the
+    /// cockpit is driven mid-show and a stepper is two targets to hit.
+    public string PenaltyLabel => Host.WrongAnswerPenalty == 0
+        ? "No penalty" : $"-{Host.WrongAnswerPenalty}/wrong";
+    public void CyclePenalty()
+    {
+        Host.WrongAnswerPenalty = (Host.WrongAnswerPenalty + 1) % 3;
+        OnPropertyChanged(nameof(PenaltyLabel));
+    }
+
     /// Moderated standings with a 1-based rank + a gold accent for the leader — the
     /// climbing-leaderboard rows for the big screen.
     public System.Collections.Generic.IReadOnlyList<LiveStandingRow> RankedStandings =>

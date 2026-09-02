@@ -433,4 +433,6 @@ public partial class LiveCockpitView : UserControl
         if (this.FindAncestorOfType<PlayView>() is { } play) play.BackToPlay();
         else this.FindAncestorOfType<LiveView>()?.BackToSetup();
     }
+
+    private void OnCyclePenalty(object? sender, Avalonia.Interactivity.RoutedEventArgs e) => Vm?.CyclePenalty();
 }

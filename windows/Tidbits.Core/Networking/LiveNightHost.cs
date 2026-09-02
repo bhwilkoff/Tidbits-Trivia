@@ -28,6 +28,14 @@ public sealed class LiveNightHost : ObservableObject
     public string? ErrorText { get; private set; }
 
     public int PointsPerCorrect { get; set; } = 1;
+
+    /// Points DEDUCTED for a wrong answer, 0 = off (the default, and what every
+    /// night so far has played under). QuizXpress offers this and pub hosts use it
+    /// to stop blind guessing on a four-option question — COMPETITOR-SCAN G3. Only
+    /// a team that ANSWERED can lose points: staying silent is declining to guess,
+    /// not being wrong, and penalising it would punish a table whose phone died.
+    /// Matches macOS `LiveHostSession.wrongAnswerPenalty`.
+    public int WrongAnswerPenalty { get; set; }
     public bool HostPlays { get; set; }
     public string HostName { get; set; } = "Host";
     public bool SpeedBonus { get; set; }
@@ -575,6 +583,11 @@ public sealed class LiveNightHost : ObservableObject
         {
             var total = e.pts + bonus.GetValueOrDefault(e.uid);
             if (total > 0) await Net.SetScore(e.uid, Net.ScoreOf(e.uid) + total);
+            // G3: negative marking. `baseScores` is built from ANSWERS, so a team
+            // that submitted nothing is not in this loop at all — which is exactly
+            // the rule (silence is not a wrong answer).
+            else if (WrongAnswerPenalty > 0)
+                await Net.SetScore(e.uid, Net.ScoreOf(e.uid) - WrongAnswerPenalty);
         }
     }
 }

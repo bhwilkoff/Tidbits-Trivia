@@ -108,6 +108,8 @@
                 <Button Content="Skip ›" Click="OnSkip" Padding="14,10" Margin="0,0,10,6"/>
                 <Button Content="Lock" Click="OnLock" Padding="20,10" Margin="0,0,10,6"/>
                 <ToggleButton Content="Standings on big screen" IsChecked="{Binding HoldStandings, Mode=OneWay}" Click="OnToggleHold" Padding="14,10" Margin="0,0,10,6"/>
+                <Button Content="{Binding PenaltyLabel}" Click="OnCyclePenalty" Padding="14,10" Margin="0,0,10,6"
+                        ToolTip.Tip="Deduct points for a wrong answer. Teams that do not answer are never penalised."/>
                 <Button Content="🔊 Audio" Click="OnAudio" Padding="14,10" Margin="0,0,10,6"/>
             </WrapPanel>
             <WrapPanel>

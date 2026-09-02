@@ -111,7 +111,10 @@ REGION_RX = re.compile(r"region|city|civilization|archaeological|county|"
 POLITY_TMPL = ("wd:capital:", "wd:currency:", "rel:P37:")
 # Only the bare generated rows. Authored `src:` questions choose their own
 # phrasing and are none of this tool's business -- see the docstring.
-GEN = re.compile(r"^(wd|rel|fact):[A-Za-z0-9]+:Q\d+$")
+# NOT just `:Q\d+` -- 134 generated rows carry a NUMERIC id instead of a
+# Qid (`wd:continent:54125299532558`), and the first version of this gate
+# skipped every one of them without saying so.
+GEN = re.compile(r"^(wd|rel|fact):[A-Za-z0-9]+:(Q\d+|\d+)$")
 PRESENT = re.compile(r"\bis\b|\bare\b|currency is used")
 
 FLIPS = [

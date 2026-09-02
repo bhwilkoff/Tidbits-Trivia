@@ -503,7 +503,7 @@ struct LiveHostView_macOS: View {
                         .keyboardShortcut(.defaultAction)
                 }
                 Spacer()
-                Text("\(session.index + 1) / \(session.questions.count) · Space to advance").font(.caption).foregroundStyle(Tidbits.Palette.inkSoft)
+                Text("\(session.index + 1) / \(session.questions.count) overall · Space to advance").font(.caption).foregroundStyle(Tidbits.Palette.inkSoft)
             }
             showBar       // Wave B: stingers + clip playback + music bed, one wrapping row
             Button("") {   // intuitive: SPACE = advance the show (reveal → next) — the emcee's clicker key.

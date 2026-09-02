@@ -289,7 +289,15 @@ public sealed class LiveNightHost : ObservableObject
     public async Task LoadQuestionsOffline()
     {
         Questions = await BuildNightQuestions();
-        if (Questions.Count > 0) PrepareQuestion();
+        if (Questions.Count == 0) return;
+        // Enter PLAYING as well. Without this the offline build left the stage in
+        // Lobby, so a rendered projector showed the JOIN NOW splash no matter what
+        // was loaded — which meant a snapshot test could assert "nothing on the big
+        // screen is truncated" and pass because there was no question on the big
+        // screen at all. An assertion that cannot fire is not an assertion.
+        Index = 0; Revealed = false; HostChoice = null; Locked = false;
+        CurrentStage = Stage.Playing;
+        PrepareQuestion();
     }
 
     /// The same question build, without a room — for "Preview solo" and for tests.

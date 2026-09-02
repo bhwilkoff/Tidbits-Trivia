@@ -64,6 +64,18 @@
             </StackPanel>
         </Viewbox>
 
+        <!-- Join strip, visible WHILE A QUESTION IS UP (not only in the lobby).
+             The code lived solely on the lobby splash, so a table arriving after the
+             first question had no way in — a pub fills up during round one, and the
+             Mac projector keeps its code on screen the whole night. -->
+        <StackPanel IsVisible="{Binding ShowQuestionScreen}" Orientation="Horizontal" Spacing="14"
+                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,28,44,0">
+            <TextBlock Text="JOIN AT tidbitstrivia.com/live" Foreground="White" Opacity="0.55"
+                       FontSize="20" VerticalAlignment="Center"/>
+            <TextBlock Text="{Binding Host.Code}" Foreground="{Binding BrandBrush}"
+                       FontSize="28" FontWeight="Black" VerticalAlignment="Center"/>
+        </StackPanel>
+
         <!-- Sponsor kit footer (all phases) -->
         <TextBlock IsVisible="{Binding HasSponsor}" Text="{Binding SponsorLine}" Foreground="White" Opacity="0.55"
                    FontSize="22" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,28"/>

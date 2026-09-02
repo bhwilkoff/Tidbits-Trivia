@@ -28,6 +28,13 @@ public sealed class LivePlayerViewModel : ObservableObject
     public bool ShowReveal => Client.Pub?.Phase == LiveRoom.Phase.Reveal;
     // Final wager round — stake 0…your score before answering.
     public bool IsWager => ShowQuestion && Client.Pub?.Wager == true;
+
+    /// G1: a BUZZ question — the player gets one big BUZZ button instead of the
+    /// answer UI, and the FIRST buzz the server sees wins. Hidden once they have
+    /// buzzed, so nobody hammers it thinking it did not register.
+    public bool IsBuzz => ShowQuestion && Client.Pub?.Buzz == true;
+    public bool CanBuzz => IsBuzz && !Client.HasAnswered;
+    public bool HasBuzzed => IsBuzz && Client.HasAnswered;
     public int MaxWager => Client.Score;
     public int Wager { get => Client.Wager; set => Client.Wager = value; }
     public bool IsEnded => Client.Meta?.State == "ended" || Client.Pub?.Phase == LiveRoom.Phase.Ended;

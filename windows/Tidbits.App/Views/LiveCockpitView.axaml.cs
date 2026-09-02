@@ -435,4 +435,11 @@ public partial class LiveCockpitView : UserControl
     }
 
     private void OnCyclePenalty(object? sender, Avalonia.Interactivity.RoutedEventArgs e) => Vm?.CyclePenalty();
+
+    private async void OnBuzzCorrect(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (Vm is { } vm) await vm.BuzzCorrect();
+    }
+
+    private void OnBuzzWrong(object? sender, Avalonia.Interactivity.RoutedEventArgs e) => Vm?.BuzzWrong();
 }

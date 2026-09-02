@@ -49,6 +49,57 @@ public sealed class LiveHostViewModel : ObservableObject
     /// teams, shows the room nothing and cannot tell whether it is broken.
     public bool HasNoStandings => RankedStandings.Count == 0;
     public bool ShowQuestionScreen => IsPlaying && !HoldStandings;
+    // ---- G1 buzz round -------------------------------------------------------
+    // Mirrors the Mac cockpit panel: name who buzzed, Correct awards and reveals,
+    // Wrong rules them out and reopens the buzzer to the rest of the room.
+
+    private readonly System.Collections.Generic.HashSet<string> _buzzedOut = new();
+
+    /// The uid holding the buzzer, or null if nobody has buzzed (or everyone who
+    /// has was already ruled out).
+    public string? BuzzUid => Host.IsBuzzRound && !Host.Revealed
+        ? LiveNightHost.FirstBuzz(Host.Net.AnswersSnapshot(), _buzzedOut)
+        : null;
+
+    public bool HasBuzz => BuzzUid is not null;
+
+    /// "<team> buzzed" — the host needs the NAME, not a uid, to call on a table.
+    public string BuzzLabel
+    {
+        get
+        {
+            var uid = BuzzUid;
+            if (uid is null) return "";
+            var name = Host.Net.JoinedList().FirstOrDefault(j => j.Id == uid).Name;
+            return $"{(string.IsNullOrWhiteSpace(name) ? "Team" : name)} buzzed";
+        }
+    }
+
+    public async Task BuzzCorrect()
+    {
+        if (BuzzUid is not { } uid) return;
+        await Host.Net.SetScore(uid, Host.Net.ScoreOf(uid) + Host.PointsPerCorrect);
+        await Host.Reveal();
+        NotifyBuzz();
+    }
+
+    /// A wrong buzz REOPENS the question to the rest — it does not end it.
+    public void BuzzWrong()
+    {
+        if (BuzzUid is { } uid) _buzzedOut.Add(uid);
+        NotifyBuzz();
+    }
+
+    /// Every new question reopens the buzzer to everyone.
+    public void ClearBuzzedOut() { _buzzedOut.Clear(); NotifyBuzz(); }
+
+    private void NotifyBuzz()
+    {
+        OnPropertyChanged(nameof(BuzzUid));
+        OnPropertyChanged(nameof(HasBuzz));
+        OnPropertyChanged(nameof(BuzzLabel));
+    }
+
     public void ToggleHold() => HoldStandings = !HoldStandings;
 
     /// G3 negative marking, cycled 0 -> 1 -> 2 -> 0 from one control, because the

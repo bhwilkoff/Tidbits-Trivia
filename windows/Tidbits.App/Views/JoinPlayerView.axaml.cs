@@ -176,4 +176,12 @@ public partial class JoinPlayerView : UserControl
         else
             Avalonia.VisualTree.VisualExtensions.FindAncestorOfType<LiveView>(this)?.BackToSetup();
     }
+
+    /// G1: buzz in. The payload is empty on purpose — the ANSWER is spoken out
+    /// loud to the room; all the wire needs to carry is who got there first, and
+    /// the server stamps that.
+    private async void OnBuzz(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (_vm?.Client is { } c) await c.SubmitBuzz();
+    }
 }

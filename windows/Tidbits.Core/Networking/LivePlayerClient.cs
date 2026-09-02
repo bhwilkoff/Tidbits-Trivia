@@ -16,6 +16,11 @@ public sealed class LivePlayerClient
     public bool Joined { get; private set; }
     public bool Joining { get; private set; }
     public LiveRoom.Pub? Pub { get; private set; }
+
+    /// Test seam: put the client into a published-question state without a room.
+    /// The join SURFACE is otherwise unreachable offline, and a surface nothing can
+    /// drive is untested (hooks-are-coverage).
+    public LiveRoom.Pub? PubForTesting { get => Pub; set => Pub = value; }
     public LiveRoom.Meta? Meta { get; private set; }
     public int Score { get; private set; }
     public int Wager { get; set; }
@@ -74,6 +79,11 @@ public sealed class LivePlayerClient
     public Task SubmitOrder(IReadOnlyList<int> order) => Send(new LiveRoom.Answer { Order = order, Ts = NowMs() });
     public Task SubmitPairs(IReadOnlyList<int> pairs) => Send(new LiveRoom.Answer { Pairs = pairs, Ts = NowMs() });
     public Task SubmitList(IReadOnlyList<string> list) => Send(new LiveRoom.Answer { List = list, Ts = NowMs() });
+
+    /// G1: buzz in. The payload is EMPTY on purpose — on a buzz round the answer is
+    /// spoken out loud to the room, so all the wire carries is who got here first,
+    /// and `Send` stamps that with the SERVER clock.
+    public Task SubmitBuzz() => Send(new LiveRoom.Answer { Ts = NowMs() });
 
     private async Task Send(LiveRoom.Answer ans)
     {

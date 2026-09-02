@@ -35,7 +35,17 @@
 
                 <TextBlock IsVisible="{Binding ShowQuestion}" Text="{Binding Client.Pub.Prompt}"
                            FontSize="21" FontWeight="Bold" TextWrapping="Wrap"/>
-                <StackPanel x:Name="OptionsPanel" Spacing="0"/>
+                <!-- G1: on a buzz round the whole answer UI is ONE button. Big,
+                     because the player is racing and looking at the big screen, not
+                     at their phone. -->
+                <Button IsVisible="{Binding CanBuzz}" Content="BUZZ" Click="OnBuzz"
+                        Classes="accent" FontSize="44" FontWeight="Black"
+                        Padding="0,34" HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Center"/>
+                <TextBlock IsVisible="{Binding HasBuzzed}" Text="Buzzed — wait for the host"
+                           FontSize="20" FontWeight="Bold" Foreground="#3FCF8E"
+                           HorizontalAlignment="Center" Margin="0,18"/>
+                <StackPanel x:Name="OptionsPanel" Spacing="0" IsVisible="{Binding !IsBuzz}"/>
                 <TextBlock IsVisible="{Binding Answered}" Text="Answer locked ✓" Foreground="#1E9E6A" FontWeight="SemiBold"/>
 
                 <!-- Reveal: the correct answer + the host's story behind it -->

@@ -73,7 +73,14 @@ enum LiveRoom {
         var list: [String]? = nil // enumerate — the names the player entered
         var wager: Int? = nil   // Wave A: points staked on this question (host clamps to the team's score at reveal)
         var blurred: Bool? = nil // Wave C: the player left the app/tab during this question before submitting (soft cheat signal)
-        var ts: Int             // epoch ms — first-submission ordering / speed
+        var ts: Int             // epoch ms from the PLAYER'S OWN device — what their screen shows them
+        /// Epoch ms stamped by the SERVER when the write landed. Ordering must not
+        /// depend on five different handset clocks: "fastest correct answer" was
+        /// decided by `ts`, so a table whose phone ran three seconds fast collected
+        /// the speed bonus every round without answering faster. Written as the RTDB
+        /// server value `{".sv":"timestamp"}`; nil from a client that predates it,
+        /// which is why every reader falls back to `ts`.
+        var sv: Int? = nil
     }
 
     enum Phase {

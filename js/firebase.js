@@ -331,7 +331,11 @@ export const FirebaseNet = {
   },
   async liveSubmit(code, qid, answer) {
     const { db } = await ensure();
-    await db.set(db.ref(_db, `live/${code}/answers/${qid}/${_uid}`), { ...answer, ts: Date.now() });
+    // `sv` is stamped by the SERVER so the host ranks by arrival at ONE clock.
+    // Ranking by the phone's own clock handed the speed bonus to whichever table
+    // had the fastest-running handset. `ts` stays: it is what this player saw.
+    await db.set(db.ref(_db, `live/${code}/answers/${qid}/${_uid}`),
+                 { ...answer, ts: Date.now(), sv: { '.sv': 'timestamp' } });
   },
   // L5 social graph: read the room roster once (uid → {name}) to capture co-players at night-end.
   async liveTeams(code) {
@@ -389,7 +393,7 @@ export const FirebaseNet = {
   },
   async liveHostAnswer(code, qid, choice) {
     const { db } = await ensure();
-    await db.set(db.ref(_db, `live/${code}/answers/${qid}/${_uid}`), { choice, ts: Date.now() });
+    await db.set(db.ref(_db, `live/${code}/answers/${qid}/${_uid}`), { choice, ts: Date.now(), sv: { '.sv': 'timestamp' } });
   },
   async liveClose(code) {
     if (!_fns) return;

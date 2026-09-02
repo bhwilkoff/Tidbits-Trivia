@@ -570,7 +570,7 @@ public sealed class LiveNightHost : ObservableObject
         }
 
         var baseScores = answers.Select(kv =>
-            (uid: kv.Key, pts: LiveScoring.Score(q, kv.Value, _shuffledOrder, _shuffledValues, PointsPerCorrect), ts: kv.Value.Ts)).ToList();
+            (uid: kv.Key, pts: LiveScoring.Score(q, kv.Value, _shuffledOrder, _shuffledValues, PointsPerCorrect), ts: kv.Value.OrderKey)).ToList();
 
         var correctBySpeed = baseScores.Where(e => e.pts > 0).OrderBy(e => e.ts).ToList();
         FastestUid = correctBySpeed.Count > 0 ? correctBySpeed[0].uid : null;

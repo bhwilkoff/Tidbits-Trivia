@@ -98,5 +98,15 @@ public static class LiveRoom
         [JsonPropertyName("wager")] public int? Wager { get; init; }
         [JsonPropertyName("blurred")] public bool? Blurred { get; init; }
         [JsonPropertyName("ts")] public long Ts { get; init; }
+
+        /// Epoch ms stamped by the SERVER when the write landed. Ordering must not
+        /// depend on five handset clocks: "fastest correct answer" was decided by
+        /// `Ts`, so a table whose phone ran fast collected the speed bonus every
+        /// round without answering faster. Null from a client that predates it,
+        /// which is why every reader falls back to `Ts`. Mirrors Swift `Answer.sv`.
+        [JsonPropertyName("sv")] public long? Sv { get; init; }
+
+        /// The key the HOST ranks by.
+        [JsonIgnore] public long OrderKey => Sv ?? Ts;
     }
 }

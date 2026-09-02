@@ -348,7 +348,7 @@ struct LiveHostContainer_macOS: View {
                 guard stake > 0 else { continue }
                 await net.setScore(uid, pts > 0 ? current + stake : current - stake)
             } else if pts > 0 {
-                if speedRound { speedCorrect.append((uid, ans.ts, pts)) }   // defer — rank by speed below
+                if speedRound { speedCorrect.append((uid, ans.sv ?? ans.ts, pts)) }   // server clock; falls back for older clients
                 else { await net.setScore(uid, (net.scores[uid] ?? 0) + pts) }
             } else if session.wrongAnswerPenalty > 0 {
                 // G3: negative marking. This team ANSWERED and got it wrong; a team

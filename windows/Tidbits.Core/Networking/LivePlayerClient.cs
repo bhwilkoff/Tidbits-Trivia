@@ -82,8 +82,27 @@ public sealed class LivePlayerClient
         SubmittedQid = pub.Qid;
         if (pub.Wager == true) ans = ans with { Wager = Math.Max(0, Math.Min(Wager, Score)) };
         if (Blurred) ans = ans with { Blurred = true };
-        try { await _db.Put($"{LiveRoom.Path(Code)}/answers/{pub.Qid}/{_uid}", ans); }
+        try { await _db.PutJson($"{LiveRoom.Path(Code)}/answers/{pub.Qid}/{_uid}", WithServerTimestamp(ans)); }
         catch { Chosen = null; SubmittedQid = null; ErrorText = "Answer didn't send — tap again."; Changed?.Invoke(); }
+    }
+
+    /// Serialise the answer and add `sv` as the RTDB SERVER timestamp, so the host
+    /// ranks submissions by when they ARRIVED at one clock instead of by what each
+    /// player's handset thinks the time is. Mirrors Swift
+    /// `LivePlayerClient.withServerTimestamp`.
+    internal static string WithServerTimestamp(LiveRoom.Answer ans)
+    {
+        var json = System.Text.Json.JsonSerializer.Serialize(ans);
+        using var doc = System.Text.Json.JsonDocument.Parse(json);
+        var sb = new System.Text.StringBuilder("{");
+        foreach (var prop in doc.RootElement.EnumerateObject())
+        {
+            if (prop.NameEquals("sv")) continue;          // never send a stale value
+            sb.Append(System.Text.Json.JsonSerializer.Serialize(prop.Name)).Append(':')
+              .Append(prop.Value.GetRawText()).Append(',');
+        }
+        sb.Append("\"sv\":{\".sv\":\"timestamp\"}}");
+        return sb.ToString();
     }
 
     public async Task Leave()

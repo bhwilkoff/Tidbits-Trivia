@@ -65,13 +65,24 @@ final class LivePlayerClient {
 
     /// Write a submission for the current question (any shape) — first-write wins;
     /// the host auto-scores it on reveal from its local Question.
+    /// Encode the answer and add `sv` as the RTDB SERVER timestamp, so the host
+    /// orders submissions by when they ARRIVED at one clock rather than by what
+    /// each player's handset believes the time is.
+    static func withServerTimestamp(_ ans: LiveRoom.Answer) throws -> Data {
+        let data = try JSONEncoder().encode(ans)
+        guard var obj = try JSONSerialization.jsonObject(with: data) as? [String: Any] else { return data }
+        obj["sv"] = [".sv": "timestamp"]
+        return try JSONSerialization.data(withJSONObject: obj)
+    }
+
     private func send(_ ans: LiveRoom.Answer) async {
         guard let pub, pub.phase == LiveRoom.Phase.question, submittedQid != pub.qid, let uid else { return }
         submittedQid = pub.qid
         var ans = ans
         if pub.wager == true { ans.wager = max(0, min(wager, score)) }   // Wave A: attach the stake
         if blurred { ans.blurred = true }   // Wave C: flag if they left the app during this question
-        do { try await db.putJSON("\(LiveRoom.path(code))/answers/\(pub.qid)/\(uid)", try JSONEncoder().encode(ans)) }
+        do { try await db.putJSON("\(LiveRoom.path(code))/answers/\(pub.qid)/\(uid)",
+                                  try Self.withServerTimestamp(ans)) }
         catch { chosen = nil; submittedQid = nil; errorText = "Answer didn't send — tap again." }
     }
 

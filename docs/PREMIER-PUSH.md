@@ -173,6 +173,51 @@ docs/COMPETITOR-SCAN.md.
 Deliberately NOT copied: question-pack marketplaces, a staffed-host network, and
 per-event pricing — see COMPETITOR-SCAN §3.
 
+## G1 buzzer round — design, and the shipped bug found while designing it (2026-09-02)
+
+### The blocker, which turned out to be a live defect
+
+A buzz-in round is decided by WHO WAS FIRST, so the ordering has to be
+trustworthy. Reading the wire to design it:
+
+    LivePlayerClient.submit(...)  ->  LiveRoom.Answer(ts: Self.nowMS())
+
+`ts` is **the player's own phone clock**. And it is not only the buzzer that
+would depend on it — the SHIPPED speed bonus already does:
+
+    macOS   speedCorrect.sorted { $0.ts < $1.ts }          (MacLiveHost)
+    Windows baseScores.OrderBy(e => e.ts)                  (LiveNightHost)
+            FastestUid = correctBySpeed[0].uid
+
+So today, on both desktops, "fastest correct answer" means "whose phone clock
+reads earliest". A table whose handset is three seconds fast collects the +3
+every round without answering faster, and nobody in the room can see why. Clock
+skew of a few seconds is completely ordinary on phones.
+
+### The fix that unblocks both
+
+Firebase RTDB accepts a SERVER value in a REST write: `{".sv": "timestamp"}`.
+The answer node gets an `sv` field stamped by the server when the write lands, so
+ordering is by ARRIVAL at one clock rather than by five different handsets.
+
+  * senders inject `"sv": {".sv":"timestamp"}` into the answer body
+  * hosts order by `sv ?? ts` — a client that has not shipped yet still sorts,
+    just on its own clock, so a mixed room degrades instead of breaking
+  * `ts` stays: it is what a player's own device shows them, and the reveal
+    animation uses it
+
+### The buzz round on top
+
+With trustworthy ordering, a buzz is a submission with no payload:
+
+  * a `buzzIn` round format; the join surface shows one big BUZZ button
+  * first `sv` wins; the cockpit shows who buzzed and the host marks it right or
+    wrong; a wrong buzz opens it to the rest
+  * the projector names the team that buzzed
+
+Ordering is the whole feature, which is why it is being fixed first and
+separately, with its own test.
+
 ## Side-effects fixed in passing
 
 **`tools/corpus/resync_corpus.sh` re-created the strays its own check reports.**

@@ -337,7 +337,15 @@ struct LiveJoinView: View {
     }
 
     @ViewBuilder private func statusNote(_ p: LiveRoom.Pub, revealed: Bool) -> some View {
-        let note: (String, Color) = revealed
+        // G1: a buzz round has no per-player answer, so the ordinary note reads
+        // its own state wrong -- `chosen` stays nil even when the player HAS
+        // buzzed, and the reveal then told them "No answer submitted." The host
+        // calls a buzz round out loud, so the note just says who speaks next.
+        let note: (String, Color) = p.buzz == true
+            ? (revealed ? ("The host has the answer.", Tidbits.Palette.inkSoft)
+               : client.hasAnswered ? ("Buzzed — wait for the host.", Tidbits.Palette.mint)
+               : ("First to buzz answers out loud.", Tidbits.Palette.inkSoft))
+            : revealed
             ? (client.chosen == p.answerIndex ? ("Correct!", Tidbits.Palette.mint) : client.chosen == nil ? ("No answer submitted.", Tidbits.Palette.inkSoft) : ("Not this time.", .red))
             : (client.hasAnswered ? ("Locked in — waiting for the reveal…", Tidbits.Palette.mint)
                : p.locked == true ? ("Answers locked — pencils down!", Tidbits.Palette.coral) : ("Tap your answer.", Tidbits.Palette.inkSoft))

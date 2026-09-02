@@ -36,12 +36,37 @@ host remote and a team-leader model are absent from macOS AND Windows; the only
 "buzz" hits on either side are sound-effect labels ("BYO clips: applause, buzzer,
 drumroll"), not a buzzer ROUND.
 
-### G1. No buzzer / fastest-finger round  *(SpeedQuizzing, QuizXpress)*
+### G1. Buzzer / fastest-finger round — CLOSED 2026-09-02, all six platforms
 SpeedQuizzing's identity is speed: ten seconds an answer, and formats called
 Fastest Fingers and Buzzin'. QuizXpress scores faster answers higher and can
-count down points over time. Tidbits has a speed BONUS (+3/+2/+1 on correct
+count down points over time. Tidbits had a speed BONUS (+3/+2/+1 on correct
 answers) but no format where the first team to buzz gets the question — the
-single most recognisable pub-quiz mechanic we do not have.
+single most recognisable pub-quiz mechanic we did not have.
+
+**Shipped.** A round is marked a buzz round on the host (macOS `currentRoundIsBuzz`,
+Windows `IsBuzzRound`/`BuzzRounds`); the host publishes `pub.buzz` and the
+cockpit gets a buzz panel with Correct / Wrong, plus a `buzzedOut` set so a team
+that got it wrong cannot buzz again on the same question. `firstBuzz(answers:
+excluding:)` lives in shared Core on both stacks and resolves the winner by the
+SERVER stamp (`Answer.sv`), not the client clock — a phone three seconds fast
+would otherwise win every buzz in the room.
+
+On the join clients the buzz button REPLACES the whole answer surface: a player
+who can both buzz and answer gives the host two things to adjudicate and it
+scores the wrong one. The payload is deliberately empty — the answer is spoken
+out loud, so the wire carries only who was first.
+
+**A `pub.buzz` reader was missed on three clients, found 2026-09-02 while
+writing this entry.** tvOS had NO buzz branch at all: a Siri Remote player saw
+the ordinary options during a buzz round and could submit an answer the host
+would never read. And on iOS, tvOS and Android the STATUS NOTE was never taught
+about the wire — it keys on `chosen`, which stays nil when a player has buzzed,
+so the reveal told a player who had buzzed "No answer submitted." Web was
+already correct because its note is generic. All four now say who speaks next.
+
+The lesson, and it is the same one G2 taught in a different costume: shipping a
+new field means enumerating every READER of it, not just the writer and the one
+client you developed against. A round-trip that works is not coverage.
 
 ### G2. Per-round score recap — CLOSED, and my first reading of it was wrong
 QuizXpress shows intermediate and round scores between rounds; Sporcle reads

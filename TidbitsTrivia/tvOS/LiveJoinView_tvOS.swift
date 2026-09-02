@@ -194,7 +194,32 @@ struct TVLivePlayerView: View {
                 .fixedSize(horizontal: false, vertical: true)
             if let d = p.deadline, !revealed { tvCountdown(d) }              // Wave A: on-screen timer
             if p.wager == true, !revealed { tvWagerControl(max(0, client.score)) }  // Wave A: wager stake
-            if let n = p.numeric {
+            // G1: on a BUZZ round the whole answer UI is ONE button and every
+            // other input must be GONE -- a player who can both buzz and answer
+            // gives the host two things to adjudicate and it scores the wrong
+            // one. Same rule as iOS/web/Android; the TV had no buzz branch at
+            // all, so a Siri Remote player saw the ordinary options and could
+            // submit an answer the host would never read. The remote is a fine
+            // buzzer: one click. Focus is left to land here on its own -- this
+            // is the only focusable view in the answer area on a buzz round, and
+            // claiming it explicitly is what yanks focus back mid-round.
+            if p.buzz == true, !revealed {
+                if locked {
+                    Text("Buzzed — wait for the host")
+                        .font(.system(size: 34, weight: .heavy, design: .rounded))
+                        .foregroundStyle(Tidbits.Palette.mint)
+                        .frame(maxWidth: .infinity).padding(.vertical, 30)
+                } else {
+                    Button {
+                        Task { await client.submitBuzz() }
+                    } label: {
+                        Text("BUZZ")
+                            .font(.system(size: 64, weight: .black, design: .rounded))
+                            .frame(maxWidth: .infinity).padding(.vertical, 26)
+                    }
+                    .buttonStyle(TVChipStyle(accent: Tidbits.Palette.coral, selected: false))
+                }
+            } else if let n = p.numeric {
                 TVNumericAnswer(spec: n, locked: locked) { v in Task { await client.submit(number: v) } }.id(p.qid)
             } else if let options = p.options, !options.isEmpty {
                 VStack(spacing: 20) {
@@ -269,7 +294,15 @@ struct TVLivePlayerView: View {
     }
 
     @ViewBuilder private func statusNote(_ p: LiveRoom.Pub, revealed: Bool) -> some View {
-        let note: (String, Color) = revealed
+        // G1: a buzz round has no per-player answer, so the ordinary note reads
+        // its own state wrong -- `chosen` stays nil even when the player HAS
+        // buzzed, and the reveal then told them "No answer submitted." The host
+        // calls a buzz round out loud, so the note just says who speaks next.
+        let note: (String, Color) = p.buzz == true
+            ? (revealed ? ("The host has the answer.", TVTheme.textSoft)
+               : client.hasAnswered ? ("Buzzed — wait for the host.", Tidbits.Palette.mint)
+               : ("First to buzz answers out loud.", TVTheme.textSoft))
+            : revealed
             ? (client.chosen == p.answerIndex ? ("Correct!", Tidbits.Palette.mint) : client.chosen == nil ? ("No answer submitted.", TVTheme.textSoft) : ("Not this time.", Tidbits.Palette.coral))
             : (client.hasAnswered ? ("Locked in — waiting for the reveal…", Tidbits.Palette.mint)
                : p.locked == true ? ("Answers locked — pencils down!", Tidbits.Palette.coral) : ("Choose your answer with the remote.", TVTheme.textSoft))

@@ -265,7 +265,15 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
                     else -> TextAnswer(p.qid, locked) { submitFields(mapOf("text" to it)) }
                 }
                 Spacer(Modifier.height(6.dp))
+                // G1: a buzz round has no per-player answer, so the ordinary note
+                // reads its own state wrong -- `chosen` stays null even when the
+                // player HAS buzzed, and the reveal then told them "No answer
+                // submitted." The host calls a buzz round out loud, so the note
+                // just says who speaks next.
                 val note = when {
+                    p.buzz && revealed -> "The host has the answer." to soft
+                    p.buzz && submittedQid == p.qid -> "Buzzed — wait for the host." to Pops.mint
+                    p.buzz -> "First to buzz answers out loud." to soft
                     revealed && chosen == p.answerIndex -> "Correct!" to Pops.mint
                     revealed && chosen == null -> "No answer submitted." to soft
                     revealed -> "Not this time." to Pops.coral

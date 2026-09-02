@@ -1,0 +1,86 @@
+[
+{"subject":"Prime number","cat":"science","diff":2,
+ "prompt":"A natural number greater than 1 that IS the product of two smaller natural numbers goes by what name?",
+ "answer":"Composite","options":["Rational","Irrational","Perfect"],
+ "why":"A prime number is a natural number greater than 1 that is not a product of two smaller natural numbers. A natural number greater than 1 that is not prime is called a composite number."},
+
+{"subject":"IPhone","cat":"business","diff":2,
+ "prompt":"Apple's smartphone line, which runs the company's own mobile operating system, had its first generation announced by which Apple co-founder, then CEO?",
+ "answer":"Steve Jobs","options":["Steve Wozniak","Tim Cook","John Sculley"],
+ "why":"The iPhone is a line of smartphones developed by Apple that run iOS. The first-generation iPhone was announced by then-Apple CEO and co-founder Steve Jobs."},
+
+{"subject":"French language","cat":"arts","diff":3,
+ "prompt":"A Romance language whose closest relatives are the langues d'oil, it belongs to which language family?",
+ "answer":"Indo-European","options":["Afroasiatic","Uralic","Turkic"],
+ "why":"French is a Romance language of the Indo-European family. Like all other Romance languages, its closest relatives are the langues d'oil."},
+
+{"subject":"Arabic","cat":"arts","diff":4,
+ "prompt":"A Central Semitic language of the Afroasiatic family, it is so varied that the ISO assigns separate language codes to how many of its varieties?",
+ "answer":"32","options":["8","15","60"],
+ "why":"Arabic is a Central Semitic language of the Afroasiatic language family spoken primarily in the Arab world. The International Organization for Standardization assigns language codes to 32 varieties of Arabic."},
+
+{"subject":"Bonnie and Clyde","cat":"history","diff":4,
+ "prompt":"This pair of Depression-era outlaws travelled the central United States with their gang until both were killed on the same day. In which year?",
+ "answer":"1934","options":["1929","1938","1942"],
+ "why":"Bonnie Elizabeth Parker (1910-1934) and Clyde Chestnut Barrow (1909-1934) were outlaws who travelled the Central United States with their gang. Both died on 23 May 1934."},
+
+{"subject":"Area 51","cat":"geography","diff":3,
+ "prompt":"This highly classified US Air Force facility sits within the Nevada Test and Training Range. Roughly how far north-northwest of Las Vegas is it?",
+ "answer":"About 130 km","options":["About 20 km","About 400 km","About 640 km"],
+ "why":"Area 51 is a highly classified United States Air Force facility within the Nevada Test and Training Range in southern Nevada, 83 miles (134 km) north-northwest of Las Vegas."},
+
+{"subject":"Australian Open","cat":"sports","diff":3,
+ "prompt":"Organised by Tennis Australia and the first of the four majors each year, this tournament is played at which Melbourne venue?",
+ "answer":"Melbourne Park","options":["Kooyong Stadium","Albert Park","Docklands Stadium"],
+ "why":"The Australian Open is a tennis tournament organised by Tennis Australia annually at Melbourne Park in Melbourne, Victoria. It is the first of the four major tennis tournaments every year."},
+
+{"subject":"Dark web","cat":"science","diff":3,
+ "prompt":"This World Wide Web content sits on overlay networks that use the Internet but cannot be reached with an ordinary browser. What does reaching it require?",
+ "answer":"Specific software or authorisation","options":["A paid subscription","A government licence","A physical hardware token"],
+ "why":"The dark web is World Wide Web content that exists on darknets — overlay networks that use the Internet but require specific software, configurations or authorization to access."},
+
+{"subject":"DuckDuckGo","cat":"business","diff":4,
+ "prompt":"This American software company built its privacy-focused search engine after being founded in 2008 by whom?",
+ "answer":"Gabriel Weinberg","options":["Brian Acton","Jimmy Wales","Marissa Mayer"],
+ "why":"DuckDuckGo is an American software company focused on online privacy whose flagship product is a search engine of the same name, founded by Gabriel Weinberg in 2008."},
+
+{"subject":"Russian language","cat":"arts","diff":4,
+ "prompt":"Belonging to the Balto-Slavic branch of Indo-European, this tongue is one of how many surviving East Slavic languages?",
+ "answer":"Four","options":["Two","Seven","Eleven"],
+ "why":"Russian is an East Slavic language belonging to the Balto-Slavic branch of the Indo-European language family. It is one of the four extant East Slavic languages."},
+
+{"subject":"Microsoft 365","cat":"business","diff":2,
+ "prompt":"This family of productivity software and cloud services from Microsoft was known by what name before it was rebranded?",
+ "answer":"Office 365","options":["Windows Live","MSN Premium","Microsoft Works"],
+ "why":"Microsoft 365, previously called Office 365, is a product family of productivity software, collaboration and cloud-based services owned by Microsoft."},
+
+{"subject":"Teenage Mutant Ninja Turtles","cat":"screen","diff":3,
+ "prompt":"Leonardo, Donatello, Raphael and Michelangelo were created by which pair of comic book artists?",
+ "answer":"Kevin Eastman and Peter Laird","options":["Stan Lee and Jack Kirby","Jerry Siegel and Joe Shuster","Joe Simon and Jack Kirby"],
+ "why":"Teenage Mutant Ninja Turtles is an American media franchise created by comic book artists Kevin Eastman and Peter Laird, following Leonardo, Donatello, Raphael and Michelangelo."},
+
+{"subject":"Pi","cat":"science","diff":2,
+ "prompt":"This mathematical constant, roughly 3.14159, expresses the ratio of a circle's circumference to what?",
+ "answer":"Its diameter","options":["Its radius","Its area","Its arc length"],
+ "why":"The number pi is a mathematical constant approximately equal to 3.14159, the ratio of a circle's circumference to its diameter. It appears in many formulae across mathematics."},
+
+{"subject":"Morse code","cat":"science","diff":3,
+ "prompt":"This telecommunications method encodes text as standardised sequences of just two different signal durations. What are they called?",
+ "answer":"Dots and dashes","options":["Ticks and tocks","Highs and lows","Marks and spaces"],
+ "why":"Morse code is a telecommunications method which encodes text characters as standardized sequences of two different signal durations, called dots and dashes, or dits and dahs."},
+
+{"subject":"Tokugawa Ieyasu","cat":"history","diff":4,
+ "prompt":"The samurai and daimyo who became Japan's first shogun of a dynasty beginning in 1603 was born under which name?",
+ "answer":"Matsudaira Takechiyo","options":["Oda Nobunaga","Toyotomi Hideyoshi","Ashikaga Takauji"],
+ "why":"Tokugawa Ieyasu, born Matsudaira Takechiyo (1543-1616), was a Japanese samurai, daimyo and the founder and first shogun of the Tokugawa shogunate, which ruled from 1603."},
+
+{"subject":"Los Angeles Lakers","cat":"sports","diff":3,
+ "prompt":"This Los Angeles basketball team plays in the NBA's Western Conference — in which division?",
+ "answer":"Pacific","options":["Atlantic","Central","Southeast"],
+ "why":"The Los Angeles Lakers are an American professional basketball team based in Los Angeles, competing in the NBA as a member of the Pacific Division of the Western Conference."},
+
+{"subject":"True Detective season 4","cat":"screen","diff":3,
+ "prompt":"The fourth season of this HBO anthology crime drama premiered in January 2024 under which subtitle?",
+ "answer":"Night Country","options":["Dark Country","Cold Ground","Polar Night"],
+ "why":"The fourth season of True Detective, created by Nic Pizzolatto, premiered on January 14, 2024 on HBO, carrying the subtitle Night Country."}
+]

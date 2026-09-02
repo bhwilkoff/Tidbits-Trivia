@@ -267,7 +267,25 @@ struct LiveJoinView: View {
     /// The right input for the question's type. The host auto-scores each on reveal.
     @ViewBuilder private func answerSurface(_ p: LiveRoom.Pub, revealed: Bool) -> some View {
         let locked = revealed || client.hasAnswered || p.locked == true
-        if let n = p.numeric {
+        // G1: on a BUZZ round the whole answer UI is ONE button, and the normal
+        // answer UI must be GONE — a player who can both buzz and answer has two
+        // ways in and the host adjudicates the wrong one. Empty payload: the answer
+        // is said out loud to the room, so the wire carries only who was first,
+        // ordered by the SERVER stamp.
+        if p.buzz == true, !revealed {
+            if locked {
+                Text("Buzzed — wait for the host")
+                    .font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.mint)
+                    .frame(maxWidth: .infinity).padding(.vertical, 28)
+            } else {
+                Button { Task { await client.submitBuzz() } } label: {
+                    Text("BUZZ")
+                        .font(.system(size: 46, weight: .black, design: .rounded))
+                        .frame(maxWidth: .infinity).padding(.vertical, 34)
+                }
+                .buttonStyle(.borderedProminent).tint(Tidbits.Palette.coral)
+            }
+        } else if let n = p.numeric {
             LiveNumericAnswer(spec: n, locked: locked) { v in Task { await client.submit(number: v) } }.id(p.qid)
         } else if let items = p.orderItems, !items.isEmpty {
             LiveOrderingAnswer(items: items, locked: locked) { o in Task { await client.submit(order: o) } }.id(p.qid)

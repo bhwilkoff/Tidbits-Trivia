@@ -232,6 +232,25 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
                 }
                 val locked = revealed || submittedQid == p.qid || p.locked
                 when {
+                    // G1: on a BUZZ round the whole answer UI is ONE button, and the
+                    // normal options must be GONE — a player who can both buzz and
+                    // pick an option has two ways to answer and the host adjudicates
+                    // the wrong one. Empty payload: the answer is spoken out loud, so
+                    // the wire only carries who was first (ordered by the server stamp).
+                    p.buzz && !revealed -> {
+                        if (submittedQid == p.qid) {
+                            Text("Buzzed — wait for the host",
+                                 style = MaterialTheme.typography.titleLarge,
+                                 fontWeight = FontWeight.Black, color = Pops.mint,
+                                 modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
+                        } else {
+                            Button(onClick = { submitFields(emptyMap()) },
+                                   modifier = Modifier.fillMaxWidth().height(120.dp)) {
+                                Text("BUZZ", style = MaterialTheme.typography.displaySmall,
+                                     fontWeight = FontWeight.Black)
+                            }
+                        }
+                    }
                     p.numeric != null -> NumericAnswer(p.numeric, p.qid, locked) { submitFields(mapOf("number" to it)) }
                     p.options != null -> p.options.forEachIndexed { i, opt ->
                         val isChosen = chosen == i

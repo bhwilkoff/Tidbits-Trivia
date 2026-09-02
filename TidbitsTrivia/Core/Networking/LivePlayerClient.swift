@@ -56,6 +56,11 @@ final class LivePlayerClient {
         }
     }
 
+    /// G1: buzz in. The payload is EMPTY on purpose — on a buzz round the answer is
+    /// spoken out loud to the room, so all the wire carries is who got here first,
+    /// and `send` stamps that with the SERVER clock. Mirrors C# `SubmitBuzz`.
+    func submitBuzz() async { await send(LiveRoom.Answer(ts: Self.nowMS())) }
+
     func submit(choice: Int) async { chosen = choice; await send(LiveRoom.Answer(choice: choice, ts: Self.nowMS())) }
     func submit(number: Double) async { await send(LiveRoom.Answer(number: number, ts: Self.nowMS())) }
     func submit(text: String) async { await send(LiveRoom.Answer(text: text, ts: Self.nowMS())) }

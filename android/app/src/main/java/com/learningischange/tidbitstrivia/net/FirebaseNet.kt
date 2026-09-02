@@ -12,6 +12,7 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ServerValue
 import com.google.firebase.database.MutableData
 import com.google.firebase.database.Transaction
 import com.google.firebase.database.ValueEventListener
@@ -340,6 +341,9 @@ object FirebaseNet {
         val story: String? = null,   // Wave A: the story behind the answer (reveal only)
         val deadline: Long? = null,  // Wave A: epoch-ms countdown deadline (question phase)
         val wager: Boolean = false,  // Wave A: wager question — the joiner shows a stake input
+        /** G1: a BUZZ question — one big BUZZ button instead of the answer UI, and
+         *  the FIRST buzz the SERVER sees wins. Mirrors Swift `Pub.buzz`. */
+        val buzz: Boolean = false,
     )
     /** A player's submission (any shape) — the host scores it locally on reveal. */
     data class LiveAnswer(
@@ -373,8 +377,16 @@ object FirebaseNet {
     suspend fun liveSubmitAnswer(code: String, qid: String, fields: Map<String, Any?>) {
         val me = uid ?: return
         db.getReference("live/$code/answers/$qid/$me")
-            .setValue(fields + ("ts" to System.currentTimeMillis())).await()
+            .setValue(fields + ("ts" to System.currentTimeMillis()) + SERVER_STAMP).await()
     }
+
+    /// `sv` is stamped by the SERVER when the write lands, so the host orders
+    /// submissions by ARRIVAL at one clock instead of by five different handsets.
+    /// Android was the last sender still shipping only `ts` — its own phone clock —
+    /// while web, Swift and C# had moved over, so an Android phone running a few
+    /// seconds fast beat everyone to the speed bonus and to the buzzer without
+    /// answering faster. Hosts read `sv ?? ts`, so an old client still sorts.
+    private val SERVER_STAMP = mapOf("sv" to ServerValue.TIMESTAMP)
 
     fun liveLeave(code: String) {
         val me = uid ?: return
@@ -428,6 +440,7 @@ object FirebaseNet {
             story = snap.child("story").getValue(String::class.java),
             deadline = snap.child("deadline").getValue(Long::class.java),
             wager = snap.child("wager").getValue(Boolean::class.java) ?: false,
+            buzz = snap.child("buzz").getValue(Boolean::class.java) ?: false,
         )
     }
 
@@ -497,7 +510,8 @@ object FirebaseNet {
     }
     suspend fun liveHostAnswer(code: String, qid: String, choice: Int) {
         val me = uid ?: return
-        db.getReference("live/$code/answers/$qid/$me").setValue(mapOf("choice" to choice.toLong(), "ts" to System.currentTimeMillis())).await()
+        db.getReference("live/$code/answers/$qid/$me")
+            .setValue(mapOf("choice" to choice.toLong(), "ts" to System.currentTimeMillis()) + SERVER_STAMP).await()
     }
     fun liveClose(code: String) { db.getReference("live/$code").removeValue() }
 }

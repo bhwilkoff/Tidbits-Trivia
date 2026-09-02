@@ -1,0 +1,86 @@
+[
+{"subject":"Holi","cat":"history","diff":3,
+ "prompt":"This major Hindu spring festival of colours celebrates the love between which pair of deities?",
+ "answer":"Radha and Krishna","options":["Shiva and Parvati","Rama and Sita","Vishnu and Lakshmi"],
+ "why":"Holi is a major Hindu festival of colours, love and spring. It celebrates the love between the deities Radha and Krishna, and signifies the triumph of good over evil."},
+
+{"subject":"World population","cat":"geography","diff":4,
+ "prompt":"The United Nations estimated the total number of humans alive passed eight billion on which date?",
+ "answer":"15 November 2022","options":["1 January 2015","4 July 2019","1 March 2024"],
+ "why":"In world demographics, the world population is the total number of humans currently alive. It was estimated by the United Nations to have exceeded 8 billion on November 15, 2022."},
+
+{"subject":"Saturn","cat":"science","diff":3,
+ "prompt":"The second largest planet in the Solar System is a gas giant with an average radius roughly how many times that of Earth?",
+ "answer":"About 9 times","options":["About 2 times","About 25 times","About 100 times"],
+ "why":"Saturn is the sixth planet from the Sun and the second largest in the Solar System after Jupiter. It is a gas giant with an average radius about 9 times that of Earth."},
+
+{"subject":"UEFA Conference League","cat":"sports","diff":4,
+ "prompt":"UEFA's third-tier annual club football competition has been organised since which year?",
+ "answer":"2021","options":["1999","2015","2023"],
+ "why":"The UEFA Conference League is an annual association football competition organised since 2021 by the Union of European Football Associations."},
+
+{"subject":"Latin","cat":"arts","diff":3,
+ "prompt":"Originally spoken by the Latins in Latium, now Lazio, this classical language belongs to which branch of Indo-European?",
+ "answer":"Italic","options":["Germanic","Celtic","Slavic"],
+ "why":"Latin is a classical language belonging to the Italic branch of the Indo-European languages. It was originally spoken by the Latins in Latium, now known as Lazio."},
+
+{"subject":"Eurovision Song Contest 2024","cat":"music","diff":3,
+ "prompt":"The 68th edition of this song competition, with semi-finals on 7 and 9 May and a final on 11 May, was staged at the Malmö Arena — in which country?",
+ "answer":"Sweden","options":["The Netherlands","Israel","Italy"],
+ "why":"The Eurovision Song Contest 2024 was the 68th edition, consisting of two semi-finals on 7 and 9 May and a final on 11 May 2024, held at the Malmö Arena in Malmö, Sweden."},
+
+{"subject":"Harvard University","cat":"history","diff":3,
+ "prompt":"This private Ivy League research university in Cambridge, Massachusetts was founded in which year?",
+ "answer":"1636","options":["1589","1701","1746"],
+ "why":"Harvard University is a private Ivy League research university in Cambridge, Massachusetts, founded in 1636 and named Harvard College in 1639 in honour of its first benefactor."},
+
+{"subject":"Gregorian calendar","cat":"history","diff":3,
+ "prompt":"The civil calendar used in most of the world today went into effect following a papal bull, in which year?",
+ "answer":"1582","options":["1492","1650","1701"],
+ "why":"The Gregorian calendar is used in most parts of the world. It went into effect in October 1582 following the papal bull Inter gravissimas."},
+
+{"subject":"Eid al-Adha","cat":"history","diff":4,
+ "prompt":"The second of Islam's two main festivals, the Feast of the Sacrifice, falls on the 10th day of which month?",
+ "answer":"Dhu al-Hijjah","options":["Ramadan","Muharram","Shawwal"],
+ "why":"Eid al-Adha, the Feast of the Sacrifice, is the second of the two main festivals in Islam alongside Eid al-Fitr. It falls on the 10th of Dhu al-Hijjah."},
+
+{"subject":"Discord","cat":"science","diff":3,
+ "prompt":"This American social platform carries text, media and video, plus voice calls delivered over the internet using which technology?",
+ "answer":"VoIP","options":["SMS","Satellite radio","Shortwave"],
+ "why":"Discord is an American instant messaging and VoIP social platform allowing communication through voice calls, video calls, text messaging and media, privately or in communities."},
+
+{"subject":"Brownie (folklore)","cat":"arts","diff":3,
+ "prompt":"Also called a broonie or brùnaidh, this household spirit comes out at night while the owners sleep. Whose folklore is it from?",
+ "answer":"Scottish","options":["Irish","Norwegian","Basque"],
+ "why":"A brownie or broonie, also known as a brùnaidh or gruagach in Scottish Gaelic, is a household spirit or hobgoblin from Scottish folklore said to come out at night while the owners sleep."},
+
+{"subject":"Newton's laws of motion","cat":"science","diff":2,
+ "prompt":"Providing the basis for Newtonian mechanics, these physical laws relate an object's motion to the forces acting on it. How many are there?",
+ "answer":"Three","options":["Two","Four","Seven"],
+ "why":"Newton's laws of motion are three physical laws that describe the relationship between the motion of an object and the forces acting on it, providing the basis for Newtonian mechanics."},
+
+{"subject":"Budapest","cat":"geography","diff":3,
+ "prompt":"Hungary's capital and primate city has a greater metro area of about 3.3 million. Roughly how many live in the city itself?",
+ "answer":"1.7 million","options":["500,000","4.5 million","9 million"],
+ "why":"Budapest is the capital and most populous city of Hungary. It is Hungary's primate city with 1.7 million inhabitants, and its greater metro area has a population of about 3.3 million."},
+
+{"subject":"Schrödinger's cat","cat":"science","diff":3,
+ "prompt":"In this thought experiment a hypothetical cat in a closed box may be considered simultaneously alive and dead. Which quantum concept is it illustrating?",
+ "answer":"Superposition","options":["Entanglement","Tunnelling","Decoherence"],
+ "why":"In quantum mechanics, Schrödinger's cat is a thought experiment concerning quantum superposition, in which a hypothetical cat in a closed box may be considered simultaneously alive and dead."},
+
+{"subject":"Chechnya","cat":"geography","diff":3,
+ "prompt":"Officially the Chechen Republic, this republic of Russia sits in the North Caucasus between the Caspian Sea and which other sea?",
+ "answer":"The Black Sea","options":["The Baltic Sea","The Aral Sea","The Mediterranean"],
+ "why":"Chechnya, officially the Chechen Republic, is a republic of Russia situated in the North Caucasus of Eastern Europe, between the Caspian Sea and the Black Sea."},
+
+{"subject":"Ram Mandir","cat":"geography","diff":3,
+ "prompt":"Built at a site many Hindus believe to be Ram Janmabhoomi, this temple complex in Ayodhya stands in which Indian state?",
+ "answer":"Uttar Pradesh","options":["Gujarat","Kerala","Punjab"],
+ "why":"The Ram Mandir is a Hindu temple complex in Ayodhya, Uttar Pradesh, India. Many Hindus believe it is located at the site of Ram Janmabhoomi, the birthplace of Rama."},
+
+{"subject":"YouTube Music","cat":"music","diff":2,
+ "prompt":"This music streaming service was developed by a video platform that is itself a subsidiary of which company?",
+ "answer":"Google","options":["Meta","Amazon","Tencent"],
+ "why":"YouTube Music is a music streaming service developed by the American video platform YouTube, a subsidiary of Google."}
+]

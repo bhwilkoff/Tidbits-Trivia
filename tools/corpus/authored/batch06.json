@@ -1,0 +1,51 @@
+[
+{"subject":"G20","cat":"geography","diff":4,
+ "prompt":"This intergovernmental forum on the global economy brings together 19 sovereign countries plus two supranational bodies. Which two?",
+ "answer":"The EU and the African Union","options":["The EU and ASEAN","NATO and the EU","The UN and the Arab League"],
+ "why":"The G20 is an intergovernmental forum comprising 19 sovereign countries, the European Union and the African Union, working on issues such as international financial stability and climate change."},
+
+{"subject":"Transformers (film series)","cat":"screen","diff":3,
+ "prompt":"Beginning in 2007 and running through The Last Knight, how many of this science-fiction action series' live-action films did Michael Bay direct?",
+ "answer":"Five","options":["Two","Three","Seven"],
+ "why":"Michael Bay directed the first five live-action Transformers films: Transformers (2007), Revenge of the Fallen (2009), Dark of the Moon (2011), Age of Extinction (2014) and The Last Knight (2017)."},
+
+{"subject":"Easter","cat":"history","diff":3,
+ "prompt":"Also called Pascha or Resurrection Sunday, this festival marks an event the New Testament places how long after the burial?",
+ "answer":"On the third day","options":["On the second day","On the seventh day","On the fortieth day"],
+ "why":"Easter is a Christian festival commemorating the resurrection of Jesus from the dead, described in the New Testament as having occurred on the third day of his burial following his crucifixion."},
+
+{"subject":"Argentina national football team","cat":"sports","diff":2,
+ "prompt":"Administered by the Argentine Football Association, this side is nicknamed la Albiceleste — 'the white and sky blue'. Which country does it represent?",
+ "answer":"Argentina","options":["Uruguay","Chile","Colombia"],
+ "why":"The Argentina national football team, nicknamed la Albiceleste, represents Argentina in men's international football and is administered by the Argentine Football Association."},
+
+{"subject":"The Lord of the Rings (film series)","cat":"screen","diff":2,
+ "prompt":"Released between 2001 and 2003 and drawn from Tolkien's three volumes, this epic fantasy trilogy was directed by whom?",
+ "answer":"Peter Jackson","options":["Ridley Scott","Guillermo del Toro","Sam Raimi"],
+ "why":"The Lord of the Rings is a trilogy of epic fantasy films directed by Peter Jackson, based on the novel by J. R. R. Tolkien and taking their titles and plots from its three volumes."},
+
+{"subject":"Aadhaar","cat":"geography","diff":3,
+ "prompt":"Issued by the UIDAI on the basis of residence, biometrics and demographic data, India's voluntary unique identity number has how many digits?",
+ "answer":"Twelve","options":["Nine","Sixteen","Six"],
+ "why":"Aadhaar is a twelve-digit unique identity number obtainable voluntarily by residents of India based on place of residence, biometrics and demographic data, collected by the Unique Identification Authority of India."},
+
+{"subject":"Wikimedia Foundation","cat":"business","diff":3,
+ "prompt":"The 501(c)(3) nonprofit best known for hosting Wikipedia is registered as a charitable foundation in which American city?",
+ "answer":"San Francisco","options":["Seattle","Boston","Austin"],
+ "why":"The Wikimedia Foundation is an American 501(c)(3) nonprofit headquartered in San Francisco, California, and registered there as a charitable foundation. It is best known as the host of Wikipedia."},
+
+{"subject":"Formula One","cat":"sports","diff":2,
+ "prompt":"The highest class of open-wheel single-seater racing is run by its own commercial group but sanctioned by which governing body?",
+ "answer":"The FIA","options":["FIFA","The IOC","The UCI"],
+ "why":"Formula One is the highest class of worldwide racing for open-wheel single-seater cars, run by the Formula One Group and sanctioned by the Federation Internationale de l'Automobile (FIA)."},
+
+{"subject":"Bundesliga","cat":"sports","diff":3,
+ "prompt":"Germany's top football division takes a name that translates literally as what?",
+ "answer":"Federal League","options":["First Division","National Cup","Premier Championship"],
+ "why":"The Bundesliga, literally 'Federal League', is a professional association football league in Germany and the highest level of the German football system."},
+
+{"subject":"Academy Awards","cat":"screen","diff":3,
+ "prompt":"Commonly called the Oscars, these annual honours for artistic and technical merit in film are presented by which organisation?",
+ "answer":"AMPAS","options":["BAFTA","The Screen Actors Guild","The Hollywood Foreign Press"],
+ "why":"The Academy Awards, commonly known as the Oscars, are presented annually by the Academy of Motion Picture Arts and Sciences (AMPAS) in recognition of artistic and technical merit in film."}
+]

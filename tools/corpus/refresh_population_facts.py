@@ -19,6 +19,28 @@ arbitrary one -- often the earliest. This asks for the statement with the LATEST
 P585, which is what "population" means to a player, and falls back to an
 unqualified statement when an item has only one.
 
+WIKIDATA STATES UNITS AND THE FIRST VERSION OF THIS IGNORED THEM. Mount Everest
+carries five P2044 statements -- 8,848 metre, 8,848.86 metre, 8,844.43 metre,
+8,850 metre AND 29,030 FOOT -- and taking the raw amount by latest date returned
+29,030, which would have replaced a CORRECT stored 8,849 with a figure in the
+wrong unit. Caught by spot-checking the fetch against a value already known to be
+right, before applying anything. The query now asks for `wikibase:quantityUnit`
+and converts feet to metres, and any statement whose unit is not recognised is
+dropped rather than guessed at.
+
+(The area refresh was re-verified against known truth for the same reason and is
+clean: US 9,826,675 km2, Russia 17,125,191, Japan 377,972 -- no square-mile
+contamination. France's 643,801 is the legitimate total including overseas
+departments.)
+
+P2044 (elevation) and P2043 (length) get the same treatment. Five Earth terrain
+features are stored above 8,849 m, which is impossible on this planet -- Sierra
+Nevada at 14,505, Cascade Range at 14,411 -- and every one is a FEET figure
+recorded as metres (14,505 ft is Mount Whitney exactly). Note the values that
+look impossible but are not: a noctilucent cloud really does sit at 76,000 m and
+Olympus Mons at 21,229 m, because one is atmospheric and the other is on Mars, so
+the check is confined to terrestrial mountains, ranges and volcanoes.
+
 Same treatment for P2046 (area) -- and the "87 physically impossible city areas"
 turn out not to be corrupt at all. Windhoek's 5,133,000,000 is not ten Earths, it
 is SQUARE METRES: 5,133 km2, which is Windhoek exactly. Miami's 143,148,642 m2 is
@@ -50,8 +72,16 @@ CACHE = ROOT / "tools" / "corpus" / "population_area_current.json"
 BATCH = 40                     # 120 drew HTTP 502 from WDQS; 40 is reliable
 MAX_CITY_AREA = 100_000        # km2 -- larger than any real city
 
+# Wikidata unit QIDs -> the base unit each property is stored in here.
+UNIT_TO_BASE = {
+    "P2044": {"Q11573": 1.0, "Q3710": 0.3048, "Q253276": 1609.344, "Q828224": 1000.0},
+    "P2043": {"Q11573": 1.0, "Q3710": 0.3048, "Q253276": 1609.344, "Q828224": 1000.0},
+    "P2046": {"Q712226": 1.0, "Q25343": 1.0e-6, "Q3272812": 2.589988, "Q35852": 0.01},
+    "P1082": {},
+}
 
-def fetch(props=("P1082", "P2046")):
+
+def fetch(props=("P1082", "P2046", "P2044", "P2043")):
     con = sqlite3.connect(f"file:{SOURCE_DB}?mode=ro", uri=True)
     out = json.loads(CACHE.read_text()) if CACHE.exists() else {}
     for prop in props:
@@ -65,9 +95,11 @@ def fetch(props=("P1082", "P2046")):
             values = " ".join(f"wd:{q}" for q in chunk)
             # Latest point-in-time wins; unqualified statements sort last but are
             # kept so single-statement items still resolve.
-            query = f"""SELECT ?item ?v ?d WHERE {{
+            query = f"""SELECT ?item ?v ?d ?unit WHERE {{
               VALUES ?item {{ {values} }}
-              ?item p:{prop} ?st . ?st ps:{prop} ?v .
+              ?item p:{prop} ?st . ?st psv:{prop} ?qv .
+              ?qv wikibase:quantityAmount ?v .
+              OPTIONAL {{ ?qv wikibase:quantityUnit ?unit }}
               OPTIONAL {{ ?st pq:P585 ?d }}
             }}"""
             rows = wd.sparql(query)
@@ -78,6 +110,11 @@ def fetch(props=("P1082", "P2046")):
                     v = float(r["v"]["value"])
                 except (KeyError, ValueError):
                     continue
+                unit = r.get("unit", {}).get("value", "").rsplit("/", 1)[-1]
+                factor = UNIT_TO_BASE.get(prop, {}).get(unit)
+                if factor is None and unit and unit not in ("", "1"):
+                    continue          # unrecognised unit: drop, never guess
+                v *= (factor or 1.0)
                 d = r.get("d", {}).get("value", "")
                 if q not in best or d > best[q][1]:
                     best[q] = (v, d)

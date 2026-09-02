@@ -34,6 +34,7 @@ SRC = ROOT / "tools" / "corpus" / "corpus_source.sqlite"
 # Topics that would make a pub table put the sheet down.
 BLOCK = re.compile(
     r"porn|xnxx|xvideos|onlyfans|sex|sexual|genital|penis|vagina|breast|nude|"
+    r"bdsm|bondage|sadomasochis|fetish|erotic|kink|"
     r"rape|incest|abuse|massacre|genocide|terror|jihad|hamas|hezbollah|isis|"
     r"islamic state|al-qaeda|taliban|shooting|bombing|assassination|suicide|"
     r"holocaust|slavery|lynching|torture|execution|cartel|narco|"

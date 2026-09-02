@@ -11245,7 +11245,12903 @@
 "value": 1331485.0
 }
 },
+"P2043": {
+"Q100026": {
+"asof": null,
+"value": 15.06
+},
+"Q100196": {
+"asof": null,
+"value": 0.5
+},
+"Q1018503": {
+"asof": null,
+"value": 112.0
+},
+"Q101936512": {
+"asof": null,
+"value": 329.95
+},
+"Q10257": {
+"asof": null,
+"value": 50450.0
+},
+"Q10285": {
+"asof": null,
+"value": 187.0
+},
+"Q10288": {
+"asof": null,
+"value": 69.61
+},
+"Q1037409": {
+"asof": null,
+"value": 470600.0
+},
+"Q104378621": {
+"asof": null,
+"value": 399.94
+},
+"Q104772074": {
+"asof": null,
+"value": 170000.0
+},
+"Q1048219": {
+"asof": null,
+"value": 425000.0
+},
+"Q1048849": {
+"asof": null,
+"value": 38560.0
+},
+"Q1056131": {
+"asof": null,
+"value": 11.46048
+},
+"Q1057263": {
+"asof": null,
+"value": 3141000.0
+},
+"Q1059437": {
+"asof": "1998-01-01",
+"value": 3.4
+},
+"Q1062": {
+"asof": null,
+"value": 311000.0
+},
+"Q106594": {
+"asof": null,
+"value": 150000.0
+},
+"Q1066": {
+"asof": null,
+"value": 563000.0
+},
+"Q1066792": {
+"asof": null,
+"value": 9.9
+},
+"Q1070564": {
+"asof": null,
+"value": 297000.0
+},
+"Q1073186": {
+"asof": null,
+"value": 152.4
+},
+"Q107338": {
+"asof": null,
+"value": 8000.0
+},
+"Q107393": {
+"asof": null,
+"value": 80000.0
+},
+"Q1078110": {
+"asof": null,
+"value": 424600.0
+},
+"Q107900": {
+"asof": null,
+"value": 26.0
+},
+"Q1084867": {
+"asof": null,
+"value": 30.2
+},
+"Q10965": {
+"asof": null,
+"value": 910000.0
+},
+"Q109858": {
+"asof": null,
+"value": 10000.0
+},
+"Q111169252": {
+"asof": null,
+"value": 351.306
+},
+"Q1124584": {
+"asof": null,
+"value": 1250000.0
+},
+"Q112507107": {
+"asof": null,
+"value": 7.8
+},
+"Q11260": {
+"asof": null,
+"value": 53000.0
+},
+"Q1127368": {
+"asof": null,
+"value": 263.0
+},
+"Q113155": {
+"asof": null,
+"value": 1805.0
+},
+"Q1137202": {
+"asof": null,
+"value": 160000.0
+},
+"Q1140980": {
+"asof": null,
+"value": 64000.0
+},
+"Q1141014": {
+"asof": null,
+"value": 2220.0
+},
+"Q1141409": {
+"asof": null,
+"value": 119.0
+},
+"Q1144920": {
+"asof": null,
+"value": 280.9
+},
+"Q1169": {
+"asof": null,
+"value": 494000.0
+},
+"Q11690": {
+"asof": null,
+"value": 605.0
+},
+"Q117936": {
+"asof": null,
+"value": 6.85
+},
+"Q1187536": {
+"asof": null,
+"value": 34.4
+},
+"Q118821": {
+"asof": null,
+"value": 770.0
+},
+"Q118840": {
+"asof": null,
+"value": 5.052
+},
+"Q118841": {
+"asof": null,
+"value": 445788.288
+},
+"Q1190152": {
+"asof": null,
+"value": 589500.0
+},
+"Q1191515": {
+"asof": null,
+"value": 55000.0
+},
+"Q119285": {
+"asof": null,
+"value": 1931212.8
+},
+"Q1193363": {
+"asof": null,
+"value": 119.0
+},
+"Q119515": {
+"asof": null,
+"value": 8893000.0
+},
+"Q1197028": {
+"asof": null,
+"value": 59100.0
+},
+"Q119799500": {
+"asof": null,
+"value": 6.7
+},
+"Q1200222": {
+"asof": null,
+"value": 5.1
+},
+"Q120119": {
+"asof": null,
+"value": 2000.0
+},
+"Q1212003": {
+"asof": null,
+"value": 13.91
+},
+"Q121378": {
+"asof": null,
+"value": 61000.0
+},
+"Q12192963": {
+"asof": null,
+"value": 80.0
+},
+"Q121982": {
+"asof": null,
+"value": 97.0
+},
+"Q12257149": {
+"asof": null,
+"value": 14.82
+},
+"Q1229": {
+"asof": null,
+"value": 1870000.0
+},
+"Q12431": {
+"asof": null,
+"value": 491000.0
+},
+"Q1244204": {
+"asof": null,
+"value": 293.5
+},
+"Q125006": {
+"asof": null,
+"value": 1825.4472
+},
+"Q12501": {
+"asof": null,
+"value": 21195000.0
+},
+"Q125050": {
+"asof": null,
+"value": 2090.0
+},
+"Q12506": {
+"asof": null,
+"value": 82.0
+},
+"Q12512": {
+"asof": null,
+"value": 220.0
+},
+"Q12514": {
+"asof": null,
+"value": 2335.0
+},
+"Q1253637": {
+"asof": null,
+"value": 93.1
+},
+"Q125673": {
+"asof": null,
+"value": 4176.0
+},
+"Q12568": {
+"asof": null,
+"value": 8038.0
+},
+"Q125821": {
+"asof": null,
+"value": 1450.0
+},
+"Q125912": {
+"asof": null,
+"value": 89000.0
+},
+"Q1260331": {
+"asof": null,
+"value": 12000.0
+},
+"Q1265": {
+"asof": null,
+"value": 2334000.0
+},
+"Q126982": {
+"asof": null,
+"value": 21000.0
+},
+"Q127892": {
+"asof": null,
+"value": 4880000.0
+},
+"Q128102": {
+"asof": null,
+"value": 4248000.0
+},
+"Q1283": {
+"asof": null,
+"value": 150000.0
+},
+"Q128323": {
+"asof": null,
+"value": 140000.0
+},
+"Q1285": {
+"asof": null,
+"value": 1200000.0
+},
+"Q1286": {
+"asof": null,
+"value": 1200000.0
+},
+"Q1286267": {
+"asof": null,
+"value": 222.2
+},
+"Q1288": {
+"asof": null,
+"value": 1700000.0
+},
+"Q129200": {
+"asof": null,
+"value": 306.0
+},
+"Q1294648": {
+"asof": null,
+"value": 29.0
+},
+"Q130135": {
+"asof": null,
+"value": 2550000.0
+},
+"Q130206": {
+"asof": null,
+"value": 283.0
+},
+"Q130681": {
+"asof": null,
+"value": 17.37
+},
+"Q130859": {
+"asof": null,
+"value": 35.0
+},
+"Q130869": {
+"asof": null,
+"value": 4.0
+},
+"Q130880": {
+"asof": null,
+"value": 0.65
+},
+"Q130885": {
+"asof": null,
+"value": 5.5
+},
+"Q130902": {
+"asof": null,
+"value": 6.0
+},
+"Q130958": {
+"asof": null,
+"value": 73.5
+},
+"Q130966": {
+"asof": null,
+"value": 14.0
+},
+"Q13098211": {
+"asof": null,
+"value": 12.192
+},
+"Q130988": {
+"asof": null,
+"value": 1.7
+},
+"Q131006": {
+"asof": null,
+"value": 10.0
+},
+"Q131009": {
+"asof": null,
+"value": 12.85
+},
+"Q131014": {
+"asof": null,
+"value": 3.0
+},
+"Q131046": {
+"asof": null,
+"value": 7.0
+},
+"Q131056": {
+"asof": null,
+"value": 6.0
+},
+"Q131071": {
+"asof": null,
+"value": 301000.0
+},
+"Q131078": {
+"asof": null,
+"value": 10.0
+},
+"Q131094": {
+"asof": null,
+"value": 5.0
+},
+"Q131106": {
+"asof": null,
+"value": 14.0
+},
+"Q131134": {
+"asof": null,
+"value": 9.5
+},
+"Q131142": {
+"asof": null,
+"value": 11.0
+},
+"Q131150": {
+"asof": null,
+"value": 3.5
+},
+"Q131188": {
+"asof": null,
+"value": 1.2
+},
+"Q131193": {
+"asof": null,
+"value": 5.5
+},
+"Q131197": {
+"asof": null,
+"value": 2.0
+},
+"Q131210": {
+"asof": null,
+"value": 1352000.0
+},
+"Q131245": {
+"asof": null,
+"value": 1.0
+},
+"Q131264": {
+"asof": null,
+"value": 9.0
+},
+"Q131305": {
+"asof": null,
+"value": 2800.0
+},
+"Q131315": {
+"asof": null,
+"value": 11.0
+},
+"Q131347": {
+"asof": null,
+"value": 64000.0
+},
+"Q131354": {
+"asof": null,
+"value": 550.0
+},
+"Q131377": {
+"asof": null,
+"value": 2000000.0
+},
+"Q131426": {
+"asof": null,
+"value": 5.0
+},
+"Q131460": {
+"asof": null,
+"value": 14.0
+},
+"Q131467": {
+"asof": null,
+"value": 2.7
+},
+"Q131558": {
+"asof": null,
+"value": 4.0
+},
+"Q131563": {
+"asof": null,
+"value": 3.0
+},
+"Q131565": {
+"asof": null,
+"value": 3.0
+},
+"Q131568": {
+"asof": null,
+"value": 8.0
+},
+"Q131574": {
+"asof": null,
+"value": 430000.0
+},
+"Q131592": {
+"asof": null,
+"value": 6.0
+},
+"Q131657": {
+"asof": null,
+"value": 4.0
+},
+"Q131678": {
+"asof": null,
+"value": 5.0
+},
+"Q131695": {
+"asof": null,
+"value": 3.3
+},
+"Q131710": {
+"asof": null,
+"value": 7.5
+},
+"Q131712": {
+"asof": null,
+"value": 6.2
+},
+"Q131716": {
+"asof": null,
+"value": 220000.0
+},
+"Q131759": {
+"asof": null,
+"value": 17.5
+},
+"Q13205": {
+"asof": null,
+"value": 320.0
+},
+"Q1321468": {
+"asof": null,
+"value": 350000.0
+},
+"Q132516": {
+"asof": null,
+"value": 41.1
+},
+"Q132647": {
+"asof": null,
+"value": 1.26
+},
+"Q132672": {
+"asof": null,
+"value": 2.0
+},
+"Q132683": {
+"asof": null,
+"value": 9.0
+},
+"Q132726": {
+"asof": null,
+"value": 1376000.0
+},
+"Q132817": {
+"asof": null,
+"value": 6.0
+},
+"Q132905": {
+"asof": null,
+"value": 16.0
+},
+"Q132956": {
+"asof": null,
+"value": 1000000.0
+},
+"Q1331750": {
+"asof": null,
+"value": 64400.00000000001
+},
+"Q133324": {
+"asof": null,
+"value": 18.92
+},
+"Q133376": {
+"asof": null,
+"value": 10.0
+},
+"Q133604": {
+"asof": null,
+"value": 2.0
+},
+"Q1336692": {
+"asof": null,
+"value": 20.0
+},
+"Q133849": {
+"asof": null,
+"value": 10.0
+},
+"Q1339472": {
+"asof": null,
+"value": 172.0
+},
+"Q13397": {
+"asof": null,
+"value": 35.42
+},
+"Q134191": {
+"asof": null,
+"value": 2.4
+},
+"Q134350": {
+"asof": null,
+"value": 966000.0
+},
+"Q134485": {
+"asof": null,
+"value": 620000.0
+},
+"Q134750": {
+"asof": null,
+"value": 1197000.0
+},
+"Q134821": {
+"asof": null,
+"value": 488.0
+},
+"Q134905": {
+"asof": null,
+"value": 124000.0
+},
+"Q1351895": {
+"asof": null,
+"value": 337.0
+},
+"Q1352202": {
+"asof": null,
+"value": 43.9
+},
+"Q135590": {
+"asof": null,
+"value": 5.0
+},
+"Q1369263": {
+"asof": null,
+"value": 350400.0
+},
+"Q13712": {
+"asof": null,
+"value": 405000.0
+},
+"Q1372951": {
+"asof": null,
+"value": 20.9
+},
+"Q13786": {
+"asof": null,
+"value": 196000.0
+},
+"Q139110": {
+"asof": null,
+"value": 2.5
+},
+"Q13989": {
+"asof": null,
+"value": 1300000.0
+},
+"Q13991": {
+"asof": null,
+"value": 225000.0
+},
+"Q140254": {
+"asof": null,
+"value": 10.58
+},
+"Q140318": {
+"asof": null,
+"value": 12.5
+},
+"Q14056": {
+"asof": null,
+"value": 54000.0
+},
+"Q14087435": {
+"asof": null,
+"value": 15.4
+},
+"Q1411902": {
+"asof": null,
+"value": 10.0
+},
+"Q1419813": {
+"asof": null,
+"value": 60000.0
+},
+"Q1424781": {
+"asof": null,
+"value": 3.2
+},
+"Q142549": {
+"asof": null,
+"value": 46.59
+},
+"Q1425594": {
+"asof": null,
+"value": 2109.0
+},
+"Q1428155": {
+"asof": null,
+"value": 114.8
+},
+"Q14294": {
+"asof": null,
+"value": 1007000.0
+},
+"Q14299": {
+"asof": null,
+"value": 897000.0
+},
+"Q14326": {
+"asof": null,
+"value": 21.0
+},
+"Q14330": {
+"asof": null,
+"value": 26.0
+},
+"Q14332": {
+"asof": null,
+"value": 12.0
+},
+"Q14348": {
+"asof": null,
+"value": 43400.0
+},
+"Q143762": {
+"asof": null,
+"value": 579000.0
+},
+"Q14379": {
+"asof": null,
+"value": 66000.0
+},
+"Q14383": {
+"asof": null,
+"value": 945000.0
+},
+"Q14384": {
+"asof": null,
+"value": 9.0
+},
+"Q14388": {
+"asof": null,
+"value": 9.0
+},
+"Q14397": {
+"asof": null,
+"value": 30.0
+},
+"Q14400": {
+"asof": null,
+"value": 12.0
+},
+"Q14403": {
+"asof": null,
+"value": 1.8
+},
+"Q14405": {
+"asof": null,
+"value": 3.4
+},
+"Q14438": {
+"asof": null,
+"value": 13.0
+},
+"Q1444474": {
+"asof": null,
+"value": 280.0
+},
+"Q14452": {
+"asof": null,
+"value": 24000.0
+},
+"Q14455": {
+"asof": null,
+"value": 5.0
+},
+"Q144825": {
+"asof": null,
+"value": 98260.0
+},
+"Q14483": {
+"asof": null,
+"value": 5.5
+},
+"Q14506": {
+"asof": null,
+"value": 1.8
+},
+"Q14565078": {
+"asof": null,
+"value": 252.0
+},
+"Q146695": {
+"asof": null,
+"value": 48000.0
+},
+"Q1469": {
+"asof": null,
+"value": 1006000.0
+},
+"Q1469336": {
+"asof": null,
+"value": 30.97
+},
+"Q1471": {
+"asof": null,
+"value": 776670.0
+},
+"Q1475405": {
+"asof": null,
+"value": 8.9
+},
+"Q1475619": {
+"asof": null,
+"value": 149.9
+},
+"Q147847": {
+"asof": null,
+"value": 1.574
+},
+"Q1497": {
+"asof": null,
+"value": 3766000.0
+},
+"Q1500182": {
+"asof": null,
+"value": 174.7
+},
+"Q150050": {
+"asof": null,
+"value": 22.69
+},
+"Q150570": {
+"asof": null,
+"value": 4.7
+},
+"Q150609": {
+"asof": null,
+"value": 15.76
+},
+"Q1506857": {
+"asof": null,
+"value": 1500.0
+},
+"Q1506936": {
+"asof": null,
+"value": 73.8
+},
+"Q150857": {
+"asof": null,
+"value": 251.0
+},
+"Q151068": {
+"asof": null,
+"value": 4.8
+},
+"Q151221": {
+"asof": null,
+"value": 8.45
+},
+"Q151374": {
+"asof": null,
+"value": 304.26
+},
+"Q151384": {
+"asof": null,
+"value": 15.96
+},
+"Q151432": {
+"asof": null,
+"value": 19.2
+},
+"Q151465": {
+"asof": null,
+"value": 4.45
+},
+"Q151475": {
+"asof": null,
+"value": 5.49
+},
+"Q151985": {
+"asof": null,
+"value": 160000.0
+},
+"Q152200": {
+"asof": null,
+"value": 16.7
+},
+"Q152207": {
+"asof": null,
+"value": 25378.0
+},
+"Q152356": {
+"asof": null,
+"value": 100000.0
+},
+"Q15288": {
+"asof": null,
+"value": 219000.0
+},
+"Q1529544": {
+"asof": null,
+"value": 126.0
+},
+"Q152976": {
+"asof": null,
+"value": 11.09
+},
+"Q153307": {
+"asof": null,
+"value": 12.54
+},
+"Q153370": {
+"asof": null,
+"value": 251.0
+},
+"Q153826": {
+"asof": null,
+"value": 11.4
+},
+"Q1540436": {
+"asof": null,
+"value": 230000.0
+},
+"Q154106": {
+"asof": null,
+"value": 12.77
+},
+"Q154115": {
+"asof": null,
+"value": 186.0
+},
+"Q1542454": {
+"asof": null,
+"value": 1780.0
+},
+"Q154504": {
+"asof": null,
+"value": 630000.0
+},
+"Q154532": {
+"asof": null,
+"value": 16.39
+},
+"Q1545509": {
+"asof": null,
+"value": 301.9
+},
+"Q154563": {
+"asof": null,
+"value": 114.0
+},
+"Q154987": {
+"asof": null,
+"value": 25.3
+},
+"Q155014": {
+"asof": null,
+"value": 208.5
+},
+"Q155222": {
+"asof": null,
+"value": 234.9
+},
+"Q15523": {
+"asof": null,
+"value": 46000.0
+},
+"Q155430": {
+"asof": null,
+"value": 212.5
+},
+"Q155490": {
+"asof": null,
+"value": 35.61
+},
+"Q155494": {
+"asof": null,
+"value": 6.74
+},
+"Q155635": {
+"asof": null,
+"value": 18.17
+},
+"Q155639": {
+"asof": null,
+"value": 8.95
+},
+"Q155651": {
+"asof": null,
+"value": 16.9
+},
+"Q155661": {
+"asof": null,
+"value": 15.5
+},
+"Q155679": {
+"asof": null,
+"value": 16.7
+},
+"Q155752": {
+"asof": null,
+"value": 10.65
+},
+"Q155868": {
+"asof": null,
+"value": 660.0
+},
+"Q155899": {
+"asof": null,
+"value": 12.11
+},
+"Q156258": {
+"asof": null,
+"value": 30400.0
+},
+"Q156962": {
+"asof": null,
+"value": 262.5
+},
+"Q15729915": {
+"asof": null,
+"value": 180.0
+},
+"Q157335": {
+"asof": null,
+"value": 12.64
+},
+"Q157467": {
+"asof": null,
+"value": 5.8
+},
+"Q157925": {
+"asof": null,
+"value": 13.61
+},
+"Q158058": {
+"asof": null,
+"value": 36.44
+},
+"Q159067": {
+"asof": null,
+"value": 34.35
+},
+"Q159142": {
+"asof": null,
+"value": 1.0
+},
+"Q159186": {
+"asof": null,
+"value": 4.5
+},
+"Q159881": {
+"asof": null,
+"value": 16.69
+},
+"Q159911": {
+"asof": null,
+"value": 7.56
+},
+"Q160266": {
+"asof": null,
+"value": 35.9
+},
+"Q160357": {
+"asof": null,
+"value": 6.72
+},
+"Q160636": {
+"asof": null,
+"value": 3051000.0
+},
+"Q160810": {
+"asof": null,
+"value": 1.44
+},
+"Q161331": {
+"asof": null,
+"value": 76.7
+},
+"Q161750": {
+"asof": null,
+"value": 500000.0
+},
+"Q163186": {
+"asof": null,
+"value": 10.6
+},
+"Q16338015": {
+"asof": null,
+"value": 145.61
+},
+"Q163873": {
+"asof": null,
+"value": 25.0
+},
+"Q164054": {
+"asof": null,
+"value": 95000.0
+},
+"Q164150": {
+"asof": null,
+"value": 270.0
+},
+"Q164341": {
+"asof": null,
+"value": 19.8
+},
+"Q1644": {
+"asof": null,
+"value": 367643.6613105102
+},
+"Q165278": {
+"asof": null,
+"value": 0.475
+},
+"Q1653": {
+"asof": null,
+"value": 2850000.0
+},
+"Q166": {
+"asof": null,
+"value": 1175000.0
+},
+"Q1667": {
+"asof": null,
+"value": 544000.0
+},
+"Q166755": {
+"asof": null,
+"value": 750000.0
+},
+"Q167021": {
+"asof": null,
+"value": 1500000.0
+},
+"Q167292": {
+"asof": null,
+"value": 6.45
+},
+"Q167968": {
+"asof": null,
+"value": 5.75
+},
+"Q168706": {
+"asof": null,
+"value": 5.88
+},
+"Q168713": {
+"asof": null,
+"value": 126.7
+},
+"Q169274": {
+"asof": null,
+"value": 3200000.0
+},
+"Q1693": {
+"asof": null,
+"value": 960000.0
+},
+"Q169399": {
+"asof": null,
+"value": 45.72
+},
+"Q169962": {
+"asof": null,
+"value": 35000.0
+},
+"Q170296": {
+"asof": null,
+"value": 9.12
+},
+"Q170479": {
+"asof": null,
+"value": 460000.0
+},
+"Q170488": {
+"asof": null,
+"value": 14000.0
+},
+"Q17054000": {
+"asof": null,
+"value": 30500.0
+},
+"Q171255": {
+"asof": null,
+"value": 85.4
+},
+"Q171313": {
+"asof": null,
+"value": 4909.0
+},
+"Q171400": {
+"asof": null,
+"value": 3337.0
+},
+"Q171402": {
+"asof": null,
+"value": 5891.0
+},
+"Q171417": {
+"asof": null,
+"value": 5793.0
+},
+"Q171468": {
+"asof": null,
+"value": 14.68
+},
+"Q17155": {
+"asof": null,
+"value": 37.0
+},
+"Q171566": {
+"asof": null,
+"value": 4318.0
+},
+"Q1723252": {
+"asof": null,
+"value": 15.86
+},
+"Q172556": {
+"asof": null,
+"value": 600000.0
+},
+"Q172572": {
+"asof": null,
+"value": 35000.0
+},
+"Q172732": {
+"asof": null,
+"value": 4023.36
+},
+"Q172822": {
+"asof": null,
+"value": 379.0
+},
+"Q172851": {
+"asof": null,
+"value": 7003.0
+},
+"Q172913": {
+"asof": null,
+"value": 11.53
+},
+"Q172957": {
+"asof": null,
+"value": 47.9
+},
+"Q172988": {
+"asof": null,
+"value": 76.5
+},
+"Q173096": {
+"asof": null,
+"value": 175000.0
+},
+"Q173148": {
+"asof": null,
+"value": 5000.0
+},
+"Q173292": {
+"asof": null,
+"value": 6300.0
+},
+"Q173680": {
+"asof": null,
+"value": 21.9
+},
+"Q173684": {
+"asof": null,
+"value": 7.930896000000001
+},
+"Q173882": {
+"asof": null,
+"value": 158.0
+},
+"Q174170": {
+"asof": null,
+"value": 5807.0
+},
+"Q174534": {
+"asof": null,
+"value": 48.03
+},
+"Q174640": {
+"asof": null,
+"value": 14.0
+},
+"Q17501733": {
+"asof": null,
+"value": 6.5
+},
+"Q175057": {
+"asof": null,
+"value": 10000.0
+},
+"Q1753108": {
+"asof": null,
+"value": 3007000.0
+},
+"Q1757204": {
+"asof": null,
+"value": 76.8
+},
+"Q176609": {
+"asof": "2018-12-20",
+"value": 15984360.0
+},
+"Q1779748": {
+"asof": null,
+"value": 3500.0
+},
+"Q178065": {
+"asof": null,
+"value": 166.0
+},
+"Q178124": {
+"asof": null,
+"value": 1700.0
+},
+"Q178351": {
+"asof": null,
+"value": 84.0
+},
+"Q178488": {
+"asof": null,
+"value": 48000.0
+},
+"Q178611": {
+"asof": null,
+"value": 340000.0
+},
+"Q178741": {
+"asof": null,
+"value": 120000.0
+},
+"Q179444": {
+"asof": null,
+"value": 665000.0
+},
+"Q179842": {
+"asof": null,
+"value": 2500000.0
+},
+"Q179969": {
+"asof": null,
+"value": 70.4
+},
+"Q180274": {
+"asof": null,
+"value": 130.0
+},
+"Q180285": {
+"asof": null,
+"value": 21.0
+},
+"Q180376": {
+"asof": null,
+"value": 107.28960000000001
+},
+"Q18084618": {
+"asof": null,
+"value": 63.66
+},
+"Q181482": {
+"asof": null,
+"value": 1472000.0
+},
+"Q181544": {
+"asof": null,
+"value": 1500.0
+},
+"Q181815": {
+"asof": null,
+"value": 47.5
+},
+"Q181932": {
+"asof": null,
+"value": 78000.0
+},
+"Q182012": {
+"asof": null,
+"value": 75.54
+},
+"Q182027": {
+"asof": null,
+"value": 29.78
+},
+"Q182137": {
+"asof": null,
+"value": 99000.0
+},
+"Q182343": {
+"asof": null,
+"value": 53000.0
+},
+"Q182575": {
+"asof": null,
+"value": 53.12
+},
+"Q182873": {
+"asof": null,
+"value": 6343.0
+},
+"Q183146": {
+"asof": null,
+"value": 18.75
+},
+"Q183360": {
+"asof": null,
+"value": 87000.0
+},
+"Q183562": {
+"asof": null,
+"value": 125.0
+},
+"Q184213": {
+"asof": null,
+"value": 3911.0
+},
+"Q18438": {
+"asof": null,
+"value": 190000.0
+},
+"Q184491": {
+"asof": null,
+"value": 10.66
+},
+"Q184870": {
+"asof": null,
+"value": 30.18
+},
+"Q185000": {
+"asof": null,
+"value": 22.8
+},
+"Q18510948": {
+"asof": null,
+"value": 8.0
+},
+"Q18510952": {
+"asof": null,
+"value": 2.3
+},
+"Q185318": {
+"asof": null,
+"value": 50000.0
+},
+"Q1854416": {
+"asof": null,
+"value": 9.5
+},
+"Q186282": {
+"asof": null,
+"value": 92.0
+},
+"Q186447": {
+"asof": null,
+"value": 21.2
+},
+"Q186556": {
+"asof": null,
+"value": 15.0
+},
+"Q187063": {
+"asof": null,
+"value": 29000.0
+},
+"Q187377": {
+"asof": null,
+"value": 10.08
+},
+"Q187425": {
+"asof": null,
+"value": 239.8
+},
+"Q187702": {
+"asof": null,
+"value": 120.0
+},
+"Q187843": {
+"asof": null,
+"value": 120000.0
+},
+"Q188195": {
+"asof": null,
+"value": 120000.0
+},
+"Q188527": {
+"asof": null,
+"value": 32500.0
+},
+"Q188528": {
+"asof": null,
+"value": 29.0
+},
+"Q18862": {
+"asof": null,
+"value": 4.0
+},
+"Q18869": {
+"asof": null,
+"value": 1200000.0
+},
+"Q188705": {
+"asof": null,
+"value": 64000.0
+},
+"Q188938": {
+"asof": null,
+"value": 27000.0
+},
+"Q188949": {
+"asof": null,
+"value": 3.6
+},
+"Q189387": {
+"asof": null,
+"value": 9900.0
+},
+"Q189503": {
+"asof": null,
+"value": 360.0
+},
+"Q189764": {
+"asof": null,
+"value": 275.0
+},
+"Q189915": {
+"asof": null,
+"value": 645000.0
+},
+"Q19003618": {
+"asof": null,
+"value": 8.88
+},
+"Q190114": {
+"asof": null,
+"value": 32.741
+},
+"Q190138": {
+"asof": null,
+"value": 35000.0
+},
+"Q190211": {
+"asof": null,
+"value": 19.63
+},
+"Q190271": {
+"asof": null,
+"value": 65200.0
+},
+"Q190542": {
+"asof": null,
+"value": 290.2
+},
+"Q190776": {
+"asof": null,
+"value": 25.1
+},
+"Q190777": {
+"asof": null,
+"value": 225000.0
+},
+"Q190973": {
+"asof": null,
+"value": 15.27
+},
+"Q191111": {
+"asof": null,
+"value": 54.0
+},
+"Q191218": {
+"asof": null,
+"value": 1287000.0
+},
+"Q191314": {
+"asof": null,
+"value": 1465000.0
+},
+"Q191643": {
+"asof": null,
+"value": 5.92
+},
+"Q191739": {
+"asof": null,
+"value": 153.0
+},
+"Q191888": {
+"asof": null,
+"value": 345.03
+},
+"Q191987": {
+"asof": null,
+"value": 293000.0
+},
+"Q192137": {
+"asof": null,
+"value": 14.5
+},
+"Q192381": {
+"asof": null,
+"value": 329.887
+},
+"Q192418": {
+"asof": null,
+"value": 121.0
+},
+"Q192443": {
+"asof": null,
+"value": 16.56
+},
+"Q192492": {
+"asof": null,
+"value": 2.1
+},
+"Q192534": {
+"asof": null,
+"value": 98000.0
+},
+"Q192757": {
+"asof": null,
+"value": 9.53
+},
+"Q192779": {
+"asof": null,
+"value": 34.8
+},
+"Q193002": {
+"asof": null,
+"value": 57090.0
+},
+"Q1930127": {
+"asof": null,
+"value": 126.0
+},
+"Q193369": {
+"asof": null,
+"value": 570.0
+},
+"Q193487": {
+"asof": null,
+"value": 69.1
+},
+"Q193499": {
+"asof": null,
+"value": 1400000.0
+},
+"Q1937892": {
+"asof": null,
+"value": 7.8
+},
+"Q193896": {
+"asof": null,
+"value": 27000.0
+},
+"Q194455": {
+"asof": null,
+"value": 19.8
+},
+"Q194474": {
+"asof": null,
+"value": 85.0
+},
+"Q19682": {
+"asof": null,
+"value": 354000.0
+},
+"Q19686": {
+"asof": null,
+"value": 334000.0
+},
+"Q198024": {
+"asof": null,
+"value": 8.22
+},
+"Q199551": {
+"asof": null,
+"value": 140000.0
+},
+"Q199570": {
+"asof": null,
+"value": 19.75
+},
+"Q199788": {
+"asof": null,
+"value": 0.9
+},
+"Q200038": {
+"asof": null,
+"value": 14.36
+},
+"Q2003736": {
+"asof": null,
+"value": 4240000.0
+},
+"Q2005433": {
+"asof": null,
+"value": 1.75
+},
+"Q200678": {
+"asof": null,
+"value": 1.67
+},
+"Q201026": {
+"asof": null,
+"value": 60000.0
+},
+"Q201743": {
+"asof": null,
+"value": 48000.0
+},
+"Q201953": {
+"asof": null,
+"value": 4.45
+},
+"Q202494": {
+"asof": null,
+"value": 241000.0
+},
+"Q202780": {
+"asof": null,
+"value": 18500.0
+},
+"Q202905": {
+"asof": null,
+"value": 58000.0
+},
+"Q203583": {
+"asof": null,
+"value": 9.0
+},
+"Q203622": {
+"asof": null,
+"value": 21.11
+},
+"Q204331": {
+"asof": null,
+"value": 21.935
+},
+"Q204342": {
+"asof": null,
+"value": 342.0
+},
+"Q204658": {
+"asof": null,
+"value": 22750.0
+},
+"Q204871": {
+"asof": null,
+"value": 515.76
+},
+"Q204944": {
+"asof": null,
+"value": 39.5
+},
+"Q205136": {
+"asof": null,
+"value": 100.0
+},
+"Q206409": {
+"asof": null,
+"value": 9.66
+},
+"Q207287": {
+"asof": null,
+"value": 21100.0
+},
+"Q207341": {
+"asof": null,
+"value": 5.267
+},
+"Q207400": {
+"asof": null,
+"value": 41.3
+},
+"Q207666": {
+"asof": null,
+"value": 371000.0
+},
+"Q207700": {
+"asof": null,
+"value": 12.74
+},
+"Q207734": {
+"asof": null,
+"value": 5.0
+},
+"Q207808": {
+"asof": null,
+"value": 600.0
+},
+"Q208075": {
+"asof": null,
+"value": 55.5
+},
+"Q208345": {
+"asof": null,
+"value": 37400.0
+},
+"Q2084454": {
+"asof": null,
+"value": 50.015
+},
+"Q208633": {
+"asof": null,
+"value": 95.0
+},
+"Q208811": {
+"asof": null,
+"value": 204.07
+},
+"Q209036": {
+"asof": null,
+"value": 90000.0
+},
+"Q209613": {
+"asof": null,
+"value": 30.1
+},
+"Q21002417": {
+"asof": null,
+"value": 112.5
+},
+"Q210413": {
+"asof": null,
+"value": 21.29
+},
+"Q211369": {
+"asof": null,
+"value": 53.0
+},
+"Q211658": {
+"asof": null,
+"value": 332.8
+},
+"Q211778": {
+"asof": null,
+"value": 55000.0
+},
+"Q212975": {
+"asof": null,
+"value": 121.0
+},
+"Q213342": {
+"asof": null,
+"value": 40.5
+},
+"Q213958": {
+"asof": null,
+"value": 69.34
+},
+"Q213962": {
+"asof": null,
+"value": 18000.0
+},
+"Q215010": {
+"asof": null,
+"value": 263.0
+},
+"Q215074": {
+"asof": null,
+"value": 29000.0
+},
+"Q215423": {
+"asof": null,
+"value": 111.2
+},
+"Q2156739": {
+"asof": null,
+"value": 1.5
+},
+"Q215692": {
+"asof": null,
+"value": 269.06
+},
+"Q215871": {
+"asof": null,
+"value": 69648.0
+},
+"Q216239": {
+"asof": null,
+"value": 765000.0
+},
+"Q216373": {
+"asof": null,
+"value": 100000.0
+},
+"Q2164015": {
+"asof": null,
+"value": 85.0
+},
+"Q216752": {
+"asof": null,
+"value": 17000.0
+},
+"Q216868": {
+"asof": null,
+"value": 320000.0
+},
+"Q217046": {
+"asof": null,
+"value": 4.57
+},
+"Q217463": {
+"asof": null,
+"value": 154.0
+},
+"Q217527": {
+"asof": null,
+"value": 175.0
+},
+"Q217805": {
+"asof": null,
+"value": 368000.0
+},
+"Q217935": {
+"asof": null,
+"value": 17.5
+},
+"Q217964": {
+"asof": null,
+"value": 245.0
+},
+"Q21814460": {
+"asof": null,
+"value": 63.1
+},
+"Q218636": {
+"asof": null,
+"value": 44.5
+},
+"Q218637": {
+"asof": null,
+"value": 22.67
+},
+"Q219629": {
+"asof": null,
+"value": 13.59
+},
+"Q219821": {
+"asof": null,
+"value": 61.0
+},
+"Q220239": {
+"asof": null,
+"value": 262.2
+},
+"Q220385": {
+"asof": null,
+"value": 940.0
+},
+"Q220529": {
+"asof": null,
+"value": 19.0
+},
+"Q220759": {
+"asof": null,
+"value": 20.47
+},
+"Q221344": {
+"asof": null,
+"value": 13.57
+},
+"Q221414": {
+"asof": null,
+"value": 31.8
+},
+"Q221883": {
+"asof": null,
+"value": 15450.0
+},
+"Q2220": {
+"asof": null,
+"value": 1923000.0
+},
+"Q222824": {
+"asof": null,
+"value": 13.1
+},
+"Q223237": {
+"asof": null,
+"value": 15.52
+},
+"Q223315": {
+"asof": null,
+"value": 45.87
+},
+"Q223372": {
+"asof": null,
+"value": 17.6
+},
+"Q223697": {
+"asof": null,
+"value": 1.52
+},
+"Q22502": {
+"asof": null,
+"value": 394000.0
+},
+"Q2262": {
+"asof": null,
+"value": 780000.0
+},
+"Q22890": {
+"asof": null,
+"value": 450000.0
+},
+"Q229269": {
+"asof": null,
+"value": 999999.690624
+},
+"Q229770": {
+"asof": null,
+"value": 180.0
+},
+"Q2299324": {
+"asof": null,
+"value": 90.0
+},
+"Q23043171": {
+"asof": null,
+"value": 30.35
+},
+"Q231606": {
+"asof": null,
+"value": 116.0
+},
+"Q2334305": {
+"asof": null,
+"value": 6.0
+},
+"Q233737": {
+"asof": null,
+"value": 12345.0
+},
+"Q234004": {
+"asof": null,
+"value": 1315000.0
+},
+"Q234069": {
+"asof": null,
+"value": 16.46
+},
+"Q23408": {
+"asof": null,
+"value": 9000.0
+},
+"Q234371": {
+"asof": null,
+"value": 15.03
+},
+"Q234676": {
+"asof": null,
+"value": 8.3
+},
+"Q23538": {
+"asof": null,
+"value": 40075000.0
+},
+"Q237135": {
+"asof": null,
+"value": 7.01
+},
+"Q23883": {
+"asof": null,
+"value": 67000.0
+},
+"Q239743": {
+"asof": null,
+"value": 29000.0
+},
+"Q240666": {
+"asof": null,
+"value": 337.0
+},
+"Q24174815": {
+"asof": null,
+"value": 304.0
+},
+"Q241858": {
+"asof": null,
+"value": 266.1
+},
+"Q2419137": {
+"asof": null,
+"value": 17.8
+},
+"Q2420111": {
+"asof": null,
+"value": 7.3
+},
+"Q242398": {
+"asof": null,
+"value": 9.87
+},
+"Q242806": {
+"asof": null,
+"value": 17.01
+},
+"Q243451": {
+"asof": null,
+"value": 2.6
+},
+"Q244169": {
+"asof": null,
+"value": 7700.0
+},
+"Q244479": {
+"asof": null,
+"value": 8.2
+},
+"Q244947": {
+"asof": null,
+"value": 17000.0
+},
+"Q245275": {
+"asof": null,
+"value": 21.9
+},
+"Q2459429": {
+"asof": null,
+"value": 130000.0
+},
+"Q247567": {
+"asof": null,
+"value": 31.0
+},
+"Q248224": {
+"asof": null,
+"value": 14.06
+},
+"Q24930575": {
+"asof": null,
+"value": 65.0
+},
+"Q250225": {
+"asof": null,
+"value": 124800.0
+},
+"Q2513": {
+"asof": null,
+"value": 13.25
+},
+"Q25173": {
+"asof": null,
+"value": 269.1
+},
+"Q25271": {
+"asof": null,
+"value": 66.4
+},
+"Q25535": {
+"asof": null,
+"value": 132000.0
+},
+"Q255371": {
+"asof": null,
+"value": 4000.0
+},
+"Q2554": {
+"asof": null,
+"value": 458.45
+},
+"Q25596": {
+"asof": null,
+"value": 14300.0
+},
+"Q256964": {
+"asof": null,
+"value": 13300.0
+},
+"Q257298": {
+"asof": null,
+"value": 35.53
+},
+"Q26066": {
+"asof": null,
+"value": 18.9
+},
+"Q261384": {
+"asof": null,
+"value": 46.61
+},
+"Q26159": {
+"asof": null,
+"value": 34.0
+},
+"Q2626037": {
+"asof": null,
+"value": 3.0
+},
+"Q262670": {
+"asof": null,
+"value": 10.5
+},
+"Q263786": {
+"asof": null,
+"value": 16.3
+},
+"Q2652980": {
+"asof": null,
+"value": 16857.28
+},
+"Q2658266": {
+"asof": null,
+"value": 1576000.0
+},
+"Q266066": {
+"asof": null,
+"value": 11.84
+},
+"Q26777": {
+"asof": null,
+"value": 644000.0
+},
+"Q26883455": {
+"asof": null,
+"value": 138.7
+},
+"Q269250": {
+"asof": null,
+"value": 16.0
+},
+"Q26955": {
+"asof": null,
+"value": 100000.0
+},
+"Q269710": {
+"asof": null,
+"value": 2657000.0
+},
+"Q270289": {
+"asof": null,
+"value": 7.35
+},
+"Q270375": {
+"asof": null,
+"value": 26000.0
+},
+"Q27092": {
+"asof": null,
+"value": 2254000.0
+},
+"Q270990": {
+"asof": null,
+"value": 22.4
+},
+"Q271195": {
+"asof": "2018-05-29",
+"value": 277000.0
+},
+"Q271559": {
+"asof": null,
+"value": 37.0
+},
+"Q271710": {
+"asof": null,
+"value": 7.0
+},
+"Q271930": {
+"asof": null,
+"value": 1.63
+},
+"Q272074": {
+"asof": null,
+"value": 1735000.0
+},
+"Q272560": {
+"asof": null,
+"value": 270.4
+},
+"Q272571": {
+"asof": null,
+"value": 64.7
+},
+"Q272768": {
+"asof": null,
+"value": 34000.0
+},
+"Q273303": {
+"asof": null,
+"value": 30000.0
+},
+"Q274106": {
+"asof": null,
+"value": 3.6
+},
+"Q274924": {
+"asof": null,
+"value": 306.45
+},
+"Q275": {
+"asof": null,
+"value": 2528.7
+},
+"Q277491": {
+"asof": null,
+"value": 19.73
+},
+"Q277621": {
+"asof": null,
+"value": 14.5
+},
+"Q279343": {
+"asof": null,
+"value": 48100.0
+},
+"Q28048": {
+"asof": null,
+"value": 10100.0
+},
+"Q28216": {
+"asof": null,
+"value": 7.93
+},
+"Q28471": {
+"asof": null,
+"value": 192.5
+},
+"Q285468": {
+"asof": null,
+"value": 480.0
+},
+"Q285801": {
+"asof": null,
+"value": 332.8
+},
+"Q286221": {
+"asof": null,
+"value": 136.0
+},
+"Q28706540": {
+"asof": null,
+"value": 4.4
+},
+"Q287632": {
+"asof": null,
+"value": 337.0
+},
+"Q288292": {
+"asof": null,
+"value": 2670000.0
+},
+"Q29026064": {
+"asof": null,
+"value": 44.9
+},
+"Q29151": {
+"asof": null,
+"value": 73000.0
+},
+"Q292141": {
+"asof": null,
+"value": 6.0
+},
+"Q29251": {
+"asof": null,
+"value": 19.44
+},
+"Q292553": {
+"asof": null,
+"value": 2.49
+},
+"Q29261": {
+"asof": null,
+"value": 15.5448
+},
+"Q29265": {
+"asof": null,
+"value": 157.0
+},
+"Q293743": {
+"asof": null,
+"value": 3.66
+},
+"Q293810": {
+"asof": null,
+"value": 3.7
+},
+"Q2943": {
+"asof": null,
+"value": 40.9
+},
+"Q29466": {
+"asof": null,
+"value": 11.68
+},
+"Q29578825": {
+"asof": null,
+"value": 16.0
+},
+"Q297193": {
+"asof": null,
+"value": 9.0
+},
+"Q297871": {
+"asof": null,
+"value": 7845.0
+},
+"Q2981": {
+"asof": null,
+"value": 127.0
+},
+"Q2992278": {
+"asof": null,
+"value": 186.0
+},
+"Q300701": {
+"asof": null,
+"value": 2500000.0
+},
+"Q30125043": {
+"asof": null,
+"value": 330.697
+},
+"Q30188": {
+"asof": null,
+"value": 57000.0
+},
+"Q3030": {
+"asof": null,
+"value": 572600.0
+},
+"Q304703": {
+"asof": null,
+"value": 313.58
+},
+"Q3052778": {
+"asof": null,
+"value": 252.0
+},
+"Q3086162": {
+"asof": null,
+"value": 1100000.0
+},
+"Q308909": {
+"asof": null,
+"value": 160.6
+},
+"Q308940": {
+"asof": null,
+"value": 14.66
+},
+"Q309104": {
+"asof": null,
+"value": 380000.0
+},
+"Q30914140": {
+"asof": null,
+"value": 44.51
+},
+"Q309177": {
+"asof": null,
+"value": 23.3
+},
+"Q309336": {
+"asof": null,
+"value": 332.8
+},
+"Q309392": {
+"asof": null,
+"value": 2.0
+},
+"Q309466": {
+"asof": null,
+"value": 13.0
+},
+"Q310387": {
+"asof": null,
+"value": 6.0
+},
+"Q310537": {
+"asof": null,
+"value": 0.8
+},
+"Q3107": {
+"asof": null,
+"value": 38000.0
+},
+"Q311212": {
+"asof": null,
+"value": 7.4
+},
+"Q311245": {
+"asof": null,
+"value": 251.0
+},
+"Q312131": {
+"asof": null,
+"value": 18.0
+},
+"Q312224": {
+"asof": null,
+"value": 29.77
+},
+"Q312471": {
+"asof": null,
+"value": 6.09
+},
+"Q312541": {
+"asof": null,
+"value": 16.56
+},
+"Q313740": {
+"asof": null,
+"value": 12.29
+},
+"Q3140": {
+"asof": null,
+"value": 492000.0
+},
+"Q320967": {
+"asof": null,
+"value": 260.68
+},
+"Q321007": {
+"asof": null,
+"value": 269.0
+},
+"Q323310": {
+"asof": null,
+"value": 11611.0
+},
+"Q3237": {
+"asof": null,
+"value": 52000.0
+},
+"Q3244259": {
+"asof": null,
+"value": 2840000.0
+},
+"Q326658": {
+"asof": null,
+"value": 5.8
+},
+"Q326673": {
+"asof": null,
+"value": 10.8
+},
+"Q328272": {
+"asof": null,
+"value": 9.02
+},
+"Q3284481": {
+"asof": null,
+"value": 284.0
+},
+"Q329266": {
+"asof": null,
+"value": 9600.0
+},
+"Q330080": {
+"asof": null,
+"value": 172.8
+},
+"Q3317803": {
+"asof": null,
+"value": 33.84
+},
+"Q33200": {
+"asof": null,
+"value": 178.0
+},
+"Q33209": {
+"asof": null,
+"value": 31.0
+},
+"Q332809": {
+"asof": null,
+"value": 16.64
+},
+"Q3329015": {
+"asof": null,
+"value": 2.41
+},
+"Q334759": {
+"asof": null,
+"value": 12.22
+},
+"Q335575": {
+"asof": null,
+"value": 644000.0
+},
+"Q336150": {
+"asof": null,
+"value": 33.7
+},
+"Q337467": {
+"asof": null,
+"value": 23.53
+},
+"Q339025": {
+"asof": null,
+"value": 5.31
+},
+"Q3392": {
+"asof": "2015-01-01",
+"value": 6650000.0
+},
+"Q34374": {
+"asof": null,
+"value": 254000.0
+},
+"Q34497": {
+"asof": null,
+"value": 15000.0
+},
+"Q34589": {
+"asof": null,
+"value": 2800000.0
+},
+"Q34640": {
+"asof": null,
+"value": 560000.0
+},
+"Q34675": {
+"asof": null,
+"value": 989000.0
+},
+"Q34775": {
+"asof": null,
+"value": 9.0
+},
+"Q3492": {
+"asof": null,
+"value": 1700000.0
+},
+"Q3492255": {
+"asof": null,
+"value": 155.0
+},
+"Q34945": {
+"asof": null,
+"value": 18.9
+},
+"Q35000": {
+"asof": null,
+"value": 340000.0
+},
+"Q3503": {
+"asof": null,
+"value": 4700000.0
+},
+"Q3529510": {
+"asof": null,
+"value": 269.2
+},
+"Q35342": {
+"asof": null,
+"value": 204000.0
+},
+"Q3542": {
+"asof": null,
+"value": 4180000.0
+},
+"Q35525": {
+"asof": null,
+"value": 51.2
+},
+"Q35591": {
+"asof": null,
+"value": 1850000.0
+},
+"Q35600": {
+"asof": null,
+"value": 2500000.0
+},
+"Q3562874": {
+"asof": null,
+"value": 7.45
+},
+"Q35827": {
+"asof": null,
+"value": 290000.0
+},
+"Q35883": {
+"asof": null,
+"value": 428000.0
+},
+"Q358930": {
+"asof": null,
+"value": 132.0
+},
+"Q35958": {
+"asof": null,
+"value": 29900.0
+},
+"Q36117": {
+"asof": null,
+"value": 1366000.0
+},
+"Q36124": {
+"asof": null,
+"value": 59000.0
+},
+"Q366912": {
+"asof": null,
+"value": 4.53
+},
+"Q367943": {
+"asof": null,
+"value": 30000.0
+},
+"Q369987": {
+"asof": null,
+"value": 234.7
+},
+"Q372823": {
+"asof": null,
+"value": 4500.0
+},
+"Q373856": {
+"asof": null,
+"value": 5070.0
+},
+"Q37495": {
+"asof": null,
+"value": 100000.0
+},
+"Q3757": {
+"asof": null,
+"value": 1062000.0
+},
+"Q377967": {
+"asof": null,
+"value": 3819000.0
+},
+"Q3783": {
+"asof": null,
+"value": 6436000.0
+},
+"Q379648": {
+"asof": null,
+"value": 660000.0
+},
+"Q38017896": {
+"asof": null,
+"value": 151.0
+},
+"Q385778": {
+"asof": null,
+"value": 9.19
+},
+"Q389052": {
+"asof": null,
+"value": 12.1
+},
+"Q389149": {
+"asof": null,
+"value": 170.0
+},
+"Q390169": {
+"asof": null,
+"value": 147.0
+},
+"Q390232": {
+"asof": null,
+"value": 1080000.0
+},
+"Q3920219": {
+"asof": null,
+"value": 112.5
+},
+"Q392377": {
+"asof": null,
+"value": 69200.0
+},
+"Q398881": {
+"asof": null,
+"value": 22.81
+},
+"Q398900": {
+"asof": null,
+"value": 16.65
+},
+"Q40021": {
+"asof": null,
+"value": 8.99
+},
+"Q40059": {
+"asof": null,
+"value": 252000.0
+},
+"Q40176": {
+"asof": null,
+"value": 203800.0
+},
+"Q402395": {
+"asof": null,
+"value": 2.56
+},
+"Q40285": {
+"asof": null,
+"value": 2398000.0
+},
+"Q403134": {
+"asof": null,
+"value": 1130.0
+},
+"Q403510": {
+"asof": null,
+"value": 8.23
+},
+"Q40605": {
+"asof": null,
+"value": 27000.0
+},
+"Q40621": {
+"asof": null,
+"value": 8.0
+},
+"Q40729": {
+"asof": null,
+"value": 100000.0
+},
+"Q408": {
+"asof": null,
+"value": 3860000.0
+},
+"Q40855": {
+"asof": null,
+"value": 2285000.0
+},
+"Q41164": {
+"asof": null,
+"value": 73000.0
+},
+"Q41179": {
+"asof": null,
+"value": 4350000.0
+},
+"Q4127": {
+"asof": null,
+"value": 63000.0
+},
+"Q41573": {
+"asof": null,
+"value": 593700.0
+},
+"Q4176": {
+"asof": null,
+"value": 144.5
+},
+"Q4186": {
+"asof": null,
+"value": 110000.0
+},
+"Q41986": {
+"asof": null,
+"value": 950000.0
+},
+"Q42000": {
+"asof": null,
+"value": 61000.0
+},
+"Q4204": {
+"asof": null,
+"value": 160000.0
+},
+"Q42070": {
+"asof": null,
+"value": 1500000.0
+},
+"Q42191": {
+"asof": null,
+"value": 182000.0
+},
+"Q42196": {
+"asof": null,
+"value": 27.1
+},
+"Q42200": {
+"asof": null,
+"value": 156000.0
+},
+"Q43106": {
+"asof": null,
+"value": 2574000.0
+},
+"Q431231": {
+"asof": null,
+"value": 29.79
+},
+"Q432650": {
+"asof": null,
+"value": 2.936
+},
+"Q433671": {
+"asof": "2025-06-28",
+"value": 3973000.0
+},
+"Q44440": {
+"asof": null,
+"value": 2737.4088
+},
+"Q44725": {
+"asof": null,
+"value": 2400000.0
+},
+"Q4484": {
+"asof": null,
+"value": 1560.0
+},
+"Q44848": {
+"asof": null,
+"value": 16.35
+},
+"Q449016": {
+"asof": null,
+"value": 7.0
+},
+"Q4504": {
+"asof": null,
+"value": 1.5
+},
+"Q4527": {
+"asof": null,
+"value": 1600000.0
+},
+"Q45328": {
+"asof": null,
+"value": 29000.0
+},
+"Q45403": {
+"asof": null,
+"value": 2900000.0
+},
+"Q4558": {
+"asof": null,
+"value": 1100000.0
+},
+"Q459133": {
+"asof": null,
+"value": 21.935
+},
+"Q459578": {
+"asof": null,
+"value": 843000.0
+},
+"Q461375": {
+"asof": null,
+"value": 261.5
+},
+"Q461457": {
+"asof": null,
+"value": 227000.0
+},
+"Q461475": {
+"asof": null,
+"value": 15.4
+},
+"Q461651": {
+"asof": null,
+"value": 20.25
+},
+"Q46197": {
+"asof": null,
+"value": 14000.0
+},
+"Q462201": {
+"asof": null,
+"value": 802000.0
+},
+"Q462407": {
+"asof": null,
+"value": 4.86
+},
+"Q463072": {
+"asof": null,
+"value": 257.0
+},
+"Q463161": {
+"asof": null,
+"value": 332.8
+},
+"Q463400": {
+"asof": null,
+"value": 275.0
+},
+"Q46397": {
+"asof": null,
+"value": 17.1
+},
+"Q4648": {
+"asof": null,
+"value": 150000.0
+},
+"Q465806": {
+"asof": null,
+"value": 10.2
+},
+"Q465811": {
+"asof": null,
+"value": 3218.688
+},
+"Q465903": {
+"asof": null,
+"value": 10.24
+},
+"Q46650": {
+"asof": null,
+"value": 34000.0
+},
+"Q467649": {
+"asof": null,
+"value": 32.65
+},
+"Q46841": {
+"asof": null,
+"value": 4294000.0
+},
+"Q473430": {
+"asof": null,
+"value": 6.55
+},
+"Q47700": {
+"asof": null,
+"value": 4000000.0
+},
+"Q477818": {
+"asof": null,
+"value": 7.65
+},
+"Q481758": {
+"asof": null,
+"value": 13700.0
+},
+"Q482538": {
+"asof": null,
+"value": 20.47
+},
+"Q482600": {
+"asof": null,
+"value": 13.14
+},
+"Q483159": {
+"asof": null,
+"value": 2212000.0
+},
+"Q48359": {
+"asof": null,
+"value": 930000.0
+},
+"Q48435": {
+"asof": null,
+"value": 90.0
+},
+"Q484374": {
+"asof": null,
+"value": 13.51
+},
+"Q48485": {
+"asof": null,
+"value": 3.0
+},
+"Q48604": {
+"asof": null,
+"value": 19.0
+},
+"Q486066": {
+"asof": null,
+"value": 29.7
+},
+"Q488232": {
+"asof": null,
+"value": 12.0
+},
+"Q49148": {
+"asof": null,
+"value": 33000.0
+},
+"Q4915": {
+"asof": null,
+"value": 1579000.0
+},
+"Q493798": {
+"asof": null,
+"value": 213.4
+},
+"Q493926": {
+"asof": null,
+"value": 22.0
+},
+"Q495035": {
+"asof": null,
+"value": 6.4
+},
+"Q495177": {
+"asof": null,
+"value": 10.8
+},
+"Q495218": {
+"asof": null,
+"value": 16.9
+},
+"Q49650": {
+"asof": null,
+"value": 39000.0
+},
+"Q499179": {
+"asof": null,
+"value": 370.5
+},
+"Q499185": {
+"asof": null,
+"value": 49.59
+},
+"Q499738": {
+"asof": null,
+"value": 50.5
+},
+"Q500301": {
+"asof": null,
+"value": 5.56
+},
+"Q502117": {
+"asof": null,
+"value": 16.1
+},
+"Q502126": {
+"asof": null,
+"value": 16.53
+},
+"Q502910": {
+"asof": null,
+"value": 4.53
+},
+"Q504096": {
+"asof": null,
+"value": 164.58
+},
+"Q505929": {
+"asof": null,
+"value": 11.3
+},
+"Q505935": {
+"asof": null,
+"value": 13000.0
+},
+"Q506022": {
+"asof": null,
+"value": 185.3
+},
+"Q50716": {
+"asof": null,
+"value": 219900.0
+},
+"Q5086": {
+"asof": null,
+"value": 155000.0
+},
+"Q5089": {
+"asof": null,
+"value": 2525000.0
+},
+"Q5100935": {
+"asof": null,
+"value": 20.0
+},
+"Q51175": {
+"asof": null,
+"value": 99.2
+},
+"Q51794": {
+"asof": null,
+"value": 3.9
+},
+"Q52051": {
+"asof": null,
+"value": 70000.0
+},
+"Q521029": {
+"asof": null,
+"value": 252.0
+},
+"Q52517": {
+"asof": null,
+"value": 11.0
+},
+"Q531053": {
+"asof": null,
+"value": 15.2
+},
+"Q533218": {
+"asof": null,
+"value": 314.0
+},
+"Q539614": {
+"asof": null,
+"value": 12.0
+},
+"Q54109": {
+"asof": null,
+"value": 500.0
+},
+"Q5413": {
+"asof": null,
+"value": 6300000.0
+},
+"Q5419": {
+"asof": null,
+"value": 3726000.0
+},
+"Q54382": {
+"asof": null,
+"value": 37.24
+},
+"Q54383": {
+"asof": null,
+"value": 37.24
+},
+"Q54384": {
+"asof": null,
+"value": 38.03
+},
+"Q54495": {
+"asof": null,
+"value": 1149.0
+},
+"Q5451": {
+"asof": null,
+"value": 2400000.0
+},
+"Q5456": {
+"asof": null,
+"value": 7000000.0
+},
+"Q5463": {
+"asof": null,
+"value": 3000000.0
+},
+"Q5469": {
+"asof": null,
+"value": 500000.0
+},
+"Q5474": {
+"asof": null,
+"value": 2500000.0
+},
+"Q5477": {
+"asof": null,
+"value": 1200000.0
+},
+"Q548": {
+"asof": null,
+"value": 1047000.0
+},
+"Q5484": {
+"asof": null,
+"value": 1200000.0
+},
+"Q5492": {
+"asof": null,
+"value": 388000.0
+},
+"Q5499": {
+"asof": "2019-01-01",
+"value": 360000.0
+},
+"Q550": {
+"asof": null,
+"value": 1910.0
+},
+"Q5505": {
+"asof": null,
+"value": 337000.0
+},
+"Q55074091": {
+"asof": null,
+"value": 105.0
+},
+"Q5511": {
+"asof": null,
+"value": 673000.0
+},
+"Q5513": {
+"asof": null,
+"value": 636000.0
+},
+"Q552": {
+"asof": null,
+"value": 742000.0
+},
+"Q554520": {
+"asof": null,
+"value": 263.0
+},
+"Q55520": {
+"asof": null,
+"value": 72.6
+},
+"Q55609320": {
+"asof": null,
+"value": 1209000.0
+},
+"Q560319": {
+"asof": null,
+"value": 23.0
+},
+"Q562161": {
+"asof": null,
+"value": 270.43
+},
+"Q565708": {
+"asof": null,
+"value": 8.0
+},
+"Q580124": {
+"asof": null,
+"value": 114.1
+},
+"Q5830": {
+"asof": null,
+"value": 72.72
+},
+"Q583990": {
+"asof": null,
+"value": 215000.0
+},
+"Q584": {
+"asof": null,
+"value": 1232700.0
+},
+"Q58767": {
+"asof": null,
+"value": 9288000.0
+},
+"Q589498": {
+"asof": null,
+"value": 26.16
+},
+"Q592260": {
+"asof": null,
+"value": 64000.0
+},
+"Q5943": {
+"asof": null,
+"value": 107.2
+},
+"Q5955": {
+"asof": null,
+"value": 2000000.0
+},
+"Q595582": {
+"asof": null,
+"value": 8.5
+},
+"Q59626": {
+"asof": null,
+"value": 5513.0
+},
+"Q599891": {
+"asof": null,
+"value": 29.5
+},
+"Q600180": {
+"asof": null,
+"value": 186.0
+},
+"Q600614": {
+"asof": null,
+"value": 106600.0
+},
+"Q602": {
+"asof": null,
+"value": 812000.0
+},
+"Q60329796": {
+"asof": null,
+"value": 14.0
+},
+"Q604141": {
+"asof": null,
+"value": 161000.0
+},
+"Q604428": {
+"asof": null,
+"value": 2.4
+},
+"Q60558345": {
+"asof": null,
+"value": 4.6
+},
+"Q607444": {
+"asof": null,
+"value": 57.8
+},
+"Q608789": {
+"asof": null,
+"value": 7.2
+},
+"Q610172": {
+"asof": null,
+"value": 7544.0
+},
+"Q611401": {
+"asof": null,
+"value": 39.47
+},
+"Q612829": {
+"asof": null,
+"value": 6.95
+},
+"Q613037": {
+"asof": null,
+"value": 137.0
+},
+"Q61989464": {
+"asof": null,
+"value": 732000.0
+},
+"Q620648": {
+"asof": null,
+"value": 3537981.8496000003
+},
+"Q62161": {
+"asof": null,
+"value": 61.21
+},
+"Q62218": {
+"asof": null,
+"value": 2900.0
+},
+"Q622299": {
+"asof": null,
+"value": 6.75
+},
+"Q624556": {
+"asof": null,
+"value": 120.91416000000001
+},
+"Q626": {
+"asof": null,
+"value": 3530000.0
+},
+"Q626690": {
+"asof": null,
+"value": 692000.0
+},
+"Q633556": {
+"asof": null,
+"value": 114.8
+},
+"Q635453": {
+"asof": null,
+"value": 5.8
+},
+"Q635687": {
+"asof": null,
+"value": 14.12
+},
+"Q6383": {
+"asof": null,
+"value": 78000.0
+},
+"Q6394": {
+"asof": null,
+"value": 46.61
+},
+"Q6401": {
+"asof": null,
+"value": 37.8
+},
+"Q6403": {
+"asof": null,
+"value": 73000.0
+},
+"Q640482": {
+"asof": null,
+"value": 170.0
+},
+"Q6409": {
+"asof": null,
+"value": 46.7
+},
+"Q6414": {
+"asof": null,
+"value": 51600.0
+},
+"Q641556": {
+"asof": null,
+"value": 152.43
+},
+"Q641568": {
+"asof": null,
+"value": 160000.0
+},
+"Q641764": {
+"asof": null,
+"value": 6.91
+},
+"Q6418": {
+"asof": null,
+"value": 47.32
+},
+"Q641943": {
+"asof": null,
+"value": 13.98
+},
+"Q6428": {
+"asof": null,
+"value": 56.7
+},
+"Q643": {
+"asof": null,
+"value": 652000.0
+},
+"Q643144": {
+"asof": null,
+"value": 3745000.0
+},
+"Q6437": {
+"asof": null,
+"value": 53.62
+},
+"Q64436": {
+"asof": null,
+"value": 44.82
+},
+"Q644544": {
+"asof": null,
+"value": 0.25
+},
+"Q644636": {
+"asof": null,
+"value": 225000.0
+},
+"Q6471": {
+"asof": null,
+"value": 46.66
+},
+"Q6475": {
+"asof": null,
+"value": 33.84
+},
+"Q6478": {
+"asof": null,
+"value": 63.67
+},
+"Q6481": {
+"asof": null,
+"value": 59.4
+},
+"Q6486": {
+"asof": null,
+"value": 56.15
+},
+"Q648864": {
+"asof": null,
+"value": 19.46
+},
+"Q6492": {
+"asof": null,
+"value": 58.8
+},
+"Q6496": {
+"asof": null,
+"value": 45.1
+},
+"Q6498": {
+"asof": null,
+"value": 21.35
+},
+"Q6505": {
+"asof": null,
+"value": 61.66
+},
+"Q6514": {
+"asof": null,
+"value": 61000.0
+},
+"Q652911": {
+"asof": null,
+"value": 17.65
+},
+"Q654515": {
+"asof": null,
+"value": 180000.0
+},
+"Q6583": {
+"asof": null,
+"value": 4800000.0
+},
+"Q660751": {
+"asof": null,
+"value": 531100.0
+},
+"Q660895": {
+"asof": null,
+"value": 515400.0
+},
+"Q660969": {
+"asof": null,
+"value": 12.0
+},
+"Q665249": {
+"asof": null,
+"value": 110.0
+},
+"Q665708": {
+"asof": null,
+"value": 12.1
+},
+"Q667443": {
+"asof": null,
+"value": 66.65
+},
+"Q671602": {
+"asof": null,
+"value": 97.2312
+},
+"Q673649": {
+"asof": null,
+"value": 8.13
+},
+"Q677122": {
+"asof": null,
+"value": 29.0
+},
+"Q681389": {
+"asof": null,
+"value": 1400.0
+},
+"Q682951": {
+"asof": null,
+"value": 7.08
+},
+"Q683041": {
+"asof": null,
+"value": 15.77
+},
+"Q684337": {
+"asof": null,
+"value": 8.99
+},
+"Q68467": {
+"asof": null,
+"value": 201000.0
+},
+"Q684927": {
+"asof": null,
+"value": 16900.0
+},
+"Q6862": {
+"asof": null,
+"value": 2824000.0
+},
+"Q68646": {
+"asof": null,
+"value": 156100.0
+},
+"Q68740": {
+"asof": null,
+"value": 150000.0
+},
+"Q687743": {
+"asof": null,
+"value": 12.43
+},
+"Q688618": {
+"asof": null,
+"value": 15003.0
+},
+"Q688771": {
+"asof": null,
+"value": 56.1
+},
+"Q6897416": {
+"asof": null,
+"value": 1200000.0
+},
+"Q693036": {
+"asof": null,
+"value": 34500.0
+},
+"Q694993": {
+"asof": null,
+"value": 3.158
+},
+"Q696182": {
+"asof": null,
+"value": 7.44
+},
+"Q706198": {
+"asof": null,
+"value": 335500.0
+},
+"Q7119023": {
+"asof": null,
+"value": 2304.0
+},
+"Q71229": {
+"asof": null,
+"value": 400.0
+},
+"Q7123825": {
+"asof": null,
+"value": 6150.0
+},
+"Q713001": {
+"asof": null,
+"value": 14.1
+},
+"Q714326": {
+"asof": null,
+"value": 19.64
+},
+"Q714810": {
+"asof": null,
+"value": 152900.0
+},
+"Q721152": {
+"asof": null,
+"value": 2277.64
+},
+"Q721721": {
+"asof": null,
+"value": 13.72
+},
+"Q724763": {
+"asof": null,
+"value": 19.6
+},
+"Q724919": {
+"asof": null,
+"value": 227.12
+},
+"Q725313": {
+"asof": null,
+"value": 14.27
+},
+"Q7260132": {
+"asof": null,
+"value": 508000.0
+},
+"Q7261433": {
+"asof": null,
+"value": 18220.0
+},
+"Q726146": {
+"asof": null,
+"value": 239.0
+},
+"Q729056": {
+"asof": null,
+"value": 56.62
+},
+"Q7332301": {
+"asof": null,
+"value": 83000.0
+},
+"Q7348": {
+"asof": null,
+"value": 3180000.0
+},
+"Q7350": {
+"asof": null,
+"value": 82000.0
+},
+"Q7355": {
+"asof": null,
+"value": 5464000.0
+},
+"Q735559": {
+"asof": null,
+"value": 96800.0
+},
+"Q736765": {
+"asof": null,
+"value": 22.25
+},
+"Q737791": {
+"asof": null,
+"value": 449200.0
+},
+"Q739641": {
+"asof": null,
+"value": 655.7
+},
+"Q741609": {
+"asof": null,
+"value": 7.5
+},
+"Q741803": {
+"asof": null,
+"value": 240.8
+},
+"Q745025": {
+"asof": null,
+"value": 60000.0
+},
+"Q745608": {
+"asof": null,
+"value": 6759.2448
+},
+"Q748461": {
+"asof": null,
+"value": 4.48
+},
+"Q751347": {
+"asof": null,
+"value": 564000.0
+},
+"Q751759": {
+"asof": null,
+"value": 10.49
+},
+"Q752536": {
+"asof": null,
+"value": 2.9
+},
+"Q752939": {
+"asof": null,
+"value": 310.74
+},
+"Q753776": {
+"asof": null,
+"value": 1820.0
+},
+"Q754800": {
+"asof": null,
+"value": 1.12
+},
+"Q756212": {
+"asof": null,
+"value": 3.5
+},
+"Q758769": {
+"asof": null,
+"value": 4.629
+},
+"Q76122": {
+"asof": null,
+"value": 140000.0
+},
+"Q765780": {
+"asof": null,
+"value": 6808.0
+},
+"Q767166": {
+"asof": null,
+"value": 269.04
+},
+"Q771010": {
+"asof": null,
+"value": 14.4
+},
+"Q7792": {
+"asof": null,
+"value": 950000.0
+},
+"Q78707": {
+"asof": null,
+"value": 3487000.0
+},
+"Q787445": {
+"asof": null,
+"value": 12.0
+},
+"Q796368": {
+"asof": null,
+"value": 7.14
+},
+"Q79934": {
+"asof": null,
+"value": 3939674.112
+},
+"Q80240": {
+"asof": null,
+"value": 2428000.0
+},
+"Q8032": {
+"asof": null,
+"value": 4023.36
+},
+"Q80378": {
+"asof": null,
+"value": 14.020800000000001
+},
+"Q80541": {
+"asof": null,
+"value": 82.0
+},
+"Q8077503": {
+"asof": null,
+"value": 4608.0
+},
+"Q810684": {
+"asof": null,
+"value": 130.0
+},
+"Q81110": {
+"asof": null,
+"value": 0.53
+},
+"Q81178": {
+"asof": null,
+"value": 1600000.0
+},
+"Q81231": {
+"asof": null,
+"value": 3.0
+},
+"Q814025": {
+"asof": null,
+"value": 10.16
+},
+"Q81591": {
+"asof": null,
+"value": 4830000.0
+},
+"Q816695": {
+"asof": null,
+"value": 11.0
+},
+"Q819119": {
+"asof": null,
+"value": 7.4
+},
+"Q828458": {
+"asof": null,
+"value": 157.02
+},
+"Q82859": {
+"asof": null,
+"value": 132000.0
+},
+"Q829092": {
+"asof": null,
+"value": 41.5
+},
+"Q830458": {
+"asof": null,
+"value": 950.4
+},
+"Q83125": {
+"asof": null,
+"value": 244.0
+},
+"Q831667": {
+"asof": null,
+"value": 15.26
+},
+"Q8319": {
+"asof": null,
+"value": 2364000.0
+},
+"Q835309": {
+"asof": null,
+"value": 30.79
+},
+"Q836296": {
+"asof": null,
+"value": 3.9
+},
+"Q83787": {
+"asof": null,
+"value": 74600.0
+},
+"Q84090": {
+"asof": null,
+"value": 140.0
+},
+"Q843869": {
+"asof": null,
+"value": 2330.0
+},
+"Q844500": {
+"asof": null,
+"value": 19.44624
+},
+"Q847785": {
+"asof": null,
+"value": 1387000.0
+},
+"Q8493": {
+"asof": null,
+"value": 2620000.0
+},
+"Q850157": {
+"asof": null,
+"value": 18.14
+},
+"Q852": {
+"asof": null,
+"value": 54.17
+},
+"Q8524": {
+"asof": null,
+"value": 105.0
+},
+"Q853721": {
+"asof": null,
+"value": 9.0
+},
+"Q855235": {
+"asof": null,
+"value": 6900.0
+},
+"Q856317": {
+"asof": null,
+"value": 22.38
+},
+"Q856906": {
+"asof": null,
+"value": 73000.0
+},
+"Q857081": {
+"asof": null,
+"value": 3.5
+},
+"Q861626": {
+"asof": null,
+"value": 108.0
+},
+"Q861662": {
+"asof": null,
+"value": 18.2
+},
+"Q862312": {
+"asof": null,
+"value": 3490000.0
+},
+"Q863952": {
+"asof": null,
+"value": 9.1885
+},
+"Q865076": {
+"asof": null,
+"value": 12900.0
+},
+"Q867913": {
+"asof": null,
+"value": 2130.0
+},
+"Q870844": {
+"asof": null,
+"value": 4700.0
+},
+"Q876490": {
+"asof": null,
+"value": 438000.0
+},
+"Q87749354": {
+"asof": null,
+"value": 3.0
+},
+"Q899": {
+"asof": null,
+"value": 193300.0
+},
+"Q899091": {
+"asof": null,
+"value": 3.0
+},
+"Q900665": {
+"asof": null,
+"value": 674900.0
+},
+"Q906937": {
+"asof": null,
+"value": 70.66
+},
+"Q907779": {
+"asof": null,
+"value": 296.0
+},
+"Q913314": {
+"asof": null,
+"value": 140000.0
+},
+"Q913355": {
+"asof": null,
+"value": 8000.0
+},
+"Q918066": {
+"asof": null,
+"value": 460.0
+},
+"Q929769": {
+"asof": null,
+"value": 46.7
+},
+"Q932860": {
+"asof": null,
+"value": 112.5
+},
+"Q93332": {
+"asof": null,
+"value": 2400000.0
+},
+"Q934803": {
+"asof": null,
+"value": 90000.0
+},
+"Q938245": {
+"asof": null,
+"value": 149.9
+},
+"Q94247": {
+"asof": null,
+"value": 77556000.0
+},
+"Q944436": {
+"asof": null,
+"value": 62.0
+},
+"Q945773": {
+"asof": null,
+"value": 1600000.0
+},
+"Q94967": {
+"asof": null,
+"value": 3089522.05056
+},
+"Q950158": {
+"asof": null,
+"value": 5.55
+},
+"Q959030": {
+"asof": null,
+"value": 30.97
+},
+"Q973": {
+"asof": null,
+"value": 3650000.0
+},
+"Q974830": {
+"asof": null,
+"value": 8.65
+},
+"Q975281": {
+"asof": null,
+"value": 35.2
+},
+"Q99200": {
+"asof": null,
+"value": 60.0
+},
+"Q99236": {
+"asof": null,
+"value": 2460.0
+},
+"Q99250": {
+"asof": null,
+"value": 53850.0
+},
+"Q99309": {
+"asof": null,
+"value": 35.0
+}
+},
+"P2044": {
+"Q100": {
+"asof": null,
+"value": 43.0
+},
+"Q10002": {
+"asof": null,
+"value": 42.0
+},
+"Q100188": {
+"asof": null,
+"value": 356.0
+},
+"Q1003496": {
+"asof": null,
+"value": 22.0
+},
+"Q10086": {
+"asof": null,
+"value": 770.0
+},
+"Q1010": {
+"asof": null,
+"value": 273.0
+},
+"Q10103": {
+"asof": null,
+"value": 38.0
+},
+"Q1011020": {
+"asof": null,
+"value": 1180.0
+},
+"Q101254": {
+"asof": null,
+"value": 16.0
+},
+"Q1012971": {
+"asof": null,
+"value": 1.0
+},
+"Q101583": {
+"asof": null,
+"value": 78.0
+},
+"Q101625": {
+"asof": null,
+"value": 468.0
+},
+"Q1017": {
+"asof": null,
+"value": 173.0
+},
+"Q1020776": {
+"asof": null,
+"value": 11.0
+},
+"Q102158": {
+"asof": null,
+"value": 25.0
+},
+"Q1022": {
+"asof": null,
+"value": 247.0
+},
+"Q102317": {
+"asof": null,
+"value": 260.0
+},
+"Q102327045": {
+"asof": null,
+"value": 498.0
+},
+"Q1027830": {
+"asof": null,
+"value": 82.0
+},
+"Q10282": {
+"asof": null,
+"value": 450.0
+},
+"Q103011": {
+"asof": null,
+"value": 10.0
+},
+"Q10305": {
+"asof": null,
+"value": 200.0
+},
+"Q10313": {
+"asof": null,
+"value": 6.0
+},
+"Q103217": {
+"asof": null,
+"value": 317.0
+},
+"Q103717": {
+"asof": null,
+"value": 88.0
+},
+"Q10389": {
+"asof": null,
+"value": 768.0
+},
+"Q10393": {
+"asof": null,
+"value": 237.0
+},
+"Q1040": {
+"asof": null,
+"value": 121.0
+},
+"Q10400": {
+"asof": null,
+"value": 20.0
+},
+"Q1045888": {
+"asof": null,
+"value": 4884.0
+},
+"Q104674": {
+"asof": "2016-01-01",
+"value": 1344.527
+},
+"Q1046755": {
+"asof": null,
+"value": 2.7432000000000003
+},
+"Q104720": {
+"asof": null,
+"value": 71.0
+},
+"Q104994": {
+"asof": null,
+"value": 3.069
+},
+"Q1052867": {
+"asof": null,
+"value": 2.0
+},
+"Q1055": {
+"asof": null,
+"value": 6.0
+},
+"Q10566": {
+"asof": null,
+"value": 488.0
+},
+"Q105967": {
+"asof": null,
+"value": 1484.0
+},
+"Q1061846": {
+"asof": null,
+"value": 4.2672
+},
+"Q1062": {
+"asof": "2014-07-09",
+"value": 74.1
+},
+"Q1063604": {
+"asof": null,
+"value": 97.536
+},
+"Q106583": {
+"asof": null,
+"value": 330.0
+},
+"Q106594": {
+"asof": null,
+"value": 1096.0
+},
+"Q1066": {
+"asof": null,
+"value": 183.0
+},
+"Q106652": {
+"asof": null,
+"value": 1344.0
+},
+"Q10686": {
+"asof": null,
+"value": 3.0
+},
+"Q10690": {
+"asof": null,
+"value": 41.0
+},
+"Q1070": {
+"asof": null,
+"value": 53.0
+},
+"Q10704": {
+"asof": null,
+"value": 24.0
+},
+"Q1070564": {
+"asof": null,
+"value": 106.0704
+},
+"Q107126": {
+"asof": null,
+"value": 80.0
+},
+"Q10717": {
+"asof": null,
+"value": 3.0
+},
+"Q107338": {
+"asof": null,
+"value": 133.0
+},
+"Q107393": {
+"asof": null,
+"value": 993.0
+},
+"Q107635": {
+"asof": null,
+"value": 2744.0
+},
+"Q107640": {
+"asof": null,
+"value": 436.0
+},
+"Q1083": {
+"asof": null,
+"value": 4.0
+},
+"Q1085": {
+"asof": null,
+"value": 235.0
+},
+"Q1093326": {
+"asof": null,
+"value": 926.0
+},
+"Q110011": {
+"asof": null,
+"value": 1.0
+},
+"Q110601629": {
+"asof": null,
+"value": 687.0
+},
+"Q11082": {
+"asof": null,
+"value": 62.0
+},
+"Q1113311": {
+"asof": null,
+"value": 359.0
+},
+"Q11194": {
+"asof": null,
+"value": 518.0
+},
+"Q11196": {
+"asof": null,
+"value": 355.0
+},
+"Q11198": {
+"asof": null,
+"value": 1126.0
+},
+"Q1124584": {
+"asof": null,
+"value": 3311.0424000000003
+},
+"Q1124852": {
+"asof": null,
+"value": 2307.0
+},
+"Q11297": {
+"asof": null,
+"value": 12.0
+},
+"Q11299": {
+"asof": null,
+"value": 85.0
+},
+"Q1137202": {
+"asof": null,
+"value": 2935.0
+},
+"Q1139574": {
+"asof": null,
+"value": 29.8704
+},
+"Q1140980": {
+"asof": null,
+"value": 1516.0
+},
+"Q1142": {
+"asof": null,
+"value": 1424.0
+},
+"Q11462": {
+"asof": null,
+"value": 2.0
+},
+"Q1147168": {
+"asof": null,
+"value": 56.083200000000005
+},
+"Q1148552": {
+"asof": null,
+"value": 617.0
+},
+"Q115459": {
+"asof": null,
+"value": 116.0
+},
+"Q1156": {
+"asof": null,
+"value": 14.0
+},
+"Q11568": {
+"asof": null,
+"value": 0.0
+},
+"Q1166": {
+"asof": null,
+"value": 275.0
+},
+"Q1166191": {
+"asof": null,
+"value": 250.0
+},
+"Q1169": {
+"asof": null,
+"value": 176.0
+},
+"Q1171": {
+"asof": null,
+"value": 1167.0
+},
+"Q11720": {
+"asof": null,
+"value": 55.0
+},
+"Q11725": {
+"asof": null,
+"value": 237.0
+},
+"Q11736": {
+"asof": null,
+"value": 5.0
+},
+"Q11739": {
+"asof": null,
+"value": 217.0
+},
+"Q11746": {
+"asof": null,
+"value": 37.0
+},
+"Q1177": {
+"asof": null,
+"value": 2319.0
+},
+"Q1180": {
+"asof": null,
+"value": 327.0
+},
+"Q118388": {
+"asof": null,
+"value": -85.0
+},
+"Q118821": {
+"asof": null,
+"value": 30.0
+},
+"Q118958": {
+"asof": null,
+"value": 36.0
+},
+"Q11909": {
+"asof": null,
+"value": 129.0
+},
+"Q11911": {
+"asof": null,
+"value": 542.0
+},
+"Q11925": {
+"asof": null,
+"value": 585.0
+},
+"Q119285": {
+"asof": null,
+"value": 2857.0
+},
+"Q1194": {
+"asof": null,
+"value": 12.0
+},
+"Q11942": {
+"asof": null,
+"value": 459.0
+},
+"Q11959": {
+"asof": null,
+"value": 3.0
+},
+"Q1196": {
+"asof": null,
+"value": 0.0
+},
+"Q1196315": {
+"asof": null,
+"value": 23.0
+},
+"Q1197": {
+"asof": null,
+"value": 13.0
+},
+"Q11974": {
+"asof": null,
+"value": 8.0
+},
+"Q1198": {
+"asof": null,
+"value": 45.0
+},
+"Q1198791": {
+"asof": null,
+"value": 4.0
+},
+"Q1199": {
+"asof": null,
+"value": 264.0
+},
+"Q1200": {
+"asof": null,
+"value": 89.0
+},
+"Q1202": {
+"asof": null,
+"value": 342.0
+},
+"Q1204": {
+"asof": null,
+"value": 191.0
+},
+"Q1205": {
+"asof": null,
+"value": 266.0
+},
+"Q1206": {
+"asof": null,
+"value": 51.0
+},
+"Q1207": {
+"asof": null,
+"value": 580.0
+},
+"Q1207562": {
+"asof": null,
+"value": 0.0
+},
+"Q1208": {
+"asof": null,
+"value": 0.0
+},
+"Q1211": {
+"asof": null,
+"value": 670.0
+},
+"Q121157": {
+"asof": null,
+"value": 982.0
+},
+"Q1212": {
+"asof": null,
+"value": 1035.0
+},
+"Q1214": {
+"asof": null,
+"value": 2040.0
+},
+"Q1216": {
+"asof": null,
+"value": 421.0
+},
+"Q1218": {
+"asof": null,
+"value": 754.0
+},
+"Q12191": {
+"asof": null,
+"value": 22.0
+},
+"Q12193": {
+"asof": null,
+"value": 54.0
+},
+"Q1221": {
+"asof": null,
+"value": 1524.0
+},
+"Q1222": {
+"asof": null,
+"value": 951.0
+},
+"Q12225": {
+"asof": null,
+"value": 43.0
+},
+"Q1223": {
+"asof": null,
+"value": 520.0
+},
+"Q12233": {
+"asof": null,
+"value": 15.0
+},
+"Q1223508": {
+"asof": null,
+"value": 695.0
+},
+"Q1227": {
+"asof": null,
+"value": 1676.0
+},
+"Q12273": {
+"asof": null,
+"value": 10.0
+},
+"Q122803": {
+"asof": null,
+"value": 1900.0
+},
+"Q12303": {
+"asof": null,
+"value": 58.0
+},
+"Q123196": {
+"asof": null,
+"value": 93.0
+},
+"Q123304": {
+"asof": null,
+"value": 2099.0
+},
+"Q123377": {
+"asof": null,
+"value": 1009.0
+},
+"Q1237": {
+"asof": null,
+"value": 749.0
+},
+"Q123709": {
+"asof": null,
+"value": 18.0
+},
+"Q1239": {
+"asof": null,
+"value": 0.0
+},
+"Q1243": {
+"asof": null,
+"value": 180.0
+},
+"Q12431": {
+"asof": null,
+"value": 3404.0
+},
+"Q12433": {
+"asof": null,
+"value": 516.0
+},
+"Q12439": {
+"asof": null,
+"value": 183.0
+},
+"Q1247": {
+"asof": null,
+"value": 0.0
+},
+"Q124739": {
+"asof": null,
+"value": 20.0
+},
+"Q1250": {
+"asof": null,
+"value": 206.0
+},
+"Q12508": {
+"asof": null,
+"value": 27.0
+},
+"Q12514": {
+"asof": null,
+"value": 4.0
+},
+"Q125309": {
+"asof": null,
+"value": 100.0
+},
+"Q125384": {
+"asof": null,
+"value": 2922.0
+},
+"Q1256": {
+"asof": null,
+"value": 250.0
+},
+"Q1257207": {
+"asof": null,
+"value": 2999.0
+},
+"Q125912": {
+"asof": null,
+"value": 1463.0
+},
+"Q1260331": {
+"asof": null,
+"value": 122.0
+},
+"Q126084": {
+"asof": null,
+"value": 10.0
+},
+"Q1261": {
+"asof": null,
+"value": 2073.0
+},
+"Q126148": {
+"asof": null,
+"value": 80.0
+},
+"Q126269": {
+"asof": null,
+"value": 163.0
+},
+"Q1263": {
+"asof": null,
+"value": 211.0
+},
+"Q12630": {
+"asof": null,
+"value": 0.0
+},
+"Q126898": {
+"asof": null,
+"value": 43.0
+},
+"Q126982": {
+"asof": null,
+"value": -213.28
+},
+"Q127041": {
+"asof": null,
+"value": 22.0
+},
+"Q127043": {
+"asof": null,
+"value": 708.0
+},
+"Q12724": {
+"asof": null,
+"value": 238.0
+},
+"Q1273": {
+"asof": null,
+"value": 279.0
+},
+"Q12738": {
+"asof": null,
+"value": 430.0
+},
+"Q12746": {
+"asof": null,
+"value": 668.0
+},
+"Q127530": {
+"asof": null,
+"value": 2.4384
+},
+"Q12771": {
+"asof": null,
+"value": 495.0
+},
+"Q127856": {
+"asof": null,
+"value": 79.0
+},
+"Q1279": {
+"asof": null,
+"value": 343.0
+},
+"Q1280": {
+"asof": null,
+"value": 493.0
+},
+"Q128011": {
+"asof": null,
+"value": 3087.0
+},
+"Q128069": {
+"asof": null,
+"value": 116.0
+},
+"Q128087": {
+"asof": null,
+"value": 968.0
+},
+"Q128114": {
+"asof": null,
+"value": 25.0
+},
+"Q1282": {
+"asof": null,
+"value": 416.0
+},
+"Q128244": {
+"asof": null,
+"value": 143.0
+},
+"Q12829733": {
+"asof": null,
+"value": 10.0
+},
+"Q1283": {
+"asof": null,
+"value": 3343.0
+},
+"Q128323": {
+"asof": null,
+"value": 940.0
+},
+"Q1284": {
+"asof": null,
+"value": 563.0
+},
+"Q128499": {
+"asof": null,
+"value": 200.0
+},
+"Q1285": {
+"asof": null,
+"value": 2912.0
+},
+"Q1286": {
+"asof": null,
+"value": 4810.9
+},
+"Q1288": {
+"asof": null,
+"value": 2655.0
+},
+"Q128841": {
+"asof": null,
+"value": 1117.0
+},
+"Q1289": {
+"asof": null,
+"value": 212.0
+},
+"Q12892": {
+"asof": null,
+"value": 7.0
+},
+"Q129072": {
+"asof": null,
+"value": 1627.0
+},
+"Q129259": {
+"asof": null,
+"value": 195.0
+},
+"Q129296": {
+"asof": null,
+"value": 567.0
+},
+"Q129352": {
+"asof": null,
+"value": 813.0
+},
+"Q1295": {
+"asof": null,
+"value": 103.0
+},
+"Q129610": {
+"asof": null,
+"value": 25.0
+},
+"Q129677": {
+"asof": null,
+"value": 180.0
+},
+"Q1297": {
+"asof": null,
+"value": 178.91760000000002
+},
+"Q12977": {
+"asof": null,
+"value": 5.0
+},
+"Q12994": {
+"asof": null,
+"value": 2.0
+},
+"Q130018": {
+"asof": null,
+"value": 6190.0
+},
+"Q130135": {
+"asof": null,
+"value": 4165.0
+},
+"Q130191": {
+"asof": null,
+"value": 15.0
+},
+"Q130212": {
+"asof": null,
+"value": 118.0
+},
+"Q130321": {
+"asof": null,
+"value": 2033.0
+},
+"Q130514": {
+"asof": null,
+"value": 89.0
+},
+"Q130736": {
+"asof": null,
+"value": 8126.0
+},
+"Q1308": {
+"asof": null,
+"value": 201.0
+},
+"Q130800": {
+"asof": null,
+"value": 621.0
+},
+"Q130895": {
+"asof": null,
+"value": 1.0
+},
+"Q1309": {
+"asof": null,
+"value": 49.0
+},
+"Q130958": {
+"asof": null,
+"value": 23.0
+},
+"Q130994": {
+"asof": null,
+"value": 185.0
+},
+"Q1310": {
+"asof": null,
+"value": 13.0
+},
+"Q131008": {
+"asof": null,
+"value": 5.0
+},
+"Q131051": {
+"asof": null,
+"value": 84.0
+},
+"Q131083": {
+"asof": null,
+"value": 880.0
+},
+"Q131127": {
+"asof": null,
+"value": 163.0
+},
+"Q131128": {
+"asof": null,
+"value": 352.0
+},
+"Q131148": {
+"asof": null,
+"value": 926.0
+},
+"Q131198": {
+"asof": null,
+"value": 2745.0
+},
+"Q131230": {
+"asof": null,
+"value": 4207.3
+},
+"Q131290": {
+"asof": null,
+"value": 408.0
+},
+"Q131301": {
+"asof": null,
+"value": 511.0
+},
+"Q131305": {
+"asof": null,
+"value": 5.0
+},
+"Q131329": {
+"asof": null,
+"value": 72.0
+},
+"Q131330": {
+"asof": null,
+"value": 193.0
+},
+"Q131335": {
+"asof": null,
+"value": 448.0
+},
+"Q131347": {
+"asof": null,
+"value": 1220.1144000000002
+},
+"Q131350": {
+"asof": null,
+"value": 1199.0
+},
+"Q131354": {
+"asof": null,
+"value": 41.0
+},
+"Q131402": {
+"asof": null,
+"value": 453.23760000000004
+},
+"Q131416": {
+"asof": null,
+"value": 0.0
+},
+"Q131491": {
+"asof": null,
+"value": 22.0
+},
+"Q13153": {
+"asof": null,
+"value": 724.0
+},
+"Q131555": {
+"asof": null,
+"value": 1216.0
+},
+"Q13160": {
+"asof": null,
+"value": 1355.0
+},
+"Q131605": {
+"asof": null,
+"value": 325.0
+},
+"Q131633": {
+"asof": null,
+"value": 511.0
+},
+"Q131638": {
+"asof": null,
+"value": 13.0
+},
+"Q131694": {
+"asof": null,
+"value": 6.0
+},
+"Q131818": {
+"asof": null,
+"value": 101.0
+},
+"Q1321468": {
+"asof": null,
+"value": 780.5928
+},
+"Q132572": {
+"asof": null,
+"value": 26.0
+},
+"Q132671": {
+"asof": null,
+"value": 245.0
+},
+"Q132754": {
+"asof": null,
+"value": 420.0
+},
+"Q132790": {
+"asof": null,
+"value": 0.0
+},
+"Q13298": {
+"asof": null,
+"value": 353.0
+},
+"Q132997": {
+"asof": null,
+"value": 3.0
+},
+"Q133083": {
+"asof": null,
+"value": 1652.0
+},
+"Q133116": {
+"asof": null,
+"value": 75.0
+},
+"Q133118": {
+"asof": null,
+"value": 515.0
+},
+"Q133123": {
+"asof": null,
+"value": 10.0
+},
+"Q13329": {
+"asof": null,
+"value": 61.0
+},
+"Q133315": {
+"asof": null,
+"value": 10.0
+},
+"Q1334855": {
+"asof": null,
+"value": 2758.0
+},
+"Q1335": {
+"asof": null,
+"value": 41.0
+},
+"Q133529": {
+"asof": null,
+"value": 180.0
+},
+"Q133575": {
+"asof": null,
+"value": 95.0
+},
+"Q13360": {
+"asof": null,
+"value": 68.0
+},
+"Q13362": {
+"asof": null,
+"value": 9.0
+},
+"Q13364": {
+"asof": null,
+"value": 4.0
+},
+"Q13369": {
+"asof": null,
+"value": 10.0
+},
+"Q13373": {
+"asof": null,
+"value": 19.0
+},
+"Q13375": {
+"asof": null,
+"value": 4.0
+},
+"Q13378": {
+"asof": null,
+"value": 296.0
+},
+"Q13386": {
+"asof": null,
+"value": 49.0
+},
+"Q133888": {
+"asof": null,
+"value": 3.0
+},
+"Q1341": {
+"asof": null,
+"value": 90.0
+},
+"Q134108": {
+"asof": "2019-01-01",
+"value": 2910.0
+},
+"Q1342": {
+"asof": null,
+"value": 373.0
+},
+"Q134279": {
+"asof": null,
+"value": 105.0
+},
+"Q134287": {
+"asof": null,
+"value": 23.0
+},
+"Q134291": {
+"asof": null,
+"value": 10.0
+},
+"Q134485": {
+"asof": null,
+"value": 342.0
+},
+"Q134494": {
+"asof": null,
+"value": 108.0
+},
+"Q1345": {
+"asof": null,
+"value": 12.0
+},
+"Q134509": {
+"asof": null,
+"value": 6.0
+},
+"Q134672": {
+"asof": null,
+"value": 7.0
+},
+"Q134674": {
+"asof": null,
+"value": 0.0
+},
+"Q134750": {
+"asof": null,
+"value": 43.0
+},
+"Q134762": {
+"asof": null,
+"value": 16.0
+},
+"Q1348": {
+"asof": null,
+"value": 9.0
+},
+"Q134902": {
+"asof": null,
+"value": 213.0
+},
+"Q134905": {
+"asof": null,
+"value": 245.0
+},
+"Q13496": {
+"asof": null,
+"value": 15.0
+},
+"Q13498": {
+"asof": null,
+"value": 15.0
+},
+"Q1352": {
+"asof": null,
+"value": 6.0
+},
+"Q1353": {
+"asof": null,
+"value": 221.0
+},
+"Q1354": {
+"asof": null,
+"value": 4.0
+},
+"Q1355": {
+"asof": null,
+"value": 920.0
+},
+"Q1356": {
+"asof": null,
+"value": 500.0
+},
+"Q13580": {
+"asof": null,
+"value": 3.0
+},
+"Q1360486": {
+"asof": null,
+"value": 2037.0
+},
+"Q1361": {
+"asof": null,
+"value": 564.0
+},
+"Q13616": {
+"asof": null,
+"value": 401.0
+},
+"Q1362": {
+"asof": null,
+"value": 490.0
+},
+"Q1364427": {
+"asof": null,
+"value": 700.0
+},
+"Q13666": {
+"asof": null,
+"value": 3.0
+},
+"Q13670": {
+"asof": null,
+"value": 17.0
+},
+"Q13678": {
+"asof": null,
+"value": 230.0
+},
+"Q1370": {
+"asof": null,
+"value": 290.0
+},
+"Q1370207": {
+"asof": null,
+"value": 100.0
+},
+"Q1371": {
+"asof": null,
+"value": 455.0
+},
+"Q137271": {
+"asof": null,
+"value": 5.0
+},
+"Q1374": {
+"asof": null,
+"value": 4477.54
+},
+"Q1384": {
+"asof": null,
+"value": 305.0
+},
+"Q138518": {
+"asof": null,
+"value": 58.0
+},
+"Q1387": {
+"asof": null,
+"value": 60.0
+},
+"Q1391": {
+"asof": null,
+"value": 106.68
+},
+"Q13924": {
+"asof": null,
+"value": 0.0
+},
+"Q1393": {
+"asof": null,
+"value": 18.0
+},
+"Q139564": {
+"asof": null,
+"value": 2.0
+},
+"Q1397": {
+"asof": null,
+"value": 260.0
+},
+"Q13972": {
+"asof": null,
+"value": 79.0
+},
+"Q13987": {
+"asof": null,
+"value": 1788.0
+},
+"Q13991": {
+"asof": null,
+"value": 1982.0
+},
+"Q1400": {
+"asof": null,
+"value": 335.0
+},
+"Q140075": {
+"asof": null,
+"value": 12.0
+},
+"Q140147": {
+"asof": null,
+"value": 280.0
+},
+"Q14056": {
+"asof": null,
+"value": 2277.0
+},
+"Q140631": {
+"asof": null,
+"value": 1.0
+},
+"Q1408": {
+"asof": null,
+"value": 75.0
+},
+"Q14081": {
+"asof": null,
+"value": 6263.47
+},
+"Q1410": {
+"asof": null,
+"value": 11.0
+},
+"Q1415": {
+"asof": null,
+"value": 210.0
+},
+"Q14181": {
+"asof": null,
+"value": 23.0
+},
+"Q14182": {
+"asof": null,
+"value": 1.0
+},
+"Q1425428": {
+"asof": null,
+"value": 30.0
+},
+"Q1428": {
+"asof": null,
+"value": 180.0
+},
+"Q14295": {
+"asof": null,
+"value": 131.9784
+},
+"Q14314": {
+"asof": null,
+"value": 260.0
+},
+"Q14317": {
+"asof": null,
+"value": 241.0
+},
+"Q14318": {
+"asof": null,
+"value": 525.0
+},
+"Q14323": {
+"asof": null,
+"value": 217.0
+},
+"Q14328": {
+"asof": null,
+"value": 4.0
+},
+"Q1435": {
+"asof": null,
+"value": 127.0
+},
+"Q1435144": {
+"asof": null,
+"value": 10.0
+},
+"Q1436816": {
+"asof": null,
+"value": 161.0
+},
+"Q14379": {
+"asof": null,
+"value": 193.0
+},
+"Q1438": {
+"asof": null,
+"value": 322.0
+},
+"Q1439": {
+"asof": null,
+"value": 520.0
+},
+"Q14409": {
+"asof": null,
+"value": 5.0
+},
+"Q1443": {
+"asof": null,
+"value": 631.0
+},
+"Q14452": {
+"asof": null,
+"value": 242.0
+},
+"Q144786": {
+"asof": null,
+"value": 837.0
+},
+"Q144880": {
+"asof": null,
+"value": 758.0
+},
+"Q1449": {
+"asof": null,
+"value": 20.0
+},
+"Q14501": {
+"asof": null,
+"value": 0.0
+},
+"Q1451": {
+"asof": null,
+"value": 1486.0
+},
+"Q1452": {
+"asof": null,
+"value": 633.0
+},
+"Q14525": {
+"asof": null,
+"value": 9.0
+},
+"Q1454": {
+"asof": null,
+"value": 215.0
+},
+"Q1456": {
+"asof": null,
+"value": 105.0
+},
+"Q1460": {
+"asof": null,
+"value": 3340.0
+},
+"Q1461": {
+"asof": null,
+"value": 9.0
+},
+"Q1462": {
+"asof": null,
+"value": 384.0
+},
+"Q14657": {
+"asof": null,
+"value": 3.0
+},
+"Q146695": {
+"asof": null,
+"value": 68.0
+},
+"Q1467": {
+"asof": null,
+"value": 135.0
+},
+"Q1473": {
+"asof": null,
+"value": 13.0
+},
+"Q1475": {
+"asof": null,
+"value": 67.0
+},
+"Q1476": {
+"asof": null,
+"value": 63.0
+},
+"Q14773": {
+"asof": null,
+"value": 22.0
+},
+"Q147739": {
+"asof": null,
+"value": 31.0
+},
+"Q1479": {
+"asof": null,
+"value": 9.0
+},
+"Q1484": {
+"asof": null,
+"value": 2462.0
+},
+"Q1486": {
+"asof": null,
+"value": 25.0
+},
+"Q1487593": {
+"asof": null,
+"value": 288.0
+},
+"Q1489": {
+"asof": null,
+"value": 2240.0
+},
+"Q1490": {
+"asof": null,
+"value": 6.0
+},
+"Q1491": {
+"asof": null,
+"value": 3640.0
+},
+"Q1492": {
+"asof": null,
+"value": 12.0
+},
+"Q1494": {
+"asof": null,
+"value": 91.0
+},
+"Q14960": {
+"asof": null,
+"value": 237.0
+},
+"Q1506857": {
+"asof": null,
+"value": 11.0
+},
+"Q15088": {
+"asof": null,
+"value": 68.0
+},
+"Q1509": {
+"asof": null,
+"value": 280.0
+},
+"Q15114": {
+"asof": null,
+"value": 431.90160000000003
+},
+"Q151198": {
+"asof": null,
+"value": 478.0
+},
+"Q1513": {
+"asof": null,
+"value": 310.0
+},
+"Q151330": {
+"asof": null,
+"value": 40.0
+},
+"Q1515": {
+"asof": null,
+"value": 18.0
+},
+"Q15174": {
+"asof": null,
+"value": 0.0
+},
+"Q1519": {
+"asof": null,
+"value": 14.0
+},
+"Q151920": {
+"asof": null,
+"value": -200.0
+},
+"Q1520": {
+"asof": null,
+"value": 347.0
+},
+"Q1520207": {
+"asof": null,
+"value": 468.0
+},
+"Q152072": {
+"asof": null,
+"value": 31.0
+},
+"Q152087": {
+"asof": null,
+"value": 40.0
+},
+"Q1522": {
+"asof": null,
+"value": 1735.0
+},
+"Q152225": {
+"asof": null,
+"value": 25.0
+},
+"Q152356": {
+"asof": null,
+"value": 747.0
+},
+"Q1524": {
+"asof": null,
+"value": 74.0
+},
+"Q152660": {
+"asof": null,
+"value": 3239.0
+},
+"Q1527": {
+"asof": null,
+"value": 365.0
+},
+"Q15282": {
+"asof": null,
+"value": 243.0
+},
+"Q15288": {
+"asof": null,
+"value": 4.84
+},
+"Q1529000": {
+"asof": null,
+"value": 3213.0
+},
+"Q1530": {
+"asof": null,
+"value": 34.0
+},
+"Q1533": {
+"asof": null,
+"value": 920.0
+},
+"Q153494": {
+"asof": null,
+"value": 430.0
+},
+"Q153592": {
+"asof": null,
+"value": 14.0
+},
+"Q1537": {
+"asof": null,
+"value": 320.0
+},
+"Q153732": {
+"asof": null,
+"value": 965.0
+},
+"Q1538": {
+"asof": null,
+"value": 561.0
+},
+"Q1540436": {
+"asof": null,
+"value": 44.0
+},
+"Q1542454": {
+"asof": null,
+"value": 656.0
+},
+"Q154372": {
+"asof": null,
+"value": 520.0
+},
+"Q154563": {
+"asof": null,
+"value": 115.0
+},
+"Q1546": {
+"asof": null,
+"value": 335.0
+},
+"Q154748": {
+"asof": null,
+"value": 236.0
+},
+"Q154987": {
+"asof": null,
+"value": 67.0
+},
+"Q15499": {
+"asof": null,
+"value": 672.0
+},
+"Q15523": {
+"asof": null,
+"value": 198.0
+},
+"Q1553": {
+"asof": null,
+"value": 790.0
+},
+"Q1555": {
+"asof": null,
+"value": 1500.0
+},
+"Q1558": {
+"asof": null,
+"value": 600.0
+},
+"Q155868": {
+"asof": null,
+"value": 41.0
+},
+"Q156258": {
+"asof": null,
+"value": 695.0
+},
+"Q1563": {
+"asof": null,
+"value": 59.0
+},
+"Q156325": {
+"asof": null,
+"value": 420.0
+},
+"Q156457": {
+"asof": null,
+"value": 843.0
+},
+"Q156591": {
+"asof": null,
+"value": 930.0
+},
+"Q156711": {
+"asof": null,
+"value": 169.0
+},
+"Q156713": {
+"asof": null,
+"value": 221.0
+},
+"Q156717": {
+"asof": null,
+"value": 295.0
+},
+"Q156726": {
+"asof": null,
+"value": 244.0
+},
+"Q156732": {
+"asof": null,
+"value": 25.0
+},
+"Q156739": {
+"asof": null,
+"value": 136.0
+},
+"Q156743": {
+"asof": null,
+"value": 320.0
+},
+"Q156747": {
+"asof": null,
+"value": 132.0
+},
+"Q1568095": {
+"asof": null,
+"value": 28.0
+},
+"Q15682": {
+"asof": null,
+"value": 11.0
+},
+"Q15684": {
+"asof": null,
+"value": 1002.0
+},
+"Q15695": {
+"asof": null,
+"value": 798.0
+},
+"Q15699": {
+"asof": null,
+"value": 837.0
+},
+"Q157053": {
+"asof": null,
+"value": 136.0
+},
+"Q157055": {
+"asof": null,
+"value": 110.0
+},
+"Q157137": {
+"asof": null,
+"value": 84.0
+},
+"Q157144": {
+"asof": null,
+"value": 248.0
+},
+"Q15758": {
+"asof": null,
+"value": 20.0
+},
+"Q15760": {
+"asof": null,
+"value": 10.0
+},
+"Q157725": {
+"asof": null,
+"value": 248.0
+},
+"Q15775": {
+"asof": null,
+"value": 30.0
+},
+"Q157835": {
+"asof": null,
+"value": 86.0
+},
+"Q1581": {
+"asof": null,
+"value": 240.0
+},
+"Q158119": {
+"asof": null,
+"value": 847.0
+},
+"Q15826": {
+"asof": null,
+"value": 118.0
+},
+"Q158292": {
+"asof": null,
+"value": 124.0
+},
+"Q158467": {
+"asof": null,
+"value": 196.0
+},
+"Q158491": {
+"asof": null,
+"value": 50.0
+},
+"Q1588": {
+"asof": null,
+"value": 30.0
+},
+"Q158903": {
+"asof": null,
+"value": 1420.0
+},
+"Q159260": {
+"asof": null,
+"value": 21.945600000000002
+},
+"Q159273": {
+"asof": null,
+"value": 2335.0
+},
+"Q159288": {
+"asof": null,
+"value": 14.9352
+},
+"Q159457": {
+"asof": null,
+"value": 10.0
+},
+"Q159483": {
+"asof": null,
+"value": 54.0
+},
+"Q159610": {
+"asof": null,
+"value": 0.0
+},
+"Q159621": {
+"asof": null,
+"value": 7756.0
+},
+"Q159762": {
+"asof": null,
+"value": 4169.3592
+},
+"Q16": {
+"asof": null,
+"value": 487.0
+},
+"Q160173": {
+"asof": null,
+"value": 45.0
+},
+"Q1603": {
+"asof": null,
+"value": 230.0
+},
+"Q160320": {
+"asof": null,
+"value": 10.0
+},
+"Q160450": {
+"asof": null,
+"value": 20.0
+},
+"Q160483": {
+"asof": null,
+"value": 1297.0
+},
+"Q160544": {
+"asof": null,
+"value": 33.0
+},
+"Q160556": {
+"asof": null,
+"value": 47.5488
+},
+"Q1612": {
+"asof": null,
+"value": 198.0
+},
+"Q161258": {
+"asof": null,
+"value": 29.0
+},
+"Q161348": {
+"asof": null,
+"value": 238.0
+},
+"Q161491": {
+"asof": null,
+"value": 61.0
+},
+"Q161750": {
+"asof": null,
+"value": 7649.0
+},
+"Q162082": {
+"asof": null,
+"value": 1820.0
+},
+"Q162219": {
+"asof": null,
+"value": 50000.0
+},
+"Q1623": {
+"asof": null,
+"value": 22.0
+},
+"Q162442": {
+"asof": null,
+"value": 98.0
+},
+"Q162615": {
+"asof": null,
+"value": 10.0
+},
+"Q162830": {
+"asof": null,
+"value": 171.0
+},
+"Q1629": {
+"asof": null,
+"value": 96.0
+},
+"Q163108": {
+"asof": null,
+"value": 8.0
+},
+"Q163132": {
+"asof": null,
+"value": 306.0
+},
+"Q163271": {
+"asof": null,
+"value": 50.0
+},
+"Q1640": {
+"asof": null,
+"value": 95.0
+},
+"Q1643": {
+"asof": null,
+"value": 13.0
+},
+"Q16466024": {
+"asof": null,
+"value": 8091.0
+},
+"Q1647": {
+"asof": null,
+"value": 0.0
+},
+"Q1649": {
+"asof": null,
+"value": 395.0
+},
+"Q165090": {
+"asof": null,
+"value": 270.0
+},
+"Q16520": {
+"asof": null,
+"value": 30.0
+},
+"Q165204": {
+"asof": "2020-01-01",
+"value": 14.0
+},
+"Q165271": {
+"asof": null,
+"value": 44.0
+},
+"Q165481": {
+"asof": null,
+"value": 28.0
+},
+"Q16551": {
+"asof": null,
+"value": 305.0
+},
+"Q16552": {
+"asof": null,
+"value": 128.62560000000002
+},
+"Q16553": {
+"asof": null,
+"value": 25.0
+},
+"Q16554": {
+"asof": null,
+"value": 1609.0
+},
+"Q16555": {
+"asof": null,
+"value": 13.0
+},
+"Q16556": {
+"asof": null,
+"value": 331.0128
+},
+"Q16557": {
+"asof": null,
+"value": 131.0
+},
+"Q16558": {
+"asof": null,
+"value": 216.0
+},
+"Q16559": {
+"asof": null,
+"value": 149.0
+},
+"Q16562": {
+"asof": null,
+"value": 1140.0
+},
+"Q16563": {
+"asof": null,
+"value": 103.0
+},
+"Q16565": {
+"asof": null,
+"value": 229.0
+},
+"Q16567": {
+"asof": null,
+"value": 275.0
+},
+"Q16568": {
+"asof": null,
+"value": 11.0
+},
+"Q16572": {
+"asof": null,
+"value": 21.0
+},
+"Q165972": {
+"asof": null,
+"value": 11.0
+},
+"Q166131": {
+"asof": null,
+"value": 3087.0
+},
+"Q166276": {
+"asof": null,
+"value": 610.0
+},
+"Q1663": {
+"asof": null,
+"value": 0.0
+},
+"Q166304": {
+"asof": null,
+"value": 952.0
+},
+"Q16641": {
+"asof": null,
+"value": 765.0
+},
+"Q166479": {
+"asof": null,
+"value": 430.0
+},
+"Q16666": {
+"asof": null,
+"value": 15.0
+},
+"Q1667": {
+"asof": null,
+"value": 65.0
+},
+"Q166755": {
+"asof": null,
+"value": 2037.0
+},
+"Q167021": {
+"asof": null,
+"value": 4409.0
+},
+"Q16739": {
+"asof": null,
+"value": 9.144
+},
+"Q167668": {
+"asof": null,
+"value": 14.0
+},
+"Q167715": {
+"asof": null,
+"value": 10.0
+},
+"Q1678260": {
+"asof": null,
+"value": 1.0
+},
+"Q168193": {
+"asof": null,
+"value": 60.0
+},
+"Q168225": {
+"asof": null,
+"value": 927.0
+},
+"Q168652": {
+"asof": null,
+"value": 1260.0
+},
+"Q168702": {
+"asof": null,
+"value": 8516.0
+},
+"Q168714": {
+"asof": null,
+"value": 2850.0
+},
+"Q168782": {
+"asof": null,
+"value": 90.0
+},
+"Q168866": {
+"asof": null,
+"value": 788.0
+},
+"Q168954": {
+"asof": null,
+"value": 222.0
+},
+"Q1693": {
+"asof": null,
+"value": 0.0
+},
+"Q16959": {
+"asof": null,
+"value": 800.0
+},
+"Q16990": {
+"asof": "2021-01-01",
+"value": 3357.0
+},
+"Q169962": {
+"asof": null,
+"value": 1899.5
+},
+"Q169966": {
+"asof": null,
+"value": 600.0
+},
+"Q169997": {
+"asof": null,
+"value": 2115.0
+},
+"Q170024": {
+"asof": null,
+"value": 2.0
+},
+"Q170047": {
+"asof": null,
+"value": 80.0
+},
+"Q170115": {
+"asof": null,
+"value": 1585.0
+},
+"Q170213": {
+"asof": null,
+"value": 579.0
+},
+"Q170295": {
+"asof": null,
+"value": 1628.0
+},
+"Q170322": {
+"asof": null,
+"value": 0.0
+},
+"Q170366": {
+"asof": null,
+"value": 23.0
+},
+"Q170377": {
+"asof": null,
+"value": 5.0
+},
+"Q17042": {
+"asof": null,
+"value": 13.1064
+},
+"Q170456": {
+"asof": null,
+"value": 127.0
+},
+"Q170462": {
+"asof": null,
+"value": 2423.0
+},
+"Q170488": {
+"asof": null,
+"value": 195.0
+},
+"Q170507": {
+"asof": null,
+"value": 22.0
+},
+"Q170513": {
+"asof": null,
+"value": 30.0
+},
+"Q170521": {
+"asof": null,
+"value": 1270.0
+},
+"Q170525": {
+"asof": null,
+"value": 74.0
+},
+"Q170573": {
+"asof": null,
+"value": 935.0
+},
+"Q170666": {
+"asof": null,
+"value": 236.0
+},
+"Q170688": {
+"asof": null,
+"value": 416.0
+},
+"Q1707": {
+"asof": null,
+"value": 5.0
+},
+"Q1709": {
+"asof": null,
+"value": 52.0
+},
+"Q1711": {
+"asof": null,
+"value": 35.0
+},
+"Q171132": {
+"asof": null,
+"value": 233.0
+},
+"Q171224": {
+"asof": null,
+"value": 131.1
+},
+"Q171334": {
+"asof": null,
+"value": 76.0
+},
+"Q1715": {
+"asof": null,
+"value": 55.0
+},
+"Q17151": {
+"asof": null,
+"value": 6.0
+},
+"Q17155": {
+"asof": null,
+"value": 12.0
+},
+"Q171617": {
+"asof": null,
+"value": 685.0
+},
+"Q171639": {
+"asof": null,
+"value": 24.0
+},
+"Q171714": {
+"asof": null,
+"value": 1760.0
+},
+"Q171771": {
+"asof": null,
+"value": 45.0
+},
+"Q1718": {
+"asof": null,
+"value": 38.0
+},
+"Q171852": {
+"asof": null,
+"value": 281.0
+},
+"Q171882": {
+"asof": null,
+"value": 26.0
+},
+"Q172": {
+"asof": null,
+"value": 76.0
+},
+"Q1720": {
+"asof": null,
+"value": 94.0
+},
+"Q1721": {
+"asof": null,
+"value": 124.0
+},
+"Q1722": {
+"asof": null,
+"value": 10.0
+},
+"Q172267": {
+"asof": null,
+"value": 10.0
+},
+"Q172343": {
+"asof": null,
+"value": 54.0
+},
+"Q1724": {
+"asof": null,
+"value": 190.0
+},
+"Q172415": {
+"asof": null,
+"value": 80.0
+},
+"Q17252": {
+"asof": null,
+"value": 4380.0
+},
+"Q172556": {
+"asof": null,
+"value": 3756.0
+},
+"Q1726": {
+"asof": null,
+"value": 519.0
+},
+"Q172668": {
+"asof": null,
+"value": 478.0
+},
+"Q172691": {
+"asof": null,
+"value": 457.0
+},
+"Q172697": {
+"asof": null,
+"value": 1230.0
+},
+"Q1729": {
+"asof": null,
+"value": 194.0
+},
+"Q173": {
+"asof": null,
+"value": 152.0
+},
+"Q173096": {
+"asof": null,
+"value": 1743.0
+},
+"Q1731": {
+"asof": null,
+"value": 126.0
+},
+"Q173121": {
+"asof": null,
+"value": 1820.0
+},
+"Q173148": {
+"asof": null,
+"value": 112.0
+},
+"Q173270": {
+"asof": null,
+"value": 10.0
+},
+"Q173292": {
+"asof": null,
+"value": 589.0
+},
+"Q1733": {
+"asof": null,
+"value": 64.0
+},
+"Q173310": {
+"asof": null,
+"value": 350.0
+},
+"Q1735": {
+"asof": null,
+"value": 574.0
+},
+"Q173532": {
+"asof": null,
+"value": 10.0
+},
+"Q173545": {
+"asof": null,
+"value": 289.0
+},
+"Q173731": {
+"asof": null,
+"value": 2219.0
+},
+"Q173959": {
+"asof": null,
+"value": 32.0
+},
+"Q174": {
+"asof": null,
+"value": 760.0
+},
+"Q174019": {
+"asof": null,
+"value": 4.0
+},
+"Q174091": {
+"asof": null,
+"value": 63.0
+},
+"Q1741": {
+"asof": null,
+"value": 198.0
+},
+"Q174224": {
+"asof": null,
+"value": 28.0
+},
+"Q174237": {
+"asof": null,
+"value": 3.0
+},
+"Q1748": {
+"asof": null,
+"value": 14.0
+},
+"Q175": {
+"asof": null,
+"value": 514.0
+},
+"Q175021": {
+"asof": null,
+"value": 52.0
+},
+"Q175057": {
+"asof": null,
+"value": 0.0
+},
+"Q175517": {
+"asof": null,
+"value": 90.0
+},
+"Q1757": {
+"asof": null,
+"value": 17.0
+},
+"Q17581": {
+"asof": null,
+"value": 6.4008
+},
+"Q1761": {
+"asof": null,
+"value": 20.0
+},
+"Q1763": {
+"asof": null,
+"value": 50.0
+},
+"Q1764": {
+"asof": null,
+"value": 8.0
+},
+"Q176767": {
+"asof": null,
+"value": 108.0
+},
+"Q1770": {
+"asof": null,
+"value": 28.0
+},
+"Q17704": {
+"asof": null,
+"value": 8.5344
+},
+"Q1773": {
+"asof": null,
+"value": 6.0
+},
+"Q177397": {
+"asof": null,
+"value": 1360.3224
+},
+"Q177477": {
+"asof": null,
+"value": 90.0
+},
+"Q1780": {
+"asof": null,
+"value": 152.0
+},
+"Q178021": {
+"asof": null,
+"value": 73.7616
+},
+"Q1781": {
+"asof": null,
+"value": 117.0
+},
+"Q178124": {
+"asof": null,
+"value": 155.0
+},
+"Q178167": {
+"asof": null,
+"value": 2228.0
+},
+"Q178405": {
+"asof": null,
+"value": 85.0
+},
+"Q178488": {
+"asof": null,
+"value": 1620.0
+},
+"Q17872": {
+"asof": null,
+"value": 576.0
+},
+"Q178741": {
+"asof": null,
+"value": 1283.0
+},
+"Q178835": {
+"asof": null,
+"value": 1170.0
+},
+"Q178925": {
+"asof": null,
+"value": 1956.0
+},
+"Q178948": {
+"asof": null,
+"value": 282.0
+},
+"Q179029": {
+"asof": null,
+"value": 4095.0
+},
+"Q179046": {
+"asof": null,
+"value": 213.0
+},
+"Q1792": {
+"asof": null,
+"value": 11.0
+},
+"Q179224": {
+"asof": null,
+"value": 12.0
+},
+"Q179295": {
+"asof": null,
+"value": 417.0
+},
+"Q1794": {
+"asof": null,
+"value": 101.0
+},
+"Q17943": {
+"asof": null,
+"value": 184.0
+},
+"Q179842": {
+"asof": null,
+"value": 4500.0
+},
+"Q179883": {
+"asof": null,
+"value": 926.0
+},
+"Q1799": {
+"asof": null,
+"value": 111.0
+},
+"Q1800": {
+"asof": null,
+"value": 0.0
+},
+"Q18013": {
+"asof": null,
+"value": 14.0
+},
+"Q180209": {
+"asof": null,
+"value": 51.0
+},
+"Q180376": {
+"asof": null,
+"value": 491.0
+},
+"Q180402": {
+"asof": null,
+"value": 2686.0
+},
+"Q180522": {
+"asof": null,
+"value": 6.0
+},
+"Q180918": {
+"asof": null,
+"value": 72.0
+},
+"Q18094": {
+"asof": null,
+"value": 12.0
+},
+"Q181157": {
+"asof": null,
+"value": 5452.0
+},
+"Q18125": {
+"asof": null,
+"value": 38.0
+},
+"Q1813": {
+"asof": null,
+"value": 0.0
+},
+"Q181376": {
+"asof": null,
+"value": 137.0
+},
+"Q181476": {
+"asof": null,
+"value": 5897.0
+},
+"Q181479": {
+"asof": null,
+"value": 41.148
+},
+"Q181544": {
+"asof": null,
+"value": 206.0
+},
+"Q181557": {
+"asof": null,
+"value": 9.0
+},
+"Q181932": {
+"asof": null,
+"value": 1900.0
+},
+"Q181962": {
+"asof": null,
+"value": 45.0
+},
+"Q18207676": {
+"asof": null,
+"value": 15.0
+},
+"Q182137": {
+"asof": null,
+"value": 0.0
+},
+"Q1822": {
+"asof": null,
+"value": 853.0
+},
+"Q182299": {
+"asof": null,
+"value": 13.0
+},
+"Q1823": {
+"asof": null,
+"value": 3466.0
+},
+"Q182394": {
+"asof": null,
+"value": 1216.0
+},
+"Q182565": {
+"asof": null,
+"value": 529.0
+},
+"Q182625": {
+"asof": null,
+"value": 185.0
+},
+"Q182640": {
+"asof": null,
+"value": 1879.0
+},
+"Q182852": {
+"asof": null,
+"value": 1892.0
+},
+"Q182872": {
+"asof": null,
+"value": 96.0
+},
+"Q1829": {
+"asof": null,
+"value": 5.0
+},
+"Q183002": {
+"asof": null,
+"value": 40.0
+},
+"Q183032": {
+"asof": null,
+"value": 1276.0
+},
+"Q183113": {
+"asof": null,
+"value": 727.0
+},
+"Q183199": {
+"asof": null,
+"value": 490.0
+},
+"Q183360": {
+"asof": null,
+"value": 905.0
+},
+"Q18383": {
+"asof": null,
+"value": 23.0
+},
+"Q184116": {
+"asof": null,
+"value": 180.0
+},
+"Q1842": {
+"asof": null,
+"value": 300.0
+},
+"Q18426": {
+"asof": null,
+"value": 90.0
+},
+"Q18438": {
+"asof": null,
+"value": 122.0
+},
+"Q184382": {
+"asof": null,
+"value": 160.0
+},
+"Q1844": {
+"asof": null,
+"value": 455.0
+},
+"Q184429": {
+"asof": null,
+"value": 2.0
+},
+"Q184587": {
+"asof": null,
+"value": 195.0
+},
+"Q1848": {
+"asof": null,
+"value": 675.0
+},
+"Q184851": {
+"asof": null,
+"value": 7.0
+},
+"Q1850": {
+"asof": null,
+"value": 11.0
+},
+"Q185018": {
+"asof": null,
+"value": 620.0
+},
+"Q1851": {
+"asof": null,
+"value": 3.0
+},
+"Q185157": {
+"asof": null,
+"value": 90.0
+},
+"Q185318": {
+"asof": null,
+"value": 545.0
+},
+"Q185362": {
+"asof": null,
+"value": 1570.0
+},
+"Q1854": {
+"asof": null,
+"value": 13.0
+},
+"Q185582": {
+"asof": null,
+"value": 270.0
+},
+"Q18569": {
+"asof": null,
+"value": 31.0
+},
+"Q18575": {
+"asof": null,
+"value": 728.0
+},
+"Q1858": {
+"asof": null,
+"value": 16.0
+},
+"Q186040": {
+"asof": null,
+"value": 93.0
+},
+"Q1861": {
+"asof": null,
+"value": 2.0
+},
+"Q186115": {
+"asof": null,
+"value": 130.53
+},
+"Q186141": {
+"asof": null,
+"value": 1436.0
+},
+"Q186182": {
+"asof": null,
+"value": 1457.0
+},
+"Q186233": {
+"asof": null,
+"value": 732.0
+},
+"Q186234": {
+"asof": null,
+"value": 30.0
+},
+"Q1863": {
+"asof": null,
+"value": 1022.0
+},
+"Q1865": {
+"asof": null,
+"value": 50.0
+},
+"Q1867": {
+"asof": null,
+"value": 10.0
+},
+"Q186702": {
+"asof": null,
+"value": 206.0
+},
+"Q186822": {
+"asof": null,
+"value": 1161.0
+},
+"Q187027": {
+"asof": null,
+"value": 846.0
+},
+"Q187063": {
+"asof": null,
+"value": 1025.9568000000002
+},
+"Q187136": {
+"asof": null,
+"value": 144.0
+},
+"Q187284": {
+"asof": null,
+"value": 11.0
+},
+"Q187346": {
+"asof": null,
+"value": 694.0
+},
+"Q187352": {
+"asof": null,
+"value": 15.0
+},
+"Q1874": {
+"asof": null,
+"value": 40.0
+},
+"Q1875": {
+"asof": null,
+"value": 77.0
+},
+"Q187805": {
+"asof": null,
+"value": 562.0
+},
+"Q187843": {
+"asof": null,
+"value": 1424.0
+},
+"Q188022": {
+"asof": null,
+"value": 1083.0
+},
+"Q18808": {
+"asof": null,
+"value": 38.0
+},
+"Q188082": {
+"asof": null,
+"value": 492.0
+},
+"Q188195": {
+"asof": null,
+"value": 88.5
+},
+"Q188304": {
+"asof": null,
+"value": 60.0
+},
+"Q188336": {
+"asof": null,
+"value": 900.0
+},
+"Q188527": {
+"asof": null,
+"value": 1003.0
+},
+"Q18869": {
+"asof": null,
+"value": 5642.0
+},
+"Q188698": {
+"asof": null,
+"value": 1247.0
+},
+"Q188705": {
+"asof": null,
+"value": 3055.0104
+},
+"Q188731": {
+"asof": null,
+"value": 10.0
+},
+"Q188810": {
+"asof": null,
+"value": 174.0
+},
+"Q1891": {
+"asof": null,
+"value": 54.0
+},
+"Q189133": {
+"asof": null,
+"value": 7.0
+},
+"Q189138": {
+"asof": "2020-01-01",
+"value": 200.0
+},
+"Q189288": {
+"asof": null,
+"value": 72.0
+},
+"Q189387": {
+"asof": null,
+"value": 789.0
+},
+"Q189471": {
+"asof": null,
+"value": 71.9328
+},
+"Q1895": {
+"asof": null,
+"value": 60.0
+},
+"Q189503": {
+"asof": null,
+"value": 33.0
+},
+"Q1897": {
+"asof": null,
+"value": 4.0
+},
+"Q189848": {
+"asof": null,
+"value": 10.0
+},
+"Q1899": {
+"asof": null,
+"value": 179.0
+},
+"Q189901": {
+"asof": null,
+"value": 27.0
+},
+"Q189915": {
+"asof": null,
+"value": 2694.0
+},
+"Q190053": {
+"asof": null,
+"value": 269.0
+},
+"Q190184": {
+"asof": null,
+"value": 1885.0
+},
+"Q190187": {
+"asof": null,
+"value": 193.0
+},
+"Q1903": {
+"asof": null,
+"value": 7.0
+},
+"Q190828": {
+"asof": null,
+"value": 16.0
+},
+"Q190974": {
+"asof": null,
+"value": 312.0
+},
+"Q19101": {
+"asof": null,
+"value": 3.9624
+},
+"Q191133": {
+"asof": null,
+"value": 322.0
+},
+"Q191170": {
+"asof": null,
+"value": 43.0
+},
+"Q191204": {
+"asof": null,
+"value": 882.0
+},
+"Q19151": {
+"asof": null,
+"value": 371.0
+},
+"Q192017": {
+"asof": null,
+"value": 2163.0
+},
+"Q1920284": {
+"asof": null,
+"value": 347.0
+},
+"Q192098": {
+"asof": null,
+"value": 745.0
+},
+"Q192134": {
+"asof": null,
+"value": 39.0
+},
+"Q192240": {
+"asof": null,
+"value": 55.0
+},
+"Q192268": {
+"asof": null,
+"value": 74.0
+},
+"Q192281": {
+"asof": null,
+"value": 965.0
+},
+"Q192418": {
+"asof": null,
+"value": 61.0
+},
+"Q192517": {
+"asof": null,
+"value": 1655.0
+},
+"Q192626": {
+"asof": null,
+"value": 4205.0
+},
+"Q192666": {
+"asof": null,
+"value": 175.0
+},
+"Q192733": {
+"asof": null,
+"value": 192.0
+},
+"Q192767": {
+"asof": null,
+"value": 2335.0
+},
+"Q192794": {
+"asof": null,
+"value": 76000.0
+},
+"Q1930": {
+"asof": null,
+"value": 70.0
+},
+"Q193163": {
+"asof": null,
+"value": 743.0
+},
+"Q193190": {
+"asof": null,
+"value": 21.0
+},
+"Q193331": {
+"asof": null,
+"value": 13.0
+},
+"Q193342": {
+"asof": null,
+"value": 100.0
+},
+"Q193369": {
+"asof": null,
+"value": 250.0
+},
+"Q193439": {
+"asof": null,
+"value": 18.8976
+},
+"Q193682": {
+"asof": null,
+"value": 5.0
+},
+"Q193896": {
+"asof": null,
+"value": 239.0
+},
+"Q193965": {
+"asof": null,
+"value": 360.0
+},
+"Q194057": {
+"asof": null,
+"value": 4389.0
+},
+"Q194263": {
+"asof": null,
+"value": 2654.0
+},
+"Q194316": {
+"asof": null,
+"value": 1.524
+},
+"Q194328": {
+"asof": null,
+"value": 837.0
+},
+"Q1947": {
+"asof": null,
+"value": 550.0
+},
+"Q19483": {
+"asof": null,
+"value": 552.0
+},
+"Q1953": {
+"asof": null,
+"value": 987.0
+},
+"Q19566": {
+"asof": null,
+"value": 235.0
+},
+"Q19583": {
+"asof": null,
+"value": 588.0
+},
+"Q1960": {
+"asof": null,
+"value": 12.0
+},
+"Q1963": {
+"asof": null,
+"value": 382.0
+},
+"Q19660": {
+"asof": null,
+"value": 70.0
+},
+"Q19675": {
+"asof": null,
+"value": 44.0
+},
+"Q19689": {
+"asof": null,
+"value": 110.0
+},
+"Q199528": {
+"asof": null,
+"value": 435.0
+},
+"Q199547": {
+"asof": null,
+"value": 137.0
+},
+"Q199551": {
+"asof": null,
+"value": 1270.0
+},
+"Q199605": {
+"asof": null,
+"value": 51.0
+},
+"Q199712": {
+"asof": null,
+"value": 6.0
+},
+"Q199797": {
+"asof": null,
+"value": 61.0
+},
+"Q199909": {
+"asof": null,
+"value": 28.0
+},
+"Q199952": {
+"asof": null,
+"value": 204.0
+},
+"Q200016": {
+"asof": null,
+"value": 45.0
+},
+"Q200017": {
+"asof": null,
+"value": 23.0
+},
+"Q200019": {
+"asof": null,
+"value": 231.0
+},
+"Q200036": {
+"asof": null,
+"value": 7.0
+},
+"Q200054": {
+"asof": null,
+"value": 135.0
+},
+"Q200119": {
+"asof": null,
+"value": 490.0
+},
+"Q200235": {
+"asof": null,
+"value": 660.0
+},
+"Q200237": {
+"asof": null,
+"value": 218.0
+},
+"Q200311": {
+"asof": null,
+"value": 181.0
+},
+"Q200340": {
+"asof": null,
+"value": 578.0
+},
+"Q200642": {
+"asof": null,
+"value": 51.0
+},
+"Q200713": {
+"asof": null,
+"value": 568.0
+},
+"Q2008735": {
+"asof": null,
+"value": -19.0
+},
+"Q201026": {
+"asof": null,
+"value": 1598.0664000000002
+},
+"Q20103": {
+"asof": null,
+"value": 424.0
+},
+"Q2012050": {
+"asof": null,
+"value": 336.0
+},
+"Q201516": {
+"asof": null,
+"value": 1.0
+},
+"Q201633": {
+"asof": null,
+"value": 161.0
+},
+"Q201689": {
+"asof": null,
+"value": 2426.0
+},
+"Q201698": {
+"asof": null,
+"value": 1050.0
+},
+"Q202139": {
+"asof": null,
+"value": 97.0
+},
+"Q202175": {
+"asof": null,
+"value": 2.0
+},
+"Q202494": {
+"asof": null,
+"value": 193.0
+},
+"Q202780": {
+"asof": null,
+"value": 1640.0
+},
+"Q2028": {
+"asof": null,
+"value": 59.0
+},
+"Q202907": {
+"asof": null,
+"value": 131.0
+},
+"Q2030": {
+"asof": null,
+"value": 0.0
+},
+"Q203476": {
+"asof": null,
+"value": 17.0
+},
+"Q203889": {
+"asof": null,
+"value": 160.0
+},
+"Q204096": {
+"asof": null,
+"value": 1205.0
+},
+"Q204200": {
+"asof": null,
+"value": 890.0
+},
+"Q204234": {
+"asof": null,
+"value": 102.0
+},
+"Q204245": {
+"asof": null,
+"value": 1510.0
+},
+"Q2044": {
+"asof": null,
+"value": 50.0
+},
+"Q204403": {
+"asof": null,
+"value": 505.0
+},
+"Q204658": {
+"asof": null,
+"value": 2333.0
+},
+"Q204853": {
+"asof": null,
+"value": 6.4008
+},
+"Q205380": {
+"asof": null,
+"value": 6.0
+},
+"Q2055": {
+"asof": null,
+"value": 670.0
+},
+"Q205842": {
+"asof": null,
+"value": 2405.0
+},
+"Q205976": {
+"asof": null,
+"value": 826.0
+},
+"Q2061": {
+"asof": null,
+"value": 190.0
+},
+"Q206277": {
+"asof": null,
+"value": 4.8768
+},
+"Q2066": {
+"asof": null,
+"value": 116.0
+},
+"Q206859": {
+"asof": null,
+"value": 37.0
+},
+"Q207284": {
+"asof": null,
+"value": 2797.0
+},
+"Q207324": {
+"asof": null,
+"value": 36.0
+},
+"Q207385": {
+"asof": null,
+"value": 23.4696
+},
+"Q207666": {
+"asof": null,
+"value": 2210.0
+},
+"Q207754": {
+"asof": null,
+"value": 82.0
+},
+"Q2079": {
+"asof": null,
+"value": 110.0
+},
+"Q207917": {
+"asof": null,
+"value": 2150.0
+},
+"Q208000": {
+"asof": null,
+"value": 12.0
+},
+"Q208022": {
+"asof": null,
+"value": 6.0
+},
+"Q208149": {
+"asof": null,
+"value": 0.0
+},
+"Q208181": {
+"asof": null,
+"value": 95.0
+},
+"Q208345": {
+"asof": null,
+"value": 459.0
+},
+"Q208358": {
+"asof": null,
+"value": 110.0
+},
+"Q208499": {
+"asof": null,
+"value": 166.0
+},
+"Q20892": {
+"asof": null,
+"value": 5.0
+},
+"Q2090": {
+"asof": null,
+"value": 209.0
+},
+"Q209016": {
+"asof": null,
+"value": 8.0
+},
+"Q209034": {
+"asof": null,
+"value": 2660.0
+},
+"Q20932": {
+"asof": null,
+"value": 7.010400000000001
+},
+"Q20934": {
+"asof": null,
+"value": 7.0
+},
+"Q2096": {
+"asof": null,
+"value": 674.0
+},
+"Q209908": {
+"asof": null,
+"value": 7.0
+},
+"Q2100": {
+"asof": null,
+"value": 33.0
+},
+"Q2103": {
+"asof": null,
+"value": 94.0
+},
+"Q210307": {
+"asof": null,
+"value": 2.98
+},
+"Q2107": {
+"asof": null,
+"value": 157.0
+},
+"Q2112": {
+"asof": null,
+"value": 118.0
+},
+"Q21162": {
+"asof": null,
+"value": 1713.0
+},
+"Q211734": {
+"asof": null,
+"value": 93.8784
+},
+"Q211760": {
+"asof": null,
+"value": 95.0
+},
+"Q211778": {
+"asof": null,
+"value": 978.0
+},
+"Q211866": {
+"asof": null,
+"value": 2.0
+},
+"Q2119": {
+"asof": null,
+"value": 97.0
+},
+"Q21197": {
+"asof": null,
+"value": 85.0
+},
+"Q21203": {
+"asof": null,
+"value": 31.0
+},
+"Q2123": {
+"asof": null,
+"value": 577.0
+},
+"Q212332": {
+"asof": null,
+"value": 88.0
+},
+"Q2126436": {
+"asof": null,
+"value": 714.0
+},
+"Q212938": {
+"asof": null,
+"value": 760.0
+},
+"Q213026": {
+"asof": null,
+"value": 268.0
+},
+"Q2132": {
+"asof": null,
+"value": 23.0
+},
+"Q213248": {
+"asof": null,
+"value": 47.0
+},
+"Q213360": {
+"asof": null,
+"value": 1085.0
+},
+"Q2135": {
+"asof": null,
+"value": 238.0
+},
+"Q213559": {
+"asof": "1980-12-18",
+"value": 16.0
+},
+"Q213679": {
+"asof": null,
+"value": 38.0
+},
+"Q213717": {
+"asof": null,
+"value": 203.6064
+},
+"Q2141": {
+"asof": null,
+"value": 28.0
+},
+"Q214164": {
+"asof": null,
+"value": 26.0
+},
+"Q214173": {
+"asof": null,
+"value": 34.0
+},
+"Q214178": {
+"asof": null,
+"value": 550.0
+},
+"Q2143": {
+"asof": null,
+"value": 172.0
+},
+"Q2145": {
+"asof": null,
+"value": 98.0
+},
+"Q214861": {
+"asof": null,
+"value": 312.7248
+},
+"Q214916": {
+"asof": null,
+"value": 6723.0
+},
+"Q214944": {
+"asof": null,
+"value": 760.0
+},
+"Q215074": {
+"asof": null,
+"value": 1022.0
+},
+"Q215471": {
+"asof": null,
+"value": 2813.95
+},
+"Q215664": {
+"asof": null,
+"value": 4.0
+},
+"Q216": {
+"asof": null,
+"value": 112.0
+},
+"Q2167": {
+"asof": null,
+"value": 30.0
+},
+"Q216752": {
+"asof": null,
+"value": 914.0
+},
+"Q216894": {
+"asof": null,
+"value": 454.0
+},
+"Q216939": {
+"asof": null,
+"value": 11.0
+},
+"Q217040": {
+"asof": null,
+"value": 151.0
+},
+"Q217568": {
+"asof": null,
+"value": 10.0
+},
+"Q2192924": {
+"asof": null,
+"value": 152.0
+},
+"Q219656": {
+"asof": null,
+"value": 116.0
+},
+"Q219694": {
+"asof": null,
+"value": 650.0
+},
+"Q219737": {
+"asof": null,
+"value": 850.0
+},
+"Q220": {
+"asof": null,
+"value": 21.0
+},
+"Q220385": {
+"asof": null,
+"value": 40.0
+},
+"Q220445": {
+"asof": null,
+"value": 8.0
+},
+"Q220982": {
+"asof": null,
+"value": 2062.0
+},
+"Q2211": {
+"asof": null,
+"value": 12.0
+},
+"Q2214": {
+"asof": null,
+"value": 45.0
+},
+"Q221749": {
+"asof": null,
+"value": 7.0
+},
+"Q221883": {
+"asof": null,
+"value": 45.0
+},
+"Q222267": {
+"asof": null,
+"value": 300.0
+},
+"Q2223": {
+"asof": null,
+"value": 1165.0
+},
+"Q223416": {
+"asof": null,
+"value": 88.69680000000001
+},
+"Q2235": {
+"asof": null,
+"value": 25.0
+},
+"Q22502": {
+"asof": null,
+"value": 3952.0
+},
+"Q2256": {
+"asof": null,
+"value": 140.0
+},
+"Q225641": {
+"asof": null,
+"value": 50.0
+},
+"Q226": {
+"asof": null,
+"value": 5.0
+},
+"Q22690": {
+"asof": null,
+"value": 189.0
+},
+"Q2280": {
+"asof": null,
+"value": 280.0
+},
+"Q228405": {
+"asof": null,
+"value": 101.0
+},
+"Q2288": {
+"asof": null,
+"value": 135.0
+},
+"Q22889": {
+"asof": null,
+"value": 132.0
+},
+"Q22905": {
+"asof": null,
+"value": 214.0
+},
+"Q229107": {
+"asof": null,
+"value": 6638.0
+},
+"Q230104": {
+"asof": null,
+"value": 873.0
+},
+"Q2308046": {
+"asof": null,
+"value": 210.0
+},
+"Q231": {
+"asof": null,
+"value": 163.0
+},
+"Q231318": {
+"asof": null,
+"value": 32.0
+},
+"Q23154": {
+"asof": null,
+"value": 11.0
+},
+"Q23197": {
+"asof": null,
+"value": 182.0
+},
+"Q23311": {
+"asof": null,
+"value": 20.0
+},
+"Q233351": {
+"asof": null,
+"value": 5389.0
+},
+"Q23337": {
+"asof": null,
+"value": 1288.0
+},
+"Q2337": {
+"asof": null,
+"value": 254.0
+},
+"Q233770": {
+"asof": null,
+"value": 67.0
+},
+"Q233836": {
+"asof": null,
+"value": 6893.0
+},
+"Q23406": {
+"asof": null,
+"value": 0.0
+},
+"Q23408": {
+"asof": null,
+"value": 780.0
+},
+"Q23430": {
+"asof": null,
+"value": 1350.0
+},
+"Q23436": {
+"asof": null,
+"value": 47.0
+},
+"Q23438": {
+"asof": null,
+"value": 219.0
+},
+"Q234600": {
+"asof": null,
+"value": 292.0
+},
+"Q23482": {
+"asof": null,
+"value": 648.0
+},
+"Q235062": {
+"asof": null,
+"value": 4276.0
+},
+"Q235539": {
+"asof": null,
+"value": 4421.0
+},
+"Q23556": {
+"asof": null,
+"value": 225.0
+},
+"Q23564": {
+"asof": null,
+"value": 49.0
+},
+"Q23635": {
+"asof": null,
+"value": 25.0
+},
+"Q23661": {
+"asof": null,
+"value": 0.0
+},
+"Q23768": {
+"asof": null,
+"value": 610.0
+},
+"Q237847": {
+"asof": null,
+"value": 457.0
+},
+"Q23800": {
+"asof": null,
+"value": 56.0
+},
+"Q238508": {
+"asof": null,
+"value": 219.0
+},
+"Q23883": {
+"asof": null,
+"value": -441.33
+},
+"Q239": {
+"asof": null,
+"value": 70.0
+},
+"Q239143": {
+"asof": null,
+"value": 5.0
+},
+"Q239743": {
+"asof": null,
+"value": 381.0
+},
+"Q240": {
+"asof": null,
+"value": 13.0
+},
+"Q240475": {
+"asof": null,
+"value": 942.0
+},
+"Q242066": {
+"asof": null,
+"value": 173.43120000000002
+},
+"Q2423": {
+"asof": null,
+"value": 100.0
+},
+"Q242995": {
+"asof": null,
+"value": 285.0
+},
+"Q243307": {
+"asof": null,
+"value": 2835.0
+},
+"Q244207": {
+"asof": null,
+"value": 273.0
+},
+"Q24451": {
+"asof": null,
+"value": 370.0
+},
+"Q2449": {
+"asof": null,
+"value": 9.0
+},
+"Q245023": {
+"asof": null,
+"value": 112.0
+},
+"Q2459429": {
+"asof": null,
+"value": 56.0
+},
+"Q24639": {
+"asof": null,
+"value": 2.0
+},
+"Q2467": {
+"asof": null,
+"value": 34.0
+},
+"Q2467005": {
+"asof": null,
+"value": 84.0
+},
+"Q2471": {
+"asof": null,
+"value": 2150.0
+},
+"Q24826": {
+"asof": null,
+"value": 70.0
+},
+"Q24861": {
+"asof": null,
+"value": 43.0
+},
+"Q24879": {
+"asof": null,
+"value": 11.0
+},
+"Q2494365": {
+"asof": null,
+"value": 152.0
+},
+"Q25231": {
+"asof": null,
+"value": 1713.0
+},
+"Q25263": {
+"asof": null,
+"value": 2351.0
+},
+"Q25270": {
+"asof": null,
+"value": 652.0
+},
+"Q25277": {
+"asof": null,
+"value": 3098.0
+},
+"Q25279": {
+"asof": null,
+"value": 39.0
+},
+"Q25280": {
+"asof": null,
+"value": 98.0
+},
+"Q25281": {
+"asof": null,
+"value": 1500.0
+},
+"Q25282": {
+"asof": null,
+"value": 19.0
+},
+"Q25286": {
+"asof": null,
+"value": 15.0
+},
+"Q25287": {
+"asof": null,
+"value": 12.0
+},
+"Q25319": {
+"asof": null,
+"value": 6.0
+},
+"Q25330": {
+"asof": null,
+"value": 16.0
+},
+"Q25331": {
+"asof": null,
+"value": 13.0
+},
+"Q253851": {
+"asof": null,
+"value": 2133.0
+},
+"Q25395": {
+"asof": null,
+"value": 3.0
+},
+"Q25396": {
+"asof": null,
+"value": 241.0
+},
+"Q25409": {
+"asof": null,
+"value": 214.0
+},
+"Q25410": {
+"asof": null,
+"value": 5.0
+},
+"Q25416": {
+"asof": null,
+"value": 1.0
+},
+"Q25475": {
+"asof": null,
+"value": 3.0
+},
+"Q25528": {
+"asof": null,
+"value": 558.0
+},
+"Q25596": {
+"asof": null,
+"value": 424.0
+},
+"Q25607": {
+"asof": null,
+"value": 675.0
+},
+"Q257441": {
+"asof": null,
+"value": 3445.0
+},
+"Q258": {
+"asof": null,
+"value": 1037.0
+},
+"Q2592": {
+"asof": null,
+"value": 110.0
+},
+"Q25923": {
+"asof": null,
+"value": 6.0
+},
+"Q26087": {
+"asof": null,
+"value": 20.0
+},
+"Q26180": {
+"asof": null,
+"value": 13.0
+},
+"Q261887": {
+"asof": null,
+"value": 452.0
+},
+"Q2630": {
+"asof": null,
+"value": 120.0
+},
+"Q26339": {
+"asof": null,
+"value": 9.0
+},
+"Q2634": {
+"asof": null,
+"value": 17.0
+},
+"Q26430": {
+"asof": null,
+"value": 14.0
+},
+"Q2656": {
+"asof": null,
+"value": 14.0
+},
+"Q265628": {
+"asof": null,
+"value": 2636.0
+},
+"Q26590": {
+"asof": null,
+"value": 1137.0
+},
+"Q26600": {
+"asof": null,
+"value": 8.0
+},
+"Q26732": {
+"asof": null,
+"value": 467.0
+},
+"Q267646": {
+"asof": null,
+"value": 3743.0
+},
+"Q26777": {
+"asof": null,
+"value": 4421.124
+},
+"Q26793": {
+"asof": null,
+"value": 5.0
+},
+"Q2683": {
+"asof": null,
+"value": 69.0
+},
+"Q2684": {
+"asof": null,
+"value": 150.0
+},
+"Q269": {
+"asof": null,
+"value": 455.0
+},
+"Q26927": {
+"asof": null,
+"value": 16.0
+},
+"Q26955": {
+"asof": null,
+"value": 3478.0
+},
+"Q270": {
+"asof": null,
+"value": 118.0
+},
+"Q270375": {
+"asof": null,
+"value": 635.0
+},
+"Q2704": {
+"asof": null,
+"value": 11.0
+},
+"Q2706": {
+"asof": null,
+"value": 2.0
+},
+"Q271030": {
+"asof": null,
+"value": 551.0
+},
+"Q271395": {
+"asof": null,
+"value": 227.0
+},
+"Q271619": {
+"asof": null,
+"value": 22.0
+},
+"Q271771": {
+"asof": null,
+"value": 18.0
+},
+"Q272153": {
+"asof": null,
+"value": 349.0
+},
+"Q272768": {
+"asof": null,
+"value": 16.0
+},
+"Q273030": {
+"asof": null,
+"value": 314.0
+},
+"Q2738637": {
+"asof": null,
+"value": 137.0
+},
+"Q2742": {
+"asof": null,
+"value": 60.0
+},
+"Q274388": {
+"asof": null,
+"value": 14.0
+},
+"Q2746": {
+"asof": null,
+"value": 130.0
+},
+"Q2749": {
+"asof": null,
+"value": 482.0
+},
+"Q27494": {
+"asof": null,
+"value": 1624.0
+},
+"Q2751": {
+"asof": null,
+"value": 322.0
+},
+"Q275565": {
+"asof": null,
+"value": 100000.0
+},
+"Q275662": {
+"asof": null,
+"value": 3425.0
+},
+"Q2758": {
+"asof": null,
+"value": 70.0
+},
+"Q2765": {
+"asof": null,
+"value": 48.0
+},
+"Q2766547": {
+"asof": null,
+"value": 6.0
+},
+"Q2770": {
+"asof": null,
+"value": 170.0
+},
+"Q2773": {
+"asof": null,
+"value": 75.0
+},
+"Q278204": {
+"asof": null,
+"value": 200.0
+},
+"Q278221": {
+"asof": null,
+"value": 520.0
+},
+"Q278667": {
+"asof": null,
+"value": 616.9152
+},
+"Q279": {
+"asof": null,
+"value": 34.0
+},
+"Q2790": {
+"asof": null,
+"value": 113.0
+},
+"Q2795": {
+"asof": null,
+"value": 298.0
+},
+"Q279537": {
+"asof": null,
+"value": 23.0
+},
+"Q2801": {
+"asof": null,
+"value": 190.0
+},
+"Q28048": {
+"asof": null,
+"value": 516.0
+},
+"Q2807": {
+"asof": null,
+"value": 663.0
+},
+"Q2814": {
+"asof": null,
+"value": 110.0
+},
+"Q28198": {
+"asof": null,
+"value": 85.0
+},
+"Q28218": {
+"asof": null,
+"value": 17.0
+},
+"Q28260": {
+"asof": null,
+"value": 358.0
+},
+"Q28271": {
+"asof": null,
+"value": 12.0
+},
+"Q2833": {
+"asof": null,
+"value": 278.0
+},
+"Q283368": {
+"asof": null,
+"value": 245.0
+},
+"Q2837": {
+"asof": null,
+"value": 190.0
+},
+"Q2841": {
+"asof": null,
+"value": 2582.0
+},
+"Q2843": {
+"asof": null,
+"value": 13.0
+},
+"Q2844": {
+"asof": null,
+"value": 1171.0
+},
+"Q28515": {
+"asof": null,
+"value": 182.0
+},
+"Q28587": {
+"asof": null,
+"value": 1850.0
+},
+"Q2861": {
+"asof": null,
+"value": 18.0
+},
+"Q2865": {
+"asof": null,
+"value": 176.0
+},
+"Q2868": {
+"asof": null,
+"value": 154.0
+},
+"Q28729": {
+"asof": null,
+"value": 1.0
+},
+"Q288": {
+"asof": null,
+"value": 109.0
+},
+"Q28848": {
+"asof": null,
+"value": 250.0
+},
+"Q2887": {
+"asof": null,
+"value": 575.0
+},
+"Q28934": {
+"asof": null,
+"value": 56.083200000000005
+},
+"Q289693": {
+"asof": null,
+"value": 6.0
+},
+"Q2900": {
+"asof": null,
+"value": 2850.0
+},
+"Q2907": {
+"asof": null,
+"value": 2810.0
+},
+"Q2910": {
+"asof": null,
+"value": 96.0
+},
+"Q29151": {
+"asof": null,
+"value": 1950.0
+},
+"Q2916": {
+"asof": null,
+"value": 63.0
+},
+"Q29303": {
+"asof": null,
+"value": 3.0
+},
+"Q2933": {
+"asof": null,
+"value": 43.0
+},
+"Q2936": {
+"asof": null,
+"value": 4.0
+},
+"Q29364": {
+"asof": null,
+"value": 73.0
+},
+"Q2938": {
+"asof": null,
+"value": 61.0
+},
+"Q29422": {
+"asof": null,
+"value": 4.0
+},
+"Q29445": {
+"asof": null,
+"value": 17.0
+},
+"Q29460": {
+"asof": null,
+"value": 383.0
+},
+"Q2966": {
+"asof": null,
+"value": 114.0
+},
+"Q2971": {
+"asof": null,
+"value": 94.0
+},
+"Q2973": {
+"asof": null,
+"value": 144.0
+},
+"Q2978": {
+"asof": null,
+"value": 346.0
+},
+"Q29888": {
+"asof": null,
+"value": 99.0
+},
+"Q2999": {
+"asof": null,
+"value": 177.0
+},
+"Q30002": {
+"asof": null,
+"value": 500.0
+},
+"Q3001": {
+"asof": null,
+"value": 3.0
+},
+"Q3004": {
+"asof": null,
+"value": 376.0
+},
+"Q3012": {
+"asof": null,
+"value": 481.0
+},
+"Q3014": {
+"asof": null,
+"value": 63.0
+},
+"Q301833": {
+"asof": null,
+"value": 330.0
+},
+"Q3033": {
+"asof": null,
+"value": 150.0
+},
+"Q3037": {
+"asof": null,
+"value": 1300.0
+},
+"Q3038": {
+"asof": null,
+"value": 40.0
+},
+"Q3043": {
+"asof": null,
+"value": 76.0
+},
+"Q304848": {
+"asof": null,
+"value": 149.0
+},
+"Q305949": {
+"asof": null,
+"value": 1623.0
+},
+"Q306201": {
+"asof": null,
+"value": 1558.0
+},
+"Q3070": {
+"asof": null,
+"value": 1161.0
+},
+"Q3086162": {
+"asof": null,
+"value": 3286.0
+},
+"Q309104": {
+"asof": null,
+"value": 3415.0
+},
+"Q309202": {
+"asof": null,
+"value": 563.88
+},
+"Q30974": {
+"asof": null,
+"value": 39.0
+},
+"Q30985": {
+"asof": null,
+"value": 18.0
+},
+"Q3104": {
+"asof": null,
+"value": 73.0
+},
+"Q31058": {
+"asof": null,
+"value": 61.0
+},
+"Q31063": {
+"asof": null,
+"value": 234.0
+},
+"Q3107": {
+"asof": null,
+"value": 53.0
+},
+"Q3110": {
+"asof": null,
+"value": 670.0
+},
+"Q311266": {
+"asof": null,
+"value": 6.0
+},
+"Q3114": {
+"asof": null,
+"value": 578.0
+},
+"Q3118": {
+"asof": null,
+"value": 170.0
+},
+"Q3125978": {
+"asof": null,
+"value": 3031.0
+},
+"Q3126": {
+"asof": null,
+"value": 279.0
+},
+"Q3130": {
+"asof": null,
+"value": 58.0
+},
+"Q3138": {
+"asof": null,
+"value": 141.0
+},
+"Q3141": {
+"asof": null,
+"value": 31.0
+},
+"Q31487": {
+"asof": null,
+"value": 219.0
+},
+"Q3150": {
+"asof": null,
+"value": 143.0
+},
+"Q3159": {
+"asof": null,
+"value": 250.0
+},
+"Q318156": {
+"asof": null,
+"value": 461.0
+},
+"Q3183": {
+"asof": null,
+"value": 2.0
+},
+"Q318637": {
+"asof": null,
+"value": 2231.0
+},
+"Q319242": {
+"asof": null,
+"value": 20.0
+},
+"Q319654": {
+"asof": null,
+"value": 6.096
+},
+"Q319841": {
+"asof": null,
+"value": 77.0
+},
+"Q3206": {
+"asof": null,
+"value": 536.0
+},
+"Q321224": {
+"asof": null,
+"value": 4.2672
+},
+"Q321240": {
+"asof": null,
+"value": 408.0
+},
+"Q3214": {
+"asof": null,
+"value": 76.0
+},
+"Q321475": {
+"asof": null,
+"value": 3.0
+},
+"Q32159": {
+"asof": null,
+"value": 6.7056000000000004
+},
+"Q32190": {
+"asof": null,
+"value": 35.3568
+},
+"Q322": {
+"asof": null,
+"value": 38.0
+},
+"Q3224": {
+"asof": null,
+"value": 160.0
+},
+"Q323310": {
+"asof": null,
+"value": 1381.0
+},
+"Q3235": {
+"asof": null,
+"value": 326.0
+},
+"Q3237": {
+"asof": null,
+"value": 161.1
+},
+"Q3238": {
+"asof": null,
+"value": 990.0
+},
+"Q3258": {
+"asof": null,
+"value": 892.0
+},
+"Q3274": {
+"asof": null,
+"value": 143.0
+},
+"Q329266": {
+"asof": null,
+"value": 1883.0
+},
+"Q329967": {
+"asof": null,
+"value": 18.0
+},
+"Q32999": {
+"asof": null,
+"value": 182.88
+},
+"Q330015": {
+"asof": null,
+"value": 1655.3688000000002
+},
+"Q3306": {
+"asof": null,
+"value": 20.0
+},
+"Q331104": {
+"asof": null,
+"value": 80.0
+},
+"Q3311985": {
+"asof": null,
+"value": 110.0
+},
+"Q3323": {
+"asof": null,
+"value": 130.0
+},
+"Q332444": {
+"asof": null,
+"value": 765.0
+},
+"Q3327": {
+"asof": null,
+"value": 960.0
+},
+"Q3329": {
+"asof": null,
+"value": 220.0
+},
+"Q33292": {
+"asof": null,
+"value": 10.0
+},
+"Q33349": {
+"asof": null,
+"value": 38.0
+},
+"Q33405": {
+"asof": null,
+"value": 102.0
+},
+"Q33486": {
+"asof": null,
+"value": 18.0
+},
+"Q33613": {
+"asof": null,
+"value": 177.0
+},
+"Q3367": {
+"asof": null,
+"value": 583.0
+},
+"Q3370": {
+"asof": null,
+"value": 5.0
+},
+"Q3375": {
+"asof": null,
+"value": 2962.06
+},
+"Q3376": {
+"asof": null,
+"value": 203.0
+},
+"Q3388": {
+"asof": null,
+"value": 3798.0
+},
+"Q33910": {
+"asof": null,
+"value": 863.0
+},
+"Q3392": {
+"asof": null,
+"value": 2700.0
+},
+"Q33935": {
+"asof": null,
+"value": 5.0
+},
+"Q33959": {
+"asof": null,
+"value": 15.0
+},
+"Q33962": {
+"asof": null,
+"value": 15.0
+},
+"Q33986": {
+"asof": null,
+"value": 21.0
+},
+"Q340": {
+"asof": null,
+"value": 31.0
+},
+"Q34006": {
+"asof": null,
+"value": 108.0
+},
+"Q34109": {
+"asof": null,
+"value": 274.0
+},
+"Q34110": {
+"asof": null,
+"value": 1644.0
+},
+"Q3415": {
+"asof": null,
+"value": 16.0
+},
+"Q3426": {
+"asof": null,
+"value": 154.0
+},
+"Q34261": {
+"asof": null,
+"value": 98.0
+},
+"Q34366": {
+"asof": null,
+"value": 1009.0
+},
+"Q3437": {
+"asof": null,
+"value": 493.0
+},
+"Q34370": {
+"asof": null,
+"value": 10.0
+},
+"Q34374": {
+"asof": null,
+"value": 2456.0
+},
+"Q34404": {
+"asof": null,
+"value": -2.0
+},
+"Q34497": {
+"asof": null,
+"value": 818.0
+},
+"Q34617": {
+"asof": null,
+"value": 240.0
+},
+"Q34647": {
+"asof": null,
+"value": 1753.0
+},
+"Q34692": {
+"asof": null,
+"value": 9.0
+},
+"Q34713": {
+"asof": null,
+"value": 424.0
+},
+"Q34739": {
+"asof": null,
+"value": 225.0
+},
+"Q34804": {
+"asof": null,
+"value": 1619.0
+},
+"Q34820": {
+"asof": null,
+"value": 14.0
+},
+"Q34863": {
+"asof": null,
+"value": 366.0
+},
+"Q3490": {
+"asof": null,
+"value": 160.0
+},
+"Q3492": {
+"asof": null,
+"value": 12.0
+},
+"Q34925": {
+"asof": null,
+"value": 44.7
+},
+"Q34932": {
+"asof": null,
+"value": 0.0
+},
+"Q350": {
+"asof": null,
+"value": 6.0
+},
+"Q3503": {
+"asof": null,
+"value": 32.0
+},
+"Q351": {
+"asof": null,
+"value": 2470.0
+},
+"Q35178": {
+"asof": null,
+"value": 16.0
+},
+"Q3519": {
+"asof": null,
+"value": 5.0
+},
+"Q35342": {
+"asof": null,
+"value": 3812.0
+},
+"Q35381": {
+"asof": null,
+"value": 1.0
+},
+"Q3542": {
+"asof": null,
+"value": 200.0
+},
+"Q35484": {
+"asof": null,
+"value": 608.0
+},
+"Q35493": {
+"asof": null,
+"value": 893.0
+},
+"Q3551": {
+"asof": null,
+"value": 87.0
+},
+"Q35555": {
+"asof": null,
+"value": 166.0
+},
+"Q3557": {
+"asof": null,
+"value": 3432.0
+},
+"Q35581": {
+"asof": null,
+"value": 2290.0
+},
+"Q35600": {
+"asof": null,
+"value": 1895.0
+},
+"Q3561": {
+"asof": null,
+"value": 0.0
+},
+"Q35715": {
+"asof": null,
+"value": 162.0
+},
+"Q3572": {
+"asof": null,
+"value": 4.0
+},
+"Q35765": {
+"asof": null,
+"value": 20.0
+},
+"Q35775": {
+"asof": null,
+"value": 824.0
+},
+"Q3579": {
+"asof": null,
+"value": 81.0
+},
+"Q3586": {
+"asof": null,
+"value": 3676.0
+},
+"Q358755": {
+"asof": null,
+"value": 3460.0
+},
+"Q35883": {
+"asof": null,
+"value": 31.0
+},
+"Q35997": {
+"asof": null,
+"value": 9.0
+},
+"Q36034": {
+"asof": null,
+"value": 1864.0
+},
+"Q36036": {
+"asof": null,
+"value": 296.0
+},
+"Q36074": {
+"asof": null,
+"value": 744.0
+},
+"Q36091": {
+"asof": null,
+"value": 264.0
+},
+"Q36117": {
+"asof": null,
+"value": 4095.0
+},
+"Q3616": {
+"asof": null,
+"value": 1179.0
+},
+"Q36160": {
+"asof": null,
+"value": 13.0
+},
+"Q36167": {
+"asof": null,
+"value": 15.0
+},
+"Q3624": {
+"asof": null,
+"value": 2355.0
+},
+"Q3630": {
+"asof": null,
+"value": 91.0
+},
+"Q36312": {
+"asof": null,
+"value": 1045.0
+},
+"Q36332": {
+"asof": null,
+"value": 1.0
+},
+"Q3640": {
+"asof": null,
+"value": 938.0
+},
+"Q3642": {
+"asof": null,
+"value": 2325.0
+},
+"Q36420": {
+"asof": null,
+"value": 4.0
+},
+"Q36433": {
+"asof": null,
+"value": 104.0
+},
+"Q36454": {
+"asof": null,
+"value": 42.976800000000004
+},
+"Q3646": {
+"asof": null,
+"value": 25.0
+},
+"Q36471": {
+"asof": null,
+"value": 14.0
+},
+"Q365": {
+"asof": null,
+"value": 59.0
+},
+"Q36526": {
+"asof": null,
+"value": 74.0
+},
+"Q3659": {
+"asof": null,
+"value": 298.0
+},
+"Q36600": {
+"asof": null,
+"value": 1.0
+},
+"Q3661908": {
+"asof": null,
+"value": 99.0
+},
+"Q36647": {
+"asof": null,
+"value": 0.0
+},
+"Q366754": {
+"asof": null,
+"value": 8.84
+},
+"Q36687": {
+"asof": null,
+"value": 236.0
+},
+"Q3674": {
+"asof": null,
+"value": 207.0
+},
+"Q36755": {
+"asof": null,
+"value": 730.0
+},
+"Q367943": {
+"asof": null,
+"value": 244.0
+},
+"Q3688": {
+"asof": null,
+"value": 7.0
+},
+"Q3692": {
+"asof": null,
+"value": 612.0
+},
+"Q36947": {
+"asof": null,
+"value": 8.0
+},
+"Q3703": {
+"asof": null,
+"value": 350.0
+},
+"Q37043": {
+"asof": null,
+"value": 62.0
+},
+"Q37100": {
+"asof": null,
+"value": 196.0
+},
+"Q3711": {
+"asof": null,
+"value": 117.0
+},
+"Q37133": {
+"asof": null,
+"value": 67.0
+},
+"Q3718": {
+"asof": null,
+"value": 10.0
+},
+"Q37200": {
+"asof": null,
+"value": 95.0
+},
+"Q3724": {
+"asof": null,
+"value": 3078.0
+},
+"Q37320": {
+"asof": null,
+"value": 199.0
+},
+"Q3733": {
+"asof": null,
+"value": 13.0
+},
+"Q37333": {
+"asof": null,
+"value": 163.0
+},
+"Q37400": {
+"asof": null,
+"value": 115.0
+},
+"Q3741": {
+"asof": null,
+"value": 2910.0
+},
+"Q374365": {
+"asof": null,
+"value": 12.0
+},
+"Q374748": {
+"asof": null,
+"value": 250.0
+},
+"Q3751": {
+"asof": null,
+"value": 1.0
+},
+"Q3757": {
+"asof": null,
+"value": 3676.0
+},
+"Q3758": {
+"asof": null,
+"value": 251.0
+},
+"Q3761": {
+"asof": null,
+"value": 61.0
+},
+"Q3766": {
+"asof": null,
+"value": 680.0
+},
+"Q376749": {
+"asof": null,
+"value": 6.0
+},
+"Q3768": {
+"asof": null,
+"value": 214.0
+},
+"Q37701": {
+"asof": null,
+"value": 1395.0
+},
+"Q377485": {
+"asof": null,
+"value": 2287.0
+},
+"Q3777": {
+"asof": null,
+"value": 305.0
+},
+"Q37776": {
+"asof": null,
+"value": 281.0
+},
+"Q37836": {
+"asof": null,
+"value": 188.0
+},
+"Q3787": {
+"asof": null,
+"value": 360.0
+},
+"Q3795": {
+"asof": null,
+"value": 2278.0
+},
+"Q37951": {
+"asof": null,
+"value": 5.0
+},
+"Q3798": {
+"asof": null,
+"value": 12.0
+},
+"Q37985": {
+"asof": null,
+"value": 1449.0
+},
+"Q37995": {
+"asof": null,
+"value": 15.0
+},
+"Q3802": {
+"asof": null,
+"value": 104.0
+},
+"Q38022": {
+"asof": null,
+"value": 149.0
+},
+"Q3805": {
+"asof": null,
+"value": 776.0
+},
+"Q3806": {
+"asof": null,
+"value": 338.0
+},
+"Q3808": {
+"asof": null,
+"value": 764.0
+},
+"Q381050": {
+"asof": null,
+"value": 157.0
+},
+"Q3812": {
+"asof": null,
+"value": 1929.0
+},
+"Q3820": {
+"asof": null,
+"value": 0.0
+},
+"Q38234": {
+"asof": null,
+"value": 105.0
+},
+"Q3826": {
+"asof": null,
+"value": 69.0
+},
+"Q3827": {
+"asof": null,
+"value": 958.0
+},
+"Q38272": {
+"asof": null,
+"value": 1343.0
+},
+"Q38283": {
+"asof": null,
+"value": 24.0
+},
+"Q3834": {
+"asof": null,
+"value": 402.0
+},
+"Q3838": {
+"asof": null,
+"value": 240.0
+},
+"Q38380": {
+"asof": null,
+"value": 64.0
+},
+"Q384": {
+"asof": null,
+"value": 251.0
+},
+"Q3844": {
+"asof": null,
+"value": 320.0
+},
+"Q38453": {
+"asof": null,
+"value": 89.0
+},
+"Q384544": {
+"asof": null,
+"value": 447.0
+},
+"Q385": {
+"asof": null,
+"value": 205.0
+},
+"Q38511": {
+"asof": null,
+"value": 0.0
+},
+"Q3852": {
+"asof": null,
+"value": 93.0
+},
+"Q385406": {
+"asof": null,
+"value": 750.0
+},
+"Q38545": {
+"asof": null,
+"value": 23.0
+},
+"Q38555": {
+"asof": null,
+"value": 2133.6
+},
+"Q3856": {
+"asof": null,
+"value": 220.0
+},
+"Q3859": {
+"asof": null,
+"value": 1567.0
+},
+"Q3861": {
+"asof": null,
+"value": 0.0
+},
+"Q3869": {
+"asof": null,
+"value": 186.0
+},
+"Q3870": {
+"asof": null,
+"value": 1661.0
+},
+"Q387047": {
+"asof": null,
+"value": 32.0
+},
+"Q38733": {
+"asof": null,
+"value": 1181.0
+},
+"Q388535": {
+"asof": null,
+"value": 5.0
+},
+"Q38888": {
+"asof": null,
+"value": 69.0
+},
+"Q3889": {
+"asof": null,
+"value": 31.0
+},
+"Q38891": {
+"asof": null,
+"value": 171.0
+},
+"Q3894": {
+"asof": null,
+"value": 1190.0
+},
+"Q38954": {
+"asof": null,
+"value": 3715.0
+},
+"Q3897": {
+"asof": null,
+"value": 6.0
+},
+"Q38981": {
+"asof": null,
+"value": 1063.0
+},
+"Q39042": {
+"asof": null,
+"value": 1848.0
+},
+"Q39054": {
+"asof": null,
+"value": 210.0
+},
+"Q39109": {
+"asof": null,
+"value": 1193.0
+},
+"Q39121": {
+"asof": null,
+"value": 51.0
+},
+"Q3915": {
+"asof": null,
+"value": 1276.0
+},
+"Q39178": {
+"asof": null,
+"value": 3.0
+},
+"Q3920": {
+"asof": null,
+"value": 17.0
+},
+"Q3921": {
+"asof": null,
+"value": 1492.0
+},
+"Q3923": {
+"asof": null,
+"value": 344.0
+},
+"Q39231": {
+"asof": null,
+"value": 3777.24
+},
+"Q3926": {
+"asof": null,
+"value": 1339.0
+},
+"Q3927": {
+"asof": null,
+"value": -25.0
+},
+"Q3929": {
+"asof": null,
+"value": 134.0
+},
+"Q393": {
+"asof": null,
+"value": 131.0
+},
+"Q3935": {
+"asof": null,
+"value": 1650.0
+},
+"Q3936": {
+"asof": null,
+"value": 262.0
+},
+"Q39420": {
+"asof": null,
+"value": 65.0
+},
+"Q39450": {
+"asof": null,
+"value": 31.0
+},
+"Q39517": {
+"asof": null,
+"value": 175.0
+},
+"Q3955": {
+"asof": null,
+"value": 208.0
+},
+"Q39561": {
+"asof": null,
+"value": 185.0136
+},
+"Q3963": {
+"asof": null,
+"value": 261.0
+},
+"Q39651": {
+"asof": null,
+"value": 1651.0
+},
+"Q39709": {
+"asof": null,
+"value": 291.0
+},
+"Q39739": {
+"asof": null,
+"value": 6962.0
+},
+"Q3992": {
+"asof": null,
+"value": 66.0
+},
+"Q3995": {
+"asof": null,
+"value": 876.0
+},
+"Q39984": {
+"asof": null,
+"value": 260.0
+},
+"Q40030": {
+"asof": null,
+"value": 121.0
+},
+"Q40040": {
+"asof": null,
+"value": 70.0
+},
+"Q40059": {
+"asof": null,
+"value": 2814.0
+},
+"Q40104": {
+"asof": null,
+"value": 38.0
+},
+"Q40191": {
+"asof": null,
+"value": 54.0
+},
+"Q40236": {
+"asof": null,
+"value": 92.0
+},
+"Q4024": {
+"asof": null,
+"value": 40.0
+},
+"Q40269": {
+"asof": null,
+"value": 10.0
+},
+"Q40285": {
+"asof": null,
+"value": 164.0
+},
+"Q4035546": {
+"asof": null,
+"value": 610.0
+},
+"Q40430": {
+"asof": null,
+"value": 838.0
+},
+"Q40435": {
+"asof": null,
+"value": 183.0
+},
+"Q406": {
+"asof": null,
+"value": 100.0
+},
+"Q406037": {
+"asof": null,
+"value": 303.0
+},
+"Q4065": {
+"asof": null,
+"value": 9.0
+},
+"Q4069": {
+"asof": null,
+"value": 307.0
+},
+"Q40729": {
+"asof": null,
+"value": 800.0
+},
+"Q40738": {
+"asof": null,
+"value": 100.0
+},
+"Q40758": {
+"asof": null,
+"value": 5610.0
+},
+"Q4077": {
+"asof": null,
+"value": 201.0
+},
+"Q40811": {
+"asof": null,
+"value": 20.0
+},
+"Q40816": {
+"asof": null,
+"value": 2.0
+},
+"Q40844": {
+"asof": null,
+"value": 3.0
+},
+"Q40846": {
+"asof": null,
+"value": 10.0
+},
+"Q40898": {
+"asof": null,
+"value": 232.0
+},
+"Q40921": {
+"asof": null,
+"value": 29.0
+},
+"Q40942": {
+"asof": null,
+"value": 504.0
+},
+"Q4098": {
+"asof": null,
+"value": 5.0
+},
+"Q4100": {
+"asof": null,
+"value": 181.0
+},
+"Q41057": {
+"asof": null,
+"value": 288.0
+},
+"Q41087": {
+"asof": null,
+"value": 96.0
+},
+"Q41115": {
+"asof": null,
+"value": 627.0
+},
+"Q4115712": {
+"asof": null,
+"value": 48.0
+},
+"Q41158": {
+"asof": null,
+"value": 1224.0
+},
+"Q41164": {
+"asof": null,
+"value": 1950.0
+},
+"Q41179": {
+"asof": null,
+"value": 1.0
+},
+"Q41183": {
+"asof": null,
+"value": 379.0
+},
+"Q41185": {
+"asof": null,
+"value": 2.0
+},
+"Q4120832": {
+"asof": null,
+"value": 48.0
+},
+"Q41211": {
+"asof": null,
+"value": 3.0
+},
+"Q41225": {
+"asof": null,
+"value": 17.0
+},
+"Q41252": {
+"asof": null,
+"value": 60.0
+},
+"Q41262": {
+"asof": null,
+"value": 61.0
+},
+"Q4127": {
+"asof": null,
+"value": 397.0
+},
+"Q41329": {
+"asof": null,
+"value": 270.0
+},
+"Q41358": {
+"asof": null,
+"value": 200.0
+},
+"Q41428": {
+"asof": null,
+"value": 1109.0
+},
+"Q4148644": {
+"asof": null,
+"value": 3694.0
+},
+"Q4152": {
+"asof": null,
+"value": 940.0
+},
+"Q41572": {
+"asof": null,
+"value": 53.0
+},
+"Q41599": {
+"asof": null,
+"value": 5.0
+},
+"Q41604": {
+"asof": null,
+"value": 14.0
+},
+"Q41621": {
+"asof": null,
+"value": 475.0
+},
+"Q4168": {
+"asof": null,
+"value": 109.0
+},
+"Q41753": {
+"asof": null,
+"value": 446.0
+},
+"Q41819": {
+"asof": null,
+"value": 277.0
+},
+"Q41843": {
+"asof": null,
+"value": 260.0
+},
+"Q4186": {
+"asof": null,
+"value": 1141.0
+},
+"Q41876": {
+"asof": null,
+"value": 93.0
+},
+"Q4190": {
+"asof": null,
+"value": 312.0
+},
+"Q4191": {
+"asof": null,
+"value": 436.0
+},
+"Q41967": {
+"asof": null,
+"value": 343.0
+},
+"Q41970": {
+"asof": null,
+"value": 500.0
+},
+"Q42000": {
+"asof": null,
+"value": 2241.0
+},
+"Q4204": {
+"asof": null,
+"value": 1493.0
+},
+"Q42049": {
+"asof": null,
+"value": 282.2448
+},
+"Q42053": {
+"asof": null,
+"value": 1574.0
+},
+"Q42070": {
+"asof": null,
+"value": 1547.0
+},
+"Q42168": {
+"asof": null,
+"value": 602.0
+},
+"Q42182": {
+"asof": null,
+"value": 6.096
+},
+"Q42191": {
+"asof": null,
+"value": 1606.0
+},
+"Q42200": {
+"asof": null,
+"value": 1840.0
+},
+"Q42308": {
+"asof": null,
+"value": 152.0
+},
+"Q42328401": {
+"asof": null,
+"value": 6.0
+},
+"Q42448": {
+"asof": null,
+"value": 75.0
+},
+"Q42462": {
+"asof": null,
+"value": 25.0
+},
+"Q42497": {
+"asof": null,
+"value": 279.0
+},
+"Q42622": {
+"asof": null,
+"value": 5.0
+},
+"Q42646": {
+"asof": null,
+"value": 54.864000000000004
+},
+"Q42716": {
+"asof": null,
+"value": 1117.0
+},
+"Q42735": {
+"asof": null,
+"value": 29.0
+},
+"Q42800": {
+"asof": null,
+"value": 760.0
+},
+"Q42807": {
+"asof": null,
+"value": 56.0
+},
+"Q42810": {
+"asof": null,
+"value": 0.0
+},
+"Q42824": {
+"asof": null,
+"value": 408.0
+},
+"Q42941": {
+"asof": null,
+"value": 171.0
+},
+"Q42944": {
+"asof": null,
+"value": 422.0
+},
+"Q42956": {
+"asof": null,
+"value": 118.0
+},
+"Q430464": {
+"asof": null,
+"value": 180.0
+},
+"Q43048": {
+"asof": null,
+"value": 1215.0
+},
+"Q43070": {
+"asof": null,
+"value": 169.0
+},
+"Q430776": {
+"asof": null,
+"value": 347.0
+},
+"Q43105": {
+"asof": null,
+"value": 5642.0
+},
+"Q43106": {
+"asof": null,
+"value": 329.0
+},
+"Q431381": {
+"asof": null,
+"value": 1719.0
+},
+"Q431470": {
+"asof": null,
+"value": 443.0
+},
+"Q43196": {
+"asof": null,
+"value": 147.0
+},
+"Q43199": {
+"asof": null,
+"value": 332.0
+},
+"Q43210": {
+"asof": null,
+"value": 333.0
+},
+"Q43233": {
+"asof": null,
+"value": 756.0
+},
+"Q43278": {
+"asof": null,
+"value": 892.0
+},
+"Q43301": {
+"asof": null,
+"value": 94.0
+},
+"Q43382": {
+"asof": null,
+"value": 0.0
+},
+"Q43387": {
+"asof": null,
+"value": 42.0
+},
+"Q43421": {
+"asof": null,
+"value": 59.0
+},
+"Q43433": {
+"asof": null,
+"value": 350.0
+},
+"Q43453": {
+"asof": null,
+"value": 322.0
+},
+"Q43463": {
+"asof": null,
+"value": 21.0
+},
+"Q43473": {
+"asof": null,
+"value": 65.0
+},
+"Q43509": {
+"asof": null,
+"value": 4.0
+},
+"Q43512": {
+"asof": null,
+"value": 8611.0
+},
+"Q4361": {
+"asof": null,
+"value": 935.0
+},
+"Q43631": {
+"asof": null,
+"value": 0.0
+},
+"Q43668": {
+"asof": null,
+"value": 142.0
+},
+"Q437": {
+"asof": null,
+"value": 309.0
+},
+"Q43788": {
+"asof": null,
+"value": 287.0
+},
+"Q43919": {
+"asof": null,
+"value": 467.0
+},
+"Q44059": {
+"asof": null,
+"value": 26.0
+},
+"Q44160": {
+"asof": null,
+"value": 0.0
+},
+"Q44198": {
+"asof": null,
+"value": 218.0
+},
+"Q44210": {
+"asof": null,
+"value": 390.0
+},
+"Q44237": {
+"asof": null,
+"value": 769.0
+},
+"Q4425": {
+"asof": null,
+"value": 3967.0
+},
+"Q44254": {
+"asof": null,
+"value": 23.0
+},
+"Q44401": {
+"asof": null,
+"value": 143.0
+},
+"Q4454": {
+"asof": null,
+"value": 72.0
+},
+"Q44564": {
+"asof": null,
+"value": 181.96560000000002
+},
+"Q44749": {
+"asof": null,
+"value": 99.0
+},
+"Q44754": {
+"asof": null,
+"value": 54.0
+},
+"Q44856": {
+"asof": null,
+"value": 33.0
+},
+"Q44889": {
+"asof": null,
+"value": 390.0
+},
+"Q44989": {
+"asof": null,
+"value": 223.0
+},
+"Q45178": {
+"asof": null,
+"value": 15.0
+},
+"Q4527": {
+"asof": null,
+"value": 2695.0
+},
+"Q45301": {
+"asof": null,
+"value": 0.0
+},
+"Q45313": {
+"asof": null,
+"value": 920.0
+},
+"Q45328": {
+"asof": null,
+"value": 1019.0
+},
+"Q45412": {
+"asof": null,
+"value": 43.0
+},
+"Q455167": {
+"asof": null,
+"value": 3888.0
+},
+"Q4558": {
+"asof": null,
+"value": 4392.4728000000005
+},
+"Q456": {
+"asof": null,
+"value": 312.0
+},
+"Q45604": {
+"asof": null,
+"value": 1010.0
+},
+"Q45656": {
+"asof": null,
+"value": 209.0
+},
+"Q456847": {
+"asof": null,
+"value": 892.0
+},
+"Q45797": {
+"asof": null,
+"value": 0.0
+},
+"Q459": {
+"asof": null,
+"value": 172.0
+},
+"Q459096": {
+"asof": null,
+"value": 185.0136
+},
+"Q459173": {
+"asof": "2014-01-01",
+"value": -10984.0
+},
+"Q459578": {
+"asof": null,
+"value": 113.0
+},
+"Q459787": {
+"asof": null,
+"value": 21.0
+},
+"Q46033": {
+"asof": null,
+"value": 110.64240000000001
+},
+"Q461371": {
+"asof": null,
+"value": 33.0
+},
+"Q461382": {
+"asof": null,
+"value": 2124.0
+},
+"Q46197": {
+"asof": null,
+"value": 345.0
+},
+"Q46280": {
+"asof": null,
+"value": 119.0
+},
+"Q4629": {
+"asof": null,
+"value": 13.0
+},
+"Q463252": {
+"asof": null,
+"value": 5.0
+},
+"Q463937": {
+"asof": null,
+"value": 306.0
+},
+"Q46422": {
+"asof": null,
+"value": 592.0
+},
+"Q46475": {
+"asof": null,
+"value": 2072.0
+},
+"Q4648": {
+"asof": null,
+"value": 3031.0
+},
+"Q465071": {
+"asof": null,
+"value": 110.03280000000001
+},
+"Q46508": {
+"asof": null,
+"value": 239.0
+},
+"Q4656": {
+"asof": null,
+"value": 30.0
+},
+"Q465811": {
+"asof": null,
+"value": 6.096
+},
+"Q46650": {
+"asof": null,
+"value": 260.0
+},
+"Q466786": {
+"asof": null,
+"value": 5.486400000000001
+},
+"Q466835": {
+"asof": null,
+"value": 95.4024
+},
+"Q46747": {
+"asof": null,
+"value": 57.0
+},
+"Q4675": {
+"asof": null,
+"value": 2549.0
+},
+"Q46772": {
+"asof": null,
+"value": 409.0
+},
+"Q46841": {
+"asof": null,
+"value": 0.0
+},
+"Q46852": {
+"asof": null,
+"value": 66.0
+},
+"Q46879": {
+"asof": null,
+"value": 5.0
+},
+"Q47034": {
+"asof": null,
+"value": 27.0
+},
+"Q47048": {
+"asof": null,
+"value": 8.0
+},
+"Q4706020": {
+"asof": null,
+"value": 2131.0
+},
+"Q47141": {
+"asof": null,
+"value": 2657.0
+},
+"Q47164": {
+"asof": null,
+"value": 32.0
+},
+"Q472": {
+"asof": null,
+"value": 560.0
+},
+"Q47265": {
+"asof": null,
+"value": 9.144
+},
+"Q47430": {
+"asof": null,
+"value": 177.0
+},
+"Q47465": {
+"asof": null,
+"value": 246.0
+},
+"Q474782": {
+"asof": null,
+"value": 1175.0
+},
+"Q474868": {
+"asof": null,
+"value": 7.0
+},
+"Q47492": {
+"asof": null,
+"value": 30.0
+},
+"Q47554": {
+"asof": null,
+"value": 59.0
+},
+"Q47700": {
+"asof": null,
+"value": 1168.0
+},
+"Q47716": {
+"asof": null,
+"value": 6.0
+},
+"Q4777": {
+"asof": null,
+"value": 2810.0
+},
+"Q47772": {
+"asof": null,
+"value": 1093.0
+},
+"Q47837": {
+"asof": null,
+"value": 72.0
+},
+"Q478595": {
+"asof": null,
+"value": 10.0
+},
+"Q47863": {
+"asof": null,
+"value": 3.0
+},
+"Q47887": {
+"asof": null,
+"value": 29.0
+},
+"Q47916": {
+"asof": null,
+"value": 123.0
+},
+"Q481758": {
+"asof": null,
+"value": 5.0
+},
+"Q48195": {
+"asof": null,
+"value": 5.0
+},
+"Q48256": {
+"asof": null,
+"value": 155.0
+},
+"Q48278": {
+"asof": null,
+"value": 1405.0
+},
+"Q48292": {
+"asof": null,
+"value": 4.0
+},
+"Q48335": {
+"asof": null,
+"value": 814.0
+},
+"Q48338": {
+"asof": null,
+"value": 1050.0
+},
+"Q48344": {
+"asof": null,
+"value": 6.0
+},
+"Q48370": {
+"asof": null,
+"value": 64.0
+},
+"Q48403": {
+"asof": null,
+"value": 234.0
+},
+"Q484245": {
+"asof": null,
+"value": 41.0
+},
+"Q48435": {
+"asof": null,
+"value": 46.0
+},
+"Q484678": {
+"asof": null,
+"value": 52.0
+},
+"Q484706": {
+"asof": null,
+"value": 553.0
+},
+"Q484799": {
+"asof": null,
+"value": 22.0
+},
+"Q485172": {
+"asof": null,
+"value": 256.0
+},
+"Q485176": {
+"asof": null,
+"value": 263.0
+},
+"Q485186": {
+"asof": null,
+"value": 4.0
+},
+"Q485496": {
+"asof": null,
+"value": 506.0
+},
+"Q485581": {
+"asof": null,
+"value": 25.0
+},
+"Q485708": {
+"asof": null,
+"value": 214.0
+},
+"Q485716": {
+"asof": null,
+"value": 159.1056
+},
+"Q485724": {
+"asof": null,
+"value": 553.0
+},
+"Q486168": {
+"asof": null,
+"value": 321.0
+},
+"Q486306": {
+"asof": null,
+"value": 31.0
+},
+"Q486472": {
+"asof": null,
+"value": 265.0
+},
+"Q486860": {
+"asof": null,
+"value": 32.0
+},
+"Q487119": {
+"asof": null,
+"value": 21.031200000000002
+},
+"Q487315": {
+"asof": null,
+"value": 8.0
+},
+"Q487656": {
+"asof": null,
+"value": 494.0
+},
+"Q487981": {
+"asof": null,
+"value": 15.0
+},
+"Q487988": {
+"asof": null,
+"value": 152.0
+},
+"Q488004": {
+"asof": null,
+"value": 146.0
+},
+"Q48821": {
+"asof": null,
+"value": 3.0
+},
+"Q48958": {
+"asof": null,
+"value": 33.0
+},
+"Q490": {
+"asof": null,
+"value": 138.0
+},
+"Q49111": {
+"asof": null,
+"value": 12.0
+},
+"Q49145": {
+"asof": null,
+"value": 18.0
+},
+"Q49148": {
+"asof": null,
+"value": 24.0
+},
+"Q49149": {
+"asof": null,
+"value": 9.0
+},
+"Q49152": {
+"asof": null,
+"value": 93.2688
+},
+"Q49174": {
+"asof": null,
+"value": 1.0
+},
+"Q49179": {
+"asof": null,
+"value": 146.0
+},
+"Q4918": {
+"asof": null,
+"value": 0.0
+},
+"Q49201": {
+"asof": null,
+"value": 19.0
+},
+"Q49218": {
+"asof": null,
+"value": 154.0
+},
+"Q49219": {
+"asof": null,
+"value": 17.0688
+},
+"Q49221": {
+"asof": null,
+"value": 380.0
+},
+"Q49225": {
+"asof": null,
+"value": 1373.0
+},
+"Q49227": {
+"asof": null,
+"value": 300.0
+},
+"Q49231": {
+"asof": null,
+"value": 10.0
+},
+"Q49233": {
+"asof": null,
+"value": 34.0
+},
+"Q49236": {
+"asof": null,
+"value": 134.0
+},
+"Q49238": {
+"asof": null,
+"value": 272.0
+},
+"Q492386": {
+"asof": null,
+"value": 447.0
+},
+"Q49239": {
+"asof": null,
+"value": 187.0
+},
+"Q49240": {
+"asof": null,
+"value": 3.9624
+},
+"Q49241": {
+"asof": null,
+"value": 305.0
+},
+"Q49242": {
+"asof": null,
+"value": 8.0
+},
+"Q49243": {
+"asof": null,
+"value": 252.0696
+},
+"Q49247": {
+"asof": null,
+"value": 47.8536
+},
+"Q49255": {
+"asof": null,
+"value": 30.0
+},
+"Q492552": {
+"asof": null,
+"value": 450.0
+},
+"Q49256": {
+"asof": null,
+"value": 123.0
+},
+"Q49258": {
+"asof": null,
+"value": 1839.0
+},
+"Q49259": {
+"asof": null,
+"value": 7.0
+},
+"Q49266": {
+"asof": null,
+"value": 396.0
+},
+"Q49268": {
+"asof": null,
+"value": 247.0
+},
+"Q495": {
+"asof": null,
+"value": 239.0
+},
+"Q49650": {
+"asof": null,
+"value": 16.0
+},
+"Q4970": {
+"asof": null,
+"value": 19.0
+},
+"Q498627": {
+"asof": null,
+"value": 10.0
+},
+"Q498773": {
+"asof": null,
+"value": 10.0
+},
+"Q500253": {
+"asof": null,
+"value": 21.640800000000002
+},
+"Q501170": {
+"asof": null,
+"value": 66.0
+},
+"Q501744": {
+"asof": null,
+"value": 30.48
+},
+"Q50189": {
+"asof": null,
+"value": 556.0
+},
+"Q502141": {
+"asof": null,
+"value": 372.0
+},
+"Q502670": {
+"asof": null,
+"value": 15.8496
+},
+"Q503301": {
+"asof": null,
+"value": -71.3232
+},
+"Q503364": {
+"asof": null,
+"value": 915.3144000000001
+},
+"Q503415": {
+"asof": null,
+"value": 29.8704
+},
+"Q504368": {
+"asof": null,
+"value": 11.277600000000001
+},
+"Q505935": {
+"asof": null,
+"value": 910.0
+},
+"Q5065": {
+"asof": null,
+"value": 570.0
+},
+"Q50816": {
+"asof": null,
+"value": 161.0
+},
+"Q5083": {
+"asof": null,
+"value": 40.0
+},
+"Q5087": {
+"asof": null,
+"value": 400.0
+},
+"Q5089": {
+"asof": null,
+"value": 9.0
+},
+"Q5092": {
+"asof": null,
+"value": 10.0
+},
+"Q5095": {
+"asof": null,
+"value": 2193.0
+},
+"Q510": {
+"asof": null,
+"value": -10994.0
+},
+"Q51103": {
+"asof": null,
+"value": 1018.0
+},
+"Q5112": {
+"asof": null,
+"value": 1.0
+},
+"Q511957": {
+"asof": null,
+"value": 1.0
+},
+"Q51252": {
+"asof": null,
+"value": 56.0
+},
+"Q513": {
+"asof": null,
+"value": 8848.344000000001
+},
+"Q514070": {
+"asof": null,
+"value": 7.0
+},
+"Q51599": {
+"asof": null,
+"value": 34.0
+},
+"Q51679": {
+"asof": null,
+"value": 1.0
+},
+"Q5168": {
+"asof": null,
+"value": 10.0
+},
+"Q51691": {
+"asof": null,
+"value": 1099.0
+},
+"Q51693": {
+"asof": null,
+"value": 10.0
+},
+"Q51812": {
+"asof": null,
+"value": 416.0
+},
+"Q5196": {
+"asof": null,
+"value": 130.0
+},
+"Q520": {
+"asof": "2003-01-01",
+"value": 21229.0
+},
+"Q52028": {
+"asof": null,
+"value": 310.0
+},
+"Q52051": {
+"asof": null,
+"value": 649.0
+},
+"Q5206": {
+"asof": null,
+"value": 620.0
+},
+"Q5239": {
+"asof": null,
+"value": 692.0
+},
+"Q524": {
+"asof": null,
+"value": 1297.0
+},
+"Q52535": {
+"asof": null,
+"value": 31.0
+},
+"Q52607": {
+"asof": null,
+"value": 38.0
+},
+"Q5265": {
+"asof": null,
+"value": 512.0
+},
+"Q528626": {
+"asof": null,
+"value": 86.86800000000001
+},
+"Q53139": {
+"asof": null,
+"value": 650.0
+},
+"Q5332": {
+"asof": null,
+"value": 50.0
+},
+"Q5337": {
+"asof": null,
+"value": 150.0
+},
+"Q535534": {
+"asof": null,
+"value": 1065.0
+},
+"Q5384": {
+"asof": null,
+"value": 150.0
+},
+"Q54066": {
+"asof": null,
+"value": 0.0
+},
+"Q54108": {
+"asof": null,
+"value": 20.0
+},
+"Q54140": {
+"asof": null,
+"value": 8.0
+},
+"Q5426": {
+"asof": null,
+"value": 140.0
+},
+"Q54264": {
+"asof": null,
+"value": 9.0
+},
+"Q5449": {
+"asof": null,
+"value": 100.0
+},
+"Q545": {
+"asof": null,
+"value": 0.0
+},
+"Q5451": {
+"asof": null,
+"value": 8848.86
+},
+"Q5456": {
+"asof": null,
+"value": 6962.0
+},
+"Q546": {
+"asof": null,
+"value": 2.0
+},
+"Q5463": {
+"asof": null,
+"value": 4401.0
+},
+"Q5465": {
+"asof": null,
+"value": 5.0
+},
+"Q5468": {
+"asof": null,
+"value": 22.0
+},
+"Q5469": {
+"asof": null,
+"value": 8611.0
+},
+"Q5470": {
+"asof": null,
+"value": 178.0
+},
+"Q5472": {
+"asof": null,
+"value": 7708.0
+},
+"Q5474": {
+"asof": null,
+"value": 7439.0
+},
+"Q5475": {
+"asof": null,
+"value": 15.0
+},
+"Q5477": {
+"asof": null,
+"value": 5642.0
+},
+"Q5484": {
+"asof": null,
+"value": -28.0
+},
+"Q5489": {
+"asof": null,
+"value": 110.0
+},
+"Q5492": {
+"asof": null,
+"value": 173.0
+},
+"Q5505": {
+"asof": null,
+"value": 1133.0
+},
+"Q5511": {
+"asof": null,
+"value": 773.0
+},
+"Q5513": {
+"asof": null,
+"value": 455.5
+},
+"Q5540": {
+"asof": null,
+"value": 150.0
+},
+"Q55630": {
+"asof": null,
+"value": 80.0
+},
+"Q5582862": {
+"asof": null,
+"value": 3399.0
+},
+"Q5627": {
+"asof": null,
+"value": 150.0
+},
+"Q5687": {
+"asof": null,
+"value": -275.0
+},
+"Q5689": {
+"asof": null,
+"value": 129.0
+},
+"Q569678": {
+"asof": null,
+"value": 1461.0
+},
+"Q56973": {
+"asof": null,
+"value": 4.0
+},
+"Q5710": {
+"asof": null,
+"value": 214.0
+},
+"Q5715": {
+"asof": null,
+"value": 20.0
+},
+"Q5720": {
+"asof": null,
+"value": 363.0
+},
+"Q5727": {
+"asof": null,
+"value": 1074.0
+},
+"Q572801": {
+"asof": null,
+"value": 1917.0
+},
+"Q572865": {
+"asof": null,
+"value": 5825.0
+},
+"Q5748": {
+"asof": null,
+"value": 696.0
+},
+"Q5753": {
+"asof": null,
+"value": 702.0
+},
+"Q5756": {
+"asof": null,
+"value": 678.0
+},
+"Q5760": {
+"asof": null,
+"value": 221.0
+},
+"Q5764": {
+"asof": null,
+"value": 225.0
+},
+"Q5772": {
+"asof": null,
+"value": 348.0
+},
+"Q5776": {
+"asof": null,
+"value": 775.0
+},
+"Q5783": {
+"asof": null,
+"value": 600.0
+},
+"Q5788": {
+"asof": null,
+"value": 1350.0
+},
+"Q580": {
+"asof": null,
+"value": 219.0
+},
+"Q5806": {
+"asof": null,
+"value": 277.0
+},
+"Q5815": {
+"asof": null,
+"value": 102.0
+},
+"Q5818": {
+"asof": null,
+"value": 120.0
+},
+"Q58226": {
+"asof": null,
+"value": 44.805600000000005
+},
+"Q5823": {
+"asof": null,
+"value": 10.0
+},
+"Q5826": {
+"asof": null,
+"value": 405.0
+},
+"Q583": {
+"asof": "2023-10-05",
+"value": 4805.59
+},
+"Q5831": {
+"asof": null,
+"value": 30.0
+},
+"Q5836": {
+"asof": null,
+"value": 523.0
+},
+"Q5838": {
+"asof": null,
+"value": 1790.0
+},
+"Q584451": {
+"asof": null,
+"value": 97.0
+},
+"Q585": {
+"asof": null,
+"value": 23.0
+},
+"Q586": {
+"asof": null,
+"value": 60.0
+},
+"Q5869": {
+"asof": null,
+"value": 3650.0
+},
+"Q58731": {
+"asof": null,
+"value": 578.0
+},
+"Q588": {
+"asof": null,
+"value": 357.0
+},
+"Q588804": {
+"asof": null,
+"value": 3300.0
+},
+"Q58976": {
+"asof": null,
+"value": 2.0
+},
+"Q59218": {
+"asof": null,
+"value": 8.0
+},
+"Q5942": {
+"asof": null,
+"value": 202.0
+},
+"Q594387": {
+"asof": null,
+"value": 3286.0
+},
+"Q5955": {
+"asof": null,
+"value": 4506.0
+},
+"Q597": {
+"asof": null,
+"value": 100.0
+},
+"Q5972": {
+"asof": null,
+"value": 26.0
+},
+"Q598": {
+"asof": null,
+"value": 384.0
+},
+"Q59828": {
+"asof": null,
+"value": 110.0
+},
+"Q60": {
+"asof": null,
+"value": 25.0
+},
+"Q60123": {
+"asof": null,
+"value": 4080.0
+},
+"Q60130": {
+"asof": null,
+"value": 300.0
+},
+"Q6014": {
+"asof": null,
+"value": 180.0
+},
+"Q60158": {
+"asof": null,
+"value": 1161.0
+},
+"Q60176": {
+"asof": null,
+"value": 30.0
+},
+"Q602": {
+"asof": null,
+"value": 2209.0
+},
+"Q607372": {
+"asof": null,
+"value": 1465.0
+},
+"Q60910": {
+"asof": null,
+"value": 234.08640000000003
+},
+"Q60956": {
+"asof": null,
+"value": 10.0
+},
+"Q609700": {
+"asof": null,
+"value": 514.0
+},
+"Q61": {
+"asof": null,
+"value": 72.0
+},
+"Q6106": {
+"asof": null,
+"value": 152.0
+},
+"Q61089": {
+"asof": null,
+"value": 14.0
+},
+"Q61092": {
+"asof": null,
+"value": 4.0
+},
+"Q612": {
+"asof": null,
+"value": 0.0
+},
+"Q613": {
+"asof": null,
+"value": 11.0
+},
+"Q61302": {
+"asof": null,
+"value": 1415.0
+},
+"Q613037": {
+"asof": null,
+"value": 86.0
+},
+"Q617": {
+"asof": null,
+"value": 12.0
+},
+"Q617433": {
+"asof": null,
+"value": 176.78400000000002
+},
+"Q62": {
+"asof": null,
+"value": 30.0
+},
+"Q621": {
+"asof": null,
+"value": 103.0
+},
+"Q621549": {
+"asof": null,
+"value": 40.0
+},
+"Q6221": {
+"asof": null,
+"value": 149.0
+},
+"Q62218": {
+"asof": null,
+"value": 7.0
+},
+"Q622796": {
+"asof": null,
+"value": 1436.0
+},
+"Q6231": {
+"asof": null,
+"value": 47.0
+},
+"Q6247": {
+"asof": null,
+"value": 19.0
+},
+"Q6250": {
+"asof": null,
+"value": 237.0
+},
+"Q6252": {
+"asof": null,
+"value": 162.0
+},
+"Q625458": {
+"asof": null,
+"value": 68.0
+},
+"Q6259": {
+"asof": null,
+"value": 77.0
+},
+"Q626690": {
+"asof": null,
+"value": 1722.0
+},
+"Q62677": {
+"asof": null,
+"value": 1471.0
+},
+"Q628": {
+"asof": null,
+"value": 249.0
+},
+"Q62823": {
+"asof": null,
+"value": 18.0
+},
+"Q629088": {
+"asof": null,
+"value": 283.0
+},
+"Q63049": {
+"asof": null,
+"value": 6.0
+},
+"Q6315811": {
+"asof": null,
+"value": 2787.0
+},
+"Q6346": {
+"asof": null,
+"value": 218.0
+},
+"Q635105": {
+"asof": null,
+"value": 3046.0
+},
+"Q6383": {
+"asof": null,
+"value": 104.0
+},
+"Q639161": {
+"asof": null,
+"value": 59.1312
+},
+"Q639421": {
+"asof": null,
+"value": 3.0
+},
+"Q6397": {
+"asof": null,
+"value": 25.0
+},
+"Q6397066": {
+"asof": null,
+"value": 1545.0
+},
+"Q64": {
+"asof": null,
+"value": 34.0
+},
+"Q64004": {
+"asof": null,
+"value": 1034.0
+},
+"Q6403": {
+"asof": null,
+"value": 372.0
+},
+"Q641": {
+"asof": null,
+"value": 2.0
+},
+"Q6414": {
+"asof": null,
+"value": 65.0
+},
+"Q641568": {
+"asof": null,
+"value": 1435.0
+},
+"Q644": {
+"asof": null,
+"value": 1.0
+},
+"Q6441": {
+"asof": null,
+"value": 14.0
+},
+"Q644636": {
+"asof": null,
+"value": 698.0
+},
+"Q6454": {
+"asof": null,
+"value": 3.0
+},
+"Q647": {
+"asof": null,
+"value": 20.0
+},
+"Q648": {
+"asof": null,
+"value": 17.0
+},
+"Q648501": {
+"asof": null,
+"value": 650.0
+},
+"Q6487": {
+"asof": null,
+"value": 30.0
+},
+"Q649": {
+"asof": null,
+"value": 156.0
+},
+"Q6494": {
+"asof": null,
+"value": 15.0
+},
+"Q65": {
+"asof": null,
+"value": 106.0
+},
+"Q6506": {
+"asof": null,
+"value": 38.0
+},
+"Q650836": {
+"asof": null,
+"value": 2805.0744
+},
+"Q6509": {
+"asof": null,
+"value": 30.0
+},
+"Q6526": {
+"asof": null,
+"value": 262.0
+},
+"Q6537": {
+"asof": null,
+"value": 39.0
+},
+"Q654515": {
+"asof": null,
+"value": 372.0
+},
+"Q6548": {
+"asof": null,
+"value": 90.0
+},
+"Q654851": {
+"asof": null,
+"value": 2107.0
+},
+"Q6555": {
+"asof": null,
+"value": 0.0
+},
+"Q656": {
+"asof": null,
+"value": 3.0
+},
+"Q657225": {
+"asof": null,
+"value": 4401.0
+},
+"Q657461": {
+"asof": null,
+"value": 2.0
+},
+"Q6576": {
+"asof": null,
+"value": 440.0
+},
+"Q6582": {
+"asof": null,
+"value": 127.0
+},
+"Q659400": {
+"asof": null,
+"value": 9.0
+},
+"Q6602": {
+"asof": null,
+"value": 151.0
+},
+"Q6610": {
+"asof": null,
+"value": 95.0
+},
+"Q66117": {
+"asof": null,
+"value": 1169.0
+},
+"Q6616": {
+"asof": null,
+"value": 144.0
+},
+"Q663243": {
+"asof": null,
+"value": 874.0
+},
+"Q66485": {
+"asof": null,
+"value": 431.0
+},
+"Q6651815": {
+"asof": null,
+"value": 25.0
+},
+"Q66568": {
+"asof": null,
+"value": 126.0
+},
+"Q66616": {
+"asof": null,
+"value": 553.0
+},
+"Q66743": {
+"asof": null,
+"value": 16.0
+},
+"Q667738": {
+"asof": null,
+"value": 6.096
+},
+"Q668395": {
+"asof": null,
+"value": 1825.0
+},
+"Q669037": {
+"asof": null,
+"value": 3087.0
+},
+"Q671475": {
+"asof": null,
+"value": 6.096
+},
+"Q6730": {
+"asof": null,
+"value": 95.0
+},
+"Q673202": {
+"asof": null,
+"value": 9.0
+},
+"Q675568": {
+"asof": null,
+"value": 992.0
+},
+"Q6761": {
+"asof": null,
+"value": 3.0
+},
+"Q676203": {
+"asof": null,
+"value": 2430.0
+},
+"Q676778": {
+"asof": null,
+"value": 564.0
+},
+"Q677037": {
+"asof": null,
+"value": 299.9232
+},
+"Q679590": {
+"asof": null,
+"value": 2329.0
+},
+"Q680161": {
+"asof": null,
+"value": 808.0
+},
+"Q68097": {
+"asof": null,
+"value": 1563.0
+},
+"Q6816": {
+"asof": null,
+"value": 500.0
+},
+"Q6829": {
+"asof": null,
+"value": 108.0
+},
+"Q683705": {
+"asof": null,
+"value": 509.0
+},
+"Q6838": {
+"asof": null,
+"value": 1600.0
+},
+"Q68467": {
+"asof": null,
+"value": 30.0
+},
+"Q685448": {
+"asof": null,
+"value": 4.0
+},
+"Q6869": {
+"asof": null,
+"value": 504.0
+},
+"Q68740": {
+"asof": null,
+"value": 4205.0
+},
+"Q688281": {
+"asof": null,
+"value": 170.0
+},
+"Q6886": {
+"asof": null,
+"value": 578.0
+},
+"Q6897416": {
+"asof": null,
+"value": 1936.0
+},
+"Q68986": {
+"asof": null,
+"value": 1822.0
+},
+"Q690": {
+"asof": null,
+"value": 0.0
+},
+"Q690347": {
+"asof": null,
+"value": 426.0
+},
+"Q69216": {
+"asof": null,
+"value": 427.0
+},
+"Q6934": {
+"asof": null,
+"value": 122.0
+},
+"Q695411": {
+"asof": null,
+"value": 2.0
+},
+"Q6984524": {
+"asof": null,
+"value": 215.0
+},
+"Q699448": {
+"asof": null,
+"value": 155.0
+},
+"Q70": {
+"asof": null,
+"value": 542.0
+},
+"Q7003": {
+"asof": null,
+"value": 220.0
+},
+"Q7024": {
+"asof": null,
+"value": 283.0
+},
+"Q7038": {
+"asof": null,
+"value": 70.0
+},
+"Q70458": {
+"asof": null,
+"value": 137.0
+},
+"Q706541": {
+"asof": null,
+"value": 135.0
+},
+"Q706857": {
+"asof": null,
+"value": 200.0
+},
+"Q711": {
+"asof": null,
+"value": 1528.0
+},
+"Q715": {
+"asof": null,
+"value": 157.0
+},
+"Q715269": {
+"asof": null,
+"value": 0.0
+},
+"Q72": {
+"asof": null,
+"value": 408.0
+},
+"Q72303": {
+"asof": null,
+"value": 5137.0
+},
+"Q724": {
+"asof": null,
+"value": 180.0
+},
+"Q725883": {
+"asof": null,
+"value": 12.0
+},
+"Q72672": {
+"asof": null,
+"value": 50.0
+},
+"Q727": {
+"asof": null,
+"value": -2.0
+},
+"Q72818": {
+"asof": null,
+"value": 12.0
+},
+"Q7296": {
+"asof": null,
+"value": 5895.0
+},
+"Q732463": {
+"asof": null,
+"value": 2025.0912
+},
+"Q7342": {
+"asof": null,
+"value": 230.0
+},
+"Q7350": {
+"asof": null,
+"value": 26.0
+},
+"Q736627": {
+"asof": null,
+"value": 35.9664
+},
+"Q739": {
+"asof": null,
+"value": 223.0
+},
+"Q740167": {
+"asof": null,
+"value": 3553.0
+},
+"Q74195": {
+"asof": null,
+"value": 21.945600000000002
+},
+"Q744591": {
+"asof": null,
+"value": 423.0
+},
+"Q744748": {
+"asof": null,
+"value": 29.5656
+},
+"Q7473516": {
+"asof": null,
+"value": 49.0
+},
+"Q748355": {
+"asof": null,
+"value": 4322.0
+},
+"Q74881": {
+"asof": null,
+"value": 29.0
+},
+"Q749": {
+"asof": null,
+"value": 7.0
+},
+"Q749497": {
+"asof": null,
+"value": 9.7536
+},
+"Q74957": {
+"asof": null,
+"value": 40.0
+},
+"Q7525": {
+"asof": null,
+"value": 15.0
+},
+"Q753776": {
+"asof": null,
+"value": 417.0
+},
+"Q753891": {
+"asof": null,
+"value": 1900.0
+},
+"Q75459": {
+"asof": null,
+"value": 570.0
+},
+"Q7550": {
+"asof": null,
+"value": 174.0
+},
+"Q755123": {
+"asof": null,
+"value": 458.0
+},
+"Q756106": {
+"asof": null,
+"value": 359.0
+},
+"Q7564": {
+"asof": null,
+"value": 294.0
+},
+"Q75666": {
+"asof": null,
+"value": 1.0
+},
+"Q7568": {
+"asof": null,
+"value": 113.0
+},
+"Q7572840": {
+"asof": null,
+"value": 415.0
+},
+"Q759": {
+"asof": null,
+"value": 305.0
+},
+"Q760": {
+"asof": null,
+"value": 330.0
+},
+"Q761": {
+"asof": null,
+"value": 175.0
+},
+"Q76122": {
+"asof": null,
+"value": 3661.0
+},
+"Q762570": {
+"asof": null,
+"value": 17.0
+},
+"Q765780": {
+"asof": null,
+"value": 98.1456
+},
+"Q771": {
+"asof": null,
+"value": 150.0
+},
+"Q771935": {
+"asof": null,
+"value": 720.0
+},
+"Q773213": {
+"asof": null,
+"value": 2084.0
+},
+"Q7769": {
+"asof": null,
+"value": 80.0
+},
+"Q776965": {
+"asof": null,
+"value": 21.0
+},
+"Q779": {
+"asof": null,
+"value": 152.0
+},
+"Q7792": {
+"asof": null,
+"value": 1609.0
+},
+"Q78": {
+"asof": null,
+"value": 260.0
+},
+"Q782": {
+"asof": null,
+"value": 925.0
+},
+"Q7859": {
+"asof": null,
+"value": 50.0
+},
+"Q788": {
+"asof": null,
+"value": 0.0
+},
+"Q7880": {
+"asof": null,
+"value": 115.0
+},
+"Q78967": {
+"asof": null,
+"value": 2407.0
+},
+"Q7903": {
+"asof": null,
+"value": 115.0
+},
+"Q791": {
+"asof": null,
+"value": 305.0
+},
+"Q791673": {
+"asof": null,
+"value": 200.0
+},
+"Q7951": {
+"asof": null,
+"value": 150.0
+},
+"Q79638": {
+"asof": null,
+"value": 137.0
+},
+"Q7968": {
+"asof": null,
+"value": 70.0
+},
+"Q797": {
+"asof": null,
+"value": 580.0
+},
+"Q79716": {
+"asof": null,
+"value": 13.0
+},
+"Q79754": {
+"asof": null,
+"value": 1856.0
+},
+"Q7978": {
+"asof": null,
+"value": 35.0
+},
+"Q79804": {
+"asof": null,
+"value": 8.0
+},
+"Q79808": {
+"asof": null,
+"value": 1.0
+},
+"Q79809": {
+"asof": null,
+"value": 3.0
+},
+"Q79815": {
+"asof": null,
+"value": 249.0
+},
+"Q79857": {
+"asof": null,
+"value": 1019.0
+},
+"Q79860": {
+"asof": null,
+"value": 193.0
+},
+"Q79861": {
+"asof": null,
+"value": 926.0
+},
+"Q79867": {
+"asof": null,
+"value": 187.0
+},
+"Q79875": {
+"asof": null,
+"value": 3.0
+},
+"Q79880": {
+"asof": null,
+"value": 121.0
+},
+"Q798844": {
+"asof": null,
+"value": 63.0
+},
+"Q79923": {
+"asof": null,
+"value": 1704.0
+},
+"Q79952": {
+"asof": null,
+"value": 1926.0
+},
+"Q79961": {
+"asof": null,
+"value": 710.0
+},
+"Q79980": {
+"asof": null,
+"value": 76.0
+},
+"Q79990": {
+"asof": null,
+"value": 20.0
+},
+"Q80007": {
+"asof": null,
+"value": 126.0
+},
+"Q80053": {
+"asof": null,
+"value": 1340.0
+},
+"Q80245": {
+"asof": null,
+"value": 31.0
+},
+"Q80252": {
+"asof": null,
+"value": 139.0
+},
+"Q80269": {
+"asof": null,
+"value": 2061.0
+},
+"Q80299": {
+"asof": null,
+"value": 1489.0
+},
+"Q803": {
+"asof": null,
+"value": 5.0
+},
+"Q80344": {
+"asof": null,
+"value": 2917.727
+},
+"Q80389": {
+"asof": null,
+"value": 2339.0
+},
+"Q80413": {
+"asof": null,
+"value": 1547.0
+},
+"Q80484": {
+"asof": null,
+"value": 58.0
+},
+"Q80517": {
+"asof": null,
+"value": 46.0
+},
+"Q80561": {
+"asof": null,
+"value": 67.0
+},
+"Q80563": {
+"asof": null,
+"value": 6.0
+},
+"Q807": {
+"asof": null,
+"value": 495.0
+},
+"Q80903": {
+"asof": null,
+"value": 1918.0
+},
+"Q80985": {
+"asof": null,
+"value": 408.0
+},
+"Q80989": {
+"asof": null,
+"value": 508.0
+},
+"Q81033": {
+"asof": null,
+"value": 546.0
+},
+"Q81052": {
+"asof": null,
+"value": 993.0
+},
+"Q81137": {
+"asof": null,
+"value": 219.0
+},
+"Q81178": {
+"asof": null,
+"value": 2147.0
+},
+"Q812": {
+"asof": null,
+"value": 30.0
+},
+"Q81345": {
+"asof": null,
+"value": 142.0
+},
+"Q81398": {
+"asof": null,
+"value": 18.0
+},
+"Q81581": {
+"asof": null,
+"value": 75.0
+},
+"Q815834": {
+"asof": null,
+"value": 312.0
+},
+"Q816": {
+"asof": null,
+"value": 1250.0
+},
+"Q816458": {
+"asof": null,
+"value": 527.0
+},
+"Q816843": {
+"asof": null,
+"value": 198.0
+},
+"Q817247": {
+"asof": null,
+"value": 0.0
+},
+"Q81725": {
+"asof": null,
+"value": 1276.0
+},
+"Q817578": {
+"asof": null,
+"value": 22.0
+},
+"Q81788": {
+"asof": null,
+"value": 30.0
+},
+"Q818475": {
+"asof": null,
+"value": 311.0
+},
+"Q81997": {
+"asof": null,
+"value": 110.0
+},
+"Q82019": {
+"asof": null,
+"value": 8586.0
+},
+"Q82070": {
+"asof": null,
+"value": 10.0
+},
+"Q82112": {
+"asof": null,
+"value": 2605.0
+},
+"Q821275": {
+"asof": null,
+"value": 236.8296
+},
+"Q82174": {
+"asof": null,
+"value": 600.0
+},
+"Q82185": {
+"asof": null,
+"value": 28.0
+},
+"Q824": {
+"asof": null,
+"value": 1005.0
+},
+"Q825347": {
+"asof": null,
+"value": 3850.0
+},
+"Q82601": {
+"asof": null,
+"value": 170.0
+},
+"Q82613": {
+"asof": null,
+"value": 813.0
+},
+"Q827202": {
+"asof": null,
+"value": 251.0
+},
+"Q82765": {
+"asof": null,
+"value": 88.0
+},
+"Q82859": {
+"asof": null,
+"value": 1503.0
+},
+"Q829": {
+"asof": null,
+"value": 1860.0
+},
+"Q83061": {
+"asof": null,
+"value": 1730.0
+},
+"Q83065": {
+"asof": null,
+"value": 67.0
+},
+"Q83210": {
+"asof": null,
+"value": 1226.0
+},
+"Q83232": {
+"asof": null,
+"value": 579.0
+},
+"Q83236": {
+"asof": null,
+"value": 995.0
+},
+"Q83247": {
+"asof": null,
+"value": 215.0
+},
+"Q83274": {
+"asof": null,
+"value": 85.0
+},
+"Q83285": {
+"asof": null,
+"value": 0.0
+},
+"Q83317": {
+"asof": null,
+"value": 223.0
+},
+"Q83324": {
+"asof": null,
+"value": 415.0
+},
+"Q83387": {
+"asof": null,
+"value": 675.0
+},
+"Q834": {
+"asof": null,
+"value": 512.0
+},
+"Q83404": {
+"asof": null,
+"value": 94.0
+},
+"Q83443": {
+"asof": null,
+"value": 2050.0
+},
+"Q83497": {
+"asof": null,
+"value": 1745.0
+},
+"Q835407": {
+"asof": null,
+"value": 495.0
+},
+"Q8356": {
+"asof": null,
+"value": 701.0
+},
+"Q83786": {
+"asof": null,
+"value": 2205.0
+},
+"Q83813": {
+"asof": null,
+"value": 15.0
+},
+"Q8385": {
+"asof": null,
+"value": 260.0
+},
+"Q84": {
+"asof": null,
+"value": 4.0
+},
+"Q8471": {
+"asof": null,
+"value": 31.0
+},
+"Q8493": {
+"asof": null,
+"value": 29.0
+},
+"Q85": {
+"asof": null,
+"value": 23.0
+},
+"Q853258": {
+"asof": "2020-01-01",
+"value": 101.0
+},
+"Q853886": {
+"asof": null,
+"value": 664.7688
+},
+"Q855235": {
+"asof": null,
+"value": 53.0
+},
+"Q856906": {
+"asof": null,
+"value": 1700.0
+},
+"Q859413": {
+"asof": null,
+"value": 44.0
+},
+"Q860559": {
+"asof": null,
+"value": 2229.9168
+},
+"Q8611": {
+"asof": null,
+"value": 3.0
+},
+"Q864024": {
+"asof": null,
+"value": 10.0
+},
+"Q86446": {
+"asof": null,
+"value": 23.0
+},
+"Q8646": {
+"asof": null,
+"value": 7.0
+},
+"Q86473": {
+"asof": null,
+"value": 49.6824
+},
+"Q864862": {
+"asof": null,
+"value": 10.0
+},
+"Q8652": {
+"asof": null,
+"value": 2.0
+},
+"Q8660": {
+"asof": null,
+"value": 8.0
+},
+"Q8673": {
+"asof": null,
+"value": 34.0
+},
+"Q8678": {
+"asof": null,
+"value": 31.0
+},
+"Q867913": {
+"asof": null,
+"value": 1085.0
+},
+"Q8684": {
+"asof": null,
+"value": 38.0
+},
+"Q8685": {
+"asof": null,
+"value": 3.9624
+},
+"Q8686": {
+"asof": null,
+"value": 4.0
+},
+"Q8688": {
+"asof": null,
+"value": 4.0
+},
+"Q8691": {
+"asof": null,
+"value": 24.384
+},
+"Q8692": {
+"asof": null,
+"value": 19.0
+},
+"Q8694": {
+"asof": null,
+"value": 78.3336
+},
+"Q87": {
+"asof": null,
+"value": -1.0
+},
+"Q8703": {
+"asof": null,
+"value": 62.0
+},
+"Q8709": {
+"asof": null,
+"value": 106.0
+},
+"Q8717": {
+"asof": null,
+"value": 18.0
+},
+"Q8731": {
+"asof": null,
+"value": 38.4048
+},
+"Q8745": {
+"asof": null,
+"value": 28.0
+},
+"Q8757": {
+"asof": null,
+"value": 21.0
+},
+"Q88": {
+"asof": null,
+"value": 11.8872
+},
+"Q8810": {
+"asof": null,
+"value": 693.0
+},
+"Q8818": {
+"asof": null,
+"value": 15.0
+},
+"Q8826": {
+"asof": null,
+"value": 13.0
+},
+"Q883": {
+"asof": null,
+"value": 153.0
+},
+"Q8851": {
+"asof": null,
+"value": 18.0
+},
+"Q887": {
+"asof": null,
+"value": 237.0
+},
+"Q889555": {
+"asof": null,
+"value": 79.0
+},
+"Q891": {
+"asof": null,
+"value": 200.0
+},
+"Q894": {
+"asof": null,
+"value": 100.0
+},
+"Q8969": {
+"asof": "2020-01-01",
+"value": 5.0
+},
+"Q898": {
+"asof": null,
+"value": 90.0
+},
+"Q8982": {
+"asof": null,
+"value": 5.7912
+},
+"Q899": {
+"asof": null,
+"value": 0.0
+},
+"Q90": {
+"asof": null,
+"value": 27.0
+},
+"Q900": {
+"asof": null,
+"value": 60.0
+},
+"Q9005": {
+"asof": null,
+"value": 13.0
+},
+"Q901646": {
+"asof": null,
+"value": 579.0
+},
+"Q9022": {
+"asof": "2020-01-01",
+"value": 1536.0
+},
+"Q906": {
+"asof": null,
+"value": 220.0
+},
+"Q907112": {
+"asof": null,
+"value": 140.0
+},
+"Q908": {
+"asof": null,
+"value": 70.0
+},
+"Q911": {
+"asof": null,
+"value": 150.0
+},
+"Q91274": {
+"asof": null,
+"value": 35.0
+},
+"Q914": {
+"asof": null,
+"value": 80.0
+},
+"Q91413": {
+"asof": null,
+"value": 324.0
+},
+"Q915": {
+"asof": null,
+"value": 90.0
+},
+"Q918066": {
+"asof": null,
+"value": 0.0
+},
+"Q919": {
+"asof": null,
+"value": 162.0
+},
+"Q9213": {
+"asof": null,
+"value": 150.0
+},
+"Q92212": {
+"asof": null,
+"value": 176.0
+},
+"Q9248": {
+"asof": null,
+"value": -28.0
+},
+"Q92561": {
+"asof": null,
+"value": 251.0
+},
+"Q9270": {
+"asof": null,
+"value": 2321.0
+},
+"Q9279": {
+"asof": null,
+"value": 14.0
+},
+"Q929859": {
+"asof": null,
+"value": 29.260800000000003
+},
+"Q9310": {
+"asof": null,
+"value": 11.0
+},
+"Q93259": {
+"asof": null,
+"value": 1467.0
+},
+"Q9326": {
+"asof": null,
+"value": 174.0
+},
+"Q93332": {
+"asof": null,
+"value": 2037.0
+},
+"Q93338": {
+"asof": null,
+"value": 850.0
+},
+"Q93347": {
+"asof": null,
+"value": 60.0
+},
+"Q93351": {
+"asof": null,
+"value": 317.0
+},
+"Q93358": {
+"asof": null,
+"value": 142.0
+},
+"Q9347": {
+"asof": null,
+"value": 2.0
+},
+"Q934803": {
+"asof": null,
+"value": 2042.0
+},
+"Q935116": {
+"asof": null,
+"value": 33.528
+},
+"Q9361": {
+"asof": null,
+"value": 750.0
+},
+"Q9365": {
+"asof": null,
+"value": 706.0
+},
+"Q9427": {
+"asof": null,
+"value": 261.0
+},
+"Q945773": {
+"asof": null,
+"value": 4095.0
+},
+"Q94950": {
+"asof": null,
+"value": 158.0
+},
+"Q95041": {
+"asof": null,
+"value": 100.0
+},
+"Q95449": {
+"asof": null,
+"value": 370.0
+},
+"Q956": {
+"asof": null,
+"value": 43.0
+},
+"Q9580": {
+"asof": null,
+"value": 859.0
+},
+"Q959": {
+"asof": null,
+"value": 12.0
+},
+"Q9686": {
+"asof": null,
+"value": 50.9016
+},
+"Q9694": {
+"asof": null,
+"value": -3.0
+},
+"Q97": {
+"asof": null,
+"value": 0.0
+},
+"Q975": {
+"asof": null,
+"value": 198.0
+},
+"Q976": {
+"asof": null,
+"value": 80.0
+},
+"Q978032": {
+"asof": null,
+"value": 1.0
+},
+"Q98": {
+"asof": null,
+"value": 0.0
+},
+"Q980": {
+"asof": null,
+"value": 503.0
+},
+"Q9824": {
+"asof": null,
+"value": 183.0
+},
+"Q9832": {
+"asof": null,
+"value": 17.0
+},
+"Q984542": {
+"asof": null,
+"value": 627.0
+},
+"Q985": {
+"asof": null,
+"value": 327.0
+},
+"Q987": {
+"asof": null,
+"value": 216.0
+},
+"Q987491": {
+"asof": null,
+"value": 21.0
+},
+"Q987729": {
+"asof": null,
+"value": 53.0
+},
+"Q9885": {
+"asof": null,
+"value": 432.0
+},
+"Q9888": {
+"asof": null,
+"value": 2240.0
+},
+"Q989988": {
+"asof": "2020-01-01",
+"value": 8.0
+},
+"Q99": {
+"asof": null,
+"value": 884.0
+},
+"Q991369": {
+"asof": null,
+"value": 104.0
+},
+"Q9920": {
+"asof": null,
+"value": 2.0
+},
+"Q994": {
+"asof": null,
+"value": 575.0
+}
+},
 "P2046": {
+"Q100": {
+"asof": "2010-04-01",
+"value": 232.167761
+},
+"Q1000": {
+"asof": null,
+"value": 267667.0
+},
 "Q10002": {
 "asof": null,
 "value": 141.47
@@ -11309,6 +24205,14 @@
 "Q1012971": {
 "asof": null,
 "value": 24.072862
+},
+"Q1013": {
+"asof": null,
+"value": 32962.8
+},
+"Q1014": {
+"asof": null,
+"value": 111369.0
 },
 "Q101439988": {
 "asof": null,
@@ -11378,6 +24282,10 @@
 "asof": "2018-01-01",
 "value": 5000.0
 },
+"Q1029": {
+"asof": null,
+"value": 801590.0
+},
 "Q102911": {
 "asof": null,
 "value": 5488.0
@@ -11410,6 +24318,14 @@
 "asof": null,
 "value": 923768.0
 },
+"Q1036": {
+"asof": null,
+"value": 241038.0
+},
+"Q1037": {
+"asof": null,
+"value": 26338.0
+},
 "Q103717": {
 "asof": "2023-01-01",
 "value": 8016.62
@@ -11417,6 +24333,10 @@
 "Q103801": {
 "asof": null,
 "value": 36993.89
+},
+"Q10389": {
+"asof": null,
+"value": 168.0
 },
 "Q1039": {
 "asof": null,
@@ -11441,6 +24361,10 @@
 "Q10406": {
 "asof": null,
 "value": 179.0
+},
+"Q1041": {
+"asof": null,
+"value": 196722.0
 },
 "Q10413": {
 "asof": null,
@@ -11510,6 +24434,10 @@
 "asof": null,
 "value": 657.0
 },
+"Q10478": {
+"asof": null,
+"value": 256.0
+},
 "Q10481": {
 "asof": null,
 "value": 239.0
@@ -11537,6 +24465,10 @@
 "Q104994": {
 "asof": null,
 "value": 12308.0
+},
+"Q1050": {
+"asof": null,
+"value": 17364.0
 },
 "Q10506": {
 "asof": null,
@@ -11582,6 +24514,10 @@
 "asof": null,
 "value": 251.5
 },
+"Q1055": {
+"asof": "2017-12-31",
+"value": 755.09
+},
 "Q10563": {
 "asof": null,
 "value": 365.5
@@ -11609,6 +24545,10 @@
 "Q1057444": {
 "asof": null,
 "value": 7.0
+},
+"Q10576": {
+"asof": null,
+"value": 980.0
 },
 "Q10580": {
 "asof": null,
@@ -11682,6 +24622,10 @@
 "asof": null,
 "value": 67.0
 },
+"Q10717": {
+"asof": null,
+"value": 147.6
+},
 "Q107258515": {
 "asof": null,
 "value": 648195.0
@@ -11729,6 +24673,10 @@
 "Q11082": {
 "asof": null,
 "value": 1115.09
+},
+"Q1108445": {
+"asof": "1000-01-01",
+"value": 1330000.0
 },
 "Q111": {
 "asof": null,
@@ -11942,6 +24890,10 @@
 "asof": null,
 "value": 191791.0
 },
+"Q1186": {
+"asof": "2018-01-01",
+"value": 38863.0
+},
 "Q1188": {
 "asof": null,
 "value": 308245.0
@@ -11950,9 +24902,17 @@
 "asof": null,
 "value": 0.15
 },
+"Q118958": {
+"asof": "2021-01-01",
+"value": 57.51
+},
 "Q11909": {
 "asof": null,
 "value": 235.0
+},
+"Q1191": {
+"asof": null,
+"value": 307713.0
 },
 "Q11911": {
 "asof": null,
@@ -12114,6 +25074,10 @@
 "asof": null,
 "value": 4500.0
 },
+"Q12193": {
+"asof": null,
+"value": 49.51
+},
 "Q121932": {
 "asof": null,
 "value": 110994.0
@@ -12238,6 +25202,10 @@
 "asof": null,
 "value": 3418400.0
 },
+"Q1249481": {
+"asof": null,
+"value": 54984.0
+},
 "Q12495": {
 "asof": null,
 "value": 344000.0
@@ -12253,6 +25221,10 @@
 "Q125309": {
 "asof": null,
 "value": 1540.0
+},
+"Q12536": {
+"asof": null,
+"value": 13000000.0
 },
 "Q125384": {
 "asof": null,
@@ -12273,6 +25245,10 @@
 "Q125912": {
 "asof": null,
 "value": 2700.0
+},
+"Q1260331": {
+"asof": null,
+"value": 59.67
 },
 "Q126084": {
 "asof": null,
@@ -12325,6 +25301,10 @@
 "Q127167": {
 "asof": null,
 "value": 129462.0
+},
+"Q12724": {
+"asof": null,
+"value": 2812.15
 },
 "Q1273": {
 "asof": null,
@@ -12418,6 +25398,10 @@
 "asof": null,
 "value": 10831.84
 },
+"Q128499": {
+"asof": null,
+"value": 283.0
+},
 "Q1286": {
 "asof": null,
 "value": 190000.0
@@ -12457,6 +25441,10 @@
 "Q129296": {
 "asof": null,
 "value": 79.194
+},
+"Q129352": {
+"asof": null,
+"value": 29.12
 },
 "Q129465": {
 "asof": null,
@@ -12505,6 +25493,10 @@
 "Q130212": {
 "asof": null,
 "value": 170.89
+},
+"Q130290": {
+"asof": null,
+"value": 8400.96
 },
 "Q130321": {
 "asof": null,
@@ -12682,6 +25674,10 @@
 "asof": null,
 "value": 122000.0
 },
+"Q13217298": {
+"asof": null,
+"value": 16359.0
+},
 "Q1324340": {
 "asof": null,
 "value": 107.0
@@ -12721,6 +25717,10 @@
 "Q132783": {
 "asof": null,
 "value": 233000.0
+},
+"Q132790": {
+"asof": null,
+"value": 11.66
 },
 "Q1328958": {
 "asof": null,
@@ -12770,6 +25770,10 @@
 "asof": "2011-10-09",
 "value": 118.24
 },
+"Q133315": {
+"asof": null,
+"value": 20.79
+},
 "Q133356": {
 "asof": "1926-12-17",
 "value": 451730.0
@@ -12793,6 +25797,10 @@
 "Q13360": {
 "asof": "2011-10-09",
 "value": 230.66
+},
+"Q13362": {
+"asof": "2011-10-09",
+"value": 405.16
 },
 "Q13364": {
 "asof": "2011-10-09",
@@ -12858,6 +25866,10 @@
 "asof": null,
 "value": 174.62
 },
+"Q1345": {
+"asof": "2016-01-01",
+"value": 369.609252
+},
 "Q134509": {
 "asof": null,
 "value": 1351.0
@@ -12902,9 +25914,17 @@
 "asof": "2011-10-09",
 "value": 332.98
 },
+"Q13498": {
+"asof": "2011-10-09",
+"value": 249.86
+},
 "Q1352": {
 "asof": null,
 "value": 426830040.0
+},
+"Q1353": {
+"asof": null,
+"value": 1397.3
 },
 "Q1354": {
 "asof": null,
@@ -12945,6 +25965,10 @@
 "Q1364427": {
 "asof": null,
 "value": 2132.0
+},
+"Q13666": {
+"asof": "2011-10-09",
+"value": 213.75
 },
 "Q13670": {
 "asof": "2011-10-09",
@@ -12990,6 +26014,10 @@
 "asof": null,
 "value": 1584233.0
 },
+"Q1384": {
+"asof": null,
+"value": 141300.0
+},
 "Q138518": {
 "asof": "2016-01-01",
 "value": 47.684048
@@ -13030,6 +26058,10 @@
 "asof": "2010-04-01",
 "value": 44.124606
 },
+"Q1397": {
+"asof": null,
+"value": 116096.0
+},
 "Q13972": {
 "asof": "2016-12-31",
 "value": 38.97
@@ -13045,6 +26077,10 @@
 "Q13991": {
 "asof": "2021-01-01",
 "value": 18297.32
+},
+"Q1400": {
+"asof": null,
+"value": 119283.0
 },
 "Q140075": {
 "asof": null,
@@ -13066,6 +26102,10 @@
 "asof": null,
 "value": 2191.65
 },
+"Q1408": {
+"asof": null,
+"value": 22591.4
+},
 "Q1410": {
 "asof": null,
 "value": 6.843
@@ -13073,6 +26113,14 @@
 "Q141017": {
 "asof": null,
 "value": 1380.0
+},
+"Q14112": {
+"asof": null,
+"value": 8680.0
+},
+"Q14118": {
+"asof": null,
+"value": 10416.0
 },
 "Q1415": {
 "asof": null,
@@ -13097,6 +26145,10 @@
 "Q1425428": {
 "asof": null,
 "value": 114.0
+},
+"Q1428": {
+"asof": null,
+"value": 153909.0
 },
 "Q14314": {
 "asof": null,
@@ -13162,6 +26214,10 @@
 "asof": null,
 "value": 130058.0
 },
+"Q14452": {
+"asof": null,
+"value": 164.0
+},
 "Q1447": {
 "asof": null,
 "value": 19540.9
@@ -13210,9 +26266,17 @@
 "asof": null,
 "value": 15221.9
 },
+"Q1460": {
+"asof": null,
+"value": 25711.0
+},
 "Q1461": {
 "asof": null,
 "value": 24.98
+},
+"Q1462": {
+"asof": null,
+"value": 23949.0
 },
 "Q146246": {
 "asof": null,
@@ -13274,6 +26338,10 @@
 "asof": null,
 "value": 9596961.0
 },
+"Q1486": {
+"asof": null,
+"value": 203.3
+},
 "Q1487593": {
 "asof": null,
 "value": 20.2
@@ -13301,6 +26369,10 @@
 "Q14960": {
 "asof": null,
 "value": 230.182739
+},
+"Q1498": {
+"asof": null,
+"value": 243290.0
 },
 "Q149805": {
 "asof": null,
@@ -13450,6 +26522,10 @@
 "asof": null,
 "value": 64156.0
 },
+"Q15288": {
+"asof": null,
+"value": 17700.0
+},
 "Q1530": {
 "asof": null,
 "value": 673.0
@@ -13465,6 +26541,10 @@
 "Q1533": {
 "asof": null,
 "value": 776.0
+},
+"Q153494": {
+"asof": "2017-12-31",
+"value": 41.67
 },
 "Q1537": {
 "asof": null,
@@ -13541,6 +26621,10 @@
 "Q155863": {
 "asof": null,
 "value": 19.35
+},
+"Q155868": {
+"asof": null,
+"value": 0.17
 },
 "Q156111": {
 "asof": "1941-08-01",
@@ -13634,6 +26718,10 @@
 "asof": null,
 "value": 410.0
 },
+"Q157144": {
+"asof": null,
+"value": 113.2
+},
 "Q15758": {
 "asof": null,
 "value": 40.0
@@ -13713,6 +26801,10 @@
 "Q159288": {
 "asof": "2010-04-01",
 "value": 108.696906
+},
+"Q159457": {
+"asof": null,
+"value": 202.57
 },
 "Q159610": {
 "asof": null,
@@ -14006,6 +27098,10 @@
 "asof": "2010-04-01",
 "value": 99.899764
 },
+"Q166": {
+"asof": null,
+"value": 436402.0
+},
 "Q166110": {
 "asof": "2018-01-01",
 "value": 17332791.0
@@ -14250,6 +27346,10 @@
 "asof": null,
 "value": 12.19
 },
+"Q170513": {
+"asof": null,
+"value": 95.0
+},
 "Q170521": {
 "asof": null,
 "value": 1003.39
@@ -14378,6 +27478,14 @@
 "asof": null,
 "value": 31.73
 },
+"Q171965": {
+"asof": null,
+"value": 26684.0
+},
+"Q172": {
+"asof": null,
+"value": 630.21
+},
 "Q1720": {
 "asof": "2017-12-31",
 "value": 97.73
@@ -14413,6 +27521,10 @@
 "Q172415": {
 "asof": null,
 "value": 67.7
+},
+"Q17252": {
+"asof": null,
+"value": 2500000.0
 },
 "Q172579": {
 "asof": null,
@@ -14514,6 +27626,10 @@
 "asof": null,
 "value": 122.0
 },
+"Q1748": {
+"asof": null,
+"value": 90.9
+},
 "Q1749": {
 "asof": null,
 "value": 15100.0
@@ -14534,6 +27650,10 @@
 "asof": null,
 "value": 90000.0
 },
+"Q1754": {
+"asof": null,
+"value": 187.16
+},
 "Q1754965": {
 "asof": null,
 "value": 28120.0
@@ -14549,6 +27669,10 @@
 "Q1759": {
 "asof": null,
 "value": 144902.0
+},
+"Q176": {
+"asof": null,
+"value": 1542056.0
 },
 "Q1761": {
 "asof": null,
@@ -14573,6 +27697,10 @@
 "Q177397": {
 "asof": null,
 "value": 100.0
+},
+"Q1774": {
+"asof": null,
+"value": 2461.0
 },
 "Q177549": {
 "asof": null,
@@ -14613,6 +27741,10 @@
 "Q178469": {
 "asof": null,
 "value": 77306.0
+},
+"Q178488": {
+"asof": null,
+"value": 734.014
 },
 "Q178611": {
 "asof": null,
@@ -14670,6 +27802,10 @@
 "asof": null,
 "value": 5044.18
 },
+"Q1794": {
+"asof": "2018-12-31",
+"value": 248.31
+},
 "Q17943": {
 "asof": "2010-04-01",
 "value": 258.022521
@@ -14677,6 +27813,10 @@
 "Q179645": {
 "asof": "2021-01-01",
 "value": 18.22
+},
+"Q179842": {
+"asof": null,
+"value": 2500000.0
 },
 "Q179883": {
 "asof": null,
@@ -14705,6 +27845,10 @@
 "Q180209": {
 "asof": "2016-01-01",
 "value": 16.3376
+},
+"Q180274": {
+"asof": null,
+"value": 1.06
 },
 "Q180294": {
 "asof": null,
@@ -14842,6 +27986,10 @@
 "asof": null,
 "value": 172.05
 },
+"Q1829": {
+"asof": null,
+"value": 224.7
+},
 "Q183": {
 "asof": null,
 "value": 357170.0
@@ -14890,6 +28038,10 @@
 "asof": "2010-04-01",
 "value": 148.083712
 },
+"Q18419": {
+"asof": null,
+"value": 251.0
+},
 "Q1842": {
 "asof": "2024-07-09",
 "value": 5173.6603
@@ -14913,6 +28065,10 @@
 "Q18438": {
 "asof": null,
 "value": 3566.0
+},
+"Q1844": {
+"asof": null,
+"value": 17.3
 },
 "Q184427": {
 "asof": null,
@@ -14962,6 +28118,10 @@
 "asof": null,
 "value": 127000.0
 },
+"Q1854": {
+"asof": null,
+"value": 6772.59
+},
 "Q18547": {
 "asof": null,
 "value": 420000.0
@@ -15006,6 +28166,10 @@
 "asof": "1700-01-01",
 "value": 14500000.0
 },
+"Q1861": {
+"asof": null,
+"value": 1568.737
+},
 "Q186141": {
 "asof": null,
 "value": 19.2
@@ -15042,9 +28206,17 @@
 "asof": "2010-04-01",
 "value": 374.375946
 },
+"Q18677767": {
+"asof": null,
+"value": 31813.0
+},
 "Q18677875": {
 "asof": null,
 "value": 29906.0
+},
+"Q18677983": {
+"asof": null,
+"value": 57433.0
 },
 "Q18678082": {
 "asof": null,
@@ -15142,6 +28314,10 @@
 "asof": null,
 "value": 1883.0
 },
+"Q188712": {
+"asof": null,
+"value": 7400000.0
+},
 "Q188731": {
 "asof": null,
 "value": 19.481
@@ -15157,6 +28333,10 @@
 "Q188810": {
 "asof": null,
 "value": 2590.0
+},
+"Q188938": {
+"asof": null,
+"value": 514.0
 },
 "Q188953": {
 "asof": null,
@@ -15342,6 +28522,10 @@
 "asof": null,
 "value": 8600.0
 },
+"Q191763": {
+"asof": null,
+"value": 431.2
+},
 "Q19186": {
 "asof": null,
 "value": 601.7
@@ -15446,6 +28630,10 @@
 "asof": null,
 "value": 27.871
 },
+"Q194263": {
+"asof": null,
+"value": 786.0
+},
 "Q194316": {
 "asof": null,
 "value": 32.8
@@ -15453,6 +28641,10 @@
 "Q194328": {
 "asof": null,
 "value": 4115.206
+},
+"Q194504": {
+"asof": null,
+"value": 2.98
 },
 "Q1947": {
 "asof": null,
@@ -15490,6 +28682,10 @@
 "asof": null,
 "value": 16.85
 },
+"Q19588497": {
+"asof": null,
+"value": 687.97
+},
 "Q19594930": {
 "asof": null,
 "value": 10584.06
@@ -15510,9 +28706,17 @@
 "asof": null,
 "value": 226.0
 },
+"Q19675": {
+"asof": null,
+"value": 210000.0
+},
 "Q19689": {
 "asof": null,
 "value": 41.8
+},
+"Q1969730": {
+"asof": null,
+"value": 1774190.0
 },
 "Q1973": {
 "asof": null,
@@ -15758,6 +28962,10 @@
 "asof": null,
 "value": 52.5
 },
+"Q20317": {
+"asof": null,
+"value": 187554.0
+},
 "Q203476": {
 "asof": null,
 "value": 16.64
@@ -15777,6 +28985,10 @@
 "Q204245": {
 "asof": null,
 "value": 151.2
+},
+"Q2044": {
+"asof": "2011-10-09",
+"value": 102.32
 },
 "Q204403": {
 "asof": null,
@@ -15802,9 +29014,17 @@
 "asof": null,
 "value": 595.8699
 },
+"Q205380": {
+"asof": null,
+"value": 0.289
+},
 "Q2055": {
 "asof": null,
 "value": 416.54
+},
+"Q205842": {
+"asof": "2010-04-01",
+"value": 10.032643
 },
 "Q2061": {
 "asof": null,
@@ -15934,9 +29154,17 @@
 "asof": null,
 "value": 539.96
 },
+"Q20927": {
+"asof": null,
+"value": 1499.53
+},
 "Q20934": {
 "asof": null,
 "value": 1046.807
+},
+"Q20937": {
+"asof": null,
+"value": 10172.07
 },
 "Q209576": {
 "asof": null,
@@ -16013,6 +29241,10 @@
 "Q212": {
 "asof": null,
 "value": 603550.0
+},
+"Q21203": {
+"asof": null,
+"value": 178.916378
 },
 "Q212056": {
 "asof": null,
@@ -16218,6 +29450,10 @@
 "asof": null,
 "value": 6020.0
 },
+"Q2191": {
+"asof": null,
+"value": 83908.0
+},
 "Q2192924": {
 "asof": null,
 "value": 12231.0
@@ -16245,6 +29481,10 @@
 "Q220289": {
 "asof": null,
 "value": 4862.893
+},
+"Q220385": {
+"asof": null,
+"value": 0.14
 },
 "Q22041180": {
 "asof": null,
@@ -16354,6 +29594,10 @@
 "asof": null,
 "value": 686.3
 },
+"Q22647": {
+"asof": null,
+"value": 158.0
+},
 "Q22690": {
 "asof": null,
 "value": 41.94
@@ -16389,6 +29633,10 @@
 "Q22889": {
 "asof": null,
 "value": 29.0
+},
+"Q22890": {
+"asof": null,
+"value": 84421.0
 },
 "Q229": {
 "asof": null,
@@ -16466,6 +29714,10 @@
 "asof": "2016-01-01",
 "value": 2624.7888
 },
+"Q23099": {
+"asof": "2016-01-01",
+"value": 1275.9821
+},
 "Q231": {
 "asof": null,
 "value": 16844.0
@@ -16489,6 +29741,10 @@
 "Q23111": {
 "asof": "2016-01-01",
 "value": 3800.9523
+},
+"Q231140": {
+"asof": null,
+"value": 42.7
 },
 "Q231318": {
 "asof": null,
@@ -16630,6 +29886,10 @@
 "asof": null,
 "value": 4704.4
 },
+"Q23436": {
+"asof": null,
+"value": 259.0
+},
 "Q23438": {
 "asof": null,
 "value": 765.0
@@ -16698,6 +29958,10 @@
 "asof": null,
 "value": 21043.0
 },
+"Q23768": {
+"asof": "2016-01-01",
+"value": 348.16824
+},
 "Q237847": {
 "asof": null,
 "value": 180.67
@@ -16714,6 +29978,10 @@
 "asof": null,
 "value": 282.7
 },
+"Q23883": {
+"asof": "2016-01-01",
+"value": 605.0
+},
 "Q239": {
 "asof": "2019-01-01",
 "value": 33.08
@@ -16725,6 +29993,10 @@
 "Q239304": {
 "asof": null,
 "value": 741.0
+},
+"Q239743": {
+"asof": null,
+"value": 179.9
 },
 "Q240": {
 "asof": null,
@@ -16746,6 +30018,10 @@
 "asof": null,
 "value": 92208.0
 },
+"Q242": {
+"asof": null,
+"value": 22966.0
+},
 "Q242111": {
 "asof": null,
 "value": 5270.411
@@ -16765,6 +30041,14 @@
 "Q243610": {
 "asof": null,
 "value": 850100.0
+},
+"Q244": {
+"asof": null,
+"value": 439.0
+},
+"Q244165": {
+"asof": null,
+"value": 3.17
 },
 "Q244207": {
 "asof": "2011-10-09",
@@ -16797,6 +30081,10 @@
 "Q2459429": {
 "asof": null,
 "value": 1780.0
+},
+"Q24639": {
+"asof": null,
+"value": 115.0
 },
 "Q2467": {
 "asof": null,
@@ -16858,6 +30146,10 @@
 "asof": null,
 "value": 61022.0
 },
+"Q25263": {
+"asof": null,
+"value": 901.0
+},
 "Q25270": {
 "asof": null,
 "value": 572.0
@@ -16865,6 +30157,10 @@
 "Q25277": {
 "asof": null,
 "value": 77900.0
+},
+"Q25279": {
+"asof": null,
+"value": 444.0
 },
 "Q25280": {
 "asof": "2016-01-01",
@@ -16934,6 +30230,10 @@
 "asof": null,
 "value": 139.0
 },
+"Q25416": {
+"asof": "2020-01-01",
+"value": 24.52
+},
 "Q25444": {
 "asof": null,
 "value": 76.16
@@ -16973,6 +30273,10 @@
 "Q25923": {
 "asof": null,
 "value": 242.86
+},
+"Q26": {
+"asof": null,
+"value": 14130.0
 },
 "Q2608489": {
 "asof": null,
@@ -17062,6 +30366,10 @@
 "asof": null,
 "value": 136000.0
 },
+"Q26777": {
+"asof": null,
+"value": 24370.0
+},
 "Q26793": {
 "asof": null,
 "value": 87.17
@@ -17098,6 +30406,10 @@
 "asof": null,
 "value": 69797.0
 },
+"Q270": {
+"asof": "2023-12-31",
+"value": 517.2
+},
 "Q270375": {
 "asof": null,
 "value": 228.7
@@ -17113,6 +30425,14 @@
 "Q270725": {
 "asof": null,
 "value": 5.18
+},
+"Q27092": {
+"asof": null,
+"value": 1048950.0
+},
+"Q270983": {
+"asof": null,
+"value": 9.3
 },
 "Q271030": {
 "asof": null,
@@ -17142,6 +30462,10 @@
 "asof": null,
 "value": 155.4
 },
+"Q272781": {
+"asof": null,
+"value": 51.5
+},
 "Q27293": {
 "asof": null,
 "value": 5994935.0
@@ -17153,6 +30477,10 @@
 "Q273195": {
 "asof": null,
 "value": 189.0
+},
+"Q27329": {
+"asof": null,
+"value": 13100000.0
 },
 "Q273303": {
 "asof": null,
@@ -17173,6 +30501,10 @@
 "Q2742": {
 "asof": "2017-12-31",
 "value": 303.28
+},
+"Q274388": {
+"asof": null,
+"value": 7.8
 },
 "Q2746": {
 "asof": null,
@@ -17230,6 +30562,10 @@
 "asof": null,
 "value": 92.1
 },
+"Q278221": {
+"asof": "2017-12-31",
+"value": 35.63
+},
 "Q279": {
 "asof": "2011-10-09",
 "value": 183.19
@@ -17249,6 +30585,10 @@
 "Q28": {
 "asof": null,
 "value": 93011.4
+},
+"Q2801": {
+"asof": null,
+"value": 186.73
 },
 "Q28048": {
 "asof": null,
@@ -17333,6 +30673,10 @@
 "Q284568": {
 "asof": null,
 "value": 1759541.0
+},
+"Q28471": {
+"asof": null,
+"value": 94.0
 },
 "Q28511": {
 "asof": null,
@@ -17466,6 +30810,10 @@
 "asof": "2010-04-01",
 "value": 8427.543777
 },
+"Q2946": {
+"asof": null,
+"value": 67000.0
+},
 "Q29460": {
 "asof": null,
 "value": 7.0
@@ -17502,6 +30850,10 @@
 "asof": null,
 "value": 756102.0
 },
+"Q2981": {
+"asof": null,
+"value": 5500.0
+},
 "Q29888": {
 "asof": null,
 "value": 375.0
@@ -17525,6 +30877,10 @@
 "Q3001": {
 "asof": null,
 "value": 182.0
+},
+"Q3004": {
+"asof": "2017-12-31",
+"value": 133.35
 },
 "Q3012": {
 "asof": "2017-12-31",
@@ -17558,6 +30914,10 @@
 "asof": "2017-12-31",
 "value": 4.21
 },
+"Q3040": {
+"asof": null,
+"value": 1243000.0
+},
 "Q3043": {
 "asof": null,
 "value": 32780000.0
@@ -17585,6 +30945,10 @@
 "Q30623": {
 "asof": null,
 "value": 1554000.0
+},
+"Q3070": {
+"asof": null,
+"value": 44.62
 },
 "Q30747910": {
 "asof": null,
@@ -17678,6 +31042,10 @@
 "asof": null,
 "value": 41910000.0
 },
+"Q3125978": {
+"asof": null,
+"value": 5780.06
+},
 "Q3126": {
 "asof": "2017-12-31",
 "value": 76.96
@@ -17685,6 +31053,10 @@
 "Q313": {
 "asof": null,
 "value": 460230000.0
+},
+"Q3130": {
+"asof": null,
+"value": 12144.6
 },
 "Q3134": {
 "asof": null,
@@ -17709,6 +31081,10 @@
 "Q31487": {
 "asof": null,
 "value": 327.0
+},
+"Q3150": {
+"asof": "2017-12-31",
+"value": 114.76
 },
 "Q3159": {
 "asof": null,
@@ -17786,6 +31162,10 @@
 "asof": null,
 "value": 201.5
 },
+"Q324": {
+"asof": null,
+"value": 8115600000.0
+},
 "Q32530": {
 "asof": null,
 "value": 11302.0
@@ -17830,6 +31210,10 @@
 "asof": null,
 "value": 7.69267116
 },
+"Q330362": {
+"asof": null,
+"value": 130395.0
+},
 "Q3306": {
 "asof": null,
 "value": 275.0
@@ -17849,6 +31233,10 @@
 "Q331603": {
 "asof": null,
 "value": 1893.0
+},
+"Q332": {
+"asof": null,
+"value": 7618300000.0
 },
 "Q3322": {
 "asof": null,
@@ -17918,6 +31306,10 @@
 "asof": null,
 "value": 23018000.0
 },
+"Q33613": {
+"asof": null,
+"value": 77.36
+},
 "Q3367": {
 "asof": "2011-10-09",
 "value": 21.39
@@ -17934,6 +31326,18 @@
 "asof": "2011-10-09",
 "value": 157.88
 },
+"Q33788": {
+"asof": null,
+"value": 18576.0
+},
+"Q33935": {
+"asof": null,
+"value": 52.0
+},
+"Q33946": {
+"asof": null,
+"value": 127900.0
+},
 "Q33959": {
 "asof": null,
 "value": 71.92
@@ -17949,6 +31353,10 @@
 "Q34": {
 "asof": "2022-01-01",
 "value": 447425.16
+},
+"Q340": {
+"asof": null,
+"value": 498.0
 },
 "Q34006": {
 "asof": null,
@@ -18010,9 +31418,17 @@
 "asof": null,
 "value": 319.35
 },
+"Q34374": {
+"asof": null,
+"value": 8335.88
+},
 "Q34404": {
 "asof": "2010-04-01",
 "value": 907.043811
+},
+"Q34497": {
+"asof": null,
+"value": 121.0
 },
 "Q34575": {
 "asof": null,
@@ -18154,9 +31570,17 @@
 "asof": null,
 "value": 47.0
 },
+"Q35715": {
+"asof": null,
+"value": 984321.0
+},
 "Q3572": {
 "asof": null,
 "value": 212630000.0
+},
+"Q3573": {
+"asof": null,
+"value": 101800.0
 },
 "Q35765": {
 "asof": null,
@@ -18302,6 +31726,10 @@
 "asof": null,
 "value": 255804.0
 },
+"Q3674": {
+"asof": null,
+"value": 239300000.0
+},
 "Q36755": {
 "asof": null,
 "value": 60000.0
@@ -18353,6 +31781,10 @@
 "Q37100": {
 "asof": null,
 "value": 559.0
+},
+"Q3711": {
+"asof": null,
+"value": 359.96
 },
 "Q37133": {
 "asof": null,
@@ -18449,6 +31881,10 @@
 "Q3768": {
 "asof": null,
 "value": 2075.0
+},
+"Q3769": {
+"asof": null,
+"value": 83534.0
 },
 "Q37701": {
 "asof": null,
@@ -18570,9 +32006,17 @@
 "asof": "2021-01-01",
 "value": 437.71
 },
+"Q3834": {
+"asof": "2017-12-31",
+"value": 54.11
+},
 "Q3838": {
 "asof": null,
 "value": 9965.0
+},
+"Q38380": {
+"asof": null,
+"value": 42.71
 },
 "Q384": {
 "asof": null,
@@ -18650,6 +32094,10 @@
 "asof": null,
 "value": 30.0
 },
+"Q38872": {
+"asof": null,
+"value": 297007.0
+},
 "Q38882": {
 "asof": null,
 "value": 275000.0
@@ -18661,6 +32109,14 @@
 "Q3889": {
 "asof": null,
 "value": 346.77
+},
+"Q3894": {
+"asof": null,
+"value": 189000000.0
+},
+"Q389688": {
+"asof": "-0499-01-0",
+"value": 5500000.0
 },
 "Q3897": {
 "asof": null,
@@ -18846,6 +32302,10 @@
 "asof": null,
 "value": 10391.0
 },
+"Q40191": {
+"asof": null,
+"value": 1357.3
+},
 "Q40236": {
 "asof": null,
 "value": 11401.092
@@ -18853,6 +32313,10 @@
 "Q4024": {
 "asof": "2017-12-31",
 "value": 147.85
+},
+"Q40269": {
+"asof": null,
+"value": 496.827
 },
 "Q40285": {
 "asof": null,
@@ -18929,6 +32393,10 @@
 "Q40844": {
 "asof": null,
 "value": 128.68
+},
+"Q40846": {
+"asof": null,
+"value": 2034.0
 },
 "Q40888": {
 "asof": null,
@@ -19022,6 +32490,10 @@
 "asof": null,
 "value": 501.18
 },
+"Q41304": {
+"asof": "1925-01-01",
+"value": 468787.0
+},
 "Q41329": {
 "asof": "2018-01-01",
 "value": 95.99
@@ -19045,6 +32517,14 @@
 "Q4152": {
 "asof": null,
 "value": 2114.0
+},
+"Q41572": {
+"asof": null,
+"value": 253.0
+},
+"Q41573": {
+"asof": null,
+"value": 223000.0
 },
 "Q41599": {
 "asof": "2023-12-31",
@@ -19182,6 +32662,10 @@
 "asof": null,
 "value": 21.25
 },
+"Q42392": {
+"asof": null,
+"value": 454000.0
+},
 "Q424": {
 "asof": null,
 "value": 181035.0
@@ -19202,6 +32686,10 @@
 "asof": null,
 "value": 570000.0
 },
+"Q42622": {
+"asof": null,
+"value": 8657.32
+},
 "Q42716": {
 "asof": null,
 "value": 79.97
@@ -19210,6 +32698,10 @@
 "asof": "2010-04-01",
 "value": 50.973496
 },
+"Q427941": {
+"asof": "2000-01-01",
+"value": 587578.0
+},
 "Q42798": {
 "asof": null,
 "value": 25.38
@@ -19217,6 +32709,10 @@
 "Q42800": {
 "asof": null,
 "value": 330.9
+},
+"Q42807": {
+"asof": null,
+"value": 161.85
 },
 "Q42810": {
 "asof": null,
@@ -19334,6 +32830,10 @@
 "asof": null,
 "value": 60.0
 },
+"Q43453": {
+"asof": null,
+"value": 137.671042
+},
 "Q4345530": {
 "asof": null,
 "value": 120260.0
@@ -19366,6 +32866,10 @@
 "asof": null,
 "value": 171.695795
 },
+"Q43684": {
+"asof": null,
+"value": 167000.0
+},
 "Q437": {
 "asof": null,
 "value": 163.76
@@ -19389,6 +32893,10 @@
 "Q44133": {
 "asof": null,
 "value": 90800.0
+},
+"Q44160": {
+"asof": null,
+"value": 42.84
 },
 "Q44198": {
 "asof": null,
@@ -19602,6 +33110,10 @@
 "asof": null,
 "value": 3500.0
 },
+"Q4629": {
+"asof": null,
+"value": 327.0
+},
 "Q463": {
 "asof": null,
 "value": 43698.0
@@ -19814,6 +33326,10 @@
 "asof": "2011-10-09",
 "value": 84.53
 },
+"Q48195": {
+"asof": null,
+"value": 181.0
+},
 "Q482485": {
 "asof": null,
 "value": 432703.0
@@ -19850,9 +33366,17 @@
 "asof": "2010-04-01",
 "value": 90.55269
 },
+"Q48403": {
+"asof": null,
+"value": 170.0
+},
 "Q484195": {
 "asof": "1405-01-01",
 "value": 4400000.0
+},
+"Q484245": {
+"asof": null,
+"value": 160000.0
 },
 "Q484458": {
 "asof": null,
@@ -19950,6 +33474,10 @@
 "asof": "2010-04-01",
 "value": 245.984242
 },
+"Q48958": {
+"asof": null,
+"value": 3.73
+},
 "Q49": {
 "asof": null,
 "value": 24930000.0
@@ -20025,6 +33553,10 @@
 "Q49233": {
 "asof": "2020-01-01",
 "value": 308.41
+},
+"Q49236": {
+"asof": "2016-01-01",
+"value": 356.49541
 },
 "Q49238": {
 "asof": "2010-04-01",
@@ -20118,6 +33650,10 @@
 "asof": null,
 "value": 82.43
 },
+"Q498261": {
+"asof": null,
+"value": 68.33
+},
 "Q498773": {
 "asof": "2016-01-01",
 "value": 51.103897
@@ -20133,6 +33669,10 @@
 "Q50189": {
 "asof": null,
 "value": 66.93
+},
+"Q502141": {
+"asof": null,
+"value": 532.0
 },
 "Q503301": {
 "asof": null,
@@ -20169,6 +33709,10 @@
 "Q50816": {
 "asof": null,
 "value": 292400000.0
+},
+"Q5083": {
+"asof": "2016-01-01",
+"value": 369.243614
 },
 "Q5087": {
 "asof": null,
@@ -20274,6 +33818,10 @@
 "asof": null,
 "value": 3425804.0
 },
+"Q5207": {
+"asof": null,
+"value": 66160.0
+},
 "Q5219": {
 "asof": null,
 "value": 3128.0
@@ -20334,6 +33882,10 @@
 "asof": null,
 "value": 534.0
 },
+"Q5328": {
+"asof": null,
+"value": 14100.0
+},
 "Q5332": {
 "asof": null,
 "value": 394.0
@@ -20341,6 +33893,10 @@
 "Q5337": {
 "asof": null,
 "value": 259.0
+},
+"Q5340": {
+"asof": null,
+"value": 26200.0
 },
 "Q535534": {
 "asof": null,
@@ -20442,6 +33998,14 @@
 "asof": "2010-04-01",
 "value": 29.503416
 },
+"Q5428": {
+"asof": null,
+"value": 10000000.0
+},
+"Q5446": {
+"asof": null,
+"value": 23200.0
+},
 "Q5449": {
 "asof": null,
 "value": 100.39
@@ -20453,6 +34017,14 @@
 "Q545": {
 "asof": null,
 "value": 377000.0
+},
+"Q5451": {
+"asof": null,
+"value": 600000.0
+},
+"Q5456": {
+"asof": null,
+"value": 3300000.0
 },
 "Q546": {
 "asof": "2011-10-09",
@@ -20469,6 +34041,10 @@
 "Q5465": {
 "asof": null,
 "value": 2454.72
+},
+"Q5466": {
+"asof": null,
+"value": 18300.0
 },
 "Q5468": {
 "asof": null,
@@ -20489,6 +34065,10 @@
 "Q5481": {
 "asof": null,
 "value": 67847.0
+},
+"Q5484": {
+"asof": null,
+"value": 386400.0
 },
 "Q5489": {
 "asof": null,
@@ -20522,6 +34102,10 @@
 "asof": null,
 "value": 106.2
 },
+"Q55643": {
+"asof": null,
+"value": 9000000.0
+},
 "Q5582862": {
 "asof": null,
 "value": 284.93
@@ -20549,6 +34133,10 @@
 "Q5689": {
 "asof": "2021-01-01",
 "value": 1582.93
+},
+"Q5690": {
+"asof": null,
+"value": 1.182
 },
 "Q569678": {
 "asof": "2010-04-01",
@@ -20598,9 +34186,17 @@
 "asof": null,
 "value": 94223.0
 },
+"Q574": {
+"asof": null,
+"value": 14918.72
+},
 "Q5747": {
 "asof": null,
 "value": 1640.0
+},
+"Q5748": {
+"asof": null,
+"value": 79463.0
 },
 "Q5753": {
 "asof": null,
@@ -20634,6 +34230,10 @@
 "asof": null,
 "value": 11313.0
 },
+"Q5776": {
+"asof": null,
+"value": 30.0
+},
 "Q5777": {
 "asof": null,
 "value": 41634.0
@@ -20653,6 +34253,10 @@
 "Q5785": {
 "asof": null,
 "value": 264.0
+},
+"Q5788": {
+"asof": null,
+"value": 26171.0
 },
 "Q580": {
 "asof": "2023-12-31",
@@ -20742,9 +34346,17 @@
 "asof": null,
 "value": 10.865
 },
+"Q590361": {
+"asof": null,
+"value": 10.0
+},
 "Q590866": {
 "asof": null,
 "value": 18814.0
+},
+"Q59174": {
+"asof": null,
+"value": 1728.0
 },
 "Q59218": {
 "asof": null,
@@ -20757,6 +34369,10 @@
 "Q5942": {
 "asof": null,
 "value": 169100.0
+},
+"Q597": {
+"asof": null,
+"value": 100.05
 },
 "Q5971": {
 "asof": null,
@@ -20882,6 +34498,10 @@
 "asof": "2016-01-01",
 "value": 600.592202
 },
+"Q620634": {
+"asof": null,
+"value": 2060.0
+},
 "Q621": {
 "asof": null,
 "value": 26.18
@@ -20922,6 +34542,14 @@
 "asof": null,
 "value": 10.0
 },
+"Q6247": {
+"asof": "2011-10-09",
+"value": 63.81
+},
+"Q6250": {
+"asof": "2016-01-01",
+"value": 266000.0
+},
 "Q6252": {
 "asof": "2011-10-09",
 "value": 33.09
@@ -20961,6 +34589,10 @@
 "Q62943": {
 "asof": null,
 "value": 5000000.0
+},
+"Q6320": {
+"asof": null,
+"value": 534500.0
 },
 "Q6346": {
 "asof": "2010-04-01",
@@ -21126,6 +34758,10 @@
 "asof": null,
 "value": 2339700.0
 },
+"Q657": {
+"asof": null,
+"value": 1284000.0
+},
 "Q657187": {
 "asof": null,
 "value": 173.0
@@ -21226,6 +34862,10 @@
 "asof": null,
 "value": 25.14
 },
+"Q6730": {
+"asof": null,
+"value": 68.07
+},
 "Q673223": {
 "asof": null,
 "value": 120000.0
@@ -21278,6 +34918,10 @@
 "asof": null,
 "value": 3.14
 },
+"Q6816": {
+"asof": null,
+"value": 347.6
+},
 "Q6829": {
 "asof": "2017-12-31",
 "value": 42.71
@@ -21306,9 +34950,17 @@
 "asof": null,
 "value": 12190.0
 },
+"Q6869": {
+"asof": "2017-12-31",
+"value": 107.09
+},
 "Q68740": {
 "asof": null,
 "value": 10434.0
+},
+"Q68744": {
+"asof": null,
+"value": 1699.39
 },
 "Q6886": {
 "asof": null,
@@ -21353,6 +35005,10 @@
 "Q696251": {
 "asof": null,
 "value": 377835.0
+},
+"Q697": {
+"asof": null,
+"value": 21.0
 },
 "Q70": {
 "asof": "2004-01-01",
@@ -21510,6 +35166,10 @@
 "asof": null,
 "value": 137.5
 },
+"Q733": {
+"asof": null,
+"value": 406756.0
+},
 "Q7332301": {
 "asof": null,
 "value": 1575.0
@@ -21566,6 +35226,10 @@
 "asof": null,
 "value": 1070.0
 },
+"Q740167": {
+"asof": null,
+"value": 2.75
+},
 "Q74195": {
 "asof": "2010-04-01",
 "value": 45.104638
@@ -21609,6 +35273,10 @@
 "Q753891": {
 "asof": null,
 "value": 43.26
+},
+"Q754": {
+"asof": null,
+"value": 5128.0
 },
 "Q7550": {
 "asof": null,
@@ -21690,6 +35358,14 @@
 "asof": null,
 "value": 176215.0
 },
+"Q770": {
+"asof": null,
+"value": 5748.74
+},
+"Q771": {
+"asof": null,
+"value": 27336.0
+},
 "Q7730": {
 "asof": null,
 "value": 36271.0
@@ -21697,6 +35373,10 @@
 "Q773213": {
 "asof": null,
 "value": 11.73
+},
+"Q774": {
+"asof": null,
+"value": 108889.0
 },
 "Q7769": {
 "asof": null,
@@ -21709,6 +35389,10 @@
 "Q777183": {
 "asof": null,
 "value": 1075.5
+},
+"Q778": {
+"asof": null,
+"value": 13878.0
 },
 "Q7788": {
 "asof": null,
@@ -21741,6 +35425,14 @@
 "Q782": {
 "asof": null,
 "value": 28311.0
+},
+"Q783": {
+"asof": null,
+"value": 112492.0
+},
+"Q7835": {
+"asof": null,
+"value": 27000.0
 },
 "Q784": {
 "asof": null,
@@ -21802,9 +35494,17 @@
 "asof": null,
 "value": 472300.0
 },
+"Q7951": {
+"asof": null,
+"value": 362.14
+},
 "Q796": {
 "asof": null,
 "value": 437072.0
+},
+"Q79638": {
+"asof": "2010-04-01",
+"value": 84.244498
 },
 "Q796583": {
 "asof": null,
@@ -21837,6 +35537,10 @@
 "Q79808": {
 "asof": null,
 "value": 124.89
+},
+"Q79809": {
+"asof": "2020-04-01",
+"value": 48.61477
 },
 "Q79815": {
 "asof": null,
@@ -21894,6 +35598,10 @@
 "asof": null,
 "value": 295.15
 },
+"Q800": {
+"asof": null,
+"value": 51179.92
+},
 "Q80007": {
 "asof": null,
 "value": 80175.0
@@ -21942,6 +35650,10 @@
 "asof": null,
 "value": 10500.0
 },
+"Q804": {
+"asof": null,
+"value": 74177.3
+},
 "Q80413": {
 "asof": null,
 "value": 90650.0
@@ -21961,6 +35673,10 @@
 "Q80517": {
 "asof": "2020-04-01",
 "value": 279.19593
+},
+"Q80563": {
+"asof": "2011-10-09",
+"value": 5.7
 },
 "Q807": {
 "asof": "2004-01-01",
@@ -21982,6 +35698,10 @@
 "asof": null,
 "value": 320.0
 },
+"Q80989": {
+"asof": null,
+"value": 648.24
+},
 "Q810": {
 "asof": null,
 "value": 89341.0
@@ -22001,6 +35721,10 @@
 "Q81052": {
 "asof": null,
 "value": 4158.0
+},
+"Q811": {
+"asof": null,
+"value": 120340.0
 },
 "Q81137": {
 "asof": null,
@@ -22042,6 +35766,10 @@
 "asof": null,
 "value": 239.0
 },
+"Q816253": {
+"asof": null,
+"value": 159542.0
+},
 "Q816437": {
 "asof": null,
 "value": 1620.0
@@ -22065,6 +35793,10 @@
 "Q81725": {
 "asof": null,
 "value": 94361.0
+},
+"Q81734": {
+"asof": null,
+"value": 13196.0
 },
 "Q817578": {
 "asof": null,
@@ -22190,6 +35922,10 @@
 "asof": "2023-12-31",
 "value": 1139.0
 },
+"Q83236": {
+"asof": null,
+"value": 116.53
+},
 "Q83247": {
 "asof": null,
 "value": 183.4
@@ -22197,6 +35933,10 @@
 "Q83273": {
 "asof": "2021-01-01",
 "value": 6097.39
+},
+"Q83274": {
+"asof": "2014-01-01",
+"value": 5524.0
 },
 "Q83285": {
 "asof": null,
@@ -22262,6 +36002,10 @@
 "asof": null,
 "value": 365000.0
 },
+"Q8385": {
+"asof": null,
+"value": 214.229602
+},
 "Q83891": {
 "asof": "0550-01-01",
 "value": 3500000.0
@@ -22277,6 +36021,10 @@
 "Q842": {
 "asof": null,
 "value": 309500.0
+},
+"Q842794": {
+"asof": null,
+"value": 2375002.0
 },
 "Q843": {
 "asof": null,
@@ -22306,6 +36054,10 @@
 "asof": "2011-10-09",
 "value": 239.04
 },
+"Q85": {
+"asof": null,
+"value": 528.0
+},
 "Q850235": {
 "asof": null,
 "value": 28627.0
@@ -22313,6 +36065,10 @@
 "Q851": {
 "asof": null,
 "value": 2250000.0
+},
+"Q853258": {
+"asof": null,
+"value": 52.0
 },
 "Q853348": {
 "asof": null,
@@ -22329,6 +36085,10 @@
 "Q856906": {
 "asof": null,
 "value": 974.0
+},
+"Q8575586": {
+"asof": null,
+"value": 15000000.0
 },
 "Q858": {
 "asof": null,
@@ -22378,6 +36138,10 @@
 "asof": null,
 "value": 11418174.0
 },
+"Q8652": {
+"asof": "2010-04-01",
+"value": 145.204218
+},
 "Q8660": {
 "asof": null,
 "value": 3527.0
@@ -22402,6 +36166,10 @@
 "asof": null,
 "value": 181040.0
 },
+"Q8678": {
+"asof": null,
+"value": 1260.029215
+},
 "Q8679": {
 "asof": null,
 "value": 889.0
@@ -22414,9 +36182,21 @@
 "asof": null,
 "value": 37200000.0
 },
+"Q8684": {
+"asof": null,
+"value": 605.25
+},
 "Q8685": {
 "asof": null,
 "value": 1995.0
+},
+"Q8686": {
+"asof": null,
+"value": 6341.0
+},
+"Q8688": {
+"asof": null,
+"value": 2093.0
 },
 "Q869": {
 "asof": null,
@@ -22437,6 +36217,10 @@
 "Q870844": {
 "asof": null,
 "value": 5.0
+},
+"Q8717": {
+"asof": null,
+"value": 140.8
 },
 "Q8731": {
 "asof": null,
@@ -22490,6 +36274,10 @@
 "asof": null,
 "value": 88.02
 },
+"Q8818": {
+"asof": null,
+"value": 134.65
+},
 "Q8826": {
 "asof": null,
 "value": 208.63
@@ -22506,6 +36294,10 @@
 "asof": null,
 "value": 100295.0
 },
+"Q8842": {
+"asof": null,
+"value": 1294.0
+},
 "Q8849": {
 "asof": null,
 "value": 506.0
@@ -22513,6 +36305,10 @@
 "Q8851": {
 "asof": null,
 "value": 394.98
+},
+"Q8853": {
+"asof": null,
+"value": 947.0
 },
 "Q8860": {
 "asof": null,
@@ -22637,6 +36433,10 @@
 "Q915": {
 "asof": null,
 "value": 799.68
+},
+"Q916": {
+"asof": null,
+"value": 1246700.0
 },
 "Q916943": {
 "asof": null,
@@ -22818,13 +36618,25 @@
 "asof": null,
 "value": 10.83
 },
+"Q954": {
+"asof": null,
+"value": 390757.0
+},
 "Q95449": {
 "asof": null,
 "value": 392.35
 },
+"Q956": {
+"asof": null,
+"value": 16410.54
+},
 "Q958": {
 "asof": null,
 "value": 644329.0
+},
+"Q9580": {
+"asof": null,
+"value": 107.08
 },
 "Q959": {
 "asof": null,
@@ -22866,6 +36678,10 @@
 "asof": null,
 "value": 27834.0
 },
+"Q9676": {
+"asof": null,
+"value": 572.0
+},
 "Q9679": {
 "asof": "2016-01-01",
 "value": 380.1644
@@ -22874,9 +36690,17 @@
 "asof": "0715-01-01",
 "value": 5400000.0
 },
+"Q97": {
+"asof": null,
+"value": 106460000.0
+},
 "Q970": {
 "asof": null,
 "value": 2034.0
+},
+"Q971": {
+"asof": null,
+"value": 342000.0
 },
 "Q974": {
 "asof": null,
@@ -22894,6 +36718,18 @@
 "asof": null,
 "value": 294.6
 },
+"Q977": {
+"asof": null,
+"value": 23200.0
+},
+"Q98": {
+"asof": null,
+"value": 161760000.0
+},
+"Q980": {
+"asof": null,
+"value": 70551.0
+},
 "Q980175": {
 "asof": null,
 "value": 1612077.2
@@ -22902,6 +36738,10 @@
 "asof": null,
 "value": 8.4
 },
+"Q983": {
+"asof": null,
+"value": 28051.0
+},
 "Q9832": {
 "asof": null,
 "value": 88.84
@@ -22909,6 +36749,10 @@
 "Q98405": {
 "asof": null,
 "value": 2956.0
+},
+"Q984542": {
+"asof": "2010-04-01",
+"value": 120.996826
 },
 "Q985": {
 "asof": null,
@@ -22957,6 +36801,10 @@
 "Q993": {
 "asof": null,
 "value": 270000.0
+},
+"Q99309": {
+"asof": "2018-01-01",
+"value": 2000.0
 },
 "Q994": {
 "asof": null,

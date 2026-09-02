@@ -1,0 +1,51 @@
+[
+{"subject":"Android (operating system)","cat":"science","diff":3,
+ "prompt":"Google's open-source mobile operating system, built for touchscreen phones and tablets, runs on a modified version of which kernel?",
+ "answer":"Linux","options":["BSD","Mach","Windows NT"],
+ "why":"Android is an open-source operating system developed by Google, based on a modified version of the Linux kernel and other free and open-source software, designed primarily for touchscreen mobile devices."},
+
+{"subject":"Rothschild family","cat":"history","diff":3,
+ "prompt":"This Ashkenazi Jewish banking dynasty takes its name from the family house where its documented history begins in the 16th century. In which German city did it start?",
+ "answer":"Frankfurt","options":["Hamburg","Cologne","Leipzig"],
+ "why":"The Rothschild family is a wealthy Ashkenazi Jewish noble banking family originally from Frankfurt, Germany. Its documented history starts in 16th-century Frankfurt, and its name derives from the family house, Rothschild."},
+
+{"subject":"2024 Men's T20 World Cup","cat":"sports","diff":4,
+ "prompt":"Co-hosted by Cricket West Indies in June 2024, this was the first major ICC tournament to stage matches in which country?",
+ "answer":"The United States","options":["Canada","Ireland","Japan"],
+ "why":"The 2024 ICC Men's T20 World Cup was co-hosted by Cricket West Indies and USA Cricket from 1 to 29 June 2024, and was the first major ICC tournament to include matches played in the United States."},
+
+{"subject":"United States dollar","cat":"business","diff":4,
+ "prompt":"The Coinage Act of 1792 divided the new American currency into 100 cents and set it at par with which existing coin?",
+ "answer":"The Spanish silver dollar","options":["The British pound sterling","The French ecu","The Dutch guilder"],
+ "why":"The Coinage Act of 1792 introduced the U.S. dollar at par with the Spanish silver dollar, divided it into 100 cents, and authorized the minting of coins."},
+
+{"subject":"COVID-19 pandemic","cat":"science","diff":2,
+ "prompt":"Caused by the SARS-CoV-2 virus, this global pandemic began with an outbreak in December 2019 in which Chinese city?",
+ "answer":"Wuhan","options":["Chengdu","Harbin","Shenzhen"],
+ "why":"The global COVID-19 pandemic, caused by severe acute respiratory syndrome coronavirus 2 (SARS-CoV-2), began with an outbreak in Wuhan, China, in December 2019, spreading worldwide in early 2020."},
+
+{"subject":"Attack on Pearl Harbor","cat":"history","diff":3,
+ "prompt":"On 7 December 1941 Japan struck the United States Pacific Fleet at its naval base, then drawing a neutral country into the war. On which Hawaiian island was that base?",
+ "answer":"Oahu","options":["Maui","Kauai","Molokai"],
+ "why":"On December 7, 1941, the Empire of Japan launched a surprise strike on the United States Pacific Fleet at its naval base at Pearl Harbor on Oahu, Hawaii Territory, while the US was still a neutral country in World War II."},
+
+{"subject":"95th Academy Awards","cat":"screen","diff":4,
+ "prompt":"Presented by AMPAS in March 2023 for the films of 2022, this ceremony was held at which Hollywood venue?",
+ "answer":"The Dolby Theatre","options":["The Shrine Auditorium","Radio City Music Hall","The Pantages Theatre"],
+ "why":"The 95th Academy Awards ceremony, presented by the Academy of Motion Picture Arts and Sciences, took place on March 12, 2023 at the Dolby Theatre in Hollywood, Los Angeles."},
+
+{"subject":"Earthquake","cat":"science","diff":3,
+ "prompt":"Also called a quake, tremor or temblor, it is the shaking of the surface caused by a sudden release of energy — in which layer of the Earth?",
+ "answer":"The lithosphere","options":["The mantle","The outer core","The stratosphere"],
+ "why":"An earthquake is the shaking of the Earth's surface resulting from a sudden release of energy in the lithosphere that creates seismic waves."},
+
+{"subject":"Industrial Revolution","cat":"history","diff":3,
+ "prompt":"Sometimes called the First of its name to distinguish it from a later one, this shift toward widespread mechanised manufacturing is usually dated to roughly which span?",
+ "answer":"1760–1840","options":["1600–1700","1850–1920","1400–1500"],
+ "why":"The Industrial Revolution, sometimes called the First Industrial Revolution in contrast to the subsequent Second Industrial Revolution, was a transitional period of the global economy toward more widespread, efficient and stable manufacturing, dated roughly 1760-1840."},
+
+{"subject":"0","cat":"science","diff":4,
+ "prompt":"Adding or subtracting this number leaves any other number unchanged. In mathematical terms it is the additive what, of the integers and the reals?",
+ "answer":"Identity","options":["Inverse","Modulus","Exponent"],
+ "why":"0 is a number representing an empty quantity. Adding or subtracting 0 to any number leaves that number unchanged; in mathematical terminology 0 is the additive identity of the integers, rational numbers, real numbers and complex numbers."}
+]

@@ -73,6 +73,20 @@ MAX_CITY_AREA = 100_000          # km2; Chongqing, the largest, is ~82,400
 MISMATCH = 10                    # the lead must be at least this many times larger
 SMALL = 100_000                  # ...and the stored value this small to be absurd
 
+WORD_NUM = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6,
+            "seven": 7, "eight": 8, "nine": 9, "ten": 10, "eleven": 11,
+            "twelve": 12, "fifteen": 15, "twenty": 20, "thirty": 30, "half": 0.5}
+
+# "a population of five million as of 2024" -- the figure is a WORD and the only
+# digits in the sentence are the YEAR. The first version of this read 2024 as
+# Amman's population, put it against a stored 500, got a ratio of 4, and let the
+# corpus keep asking "largest population? Verona / York / Amman / Cannes" with
+# York marked correct while Amman holds five million people. Spelled-out numerals
+# are read, and a bare four-digit number in year range with no scale word after
+# it is refused.
+WORD_POP = re.compile(
+    r"population[^.]{0,40}?\b(" + "|".join(WORD_NUM) + r")\s+(million|billion)\b", re.I)
+
 POP_PATTERNS = [
     re.compile(r"population[^.]{0,60}?([\d][\d,\.]*)\s*(million|billion)\b", re.I),
     re.compile(r"population(?:\s+\w+){0,6}?\s+(?:of|was|is|at)\s+([\d][\d,\.]*)\s*(million|billion)?", re.I),
@@ -81,6 +95,10 @@ POP_PATTERNS = [
 
 
 def prose_population(lead):
+    m = WORD_POP.search(lead or "")
+    if m:
+        v = WORD_NUM[m.group(1).lower()]
+        return v * (1e9 if m.group(2).lower() == "billion" else 1e6)
     for rx in POP_PATTERNS:
         m = rx.search(lead or "")
         if not m:
@@ -97,6 +115,10 @@ def prose_population(lead):
             v *= 1e6
         elif scale == "billion":
             v *= 1e9
+        # A bare number in year range with no scale word is a date, not a count.
+        if not scale and 1000 <= v <= 2100 and re.search(r"\b(as of|in)\s*$",
+                                                        (lead or "")[:m.start(1)][-8:]):
+            continue
         if v >= 100:
             return v
     return None

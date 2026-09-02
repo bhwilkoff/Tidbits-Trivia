@@ -39,6 +39,9 @@ public sealed class LivePlayerViewModel : ObservableObject
     public int Wager { get => Client.Wager; set => Client.Wager = value; }
     public bool IsEnded => Client.Meta?.State == "ended" || Client.Pub?.Phase == LiveRoom.Phase.Ended;
     public bool Answered => Client.HasAnswered;
+    /// A buzz is an answer, but it has its own confirmation line, so the
+    /// generic "Answer locked" must stand down or the player is told twice.
+    public bool AnswerLocked => Client.HasAnswered && !IsBuzz;
 
     // L5 social graph — "add the people you played with" at the wrap.
     public System.Collections.Generic.IReadOnlyList<PlayerIdentity.Friend> Coplayers => Client.Coplayers;

@@ -46,7 +46,9 @@
                            FontSize="20" FontWeight="Bold" Foreground="#3FCF8E"
                            HorizontalAlignment="Center" Margin="0,18"/>
                 <StackPanel x:Name="OptionsPanel" Spacing="0" IsVisible="{Binding !IsBuzz}"/>
-                <TextBlock IsVisible="{Binding Answered}" Text="Answer locked ✓" Foreground="#1E9E6A" FontWeight="SemiBold"/>
+                <!-- G1: a buzz IS an answer, so this fired alongside "Buzzed — wait for
+                     the host" and the player got the same news twice. -->
+                <TextBlock IsVisible="{Binding AnswerLocked}" Text="Answer locked ✓" Foreground="#1E9E6A" FontWeight="SemiBold"/>
 
                 <!-- Reveal: the correct answer + the host's story behind it -->
                 <Border IsVisible="{Binding HasRevealAnswer}"

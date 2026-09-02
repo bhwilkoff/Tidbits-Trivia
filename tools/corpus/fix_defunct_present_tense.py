@@ -217,6 +217,12 @@ def main():
     tomb = doc.setdefault("tombstones", {}).setdefault("corpus", {})
     for qid, p in culled:
         tomb[qid] = "subject is a historical period or people: no capital, currency or continent"
+    # `count` is a SECOND derived field, and forgetting it ships a corpus that
+    # disagrees with itself: this tool recomputed `version` correctly, left
+    # `count` at 98,514 against 98,484 real rows, and the Android golden
+    # (`corpus parse is short`) failed one commit later -- after the corpus
+    # commit's own CI had gone green on a CACHED test result.
+    doc["count"] = len(keep)
     doc["version"] = md5(json.dumps(
         keep, ensure_ascii=False, separators=(",", ":")).encode()).hexdigest()[:12]
     CORPUS.write_text(json.dumps(doc, ensure_ascii=False))

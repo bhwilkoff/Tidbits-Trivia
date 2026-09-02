@@ -43,7 +43,7 @@ for f in oddoneout match order thisorthat picture typeanswer closest enumerate d
   cp "assets/$f.json" "android/app/src/main/assets/$f.json"
 done
 
-echo "--- 2b. assert corpus.json's version hash matches its content"
+echo "--- 2b. assert corpus.json's version hash AND count match its content"
 python3 - <<'PY2'
 # The web client busts its IndexedDB cache on this string and nothing else, so a
 # content change under an unchanged version never reaches a returning player.
@@ -54,6 +54,14 @@ import hashlib, json, sys
 d = json.load(open("assets/corpus.json"))
 body = json.dumps(d["questions"], ensure_ascii=False, separators=(",", ":"))
 want = hashlib.md5(body.encode()).hexdigest()[:12]
+if d.get("count") != len(d["questions"]):
+    print(f"   COUNT-STALE: corpus.json declares count={d.get('count')} but carries "
+          f"{len(d['questions'])} questions.")
+    print("   The same failure as VERSION-STALE, one field over: a repair tool")
+    print("   recomputed the hash and forgot the count. The Android golden asserts")
+    print("   'corpus parse is short' against this field, so it fails a build LATER")
+    print("   than the commit that broke it. Set doc['count'] = len(questions).")
+    sys.exit(1)
 if d["version"] != want:
     print(f"   VERSION-STALE: corpus.json says {d['version']} but its content hashes to {want}.")
     print("   Whatever last wrote corpus.json kept the old version. Every web player")

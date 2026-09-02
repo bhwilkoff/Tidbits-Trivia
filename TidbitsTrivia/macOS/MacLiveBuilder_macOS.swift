@@ -13,7 +13,6 @@ struct LiveBuilderView_macOS: View {
     /// Retained so the launch hook (`TIDBITS_LIVE_JOIN`) and any future Live-side
     /// entry can still reach the join sheet — but §A0.4.1 keeps the visible door on
     /// Play, because joining is a Trivia Night action.
-    var onJoin: (() -> Void)? = nil
 
     @State private var store = LiveEventStore()
     @State private var selectedID: LiveEvent.ID?

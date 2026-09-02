@@ -201,8 +201,7 @@ struct ContentView_macOS: View {
                                               })
                 case .records: RecordsView_macOS(onPlay: start)
                 case .create:  CreateView_macOS { topic, qs in customGame = CustomLaunch(topic: topic, questions: qs) }
-                case .live:    LiveBuilderView_macOS(onPreview: { livePreview = $0 }, onHost: { liveHost = $0 },
-                                                     onJoin: { joinCode = "" })
+                case .live:    LiveBuilderView_macOS(onPreview: { livePreview = $0 }, onHost: { liveHost = $0 })
                 }
             }
             }

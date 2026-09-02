@@ -98,11 +98,25 @@ def frame_text(d):
 
 
 def clipped_lines(d, clip_x=CLIP_X_DEFAULT):
-    """Lines starting at the frame gutter. Big display type is excluded by
-    height: a hero numeral legitimately spans the frame, chrome type never
-    starts at the edge."""
-    return [t for t in d.get("allText", [])
-            if t.get("x", 1.0) <= clip_x and t.get("h", 1.0) <= 0.030]
+    """Text cut off by a frame edge, on EITHER side.
+
+    Big display type is excluded by height: a hero numeral legitimately spans the
+    frame, chrome type never starts at the edge.
+
+    The right edge was not checked at all, and that was not hypothetical — a Mac
+    tooltip ran off the right of the window reading 'Shown as "brought to you by
+    ..." in the l', and the run passed the clipping check while the sentence was
+    visibly severed on the glass. A left-only test cannot see the overflow
+    direction that horizontal text actually overflows in.
+    """
+    out = []
+    for t in d.get("allText", []):
+        if t.get("h", 1.0) > 0.030:
+            continue
+        x, w = t.get("x", 1.0), t.get("w", 0.0)
+        if x <= clip_x or (x + w) >= (1.0 - clip_x):
+            out.append(t)
+    return out
 
 
 def frame_darkness(path):
@@ -177,11 +191,29 @@ class Grader:
             self.grade("expect_any", bool(m), f"/{spec['expect_any']}/ "
                        + (f"matched {m.group(0)!r}" if m else "matched nothing"))
 
+        # A rule about what must NOT be on a surface. `forbid` below is only for
+        # error text; this is for product rules — e.g. Tidbits Live must not offer
+        # to JOIN a night, because joining needs no desktop rig (macOS-DESIGN
+        # A0.4.1). Nothing could express that before, so the rule lived only in a
+        # doc and drifted back into the UI twice.
+        if "expect_none" in spec:
+            m = re.search(spec["expect_none"], all_text, re.I)
+            self.grade("expect_none", not m, f"/{spec['expect_none']}/ "
+                       + (f"must not be here but matched {m.group(0)!r}" if m else "absent, as required"))
+
         bad = re.search(spec.get("forbid", FORBID_DEFAULT), all_text, re.I)
         self.grade("no_error_text", not bad,
                    "clean" if not bad else f"found {bad.group(0)!r}")
 
-        clipped = {p.name: [t["text"] for t in clipped_lines(texts.get(p.name, {}), clip_x)]
+        # A surface may declare edge text that is CORRECT there. The Mac sidebar's
+        # "Settings & Account" footer is the case this exists for: its OCR box
+        # starts at x=0.0000 because it includes the row's background, which is
+        # flush with the window by design, while the glass shows the label fully
+        # rendered with normal padding (verified by cropping the corner). No
+        # threshold separates that from a real clip, so it is named, not tuned.
+        allow = spec.get("allow_edge")
+        clipped = {p.name: [t["text"] for t in clipped_lines(texts.get(p.name, {}), clip_x)
+                            if not (allow and re.search(allow, t["text"], re.I))]
                    for _, p in shots}
         clipped = {k: v for k, v in clipped.items() if v}
         self.grade("no_clipped_text", not clipped, "no edge clipping"

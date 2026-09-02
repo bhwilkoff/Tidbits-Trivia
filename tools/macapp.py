@@ -166,15 +166,26 @@ def _windows(pid):
 
 
 def main_window_index(pid):
-    """The app's MAIN window, never a projector. Projectors are identified by
-    their fixed 1280x720 default; anything else is the shell."""
-    ws = _windows(pid)
+    """The app's MAIN window: never a projector, and TITLED if there is a choice.
+
+    The app reports two windows — an UNTITLED 1180x708 one and the real shell,
+    titled ("Tidbits Live") at 1180x760, the 52px difference being the title bar.
+    Taking the first non-projector took the untitled one, so every capture was of
+    a window with no traffic lights whose content sat flush at x=0. That is what
+    made the sidebar's "Settings & Account" land at x=0.0000 and trip the
+    clipped-text check: a harness artifact reported as an app layout bug.
+
+    A titled window is the one a person would call the app's window.
+    """
+    ws = [(i, n, w, h) for i, n, w, h in _windows(pid) if not _is_projector(w, h)]
+    if not ws:
+        ws = _windows(pid)          # all projector-sized — fall back rather than guess
     if not ws:
         return None
-    for i, name, w, h in ws:
-        if not _is_projector(w, h):
+    for i, name, _w, _h in ws:
+        if name.strip():
             return i
-    return ws[0][0]      # all projector-sized — fall back rather than guess
+    return ws[0][0]
 
 
 def bounds(pid):
@@ -221,12 +232,66 @@ def why_no_window(pid):
     return f"windows exist but none was grabbable: {sizes}"
 
 
+def park_cursor():
+    """Move the pointer out of the window before grabbing it.
+
+    Whatever the pointer rests on gets a HOVER TOOLTIP, and the tooltip lands in
+    the screenshot. One capture held a help balloon overflowing the right edge
+    reading 'Shown as "brought to you by ..." in the' — genuinely severed text,
+    but the TOOLTIP's, not the layout's, and the clipping check graded it as an
+    app defect. A capture should show the app at rest.
+
+    AppleScript cannot move the mouse (System Events has no such command; the
+    obvious-looking "set the position of the mouse" silently does nothing), and
+    Quartz/pyobjc is not installed here, so this shells out to a tiny Swift
+    snippet using CGWarpMouseCursorPosition. If that is unavailable the capture
+    still happens, just without the guarantee.
+    """
+    src = ('import CoreGraphics\n'
+           'CGWarpMouseCursorPosition(CGPoint(x: 4, y: 4))\n')
+    try:
+        subprocess.run(["swift", "-"], input=src, text=True,
+                       capture_output=True, timeout=45)
+    except (subprocess.SubprocessError, OSError, FileNotFoundError):
+        pass          # worst case a tooltip shows, as before
+
+
+def ensure_onscreen(pid):
+    """Move the window fully on screen before grabbing it.
+
+    `screencapture -R` takes SCREEN coordinates and CLAMPS them to the display, so
+    a window sitting at a negative origin is captured cropped: the title bar and
+    the left gutter are silently missing from the PNG. That produced an
+    intermittent, entirely fake "clipped text" failure — the sidebar's
+    "Settings & Account" landed at x=0.0000 in exactly the runs where the window
+    had drifted off the left edge, and read as a layout bug in the app.
+
+    macOS restores window position across launches, so whether a run is cropped
+    depends on where the window was last left. Pin it instead.
+    """
+    idx = main_window_index(pid)
+    if idx is None:
+        return False
+    b = bounds(pid)
+    if b and b[0] >= 0 and b[1] >= 25:
+        return True                      # already clear of the menu bar
+    try:
+        _osa('tell application "System Events" to tell '
+             f'(first process whose unix id is {pid}) to '
+             f'set position of window {idx} to {{60, 60}}')
+        return True
+    except subprocess.SubprocessError:
+        return False
+
+
 def capture(pid, path, tries=12):
     close_projectors(pid)
     """Raise, then grab the window's screen region. -R takes SCREEN pixels, so
     the app must be in front or a terminal gets graded as the app."""
+    park_cursor()
     for _ in range(tries):
         raise_pid(pid)
+        ensure_onscreen(pid)
         time.sleep(0.7)
         b = bounds(pid)
         if b and b[2] > 200 and b[3] > 200:

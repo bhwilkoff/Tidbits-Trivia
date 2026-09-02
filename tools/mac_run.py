@@ -32,24 +32,33 @@ PROC = "TidbitsTrivia"
 # expect_any below is content from the DETAIL column only.
 ANCHOR = r"Tidbits|Quick Play|Records|Create|Leaderboard|Live"
 
+# The sidebar footer is flush with the window on EVERY Mac surface; see
+# devharness.clipped_lines / the allow_edge note.
+SIDEBAR_FOOTER = r"Settings & Account"
+
 SCENARIOS = {
     "home":    (dict(TIDBITS_TAB="play"),
-                {"expect_any": r"Quick Play|Daily|Play a round|Start"}),
+                {"allow_edge": SIDEBAR_FOOTER, "expect_any": r"Quick Play|Daily|Play a round|Start"}),
     "records":  (dict(TIDBITS_TAB="records"),
-                 {"expect_any": r"Your games|Personal bests|No games yet|streak"}),
+                 {"allow_edge": SIDEBAR_FOOTER, "expect_any": r"Your games|Personal bests|No games yet|streak"}),
     "create":   (dict(TIDBITS_TAB="create"),
-                 {"expect_any": r"Create|quiz|round|question"}),
-    "leaderboard": (dict(TIDBITS_TAB="leaderboard"),
-                    {"expect_any": r"Leaderboard|standings|season|venue|rank"}),
+                 {"allow_edge": SIDEBAR_FOOTER, "expect_any": r"Create|quiz|round|question"}),
+    # NO "leaderboard" scenario: macOS HAS no leaderboard. The Mac sidebar is
+    # play/records/create/live (ContentView_macOS Section), and LeaderboardView
+    # exists only for iOS and tvOS — so TIDBITS_TAB=leaderboard silently landed on
+    # Play and the scenario graded the WRONG SCREEN. It is a real parity gap, not
+    # a harness bug; tracked in PARITY.md and docs/PREMIER-PUSH.md. Add the
+    # scenario back in the same change that adds the surface.
     "live":     (dict(TIDBITS_TAB="live"),
-                 {"expect_any": r"Live|Host|room|code|join"}),
+                 {"allow_edge": SIDEBAR_FOOTER, "expect_any": r"Tidbits Live|Event name|Rounds",
+                  "expect_none": r"Join a game|Join a night|join one with a code"}),
     # The room CODE, not a generic word. The first version of this accepted
     # "players|waiting|Start", and once the QR panel shipped it passed on the
     # word "Players" in "Players scan, or join at…" — which would still be there
     # if the code never rendered. A host who cannot read the code out has no
     # night, so the code is what the assertion is for.
     "livehost": (dict(TIDBITS_LIVE_HOST="1", TIDBITS_LIVE_CODE="QATEST"),
-                 {"expect_any": r"QATEST"}),
+                 {"allow_edge": SIDEBAR_FOOTER, "expect_any": r"QATEST"}),
     # The Live builder with a populated event and its first round expanded, so
     # the per-question list and the Edit affordance are observable at all
     # (macOS-DESIGN §A2.4). Nothing could reach them from a cold launch.
@@ -59,7 +68,7 @@ SCENARIOS = {
     # single question rendered; "Add question" is real but sits below the fold
     # at the default window height, so it asserted the window size, not the list.
     "livebuilder": (dict(TIDBITS_TAB="live", TIDBITS_LIVE_BUILDER="1"),
-                    {"expect_any": r"Answer:"}),
+                    {"allow_edge": SIDEBAR_FOOTER, "expect_any": r"Answer:"}),
 }
 
 

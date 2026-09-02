@@ -71,11 +71,13 @@ def quit_app():
 
 
 def launch(env):
-    """`open -a` does NOT forward env to a GUI app, so the binary is exec'd
-    directly — which is what makes the TIDBITS_* hooks reachable on the Mac, and
-    also why every later call must address the PID rather than the name."""
+    """Launch through LaunchServices with the hooks attached (macapp.launch).
+
+    This used to exec the binary directly, believing `open` could not forward
+    env. `open --env` can, and exec'ing is worse than merely unnecessary: System
+    Events cannot see an unregistered process, so every capture failed."""
     global _PID
-    _PID = macapp.launch(BIN, env)
+    _PID = macapp.launch(APP, env)
 
 
 def capture(path, tries=20):

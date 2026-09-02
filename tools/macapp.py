@@ -1,17 +1,21 @@
 """Drive the Mac app by PROCESS, never by name.
 
-`tell application "TidbitsTrivia" to activate` looks harmless and is not. The
-harnesses exec the app binary directly (that is the only way TIDBITS_* env hooks
-reach a GUI app), so the running instance is not a LaunchServices-registered
-application. AppleScript therefore resolves the NAME instead, which either
+`tell application "TidbitsTrivia" to activate` looks harmless and is not. It
+resolves the NAME, which either launches /Applications/TidbitsTrivia.app
+alongside the build under test — two processes with one name, and screenshots of
+whichever won the race — or hangs waiting for a launch that never completes,
+which killed an entire 18-cell lap. Both were observed. Every call here targets a
+specific unix pid instead.
 
-  * launches /Applications/TidbitsTrivia.app alongside the build under test —
-    two processes with one name, and screenshots of whichever won the race, or
-  * hangs indefinitely waiting for a launch that never completes, which killed
-    an entire 18-cell lap when the timeout propagated.
-
-Both were observed. Every call here targets a specific unix pid, so the app under
-test is the app measured, and a name collision cannot occur.
+LAUNCHING: through `open`, never by exec'ing the binary. Exec'ing it was the
+original design, on the belief that `open` could not forward the TIDBITS_* hooks
+a GUI app needs. That belief is now WRONG — `open --env` has existed since macOS
+13 — and it cost a whole run: a directly-exec'd bundle is not registered with
+LaunchServices, so System Events cannot see it AT ALL ("Can't get process whose
+unix id = N. Invalid index"), every capture failed, and the harness reported "no
+window ever appeared" about an app that was running fine. Measured on this
+machine: exec'd -> System Events cannot resolve the process; `open -n` -> the
+windows are there. `ps eww` confirms `--env` reaches the app.
 """
 import re
 import subprocess
@@ -31,16 +35,38 @@ def quit_all():
     time.sleep(1.5)
 
 
-def launch(binary, env=None):
-    """Exec the binary directly and return its real pid. Popen with a list (not
-    a shell string) is what makes the pid the APP's rather than a shell's."""
+def launch(app, env=None, timeout=20):
+    """Launch the .app through LaunchServices and return its real pid.
+
+    `-n` forces a NEW instance so the build under test is the one measured, and
+    `--env` carries the QA hooks that used to require exec'ing the binary.
+
+    The pid comes from pgrep because `open` exits immediately and reports its own
+    status, not the app's. Poll rather than sleep a fixed amount: LaunchServices
+    needs a moment to tear down the previous instance, and a launch issued into
+    that window is silently dropped — which looked exactly like a crash (`pgrep`
+    empty, so the caller's AppleScript got an empty pid and failed to parse).
+    """
     quit_all()
     import os
-    e = dict(os.environ)
-    e.update(env or {})
-    p = subprocess.Popen([str(binary)], env=e,
-                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    return p.pid
+    app = str(app)
+    if app.endswith("/Contents/MacOS/" + PROC):          # tolerate a binary path
+        app = app[: -len("/Contents/MacOS/" + PROC)]
+    cmd = ["open", "-n"]
+    for k, v in (env or {}).items():
+        cmd += ["--env", f"{k}={v}"]
+    cmd.append(app)
+    subprocess.run(cmd, capture_output=True, timeout=30)
+
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        r = subprocess.run(["pgrep", "-f", f"{PROC}.app/Contents/MacOS/{PROC}"],
+                           capture_output=True, text=True)
+        pids = [int(x) for x in r.stdout.split()]
+        if pids:
+            return pids[0]
+        time.sleep(0.5)
+    return None
 
 
 def close_projectors(pid):
@@ -172,12 +198,20 @@ def why_no_window(pid):
     app System Events cannot see, and a window too small to grab — and they need
     different fixes.
     """
-    try:
-        alive = subprocess.run(["ps", "-p", str(pid)], capture_output=True).returncode == 0
-    except OSError:
-        alive = False
-    if not alive:
+    if pid is None:
+        return ("the app never started — `open` returned but no process appeared. "
+                "Usually LaunchServices was still tearing down the previous "
+                "instance, or the .app path is wrong")
+    # `ps -p` is NOT a liveness check here: a child that exited but was never
+    # reaped stays a zombie and ps still finds it, which is how this reported
+    # "the process is alive" about an app that was gone. Ask for its state.
+    r = subprocess.run(["ps", "-o", "state=", "-p", str(pid)],
+                       capture_output=True, text=True)
+    state = r.stdout.strip()
+    if not state:
         return "the app process exited before a window appeared"
+    if state.startswith("Z"):
+        return "the app process exited (zombie) before a window appeared"
     ws = _windows(pid)
     if not ws:
         return ("the process is alive but System Events reports NO windows — "

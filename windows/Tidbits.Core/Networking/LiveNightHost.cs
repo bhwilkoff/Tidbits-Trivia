@@ -140,7 +140,9 @@ public sealed class LiveNightHost : ObservableObject
     {
         get
         {
-            var net = Net.JoinedList().Where(j => !_removed.Contains(j.Id));
+            // G7: one row per TEAM. JoinedList() is per DEVICE, so a table that
+            // grouped appeared as three near-identical rows splitting its score.
+            var net = Net.JoinedTeams().Where(j => !_removed.Contains(j.Id));
             var paper = _paperScores.Where(kv => !_removed.Contains(kv.Key))
                 .Select(kv => new LiveHostNet.Joined(kv.Key, _paperNames[kv.Key], kv.Value));
             return net.Concat(paper)
@@ -148,7 +150,7 @@ public sealed class LiveNightHost : ObservableObject
         }
     }
     public int PlayerCount => Net.PlayerCount;
-    public int AnsweredCount => Net.AnsweredCount;
+    public int AnsweredCount => Net.AnsweredTeamCount;
     public int RoundIndex => Current?.RoundIndex ?? 0;
     public bool IsWagerRound => WagerRoundIndex is { } w && Current is not null && RoundIndex == w;
 

@@ -37,6 +37,18 @@ final class LiveHostNet {
         teams.map { LiveMember(uid: $0.key, teamName: $0.value.name, joinedAt: $0.value.joinedAt) }
     }
 
+    /// G7: how many TEAMS have answered.
+    ///
+    /// `answers.count` counts DEVICES, which was the same number until tables
+    /// could group. A host watching for "everyone is in" would read 3 answered
+    /// from one table of three phones and move on while two tables were still
+    /// thinking.
+    var answeredTeamCount: Int {
+        var stamps: [String: Int] = [:]
+        for (uid, a) in answers { stamps[uid] = a.sv ?? a.ts }
+        return LiveTeamRoster.scorableUIDs(members: members, answeredAt: stamps).count
+    }
+
     /// G7: the answer that counts for a team, looked up by the row's id (which is
     /// the LEADER's uid). Any member may have answered, so keying the cockpit's
     /// per-team row on the leader alone reports "no answer" for a table whose

@@ -75,6 +75,21 @@ public sealed class LiveHostNet
     public int PlayerCount { get { lock (_lock) return _teams.Count; } }
     public int AnsweredCount { get { lock (_lock) return _answers.Count; } }
 
+    /// G7: how many TEAMS have answered. `AnsweredCount` counts DEVICES, which was
+    /// the same number until tables could group — a host watching for "everyone is
+    /// in" would read 3 from one table of three phones and move on while two
+    /// tables were still thinking. Mirrors Swift `answeredTeamCount`.
+    public int AnsweredTeamCount
+    {
+        get
+        {
+            var members = Members();
+            lock (_lock)
+                return LiveTeamRoster.ScorableUids(
+                    members, _answers.ToDictionary(kv => kv.Key, kv => kv.Value.OrderKey)).Count;
+        }
+    }
+
     private readonly List<CancellationTokenSource> _streamCts = new();
     private CancellationTokenSource? _answersCts;
     private string _currentQid = "";

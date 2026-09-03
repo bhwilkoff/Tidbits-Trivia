@@ -876,7 +876,7 @@ struct LiveHostView_macOS: View {
                             Text("JOINED").font(.callout).foregroundStyle(Tidbits.Palette.inkSoft)
                             Spacer()
                             if session.revealed == false, !net.answers.isEmpty {
-                                Text("\(net.answers.count) answered").font(.caption).foregroundStyle(Tidbits.Palette.mint)
+                                Text("\(net.answeredTeamCount) answered").font(.caption).foregroundStyle(Tidbits.Palette.mint)
                             }
                         }
                         // G7: one row per TEAM. Listing net.joined showed a table

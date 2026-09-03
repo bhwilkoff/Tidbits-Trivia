@@ -183,12 +183,20 @@ function ensureLiveTimer() {
 
 function draw() {
   if (!root) return;
-  root.innerHTML = S.joined ? playHTML() : joinHTML();
+  root.innerHTML = S.remote ? remoteHTML() : (S.joined ? playHTML() : joinHTML());
+  if (S.remote) {
+    root.querySelector('#rmt-go')?.addEventListener('click', remotePair);
+    root.querySelectorAll('[data-rmt]').forEach((b) =>
+      b.addEventListener('click', () => remoteSend(b.dataset.rmt)));
+    root.querySelector('#live-x')?.addEventListener('click', () => { location.hash = '#/play'; });
+    return;
+  }
   if (document.getElementById('live-timer')) ensureLiveTimer();
   const wr = document.getElementById('live-wager-range');   // Wave A: wager slider
   if (wr) wr.oninput = (e) => { S.wager = +e.target.value; const n = document.getElementById('live-wager-num'); if (n) n.textContent = e.target.value; };
   if (!S.joined) {
     root.querySelector('#live-join')?.addEventListener('click', join);
+    root.querySelector('#live-hostrmt')?.addEventListener('click', () => { S.remote = true; S.error = ''; draw(); });
     root.querySelector('#live-code')?.addEventListener('input', (e) => {
       e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
       // G7: look the room up as soon as the code is complete, so the teams are on
@@ -243,6 +251,70 @@ function draw() {
   });
 }
 
+/// G6 — the host's phone remote.
+///
+/// A SEPARATE surface, not a mode on the joiner, because a remote is not a
+/// player: it has no team, no score, and must not be able to submit an answer.
+/// Sharing the joiner's state machine would put an answer path one bug away from
+/// a device that is standing next to the projector.
+function remoteHTML() {
+  if (!S.remotePaired) {
+    return `<div class="live-card">
+      <button id="live-x" class="live-x" aria-label="Close">✕</button>
+      <div class="live-badge">HOST REMOTE</div>
+      <h1>Drive the night</h1>
+      <p class="live-sub">Enter your room code and the PIN from your laptop.</p>
+      <input id="rmt-code" class="live-in live-codein" placeholder="CODE" maxlength="4" value="${esc(S.code)}" autocapitalize="characters" autocomplete="off">
+      <input id="rmt-pin" class="live-in live-codein" placeholder="PIN" maxlength="6" inputmode="numeric" value="${esc(S.remotePin)}">
+      ${S.error ? `<div class="live-err">${esc(S.error)}</div>` : ''}
+      <button id="rmt-go" class="live-go">Pair</button>
+      <p class="live-sub" style="margin-top:14px">The PIN is on the host screen, not the projector — the room code alone cannot drive the show.</p>
+    </div>`;
+  }
+  const p = S.pub || {};
+  return `<div class="live-play">
+    <div class="live-round">REMOTE · ${esc(S.code)}${p.round ? ` · ROUND ${p.round}` : ''}</div>
+    <div class="live-q">${esc(p.prompt || 'Waiting for the host…')}</div>
+    ${p.phase === 'reveal' && p.options && typeof p.answerIndex === 'number'
+      ? `<div class="live-rmtanswer">Answer: ${esc(p.options[p.answerIndex] || '')}</div>` : ''}
+    <div class="live-rmtgrid">
+      <button class="live-rmtbtn" data-rmt="reveal">Reveal</button>
+      <button class="live-rmtbtn" data-rmt="next">Next</button>
+      <button class="live-rmtbtn" data-rmt="skip">Skip</button>
+      <button class="live-rmtbtn" data-rmt="scores">Scores</button>
+    </div>
+    ${S.remoteNote ? `<div class="live-sub">${esc(S.remoteNote)}</div>` : ''}
+  </div>`;
+}
+
+async function remotePair() {
+  const code = (document.getElementById('rmt-code')?.value || '').trim().toUpperCase();
+  const pin = (document.getElementById('rmt-pin')?.value || '').trim();
+  if (code.length < 4) { S.error = 'Enter the 4-letter room code.'; return draw(); }
+  if (pin.length < 6) { S.error = 'Enter the 6-digit PIN from your laptop.'; return draw(); }
+  S.code = code; S.remotePin = pin; S.error = '';
+  // Resume from the HOST's counter. A fresh remote that started at 1 would be
+  // refused forever once the host had run anything.
+  S.remoteId = await FirebaseNet.liveRemoteLastId(code);
+  S.remotePaired = true;
+  FirebaseNet.liveOnPub(code, (p) => { S.pub = p; draw(); });
+  draw();
+}
+
+async function remoteSend(verb) {
+  S.remoteId = (S.remoteId || 0) + 1;
+  try {
+    await FirebaseNet.liveRemoteSend(S.code, { id: S.remoteId, verb, pin: S.remotePin });
+    S.remoteNote = '';
+  } catch {
+    // The command did not land, so do NOT keep the id: reusing it next press is
+    // correct, and advancing it would leave a gap the host silently skips past.
+    S.remoteId -= 1;
+    S.remoteNote = 'That did not send — try again.';
+  }
+  draw();
+}
+
 function joinHTML() {
   return `<div class="live-card">
     <button id="live-x" class="live-x" aria-label="Close">✕</button>
@@ -256,6 +328,7 @@ function joinHTML() {
       `</div>` : ''}
     ${S.error ? `<div class="live-err">${esc(S.error)}</div>` : ''}
     <button id="live-join" class="live-go" ${S.joining ? 'disabled' : ''}>${S.joining ? 'Joining…' : 'Join'}</button>
+    <button id="live-hostrmt" class="live-hostrmt">I'm the host — use this phone as a remote</button>
   </div>`;
 }
 
@@ -418,6 +491,10 @@ function injectStyles() {
   .live-teams{margin:6px 0 2px}
   .live-teamshead{font-size:.72rem;font-weight:800;color:#8a8078;margin-bottom:6px}
   .live-teamchip{display:inline-block;margin:0 6px 6px 0;padding:7px 12px;border-radius:999px;border:2.5px solid #231E1A;background:#fff;font-weight:800;cursor:pointer;font-size:.85rem}
+  .live-hostrmt{display:block;width:100%;margin-top:10px;padding:11px;border:0;background:none;color:#8a8078;font-weight:700;text-decoration:underline;cursor:pointer}
+  .live-rmtgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+  .live-rmtbtn{padding:22px 10px;font-size:1.15rem;font-weight:900;color:#fff;background:var(--color-primary,#FF746F);border:2.5px solid #231E1A;border-radius:16px;box-shadow:4px 4px 0 #231E1A;cursor:pointer}
+  .live-rmtanswer{margin-top:10px;font-weight:900;color:#1E9E6A}
   .live-q{font-weight:900;font-size:1.5rem;line-height:1.25;color:#231E1A;margin:6px 0 20px}
   .live-opts{display:flex;flex-direction:column;gap:12px}
   .live-opt{display:flex;align-items:center;gap:12px;text-align:left;padding:16px;font-size:1.1rem;font-weight:800;color:#231E1A;background:#fff;border:2.5px solid #231E1A;border-radius:16px;box-shadow:4px 4px 0 #231E1A;cursor:pointer}

@@ -349,6 +349,24 @@ export const FirebaseNet = {
     try { await remove(ref(_db, `live/${code}/teams/${_uid}`)); } catch { /* best effort */ }
   },
 
+  /// G6: send one host-remote command. The remote REQUESTS; the desktop host
+  /// reads `control`, checks the PIN and the id, and only then moves the show —
+  /// this never writes `pub`, because two writers is how a room ends up seeing
+  /// question 4 while the host reads question 5.
+  async liveRemoteSend(code, cmd) {
+    const { db } = await ensure();
+    await db.set(db.ref(_db, `live/${code}/control`), cmd);
+  },
+  /// G6: the host's last executed command id, so a reconnecting remote resumes
+  /// from the HOST's counter instead of restarting at 1 (which the host would
+  /// refuse forever, every id being <= what it has already run).
+  async liveRemoteLastId(code) {
+    const { db } = await ensure();
+    const snap = await db.get(db.ref(_db, `live/${code}/control`));
+    const v = snap.exists() ? snap.val() : null;
+    return (v && typeof v.id === 'number') ? v.id : 0;
+  },
+
   // --- HOST side (this device opens live/{code} and owns meta/pub/scores) ---
   // The web can now HOST a casual Trivia Night on the same backend as Tidbits
   // Live (owner architecture). Mirrors LiveNightHost (Swift) + FirebaseNet

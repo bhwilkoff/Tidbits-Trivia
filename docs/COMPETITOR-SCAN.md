@@ -176,11 +176,45 @@ found by a passing unit test**. Three came from rendering the screen and looking
 at it — twice after the tests were already green — and the fourth from asking
 what the OTHER clients were showing while the host's screen was correct.
 
-### G6. No phone remote for the host  *(QuizXpress)*
-QuizXpress drives the show from a presenter remote or a phone app, so the host can
-walk the room. Tidbits' cockpit is keyboard + mouse at the laptop. We already have
-the whole phone-join transport (`live/{code}`), so a host-role client is a
-smaller job than it looks.
+### G6. Phone host remote — CLOSED 2026-09-03
+QuizXpress drives the show from a presenter remote or a phone app so the host can
+walk the room; the Tidbits cockpit was keyboard and mouse at the laptop. **A host
+can now drive the night from any phone.**
+
+Every other Live path runs host -> players. This one runs the other way, and that
+inverts the trust: a phone is asking the show to advance. Three rules make it
+safe, and each is a way the obvious implementation breaks. 9 Swift + 9 C# tests.
+
+- **The room code is NOT authorisation.** It is printed on the projector, so
+  every player in the pub has it. A remote authorised by the code alone would let
+  any table reveal the answer mid-question. The host shows a 6-digit PIN on the
+  LAPTOP only, and an unpaired host — no PIN set — accepts **nothing** rather
+  than everything. Failing closed matters more here than anywhere else in the app.
+- **Commands carry a monotonic id, not a timestamp.** A retried write or a
+  reconnect delivers the same command twice, and "next" applied twice skips a
+  question the room never saw. The host runs a command only if its id exceeds the
+  last it ran, so a replay is a no-op and a stale remote cannot rewind the show.
+  A reconnecting phone resumes from the HOST's counter — starting again at 1
+  would be refused forever.
+- **The remote requests; the desktop decides.** The phone never writes `pub`. Two
+  writers to the show state is how a room ends up seeing question 4 while the
+  host reads question 5. `live/{code}/control` is a separate, additive node.
+
+**It is a clicker, not a second cockpit.** The verbs are reveal, next, skip,
+scores and board. Nothing that EDITS the night — scores, teams, the question list
+— is remotely reachable, because a phone in a pocket should not be able to delete
+a team. The tests assert the absent verbs, not only the present ones.
+
+Two implementation notes worth keeping. The Windows host **marshals the command
+to the UI thread**; the Mac gets that free from its `@MainActor` session, and
+copying the Swift shape into C# verbatim would have left a cross-thread race that
+only appears under a real phone. And the phone surface is a **separate screen,
+not a mode on the joiner** — a remote has no team, no score, and must not be able
+to submit an answer, so sharing the joiner's state machine would leave an answer
+path one bug away from the device standing next to the projector.
+
+Shipped on the web first: a host with any phone opens the join page, taps "I'm
+the host", and needs nothing installed.
 
 ### G7. Several phones, one team — CLOSED 2026-09-03
 Crowdpurr has an explicit team-leader model — one device answers for a physically

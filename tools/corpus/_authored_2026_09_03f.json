@@ -1,0 +1,51 @@
+[
+ {"subject":"Provinces and territories of Canada","cat":"geography","diff":3,
+  "prompt":"Canada is divided into ten provinces and how many territories?",
+  "answer":"Three","options":["One","Two","Five"],
+  "why":"Yukon, the Northwest Territories and Nunavut. Territories draw their powers from the federal parliament, where provinces hold theirs constitutionally."},
+
+ {"subject":"Bavaria","cat":"geography","diff":4,
+  "prompt":"Bavaria is the largest German state by area. Where does it rank by population?",
+  "answer":"Second","options":["First","Fourth","Ninth"],
+  "why":"Its 70,550 square kilometres lead the country, but its 13.08 million people put it behind North Rhine-Westphalia. Munich is its capital."},
+
+ {"subject":"Neon Genesis Evangelion","cat":"screen","diff":4,
+  "prompt":"Neon Genesis Evangelion was broadcast in 1995-96, but its story is set in which year?",
+  "answer":"2015","options":["2050","1999","2100"],
+  "why":"Hideaki Anno set it fifteen years after a worldwide catastrophe, placing the series in a 2015 that was two decades ahead when it aired."},
+
+ {"subject":"Cannabis (drug)","cat":"science","diff":2,
+  "prompt":"Which compound is the main psychoactive component of cannabis?",
+  "answer":"THC","options":["CBD","CBN","THCV"],
+  "why":"Tetrahydrocannabinol is one of 483 known compounds in the plant, and the one responsible for the high. CBD is not psychoactive in the same way."},
+
+ {"subject":"IMDb","cat":"screen","diff":3,
+  "prompt":"Beyond films and television, IMDb now catalogues which of these?",
+  "answer":"Podcasts","options":["Novels","Stage plays","Album releases"],
+  "why":"The Internet Movie Database has expanded to podcasts, video games and streaming content, holding around 25.9 million titles."},
+
+ {"subject":"Japanese language","cat":"geography","diff":4,
+  "prompt":"Japanese belongs to which language family?",
+  "answer":"Japonic","options":["Sino-Tibetan","Altaic","Austronesian"],
+  "why":"Japanese and the Ryukyuan languages form the Japonic family. Despite the borrowed writing system, Japanese is not related to Chinese, which is Sino-Tibetan."},
+
+ {"subject":"Atom","cat":"science","diff":3,
+  "prompt":"Which single number decides what chemical element an atom is?",
+  "answer":"Its number of protons","options":["Its number of neutrons","Its number of electrons","Its total mass"],
+  "why":"Eleven protons make sodium, twenty-nine make copper -- always. Neutrons vary between isotopes and electrons between ions, without changing the element."},
+
+ {"subject":"Standard deviation","cat":"science","diff":3,
+  "prompt":"A low standard deviation tells you what about a set of values?",
+  "answer":"They cluster near the average","options":["They are mostly negative","They are evenly spaced","The average is small"],
+  "why":"Standard deviation measures spread around the mean, not the size of the mean. A high one means the values range widely."},
+
+ {"subject":"Thanksgiving","cat":"geography","diff":5,
+  "prompt":"Besides the United States, Canada and Liberia, Thanksgiving is a national holiday on which Caribbean island?",
+  "answer":"Saint Lucia","options":["Barbados","Jamaica","Grenada"],
+  "why":"It is also observed on Norfolk Island, an Australian territory. The dates differ -- Canada's falls in October, a month before the American one."},
+
+ {"subject":"Lucifer","cat":"history","diff":3,
+  "prompt":"In Christian theology, Lucifer's fall is associated with which sin?",
+  "answer":"Pride","options":["Greed","Envy","Wrath"],
+  "why":"He is said to have attempted to usurp God and been cast down for it. The story parallels Attar's failed attempt to overthrow Ba'al in Canaanite religion."}
+]

@@ -1,0 +1,46 @@
+[
+ {"subject":"Asperger syndrome","cat":"science","diff":3,
+  "prompt":"Asperger syndrome is no longer a separate diagnosis. What was it merged into?",
+  "answer":"Autism spectrum disorder","options":["Social anxiety disorder","Obsessive-compulsive disorder","Developmental language disorder"],
+  "why":"It was folded into the autism spectrum by the DSM-5 in 2013 and the ICD-11 in 2022, so clinicians no longer diagnose it as a distinct condition."},
+
+ {"subject":"Satan","cat":"history","diff":4,
+  "prompt":"In Judaism, Satan is traditionally understood not as a rival to God but as what?",
+  "answer":"An agent serving God","options":["A fallen angel","A rival deity","A human king"],
+  "why":"Jewish tradition treats him as subservient, often a metaphor for the yetzer hara or 'evil inclination'. The rebel fallen angel is the Christian and Islamic reading."},
+
+ {"subject":"Attention deficit hyperactivity disorder","cat":"science","diff":4,
+  "prompt":"ADHD symptoms are understood to arise from a deficit in which kind of brain process?",
+  "answer":"Executive function","options":["Long-term memory","Visual processing","Language production"],
+  "why":"Executive dysfunction explains the pattern: time management, cognitive inhibition and self-regulation, rather than a problem with attention alone."},
+
+ {"subject":"Generation Alpha","cat":"history","diff":3,
+  "prompt":"Generation Alpha takes its name from the first letter of which alphabet?",
+  "answer":"Greek","options":["Latin","Hebrew","Cyrillic"],
+  "why":"Generation Z exhausted the Latin alphabet, so the naming restarted with the Greek one rather than running past Z."},
+
+ {"subject":"Microsoft Office","cat":"business","diff":3,
+  "prompt":"The first Microsoft Office suite, announced in 1988, bundled Word, Excel and which third program?",
+  "answer":"PowerPoint","options":["Access","Outlook","Publisher"],
+  "why":"Bill Gates announced the three at COMDEX, and all three are still core products. Access, Outlook and Publisher joined the suite later."},
+
+ {"subject":"Scream (franchise)","cat":"screen","diff":3,
+  "prompt":"Who directed the first four Scream films?",
+  "answer":"Wes Craven","options":["John Carpenter","Sam Raimi","Tobe Hooper"],
+  "why":"Craven directed the first four; Kevin Williamson created the series and wrote most of it. The fifth and sixth went to Matt Bettinelli-Olpin and Tyler Gillett."},
+
+ {"subject":"Suzume","cat":"screen","diff":4,
+  "prompt":"Suzume completes Makoto Shinkai's Disaster trilogy, following Weathering with You and which earlier film?",
+  "answer":"Your Name","options":["Spirited Away","Akira","Perfect Blue"],
+  "why":"Your Name (2016), Weathering with You (2019) and Suzume (2022) form the trilogy. Spirited Away is Miyazaki's, from a different studio entirely."},
+
+ {"subject":"International Workers' Day","cat":"history","diff":4,
+  "prompt":"The 1889 international congress that established the 1 May workers' holiday met in which city?",
+  "answer":"Paris","options":["Berlin","Chicago","London"],
+  "why":"The date commemorates Chicago's Haymarket affair, which is why Chicago is the tempting answer -- but the congress that fixed it met in Paris."},
+
+ {"subject":"New Year's Eve","cat":"history","diff":4,
+  "prompt":"What is the church service many Christians attend on the last night of the year called?",
+  "answer":"A watchnight service","options":["A vigil mass","An evensong","A vespers service"],
+  "why":"Watchnight services carry the congregation past midnight into the new year, a tradition with particular significance in Black American churches since 1862."}
+]

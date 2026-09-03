@@ -80,6 +80,9 @@ public partial class LiveView : UserControl
     /// G4: the first-letter theme of each round ("" = none). Index-aligned with
     /// _rounds, like _buzz/_notes/_timers.
     private readonly System.Collections.Generic.List<string> _letters = new();
+    /// G5: the pick-a-category grid of each round ("" / null = ordinary).
+    /// Index-aligned with _rounds, like _letters/_buzz/_notes/_timers.
+    private readonly System.Collections.Generic.List<LiveBoard?> _boards = new();
     // The AUTHORED questions of each round, index-aligned with _rounds. Empty means
     // "pull from the corpus at host time", which is what every round did before —
     // and is exactly why a host had nothing to edit (WINDOWS-DESIGN §6.6).
@@ -98,6 +101,7 @@ public partial class LiveView : UserControl
         _timers.Add(0);
         _buzz.Add(false);
         _letters.Add("");
+        _boards.Add(null);
         _questions.Add(new System.Collections.Generic.List<Question>());
         _clips.Add(new System.Collections.Generic.List<string>());
         RoundNoteBox.Text = "";
@@ -116,6 +120,8 @@ public partial class LiveView : UserControl
             (_buzz[index], _buzz[target]) = (_buzz[target], _buzz[index]);
         if (index < _letters.Count && target < _letters.Count)
             (_letters[index], _letters[target]) = (_letters[target], _letters[index]);
+        if (index < _boards.Count && target < _boards.Count)
+            (_boards[index], _boards[target]) = (_boards[target], _boards[index]);
         if (index < _questions.Count && target < _questions.Count)
             (_questions[index], _questions[target]) = (_questions[target], _questions[index]);
         if (index < _clips.Count && target < _clips.Count)
@@ -231,6 +237,7 @@ public partial class LiveView : UserControl
                 if (idx < _timers.Count) _timers.RemoveAt(idx);
                 if (idx < _buzz.Count) _buzz.RemoveAt(idx);
                 if (idx < _letters.Count) _letters.RemoveAt(idx);
+                if (idx < _boards.Count) _boards.RemoveAt(idx);
                 if (idx < _questions.Count) _questions.RemoveAt(idx);
                 if (idx < _clips.Count) _clips.RemoveAt(idx);
                 _expandedRounds.Clear();   // the indices below this round all shifted
@@ -255,6 +262,7 @@ public partial class LiveView : UserControl
     /// a move or a delete — and that is invisible from the rendered row.
     public System.Collections.Generic.IReadOnlyList<bool> BuzzFlagsForTesting => _buzz;
     public System.Collections.Generic.IReadOnlyList<string> RoundLettersForTesting => _letters;
+    public System.Collections.Generic.IReadOnlyList<LiveBoard?> RoundBoardsForTesting => _boards;
     public void MoveRoundForTesting(int index, int delta) => MoveRound(index, delta);
 
     public void ExpandRoundForTesting(int roundIndex)
@@ -455,6 +463,7 @@ public partial class LiveView : UserControl
         RoundTimers = new System.Collections.Generic.List<int>(_timers),
         BuzzRounds = new System.Collections.Generic.List<bool>(_buzz),
         RoundLetters = new System.Collections.Generic.List<string>(_letters),
+        RoundBoards = new System.Collections.Generic.List<LiveBoard?>(_boards),
         RoundQuestions = _questions
             .Select(q => (System.Collections.Generic.IReadOnlyList<Question>)new System.Collections.Generic.List<Question>(q))
             .ToList(),
@@ -472,7 +481,7 @@ public partial class LiveView : UserControl
         LeadUrlBox.Text = ev.LeadCaptureUrl ?? "";
         WeekdayBox.SelectedIndex = ev.Weekday is int w and >= 0 and <= 6 ? w + 1 : 0;
         WagerFinalCheck.IsChecked = ev.WagerFinalRound;
-        _rounds.Clear(); _notes.Clear(); _timers.Clear(); _questions.Clear(); _clips.Clear(); _expandedRounds.Clear(); _buzz.Clear(); _letters.Clear();
+        _rounds.Clear(); _notes.Clear(); _timers.Clear(); _questions.Clear(); _clips.Clear(); _expandedRounds.Clear(); _buzz.Clear(); _letters.Clear(); _boards.Clear();
         for (int i = 0; i < ev.Rounds.Count; i++)
         {
             _rounds.Add(ev.Rounds[i]);
@@ -480,6 +489,7 @@ public partial class LiveView : UserControl
             _timers.Add(i < ev.RoundTimers.Count ? ev.RoundTimers[i] : 0);
             _buzz.Add(i < ev.BuzzRounds.Count && ev.BuzzRounds[i]);
             _letters.Add(i < ev.RoundLetters.Count ? ev.RoundLetters[i] : "");
+            _boards.Add(ev.BoardFor(i));
             _questions.Add(ev.QuestionsFor(i).ToList());
             _clips.Add(Enumerable.Range(0, ev.QuestionsFor(i).Count).Select(q => ev.ClipFor(i, q) ?? "").ToList());
         }
@@ -546,6 +556,44 @@ public partial class LiveView : UserControl
     /// name, and the clip path is stored index-aligned with the question. Unlike
     /// macOS there is no security-scoped bookmark to keep: on Windows the path IS
     /// the reference.
+    /// G5: add a pick-a-category board round.
+    ///
+    /// The pool is queried PER CELL, not per category. Asking for a category pool
+    /// and slicing it is how a grid comes back with holes — a thin tier like
+    /// business at 500 is ~1.5% of its own category, so a random sample misses it.
+    private void OnAddBoardRound(object? sender, RoutedEventArgs e)
+    {
+        var corpus = GameData.Shared.Value.Sources.Corpus;
+        var columns = LiveBoardBuilder
+            .FillableCategories(corpus.Questions("mixed", new System.Collections.Generic.HashSet<string>(), 4000))
+            .Where(c => c != "mixed").Take(5).ToList();
+        if (columns.Count == 0)
+            columns = TriviaCategory.All.Where(c => c.Id != "mixed").Take(5).Select(c => c.Id).ToList();
+
+        var pool = new System.Collections.Generic.List<Question>();
+        foreach (var c in columns)
+            foreach (var t in LiveBoard.DefaultTiers)
+                pool.AddRange(corpus.Questions(c, t, new System.Collections.Generic.HashSet<string>(), 1));
+
+        var board = LiveBoardBuilder.Build(pool, columns);
+        if (board.Cells.Count == 0) { ShowStatus("The corpus cannot fill a board right now."); return; }
+
+        // The round HOLDS the questions its grid references, in cell order, so the
+        // board and the question list can never disagree about what is in it.
+        var questions = board.Cells.Select(cell => pool.First(q => q.Id == cell.QuestionId)).ToList();
+        _rounds.Add(new NightRound { Kind = GameMode.Classic, Count = questions.Count });
+        _notes.Add("Pick a Category");
+        _timers.Add(0);
+        _buzz.Add(false);
+        _letters.Add("");
+        _boards.Add(board);
+        _questions.Add(questions);
+        _clips.Add(new System.Collections.Generic.List<string>());
+        _expandedRounds.Clear();
+        RebuildBuilderRounds();
+        ShowStatus($"Board round added — {board.Cells.Count} cells, {board.PointsRemaining:N0} points.");
+    }
+
     private async void OnAddAudioRound(object? sender, RoutedEventArgs e) => await AddClipRound(video: false);
     private async void OnAddVideoRound(object? sender, RoutedEventArgs e) => await AddClipRound(video: true);
 

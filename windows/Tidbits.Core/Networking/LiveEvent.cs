@@ -42,6 +42,19 @@ public sealed record LiveEvent
     /// BuzzRounds/RoundNotes/RoundTimers. Mirrors Swift `LiveRound.letter`.
     [JsonPropertyName("roundLetters")] public IReadOnlyList<string> RoundLetters { get; init; } = new List<string>();
 
+    /// G5: the pick-a-category GRID of each round (index-aligned; null = an
+    /// ordinary round). Additive like RoundLetters, so every event saved before
+    /// this decodes unchanged and an older reader simply ignores the key.
+    ///
+    /// The grid is LAYOUT — which question sits in which cell — and the questions
+    /// themselves stay in RoundQuestions, so nothing is stored twice and the two
+    /// cannot disagree about what is in the round.
+    [JsonPropertyName("roundBoards")] public IReadOnlyList<LiveBoard?> RoundBoards { get; init; } = new List<LiveBoard?>();
+
+    /// The grid of round `i`, or null when it is an ordinary round.
+    public LiveBoard? BoardFor(int i) =>
+        i >= 0 && i < RoundBoards.Count ? RoundBoards[i] : null;
+
     /// The letter theme of round `i`, or null when it has none.
     public char? LetterFor(int i)
     {

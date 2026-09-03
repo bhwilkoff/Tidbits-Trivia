@@ -135,6 +135,62 @@ public class LiveBoardRenderTest
     }
 
     [AvaloniaFact]
+    public void A_board_round_survives_a_save_and_reload()
+    {
+        var view = new LiveView();
+        var win = new Window { Width = 900, Height = 700, Content = view };
+        win.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var data = GameData.FromDirectory(Path.Combine(AppContext.BaseDirectory, "Data"));
+        var pool = new List<Question>();
+        foreach (var c in Columns)
+            foreach (var t in LiveBoard.DefaultTiers)
+                pool.AddRange(data.Sources.Corpus.Questions(c, t, new HashSet<string>(), 1));
+        var board = LiveBoardBuilder.Build(pool, Columns);
+
+        var ev = new LiveEvent
+        {
+            Name = "Board Night",
+            Rounds = new List<NightRound> { new() { Kind = GameMode.Classic, Count = board.Cells.Count } },
+            RoundQuestions = new List<IReadOnlyList<Question>>
+            {
+                board.Cells.Select(c => pool.First(q => q.Id == c.QuestionId)).ToList(),
+            },
+            RoundBoards = new List<LiveBoard?> { board },
+        };
+
+        view.LoadEventForTesting(ev);
+        Dispatcher.UIThread.RunJobs();
+
+        // The grid came back with every cell. A round that loads as an ordinary
+        // one is a board the host built and cannot host.
+        var loaded = view.RoundBoardsForTesting[0];
+        Assert.NotNull(loaded);
+        Assert.Equal(Columns.Length * LiveBoard.DefaultTiers.Length, loaded!.Cells.Count);
+        Assert.Equal(Columns, loaded.Categories);
+    }
+
+    [AvaloniaFact]
+    public void An_event_with_no_board_still_loads_as_an_ordinary_round()
+    {
+        var view = new LiveView();
+        var win = new Window { Width = 900, Height = 700, Content = view };
+        win.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        // RoundBoards is ADDITIVE: every event saved before G5 has no such key,
+        // and must decode as the ordinary round it always was.
+        view.LoadEventForTesting(new LiveEvent
+        {
+            Name = "Old Night",
+            Rounds = new List<NightRound> { new() { Kind = GameMode.Classic, Count = 5 } },
+        });
+        Dispatcher.UIThread.RunJobs();
+        Assert.Null(view.RoundBoardsForTesting[0]);
+    }
+
+    [AvaloniaFact]
     public async Task A_taken_cell_is_no_longer_playable_but_keeps_its_place()
     {
         var vm = await BoardHost();

@@ -37,6 +37,8 @@
                     <Button Content="+ Add round" Click="OnAddRound" Margin="0,0,8,6"/>
                     <Button Content="Audio round…" Click="OnAddAudioRound" Margin="0,0,8,6"/>
                     <Button Content="Video round…" Click="OnAddVideoRound" Margin="0,0,8,6"/>
+                    <Button Content="Pick-a-category board…" Click="OnAddBoardRound" Margin="0,0,8,6"
+                            ToolTip.Tip="A Jeopardy-style grid the room picks from — categories across, point tiers down"/>
                 </WrapPanel>
                 <StackPanel x:Name="BuilderRounds" Spacing="4"/>
                 <CheckBox x:Name="WagerFinalCheck" Content="Make the last round a final wager (teams stake points)"/>

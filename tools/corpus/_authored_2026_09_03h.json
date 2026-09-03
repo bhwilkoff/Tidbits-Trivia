@@ -1,0 +1,41 @@
+[
+ {"subject":"Temperature","cat":"science","diff":4,
+  "prompt":"In physics, temperature measures which property of a system's particles?",
+  "answer":"Their average kinetic energy","options":["Their total heat content","Their number per volume","Their average mass"],
+  "why":"Temperature is an average, which is why a spark at 1000 degrees carries far less energy than a bathtub at 40 -- the bath has vastly more particles and so more total heat."},
+
+ {"subject":"Alphabet","cat":"arts","diff":4,
+  "prompt":"A writing system whose symbols each stand for a whole syllable rather than a single sound is called what?",
+  "answer":"A syllabary","options":["An alphabet","A logography","An abjad"],
+  "why":"Alphabet letters map to phonemes, the smallest distinguishing sounds. Japanese kana are a syllabary; Chinese characters are a logography; an abjad writes consonants and leaves vowels implied."},
+
+ {"subject":"Rugby World Cup","cat":"sports","diff":3,
+  "prompt":"Winners of the Rugby World Cup are awarded which trophy?",
+  "answer":"The Webb Ellis Cup","options":["The Calcutta Cup","The Bledisloe Cup","The Six Nations Trophy"],
+  "why":"Named for William Webb Ellis, who by legend invented the game by picking up the ball during a football match. The others are real rugby trophies, but for different competitions."},
+
+ {"subject":"French Open","cat":"sports","diff":3,
+  "prompt":"Where does the French Open fall in the year among the four tennis majors?",
+  "answer":"Second","options":["First","Third","Fourth"],
+  "why":"It follows the Australian Open and comes before Wimbledon and the US Open. Held at Stade Roland Garros, it is the only major still played on clay."},
+
+ {"subject":"Asian Games","cat":"sports","diff":4,
+  "prompt":"The first Asian Games were held in 1951 in which city?",
+  "answer":"New Delhi","options":["Tokyo","Manila","Bangkok"],
+  "why":"The Asian Games Federation ran them until 1978; the Olympic Council of Asia has organised them since 1982. They are recognised by the IOC."},
+
+ {"subject":"Google Chrome","cat":"science","diff":4,
+  "prompt":"Google Chrome launched in 2008 built from free software components of Mozilla Firefox and which other project?",
+  "answer":"WebKit","options":["Gecko","Trident","Presto"],
+  "why":"Chrome took Apple's WebKit as its rendering engine. Gecko is Firefox's own engine, Trident was Internet Explorer's and Presto was Opera's."},
+
+ {"subject":"PayPal","cat":"business","diff":5,
+  "prompt":"PayPal was founded in 1998 under what original name?",
+  "answer":"Confinity","options":["Netcash","PayBox","CyberCoin"],
+  "why":"Confinity began as a security company for handheld devices before the payments product took over and gave the company its lasting name."},
+
+ {"subject":"Quantum mechanics","cat":"science","diff":3,
+  "prompt":"Quantum mechanics describes behaviour that turns strange at roughly which scale?",
+  "answer":"Atoms and smaller","options":["Planets and stars","Cells and bacteria","Everyday objects"],
+  "why":"Its unusual effects appear at and below atomic scale. Bacteria and dust are still firmly in the classical world."}
+]

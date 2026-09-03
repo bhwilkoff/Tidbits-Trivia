@@ -1,0 +1,51 @@
+[
+ {"subject":"Banana","cat":"science","diff":3,
+  "prompt":"A banana is botanically classified as which of these?",
+  "answer":"A berry","options":["A nut","A drupe","A legume"],
+  "why":"Botanically it is a berry, and the plant that bears it is not a tree but a giant herb of the genus Musa."},
+
+ {"subject":"Time zone","cat":"geography","diff":4,
+  "prompt":"World time-zone offsets run from UTC-12:00 out to which far extreme?",
+  "answer":"UTC+14:00","options":["UTC+12:00","UTC+10:00","UTC+16:00"],
+  "why":"The span is 26 hours, not 24 -- islands such as Kiritimati sit at UTC+14 so they can share a working week with their neighbours, which means three different calendar dates can exist at once."},
+
+ {"subject":"Volkswagen","cat":"business","diff":4,
+  "prompt":"Volkswagen was rebuilt after the Second World War under an officer of which country's army?",
+  "answer":"Britain","options":["The United States","France","The Soviet Union"],
+  "why":"Major Ivan Hirst of the British Army restarted production at the bombed Wolfsburg plant. The company had been founded in 1937 by the German Labour Front."},
+
+ {"subject":"NASA","cat":"science","diff":4,
+  "prompt":"NASA was formed in 1958 by absorbing which older federal aeronautics body?",
+  "answer":"NACA","options":["NORAD","DARPA","NOAA"],
+  "why":"The National Advisory Committee for Aeronautics had run American aeronautical research since 1915. The Space Race turned it into a space agency."},
+
+ {"subject":"Saint Peter","cat":"history","diff":4,
+  "prompt":"Besides Rome, Saint Peter is traditionally counted as the first bishop of which city?",
+  "answer":"Antioch","options":["Jerusalem","Alexandria","Corinth"],
+  "why":"Catholic and Orthodox tradition names him first bishop of Antioch as well as of Rome, which is why Antioch held such early standing among Christian sees."},
+
+ {"subject":"Eastern Orthodox Church","cat":"history","diff":4,
+  "prompt":"The Eastern Orthodox Church is a communion of national and regional churches that are what?",
+  "answer":"Self-governing","options":["Centrally appointed","Run from Rome","Elected by laity"],
+  "why":"Each is autocephalous -- it appoints its own head. With around 220 million adherents it is the second-largest Christian body, but it has no single pope."},
+
+ {"subject":"Nintendo Switch","cat":"screen","diff":3,
+  "prompt":"The Nintendo Switch arrived in 2017 as the successor to which console?",
+  "answer":"The Wii U","options":["The Wii","The GameCube","The Nintendo DS"],
+  "why":"The Wii U came between them and sold poorly, so the Switch is often mistaken for the Wii's direct replacement."},
+
+ {"subject":"Narcissism","cat":"history","diff":2,
+  "prompt":"Narcissism is named for a Greek figure who fell in love with what?",
+  "answer":"His own reflection","options":["The goddess Echo","A marble statue","His own voice"],
+  "why":"Narcissus was transfixed by his reflection in a pool. Echo is the nymph who loved him and was refused -- her name gave us a different word entirely."},
+
+ {"subject":"Parkinson's disease","cat":"science","diff":4,
+  "prompt":"Which of these is a recognised non-motor symptom of Parkinson's disease?",
+  "answer":"Loss of the sense of smell","options":["Sudden hearing loss","Red-green colour blindness","Chronic hiccups"],
+  "why":"A reduced sense of smell often appears years before the tremor and slowness that people associate with the disease, alongside sleep disturbance and autonomic problems."},
+
+ {"subject":"Kyiv","cat":"geography","diff":3,
+  "prompt":"Ukraine's capital straddles both banks of which river?",
+  "answer":"The Dnieper","options":["The Danube","The Volga","The Vistula"],
+  "why":"Kyiv sits on both sides of the Dnieper in north-central Ukraine, and is the seventh-most populous city in Europe."}
+]

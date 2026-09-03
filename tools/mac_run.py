@@ -160,12 +160,23 @@ SCENARIOS = {
                     # reference, which is the exact bug this is here to catch.
                     "expect_any": r"qa-clip|Video round",
                     "expect_none": r"Could not|unavailable|missing"}),
-    # The clip-reference self-test, on the glass. This is the check that CAN fail
-    # for the reason that matters: bookmarking a file OUTSIDE the sandbox
-    # container, which is what a host's picked clip actually is and what the
-    # app-scope entitlement governs. The videoround scenario's clip lives INSIDE
-    # the container, which the sandbox grants anyway — it proves the picker path,
-    # not the entitlement.
+    # The PROJECTOR playing a video round -- the big screen the room actually
+    # watches, which had never been photographed. TIDBITS_LIVE_VIDEO=1 puts a real
+    # clip-backed round into the hosted event and STATE=video starts it through the
+    # same two calls as the cockpit button. Without both, currentVideoBookmark is
+    # nil and this would photograph an ordinary question slide while passing.
+    "projvideo": (dict(TIDBITS_LIVE_HOST="1", TIDBITS_LIVE_CODE="QATEST",
+                       TIDBITS_LIVE_VIDEO="1", TIDBITS_LIVE_STATE="video",
+                       TIDBITS_LIVE_CLIPS=str(FILEOP_DIR / "qa-clip.mp4")),
+                  {"last_frame_only": True, "projector": True,
+                   "expect_none": r"unavailable|re-attach|\u2026|\.\.\.",
+                   "expect_all": [r"Clip 1", r"name it"]}),
+    # The clip-reference self-test, on the glass. It renders the summary and
+    # confirms the IN-container bookmark. It CANNOT confirm the entitlement: a
+    # sandboxed app cannot open a path it was never granted, so the outside-
+    # container line fails whether or not app-scope bookmarks are enabled. Both
+    # entitlements were verified by reading the shipped binary instead. See
+    # docs/DEVICE-QA-SUITE.md section 5.
     "avselftest": (dict(TIDBITS_LIVE_AVSELFTEST="1",
                         TIDBITS_LIVE_AVSELFTEST_PATH="/Users/bhwilkoff/Documents/GitHub/Tidbits-Trivia/build/qa/avselftest/outside.m4a"),
                    {"last_frame_only": True,

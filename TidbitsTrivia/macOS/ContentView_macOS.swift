@@ -262,6 +262,34 @@ struct ContentView_macOS: View {
             ev.rounds.append(await LiveEventStore.buildBoardRound(
                 categories: ["history", "science", "music", "screen", "geography"]))
         }
+        // Wave B: TIDBITS_LIVE_VIDEO=1 + TIDBITS_LIVE_CLIPS=<path> makes round 1 a
+        // VIDEO round, so the projector's video surface is reachable at all. It is
+        // gated the same way as the board hook and for the same reason: without a
+        // hosted video round `currentVideoBookmark` is nil, the big screen renders
+        // an ordinary question slide, and a scenario would photograph the wrong
+        // thing while passing. Bookmarks are made HERE, exactly as the builder
+        // does, so a clip that cannot be referenced never becomes a question.
+        // No-op in production.
+        if ProcessInfo.processInfo.environment["TIDBITS_LIVE_VIDEO"] == "1",
+           let raw = ProcessInfo.processInfo.environment["TIDBITS_LIVE_CLIPS"] {
+            var qs: [Question] = []
+            var marks: [Data] = []
+            for (i, path) in raw.split(separator: ":").enumerated() {
+                let url = URL(fileURLWithPath: String(path))
+                guard let mark = try? LiveClip.bookmark(for: url) else { continue }
+                let answer = url.deletingPathExtension().lastPathComponent
+                qs.append(Question(id: UUID().uuidString, prompt: "Clip \(i + 1) — name it",
+                                   options: [answer], correctIndex: 0, categoryID: "screen",
+                                   difficulty: 3, explanation: "", sourceTitle: "", sourceURL: nil,
+                                   templateID: "video", accepted: [answer]))
+                marks.append(mark)
+            }
+            if !qs.isEmpty {
+                ev.rounds.append(LiveRound(title: "Video round", format: .typeAnswer,
+                                           categoryID: "screen", questions: qs,
+                                           videoBookmarks: marks))
+            }
+        }
         for (i, fmt) in [GameMode.classic, GameMode.oddOneOut].enumerated() {
             ev.rounds.append(await LiveEventStore.buildRound(
                 format: fmt, category: .named(i == 0 ? "history" : "science"), count: 5))

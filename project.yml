@@ -60,6 +60,19 @@ targets:
       # universal target — embedding an iOS-only extension there fails the build.
       - target: TidbitsMessages
         platformFilter: iOS
+      # AVKit must be linked EXPLICITLY. `import AVKit` in MacLiveBigScreen only
+      # autolinked the SwiftUI overlay (_AVKit_SwiftUI), because no AVKit ObjC
+      # symbol is referenced directly from Swift -- SwiftUI's VideoPlayer is all
+      # the file uses. The overlay then cannot resolve its AVPlayerView superclass
+      # at runtime and the app ABORTS ("failed to demangle superclass of
+      # VideoPlayerView from mangled name 'So12AVPlayerViewC'"). It built green for
+      # the whole of Wave B: the crash only happens when the projector actually
+      # renders a video question, which nothing had ever driven.
+      # NO platformFilter: xcodegen maps `macOS` to the pbxproj value
+      # `maccatalyst`, which filtered the framework straight back out of the Mac
+      # build (verified by otool). AVKit ships on iOS and tvOS too, so linking it
+      # for every slice is correct and costs nothing.
+      - sdk: AVKit.framework
     # Local StoreKit config so IAP purchases work in the simulator without App Store
     # Connect (the products still ship for real via App Store Connect at go-live).
     scheme:

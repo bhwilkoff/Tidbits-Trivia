@@ -381,6 +381,13 @@ struct LiveHostContainer_macOS: View {
             case "scores":    session.showScores = true
             case "standings": session.finished = true
             case "board":     session.showBoard = true
+            // Wave B: start the clip the way the host does. Routed through the
+            // SAME two calls as the cockpit's "Play video on the big screen"
+            // button, so the hook cannot reach a state a real host cannot.
+            case "video":
+                if let vid = session.currentVideoBookmark, LiveClip.isPlayable(vid) {
+                    LiveVideoPlayer.shared.openBookmark(vid); LiveVideoPlayer.shared.play()
+                }
             default: break
             }
         }

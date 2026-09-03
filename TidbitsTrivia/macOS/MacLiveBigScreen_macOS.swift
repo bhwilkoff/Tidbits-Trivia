@@ -273,6 +273,17 @@ struct LiveBigScreen_macOS: View {
                             .frame(maxWidth: .infinity, minHeight: 420, maxHeight: 560)
                             .clipShape(RoundedRectangle(cornerRadius: 16))
                             .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(Tidbits.Palette.border, lineWidth: 4))
+                            // Same clearance, and for the same reason, as the vote
+                            // tally below: the join panel is a bottom overlay across
+                            // the full width, and a full-width video ran straight
+                            // underneath it -- the room watched a clip with a white
+                            // QR card sitting on the bottom-right corner of it. Only
+                            // visible once the projector was photographed mid-clip.
+                            //
+                            // AFTER the border, not before: applied earlier the
+                            // outline wrapped the padded box and drew a frame around
+                            // 360pt of empty cream.
+                            .padding(.trailing, coordinator.net?.isOpen == true ? 360 : 0)
                     }
                     let hasVotes = !(coordinator.net?.answers.isEmpty ?? true)
                     if LiveNightHost.isMCQ(q), hasVotes || s.revealed {

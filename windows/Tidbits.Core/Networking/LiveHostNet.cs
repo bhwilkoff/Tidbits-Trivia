@@ -38,6 +38,34 @@ public sealed class LiveHostNet
                          .OrderByDescending(j => j.Score).ThenBy(j => j.Name, StringComparer.Ordinal).ToList();
     }
 
+    /// G7: the joins as roster members. The wire already carried what the roster
+    /// needs — name and joinedAt keyed by uid — so several phones on one team was
+    /// never a transport problem, only a grouping one. Mirrors Swift
+    /// `LiveHostNet.members`.
+    public IReadOnlyList<LiveMember> Members()
+    {
+        lock (_lock)
+            return _teams.Select(kv => new LiveMember
+            {
+                Uid = kv.Key, TeamName = kv.Value.Name, JoinedAt = kv.Value.JoinedAt,
+            }).ToList();
+    }
+
+    /// G7: one row per TEAM, not per device. Only one member is ever scored for a
+    /// question, so summing the members is the team's score. Mirrors Swift
+    /// `joinedTeams`.
+    public IReadOnlyList<Joined> JoinedTeams()
+    {
+        var members = Members();
+        lock (_lock)
+            return LiveTeamRoster.Teams(members).Select(t =>
+                {
+                    var score = t.Members.Sum(m => _scores.GetValueOrDefault(m.Uid));
+                    return new Joined(t.Leader?.Uid ?? t.Key, t.Name, score);
+                })
+                .OrderByDescending(j => j.Score).ThenBy(j => j.Name, StringComparer.Ordinal).ToList();
+    }
+
     public IReadOnlyDictionary<string, LiveRoom.Answer> AnswersSnapshot()
     {
         lock (_lock) return new Dictionary<string, LiveRoom.Answer>(_answers);

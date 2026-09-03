@@ -681,7 +681,14 @@ public sealed class LiveNightHost : ObservableObject
             return;
         }
 
-        var baseScores = answers.Select(kv =>
+        // G7: exactly one answer per TEAM reaches the scoreboard. Walking the
+        // answers per uid is correct while a device IS a team, and awards a table
+        // twice the moment two of its phones answer — or penalises it twice under
+        // negative marking. Mirrors the Swift scoreReveal filter.
+        var scorable = LiveTeamRoster.ScorableUids(
+            Net.Members(), answers.ToDictionary(kv => kv.Key, kv => kv.Value.OrderKey));
+
+        var baseScores = answers.Where(kv => scorable.Contains(kv.Key)).Select(kv =>
             (uid: kv.Key, pts: LiveScoring.Score(q, kv.Value, _shuffledOrder, _shuffledValues, PointsPerCorrect), ts: kv.Value.OrderKey)).ToList();
 
         var correctBySpeed = baseScores.Where(e => e.pts > 0).OrderBy(e => e.ts).ToList();

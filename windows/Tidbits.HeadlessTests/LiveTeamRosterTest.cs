@@ -90,6 +90,42 @@ public class LiveTeamRosterTest
     }
 
     [Fact]
+    public void A_team_with_two_members_answering_is_scored_once()
+    {
+        // The host scores by walking answers per uid. Two phones on one team would
+        // be awarded twice for one question — or, under negative marking,
+        // penalised twice for one wrong answer.
+        var members = new[] { M("a", "T", 100), M("b", "T", 200) };
+        var keep = LiveTeamRoster.ScorableUids(members,
+            new Dictionary<string, long> { ["a"] = 5, ["b"] = 9 });
+        Assert.Equal(new[] { "a" }, keep.OrderBy(x => x));
+    }
+
+    [Fact]
+    public void Two_different_teams_are_both_scored()
+    {
+        var members = new[] { M("a", "Ours", 100), M("x", "Theirs", 100) };
+        var keep = LiveTeamRoster.ScorableUids(members,
+            new Dictionary<string, long> { ["a"] = 5, ["x"] = 9 });
+        Assert.Equal(new[] { "a", "x" }, keep.OrderBy(x => x));
+    }
+
+    [Fact]
+    public void An_answer_from_a_uid_with_no_join_still_scores()
+    {
+        // A device that answered before its join landed. Dropping it silently
+        // loses a real answer, which is worse than the duplicate this guards.
+        var keep = LiveTeamRoster.ScorableUids(new[] { M("a", "T", 100) },
+            new Dictionary<string, long> { ["a"] = 5, ["ghost"] = 7 });
+        Assert.Equal(new[] { "a", "ghost" }, keep.OrderBy(x => x));
+    }
+
+    [Fact]
+    public void Nobody_answering_scores_nobody() =>
+        Assert.Empty(LiveTeamRoster.ScorableUids(new[] { M("a", "T", 100) },
+                                                 new Dictionary<string, long>()));
+
+    [Fact]
     public void A_uid_resolves_to_its_own_team()
     {
         var members = new[] { M("a", "Ours", 100), M("x", "Theirs", 100) };

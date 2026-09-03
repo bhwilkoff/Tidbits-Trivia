@@ -90,6 +90,29 @@ public static class LiveTeamRoster
         return bestUid;
     }
 
+    /// The uids whose answers may be SCORED — exactly one per team.
+    ///
+    /// The host scores by walking answers one uid at a time, which is right while
+    /// a device is a team and wrong the moment two devices share one: the table
+    /// would be awarded twice for one question, or penalised twice for one wrong
+    /// answer under negative marking. Mirrors Swift `scorableUIDs`.
+    public static ISet<string> ScorableUids(IReadOnlyList<LiveMember> members,
+                                            IReadOnlyDictionary<string, long> answeredAt)
+    {
+        var keep = new HashSet<string>();
+        foreach (var team in Teams(members))
+        {
+            var uid = AnsweringMember(team, answeredAt);
+            if (uid != null) keep.Add(uid);
+        }
+        // A uid the host has no join for — a device that answered before its join
+        // landed — still scores for itself. Losing a real answer is worse than the
+        // duplicate this guards against.
+        var known = members.Select(m => m.Uid).ToHashSet();
+        foreach (var uid in answeredAt.Keys) if (!known.Contains(uid)) keep.Add(uid);
+        return keep;
+    }
+
     /// Who leads after `gone` have left. A team whose leader closes their phone is
     /// not disbanded — a table does not stop playing because one person went to
     /// the bar.

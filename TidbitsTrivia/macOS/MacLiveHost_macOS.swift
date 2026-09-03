@@ -13,7 +13,10 @@ import UniformTypeIdentifiers
 @Observable
 @MainActor
 final class LiveHostSession {
-    let event: LiveEvent
+    /// The session owns its OWN copy of the night, so this is var: G5 marks board
+    /// cells taken as they are played, and the grid the projector draws has to be
+    /// the same object the host picks from or the two drift apart mid-round.
+    var event: LiveEvent
     var teams: [LiveTeam] = []
     var index = 0
     var revealed = false
@@ -153,6 +156,36 @@ final class LiveHostSession {
         if index + 1 >= questions.count { finished = true } else { index += 1; prepare(); armTimer() }
         LiveVideoPlayer.shared.stop()   // Wave B: clear the previous question's video + clip (the music bed keeps looping)
         LiveAudioPlayer.shared.stop()
+    }
+
+    /// G5: the room picked a cell — play it.
+    ///
+    /// Marks the cell taken on the ROUND (so the grid the projector draws and the
+    /// question the host reads can never disagree) and jumps to that question.
+    /// Returns false when the cell is missing or already taken, which is what a
+    /// second click on the same tile is; the caller must not advance on that.
+    @discardableResult
+    func pickBoardCell(_ categoryID: String, _ tier: Int) -> Bool {
+        let ri = current?.roundIndex ?? 0
+        guard event.rounds.indices.contains(ri),
+              var board = event.rounds[ri].board,
+              let cell = board.cell(categoryID, tier), !cell.taken,
+              board.take(categoryID, tier) else { return false }
+        event.rounds[ri].board = board
+        guard let target = questions.firstIndex(where: { $0.id == cell.questionID }) else { return false }
+        revealed = false
+        locked = false
+        showBoard = false
+        index = target
+        prepare()
+        armTimer()
+        return true
+    }
+
+    /// G5: back to the grid for the next pick.
+    func returnToBoard() {
+        revealed = false
+        showBoard = true
     }
 
     /// Adaptability: skip the current question WITHOUT revealing or scoring it ("let's skip this one").
@@ -484,7 +517,13 @@ struct LiveHostView_macOS: View {
                 .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
                     .strokeBorder(Tidbits.Palette.border.opacity(0.55), lineWidth: 1))
             }
-            if let q = session.current {
+            // G5: while the board is up nobody has picked a cell yet, so there IS
+            // no current question. Showing the previous one with a live "Reveal
+            // answer" under it invites the host to reveal a question the room was
+            // never asked — which is what the first version of this panel did.
+            if session.showBoard, let board = session.currentRoundBoard {
+                boardPicker(board)
+            } else if let q = session.current {
                 let inR = session.questionInRound
                 Text("Question \(inR.n) of \(inR.of)").font(.callout).foregroundStyle(Tidbits.Palette.inkSoft)
                 Text(q.prompt).font(.system(size: 30, weight: .bold, design: .rounded))
@@ -563,7 +602,19 @@ struct LiveHostView_macOS: View {
                     .disabled(!session.canGoBack)
                     .keyboardShortcut(.leftArrow, modifiers: .command)
                     .help("Back to the previous question (⌘←)")
-                if !session.revealed {
+                if session.showBoard {
+                    // G5: the room is choosing. The only move is to pick a cell in
+                    // the grid above, or to move on once the board is clear — a
+                    // Lock/Skip/Reveal row here acts on a question nobody has asked.
+                    if session.currentRoundBoard?.isComplete == true {
+                        Button("Board clear — next round") { session.showBoard = false; session.next() }
+                            .buttonStyle(.borderedProminent).tint(Tidbits.Palette.coral)
+                            .keyboardShortcut(.defaultAction)
+                    } else {
+                        Text("Waiting for the room to pick a cell.")
+                            .font(.callout).foregroundStyle(Tidbits.Palette.inkSoft)
+                    }
+                } else if !session.revealed {
                     Button(session.locked ? "Answers locked" : "Lock answers") {   // Wave C: manual pencils-down
                         session.locked = true; Task { await net.publish(session.currentPub()) }
                     }
@@ -595,6 +646,15 @@ struct LiveHostView_macOS: View {
                     Button("Reveal answer") { session.reveal() }
                         .buttonStyle(.borderedProminent).tint(Tidbits.Palette.coral)
                         .keyboardShortcut(.defaultAction)
+                } else if session.currentRoundBoard != nil {
+                    // G5: on a board round the room chooses, so "Next question" is
+                    // the wrong verb — the host goes BACK TO THE BOARD and taps
+                    // whatever was called out.
+                    Button(session.currentRoundBoard?.isComplete == true ? "Board clear — next round" : "Back to the board") {
+                        if session.currentRoundBoard?.isComplete == true { session.next() } else { session.returnToBoard() }
+                    }
+                    .buttonStyle(.borderedProminent).tint(Tidbits.Palette.coral)
+                    .keyboardShortcut(.defaultAction)
                 } else {
                     Button(session.index + 1 >= session.questions.count ? "Finish night" : "Next question") { session.next() }
                         .buttonStyle(.borderedProminent).tint(Tidbits.Palette.coral)
@@ -613,6 +673,41 @@ struct LiveHostView_macOS: View {
         }
         .padding(28)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+
+    /// G5 — the cockpit's pick-a-category grid.
+    private func boardPicker(_ board: LiveBoard) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(session.boardChooser.map { "\($0) picks" } ?? "Pick a category")
+                .font(.headline).foregroundStyle(Tidbits.Palette.ink)
+            Grid(horizontalSpacing: 6, verticalSpacing: 6) {
+                GridRow {
+                    ForEach(board.categories, id: \.self) { c in
+                        Text(TriviaCategory.named(c).name)
+                            .font(.caption).bold().foregroundStyle(Tidbits.Palette.inkSoft)
+                            .lineLimit(1).minimumScaleFactor(0.7)
+                    }
+                }
+                ForEach(board.tiers, id: \.self) { t in
+                    GridRow {
+                        ForEach(board.categories, id: \.self) { c in
+                            if let cell = board.cell(c, t) {
+                                Button("\(cell.points)") { session.pickBoardCell(c, t) }
+                                    .buttonStyle(.bordered)
+                                    .disabled(cell.taken)
+                                    .help(cell.taken ? "Already played" : "Play this cell")
+                            } else {
+                                Text("—").font(.caption).foregroundStyle(Tidbits.Palette.inkSoft)
+                                    .frame(maxWidth: .infinity)
+                            }
+                        }
+                    }
+                }
+            }
+            Text("\(board.remaining.count) left · \(board.pointsRemaining) points on the board")
+                .font(.caption).foregroundStyle(Tidbits.Palette.inkSoft)
+        }
+        .padding(12).quietCard()
     }
 
     /// The show controls as ONE wrapping row. They used to render as three

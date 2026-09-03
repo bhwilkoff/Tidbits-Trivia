@@ -117,6 +117,22 @@ SCENARIOS = {
                    # fire is not an assertion.
                    "expect_all": [r"PICK A CATEGORY|PICKS", r"100", r"500",
                                   r"25 left", r"7,500 points on the board"]}),
+    # G5: the HOST's copy of the grid, on the laptop — the same two hooks as
+    # projboard but photographing the cockpit instead of the projector. The room
+    # calls a cell out loud and the host taps it here, so if this panel is missing
+    # the board round cannot be played at all.
+    "hostboard": (dict(TIDBITS_LIVE_HOST="1", TIDBITS_LIVE_CODE="QATEST",
+                       TIDBITS_LIVE_BOARD="1", TIDBITS_LIVE_STATE="board"),
+                  {"allow_edge": SIDEBAR_FOOTER, "last_frame_only": True,
+                   # "Back to the board" proves the transport switched verbs for a
+                   # board round; "Pick a category" proves the picker rendered.
+                   "expect_all": [r"Pick a category|picks", r"points on the board",
+                                  r"Waiting for the room to pick|Board clear"],
+                   # While the board is up NOBODY has picked a cell, so a live
+                   # question and a Reveal button must not be on the cockpit at all.
+                   # The first version of this panel showed both, which invites the
+                   # host to reveal a question the room was never asked.
+                   "expect_none": r"Reveal answer|Lock answers"}),
     # The Live builder with a populated event and its first round expanded, so
     # the per-question list and the Edit affordance are observable at all
     # (macOS-DESIGN §A2.4). Nothing could reach them from a cold launch.

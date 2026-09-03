@@ -24,6 +24,34 @@ function recordIfEnded() {
   captureCoplayers();   // L5 social graph: remember who you played with
 }
 
+/// G7: group the room's joins into teams, the SAME rule as Swift LiveTeamRoster
+/// and its C# mirror — fold surrounding space, case and runs of whitespace, but
+/// NOT punctuation ("St. Elmo" and "St Elmo" are plausibly different tables, and
+/// merging is destructive in a way splitting is not). The display name is the
+/// LEADER's spelling; ties on joinedAt break on uid so every stack agrees.
+function rosterTeams(teams) {
+  const byKey = {};
+  for (const [uid, t] of Object.entries(teams || {})) {
+    const name = (t?.name || '');
+    const key = name.trim().toLowerCase().split(/\s+/).filter(Boolean).join(' ');
+    if (!key) continue;
+    (byKey[key] ||= []).push({ uid, name, joinedAt: t?.joinedAt || 0 });
+  }
+  return Object.entries(byKey).map(([key, ms]) => {
+    ms.sort((a, b) => (a.joinedAt - b.joinedAt) || (a.uid < b.uid ? -1 : 1));
+    return { key, name: ms[0].name, size: ms.length };
+  }).sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/// G7: the teams already in the room, so a second phone at a table can JOIN it
+/// instead of quietly starting a near-identical second team.
+async function loadRoomTeams(code) {
+  try {
+    S.roomTeams = rosterTeams(await FirebaseNet.liveTeams(code));
+  } catch { S.roomTeams = []; }
+  draw();
+}
+
 // L5: read the room roster once at night-end and stash the co-players (uid + name + venue),
 // so the "Add the people you played with" surface can offer to connect with them.
 async function captureCoplayers() {
@@ -163,7 +191,19 @@ function draw() {
     root.querySelector('#live-join')?.addEventListener('click', join);
     root.querySelector('#live-code')?.addEventListener('input', (e) => {
       e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
+      // G7: look the room up as soon as the code is complete, so the teams are on
+      // screen BEFORE the player commits to a name.
+      S.code = e.target.value;
+      if (e.target.value.length === 4) loadRoomTeams(e.target.value);
+      else if ((S.roomTeams || []).length) { S.roomTeams = []; draw(); }
     });
+    // Tapping a team fills in the LEADER's spelling, which is what keeps the
+    // table one row instead of two near-identical ones.
+    root.querySelectorAll('[data-team]').forEach((b) => b.addEventListener('click', () => {
+      S.team = b.dataset.team;
+      const f = document.getElementById('live-team');
+      if (f) f.value = S.team;
+    }));
   }
   root.querySelector('#live-x')?.addEventListener('click', () => { location.hash = '#/play'; });
   root.querySelectorAll('[data-opt]').forEach((b) => b.addEventListener('click', () => pick(+b.dataset.opt)));
@@ -211,6 +251,9 @@ function joinHTML() {
     <p class="live-sub">Enter the code on the big screen.</p>
     <input id="live-code" class="live-in live-codein" placeholder="CODE" maxlength="4" value="${esc(S.code)}" autocapitalize="characters" autocomplete="off">
     <input id="live-team" class="live-in" placeholder="Your team name" value="${esc(S.team)}" maxlength="24">
+    ${(S.roomTeams || []).length ? `<div class="live-teams"><div class="live-teamshead">Already playing — tap to join your table</div>` +
+      S.roomTeams.map(t => `<button class="live-teamchip" data-team="${esc(t.name)}">${esc(t.size > 1 ? `${t.name} · ${t.size}` : t.name)}</button>`).join('') +
+      `</div>` : ''}
     ${S.error ? `<div class="live-err">${esc(S.error)}</div>` : ''}
     <button id="live-join" class="live-go" ${S.joining ? 'disabled' : ''}>${S.joining ? 'Joining…' : 'Join'}</button>
   </div>`;
@@ -372,6 +415,9 @@ function injectStyles() {
   .live-boardcell{flex:1;text-align:center;padding:9px 0;border-radius:8px;background:#fff;border:2px solid #231E1A;font-weight:900}
   .live-boardcell.taken{opacity:.28;border-style:dashed}
   .live-boardfoot{text-align:center;font-weight:700;color:#8a8078;margin-top:6px}
+  .live-teams{margin:6px 0 2px}
+  .live-teamshead{font-size:.72rem;font-weight:800;color:#8a8078;margin-bottom:6px}
+  .live-teamchip{display:inline-block;margin:0 6px 6px 0;padding:7px 12px;border-radius:999px;border:2.5px solid #231E1A;background:#fff;font-weight:800;cursor:pointer;font-size:.85rem}
   .live-q{font-weight:900;font-size:1.5rem;line-height:1.25;color:#231E1A;margin:6px 0 20px}
   .live-opts{display:flex;flex-direction:column;gap:12px}
   .live-opt{display:flex;align-items:center;gap:12px;text-align:left;padding:16px;font-size:1.1rem;font-weight:800;color:#231E1A;background:#fff;border:2.5px solid #231E1A;border-radius:16px;box-shadow:4px 4px 0 #231E1A;cursor:pointer}

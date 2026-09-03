@@ -1,0 +1,81 @@
+[
+ {"subject":"QR code","cat":"business","diff":3,
+  "prompt":"The QR code was invented in 1994 by a Japanese firm to keep track of what?",
+  "answer":"Car parts","options":["Library books","Cattle","Shipping containers"],
+  "why":"Masahiro Hara designed it at Denso Wave for labelling automobile components on the production line. Phones and menus came decades later."},
+
+ {"subject":"Nobel Prize","cat":"history","diff":3,
+  "prompt":"Five Nobel Prizes come from Alfred Nobel's will. Which sixth was added in 1968 by Sweden's central bank?",
+  "answer":"Economic Sciences","options":["Mathematics","Engineering","Philosophy"],
+  "why":"Nobel's will named physics, chemistry, physiology or medicine, literature and peace. The economics prize was endowed later by Sveriges Riksbank in his memory, which is why it is not strictly a Nobel."},
+
+ {"subject":"International Space Station","cat":"science","diff":3,
+  "prompt":"Besides NASA, Roscosmos, ESA and JAXA, the fifth partner agency running the space station belongs to which country?",
+  "answer":"Canada","options":["India","Brazil","China"],
+  "why":"The Canadian Space Agency is the fifth partner. China is not a partner at all -- it built its own station, Tiangong."},
+
+ {"subject":"Daylight saving time","cat":"history","diff":3,
+  "prompt":"What do the UK and the EU officially call the practice of putting the clocks forward?",
+  "answer":"Summer time","options":["Daylight time","Advanced time","Solar time"],
+  "why":"It is 'summer time' in Britain and the EU and 'daylight time' in the US and Canada -- the same one-hour shift under two different names."},
+
+ {"subject":"HTTP 404","cat":"science","diff":3,
+  "prompt":"An HTTP 404 is proof that which part of the process actually worked?",
+  "answer":"The connection to the server","options":["The user's password","The site's payment system","The browser's cache"],
+  "why":"404 means the browser reached the server perfectly well and the server could not supply the resource. A server you cannot reach at all gives you a different error entirely."},
+
+ {"subject":"Coffee","cat":"science","diff":2,
+  "prompt":"Coffee beans are not beans at all. What are they?",
+  "answer":"Seeds of a fruit","options":["Dried leaves","Tree bark","Roasted nuts"],
+  "why":"They are the seeds of the coffee cherry, the fruit of the Coffea plant, separated and roasted before grinding."},
+
+ {"subject":"Blood type","cat":"science","diff":2,
+  "prompt":"Your blood type is set by antigens sitting on the surface of which cells?",
+  "answer":"Red blood cells","options":["White blood cells","Platelets","Nerve cells"],
+  "why":"Inherited proteins, carbohydrates and glycolipids on the red cell surface define the group. Some of the same antigens appear on other tissues too."},
+
+ {"subject":"Ivy League","cat":"sports","diff":3,
+  "prompt":"The Ivy League is, formally and originally, what kind of organisation?",
+  "answer":"An athletic conference","options":["A research consortium","A funding trust","An admissions body"],
+  "why":"It is an NCAA Division I athletic conference of eight private universities. The academic prestige attached to the name later; the league itself is about sport."},
+
+ {"subject":"Order of the British Empire","cat":"history","diff":3,
+  "prompt":"The Order of the British Empire was created in 1917 by which monarch?",
+  "answer":"George V","options":["Edward VII","Victoria","George VI"],
+  "why":"George V established it during the First World War to recognise service outside the battlefield, which is why it reaches so far beyond the military."},
+
+ {"subject":"Uranus","cat":"science","diff":3,
+  "prompt":"Which planet has recorded the coldest temperature in the Solar System, colder even than the planet beyond it?",
+  "answer":"Uranus","options":["Neptune","Saturn","Mercury"],
+  "why":"Uranus has hit 49 K (about -224 C), lower than anywhere on Neptune despite Neptune being further from the Sun."},
+
+ {"subject":"Eurovision Song Contest","cat":"music","diff":4,
+  "prompt":"Eurovision was modelled on which country's national song festival, running since 1951?",
+  "answer":"Italy","options":["France","Sweden","Ireland"],
+  "why":"The Sanremo Music Festival inspired the European Broadcasting Union to launch Eurovision in 1956."},
+
+ {"subject":"Dalai Lama","cat":"history","diff":4,
+  "prompt":"The title Dalai Lama was first conferred in 1578 by whom?",
+  "answer":"A Mongol khan","options":["A Chinese emperor","An Indian maharaja","A Nepalese king"],
+  "why":"Altan Khan gave the title to Sonam Gyatso in thanks for his teachings, and it was applied backwards to the whole lineage."},
+
+ {"subject":"Pacific Ocean","cat":"geography","diff":2,
+  "prompt":"The Pacific is the largest of Earth's oceanic divisions. What other superlative does it hold?",
+  "answer":"The deepest point","options":["The saltiest water","The warmest water","The strongest tides"],
+  "why":"It is both the largest and the deepest ocean; the Mariana Trench lies within it."},
+
+ {"subject":"Amish","cat":"history","diff":4,
+  "prompt":"The Amish are an Anabaptist group tracing their origins to which two European regions?",
+  "answer":"Switzerland and Alsace","options":["Bavaria and Bohemia","Holland and Flanders","Denmark and Schleswig"],
+  "why":"Their Swiss and Alsatian roots explain the Pennsylvania German they still speak, and their close relation to the Old Order Mennonites."},
+
+ {"subject":"Yin and yang","cat":"arts","diff":2,
+  "prompt":"In Chinese philosophy, yin and yang are opposite forces that are also what?",
+  "answer":"Complementary","options":["Identical","Unrelated","Hostile"],
+  "why":"They interact, support and perpetuate each other -- neither can exist alone, and the whole is greater than either part."},
+
+ {"subject":"Ganesha","cat":"history","diff":3,
+  "prompt":"Ganesha's title Pratham Pujya marks him as the god worshipped when?",
+  "answer":"First, before any other deity","options":["Only at harvest","Only after sunset","Once a year"],
+  "why":"Hindus of many denominations invoke Ganesha at the start of a ritual, a journey or a new venture, regardless of which god the ceremony is actually for."}
+]

@@ -36,6 +36,15 @@ ANCHOR = r"Tidbits|Quick Play|Records|Create|Leaderboard|Live"
 # devharness.clipped_lines / the allow_edge note.
 SIDEBAR_FOOTER = r"Settings & Account"
 
+# G5/file-edge: where the panel-hook scenarios write. Under the QA output dir so a
+# run leaves its artifacts beside its screenshots.
+# The Mac app is SANDBOXED: it cannot write to a path the harness invents, because
+# outside its container only a real panel grant opens a file. So the file-edge
+# scenarios pass a BARE FILENAME, the app resolves it inside its own Documents
+# directory, and the harness reads it back from the container.
+FILEOP_DIR = (Path.home() / "Library/Containers/com.learningischange.tidbitstrivia"
+              / "Data/Documents")
+
 SCENARIOS = {
     "home":    (dict(TIDBITS_TAB="play"),
                 {"allow_edge": SIDEBAR_FOOTER, "expect_any": r"Quick Play|Daily|Play a round|Start"}),
@@ -143,6 +152,37 @@ SCENARIOS = {
     # at the default window height, so it asserted the window size, not the list.
     "livebuilder": (dict(TIDBITS_TAB="live", TIDBITS_LIVE_BUILDER="1"),
                     {"allow_edge": SIDEBAR_FOOTER, "expect_any": r"Answer:"}),
+    # The FILE PANEL EDGE. The behaviour layer (encode/decode/parse) has had good
+    # coverage all along; nothing drove button -> panel -> file on disk, which is
+    # the half a host actually touches. TIDBITS_LIVE_FILE hands the panel its
+    # answer and TIDBITS_LIVE_FILEOP fires the operation on launch.
+    #
+    # `expect_file` is the real assertion: the on-screen receipt proves the app
+    # THINKS it wrote, and a file on disk proves it did.
+    "exportevent": (dict(TIDBITS_TAB="live", TIDBITS_LIVE_BUILDER="1",
+                         TIDBITS_LIVE_FILEOP="exportevent",
+                         TIDBITS_LIVE_FILE="qa-event.json"),
+                    {"allow_edge": SIDEBAR_FOOTER, "last_frame_only": True,
+                     "expect_any": r"Exported \d+ rounds",
+                     "expect_file": FILEOP_DIR / "qa-event.json"}),
+    "exportcsv": (dict(TIDBITS_TAB="live", TIDBITS_LIVE_BUILDER="1",
+                       TIDBITS_LIVE_FILEOP="exportcsv",
+                       TIDBITS_LIVE_FILE="qa-questions.csv"),
+                  {"allow_edge": SIDEBAR_FOOTER, "last_frame_only": True,
+                   "expect_any": r"Exported \d+ questions as CSV",
+                   "expect_file": FILEOP_DIR / "qa-questions.csv"}),
+    # Import reads the file the export scenario just wrote, so the two together are
+    # a genuine round trip THROUGH THE PANELS, not just through the parser.
+    "importevent": (dict(TIDBITS_TAB="live", TIDBITS_LIVE_BUILDER="1",
+                         TIDBITS_LIVE_FILEOP="importevent",
+                         TIDBITS_LIVE_FILE="qa-event.json"),
+                    {"allow_edge": SIDEBAR_FOOTER, "last_frame_only": True,
+                     "expect_any": r"Imported \d+ rounds"}),
+    "importcsv": (dict(TIDBITS_TAB="live", TIDBITS_LIVE_BUILDER="1",
+                       TIDBITS_LIVE_FILEOP="importcsv",
+                       TIDBITS_LIVE_FILE="qa-questions.csv"),
+                  {"allow_edge": SIDEBAR_FOOTER, "last_frame_only": True,
+                   "expect_any": r"Imported \d+ questions from CSV"}),
 }
 
 
@@ -169,6 +209,11 @@ def capture(path, tries=20, projector=False):
 
 def run(name, outdir):
     env, spec = SCENARIOS[name]
+    # An export scenario must not pass on a file a PREVIOUS run left behind.
+    if spec.get("expect_file"):
+        want = Path(spec["expect_file"])
+        want.parent.mkdir(parents=True, exist_ok=True)
+        want.unlink(missing_ok=True)
     quit_app()
     launch(env)
     d = outdir / name
@@ -210,6 +255,12 @@ def main():
         sub.grade_glass(shots, texts, spec, ANCHOR)
         for k, v in sub.report["assertions"].items():
             g.grade(f"{n}.{k}", v["pass"], v["evidence"])
+        # The file itself, not the app's opinion of it.
+        if (want := spec.get("expect_file")) is not None:
+            want = Path(want)
+            size = want.stat().st_size if want.exists() else 0
+            g.grade(f"{n}.file_written", size > 0,
+                    f"{want} is {size} bytes" if size else f"{want} was never written")
     quit_app()
     return g.finish()
 

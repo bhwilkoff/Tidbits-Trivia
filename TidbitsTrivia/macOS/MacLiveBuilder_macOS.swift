@@ -23,6 +23,10 @@ struct LiveBuilderView_macOS: View {
     @State private var busy = false
     @State private var expandedRounds: Set<UUID> = []
     @State private var editing: EditingQuestion?
+    /// The last file operation's result, shown on the builder. A host who exports
+    /// and sees nothing cannot tell success from a silently-cancelled panel — and
+    /// it is what makes the file path GRADEABLE from a screenshot.
+    @State private var fileReceipt: String?
 
     /// The question currently open in the editor sheet. `questionIndex == nil`
     /// means "a new question being appended to that round".
@@ -86,6 +90,23 @@ struct LiveBuilderView_macOS: View {
             try? await Task.sleep(for: .seconds(2))
             addAudioRound()
             if let last = working.rounds.last { expandedRounds = [last.id] }
+        }
+        // TIDBITS_LIVE_FILEOP=exportevent|importevent|exportcsv|importcsv — run one
+        // file operation on launch, with TIDBITS_LIVE_FILE supplying the path the
+        // panel would have returned. This is what makes the EDGE observable: the
+        // behaviour layer (encode/decode/parse) has had good coverage all along,
+        // but nothing drove button -> panel -> file on disk, which is the half a
+        // host actually touches.
+        .task {
+            guard let op = ProcessInfo.processInfo.environment["TIDBITS_LIVE_FILEOP"] else { return }
+            try? await Task.sleep(for: .seconds(3))   // let the demo event load first
+            switch op {
+            case "exportevent": exportEvent()
+            case "importevent": importEvent()
+            case "exportcsv":   exportQuestionsCSV()
+            case "importcsv":   importCSV()
+            default: break
+            }
         }
         .sheet(item: $editing) { ctx in
             LiveQuestionEditor_macOS(draft: ctx.draft, format: ctx.format,
@@ -173,6 +194,15 @@ struct LiveBuilderView_macOS: View {
                     // Every field on this surface is the same control at the same
                     // size. The event name used to be 20pt semibold directly above
                     // a 13pt venue field (§5.7).
+                    // The result of the last import/export. It used to sit with the
+                    // Event-file menu at the bottom of the builder, which is below
+                    // the fold at the default window height — a confirmation a host
+                    // has to scroll to find cannot tell them an export worked, and
+                    // a QA assertion on it was really asserting the window size.
+                    if let r = fileReceipt {
+                        Label(r, systemImage: "checkmark.circle.fill")
+                            .font(.callout).foregroundStyle(Tidbits.Palette.mint)
+                    }
                     TextField("Event name", text: $working.name, prompt: Text("Friday Pub Quiz"))
                     TextField("Venue", text: $working.venue, prompt: Text("The Anchor"))
                         .help("Shown on the big screen and printed on the answer sheets")
@@ -262,6 +292,7 @@ struct LiveBuilderView_macOS: View {
                 .disabled(working.totalQuestions == 0)
         } label: { Label("Event file", systemImage: "doc") }
             .fixedSize()
+
         Menu {
             Button("Question pack (host)") { LivePrint.questionPack(working) }
             Button("Answer sheet (teams)") { LivePrint.answerSheet(working) }
@@ -597,13 +628,56 @@ struct LiveBuilderView_macOS: View {
     /// Write the working event out as one self-describing JSON document. A host's
     /// night is their work product: it has to survive a reinstall, move between
     /// their Mac and their Windows box, and be shareable with a co-host.
-    private func exportEvent() {
+    // MARK: File panels — the one seam that makes them testable
+    //
+    // Every import/export ran `panel.runModal()` inline, so the whole path from
+    // the button to the file on disk was undrivable: a modal panel is not
+    // scriptable, and the QA harness had no scenario for print, export, import or
+    // save-load at all. The BEHAVIOUR (encode/decode/parse) was well covered; the
+    // EDGE was not covered anywhere.
+    //
+    // TIDBITS_LIVE_FILE=<path> hands the panel its answer, so the harness drives
+    // the real code path and a real file lands on disk. No-op in production, where
+    // the environment variable is absent and the panel runs exactly as before.
+    private func panelURL() -> URL? {
+        guard let p = ProcessInfo.processInfo.environment["TIDBITS_LIVE_FILE"], !p.isEmpty
+        else { return nil }
+        // The Mac app is SANDBOXED, so it cannot write to an arbitrary path the
+        // harness picks — outside the container only a real panel grant opens a
+        // file, which is the whole reason this edge was undrivable. A bare
+        // filename therefore resolves inside the app's own Documents directory,
+        // which is always writable; the harness reads it back from the container.
+        // An absolute path is honoured as-is and will fail under the sandbox
+        // exactly as it would in production, which is the truthful behaviour.
+        if p.contains("/") { return URL(fileURLWithPath: (p as NSString).expandingTildeInPath) }
+        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+        return docs?.appendingPathComponent(p)
+    }
+
+    private func chooseSaveURL(named: String, types: [UTType]) -> URL? {
+        if let hooked = panelURL() { return hooked }
         let panel = NSSavePanel()
-        panel.allowedContentTypes = [.json]
-        panel.nameFieldStringValue = LiveEventFile.suggestedFilename(for: working)
-        guard panel.runModal() == .OK, let url = panel.url else { return }
+        panel.allowedContentTypes = types
+        panel.nameFieldStringValue = named
+        guard panel.runModal() == .OK else { return nil }
+        return panel.url
+    }
+
+    private func chooseOpenURL(types: [UTType]) -> URL? {
+        if let hooked = panelURL() { return hooked }
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = types
+        panel.allowsMultipleSelection = false
+        guard panel.runModal() == .OK else { return nil }
+        return panel.url
+    }
+
+    private func exportEvent() {
+        guard let url = chooseSaveURL(named: LiveEventFile.suggestedFilename(for: working),
+                                      types: [.json]) else { return }
         do {
             try LiveEventFile.write(working, to: url)
+            fileReceipt = "Exported \(working.rounds.count) rounds, \(working.totalQuestions) questions"
             // A dropped clip is told at EXPORT time as well as at import: the host
             // who made the file is the one who can re-attach the clips.
             let dropped = LiveEventFile.droppedClipCount(in: working)
@@ -621,12 +695,10 @@ struct LiveBuilderView_macOS: View {
     /// Read an event document back. The imported event gets a NEW id so importing
     /// a co-host's copy adds a night rather than silently overwriting one of yours.
     private func importEvent() {
-        let panel = NSOpenPanel()
-        panel.allowedContentTypes = [.json]
-        panel.allowsMultipleSelection = false
-        guard panel.runModal() == .OK, let url = panel.url else { return }
+        guard let url = chooseOpenURL(types: [.json]) else { return }
         do {
             let ev = try LiveEventFile.read(from: url)
+            fileReceipt = "Imported \(ev.rounds.count) rounds, \(ev.totalQuestions) questions"
             working = ev
             store.upsert(ev)
             selectedID = ev.id
@@ -650,12 +722,11 @@ struct LiveBuilderView_macOS: View {
     /// The event file round-trips Tidbits-to-Tidbits; this is the door to Excel
     /// and back, which is how a host actually revises a bank between weeks.
     private func exportQuestionsCSV() {
-        let panel = NSSavePanel()
-        panel.allowedContentTypes = [.commaSeparatedText]
-        panel.nameFieldStringValue = "\(working.name) — questions.csv"
-        guard panel.runModal() == .OK, let url = panel.url else { return }
+        guard let url = chooseSaveURL(named: "\(working.name) — questions.csv",
+                                      types: [.commaSeparatedText]) else { return }
         do {
             try Data(LiveCSV.exportCSV(working.questionStream).utf8).write(to: url, options: .atomic)
+            fileReceipt = "Exported \(working.totalQuestions) questions as CSV"
         } catch {
             presentMessage("Could not export the questions", error.localizedDescription)
         }
@@ -664,10 +735,7 @@ struct LiveBuilderView_macOS: View {
     /// Wave A: CSV import — bulk-author a round from a host's question bank.
     /// Columns: prompt, correct, wrong1, wrong2, wrong3, [category], [difficulty 1-5], [explanation].
     private func importCSV() {
-        let panel = NSOpenPanel()
-        panel.allowedContentTypes = [.commaSeparatedText, .plainText, .text]
-        panel.allowsMultipleSelection = false
-        guard panel.runModal() == .OK, let url = panel.url else { return }
+        guard let url = chooseOpenURL(types: [.commaSeparatedText, .plainText, .text]) else { return }
         guard let text = LiveCSV.readTextFile(at: url) else {
             presentMessage("Could not read “\(url.lastPathComponent)”",
                            "Tidbits tried UTF-8, UTF-16 and Latin-1 and none of them decoded the file. "
@@ -683,6 +751,7 @@ struct LiveBuilderView_macOS: View {
             return
         }
         working.rounds.append(LiveRound(title: "Imported round", format: .classic, categoryID: "mixed", questions: qs))
+        fileReceipt = "Imported \(qs.count) questions from CSV"
     }
 
     private func presentMessage(_ title: String, _ detail: String) {

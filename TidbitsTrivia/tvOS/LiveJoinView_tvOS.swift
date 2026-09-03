@@ -208,7 +208,18 @@ struct TVLivePlayerView: View {
             // buzzer: one click. Focus is left to land here on its own -- this
             // is the only focusable view in the answer area on a buzz round, and
             // claiming it explicitly is what yanks focus back mid-round.
-            if p.buzz == true, !revealed {
+            // G5: the grid is up — no question is being asked, so the answer UI
+            // must be GONE rather than disabled.
+            if let b = p.board, p.phase == LiveRoom.Phase.board {
+                VStack(spacing: 14) {
+                    Text(b.chooser.map { "\($0) PICKS" } ?? "PICK A CATEGORY")
+                        .font(.system(size: 38, weight: .black, design: .rounded))
+                        .foregroundStyle(Tidbits.Palette.coral)
+                    Text("\(b.remaining) left · \(b.points) points on the board")
+                        .font(.system(size: 27, weight: .semibold, design: .rounded))
+                        .foregroundStyle(TVTheme.textSoft)
+                }
+            } else if p.buzz == true, !revealed {
                 if locked {
                     Text("Buzzed — wait for the host")
                         .font(.system(size: 34, weight: .heavy, design: .rounded))

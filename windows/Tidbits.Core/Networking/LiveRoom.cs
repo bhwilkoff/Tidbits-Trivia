@@ -31,6 +31,9 @@ public static class LiveRoom
         public const string Intro = "intro";
         public const string Question = "question";
         public const string Reveal = "reveal";
+        /// G5: the pick-a-category grid is up and no cell has been chosen. A
+        /// distinct phase because there is no live question during it.
+        public const string Board = "board";
         public const string Ended = "ended";
     }
 
@@ -42,6 +45,19 @@ public static class LiveRoom
         [JsonPropertyName("name")] public string Name { get; init; } = "";
         [JsonPropertyName("venue")] public string Venue { get; init; } = "";
         [JsonPropertyName("state")] public string State { get; init; } = "lobby"; // lobby | live | ended
+    }
+
+    /// G5: the grid as the joiners see it. Deliberately NOT the host's LiveBoard —
+    /// that carries every cell's question id, which would hand the room a map of
+    /// the night's content. `Taken` is "columnIndex:tier", positional.
+    public sealed record BoardPub
+    {
+        [JsonPropertyName("categories")] public IReadOnlyList<string> Categories { get; init; } = new List<string>();
+        [JsonPropertyName("tiers")] public IReadOnlyList<int> Tiers { get; init; } = new List<int>();
+        [JsonPropertyName("taken")] public IReadOnlyList<string> Taken { get; init; } = new List<string>();
+        [JsonPropertyName("chooser")] public string? Chooser { get; init; }
+        [JsonPropertyName("remaining")] public int Remaining { get; init; }
+        [JsonPropertyName("points")] public int Points { get; init; }
     }
 
     /// Closest Call bounds a joiner needs (the answer + tolerance stay on the host).
@@ -88,6 +104,10 @@ public static class LiveRoom
         /// instead of relying on having heard the host say it once. Mirrors Swift
         /// `Pub.letter`; null on every unthemed round, so an older client never sees it.
         [JsonPropertyName("letter")] public string? Letter { get; init; }
+        /// G5: the pick-a-category grid, published so a table at the back can read
+        /// what is left without seeing the projector. Present ONLY on the "board"
+        /// phase; null otherwise. Mirrors Swift `Pub.board`.
+        [JsonPropertyName("board")] public BoardPub? Board { get; init; }
     }
 
     /// A team as the joining player writes it (`teams/{uid}`).

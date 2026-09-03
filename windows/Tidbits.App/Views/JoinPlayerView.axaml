@@ -33,9 +33,13 @@
 
                 <TextBlock x:Name="CountdownText" Foreground="#FF5C35" FontSize="26" FontWeight="Black"/>
 
+                <StackPanel IsVisible="{Binding IsBoard}" Spacing="6">
+                    <TextBlock Text="{Binding BoardHeadline}" FontWeight="Black" FontSize="20" Foreground="#FF5C35"/>
+                    <TextBlock Text="{Binding BoardSummary}" FontSize="13" Opacity="0.7"/>
+                </StackPanel>
                 <TextBlock IsVisible="{Binding HasLetter}" Text="{Binding LetterBanner}"
                            FontWeight="Black" FontSize="13" Foreground="#FF5C35"/>
-                <TextBlock IsVisible="{Binding ShowQuestion}" Text="{Binding Client.Pub.Prompt}"
+                <TextBlock IsVisible="{Binding ShowQuestionOnly}" Text="{Binding Client.Pub.Prompt}"
                            FontSize="21" FontWeight="Bold" TextWrapping="Wrap"/>
                 <!-- G1: on a buzz round the whole answer UI is ONE button. Big,
                      because the player is racing and looking at the big screen, not
@@ -47,7 +51,7 @@
                 <TextBlock IsVisible="{Binding HasBuzzed}" Text="Buzzed — wait for the host"
                            FontSize="20" FontWeight="Bold" Foreground="#3FCF8E"
                            HorizontalAlignment="Center" Margin="0,18"/>
-                <StackPanel x:Name="OptionsPanel" Spacing="0" IsVisible="{Binding !IsBuzz}"/>
+                <StackPanel x:Name="OptionsPanel" Spacing="0" IsVisible="{Binding ShowOptions}"/>
                 <!-- G1: a buzz IS an answer, so this fired alongside "Buzzed — wait for
                      the host" and the player got the same news twice. -->
                 <TextBlock IsVisible="{Binding AnswerLocked}" Text="Answer locked ✓" Foreground="#1E9E6A" FontWeight="SemiBold"/>

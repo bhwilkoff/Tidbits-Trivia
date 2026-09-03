@@ -57,6 +57,19 @@ public sealed class LivePlayerViewModel : ObservableObject
     }
     public bool HasLetter => LetterBanner != null;
 
+    /// G5: the pick-a-category grid is up, so no question is being asked. The
+    /// answer surface must be GONE, not disabled — otherwise this phone can still
+    /// answer the PREVIOUS question while the room is choosing.
+    public bool IsBoard => Client.Pub?.Phase == LiveRoom.Phase.Board && Client.Pub?.Board is not null;
+    /// The prompt only when a question is actually being asked.
+    public bool ShowQuestionOnly => ShowQuestion && !IsBoard;
+    /// Answer buttons: never on a buzz round, never while the grid is up.
+    public bool ShowOptions => !IsBuzz && !IsBoard;
+    public string BoardHeadline =>
+        Client.Pub?.Board?.Chooser is { Length: > 0 } who ? $"{who} picks" : "Pick a category";
+    public string BoardSummary =>
+        Client.Pub?.Board is { } b ? $"{b.Remaining} left · {b.Points:N0} points on the board" : "";
+
     // L5 social graph — "add the people you played with" at the wrap.
     public System.Collections.Generic.IReadOnlyList<PlayerIdentity.Friend> Coplayers => Client.Coplayers;
     public bool HasCoplayers => IsEnded && Client.Coplayers.Count > 0;

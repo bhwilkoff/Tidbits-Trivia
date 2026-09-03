@@ -597,8 +597,38 @@ public sealed class LiveNightHost : ObservableObject
     public Task Close() => Net.Close();
 
     // Internals
+    /// The published state, for tests. What the joiners get IS the contract — a
+    /// board phase that never reaches a phone is a room answering the wrong
+    /// question — so it is asserted rather than inferred from the UI.
+    public LiveRoom.Pub BuildPubForTesting() => BuildPub();
+
     private LiveRoom.Pub BuildPub()
     {
+
+        // G5: while the grid is up there is NO live question. Publishing the
+        // previous one leaves it on every phone with its answer buttons live,
+        // so the room can answer a question that is no longer being asked.
+        if (ShowBoard && CurrentBoard is { } b)
+        {
+            var cols = b.Categories.ToList();
+            return new LiveRoom.Pub
+            {
+                Round = RoundNumber, RoundTitle = RoundTitle, Qid = $"board-{RoundNumber}",
+                QNum = 0, QTotal = 0, Phase = LiveRoom.Phase.Board,
+                Prompt = "Pick a category", Options = null, Format = "",
+                Board = new LiveRoom.BoardPub
+                {
+                    Categories = cols.Select(c => TriviaCategory.Named(c).Name).ToList(),
+                    Tiers = b.Tiers.ToList(),
+                    Taken = b.Cells.Where(c => c.Taken)
+                                    .Select(c => $"{cols.IndexOf(c.CategoryId)}:{c.Tier}")
+                                    .Where(k => !k.StartsWith("-1")).ToList(),
+                    Chooser = BoardChooser,
+                    Remaining = b.Remaining.Count,
+                    Points = b.PointsRemaining,
+                },
+            };
+        }
         var q = Current;
         if (q is null) return EndedPub();
         var inR = QuestionInRound;

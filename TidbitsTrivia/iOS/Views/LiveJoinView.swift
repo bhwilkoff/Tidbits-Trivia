@@ -260,6 +260,37 @@ struct LiveJoinView: View {
         .background(RoundedRectangle(cornerRadius: 12).fill(Tidbits.Palette.coral.opacity(0.12)))
     }
 
+    /// G5 — what a phone shows while the room picks a cell. A table at the back
+    /// cannot always see the projector, so the grid rides the wire too.
+    @ViewBuilder private func boardWait(_ b: LiveRoom.BoardPub) -> some View {
+        VStack(spacing: 12) {
+            Text(b.chooser.map { "\($0) picks" } ?? "Pick a category")
+                .font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.coral)
+            Grid(horizontalSpacing: 6, verticalSpacing: 6) {
+                GridRow {
+                    ForEach(b.categories, id: \.self) { c in
+                        Text(c).font(Tidbits.TypeRamp.l6).lineLimit(1).minimumScaleFactor(0.6)
+                            .foregroundStyle(Tidbits.Palette.inkSoft)
+                    }
+                }
+                ForEach(b.tiers, id: \.self) { t in
+                    GridRow {
+                        ForEach(Array(b.categories.enumerated()), id: \.offset) { i, _ in
+                            let played = b.taken.contains("\(i):\(t)")
+                            Text("\(t * 100)")
+                                .font(Tidbits.TypeRamp.l4).monospacedDigit()
+                                .foregroundStyle(played ? Tidbits.Palette.inkSoft.opacity(0.4) : Tidbits.Palette.ink)
+                                .frame(maxWidth: .infinity).padding(.vertical, 8)
+                                .background(RoundedRectangle(cornerRadius: 8).fill(Tidbits.Palette.surface))
+                        }
+                    }
+                }
+            }
+            Text("\(b.remaining) left · \(b.points) points on the board")
+                .font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft)
+        }
+    }
+
     /// Wave A: the shared countdown, ticking to the host's deadline (coral at ≤5s).
     @ViewBuilder private func countdownView(_ deadlineMs: Int) -> some View {
         TimelineView(.periodic(from: .now, by: 0.5)) { _ in
@@ -274,6 +305,12 @@ struct LiveJoinView: View {
     /// The right input for the question's type. The host auto-scores each on reveal.
     @ViewBuilder private func answerSurface(_ p: LiveRoom.Pub, revealed: Bool) -> some View {
         let locked = revealed || client.hasAnswered || p.locked == true
+        // G5: the pick-a-category grid is up, so no question is being asked. The
+        // answer UI must be GONE, not merely disabled — before this the phones kept
+        // the PREVIOUS question with its buttons live while the room was choosing.
+        if let b = p.board, p.phase == LiveRoom.Phase.board {
+            boardWait(b)
+        } else
         // G1: on a BUZZ round the whole answer UI is ONE button, and the normal
         // answer UI must be GONE — a player who can both buzz and answer has two
         // ways in and the host adjudicates the wrong one. Empty payload: the answer

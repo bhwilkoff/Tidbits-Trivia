@@ -349,6 +349,23 @@ object FirebaseNet {
          *  instead of relying on having heard the host say it. Mirrors Swift
          *  `Pub.letter`; null on every unthemed round. */
         val letter: String? = null,
+        /** G5: the pick-a-category grid, published so a table at the back can read
+         *  what is left without seeing the projector. Present ONLY on the "board"
+         *  phase; null otherwise, so an older client never sees it.
+         *  Mirrors Swift `Pub.board`. */
+        val board: BoardPub? = null,
+    )
+
+    /** G5: the grid as the joiners see it. Deliberately NOT the host's board —
+     *  that carries every cell's question id, which would hand the room a map of
+     *  the night's content. `taken` is "columnIndex:tier", positional. */
+    data class BoardPub(
+        val categories: List<String> = emptyList(),
+        val tiers: List<Int> = emptyList(),
+        val taken: List<String> = emptyList(),
+        val chooser: String? = null,
+        val remaining: Int = 0,
+        val points: Int = 0,
     )
     /** A player's submission (any shape) — the host scores it locally on reveal. */
     data class LiveAnswer(

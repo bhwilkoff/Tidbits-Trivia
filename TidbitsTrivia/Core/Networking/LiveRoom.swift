@@ -57,6 +57,26 @@ enum LiveRoom {
         /// rule instead of relying on having heard the host say it once; nil on
         /// every unthemed round, so an older client simply never sees it.
         var letter: String? = nil
+        /// G5: the pick-a-category grid, published so the room can read what is
+        /// left from their own phones — a table at the back cannot always see the
+        /// projector. Present ONLY during `Phase.board`; nil otherwise, so an
+        /// older client never sees it.
+        var board: BoardPub? = nil
+    }
+
+    /// G5: the grid as the joiners see it. Deliberately NOT the host's LiveBoard:
+    /// that carries the question id of every cell, and shipping those to a phone
+    /// hands the room a map of the night's content.
+    struct BoardPub: Codable, Equatable {
+        var categories: [String]      // display names, column order
+        var tiers: [Int]
+        /// "columnIndex:tier" of every played cell — positional, NOT the category
+        /// id. The joiner has only the display names, and keying on ids would both
+        /// force it to carry the id list and leak the host's category slugs.
+        var taken: [String]
+        var chooser: String? = nil    // whose turn it is to pick
+        var remaining: Int = 0
+        var points: Int = 0
     }
 
     /// Closest Call bounds a joiner needs to render a number input (the answer +
@@ -98,6 +118,11 @@ enum LiveRoom {
         static let question = "question"    // question shown, accepting answers
         static let reveal = "reveal"        // answer shown, answers locked
         static let ended = "ended"          // night over → final standings
+        /// G5: the pick-a-category GRID is up and no cell has been chosen yet.
+        /// A distinct phase because there is no live question during it — leaving
+        /// the joiners on `question` left the PREVIOUS question on their phones,
+        /// with its answer buttons still live, while the room was picking.
+        static let board = "board"
     }
 
     /// Stable per-question id used to key answers (survives reveal/advance).

@@ -188,6 +188,12 @@ final class LiveHostSession {
         showBoard = true
     }
 
+    /// G5: the chooser for the next pick, from the team that just answered
+    /// correctly. Rotates when nobody did, so one table cannot drive the board.
+    func advanceBoardChooser(correct: String?, teams: [String]) {
+        boardChooser = LiveBoardBuilder.nextChooser(current: boardChooser, correct: correct, teams: teams)
+    }
+
     /// Adaptability: skip the current question WITHOUT revealing or scoring it ("let's skip this one").
     func skip() {
         guard index + 1 < questions.count else { finished = true; return }
@@ -257,6 +263,24 @@ final class LiveHostSession {
     }
     /// The live state to publish for the current question (or an "ended" frame).
     func currentPub() -> LiveRoom.Pub {
+        // G5: while the grid is up there is NO live question. Publishing the
+        // previous one left it on every phone with its answer buttons live, so the
+        // room could answer a question that was no longer being asked.
+        if showBoard, let b = currentRoundBoard {
+            return LiveRoom.Pub(
+                round: roundNumber, roundTitle: roundTitle, qid: "board-\(roundNumber)",
+                qNum: 0, qTotal: 0, phase: LiveRoom.Phase.board,
+                prompt: "Pick a category", options: nil, format: "", answerIndex: nil,
+                board: LiveRoom.BoardPub(
+                    categories: b.categories.map { TriviaCategory.named($0).name },
+                    tiers: b.tiers,
+                    taken: b.cells.filter(\.taken).compactMap { cell in
+                        b.categories.firstIndex(of: cell.categoryID).map { "\($0):\(cell.tier)" }
+                    },
+                    chooser: boardChooser,
+                    remaining: b.remaining.count,
+                    points: b.pointsRemaining))
+        }
         guard let q = current else {
             return LiveRoom.Pub(round: roundNumber, roundTitle: roundTitle, qid: "end", qNum: 0, qTotal: 0,
                                 phase: LiveRoom.Phase.ended, prompt: "", options: nil, format: "", answerIndex: nil)
@@ -651,7 +675,14 @@ struct LiveHostView_macOS: View {
                     // the wrong verb — the host goes BACK TO THE BOARD and taps
                     // whatever was called out.
                     Button(session.currentRoundBoard?.isComplete == true ? "Board clear — next round" : "Back to the board") {
-                        if session.currentRoundBoard?.isComplete == true { session.next() } else { session.returnToBoard() }
+                        if session.currentRoundBoard?.isComplete == true {
+                            session.next()
+                        } else {
+                            session.returnToBoard()
+                            // Republish: the flag alone changes the host's screen and
+                            // leaves the last question live on every phone.
+                            Task { await net.publish(session.currentPub()) }
+                        }
                     }
                     .buttonStyle(.borderedProminent).tint(Tidbits.Palette.coral)
                     .keyboardShortcut(.defaultAction)
@@ -692,7 +723,11 @@ struct LiveHostView_macOS: View {
                     GridRow {
                         ForEach(board.categories, id: \.self) { c in
                             if let cell = board.cell(c, t) {
-                                Button("\(cell.points)") { session.pickBoardCell(c, t) }
+                                Button("\(cell.points)") {
+                                    if session.pickBoardCell(c, t) {
+                                        Task { await net.publish(session.currentPub()) }
+                                    }
+                                }
                                     .buttonStyle(.bordered)
                                     .disabled(cell.taken)
                                     .help(cell.taken ? "Already played" : "Play this cell")

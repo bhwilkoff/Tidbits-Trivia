@@ -280,6 +280,22 @@ function answerHTML(p, revealed) {
   // ways to answer and the host adjudicates the wrong one. The payload is empty
   // on purpose: the answer is spoken out loud, so the wire only carries who was
   // first, ordered by the SERVER stamp.
+  // G5: the pick-a-category grid is up, so there is no live question. The answer
+  // buttons must be GONE — leaving them left the room able to answer the previous
+  // question while the host was waiting for a pick.
+  if (p.phase === 'board' && p.board) {
+    const b = p.board;
+    const head = b.chooser ? `${esc(b.chooser)} picks` : 'Pick a category';
+    const rows = (b.tiers || []).map(t =>
+      `<div class="live-boardrow">` +
+      (b.categories || []).map((_, i) =>
+        `<span class="live-boardcell${(b.taken || []).includes(i + ':' + t) ? ' taken' : ''}">${t * 100}</span>`
+      ).join('') + `</div>`).join('');
+    return `<div class="live-board"><div class="live-boardhead">${head}</div>` +
+           `<div class="live-boardcols">${(b.categories || []).map(c => `<span>${esc(c)}</span>`).join('')}</div>` +
+           rows +
+           `<div class="live-boardfoot">${b.remaining} left · ${b.points} points on the board</div></div>`;
+  }
   if (p.buzz && !revealed) {
     return S.submittedQid === p.qid
       ? '<div class="live-buzzed">Buzzed — wait for the host</div>'
@@ -348,6 +364,14 @@ function injectStyles() {
   .live-score{margin-left:auto;text-align:right;line-height:1}.live-score span{font-weight:900;font-size:1.8rem;color:#231E1A}.live-score small{display:block;color:#8a8078;font-weight:700}
   .live-round{font-weight:800;color:#8a8078;letter-spacing:.03em;margin:8px 0}
   .live-letter{font-weight:900;color:var(--color-primary,#FF746F);letter-spacing:.04em;margin:-4px 0 8px}
+  .live-board{margin:10px 0}
+  .live-boardhead{font-weight:900;font-size:1.2rem;color:var(--color-primary,#FF746F);text-align:center;margin-bottom:8px}
+  .live-boardcols{display:flex;gap:4px;margin-bottom:4px}
+  .live-boardcols span{flex:1;text-align:center;font-size:.68rem;font-weight:800;color:#8a8078;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .live-boardrow{display:flex;gap:4px;margin-bottom:4px}
+  .live-boardcell{flex:1;text-align:center;padding:9px 0;border-radius:8px;background:#fff;border:2px solid #231E1A;font-weight:900}
+  .live-boardcell.taken{opacity:.28;border-style:dashed}
+  .live-boardfoot{text-align:center;font-weight:700;color:#8a8078;margin-top:6px}
   .live-q{font-weight:900;font-size:1.5rem;line-height:1.25;color:#231E1A;margin:6px 0 20px}
   .live-opts{display:flex;flex-direction:column;gap:12px}
   .live-opt{display:flex;align-items:center;gap:12px;text-align:left;padding:16px;font-size:1.1rem;font-weight:800;color:#231E1A;background:#fff;border:2.5px solid #231E1A;border-radius:16px;box-shadow:4px 4px 0 #231E1A;cursor:pointer}

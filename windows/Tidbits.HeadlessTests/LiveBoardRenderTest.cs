@@ -135,6 +135,35 @@ public class LiveBoardRenderTest
     }
 
     [AvaloniaFact]
+    public async Task While_the_grid_is_up_the_host_publishes_a_BOARD_phase_with_no_options()
+    {
+        var vm = await BoardHost();
+        var pub = vm.Host.BuildPubForTesting();
+
+        // The phase is what tells every joiner there is no live question. Without
+        // it the phones keep the PREVIOUS question, answer buttons and all, while
+        // the room is still choosing a cell.
+        Assert.Equal(LiveRoom.Phase.Board, pub.Phase);
+        Assert.Null(pub.Options);
+        Assert.NotNull(pub.Board);
+        Assert.Equal(Columns.Length, pub.Board!.Categories.Count);
+        Assert.Empty(pub.Board.Taken);
+
+        // The grid must NOT ship question ids — that would hand the room a map of
+        // the night's content.
+        var json = System.Text.Json.JsonSerializer.Serialize(pub.Board);
+        foreach (var cell in vm.Host.CurrentBoard!.Cells)
+            Assert.DoesNotContain(cell.QuestionId, json);
+
+        // A played cell arrives POSITIONALLY, so a joiner that only has display
+        // names can still grey the right tile.
+        var first = vm.Host.CurrentBoard!.Cells[0];
+        vm.Host.PickBoardCell(first.CategoryId, first.Tier);
+        vm.Host.ReturnToBoard();
+        Assert.Contains($"0:{first.Tier}", vm.Host.BuildPubForTesting().Board!.Taken);
+    }
+
+    [AvaloniaFact]
     public void A_board_round_survives_a_save_and_reload()
     {
         var view = new LiveView();

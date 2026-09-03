@@ -217,6 +217,15 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
                     fontSize = 13.sp, fontWeight = FontWeight.Bold, color = soft)
                 // G4: a player who joined mid-round never heard the host announce
                 // the letter, so the rule rides the wire, not the room's memory.
+                // G5: the grid is up, so no question is being asked.
+                p.board?.takeIf { p.phase == "board" }?.let { b ->
+                    Text(b.chooser?.let { "$it picks" } ?: "Pick a category",
+                        fontSize = 20.sp, fontWeight = FontWeight.Black,
+                        color = MaterialTheme.colorScheme.primary)
+                    Spacer(Modifier.height(6.dp))
+                    Text("${b.remaining} left · ${b.points} points on the board",
+                        fontSize = 13.sp, color = soft)
+                }
                 p.letter?.firstOrNull()?.let { ch ->
                     Text("EVERY ANSWER BEGINS WITH ${ch.uppercaseChar()}",
                         fontSize = 13.sp, fontWeight = FontWeight.Black,
@@ -244,6 +253,11 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
                     // pick an option has two ways to answer and the host adjudicates
                     // the wrong one. Empty payload: the answer is spoken out loud, so
                     // the wire only carries who was first (ordered by the server stamp).
+                    // G5: the grid is up, so no question is being asked and the
+                    // answer buttons must be GONE, not merely disabled — otherwise
+                    // the room can answer the PREVIOUS question while the host
+                    // waits for a pick.
+                    p.phase == "board" -> {}
                     p.buzz && !revealed -> {
                         if (submittedQid == p.qid) {
                             Text("Buzzed — wait for the host",

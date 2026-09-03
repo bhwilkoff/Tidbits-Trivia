@@ -126,6 +126,18 @@ blind press script labels its screenshots wrong.
 - **The Apple TV drops remote presses after ~80 automated runs** (F-009).
   Warmed presses mitigate it; `devicectl device reboot` is the only cure. Reboot
   proactively at ~70 runs. This is harness-class — real Siri remotes are fine.
+- **The outside-container bookmark grant is not automatable at all.** The Mac
+  app is sandboxed, so it cannot open a path it was never granted — and a path
+  handed in by a harness never has a grant. `TIDBITS_LIVE_AVSELFTEST_PATH`
+  pointed outside the container therefore reports FAIL *whether or not*
+  `files.bookmarks.app-scope` is set (error -54 is the permission error). That
+  is the exact mirror of the flaw it was written to fix: the earlier version
+  bookmarked INSIDE the container and reported OK either way. Neither
+  distinguishes the case. Both entitlements were confirmed present by reading
+  the shipped binary (`codesign -d --entitlements`), which is the check that
+  actually answers the question. The `avselftest` scenario now asserts only
+  what it can establish — the summary renders, and the in-container case works.
+  The entitlement's real exercise is a human picking a file at the panel.
 - **tvOS focus has no automated coverage** in either repo. `atv_run.py` drives
   presses; nothing verifies which element *has* focus.
 

@@ -160,6 +160,33 @@ SCENARIOS = {
                     # reference, which is the exact bug this is here to catch.
                     "expect_any": r"qa-clip|Video round",
                     "expect_none": r"Could not|unavailable|missing"}),
+    # The clip-reference self-test, on the glass. This is the check that CAN fail
+    # for the reason that matters: bookmarking a file OUTSIDE the sandbox
+    # container, which is what a host's picked clip actually is and what the
+    # app-scope entitlement governs. The videoround scenario's clip lives INSIDE
+    # the container, which the sandbox grants anyway — it proves the picker path,
+    # not the entitlement.
+    "avselftest": (dict(TIDBITS_LIVE_AVSELFTEST="1",
+                        TIDBITS_LIVE_AVSELFTEST_PATH="/Users/bhwilkoff/Documents/GitHub/Tidbits-Trivia/build/qa/avselftest/outside.m4a"),
+                   {"last_frame_only": True,
+                    # What this CAN check: the summary rendered and the in-container
+                    # bookmark works. What it CANNOT check is the entitlement — a
+                    # sandboxed app cannot open a path it was never granted, so the
+                    # outside-container line FAILs whether or not the entitlement is
+                    # set. Asserting no-FAIL here would be asserting something the
+                    # sandbox makes impossible, and the scenario would be red
+                    # forever for the wrong reason.
+                    "expect_all": [r"BOOKMARK inside container: OK",
+                                   r"BOOKMARK outside container"],
+                    # This screen prints its verdict as text, so the default
+                    # forbid list would flag the self-test's OWN output: it
+                    # contains "FAIL", "error -54" and "couldn't be opened" by
+                    # design. Dropping \berror\b and couldn.t be is what makes
+                    # the guard meaningful here rather than always-red; the
+                    # crash-family terms are kept, and they can still fire --
+                    # "No questions" is what a broken corpus load looks like on
+                    # this window.
+                    "forbid": r"No questions|Something went wrong|failed to"}),
     # The Live builder with a populated event and its first round expanded, so
     # the per-question list and the Edit affordance are observable at all
     # (macOS-DESIGN §A2.4). Nothing could reach them from a cold launch.

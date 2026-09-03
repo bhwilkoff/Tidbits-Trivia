@@ -108,6 +108,12 @@ enum LiveClip {
         var lines: [String] = []
         let external = ProcessInfo.processInfo.environment["TIDBITS_LIVE_AVSELFTEST_PATH"]
 
+        // State the build-time fact plainly. This IS checkable without a grant,
+        // and it is what a reader actually wants to know when a clip will not
+        // play — the rest of this summary cannot tell them.
+        let scoped = Bundle.main.object(forInfoDictionaryKey: "TidbitsHasBookmarkEntitlement") as? Bool
+        lines.append("ENTITLEMENTS: app-scope bookmarks \(scoped == false ? "ABSENT" : "expected present (see codesign -d --entitlements)")")
+
         // 1. Bookmarking a file inside the container — the weak case, kept only so
         //    the two are visibly distinguished in the output.
         let inside = FileManager.default.temporaryDirectory
@@ -121,8 +127,21 @@ enum LiveClip {
             lines.append("BOOKMARK inside container: FAIL — \(error.localizedDescription)")
         }
 
-        // 2. Bookmarking a file OUTSIDE the container. This is the case a host's
-        //    picked clip actually is, and the one the entitlement governs.
+        // 2. Bookmarking a file OUTSIDE the container.
+        //
+        //    READ THE RESULT CAREFULLY. A FAIL here does NOT mean the entitlement
+        //    is missing. A sandboxed app cannot open an arbitrary path it was
+        //    never granted, so a path handed in by a harness fails whether or not
+        //    `files.bookmarks.app-scope` is set — which makes this line the exact
+        //    mirror of the flaw it replaced. The old version bookmarked inside the
+        //    container and reported OK either way; this one reports FAIL either
+        //    way. Neither distinguishes the case it was built to detect.
+        //
+        //    What actually exercises the entitlement is a file the USER picked
+        //    through a real panel: the grant comes from the pick, and the
+        //    entitlement is what lets the grant survive as a bookmark. That path
+        //    is driven by TIDBITS_LIVE_ADDAUDIO / TIDBITS_LIVE_ADDVIDEO with a
+        //    human at the panel — it is the one thing here no harness can fake.
         if let path = external {
             let url = URL(fileURLWithPath: path)
             do {

@@ -84,6 +84,37 @@ struct LiveTeamRosterTests {
         #expect(LiveTeamRoster.leaderAfterDepartures(team: team, gone: ["a", "b", "c"]) == nil)
     }
 
+    @Test("a team with two members answering is scored ONCE")
+    func scoredOnce() {
+        // The host scores by walking answers per uid. Two phones on one team would
+        // be awarded twice for one question — or, under negative marking,
+        // penalised twice for one wrong answer.
+        let members = [m("a", "T", 100), m("b", "T", 200)]
+        let keep = LiveTeamRoster.scorableUIDs(members: members, answeredAt: ["a": 5, "b": 9])
+        #expect(keep == ["a"])
+    }
+
+    @Test("two DIFFERENT teams are both scored")
+    func bothTeamsScored() {
+        let members = [m("a", "Ours", 100), m("x", "Theirs", 100)]
+        let keep = LiveTeamRoster.scorableUIDs(members: members, answeredAt: ["a": 5, "x": 9])
+        #expect(keep == ["a", "x"])
+    }
+
+    @Test("an answer from a uid the host has no join for still scores")
+    func unknownUID() {
+        // A device that answered before its join landed. Dropping it silently
+        // loses a real answer, which is worse than the duplicate this guards.
+        let keep = LiveTeamRoster.scorableUIDs(members: [m("a", "T", 100)],
+                                               answeredAt: ["a": 5, "ghost": 7])
+        #expect(keep == ["a", "ghost"])
+    }
+
+    @Test("nobody answering scores nobody")
+    func noneScored() {
+        #expect(LiveTeamRoster.scorableUIDs(members: [m("a", "T", 100)], answeredAt: [:]).isEmpty)
+    }
+
     @Test("a uid resolves to its own team")
     func lookup() {
         let members = [m("a", "Ours", 100), m("x", "Theirs", 100)]

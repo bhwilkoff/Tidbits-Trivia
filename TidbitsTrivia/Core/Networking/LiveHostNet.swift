@@ -30,6 +30,24 @@ final class LiveHostNet {
     }
     struct Joined: Identifiable, Hashable { let id: String; let name: String; let score: Int }
 
+    /// G7: the joins as roster members. The wire already carried everything the
+    /// roster needs — name and joinedAt, keyed by uid — so several phones on one
+    /// team was never a transport problem, only a grouping one.
+    var members: [LiveMember] {
+        teams.map { LiveMember(uid: $0.key, teamName: $0.value.name, joinedAt: $0.value.joinedAt) }
+    }
+
+    /// G7: one row per TEAM, not per device. Three phones that typed the same team
+    /// name are one row with one score; only one member is ever scored for a
+    /// question, so summing the members is the team's score.
+    var joinedTeams: [Joined] {
+        LiveTeamRoster.teams(members).map { team in
+            let score = team.members.reduce(0) { $0 + (scores[$1.uid] ?? 0) }
+            return Joined(id: team.leader?.uid ?? team.key, name: team.name, score: score)
+        }
+        .sorted { $0.score != $1.score ? $0.score > $1.score : $0.name < $1.name }
+    }
+
     /// F-006: rules deny the host deleting other uids' answer nodes, so a
     /// reused room code cannot have its stale ledger cleared server-side.
     /// Instead the host IGNORES answers written before this session opened —

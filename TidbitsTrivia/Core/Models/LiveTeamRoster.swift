@@ -92,6 +92,25 @@ enum LiveTeamRoster {
         return bestUID
     }
 
+    /// The uids whose answers may be SCORED — exactly one per team.
+    ///
+    /// The host scores by walking the answers, one uid at a time. That is correct
+    /// while a device is a team and wrong the moment two devices share one: the
+    /// table would be awarded twice for the same question, or penalised twice for
+    /// the same wrong answer under negative marking.
+    static func scorableUIDs(members: [LiveMember], answeredAt: [String: Int]) -> Set<String> {
+        var keep = Set<String>()
+        for team in teams(members) {
+            if let uid = answeringMember(team: team, answeredAt: answeredAt) { keep.insert(uid) }
+        }
+        // A uid the host knows nothing about — a device that answered before its
+        // join landed — still scores for itself. Dropping it would silently lose a
+        // real answer, which is worse than the duplicate this guards against.
+        let known = Set(members.map(\.uid))
+        for uid in answeredAt.keys where !known.contains(uid) { keep.insert(uid) }
+        return keep
+    }
+
     /// Who leads after `gone` have left.
     ///
     /// A team whose leader closes their phone is not disbanded — the earliest

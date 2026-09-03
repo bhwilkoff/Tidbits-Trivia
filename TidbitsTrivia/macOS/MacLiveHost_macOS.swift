@@ -430,7 +430,14 @@ struct LiveHostContainer_macOS: View {
         let wagerRound = session.currentRoundIsWager
         let speedRound = session.currentRoundIsSpeed
         var speedCorrect: [(uid: String, ts: Int, pts: Int)] = []
-        for (uid, ans) in net.answers {
+        // G7: exactly one answer per TEAM reaches the scoreboard. Walking the
+        // answers per uid is correct while a device IS a team, and awards a table
+        // twice the moment two of its phones answer — or penalises it twice under
+        // negative marking.
+        let scorable = LiveTeamRoster.scorableUIDs(
+            members: net.members,
+            answeredAt: net.answers.mapValues { $0.sv ?? $0.ts })
+        for (uid, ans) in net.answers where scorable.contains(uid) {
             let pts = LiveNightHost.score(q, ans, shuffledOrder: session.shuffledOrder,
                                           shuffledValues: session.shuffledValues, mcqPoints: session.pointsPerCorrect)
             if wagerRound {

@@ -1,0 +1,51 @@
+[
+ {"subject":"Timur","cat":"history","diff":4,
+  "prompt":"Tamerlane, founder of the Timurid Empire, holds what distinction as a commander?",
+  "answer":"He was never defeated in battle","options":["He never fought in person","He lost only one battle","He fought only at sea"],
+  "why":"Timur was undefeated across a career of conquest from Anatolia to India, and is rated among the greatest tacticians in history -- and among the most brutal."},
+
+ {"subject":"Shivaji","cat":"history","diff":4,
+  "prompt":"Shivaji was crowned Chhatrapati at Raigad Fort in 1674, founding which Indian kingdom?",
+  "answer":"The Maratha Kingdom","options":["The Chola Kingdom","The Ahom Kingdom","The Vijayanagara Empire"],
+  "why":"He built it from a fiefdom his father had held under the Sultanate of Bijapur, and it grew into the power that outlasted the Mughals across much of India."},
+
+ {"subject":"Dagestan","cat":"geography","diff":3,
+  "prompt":"Dagestan sits at the southernmost tip of Russia, on the shore of which sea?",
+  "answer":"The Caspian Sea","options":["The Black Sea","The Aral Sea","The Baltic Sea"],
+  "why":"It lies in the North Caucasus, bordering Azerbaijan and Georgia, with its capital Makhachkala on the Caspian coast."},
+
+ {"subject":"Eid al-Fitr","cat":"history","diff":4,
+  "prompt":"Eid al-Fitr falls on the first day of which month of the Islamic calendar?",
+  "answer":"Shawwal","options":["Ramadan","Muharram","Rajab"],
+  "why":"The festival marks the END of Ramadan, so it falls not in Ramadan but on the first day of the month that follows it, Shawwal."},
+
+ {"subject":"Academy Award for Best Picture","cat":"screen","diff":3,
+  "prompt":"The Academy Award for Best Picture is handed to whom?",
+  "answer":"The producers","options":["The director","The studio","The lead actors"],
+  "why":"The statuette goes to the film's producers. It is also the only category in which every Academy member may both nominate and vote."},
+
+ {"subject":"Linux","cat":"science","diff":3,
+  "prompt":"Strictly speaking, Linux itself is not a complete operating system. What is it?",
+  "answer":"A kernel","options":["A file system","A programming language","A web server"],
+  "why":"Linus Torvalds released the kernel in 1991. A usable system pairs it with software from GNU, Red Hat, X.Org and others -- which is what a distribution actually is."},
+
+ {"subject":"Chinese New Year","cat":"history","diff":3,
+  "prompt":"Chinese New Year celebrations run for fifteen days and close with which festival?",
+  "answer":"The Lantern Festival","options":["The Dragon Boat Festival","The Mid-Autumn Festival","The Qingming Festival"],
+  "why":"The Spring Festival runs from New Year's Eve to the Lantern Festival on the fifteenth day of the new lunisolar year."},
+
+ {"subject":"Commonwealth of Nations","cat":"geography","diff":3,
+  "prompt":"How many member states belong to the Commonwealth of Nations?",
+  "answer":"56","options":["27","15","104"],
+  "why":"Most are former British Empire territories, though not all -- membership has since opened to countries with no imperial tie at all."},
+
+ {"subject":"Islamic calendar","cat":"science","diff":4,
+  "prompt":"A year on the Hijri calendar is how much shorter than a Gregorian one?",
+  "answer":"About 11 days","options":["About 3 days","About 30 days","About 60 days"],
+  "why":"Twelve lunar months come to 354 or 355 days against the Gregorian 365, which is why Islamic dates drift backwards through the seasons rather than staying fixed."},
+
+ {"subject":"Indo-European languages","cat":"geography","diff":3,
+  "prompt":"The Indo-European family is native to most of Europe, the Iranian plateau, and which other region?",
+  "answer":"Northern India","options":["Southern Africa","Southeast Asia","The Andes"],
+  "why":"The family stretches from Iceland to Bangladesh. Hindi, Persian, Greek, Russian and English all sit inside it."}
+]

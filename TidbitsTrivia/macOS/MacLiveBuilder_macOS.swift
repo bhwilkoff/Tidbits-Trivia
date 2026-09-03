@@ -105,6 +105,12 @@ struct LiveBuilderView_macOS: View {
             case "importevent": importEvent()
             case "exportcsv":   exportQuestionsCSV()
             case "importcsv":   importCSV()
+            case "printpack":
+                LivePrint.questionPack(working)
+                fileReceipt = "Printed \(LivePrint.lastRenderedPages) pages"
+            case "printsheet":
+                LivePrint.answerSheet(working)
+                fileReceipt = "Printed \(LivePrint.lastRenderedPages) pages"
             default: break
             }
         }

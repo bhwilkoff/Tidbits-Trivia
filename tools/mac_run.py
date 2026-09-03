@@ -10,6 +10,7 @@ those strings would count as "text the app put on the glass".
 """
 import argparse
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -178,6 +179,28 @@ SCENARIOS = {
                          TIDBITS_LIVE_FILE="qa-event.json"),
                     {"allow_edge": SIDEBAR_FOOTER, "last_frame_only": True,
                      "expect_any": r"Imported \d+ rounds"}),
+    # PRINT — the host's Wi-Fi-dies fallback. LivePrintTests already pins that a
+    # long pack paginates and that the TEAM sheet does not leak answers, but
+    # nothing drove the button. This runs the real render (the only thing skipped
+    # is the hand-off to Preview, which would steal the screen mid-capture) and
+    # asserts the PDF on disk.
+    "printpack": (dict(TIDBITS_TAB="live", TIDBITS_LIVE_BUILDER="1",
+                       TIDBITS_LIVE_FILEOP="printpack",
+                       TIDBITS_LIVE_FILE="qa-pack.pdf"),
+                  {"allow_edge": SIDEBAR_FOOTER, "last_frame_only": True,
+                   "expect_any": r"Printed \d+ pages",
+                   "expect_file": FILEOP_DIR / "qa-pack.pdf",
+                   # The HOST's pack must carry the answers he reads out.
+                   "expect_pdf": r"Answer:"}),
+    "printsheet": (dict(TIDBITS_TAB="live", TIDBITS_LIVE_BUILDER="1",
+                        TIDBITS_LIVE_FILEOP="printsheet",
+                        TIDBITS_LIVE_FILE="qa-sheet.pdf"),
+                   {"allow_edge": SIDEBAR_FOOTER, "last_frame_only": True,
+                    "expect_any": r"Printed \d+ pages",
+                    "expect_file": FILEOP_DIR / "qa-sheet.pdf",
+                    # The TEAM's sheet must carry none of them. This is the one
+                    # that matters: a leak here hands the room the answers.
+                    "expect_pdf_none": r"Answer:"}),
     "importcsv": (dict(TIDBITS_TAB="live", TIDBITS_LIVE_BUILDER="1",
                        TIDBITS_LIVE_FILEOP="importcsv",
                        TIDBITS_LIVE_FILE="qa-questions.csv"),
@@ -261,6 +284,28 @@ def main():
             size = want.stat().st_size if want.exists() else 0
             g.grade(f"{n}.file_written", size > 0,
                     f"{want} is {size} bytes" if size else f"{want} was never written")
+            # And what is INSIDE it. A printed pack that renders is not the same as
+            # one that carries the answers the host reads out — and the team's sheet
+            # must carry none. Checked on the PDF a host would actually print, not
+            # on the SwiftUI page a unit test builds.
+            pat, absent = spec.get("expect_pdf"), spec.get("expect_pdf_none")
+            if (pat or absent) and size:
+                if not shutil.which("pdftotext"):
+                    # A check that cannot see its input must FAIL, not pass quietly.
+                    g.grade(f"{n}.pdf_text", False,
+                            "pdftotext is not installed — the PDF content was never read")
+                else:
+                    text = subprocess.run(["pdftotext", str(want), "-"],
+                                          capture_output=True, text=True).stdout
+                    if pat:
+                        hits = len(re.findall(pat, text))
+                        g.grade(f"{n}.pdf_text", hits > 0,
+                                f"/{pat}/ appears {hits}x in the rendered PDF")
+                    if absent:
+                        hits = len(re.findall(absent, text))
+                        g.grade(f"{n}.pdf_text_none", hits == 0,
+                                f"/{absent}/ absent, as required" if not hits
+                                else f"/{absent}/ LEAKED into the PDF {hits}x")
     quit_app()
     return g.finish()
 

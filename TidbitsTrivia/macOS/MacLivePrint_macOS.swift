@@ -9,6 +9,13 @@ import AppKit
 ///   • Answer sheet — the teams' blank sheet (numbered lines to write on).
 enum LivePrint {
 
+    /// Page count of the last pack rendered. A host's printable fallback that
+    /// silently produced ONE page for a five-round night is the bug LivePrintTests
+    /// was written for; this lets the QA harness assert the same thing about the
+    /// pack the BUTTON produces, not just the one a unit test builds.
+    @MainActor static var lastRenderedPages = 0
+
+
     /// "1 round · 1 question", not "1 rounds · 1 questions".
     ///
     /// Lives HERE, not on the builder view: the test target compiles this file but
@@ -88,11 +95,22 @@ enum LivePrint {
     /// "tidbits-live-a1b2c3d4.pdf" tells them nothing about which one it is.
     @MainActor private static func render(_ page: some View, name: String) {
         let safe = name.replacingOccurrences(of: "/", with: "-")
-        let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("\(safe).pdf")
+        // TIDBITS_LIVE_FILE — the QA harness names the PDF so it can assert the
+        // artefact. The REAL render runs either way; only the hand-off to Preview
+        // is skipped, because a launched Preview steals the screen and the capture
+        // would photograph it instead of the app. No-op in production.
+        let hooked = ProcessInfo.processInfo.environment["TIDBITS_LIVE_FILE"].flatMap {
+            $0.isEmpty ? nil : $0
+        }
+        let url = hooked.map { name -> URL in
+            name.contains("/") ? URL(fileURLWithPath: (name as NSString).expandingTildeInPath)
+                               : FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+                                     .appendingPathComponent(name)
+        } ?? FileManager.default.temporaryDirectory.appendingPathComponent("\(safe).pdf")
         do {
-            _ = try makePDF(page, to: url)
-            NSWorkspace.shared.open(url)
+            let pages = try makePDF(page, to: url)
+            lastRenderedPages = pages
+            if hooked == nil { NSWorkspace.shared.open(url) }
         } catch {
             // The old code was `guard let url else { return }` — a print button
             // that did nothing at all when rendering failed.

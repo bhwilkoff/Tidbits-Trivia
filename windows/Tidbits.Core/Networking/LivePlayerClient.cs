@@ -223,6 +223,26 @@ public sealed class LivePlayerClient
         catch { /* best-effort; the night's score already showed live */ }
     }
 
+    /// G7: the teams already in a room, so a second phone at a table can JOIN it
+    /// instead of quietly starting a near-identical second team.
+    ///
+    /// No new wire path: this client already read `teams` for the night-end
+    /// co-player capture, so the join screen only had to ask earlier.
+    public async Task<IReadOnlyList<RosterTeam>> ExistingTeams(string code)
+    {
+        try
+        {
+            var teams = await _db.Get<Dictionary<string, LiveRoom.Team>>($"{LiveRoom.Path(code)}/teams");
+            if (teams is null) return new List<RosterTeam>();
+            var members = teams.Select(kv => new LiveMember
+            {
+                Uid = kv.Key, TeamName = kv.Value.Name, JoinedAt = kv.Value.JoinedAt,
+            }).ToList();
+            return LiveTeamRoster.Teams(members);
+        }
+        catch { return new List<RosterTeam>(); }
+    }
+
     private async Task CaptureCoplayers()
     {
         if (_uid is null) return;

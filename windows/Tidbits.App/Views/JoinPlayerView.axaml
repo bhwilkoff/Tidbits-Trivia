@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Tidbits.App.ViewModels"
+             xmlns:net="using:Tidbits.Core.Networking"
              x:Class="Tidbits.App.Views.JoinPlayerView"
              x:DataType="vm:LivePlayerViewModel">
     <ScrollViewer>
@@ -9,8 +10,27 @@
             <StackPanel IsVisible="{Binding NotJoined}" Spacing="12">
                 <TextBlock Text="Join a game" FontSize="28" FontWeight="Black"/>
                 <TextBlock Text="Enter the 4-letter code from the host's screen." FontSize="14" Opacity="0.7"/>
-                <TextBox x:Name="CodeBox" Watermark="Code (e.g. 2NRE)" FontSize="18" MaxLength="4" Padding="12"/>
+                <TextBox x:Name="CodeBox" Watermark="Code (e.g. 2NRE)" FontSize="18" MaxLength="4" Padding="12"
+                         TextChanged="OnCodeChanged"/>
                 <TextBox x:Name="TeamBox" Watermark="Your team name" FontSize="16" Padding="12"/>
+                <!-- G7: the tables already in the room. Without this a second phone
+                     at a table has no way to know its table is here, types the name
+                     slightly differently, and the table plays as two teams with a
+                     split score. -->
+                <StackPanel IsVisible="{Binding HasRoomTeams}" Spacing="6">
+                    <TextBlock Text="Already playing — click to join your table" FontSize="12" Opacity="0.7"/>
+                    <ItemsControl ItemsSource="{Binding RoomTeams}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="net:RosterTeam">
+                                <Button Click="OnPickTeam" Margin="0,0,6,6" Padding="12,7" FontWeight="SemiBold"
+                                        Content="{Binding Name}"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
                 <StackPanel Orientation="Horizontal" Spacing="10">
                     <Button Content="Join" Click="OnJoin" Classes="accent" Padding="26,12" FontWeight="Bold"/>
                     <!-- There was no way back out of this surface at all. -->

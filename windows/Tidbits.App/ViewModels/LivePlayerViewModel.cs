@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -60,6 +61,23 @@ public sealed class LivePlayerViewModel : ObservableObject
     /// G5: the pick-a-category grid is up, so no question is being asked. The
     /// answer surface must be GONE, not disabled — otherwise this phone can still
     /// answer the PREVIOUS question while the room is choosing.
+    /// G7: the room's tables, offered on the join screen so a second phone can
+    /// join its table instead of starting a near-identical second team.
+    private IReadOnlyList<RosterTeam> _roomTeams = new List<RosterTeam>();
+    public IReadOnlyList<RosterTeam> RoomTeams
+    {
+        get => _roomTeams;
+        private set { _roomTeams = value; OnPropertyChanged(nameof(RoomTeams)); OnPropertyChanged(nameof(HasRoomTeams)); }
+    }
+    public bool HasRoomTeams => RoomTeams.Count > 0;
+
+    /// Look the room up once the code is complete, so the tables are on screen
+    /// BEFORE the player commits to a name.
+    public async Task LoadRoomTeams(string code)
+    {
+        RoomTeams = code.Length == 4 ? await Client.ExistingTeams(code) : new List<RosterTeam>();
+    }
+
     public bool IsBoard => Client.Pub?.Phase == LiveRoom.Phase.Board && Client.Pub?.Board is not null;
     /// The prompt only when a question is actually being asked.
     public bool ShowQuestionOnly => ShowQuestion && !IsBoard;

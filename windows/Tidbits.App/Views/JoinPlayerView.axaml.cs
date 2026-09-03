@@ -95,6 +95,21 @@ public partial class JoinPlayerView : UserControl
         await _vm.Join(CodeBox.Text ?? "", TeamBox.Text ?? "");
     }
 
+    /// G7: look the room up as soon as the code is complete, so the tables are on
+    /// screen BEFORE the player commits to a name.
+    private async void OnCodeChanged(object? sender, Avalonia.Controls.TextChangedEventArgs e)
+    {
+        if (_vm is null) return;
+        await _vm.LoadRoomTeams((CodeBox.Text ?? "").Trim());
+    }
+
+    /// Tapping a table fills the LEADER's spelling — that is what keeps it one row
+    /// rather than two near-identical ones.
+    private void OnPickTeam(object? sender, RoutedEventArgs e)
+    {
+        if ((sender as Control)?.DataContext is RosterTeam t) TeamBox.Text = t.Name;
+    }
+
     /// Fill the form and submit it, for TIDBITS_LIVE_JOIN.
     ///
     /// Deliberately drives the SAME fields and the same OnJoin the button does, rather

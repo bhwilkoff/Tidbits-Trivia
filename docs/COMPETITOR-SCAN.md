@@ -182,11 +182,61 @@ walk the room. Tidbits' cockpit is keyboard + mouse at the laptop. We already ha
 the whole phone-join transport (`live/{code}`), so a host-role client is a
 smaller job than it looks.
 
-### G7. Team self-registration detail  *(Crowdpurr)*
+### G7. Several phones, one team — CLOSED 2026-09-03
 Crowdpurr has an explicit team-leader model — one device answers for a physically
-grouped team. Ours is close (a phone team is a team), but there is no notion of a
-team leader or of members joining a named team, which is how a table of six with
-one phone actually behaves.
+grouped team.
+
+**This entry was filed against the wrong failure.** It described "a table of six
+with one phone", and that case already worked: one phone joins, one phone is the
+team. The break is the opposite one. Three friends at a table each open the app,
+each becomes a separate team, and their night is split three ways across three
+near-identical standings rows. Worth recording, because the scan sent me looking
+for the wrong thing until I read what the code actually did.
+
+The rule is a pure function written once per stack (`Core/Models/LiveTeamRoster.swift`,
+`Tidbits.Core/Networking/LiveTeamRoster.cs`, plus JS and Kotlin ports), 15 Swift
+and 15 C# tests on the same cases.
+
+**The judgement calls:**
+
+- **The same name typed differently is ONE team** — fold surrounding space, case,
+  and runs of whitespace.
+- **Punctuation is NOT folded.** "St. Elmo" and "St Elmo" stay two teams. Merging
+  is destructive in a way splitting is not: a host can merge two rows, but cannot
+  un-merge a night's scoring.
+- **The display name is the LEADER's spelling.** A later joiner does not restyle
+  the row the table already has.
+- **The first answer by SERVER stamp stands.** A teammate cannot overwrite it —
+  otherwise the loudest phone at the table wins, or a team changes its mind after
+  watching the tally move.
+- **A same-millisecond join breaks on uid.** Two phones can be stamped the same
+  ms, and without it the leader — and so whose answer counts — would differ by
+  stack and by run.
+- **The leader leaving promotes the next member.** A table does not stop playing
+  because one person went to the bar.
+- **A uid the host has no join record for still scores for itself.** That is a
+  device whose answer landed before its join did, and losing a real answer is
+  worse than the duplicate the rule guards against.
+
+**The wire needed no change.** `live/{code}/teams` already carried name and
+joinedAt keyed by uid — which IS a roster member — and every client already read
+that node for the night-end co-player capture. The only real gap was Android's
+`liveTeams`, which read uid and name but not joinedAt, so it could not pick the
+leader's spelling deterministically.
+
+**The pattern worth carrying, because it produced four separate bugs:** when a
+row stops being one thing and becomes a group, every count and lookup keyed on
+its id changes meaning, and **none of them fail loudly**. In order: both hosts
+awarded a table twice (and penalised it twice under negative marking) because
+scoring walked answers per uid; the standings listed devices; the cockpit's
+per-team answer lookup used the leader's uid and reported "no answer" for a table
+whose second phone had submitted; and "N answered" counted devices, so a host
+watching for "everyone is in" would read 3 from one table of three phones and
+move on while two tables were still thinking.
+
+Join surfaces (tap your table, showing its size, filling the leader's spelling)
+ship on iOS, Android, web and Windows — every client where a player types a team
+name.
 
 ## §3 — What NOT to copy
 

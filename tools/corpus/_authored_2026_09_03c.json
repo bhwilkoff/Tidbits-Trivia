@@ -1,0 +1,51 @@
+[
+ {"subject":"Twelve Olympians","cat":"history","diff":3,
+  "prompt":"Eleven of the twelve Olympian gods are agreed on. The last seat is disputed between Hestia and whom?",
+  "answer":"Dionysus","options":["Hades","Persephone","Heracles"],
+  "why":"Ancient sources disagree over whether the twelfth Olympian is Hestia, goddess of the hearth, or Dionysus. Hades is never counted -- he rules the underworld, not Mount Olympus."},
+
+ {"subject":"Pound sterling","cat":"business","diff":3,
+  "prompt":"Sterling holds which distinction among the world's currencies?",
+  "answer":"The oldest still in use","options":["The most widely traded","The most valuable per unit","The youngest major currency"],
+  "why":"Sterling has been in continuous use since its inception, longer than any other currency. It is only the fourth-most-traded on the foreign exchange market."},
+
+ {"subject":"2023 Turkey–Syria earthquakes","cat":"geography","diff":3,
+  "prompt":"Hours after a magnitude 7.8 quake devastated southern Turkey and northern Syria in February 2023, what happened?",
+  "answer":"A second quake of magnitude 7.7","options":["A magnitude 4.1 aftershock","A tsunami reached the coast","A volcanic eruption began"],
+  "why":"The second shock struck the same day, centred 95 km north-northwest of the first. Two near-identical quakes in one day is why the damage was so widespread."},
+
+ {"subject":"Scientology","cat":"history","diff":3,
+  "prompt":"Scientology grew out of a system L. Ron Hubbard first presented in 1950 as a form of talk therapy. What was it called?",
+  "answer":"Dianetics","options":["Logotherapy","Orgonomy","Psychometrics"],
+  "why":"Hubbard published Dianetics in 1950 as therapy, then reframed it as a religion and founded the Church of Scientology in 1953."},
+
+ {"subject":"Grand Slam (tennis)","cat":"sports","diff":3,
+  "prompt":"In tennis, a true Grand Slam means winning all four majors within what span?",
+  "answer":"One calendar year","options":["A career","Two seasons","Any twelve months"],
+  "why":"All four in one calendar year is the Grand Slam proper. Four in a row across two years is a non-calendar-year Grand Slam, and four at any point is a Career Grand Slam -- three different achievements."},
+
+ {"subject":"Ayahuasca","cat":"science","diff":4,
+  "prompt":"The Quechua name ayahuasca translates roughly as what?",
+  "answer":"Liana of the soul","options":["Fire of the forest","Blood of the moon","Breath of the river"],
+  "why":"It means 'spirit rope' or 'liana of the soul' -- a liana being a woody vine. The name refers both to the Banisteriopsis caapi vine and to the brew made from it."},
+
+ {"subject":"4chan","cat":"business","diff":3,
+  "prompt":"What can users not do on 4chan, unlike almost every other major forum?",
+  "answer":"Register an account","options":["Post images","Reply to threads","Create new threads"],
+  "why":"Registration is unavailable to anyone but staff, so users post anonymously by default. That design is the root of both the site's culture and its reputation."},
+
+ {"subject":"Starlink","cat":"science","diff":3,
+  "prompt":"Starlink needs thousands of satellites rather than a handful because they fly in which kind of orbit?",
+  "answer":"Low Earth orbit","options":["Geostationary orbit","Medium Earth orbit","Lunar orbit"],
+  "why":"A low orbit means each satellite covers a small patch of ground and moves fast overhead, so continuous coverage takes a constellation of thousands rather than a few high satellites."},
+
+ {"subject":"Spirited Away","cat":"screen","diff":2,
+  "prompt":"Which studio animated Hayao Miyazaki's 2001 fantasy film Spirited Away?",
+  "answer":"Studio Ghibli","options":["Studio Trigger","Toei Animation","Madhouse"],
+  "why":"Ghibli produced it under Toshio Suzuki, and Toho distributed it. It follows Chihiro, a girl trapped in a world of Shinto spirits."},
+
+ {"subject":"Age of Enlightenment","cat":"history","diff":2,
+  "prompt":"The Age of Reason emerged in the late 1600s but reached its peak in which century?",
+  "answer":"The 18th","options":["The 16th","The 17th","The 19th"],
+  "why":"Enlightenment ideas spread across Europe and the colonies through the 1700s, promoting reason, empirical evidence and individual liberty."}
+]

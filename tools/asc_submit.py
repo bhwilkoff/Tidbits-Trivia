@@ -171,11 +171,24 @@ def submit_for_review(app_id, version_id):
     print("SUBMITTED FOR REVIEW")
 
 
-REQUIRED_SHOT_SETS = {
-    "APP_IPHONE_67": "iPhone 6.9\" app screenshots",
-    "APP_IPAD_PRO_3GEN_129": "iPad 13\" app screenshots",
-    "IMESSAGE_APP_IPHONE_67": "iMessage iPhone screenshots",
-    "IMESSAGE_APP_IPAD_PRO_3GEN_129": "iMessage iPad screenshots",
+# Required screenshot sets PER PLATFORM. This was a flat iOS-only dict, so auditing
+# the macOS or tvOS version demanded iPhone and iMessage art and reported four
+# blockers that cannot apply to it -- while staying silent about the sets those
+# platforms DO require. A check that names the wrong requirement is worse than no
+# check: it hides the real one behind noise.
+REQUIRED_SHOT_SETS_BY_PLATFORM = {
+    "IOS": {
+        "APP_IPHONE_67": "iPhone 6.9\" app screenshots",
+        "APP_IPAD_PRO_3GEN_129": "iPad 13\" app screenshots",
+        "IMESSAGE_APP_IPHONE_67": "iMessage iPhone screenshots",
+        "IMESSAGE_APP_IPAD_PRO_3GEN_129": "iMessage iPad screenshots",
+    },
+    "MAC_OS": {
+        "APP_DESKTOP": "Mac app screenshots",
+    },
+    "TV_OS": {
+        "APP_APPLE_TV": "Apple TV app screenshots",
+    },
 }
 
 
@@ -235,7 +248,7 @@ def audit(app_id, locale):
         bad = [x for x in shots["data"]
                if (x["attributes"].get("assetDeliveryState") or {}).get("errors")]
         have[st["attributes"]["screenshotDisplayType"]] = (done, len(shots["data"]), bad)
-    for dtype, label in REQUIRED_SHOT_SETS.items():
+    for dtype, label in REQUIRED_SHOT_SETS_BY_PLATFORM[PLATFORM].items():
         if dtype not in have:
             problems.append(f"no screenshot set for {dtype} ({label})")
             print(f"  {dtype:32} MISSING")

@@ -45,6 +45,22 @@ public sealed class CorpusDatabase
         return QueryHelpers.Shuffle(pool).Take(limit).ToList();
     }
 
+    /// G5: questions for one CATEGORY at one DIFFICULTY — exactly the cell of a
+    /// pick-a-category board.
+    ///
+    /// A board needs a guaranteed question per (category, tier), and the general
+    /// category query cannot supply that: it samples the category at random, so a
+    /// thin tier is a coin flip. The macOS board rendered with five holes for
+    /// exactly this reason. Mirrors Swift
+    /// `CorpusDatabase.questions(categoryID:difficulty:excluding:limit:)`.
+    public List<Question> Questions(string categoryId, int difficulty, ISet<string> seen, int limit)
+    {
+        var pool = _all.Where(q => q.CategoryId == categoryId
+                                   && q.Difficulty == difficulty
+                                   && !seen.Contains(q.Id)).ToList();
+        return QueryHelpers.Shuffle(pool).Take(limit).ToList();
+    }
+
     /// All ids for a category in a stable order. The daily uses this + DailyPick,
     /// which is order-independent, so only the id SET matters (identical across
     /// platforms because the corpus is identical). "mixed"/"" = the whole corpus.

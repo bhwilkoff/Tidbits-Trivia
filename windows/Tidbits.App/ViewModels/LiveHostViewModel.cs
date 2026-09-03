@@ -1,7 +1,9 @@
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Tidbits.Core.Models;
 using Tidbits.Core.Networking;
 
 namespace Tidbits.App.ViewModels;
@@ -48,7 +50,59 @@ public sealed class LiveHostViewModel : ObservableObject
     /// scores before anyone has joined, or who runs on paper without adding the
     /// teams, shows the room nothing and cannot tell whether it is broken.
     public bool HasNoStandings => RankedStandings.Count == 0;
-    public bool ShowQuestionScreen => IsPlaying && !HoldStandings;
+    // ---- G5 pick-a-category board -------------------------------------------
+    // The board is a PHASE of a live round, not an interruption, so it takes
+    // precedence over the question screen but not over a standings hold.
+    public bool ShowBoardScreen => IsPlaying && !HoldStandings && Host.ShowBoard && Host.CurrentBoard is not null;
+    public bool ShowQuestionScreen => IsPlaying && !HoldStandings && !ShowBoardScreen;
+    public bool IsBoardRound => Host.IsBoardRound;
+    public string BoardHeadline =>
+        string.IsNullOrWhiteSpace(Host.BoardChooser) ? "PICK A CATEGORY"
+                                                     : $"{Host.BoardChooser!.ToUpperInvariant()} PICKS";
+    public string BoardSummary
+    {
+        get
+        {
+            var b = Host.CurrentBoard;
+            // Thousands-separated, like the Mac slide. The room reads this off a
+            // wall: "7500" and "7,500" are not equally legible at ten feet.
+            return b is null ? "" : $"{b.Remaining.Count} left · {b.PointsRemaining:N0} points on the board";
+        }
+    }
+    /// Column headers for the grid.
+    public IReadOnlyList<string> BoardCategories =>
+        Host.CurrentBoard?.Categories.Select(c => TriviaCategory.Named(c).Name.ToUpperInvariant()).ToList()
+        ?? new List<string>();
+    /// The grid in ROW-MAJOR order (tier by tier), so a uniform-grid panel with
+    /// one column per category lays it out the way the room reads it. A HOLE is a
+    /// cell with no question — it renders as an empty slot, never a pickable tile.
+    public IReadOnlyList<BoardTile> BoardTiles
+    {
+        get
+        {
+            var b = Host.CurrentBoard;
+            var outp = new List<BoardTile>();
+            if (b is null) return outp;
+            foreach (var t in b.Tiers)
+                foreach (var c in b.Categories)
+                {
+                    var cell = b.Cell(c, t);
+                    outp.Add(new BoardTile(c, t, cell is null ? "" : cell.Points.ToString(),
+                                           cell is not null && !cell.Taken));
+                }
+            return outp;
+        }
+    }
+
+    /// The grid's column count. Bound explicitly: a bare UniformGrid auto-squares
+    /// its children, which is accidentally right for a 5x5 board and wrong for any
+    /// other column count.
+    public int BoardColumns => System.Math.Max(Host.CurrentBoard?.Categories.Count ?? 1, 1);
+
+    /// One tile of the projector/cockpit grid. `Playable` is false for a taken
+    /// cell AND for a hole, which is what keeps a dead tile unclickable.
+    public sealed record BoardTile(string CategoryId, int Tier, string Label, bool Playable);
+
     // ---- G1 buzz round -------------------------------------------------------
     // Mirrors the Mac cockpit panel: name who buzzed, Correct awards and reveals,
     // Wrong rules them out and reopens the buzzer to the rest of the room.

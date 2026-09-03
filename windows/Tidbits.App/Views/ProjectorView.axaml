@@ -42,6 +42,50 @@
             </StackPanel>
         </Viewbox>
 
+        <!-- G5: the pick-a-category grid. A phase of a LIVE round, so it sits
+             between the standings hold and the question screen. A taken cell keeps
+             its place and goes quiet rather than disappearing: the room reads the
+             board as a map of what is left, and a grid that reflows on every pick
+             makes them re-find their column. -->
+        <Viewbox IsVisible="{Binding ShowBoardScreen}" Margin="100,70" Stretch="Uniform">
+            <StackPanel Width="1500" Spacing="20">
+                <TextBlock Text="{Binding BoardHeadline}" Foreground="#FF5C35" FontSize="54"
+                           FontWeight="Black" HorizontalAlignment="Center"/>
+                <ItemsControl ItemsSource="{Binding BoardCategories}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Rows="1"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding}" Foreground="White" FontSize="30" FontWeight="Black"
+                                       HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <ItemsControl x:Name="BoardGrid" ItemsSource="{Binding BoardTiles}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="{Binding BoardColumns}"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:LiveHostViewModel+BoardTile">
+                            <Border Margin="7" Height="96" CornerRadius="14"
+                                    Background="#1AFFFFFF" BorderBrush="#47FFFFFF" BorderThickness="2">
+                                <TextBlock Text="{Binding Label}" Foreground="#FF5C35" FontSize="46"
+                                           FontWeight="Black" HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"/>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock Text="{Binding BoardSummary}" Foreground="White" Opacity="0.7" FontSize="26"
+                           FontWeight="Black" HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Viewbox>
+
         <!-- Question / reveal -->
         <Viewbox IsVisible="{Binding ShowQuestionScreen}" Margin="100,80" Stretch="Uniform">
             <StackPanel Width="1400" Spacing="26">

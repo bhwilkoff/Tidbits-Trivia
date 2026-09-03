@@ -157,6 +157,48 @@ public sealed class LiveNightHost : ObservableObject
     public bool IsBuzzRound => Current is not null && RoundIndex >= 0
                                && RoundIndex < BuzzRounds.Count && BuzzRounds[RoundIndex];
 
+    /// G5: the pick-a-category grid of each round (index-aligned; null = an
+    /// ordinary round). Mutable, because cells are marked taken as they are
+    /// played — the grid the projector draws and the question the host reads must
+    /// be the same object or they drift apart mid-round. Mirrors Swift
+    /// `LiveRound.board`.
+    public IReadOnlyList<LiveBoard?> RoundBoards { get; set; } = new List<LiveBoard?>();
+    public LiveBoard? CurrentBoard =>
+        RoundIndex >= 0 && RoundIndex < RoundBoards.Count ? RoundBoards[RoundIndex] : null;
+    public bool IsBoardRound => CurrentBoard is not null;
+
+    /// G5: hold the big screen on the grid, between questions of a board round.
+    /// The room cannot pick a cell it cannot see, so this is a real phase.
+    public bool ShowBoard { get; set; }
+    /// G5: the team whose turn it is to pick (null = anyone / not a board round).
+    public string? BoardChooser { get; set; }
+
+    /// G5: the room picked a cell — play it. Returns false when the cell is
+    /// missing or ALREADY taken, which is what a second click on one tile is; the
+    /// caller must not advance on that. Mirrors Swift `pickBoardCell`.
+    public bool PickBoardCell(string categoryId, int tier)
+    {
+        var board = CurrentBoard;
+        if (board is null) return false;
+        var cell = board.Cell(categoryId, tier);
+        if (cell is null || cell.Taken) return false;
+        if (!board.Take(categoryId, tier)) return false;
+        var target = Questions.FindIndex(q => q.Id == cell.QuestionId);
+        if (target < 0) return false;
+        Index = target;
+        Revealed = false;
+        Locked = false;
+        ShowBoard = false;
+        return true;
+    }
+
+    /// G5: back to the grid for the next pick.
+    public void ReturnToBoard()
+    {
+        Revealed = false;
+        ShowBoard = true;
+    }
+
     /// The team that buzzed FIRST, or null if nobody has.
     ///
     /// Ranked by the SERVER stamp (`OrderKey`), never the handset clock — a buzzer

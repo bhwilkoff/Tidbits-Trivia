@@ -384,6 +384,29 @@ struct LiveHostContainer_macOS: View {
             default: break
             }
         }
+        // G6: the phone remote. The net layer decides whether a command is
+        // ACCEPTED (PIN, known verb, unseen id); this only says what the verbs
+        // MEAN, routed through the same actions the cockpit buttons use so the
+        // remote can never reach a path the laptop cannot.
+        .task {
+            net.onRemoteCommand = { verb in
+                Task { @MainActor in
+                    switch verb {
+                    case "reveal": if !session.revealed { session.reveal(); await scoreReveal() }
+                    case "next":   session.next()
+                    case "skip":   session.skip()
+                    case "scores": session.showScores.toggle()
+                    case "board":
+                        if session.currentRoundBoard != nil {
+                            session.returnToBoard()
+                            await net.publish(session.currentPub())
+                        }
+                    default: break   // Core already refused anything unknown
+                    }
+                    await net.publish(session.currentPub())
+                }
+            }
+        }
         // Open the networked room and publish the first question.
         .task {
             await net.open(name: event.name, venue: event.venue)
@@ -510,6 +533,19 @@ struct LiveHostView_macOS: View {
                 }
                 .buttonStyle(.bordered)
                 .help("Show the standings so far on the big screen")
+                // G6: pair a phone as a remote. The PIN is shown HERE, on the
+                // laptop, and nowhere else — the room code is on the projector, so
+                // it authorises nothing. Unpaired, the host refuses every command.
+                Button {
+                    if net.remotePIN.isEmpty { _ = net.startRemote() } else { net.stopRemote() }
+                } label: {
+                    Label(net.remotePIN.isEmpty ? "Phone remote" : "Remote PIN \(net.remotePIN)",
+                          systemImage: "iphone.radiowaves.left.and.right").font(.callout)
+                }
+                .buttonStyle(.bordered)
+                .help(net.remotePIN.isEmpty
+                      ? "Pair your phone to reveal and advance while you walk the room"
+                      : "Type this PIN into your phone. Click again to unpair.")
                 Button { session.onBreak.toggle() } label: {   // adaptability: intermission hold
                     Label(session.onBreak ? "Resume" : "Hold", systemImage: session.onBreak ? "play.fill" : "pause.fill").font(.callout)
                 }

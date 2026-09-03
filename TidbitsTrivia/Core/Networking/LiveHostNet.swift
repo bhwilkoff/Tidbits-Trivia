@@ -116,6 +116,7 @@ final class LiveHostNet {
             self.hostUid = host
             watchTeams(code)
             watchScores(code)
+            watchRemote(code)   // G6
             return code
         } catch {
             lastError = "Couldn't open a networked room: \(error)"
@@ -188,6 +189,47 @@ final class LiveHostNet {
             }
         })
     }
+    /// G6: the host's phone remote writes here; the desktop reads and DECIDES.
+    ///
+    /// Deliberately a separate node from `pub`: the remote never writes the show
+    /// state, because two writers is how a room sees question 4 while the host
+    /// reads question 5. Additive — a host that never pairs a remote simply has an
+    /// empty node, and an older client never looks at it.
+    private(set) var remotePIN = ""
+    private(set) var lastRemoteID = 0
+    /// Set by the host view when a command should run. The net layer does the
+    /// accept/refuse; the view owns what the verbs MEAN.
+    var onRemoteCommand: ((String) -> Void)?
+
+    /// Pair a remote. The PIN is shown on the LAPTOP only — the room code is
+    /// printed on the projector, so it authorises nothing.
+    func startRemote() -> String {
+        if remotePIN.isEmpty { remotePIN = LiveRemote.makePIN() }
+        return remotePIN
+    }
+    func stopRemote() { remotePIN = "" }
+
+    private func watchRemote(_ code: String) {
+        streamTasks.append(Task { [weak self, db] in
+            while !Task.isCancelled {
+                if let stream = try? await db.stream("\(LiveRoom.path(code))/control") {
+                    do { for try await ev in stream { await self?.applyRemote(ev) } } catch { }
+                }
+                if !Task.isCancelled { try? await Task.sleep(for: .seconds(1.5)) }
+            }
+        })
+    }
+
+    private func applyRemote(_ ev: FirebaseRTDB.StreamEvent) {
+        guard let d = ev.dataJSON,
+              let cmd = try? JSONDecoder().decode(RemoteCommand.self, from: d) else { return }
+        // Every refusal path lives in Core and is tested there: wrong PIN, unknown
+        // verb, and an id already run (so a retried write cannot skip a question).
+        guard LiveRemote.accepted(cmd, pin: remotePIN, lastExecutedID: lastRemoteID) else { return }
+        lastRemoteID = cmd.id
+        onRemoteCommand?(cmd.verb)
+    }
+
     private func watchScores(_ code: String) {
         streamTasks.append(Task { [weak self, db] in
             while !Task.isCancelled {

@@ -85,6 +85,39 @@ public class LiveBoardRenderTest
     }
 
     [AvaloniaFact]
+    public async Task The_cockpit_shows_the_picker_and_HIDES_the_question()
+    {
+        var vm = await BoardHost();
+        var win = new Window { Width = 1280, Height = 860, Content = new LiveCockpitView { DataContext = vm } };
+        win.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        // Every tile is a real, tappable control — a grid the host cannot click is
+        // a board round that cannot be played.
+        var buttons = win.GetVisualDescendants().OfType<Button>().ToList();
+        var tiles = buttons.Where(b => b.DataContext is LiveHostViewModel.BoardTile).ToList();
+        Assert.Equal(Columns.Length * LiveBoard.DefaultTiers.Length, tiles.Count);
+        Assert.All(tiles, t => Assert.True(t.IsEnabled));
+
+        // And the verbs that act on a question nobody asked are GONE. This is the
+        // macOS cockpit bug, asserted rather than eyeballed.
+        Assert.False(vm.ShowQuestionScreen);
+        foreach (var label in new[] { "Reveal", "Next", "Lock" })
+            Assert.DoesNotContain(buttons, b => b.IsVisible && (b.Content as string) == label);
+
+        // Nor may the ANSWER OPTIONS of the unpicked question be on screen. The
+        // first version of this test checked only the buttons and passed while the
+        // tally bars still listed four answers to a question nobody had asked —
+        // visible in the rendered PNG, invisible to the assertions.
+        var hidden = vm.Host.Questions[vm.Host.Index].Options;
+        var texts = win.GetVisualDescendants().OfType<TextBlock>()
+                       .Where(t => t.IsVisible).Select(t => t.Text ?? "").ToList();
+        foreach (var opt in hidden) Assert.DoesNotContain(opt, texts);
+
+        win.CaptureRenderedFrame()!.Save(Path.Combine(Art(), "cockpit-board.png"));
+    }
+
+    [AvaloniaFact]
     public async Task Picking_a_cell_takes_it_once_and_opens_its_question()
     {
         var vm = await BoardHost();

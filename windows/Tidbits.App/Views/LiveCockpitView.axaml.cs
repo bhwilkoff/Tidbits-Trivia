@@ -114,6 +114,12 @@ public partial class LiveCockpitView : UserControl
         OptionsTally.Children.Clear();
         var host = Vm?.Host;
         if (host?.Current is not { } q || q.Options.Count == 0) return;
+        // G5: while the pick-a-category grid is up the room has not chosen a cell,
+        // so there is no live question — and these bars were still listing the
+        // OPTIONS of the one the host happens to be sitting on. A host reading
+        // four answers to a question nobody asked is the same confusion the
+        // hidden Reveal button caused.
+        if (Vm is { ShowBoardScreen: true }) return;
 
         var dist = host.AnswerDistribution;
         int max = dist.Count > 0 ? Math.Max(1, dist.Max()) : 1;
@@ -170,6 +176,14 @@ public partial class LiveCockpitView : UserControl
     private async void OnLock(object? sender, RoutedEventArgs e) { if (Vm is { } vm) await vm.Lock(); }
     private async void OnSkip(object? sender, RoutedEventArgs e) { if (Vm is { } vm) await vm.Skip(); }
     private void OnToggleHold(object? sender, RoutedEventArgs e) => Vm?.ToggleHold();
+
+    /// G5: the host taps the cell the room called out.
+    private async void OnPickBoardCell(object? sender, RoutedEventArgs e)
+    {
+        if (Vm is not { } vm) return;
+        if ((sender as Control)?.DataContext is not LiveHostViewModel.BoardTile tile) return;
+        await vm.PickBoardCell(tile.CategoryId, tile.Tier);
+    }
 
     private int _bedVolume = 60;
     private bool _bedPlaying;

@@ -26,11 +26,47 @@
             <ScrollViewer>
                 <StackPanel Spacing="12">
                     <TextBlock Text="{Binding Host.RoundTitle}" Classes="caption" FontWeight="SemiBold"/>
+                    <!-- G5: the host's copy of the pick-a-category grid. The room
+                         calls a cell out loud and the host taps it here. While it is
+                         up NOBODY has picked yet, so the question below is hidden —
+                         a live prompt with a Reveal button beside it invites the host
+                         to reveal a question the room was never asked. -->
+                    <StackPanel IsVisible="{Binding ShowBoardScreen}" Spacing="8">
+                        <TextBlock Text="{Binding BoardHeadline}" Classes="section-header"/>
+                        <ItemsControl ItemsSource="{Binding BoardCategories}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate><UniformGrid Rows="1"/></ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" Classes="caption" FontWeight="Bold"
+                                               HorizontalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <ItemsControl ItemsSource="{Binding BoardTiles}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid Columns="{Binding BoardColumns}"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:LiveHostViewModel+BoardTile">
+                                    <Button Content="{Binding Label}" Click="OnPickBoardCell"
+                                            IsEnabled="{Binding Playable}"
+                                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                                            Margin="3" Padding="0,10" FontWeight="Bold"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Text="{Binding BoardSummary}" Classes="caption"/>
+                    </StackPanel>
                     <!-- Host's private per-round note (cockpit-only, never on the projector) -->
                     <Border IsVisible="{Binding HasRoundNote}" Background="#22FFC93C" CornerRadius="8" Padding="10,7">
                         <TextBlock Text="{Binding CurrentRoundNote, StringFormat='📝 {0}'}" TextWrapping="Wrap" FontWeight="SemiBold"/>
                     </Border>
-                    <TextBlock Text="{Binding Host.Current.Prompt}" Classes="section-header" TextWrapping="Wrap"/>
+                    <TextBlock Text="{Binding Host.Current.Prompt}" Classes="section-header" TextWrapping="Wrap"
+                               IsVisible="{Binding !ShowBoardScreen}"/>
                     <!-- The authored clip for THIS question (audio/video round). Either a
                          working control or an explicit "unavailable" line — never a play
                          button that does nothing (WINDOWS-DESIGN §6.6). -->
@@ -103,10 +139,10 @@
         <StackPanel Grid.Row="3" Spacing="2">
             <WrapPanel>
                 <Button Content="‹ Back" Click="OnBack" Padding="14,10" IsEnabled="{Binding CanGoBack}" Margin="0,0,10,6"/>
-                <Button Content="Reveal" Click="OnReveal" Classes="accent" Padding="20,10" FontWeight="Bold" Margin="0,0,10,6"/>
-                <Button Content="Next" Click="OnNext" Padding="20,10" Margin="0,0,10,6"/>
-                <Button Content="Skip ›" Click="OnSkip" Padding="14,10" Margin="0,0,10,6"/>
-                <Button Content="Lock" Click="OnLock" Padding="20,10" Margin="0,0,10,6"/>
+                <Button Content="Reveal" Click="OnReveal" IsVisible="{Binding !ShowBoardScreen}" Classes="accent" Padding="20,10" FontWeight="Bold" Margin="0,0,10,6"/>
+                <Button Content="Next" Click="OnNext" IsVisible="{Binding !ShowBoardScreen}" Padding="20,10" Margin="0,0,10,6"/>
+                <Button Content="Skip ›" Click="OnSkip" IsVisible="{Binding !ShowBoardScreen}" Padding="14,10" Margin="0,0,10,6"/>
+                <Button Content="Lock" Click="OnLock" IsVisible="{Binding !ShowBoardScreen}" Padding="20,10" Margin="0,0,10,6"/>
                 <ToggleButton Content="Standings on big screen" IsChecked="{Binding HoldStandings, Mode=OneWay}" Click="OnToggleHold" Padding="14,10" Margin="0,0,10,6"/>
                 <!-- G1: the buzz panel. Only once somebody HAS buzzed — a control
                      naming nobody is noise in a cockpit driven live. -->

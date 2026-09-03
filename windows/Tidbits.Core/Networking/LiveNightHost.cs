@@ -187,8 +187,22 @@ public sealed class LiveNightHost : ObservableObject
         if (target < 0) return false;
         Index = target;
         Revealed = false;
+        HostChoice = null;
         Locked = false;
         ShowBoard = false;
+        PrepareQuestion();
+        ArmRoundTimer();
+        return true;
+    }
+
+    /// G5: pick a cell AND publish it, the way Next() does. A pick that changes
+    /// the host's screen but not the phones is a question the room cannot answer.
+    public async Task<bool> PickBoardCellAsync(string categoryId, int tier)
+    {
+        if (CurrentStage != Stage.Playing) return false;
+        if (!PickBoardCell(categoryId, tier)) return false;
+        await Net.Publish(BuildPub());
+        Notify();
         return true;
     }
 

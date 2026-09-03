@@ -249,6 +249,22 @@ public sealed class LiveHostViewModel : ObservableObject
     public string WinnerLine => Host.Standings.Count > 0 ? $"{Host.Standings[0].Name} wins the night" : "";
 
     public Task StartHosting() => Host.Start();
+    /// G5: the room picked a cell. Republishes so the joiners get the question,
+    /// exactly as Next() does — a pick that changes the host's screen and not the
+    /// phones is a round the room cannot answer.
+    public async Task PickBoardCell(string categoryId, int tier)
+    {
+        await Host.PickBoardCellAsync(categoryId, tier);   // no-op if missing or already taken
+        OnPropertyChanged(string.Empty);
+    }
+
+    /// G5: back to the grid for the next pick.
+    public void ReturnToBoard()
+    {
+        Host.ReturnToBoard();
+        OnPropertyChanged(string.Empty);
+    }
+
     public Task Reveal() => Host.Reveal();
     public Task Next() => Host.Next();
     public Task Lock() => Host.Lock();

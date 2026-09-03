@@ -1,0 +1,76 @@
+[
+ {"subject":"Uruguayan Air Force Flight 571","cat":"history","diff":3,
+  "prompt":"Sixteen survivors of the 1972 Andes plane crash were finally rescued after how long in the mountains?",
+  "answer":"72 days","options":["41 days","18 days","129 days"],
+  "why":"The Fairchild crashed on 13 October 1972 and the last survivors were brought out on 23 December -- 72 days later, after two of them walked out over the mountains for help."},
+
+ {"subject":"Seven Wonders of the Ancient World","cat":"history","diff":2,
+  "prompt":"Only one of the seven wonders of the ancient world is still standing today. Which?",
+  "answer":"Great Pyramid of Giza","options":["Colossus of Rhodes","Lighthouse of Alexandria","Temple of Artemis"],
+  "why":"The Great Pyramid of Giza is the oldest wonder on the list and the only one that survives; the other six were destroyed by earthquake, fire or war."},
+
+ {"subject":"Aurora","cat":"science","diff":2,
+  "prompt":"An aurora glows when charged particles from the Sun collide with which two gases high in Earth's atmosphere?",
+  "answer":"Oxygen and nitrogen","options":["Hydrogen and helium","Carbon dioxide and argon","Methane and ozone"],
+  "why":"The collisions excite oxygen and nitrogen atoms, which release the energy as light -- oxygen gives the familiar green and red, nitrogen the blues and purples."},
+
+ {"subject":"At sign","cat":"business","diff":3,
+  "prompt":"Long before email, the @ symbol was an accounting and invoicing shorthand meaning what?",
+  "answer":"At a rate of","options":["Care of","In account with","Per dozen"],
+  "why":"It meant 'at a rate of' -- as in '7 widgets @ 2 pounds per widget'. That commercial use is why it sat on typewriter keyboards decades before anyone put it in an email address."},
+
+ {"subject":"Neptune","cat":"science","diff":3,
+  "prompt":"Roughly how many Earth years does Neptune take to complete one orbit of the Sun?",
+  "answer":"165","options":["84","248","29"],
+  "why":"Neptune orbits once every 164.8 years at about 30 astronomical units. It has completed only one full orbit since its discovery in 1846."},
+
+ {"subject":"Biggest ball of twine","cat":"geography","diff":3,
+  "prompt":"The world's largest ball of twine by circumference is a roadside attraction in Cawker City -- in which US state?",
+  "answer":"Kansas","options":["Nebraska","Missouri","Iowa"],
+  "why":"The Cawker City, Kansas ball measured about 8 feet across and nearly 11 feet tall as of 2014. Several US towns claim a 'biggest ball of twine' record on different measures."},
+
+ {"subject":"Iron Dome","cat":"history","diff":3,
+  "prompt":"Israel's Iron Dome is built to intercept short-range rockets launched from up to roughly what distance away?",
+  "answer":"70 km","options":["250 km","15 km","500 km"],
+  "why":"The system targets rockets and artillery shells fired from 4 to 70 kilometres away whose trajectory would carry them into a populated area."},
+
+ {"subject":"Sinking of the Titanic","cat":"history","diff":3,
+  "prompt":"How long did the Titanic stay afloat after striking the iceberg?",
+  "answer":"2 hours 40 minutes","options":["6 hours 10 minutes","45 minutes","12 hours"],
+  "why":"She struck at 23:40 on 14 April 1912 and sank at 02:20 on 15 April -- two hours and forty minutes, with lifeboat places for only about half those aboard."},
+
+ {"subject":"27 Club","cat":"music","diff":3,
+  "prompt":"The 27 Club took hold after four rock stars died at that age between 1969 and 1971: Jimi Hendrix, Janis Joplin, Jim Morrison and who else?",
+  "answer":"Brian Jones","options":["Keith Moon","Gram Parsons","Duane Allman"],
+  "why":"Rolling Stones founder Brian Jones died in July 1969, weeks before Hendrix. Research has since found no real spike in musician deaths at 27 -- the cluster was coincidence."},
+
+ {"subject":"Magnus Carlsen","cat":"sports","diff":4,
+  "prompt":"Magnus Carlsen holds the highest chess rating ever achieved. What was his peak?",
+  "answer":"2882","options":["2851","2799","2915"],
+  "why":"Carlsen reached 2882 in 2014, passing Garry Kasparov's long-standing 2851. He has held the world number one ranking continuously since July 2011."},
+
+ {"subject":"Elizabeth Holmes","cat":"business","diff":2,
+  "prompt":"Theranos claimed its machines could run a huge range of blood tests from a sample as small as what?",
+  "answer":"A fingerprick","options":["A teaspoon","A single vial","A blood bag"],
+  "why":"The fingerprick claim drove a 9 billion dollar valuation and made Holmes, on paper, the youngest self-made female billionaire in the US. The technology did not work, and she was convicted of fraud."},
+
+ {"subject":"NATO phonetic alphabet","cat":"history","diff":4,
+  "prompt":"Alfa, Bravo, Charlie -- the spelling alphabet everyone calls the NATO phonetic alphabet was actually defined in the 1950s by which body?",
+  "answer":"ICAO","options":["NATO","The FAA","The ITU"],
+  "why":"Its official name is the International Radiotelephony Spelling Alphabet, defined in 1955-56 by the International Civil Aviation Organization for radio use where ordinary letter names are easily misheard."},
+
+ {"subject":"Prometheus","cat":"history","diff":2,
+  "prompt":"Zeus punished Prometheus for giving fire to humanity by chaining him to a rock where an eagle ate what, every day?",
+  "answer":"His liver","options":["His heart","His eyes","His hands"],
+  "why":"The liver regrew each night so the punishment could repeat forever -- the Greeks had noticed that the liver, alone among organs, regenerates."},
+
+ {"subject":"Camino de Santiago","cat":"geography","diff":3,
+  "prompt":"The Camino de Santiago pilgrim routes all end at a cathedral in Galicia said to hold the remains of which apostle?",
+  "answer":"James","options":["Peter","Andrew","Thomas"],
+  "why":"Santiago is Spanish for Saint James. Tradition places his tomb at Santiago de Compostela, and the network of walking routes to it has drawn pilgrims for over a thousand years."},
+
+ {"subject":"Go (game)","cat":"arts","diff":2,
+  "prompt":"Which board game, invented in China more than 2,500 years ago, is believed to be the oldest one still played today?",
+  "answer":"Go","options":["Chess","Backgammon","Mancala"],
+  "why":"Players place black and white stones to fence off territory. Over 20 million people play, most of them in East Asia."}
+]

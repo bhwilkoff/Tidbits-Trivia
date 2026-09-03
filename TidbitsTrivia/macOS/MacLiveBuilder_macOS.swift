@@ -114,6 +114,16 @@ struct LiveBuilderView_macOS: View {
             default: break
             }
         }
+        // TIDBITS_LIVE_ADDVIDEO=1 — build a VIDEO round on launch, paired with
+        // TIDBITS_LIVE_CLIPS. A video round that renders a black rectangle passes
+        // every unit test in the suite, so the only way to know the surface works
+        // is to put a real clip through the real path and photograph it.
+        .task {
+            guard ProcessInfo.processInfo.environment["TIDBITS_LIVE_ADDVIDEO"] == "1" else { return }
+            try? await Task.sleep(for: .seconds(2))
+            addVideoRound()
+            if let last = working.rounds.last { expandedRounds = [last.id] }
+        }
         .sheet(item: $editing) { ctx in
             LiveQuestionEditor_macOS(draft: ctx.draft, format: ctx.format,
                                      onSave: { q in
@@ -788,6 +798,20 @@ struct LiveBuilderView_macOS: View {
         }
     }
 
+    /// TIDBITS_LIVE_CLIPS=<path>[:<path>…] — the clips a harness would have picked.
+    ///
+    /// Same seam as the import/export panels: a modal picker is not scriptable, so
+    /// an AV round could be built by hand and never once driven end to end. The
+    /// REST of the path is unchanged — the bookmark is still made the same way and
+    /// still refused the same way, which is the part that decides whether a clip
+    /// plays. No-op in production, where the variable is unset.
+    private func hookedClipURLs() -> [URL]? {
+        guard let raw = ProcessInfo.processInfo.environment["TIDBITS_LIVE_CLIPS"], !raw.isEmpty
+        else { return nil }
+        let urls = raw.split(separator: ":").map { URL(fileURLWithPath: String($0)) }
+        return urls.isEmpty ? nil : urls
+    }
+
     private func addAudioRound() {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.audio, .mp3, .wav, .mpeg4Audio, .aiff]
@@ -797,11 +821,13 @@ struct LiveBuilderView_macOS: View {
         if let dir = ProcessInfo.processInfo.environment["TIDBITS_LIVE_CLIPDIR"] {
             panel.directoryURL = URL(fileURLWithPath: dir)
         }
-        guard panel.runModal() == .OK, !panel.urls.isEmpty else { return }
+        let picked: [URL]
+        if let hooked = hookedClipURLs() { picked = hooked }
+        else { guard panel.runModal() == .OK, !panel.urls.isEmpty else { return }; picked = panel.urls }
         var questions: [Question] = []
         var bookmarks: [Data] = []
         var failures: [String] = []
-        for (i, url) in panel.urls.enumerated() {
+        for (i, url) in picked.enumerated() {
             // Make the bookmark FIRST. A clip whose reference cannot be kept must
             // not become a question: the old code stored an empty Data and the
             // round played silence with no way to tell.
@@ -835,11 +861,13 @@ struct LiveBuilderView_macOS: View {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.movie, .video, .mpeg4Movie, .quickTimeMovie]
         panel.allowsMultipleSelection = true
-        guard panel.runModal() == .OK, !panel.urls.isEmpty else { return }
+        let picked: [URL]
+        if let hooked = hookedClipURLs() { picked = hooked }
+        else { guard panel.runModal() == .OK, !panel.urls.isEmpty else { return }; picked = panel.urls }
         var questions: [Question] = []
         var bookmarks: [Data] = []
         var failures: [String] = []
-        for (i, url) in panel.urls.enumerated() {
+        for (i, url) in picked.enumerated() {
             // Make the bookmark FIRST. A clip whose reference cannot be kept must
             // not become a question: the old code stored an empty Data and the
             // round played silence with no way to tell.

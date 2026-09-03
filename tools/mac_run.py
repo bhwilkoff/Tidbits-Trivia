@@ -143,6 +143,23 @@ SCENARIOS = {
                    # The first version of this panel showed both, which invites the
                    # host to reveal a question the room was never asked.
                    "expect_none": r"Reveal answer|Lock answers"}),
+    # The VIDEO round, built through the REAL picker path and photographed. A
+    # video round that renders a black rectangle passes every unit test in the
+    # suite — the clip reference, the bookmark and the surface are only provably
+    # working when a real file has been through them and the result is on screen.
+    #
+    # The clip lives in the app container because the sandbox can bookmark that
+    # without a panel grant. The OUTSIDE-container grant is a different question
+    # and is what TIDBITS_LIVE_AVSELFTEST exists to answer; this does not claim it.
+    "videoround": (dict(TIDBITS_TAB="live", TIDBITS_LIVE_BUILDER="1",
+                        TIDBITS_LIVE_ADDVIDEO="1",
+                        TIDBITS_LIVE_CLIPS=str(FILEOP_DIR / "qa-clip.mp4")),
+                   {"allow_edge": SIDEBAR_FOOTER, "last_frame_only": True,
+                    # The round is IN the event and its clip resolved. "Video round"
+                    # alone would pass on a round that holds an unplayable
+                    # reference, which is the exact bug this is here to catch.
+                    "expect_any": r"qa-clip|Video round",
+                    "expect_none": r"Could not|unavailable|missing"}),
     # The Live builder with a populated event and its first round expanded, so
     # the per-question list and the Edit affordance are observable at all
     # (macOS-DESIGN §A2.4). Nothing could reach them from a cold launch.

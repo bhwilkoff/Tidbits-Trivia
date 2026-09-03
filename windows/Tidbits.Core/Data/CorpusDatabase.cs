@@ -42,7 +42,43 @@ public sealed class CorpusDatabase
     public List<Question> Questions(string categoryId, ISet<string> seen, int limit)
     {
         var pool = _all.Where(q => (categoryId == "mixed" || q.CategoryId == categoryId) && !seen.Contains(q.Id)).ToList();
-        return QueryHelpers.Shuffle(pool).Take(limit).ToList();
+        return DistinctTake(QueryHelpers.Shuffle(pool), limit);
+    }
+
+    /// Take `limit` questions that a player will not experience as repeats.
+    ///
+    /// Two things count as a repeat inside one set, and neither is caught by the
+    /// id-based seen-set:
+    ///   - the same PROMPT twice. The chron family asks "Which of these four is
+    ///     the oldest?" over different option sets, which is a fair shape — but
+    ///     two of them in one round reads as a bug to the player.
+    ///   - the same ANSWER with the same OPTIONS. `src:describe:X` and
+    ///     `src:cloze:X` are two write-ups of one subject sharing distractors, so
+    ///     back to back they are the same question asked twice.
+    /// Roughly a third of the corpus has an option-set twin somewhere, so drawing
+    /// ten at random from one category collides more often than it looks.
+    private static List<Question> DistinctTake(IEnumerable<Question> ordered, int limit)
+    {
+        var prompts = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var shapes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var outp = new List<Question>();
+        var spare = new List<Question>();
+        foreach (var q in ordered)
+        {
+            if (outp.Count >= limit) break;
+            var shape = string.Join("\u0001", q.Options.Select(o => o.ToLowerInvariant()).OrderBy(o => o, StringComparer.Ordinal))
+                        + "\u0002" + q.CorrectAnswer.ToLowerInvariant();
+            if (prompts.Add(q.Prompt) & shapes.Add(shape)) outp.Add(q);
+            else spare.Add(q);
+        }
+        // A thin category must still fill the round: if de-duplicating starved it,
+        // top up rather than hand the player a short quiz.
+        foreach (var q in spare)
+        {
+            if (outp.Count >= limit) break;
+            outp.Add(q);
+        }
+        return outp;
     }
 
     /// G5: questions for one CATEGORY at one DIFFICULTY — exactly the cell of a

@@ -23,6 +23,21 @@ public static class LiveExport
 
     /// A print-ready HTML standings sheet (opened in the default browser → print
     /// / save as PDF — the $0 printable fallback). Names are HTML-escaped.
+    /// Write a print-ready page and return the path.
+    ///
+    /// Extracted from the cockpit so the EDGE is testable. The Windows print path
+    /// is: build HTML -> write to temp -> hand to the browser, which is where a
+    /// Windows host prints or saves as PDF. The HTML was well covered; the WRITE
+    /// was not covered anywhere, exactly as on the Mac before the panel seam.
+    public static string WritePrintable(string html, string fileName, string? directory = null)
+    {
+        var dir = directory ?? System.IO.Path.GetTempPath();
+        System.IO.Directory.CreateDirectory(dir);
+        var path = System.IO.Path.Combine(dir, fileName);
+        System.IO.File.WriteAllText(path, html);
+        return path;
+    }
+
     public static string StandingsHtml(IReadOnlyList<LiveHostNet.Joined> standings, string title)
     {
         var rows = new StringBuilder();

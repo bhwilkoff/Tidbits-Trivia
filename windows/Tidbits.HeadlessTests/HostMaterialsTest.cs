@@ -31,6 +31,13 @@ public class HostMaterialsTest
         Assert.Contains("Round 2:", html);
         // One blank line per question across both rounds (plus the team-name rule).
         Assert.Equal(3 + 2 + 1, System.Text.RegularExpressions.Regex.Matches(html, "class=\"rule\"").Count);
+
+        // The name of this test claims "no answers" and nothing used to check it.
+        // Today AnswerSheetHtml only receives round KIND + COUNT, so a leak is
+        // impossible by signature — but that is an argument that could stop being
+        // true the moment someone passes questions in, and the test would go on
+        // claiming a property it never asserted.
+        Assert.DoesNotContain("Answer:", html);
     }
 
     [Fact]

@@ -386,10 +386,9 @@ public partial class LiveCockpitView : UserControl
     /// Windows users print or save-as-PDF from.
     private async System.Threading.Tasks.Task OpenPrintable(string html, string fileName)
     {
-        var path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), fileName);
         try
         {
-            await System.IO.File.WriteAllTextAsync(path, html);
+            var path = Tidbits.Core.Networking.LiveExport.WritePrintable(html, fileName);
             var top = TopLevel.GetTopLevel(this);
             if (top?.Launcher is { } launcher) await launcher.LaunchUriAsync(new Uri(new Uri("file://"), path));
         }

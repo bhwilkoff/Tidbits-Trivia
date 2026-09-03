@@ -128,6 +128,23 @@ SCENARIOS = {
         forbid_extra=r"QUICK PLAY",
         note="Cross-platform Trivia Night: scripted RTDB player joins the "
              "TV-hosted room, then the night STARTS on the glass."),
+    "live-join-buzz": dict(
+        # G1's BUZZ button on the real TV. It shipped, built green and had never
+        # been on a screen: it only renders when a host publishes buzz == true,
+        # and nothing could make a host do that. TIDBITS_LIVE_BUZZ=1 on the Mac
+        # host is the other half -- run it FIRST (see the note) or this joins a
+        # room with an ordinary question and photographs the option buttons
+        # while passing.
+        env={"TIDBITS_LIVE_JOIN": "QABZ", "TIDBITS_LIVE_CODE": "QABZ",
+             "TIDBITS_LIVE_AUTOJOIN": "1", "TIDBITS_LIVE_NAME": "AppleTV"},
+        minutes=1.4,
+        # BUZZ alone -- the ordinary answer UI must be GONE, which is the actual
+        # G1 rule. A player who can both buzz and answer gives the host two
+        # things to adjudicate.
+        expect_any=r"BUZZ",
+        forbid_extra=r"QUICK PLAY",
+        note="Joins a Mac-hosted buzz round and shows the BUZZ button "
+             "(host: TIDBITS_LIVE_HOST=1 TIDBITS_LIVE_CODE=QABZ TIDBITS_LIVE_BUZZ=1)."),
     "quickmatch": dict(
         env={"TIDBITS_MULTIPLAYER": "1"}, minutes=1.2,
         expect_any=r"Quick Match|Finding|Searching|opponent",

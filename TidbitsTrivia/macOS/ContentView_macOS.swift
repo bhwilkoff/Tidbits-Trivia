@@ -294,6 +294,14 @@ struct ContentView_macOS: View {
             ev.rounds.append(await LiveEventStore.buildRound(
                 format: fmt, category: .named(i == 0 ? "history" : "science"), count: 5))
         }
+        // G1: TIDBITS_LIVE_BUZZ=1 marks round 1 a BUZZ round, so the buzz payload
+        // reaches every joiner. The Apple TV's BUZZ button is the reason this
+        // exists: it can only be photographed against a host that actually
+        // publishes buzz == true, and nothing could make one. No-op in production.
+        if ProcessInfo.processInfo.environment["TIDBITS_LIVE_BUZZ"] == "1",
+           let first = ev.rounds.indices.first {
+            ev.rounds[first].isBuzz = true
+        }
         return ev
     }
 }

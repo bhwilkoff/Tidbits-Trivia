@@ -138,6 +138,21 @@ blind press script labels its screenshots wrong.
   actually answers the question. The `avselftest` scenario now asserts only
   what it can establish — the summary renders, and the in-container case works.
   The entitlement's real exercise is a human picking a file at the panel.
+- **A pinned QA room code is owned by its FIRST host forever.** `live/{code}`
+  rules give the host uid sole write access to `meta`/`pub`, so a later host with
+  a different anonymous uid is **silently refused** -- `net.open()` fails, the app
+  shows no error, and every reader sees the ORIGINAL host's week-old payload.
+  QATV is squatted this way (created 2026-08-26, `meta.name` still "Trivia
+  Night"). This cost a full diagnostic pass: the TV joined correctly, rendered
+  correctly, and showed the wrong round, because the room it joined was not the
+  one being hosted. Symptom to recognise: `meta.name` is not the event name you
+  launched with. Use a FRESH code (the buzz scenario uses QABZ), and check the
+  wire before blaming the glass.
+- **`atv_run` reports "TV dozing" on any static screen.** The heuristic is
+  screenshot BYTE SIZE, and a correctly-rendered screen that simply is not
+  changing produces identical frames run after run. The first buzz run printed
+  it 16 times while the glass held a perfectly good question. Treat it as
+  "nothing changed", not "nothing rendered" -- read a frame before acting on it.
 - **tvOS focus has no automated coverage** in either repo. `atv_run.py` drives
   presses; nothing verifies which element *has* focus.
 

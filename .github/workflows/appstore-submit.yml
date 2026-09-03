@@ -46,6 +46,11 @@ on:
         default: ''
         type: choice
         options: ['', 'AFTER_APPROVAL', 'MANUAL']
+      platform:
+        description: 'Which Apple platform (macOS and tvOS are SEPARATE submissions from iOS)'
+        type: choice
+        options: [IOS, MAC_OS, TV_OS]
+        default: IOS
       submit:
         description: 'Submit for App Review (withdrawable in Connect afterwards)'
         required: true
@@ -92,13 +97,14 @@ jobs:
           RELEASE_NOTES: ${{ inputs.release_notes }}
           RELEASE_TYPE: ${{ inputs.release_type }}
           SUBMIT: ${{ inputs.submit }}
+          PLATFORM: ${{ inputs.platform }}
         run: |
           set -euo pipefail
           SETS=(--set IMESSAGE_APP_IPHONE_67=branding/store-screenshots/imessage-iphone-6.9
                 --set IMESSAGE_APP_IPAD_PRO_3GEN_129=branding/store-screenshots/imessage-ipad-13)
 
           if [ "$MODE" = "list" ]; then
-            exec python3 tools/asc_submit.py --list
+            exec python3 tools/asc_submit.py --list --platform "${PLATFORM:-IOS}"
           fi
 
           ARGS=()
@@ -114,5 +120,6 @@ jobs:
             upload)  if [ "$REPLACE" = "true" ]; then ARGS+=(--replace); fi ;;
           esac
           if [ "$SUBMIT" = "true" ]; then ARGS+=(--submit); fi
+          ARGS+=(--platform "${PLATFORM:-IOS}")
 
           python3 tools/asc_submit.py "${ARGS[@]}" "${SETS[@]}"

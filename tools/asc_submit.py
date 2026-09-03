@@ -84,9 +84,17 @@ EDITABLE = {"PREPARE_FOR_SUBMISSION", "DEVELOPER_REJECTED", "REJECTED",
 IN_FLIGHT = {"WAITING_FOR_REVIEW", "IN_REVIEW", "PENDING_DEVELOPER_RELEASE"}
 
 
+# The Apple platform this run acts on. Defaults to IOS so every existing caller
+# keeps its behaviour. macOS and tvOS ship from the SAME universal target and the
+# same build number, but App Store Connect keeps a SEPARATE appStoreVersion and a
+# SEPARATE reviewSubmission per platform -- so shipping "the Apple app" is three
+# submissions, not one. Hardcoding IOS here silently shipped only the iPhone app.
+PLATFORM = "IOS"
+
+
 def versions(app_id):
     vs = call(f"v1/apps/{app_id}/appStoreVersions?limit=50"
-              "&filter[platform]=IOS&fields[appStoreVersions]=versionString,appStoreState")
+              f"&filter[platform]={PLATFORM}&fields[appStoreVersions]=versionString,appStoreState")
     return vs["data"]
 
 
@@ -112,10 +120,10 @@ def editable_version(app_id, create=None, allow_in_flight=False):
     # lost days to exactly that on the Microsoft Store.
     made = call("v1/appStoreVersions", method="POST", body={"data": {
         "type": "appStoreVersions",
-        "attributes": {"platform": "IOS", "versionString": create,
+        "attributes": {"platform": PLATFORM, "versionString": create,
                        "releaseType": "AFTER_APPROVAL"},
         "relationships": {"app": {"data": {"type": "apps", "id": app_id}}}}})
-    print(f"created iOS version {create} (releaseType AFTER_APPROVAL)")
+    print(f"created {PLATFORM} version {create} (releaseType AFTER_APPROVAL)")
     return made["data"]
 
 
@@ -131,7 +139,7 @@ def submit_for_review(app_id, version_id):
     """
     open_states = {"READY_FOR_REVIEW", "WAITING_FOR_REVIEW", "IN_REVIEW", "UNRESOLVED_ISSUES"}
     existing = call(f"v1/reviewSubmissions?filter[app]={app_id}"
-                    "&filter[platform]=IOS&limit=50")
+                    f"&filter[platform]={PLATFORM}&limit=50")
     sub = next((r for r in existing["data"]
                 if r["attributes"].get("state") in open_states), None)
     if sub and sub["attributes"]["state"] != "READY_FOR_REVIEW":
@@ -140,7 +148,7 @@ def submit_for_review(app_id, version_id):
     if sub is None:
         sub = call("v1/reviewSubmissions", method="POST", body={"data": {
             "type": "reviewSubmissions",
-            "attributes": {"platform": "IOS"},
+            "attributes": {"platform": PLATFORM},
             "relationships": {"app": {"data": {"type": "apps", "id": app_id}}}}})["data"]
         print(f"opened review submission {sub['id']}")
 
@@ -276,7 +284,7 @@ def audit(app_id, locale):
                             "(set ITSAppUsesNonExemptEncryption in the plist to avoid it)")
 
     # --- the review submission itself ---------------------------------------
-    subs = call(f"v1/reviewSubmissions?filter[app]={app_id}&filter[platform]=IOS&limit=20")
+    subs = call(f"v1/reviewSubmissions?filter[app]={app_id}&filter[platform]={PLATFORM}&limit=20")
     live = [r for r in subs["data"]
             if r["attributes"].get("state") not in {"COMPLETE", "CANCELING"}]
     for r in live:
@@ -330,9 +338,20 @@ def main():
                     help="how the version goes live once approved")
     ap.add_argument("--audit", action="store_true",
                     help="full pre-submission audit of the newest version; exits non-zero on a blocker")
+    ap.add_argument("--platform", choices=["IOS", "MAC_OS", "TV_OS"], default="IOS",
+                    help="which Apple platform's App Store version to act on. macOS and tvOS "
+                         "ship from the same universal target and the same build, but Connect "
+                         "keeps a separate version and review submission per platform")
     a = ap.parse_args()
+    global PLATFORM
+    PLATFORM = a.platform
 
-    if not a.set and not a.list:
+    if PLATFORM != "IOS":
+        # The --set display types are iPhone/iPad ones. Sending them at a macOS or
+        # tvOS version is a different upload with different display types, so this
+        # run manages the VERSION and the SUBMISSION only and leaves art alone.
+        a.set = []
+    elif not a.set and not a.list:
         raise SystemExit("nothing to do: pass --set DISPLAY_TYPE=DIR or --list")
     TOK = token()
 
@@ -365,13 +384,21 @@ def main():
     print(f"locale {a.locale} -> {loc['id']}")
 
     if a.attach_build:
+        # Filter by PLATFORM as well as number. All three Apple platforms ship from
+        # one universal target with one CURRENT_PROJECT_VERSION, so `platform=all`
+        # produces three builds that share a number. Without this filter the first
+        # match wins at random, and Connect rejects the mismatch with
+        # "The specified build has a different platform than the version" -- which
+        # reads like a build problem rather than a query problem.
         builds = call(f"v1/builds?filter[app]={app_id}&limit=50"
                       f"&filter[version]={a.attach_build}"
+                      f"&filter[preReleaseVersion.platform]={PLATFORM}"
                       "&fields[builds]=version,processingState,expired")
         usable = [b for b in builds["data"]
                   if not b["attributes"].get("expired")]
         if not usable:
-            raise SystemExit(f"build {a.attach_build} not found for this app")
+            raise SystemExit(f"build {a.attach_build} not found for this app "
+                             f"on platform {PLATFORM}")
         b = usable[0]
         state = b["attributes"]["processingState"]
         if state != "VALID":

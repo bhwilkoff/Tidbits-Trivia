@@ -37,6 +37,21 @@ final class LiveHostNet {
         teams.map { LiveMember(uid: $0.key, teamName: $0.value.name, joinedAt: $0.value.joinedAt) }
     }
 
+    /// G7: the answer that counts for a team, looked up by the row's id (which is
+    /// the LEADER's uid). Any member may have answered, so keying the cockpit's
+    /// per-team row on the leader alone reports "no answer" for a table whose
+    /// second phone submitted.
+    func teamAnswer(forTeamID id: String) -> LiveRoom.Answer? {
+        if let mine = answers[id] { return mine }
+        guard let team = LiveTeamRoster.team(of: id, in: members) else { return nil }
+        var stamps: [String: Int] = [:]
+        for m in team.members {
+            if let a = answers[m.uid] { stamps[m.uid] = a.sv ?? a.ts }
+        }
+        guard let uid = LiveTeamRoster.answeringMember(team: team, answeredAt: stamps) else { return nil }
+        return answers[uid]
+    }
+
     /// G7: one row per TEAM, not per device. Three phones that typed the same team
     /// name are one row with one score; only one member is ever scored for a
     /// question, so summing the members is the team's score.

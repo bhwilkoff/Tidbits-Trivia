@@ -161,6 +161,20 @@ final class LivePlayerClient {
         }
     }
 
+    /// G7: the teams already in this room, so a player can JOIN one instead of
+    /// silently starting a second team with the same name.
+    ///
+    /// No new wire path: the client already reads `teams` at night-end for the
+    /// co-player list, so joining a named team was only ever a question of asking
+    /// earlier and showing the answer.
+    func existingTeams(code roomCode: String) async -> [RosterTeam] {
+        guard let teams = (try? await db.get("\(LiveRoom.path(roomCode))/teams",
+                                             as: [String: LiveRoom.Team].self)) ?? nil
+        else { return [] }
+        let members = teams.map { LiveMember(uid: $0.key, teamName: $0.value.name, joinedAt: $0.value.joinedAt) }
+        return LiveTeamRoster.teams(members)
+    }
+
     /// L5 social graph: the co-players from this room, captured at night-end for the "Add" surface.
     private(set) var coplayers: [PlayerIdentity.Friend] = []
 

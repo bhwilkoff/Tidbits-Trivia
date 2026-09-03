@@ -19,6 +19,8 @@ struct LiveJoinView: View {
     @State private var client = LivePlayerClient()
     @State private var code = ""
     @State private var team = ""
+    /// G7: the teams already in the room, fetched once the code is complete.
+    @State private var roomTeams: [RosterTeam] = []
     @State private var probing = false
     @State private var formError: String?
 
@@ -92,6 +94,38 @@ struct LiveJoinView: View {
                 .padding(16)
                 .background(RoundedRectangle(cornerRadius: 14).fill(.white))
                 .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Tidbits.Palette.border, lineWidth: 2.5))
+                .onChange(of: code) { _, v in
+                    // Look the room up as soon as the code is complete, so the
+                    // teams are on screen BEFORE the player commits to a name.
+                    guard v.count == 4 else { roomTeams = []; return }
+                    Task { roomTeams = await client.existingTeams(code: v) }
+                }
+            // G7: the teams already in the room. Without this a second phone at a
+            // table has no way to know its table is here — it types the name
+            // slightly differently, or does not think to type it at all, and the
+            // table plays as two teams with a split score.
+            if !roomTeams.isEmpty {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Already playing — tap to join your table")
+                        .font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft)
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(roomTeams) { t in
+                                Button {
+                                    team = t.name   // the LEADER's spelling, so the row stays one team
+                                } label: {
+                                    Text(t.size == 1 ? t.name : "\(t.name) · \(t.size)")
+                                        .font(Tidbits.TypeRamp.l6)
+                                        .padding(.horizontal, 12).padding(.vertical, 8)
+                                        .background(Capsule().fill(Tidbits.Palette.surface))
+                                        .overlay(Capsule().strokeBorder(Tidbits.Palette.border, lineWidth: 2))
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                    }
+                }
+            }
             if let e = formError ?? client.errorText {
                 Text(e).font(Tidbits.TypeRamp.l5).foregroundStyle(.red)
             }

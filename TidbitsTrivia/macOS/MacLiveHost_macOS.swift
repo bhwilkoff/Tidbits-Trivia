@@ -540,6 +540,9 @@ struct LiveHostView_macOS: View {
                     Text("Players scan, or join at tidbitstrivia.com/live").font(.callout).foregroundStyle(Tidbits.Palette.inkSoft)
                     Text("CODE \(net.code)").font(.system(size: 15, weight: .black, design: .monospaced)).foregroundStyle(Tidbits.Palette.ink)
                     if !net.joined.isEmpty {
+                        // Phones, not teams: this line tells the host whether the
+                        // ROOM is filling up, and a table of three phones is three
+                        // people who got in.
                         Text("· \(net.joined.count) joined").font(.callout).foregroundStyle(Tidbits.Palette.mint)
                     }
                 }
@@ -876,11 +879,14 @@ struct LiveHostView_macOS: View {
                                 Text("\(net.answers.count) answered").font(.caption).foregroundStyle(Tidbits.Palette.mint)
                             }
                         }
-                        if net.joined.isEmpty {
+                        // G7: one row per TEAM. Listing net.joined showed a table
+                        // that grouped as three near-identical rows splitting its
+                        // own score.
+                        if net.joinedTeams.isEmpty {
                             Text("Waiting for phones to join with code \(net.code)…")
                                 .font(.callout).foregroundStyle(Tidbits.Palette.inkSoft)
                         }
-                        ForEach(net.joined) { joinedRow($0) }
+                        ForEach(net.joinedTeams) { joinedRow($0) }
                         if !session.teams.isEmpty {
                             Divider().overlay(Tidbits.Palette.border).padding(.vertical, 4)
                             Text("IN-ROOM (PAPER)").font(.callout).foregroundStyle(Tidbits.Palette.inkSoft)
@@ -961,7 +967,11 @@ struct LiveHostView_macOS: View {
     /// — the team's typed answer with an auto-match verdict + a leniency "mark
     /// correct" the host can grant on a borderline miss (§A3.3, host pain #2).
     private func joinedRow(_ team: LiveHostNet.Joined) -> some View {
-        let ans = net.answers[team.id]
+        // G7: the row is a TEAM and its id is the LEADER's uid, but any member may
+        // have answered. Looking the answer up by team.id alone showed "no answer"
+        // for a table whose second phone submitted — the host would chase a team
+        // that had already answered.
+        let ans = net.teamAnswer(forTeamID: team.id)
         let q = session.current
         return VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 8) {

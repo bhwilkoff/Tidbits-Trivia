@@ -22,6 +22,10 @@ public sealed class LiveHostViewModel : ObservableObject
     {
         Host = host;
         Host.PropertyChanged += (_, _) => Dispatcher.UIThread.Post(() => OnPropertyChanged(string.Empty));
+        // G6: a remote command arrives off the network thread; marshal it before
+        // it touches the show.
+        Host.Net.RemoteCommandReceived += verb =>
+            Dispatcher.UIThread.Post(async () => await RunRemoteVerb(verb));
     }
 
     public bool IsLobby => Host.CurrentStage == LiveNightHost.Stage.Lobby;
@@ -262,6 +266,36 @@ public sealed class LiveHostViewModel : ObservableObject
     public void ReturnToBoard()
     {
         Host.ReturnToBoard();
+        OnPropertyChanged(string.Empty);
+    }
+
+    // ---- G6 the phone remote -------------------------------------------------
+    // The net layer decides whether a command is ACCEPTED (PIN, known verb, unseen
+    // id). This only says what the verbs MEAN, routed through the SAME actions the
+    // cockpit buttons use — so a remote can never reach a path the laptop cannot.
+    public string RemotePin => Host.Net.RemotePin;
+    public bool RemotePaired => RemotePin.Length > 0;
+    public string RemoteLabel => RemotePaired ? $"Remote PIN {RemotePin}" : "Phone remote";
+
+    public void ToggleRemote()
+    {
+        if (RemotePaired) Host.Net.StopRemote(); else Host.Net.StartRemote();
+        OnPropertyChanged(nameof(RemotePin));
+        OnPropertyChanged(nameof(RemotePaired));
+        OnPropertyChanged(nameof(RemoteLabel));
+    }
+
+    private async Task RunRemoteVerb(string verb)
+    {
+        switch (verb)
+        {
+            case "reveal": if (!Host.Revealed) await Host.Reveal(); break;
+            case "next":   await Host.Next(); break;
+            case "skip":   await Host.SkipNext(); break;
+            case "scores": ToggleHold(); break;
+            case "board":  if (Host.IsBoardRound) { ReturnToBoard(); } break;
+            default: break;   // Core already refused anything unknown
+        }
         OnPropertyChanged(string.Empty);
     }
 

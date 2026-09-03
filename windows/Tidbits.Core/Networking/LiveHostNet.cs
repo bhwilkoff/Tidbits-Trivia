@@ -109,6 +109,7 @@ public sealed class LiveHostNet
             HostUid = host;
             _streamCts.Add(StartWatch($"{LiveRoom.Path(code)}/teams", _teams));
             _streamCts.Add(StartWatch($"{LiveRoom.Path(code)}/scores", _scores));
+            _streamCts.Add(StartRemoteWatch($"{LiveRoom.Path(code)}/control"));   // G6
             return code;
         }
         catch (Exception ex)
@@ -164,6 +165,58 @@ public sealed class LiveHostNet
         Code = "";
         if (code.Length == 0) return;
         try { await _db.Delete(LiveRoom.Path(code)); } catch { }
+    }
+
+    // MARK: G6 — the host's phone remote
+
+    /// The remote writes to `control`; the desktop reads and DECIDES. Deliberately
+    /// a separate node from `pub`: the phone never writes the show state, because
+    /// two writers is how a room sees question 4 while the host reads question 5.
+    public string RemotePin { get; private set; } = "";
+    public int LastRemoteId { get; private set; }
+    /// Raised with a verb the host should run. The net layer does accept/refuse;
+    /// the caller owns what the verbs MEAN.
+    public event Action<string>? RemoteCommandReceived;
+
+    /// Pair a remote. The PIN is shown on the LAPTOP only — the room code is
+    /// printed on the projector, so it authorises nothing.
+    public string StartRemote()
+    {
+        if (RemotePin.Length == 0) RemotePin = LiveRemote.MakePin();
+        return RemotePin;
+    }
+    public void StopRemote() => RemotePin = "";
+
+    private CancellationTokenSource StartRemoteWatch(string path)
+    {
+        var cts = new CancellationTokenSource();
+        _ = Task.Run(async () =>
+        {
+            while (!cts.IsCancellationRequested)
+            {
+                try
+                {
+                    await foreach (var ev in _db.Stream(path, cts.Token))
+                    {
+                        if (ev.DataJson is null) continue;
+                        RemoteCommand? cmd = null;
+                        try { cmd = JsonSerializer.Deserialize<RemoteCommand>(ev.DataJson); } catch { }
+                        if (cmd is null) continue;
+                        // Every refusal — wrong PIN, unknown verb, already-run id —
+                        // lives in Core and is tested there.
+                        if (!LiveRemote.Accepted(cmd, RemotePin, LastRemoteId)) continue;
+                        LastRemoteId = cmd.Id;
+                        RemoteCommandReceived?.Invoke(cmd.Verb);
+                    }
+                }
+                catch { /* drop → back off + reconnect */ }
+                if (!cts.IsCancellationRequested)
+                {
+                    try { await Task.Delay(1500, cts.Token); } catch { }
+                }
+            }
+        }, cts.Token);
+        return cts;
     }
 
     // MARK: Streams (self-reconnecting — RTDB resends the whole node on re-subscribe)

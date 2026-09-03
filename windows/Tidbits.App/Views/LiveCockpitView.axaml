@@ -143,6 +143,12 @@
                 <Button Content="Next" Click="OnNext" IsVisible="{Binding !ShowBoardScreen}" Padding="20,10" Margin="0,0,10,6"/>
                 <Button Content="Skip ›" Click="OnSkip" IsVisible="{Binding !ShowBoardScreen}" Padding="14,10" Margin="0,0,10,6"/>
                 <Button Content="Lock" Click="OnLock" IsVisible="{Binding !ShowBoardScreen}" Padding="20,10" Margin="0,0,10,6"/>
+                <!-- G6: pair a phone as a remote. The PIN shows HERE, on the
+                     laptop, and nowhere else — the room code is on the projector,
+                     so it authorises nothing. Unpaired, the host refuses every
+                     command rather than accepting any. -->
+                <Button Content="{Binding RemoteLabel}" Click="OnToggleRemote" Padding="14,10" Margin="0,0,10,6"
+                        ToolTip.Tip="Pair your phone to reveal and advance while you walk the room"/>
                 <ToggleButton Content="Standings on big screen" IsChecked="{Binding HoldStandings, Mode=OneWay}" Click="OnToggleHold" Padding="14,10" Margin="0,0,10,6"/>
                 <!-- G1: the buzz panel. Only once somebody HAS buzzed — a control
                      naming nobody is noise in a cockpit driven live. -->

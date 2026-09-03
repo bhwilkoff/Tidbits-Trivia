@@ -176,6 +176,7 @@ public partial class LiveCockpitView : UserControl
     private async void OnLock(object? sender, RoutedEventArgs e) { if (Vm is { } vm) await vm.Lock(); }
     private async void OnSkip(object? sender, RoutedEventArgs e) { if (Vm is { } vm) await vm.Skip(); }
     private void OnToggleHold(object? sender, RoutedEventArgs e) => Vm?.ToggleHold();
+    private void OnToggleRemote(object? sender, RoutedEventArgs e) => Vm?.ToggleRemote();
 
     /// G5: the host taps the cell the room called out.
     private async void OnPickBoardCell(object? sender, RoutedEventArgs e)

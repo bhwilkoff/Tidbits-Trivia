@@ -250,6 +250,8 @@ struct LiveBuilderView_macOS: View {
             Button("Import CSV…") { importCSV() }
             Button("Audio round…") { addAudioRound() }
             Button("Video round…") { addVideoRound() }
+            Divider()
+            Button("Pick-a-category board…") { addBoardRound() }
         } label: { Label("Add round…", systemImage: "plus") }
             .fixedSize()
         Menu {
@@ -694,6 +696,23 @@ struct LiveBuilderView_macOS: View {
     /// Wave B: build an audio round from picked clips — each clip becomes a "name it"
     /// (typeAnswer) question, answer defaulting to the filename, with a security-scoped
     /// bookmark stored parallel so the host can play the right clip during the round.
+    /// G5: add a pick-your-category board round. Only categories the corpus can
+    /// fill at EVERY tier are offered — a column with a hole in it is a cell the
+    /// room can pick and the host cannot read.
+    private func addBoardRound() {
+        Task {
+            busy = true
+            let pool = await QuestionProvider.shared.questions(mode: .classic, category: .named("mixed"))
+            let fillable = LiveBoardBuilder.fillableCategories(in: pool)
+            let chosen = Array((fillable.isEmpty ? TriviaCategory.all.dropFirst().map(\.id) : fillable).prefix(5))
+            var round = await LiveEventStore.buildBoardRound(categories: chosen)
+            round.title = "Pick a Category"
+            working.rounds.append(round)
+            expandedRounds.insert(round.id)
+            busy = false
+        }
+    }
+
     private func addAudioRound() {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.audio, .mp3, .wav, .mpeg4Audio, .aiff]

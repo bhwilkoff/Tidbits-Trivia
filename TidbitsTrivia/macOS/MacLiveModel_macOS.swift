@@ -40,6 +40,12 @@ struct LiveRound: Identifiable, Codable, Hashable {
     /// question IS, so it is a field rather than a GameMode (which both stacks pin
     /// with wire goldens). Optional so every saved event still decodes.
     var letter: String? = nil
+    /// G5: a BOARD round — the room picks the next cell off a category x tier grid
+    /// instead of the host marching through the list. The grid REFERENCES the
+    /// round's own questions by id, so `questions` stays the single source of the
+    /// content and the board is only its layout. Optional so every saved event
+    /// still decodes.
+    var board: LiveBoard? = nil
     var videoBookmarks: [Data]? = nil   // Wave B: security-scoped bookmarks to each question's video clip (video round; parallel to questions)
 
     var symbol: String { format.symbol }
@@ -114,6 +120,36 @@ final class LiveEventStore {
         let qs = await QuestionProvider.shared.questions(mode: format, category: category)
         return LiveRound(title: format.nightRoundTitle, format: format, categoryID: category.id,
                          questions: Array(qs.prefix(count)))
+    }
+
+    /// G5: a BOARD round — a category x tier grid the room picks from.
+    ///
+    /// The pool is gathered per CATEGORY, because a board needs a question at every
+    /// tier of every column and the mixed pool is dominated by whichever categories
+    /// are largest — asking for one pool and slicing it is how a column comes back
+    /// with three of its five cells missing.
+    static func buildBoardRound(categories: [String],
+                                tiers: [Int] = LiveBoard.defaultTiers) async -> LiveRound {
+        // Ask the corpus for each CELL, not for a category pool.
+        // `questions(mode:category:)` returns only `mode.questionCount` rows — about
+        // ten — so filling five tiers from it is a lottery, and a rendered board came
+        // back with five holes in it even though the corpus holds every cell.
+        var pool: [Question] = []
+        for c in categories {
+            for t in tiers {
+                pool += CorpusDatabase.shared.questions(categoryID: c, difficulty: t,
+                                                        excluding: [], limit: 1)
+            }
+        }
+        let board = LiveBoardBuilder.build(from: pool, categories: categories, tiers: tiers)
+        // The round carries ONLY the questions the grid actually references, in
+        // cell order, so `questionStream` and the board never disagree about what
+        // is in the round.
+        let byID = Dictionary(pool.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+        let questions = board.cells.compactMap { byID[$0.questionID] }
+        return LiveRound(title: "Pick a Category", format: .classic,
+                         categoryID: categories.first ?? "mixed",
+                         questions: questions, board: board)
     }
 
     /// G4: questions whose ANSWER begins with `letter`, for a first-letter round.

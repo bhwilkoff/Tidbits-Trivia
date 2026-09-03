@@ -94,6 +94,37 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
         }
     }
 
+    /// G5: questions for one CATEGORY at one DIFFICULTY — exactly the cell of a
+    /// pick-a-category board.
+    ///
+    /// The board needs a guaranteed question per (category, tier), and the general
+    /// category query cannot supply that: it samples the category at random, so a
+    /// thin tier is a coin flip. Business at tier 5 is ~1.5% of its own category,
+    /// which is how a rendered board came back with five holes in it even though
+    /// the corpus holds every cell.
+    func questions(categoryID: String, difficulty: Int, excluding seen: Set<String>,
+                   limit: Int) -> [Question] {
+        queue.sync {
+            guard let db else { return [] }
+            let overFetch = max(limit * 6, 30)
+            let sql = "SELECT * FROM questions WHERE category_id = ? AND difficulty = ? ORDER BY RANDOM() LIMIT ?"
+            var stmt: OpaquePointer?
+            defer { sqlite3_finalize(stmt) }
+            guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else { return [] }
+            sqlite3_bind_text(stmt, 1, categoryID, -1, Self.transientDestructor)
+            sqlite3_bind_int(stmt, 2, Int32(difficulty))
+            sqlite3_bind_int(stmt, 3, Int32(overFetch))
+            var out: [Question] = []
+            while sqlite3_step(stmt) == SQLITE_ROW {
+                guard let q = Self.row(stmt) else { continue }
+                if seen.contains(q.id) { continue }
+                out.append(q)
+                if out.count >= limit { break }
+            }
+            return out
+        }
+    }
+
     /// All question IDs for a category in STABLE id order (no RANDOM()). The
     /// caller seed-shuffles for a deterministic-but-varied slice — this is what
     /// makes the Daily identical for everyone for the calendar day. "mixed"/""

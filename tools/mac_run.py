@@ -97,6 +97,26 @@ SCENARIOS = {
                        # the case that rendered a blank wall. The guidance line is
                        # what proves the empty state is on screen.
                        "expect_all": [r"FINAL STANDINGS", r"No teams to rank"]}),
+    # G5: the pick-a-category GRID — the slide the room reads to choose the next
+    # cell. It needs BOTH hooks: LIVE_BOARD=1 puts a board round in the event at
+    # all, and LIVE_STATE=board holds the projector on the grid. With only the
+    # second, `currentRoundBoard` is nil and the ordinary question slide renders —
+    # the scenario would photograph the wrong screen and still pass.
+    #
+    # The assertion is the POINTS, not the word "board": a grid that drew its
+    # headers but no cells is a board the room cannot pick from.
+    "projboard": (dict(TIDBITS_LIVE_HOST="1", TIDBITS_LIVE_CODE="QATEST",
+                       TIDBITS_LIVE_BOARD="1", TIDBITS_LIVE_STATE="board"),
+                  {"last_frame_only": True, "projector": True,
+                   "expect_none": r"\u2026|\.\.\.",
+                   # "25 left" is the assertion that a 5x5 board is COMPLETE. The
+                   # first version asked only for "points on the board" and passed
+                   # over a grid with five holes in it — the corpus held every cell,
+                   # but the builder was handed a ~10-question category pool and
+                   # could not fill five tiers from it. An assertion that cannot
+                   # fire is not an assertion.
+                   "expect_all": [r"PICK A CATEGORY|PICKS", r"100", r"500",
+                                  r"25 left", r"7,500 points on the board"]}),
     # The Live builder with a populated event and its first round expanded, so
     # the per-question list and the Edit affordance are observable at all
     # (macOS-DESIGN §A2.4). Nothing could reach them from a cold launch.

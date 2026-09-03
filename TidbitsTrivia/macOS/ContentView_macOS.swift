@@ -253,6 +253,15 @@ struct ContentView_macOS: View {
     /// TIDBITS_LIVE_HOST cannot drift into hosting different things.
     static func quickNightEvent(name: String = "Quick Night") async -> LiveEvent {
         var ev = LiveEvent(name: name)
+        // G5: TIDBITS_LIVE_BOARD=1 makes round 1 a pick-a-category BOARD round, so
+        // the projector's grid is reachable at all. Without it `currentRoundBoard`
+        // is nil, TIDBITS_LIVE_STATE=board renders the ordinary question slide, and
+        // the scenario would photograph the wrong screen while passing
+        // (hooks-are-coverage). No-op in production.
+        if ProcessInfo.processInfo.environment["TIDBITS_LIVE_BOARD"] == "1" {
+            ev.rounds.append(await LiveEventStore.buildBoardRound(
+                categories: ["history", "science", "music", "screen", "geography"]))
+        }
         for (i, fmt) in [GameMode.classic, GameMode.oddOneOut].enumerated() {
             ev.rounds.append(await LiveEventStore.buildRound(
                 format: fmt, category: .named(i == 0 ? "history" : "science"), count: 5))

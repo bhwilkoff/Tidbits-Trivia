@@ -24,6 +24,12 @@ final class LiveHostSession {
     /// tally per question and the FINAL table, and nothing in between
     /// (COMPETITOR-SCAN G2 — QuizXpress, Sporcle and Crowdpurr all do this).
     var showScores = false
+    /// G5: hold the big screen on the pick-a-category GRID, between questions of a
+    /// board round. The room cannot pick a cell it cannot see, so this is a real
+    /// phase of the round rather than a decoration.
+    var showBoard = false
+    /// G5: the team whose turn it is to pick (nil = anyone / not a board round).
+    var boardChooser: String? = nil
     var finished = false
     var deadlineMs: Int? = nil   // Wave A: epoch-ms countdown deadline for the current timed question
     var locked = false           // Wave C: answers locked ("pencils down") — auto-set at the timer deadline or manually
@@ -80,6 +86,13 @@ final class LiveHostSession {
         let ri = current?.roundIndex ?? 0
         guard event.rounds.indices.contains(ri) else { return nil }
         return event.rounds[ri].letter?.first.map { Character($0.uppercased()) }
+    }
+    /// G5: the pick-your-category grid of the current round, if it is a board
+    /// round — what the projector draws and the host picks from.
+    var currentRoundBoard: LiveBoard? {
+        let ri = current?.roundIndex ?? 0
+        guard event.rounds.indices.contains(ri) else { return nil }
+        return event.rounds[ri].board
     }
     /// Wave B: is the current round a speed round (fastest-first bonus)?
     var currentRoundIsSpeed: Bool {
@@ -310,6 +323,7 @@ struct LiveHostContainer_macOS: View {
             case "break":     session.onBreak = true
             case "scores":    session.showScores = true
             case "standings": session.finished = true
+            case "board":     session.showBoard = true
             default: break
             }
         }

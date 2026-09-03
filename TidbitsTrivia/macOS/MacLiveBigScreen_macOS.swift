@@ -86,6 +86,9 @@ struct LiveBigScreen_macOS: View {
             Tidbits.Palette.bg.ignoresSafeArea()
             if let s = coordinator.session {
                 if s.showScores && !s.finished { standings(s, interim: true).transition(.opacity) }
+                // G5: the pick-a-category grid. Ahead of the break/standings slides
+                // because it is a phase of a LIVE round, not an interruption of one.
+                else if s.showBoard, let b = s.currentRoundBoard { boardSlide(b, chooser: s.boardChooser).transition(.opacity) }
                 else if s.onBreak { breakSlide(s).transition(.opacity) }   // adaptability: intermission hold
                 else if s.finished { standings(s).transition(.opacity) } else { live(s).transition(.opacity) }
             } else {
@@ -119,6 +122,57 @@ struct LiveBigScreen_macOS: View {
             guard introRound != nil else { return }
             try? await Task.sleep(for: .seconds(reduceMotion ? 1.4 : 2.6))
             introRound = nil
+        }
+    }
+
+    /// G5 — the pick-a-category grid the room chooses from.
+    ///
+    /// A TAKEN cell keeps its place and goes quiet rather than disappearing: the
+    /// room reads the board as a map of what is left, and a grid that reflows on
+    /// every pick makes them re-find their column each time.
+    private func boardSlide(_ board: LiveBoard, chooser: String?) -> some View {
+        let columns = Array(repeating: GridItem(.flexible(), spacing: 14), count: max(board.categories.count, 1))
+        return ZStack {
+            Tidbits.Palette.ink.ignoresSafeArea()
+            VStack(spacing: 20) {
+                Text(chooser.map { "\($0.uppercased()) PICKS" } ?? "PICK A CATEGORY")
+                    .font(.system(size: 40, weight: .heavy, design: .rounded))
+                    .foregroundStyle(Tidbits.Palette.coral)
+                LazyVGrid(columns: columns, spacing: 14) {
+                    ForEach(board.categories, id: \.self) { c in
+                        Text(TriviaCategory.named(c).name.uppercased())
+                            .font(.system(size: 26, weight: .black, design: .rounded))
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity).lineLimit(2).minimumScaleFactor(0.6)
+                    }
+                    ForEach(board.tiers, id: \.self) { t in
+                        ForEach(board.categories, id: \.self) { c in
+                            boardCell(board.cell(c, t))
+                        }
+                    }
+                }
+                Text("\(board.remaining.count) left · \(board.pointsRemaining) points on the board")
+                    .font(.system(size: 24, weight: .heavy, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.7))
+            }
+            .padding(50)
+        }
+    }
+
+    /// One cell. A HOLE (nil) is drawn as an empty slot, never as a pickable tile —
+    /// the room must not be able to choose a cell the host cannot read.
+    @ViewBuilder private func boardCell(_ cell: LiveBoardCell?) -> some View {
+        let shape = RoundedRectangle(cornerRadius: 14)
+        if let cell {
+            Text("\(cell.points)")
+                .font(.system(size: 44, weight: .black, design: .rounded)).monospacedDigit()
+                .foregroundStyle(cell.taken ? .white.opacity(0.22) : Tidbits.Palette.coral)
+                .frame(maxWidth: .infinity).frame(height: 88)
+                .background(shape.fill(cell.taken ? Color.white.opacity(0.04) : Color.white.opacity(0.10)))
+                .overlay(shape.strokeBorder(.white.opacity(cell.taken ? 0.08 : 0.28), lineWidth: 2))
+        } else {
+            shape.fill(Color.white.opacity(0.03))
+                .frame(maxWidth: .infinity).frame(height: 88)
         }
     }
 

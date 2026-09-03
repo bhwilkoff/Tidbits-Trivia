@@ -1,0 +1,36 @@
+[
+ {"subject":"Hanuman Chalisa","cat":"history","diff":4,
+  "prompt":"The Hanuman Chalisa takes its name from a word meaning which number?",
+  "answer":"Forty","options":["Seven","Twelve","One hundred"],
+  "why":"It is forty chaupais in praise of Hanuman, written by Tulsidas in Awadhi and the best-known passage of the Ramcharitmanas."},
+
+ {"subject":"PlayStation 4","cat":"screen","diff":4,
+  "prompt":"Sony launched the PlayStation 4 in North America in November 2013. When did it reach Japan?",
+  "answer":"Three months later","options":["The same day","A month earlier","Two years later"],
+  "why":"Japan got it last, in February 2014, after North America, Europe, South America and Australia -- an unusual order for a Japanese company's flagship console."},
+
+ {"subject":"The Apothecary Diaries","cat":"screen","diff":4,
+  "prompt":"The Apothecary Diaries began in 2011 on what kind of platform?",
+  "answer":"A user-submitted novel site","options":["A newspaper serial","A radio drama","A manga magazine"],
+  "why":"It was serialised on Shosetsuka ni Naro, where anyone can post fiction. A publisher picked it up in 2012 and the light novels, manga and anime followed."},
+
+ {"subject":"Miss Universe 2023","cat":"history","diff":5,
+  "prompt":"Sheynnis Palacios won Miss Universe 2023, delivering a first-ever crown for which country?",
+  "answer":"Nicaragua","options":["Panama","Honduras","Bolivia"],
+  "why":"It was Nicaragua's first win in the pageant and its first victory in any of the Big Four international pageants. The final was held in San Salvador."},
+
+ {"subject":"Google Scholar","cat":"science","diff":4,
+  "prompt":"In which year did Google Scholar launch in beta?",
+  "answer":"2004","options":["1998","2010","2015"],
+  "why":"It indexes peer-reviewed journals, books, conference papers, theses and preprints, and has been free to use since that November beta."},
+
+ {"subject":"Brazil national football team","cat":"sports","diff":4,
+  "prompt":"What is the nickname of the Brazil national football team?",
+  "answer":"Canarinho","options":["La Albiceleste","Los Cafeteros","La Roja"],
+  "why":"Canarinho means 'little canary', for the yellow shirt. The others belong to Argentina, Colombia and Chile."},
+
+ {"subject":"Translation","cat":"arts","diff":4,
+  "prompt":"English separates translating from interpreting. What does interpreting cover?",
+  "answer":"Speech and sign","options":["Poetry only","Legal documents","Ancient texts"],
+  "why":"Translating handles written text; interpreting handles spoken or signed communication. Many languages draw no such distinction and use one word for both."}
+]

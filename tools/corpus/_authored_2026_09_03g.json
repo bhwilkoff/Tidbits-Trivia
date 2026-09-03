@@ -1,0 +1,51 @@
+[
+ {"subject":"Ocean","cat":"geography","diff":3,
+  "prompt":"The ocean holds what share of all the water on Earth?",
+  "answer":"97%","options":["71%","85%","60%"],
+  "why":"It covers about 70.8% of the SURFACE, which is the figure people usually recall -- but by volume it holds 97% of the planet's water."},
+
+ {"subject":"Cell (biology)","cat":"science","diff":3,
+  "prompt":"The biological term 'cell' comes from a Latin word meaning what?",
+  "answer":"Small room","options":["Living seed","Tiny sphere","Water drop"],
+  "why":"From cellula, 'small room'. Robert Hooke coined the usage after the chambers he saw in cork reminded him of monks' cells."},
+
+ {"subject":"International System of Units","cat":"science","diff":3,
+  "prompt":"The abbreviation SI, used for the modern metric system, comes from its official name in which language?",
+  "answer":"French","options":["Latin","Greek","Italian"],
+  "why":"Systeme international d'unites. The Bureau International des Poids et Mesures that maintains it sits outside Paris, which is why the naming is French rather than English."},
+
+ {"subject":"Hindi","cat":"geography","diff":3,
+  "prompt":"Modern Standard Hindi is written in which script?",
+  "answer":"Devanagari","options":["Arabic","Tamil","Bengali"],
+  "why":"The same script carries Sanskrit, Marathi and Nepali. Urdu is closely related to Hindi in speech but is written in a Perso-Arabic script."},
+
+ {"subject":"Human digestive system","cat":"science","diff":4,
+  "prompt":"Which of these counts as an accessory organ of digestion rather than part of the gut tube itself?",
+  "answer":"The pancreas","options":["The stomach","The colon","The oesophagus"],
+  "why":"The accessory organs -- tongue, salivary glands, pancreas, liver and gallbladder -- feed into digestion without food passing through them."},
+
+ {"subject":"Spotify","cat":"business","diff":2,
+  "prompt":"Spotify was founded in 2006 in which country?",
+  "answer":"Sweden","options":["The United States","Norway","Denmark"],
+  "why":"Daniel Ek and Martin Lorentzon started it in Stockholm. It now lists on the New York Stock Exchange, which is why it is often taken for an American company."},
+
+ {"subject":"PlayStation 5","cat":"screen","diff":4,
+  "prompt":"The PlayStation 5 belongs to which generation of video game consoles?",
+  "answer":"The ninth","options":["The eighth","The seventh","The tenth"],
+  "why":"It launched in November 2020 alongside Microsoft's Xbox Series X/S. The PlayStation 4 was the eighth generation."},
+
+ {"subject":"Attack on Titan (TV series)","cat":"screen","diff":4,
+  "prompt":"Attack on Titan changed animation studios for its final season, moving from Wit Studio to which one?",
+  "answer":"MAPPA","options":["Ufotable","Bones","Madhouse"],
+  "why":"Wit animated the first three seasons from 2013; MAPPA took over and carried the series to its conclusion in November 2023."},
+
+ {"subject":"Samsung","cat":"business","diff":5,
+  "prompt":"Samsung is the largest example of which South Korean business structure?",
+  "answer":"The chaebol","options":["The keiretsu","The zaibatsu","The kongsi"],
+  "why":"A chaebol is a family-controlled conglomerate. Keiretsu and zaibatsu are the Japanese equivalents, organised quite differently around banks and cross-shareholdings."},
+
+ {"subject":"Rupert Murdoch","cat":"business","diff":3,
+  "prompt":"Which American newspaper does Rupert Murdoch's News Corp own?",
+  "answer":"The Wall Street Journal","options":["The Washington Post","The Los Angeles Times","The Boston Globe"],
+  "why":"News Corp also holds The Sun and The Times in Britain and The Australian at home -- hundreds of titles across three countries."}
+]

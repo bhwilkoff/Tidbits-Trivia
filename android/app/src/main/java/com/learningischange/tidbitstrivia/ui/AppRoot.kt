@@ -1082,7 +1082,17 @@ private fun NightJoinScreen(initialCode: String, initialName: String, onFound: (
     var name by remember { mutableStateOf(initialName) }
     var probing by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
+    // G7: the teams already in the room, so a second phone at a table can JOIN it
+    // rather than quietly starting a near-identical second team.
+    var roomTeams by remember { mutableStateOf<List<FirebaseNet.RoomTeam>>(emptyList()) }
     val scope = rememberCoroutineScope()
+
+    // Look the room up as soon as the code is complete, so the tables are on
+    // screen BEFORE the player commits to a name.
+    LaunchedEffect(code) {
+        roomTeams = if (code.length == 4) runCatching { FirebaseNet.liveRoomTeams(code) }.getOrDefault(emptyList())
+                    else emptyList()
+    }
     // .then(tvOverscan()) — TVs crop the outer ~5%; see TvFocus.kt. No-op off TV.
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp).then(tvOverscan()),
            verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -1095,6 +1105,21 @@ private fun NightJoinScreen(initialCode: String, initialName: String, onFound: (
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters),
         )
         OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Your name") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+        if (roomTeams.isNotEmpty()) {
+            Text("Already playing — tap to join your table",
+                fontSize = 13.sp, fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+            // LazyRow, not Modifier.horizontalScroll: this file already imports it,
+            // and a room with a dozen tables should not lay out every chip.
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(roomTeams) { t ->
+                    // Tapping fills the LEADER's spelling — that is what keeps the
+                    // table one row instead of two near-identical ones.
+                    AssistChip(onClick = { name = t.name },
+                        label = { Text(if (t.size > 1) "${t.name} · ${t.size}" else t.name) })
+                }
+            }
+        }
         error?.let { Text(it, color = Pops.coral, fontWeight = FontWeight.Bold) }
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             OutlinedButton(onClick = onCancel) { Text("Cancel") }

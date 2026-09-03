@@ -182,6 +182,47 @@ object FirebaseNet {
             com.learningischange.tidbitstrivia.data.PlayerIdentity.Friend(uid, c.child("name").getValue(String::class.java) ?: "Player")
         }
     }
+    /** G7: one join in the room — the roster member behind the team grouping.
+     *  Mirrors Swift `LiveMember` / C# `LiveMember`. */
+    data class RoomMember(val uid: String, val teamName: String, val joinedAt: Long)
+
+    /** G7: one team in the room, for the join screen's "tap your table" chips. */
+    data class RoomTeam(val key: String, val name: String, val size: Int)
+
+    /** G7: the room's joins WITH their join time.
+     *
+     *  `liveTeams` returns uid + name only, which is enough for the night-end
+     *  co-player capture and NOT enough to group: picking the leader's spelling
+     *  needs the join order, so without joinedAt two devices would disagree about
+     *  which spelling names the row. */
+    suspend fun liveMembers(code: String): List<RoomMember> {
+        val snap = db.getReference("live/$code/teams").get().await()
+        return snap.children.mapNotNull { c ->
+            val uid = c.key ?: return@mapNotNull null
+            RoomMember(uid,
+                c.child("name").getValue(String::class.java) ?: "",
+                c.child("joinedAt").getValue(Long::class.java) ?: 0L)
+        }
+    }
+
+    /** G7: the room's teams, grouped by the SAME rule as the other five stacks —
+     *  fold surrounding space, case and runs of whitespace, but NEVER punctuation
+     *  ("St. Elmo" and "St Elmo" are plausibly different tables, and merging is
+     *  destructive in a way splitting is not). The display name is the LEADER's
+     *  spelling; a joinedAt tie breaks on uid so every stack agrees. */
+    suspend fun liveRoomTeams(code: String): List<RoomTeam> {
+        val byKey = LinkedHashMap<String, MutableList<RoomMember>>()
+        for (m in liveMembers(code)) {
+            val key = m.teamName.trim().lowercase().split(Regex("\\s+")).filter { it.isNotEmpty() }.joinToString(" ")
+            if (key.isEmpty()) continue
+            byKey.getOrPut(key) { mutableListOf() }.add(m)
+        }
+        return byKey.map { (key, ms) ->
+            val ordered = ms.sortedWith(compareBy({ it.joinedAt }, { it.uid }))
+            RoomTeam(key, ordered.first().teamName, ordered.size)
+        }.sortedBy { it.name.lowercase() }
+    }
+
     // L5 async friend duels.
     suspend fun createDuel(id: String, obj: Map<String, Any?>) { db.getReference("duels/$id").setValue(obj).await() }
     suspend fun loadDuel(id: String): com.google.firebase.database.DataSnapshot = db.getReference("duels/$id").get().await()

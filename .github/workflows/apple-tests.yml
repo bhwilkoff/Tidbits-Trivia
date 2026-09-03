@@ -1,4 +1,4 @@
-name: Apple Core tests
+name: Apple build + Core tests
 
 # The Apple side had no test target at all while Windows carried 443 tests, so
 # Core regressions could only be caught by driving a simulator by hand. These are
@@ -7,9 +7,17 @@ name: Apple Core tests
 on:
   push:
     paths:
-      - 'TidbitsTrivia/Core/**'
+      # The WHOLE app, not just Core. This used to list Core/** and the test dir,
+      # which meant a change under iOS/, macOS/ or tvOS/ triggered NOTHING — and
+      # since no other workflow builds the Apple targets on push (appstore-build
+      # is workflow_dispatch only), a UI compile break reached main unseen. Worse,
+      # the test bundle itself compiles several macOS/ files by name, so editing
+      # one did not even run its own tests.
+      - 'TidbitsTrivia/**'
       - 'TidbitsTriviaTests/**'
+      - 'TidbitsMessages/**'
       - 'project.yml'
+      - 'AppVersion.xcconfig'
       # LiveEventFileGoldenTests round-trips this file from the repo, so a change
       # to it must trigger the suite that checks it.
       - 'tools/live-event/**'
@@ -45,6 +53,29 @@ jobs:
       # ratchet) — so CI regenerates it rather than trusting the committed copy.
       - name: Generate the project
         run: xcodegen generate
+
+      # BUILD every Apple destination before testing. The test bundle is
+      # standalone — it compiles Core plus a handful of named macOS files and does
+      # NOT depend on the app target — so `xcodebuild test` alone never compiles
+      # the iOS, macOS or tvOS UI. Without this step "Apple CI is green" says
+      # nothing about whether the apps still build.
+      - name: Build macOS
+        run: |
+          set -o pipefail
+          xcodebuild build -project TidbitsTrivia.xcodeproj -scheme TidbitsTrivia \
+            -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO | xcbeautify
+
+      - name: Build iOS
+        run: |
+          set -o pipefail
+          xcodebuild build -project TidbitsTrivia.xcodeproj -scheme TidbitsTrivia \
+            -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO | xcbeautify
+
+      - name: Build tvOS
+        run: |
+          set -o pipefail
+          xcodebuild build -project TidbitsTrivia.xcodeproj -scheme TidbitsTrivia \
+            -destination 'generic/platform=tvOS' CODE_SIGNING_ALLOWED=NO | xcbeautify
 
       - name: Run Core tests
         run: |

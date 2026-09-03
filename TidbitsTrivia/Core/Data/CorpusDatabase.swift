@@ -84,12 +84,31 @@ nonisolated final class CorpusDatabase: @unchecked Sendable {
                 sqlite3_bind_int(stmt, 2, Int32(overFetch))
             }
             var out: [Question] = []
+            var spare: [Question] = []
+            var prompts = Set<String>()
+            var shapes = Set<String>()
             while sqlite3_step(stmt) == SQLITE_ROW {
                 guard let q = Self.row(stmt) else { continue }
                 if seen.contains(q.id) { continue }
-                out.append(q)
+                // A round must not serve the same question twice, and the id-based
+                // seen-set cannot tell: the same PROMPT appears across the chron
+                // family over different options, and `src:describe:X` /
+                // `src:cloze:X` are two write-ups of one subject that SHARE their
+                // distractors. About a third of the corpus has such a twin, so a
+                // ten-question draw collides more often than it looks. Mirrors the
+                // C# DistinctTake.
+                let shape = q.options.map { $0.lowercased() }.sorted().joined(separator: "\u{1}")
+                    + "\u{2}" + q.correctAnswer.lowercased()
+                if prompts.insert(q.prompt.lowercased()).inserted, shapes.insert(shape).inserted {
+                    out.append(q)
+                } else {
+                    spare.append(q)
+                }
                 if out.count >= limit { break }
             }
+            // A thin category must still fill the round rather than hand the player
+            // a short quiz because de-duplication starved it.
+            for q in spare where out.count < limit { out.append(q) }
             return out
         }
     }

@@ -133,9 +133,48 @@ rather than mis-bucketed, which is the correct failure.
 The joiners render the banner from `pub.letter` so a player who joined MID-ROUND
 still knows the rule instead of relying on having heard the host say it once.
 
-### G5. No pick-your-category board  *(QuizXpress)*
+### G5. Pick-a-category board — CLOSED 2026-09-02, all six platforms
 QuizXpress supports Jeopardy-style rounds where players choose subject and
-difficulty. Nothing in Tidbits lets the room pick the next question.
+difficulty. **Tidbits now does too** — and it is the first format here where the
+ROOM chooses what to play next; every other one marches through a list the host
+fixed in advance.
+
+Categories across, point tiers down. The rule is a pure value plus pure
+transitions written once per stack (`Core/Models/LiveBoard.swift`,
+`Tidbits.Core/Networking/LiveBoard.cs`), pinned by the same 12 cases on both.
+
+**The judgement calls are the contract**, because each one decides whether a
+night stalls in front of a room:
+
+- **An unfillable cell is ABSENT, not a dead button.** A board with a cell
+  nothing can fill is worse than a smaller board: the room picks it, the host has
+  nothing to read, and the night stops in front of everyone.
+- **Points come from the TIER, not the question.** The room sees what it is
+  risking before it picks, and a later difficulty edit cannot move the board's
+  promise.
+- **A second click on one tile is refused.** Two host clicks must not advance the
+  night twice.
+- **The pick goes to the team that answered correctly, else it ROTATES.** Left
+  alone it stays put and one table drives the whole board.
+- **A played cell goes quiet IN PLACE.** The room reads the board as a map of
+  what is left; a grid that reflows on every pick makes them re-find their column.
+
+**Filling a board asks the corpus PER CELL.** Building from a category-level
+sample is how a grid comes back with holes — a thin tier like business at 500 is
+~1.5% of its own category. That trap appeared three separate times (the macOS
+builder, a Windows test, the Windows builder) before it was closed in all three.
+
+**`board` is a distinct wire Phase, not a flag.** While the grid is up there is
+no live question, and publishing the previous one left it on every phone with its
+answer buttons live — the room could answer a question that was no longer being
+asked, and the host would score it. `pub.board` carries display names, tiers, a
+positional taken list, the chooser and the totals, and deliberately NEVER the
+cells' question ids: that would hand the room a map of the night's content.
+
+Worth recording about the process: four bugs in this feature, and **not one was
+found by a passing unit test**. Three came from rendering the screen and looking
+at it — twice after the tests were already green — and the fourth from asking
+what the OTHER clients were showing while the host's screen was correct.
 
 ### G6. No phone remote for the host  *(QuizXpress)*
 QuizXpress drives the show from a presenter remote or a phone app, so the host can

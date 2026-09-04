@@ -750,14 +750,17 @@ what. See `SCRATCHPAD.md` for active milestone + open questions. See
 `DECISIONS.md` for architecture decisions. See `PARITY.md` for
 feature parity across web / iOS / tvOS / Android.
 
-**Real-hardware QA:** `python3 tools/qa_suite.py` runs the whole fleet (Apple
-TV, iPad 12.9, iPhone 12, Pixel 8a) and grades every scenario from the glass.
-Read `docs/AUTONOMOUS-FLEET-TESTING.md` for the METHOD (external-observation doctrine,
-the blind-instrument failure, hooks-are-coverage, wire-vs-glass) and
-`docs/DEVICE-QA-SUITE.md` BEFORE changing a harness or adding a scenario —
-it carries the two rules that decide whether the loop is worth running
-(calibrate thresholds against a real capture, never copy one; an assertion that
-cannot fire is not an assertion) and the known limitations, so they are not
-re-diagnosed. Android needs the **debug** APK installed: the QA hooks are
-`BuildConfig.DEBUG`-gated, and against the release build every scenario silently
+**Real-hardware QA:** `python3 tools/qa_suite.py` grades every scenario from the
+glass across the bench — Apple TV, iPad 12.9, iPhone 12, Pixel 8a, Fire TV, the
+onn Android TV dongle, the Mac app and the web (Windows has its own runner,
+`tools/win_run.py`, and is not yet in the sweep). Read
+`docs/AUTONOMOUS-FLEET-TESTING.md` for the METHOD (external-observation doctrine,
+the blind-instrument failure, hooks-are-coverage, wire-vs-glass, assert-the-artefact,
+and the tier ladder) and `docs/DEVICE-QA-SUITE.md` BEFORE changing a harness or
+adding a scenario — it carries the three rules that decide whether the loop is worth
+running (calibrate thresholds against a real capture, never copy one; an assertion
+that cannot fire is not an assertion; assert the artefact, not the app's opinion of
+it), the tier table for picking the cheapest honest check, and the known limitations,
+so they are not re-diagnosed. Android needs the **debug** APK installed: the QA hooks
+are `BuildConfig.DEBUG`-gated, and against the release build every scenario silently
 lands on Home and passes.

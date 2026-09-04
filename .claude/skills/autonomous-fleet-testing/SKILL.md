@@ -50,6 +50,15 @@ every scenario lands on Home, and every scenario passes.
 Always ship a `SKIP_ONBOARD` hook; a first-run modal blocks every capture while the
 screenshots still look like the app is being driven.
 
+**A hook must create the PRECONDITION, not just open the screen.** A control that only
+renders in a particular backend state is unphotographable until something can produce
+that state — the unblocking hook is often on the *host* side, not the screen's.
+
+**Where the platform blocks scripting, seam the platform edge.** A modal file panel is
+not scriptable; have the function that returns the panel's answer accept the harness's
+answer instead (no-op in production). Under a sandbox, a path the harness invented was
+never granted — resolve a bare filename inside the app's own container.
+
 ## Grade the wire and the glass separately
 
 For anything networked, check the shared backend state *and* the screenshots. **When
@@ -98,6 +107,34 @@ files, not copies — rendering any screen chosen by an env var at exact device 
 That yields repeatable captures, store screenshots, and a regression signal from the
 real UI. Do **not** composite fake surrounding chrome: that is a picture of an app that
 does not exist.
+
+## Assert the artefact, not the app's opinion of it
+
+Where a feature produces a file, grade the file. Driving the print button and running
+`pdftotext` over the result proved the host pack contains answers ten times and the team
+sheet zero — something no assertion on the view could see. Export/import scenarios assert
+the bytes on disk and then read back what the export wrote, so the pair is a round trip
+through the real panels.
+
+If the extraction tool is missing or wrong, **FAIL**. The first version used a tool that
+cannot read PDF text, searched compressed bytes, and cleared both files — including the
+one that must contain answers.
+
+**An assertion that depends on scroll position is asserting the window size.** Pin the
+window, or assert something that cannot move: the file, the bytes, the wire.
+
+## Use the cheapest tier that can answer the question
+
+Unit + golden vectors → headless render to PNG → simulator sweep → **real hardware** →
+device-farm Robo on hardware you don't own → read the shipped binary (link table,
+entitlements, artefact). Using the wrong tier does not just cost time; it produces a
+green result that does not mean what it looks like.
+
+Loop economics: make coverage **state** (per-surface last-verified, take never-run then
+stalest) so each lap does new work; give long matrices a **ledger** so they resume;
+batch where a runner allows it and isolate where a device can wedge; and probe
+reachability rather than assuming it — a SKIP is quiet, so a probe that disagrees with
+its own evidence string silently drops a platform.
 
 ## Look at the output
 

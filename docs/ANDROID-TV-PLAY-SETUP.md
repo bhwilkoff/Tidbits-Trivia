@@ -105,3 +105,82 @@ python3 tools/tv_focus_audit.py --device firetv   --only ...
 A surface that does not show its own content is FAIL regardless of how healthy
 its focus looks — that check exists because an earlier version of this walk
 reported 26/26 while every capture was the Home screen.
+
+---
+
+## 6. TV-BN: the rejection that vc93 earned, and how to not earn it again
+
+**versionCode 93 was REJECTED** (2026-09-05) under the Android TV App Quality
+Guidelines. It was the first production build carrying `LEANBACK_LAUNCHER`, and
+that is what put it in front of a TV reviewer at all.
+
+> Issue found: No full-size app banner and/or icon
+> Your icon does not fill the entire icon space.
+> TV-BN: The app launch banner contains the name of the app.
+> Version code 93: In-app experience: Please see attached screenshot
+
+**A TV rejection blocks the WHOLE app update, not just the TV form factor.**
+"Changes to your app weren't published" — phone and tablet users did not get
+1.7.1 either. The TV opt-in is not a side channel; it is a gate on every ship.
+
+### What was actually wrong
+
+Both assets were the right SIZE and the wrong SHAPE. Nothing in the pipeline
+measured them, because "320x180 exists in drawable-xhdpi" was treated as the
+requirement:
+
+| Asset | Was | Requirement |
+|---|---|---|
+| `tv_banner.png` | 320x180, but its artwork filled **79.7% x 57.8%** — 38px of dead cream top and bottom | Artwork to all four edges |
+| launcher icon | adaptive foreground fills **62%** of its canvas | Fills the icon space |
+
+The 62% is *correct on a phone* — it is the adaptive-icon mask safe zone. It
+reads as "doesn't fill" on a TV that draws the icon without that viewport. The
+fix therefore must not touch the phone icon.
+
+### The fix
+
+`python3 tools/branding/make_tv_assets.py` generates all three, full-bleed:
+
+- `res/drawable-xhdpi/tv_banner.png` — 320x180, artwork edge to edge, app name in
+  ink on the coral field (ink-on-coral is 6.5:1; cream-on-coral is 2.3:1 and is
+  not a ten-foot pair).
+- `res/mipmap-television-{xhdpi,xxhdpi}/ic_launcher.png` — 512x512, tile at 0.70
+  of the frame. **The `television` UI-mode qualifier outranks density and version
+  in resource resolution**, so a TV takes these bitmaps while every phone keeps
+  the adaptive icon in `mipmap-anydpi-v26`. That is what makes a TV-only icon
+  possible without a second app.
+- `branding/play-tv-banner-1280x720.png` — the Play listing banner.
+
+The generator auto-fits the wordmark to the frame. The first cut hard-coded a
+point size and rendered a banner reading **"TIDE"** — the frame ran out before
+the word did, and no check could have caught it, which is exactly why the fit is
+computed rather than tuned.
+
+### Verifying it — and the cache that will fool you
+
+Read the artifact, then the glass:
+
+```bash
+unzip -l app-debug.apk | grep -E "tv_banner|television"   # is it even in there?
+adb -s <tv> uninstall com.tidbitstrivia.app.debug          # NOT just install -r
+adb -s <tv> install -r app-debug.apk
+```
+
+**The Google TV launcher caches banners.** After `install -r` the row kept
+showing the OLD banner while the APK provably contained the new one (md5 against
+the source). Only uninstall + install refreshed it. Do not clear the launcher's
+data to force this — on the owner's real TV that resets their Favorite Apps.
+
+Then photograph the apps row and compare against the neighbouring tiles. Every
+compliant neighbour (Netflix, tivimate, Archive Watch) is edge-to-edge artwork;
+if ours is a small mark floating in a flat field, it fails, whatever its pixel
+dimensions say.
+
+### Where the reviewer's evidence lives
+
+The rejection email carries a screenshot (`IN_APP_EXPERIENCE-*.png`) that names
+the surface, and the Play API cannot see any of it — `edits.tracks` shows
+`status=completed versionCodes=['93']` for a build that was rejected. The email
+is the only source. Its attachment is on disk under
+`~/Library/Mail/V10/*/[Gmail].mbox/.../Attachments/` when Mail has synced it.

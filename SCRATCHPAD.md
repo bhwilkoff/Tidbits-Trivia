@@ -7,6 +7,47 @@
 > `docs/ROADMAP.md`, `docs/DATA-CONTRACT.md`. Detailed per-round history is in
 > `ARCHIVE.md`.
 
+## Current state (2026-09-05) — Play rejected vc93 on TV-BN; assets fixed and re-shipped
+
+**Found:** Google Play **rejected versionCode 93 (1.7.1)** under the Android TV
+App Quality Guidelines — "No full-size app banner and/or icon … Your icon does
+not fill the entire icon space … TV-BN". vc93 was the first production build
+carrying `LEANBACK_LAUNCHER`, which is what put it in front of a TV reviewer at
+all. The rejection blocked the WHOLE update: phone and tablet users never got
+1.7.1 either.
+
+The Play API cannot see any of this — `edits.tracks` reported
+`status=completed versionCodes=['93']` for a rejected build. The rejection email
+is the only source, and its attached screenshot names the surface.
+
+**Diagnosed by measuring, not guessing.** Both assets were the right SIZE and the
+wrong SHAPE: the 320x180 banner's artwork filled only 79.7% x 57.8% of its frame
+(38px of dead cream top and bottom), and the adaptive icon's foreground fills 62%
+of its canvas — correct on a phone (mask safe zone), "doesn't fill" on a TV.
+Photographing the real Google TV apps row settled it: every neighbouring tile
+(Netflix, tivimate, Archive Watch) is edge-to-edge artwork and ours was a small
+mark in a flat field.
+
+**Did:** `tools/branding/make_tv_assets.py` now generates all three TV assets
+full-bleed — the 320x180 banner, a 512x512 TV-only launcher icon under
+`res/mipmap-television-*` (the `television` UI-mode qualifier outranks density
+and version, so phones keep the adaptive icon untouched), and the 1280x720 Play
+listing banner. Verified on the real Google TV dongle: the tile is now
+edge-to-edge and holds its own beside the compliant neighbours. Android bumped to
+1.7.2 (vc94) and staged to production; `docs/ANDROID-TV-PLAY-SETUP.md` §6 carries
+the runbook.
+
+**State left:** the fixed build is uploaded, but **managed publishing means the
+API cannot send it for review** — it needs the Console click (Publishing overview
+→ Send changes for review). The improved 1280x720 listing banner is generated and
+committed but deliberately NOT uploaded, to keep the resubmission a single clean
+item; upload it on a later listing change. Apple stays 1.7.1 and realigns on the
+next shared ship.
+
+**Out of scope (rejected):** opting the app out of the Android TV release type to
+unblock the phone ship. It would work, and it throws away the 7th-platform
+decision and the wave-1 focus work to save one asset regeneration.
+
 ## Current state (2026-08-30) — the go-live suite: eight surfaces, six defects
 
 **Found:** macOS and web had NO harness, and cross-device multiplayer had none

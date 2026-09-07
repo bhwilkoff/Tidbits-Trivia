@@ -130,12 +130,25 @@ wire and the Daily golden already run under.
 A host's own questions arrive as CSV far more often than as an event file, and
 the two clients diverged silently on what a CSV column means.
 
-6.1 **A NAMED HEADER decides.** If the first row starts with `prompt` or
-`question`, columns are mapped by name and their order does not matter.
-Recognised: `prompt`/`question`, `correct`/`answer`/`correctanswer`,
-`optionA…optionD` / `option1…option4` / `wrong1…wrong3` / `a`,`b`,`c`,`d`,
-`category`, `difficulty`, `explanation`/`reveal`/`note`. **Emit a header on every
-export.** It is the only shape that cannot be misread.
+6.1 **A NAMED HEADER decides.** The header is the first row in the first
+dozen that names a prompt column AND (an answer column or two choice columns);
+rows above it are ignored (Kahoot's template carries instructions above its
+header). Names are matched NORMALIZED — lowercase, alphanumerics only, minus
+Kahoot's "- max N characters" — so other tools' sheets import as they are
+(2026-09-07, QUIZ-FORMATS-RESEARCH §4):
+
+| Ours | Also recognised |
+|---|---|
+| prompt | `prompt`, `Question Text`, `Question` (`Question Text` wins over `Question` — Blooket's `Question #` is a number) |
+| choices | `optionA…D`, `option1…4`, `wrong1…3`, `a…d`, `Answer 1…9`, `Answer Option 1…9`, `Incorrect Answer 1…9`, `Choice 1…9`, `Distractor 1…9` |
+| correct | `correct`, `answer`, `correctanswer`, `Correct Answer(s)`, `correctoption`; the value may be TEXT, a 1-based INDEX, a letter A–D, Kahoot's `1,3` (the first is kept) or Crowdpurr's `a@@@b` (all kept for a type-in) |
+| type | `Question Type Code`, `questiontype`, `type`: `text`/`fill`/`short`/`numerical` → type-in (`accepted`); `reorder` → ordering; `poll`/`survey`/`yesNo`/`likeDislike`/`wordCloud`/`open-ended` → the row is DROPPED (no right answer). Blooket's `Typing Answer` column, when non-empty, means type-in |
+| picture | `Question Media URL`, `mediaurl`, `imageurl`, `image`, `picture` (https only) → `imageURL` |
+| note | `explanation`, `reveal`, `note`, `Question Note`, `feedback` |
+| category, difficulty | as before; `points`/`time` columns are read past (a Tidbits round has ONE timer) |
+
+**Emit a header on every export**, now with an `imageURL` column, so a bank
+with pictures round-trips. It is the only shape that cannot be misread.
 
 6.2 **`correct` may be the answer TEXT or a 1-based INDEX** into the options.
 Both are common in the wild and both must resolve to the same question.

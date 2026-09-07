@@ -115,6 +115,75 @@ struct LiveCSVImportTests {
         }
     }
 
+    // MARK: Other tools' spreadsheets (QUIZ-FORMATS-RESEARCH §1, LIVE-EVENT-FILE §6.1)
+
+    @Test("a Kahoot template export imports: instruction rows above the header, index answers, Kahoot's column names")
+    func kahootTemplate() {
+        let csv = """
+        Kahoot! spreadsheet template,,,,,,
+        Fill in the questions below.,,,,,,
+        Question - max 95 characters,Answer 1 - max 60 characters,Answer 2 - max 60 characters,Answer 3 - max 60 characters,Answer 4 - max 60 characters,Time limit (sec),Correct answer(s) - choose at least one
+        Which kingdom minted the first coins?,Phrygia,Lydia,Caria,Lycia,20,2
+        Which of these is a planet?,Pluto,Mars,Ceres,Vesta,10,"2,1"
+        """
+        let qs = LiveCSV.parseCSVQuestions(csv)
+        #expect(qs.count == 2)
+        #expect(qs[0].correctAnswer == "Lydia")
+        #expect(Set(qs[0].options) == ["Phrygia", "Lydia", "Caria", "Lycia"])
+        #expect(qs[1].correctAnswer == "Mars")   // Kahoot multi-correct keeps the first
+    }
+
+    @Test("a Blooket sheet imports, with its typing column making a type-in question")
+    func blooketSheet() {
+        let csv = """
+        Question #,Question Text,Answer 1,Answer 2,Answer 3,Answer 4,Time Limit (sec),Correct Answer(s),Typing Answer
+        1,Capital of France?,Paris,Rome,Berlin,Madrid,20,1,
+        2,Largest ocean?,Pacific,,,,20,1,typing
+        """
+        let qs = LiveCSV.parseCSVQuestions(csv)
+        #expect(qs.count == 2)
+        #expect(qs[0].prompt == "Capital of France?" && qs[0].correctAnswer == "Paris")
+        #expect(qs[1].accepted == ["Pacific"] && qs[1].options == ["Pacific"])
+    }
+
+    @Test("a Crowdpurr export imports: type codes, media URL, note, @@@ answers; a poll row is dropped")
+    func crowdpurrExport() {
+        let csv = """
+        Question Text,Question Type Code,Points Value,Question Time,Question Media URL,Question Note,Question Link,Correct Answer(s),Answer Option 1,Answer Option 2,Answer Option 3,Answer Option 4
+        Which kingdom minted the first coins?,multipleChoice,100,20,https://example.test/coin.jpg,Electrum c.600BC,,Lydia,Phrygia,Lydia,Caria,Lycia
+        Name the Anatolian kingdom of Croesus.,text,100,20,,,,Lydia@@@Lydian Kingdom,,,,
+        Which do you prefer?,yesNo,0,20,,,,,,,,
+        Put these in order,reorder,100,30,,,,,Bronze Age,Iron Age,Classical,Medieval
+        """
+        let qs = LiveCSV.parseCSVQuestions(csv)
+        #expect(qs.count == 3)
+        #expect(qs[0].correctAnswer == "Lydia")
+        #expect(qs[0].imageURL?.absoluteString == "https://example.test/coin.jpg")
+        #expect(qs[0].explanation == "Electrum c.600BC")
+        #expect(qs[1].accepted == ["Lydia", "Lydian Kingdom"])
+        #expect(qs[2].ordering == ["Bronze Age", "Iron Age", "Classical", "Medieval"])
+    }
+
+    @Test("a Gimkit sheet imports: Correct Answer plus Incorrect Answer 1-3")
+    func gimkitSheet() {
+        let csv = """
+        Question,Correct Answer,Incorrect Answer 1,Incorrect Answer 2,Incorrect Answer 3
+        Which kingdom minted the first coins?,Lydia,Phrygia,Caria,Lycia
+        """
+        let qs = LiveCSV.parseCSVQuestions(csv)
+        #expect(qs.count == 1 && qs[0].correctAnswer == "Lydia" && qs[0].options.count == 4)
+    }
+
+    @Test("the export carries the picture URL and re-imports it")
+    func exportCarriesPicture() {
+        let q = Question(id: "x", prompt: "Which flag is this?", options: ["Chad", "Romania", "Mali", "Andorra"],
+                         correctIndex: 1, categoryID: "geography", difficulty: 3, explanation: "", sourceTitle: "",
+                         sourceURL: nil, templateID: "csv", imageURL: URL(string: "https://example.test/flag.png"))
+        let back = LiveCSV.parseCSVQuestions(LiveCSV.exportCSV([q]))
+        #expect(back.first?.imageURL?.absoluteString == "https://example.test/flag.png")
+        #expect(back.first?.correctAnswer == "Romania")
+    }
+
     // MARK: The two shipped column orders
 
     /// macOS wrote `prompt, correct, wrong1..3, [category], [difficulty], [explanation]`.

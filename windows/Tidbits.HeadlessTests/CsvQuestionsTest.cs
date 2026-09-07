@@ -192,4 +192,74 @@ public class CsvQuestionsTest
         var ours = CsvQuestions.Export([]).Split('\n')[0].Trim();
         Assert.Contains(ours, text);
     }
+
+    // Other tools' spreadsheets (QUIZ-FORMATS-RESEARCH §1, LIVE-EVENT-FILE §6.1).
+
+    [Fact]
+    public void A_Kahoot_template_export_imports()
+    {
+        var csv = "Kahoot! spreadsheet template,,,,,,\n"
+                + "Fill in the questions below.,,,,,,\n"
+                + "Question - max 95 characters,Answer 1 - max 60 characters,Answer 2 - max 60 characters,Answer 3 - max 60 characters,Answer 4 - max 60 characters,Time limit (sec),Correct answer(s) - choose at least one\n"
+                + "Which kingdom minted the first coins?,Phrygia,Lydia,Caria,Lycia,20,2\n"
+                + "Which of these is a planet?,Pluto,Mars,Ceres,Vesta,10,\"2,1\"\n";
+        var qs = CsvQuestions.Parse(csv);
+        Assert.Equal(2, qs.Count);
+        Assert.Equal("Lydia", qs[0].CorrectAnswer);
+        Assert.Equal("Mars", qs[1].CorrectAnswer);
+    }
+
+    [Fact]
+    public void A_Blooket_sheet_imports_with_typing_as_type_in()
+    {
+        var csv = "Question #,Question Text,Answer 1,Answer 2,Answer 3,Answer 4,Time Limit (sec),Correct Answer(s),Typing Answer\n"
+                + "1,Capital of France?,Paris,Rome,Berlin,Madrid,20,1,\n"
+                + "2,Largest ocean?,Pacific,,,,20,1,typing\n";
+        var qs = CsvQuestions.Parse(csv);
+        Assert.Equal(2, qs.Count);
+        Assert.Equal("Paris", qs[0].CorrectAnswer);
+        Assert.Equal(new[] { "Pacific" }, qs[1].Accepted!.ToArray());
+    }
+
+    [Fact]
+    public void A_Crowdpurr_export_imports_and_drops_the_poll()
+    {
+        var csv = "Question Text,Question Type Code,Points Value,Question Time,Question Media URL,Question Note,Question Link,Correct Answer(s),Answer Option 1,Answer Option 2,Answer Option 3,Answer Option 4\n"
+                + "Which kingdom minted the first coins?,multipleChoice,100,20,https://example.test/coin.jpg,Electrum c.600BC,,Lydia,Phrygia,Lydia,Caria,Lycia\n"
+                + "Name the Anatolian kingdom of Croesus.,text,100,20,,,,Lydia@@@Lydian Kingdom,,,,\n"
+                + "Which do you prefer?,yesNo,0,20,,,,,,,,\n"
+                + "Put these in order,reorder,100,30,,,,,Bronze Age,Iron Age,Classical,Medieval\n";
+        var qs = CsvQuestions.Parse(csv);
+        Assert.Equal(3, qs.Count);
+        Assert.Equal("Lydia", qs[0].CorrectAnswer);
+        Assert.Equal("https://example.test/coin.jpg", qs[0].ImageUrl);
+        Assert.Equal("Electrum c.600BC", qs[0].Explanation);
+        Assert.Equal(new[] { "Lydia", "Lydian Kingdom" }, qs[1].Accepted!.ToArray());
+        Assert.Equal(new[] { "Bronze Age", "Iron Age", "Classical", "Medieval" }, qs[2].Ordering!.ToArray());
+    }
+
+    [Fact]
+    public void A_Gimkit_sheet_imports()
+    {
+        var csv = "Question,Correct Answer,Incorrect Answer 1,Incorrect Answer 2,Incorrect Answer 3\n"
+                + "Which kingdom minted the first coins?,Lydia,Phrygia,Caria,Lycia\n";
+        var qs = CsvQuestions.Parse(csv);
+        Assert.Single(qs);
+        Assert.Equal("Lydia", qs[0].CorrectAnswer);
+        Assert.Equal(4, qs[0].Options.Count);
+    }
+
+    [Fact]
+    public void The_export_carries_the_picture_url_and_reimports_it()
+    {
+        var q = new Question
+        {
+            Id = "x", Prompt = "Which flag is this?", Options = new[] { "Chad", "Romania", "Mali", "Andorra" },
+            CorrectIndex = 1, CategoryId = "geography", Difficulty = 3, ImageUrl = "https://example.test/flag.png",
+        };
+        var back = CsvQuestions.Parse(CsvQuestions.Export(new[] { q }));
+        Assert.Single(back);
+        Assert.Equal("https://example.test/flag.png", back[0].ImageUrl);
+        Assert.Equal("Romania", back[0].CorrectAnswer);
+    }
 }

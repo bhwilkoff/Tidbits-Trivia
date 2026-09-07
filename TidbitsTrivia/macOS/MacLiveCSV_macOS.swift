@@ -78,71 +78,158 @@ static func parseCSVQuestions(_ text: String) -> [Question] {
     var rows = text.split(whereSeparator: \.isNewline).map { splitCSVLine(String($0)) }
     guard !rows.isEmpty else { return [] }
 
-    var header: [String: Int]? = nil
-    if let first = rows.first, isHeaderRow(first) {
-        var map: [String: Int] = [:]
-        for (i, name) in first.enumerated() {
-            map[name.lowercased().trimmingCharacters(in: .whitespaces)] = i
-        }
-        header = map
-        rows.removeFirst()
+    // §6.1: a named header decides — and it need not be the FIRST row. Kahoot's
+    // spreadsheet template carries instruction rows above its header, so the
+    // header is looked for in the first dozen rows and everything above it is
+    // ignored. Any spreadsheet in QUIZ-FORMATS-RESEARCH §1 is read by its names.
+    var header: CSVHeader? = nil
+    if let (at, h) = CSVHeader.find(in: rows) {
+        header = h
+        rows.removeFirst(at + 1)
     }
 
     var out: [Question] = []
     for f in rows {
-        guard f.count >= 5, !f[0].isEmpty else { continue }
-        if let q = question(from: f, header: header) { out.append(q) }
+        if let header {
+            guard f.count >= 2 else { continue }
+            if let q = question(from: f, header: header) { out.append(q) }
+        } else {
+            guard f.count >= 5, !f[0].isEmpty else { continue }
+            if let q = question(from: f, header: nil) { out.append(q) }
+        }
     }
     return out
 }
 
-private static func isHeaderRow(_ f: [String]) -> Bool {
-    guard let first = f.first?.lowercased() else { return false }
-    return first == "prompt" || first == "question"
-}
+/// A named header, read by NORMALIZED names so the spreadsheets of other tools
+/// map onto ours: "Question Text" (Crowdpurr, Blooket), "Question - max 95
+/// characters" and "Answer 1 - max 60 characters" (Kahoot), "Incorrect Answer 1"
+/// (Gimkit), "Answer Option 1", "Correct Answer(s)", "Question Media URL"…
+struct CSVHeader {
+    let columns: [String: Int]     // normalized name -> column
+    let promptColumn: Int
+    let optionColumns: [Int]       // in sheet order
 
-private static func value(_ f: [String], _ header: [String: Int]?, _ names: [String]) -> String? {
-    guard let header else { return nil }
-    for n in names {
-        if let i = header[n], f.indices.contains(i) {
-            let v = f[i].trimmingCharacters(in: .whitespaces)
-            if !v.isEmpty { return v }
-        }
+    /// lowercase, alphanumerics only, minus Kahoot's "- max N characters" suffix.
+    static func normalize(_ raw: String) -> String {
+        var s = raw.lowercased().filter { $0.isLetter || $0.isNumber }
+        if let r = s.range(of: "max[0-9]+characters$", options: .regularExpression) { s.removeSubrange(r) }
+        return s
     }
-    return nil
+
+    static let promptNames = ["prompt", "questiontext", "question"]
+    static let correctNames = ["correct", "correctanswer", "correctanswers", "answer", "correctoption", "correctanswerindex"]
+
+    static func isOptionName(_ n: String) -> Bool {
+        n.range(of: "^((answer|option|answeroption|choice|incorrectanswer|wrong|distractor)([1-9]|[a-d])|[a-d])$",
+                options: .regularExpression) != nil
+    }
+
+    static func find(in rows: [[String]]) -> (Int, CSVHeader)? {
+        for (i, row) in rows.prefix(12).enumerated() {
+            var cols: [String: Int] = [:]
+            for (c, name) in row.enumerated() {
+                let n = normalize(name)
+                if !n.isEmpty, cols[n] == nil { cols[n] = c }
+            }
+            guard let prompt = promptNames.compactMap({ cols[$0] }).first else { continue }
+            let options = cols.filter { isOptionName($0.key) }.map { ($0.value, $0.key) }
+                .sorted { $0.0 < $1.0 }.map(\.0)
+            // "Correct answer(s) - choose at least one" (Kahoot) normalizes to a longer
+            // name; a column that STARTS with "correctanswer" is the answer column.
+            if !correctNames.contains(where: { cols[$0] != nil }),
+               let long = cols.first(where: { $0.key.hasPrefix("correctanswer") }) { cols["correctanswers"] = long.value }
+            let hasCorrect = correctNames.contains { cols[$0] != nil }
+            // A header names the prompt AND either the answer or at least two choices;
+            // a data row whose first cell happens to say "question" does neither.
+            guard hasCorrect || options.count >= 2 else { continue }
+            return (i, CSVHeader(columns: cols, promptColumn: prompt, optionColumns: options))
+        }
+        return nil
+    }
+
+    func value(_ f: [String], _ names: [String]) -> String? {
+        for n in names {
+            if let i = columns[n], f.indices.contains(i) {
+                let v = f[i].trimmingCharacters(in: .whitespaces)
+                if !v.isEmpty { return v }
+            }
+        }
+        return nil
+    }
+
+    func options(_ f: [String]) -> [String] {
+        optionColumns.compactMap { f.indices.contains($0) ? f[$0].trimmingCharacters(in: .whitespaces) : nil }
+            .filter { !$0.isEmpty }
+    }
 }
 
-private static func question(from f: [String], header: [String: Int]?) -> Question? {
-    let prompt = f[0].trimmingCharacters(in: .whitespaces)
-    guard !prompt.isEmpty else { return nil }
+/// The answer cell of another tool's sheet: text, a 1-based index, a letter,
+/// Kahoot's "1,3" (multiple correct → the first), Crowdpurr's "a@@@b".
+private static func correctAnswers(_ raw: String, options: [String]) -> [String] {
+    let parts = raw.components(separatedBy: "@@@").flatMap { $0.components(separatedBy: ";") }
+        .map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+    guard !parts.isEmpty else { return [] }
+    // "1,3" is an index list only if EVERY piece is an index; "Paris, France" is text.
+    let commaPieces = raw.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+    if commaPieces.count > 1, commaPieces.allSatisfy({ Int($0) != nil }) {
+        return commaPieces.compactMap { Int($0) }.filter { options.indices.contains($0 - 1) }.map { options[$0 - 1] }
+    }
+    return parts.map { p -> String in
+        if let idx = Int(p), options.indices.contains(idx - 1) { return options[idx - 1] }
+        if p.count == 1, let li = "abcd".firstIndex(of: Character(p.lowercased())) {
+            let n = "abcd".distance(from: "abcd".startIndex, to: li)
+            if options.indices.contains(n) { return options[n] }
+        }
+        return p
+    }
+}
 
+private static func question(from f: [String], header: CSVHeader?) -> Question? {
     var options: [String] = []
     var correct = ""
     var category = "mixed"
     var difficulty = 3
     var explanation = ""
+    var imageURL: URL? = nil
+    var accepted: [String]? = nil
+    var ordering: [String]? = nil
+    let prompt: String
 
-    if header != nil {
-        // Named columns win, whatever order they came in.
-        let opts = ["optiona", "optionb", "optionc", "optiond", "option1", "option2",
-                    "option3", "option4", "wrong1", "wrong2", "wrong3", "a", "b", "c", "d"]
-            .compactMap { value(f, header, [$0]) }
-        let answer = value(f, header, ["correct", "answer", "correctanswer"]) ?? ""
-        // "correct" may be the answer TEXT or a 1-based index into the options.
-        if let idx = Int(answer), (1...max(opts.count, 4)).contains(idx), opts.indices.contains(idx - 1) {
-            correct = opts[idx - 1]
-            options = opts
+    if let header {
+        prompt = (f.indices.contains(header.promptColumn) ? f[header.promptColumn] : "").trimmingCharacters(in: .whitespaces)
+        guard !prompt.isEmpty else { return nil }
+        let opts = header.options(f)
+        let rawAnswer = header.value(f, CSVHeader.correctNames) ?? ""
+        let answers = correctAnswers(rawAnswer, options: opts)
+        category = (header.value(f, ["category"]) ?? "mixed").lowercased()
+        difficulty = Int(header.value(f, ["difficulty"]) ?? "") ?? 3
+        explanation = header.value(f, ["explanation", "reveal", "note", "questionnote", "feedback"]) ?? ""
+        if let m = header.value(f, ["questionmediaurl", "mediaurl", "media", "imageurl", "image", "picture", "pictureurl"]),
+           m.lowercased().hasPrefix("http"), let u = URL(string: m) { imageURL = u }
+
+        // The question TYPE, where a sheet names one: Crowdpurr's type code, Quizizz's
+        // "Fill-in-the-blank", Blooket's typing column. Polls have no right answer
+        // and are dropped, never imported as a question nobody can get right.
+        let type = (header.value(f, ["questiontypecode", "questiontype", "type"]) ?? "").lowercased()
+        let typing = header.value(f, ["typing", "typinganswer", "typeanswer"]) != nil
+        if type.contains("poll") || type.contains("survey") || type.contains("yesno") || type.contains("likedislike")
+            || type.contains("wordcloud") || type.contains("openended") || type.contains("open-ended") { return nil }
+        if type.contains("reorder") || type.contains("order") {
+            guard opts.count >= 3 else { return nil }
+            ordering = opts; options = opts; correct = opts[0]
+        } else if typing || type.contains("text") || type.contains("fill") || type.contains("short") || type.contains("numerical") || type.contains("number") {
+            let acc = answers.isEmpty ? opts : answers
+            guard let first = acc.first else { return nil }
+            accepted = acc; options = [first]; correct = first
         } else {
-            correct = answer
-            // Only prepend the answer if the option columns did not already carry
-            // it. Prepending unconditionally gave five options, and the prefix(4)
-            // below then dropped a real one — caught by the export round-trip.
-            options = opts.contains(answer) ? opts : ([answer] + opts).filter { !$0.isEmpty }
+            guard let first = answers.first else { return nil }
+            correct = first
+            options = opts.contains(first) ? opts : ([first] + opts).filter { !$0.isEmpty }
         }
-        category = (value(f, header, ["category"]) ?? "mixed").lowercased()
-        difficulty = Int(value(f, header, ["difficulty"]) ?? "") ?? 3
-        explanation = value(f, header, ["explanation", "reveal", "note"]) ?? ""
     } else {
+        prompt = f[0].trimmingCharacters(in: .whitespaces)
+        guard !prompt.isEmpty else { return nil }
         // No header. Field 5 tells the two shipped shapes apart: an answer INDEX
         // (1-4) means the Windows order, anything else means the macOS order.
         let fifth = f.count > 5 ? f[5].trimmingCharacters(in: .whitespaces) : ""
@@ -162,14 +249,17 @@ private static func question(from f: [String], header: [String: Int]?) -> Questi
     var opts = options.filter { !$0.isEmpty }
     guard !correct.isEmpty, opts.contains(correct) || opts.isEmpty else { return nil }
     if opts.isEmpty { opts = [correct] }
-    while opts.count < 4 { opts.append("—") }
-    opts = Array(opts.prefix(4)).shuffled()
+    if accepted == nil && ordering == nil {
+        while opts.count < 4 { opts.append("—") }
+        opts = Array(opts.prefix(4)).shuffled()
+    }
     guard let ci = opts.firstIndex(of: correct) else { return nil }
 
     return Question(id: UUID().uuidString, prompt: prompt, options: opts, correctIndex: ci,
                     categoryID: category, difficulty: min(5, max(1, difficulty)),
                     explanation: explanation.trimmingCharacters(in: .whitespaces),
-                    sourceTitle: "", sourceURL: nil, templateID: "csv")
+                    sourceTitle: "", sourceURL: nil, templateID: "csv",
+                    imageURL: imageURL, ordering: ordering, accepted: accepted)
 }
 
 /// Write a question bank back out as CSV — docs/LIVE-EVENT-FILE.md §6.1.
@@ -181,13 +271,14 @@ private static func question(from f: [String], header: [String: Int]?) -> Questi
 /// Always emits the NAMED HEADER. It is the only shape neither client can
 /// misread, and it is what makes an export re-importable on the other platform.
 static func exportCSV(_ questions: [Question]) -> String {
-    var out = "prompt,correct,optionA,optionB,optionC,optionD,category,difficulty,explanation\n"
+    var out = "prompt,correct,optionA,optionB,optionC,optionD,category,difficulty,explanation,imageURL\n"
     for q in questions {
         var opts = q.options
         while opts.count < 4 { opts.append("") }
         let fields = [q.prompt, q.correctAnswer,
                       opts[0], opts[1], opts[2], opts[3],
-                      q.categoryID, String(q.difficulty), q.explanation]
+                      q.categoryID, String(q.difficulty), q.explanation,
+                      q.imageURL?.absoluteString ?? ""]
         out += fields.map(escapeCSVField).joined(separator: ",") + "\n"
     }
     return out

@@ -78,9 +78,10 @@ wraps. Do not import those caps.
 | `.tidbitsevent.json` | ✅ | ✅ | by URL only | shipped 2026-09-01 |
 | CSV (named header) | ✅ | ✅ | by URL | shipped (LIVE-EVENT-FILE §6) |
 | Kahoot (share link / JSON) | ✅ `tools/kahoot_import.py` → package | — | downloaded + embedded | shipped |
-| Kahoot spreadsheet `.xlsx` | ⏳ | ⏳ (their template, text only) | none | next: the export lets a Tidbits night go BACK to a Kahoot user |
-| Crowdpurr CSV | ⏳ | ⏳ | by URL | next: the richest spreadsheet; maps type/points/time/media/note |
-| Blooket CSV / Quizizz xlsx | ⏳ | ⏳ | none | text-only; map `typing` → typeAnswer |
+| Kahoot spreadsheet template (exported as CSV) | ✅ both hosts' CSV import (2026-09-07) | ⏳ (their template, text only) | none | instruction rows above the header are skipped; `1,3` keeps the first |
+| Crowdpurr CSV | ✅ both hosts (2026-09-07) | ⏳ | by URL → `imageURL` | type codes (text → type-in, reorder → ordering, polls dropped), `@@@` answers, media URL, note |
+| Blooket CSV / Gimkit CSV | ✅ both hosts (2026-09-07) | ⏳ | none | `Typing Answer` → type-in; Gimkit's Correct/Incorrect columns |
+| Quizizz xlsx | ⏳ (export it as CSV) | ⏳ | none | its header names are read once saved as CSV |
 | Moodle GIFT / Aiken | ⏳ | ⏳ GIFT | none | GIFT export is the human-writable archive form |
 | SpeedQuizzing Quick Questions folder | ⏳ | ⏳ | files | drag a folder in: filename → question, file → media |
 | Open Trivia DB JSON | ⏳ | — | none | seed a round from a public bank |

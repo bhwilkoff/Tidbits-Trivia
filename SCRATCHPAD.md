@@ -60,6 +60,15 @@ photograph the editor with media attached. Windows drag-and-drop ⏳ (3.39).
 association + `Program.LaunchPackage`). Verified on the Mac by `open -a` on
 the Minerva package.
 
+**§8.5 first cut:** both CSV readers now read OTHER tools' sheets by
+normalized header names (LIVE-EVENT-FILE §6.1 table): a Kahoot template
+exported as CSV (instruction rows skipped, `1,3` keeps the first), Blooket
+(`Question #` vs `Question Text`, `Typing Answer` → type-in), Crowdpurr (type
+codes → type-in / ordering / polls dropped, `@@@`, media URL → `imageURL`,
+note), Gimkit (Correct + Incorrect 1–3); the export gains an `imageURL`
+column. 5 new tests per stack; the Windows no-header rule restored to "any
+integer in field 5 is the Windows order".
+
 **State left / sequenced (LIVE-PACKAGE-FORMAT §8):** Windows drag-and-drop; file association (Mac UTType +
 MSIX); phones see package media via Firebase Storage at host time; the
 question library (`kind: bank`); Crowdpurr / Kahoot-xlsx / Blooket / GIFT /

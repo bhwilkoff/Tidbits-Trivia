@@ -150,6 +150,14 @@ Kahoot's "- max N characters" — so other tools' sheets import as they are
 **Emit a header on every export**, now with an `imageURL` column, so a bank
 with pictures round-trips. It is the only shape that cannot be misread.
 
+6.1a **One Import button reads three shapes.** The TEXT says which it is
+(`LiveTextFormats.detect` / `TextQuestionFormats.Detect`, mirrored on both
+stacks): `ANSWER:` lines under lettered options = **Aiken**; `{…}` answer
+blocks = **Moodle GIFT**; anything else = CSV. GIFT is also an EXPORT — the
+human-writable archive form, carrying every Tidbits type except ordering
+(which is written as a short answer of the correct sequence rather than
+dropped).
+
 6.2 **`correct` may be the answer TEXT or a 1-based INDEX** into the options.
 Both are common in the wild and both must resolve to the same question.
 

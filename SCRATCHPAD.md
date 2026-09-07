@@ -86,6 +86,14 @@ category filter, Add a fresh copy, remove), Export library as bank package…,
 and a `bank` package imports INTO the library. 4 Swift + 3 xUnit tests; Mac
 picker photographed via `TIDBITS_LIVE_LIBRARY=1`.
 
+**§8.5 continued — GIFT + Aiken** on both hosts: one Import button detects
+Aiken (`ANSWER:` + lettered options), GIFT (`{…}` blocks) or CSV from the text
+itself; GIFT reads MCQ with weights, T/F, short answer → type-in, numerical
+(`:tol`, `..range`) → Closest Call, matching → Match-Up, missing word,
+`::title::`, `####` feedback, `[html]`, escapes. GIFT is also an export (the
+archive form; ordering becomes a short answer of the sequence). An imported
+round takes the format its questions share. 4 tests per stack.
+
 **State left / sequenced (LIVE-PACKAGE-FORMAT §8):** Windows drag-and-drop; file association (Mac UTType +
 MSIX); phones see package media via Firebase Storage at host time; the
 question library (`kind: bank`); Crowdpurr / Kahoot-xlsx / Blooket / GIFT /

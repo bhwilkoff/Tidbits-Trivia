@@ -833,6 +833,72 @@ public partial class LiveView : UserControl
     /// Write the event's authored questions out as CSV a spreadsheet can edit
     /// (LIVE-EVENT-FILE §6.1) — the door to Excel and back, which the event file
     /// does not provide.
+    /// A host's own question file as a new round — CSV (any tool's header, LIVE-EVENT-FILE
+    /// §6.1), GIFT or Aiken; the text says which. The Mac's Import questions… twin.
+    private async void OnImportQuestions(object? sender, RoutedEventArgs e)
+    {
+        var top = TopLevel.GetTopLevel(this);
+        if (top?.StorageProvider is not { } sp) { ShowStatus("This window cannot open a file picker."); return; }
+        try
+        {
+            var files = await sp.OpenFilePickerAsync(new Avalonia.Platform.Storage.FilePickerOpenOptions
+            {
+                Title = "Import questions (CSV, GIFT, Aiken)", AllowMultiple = false,
+                FileTypeFilter = new[] { new Avalonia.Platform.Storage.FilePickerFileType("Questions") { Patterns = new[] { "*.csv", "*.txt", "*.gift" } } },
+            });
+            if (files.Count == 0) return;
+            string text;
+            await using (var stream = await files[0].OpenReadAsync())
+            using (var reader = new System.IO.StreamReader(stream))
+                text = await reader.ReadToEndAsync();
+            var questions = Tidbits.Core.Data.TextQuestionFormats.Detect(text) switch
+            {
+                Tidbits.Core.Data.TextQuestionFormats.Kind.Aiken => Tidbits.Core.Data.TextQuestionFormats.ParseAiken(text),
+                Tidbits.Core.Data.TextQuestionFormats.Kind.Gift => Tidbits.Core.Data.TextQuestionFormats.ParseGift(text),
+                _ => Tidbits.Core.Data.CsvQuestions.Parse(text),
+            };
+            if (questions.Count == 0) { ShowStatus($"No questions in \u201C{files[0].Name}\u201D (CSV, GIFT or Aiken)."); return; }
+            // One format per round: pick the one the questions share, else classic.
+            var kind = questions.All(q => q.Accepted is not null) ? GameMode.TypeAnswer
+                     : questions.All(q => q.Closest is not null) ? GameMode.ClosestCall
+                     : questions.All(q => q.Matching is not null) ? GameMode.Matching
+                     : GameMode.Classic;
+            // NightRound is the wire type pinned to {kind, count} (LIVE-EVENT-FILE §4.1):
+            // its Title is computed from the mode, so an imported round is named by its
+            // FORMAT, not the file. The file name rides in the round's host note instead.
+            _rounds.Add(new NightRound { Kind = kind, Count = questions.Count });
+            _questions.Add(questions.Select(q => q with { RoundIndex = null }).ToList());
+            _notes.Add($"Imported from {files[0].Name}"); _timers.Add(0); _clips.Add(new System.Collections.Generic.List<string>());
+            _buzz.Add(false); _letters.Add(""); _boards.Add(null);
+            RebuildBuilderRounds();
+            ShowStatus($"Imported {questions.Count} question(s) as a new round.");
+        }
+        catch (Exception ex) { ShowStatus($"Could not import that file: {ex.Message}"); }
+    }
+
+    /// GIFT: the human-writable archive form (QUIZ-FORMATS-RESEARCH §4).
+    private async void OnExportQuestionsGift(object? sender, RoutedEventArgs e)
+    {
+        var ev = CurrentEvent();
+        var questions = Enumerable.Range(0, ev.Rounds.Count).SelectMany(ev.QuestionsFor).ToList();
+        if (questions.Count == 0) { ShowStatus("There are no authored questions to export yet."); return; }
+        var top = TopLevel.GetTopLevel(this);
+        if (top?.StorageProvider is not { } sp) { ShowStatus("This window cannot open a file picker."); return; }
+        try
+        {
+            var file = await sp.SaveFilePickerAsync(new Avalonia.Platform.Storage.FilePickerSaveOptions
+            {
+                Title = "Export questions as GIFT", SuggestedFileName = $"{Sanitise(ev.Name)} - questions.gift.txt", DefaultExtension = "txt",
+            });
+            if (file is null) return;
+            await using var stream = await file.OpenWriteAsync();
+            await using var writer = new System.IO.StreamWriter(stream);
+            await writer.WriteAsync(Tidbits.Core.Data.TextQuestionFormats.ExportGift(questions));
+            ShowStatus($"Exported {questions.Count} question(s) as GIFT.");
+        }
+        catch (Exception ex) { ShowStatus($"Could not export the questions: {ex.Message}"); }
+    }
+
     private async void OnExportQuestionsCsv(object? sender, RoutedEventArgs e)
     {
         var ev = CurrentEvent();

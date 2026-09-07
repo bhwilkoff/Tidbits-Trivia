@@ -82,7 +82,8 @@ wraps. Do not import those caps.
 | Crowdpurr CSV | ✅ both hosts (2026-09-07) | ⏳ | by URL → `imageURL` | type codes (text → type-in, reorder → ordering, polls dropped), `@@@` answers, media URL, note |
 | Blooket CSV / Gimkit CSV | ✅ both hosts (2026-09-07) | ⏳ | none | `Typing Answer` → type-in; Gimkit's Correct/Incorrect columns |
 | Quizizz xlsx | ⏳ (export it as CSV) | ⏳ | none | its header names are read once saved as CSV |
-| Moodle GIFT / Aiken | ⏳ | ⏳ GIFT | none | GIFT export is the human-writable archive form |
+| Moodle GIFT | ✅ both hosts (2026-09-07) | ✅ both hosts (2026-09-07) | none | MCQ (with `%50%` weights), T/F, short answer → type-in, numerical (`:tol` and `..range`) → Closest Call, matching → Match-Up, missing word, `::title::`, `####` feedback, `[html]` tags, backslash escapes. Ordering exports as a short answer of the sequence so nothing is silently dropped |
+| Moodle Aiken | ✅ both hosts (2026-09-07) | — | none | lettered options + `ANSWER:`; the simplest MCQ text format there is |
 | SpeedQuizzing Quick Questions folder | ⏳ | ⏳ | files | drag a folder in: filename → question, file → media |
 | Open Trivia DB JSON | ⏳ | — | none | seed a round from a public bank |
 | QTI 3.0 | 🚫 for now | 🚫 | embedded | education-only demand; revisit if a school asks |

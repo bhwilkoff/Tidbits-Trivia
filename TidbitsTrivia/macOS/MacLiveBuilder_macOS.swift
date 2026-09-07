@@ -350,7 +350,7 @@ struct LiveBuilderView_macOS: View {
             .keyboardShortcut(.return, modifiers: [.command])
             .disabled(working.totalQuestions == 0)
         Menu {
-            Button("Import CSV…") { importCSV() }
+            Button("Import questions (CSV, GIFT, Aiken)…") { importCSV() }
             Button("Audio round…") { addAudioRound() }
             Button("Video round…") { addVideoRound() }
             Divider()
@@ -369,6 +369,8 @@ struct LiveBuilderView_macOS: View {
                 .disabled(library.items.isEmpty)
             Divider()
             Button("Export questions as CSV…") { exportQuestionsCSV() }
+                .disabled(working.totalQuestions == 0)
+            Button("Export questions as GIFT…") { exportQuestionsGIFT() }
                 .disabled(working.totalQuestions == 0)
         } label: { Label("Event file", systemImage: "doc") }
             .fixedSize()
@@ -978,6 +980,16 @@ struct LiveBuilderView_macOS: View {
         }
     }
 
+    /// GIFT: the human-writable archive form (QUIZ-FORMATS-RESEARCH §4) — every
+    /// type but ordering round-trips through Moodle and any text editor.
+    private func exportQuestionsGIFT() {
+        guard let url = chooseSaveURL(named: "\(working.name) — questions.gift.txt", types: [.plainText]) else { return }
+        do {
+            try Data(LiveTextFormats.exportGIFT(working.questionStream).utf8).write(to: url, options: .atomic)
+            fileReceipt = "Exported \(working.totalQuestions) questions as GIFT"
+        } catch { presentMessage("Could not export the questions", error.localizedDescription) }
+    }
+
     /// Wave A: CSV import — bulk-author a round from a host's question bank.
     /// Columns: prompt, correct, wrong1, wrong2, wrong3, [category], [difficulty 1-5], [explanation].
     private func importCSV() {
@@ -988,16 +1000,34 @@ struct LiveBuilderView_macOS: View {
                            + "Re-save it from your spreadsheet as CSV (UTF-8).")
             return
         }
-        let qs = LiveCSV.parseCSVQuestions(text)
+        // The text says what it is: Aiken's ANSWER: lines, GIFT's {…} blocks, else CSV.
+        let kind = LiveTextFormats.detect(text)
+        let qs: [Question]
+        let kindName: String
+        switch kind {
+        case .aiken: qs = LiveTextFormats.parseAiken(text); kindName = "Aiken"
+        case .gift: qs = LiveTextFormats.parseGIFT(text); kindName = "GIFT"
+        case .csv: qs = LiveCSV.parseCSVQuestions(text); kindName = "CSV"
+        }
         guard !qs.isEmpty else {
             // A silent return here is how a host's CSV "imports" and nothing appears.
             presentMessage("No questions in “\(url.lastPathComponent)”",
-                           "Each row needs at least: prompt, correct answer, and three wrong answers. "
-                           + "Optional extras follow: category, difficulty 1-5, explanation.")
+                           kind == .csv
+                           ? "Each row needs at least: prompt, correct answer, and three wrong answers. "
+                             + "Optional extras follow: category, difficulty 1-5, explanation. A named header row "
+                             + "(including another tool's, like Kahoot's or Crowdpurr's) is read by name."
+                           : "Tidbits read this as \(kindName) but found no answerable questions in it.")
             return
         }
-        working.rounds.append(LiveRound(title: "Imported round", format: .classic, categoryID: "mixed", questions: qs))
-        fileReceipt = "Imported \(qs.count) questions from CSV"
+        // One format per round: the one the questions share, else classic.
+        let format: GameMode = qs.allSatisfy { $0.accepted != nil } ? .typeAnswer
+            : qs.allSatisfy { $0.closest != nil } ? .closestCall
+            : qs.allSatisfy { $0.matching != nil } ? .matching : .classic
+        working.rounds.append(LiveRound(title: url.deletingPathExtension().lastPathComponent, format: format,
+                                        categoryID: "mixed", questions: qs))
+        // Name the format the file actually WAS: a GIFT import reporting "from CSV"
+        // is a false receipt, and the receipt is the only thing the host reads.
+        fileReceipt = "Imported \(qs.count) questions from \(kindName)"
     }
 
     private func presentMessage(_ title: String, _ detail: String) {

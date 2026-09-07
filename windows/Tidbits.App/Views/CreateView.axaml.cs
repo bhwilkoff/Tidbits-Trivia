@@ -72,10 +72,10 @@ public partial class CreateView : UserControl
         if (top is null) return;
         var files = await top.StorageProvider.OpenFilePickerAsync(new Avalonia.Platform.Storage.FilePickerOpenOptions
         {
-            Title = "Import questions (CSV)", AllowMultiple = false,
+            Title = "Import questions (CSV, GIFT, Aiken)", AllowMultiple = false,
             FileTypeFilter = new[]
             {
-                new Avalonia.Platform.Storage.FilePickerFileType("CSV") { Patterns = new[] { "*.csv" } },
+                new Avalonia.Platform.Storage.FilePickerFileType("Questions") { Patterns = new[] { "*.csv", "*.txt", "*.gift" } },
             },
         });
         var file = files.FirstOrDefault();
@@ -86,8 +86,14 @@ public partial class CreateView : UserControl
         using (var reader = new System.IO.StreamReader(stream))
             text = await reader.ReadToEndAsync();
 
-        var questions = Tidbits.Core.Data.CsvQuestions.Parse(text);
-        if (questions.Count == 0) { Status("No valid questions found in that CSV."); return; }
+        // The text says what it is: Aiken's ANSWER: lines, GIFT's {…} blocks, else CSV.
+        var questions = Tidbits.Core.Data.TextQuestionFormats.Detect(text) switch
+        {
+            Tidbits.Core.Data.TextQuestionFormats.Kind.Aiken => Tidbits.Core.Data.TextQuestionFormats.ParseAiken(text),
+            Tidbits.Core.Data.TextQuestionFormats.Kind.Gift => Tidbits.Core.Data.TextQuestionFormats.ParseGift(text),
+            _ => Tidbits.Core.Data.CsvQuestions.Parse(text),
+        };
+        if (questions.Count == 0) { Status("No valid questions found in that file (CSV, GIFT or Aiken)."); return; }
 
         var label = System.IO.Path.GetFileNameWithoutExtension(file.Name);
         var gdi = GameData.Shared.Value;

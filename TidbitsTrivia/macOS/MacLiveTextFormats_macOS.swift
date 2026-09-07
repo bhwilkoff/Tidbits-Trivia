@@ -237,3 +237,117 @@ enum LiveTextFormats {
     }
 }
 #endif
+
+// MARK: - SpeedQuizzing "Quick Questions" folders (QUIZ-FORMATS-RESEARCH §1)
+
+/// A SpeedQuizzing quizpack is a FOLDER of files whose NAMES are the questions
+/// and whose CONTENTS are the media: `QQ_Who sang this^^_Dolly Parton.mp3` is a
+/// name-that-tune question with the clip attached. This is the one importer
+/// where the media IS the question, which is exactly what the `.tidbits`
+/// package was built to carry.
+///
+/// The public documentation gives the separator (underscore), the `^^` → `?`
+/// substitution, the leading order number (`05 QQ_…`) and the supported
+/// extensions; the full help file ships inside the SpeedQuizzing app and is not
+/// public. So this reads what is DOCUMENTED and refuses to guess the rest: an
+/// unknown prefix is treated as a plain quick question, and no field is ever
+/// promoted to a right answer it might not be.
+enum LiveQuickQuestions {
+    static let mediaExtensions: Set<String> = ["jpg", "jpeg", "png", "gif", "mp3", "wav", "m4a", "mp4", "mov"]
+
+    struct Parsed {
+        var prompt: String
+        var answers: [String]      // the first is the one to beat; the rest are ALTERNATIVES
+        var isPoll: Bool           // QQV — a vote, with no right answer
+        var order: Int?            // a leading "05 " so a folder keeps its running order
+    }
+
+    /// Read one filename. Returns nil when it carries no question at all.
+    static func parse(filename: String) -> Parsed? {
+        var stem = (filename as NSString).deletingPathExtension
+        var order: Int? = nil
+        // A leading order number: "05 QQ_What is…"
+        if let m = stem.range(of: "^\\s*(\\d{1,3})[\\s._-]+", options: .regularExpression) {
+            order = Int(stem[m].trimmingCharacters(in: CharacterSet(charactersIn: " ._-")))
+            stem = String(stem[m.upperBound...])
+        }
+        var fields = stem.components(separatedBy: "_").map {
+            $0.replacingOccurrences(of: "^^", with: "?")
+              .trimmingCharacters(in: .whitespaces)
+        }
+        var isPoll = false
+        // A leading QQ… code names the KIND. QQV is a vote; the rest play as questions.
+        if let first = fields.first, first.range(of: "^QQ[A-Z]{0,3}$", options: [.regularExpression, .caseInsensitive]) != nil {
+            isPoll = first.uppercased().hasPrefix("QQV")
+            fields.removeFirst()
+        }
+        fields.removeAll { $0.isEmpty }
+        guard let prompt = fields.first, !prompt.isEmpty else { return nil }
+        return Parsed(prompt: prompt, answers: Array(fields.dropFirst()), isPoll: isPoll, order: order)
+    }
+
+    /// Turn a picked folder's files into questions. `store` puts a media file in
+    /// the media store and returns its id; the caller owns the sandbox scope.
+    ///
+    /// Every question is a TYPE-IN with each filename answer accepted. The
+    /// documented format does not say whether the fields after the first are
+    /// alternative spellings or distractors, and importing a distractor as a
+    /// choice would be fine while importing one as ACCEPTED would mark a wrong
+    /// player right — so they are accepted only as answers to a name-it, which is
+    /// how a quizpack is hosted anyway. Notes say what was skipped.
+    static func questions(from files: [URL], store: (URL) throws -> String?) -> (questions: [Question], notes: [String]) {
+        var rows: [(order: Int, q: Question)] = []
+        var notes: [String] = []
+        var n = 0
+        for url in files.sorted(by: { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }) {
+            let name = url.lastPathComponent
+            if name.hasPrefix(".") { continue }
+            let ext = url.pathExtension.lowercased()
+            guard ext == "txt" || mediaExtensions.contains(ext) else {
+                notes.append("\(name): not a Quick Question file (.txt, picture, audio or video)")
+                continue
+            }
+            guard let p = parse(filename: name) else {
+                notes.append("\(name): no question in the filename")
+                continue
+            }
+            if p.isPoll {
+                notes.append("\(name): a voting question has no right answer — skipped")
+                continue
+            }
+            guard let answer = p.answers.first else {
+                notes.append("\(name): no answer after the question — skipped")
+                continue
+            }
+            var mediaID: String? = nil
+            if ext != "txt" {
+                do { mediaID = try store(url) }
+                catch { notes.append("\(name): could not read the media (\(error.localizedDescription))") }
+            }
+            n += 1
+            var q = Question(id: "sq-\(UUID().uuidString.prefix(8))", prompt: p.prompt, options: [answer],
+                             correctIndex: 0, categoryID: "mixed", difficulty: 3, explanation: "",
+                             sourceTitle: "", sourceURL: nil, templateID: "speedquizzing",
+                             accepted: p.answers)
+            if let id = mediaID, ["jpg", "jpeg", "png", "gif"].contains(ext) {
+                q.imageURL = LiveMediaStore.reference(id)
+            }
+            rows.append((p.order ?? n, q))
+        }
+        // A folder's own numbering wins; files without one keep their sorted place.
+        return (rows.sorted { $0.order < $1.order }.map(\.q), notes)
+    }
+
+    /// The clip ids, index-parallel with `questions(from:store:)`'s output, for the
+    /// audio/video files among them (LIVE-PACKAGE-FORMAT §3.2).
+    static func clipIDs(from files: [URL], store: (URL) throws -> String?) -> [String?] {
+        var out: [String?] = []
+        for url in files.sorted(by: { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }) {
+            let ext = url.pathExtension.lowercased()
+            guard ext == "txt" || mediaExtensions.contains(ext), !url.lastPathComponent.hasPrefix("."),
+                  let p = parse(filename: url.lastPathComponent), !p.isPoll, !p.answers.isEmpty else { continue }
+            if ["mp3", "wav", "m4a", "mp4", "mov"].contains(ext) { out.append(try? store(url)) } else { out.append(nil) }
+        }
+        return out
+    }
+}

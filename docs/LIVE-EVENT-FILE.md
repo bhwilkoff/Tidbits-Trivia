@@ -150,6 +150,12 @@ Kahoot's "- max N characters" — so other tools' sheets import as they are
 **Emit a header on every export**, now with an `imageURL` column, so a bank
 with pictures round-trips. It is the only shape that cannot be misread.
 
+6.1b **A SpeedQuizzing folder is a fourth import** (QUIZ-FORMATS-RESEARCH §1):
+"Import a SpeedQuizzing folder…" on both hosts reads a quizpack whose filenames
+are the questions and whose files are the media. It is a FOLDER picker, not a
+file picker, and every picture/clip is copied into the media store, so the
+imported round exports as a `.tidbits` package with its media inside.
+
 6.1a **One Import button reads three shapes.** The TEXT says which it is
 (`LiveTextFormats.detect` / `TextQuestionFormats.Detect`, mirrored on both
 stacks): `ANSWER:` lines under lettered options = **Aiken**; `{…}` answer

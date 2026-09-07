@@ -930,6 +930,56 @@ public partial class LiveView : UserControl
         catch (Exception ex) { ShowStatus($"Could not import that file: {ex.Message}"); }
     }
 
+    /// A SpeedQuizzing quizpack is a FOLDER whose filenames are the questions and
+    /// whose files are the media (QUIZ-FORMATS-RESEARCH §1). Each picture, MP3 or
+    /// clip lands in the media store, so the round exports as a `.tidbits` package
+    /// with the media inside — the whole point of the format.
+    private async void OnImportQuickQuestions(object? sender, RoutedEventArgs e)
+    {
+        var top = TopLevel.GetTopLevel(this);
+        if (top?.StorageProvider is not { } sp) { ShowStatus("This window cannot open a folder picker."); return; }
+        try
+        {
+            var folders = await sp.OpenFolderPickerAsync(new Avalonia.Platform.Storage.FolderPickerOpenOptions
+            {
+                Title = "Import a SpeedQuizzing folder", AllowMultiple = false,
+            });
+            if (folders.Count == 0) return;
+            var dir = folders[0].Path?.LocalPath;
+            if (string.IsNullOrEmpty(dir) || !System.IO.Directory.Exists(dir)) { ShowStatus("Could not read that folder."); return; }
+            var files = System.IO.Directory.GetFiles(dir);
+            string? Store(string path)
+            {
+                try
+                {
+                    return LiveMediaStore.Store(System.IO.File.ReadAllBytes(path),
+                                                System.IO.Path.GetExtension(path), System.IO.Path.GetFileName(path));
+                }
+                catch { return null; }
+            }
+            var (qs, notes) = Tidbits.Core.Data.QuickQuestions.FromFolder(files, Store);
+            if (qs.Count == 0)
+            {
+                ShowStatus($"No Quick Questions in that folder — a Quick Question is a file whose NAME is the "
+                         + "question and answer, separated by underscores, e.g. \u201CQQ_Who sang this^^_Dolly Parton.mp3\u201D.");
+                return;
+            }
+            var clips = Tidbits.Core.Data.QuickQuestions.ClipPaths(files, Store);
+            _rounds.Add(new NightRound { Kind = GameMode.TypeAnswer, Count = qs.Count });
+            _questions.Add(qs);
+            _notes.Add($"Imported from {System.IO.Path.GetFileName(dir)}");
+            _timers.Add(0);
+            _clips.Add(clips.Take(qs.Count).Concat(Enumerable.Repeat("", Math.Max(0, qs.Count - clips.Count))).ToList());
+            _buzz.Add(false); _letters.Add(""); _boards.Add(null);
+            RebuildBuilderRounds();
+            var pictured = qs.Count(q => q.ImageUrl is not null);
+            var clipped = clips.Take(qs.Count).Count(c => !string.IsNullOrEmpty(c));
+            ShowStatus($"Imported {qs.Count} Quick Questions ({pictured} with pictures, {clipped} with clips)."
+                       + (notes.Count == 0 ? "" : $" {notes.Count} note(s): {string.Join("; ", notes.Take(3))}"));
+        }
+        catch (Exception ex) { ShowStatus($"Could not import that folder: {ex.Message}"); }
+    }
+
     /// GIFT: the human-writable archive form (QUIZ-FORMATS-RESEARCH §4).
     private async void OnExportQuestionsGift(object? sender, RoutedEventArgs e)
     {

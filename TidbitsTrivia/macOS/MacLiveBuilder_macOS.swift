@@ -111,6 +111,7 @@ struct LiveBuilderView_macOS: View {
             case "exportpackage": exportPackage()
             case "importpackage": importEvent()   // the one importer opens both shapes
             case "exportlibrary": exportLibrary()
+            case "importqq": importQuickQuestions()
             case "exportcsv":   exportQuestionsCSV()
             case "importcsv":   importCSV()
             case "printpack":
@@ -351,6 +352,7 @@ struct LiveBuilderView_macOS: View {
             .disabled(working.totalQuestions == 0)
         Menu {
             Button("Import questions (CSV, GIFT, Aiken)…") { importCSV() }
+            Button("Import a SpeedQuizzing folder…") { importQuickQuestions() }
             Button("Audio round…") { addAudioRound() }
             Button("Video round…") { addVideoRound() }
             Divider()
@@ -977,6 +979,59 @@ struct LiveBuilderView_macOS: View {
             fileReceipt = "Exported \(working.totalQuestions) questions as CSV"
         } catch {
             presentMessage("Could not export the questions", error.localizedDescription)
+        }
+    }
+
+    /// A SpeedQuizzing quizpack is a FOLDER whose filenames are the questions and
+    /// whose files are the media (QUIZ-FORMATS-RESEARCH §1). Each picture, MP3 or
+    /// clip lands in the media store, so the round exports as a `.tidbits` package
+    /// with the media inside — the whole point of the format.
+    private func importQuickQuestions() {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.allowsMultipleSelection = false
+        let picked: URL?
+        if let p = ProcessInfo.processInfo.environment["TIDBITS_LIVE_QQFOLDER"], !p.isEmpty {
+            picked = p.contains("/") ? URL(fileURLWithPath: (p as NSString).expandingTildeInPath)
+                : FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!.appendingPathComponent(p)
+        } else {
+            picked = panel.runModal() == .OK ? panel.url : nil
+        }
+        guard let folder = picked else { return }
+        let granted = folder.startAccessingSecurityScopedResource()
+        defer { if granted { folder.stopAccessingSecurityScopedResource() } }
+        guard let files = try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil) else {
+            presentMessage("Could not read “\(folder.lastPathComponent)”", "Tidbits could not list that folder.")
+            return
+        }
+        let store: (URL) throws -> String? = { url in
+            try LiveMediaStore.store(try Data(contentsOf: url), ext: url.pathExtension, originalName: url.lastPathComponent)
+        }
+        let (qs, notes) = LiveQuickQuestions.questions(from: files, store: store)
+        guard !qs.isEmpty else {
+            presentMessage("No Quick Questions in “\(folder.lastPathComponent)”",
+                           "A Quick Question is a file whose NAME is the question and answer, separated by "
+                           + "underscores — for example “QQ_Who sang this^^_Dolly Parton.mp3”."
+                           + (notes.isEmpty ? "" : "\n\n" + notes.prefix(6).joined(separator: "\n")))
+            return
+        }
+        let clips = LiveQuickQuestions.clipIDs(from: files, store: store)
+        var round = LiveRound(title: folder.lastPathComponent, format: .typeAnswer, categoryID: "mixed", questions: qs)
+        // The clip arrays stay index-parallel with the questions (§3.2).
+        let marks: [Data] = clips.prefix(qs.count).map { id in
+            guard let id, let url = LiveMediaStore.fileURL(id), let m = try? LiveClip.bookmark(for: url) else { return Data() }
+            return m
+        }
+        if marks.contains(where: { !$0.isEmpty }) {
+            round.audioBookmarks = marks + Array(repeating: Data(), count: max(0, qs.count - marks.count))
+        }
+        working.rounds.append(round)
+        let pictured = qs.filter { $0.imageURL != nil }.count
+        let clipped = marks.filter { !$0.isEmpty }.count
+        fileReceipt = "Imported \(qs.count) Quick Questions (\(pictured) with pictures, \(clipped) with clips)"
+        if !notes.isEmpty {
+            presentMessage("Imported with \(notes.count) note\(notes.count == 1 ? "" : "s")", notes.prefix(8).joined(separator: "\n"))
         }
     }
 

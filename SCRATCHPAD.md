@@ -94,6 +94,16 @@ itself; GIFT reads MCQ with weights, T/F, short answer → type-in, numerical
 archive form; ordering becomes a short answer of the sequence). An imported
 round takes the format its questions share. 4 tests per stack.
 
+**SpeedQuizzing quizpacks import on both hosts** — pick the folder, the
+filename is the question and the file is the media (into the store, so the
+round exports as a package with its clips inside). Only the DOCUMENTED parts
+are read (`_` separator, `^^` → `?`, `05 ` order prefix, `QQ…` kind code,
+extensions); `QQV` votes are skipped by name and anything unreadable is
+reported. Questions import as name-it accepting each filename answer, because
+the public docs never say whether later fields are alternatives or distractors
+and accepting a distractor would mark a wrong player right. Verified on the
+glass with a real folder (`TIDBITS_LIVE_FILEOP=importqq`).
+
 **State left / sequenced (LIVE-PACKAGE-FORMAT §8):** Windows drag-and-drop; file association (Mac UTType +
 MSIX); phones see package media via Firebase Storage at host time; the
 question library (`kind: bank`); Crowdpurr / Kahoot-xlsx / Blooket / GIFT /

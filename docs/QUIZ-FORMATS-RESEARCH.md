@@ -84,7 +84,7 @@ wraps. Do not import those caps.
 | Quizizz xlsx | ⏳ (export it as CSV) | ⏳ | none | its header names are read once saved as CSV |
 | Moodle GIFT | ✅ both hosts (2026-09-07) | ✅ both hosts (2026-09-07) | none | MCQ (with `%50%` weights), T/F, short answer → type-in, numerical (`:tol` and `..range`) → Closest Call, matching → Match-Up, missing word, `::title::`, `####` feedback, `[html]` tags, backslash escapes. Ordering exports as a short answer of the sequence so nothing is silently dropped |
 | Moodle Aiken | ✅ both hosts (2026-09-07) | — | none | lettered options + `ANSWER:`; the simplest MCQ text format there is |
-| SpeedQuizzing Quick Questions folder | ⏳ | ⏳ | files | drag a folder in: filename → question, file → media |
+| SpeedQuizzing Quick Questions folder | ✅ both hosts (2026-09-07) | 🚫 | **files, embedded** | Pick the folder: the FILENAME is the question (`QQ_Who sang this^^_Dolly Parton.mp3`) and the FILE is the media, which lands in the media store so the round exports as a `.tidbits` with the clips inside. Reads the documented parts only — underscore separator, `^^` → `?`, a leading order number (`05 QQ_…`), the `QQ…` kind code, the supported extensions. `QQV` (voting) has no right answer and is skipped by name; anything else unreadable is reported, never guessed. Every question imports as a name-it (type-in) accepting each filename answer, because the public docs do not say whether the later fields are alternative spellings or distractors — and accepting a distractor would mark a wrong player RIGHT. No export: their format is a folder of their files, not ours |
 | Open Trivia DB JSON | ⏳ | — | none | seed a round from a public bank |
 | QTI 3.0 | 🚫 for now | 🚫 | embedded | education-only demand; revisit if a school asks |
 

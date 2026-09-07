@@ -75,3 +75,64 @@ struct LiveTextFormatsTests {
     }
 }
 #endif
+
+#if os(macOS)
+import Foundation
+import Testing
+
+/// QUIZ-FORMATS-RESEARCH §1 — SpeedQuizzing Quick Questions: the filename IS the
+/// question, the file IS the media.
+@Suite("SpeedQuizzing Quick Questions")
+struct LiveQuickQuestionsTests {
+    @Test("the documented filename shape: prefix code, underscores, ^^ for ?, a leading order number")
+    func filenames() {
+        let a = LiveQuickQuestions.parse(filename: "QQ_Who sang this^^_Dolly Parton.mp3")
+        #expect(a?.prompt == "Who sang this?" && a?.answers == ["Dolly Parton"] && a?.isPoll == false)
+        let b = LiveQuickQuestions.parse(filename: "05 QQ_What is the capital of Peru^^_Lima_Ciudad de los Reyes.txt")
+        #expect(b?.order == 5 && b?.prompt == "What is the capital of Peru?")
+        #expect(b?.answers == ["Lima", "Ciudad de los Reyes"])
+        // The verbatim example from SpeedQuizzing's own documentation.
+        let v = LiveQuickQuestions.parse(filename: "QQV_Who would have won in a cage fight in their prime^^_Mike Tyson_Bruce Lee.txt")
+        #expect(v?.isPoll == true)
+        // A file with no answer, and one with no question at all.
+        #expect(LiveQuickQuestions.parse(filename: "QQ_Just a question^^.txt")?.answers.isEmpty == true)
+        #expect(LiveQuickQuestions.parse(filename: ".DS_Store") != nil)   // filtered by the caller, not here
+    }
+
+    @Test("a folder becomes a round: media attached, votes skipped, order honoured, notes for the rest")
+    func folder() {
+        let dir = URL(fileURLWithPath: "/quizpack")
+        let files = [
+            dir.appendingPathComponent("03 QQ_Who sang this^^_Dolly Parton.mp3"),
+            dir.appendingPathComponent("01 QQ_Which building is this^^_Chrysler Building.jpg"),
+            dir.appendingPathComponent("02 QQ_Capital of Peru^^_Lima_Ciudad de los Reyes.txt"),
+            dir.appendingPathComponent("QQV_Cats or dogs^^_Cats_Dogs.txt"),
+            dir.appendingPathComponent("notes.pdf"),
+            dir.appendingPathComponent(".DS_Store"),
+        ]
+        var stored: [String] = []
+        let (qs, notes) = LiveQuickQuestions.questions(from: files) { url in
+            stored.append(url.lastPathComponent); return "id-" + String(url.pathExtension)
+        }
+        #expect(qs.count == 3)
+        #expect(qs.map(\.prompt) == ["Which building is this?", "Capital of Peru?", "Who sang this?"])
+        #expect(qs[0].imageURL?.absoluteString == "tidbits-media:id-jpg")   // the picture rides on the question
+        #expect(qs[1].imageURL == nil)
+        #expect(qs[1].accepted == ["Lima", "Ciudad de los Reyes"])
+        #expect(qs.allSatisfy { $0.accepted != nil })                       // every one is a name-it
+        #expect(notes.count == 2)                                          // the vote and the PDF
+        #expect(notes.contains { $0.contains("voting") } && notes.contains { $0.contains("notes.pdf") })
+    }
+
+    @Test("clip ids line up with the questions, one slot per question")
+    func clips() {
+        let dir = URL(fileURLWithPath: "/quizpack")
+        let files = [
+            dir.appendingPathComponent("01 QQ_Which building is this^^_Chrysler Building.jpg"),
+            dir.appendingPathComponent("02 QQ_Who sang this^^_Dolly Parton.mp3"),
+        ]
+        let ids = LiveQuickQuestions.clipIDs(from: files) { "id-" + $0.pathExtension }
+        #expect(ids == [nil, "id-mp3"])   // the picture takes no clip slot; the MP3 does
+    }
+}
+#endif

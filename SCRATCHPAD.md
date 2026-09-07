@@ -7,6 +7,45 @@
 > `docs/ROADMAP.md`, `docs/DATA-CONTRACT.md`. Detailed per-round history is in
 > `ARCHIVE.md`.
 
+## Current state (2026-09-06) — Kahoot import + projector pictures + per-element big-screen switches
+
+**Asked:** "build a parser/extractor for Kahoot quizzes to import into Tidbits
+Live … get everything (even images) to work for this specific quiz in the mac
+app" and, on seeing the projector, "so busy with words that are unnecessary …
+make it so I can turn off each element of the projection as needed."
+
+**Found:** the portable event file (`docs/LIVE-EVENT-FILE.md`) already carried
+everything an import needs, including `imageURL`, and every JOINER already
+rendered it — but the Mac big screen and cockpit had never shown a picture,
+because no generated night has one. Kahoot's own REST JSON
+(`create.kahoot.it/rest/kahoots/{uuid}`) serves a shared quiz anonymously with
+every choice's `correct` flag, so nothing is scraped and the editor is never
+opened.
+
+**Did:** `tools/kahoot_import.py` (LIVE-EVENT-FILE §7, Decision 057) — one
+round per format, longest Kahoot timer per round, content slides → host notes,
+answerless blocks skipped and NAMED, pictures downloaded for the host and
+HEAD-verified as `image/*` before they are referenced. Mac host surfaces now
+render the picture (`LiveQuestionImage`: `NSImageView` so GIFs animate, one
+prefetching cache, a visible "Picture unavailable" state), the big screen's
+picture band yields before the prompt does (measured at 1280x720). macOS-DESIGN
+**A8.7**: every non-question element of the live slide is a check item in the
+cockpit's **Screen** menu (persisted; `TIDBITS_LIVE_HIDE=` for one launch).
+New hook `TIDBITS_LIVE_HOST_FILE=<event>` hosts an imported night. Verified on
+the glass: projector question/reveal/minimal/bare, cockpit, and the web joiner
+(code MINV) showing the picture + choices. Version 1.7.2 (125).
+
+**The Minerva night** (13 questions, 10 pictures, 2 GIFs) lives OUTSIDE the
+repo — photos of colleagues on a public Pages site would be wrong:
+`~/Documents/Tidbits Live/Minerva Admissions Onboarding 26-27.tidbitsevent.json`
+(+ `.images/`, + the raw `.kahoot.json`). It is also pre-imported into the app's
+saved nights. The build that carries the pictures + switches is
+`build/dd-mac/…/TidbitsTrivia.app`; `/Applications/TidbitsTrivia.app` is 1.7.1.
+
+**State left:** Windows host big-screen picture band is ⏳ (WINDOWS-PARITY
+3.36). Pre-existing at 1280x720: the team strip can overlap the tally on
+reveal (the host can now switch it off).
+
 ## Current state (2026-09-05) — Play rejected vc93 on TV-BN; assets fixed and re-shipped
 
 **Found:** Google Play **rejected versionCode 93 (1.7.1)** under the Android TV

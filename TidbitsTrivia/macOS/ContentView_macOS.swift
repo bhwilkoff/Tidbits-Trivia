@@ -126,6 +126,19 @@ struct ContentView_macOS: View {
             if liveHost == nil, ProcessInfo.processInfo.environment["TIDBITS_LIVE_HOST"] == "1" {
                 liveHost = await Self.quickNightEvent(name: "Friday Pub Quiz")
             }
+            // TIDBITS_LIVE_HOST_FILE=<event file> hosts an IMPORTED night (a Kahoot
+            // import, a co-host's export) instead of the generated quick night, so the
+            // projector can be photographed showing a question that carries a picture.
+            // The generated night never has one, and a surface nothing can drive is
+            // untested (hooks-are-coverage). A bare filename resolves inside the
+            // sandbox's Documents, exactly like TIDBITS_LIVE_FILE. No-op in production.
+            if liveHost == nil, let p = ProcessInfo.processInfo.environment["TIDBITS_LIVE_HOST_FILE"], !p.isEmpty {
+                let url = p.contains("/")
+                    ? URL(fileURLWithPath: (p as NSString).expandingTildeInPath)
+                    : FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+                        .appendingPathComponent(p)
+                liveHost = try? LiveEventFile.read(from: url)
+            }
             // Resolve against the MAC's sections, not AppStore.Tab. That enum is the
             // iOS tab set (play/records/create), so every Mac-only section had to be
             // special-cased — "live" was, and "leaderboard" was not, which meant

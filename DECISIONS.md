@@ -2036,3 +2036,31 @@ fires CS0020 if the names drift — a `const string` may legally be null, so a
 check the type, interface, constructor and probe. Also set `EnableWindowsTargeting=true`
 so the library still compiles on the non-Windows dev box (Decision 045); a compile error
 is worth catching in seconds rather than a four-minute CI round trip.
+
+## 057 — An outside quiz is imported through the portable event file, never through its own model
+*Date: 2026-09-06*
+
+When a host brings a night from another tool (Kahoot today; Quizizz, Blooket,
+a spreadsheet tomorrow), the importer writes the **portable event document**
+(`docs/LIVE-EVENT-FILE.md`) and the app opens it through the ordinary
+"Import event…". No client grows a Kahoot type, a Kahoot round, or a Kahoot
+picture path.
+
+**Why:** the event file already IS the contract every host platform reads, and
+it carries the shared `Question` shape verbatim — including `imageURL`, which
+every joiner already rendered. Writing the file meant the Mac and Windows hosts
+needed zero new import code, and the one real gap it exposed (the Mac big screen
+had never rendered a picture, because no generated night has one) was a display
+bug in the host, not an import feature. An importer that produced its own model
+would have needed that model mirrored on both hosts and would have hidden the
+gap behind "works in the builder". The importer is also where the tool's
+semantics get translated ONCE — Kahoot's per-question timer becomes the round's
+longest timer, multi-correct becomes first-correct-and-reported, content slides
+become host notes — and every deviation is printed, never silently applied.
+
+**How to apply:** a new source gets a new `tools/<source>_import.py` that emits
+`com.learningischange.tidbits.live-event` v1 and prints a note for every
+lossy mapping. Verify the artefact the file references (a picture URL must
+answer `image/*` before it is written), not the tool's opinion of it. If the
+imported night shows something the host surfaces have never displayed, add the
+display hook (`TIDBITS_LIVE_HOST_FILE`) and photograph it — hooks are coverage.

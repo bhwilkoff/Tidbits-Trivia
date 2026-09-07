@@ -156,3 +156,56 @@ An answer no option matches is a question nobody can get right.
 bytes look like it (interleaved NULs), then the 8-bit encodings, rejecting any
 decode containing a NUL or a replacement character. Excel on Windows writes
 UTF-16LE with a BOM; assuming UTF-8 silently imported nothing.
+
+
+---
+
+## §7 — Importing a Kahoot (binding)
+
+A host who already has a night in Kahoot does not rebuild it by hand. The
+import is `tools/kahoot_import.py`, and it writes THIS document — never a
+Kahoot-shaped file and never a client-specific one — so the night opens on the
+Mac and on Windows through the ordinary "Import event…" with no new code path.
+
+7.1 **The source is Kahoot's own JSON, not the slides.** A share link's quiz is
+served by `https://create.kahoot.it/rest/kahoots/{uuid}` (the payload the
+details page itself loads) with every choice and its `correct` flag, so nothing
+is scraped off the slide DOM and the editor never has to be opened. A private
+quiz needs `--token` (the `token` key in create.kahoot.it's localStorage) or the
+JSON saved from the browser. The raw JSON is always written next to the output
+so a re-import is offline.
+
+7.2 **Block → question mapping.** `quiz` / `true_false` → `classic`;
+`multiple_select_quiz` → `classic` keeping the FIRST correct choice (reported,
+so the host edits it); `jumble` → `ordering` (Kahoot stores jumble choices in
+the correct order); `open_ended` → `typeAnswer` with every choice accepted.
+`survey` / `poll` / `word_cloud` / `brainstorm` / `scale` and the other
+answerless blocks are skipped and named in the output; a content slide becomes
+the next round's `hostNote`, because the host reads it aloud. Nothing is
+dropped silently — every deviation is printed as a note.
+
+7.3 **One round per format.** A `LiveRound` holds one format, so a format
+change always starts a round. Kahoot times each question; a round has ONE
+timer, so the round takes the LONGEST time in it (no question is cut short;
+the host reveals early) and the note says so. `--rounds by-timer` splits on
+timer changes instead, at the cost of a standings break at each boundary.
+
+7.4 **Pictures travel as `imageURL` and are verified.** Every question image
+(and the cover) is downloaded into `<stem>.images/` so the host owns a copy,
+and `imageURL` points at Kahoot's public media CDN, which the Mac projector,
+the cockpit and every joiner load at show time. Each URL the file references
+is HEAD-checked for an `image/*` answer first; one that fails is left OFF the
+question and reported, because a broken picture on the projector is the one
+failure nobody in the room can diagnose. `--rehost BASE` rewrites `imageURL` to
+a folder the host serves themselves (and checks that too). Choice images
+(picture answers) have no Tidbits equivalent: the choice is labelled
+"Picture A…" and reported.
+
+7.5 **The host surfaces render the picture.** The Mac big screen shows it in
+the video's slot under the prompt (the prompt yields part of its band, as it
+does on reveal), the cockpit shows a thumbnail so the host sees what the room
+sees, and the whole night's pictures are prefetched when hosting starts.
+Animated GIFs animate (an `NSImageView`, not a SwiftUI `Image`, which shows the
+first frame only). A load failure says "Picture unavailable" on the glass.
+Windows: the joiner side is unchanged; the Windows big screen's picture band is
+tracked in `docs/WINDOWS-PARITY.md` 3.36.

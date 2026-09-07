@@ -211,6 +211,16 @@ incredible bar-trivia big screen in the world. Binding rules:
 - **A8.6 — One show system, reused.** The reveal/leaderboard/round-intro/celebration
   components are shared by the big screen AND (scaled down) the cockpit preview, and
   every new format (speed podium, poll bars) plugs into them — never a bespoke look.
+- **A8.7 — The host decides what the room sees.** Every element of the live
+  slide except the question and its answer is a switch in the cockpit's
+  **Big screen** menu: event name & venue, round line, countdown, format &
+  difficulty, question picture, live vote bars, "Answer on your phones", the
+  story on reveal, the team strip, the scan-to-join panel, the sponsor footer.
+  A room that only needs the question gets only the question. Switches
+  PERSIST (a host sets a venue up once); a hidden element contributes no
+  space, so the rest of the slide re-centres and the clearances the join panel
+  demands go with it. (Owner, 2026-09-06: "so busy with words that are
+  unnecessary … turn off each element of the projection as needed.")
 
 ---
 

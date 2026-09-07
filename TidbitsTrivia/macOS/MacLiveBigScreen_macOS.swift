@@ -72,8 +72,73 @@ final class LiveHostCoordinator {
 /// The big-screen (projector) output — ten-foot UI (§A1.2). Shows ONLY the
 /// current question, the join info, and the team leaderboard — never a
 /// host-only affordance. Opens as its own window; drag it to the projector.
+// MARK: - What the room sees (macOS-DESIGN §A8.7)
+
+/// The host's per-element switches for the live slide. Everything except the
+/// question and its answer can be turned off from the cockpit: a room that only
+/// needs the question, or a host projecting onto a small screen, strips the
+/// slide down instead of living with every element the show system offers.
+///
+/// Persisted, because a host sets this up once per venue and expects it back next
+/// week. `TIDBITS_LIVE_HIDE=title,roundLine,...` applies a set for ONE launch
+/// without persisting it, so the harness can photograph the stripped slide
+/// without leaving the host's real preference changed underneath them (the QA
+/// build shares the sandbox container with the installed app).
+@Observable
+@MainActor
+final class LiveProjectorElements {
+    static let shared = LiveProjectorElements()
+
+    struct Element: Identifiable, Hashable {
+        let id: String
+        let title: String
+    }
+    /// Every switchable element, in the order the cockpit menu lists them —
+    /// top of the slide to bottom.
+    static let all: [Element] = [
+        Element(id: "title", title: "Event name & venue"),
+        Element(id: "roundLine", title: "Round line"),
+        Element(id: "countdown", title: "Countdown"),
+        Element(id: "chrome", title: "Format & difficulty"),
+        Element(id: "picture", title: "Question picture"),
+        Element(id: "tally", title: "Live vote bars"),
+        Element(id: "status", title: "\"Answer on your phones\""),
+        Element(id: "story", title: "Story on reveal"),
+        Element(id: "teams", title: "Team standings strip"),
+        Element(id: "joinPanel", title: "Scan-to-join panel"),
+        Element(id: "sponsor", title: "Sponsor footer"),
+    ]
+
+    private static let key = "tidbits.projector.hidden"
+    private let persists: Bool
+    private(set) var hidden: Set<String> {
+        didSet { if persists { UserDefaults.standard.set(Array(hidden).sorted(), forKey: Self.key) } }
+    }
+
+    init() {
+        if let raw = ProcessInfo.processInfo.environment["TIDBITS_LIVE_HIDE"], !raw.isEmpty {
+            hidden = Set(raw.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) })
+            persists = false
+        } else {
+            hidden = Set(UserDefaults.standard.stringArray(forKey: Self.key) ?? [])
+            persists = true
+        }
+    }
+
+    func shows(_ id: String) -> Bool { !hidden.contains(id) }
+    func set(_ id: String, shown: Bool) { if shown { hidden.remove(id) } else { hidden.insert(id) } }
+    func showEverything() { hidden = [] }
+    var hiddenCount: Int { hidden.count }
+}
+
 struct LiveBigScreen_macOS: View {
     @Environment(LiveHostCoordinator.self) private var coordinator
+    private var el: LiveProjectorElements { LiveProjectorElements.shared }
+    /// The join panel is a trailing overlay; the tally, the story, the picture and
+    /// the video clear it ONLY while it is actually on the screen.
+    private var joinPanelClearance: CGFloat {
+        (coordinator.net?.isOpen == true && el.shows("joinPanel")) ? 360 : 0
+    }
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// §A8.5 — one show-timing spring, disabled under reduce-motion.
@@ -97,7 +162,7 @@ struct LiveBigScreen_macOS: View {
         }
         .frame(minWidth: 720, minHeight: 480)
         .overlay(alignment: .bottom) {   // Wave D: sponsor kit — a persistent branded footer (lobby + between rounds + play)
-            if let s = coordinator.session, !s.event.sponsor.isEmpty {
+            if el.shows("sponsor"), let s = coordinator.session, !s.event.sponsor.isEmpty {
                 Text("Brought to you by \(s.event.sponsor)")
                     .font(.system(size: 24, weight: .heavy, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
                     .padding(.vertical, 9).padding(.horizontal, 24)
@@ -223,7 +288,9 @@ struct LiveBigScreen_macOS: View {
 
     private func live(_ s: LiveHostSession) -> some View {
         VStack(spacing: 24) {
+            if el.shows("title") || el.shows("roundLine") {
             HStack(alignment: .firstTextBaseline) {
+                if el.shows("title") {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(s.event.name.uppercased()).font(.system(size: 30, weight: .black, design: .rounded)).foregroundStyle(Color(hexString: s.event.brandHex) ?? Tidbits.Palette.ink)   // Wave D: white-label brand accent
                         .lineLimit(1).minimumScaleFactor(0.6)
@@ -231,15 +298,23 @@ struct LiveBigScreen_macOS: View {
                         Text(s.event.venue).font(.system(size: 22, weight: .heavy, design: .rounded)).foregroundStyle(Tidbits.Palette.coral)
                     }
                 }
+                }
                 Spacer()
+                if el.shows("roundLine") {
                 Text("ROUND \(s.roundNumber)/\(s.roundCount) · \(s.roundTitle)")
                     .font(.system(size: 26, weight: .heavy, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
                     .lineLimit(1).minimumScaleFactor(0.6)   // a long round title shrinks instead of wrapping/overflowing
+                }
             }
-            if let d = s.deadlineMs, !s.revealed { countdown(deadlineMs: d) }   // Wave A: on-screen timer
+            }
+            if el.shows("countdown"), let d = s.deadlineMs, !s.revealed { countdown(deadlineMs: d) }   // Wave A: on-screen timer
             VStack(spacing: 12) {
                 if let q = s.current {
-                    chromeRow(q, s)   // Wave B: format + difficulty chrome
+                    if el.shows("chrome") { chromeRow(q, s) }   // Wave B: format + difficulty chrome
+                    // An imported (Kahoot) question usually carries a picture. It takes
+                    // the video's slot; the prompt yields some of its band to it, the
+                    // same trade the reveal already makes.
+                    let hasPicture = el.shows("picture") && q.imageURL != nil && !LiveVideoPlayer.shared.hasVideo
                     Text(q.prompt)
                         .font(.system(size: 56, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
                         .multilineTextAlignment(.center).lineLimit(5).minimumScaleFactor(0.45)
@@ -264,10 +339,25 @@ struct LiveBigScreen_macOS: View {
                         // truncation fix, in the state the room stares at longest. The question
                         // has already been read aloud by then, so it yields the space.
                         .frame(maxWidth: 1200,
-                               minHeight: s.revealed ? 90 : 150,
-                               maxHeight: s.revealed ? 150 : 240)
+                               minHeight: hasPicture ? (s.revealed ? 70 : 100) : (s.revealed ? 90 : 150),
+                               maxHeight: hasPicture ? (s.revealed ? 110 : 160) : (s.revealed ? 150 : 240))
                         .id(q.id)
                         .transition(.opacity.combined(with: .move(edge: .top)))
+                    if hasPicture, let img = q.imageURL {
+                        LiveQuestionImage(url: img, cornerRadius: 16)
+                            // The band is FLEXIBLE and yields first: on a 720-line projector
+                            // a fixed 430pt pushed the prompt down under the join panel.
+                            // The prompt keeps its minimum band; the picture takes what is
+                            // left, up to its cap. The floor is the join panel's height, so
+                            // the prompt above the picture always clears the panel -- measured
+                            // at 1280x720, where a 120pt floor still put "Hired?" under it.
+                            .frame(maxWidth: .infinity, minHeight: s.revealed ? 120 : 240, maxHeight: s.revealed ? 250 : 430)
+                            .layoutPriority(-1)
+                            // Same clearance as the video and the tally: the join panel
+                            // is a bottom-trailing overlay and would sit on the picture.
+                            .padding(.trailing, joinPanelClearance)
+                            .id(q.id)
+                    }
                     if LiveVideoPlayer.shared.hasVideo, let vplayer = LiveVideoPlayer.shared.player {   // Wave B: video question
                         VideoPlayer(player: vplayer)
                             .frame(maxWidth: .infinity, minHeight: 420, maxHeight: 560)
@@ -283,16 +373,16 @@ struct LiveBigScreen_macOS: View {
                             // AFTER the border, not before: applied earlier the
                             // outline wrapped the padded box and drew a frame around
                             // 360pt of empty cream.
-                            .padding(.trailing, coordinator.net?.isOpen == true ? 360 : 0)
+                            .padding(.trailing, joinPanelClearance)
                     }
                     let hasVotes = !(coordinator.net?.answers.isEmpty ?? true)
-                    if LiveNightHost.isMCQ(q), hasVotes || s.revealed {
+                    if el.shows("tally"), LiveNightHost.isMCQ(q), hasVotes || s.revealed {
                         voteTally(q, revealed: s.revealed)   // A8: the room watches the votes land
                             // Same clearance as the explanation: the per-option VOTE
                             // COUNTS sit at the trailing end of each bar, and the join
                             // panel overlay was sitting on top of them. "How did the room
                             // vote" is the point of this panel.
-                            .padding(.trailing, 360)
+                            .padding(.trailing, joinPanelClearance)
                     } else if s.revealed {
                         Text(q.correctAnswer)
                             .font(.system(size: 52, weight: .black, design: .rounded)).foregroundStyle(.white)
@@ -321,11 +411,11 @@ struct LiveBigScreen_macOS: View {
                         } else if s.currentRoundIsBuzz {
                             Text("BUZZ IN").font(.system(size: 26, weight: .semibold, design: .rounded))
                                 .foregroundStyle(Tidbits.Palette.inkSoft)
-                        } else {
+                        } else if el.shows("status") {
                         Text("Answer on your phones").font(.system(size: 26, weight: .semibold, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
                         }
                     }
-                    if s.revealed {   // Wave A: the story behind the answer — the learning payoff on the big screen
+                    if el.shows("story"), s.revealed {   // Wave A: the story behind the answer — the learning payoff on the big screen
                         let story = q.explanation.trimmingCharacters(in: .whitespacesAndNewlines)
                         if !story.isEmpty {
                             Text(story)
@@ -348,7 +438,7 @@ struct LiveBigScreen_macOS: View {
                                 // underneath the QR — "...is an Ea", "...since" — and the
                                 // room could not read the payoff. The panel is ~340pt
                                 // wide in the trailing corner.
-                                .padding(.trailing, 360)
+                                .padding(.trailing, joinPanelClearance)
                                 .transition(.opacity)
                         }
                     }
@@ -381,9 +471,9 @@ struct LiveBigScreen_macOS: View {
         // its own header off the screen.
         .overlay(alignment: .bottom) {
             HStack(alignment: .bottom, spacing: 24) {
-                leaderboard(s)
+                if el.shows("teams") { leaderboard(s) }
                 Spacer(minLength: 0)
-                if let net = coordinator.net, net.isOpen {
+                if el.shows("joinPanel"), let net = coordinator.net, net.isOpen {
                     LiveJoinPanel(code: net.code)
                 }
             }
@@ -562,6 +652,111 @@ struct LiveBigScreen_macOS: View {
             }
         }
         .padding(48)
+    }
+}
+
+// MARK: - Question pictures on the host surfaces
+
+/// A question's picture on the projector and in the cockpit. Imported Kahoot
+/// nights carry photos and animated GIFs, and SwiftUI's `Image` shows a GIF's
+/// FIRST FRAME only, so this is an `NSImageView` with `animates` on. A failed
+/// load says so on the glass: a blank band on the projector is the one failure
+/// nobody in the room can diagnose, and a night that "looked complete" in the
+/// builder is exactly how it would ship.
+struct LiveQuestionImage: View {
+    let url: URL
+    var cornerRadius: CGFloat = 12
+    @State private var state: LiveImageLoader.State = .loading
+
+    var body: some View {
+        Group {
+            switch state {
+            case .loading:
+                RoundedRectangle(cornerRadius: cornerRadius).fill(Tidbits.Palette.bgDeep)
+                    .overlay(ProgressView())
+            case .failed:
+                RoundedRectangle(cornerRadius: cornerRadius).fill(Tidbits.Palette.bgDeep)
+                    .overlay(
+                        Label("Picture unavailable", systemImage: "photo.badge.exclamationmark")
+                            .font(.system(size: 22, weight: .semibold, design: .rounded))
+                            .foregroundStyle(Tidbits.Palette.inkSoft))
+            case .loaded(let image):
+                AnimatedImageView(image: image)
+                    .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+            }
+        }
+        .task(id: url) {
+            state = .loading
+            state = await LiveImageLoader.shared.load(url)
+        }
+    }
+}
+
+/// One decoded-image cache for the cockpit and the projector, so the same
+/// picture is fetched once and the projector shows it the instant the host
+/// advances. `prefetch` warms it with the whole night when hosting starts, which
+/// is what keeps a slow venue Wi-Fi from becoming a blank projector mid-round.
+@MainActor
+final class LiveImageLoader {
+    static let shared = LiveImageLoader()
+    enum State { case loading, failed, loaded(NSImage) }
+
+    private var cache: [URL: NSImage] = [:]
+    private var inflight: [URL: Task<NSImage?, Never>] = [:]
+    private let session: URLSession = {
+        let c = URLSessionConfiguration.default
+        c.timeoutIntervalForRequest = 20
+        c.requestCachePolicy = .returnCacheDataElseLoad
+        return URLSession(configuration: c)
+    }()
+
+    func load(_ url: URL) async -> State {
+        if let img = cache[url] { return .loaded(img) }
+        let task = inflight[url] ?? Task { [session] in
+            guard let (data, resp) = try? await session.data(from: url) else { return nil }
+            if let http = resp as? HTTPURLResponse, !(200..<300).contains(http.statusCode) { return nil }
+            return NSImage(data: data)
+        }
+        inflight[url] = task
+        let img = await task.value
+        inflight[url] = nil
+        guard let img else { return .failed }
+        cache[url] = img
+        return .loaded(img)
+    }
+
+    func prefetch(_ urls: [URL]) {
+        for url in urls where cache[url] == nil && inflight[url] == nil {
+            Task { _ = await load(url) }
+        }
+    }
+}
+
+/// `NSImageView` fills whatever SwiftUI proposes and scales the picture
+/// proportionally inside it, so the band's height is the layout's decision and
+/// the picture never distorts.
+private struct AnimatedImageView: NSViewRepresentable {
+    let image: NSImage
+
+    func makeNSView(context: Context) -> NSImageView {
+        let v = NSImageView()
+        v.imageScaling = .scaleProportionallyUpOrDown
+        v.imageAlignment = .alignCenter
+        v.animates = true
+        v.image = image
+        for axis in [NSLayoutConstraint.Orientation.horizontal, .vertical] {
+            v.setContentHuggingPriority(.defaultLow, for: axis)
+            v.setContentCompressionResistancePriority(.defaultLow, for: axis)
+        }
+        return v
+    }
+
+    func updateNSView(_ v: NSImageView, context: Context) {
+        if v.image !== image { v.image = image }
+    }
+
+    func sizeThatFits(_ proposal: ProposedViewSize, nsView: NSImageView, context: Context) -> CGSize? {
+        CGSize(width: proposal.width ?? image.size.width, height: proposal.height ?? image.size.height)
     }
 }
 #endif

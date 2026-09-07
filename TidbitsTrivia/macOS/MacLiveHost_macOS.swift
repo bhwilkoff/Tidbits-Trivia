@@ -356,6 +356,9 @@ struct LiveHostContainer_macOS: View {
         // accessibility name and cannot be driven from a harness; without this
         // the projector's teardown was the one part of the fix nothing could
         // prove. No-op unless the variable is set.
+        // Warm the picture cache with the whole night, so the projector shows each
+        // picture the instant the host advances instead of after the venue Wi-Fi.
+        .task { LiveImageLoader.shared.prefetch(event.questionStream.compactMap(\.imageURL)) }
         .task {
             guard let raw = ProcessInfo.processInfo.environment["TIDBITS_LIVE_AUTOCLOSE"],
                   let secs = Double(raw) else { return }
@@ -572,6 +575,25 @@ struct LiveHostView_macOS: View {
                     }
                 } label: { Label("Jump", systemImage: "list.number").font(.callout) }
                 .menuStyle(.button).buttonStyle(.bordered).fixedSize()
+                // §A8.7: what the room sees. Each element of the live slide is a
+                // check item; the question and its answer are not on the list.
+                Menu {
+                    ForEach(LiveProjectorElements.all) { e in
+                        Toggle(e.title, isOn: Binding(
+                            get: { LiveProjectorElements.shared.shows(e.id) },
+                            set: { LiveProjectorElements.shared.set(e.id, shown: $0) }))
+                    }
+                    Divider()
+                    Button("Show everything") { LiveProjectorElements.shared.showEverything() }
+                        .disabled(LiveProjectorElements.shared.hiddenCount == 0)
+                } label: {
+                    // Compact: the toolbar is already six controls wide, and a
+                    // long label here truncated "Scores" to "Sco…" on a laptop.
+                    let n = LiveProjectorElements.shared.hiddenCount
+                    Label(n == 0 ? "Screen" : "Screen · \(n) off", systemImage: "tv").font(.callout)
+                }
+                .menuStyle(.button).buttonStyle(.bordered).fixedSize()
+                .help("Choose which elements the projector shows. The question and its answer always show.")
                 Text("ROUND \(session.roundNumber)/\(session.roundCount) · \(session.roundTitle)")
                     .font(.callout).foregroundStyle(Tidbits.Palette.inkSoft)
             }
@@ -605,6 +627,11 @@ struct LiveHostView_macOS: View {
                 Text("Question \(inR.n) of \(inR.of)").font(.callout).foregroundStyle(Tidbits.Palette.inkSoft)
                 Text(q.prompt).font(.system(size: 30, weight: .bold, design: .rounded))
                     .foregroundStyle(Tidbits.Palette.ink).fixedSize(horizontal: false, vertical: true)
+                if let img = q.imageURL {   // what the room is looking at, so the host can talk to it
+                    LiveQuestionImage(url: img)
+                        .frame(maxWidth: 360, maxHeight: 180)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
                 if let note = session.currentRoundNote, !note.isEmpty {   // Wave A: host prep note (cockpit only)
                     HStack(alignment: .top, spacing: 6) {
                         Image(systemName: "note.text").foregroundStyle(Tidbits.Palette.blue)

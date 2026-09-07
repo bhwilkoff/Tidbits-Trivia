@@ -236,7 +236,6 @@ enum LiveTextFormats {
                  difficulty: 3, explanation: explanation, sourceTitle: "", sourceURL: nil, templateID: templateID)
     }
 }
-#endif
 
 // MARK: - SpeedQuizzing "Quick Questions" folders (QUIZ-FORMATS-RESEARCH §1)
 
@@ -351,3 +350,4 @@ enum LiveQuickQuestions {
         return out
     }
 }
+#endif

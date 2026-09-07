@@ -320,7 +320,10 @@ public partial class LiveView : UserControl
         {
             int qi = i;
             var q = qs[qi];
-            var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto,Auto,Auto") };
+            // Seven columns: number, prompt, difficulty, Edit, Save to library, Duplicate, ✕.
+            // The Save button was added at column 6 of a SIX-column grid, which Avalonia
+            // clamps to the last column — it would have sat on top of the remove button.
+            var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto,Auto,Auto,Auto") };
             grid.Children.Add(new TextBlock
             {
                 Text = $"{qi + 1}.", FontSize = 12, Opacity = 0.6, MinWidth = 22,
@@ -373,7 +376,7 @@ public partial class LiveView : UserControl
                 var isNew = GameData.Shared.Value.Library.Add(q, EventNameBox.Text ?? "");
                 ShowStatus(isNew ? $"Saved to your library ({GameData.Shared.Value.Library.All.Count})." : "Already in your library — updated.");
             };
-            Grid.SetColumn(save, 6);
+            Grid.SetColumn(save, 4);
             grid.Children.Add(save);
 
             var dup = new Button { Content = "Duplicate", Padding = new Avalonia.Thickness(10, 4), FontSize = 12, Margin = new Avalonia.Thickness(4, 0, 0, 0) };
@@ -385,13 +388,13 @@ public partial class LiveView : UserControl
                 _questions[roundIndex].Insert(qi + 1, q with { Id = Guid.NewGuid().ToString("N") });
                 SyncRoundCount(roundIndex); RebuildBuilderRounds();
             };
-            Grid.SetColumn(dup, 4);
+            Grid.SetColumn(dup, 5);
             grid.Children.Add(dup);
 
             var remove = new Button { Content = "\u2715", Padding = new Avalonia.Thickness(9, 4), FontSize = 12, Margin = new Avalonia.Thickness(4, 0, 0, 0) };
             AutomationProperties.SetName(remove, $"Remove question {qi + 1} of round {roundIndex + 1}");
             remove.Click += (_, _) => { _questions[roundIndex].RemoveAt(qi); SyncRoundCount(roundIndex); RebuildBuilderRounds(); };
-            Grid.SetColumn(remove, 5);
+            Grid.SetColumn(remove, 6);
             grid.Children.Add(remove);
 
             // Drop a picture, an audio file or a video onto the question row (the Mac

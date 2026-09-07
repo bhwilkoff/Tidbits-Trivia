@@ -61,6 +61,7 @@
                     <Button Content="Import a SpeedQuizzing folder…" Click="OnImportQuickQuestions" Padding="16,10" Margin="0,0,8,8"/>
                     <Button Content="Export questions as CSV…" Click="OnExportQuestionsCsv" Padding="16,10" Margin="0,0,8,8"/>
                     <Button Content="Export questions as GIFT…" Click="OnExportQuestionsGift" Padding="16,10" Margin="0,0,8,8"/>
+                    <Button Content="Export for Kahoot (.xlsx)…" Click="OnExportKahootSheet" Padding="16,10" Margin="0,0,8,8"/>
                 </WrapPanel>
 
                 <TextBlock x:Name="SavedEventsHeader" Text="Saved events" Classes="section-header"

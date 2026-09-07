@@ -112,6 +112,7 @@ struct LiveBuilderView_macOS: View {
             case "importpackage": importEvent()   // the one importer opens both shapes
             case "exportlibrary": exportLibrary()
             case "importqq": importQuickQuestions()
+            case "exportkahoot": exportKahootSheet()
             case "exportcsv":   exportQuestionsCSV()
             case "importcsv":   importCSV()
             case "printpack":
@@ -373,6 +374,8 @@ struct LiveBuilderView_macOS: View {
             Button("Export questions as CSV…") { exportQuestionsCSV() }
                 .disabled(working.totalQuestions == 0)
             Button("Export questions as GIFT…") { exportQuestionsGIFT() }
+                .disabled(working.totalQuestions == 0)
+            Button("Export for Kahoot (.xlsx)…") { exportKahootSheet() }
                 .disabled(working.totalQuestions == 0)
         } label: { Label("Event file", systemImage: "doc") }
             .fixedSize()
@@ -980,6 +983,31 @@ struct LiveBuilderView_macOS: View {
         } catch {
             presentMessage("Could not export the questions", error.localizedDescription)
         }
+    }
+
+    /// Kahoot's own import template, so a host can hand a Tidbits night to someone
+    /// who runs Kahoot (QUIZ-FORMATS-RESEARCH §4). Their importer takes only xlsx.
+    private func exportKahootSheet() {
+        let type = UTType(filenameExtension: "xlsx") ?? .data
+        guard let url = chooseSaveURL(named: "\(working.name) — for Kahoot.xlsx", types: [type]) else { return }
+        // One timer for the whole sheet: Kahoot allows a per-question time, but a
+        // Tidbits round has ONE, so the first round's timer is the honest source.
+        let (rows, notes) = LiveKahootSheet.rows(for: working.questionStream,
+                                                 seconds: working.rounds.first?.timerSeconds)
+        guard !rows.isEmpty else {
+            presentMessage("Nothing to export for Kahoot",
+                           "Kahoot's sheet only carries multiple-choice questions with two to four answers."
+                           + (notes.isEmpty ? "" : "\n\n" + notes.prefix(6).joined(separator: "\n")))
+            return
+        }
+        do {
+            try LiveKahootSheet.xlsx(rows).write(to: url, options: .atomic)
+            fileReceipt = "Exported \(rows.count) questions for Kahoot"
+            if !notes.isEmpty {
+                presentMessage("Exported \(rows.count) of \(working.totalQuestions) questions",
+                               notes.prefix(8).joined(separator: "\n"))
+            }
+        } catch { presentMessage("Could not export for Kahoot", error.localizedDescription) }
     }
 
     /// A SpeedQuizzing quizpack is a FOLDER whose filenames are the questions and

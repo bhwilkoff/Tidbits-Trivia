@@ -930,6 +930,38 @@ public partial class LiveView : UserControl
         catch (Exception ex) { ShowStatus($"Could not import that file: {ex.Message}"); }
     }
 
+    /// Kahoot's own import template, so a host can hand a Tidbits night to someone
+    /// who runs Kahoot (QUIZ-FORMATS-RESEARCH §4). Their importer takes only xlsx.
+    private async void OnExportKahootSheet(object? sender, RoutedEventArgs e)
+    {
+        var ev = CurrentEvent();
+        var questions = Enumerable.Range(0, ev.Rounds.Count).SelectMany(ev.QuestionsFor).ToList();
+        // One timer for the whole sheet: Kahoot allows a per-question time, but a
+        // Tidbits round has ONE, so the first round's timer is the honest source.
+        var (rows, notes) = Tidbits.Core.Data.KahootSheet.Rows(questions, ev.RoundTimers.FirstOrDefault());
+        if (rows.Count == 0)
+        {
+            ShowStatus("Nothing to export for Kahoot — their sheet only carries multiple-choice questions with two to four answers."
+                       + (notes.Count == 0 ? "" : $" {string.Join("; ", notes.Take(3))}"));
+            return;
+        }
+        var top = TopLevel.GetTopLevel(this);
+        if (top?.StorageProvider is not { } sp) { ShowStatus("This window cannot open a file picker."); return; }
+        try
+        {
+            var file = await sp.SaveFilePickerAsync(new Avalonia.Platform.Storage.FilePickerSaveOptions
+            {
+                Title = "Export for Kahoot", SuggestedFileName = $"{Sanitise(ev.Name)} - for Kahoot.xlsx", DefaultExtension = "xlsx",
+            });
+            if (file is null) return;
+            var bytes = Tidbits.Core.Data.KahootSheet.Xlsx(rows);
+            await using (var stream = await file.OpenWriteAsync()) await stream.WriteAsync(bytes);
+            ShowStatus($"Exported {rows.Count} of {questions.Count} question(s) for Kahoot."
+                       + (notes.Count == 0 ? "" : $" {notes.Count} note(s): {string.Join("; ", notes.Take(3))}"));
+        }
+        catch (Exception ex) { ShowStatus($"Could not export for Kahoot: {ex.Message}"); }
+    }
+
     /// A SpeedQuizzing quizpack is a FOLDER whose filenames are the questions and
     /// whose files are the media (QUIZ-FORMATS-RESEARCH §1). Each picture, MP3 or
     /// clip lands in the media store, so the round exports as a `.tidbits` package

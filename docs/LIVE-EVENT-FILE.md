@@ -150,6 +150,13 @@ Kahoot's "- max N characters" — so other tools' sheets import as they are
 **Emit a header on every export**, now with an `imageURL` column, so a bank
 with pictures round-trips. It is the only shape that cannot be misread.
 
+6.1c **The export side goes back out to the other tools too.** Beyond CSV:
+GIFT (the human-writable archive form) and **Kahoot's own `.xlsx` template**,
+so a host can hand a night to someone who runs Kahoot. Their importer takes
+only xlsx, so that export writes a real OOXML workbook in their layout;
+everything their sheet cannot carry (pictures, non-multiple-choice questions,
+over-long text) is reported to the host rather than silently altered.
+
 6.1b **A SpeedQuizzing folder is a fourth import** (QUIZ-FORMATS-RESEARCH §1):
 "Import a SpeedQuizzing folder…" on both hosts reads a quizpack whose filenames
 are the questions and whose files are the media. It is a FOLDER picker, not a

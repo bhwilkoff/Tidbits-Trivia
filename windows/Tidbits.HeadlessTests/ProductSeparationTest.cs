@@ -33,16 +33,28 @@ public class ProductSeparationTest
         var win = new Window { Width = 900, Height = 900, Content = root };
         win.Show();
         Dispatcher.UIThread.RunJobs();
+        // A button's label is its string Content OR the TextBlocks inside a richer
+        // Content (the Quick Play hero and the JOIN A GAME card are two-line
+        // StackPanels). Reading only string Content made a card-shaped button
+        // invisible to this test, so a join affordance could be present and the
+        // assertion still fail — or absent and, on the Live page, still pass.
         return win.GetVisualDescendants().OfType<Button>()
-                  .Select(b => b.Content as string ?? "")
+                  .Select(b => b.Content as string
+                               ?? string.Join(" ", b.GetVisualDescendants().OfType<TextBlock>()
+                                                     .Select(t => t.Text ?? "")))
                   .Where(t => t.Length > 0).ToArray();
     }
 
     [AvaloniaFact]
     public void Joining_is_offered_on_Play()
     {
-        // A0.4.1 — joining is ALWAYS a Trivia Night action.
-        Assert.Contains(ButtonText(new PlayView()), t => t.Contains("Join a night"));
+        // A0.4.1 — joining is ALWAYS a Trivia Night action; R-JOIN-1 — and it is a
+        // card that says JOIN, second on Play, not a row under the night presets.
+        var labels = ButtonText(new PlayView());
+        Assert.Contains(labels, t => t.Contains("JOIN A GAME"));
+        // Second thing after the hero: the hero, its two secondaries, then join.
+        var idx = Array.FindIndex(labels, t => t.Contains("JOIN A GAME"));
+        Assert.InRange(idx, 0, 3);
     }
 
     [AvaloniaFact]

@@ -104,10 +104,19 @@ the public docs never say whether later fields are alternatives or distractors
 and accepting a distractor would mark a wrong player right. Verified on the
 glass with a real folder (`TIDBITS_LIVE_FILEOP=importqq`).
 
-**State left / sequenced (LIVE-PACKAGE-FORMAT §8):** Windows drag-and-drop; file association (Mac UTType +
-MSIX); phones see package media via Firebase Storage at host time; the
-question library (`kind: bank`); Crowdpurr / Kahoot-xlsx / Blooket / GIFT /
-SpeedQuizzing-folder / OpenTDB importers-exporters. The Minerva package is at
+**State left (LIVE-PACKAGE-FORMAT §8) — the sequenced list is DONE except one
+owner call.** Shipped the same day: editors attach a picture and a per-question
+audio/video clip (both hosts; drag-and-drop on both); `.tidbits` file
+association; package pictures reach phones as a ≤800px JPEG data URL; the
+question LIBRARY with `bank` packages; other tools' spreadsheets by normalized
+header (Kahoot template, Blooket, Crowdpurr, Gimkit); Moodle GIFT + Aiken
+import and GIFT export; SpeedQuizzing quizpack FOLDERS; and Kahoot's own
+`.xlsx` as an export. **Open Trivia DB is a deliberate 🚫** (the corpus already
+covers it, and their bank is uneven — `quality-over-volume-steer`). The ONE
+open item is the owner call: for rooms bigger than a data URL comfortably
+serves, either a once-written `live/{code}/media/{id}` node (needs all four
+joiners updated) or Firebase Storage (a paid plan on new projects). The
+Minerva package is at
 `~/Documents/Tidbits Live/Minerva Admissions Onboarding 26-27.tidbits`.
 
 ## Current state (2026-09-06) — Kahoot import + projector pictures + per-element big-screen switches

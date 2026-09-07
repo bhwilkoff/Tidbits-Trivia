@@ -512,14 +512,21 @@ public partial class PlayView : UserControl
         // off the fold, which no other platform does.
         DailyPanel.Children.Add(DailyUi.BuildRow(DateTime.Now.Date, today, log, StartDaily));
 
+        // ADVERSARIAL-DESIGN-LEDGER W10: a transparent, border-less, zero-padding
+        // button reads as a caption. It is the archive door — it looks like one now,
+        // and has a hit area a pointer can find.
         var archive = new Button
         {
             Content = "Previous Tidbits",
             HorizontalAlignment = HorizontalAlignment.Left,
-            Padding = new Avalonia.Thickness(0),
+            Padding = new Avalonia.Thickness(10, 5),
+            Margin = new Avalonia.Thickness(0, 4, 0, 0),
+            Foreground = new SolidColorBrush(Color.Parse("#2D5BFF")),
             Background = Brushes.Transparent,
             BorderThickness = new Avalonia.Thickness(0),
+            Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand),
         };
+        Avalonia.Automation.AutomationProperties.SetName(archive, "Previous Tidbits");
         archive.Click += (_, _) => _ = DailyArchiveDialog.ShowAsync(log, StartDaily);
         DailyPanel.Children.Add(archive);
     }

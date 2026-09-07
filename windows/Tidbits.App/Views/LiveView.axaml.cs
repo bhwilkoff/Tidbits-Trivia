@@ -187,10 +187,20 @@ public partial class LiveView : UserControl
             row.Children.Add(chevron);
             int authored = idx < _questions.Count ? _questions[idx].Count : 0;
             var countText = authored > 0 ? $"{authored} questions (yours)" : $"{r.Count} questions";
-            var label = note.Length > 0
-                ? $"{idx + 1}. {r.Kind.Title()} · {countText}  \U0001F4DD {note}"
-                : $"{idx + 1}. {r.Kind.Title()} · {countText}";
-            var labelBlock = new TextBlock { Text = label, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center, TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis };
+            var titleLine = $"{idx + 1}. {r.Kind.Title()} · {countText}";
+            var labelBlock = new StackPanel { Spacing = 1, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center };
+            labelBlock.Children.Add(new TextBlock
+            {
+                Text = titleLine, FontWeight = Avalonia.Media.FontWeight.SemiBold,
+                TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis,
+            });
+            if (note.Length > 0)
+            {
+                labelBlock.Children.Add(new TextBlock
+                {
+                    Text = note, FontSize = 12, Opacity = 0.7, TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+                });
+            }
             Grid.SetColumn(labelBlock, 1);
             row.Children.Add(labelBlock);
             // Wave A per-round countdown (macOS parity). "No timer" is first and the

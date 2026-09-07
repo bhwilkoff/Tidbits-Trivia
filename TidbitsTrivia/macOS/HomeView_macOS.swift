@@ -208,7 +208,7 @@ struct HomeView_macOS: View {
                 Image(systemName: "person.2.fill").font(.system(size: 26, weight: .black))
                 VStack(alignment: .leading, spacing: 3) {
                     Text("PASS & PLAY").font(Tidbits.TypeRamp.l2)
-                    Text("2-4 players take turns at one Mac - same questions, fair and square.")
+                    Text("2–4 players take turns at one Mac — same questions, fair and square.")
                         .font(Tidbits.TypeRamp.l5).opacity(0.9)
                 }
                 Spacer(minLength: 0)
@@ -233,9 +233,12 @@ struct HomeView_macOS: View {
                 Spacer(minLength: 0)
                 Image(systemName: "chevron.right.circle.fill").font(.system(size: 24, weight: .bold))
             }
-            .foregroundStyle(Tidbits.Palette.coral.legibleForeground)
+            // R-HOME-1: Home is ONE primary action. Quick Play is the coral hero, so a
+            // second coral card gave the page two primaries and nothing to lead with
+            // (ADVERSARIAL-DESIGN-LEDGER M5). Mint is the only unused card colour here.
+            .foregroundStyle(Tidbits.Palette.mint.legibleForeground)
             .padding(18).frame(maxWidth: .infinity, alignment: .leading)
-            .chunkyCard(fill: Tidbits.Palette.coral)
+            .chunkyCard(fill: Tidbits.Palette.mint)
         }
         .buttonStyle(.plain)
     }

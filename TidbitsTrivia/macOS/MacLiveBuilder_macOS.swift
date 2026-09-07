@@ -431,22 +431,18 @@ struct LiveBuilderView_macOS: View {
                     ForEach([30, 45, 60, 90, 120], id: \.self) { s in Button("\(s)s") { working.rounds[i].timerSeconds = s } }
                 } label: { Label(round.timerSeconds.map { "\($0)s" } ?? "Timer", systemImage: "timer") }
                     .menuStyle(.button).buttonStyle(.bordered).fixedSize()
-                Toggle(isOn: Binding(   // Wave A: wager round
-                    get: { working.rounds[i].isWager ?? false },
-                    set: { working.rounds[i].isWager = $0 ? true : nil })) {
-                    Label("Wager", systemImage: "dollarsign.circle")
-                }.toggleStyle(.button).font(.callout).fixedSize()
-                Toggle(isOn: Binding(   // Wave B: speed round
-                    get: { working.rounds[i].isSpeed ?? false },
-                    set: { working.rounds[i].isSpeed = $0 ? true : nil })) {
-                    Label("Speed", systemImage: "bolt")
-                }.toggleStyle(.button).font(.callout).fixedSize()
-                Toggle(isOn: Binding(   // G1: buzz round — first team to buzz answers
-                    get: { working.rounds[i].isBuzz ?? false },
-                    set: { working.rounds[i].isBuzz = $0 ? true : nil })) {
-                    Label("Buzz", systemImage: "hand.tap")
-                }.toggleStyle(.button).font(.callout).fixedSize()
-                    .help("Buzz round — the room races to buzz and the first team answers out loud")
+                roundFlagChip("Wager", systemImage: "dollarsign.circle",   // Wave A: wager round
+                              isOn: Binding(get: { working.rounds[i].isWager ?? false },
+                                            set: { working.rounds[i].isWager = $0 ? true : nil }),
+                              help: "Wager round — teams stake points on each question")
+                roundFlagChip("Speed", systemImage: "bolt",                 // Wave B: speed round
+                              isOn: Binding(get: { working.rounds[i].isSpeed ?? false },
+                                            set: { working.rounds[i].isSpeed = $0 ? true : nil }),
+                              help: "Speed round — the fastest correct answers earn a bonus")
+                roundFlagChip("Buzz", systemImage: "hand.tap",              // G1: buzz round
+                              isOn: Binding(get: { working.rounds[i].isBuzz ?? false },
+                                            set: { working.rounds[i].isBuzz = $0 ? true : nil }),
+                              help: "Buzz round — the room races to buzz and the first team answers out loud")
                 Menu {   // G4: first-letter round — every answer begins with the same letter
                     Button("No letter theme") { working.rounds[i].letter = nil }
                     Divider()
@@ -561,6 +557,33 @@ struct LiveBuilderView_macOS: View {
                 Spacer()
             }
             .padding(.top, 4)
+        }
+    }
+
+    /// A round's ON/OFF flag, as a chip whose STATE is visible.
+    ///
+    /// ADVERSARIAL-DESIGN-LEDGER M3, measured: with `.toggleStyle(.button)` an ON
+    /// chip and an OFF chip rendered the same pixels — fill (226,231,254), text
+    /// (56,90,246) — so "is this a wager round?" was unanswerable from the glass.
+    /// ON is now a filled coral pill with a filled symbol; OFF is a plain bordered
+    /// one. The two menus beside them keep their chevron, so a menu still reads as
+    /// a menu and a switch as a switch.
+    @ViewBuilder
+    private func roundFlagChip(_ title: String, systemImage: String,
+                               isOn: Binding<Bool>, help: String) -> some View {
+        if isOn.wrappedValue {
+            Button { isOn.wrappedValue = false } label: {
+                Label(title, systemImage: systemImage + ".fill")
+            }
+            .buttonStyle(.borderedProminent).tint(Tidbits.Palette.coral)
+            .font(.callout).fixedSize().help(help)
+            .accessibilityAddTraits(.isSelected)
+        } else {
+            Button { isOn.wrappedValue = true } label: {
+                Label(title, systemImage: systemImage)
+            }
+            .buttonStyle(.bordered)
+            .font(.callout).fixedSize().help(help)
         }
     }
 

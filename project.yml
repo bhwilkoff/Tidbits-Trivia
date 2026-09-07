@@ -296,6 +296,7 @@ targets:
       # container contract with a golden both stacks open.
       - path: TidbitsTrivia/macOS/MacLivePackage_macOS.swift
       - path: TidbitsTrivia/macOS/MacLiveMediaStore_macOS.swift
+      - path: TidbitsTrivia/macOS/MacLiveLibrary_macOS.swift
       # The clip references an audio/video round stores. The swallow that made
       # those rounds silent lived here, so it gets the same coverage.
       - path: TidbitsTrivia/macOS/MacLiveClips_macOS.swift

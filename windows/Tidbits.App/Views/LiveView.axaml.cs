@@ -365,6 +365,16 @@ public partial class LiveView : UserControl
             Grid.SetColumn(edit, 3);
             grid.Children.Add(edit);
 
+            var save = new Button { Content = "Save to library", Padding = new Avalonia.Thickness(10, 4), FontSize = 12, Margin = new Avalonia.Thickness(4, 0, 0, 0) };
+            AutomationProperties.SetName(save, $"Save question {qi + 1} of round {roundIndex + 1} to library");
+            save.Click += (_, _) =>
+            {
+                var isNew = GameData.Shared.Value.Library.Add(q, EventNameBox.Text ?? "");
+                ShowStatus(isNew ? $"Saved to your library ({GameData.Shared.Value.Library.All.Count})." : "Already in your library — updated.");
+            };
+            Grid.SetColumn(save, 6);
+            grid.Children.Add(save);
+
             var dup = new Button { Content = "Duplicate", Padding = new Avalonia.Thickness(10, 4), FontSize = 12, Margin = new Avalonia.Thickness(4, 0, 0, 0) };
             AutomationProperties.SetName(dup, $"Duplicate question {qi + 1} of round {roundIndex + 1}");
             dup.Click += (_, _) =>
@@ -413,6 +423,22 @@ public partial class LiveView : UserControl
             if (pulled.Count > 0) { _questions[roundIndex].Add(pulled[0] with { RoundIndex = null }); SyncRoundCount(roundIndex); RebuildBuilderRounds(); }
         };
         actions.Children.Add(pull);
+
+        // §6: the host's own bank. Search it and add to THIS round; save the round to it.
+        var fromLibrary = new Button { Content = "From library…", Padding = new Avalonia.Thickness(12, 5), FontSize = 12, Margin = new Avalonia.Thickness(0, 0, 8, 4) };
+        AutomationProperties.SetName(fromLibrary, $"Add from library to round {roundIndex + 1}");
+        fromLibrary.Click += async (_, _) => await ShowLibraryPicker(roundIndex);
+        actions.Children.Add(fromLibrary);
+        if (qs.Count > 0)
+        {
+            var saveRound = new Button { Content = "Save round to library", Padding = new Avalonia.Thickness(12, 5), FontSize = 12, Margin = new Avalonia.Thickness(0, 0, 8, 4) };
+            saveRound.Click += (_, _) =>
+            {
+                var n = GameData.Shared.Value.Library.Add(qs, EventNameBox.Text ?? "");
+                ShowStatus($"Saved round to your library: {n} new, {qs.Count - n} already there.");
+            };
+            actions.Children.Add(saveRound);
+        }
 
         if (qs.Count > 0)
         {
@@ -622,6 +648,95 @@ public partial class LiveView : UserControl
         _expandedRounds.Clear();
         RebuildBuilderRounds();
         ShowStatus($"Board round added — {board.Cells.Count} cells, {board.PointsRemaining:N0} points.");
+    }
+
+    /// The library picker: search box, category filter, one row per hit with Add.
+    private async System.Threading.Tasks.Task ShowLibraryPicker(int roundIndex)
+    {
+        var lib = GameData.Shared.Value.Library;
+        var search = new TextBox { Watermark = "Search your library", MinWidth = 320 };
+        AutomationProperties.SetName(search, "Search library");
+        var cats = new[] { (Id: "", Name: "Any category") }.Concat(TriviaCategory.All.Select(c => (Id: c.Id, Name: c.Name))).ToList();
+        var catBox = new ComboBox { MinWidth = 160, ItemsSource = cats.Select(c => c.Name).ToList(), SelectedIndex = 0 };
+        var list = new StackPanel { Spacing = 6 };
+        var count = new TextBlock { Classes = { "caption" }, Opacity = 0.72 };
+        var added = new System.Collections.Generic.HashSet<string>();
+        void Refresh()
+        {
+            list.Children.Clear();
+            var cat = catBox.SelectedIndex > 0 ? cats[catBox.SelectedIndex].Id : null;
+            var hits = lib.Search(search.Text ?? "", cat);
+            count.Text = lib.All.Count == 0
+                ? "Your library is empty — save a question from any round, or import a bank package."
+                : $"{hits.Count} of {lib.All.Count} saved";
+            foreach (var it in hits)
+            {
+                var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto") };
+                var text = new StackPanel();
+                text.Children.Add(new TextBlock { Text = it.Question.Prompt, TextWrapping = Avalonia.Media.TextWrapping.Wrap, MaxWidth = 420 });
+                text.Children.Add(new TextBlock
+                {
+                    Text = $"{it.Question.CorrectAnswer} · {TriviaCategory.Named(it.Question.CategoryId).Name} · D{it.Question.Difficulty} · from {it.Source}"
+                           + (it.Question.ImageUrl is null ? "" : " · picture"),
+                    Classes = { "caption" }, Opacity = 0.72,
+                });
+                row.Children.Add(text);
+                var addBtn = new Button { Content = added.Contains(it.Id) ? "Added" : "Add", IsEnabled = !added.Contains(it.Id), Padding = new Avalonia.Thickness(10, 3), Margin = new Avalonia.Thickness(8, 0, 0, 0) };
+                var id = it.Id; var question = it.Question;
+                addBtn.Click += (_, _) =>
+                {
+                    _questions[roundIndex].Add(question with { Id = Guid.NewGuid().ToString("N"), RoundIndex = null });
+                    SyncRoundCount(roundIndex);
+                    added.Add(id); Refresh();
+                };
+                Grid.SetColumn(addBtn, 1); row.Children.Add(addBtn);
+                var rm = new Button { Content = "\u2715", Padding = new Avalonia.Thickness(8, 3), Margin = new Avalonia.Thickness(4, 0, 0, 0) };
+                AutomationProperties.SetName(rm, "Remove from library");
+                rm.Click += (_, _) => { lib.Remove(id); Refresh(); };
+                Grid.SetColumn(rm, 2); row.Children.Add(rm);
+                list.Children.Add(row);
+            }
+        }
+        search.TextChanged += (_, _) => Refresh();
+        catBox.SelectionChanged += (_, _) => Refresh();
+        Refresh();
+        var top = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+        top.Children.Add(search); top.Children.Add(catBox);
+        var body = new StackPanel { Spacing = 8, MinWidth = 560 };
+        body.Children.Add(top); body.Children.Add(count);
+        body.Children.Add(new ScrollViewer { Content = list, MaxHeight = 380 });
+        var dialog = new FluentAvalonia.UI.Controls.FAContentDialog
+        {
+            Title = $"Add from your library to round {roundIndex + 1}",
+            CloseButtonText = "Done",
+            Content = body,
+        };
+        await dialog.ShowAsync();
+        RebuildBuilderRounds();
+    }
+
+    /// The whole library as a `bank` package (LIVE-PACKAGE-FORMAT §6).
+    private async void OnExportLibrary(object? sender, RoutedEventArgs e)
+    {
+        var lib = GameData.Shared.Value.Library;
+        if (lib.All.Count == 0) { ShowStatus("Your library is empty — save a question from any round first."); return; }
+        var top = TopLevel.GetTopLevel(this);
+        if (top?.StorageProvider is not { } sp) { ShowStatus("This window cannot open a file picker."); return; }
+        try
+        {
+            var file = await sp.SaveFilePickerAsync(new Avalonia.Platform.Storage.FilePickerSaveOptions
+            {
+                Title = "Export library", SuggestedFileName = "Question library." + LivePackage.FileExtension,
+                DefaultExtension = LivePackage.FileExtension,
+            });
+            if (file is null) return;
+            var bank = LiveLibrary.BankEvent(lib.All, "Question library");
+            var version = typeof(LiveView).Assembly.GetName().Version?.ToString(3) ?? "";
+            await using (var stream = await file.OpenWriteAsync())
+                LivePackage.Write(stream, bank, $"Tidbits Trivia (Windows) {version}", "", packageKind: "bank");
+            ShowStatus($"Exported your library: {lib.All.Count} questions in {bank.Rounds.Count} categories.");
+        }
+        catch (Exception ex) { ShowStatus($"Could not export the library: {ex.Message}"); }
     }
 
     /// A round's clips are index-parallel to its questions (LIVE-PACKAGE-FORMAT §3.2);
@@ -841,6 +956,18 @@ public partial class LiveView : UserControl
         System.Collections.Generic.IReadOnlyList<string> problems = System.Array.Empty<string>();
         if (ms.Length >= 2 && ms.GetBuffer()[0] == (byte)'P' && ms.GetBuffer()[1] == (byte)'K')
         {
+            // A BANK goes into the library, not the list of nights (§6.1).
+            var peek = Tidbits.Core.Networking.LivePackage.Read(ms);
+            ms.Position = 0;
+            if (peek.Manifest.Kind == "bank")
+            {
+                var (bank, bankProblems) = Tidbits.Core.Networking.LivePackage.ImportIntoStore(ms);
+                var all = Enumerable.Range(0, bank.Rounds.Count).SelectMany(i => bank.QuestionsFor(i)).Select(q => q with { RoundIndex = null }).ToList();
+                var n = GameData.Shared.Value.Library.Add(all, string.IsNullOrEmpty(bank.Name) ? "bank" : bank.Name);
+                ShowStatus($"Imported bank into your library: {n} new, {all.Count - n} already there."
+                           + (bankProblems.Count == 0 ? "" : $" {bankProblems.Count} problem(s)."));
+                return;
+            }
             (ev, problems) = Tidbits.Core.Networking.LivePackage.ImportIntoStore(ms);
         }
         else

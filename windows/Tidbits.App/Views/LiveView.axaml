@@ -56,6 +56,7 @@
                     <Button Content="Export package (with media)…" Click="OnExportPackage" Padding="16,10" Margin="0,0,8,8"/>
                     <Button Content="Export event as JSON…" Click="OnExportEvent" Padding="16,10" Margin="0,0,8,8"/>
                     <Button Content="Import event or package…" Click="OnImportEvent" Padding="16,10" Margin="0,0,8,8"/>
+                    <Button Content="Export library as bank package…" Click="OnExportLibrary" Padding="16,10" Margin="0,0,8,8"/>
                     <Button Content="Export questions as CSV…" Click="OnExportQuestionsCsv" Padding="16,10" Margin="0,0,8,8"/>
                 </WrapPanel>
 

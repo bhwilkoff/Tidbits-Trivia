@@ -142,7 +142,7 @@ enum LivePackage {
     /// Build a package from an event: pictures already in the store travel by id,
     /// clips are read through their bookmarks, https pictures stay URLs (§3.3).
     /// Returns the bytes and the names of clips that could NOT be read.
-    static func export(_ event: LiveEvent, createdBy: String) throws -> (data: Data, dropped: [String]) {
+    static func export(_ event: LiveEvent, createdBy: String, kind: String = "event") throws -> (data: Data, dropped: [String]) {
         var doc = LiveEventFile.document(for: event, droppedClipCount: 0)
         var media: [String: (bytes: Data, entry: MediaEntry)] = [:]
         var dropped: [String] = []
@@ -199,7 +199,7 @@ enum LivePackage {
         doc.droppedClipCount = dropped.count
 
         let f = ISO8601DateFormatter()
-        let manifest = Manifest(kind: "event", title: event.name, createdAt: f.string(from: .now),
+        let manifest = Manifest(kind: kind, title: event.name, createdAt: f.string(from: .now),
                                 createdBy: createdBy, media: media.keys.sorted().map { media[$0]!.entry })
         let enc = JSONEncoder(); enc.outputFormatting = [.prettyPrinted, .sortedKeys]
         var entries: [(name: String, data: Data)] = [
@@ -211,8 +211,8 @@ enum LivePackage {
         return (ZipContainer.write(entries), dropped)
     }
 
-    static func write(_ event: LiveEvent, to url: URL, createdBy: String) throws -> [String] {
-        let (data, dropped) = try export(event, createdBy: createdBy)
+    static func write(_ event: LiveEvent, to url: URL, createdBy: String, kind: String = "event") throws -> [String] {
+        let (data, dropped) = try export(event, createdBy: createdBy, kind: kind)
         try data.write(to: url, options: .atomic)
         return dropped
     }

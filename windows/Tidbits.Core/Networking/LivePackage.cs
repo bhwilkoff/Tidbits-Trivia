@@ -159,7 +159,7 @@ public static class LivePackage
 
     /// Build a package from an event: store pictures travel by id, clip paths are
     /// read, https pictures stay URLs (§3.3). Returns the clips that could NOT be read.
-    public static IReadOnlyList<string> Write(Stream output, LiveEvent ev, string createdBy, string venue = "")
+    public static IReadOnlyList<string> Write(Stream output, LiveEvent ev, string createdBy, string venue = "", string packageKind = "event")
     {
         var doc = LiveEventFile.BuildDocument(ev, venue);
         var media = new SortedDictionary<string, (byte[] Bytes, MediaEntry Entry)>(StringComparer.Ordinal);
@@ -223,6 +223,7 @@ public static class LivePackage
 
         var manifest = new Manifest
         {
+            Kind = packageKind,
             Title = ev.Name,
             CreatedAt = DateTimeOffset.UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'"),
             CreatedBy = createdBy,

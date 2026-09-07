@@ -21,6 +21,7 @@ public sealed class GameData
     public QuizStore Quizzes { get; }
     public PresetsStore Presets { get; }
     public Tidbits.Core.Networking.LiveEventStore LiveEvents { get; }
+    public Tidbits.Core.Networking.LiveLibraryStore Library { get; }   // §6: the host's own bank, across nights
     public Tidbits.Core.Networking.FriendStore Friends { get; }
     public Tidbits.Core.Networking.PlayerIdentityStore Identity { get; }
     public Tidbits.Core.Networking.DuelStore Duels { get; }
@@ -60,6 +61,7 @@ public sealed class GameData
         Quizzes = new QuizStore(Path.Combine(appDir, "quizzes"));
         Presets = new PresetsStore(Path.Combine(appDir, "presets.json"));
         LiveEvents = new Tidbits.Core.Networking.LiveEventStore(Path.Combine(appDir, "live-events.json"));
+        Library = new Tidbits.Core.Networking.LiveLibraryStore(Path.Combine(appDir, "live-library.json"));
         Friends = new Tidbits.Core.Networking.FriendStore(Path.Combine(appDir, "friends.json"));
         Identity = new Tidbits.Core.Networking.PlayerIdentityStore(Path.Combine(appDir, "profile.json"));
         Duels = new Tidbits.Core.Networking.DuelStore(Path.Combine(appDir, "duels.json"));

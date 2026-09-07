@@ -15,6 +15,8 @@ struct LiveBuilderView_macOS: View {
     /// Play, because joining is a Trivia Night action.
 
     @State private var store = LiveEventStore()
+    @State private var library = LiveLibraryStore()          // §6: the host's own bank, across nights
+    @State private var libraryPickFor: Int? = nil            // the round a "From library…" is adding to
     @Environment(AppStore.self) private var appStore   // the deep-link inbox's pending package
     @State private var selectedID: LiveEvent.ID?
     @State private var working = LiveEvent(name: "New Event")
@@ -31,6 +33,8 @@ struct LiveBuilderView_macOS: View {
 
     /// The question currently open in the editor sheet. `questionIndex == nil`
     /// means "a new question being appended to that round".
+    struct LibraryPick: Identifiable { let round: Int; var id: Int { round } }
+
     struct EditingQuestion: Identifiable {
         let id = UUID()
         let roundIndex: Int
@@ -106,6 +110,7 @@ struct LiveBuilderView_macOS: View {
             case "importevent": importEvent()
             case "exportpackage": exportPackage()
             case "importpackage": importEvent()   // the one importer opens both shapes
+            case "exportlibrary": exportLibrary()
             case "exportcsv":   exportQuestionsCSV()
             case "importcsv":   importCSV()
             case "printpack":
@@ -156,6 +161,20 @@ struct LiveBuilderView_macOS: View {
         // Checked on appear too — the inbox can drain before this view exists.
         .onChange(of: appStore.pendingPackageURL) { _, _ in consumePendingPackage() }
         .onAppear { consumePendingPackage() }
+        // TIDBITS_LIVE_LIBRARY=1 — open the library picker on round 1 after the demo
+        // event loads, so the picker can be photographed (hooks-are-coverage).
+        .task {
+            guard ProcessInfo.processInfo.environment["TIDBITS_LIVE_LIBRARY"] == "1" else { return }
+            try? await Task.sleep(for: .seconds(3))
+            if library.items.isEmpty, let r = working.rounds.first { library.add(r.questions, source: working.name) }
+            libraryPickFor = 0
+        }
+        .sheet(item: Binding(get: { libraryPickFor.map { LibraryPick(round: $0) } },
+                             set: { libraryPickFor = $0?.round })) { pick in
+            LiveLibraryPicker_macOS(library: library,
+                                    onAdd: { q in insertQuestion(q.duplicatedForEditing(), into: pick.round, at: nil) },   // a fresh id per use
+                                    onClose: { libraryPickFor = nil })
+        }
         .sheet(item: $editing) { ctx in
             LiveQuestionEditor_macOS(draft: ctx.draft, format: ctx.format,
                                      onSave: { q, audio, video in
@@ -346,6 +365,9 @@ struct LiveBuilderView_macOS: View {
             Button("Export event as JSON…") { exportEvent() }
             Button("Import event or package…") { importEvent() }
             Divider()
+            Button("Export library as bank package…") { exportLibrary() }
+                .disabled(library.items.isEmpty)
+            Divider()
             Button("Export questions as CSV…") { exportQuestionsCSV() }
                 .disabled(working.totalQuestions == 0)
         } label: { Label("Event file", systemImage: "doc") }
@@ -500,6 +522,16 @@ struct LiveBuilderView_macOS: View {
                 } label: { Label("Pull one from the corpus", systemImage: "sparkles") }
                 .buttonStyle(.bordered).controlSize(.small)
                 .disabled(busy)
+                Button { libraryPickFor = ri } label: { Label("From library…", systemImage: "books.vertical") }
+                    .buttonStyle(.bordered).controlSize(.small)
+                    .help("Add questions you saved from earlier nights")
+                if !round.questions.isEmpty {
+                    Button {
+                        let n = library.add(round.questions, source: working.name)
+                        fileReceipt = "Saved round to your library: \(n) new, \(round.questions.count - n) already there"
+                    } label: { Label("Save round to library", systemImage: "square.and.arrow.down") }
+                    .buttonStyle(.bordered).controlSize(.small)
+                }
                 // G4: hand-picking eight answers that all begin with B out of a
                 // 98,000-question corpus is not something a host will do, so the
                 // themed round fills itself.
@@ -546,6 +578,10 @@ struct LiveBuilderView_macOS: View {
             }
             .controlSize(.small)
             Menu {
+                Button("Save to library") {
+                    let new = library.add(q, source: working.name)
+                    fileReceipt = new ? "Saved to your library (\(library.items.count))" : "Already in your library — updated"
+                }
                 Button("Duplicate") { insertQuestion(q.duplicatedForEditing(), into: ri, at: qi + 1) }
                 Button("Move up") { moveQuestion(ri, from: qi, to: qi - 1) }.disabled(qi == 0)
                 Button("Move down") { moveQuestion(ri, from: qi, to: qi + 1) }
@@ -845,6 +881,19 @@ struct LiveBuilderView_macOS: View {
         } catch { presentError("Could not open \(url.lastPathComponent)", error) }
     }
 
+    /// The whole library as a `bank` package: the same container, rounds as
+    /// category folders, media inside (LIVE-PACKAGE-FORMAT §6).
+    private func exportLibrary() {
+        let type = UTType(filenameExtension: LivePackage.fileExtension, conformingTo: .zip) ?? .zip
+        let bank = LiveLibrary.bankEvent(library.items, name: "Question library")
+        guard let url = chooseSaveURL(named: "Question library.\(LivePackage.fileExtension)", types: [type]) else { return }
+        do {
+            let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
+            _ = try LivePackage.write(bank, to: url, createdBy: "Tidbits Trivia (macOS) \(version)", kind: "bank")
+            fileReceipt = "Exported your library: \(library.items.count) questions in \(bank.rounds.count) categories"
+        } catch { presentError("Could not export the library", error) }
+    }
+
     /// Write the night as ONE file with its media inside (LIVE-PACKAGE-FORMAT).
     private func exportPackage() {
         let type = UTType(filenameExtension: LivePackage.fileExtension, conformingTo: .zip) ?? .zip
@@ -873,7 +922,17 @@ struct LiveBuilderView_macOS: View {
             let ev: LiveEvent
             var problems: [String] = []
             if LivePackage.isPackage(url) || (try? LivePackage.read(try Data(contentsOf: url))) != nil {
-                (ev, problems) = try LivePackage.importIntoStore(try Data(contentsOf: url))
+                let data = try Data(contentsOf: url)
+                // A BANK goes into the library, not the list of nights (§6.1).
+                if (try? LivePackage.read(data).manifest.kind) == "bank" {
+                    let (bank, bankProblems) = try LivePackage.importIntoStore(data)
+                    let n = library.add(bank.questionStream.map { var q = $0; q.roundIndex = nil; return q },
+                                        source: bank.name.isEmpty ? url.lastPathComponent : bank.name)
+                    fileReceipt = "Imported bank into your library: \(n) new, \(bank.totalQuestions - n) already there"
+                    if !bankProblems.isEmpty { presentError("Imported with problems", NSError(domain: "LivePackage", code: 1, userInfo: [NSLocalizedDescriptionKey: bankProblems.prefix(6).joined(separator: "\n")])) }
+                    return
+                }
+                (ev, problems) = try LivePackage.importIntoStore(data)
                 fileReceipt = "Imported package: \(ev.rounds.count) rounds, \(ev.totalQuestions) questions"
             } else {
                 ev = try LiveEventFile.read(from: url)

@@ -170,11 +170,17 @@ pockets.
 ## §6 — Question banks
 
 6.1 **A `bank` package is a library, not a night.** Its `event.json` rounds
-are folders ("Geography — pictures", "80s music intros"); the importer offers
-them to the host's question library, from which rounds are assembled. The
-first bank importer is the Kahoot importer with `--bank`, and the app-side
-library (search, tags, "add to round", "used in") is the next scope after this
-one.
+are folders (one per category when a host exports their library); the
+importer puts its questions into the host's QUESTION LIBRARY, never into the
+list of nights. **Both hosts have the library (2026-09-07):** "Save to
+library" on every question row and "Save round to library" on every round;
+"From library…" beside "Pull one from the corpus" opens a searchable picker
+(every term must hit the prompt, an option, the explanation, a tag, the
+category or the source night; a category filter narrows first) that adds a
+FRESH copy of a saved question to the round; "Export library as bank
+package…" writes the whole library as one `bank` file. Saving is keyed by
+prompt + answer, so a round saved twice does not double. `kahoot_import.py
+--bank` writes a bank straight from a Kahoot.
 
 ## §7 — Goldens (the test that keeps them honest)
 
@@ -210,7 +216,8 @@ writer that produced it and the tool a host can use from a shell (`pack`,
    on both hosts. For scale: a once-written `live/{code}/media/<id>` node the
    joiners fetch once (needs all four joiners updated), or Firebase Storage
    (a paid plan on new projects — an OWNER decision).
-4. **The question library** (§6) in both apps.
+4. **The question library** (§6) — **DONE 2026-09-07** on both hosts (store,
+   save from any row/round, searchable picker, bank package in and out).
 5. **More importers/exporters** per the matrix in QUIZ-FORMATS-RESEARCH §4:
    Crowdpurr CSV, Kahoot xlsx export, Blooket/Quizizz, GIFT/Aiken,
    SpeedQuizzing folders, Open Trivia DB.

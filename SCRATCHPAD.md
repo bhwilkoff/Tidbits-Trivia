@@ -78,6 +78,14 @@ joiner against a store-only copy of the Minerva package (room MINS). The
 once-written `live/{code}/media/{id}` node and Firebase Storage remain the
 scale follow-ups (§5.3).
 
+**§8.4 done — the question library** on both hosts: `LiveLibraryStore`
+(Mac UserDefaults / Windows live-library.json), Save to library on every row +
+Save round to library, From library… picker beside Pull one from the corpus
+(search every term across prompt/options/explanation/tags/category/source,
+category filter, Add a fresh copy, remove), Export library as bank package…,
+and a `bank` package imports INTO the library. 4 Swift + 3 xUnit tests; Mac
+picker photographed via `TIDBITS_LIVE_LIBRARY=1`.
+
 **State left / sequenced (LIVE-PACKAGE-FORMAT §8):** Windows drag-and-drop; file association (Mac UTType +
 MSIX); phones see package media via Firebase Storage at host time; the
 question library (`kind: bank`); Crowdpurr / Kahoot-xlsx / Blooket / GIFT /

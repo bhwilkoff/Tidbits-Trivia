@@ -90,6 +90,8 @@ struct ContentView_iOS: View {
                 // The projector's QR. Home opens the join screen with the code in it.
                 store.selectedTab = .play
                 store.pendingLiveJoinCode = code
+            case .package:
+                break   // a host's package; only the Mac has a builder to open it in
             }
         }
     }

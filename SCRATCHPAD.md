@@ -55,6 +55,11 @@ the round's bookmark arrays index-parallel; Windows: `ClipAt`/`SetClip` on
 kind. Hooks `TIDBITS_LIVE_EDITQ=1` + `TIDBITS_LIVE_PICTURE`/`TIDBITS_LIVE_CLIP`
 photograph the editor with media attached. Windows drag-and-drop ⏳ (3.39).
 
+**§8.2 done:** `.tidbits` double-click opens the importer on both platforms
+(Mac: document type + `DeepLink.package` → builder; Windows: MSIX file type
+association + `Program.LaunchPackage`). Verified on the Mac by `open -a` on
+the Minerva package.
+
 **State left / sequenced (LIVE-PACKAGE-FORMAT §8):** Windows drag-and-drop; file association (Mac UTType +
 MSIX); phones see package media via Firebase Storage at host time; the
 question library (`kind: bank`); Crowdpurr / Kahoot-xlsx / Blooket / GIFT /

@@ -74,6 +74,17 @@
             <uap:DisplayName>Tidbits Trivia</uap:DisplayName>
           </uap:Protocol>
         </uap:Extension>
+        <!-- The .tidbits package (docs/LIVE-PACKAGE-FORMAT.md §8.2): double-click
+             opens the night in the Live builder. Program.LaunchPackage reads the path
+             off the command line the association passes. -->
+        <uap:Extension Category="windows.fileTypeAssociation">
+          <uap:FileTypeAssociation Name="tidbits">
+            <uap:DisplayName>Tidbits package</uap:DisplayName>
+            <uap:SupportedFileTypes>
+              <uap:FileType ContentType="application/vnd.learningischange.tidbits+zip">.tidbits</uap:FileType>
+            </uap:SupportedFileTypes>
+          </uap:FileTypeAssociation>
+        </uap:Extension>
 
         <!-- The https twin: tidbitstrivia.com/live/CODE (and every https deep link)
              opens the app rather than the browser. Paired with

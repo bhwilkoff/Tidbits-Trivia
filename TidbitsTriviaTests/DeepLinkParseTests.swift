@@ -35,6 +35,12 @@ struct DeepLinkParseTests {
         #expect(parse("tidbits://category/history") == .category("history"))
     }
 
+    @Test func aPackageFileIsItsOwnRoute() {
+        let f = URL(fileURLWithPath: "/Users/host/Desktop/Friday Pub Quiz.tidbits")
+        #expect(DeepLink.parse(f) == .package(f))
+        #expect(parse("file:///Users/host/notes.txt") == nil)
+    }
+
     @Test func unknownAndEmptyRoutesAreNil() {
         #expect(parse("https://tidbitstrivia.com/support") == nil)
         #expect(parse("https://tidbitstrivia.com/") == nil)

@@ -30,6 +30,11 @@ final class AppStore {
     /// join screen with the code filled in — the player scanned, they don't type.
     var pendingLiveJoinCode: String?
 
+    /// A `.tidbits` package the system asked us to open. Set by the deep-link
+    /// inbox, CONSUMED by the Live builder (macOS), which imports it and selects
+    /// the night.
+    var pendingPackageURL: URL?
+
 
     var selectedTab: Tab = .play
     var playPath = NavigationPath()
@@ -148,6 +153,10 @@ enum DeepLink: Equatable, Sendable {
     /// `https://tidbitstrivia.com/live/<code>` — the URL the projector's
     /// scan-to-join QR encodes (DEEP_LINKS.md).
     case live(String)
+    /// A `.tidbits` package file the system handed the app (double-click, Open
+    /// With, a drag onto the Dock icon). Only the Mac has a builder to import it
+    /// into; the other platforms ignore it (LIVE-PACKAGE-FORMAT §8.2).
+    case package(URL)
 
     /// One parser for BOTH URL shapes an entry point can hand the app.
     ///
@@ -158,6 +167,9 @@ enum DeepLink: Equatable, Sendable {
     /// Universal Link, including the projector's QR, launched the app and did
     /// nothing. The web app is hash-routed, so a pasted `…/#/live/CODE` is read too.
     static func parse(_ url: URL) -> DeepLink? {
+        if url.isFileURL {
+            return url.pathExtension.lowercased() == "tidbits" ? .package(url) : nil
+        }
         let parts: [String]
         if let scheme = url.scheme?.lowercased(), scheme == "http" || scheme == "https" {
             var p = url.pathComponents.filter { $0 != "/" }

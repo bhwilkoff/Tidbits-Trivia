@@ -87,6 +87,8 @@ struct ContentView_tvOS: View {
                 launch = store.surpriseMe()
             case .live:
                 showJoinNight = true   // custom scheme only on tvOS; the cover asks for the code
+            case .package:
+                break   // no builder on a TV
             }
         }
     }

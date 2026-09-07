@@ -52,6 +52,22 @@ public partial class LiveView : UserControl
             return;
         }
 
+        // A double-clicked .tidbits (the MSIX file-type association): import it and
+        // select the night, exactly as the Import button would (§8.2).
+        if (Program.LaunchPackage is { } pkg)
+        {
+            Loaded += (_, _) =>
+            {
+                try
+                {
+                    using var ms = new System.IO.MemoryStream(System.IO.File.ReadAllBytes(pkg));
+                    ImportFromStream(ms);
+                }
+                catch (Exception ex) { ShowStatus($"Could not open {System.IO.Path.GetFileName(pkg)}: {ex.Message}"); }
+            };
+            return;
+        }
+
         // TIDBITS_NIGHT_HOST=1 — host the default night. Apple and Android both had
         // this; Windows could reach the host seat only through a Click handler.
         var wantHost = Services.LaunchHooks.NightHost
@@ -816,6 +832,30 @@ public partial class LiveView : UserControl
         }
     }
 
+    /// One importer for both shapes. Sniffs the bytes, never the extension: a
+    /// package renamed .zip still opens, and a JSON document named .tidbits is
+    /// still read as JSON.
+    private void ImportFromStream(System.IO.MemoryStream ms)
+    {
+        LiveEvent ev;
+        System.Collections.Generic.IReadOnlyList<string> problems = System.Array.Empty<string>();
+        if (ms.Length >= 2 && ms.GetBuffer()[0] == (byte)'P' && ms.GetBuffer()[1] == (byte)'K')
+        {
+            (ev, problems) = Tidbits.Core.Networking.LivePackage.ImportIntoStore(ms);
+        }
+        else
+        {
+            using var reader = new System.IO.StreamReader(ms);
+            ev = LiveEventFile.Decode(reader.ReadToEnd());
+        }
+        LoadEvent(ev);
+        GameData.Shared.Value.LiveEvents.Save(ev);
+        BuildSavedEvents();
+        ShowStatus(problems.Count == 0
+            ? $"Imported \u201C{ev.Name}\u201D \u2014 {ev.TotalQuestions} questions across {ev.Rounds.Count} rounds."
+            : $"Imported \u201C{ev.Name}\u201D with {problems.Count} problem(s): {string.Join("; ", problems.Take(3))}");
+    }
+
     /// Write the night as ONE file with its media inside (docs/LIVE-PACKAGE-FORMAT.md,
     /// Decision 059). The JSON export above is kept for hosts who want text.
     private async void OnExportPackage(object? sender, RoutedEventArgs e)
@@ -867,27 +907,10 @@ public partial class LiveView : UserControl
             });
             if (files.Count == 0) return;
             await using var stream = await files[0].OpenReadAsync();
-            // Sniff, do not trust the extension: a package renamed .zip still opens.
             using var ms = new System.IO.MemoryStream();
             await stream.CopyToAsync(ms);
             ms.Position = 0;
-            LiveEvent ev;
-            System.Collections.Generic.IReadOnlyList<string> problems = System.Array.Empty<string>();
-            if (ms.Length >= 2 && ms.GetBuffer()[0] == (byte)'P' && ms.GetBuffer()[1] == (byte)'K')
-            {
-                (ev, problems) = Tidbits.Core.Networking.LivePackage.ImportIntoStore(ms);
-            }
-            else
-            {
-                using var reader = new System.IO.StreamReader(ms);
-                ev = LiveEventFile.Decode(await reader.ReadToEndAsync());
-            }
-            LoadEvent(ev);
-            GameData.Shared.Value.LiveEvents.Save(ev);
-            BuildSavedEvents();
-            ShowStatus(problems.Count == 0
-                ? $"Imported \u201C{ev.Name}\u201D \u2014 {ev.TotalQuestions} questions across {ev.Rounds.Count} rounds."
-                : $"Imported \u201C{ev.Name}\u201D with {problems.Count} problem(s): {string.Join("; ", problems.Take(3))}");
+            ImportFromStream(ms);
         }
         catch (LiveEventFile.FileFormatException ex)
         {

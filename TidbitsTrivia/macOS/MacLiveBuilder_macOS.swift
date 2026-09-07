@@ -15,6 +15,7 @@ struct LiveBuilderView_macOS: View {
     /// Play, because joining is a Trivia Night action.
 
     @State private var store = LiveEventStore()
+    @Environment(AppStore.self) private var appStore   // the deep-link inbox's pending package
     @State private var selectedID: LiveEvent.ID?
     @State private var working = LiveEvent(name: "New Event")
     @State private var newFormat: GameMode = .classic
@@ -151,6 +152,10 @@ struct LiveBuilderView_macOS: View {
             editing = EditingQuestion(roundIndex: 0, questionIndex: 0, format: round.format,
                                       draft: draftFor(0, 0))
         }
+        // A double-clicked .tidbits (DeepLink.package): import it and select the night.
+        // Checked on appear too — the inbox can drain before this view exists.
+        .onChange(of: appStore.pendingPackageURL) { _, _ in consumePendingPackage() }
+        .onAppear { consumePendingPackage() }
         .sheet(item: $editing) { ctx in
             LiveQuestionEditor_macOS(draft: ctx.draft, format: ctx.format,
                                      onSave: { q, audio, video in
@@ -814,6 +819,30 @@ struct LiveBuilderView_macOS: View {
             }
         }
         catch { presentError("Could not export the event", error) }
+    }
+
+    private func consumePendingPackage() {
+        guard let url = appStore.pendingPackageURL else { return }
+        appStore.pendingPackageURL = nil
+        // LaunchServices grants the sandbox access to a file the user opened; the
+        // scope must still be claimed to read it.
+        let granted = url.startAccessingSecurityScopedResource()
+        defer { if granted { url.stopAccessingSecurityScopedResource() } }
+        do {
+            let (ev, problems) = try LivePackage.importIntoStore(try Data(contentsOf: url))
+            fileReceipt = "Imported package: \(ev.rounds.count) rounds, \(ev.totalQuestions) questions"
+            working = ev
+            store.upsert(ev)
+            selectedID = ev.id
+            expandedRounds = []
+            if !problems.isEmpty {
+                let alert = NSAlert()
+                alert.messageText = "Imported with \(problems.count) problem\(problems.count == 1 ? "" : "s")"
+                alert.informativeText = problems.prefix(6).joined(separator: "\n")
+                alert.alertStyle = .warning
+                alert.runModal()
+            }
+        } catch { presentError("Could not open \(url.lastPathComponent)", error) }
     }
 
     /// Write the night as ONE file with its media inside (LIVE-PACKAGE-FORMAT).

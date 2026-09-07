@@ -265,6 +265,10 @@ struct ContentView_macOS: View {
             case .live(let code):
                 // A `…/live/CODE` link on the Mac opens the join screen with the code.
                 joinCode = code
+            case .package(let url):
+                // Double-clicked .tidbits: the Live builder imports it (§8.2).
+                section = .live
+                store.pendingPackageURL = url
             }
         }
     }

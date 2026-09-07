@@ -48,7 +48,8 @@ public partial class MainWindow : Window
             var startTab = Services.LaunchHooks.Tab
                 ?? (Services.LaunchHooks.LiveHost is not null
                     || Services.LaunchHooks.NightHost
-                    || Services.LaunchHooks.LiveJoin is not null ? "live" : null);
+                    || Services.LaunchHooks.LiveJoin is not null
+                    || Program.LaunchPackage is not null ? "live" : null);
             var tags = Nav.MenuItems.OfType<FANavigationViewItem>().ToList();
             var wanted = tags.FirstOrDefault(i =>
                 string.Equals(i.Tag as string, startTab, StringComparison.OrdinalIgnoreCase));

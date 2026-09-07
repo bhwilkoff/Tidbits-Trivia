@@ -12,12 +12,19 @@ sealed class Program
     /// twin), consumed by MainWindow once shown. Set once at startup.
     public static string? LaunchUrl { get; private set; }
 
+    /// A `.tidbits` package the app was launched to open (double-click / Open With
+    /// through the MSIX file-type association), consumed by the Live view once
+    /// shown (LIVE-PACKAGE-FORMAT §8.2). Set once at startup.
+    public static string? LaunchPackage { get; private set; }
+
     [STAThread]
     public static void Main(string[] args)
     {
         LaunchUrl = System.Array.Find(args, a =>
             a.StartsWith("tidbitstrivia:", StringComparison.OrdinalIgnoreCase)
             || a.StartsWith("https://tidbitstrivia.com", StringComparison.OrdinalIgnoreCase));
+        LaunchPackage = System.Array.Find(args, a =>
+            a.EndsWith(".tidbits", StringComparison.OrdinalIgnoreCase) && System.IO.File.Exists(a));
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
     }
 

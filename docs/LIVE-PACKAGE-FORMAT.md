@@ -192,9 +192,14 @@ writer that produced it and the tool a host can use from a shell (`pack`,
    and on the Mac a picture/audio/video file dropped on a question row becomes
    that question's media by its kind. Windows drag-and-drop is tracked
    (WINDOWS-PARITY 3.39).
-2. **File association**: double-click a `.tidbits` on the Mac
-   (`UTExportedTypeDeclarations`, macOS-only Info.plist) and on Windows
-   (`uap:FileTypeAssociation` in the MSIX manifest) opens the importer.
+2. **File association** — **DONE 2026-09-07:** double-click a `.tidbits` on
+   the Mac (`UTExportedTypeDeclarations` + `CFBundleDocumentTypes` in the
+   shared Info.plist; the file arrives as `DeepLink.package` and the Live
+   builder imports it; iOS/tvOS ignore the case) and on Windows
+   (`uap:FileTypeAssociation` in the MSIX manifest; `Program.LaunchPackage`
+   reads the path and the Live view imports it on load). Note the shared
+   Info.plist means an iPhone also lists Tidbits under "Open in" for a
+   `.tidbits` file; it opens the app and does nothing, which is truthful.
 3. **Phones see package media**: at host time upload the night's media to
    Firebase Storage under `live/{code}/media/<id>` and publish the download
    URLs; delete at end of night. Stays inside the $0 guardrail at pub scale.

@@ -127,4 +127,25 @@ public class LivePackageGoldenTest : IDisposable
         Assert.Equal(new string?[] { WavId, null }, r0.Audio!.ToArray());
         Assert.Equal(0, again.Document.DroppedClipCount);
     }
+
+    [Fact]
+    public void A_store_only_picture_is_published_through_the_data_url_provider()
+    {
+        using var s = Golden();
+        var ev = LivePackage.ImportIntoStore(s).Event;
+        var q0 = ev.QuestionsFor(0)[0];
+        // The golden picture HAS an https twin: the twin wins, provider or not.
+        LiveMediaStore.DataUrlProvider = _ => "data:image/jpeg;base64,STUB";
+        try
+        {
+            Assert.Equal("https://example.test/golden-picture.png", LiveMediaStore.PublishableUrl(q0.ImageUrl));
+            // A picture with no twin goes through the provider; the same id is cached.
+            var id = LiveMediaStore.Store(new byte[] { 1, 2, 3 }, "png", "twinless.png");
+            var reference = LiveMediaStore.Reference(id);
+            Assert.Equal("data:image/jpeg;base64,STUB", LiveMediaStore.PublishableUrl(reference));
+            LiveMediaStore.DataUrlProvider = _ => "changed";
+            Assert.Equal("data:image/jpeg;base64,STUB", LiveMediaStore.PublishableUrl(reference));
+        }
+        finally { LiveMediaStore.DataUrlProvider = null; }
+    }
 }

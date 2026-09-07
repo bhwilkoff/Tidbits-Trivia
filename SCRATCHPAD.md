@@ -69,6 +69,15 @@ note), Gimkit (Correct + Incorrect 1–3); the export gains an `imageURL`
 column. 5 new tests per stack; the Windows no-header rule restored to "any
 integer in field 5 is the Windows order".
 
+**§8.3 done as a data URL:** a store-only picture is published to phones as a
+≤800px JPEG data URL under ~120 KB (Mac: `LiveMediaStore.dataURL`, AppKit;
+Windows: `MediaPublisher` via SkiaSharp installed into Core's
+`LiveMediaStore.DataUrlProvider`); Android's joiner decodes a data URL into
+bytes for Coil. Verified on the REAL Pixel 8a, the real iPhone 12 and the web
+joiner against a store-only copy of the Minerva package (room MINS). The
+once-written `live/{code}/media/{id}` node and Firebase Storage remain the
+scale follow-ups (§5.3).
+
 **State left / sequenced (LIVE-PACKAGE-FORMAT §8):** Windows drag-and-drop; file association (Mac UTType +
 MSIX); phones see package media via Firebase Storage at host time; the
 question library (`kind: bank`); Crowdpurr / Kahoot-xlsx / Blooket / GIFT /

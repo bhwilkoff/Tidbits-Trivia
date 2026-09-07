@@ -134,12 +134,28 @@ public static class LiveMediaStore
         return id is null ? url : FilePath(id);
     }
 
-    /// What a JOINER may be given (§5.3): the https twin, or nothing.
+    /// The App installs this: a store file path → a small `data:image/jpeg;base64,…`
+    /// (downscaled for venue Wi-Fi). Core has no image codec, and a null provider
+    /// means a store-only picture is projector-only, which is the truthful result.
+    public static Func<string, string?>? DataUrlProvider { get; set; }
+    private static readonly Dictionary<string, string> DataUrlCache = new();
+
+    /// What a JOINER may be given (§5.3): the https twin when there is one,
+    /// otherwise the picture itself as a small data URL. A phone can never open
+    /// the host's package, and the shipped joiners load whatever `imageURL` says.
     public static string? PublishableUrl(string? url)
     {
         var id = IdFrom(url);
         if (id is null) return url;
         var idx = LoadIndex();
-        return idx.TryGetValue(id, out var info) && info.SourceUrl is { } s && s.StartsWith("http") ? s : null;
+        if (idx.TryGetValue(id, out var info) && info.SourceUrl is { } s && s.StartsWith("http")) return s;
+        lock (Gate)
+        {
+            if (DataUrlCache.TryGetValue(id, out var hit)) return hit;
+            var path = FilePath(id);
+            var made = path is null ? null : DataUrlProvider?.Invoke(path);
+            if (made is not null) DataUrlCache[id] = made;
+            return made;
+        }
     }
 }

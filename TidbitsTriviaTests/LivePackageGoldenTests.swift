@@ -1,4 +1,5 @@
 #if os(macOS)
+import AppKit
 import Foundation
 import Testing
 
@@ -93,6 +94,27 @@ struct LivePackageGoldenTests {
         let marks = try #require(event.rounds[0].audioBookmarks)
         #expect(marks.count == 2 && !marks[0].isEmpty && marks[1].isEmpty)
         #expect(LiveClip.isPlayable(marks[0]))
+    }
+
+    @Test("a store-only picture reaches a phone as a small JPEG data URL (§5.3)")
+    func storeOnlyPictureIsPublishedAsDataURL() throws {
+        let dir = Self.scratchStore()
+        defer { try? FileManager.default.removeItem(at: dir); LiveMediaStore.directoryOverride = nil }
+        // A 1200x900 red picture with NO https twin.
+        let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 1200, pixelsHigh: 900, bitsPerSample: 8,
+                                   samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+                                   colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)!
+        for y in 0..<900 { for x in 0..<1200 { rep.setColor(NSColor(red: 1, green: 0.2, blue: 0.1, alpha: 1), atX: x, y: y) } }
+        let png = rep.representation(using: .png, properties: [:])!
+        let id = try LiveMediaStore.store(png, ext: "png", originalName: "big.png")
+        let published = try #require(LiveMediaStore.publishableURL(LiveMediaStore.reference(id)))
+        #expect(published.hasPrefix("data:image/jpeg;base64,"))
+        #expect(published.count < 170_000)   // ~120 KB of JPEG, base64-expanded
+        let jpeg = try #require(Data(base64Encoded: String(published.dropFirst("data:image/jpeg;base64,".count))))
+        let back = try #require(NSImage(data: jpeg))
+        #expect(back.size.width <= 800 && back.size.height <= 800)
+        // The same id publishes the same bytes (cached), and an https twin still wins.
+        #expect(LiveMediaStore.publishableURL(LiveMediaStore.reference(id)) == published)
     }
 
     @Test("pack → unpack → pack keeps the manifest media and the document")

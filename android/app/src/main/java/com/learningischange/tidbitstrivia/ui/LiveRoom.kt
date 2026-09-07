@@ -233,7 +233,14 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
                 }
                 Spacer(Modifier.height(10.dp))
                 p.imageUrl?.let { url ->
-                    AsyncImage(model = url, contentDescription = null, modifier = Modifier.fillMaxWidth().height(220.dp))
+                    // A host may publish the picture itself as a data URL (a picture that
+                    // lives only in the host's package — LIVE-PACKAGE-FORMAT §5.3). Coil
+                    // takes the decoded bytes as a model; a URL stays a URL.
+                    val model: Any = if (url.startsWith("data:")) {
+                        runCatching { android.util.Base64.decode(url.substringAfter(",", ""), android.util.Base64.DEFAULT) }
+                            .getOrNull() ?: url
+                    } else url
+                    AsyncImage(model = model, contentDescription = null, modifier = Modifier.fillMaxWidth().height(220.dp))
                     Spacer(Modifier.height(12.dp))
                 }
                 Text(p.prompt, fontSize = 24.sp, fontWeight = FontWeight.Black, color = ink)

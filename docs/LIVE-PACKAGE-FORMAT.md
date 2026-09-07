@@ -154,12 +154,18 @@ bookmark, a Windows path), so the existing cockpit playback needs no change.
 5.2 **The projector and the cockpit resolve `tidbits-media:` locally.** A
 missing file shows "Picture unavailable" on the glass — never a blank.
 
-5.3 **Joiners are given `sourceURL`, never `tidbits-media:`.** A phone cannot
-reach the host's disk. If the media has no https twin the picture is
-PROJECTOR-ONLY, which is the ordinary pub-quiz idiom (Kahoot's phones show only
-answer colours). Publishing package media to phones through Firebase Storage
-is the tracked follow-up (§8); until then the cockpit says which pictures are
-projector-only.
+5.3 **Joiners are given `sourceURL` when there is one, otherwise the picture
+itself as a small data URL — never `tidbits-media:`.** A phone cannot reach the
+host's disk. Both hosts (2026-09-07) downscale a store-only picture to ≤ 800px
+JPEG under ~120 KB and publish `data:image/jpeg;base64,…` in `pub.imageURL`;
+every shipped joiner (web `<img>`, iOS/tvOS `AsyncImage`, Android Coil via
+decoded bytes) loads it with no client update. The cost is bandwidth, not a
+service: the pub node is re-sent on each state change, so a 13-picture night
+for 40 phones is on the order of 200 MB, inside the RTDB free tier at pub
+scale. Firebase Storage (a paid plan on new projects) or a once-written
+`live/{code}/media/{id}` node that joiners fetch once are the follow-ups for
+scale (§8.3); the data URL is what works today with the apps in people's
+pockets.
 
 ## §6 — Question banks
 
@@ -200,9 +206,10 @@ writer that produced it and the tool a host can use from a shell (`pack`,
    reads the path and the Live view imports it on load). Note the shared
    Info.plist means an iPhone also lists Tidbits under "Open in" for a
    `.tidbits` file; it opens the app and does nothing, which is truthful.
-3. **Phones see package media**: at host time upload the night's media to
-   Firebase Storage under `live/{code}/media/<id>` and publish the download
-   URLs; delete at end of night. Stays inside the $0 guardrail at pub scale.
+3. **Phones see package media** — **DONE as a data URL 2026-09-07 (§5.3)**
+   on both hosts. For scale: a once-written `live/{code}/media/<id>` node the
+   joiners fetch once (needs all four joiners updated), or Firebase Storage
+   (a paid plan on new projects — an OWNER decision).
 4. **The question library** (§6) in both apps.
 5. **More importers/exporters** per the matrix in QUIZ-FORMATS-RESEARCH §4:
    Crowdpurr CSV, Kahoot xlsx export, Blooket/Quizizz, GIFT/Aiken,

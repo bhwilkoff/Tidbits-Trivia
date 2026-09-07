@@ -644,7 +644,7 @@ public sealed class LiveNightHost : ObservableObject
             Phase = Revealed ? LiveRoom.Phase.Reveal : LiveRoom.Phase.Question,
             Prompt = q.Prompt, Options = mcq ? q.Options : null, Format = fmt,
             AnswerIndex = Revealed && mcq ? q.CorrectIndex : null,
-            ImageUrl = q.ImageUrl,
+            ImageUrl = LiveMediaStore.PublishableUrl(q.ImageUrl),   // §5.3: a phone cannot open the host's package
             Numeric = q.Closest is { } c ? new LiveRoom.Numeric { Min = c.Min, Max = c.Max, Step = c.Step, Unit = c.Unit } : null,
             OrderItems = q.Ordering is not null ? _shuffledOrder : null,
             MatchKeys = q.Matching?.Keys,

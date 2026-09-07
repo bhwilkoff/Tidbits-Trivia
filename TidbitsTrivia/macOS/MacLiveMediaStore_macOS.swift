@@ -1,5 +1,6 @@
 #if os(macOS)
 import Foundation
+import AppKit
 import CryptoKit
 
 // MARK: - The media store (LIVE-PACKAGE-FORMAT §5.1)
@@ -121,13 +122,61 @@ nonisolated enum LiveMediaStore {
         return fileURL(id)
     }
 
-    /// What a JOINER may be given for this reference (§5.3): the https twin, or
-    /// nothing. A phone can never open the host's package.
+    /// What a JOINER may be given for this reference (§5.3): the https twin when
+    /// there is one, otherwise the picture itself as a small data URL. A phone can
+    /// never open the host's package, and the shipped joiners already load
+    /// whatever `imageURL` says — a data URL needs no client update.
     static func publishableURL(_ url: URL?) -> String? {
         guard let url else { return nil }
         guard let id = id(from: url) else { return url.absoluteString }
         if let s = loadIndex()[id]?.sourceURL, s.hasPrefix("http") { return s }
+        return dataURL(forID: id)
+    }
+
+    /// The picture as `data:image/jpeg;base64,…`, downscaled so the whole room
+    /// can fetch it on venue Wi-Fi: the longest side ≤ 800px, JPEG 0.6, and it
+    /// shrinks further until it is under ~120 KB. Cached per id: the same bytes
+    /// are published on every state change of the question.
+    static let publishMaxPixels = 800
+    static let publishMaxBytes = 120_000
+    nonisolated(unsafe) private static var dataURLCache: [String: String] = [:]
+
+    static func dataURL(forID id: String) -> String? {
+        if let hit = dataURLCache[id] { return hit }
+        guard let file = fileURL(id), let image = NSImage(contentsOf: file) else { return nil }
+        var side = publishMaxPixels
+        var quality = 0.6
+        for _ in 0..<5 {
+            guard let jpeg = jpegData(image, maxSide: side, quality: quality) else { return nil }
+            if jpeg.count <= publishMaxBytes || side <= 320 {
+                let s = "data:image/jpeg;base64," + jpeg.base64EncodedString()
+                dataURLCache[id] = s
+                return s
+            }
+            side = side * 3 / 4
+            quality = max(0.4, quality - 0.1)
+        }
         return nil
+    }
+
+    private static func jpegData(_ image: NSImage, maxSide: Int, quality: Double) -> Data? {
+        guard var cg = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return nil }
+        let w = cg.width, h = cg.height
+        let scale = min(1, Double(maxSide) / Double(max(w, h)))
+        if scale < 1 {
+            let nw = max(1, Int(Double(w) * scale)), nh = max(1, Int(Double(h) * scale))
+            guard let ctx = CGContext(data: nil, width: nw, height: nh, bitsPerComponent: 8, bytesPerRow: 0,
+                                      space: CGColorSpaceCreateDeviceRGB(),
+                                      bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue) else { return nil }
+            ctx.interpolationQuality = .high
+            ctx.setFillColor(CGColor(gray: 1, alpha: 1))
+            ctx.fill(CGRect(x: 0, y: 0, width: nw, height: nh))   // JPEG has no alpha: white behind a PNG
+            ctx.draw(cg, in: CGRect(x: 0, y: 0, width: nw, height: nh))
+            guard let scaled = ctx.makeImage() else { return nil }
+            cg = scaled
+        }
+        let rep = NSBitmapImageRep(cgImage: cg)
+        return rep.representation(using: .jpeg, properties: [.compressionFactor: quality])
     }
 
     /// The id of a file that lives in the store (its name is `<id>.<ext>`).

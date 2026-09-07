@@ -38,11 +38,26 @@ struct ClubPaywallView_macOS: View {
             ScrollView {
                 VStack(spacing: 22) {
                     hero
-                    if entitlement.isClub { memberBanner } else { pillarList; plans; restoreRow; webNote; legalFooter }
+                    if entitlement.isClub { memberBanner } else { pillarList; restoreRow; webNote; legalFooter }
                     if let message { Text(message).font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft).multilineTextAlignment(.center) }
                 }
                 .padding(Tidbits.Metric.pad)
                 .padding(.vertical, 20)
+            }
+            // The PRICE is pinned, not scrolled. It used to sit inside the scroll
+            // after the hero and the four pillars, which fill a 640-720pt sheet
+            // exactly — so on a laptop the paywall showed what Club is and never
+            // showed what it costs or how to buy it, with no hint there was more.
+            .safeAreaInset(edge: .bottom) {
+                if !entitlement.isClub {
+                    VStack(spacing: 0) {
+                        Divider().overlay(Tidbits.Palette.border)
+                        plans
+                            .padding(.horizontal, Tidbits.Metric.pad)
+                            .padding(.vertical, 14)
+                    }
+                    .background(Tidbits.Palette.bg)
+                }
             }
         }
         .frame(minWidth: 460, minHeight: 640)

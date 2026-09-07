@@ -32,6 +32,12 @@ public class AccessibleNamesTest
             var lines = File.ReadAllLines(file);
             for (int i = 0; i < lines.Length; i++)
             {
+                // A COMMENT is not a control. The rule is about code, and a comment that
+                // quotes the banned shape — which the fix for W22 wrote, describing
+                // `Content="…"` — made this fail on prose. A check that fires on its own
+                // documentation is measuring the wrong thing.
+                var code = lines[i].TrimStart();
+                if (code.StartsWith("//") || code.StartsWith("///") || code.StartsWith("*")) continue;
                 var m = IconContent.Match(lines[i]);
                 if (!m.Success) continue;
                 // "▶ " + pad.Label is a labelled button, not an icon-only one.

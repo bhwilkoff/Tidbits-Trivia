@@ -121,8 +121,14 @@ public class StoryArchiveSnapshot
         Assert.Contains("Prompt a", texts);
         Assert.Contains("Prompt b", texts);
         Assert.Contains("Answer: A", texts);
-        Assert.Contains("★", texts); // missed is favorited
-        Assert.Contains("☆", texts); // mastered is not
+        // The favorite state is a Fluent SYMBOL now, not a ★/☆ glyph (ledger W22 —
+        // Inter has no star, so those rendered as ▯). Assert the thing that carries
+        // the meaning rather than the character that used to stand in for it.
+        var stars = win.GetVisualDescendants()
+            .OfType<FluentAvalonia.UI.Controls.FASymbolIcon>()
+            .Select(i => i.Symbol).ToList();
+        Assert.Contains(FluentAvalonia.UI.Controls.FASymbol.StarFilled, stars); // missed is favorited
+        Assert.Contains(FluentAvalonia.UI.Controls.FASymbol.Star, stars);       // mastered is not
 
         // Tapping a card's select button fires onSelect with that story's qid.
         var selectButtons = win.GetVisualDescendants().OfType<Button>()

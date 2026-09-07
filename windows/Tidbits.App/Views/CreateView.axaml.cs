@@ -197,7 +197,15 @@ public partial class CreateView : UserControl
             };
             Grid.SetColumn(share, 2);
             grid.Children.Add(share);
-            var del = new Button { Content = "✕", Padding = new Avalonia.Thickness(10, 7), Margin = new Avalonia.Thickness(8, 0, 0, 0) };
+            var del = new Button
+            {
+                // A Unicode ✕ as Content falls back to the TEXT font, and Inter has no
+                // glyph for it — it drew ▯. Same fix as the round header (W3/W21).
+                Content = new FluentAvalonia.UI.Controls.FASymbolIcon
+                    { Symbol = FluentAvalonia.UI.Controls.FASymbol.Dismiss, FontSize = 14 },
+                Padding = new Avalonia.Thickness(10, 7),
+                Margin = new Avalonia.Thickness(8, 0, 0, 0),
+            };
             AutomationProperties.SetName(del, $"Delete quiz {set.Title}");
             del.Click += (_, _) => { data.Quizzes.Delete(set.Id); BuildSaved(); };
             Grid.SetColumn(del, 3);

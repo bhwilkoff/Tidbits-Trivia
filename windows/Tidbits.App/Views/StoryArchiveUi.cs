@@ -106,11 +106,18 @@ public static class StoryArchiveUi
 
         var favBtn = new Button
         {
-            Content = s.Favorite ? "★" : "☆",
+            Content = new FluentAvalonia.UI.Controls.FASymbolIcon
+            {
+                Symbol = s.Favorite ? FluentAvalonia.UI.Controls.FASymbol.StarFilled
+                                    : FluentAvalonia.UI.Controls.FASymbol.Star,
+                FontSize = 14,
+            },
             FontSize = 16,
             Foreground = s.Favorite ? Gold : Brushes.Gray,
             Background = Brushes.Transparent,
             BorderThickness = new Avalonia.Thickness(0),
+            [Avalonia.Automation.AutomationProperties.NameProperty] =
+                s.Favorite ? "Remove from favorites" : "Add to favorites",
             VerticalAlignment = VerticalAlignment.Top,
             HorizontalAlignment = HorizontalAlignment.Right,
             Padding = new Avalonia.Thickness(10),
@@ -154,7 +161,7 @@ public static class StoryArchiveUi
 
         var header = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
         header.Children.Add(new TextBlock { Text = TriviaCategory.Named(story.CategoryId).Name, Classes = { "caption" }, VerticalAlignment = VerticalAlignment.Center });
-        var favBtn = new Button { Content = story.Favorite ? "★ Favorited" : "☆ Favorite", Classes = { "compact" } };
+        var favBtn = new Button { Content = story.Favorite ? "Favorited" : "Favorite", Classes = { "compact" } };
         favBtn.Click += (_, _) => onFavorite();
         Grid.SetColumn(favBtn, 1);
         header.Children.Add(favBtn);

@@ -29,11 +29,26 @@ struct ClubPaywallView: View {
             ScrollView {
                 VStack(spacing: 22) {
                     hero
-                    if entitlement.isClub { memberBanner } else { pillarList; plans; restoreRow; webNote; legalFooter }
+                    if entitlement.isClub { memberBanner } else { pillarList; restoreRow; webNote; legalFooter }
                     if let message { Text(message).font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft).multilineTextAlignment(.center) }
                 }
                 .padding(Tidbits.Metric.pad)
                 .padding(.vertical, 20)
+            }
+            // The PRICE is pinned, not scrolled — same fix as the Mac. The hero plus
+            // the four pillars are taller than a phone, so the paywall said what Club
+            // is and never what it costs without a scroll nothing hinted at.
+            .safeAreaInset(edge: .bottom) {
+                if !entitlement.isClub {
+                    VStack(spacing: 0) {
+                        Divider().overlay(Tidbits.Palette.border)
+                        plans
+                            .padding(.horizontal, Tidbits.Metric.pad)
+                            .padding(.top, 14)
+                            .padding(.bottom, 8)
+                    }
+                    .background(.bar)
+                }
             }
             .background(Tidbits.Palette.bg.ignoresSafeArea())
             .navigationTitle("Tidbits Club")

@@ -1365,7 +1365,15 @@ public partial class LiveView : UserControl
             host.Click += (_, _) => StartHosting(e.ToPlan(), e.Name, e);
             Grid.SetColumn(host, 1);
             grid.Children.Add(host);
-            var del = new Button { Content = "✕", Padding = new Avalonia.Thickness(10, 7), Margin = new Avalonia.Thickness(8, 0, 0, 0) };
+            var del = new Button
+            {
+                // A Unicode ✕ as Content falls back to the TEXT font, and Inter has no
+                // glyph for it — it drew ▯. Same fix as the round header (W3/W21).
+                Content = new FluentAvalonia.UI.Controls.FASymbolIcon
+                    { Symbol = FluentAvalonia.UI.Controls.FASymbol.Dismiss, FontSize = 14 },
+                Padding = new Avalonia.Thickness(10, 7),
+                Margin = new Avalonia.Thickness(8, 0, 0, 0),
+            };
             AutomationProperties.SetName(del, $"Delete saved event {e.Name}");
             del.Click += (_, _) => { GameData.Shared.Value.LiveEvents.Remove(e.Id); BuildSavedEvents(); };
             Grid.SetColumn(del, 2);

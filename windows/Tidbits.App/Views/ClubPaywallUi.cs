@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Avalonia.Controls;
+using FluentAvalonia.UI.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Tidbits.Core.Networking;
@@ -38,12 +39,17 @@ public static class ClubPaywallUi
     public const string MemberHeadline = "You're a Club member";
 
     /// CLUB-MARKETING §2 — the four pillars, verbatim (order deliberate: two play, two keep).
-    public static readonly IReadOnlyList<(string Emoji, string Title, string Subtitle)> Pillars = new[]
+    ///
+    /// Fluent symbols, NOT emoji. These were 🏆🗺️📚🧭 — emoji chrome on the app's
+    /// revenue surface, against R-ICON-1, while the Mac paywall drew the same four
+    /// rows in SF Symbols. W3/W21 swept `Content="…"`; these are tuple data, so the
+    /// grep missed them twice.
+    public static readonly IReadOnlyList<(FASymbol Symbol, string Title, string Subtitle)> Pillars = new[]
     {
-        ("🏆", "Ranked Seasons", "A calendar-driven climb — and your live pub nights count too."),
-        ("🗺️", "Knowledge Atlas", "A map of what you actually know, by domain, over time."),
-        ("📚", "Story Archive", "Every fact you've learned, kept forever and searchable."),
-        ("🧭", "Expeditions", "Multi-week campaigns that turn a session game into a pursuit."),
+        (FASymbol.StarEmphasis, "Ranked Seasons", "A calendar-driven climb — and your live pub nights count too."),
+        (FASymbol.Map, "Knowledge Atlas", "A map of what you actually know, by domain, over time."),
+        (FASymbol.Library, "Story Archive", "Every fact you've learned, kept forever and searchable."),
+        (FASymbol.Flag, "Expeditions", "Multi-week campaigns that turn a session game into a pursuit."),
     };
 
     /// `onPurchase(productId)` / `onRestore()` fire the actions; `busyProductId` disables the
@@ -131,12 +137,13 @@ public static class ClubPaywallUi
     private static Control PillarList()
     {
         var list = new StackPanel { Spacing = 14 };
-        foreach (var (emoji, title, subtitle) in Pillars)
+        foreach (var (symbol, title, subtitle) in Pillars)
         {
             var row = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*") };
-            row.Children.Add(new TextBlock
+            row.Children.Add(new FASymbolIcon
             {
-                Text = emoji, FontSize = 22, VerticalAlignment = VerticalAlignment.Top,
+                Symbol = symbol, FontSize = 22, VerticalAlignment = VerticalAlignment.Top,
+                Foreground = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#2D5BFF")),
                 Margin = new Avalonia.Thickness(0, 0, 12, 0),
             });
             var text = new StackPanel { Spacing = 2 };

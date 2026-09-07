@@ -87,6 +87,7 @@ both reported honestly. Not filed.
 | W19 | **Windows Records has no sign-in banner at all**, though WINDOWS-DESIGN §4.2 requires one when signed out and calls it a mirror of the macOS fix. The page said only "Records are saved on this device" — a statement, not a door, on the one screen where the need is obvious | `RecordsView.axaml` | ✅ |
 | W20 | **Eleven consumer views had never been rendered by the rig** — Records, Leaderboard, Settings, Quick Match, Party, Club paywall, Game, cockpit, projector and the shells. Every one of them "passed" the first two passes by not being looked at (`hooks-are-coverage`) | `AdversarialShots.cs` | ◐ 6 of 11 |
 | W21 | **W3's glyph sweep missed four buttons**, three of them on the host COCKPIT — `⚔ Duels`, `▶ Play clip`, `🔊 Audio`. The crossed swords render as tofu in the capture, and R-ICON-1 bans emoji chrome outright. W3 fixed the buttons I had shot and I closed it | `LeaderboardView.axaml`, `LiveCockpitView.axaml` | ✅ |
+| W22 | **And it missed the emoji too.** The Club paywall — the app's REVENUE surface — drew its four pillars as 🏆🗺️📚🧭 while the Mac drew the same four rows in SF Symbols; the saved-event and saved-quiz delete buttons still carried the `✕` that this very file records as rendering ▯ in Inter; the Story archive used ★/☆. W3 and W21 both grepped `Content="…"`, and these live in tuple data and ternaries | `ClubPaywallUi.cs`, `LiveView.axaml.cs`, `CreateView.axaml.cs`, `StoryArchiveUi.cs` | ✅ |
 
 ## §2 — macOS (the strong platform, still not finished)
 
@@ -130,6 +131,8 @@ W5 W8 W9 W10 M3 M5 M6.
 | M2 X2 | "corpus" is gone from every host-facing string on both platforms | grep + re-shot |
 | M4 | "Abc Letter" → "Letter" (the SF Symbol was drawing the letters) | re-shot |
 | X1 | One spelling of colour/color | grep |
+| X3 | **The Club paywall never showed a PRICE.** `plans` sat inside the ScrollView after the hero and the four pillars, which fill a 640-720pt sheet exactly — so on a laptop, and on every iPhone, the paywall said what Club is and never what it costs or how to buy it, with nothing hinting there was more below. macOS AND iOS, identical code. The price row is now a pinned `safeAreaInset(edge: .bottom)` | re-shot: $79.99 / $29.99 a year / $3.99 a month all visible without scrolling. Windows was already fine — its dialog host sizes to content |
+| W22 | Fluent symbols throughout: `StarEmphasis` / `Map` / `Library` / `Flag` for the pillars in brand blue, `Dismiss` for both delete buttons, `StarFilled`/`Star` for the archive | I enumerated the 441 real `FASymbol` members instead of guessing names a build at a time. Re-shot |
 | W21 | `FASymbolIcon` + a `TextBlock` in each, with an accessible name | grepped the WHOLE Windows view tree for a symbol codepoint inside `Content="…"` rather than fixing the one I saw. Re-shot: Duels draws a real people glyph. The `−`/`+` score buttons are ordinary text and were left alone |
 | W18 | The remaining six page roots centre too | re-shot: Records at 900 wide has matching gutters |
 | W19 | A `Sign in to sync your records` card, hidden once `Account.SignedIn`, routing to Settings via a new `MainWindow.ShowSettings()` | re-shot; wording matches the Mac |

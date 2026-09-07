@@ -30,9 +30,34 @@ def _osa(script, timeout=15):
                           capture_output=True, text=True, timeout=timeout)
 
 
-def quit_all():
+def _live_pids():
+    r = subprocess.run(["pgrep", "-x", PROC], capture_output=True, text=True)
+    return [int(x) for x in r.stdout.split()]
+
+
+def quit_all(timeout=20):
+    """Terminate every instance and WAIT until the process table is empty.
+
+    This used to be `pkill` + `time.sleep(1.5)`, and 1.5s is not always enough:
+    the old instance kept its window while the new one came up, so TWO processes
+    were on screen at once. `_windows(pid)` still reported one process honestly,
+    but `screencapture -R` grabs a SCREEN RECTANGLE — it captured both apps'
+    windows overlapping, which read as one app with duplicate windows. That cost
+    a false product finding ("the Mac app opens two cockpits"); the app opens one
+    cockpit and one projector, measured over three clean launches. Poll instead,
+    and escalate to SIGKILL rather than return with a survivor.
+    """
     subprocess.run(["pkill", "-x", PROC], capture_output=True)
-    time.sleep(1.5)
+    deadline = time.time() + timeout
+    killed = False
+    while time.time() < deadline:
+        if not _live_pids():
+            return True
+        if not killed and time.time() > deadline - timeout / 2:
+            subprocess.run(["pkill", "-9", "-x", PROC], capture_output=True)
+            killed = True
+        time.sleep(0.25)
+    return not _live_pids()
 
 
 def launch(app, env=None, timeout=20):
@@ -64,6 +89,13 @@ def launch(app, env=None, timeout=20):
                            capture_output=True, text=True)
         pids = [int(x) for x in r.stdout.split()]
         if pids:
+            # More than one means quit_all left a survivor. Returning pids[0]
+            # returned the OLD process, and every capture then graded a screen
+            # holding two apps' windows. Fail loudly instead.
+            if len(pids) > 1:
+                raise RuntimeError(
+                    f"{len(pids)} {PROC} processes are running ({pids}); "
+                    "captures would grade a mix of them. quit_all() first.")
             return pids[0]
         time.sleep(0.5)
     return None

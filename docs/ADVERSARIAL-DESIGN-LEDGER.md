@@ -24,6 +24,28 @@ exclusive states — and it is an artifact: `IsVisible="{Binding NotJoined}"`
 with no context evaluates to visible. **Not a defect; not filed.** Any row below
 that depends on state was checked against the XAML, not just the pixels.
 
+**A screen-region capture grades the SCREEN, not the process.** My second false
+finding, 2026-09-07: I reported that the Mac app opens two cockpit windows, each
+hosting its own live room, and told the owner to close the extras before hosting
+a real night. It does not. `tools/macapp.py`'s `quit_all()` was `pkill` plus a
+fixed `time.sleep(1.5)`, and 1.5s does not always outlast the old instance — so
+two TidbitsTrivia processes were on screen together, and `launch()` returned
+`pids[0]`, which could be the OLD one. `_windows(pid)` reported one process
+honestly; `screencapture -R` captured a rectangle holding BOTH apps' windows,
+and two overlapping shells read as one app with duplicate windows. The two room
+codes I cited as proof (RQP5 and XMZG) were from two different launches — I
+compared screenshots across a relaunch and called it one session.
+
+Measured after the fix (poll until the process table is empty; refuse to return
+a pid when more than one is running): three consecutive hosting launches each
+give exactly one process with exactly two windows — the cockpit (1281x732) and
+the projector (1280x720, `Window`, singleton). Non-hosting launches give one
+window, four for four. **Nothing was filed against the app.**
+
+The rule this yields: an observation about WINDOW IDENTITY has to come from the
+accessibility tree of ONE known pid, never from a screen rectangle. A rectangle
+is evidence about pixels, and only about pixels.
+
 ## §1 — Windows (the weak platform)
 
 | # | Defect, measured | Where | Status |

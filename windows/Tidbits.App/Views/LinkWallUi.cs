@@ -196,7 +196,7 @@ public static class LinkWallUi
             new TextBlock { Text = "Link Wall isn't ready", Classes = { "section-header" } },
             new TextBlock
             {
-                Text = "Couldn't build today's board from the corpus. Try again tomorrow.",
+                Text = "Couldn't build today's board. Try again tomorrow.",
                 Classes = { "body" }, Opacity = 0.75, TextWrapping = Avalonia.Media.TextWrapping.Wrap,
             },
         },

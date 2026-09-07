@@ -53,6 +53,10 @@ public partial class PlayView : UserControl
             new TextBlock { Text = c?.Name ?? "" });
         CategoryPicker.SelectedIndex = 0; // Mixed Bag
         CategoryPicker.SelectionChanged += (_, _) => RefreshCoverageNote();
+        RefreshQuickPlayTarget();
+        // Customize and Surprise change what Quick Play launches; the hero has to
+        // catch up when the host comes back to this page.
+        AttachedToVisualTree += (_, _) => RefreshQuickPlayTarget();
 
         foreach (var m in Offered)
         {
@@ -697,6 +701,17 @@ public partial class PlayView : UserControl
 
     /// Quick Play replays your last single mode + category (parity with web
     /// quickPlayTarget), defaulting to Classic/Mixed on a fresh install.
+    /// The hero's second line: the mode and category the one click will actually
+    /// launch (ADVERSARIAL-DESIGN-LEDGER W9). Refreshed whenever the view appears,
+    /// because Customize and Surprise change it behind the host's back.
+    private void RefreshQuickPlayTarget()
+    {
+        var s = GameData.Shared.Value.Settings;
+        var mode = Enum.TryParse<GameMode>(s.LastMode, out var m) && Offered.Contains(m) ? m : GameMode.Classic;
+        var cat = TriviaCategory.Named(s.LastCategoryId ?? "mixed");
+        QuickPlayTarget.Text = $"{mode.Title().ToUpperInvariant()} · {cat.Name.ToUpperInvariant()}";
+    }
+
     private void OnQuickPlay(object? sender, RoutedEventArgs e)
     {
         var s = GameData.Shared.Value.Settings;

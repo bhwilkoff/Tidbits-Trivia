@@ -305,7 +305,7 @@ struct LiveBuilderView_macOS: View {
                             if !working.brandHex.isEmpty {
                                 Button("Reset") { working.brandHex = "" }.controlSize(.small)
                             }
-                            Text("Colours the event title on the big screen")
+                            Text("Colors the event title on the big screen")
                                 .font(.footnote).foregroundStyle(.secondary)
                         }
                     }
@@ -454,7 +454,7 @@ struct LiveBuilderView_macOS: View {
                         Button(String(c)) { working.rounds[i].letter = String(c) }
                     }
                 } label: {
-                    Label(round.letter.map { "Letter \($0)" } ?? "Letter", systemImage: "textformat.abc")
+                    Text(round.letter.map { "Letter \($0)" } ?? "Letter")
                 }
                 .menuStyle(.button).buttonStyle(.bordered).fixedSize()
                 .help("First-letter round — every answer in it begins with the same letter")
@@ -526,7 +526,7 @@ struct LiveBuilderView_macOS: View {
                         if let q = more.questions.first { insertQuestion(q, into: ri, at: nil) }
                         busy = false
                     }
-                } label: { Label("Pull one from the corpus", systemImage: "sparkles") }
+                } label: { Label("Add one from the question bank", systemImage: "sparkles") }
                 .buttonStyle(.bordered).controlSize(.small)
                 .disabled(busy)
                 Button { libraryPickFor = ri } label: { Label("From library…", systemImage: "books.vertical") }
@@ -570,8 +570,12 @@ struct LiveBuilderView_macOS: View {
                 .font(.caption).foregroundStyle(Tidbits.Palette.inkSoft)
                 .frame(width: 22, alignment: .trailing)
             VStack(alignment: .leading, spacing: 1) {
+                // ADVERSARIAL-DESIGN-LEDGER M1: `lineLimit(2)` cut 3 of 5 prompts in one
+                // round mid-sentence ("…impeached for corruption,…"), so a host could not
+                // proof-read their own night. A question is the row's whole point; it wraps.
                 Text(q.prompt.isEmpty ? "Untitled question" : q.prompt)
-                    .font(.body).foregroundStyle(Tidbits.Palette.ink).lineLimit(2)
+                    .font(.body).foregroundStyle(Tidbits.Palette.ink)
+                    .fixedSize(horizontal: false, vertical: true)
                     .multilineTextAlignment(.leading)
                 Text(answerSummary(q, format: format))
                     .font(.caption).foregroundStyle(Tidbits.Palette.inkSoft).lineLimit(1)

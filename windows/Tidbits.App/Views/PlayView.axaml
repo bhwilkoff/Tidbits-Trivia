@@ -12,7 +12,11 @@
                         HorizontalContentAlignment="Left" Padding="24,18" Margin="0,6,0,0">
                     <StackPanel Spacing="3">
                         <TextBlock Text="QUICK PLAY" FontSize="23" FontWeight="Black"/>
-                        <TextBlock Text="Jump straight into a round" FontSize="13" Opacity="0.9"/>
+                        <!-- ADVERSARIAL W9: the hero has to say what it will play. The Mac
+                             hero reads "NAME AS MANY · MIXED BAG"; this said only "jump in",
+                             so the one-click primary action was a surprise. -->
+                        <TextBlock x:Name="QuickPlayTarget" FontSize="13" FontWeight="Bold" Opacity="0.95"/>
+                        <TextBlock Text="Jump straight into a round" FontSize="13" Opacity="0.85"/>
                     </StackPanel>
                 </Button>
 
@@ -25,7 +29,8 @@
                 <!-- JOIN A GAME — the second thing on Play (R-JOIN-1, WINDOWS-DESIGN 6.0).
                      It sat under the Trivia Night presets as "Join a night with a code". -->
                 <Button Click="OnJoinNight" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
-                        Padding="20,14" Margin="0,4,0,0">
+                        Padding="20,14" Margin="0,4,0,0" Foreground="White"
+                        Background="#13B6C9" BorderBrush="#0F97A6" BorderThickness="1">
                     <StackPanel Spacing="2">
                         <TextBlock Text="JOIN A GAME" FontSize="18" FontWeight="Black"/>
                         <TextBlock Text="Enter the host's 4-letter code, or scan the QR on the big screen" FontSize="12" Opacity="0.8"/>

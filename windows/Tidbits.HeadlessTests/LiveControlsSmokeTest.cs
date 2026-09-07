@@ -70,11 +70,29 @@ public class LiveControlsSmokeTest
         var buttons = AppButtons(view);
         Assert.True(buttons.Count >= 8, $"only {buttons.Count} buttons found — the view did not render");
 
-        // A button with no label is a button a host cannot identify.
-        var blank = buttons.Where(b => b.Content is null
-                                    || (b.Content is string s && string.IsNullOrWhiteSpace(s)))
-                           .ToList();
-        Assert.True(blank.Count == 0, $"{blank.Count} button(s) render with no label");
+        // A button with no label is a button a host cannot identify. An ICON button
+        // (FASymbolIcon — ADVERSARIAL-DESIGN-LEDGER W3) is legitimate, but only if it
+        // carries an accessible name; otherwise it is unidentifiable to a host reading
+        // the screen AND to a screen reader.
+        var blank = buttons.Where(b =>
+        {
+            // Library internals (FluentAvalonia's expander chevron) are not ours to name;
+            // the expander's Header names that row on the glass.
+            if (b.GetType().Namespace?.StartsWith("FluentAvalonia") == true) return false;
+            if (b.Content?.GetType().Namespace?.StartsWith("FluentAvalonia") == true) return false;
+            // A text label is enough on its own. ANYTHING else — an icon, a
+            // ToggleSwitch whose label is the Settings row it sits in — needs an
+            // accessible name. (An earlier cut of this returned "blank" for null
+            // content BEFORE checking the name, which flagged two correctly-named
+            // toggles: the test was wrong, not the app.)
+            var text = b.Content as string;
+            if (!string.IsNullOrWhiteSpace(text)) return false;
+            return string.IsNullOrWhiteSpace(Avalonia.Automation.AutomationProperties.GetName(b));
+        }).ToList();
+        // Name them: "2 buttons are blank" cannot be acted on.
+        Assert.True(blank.Count == 0,
+            $"{blank.Count} button(s) with neither a text label nor an accessible name: "
+            + string.Join(", ", blank.Select(b => $"{b.GetType().Name}<{b.Content?.GetType().Name ?? "null"}>")));
 
         // On a FRESH builder every control must be reachable. A button that is
         // disabled here can never be enabled by anything the host does on this

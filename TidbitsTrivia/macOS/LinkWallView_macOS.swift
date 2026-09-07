@@ -62,7 +62,7 @@ struct LinkWallView_macOS: View {
                 } else {
                     VStack(spacing: 10) {
                         Text("Link Wall isn't ready").font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
-                        Text("Couldn't build today's board from the corpus. Try again tomorrow.")
+                        Text("Couldn't build today's board. Try again tomorrow.")
                             .font(Tidbits.TypeRamp.l4).foregroundStyle(Tidbits.Palette.inkSoft)
                             .multilineTextAlignment(.center)
                     }

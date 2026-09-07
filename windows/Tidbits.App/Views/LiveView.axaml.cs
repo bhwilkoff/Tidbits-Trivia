@@ -19,6 +19,18 @@ public partial class LiveView : UserControl
     {
         InitializeComponent();
 
+        // The brand swatch shows the colour the hex field names, so the field is
+        // legible without a colour picker (ADVERSARIAL-DESIGN-LEDGER W6).
+        void PaintSwatch()
+        {
+            var hex = (BrandHexBox.Text ?? "").Trim();
+            BrandSwatch.Background = Avalonia.Media.Color.TryParse(hex, out var c)
+                ? new Avalonia.Media.SolidColorBrush(c)
+                : Avalonia.Media.Brushes.Transparent;
+        }
+        BrandHexBox.TextChanged += (_, _) => PaintSwatch();
+        PaintSwatch();
+
         CategoryPicker.ItemsSource = TriviaCategory.All;
         CategoryPicker.ItemTemplate = new Avalonia.Controls.Templates.FuncDataTemplate<TriviaCategory>(
             (c, _) => new TextBlock { Text = c?.Name ?? "" });
@@ -162,7 +174,7 @@ public partial class LiveView : UserControl
             bool open = _expandedRounds.Contains(idx);
             var chevron = new Button
             {
-                Content = open ? "\u25BE" : "\u25B8", FontSize = 12,
+                Content = Icon(open ? FluentAvalonia.UI.Controls.FASymbol.ChevronDown : FluentAvalonia.UI.Controls.FASymbol.ChevronRight),
                 Padding = new Avalonia.Thickness(6, 2), Margin = new Avalonia.Thickness(0, 0, 6, 0),
             };
             AutomationProperties.SetName(chevron, open ? $"Hide round {idx + 1} questions" : $"Show round {idx + 1} questions");
@@ -199,7 +211,7 @@ public partial class LiveView : UserControl
             Grid.SetColumn(timer, 2);
             row.Children.Add(timer);
 
-            var up = new Button { Content = "▲", Padding = new Avalonia.Thickness(7, 2), FontSize = 11, IsEnabled = idx > 0 };
+            var up = new Button { Content = Icon(FluentAvalonia.UI.Controls.FASymbol.ChevronUp), Padding = new Avalonia.Thickness(7, 2), IsEnabled = idx > 0 };
             AutomationProperties.SetName(up, $"Move round {idx + 1} up");
             up.Click += (_, _) => MoveRound(idx, -1);
             // G1: mark this round a BUZZ round — the room races to buzz and the first
@@ -240,12 +252,12 @@ public partial class LiveView : UserControl
             row.Children.Add(letter);
             Grid.SetColumn(up, 5);
             row.Children.Add(up);
-            var down = new Button { Content = "▼", Padding = new Avalonia.Thickness(7, 2), FontSize = 11, IsEnabled = idx < _rounds.Count - 1, Margin = new Avalonia.Thickness(4, 0, 0, 0) };
+            var down = new Button { Content = Icon(FluentAvalonia.UI.Controls.FASymbol.ChevronDown), Padding = new Avalonia.Thickness(7, 2), IsEnabled = idx < _rounds.Count - 1, Margin = new Avalonia.Thickness(4, 0, 0, 0) };
             AutomationProperties.SetName(down, $"Move round {idx + 1} down");
             down.Click += (_, _) => MoveRound(idx, +1);
             Grid.SetColumn(down, 6);
             row.Children.Add(down);
-            var del = new Button { Content = "✕", Padding = new Avalonia.Thickness(8, 2), FontSize = 12, Margin = new Avalonia.Thickness(4, 0, 0, 0) };
+            var del = new Button { Content = Icon(FluentAvalonia.UI.Controls.FASymbol.Delete), Padding = new Avalonia.Thickness(8, 2), Margin = new Avalonia.Thickness(4, 0, 0, 0) };
             AutomationProperties.SetName(del, $"Remove round {idx + 1}");
             del.Click += (_, _) =>
             {
@@ -310,7 +322,7 @@ public partial class LiveView : UserControl
         {
             panel.Children.Add(new TextBlock
             {
-                Text = "No questions authored — this round is pulled from the corpus when you host. "
+                Text = "No questions written yet — this round draws from the Tidbits question bank when you host. "
                      + "Add or pull one to shape it yourself.",
                 FontSize = 12, Opacity = 0.7, TextWrapping = Avalonia.Media.TextWrapping.Wrap,
             });
@@ -391,7 +403,7 @@ public partial class LiveView : UserControl
             Grid.SetColumn(dup, 5);
             grid.Children.Add(dup);
 
-            var remove = new Button { Content = "\u2715", Padding = new Avalonia.Thickness(9, 4), FontSize = 12, Margin = new Avalonia.Thickness(4, 0, 0, 0) };
+            var remove = new Button { Content = Icon(FluentAvalonia.UI.Controls.FASymbol.Dismiss), Padding = new Avalonia.Thickness(9, 4), Margin = new Avalonia.Thickness(4, 0, 0, 0) };
             AutomationProperties.SetName(remove, $"Remove question {qi + 1} of round {roundIndex + 1}");
             remove.Click += (_, _) => { _questions[roundIndex].RemoveAt(qi); SyncRoundCount(roundIndex); RebuildBuilderRounds(); };
             Grid.SetColumn(remove, 6);
@@ -442,7 +454,7 @@ public partial class LiveView : UserControl
         };
         actions.Children.Add(add);
 
-        var pull = new Button { Content = "Pull one from the corpus", Padding = new Avalonia.Thickness(12, 5), FontSize = 12, Margin = new Avalonia.Thickness(0, 0, 8, 4) };
+        var pull = new Button { Content = "Add one from the question bank", Padding = new Avalonia.Thickness(12, 5), FontSize = 12, Margin = new Avalonia.Thickness(0, 0, 8, 4) };
         pull.Click += async (_, _) =>
         {
             var cat = CategoryPicker.SelectedItem as TriviaCategory ?? TriviaCategory.Named("mixed");
@@ -470,7 +482,7 @@ public partial class LiveView : UserControl
 
         if (qs.Count > 0)
         {
-            var clear = new Button { Content = "Back to corpus-sourced", Padding = new Avalonia.Thickness(12, 5), FontSize = 12, Margin = new Avalonia.Thickness(0, 0, 8, 4) };
+            var clear = new Button { Content = "Use the question bank instead", Padding = new Avalonia.Thickness(12, 5), FontSize = 12, Margin = new Avalonia.Thickness(0, 0, 8, 4) };
             AutomationProperties.SetName(clear, $"Clear authored questions in round {roundIndex + 1}");
             clear.Click += (_, _) => { _questions[roundIndex].Clear(); RebuildBuilderRounds(); };
             actions.Children.Add(clear);
@@ -766,6 +778,12 @@ public partial class LiveView : UserControl
         }
         catch (Exception ex) { ShowStatus($"Could not export the library: {ex.Message}"); }
     }
+
+    /// A real Fluent icon, not a text glyph (ADVERSARIAL-DESIGN-LEDGER W3). A bare
+    /// Unicode shape as Button.Content falls back to whatever the TEXT font carries;
+    /// Inter has no ✕ or ▲, so the builder rendered `▯ ▼ ▯` on every round header.
+    private static FluentAvalonia.UI.Controls.FASymbolIcon Icon(FluentAvalonia.UI.Controls.FASymbol symbol) =>
+        new() { Symbol = symbol, FontSize = 14 };
 
     /// A dropped file becomes this question's picture or clip, by its KIND — the
     /// media store decides, so an unsupported type is named rather than ignored.

@@ -134,7 +134,9 @@ public class LiveBuilderSnapshot
         Dispatcher.UIThread.RunJobs();
 
         var texts = view.GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text ?? "").ToList();
-        Assert.Contains(texts, t => t.Contains("pulled from the corpus"));
+        // ADVERSARIAL-DESIGN-LEDGER M2: the copy no longer says "corpus" — a host has
+        // a question bank, not a corpus. The PROMISE is what must be on the glass.
+        Assert.Contains(texts, t => t.Contains("draws from the Tidbits question bank"));
 
         win.CaptureRenderedFrame()!.Save(Path.Combine(Art(), "live-builder-unauthored-round.png"));
     }

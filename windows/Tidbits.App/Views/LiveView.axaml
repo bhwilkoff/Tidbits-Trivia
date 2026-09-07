@@ -1,67 +1,142 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
              x:Class="Tidbits.App.Views.LiveView">
     <Panel>
         <ScrollViewer x:Name="Setup">
-            <StackPanel Margin="36,32" Spacing="16" MaxWidth="640" HorizontalAlignment="Left">
+            <!-- ADVERSARIAL-DESIGN-LEDGER W1/W4/W5/W7/W11. This page was a flat form of
+                 watermark-only fields under bold TextBlocks, ending in FOURTEEN
+                 equal-weight buttons — three of which are the host's actual job and
+                 eleven of which are file plumbing. It is now the Windows 11 Settings
+                 shape the app already uses on its own Settings page (WINDOWS-DESIGN
+                 §5.6): FASettingsExpander rows carry the LABEL, so a filled form still
+                 says what each field is, and the file operations sit behind Import /
+                 Export / Print menus the way the Mac's one "Event file" menu does. -->
+            <StackPanel Margin="36,32" Spacing="10" MaxWidth="900" HorizontalAlignment="Left">
                 <TextBlock Text="Tidbits Live" Classes="view-heading"/>
-                <TextBlock Text="The pub-trivia rig: build a branded event, run it from the host cockpit, and put a projector window on the big screen. Desktop only — it needs the second screen and the keyboard."
-                           Classes="body" Opacity="0.72" TextWrapping="Wrap"/>
-                <TextBlock Text="Just want to play a night with friends? That is Trivia Night, on the Play page — host it from any device, or join one with a code."
-                           Classes="caption" Opacity="0.6" TextWrapping="Wrap"/>
-                <TextBlock Text="Host options" Classes="section-header" Margin="0,10,0,0"/>
-                <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                    <TextBlock Text="Category:" VerticalAlignment="Center" Opacity="0.7"/>
-                    <ComboBox x:Name="CategoryPicker" MinWidth="150"/>
-                </StackPanel>
-                <CheckBox x:Name="SpeedBonusCheck" Content="Speed bonus — fastest correct answers score extra (+3 / +2 / +1)"/>
-                <CheckBox x:Name="HostPlaysCheck" Content="I'll play too (answer on this device and be scored)"/>
-                <TextBox x:Name="HostNameBox" PlaceholderText="Your team name" MaxWidth="260"
-                         HorizontalAlignment="Left" IsEnabled="{Binding #HostPlaysCheck.IsChecked}"/>
+                <TextBlock Text="Build a branded event, run it from the host cockpit, and put a projector on the big screen."
+                           Classes="body" Opacity="0.72" TextWrapping="Wrap" Margin="0,0,0,8"/>
 
-                <TextBlock Text="Build a custom event" Classes="section-header" Margin="0,14,0,0"/>
-                <TextBox x:Name="EventNameBox" PlaceholderText="Event name (e.g. Friday Pub Quiz)" MaxWidth="360" HorizontalAlignment="Left"/>
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <TextBox x:Name="SponsorBox" PlaceholderText="Sponsor (optional)" MinWidth="220"/>
-                    <TextBox x:Name="BrandHexBox" PlaceholderText="Brand color #hex" MinWidth="130"/>
-                </StackPanel>
-                <TextBox x:Name="LeadUrlBox" PlaceholderText="Mailing-list URL (lead-capture QR, optional)" MaxWidth="360" HorizontalAlignment="Left"/>
-                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                    <TextBlock Text="Repeats:" VerticalAlignment="Center" Opacity="0.7"/>
-                    <ComboBox x:Name="WeekdayBox" MinWidth="140"/>
-                </StackPanel>
+                <ui:FASettingsExpander Header="Host a quick night"
+                                     Description="Draw questions from the Tidbits question bank and start hosting straight away."
+                                     IsExpanded="True">
+                    <ui:FASettingsExpanderItem Content="Category">
+                        <ui:FASettingsExpanderItem.Footer>
+                            <ComboBox x:Name="CategoryPicker" MinWidth="180"/>
+                        </ui:FASettingsExpanderItem.Footer>
+                    </ui:FASettingsExpanderItem>
+                    <ui:FASettingsExpanderItem Content="Speed bonus"
+                                             Description="The fastest correct answers score extra (+3 / +2 / +1).">
+                        <ui:FASettingsExpanderItem.Footer>
+                            <ToggleSwitch x:Name="SpeedBonusCheck" AutomationProperties.Name="Speed bonus"/>
+                        </ui:FASettingsExpanderItem.Footer>
+                    </ui:FASettingsExpanderItem>
+                    <ui:FASettingsExpanderItem Content="I'll play too"
+                                             Description="Answer on this device and be scored alongside the room.">
+                        <ui:FASettingsExpanderItem.Footer>
+                            <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                <TextBox x:Name="HostNameBox" PlaceholderText="Your team name" MinWidth="180" MaxLength="24"
+                                         IsEnabled="{Binding #HostPlaysCheck.IsChecked}"/>
+                                <ToggleSwitch x:Name="HostPlaysCheck" AutomationProperties.Name="I'll play too"/>
+                            </StackPanel>
+                        </ui:FASettingsExpanderItem.Footer>
+                    </ui:FASettingsExpanderItem>
+                </ui:FASettingsExpander>
+
+                <ui:FASettingsExpander Header="Event details"
+                                     Description="The name, branding and schedule the room sees on the big screen."
+                                     IsExpanded="True">
+                    <ui:FASettingsExpanderItem Content="Event name">
+                        <ui:FASettingsExpanderItem.Footer>
+                            <TextBox x:Name="EventNameBox" PlaceholderText="Friday Pub Quiz" MinWidth="260"/>
+                        </ui:FASettingsExpanderItem.Footer>
+                    </ui:FASettingsExpanderItem>
+                    <ui:FASettingsExpanderItem Content="Sponsor"
+                                             Description="Shown as “brought to you by…” in the lobby and between rounds.">
+                        <ui:FASettingsExpanderItem.Footer>
+                            <TextBox x:Name="SponsorBox" PlaceholderText="Optional" MinWidth="220"/>
+                        </ui:FASettingsExpanderItem.Footer>
+                    </ui:FASettingsExpanderItem>
+                    <ui:FASettingsExpanderItem Content="Brand color"
+                                             Description="Colors the event title on the big screen.">
+                        <ui:FASettingsExpanderItem.Footer>
+                            <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                                <Border x:Name="BrandSwatch" Width="28" Height="28" CornerRadius="6"
+                                        BorderThickness="1" BorderBrush="#33000000"/>
+                                <TextBox x:Name="BrandHexBox" PlaceholderText="#FF5C35" MinWidth="110" MaxLength="7"/>
+                            </StackPanel>
+                        </ui:FASettingsExpanderItem.Footer>
+                    </ui:FASettingsExpanderItem>
+                    <ui:FASettingsExpanderItem Content="Mailing list"
+                                             Description="Shown as a QR at the end of the night.">
+                        <ui:FASettingsExpanderItem.Footer>
+                            <TextBox x:Name="LeadUrlBox" PlaceholderText="https://…" MinWidth="260"/>
+                        </ui:FASettingsExpanderItem.Footer>
+                    </ui:FASettingsExpanderItem>
+                    <ui:FASettingsExpanderItem Content="Repeats">
+                        <ui:FASettingsExpanderItem.Footer>
+                            <ComboBox x:Name="WeekdayBox" MinWidth="160"/>
+                        </ui:FASettingsExpanderItem.Footer>
+                    </ui:FASettingsExpanderItem>
+                </ui:FASettingsExpander>
+
+                <TextBlock Text="Rounds" Classes="section-header" Margin="0,12,0,0"/>
                 <WrapPanel Orientation="Horizontal">
                     <ComboBox x:Name="RoundModeBox" MinWidth="160" Margin="0,0,8,6"/>
                     <ComboBox x:Name="RoundCountBox" MinWidth="90" Margin="0,0,8,6"/>
                     <TextBox x:Name="RoundNoteBox" PlaceholderText="Host note (optional)" MinWidth="180" Margin="0,0,8,6"/>
-                    <Button Content="+ Add round" Click="OnAddRound" Margin="0,0,8,6"/>
-                    <Button Content="Audio round…" Click="OnAddAudioRound" Margin="0,0,8,6"/>
-                    <Button Content="Video round…" Click="OnAddVideoRound" Margin="0,0,8,6"/>
-                    <Button Content="Pick-a-category board…" Click="OnAddBoardRound" Margin="0,0,8,6"
-                            ToolTip.Tip="A Jeopardy-style grid the room picks from — categories across, point tiers down"/>
+                    <Button Content="Add round" Click="OnAddRound" Classes="accent" Margin="0,0,8,6"/>
+                    <DropDownButton Content="Add a special round" Margin="0,0,8,6">
+                        <DropDownButton.Flyout>
+                            <MenuFlyout>
+                                <MenuItem Header="Audio round…" Click="OnAddAudioRound"/>
+                                <MenuItem Header="Video round…" Click="OnAddVideoRound"/>
+                                <MenuItem Header="Pick-a-category board…" Click="OnAddBoardRound"
+                                          ToolTip.Tip="A Jeopardy-style grid the room picks from — categories across, point tiers down"/>
+                            </MenuFlyout>
+                        </DropDownButton.Flyout>
+                    </DropDownButton>
                 </WrapPanel>
                 <StackPanel x:Name="BuilderRounds" Spacing="4"/>
                 <CheckBox x:Name="WagerFinalCheck" Content="Make the last round a final wager (teams stake points)"/>
                 <!-- Balance meter: question-type mix + variety verdict -->
                 <StackPanel x:Name="BalancePanel" Spacing="4" IsVisible="False"/>
-                <!-- §6.3b: a WrapPanel, not a StackPanel. Six buttons in a
-                     non-wrapping row clip the moment the window is anything but
-                     maximised, and a control the host cannot reach is a broken night. -->
-                <WrapPanel Orientation="Horizontal">
+
+                <!-- The host's job, then the plumbing. Fourteen loose buttons gave a
+                     one-off export the same weight as "Host this event". -->
+                <WrapPanel Orientation="Horizontal" Margin="0,10,0,0">
                     <Button Content="Host this event" Click="OnHostEvent" Classes="accent" Padding="16,10" Margin="0,0,8,8"/>
                     <Button Content="Preview solo" Click="OnPreviewEvent" Padding="16,10" Margin="0,0,8,8"/>
                     <Button Content="Save event" Click="OnSaveEvent" Padding="16,10" Margin="0,0,8,8"/>
-                    <Button Content="Print answer sheet" Click="OnPrintAnswerSheet" Padding="16,10" Margin="0,0,8,8"/>
-                    <Button x:Name="PrintPackButton" Content="Print question pack" Click="OnPrintQuestionPack" Padding="16,10" Margin="0,0,8,8"/>
-                    <Button Content="Export package (with media)…" Click="OnExportPackage" Padding="16,10" Margin="0,0,8,8"/>
-                    <Button Content="Export event as JSON…" Click="OnExportEvent" Padding="16,10" Margin="0,0,8,8"/>
-                    <Button Content="Import event or package…" Click="OnImportEvent" Padding="16,10" Margin="0,0,8,8"/>
-                    <Button Content="Export library as bank package…" Click="OnExportLibrary" Padding="16,10" Margin="0,0,8,8"/>
-                    <Button Content="Import questions (CSV, GIFT, Aiken)…" Click="OnImportQuestions" Padding="16,10" Margin="0,0,8,8"/>
-                    <Button Content="Import a SpeedQuizzing folder…" Click="OnImportQuickQuestions" Padding="16,10" Margin="0,0,8,8"/>
-                    <Button Content="Export questions as CSV…" Click="OnExportQuestionsCsv" Padding="16,10" Margin="0,0,8,8"/>
-                    <Button Content="Export questions as GIFT…" Click="OnExportQuestionsGift" Padding="16,10" Margin="0,0,8,8"/>
-                    <Button Content="Export for Kahoot (.xlsx)…" Click="OnExportKahootSheet" Padding="16,10" Margin="0,0,8,8"/>
+                    <DropDownButton Content="Import" Padding="16,10" Margin="0,0,8,8">
+                        <DropDownButton.Flyout>
+                            <MenuFlyout>
+                                <MenuItem Header="Event or package…" Click="OnImportEvent"/>
+                                <MenuItem Header="Questions (CSV, GIFT, Aiken)…" Click="OnImportQuestions"/>
+                                <MenuItem Header="A SpeedQuizzing folder…" Click="OnImportQuickQuestions"/>
+                            </MenuFlyout>
+                        </DropDownButton.Flyout>
+                    </DropDownButton>
+                    <DropDownButton Content="Export" Padding="16,10" Margin="0,0,8,8">
+                        <DropDownButton.Flyout>
+                            <MenuFlyout>
+                                <MenuItem Header="Package (with media)…" Click="OnExportPackage"/>
+                                <MenuItem Header="Event as JSON…" Click="OnExportEvent"/>
+                                <MenuItem Header="Question library as a bank…" Click="OnExportLibrary"/>
+                                <MenuItem Header="Questions as CSV…" Click="OnExportQuestionsCsv"/>
+                                <MenuItem Header="Questions as GIFT…" Click="OnExportQuestionsGift"/>
+                                <MenuItem Header="For Kahoot (.xlsx)…" Click="OnExportKahootSheet"/>
+                            </MenuFlyout>
+                        </DropDownButton.Flyout>
+                    </DropDownButton>
+                    <DropDownButton Content="Print" Padding="16,10" Margin="0,0,8,8">
+                        <DropDownButton.Flyout>
+                            <MenuFlyout>
+                                <MenuItem Header="Answer sheet…" Click="OnPrintAnswerSheet"/>
+                                <MenuItem x:Name="PrintPackButton" Header="Question pack…" Click="OnPrintQuestionPack"/>
+                            </MenuFlyout>
+                        </DropDownButton.Flyout>
+                    </DropDownButton>
                 </WrapPanel>
 
                 <TextBlock x:Name="SavedEventsHeader" Text="Saved events" Classes="section-header"

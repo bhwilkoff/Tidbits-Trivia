@@ -3,6 +3,7 @@ using System.Linq;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Tidbits.App.Services;
@@ -393,6 +394,30 @@ public partial class LiveView : UserControl
             Grid.SetColumn(remove, 5);
             grid.Children.Add(remove);
 
+            // Drop a picture, an audio file or a video onto the question row (the Mac
+            // twin, LIVE-PACKAGE-FORMAT §8.1). The file's KIND decides what it becomes;
+            // anything else is refused by name rather than silently ignored.
+            var dropRound = roundIndex; var dropIndex = qi;
+            DragDrop.SetAllowDrop(grid, true);
+            grid.AddHandler(DragDrop.DragOverEvent, (object? _, DragEventArgs de) =>
+            {
+                de.DragEffects = de.DataTransfer.TryGetFiles() is not null ? DragDropEffects.Copy : DragDropEffects.None;
+                de.Handled = true;
+            });
+            grid.AddHandler(DragDrop.DropEvent, async (object? _, DragEventArgs de) =>
+            {
+                de.Handled = true;
+                var files = de.DataTransfer.TryGetFiles();
+                if (files is null) return;
+                foreach (var f in files)
+                {
+                    var path = f.Path?.LocalPath;
+                    if (string.IsNullOrEmpty(path) || !System.IO.File.Exists(path)) continue;
+                    await AttachDropped(path, dropRound, dropIndex);
+                    break;   // one file per question
+                }
+            });
+
             panel.Children.Add(grid);
         }
 
@@ -737,6 +762,35 @@ public partial class LiveView : UserControl
             ShowStatus($"Exported your library: {lib.All.Count} questions in {bank.Rounds.Count} categories.");
         }
         catch (Exception ex) { ShowStatus($"Could not export the library: {ex.Message}"); }
+    }
+
+    /// A dropped file becomes this question's picture or clip, by its KIND — the
+    /// media store decides, so an unsupported type is named rather than ignored.
+    private async System.Threading.Tasks.Task AttachDropped(string path, int roundIndex, int qi)
+    {
+        var ext = LiveMediaStore.NormalizedExt(System.IO.Path.GetExtension(path));
+        if (!LiveMediaStore.Allowed.TryGetValue(ext, out var kind))
+        {
+            ShowStatus($"Could not use {System.IO.Path.GetFileName(path)} — drop a picture, an audio file or a video.");
+            return;
+        }
+        try
+        {
+            var bytes = await System.IO.File.ReadAllBytesAsync(path);
+            var id = LiveMediaStore.Store(bytes, ext, System.IO.Path.GetFileName(path));
+            if (kind.Kind == "image")
+            {
+                _questions[roundIndex][qi] = _questions[roundIndex][qi] with { ImageUrl = LiveMediaStore.Reference(id) };
+                ShowStatus($"Picture attached to question {qi + 1} of round {roundIndex + 1}.");
+            }
+            else
+            {
+                SetClip(roundIndex, qi, LiveMediaStore.FilePath(id));
+                ShowStatus($"Clip attached to question {qi + 1} of round {roundIndex + 1}.");
+            }
+            RebuildBuilderRounds();
+        }
+        catch (Exception ex) { ShowStatus($"Could not use {System.IO.Path.GetFileName(path)}: {ex.Message}"); }
     }
 
     /// A round's clips are index-parallel to its questions (LIVE-PACKAGE-FORMAT §3.2);

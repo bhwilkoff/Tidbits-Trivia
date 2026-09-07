@@ -202,8 +202,10 @@ writer that produced it and the tool a host can use from a shell (`pack`,
    created and kept aligned by the builder; the editor hands back a
    keep/remove/set CHANGE because the wire Question may not grow media keys),
    and on the Mac a picture/audio/video file dropped on a question row becomes
-   that question's media by its kind. Windows drag-and-drop is tracked
-   (WINDOWS-PARITY 3.39).
+   that question's media by its kind — **and Windows takes a dropped file too
+   (2026-09-07)**, through Avalonia 12's `DragEventArgs.DataTransfer`. The kind
+   decision is unit-tested on both stacks; the drag gesture itself cannot be
+   simulated headlessly, so it wants one by-hand pass on a real Windows box.
 2. **File association** — **DONE 2026-09-07:** double-click a `.tidbits` on
    the Mac (`UTExportedTypeDeclarations` + `CFBundleDocumentTypes` in the
    shared Info.plist; the file arrives as `DeepLink.package` and the Live

@@ -117,6 +117,21 @@ struct LivePackageGoldenTests {
         #expect(LiveMediaStore.publishableURL(LiveMediaStore.reference(id)) == published)
     }
 
+    @Test("a dropped file becomes the kind its extension names, and an unsupported one is refused")
+    func droppedFileKinds() throws {
+        let dir = Self.scratchStore()
+        defer { try? FileManager.default.removeItem(at: dir); LiveMediaStore.directoryOverride = nil }
+        for (ext, kind) in [("png", "image"), ("JPG", "image"), ("jpeg", "image"), ("gif", "image"),
+                            ("webp", "image"), ("svg", "image"), ("mp3", "audio"), ("m4a", "audio"),
+                            ("wav", "audio"), ("mp4", "video"), ("mov", "video"), ("webm", "video")] {
+            #expect(LiveMediaStore.allowed[LiveMediaStore.normalizedExt(ext)]?.kind == kind, "\(ext)")
+        }
+        for ext in ["pdf", "docx", "zip", "exe", "txt"] {
+            #expect(LiveMediaStore.allowed[LiveMediaStore.normalizedExt(ext)] == nil, "\(ext)")
+            #expect(throws: (any Error).self) { try LiveMediaStore.store(Data([1]), ext: ext, originalName: "x." + ext) }
+        }
+    }
+
     @Test("pack → unpack → pack keeps the manifest media and the document")
     func roundTrip() throws {
         let dir = Self.scratchStore()

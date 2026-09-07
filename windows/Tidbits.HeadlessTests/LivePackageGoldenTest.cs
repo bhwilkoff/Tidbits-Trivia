@@ -148,4 +148,26 @@ public class LivePackageGoldenTest : IDisposable
         }
         finally { LiveMediaStore.DataUrlProvider = null; }
     }
+
+    [Theory]
+    // What a DROPPED file becomes is decided by the media store's allow-list, so the
+    // Mac and Windows rows agree by construction (LIVE-PACKAGE-FORMAT §2.5, §8.1).
+    [InlineData(".png", "image")] [InlineData(".JPG", "image")] [InlineData(".jpeg", "image")]
+    [InlineData(".gif", "image")] [InlineData(".webp", "image")] [InlineData(".svg", "image")]
+    [InlineData(".mp3", "audio")] [InlineData(".m4a", "audio")] [InlineData(".wav", "audio")]
+    [InlineData(".mp4", "video")] [InlineData(".mov", "video")] [InlineData(".webm", "video")]
+    public void A_dropped_file_becomes_the_kind_its_extension_names(string ext, string kind)
+    {
+        var normalized = LiveMediaStore.NormalizedExt(ext);
+        Assert.True(LiveMediaStore.Allowed.TryGetValue(normalized, out var entry));
+        Assert.Equal(kind, entry.Kind);
+    }
+
+    [Theory]
+    [InlineData(".pdf")] [InlineData(".docx")] [InlineData(".zip")] [InlineData(".exe")] [InlineData(".txt")]
+    public void An_unsupported_drop_is_refused_rather_than_stored(string ext)
+    {
+        Assert.False(LiveMediaStore.Allowed.ContainsKey(LiveMediaStore.NormalizedExt(ext)));
+        Assert.Throws<InvalidDataException>(() => LiveMediaStore.Store(new byte[] { 1 }, ext, "x" + ext));
+    }
 }

@@ -69,6 +69,11 @@ enum PlayerIdentity {
         var longest: Int
         var lastPlayedDay: String   // "yyyy-MM-dd" in the player's local zone
         var freezes: Int            // streak-protection tokens (auto-earned; a live night grants one)
+
+        /// "1 day", "2 days". The three Apple Records surfaces each interpolated
+        /// `\(current) days` and every one of them read "1 days" on a new
+        /// player's very first day — the first thing a new player sees.
+        var currentLabel: String { "\(current) day" + (current == 1 ? "" : "s") }
     }
 
     /// Lifetime aggregate stats (the "deep stats" surface, and leaderboard tie-breakers).

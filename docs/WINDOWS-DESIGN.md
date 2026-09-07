@@ -218,6 +218,16 @@ affordance ships `IsExpanded="True"`: sign-in hidden behind a chevron reads as
 "this app has no account", which is exactly what the iPhone got wrong.
 (FluentAvalonia 3 prefixes these `FA…`; the unprefixed WinUI names do not resolve.)
 
+5.7 **The content column is CENTRED under a max width, never pinned left.**
+Every page's root panel caps its measure (Join 560, Create 620, Play 760, Live
+900 — long lines are unreadable) and then sits `HorizontalAlignment="Center"`,
+which is what Windows Settings and the Store do. `"Left"` was the original
+shape on all four pages: at a 1900-wide window the Live page filled 47% and
+jammed against the left edge, which reads as an unfinished port. Widening the
+cap is NOT the fix and does not close this rule — a wider column pinned left is
+still pinned left. The one exception is a page whose content is genuinely a
+full-bleed surface (the projector), which stretches instead.
+
 6.3a **The projector must never hijack the only display.** Auto-
 fullscreen is correct ONLY when a non-primary `Screen` exists. With a
 single monitor, open a normal **decorated, resizable** window the host

@@ -819,7 +819,7 @@ struct LiveHostView_macOS: View {
                     }
                 }
             }
-            Text("\(board.remaining.count) left · \(board.pointsRemaining) points on the board")
+            Text("\(board.remaining.count) left · " + pluralized(board.pointsRemaining, "point") + " on the board")
                 .font(.caption).foregroundStyle(Tidbits.Palette.inkSoft)
         }
         .padding(12).quietCard()

@@ -146,4 +146,41 @@ public class LiveControlsSmokeTest
             Assert.False(string.IsNullOrWhiteSpace(status.Text), $"{name} showed an empty status");
         }
     }
+
+    /// The brand swatch must show the colour the BIG SCREEN will paint, including
+    /// when the host has typed nothing. It used to paint transparent on an empty
+    /// field, which read as an empty broken box while the projector went coral
+    /// (ADVERSARIAL-DESIGN-LEDGER W6).
+    [AvaloniaFact]
+    public void The_brand_swatch_shows_the_colour_an_unset_event_actually_uses()
+    {
+        var view = new LiveView();
+        var win = new Window { Width = 1180, Height = 760, Content = view };
+        win.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        var hex = view.GetVisualDescendants().OfType<TextBox>()
+                      .First(t => t.Name == "BrandHexBox");
+        var swatch = view.GetVisualDescendants().OfType<Border>()
+                         .First(b => b.Name == "BrandSwatch");
+
+        var fallback = Avalonia.Media.Color.Parse(
+            Tidbits.App.ViewModels.LiveHostViewModel.DefaultBrandHex);
+
+        hex.Text = "";
+        Dispatcher.UIThread.RunJobs();
+        Assert.Equal(fallback,
+            Assert.IsType<Avalonia.Media.SolidColorBrush>(swatch.Background).Color);
+
+        hex.Text = "#2D5BFF";
+        Dispatcher.UIThread.RunJobs();
+        Assert.Equal(Avalonia.Media.Color.Parse("#2D5BFF"),
+            Assert.IsType<Avalonia.Media.SolidColorBrush>(swatch.Background).Color);
+
+        // Garbage falls back rather than painting nothing.
+        hex.Text = "#zzz";
+        Dispatcher.UIThread.RunJobs();
+        Assert.Equal(fallback,
+            Assert.IsType<Avalonia.Media.SolidColorBrush>(swatch.Background).Color);
+    }
 }

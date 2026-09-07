@@ -216,7 +216,7 @@ struct LiveBigScreen_macOS: View {
                         }
                     }
                 }
-                Text("\(board.remaining.count) left · \(board.pointsRemaining) points on the board")
+                Text("\(board.remaining.count) left · " + pluralized(board.pointsRemaining, "point") + " on the board")
                     .font(.system(size: 24, weight: .heavy, design: .rounded))
                     .foregroundStyle(.white.opacity(0.7))
             }

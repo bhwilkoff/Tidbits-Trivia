@@ -3,7 +3,7 @@
              x:Class="Tidbits.App.Views.CreateView">
     <Panel>
         <ScrollViewer x:Name="Landing">
-            <StackPanel Margin="36,32" Spacing="16" MaxWidth="620" HorizontalAlignment="Left">
+            <StackPanel Margin="36,32" Spacing="16" MaxWidth="620" HorizontalAlignment="Center">
                 <TextBlock Text="Create" Classes="view-heading"/>
                 <TextBlock Text="Generate a quiz on any topic — real, vetted questions from the whole of Wikipedia."
                            FontSize="15" Opacity="0.72" TextWrapping="Wrap"/>
@@ -14,7 +14,7 @@
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Spacing="10">
                     <Button x:Name="GenBtn" Content="Generate Quiz" Click="OnGenerate"
-                            Classes="accent" Padding="24,13" FontWeight="Bold"/>
+                            Classes="grape" Padding="24,13" FontWeight="Bold"/>
                     <Button Content="Import questions (CSV, GIFT, Aiken)" Click="OnImportCsv" Padding="18,13" FontWeight="SemiBold"/>
                 </StackPanel>
                 <ProgressBar x:Name="GenProgress" IsIndeterminate="True" IsVisible="False" Height="4"/>

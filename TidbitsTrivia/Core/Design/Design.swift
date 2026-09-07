@@ -209,3 +209,19 @@ struct CompactButtonStyle: ButtonStyle {
             .animation(.snappy(duration: 0.08), value: pressed)
     }
 }
+
+/// "1 game" / "2 games" — the count and its noun, agreeing.
+///
+/// Written after an adversarial pass found `DAY STREAK / 1 days` on a new
+/// player's first Records screen, and then the same shape in five more places on
+/// paths that really do reach 1: a season's last day ("Resets in 1 days"), a
+/// player's first game ("See all 1 games"), and a Jeopardy board down to its
+/// last clue ("1 points on the board") — that one on the PROJECTOR, in front of
+/// a room. Interpolating `\(n) things` is the trap; this is the replacement.
+///
+/// English only, and deliberately: the app ships one language. When it doesn't,
+/// this becomes an `AttributedString` with `inflect: true` and the call sites
+/// don't move.
+func pluralized(_ n: Int, _ singular: String, _ plural: String? = nil) -> String {
+    "\(n) " + (n == 1 ? singular : (plural ?? singular + "s"))
+}

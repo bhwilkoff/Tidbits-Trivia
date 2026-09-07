@@ -27,7 +27,10 @@ public static class DailyUi
 
         var row = new Border
         {
-            Background = heroToday ? new SolidColorBrush(Color.Parse("#FF5C35")) : null,
+            // Yellow, not coral. Coral here made TWO full-width coral bands on Play —
+            // the Quick Play hero and this — so the page had two primaries, against
+            // R-HOME-1. The Mac card has always been yellow (Palette.yellow #FFC93C).
+            Background = heroToday ? new SolidColorBrush(Color.Parse("#FFC93C")) : null,
             CornerRadius = new Avalonia.CornerRadius(10),
             BorderBrush = heroToday ? null : new SolidColorBrush(Color.Parse("#22808080")),
             BorderThickness = new Avalonia.Thickness(heroToday ? 0 : 1),
@@ -41,8 +44,25 @@ public static class DailyUi
             FontWeight = FontWeight.SemiBold,
             VerticalAlignment = VerticalAlignment.Center,
         };
-        if (heroToday) labelBlock.Foreground = Brushes.White;   // else inherit the themed default
-        grid.Children.Add(labelBlock);
+        if (heroToday)
+        {
+            // "Today" alone told a new player nothing — not what a Tidbit is, not that
+            // the set is shared, not that a streak exists, all of which the Mac card
+            // says. Windows submits to the same global board, so it can say the same.
+            labelBlock.Foreground = new SolidColorBrush(Color.Parse("#1A1714"));
+            var stack = new StackPanel { Spacing = 2, VerticalAlignment = VerticalAlignment.Center };
+            stack.Children.Add(labelBlock);
+            stack.Children.Add(new TextBlock
+            {
+                Text = "7 questions. Everyone gets the same set. Keep your streak.",
+                FontSize = 13,
+                Opacity = 0.75,
+                Foreground = new SolidColorBrush(Color.Parse("#1A1714")),
+                TextWrapping = TextWrapping.Wrap,
+            });
+            grid.Children.Add(stack);
+        }
+        else grid.Children.Add(labelBlock);
 
         if (result is not null)
         {
@@ -66,17 +86,9 @@ public static class DailyUi
                 Content = isToday ? "Play today's Tidbit" : "Play",
                 Padding = new Avalonia.Thickness(16, 8),
             };
-            if (heroToday)
-            {
-                play.Background = Brushes.White;
-                play.Foreground = new SolidColorBrush(Color.Parse("#FF5C35"));
-                play.BorderBrush = Brushes.White;
-                play.FontWeight = FontWeight.SemiBold;
-            }
-            else
-            {
-                play.Classes.Add("accent");
-            }
+            // On the yellow card the brand coral CTA is legible and is the page's
+            // single primary, so the white-chip inverse this used to need is gone.
+            play.Classes.Add("accent");
             play.Click += (_, _) => onPlay(day);
             Grid.SetColumn(play, 1);
             grid.Children.Add(play);

@@ -212,6 +212,10 @@ public sealed class LiveHostViewModel : ObservableObject
     public string? LeadCaptureUrl => Host.LeadCaptureUrl;
     public bool HasSponsor => !string.IsNullOrWhiteSpace(Host.Sponsor);
     public string SponsorLine => $"Brought to you by {Host.Sponsor}";
+    /// The colour an event with no brand set actually paints on the big screen.
+    /// The editor's swatch reads this too, so an empty field shows the truth.
+    public const string DefaultBrandHex = "#FF5C35";
+
     public Avalonia.Media.IBrush BrandBrush
     {
         get
@@ -222,7 +226,7 @@ public sealed class LiveHostViewModel : ObservableObject
                     return new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse(Host.BrandHex!));
             }
             catch { /* fall through to the brand default */ }
-            return new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#FF5C35"));
+            return new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse(DefaultBrandHex));
         }
     }
     public bool IsLocked => Host.Locked;

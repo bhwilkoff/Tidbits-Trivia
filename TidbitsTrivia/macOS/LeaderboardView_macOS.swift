@@ -11,6 +11,11 @@ import SwiftUI
 /// Core does the work (`LeaderboardAPI` reads the static Pages JSON, never RTDB),
 /// so this is shell only — the rule that makes a new Apple platform cheap.
 struct LeaderboardView_macOS: View {
+    /// The empty state names a live night as the way onto the board, so it has to
+    /// be able to open one. Naming an action without offering it is the same fault
+    /// as a screen that narrates navigation (ledger W5).
+    var onHostANight: () -> Void = {}
+
     @State private var overall: [LeaderboardRow] = []
     @State private var venues: [(venue: String, rows: [LeaderboardRow])] = []
     @State private var myUid = ""
@@ -42,15 +47,26 @@ struct LeaderboardView_macOS: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(PlayerIdentity.seasonDisplay(PlayerIdentity.currentSeason()))
                 .font(.title2.weight(.bold)).foregroundStyle(Tidbits.Palette.ink)
-            Text("Resets in \(PlayerIdentity.seasonResetDays()) days · refreshes hourly")
+            Text("Resets in " + pluralized(PlayerIdentity.seasonResetDays(), "day") + " · refreshes hourly")
                 .font(.callout).foregroundStyle(Tidbits.Palette.inkSoft)
         }
     }
 
+    /// `ContentUnavailableView` — the same empty state the Story archive and the
+    /// Knowledge atlas use. This page used to put one grey sentence in the top-left
+    /// corner of an otherwise empty window, and that sentence named two actions it
+    /// did not offer.
     private var empty: some View {
-        Text("No standings yet. Play a live night — a Trivia Night or a Tidbits Live event — while signed in, and you'll climb the board here.")
-            .font(.callout).foregroundStyle(Tidbits.Palette.inkSoft)
-            .fixedSize(horizontal: false, vertical: true)
+        ContentUnavailableView {
+            Label("No standings yet", systemImage: "trophy.fill")
+        } description: {
+            Text("Play a live night while signed in and you'll climb the board here.")
+        } actions: {
+            Button("Host a night") { onHostANight() }
+                .buttonStyle(.borderedProminent).tint(Tidbits.Palette.coral)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, 40)
     }
 
     private func board(_ title: String, _ rows: [LeaderboardRow]) -> some View {

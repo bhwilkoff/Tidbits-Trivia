@@ -12,7 +12,7 @@
                  §5.6): FASettingsExpander rows carry the LABEL, so a filled form still
                  says what each field is, and the file operations sit behind Import /
                  Export / Print menus the way the Mac's one "Event file" menu does. -->
-            <StackPanel Margin="36,32" Spacing="10" MaxWidth="900" HorizontalAlignment="Left">
+            <StackPanel Margin="36,32" Spacing="10" MaxWidth="900" HorizontalAlignment="Center">
                 <TextBlock Text="Tidbits Live" Classes="view-heading"/>
                 <TextBlock Text="Build a branded event, run it from the host cockpit, and put a projector on the big screen."
                            Classes="body" Opacity="0.72" TextWrapping="Wrap" Margin="0,0,0,8"/>
@@ -61,8 +61,20 @@
                                              Description="Colors the event title on the big screen.">
                         <ui:FASettingsExpanderItem.Footer>
                             <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                                <Border x:Name="BrandSwatch" Width="28" Height="28" CornerRadius="6"
-                                        BorderThickness="1" BorderBrush="#33000000"/>
+                                <!-- The swatch IS the control: a pub host picks a colour, and only
+                                     someone copying a hex out of a brand guide needs the field
+                                     beside it (ADVERSARIAL-DESIGN-LEDGER W6). -->
+                                <Button x:Name="BrandSwatchButton" Width="32" Height="32" Padding="0"
+                                        ToolTip.Tip="Pick the brand color"
+                                        AutomationProperties.Name="Pick the brand color">
+                                    <Button.Flyout>
+                                        <Flyout Placement="Bottom">
+                                            <ColorPicker x:Name="BrandColorPicker" IsAlphaEnabled="False"/>
+                                        </Flyout>
+                                    </Button.Flyout>
+                                    <Border x:Name="BrandSwatch" Width="22" Height="22" CornerRadius="5"
+                                            BorderThickness="1" BorderBrush="#33000000"/>
+                                </Button>
                                 <TextBox x:Name="BrandHexBox" PlaceholderText="#FF5C35" MinWidth="110" MaxLength="7"/>
                             </StackPanel>
                         </ui:FASettingsExpanderItem.Footer>

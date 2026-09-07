@@ -14,6 +14,11 @@
         <!-- Brand tokens (shared design system — WINDOWS-DESIGN §5.1). -->
         <Color x:Key="BrandPrimary">#FF5C35</Color>
         <Color x:Key="BrandAccent">#0047FF</Color>
+        <!-- The Daily card's fill. Yellow, NOT coral: the page gets ONE coral
+             primary (R-HOME-1), and the Mac has always painted this card yellow. -->
+        <Color x:Key="BrandYellow">#FFC93C</Color>
+        <Color x:Key="BrandInk">#1A1714</Color>
+        <Color x:Key="BrandGrape">#8B5CF6</Color>
     </Application.Resources>
 
     <Application.Styles>
@@ -56,6 +61,28 @@
         </Style>
         <Style Selector="Button.accent:disabled /template/ ContentPresenter">
             <Setter Property="Background" Value="#66FF5C35"/>
+            <Setter Property="Foreground" Value="#99FFFFFF"/>
+        </Style>
+        <!-- Create's CTA is GRAPE (#8B5CF6) on macOS, iOS, Android and the web —
+             the page's own identity colour, not the brand primary. Windows was the
+             only platform painting it coral. Pinned for the same reason as .accent. -->
+        <Style Selector="Button.grape /template/ ContentPresenter">
+            <Setter Property="Background" Value="#8B5CF6"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#8B5CF6"/>
+        </Style>
+        <Style Selector="Button.grape:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#7C4DEF"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#7C4DEF"/>
+        </Style>
+        <Style Selector="Button.grape:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="#6D3FE0"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#6D3FE0"/>
+        </Style>
+        <Style Selector="Button.grape:disabled /template/ ContentPresenter">
+            <Setter Property="Background" Value="#668B5CF6"/>
             <Setter Property="Foreground" Value="#99FFFFFF"/>
         </Style>
         <!-- Same §5.5 rule, different control: a switched-on ToggleSwitch is an accent

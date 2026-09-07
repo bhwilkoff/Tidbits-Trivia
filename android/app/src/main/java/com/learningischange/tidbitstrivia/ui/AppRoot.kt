@@ -1866,7 +1866,7 @@ private fun RecordsScreen(store: Store, onOpenArchive: () -> Unit, onOpenMaratho
         }
         ChunkyCard(fill = Pops.yellow) {
             Row(Modifier.padding(18.dp).fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Column { Text("DAY STREAK", color = Ink.copy(alpha = 0.7f), fontSize = 12.sp); Text("${PlayerIdentity.displayStreak.current} days", fontWeight = FontWeight.Black, fontSize = 26.sp, color = Ink) }
+                Column { Text("DAY STREAK", color = Ink.copy(alpha = 0.7f), fontSize = 12.sp); Text(PlayerIdentity.displayStreak.current.let { "$it day" + if (it == 1) "" else "s" }, fontWeight = FontWeight.Black, fontSize = 26.sp, color = Ink) }
                 Text("best ${PlayerIdentity.displayStreak.longest} 🔥", color = Ink, fontWeight = FontWeight.Bold)
             }
         }

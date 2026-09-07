@@ -19,16 +19,38 @@ public partial class LiveView : UserControl
     {
         InitializeComponent();
 
-        // The brand swatch shows the colour the hex field names, so the field is
-        // legible without a colour picker (ADVERSARIAL-DESIGN-LEDGER W6).
+        // The swatch button opens a real ColorPicker and the hex field mirrors it,
+        // so a host can pick a colour OR paste one from a brand guide
+        // (ADVERSARIAL-DESIGN-LEDGER W6). `syncing` stops the two inputs from
+        // driving each other in a loop.
+        var syncing = false;
         void PaintSwatch()
         {
             var hex = (BrandHexBox.Text ?? "").Trim();
-            BrandSwatch.Background = Avalonia.Media.Color.TryParse(hex, out var c)
-                ? new Avalonia.Media.SolidColorBrush(c)
-                : Avalonia.Media.Brushes.Transparent;
+            // An EMPTY field is not "no colour" — LiveHostViewModel.BrandBrush falls
+            // back to #FF5C35, so that is what the big screen will actually paint.
+            // A transparent swatch here read as an empty broken box and misdescribed
+            // the event.
+            if (!Avalonia.Media.Color.TryParse(hex, out var c))
+                c = Avalonia.Media.Color.Parse(LiveHostViewModel.DefaultBrandHex);
+            BrandSwatch.Background = new Avalonia.Media.SolidColorBrush(c);
+            if (!syncing)
+            {
+                syncing = true;
+                BrandColorPicker.Color = c;
+                syncing = false;
+            }
         }
         BrandHexBox.TextChanged += (_, _) => PaintSwatch();
+        BrandColorPicker.PropertyChanged += (_, e) =>
+        {
+            if (e.Property != Avalonia.Controls.ColorPicker.ColorProperty || syncing) return;
+            var c = BrandColorPicker.Color;
+            syncing = true;
+            BrandHexBox.Text = $"#{c.R:X2}{c.G:X2}{c.B:X2}";
+            syncing = false;
+            PaintSwatch();
+        };
         PaintSwatch();
 
         CategoryPicker.ItemsSource = TriviaCategory.All;
@@ -355,7 +377,11 @@ public partial class LiveView : UserControl
             text.Children.Add(new TextBlock
             {
                 Text = string.IsNullOrWhiteSpace(q.Prompt) ? "Untitled question" : q.Prompt,
-                TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis, MaxLines = 2,
+                // WRAP, don't trim. `MaxLines = 2` with an ellipsis and no wrapping
+                // still laid out on ONE line, so a real prompt read "...minted some of
+                // the world's old…" and the host could not check their own question
+                // against the room. Same fix the Mac took as ledger M1.
+                TextWrapping = Avalonia.Media.TextWrapping.Wrap,
             });
             text.Children.Add(new TextBlock
             {
@@ -464,7 +490,13 @@ public partial class LiveView : UserControl
         };
         actions.Children.Add(add);
 
-        var pull = new Button { Content = "Add one from the question bank", Padding = new Avalonia.Thickness(12, 5), FontSize = 12, Margin = new Avalonia.Thickness(0, 0, 8, 4) };
+        // The other four ways into this round were four more text pills of the same
+        // weight as "+ Add question", so the row read as five equal doors when only
+        // one is the ordinary action — the W11 defect at round scale. They collapse
+        // into ONE "Add from…" menu, exactly as the page-level file plumbing did.
+        var more = new MenuFlyout();
+
+        var pull = new MenuItem { Header = "The Tidbits question bank" };
         pull.Click += async (_, _) =>
         {
             var cat = CategoryPicker.SelectedItem as TriviaCategory ?? TriviaCategory.Named("mixed");
@@ -472,32 +504,41 @@ public partial class LiveView : UserControl
             var pulled = await GameData.Shared.Value.Provider.NightQuestions(plan, cat);
             if (pulled.Count > 0) { _questions[roundIndex].Add(pulled[0] with { RoundIndex = null }); SyncRoundCount(roundIndex); RebuildBuilderRounds(); }
         };
-        actions.Children.Add(pull);
+        more.Items.Add(pull);
 
         // §6: the host's own bank. Search it and add to THIS round; save the round to it.
-        var fromLibrary = new Button { Content = "From library…", Padding = new Avalonia.Thickness(12, 5), FontSize = 12, Margin = new Avalonia.Thickness(0, 0, 8, 4) };
+        var fromLibrary = new MenuItem { Header = "Your saved library…" };
         AutomationProperties.SetName(fromLibrary, $"Add from library to round {roundIndex + 1}");
         fromLibrary.Click += async (_, _) => await ShowLibraryPicker(roundIndex);
-        actions.Children.Add(fromLibrary);
+        more.Items.Add(fromLibrary);
+
         if (qs.Count > 0)
         {
-            var saveRound = new Button { Content = "Save round to library", Padding = new Avalonia.Thickness(12, 5), FontSize = 12, Margin = new Avalonia.Thickness(0, 0, 8, 4) };
+            more.Items.Add(new Separator());
+            var saveRound = new MenuItem { Header = "Save this round to your library" };
             saveRound.Click += (_, _) =>
             {
                 var n = GameData.Shared.Value.Library.Add(qs, EventNameBox.Text ?? "");
                 ShowStatus($"Saved round to your library: {n} new, {qs.Count - n} already there.");
             };
-            actions.Children.Add(saveRound);
-        }
+            more.Items.Add(saveRound);
 
-        if (qs.Count > 0)
-        {
-            var clear = new Button { Content = "Use the question bank instead", Padding = new Avalonia.Thickness(12, 5), FontSize = 12, Margin = new Avalonia.Thickness(0, 0, 8, 4) };
+            var clear = new MenuItem { Header = "Discard these and draw from the bank" };
             AutomationProperties.SetName(clear, $"Clear authored questions in round {roundIndex + 1}");
             clear.Click += (_, _) => { _questions[roundIndex].Clear(); RebuildBuilderRounds(); };
-            actions.Children.Add(clear);
+            more.Items.Add(clear);
         }
-        panel.Children.Add(actions);
+
+        var moreBtn = new DropDownButton
+        {
+            Content = "Add from…",
+            Flyout = more,
+            Padding = new Avalonia.Thickness(12, 5),
+            FontSize = 12,
+            Margin = new Avalonia.Thickness(0, 0, 8, 4),
+        };
+        AutomationProperties.SetName(moreBtn, $"Add questions to round {roundIndex + 1} from elsewhere");
+        actions.Children.Add(moreBtn);        panel.Children.Add(actions);
         return panel;
     }
 

@@ -46,6 +46,23 @@ The rule this yields: an observation about WINDOW IDENTITY has to come from the
 accessibility tree of ONE known pid, never from a screen rectangle. A rectangle
 is evidence about pixels, and only about pixels.
 
+**A row closes against the DEFECT AS STATED, not against a proxy.** W1 was
+"every view pins its content hard-left, `HorizontalAlignment="Left"` on the root
+StackPanel of Play, Live, Join, Create". I widened the max width, measured that
+the page went from filling 54% of the window to 76%, and marked it ✅. The
+second pass re-shot it and all four roots still read `Left` — a wider column
+pinned left is still pinned left, and the number I had cited went up without the
+defect moving. The proxy was easier to measure than the thing I had written
+down, which is exactly why it was the wrong evidence. Re-opened, fixed for real,
+and the rule written into WINDOWS-DESIGN §5.7 first so it stays fixed.
+
+**Checked and dismissed:** the Mac Records screen shows a "Sign in to sync your
+records" card while a Game Center toast reads "Signed in as CopperCrow6414",
+which looks like the app contradicting itself. It is not: the banner is gated on
+`!identity.signedIn` (the portable identity — Sign in with Apple), and Game
+Center is a different account the app authenticates separately. Two identities,
+both reported honestly. Not filed.
+
 ## §1 — Windows (the weak platform)
 
 | # | Defect, measured | Where | Status |
@@ -60,6 +77,12 @@ is evidence about pixels, and only about pixels.
 | W8 | **The round header inlines the host note and truncates it mid-word**: `1. Classic · 3 questions (yours) ▯ Read the first…`. The note competes with the round's identity for the same line | `LiveView.axaml.cs` round header | ✅ |
 | W9 | **The Quick Play hero does not say what it will play.** Windows: "QUICK PLAY / Jump straight into a round". Mac: "QUICK PLAY / NAME AS MANY · MIXED BAG / Click to jump straight into a round". The Windows hero is strictly less informative than the Mac one | `PlayView.axaml` |✅ |
 | W10 | **"Previous Tidbits" is bare text with no affordance** — it is a button, and looks like a caption | `PlayView.axaml` | ✅ |
+| W12 | **An empty Brand color field painted the swatch transparent** — an empty broken box — while `LiveHostViewModel.BrandBrush` falls back to `#FF5C35`, so the projector painted coral regardless. The editor misdescribed the event it was editing | `LiveView.axaml.cs` | ✅ |
+| W13 | **Two full-width coral bands on Play** — the QUICK PLAY hero and the unplayed Daily card — so the page has two primaries, against R-HOME-1. `DailyUi`'s own comment says the actionable card should be "the only bright thing on the panel"; there were two. The Mac card has always been yellow | `DailyUi.cs` | ✅ |
+| W14 | **The Daily card said only "Today"** — the least informative version on any platform. The Mac says what a Tidbit is, that the set is shared, and that a streak exists; Windows submits to the same global board and said none of it | `DailyUi.cs` | ✅ |
+| W15 | **Create's "Generate Quiz" is coral on Windows and GRAPE (`#8B5CF6`) on macOS, iOS, Android and the web.** Grape is that page's identity colour on four platforms; Windows was the only one painting it the brand primary | `CreateView.axaml` | ✅ |
+| W16 | **The question row truncates the prompt on ONE line** — `MaxLines = 2` with an ellipsis but no `TextWrapping`, so it never used the second line: "…minted some of the world's old…". The host cannot check their own question against the room. The Mac fixed exactly this as M1 | `LiveView.axaml.cs` | ✅ |
+| W17 | **Five equal text pills under every round** — `+ Add question`, `Add one from the question bank`, `From library…`, `Save round to library`, `Use the question bank instead`. Only the first is the ordinary action; W11's defect at round scale | `LiveView.axaml.cs` | ✅ |
 
 ## §2 — macOS (the strong platform, still not finished)
 
@@ -71,6 +94,8 @@ is evidence about pixels, and only about pixels.
 | M4 | **"Abc Letter" is not a phrase.** It is the first-letter round; the label reads as two unrelated words | `MacLiveBuilder_macOS.swift` |✅ |
 | M5 | **Two coral cards on Play** (QUICK PLAY and TRIVIA NIGHT) give the page two primary actions, against R-HOME-1's "Home is ONE primary action" | `HomeView_macOS.swift` | ✅ |
 | M6 | **Mixed dash style in one card set**: "at one Mac - same questions" (hyphen) beside "Mixed rounds with friends — host from any device" (em dash) | `HomeView_macOS.swift` | ✅ |
+| M7 | **"1 days".** A new player's very first Records screen reads `DAY STREAK / 1 days` — the first number the app ever shows them, ungrammatical. macOS, iOS, tvOS, Android and the web each interpolated `\(current) days` independently; only Windows escaped, by printing the bare number | `PlayerProfile.swift` + 5 call sites | ✅ |
+| M8 | **The Leaderboard's empty state is one grey sentence in the top-left of an empty window** — no icon, no heading, no control — and that sentence NAMES two actions ("a Trivia Night or a Tidbits Live event") it does not offer, which is the same fault as W5's navigation narration. The Story archive and the Knowledge atlas on this same platform already use `ContentUnavailableView` | `LeaderboardView_macOS.swift` | ✅ |
 
 ## §3 — Cross-platform
 
@@ -89,18 +114,27 @@ W5 W8 W9 W10 M3 M5 M6.
 
 | # | What changed | Evidence |
 |---|---|---|
-| W1 | Content column 640 → 900; the Settings rows stretch it | 1180-wide shot: the page fills 76% of the window, was 54% |
+| W1 | Content column 640 → 900 AND `HorizontalAlignment` Left → **Center** on all four pages | I closed this row the first time having only widened the column, and cited a fill percentage as the proof. The stated defect was the hard-LEFT pin, and a wider column pinned left is still pinned left — all four roots still read `Left` when I re-shot them. Now measured on all 10 shots (4 pages x 2 widths): left and right gutters match to within the scrollbar's 18px. Rule written down first, as WINDOWS-DESIGN §5.7 |
 | W2 | JOIN A GAME is a teal filled card, not a default button | re-shot beside the coral hero; PARITY.md's Windows cell is now true |
 | W3 | Every icon is a `FASymbolIcon`, not a text glyph | the round header read `▯ ▼ ▯`; it now shows real chevrons and a trash can, and each question row a real ✕ |
 | W4 W7 | The Live page is `FASettingsExpander` rows — the shape the app's OWN Settings page already uses (WINDOWS-DESIGN §5.6) | labels and descriptions persist on a filled form; cards have elevation |
 | W5 | Two instruction paragraphs → one line; the one narrating navigation to another page is deleted | re-shot |
-| W6 | A live swatch paints from the hex field | ◐ a real `ColorPicker` is not in this FluentAvalonia build |
+| W6 | The swatch is a Button opening a real `ColorPicker`; the hex field stays for a host pasting from a brand guide, and the two mirror each other | I had recorded "no `ColorPicker` in this build" WITHOUT checking. `Avalonia.Controls.ColorPicker` 12.0.0 is already a transitive reference — the type is in `Avalonia.Controls`, not `FluentAvalonia.UI.Controls`. Re-shot |
 | W9 | The hero names what it will launch: `CLASSIC · MIXED BAG` | re-shot; refreshed on appear |
 | W11 | **Fourteen equal-weight buttons → three primaries + Import / Export / Print menus** (the Mac has had one "Event file" menu all along). Eleven of the fourteen were file plumbing, and six of those I added today | re-shot |
 | M1 | Question prompts wrap instead of truncating | re-shot: 5 of 5 in full, two of them three lines. Was 3 of 5 cut mid-sentence |
 | M2 X2 | "corpus" is gone from every host-facing string on both platforms | grep + re-shot |
 | M4 | "Abc Letter" → "Letter" (the SF Symbol was drawing the letters) | re-shot |
 | X1 | One spelling of colour/color | grep |
+| W16 | `TextWrapping.Wrap`, no trimming | re-shot: the Anatolia prompt reads in full over two lines |
+| W17 | `+ Add question` stays; the other four become one **Add from…** `DropDownButton` (bank / library / save this round / discard and draw from the bank) | re-shot: two controls where there were five |
+| W15 | A pinned `Button.grape` beside `Button.accent` (same §5.5 reasoning — a derived accent washes out in dark theme), used by `GenBtn` | re-shot: grape is the dominant colour on Create (1330 sampled px vs 378 coral, and that coral is the saved-quiz **Play** button, which is correctly the brand action) |
+| M8 | `ContentUnavailableView` — trophy, "No standings yet", one sentence, and a coral **Host a night** button wired to the Live section | re-shot; the button is the action the copy names |
+| M7b | A `pluralized(_:_:)` helper in Core, applied where a count really reaches 1: a season's last day, a player's first game, and a Jeopardy board's last clue — that one reads on the PROJECTOR | swept the whole Swift tree for the shape rather than fixing the one I saw |
+| M7 | One `Streak.currentLabel` in Core ("1 day" / "2 days") used by all three Apple surfaces; Android and the web pluralise in place | re-shot: the Mac Records card reads `1 day`. Android compiles, the web expression checked in node (`0 days | 1 day | 2 days`) |
+| W13 | The Daily hero is `#FFC93C` with ink text; the CTA is the ordinary brand-coral accent button, so the white-chip inverse it needed on coral is gone | re-shot at both widths: one coral band remains |
+| W14 | The hero carries the Mac's line — "7 questions. Everyone gets the same set. Keep your streak." | re-shot |
+| W12 | An EMPTY brand field painted the swatch transparent — an empty broken box — while `BrandBrush` falls back to `#FF5C35`, so the projector went coral anyway. The swatch paints that fallback now, off one shared `LiveHostViewModel.DefaultBrandHex`; the Mac has always done this | swatch pixel measures (255,92,53); the regression test was proven to fail with the transparent branch put back |
 
 **Still open:** W8 (the round header inlines the host note on Windows), W10
 ("Previous Tidbits" is bare text), M3 (round chips do not distinguish a menu

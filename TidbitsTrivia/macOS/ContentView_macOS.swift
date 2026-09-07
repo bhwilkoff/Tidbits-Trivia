@@ -223,7 +223,7 @@ struct ContentView_macOS: View {
                                                   expeditionLaunch = ExpeditionStageLaunch_macOS(expedition: expedition, stageIndex: stageIndex)
                                               })
                 case .records: RecordsView_macOS(onPlay: start)
-                case .leaderboard: LeaderboardView_macOS()
+                case .leaderboard: LeaderboardView_macOS(onHostANight: { section = .live })
                 case .create:  CreateView_macOS { topic, qs in customGame = CustomLaunch(topic: topic, questions: qs) }
                 case .live:    LiveBuilderView_macOS(onPreview: { livePreview = $0 }, onHost: { liveHost = $0 })
                 }

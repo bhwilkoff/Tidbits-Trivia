@@ -36,7 +36,7 @@ struct PartyContainer_macOS: View {
             case .loading:
                 VStack(spacing: 14) {
                     ProgressView().controlSize(.large)
-                    Text("Dealing \(questionCount) questions…")
+                    Text("Dealing " + pluralized(questionCount, "question") + "…")
                         .font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.inkSoft)
                 }
             case .handoff:    handoff
@@ -76,7 +76,7 @@ struct PartyContainer_macOS: View {
             Text(players[turn].name)
                 .font(.system(size: 38, weight: .black, design: .rounded))
                 .foregroundStyle(Tidbits.Palette.ink)
-            Text("Turn \(turn + 1) of \(players.count) · \(questionCount) questions")
+            Text("Turn \(turn + 1) of \(players.count) · " + pluralized(questionCount, "question"))
                 .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
             Spacer()
             HStack(spacing: 12) {

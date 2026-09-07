@@ -73,7 +73,7 @@ struct RecordsView: View {
         HStack(spacing: 16) {
             VStack(alignment: .leading, spacing: 2) {
                 Text("DAY STREAK").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.ink.opacity(0.7))
-                Text("\(identity.displayStreak.current) days")
+                Text(identity.displayStreak.currentLabel)
                     .font(.system(size: 30, weight: .black, design: .rounded))
                     .foregroundStyle(Tidbits.Palette.ink)
             }

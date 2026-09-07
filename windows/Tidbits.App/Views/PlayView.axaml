@@ -3,7 +3,7 @@
              x:Class="Tidbits.App.Views.PlayView">
     <Panel>
         <ScrollViewer x:Name="Landing">
-            <StackPanel Margin="36,30" Spacing="16" MaxWidth="760" HorizontalAlignment="Left">
+            <StackPanel Margin="36,30" Spacing="16" MaxWidth="760" HorizontalAlignment="Center">
                 <TextBlock Text="Play" Classes="view-heading"/>
                 <TextBlock Text="Trivia from the whole of Wikipedia." Classes="body" Opacity="0.7"/>
 

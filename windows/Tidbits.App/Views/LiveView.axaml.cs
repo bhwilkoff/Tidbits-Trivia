@@ -336,8 +336,15 @@ public partial class LiveView : UserControl
             AutomationProperties.SetName(edit, $"Edit question {qi + 1} of round {roundIndex + 1}");
             edit.Click += async (_, _) =>
             {
-                var updated = await LiveQuestionEditorDialog.ShowAsync(q, kind, $"Round {roundIndex + 1}, question {qi + 1}");
-                if (updated is not null) { _questions[roundIndex][qi] = updated; SyncRoundCount(roundIndex); RebuildBuilderRounds(); }
+                string? newClip = null; bool clipChanged = false;
+                var updated = await LiveQuestionEditorDialog.ShowAsync(q, kind, $"Round {roundIndex + 1}, question {qi + 1}",
+                    ClipAt(roundIndex, qi), path => { newClip = path; clipChanged = true; });
+                if (updated is not null)
+                {
+                    _questions[roundIndex][qi] = updated;
+                    if (clipChanged) SetClip(roundIndex, qi, newClip);
+                    SyncRoundCount(roundIndex); RebuildBuilderRounds();
+                }
             };
             Grid.SetColumn(edit, 3);
             grid.Children.Add(edit);
@@ -368,9 +375,16 @@ public partial class LiveView : UserControl
         add.Click += async (_, _) =>
         {
             var cat = (CategoryPicker.SelectedItem as TriviaCategory)?.Id ?? "mixed";
+            string? newClip = null; bool clipChanged = false;
             var made = await LiveQuestionEditorDialog.ShowAsync(
-                LiveQuestionEditorDialog.Blank(kind, cat), kind, $"New question in round {roundIndex + 1}");
-            if (made is not null) { _questions[roundIndex].Add(made); SyncRoundCount(roundIndex); RebuildBuilderRounds(); }
+                LiveQuestionEditorDialog.Blank(kind, cat), kind, $"New question in round {roundIndex + 1}",
+                null, path => { newClip = path; clipChanged = true; });
+            if (made is not null)
+            {
+                _questions[roundIndex].Add(made);
+                if (clipChanged) SetClip(roundIndex, _questions[roundIndex].Count - 1, newClip);
+                SyncRoundCount(roundIndex); RebuildBuilderRounds();
+            }
         };
         actions.Children.Add(add);
 
@@ -592,6 +606,25 @@ public partial class LiveView : UserControl
         _expandedRounds.Clear();
         RebuildBuilderRounds();
         ShowStatus($"Board round added — {board.Cells.Count} cells, {board.PointsRemaining:N0} points.");
+    }
+
+    /// A round's clips are index-parallel to its questions (LIVE-PACKAGE-FORMAT §3.2);
+    /// these keep the list sized so any question can carry one, not only the
+    /// questions an audio/video ROUND was built from.
+    private string? ClipAt(int roundIndex, int qi)
+    {
+        if (roundIndex >= _clips.Count) return null;
+        var list = _clips[roundIndex];
+        return qi < list.Count && !string.IsNullOrEmpty(list[qi]) ? list[qi] : null;
+    }
+
+    private void SetClip(int roundIndex, int qi, string? path)
+    {
+        while (_clips.Count <= roundIndex) _clips.Add(new System.Collections.Generic.List<string>());
+        var list = _clips[roundIndex];
+        var n = roundIndex < _questions.Count ? _questions[roundIndex].Count : qi + 1;
+        while (list.Count < Math.Max(n, qi + 1)) list.Add("");
+        list[qi] = path ?? "";
     }
 
     private async void OnAddAudioRound(object? sender, RoutedEventArgs e) => await AddClipRound(video: false);

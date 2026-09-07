@@ -142,19 +142,31 @@ struct LiveBuilderView_macOS: View {
                 var pictured = q; pictured.imageURL = LiveMediaStore.reference(id)
                 working.rounds[0].questions[0] = pictured
             }
+            // TIDBITS_LIVE_CLIP=<file in Documents> attaches an audio clip to it first.
+            if let p = ProcessInfo.processInfo.environment["TIDBITS_LIVE_CLIP"], !p.isEmpty, !p.contains("/"),
+               let data = try? Data(contentsOf: FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!.appendingPathComponent(p)),
+               let id = try? LiveMediaStore.store(data, ext: (p as NSString).pathExtension, originalName: p) {
+                applyClip(.set(id: id), video: false, ri: 0, qi: 0)
+            }
             editing = EditingQuestion(roundIndex: 0, questionIndex: 0, format: round.format,
-                                      draft: QuestionDraft(working.rounds[0].questions[0]))
+                                      draft: draftFor(0, 0))
         }
         .sheet(item: $editing) { ctx in
             LiveQuestionEditor_macOS(draft: ctx.draft, format: ctx.format,
-                                     onSave: { q in
-                                         if let qi = ctx.questionIndex,
+                                     onSave: { q, audio, video in
+                                         let qi: Int
+                                         if let i = ctx.questionIndex,
                                             working.rounds.indices.contains(ctx.roundIndex),
-                                            working.rounds[ctx.roundIndex].questions.indices.contains(qi) {
-                                             working.rounds[ctx.roundIndex].questions[qi] = q
+                                            working.rounds[ctx.roundIndex].questions.indices.contains(i) {
+                                             working.rounds[ctx.roundIndex].questions[i] = q
+                                             qi = i
                                          } else {
                                              insertQuestion(q, into: ctx.roundIndex, at: nil)
+                                             qi = max(0, (working.rounds.indices.contains(ctx.roundIndex)
+                                                          ? working.rounds[ctx.roundIndex].questions.count : 1) - 1)
                                          }
+                                         applyClip(audio, video: false, ri: ctx.roundIndex, qi: qi)
+                                         applyClip(video, video: true, ri: ctx.roundIndex, qi: qi)
                                          editing = nil
                                      },
                                      onCancel: { editing = nil })
@@ -525,7 +537,7 @@ struct LiveBuilderView_macOS: View {
                 .font(.caption).foregroundStyle(Tidbits.Palette.inkSoft)
             Button("Edit") {
                 editing = EditingQuestion(roundIndex: ri, questionIndex: qi, format: format,
-                                          draft: QuestionDraft(q))
+                                          draft: draftFor(ri, qi))
             }
             .controlSize(.small)
             Menu {
@@ -543,8 +555,79 @@ struct LiveBuilderView_macOS: View {
         .padding(.vertical, 4)
         .contentShape(Rectangle())
         .onTapGesture(count: 2) {
-            editing = EditingQuestion(roundIndex: ri, questionIndex: qi, format: format, draft: QuestionDraft(q))
+            editing = EditingQuestion(roundIndex: ri, questionIndex: qi, format: format, draft: draftFor(ri, qi))
         }
+        // Drop a picture, an audio file or a video onto the question (§8.1). The
+        // file's KIND decides what it becomes; anything else is refused by name.
+        .onDrop(of: [.fileURL], isTargeted: nil) { providers in
+            guard let provider = providers.first else { return false }
+            _ = provider.loadDataRepresentation(forTypeIdentifier: UTType.fileURL.identifier) { data, _ in
+                guard let data, let url = URL(dataRepresentation: data, relativeTo: nil) else { return }
+                Task { @MainActor in attachDropped(url, ri: ri, qi: qi) }
+            }
+            return true
+        }
+    }
+
+    /// The editor draft for a question, with the round's clips named so the
+    /// editor can show what is attached (the clips live on the round, §8.1).
+    private func draftFor(_ ri: Int, _ qi: Int) -> QuestionDraft {
+        var d = QuestionDraft(working.rounds[ri].questions[qi])
+        d.audioClipName = clipName(working.rounds[ri].audioBookmarks, qi)
+        d.videoClipName = clipName(working.rounds[ri].videoBookmarks, qi)
+        return d
+    }
+
+    private func clipName(_ marks: [Data]?, _ qi: Int) -> String? {
+        guard let marks, marks.indices.contains(qi), !marks[qi].isEmpty,
+              let url = try? LiveClip.resolve(marks[qi]) else { return nil }
+        if let id = LiveMediaStore.id(forStoreFile: url) {
+            return LiveMediaStore.info(id)?.originalName ?? url.lastPathComponent
+        }
+        url.stopAccessingSecurityScopedResource()
+        return url.lastPathComponent
+    }
+
+    /// Put an editor's clip decision onto the round, keeping the bookmark array
+    /// index-parallel with the questions (a missing array is created on first use).
+    private func applyClip(_ change: QuestionDraft.ClipChange, video: Bool, ri: Int, qi: Int) {
+        guard working.rounds.indices.contains(ri), case let count = working.rounds[ri].questions.count, qi < count else { return }
+        var marks = (video ? working.rounds[ri].videoBookmarks : working.rounds[ri].audioBookmarks) ?? []
+        switch change {
+        case .keep: return
+        case .remove:
+            if marks.indices.contains(qi) { marks[qi] = Data() }
+        case .set(let id):
+            while marks.count < count { marks.append(Data()) }
+            guard let url = LiveMediaStore.fileURL(id), let mark = try? LiveClip.bookmark(for: url) else {
+                presentError("Could not attach that clip", NSError(domain: "LiveClip", code: 2,
+                             userInfo: [NSLocalizedDescriptionKey: "The clip is not in the media store."]))
+                return
+            }
+            marks[qi] = mark
+        }
+        let value: [Data]? = marks.contains(where: { !$0.isEmpty }) ? marks : nil
+        if video { working.rounds[ri].videoBookmarks = value } else { working.rounds[ri].audioBookmarks = value }
+    }
+
+    private func attachDropped(_ url: URL, ri: Int, qi: Int) {
+        guard working.rounds.indices.contains(ri), working.rounds[ri].questions.indices.contains(qi) else { return }
+        let ext = LiveMediaStore.normalizedExt(url.pathExtension)
+        guard let kind = LiveMediaStore.allowed[ext] else {
+            presentError("Could not use \(url.lastPathComponent)", NSError(domain: "LiveMediaStore", code: 3,
+                         userInfo: [NSLocalizedDescriptionKey: "Drop a picture, an audio file or a video."]))
+            return
+        }
+        let granted = url.startAccessingSecurityScopedResource()
+        defer { if granted { url.stopAccessingSecurityScopedResource() } }
+        do {
+            let id = try LiveMediaStore.store(try Data(contentsOf: url), ext: ext, originalName: url.lastPathComponent)
+            switch kind.kind {
+            case "image": working.rounds[ri].questions[qi].imageURL = LiveMediaStore.reference(id)
+            case "audio": applyClip(.set(id: id), video: false, ri: ri, qi: qi)
+            default: applyClip(.set(id: id), video: true, ri: ri, qi: qi)
+            }
+        } catch { presentError("Could not use \(url.lastPathComponent)", error) }
     }
 
     /// One line the host can scan to know whether a question is right, without opening it.

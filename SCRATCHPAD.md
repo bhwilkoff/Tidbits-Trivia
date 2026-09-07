@@ -48,8 +48,14 @@ its file. Verified: the Minerva `.tidbits` (13 pictures inside) hosted from the
 Mac via the hook, projector shows the package picture from the store; iOS /
 tvOS / macOS / Windows build green. 1.7.3 (126).
 
-**State left / sequenced (LIVE-PACKAGE-FORMAT §8):** per-question audio/video
-attach in the editors and drag-and-drop; file association (Mac UTType +
+**Same day, §8.1 done:** both editors attach an audio or video clip to any
+single question (Mac: a `ClipChange` handed back to the builder, which keeps
+the round's bookmark arrays index-parallel; Windows: `ClipAt`/`SetClip` on
+`_clips`); the Mac question row accepts a dropped picture/audio/video file by
+kind. Hooks `TIDBITS_LIVE_EDITQ=1` + `TIDBITS_LIVE_PICTURE`/`TIDBITS_LIVE_CLIP`
+photograph the editor with media attached. Windows drag-and-drop ⏳ (3.39).
+
+**State left / sequenced (LIVE-PACKAGE-FORMAT §8):** Windows drag-and-drop; file association (Mac UTType +
 MSIX); phones see package media via Firebase Storage at host time; the
 question library (`kind: bank`); Crowdpurr / Kahoot-xlsx / Blooket / GIFT /
 SpeedQuizzing-folder / OpenTDB importers-exporters. The Minerva package is at

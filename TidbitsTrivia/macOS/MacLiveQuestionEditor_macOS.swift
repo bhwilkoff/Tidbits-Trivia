@@ -38,6 +38,20 @@ struct QuestionDraft {
     var tags: [String]
     var roundIndex: Int?
 
+    /// Clips (LIVE-PACKAGE-FORMAT §8.1). They are NOT part of the Question — a
+    /// round keeps them index-parallel to its questions, and the wire Question
+    /// may never grow media keys — so the editor carries the CHANGE back to the
+    /// builder, which owns the round.
+    enum ClipChange: Equatable {
+        case keep
+        case remove
+        case set(id: String)
+    }
+    var audioClipName: String? = nil
+    var videoClipName: String? = nil
+    var audioChange: ClipChange = .keep
+    var videoChange: ClipChange = .keep
+
     init(_ q: Question) {
         id = q.id
         prompt = q.prompt
@@ -151,19 +165,23 @@ struct QuestionDraft {
 /// controls, Cancel/Save in the footer with Return bound to Save.
 struct LiveQuestionEditor_macOS: View {
     let format: GameMode
-    let onSave: (Question) -> Void
+    let onSave: (Question, QuestionDraft.ClipChange, QuestionDraft.ClipChange) -> Void
     let onCancel: () -> Void
 
     @State private var draft: QuestionDraft
     @FocusState private var promptFocused: Bool
 
-    init(question: Question, format: GameMode, onSave: @escaping (Question) -> Void, onCancel: @escaping () -> Void) {
+    init(question: Question, format: GameMode,
+         onSave: @escaping (Question, QuestionDraft.ClipChange, QuestionDraft.ClipChange) -> Void,
+         onCancel: @escaping () -> Void) {
         self.format = format
         self.onSave = onSave
         self.onCancel = onCancel
         _draft = State(initialValue: QuestionDraft(question))
     }
-    init(draft: QuestionDraft, format: GameMode, onSave: @escaping (Question) -> Void, onCancel: @escaping () -> Void) {
+    init(draft: QuestionDraft, format: GameMode,
+         onSave: @escaping (Question, QuestionDraft.ClipChange, QuestionDraft.ClipChange) -> Void,
+         onCancel: @escaping () -> Void) {
         self.format = format
         self.onSave = onSave
         self.onCancel = onCancel
@@ -215,6 +233,16 @@ struct LiveQuestionEditor_macOS: View {
                     TextField("…or a picture URL", text: $draft.imageURLText)
                 }
 
+                Section("Clips (play on the big screen)") {
+                    // A clip is copied into the media store like a picture, so the
+                    // package the host exports carries it. The old audio/video ROUND
+                    // flow still works; this attaches a clip to any single question.
+                    clipRow("Audio", current: draft.audioClipName, change: draft.audioChange,
+                            choose: { chooseClip(video: false) }, remove: { draft.audioChange = .remove })
+                    clipRow("Video", current: draft.videoClipName, change: draft.videoChange,
+                            choose: { chooseClip(video: true) }, remove: { draft.videoChange = .remove })
+                }
+
                 Section("Reveal") {
                     TextField("Explanation read out after the answer (optional)",
                               text: $draft.explanation, axis: .vertical)
@@ -237,14 +265,60 @@ struct LiveQuestionEditor_macOS: View {
                 Spacer()
                 Button("Cancel", role: .cancel) { onCancel() }
                     .keyboardShortcut(.cancelAction)
-                Button("Save") { onSave(draft.build()) }
+                Button("Save") { onSave(draft.build(), draft.audioChange, draft.videoChange) }
                     .keyboardShortcut(.defaultAction)
                     .disabled(!problems.isEmpty)
             }
             .padding(14)
         }
-        .frame(width: 620, height: 560)
+        // Tall enough that Picture and Clips are visible without scrolling on a
+        // laptop display; the Form still scrolls for the long payloads.
+        .frame(width: 620, height: 760)
         .onAppear { promptFocused = draft.prompt.isEmpty }
+    }
+
+    private func clipRow(_ label: String, current: String?, change: QuestionDraft.ClipChange,
+                         choose: @escaping () -> Void, remove: @escaping () -> Void) -> some View {
+        let status: String
+        switch change {
+        case .set(let id): status = "Attached: " + (LiveMediaStore.info(id)?.originalName ?? String(id.prefix(8)) + "…")
+        case .remove: status = "Will be removed"
+        case .keep: status = current ?? "None"
+        }
+        let hasSomething: Bool = { if case .set = change { return true }; if case .remove = change { return false }; return current != nil }()
+        return HStack {
+            Text(label).frame(width: 52, alignment: .leading)
+            Text(status).font(.callout).foregroundStyle(.secondary).lineLimit(1)
+            Spacer()
+            Button("Choose…", action: choose)
+            if hasSomething { Button("Remove", role: .destructive, action: remove) }
+        }
+    }
+
+    private func chooseClip(video: Bool) {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = video ? [.movie, .video, .mpeg4Movie, .quickTimeMovie]
+                                          : [.audio, .mp3, .wav, .mpeg4Audio, .aiff]
+        panel.allowsMultipleSelection = false
+        let picked: URL?
+        if let p = ProcessInfo.processInfo.environment["TIDBITS_LIVE_CLIP"], !p.isEmpty {
+            picked = p.contains("/") ? URL(fileURLWithPath: (p as NSString).expandingTildeInPath)
+                : FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!.appendingPathComponent(p)
+        } else {
+            picked = panel.runModal() == .OK ? panel.url : nil
+        }
+        guard let url = picked else { return }
+        do {
+            let data = try Data(contentsOf: url)
+            let id = try LiveMediaStore.store(data, ext: url.pathExtension, originalName: url.lastPathComponent)
+            if video { draft.videoChange = .set(id: id) } else { draft.audioChange = .set(id: id) }
+        } catch {
+            let alert = NSAlert()
+            alert.messageText = "Could not use that clip"
+            alert.informativeText = error.localizedDescription
+            alert.alertStyle = .warning
+            alert.runModal()
+        }
     }
 
     private var pictureDescription: String {

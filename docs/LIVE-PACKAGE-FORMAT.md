@@ -183,9 +183,15 @@ writer that produced it and the tool a host can use from a shell (`pack`,
 
 ## §8 — Sequenced follow-ups
 
-1. **Editors carry media** (Mac + Windows): "Choose picture…" on every
-   question (copies into the store, writes `tidbits-media:`), per-question
-   audio/video attach in any round, drag-and-drop a file onto a question.
+1. **Editors carry media** (Mac + Windows) — **DONE 2026-09-07 except
+   Windows drag-and-drop:** "Choose picture…" on every question (copies into
+   the store, writes `tidbits-media:`), a Clips section that attaches an audio
+   or video file to any single question (the round's index-parallel arrays are
+   created and kept aligned by the builder; the editor hands back a
+   keep/remove/set CHANGE because the wire Question may not grow media keys),
+   and on the Mac a picture/audio/video file dropped on a question row becomes
+   that question's media by its kind. Windows drag-and-drop is tracked
+   (WINDOWS-PARITY 3.39).
 2. **File association**: double-click a `.tidbits` on the Mac
    (`UTExportedTypeDeclarations`, macOS-only Info.plist) and on Windows
    (`uap:FileTypeAssociation` in the MSIX manifest) opens the importer.

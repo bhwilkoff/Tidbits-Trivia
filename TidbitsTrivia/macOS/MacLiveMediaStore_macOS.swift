@@ -130,6 +130,13 @@ nonisolated enum LiveMediaStore {
         return nil
     }
 
+    /// The id of a file that lives in the store (its name is `<id>.<ext>`).
+    static func id(forStoreFile url: URL) -> String? {
+        guard isStoreFile(url) else { return nil }
+        let stem = url.deletingPathExtension().lastPathComponent
+        return stem.count == 32 ? stem : nil
+    }
+
     static func isStoreFile(_ url: URL) -> Bool {
         url.standardizedFileURL.path.hasPrefix(directory.standardizedFileURL.path)
     }

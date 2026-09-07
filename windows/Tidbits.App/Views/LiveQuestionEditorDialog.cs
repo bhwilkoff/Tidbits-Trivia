@@ -19,7 +19,13 @@ namespace Tidbits.App.Views;
 public static class LiveQuestionEditorDialog
 {
     /// Returns the edited question, or null if the host cancelled.
-    public static async Task<Question?> ShowAsync(Question question, GameMode format, string title)
+    ///
+    /// `clipPath` is the audio/video clip attached to this question (a round keeps
+    /// clips index-parallel to its questions — LIVE-PACKAGE-FORMAT §8.1 — so the
+    /// clip is not part of the Question); `clipChanged` receives the new store path
+    /// on Save (null = removed) and is not called when the host left it alone.
+    public static async Task<Question?> ShowAsync(Question question, GameMode format, string title,
+                                                  string? clipPath = null, Action<string?>? clipChanged = null)
     {
         var promptBox = new TextBox
         {
@@ -114,6 +120,66 @@ public static class LiveQuestionEditorDialog
             Title = "Not ready", Margin = new Avalonia.Thickness(0, 6, 0, 0),
         };
 
+        // Clips: attach an audio or video file to THIS question; it is copied into
+        // the media store so the exported package carries it.
+        string? pendingClip = clipPath;
+        bool clipDirty = false;
+        var clipNote = new TextBlock { Classes = { "caption" }, Opacity = 0.72, VerticalAlignment = VerticalAlignment.Center };
+        var removeClip = new Button { Content = "Remove clip" };
+        void RefreshClip()
+        {
+            removeClip.IsVisible = !string.IsNullOrEmpty(pendingClip);
+            if (string.IsNullOrEmpty(pendingClip)) { clipNote.Text = "No clip"; return; }
+            var name = System.IO.Path.GetFileName(pendingClip);
+            var stem = System.IO.Path.GetFileNameWithoutExtension(pendingClip);
+            if (stem.Length == 32 && Tidbits.Core.Networking.LiveMediaStore.LoadIndex().TryGetValue(stem, out var info) && info.OriginalName is { } o)
+                name = o;
+            clipNote.Text = "Attached: " + name + (System.IO.File.Exists(pendingClip) ? "" : " (file missing)");
+        }
+        async Task ChooseClip(bool video)
+        {
+            var sp = (Avalonia.Application.Current?.ApplicationLifetime as Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime)
+                ?.MainWindow?.StorageProvider;
+            if (sp is null) return;
+            var files = await sp.OpenFilePickerAsync(new Avalonia.Platform.Storage.FilePickerOpenOptions
+            {
+                Title = video ? "Choose a video clip" : "Choose an audio clip", AllowMultiple = false,
+                FileTypeFilter = new[]
+                {
+                    new Avalonia.Platform.Storage.FilePickerFileType(video ? "Video" : "Audio")
+                    {
+                        Patterns = video ? new[] { "*.mp4", "*.mov", "*.m4v", "*.webm" }
+                                         : new[] { "*.mp3", "*.m4a", "*.wav", "*.aac", "*.ogg", "*.flac" },
+                    },
+                },
+            });
+            if (files.Count == 0) return;
+            try
+            {
+                await using var s = await files[0].OpenReadAsync();
+                using var ms = new System.IO.MemoryStream();
+                await s.CopyToAsync(ms);
+                var id = Tidbits.Core.Networking.LiveMediaStore.Store(ms.ToArray(), System.IO.Path.GetExtension(files[0].Name), files[0].Name);
+                pendingClip = Tidbits.Core.Networking.LiveMediaStore.FilePath(id);
+                clipDirty = true;
+                RefreshClip();
+            }
+            catch (Exception ex) { clipNote.Text = ex.Message; }
+        }
+        var chooseAudio = new Button { Content = "Choose audio…" };
+        var chooseVideo = new Button { Content = "Choose video…" };
+        AutomationProperties.SetName(chooseAudio, "Choose audio clip");
+        AutomationProperties.SetName(chooseVideo, "Choose video clip");
+        chooseAudio.Click += async (_, _) => await ChooseClip(video: false);
+        chooseVideo.Click += async (_, _) => await ChooseClip(video: true);
+        removeClip.Click += (_, _) => { pendingClip = null; clipDirty = true; RefreshClip(); };
+        var clipRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+        clipRow.Children.Add(chooseAudio);
+        clipRow.Children.Add(chooseVideo);
+        clipRow.Children.Add(removeClip);
+        clipRow.Children.Add(clipNote);
+        RefreshClip();
+
         var body = new StackPanel { Spacing = 10, MinWidth = 520 };
         body.Children.Add(Labelled("Question", promptBox));
         var meta = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12 };
@@ -122,6 +188,7 @@ public static class LiveQuestionEditorDialog
         body.Children.Add(meta);
         body.Children.Add(payload);
         body.Children.Add(Labelled("Picture", picture));
+        body.Children.Add(Labelled("Clip (plays on the big screen)", clipRow));
         body.Children.Add(Labelled("Reveal", explanationBox));
         body.Children.Add(problem);
 
@@ -157,6 +224,7 @@ public static class LiveQuestionEditorDialog
                 return;
             }
             result = draft;
+            if (clipDirty) clipChanged?.Invoke(pendingClip);
         };
 
         await dialog.ShowAsync();

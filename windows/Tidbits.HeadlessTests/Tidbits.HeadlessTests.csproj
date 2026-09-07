@@ -44,6 +44,8 @@
     <!-- The portable Live-event contract golden (docs/LIVE-EVENT-FILE.md §5.1) —
          linked, not copied, so Windows and Apple assert against the SAME bytes. -->
     <Content Include="..\..\tools\live-event\golden.tidbitsevent.json" Link="Fixtures\live-event-golden.json" CopyToOutputDirectory="PreserveNewest" />
+    <!-- The PACKAGE golden (docs/LIVE-PACKAGE-FORMAT.md §7.1). -->
+    <Content Include="..\..\tools\live-event\golden.tidbits" Link="Fixtures\live-package-golden.tidbits" CopyToOutputDirectory="PreserveNewest" />
     <!-- Full shared data under Data/ so GameData.Shared (app path) resolves in tests too. -->
     <Content Include="..\..\assets\*.json" Link="Data\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>

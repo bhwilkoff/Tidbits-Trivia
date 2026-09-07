@@ -57,6 +57,9 @@ enum LiveClip {
                                    relativeTo: nil, bookmarkDataIsStale: &stale) else {
             throw ClipError.bookmarkDidNotResolve(name: name)
         }
+        // A clip that lives in the app's own media store (an imported package,
+        // LIVE-PACKAGE-FORMAT §5.1) needs no scope grant; the sandbox owns it.
+        if LiveMediaStore.isStoreFile(round) { return data }
         guard round.startAccessingSecurityScopedResource() else {
             throw ClipError.accessDenied(name: name)
         }
@@ -73,6 +76,7 @@ enum LiveClip {
                                  relativeTo: nil, bookmarkDataIsStale: &stale) else {
             throw ClipError.bookmarkDidNotResolve(name: "this clip")
         }
+        if LiveMediaStore.isStoreFile(url) { return url }
         guard url.startAccessingSecurityScopedResource() else {
             throw ClipError.accessDenied(name: url.lastPathComponent)
         }
@@ -86,6 +90,7 @@ enum LiveClip {
         var stale = false
         guard let url = try? URL(resolvingBookmarkData: data, options: .withSecurityScope,
                                  relativeTo: nil, bookmarkDataIsStale: &stale) else { return false }
+        if LiveMediaStore.isStoreFile(url) { return FileManager.default.fileExists(atPath: url.path) }
         let ok = url.startAccessingSecurityScopedResource()
         if ok { url.stopAccessingSecurityScopedResource() }
         return ok

@@ -293,7 +293,7 @@ final class LiveHostSession {
                              phase: revealed ? LiveRoom.Phase.reveal : LiveRoom.Phase.question,
                              prompt: q.prompt, options: mcq ? q.options : nil, format: currentFormat,
                              answerIndex: (revealed && mcq) ? q.correctIndex : nil)
-        p.imageURL = q.imageURL?.absoluteString
+        p.imageURL = LiveMediaStore.publishableURL(q.imageURL)   // §5.3: a phone cannot open the host's package
         if let c = q.closest { p.numeric = LiveRoom.Numeric(min: c.min, max: c.max, step: c.step, unit: c.unit) }
         if q.ordering != nil { p.orderItems = shuffledOrder }
         if let m = q.matching { p.matchKeys = m.keys; p.matchValues = shuffledValues }

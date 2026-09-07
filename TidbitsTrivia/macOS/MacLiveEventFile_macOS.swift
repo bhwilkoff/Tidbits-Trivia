@@ -54,6 +54,11 @@ enum LiveEventFile {
         var isSpeed: Bool?
         var isBuzz: Bool?
         var questions: [Question]   // the shared Question shape, verbatim (§2.1)
+        /// LIVE-PACKAGE-FORMAT §3.2: one media id per question (null = none). Only a
+        /// PACKAGE writes these; the bare document leaves them absent, because a
+        /// bookmark cannot travel and an id without its file is a broken promise.
+        var audio: [String?]?
+        var video: [String?]?
     }
 
     enum FileError: LocalizedError {
@@ -91,8 +96,21 @@ enum LiveEventFile {
     }
 
     static func encode(_ event: LiveEvent) throws -> Data {
-        let doc = Document(
-            droppedClipCount: droppedClipCount(in: event),
+        try encode(document(for: event, droppedClipCount: droppedClipCount(in: event)))
+    }
+
+    static func encode(_ doc: Document) throws -> Data {
+        let enc = JSONEncoder()
+        enc.outputFormatting = [.prettyPrinted, .sortedKeys]
+        enc.dateEncodingStrategy = .iso8601
+        return try enc.encode(doc)
+    }
+
+    /// The document for an event. Split from `encode` so the package writer can
+    /// add its media ids to the same document before it is serialized.
+    static func document(for event: LiveEvent, droppedClipCount: Int) -> Document {
+        Document(
+            droppedClipCount: droppedClipCount,
             event: PortableEvent(
                 id: event.id.uuidString,
                 name: event.name,
@@ -109,21 +127,26 @@ enum LiveEventFile {
                                   isWager: r.isWager, isSpeed: r.isSpeed, isBuzz: r.isBuzz,
                                   questions: r.questions)
                 }))
-        let enc = JSONEncoder()
-        enc.outputFormatting = [.prettyPrinted, .sortedKeys]
-        enc.dateEncodingStrategy = .iso8601
-        return try enc.encode(doc)
     }
 
     // MARK: Import
 
     static func decode(_ data: Data) throws -> LiveEvent {
+        event(from: try decodeDocument(data))
+    }
+
+    static func decodeDocument(_ data: Data) throws -> Document {
         let dec = JSONDecoder()
         dec.dateDecodingStrategy = .iso8601
         guard let doc = try? dec.decode(Document.self, from: data),
               doc.format == formatIdentifier else { throw FileError.notATidbitsEvent }
         guard doc.version <= formatVersion else { throw FileError.unsupportedVersion(doc.version) }
+        return doc
+    }
 
+    /// The event for a document. Media ids on the rounds are NOT resolved here —
+    /// that is the package importer's job, because only it has the files.
+    static func event(from doc: Document) -> LiveEvent {
         let e = doc.event
         var event = LiveEvent(name: e.name, venue: e.venue)
         // §2.3: a NEW id, so importing a co-host's copy ADDS a night instead of

@@ -62,6 +62,10 @@ public static class LiveEventFile
         [JsonPropertyName("isWager")] public bool? IsWager { get; init; }
         [JsonPropertyName("isSpeed")] public bool? IsSpeed { get; init; }
         [JsonPropertyName("questions")] public IReadOnlyList<Question> Questions { get; init; } = [];
+        /// LIVE-PACKAGE-FORMAT §3.2: one media id per question (null = none). Only a
+        /// PACKAGE writes these; the bare document leaves them absent.
+        [JsonPropertyName("audio")] public IReadOnlyList<string?>? Audio { get; init; }
+        [JsonPropertyName("video")] public IReadOnlyList<string?>? Video { get; init; }
     }
 
     public sealed class FileFormatException(string message) : Exception(message);
@@ -75,7 +79,13 @@ public static class LiveEventFile
 
     // ---------------------------------------------------------------- export
 
-    public static string Encode(LiveEvent ev, string venue = "")
+    public static string Encode(LiveEvent ev, string venue = "") => Serialize(BuildDocument(ev, venue));
+
+    public static string Serialize(Document doc) => JsonSerializer.Serialize(doc, Options);
+
+    /// The document for an event. Split from `Encode` so the package writer can
+    /// add its media ids to the same document before it is serialized.
+    public static Document BuildDocument(LiveEvent ev, string venue = "")
     {
         var rounds = new List<PortableRound>();
         for (int i = 0; i < ev.Rounds.Count; i++)
@@ -116,7 +126,7 @@ public static class LiveEventFile
                 Rounds = rounds,
             },
         };
-        return JsonSerializer.Serialize(doc, Options);
+        return doc;
     }
 
     private static string MajorityCategory(IReadOnlyList<Question> qs) =>
@@ -124,7 +134,9 @@ public static class LiveEventFile
 
     // ---------------------------------------------------------------- import
 
-    public static LiveEvent Decode(string json)
+    public static LiveEvent Decode(string json) => ToEvent(Parse(json));
+
+    public static Document Parse(string json)
     {
         Document? doc;
         try { doc = JsonSerializer.Deserialize<Document>(json); }
@@ -135,7 +147,13 @@ public static class LiveEventFile
         if (doc.Version > FormatVersion)
             throw new FileFormatException(
                 $"That event was saved by a newer version of Tidbits (format {doc.Version}). Update Tidbits to open it.");
+        return doc;
+    }
 
+    /// The event for a document. Media ids on the rounds are NOT resolved here —
+    /// that is the package importer's job, because only it has the files.
+    public static LiveEvent ToEvent(Document doc)
+    {
         var ev = doc.Event;
         var rounds = new List<NightRound>();
         var questions = new List<IReadOnlyList<Question>>();

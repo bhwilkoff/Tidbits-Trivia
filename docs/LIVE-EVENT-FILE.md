@@ -85,8 +85,11 @@ number nobody can bump: additive fields ship without a version change.
 
 ## §3 — What cannot travel
 
-3.1 **Security-scoped bookmarks are stripped on export** and counted into
-`droppedClipCount`. A macOS bookmark is meaningless on another machine, and a
+3.1 **Security-scoped bookmarks are stripped on export** of the BARE document
+and counted into `droppedClipCount`. (The `.tidbits` PACKAGE —
+`docs/LIVE-PACKAGE-FORMAT.md`, 2026-09-07 — carries the clips themselves, as
+index-parallel `audio`/`video` media-id arrays on the round; the bare document
+still cannot.) A macOS bookmark is meaningless on another machine, and a
 Windows path is meaningless on a Mac. Writing one anyway would make a round look
 complete and play silent — strictly worse than an empty clip slot the host can
 see and re-fill.

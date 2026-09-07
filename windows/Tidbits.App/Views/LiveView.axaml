@@ -53,8 +53,9 @@
                     <Button Content="Save event" Click="OnSaveEvent" Padding="16,10" Margin="0,0,8,8"/>
                     <Button Content="Print answer sheet" Click="OnPrintAnswerSheet" Padding="16,10" Margin="0,0,8,8"/>
                     <Button x:Name="PrintPackButton" Content="Print question pack" Click="OnPrintQuestionPack" Padding="16,10" Margin="0,0,8,8"/>
-                    <Button Content="Export event…" Click="OnExportEvent" Padding="16,10" Margin="0,0,8,8"/>
-                    <Button Content="Import event…" Click="OnImportEvent" Padding="16,10" Margin="0,0,8,8"/>
+                    <Button Content="Export package (with media)…" Click="OnExportPackage" Padding="16,10" Margin="0,0,8,8"/>
+                    <Button Content="Export event as JSON…" Click="OnExportEvent" Padding="16,10" Margin="0,0,8,8"/>
+                    <Button Content="Import event or package…" Click="OnImportEvent" Padding="16,10" Margin="0,0,8,8"/>
                     <Button Content="Export questions as CSV…" Click="OnExportQuestionsCsv" Padding="16,10" Margin="0,0,8,8"/>
                 </WrapPanel>
 

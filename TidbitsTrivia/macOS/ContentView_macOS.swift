@@ -137,7 +137,11 @@ struct ContentView_macOS: View {
                     ? URL(fileURLWithPath: (p as NSString).expandingTildeInPath)
                     : FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
                         .appendingPathComponent(p)
-                liveHost = try? LiveEventFile.read(from: url)
+                if LivePackage.isPackage(url), let data = try? Data(contentsOf: url) {
+                    liveHost = try? LivePackage.importIntoStore(data).event   // a .tidbits package, media and all
+                } else {
+                    liveHost = try? LiveEventFile.read(from: url)
+                }
             }
             // Resolve against the MAC's sections, not AppStore.Tab. That enum is the
             // iOS tab set (play/records/create), so every Mac-only section had to be

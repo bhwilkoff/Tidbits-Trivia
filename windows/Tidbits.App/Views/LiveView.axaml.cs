@@ -783,7 +783,41 @@ public partial class LiveView : UserControl
         }
     }
 
-    /// Import an event document back — from this machine, a co-host, or the Mac app.
+    /// Write the night as ONE file with its media inside (docs/LIVE-PACKAGE-FORMAT.md,
+    /// Decision 059). The JSON export above is kept for hosts who want text.
+    private async void OnExportPackage(object? sender, RoutedEventArgs e)
+    {
+        if (_rounds.Count == 0) { ShowStatus("Add at least one round first."); return; }
+        var top = TopLevel.GetTopLevel(this);
+        if (top?.StorageProvider is not { } sp) { ShowStatus("This window cannot open a file picker."); return; }
+        var ev = CurrentEvent();
+        try
+        {
+            var file = await sp.SaveFilePickerAsync(new Avalonia.Platform.Storage.FilePickerSaveOptions
+            {
+                Title = "Export package",
+                SuggestedFileName = Tidbits.Core.Networking.LivePackage.SuggestedFileName(ev),
+                DefaultExtension = Tidbits.Core.Networking.LivePackage.FileExtension,
+            });
+            if (file is null) return;
+            var version = typeof(LiveView).Assembly.GetName().Version?.ToString(3) ?? "";
+            System.Collections.Generic.IReadOnlyList<string> dropped;
+            await using (var stream = await file.OpenWriteAsync())
+            {
+                dropped = Tidbits.Core.Networking.LivePackage.Write(stream, ev, $"Tidbits Trivia (Windows) {version}");
+            }
+            ShowStatus(dropped.Count == 0
+                ? $"Exported package \u201C{ev.Name}\u201D \u2014 {ev.TotalQuestions} questions, media inside."
+                : $"Exported package without {dropped.Count} clip(s) that could not be read: {string.Join(", ", dropped.Take(3))}");
+        }
+        catch (Exception ex)
+        {
+            ShowStatus($"Could not export the package: {ex.Message}");
+        }
+    }
+
+    /// Import an event back — a `.tidbits` package (media and all) or the bare JSON
+    /// document — from this machine, a co-host, or the Mac app.
     private async void OnImportEvent(object? sender, RoutedEventArgs e)
     {
         var top = TopLevel.GetTopLevel(this);
@@ -792,18 +826,41 @@ public partial class LiveView : UserControl
         {
             var files = await sp.OpenFilePickerAsync(new Avalonia.Platform.Storage.FilePickerOpenOptions
             {
-                Title = "Import event", AllowMultiple = false,
+                Title = "Import event or package", AllowMultiple = false,
+                FileTypeFilter = new[]
+                {
+                    new Avalonia.Platform.Storage.FilePickerFileType("Tidbits event or package") { Patterns = new[] { "*.tidbits", "*.json" } },
+                },
             });
             if (files.Count == 0) return;
             await using var stream = await files[0].OpenReadAsync();
-            using var reader = new System.IO.StreamReader(stream);
-            var ev = LiveEventFile.Decode(await reader.ReadToEndAsync());
+            // Sniff, do not trust the extension: a package renamed .zip still opens.
+            using var ms = new System.IO.MemoryStream();
+            await stream.CopyToAsync(ms);
+            ms.Position = 0;
+            LiveEvent ev;
+            System.Collections.Generic.IReadOnlyList<string> problems = System.Array.Empty<string>();
+            if (ms.Length >= 2 && ms.GetBuffer()[0] == (byte)'P' && ms.GetBuffer()[1] == (byte)'K')
+            {
+                (ev, problems) = Tidbits.Core.Networking.LivePackage.ImportIntoStore(ms);
+            }
+            else
+            {
+                using var reader = new System.IO.StreamReader(ms);
+                ev = LiveEventFile.Decode(await reader.ReadToEndAsync());
+            }
             LoadEvent(ev);
             GameData.Shared.Value.LiveEvents.Save(ev);
             BuildSavedEvents();
-            ShowStatus($"Imported \u201C{ev.Name}\u201D \u2014 {ev.TotalQuestions} questions across {ev.Rounds.Count} rounds.");
+            ShowStatus(problems.Count == 0
+                ? $"Imported \u201C{ev.Name}\u201D \u2014 {ev.TotalQuestions} questions across {ev.Rounds.Count} rounds."
+                : $"Imported \u201C{ev.Name}\u201D with {problems.Count} problem(s): {string.Join("; ", problems.Take(3))}");
         }
         catch (LiveEventFile.FileFormatException ex)
+        {
+            ShowStatus(ex.Message);
+        }
+        catch (Tidbits.Core.Networking.LivePackage.PackageException ex)
         {
             ShowStatus(ex.Message);
         }

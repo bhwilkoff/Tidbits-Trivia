@@ -37,10 +37,14 @@ public sealed class ImageCache
         try
         {
             Stream stream;
-            if (url.StartsWith("http", StringComparison.OrdinalIgnoreCase))
-                stream = new MemoryStream(await _http.GetByteArrayAsync(url));
+            // A `tidbits-media:` reference is a file in the store (LIVE-PACKAGE-FORMAT
+            // §5.2); a missing one returns null and the caller shows its fallback.
+            var local = Tidbits.Core.Networking.LiveMediaStore.Resolve(url);
+            if (local is null) return null;
+            if (local.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                stream = new MemoryStream(await _http.GetByteArrayAsync(local));
             else
-                stream = File.OpenRead(url);
+                stream = File.OpenRead(local);
             using (stream)
             {
                 var bmp = new Bitmap(stream);

@@ -50,6 +50,64 @@ public static class LiveQuestionEditorDialog
 
         var payload = BuildPayload(question, format, out var readBack);
 
+        // LIVE-PACKAGE-FORMAT §8.1: the picture travels INSIDE the night. A chosen
+        // file is copied into the media store and referenced by content hash; a URL
+        // still works for a host who has one, and the row says which it is.
+        var imageBox = new TextBox { Text = question.ImageUrl ?? "", PlaceholderText = "…or a picture URL" };
+        AutomationProperties.SetName(imageBox, "Picture URL");
+        var preview = new Image { Height = 120, HorizontalAlignment = HorizontalAlignment.Left, Stretch = Avalonia.Media.Stretch.Uniform };
+        var pictureNote = new TextBlock { Classes = { "caption" }, Opacity = 0.72, VerticalAlignment = VerticalAlignment.Center };
+        var chooseButton = new Button { Content = "Choose picture…" };
+        var removeButton = new Button { Content = "Remove picture" };
+        AutomationProperties.SetName(chooseButton, "Choose picture");
+        async void RefreshPicture()
+        {
+            var url = imageBox.Text?.Trim() ?? "";
+            removeButton.IsVisible = url.Length > 0;
+            if (url.Length == 0) { preview.Source = null; preview.IsVisible = false; pictureNote.Text = "No picture"; return; }
+            if (Tidbits.Core.Networking.LiveMediaStore.IdFrom(url) is { } id)
+            {
+                var info = Tidbits.Core.Networking.LiveMediaStore.LoadIndex().GetValueOrDefault(id);
+                pictureNote.Text = "In this night: " + (info?.OriginalName ?? id[..8] + "…");
+            }
+            else pictureNote.Text = "By URL — travels only while that link lives";
+            var bmp = await Services.ImageCache.Shared.LoadAsync(url);
+            preview.Source = bmp; preview.IsVisible = bmp is not null;
+            if (bmp is null) pictureNote.Text += " (picture unavailable)";
+        }
+        chooseButton.Click += async (_, _) =>
+        {
+            var sp = (Avalonia.Application.Current?.ApplicationLifetime as Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime)
+                ?.MainWindow?.StorageProvider;
+            if (sp is null) return;
+            var files = await sp.OpenFilePickerAsync(new Avalonia.Platform.Storage.FilePickerOpenOptions
+            {
+                Title = "Choose a picture", AllowMultiple = false,
+                FileTypeFilter = new[] { new Avalonia.Platform.Storage.FilePickerFileType("Pictures") { Patterns = new[] { "*.png", "*.jpg", "*.jpeg", "*.gif", "*.webp", "*.svg" } } },
+            });
+            if (files.Count == 0) return;
+            try
+            {
+                await using var s = await files[0].OpenReadAsync();
+                using var ms = new System.IO.MemoryStream();
+                await s.CopyToAsync(ms);
+                var id = Tidbits.Core.Networking.LiveMediaStore.Store(ms.ToArray(), System.IO.Path.GetExtension(files[0].Name), files[0].Name);
+                imageBox.Text = Tidbits.Core.Networking.LiveMediaStore.Reference(id);
+            }
+            catch (Exception ex) { pictureNote.Text = ex.Message; }
+        };
+        removeButton.Click += (_, _) => imageBox.Text = "";
+        imageBox.TextChanged += (_, _) => RefreshPicture();
+        var pictureRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+        pictureRow.Children.Add(chooseButton);
+        pictureRow.Children.Add(removeButton);
+        pictureRow.Children.Add(pictureNote);
+        var picture = new StackPanel { Spacing = 6 };
+        picture.Children.Add(preview);
+        picture.Children.Add(pictureRow);
+        picture.Children.Add(imageBox);
+        RefreshPicture();
+
         var problem = new FAInfoBar
         {
             Severity = FAInfoBarSeverity.Warning, IsClosable = false, IsOpen = false,
@@ -63,6 +121,7 @@ public static class LiveQuestionEditorDialog
         meta.Children.Add(Labelled("Difficulty", difficultyBox));
         body.Children.Add(meta);
         body.Children.Add(payload);
+        body.Children.Add(Labelled("Picture", picture));
         body.Children.Add(Labelled("Reveal", explanationBox));
         body.Children.Add(problem);
 
@@ -84,6 +143,7 @@ public static class LiveQuestionEditorDialog
                 CategoryId = (categoryBox.SelectedItem as TriviaCategory)?.Id ?? "mixed",
                 Difficulty = difficultyBox.SelectedIndex + 1,
                 Explanation = explanationBox.Text?.Trim() ?? "",
+                ImageUrl = string.IsNullOrWhiteSpace(imageBox.Text) ? null : imageBox.Text.Trim(),
             };
             draft = readBack(draft);
             var issues = Problems(draft, format);

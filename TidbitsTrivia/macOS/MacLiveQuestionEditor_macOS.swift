@@ -195,11 +195,30 @@ struct LiveQuestionEditor_macOS: View {
 
                 payloadSection
 
+                Section("Picture") {
+                    // The picture travels INSIDE the night (LIVE-PACKAGE-FORMAT §8.1): a
+                    // chosen file is copied into the media store and referenced by
+                    // content hash, so the package the host exports carries it.
+                    if let url = URL(string: draft.imageURLText), !draft.imageURLText.isEmpty {
+                        LiveQuestionImage(url: url, cornerRadius: 10)
+                            .frame(height: 140)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    HStack {
+                        Button("Choose picture…") { choosePicture() }
+                        if !draft.imageURLText.isEmpty {
+                            Button("Remove picture", role: .destructive) { draft.imageURLText = "" }
+                        }
+                        Spacer()
+                        Text(pictureDescription).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                    }
+                    TextField("…or a picture URL", text: $draft.imageURLText)
+                }
+
                 Section("Reveal") {
                     TextField("Explanation read out after the answer (optional)",
                               text: $draft.explanation, axis: .vertical)
                         .lineLimit(2...6)
-                    TextField("Picture URL (optional)", text: $draft.imageURLText)
                     if !draft.sourceTitle.isEmpty {
                         LabeledContent("Source", value: draft.sourceTitle)
                     }
@@ -226,6 +245,42 @@ struct LiveQuestionEditor_macOS: View {
         }
         .frame(width: 620, height: 560)
         .onAppear { promptFocused = draft.prompt.isEmpty }
+    }
+
+    private var pictureDescription: String {
+        guard let url = URL(string: draft.imageURLText), !draft.imageURLText.isEmpty else { return "No picture" }
+        if let id = LiveMediaStore.id(from: url) {
+            let info = LiveMediaStore.info(id)
+            return "In this night: \(info?.originalName ?? id.prefix(8) + "…")"
+        }
+        return "By URL — travels only while that link lives"
+    }
+
+    private func choosePicture() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.png, .jpeg, .gif, .webP, .svg]
+        panel.allowsMultipleSelection = false
+        // TIDBITS_LIVE_FILE hands the panel its answer for the harness (same seam
+        // as the builder's import/export); a person never sees it.
+        let picked: URL?
+        if let p = ProcessInfo.processInfo.environment["TIDBITS_LIVE_PICTURE"], !p.isEmpty {
+            picked = p.contains("/") ? URL(fileURLWithPath: (p as NSString).expandingTildeInPath)
+                : FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!.appendingPathComponent(p)
+        } else {
+            picked = panel.runModal() == .OK ? panel.url : nil
+        }
+        guard let url = picked else { return }
+        do {
+            let data = try Data(contentsOf: url)
+            let id = try LiveMediaStore.store(data, ext: url.pathExtension, originalName: url.lastPathComponent)
+            draft.imageURLText = LiveMediaStore.reference(id).absoluteString
+        } catch {
+            let alert = NSAlert()
+            alert.messageText = "Could not use that picture"
+            alert.informativeText = error.localizedDescription
+            alert.alertStyle = .warning
+            alert.runModal()
+        }
     }
 
     /// The format-specific answer payload. One question shape per format — the

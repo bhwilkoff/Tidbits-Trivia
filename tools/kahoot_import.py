@@ -362,6 +362,9 @@ def main():
     ap.add_argument("--venue", help="venue line for the big screen")
     ap.add_argument("--token", help="Kahoot bearer token for a quiz that is not shared publicly")
     ap.add_argument("--no-download", action="store_true", help="verify the image URLs but do not save copies")
+    ap.add_argument("--package", action="store_true",
+                    help="also write <stem>.tidbits: ONE file with every picture inside it (docs/LIVE-PACKAGE-FORMAT.md)")
+    ap.add_argument("--bank", action="store_true", help="with --package: write a question BANK, not a night")
     args = ap.parse_args()
 
     warnings = []
@@ -390,6 +393,25 @@ def main():
     raw.write_text(json.dumps(kahoot, indent=2, ensure_ascii=False) + "\n")
     if manifest:
         (images_dir / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+    package_path = None
+    if args.package:
+        # The distributable form: the same document with the downloaded pictures
+        # INSIDE it, referenced by content hash; the Kahoot URL rides along as
+        # sourceURL so phones (which cannot open the host's package) still get it.
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import live_package as lp
+        by_source = {m["source"]: m for m in manifest}
+        media, pdoc = [], json.loads(json.dumps(doc))
+        for r in pdoc["event"]["rounds"]:
+            for q in r["questions"]:
+                m = by_source.get(q.get("imageURL"))
+                if m and not args.no_download:
+                    med = lp.media_from_file(images_dir / m["file"], source_url=m["source"])
+                    media.append(med)
+                    q["imageURL"] = med.ref
+        package_path = out.with_name(stem + ".tidbits")
+        lp.write(package_path, pdoc, media, kind="bank" if args.bank else "event",
+                 created_by="tools/kahoot_import.py")
 
     total = sum(len(r["questions"]) for r in event["rounds"])
     pictured = sum(1 for r in event["rounds"] for q in r["questions"] if q.get("imageURL"))
@@ -401,6 +423,8 @@ def main():
     if manifest:
         print(f"  images: {images_dir}/ ({len(manifest)} files, incl. cover)")
     print(f"  raw Kahoot JSON: {raw}")
+    if package_path:
+        print(f"  package: {package_path} ({package_path.stat().st_size / 1e6:.1f} MB, pictures inside)")
     if warnings:
         print(f"  {len(warnings)} note(s):")
         for w in warnings:

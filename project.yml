@@ -253,6 +253,7 @@ targets:
       # The clip references an audio/video round stores. The swallow that made
       # those rounds silent lived here, so it gets the same coverage.
       - path: TidbitsTrivia/macOS/MacLiveClips_macOS.swift
+      - path: TidbitsTrivia/macOS/MacLiveMediaStore_macOS.swift   # the clip helper now resolves store files
       # The printable Wi-Fi-dies fallback: it must actually paginate.
       - path: TidbitsTrivia/macOS/MacLivePrint_macOS.swift
       # CSV import: pure reader + parser, extracted from the builder view.
@@ -291,6 +292,10 @@ targets:
       # bundle is macOS-only, so the `#if os(macOS)` guards compile through.
       - path: TidbitsTrivia/macOS/MacLiveModel_macOS.swift
       - path: TidbitsTrivia/macOS/MacLiveEventFile_macOS.swift
+      # The PACKAGE (docs/LIVE-PACKAGE-FORMAT.md) — same reasoning: a cross-platform
+      # container contract with a golden both stacks open.
+      - path: TidbitsTrivia/macOS/MacLivePackage_macOS.swift
+      - path: TidbitsTrivia/macOS/MacLiveMediaStore_macOS.swift
       # The clip references an audio/video round stores. The swallow that made
       # those rounds silent lived here, so it gets the same coverage.
       - path: TidbitsTrivia/macOS/MacLiveClips_macOS.swift

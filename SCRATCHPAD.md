@@ -7,6 +7,54 @@
 > `docs/ROADMAP.md`, `docs/DATA-CONTRACT.md`. Detailed per-round history is in
 > `ARCHIVE.md`.
 
+## Current state (2026-09-07) — the `.tidbits` package: a night with its media in one file
+
+**Asked:** "a more sustainable file format for Tidbits Live events … that
+actually has media files contained within it and can be used across different
+devices easily … a way to develop and distribute games/quizzes across multiple
+different pubs and events around the world … fully interoperable across
+platform (Mac and PC) … continue building out the question editor within both
+the Mac and Windows builds (including media files) … research other question
+formats from other trivia apps."
+
+**Researched** (`docs/QUIZ-FORMATS-RESEARCH.md`): every spreadsheet format in
+the field (Kahoot, Quizizz, Blooket, Gimkit, Quizlet) is text-only; every
+format that moves media is a zip with a manifest (QTI, Anki `.apkg`, H5P);
+the dominant pub platform (SpeedQuizzing) stores a quizpack as a folder of the
+media files themselves; Crowdpurr's CSV is the richest spreadsheet (type,
+points, time, media URL, note) and its URL-only media is the weakness a
+package fixes.
+
+**Built** (`docs/LIVE-PACKAGE-FORMAT.md`, Decision 059): `.tidbits` = ZIP with
+a `mimetype` signature, `manifest.json` (media by SHA-256, kind, mime,
+originalName, sourceURL, credit, license), the unchanged `event.json`, and
+`media/<id>.<ext>`. Pictures reference `tidbits-media:<id>`; rounds carry
+index-parallel `audio`/`video` id arrays — clips finally travel. Mac:
+hand-rolled `ZipContainer` in Core (store + inflate via Compression),
+`LivePackage` + `LiveMediaStore` (Application Support/LiveMedia); builder
+menu Export package (with media)… / Export event as JSON… / Import event or
+package…; projector + cockpit resolve store refs; joiners get the https twin
+or nothing (§5.3); clip bookmarks to store files need no scope grant.
+Windows: `LivePackage` (System.IO.Compression) + `LiveMediaStore`
+(LocalAppData); same buttons; `ImageCache` resolves store refs. Reference
+writer `tools/live_package.py` (pack/unpack/inspect), golden
+`tools/live-event/golden.tidbits` (reproducible; opened by 5 Swift + 4 xUnit
+tests on both stacks), `tools/kahoot_import.py --package`. **Editors:** both
+now have a Picture section — Choose picture… (into the store), preview,
+Remove, or a URL — the Windows dialog had no picture field at all. Hooks:
+`TIDBITS_LIVE_HOST_FILE` accepts a `.tidbits`; `TIDBITS_LIVE_FILEOP=
+exportpackage|importpackage`; `TIDBITS_LIVE_PICTURE` hands the editor's panel
+its file. Verified: the Minerva `.tidbits` (13 pictures inside) hosted from the
+Mac via the hook, projector shows the package picture from the store; iOS /
+tvOS / macOS / Windows build green. 1.7.3 (126).
+
+**State left / sequenced (LIVE-PACKAGE-FORMAT §8):** per-question audio/video
+attach in the editors and drag-and-drop; file association (Mac UTType +
+MSIX); phones see package media via Firebase Storage at host time; the
+question library (`kind: bank`); Crowdpurr / Kahoot-xlsx / Blooket / GIFT /
+SpeedQuizzing-folder / OpenTDB importers-exporters. The Minerva package is at
+`~/Documents/Tidbits Live/Minerva Admissions Onboarding 26-27.tidbits`.
+
 ## Current state (2026-09-06) — Kahoot import + projector pictures + per-element big-screen switches
 
 **Asked:** "build a parser/extractor for Kahoot quizzes to import into Tidbits

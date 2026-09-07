@@ -1,0 +1,145 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Security.Cryptography;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
+namespace Tidbits.Core.Networking;
+
+/// Where a night's pictures and clips live once a package is imported —
+/// content-addressed files under LocalAppData, plus one index that remembers
+/// each file's kind, original name and https twin (LIVE-PACKAGE-FORMAT §5.1).
+/// The Windows twin of the Mac `LiveMediaStore`; the event references media as
+/// `tidbits-media:<id>` and this resolves it.
+public static class LiveMediaStore
+{
+    public const string Scheme = "tidbits-media";
+
+    public sealed record Info
+    {
+        [JsonPropertyName("ext")] public string Ext { get; init; } = "";
+        [JsonPropertyName("mime")] public string Mime { get; init; } = "";
+        [JsonPropertyName("kind")] public string Kind { get; init; } = "";
+        [JsonPropertyName("bytes")] public int Bytes { get; init; }
+        [JsonPropertyName("originalName")] public string? OriginalName { get; init; }
+        [JsonPropertyName("sourceURL")] public string? SourceUrl { get; init; }
+        [JsonPropertyName("credit")] public string? Credit { get; init; }
+        [JsonPropertyName("license")] public string? License { get; init; }
+    }
+
+    /// §2.5 — the allow-list. A package is not a general-purpose archive.
+    public static readonly IReadOnlyDictionary<string, (string Mime, string Kind)> Allowed =
+        new Dictionary<string, (string, string)>
+        {
+            ["png"] = ("image/png", "image"), ["jpg"] = ("image/jpeg", "image"), ["jpeg"] = ("image/jpeg", "image"),
+            ["gif"] = ("image/gif", "image"), ["webp"] = ("image/webp", "image"), ["svg"] = ("image/svg+xml", "image"),
+            ["mp3"] = ("audio/mpeg", "audio"), ["m4a"] = ("audio/mp4", "audio"), ["wav"] = ("audio/wav", "audio"),
+            ["aac"] = ("audio/aac", "audio"), ["ogg"] = ("audio/ogg", "audio"), ["flac"] = ("audio/flac", "audio"),
+            ["mp4"] = ("video/mp4", "video"), ["mov"] = ("video/quicktime", "video"), ["m4v"] = ("video/x-m4v", "video"),
+            ["webm"] = ("video/webm", "video"),
+        };
+
+    /// Overridable so tests (and the headless harness) keep their media out of the
+    /// user's real store.
+    public static string Directory { get; set; } =
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Tidbits", "LiveMedia");
+
+    private static string IndexPath => Path.Combine(Directory, "index.json");
+    private static readonly object Gate = new();
+
+    public static string Sha256Hex(byte[] data)
+    {
+        var h = SHA256.HashData(data);
+        return Convert.ToHexString(h).ToLowerInvariant();
+    }
+    public static string IdFor(byte[] data) => Sha256Hex(data)[..32];
+
+    public static string NormalizedExt(string ext)
+    {
+        var e = ext.Trim().TrimStart('.').ToLowerInvariant();
+        return e == "jpeg" ? "jpg" : e;
+    }
+
+    public static Dictionary<string, Info> LoadIndex()
+    {
+        try
+        {
+            if (!File.Exists(IndexPath)) return new();
+            return JsonSerializer.Deserialize<Dictionary<string, Info>>(File.ReadAllText(IndexPath)) ?? new();
+        }
+        catch { return new(); }
+    }
+
+    private static void SaveIndex(Dictionary<string, Info> idx)
+    {
+        System.IO.Directory.CreateDirectory(Directory);
+        File.WriteAllText(IndexPath, JsonSerializer.Serialize(idx, new JsonSerializerOptions { WriteIndented = true }));
+    }
+
+    /// Put bytes in the store; returns the id. Idempotent for identical bytes.
+    public static string Store(byte[] data, string ext, string? originalName = null, string? sourceUrl = null,
+                               string? credit = null, string? license = null)
+    {
+        var e = NormalizedExt(ext);
+        if (!Allowed.TryGetValue(e, out var kind))
+            throw new InvalidDataException($"{originalName ?? e} is not a picture, audio or video type Tidbits can carry.");
+        var id = IdFor(data);
+        lock (Gate)
+        {
+            System.IO.Directory.CreateDirectory(Directory);
+            var path = Path.Combine(Directory, $"{id}.{e}");
+            if (!File.Exists(path)) File.WriteAllBytes(path, data);
+            var idx = LoadIndex();
+            var prev = idx.TryGetValue(id, out var p) ? p : new Info { Ext = e, Mime = kind.Mime, Kind = kind.Kind, Bytes = data.Length };
+            idx[id] = prev with
+            {
+                OriginalName = originalName ?? prev.OriginalName,
+                SourceUrl = sourceUrl ?? prev.SourceUrl,
+                Credit = credit ?? prev.Credit,
+                License = license ?? prev.License,
+            };
+            SaveIndex(idx);
+        }
+        return id;
+    }
+
+    public static string Reference(string id) => $"{Scheme}:{id}";
+
+    public static string? IdFrom(string? url)
+    {
+        if (string.IsNullOrEmpty(url) || !url.StartsWith(Scheme + ":", StringComparison.Ordinal)) return null;
+        var id = url[(Scheme.Length + 1)..].Trim('/');
+        return id.Length == 0 ? null : id;
+    }
+
+    /// The file behind an id, if the store has it.
+    public static string? FilePath(string id)
+    {
+        var idx = LoadIndex();
+        if (idx.TryGetValue(id, out var info))
+        {
+            var p = Path.Combine(Directory, $"{id}.{info.Ext}");
+            if (File.Exists(p)) return p;
+        }
+        if (!System.IO.Directory.Exists(Directory)) return null;
+        foreach (var f in System.IO.Directory.EnumerateFiles(Directory, id + ".*")) return f;
+        return null;
+    }
+
+    /// `tidbits-media:<id>` → the local file path; any other URL → itself.
+    public static string? Resolve(string? url)
+    {
+        var id = IdFrom(url);
+        return id is null ? url : FilePath(id);
+    }
+
+    /// What a JOINER may be given (§5.3): the https twin, or nothing.
+    public static string? PublishableUrl(string? url)
+    {
+        var id = IdFrom(url);
+        if (id is null) return url;
+        var idx = LoadIndex();
+        return idx.TryGetValue(id, out var info) && info.SourceUrl is { } s && s.StartsWith("http") ? s : null;
+    }
+}

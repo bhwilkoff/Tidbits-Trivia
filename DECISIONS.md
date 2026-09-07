@@ -2093,3 +2093,36 @@ https shape on a real device (`devicectl … --payload-url`, `am start -a VIEW
 -d https://…`), never by reading the association file. R-JOIN-1: the Join card
 is the second thing on Home on every platform (tvOS: a visible chip in the
 night hero) — the link is a shortcut to it, not a replacement for it.
+
+## 059 — A night travels as a zip with a manifest and its media inside; the document alone is not a distribution format
+*Date: 2026-09-07*
+
+The distributable form of a Tidbits Live night is the **`.tidbits` package**
+(`docs/LIVE-PACKAGE-FORMAT.md`): a ZIP with a `mimetype` signature, a
+`manifest.json` that lists every media file by SHA-256, the unchanged
+`event.json` document, and the media under `media/`. Questions reference
+media as `tidbits-media:<id>`; clips ride as index-parallel `audio`/`video`
+arrays on the round. Both hosts (Mac, Windows) read and write it; every
+importer from another tool writes it.
+
+**Why:** the JSON document was the right contract for the QUESTIONS and the
+wrong one for a NIGHT. Its pictures were URLs (a Kahoot CDN link, an Unsplash
+link) that die with the host they point at, and its clips were stripped on
+export because a security-scoped bookmark means nothing on another machine —
+so a night with an audio round could not be given to a co-host at all. The
+owner's brief: "a file format that actually has media files contained within
+it and can be used across different devices easily … a way to develop and
+distribute games/quizzes across multiple different pubs and events around the
+world." Every format in the field that moves media independently converged on
+zip-plus-manifest (QTI, Anki, H5P), and the dominant pub platform stores a
+quizpack as a folder of the media files themselves. Content addressing by
+hash is what makes the package de-duplicate, verify, and merge into a local
+store without name collisions.
+
+**How to apply:** the inner `event.json` stays the LIVE-EVENT-FILE contract
+verbatim — the package is a container around it, not a new document. Media
+is copied INTO the app's store on import and referenced by id; the shared
+`Question` shape does not grow media fields (joiners never see package media
+directly — they are given the https twin, or nothing). A new media kind is an
+allow-list row in §2.5 on both stacks plus the golden. Verify a package by
+opening the golden on both platforms, not by reading the manifest.

@@ -103,6 +103,8 @@ struct LiveBuilderView_macOS: View {
             switch op {
             case "exportevent": exportEvent()
             case "importevent": importEvent()
+            case "exportpackage": exportPackage()
+            case "importpackage": importEvent()   // the one importer opens both shapes
             case "exportcsv":   exportQuestionsCSV()
             case "importcsv":   importCSV()
             case "printpack":
@@ -123,6 +125,25 @@ struct LiveBuilderView_macOS: View {
             try? await Task.sleep(for: .seconds(2))
             addVideoRound()
             if let last = working.rounds.last { expandedRounds = [last.id] }
+        }
+        // TIDBITS_LIVE_EDITQ=1 — open the FIRST question's editor after the demo
+        // event loads, so the editor (and its Picture section, LIVE-PACKAGE-FORMAT
+        // §8.1) can be photographed. A per-question sheet is otherwise unreachable
+        // from a cold launch (hooks-are-coverage). No-op in production.
+        .task {
+            guard ProcessInfo.processInfo.environment["TIDBITS_LIVE_EDITQ"] == "1" else { return }
+            try? await Task.sleep(for: .seconds(3))
+            guard let round = working.rounds.first, let q = round.questions.first else { return }
+            // A bare filename resolves inside the sandbox's Documents, like TIDBITS_LIVE_FILE.
+            if let p = ProcessInfo.processInfo.environment["TIDBITS_LIVE_PICTURE"], !p.isEmpty,
+               let data = try? Data(contentsOf: p.contains("/") ? URL(fileURLWithPath: p)
+                                    : FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!.appendingPathComponent(p)),
+               let id = try? LiveMediaStore.store(data, ext: (p as NSString).pathExtension, originalName: (p as NSString).lastPathComponent) {
+                var pictured = q; pictured.imageURL = LiveMediaStore.reference(id)
+                working.rounds[0].questions[0] = pictured
+            }
+            editing = EditingQuestion(roundIndex: 0, questionIndex: 0, format: round.format,
+                                      draft: QuestionDraft(working.rounds[0].questions[0]))
         }
         .sheet(item: $editing) { ctx in
             LiveQuestionEditor_macOS(draft: ctx.draft, format: ctx.format,
@@ -301,8 +322,12 @@ struct LiveBuilderView_macOS: View {
         } label: { Label("Add round…", systemImage: "plus") }
             .fixedSize()
         Menu {
-            Button("Export event…") { exportEvent() }
-            Button("Import event…") { importEvent() }
+            // The PACKAGE is the distributable form (LIVE-PACKAGE-FORMAT, Decision
+            // 059): pictures and clips inside. The bare document is kept for
+            // hosts who want text they can diff or edit by hand.
+            Button("Export package (with media)…") { exportPackage() }
+            Button("Export event as JSON…") { exportEvent() }
+            Button("Import event or package…") { importEvent() }
             Divider()
             Button("Export questions as CSV…") { exportQuestionsCSV() }
                 .disabled(working.totalQuestions == 0)
@@ -708,17 +733,51 @@ struct LiveBuilderView_macOS: View {
         catch { presentError("Could not export the event", error) }
     }
 
-    /// Read an event document back. The imported event gets a NEW id so importing
-    /// a co-host's copy adds a night rather than silently overwriting one of yours.
-    private func importEvent() {
-        guard let url = chooseOpenURL(types: [.json]) else { return }
+    /// Write the night as ONE file with its media inside (LIVE-PACKAGE-FORMAT).
+    private func exportPackage() {
+        let type = UTType(filenameExtension: LivePackage.fileExtension, conformingTo: .zip) ?? .zip
+        guard let url = chooseSaveURL(named: LivePackage.suggestedFilename(for: working), types: [type]) else { return }
         do {
-            let ev = try LiveEventFile.read(from: url)
-            fileReceipt = "Imported \(ev.rounds.count) rounds, \(ev.totalQuestions) questions"
+            let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
+            let dropped = try LivePackage.write(working, to: url, createdBy: "Tidbits Trivia (macOS) \(version)")
+            fileReceipt = "Exported package: \(working.rounds.count) rounds, \(working.totalQuestions) questions"
+            if !dropped.isEmpty {
+                let alert = NSAlert()
+                alert.messageText = "Exported without \(dropped.count) clip\(dropped.count == 1 ? "" : "s")"
+                alert.informativeText = "These could not be read from disk, so they are not in the package:\n" + dropped.prefix(6).joined(separator: "\n")
+                alert.alertStyle = .informational
+                alert.runModal()
+            }
+        } catch { presentError("Could not export the package", error) }
+    }
+
+    /// Read an event back — a `.tidbits` package (media and all) or the bare JSON
+    /// document. The imported event gets a NEW id so importing a co-host's copy
+    /// adds a night rather than silently overwriting one of yours.
+    private func importEvent() {
+        let pkg = UTType(filenameExtension: LivePackage.fileExtension, conformingTo: .zip) ?? .zip
+        guard let url = chooseOpenURL(types: [pkg, .json, .zip]) else { return }
+        do {
+            let ev: LiveEvent
+            var problems: [String] = []
+            if LivePackage.isPackage(url) || (try? LivePackage.read(try Data(contentsOf: url))) != nil {
+                (ev, problems) = try LivePackage.importIntoStore(try Data(contentsOf: url))
+                fileReceipt = "Imported package: \(ev.rounds.count) rounds, \(ev.totalQuestions) questions"
+            } else {
+                ev = try LiveEventFile.read(from: url)
+                fileReceipt = "Imported \(ev.rounds.count) rounds, \(ev.totalQuestions) questions"
+            }
             working = ev
             store.upsert(ev)
             selectedID = ev.id
             expandedRounds = []
+            if !problems.isEmpty {
+                let alert = NSAlert()
+                alert.messageText = "Imported with \(problems.count) problem\(problems.count == 1 ? "" : "s")"
+                alert.informativeText = problems.prefix(6).joined(separator: "\n")
+                alert.alertStyle = .warning
+                alert.runModal()
+            }
         } catch {
             presentError("Could not import that file", error)
         }

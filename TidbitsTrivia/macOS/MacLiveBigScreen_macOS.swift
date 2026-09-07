@@ -712,7 +712,13 @@ final class LiveImageLoader {
 
     func load(_ url: URL) async -> State {
         if let img = cache[url] { return .loaded(img) }
+        // A `tidbits-media:` reference is a file in the store (LIVE-PACKAGE-FORMAT
+        // §5.2); anything else is fetched. A missing store file is a visible failure.
         let task = inflight[url] ?? Task { [session] in
+            if LiveMediaStore.id(from: url) != nil {
+                guard let file = LiveMediaStore.resolve(url), let data = try? Data(contentsOf: file) else { return nil }
+                return NSImage(data: data)
+            }
             guard let (data, resp) = try? await session.data(from: url) else { return nil }
             if let http = resp as? HTTPURLResponse, !(200..<300).contains(http.statusCode) { return nil }
             return NSImage(data: data)

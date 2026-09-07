@@ -86,6 +86,10 @@ struct ContentView_iOS: View {
             case .surprise:
                 store.selectedTab = .play
                 store.pendingLaunch = store.surpriseMe()
+            case .live(let code):
+                // The projector's QR. Home opens the join screen with the code in it.
+                store.selectedTab = .play
+                store.pendingLiveJoinCode = code
             }
         }
     }

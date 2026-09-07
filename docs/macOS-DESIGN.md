@@ -425,7 +425,10 @@ A0.4.1 **JOINING is always Trivia Night, never Tidbits Live.** A player with a
 code is joining a night; that they might be joining a night a Live host opened
 is an implementation detail they never see. The join affordance belongs on
 **Play**, beside the other ways to play — putting it on the Tidbits Live page
-told every Mac user those are the same feature.
+told every Mac user those are the same feature. **And it is the SECOND thing on
+Play (R-JOIN-1, iOS-DESIGN §5.1b): a full-width teal "JOIN A GAME" card under
+Surprise/Customize**, not a borderless text row under the Trivia Night card. A
+`…/live/{code}` link opens the join screen with the code filled in.
 
 A0.4.2 **Tidbits Live never appears on a phone, tablet or TV** — not as a locked
 row, not as an upsell. It is desktop-only because the cockpit needs a second

@@ -198,9 +198,13 @@ fun AppRoot(
                 // build either ships or doesn't, and the screen says which.
                 val itemId = deepLink.removePrefix("item/").takeIf { deepLink.startsWith("item/") && it.isNotBlank() }
                 val id = deepLink.removePrefix("quiz/").takeIf { deepLink.startsWith("quiz/") && it.isNotBlank() }
+                // The projector's QR: "live/<code>". Open the join screen with the code
+                // already in the box — the player scanned, they don't type.
+                val liveCode = deepLink.removePrefix("live/").takeIf { deepLink.startsWith("live/") && it.isNotBlank() }
                 backStack.clear()
                 backStack.add(Route.Home)
                 if (itemId != null) backStack.add(Route.SharedItem(itemId))
+                if (liveCode != null) { store.rememberNight(liveCode, store.lastNightName()); backStack.add(Route.NightJoin) }
                 if (id != null) {
                     backStack.add(Route.Create)
                     runCatching {
@@ -453,6 +457,21 @@ private fun HomeScreen(
                 Icon(Icons.Filled.Tune, null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
                 Text("Customize", fontWeight = FontWeight.Bold)
+            }
+        }
+
+        // JOIN A GAME — the second thing on Home (R-JOIN-1, ANDROID-DESIGN §3.1). It was a
+        // row inside the Trivia Night sheet: one tap away and behind a word that does
+        // not say "join". A player with a code on the wall finds this at a glance.
+        ChunkyCard(fill = Pops.teal, onClick = onJoinNight) {
+            Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Filled.Tag, null, tint = Color.White, modifier = Modifier.size(28.dp))
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text("JOIN A GAME", fontWeight = FontWeight.Black, fontSize = 20.sp, color = Color.White)
+                    Text("Enter the host's 4-letter code, or scan the QR on the big screen.", color = Color.White.copy(alpha = 0.85f), fontSize = 13.sp)
+                }
+                Icon(Icons.Filled.KeyboardArrowRight, null, tint = Color.White)
             }
         }
 

@@ -58,9 +58,12 @@ native platform — every `tidbits://…` has an `https://…` twin
 ## §3 Surfaces (the only allowed shapes)
 
 - **§3.1 Home** = one Quick Play hero (`.banner.hero`) → Surprise /
-  Customize pair → Daily card → Trivia Night card → "More ways to play"
-  tiles → native-app promo foot (R-HOME-1, `styles.css:329`). One
-  primary action; pickers live in the Customize modal.
+  Customize pair → **Join a game card** (`.banner.join-banner-cta`,
+  R-JOIN-1 — the second thing on Home, opens `#/live`; a `/live/{code}`
+  link lands in the player with the code) → Daily card → Trivia Night
+  card → "More ways to play" tiles → native-app promo foot (R-HOME-1,
+  `styles.css:329`). One primary action; pickers live in the Customize
+  modal.
 - **§3.2 Records** = the dashboard (§5). **A summary, never a full
   ledger.**
 - **§3.3 Create** = topic field → generated quiz.

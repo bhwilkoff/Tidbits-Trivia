@@ -121,6 +121,26 @@ def load_source(src, token):
         sys.exit(f"Kahoot returned HTTP {e.code} for {uuid}")
 
 
+def block_image(block):
+    """The picture Kahoot shows with a block. An UPLOADED picture is `image`; a
+    Giphy or Unsplash pick from Kahoot's media browser is an entry in `media`
+    with no `image` at all -- three of thirteen questions in the first imported
+    quiz were "missing" their pictures for exactly this reason. The animated
+    Giphy `url` is preferred over its `stillUrl`, because that is what the room
+    saw in Kahoot."""
+    if block.get("image"):
+        return block["image"]
+    for m in block.get("media") or []:
+        if not isinstance(m, dict):
+            continue
+        if m.get("isBackground"):
+            continue
+        ctype = str(m.get("contentType") or "")
+        if m.get("url") and (ctype.startswith("image") or m.get("type", "").endswith(("gif", "image"))):
+            return m["url"]
+    return ""
+
+
 def question_from(block, index, quiz_uuid, share_url, warnings):
     """Map one gradable Kahoot block to the shared Question shape (LIVE-EVENT-FILE §2.1)."""
     kind = block.get("type", "quiz")
@@ -223,7 +243,7 @@ def build_event(kahoot, quiz_uuid, share_url, args, warnings):
         if q is None:
             continue
         timer = int(round((b.get("time") or 20000) / 1000))
-        rows.append(("q", q, fmt, timer, b.get("image") or "", n))
+        rows.append(("q", q, fmt, timer, block_image(b), n))
 
     # Pass 2: rounds. A LiveRound holds ONE format, so a format change always
     # starts a round; a timer change does only under --rounds by-timer, because

@@ -159,14 +159,31 @@ layout-blowup; `ios-production-gotchas`).
 
 5.1 **Home is ONE primary action.** The fixed order is: header →
 **Quick Play hero** (the single primary CTA) → the two quiet secondary
-actions (Surprise / Customize) → Daily card → Trivia Night card → "More
-ways to play" tiles (`HomeView.swift:34-46`). Inserting a section means
+actions (Surprise / Customize) → **Join a game card (R-JOIN-1)** → Daily
+card → Trivia Night card → "More ways to play" tiles (`HomeView.swift`). Inserting a section means
 amending this rule, not appending. Mode and category pickers live behind
 the Customize sheet, never on Home.
 
 5.2 **The hero is exactly one `Button`** (R-HOME-1a) — no embedded
 second tap target. Surprise + Customize are two equal-weight secondary
 buttons beneath it.
+
+### Join is the second thing on Home (rule R-JOIN-1, 2026-09-06)
+
+5.1b **"JOIN A GAME" is a full-width teal card directly under the
+Surprise/Customize pair, on every platform.** A player in a room with a
+code on the wall must find it at a glance, without scrolling and without
+opening anything. It is never a text link at the foot of Home, never a row
+inside a Trivia Night sheet, and never behind a word that does not say
+"join". The card says both ways in — type the code, or scan the QR on the
+big screen — and opens the unified join screen. (Owner, 2026-09-06: *"It
+needs to be incredibly easy to find the Join button and not have it hidden
+away either at the bottom of the screen or within another button that
+doesn't intuitively mean join."*) The Trivia Night sheet may keep its
+join row as a second door; the card is the first.
+
+5.1c **A `…/live/{code}` link opens the join screen with the code filled
+in** (DEEP_LINKS.md). The player scanned; they do not type.
 
 ### Tidbits Club has exactly one door (rule R-CLUB-1, 2026-07-29)
 

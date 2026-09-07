@@ -62,14 +62,9 @@ struct TidbitsTriviaApp: App {
                 // .onOpenURL fires for BOTH custom schemes and Universal
                 // Links on iOS 17+. Route into the inbox, never directly.
                 .onOpenURL { url in
-                    switch url.host {
-                    case "daily": store.post(.daily)
-                    case "topic": store.post(.topic(url.lastPathComponent))
-                    case "category": store.post(.category(url.lastPathComponent))
-                    case "quiz": store.post(.quiz(url.lastPathComponent))
-                    case "item": store.post(.item(url.lastPathComponent))
-                    default: break
-                    }
+                    // ONE parser for custom-scheme AND https shapes (DeepLink.parse) —
+                    // switching on `url.host` here dropped every Universal Link.
+                    if let link = DeepLink.parse(url) { store.post(link) }
                 }
         }
         .modelContainer(modelContainer)

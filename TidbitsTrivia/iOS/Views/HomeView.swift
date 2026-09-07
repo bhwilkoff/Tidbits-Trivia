@@ -51,6 +51,10 @@ struct HomeView: View {
                               isFirstRun: !store.hasQuickPlayHistory,
                               onPlay: { start(store.quickPlay) })
                 quickActionsRow
+                // R-JOIN-1 (iOS-DESIGN §5.1b): JOIN is the second thing on Home. A player
+                // in a room with a code on the wall must find it at a glance — it used to
+                // be a text link at the very bottom, and a row inside the Trivia Night sheet.
+                JoinGameCard { liveJoinCode = ""; showLiveJoin = true }
                 DailyCard(playedScore: DailyLog.todayScore) {
                     if DailyLog.playedToday { showDailyArchive = true }
                     else { start(LaunchRequest(mode: .daily, category: .named("mixed")), remember: false) }
@@ -60,16 +64,6 @@ struct HomeView: View {
                 // R-CLUB-1 (iOS-DESIGN §5.2a): ONE Club door for the whole app. Members go
                 // to the hub; everyone else to the paywall. No other surface may offer Club.
                 ClubDoorCard(isClub: entitlement.isClub) { openClub() }
-                Button { showLiveJoin = true } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "qrcode.viewfinder").font(.system(size: 15, weight: .bold))
-                        Text("Have a code? Join a game")
-                        Image(systemName: "arrow.right").font(.system(size: 13, weight: .bold))
-                    }
-                    .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.blue)
-                    .frame(maxWidth: .infinity).padding(.vertical, 6)
-                }
-                .buttonStyle(.plain)
             }
             .padding(.horizontal, Tidbits.Metric.pad)
             .readableColumn()          // §2.2a
@@ -186,6 +180,11 @@ struct HomeView: View {
         // Keyed on the id STRING: LaunchRequest can't be Equatable (TriviaCategory's
         // conformance is MainActor-isolated and this type is nonisolated), and the id is
         // already the stable identity SwiftUI uses for it elsewhere.
+        // A scanned QR / tapped `…/live/CODE` link: open the join screen with the code
+        // filled in. Checked on appear too, because a cold launch can drain the inbox
+        // before this view's onChange is installed.
+        .onChange(of: store.pendingLiveJoinCode) { _, _ in consumePendingJoin() }
+        .onAppear { consumePendingJoin() }
         .onChange(of: store.pendingLaunch?.id) { _, _ in
             if let req = store.pendingLaunch { store.pendingLaunch = nil; start(req, remember: false) }
         }
@@ -301,6 +300,13 @@ struct HomeView: View {
 
     /// R-HOME-1a: the hero is ONE action — Surprise + Customize live here,
     /// two quiet equal-weight secondary buttons directly beneath it.
+    private func consumePendingJoin() {
+        guard let code = store.pendingLiveJoinCode, !code.isEmpty else { return }
+        store.pendingLiveJoinCode = nil
+        liveJoinCode = code
+        showLiveJoin = true
+    }
+
     private var quickActionsRow: some View {
         HStack(spacing: 14) {
             QuickActionButton(symbol: "die.face.5.fill", title: "Surprise me") { start(store.surpriseMe()) }
@@ -790,6 +796,38 @@ private struct TriviaNightCard: View {
         }
         .buttonStyle(.plain)
         .padding(.trailing, Tidbits.Metric.shadowOffset)
+    }
+}
+
+// MARK: - Join a game (R-JOIN-1 — the second thing on Home)
+
+/// The one door for a player with a code. Teal, so it is neither the coral hero
+/// nor a Trivia Night card, and it says the two ways in: type the code, or scan.
+private struct JoinGameCard: View {
+    let action: () -> Void
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 14) {
+                Image(systemName: "qrcode.viewfinder")
+                    .font(.system(size: 30, weight: .black))
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("JOIN A GAME")
+                        .font(Tidbits.TypeRamp.l2)
+                    Text("Enter the host's 4-letter code, or scan the QR on the big screen.")
+                        .font(Tidbits.TypeRamp.l5).opacity(0.85)
+                        .multilineTextAlignment(.leading)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right.circle.fill")
+                    .font(.system(size: 26, weight: .bold))
+            }
+            .foregroundStyle(Tidbits.Palette.teal.legibleForeground)
+            .padding(18)
+            .chunkyCard(fill: Tidbits.Palette.teal)
+        }
+        .buttonStyle(.plain)
+        .padding(.trailing, Tidbits.Metric.shadowOffset)
+        .accessibilityLabel("Join a game")
     }
 }
 

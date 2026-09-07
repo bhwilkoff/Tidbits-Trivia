@@ -2064,3 +2064,32 @@ lossy mapping. Verify the artefact the file references (a picture URL must
 answer `image/*` before it is written), not the tool's opinion of it. If the
 imported night shows something the host surfaces have never displayed, add the
 display hook (`TIDBITS_LIVE_HOST_FILE`) and photograph it — hooks are coverage.
+
+## 058 — A URL router resolves the ROUTE, never the host; and a link is never the only door
+*Date: 2026-09-06*
+
+Parse every incoming URL into a route with ONE function that understands both
+shapes the app registers — custom scheme (`tidbits://item/x`, route in the
+host) and Universal/App Link (`https://tidbitstrivia.com/item/x`, route in the
+path) — and pin both shapes per route with tests. And keep a visible, labelled
+"Join" control on every platform's Home, because the link WILL fail for some
+player in every room.
+
+**Why:** the projector's scan-to-join QR had been broken in the installed apps
+since it shipped, and nothing had noticed. The AASA listed `/live/*`, the
+entitlement was right, Apple's CDN served it — every association check
+passed — but the iOS router switched on `url.host`, which is the ROUTE for a
+custom-scheme link and the DOMAIN for a Universal Link. Every https link,
+including `/item/` and `/quiz/` shares, launched the app and did nothing.
+Android had the mirror bug: a fixed set of five bare tokens with no `live`.
+Both routers were "verified" by the custom-scheme path they were written
+against. A player with a QR that does nothing and a Join button at the foot of
+Home, or inside a sheet called "Trivia Night", has no way in.
+
+**How to apply:** `DeepLink.parse` (Apple) and `routeFor` (Android) own URL →
+route; a new route is a case in the parser and a row in DEEP_LINKS.md with BOTH
+shapes in the golden test. Verify a deep link by launching the app with the
+https shape on a real device (`devicectl … --payload-url`, `am start -a VIEW
+-d https://…`), never by reading the association file. R-JOIN-1: the Join card
+is the second thing on Home on every platform (tvOS: a visible chip in the
+night hero) — the link is a shortcut to it, not a replacement for it.

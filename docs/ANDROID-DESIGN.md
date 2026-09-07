@@ -66,10 +66,12 @@ load-bearing files are `ui/AppRoot.kt` (shell + nearly every screen) and
 ## §3 Surfaces
 
 - **§3.1 Home** = "TIDBITS" wordmark + settings icon → Quick Play hero
-  (coral, one action, R-HOME-1) → Surprise/Customize pair → Daily card
-  (yellow, play-once → archive) → Trivia Night card → "More ways to play"
-  tiles (Pass & Play, Online Multiplayer) (`AppRoot.kt:186`). Pickers
-  live in the `CustomizeSheet` `ModalBottomSheet`, never on Home.
+  (coral, one action, R-HOME-1) → Surprise/Customize pair → **Join a game
+  card** (teal, R-JOIN-1 — the second thing on Home; opens `NightJoin`,
+  and a `/live/{code}` App Link opens it with the code remembered) →
+  Daily card (yellow, play-once → archive) → Trivia Night card → "More
+  ways to play" tiles (Pass & Play, Online Multiplayer) (`AppRoot.kt`).
+  Pickers live in the `CustomizeSheet` `ModalBottomSheet`, never on Home.
 - **§3.2 Records** = the dashboard (§5). **A summary, never a full
   ledger.**
 - **§3.3 Create** = topic field → generated quiz (`:1186`).

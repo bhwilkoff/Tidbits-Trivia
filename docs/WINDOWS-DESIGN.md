@@ -246,7 +246,9 @@ combined on one Live page (presets and the custom-event builder sit together, so
 
 Trivia Night is for everyone and hosts from ANY device; Tidbits Live is the
 desktop-only emcee rig. Joining a night is always Trivia Night: the join
-affordance belongs with Play, not on the Live page. Each entry point says which
+affordance belongs with Play, not on the Live page — and it is the SECOND thing
+on Play (R-JOIN-1, iOS-DESIGN §5.1b): a full-width "JOIN A GAME" button under
+Surprise/Customize, never a row under the night presets. Each entry point says which
 it is in the user's terms — "Host a trivia night from any device" vs "Run pub
 trivia from this PC".
 

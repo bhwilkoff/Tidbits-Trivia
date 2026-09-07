@@ -51,7 +51,9 @@ the siblings (`shared-data-plane-contract`, `per-ecosystem-sync-islands`).
 (`ContentView_tvOS.swift:42`). Fixed row order: header (wordmark +
 Records/Settings chips) → Quick Play hero → Surprise/Customize chips →
 Daily hero → Trivia Night hero → multiplayer panel (`:46-53`). Inserting
-a row means amending this rule.
+a row means amending this rule. (R-JOIN-1 on tvOS: the "Join a game" chip
+sits IN the Trivia Night hero, visible without a tap — a TV rarely joins,
+so the second-thing-on-Home card is deliberately not mirrored here.)
 
 2.2 **Records and Settings are covers reached from the header chips,**
 not tabs. Customize, the Daily archive, game launch, the three night

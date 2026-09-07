@@ -85,6 +85,8 @@ struct ContentView_tvOS: View {
                 sharedItemID = TVSharedItemID(id: id)
             case .surprise:
                 launch = store.surpriseMe()
+            case .live:
+                showJoinNight = true   // custom scheme only on tvOS; the cover asks for the code
             }
         }
     }

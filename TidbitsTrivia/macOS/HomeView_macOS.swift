@@ -46,9 +46,9 @@ struct HomeView_macOS: View {
                 header
                 quickPlayHero
                 quickActionsRow
+                joinGameCard      // R-JOIN-1: the second thing on Play (macOS-DESIGN A0.4.1)
                 dailyCard
                 triviaNightCard
-                joinNightRow
                 passAndPlayCard
                 onlineCard
                 // R-CLUB-1: ONE Club door for the whole app (was four locked cards here
@@ -240,18 +240,27 @@ struct HomeView_macOS: View {
         .buttonStyle(.plain)
     }
 
-    /// Joining is a TRIVIA NIGHT action (macOS-DESIGN §A0.4.1). It used to sit on
-    /// the Tidbits Live page, which told every Mac user the two features were one
-    /// — a player with a code is joining a night, and whether a Live host opened
-    /// that night is an implementation detail they never see.
-    private var joinNightRow: some View {
+    /// Joining is a TRIVIA NIGHT action (macOS-DESIGN §A0.4.1), and it is the SECOND
+    /// thing on Play (R-JOIN-1). It was a borderless text row under the Trivia Night
+    /// card — the one control a player with a code needs, and the hardest to see.
+    private var joinGameCard: some View {
         Button { onJoinNight() } label: {
-            Label("Join a night with a code", systemImage: "person.badge.plus")
-                .font(.callout)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            HStack(spacing: 14) {
+                Image(systemName: "qrcode.viewfinder").font(.system(size: 26, weight: .black))
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("JOIN A GAME").font(Tidbits.TypeRamp.l2)
+                    Text("Enter the host's 4-letter code, or scan the QR on the big screen.")
+                        .font(Tidbits.TypeRamp.l5).opacity(0.85)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right.circle.fill").font(.system(size: 22, weight: .bold))
+            }
+            .foregroundStyle(Tidbits.Palette.teal.legibleForeground)
+            .padding(18).frame(maxWidth: .infinity, alignment: .leading)
+            .chunkyCard(fill: Tidbits.Palette.teal)
         }
-        .buttonStyle(.borderless)
-        .help("Someone else is hosting — join their Trivia Night from here")
+        .buttonStyle(.plain)
+        .help("Someone else is hosting — join their game with the code on the screen")
     }
 
     private var onlineCard: some View {

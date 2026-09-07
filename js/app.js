@@ -370,6 +370,8 @@ function viewHome() {
       <button class="btn btn-quiet" data-surprise>${ICON.die}<span>Surprise me</span></button>
       <button class="btn btn-quiet" data-customize>${ICON.sliders}<span>Customize</span></button>
     </div>
+    <button class="banner card join-banner-cta" data-join-game><div><div class="banner-title">${ICON.globe} JOIN A GAME</div>
+      <div class="muted">Enter the host's 4-letter code, or scan the QR on the big screen.</div></div><span class="chev">›</span></button>
     ${dailyBanner()}
     <button class="banner card night-banner-cta" data-night-open><div><div class="banner-title">TRIVIA NIGHT</div>
       <div class="muted">Host or join a night of mixed rounds.</div></div><span class="chev">›</span></button>
@@ -1153,6 +1155,9 @@ function bindHome() {
   let nightPreset = 1;
   const dlg = $('#night-dlg');
   $('[data-night-open]').addEventListener('click', () => dlg.showModal());
+  // R-JOIN-1 (WEB-DESIGN §3.1): JOIN is the second thing on Home, not a row inside
+  // the Trivia Night dialog. Same destination as that row: the #/live player.
+  $('[data-join-game]').addEventListener('click', () => { location.hash = '#/live'; });
   $('[data-live-join]').addEventListener('click', () => { dlg.close(); location.hash = '#/live'; });
   dlg.querySelectorAll('[data-preset]').forEach((b) => b.addEventListener('click', () => {
     nightPreset = +b.dataset.preset;

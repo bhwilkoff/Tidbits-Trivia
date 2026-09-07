@@ -29,6 +29,7 @@ prefix lists, and a flat structure makes the lists short.
 | Public profile | `https://tidbitstrivia.com/u/{username}` | Web renders; iOS + Android open the in-app view |
 | Single item detail | `https://tidbitstrivia.com/item/{id}` | **SHIPPED 2026-08-03.** Web renders the landing twin (`#/item/{id}`, reached from a clean path by the existing `404.html` forwarder); iOS + macOS open a sheet, Android a screen. Emitted by the per-question "how did YOU know that?" share on web, iOS, Android and Windows |
 | Settings deep entry | `https://tidbitstrivia.com/settings/{section}` | All; web routes via `?view=settings&section=...` |
+| **Join a live room** | `https://tidbitstrivia.com/live/{code}` (twin: `tidbits://live/{code}`) | **The projector's scan-to-join QR.** Web: `404.html` → `#/live/{code}` → the player. iOS/macOS: `DeepLink.live` → the join screen with the code filled in. Android: route `live/<code>` → `NightJoin` with the code remembered. **Fixed 2026-09-06:** the AASA had listed `/live/*` since the QR shipped, but the iOS router switched on `url.host` (so EVERY https link fell through) and Android's token set had no `live` — the app opened on Home and did nothing. Pinned by `DeepLinkParseTests` |
 | OAuth callback | `tidbits://oauth/callback?...` | Custom scheme only — never HTTPS (provider redirects break otherwise) |
 
 **Add a row to this table BEFORE adding a deep link in code.** New

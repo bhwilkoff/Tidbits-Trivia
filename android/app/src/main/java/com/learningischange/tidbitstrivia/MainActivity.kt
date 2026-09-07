@@ -138,6 +138,10 @@ class MainActivity : ComponentActivity() {
         // is a real PATH here, not a fragment, so the existing host-wide App Link filter
         // already matches it — no new intent-filter, and nothing emitted goes undeclared.
         itemIdFrom(uri)?.let { return "item/$it" }
+        // The projector's scan-to-join QR: https://tidbitstrivia.com/live/<code> (and
+        // tidbits://live/<code>). The token set below only knew five bare words, so
+        // "live" fell through and the link launched the app onto Home with nothing.
+        liveCodeFrom(uri)?.let { return "live/$it" }
 
         val token = when (uri.scheme) {
             "tidbits", "tidbitstrivia" -> uri.host
@@ -145,6 +149,20 @@ class MainActivity : ComponentActivity() {
             else -> null
         }?.lowercase()
         return token?.takeIf { it in setOf("daily", "night", "party", "create", "settings") }
+    }
+
+    private fun liveCodeFrom(uri: android.net.Uri): String? {
+        val code = when {
+            (uri.scheme == "tidbits" || uri.scheme == "tidbitstrivia") && uri.host == "live" ->
+                uri.pathSegments.firstOrNull()
+            uri.scheme == "https" && uri.pathSegments.size >= 2 && uri.pathSegments[0] == "live" ->
+                uri.pathSegments[1]
+            // The web app is hash-routed, so a pasted link may carry #/live/<code>.
+            uri.scheme == "https" && uri.fragment?.startsWith("/live/") == true ->
+                uri.fragment?.removePrefix("/live/")?.substringBefore('/')
+            else -> null
+        }
+        return code?.trim()?.uppercase()?.takeIf { it.isNotBlank() }
     }
 
     private fun itemIdFrom(uri: android.net.Uri): String? {

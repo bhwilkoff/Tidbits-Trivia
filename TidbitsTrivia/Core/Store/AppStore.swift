@@ -25,6 +25,11 @@ final class AppStore {
     /// a game itself, and a request that stayed set would replay on every return to Play.
     var pendingLaunch: LaunchRequest?
 
+    /// A room code a link asked us to join (`…/live/<code>`, the projector's QR).
+    /// Set by the deep-link inbox, CONSUMED by the Home surface, which opens the
+    /// join screen with the code filled in — the player scanned, they don't type.
+    var pendingLiveJoinCode: String?
+
 
     var selectedTab: Tab = .play
     var playPath = NavigationPath()
@@ -139,6 +144,44 @@ enum DeepLink: Equatable, Sendable {
     /// "Surprise me" — a random mode in a random category. Reached from Siri /
     /// Shortcuts (`SurpriseMeIntent`), not from a URL.
     case surprise
+    /// Join a live room by code: `tidbits://live/<code>` and the canonical
+    /// `https://tidbitstrivia.com/live/<code>` — the URL the projector's
+    /// scan-to-join QR encodes (DEEP_LINKS.md).
+    case live(String)
+
+    /// One parser for BOTH URL shapes an entry point can hand the app.
+    ///
+    /// A custom-scheme link carries its route in the HOST (`tidbits://item/x`); a
+    /// Universal Link carries it in the PATH (`https://tidbitstrivia.com/item/x`)
+    /// and its host is the domain. The router used to switch on `url.host` alone,
+    /// which routed the first shape and silently dropped the second — every
+    /// Universal Link, including the projector's QR, launched the app and did
+    /// nothing. The web app is hash-routed, so a pasted `…/#/live/CODE` is read too.
+    static func parse(_ url: URL) -> DeepLink? {
+        let parts: [String]
+        if let scheme = url.scheme?.lowercased(), scheme == "http" || scheme == "https" {
+            var p = url.pathComponents.filter { $0 != "/" }
+            if p.isEmpty, let frag = url.fragment {
+                p = frag.split(separator: "/").map(String.init).filter { !$0.isEmpty }
+            }
+            parts = p
+        } else {
+            parts = [url.host ?? ""] + url.pathComponents.filter { $0 != "/" }
+        }
+        guard let route = parts.first?.lowercased(), !route.isEmpty else { return nil }
+        let arg = parts.dropFirst().first ?? ""
+        switch route {
+        case "daily": return .daily
+        case "topic": return arg.isEmpty ? nil : .topic(arg)
+        case "category": return arg.isEmpty ? nil : .category(arg)
+        case "quiz": return arg.isEmpty ? nil : .quiz(arg)
+        case "item": return arg.isEmpty ? nil : .item(arg)
+        case "live":
+            let code = arg.trimmingCharacters(in: .whitespaces).uppercased()
+            return code.isEmpty ? nil : .live(code)
+        default: return nil
+        }
+    }
 }
 
 /// A request to launch a game with a given mode + category. Shared by the

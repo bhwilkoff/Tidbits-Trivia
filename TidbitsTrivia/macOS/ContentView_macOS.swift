@@ -258,6 +258,9 @@ struct ContentView_macOS: View {
             case .surprise:
                 section = .play
                 launch = store.surpriseMe()
+            case .live(let code):
+                // A `…/live/CODE` link on the Mac opens the join screen with the code.
+                joinCode = code
             }
         }
     }

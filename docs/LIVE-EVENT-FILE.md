@@ -190,8 +190,11 @@ timer, so the round takes the LONGEST time in it (no question is cut short;
 the host reveals early) and the note says so. `--rounds by-timer` splits on
 timer changes instead, at the cost of a standings break at each boundary.
 
-7.4 **Pictures travel as `imageURL` and are verified.** Every question image
-(and the cover) is downloaded into `<stem>.images/` so the host owns a copy,
+7.4 **Pictures travel as `imageURL` and are verified.** A picture is Kahoot's
+`image` (an upload) OR the first image entry in the block's `media` list (a
+Giphy or Unsplash pick from Kahoot's media browser — three of the first
+quiz's thirteen questions had ONLY that, and looked pictureless). Every
+question image (and the cover) is downloaded into `<stem>.images/` so the host owns a copy,
 and `imageURL` points at Kahoot's public media CDN, which the Mac projector,
 the cockpit and every joiner load at show time. Each URL the file references
 is HEAD-checked for an `image/*` answer first; one that fails is left OFF the

@@ -42,6 +42,22 @@ repo — photos of colleagues on a public Pages site would be wrong:
 saved nights. The build that carries the pictures + switches is
 `build/dd-mac/…/TidbitsTrivia.app`; `/Applications/TidbitsTrivia.app` is 1.7.1.
 
+**Later the same day (owner's second pass):** three of the Minerva pictures
+were "missing" — Kahoot keeps Giphy/Unsplash picks in `media[]`, not `image`;
+the extractor now reads both and all 13 carry pictures (re-imported, old copy
+removed from the app's nights). **The projector QR did not open the installed
+app** — root cause was never the AASA (checked at Apple's CDN, fine): the iOS
+router switched on `url.host`, so EVERY Universal Link fell through, and
+Android's router had no `live` token. Fixed with one `DeepLink.parse` for both
+URL shapes (4 golden tests) + Android `liveCodeFrom`; both open the join screen
+with the code filled in (Decision 058). **R-JOIN-1:** a full-width teal JOIN A
+GAME card is now the second thing on Home on iOS / Android / web / macOS /
+Windows (owner: "incredibly easy to find the Join button … especially for when
+deep linking doesn't work"). Verified on the REAL iPhone 12 and Pixel 8a
+(`.debug` package — `adb install` of the debug APK lands in
+`com.tidbitstrivia.app.debug`, so launch THAT, not the release id), plus Mac
+and web captures; all six platforms build green.
+
 **State left:** Windows host big-screen picture band is ⏳ (WINDOWS-PARITY
 3.36). Pre-existing at 1280x720: the team strip can overlap the tally on
 reveal (the host can now switch it off).

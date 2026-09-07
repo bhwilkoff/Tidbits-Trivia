@@ -332,6 +332,8 @@ body {
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 
 /* ---------------- Trivia Night ---------------- */
+.banner.join-banner-cta { background: var(--color-teal); color: #fff; }
+.banner.join-banner-cta .muted { color: rgba(255,255,255,0.85); }
 .banner.night-banner-cta { background: var(--color-primary); color: #fff; }
 .banner.night-banner-cta .muted { color: rgba(255,255,255,0.85); }
 .night-banner { display: flex; align-items: center; justify-content: space-between;

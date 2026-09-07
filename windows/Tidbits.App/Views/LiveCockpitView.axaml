@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
              xmlns:vm="using:Tidbits.App.ViewModels"
              x:Class="Tidbits.App.Views.LiveCockpitView"
              x:DataType="vm:LiveHostViewModel">
@@ -71,7 +72,13 @@
                          working control or an explicit "unavailable" line — never a play
                          button that does nothing (WINDOWS-DESIGN §6.6). -->
                     <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding HasClip}">
-                        <Button Content="▶ Play clip" Click="OnPlayQuestionClip" Classes="accent" Padding="14,8"/>
+                        <Button Click="OnPlayQuestionClip" Classes="accent" Padding="14,8"
+                                AutomationProperties.Name="Play clip">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <ui:FASymbolIcon Symbol="Play" FontSize="16" VerticalAlignment="Center"/>
+                                <TextBlock Text="Play clip" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
                         <Button Content="Stop" Click="OnStopQuestionClip" Padding="12,8"/>
                         <TextBlock Text="{Binding ClipName}" Classes="caption" VerticalAlignment="Center"/>
                     </StackPanel>
@@ -161,7 +168,13 @@
                         ToolTip.Tip="Rule this team out and reopen the buzzer to the rest"/>
                 <Button Content="{Binding PenaltyLabel}" Click="OnCyclePenalty" Padding="14,10" Margin="0,0,10,6"
                         ToolTip.Tip="Deduct points for a wrong answer. Teams that do not answer are never penalised."/>
-                <Button Content="🔊 Audio" Click="OnAudio" Padding="14,10" Margin="0,0,10,6"/>
+                <Button Click="OnAudio" Padding="14,10" Margin="0,0,10,6"
+                        AutomationProperties.Name="Audio">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <ui:FASymbolIcon Symbol="Volume" FontSize="16" VerticalAlignment="Center"/>
+                        <TextBlock Text="Audio" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
             </WrapPanel>
             <WrapPanel>
                 <Button Content="Break tie" Click="OnBreakTie" Padding="16,10" IsVisible="{Binding HasTie}"

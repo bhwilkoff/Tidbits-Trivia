@@ -42,7 +42,7 @@
 
             <!-- Question (playing + reveal share the prompt + options; options colored on reveal) -->
             <ScrollViewer IsVisible="{Binding Engine.CurrentPhase, Converter={x:Static conv:Conv.IsQuestion}}">
-                <StackPanel Margin="36,12" Spacing="18" MaxWidth="760" HorizontalAlignment="Left">
+                <StackPanel Margin="36,12" Spacing="18" MaxWidth="760" HorizontalAlignment="Center">
                     <!-- Weak-Spot Arena: the plain "why you're seeing this" caption. -->
                     <TextBlock Text="{Binding Engine.CurrentReason}" Classes="caption" FontWeight="SemiBold"
                                IsVisible="{Binding Engine.CurrentReason, Converter={x:Static conv:Conv.NonEmpty}}"/>

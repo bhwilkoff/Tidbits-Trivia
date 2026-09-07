@@ -1,12 +1,19 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
              x:Class="Tidbits.App.Views.LeaderboardView">
     <Panel>
         <ScrollViewer>
-            <StackPanel Margin="36,32" Spacing="16" MaxWidth="760" HorizontalAlignment="Left">
+            <StackPanel Margin="36,32" Spacing="16" MaxWidth="760" HorizontalAlignment="Center">
                 <Grid ColumnDefinitions="*,Auto">
                     <TextBlock Text="Leaderboard" Classes="view-heading"/>
-                    <Button Grid.Column="1" Content="⚔ Duels" Click="OnDuels" VerticalAlignment="Center" Padding="16,8"/>
+                    <Button Grid.Column="1" Click="OnDuels" VerticalAlignment="Center" Padding="16,8"
+                            AutomationProperties.Name="Duels">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <ui:FASymbolIcon Symbol="People" FontSize="16" VerticalAlignment="Center"/>
+                            <TextBlock Text="Duels" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
                 </Grid>
                 <TextBlock Text="Season standings across every venue where you've played a live Tidbits night."
                            FontSize="15" Opacity="0.7" TextWrapping="Wrap"/>

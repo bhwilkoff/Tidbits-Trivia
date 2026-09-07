@@ -1,11 +1,12 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Tidbits.App.ViewModels"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
              x:Class="Tidbits.App.Views.RecordsView"
              x:DataType="vm:RecordsViewModel">
     <Panel>
     <ScrollViewer>
-        <StackPanel Margin="36,32" Spacing="18" MaxWidth="760" HorizontalAlignment="Left">
+        <StackPanel Margin="36,32" Spacing="18" MaxWidth="760" HorizontalAlignment="Center">
             <TextBlock Text="Records" Classes="view-heading"/>
             <TextBlock Text="Compete against your past self." FontSize="15" Opacity="0.7"/>
 
@@ -20,6 +21,27 @@
                     </StackPanel>
                 </StackPanel>
             </Border>
+
+            <!-- WINDOWS-DESIGN §4.2: the sign-in banner when signed OUT, mirroring the
+                 macOS Records fix. Windows shipped only the passive "records are saved
+                 on this device" line, so the one screen where the need is obvious never
+                 offered the door. Hidden once signed in. -->
+            <Button x:Name="SyncBanner" Classes="card" HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Stretch" Padding="14,12" IsVisible="False"
+                    Click="OnSignInBanner"
+                    AutomationProperties.Name="Sign in to sync your records">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <ui:FASymbolIcon Symbol="Sync" FontSize="22" VerticalAlignment="Center"
+                                     Foreground="#FF5C35" Margin="0,0,12,0"/>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="Sign in to sync your records" FontWeight="SemiBold"/>
+                        <TextBlock Text="Keep your streak, rating, and history across every device."
+                                   FontSize="12" Opacity="0.6" TextWrapping="Wrap"/>
+                    </StackPanel>
+                    <ui:FASymbolIcon Grid.Column="2" Symbol="ChevronRight" FontSize="16"
+                                     VerticalAlignment="Center" Opacity="0.5"/>
+                </Grid>
+            </Button>
 
             <TextBlock IsVisible="{Binding NoGames}" Margin="0,20,0,0" Opacity="0.7" TextWrapping="Wrap"
                        Text="No games yet — play a round and your scores, streaks, and knowledge show up here."/>

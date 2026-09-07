@@ -97,6 +97,14 @@ public partial class MainWindow : Window
         });
     }
 
+    /// Open Settings from anywhere in the shell — the sign-in banner on Records
+    /// needs the same door Ctrl+, uses (`settings-is-where-accounts-live`).
+    public void ShowSettings()
+    {
+        Nav.IsSettingsVisible = true;
+        Navigate("settings");
+    }
+
     /// Shrink the startup size to fit the display it opens on.
     ///
     /// The window asks for 1180x760, matching the Mac's `.defaultSize`. But AppKit

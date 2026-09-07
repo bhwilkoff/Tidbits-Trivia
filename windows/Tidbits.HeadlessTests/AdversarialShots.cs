@@ -105,4 +105,52 @@ public class AdversarialShots
     [AvaloniaTheory]
     [MemberData(nameof(Sizes))]
     public void Join(int w, int h) => Shoot(new JoinPlayerView(), "join", w, h);
+
+    // ---- The surfaces the rig had never rendered ------------------------------
+    //
+    // The first two passes shot Play, Live, Create and Join, and read those four
+    // hostilely. ELEVEN other consumer views were never captured at all, so every
+    // one of them "passed" by not being looked at — `hooks-are-coverage`. These
+    // are the ones a player or host actually reaches.
+
+    [AvaloniaTheory]
+    [MemberData(nameof(Sizes))]
+    public void Records_with_history(int w, int h)
+    {
+        // Records binds to a RecordsViewModel, so it MUST be given one. Shot without
+        // a DataContext every value on the page renders blank and the stat card reads
+        // as three headings floating over nothing — which is a rig artifact, not a
+        // defect, and §0 exists because I nearly filed it as one.
+        Environment.SetEnvironmentVariable("TIDBITS_SEED_RECORDS", "24");
+        try
+        {
+            var view = new RecordsView
+            {
+                DataContext = new Tidbits.App.ViewModels.RecordsViewModel(
+                    Tidbits.App.Services.GameData.Shared.Value.Records),
+            };
+            Shoot(view, "records", w, h);
+        }
+        finally { Environment.SetEnvironmentVariable("TIDBITS_SEED_RECORDS", null); }
+    }
+
+    [AvaloniaTheory]
+    [MemberData(nameof(Sizes))]
+    public void Leaderboard(int w, int h) => Shoot(new LeaderboardView(), "leaderboard", w, h);
+
+    [AvaloniaTheory]
+    [MemberData(nameof(Sizes))]
+    public void Settings(int w, int h) => Shoot(new SettingsView(), "settings", w, h);
+
+    [AvaloniaTheory]
+    [MemberData(nameof(Sizes))]
+    public void Quick_match(int w, int h) => Shoot(new QuickMatchView(), "quickmatch", w, h);
+
+    [AvaloniaTheory]
+    [MemberData(nameof(Sizes))]
+    public void Party(int w, int h) => Shoot(new PartyView(), "party", w, h);
+
+    [AvaloniaTheory]
+    [MemberData(nameof(Sizes))]
+    public void Club_paywall(int w, int h) => Shoot(new ClubPaywallView(), "club-paywall", w, h);
 }

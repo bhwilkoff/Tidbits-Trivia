@@ -83,6 +83,10 @@ both reported honestly. Not filed.
 | W15 | **Create's "Generate Quiz" is coral on Windows and GRAPE (`#8B5CF6`) on macOS, iOS, Android and the web.** Grape is that page's identity colour on four platforms; Windows was the only one painting it the brand primary | `CreateView.axaml` | ✅ |
 | W16 | **The question row truncates the prompt on ONE line** — `MaxLines = 2` with an ellipsis but no `TextWrapping`, so it never used the second line: "…minted some of the world's old…". The host cannot check their own question against the room. The Mac fixed exactly this as M1 | `LiveView.axaml.cs` | ✅ |
 | W17 | **Five equal text pills under every round** — `+ Add question`, `Add one from the question bank`, `From library…`, `Save round to library`, `Use the question bank instead`. Only the first is the ordinary action; W11's defect at round scale | `LiveView.axaml.cs` | ✅ |
+| W18 | **Rule 5.7 was applied to four pages; it says EVERY page.** Records, Leaderboard, Settings, Party, Game and the section frame were all still `HorizontalAlignment="Left"` — I fixed the four pages the rig happened to shoot and called the sweep done, which is the §0 proxy fault again in a different costume | 6 `*.axaml` roots | ✅ |
+| W19 | **Windows Records has no sign-in banner at all**, though WINDOWS-DESIGN §4.2 requires one when signed out and calls it a mirror of the macOS fix. The page said only "Records are saved on this device" — a statement, not a door, on the one screen where the need is obvious | `RecordsView.axaml` | ✅ |
+| W20 | **Eleven consumer views had never been rendered by the rig** — Records, Leaderboard, Settings, Quick Match, Party, Club paywall, Game, cockpit, projector and the shells. Every one of them "passed" the first two passes by not being looked at (`hooks-are-coverage`) | `AdversarialShots.cs` | ◐ 6 of 11 |
+| W21 | **W3's glyph sweep missed four buttons**, three of them on the host COCKPIT — `⚔ Duels`, `▶ Play clip`, `🔊 Audio`. The crossed swords render as tofu in the capture, and R-ICON-1 bans emoji chrome outright. W3 fixed the buttons I had shot and I closed it | `LeaderboardView.axaml`, `LiveCockpitView.axaml` | ✅ |
 
 ## §2 — macOS (the strong platform, still not finished)
 
@@ -126,6 +130,10 @@ W5 W8 W9 W10 M3 M5 M6.
 | M2 X2 | "corpus" is gone from every host-facing string on both platforms | grep + re-shot |
 | M4 | "Abc Letter" → "Letter" (the SF Symbol was drawing the letters) | re-shot |
 | X1 | One spelling of colour/color | grep |
+| W21 | `FASymbolIcon` + a `TextBlock` in each, with an accessible name | grepped the WHOLE Windows view tree for a symbol codepoint inside `Content="…"` rather than fixing the one I saw. Re-shot: Duels draws a real people glyph. The `−`/`+` score buttons are ordinary text and were left alone |
+| W18 | The remaining six page roots centre too | re-shot: Records at 900 wide has matching gutters |
+| W19 | A `Sign in to sync your records` card, hidden once `Account.SignedIn`, routing to Settings via a new `MainWindow.ShowSettings()` | re-shot; wording matches the Mac |
+| W20 | Six more surfaces in the rig (Records with a REAL `RecordsViewModel`, Leaderboard, Settings, Quick Match, Party, Club paywall) | 22 shots where there were 10. Records shot without a DataContext rendered every value blank and read as three headings over nothing — nearly filed as a defect before §0 caught it. Game / cockpit / projector still need real view models |
 | W16 | `TextWrapping.Wrap`, no trimming | re-shot: the Anatolia prompt reads in full over two lines |
 | W17 | `+ Add question` stays; the other four become one **Add from…** `DropDownButton` (bank / library / save this round / discard and draw from the bank) | re-shot: two controls where there were five |
 | W15 | A pinned `Button.grape` beside `Button.accent` (same §5.5 reasoning — a derived accent washes out in dark theme), used by `GenBtn` | re-shot: grape is the dominant colour on Create (1330 sampled px vs 378 coral, and that coral is the saved-quiz **Play** button, which is correctly the brand action) |

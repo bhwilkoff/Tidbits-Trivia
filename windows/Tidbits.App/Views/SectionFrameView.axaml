@@ -4,7 +4,7 @@
              x:Class="Tidbits.App.Views.SectionFrameView"
              x:DataType="vm:SectionViewModel">
     <ScrollViewer>
-        <StackPanel Margin="36,32" Spacing="18" MaxWidth="760" HorizontalAlignment="Left">
+        <StackPanel Margin="36,32" Spacing="18" MaxWidth="760" HorizontalAlignment="Center">
             <TextBlock Text="{Binding Title}" FontSize="34" FontWeight="Black"/>
             <TextBlock Text="{Binding Subtitle}" FontSize="15" Opacity="0.75" TextWrapping="Wrap"/>
 

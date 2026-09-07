@@ -75,7 +75,16 @@ public partial class RecordsView : UserControl
         if (ProfileName is null) return;
         var p = Services.GameData.Shared.Value.Identity.Current;
         ProfileName.Text = $"Playing as {p.Name}";
+        if (SyncBanner is not null)
+            SyncBanner.IsVisible = !Services.GameData.Shared.Value.Account.SignedIn;
         ProfileAvatar.Background = new SolidColorBrush(new HslColor(1.0, p.AvatarHue * 360.0, 0.62, 0.55).ToRgb());
+    }
+
+    /// Route to Settings, where sign-in lives on every platform
+    /// (`settings-is-where-accounts-live`).
+    private void OnSignInBanner(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (Avalonia.VisualTree.VisualExtensions.FindAncestorOfType<MainWindow>(this) is { } win) win.ShowSettings();
     }
 
     /// The Pie — one wedge per domain, filled in its category color when mastered,

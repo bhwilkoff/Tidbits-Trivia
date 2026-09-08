@@ -41,6 +41,20 @@ public class AdversarialShots
         win.CaptureRenderedFrame()!.Save(Path.Combine(Dir(), $"{name}-{w}x{h}.png"));
     }
 
+    /// A night already on its first question. `Start()` is async and the Avalonia
+    /// headless session runs the test ON the dispatcher thread, so blocking it
+    /// with `.GetAwaiter().GetResult()` deadlocked — the run hung with no output
+    /// and no failure, which reads exactly like a slow test.
+    private static Tidbits.Core.Networking.LiveNightHost StartedHost(
+        Tidbits.App.Services.GameData data)
+    {
+        var host = new Tidbits.Core.Networking.LiveNightHost(
+            NightPlan.Quick, TriviaCategory.Named("mixed"), data.Provider, "Friday Pub Quiz");
+        var t = System.Threading.Tasks.Task.Run(() => host.Start());
+        t.Wait(TimeSpan.FromSeconds(30));
+        return host;
+    }
+
     private static LiveEvent AuthoredNight()
     {
         var qs = new List<Question>
@@ -153,4 +167,30 @@ public class AdversarialShots
     [AvaloniaTheory]
     [MemberData(nameof(Sizes))]
     public void Club_paywall(int w, int h) => Shoot(new ClubPaywallView(), "club-paywall", w, h);
+
+    /// The HOST COCKPIT — the surface a host stares at all night, and the one the
+    /// rig had never rendered. It needs a real LiveHostViewModel driven into play;
+    /// with no DataContext it renders empty and reads as a pass (W20).
+    [AvaloniaTheory]
+    [MemberData(nameof(Sizes))]
+    public void Live_cockpit(int w, int h)
+    {
+        var data = Tidbits.App.Services.GameData.FromDirectory(
+            Path.Combine(AppContext.BaseDirectory, "Data"));
+        var host = StartedHost(data);
+        var view = new LiveCockpitView { DataContext = new Tidbits.App.ViewModels.LiveHostViewModel(host) };
+        Shoot(view, "live-cockpit", w, h);
+    }
+
+    /// The PROJECTOR output. Its own aspect: a room sees 16:9, not a laptop window.
+    [AvaloniaTheory]
+    [InlineData(1280, 720)]
+    public void Projector(int w, int h)
+    {
+        var data = Tidbits.App.Services.GameData.FromDirectory(
+            Path.Combine(AppContext.BaseDirectory, "Data"));
+        var host = StartedHost(data);
+        var view = new ProjectorView { DataContext = new Tidbits.App.ViewModels.LiveHostViewModel(host) };
+        Shoot(view, "projector", w, h);
+    }
 }

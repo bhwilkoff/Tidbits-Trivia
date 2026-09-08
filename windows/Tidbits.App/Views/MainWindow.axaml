@@ -17,6 +17,76 @@
         <vm:MainWindowViewModel/>
     </Design.DataContext>
 
+    <DockPanel>
+    <!-- WINDOWS-DESIGN §6.2: the Alt-mnemonic menu bar. Specified since the platform
+         doc was written and never built; the Mac grew its §B2 equivalent first, so
+         this was the parity gap. Windows convention is an IN-WINDOW menu bar (what
+         Notepad, Paint and File Explorer's legacy surfaces use), not the Mac's
+         system bar — the commands are the same, the idiom is not. -->
+    <Menu DockPanel.Dock="Top" x:Name="AppMenu">
+        <MenuItem Header="_File">
+            <MenuItem Header="New _Quick Play" Click="OnMenuQuickPlay" InputGesture="Ctrl+N"/>
+            <MenuItem Header="New Live _Event" Click="OnMenuNewEvent" InputGesture="Ctrl+Shift+N"/>
+            <MenuItem Header="_Join a Game…" Click="OnMenuJoin" InputGesture="Ctrl+J"/>
+            <Separator/>
+            <MenuItem Header="_Save Event" Click="OnMenuSaveEvent" InputGesture="Ctrl+S"/>
+            <MenuItem Header="_Import">
+                <MenuItem Header="Event or Package…" Click="OnMenuImportEvent"/>
+                <MenuItem Header="Questions (CSV, GIFT, Aiken)…" Click="OnMenuImportQuestions"/>
+            </MenuItem>
+            <MenuItem Header="_Export">
+                <MenuItem Header="Package (with media)…" Click="OnMenuExportPackage"/>
+                <MenuItem Header="Event as JSON…" Click="OnMenuExportEvent"/>
+                <MenuItem Header="Questions as CSV…" Click="OnMenuExportCsv"/>
+                <MenuItem Header="Questions as GIFT…" Click="OnMenuExportGift"/>
+            </MenuItem>
+            <Separator/>
+            <MenuItem Header="_Print Question Pack…" Click="OnMenuPrintPack" InputGesture="Ctrl+P"/>
+            <MenuItem Header="Print _Answer Sheets…" Click="OnMenuPrintSheets"/>
+            <Separator/>
+            <MenuItem Header="E_xit" Click="OnMenuExit" InputGesture="Alt+F4"/>
+        </MenuItem>
+        <MenuItem Header="_Event">
+            <MenuItem Header="Add _Round" Click="OnMenuAddRound" InputGesture="Ctrl+R"/>
+            <MenuItem Header="Add _Special Round">
+                <MenuItem Header="Audio Round…" Click="OnMenuAddAudioRound"/>
+                <MenuItem Header="Video Round…" Click="OnMenuAddVideoRound"/>
+                <MenuItem Header="Pick-a-Category Board…" Click="OnMenuAddBoardRound"/>
+            </MenuItem>
+            <Separator/>
+            <MenuItem Header="_Host Live" Click="OnMenuHostLive" InputGesture="Ctrl+Enter"/>
+        </MenuItem>
+        <MenuItem Header="_Show">
+            <MenuItem Header="_Reveal Answer" Click="OnMenuReveal" InputGesture="Space"/>
+            <MenuItem Header="_Next Question" Click="OnMenuNext" InputGesture="Right"/>
+            <MenuItem Header="_Previous Question" Click="OnMenuPrevious" InputGesture="Left"/>
+            <MenuItem Header="_Lock Answers" Click="OnMenuLock" InputGesture="Ctrl+L"/>
+            <MenuItem Header="S_kip Question" Click="OnMenuSkip"/>
+            <Separator/>
+            <MenuItem Header="Add _30 Seconds" Click="OnMenuAdd30"/>
+            <MenuItem Header="Add _15 Seconds" Click="OnMenuAdd15"/>
+            <MenuItem Header="_Clear Timer" Click="OnMenuClearTimer"/>
+            <Separator/>
+            <MenuItem Header="Show _Standings on Big Screen" Click="OnMenuStandings"/>
+            <MenuItem Header="Show on _Projector" Click="OnMenuProjector"/>
+            <Separator/>
+            <MenuItem Header="_End the Night" Click="OnMenuEndNight"/>
+        </MenuItem>
+        <MenuItem Header="_View">
+            <MenuItem Header="_Play" Click="OnMenuViewPlay"/>
+            <MenuItem Header="_Records" Click="OnMenuViewRecords"/>
+            <MenuItem Header="_Leaderboard" Click="OnMenuViewLeaderboard"/>
+            <MenuItem Header="_Create" Click="OnMenuViewCreate"/>
+            <MenuItem Header="Tidbits Li_ve" Click="OnMenuViewLive"/>
+            <Separator/>
+            <MenuItem Header="_Settings" Click="OnMenuViewSettings" InputGesture="Ctrl+OemComma"/>
+        </MenuItem>
+        <MenuItem Header="_Help">
+            <MenuItem Header="Tidbits Trivia on the _Web" Click="OnMenuHelpWeb"/>
+            <MenuItem Header="_About Tidbits Trivia" Click="OnMenuAbout"/>
+        </MenuItem>
+    </Menu>
+
     <!-- WINDOWS-DESIGN §2.1: FluentAvalonia NavigationView (the WinUI idiom), Settings
          as a footer item (§2.2). Content swaps in code-behind on selection. -->
     <ui:FANavigationView x:Name="Nav"
@@ -48,4 +118,5 @@
             </Border>
         </Panel>
     </ui:FANavigationView>
+    </DockPanel>
 </Window>

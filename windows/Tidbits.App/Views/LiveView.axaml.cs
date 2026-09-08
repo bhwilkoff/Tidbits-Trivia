@@ -144,6 +144,23 @@ public partial class LiveView : UserControl
     private static int TimerIndex(int seconds) => System.Math.Max(0, System.Array.IndexOf(TimerChoices, seconds));
     private static int TimerSeconds(int index) => index >= 0 && index < TimerChoices.Length ? TimerChoices[index] : 0;
 
+    /// §6.2 — the menu bar's entry point into the builder. Same handlers as the
+    /// buttons, so the two can never drift apart.
+    public void RunCommand(string id)
+    {
+        var e = new RoutedEventArgs();
+        switch (id)
+        {
+            case "addRound":       OnAddRound(this, e); break;
+            case "saveEvent":      OnSaveEvent(this, e); break;
+            case "importEvent":    OnImportEvent(this, e); break;
+            case "exportEvent":    OnExportEvent(this, e); break;
+            case "exportPackage":  OnExportPackage(this, e); break;
+            case "printPack":      OnPrintQuestionPack(this, e); break;
+            case "printSheets":    OnPrintAnswerSheet(this, e); break;
+        }
+    }
+
     private void OnAddRound(object? sender, RoutedEventArgs e)
     {
         if (RoundModeBox.SelectedItem is not GameMode mode || RoundCountBox.SelectedItem is not int count) return;

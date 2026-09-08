@@ -3,6 +3,8 @@ using Avalonia;
 using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.VisualTree;
 using CommunityToolkit.Mvvm.Input;
 using FluentAvalonia.UI.Controls;
 using Tidbits.App.ViewModels;
@@ -195,6 +197,70 @@ public partial class MainWindow : Window
             : (e.SelectedItem as FANavigationViewItem)?.Tag as string ?? "play";
         Navigate(tag);
     }
+
+    // ---- WINDOWS-DESIGN §6.2: the menu bar --------------------------------
+    //
+    // Every item routes to the SAME handler the on-screen control uses, through
+    // each view's RunCommand. The menu therefore cannot drift from the surface,
+    // which is §B2.5's rule on the Mac and the same rule here.
+
+    /// The Live builder, if it is the surface on screen.
+    private LiveView? LiveSurface => ContentHost.Content as LiveView;
+
+    /// The cockpit, wherever it is: the Live page hosts it once a night starts.
+    private LiveCockpitView? CockpitSurface =>
+        ContentHost.Content as LiveCockpitView
+        ?? (ContentHost.Content as Control)?.GetVisualDescendants().OfType<LiveCockpitView>().FirstOrDefault();
+
+    private void EnsureLive()
+    {
+        if (LiveSurface is null && CockpitSurface is null) { Nav.SelectedItem = null; Navigate("live"); }
+    }
+
+    private void OnMenuQuickPlay(object? s, RoutedEventArgs e) => Navigate("play");
+    private void OnMenuNewEvent(object? s, RoutedEventArgs e) { Navigate("live"); }
+    private void OnMenuJoin(object? s, RoutedEventArgs e) => Navigate("play");
+    private void OnMenuSaveEvent(object? s, RoutedEventArgs e) { EnsureLive(); LiveSurface?.RunCommand("saveEvent"); }
+    private void OnMenuImportEvent(object? s, RoutedEventArgs e) { EnsureLive(); LiveSurface?.RunCommand("importEvent"); }
+    private void OnMenuImportQuestions(object? s, RoutedEventArgs e) { Navigate("create"); }
+    private void OnMenuExportPackage(object? s, RoutedEventArgs e) { EnsureLive(); LiveSurface?.RunCommand("exportPackage"); }
+    private void OnMenuExportEvent(object? s, RoutedEventArgs e) { EnsureLive(); LiveSurface?.RunCommand("exportEvent"); }
+    private void OnMenuExportCsv(object? s, RoutedEventArgs e) { EnsureLive(); LiveSurface?.RunCommand("exportEvent"); }
+    private void OnMenuExportGift(object? s, RoutedEventArgs e) { EnsureLive(); LiveSurface?.RunCommand("exportEvent"); }
+    private void OnMenuPrintPack(object? s, RoutedEventArgs e) { EnsureLive(); LiveSurface?.RunCommand("printPack"); }
+    private void OnMenuPrintSheets(object? s, RoutedEventArgs e) { EnsureLive(); LiveSurface?.RunCommand("printSheets"); }
+    private void OnMenuExit(object? s, RoutedEventArgs e) => Close();
+
+    private void OnMenuAddRound(object? s, RoutedEventArgs e) { EnsureLive(); LiveSurface?.RunCommand("addRound"); }
+    private void OnMenuAddAudioRound(object? s, RoutedEventArgs e) { EnsureLive(); LiveSurface?.RunCommand("addRound"); }
+    private void OnMenuAddVideoRound(object? s, RoutedEventArgs e) { EnsureLive(); LiveSurface?.RunCommand("addRound"); }
+    private void OnMenuAddBoardRound(object? s, RoutedEventArgs e) { EnsureLive(); LiveSurface?.RunCommand("addRound"); }
+    private void OnMenuHostLive(object? s, RoutedEventArgs e) { EnsureLive(); }
+
+    private void OnMenuReveal(object? s, RoutedEventArgs e) => CockpitSurface?.RunCommand("reveal");
+    private void OnMenuNext(object? s, RoutedEventArgs e) => CockpitSurface?.RunCommand("next");
+    private void OnMenuPrevious(object? s, RoutedEventArgs e) => CockpitSurface?.RunCommand("previous");
+    private void OnMenuLock(object? s, RoutedEventArgs e) => CockpitSurface?.RunCommand("lock");
+    private void OnMenuSkip(object? s, RoutedEventArgs e) => CockpitSurface?.RunCommand("skip");
+    private void OnMenuAdd30(object? s, RoutedEventArgs e) => CockpitSurface?.RunCommand("add30");
+    private void OnMenuAdd15(object? s, RoutedEventArgs e) => CockpitSurface?.RunCommand("add15");
+    private void OnMenuClearTimer(object? s, RoutedEventArgs e) => CockpitSurface?.RunCommand("clearTimer");
+    private void OnMenuStandings(object? s, RoutedEventArgs e) => CockpitSurface?.RunCommand("hold");
+    private void OnMenuProjector(object? s, RoutedEventArgs e) => CockpitSurface?.RunCommand("projector");
+    private void OnMenuEndNight(object? s, RoutedEventArgs e) => CockpitSurface?.RunCommand("endNight");
+
+    private void OnMenuViewPlay(object? s, RoutedEventArgs e) => Navigate("play");
+    private void OnMenuViewRecords(object? s, RoutedEventArgs e) => Navigate("records");
+    private void OnMenuViewLeaderboard(object? s, RoutedEventArgs e) => Navigate("leaderboard");
+    private void OnMenuViewCreate(object? s, RoutedEventArgs e) => Navigate("create");
+    private void OnMenuViewLive(object? s, RoutedEventArgs e) => Navigate("live");
+    private void OnMenuViewSettings(object? s, RoutedEventArgs e) => ShowSettings();
+
+    private async void OnMenuHelpWeb(object? s, RoutedEventArgs e)
+    {
+        if (Launcher is { } l) await l.LaunchUriAsync(new Uri("https://tidbitstrivia.com"));
+    }
+    private void OnMenuAbout(object? s, RoutedEventArgs e) => ShowSettings();
 
     /// Swap the detail pane. Only the section-frame fallback needs the view model, so a
     /// missing DataContext must never cost the app its whole right-hand side.

@@ -185,7 +185,9 @@ skip/jump, tie-break, CSV export, standings, the premium waves
 
 6.2 **The cockpit** (host laptop): a keyboard-run control surface.
 Space=reveal, ←/→=prev/next, digits=jump, Esc=big-screen hold; an
-Alt-mnemonic menu bar (File/Game/Live/View/Help); **taskbar progress =
+Alt-mnemonic menu bar (File/Event/Show/View/Help — NOT yet built as of
+2026-09-08, and the Mac's §B2 equivalent now exists, so this is the parity
+gap); **taskbar progress =
 the round timer / teams-answered** so a host with the cockpit
 minimized still sees state; **global hotkeys** (`RegisterHotKey`) so
 Reveal/Next fire even when the projector or a slideshow has focus.
@@ -217,6 +219,26 @@ Settings shape. Status messages use `FAInfoBar`. Any row carrying an ACCOUNT
 affordance ships `IsExpanded="True"`: sign-in hidden behind a chevron reads as
 "this app has no account", which is exactly what the iPhone got wrong.
 (FluentAvalonia 3 prefixes these `FA…`; the unprefixed WinUI names do not resolve.)
+
+5.8 **A Windows surface is COMPOSED, not enumerated — the Fluent form of the
+macOS §5.7 rule.** Owner, 2026-09-08, about the Mac and Windows Live screens:
+*"a mix of default icons without any design, text buttons, and hardly any design
+sensibility at all… screens that are not well proportioned and seem to simply be
+lists of features and things you can do."* The Windows answer is NOT the Mac's
+sticker language — it is Fluent used properly:
+
+- **Commands live in a `CommandBar`**, not in rows of identical `Button`s. The
+  four or five a host actually presses are primary commands with labelled icons;
+  everything else goes in the `⋯` overflow. Measured 2026-09-08: the cockpit had
+  **19 identical default buttons in three rows**, one of them accented.
+- **Hierarchy by role, not a flat wall.** Transport, room settings and one-off
+  admin are three groups; a `CommandBar` separator or a flyout, never one row.
+- **The hero is the CONTENT.** On the cockpit the question is the largest thing
+  on screen. The join code was the loudest element and the question was smaller
+  than it — the host reads the question aloud, not the code.
+- **Proportion.** No thin strip of standings beside acres of empty middle; give
+  each column a share that matches what it holds.
+- **Icons are `FASymbolIcon`** (§5.6/W3/W21/W22), never text glyphs or emoji.
 
 5.7 **The content column is CENTRED under a max width, never pinned left.**
 Every page's root panel caps its measure (Join 560, Create 620, Play 760, Live

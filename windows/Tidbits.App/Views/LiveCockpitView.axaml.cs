@@ -171,6 +171,28 @@ public partial class LiveCockpitView : UserControl
 
     private LiveHostViewModel? Vm => DataContext as LiveHostViewModel;
 
+    /// WINDOWS-DESIGN §6.2 — the menu bar drives the SAME handlers the buttons do,
+    /// so a command can never exist in one place and not the other. One dispatcher
+    /// rather than a dozen public wrappers.
+    public void RunCommand(string id)
+    {
+        var e = new RoutedEventArgs();
+        switch (id)
+        {
+            case "reveal":     OnReveal(this, e); break;
+            case "next":       OnNext(this, e); break;
+            case "previous":   OnBack(this, e); break;
+            case "lock":       OnLock(this, e); break;
+            case "skip":       OnSkip(this, e); break;
+            case "add30":      OnAdd30(this, e); break;
+            case "add15":      OnAdd15(this, e); break;
+            case "clearTimer": OnClearTimer(this, e); break;
+            case "hold":       OnToggleHold(this, e); break;
+            case "projector":  OnProjector(this, e); break;
+            case "endNight":   OnClose(this, e); break;
+        }
+    }
+
     private async void OnReveal(object? sender, RoutedEventArgs e) { if (Vm is { } vm) await vm.Reveal(); }
     private async void OnNext(object? sender, RoutedEventArgs e) { if (Vm is { } vm) await vm.Next(); }
     private async void OnLock(object? sender, RoutedEventArgs e) { if (Vm is { } vm) await vm.Lock(); }

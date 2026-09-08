@@ -168,19 +168,27 @@ enum LivePackage {
         }
         func addClips(_ marks: [Data]?, round: String, kind: String) -> [String?]? {
             guard let marks, marks.contains(where: { !$0.isEmpty }) else { return nil }
-            return marks.enumerated().map { i, mark -> String? in
-                guard !mark.isEmpty else { return nil }
+            // A plain loop, NOT `marks.enumerated().map { … }`. The closure captured
+            // `add`, which mutates the enclosing `media` and `dropped`, and Xcode
+            // 26.6 rejects that as "sending 'media' risks causing data race" while
+            // the Xcode on this Mac accepts it. The archive is the compiler that
+            // matters, so write it in the form BOTH accept — a loop sends nothing.
+            var ids: [String?] = []
+            for (i, mark) in marks.enumerated() {
+                guard !mark.isEmpty else { ids.append(nil); continue }
                 guard let url = try? LiveClip.resolve(mark) else {
-                    dropped.append("\(round) \(kind) #\(i + 1)"); return nil
+                    dropped.append("\(round) \(kind) #\(i + 1)"); ids.append(nil); continue
                 }
                 defer { url.stopAccessingSecurityScopedResource() }
                 guard let bytes = try? Data(contentsOf: url),
                       let id = add(bytes, ext: url.pathExtension, originalName: url.lastPathComponent,
                                    sourceURL: nil, credit: nil, license: nil) else {
-                    dropped.append("\(round) \(kind) #\(i + 1) (\(url.lastPathComponent))"); return nil
+                    dropped.append("\(round) \(kind) #\(i + 1) (\(url.lastPathComponent))")
+                    ids.append(nil); continue
                 }
-                return id
+                ids.append(id)
             }
+            return ids
         }
 
         for (ri, round) in event.rounds.enumerated() {

@@ -32,8 +32,8 @@ android {
         applicationId = "com.tidbitstrivia.app"
         minSdk = 29
         targetSdk = 36
-        versionCode = 96
-        versionName = "1.8.0"   // lockstep with iOS MARKETING_VERSION (X.Y.Z, bump every ship)
+        versionCode = 97
+        versionName = "1.9.0"   // lockstep with iOS MARKETING_VERSION (X.Y.Z, bump every ship)
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
     }

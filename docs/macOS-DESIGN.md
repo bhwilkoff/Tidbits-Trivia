@@ -322,6 +322,19 @@ surface too.
 B2.5 **A menu-only command is a design smell.** Menus mirror the surface; they
 are not a hiding place for features that never earned a control.
 
+B2.6 **Gate the CHILDREN, not just the `Menu`.** Measured 2026-09-08: `.disabled`
+on a `Menu` leaves its parent item enabled while any child is enabled, so "Big
+Screen Shows" and "Play Sound" read as live with no night running. Disable every
+child as well. Note that an item owning a submenu still reports `enabled = true`
+to the accessibility API even when all of its children are disabled — that is
+AppKit's own behaviour for submenu items, the command genuinely cannot fire, and
+it is not worth fighting. Verify a submenu by measuring its CHILDREN.
+
+B2.7 **Prove a menu item DOES the thing.** "Enabled" is not "works". The check
+that counts is invoking the item from the menu bar and observing the surface
+change — `click menu item "Reveal Answer" of menu 1 of menu bar item "Show"` and
+then re-shooting the cockpit.
+
 ## §3 — The game surface (the "player" analog, binding)
 
 3.1 **A game in progress REPLACES the window root** — never an

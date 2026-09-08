@@ -518,7 +518,30 @@ struct LiveHostView_macOS: View {
         // enough to show every control without a risky ScrollView restructure of the tuned layout.
         .frame(minWidth: 900, maxWidth: .infinity, minHeight: 680, maxHeight: .infinity)
         .background(Tidbits.Palette.bg)
+        // §B2.1 — the Show menu. Published only while a night is on, so the whole
+        // menu greys out when there is no show (§B2.3).
+        .focusedSceneValue(\.liveShow, LiveShowCommands(
+            canGoBack: session.canGoBack,
+            revealed: session.revealed,
+            onBreak: session.onBreak,
+            scoresShown: session.showScores,
+            reveal: { session.reveal() },
+            next: { session.next() },
+            previous: { session.previous() },
+            lock: { session.locked = true; Task { await net.publish(session.currentPub()) } },
+            skip: { session.skip() },
+            addTime: { session.addTime($0) },
+            clearTimer: { session.clearTimer() },
+            toggleHold: { session.onBreak.toggle() },
+            toggleScores: { session.showScores.toggle() },
+            openProjector: { openProjector() },
+            endNight: onClose,
+            exportResults: { exportResultsCSV() }))
     }
+
+    /// The projector is a singleton `Window`; `openWindow` focuses the existing one.
+    @Environment(\.openWindow) private var openProjectorWindow
+    private func openProjector() { openProjectorWindow(id: "tidbits-bigscreen") }
 
     // MARK: Cockpit
 

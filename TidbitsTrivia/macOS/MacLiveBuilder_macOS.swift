@@ -57,6 +57,37 @@ struct LiveBuilderView_macOS: View {
         }
         .background(Tidbits.Palette.bg)
         .navigationTitle("Tidbits Live")
+        // macOS-DESIGN §B2.1 — every command that has a button here also has a
+        // menu item. The bundle is republished whenever the working event changes
+        // so `hasQuestions` (which gates Print and Host) stays honest.
+        .focusedSceneValue(\.liveBuilder, LiveBuilderCommands(
+            hasQuestions: working.totalQuestions > 0,
+            newEvent: { newEvent() },
+            saveEvent: { store.upsert(working); selectedID = working.id },
+            addRound: {
+                Task {
+                    busy = true
+                    let r = await LiveEventStore.buildRound(format: newFormat, category: newCategory, count: newCount)
+                    working.rounds.append(r)
+                    busy = false
+                }
+            },
+            addAudioRound: { addAudioRound() },
+            addVideoRound: { addVideoRound() },
+            addBoardRound: { addBoardRound() },
+            hostLive: { store.upsert(working); onHost(working) },
+            previewSolo: { store.upsert(working); onPreview(working) },
+            importQuestions: { importCSV() },
+            importQuickQuestions: { importQuickQuestions() },
+            importEvent: { importEvent() },
+            exportPackage: { exportPackage() },
+            exportEvent: { exportEvent() },
+            exportLibrary: { exportLibrary() },
+            exportCSV: { exportQuestionsCSV() },
+            exportGIFT: { exportQuestionsGIFT() },
+            exportKahoot: { exportKahootSheet() },
+            printQuestionPack: { LivePrint.questionPack(working) },
+            printAnswerSheet: { LivePrint.answerSheet(working) }))
         .onAppear {
             // Open the host's most recent night, not a blank draft. Creating one
             // unconditionally left the saved event visible in the list and an

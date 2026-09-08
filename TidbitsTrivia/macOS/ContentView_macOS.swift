@@ -388,13 +388,80 @@ extension FocusedValues {
     }
 }
 
+/// macOS-DESIGN §B2: every command on the Live BUILDER, published so the menu bar
+/// can invoke it. One bundle rather than a key per command — the menu items all
+/// appear and disappear together, because they all belong to the same surface.
+struct LiveBuilderCommands {
+    var hasQuestions = false
+    var newEvent: () -> Void = {}
+    var saveEvent: () -> Void = {}
+    var addRound: () -> Void = {}
+    var addAudioRound: () -> Void = {}
+    var addVideoRound: () -> Void = {}
+    var addBoardRound: () -> Void = {}
+    var hostLive: () -> Void = {}
+    var previewSolo: () -> Void = {}
+    var importQuestions: () -> Void = {}
+    var importQuickQuestions: () -> Void = {}
+    var importEvent: () -> Void = {}
+    var exportPackage: () -> Void = {}
+    var exportEvent: () -> Void = {}
+    var exportLibrary: () -> Void = {}
+    var exportCSV: () -> Void = {}
+    var exportGIFT: () -> Void = {}
+    var exportKahoot: () -> Void = {}
+    var printQuestionPack: () -> Void = {}
+    var printAnswerSheet: () -> Void = {}
+}
+
+/// §B2: every command on the host COCKPIT. Published only while a night is being
+/// hosted, so the Show menu greys out when there is no show — which is what makes
+/// a disabled menu item mean something (§B2.3).
+struct LiveShowCommands {
+    var canGoBack = false
+    var revealed = false
+    var onBreak = false
+    var scoresShown = false
+    var reveal: () -> Void = {}
+    var next: () -> Void = {}
+    var previous: () -> Void = {}
+    var lock: () -> Void = {}
+    var skip: () -> Void = {}
+    var addTime: (Int) -> Void = { _ in }
+    var clearTimer: () -> Void = {}
+    var toggleHold: () -> Void = {}
+    var toggleScores: () -> Void = {}
+    var openProjector: () -> Void = {}
+    var endNight: () -> Void = {}
+    var exportResults: () -> Void = {}
+}
+
+struct LiveBuilderKey: FocusedValueKey { typealias Value = LiveBuilderCommands }
+struct LiveShowKey: FocusedValueKey { typealias Value = LiveShowCommands }
+
+extension FocusedValues {
+    var liveBuilder: LiveBuilderCommands? {
+        get { self[LiveBuilderKey.self] }
+        set { self[LiveBuilderKey.self] = newValue }
+    }
+    var liveShow: LiveShowCommands? {
+        get { self[LiveShowKey.self] }
+        set { self[LiveShowKey.self] = newValue }
+    }
+}
+
 /// Menu-bar commands: ⌘N replaces File ▸ New with "New Quick Play", ⌘J joins a game.
 struct TidbitsCommands: Commands {
     var body: some Commands {
         CommandGroup(replacing: .newItem) {
             NewGameMenuItem()
+            NewEventMenuItem()
             JoinGameMenuItem()
         }
+        CommandGroup(after: .newItem) { FileCommands() }
+        CommandGroup(replacing: .printItem) { PrintCommands() }
+        CommandMenu("Event") { EventCommands() }
+        CommandMenu("Show") { ShowCommands() }
     }
 
     /// A Mac user reaches for the menu bar. The Live section carries the same door as
@@ -414,6 +481,161 @@ struct TidbitsCommands: Commands {
             Button("New Quick Play") { newGame?.start() }
                 .keyboardShortcut("n", modifiers: .command)
                 .disabled(newGame == nil)
+        }
+    }
+    private struct NewEventMenuItem: View {
+        @FocusedValue(\.liveBuilder) private var live
+        var body: some View {
+            Button("New Live Event") { live?.newEvent() }
+                .keyboardShortcut("n", modifiers: [.command, .shift])
+                .disabled(live == nil)
+        }
+    }
+
+    /// File ▸ save, import and export. Every one of these is also a button on the
+    /// builder — §B2.5: the menu mirrors the surface, it does not hide features.
+    private struct FileCommands: View {
+        @FocusedValue(\.liveBuilder) private var live
+        var body: some View {
+            Divider()
+            Button("Save Event") { live?.saveEvent() }
+                .keyboardShortcut("s", modifiers: .command).disabled(live == nil)
+            Menu("Import") {
+                Button("Event or Package…") { live?.importEvent() }
+                Button("Questions (CSV, GIFT, Aiken)…") { live?.importQuestions() }
+                Button("SpeedQuizzing Folder…") { live?.importQuickQuestions() }
+            }
+            .disabled(live == nil)
+            Menu("Export") {
+                Button("Package (with media)…") { live?.exportPackage() }
+                Button("Event as JSON…") { live?.exportEvent() }
+                Divider()
+                Button("Questions as CSV…") { live?.exportCSV() }
+                    .disabled(live?.hasQuestions != true)
+                Button("Questions as GIFT…") { live?.exportGIFT() }
+                    .disabled(live?.hasQuestions != true)
+                Button("For Kahoot (.xlsx)…") { live?.exportKahoot() }
+                    .disabled(live?.hasQuestions != true)
+                Divider()
+                Button("Question Library as Bank…") { live?.exportLibrary() }
+            }
+            .disabled(live == nil)
+        }
+    }
+
+    private struct PrintCommands: View {
+        @FocusedValue(\.liveBuilder) private var live
+        @FocusedValue(\.liveShow) private var show
+        var body: some View {
+            Button("Print Question Pack…") { live?.printQuestionPack() }
+                .keyboardShortcut("p", modifiers: .command)
+                .disabled(live?.hasQuestions != true)
+            Button("Print Answer Sheets…") { live?.printAnswerSheet() }
+                .keyboardShortcut("p", modifiers: [.command, .shift])
+                .disabled(live?.hasQuestions != true)
+            Button("Export Standings as CSV…") { show?.exportResults() }
+                .disabled(show == nil)
+        }
+    }
+
+    /// The Event menu — authoring. Lives only while the builder is frontmost.
+    private struct EventCommands: View {
+        @FocusedValue(\.liveBuilder) private var live
+        @FocusedValue(\.liveShow) private var show
+        /// Authoring is dead while a night is ON — you do not add a round to the
+        /// event you are in the middle of running. Measured: without this the
+        /// Event menu stayed fully live behind the cockpit.
+        private var off: Bool { live == nil || show != nil }
+        var body: some View {
+            Button("Add Round") { live?.addRound() }
+                .keyboardShortcut("r", modifiers: .command).disabled(off)
+            Menu("Add Special Round") {
+                Button("Audio Round…") { live?.addAudioRound() }.disabled(off)
+                Button("Video Round…") { live?.addVideoRound() }.disabled(off)
+                Button("Pick-a-Category Board…") { live?.addBoardRound() }.disabled(off)
+            }
+            .disabled(off)
+            Divider()
+            Button("Preview Solo") { live?.previewSolo() }
+                .disabled(off || live?.hasQuestions != true)
+            Button("Host Live") { live?.hostLive() }
+                .keyboardShortcut(.return, modifiers: .command)
+                .disabled(off || live?.hasQuestions != true)
+        }
+    }
+
+    /// The Show menu — running the night. Every control in the cockpit appears
+    /// here, and the whole menu is dead when no night is being hosted.
+    private struct ShowCommands: View {
+        @FocusedValue(\.liveShow) private var show
+        var body: some View {
+            Button(show?.revealed == true ? "Next Question" : "Reveal Answer") {
+                if show?.revealed == true { show?.next() } else { show?.reveal() }
+            }
+            .keyboardShortcut(.return, modifiers: [])
+            .disabled(show == nil)
+            Button("Lock Answers") { show?.lock() }
+                .keyboardShortcut("l", modifiers: .command).disabled(show == nil)
+            Button("Skip Question") { show?.skip() }
+                .keyboardShortcut(.rightArrow, modifiers: .command).disabled(show == nil)
+            Button("Previous Question") { show?.previous() }
+                .keyboardShortcut(.leftArrow, modifiers: .command)
+                .disabled(show?.canGoBack != true)
+            Divider()
+            Button("Add 30 Seconds") { show?.addTime(30) }.disabled(show == nil)
+            Button("Add 15 Seconds") { show?.addTime(15) }.disabled(show == nil)
+            Button("Clear Timer") { show?.clearTimer() }.disabled(show == nil)
+            Divider()
+            Button(show?.scoresShown == true ? "Hide Standings" : "Show Standings") { show?.toggleScores() }
+                .disabled(show == nil)
+            Button(show?.onBreak == true ? "Resume the Night" : "Hold the Night") { show?.toggleHold() }
+                .keyboardShortcut("b", modifiers: .command).disabled(show == nil)
+            Divider()
+            ProjectorElementsMenu()
+            Button("Open Projector Window") { show?.openProjector() }
+                .keyboardShortcut("p", modifiers: [.command, .option])
+                .disabled(show == nil)
+            Divider()
+            StingerMenu()
+            Divider()
+            Button("End the Night") { show?.endNight() }.disabled(show == nil)
+        }
+    }
+
+    /// §A8.7's projector switches, in the menu bar as well as the cockpit — this is
+    /// the list a host reaches for mid-show to quieten the big screen.
+    private struct ProjectorElementsMenu: View {
+        @FocusedValue(\.liveShow) private var show
+        var body: some View {
+            // Each CHILD is gated, not just the Menu. `.disabled` on a Menu leaves
+            // the parent item enabled while any child is enabled, so this submenu
+            // measured as live with no night running (§B2.3).
+            Menu("Big Screen Shows") {
+                ForEach(LiveProjectorElements.all) { e in
+                    Toggle(e.title, isOn: Binding(
+                        get: { LiveProjectorElements.shared.shows(e.id) },
+                        set: { LiveProjectorElements.shared.set(e.id, shown: $0) }))
+                        .disabled(show == nil)
+                }
+                Divider()
+                Button("Show Everything") { LiveProjectorElements.shared.showEverything() }
+                    .disabled(show == nil || LiveProjectorElements.shared.hiddenCount == 0)
+            }
+            .disabled(show == nil)
+        }
+    }
+
+    private struct StingerMenu: View {
+        @FocusedValue(\.liveShow) private var show
+        var body: some View {
+            Menu("Play Sound") {
+                ForEach(LiveSFXBoard.Stinger.allCases) { s in
+                    Button(s.label) { LiveSFXBoard.shared.play(s) }
+                        .keyboardShortcut(s.shortcut, modifiers: [])
+                        .disabled(show == nil)
+                }
+            }
+            .disabled(show == nil)
         }
     }
 }

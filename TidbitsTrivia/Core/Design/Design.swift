@@ -195,18 +195,131 @@ struct CompactButtonStyle: ButtonStyle {
     var textColor: Color = Tidbits.Palette.ink
     var prominent: Bool = false
     func makeBody(configuration: Configuration) -> some View {
-        let pressed = configuration.isPressed
-        return configuration.label
-            .font(Tidbits.TypeRamp.l5.weight(.bold))
-            .foregroundStyle(textColor)
-            .lineLimit(1)
-            .padding(.horizontal, prominent ? 18 : 13)
-            .padding(.vertical, prominent ? 10 : 7)
-            .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(fill))
-            .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(Tidbits.Palette.border, lineWidth: 2))
-            .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-            .opacity(pressed ? 0.75 : 1)
-            .animation(.snappy(duration: 0.08), value: pressed)
+        CompactBody(configuration: configuration, fill: fill, textColor: textColor, prominent: prominent)
+    }
+
+    /// A nested view so the style can hold `@State` for hover. macOS-DESIGN §5.7:
+    /// a styled control still owes the pointer a response — a control that does not
+    /// react to hover reads as a picture of a button, which was the true complaint
+    /// behind "they look foreign," not the sticker border.
+    private struct CompactBody: View {
+        let configuration: Configuration
+        let fill: Color
+        let textColor: Color
+        let prominent: Bool
+        @State private var hovering = false
+
+        var body: some View {
+            let pressed = configuration.isPressed
+            configuration.label
+                .font(Tidbits.TypeRamp.l5.weight(.bold))
+                .foregroundStyle(textColor)
+                // A button label is NEVER abbreviated. `lineLimit(1)` let a tight
+                // row shrink the label into an ellipsis instead of the row wrapping
+                // — owner, 2026-09-08: "make sure none of the buttons are
+                // truncated/abreviated with an elipsis". The button takes the width
+                // its words need; the CONTAINER is what has to give.
+                .fixedSize(horizontal: true, vertical: false)
+                .padding(.horizontal, prominent ? 18 : 13)
+                .padding(.vertical, prominent ? 10 : 7)
+                .background(RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(hovering && !pressed ? fill.opacity(0.82) : fill))
+                .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(Tidbits.Palette.border, lineWidth: 2))
+                .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .opacity(pressed ? 0.75 : 1)
+                .offset(y: pressed ? 1 : 0)
+                .animation(.snappy(duration: 0.08), value: pressed)
+                .animation(.easeOut(duration: 0.12), value: hovering)
+                #if os(macOS)
+                .onHover { hovering = $0 }
+                #endif
+        }
+    }
+}
+
+/// The cockpit's transport control (macOS-DESIGN §5.7): bigger than
+/// `CompactButtonStyle`, because a host reaches for Reveal / Lock / Skip mid-show
+/// in a dark room without looking. Same sticker vocabulary, a touch-sized target.
+struct TransportButtonStyle: ButtonStyle {
+    var fill: Color = Tidbits.Palette.surface
+    var textColor: Color = Tidbits.Palette.ink
+    func makeBody(configuration: Configuration) -> some View {
+        TransportBody(configuration: configuration, fill: fill, textColor: textColor)
+    }
+
+    private struct TransportBody: View {
+        let configuration: Configuration
+        let fill: Color
+        let textColor: Color
+        @Environment(\.isEnabled) private var isEnabled
+        @State private var hovering = false
+
+        var body: some View {
+            let pressed = configuration.isPressed
+            configuration.label
+                .font(Tidbits.TypeRamp.l3)
+                .foregroundStyle(isEnabled ? textColor : textColor.opacity(0.4))
+                .fixedSize(horizontal: true, vertical: false)
+                .padding(.horizontal, 22)
+                .padding(.vertical, 13)
+                .background(RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(isEnabled ? (hovering && !pressed ? fill.opacity(0.85) : fill)
+                                    : fill.opacity(0.45)))
+                .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .strokeBorder(Tidbits.Palette.border.opacity(isEnabled ? 1 : 0.3),
+                                  lineWidth: Tidbits.Metric.borderWidth))
+                .background(RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(Tidbits.Palette.border.opacity(isEnabled ? 1 : 0.25))
+                    .offset(x: pressed ? 0 : 3, y: pressed ? 0 : 3))
+                .offset(x: pressed ? 3 : 0, y: pressed ? 3 : 0)
+                .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .animation(.snappy(duration: 0.08), value: pressed)
+                .animation(.easeOut(duration: 0.12), value: hovering)
+                #if os(macOS)
+                .onHover { hovering = $0 }
+                #endif
+        }
+    }
+}
+
+/// An icon-only control that still looks designed: a bordered circle that reacts
+/// to the pointer. macOS-DESIGN §5.6 — a naked `Image(systemName:)` at default
+/// weight and colour was most of what the owner meant by "default icons without
+/// any design". Every caller supplies `.help()` and an accessibility label.
+struct RoundIconButtonStyle: ButtonStyle {
+    var tint: Color = Tidbits.Palette.ink
+    var diameter: CGFloat = 30
+    func makeBody(configuration: Configuration) -> some View {
+        IconBody(configuration: configuration, tint: tint, diameter: diameter)
+    }
+
+    private struct IconBody: View {
+        let configuration: Configuration
+        let tint: Color
+        let diameter: CGFloat
+        @Environment(\.isEnabled) private var isEnabled
+        @State private var hovering = false
+
+        var body: some View {
+            let pressed = configuration.isPressed
+            configuration.label
+                .font(.system(size: 13, weight: .bold))
+                .foregroundStyle(isEnabled ? tint : tint.opacity(0.35))
+                .frame(width: diameter, height: diameter)
+                .background(Circle().fill(hovering && isEnabled
+                                          ? Tidbits.Palette.surface
+                                          : Tidbits.Palette.surface.opacity(0.0)))
+                .overlay(Circle().strokeBorder(
+                    isEnabled ? Tidbits.Palette.border.opacity(hovering ? 1 : 0.45)
+                              : Tidbits.Palette.border.opacity(0.18),
+                    lineWidth: 2))
+                .contentShape(Circle())
+                .opacity(pressed ? 0.6 : 1)
+                .animation(.easeOut(duration: 0.12), value: hovering)
+                #if os(macOS)
+                .onHover { hovering = $0 }
+                #endif
+        }
     }
 }
 

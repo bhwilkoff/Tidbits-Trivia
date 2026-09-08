@@ -532,16 +532,47 @@ struct LiveHostView_macOS: View {
 
     private var stage: some View {
         VStack(alignment: .leading, spacing: 18) {
-            HStack {
-                Button(action: onClose) { Image(systemName: "xmark").font(.system(size: 14, weight: .bold)) }
-                    .buttonStyle(.plain).keyboardShortcut(.cancelAction)
-                Text(session.event.name).font(.headline).foregroundStyle(Tidbits.Palette.ink)
-                Spacer()
+            // Two rows on purpose. One row held the title, five commands and the
+            // round name, so at any real window width something had to shrink —
+            // and what shrank was a LABEL, into an ellipsis. Title and state on
+            // top, commands beneath, and the command row wraps.
+            HStack(spacing: 12) {
+                Button(action: onClose) { Image(systemName: "xmark") }
+                    .buttonStyle(RoundIconButtonStyle()).keyboardShortcut(.cancelAction)
+                    .help("End the night and close the projector").accessibilityLabel("End night")
+                Text(session.event.name).font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 8)
+                Text("ROUND \(session.roundNumber)/\(session.roundCount) · \(session.roundTitle)")
+                    .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .multilineTextAlignment(.trailing)
+                    .padding(.horizontal, 12).padding(.vertical, 7)
+                    .background(Capsule().fill(Tidbits.Palette.bgDeep))
+                    .overlay(Capsule().strokeBorder(Tidbits.Palette.border, lineWidth: 2))
+            }
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 10) { cockpitCommands }
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 10) { cockpitCommands }
+                }
+            }
+            stageBody
+        }
+        .padding(28)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+
+    /// The cockpit's command row, factored out so `ViewThatFits` can lay it out on
+    /// one line or wrap it without either copy truncating.
+    @ViewBuilder private var cockpitCommands: some View {
+        Group {
                 Button { session.showScores.toggle() } label: {   // G2: scores between rounds
                     Label(session.showScores ? "Hide scores" : "Scores",
-                          systemImage: "list.number").font(.callout)
+                          systemImage: "list.number")
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(CompactButtonStyle(fill: session.showScores ? Tidbits.Palette.blue : Tidbits.Palette.surface,
+                                                textColor: session.showScores ? .white : Tidbits.Palette.ink))
                 .help("Show the standings so far on the big screen")
                 // G6: pair a phone as a remote. The PIN is shown HERE, on the
                 // laptop, and nowhere else — the room code is on the projector, so
@@ -550,19 +581,19 @@ struct LiveHostView_macOS: View {
                     if net.remotePIN.isEmpty { _ = net.startRemote() } else { net.stopRemote() }
                 } label: {
                     Label(net.remotePIN.isEmpty ? "Phone remote" : "Remote PIN \(net.remotePIN)",
-                          systemImage: "iphone.radiowaves.left.and.right").font(.callout)
+                          systemImage: "iphone.radiowaves.left.and.right")
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(CompactButtonStyle(fill: net.remotePIN.isEmpty ? Tidbits.Palette.surface : Tidbits.Palette.blue,
+                                                textColor: net.remotePIN.isEmpty ? Tidbits.Palette.ink : .white))
                 .help(net.remotePIN.isEmpty
                       ? "Pair your phone to reveal and advance while you walk the room"
                       : "Type this PIN into your phone. Click again to unpair.")
                 Button { session.onBreak.toggle() } label: {   // adaptability: intermission hold
-                    Label(session.onBreak ? "Resume" : "Hold", systemImage: session.onBreak ? "play.fill" : "pause.fill").font(.callout)
+                    Label(session.onBreak ? "Resume" : "Hold", systemImage: session.onBreak ? "play.fill" : "pause.fill")
                 }
-                .buttonStyle(.bordered)
-                // Tinted only while the break is ACTIVE. Tinting a bordered button
-                // with the near-white surface colour erases its own label.
-                .tint(session.onBreak ? Tidbits.Palette.mint : Color.accentColor)
+                // Filled only while the break is ACTIVE — the state has to be
+                // readable across a room, not inferred from a word.
+                .buttonStyle(CompactButtonStyle(fill: session.onBreak ? Tidbits.Palette.mint : Tidbits.Palette.surface))
                 .keyboardShortcut("b", modifiers: .command)
                 .help(session.onBreak ? "Resume the game" : "Hold — show a 'Back in a moment' slide on the big screen (⌘B)")
                 Menu {   // adaptability: jump to any round/question on the fly
@@ -573,8 +604,8 @@ struct LiveHostView_macOS: View {
                             }
                         }
                     }
-                } label: { Label("Jump", systemImage: "list.number").font(.callout) }
-                .menuStyle(.button).buttonStyle(.bordered).fixedSize()
+                } label: { Label("Jump", systemImage: "list.number") }
+                .menuStyle(.button).buttonStyle(CompactButtonStyle()).fixedSize()
                 // §A8.7: what the room sees. Each element of the live slide is a
                 // check item; the question and its answer are not on the list.
                 Menu {
@@ -590,13 +621,18 @@ struct LiveHostView_macOS: View {
                     // Compact: the toolbar is already six controls wide, and a
                     // long label here truncated "Scores" to "Sco…" on a laptop.
                     let n = LiveProjectorElements.shared.hiddenCount
-                    Label(n == 0 ? "Screen" : "Screen · \(n) off", systemImage: "tv").font(.callout)
+                    Label(n == 0 ? "Screen" : "Screen · \(n) off", systemImage: "tv")
                 }
-                .menuStyle(.button).buttonStyle(.bordered).fixedSize()
+                .menuStyle(.button).buttonStyle(CompactButtonStyle(
+                    fill: LiveProjectorElements.shared.hiddenCount == 0
+                        ? Tidbits.Palette.surface : Tidbits.Palette.yellow)).fixedSize()
                 .help("Choose which elements the projector shows. The question and its answer always show.")
-                Text("ROUND \(session.roundNumber)/\(session.roundCount) · \(session.roundTitle)")
-                    .font(.callout).foregroundStyle(Tidbits.Palette.inkSoft)
-            }
+        }
+    }
+
+    /// The rest of the cockpit, below the header.
+    @ViewBuilder private var stageBody: some View {
+        VStack(alignment: .leading, spacing: 18) {
             if net.isOpen {
                 HStack(spacing: 8) {
                     if let qr = makeLiveQR(liveJoinURL(net.code)) {
@@ -611,10 +647,8 @@ struct LiveHostView_macOS: View {
                         Text("· \(net.joined.count) joined").font(.callout).foregroundStyle(Tidbits.Palette.mint)
                     }
                 }
-                .padding(.horizontal, 12).padding(.vertical, 7)
-                .background(RoundedRectangle(cornerRadius: 10).fill(Tidbits.Palette.surface))
-                .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .strokeBorder(Tidbits.Palette.border.opacity(0.55), lineWidth: 1))
+                .padding(.horizontal, 14).padding(.vertical, 10)
+                .chunkyCard(fill: Tidbits.Palette.surface)
             }
             // G5: while the board is up nobody has picked a cell yet, so there IS
             // no current question. Showing the previous one with a live "Reveal
@@ -691,19 +725,19 @@ struct LiveHostView_macOS: View {
             if !session.revealed, session.current != nil {   // adaptability: extend/clear the countdown live
                 HStack(spacing: 8) {
                     Image(systemName: "timer").foregroundStyle(Tidbits.Palette.inkSoft)
-                    Button("+30s") { session.addTime(30) }.buttonStyle(.bordered)
-                    Button("+15s") { session.addTime(15) }.buttonStyle(.bordered)
+                    Button("+30s") { session.addTime(30) }.buttonStyle(CompactButtonStyle())
+                    Button("+15s") { session.addTime(15) }.buttonStyle(CompactButtonStyle())
                     if session.deadlineMs != nil {
-                        Button("Clear timer") { session.clearTimer() }.buttonStyle(.bordered)
+                        Button("Clear timer") { session.clearTimer() }.buttonStyle(CompactButtonStyle())
                     }
                 }
-                .font(.caption)
             }
             Spacer()
             HStack(spacing: 12) {
-                Button { session.previous() } label: { Image(systemName: "chevron.left").font(.system(size: 14, weight: .bold)) }   // adaptability: go back
-                    .buttonStyle(.bordered)
+                Button { session.previous() } label: { Image(systemName: "chevron.left") }   // adaptability: go back
+                    .buttonStyle(RoundIconButtonStyle(diameter: 38))
                     .disabled(!session.canGoBack)
+                    .accessibilityLabel("Previous question")
                     .keyboardShortcut(.leftArrow, modifiers: .command)
                     .help("Back to the previous question (⌘←)")
                 if session.showBoard {
@@ -712,20 +746,22 @@ struct LiveHostView_macOS: View {
                     // Lock/Skip/Reveal row here acts on a question nobody has asked.
                     if session.currentRoundBoard?.isComplete == true {
                         Button("Board clear — next round") { session.showBoard = false; session.next() }
-                            .buttonStyle(.borderedProminent).tint(Tidbits.Palette.coral)
+                            .buttonStyle(TransportButtonStyle(fill: Tidbits.Palette.coral, textColor: .white))
                             .keyboardShortcut(.defaultAction)
                     } else {
                         Text("Waiting for the room to pick a cell.")
-                            .font(.callout).foregroundStyle(Tidbits.Palette.inkSoft)
+                            .font(Tidbits.TypeRamp.l4).foregroundStyle(Tidbits.Palette.inkSoft)
                     }
                 } else if !session.revealed {
                     Button(session.locked ? "Answers locked" : "Lock answers") {   // Wave C: manual pencils-down
                         session.locked = true; Task { await net.publish(session.currentPub()) }
                     }
-                    .buttonStyle(.bordered)
+                    .buttonStyle(TransportButtonStyle())
                     .disabled(session.locked)
+                    .keyboardShortcut("l", modifiers: .command)
+                    .help("Pencils down — stop accepting answers (⌘L)")
                     Button("Skip") { session.skip() }   // adaptability: skip this question (no score)
-                        .buttonStyle(.bordered)
+                        .buttonStyle(TransportButtonStyle())
                         .keyboardShortcut(.rightArrow, modifiers: .command)
                         .help("Skip this question — no score (⌘→)")
                     // G1: the buzz panel. Only on a buzz round, and only once
@@ -734,22 +770,23 @@ struct LiveHostView_macOS: View {
                     if session.currentRoundIsBuzz, !session.revealed,
                        let uid = LiveNightHost.firstBuzz(net.answers, excluding: session.buzzedOut) {
                         let who = net.teams[uid]?.name ?? "Team"
-                        Text("\(who) buzzed").font(.headline).foregroundStyle(Tidbits.Palette.coral)
+                        Text("\(who) buzzed").font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.coral)
                         Button("Correct") {
                             Task {
                                 await net.setScore(uid, (net.scores[uid] ?? 0) + session.pointsPerCorrect)
                                 session.reveal()
                             }
                         }
-                        .buttonStyle(.borderedProminent).tint(Tidbits.Palette.mint)
+                        .buttonStyle(TransportButtonStyle(fill: Tidbits.Palette.mint))
                         .help("Award \(session.pointsPerCorrect) and reveal")
                         Button("Wrong") { session.buzzedOut.insert(uid) }
-                            .buttonStyle(.bordered)
+                            .buttonStyle(TransportButtonStyle())
                             .help("Rule this team out and reopen the buzzer to the rest")
                     }
                     Button("Reveal answer") { session.reveal() }
-                        .buttonStyle(.borderedProminent).tint(Tidbits.Palette.coral)
+                        .buttonStyle(TransportButtonStyle(fill: Tidbits.Palette.coral, textColor: .white))
                         .keyboardShortcut(.defaultAction)
+                        .help("Show the answer on the big screen (Space)")
                 } else if session.currentRoundBoard != nil {
                     // G5: on a board round the room chooses, so "Next question" is
                     // the wrong verb — the host goes BACK TO THE BOARD and taps
@@ -764,15 +801,17 @@ struct LiveHostView_macOS: View {
                             Task { await net.publish(session.currentPub()) }
                         }
                     }
-                    .buttonStyle(.borderedProminent).tint(Tidbits.Palette.coral)
+                    .buttonStyle(TransportButtonStyle(fill: Tidbits.Palette.coral, textColor: .white))
                     .keyboardShortcut(.defaultAction)
                 } else {
                     Button(session.index + 1 >= session.questions.count ? "Finish night" : "Next question") { session.next() }
-                        .buttonStyle(.borderedProminent).tint(Tidbits.Palette.coral)
+                        .buttonStyle(TransportButtonStyle(fill: Tidbits.Palette.coral, textColor: .white))
                         .keyboardShortcut(.defaultAction)
+                        .help("Move the room on (Space)")
                 }
                 Spacer()
-                Text("\(session.index + 1) / \(session.questions.count) overall · Space to advance").font(.caption).foregroundStyle(Tidbits.Palette.inkSoft)
+                Text("\(session.index + 1) / \(session.questions.count) overall · Space to advance")
+                    .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
             }
             showBar       // Wave B: stingers + clip playback + music bed, one wrapping row
             Button("") {   // intuitive: SPACE = advance the show (reveal → next) — the emcee's clicker key.
@@ -850,14 +889,14 @@ struct LiveHostView_macOS: View {
                 ForEach(LiveSFXBoard.availableOutputs(), id: \.id) { dev in
                     Button(dev.name) { LiveSFXBoard.shared.select(deviceID: dev.id, name: dev.name) }
                 }
-            } label: { Label(LiveSFXBoard.shared.outputName, systemImage: "hifispeaker.fill").font(.caption) }
-                .menuStyle(.button).buttonStyle(.bordered).fixedSize()
+            } label: { Label(LiveSFXBoard.shared.outputName, systemImage: "hifispeaker.fill") }
+                .menuStyle(.button).buttonStyle(CompactButtonStyle()).fixedSize()
             Divider().frame(height: 20)
             ForEach(LiveSFXBoard.Stinger.allCases) { s in
                 Button { LiveSFXBoard.shared.play(s) } label: {
-                    Label(s.label, systemImage: s.symbol).font(.caption)
+                    Label(s.label, systemImage: s.symbol)
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(CompactButtonStyle())
                 .keyboardShortcut(s.shortcut, modifiers: [])
             }
         }
@@ -867,14 +906,16 @@ struct LiveHostView_macOS: View {
     private var audioClipBar: some View {
         let audio = LiveAudioPlayer.shared
         return HStack(spacing: 10) {
-            Button { pickAudioClip() } label: { Label("Open clip…", systemImage: "music.note.list").font(.caption) }
-                .buttonStyle(.bordered)
+            Button { pickAudioClip() } label: { Label("Open clip…", systemImage: "music.note.list") }
+                .buttonStyle(CompactButtonStyle())
             if !audio.trackName.isEmpty {
                 Button { audio.togglePlay() } label: { Image(systemName: audio.isPlaying ? "pause.fill" : "play.fill") }
-                    .buttonStyle(.bordered).tint(Tidbits.Palette.mint)
+                    .buttonStyle(RoundIconButtonStyle(tint: Tidbits.Palette.mint))
+                    .accessibilityLabel(audio.isPlaying ? "Pause clip" : "Play clip")
                 Button { audio.stop() } label: { Image(systemName: "stop.fill") }
-                    .buttonStyle(.bordered)
-                Text(audio.trackName).font(.caption).foregroundStyle(Tidbits.Palette.inkSoft).lineLimit(1)
+                    .buttonStyle(RoundIconButtonStyle())
+                    .accessibilityLabel("Stop clip")
+                Text(audio.trackName).font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft).lineLimit(1)
             }
         }
     }
@@ -890,14 +931,16 @@ struct LiveHostView_macOS: View {
     private var musicBedBar: some View {
         let bed = LiveMusicBed.shared
         return HStack(spacing: 10) {
-            Button { pickMusicBed() } label: { Label("Music bed…", systemImage: "music.quarternote.3").font(.caption) }
-                .buttonStyle(.bordered)
+            Button { pickMusicBed() } label: { Label("Music bed…", systemImage: "music.quarternote.3") }
+                .buttonStyle(CompactButtonStyle())
             if !bed.trackName.isEmpty {
                 Button { bed.toggle() } label: { Image(systemName: bed.isPlaying ? "pause.fill" : "play.fill") }
-                    .buttonStyle(.bordered).tint(Tidbits.Palette.blue)
-                Image(systemName: "speaker.fill").font(.caption).foregroundStyle(Tidbits.Palette.inkSoft)
+                    .buttonStyle(RoundIconButtonStyle(tint: Tidbits.Palette.blue))
+                    .accessibilityLabel(bed.isPlaying ? "Pause music bed" : "Play music bed")
+                Image(systemName: "speaker.fill").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
                 Slider(value: Binding(get: { Double(bed.volume) }, set: { bed.volume = Float($0) }), in: 0...1).frame(width: 90)
-                Text(bed.trackName).font(.caption).foregroundStyle(Tidbits.Palette.inkSoft).lineLimit(1)
+                    .accessibilityLabel("Music bed volume")
+                Text(bed.trackName).font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft).lineLimit(1)
             }
         }
     }
@@ -913,29 +956,40 @@ struct LiveHostView_macOS: View {
 
     private var scoreboard: some View {
         VStack(alignment: .leading, spacing: 0) {
+            // The title and the scoring rules are TWO rows. Sharing one row inside a
+            // 320pt sidebar wrapped the heading to "Team / s" and "No penalty" to
+            // three lines — the §5.7 proportion rule, which a bigger font exposed.
             HStack(spacing: 10) {
-                Text("Teams").font(.headline).foregroundStyle(Tidbits.Palette.ink)
-                Spacer()
+                Text("Teams").font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
+                    .fixedSize()
+                Spacer(minLength: 0)
+                Button { exportResultsCSV() } label: { Image(systemName: "square.and.arrow.up") }
+                    .buttonStyle(RoundIconButtonStyle())
+                    .help("Export standings to CSV").accessibilityLabel("Export standings to CSV")
+            }
+            .padding(.horizontal, 12).padding(.top, 12)
+            HStack(spacing: 10) {
                 Stepper(value: $session.wrongAnswerPenalty, in: 0...5) {
                     Text(session.wrongAnswerPenalty == 0
                          ? "No penalty"
                          : "−\(session.wrongAnswerPenalty) pt\(session.wrongAnswerPenalty == 1 ? "" : "s")/wrong")
-                        .font(.callout).foregroundStyle(Tidbits.Palette.inkSoft)
+                        .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
                 }
                 .help("Deduct points for a wrong answer. Teams that do not answer are never penalised.")
                 Stepper(value: $session.pointsPerCorrect, in: 1...10) {
                     Text("\(session.pointsPerCorrect) pt\(session.pointsPerCorrect == 1 ? "" : "s")/correct")
-                        .font(.caption).foregroundStyle(Tidbits.Palette.inkSoft)
+                        .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
                 }
                 .fixedSize()
-                Button { exportResultsCSV() } label: { Image(systemName: "square.and.arrow.up") }   // Wave C: data export
-                    .buttonStyle(.borderless).help("Export standings to CSV")
+                Spacer(minLength: 0)
             }
-            .padding(12)
+            .padding(.horizontal, 12).padding(.top, 6).padding(.bottom, 10)
             HStack(spacing: 8) {
                 TextField("Add a team…", text: $newTeam)
                     .textFieldStyle(.roundedBorder).onSubmit { session.addTeam(newTeam); newTeam = "" }
-                Button("Add") { session.addTeam(newTeam); newTeam = "" }.disabled(newTeam.trimmingCharacters(in: .whitespaces).isEmpty)
+                Button("Add") { session.addTeam(newTeam); newTeam = "" }
+                    .buttonStyle(CompactButtonStyle(fill: Tidbits.Palette.mint))
+                    .disabled(newTeam.trimmingCharacters(in: .whitespaces).isEmpty)
             }
             .padding(.horizontal, 12).padding(.bottom, 8)
             Divider().overlay(Tidbits.Palette.border)
@@ -943,27 +997,32 @@ struct LiveHostView_macOS: View {
                 VStack(spacing: 10) {
                     if net.isOpen {
                         HStack {
-                            Text("JOINED").font(.callout).foregroundStyle(Tidbits.Palette.inkSoft)
+                            Text("JOINED").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
                             Spacer()
                             if session.revealed == false, !net.answers.isEmpty {
-                                Text("\(net.answeredTeamCount) answered").font(.caption).foregroundStyle(Tidbits.Palette.mint)
+                                Text("\(net.answeredTeamCount) answered").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.mint)
                             }
                         }
                         // G7: one row per TEAM. Listing net.joined showed a table
                         // that grouped as three near-identical rows splitting its
                         // own score.
                         if net.joinedTeams.isEmpty {
+                            // Wraps. In a 320pt sidebar this truncated to "…code
+                            // UG6D…" — the one thing on the line a host might need
+                            // to read out was the part that got cut.
                             Text("Waiting for phones to join with code \(net.code)…")
-                                .font(.callout).foregroundStyle(Tidbits.Palette.inkSoft)
+                                .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .frame(maxWidth: .infinity, alignment: .leading)
                         }
                         ForEach(net.joinedTeams) { joinedRow($0) }
                         if !session.teams.isEmpty {
                             Divider().overlay(Tidbits.Palette.border).padding(.vertical, 4)
-                            Text("IN-ROOM (PAPER)").font(.callout).foregroundStyle(Tidbits.Palette.inkSoft)
+                            Text("IN-ROOM (PAPER)").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
                         }
                     } else if session.teams.isEmpty {
                         Text("Add the teams in the room. When you reveal an answer, tap ✓ to award points, or ± to correct any score.")
-                            .font(.callout).foregroundStyle(Tidbits.Palette.inkSoft).padding(.top, 20)
+                            .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft).padding(.top, 20)
                     }
                     ForEach(session.standings) { team in teamRow(team) }
                 }
@@ -1108,11 +1167,11 @@ struct LiveHostView_macOS: View {
             let counts = optionCounts(opts.count)
             let total = max(1, counts.reduce(0, +))
             VStack(alignment: .leading, spacing: 5) {
-                Text("LIVE ANSWERS").font(.caption).foregroundStyle(Tidbits.Palette.inkSoft)
+                Text("LIVE ANSWERS").font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
                 ForEach(Array(opts.enumerated()), id: \.offset) { i, opt in
                     let isCorrect = opt == q.correctAnswer
                     HStack(spacing: 8) {
-                        Text(opt).font(.caption).foregroundStyle(isCorrect ? Tidbits.Palette.mint : Tidbits.Palette.ink)
+                        Text(opt).font(Tidbits.TypeRamp.l5).foregroundStyle(isCorrect ? Tidbits.Palette.mint : Tidbits.Palette.ink)
                             .frame(width: 180, alignment: .leading).lineLimit(1)
                         GeometryReader { geo in
                             ZStack(alignment: .leading) {
@@ -1122,15 +1181,13 @@ struct LiveHostView_macOS: View {
                             }
                         }
                         .frame(height: 14)
-                        Text("\(counts[i])").font(.caption).monospacedDigit()
+                        Text("\(counts[i])").font(Tidbits.TypeRamp.l6)
                             .foregroundStyle(Tidbits.Palette.inkSoft).frame(width: 24, alignment: .trailing)
                     }
                 }
             }
-            .padding(10)
-            .background(RoundedRectangle(cornerRadius: 8).fill(Tidbits.Palette.bg))
-            .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .strokeBorder(Tidbits.Palette.border.opacity(0.55), lineWidth: 1))
+            .padding(14)
+            .chunkyCard(fill: Tidbits.Palette.bg)
         }
     }
 

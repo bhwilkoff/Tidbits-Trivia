@@ -286,6 +286,42 @@ outside the view tree.
 2.4 **`minWidth`/`minHeight` on the main window** so the sidebar +
 detail never collapse into an unusable strip.
 
+## §B2 — The menu bar (binding, and the definition of desktop-class)
+
+Owner, 2026-09-08: *"within the MacOS native app, nearly everything in the app
+should be accessible via menus and hardly anything is. That is the design for
+desktop-class apps and it should be so for ours as well."*
+
+B2.1 **Every command reachable by clicking is ALSO reachable from the menu
+bar.** If a button exists on a surface and the menu bar cannot invoke it, one of
+the two is wrong. This is the test a reviewer runs: open every menu, and every
+button on the frontmost surface should be findable there.
+
+B2.2 **The menu set.** Tidbits, File, Edit, Event, Show, Window, Help.
+- **File** — New Quick Play (⌘N), New Event (⇧⌘N), Open Event…​ (⌘O), Save Event
+  (⌘S), Import ▸, Export ▸, Print Question Sheet (⌘P), Close (⌘W).
+- **Event** (builder) — Add Round (⌘R), Add Question (⌘⇧A), Add from Bank, Add
+  from Library…, Duplicate, Delete Round, Move Round Up/Down (⌘⌥↑/↓), Host Live
+  (⌘↩).
+- **Show** (cockpit + projector) — Reveal Answer (Space), Lock Answers (⌘L),
+  Skip (⌘→), Previous (⌘←), Add 30s / 15s, Clear Timer, Open Projector (⌘⇧P),
+  and one toggle per projector element (the §A8.7 switches), plus Scores,
+  Fanfare, Tick, Time!.
+- **Window** — the standard set plus the projector.
+
+B2.3 **The menu is driven by `@FocusedValue`, never by a global.** A command is
+published by the surface that owns it (`.focusedSceneValue`); the menu item is
+`.disabled` when no surface publishes it. That is what makes a greyed-out menu
+item mean something.
+
+B2.4 **A keyboard shortcut is part of the command, not decoration.** Anything a
+host reaches for mid-night — reveal, lock, skip, timer — gets a shortcut, and the
+shortcut is shown on the button's `.help()` so it is discoverable from the
+surface too.
+
+B2.5 **A menu-only command is a design smell.** Menus mirror the surface; they
+are not a hiding place for features that never earned a control.
+
 ## §3 — The game surface (the "player" analog, binding)
 
 3.1 **A game in progress REPLACES the window root** — never an
@@ -339,70 +375,60 @@ absolute** — same as iOS-DESIGN §8–§9.
 views (a Combine timer into a `@MainActor` closure can fault into a
 torn-down view on macOS; `macos-platform-patterns`).
 
-5.6 **R-MAC-CTL-1 — the sticker language is for CONTENT; controls are
-native AppKit.** Cream ground, `chunkyCard` panels, the six pops and the type
-ramp stay (§5.1). But anything the host *operates* — buttons, pickers, steppers,
-toggles, text fields, tables, sidebars — uses the stock SwiftUI/AppKit control
-styles (`.bordered`, `.borderedProminent`, `.menu`, `.segmented`,
-`.roundedBorder`, `Table`, `Form`, `.inspector`), at `.controlSize` appropriate
-to a dense work surface. Do NOT use `ChunkyButtonStyle`/`CompactButtonStyle` on
-a Mac work surface.
+5.6 **R-MAC-CTL-1 — the Tidbits design language applies to EVERY surface,
+Tidbits Live included.** Cream ground, `chunkyCard` panels, `CompactButtonStyle`
+controls, the six pops, real coloured iconography, and the `TypeRamp`. There is
+no "work surface" exemption. The builder and the cockpit are Tidbits screens and
+must look like Tidbits screens.
 
-**Why:** the sticker-book button (heavy black border, hard drop shadow, rounded
-pill) is a ten-foot/touch affordance. On a pointer-and-keyboard Mac it reads as
-a web page embedded in an app — it loses hover, focus ring, default-button
-pulsing, keyboard activation, and Accessibility's control traits, and it sits
-wrong beside the real title bar. Owner directive, 2026-09-01: *"there are lots of
-text and buttons that look foreign within the MacOS and Windows platforms. They
-should be natively designed and polished."*
+**Why (and the correction):** an earlier reading of the owner's 2026-09-01
+directive — *"there are lots of text and buttons that look foreign within the
+MacOS and Windows platforms. They should be natively designed and polished"* and
+*"The consistency of font, button, and drop down menu styles on the mac app is
+incredibly haphazard… It looks like each item was designed independently of one
+another"* — turned it into "Live uses stock AppKit controls." That was backwards.
+Owner, 2026-09-08: *"We were trying to ban the plain looking text controls and
+not the chunky good looking design elements."* The thing that looked foreign was
+the UNDESIGNED control — a bare text button, a default 13pt glyph, an unstyled
+form row — not the sticker language. Following the inverted rule produced exactly
+what it was meant to prevent: *"a mix of default icons without any design, text
+buttons, and hardly any design sensibility at all… screens that seem to simply be
+lists of features and things you can do."*
 
-**How to apply:** the *game* surface (§3) and the *big screen* (§A1.2) are
-content — they keep the sticker language, because there the button IS the
-content and the audience is at a distance. Tidbits Live's builder, cockpit, the
-Records dashboard chrome, and Settings are work surfaces — native controls. When
-in doubt: if a competent Mac developer would reach for `Form`/`Table`/`.bordered`
-here, use it.
+**How to apply:** style every control the host touches. A command is a
+`CompactButtonStyle` button (`prominent: true` for the one primary on the
+surface); a container is a `chunkyCard`; a heading comes off the `TypeRamp`. Do
+NOT ship a bare `Button("Text")`, a naked `Image(systemName:)` at default weight
+and colour, or a `LabeledContent` row with a hairline `TextField`.
 
-5.7 **R-MAC-CTL-2 — a work surface uses ONE system, all the way down.**
-Owner directive, 2026-09-01: *"The consistency of font, button, and drop down
-menu styles on the mac app is incredibly haphazard… It looks like each item was
-designed independently of one another."* That was a fair reading of Tidbits Live:
-§5.6 had been applied to the header and the action bar and nowhere else, leaving
-native controls sitting inside sticker cards under display-ramp headings. Half a
-system reads worse than either whole one.
+5.7 **R-MAC-CTL-2 — designed does not mean un-native. Keep the behaviours,
+style the pixels.** The legitimate half of the old rule: a Mac control owes the
+user hover feedback, a focus ring, keyboard activation, and an Accessibility
+trait. Those come from building on a real `Button` / `Toggle` / `Picker` and
+restyling it — never from drawing a tappable rectangle.
 
-On a Mac work surface (Tidbits Live builder + cockpit, Settings, the Records
-dashboard chrome):
+- Every command is a real `Button` with a `ButtonStyle`, so `.keyboardShortcut`,
+  `.disabled`, focus and VoiceOver all keep working.
+- `CompactButtonStyle` carries a hover state; a Mac control that does not respond
+  to the pointer reads as a picture of a button.
+- Menus are real `Menu`/`Picker`, not a button that opens a custom popover.
+- Every icon-only control gets `.help()` and an accessibility label.
+- **Every command in Live is ALSO a menu item** (§B2) — that is what makes it a
+  desktop-class app, and it is not optional.
 
-**Type — the system ramp, not `Tidbits.TypeRamp`.** `TypeRamp` is the display
-ramp for the GAME and the big screen: heavy, rounded, sized for distance. A
-document editor uses `.largeTitle` / `.title2` / `.headline` / `.body` /
-`.callout` / `.caption`, so it inherits Dynamic Type and matches the labels
-AppKit draws beside it. Never set a raw `.system(size:)` on a work surface.
+**Composition — the part the old rule left out entirely, which is why the screen
+became a feature list.**
 
-**Buttons — exactly three roles, no fourth.**
-`.borderedProminent` for the ONE primary action on the surface;
-`.bordered` for every other command;
-`.borderless` only for an icon-only affordance inside a row (chevron, trash, ⋯).
-No `.toggleStyle(.button)` capsules beside bordered buttons, and no
-`ChunkyButtonStyle`/`CompactButtonStyle` at all (§5.6).
-
-**One accent.** The brand coral marks the primary action and nothing else;
-system blue is left to links, selection and focus, which the OS already owns.
-Two saturated accents in one row read as two apps.
-
-**Containers — a quiet group, not a sticker.** `chunkyCard`'s 2.5px border and
-hard shadow is a touch/ten-foot affordance; wrapped around native controls it is
-the single loudest source of the "designed independently" feeling. Work surfaces
-group with a soft rounded rect (hairline border, no shadow) or `GroupBox`.
-
-**Fields of the same kind are the same size.** The event-name field was 20pt
-semibold directly above a 13pt venue field — same control, same purpose, two
-designs.
-
-**How to apply:** the GAME surface (§3) and the BIG SCREEN (§A1.2) keep the
-sticker language entirely — there the button IS the content and the audience is
-across a room. The line is the surface, not the widget.
+- **Proportion.** A field is as wide as its content deserves: a name field is
+  ~320pt, not the full window. Editors cap their column (~720pt) and centre it.
+- **Hierarchy.** Every screen has ONE L1 title, L2 section headers, and grouped
+  cards. A flat stack of equal-weight rows is the defect.
+- **Iconography.** Round formats, media, and state carry a coloured symbol in a
+  filled circle — the same vocabulary Play uses. Never a default-weight glyph.
+- **One primary.** Exactly one `prominent` control per surface (R-HOME-1's rule,
+  applied to every screen).
+- **Density comes from removing chrome**, not from shrinking type. The cockpit is
+  read at arm's length in a dark room: nothing operational below L5.
 
 ## §A0.4 — Trivia Night and Tidbits Live are TWO PRODUCTS (binding)
 

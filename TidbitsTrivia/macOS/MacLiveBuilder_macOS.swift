@@ -257,65 +257,24 @@ struct LiveBuilderView_macOS: View {
 
     private var editor: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                // The event name was a `.plain` TextField styled as a heading, so
-                // it read as a title and nothing said it was editable (§5.6: a
-                // control the host operates gets the native control).
-
-                // A Form is the Mac idiom for a block of settings, and it also fixes
-                // the clipped placeholders: the labels carry the explanation, so the
-                // fields no longer need placeholder prose wider than the field.
-                Form {
-                    // Every field on this surface is the same control at the same
-                    // size. The event name used to be 20pt semibold directly above
-                    // a 13pt venue field (§5.7).
-                    // The result of the last import/export. It used to sit with the
-                    // Event-file menu at the bottom of the builder, which is below
-                    // the fold at the default window height — a confirmation a host
-                    // has to scroll to find cannot tell them an export worked, and
-                    // a QA assertion on it was really asserting the window size.
-                    if let r = fileReceipt {
-                        Label(r, systemImage: "checkmark.circle.fill")
-                            .font(.callout).foregroundStyle(Tidbits.Palette.mint)
-                    }
-                    TextField("Event name", text: $working.name, prompt: Text("Friday Pub Quiz"))
-                    TextField("Venue", text: $working.venue, prompt: Text("The Anchor"))
-                        .help("Shown on the big screen and printed on the answer sheets")
-                    Picker("Repeats", selection: Binding(get: { working.weekday ?? 0 },
-                                                        set: { working.weekday = $0 == 0 ? nil : $0 })) {
-                        Text("One-off").tag(0)
-                        ForEach(1...7, id: \.self) { wd in
-                            Text("Every \(Calendar.current.weekdaySymbols[wd - 1])").tag(wd)
-                        }
-                    }
-                    if let next = working.nextOccurrence {
-                        LabeledContent("Next night",
-                                       value: next.formatted(.dateTime.weekday(.wide).month().day()))
-                    }
-                    TextField("Sponsor", text: $working.sponsor, prompt: Text("optional"))
-                        .help("Shown as “brought to you by …” in the lobby and between rounds")
-                    TextField("Mailing list", text: $working.leadCaptureURL, prompt: Text("https://…"))
-                        .help("A “join our list” QR is shown at the end of the night")
-                    LabeledContent("Brand accent") {
-                        HStack(spacing: 8) {
-                            ColorPicker("", selection: Binding(
-                                get: { Color(hexString: working.brandHex) ?? Tidbits.Palette.coral },
-                                set: { working.brandHex = $0.hexString }))
-                                .labelsHidden()
-                            if !working.brandHex.isEmpty {
-                                Button("Reset") { working.brandHex = "" }.controlSize(.small)
-                            }
-                            Text("Colors the event title on the big screen")
-                                .font(.footnote).foregroundStyle(.secondary)
-                        }
-                    }
+            VStack(alignment: .leading, spacing: 20) {
+                eventHeader
+                if let r = fileReceipt {
+                    Label(r, systemImage: "checkmark.circle.fill")
+                        .font(Tidbits.TypeRamp.l5)
+                        .foregroundStyle(Tidbits.Palette.ink)
+                        .padding(.horizontal, 14).padding(.vertical, 10)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .quietCard(fill: Tidbits.Palette.mint.opacity(0.28))
                 }
-                .formStyle(.columns)
-                .frame(maxWidth: 520)
+                eventDetailsCard
 
-                Text("Rounds").font(.title2.weight(.semibold)).foregroundStyle(Tidbits.Palette.ink)
+                sectionHeader("Rounds", trailing: working.rounds.isEmpty
+                              ? nil : pluralized(working.rounds.count, "round"))
                 if working.rounds.isEmpty {
-                    Text("No rounds yet — add one below.").font(.callout).foregroundStyle(Tidbits.Palette.inkSoft)
+                    Text("No rounds yet — add one below.")
+                        .font(Tidbits.TypeRamp.l4).foregroundStyle(Tidbits.Palette.inkSoft)
+                        .padding(.vertical, 6)
                 }
                 ForEach(Array(working.rounds.enumerated()), id: \.element.id) { i, round in
                     roundRow(i, round)
@@ -324,33 +283,148 @@ struct LiveBuilderView_macOS: View {
                 addRoundBar
                 balanceMeter
 
-                Divider().overlay(Tidbits.Palette.border).padding(.vertical, 4)
-                // §5.6: native controls on a work surface. Buttons size to content
-                // and wrap, so the row survives a narrow window instead of clipping.
+                sectionHeader("Event file")
                 ViewThatFits(in: .horizontal) {
                     HStack(spacing: 10) { actionButtons }
                     VStack(alignment: .leading, spacing: 10) { actionButtons }
                 }
             }
-            .padding(24)
-            .frame(maxWidth: 720, alignment: .leading)
+            .padding(28)
+            .frame(maxWidth: 760, alignment: .leading)
             .frame(maxWidth: .infinity, alignment: .topLeading)
         }
     }
 
+    /// The screen's identity and its ONE primary action, at the top where a host
+    /// looks first. "Host live" used to be the third of five equal text buttons at
+    /// the very bottom of the scroll (§5.6/§5.7 — one primary, and hierarchy).
+    private var eventHeader: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 16) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(working.name.isEmpty ? "New Event" : working.name)
+                    .font(Tidbits.TypeRamp.l1).foregroundStyle(Tidbits.Palette.ink)
+                    .lineLimit(2).fixedSize(horizontal: false, vertical: true)
+                Text(subtitleLine)
+                    .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+            }
+            Spacer(minLength: 12)
+            Button {
+                store.upsert(working); onHost(working)
+            } label: {
+                Label("Host live", systemImage: "dot.radiowaves.left.and.right")
+            }
+            .buttonStyle(CompactButtonStyle(fill: Tidbits.Palette.coral,
+                                            textColor: .white, prominent: true))
+            .disabled(working.totalQuestions == 0)
+            .keyboardShortcut(.return, modifiers: .command)
+            .help("Open the host cockpit and put this night on the big screen (⌘↩)")
+        }
+    }
+
+    private var subtitleLine: String {
+        var parts: [String] = []
+        if !working.venue.isEmpty { parts.append(working.venue) }
+        parts.append(pluralized(working.rounds.count, "round"))
+        parts.append(pluralized(working.totalQuestions, "question"))
+        return parts.joined(separator: " · ")
+    }
+
+    /// L2 with an optional count on the right — the hierarchy the flat stack lacked.
+    private func sectionHeader(_ title: String, trailing: String? = nil) -> some View {
+        HStack(alignment: .firstTextBaseline) {
+            Text(title).font(Tidbits.TypeRamp.l2).foregroundStyle(Tidbits.Palette.ink)
+            Spacer()
+            if let trailing {
+                Text(trailing).font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+            }
+        }
+        .padding(.top, 4)
+    }
+
+    /// The event's settings, in a card, with fields sized to what they hold —
+    /// a mailing-list URL does not deserve the whole window (§5.7 Proportion).
+    private var eventDetailsCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            field("Event name", help: "Shown on the big screen and the answer sheets") {
+                TextField("", text: $working.name, prompt: Text("Friday Pub Quiz"))
+                    .textFieldStyle(.roundedBorder).frame(width: 320)
+            }
+            field("Venue", help: "Shown on the big screen and printed on the answer sheets") {
+                TextField("", text: $working.venue, prompt: Text("The Anchor"))
+                    .textFieldStyle(.roundedBorder).frame(width: 320)
+            }
+            field("Repeats") {
+                HStack(spacing: 10) {
+                    Picker("", selection: Binding(get: { working.weekday ?? 0 },
+                                                  set: { working.weekday = $0 == 0 ? nil : $0 })) {
+                        Text("One-off").tag(0)
+                        ForEach(1...7, id: \.self) { wd in
+                            Text("Every \(Calendar.current.weekdaySymbols[wd - 1])").tag(wd)
+                        }
+                    }
+                    .labelsHidden().frame(width: 200)
+                    if let next = working.nextOccurrence {
+                        Text("next " + next.formatted(.dateTime.weekday(.abbreviated).month().day()))
+                            .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                    }
+                }
+            }
+            field("Sponsor", help: "Shown as “brought to you by …” in the lobby and between rounds") {
+                TextField("", text: $working.sponsor, prompt: Text("optional"))
+                    .textFieldStyle(.roundedBorder).frame(width: 320)
+            }
+            field("Mailing list", help: "A “join our list” QR is shown at the end of the night") {
+                TextField("", text: $working.leadCaptureURL, prompt: Text("https://…"))
+                    .textFieldStyle(.roundedBorder).frame(width: 320)
+            }
+            field("Brand accent", help: "Colors the event title on the big screen") {
+                HStack(spacing: 10) {
+                    ColorPicker("", selection: Binding(
+                        get: { Color(hexString: working.brandHex) ?? Tidbits.Palette.coral },
+                        set: { working.brandHex = $0.hexString }))
+                        .labelsHidden()
+                    if !working.brandHex.isEmpty {
+                        Button("Reset") { working.brandHex = "" }
+                            .buttonStyle(CompactButtonStyle())
+                    }
+                }
+            }
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .chunkyCard(fill: Tidbits.Palette.bg)
+    }
+
+    /// One labelled row: a fixed label column so every field starts at the same x,
+    /// which is what makes a stack of settings read as a form instead of a list.
+    private func field<Content: View>(_ label: String, help: String? = nil,
+                                      @ViewBuilder content: () -> Content) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 14) {
+            Text(label)
+                .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+                .frame(width: 110, alignment: .trailing)
+            VStack(alignment: .leading, spacing: 3) {
+                content()
+                if let help {
+                    Text(help).font(.footnote).foregroundStyle(Tidbits.Palette.inkSoft.opacity(0.85))
+                }
+            }
+            Spacer(minLength: 0)
+        }
+    }
+
+    /// File plumbing only. "Host live" is the header's primary (§5.7 — one
+    /// prominent control per surface), so nothing down here competes with it and
+    /// every control in the row is the same style at the same size.
     @ViewBuilder private var actionButtons: some View {
         Button("Save event") { store.upsert(working); selectedID = working.id }
+            .buttonStyle(CompactButtonStyle())
+            .keyboardShortcut("s", modifiers: .command)
+            .help("Save this event to your library (⌘S)")
         Button("Preview solo") { store.upsert(working); onPreview(working) }
+            .buttonStyle(CompactButtonStyle())
             .disabled(working.totalQuestions == 0)
-        Button("Host live") { store.upsert(working); onHost(working) }
-            .buttonStyle(.borderedProminent)
-            // macOS-DESIGN §5.7 — ONE accent. Untinted, this took the system
-            // accent (blue by default) and sat in the same view as the coral
-            // "Add round", so the surface showed two different filled accents
-            // and read as two design systems.
-            .tint(Tidbits.Palette.coral)
-            .keyboardShortcut(.return, modifiers: [.command])
-            .disabled(working.totalQuestions == 0)
+            .help("Play the night yourself before you host it")
         Menu {
             Button("Import questions (CSV, GIFT, Aiken)…") { importCSV() }
             Button("Import a SpeedQuizzing folder…") { importQuickQuestions() }
@@ -359,7 +433,7 @@ struct LiveBuilderView_macOS: View {
             Divider()
             Button("Pick-a-category board…") { addBoardRound() }
         } label: { Label("Add round…", systemImage: "plus") }
-            .fixedSize()
+            .menuStyle(.button).buttonStyle(CompactButtonStyle()).fixedSize()
         Menu {
             // The PACKAGE is the distributable form (LIVE-PACKAGE-FORMAT, Decision
             // 059): pictures and clips inside. The bare document is kept for
@@ -378,13 +452,13 @@ struct LiveBuilderView_macOS: View {
             Button("Export for Kahoot (.xlsx)…") { exportKahootSheet() }
                 .disabled(working.totalQuestions == 0)
         } label: { Label("Event file", systemImage: "doc") }
-            .fixedSize()
+            .menuStyle(.button).buttonStyle(CompactButtonStyle()).fixedSize()
 
         Menu {
             Button("Question pack (host)") { LivePrint.questionPack(working) }
             Button("Answer sheet (teams)") { LivePrint.answerSheet(working) }
         } label: { Label("Print…", systemImage: "printer") }
-            .fixedSize()
+            .menuStyle(.button).buttonStyle(CompactButtonStyle()).fixedSize()
             .disabled(working.totalQuestions == 0)
     }
 
@@ -396,31 +470,34 @@ struct LiveBuilderView_macOS: View {
                     else { expandedRounds.insert(round.id) }
                 } label: {
                     Image(systemName: expandedRounds.contains(round.id) ? "chevron.down" : "chevron.right")
-                        .foregroundStyle(Tidbits.Palette.inkSoft)
                 }
-                .buttonStyle(.borderless)
+                .buttonStyle(RoundIconButtonStyle())
                 .help("Show this round's questions")
                 .accessibilityLabel(expandedRounds.contains(round.id) ? "Hide questions" : "Show questions")
                 Image(systemName: round.symbol).foregroundStyle(round.format.accent.legibleForeground)
-                    .frame(width: 34, height: 34).background(Circle().fill(round.format.accent))
-                    .overlay(Circle().strokeBorder(Tidbits.Palette.border.opacity(0.55), lineWidth: 1))
+                    .font(.system(size: 16, weight: .black))
+                    .frame(width: 38, height: 38).background(Circle().fill(round.format.accent))
+                    .overlay(Circle().strokeBorder(Tidbits.Palette.border, lineWidth: 2))
                 VStack(alignment: .leading, spacing: 2) {
                     // The round title was display-only, so a host could never rename
                     // "General Knowledge" to "Round 1 — Warm Up".
                     TextField("Round title", text: Binding(get: { working.rounds[i].title },
                                                            set: { working.rounds[i].title = $0 }))
                         .textFieldStyle(.plain)
-                        .font(.headline).foregroundStyle(Tidbits.Palette.ink).lineLimit(1)
+                        .font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.ink).lineLimit(1)
                     Text("\(round.format.title) · \(TriviaCategory.named(round.categoryID).name) · " + (round.questions.count == 1 ? "1 question" : "\(round.questions.count) questions"))
-                        .font(.callout).foregroundStyle(Tidbits.Palette.inkSoft).lineLimit(1)
+                        .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft).lineLimit(1)
                 }
                 Spacer()
                 Button { move(i, up: true) } label: { Image(systemName: "chevron.up") }
-                    .buttonStyle(.borderless).foregroundStyle(.secondary).disabled(i == 0)
+                    .buttonStyle(RoundIconButtonStyle()).disabled(i == 0)
+                    .help("Move this round earlier (⌘⌥↑)").accessibilityLabel("Move round up")
                 Button { move(i, up: false) } label: { Image(systemName: "chevron.down") }
-                    .buttonStyle(.borderless).foregroundStyle(.secondary).disabled(i == working.rounds.count - 1)
+                    .buttonStyle(RoundIconButtonStyle()).disabled(i == working.rounds.count - 1)
+                    .help("Move this round later (⌘⌥↓)").accessibilityLabel("Move round down")
                 Button(role: .destructive) { working.rounds.remove(at: i) } label: { Image(systemName: "trash") }
-                    .buttonStyle(.borderless).foregroundStyle(.secondary)
+                    .buttonStyle(RoundIconButtonStyle(tint: Tidbits.Palette.coral))
+                    .help("Delete this round").accessibilityLabel("Delete round")
             }
             // Per-round settings live WITH the round, not in its title bar. Crowding
             // them into the header pushed the subtitle into an ellipsis and put
@@ -430,7 +507,7 @@ struct LiveBuilderView_macOS: View {
                     Button("No timer") { working.rounds[i].timerSeconds = nil }
                     ForEach([30, 45, 60, 90, 120], id: \.self) { s in Button("\(s)s") { working.rounds[i].timerSeconds = s } }
                 } label: { Label(round.timerSeconds.map { "\($0)s" } ?? "Timer", systemImage: "timer") }
-                    .menuStyle(.button).buttonStyle(.bordered).fixedSize()
+                    .menuStyle(.button).buttonStyle(CompactButtonStyle()).fixedSize()
                 roundFlagChip("Wager", systemImage: "dollarsign.circle",   // Wave A: wager round
                               isOn: Binding(get: { working.rounds[i].isWager ?? false },
                                             set: { working.rounds[i].isWager = $0 ? true : nil }),
@@ -452,7 +529,7 @@ struct LiveBuilderView_macOS: View {
                 } label: {
                     Text(round.letter.map { "Letter \($0)" } ?? "Letter")
                 }
-                .menuStyle(.button).buttonStyle(.bordered).fixedSize()
+                .menuStyle(.button).buttonStyle(CompactButtonStyle()).fixedSize()
                 .help("First-letter round — every answer in it begins with the same letter")
                 Spacer()
             }
@@ -477,10 +554,10 @@ struct LiveBuilderView_macOS: View {
             TextField("Host note (shown in the cockpit)", text: Binding(   // Wave A — its own line, full width
                 get: { working.rounds[i].hostNote ?? "" },
                 set: { working.rounds[i].hostNote = $0.isEmpty ? nil : $0 }))
-                .textFieldStyle(.roundedBorder).font(.callout)
+                .textFieldStyle(.roundedBorder).font(Tidbits.TypeRamp.l5)
             if expandedRounds.contains(round.id) { questionList(i, round) }
         }
-        .padding(14).quietCard()
+        .padding(16).chunkyCard(fill: Tidbits.Palette.bg)
         .draggable(round.id.uuidString)   // Wave A: drag-to-reorder (chevrons remain as a fallback)
         .dropDestination(for: String.self) { items, _ in
             guard let idStr = items.first,
@@ -575,15 +652,15 @@ struct LiveBuilderView_macOS: View {
             Button { isOn.wrappedValue = false } label: {
                 Label(title, systemImage: systemImage + ".fill")
             }
-            .buttonStyle(.borderedProminent).tint(Tidbits.Palette.coral)
-            .font(.callout).fixedSize().help(help)
+            .buttonStyle(CompactButtonStyle(fill: Tidbits.Palette.coral, textColor: .white))
+            .fixedSize().help(help)
             .accessibilityAddTraits(.isSelected)
         } else {
             Button { isOn.wrappedValue = true } label: {
                 Label(title, systemImage: systemImage)
             }
-            .buttonStyle(.bordered)
-            .font(.callout).fixedSize().help(help)
+            .buttonStyle(CompactButtonStyle())
+            .fixedSize().help(help)
         }
     }
 
@@ -772,14 +849,15 @@ struct LiveBuilderView_macOS: View {
                     busy = false
                 }
             } label: { Label("Add round", systemImage: "plus.circle.fill") }
-            .buttonStyle(.borderedProminent).tint(Tidbits.Palette.coral)
+            .buttonStyle(CompactButtonStyle(fill: Tidbits.Palette.coral, textColor: .white))
+            .keyboardShortcut("r", modifiers: .command)
             .disabled(busy)
+            .help("Draw a round from the Tidbits question bank (⌘R)")
             if busy { ProgressView().controlSize(.small) }
         }
-        .padding(12)
-        .background(RoundedRectangle(cornerRadius: 12).fill(Tidbits.Palette.bgDeep))
-        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
-            .strokeBorder(Tidbits.Palette.border.opacity(0.55), lineWidth: 1))
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .chunkyCard(fill: Tidbits.Palette.bgDeep)
     }
 
     /// Wave A: a read-only composition meter — shows the host the night's difficulty curve

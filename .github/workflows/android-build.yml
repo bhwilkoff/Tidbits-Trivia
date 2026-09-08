@@ -99,3 +99,11 @@ jobs:
           # Play shows these in the listing's "What's new". The action wants a
           # DIRECTORY of `whatsnew-<locale>` files, not a string.
           whatsNewDirectory: android/play-notes
+          # MANAGED PUBLISHING IS ON for this app, permanently (confirmed shipping
+          # vc88, and again on vc97). With it on, the Play API *cannot* send an edit
+          # for review: edits.commit fails outright with "Changes cannot be sent for
+          # review automatically". This flag is the only commit that works. The
+          # release then lands on the track staged, and a human presses "Submit N
+          # changes" in the Console — that click is unavoidable while the toggle is
+          # on, so never read a green run here as "submitted to Play".
+          changesNotSentForReview: true

@@ -109,6 +109,10 @@ public partial class LiveCockpitView : UserControl
 
     /// Rebuild the options with a live per-option answer-distribution bar. The
     /// correct option is tinted green on reveal.
+    /// The tally column's measured width, so a vote fills a real proportion of the
+    /// row rather than a guessed 500px. NaN until the panel has been laid out once.
+    private double TallyWidth => OptionsTally?.Bounds.Width ?? double.NaN;
+
     private void RefreshTally()
     {
         OptionsTally.Children.Clear();
@@ -125,19 +129,41 @@ public partial class LiveCockpitView : UserControl
         int max = dist.Count > 0 ? Math.Max(1, dist.Max()) : 1;
         bool reveal = host.Revealed;
 
+        // Row height by option COUNT, not a fixed 34. A four-option question left
+        // ~170px of dead space between the last answer and the controls on a real
+        // 1080-wide window; a taller row fills it AND is easier to read across a
+        // room, which is the whole job of this panel. Deterministic rather than
+        // measured — a height that depends on a laid-out viewport changes between
+        // the first and second layout pass and makes the capture non-reproducible.
+        double rowH = q.Options.Count <= 4 ? 64 : q.Options.Count <= 6 ? 52 : 42;
+
         for (int i = 0; i < q.Options.Count; i++)
         {
             int count = i < dist.Count ? dist[i] : 0;
             bool correct = reveal && i == q.CorrectIndex;
 
-            var bar = new Border
+            // A full-width TRACK with the vote filling it, not a pill sized to the
+            // vote. At zero votes the old bar collapsed to its 60px MinWidth, so the
+            // panel had no presence and the body row's slack showed as a void in
+            // the middle of the cockpit — visible on the real box at 1080 wide.
+            // A track also shows the SCALE: a host can see 3-of-10 as a third of a
+            // row rather than having to read the number.
+            var track = new Border
             {
-                Height = 34, CornerRadius = new Avalonia.CornerRadius(8),
+                Height = rowH, CornerRadius = new Avalonia.CornerRadius(8),
                 Background = new Avalonia.Media.SolidColorBrush(
-                    Avalonia.Media.Color.Parse(correct ? "#3320A060" : "#14808080")),
+                    Avalonia.Media.Color.Parse("#0F808080")),
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
+            };
+            var fill = new Border
+            {
+                Height = rowH, CornerRadius = new Avalonia.CornerRadius(8),
+                Background = new Avalonia.Media.SolidColorBrush(
+                    Avalonia.Media.Color.Parse(correct ? "#3320A060" : "#22808080")),
                 HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left,
-                Width = 60 + (500.0 * count / max),
-                MinWidth = 60,
+                // A zero-vote row still shows a sliver, so the row reads as a bar at
+                // 0 rather than as an empty box.
+                Width = 6 + (double.IsNaN(TallyWidth) ? 460 : TallyWidth - 6) * count / max,
             };
             var label = new TextBlock
             {
@@ -153,8 +179,9 @@ public partial class LiveCockpitView : UserControl
             over.Children.Add(label);
             Grid.SetColumn(countTb, 1);
             over.Children.Add(countTb);
-            var stack = new Panel();          // the bar sits behind the label + count
-            stack.Children.Add(bar);
+            var stack = new Panel();          // the fill sits behind the label + count
+            stack.Children.Add(track);
+            stack.Children.Add(fill);
             stack.Children.Add(over);
             OptionsTally.Children.Add(stack);
         }

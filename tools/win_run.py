@@ -55,10 +55,20 @@ SCENARIOS = {
                     {"expect_any": r"Leaderboard|standings|season|venue|rank|No standings"}),
     "live":        (dict(TIDBITS_TAB="live"),
                     {"expect_any": r"Live|Host|room|code|join|SCAN"}),
-    # NOTE: Windows reads only TIDBITS_CLUB, TIDBITS_LIVE_CODE,
-    # TIDBITS_MARATHON_LEN and the auth vars, plus TIDBITS_TAB as of this change.
-    # Apple's TIDBITS_SETTINGS / _PAYWALL / _AUTOPLAY / _LIVE_HOST have no Windows
-    # equivalent yet, so scenarios for them are NOT listed here — a scenario whose
+    # The HOST COCKPIT. `TIDBITS_LIVE_HOST=<preset>` has existed in
+    # Services/LaunchHooks.cs all along — the note that used to sit here said it
+    # did not, and I repeated that in a commit message before checking the code.
+    # A stale comment about coverage is worse than none: it is why the one surface
+    # a host stares at all night had never been photographed on real Windows.
+    "cockpit":     (dict(TIDBITS_TAB="live", TIDBITS_LIVE_HOST="Quick Night"),
+                    # Cockpit-SPECIFIC words. "Live" and "Host" appear on the Live
+                    # setup page too, so asserting those would pass on the screen
+                    # this scenario exists to prove we got PAST.
+                    {"expect_any": r"Join code|Reveal|Standings|players|answered"}),
+    # NOTE: Windows reads TIDBITS_CLUB, TIDBITS_LIVE_CODE, TIDBITS_MARATHON_LEN,
+    # TIDBITS_TAB, TIDBITS_LIVE_HOST, TIDBITS_NIGHT_HOST and TIDBITS_LIVE_JOIN.
+    # Apple's TIDBITS_SETTINGS / _PAYWALL / _AUTOPLAY still have no Windows
+    # equivalent, so scenarios for them are NOT listed here — a scenario whose
     # hook does not exist grades whatever screen happened to be showing, which is
     # how the Mac "leaderboard" tab came to be reported as a defect.
     "club":        (dict(TIDBITS_TAB="play", TIDBITS_CLUB="1"),

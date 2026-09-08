@@ -32,7 +32,7 @@
         </Grid>
 
         <!-- Body: question + standings -->
-        <Grid Grid.Row="1" ColumnDefinitions="*,300" Margin="0,16">
+        <Grid Grid.Row="1" ColumnDefinitions="*,260" Margin="0,16">
             <ScrollViewer>
                 <StackPanel Spacing="12">
                     <TextBlock Text="{Binding Host.RoundTitle}" Classes="caption" FontWeight="SemiBold"/>
@@ -75,7 +75,15 @@
                     <Border IsVisible="{Binding HasRoundNote}" Background="#22FFC93C" CornerRadius="8" Padding="10,7">
                         <TextBlock Text="{Binding CurrentRoundNote, StringFormat='📝 {0}'}" TextWrapping="Wrap" FontWeight="SemiBold"/>
                     </Border>
-                    <TextBlock Text="{Binding Host.Current.Prompt}" Classes="view-heading" TextWrapping="Wrap"
+                    <!-- `section-header`, NOT `view-heading`. Promoting this to the page
+                         title size was my own regression: measured on the real box, a
+                         long question then filled the whole body and pushed every
+                         answer option off the bottom, so the host could not see what
+                         the room was choosing between. The hierarchy problem was
+                         never that the question was too small — it was that the join
+                         code was drawn BIGGER than it (FontSize 26 Black). Shrinking
+                         the code fixed it; enlarging the question broke the screen. -->
+                    <TextBlock Text="{Binding Host.Current.Prompt}" Classes="section-header" TextWrapping="Wrap"
                                IsVisible="{Binding !ShowBoardScreen}"/>
                     <!-- The authored clip for THIS question (audio/video round). Either a
                          working control or an explicit "unavailable" line — never a play

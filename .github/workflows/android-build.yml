@@ -107,3 +107,25 @@ jobs:
           # changes" in the Console — that click is unavoidable while the toggle is
           # on, so never read a green run here as "submitted to Play".
           changesNotSentForReview: true
+
+      # The Windows workflow learned this the hard way and says it out loud; so
+      # should this one. `changesNotSentForReview` makes the action exit 0 while
+      # the release is only STAGED, which is the exact "green run that shipped
+      # nothing" shape that cost days on the Microsoft Store.
+      - name: Say plainly whether anything shipped
+        if: (startsWith(github.ref, 'refs/tags/v') && endsWith(github.ref, '-android')) || github.event_name == 'workflow_dispatch'
+        run: |
+          TRACK="${{ github.event.inputs.track || 'internal' }}"
+          {
+            echo "## Play: $TRACK"
+            echo ""
+            echo "The AAB is uploaded and the edit is committed, but **managed publishing is ON**"
+            echo "for this app, so the Play API cannot send it for review. The release is STAGED."
+            echo ""
+            echo "To finish: Play Console -> Publishing overview -> **Send changes for review**."
+            echo ""
+            echo "To make this automatic forever: Play Console -> Publishing overview ->"
+            echo "turn **Managed publishing OFF**. There is no API for that toggle — it is the"
+            echo "only reason this is not a one-command ship."
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::warning title=Staged, not submitted::Managed publishing is on - the release is staged on '$TRACK' and needs Send changes for review."

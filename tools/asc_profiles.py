@@ -23,15 +23,35 @@ def token():
     return jwt.encode({"iss": iss, "iat": now, "exp": now + 600, "aud": "appstoreconnect-v1"},
                       key, algorithm="ES256", headers={"kid": kid, "typ": "JWT"})
 
-def api(method, path, body=None):
-    data = json.dumps(body).encode() if body else None
-    req = urllib.request.Request("https://api.appstoreconnect.apple.com" + path, data=data,
-            headers={"Authorization": f"Bearer {token()}", "Content-Type": "application/json"}, method=method)
-    try:
-        r = urllib.request.urlopen(req, timeout=30)
-        return r.status, (json.load(r) if r.length != 0 else {})
-    except urllib.error.HTTPError as e:
-        raise SystemExit(f"ASC API {method} {path} -> {e.code}: {e.read().decode()[:400]}")
+def api(method, path, body=None, attempts=4):
+    """One ASC call, retrying Apple's 5xx.
+
+    `POST /v1/profiles` answers 500 UNEXPECTED_ERROR intermittently, and it did it
+    twice in a row on the 1.9.0 ship — once on the iMessage extension and once on
+    tvOS, in both cases on the call immediately after DELETEing a profile of the
+    same name. Apple appears to answer a not-yet-propagated duplicate name with a
+    500 rather than a 409, so the create races its own delete. Their message says
+    only "contact us", which reads as fatal and is not.
+
+    Retried on 5xx and 429 only. A 4xx is OUR mistake and still fails at once —
+    retrying a bad request just hides it behind four identical errors.
+    """
+    for attempt in range(1, attempts + 1):
+        data = json.dumps(body).encode() if body else None
+        req = urllib.request.Request("https://api.appstoreconnect.apple.com" + path, data=data,
+                headers={"Authorization": f"Bearer {token()}", "Content-Type": "application/json"}, method=method)
+        try:
+            r = urllib.request.urlopen(req, timeout=30)
+            return r.status, (json.load(r) if r.length != 0 else {})
+        except urllib.error.HTTPError as e:
+            detail = e.read().decode()[:400]
+            if (e.code >= 500 or e.code == 429) and attempt < attempts:
+                wait = 3 * (2 ** (attempt - 1))       # 3s, 6s, 12s
+                print(f"  ASC {method} {path} -> {e.code}; retry {attempt}/{attempts - 1} in {wait}s",
+                      file=sys.stderr)
+                time.sleep(wait)
+                continue
+            raise SystemExit(f"ASC API {method} {path} -> {e.code}: {detail}")
 
 PLATFORM_KEY = {"ios": "IOS", "tvos": "IOS", "mac": "MAC_OS"}
 
@@ -71,9 +91,16 @@ def main():
         name = f"AW {platform} {ident}"
         # Delete any existing profile with this name (a stale one can't be reused if the cert changed).
         _, d = api("GET", f"/v1/profiles?filter[name]={urllib.parse.quote(name)}&limit=20")
+        deleted = False
         for x in d.get("data", []):
             if x["attributes"]["name"] == name:
                 api("DELETE", f"/v1/profiles/{x['id']}")
+                deleted = True
+        # Let the delete settle. Creating the same NAME straight after removing it is
+        # what the 500 above correlates with; a second here is cheaper than a failed
+        # ship, and it only costs anything when a profile actually existed.
+        if deleted:
+            time.sleep(1.5)
         bid = bundle_resource_id(ident, platform)
         body = {"data": {"type": "profiles",
                          "attributes": {"name": name, "profileType": ptype},

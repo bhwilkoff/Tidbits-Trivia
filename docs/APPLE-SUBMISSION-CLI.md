@@ -80,6 +80,24 @@ editable version.
 
 ---
 
+## A fifth trap: a FAILED run still burns the build number
+
+`appstore-build.yml -f platform=all` archives and uploads ios, then tvos, then
+mac. iOS uploads FIRST, so if a later platform fails — a signing 500, a compile
+error only that platform hits — the run is red but iOS already went to Apple and
+that `CURRENT_PROJECT_VERSION` is spent. The next attempt then dies with:
+
+```
+error: exportArchive The provided entity includes an attribute with a value that
+has already been used. The bundle version must be higher than the previously
+uploaded version: '129'
+```
+
+Shipping 1.9.0 hit this twice, at 128 and again at 129. So: **bump
+`CURRENT_PROJECT_VERSION` before every retry of a failed all-platform run**, and
+do not read a red run as "nothing reached Apple". The marketing version does not
+move — only the build number.
+
 ## The four traps
 
 Every one of these built and archived **green** and failed only at upload or submit.

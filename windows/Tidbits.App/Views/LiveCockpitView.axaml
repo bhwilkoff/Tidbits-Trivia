@@ -8,8 +8,17 @@
         <!-- Header: join info + roster status + QR -->
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
             <StackPanel Spacing="3" VerticalAlignment="Center">
-                <TextBlock Text="{Binding Host.Code, StringFormat='Join code: {0}'}" FontSize="26" FontWeight="Black" Foreground="#FF5C35"/>
-                <TextBlock Text="tidbitstrivia.com/live" Classes="caption"/>
+                <!-- §5.8: the HERO is the content. The join code was FontSize 26 Black
+                     while the question — the thing the host reads out loud — was the
+                     smaller `section-header`. The code is reference information; it
+                     belongs in the room's eyeline on the projector, not shouting on
+                     the host's. -->
+                <TextBlock Text="{Binding Host.Title}" Classes="view-heading"/>
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="{Binding Host.Code, StringFormat='Join code {0}'}"
+                               Classes="body-strong" Foreground="#FF5C35"/>
+                    <TextBlock Text="tidbitstrivia.com/live" Classes="caption" VerticalAlignment="Center"/>
+                </StackPanel>
                 <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,6,0,0">
                     <TextBlock Text="{Binding Host.PlayerCount}" FontWeight="Bold"/>
                     <TextBlock Text="players ·" Opacity="0.7"/>
@@ -23,7 +32,7 @@
         </Grid>
 
         <!-- Body: question + standings -->
-        <Grid Grid.Row="1" ColumnDefinitions="*,220" Margin="0,16">
+        <Grid Grid.Row="1" ColumnDefinitions="*,300" Margin="0,16">
             <ScrollViewer>
                 <StackPanel Spacing="12">
                     <TextBlock Text="{Binding Host.RoundTitle}" Classes="caption" FontWeight="SemiBold"/>
@@ -66,7 +75,7 @@
                     <Border IsVisible="{Binding HasRoundNote}" Background="#22FFC93C" CornerRadius="8" Padding="10,7">
                         <TextBlock Text="{Binding CurrentRoundNote, StringFormat='📝 {0}'}" TextWrapping="Wrap" FontWeight="SemiBold"/>
                     </Border>
-                    <TextBlock Text="{Binding Host.Current.Prompt}" Classes="section-header" TextWrapping="Wrap"
+                    <TextBlock Text="{Binding Host.Current.Prompt}" Classes="view-heading" TextWrapping="Wrap"
                                IsVisible="{Binding !ShowBoardScreen}"/>
                     <!-- The authored clip for THIS question (audio/video round). Either a
                          working control or an explicit "unavailable" line — never a play
@@ -141,52 +150,91 @@
             </Border>
         </WrapPanel>
 
-        <!-- Controls: transport, then night management. Two WrapPanels rather than one row
-             so the groups stay legible while each reflows independently (§6.3b). -->
-        <StackPanel Grid.Row="3" Spacing="2">
-            <WrapPanel>
-                <Button Content="‹ Back" Click="OnBack" Padding="14,10" IsEnabled="{Binding CanGoBack}" Margin="0,0,10,6"/>
-                <Button Content="Reveal" Click="OnReveal" IsVisible="{Binding !ShowBoardScreen}" Classes="accent" Padding="20,10" FontWeight="Bold" Margin="0,0,10,6"/>
-                <Button Content="Next" Click="OnNext" IsVisible="{Binding !ShowBoardScreen}" Padding="20,10" Margin="0,0,10,6"/>
-                <Button Content="Skip ›" Click="OnSkip" IsVisible="{Binding !ShowBoardScreen}" Padding="14,10" Margin="0,0,10,6"/>
-                <Button Content="Lock" Click="OnLock" IsVisible="{Binding !ShowBoardScreen}" Padding="20,10" Margin="0,0,10,6"/>
-                <!-- G6: pair a phone as a remote. The PIN shows HERE, on the
-                     laptop, and nowhere else — the room code is on the projector,
-                     so it authorises nothing. Unpaired, the host refuses every
-                     command rather than accepting any. -->
-                <Button Content="{Binding RemoteLabel}" Click="OnToggleRemote" Padding="14,10" Margin="0,0,10,6"
-                        ToolTip.Tip="Pair your phone to reveal and advance while you walk the room"/>
-                <ToggleButton Content="Standings on big screen" IsChecked="{Binding HoldStandings, Mode=OneWay}" Click="OnToggleHold" Padding="14,10" Margin="0,0,10,6"/>
+        <!-- WINDOWS-DESIGN §5.8: a Fluent CommandBar, not rows of identical buttons.
+             This was NINETEEN default buttons across three WrapPanels with one
+             accent, which is what the owner meant by a screen that "seems to simply
+             be a list of features and things you can do". The five a host presses
+             all night are primary commands with labelled icons; everything else is
+             in the ⋯ overflow, which is where Windows puts it. -->
+        <ui:FACommandBar Grid.Row="3" DefaultLabelPosition="Right"
+                         HorizontalAlignment="Left" Margin="0,4,0,0">
+            <ui:FACommandBar.PrimaryCommands>
+                <ui:FACommandBarButton Label="Back" Click="OnBack" IsEnabled="{Binding CanGoBack}"
+                                       ToolTip.Tip="Back to the previous question">
+                    <ui:FACommandBarButton.IconSource>
+                        <ui:FASymbolIconSource Symbol="Previous"/>
+                    </ui:FACommandBarButton.IconSource>
+                </ui:FACommandBarButton>
+                <!-- The ONE command a host hits all night is accented. A Fluent
+                     CommandBar draws every command alike, which is right for a
+                     toolbar and wrong for a live show where "which one is Reveal"
+                     has to be answerable at a glance in a dark room. -->
+                <ui:FACommandBarButton Label="Reveal" Click="OnReveal" IsVisible="{Binding !ShowBoardScreen}"
+                                       Foreground="#FF5C35" FontWeight="SemiBold"
+                                       ToolTip.Tip="Show the answer on the big screen (Space)">
+                    <ui:FACommandBarButton.IconSource>
+                        <ui:FASymbolIconSource Symbol="View"/>
+                    </ui:FACommandBarButton.IconSource>
+                </ui:FACommandBarButton>
+                <ui:FACommandBarButton Label="Next" Click="OnNext" IsVisible="{Binding !ShowBoardScreen}"
+                                       ToolTip.Tip="Move the room on">
+                    <ui:FACommandBarButton.IconSource>
+                        <ui:FASymbolIconSource Symbol="Next"/>
+                    </ui:FACommandBarButton.IconSource>
+                </ui:FACommandBarButton>
+                <ui:FACommandBarButton Label="Lock" Click="OnLock" IsVisible="{Binding !ShowBoardScreen}"
+                                       ToolTip.Tip="Pencils down — stop accepting answers (Ctrl+L)">
+                    <ui:FACommandBarButton.IconSource>
+                        <ui:FASymbolIconSource Symbol="Clear"/>
+                    </ui:FACommandBarButton.IconSource>
+                </ui:FACommandBarButton>
+                <ui:FACommandBarButton Label="Skip" Click="OnSkip" IsVisible="{Binding !ShowBoardScreen}"
+                                       ToolTip.Tip="Skip this question — no score">
+                    <ui:FACommandBarButton.IconSource>
+                        <ui:FASymbolIconSource Symbol="Forward"/>
+                    </ui:FACommandBarButton.IconSource>
+                </ui:FACommandBarButton>
+                <ui:FACommandBarSeparator/>
                 <!-- G1: the buzz panel. Only once somebody HAS buzzed — a control
                      naming nobody is noise in a cockpit driven live. -->
-                <TextBlock Text="{Binding BuzzLabel}" IsVisible="{Binding HasBuzz}" FontWeight="Bold"
-                           VerticalAlignment="Center" Margin="0,0,10,6" Foreground="#FF5C35"/>
-                <Button Content="Correct" IsVisible="{Binding HasBuzz}" Click="OnBuzzCorrect"
-                        Classes="accent" Padding="16,10" Margin="0,0,10,6"/>
-                <Button Content="Wrong" IsVisible="{Binding HasBuzz}" Click="OnBuzzWrong"
-                        Padding="16,10" Margin="0,0,10,6"
-                        ToolTip.Tip="Rule this team out and reopen the buzzer to the rest"/>
-                <Button Content="{Binding PenaltyLabel}" Click="OnCyclePenalty" Padding="14,10" Margin="0,0,10,6"
-                        ToolTip.Tip="Deduct points for a wrong answer. Teams that do not answer are never penalised."/>
-                <Button Click="OnAudio" Padding="14,10" Margin="0,0,10,6"
-                        AutomationProperties.Name="Audio">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <ui:FASymbolIcon Symbol="Volume" FontSize="16" VerticalAlignment="Center"/>
-                        <TextBlock Text="Audio" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
-            </WrapPanel>
-            <WrapPanel>
-                <Button Content="Break tie" Click="OnBreakTie" Padding="16,10" IsVisible="{Binding HasTie}"
-                        Classes="accent" Margin="0,0,10,6"/>
-                <Button Content="Merge teams" Click="OnMergeTeams" Padding="16,10" Margin="0,0,10,6"/>
-                <Button Content="Remove team" Click="OnRemoveTeam" Padding="16,10" Margin="0,0,10,6"/>
-                <Button Content="Export CSV" Click="OnExportCsv" Padding="16,10" Margin="0,0,10,6"/>
-                <Button Content="Print standings" Click="OnPrintStandings" Padding="16,10" Margin="0,0,10,6"/>
-                <Button Content="Question pack" Click="OnPrintPack" Padding="16,10" Margin="0,0,10,6"/>
-                <Button Content="Show on projector" Click="OnProjector" Padding="16,10" Margin="0,0,10,6"/>
-                <Button Content="End night" Click="OnClose" Padding="16,10" Margin="0,0,10,6"/>
-            </WrapPanel>
-        </StackPanel>
+                <ui:FACommandBarButton Label="Correct" IsVisible="{Binding HasBuzz}" Click="OnBuzzCorrect"
+                                       ToolTip.Tip="{Binding BuzzLabel}">
+                    <ui:FACommandBarButton.IconSource>
+                        <ui:FASymbolIconSource Symbol="Accept"/>
+                    </ui:FACommandBarButton.IconSource>
+                </ui:FACommandBarButton>
+                <ui:FACommandBarButton Label="Wrong" IsVisible="{Binding HasBuzz}" Click="OnBuzzWrong"
+                                       ToolTip.Tip="Rule this team out and reopen the buzzer to the rest">
+                    <ui:FACommandBarButton.IconSource>
+                        <ui:FASymbolIconSource Symbol="Cancel"/>
+                    </ui:FACommandBarButton.IconSource>
+                </ui:FACommandBarButton>
+                <ui:FACommandBarButton Label="Break tie" IsVisible="{Binding HasTie}" Click="OnBreakTie">
+                    <ui:FACommandBarButton.IconSource>
+                        <ui:FASymbolIconSource Symbol="Shuffle"/>
+                    </ui:FACommandBarButton.IconSource>
+                </ui:FACommandBarButton>
+            </ui:FACommandBar.PrimaryCommands>
+
+            <ui:FACommandBar.SecondaryCommands>
+                <ui:FACommandBarButton Label="{Binding RemoteLabel}" Click="OnToggleRemote"
+                                       ToolTip.Tip="Pair your phone to reveal and advance while you walk the room"/>
+                <ui:FACommandBarToggleButton Label="Standings on big screen"
+                                             IsChecked="{Binding HoldStandings, Mode=OneWay}" Click="OnToggleHold"/>
+                <ui:FACommandBarButton Label="Show on projector" Click="OnProjector"/>
+                <ui:FACommandBarButton Label="Audio output" Click="OnAudio"/>
+                <ui:FACommandBarSeparator/>
+                <ui:FACommandBarButton Label="{Binding PenaltyLabel}" Click="OnCyclePenalty"
+                                       ToolTip.Tip="Deduct points for a wrong answer. Teams that do not answer are never penalised."/>
+                <ui:FACommandBarButton Label="Merge teams" Click="OnMergeTeams"/>
+                <ui:FACommandBarButton Label="Remove team" Click="OnRemoveTeam"/>
+                <ui:FACommandBarSeparator/>
+                <ui:FACommandBarButton Label="Export standings as CSV" Click="OnExportCsv"/>
+                <ui:FACommandBarButton Label="Print standings" Click="OnPrintStandings"/>
+                <ui:FACommandBarButton Label="Print question pack" Click="OnPrintPack"/>
+                <ui:FACommandBarSeparator/>
+                <ui:FACommandBarButton Label="End the night" Click="OnClose"/>
+            </ui:FACommandBar.SecondaryCommands>
+        </ui:FACommandBar>
     </Grid>
 </UserControl>

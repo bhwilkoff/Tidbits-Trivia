@@ -7,6 +7,40 @@
 > `docs/ROADMAP.md`, `docs/DATA-CONTRACT.md`. Detailed per-round history is in
 > `ARCHIVE.md`.
 
+## Live loop punch list (audited against the CODE on both hosts, 2026-09-09)
+
+Ranked by (value to a host or a player's learning/joy) × (small first). Each
+was grepped on both stacks; the premium backlog's July statuses were stale
+in both directions (see the last paragraph).
+
+1. **Wikipedia source / "learn more" on reveal** — the corpus carries
+   `sourceTitle`/`sourceURL` but the live wire never sends them; no joiner or
+   projector names where a fact came from. Charter-critical. Mac ✗ Windows ✗. S.
+2. **Mid-game question editing from the cockpit** — editors exist, reachable
+   only from the builder. Mac ✗ Windows ✗. M.
+3. **Retroactive "mark correct for all"** — accepting a typed variant awards
+   one team. Mac ✗ Windows ✗. S.
+4. **Avoid-repeats** — no "last used" / dedupe warning across nights. S.
+5. **Duplicate an event / clone last week + recurring auto-spawn** — recurring
+   is display-only. S/M.
+6. **Numeric tie-break engine on Windows** — Windows is a pick-the-winner
+   dialog; the Mac collects guesses vs a target. S.
+7. **Per-question timer & points overrides** (round-level only today). M.
+8. **Per-question host note** (per-round only today). S.
+9. **"How did you know that?"** on macOS and after a live night. S.
+10. **Answer-level data export** (standings only today). S.
+11. **Final-wager tie-break** (both partial). M.
+12. **Drag-to-reorder on Windows** (up/down buttons). S.
+13. **Poll / no-answer question** (no authoring path). M.
+14. **Music-bed auto-duck** under a clip. S.
+15. **Per-event / per-venue analytics.** L.
+
+Backlog rows that were wrong: §F "tie-break engine ✅" is FALSE on Windows;
+and answer-lock timer, CSV import, balance meter, SFX board, audio/video
+rounds + PA device, music beds, on-screen countdown, story on reveal,
+first-letter round, kick/merge/moderation, focus signal, lead capture +
+sponsor + brand, standings CSV are all SHIPPED on both despite ⬜/🔨.
+
 ## Current state (2026-09-09j) — the board and video slides join both projector sims; the Windows cockpit shows the picture
 
 **Did:** the Mac offline projector set gained the pick-a-category BOARD (a

@@ -9,6 +9,7 @@ namespace Tidbits.HeadlessTests;
 /// LIVE-PACKAGE-FORMAT §7.1 — the golden package both stacks must open. The Mac
 /// side runs the same assertions against the same bytes
 /// (`TidbitsTriviaTests/LivePackageGoldenTests.swift`).
+[Collection("LiveMediaStore")]
 public class LivePackageGoldenTest : IDisposable
 {
     private const string PngId = "e06f876bfc434e1656878a0db85b9a13";

@@ -9,6 +9,7 @@ using Xunit;
 /// The JPEG maker is stubbed: SkiaSharp's natives are not loadable on the Mac
 /// head's test process, and the SPLIT rules are what this pins — the real
 /// encoder is exercised by the projector/cockpit snapshots on windows-latest.
+[Collection("LiveMediaStore")]
 public class LivePictureNodeTest
 {
     private static byte[] Bytes(int n, byte seed) { var b = new byte[n]; for (int i = 0; i < n; i++) b[i] = (byte)(seed + i); return b; }

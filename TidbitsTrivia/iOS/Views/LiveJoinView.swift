@@ -256,6 +256,11 @@ struct LiveJoinView: View {
                 .frame(maxWidth: .infinity, maxHeight: 240)
                 .clipShape(RoundedRectangle(cornerRadius: 14))
             }
+            // Decision 060: the host's clip, offered here too. Keyed on the
+            // question + url so a new question gets a fresh player.
+            if let m = p.media {
+                LiveClipView(media: m, code: client.code).id(p.qid + m.url)
+            }
             // 24pt is a phone size read at arm's length; a 12.9" iPad is held
             // further away and usually shared, so the clue carries at 34.
             Text(p.prompt)

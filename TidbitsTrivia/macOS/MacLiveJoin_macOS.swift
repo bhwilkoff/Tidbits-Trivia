@@ -170,6 +170,9 @@ struct MacLiveJoinView_macOS: View {
                 .foregroundStyle(Tidbits.Palette.ink)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 640)
+            if let m = pub.media {   // Decision 060: the host's clip, offered on a Mac joiner too
+                LiveClipView(media: m, code: client.code).id(pub.qid + m.url).frame(maxWidth: 640)
+            }
 
             // Two columns: a Mac window is wide, and a single stacked column of four
             // options wastes the measure the platform actually has.

@@ -15,6 +15,7 @@
 		03FB04C17EDA45D30AC911F4 /* QuestionProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B9A918292A8BD08D5EEAFA6 /* QuestionProvider.swift */; };
 		045C8A23CC31B3DBE5725CE1 /* LivePlayerClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5F5C716CAEEA33AF734ED56 /* LivePlayerClient.swift */; };
 		04EF040204788DE4625DAF9D /* ScreenshotQuestions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A1E96A2E9C52465F028B999 /* ScreenshotQuestions.swift */; };
+		054352D05F4FD5BF70690B79 /* LiveMediaCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76EA97BD0C1F06700A2A22B9 /* LiveMediaCache.swift */; };
 		057A58BF61DB4274C23EF48E /* BotOpponent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DC6C8D9CA86356D95539EA4 /* BotOpponent.swift */; };
 		0608CF492FA14F91750D1B69 /* SettingsView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4534F27C4206B9640778460 /* SettingsView_tvOS.swift */; };
 		063A735FDB19BA8567164F51 /* GameContainerView_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BE19D7C519BC6A5BAFC9A2E /* GameContainerView_macOS.swift */; };
@@ -155,6 +156,7 @@
 		7BF179B08362F060D9661D93 /* LiveKahootSheetTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D26CFCFF3F7D4A5BD0398D7 /* LiveKahootSheetTests.swift */; };
 		7E457DE11CD8D820A503C8EB /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 3C266F600F75F40E459D2276 /* PrivacyInfo.xcprivacy */; };
 		80FE712A2D805B40834439C2 /* DelightfulQuizGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 161521EA893E91207502AEC2 /* DelightfulQuizGenerator.swift */; };
+		81549AD530C5CE7162246A77 /* LiveClipView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CA8462FA2120F8BF68BBF03 /* LiveClipView.swift */; };
 		81DC50B3FC38C327FBBD31D2 /* MacLiveLibrary_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = C08E9A757230F2C390FADC87 /* MacLiveLibrary_macOS.swift */; };
 		820B047479D40955420CBB7A /* ExpeditionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA61D1D2032AFB58899B45EC /* ExpeditionsView.swift */; };
 		822891D7170B156CB45A51CF /* NightHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61CF6B570C9884F8DF3645CD /* NightHost.swift */; };
@@ -167,6 +169,7 @@
 		872E4C7608D1C10EE7E97E55 /* TemplateEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = E48988FC967EF362B69C2FB5 /* TemplateEngine.swift */; };
 		87D2A2B94B2CE47C7ADB8348 /* GameView_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5C9D9266531ECD27156562D /* GameView_tvOS.swift */; };
 		8821E8F3C0AAF0F3DF606FEA /* NightHostView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D490C60AA88C077AEEE3BDB3 /* NightHostView.swift */; };
+		88FF20BAE755293B852992C0 /* LiveClipView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CA8462FA2120F8BF68BBF03 /* LiveClipView.swift */; };
 		8932DF2335A76D131E937272 /* NightLiveContainer_tvOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF5CC9559B7356814F9FE1D4 /* NightLiveContainer_tvOS.swift */; };
 		89556D2FB04AAF2269B0D9C4 /* MacLiveEventFile_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EEB0B7A61D81B85793EBCBC /* MacLiveEventFile_macOS.swift */; };
 		8C513BA7DC2B2E89705D3968 /* MacLiveKahootSheet_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B96841C555F02C588A2A843 /* MacLiveKahootSheet_macOS.swift */; };
@@ -258,6 +261,7 @@
 		C1DE024CBF206CDDE8F875FB /* LiveRoom.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BB92F967027E59F005CB86D /* LiveRoom.swift */; };
 		C2723A2D30FE2EB6BE44304D /* LinkWallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C89A5FB7DDBE19EDD404584 /* LinkWallView.swift */; };
 		C51B41911E3DD0730E12BA25 /* DeepLinkParseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 935F34F61316C466D3D8142F /* DeepLinkParseTests.swift */; };
+		C543652F4FA61B9A0CEC4236 /* LiveMediaCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76EA97BD0C1F06700A2A22B9 /* LiveMediaCache.swift */; };
 		C5BFD93BA4DD9B0643FBBA93 /* LiveLibraryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C3D475E01EA84F4BB1E91D6 /* LiveLibraryTests.swift */; };
 		C5D34E16C6CAD80BCE7BD4D7 /* Marathon.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACBB11A0D029110390E8A92A /* Marathon.swift */; };
 		C7945BEDE8CABFED83A6B1C4 /* MessagesAppearanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3E807AAB9780367FFC5699F /* MessagesAppearanceTests.swift */; };
@@ -450,6 +454,7 @@
 		75304BB2E262AD6046E5D812 /* PushNotifications.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushNotifications.swift; sourceTree = "<group>"; };
 		75E9CEE06FB100ABD34F703F /* RoundViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoundViews.swift; sourceTree = "<group>"; };
 		7633D27702A6874F7D8993DF /* RecordsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordsStore.swift; sourceTree = "<group>"; };
+		76EA97BD0C1F06700A2A22B9 /* LiveMediaCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveMediaCache.swift; sourceTree = "<group>"; };
 		770E593F52F5DB070F1B2591 /* DailyBoardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyBoardView.swift; sourceTree = "<group>"; };
 		77D70EE17557065B82216D8B /* SharedItemView_tvOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedItemView_tvOS.swift; sourceTree = "<group>"; };
 		79A5D10D9EBC4D0950DE13CF /* order.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = order.json; sourceTree = "<group>"; };
@@ -490,6 +495,7 @@
 		9C0424A46E0A825EA0A8EFE2 /* DifficultyOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DifficultyOverlay.swift; sourceTree = "<group>"; };
 		9C85EFA6D9DAE294C88AC8C8 /* KnowledgeAtlasView_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnowledgeAtlasView_macOS.swift; sourceTree = "<group>"; };
 		9C89A5FB7DDBE19EDD404584 /* LinkWallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkWallView.swift; sourceTree = "<group>"; };
+		9CA8462FA2120F8BF68BBF03 /* LiveClipView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveClipView.swift; sourceTree = "<group>"; };
 		9EC36128FD96E62B320AD497 /* MacLiveClips_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacLiveClips_macOS.swift; sourceTree = "<group>"; };
 		A0B1B4D9BA126D3D5E585A00 /* NightClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightClient.swift; sourceTree = "<group>"; };
 		A13715FE3E9410D538D055E2 /* MacLiveMediaStore_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacLiveMediaStore_macOS.swift; sourceTree = "<group>"; };
@@ -575,7 +581,7 @@
 		FD70222B5EE4C4145E4D1F84 /* NightSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NightSetupView.swift; sourceTree = "<group>"; };
 		FDDD2AC4DB9C421C5849B8F6 /* GameView_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView_macOS.swift; sourceTree = "<group>"; };
 		FFC46D4CE8D03186C064C759 /* Question.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Question.swift; sourceTree = "<group>"; };
-		"TEMP_E3414A31-AA74-4B6E-BC07-ABD780F33CEA" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
+		"TEMP_46EEF9F1-AA78-452D-898E-416C753F2F8F" /* AppVersion.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppVersion.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -690,6 +696,7 @@
 			isa = PBXGroup;
 			children = (
 				56D864166DCE99D76AD6FD72 /* DailyBoardContent.swift */,
+				9CA8462FA2120F8BF68BBF03 /* LiveClipView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -925,6 +932,7 @@
 				7B6C1AB3D2D712041E246473 /* GameKitTransport.swift */,
 				B87EE4E2D9F044824CAA43F0 /* Keychain.swift */,
 				2A6236DA6CAC7451F433FB4B /* LiveHostNet.swift */,
+				76EA97BD0C1F06700A2A22B9 /* LiveMediaCache.swift */,
 				2AD18ED3C40BFC78AFD8FB0C /* LiveNight.swift */,
 				536B676053104B866A65587A /* LiveNightHost.swift */,
 				E5F5C716CAEEA33AF734ED56 /* LivePlayerClient.swift */,
@@ -1015,10 +1023,10 @@
 			path = TidbitsTrivia;
 			sourceTree = "<group>";
 		};
-		"TEMP_DF3FB0C5-E6BE-4776-AC03-79DF00381DE5" /* Tidbits-Trivia */ = {
+		"TEMP_E292E747-D7A7-426E-8172-08B37AF37DD3" /* Tidbits-Trivia */ = {
 			isa = PBXGroup;
 			children = (
-				"TEMP_E3414A31-AA74-4B6E-BC07-ABD780F33CEA" /* AppVersion.xcconfig */,
+				"TEMP_46EEF9F1-AA78-452D-898E-416C753F2F8F" /* AppVersion.xcconfig */,
 			);
 			path = "Tidbits-Trivia";
 			sourceTree = "<group>";
@@ -1278,12 +1286,14 @@
 				479680B28148A533C7ADEFBD /* LiveBoardTests.swift in Sources */,
 				5371E2BE6633B980261483DC /* LiveCSVImportTests.swift in Sources */,
 				B59E8CFBD1FBDEE4064FA0DE /* LiveClipTests.swift in Sources */,
+				88FF20BAE755293B852992C0 /* LiveClipView.swift in Sources */,
 				A478F1F2C6EAB396BFAC8230 /* LiveEventFileGoldenTests.swift in Sources */,
 				DD2CA3B51CDF571AC686C272 /* LiveHostNet.swift in Sources */,
 				7BF179B08362F060D9661D93 /* LiveKahootSheetTests.swift in Sources */,
 				98660AF3B751C09A2A864E1B /* LiveLetterRound.swift in Sources */,
 				A126066D193E3656B4DAA22B /* LiveLetterRoundTests.swift in Sources */,
 				C5BFD93BA4DD9B0643FBBA93 /* LiveLibraryTests.swift in Sources */,
+				054352D05F4FD5BF70690B79 /* LiveMediaCache.swift in Sources */,
 				50BD886C7B0BD04B7457889D /* LiveMediaWireTests.swift in Sources */,
 				A932712C398115691CFEABA8 /* LiveNight.swift in Sources */,
 				F3A4B7E171B4665A63062BBA /* LiveNightHost.swift in Sources */,
@@ -1422,10 +1432,12 @@
 				13F99AC4E453D3A6059DE7D1 /* LinkWallView_macOS.swift in Sources */,
 				E07DEEEDDFBA2E548F8CDD65 /* LinkWallView_tvOS.swift in Sources */,
 				8F4C3E404B2C2EEC17BD71BF /* LiveBoard.swift in Sources */,
+				81549AD530C5CE7162246A77 /* LiveClipView.swift in Sources */,
 				5B838192AE2C410B06306AAD /* LiveHostNet.swift in Sources */,
 				B72DA2D151B3156C162753C6 /* LiveJoinView.swift in Sources */,
 				A4E1EFF1535F0273FCC53974 /* LiveJoinView_tvOS.swift in Sources */,
 				CBAB7BF8FFDC2A144A785C4C /* LiveLetterRound.swift in Sources */,
+				C543652F4FA61B9A0CEC4236 /* LiveMediaCache.swift in Sources */,
 				02F153022C6FAD01DE261FB5 /* LiveNight.swift in Sources */,
 				D7B57E08EBBAC3A1B5739CE8 /* LiveNightHost.swift in Sources */,
 				087E3615408F7F05DD5FD733 /* LivePlayerClient.swift in Sources */,
@@ -1624,7 +1636,7 @@
 		};
 		296659EF0549868336801823 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_E3414A31-AA74-4B6E-BC07-ABD780F33CEA" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_46EEF9F1-AA78-452D-898E-416C753F2F8F" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -1789,7 +1801,7 @@
 		};
 		E6F711EEEE2896F84FE9AB98 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_E3414A31-AA74-4B6E-BC07-ABD780F33CEA" /* AppVersion.xcconfig */;
+			baseConfigurationReference = "TEMP_46EEF9F1-AA78-452D-898E-416C753F2F8F" /* AppVersion.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;

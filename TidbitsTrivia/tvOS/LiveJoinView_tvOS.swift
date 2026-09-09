@@ -195,6 +195,9 @@ struct TVLivePlayerView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: 300).clipShape(RoundedRectangle(cornerRadius: 16))
             }
+            if let m = p.media {   // Decision 060: the host's clip, offered on the TV too
+                LiveClipView(media: m, code: client.code).id(p.qid + m.url)
+            }
             Text(p.prompt).font(.system(size: 48, weight: .black, design: .rounded)).foregroundStyle(.white)
                 .fixedSize(horizontal: false, vertical: true)
             if let d = p.deadline, !revealed { tvCountdown(d) }              // Wave A: on-screen timer

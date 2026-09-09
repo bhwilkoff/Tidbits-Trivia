@@ -71,3 +71,15 @@ struct LiveMediaWireTests {
         #expect(LiveRoom.mediaMaxBytes == 3_000_000)
     }
 }
+
+@Suite("Live media cache")
+struct LiveMediaCacheTests {
+    @Test("the file name carries the container the player sniffs")
+    func extensions() {
+        #expect(LiveMediaCache.fileExtension(mime: "audio/mp4", kind: "audio") == "m4a")
+        #expect(LiveMediaCache.fileExtension(mime: "audio/mpeg", kind: "audio") == "mp3")
+        #expect(LiveMediaCache.fileExtension(mime: "video/mp4", kind: "video") == "mp4")
+        #expect(LiveMediaCache.fileExtension(mime: "", kind: "video") == "mp4")
+        #expect(LiveMediaCache.fileExtension(mime: "application/octet-stream", kind: "audio") == "m4a")
+    }
+}

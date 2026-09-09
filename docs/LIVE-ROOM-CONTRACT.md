@@ -67,9 +67,9 @@ no confusable chars) shown on the big screen for players to enter.
 to the clip" / "Watch the clip", with the name and size). It fetches a `room:`
 node ONCE — when the host's `startedAt` appears or the player taps, whichever
 first — decodes `b64` into a blob, and plays it in a native `<audio>`/`<video>`
-(AVPlayer / Media3). Autoplay is attempted only on the host's cue; a browser or
-OS that refuses leaves the control on screen. The element survives `pub`
-re-renders (recreating it restarts the clip). `url` is never `tidbits-media:`.
+(AVPlayer / Media3). Nothing plays until the player taps; the host's `startedAt`
+readies the clip and positions it at the room's offset. The element survives
+`pub` re-renders (recreating it restarts the clip). `url` is never `tidbits-media:`.
 `qid = "r{roundIndex}q{questionIndex}"` is stable across reveal/advance so answers
 key cleanly. **Every question type is playable** — only the field(s) for the current
 `format` are set. **Nothing that could leak the answer is ever published** (correct

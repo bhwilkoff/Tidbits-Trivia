@@ -74,7 +74,7 @@ enum LiveRoom {
     /// once-written `live/{code}/media/{id}` node (`RoomMedia`) that the joiner
     /// fetches ONCE and caches by id. Never a `tidbits-media:` reference: a phone
     /// cannot open the host's package.
-    struct Media: Codable, Equatable {
+    nonisolated struct Media: Codable, Equatable {
         var kind: String          // "audio" | "video"
         var url: String           // https://… | room:<id>
         var mime: String          // audio/mpeg, video/mp4, …
@@ -91,7 +91,7 @@ enum LiveRoom {
     /// venue Wi-Fi can fetch it and the RTDB free tier never meters it. The host
     /// writes it BEFORE publishing the `pub` that references it, and only once per
     /// room per id.
-    struct RoomMedia: Codable, Equatable {
+    nonisolated struct RoomMedia: Codable, Equatable {
         var kind: String
         var mime: String
         var bytes: Int

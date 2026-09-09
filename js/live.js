@@ -462,11 +462,9 @@ function answerHTML(p, revealed) {
 // Decision 060: the clip a phone is offered. One element per (qid, url), kept
 // across draws; the bytes of a `room:` clip are fetched ONCE, and only when the
 // host presses Play or this player taps — an offer costs the room nothing until
-// it is taken up. Autoplay is attempted only on the host's cue and only when the
-// browser allows it (a prior tap on this page); otherwise the control is shown.
+// it is taken up. Nothing plays until the player taps: the host's cue readies the
+// clip and positions it where the room is (A8.8).
 const M = { key: null, el: null, objectURL: null, loading: false, error: '', startedFor: null };
-let gestured = false;
-document.addEventListener('pointerdown', () => { gestured = true; }, { capture: true, passive: true });
 
 function mountMedia() {
   const slot = document.getElementById('live-media');
@@ -489,7 +487,8 @@ function mountMedia() {
 function mediaShellHTML(m) {
   const size = m.bytes ? ` · ${m.bytes >= 1e6 ? (m.bytes / 1e6).toFixed(1) + ' MB' : Math.max(1, Math.round(m.bytes / 1000)) + ' KB'}` : '';
   const what = m.kind === 'video' ? 'Watch the clip' : 'Listen to the clip';
-  return `<button class="live-mediabtn" data-media-play>${m.kind === 'video' ? '▶' : '♪'} ${what}<small>${esc(m.name || '')}${size}</small></button>`;
+  const sub = m.startedAt ? 'Playing in the room now — tap to hear it here' : `${esc(m.name || '')}${size}`;
+  return `<button class="live-mediabtn" data-media-play>${m.kind === 'video' ? '▶' : '♪'} ${what}<small>${sub}</small></button>`;
 }
 
 function resetMedia() {
@@ -522,19 +521,24 @@ async function loadMedia(m, byTap) {
   const el = document.createElement(m.kind === 'video' ? 'video' : 'audio');
   el.controls = true; el.preload = 'auto'; el.src = src;
   if (m.kind === 'video') { el.playsInline = true; el.setAttribute('playsinline', ''); }
+  el.addEventListener('loadedmetadata', () => seekToRoom(el, m), { once: true });
   M.el.innerHTML = ''; M.el.appendChild(el);
   M.loading = false;
   startMedia(el, m, byTap);
 }
 
 function startMedia(el, m, byTap) {
-  // Sync to the room: the host's cue plus how long ago it was.
-  if (m.startedAt && !byTap) {
-    const offset = (Date.now() - m.startedAt) / 1000;
-    if (offset > 1 && Number.isFinite(el.duration) && offset < el.duration) el.currentTime = offset;
-  }
-  if (!byTap && !gestured) return;   // the browser will refuse; the control is on screen
+  if (!byTap) return;   // the host's cue readies the clip; only a tap plays it
+  seekToRoom(el, m);
   const r = el.play(); if (r && r.catch) r.catch(() => { /* the control stays on screen */ });
+}
+
+// Where the room is in the clip, if the host has started it — so a late tap
+// joins the song mid-way instead of starting it over.
+function seekToRoom(el, m) {
+  if (!m.startedAt) return;
+  const offset = (Date.now() - m.startedAt) / 1000;
+  if (offset > 1 && Number.isFinite(el.duration) && offset < el.duration - 0.5) el.currentTime = offset;
 }
 
 function injectStyles() {

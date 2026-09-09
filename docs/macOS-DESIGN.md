@@ -224,9 +224,11 @@ incredible bar-trivia big screen in the world. Binding rules:
 - **A8.8 — What the room hears, the phones can hear.** A clip attached to a
   question is OFFERED to every joiner (Decision 060): by link when it has
   one, otherwise as a once-written room node under the 3 MB cap. It is an
-  offer, never a forced autoplay — phones are in pockets and a bar is loud —
-  so the joiner shows a Play control and joins in on the host's cue where the
-  platform allows. The cockpit tells the host, under the Play button, whether
+  offer, never a forced autoplay — phones are in pockets and a bar is loud,
+  and forty phones starting a song a beat apart is not a feature — so nothing
+  plays until the player taps. The host's Play readies the clip on every phone
+  (the tap is instant) and positions it where the room is, so a late tap joins
+  the song mid-way. The cockpit tells the host, under the Play button, whether
   the phones have it ("On phones too · 1.2 MB", "On phones by link", or why
   not). A clip that cannot go to phones is never silent: the line says so,
   and the PA carries it as before. (Owner, 2026-09-09: "video questions or

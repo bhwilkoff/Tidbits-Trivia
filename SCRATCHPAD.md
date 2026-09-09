@@ -7,6 +7,34 @@
 > `docs/ROADMAP.md`, `docs/DATA-CONTRACT.md`. Detailed per-round history is in
 > `ARCHIVE.md`.
 
+## Current state (2026-09-09b) — clips on the Apple joiners (real iPhone 12 + real Apple TV)
+
+**Did:** the joiner half of Decision 060 on iOS, tvOS and the Mac joiner from
+ONE shared view — `Core/Views/LiveClipView.swift` (offer card → AVPlayer;
+`VideoPlayer` for video, a play/pause row for audio; ten-foot sizes and
+`.borderless` on tvOS) over `Core/Networking/LiveMediaCache.swift` (a `room:`
+node fetched once into Caches, keyed by id; https links pass through).
+**The rule tightened (A8.8):** nothing plays until the player taps, on every
+platform — the host's Play readies the clip everywhere and positions it at
+the room's offset; the web's gesture-gated autoplay went the same way.
+`TIDBITS_LIVE_TAPCLIP=1` takes the offer up from a harness. 319 tests.
+
+**Verified on the glass, real devices only (owner: "You should not be using
+simulators. You have access to real devices"):** the iPhone 12 joined the
+Mac's room, showed "Listen to the clip · tune · 36 KB", and played it
+("tune · Playing"); the Apple TV joined and played the same clip. The Mac
+transcoded a 2.6 MB WAV to a 195 KB m4a. The Mac joiner is build-verified
+(the same view). 1.9.2 (132).
+
+**Owner, mid-tick:** "literally everything overlaps on the projector/display
+surface … will need to be completely fixed in order to actually use the app
+for Tidbits Live." → the next tick photographs every projector state at
+1280x720 and 1920x1080 and fixes the layout before anything else.
+
+**State left:** Android joiner ⏳ (and Android's `parsePub` never reads
+`letter` or `board`, so those two rounds are silently plain on Android — fix
+in the same tick); Windows host + joiner ⏳ (3.53).
+
 ## Current state (2026-09-09) — Decision 060: clips reach the phones (Mac host + web joiner)
 
 **Asked (loop brief):** keep iterating the three Tidbits Live surfaces — Event

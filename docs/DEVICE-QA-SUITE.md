@@ -352,3 +352,9 @@ there is no regression baseline at all.
   `TIDBITS_LIVE_DIAG=1` appends what the launch hooks saw to
   `%LOCALAPPDATA%/TidbitsTrivia/launch-hooks.log` — read it with `winbox.ps`
   (which now decodes with `errors="replace"`, because PowerShell writes cp1252).
+- Both hosts (Mac + Windows box): `TIDBITS_LIVE_EDIT=<prompt>` rewrites the
+  question on screen at `TIDBITS_LIVE_EDIT_AT` s (default 8) the way the
+  cockpit's Edit does (A3.6); `TIDBITS_LIVE_ACCEPT_ALL=<text>` reveals if needed
+  at `TIDBITS_LIVE_ACCEPT_AT` s (default 30) and rules that typed answer correct
+  for everyone (A3.3). The Mac's `TIDBITS_LIVE_HOST_FILE` bare name resolves in
+  the sandbox container's Documents — a `/tmp` path is silently not hosted.

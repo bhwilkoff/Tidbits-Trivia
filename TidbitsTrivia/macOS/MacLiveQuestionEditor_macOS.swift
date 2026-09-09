@@ -10,7 +10,7 @@ import UniformTypeIdentifiers
 /// it. Everything the host can legitimately change lives here; `id`,
 /// `sourceTitle`/`sourceURL` and `templateID` are carried through untouched so
 /// an edited corpus question still points at its provenance.
-struct QuestionDraft {
+struct QuestionDraft: Identifiable {
     var id: String
     var prompt: String
     var options: [String]        // always exactly 4 slots in the editor
@@ -49,6 +49,18 @@ struct QuestionDraft {
     }
     var audioClipName: String? = nil
     var videoClipName: String? = nil
+
+    /// The display name of a round's clip at `qi` (store-original name when it
+    /// was copied in, else the file name), or nil when there is none.
+    static func clipName(_ marks: [Data]?, _ qi: Int) -> String? {
+        guard let marks, marks.indices.contains(qi), !marks[qi].isEmpty,
+              let url = try? LiveClip.resolve(marks[qi]) else { return nil }
+        if let id = LiveMediaStore.id(forStoreFile: url) {
+            return LiveMediaStore.info(id)?.originalName ?? url.lastPathComponent
+        }
+        url.stopAccessingSecurityScopedResource()
+        return url.lastPathComponent
+    }
     var audioChange: ClipChange = .keep
     var videoChange: ClipChange = .keep
 

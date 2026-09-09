@@ -79,6 +79,15 @@ public static class LaunchHooks
     /// TIDBITS_LIVE_TAPCLIP=1 — a joiner takes up a clip offer without a click.
     public static bool LiveTapClip => Flag("TIDBITS_LIVE_TAPCLIP");
 
+    /// TIDBITS_LIVE_EDIT=<prompt> (at TIDBITS_LIVE_EDIT_AT s, default 8) — rewrite
+    /// the question on screen mid-night, the way the cockpit's Edit does (3.55).
+    public static string? LiveEdit => Env("TIDBITS_LIVE_EDIT");
+    public static double LiveEditAt => double.TryParse(Env("TIDBITS_LIVE_EDIT_AT"), out var v) ? v : 8;
+    /// TIDBITS_LIVE_ACCEPT_ALL=<text> (at TIDBITS_LIVE_ACCEPT_AT s, default 30) —
+    /// reveal if needed, then rule that typed answer correct for everyone (3.21).
+    public static string? LiveAcceptAll => Env("TIDBITS_LIVE_ACCEPT_ALL");
+    public static double LiveAcceptAt => double.TryParse(Env("TIDBITS_LIVE_ACCEPT_AT"), out var v) ? v : 30;
+
     /// TIDBITS_LIVE_PROJECTOR=1 — open the projector window as soon as the cockpit
     /// is up, so the big screen can be photographed without a click.
     public static bool LiveProjector => Flag("TIDBITS_LIVE_PROJECTOR");

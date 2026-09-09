@@ -125,7 +125,13 @@ A3.3 **Free-text answers get a review lane with spelling leniency.** Typed
 answers are grouped (identical → one row) and the host one-taps
 mark-correct/incorrect; near-misses are surfaced for a judgment call. Auto-
 matching (alias-based, reusing the corpus's accepted-answer sets) proposes,
-the host disposes.
+the host disposes. **A ruling is for the room, not for one table** (2026-09-09):
+the accept control is a split button — accept THIS team, or "Accept “<typed>”
+from everyone", which adds the spelling to the question's accepted list (every
+row that typed it turns ✓ and stays that way; a saved pack carries it) and pays
+each team the scorer had refused for it exactly once (team-deduped like the
+reveal scorer). A row the host accepted by hand reads "Accepted" and never
+offers the button again.
 
 A3.4 **Live answer tally.** The host sees submissions arrive in real time
 (counts per option, who's answered) before revealing.
@@ -133,6 +139,17 @@ A3.4 **Live answer tally.** The host sees submissions arrive in real time
 A3.5 **A built-in tie-break engine** (the field punts this). On a tie, the
 host triggers a Nearest-Wins numeric prompt (or sudden-death question)
 resolved live; the engine breaks the tie and updates standings.
+
+A3.6 **The question on screen can be fixed without leaving the night**
+(2026-09-09). A typo the room is reading, a wrong option, a missing accepted
+spelling, a clip that should have been attached: "Edit question" on the
+cockpit's question card (and Show → Edit This Question…, ⌘E) opens the SAME
+editor the builder uses on the night's own copy of the question. Save
+republishes at once — every phone and the projector show the change — the
+display shuffles are redone only when the shuffled content changed (a typo fix
+never re-deals an ordering the room is halfway through), and a clip change
+re-offers the media (Decision 060). Print/export carry the fix. Not on a board
+slide (there is no current question to edit).
 
 ## §A4 — Player join & teams (serverless)
 

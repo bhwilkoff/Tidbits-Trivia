@@ -28,6 +28,10 @@ public sealed class LiveNightHost : ObservableObject
     public string? ErrorText { get; private set; }
 
     public int PointsPerCorrect { get; set; } = 1;
+    /// Teams the host accepted by hand on this question (3.21): the row says
+    /// "Accepted" instead of offering the button again, and "accept from
+    /// everyone" never pays one of them twice. Cleared per question.
+    public HashSet<string> ManuallyAccepted { get; } = new();
 
     /// Points DEDUCTED for a wrong answer, 0 = off (the default, and what every
     /// night so far has played under). QuizXpress offers this and pub hosts use it
@@ -329,15 +333,89 @@ public sealed class LiveNightHost : ObservableObject
                 .Where(kv => kv.Value.Text is not null)
                 .Select(kv => new TextReviewRow(
                     kv.Key, names.GetValueOrDefault(kv.Key, "?"), kv.Value.Text!,
-                    Store.GameEngine.MatchesAccepted(kv.Value.Text!, acc)))
+                    Store.GameEngine.MatchesAccepted(kv.Value.Text!, acc), ManuallyAccepted.Contains(kv.Key)))
                 .OrderBy(r => r.AutoCorrect).ThenBy(r => r.Name, System.StringComparer.Ordinal)
                 .ToList();
         }
     }
 
     /// Accept a team's free-text answer the auto-scorer rejected — award the
-    /// per-correct points.
-    public Task AcceptText(string uid) => AdjustScore(uid, PointsPerCorrect);
+    /// per-correct points, once.
+    public async Task AcceptText(string uid)
+    {
+        if (string.IsNullOrEmpty(uid) || !ManuallyAccepted.Add(uid)) return;
+        await AdjustScore(uid, PointsPerCorrect);
+    }
+
+    /// "Accept this answer from everyone" (3.21): the ruling joins the question's
+    /// accepted list — every row that typed it turns correct and stays that way,
+    /// and the pack carries the fix if it is saved — and each team the scorer had
+    /// refused for that answer is paid once. Same team-dedup as the reveal scorer.
+    public async Task AcceptTextForAll(string text)
+    {
+        if (Current is not { Accepted: { } acc } q) return;
+        var t = text.Trim();
+        if (t.Length == 0) return;
+        var answers = Net.AnswersSnapshot();
+        var scorable = LiveTeamRoster.ScorableUids(Net.Members(), answers.ToDictionary(kv => kv.Key, kv => kv.Value.OrderKey));
+        var uids = TypedAlike(t, answers.Where(kv => scorable.Contains(kv.Key)).ToDictionary(kv => kv.Key, kv => kv.Value), acc, ManuallyAccepted);
+        if (!Store.GameEngine.MatchesAccepted(t, acc)) Questions[Index] = q with { Accepted = acc.Append(t).ToList() };
+        foreach (var uid in uids) { ManuallyAccepted.Add(uid); await AdjustScore(uid, PointsPerCorrect); }
+        Notify();
+    }
+
+    /// The uids whose typed answer IS `text` under the scorer's own normalisation
+    /// and whom the scorer did not credit; `already` are the manual accepts so far.
+    /// Mirrors Swift's LiveNightHost.typedAlike.
+    public static IReadOnlyList<string> TypedAlike(string text, IReadOnlyDictionary<string, LiveRoom.Answer> answers,
+                                                   IReadOnlyList<string> accepted, IReadOnlySet<string> already)
+    {
+        var n = Store.GameEngine.NormalizeType(text);
+        if (n.Length == 0) return System.Array.Empty<string>();
+        return answers
+            .Where(kv => kv.Value.Text is { } t && !already.Contains(kv.Key)
+                         && Store.GameEngine.NormalizeType(t) == n && !Store.GameEngine.MatchesAccepted(t, accepted))
+            .Select(kv => kv.Key).OrderBy(u => u, System.StringComparer.Ordinal).ToList();
+    }
+
+    /// The round format of the question on screen (for the editor dialog).
+    public GameMode CurrentKind => RoundIndex < _plan.Rounds.Count ? _plan.Rounds[RoundIndex].Kind : GameMode.Classic;
+
+    /// 3.55 — a mid-night edit of the question on screen. The night's own copy
+    /// changes (print/export carry the fix), the display shuffles are redone only
+    /// when the shuffled content changed (a typo fix must not re-deal an ordering
+    /// the room is halfway through), and the room is republished.
+    public async Task ReplaceCurrent(Question q)
+    {
+        if (Current is not { } old) return;
+        var next = q with { RoundIndex = old.RoundIndex };
+        Questions[Index] = next;
+        if (!SameList(old.Ordering, next.Ordering))
+            _shuffledOrder = next.Ordering is { } o ? QueryHelpers.Shuffle(o.ToList()) : new();
+        if (!SameList(old.Matching?.Values, next.Matching?.Values) || !SameList(old.Matching?.Keys, next.Matching?.Keys))
+            _shuffledValues = next.Matching is { } m ? QueryHelpers.Shuffle(m.Values.ToList()) : new();
+        await PublishCurrent();
+        Notify();
+    }
+
+    private static bool SameList(IReadOnlyList<string>? a, IReadOnlyList<string>? b) =>
+        a is null ? b is null : b is not null && a.SequenceEqual(b);
+
+    /// Put an editor's clip decision onto the current question's seat in its
+    /// round (the clip list is per-round, index-parallel), and re-offer the media.
+    public async Task SetCurrentClip(string? path)
+    {
+        if (Current?.RoundIndex is not int ri || ri < 0) return;
+        int pos = Questions.Take(Index).Count(x => x.RoundIndex == ri);
+        var rounds = AuthoredClips.Select(r => r.ToList()).ToList();
+        while (rounds.Count <= ri) rounds.Add(new List<string>());
+        while (rounds[ri].Count <= pos) rounds[ri].Add("");
+        rounds[ri][pos] = path ?? "";
+        AuthoredClips = rounds;
+        CurrentMedia = null; MediaNote = null; MediaStartedAt = null;
+        await PublishCurrent();
+        Notify();
+    }
 
     /// Teams sharing the top score (a tie for first) — else empty (3.24).
     public IReadOnlyList<LiveHostNet.Joined> TiedLeaders => Ties(Standings);
@@ -532,6 +610,7 @@ public sealed class LiveNightHost : ObservableObject
     private void PrepareQuestion()
     {
         CurrentMedia = null; MediaNote = null; MediaStartedAt = null; CurrentPicture = null;   // Decision 060: offered when in place
+        ManuallyAccepted.Clear();
         _shuffledOrder = Current?.Ordering is { } o ? QueryHelpers.Shuffle(o.ToList()) : new();
         _shuffledValues = Current?.Matching is { } m ? QueryHelpers.Shuffle(m.Values.ToList()) : new();
     }
@@ -784,4 +863,4 @@ public sealed class LiveNightHost : ObservableObject
 }
 
 /// One team's free-text submission under review (3.21).
-public sealed record TextReviewRow(string Uid, string Name, string Text, bool AutoCorrect);
+public sealed record TextReviewRow(string Uid, string Name, string Text, bool AutoCorrect, bool Accepted = false);

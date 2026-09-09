@@ -216,6 +216,12 @@
                         <ui:FASymbolIconSource Symbol="Forward"/>
                     </ui:FACommandBarButton.IconSource>
                 </ui:FACommandBarButton>
+                <ui:FACommandBarButton Label="Edit question" Click="OnEditQuestion" IsVisible="{Binding !ShowBoardScreen}"
+                                       ToolTip.Tip="Fix this question for the room — wording, options, answer, clip. Every phone and the projector see the change at once.">
+                    <ui:FACommandBarButton.IconSource>
+                        <ui:FASymbolIconSource Symbol="Edit"/>
+                    </ui:FACommandBarButton.IconSource>
+                </ui:FACommandBarButton>
                 <ui:FACommandBarSeparator/>
                 <!-- G1: the buzz panel. Only once somebody HAS buzzed — a control
                      naming nobody is noise in a cockpit driven live. -->

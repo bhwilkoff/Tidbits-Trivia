@@ -427,6 +427,7 @@ struct LiveShowCommands {
     var previous: () -> Void = {}
     var lock: () -> Void = {}
     var skip: () -> Void = {}
+    var editQuestion: () -> Void = {}
     var addTime: (Int) -> Void = { _ in }
     var clearTimer: () -> Void = {}
     var toggleHold: () -> Void = {}
@@ -581,6 +582,8 @@ struct TidbitsCommands: Commands {
             Button("Previous Question") { show?.previous() }
                 .keyboardShortcut(.leftArrow, modifiers: .command)
                 .disabled(show?.canGoBack != true)
+            Button("Edit This Question…") { show?.editQuestion() }
+                .keyboardShortcut("e", modifiers: .command).disabled(show == nil)
             Divider()
             Button("Add 30 Seconds") { show?.addTime(30) }.disabled(show == nil)
             Button("Add 15 Seconds") { show?.addTime(15) }.disabled(show == nil)

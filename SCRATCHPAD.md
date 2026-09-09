@@ -48,10 +48,10 @@ in both directions (see the last paragraph).
 1. **Wikipedia source / "learn more" on reveal** — the corpus carries
    `sourceTitle`/`sourceURL` but the live wire never sends them; no joiner or
    projector names where a fact came from. Charter-critical. Mac ✗ Windows ✗. S.
-2. **Mid-game question editing from the cockpit** — editors exist, reachable
-   only from the builder. Mac ✗ Windows ✗. M.
-3. **Retroactive "mark correct for all"** — accepting a typed variant awards
-   one team. Mac ✗ Windows ✗. S.
+2. ~~**Mid-game question editing from the cockpit**~~ — DONE 2026-09-09
+   (A3.6 / 3.55): Edit question on both cockpits, republished at once.
+3. ~~**Retroactive "mark correct for all"**~~ — DONE 2026-09-09 (A3.3
+   addendum / 3.21): "Accept from everyone" on both cockpits.
 4. **Avoid-repeats** — no "last used" / dedupe warning across nights. S.
 5. **Duplicate an event / clone last week + recurring auto-spawn** — recurring
    is display-only. S/M.
@@ -2189,3 +2189,28 @@ F-006 watch-item, re-arm instructions) now lives in
 docs/RESUME-TVOS-QA-LOOP.md — written for post-compaction pickup. Playbook
 remains the source of truth; nine consecutive laps green; Chrome loop passed
 twice; lap 11 next at home.
+
+**2026-09-09l — Live loop tick 12: mid-night rulings on both cockpits.**
+Punch list 2 + 3. *Edit question* (Mac card button + Show menu ⌘E; Windows
+command bar) opens the builder's editor on the night's own copy —
+`LiveHostSession.replaceCurrent` / `LiveNightHost.ReplaceCurrent` swap the
+question, re-deal ordering/matching shuffles only if that content changed,
+apply a clip change to the round (Mac bumps `mediaEpoch` so the container
+re-offers the media; Windows `SetCurrentClip`), republish. *Accept from
+everyone* (Mac: the accept button is now a split button; Windows: a second
+button per refused row): `learnAccepted`/`Accepted ∪ {text}` so every matching
+row turns ✓ for the rest of the night and the pack carries it, then
+`typedAlike`/`TypedAlike` (pure, 4 tests each stack) pays each refused team
+once, team-deduped; hand-accepted rows read "Accepted" (`manuallyAccepted` /
+`ManuallyAccepted`, cleared per question). Hooks `TIDBITS_LIVE_EDIT` /
+`TIDBITS_LIVE_ACCEPT_ALL` (+`_AT`) on both hosts. **Verified on the glass** with
+`scratchpad/e2e_edit_accept.py`: the real web app + three wire phones typed
+"Keanu Reaves" variants; the Mac host and then the real Windows box each
+rewrote the prompt mid-question (wire + web glass showed the new words),
+revealed, ruled — scores paid exactly the three refused typers once, the
+Mac rows all ✓, the Windows review rows "✓ Accepted". Nits seen: the Mac split
+button ignores `.tint` (native grey, still clear); the Windows free-text
+review sits at the bottom of the cockpit scroll (two rows visible at 1080p);
+a fixture with blank options paints empty tally bars on Windows (the builder
+never makes one). Versions 1.9.10 / 140 / vc101 / MSIX 1.9.10.0. Next:
+punch list 4 (avoid-repeats across nights) and 5 (clone + recurring spawn).

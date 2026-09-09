@@ -21,6 +21,14 @@ final class LiveHostSession {
     var index = 0
     var revealed = false
     var scoredIndices: Set<Int> = []   // adaptability: score each question ONCE (so go-back / re-reveal never double-scores)
+    /// Teams the host accepted by hand on this question (§A3.3): the row says
+    /// "Accepted" instead of offering the button again, and "accept from
+    /// everyone" never pays one of them twice.
+    var manuallyAccepted: Set<String> = []
+    /// Bumped when the host changes the current question's clip mid-night, so the
+    /// container re-offers the media to the phones (Decision 060) — `index` did
+    /// not move, and that is what the resync used to key on.
+    var mediaEpoch = 0
     var onBreak = false                // adaptability: hold the big screen on an intermission slide (game position preserved)
     /// Show the standings SO FAR on the big screen, between rounds. A pub host
     /// reads the scores out after every round; the projector could show a vote
@@ -75,9 +83,76 @@ final class LiveHostSession {
         shuffledValues = current?.matching?.values.shuffled() ?? []
         buzzedOut = []          // G1: a new question reopens the buzzer to everyone
         currentMedia = nil; mediaNote = nil; mediaStartedAt = nil; currentPicture = nil   // Decision 060: offered when in place
+        manuallyAccepted = []
     }
 
     var questions: [Question] { event.questionStream }
+    /// The current question's seat in its round, or nil while the board is up.
+    var currentSlot: (ri: Int, qi: Int)? {
+        guard let cur = current, let ri = cur.roundIndex, event.rounds.indices.contains(ri) else { return nil }
+        let qi = questionInRound.n - 1
+        return event.rounds[ri].questions.indices.contains(qi) ? (ri, qi) : nil
+    }
+    var currentRoundMode: GameMode { currentSlot.map { event.rounds[$0.ri].format } ?? .classic }
+
+    /// The editor's view of the current question, clips named (§A3.6).
+    func editorDraft() -> QuestionDraft? {
+        guard let slot = currentSlot else { return nil }
+        let round = event.rounds[slot.ri]
+        var d = QuestionDraft(round.questions[slot.qi])
+        d.audioClipName = QuestionDraft.clipName(round.audioBookmarks, slot.qi)
+        d.videoClipName = QuestionDraft.clipName(round.videoBookmarks, slot.qi)
+        return d
+    }
+
+    /// §A3.6 — a mid-night edit of the question on screen. The night's own copy
+    /// changes (so print/export carry the fix), the display shuffles are redone
+    /// only when the shuffled content changed (a typo fix must not re-deal an
+    /// ordering the room is halfway through), and a clip change re-offers the
+    /// media. The caller republishes.
+    func replaceCurrent(_ q: Question, audio: QuestionDraft.ClipChange, video: QuestionDraft.ClipChange) {
+        guard let slot = currentSlot else { return }
+        let old = event.rounds[slot.ri].questions[slot.qi]
+        event.rounds[slot.ri].questions[slot.qi] = q
+        if q.ordering != old.ordering { shuffledOrder = q.ordering?.shuffled() ?? [] }
+        if q.matching != old.matching { shuffledValues = q.matching?.values.shuffled() ?? [] }
+        let clipsChanged = setClip(audio, video: false, at: slot) || setClip(video, video: true, at: slot)
+        if clipsChanged { currentMedia = nil; mediaNote = nil; mediaStartedAt = nil; mediaEpoch += 1 }
+    }
+
+    /// The host's ruling that `text` is a correct answer — for the rest of the
+    /// night, and for the pack if it is saved: the scorer's own accepted list
+    /// grows, so every row that typed it turns ✓ instead of needing a tap each.
+    func learnAccepted(_ text: String) {
+        guard let slot = currentSlot else { return }
+        let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !t.isEmpty else { return }
+        var acc = event.rounds[slot.ri].questions[slot.qi].accepted ?? []
+        guard !GameEngine.matchesAccepted(t, acc) else { return }
+        acc.append(t)
+        event.rounds[slot.ri].questions[slot.qi].accepted = acc
+    }
+
+    /// Put an editor's clip decision onto the round (index-parallel bookmarks,
+    /// LIVE-PACKAGE-FORMAT §8.1). Returns whether anything changed.
+    @discardableResult
+    private func setClip(_ change: QuestionDraft.ClipChange, video: Bool, at slot: (ri: Int, qi: Int)) -> Bool {
+        let count = event.rounds[slot.ri].questions.count
+        var marks = (video ? event.rounds[slot.ri].videoBookmarks : event.rounds[slot.ri].audioBookmarks) ?? []
+        switch change {
+        case .keep: return false
+        case .remove:
+            guard marks.indices.contains(slot.qi), !marks[slot.qi].isEmpty else { return false }
+            marks[slot.qi] = Data()
+        case .set(let id):
+            while marks.count < count { marks.append(Data()) }
+            guard let url = LiveMediaStore.fileURL(id), let mark = try? LiveClip.bookmark(for: url) else { return false }
+            marks[slot.qi] = mark
+        }
+        let value: [Data]? = marks.contains(where: { !$0.isEmpty }) ? marks : nil
+        if video { event.rounds[slot.ri].videoBookmarks = value } else { event.rounds[slot.ri].audioBookmarks = value }
+        return true
+    }
     var current: Question? { questions.indices.contains(index) ? questions[index] : nil }
     var roundNumber: Int { (current?.roundIndex ?? 0) + 1 }
     var roundCount: Int { max(event.rounds.count, 1) }
@@ -330,6 +405,23 @@ final class LiveHostSession {
 
 // MARK: - Host container + cockpit
 
+/// §A3.3 "accept from everyone": the ruling joins the question's accepted list
+/// (every matching row turns ✓ and stays that way, and a saved pack carries it),
+/// and each team the scorer had refused for that answer is paid once. Same
+/// team-dedup as the reveal scorer, so a table with two phones is paid once.
+@MainActor
+func liveAcceptFromEveryone(_ typed: String, _ q: Question, session: LiveHostSession, net: LiveHostNet) async {
+    let scorable = LiveTeamRoster.scorableUIDs(members: net.members,
+                                               answeredAt: net.answers.mapValues { $0.sv ?? $0.ts })
+    let uids = LiveNightHost.typedAlike(typed, answers: net.answers.filter { scorable.contains($0.key) },
+                                        accepted: q.accepted ?? [], already: session.manuallyAccepted)
+    session.learnAccepted(typed)
+    for uid in uids {
+        session.manuallyAccepted.insert(uid)
+        await net.setScore(uid, (net.scores[uid] ?? 0) + session.pointsPerCorrect)
+    }
+}
+
 struct LiveHostContainer_macOS: View {
     let event: LiveEvent
     let onClose: () -> Void
@@ -384,6 +476,29 @@ struct LiveHostContainer_macOS: View {
                   let secs = Double(raw) else { return }
             try? await Task.sleep(for: .seconds(secs))
             endNight()
+        }
+        // TIDBITS_LIVE_EDIT=<prompt> (at TIDBITS_LIVE_EDIT_AT s, default 8) — rewrite
+        // the question on screen mid-night, the way the cockpit's Edit does (§A3.6).
+        // TIDBITS_LIVE_ACCEPT_ALL=<text> (at TIDBITS_LIVE_ACCEPT_AT s, default 30) —
+        // reveal if needed, then rule that typed answer correct for everyone
+        // (§A3.3). Both route through the SAME calls as the buttons, so the hook
+        // cannot reach a state a host cannot (hooks-are-coverage). No-ops in production.
+        .task {
+            let env = ProcessInfo.processInfo.environment
+            guard let text = env["TIDBITS_LIVE_EDIT"], !text.isEmpty else { return }
+            try? await Task.sleep(for: .seconds(Double(env["TIDBITS_LIVE_EDIT_AT"] ?? "") ?? 8))
+            guard let q = session.current else { return }
+            var d = QuestionDraft(q); d.prompt = text
+            session.replaceCurrent(d.build(), audio: .keep, video: .keep)
+            await net.publish(session.currentPub())
+        }
+        .task {
+            let env = ProcessInfo.processInfo.environment
+            guard let text = env["TIDBITS_LIVE_ACCEPT_ALL"], !text.isEmpty else { return }
+            try? await Task.sleep(for: .seconds(Double(env["TIDBITS_LIVE_ACCEPT_AT"] ?? "") ?? 30))
+            if !session.revealed { session.reveal(); try? await Task.sleep(for: .seconds(3)) }   // let the reveal scorer run
+            guard let q = session.current else { return }
+            await liveAcceptFromEveryone(text, q, session: session, net: net)
         }
         // TIDBITS_LIVE_STATE=reveal|break|standings — put the PROJECTOR into one of
         // the states only a host's clicks can reach.
@@ -447,6 +562,9 @@ struct LiveHostContainer_macOS: View {
         }
         // Re-publish whenever the host advances or reveals; auto-score on reveal.
         .onChange(of: session.index) { _, _ in
+            Task { await net.publish(session.currentPub()); await syncMedia() }
+        }
+        .onChange(of: session.mediaEpoch) { _, _ in
             Task { await net.publish(session.currentPub()); await syncMedia() }
         }
         // Decision 060: the host pressed Play — tell the phones when, so the ones
@@ -566,6 +684,7 @@ struct LiveHostView_macOS: View {
     @State private var newTeam = ""
     @State private var showTieBreak = false
     @State private var tieGroup: [LiveTeam] = []
+    @State private var editingCurrent: QuestionDraft?
 
     var body: some View {
         Group {
@@ -594,6 +713,7 @@ struct LiveHostView_macOS: View {
             previous: { session.previous() },
             lock: { session.locked = true; Task { await net.publish(session.currentPub()) } },
             skip: { session.skip() },
+            editQuestion: { editingCurrent = session.editorDraft() },
             addTime: { session.addTime($0) },
             clearTimer: { session.clearTimer() },
             toggleHold: { session.onBreak.toggle() },
@@ -769,7 +889,19 @@ struct LiveHostView_macOS: View {
                 boardPicker(board)
             } else if let q = session.current {
                 let inR = session.questionInRound
-                Text("Question \(inR.n) of \(inR.of)").font(.callout).foregroundStyle(Tidbits.Palette.inkSoft)
+                HStack {
+                    Text("Question \(inR.n) of \(inR.of)").font(.callout).foregroundStyle(Tidbits.Palette.inkSoft)
+                    Spacer()
+                    // §A3.6: a typo the room is reading, fixed without leaving the
+                    // night — the edit republishes to every phone and the screen.
+                    Button { editingCurrent = session.editorDraft() } label: {
+                        Label("Edit question", systemImage: "pencil")
+                    }
+                    .buttonStyle(.bordered).controlSize(.small)
+                    .keyboardShortcut("e", modifiers: .command)
+                    .help("Fix this question for the room — wording, options, answer, clip (⌘E)")
+                    .accessibilityIdentifier("live.editQuestion")
+                }
                 Text(q.prompt).font(.system(size: 30, weight: .bold, design: .rounded))
                     .foregroundStyle(Tidbits.Palette.ink).fixedSize(horizontal: false, vertical: true)
                 if let img = q.imageURL {   // what the room is looking at, so the host can talk to it
@@ -1244,11 +1376,26 @@ struct LiveHostView_macOS: View {
                     Text("\(team.score)").font(.system(size: 22, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
                 }
                 Spacer()
-                // Leniency: for a free-text answer the matcher REJECTED, let the host accept it.
+                // Leniency: for a free-text answer the matcher REJECTED, let the host accept it —
+                // this team alone, or (the menu) everyone who typed the same thing (§A3.3).
                 if let q, let ans, session.revealed, q.accepted != nil, !autoMatched(q, ans) {
-                    Button { Task { await net.setScore(team.id, team.score + session.pointsPerCorrect) } } label: {
-                        Image(systemName: "checkmark")
-                    }.buttonStyle(.borderedProminent).tint(Tidbits.Palette.mint).help("Mark correct (+\(session.pointsPerCorrect))")
+                    if session.manuallyAccepted.contains(team.id) {
+                        Label("Accepted", systemImage: "checkmark").font(.caption).foregroundStyle(Tidbits.Palette.mint)
+                    } else {
+                        Menu {
+                            if let typed = ans.text?.trimmingCharacters(in: .whitespacesAndNewlines), !typed.isEmpty {
+                                Button("Accept “\(typed)” from everyone") { Task { await acceptFromEveryone(typed, q) } }
+                            }
+                        } label: {
+                            Image(systemName: "checkmark")
+                        } primaryAction: {
+                            session.manuallyAccepted.insert(team.id)
+                            Task { await net.setScore(team.id, team.score + session.pointsPerCorrect) }
+                        }
+                        .menuStyle(.button).buttonStyle(.borderedProminent).tint(Tidbits.Palette.mint).fixedSize()
+                        .help("Mark correct (+\(session.pointsPerCorrect)) — or open the menu to accept this answer from every team")
+                        .accessibilityIdentifier("live.acceptText")
+                    }
                 }
                 Button { Task { await net.setScore(team.id, team.score - 1) } } label: { Image(systemName: "minus") }.buttonStyle(.bordered)
                 Button { Task { await net.setScore(team.id, team.score + 1) } } label: { Image(systemName: "plus") }.buttonStyle(.bordered)
@@ -1266,13 +1413,18 @@ struct LiveHostView_macOS: View {
                     Image(systemName: "text.quote").font(.system(size: 11)).foregroundStyle(Tidbits.Palette.inkSoft)
                     Text(typed).font(.callout).foregroundStyle(Tidbits.Palette.ink).italic().lineLimit(2)
                     if session.revealed {
-                        Image(systemName: autoMatched(q, ans) ? "checkmark.circle.fill" : "xmark.circle")
-                            .foregroundStyle(autoMatched(q, ans) ? Tidbits.Palette.mint : Tidbits.Palette.coral)
+                        let credited = autoMatched(q, ans) || session.manuallyAccepted.contains(team.id)
+                        Image(systemName: credited ? "checkmark.circle.fill" : "xmark.circle")
+                            .foregroundStyle(credited ? Tidbits.Palette.mint : Tidbits.Palette.coral)
                     }
                 }
             }
         }
         .padding(12).quietCard(fill: Tidbits.Palette.blue.opacity(0.08))
+    }
+
+    private func acceptFromEveryone(_ typed: String, _ q: Question) async {
+        await liveAcceptFromEveryone(typed, q, session: session, net: net)
     }
 
     /// Whether the shared scorer credits this submission (for the ✓/✗ verdict).
@@ -1357,6 +1509,15 @@ struct LiveHostView_macOS: View {
                 .padding(.top, 8)
             }
             .padding(28).frame(maxWidth: 620).frame(maxWidth: .infinity)
+        }
+        .sheet(item: $editingCurrent) { draft in
+            LiveQuestionEditor_macOS(draft: draft, format: session.currentRoundMode,
+                                     onSave: { q, audio, video in
+                                         session.replaceCurrent(q, audio: audio, video: video)
+                                         editingCurrent = nil
+                                         Task { await net.publish(session.currentPub()) }
+                                     },
+                                     onCancel: { editingCurrent = nil })
         }
         .sheet(isPresented: $showTieBreak) {
             TieBreakSheet_macOS(teams: tieGroup, onResolve: { target, guesses in

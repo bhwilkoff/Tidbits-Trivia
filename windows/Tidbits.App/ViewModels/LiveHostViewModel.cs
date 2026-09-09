@@ -387,6 +387,7 @@ public sealed class LiveHostViewModel : ObservableObject
     // Free-text review (3.21) — accept a borderline typed answer.
     public System.Collections.Generic.IReadOnlyList<TextReviewRow> TextReview => Host.TextReview;
     public Task AcceptText(string uid) => Host.AcceptText(uid);
+    public Task AcceptTextForAll(string text) => Host.AcceptTextForAll(text);
 
     // Tie-break (3.24) — brains-only manual pick among the tied leaders.
     public bool HasTie => Host.HasTie;

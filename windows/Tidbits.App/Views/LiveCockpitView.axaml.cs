@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media;
@@ -21,6 +22,7 @@ public partial class LiveCockpitView : UserControl
         InitializeComponent();
         AttachedToVisualTree += (_, _) =>
             Avalonia.Threading.Dispatcher.UIThread.Post(OpenProjectorFromHook, Avalonia.Threading.DispatcherPriority.Background);
+            Avalonia.Threading.Dispatcher.UIThread.Post(RunScriptHooks, Avalonia.Threading.DispatcherPriority.Background);
         // Tick the countdown display once a second (the deadline itself lives in the
         // published pub; this just renders the remaining seconds locally).
         _tick = new Avalonia.Threading.DispatcherTimer(
@@ -80,26 +82,46 @@ public partial class LiveCockpitView : UserControl
         foreach (var r in rows)
         {
             var row = r;
-            var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), Margin = new Avalonia.Thickness(0, 2, 0, 0) };
+            var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto,Auto"), Margin = new Avalonia.Thickness(0, 2, 0, 0) };
             grid.Children.Add(new TextBlock
             {
                 Text = $"{row.Name}: “{row.Text}”", TextTrimming = TextTrimming.CharacterEllipsis, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
                 Opacity = row.AutoCorrect ? 1 : 0.75,
             });
+            var credited = row.AutoCorrect || row.Accepted;
             var verdict = new TextBlock
             {
-                Text = row.AutoCorrect ? "✓" : "✗", FontWeight = FontWeight.Black,
-                Foreground = new SolidColorBrush(Color.Parse(row.AutoCorrect ? "#1E9E6A" : "#D64545")),
+                Text = credited ? "✓" : "✗", FontWeight = FontWeight.Black,
+                Foreground = new SolidColorBrush(Color.Parse(credited ? "#1E9E6A" : "#D64545")),
                 VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center, Margin = new Avalonia.Thickness(8, 0),
             };
             Grid.SetColumn(verdict, 1);
             grid.Children.Add(verdict);
-            if (!row.AutoCorrect)
+            if (row.Accepted)
+            {
+                var done = new TextBlock { Text = "Accepted", FontSize = 12, Opacity = 0.7, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center };
+                Grid.SetColumn(done, 2);
+                grid.Children.Add(done);
+            }
+            else if (!row.AutoCorrect)
             {
                 var accept = new Button { Content = "Accept", Padding = new Avalonia.Thickness(10, 3), FontSize = 12, Tag = row.Uid };
+                Avalonia.Automation.AutomationProperties.SetName(accept, $"Accept {row.Name}");
                 accept.Click += OnAcceptText;
                 Grid.SetColumn(accept, 2);
                 grid.Children.Add(accept);
+                // 3.21: the same ruling for every team that typed this — the answer
+                // joins the question's accepted list, so the rows turn ✓ together.
+                var all = new Button
+                {
+                    Content = "Accept from everyone", Padding = new Avalonia.Thickness(10, 3), FontSize = 12, Tag = row.Text,
+                    Margin = new Avalonia.Thickness(4, 0, 0, 0),
+                };
+                ToolTip.SetTip(all, $"Rule “{row.Text}” correct for every team that typed it, and for the rest of the night");
+                Avalonia.Automation.AutomationProperties.SetName(all, $"Accept {row.Text} from everyone");
+                all.Click += OnAcceptTextForAll;
+                Grid.SetColumn(all, 3);
+                grid.Children.Add(all);
             }
             ReviewPanel.Children.Add(grid);
         }
@@ -109,6 +131,25 @@ public partial class LiveCockpitView : UserControl
     {
         if (Vm is { } vm && (sender as Control)?.Tag is string uid && uid.Length > 0)
             await vm.AcceptText(uid);
+    }
+
+    private async void OnAcceptTextForAll(object? sender, RoutedEventArgs e)
+    {
+        if (Vm is { } vm && (sender as Control)?.Tag is string text && text.Trim().Length > 0)
+            await vm.AcceptTextForAll(text);
+    }
+
+    /// 3.55: fix the question on screen without leaving the night — the same
+    /// editor as the builder; the room and the projector get the change at once.
+    private async void OnEditQuestion(object? sender, RoutedEventArgs e)
+    {
+        if (Vm is not { } vm || vm.Host.Current is not { } q || vm.ShowBoardScreen) return;
+        string? newClip = null; bool clipChanged = false;
+        var updated = await LiveQuestionEditorDialog.ShowAsync(q, vm.Host.CurrentKind, "Edit this question",
+            vm.CurrentClipPath, path => { newClip = path; clipChanged = true; });
+        if (updated is null) return;
+        await vm.Host.ReplaceCurrent(updated);
+        if (clipChanged) await vm.Host.SetCurrentClip(newClip);
     }
 
     /// Rebuild the options with a live per-option answer-distribution bar. The
@@ -544,6 +585,31 @@ public partial class LiveCockpitView : UserControl
                 else CockpitPictureHint.Text = "Picture unavailable";
             }));
     }
+
+    /// TIDBITS_LIVE_EDIT / TIDBITS_LIVE_ACCEPT_ALL: the harness drives the two
+    /// mid-night rulings through the SAME host calls as the buttons.
+    private async void RunScriptHooks()
+    {
+        if (_scriptHooksRan) return;
+        _scriptHooksRan = true;
+        try
+        {
+            if (Services.LaunchHooks.LiveEdit is { Length: > 0 } text)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(Services.LaunchHooks.LiveEditAt));
+                if (Vm?.Host.Current is { } q) await Vm.Host.ReplaceCurrent(q with { Prompt = text });
+            }
+            if (Services.LaunchHooks.LiveAcceptAll is { Length: > 0 } ruling)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(Services.LaunchHooks.LiveAcceptAt));
+                if (Vm is not { } vm) return;
+                if (!vm.Host.Revealed) { await vm.Reveal(); await Task.Delay(3000); }
+                await vm.AcceptTextForAll(ruling);
+            }
+        }
+        catch (Exception ex) { Services.LaunchHooks.Diag($"script hooks: FAILED {ex}"); }
+    }
+    private bool _scriptHooksRan;
 
     /// TIDBITS_LIVE_PROJECTOR=1: the projector opens with the cockpit (harness).
     private void OpenProjectorFromHook()

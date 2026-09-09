@@ -248,6 +248,22 @@ final class LiveNightHost {
         return a.choice == q.correctIndex ? mcqPoints : 0                             // MCQ / picture / T-or-T / odd
     }
 
+    /// "Accept this answer from everyone" (host pain #2, both cockpits): the uids
+    /// whose typed answer IS `text` under the scorer's own normalisation and whom
+    /// the scorer did not credit. A team the matcher already accepted keeps its
+    /// points, and a team the host accepted by hand earlier (`already`) is not
+    /// paid twice. Sorted so the awards land in a stable order.
+    static func typedAlike(_ text: String, answers: [String: LiveRoom.Answer],
+                           accepted: [String], already: Set<String>) -> [String] {
+        let n = GameEngine.normalizeType(text)
+        guard !n.isEmpty else { return [] }
+        return answers.compactMap { uid, a -> String? in
+            guard let t = a.text, !already.contains(uid), GameEngine.normalizeType(t) == n,
+                  !GameEngine.matchesAccepted(t, accepted) else { return nil }
+            return uid
+        }.sorted()
+    }
+
     /// True for the option-based types (classic/describe/cloze/oddOneOut/thisOrThat/
     /// pictureId) — the host renders options; everything else has a bespoke surface.
     static func isMCQ(_ q: Question) -> Bool {

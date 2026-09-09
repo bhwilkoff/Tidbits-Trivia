@@ -32,8 +32,8 @@ android {
         applicationId = "com.tidbitstrivia.app"
         minSdk = 29
         targetSdk = 36
-        versionCode = 97
-        versionName = "1.9.0"   // lockstep with iOS MARKETING_VERSION (X.Y.Z, bump every ship)
+        versionCode = 98
+        versionName = "1.9.5"   // lockstep with iOS MARKETING_VERSION (X.Y.Z, bump every ship)
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
     }
@@ -100,6 +100,8 @@ dependencies {
     // Firebase (online Quick Match — Decision 040)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.database)
+    implementation(libs.media3.exoplayer)   // Decision 060: play the host's clip
+    implementation(libs.media3.ui)
     implementation(libs.firebase.auth)
     implementation(libs.firebase.messaging)   // docs/PUSH-CONTRACT.md — the FCM leg
     implementation(libs.credentials)

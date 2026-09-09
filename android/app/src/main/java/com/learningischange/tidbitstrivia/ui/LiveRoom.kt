@@ -243,6 +243,10 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
                     AsyncImage(model = model, contentDescription = null, modifier = Modifier.fillMaxWidth().height(220.dp))
                     Spacer(Modifier.height(12.dp))
                 }
+                p.media?.let { m ->   // Decision 060: the host's clip, offered here too
+                    androidx.compose.runtime.key(p.qid, m.url) { LiveClipCard(m, code) }
+                    Spacer(Modifier.height(12.dp))
+                }
                 Text(p.prompt, fontSize = 24.sp, fontWeight = FontWeight.Black, color = ink)
                 Spacer(Modifier.height(12.dp))
                 if (!revealed && p.deadline != null) {   // Wave A: on-screen timer

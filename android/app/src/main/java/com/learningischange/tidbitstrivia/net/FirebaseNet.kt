@@ -395,6 +395,16 @@ object FirebaseNet {
          *  phase; null otherwise, so an older client never sees it.
          *  Mirrors Swift `Pub.board`. */
         val board: BoardPub? = null,
+        /** Decision 060: the clip attached to this question, OFFERED to every joiner.
+         *  Mirrors Swift `Pub.media`; null on a question without one. */
+        val media: LiveMedia? = null,
+    )
+
+    /** Decision 060: a clip as the joiners are given it — an https FILE link, or
+     *  `room:<id>` → the once-written `live/{code}/media/{id}` node. */
+    data class LiveMedia(
+        val kind: String, val url: String, val mime: String,
+        val name: String? = null, val bytes: Int? = null, val startedAt: Long? = null,
     )
 
     /** G5: the grid as the joiners see it. Deliberately NOT the host's board —
@@ -504,7 +514,42 @@ object FirebaseNet {
             deadline = snap.child("deadline").getValue(Long::class.java),
             wager = snap.child("wager").getValue(Boolean::class.java) ?: false,
             buzz = snap.child("buzz").getValue(Boolean::class.java) ?: false,
+            // G4/G5 were in the data class but never PARSED, so an Android joiner
+            // never saw the first-letter rule or the category board — the two
+            // rounds rendered as plain questions. Found while adding `media`.
+            letter = snap.child("letter").getValue(String::class.java),
+            board = snap.child("board").takeIf { it.exists() }?.let { b ->
+                BoardPub(
+                    categories = b.child("categories").children.mapNotNull { it.getValue(String::class.java) },
+                    tiers = b.child("tiers").children.mapNotNull { it.getValue(Long::class.java)?.toInt() },
+                    taken = b.child("taken").children.mapNotNull { it.getValue(String::class.java) },
+                    chooser = b.child("chooser").getValue(String::class.java),
+                    remaining = (b.child("remaining").getValue(Long::class.java) ?: 0L).toInt(),
+                    points = (b.child("points").getValue(Long::class.java) ?: 0L).toInt(),
+                )
+            },
+            media = snap.child("media").takeIf { it.exists() }?.let { m ->
+                val url = m.child("url").getValue(String::class.java) ?: return@let null
+                LiveMedia(
+                    kind = m.child("kind").getValue(String::class.java) ?: "audio",
+                    url = url,
+                    mime = m.child("mime").getValue(String::class.java) ?: "",
+                    name = m.child("name").getValue(String::class.java),
+                    bytes = m.child("bytes").getValue(Long::class.java)?.toInt(),
+                    startedAt = m.child("startedAt").getValue(Long::class.java),
+                )
+            },
         )
+    }
+
+    /** Decision 060: read a clip the host wrote to the room ONCE (`room:<id>`).
+     *  Returns (mime, kind, bytes) or null. Read, never streamed. */
+    suspend fun liveMedia(code: String, id: String): Triple<String, String, ByteArray>? {
+        val snap = db.getReference("live/$code/media/$id").get().await()
+        if (!snap.exists()) return null
+        val b64 = snap.child("b64").getValue(String::class.java) ?: return null
+        val bytes = runCatching { android.util.Base64.decode(b64, android.util.Base64.DEFAULT) }.getOrNull() ?: return null
+        return Triple(snap.child("mime").getValue(String::class.java) ?: "", snap.child("kind").getValue(String::class.java) ?: "audio", bytes)
     }
 
     // ---- HOST side (this device opens live/{code} and owns meta/pub/scores) ----

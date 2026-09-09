@@ -7,6 +7,33 @@
 > `docs/ROADMAP.md`, `docs/DATA-CONTRACT.md`. Detailed per-round history is in
 > `ARCHIVE.md`.
 
+## Current state (2026-09-09f) — the Android joiner plays the clip (Decision 060 closes the joiner set)
+
+**Did:** `ui/LiveClip.kt` — `LiveMediaCache` (a `room:` node fetched once
+into `cacheDir/LiveRoomMedia/<id>.<ext>`; links pass through) and
+`LiveClipCard` (the offer → Media3 `ExoPlayer`; `PlayerView` for video, a
+play/pause row for audio; the host's cue readies + positions, only a tap
+plays — the same rule as every other joiner). `FirebaseNet.LivePub.media` +
+`liveMedia(code,id)`; `tidbits_live_tapclip=1` hook. Media3 1.6.1 added to
+the catalog (CLAUDE.md: Media3 from day one). Android 1.9.5 (vc 98).
+
+**Found on the way — a real parity bug:** Android's `parsePub` had `letter`
+and `board` in the data class but never PARSED them, so a first-letter round
+and the pick-a-category board had rendered as plain questions on every
+Android joiner. Both parsed now.
+
+**Verified on the REAL onn Android TV dongle (10.0.0.55):** joined a
+Mac-hosted room (`ANDV`) and, via `tidbits_live_tapclip=1`, fetched the
+195 KB m4a node and played it — photographed "tune · Playing" (pause glyph)
+above the prompt, the 33 s countdown and the options. The **Pixel 8a** could
+not be used: it advertises on mDNS (10.0.0.175:45321) but refuses `adb
+connect` — its wireless-debugging pairing has lapsed and needs the pairing
+code on the phone (owner). Harness note: `am start -W` made the join
+deterministic; a bare `am start` after `force-stop` once landed on Home.
+
+**Decision 060 is complete on every surface:** hosts Mac + Windows publish;
+joiners web, iOS, tvOS, macOS, Android, Windows play.
+
 ## Current state (2026-09-09e) — the Windows host and joiner carry clips (3.53), on the real box
 
 **Did:** the C# side of Decision 060 — `LiveRoom.Media`/`RoomMedia`,

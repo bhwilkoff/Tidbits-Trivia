@@ -57,6 +57,8 @@ object ScreenshotHooks {
      *  put an Android device in a host's room was blind tapping, so cross-platform
      *  multiplayer was the one feature no harness could actually exercise. */
     var liveJoin: Pair<String, String>? = null
+    /** tidbits_live_tapclip=1 — a joiner takes up a Decision 060 clip offer without a finger. */
+    var liveTapClip: Boolean = false
         private set
 
     /** Draw the autoplay round from ScreenshotQuestions instead of a random corpus pull
@@ -125,6 +127,7 @@ object ScreenshotHooks {
             ?.let { forcedLiveCode = it.trim().uppercase().take(4) }
         if (intent.hasExtra("tidbits_night_autostart"))
             nightAutostart = intent.getIntExtra("tidbits_night_autostart", -1).takeIf { it >= 0 }
+        if (intent.hasExtra("tidbits_live_tapclip")) liveTapClip = intent.getStringExtra("tidbits_live_tapclip") == "1"
         intent.getStringExtra("tidbits_live_join")?.takeIf { it.isNotBlank() }?.let { code ->
             liveJoin = code.trim().uppercase() to
                 (intent.getStringExtra("tidbits_live_name")?.takeIf { it.isNotBlank() } ?: "Android")

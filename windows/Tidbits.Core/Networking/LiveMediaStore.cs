@@ -152,8 +152,11 @@ public static class LiveMediaStore
     public const int FallbackMaxPixels = 320, FallbackMaxBytes = 20_000;
     private static readonly Dictionary<string, PublishablePicture> PictureCache = new();
 
-    public static PublishablePicture PublishPicture(string? url)
+    /// `jpeg` overrides the installed provider — tests pass a stub so a parallel
+    /// test that boots the app (and re-installs the real provider) cannot race it.
+    public static PublishablePicture PublishPicture(string? url, Func<string, int, int, byte[]?>? jpeg = null)
     {
+        jpeg ??= JpegProvider;
         var id = IdFrom(url);
         if (id is null) return new(url, null, null, null);
         var idx = LoadIndex();
@@ -162,13 +165,13 @@ public static class LiveMediaStore
         {
             if (PictureCache.TryGetValue(id, out var hit)) return hit;
             var path = FilePath(id);
-            var full = path is null ? null : JpegProvider?.Invoke(path, PublishMaxPixels, PublishMaxBytes);
+            var full = path is null ? null : jpeg?.Invoke(path, PublishMaxPixels, PublishMaxBytes);
             PublishablePicture outp;
             if (full is null) outp = new(null, null, null, null);
             else if (full.Length <= NodeThresholdBytes) outp = new("data:image/jpeg;base64," + Convert.ToBase64String(full), null, null, null);
             else
             {
-                var small = JpegProvider?.Invoke(path!, FallbackMaxPixels, FallbackMaxBytes) ?? full;
+                var small = jpeg?.Invoke(path!, FallbackMaxPixels, FallbackMaxBytes) ?? full;
                 var nodeId = IdFor(full);
                 var name = info?.OriginalName is { } on ? System.IO.Path.GetFileNameWithoutExtension(on) : null;
                 outp = new("data:image/jpeg;base64," + Convert.ToBase64String(small),

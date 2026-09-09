@@ -25,12 +25,11 @@ public class LivePictureNodeTest
     [Fact]
     public void A_big_picture_becomes_a_node_plus_a_small_fallback()
     {
-        var prevDir = LiveMediaStore.Directory; var prevProv = LiveMediaStore.JpegProvider;
+        var prevDir = LiveMediaStore.Directory;
         try
         {
-            LiveMediaStore.JpegProvider = (path, side, max) => side >= 800 ? Bytes(90_000, 1) : Bytes(15_000, 2);
             var id = StoreOne(11);
-            var pic = LiveMediaStore.PublishPicture(LiveMediaStore.Reference(id));
+            var pic = LiveMediaStore.PublishPicture(LiveMediaStore.Reference(id), (path, side, max) => side >= 800 ? Bytes(90_000, 1) : Bytes(15_000, 2));
             Assert.NotNull(pic.Node); Assert.NotNull(pic.Wire); Assert.NotNull(pic.Id);
             Assert.Equal("image", pic.Node!.Kind); Assert.Equal("image/jpeg", pic.Node.Mime); Assert.Equal(90_000, pic.Node.Bytes);
             Assert.Equal($"room:{pic.Id}", pic.Wire!.Url); Assert.Equal(32, pic.Id!.Length); Assert.Equal("photo", pic.Wire.Name);
@@ -41,22 +40,21 @@ public class LivePictureNodeTest
             Assert.Contains("\"picture\":{", json); Assert.Contains("\"kind\":\"image\"", json);
             Assert.Equal("jpg", LiveMediaCache.FileExtension("image/jpeg", "image"));
         }
-        finally { LiveMediaStore.Directory = prevDir; LiveMediaStore.JpegProvider = prevProv; }
+        finally { LiveMediaStore.Directory = prevDir; }
     }
 
     [Fact]
     public void A_small_picture_stays_a_data_url_with_no_node()
     {
-        var prevDir = LiveMediaStore.Directory; var prevProv = LiveMediaStore.JpegProvider;
+        var prevDir = LiveMediaStore.Directory;
         try
         {
-            LiveMediaStore.JpegProvider = (path, side, max) => Bytes(12_000, 3);
             var id = StoreOne(12);
-            var pic = LiveMediaStore.PublishPicture(LiveMediaStore.Reference(id));
+            var pic = LiveMediaStore.PublishPicture(LiveMediaStore.Reference(id), (path, side, max) => Bytes(12_000, 3));
             Assert.Null(pic.Node); Assert.Null(pic.Wire);
             Assert.StartsWith("data:image/jpeg;base64,", pic.Fallback);
         }
-        finally { LiveMediaStore.Directory = prevDir; LiveMediaStore.JpegProvider = prevProv; }
+        finally { LiveMediaStore.Directory = prevDir; }
     }
 
     [Fact]

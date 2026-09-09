@@ -133,6 +133,47 @@ nonisolated enum LiveMediaStore {
         return dataURL(forID: id)
     }
 
+    /// Decision 060 (pictures): what a joiner is given for a picture — the https
+    /// twin, or the picture split into the once-written room NODE (the full
+    /// ≤ 800 px version) plus a SMALL data URL (≤ 320 px, ~20 KB) that rides in
+    /// `imageURL` so a joiner that predates the node still shows a picture, and a
+    /// joiner that reads the node has something to show while it fetches.
+    /// Measured 2026-09-09: the full data URL made `pub` 108 KB and was re-sent
+    /// to every phone on every state change.
+    struct PublishablePicture: Equatable {
+        var fallback: String?
+        var node: LiveRoom.RoomMedia?
+        var id: String?
+        var wire: LiveRoom.Media?
+    }
+    static let nodeThresholdBytes = 30_000
+    static let fallbackMaxPixels = 320
+    static let fallbackMaxBytes = 20_000
+    nonisolated(unsafe) private static var pictureCache: [String: PublishablePicture] = [:]
+
+    static func publishablePicture(_ url: URL?) -> PublishablePicture {
+        guard let url else { return PublishablePicture() }
+        guard let id = id(from: url) else { return PublishablePicture(fallback: url.absoluteString) }
+        if let s = loadIndex()[id]?.sourceURL, s.hasPrefix("http") { return PublishablePicture(fallback: s) }
+        if let hit = pictureCache[id] { return hit }
+        guard let full = jpeg(forID: id, maxSide: publishMaxPixels, maxBytes: publishMaxBytes) else { return PublishablePicture() }
+        var out: PublishablePicture
+        if full.count <= nodeThresholdBytes {
+            out = PublishablePicture(fallback: "data:image/jpeg;base64," + full.base64EncodedString())
+        } else {
+            let small = jpeg(forID: id, maxSide: fallbackMaxPixels, maxBytes: fallbackMaxBytes) ?? full
+            let nodeID = Self.id(for: full)
+            let name = loadIndex()[id]?.originalName.map { ($0 as NSString).deletingPathExtension }
+            out = PublishablePicture(
+                fallback: "data:image/jpeg;base64," + small.base64EncodedString(),
+                node: LiveRoom.RoomMedia(kind: "image", mime: "image/jpeg", bytes: full.count, b64: full.base64EncodedString()),
+                id: nodeID,
+                wire: LiveRoom.Media(kind: "image", url: "\(LiveRoom.mediaScheme):\(nodeID)", mime: "image/jpeg", name: name, bytes: full.count))
+        }
+        pictureCache[id] = out
+        return out
+    }
+
     /// The picture as `data:image/jpeg;base64,…`, downscaled so the whole room
     /// can fetch it on venue Wi-Fi: the longest side ≤ 800px, JPEG 0.6, and it
     /// shrinks further until it is under ~120 KB. Cached per id: the same bytes
@@ -143,16 +184,21 @@ nonisolated enum LiveMediaStore {
 
     static func dataURL(forID id: String) -> String? {
         if let hit = dataURLCache[id] { return hit }
+        guard let jpeg = jpeg(forID: id, maxSide: publishMaxPixels, maxBytes: publishMaxBytes) else { return nil }
+        let s = "data:image/jpeg;base64," + jpeg.base64EncodedString()
+        dataURLCache[id] = s
+        return s
+    }
+
+    /// A JPEG of the stored picture no larger than `maxSide` and, by shrinking,
+    /// no heavier than `maxBytes` (floor: 160 px).
+    static func jpeg(forID id: String, maxSide: Int, maxBytes: Int) -> Data? {
         guard let file = fileURL(id), let image = NSImage(contentsOf: file) else { return nil }
-        var side = publishMaxPixels
+        var side = maxSide
         var quality = 0.6
-        for _ in 0..<5 {
+        for _ in 0..<6 {
             guard let jpeg = jpegData(image, maxSide: side, quality: quality) else { return nil }
-            if jpeg.count <= publishMaxBytes || side <= 320 {
-                let s = "data:image/jpeg;base64," + jpeg.base64EncodedString()
-                dataURLCache[id] = s
-                return s
-            }
+            if jpeg.count <= maxBytes || side <= 160 { return jpeg }
             side = side * 3 / 4
             quality = max(0.4, quality - 0.1)
         }

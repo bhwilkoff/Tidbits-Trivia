@@ -247,14 +247,8 @@ struct LiveJoinView: View {
                     .font(Tidbits.TypeRamp.l6.weight(.heavy))
                     .foregroundStyle(Tidbits.Palette.coral)
             }
-            if let img = p.imageURL, let url = URL(string: img) {
-                AsyncImage(url: url) { phase in
-                    if let image = phase.image { image.resizable().scaledToFit() }
-                    else if phase.error != nil { EmptyView() }
-                    else { ProgressView().frame(maxWidth: .infinity, minHeight: 160) }
-                }
-                .frame(maxWidth: .infinity, maxHeight: 240)
-                .clipShape(RoundedRectangle(cornerRadius: 14))
+            if p.picture != nil || p.imageURL != nil {   // Decision 060: the full picture from the room node, the small fallback meanwhile
+                LivePictureView(picture: p.picture, fallback: p.imageURL, code: client.code, maxHeight: 240)
             }
             // Decision 060: the host's clip, offered here too. Keyed on the
             // question + url so a new question gets a fresh player.

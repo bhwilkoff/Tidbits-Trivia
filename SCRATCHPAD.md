@@ -7,6 +7,28 @@
 > `docs/ROADMAP.md`, `docs/DATA-CONTRACT.md`. Detailed per-round history is in
 > `ARCHIVE.md`.
 
+## Current state (2026-09-09h) — pictures ride the once-written node (Mac host + web/Apple joiners)
+
+**Did:** `LiveMediaStore.publishablePicture` splits a store-only picture:
+the ≤800 px JPEG (≤120 KB) becomes a `kind: "image"` room node, referenced
+from the new `pub.picture`; `imageURL` now carries a ≤320 px / ~20 KB
+fallback (an https twin or a ≤30 KB picture still rides `imageURL` alone).
+The Mac host writes the node before the pub that references it
+(`syncPicture`, same discipline as clips). Joiners: web `mountPicture` (the
+fallback `<img>` at once, the node fetched once and swapped in place — no
+redraw), and one shared `LivePictureView` (Core) for iOS/tvOS/Mac over
+`LiveMediaCache`. 2 new Swift tests (the wire key; a 1600x1200 photo splits
+into a node under 120 KB and a fallback under 20 KB). 1.9.6 (136).
+
+**State left:** Windows host + joiner and Android still read `imageURL`
+only (they show the fallback — smaller, never blank); next tick.
+
+**Verified:** the Mac hosted the 266 KB store-only photo — `pub` fell from
+108 KB to 17.8 KB (a 17 KB fallback), the node is 81 KB written once; the web
+joiner's `<img>` swapped to an 800x600 blob from the node; the REAL iPhone 12
+shows the full photo above the question. iOS/tvOS/macOS builds green; 321
+tests.
+
 ## Current state (2026-09-09g) — measured: the clip burst is fine, the picture path is the cost
 
 **Owner:** "The media you are testing is pretty small. How will performance

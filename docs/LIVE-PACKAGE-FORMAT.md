@@ -167,6 +167,12 @@ scale. Firebase Storage (a paid plan on new projects) or a once-written
 scale (§8.3); the data URL is what works today with the apps in people's
 pockets.
 
+5.3a **Pictures over the budget ride the node too (2026-09-09).** The measured
+cost of the data URL — `pub` at 108 KB, re-sent to every phone on every state
+change — moved store-only pictures over ~30 KB (as a ≤ 800 px JPEG) onto the
+same once-written `live/{code}/media/{id}` node the clips use, referenced from
+`pub.picture`; `imageURL` keeps a ≤ 320 px fallback for joiners in the field.
+
 5.4 **Clips reach the phones too (Decision 060, 2026-09-09).** A question's
 audio or video clip is published as `pub.media` — the store's `sourceURL`
 when it is a direct file link, otherwise the clip re-encoded to a web-safe
@@ -228,8 +234,9 @@ writer that produced it and the tool a host can use from a shell (`pack`,
    once-written `live/{code}/media/<id>` node, never Firebase Storage (Blaze
    is forbidden by the $0 rule). Built first for CLIPS (§5.4) — Mac host + web
    joiner shipped; iOS/tvOS, Android, and the Windows host + joiner follow in
-   the same sequence. Moving pictures over the cap onto the same node is the
-   remaining step.
+   the same sequence. **Pictures over the budget moved onto the node the same
+   day (§5.3a)** — Mac host + web/iOS/tvOS/Mac joiners first; Windows host +
+   joiner and Android follow.
 4. **The question library** (§6) — **DONE 2026-09-07** on both hosts (store,
    save from any row/round, searchable picker, bank package in and out).
 5. **More importers/exporters** per the matrix in QUIZ-FORMATS-RESEARCH §4:

@@ -170,6 +170,10 @@ struct MacLiveJoinView_macOS: View {
                 .foregroundStyle(Tidbits.Palette.ink)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 640)
+            if pub.picture != nil || pub.imageURL != nil {   // the question's picture (Decision 060: full version from the room node)
+                LivePictureView(picture: pub.picture, fallback: pub.imageURL, code: client.code, maxHeight: 300, cornerRadius: 16)
+                    .frame(maxWidth: 640)
+            }
             if let m = pub.media {   // Decision 060: the host's clip, offered on a Mac joiner too
                 LiveClipView(media: m, code: client.code).id(pub.qid + m.url).frame(maxWidth: 640)
             }

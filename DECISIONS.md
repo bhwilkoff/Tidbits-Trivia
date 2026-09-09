@@ -2167,3 +2167,12 @@ element alive across state re-renders (the web re-draws on every `pub`
 change; re-creating the element restarts the clip). The host is always told,
 under the Play button, whether the phones have the clip. A page link
 (YouTube, Vimeo) is not a file link: it goes as bytes, never as `url`.
+
+*Addendum, same day — pictures:* measured, a store-only picture as a data URL
+made `pub` 108 KB and `pub` is re-sent to every phone on every state change
+(~225 MB for a 13-picture night of 40 phones, and a 4 MB burst on every host
+click). A picture over ~30 KB now rides the same once-written node
+(`pub.picture`, `kind: "image"`), fetched once per phone; `imageURL` keeps a
+≤ 320 px fallback so a joiner in the field still shows something. The forty-
+client burst on a 3.8 MB node measured 2.5 s wall — the node path is the
+cheap one, so it is the default for anything heavier than a thumbnail.

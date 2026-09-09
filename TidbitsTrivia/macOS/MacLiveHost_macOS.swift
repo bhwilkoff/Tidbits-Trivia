@@ -60,6 +60,9 @@ final class LiveHostSession {
     var mediaNote: String? = nil
     /// Epoch ms of the host's Play, published so phones that may autoplay do.
     var mediaStartedAt: Int? = nil
+    /// Decision 060 (pictures): the current question's picture node, once it is
+    /// in the room; nil until then (the small fallback in `imageURL` shows).
+    var currentPicture: LiveRoom.Media? = nil
     /// Per-question display shuffles (fixed once so publish + reveal agree).
     var shuffledOrder: [String] = []
     var shuffledValues: [String] = []
@@ -71,7 +74,7 @@ final class LiveHostSession {
         shuffledOrder = current?.ordering?.shuffled() ?? []
         shuffledValues = current?.matching?.values.shuffled() ?? []
         buzzedOut = []          // G1: a new question reopens the buzzer to everyone
-        currentMedia = nil; mediaNote = nil; mediaStartedAt = nil   // Decision 060: the next clip is offered when it is in place
+        currentMedia = nil; mediaNote = nil; mediaStartedAt = nil; currentPicture = nil   // Decision 060: offered when in place
     }
 
     var questions: [Question] { event.questionStream }
@@ -302,7 +305,8 @@ final class LiveHostSession {
                              phase: revealed ? LiveRoom.Phase.reveal : LiveRoom.Phase.question,
                              prompt: q.prompt, options: mcq ? q.options : nil, format: currentFormat,
                              answerIndex: (revealed && mcq) ? q.correctIndex : nil)
-        p.imageURL = LiveMediaStore.publishableURL(q.imageURL)   // §5.3: a phone cannot open the host's package
+        p.imageURL = LiveMediaStore.publishablePicture(q.imageURL).fallback   // §5.3: the https twin, or a SMALL data URL
+        p.picture = currentPicture                                             // Decision 060: the full picture, once its node is in the room
         if let c = q.closest { p.numeric = LiveRoom.Numeric(min: c.min, max: c.max, step: c.step, unit: c.unit) }
         if q.ordering != nil { p.orderItems = shuffledOrder }
         if let m = q.matching { p.matchKeys = m.keys; p.matchValues = shuffledValues }
@@ -476,6 +480,7 @@ struct LiveHostContainer_macOS: View {
     /// written BEFORE the `pub` that references it, and a question the host has
     /// already left is never published over.
     private func syncMedia() async {
+        await syncPicture()
         let idx = session.index
         let clip: (Data, String)? = session.currentVideoBookmark.map { ($0, "video") }
             ?? session.currentAudioBookmark.map { ($0, "audio") }
@@ -492,6 +497,19 @@ struct LiveHostContainer_macOS: View {
         }
         guard session.index == idx else { return }
         session.currentMedia = media
+        await net.publish(session.currentPub())
+    }
+
+    /// Decision 060 (pictures): a store-only picture over the data-URL budget is
+    /// written to the room once and then referenced from `pub.picture`.
+    private func syncPicture() async {
+        let idx = session.index
+        guard let q = session.current else { return }
+        let pic = await Task.detached(priority: .utility) { LiveMediaStore.publishablePicture(q.imageURL) }.value
+        guard session.index == idx, let id = pic.id, let node = pic.node, let wire = pic.wire else { return }
+        guard await net.publishMedia(id: id, node) else { return }
+        guard session.index == idx else { return }
+        session.currentPicture = wire
         await net.publish(session.currentPub())
     }
 

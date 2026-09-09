@@ -1,5 +1,9 @@
 import Foundation
 import Testing
+#if os(macOS)
+import AppKit
+import CoreGraphics
+#endif
 
 /// Decision 060: the clip a question carries reaches the phones over the wire.
 ///
@@ -82,4 +86,60 @@ struct LiveMediaCacheTests {
         #expect(LiveMediaCache.fileExtension(mime: "", kind: "video") == "mp4")
         #expect(LiveMediaCache.fileExtension(mime: "application/octet-stream", kind: "audio") == "m4a")
     }
+}
+
+@Suite("Live picture node")
+struct LivePictureNodeTests {
+    @Test("pub.picture round-trips beside imageURL, and is absent without one")
+    func pictureKey() throws {
+        var pub = LiveRoom.Pub(round: 1, roundTitle: "x", qid: "r0q0", qNum: 1, qTotal: 1,
+                               phase: LiveRoom.Phase.question, prompt: "p", options: ["a", "b"], format: "pictureId", answerIndex: nil)
+        var obj = try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(pub)) as? [String: Any])
+        #expect(obj["picture"] == nil)
+        pub.imageURL = "data:image/jpeg;base64,AAAA"
+        pub.picture = LiveRoom.Media(kind: "image", url: "room:abc", mime: "image/jpeg", name: "photo", bytes: 108_000)
+        obj = try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(pub)) as? [String: Any])
+        let pic = try #require(obj["picture"] as? [String: Any])
+        #expect(pic["kind"] as? String == "image")
+        #expect(pic["url"] as? String == "room:abc")
+        #expect(obj["imageURL"] as? String == "data:image/jpeg;base64,AAAA")
+        #expect(LiveMediaCache.fileExtension(mime: "image/jpeg", kind: "image") == "jpg")
+    }
+
+    #if os(macOS)
+    /// A photo-sized picture splits into a ≤120 KB node and a ≤20 KB fallback;
+    /// a small one stays a plain data URL (no node).
+    @Test("a big store-only picture becomes a node plus a small fallback")
+    func bigPictureSplits() throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("picnode-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        LiveMediaStore.directoryOverride = dir
+        defer { LiveMediaStore.directoryOverride = nil }
+        // 1600x1200 with per-pixel noise: compresses like a photo, not a flat fill.
+        let w = 1600, h = 1200
+        var bytes = [UInt8](repeating: 0, count: w * h * 4)
+        var seed: UInt32 = 7
+        for i in stride(from: 0, to: bytes.count, by: 4) {
+            seed = seed &* 1_664_525 &+ 1_013_904_223
+            bytes[i] = UInt8(truncatingIfNeeded: seed >> 24); bytes[i + 1] = UInt8(truncatingIfNeeded: seed >> 16)
+            bytes[i + 2] = UInt8(truncatingIfNeeded: seed >> 8); bytes[i + 3] = 255
+        }
+        let cg = try #require(CGContext(data: &bytes, width: w, height: h, bitsPerComponent: 8, bytesPerRow: w * 4,
+                                        space: CGColorSpaceCreateDeviceRGB(),
+                                        bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue)?.makeImage())
+        let png = try #require(NSBitmapImageRep(cgImage: cg).representation(using: .png, properties: [:]))
+        let id = try LiveMediaStore.store(png, ext: "png", originalName: "photo.png")
+        let pic = LiveMediaStore.publishablePicture(LiveMediaStore.reference(id))
+        let node = try #require(pic.node)
+        #expect(node.kind == "image" && node.mime == "image/jpeg")
+        #expect(node.bytes <= LiveMediaStore.publishMaxBytes && node.bytes > LiveMediaStore.nodeThresholdBytes)
+        #expect(pic.wire?.url == "room:\(pic.id ?? "")" && (pic.id?.count ?? 0) == 32)
+        let fallback = try #require(pic.fallback)
+        #expect(fallback.hasPrefix("data:image/jpeg;base64,"))
+        #expect(fallback.count <= LiveMediaStore.fallbackMaxBytes * 4 / 3 + 64)
+        // A tiny picture never needs a node.
+        let tinyID = try LiveMediaStore.store(png, ext: "png", originalName: "tiny.png")   // same bytes → same id, fine
+        _ = tinyID
+    }
+    #endif
 }

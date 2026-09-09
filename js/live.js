@@ -193,6 +193,7 @@ function draw() {
   }
   if (document.getElementById('live-timer')) ensureLiveTimer();
   mountMedia();
+  mountPicture();
   const wr = document.getElementById('live-wager-range');   // Wave A: wager slider
   if (wr) wr.oninput = (e) => { S.wager = +e.target.value; const n = document.getElementById('live-wager-num'); if (n) n.textContent = e.target.value; };
   if (!S.joined) {
@@ -374,7 +375,11 @@ function playHTML() {
     : (answered ? `<div class="live-note ok">Locked in — waiting for the reveal…</div>`
        : p.locked ? `<div class="live-note" style="color:#FF5C35">Answers locked — pencils down!</div>`
        : `<div class="live-note">Answer below.</div>`);
-  const img = p.imageURL ? `<img class="live-img" src="${esc(p.imageURL)}" alt="">` : '';
+  // Decision 060 (pictures): the small fallback shows at once; when the host
+  // published the full picture as a room node, mountPicture() fetches it ONCE
+  // and swaps the src. Nothing about a picture is re-sent on a state change.
+  const picSrc = p.picture && P.key === `${p.qid}|${p.picture.url}` && P.objectURL ? P.objectURL : p.imageURL;
+  const img = picSrc ? `<img id="live-picture" class="live-img" src="${esc(picSrc)}" alt="">` : '';
   // Decision 060: the clip slot. Filled AFTER the draw by mountMedia(), which
   // keeps one <audio>/<video> element alive across re-renders — innerHTML on
   // every state change would restart a playing clip.
@@ -457,6 +462,29 @@ function answerHTML(p, revealed) {
       ${locked ? '' : `<div class="live-addrow"><input id="live-enum" class="live-in" placeholder="Add one…"><button id="live-add" class="live-go">Add</button></div><button id="live-submit" class="live-go">Done</button>`}`;
   }
   return `<input id="live-text" class="live-in" placeholder="Type your answer" value="${esc(L.text || '')}" ${locked ? 'disabled' : ''}>${submit}`;
+}
+
+// Decision 060 (pictures): the full picture from the room node, fetched once per
+// question and kept as an object URL; the small fallback in imageURL is what the
+// player sees until it lands (and all a joiner without this code ever sees).
+const P = { key: null, objectURL: null, loading: false };
+function mountPicture() {
+  const p = S.pub;
+  const pic = p && p.picture;
+  if (!pic || !pic.url.startsWith('room:')) { if (P.objectURL) { try { URL.revokeObjectURL(P.objectURL); } catch { /* gone */ } } Object.assign(P, { key: null, objectURL: null, loading: false }); return; }
+  const key = `${p.qid}|${pic.url}`;
+  if (P.key === key) return;
+  if (P.objectURL) { try { URL.revokeObjectURL(P.objectURL); } catch { /* gone */ } }
+  Object.assign(P, { key, objectURL: null, loading: true });
+  FirebaseNet.liveMedia(S.code, pic.url.slice(5)).then((node) => {
+    if (P.key !== key || !node || !node.b64) { P.loading = false; return; }
+    const bin = atob(node.b64), buf = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+    P.objectURL = URL.createObjectURL(new Blob([buf], { type: node.mime || 'image/jpeg' }));
+    P.loading = false;
+    const el = document.getElementById('live-picture');
+    if (el) el.src = P.objectURL;   // swap in place — no redraw, no flicker
+  }).catch(() => { P.loading = false; });
 }
 
 // Decision 060: the clip a phone is offered. One element per (qid, url), kept

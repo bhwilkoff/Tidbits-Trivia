@@ -55,6 +55,7 @@ no confusable chars) shown on the big screen for players to enter.
   "orderItems": ["…"],            // ordering (SHUFFLED; correct order withheld)
   "matchKeys": ["…"], "matchValues": ["…"],       // matching (values SHUFFLED)
   "enumTarget": 8,                // enumerate (how many in the set)
+  "picture": { "kind": "image", "url": "room:<id>", "mime": "image/jpeg", "bytes": 108000 },   // Decision 060: the FULL picture as a room node (absent when imageURL is all there is)
   "media": {                      // Decision 060: the question's clip, OFFERED to every joiner (absent = no clip)
     "kind": "audio",              // "audio" | "video"
     "url": "room:<id>",           // a direct https FILE link, or room:<id> → live/{code}/media/{id}
@@ -70,6 +71,14 @@ first — decodes `b64` into a blob, and plays it in a native `<audio>`/`<video>
 (AVPlayer / Media3). Nothing plays until the player taps; the host's `startedAt`
 readies the clip and positions it at the room's offset. The element survives
 `pub` re-renders (recreating it restarts the clip). `url` is never `tidbits-media:`.
+**`picture` (Decision 060, pictures).** A store-only picture whose ≤ 800 px JPEG is
+over ~30 KB is written ONCE to `live/{code}/media/{id}` (`kind: "image"`) and
+referenced from `pub.picture`; `imageURL` then carries a SMALL fallback (≤ 320 px,
+~20 KB data URL) so a joiner that predates this key still shows a picture, and a
+joiner that reads `picture` shows the fallback while it fetches the node once per
+question. An https twin, or a small picture, still rides in `imageURL` alone.
+Nothing about a picture is re-sent on a state change any more.
+
 **Costs, measured 2026-09-09 (Mac host on an office connection; the venue's
 Wi-Fi, not Firebase, is the bottleneck in a room):** a 2.87 MB clip is a
 3.83 MB node; one client fetched it in 0.47 s; 10 concurrent clients in 0.83 s

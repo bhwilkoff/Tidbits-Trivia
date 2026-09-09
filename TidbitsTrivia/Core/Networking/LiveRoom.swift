@@ -67,6 +67,12 @@ enum LiveRoom {
         /// question, which until now played ONLY on the host's PA and projector.
         /// nil on a question without a clip, so an older client never sees it.
         var media: Media? = nil
+        /// Decision 060 (pictures, 2026-09-09): a store-only picture over the
+        /// data-URL budget, as a once-written room node (`kind: "image"`). When
+        /// present, `imageURL` still carries a SMALL fallback (≤ 320 px) for a
+        /// joiner that predates this key; a joiner that reads `picture` fetches
+        /// the full version once and shows the fallback while it loads.
+        var picture: Media? = nil
     }
 
     /// Decision 060: a clip as the joiners are given it. `url` is an https file

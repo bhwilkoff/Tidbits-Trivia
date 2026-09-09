@@ -37,7 +37,11 @@ final class LiveMediaCache {
         case "video/mp4": return "mp4"
         case "video/quicktime": return "mov"
         case "video/webm": return "webm"
-        default: return kind == "video" ? "mp4" : "m4a"
+        case "image/jpeg", "image/jpg": return "jpg"
+        case "image/png": return "png"
+        case "image/gif": return "gif"
+        case "image/webp": return "webp"
+        default: return kind == "video" ? "mp4" : (kind == "image" ? "jpg" : "m4a")
         }
     }
 

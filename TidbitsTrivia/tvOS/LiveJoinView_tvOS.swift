@@ -189,11 +189,8 @@ struct TVLivePlayerView: View {
                     .font(.system(size: 25, weight: .heavy, design: .rounded))
                     .foregroundStyle(Tidbits.Palette.coral)
             }
-            if let img = p.imageURL, let url = URL(string: img) {
-                AsyncImage(url: url) { phase in
-                    if let image = phase.image { image.resizable().scaledToFit() } else { Color.clear }
-                }
-                .frame(maxWidth: .infinity, maxHeight: 300).clipShape(RoundedRectangle(cornerRadius: 16))
+            if p.picture != nil || p.imageURL != nil {   // Decision 060: the room node's full picture, the fallback meanwhile
+                LivePictureView(picture: p.picture, fallback: p.imageURL, code: client.code, maxHeight: 300, cornerRadius: 16)
             }
             if let m = p.media {   // Decision 060: the host's clip, offered on the TV too
                 LiveClipView(media: m, code: client.code).id(p.qid + m.url)

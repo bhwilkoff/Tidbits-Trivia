@@ -106,6 +106,40 @@ public class ProjectorAdaptiveSnapshot
                         $"{label}: clipped ({t.TextLayout.Height:F0} of text in {t.Bounds.Height:F0}): {t.Text}");
     }
 
+    /// G5: the pick-a-category grid — the one live slide the adaptive set was
+    /// missing. Five columns x five tiers of synthetic questions.
+    [AvaloniaTheory]
+    [InlineData(1280, 720)]
+    [InlineData(1920, 1080)]
+    public async Task The_board_slide_fits_with_nothing_overlapping(int w, int h)
+    {
+        ProjectorElements.FilePath = Path.Combine(Path.GetTempPath(), $"projector-elements-test-{Guid.NewGuid():N}.json");
+        ProjectorElements.Shared.ShowEverything();
+        var cats = new[] { "history", "science", "geography", "music", "film" };
+        var pool = new List<Question>();
+        foreach (var c in cats) foreach (var t in LiveBoard.DefaultTiers)
+            pool.Add(new Question { Id = $"{c}-{t}", Prompt = $"{c} question worth {t * 100}", Options = new[] { "A", "B", "C", "D" },
+                                    CorrectIndex = 0, CategoryId = c, Difficulty = t, TemplateId = "mcq" });
+        var board = LiveBoardBuilder.Build(pool, cats);
+        var (host, seed) = SeededHost();
+        await host.LoadQuestionsOffline();
+        host.Questions.Clear();
+        host.Questions.AddRange(board.Cells.Select(cell => pool.First(q => q.Id == cell.QuestionId)));
+        host.RoundBoards = new List<LiveBoard?> { board };
+        host.ShowBoard = true; host.BoardChooser = "The Quizzards of Oz";
+        seed();
+        var vm = new LiveHostViewModel(host);
+        var win = new Window { Width = w, Height = h, Content = new ProjectorView { DataContext = vm } };
+        win.Show();
+        Dispatcher.UIThread.RunJobs(); await Task.Yield(); Dispatcher.UIThread.RunJobs();
+        var label = $"projector-adaptive-{w}x{h}-board";
+        win.CaptureRenderedFrame()!.Save(Path.Combine(ArtifactDir(), label + ".png"));
+        var text = VisibleTextBoxes(win).Select(b => b.Text).ToList();
+        Assert.Contains(text, t => t.Contains("PICKS"));
+        Assert.Equal(25, text.Count(t => t == "100" || t == "200" || t == "300" || t == "400" || t == "500"));
+        AssertNoOverlap(win, label);
+    }
+
     public static IEnumerable<object[]> Cases()
     {
         foreach (var (w, h) in new[] { (1280, 720), (1920, 1080) })

@@ -85,6 +85,17 @@
                          the code fixed it; enlarging the question broke the screen. -->
                     <TextBlock Text="{Binding Host.Current.Prompt}" Classes="section-header" TextWrapping="Wrap"
                                IsVisible="{Binding !ShowBoardScreen}"/>
+                    <!-- 3.36: the question's picture, so the host can talk to what the
+                         room is looking at (the projector shows the same one). -->
+                    <Border IsVisible="{Binding ShowPicture}" Height="160" CornerRadius="10" ClipToBounds="True"
+                            HorizontalAlignment="Left" MinWidth="240"
+                            Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
+                        <Panel>
+                            <TextBlock x:Name="CockpitPictureHint" Text="Loading picture" Classes="caption" Opacity="0.6"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <Image x:Name="CockpitPicture" Stretch="Uniform"/>
+                        </Panel>
+                    </Border>
                     <!-- The authored clip for THIS question (audio/video round). Either a
                          working control or an explicit "unavailable" line — never a play
                          button that does nothing (WINDOWS-DESIGN §6.6). -->

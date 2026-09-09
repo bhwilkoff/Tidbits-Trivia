@@ -338,6 +338,9 @@ there is no regression baseline at all.
   and exits. Set `TIDBITS_LIVE_HIDE=none` alongside it so the element switches
   are not persisted. This is the sim the overlap fix (A8.9) was measured on;
   the screen-region capture had graded a terminal window as the projector.
+- `TIDBITS_PROJECTOR_SNAPSHOT_VIDEO=<file.mp4>` adds the VIDEO slide to that set
+  (ImageRenderer draws no AVKit view — the band is a placeholder; the layout
+  around it is what it photographs); the BOARD slide is always in the set.
 - `TIDBITS_LIVE_FULLSCREEN=1` puts the projector into full screen on its own
   1.5 s after it appears (A8.10); capture it by CGWindowID
   (`screencapture -l <id>`), not by screen region.

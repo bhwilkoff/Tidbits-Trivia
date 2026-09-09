@@ -33,7 +33,19 @@ enum LiveProjectorSnapshot {
                               questions: [q(longPrompt, ["Kingdom of Portugal", "Pahlavi Iran", "Lydia", "Soviet Union"], story: longStory),
                                           q("Who painted the Mona Lisa?", ["Leonardo da Vinci", "Michelangelo", "Raphael", "Donatello"], story: "It hangs in the Louvre.", picture: true)],
                               timerSeconds: 45)
-        var event = LiveEvent(name: "Thursday Night Trivia at The Anchor", venue: "The Anchor, Boulder", rounds: [round])
+        // G5: a pick-a-category board round — five columns x five tiers of synthetic
+        // questions, so the grid slide is in the set (it was the one slide missing).
+        let boardCats = ["history", "science", "geography", "music", "film"]
+        var pool: [Question] = []
+        for c in boardCats { for t in LiveBoard.defaultTiers {
+            pool.append(Question(id: "\(c)-\(t)", prompt: "\(c.capitalized) question worth \(t * 100)", options: ["A", "B", "C", "D"],
+                                 correctIndex: 0, categoryID: c, difficulty: t, explanation: "", sourceTitle: "", sourceURL: nil, templateID: "mcq"))
+        } }
+        let board = LiveBoardBuilder.build(from: pool, categories: boardCats)
+        var boardRound = LiveRound(title: "Pick a Category", format: .classic, categoryID: "mixed",
+                                   questions: board.cells.compactMap { cell in pool.first { $0.id == cell.questionID } })
+        boardRound.board = board
+        var event = LiveEvent(name: "Thursday Night Trivia at The Anchor", venue: "The Anchor, Boulder", rounds: [round, boardRound])
         event.sponsor = "Left Hand Brewing"
         let net = LiveHostNet()
         let teamNames = ["The Quizzards of Oz", "Les Quizerables", "Trivia Newton John", "Norfolk Enchants", "Smarty Pints", "Beer Pressure"]
@@ -57,13 +69,26 @@ enum LiveProjectorSnapshot {
             Shot(name: "scores") { s in s.showScores = true },
             Shot(name: "break") { s in s.onBreak = true },
             Shot(name: "standings") { s in s.finished = true },
+            // The board: jump into round 2 and hold the grid.
+            Shot(name: "board") { s in s.next(); s.next(); s.showBoard = true; s.boardChooser = "The Quizzards of Oz" },
         ]
+        // A video question, when the harness hands us a real clip
+        // (TIDBITS_PROJECTOR_SNAPSHOT_VIDEO=<file>): the band the room watches.
+        // ImageRenderer draws no AVKit view, so the band is a black box in the PNG —
+        // the LAYOUT around it is what this photographs.
+        let videoPath = ProcessInfo.processInfo.environment["TIDBITS_PROJECTOR_SNAPSHOT_VIDEO"]
         let sizes: [(String, CGFloat, CGFloat)] = [("720p", 1280, 720), ("1080p", 1920, 1080)]
         for (label, w, h) in sizes {
-            for shot in shots {
+            let shotsForSize: [Shot] = shots + (videoPath.map { path in
+                [Shot(name: "video") { s in
+                    LiveVideoPlayer.shared.open(URL(fileURLWithPath: path)); s.deadlineMs = LiveHostNet.nowMS() + 32_000
+                }]
+            } ?? [])
+            for shot in shotsForSize {
                 for allOn in [true, false] {
                     if allOn { elements.showEverything() }
                     else { for e in LiveProjectorElements.all { elements.set(e.id, shown: false) } }
+                    LiveVideoPlayer.shared.stop()
                     let session = LiveHostSession(event: event)
                     session.deadlineMs = nil
                     shot.apply(session)
@@ -83,6 +108,7 @@ enum LiveProjectorSnapshot {
                 }
             }
         }
+        LiveVideoPlayer.shared.stop()
         coord.session = nil
     }
 

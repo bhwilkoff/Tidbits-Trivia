@@ -60,6 +60,8 @@ public partial class LiveCockpitView : UserControl
     protected override void OnDataContextChanged(EventArgs e)
     {
         base.OnDataContextChanged(e);
+        if (DataContext is LiveHostViewModel pvm) pvm.PropertyChanged += (_, _) => RefreshCockpitPicture();
+        RefreshCockpitPicture();
         if (Vm is { } vm) vm.PropertyChanged += (_, _) => { RefreshQr(); RefreshTally(); RefreshReview(); };
         RefreshQr();
         RefreshTally();
@@ -522,6 +524,25 @@ public partial class LiveCockpitView : UserControl
                 menu.Items.Add(item);
             }
         menu.ShowAt(ScreenButton);
+    }
+
+    /// 3.36 (cockpit half): the question's picture through the shared ImageCache.
+    private string _cockpitPictureUrl = "";
+    private void RefreshCockpitPicture()
+    {
+        var url = Vm?.PictureUrl ?? "";
+        if (url == _cockpitPictureUrl) return;
+        _cockpitPictureUrl = url;
+        CockpitPicture.Source = null; CockpitPictureHint.IsVisible = true; CockpitPictureHint.Text = "Loading picture";
+        if (url.Length == 0) return;
+        if (Services.ImageCache.Shared.Cached(url) is { } cached) { CockpitPicture.Source = cached; CockpitPictureHint.IsVisible = false; return; }
+        Services.ImageCache.Shared.LoadAsync(url).ContinueWith(t =>
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                if (_cockpitPictureUrl != url) return;
+                if (t.Status == System.Threading.Tasks.TaskStatus.RanToCompletion && t.Result is { } bmp) { CockpitPicture.Source = bmp; CockpitPictureHint.IsVisible = false; }
+                else CockpitPictureHint.Text = "Picture unavailable";
+            }));
     }
 
     /// TIDBITS_LIVE_PROJECTOR=1: the projector opens with the cockpit (harness).

@@ -7,6 +7,21 @@
 > `docs/ROADMAP.md`, `docs/DATA-CONTRACT.md`. Detailed per-round history is in
 > `ARCHIVE.md`.
 
+## Current state (2026-09-09j) — the board and video slides join both projector sims; the Windows cockpit shows the picture
+
+**Did:** the Mac offline projector set gained the pick-a-category BOARD (a
+synthetic 5x5 grid) and, with `TIDBITS_PROJECTOR_SNAPSHOT_VIDEO=<mp4>`, the
+VIDEO slide (36 PNGs now; the AVKit band renders as a placeholder, the
+layout around it is the point); the Windows `ProjectorAdaptiveSnapshot`
+gained the board at both sizes with the no-overlap + 25-cell assertions.
+Both boards read the same. The Windows COCKPIT shows the question's picture
+under the prompt (3.36 closed on both halves). 1.9.8 (138).
+
+**Verified:** Mac sim read (board at both sizes; video band with the tally,
+chips and join card fitted around it; all-off = prompt + video only);
+Windows 25 tests green; the Windows cockpit photographed on the real box with
+the photo under the prompt of the hosted "QA picture night".
+
 ## Current state (2026-09-09i) — the picture node on the Windows host + joiner and Android (closes the picture path)
 
 **Did:** C# `LiveMediaStore.PublishPicture` (the same split as the Mac, over

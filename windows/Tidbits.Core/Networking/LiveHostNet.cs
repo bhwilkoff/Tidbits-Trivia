@@ -115,6 +115,7 @@ public sealed class LiveHostNet
     /// Open a room and start streaming joins. Returns the code, or null on failure.
     public async Task<string?> Open(string name, string venue = "")
     {
+        lock (_lock) _publishedMedia.Clear();
         try
         {
             var host = await _db.EnsureAuth();
@@ -133,6 +134,24 @@ public sealed class LiveHostNet
             LastError = $"Couldn't open a networked room: {ex.Message}";
             return null;
         }
+    }
+
+    /// Decision 060: write a clip to the room ONCE so every joiner can fetch it.
+    /// Returns whether the node is in place (already written counts). The caller
+    /// publishes the `pub` that references it only after this returns true.
+    private readonly HashSet<string> _publishedMedia = new();
+    public async Task<bool> PublishMedia(string id, LiveRoom.RoomMedia media)
+    {
+        if (!IsOpen) return false;
+        lock (_lock) { if (_publishedMedia.Contains(id)) return true; }
+        if (media.Bytes > LiveRoom.MediaMaxBytes) return false;
+        try
+        {
+            await _db.Put(LiveRoom.MediaPath(Code, id), media);
+            lock (_lock) _publishedMedia.Add(id);
+            return true;
+        }
+        catch (Exception ex) { LastError = $"Couldn't send the clip to the room: {ex.Message}"; return false; }
     }
 
     public async Task Publish(LiveRoom.Pub pub)

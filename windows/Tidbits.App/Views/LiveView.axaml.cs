@@ -87,6 +87,37 @@ public partial class LiveView : UserControl
             return;
         }
 
+        // TIDBITS_LIVE_HOST_FILE: import a night and HOST it from launch — the way
+        // the device harness puts a clip-bearing package on the wire.
+        Services.LaunchHooks.Diag($"LiveView ctor: hostFile={Services.LaunchHooks.LiveHostFile ?? "(none)"} exists={(Services.LaunchHooks.LiveHostFile is { } hf && System.IO.File.Exists(hf))}");
+        if (Services.LaunchHooks.LiveHostFile is { } hostFile && System.IO.File.Exists(hostFile))
+        {
+            Loaded += (_, _) =>
+            {
+                try
+                {
+                    Services.LaunchHooks.Diag("host-file: importing");
+                    var bytes = System.IO.File.ReadAllBytes(hostFile);
+                    // publiclyVisible: the importer reads GetBuffer(), which a
+                    // byte[]-backed stream refuses by default.
+                    using var ms = new System.IO.MemoryStream(bytes, 0, bytes.Length, false, true);
+                    ImportFromStream(ms);
+                    Services.LaunchHooks.Diag($"host-file: imported, rounds={_rounds.Count}, status={StatusText.Text}");
+                    Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                    {
+                        Services.LaunchHooks.Diag($"host-file: hosting, rounds={_rounds.Count}");
+                        OnHostEvent(this, new RoutedEventArgs());
+                    }, Avalonia.Threading.DispatcherPriority.Background);
+                }
+                catch (Exception ex)
+                {
+                    Services.LaunchHooks.Diag($"host-file: FAILED {ex}");
+                    ShowStatus($"Could not host {System.IO.Path.GetFileName(hostFile)}: {ex.Message}");
+                }
+            };
+            return;
+        }
+
         // A double-clicked .tidbits (the MSIX file-type association): import it and
         // select the night, exactly as the Import button would (§8.2).
         if (Program.LaunchPackage is { } pkg)
@@ -95,7 +126,8 @@ public partial class LiveView : UserControl
             {
                 try
                 {
-                    using var ms = new System.IO.MemoryStream(System.IO.File.ReadAllBytes(pkg));
+                    var bytes = System.IO.File.ReadAllBytes(pkg);
+                    using var ms = new System.IO.MemoryStream(bytes, 0, bytes.Length, false, true);
                     ImportFromStream(ms);
                 }
                 catch (Exception ex) { ShowStatus($"Could not open {System.IO.Path.GetFileName(pkg)}: {ex.Message}"); }

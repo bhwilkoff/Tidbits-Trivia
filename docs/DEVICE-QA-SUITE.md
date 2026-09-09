@@ -343,3 +343,9 @@ there is no regression baseline at all.
   (`screencapture -l <id>`), not by screen region.
 - `TIDBITS_LIVE_TAPCLIP=1` takes up a Decision 060 clip offer on any Apple
   joiner without a finger on the glass.
+- Windows box: `TIDBITS_LIVE_HOST_FILE=<C:/…/night.tidbits>` imports and hosts
+  that night from launch (with `TIDBITS_LIVE_CODE` to pin the room);
+  `TIDBITS_LIVE_TAPCLIP=1` takes up a clip offer on the Windows joiner;
+  `TIDBITS_LIVE_DIAG=1` appends what the launch hooks saw to
+  `%LOCALAPPDATA%/TidbitsTrivia/launch-hooks.log` — read it with `winbox.ps`
+  (which now decodes with `errors="replace"`, because PowerShell writes cp1252).

@@ -58,6 +58,27 @@ public static class LaunchHooks
         }
     }
 
+    /// TIDBITS_LIVE_DIAG=1 — append what the launch hooks saw to
+    /// %LOCALAPPDATA%/TidbitsTrivia/launch-hooks.log, the only way to read it on a
+    /// box driven over ssh. No-op otherwise.
+    public static void Diag(string line)
+    {
+        if (!Flag("TIDBITS_LIVE_DIAG")) return;
+        try
+        {
+            var dir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TidbitsTrivia");
+            System.IO.Directory.CreateDirectory(dir);
+            System.IO.File.AppendAllText(System.IO.Path.Combine(dir, "launch-hooks.log"), $"{DateTime.Now:HH:mm:ss.fff} {line}\n");
+        }
+        catch { }
+    }
+
+    /// TIDBITS_LIVE_HOST_FILE=<path.tidbits|.json> — import that night and host it
+    /// straight from launch (the Mac's hook of the same name).
+    public static string? LiveHostFile => Env("TIDBITS_LIVE_HOST_FILE");
+    /// TIDBITS_LIVE_TAPCLIP=1 — a joiner takes up a clip offer without a click.
+    public static bool LiveTapClip => Flag("TIDBITS_LIVE_TAPCLIP");
+
     /// TIDBITS_LIVE_PROJECTOR=1 — open the projector window as soon as the cockpit
     /// is up, so the big screen can be photographed without a click.
     public static bool LiveProjector => Flag("TIDBITS_LIVE_PROJECTOR");

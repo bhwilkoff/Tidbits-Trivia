@@ -21,6 +21,9 @@ public sealed class LivePlayerClient
     /// The join SURFACE is otherwise unreachable offline, and a surface nothing can
     /// drive is untested (hooks-are-coverage).
     public LiveRoom.Pub? PubForTesting { get => Pub; set => Pub = value; }
+    /// Put the client in the JOINED state without a network, so a surface test can
+    /// render the game screen (the join form hides it otherwise).
+    public void JoinedForTesting(string code) { Code = code; Joined = true; Joining = false; Changed?.Invoke(); }
     public LiveRoom.Meta? Meta { get; private set; }
     public int Score { get; private set; }
     public int Wager { get; set; }

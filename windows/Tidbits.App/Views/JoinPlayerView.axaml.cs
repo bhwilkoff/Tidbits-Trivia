@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using System.ComponentModel;
 using Avalonia;
 using Avalonia.Controls;
@@ -64,7 +65,81 @@ public partial class JoinPlayerView : UserControl
         RebuildCoplayers();
     }
 
-    private void OnClientChanged() => Avalonia.Threading.Dispatcher.UIThread.Post(() => { RebuildOptions(); RebuildCoplayers(); });
+    private void OnClientChanged() => Avalonia.Threading.Dispatcher.UIThread.Post(() => { RebuildOptions(); RebuildCoplayers(); RefreshClip(); });
+
+    // ---- Decision 060: the host's clip on a Windows joiner ---------------------
+    private string _clipKey = "";
+    private string? _clipPath;
+    private bool _clipLoading;
+    private Services.VideoFrameSink? _clipSink;
+
+    /// A new question (or a new clip) resets the offer; the host's cue readies the
+    /// file so the click is instant. Nothing plays until the player clicks.
+    private void RefreshClip()
+    {
+        var vm = _vm;
+        var key = vm?.MediaKey ?? "";
+        if (key != _clipKey)
+        {
+            _clipKey = key; _clipPath = null; _clipLoading = false;
+            ClipStatus.IsVisible = false; ClipVideoFrame.IsVisible = false;
+            Services.GameData.Shared.Value.Av.StopClip();
+            if (key.Length > 0 && Services.LaunchHooks.LiveTapClip)
+            {
+                var k = key;
+                Avalonia.Threading.DispatcherTimer.RunOnce(() => { if (_clipKey == k) OnPlayClip(this, new RoutedEventArgs()); }, TimeSpan.FromSeconds(2));
+            }
+        }
+        if (vm?.Media is { StartedAt: not null } && _clipPath is null && !_clipLoading) _ = LoadClip(vm.Media, thenPlay: false);
+    }
+
+    private async void OnPlayClip(object? sender, RoutedEventArgs e)
+    {
+        if (_vm?.Media is not { } media) return;
+        await LoadClip(media, thenPlay: true);
+    }
+
+    private async Task LoadClip(LiveRoom.Media media, bool thenPlay)
+    {
+        var key = _clipKey;
+        if (_clipPath is null)
+        {
+            if (_clipLoading) return;
+            _clipLoading = true;
+            ClipStatus.Text = "Loading the clip"; ClipStatus.IsVisible = true;
+            try { _clipPath = await LiveMediaCache.Shared.LocalPath(media, _vm!.Client.Code); }
+            catch (Exception ex)
+            {
+                ClipStatus.Text = $"Clip unavailable — the room hears it from the host. ({ex.Message})";
+                _clipLoading = false; return;
+            }
+            _clipLoading = false;
+            if (_clipKey != key) return;
+            ClipStatus.Text = "Ready — click to play";
+        }
+        if (!thenPlay) return;
+        var av = Services.GameData.Shared.Value.Av;
+        if (!av.Available) { ClipStatus.Text = "This build has no media player (LibVLC missing)"; return; }
+        if (media.Kind == "video") AttachClipVideo(av);
+        av.PlayClip(_clipPath!);
+        ClipStatus.Text = "Playing";
+    }
+
+    /// Route a video clip's picture into this card, the way the projector does.
+    private void AttachClipVideo(Services.AvPlayer av)
+    {
+        if (_clipSink is null)
+        {
+            _clipSink = new Services.VideoFrameSink();
+            _clipSink.FrameArrived += () => Avalonia.Threading.Dispatcher.UIThread.Post(() => ClipVideoFrame.IsVisible = true);
+            ClipVideo.Sink = _clipSink;
+            DetachedFromVisualTree += (_, _) =>
+            {
+                av.SetVideoSink(null); ClipVideo.Sink = null; _clipSink?.Dispose(); _clipSink = null;
+            };
+        }
+        av.SetVideoSink(_clipSink);
+    }
 
     /// At the wrap, list the people you played with, each with an Add / Added button.
     private void RebuildCoplayers()

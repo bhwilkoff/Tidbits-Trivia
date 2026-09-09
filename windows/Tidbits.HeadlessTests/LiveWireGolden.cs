@@ -29,6 +29,7 @@ public class LiveWireGolden
         Assert.DoesNotContain("imageURL", json);
         Assert.DoesNotContain("numeric", json);
         Assert.DoesNotContain("locked", json);
+        Assert.DoesNotContain("media", json);   // Decision 060: absent on a question without a clip
     }
 
     [Fact]

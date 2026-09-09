@@ -469,10 +469,11 @@ public partial class LiveCockpitView : UserControl
     /// This is the leg that made the round real: Windows could already play a clip
     /// the host picked ad hoc, but nothing connected an AUTHORED round's clip to
     /// the question it belongs to.
-    private void OnPlayQuestionClip(object? sender, RoutedEventArgs e)
+    private async void OnPlayQuestionClip(object? sender, RoutedEventArgs e)
     {
         if (Vm?.CurrentClipPath is not { } path) return;
         Services.GameData.Shared.Value.Av.PlayClip(path);
+        await Vm.CueMedia();   // Decision 060: cue the phones
     }
 
     private void OnStopQuestionClip(object? sender, RoutedEventArgs e) =>

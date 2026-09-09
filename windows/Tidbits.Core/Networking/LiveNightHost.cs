@@ -71,6 +71,52 @@ public sealed class LiveNightHost : ObservableObject
         }
     }
 
+    /// Decision 060: the current question's clip as the ROOM is given it, set once
+    /// the room node is in place; null until then and on a question without one.
+    public LiveRoom.Media? CurrentMedia { get; private set; }
+    /// What the cockpit says under the Play button about the phones.
+    public string? MediaNote { get; private set; }
+    /// Epoch ms of the host's Play, published so phones ready and position the clip.
+    public long? MediaStartedAt { get; private set; }
+
+    /// Offer the current question's clip to the phones: prepare it, write the node
+    /// BEFORE the pub that references it, and never publish over a question the
+    /// host has already left.
+    public async Task SyncMedia()
+    {
+        var path = CurrentClipPath;
+        if (path is null) return;
+        var index = Index;
+        var prepared = await Task.Run(() => LiveClipPublisher.Prepare(path));
+        if (Index != index) return;
+        MediaNote = prepared.Note;
+        if (prepared.Media is null) { Notify(); return; }
+        if (prepared.Id is not null && prepared.Node is not null)
+        {
+            if (!await Net.PublishMedia(prepared.Id, prepared.Node)) { MediaNote = "Not on phones — the room refused the clip"; Notify(); return; }
+        }
+        if (Index != index) return;
+        CurrentMedia = prepared.Media;
+        await Net.Publish(BuildPub());
+        Notify();
+    }
+
+    /// The host pressed Play: tell the phones when, so each readies the clip and
+    /// positions it where the room is.
+    public async Task CueMedia()
+    {
+        if (CurrentMedia is null) return;
+        MediaStartedAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        await Net.Publish(BuildPub());
+        Notify();
+    }
+
+    private async Task PublishCurrent()
+    {
+        await Net.Publish(BuildPub());
+        await SyncMedia();
+    }
+
     /// True when the current round HAS clips but this question's is gone — the
     /// difference between "no clip round" and "your clip moved", which the host
     /// needs to tell apart mid-night.
@@ -203,7 +249,7 @@ public sealed class LiveNightHost : ObservableObject
     {
         if (CurrentStage != Stage.Playing) return false;
         if (!PickBoardCell(categoryId, tier)) return false;
-        await Net.Publish(BuildPub());
+        await PublishCurrent();
         Notify();
         return true;
     }
@@ -462,12 +508,13 @@ public sealed class LiveNightHost : ObservableObject
         PrepareQuestion();
         ArmRoundTimer();
         await Net.SetState("live");
-        await Net.Publish(BuildPub());
+        await PublishCurrent();
         Notify();
     }
 
     private void PrepareQuestion()
     {
+        CurrentMedia = null; MediaNote = null; MediaStartedAt = null;   // Decision 060: the next clip is offered when it is in place
         _shuffledOrder = Current?.Ordering is { } o ? QueryHelpers.Shuffle(o.ToList()) : new();
         _shuffledValues = Current?.Matching is { } m ? QueryHelpers.Shuffle(m.Values.ToList()) : new();
     }
@@ -503,7 +550,7 @@ public sealed class LiveNightHost : ObservableObject
         Revealed = false; HostChoice = null; Locked = false; _deadline = null;
         Index++;
         if (Current is null) await End();
-        else { PrepareQuestion(); ArmRoundTimer(); await Net.Publish(BuildPub()); }
+        else { PrepareQuestion(); ArmRoundTimer(); await PublishCurrent(); }
         Notify();
     }
 
@@ -514,7 +561,7 @@ public sealed class LiveNightHost : ObservableObject
         Revealed = false; HostChoice = null; Locked = false; _deadline = null;
         Index++;
         if (Current is null) await End();
-        else { PrepareQuestion(); ArmRoundTimer(); await Net.Publish(BuildPub()); }
+        else { PrepareQuestion(); ArmRoundTimer(); await PublishCurrent(); }
         Notify();
     }
 
@@ -527,7 +574,7 @@ public sealed class LiveNightHost : ObservableObject
         // No ArmRoundTimer here on purpose: going back means the host is fixing something,
         // and dropping a fresh countdown on a re-ask would rush the room mid-correction.
         PrepareQuestion();
-        await Net.Publish(BuildPub());
+        await PublishCurrent();
         Notify();
     }
 
@@ -654,6 +701,7 @@ public sealed class LiveNightHost : ObservableObject
             Deadline = Revealed ? null : _deadline,
             Wager = IsWagerRound ? true : null,
             Buzz = IsBuzzRound ? true : null,          // G1: joiners show a BUZZ button
+            Media = CurrentMedia is { } m ? m with { StartedAt = MediaStartedAt } : null,   // Decision 060
         };
     }
 

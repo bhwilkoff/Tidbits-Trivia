@@ -18,6 +18,17 @@ public sealed class LivePlayerViewModel : ObservableObject
         Client.Changed += () => Dispatcher.UIThread.Post(() => OnPropertyChanged(string.Empty));
     }
 
+    // Bound as VM properties on purpose: a path through `Client` (`Client.Pub.Prompt`)
+    // never re-evaluates once `Client` itself is unchanged — Avalonia re-reads a
+    // chain only from the node that changed, and `Client` is not INotifyPropertyChanged.
+    // Measured on the real box: a joiner that showed the options and a BLANK band
+    // where the question should be, and no room name, all night.
+    public string Prompt => Client.Pub?.Prompt ?? "";
+    public string RoomName => Client.Meta?.Name ?? "";
+    public int Score => Client.Score;
+    public string? ErrorText => Client.ErrorText;
+    public bool HasError => Client.ErrorText is not null;
+
     public Task Join(string code, string team) => Client.Join(code, team);
     public Task SubmitChoice(int i) => Client.SubmitChoice(i);
     public Task Leave() => Client.Leave();
@@ -89,6 +100,22 @@ public sealed class LivePlayerViewModel : ObservableObject
         Client.Pub?.Board is { } b ? $"{b.Remaining} left · {b.Points:N0} points on the board" : "";
 
     // L5 social graph — "add the people you played with" at the wrap.
+    // Decision 060: the host's clip, offered here too. Nothing plays until the
+    // player clicks; the host's cue readies it and positions it where the room is.
+    public LiveRoom.Media? Media => Client.Pub?.Phase is LiveRoom.Phase.Question or LiveRoom.Phase.Reveal ? Client.Pub?.Media : null;
+    public bool HasMedia => Media is not null;
+    public string MediaTitle => Media?.Kind == "video" ? "Watch the clip" : "Listen to the clip";
+    public string MediaSubtitle
+    {
+        get
+        {
+            var m = Media; if (m is null) return "";
+            if (m.StartedAt is not null) return "Playing in the room now — click to hear it here";
+            var size = m.Bytes is { } b ? (b >= 1_000_000 ? $" · {b / 1_000_000.0:F1} MB" : $" · {System.Math.Max(1, b / 1000)} KB") : "";
+            return (m.Name ?? (m.Kind == "video" ? "Video" : "Audio")) + size;
+        }
+    }
+    public string MediaKey => Media is { } m ? $"{Client.Pub?.Qid}|{m.Url}" : "";
     public System.Collections.Generic.IReadOnlyList<PlayerIdentity.Friend> Coplayers => Client.Coplayers;
     public bool HasCoplayers => IsEnded && Client.Coplayers.Count > 0;
     public bool IsFriend(string uid) { try { return Services.GameData.Shared.Value.Friends.Contains(uid); } catch { return false; } }

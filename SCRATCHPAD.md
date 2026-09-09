@@ -7,6 +7,56 @@
 > `docs/ROADMAP.md`, `docs/DATA-CONTRACT.md`. Detailed per-round history is in
 > `ARCHIVE.md`.
 
+## Current state (2026-09-09e) — the Windows host and joiner carry clips (3.53), on the real box
+
+**Did:** the C# side of Decision 060 — `LiveRoom.Media`/`RoomMedia`,
+`LiveHostNet.PublishMedia` (once per room, node before pub),
+`LiveClipPublisher` (Core), `LiveNightHost.CurrentMedia`/`SyncMedia`/`CueMedia`
+(after Start/Next/Skip/Back/board pick; Play cues the phones), the cockpit's
+"On phones too · 74 KB" line, `LiveMediaCache` and the joiner's offer card
+(LibVLC; video into a `VideoSurface` in the card). **Windows delta:** no
+transcoder in the box — MP3/M4A/AAC/MP4/M4V under 3 MB go as they are;
+WAV/MOV or over the cap read "Not on phones — attach an MP3 or M4A / MP4
+under 3.0 MB". New hooks: `TIDBITS_LIVE_HOST_FILE` (Windows twin of the
+Mac's), `TIDBITS_LIVE_TAPCLIP`, `TIDBITS_LIVE_DIAG`.
+
+**Verified on the real box (DESKTOP-LAKMUIR):** hosted `qa-audio-m4a.tidbits`
+from launch → `pub.media = room:d510… audio/mp4 74 KB` on the wire; the web
+joiner played it (readyState 4, 6 s, playing); the cockpit photographed with
+"On phones too · 74 KB" and the joiner in the room. 19 targeted tests green
+(publisher, wire golden, projector). **The Windows JOINER on the real box:**
+joined a Mac-hosted room (`WINK`), fetched the Mac's 195 KB m4a node and
+played it — photographed "QA audio night · 69s · Listen to the clip · tune ·
+195 KB · Playing" above the question and options. **That capture found a
+second pre-existing bug:** the first run showed the options and a BLANK band
+where the question should be, and no room name — `Client.Pub.Prompt` /
+`Client.Meta.Name` / `Client.Score` were bound THROUGH `Client`, an object
+that never changes and is not INotifyPropertyChanged, so Avalonia never
+re-read the chain after the join (a headless probe with the question set
+BEFORE the view passed; set AFTER, it failed). Routed through VM properties
+(`Prompt`, `RoomName`, `Score`, `ErrorText`); `JoinerPromptProbe` pins the
+arrival order. The Windows joiner had never shown a question after joining.
+
+**Found on the way — a real 8.2 bug:** the `.tidbits` file-association import
+threw "MemoryStream's internal buffer cannot be accessed" on Windows
+(`GetBuffer()` on a byte[]-backed stream), so double-clicking a package had
+never worked there; fixed with `publiclyVisible: true`. Only the launch-hook
+log (`TIDBITS_LIVE_DIAG`) found it — the first run just showed the builder.
+
+**Owner's question ("the media you are testing is pretty small … larger
+video/audio/image files?"):** the wire never carries the original. Pictures
+are downscaled by the host to ≤800 px JPEG ≤120 KB (a 20 MB photo becomes
+~100 KB on the wire); clips are capped at 3 MB raw — the Mac re-encodes to
+reach it (AAC; 640x480 H.264 ≈ 30–60 s of video, ~3 min of audio), Windows
+refuses; the projector and PA play the full original from disk. Costs: a
+clip node is fetched ONCE per phone and only on Play/tap (40 phones × 3 MB =
+120 MB; a 5-clip night ≈ 600 MB of the Spark tier's 10 GB/month); a picture
+rides INSIDE `pub`, which is re-sent to every phone on every state change
+(a 13-picture night for 40 phones ≈ 200 MB) — the once-written node the
+clips use is the right home for pictures over ~30 KB too (§8.3, next).
+Unmeasured: the 40-phone burst on venue Wi-Fi and RTDB's per-connection
+throughput — a scale tick with 40 scripted web joiners is queued. 1.9.5 (135).
+
 ## Current state (2026-09-09d) — the Windows projector adapts and goes full screen (parity with 2026-09-09c)
 
 **Did (WINDOWS-DESIGN 6.3c, WINDOWS-PARITY 3.54):** the Windows question

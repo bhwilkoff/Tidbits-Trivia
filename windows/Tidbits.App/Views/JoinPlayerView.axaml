@@ -1,5 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             xmlns:views="using:Tidbits.App.Views"
              xmlns:vm="using:Tidbits.App.ViewModels"
              xmlns:net="using:Tidbits.Core.Networking"
              x:Class="Tidbits.App.Views.JoinPlayerView"
@@ -36,15 +38,14 @@
                     <!-- There was no way back out of this surface at all. -->
                     <Button Content="Cancel" Click="OnLeave" Padding="18,12"/>
                 </StackPanel>
-                <TextBlock Text="{Binding Client.ErrorText}" Foreground="#D64545" FontSize="13"
-                           IsVisible="{Binding Client.ErrorText, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                <TextBlock Text="{Binding ErrorText}" Foreground="#D64545" FontSize="13" IsVisible="{Binding HasError}"/>
             </StackPanel>
 
             <!-- Joined: the game -->
             <StackPanel IsVisible="{Binding !NotJoined}" Spacing="14">
                 <Grid ColumnDefinitions="*,Auto">
-                    <TextBlock Text="{Binding Client.Meta.Name}" FontWeight="Bold" FontSize="18" VerticalAlignment="Center"/>
-                    <TextBlock Grid.Column="1" Text="{Binding Client.Score, StringFormat='{}{0} pts'}"
+                    <TextBlock Text="{Binding RoomName}" FontWeight="Bold" FontSize="18" VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="1" Text="{Binding Score, StringFormat='{}{0} pts'}"
                                FontWeight="Black" FontSize="18" Foreground="#FF5C35"/>
                 </Grid>
 
@@ -59,7 +60,24 @@
                 </StackPanel>
                 <TextBlock IsVisible="{Binding HasLetter}" Text="{Binding LetterBanner}"
                            FontWeight="Black" FontSize="13" Foreground="#FF5C35"/>
-                <TextBlock IsVisible="{Binding ShowQuestionOnly}" Text="{Binding Client.Pub.Prompt}"
+                <!-- Decision 060: the host's clip, offered here too -->
+                <StackPanel IsVisible="{Binding HasMedia}" Spacing="6">
+                    <Button x:Name="ClipButton" Click="OnPlayClip" Classes="accent" Padding="14,10" HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Left" AutomationProperties.Name="Play the clip">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <ui:FASymbolIcon Symbol="Play" FontSize="18" VerticalAlignment="Center"/>
+                            <StackPanel>
+                                <TextBlock x:Name="ClipTitle" Text="{Binding MediaTitle}" FontWeight="Bold"/>
+                                <TextBlock Text="{Binding MediaSubtitle}" FontSize="12" Opacity="0.85"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Button>
+                    <TextBlock x:Name="ClipStatus" IsVisible="False" FontSize="12" Opacity="0.75"/>
+                    <Border x:Name="ClipVideoFrame" IsVisible="False" CornerRadius="10" ClipToBounds="True" Background="Black" Height="220">
+                        <views:VideoSurface x:Name="ClipVideo"/>
+                    </Border>
+                </StackPanel>
+                <TextBlock IsVisible="{Binding ShowQuestionOnly}" Text="{Binding Prompt}"
                            FontSize="21" FontWeight="Bold" TextWrapping="Wrap"/>
                 <!-- G1: on a buzz round the whole answer UI is ONE button. Big,
                      because the player is racing and looking at the big screen, not

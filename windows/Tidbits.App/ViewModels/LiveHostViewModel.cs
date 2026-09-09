@@ -243,6 +243,11 @@ public sealed class LiveHostViewModel : ObservableObject
     /// discovers a dead control mid-round, with a room watching.
     public bool ClipMissing => Host.CurrentClipMissing;
     public string ClipName => Host.CurrentClipPath is { } p ? System.IO.Path.GetFileName(p) : "";
+    /// Decision 060: whether the phones have this clip too — "On phones too · 1.2 MB",
+    /// "On phones by link", or why not.
+    public string MediaNote => Host.MediaNote ?? "";
+    public bool HasMediaNote => Host.MediaNote is not null;
+    public Task CueMedia() => Host.CueMedia();
     public bool HasRoundNote => Host.CurrentRoundNote is not null;
     /// The correct option text (shown big on the projector at reveal).
     public string? RevealAnswer => Host.Current is { } q ? LiveScoring.AnswerLine(q) : null;

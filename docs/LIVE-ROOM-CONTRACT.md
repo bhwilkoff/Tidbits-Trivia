@@ -70,6 +70,9 @@ first — decodes `b64` into a blob, and plays it in a native `<audio>`/`<video>
 (AVPlayer / Media3). Nothing plays until the player taps; the host's `startedAt`
 readies the clip and positions it at the room's offset. The element survives
 `pub` re-renders (recreating it restarts the clip). `url` is never `tidbits-media:`.
+Hosts differ in ENCODING only: the Mac re-encodes (AAC `.m4a`, H.264 640x480
+`.mp4`) to get under the cap; Windows sends an MP3/M4A/AAC/MP4/M4V as it is and
+refuses anything else or over the cap, saying so under the Play button.
 `qid = "r{roundIndex}q{questionIndex}"` is stable across reveal/advance so answers
 key cleanly. **Every question type is playable** — only the field(s) for the current
 `format` are set. **Nothing that could leak the answer is ever published** (correct

@@ -99,6 +99,9 @@
                         <Button Content="Stop" Click="OnStopQuestionClip" Padding="12,8"/>
                         <TextBlock Text="{Binding ClipName}" Classes="caption" VerticalAlignment="Center"/>
                     </StackPanel>
+                    <!-- Decision 060: the phones' side of the clip, always stated. -->
+                    <TextBlock IsVisible="{Binding HasMediaNote}" Text="{Binding MediaNote}" Classes="caption"
+                               Opacity="0.75" Margin="2,0,0,0"/>
                     <Border IsVisible="{Binding ClipMissing}" Background="#22FF5C35" CornerRadius="8" Padding="10,7">
                         <TextBlock Text="Clip unavailable — re-attach it in the builder"
                                    Classes="body-strong" Foreground="#FF5C35" TextWrapping="Wrap"/>

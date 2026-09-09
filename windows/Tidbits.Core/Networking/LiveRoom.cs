@@ -1,3 +1,4 @@
+using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -108,7 +109,41 @@ public static class LiveRoom
         /// what is left without seeing the projector. Present ONLY on the "board"
         /// phase; null otherwise. Mirrors Swift `Pub.board`.
         [JsonPropertyName("board")] public BoardPub? Board { get; init; }
+        /// Decision 060: the clip attached to this question, offered to every
+        /// joiner. Mirrors Swift `Pub.media`; null on a question without one.
+        [JsonPropertyName("media")] public Media? Media { get; init; }
     }
+
+    /// Decision 060: a clip as the joiners are given it — an https FILE link, or
+    /// `room:<id>` → the once-written `live/{code}/media/{id}` node.
+    public sealed record Media
+    {
+        [JsonPropertyName("kind")] public string Kind { get; init; } = "";       // audio | video
+        [JsonPropertyName("url")] public string Url { get; init; } = "";
+        [JsonPropertyName("mime")] public string Mime { get; init; } = "";
+        [JsonPropertyName("name")] public string? Name { get; init; }
+        [JsonPropertyName("bytes")] public int? Bytes { get; init; }
+        /// Epoch ms of the host's Play — readies the clip on every phone and
+        /// positions it at the room's offset; nothing plays until the player taps.
+        [JsonPropertyName("startedAt")] public long? StartedAt { get; init; }
+    }
+
+    /// Decision 060: the once-written media node, base64 of the file under the cap.
+    public sealed record RoomMedia
+    {
+        [JsonPropertyName("kind")] public string Kind { get; init; } = "";
+        [JsonPropertyName("mime")] public string Mime { get; init; } = "";
+        [JsonPropertyName("bytes")] public int Bytes { get; init; }
+        [JsonPropertyName("b64")] public string B64 { get; init; } = "";
+    }
+    /// The largest file a host publishes as a room node (raw bytes; the rules
+    /// validate the base64 length, 4/3 of this).
+    public const int MediaMaxBytes = 3_000_000;
+    public const string MediaScheme = "room";
+    public static string MediaPath(string code, string id) => $"{Path(code)}/media/{id}";
+    public static string? MediaIdFrom(string? url) =>
+        url is not null && url.StartsWith(MediaScheme + ":", StringComparison.Ordinal) && url.Length > MediaScheme.Length + 1
+            ? url[(MediaScheme.Length + 1)..] : null;
 
     /// A team as the joining player writes it (`teams/{uid}`).
     public sealed record Team

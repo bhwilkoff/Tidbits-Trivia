@@ -77,7 +77,10 @@ def _ssh(*args, timeout=120, check=False):
     if not HOST:
         raise RuntimeError("TIDBITS_WIN_HOST is not set (user@host)")
     cmd = ["ssh", "-i", KEY] + SSH_OPTS + [HOST] + list(args)
-    r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+    # PowerShell writes cp1252 (an em dash in a question prompt broke a log
+    # read); a stray byte is not a reason to lose the whole result.
+    r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout,
+                       encoding="utf-8", errors="replace")
     if check and r.returncode != 0:
         raise RuntimeError(f"ssh failed ({r.returncode}): {_clean(r.stderr)[:300]}")
     return r

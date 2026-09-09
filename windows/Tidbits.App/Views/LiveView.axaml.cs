@@ -201,6 +201,10 @@ public partial class LiveView : UserControl
     // and is exactly why a host had nothing to edit (WINDOWS-DESIGN §6.6).
     private readonly System.Collections.Generic.List<System.Collections.Generic.List<Question>> _questions = new();
     private readonly System.Collections.Generic.List<System.Collections.Generic.List<string>> _clips = new();
+    /// 3.59: per-question timer / points overrides, keyed by question id so insert,
+    /// remove and move never have to keep a parallel list in step (0 = default).
+    private readonly Dictionary<string, int> _qTimers = new();
+    private readonly Dictionary<string, int> _qPoints = new();
     private readonly System.Collections.Generic.HashSet<int> _expandedRounds = new();
     private static readonly int[] TimerChoices = { 0, 30, 45, 60, 90, 120 };
     private static int TimerIndex(int seconds) => System.Math.Max(0, System.Array.IndexOf(TimerChoices, seconds));
@@ -448,7 +452,7 @@ public partial class LiveView : UserControl
             // Seven columns: number, prompt, difficulty, Edit, Save to library, Duplicate, ✕.
             // The Save button was added at column 6 of a SIX-column grid, which Avalonia
             // clamps to the last column — it would have sat on top of the remove button.
-            var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto,Auto,Auto,Auto,Auto") };
+            var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto,Auto,Auto,Auto,Auto,Auto") };
             grid.Children.Add(new TextBlock
             {
                 Text = $"{qi + 1}.", FontSize = 12, Opacity = 0.6, MinWidth = 22,
@@ -469,6 +473,15 @@ public partial class LiveView : UserControl
                 Text = AnswerSummary(q, kind), FontSize = 12, Opacity = 0.62,
                 TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis,
             });
+            var qTimer = _qTimers.GetValueOrDefault(q.Id); var qPts = _qPoints.GetValueOrDefault(q.Id);
+            if (qTimer > 0 || qPts > 0)   // 3.59: this question's own timer / points
+            {
+                var parts = new List<string>();
+                if (qTimer > 0) parts.Add($"⏱ {qTimer} s");
+                // No star glyph: Inter has none and draws a box (the W3/W21 lesson).
+                if (qPts > 0) parts.Add($"{qPts} pt{(qPts == 1 ? "" : "s")}");
+                text.Children.Add(new TextBlock { Text = string.Join(" · ", parts), FontSize = 12, Foreground = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#0047FF")) });
+            }
             if (Played.Entry(q.Id) is { } heard)   // 3.56: the room has heard this one
             {
                 var badge = new TextBlock
@@ -539,10 +552,37 @@ public partial class LiveView : UserControl
             Grid.SetColumn(fresh, 6);
             grid.Children.Add(fresh);
 
+            // 3.59: timer and points for THIS question, over the round's / night's.
+            var moreQ = new MenuFlyout();
+            var timerMenu = new MenuItem { Header = "Timer for this question" };
+            var tDefault = new MenuItem { Header = "Round default" }; tDefault.Click += (_, _) => { _qTimers.Remove(q.Id); RebuildBuilderRounds(); };
+            timerMenu.Items.Add(tDefault);
+            foreach (var secs in new[] { 15, 30, 45, 60, 90, 120 })
+            {
+                var item = new MenuItem { Header = $"{secs} seconds" }; var v = secs;
+                item.Click += (_, _) => { _qTimers[q.Id] = v; RebuildBuilderRounds(); };
+                timerMenu.Items.Add(item);
+            }
+            var pointsMenu = new MenuItem { Header = "Points for this question" };
+            var pDefault = new MenuItem { Header = "Night default" }; pDefault.Click += (_, _) => { _qPoints.Remove(q.Id); RebuildBuilderRounds(); };
+            pointsMenu.Items.Add(pDefault);
+            foreach (var pts in new[] { 1, 2, 3, 5, 10 })
+            {
+                var item = new MenuItem { Header = $"{pts} point{(pts == 1 ? "" : "s")}" }; var v = pts;
+                item.Click += (_, _) => { _qPoints[q.Id] = v; RebuildBuilderRounds(); };
+                pointsMenu.Items.Add(item);
+            }
+            moreQ.Items.Add(timerMenu); moreQ.Items.Add(pointsMenu);
+            var overrideBtn = new Button { Content = "Timer · points", Padding = new Avalonia.Thickness(10, 4), FontSize = 12, Margin = new Avalonia.Thickness(4, 0, 0, 0), Flyout = moreQ };
+            ToolTip.SetTip(overrideBtn, "A timer or a points value for this question alone");
+            AutomationProperties.SetName(overrideBtn, $"Timer and points for question {qi + 1} of round {roundIndex + 1}");
+            Grid.SetColumn(overrideBtn, 7);
+            grid.Children.Add(overrideBtn);
+
             var remove = new Button { Content = Icon(FluentAvalonia.UI.Controls.FASymbol.Dismiss), Padding = new Avalonia.Thickness(9, 4), Margin = new Avalonia.Thickness(4, 0, 0, 0) };
             AutomationProperties.SetName(remove, $"Remove question {qi + 1} of round {roundIndex + 1}");
             remove.Click += (_, _) => { _questions[roundIndex].RemoveAt(qi); SyncRoundCount(roundIndex); RebuildBuilderRounds(); };
-            Grid.SetColumn(remove, 7);
+            Grid.SetColumn(remove, 8);
             grid.Children.Add(remove);
 
             // Drop a picture, an audio file or a video onto the question row (the Mac
@@ -787,6 +827,8 @@ public partial class LiveView : UserControl
         RoundClips = _clips
             .Select(c => (System.Collections.Generic.IReadOnlyList<string>)new System.Collections.Generic.List<string>(c))
             .ToList(),
+        RoundQuestionTimers = _questions.Select(r => (IReadOnlyList<int>)r.Select(q => _qTimers.GetValueOrDefault(q.Id)).ToList()).ToList(),
+        RoundQuestionPoints = _questions.Select(r => (IReadOnlyList<int>)r.Select(q => _qPoints.GetValueOrDefault(q.Id)).ToList()).ToList(),
     };
 
     /// Load an event into the builder fields (import, or picking a saved event).
@@ -799,6 +841,7 @@ public partial class LiveView : UserControl
         WeekdayBox.SelectedIndex = ev.Weekday is int w and >= 0 and <= 6 ? w + 1 : 0;
         WagerFinalCheck.IsChecked = ev.WagerFinalRound;
         _rounds.Clear(); _notes.Clear(); _timers.Clear(); _questions.Clear(); _clips.Clear(); _expandedRounds.Clear(); _buzz.Clear(); _letters.Clear(); _boards.Clear();
+        _qTimers.Clear(); _qPoints.Clear();
         for (int i = 0; i < ev.Rounds.Count; i++)
         {
             _rounds.Add(ev.Rounds[i]);
@@ -809,6 +852,11 @@ public partial class LiveView : UserControl
             _boards.Add(ev.BoardFor(i));
             _questions.Add(ev.QuestionsFor(i).ToList());
             _clips.Add(Enumerable.Range(0, ev.QuestionsFor(i).Count).Select(q => ev.ClipFor(i, q) ?? "").ToList());
+            for (int q = 0; q < ev.QuestionsFor(i).Count; q++)
+            {
+                if (ev.QuestionTimer(i, q) is { } t) _qTimers[ev.QuestionsFor(i)[q].Id] = t;
+                if (ev.QuestionPoints(i, q) is { } pts) _qPoints[ev.QuestionsFor(i)[q].Id] = pts;
+            }
         }
         RebuildBuilderRounds();
     }

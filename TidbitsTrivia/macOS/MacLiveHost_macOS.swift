@@ -60,6 +60,11 @@ final class LiveHostSession {
 
     /// Points a correct answer is worth this round (host-adjustable; pub default 1).
     var pointsPerCorrect = 1
+    /// A2.8: this question's own timer / points when the builder set one.
+    var currentQuestionTimer: Int? { currentSlot.flatMap { LiveEvent.override(event.rounds[$0.ri].questionTimers, $0.qi) } }
+    var currentQuestionPoints: Int? { currentSlot.flatMap { LiveEvent.override(event.rounds[$0.ri].questionPoints, $0.qi) } }
+    /// What a correct answer is worth right now — the question's override, else the night's setting.
+    var currentPoints: Int { currentQuestionPoints ?? pointsPerCorrect }
     /// Decision 060: the current question's clip as the ROOM is given it (an
     /// https link or a `room:<id>` node reference), set by the host container
     /// once the node is in place; nil until then, and on a question without one.
@@ -321,7 +326,7 @@ final class LiveHostSession {
     /// Wave A: arm the per-question countdown from the current round's timer (0/nil = off).
     func armTimer() {
         let ri = current?.roundIndex ?? 0
-        let secs = (event.rounds.indices.contains(ri) ? event.rounds[ri].timerSeconds : nil) ?? 0
+        let secs = currentQuestionTimer ?? (event.rounds.indices.contains(ri) ? event.rounds[ri].timerSeconds : nil) ?? 0
         deadlineMs = secs > 0 ? Int(Date().timeIntervalSince1970 * 1000) + secs * 1000 : nil
     }
     var standings: [LiveTeam] { teams.sorted { $0.score > $1.score } }
@@ -418,7 +423,7 @@ func liveAcceptFromEveryone(_ typed: String, _ q: Question, session: LiveHostSes
     session.learnAccepted(typed)
     for uid in uids {
         session.manuallyAccepted.insert(uid)
-        await net.setScore(uid, (net.scores[uid] ?? 0) + session.pointsPerCorrect)
+        await net.setScore(uid, (net.scores[uid] ?? 0) + session.currentPoints)
     }
 }
 
@@ -656,7 +661,7 @@ struct LiveHostContainer_macOS: View {
             answeredAt: net.answers.mapValues { $0.sv ?? $0.ts })
         for (uid, ans) in net.answers where scorable.contains(uid) {
             let pts = LiveNightHost.score(q, ans, shuffledOrder: session.shuffledOrder,
-                                          shuffledValues: session.shuffledValues, mcqPoints: session.pointsPerCorrect)
+                                          shuffledValues: session.shuffledValues, mcqPoints: session.currentPoints)
             if wagerRound {
                 // Wave A: stake clamped to the team's current score; correct +stake, wrong −stake.
                 let current = net.scores[uid] ?? 0
@@ -904,6 +909,13 @@ struct LiveHostView_macOS: View {
                     .help("Fix this question for the room — wording, options, answer, clip (⌘E)")
                     .accessibilityIdentifier("live.editQuestion")
                 }
+                if session.currentQuestionTimer != nil || session.currentQuestionPoints != nil {   // A2.8
+                    HStack(spacing: 10) {
+                        if let t = session.currentQuestionTimer { Label("\(t) s for this one", systemImage: "timer") }
+                        if let pts = session.currentQuestionPoints { Label("\(pts) pt\(pts == 1 ? "" : "s") for this one", systemImage: "star.fill") }
+                    }
+                    .font(.callout).foregroundStyle(Tidbits.Palette.coral)
+                }
                 Text(q.prompt).font(.system(size: 30, weight: .bold, design: .rounded))
                     .foregroundStyle(Tidbits.Palette.ink).fixedSize(horizontal: false, vertical: true)
                 if let img = q.imageURL {   // what the room is looking at, so the host can talk to it
@@ -1033,12 +1045,12 @@ struct LiveHostView_macOS: View {
                         Text("\(who) buzzed").font(Tidbits.TypeRamp.l3).foregroundStyle(Tidbits.Palette.coral)
                         Button("Correct") {
                             Task {
-                                await net.setScore(uid, (net.scores[uid] ?? 0) + session.pointsPerCorrect)
+                                await net.setScore(uid, (net.scores[uid] ?? 0) + session.currentPoints)
                                 session.reveal()
                             }
                         }
                         .buttonStyle(TransportButtonStyle(fill: Tidbits.Palette.mint))
-                        .help("Award \(session.pointsPerCorrect) and reveal")
+                        .help("Award \(session.currentPoints) and reveal")
                         Button("Wrong") { session.buzzedOut.insert(uid) }
                             .buttonStyle(TransportButtonStyle())
                             .help("Rule this team out and reopen the buzzer to the rest")
@@ -1331,8 +1343,8 @@ struct LiveHostView_macOS: View {
             Spacer()
             // Award (only meaningful once revealed) + manual override (always).
             if session.revealed {
-                Button { session.adjust(team.id, by: session.pointsPerCorrect) } label: { Image(systemName: "checkmark") }
-                    .buttonStyle(.borderedProminent).tint(Tidbits.Palette.mint).help("Award \(session.pointsPerCorrect)")
+                Button { session.adjust(team.id, by: session.currentPoints) } label: { Image(systemName: "checkmark") }
+                    .buttonStyle(.borderedProminent).tint(Tidbits.Palette.mint).help("Award \(session.currentPoints)")
             }
             Button { session.adjust(team.id, by: -1) } label: { Image(systemName: "minus") }.buttonStyle(.bordered)
             Button { session.adjust(team.id, by: 1) } label: { Image(systemName: "plus") }.buttonStyle(.bordered)
@@ -1392,10 +1404,10 @@ struct LiveHostView_macOS: View {
                             Image(systemName: "checkmark")
                         } primaryAction: {
                             session.manuallyAccepted.insert(team.id)
-                            Task { await net.setScore(team.id, team.score + session.pointsPerCorrect) }
+                            Task { await net.setScore(team.id, team.score + session.currentPoints) }
                         }
                         .menuStyle(.button).buttonStyle(.borderedProminent).tint(Tidbits.Palette.mint).fixedSize()
-                        .help("Mark correct (+\(session.pointsPerCorrect)) — or open the menu to accept this answer from every team")
+                        .help("Mark correct (+\(session.currentPoints)) — or open the menu to accept this answer from every team")
                         .accessibilityIdentifier("live.acceptText")
                     }
                 }
@@ -1431,7 +1443,7 @@ struct LiveHostView_macOS: View {
 
     /// Whether the shared scorer credits this submission (for the ✓/✗ verdict).
     private func autoMatched(_ q: Question, _ a: LiveRoom.Answer) -> Bool {
-        LiveNightHost.score(q, a, shuffledOrder: session.shuffledOrder, shuffledValues: session.shuffledValues, mcqPoints: session.pointsPerCorrect) > 0
+        LiveNightHost.score(q, a, shuffledOrder: session.shuffledOrder, shuffledValues: session.shuffledValues, mcqPoints: session.currentPoints) > 0
     }
 
     /// §A3.4 — the live per-option tally (how many teams chose each option), so the host reads

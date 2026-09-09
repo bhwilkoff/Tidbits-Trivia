@@ -393,4 +393,17 @@ public sealed class LiveHostViewModel : ObservableObject
     public bool HasTie => Host.HasTie;
     public System.Collections.Generic.IReadOnlyList<LiveHostNet.Joined> TiedLeaders => Host.TiedLeaders;
     public Task BreakTie(string uid) => Host.BreakTie(uid);
+    public Task BreakTieClosest(double target, System.Collections.Generic.IReadOnlyDictionary<string, double> guesses) => Host.BreakTieClosest(target, guesses);
+    /// 3.59: "45 s · 3 pts for this one" when the builder set an override, else "".
+    public string QuestionOverrideLine
+    {
+        get
+        {
+            var parts = new System.Collections.Generic.List<string>();
+            if (Host.CurrentQuestionTimer is { } t) parts.Add($"{t} s");
+            if (Host.CurrentQuestionPoints is { } p) parts.Add($"{p} pt{(p == 1 ? "" : "s")}");
+            return parts.Count == 0 ? "" : string.Join(" · ", parts) + " for this one";
+        }
+    }
+    public bool HasQuestionOverride => QuestionOverrideLine.Length > 0;
 }

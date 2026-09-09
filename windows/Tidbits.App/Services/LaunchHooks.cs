@@ -94,6 +94,9 @@ public static class LaunchHooks
     public static string? LiveAcceptAll => Env("TIDBITS_LIVE_ACCEPT_ALL");
     public static double LiveAcceptAt => double.TryParse(Env("TIDBITS_LIVE_ACCEPT_AT"), out var v) ? v : 30;
 
+    /// TIDBITS_LIVE_TIEBREAK=1 — 3 s after the ACCEPT_ALL ruling, open the
+    /// tie-break dialog (3.58) so it can be photographed with real tied teams.
+    public static bool LiveTieBreak => Flag("TIDBITS_LIVE_TIEBREAK");
     /// TIDBITS_LIVE_PROJECTOR=1 — open the projector window as soon as the cockpit
     /// is up, so the big screen can be photographed without a click.
     public static bool LiveProjector => Flag("TIDBITS_LIVE_PROJECTOR");

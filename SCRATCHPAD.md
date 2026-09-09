@@ -58,9 +58,9 @@ in both directions (see the last paragraph).
    3.57): Duplicate, and Clone for next <weekday> with fresh questions.
    (Auto-spawn without a click was NOT built: a night that appears on its own
    is a night nobody proof-read — the clone is one click on the day.)
-6. **Numeric tie-break engine on Windows** — Windows is a pick-the-winner
-   dialog; the Mac collects guesses vs a target. S.
-7. **Per-question timer & points overrides** (round-level only today). M.
+6. ~~**Numeric tie-break engine on Windows**~~ — DONE 2026-09-09 (3.58).
+7. ~~**Per-question timer & points overrides**~~ — DONE 2026-09-09 (A2.8 /
+   3.59), in the file contract too.
 8. **Per-question host note** (per-round only today). S.
 9. **"How did you know that?"** on macOS and after a live night. S.
 10. **Answer-level data export** (standings only today). S.
@@ -2241,3 +2241,25 @@ and carries no badge), then the swap: a fresh Name-It question in the seat and
 a click (a night nobody proof-read). Versions 1.9.11 / 141 / vc102 / MSIX
 1.9.11.0. Next: punch list 6 (Windows numeric tie-break engine) and 7
 (per-question timer/points overrides).
+
+**2026-09-09n — Live loop tick 14: a question's own clock and worth; the
+numeric tie-break on Windows.** Punch list 6 + 7. File contract first
+(LIVE-EVENT-FILE §4): `rounds[i].questionTimers` / `questionPoints`, `[Int?]`
+index-parallel to the questions, absent when nothing is set — additive, the
+golden is untouched on both stacks. Mac: `LiveRound.questionTimers/Points`
+(+ insert/remove/move bookkeeping like the clips), the question menu's "Timer
+for this question" / "Points for this question", `LiveHostSession.currentPoints`
+/ `currentQuestionTimer` in `armTimer` and every scoring path, the cockpit's
+"45 s for this one · 3 pts for this one". Windows: `LiveEvent.RoundQuestion
+Timers/Points`, `LiveEventFile` both ways, `LiveNightHost.CurrentPoints` /
+`CurrentQuestionTimer`, the builder's **Timer · points** flyout (keyed by
+question id), the cockpit line; and the Break tie dialog now has "Closest
+number" (`ClosestWinner`, the Mac's `breakTie` mirrored) beside "Brains-only".
+**Verified on the glass** (`scratchpad/e2e_overrides.py`, the file written by
+the script itself): the Mac builder showed "45 s · 3 pts" under question 1
+only; hosting armed a deadline 39 s out on the wire at the time of reading
+(45 minus the host's own start-up), two wire typers were paid 3 each on reveal,
+the cockpit read "45 s for this one · 3 pts for this one".
+The Windows box: the same file (a 120 s override there, because `winbox.launch` returns ~60 s after the app starts and a 45 s clock had already run out on the first try — the harness, not the host), the builder caption (the ★ glyph drew a box in Inter → dropped), deadline on the wire, 3 each on reveal, and the numeric tie-break dialog over the two tied teams. Versions 1.9.12 / 142 / vc103 / MSIX 1.9.12.0. Next:
+punch list 8 (per-question host note) and 9 ("How did you know that?" on macOS
+and after a live night).

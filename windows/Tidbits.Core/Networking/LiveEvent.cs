@@ -51,6 +51,18 @@ public sealed record LiveEvent
     /// cannot disagree about what is in the round.
     [JsonPropertyName("roundBoards")] public IReadOnlyList<LiveBoard?> RoundBoards { get; init; } = new List<LiveBoard?>();
 
+    /// 3.59 (macOS-DESIGN A2.8): per-question overrides of the round's timer and of
+    /// the night's points-per-correct, index-aligned to RoundQuestions[i] like the
+    /// clips (0 = the default). Additive; old saved events decode unchanged.
+    [JsonPropertyName("roundQuestionTimers")] public IReadOnlyList<IReadOnlyList<int>> RoundQuestionTimers { get; init; } = new List<IReadOnlyList<int>>();
+    [JsonPropertyName("roundQuestionPoints")] public IReadOnlyList<IReadOnlyList<int>> RoundQuestionPoints { get; init; } = new List<IReadOnlyList<int>>();
+
+    /// The override for question `q` of round `i`, or null for the default.
+    public static int? Override(IReadOnlyList<IReadOnlyList<int>> lists, int i, int q) =>
+        i >= 0 && i < lists.Count && q >= 0 && q < lists[i].Count && lists[i][q] > 0 ? lists[i][q] : null;
+    public int? QuestionTimer(int i, int q) => Override(RoundQuestionTimers, i, q);
+    public int? QuestionPoints(int i, int q) => Override(RoundQuestionPoints, i, q);
+
     /// The grid of round `i`, or null when it is an ordinary round.
     public LiveBoard? BoardFor(int i) =>
         i >= 0 && i < RoundBoards.Count ? RoundBoards[i] : null;

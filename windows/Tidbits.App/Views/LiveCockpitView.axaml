@@ -85,6 +85,9 @@
                          the code fixed it; enlarging the question broke the screen. -->
                     <TextBlock Text="{Binding Host.Current.Prompt}" Classes="section-header" TextWrapping="Wrap"
                                IsVisible="{Binding !ShowBoardScreen}"/>
+                    <!-- 3.59: this question's own timer / points, when the builder set one. -->
+                    <TextBlock Text="{Binding QuestionOverrideLine}" Classes="caption" Foreground="#FF5C35"
+                               IsVisible="{Binding HasQuestionOverride}"/>
                     <!-- 3.36: the question's picture, so the host can talk to what the
                          room is looking at (the projector shows the same one). -->
                     <Border IsVisible="{Binding ShowPicture}" Height="160" CornerRadius="10" ClipToBounds="True"

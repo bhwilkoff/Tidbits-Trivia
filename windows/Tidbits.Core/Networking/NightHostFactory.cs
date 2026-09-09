@@ -42,6 +42,8 @@ public static class NightHostFactory
                         Enumerable.Range(0, branding.QuestionsFor(i).Count)
                                   .Select(q => branding.ClipFor(i, q) ?? "").ToList())
                     .ToList(),
+            QuestionTimers = branding?.RoundQuestionTimers ?? new List<IReadOnlyList<int>>(),
+            QuestionPoints = branding?.RoundQuestionPoints ?? new List<IReadOnlyList<int>>(),
             Sponsor = branding?.Sponsor,
             BrandHex = branding?.BrandHex,
             LeadCaptureUrl = branding?.LeadCaptureUrl,

@@ -375,13 +375,54 @@ public partial class LiveCockpitView : UserControl
             ItemTemplate = new Avalonia.Controls.Templates.FuncDataTemplate<Tidbits.Core.Networking.LiveHostNet.Joined>(
                 (t, _) => new TextBlock { Text = $"{t.Name} ({t.Score})" }),
         };
-        var panel = new StackPanel { Spacing = 8, MinWidth = 300 };
-        panel.Children.Add(new TextBlock { Text = "Brains-only tie-break — pick the winner. They get +1 to take the lead.", TextWrapping = TextWrapping.Wrap, Opacity = 0.75 });
-        panel.Children.Add(pick);
-        var dlg = new FAContentDialog { Title = "Break the tie", Content = panel, PrimaryButtonText = "Award +1", CloseButtonText = "Cancel" };
-        if (await dlg.ShowAsync() == FAContentDialogResult.Primary
-            && pick.SelectedItem is Tidbits.Core.Networking.LiveHostNet.Joined w)
-            await vm.BreakTie(w.Id);
+        // 3.58 (A3.5): the numeric engine the Mac has — a nearest-wins number
+        // question, each tied team's guess typed in, the closest takes +1.
+        var mode = new ComboBox { ItemsSource = new[] { "Closest number", "Brains-only" }, SelectedIndex = 0, MinWidth = 240 };
+        Avalonia.Automation.AutomationProperties.SetName(mode, "Tie-break method");
+        var target = new TextBox { Watermark = "e.g. 1889", MinWidth = 120 };
+        Avalonia.Automation.AutomationProperties.SetName(target, "Correct number");
+        var guesses = new System.Collections.Generic.Dictionary<string, TextBox>();
+        var numeric = new StackPanel { Spacing = 6 };
+        numeric.Children.Add(new TextBlock
+        {
+            Text = "Ask a number question (e.g. \u201cwhat year did the Eiffel Tower open?\u201d). Enter the answer, then each team's guess — closest wins +1.",
+            TextWrapping = TextWrapping.Wrap, Opacity = 0.75,
+        });
+        var targetRow = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
+        targetRow.Children.Add(new TextBlock { Text = "Correct number", FontWeight = FontWeight.SemiBold, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center });
+        Grid.SetColumn(target, 1); targetRow.Children.Add(target);
+        numeric.Children.Add(targetRow);
+        foreach (var t in tied)
+        {
+            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
+            row.Children.Add(new TextBlock { Text = t.Name, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis });
+            var g = new TextBox { Watermark = "guess", MinWidth = 120 };
+            Avalonia.Automation.AutomationProperties.SetName(g, $"Guess by {t.Name}");
+            Grid.SetColumn(g, 1); row.Children.Add(g);
+            guesses[t.Id] = g;
+            numeric.Children.Add(row);
+        }
+        var brains = new StackPanel { Spacing = 8, IsVisible = false };
+        brains.Children.Add(new TextBlock { Text = "Phones down. Ask a question aloud — first correct hand wins. Pick the team that won; they get +1 to take the lead.", TextWrapping = TextWrapping.Wrap, Opacity = 0.75 });
+        brains.Children.Add(pick);
+        mode.SelectionChanged += (_, _) => { numeric.IsVisible = mode.SelectedIndex == 0; brains.IsVisible = mode.SelectedIndex == 1; };
+
+        var panel = new StackPanel { Spacing = 10, MinWidth = 340 };
+        panel.Children.Add(mode);
+        panel.Children.Add(numeric);
+        panel.Children.Add(brains);
+        var dlg = new FAContentDialog { Title = "Break the tie", Content = panel, PrimaryButtonText = "Resolve tie", CloseButtonText = "Cancel" };
+        if (await dlg.ShowAsync() != FAContentDialogResult.Primary) return;
+        if (mode.SelectedIndex == 1)
+        {
+            if (pick.SelectedItem is Tidbits.Core.Networking.LiveHostNet.Joined w) await vm.BreakTie(w.Id);
+            return;
+        }
+        if (!double.TryParse(target.Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var answer)) return;
+        var typed = new System.Collections.Generic.Dictionary<string, double>();
+        foreach (var (uid, box) in guesses)
+            if (double.TryParse(box.Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var v)) typed[uid] = v;
+        await vm.BreakTieClosest(answer, typed);
     }
 
     /// Drop a team from the night (macOS parity — the per-team "Remove team"). Destructive and
@@ -605,6 +646,7 @@ public partial class LiveCockpitView : UserControl
                 if (Vm is not { } vm) return;
                 if (!vm.Host.Revealed) { await vm.Reveal(); await Task.Delay(3000); }
                 await vm.AcceptTextForAll(ruling);
+                if (Services.LaunchHooks.LiveTieBreak) { await Task.Delay(3000); OnBreakTie(this, new RoutedEventArgs()); }
             }
         }
         catch (Exception ex) { Services.LaunchHooks.Diag($"script hooks: FAILED {ex}"); }

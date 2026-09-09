@@ -27,6 +27,11 @@ struct LiveRound: Identifiable, Codable, Hashable {
     var hostNote: String? = nil    // Wave A: the host's prep note for this round, shown in the cockpit (never published)
     var isWager: Bool? = nil       // Wave A: a wager round — teams stake points on each question (correct +stake, wrong −stake)
     var audioBookmarks: [Data]? = nil   // Wave B: security-scoped bookmarks to each question's audio clip (audio round; parallel to questions)
+    /// A2.8: per-question overrides of the round's timer and of the night's
+    /// points-per-correct, index-parallel to `questions` like the clips (0 = the
+    /// round/night default). Optional so every saved event decodes unchanged.
+    var questionTimers: [Int]? = nil
+    var questionPoints: [Int]? = nil
     var isSpeed: Bool? = nil            // Wave B: a speed round — correct answers earn a fastest-first bonus
     /// G1: a BUZZ round — the room races to buzz and the FIRST team gets to answer
     /// out loud; the host marks it right or wrong and a wrong buzz reopens it to the
@@ -66,6 +71,11 @@ struct LiveEvent: Identifiable, Codable, Hashable {
     var brandHex: String = ""        // Wave D: white-label — the host's brand accent (hex), applied to the big-screen event title
 
     var totalQuestions: Int { rounds.reduce(0) { $0 + $1.questions.count } }
+    /// A2.8: the override for question `qi` of round `ri`, or nil for the default.
+    static func override(_ list: [Int]?, _ qi: Int) -> Int? {
+        guard let list, list.indices.contains(qi), list[qi] > 0 else { return nil }
+        return list[qi]
+    }
 
     /// A2.7 — a copy the host can run as a separate night: new event and round
     /// ids (so both stay in the list), the same questions and settings.

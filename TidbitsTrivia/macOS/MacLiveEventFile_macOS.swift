@@ -59,6 +59,9 @@ enum LiveEventFile {
         /// bookmark cannot travel and an id without its file is a broken promise.
         var audio: [String?]?
         var video: [String?]?
+        /// §2.6: per-question overrides (index-parallel; null = the round default).
+        var questionTimers: [Int?]?
+        var questionPoints: [Int?]?
     }
 
     enum FileError: LocalizedError {
@@ -125,7 +128,9 @@ enum LiveEventFile {
                                   format: r.format.rawValue, categoryID: r.categoryID,
                                   timerSeconds: r.timerSeconds, hostNote: r.hostNote,
                                   isWager: r.isWager, isSpeed: r.isSpeed, isBuzz: r.isBuzz,
-                                  questions: r.questions)
+                                  questions: r.questions,
+                                  questionTimers: r.questionTimers.map { $0.map { $0 > 0 ? $0 : nil } },
+                                  questionPoints: r.questionPoints.map { $0.map { $0 > 0 ? $0 : nil } })
                 }))
     }
 
@@ -158,16 +163,19 @@ enum LiveEventFile {
         event.brandHex = e.brandHex
         event.weekday = e.weekday
         event.rounds = e.rounds.map { r in
-            LiveRound(id: UUID(uuidString: r.id) ?? UUID(),
-                      title: r.title,
-                      format: GameMode(rawValue: r.format) ?? .classic,
-                      categoryID: r.categoryID,
-                      questions: r.questions,
-                      timerSeconds: r.timerSeconds,
-                      hostNote: r.hostNote,
-                      isWager: r.isWager,
-                      isSpeed: r.isSpeed,
-                      isBuzz: r.isBuzz)
+            var round = LiveRound(id: UUID(uuidString: r.id) ?? UUID(),
+                                  title: r.title,
+                                  format: GameMode(rawValue: r.format) ?? .classic,
+                                  categoryID: r.categoryID,
+                                  questions: r.questions,
+                                  timerSeconds: r.timerSeconds,
+                                  hostNote: r.hostNote,
+                                  isWager: r.isWager,
+                                  isSpeed: r.isSpeed,
+                                  isBuzz: r.isBuzz)
+            round.questionTimers = r.questionTimers.flatMap { t in t.contains { ($0 ?? 0) > 0 } ? t.map { $0 ?? 0 } : nil }
+            round.questionPoints = r.questionPoints.flatMap { t in t.contains { ($0 ?? 0) > 0 } ? t.map { $0 ?? 0 } : nil }
+            return round
         }
         return event
     }

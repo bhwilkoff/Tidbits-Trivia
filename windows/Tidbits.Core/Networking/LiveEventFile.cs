@@ -66,6 +66,9 @@ public static class LiveEventFile
         /// PACKAGE writes these; the bare document leaves them absent.
         [JsonPropertyName("audio")] public IReadOnlyList<string?>? Audio { get; init; }
         [JsonPropertyName("video")] public IReadOnlyList<string?>? Video { get; init; }
+        /// §2.6: per-question overrides (index-parallel; null = the round default).
+        [JsonPropertyName("questionTimers")] public IReadOnlyList<int?>? QuestionTimers { get; init; }
+        [JsonPropertyName("questionPoints")] public IReadOnlyList<int?>? QuestionPoints { get; init; }
     }
 
     public sealed class FileFormatException(string message) : Exception(message);
@@ -106,6 +109,8 @@ public static class LiveEventFile
                 // WagerFinalRound is a single flag on the event; it means the LAST round.
                 IsWager = ev.WagerFinalRound && i == ev.Rounds.Count - 1 ? true : null,
                 Questions = qs,
+                QuestionTimers = Portable(ev.RoundQuestionTimers, i, qs.Count),
+                QuestionPoints = Portable(ev.RoundQuestionPoints, i, qs.Count),
             });
         }
         var doc = new Document
@@ -128,6 +133,16 @@ public static class LiveEventFile
         };
         return doc;
     }
+
+    /// The per-question override list for the file: absent when nothing is set.
+    private static IReadOnlyList<int?>? Portable(IReadOnlyList<IReadOnlyList<int>> lists, int i, int count)
+    {
+        if (i >= lists.Count || !lists[i].Any(v => v > 0)) return null;
+        return Enumerable.Range(0, count).Select(q => LiveEvent.Override(lists, i, q)).ToList();
+    }
+    /// The stored list from the file's: empty when nothing is set.
+    private static IReadOnlyList<int> Stored(IReadOnlyList<int?>? list) =>
+        list is null || !list.Any(v => (v ?? 0) > 0) ? new List<int>() : list.Select(v => v ?? 0).ToList();
 
     private static string MajorityCategory(IReadOnlyList<Question> qs) =>
         qs.GroupBy(q => q.CategoryId).OrderByDescending(g => g.Count()).First().Key;
@@ -159,6 +174,8 @@ public static class LiveEventFile
         var questions = new List<IReadOnlyList<Question>>();
         var notes = new List<string>();
         var timers = new List<int>();
+        var qTimers = new List<IReadOnlyList<int>>();
+        var qPoints = new List<IReadOnlyList<int>>();
         bool wagerFinal = false;
 
         for (int i = 0; i < ev.Rounds.Count; i++)
@@ -171,6 +188,8 @@ public static class LiveEventFile
             questions.Add(r.Questions);
             notes.Add(r.HostNote ?? "");
             timers.Add(r.TimerSeconds ?? 0);
+            qTimers.Add(Stored(r.QuestionTimers));
+            qPoints.Add(Stored(r.QuestionPoints));
             if (r.IsWager == true && i == ev.Rounds.Count - 1) wagerFinal = true;
         }
 
@@ -184,6 +203,8 @@ public static class LiveEventFile
             RoundQuestions = questions,
             RoundNotes = notes,
             RoundTimers = timers,
+            RoundQuestionTimers = qTimers,
+            RoundQuestionPoints = qPoints,
             WagerFinalRound = wagerFinal,
             Sponsor = string.IsNullOrEmpty(ev.Sponsor) ? null : ev.Sponsor,
             BrandHex = string.IsNullOrEmpty(ev.BrandHex) ? null : ev.BrandHex,

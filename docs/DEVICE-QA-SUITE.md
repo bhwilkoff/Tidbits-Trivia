@@ -364,3 +364,8 @@ there is no regression baseline at all.
   `TIDBITS_LIVE_IMPORT_FILE=<C:\…\night.json> TIDBITS_LIVE_REFRESH=1` does the
   same at 20 s (window maximised, rounds scrolled into view). Host the same file first so the log has something to name
   (`scratchpad/e2e_repeats.py`).
+- Windows box: `TIDBITS_LIVE_TIEBREAK=1` opens the Break tie dialog 3 s after
+  the `TIDBITS_LIVE_ACCEPT_ALL` ruling (needs two tied teams on the wire).
+  `scratchpad/e2e_overrides.py` writes a night with `questionTimers` /
+  `questionPoints` itself and checks the deadline and the 3-point payout on
+  the wire against either host.

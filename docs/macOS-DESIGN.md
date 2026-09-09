@@ -122,6 +122,16 @@ command reads "Clone for next <weekday> with fresh questions" and, having
 copied, swaps every question the room has heard (A2.6). Both are also under
 File. The event list is the host's season, not a single Friday.
 
+A2.8 **A question can carry its own clock and its own worth** (2026-09-09).
+The round sets the timer and the night sets points-per-correct; a single
+question may override either — the closer, the bonus, the one that needs a
+minute — from the question's menu ("Timer for this question", "Points for this
+question"; "Round default" / "Night default" clears it). The builder row shows
+"45 s · 3 pts", the cockpit says "45 s for this one · 3 pts for this one" over
+the prompt, the timer arms with the override and every scoring path (auto,
+manual mark, accept, buzz) pays it. Stored index-parallel to the questions
+(LIVE-EVENT-FILE §4) so the night travels with them.
+
 A2.3 **Round formats (MVP set), Tidbits-native:** MCQ, True/False, Picture,
 Nearest-Wins (numeric — also the tie-break unit), Ordering, Wager (Stake),
 Poll/Majority. Audio round and Fastest-Finger (speed scoring) are Phase B.
@@ -156,7 +166,11 @@ A3.4 **Live answer tally.** The host sees submissions arrive in real time
 
 A3.5 **A built-in tie-break engine** (the field punts this). On a tie, the
 host triggers a Nearest-Wins numeric prompt (or sudden-death question)
-resolved live; the engine breaks the tie and updates standings.
+resolved live; the engine breaks the tie and updates standings. Both hosts
+(2026-09-09): the Windows tie-break dialog gained the numeric engine the Mac
+had — "Closest number" (the answer, each tied team's guess, nearest takes +1;
+ties on distance resolve by name, so the result is the same on both stacks)
+beside "Brains-only".
 
 A3.6 **The question on screen can be fixed without leaving the night**
 (2026-09-09). A typo the room is reading, a wrong option, a missing accepted

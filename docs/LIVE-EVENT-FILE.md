@@ -83,6 +83,13 @@ number nobody can bump: additive fields ship without a version change.
 `count`; a round has as many questions as its `questions` array. Windows'
 `NightRound.Count` is DERIVED on import, never read from the file.
 
+2.6 **Per-question overrides ride the round, index-parallel to its questions**
+(2026-09-09): `questionTimers` and `questionPoints` are `[Int?]` arrays the
+length of `questions`, `null` where the question takes the round's timer or
+the night's points; a round with nothing set omits the key. The same shape as
+the package's `audio`/`video` arrays, for the same reason — the shared
+`Question` is a wire type pinned by goldens and may not grow keys.
+
 ## §3 — What cannot travel
 
 3.1 **Security-scoped bookmarks are stripped on export** of the BARE document
@@ -106,6 +113,8 @@ must keep the clip arrays index-parallel on both platforms.
 | `rounds[i].format` | `LiveRound.format` | `NightRound.Kind` |
 | `rounds[i].hostNote` | `LiveRound.hostNote` | `LiveEvent.RoundNotes[i]` |
 | `rounds[i].timerSeconds` | `LiveRound.timerSeconds` | `LiveEvent.RoundTimers[i]` |
+| `rounds[i].questionTimers` (2026-09-09, additive; `[Int?]` index-parallel to `questions`, null = the round default) | `LiveRound.questionTimers` | `LiveEvent.RoundQuestionTimers[i]` |
+| `rounds[i].questionPoints` (same shape; null = the night's points-per-correct) | `LiveRound.questionPoints` | `LiveEvent.RoundQuestionPoints[i]` |
 | `rounds[i].isWager` | `LiveRound.isWager` | `LiveEvent.WagerFinalRound` on the LAST round only |
 | `rounds[i].title` | `LiveRound.title` | derived from the mode's title when absent |
 

@@ -28,6 +28,14 @@ public sealed class LiveNightHost : ObservableObject
     public string? ErrorText { get; private set; }
 
     public int PointsPerCorrect { get; set; } = 1;
+    /// 3.59: per-question overrides from the builder (index-aligned per round, 0 = default).
+    public IReadOnlyList<IReadOnlyList<int>> QuestionTimers { get; set; } = new List<IReadOnlyList<int>>();
+    public IReadOnlyList<IReadOnlyList<int>> QuestionPoints { get; set; } = new List<IReadOnlyList<int>>();
+    private int PositionInRound => Current?.RoundIndex is int ri ? Questions.Take(Index).Count(x => x.RoundIndex == ri) : 0;
+    public int? CurrentQuestionTimer => Current?.RoundIndex is int ri ? LiveEvent.Override(QuestionTimers, ri, PositionInRound) : null;
+    public int? CurrentQuestionPoints => Current?.RoundIndex is int ri ? LiveEvent.Override(QuestionPoints, ri, PositionInRound) : null;
+    /// What a correct answer is worth right now — the question's override, else the night's setting.
+    public int CurrentPoints => CurrentQuestionPoints ?? PointsPerCorrect;
     /// 3.56: what the room has heard — corpus draws skip it, and every question
     /// this night shows is written to it. Null in tests that never host.
     public Store.PlayedLog? Played { get; set; }
@@ -347,7 +355,7 @@ public sealed class LiveNightHost : ObservableObject
     public async Task AcceptText(string uid)
     {
         if (string.IsNullOrEmpty(uid) || !ManuallyAccepted.Add(uid)) return;
-        await AdjustScore(uid, PointsPerCorrect);
+        await AdjustScore(uid, CurrentPoints);
     }
 
     /// "Accept this answer from everyone" (3.21): the ruling joins the question's
@@ -363,7 +371,7 @@ public sealed class LiveNightHost : ObservableObject
         var scorable = LiveTeamRoster.ScorableUids(Net.Members(), answers.ToDictionary(kv => kv.Key, kv => kv.Value.OrderKey));
         var uids = TypedAlike(t, answers.Where(kv => scorable.Contains(kv.Key)).ToDictionary(kv => kv.Key, kv => kv.Value), acc, ManuallyAccepted);
         if (!Store.GameEngine.MatchesAccepted(t, acc)) Questions[Index] = q with { Accepted = acc.Append(t).ToList() };
-        foreach (var uid in uids) { ManuallyAccepted.Add(uid); await AdjustScore(uid, PointsPerCorrect); }
+        foreach (var uid in uids) { ManuallyAccepted.Add(uid); await AdjustScore(uid, CurrentPoints); }
         Notify();
     }
 
@@ -436,6 +444,16 @@ public sealed class LiveNightHost : ObservableObject
     /// Break a tie in the winner's favor (brains-only manual pick) — +1 to the
     /// chosen team so they're strictly ahead.
     public Task BreakTie(string uid) => AdjustScore(uid, +1);
+
+    /// 3.58 (A3.5): the closest guess to `target` wins the tie-break (+1) — the
+    /// pub-standard "nearest wins" protocol. Mirrors the Mac's `breakTie`.
+    public static string? ClosestWinner(double target, IReadOnlyDictionary<string, double> guesses) =>
+        guesses.Count == 0 ? null
+            : guesses.OrderBy(kv => Math.Abs(kv.Value - target)).ThenBy(kv => kv.Key, StringComparer.Ordinal).First().Key;
+    public async Task BreakTieClosest(double target, IReadOnlyDictionary<string, double> guesses)
+    {
+        if (ClosestWinner(target, guesses) is { } winner) await AdjustScore(winner, +1);
+    }
 
     /// Merge one team into another (3.25) — combine their scores onto `intoUid`,
     /// zero the merged team, and drop it from the big screen. For a paper team that
@@ -689,7 +707,7 @@ public sealed class LiveNightHost : ObservableObject
     /// publishes the pub right after.
     private void ArmRoundTimer()
     {
-        var secs = RoundTimerSeconds;
+        var secs = CurrentQuestionTimer ?? RoundTimerSeconds;
         _deadline = secs > 0 ? NowMs() + secs * 1000L : null;
     }
 
@@ -831,7 +849,7 @@ public sealed class LiveNightHost : ObservableObject
         {
             foreach (var kv in answers)
             {
-                var correct = LiveScoring.Score(q, kv.Value, _shuffledOrder, _shuffledValues, PointsPerCorrect) > 0;
+                var correct = LiveScoring.Score(q, kv.Value, _shuffledOrder, _shuffledValues, CurrentPoints) > 0;
                 var stake = kv.Value.Wager ?? 0;
                 var delta = LiveScoring.WagerDelta(correct, stake);
                 if (delta != 0) await Net.SetScore(kv.Key, Math.Max(0, Net.ScoreOf(kv.Key) + delta));
@@ -847,7 +865,7 @@ public sealed class LiveNightHost : ObservableObject
             Net.Members(), answers.ToDictionary(kv => kv.Key, kv => kv.Value.OrderKey));
 
         var baseScores = answers.Where(kv => scorable.Contains(kv.Key)).Select(kv =>
-            (uid: kv.Key, pts: LiveScoring.Score(q, kv.Value, _shuffledOrder, _shuffledValues, PointsPerCorrect), ts: kv.Value.OrderKey)).ToList();
+            (uid: kv.Key, pts: LiveScoring.Score(q, kv.Value, _shuffledOrder, _shuffledValues, CurrentPoints), ts: kv.Value.OrderKey)).ToList();
 
         var correctBySpeed = baseScores.Where(e => e.pts > 0).OrderBy(e => e.ts).ToList();
         FastestUid = correctBySpeed.Count > 0 ? correctBySpeed[0].uid : null;

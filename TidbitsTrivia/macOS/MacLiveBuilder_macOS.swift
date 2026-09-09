@@ -746,6 +746,15 @@ struct LiveBuilderView_macOS: View {
                     .multilineTextAlignment(.leading)
                 Text(answerSummary(q, format: format))
                     .font(.caption).foregroundStyle(Tidbits.Palette.inkSoft).lineLimit(1)
+                let qTimer = LiveEvent.override(working.rounds[ri].questionTimers, qi)
+                let qPoints = LiveEvent.override(working.rounds[ri].questionPoints, qi)
+                if qTimer != nil || qPoints != nil {   // A2.8: this question's own timer / points
+                    HStack(spacing: 8) {
+                        if let t = qTimer { Label("\(t) s", systemImage: "timer") }
+                        if let pts = qPoints { Label("\(pts) pt\(pts == 1 ? "" : "s")", systemImage: "star.fill") }
+                    }
+                    .font(.caption).foregroundStyle(Tidbits.Palette.blue)
+                }
                 if let e = played.entry(q.id) {   // A2.6: the room has heard this one
                     Label(LivePlayedLog.askedLine(e), systemImage: "clock.arrow.circlepath")
                         .font(.caption).foregroundStyle(Tidbits.Palette.coral).lineLimit(1)
@@ -767,6 +776,18 @@ struct LiveBuilderView_macOS: View {
                 }
                 Button("Duplicate") { insertQuestion(q.duplicatedForEditing(), into: ri, at: qi + 1) }
                 Button("Swap for a fresh one") { Task { await swapForFresh(ri, qi) } }.disabled(busy)
+                Menu("Timer for this question") {   // A2.8
+                    Button("Round default") { setOverride(ri, qi, timer: 0) }
+                    ForEach([15, 30, 45, 60, 90, 120], id: \.self) { secs in
+                        Button("\(secs) seconds") { setOverride(ri, qi, timer: secs) }
+                    }
+                }
+                Menu("Points for this question") {
+                    Button("Night default") { setOverride(ri, qi, points: 0) }
+                    ForEach([1, 2, 3, 5, 10], id: \.self) { pts in
+                        Button("\(pts) point\(pts == 1 ? "" : "s")") { setOverride(ri, qi, points: pts) }
+                    }
+                }
                 Button("Move up") { moveQuestion(ri, from: qi, to: qi - 1) }.disabled(qi == 0)
                 Button("Move down") { moveQuestion(ri, from: qi, to: qi + 1) }
                     .disabled(qi >= working.rounds[ri].questions.count - 1)
@@ -873,6 +894,7 @@ struct LiveBuilderView_macOS: View {
         guard working.rounds.indices.contains(ri) else { return }
         let at = index ?? working.rounds[ri].questions.count
         working.rounds[ri].questions.insert(q, at: min(at, working.rounds[ri].questions.count))
+        syncOverrides(ri, insertAt: at)
         // An audio/video round pairs bookmark[i] with question[i]; inserting a
         // question without a matching slot would silently shift every later clip
         // onto the wrong question.
@@ -884,9 +906,38 @@ struct LiveBuilderView_macOS: View {
         }
     }
 
+    /// A2.8: keep the per-question override arrays index-parallel with the
+    /// questions through insert / remove / move, the way the clips are kept.
+    private func syncOverrides(_ ri: Int, insertAt: Int? = nil, removeAt: Int? = nil, swap: (Int, Int)? = nil) {
+        func fix(_ list: inout [Int]?) {
+            guard var l = list else { return }
+            if let at = insertAt { l.insert(0, at: min(at, l.count)) }
+            if let at = removeAt, l.indices.contains(at) { l.remove(at: at) }
+            if let (a, b) = swap, l.indices.contains(a), l.indices.contains(b) { l.swapAt(a, b) }
+            list = l.contains(where: { $0 > 0 }) ? l : nil
+        }
+        fix(&working.rounds[ri].questionTimers)
+        fix(&working.rounds[ri].questionPoints)
+    }
+
+    private func setOverride(_ ri: Int, _ qi: Int, timer: Int? = nil, points: Int? = nil) {
+        guard working.rounds.indices.contains(ri) else { return }
+        let count = working.rounds[ri].questions.count
+        guard qi < count else { return }
+        func put(_ list: inout [Int]?, _ v: Int) {
+            var l = list ?? []
+            while l.count < count { l.append(0) }
+            l[qi] = v
+            list = l.contains(where: { $0 > 0 }) ? l : nil
+        }
+        if let timer { put(&working.rounds[ri].questionTimers, timer) }
+        if let points { put(&working.rounds[ri].questionPoints, points) }
+    }
+
     private func removeQuestion(_ ri: Int, at qi: Int) {
         guard working.rounds.indices.contains(ri), working.rounds[ri].questions.indices.contains(qi) else { return }
         working.rounds[ri].questions.remove(at: qi)
+        syncOverrides(ri, removeAt: qi)
         if working.rounds[ri].audioBookmarks?.indices.contains(qi) == true { working.rounds[ri].audioBookmarks?.remove(at: qi) }
         if working.rounds[ri].videoBookmarks?.indices.contains(qi) == true { working.rounds[ri].videoBookmarks?.remove(at: qi) }
     }
@@ -903,6 +954,7 @@ struct LiveBuilderView_macOS: View {
         if var bm = working.rounds[ri].videoBookmarks, bm.indices.contains(from), bm.indices.contains(to) {
             bm.swapAt(from, to); working.rounds[ri].videoBookmarks = bm
         }
+        syncOverrides(ri, swap: (from, to))
     }
 
     private var addRoundBar: some View {

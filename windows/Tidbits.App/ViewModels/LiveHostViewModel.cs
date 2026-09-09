@@ -26,7 +26,55 @@ public sealed class LiveHostViewModel : ObservableObject
         // it touches the show.
         Host.Net.RemoteCommandReceived += verb =>
             Dispatcher.UIThread.Post(async () => await RunRemoteVerb(verb));
+        // A8.7: an element switched in the cockpit re-lays the projector.
+        Elements.Changed += () => Dispatcher.UIThread.Post(() => OnPropertyChanged(string.Empty));
     }
+
+    // ---- The projector's elements (macOS-DESIGN A8.7 / A8.9, WINDOWS-DESIGN 6.3c) ----
+    // Every element of the live slide except the question and its answer is a
+    // switch; a hidden element takes NO space, so the rest re-centres.
+    public Tidbits.Core.Store.ProjectorElements Elements => Tidbits.Core.Store.ProjectorElements.Shared;
+    public string EventTitleUpper => Host.Title.ToUpperInvariant();
+    public bool ShowTitle => Elements.Shows("title");
+    public bool ShowRoundLine => Elements.Shows("roundLine");
+    public string RoundLine => $"ROUND {Host.RoundNumber}/{Host.RoundCount} · {Host.RoundTitle}";
+    public bool ShowHeader => ShowTitle || ShowRoundLine;
+    public bool ShowCountdown => Elements.Shows("countdown") && Host.SecondsRemaining is not null && !Host.Revealed;
+    public bool ShowChrome => Elements.Shows("chrome");
+    public bool ShowChromeRow => ShowChrome || ShowCountdown;
+    public bool ShowPicture => Elements.Shows("picture") && !string.IsNullOrWhiteSpace(Host.Current?.ImageUrl);
+    public string? PictureUrl => ShowPicture ? Host.Current!.ImageUrl : null;
+    public double PictureHeight => Host.Revealed ? 190 : 300;
+    public bool HasVotes => Host.Net.AnswersSnapshot().Count > 0;
+    public bool ShowTally => Elements.Shows("tally") && Host.Current?.Options is { Count: > 0 } && (HasVotes || Host.Revealed);
+    /// Votes per option, from the room's submissions.
+    public IReadOnlyList<int> OptionTallies
+    {
+        get
+        {
+            var opts = Host.Current?.Options;
+            if (opts is null) return System.Array.Empty<int>();
+            var answers = Host.Net.AnswersSnapshot().Values;
+            return opts.Select((_, i) => answers.Count(a => a.Choice == i)).ToList();
+        }
+    }
+    /// The one line under the question before the reveal — the buzz cue on a buzz
+    /// round (always), otherwise "Answer on your phones" (a switch).
+    public bool ShowStatusLine => !Host.Revealed && !HasBuzz && (Host.IsBuzzRound || Elements.Shows("status"));
+    public string StatusLine => Host.IsBuzzRound ? "BUZZ IN" : "Answer on your phones";
+    public bool ShowStory => Elements.Shows("story") && HasRevealStory;
+    /// The answer capsule is for a NON-MCQ reveal; an MCQ's tally already lights the
+    /// correct option, and saying it twice is the kind of clutter A8.7 exists to cut.
+    public bool ShowRevealAnswer => Host.Revealed && !(Host.Current?.Options is { Count: > 0 });
+    public bool ShowTeams => Elements.Shows("teams");
+    public IReadOnlyList<LiveStandingRow> TeamChips => RankedStandings.Take(5).ToList();
+    public bool ShowJoinPanel => Elements.Shows("joinPanel") && Host.Net.IsOpen;
+    public bool ShowBottomRow => ShowTeams || ShowJoinPanel;
+    public bool ShowSponsor => Elements.Shows("sponsor") && HasSponsor;
+    /// A8.9 resizing: a slide with little on it gives the question the room.
+    public bool IsSparse => !ShowBottomRow && !ShowPicture && !ShowTally && !ShowStory;
+    public double PromptSize => ShowPicture ? 40 : (IsSparse ? 68 : 50);
+    public string ScreenMenuLabel => Elements.HiddenCount == 0 ? "Screen" : $"Screen · {Elements.HiddenCount} off";
 
     public bool IsLobby => Host.CurrentStage == LiveNightHost.Stage.Lobby;
     public bool IsPlaying => Host.CurrentStage == LiveNightHost.Stage.Playing;

@@ -230,6 +230,8 @@
                 <ui:FACommandBarToggleButton Label="Standings on big screen"
                                              IsChecked="{Binding HoldStandings, Mode=OneWay}" Click="OnToggleHold"/>
                 <ui:FACommandBarButton Label="Show on projector" Click="OnProjector"/>
+                <ui:FACommandBarButton x:Name="ScreenButton" Label="{Binding ScreenMenuLabel}" Click="OnScreenMenu"
+                                       ToolTip.Tip="What the room sees: switch each element of the big screen, and go full screen"/>
                 <ui:FACommandBarButton Label="Audio output" Click="OnAudio"/>
                 <ui:FACommandBarSeparator/>
                 <ui:FACommandBarButton Label="{Binding PenaltyLabel}" Click="OnCyclePenalty"

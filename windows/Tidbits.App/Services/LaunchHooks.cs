@@ -58,6 +58,13 @@ public static class LaunchHooks
         }
     }
 
+    /// TIDBITS_LIVE_PROJECTOR=1 — open the projector window as soon as the cockpit
+    /// is up, so the big screen can be photographed without a click.
+    public static bool LiveProjector => Flag("TIDBITS_LIVE_PROJECTOR");
+    /// TIDBITS_LIVE_FULLSCREEN=1 — the projector goes full screen even on a
+    /// single display (6.3a's automatic placement would keep it windowed there).
+    public static bool LiveFullScreen => Flag("TIDBITS_LIVE_FULLSCREEN");
+
     /// TIDBITS_SETTINGS=1 — open Settings.
     public static bool Settings => Flag("TIDBITS_SETTINGS");
 

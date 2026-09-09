@@ -250,6 +250,26 @@ cap is NOT the fix and does not close this rule — a wider column pinned left i
 still pinned left. The one exception is a page whose content is genuinely a
 full-bleed surface (the projector), which stretches instead.
 
+6.3c **The slide adapts; nothing is ever laid over anything** (the Windows
+form of macOS-DESIGN A8.9/A8.10, 2026-09-09). The question screen is one
+1280x720 design canvas in a `Viewbox` — header · a middle column in a
+`StretchDirection="DownOnly"` Viewbox (chrome + countdown row, prompt, picture,
+options with live vote bars, answer, story) · a bottom band (team STRIP as a
+`WrapPanel` of chips + a horizontal scan-to-join card) · the sponsor line —
+every element IN the flow. Every element except the question and its answer is
+a switch (`ProjectorElements`, the same ids as the Mac) reached from the
+cockpit's **Screen** command; a hidden element takes no space and a sparse slide
+gives the prompt the room. No `MaxLines` on the big screen — a line limit drops
+the LAST line with no ellipsis; the Viewbox scales instead. Full screen is
+first-class: **Screen → Full screen / Full screen on <display>**, F11 and a
+double-click on the slide, Esc to leave (6.3a still holds for the automatic
+placement). Gate: `ProjectorAdaptiveSnapshot` renders question + reveal at
+1280x720 and 1920x1080, all-on and all-off, and asserts no two text blocks
+intersect and no text block is clipped. (Owner: "literally everything overlaps
+on the projector … the projector graphics would adapt based upon which of the
+features you have turned on … capable of going full screen on both windows and
+mac.")
+
 6.3a **The projector must never hijack the only display.** Auto-
 fullscreen is correct ONLY when a non-primary `Screen` exists. With a
 single monitor, open a normal **decorated, resizable** window the host

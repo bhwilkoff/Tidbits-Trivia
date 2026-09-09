@@ -55,6 +55,14 @@ SCENARIOS = {
                     {"expect_any": r"Leaderboard|standings|season|venue|rank|No standings"}),
     "live":        (dict(TIDBITS_TAB="live"),
                     {"expect_any": r"Live|Host|room|code|join|SCAN"}),
+    # The PROJECTOR on the real glass, full screen (WINDOWS-DESIGN 6.3c). The
+    # headless render proves the layout; this proves the window, the full-screen
+    # path and the real display. The capture is the whole desktop, which a
+    # full-screen projector fills.
+    "projector":   (dict(TIDBITS_TAB="live", TIDBITS_LIVE_HOST="Quick Night",
+                         TIDBITS_LIVE_PROJECTOR="1", TIDBITS_LIVE_FULLSCREEN="1"),
+                    {"expect_any": r"SCAN TO JOIN|CODE [A-Z0-9]{4}|Answer on your phones|ROUND",
+                     "expect_none": r"\u2026|\.\.\."}),
     # The HOST COCKPIT. `TIDBITS_LIVE_HOST=<preset>` has existed in
     # Services/LaunchHooks.cs all along — the note that used to sit here said it
     # did not, and I repeated that in a commit message before checking the code.
@@ -242,7 +250,7 @@ def _sweep(a, names, out, g):
         if not g.grade("published", pub_ok, "win-x64 self-contained" if pub_ok else log[-200:]):
             return g.finish()
         dep_ok, err = winbox.deploy()
-        if not g.grade("deployed", dep_ok, winbox.REMOTE if dep_ok else err):
+        if not g.grade("deployed", dep_ok, winbox.remote_dir() if dep_ok else err):
             return g.finish()
 
     for n in names:

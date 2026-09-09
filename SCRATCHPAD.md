@@ -7,6 +7,45 @@
 > `docs/ROADMAP.md`, `docs/DATA-CONTRACT.md`. Detailed per-round history is in
 > `ARCHIVE.md`.
 
+## Current state (2026-09-09d) — the Windows projector adapts and goes full screen (parity with 2026-09-09c)
+
+**Did (WINDOWS-DESIGN 6.3c, WINDOWS-PARITY 3.54):** the Windows question
+screen is now the same composition as the Mac's — a 1280x720 canvas in a
+Viewbox; header · a `StretchDirection=DownOnly` middle (chrome + countdown,
+prompt, the question PICTURE (3.36, projector half), options with live vote
+bars, answer, story) · a bottom band (team chips in a `WrapPanel` + a
+horizontal join card with a real QR — Windows had only a text strip overlaid
+top-right) · the sponsor line in the flow. Every element is a switch:
+`Tidbits.Core.Store.ProjectorElements` (the Mac's ids; JSON in LocalAppData;
+`TIDBITS_LIVE_HIDE`), reached from a new cockpit **Screen** command that
+also carries Full screen / Full screen on <display>; the projector window
+gained `ToggleFullScreen`, `FullScreenOn(Screen)`, F11 and double-click
+(Windows already auto-fullscreened on a second display, 6.3/6.3a kept).
+`LiveHostNet.PreviewSeed` mirrors the Swift seam so the headless test can
+draw a roster, votes and the join card offline.
+
+**Verified:** `ProjectorAdaptiveSnapshot` — question + reveal x 1280x720 +
+1920x1080 x all-on/all-off — asserts no two visible text blocks intersect AND
+no text block is clipped; the clip assertion caught `MaxLines` dropping the
+last line of the prompt ("…BCE — which") with no ellipsis, which the
+existing truncation check could never see. 8/8 green on the Mac head; the
+PNGs were read. **And on the real Windows box** (owner: "Are you using the
+real Windows device that you have available for testing on 'the glass'?"):
+`python3 tools/win_run.py --deploy --only projector` — a new scenario driven
+by two new hooks (`TIDBITS_LIVE_PROJECTOR=1` opens the projector with the
+cockpit; `TIDBITS_LIVE_FULLSCREEN=1` goes full screen even on one display) —
+photographed the projector full screen on DESKTOP-LAKMUIR's 1080x1920 portrait
+display: the 16:9 canvas letterboxed and centred, header, chrome, prompt,
+options, "Answer on your phones", the team placeholder and the join card with
+its QR, nothing overlapping, 6/6 checks green. (The runner had a stale
+`winbox.REMOTE` reference — fixed.) Gate on `windows-latest` is
+`windows-repl.yml` (run after the push). 1.9.4 (134).
+
+**State left:** the Windows COCKPIT still shows no picture (3.36 cockpit
+half); Windows host clip publish + joiner (3.53); Android joiner clip;
+the video slide on both projectors is still the full-screen overlay (fine —
+a clip is the show) but is not in either offline set.
+
 ## Current state (2026-09-09c) — the projector adapts and goes full screen (macOS)
 
 **Owner:** "literally everything overlaps on the projector/display surface …

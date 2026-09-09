@@ -66,6 +66,22 @@ public sealed class LiveHostNet
                 .OrderByDescending(j => j.Score).ThenBy(j => j.Name, StringComparer.Ordinal).ToList();
     }
 
+    /// Make the net look OPEN with a roster, without a network — the projector
+    /// snapshot tests draw the join card, the team strip and the vote tally from
+    /// this. Nothing here touches the database. Mirrors Swift `previewSeed`.
+    public void PreviewSeed(string code, IReadOnlyDictionary<string, LiveRoom.Team> teams,
+                            IReadOnlyDictionary<string, int> scores, IReadOnlyDictionary<string, LiveRoom.Answer> answers)
+    {
+        lock (_lock)
+        {
+            Code = code; HostUid = "preview-host";
+            _teams.Clear(); foreach (var kv in teams) _teams[kv.Key] = kv.Value;
+            _scores.Clear(); foreach (var kv in scores) _scores[kv.Key] = kv.Value;
+            _answers.Clear(); foreach (var kv in answers) _answers[kv.Key] = kv.Value;
+        }
+        Changed?.Invoke();
+    }
+
     public IReadOnlyDictionary<string, LiveRoom.Answer> AnswersSnapshot()
     {
         lock (_lock) return new Dictionary<string, LiveRoom.Answer>(_answers);

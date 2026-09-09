@@ -19,6 +19,8 @@ public partial class LiveCockpitView : UserControl
     public LiveCockpitView()
     {
         InitializeComponent();
+        AttachedToVisualTree += (_, _) =>
+            Avalonia.Threading.Dispatcher.UIThread.Post(OpenProjectorFromHook, Avalonia.Threading.DispatcherPriority.Background);
         // Tick the countdown display once a second (the deadline itself lives in the
         // published pub; this just renders the remaining seconds locally).
         _tick = new Avalonia.Threading.DispatcherTimer(
@@ -482,6 +484,55 @@ public partial class LiveCockpitView : UserControl
     {
         if (Vm is not { } vm) return;
         if (_projector is not null) { _projector.Activate(); return; }
+        _projector = new ProjectorWindow(vm);
+        _projector.Closed += (_, _) => _projector = null;
+        _projector.Show();
+    }
+
+    /// A8.7 / A8.10: what the room sees. Each element of the live slide is a check
+    /// item (the question and its answer are not on the list), then full screen —
+    /// on the display the projector is on, or on any attached display by name.
+    private void OnScreenMenu(object? sender, RoutedEventArgs e)
+    {
+        var elements = Tidbits.Core.Store.ProjectorElements.Shared;
+        var menu = new MenuFlyout();
+        foreach (var el in Tidbits.Core.Store.ProjectorElements.All)
+        {
+            var item = new MenuItem { Header = el.Title, ToggleType = MenuItemToggleType.CheckBox, IsChecked = elements.Shows(el.Id) };
+            var id = el.Id;
+            item.Click += (_, _) => elements.Set(id, !elements.Shows(id));
+            menu.Items.Add(item);
+        }
+        menu.Items.Add(new Separator());
+        var all = new MenuItem { Header = "Show everything", IsEnabled = elements.HiddenCount > 0 };
+        all.Click += (_, _) => elements.ShowEverything();
+        menu.Items.Add(all);
+        menu.Items.Add(new Separator());
+        var full = new MenuItem { Header = _projector?.IsFullScreen == true ? "Exit full screen" : "Full screen" };
+        full.Click += (_, _) => { EnsureProjector(); _projector?.ToggleFullScreen(); };
+        menu.Items.Add(full);
+        var screens = (TopLevel.GetTopLevel(this) as Window)?.Screens?.All;
+        if (screens is not null)
+            foreach (var sc in screens)
+            {
+                var target = sc;
+                var item = new MenuItem { Header = $"Full screen on {sc.DisplayName ?? "display"}{(sc.IsPrimary ? " (primary)" : "")}" };
+                item.Click += (_, _) => { EnsureProjector(); _projector?.FullScreenOn(target); };
+                menu.Items.Add(item);
+            }
+        menu.ShowAt(ScreenButton);
+    }
+
+    /// TIDBITS_LIVE_PROJECTOR=1: the projector opens with the cockpit (harness).
+    private void OpenProjectorFromHook()
+    {
+        if (!Services.LaunchHooks.LiveProjector || _projector is not null) return;
+        EnsureProjector();
+    }
+
+    private void EnsureProjector()
+    {
+        if (_projector is not null || Vm is not { } vm) return;
         _projector = new ProjectorWindow(vm);
         _projector.Closed += (_, _) => _projector = null;
         _projector.Show();

@@ -38,8 +38,17 @@ photographed the projector full screen on DESKTOP-LAKMUIR's 1080x1920 portrait
 display: the 16:9 canvas letterboxed and centred, header, chrome, prompt,
 options, "Answer on your phones", the team placeholder and the join card with
 its QR, nothing overlapping, 6/6 checks green. (The runner had a stale
-`winbox.REMOTE` reference — fixed.) Gate on `windows-latest` is
-`windows-repl.yml` (run after the push). 1.9.4 (134).
+`winbox.REMOTE` reference — fixed.) **The `windows-latest` gates failed
+first, 3 of 751:** (1) the projector's "Loading picture…" hint ends in an
+ellipsis, which the big-screen truncation check forbids — reworded; (2)+(3)
+the two MCQ visual baselines still pinned the Play surface LEFT, while 5.7
+centred it on 2026-09-08 without a refresh — the committed baseline and the
+CI frame differed exactly in the question column, and the refreshed baseline
+(`-f update_baselines=true`) matches the live frame pixel-for-pixel. Green on
+ec84fc61: Windows REPL, Windows build + snapshots, Android, Apple. The local
+`dotnet test` hangs on the Mac head somewhere after 267 tests and its
+`--blame-hang` dumps grew to 24 GB under `TestResults/` (now git-ignored);
+CI ran all 751 in 2 minutes, so the Mac head is not the gate. 1.9.4 (134).
 
 **State left:** the Windows COCKPIT still shows no picture (3.36 cockpit
 half); Windows host clip publish + joiner (3.53); Android joiner clip;

@@ -37,27 +37,6 @@ extension Color {
 
 /// Big-screen join panel: a scannable QR + the 4-char code (for anyone typing).
 /// The QR opens the web player with the code prefilled — join without typing.
-struct LiveJoinPanel: View {
-    let code: String
-    var qrSize: CGFloat = 150
-    var body: some View {
-        VStack(spacing: 8) {
-            Text("SCAN TO JOIN").font(.system(size: 17, weight: .heavy, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
-            if let img = makeLiveQR(liveJoinURL(code)) {
-                Image(nsImage: img).interpolation(.none).resizable()
-                    .frame(width: qrSize, height: qrSize)
-                    .padding(10).background(RoundedRectangle(cornerRadius: 12).fill(.white))
-                    .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Tidbits.Palette.border, lineWidth: 3))
-            }
-            Text("CODE \(code)").font(.system(size: 26, weight: .black, design: .monospaced)).foregroundStyle(Tidbits.Palette.ink).kerning(2)
-            Text("or tidbitstrivia.com/live").font(.system(size: 14, weight: .semibold, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
-        }
-        .padding(18)
-        .background(RoundedRectangle(cornerRadius: 18).fill(Tidbits.Palette.surface))
-        .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(Tidbits.Palette.border, lineWidth: 3))
-    }
-}
-
 /// Shares the active host session between the cockpit window and the projector
 /// window (macOS-DESIGN §A1.1 — two views of ONE live event, never mirrored).
 @Observable
@@ -134,11 +113,6 @@ final class LiveProjectorElements {
 struct LiveBigScreen_macOS: View {
     @Environment(LiveHostCoordinator.self) private var coordinator
     private var el: LiveProjectorElements { LiveProjectorElements.shared }
-    /// The join panel is a trailing overlay; the tally, the story, the picture and
-    /// the video clear it ONLY while it is actually on the screen.
-    private var joinPanelClearance: CGFloat {
-        (coordinator.net?.isOpen == true && el.shows("joinPanel")) ? 360 : 0
-    }
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// §A8.5 — one show-timing spring, disabled under reduce-motion.
@@ -149,27 +123,35 @@ struct LiveBigScreen_macOS: View {
     var body: some View {
         ZStack {
             Tidbits.Palette.bg.ignoresSafeArea()
-            if let s = coordinator.session {
-                if s.showScores && !s.finished { standings(s, interim: true).transition(.opacity) }
-                // G5: the pick-a-category grid. Ahead of the break/standings slides
-                // because it is a phase of a LIVE round, not an interruption of one.
-                else if s.showBoard, let b = s.currentRoundBoard { boardSlide(b, chooser: s.boardChooser).transition(.opacity) }
-                else if s.onBreak { breakSlide(s).transition(.opacity) }   // adaptability: intermission hold
-                else if s.finished { standings(s).transition(.opacity) } else { live(s).transition(.opacity) }
-            } else {
-                splash.transition(.opacity)
+            // A8.9: one design canvas, scaled to the window — every slide is
+            // composed at 1280x720 and fits any display without a single
+            // hand-computed clearance.
+            ProjectorCanvas(size: Self.canvas) {
+                ZStack {
+                    if let s = coordinator.session {
+                        if s.showScores && !s.finished { standings(s, interim: true).transition(.opacity) }
+                        // G5: the pick-a-category grid. Ahead of the break/standings slides
+                        // because it is a phase of a LIVE round, not an interruption of one.
+                        else if s.showBoard, let b = s.currentRoundBoard { boardSlide(b, chooser: s.boardChooser).transition(.opacity) }
+                        else if s.onBreak { breakSlide(s).transition(.opacity) }   // adaptability: intermission hold
+                        else if s.finished { standings(s).transition(.opacity) } else { live(s).transition(.opacity) }
+                    } else {
+                        splash.transition(.opacity)
+                    }
+                }
             }
         }
-        .frame(minWidth: 720, minHeight: 480)
-        .overlay(alignment: .bottom) {   // Wave D: sponsor kit — a persistent branded footer (lobby + between rounds + play)
-            if el.shows("sponsor"), let s = coordinator.session, !s.event.sponsor.isEmpty {
-                Text("Brought to you by \(s.event.sponsor)")
-                    .font(.system(size: 24, weight: .heavy, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
-                    .padding(.vertical, 9).padding(.horizontal, 24)
-                    .background(Capsule().fill(Tidbits.Palette.surface))
-                    .overlay(Capsule().strokeBorder(Tidbits.Palette.border, lineWidth: 2))
-                    .padding(.bottom, 26)
-            }
+        .frame(minWidth: 640, minHeight: 360)
+        // A8.10: a projector goes full screen. Double-click anywhere on the slide.
+        .onTapGesture(count: 2) { LiveProjectorWindow.toggleFullScreen() }
+        // TIDBITS_LIVE_FULLSCREEN=1 → the projector goes full screen on its own,
+        // so the harness can photograph the state a real night runs in. No-op
+        // in production.
+        .task {
+            guard ProcessInfo.processInfo.environment["TIDBITS_LIVE_FULLSCREEN"] == "1" else { return }
+            try? await Task.sleep(for: .seconds(1.5))
+            LiveProjectorWindow.diag("hook fired; isFullScreen=\(LiveProjectorWindow.isFullScreen)")
+            if !LiveProjectorWindow.isFullScreen { LiveProjectorWindow.toggleFullScreen() }
         }
         .animation(showAnim, value: coordinator.session?.finished)
         .overlay {
@@ -283,162 +265,145 @@ struct LiveBigScreen_macOS: View {
                 .font(.system(size: 34, weight: .heavy, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
             Text("Back in a moment").font(.system(size: 72, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
             Text("Grab a drink — the next round is coming up.").font(.system(size: 28, weight: .semibold, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
+            sponsorLine(s).padding(.top, 20)
         }
     }
 
+    // MARK: - The live slide (macOS-DESIGN A8.9: everything in the flow, the slide fits the window)
+
+    /// The design canvas every slide is laid out on, then scaled to the window.
+    /// Sizes below are canvas points. A 4K projector, a 720p bar TV and a
+    /// laptop preview all show the SAME composition at the same proportions.
+    static let canvas = CGSize(width: 1280, height: 720)
+
     private func live(_ s: LiveHostSession) -> some View {
-        VStack(spacing: 24) {
-            if el.shows("title") || el.shows("roundLine") {
-            HStack(alignment: .firstTextBaseline) {
+        let showBottom = el.shows("teams") || (el.shows("joinPanel") && coordinator.net?.isOpen == true)
+        return VStack(spacing: 0) {
+            header(s)
+            middle(s, bottomShown: showBottom)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            if showBottom { bottomRow(s).padding(.top, 12) }
+            sponsorLine(s)
+        }
+        .padding(.horizontal, 36).padding(.top, 24).padding(.bottom, 20)
+    }
+
+    /// Event name & venue on the left, round line on the right. Hidden elements
+    /// contribute nothing: with both off there is no header band at all.
+    @ViewBuilder private func header(_ s: LiveHostSession) -> some View {
+        if el.shows("title") || el.shows("roundLine") {
+            HStack(alignment: .firstTextBaseline, spacing: 24) {
                 if el.shows("title") {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(s.event.name.uppercased()).font(.system(size: 30, weight: .black, design: .rounded)).foregroundStyle(Color(hexString: s.event.brandHex) ?? Tidbits.Palette.ink)   // Wave D: white-label brand accent
-                        .lineLimit(1).minimumScaleFactor(0.6)
-                    if !s.event.venue.isEmpty {
-                        Text(s.event.venue).font(.system(size: 22, weight: .heavy, design: .rounded)).foregroundStyle(Tidbits.Palette.coral)
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text(s.event.name.uppercased())
+                            .font(.system(size: 26, weight: .black, design: .rounded))
+                            .foregroundStyle(Color(hexString: s.event.brandHex) ?? Tidbits.Palette.ink)   // Wave D: white-label brand accent
+                            .lineLimit(1).minimumScaleFactor(0.6)
+                        if !s.event.venue.isEmpty {
+                            Text(s.event.venue).font(.system(size: 18, weight: .heavy, design: .rounded))
+                                .foregroundStyle(Tidbits.Palette.coral).lineLimit(1)
+                        }
                     }
                 }
-                }
-                Spacer()
+                Spacer(minLength: 0)
                 if el.shows("roundLine") {
-                Text("ROUND \(s.roundNumber)/\(s.roundCount) · \(s.roundTitle)")
-                    .font(.system(size: 26, weight: .heavy, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
-                    .lineLimit(1).minimumScaleFactor(0.6)   // a long round title shrinks instead of wrapping/overflowing
+                    Text("ROUND \(s.roundNumber)/\(s.roundCount) · \(s.roundTitle)")
+                        .font(.system(size: 22, weight: .heavy, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
+                        .lineLimit(1).minimumScaleFactor(0.6)
                 }
             }
-            }
-            if el.shows("countdown"), let d = s.deadlineMs, !s.revealed { countdown(deadlineMs: d) }   // Wave A: on-screen timer
+            .padding(.bottom, 10)
+        }
+    }
+
+    /// The question and everything that belongs to it. Laid out top-down at
+    /// natural size and then FITTED to whatever height the header and the
+    /// bottom row left — so a long prompt, a picture, four vote bars and a
+    /// three-line story shrink together instead of one of them landing on
+    /// another. The media band yields first; the prompt shrinks before it wraps
+    /// past three lines.
+    private func middle(_ s: LiveHostSession, bottomShown: Bool) -> some View {
+        FitToHeight {
             VStack(spacing: 12) {
                 if let q = s.current {
-                    if el.shows("chrome") { chromeRow(q, s) }   // Wave B: format + difficulty chrome
-                    // An imported (Kahoot) question usually carries a picture. It takes
-                    // the video's slot; the prompt yields some of its band to it, the
-                    // same trade the reveal already makes.
-                    let hasPicture = el.shows("picture") && q.imageURL != nil && !LiveVideoPlayer.shared.hasVideo
+                    let showCountdown = el.shows("countdown") && s.deadlineMs != nil && !s.revealed
+                    if el.shows("chrome") || showCountdown {
+                        HStack(alignment: .center, spacing: 16) {
+                            if el.shows("chrome") { chromeRow(q, s) }
+                            Spacer(minLength: 0)
+                            if showCountdown, let d = s.deadlineMs { countdown(deadlineMs: d) }
+                        }
+                    }
+                    let hasVideo = LiveVideoPlayer.shared.hasVideo
+                    let hasPicture = el.shows("picture") && q.imageURL != nil && !hasVideo
+                    let hasMedia = hasPicture || hasVideo
+                    let hasVotes = !(coordinator.net?.answers.isEmpty ?? true)
+                    let tallyShown = el.shows("tally") && LiveNightHost.isMCQ(q) && (hasVotes || s.revealed)
+                    let storyShown = el.shows("story") && s.revealed && !q.explanation.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                    // A8.9 resizing: a slide with little on it gives the question the
+                    // room — the prompt grows when the bottom band, the media and the
+                    // votes are off, and FitToHeight still shrinks it if it must.
+                    let sparse = !bottomShown && !hasMedia && !tallyShown && !storyShown
                     Text(q.prompt)
-                        .font(.system(size: 56, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
-                        .multilineTextAlignment(.center).lineLimit(5).minimumScaleFactor(0.45)
-                        // The prompt gets a GUARANTEED band of the screen. Both bounds
-                        // are load-bearing, and each was measured on the real projector:
-                        //
-                        //   no minHeight — the VStack squeezed the prompt to one line and
-                        //   it truncated: "...rose from advisor to his father in 2…".
-                        //   lineLimit(5) does not save it, because minimumScaleFactor
-                        //   makes SwiftUI prefer shrinking one line over wrapping.
-                        //
-                        //   no maxHeight (or .fixedSize) — a long prompt wraps but grows
-                        //   without limit, pushing the event title, the round line and the
-                        //   join code off the screen entirely.
-                        //
-                        // A question the room cannot read, and a join code the room cannot
-                        // see, are the two worst failures this surface has.
-                        // On REVEAL the slide also carries the vote tally (one row per option) and the
-                        // explanation, roughly 340pt more. Measured on the projector: with the
-                        // question keeping its full band, that pushed the event title, the round
-                        // line and the join code off the screen — the same overflow as the
-                        // truncation fix, in the state the room stares at longest. The question
-                        // has already been read aloud by then, so it yields the space.
-                        .frame(maxWidth: 1200,
-                               minHeight: hasPicture ? (s.revealed ? 70 : 100) : (s.revealed ? 90 : 150),
-                               maxHeight: hasPicture ? (s.revealed ? 110 : 160) : (s.revealed ? 150 : 240))
+                        .font(.system(size: hasMedia ? 40 : (sparse ? 68 : 50), weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(hasMedia ? 3 : (sparse ? 5 : 4)).minimumScaleFactor(0.5)
+                        .frame(maxWidth: .infinity)
                         .id(q.id)
                         .transition(.opacity.combined(with: .move(edge: .top)))
                     if hasPicture, let img = q.imageURL {
                         LiveQuestionImage(url: img, cornerRadius: 16)
-                            // The band is FLEXIBLE and yields first: on a 720-line projector
-                            // a fixed 430pt pushed the prompt down under the join panel.
-                            // The prompt keeps its minimum band; the picture takes what is
-                            // left, up to its cap. The floor is the join panel's height, so
-                            // the prompt above the picture always clears the panel -- measured
-                            // at 1280x720, where a 120pt floor still put "Hired?" under it.
-                            .frame(maxWidth: .infinity, minHeight: s.revealed ? 120 : 240, maxHeight: s.revealed ? 250 : 430)
-                            .layoutPriority(-1)
-                            // Same clearance as the video and the tally: the join panel
-                            // is a bottom-trailing overlay and would sit on the picture.
-                            .padding(.trailing, joinPanelClearance)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: s.revealed ? 190 : 300)
                             .id(q.id)
                     }
-                    if LiveVideoPlayer.shared.hasVideo, let vplayer = LiveVideoPlayer.shared.player {   // Wave B: video question
+                    if hasVideo, let vplayer = LiveVideoPlayer.shared.player {   // Wave B: video question
                         VideoPlayer(player: vplayer)
-                            .frame(maxWidth: .infinity, minHeight: 420, maxHeight: 560)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 340)
                             .clipShape(RoundedRectangle(cornerRadius: 16))
                             .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(Tidbits.Palette.border, lineWidth: 4))
-                            // Same clearance, and for the same reason, as the vote
-                            // tally below: the join panel is a bottom overlay across
-                            // the full width, and a full-width video ran straight
-                            // underneath it -- the room watched a clip with a white
-                            // QR card sitting on the bottom-right corner of it. Only
-                            // visible once the projector was photographed mid-clip.
-                            //
-                            // AFTER the border, not before: applied earlier the
-                            // outline wrapped the padded box and drew a frame around
-                            // 360pt of empty cream.
-                            .padding(.trailing, joinPanelClearance)
                     }
-                    let hasVotes = !(coordinator.net?.answers.isEmpty ?? true)
-                    if el.shows("tally"), LiveNightHost.isMCQ(q), hasVotes || s.revealed {
+                    if tallyShown {
                         voteTally(q, revealed: s.revealed)   // A8: the room watches the votes land
-                            // Same clearance as the explanation: the per-option VOTE
-                            // COUNTS sit at the trailing end of each bar, and the join
-                            // panel overlay was sitting on top of them. "How did the room
-                            // vote" is the point of this panel.
-                            .padding(.trailing, joinPanelClearance)
                     } else if s.revealed {
                         Text(q.correctAnswer)
-                            .font(.system(size: 52, weight: .black, design: .rounded)).foregroundStyle(.white)
+                            .font(.system(size: 44, weight: .black, design: .rounded)).foregroundStyle(.white)
                             .lineLimit(2).minimumScaleFactor(0.5)   // a long answer fits the capsule
-                            .padding(.horizontal, 28).padding(.vertical, 14)
+                            .padding(.horizontal, 28).padding(.vertical, 12)
                             .background(Capsule().fill(Tidbits.Palette.mint))
                             .overlay(Capsule().strokeBorder(Tidbits.Palette.border, lineWidth: 4))
                             .shadow(color: Tidbits.Palette.mint.opacity(reduceMotion ? 0 : 0.65), radius: 34)
-                            .padding(.top, 12)
                             .transition(.scale(scale: 0.55).combined(with: .opacity))   // A8.1 the reveal is theatre
                     } else {
                         // G1: on a buzz round the room needs to SEE who got there
-                        // first — that is the whole drama of the format, and until
-                        // now only the host's laptop knew. Named on the big screen
-                        // the moment it happens.
+                        // first — that is the whole drama of the format.
                         if s.currentRoundIsBuzz,
                            let uid = LiveNightHost.firstBuzz(coordinator.net?.answers ?? [:],
                                                              excluding: s.buzzedOut) {
                             let who = coordinator.net?.teams[uid]?.name ?? "Team"
                             Text("\(who) buzzed!")
-                                .font(.system(size: 46, weight: .black, design: .rounded))
+                                .font(.system(size: 40, weight: .black, design: .rounded))
                                 .foregroundStyle(Tidbits.Palette.coral)
                                 .lineLimit(2).minimumScaleFactor(0.5)
-                                .frame(maxWidth: 1100)
                                 .transition(.scale(scale: 0.7).combined(with: .opacity))
                         } else if s.currentRoundIsBuzz {
-                            Text("BUZZ IN").font(.system(size: 26, weight: .semibold, design: .rounded))
+                            Text("BUZZ IN").font(.system(size: 24, weight: .semibold, design: .rounded))
                                 .foregroundStyle(Tidbits.Palette.inkSoft)
                         } else if el.shows("status") {
-                        Text("Answer on your phones").font(.system(size: 26, weight: .semibold, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
+                            Text("Answer on your phones").font(.system(size: 24, weight: .semibold, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
                         }
                     }
-                    if el.shows("story"), s.revealed {   // Wave A: the story behind the answer — the learning payoff on the big screen
+                    if storyShown {   // Wave A: the story behind the answer — the learning payoff on the big screen
                         let story = q.explanation.trimmingCharacters(in: .whitespacesAndNewlines)
-                        if !story.isEmpty {
+                        do {
                             Text(story)
-                                .font(.system(size: 30, weight: .medium, design: .rounded))
+                                .font(.system(size: 24, weight: .medium, design: .rounded))
                                 .foregroundStyle(Tidbits.Palette.inkSoft)
                                 .multilineTextAlignment(.center)
-                                // Wraps to three lines and shrinks rather than cutting.
-                                // Without this a long payoff truncated —
-                                // "...proscribed by the British government and in 1940 it
-                                // was disp…" — and the explanation is the LEARNING, the
-                                // reason the reveal is on the screen at all. The earlier
-                                // pass here was luck: the scenario draws a random question
-                                // and had happened to land a one-line explanation.
-                                .lineLimit(3).minimumScaleFactor(0.55)
-                                .frame(maxWidth: 1100, minHeight: 90, alignment: .top)
-                                .padding(.top, 18)
-                                // Clear the join panel. Moving that panel to an overlay
-                                // stopped it pushing the header off the top, but an
-                                // overlay OCCLUDES: the reveal explanation then ran
-                                // underneath the QR — "...is an Ea", "...since" — and the
-                                // room could not read the payoff. The panel is ~340pt
-                                // wide in the trailing corner.
-                                .padding(.trailing, joinPanelClearance)
+                                .lineLimit(3).minimumScaleFactor(0.6)
+                                .frame(maxWidth: 1000)
+                                .padding(.top, 4)
                                 .transition(.opacity)
                         }
                     }
@@ -446,38 +411,31 @@ struct LiveBigScreen_macOS: View {
             }
             .animation(showAnim, value: s.revealed)
             .animation(showAnim, value: s.current?.id)
-            // The middle takes WHAT IS LEFT between the header and the join panel,
-            // and never more. It used to sit between two Spacers, so on the reveal —
-            // when the vote tally and the explanation appear — the stack grew past
-            // the window, SwiftUI centred the overflow, and the event title, the
-            // round line and the join code went off the top and bottom of the
-            // projector. Measured three times at three different fixed heights
-            // before fixing the structure instead of the numbers.
-            .frame(maxHeight: .infinity)
         }
-        .padding(48)
-        // The team list and the JOIN PANEL are an OVERLAY, not a stacked row.
-        //
-        // This is what was actually overflowing the projector. The QR panel is
-        // roughly 280pt tall, and in the vertical flow it competed with the
-        // question, the vote tally and the explanation for the window's 720pt. On
-        // the reveal the sum went over, SwiftUI centred the excess, and the event
-        // title and round line went off the top while the explanation was squeezed
-        // to one truncated line. Three different fixed heights were tried against
-        // the symptom before measuring what actually occupied the space.
-        //
-        // As an overlay the panel renders in exactly the same corner — it sat in
-        // empty space already — but contributes NO height, so the slide cannot push
-        // its own header off the screen.
-        .overlay(alignment: .bottom) {
-            HStack(alignment: .bottom, spacing: 24) {
-                if el.shows("teams") { leaderboard(s) }
-                Spacer(minLength: 0)
-                if el.shows("joinPanel"), let net = coordinator.net, net.isOpen {
-                    LiveJoinPanel(code: net.code)
-                }
+    }
+
+    /// The team STRIP and the join card share one band at the bottom of the
+    /// slide — in the flow, never over the question. Either alone takes the
+    /// whole width; both off means no band.
+    private func bottomRow(_ s: LiveHostSession) -> some View {
+        HStack(alignment: .bottom, spacing: 20) {
+            if el.shows("teams") { teamStrip(s) }
+            Spacer(minLength: 0)
+            if el.shows("joinPanel"), let net = coordinator.net, net.isOpen {
+                LiveJoinCard(code: net.code)
             }
-            .padding(48)
+        }
+    }
+
+    /// A8.7 sponsor footer — one small line in the flow at the very bottom.
+    @ViewBuilder private func sponsorLine(_ s: LiveHostSession) -> some View {
+        if el.shows("sponsor"), !s.event.sponsor.isEmpty {
+            Text("Brought to you by \(s.event.sponsor)")
+                .font(.system(size: 16, weight: .heavy, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
+                .padding(.vertical, 5).padding(.horizontal, 16)
+                .background(Capsule().fill(Tidbits.Palette.surface))
+                .overlay(Capsule().strokeBorder(Tidbits.Palette.border, lineWidth: 2))
+                .padding(.top, 10)
         }
     }
 
@@ -518,39 +476,31 @@ struct LiveBigScreen_macOS: View {
         let answers = coordinator.net?.answers ?? [:]
         let counts = q.options.indices.map { i in answers.values.filter { $0.choice == i }.count }
         let total = max(counts.reduce(0, +), 1)
-        return VStack(spacing: 10) {
-            ForEach(Array(q.options.enumerated()), id: \.offset) { i, opt in
-                let n = counts[i]
+        return VStack(spacing: 6) {
+            ForEach(q.options.indices, id: \.self) { i in
                 let correct = revealed && i == q.correctIndex
-                HStack(spacing: 14) {
-                    Text(opt).font(.system(size: 26, weight: .heavy, design: .rounded))
-                        .foregroundStyle(correct ? Tidbits.Palette.mint : Tidbits.Palette.ink)
-                        // A fixed 300pt with lineLimit(1) TRUNCATED the option on the
-                        // big screen — measured: the correct answer read "Imperial House
-                        // of Jap…". An answer the room cannot read is the same failure as
-                        // a question it cannot read, and worse on the reveal, because
-                        // this is the moment the answer is announced. Wider, two lines,
-                        // and it shrinks rather than cuts.
-                        .frame(width: 420, alignment: .leading)
-                        .lineLimit(2).minimumScaleFactor(0.55)
+                HStack(spacing: 12) {
+                    Text(q.options[i])
+                        .font(.system(size: correct ? 24 : 21, weight: correct ? .black : .heavy, design: .rounded))
+                        .foregroundStyle(correct ? Tidbits.Palette.mint : (revealed ? Tidbits.Palette.inkSoft : Tidbits.Palette.ink))
+                        .lineLimit(1).minimumScaleFactor(0.6)
+                        .frame(width: 360, alignment: .leading)
                     GeometryReader { geo in
                         ZStack(alignment: .leading) {
                             Capsule().fill(Tidbits.Palette.surface)
-                            Capsule().fill(correct ? Tidbits.Palette.mint : Tidbits.Palette.blue.opacity(revealed ? 0.35 : 0.7))
-                                .frame(width: max(10, geo.size.width * CGFloat(n) / CGFloat(total)))
+                            Capsule().fill(correct ? Tidbits.Palette.mint : Tidbits.Palette.blue.opacity(revealed ? 0.35 : 0.8))
+                                .frame(width: max(10, geo.size.width * CGFloat(counts[i]) / CGFloat(total)))
                         }
-                    }.frame(height: 30)
-                    Text("\(n)").font(.system(size: 26, weight: .black, design: .rounded).monospacedDigit())
-                        .foregroundStyle(Tidbits.Palette.ink).frame(width: 52)
+                    }.frame(height: 22)
+                    Text("\(counts[i])").font(.system(size: 22, weight: .black, design: .rounded).monospacedDigit())
+                        .foregroundStyle(Tidbits.Palette.ink).frame(width: 44, alignment: .trailing)
                 }
+                .animation(showAnim, value: counts[i])
             }
         }
         .frame(maxWidth: 900)
-        .animation(showAnim, value: counts)
     }
 
-    /// Wave C: the hybrid standings — networked phone teams AND in-room paper teams merged into
-    /// ONE ranked list (the differentiator the field doesn't ship well).
     struct UnifiedStanding: Identifiable { let id: String; let name: String; let score: Int; let paper: Bool }
     private func unifiedStandings(_ s: LiveHostSession) -> [UnifiedStanding] {
         var rows: [UnifiedStanding] = []
@@ -563,34 +513,35 @@ struct LiveBigScreen_macOS: View {
         return rows.sorted { $0.score > $1.score }
     }
 
-    private func leaderboard(_ s: LiveHostSession) -> some View {
-        let rows = unifiedStandings(s)
-        return VStack(alignment: .leading, spacing: 10) {
+    /// A8.2/A8.7: the top five as one ROW of chips — a strip, not a column. Five
+    /// stacked rows was 300pt of the slide and the thing that sat on the prompt.
+    private func teamStrip(_ s: LiveHostSession) -> some View {
+        let rows = Array(unifiedStandings(s).prefix(5))
+        return FlowLayout(spacing: 8) {
             if rows.isEmpty {
-                Text("Teams appear here as they join.").font(.system(size: 24, weight: .semibold, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
+                Text("Teams appear here as they join.").font(.system(size: 18, weight: .semibold, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
             } else {
-                ForEach(Array(rows.prefix(5).enumerated()), id: \.element.id) { i, team in
-                    HStack(spacing: 14) {
-                        Text("\(i + 1)").font(.system(size: 24, weight: .black, design: .rounded)).foregroundStyle(i == 0 ? Tidbits.Palette.ink : Tidbits.Palette.inkSoft).frame(width: 32)
-                        if i == 0 { Image(systemName: "crown.fill").font(.system(size: 22)).foregroundStyle(Tidbits.Palette.yellow) }
-                        Image(systemName: team.paper ? "pencil" : "iphone").font(.system(size: 15)).foregroundStyle(Tidbits.Palette.inkSoft)   // Wave C: paper vs phone
-                        Text(team.name).font(.system(size: 26, weight: .heavy, design: .rounded)).foregroundStyle(Tidbits.Palette.ink).lineLimit(1)
-                        Spacer(minLength: 20)
-                        Text("\(team.score)").font(.system(size: 30, weight: .black, design: .rounded).monospacedDigit()).foregroundStyle(Tidbits.Palette.ink)
+                ForEach(Array(rows.enumerated()), id: \.element.id) { i, team in
+                    HStack(spacing: 8) {
+                        if i == 0 { Image(systemName: "crown.fill").font(.system(size: 15)).foregroundStyle(Tidbits.Palette.yellow) }
+                        else { Text("\(i + 1)").font(.system(size: 16, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft) }
+                        Text(team.name).font(.system(size: 18, weight: .heavy, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
+                            .lineLimit(1).minimumScaleFactor(0.7)
+                        Text("\(team.score)").font(.system(size: 20, weight: .black, design: .rounded).monospacedDigit()).foregroundStyle(Tidbits.Palette.ink)
                     }
-                    .padding(.horizontal, 20).padding(.vertical, 12).frame(width: 460)
-                    .background(RoundedRectangle(cornerRadius: 16).fill(i == 0 ? Tidbits.Palette.yellow : Tidbits.Palette.surface))
-                    .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(Tidbits.Palette.border, lineWidth: 3))
+                    .padding(.horizontal, 14).padding(.vertical, 9)
+                    .background(RoundedRectangle(cornerRadius: 12).fill(i == 0 ? Tidbits.Palette.yellow : Tidbits.Palette.surface))
+                    .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Tidbits.Palette.border, lineWidth: 2.5))
                     .transition(.opacity)
                 }
             }
         }
-        .animation(showAnim, value: rows.prefix(5).map(\.id))   // A8.2 the leaderboard climbs
+        .animation(showAnim, value: rows.map(\.id))   // A8.2 the leaderboard climbs
     }
 
     private func standings(_ s: LiveHostSession, interim: Bool = false) -> some View {
         let rows = unifiedStandings(s)
-        return VStack(spacing: 20) {
+        return FitToHeight { VStack(spacing: 16) {
             let outcome = StandingsOutcome.headline(rows.map { ($0.name, $0.score) }, empty: "")
             if interim {
                 // Between rounds the headline is the POSITION, not a winner: naming
@@ -650,8 +601,136 @@ struct LiveBigScreen_macOS: View {
                 }
                 .padding(.top, 24)
             }
+            sponsorLine(s)
+        } }
+        .padding(.horizontal, 48).padding(.vertical, 24)
+    }
+}
+
+// MARK: - The projector window (A8.10: full screen is first-class)
+
+enum LiveProjectorWindow {
+    static let id = "tidbits-bigscreen"
+    /// SwiftUI does not promise the scene id lands on `NSWindow.identifier`
+    /// (measured: it did not), so the title is the fallback — the projector is
+    /// the only window titled "Tidbits Live".
+    @MainActor static var window: NSWindow? {
+        NSApp.windows.first { $0.identifier?.rawValue == id }
+            ?? NSApp.windows.first { $0.title == "Tidbits Live" }
+    }
+    @MainActor static var isFullScreen: Bool { window?.styleMask.contains(.fullScreen) ?? false }
+    @MainActor static func toggleFullScreen() {
+        guard let w = window else { diag("toggle: no window; titles=\(NSApp.windows.map(\.title))"); return }
+        w.collectionBehavior.insert(.fullScreenPrimary)
+        diag("toggle: \(w.title) fullScreen=\(w.styleMask.contains(.fullScreen))")
+        w.toggleFullScreen(nil)
+    }
+    /// TIDBITS_LIVE_DIAG=1 writes what the full-screen path saw to the app's
+    /// temp directory — the only way to read it when launched by LaunchServices.
+    static func diag(_ line: String) {
+        guard ProcessInfo.processInfo.environment["TIDBITS_LIVE_DIAG"] == "1" else { return }
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("projector-diag.txt")
+        let text = ((try? String(contentsOf: url, encoding: .utf8)) ?? "") + line + "\n"
+        try? text.write(to: url, atomically: true, encoding: .utf8)
+    }
+    /// Put the projector on a given display and fill it. The host's laptop is
+    /// screen 0; the projector is usually the other one.
+    @MainActor static func fullScreen(on screen: NSScreen) {
+        guard let w = window else { return }
+        if w.styleMask.contains(.fullScreen) { w.toggleFullScreen(nil) }
+        w.setFrame(screen.visibleFrame, display: true)
+        w.makeKeyAndOrderFront(nil)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { w.toggleFullScreen(nil) }
+    }
+}
+
+// MARK: - Layout helpers (A8.9)
+
+/// Chips that WRAP to the next line when the row is full — the team strip
+/// next to the join card, instead of five chips squeezed into "The Qui…".
+struct FlowLayout: Layout {
+    var spacing: CGFloat = 8
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let width = proposal.width ?? .infinity
+        var x: CGFloat = 0, y: CGFloat = 0, rowH: CGFloat = 0, maxX: CGFloat = 0
+        for v in subviews {
+            let sz = v.sizeThatFits(.unspecified)
+            if x > 0, x + sz.width > width { x = 0; y += rowH + spacing; rowH = 0 }
+            x += sz.width + spacing; rowH = max(rowH, sz.height); maxX = max(maxX, x - spacing)
         }
-        .padding(48)
+        return CGSize(width: width.isFinite ? min(width, maxX) : maxX, height: y + rowH)
+    }
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var x = bounds.minX, y = bounds.minY, rowH: CGFloat = 0
+        for v in subviews {
+            let sz = v.sizeThatFits(.unspecified)
+            if x > bounds.minX, x + sz.width > bounds.maxX { x = bounds.minX; y += rowH + spacing; rowH = 0 }
+            v.place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(sz))
+            x += sz.width + spacing; rowH = max(rowH, sz.height)
+        }
+    }
+}
+
+/// Scales a fixed design canvas to whatever window it is in — the projector
+/// version of a Viewbox. The composition is authored ONCE at
+/// `LiveBigScreen_macOS.canvas`; a 4K wall and a laptop preview show the same
+/// slide, letterboxed on a non-16:9 display.
+struct ProjectorCanvas<Content: View>: View {
+    let size: CGSize
+    @ViewBuilder let content: () -> Content
+    var body: some View {
+        GeometryReader { g in
+            let scale = min(g.size.width / size.width, g.size.height / size.height)
+            content()
+                .frame(width: size.width, height: size.height)
+                .scaleEffect(scale, anchor: .center)
+                .frame(width: g.size.width, height: g.size.height)
+        }
+    }
+}
+
+/// Lays its content out at natural height and, when that is taller than the
+/// space it was given, scales it down uniformly to fit — the rule that makes
+/// "everything on" and "everything off" both readable without a fixed band
+/// height anywhere. Content shorter than the space is centred.
+struct FitToHeight<Content: View>: View {
+    @ViewBuilder let content: () -> Content
+    @State private var natural: CGFloat = 0
+    var body: some View {
+        GeometryReader { g in
+            let scale = natural > 0 ? min(1, g.size.height / natural) : 1
+            content()
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(width: g.size.width)
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { natural = $0 }
+                .scaleEffect(scale, anchor: .center)
+                .frame(width: g.size.width, height: g.size.height)
+        }
+    }
+}
+
+/// The join card as a compact horizontal band — QR beside the code, ~120pt
+/// tall — instead of the 280pt vertical panel that used to float over the
+/// question.
+struct LiveJoinCard: View {
+    let code: String
+    var body: some View {
+        HStack(spacing: 14) {
+            if let img = makeLiveQR(liveJoinURL(code)) {
+                Image(nsImage: img).interpolation(.none).resizable()
+                    .frame(width: 84, height: 84)
+                    .padding(6).background(RoundedRectangle(cornerRadius: 10).fill(.white))
+                    .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Tidbits.Palette.border, lineWidth: 2.5))
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Text("SCAN TO JOIN").font(.system(size: 14, weight: .heavy, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
+                Text("CODE \(code)").font(.system(size: 26, weight: .black, design: .monospaced)).foregroundStyle(Tidbits.Palette.ink).kerning(2)
+                Text("or tidbitstrivia.com/live").font(.system(size: 13, weight: .semibold, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
+            }
+        }
+        .padding(.horizontal, 14).padding(.vertical, 10)
+        .background(RoundedRectangle(cornerRadius: 16).fill(Tidbits.Palette.surface))
+        .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(Tidbits.Palette.border, lineWidth: 3))
     }
 }
 
@@ -681,14 +760,34 @@ struct LiveQuestionImage: View {
                             .font(.system(size: 22, weight: .semibold, design: .rounded))
                             .foregroundStyle(Tidbits.Palette.inkSoft))
             case .loaded(let image):
-                AnimatedImageView(image: image)
-                    .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+                // A GIF animates through AppKit; a still picture is a SwiftUI Image,
+                // which scales cleanly and renders offline (ImageRenderer draws no
+                // NSView, so the projector sim showed every picture as unavailable).
+                if Self.isAnimated(image) {
+                    AnimatedImageView(image: image)
+                        .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+                } else {
+                    Image(nsImage: image).resizable().scaledToFit()
+                        .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+                }
             }
         }
         .task(id: url) {
             state = .loading
             state = await LiveImageLoader.shared.load(url)
         }
+        // A picture already in the cache is drawn on the first frame — the offline
+        // renderer (ImageRenderer) never runs `.task`, and a real advance to a
+        // prefetched picture should not flash the spinner either.
+        .onAppear {
+            if let img = LiveImageLoader.shared.cached(url) { state = .loaded(img) }
+        }
+    }
+
+    static func isAnimated(_ image: NSImage) -> Bool {
+        guard let rep = image.representations.first as? NSBitmapImageRep,
+              let frames = rep.value(forProperty: .frameCount) as? Int else { return false }
+        return frames > 1
     }
 }
 
@@ -710,8 +809,15 @@ final class LiveImageLoader {
         return URLSession(configuration: c)
     }()
 
+    func cached(_ url: URL) -> NSImage? { cache[url] }
+
     func load(_ url: URL) async -> State {
         if let img = cache[url] { return .loaded(img) }
+        if url.isFileURL {   // a picture on disk (the offline renderer, a dropped file)
+            guard let img = NSImage(contentsOf: url) else { return .failed }
+            cache[url] = img
+            return .loaded(img)
+        }
         // A `tidbits-media:` reference is a file in the store (LIVE-PACKAGE-FORMAT
         // §5.2); anything else is fetched. A missing store file is a visible failure.
         let task = inflight[url] ?? Task { [session] in

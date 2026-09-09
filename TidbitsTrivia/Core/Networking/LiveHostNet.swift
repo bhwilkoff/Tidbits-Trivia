@@ -85,6 +85,20 @@ final class LiveHostNet {
     private var answersTask: Task<Void, Never>?
     private var currentQid = ""
 
+    // MARK: Preview seams (offline renders only — never in normal use)
+
+    /// Make the net look OPEN with a roster, without a network. The projector
+    /// renderer uses this to draw the join panel, the team strip and the vote
+    /// tally offline; nothing here touches the database.
+    func previewSeed(code: String, teams: [String: LiveRoom.Team], scores: [String: Int],
+                     answers: [String: LiveRoom.Answer]) {
+        self.code = code
+        self.hostUid = "preview-host"
+        self.teams = teams
+        self.scores = scores
+        self.answers = answers
+    }
+
     // MARK: Lifecycle
 
     /// Open a room and start streaming joins. Returns the code. `name`/`venue`

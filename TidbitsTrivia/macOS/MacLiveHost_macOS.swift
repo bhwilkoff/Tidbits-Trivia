@@ -694,6 +694,19 @@ struct LiveHostView_macOS: View {
                     Divider()
                     Button("Show everything") { LiveProjectorElements.shared.showEverything() }
                         .disabled(LiveProjectorElements.shared.hiddenCount == 0)
+                    Divider()
+                    // A8.10: the projector goes full screen from here — on the
+                    // display the host names, or wherever the window is now.
+                    Button(LiveProjectorWindow.isFullScreen ? "Exit full screen" : "Full screen") {
+                        if LiveProjectorWindow.window == nil { openProjector() }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { LiveProjectorWindow.toggleFullScreen() }
+                    }
+                    ForEach(Array(NSScreen.screens.enumerated()), id: \.offset) { i, screen in
+                        Button("Full screen on \(screen.localizedName)") {
+                            if LiveProjectorWindow.window == nil { openProjector() }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { LiveProjectorWindow.fullScreen(on: screen) }
+                        }
+                    }
                 } label: {
                     // Compact: the toolbar is already six controls wide, and a
                     // long label here truncated "Scores" to "Sco…" on a laptop.

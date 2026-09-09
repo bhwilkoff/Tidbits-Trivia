@@ -233,6 +233,27 @@ incredible bar-trivia big screen in the world. Binding rules:
   not). A clip that cannot go to phones is never silent: the line says so,
   and the PA carries it as before. (Owner, 2026-09-09: "video questions or
   other media types that get broadcast even on the web app.")
+- **A8.9 — The slide adapts; nothing is ever laid over anything.** Every
+  element of the live slide lives IN the layout flow: a hidden element takes
+  no space, a visible one gets measured space, and the whole composition is
+  authored once on a 1280x720 design canvas that scales to the window
+  (`ProjectorCanvas`). The middle column — chrome, prompt, picture or video,
+  votes or answer, story — is fitted to whatever height the header and the
+  bottom band left (`FitToHeight`), so a long prompt, a picture and three
+  lines of story shrink TOGETHER rather than one landing on another. Team
+  standings are a one-row STRIP of chips and the join card is a horizontal
+  band; both sit in a bottom row, never over the question. No overlay with a
+  clearance constant, no fixed band height. Verified by rendering every state
+  x both sizes x elements all-on and all-off (`TIDBITS_PROJECTOR_SNAPSHOT`)
+  before any change ships. (Owner, 2026-09-09: "literally everything overlaps
+  on the projector … the projector graphics would adapt based upon which of
+  the features you have turned on (wrapping or re-sizing, etc.)".)
+- **A8.10 — The projector goes full screen.** Full screen is a first-class
+  control: the cockpit's Screen menu offers "Full screen" and "Full screen on
+  <display>" for every attached display, and a double-click on the slide
+  toggles it. The Windows projector carries the same two controls (F11 + the
+  cockpit button, WINDOWS-DESIGN). (Owner, 2026-09-09: "the projector/display
+  window should be capable of going full screen on both windows and mac.")
 
 ---
 

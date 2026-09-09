@@ -57,6 +57,13 @@ struct TidbitsTriviaApp: App {
                         LiveCockpitSnapshot.writePNG(to: path)
                         exit(0)
                     }
+                    // The PROJECTOR, every state x every size x elements on/off,
+                    // as PNGs — the offline sim the overlap fix is measured on.
+                    if let dir = ProcessInfo.processInfo.environment["TIDBITS_PROJECTOR_SNAPSHOT"] {
+                        try? await Task.sleep(nanoseconds: 400_000_000)
+                        await LiveProjectorSnapshot.writePNGs(to: dir)
+                        exit(0)
+                    }
                 }
                 #endif
                 // .onOpenURL fires for BOTH custom schemes and Universal

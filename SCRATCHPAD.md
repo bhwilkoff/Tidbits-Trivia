@@ -7,6 +7,48 @@
 > `docs/ROADMAP.md`, `docs/DATA-CONTRACT.md`. Detailed per-round history is in
 > `ARCHIVE.md`.
 
+## Current state (2026-09-09c) — the projector adapts and goes full screen (macOS)
+
+**Owner:** "literally everything overlaps on the projector/display surface …
+will need to be completely fixed" and "the projector graphics would adapt
+based upon which of the features you have turned on (wrapping or re-sizing,
+etc.) … the projector/display window should be capable of going full screen
+on both windows and mac."
+
+**Found (by rendering, not by trusting the harness):** the screen-region
+capture had been grading a TERMINAL as the projector, so the overlaps had
+never been photographed. A new offline renderer (`TIDBITS_PROJECTOR_SNAPSHOT`,
+28 PNGs: 7 states x 2 sizes x all-on/all-off) showed the team strip on the
+prompt and the vote bars, the sponsor capsule on the sixth standings row, the
+join panel over pictures, and a clipped header — every overlay-with-a-
+clearance in the old composition.
+
+**Did (macOS-DESIGN A8.9 + A8.10):** the live slide is now a flow — header ·
+fit-to-height middle (chrome+countdown row, prompt, picture/video, votes or
+answer, story) · bottom band (team STRIP as wrapping chips + a horizontal join
+card) · sponsor line — on one 1280x720 design canvas scaled to the window
+(`ProjectorCanvas`); a hidden element takes no space, a sparse slide gives
+the prompt the room (68pt), and nothing is ever overlaid. Standings and the
+break slide carry the sponsor in the flow and fit their height. Full screen:
+"Full screen" + "Full screen on <display>" in the cockpit's Screen menu, and a
+double-click on the slide (`LiveProjectorWindow`; the SwiftUI scene id does
+not land on `NSWindow.identifier`, so the title is the fallback). Still
+pictures draw through SwiftUI `Image` (GIFs keep the AppKit view), which is
+also what made the offline render honest. Hooks: `TIDBITS_LIVE_FULLSCREEN=1`,
+`TIDBITS_LIVE_DIAG=1`.
+
+**Verified:** the 28-frame AFTER set at 720p and 1080p, all-on and all-off —
+no overlap in any state (the Mona Lisa picture slide with votes, chips, the
+join card and the sponsor all on; the reveal with a three-line story). On the
+glass: the real projector window went full screen from the hook and was
+captured by CGWindowID — the slide fills the display, letterboxed to the
+canvas. 1.9.3 (133).
+
+**State left:** Windows projector gets the same treatment next
+(WINDOWS-PARITY 3.54); Android joiner clip ⏳; Windows host clip ⏳ (3.53).
+The board slide and the video slide were not in the offline set (a video
+needs a real player; the board needs a LiveBoard fixture) — add both.
+
 ## Current state (2026-09-09b) — clips on the Apple joiners (real iPhone 12 + real Apple TV)
 
 **Did:** the joiner half of Decision 060 on iOS, tvOS and the Mac joiner from

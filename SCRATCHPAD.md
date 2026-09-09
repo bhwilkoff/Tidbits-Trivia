@@ -7,6 +7,33 @@
 > `docs/ROADMAP.md`, `docs/DATA-CONTRACT.md`. Detailed per-round history is in
 > `ARCHIVE.md`.
 
+## Current state (2026-09-09g) — measured: the clip burst is fine, the picture path is the cost
+
+**Owner:** "The media you are testing is pretty small. How will performance
+be impacted with larger video/audio/image files?" Measured, not estimated:
+
+- **Clip node, near the cap** (2.87 MB m4a → 3.83 MB base64 node, hosted from
+  the Mac): one client 0.47 s; 10 concurrent 0.83 s wall; **40 concurrent
+  2.53 s wall, median 1.98 s, p90 2.14 s, 60 MB/s aggregate, 153 MB moved.**
+  Forty anonymous sign-ups took 1.7 s. Firebase is not the bottleneck; a
+  venue's Wi-Fi will be, and the fetch happens only on the host's Play or a
+  tap, never on publish.
+- **Picture inside `pub`** (a 266 KB photo, store-only): the host downscales
+  to a 108 KB data URL and `pub` becomes 108 KB — re-sent to every streaming
+  phone on EVERY state change (question, timer, lock, reveal). One picture
+  question ≈ 400 KB per phone; a 13-picture night for 40 phones ≈ 225 MB; and
+  each host click pushes a ~4 MB burst to the room before the reveal lands.
+  Pictures with an https twin (the Kahoot-imported Minerva night) cost
+  nothing on the wire — `pub` is 0.5 KB.
+- **The projector/PA never pay:** the original plays from disk at full size.
+
+**Decision for the next tick:** store-only pictures over ~30 KB go on the
+same once-written `live/{code}/media/{id}` node the clips use, fetched once
+per phone, with a small (≤20 KB, 320 px) data-URL fallback in `imageURL` so
+a joiner in the field that predates the node still shows a picture. Cuts
+the 13-picture night to ~56 MB and takes the picture out of every state
+change. Both hosts, all six joiners.
+
 ## Current state (2026-09-09f) — the Android joiner plays the clip (Decision 060 closes the joiner set)
 
 **Did:** `ui/LiveClip.kt` — `LiveMediaCache` (a `room:` node fetched once

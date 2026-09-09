@@ -70,7 +70,18 @@ first — decodes `b64` into a blob, and plays it in a native `<audio>`/`<video>
 (AVPlayer / Media3). Nothing plays until the player taps; the host's `startedAt`
 readies the clip and positions it at the room's offset. The element survives
 `pub` re-renders (recreating it restarts the clip). `url` is never `tidbits-media:`.
-Hosts differ in ENCODING only: the Mac re-encodes (AAC `.m4a`, H.264 640x480
+**Costs, measured 2026-09-09 (Mac host on an office connection; the venue's
+Wi-Fi, not Firebase, is the bottleneck in a room):** a 2.87 MB clip is a
+3.83 MB node; one client fetched it in 0.47 s; 10 concurrent clients in 0.83 s
+wall (median 0.62 s); **40 concurrent clients in 2.53 s wall (median 1.98 s,
+p90 2.14 s), 60 MB/s aggregate, 153 MB moved** — the burst the owner asked
+about is fine on the server side. A store-only PICTURE is different: it rides
+INSIDE `pub` as a data URL (measured 108 KB for a 266 KB photo, downscaled),
+and `pub` is re-sent to every streaming phone on every state change — question,
+timer, lock, reveal — so one picture question costs each phone ~400 KB and a
+13-picture night for 40 phones ~225 MB, and every host click pushes a 4 MB
+burst before anyone sees the reveal. Pictures over ~30 KB belong on the same
+once-written node (next). Hosts differ in ENCODING only: the Mac re-encodes (AAC `.m4a`, H.264 640x480
 `.mp4`) to get under the cap; Windows sends an MP3/M4A/AAC/MP4/M4V as it is and
 refuses anything else or over the cap, saying so under the Play button.
 `qid = "r{roundIndex}q{questionIndex}"` is stable across reveal/advance so answers

@@ -73,6 +73,16 @@ enum LiveRoom {
         /// joiner that predates this key; a joiner that reads `picture` fetches
         /// the full version once and shows the fallback while it loads.
         var picture: Media? = nil
+        /// The charter, on the wire: where the fact came from. Published ONLY on
+        /// reveal, beside `story` — the Wikipedia article's title and link, so every
+        /// joiner and both projectors can say "learn more". nil before reveal and
+        /// on a question with no source.
+        var source: Source? = nil
+    }
+
+    nonisolated struct Source: Codable, Equatable {
+        var title: String
+        var url: String? = nil
     }
 
     /// Decision 060: a clip as the joiners are given it. `url` is an https file

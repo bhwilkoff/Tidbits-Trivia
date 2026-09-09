@@ -56,6 +56,8 @@ no confusable chars) shown on the big screen for players to enter.
   "matchKeys": ["…"], "matchValues": ["…"],       // matching (values SHUFFLED)
   "enumTarget": 8,                // enumerate (how many in the set)
   "picture": { "kind": "image", "url": "room:<id>", "mime": "image/jpeg", "bytes": 108000 },   // Decision 060: the FULL picture as a room node (absent when imageURL is all there is)
+  "story": "…",                                        // REVEAL ONLY: the story behind the answer (the learning payoff)
+  "source": { "title": "Lydia", "url": "https://en.wikipedia.org/wiki/Lydia" },   // REVEAL ONLY: the Wikipedia article it came from — every joiner and projector says "learn more"
   "media": {                      // Decision 060: the question's clip, OFFERED to every joiner (absent = no clip)
     "kind": "audio",              // "audio" | "video"
     "url": "room:<id>",           // a direct https FILE link, or room:<id> → live/{code}/media/{id}
@@ -71,6 +73,15 @@ first — decodes `b64` into a blob, and plays it in a native `<audio>`/`<video>
 (AVPlayer / Media3). Nothing plays until the player taps; the host's `startedAt`
 readies the clip and positions it at the room's offset. The element survives
 `pub` re-renders (recreating it restarts the clip). `url` is never `tidbits-media:`.
+**`story` + `source` (reveal only, 2026-09-09).** The charter is learning, and
+the wire had never said where a fact came from: the Mac cockpit alone sent
+`story`; the Apple Trivia Night host, the Windows host, the web host and the
+Android host sent neither. Every host now publishes both on reveal (and never
+before — the source names the answer). Joiners show "Learn more on Wikipedia ·
+<title>" as a link (web, iOS, Mac, Android, Windows) or name the article (tvOS
+cannot open a browser); both projectors add "From Wikipedia · <title>" under
+the story, on the story's switch; the Mac cockpit links it for the host.
+
 **`picture` (Decision 060, pictures).** A store-only picture whose ≤ 800 px JPEG is
 over ~30 KB is written ONCE to `live/{code}/media/{id}` (`kind: "image"`) and
 referenced from `pub.picture`; `imageURL` then carries a SMALL fallback (≤ 320 px,

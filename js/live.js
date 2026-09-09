@@ -396,6 +396,9 @@ function playHTML() {
     ${answerHTML(p, revealed)}
     ${status}
     ${revealed && p.story ? `<div style="margin-top:12px;padding:12px 14px;border-radius:12px;background:var(--color-surface);line-height:1.5;color:var(--color-text)">${esc(p.story)}</div>` : ''}
+    ${revealed && p.source && p.source.title ? (p.source.url
+      ? `<a class="live-source" href="${esc(p.source.url)}" target="_blank" rel="noopener">Learn more on Wikipedia · ${esc(p.source.title)} ↗</a>`
+      : `<div class="live-source">From Wikipedia · ${esc(p.source.title)}</div>`) : ''}
   </div>`;
 }
 
@@ -641,6 +644,7 @@ function injectStyles() {
   .live-sel{padding:8px;border:2px solid #231E1A;border-radius:8px;font-weight:700;background:#fff}
   .live-chips{font-weight:800;color:#231E1A;margin:6px 0}
   .live-addrow{display:flex;gap:8px;align-items:center}.live-addrow .live-in{margin:0}.live-addrow .live-go{width:auto;margin:0;padding:12px 18px}
+  .live-source{display:block;margin-top:10px;text-align:center;font-weight:800;color:#0047FF;text-decoration:none}
   .live-note{margin-top:18px;text-align:center;font-weight:800;color:#8a8078}
   .live-note.ok{color:#2f9e6f}.live-note.miss{color:#c0392b}
   .live-center{text-align:center;padding:40px 16px}`;

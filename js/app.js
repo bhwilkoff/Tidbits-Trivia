@@ -3393,6 +3393,10 @@ function nhPub() {
   if (q.matching) { p.matchKeys = q.matching.keys; p.matchValues = NH.shuffledValues; }
   if (q.enumerate) p.enumTarget = q.enumerate.groups.length;
   if (NH.locked && !NH.revealed) p.locked = true;
+  if (NH.revealed) {   // the learning payoff: the story and its Wikipedia source, reveal only
+    if (q.explanation) p.story = q.explanation;
+    if (q.sourceTitle) p.source = { title: q.sourceTitle, url: q.sourceURL || null };
+  }
   return p;
 }
 

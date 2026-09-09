@@ -42,5 +42,18 @@ public class JoinerPromptProbe
         Assert.True(texts.Any(t => t.Contains("Listen to the clip")), "no clip offer: " + dump);
         Assert.True(texts.Any(t => t.Contains("tune")), "no clip name: " + dump);
         Assert.True(texts.Any(t => t.Contains("Which kingdom")), "no prompt: " + dump);
+
+        // On REVEAL the prompt stays, and the Wikipedia source line appears.
+        vm.Client.PubForTesting = vm.Client.Pub! with
+        {
+            Phase = LiveRoom.Phase.Reveal, AnswerIndex = 0, Story = "Electrum coins.",
+            Source = new LiveRoom.Source { Title = "Lydia", Url = "https://en.wikipedia.org/wiki/Lydia" },
+        };
+        vm.Client.JoinedForTesting("QATEST");
+        Dispatcher.UIThread.RunJobs();
+        var reveal = win.GetVisualDescendants().OfType<TextBlock>()
+                        .Where(t => t.IsEffectivelyVisible && !string.IsNullOrWhiteSpace(t.Text)).Select(t => t.Text!).ToList();
+        Assert.True(reveal.Any(t => t.Contains("Which kingdom")), "prompt gone on reveal: " + string.Join(" | ", reveal));
+        Assert.True(reveal.Any(t => t.Contains("Learn more on Wikipedia") && t.Contains("Lydia")), "no source line: " + string.Join(" | ", reveal));
     }
 }

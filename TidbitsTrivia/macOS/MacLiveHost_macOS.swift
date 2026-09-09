@@ -320,6 +320,9 @@ final class LiveHostSession {
         if revealed {   // Wave A: the story behind the answer — the learning payoff, only at reveal
             let s = q.explanation.trimmingCharacters(in: .whitespacesAndNewlines)
             if !s.isEmpty { p.story = s }
+            // ...and where it came from. The charter is learning; the wire never said.
+            let t = q.sourceTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !t.isEmpty { p.source = LiveRoom.Source(title: t, url: q.sourceURL?.absoluteString) }
         }
         return p
     }
@@ -831,6 +834,13 @@ struct LiveHostView_macOS: View {
                     if !q.explanation.isEmpty {
                         Text(q.explanation).font(.body).foregroundStyle(Tidbits.Palette.inkSoft)
                             .fixedSize(horizontal: false, vertical: true)
+                    }
+                    if !q.sourceTitle.isEmpty {   // the host can say where it came from — and open it
+                        if let u = q.sourceURL {
+                            Link(destination: u) { Label("Wikipedia · \(q.sourceTitle)", systemImage: "book.closed").font(.callout) }
+                        } else {
+                            Label("Wikipedia · \(q.sourceTitle)", systemImage: "book.closed").font(.callout).foregroundStyle(Tidbits.Palette.inkSoft)
+                        }
                     }
                 } else {
                     Text("Read it out. Reveal the answer when the room is ready.")

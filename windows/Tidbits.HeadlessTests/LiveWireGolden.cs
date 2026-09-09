@@ -30,6 +30,12 @@ public class LiveWireGolden
         Assert.DoesNotContain("numeric", json);
         Assert.DoesNotContain("locked", json);
         Assert.DoesNotContain("media", json);   // Decision 060: absent on a question without a clip
+        Assert.DoesNotContain("source", json);  // the Wikipedia source rides the REVEAL only
+        var reveal = new LiveRoom.Pub { Round = 1, Qid = "r0q1", Phase = LiveRoom.Phase.Reveal, Format = "classic", AnswerIndex = 2,
+                                        Story = "Electrum.", Source = new LiveRoom.Source { Title = "Lydia", Url = "https://en.wikipedia.org/wiki/Lydia" } };
+        var rj = JsonSerializer.Serialize(reveal, Wire.Json);
+        Assert.Contains("\"source\":{\"title\":\"Lydia\",\"url\":\"https://en.wikipedia.org/wiki/Lydia\"}", rj);
+        Assert.Contains("\"story\":\"Electrum.\"", rj);
     }
 
     [Fact]

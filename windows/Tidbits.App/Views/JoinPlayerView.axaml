@@ -110,6 +110,9 @@
                                    Foreground="#1E9E6A" FontWeight="Bold" FontSize="16" TextWrapping="Wrap"/>
                         <TextBlock IsVisible="{Binding HasStory}" Text="{Binding Story}"
                                    Opacity="0.85" TextWrapping="Wrap"/>
+                        <!-- The charter: where the fact came from. -->
+                        <HyperlinkButton IsVisible="{Binding HasSource}" Content="{Binding SourceLine}"
+                                         NavigateUri="{Binding SourceUrl}" Padding="0" FontWeight="Bold"/>
                     </StackPanel>
                 </Border>
 

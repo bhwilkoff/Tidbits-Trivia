@@ -401,7 +401,11 @@ object FirebaseNet {
         /** Decision 060 (pictures): the full picture as a room node; `imageUrl` is
          *  then a small fallback. Mirrors Swift `Pub.picture`. */
         val picture: LiveMedia? = null,
+        /** The Wikipedia article the fact came from — title + link, reveal only.
+         *  Mirrors Swift `Pub.source`. */
+        val source: LiveSource? = null,
     )
+    data class LiveSource(val title: String, val url: String? = null)
 
     /** Decision 060: a clip as the joiners are given it — an https FILE link, or
      *  `room:<id>` → the once-written `live/{code}/media/{id}` node. */
@@ -530,6 +534,10 @@ object FirebaseNet {
                     remaining = (b.child("remaining").getValue(Long::class.java) ?: 0L).toInt(),
                     points = (b.child("points").getValue(Long::class.java) ?: 0L).toInt(),
                 )
+            },
+            source = snap.child("source").takeIf { it.exists() }?.let { s ->
+                val title = s.child("title").getValue(String::class.java) ?: return@let null
+                if (title.isBlank()) null else LiveSource(title, s.child("url").getValue(String::class.java))
             },
             picture = snap.child("picture").takeIf { it.exists() }?.let { m ->
                 val url = m.child("url").getValue(String::class.java) ?: return@let null

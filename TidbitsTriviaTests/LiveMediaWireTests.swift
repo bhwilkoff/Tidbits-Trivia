@@ -143,3 +143,25 @@ struct LivePictureNodeTests {
     }
     #endif
 }
+
+@Suite("Live source on reveal")
+struct LiveSourceWireTests {
+    @Test("the Wikipedia source rides the reveal with title + url, and never before")
+    func sourceKey() throws {
+        var pub = LiveRoom.Pub(round: 1, roundTitle: "x", qid: "r0q0", qNum: 1, qTotal: 1,
+                               phase: LiveRoom.Phase.reveal, prompt: "p", options: ["a", "b"], format: "classic", answerIndex: 1)
+        pub.story = "Lydia's coins were electrum."
+        pub.source = LiveRoom.Source(title: "Lydia", url: "https://en.wikipedia.org/wiki/Lydia")
+        let obj = try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(pub)) as? [String: Any])
+        let src = try #require(obj["source"] as? [String: Any])
+        #expect(src["title"] as? String == "Lydia")
+        #expect(src["url"] as? String == "https://en.wikipedia.org/wiki/Lydia")
+        #expect(obj["story"] as? String == "Lydia's coins were electrum.")
+        let back = try JSONDecoder().decode(LiveRoom.Pub.self, from: JSONEncoder().encode(pub))
+        #expect(back.source == pub.source)
+        let bare = LiveRoom.Pub(round: 1, roundTitle: "x", qid: "r0q0", qNum: 1, qTotal: 1,
+                                phase: LiveRoom.Phase.question, prompt: "p", options: ["a", "b"], format: "classic", answerIndex: nil)
+        let bareObj = try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(bare)) as? [String: Any])
+        #expect(bareObj["source"] == nil && bareObj["story"] == nil)
+    }
+}

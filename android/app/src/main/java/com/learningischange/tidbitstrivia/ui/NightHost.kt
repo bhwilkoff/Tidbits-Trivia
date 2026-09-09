@@ -116,6 +116,10 @@ fun NightHostScreen(rounds: List<Pair<String, Int>>, category: Category, store: 
         q.matching?.let { m["matchKeys"] = it.keys; m["matchValues"] = shuffledValues }
         q.enumerate?.let { m["enumTarget"] = it.total }
         if (locked && !revealed) m["locked"] = true
+        if (revealed) {   // the learning payoff: the story and its Wikipedia source, reveal only
+            if (q.explanation.isNotBlank()) m["story"] = q.explanation.trim()
+            if (q.sourceTitle.isNotBlank()) m["source"] = mapOf("title" to q.sourceTitle.trim(), "url" to q.sourceUrl.ifBlank { null })
+        }
         return m
     }
     fun watchAnswers() {

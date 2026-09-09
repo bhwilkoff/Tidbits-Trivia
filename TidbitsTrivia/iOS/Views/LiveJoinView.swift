@@ -273,6 +273,9 @@ struct LiveJoinView: View {
                     .padding(14)
                     .background(RoundedRectangle(cornerRadius: 12).fill(Tidbits.Palette.surface))
             }
+            if revealed, let src = p.source, !src.title.isEmpty {   // the charter: where the fact came from
+                LiveSourceLine(source: src)
+            }
         }
     }
 

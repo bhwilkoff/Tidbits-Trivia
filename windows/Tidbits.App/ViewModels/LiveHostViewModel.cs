@@ -63,6 +63,7 @@ public sealed class LiveHostViewModel : ObservableObject
     public bool ShowStatusLine => !Host.Revealed && !HasBuzz && (Host.IsBuzzRound || Elements.Shows("status"));
     public string StatusLine => Host.IsBuzzRound ? "BUZZ IN" : "Answer on your phones";
     public bool ShowStory => Elements.Shows("story") && HasRevealStory;
+    public bool ShowSource => Elements.Shows("story") && HasRevealSource;
     /// The answer capsule is for a NON-MCQ reveal; an MCQ's tally already lights the
     /// correct option, and saying it twice is the kind of clutter A8.7 exists to cut.
     public bool ShowRevealAnswer => Host.Revealed && !(Host.Current?.Options is { Count: > 0 });
@@ -255,6 +256,10 @@ public sealed class LiveHostViewModel : ObservableObject
     /// parity with the join client's reveal card.
     public string? RevealStory => Host.Revealed && Host.Current is { Explanation.Length: > 0 } q ? q.Explanation : null;
     public bool HasRevealStory => RevealStory is not null;
+    /// The charter on the big screen and in the cockpit: the article the fact came from.
+    public string? RevealSource => Host.Revealed && Host.Current is { } q && !string.IsNullOrWhiteSpace(q.SourceTitle)
+        ? $"From Wikipedia · {q.SourceTitle.Trim()}" : null;
+    public bool HasRevealSource => RevealSource is not null;
 
     public bool CanGoBack => Host.CanGoBack;
     public int? SecondsRemaining => Host.SecondsRemaining;

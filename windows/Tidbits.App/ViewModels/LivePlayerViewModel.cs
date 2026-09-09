@@ -91,7 +91,9 @@ public sealed class LivePlayerViewModel : ObservableObject
 
     public bool IsBoard => Client.Pub?.Phase == LiveRoom.Phase.Board && Client.Pub?.Board is not null;
     /// The prompt only when a question is actually being asked.
-    public bool ShowQuestionOnly => ShowQuestion && !IsBoard;
+    /// The prompt stays through the REVEAL (every other joiner keeps it; the room is
+    /// still talking about the question) — only the board phase hides it.
+    public bool ShowQuestionOnly => (ShowQuestion || ShowReveal) && !IsBoard;
     /// Answer buttons: never on a buzz round, never while the grid is up.
     public bool ShowOptions => !IsBuzz && !IsBoard;
     public string BoardHeadline =>
@@ -154,4 +156,9 @@ public sealed class LivePlayerViewModel : ObservableObject
     public bool HasRevealAnswer => RevealAnswerLine is not null;
     public string? Story => Client.Pub?.Story;
     public bool HasStory => ShowReveal && !string.IsNullOrEmpty(Client.Pub?.Story);
+    /// The charter: where the fact came from (reveal only).
+    public bool HasSource => ShowReveal && !string.IsNullOrWhiteSpace(Client.Pub?.Source?.Title);
+    public string SourceLine => Client.Pub?.Source is { } s
+        ? (string.IsNullOrWhiteSpace(s.Url) ? $"From Wikipedia · {s.Title}" : $"Learn more on Wikipedia · {s.Title}") : "";
+    public string? SourceUrl => Client.Pub?.Source?.Url;
 }

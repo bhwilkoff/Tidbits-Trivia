@@ -710,6 +710,10 @@ public sealed class LiveNightHost : ObservableObject
             AnswerIndex = Revealed && mcq ? q.CorrectIndex : null,
             ImageUrl = LiveMediaStore.PublishPicture(q.ImageUrl).Fallback,   // §5.3: the https twin, or a SMALL data URL
             Picture = CurrentPicture,                                        // Decision 060: the full picture, once its node is in the room
+            // The learning payoff, reveal only: the story and its Wikipedia source. The
+            // Windows host had published neither — only its own projector showed the story.
+            Story = Revealed && !string.IsNullOrWhiteSpace(q.Explanation) ? q.Explanation.Trim() : null,
+            Source = Revealed && !string.IsNullOrWhiteSpace(q.SourceTitle) ? new LiveRoom.Source { Title = q.SourceTitle.Trim(), Url = q.SourceUrl } : null,
             Numeric = q.Closest is { } c ? new LiveRoom.Numeric { Min = c.Min, Max = c.Max, Step = c.Step, Unit = c.Unit } : null,
             OrderItems = q.Ordering is not null ? _shuffledOrder : null,
             MatchKeys = q.Matching?.Keys,

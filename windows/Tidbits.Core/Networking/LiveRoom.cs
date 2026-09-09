@@ -116,6 +116,15 @@ public static class LiveRoom
         /// once-written room node (`kind: "image"`); `imageURL` keeps a ≤320 px
         /// fallback for a joiner that predates this key.
         [JsonPropertyName("picture")] public Media? Picture { get; init; }
+        /// The charter, on the wire: the Wikipedia article the fact came from — title
+        /// + link, published ONLY on reveal beside `story`. Mirrors Swift `Pub.source`.
+        [JsonPropertyName("source")] public Source? Source { get; init; }
+    }
+
+    public sealed record Source
+    {
+        [JsonPropertyName("title")] public string Title { get; init; } = "";
+        [JsonPropertyName("url")] public string? Url { get; init; }
     }
 
     /// Decision 060: a clip as the joiners are given it — an https FILE link, or

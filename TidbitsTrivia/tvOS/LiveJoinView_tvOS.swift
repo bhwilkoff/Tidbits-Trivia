@@ -257,6 +257,10 @@ struct TVLivePlayerView: View {
                     .padding(24).frame(maxWidth: .infinity, alignment: .leading)
                     .background(RoundedRectangle(cornerRadius: 16).fill(Color.white.opacity(0.06)))
             }
+            if revealed, let src = p.source, !src.title.isEmpty {   // a TV cannot open a link; it can name the article
+                Label("From Wikipedia · \(src.title)", systemImage: "book.closed")
+                    .font(.system(size: 26, weight: .semibold)).foregroundStyle(TVTheme.textSoft)
+            }
         }
     }
 

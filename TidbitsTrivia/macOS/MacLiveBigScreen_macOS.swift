@@ -405,6 +405,15 @@ struct LiveBigScreen_macOS: View {
                                 .frame(maxWidth: 1000)
                                 .padding(.top, 4)
                                 .transition(.opacity)
+                            // The charter on the big screen: name the article. Small, under
+                            // the story, the same switch — the room learns where it came from.
+                            let src = q.sourceTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+                            if !src.isEmpty {
+                                Label("From Wikipedia · \(src)", systemImage: "book.closed")
+                                    .font(.system(size: 18, weight: .heavy, design: .rounded))
+                                    .foregroundStyle(Tidbits.Palette.blue)
+                                    .lineLimit(1).minimumScaleFactor(0.7)
+                            }
                         }
                     }
                 }

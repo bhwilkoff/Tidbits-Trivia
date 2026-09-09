@@ -145,6 +145,9 @@
                         <!-- The story behind the answer on reveal (3.42) — the room learns why. -->
                         <TextBlock IsVisible="{Binding ShowStory}" Foreground="White" Opacity="0.72" FontSize="24"
                                    TextWrapping="Wrap" TextAlignment="Center" MaxWidth="1000" Text="{Binding RevealStory}"/>
+                        <!-- The charter on the big screen: where the fact came from (same switch as the story). -->
+                        <TextBlock IsVisible="{Binding ShowSource}" Foreground="{Binding BrandBrush}" FontSize="18" FontWeight="Black"
+                                   TextAlignment="Center" Text="{Binding RevealSource}"/>
                     </StackPanel>
                 </Viewbox>
                 <!-- bottom band: team STRIP (wrapping chips) | join card — in the flow -->

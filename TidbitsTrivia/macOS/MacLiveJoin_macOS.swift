@@ -174,6 +174,13 @@ struct MacLiveJoinView_macOS: View {
                 LivePictureView(picture: pub.picture, fallback: pub.imageURL, code: client.code, maxHeight: 300, cornerRadius: 16)
                     .frame(maxWidth: 640)
             }
+            if pub.phase == LiveRoom.Phase.reveal, let story = pub.story, !story.isEmpty {
+                Text(story).font(Tidbits.TypeRamp.l4).foregroundStyle(Tidbits.Palette.inkSoft)
+                    .multilineTextAlignment(.center).frame(maxWidth: 640)
+            }
+            if pub.phase == LiveRoom.Phase.reveal, let src = pub.source, !src.title.isEmpty {
+                LiveSourceLine(source: src)
+            }
             if let m = pub.media {   // Decision 060: the host's clip, offered on a Mac joiner too
                 LiveClipView(media: m, code: client.code).id(pub.qid + m.url).frame(maxWidth: 640)
             }

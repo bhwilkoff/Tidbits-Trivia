@@ -330,6 +330,15 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f),
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp))
                 }
+                if (revealed && p.source != null && p.source.title.isNotBlank()) {   // the charter: where the fact came from
+                    val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
+                    val src = p.source
+                    Spacer(Modifier.height(8.dp))
+                    Text(if (src.url != null) "Learn more on Wikipedia · ${src.title} ↗" else "From Wikipedia · ${src.title}",
+                        fontSize = 14.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center,
+                        color = if (src.url != null) Pops.blue else soft,
+                        modifier = Modifier.fillMaxWidth().then(if (src.url != null) Modifier.clickable { runCatching { uriHandler.openUri(src.url) } } else Modifier))
+                }
             }
         }
     }

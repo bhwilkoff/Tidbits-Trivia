@@ -7,6 +7,38 @@
 > `docs/ROADMAP.md`, `docs/DATA-CONTRACT.md`. Detailed per-round history is in
 > `ARCHIVE.md`.
 
+## Current state (2026-09-09k) — the Wikipedia source on every reveal (punch list #1)
+
+**Did:** `pub.source {title, url}` beside `pub.story`, reveal only, from every
+host — and the audit's finding went deeper than the source: only the Mac
+cockpit had ever published the STORY; the Apple Trivia Night host (iOS/tvOS),
+the Windows host, the web host and the Android host all published neither,
+so a phone joining any of those nights got a bare answer. Both now ride every
+host's reveal. Joiners: a "Learn more on Wikipedia · <title>" link (web,
+iOS, Mac, Android, Windows `HyperlinkButton`); tvOS names the article; the
+Mac joiner also shows the story for the first time. Projectors: "From
+Wikipedia · <title>" under the story on both, on the story's switch. The Mac
+cockpit links the article for the host. Wire tests on both stacks. Apple
+1.9.9 (139), Android 1.9.9 (vc 100), Windows 1.9.9.
+
+**Verified on every real device, one at a time:** the Mac hosted a corpus
+night and revealed — `pub.source = {Abhimanyu, en.wikipedia.org/wiki/
+Abhimanyu}` + the story on the wire; the web joiner's link ("Learn more on
+Wikipedia · Abhimanyu ↗", href to the article); the real iPhone 12 (story
+card + link); the Windows box (reveal card with the story and the hyperlink);
+the **Pixel 8a, re-paired with the owner's code** (story + blue link); the
+onn Android TV dongle (story; the link sits below the fold of a non-scrolling
+TV frame — the column scrolls with the remote). Found on the way: the Windows
+joiner hid the PROMPT on reveal (every other joiner keeps it) — fixed, pinned
+by `JoinerPromptProbe`'s reveal step.
+
+**Owner, mid-tick: "My computer slowed to a crawl."** Found: an `xcodebuild
+test` stuck 38 minutes, a Gradle build and a .NET test host all at once, and
+the iPhone 17 Pro SIMULATOR booted since session start (never used after the
+first note, never shut down). Killed, `simctl shutdown all`, free memory 20%
+→ 26%; rule saved (`one-build-at-a-time`): sequential builds, no booted
+simulator, `ps` before a heavy job.
+
 ## Live loop punch list (audited against the CODE on both hosts, 2026-09-09)
 
 Ranked by (value to a host or a player's learning/joy) × (small first). Each

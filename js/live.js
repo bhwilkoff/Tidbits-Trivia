@@ -192,6 +192,7 @@ function draw() {
     return;
   }
   if (document.getElementById('live-timer')) ensureLiveTimer();
+  mountMedia();
   const wr = document.getElementById('live-wager-range');   // Wave A: wager slider
   if (wr) wr.oninput = (e) => { S.wager = +e.target.value; const n = document.getElementById('live-wager-num'); if (n) n.textContent = e.target.value; };
   if (!S.joined) {
@@ -374,11 +375,16 @@ function playHTML() {
        : p.locked ? `<div class="live-note" style="color:#FF5C35">Answers locked — pencils down!</div>`
        : `<div class="live-note">Answer below.</div>`);
   const img = p.imageURL ? `<img class="live-img" src="${esc(p.imageURL)}" alt="">` : '';
+  // Decision 060: the clip slot. Filled AFTER the draw by mountMedia(), which
+  // keeps one <audio>/<video> element alive across re-renders — innerHTML on
+  // every state change would restart a playing clip.
+  const media = p.media && p.phase !== 'ended' ? `<div id="live-media"></div>` : '';
 
   return `<div class="live-play">${head}
     <div class="live-round">ROUND ${p.round} · ${esc(p.roundTitle)} — Q${p.qNum}/${p.qTotal}</div>
     ${p.letter ? `<div class="live-letter">EVERY ANSWER BEGINS WITH ${esc(String(p.letter).toUpperCase()[0])}</div>` : ''}
     ${img}
+    ${media}
     <div class="live-q">${esc(p.prompt)}</div>
     ${!revealed && p.deadline ? `<div id="live-timer" data-dl="${p.deadline}" style="font-size:30px;font-weight:900;text-align:center;margin:6px 0;font-variant-numeric:tabular-nums"></div>` : ''}
     ${!revealed && p.wager ? wagerHTML() : ''}
@@ -453,6 +459,84 @@ function answerHTML(p, revealed) {
   return `<input id="live-text" class="live-in" placeholder="Type your answer" value="${esc(L.text || '')}" ${locked ? 'disabled' : ''}>${submit}`;
 }
 
+// Decision 060: the clip a phone is offered. One element per (qid, url), kept
+// across draws; the bytes of a `room:` clip are fetched ONCE, and only when the
+// host presses Play or this player taps — an offer costs the room nothing until
+// it is taken up. Autoplay is attempted only on the host's cue and only when the
+// browser allows it (a prior tap on this page); otherwise the control is shown.
+const M = { key: null, el: null, objectURL: null, loading: false, error: '', startedFor: null };
+let gestured = false;
+document.addEventListener('pointerdown', () => { gestured = true; }, { capture: true, passive: true });
+
+function mountMedia() {
+  const slot = document.getElementById('live-media');
+  const p = S.pub;
+  const m = p && p.media;
+  if (!slot || !m || !m.url) { if (!slot) resetMedia(); return; }
+  const key = `${p.qid}|${m.url}`;
+  if (M.key !== key) { resetMedia(); M.key = key; }
+  if (!M.el) {
+    M.el = document.createElement('div');
+    M.el.className = 'live-media';
+    M.el.innerHTML = mediaShellHTML(m);
+    M.el.querySelector('[data-media-play]')?.addEventListener('click', () => loadMedia(m, true));
+  }
+  slot.appendChild(M.el);
+  // The host pressed Play — join in, once per cue.
+  if (m.startedAt && M.startedFor !== m.startedAt) { M.startedFor = m.startedAt; loadMedia(m, false); }
+}
+
+function mediaShellHTML(m) {
+  const size = m.bytes ? ` · ${m.bytes >= 1e6 ? (m.bytes / 1e6).toFixed(1) + ' MB' : Math.max(1, Math.round(m.bytes / 1000)) + ' KB'}` : '';
+  const what = m.kind === 'video' ? 'Watch the clip' : 'Listen to the clip';
+  return `<button class="live-mediabtn" data-media-play>${m.kind === 'video' ? '▶' : '♪'} ${what}<small>${esc(m.name || '')}${size}</small></button>`;
+}
+
+function resetMedia() {
+  if (M.objectURL) { try { URL.revokeObjectURL(M.objectURL); } catch { /* gone */ } }
+  Object.assign(M, { key: null, el: null, objectURL: null, loading: false, error: '', startedFor: null });
+}
+
+async function loadMedia(m, byTap) {
+  if (!M.el || M.loading) return;
+  const player = M.el.querySelector('audio,video');
+  if (player) { startMedia(player, m, byTap); return; }
+  M.loading = true;
+  const btn = M.el.querySelector('[data-media-play]');
+  if (btn) { btn.disabled = true; btn.innerHTML = `Loading clip…`; }
+  let src = m.url;
+  try {
+    if (src.startsWith('room:')) {
+      const node = await FirebaseNet.liveMedia(S.code, src.slice(5));
+      if (!node || !node.b64) throw new Error('missing');
+      const bin = atob(node.b64), buf = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+      M.objectURL = URL.createObjectURL(new Blob([buf], { type: node.mime || m.mime || '' }));
+      src = M.objectURL;
+    }
+  } catch {
+    M.loading = false;
+    if (btn) { btn.disabled = false; btn.innerHTML = `Clip unavailable — the room hears it from the host<small>tap to retry</small>`; }
+    return;
+  }
+  const el = document.createElement(m.kind === 'video' ? 'video' : 'audio');
+  el.controls = true; el.preload = 'auto'; el.src = src;
+  if (m.kind === 'video') { el.playsInline = true; el.setAttribute('playsinline', ''); }
+  M.el.innerHTML = ''; M.el.appendChild(el);
+  M.loading = false;
+  startMedia(el, m, byTap);
+}
+
+function startMedia(el, m, byTap) {
+  // Sync to the room: the host's cue plus how long ago it was.
+  if (m.startedAt && !byTap) {
+    const offset = (Date.now() - m.startedAt) / 1000;
+    if (offset > 1 && Number.isFinite(el.duration) && offset < el.duration) el.currentTime = offset;
+  }
+  if (!byTap && !gestured) return;   // the browser will refuse; the control is on screen
+  const r = el.play(); if (r && r.catch) r.catch(() => { /* the control stays on screen */ });
+}
+
 function injectStyles() {
   if (document.getElementById('live-styles')) return;
   const s = document.createElement('style');
@@ -509,6 +593,12 @@ function injectStyles() {
   .live-opt.wrong{background:#f3d1cd}
   .live-optnum{display:inline-flex;width:26px;height:26px;align-items:center;justify-content:center;border-radius:8px;background:#231E1A;color:#fff;font-weight:900;font-size:.9rem;flex:none}
   .live-img{display:block;max-width:100%;max-height:260px;border-radius:12px;margin:6px 0}
+  .live-media{margin:6px 0 12px}
+  .live-media audio{display:block;width:100%}
+  .live-media video{display:block;width:100%;max-height:260px;border-radius:12px;background:#000}
+  .live-mediabtn{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;padding:14px 16px;font-size:1.05rem;font-weight:900;text-align:left;color:#fff;background:#0047FF;border:2.5px solid #231E1A;border-radius:16px;box-shadow:4px 4px 0 #231E1A;cursor:pointer}
+  .live-mediabtn small{font-weight:700;font-size:.8rem;opacity:.85}
+  .live-mediabtn:disabled{opacity:.7;cursor:default}
   .live-num{font-weight:900;font-size:1.8rem;color:#231E1A;text-align:center;margin:6px 0}
   .live-range{width:100%;margin:6px 0 12px}
   .live-order,.live-match{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}

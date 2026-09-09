@@ -2126,3 +2126,44 @@ is copied INTO the app's store on import and referenced by id; the shared
 directly — they are given the https twin, or nothing). A new media kind is an
 allow-list row in §2.5 on both stacks plus the golden. Verify a package by
 opening the golden on both platforms, not by reading the manifest.
+
+## 060 — A clip reaches the phones the way a picture does: by link when it has one, otherwise as a once-written room node under a hard cap — never through a paid bucket
+*Date: 2026-09-09*
+
+A question's audio or video clip is OFFERED to every joiner as `pub.media`
+(`docs/LIVE-ROOM-CONTRACT.md`): `{kind, url, mime, name?, bytes?, startedAt?}`.
+`url` is a direct https file link when the media has one, otherwise
+`room:<id>` — a reference to `live/{code}/media/{id}`, a node the host writes
+ONCE per room holding the clip as base64 in a web-safe encoding (AAC `.m4a`
+for audio, H.264 640x480 `.mp4` for video), capped at 3 MB raw / 4.2M base64
+characters, which the RTDB rules validate. A joiner fetches the node once and
+caches it by id; it fetches only when the host presses Play or the player
+taps, and it autoplays only on the host's cue and only where the browser or
+OS allows, otherwise its Play control is on screen. A clip that cannot be
+brought under the cap is reported to the host as "Not on phones" and the room
+hears it from the PA as before.
+
+**Why:** the owner's ask was "video questions or other media types that get
+broadcast even on the web app." Until now a name-that-tune clip played on
+the host's PA and a video on the projector, and a phone showed the prompt and
+nothing else — a hybrid or remote joiner had no clip, and a table at the back
+of a loud bar had a song it could not hear. The picture path (§5.3 of
+LIVE-PACKAGE-FORMAT) already proved the shape: publish what the phone can
+open. The two scale options were a once-written node or Firebase Storage,
+and Storage needs the Blaze plan on new projects — the one thing the $0 rule
+forbids (TIDBITS-LIVE-PREMIUM-BACKLOG §M: never enable Blaze). The node is
+bounded by construction: forty phones taking up a 3 MB clip is 120 MB, a
+five-clip night is 600 MB, well inside the free tier's 10 GB/month egress
+wall — and the wall is a wall, not a meter. Fetching on intent rather than
+on publish keeps the OFFER free: the bytes move only for a phone that plays.
+
+**How to apply:** the wire key is `media`, optional, mirrored on every stack
+(`LiveRoom.Media` Swift, `LivePub.media` Kotlin, `pub.media` JS, `Pub.Media`
+C#). The host writes the node BEFORE the `pub` that references it, and never
+publishes a `tidbits-media:` reference. Encoding lives in one place per host
+(`LiveClipPublisher` on the Mac); the cap is `LiveRoom.mediaMaxBytes` and the
+rules' `.validate` — change both or neither. A joiner keeps ONE player
+element alive across state re-renders (the web re-draws on every `pub`
+change; re-creating the element restarts the clip). The host is always told,
+under the Play button, whether the phones have the clip. A page link
+(YouTube, Vimeo) is not a file link: it goes as bytes, never as `url`.

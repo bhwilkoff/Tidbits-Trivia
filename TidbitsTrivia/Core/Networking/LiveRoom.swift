@@ -62,6 +62,51 @@ enum LiveRoom {
         /// projector. Present ONLY during `Phase.board`; nil otherwise, so an
         /// older client never sees it.
         var board: BoardPub? = nil
+        /// Decision 060: the clip attached to this question, offered to every
+        /// joiner — the audio of a name-that-tune round or the video of a video
+        /// question, which until now played ONLY on the host's PA and projector.
+        /// nil on a question without a clip, so an older client never sees it.
+        var media: Media? = nil
+    }
+
+    /// Decision 060: a clip as the joiners are given it. `url` is an https file
+    /// URL when the media has one, otherwise `room:<id>` — a reference to the
+    /// once-written `live/{code}/media/{id}` node (`RoomMedia`) that the joiner
+    /// fetches ONCE and caches by id. Never a `tidbits-media:` reference: a phone
+    /// cannot open the host's package.
+    struct Media: Codable, Equatable {
+        var kind: String          // "audio" | "video"
+        var url: String           // https://… | room:<id>
+        var mime: String          // audio/mpeg, video/mp4, …
+        var name: String? = nil   // the clip's display name (never the host's path)
+        var bytes: Int? = nil     // size of the file behind `url`, so a joiner can say "1.2 MB" before fetching
+        /// Epoch ms when the host pressed Play. A joiner that may autoplay starts
+        /// from the matching offset; one that may not shows its Play control. nil
+        /// until the host plays, so a clip is always an OFFER first.
+        var startedAt: Int? = nil
+    }
+
+    /// Decision 060: the once-written media node, `live/{code}/media/{id}`.
+    /// Base64 of the file, capped (`mediaMaxBytes`) so a room of forty phones on
+    /// venue Wi-Fi can fetch it and the RTDB free tier never meters it. The host
+    /// writes it BEFORE publishing the `pub` that references it, and only once per
+    /// room per id.
+    struct RoomMedia: Codable, Equatable {
+        var kind: String
+        var mime: String
+        var bytes: Int
+        var b64: String
+    }
+    /// The largest file a host will publish as a room node (raw bytes; the base64
+    /// is 4/3 of this and the rules validate that length).
+    nonisolated static let mediaMaxBytes = 3_000_000
+    nonisolated static let mediaScheme = "room"
+    static func mediaPath(_ code: String, id: String) -> String { "\(path(code))/media/\(id)" }
+    /// `room:<id>` → id; anything else → nil.
+    nonisolated static func mediaID(from url: String) -> String? {
+        guard url.hasPrefix(mediaScheme + ":") else { return nil }
+        let id = String(url.dropFirst(mediaScheme.count + 1))
+        return id.isEmpty ? nil : id
     }
 
     /// G5: the grid as the joiners see it. Deliberately NOT the host's LiveBoard:

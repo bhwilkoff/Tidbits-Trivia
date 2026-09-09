@@ -337,6 +337,14 @@ export const FirebaseNet = {
     await db.set(db.ref(_db, `live/${code}/answers/${qid}/${_uid}`),
                  { ...answer, ts: Date.now(), sv: { '.sv': 'timestamp' } });
   },
+  // Decision 060: fetch a clip the host wrote to the room ONCE (`room:<id>` in
+  // pub.media). Returns {kind, mime, bytes, b64} or null. Read, never streamed:
+  // a clip is fetched when someone means to play it, not on every state change.
+  async liveMedia(code, id) {
+    const { db } = await ensure();
+    const snap = await db.get(db.ref(_db, `live/${code}/media/${id}`));
+    return snap.exists() ? snap.val() : null;
+  },
   // L5 social graph: read the room roster once (uid → {name}) to capture co-players at night-end.
   async liveTeams(code) {
     const { db } = await ensure();

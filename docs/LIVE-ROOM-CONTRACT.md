@@ -38,6 +38,8 @@ no confusable chars) shown on the big screen for players to enter.
 | `scores/{uid}` | host | integer — a team's running score (host owns scoring) |
 | `teams/{uid}` | that player | `{ name, joinedAt: ms }` |
 | `answers/{qid}/{uid}` | that player | `{ choice?, text?, number?, order?:[Int], pairs?:[Int], list?:[String], ts }` |
+| `control` | any player (the host's phone remote, G6) | `{ id, verb, pin }` — the host READS and decides; never writes `pub` |
+| `media/{id}` | host, ONCE per room | `{ kind: "audio"\|"video", mime, bytes, b64 }` — Decision 060; `bytes` ≤ 3,000,000, `b64` ≤ 4,200,000 chars (rules-validated) |
 
 ### `pub` (host-published, players stream it) — ALL question types
 ```json
@@ -52,9 +54,22 @@ no confusable chars) shown on the big screen for players to enter.
   "numeric": {"min":,"max":,"step":,"unit":""},   // closestCall (NOT the answer)
   "orderItems": ["…"],            // ordering (SHUFFLED; correct order withheld)
   "matchKeys": ["…"], "matchValues": ["…"],       // matching (values SHUFFLED)
-  "enumTarget": 8                 // enumerate (how many in the set)
+  "enumTarget": 8,                // enumerate (how many in the set)
+  "media": {                      // Decision 060: the question's clip, OFFERED to every joiner (absent = no clip)
+    "kind": "audio",              // "audio" | "video"
+    "url": "room:<id>",           // a direct https FILE link, or room:<id> → live/{code}/media/{id}
+    "mime": "audio/mp4", "name": "golden-beep", "bytes": 1644,
+    "startedAt": 1757000000000    // epoch ms of the host's Play — absent until the host plays
+  }
 }
 ```
+**`media` (Decision 060).** A joiner that sees `media` shows an offer ("Listen
+to the clip" / "Watch the clip", with the name and size). It fetches a `room:`
+node ONCE — when the host's `startedAt` appears or the player taps, whichever
+first — decodes `b64` into a blob, and plays it in a native `<audio>`/`<video>`
+(AVPlayer / Media3). Autoplay is attempted only on the host's cue; a browser or
+OS that refuses leaves the control on screen. The element survives `pub`
+re-renders (recreating it restarts the clip). `url` is never `tidbits-media:`.
 `qid = "r{roundIndex}q{questionIndex}"` is stable across reveal/advance so answers
 key cleanly. **Every question type is playable** — only the field(s) for the current
 `format` are set. **Nothing that could leak the answer is ever published** (correct
@@ -72,6 +87,11 @@ in `LiveNightHost.score` (Swift), `liveScore` (Kotlin), `nhScore` (JS). Tidbits 
   First `meta` write (room creation) is allowed because `!data.exists()`.
 - **Players own** their `teams/{uid}` and `answers/{qid}/{uid}` — write gated on
   `auth.uid === $uid`.
+- **Host owns `media/{id}`** (same gate as `pub`), and the rules VALIDATE the
+  cap — a node over 3 MB raw / 4.2M base64 chars is refused server-side, so a
+  host build with a wrong cap cannot push the room over the free tier.
+- **Any player may write `control`** (the phone remote requests; the host
+  decides by PIN and command id — `LiveRemote.accepted`).
 - **Room teardown**: a `live/{code}` root write matches only the host deleting the
   whole subtree (`!newData.exists()`).
 - Everything requires anonymous auth (`auth != null`); no accounts, no PII.

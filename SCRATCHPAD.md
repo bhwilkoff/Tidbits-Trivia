@@ -7,6 +7,48 @@
 > `docs/ROADMAP.md`, `docs/DATA-CONTRACT.md`. Detailed per-round history is in
 > `ARCHIVE.md`.
 
+## Current state (2026-09-09) — Decision 060: clips reach the phones (Mac host + web joiner)
+
+**Asked (loop brief):** keep iterating the three Tidbits Live surfaces — Event
+Builder, Cockpit, Display — for parity-first feature depth and joy; "I'm
+particularly keen to see if we can have video questions or other media types
+that get broadcast even on the web app."
+
+**Found:** a question's audio/video clip played ONLY on the host (PA +
+projector). `pub` carried `imageURL` and nothing for clips, so every joiner
+showed the prompt and no media; a remote/hybrid player had no clip at all.
+The two scale options in LIVE-PACKAGE-FORMAT §8.3 were a once-written room
+node or Firebase Storage — and Storage needs Blaze, which the $0 rule forbids
+(PREMIUM-BACKLOG §M). So the call was already made by the rule.
+
+**Did (Decision 060, macOS-DESIGN A8.8, LIVE-ROOM-CONTRACT `media`):**
+`pub.media = {kind, url, mime, name?, bytes?, startedAt?}`; `url` is a direct
+https file link or `room:<id>` → `live/{code}/media/{id}` `{kind, mime, bytes,
+b64}`, written ONCE per room, capped at 3 MB raw / 4.2M base64 chars and
+VALIDATED by the rules (deployed; the rules also gained the `control` node
+the G6 phone remote writes, which had no rule at all). Mac:
+`LiveClipPublisher` (re-encodes to AAC `.m4a` / H.264 640x480 `.mp4` via
+`AVAssetExportSession` unless already web-safe and under the cap; prewarms
+every clip at room open; https twin passes through; page links never do),
+`LiveHostNet.publishMedia` (once per id, node before pub), the session's
+`currentMedia`/`mediaStartedAt` (Play cues the phones), and a caption under
+the Play button: "On phones too · 36 KB" / "On phones by link" / "Not on
+phones — …". Web: "Listen to / Watch the clip" offer (name + size); fetches
+the node once on the host's cue or a tap; native `<audio>`/`<video
+playsinline>` kept alive across the joiner's innerHTML re-draws; autoplay
+only on the cue and only after a gesture. 6 Swift wire tests. **Verified
+end-to-end** on the wire AND the glass with two packages hosted from the Mac
+via `TIDBITS_LIVE_HOST_FILE`: a WAV clip was transcoded to a 37 KB m4a,
+offered, tapped, and played in headless Chrome (readyState 4, 6.08 s, playing);
+an mp4 was cued by `TIDBITS_LIVE_STATE=video`, mounted without a tap
+(control on screen, 640x360, plays). iOS/tvOS/macOS build green; 318 tests.
+1.9.1 (131).
+
+**State left:** joiners iOS/tvOS ⏳ (AVPlayer), Android ⏳ (Media3), Windows
+host + joiner ⏳ (WINDOWS-PARITY 3.53); pictures over the data-URL budget could
+ride the same node. Pre-existing cockpit nit seen in the capture: the window
+title "Tidbits" collides with the "Phone remote" toolbar item at 1280 wide.
+
 ## Current state (2026-09-07) — the `.tidbits` package: a night with its media in one file
 
 **Asked:** "a more sustainable file format for Tidbits Live events … that

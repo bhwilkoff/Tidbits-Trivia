@@ -167,6 +167,15 @@ scale. Firebase Storage (a paid plan on new projects) or a once-written
 scale (§8.3); the data URL is what works today with the apps in people's
 pockets.
 
+5.4 **Clips reach the phones too (Decision 060, 2026-09-09).** A question's
+audio or video clip is published as `pub.media` — the store's `sourceURL`
+when it is a direct file link, otherwise the clip re-encoded to a web-safe
+form (AAC `.m4a` / H.264 640x480 `.mp4`) and written ONCE to
+`live/{code}/media/{id}` under a 3 MB cap the rules validate. Joiners fetch a
+node only when the host presses Play or the player taps. A clip over the cap
+after re-encoding is reported to the host as "Not on phones" and the room
+hears it from the PA. See LIVE-ROOM-CONTRACT `media`.
+
 ## §6 — Question banks
 
 6.1 **A `bank` package is a library, not a night.** Its `event.json` rounds
@@ -215,9 +224,12 @@ writer that produced it and the tool a host can use from a shell (`pack`,
    Info.plist means an iPhone also lists Tidbits under "Open in" for a
    `.tidbits` file; it opens the app and does nothing, which is truthful.
 3. **Phones see package media** — **DONE as a data URL 2026-09-07 (§5.3)**
-   on both hosts. For scale: a once-written `live/{code}/media/<id>` node the
-   joiners fetch once (needs all four joiners updated), or Firebase Storage
-   (a paid plan on new projects — an OWNER decision).
+   on both hosts. **The scale call is made (Decision 060, 2026-09-09):** the
+   once-written `live/{code}/media/<id>` node, never Firebase Storage (Blaze
+   is forbidden by the $0 rule). Built first for CLIPS (§5.4) — Mac host + web
+   joiner shipped; iOS/tvOS, Android, and the Windows host + joiner follow in
+   the same sequence. Moving pictures over the cap onto the same node is the
+   remaining step.
 4. **The question library** (§6) — **DONE 2026-09-07** on both hosts (store,
    save from any row/round, searchable picker, bank package in and out).
 5. **More importers/exporters** per the matrix in QUIZ-FORMATS-RESEARCH §4:

@@ -52,6 +52,14 @@ final class LiveHostSession {
 
     /// Points a correct answer is worth this round (host-adjustable; pub default 1).
     var pointsPerCorrect = 1
+    /// Decision 060: the current question's clip as the ROOM is given it (an
+    /// https link or a `room:<id>` node reference), set by the host container
+    /// once the node is in place; nil until then, and on a question without one.
+    var currentMedia: LiveRoom.Media? = nil
+    /// What the cockpit says under the Play button about the phones.
+    var mediaNote: String? = nil
+    /// Epoch ms of the host's Play, published so phones that may autoplay do.
+    var mediaStartedAt: Int? = nil
     /// Per-question display shuffles (fixed once so publish + reveal agree).
     var shuffledOrder: [String] = []
     var shuffledValues: [String] = []
@@ -63,6 +71,7 @@ final class LiveHostSession {
         shuffledOrder = current?.ordering?.shuffled() ?? []
         shuffledValues = current?.matching?.values.shuffled() ?? []
         buzzedOut = []          // G1: a new question reopens the buzzer to everyone
+        currentMedia = nil; mediaNote = nil; mediaStartedAt = nil   // Decision 060: the next clip is offered when it is in place
     }
 
     var questions: [Question] { event.questionStream }
@@ -303,6 +312,7 @@ final class LiveHostSession {
         if !revealed, currentRoundIsWager { p.wager = true }  // Wave A: wager round — joiners show a stake input
         if !revealed, currentRoundIsBuzz { p.buzz = true }    // G1: buzz round — joiners show a BUZZ button
         if let l = currentRoundLetter { p.letter = String(l) }   // G4: first-letter round — joiners see the rule
+        if var m = currentMedia { m.startedAt = mediaStartedAt; p.media = m }   // Decision 060: the clip, offered to the phones
         if revealed {   // Wave A: the story behind the answer — the learning payoff, only at reveal
             let s = q.explanation.trimmingCharacters(in: .whitespacesAndNewlines)
             if !s.isEmpty { p.story = s }
@@ -359,6 +369,9 @@ struct LiveHostContainer_macOS: View {
         // Warm the picture cache with the whole night, so the projector shows each
         // picture the instant the host advances instead of after the venue Wi-Fi.
         .task { LiveImageLoader.shared.prefetch(event.questionStream.compactMap(\.imageURL)) }
+        // Decision 060: encode every clip of the night early, so the phones'
+        // copy is ready before the host reaches the question.
+        .task { LiveClipPublisher.shared.prewarm(event) }
         .task {
             guard let raw = ProcessInfo.processInfo.environment["TIDBITS_LIVE_AUTOCLOSE"],
                   let secs = Double(raw) else { return }
@@ -390,6 +403,7 @@ struct LiveHostContainer_macOS: View {
             case "video":
                 if let vid = session.currentVideoBookmark, LiveClip.isPlayable(vid) {
                     LiveVideoPlayer.shared.openBookmark(vid); LiveVideoPlayer.shared.play()
+                    session.mediaStartedAt = LiveHostNet.nowMS()
                 }
             default: break
             }
@@ -422,9 +436,15 @@ struct LiveHostContainer_macOS: View {
             await net.open(name: event.name, venue: event.venue)
             await net.setState("live")
             await net.publish(session.currentPub())
+            await syncMedia()
         }
         // Re-publish whenever the host advances or reveals; auto-score on reveal.
         .onChange(of: session.index) { _, _ in
+            Task { await net.publish(session.currentPub()); await syncMedia() }
+        }
+        // Decision 060: the host pressed Play — tell the phones when, so the ones
+        // allowed to autoplay start from the same beat.
+        .onChange(of: session.mediaStartedAt) { _, _ in
             Task { await net.publish(session.currentPub()) }
         }
         .onChange(of: session.revealed) { _, revealed in
@@ -450,6 +470,29 @@ struct LiveHostContainer_macOS: View {
                 await net.publish(session.currentPub())
             }
         }
+    }
+
+    /// Decision 060: offer the current question's clip to the phones. The node is
+    /// written BEFORE the `pub` that references it, and a question the host has
+    /// already left is never published over.
+    private func syncMedia() async {
+        let idx = session.index
+        let clip: (Data, String)? = session.currentVideoBookmark.map { ($0, "video") }
+            ?? session.currentAudioBookmark.map { ($0, "audio") }
+        guard let clip, !clip.0.isEmpty else { return }
+        let prepared = await LiveClipPublisher.shared.prepare(bookmark: clip.0, kind: clip.1)
+        guard session.index == idx else { return }
+        session.mediaNote = prepared.note
+        guard let media = prepared.media else { return }
+        if let id = prepared.id, let node = prepared.node {
+            guard await net.publishMedia(id: id, node) else {
+                session.mediaNote = "Not on phones — the room refused the clip"
+                return
+            }
+        }
+        guard session.index == idx else { return }
+        session.currentMedia = media
+        await net.publish(session.currentPub())
     }
 
     /// On reveal, auto-score every joined team's submission for EVERY question type
@@ -541,6 +584,17 @@ struct LiveHostView_macOS: View {
 
     /// The projector is a singleton `Window`; `openWindow` focuses the existing one.
     @Environment(\.openWindow) private var openProjectorWindow
+
+    /// Decision 060: one line under the Play button saying whether the phones
+    /// have this clip too — "On phones too · 1.2 MB", "On phones by link", or
+    /// why not. A clip the room cannot hear on its own phones is not a silent
+    /// omission; the host is told, and the PA carries it as before.
+    @ViewBuilder private var mediaNoteLine: some View {
+        if let note = session.mediaNote {
+            Label(note, systemImage: note.hasPrefix("On phones") ? "iphone.radiowaves.left.and.right" : "iphone.slash")
+                .font(.caption).foregroundStyle(.secondary)
+        }
+    }
     private func openProjector() { openProjectorWindow(id: "tidbits-bigscreen") }
 
     // MARK: Cockpit
@@ -710,10 +764,14 @@ struct LiveHostView_macOS: View {
                 // mid-round with a room watching.
                 if let clip = session.currentAudioBookmark {   // Wave B: audio round — play this question's clip
                     if LiveClip.isPlayable(clip) {
-                        Button { LiveAudioPlayer.shared.openBookmark(clip); LiveAudioPlayer.shared.togglePlay() } label: {
+                        Button {
+                            LiveAudioPlayer.shared.openBookmark(clip); LiveAudioPlayer.shared.togglePlay()
+                            if LiveAudioPlayer.shared.isPlaying { session.mediaStartedAt = LiveHostNet.nowMS() }   // Decision 060: cue the phones
+                        } label: {
                             Label("Play this clip", systemImage: "play.circle.fill").font(.body)
                         }
                         .buttonStyle(.bordered).tint(Tidbits.Palette.blue)
+                        mediaNoteLine
                     } else {
                         Label("Clip unavailable — re-attach it in the builder", systemImage: "exclamationmark.triangle.fill")
                             .font(.callout).foregroundStyle(Tidbits.Palette.coral)
@@ -721,10 +779,14 @@ struct LiveHostView_macOS: View {
                 }
                 if let vid = session.currentVideoBookmark {   // Wave B: video round — play on the big screen
                     if LiveClip.isPlayable(vid) {
-                        Button { LiveVideoPlayer.shared.openBookmark(vid); LiveVideoPlayer.shared.play() } label: {
+                        Button {
+                            LiveVideoPlayer.shared.openBookmark(vid); LiveVideoPlayer.shared.play()
+                            session.mediaStartedAt = LiveHostNet.nowMS()   // Decision 060: cue the phones
+                        } label: {
                             Label("Play video on the big screen", systemImage: "play.rectangle.fill").font(.body)
                         }
                         .buttonStyle(.bordered).tint(Tidbits.Palette.blue)
+                        mediaNoteLine
                     } else {
                         Label("Video unavailable — re-attach it in the builder", systemImage: "exclamationmark.triangle.fill")
                             .font(.callout).foregroundStyle(Tidbits.Palette.coral)

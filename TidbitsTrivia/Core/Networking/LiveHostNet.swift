@@ -112,6 +112,7 @@ final class LiveHostNet {
             try? await db.delete("\(LiveRoom.path(code))/answers")
             try? await db.delete("\(LiveRoom.path(code))/scores")
             scores = [:]
+            publishedMedia = []
             self.code = code
             self.hostUid = host
             watchTeams(code)
@@ -134,6 +135,27 @@ final class LiveHostNet {
         }
         guard let json = try? JSONEncoder().encode(pub) else { return }
         try? await db.putJSON("\(LiveRoom.path(code))/pub", json)
+    }
+
+    /// Decision 060: write a clip to the room ONCE so every joiner can fetch it.
+    /// Returns whether the node is in place (already written counts). The caller
+    /// publishes the `pub` that references it only after this returns true — a
+    /// reference to a node that is not there is a "Clip unavailable" on forty
+    /// phones.
+    private var publishedMedia: Set<String> = []
+    func publishMedia(id: String, _ media: LiveRoom.RoomMedia) async -> Bool {
+        guard isOpen else { return false }
+        if publishedMedia.contains(id) { return true }
+        guard media.bytes <= LiveRoom.mediaMaxBytes,
+              let json = try? JSONEncoder().encode(media) else { return false }
+        do {
+            try await db.putJSON(LiveRoom.mediaPath(code, id: id), json)
+            publishedMedia.insert(id)
+            return true
+        } catch {
+            lastError = "Couldn't send the clip to the room: \(error)"
+            return false
+        }
     }
 
     func setState(_ state: String) async {

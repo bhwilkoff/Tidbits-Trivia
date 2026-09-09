@@ -69,7 +69,7 @@ enum LiveClip {
 
     /// Resolve a stored bookmark for playback. The caller owns the access scope
     /// and must call `stopAccessingSecurityScopedResource()` when done.
-    static func resolve(_ data: Data) throws -> URL {
+    nonisolated static func resolve(_ data: Data) throws -> URL {
         guard !data.isEmpty else { throw ClipError.missing }
         var stale = false
         guard let url = try? URL(resolvingBookmarkData: data, options: .withSecurityScope,

@@ -221,6 +221,16 @@ incredible bar-trivia big screen in the world. Binding rules:
   space, so the rest of the slide re-centres and the clearances the join panel
   demands go with it. (Owner, 2026-09-06: "so busy with words that are
   unnecessary … turn off each element of the projection as needed.")
+- **A8.8 — What the room hears, the phones can hear.** A clip attached to a
+  question is OFFERED to every joiner (Decision 060): by link when it has
+  one, otherwise as a once-written room node under the 3 MB cap. It is an
+  offer, never a forced autoplay — phones are in pockets and a bar is loud —
+  so the joiner shows a Play control and joins in on the host's cue where the
+  platform allows. The cockpit tells the host, under the Play button, whether
+  the phones have it ("On phones too · 1.2 MB", "On phones by link", or why
+  not). A clip that cannot go to phones is never silent: the line says so,
+  and the PA carries it as before. (Owner, 2026-09-09: "video questions or
+  other media types that get broadcast even on the web app.")
 
 ---
 

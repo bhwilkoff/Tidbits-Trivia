@@ -55,6 +55,15 @@
               ".write": "auth != null && auth.uid === $uid"
             }
           }
+        },
+        "media": {
+          "$id": {
+            ".write": "auth != null && root.child('live').child($code).child('meta/host').val() === auth.uid",
+            ".validate": "newData.hasChildren(['kind','mime','bytes','b64']) && newData.child('b64').isString() && newData.child('b64').val().length <= 4200000 && newData.child('bytes').isNumber() && newData.child('bytes').val() <= 3000000"
+          }
+        },
+        "control": {
+          ".write": "auth != null"
         }
       }
     },

@@ -28,6 +28,9 @@ public sealed class LiveNightHost : ObservableObject
     public string? ErrorText { get; private set; }
 
     public int PointsPerCorrect { get; set; } = 1;
+    /// 3.56: what the room has heard — corpus draws skip it, and every question
+    /// this night shows is written to it. Null in tests that never host.
+    public Store.PlayedLog? Played { get; set; }
     /// Teams the host accepted by hand on this question (3.21): the row says
     /// "Accepted" instead of offering the button again, and "accept from
     /// everyone" never pays one of them twice. Cleared per question.
@@ -550,6 +553,9 @@ public sealed class LiveNightHost : ObservableObject
     /// already-seen de-duplication holds across the corpus-sourced rounds.
     internal async Task<List<Question>> BuildNightQuestions()
     {
+        // 3.56: a sourced round never re-asks what an earlier night showed — the
+        // provider's own seen set is per launch; the log outlives it.
+        if (Played is { } played) _provider.MarkSeen(played.Ids);
         bool anyAuthored = _plan.Rounds
             .Select((_, i) => i < AuthoredQuestions.Count ? AuthoredQuestions[i].Count : 0)
             .Any(n => n > 0);
@@ -610,6 +616,7 @@ public sealed class LiveNightHost : ObservableObject
     private void PrepareQuestion()
     {
         CurrentMedia = null; MediaNote = null; MediaStartedAt = null; CurrentPicture = null;   // Decision 060: offered when in place
+        if (Current is { } shown) Played?.Record(new[] { shown.Id }, Title);   // 3.56: the room heard it
         ManuallyAccepted.Clear();
         _shuffledOrder = Current?.Ordering is { } o ? QueryHelpers.Shuffle(o.ToList()) : new();
         _shuffledValues = Current?.Matching is { } m ? QueryHelpers.Shuffle(m.Values.ToList()) : new();

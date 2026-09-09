@@ -66,6 +66,20 @@ struct LiveEvent: Identifiable, Codable, Hashable {
     var brandHex: String = ""        // Wave D: white-label — the host's brand accent (hex), applied to the big-screen event title
 
     var totalQuestions: Int { rounds.reduce(0) { $0 + $1.questions.count } }
+
+    /// A2.7 — a copy the host can run as a separate night: new event and round
+    /// ids (so both stay in the list), the same questions and settings.
+    func duplicated(named name: String) -> LiveEvent {
+        var copy = self
+        copy.id = UUID(); copy.name = name; copy.createdAt = .now
+        copy.rounds = rounds.map { r in var c = r; c.id = UUID(); return c }
+        return copy
+    }
+    /// "<name> — <next occurrence>" for a recurring night, "<name> copy" otherwise.
+    var cloneName: String {
+        if let next = nextOccurrence { return "\(name) — \(next.formatted(.dateTime.month(.abbreviated).day()))" }
+        return "\(name) copy"
+    }
     /// Wave D: the day-name of a recurring series (nil for a one-off).
     var weekdayName: String? {
         guard let weekday, (1...7).contains(weekday) else { return nil }
@@ -116,10 +130,15 @@ final class LiveEventStore {
 
     /// Build a round for a format+category by pulling questions from the shared
     /// corpus/engine (the host then edits — §A2.2 no-auto-edit gate).
-    static func buildRound(format: GameMode, category: TriviaCategory, count: Int) async -> LiveRound {
+    static func buildRound(format: GameMode, category: TriviaCategory, count: Int,
+                           excluding: Set<String> = []) async -> LiveRound {
         let qs = await QuestionProvider.shared.questions(mode: format, category: category)
+        // A2.6: questions the room has heard (or that are already in the night) go
+        // last, so a draw is fresh whenever the bank can manage it — and never
+        // short when it cannot (a short round is worse than a repeat).
+        let ordered = qs.filter { !excluding.contains($0.id) } + qs.filter { excluding.contains($0.id) }
         return LiveRound(title: format.nightRoundTitle, format: format, categoryID: category.id,
-                         questions: Array(qs.prefix(count)))
+                         questions: Array(ordered.prefix(count)))
     }
 
     /// G5: a BOARD round — a category x tier grid the room picks from.

@@ -558,10 +558,12 @@ struct LiveHostContainer_macOS: View {
             await net.open(name: event.name, venue: event.venue)
             await net.setState("live")
             await net.publish(session.currentPub())
+            if let q = session.current { LivePlayedLog.shared.record([q.id], night: event.name) }   // A2.6: the room heard it
             await syncMedia()
         }
         // Re-publish whenever the host advances or reveals; auto-score on reveal.
         .onChange(of: session.index) { _, _ in
+            if let q = session.current { LivePlayedLog.shared.record([q.id], night: event.name) }
             Task { await net.publish(session.currentPub()); await syncMedia() }
         }
         .onChange(of: session.mediaEpoch) { _, _ in

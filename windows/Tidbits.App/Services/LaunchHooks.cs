@@ -76,6 +76,12 @@ public static class LaunchHooks
     /// TIDBITS_LIVE_HOST_FILE=<path.tidbits|.json> — import that night and host it
     /// straight from launch (the Mac's hook of the same name).
     public static string? LiveHostFile => Env("TIDBITS_LIVE_HOST_FILE");
+    /// TIDBITS_LIVE_IMPORT_FILE=<path.tidbits|.json> — import that night into the
+    /// BUILDER (rounds open) without hosting it, so the builder can be photographed.
+    public static string? LiveImportFile => Env("TIDBITS_LIVE_IMPORT_FILE");
+    /// TIDBITS_LIVE_REFRESH=1 — 20 s in, swap every question the room has heard
+    /// for a fresh one, through the same call as the round menu (3.56).
+    public static bool LiveRefresh => Flag("TIDBITS_LIVE_REFRESH");
     /// TIDBITS_LIVE_TAPCLIP=1 — a joiner takes up a clip offer without a click.
     public static bool LiveTapClip => Flag("TIDBITS_LIVE_TAPCLIP");
 

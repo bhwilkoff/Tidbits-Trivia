@@ -401,6 +401,8 @@ struct LiveBuilderCommands {
     var addBoardRound: () -> Void = {}
     var hostLive: () -> Void = {}
     var previewSolo: () -> Void = {}
+    var duplicateEvent: () -> Void = {}
+    var refreshRepeats: () -> Void = {}
     var importQuestions: () -> Void = {}
     var importQuickQuestions: () -> Void = {}
     var importEvent: () -> Void = {}
@@ -501,6 +503,9 @@ struct TidbitsCommands: Commands {
             Divider()
             Button("Save Event") { live?.saveEvent() }
                 .keyboardShortcut("s", modifiers: .command).disabled(live == nil)
+            Button("Duplicate Event") { live?.duplicateEvent() }.disabled(live == nil)
+            Button("Swap Questions the Room Has Heard") { live?.refreshRepeats() }
+                .disabled(live?.hasQuestions != true)
             Menu("Import") {
                 Button("Event or Package…") { live?.importEvent() }
                 Button("Questions (CSV, GIFT, Aiken)…") { live?.importQuestions() }

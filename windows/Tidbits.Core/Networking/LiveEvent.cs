@@ -139,6 +139,18 @@ public sealed record LiveEvent
         IsRecurring ? RecurringSchedule.Display((DayOfWeek)Weekday!.Value, now) : "";
 
     public NightPlan ToPlan() => new() { Rounds = Rounds.ToList() };
+
+    /// 3.57 — a copy the host runs as a separate night: a new id (so both stay in
+    /// the list), the same questions and settings.
+    public LiveEvent Duplicated(string name) => this with { Id = Guid.NewGuid().ToString("N"), Name = name };
+
+    /// "<name> — <next occurrence>" for a recurring night, "<name> copy" otherwise.
+    public string CloneName(DateTime now) =>
+        IsRecurring ? $"{Name} — {RecurringSchedule.NextOccurrence((DayOfWeek)Weekday!.Value, now):MMM d}" : $"{Name} copy";
+
+    /// 3.56: the ids of the authored questions the room has heard.
+    public IReadOnlyList<string> Repeats(IReadOnlySet<string> played) =>
+        RoundQuestions.SelectMany(r => r).Where(q => played.Contains(q.Id)).Select(q => q.Id).ToList();
 }
 
 /// Recurring-series date math (Wave D). Pure so it can be unit-tested.

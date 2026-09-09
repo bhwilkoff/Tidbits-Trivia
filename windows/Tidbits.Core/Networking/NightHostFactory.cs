@@ -27,6 +27,7 @@ public static class NightHostFactory
         var host = new LiveNightHost(plan, category, provider, title)
         {
             SpeedBonus = speedBonus,
+            Played = Store.PlayedLog.Shared.Value,
             HostPlays = hostPlays,
             HostName = string.IsNullOrWhiteSpace(hostName) ? "Host" : hostName!.Trim(),
             // Without this the editor is theatre: the host edits a question, hits

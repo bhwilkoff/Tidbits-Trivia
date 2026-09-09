@@ -358,3 +358,9 @@ there is no regression baseline at all.
   at `TIDBITS_LIVE_ACCEPT_AT` s (default 30) and rules that typed answer correct
   for everyone (A3.3). The Mac's `TIDBITS_LIVE_HOST_FILE` bare name resolves in
   the sandbox container's Documents — a `/tmp` path is silently not hosted.
+- Builder repeats (A2.6): Mac `TIDBITS_LIVE_FILEOP=importevent TIDBITS_LIVE_FILE=<name>
+  TIDBITS_LIVE_REFRESH=1` imports a night, opens every round at 5 s (badges on
+  screen) and swaps the heard questions at 14 s; Windows box
+  `TIDBITS_LIVE_IMPORT_FILE=<C:\…\night.json> TIDBITS_LIVE_REFRESH=1` does the
+  same at 20 s (window maximised, rounds scrolled into view). Host the same file first so the log has something to name
+  (`scratchpad/e2e_repeats.py`).

@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -114,6 +116,34 @@ public partial class LiveView : UserControl
                     Services.LaunchHooks.Diag($"host-file: FAILED {ex}");
                     ShowStatus($"Could not host {System.IO.Path.GetFileName(hostFile)}: {ex.Message}");
                 }
+            };
+            return;
+        }
+
+        if (Services.LaunchHooks.LiveImportFile is { } importFile && System.IO.File.Exists(importFile))
+        {
+            Loaded += async (_, _) =>
+            {
+                try
+                {
+                    var bytes = System.IO.File.ReadAllBytes(importFile);
+                    using var ms = new System.IO.MemoryStream(bytes, 0, bytes.Length, false, true);
+                    ImportFromStream(ms);
+                    for (int i = 0; i < _rounds.Count; i++) _expandedRounds.Add(i);
+                    RebuildBuilderRounds();
+                    // The rounds are below the fold of a fresh window; the harness
+                    // photographs the desktop, so bring them up and use the display.
+                    if (TopLevel.GetTopLevel(this) is Window win) win.WindowState = WindowState.Maximized;
+                    await Task.Delay(800);
+                    BuilderRounds.BringIntoView();
+                    if (Services.LaunchHooks.LiveRefresh)
+                    {
+                        await Task.Delay(20000);
+                        await RefreshRepeats();
+                        RebuildBuilderRounds();
+                    }
+                }
+                catch (Exception ex) { ShowStatus($"Could not import {System.IO.Path.GetFileName(importFile)}: {ex.Message}"); }
             };
             return;
         }
@@ -257,7 +287,9 @@ public partial class LiveView : UserControl
             Grid.SetColumn(chevron, 0);
             row.Children.Add(chevron);
             int authored = idx < _questions.Count ? _questions[idx].Count : 0;
-            var countText = authored > 0 ? $"{authored} questions (yours)" : $"{r.Count} questions";
+            var countText = authored > 0
+                ? (authored == 1 ? "1 question (yours)" : $"{authored} questions (yours)")
+                : (r.Count == 1 ? "1 question" : $"{r.Count} questions");
             var titleLine = $"{idx + 1}. {r.Kind.Title()} · {countText}";
             var labelBlock = new StackPanel { Spacing = 1, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center };
             labelBlock.Children.Add(new TextBlock
@@ -416,7 +448,7 @@ public partial class LiveView : UserControl
             // Seven columns: number, prompt, difficulty, Edit, Save to library, Duplicate, ✕.
             // The Save button was added at column 6 of a SIX-column grid, which Avalonia
             // clamps to the last column — it would have sat on top of the remove button.
-            var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto,Auto,Auto,Auto") };
+            var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto,Auto,Auto,Auto,Auto") };
             grid.Children.Add(new TextBlock
             {
                 Text = $"{qi + 1}.", FontSize = 12, Opacity = 0.6, MinWidth = 22,
@@ -437,6 +469,17 @@ public partial class LiveView : UserControl
                 Text = AnswerSummary(q, kind), FontSize = 12, Opacity = 0.62,
                 TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis,
             });
+            if (Played.Entry(q.Id) is { } heard)   // 3.56: the room has heard this one
+            {
+                var badge = new TextBlock
+                {
+                    Text = "⟲ " + Tidbits.Core.Store.PlayedLog.AskedLine(heard, DateTimeOffset.Now), FontSize = 12,
+                    Foreground = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#FF5C35")),
+                    TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis,
+                };
+                AutomationProperties.SetName(badge, $"Asked before: question {qi + 1} of round {roundIndex + 1}");
+                text.Children.Add(badge);
+            }
             Grid.SetColumn(text, 1);
             grid.Children.Add(text);
 
@@ -488,10 +531,18 @@ public partial class LiveView : UserControl
             Grid.SetColumn(dup, 5);
             grid.Children.Add(dup);
 
+            // 3.56: a bank question of the same kind the room has NOT heard, in this seat.
+            var fresh = new Button { Content = "Fresh", Padding = new Avalonia.Thickness(10, 4), FontSize = 12, Margin = new Avalonia.Thickness(4, 0, 0, 0) };
+            ToolTip.SetTip(fresh, "Swap for a question from the bank that the room has not heard");
+            AutomationProperties.SetName(fresh, $"Swap question {qi + 1} of round {roundIndex + 1} for a fresh one");
+            fresh.Click += async (_, _) => { await SwapForFresh(roundIndex, qi); RebuildBuilderRounds(); };
+            Grid.SetColumn(fresh, 6);
+            grid.Children.Add(fresh);
+
             var remove = new Button { Content = Icon(FluentAvalonia.UI.Controls.FASymbol.Dismiss), Padding = new Avalonia.Thickness(9, 4), Margin = new Avalonia.Thickness(4, 0, 0, 0) };
             AutomationProperties.SetName(remove, $"Remove question {qi + 1} of round {roundIndex + 1}");
             remove.Click += (_, _) => { _questions[roundIndex].RemoveAt(qi); SyncRoundCount(roundIndex); RebuildBuilderRounds(); };
-            Grid.SetColumn(remove, 6);
+            Grid.SetColumn(remove, 7);
             grid.Children.Add(remove);
 
             // Drop a picture, an audio file or a video onto the question row (the Mac
@@ -572,6 +623,14 @@ public partial class LiveView : UserControl
             };
             more.Items.Add(saveRound);
 
+            var heardCount = qs.Count(q => Played.Ids.Contains(q.Id));
+            if (heardCount > 0)   // 3.56: the repeats, named, with the one-click fix
+            {
+                var swapHeard = new MenuItem { Header = heardCount == 1 ? "Swap the 1 question the room has heard" : $"Swap the {heardCount} questions the room has heard" };
+                AutomationProperties.SetName(swapHeard, $"Swap heard questions in round {roundIndex + 1}");
+                swapHeard.Click += async (_, _) => { await RefreshRepeats(new[] { roundIndex }); RebuildBuilderRounds(); };
+                more.Items.Add(swapHeard);
+            }
             var clear = new MenuItem { Header = "Discard these and draw from the bank" };
             AutomationProperties.SetName(clear, $"Clear authored questions in round {roundIndex + 1}");
             clear.Click += (_, _) => { _questions[roundIndex].Clear(); RebuildBuilderRounds(); };
@@ -644,6 +703,68 @@ public partial class LiveView : UserControl
             FontSize = 12, FontWeight = Avalonia.Media.FontWeight.SemiBold, Foreground = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#FF5C35")),
             Margin = new Avalonia.Thickness(0, 4, 0, 0),
         });
+    }
+
+    private static Tidbits.Core.Store.PlayedLog Played => Tidbits.Core.Store.PlayedLog.Shared.Value;
+
+    /// 3.56: swap one authored question for a bank question of the same kind that
+    /// neither the room has heard nor the night already holds. The seat stays put.
+    /// Returns whether anything changed.
+    private async Task<bool> SwapForFresh(int roundIndex, int qi)
+    {
+        if (roundIndex >= _questions.Count || qi >= _questions[roundIndex].Count || roundIndex >= _rounds.Count) return false;
+        var kind = _rounds[roundIndex].Kind;
+        var cat = CategoryPicker.SelectedItem as TriviaCategory ?? TriviaCategory.Named("mixed");
+        var taken = new HashSet<string>(Played.Ids);
+        foreach (var r in _questions) foreach (var q in r) taken.Add(q.Id);
+        var provider = GameData.Shared.Value.Provider;
+        for (int attempt = 0; attempt < 3; attempt++)
+        {
+            var plan = new NightPlan { Rounds = new[] { new NightRound { Kind = kind, Count = 3 } } };
+            var pulled = await provider.NightQuestions(plan, cat);
+            var pick = pulled.FirstOrDefault(q => !taken.Contains(q.Id));
+            if (pick is not null)
+            {
+                _questions[roundIndex][qi] = pick with { RoundIndex = null };
+                return true;
+            }
+        }
+        ShowStatus($"The bank has nothing fresh for this round — every {kind.NightRoundTitle().ToLowerInvariant()} question has been asked.");
+        return false;
+    }
+
+    /// 3.56: every authored question the room has heard, in the given rounds (all
+    /// by default), swapped for a fresh one. Reports what changed.
+    private async Task RefreshRepeats(IEnumerable<int>? rounds = null)
+    {
+        int swapped = 0, stuck = 0;
+        foreach (var ri in rounds ?? Enumerable.Range(0, _questions.Count))
+        {
+            if (ri >= _questions.Count) continue;
+            for (int qi = 0; qi < _questions[ri].Count; qi++)
+            {
+                if (!Played.Ids.Contains(_questions[ri][qi].Id)) continue;
+                if (await SwapForFresh(ri, qi)) swapped++; else stuck++;
+            }
+        }
+        if (swapped + stuck == 0) return;
+        ShowStatus(swapped == 0
+            ? $"No fresh questions for {stuck} repeat{(stuck == 1 ? "" : "s")} — the bank is spent for those rounds."
+            : (swapped == 1 ? "1 question swapped for a fresh one" : $"{swapped} questions swapped for fresh ones") + (stuck > 0 ? $" · {stuck} had nothing fresh left" : "") + ".");
+    }
+
+    /// 3.57: a copy the host runs as its own night; `fresh` swaps every authored
+    /// question the room has heard (a recurring night's regulars are the same
+    /// people every week). Sourced rounds are fresh at host time by 3.56.
+    private async Task DuplicateEvent(LiveEvent e, bool fresh)
+    {
+        var copy = e.Duplicated(e.CloneName(DateTime.Now));
+        GameData.Shared.Value.LiveEvents.Save(copy);
+        LoadEvent(copy);
+        if (fresh) await RefreshRepeats();
+        GameData.Shared.Value.LiveEvents.Save(CurrentEvent() with { Id = copy.Id });
+        RebuildBuilderRounds(); BuildSavedEvents();
+        ShowStatus($"Saved “{copy.Name}”.");
     }
 
     private LiveEvent CurrentEvent() => new()
@@ -1395,7 +1516,7 @@ public partial class LiveView : UserControl
                 Background = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#0F808080")),
                 CornerRadius = new Avalonia.CornerRadius(10), Padding = new Avalonia.Thickness(14, 10),
             };
-            var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto") };
+            var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto,Auto") };
             grid.Children.Add(new StackPanel
             {
                 VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center, Spacing = 1,
@@ -1414,6 +1535,19 @@ public partial class LiveView : UserControl
             host.Click += (_, _) => StartHosting(e.ToPlan(), e.Name, e);
             Grid.SetColumn(host, 1);
             grid.Children.Add(host);
+            // 3.57: the night as a template — next week's copy, fresh where the room has heard it.
+            var clone = new Button
+            {
+                Content = e.IsRecurring ? $"Clone for next {(DayOfWeek)e.Weekday!.Value}" : "Duplicate",
+                Padding = new Avalonia.Thickness(10, 7), Margin = new Avalonia.Thickness(8, 0, 0, 0),
+            };
+            ToolTip.SetTip(clone, e.IsRecurring
+                ? "A copy for next week — every question the room has heard is swapped for a fresh one"
+                : "A copy you can run as its own night");
+            AutomationProperties.SetName(clone, $"Duplicate saved event {e.Name}");
+            clone.Click += async (_, _) => await DuplicateEvent(e, fresh: e.IsRecurring);
+            Grid.SetColumn(clone, 2);
+            grid.Children.Add(clone);
             var del = new Button
             {
                 // A Unicode ✕ as Content falls back to the TEXT font, and Inter has no
@@ -1425,7 +1559,7 @@ public partial class LiveView : UserControl
             };
             AutomationProperties.SetName(del, $"Delete saved event {e.Name}");
             del.Click += (_, _) => { GameData.Shared.Value.LiveEvents.Remove(e.Id); BuildSavedEvents(); };
-            Grid.SetColumn(del, 2);
+            Grid.SetColumn(del, 3);
             grid.Children.Add(del);
             row.Child = grid;
             SavedEvents.Children.Add(row);

@@ -52,9 +52,12 @@ in both directions (see the last paragraph).
    (A3.6 / 3.55): Edit question on both cockpits, republished at once.
 3. ~~**Retroactive "mark correct for all"**~~ — DONE 2026-09-09 (A3.3
    addendum / 3.21): "Accept from everyone" on both cockpits.
-4. **Avoid-repeats** — no "last used" / dedupe warning across nights. S.
-5. **Duplicate an event / clone last week + recurring auto-spawn** — recurring
-   is display-only. S/M.
+4. ~~**Avoid-repeats**~~ — DONE 2026-09-09 (A2.6 / 3.56): the played log,
+   badges, swap-for-fresh, heard-last bank draws.
+5. ~~**Duplicate an event / clone last week**~~ — DONE 2026-09-09 (A2.7 /
+   3.57): Duplicate, and Clone for next <weekday> with fresh questions.
+   (Auto-spawn without a click was NOT built: a night that appears on its own
+   is a night nobody proof-read — the clone is one click on the day.)
 6. **Numeric tie-break engine on Windows** — Windows is a pick-the-winner
    dialog; the Mac collects guesses vs a target. S.
 7. **Per-question timer & points overrides** (round-level only today). M.
@@ -2214,3 +2217,27 @@ review sits at the bottom of the cockpit scroll (two rows visible at 1080p);
 a fixture with blank options paints empty tally bars on Windows (the builder
 never makes one). Versions 1.9.10 / 140 / vc101 / MSIX 1.9.10.0. Next:
 punch list 4 (avoid-repeats across nights) and 5 (clone + recurring spawn).
+
+**2026-09-09m — Live loop tick 13: the builder names what the room has heard;
+a night is a template.** Punch list 4 + 5. Audit first: the Swift provider's
+`seen` set persists and is marked at PULL (solo play + builder pulls alike), the
+Windows `_seen` is per launch — neither could tell a host "this saved night
+asked that last Friday", which is the pub scenario ("re-run it next week").
+Built: `LivePlayedLog` (Core, UserDefaults) / `PlayedLog` (Core, JSON) written
+by the HOST when a question is shown (Mac container open + index change;
+Windows `PrepareQuestion`), read by the builder for the "Asked … · <night>"
+badge, the round header count + "Swap them for fresh ones", per-row "Swap for a
+fresh one" / **Fresh**, `buildRound(excluding:)` (heard last, never short) and
+Windows `MarkSeen(played)` before a sourced draw; `LiveEvent.duplicated`/
+`cloneName` (+ Windows `Duplicated`/`CloneName`/`Repeats`) behind Duplicate /
+"Clone for next <weekday> with fresh questions" in the event list (Mac context
+menu + File menu; Windows saved-events row). Hooks `TIDBITS_LIVE_REFRESH=1`
+(both), `TIDBITS_LIVE_IMPORT_FILE` (Windows). **Verified on the glass**
+(`scratchpad/e2e_repeats.py`): hosted the QA night on the Mac, reopened it in
+the builder → "1 question the room has heard · Swap it for a fresh one" and
+"Asked today · Edit & Accept QA" under question 1 (question 2 was never shown
+and carries no badge), then the swap: a fresh Name-It question in the seat and
+"1 question swapped for a fresh one". Same on the real Windows box (`TIDBITS_LIVE_IMPORT_FILE`, window maximised by the hook: the rounds sat below the fold of a fresh window and the first capture showed no rounds at all — the capture rig, not the feature). Not built: auto-spawn without
+a click (a night nobody proof-read). Versions 1.9.11 / 141 / vc102 / MSIX
+1.9.11.0. Next: punch list 6 (Windows numeric tie-break engine) and 7
+(per-question timer/points overrides).

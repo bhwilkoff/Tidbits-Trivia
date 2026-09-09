@@ -104,6 +104,24 @@ as a single self-describing JSON document, plus CSV import for a question bank.
 A host's night is their work product; it must survive a reinstall, move between
 their Mac and their Windows box, and be shareable with a co-host.
 
+A2.6 **The builder names what the room has already heard** (2026-09-09). A
+saved night is meant to be re-run, and re-run verbatim it asks the same
+questions to the same regulars. Every question a HOSTED night shows (not what
+the builder pulled — pulling is not asking) is logged with the date and the
+night's name; the builder puts "Asked 6 days ago · Friday Pub Quiz" under such a
+question, a round header counts them with "Swap them for fresh ones", and each
+question's menu has "Swap for a fresh one" — a bank question of the same
+format and category that neither the room has heard nor the night already
+holds, in the same seat. A bank draw itself puts heard questions last, and is
+never short because of it (a short round is worse than a repeat). The host
+decides; nothing is swapped without a click.
+
+A2.7 **A night is a template for the next one.** "Duplicate" on a saved event
+makes a copy that lives as its own night; on a recurring event the same
+command reads "Clone for next <weekday> with fresh questions" and, having
+copied, swaps every question the room has heard (A2.6). Both are also under
+File. The event list is the host's season, not a single Friday.
+
 A2.3 **Round formats (MVP set), Tidbits-native:** MCQ, True/False, Picture,
 Nearest-Wins (numeric — also the tie-break unit), Ordering, Wager (Stake),
 Poll/Majority. Audio round and Fastest-Finger (speed scoring) are Phase B.

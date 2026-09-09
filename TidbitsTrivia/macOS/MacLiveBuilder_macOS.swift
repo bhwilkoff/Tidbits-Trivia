@@ -26,6 +26,7 @@ struct LiveBuilderView_macOS: View {
     @State private var busy = false
     @State private var expandedRounds: Set<UUID> = []
     @State private var editing: EditingQuestion?
+    private var played: LivePlayedLog { LivePlayedLog.shared }   // A2.6: what the room has heard
     /// The last file operation's result, shown on the builder. A host who exports
     /// and sees nothing cannot tell success from a silently-cancelled panel — and
     /// it is what makes the file path GRADEABLE from a screenshot.
@@ -77,6 +78,8 @@ struct LiveBuilderView_macOS: View {
             addBoardRound: { addBoardRound() },
             hostLive: { store.upsert(working); onHost(working) },
             previewSolo: { store.upsert(working); onPreview(working) },
+            duplicateEvent: { duplicateEvent(working, fresh: working.weekday != nil) },
+            refreshRepeats: { Task { await refreshRepeats() } },
             importQuestions: { importCSV() },
             importQuickQuestions: { importQuickQuestions() },
             importEvent: { importEvent() },
@@ -154,6 +157,17 @@ struct LiveBuilderView_macOS: View {
                 fileReceipt = "Printed \(LivePrint.lastRenderedPages) pages"
             default: break
             }
+        }
+        // TIDBITS_LIVE_REFRESH=1 — after the import above lands, open every round
+        // (so the asked-before badges are on screen at 5 s) and at 14 s swap the
+        // questions the room has heard, through the same call as the button
+        // (A2.6; hooks-are-coverage). No-op in production.
+        .task {
+            guard ProcessInfo.processInfo.environment["TIDBITS_LIVE_REFRESH"] == "1" else { return }
+            try? await Task.sleep(for: .seconds(5))
+            expandedRounds = Set(working.rounds.map(\.id))
+            try? await Task.sleep(for: .seconds(9))
+            await refreshRepeats()
         }
         // TIDBITS_LIVE_ADDVIDEO=1 — build a VIDEO round on launch, paired with
         // TIDBITS_LIVE_CLIPS. A video round that renders a black rectangle passes
@@ -273,7 +287,15 @@ struct LiveBuilderView_macOS: View {
                         }
                     }
                     .tag(ev.id)
-                    .contextMenu { Button("Delete", role: .destructive) { store.delete(ev) } }
+                    .contextMenu {
+                        // A2.7: the night as a template — next week's copy, fresh where the
+                        // room has heard it.
+                        Button(ev.weekday != nil ? "Clone for next \(ev.weekdayName ?? "week") with fresh questions" : "Duplicate") {
+                            duplicateEvent(ev, fresh: ev.weekday != nil)
+                        }
+                        if ev.weekday != nil { Button("Duplicate as is") { duplicateEvent(ev, fresh: false) } }
+                        Button("Delete", role: .destructive) { store.delete(ev) }
+                    }
                 }
             }
             .onChange(of: selectedID) { _, id in
@@ -582,6 +604,20 @@ struct LiveBuilderView_macOS: View {
                 .font(.callout)
                 .foregroundStyle(bad.isEmpty ? Tidbits.Palette.inkSoft : Color.orange)
             }
+            // A2.6: a re-run night names its repeats up front, with the one-click fix.
+            let heard = LivePlayedLog.repeats(in: round.questions, played: played.ids).count
+            if heard > 0 {
+                HStack(spacing: 8) {
+                    Label(heard == 1 ? "1 question the room has heard" : "\(heard) questions the room has heard",
+                          systemImage: "clock.arrow.circlepath")
+                        .font(.callout).foregroundStyle(Tidbits.Palette.coral)
+                    Button(heard == 1 ? "Swap it for a fresh one" : "Swap them for fresh ones") {
+                        Task { await refreshRepeats(rounds: [i]) }
+                    }
+                    .buttonStyle(.bordered).controlSize(.small).disabled(busy)
+                    .accessibilityIdentifier("live.refreshRepeats")
+                }
+            }
             TextField("Host note (shown in the cockpit)", text: Binding(   // Wave A — its own line, full width
                 get: { working.rounds[i].hostNote ?? "" },
                 set: { working.rounds[i].hostNote = $0.isEmpty ? nil : $0 }))
@@ -710,6 +746,11 @@ struct LiveBuilderView_macOS: View {
                     .multilineTextAlignment(.leading)
                 Text(answerSummary(q, format: format))
                     .font(.caption).foregroundStyle(Tidbits.Palette.inkSoft).lineLimit(1)
+                if let e = played.entry(q.id) {   // A2.6: the room has heard this one
+                    Label(LivePlayedLog.askedLine(e), systemImage: "clock.arrow.circlepath")
+                        .font(.caption).foregroundStyle(Tidbits.Palette.coral).lineLimit(1)
+                        .accessibilityIdentifier("live.askedBefore")
+                }
             }
             Spacer(minLength: 8)
             Text("D\(q.difficulty)")
@@ -725,6 +766,7 @@ struct LiveBuilderView_macOS: View {
                     fileReceipt = new ? "Saved to your library (\(library.items.count))" : "Already in your library — updated"
                 }
                 Button("Duplicate") { insertQuestion(q.duplicatedForEditing(), into: ri, at: qi + 1) }
+                Button("Swap for a fresh one") { Task { await swapForFresh(ri, qi) } }.disabled(busy)
                 Button("Move up") { moveQuestion(ri, from: qi, to: qi - 1) }.disabled(qi == 0)
                 Button("Move down") { moveQuestion(ri, from: qi, to: qi + 1) }
                     .disabled(qi >= working.rounds[ri].questions.count - 1)
@@ -1387,6 +1429,51 @@ struct LiveBuilderView_macOS: View {
     private func newEvent() {
         working = LiveEvent(name: "New Event")
         selectedID = nil
+    }
+
+    /// A2.7: a copy the host runs as its own night; `fresh` swaps every question
+    /// the room has heard for one it has not (a recurring night's regulars are
+    /// the same people every week).
+    private func duplicateEvent(_ ev: LiveEvent, fresh: Bool) {
+        let copy = ev.duplicated(named: ev.cloneName)
+        store.upsert(copy)
+        working = copy
+        selectedID = copy.id
+        if fresh { Task { await refreshRepeats() } }
+    }
+
+    /// Swap one question for a bank question of the same format and category that
+    /// neither the room has heard nor the night already holds. The row stays put.
+    private func swapForFresh(_ ri: Int, _ qi: Int) async {
+        guard working.rounds.indices.contains(ri), working.rounds[ri].questions.indices.contains(qi) else { return }
+        busy = true; defer { busy = false }
+        let round = working.rounds[ri]
+        let taken = played.ids.union(working.questionStream.map(\.id))
+        let drawn = await LiveEventStore.buildRound(format: round.format, category: .named(round.categoryID),
+                                                    count: 1, excluding: taken)
+        guard let q = drawn.questions.first, !taken.contains(q.id),
+              working.rounds.indices.contains(ri), working.rounds[ri].questions.indices.contains(qi) else {
+            fileReceipt = "The bank has nothing fresh for this round — every \(round.format.nightRoundTitle.lowercased()) question has been asked."
+            return
+        }
+        working.rounds[ri].questions[qi] = q
+    }
+
+    /// Every question the room has heard, in the given rounds (all by default),
+    /// swapped for a fresh one. Reports what changed.
+    private func refreshRepeats(rounds: [Int]? = nil) async {
+        var swapped = 0, stuck = 0
+        for ri in rounds ?? Array(working.rounds.indices) where working.rounds.indices.contains(ri) {
+            for qi in working.rounds[ri].questions.indices where played.ids.contains(working.rounds[ri].questions[qi].id) {
+                let before = working.rounds[ri].questions[qi].id
+                await swapForFresh(ri, qi)
+                if working.rounds[ri].questions[qi].id != before { swapped += 1 } else { stuck += 1 }
+            }
+        }
+        if swapped + stuck > 0 {
+            fileReceipt = swapped == 0 ? "No fresh questions for \(stuck) repeat\(stuck == 1 ? "" : "s") — the bank is spent for those rounds."
+                : (swapped == 1 ? "1 question swapped for a fresh one" : "\(swapped) questions swapped for fresh ones") + (stuck > 0 ? " · \(stuck) had nothing fresh left" : "")
+        }
     }
     private func move(_ i: Int, up: Bool) {
         let t = up ? i - 1 : i + 1

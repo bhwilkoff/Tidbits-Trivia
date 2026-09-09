@@ -196,7 +196,7 @@ public partial class ProjectorView : UserControl
         var url = vm?.PictureUrl ?? "";
         if (url == _pictureUrl) return;
         _pictureUrl = url;
-        Picture.Source = null; PictureHint.IsVisible = true; PictureHint.Text = "Loading picture…";
+        Picture.Source = null; PictureHint.IsVisible = true; PictureHint.Text = "Loading picture";
         if (url.Length == 0) return;
         if (Services.ImageCache.Shared.Cached(url) is { } cached) { Picture.Source = cached; PictureHint.IsVisible = false; return; }
         Services.ImageCache.Shared.LoadAsync(url).ContinueWith(t =>

@@ -127,7 +127,7 @@
                         <Border IsVisible="{Binding ShowPicture}" Height="{Binding PictureHeight}" CornerRadius="16" ClipToBounds="True"
                                 Background="#1C1C28" HorizontalAlignment="Center" MinWidth="400">
                             <Panel>
-                                <TextBlock x:Name="PictureHint" Text="Loading picture…" Foreground="White" Opacity="0.6" FontSize="22"
+                                <TextBlock x:Name="PictureHint" Text="Loading picture" Foreground="White" Opacity="0.6" FontSize="22"
                                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 <Image x:Name="Picture" Stretch="Uniform"/>
                             </Panel>

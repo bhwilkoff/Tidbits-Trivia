@@ -65,7 +65,34 @@ public partial class JoinPlayerView : UserControl
         RebuildCoplayers();
     }
 
-    private void OnClientChanged() => Avalonia.Threading.Dispatcher.UIThread.Post(() => { RebuildOptions(); RebuildCoplayers(); RefreshClip(); });
+    private void OnClientChanged() => Avalonia.Threading.Dispatcher.UIThread.Post(() => { RebuildOptions(); RebuildCoplayers(); RefreshClip(); RefreshPicture(); });
+
+    // ---- Decision 060 (pictures) ----------------------------------------------
+    private string _pictureKey = "";
+    private async void RefreshPicture()
+    {
+        var vm = _vm; var key = vm?.PictureKey ?? "";
+        if (key == _pictureKey) return;
+        _pictureKey = key;
+        PictureImage.Source = null;
+        if (vm is null || !vm.HasPicture) return;
+        if (vm.PictureFallback is { } fb)
+        {
+            var bmp = await Services.ImageCache.Shared.LoadAsync(fb);
+            if (_pictureKey == key && bmp is not null) PictureImage.Source = bmp;
+        }
+        if (vm.Picture is { } pic)
+        {
+            try
+            {
+                var path = await LiveMediaCache.Shared.LocalPath(pic, vm.Client.Code);
+                if (_pictureKey != key) return;
+                using var fs = System.IO.File.OpenRead(path);
+                PictureImage.Source = new Avalonia.Media.Imaging.Bitmap(fs);
+            }
+            catch { /* the fallback stays */ }
+        }
+    }
 
     // ---- Decision 060: the host's clip on a Windows joiner ---------------------
     private string _clipKey = "";

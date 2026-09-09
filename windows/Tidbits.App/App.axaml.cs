@@ -21,6 +21,7 @@ public partial class App : Application
         // Core cannot encode images; the App lends it Skia so a package picture can
         // reach the phones as a small data URL (LIVE-PACKAGE-FORMAT §5.3).
         Tidbits.Core.Networking.LiveMediaStore.DataUrlProvider = Services.MediaPublisher.DataUrl;
+        Tidbits.Core.Networking.LiveMediaStore.JpegProvider = Services.MediaPublisher.JpegUnder;
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             desktop.MainWindow = new MainWindow

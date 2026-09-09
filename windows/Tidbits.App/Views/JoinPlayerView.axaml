@@ -60,6 +60,12 @@
                 </StackPanel>
                 <TextBlock IsVisible="{Binding HasLetter}" Text="{Binding LetterBanner}"
                            FontWeight="Black" FontSize="13" Foreground="#FF5C35"/>
+                <!-- The question's picture: the small fallback at once, the full room-node
+                     version once fetched (Decision 060) -->
+                <Border IsVisible="{Binding HasPicture}" CornerRadius="12" ClipToBounds="True" Height="220"
+                        Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
+                    <Image x:Name="PictureImage" Stretch="Uniform"/>
+                </Border>
                 <!-- Decision 060: the host's clip, offered here too -->
                 <StackPanel IsVisible="{Binding HasMedia}" Spacing="6">
                     <Button x:Name="ClipButton" Click="OnPlayClip" Classes="accent" Padding="14,10" HorizontalAlignment="Stretch"

@@ -138,6 +138,48 @@ public static class LiveMediaStore
     /// (downscaled for venue Wi-Fi). Core has no image codec, and a null provider
     /// means a store-only picture is projector-only, which is the truthful result.
     public static Func<string, string?>? DataUrlProvider { get; set; }
+    /// (path, maxSide, maxBytes) → JPEG bytes. Installed by the app (SkiaSharp);
+    /// Core has no codec. The node/fallback split below is built on it.
+    public static Func<string, int, int, byte[]?>? JpegProvider { get; set; }
+
+    /// Decision 060 (pictures): the https twin, or the picture split into a
+    /// once-written room NODE (the full ≤800 px JPEG) plus a SMALL data-URL
+    /// fallback (≤320 px, ~20 KB) that rides in `imageURL`. Measured 2026-09-09:
+    /// the full data URL made `pub` 108 KB, re-sent on every state change.
+    public sealed record PublishablePicture(string? Fallback, LiveRoom.RoomMedia? Node, string? Id, LiveRoom.Media? Wire);
+    public const int NodeThresholdBytes = 30_000;
+    public const int PublishMaxPixels = 800, PublishMaxBytes = 120_000;
+    public const int FallbackMaxPixels = 320, FallbackMaxBytes = 20_000;
+    private static readonly Dictionary<string, PublishablePicture> PictureCache = new();
+
+    public static PublishablePicture PublishPicture(string? url)
+    {
+        var id = IdFrom(url);
+        if (id is null) return new(url, null, null, null);
+        var idx = LoadIndex();
+        if (idx.TryGetValue(id, out var info) && info.SourceUrl is { } s && s.StartsWith("http")) return new(s, null, null, null);
+        lock (Gate)
+        {
+            if (PictureCache.TryGetValue(id, out var hit)) return hit;
+            var path = FilePath(id);
+            var full = path is null ? null : JpegProvider?.Invoke(path, PublishMaxPixels, PublishMaxBytes);
+            PublishablePicture outp;
+            if (full is null) outp = new(null, null, null, null);
+            else if (full.Length <= NodeThresholdBytes) outp = new("data:image/jpeg;base64," + Convert.ToBase64String(full), null, null, null);
+            else
+            {
+                var small = JpegProvider?.Invoke(path!, FallbackMaxPixels, FallbackMaxBytes) ?? full;
+                var nodeId = IdFor(full);
+                var name = info?.OriginalName is { } on ? System.IO.Path.GetFileNameWithoutExtension(on) : null;
+                outp = new("data:image/jpeg;base64," + Convert.ToBase64String(small),
+                           new LiveRoom.RoomMedia { Kind = "image", Mime = "image/jpeg", Bytes = full.Length, B64 = Convert.ToBase64String(full) },
+                           nodeId,
+                           new LiveRoom.Media { Kind = "image", Url = $"{LiveRoom.MediaScheme}:{nodeId}", Mime = "image/jpeg", Name = name, Bytes = full.Length });
+            }
+            PictureCache[id] = outp;
+            return outp;
+        }
+    }
     private static readonly Dictionary<string, string> DataUrlCache = new();
 
     /// What a JOINER may be given (§5.3): the https twin when there is one,

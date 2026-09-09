@@ -116,6 +116,13 @@ public sealed class LivePlayerViewModel : ObservableObject
         }
     }
     public string MediaKey => Media is { } m ? $"{Client.Pub?.Qid}|{m.Url}" : "";
+    /// The question's picture: the small fallback now, the room node's full
+    /// version once fetched (Decision 060). The Windows joiner never showed a
+    /// picture at all before this.
+    public string? PictureFallback => Client.Pub?.ImageUrl;
+    public LiveRoom.Media? Picture => Client.Pub?.Picture;
+    public bool HasPicture => !string.IsNullOrWhiteSpace(PictureFallback) || Picture is not null;
+    public string PictureKey => $"{Client.Pub?.Qid}|{Picture?.Url}|{(PictureFallback ?? "").Length}";
     public System.Collections.Generic.IReadOnlyList<PlayerIdentity.Friend> Coplayers => Client.Coplayers;
     public bool HasCoplayers => IsEnded && Client.Coplayers.Count > 0;
     public bool IsFriend(string uid) { try { return Services.GameData.Shared.Value.Friends.Contains(uid); } catch { return false; } }

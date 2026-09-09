@@ -232,16 +232,26 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
                         color = MaterialTheme.colorScheme.primary)
                 }
                 Spacer(Modifier.height(10.dp))
-                p.imageUrl?.let { url ->
+                if (p.imageUrl != null || p.picture != null) {
                     // A host may publish the picture itself as a data URL (a picture that
                     // lives only in the host's package — LIVE-PACKAGE-FORMAT §5.3). Coil
-                    // takes the decoded bytes as a model; a URL stays a URL.
-                    val model: Any = if (url.startsWith("data:")) {
-                        runCatching { android.util.Base64.decode(url.substringAfter(",", ""), android.util.Base64.DEFAULT) }
-                            .getOrNull() ?: url
-                    } else url
-                    AsyncImage(model = model, contentDescription = null, modifier = Modifier.fillMaxWidth().height(220.dp))
-                    Spacer(Modifier.height(12.dp))
+                    // takes the decoded bytes as a model; a URL stays a URL. Decision 060:
+                    // when the FULL picture is a room node, fetch it once and swap it in;
+                    // the small fallback shows meanwhile.
+                    val fallback: Any? = p.imageUrl?.let { url ->
+                        if (url.startsWith("data:")) runCatching { android.util.Base64.decode(url.substringAfter(",", ""), android.util.Base64.DEFAULT) }.getOrNull() ?: url else url
+                    }
+                    val ctx = androidx.compose.ui.platform.LocalContext.current
+                    var full by remember(p.qid, p.picture?.url) { mutableStateOf<java.io.File?>(null) }
+                    LaunchedEffect(p.qid, p.picture?.url) {
+                        val pic = p.picture ?: return@LaunchedEffect
+                        full = runCatching { LiveMediaCache.uriFor(ctx, code, pic).path?.let { java.io.File(it) } }.getOrNull()
+                    }
+                    val model: Any? = full ?: fallback
+                    if (model != null) {
+                        AsyncImage(model = model, contentDescription = null, modifier = Modifier.fillMaxWidth().height(220.dp))
+                        Spacer(Modifier.height(12.dp))
+                    }
                 }
                 p.media?.let { m ->   // Decision 060: the host's clip, offered here too
                     androidx.compose.runtime.key(p.qid, m.url) { LiveClipCard(m, code) }

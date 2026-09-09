@@ -112,6 +112,10 @@ public static class LiveRoom
         /// Decision 060: the clip attached to this question, offered to every
         /// joiner. Mirrors Swift `Pub.media`; null on a question without one.
         [JsonPropertyName("media")] public Media? Media { get; init; }
+        /// Decision 060 (pictures): a store-only picture over the data-URL budget as a
+        /// once-written room node (`kind: "image"`); `imageURL` keeps a ≤320 px
+        /// fallback for a joiner that predates this key.
+        [JsonPropertyName("picture")] public Media? Picture { get; init; }
     }
 
     /// Decision 060: a clip as the joiners are given it — an https FILE link, or

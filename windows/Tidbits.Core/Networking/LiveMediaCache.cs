@@ -30,7 +30,11 @@ public sealed class LiveMediaCache
         "video/mp4" => "mp4",
         "video/quicktime" => "mov",
         "video/webm" => "webm",
-        _ => kind == "video" ? "mp4" : "m4a",
+        "image/jpeg" or "image/jpg" => "jpg",
+        "image/png" => "png",
+        "image/gif" => "gif",
+        "image/webp" => "webp",
+        _ => kind == "video" ? "mp4" : kind == "image" ? "jpg" : "m4a",
     };
 
     /// A path or URL a player can open for this offer.

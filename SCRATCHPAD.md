@@ -7,6 +7,32 @@
 > `docs/ROADMAP.md`, `docs/DATA-CONTRACT.md`. Detailed per-round history is in
 > `ARCHIVE.md`.
 
+## Current state (2026-09-09i) — the picture node on the Windows host + joiner and Android (closes the picture path)
+
+**Did:** C# `LiveMediaStore.PublishPicture` (the same split as the Mac, over
+a `JpegProvider` the app installs from `MediaPublisher.JpegUnder`),
+`LiveNightHost.SyncPicture`/`CurrentPicture`, `Pub.Picture`; the Windows
+joiner draws a picture for the FIRST time (it never had one): the fallback
+at once through `ImageCache` (which now decodes `data:` URLs), the room
+node's full version once fetched. Android: `picture` parsed; the room node
+fetched once through `LiveMediaCache` and swapped in over the fallback.
+3 C# tests pin the split with a stubbed JPEG maker (SkiaSharp's natives do
+not load in the Mac head's test process; the real encoder is exercised on
+windows-latest). Apple 1.9.7 (137), Android 1.9.7 (vc 99), Windows 1.9.7.
+
+**Verified on real hardware:** the Windows box hosted the store-only photo —
+`pub` 18 KB with a 17.8 KB fallback, the node 46 KB written once; the
+Windows box JOINED a Mac-hosted picture room and drew the photo (its first
+picture ever); the onn Android TV dongle joined the same room and drew it.
+
+**Found on the way — a real pre-existing Windows bug:** the first Windows
+host run published NO picture at all, neither fallback nor node. The
+launch-hook log said `JpegUnder: encode returned null` — Skia's JPEG encoder
+returns null for the `Rgb888x` raster `MediaPublisher` drew into, on the real
+box. That is the same code the 2026-09-07 data-URL path used, so a
+Windows-hosted store-only picture had never reached a phone; the 09-07
+verification was Mac-hosted. Fixed with the platform's default 8888 format.
+
 ## Current state (2026-09-09h) — pictures ride the once-written node (Mac host + web/Apple joiners)
 
 **Did:** `LiveMediaStore.publishablePicture` splits a store-only picture:

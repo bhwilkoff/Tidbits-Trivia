@@ -398,6 +398,9 @@ object FirebaseNet {
         /** Decision 060: the clip attached to this question, OFFERED to every joiner.
          *  Mirrors Swift `Pub.media`; null on a question without one. */
         val media: LiveMedia? = null,
+        /** Decision 060 (pictures): the full picture as a room node; `imageUrl` is
+         *  then a small fallback. Mirrors Swift `Pub.picture`. */
+        val picture: LiveMedia? = null,
     )
 
     /** Decision 060: a clip as the joiners are given it — an https FILE link, or
@@ -527,6 +530,11 @@ object FirebaseNet {
                     remaining = (b.child("remaining").getValue(Long::class.java) ?: 0L).toInt(),
                     points = (b.child("points").getValue(Long::class.java) ?: 0L).toInt(),
                 )
+            },
+            picture = snap.child("picture").takeIf { it.exists() }?.let { m ->
+                val url = m.child("url").getValue(String::class.java) ?: return@let null
+                LiveMedia(kind = "image", url = url, mime = m.child("mime").getValue(String::class.java) ?: "image/jpeg",
+                    name = m.child("name").getValue(String::class.java), bytes = m.child("bytes").getValue(Long::class.java)?.toInt())
             },
             media = snap.child("media").takeIf { it.exists() }?.let { m ->
                 val url = m.child("url").getValue(String::class.java) ?: return@let null

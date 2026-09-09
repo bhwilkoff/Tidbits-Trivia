@@ -16,24 +16,33 @@ public static class MediaPublisher
 
     public static string? DataUrl(string path)
     {
+        var bytes = JpegUnder(path, MaxPixels, MaxBytes);
+        return bytes is null ? null : "data:image/jpeg;base64," + Convert.ToBase64String(bytes);
+    }
+
+    /// A JPEG no larger than `maxSide` and, by shrinking, no heavier than
+    /// `maxBytes` (floor: 160 px). The Decision 060 picture node and its small
+    /// fallback are both made here.
+    public static byte[]? JpegUnder(string path, int maxSide, int maxBytes)
+    {
         try
         {
+            LaunchHooks.Diag($"JpegUnder: {path} exists={File.Exists(path)} side={maxSide} max={maxBytes}");
             using var src = SKBitmap.Decode(path);
-            if (src is null) return null;
-            int side = MaxPixels;
+            if (src is null) { LaunchHooks.Diag("JpegUnder: decode returned null"); return null; }
+            int side = maxSide;
             int quality = 60;
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < 6; i++)
             {
                 var bytes = Jpeg(src, side, quality);
-                if (bytes is null) return null;
-                if (bytes.Length <= MaxBytes || side <= 320)
-                    return "data:image/jpeg;base64," + Convert.ToBase64String(bytes);
+                if (bytes is null) { LaunchHooks.Diag("JpegUnder: encode returned null"); return null; }
+                if (bytes.Length <= maxBytes || side <= 160) { LaunchHooks.Diag($"JpegUnder: ok {bytes.Length} bytes at {side}px"); return bytes; }
                 side = side * 3 / 4;
                 quality = Math.Max(40, quality - 10);
             }
             return null;
         }
-        catch { return null; }
+        catch (Exception ex) { LaunchHooks.Diag($"JpegUnder: FAILED {ex}"); return null; }
     }
 
     private static byte[]? Jpeg(SKBitmap src, int maxSide, int quality)
@@ -41,7 +50,10 @@ public static class MediaPublisher
         var scale = Math.Min(1.0, (double)maxSide / Math.Max(src.Width, src.Height));
         var w = Math.Max(1, (int)(src.Width * scale));
         var h = Math.Max(1, (int)(src.Height * scale));
-        using var surface = SKSurface.Create(new SKImageInfo(w, h, SKColorType.Rgb888x, SKAlphaType.Opaque));
+        // The platform's default 8888 format, NOT Rgb888x: Skia's JPEG encoder
+        // returned null for an Rgb888x raster on the real Windows box, so every
+        // store-only picture silently had no data URL and no node (2026-09-09).
+        using var surface = SKSurface.Create(new SKImageInfo(w, h));
         var canvas = surface.Canvas;
         canvas.Clear(SKColors.White);   // JPEG has no alpha: white behind a PNG
         using var image = SKImage.FromBitmap(src);

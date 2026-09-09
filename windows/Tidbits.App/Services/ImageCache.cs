@@ -41,7 +41,9 @@ public sealed class ImageCache
             // §5.2); a missing one returns null and the caller shows its fallback.
             var local = Tidbits.Core.Networking.LiveMediaStore.Resolve(url);
             if (local is null) return null;
-            if (local.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+            if (local.StartsWith("data:", StringComparison.OrdinalIgnoreCase))   // the joiner's small fallback (Decision 060)
+                stream = new MemoryStream(Convert.FromBase64String(local[(local.IndexOf(',') + 1)..]));
+            else if (local.StartsWith("http", StringComparison.OrdinalIgnoreCase))
                 stream = new MemoryStream(await _http.GetByteArrayAsync(local));
             else
                 stream = File.OpenRead(local);

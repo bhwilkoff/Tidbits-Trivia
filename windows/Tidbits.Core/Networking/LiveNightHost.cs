@@ -78,12 +78,29 @@ public sealed class LiveNightHost : ObservableObject
     public string? MediaNote { get; private set; }
     /// Epoch ms of the host's Play, published so phones ready and position the clip.
     public long? MediaStartedAt { get; private set; }
+    /// Decision 060 (pictures): the current question's picture node once it is in
+    /// the room; null until then (the small fallback in `imageURL` shows).
+    public LiveRoom.Media? CurrentPicture { get; private set; }
+
+    private async Task SyncPicture()
+    {
+        var q = Current; if (q?.ImageUrl is null) return;
+        var index = Index;
+        var pic = await Task.Run(() => LiveMediaStore.PublishPicture(q.ImageUrl));
+        if (Index != index || pic.Id is null || pic.Node is null || pic.Wire is null) return;
+        if (!await Net.PublishMedia(pic.Id, pic.Node)) return;
+        if (Index != index) return;
+        CurrentPicture = pic.Wire;
+        await Net.Publish(BuildPub());
+        Notify();
+    }
 
     /// Offer the current question's clip to the phones: prepare it, write the node
     /// BEFORE the pub that references it, and never publish over a question the
     /// host has already left.
     public async Task SyncMedia()
     {
+        await SyncPicture();
         var path = CurrentClipPath;
         if (path is null) return;
         var index = Index;
@@ -514,7 +531,7 @@ public sealed class LiveNightHost : ObservableObject
 
     private void PrepareQuestion()
     {
-        CurrentMedia = null; MediaNote = null; MediaStartedAt = null;   // Decision 060: the next clip is offered when it is in place
+        CurrentMedia = null; MediaNote = null; MediaStartedAt = null; CurrentPicture = null;   // Decision 060: offered when in place
         _shuffledOrder = Current?.Ordering is { } o ? QueryHelpers.Shuffle(o.ToList()) : new();
         _shuffledValues = Current?.Matching is { } m ? QueryHelpers.Shuffle(m.Values.ToList()) : new();
     }
@@ -691,7 +708,8 @@ public sealed class LiveNightHost : ObservableObject
             Phase = Revealed ? LiveRoom.Phase.Reveal : LiveRoom.Phase.Question,
             Prompt = q.Prompt, Options = mcq ? q.Options : null, Format = fmt,
             AnswerIndex = Revealed && mcq ? q.CorrectIndex : null,
-            ImageUrl = LiveMediaStore.PublishableUrl(q.ImageUrl),   // §5.3: a phone cannot open the host's package
+            ImageUrl = LiveMediaStore.PublishPicture(q.ImageUrl).Fallback,   // §5.3: the https twin, or a SMALL data URL
+            Picture = CurrentPicture,                                        // Decision 060: the full picture, once its node is in the room
             Numeric = q.Closest is { } c ? new LiveRoom.Numeric { Min = c.Min, Max = c.Max, Step = c.Step, Unit = c.Unit } : null,
             OrderItems = q.Ordering is not null ? _shuffledOrder : null,
             MatchKeys = q.Matching?.Keys,

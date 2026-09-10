@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System;
+using System.Linq;
 using System.Text;
 using Tidbits.Core.Models;
 
@@ -20,6 +22,19 @@ public static class LiveExport
     }
 
     private static string Quote(string s) => $"\"{s.Replace("\"", "\"\"")}\"";
+
+    /// A3.8 / 3.62: the answer sheet — round,question,prompt,answer,team,submitted,points,
+    /// one row per team per revealed question, teams alphabetical. Mirrors Swift LiveAnswerLog.csv.
+    public static string AnswersCsv(IReadOnlyList<LiveAnswerRecord> records)
+    {
+        static string Esc(string s) => s.Contains(',') || s.Contains('"') || s.Contains('\n') ? Quote(s) : s;
+        var sb = new StringBuilder("round,question,prompt,answer,team,submitted,points\n");
+        foreach (var r in records)
+            foreach (var l in r.Lines.OrderBy(x => x.Team, StringComparer.OrdinalIgnoreCase))
+                sb.Append(r.Round).Append(',').Append(r.Number).Append(',').Append(Esc(r.Prompt)).Append(',').Append(Esc(r.Answer))
+                  .Append(',').Append(Esc(l.Team)).Append(',').Append(Esc(l.Submitted)).Append(',').Append(l.Points).Append('\n');
+        return sb.ToString();
+    }
 
     /// A print-ready HTML standings sheet (opened in the default browser → print
     /// / save as PDF — the $0 printable fallback). Names are HTML-escaped.
@@ -116,4 +131,26 @@ public static class LiveExport
 
     private static string Esc(string s) => s
         .Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;").Replace("\"", "&quot;");
+}
+
+/// One revealed question on the host's answer sheet (A3.8).
+public sealed record LiveAnswerRecord(string Qid, int Round, int Number, string Prompt, string Answer, IReadOnlyList<LiveAnswerRecord.Line> Lines)
+{
+    public sealed record Line(string Uid, string Team, string Submitted, int Points);
+
+    /// What a team submitted, as text, for any format.
+    public static string Submitted(Question q, LiveRoom.Answer a)
+    {
+        if (q.Accepted is not null) return a.Text ?? "";
+        if (q.Closest is { } c && a.Number is { } n)
+        {
+            var s = n == Math.Round(n) ? ((long)n).ToString() : n.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture);
+            return string.IsNullOrEmpty(c.Unit) ? s : $"{s} {c.Unit}";
+        }
+        if (a.Choice is { } ch && ch >= 0 && ch < q.Options.Count) return q.Options[ch];
+        if (a.List is { Count: > 0 } list) return string.Join(" · ", list);
+        if (a.Order is { } order) return string.Join(",", order);
+        if (a.Pairs is { } pairs) return string.Join(",", pairs);
+        return a.Text ?? "";
+    }
 }

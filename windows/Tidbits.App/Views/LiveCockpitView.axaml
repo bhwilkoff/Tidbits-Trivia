@@ -267,6 +267,8 @@
                 <ui:FACommandBarButton Label="Remove team" Click="OnRemoveTeam"/>
                 <ui:FACommandBarSeparator/>
                 <ui:FACommandBarButton Label="Export standings as CSV" Click="OnExportCsv"/>
+                <ui:FACommandBarButton Label="Export answer sheet as CSV" Click="OnExportAnswers"
+                                       ToolTip.Tip="Every team's submission and credit, question by question"/>
                 <ui:FACommandBarButton Label="Print standings" Click="OnPrintStandings"/>
                 <ui:FACommandBarButton Label="Print question pack" Click="OnPrintPack"/>
                 <ui:FACommandBarSeparator/>

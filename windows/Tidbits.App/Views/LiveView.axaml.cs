@@ -277,6 +277,29 @@ public partial class LiveView : UserControl
             // in one cell and the toggle drew ON TOP of the countdown dropdown. Every
             // per-round control gets its own column.
             var row = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto,Auto,Auto,Auto,Auto"), Margin = new Avalonia.Thickness(0, 0, 0, 2) };
+            // 3.63 (Mac parity A2.4): drag a round header onto another to reorder; the
+            // chevrons stay as the keyboard / precision fallback.
+            var dragFrom = idx;
+            row.AddHandler(InputElement.PointerPressedEvent, async (object? _, PointerPressedEventArgs pe) =>
+            {
+                if (pe.Source is Button or TextBox or ComboBox) return;   // the header's own controls keep their clicks
+                if (!pe.GetCurrentPoint(row).Properties.IsLeftButtonPressed) return;
+                var dt = new DataTransfer(); var item = new DataTransferItem(); item.SetText($"tidbits-round:{dragFrom}"); dt.Add(item);
+                await DragDrop.DoDragDropAsync(pe, dt, DragDropEffects.Move);
+            }, RoutingStrategies.Tunnel);
+            DragDrop.SetAllowDrop(row, true);
+            row.AddHandler(DragDrop.DragOverEvent, (object? _, DragEventArgs de) =>
+            {
+                de.DragEffects = (de.DataTransfer.TryGetText() ?? "").StartsWith("tidbits-round:") ? DragDropEffects.Move : DragDropEffects.None;
+                de.Handled = true;
+            });
+            row.AddHandler(DragDrop.DropEvent, (object? _, DragEventArgs de) =>
+            {
+                var text = de.DataTransfer.TryGetText() ?? "";
+                if (!text.StartsWith("tidbits-round:") || !int.TryParse(text.AsSpan("tidbits-round:".Length), out var from)) return;
+                de.Handled = true;
+                MoveRoundTo(from, idx);
+            });
             bool open = _expandedRounds.Contains(idx);
             var chevron = new Button
             {
@@ -411,6 +434,16 @@ public partial class LiveView : UserControl
     public System.Collections.Generic.IReadOnlyList<string> RoundLettersForTesting => _letters;
     public System.Collections.Generic.IReadOnlyList<LiveBoard?> RoundBoardsForTesting => _boards;
     public void MoveRoundForTesting(int index, int delta) => MoveRound(index, delta);
+    public void MoveRoundToForTesting(int from, int to) => MoveRoundTo(from, to);
+
+    /// Put round `from` at position `to` (every parallel list travels with it).
+    private void MoveRoundTo(int from, int to)
+    {
+        if (from == to || from < 0 || to < 0 || from >= _rounds.Count || to >= _rounds.Count) return;
+        int step = to > from ? 1 : -1;
+        for (int i = from; i != to; i += step) MoveRound(i, step);
+        RebuildBuilderRounds();
+    }
 
     public void ExpandRoundForTesting(int roundIndex)
     {

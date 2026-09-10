@@ -390,6 +390,8 @@ public sealed class LiveHostViewModel : ObservableObject
     public System.Collections.Generic.IReadOnlyList<TextReviewRow> TextReview => Host.TextReview;
     public Task AcceptText(string uid) => Host.AcceptText(uid);
     public Task AcceptTextForAll(string text) => Host.AcceptTextForAll(text);
+    public string AnswersCsv() => LiveExport.AnswersCsv(Host.AnswerLog);
+    public bool HasAnswerLog => Host.AnswerLog.Count > 0;
 
     // Tie-break (3.24) — brains-only manual pick among the tied leaders.
     public bool HasTie => Host.HasTie;

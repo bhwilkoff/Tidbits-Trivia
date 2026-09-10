@@ -203,6 +203,16 @@ alone vanished seconds after it was read — that was every Apple joiner of a
 Mac-hosted night, which had also never learned the night ended because the
 cockpit republished the last reveal instead of an ended frame.
 
+A3.8 **The night keeps its answer sheet** (2026-09-09). The room only ever
+holds the current question's answers, so the host keeps one record per
+revealed question — every team's submission as text, for every format, and
+what the scorer paid it, counted as it is paid (a score read back from the
+room after the loop lags the write). "Export Answer Sheet as CSV…" (Show
+menu; the cockpit's export menu) writes it long-format beside the standings
+export: round, question, prompt, answer, team, submitted, points. A league,
+a venue that wants to see which questions a room found hard, or a host who
+wants to check a dispute after the night, all read the same file.
+
 ## §A4 — Player join & teams (serverless)
 
 A4.1 **Teams, not solo, are the unit.** Several phones join one team; the

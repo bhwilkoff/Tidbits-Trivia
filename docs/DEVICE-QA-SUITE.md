@@ -372,6 +372,9 @@ there is no regression baseline at all.
   check `curl http://127.0.0.1:8080/js/live.js` — the local server dies quietly.
   `e2e_wrap.py windows,dongle` adds the box and the Android TV dongle as joiners
   (Android needs the DEBUG apk; the harness installs it).
+- Both hosts: `TIDBITS_LIVE_EXPORT_ANSWERS=<path>` writes the answer sheet (A3.8)
+  8 s (Mac) / 5 s (box) after the ACCEPT_ALL ruling; `scratchpad/e2e_answers.py`
+  reads it back and checks the credit column.
 - Windows box: `TIDBITS_LIVE_TIEBREAK=1` opens the Break tie dialog 3 s after
   the `TIDBITS_LIVE_ACCEPT_ALL` ruling (needs two tied teams on the wire).
   `scratchpad/e2e_overrides.py` writes a night with `questionTimers` /

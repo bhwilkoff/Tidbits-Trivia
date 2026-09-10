@@ -437,6 +437,7 @@ struct LiveShowCommands {
     var openProjector: () -> Void = {}
     var endNight: () -> Void = {}
     var exportResults: () -> Void = {}
+    var exportAnswers: () -> Void = {}
 }
 
 struct LiveBuilderKey: FocusedValueKey { typealias Value = LiveBuilderCommands }
@@ -541,6 +542,7 @@ struct TidbitsCommands: Commands {
                 .disabled(live?.hasQuestions != true)
             Button("Export Standings as CSV…") { show?.exportResults() }
                 .disabled(show == nil)
+            Button("Export Answer Sheet as CSV…") { show?.exportAnswers() }.disabled(show == nil)
         }
     }
 

@@ -25,6 +25,8 @@ final class LiveHostSession {
     /// "Accepted" instead of offering the button again, and "accept from
     /// everyone" never pays one of them twice.
     var manuallyAccepted: Set<String> = []
+    /// A3.8: the night's answer sheet, one record per revealed question.
+    var answerLog: [LiveAnswerRecord] = []
     /// Bumped when the host changes the current question's clip mid-night, so the
     /// container re-offers the media to the phones (Decision 060) — `index` did
     /// not move, and that is what the resync used to key on.
@@ -528,6 +530,15 @@ struct LiveHostContainer_macOS: View {
             try? await Task.sleep(for: .seconds(secs))
             session.finished = true
         }
+        // TIDBITS_LIVE_EXPORT_ANSWERS=<path> — write the answer sheet (A3.8) there at
+        // TIDBITS_LIVE_ACCEPT_AT + 8 s, i.e. after the harness's reveal, without a panel.
+        .task {
+            let env = ProcessInfo.processInfo.environment
+            guard let path = env["TIDBITS_LIVE_EXPORT_ANSWERS"], !path.isEmpty else { return }
+            let at = (Double(env["TIDBITS_LIVE_ACCEPT_AT"] ?? "") ?? 30) + 8
+            try? await Task.sleep(for: .seconds(at))
+            try? Data(LiveAnswerLog.csv(session.answerLog).utf8).write(to: URL(fileURLWithPath: path), options: .atomic)
+        }
         // TIDBITS_LIVE_STATE=reveal|break|standings — put the PROJECTOR into one of
         // the states only a host's clicks can reach.
         //
@@ -682,6 +693,21 @@ struct LiveHostContainer_macOS: View {
         let scorable = LiveTeamRoster.scorableUIDs(
             members: net.members,
             answeredAt: net.answers.mapValues { $0.sv ?? $0.ts })
+        // A3.8: what each team is PAID here goes on the answer sheet. Counted as it
+        // is paid — the room echoes a score write back later, so reading the score
+        // after the loop said 0 for a team that had just been credited.
+        var paid: [String: Int] = [:]
+        defer {
+            let inR = session.questionInRound
+            let lines = net.answers.filter { scorable.contains($0.key) }.map { uid, ans in
+                LiveAnswerRecord.Line(uid: uid, team: net.teams[uid]?.name ?? uid,
+                                      submitted: LiveAnswerLog.submitted(q, ans),
+                                      points: paid[uid] ?? 0)
+            }
+            session.answerLog.append(LiveAnswerRecord(qid: LiveRoom.qid(round: q.roundIndex ?? 0, question: session.index),
+                                                      round: session.roundNumber, number: inR.n, prompt: q.prompt,
+                                                      answer: LiveNightHost.answerLine(q), lines: lines))
+        }
         for (uid, ans) in net.answers where scorable.contains(uid) {
             let pts = LiveNightHost.score(q, ans, shuffledOrder: session.shuffledOrder,
                                           shuffledValues: session.shuffledValues, mcqPoints: session.currentPoints)
@@ -690,18 +716,21 @@ struct LiveHostContainer_macOS: View {
                 let current = net.scores[uid] ?? 0
                 let stake = max(0, min(ans.wager ?? 0, current))
                 guard stake > 0 else { continue }
+                paid[uid] = pts > 0 ? stake : -stake
                 await net.setScore(uid, pts > 0 ? current + stake : current - stake)
             } else if pts > 0 {
                 if speedRound { speedCorrect.append((uid, ans.sv ?? ans.ts, pts)) }   // server clock; falls back for older clients
-                else { await net.setScore(uid, (net.scores[uid] ?? 0) + pts) }
+                else { paid[uid] = pts; await net.setScore(uid, (net.scores[uid] ?? 0) + pts) }
             } else if session.wrongAnswerPenalty > 0 {
                 // G3: negative marking. This team ANSWERED and got it wrong; a team
                 // that submitted nothing never reaches here, which is the whole point.
+                paid[uid] = -session.wrongAnswerPenalty
                 await net.setScore(uid, (net.scores[uid] ?? 0) - session.wrongAnswerPenalty)
             }
         }
         // Wave B: speed round — base points + a fastest-first bonus (1st correct +3, 2nd +2, 3rd +1).
         for (rank, c) in speedCorrect.sorted(by: { $0.ts < $1.ts }).enumerated() {
+            paid[c.uid] = c.pts + max(0, 3 - rank)
             await net.setScore(c.uid, (net.scores[c.uid] ?? 0) + c.pts + max(0, 3 - rank))
         }
     }
@@ -750,7 +779,8 @@ struct LiveHostView_macOS: View {
             toggleScores: { session.showScores.toggle() },
             openProjector: { openProjector() },
             endNight: onClose,
-            exportResults: { exportResultsCSV() }))
+            exportResults: { exportResultsCSV() },
+            exportAnswers: { exportAnswersCSV() }))
     }
 
     /// The projector is a singleton `Window`; `openWindow` focuses the existing one.
@@ -1269,6 +1299,11 @@ struct LiveHostView_macOS: View {
                 Button { exportResultsCSV() } label: { Image(systemName: "square.and.arrow.up") }
                     .buttonStyle(RoundIconButtonStyle())
                     .help("Export standings to CSV").accessibilityLabel("Export standings to CSV")
+                Menu {
+                    Button("Export answer sheet as CSV…") { exportAnswersCSV() }.disabled(session.answerLog.isEmpty)
+                } label: { Image(systemName: "list.bullet.rectangle") }
+                .menuStyle(.borderlessButton).frame(width: 24)
+                .help("Every team's submission and credit, question by question (A3.8)")
             }
             .padding(.horizontal, 12).padding(.top, 12)
             HStack(spacing: 10) {
@@ -1337,6 +1372,22 @@ struct LiveHostView_macOS: View {
     }
 
     /// Wave C: export the unified standings (phone + paper teams) to a CSV the host keeps.
+    /// A3.8: the answer sheet — every team's submission and credit per question.
+    private func exportAnswersCSV() {
+        let csv = LiveAnswerLog.csv(session.answerLog)
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.commaSeparatedText]
+        panel.nameFieldStringValue = "\(session.event.name) — answers.csv"
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do { try Data(csv.utf8).write(to: url, options: .atomic) } catch {
+            let alert = NSAlert()
+            alert.messageText = "Could not save the answer sheet"
+            alert.informativeText = error.localizedDescription
+            alert.alertStyle = .warning
+            alert.runModal()
+        }
+    }
+
     private func exportResultsCSV() {
         var rows: [(name: String, score: Int, kind: String)] = []
         for (uid, team) in net.teams { rows.append((team.name, net.scores[uid] ?? 0, "phone")) }

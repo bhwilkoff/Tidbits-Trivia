@@ -67,6 +67,8 @@ public sealed class LiveNightHost : ObservableObject
     /// "Accepted" instead of offering the button again, and "accept from
     /// everyone" never pays one of them twice. Cleared per question.
     public HashSet<string> ManuallyAccepted { get; } = new();
+    /// A3.8: the night's answer sheet, one record per revealed question.
+    public List<LiveAnswerRecord> AnswerLog { get; } = new();
 
     /// Points DEDUCTED for a wrong answer, 0 = off (the default, and what every
     /// night so far has played under). QuizXpress offers this and pub hosts use it
@@ -869,7 +871,21 @@ public sealed class LiveNightHost : ObservableObject
         var q = Current;
         if (q is null) return;
         var answers = Net.AnswersSnapshot();
+        // A3.8: what each team is PAID here goes on the answer sheet, counted as it is
+        // paid (the room echoes a score write back later).
+        var paid = new Dictionary<string, int>();
+        try { await ScoreAnswers(q, answers, paid); }
+        finally
+        {
+            var names = Net.JoinedList().ToDictionary(j => j.Id, j => j.Name);
+            var lines = answers.Select(kv => new LiveAnswerRecord.Line(kv.Key, names.GetValueOrDefault(kv.Key, kv.Key),
+                LiveAnswerRecord.Submitted(q, kv.Value), paid.GetValueOrDefault(kv.Key))).ToList();
+            AnswerLog.Add(new LiveAnswerRecord(LiveRoom.Qid(q.RoundIndex ?? 0, Index), RoundNumber, QuestionInRound.N, q.Prompt, LiveScoring.AnswerLine(q), lines));
+        }
+    }
 
+    private async Task ScoreAnswers(Question q, IReadOnlyDictionary<string, LiveRoom.Answer> answers, Dictionary<string, int> paid)
+    {
         // Final wager round: correct +stake, wrong −stake (clamped ≥0), no speed bonus.
         if (IsWagerRound)
         {
@@ -878,6 +894,7 @@ public sealed class LiveNightHost : ObservableObject
                 var correct = LiveScoring.Score(q, kv.Value, _shuffledOrder, _shuffledValues, CurrentPoints) > 0;
                 var stake = kv.Value.Wager ?? 0;
                 var delta = LiveScoring.WagerDelta(correct, stake);
+                paid[kv.Key] = delta;
                 if (delta != 0) await Net.SetScore(kv.Key, Math.Max(0, Net.ScoreOf(kv.Key) + delta));
             }
             return;
@@ -903,6 +920,7 @@ public sealed class LiveNightHost : ObservableObject
         foreach (var e in baseScores)
         {
             var total = e.pts + bonus.GetValueOrDefault(e.uid);
+            paid[e.uid] = total > 0 ? total : (WrongAnswerPenalty > 0 ? -WrongAnswerPenalty : 0);
             if (total > 0) await Net.SetScore(e.uid, Net.ScoreOf(e.uid) + total);
             // G3: negative marking. `baseScores` is built from ANSWERS, so a team
             // that submitted nothing is not in this loop at all — which is exactly

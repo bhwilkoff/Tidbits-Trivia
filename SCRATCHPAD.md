@@ -64,9 +64,10 @@ in both directions (see the last paragraph).
 8. ~~**Per-question host note**~~ — DONE 2026-09-09 (A2.9 / 3.60).
 9. ~~**"How did you know that?"**~~ — macOS solo results DONE 2026-09-09; the
    live-night wrap DONE 2026-09-09 on ALL SIX joiners (A3.7).
-10. **Answer-level data export** (standings only today). S.
+10. ~~**Answer-level data export**~~ — DONE 2026-09-09 (A3.8 / 3.62).
 11. **Final-wager tie-break** (both partial). M.
-12. **Drag-to-reorder on Windows** (up/down buttons). S.
+12. ~~**Drag-to-reorder on Windows**~~ — DONE 2026-09-09 (3.63; the gesture
+    is headless-tested, not driven on the box).
 13. **Poll / no-answer question** (no authoring path). M.
 14. **Music-bed auto-duck** under a clip. S.
 15. **Per-event / per-venue analytics.** L.
@@ -2324,3 +2325,19 @@ Mac host tore the room down. The Pixel 8a was not driven this tick (same
 code; the dongle stands in). Versions 1.9.15 / 145 / vc106 / MSIX 1.9.15.0.
 Next: punch list 10 (answer-level export) and 11 (final-wager tie-break);
 re-photograph the brightened Apple TV recap card.
+
+**2026-09-09r — Live loop tick 18: the answer sheet; drag-to-reorder on
+Windows.** Punch list 10 + 12. `LiveAnswerLog`/`LiveAnswerRecord` (Swift +
+C#, tests on both): one record per revealed question with every team's
+submission (any format) and what the scorer paid — counted AS IT IS PAID,
+because the first cut read the score back after the loop and logged 0 for a
+team that had just been credited (the room echoes writes later; found on the
+Mac, pre-empted on Windows). Exports: Mac Show ▸ Export Answer Sheet as CSV…
++ the cockpit export menu; Windows cockpit ▸ Export answer sheet as CSV. Hook
+`TIDBITS_LIVE_EXPORT_ANSWERS=<path>` on both. **Verified on the glass**
+(`scratchpad/e2e_answers.py`): both hosts wrote `Table 1,Keanu Reeves,1` /
+`Table 2,Neo,0`. Windows rounds now drag-to-reorder by their header
+(`MoveRoundTo`, headless-tested with the buzz flag as canary). Versions
+1.9.16 / 146 / vc107 / MSIX 1.9.16.0. Next: punch list 13 (poll / no-answer
+question) and 11 (final-wager tie-break), then 14 (music-bed auto-duck) and
+15 (analytics).

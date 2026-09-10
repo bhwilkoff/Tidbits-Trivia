@@ -510,6 +510,25 @@ public partial class LiveCockpitView : UserControl
         await writer.WriteAsync(vm.StandingsCsv());
     }
 
+    /// A3.8 / 3.62: the answer sheet — every team's submission and credit per question.
+    private async void OnExportAnswers(object? sender, RoutedEventArgs e)
+    {
+        if (Vm is not { } vm || !vm.HasAnswerLog) return;
+        var top = TopLevel.GetTopLevel(this);
+        if (top is null) return;
+        var file = await top.StorageProvider.SaveFilePickerAsync(new Avalonia.Platform.Storage.FilePickerSaveOptions
+        {
+            Title = "Export answer sheet",
+            SuggestedFileName = $"tidbits-answers-{vm.Host.Code}.csv",
+            DefaultExtension = "csv",
+            FileTypeChoices = new[] { new Avalonia.Platform.Storage.FilePickerFileType("CSV") { Patterns = new[] { "*.csv" } } },
+        });
+        if (file is null) return;
+        await using var stream = await file.OpenWriteAsync();
+        await using var writer = new System.IO.StreamWriter(stream);
+        await writer.WriteAsync(vm.AnswersCsv());
+    }
+
     /// The host's question pack for the night IN PROGRESS — printed from the cockpit rather
     /// than the builder because a saved event stores only {kind, count}: a pack drawn at build
     /// time would list different questions than the room is actually being asked.
@@ -649,6 +668,11 @@ public partial class LiveCockpitView : UserControl
                 if (!vm.Host.Revealed) { await vm.Reveal(); await Task.Delay(3000); }
                 await vm.AcceptTextForAll(ruling);
                 if (Services.LaunchHooks.LiveTieBreak) { await Task.Delay(3000); OnBreakTie(this, new RoutedEventArgs()); }
+                if (Services.LaunchHooks.LiveExportAnswers is { Length: > 0 } sheet)
+                {
+                    await Task.Delay(5000);
+                    try { System.IO.File.WriteAllText(sheet, vm.AnswersCsv()); } catch (Exception ex) { Services.LaunchHooks.Diag($"export answers: FAILED {ex}"); }
+                }
             }
         }
         catch (Exception ex) { Services.LaunchHooks.Diag($"script hooks: FAILED {ex}"); }

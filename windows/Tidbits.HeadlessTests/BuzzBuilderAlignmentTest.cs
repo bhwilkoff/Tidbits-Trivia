@@ -34,6 +34,21 @@ public class BuzzBuilderAlignmentTest
     }
 
     [AvaloniaFact]
+    public void Dropping_a_round_on_another_puts_it_there_and_every_flag_travels()
+    {
+        // 3.63: the drag handler calls MoveRoundTo(from, to); the buzz flag is the
+        // canary that every parallel list moved with the round.
+        var view = new LiveView();
+        view.LoadEventForTesting(EventWithBuzzOn(4, 3));
+        view.MoveRoundToForTesting(3, 0);         // the last round dropped onto the first
+        Assert.Equal(new[] { true, false, false, false }, view.BuzzFlagsForTesting.ToArray());
+        view.MoveRoundToForTesting(0, 2);         // …and dropped two down again
+        Assert.Equal(new[] { false, false, true, false }, view.BuzzFlagsForTesting.ToArray());
+        view.MoveRoundToForTesting(2, 9);         // out of range: nothing moves
+        Assert.Equal(new[] { false, false, true, false }, view.BuzzFlagsForTesting.ToArray());
+    }
+
+    [AvaloniaFact]
     public void Moving_a_round_carries_its_buzz_flag_with_it()
     {
         var view = new LiveView();

@@ -94,6 +94,8 @@ public static class LaunchHooks
     public static string? LiveAcceptAll => Env("TIDBITS_LIVE_ACCEPT_ALL");
     public static double LiveAcceptAt => double.TryParse(Env("TIDBITS_LIVE_ACCEPT_AT"), out var v) ? v : 30;
 
+    /// TIDBITS_LIVE_EXPORT_ANSWERS=<path> — write the answer sheet (3.62) there 5 s after the ACCEPT_ALL ruling.
+    public static string? LiveExportAnswers => Env("TIDBITS_LIVE_EXPORT_ANSWERS");
     /// TIDBITS_LIVE_TIEBREAK=1 — 3 s after the ACCEPT_ALL ruling, open the
     /// tie-break dialog (3.58) so it can be photographed with real tied teams.
     public static bool LiveTieBreak => Flag("TIDBITS_LIVE_TIEBREAK");

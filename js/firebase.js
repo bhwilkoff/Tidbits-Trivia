@@ -346,6 +346,17 @@ export const FirebaseNet = {
     return snap.exists() ? snap.val() : null;
   },
   // L5 social graph: read the room roster once (uid → {name}) to capture co-players at night-end.
+  // A2.14: play (or move) this table's joker — the round it doubles. Owned by the
+  // table like its answers; the host locks it when the round starts.
+  async liveJoker(code, round) {
+    const { db } = await ensure();
+    await db.set(db.ref(_db, `live/${code}/jokers/${_uid}`), { round, ts: Date.now() });
+  },
+  async liveJokerGet(code) {
+    const { db } = await ensure();
+    const snap = await db.get(db.ref(_db, `live/${code}/jokers/${_uid}`));
+    return snap.exists() ? snap.val().round : null;
+  },
   async liveTeams(code) {
     const { db } = await ensure();
     const snap = await db.get(db.ref(_db, `live/${code}/teams`));

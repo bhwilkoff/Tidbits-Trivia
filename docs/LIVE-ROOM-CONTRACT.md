@@ -37,6 +37,7 @@ no confusable chars) shown on the big screen for players to enter.
 | `pub` | host | the live question state players render (see below) |
 | `scores/{uid}` | host | integer — a team's running score (host owns scoring) |
 | `teams/{uid}` | that player | `{ name, joinedAt: ms }` |
+| `jokers/{uid}` | that player | `{ round: Int (0-based), ts? }` — A2.14: the round this table doubles; the host locks a round's picks when its first question goes out |
 | `answers/{qid}/{uid}` | that player | `{ choice?, text?, number?, order?:[Int], pairs?:[Int], list?:[String], ts }` |
 | `control` | any player (the host's phone remote, G6) | `{ id, verb, pin }` — the host READS and decides; never writes `pub` |
 | `media/{id}` | host, ONCE per room | `{ kind: "audio"\|"video", mime, bytes, b64 }` — Decision 060; `bytes` ≤ 3,000,000, `b64` ≤ 4,200,000 chars (rules-validated) |
@@ -144,6 +145,12 @@ fixed once (publish == reveal) so submitted indices stay valid. The scorer is mi
 in `LiveNightHost.score` (Swift), `liveScore` (Kotlin), `nhScore` (JS). Tidbits Live
 (Mac) publishes the same fields but keeps its manual/referee scoring.
 
+**`jokerRounds`** (A2.14, 2026-09-10) — `[{index, title}]`, the rounds a table can
+still play its joker on: every round after the one in play, minus the wager
+round. Present only while the event has the joker and a round is still ahead;
+absent otherwise, so an older client never sees it. A table answers by writing
+`jokers/{uid}`.
+
 ## Security rules (`database.rules.json` → `live`)
 
 - **Host owns** `meta` / `pub` / `scores` — write gated on `meta/host === auth.uid`.
@@ -157,6 +164,9 @@ in `LiveNightHost.score` (Swift), `liveScore` (Kotlin), `nhScore` (JS). Tidbits 
   decides by PIN and command id — `LiveRemote.accepted`) — but only the HOST may
   READ it, because the node carries the remote's PIN. A remote reads
   `control/id` alone to resume its counter (RTDB reads cascade DOWN, never up).
+- **`jokers/{uid}` is the table's own** (write and read gated on `auth.uid === $uid`);
+  the host reads the node and may clear it on a fresh night (a reused code must
+  not inherit last week's picks). Proven by `tools/rules_probe.py`.
 - **`answers` is host-only to read**; a table may read `answers/{qid}/{uid}`
   only when that uid is its own. The host streams the whole node to score.
 - **There is NO blanket read on the room root.** `meta`, `pub`, `scores`,

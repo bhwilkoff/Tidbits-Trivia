@@ -83,6 +83,7 @@ final class LiveProjectorElements {
         Element(id: "tally", title: "Live vote bars"),
         Element(id: "status", title: "\"Answer on your phones\""),
         Element(id: "answersIn", title: "Answers in (12 of 18)"),
+        Element(id: "jokers", title: "Jokers played (first question of a round)"),
         Element(id: "story", title: "Story on reveal"),
         Element(id: "teams", title: "Team standings strip"),
         Element(id: "joinPanel", title: "Scan-to-join panel"),
@@ -309,8 +310,17 @@ struct LiveBigScreen_macOS: View {
 
     /// Event name & venue on the left, round line on the right. Hidden elements
     /// contribute nothing: with both off there is no header band at all.
+    /// A2.14: who played their joker on this round — said once, on its first
+    /// question, so the room hears it before the points land. Hidden names stay hidden.
+    private func jokersLine(_ s: LiveHostSession) -> String? {
+        guard s.questionInRound.n == 1 else { return nil }
+        let hidden = Set((coordinator.net?.teams ?? [:]).filter { s.blockedTeams.contains($0.key) }.map(\.value.name))
+        return LiveJoker.line(played: (s.jokersPlayed[s.currentRoundIndex] ?? []).subtracting(hidden))
+    }
+
     @ViewBuilder private func header(_ s: LiveHostSession) -> some View {
-        if el.shows("title") || el.shows("roundLine") {
+        let jokers = el.shows("jokers") ? jokersLine(s) : nil
+        if el.shows("title") || el.shows("roundLine") || jokers != nil {
             HStack(alignment: .firstTextBaseline, spacing: 24) {
                 if el.shows("title") {
                     VStack(alignment: .leading, spacing: 0) {
@@ -325,10 +335,18 @@ struct LiveBigScreen_macOS: View {
                     }
                 }
                 Spacer(minLength: 0)
-                if el.shows("roundLine") {
-                    Text("ROUND \(s.roundNumber)/\(s.roundCount) · \(s.roundTitle)" + (s.currentRoundPoints.map { " · \($0) PTS A QUESTION" } ?? ""))   // A2.11
-                        .font(.system(size: 22, weight: .heavy, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
-                        .lineLimit(1).minimumScaleFactor(0.6)
+                VStack(alignment: .trailing, spacing: 2) {
+                    if el.shows("roundLine") {
+                        Text("ROUND \(s.roundNumber)/\(s.roundCount) · \(s.roundTitle)" + (s.currentRoundPoints.map { " · \($0) PTS A QUESTION" } ?? ""))   // A2.11
+                            .font(.system(size: 22, weight: .heavy, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
+                            .lineLimit(1).minimumScaleFactor(0.6)
+                    }
+                    if let jokers {
+                        Text(jokers.uppercased())
+                            .font(.system(size: 18, weight: .heavy, design: .rounded)).foregroundStyle(Tidbits.Palette.coral)
+                            .lineLimit(1).minimumScaleFactor(0.6)
+                            .accessibilityIdentifier("big.jokers")
+                    }
                 }
             }
             .padding(.bottom, 10)

@@ -34,6 +34,7 @@ public static class NightHostFactory
             Archive = Store.NightArchive.Shared.Value,   // A2.12: the night is kept when it ends
             Resume = Store.NightResume.Shared.Value,     // A2.13: …and recoverable while it runs
             Branding = branding,
+            Joker = branding?.Joker == true,           // A2.14
             HostPlays = hostPlays,
             HostName = string.IsNullOrWhiteSpace(hostName) ? "Host" : hostName!.Trim(),
             // Without this the editor is theatre: the host edits a question, hits
@@ -57,6 +58,7 @@ public static class NightHostFactory
             LeadCaptureUrl = branding?.LeadCaptureUrl,
             WagerRoundIndex = branding?.WagerFinalRound == true ? System.Math.Max(0, plan.Rounds.Count - 1) : null,
             RoundNotes = branding?.RoundNotes ?? new List<string>(),
+            AuthoredRoundTitles = branding?.RoundTitles ?? new List<string>(),
             RoundTimers = branding?.RoundTimers ?? new List<int>(),
             RoundPoints = branding?.RoundPoints ?? new List<int>(),
         };

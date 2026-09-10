@@ -52,6 +52,11 @@ enum LiveRoom {
         /// buzz. Published so a joiner knows without being told; nil on every
         /// non-buzz question, so an older client simply never sees it.
         var buzz: Bool? = nil
+        /// A2.14: the rounds a table can still play its JOKER on (every round after
+        /// this one, minus the wager round). Present only while the event has the
+        /// joker and a round is still ahead; nil otherwise, so an older client never
+        /// sees it. A table answers by writing `jokers/{uid}`.
+        var jokerRounds: [JokerRound]? = nil
         /// G4: this round's FIRST-LETTER theme — every answer in it begins with
         /// this letter. Published so a player who joined mid-round still knows the
         /// rule instead of relying on having heard the host say it once; nil on
@@ -173,6 +178,18 @@ enum LiveRoom {
     struct Team: Codable, Equatable {
         var name: String
         var joinedAt: Int
+    }
+
+    /// A2.14: one round a joker can be played on, as the phones list it.
+    nonisolated struct JokerRound: Codable, Equatable, Sendable {
+        var index: Int     // 0-based round index — what the table writes back
+        var title: String
+    }
+    /// A2.14: a table's joker (`jokers/{uid}`) — the round it doubles. Owned by the
+    /// table like its answers; read by the host, who locks it when the round starts.
+    nonisolated struct Joker: Codable, Equatable, Sendable {
+        var round: Int
+        var ts: Int? = nil
     }
 
     /// A player's submission for the current question (`answers/{qid}/{uid}`).

@@ -111,6 +111,8 @@
                 </WrapPanel>
                 <StackPanel x:Name="BuilderRounds" Spacing="4"/>
                 <CheckBox x:Name="WagerFinalCheck" Content="Make the last round a final wager (teams stake points)"/>
+                <!-- A2.14: the joker — each table doubles ONE round of its choice, from its phone. -->
+                <CheckBox x:Name="JokerCheck" Content="Teams play a joker (each table doubles one round of its choice)"/>
                 <!-- Balance meter: question-type mix + variety verdict -->
                 <StackPanel x:Name="BalancePanel" Spacing="4" IsVisible="False"/>
 

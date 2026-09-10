@@ -159,19 +159,30 @@
                 <ItemsControl ItemsSource="{Binding Host.Standings}" x:CompileBindings="False">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto" Margin="0,3">
-                                <TextBlock Text="{Binding Name}" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
-                                <Button Grid.Column="1" Content="Rename" Click="OnRenameTeam" Tag="{Binding Id}"
+                            <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto,Auto" Margin="0,3">
+                                <StackPanel Spacing="2" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Name}" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis"/>
+                                    <!-- A2.14: the table's joker round, UNDER the name so a narrow
+                                         standings column never squeezes the name out. -->
+                                    <Border IsVisible="{Binding HasJoker}" Background="#FF5C35" CornerRadius="8"
+                                            Padding="6,1" HorizontalAlignment="Left">
+                                        <TextBlock Text="{Binding Joker}" Foreground="White" FontSize="10" FontWeight="Black"/>
+                                    </Border>
+                                </StackPanel>
+                                <Button Grid.Column="1" Content="Joker" Click="OnCycleJoker" Tag="{Binding Id}" IsVisible="{Binding IsPaper}"
+                                        AutomationProperties.Name="{Binding Name, StringFormat='Set the joker round for {0}'}"
+                                        Padding="7,1" MinWidth="0" FontSize="11" Opacity="0.7" Margin="0,0,4,0"/>
+                                <Button Grid.Column="2" Content="Rename" Click="OnRenameTeam" Tag="{Binding Id}"
                                         AutomationProperties.Name="{Binding Name, StringFormat='Rename {0}'}"
                                         Padding="7,1" MinWidth="0" FontSize="11" Opacity="0.7" Margin="0,0,4,0"/>
-                                <Button Grid.Column="2" Content="Hide" Click="OnToggleHide" Tag="{Binding Id}"
+                                <Button Grid.Column="3" Content="Hide" Click="OnToggleHide" Tag="{Binding Id}"
                                         Padding="7,1" MinWidth="0" FontSize="11" Opacity="0.7"/>
-                                <Button Grid.Column="3" Content="−" Click="OnScoreDown" Tag="{Binding Id}"
+                                <Button Grid.Column="4" Content="−" Click="OnScoreDown" Tag="{Binding Id}"
                                         AutomationProperties.Name="{Binding Name, StringFormat='Subtract a point from {0}'}"
                                         Padding="7,1" MinWidth="0" FontWeight="Bold" Margin="4,0,0,0"/>
-                                <TextBlock Grid.Column="4" Text="{Binding Score}" Classes="tabular" FontWeight="Bold"
+                                <TextBlock Grid.Column="5" Text="{Binding Score}" Classes="tabular" FontWeight="Bold"
                                            MinWidth="26" TextAlignment="Center" VerticalAlignment="Center" Margin="4,0"/>
-                                <Button Grid.Column="5" Content="+" Click="OnScoreUp" Tag="{Binding Id}"
+                                <Button Grid.Column="6" Content="+" Click="OnScoreUp" Tag="{Binding Id}"
                                         AutomationProperties.Name="{Binding Name, StringFormat='Add a point to {0}'}"
                                         Padding="7,1" MinWidth="0" FontWeight="Bold"/>
                             </Grid>

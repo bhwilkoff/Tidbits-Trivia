@@ -87,6 +87,14 @@ struct LiveEventFileGoldenTests {
         }
     }
 
+    @Test("the joker flag rides the file (A2.14); an older file has none")
+    func jokerRoundTrips() throws {
+        var ev = try LiveEventFile.decode(try Self.goldenData())
+        #expect(ev.joker == nil)
+        ev.joker = true
+        #expect(try LiveEventFile.decode(try LiveEventFile.encode(ev)).joker == true)
+    }
+
     @Test("import assigns a new id so it never overwrites an existing night")
     func importIsAdditive() throws {
         // §2.3. Two imports of the SAME co-host file must land as two nights, not

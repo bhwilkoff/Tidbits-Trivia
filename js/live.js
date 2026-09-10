@@ -7,7 +7,7 @@ import { Identity } from './identity.js';
 import { newRecap, observe as recapObserve, finish as recapFinish, tough as recapTough, toRemember as recapRemember, howDidYouKnowText } from './liverecap.js';
 
 const S = { skewMS: 0, code: '', team: '', joined: false, joining: false, pub: null, meta: null,
-            score: 0, wager: 0, blurred: false, submittedQid: null, chosen: null, error: '', local: {},
+            score: 0, wager: 0, jokerRound: null, blurred: false, submittedQid: null, chosen: null, error: '', local: {},
             liveAnswered: 0, liveCorrect: 0, talliedQid: null, recorded: false, recap: newRecap() };
 
 // Wave C: flag if the player switches tab / backgrounds mid-question before submitting.
@@ -110,6 +110,7 @@ async function join() {
   S.code = code; S.team = team; S.joining = true; S.error = ''; draw();
   try {
     await FirebaseNet.liveJoin(code, team, { onError: (m) => { S.error = m; } });
+    S.jokerRound = await FirebaseNet.liveJokerGet(code).catch(() => null);   // A2.14: a reload keeps the pick
     S.joined = true; S.joining = false;
     S.liveAnswered = 0; S.liveCorrect = 0; S.talliedQid = null; S.recorded = false;
     try { localStorage.setItem('tidbits.live.code', code); localStorage.setItem('tidbits.live.team', team); } catch { /* private mode */ }
@@ -162,6 +163,26 @@ async function pick(i) { S.chosen = i; submitAns({ choice: i }); }
 /// the room, so all the wire needs is who was first, and the server stamps that.
 async function buzz() { submitAns({}); }
 
+// A2.14: the joker — ONE round of the night this table doubles, named before it
+// starts. Offered only while the host says a round is still ahead (pub.jokerRounds);
+// once the pick's round has begun it reads as played and cannot move.
+function jokerHTML(p) {
+  const rounds = p.jokerRounds || [];
+  const cur = S.jokerRound;
+  const playable = rounds.some(r => r.index === cur);
+  if (cur != null && !playable) {
+    return `<div class="live-joker played"><div class="live-joker-label">YOUR JOKER</div>
+      <div class="live-sub">Played on Round ${cur + 1} — every point there counts double.</div></div>`;
+  }
+  if (!rounds.length) return '';
+  return `<div class="live-joker"><div class="live-joker-label">YOUR JOKER${cur != null ? ` · Round ${cur + 1}` : ''}</div>
+    <select id="live-joker" aria-label="Play your joker on a round">
+      <option value=""${cur == null ? ' selected' : ''}>Pick a round to double…</option>
+      ${rounds.map(r => `<option value="${r.index}"${r.index === cur ? ' selected' : ''}>Round ${r.index + 1} — ${esc(r.title)}</option>`).join('')}
+    </select>
+    <div class="live-sub">Every point your table scores in that round counts double. Pick before it starts.</div></div>`;
+}
+
 // Wave A: the stake input on a wager question — bet 0…your score.
 function wagerHTML() {
   const maxBet = Math.max(0, S.score || 0);
@@ -204,6 +225,14 @@ function draw() {
   if (document.getElementById('live-timer')) ensureLiveTimer();
   mountMedia();
   mountPicture();
+  const jk = document.getElementById('live-joker');   // A2.14: the joker pick
+  if (jk) jk.onchange = async (e) => {
+    const v = e.target.value === '' ? null : +e.target.value;
+    if (v == null) return;
+    S.jokerRound = v; draw();
+    try { await FirebaseNet.liveJoker(S.code, v); }
+    catch { S.error = 'Joker didn’t send — try again.'; draw(); }
+  };
   const wr = document.getElementById('live-wager-range');   // Wave A: wager slider
   if (wr) wr.oninput = (e) => { S.wager = +e.target.value; const n = document.getElementById('live-wager-num'); if (n) n.textContent = e.target.value; };
   if (!S.joined) {
@@ -462,6 +491,7 @@ function playHTML() {
     <div class="live-q">${esc(p.prompt)}</div>
     ${!revealed && p.deadline ? `<div id="live-timer" data-dl="${p.deadline}" style="font-size:30px;font-weight:900;text-align:center;margin:6px 0;font-variant-numeric:tabular-nums"></div>` : ''}
     ${!revealed && p.wager ? wagerHTML() : ''}
+    ${jokerHTML(p)}
     ${answerHTML(p, revealed)}
     ${status}
     ${revealed && p.story ? `<div style="margin-top:12px;padding:12px 14px;border-radius:12px;background:var(--color-surface);line-height:1.5;color:var(--color-text)">${esc(p.story)}</div>` : ''}
@@ -659,6 +689,10 @@ function injectStyles() {
   .live-x{position:absolute;top:16px;right:16px;width:34px;height:34px;border-radius:999px;border:2.5px solid #231E1A;background:#fff;font-weight:900;cursor:pointer;color:#231E1A}
   .live-wager{margin:10px 0;padding:12px;border-radius:12px;background:rgba(255,92,53,.12)}
   .live-wager-label{font-weight:800;font-size:.8rem;color:#FF5C35;letter-spacing:.04em}
+  .live-joker{margin:10px 0;padding:10px 12px;border:2px solid #0A0A0A;border-radius:12px;background:#FFF7E6}
+  .live-joker.played{background:#F7F7F7;border-style:dashed}
+  .live-joker-label{font-weight:800;font-size:.8rem;color:#FF5C35;letter-spacing:.04em}
+  .live-joker select{display:block;width:100%;margin:6px 0;padding:8px;font:inherit;font-weight:700;border:2px solid #0A0A0A;border-radius:8px;background:#fff}
   .live-wager input[type=range]{width:100%;margin:8px 0;accent-color:#FF5C35}
   .live-wager-val{font-weight:900;font-size:1.3rem;color:#231E1A}
   .live-play{padding:16px;max-width:640px;width:100%;margin:0 auto;position:relative}

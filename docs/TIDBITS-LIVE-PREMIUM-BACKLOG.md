@@ -139,6 +139,7 @@ is a first-class format to design *for*, not a legacy fallback.
 | **Audio round (name-that-tune)** | Host plays a clip; teams ID it; speed-tiered scoring | P (market-beloved; SpeedQuizzing *can't even author* audio) | ✅ |
 | **Video question** | Video clip as prompt | P | ✅ |
 | **Wager round** | Teams bet points before answering | P | 🔨 (Stake mode exists) |
+| **Joker round (the table's pick)** | Each table doubles ONE round of its choice, named before it starts | D (every UK pub quiz; SpeedQuizzing/KwizzBit have it) | ✅ (A2.14, 2026-09-10; web + iOS joiners, the rest next) |
 | **First-letter / wordplay** | Answers share a first letter; word-chain, etc. | D | ⬜ |
 | Fastest-finger / buzzer race | Only fastest correct scores; speed bonus | P | ✅ (speed-bonus) |
 | Dedicated tiebreaker Q | Numeric closest-guess held in reserve | TS | ✅ (tie-break engine) |

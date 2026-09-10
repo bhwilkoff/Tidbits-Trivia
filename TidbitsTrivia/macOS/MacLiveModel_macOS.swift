@@ -76,6 +76,7 @@ struct LiveEvent: Identifiable, Codable, Hashable {
     var sponsor: String = ""  // Wave D: sponsor kit — "brought to you by …" in the lobby + between rounds + a per-question tag
     var leadCaptureURL: String = ""  // Wave D: lead capture — the host's mailing-list signup URL, shown as a QR at the end of the night
     var brandHex: String = ""        // Wave D: white-label — the host's brand accent (hex), applied to the big-screen event title
+    var joker: Bool? = nil           // A2.14: each table doubles ONE round of its choice, picked from its phone before the round starts
 
     var totalQuestions: Int { rounds.reduce(0) { $0 + $1.questions.count } }
     /// A2.8: the override for question `qi` of round `ri`, or nil for the default.

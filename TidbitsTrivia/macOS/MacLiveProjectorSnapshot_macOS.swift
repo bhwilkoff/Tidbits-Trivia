@@ -62,6 +62,9 @@ enum LiveProjectorSnapshot {
 
         struct Shot { let name: String; let apply: (LiveHostSession) -> Void }
         let shots: [Shot] = [
+            // A2.14: two tables played their joker on this round — the line rides the
+            // round's first question and nothing else changes.
+            Shot(name: "jokers") { s in s.event.joker = true; s.jokersPlayed[0] = ["Smarty Pints", "The Quizzards of Oz"] },
             Shot(name: "question") { s in s.deadlineMs = LiveHostNet.nowMS() + 32_000 },
             Shot(name: "reveal") { s in s.reveal() },
             Shot(name: "picture") { s in s.next(); s.deadlineMs = LiveHostNet.nowMS() + 32_000 },

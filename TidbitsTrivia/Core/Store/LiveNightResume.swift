@@ -27,6 +27,10 @@ nonisolated struct LiveNightSnapshot: Codable, @unchecked Sendable {
     var wrongAnswerPenalty: Int
     var answerLog: [LiveAnswerRecord]
     var savedAt: Date
+    /// A2.14: the jokers locked per round (key = round index), and the paper tables'
+    /// jokers by team name. Optional so a snapshot from before the joker decodes.
+    var jokersPlayed: [String: [String]]? = nil
+    var paperJokers: [String: Int]? = nil
 
     nonisolated struct Team: Codable, Equatable, Sendable {
         var name: String

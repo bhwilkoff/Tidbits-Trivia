@@ -20,7 +20,17 @@ public sealed record LiveEvent
     [JsonPropertyName("leadCaptureURL")] public string? LeadCaptureUrl { get; init; } // Wave D lead capture
     [JsonPropertyName("weekday")] public int? Weekday { get; init; } // Wave D recurring (0=Sun..6=Sat), null = one-off
     [JsonPropertyName("wagerFinal")] public bool WagerFinalRound { get; init; } // Wave A final wager round
+    /// A2.14: tables play a joker — each doubles ONE round of its choice, picked from its
+    /// phone before that round starts. Mirrors Swift `LiveEvent.joker`.
+    [JsonPropertyName("joker")] public bool Joker { get; init; }
     [JsonPropertyName("roundNotes")] public IReadOnlyList<string> RoundNotes { get; init; } = new List<string>(); // Wave A per-round host notes (index-aligned)
+    /// The authored round TITLES ("Round 2 — Movies"), index-aligned; empty = the round
+    /// kind's name. Found 2026-09-10: the Windows host published "Name It" for every
+    /// authored round, so the joker picker (and the round line) named rounds wrongly.
+    [JsonPropertyName("roundTitles")] public IReadOnlyList<string> RoundTitles { get; init; } = new List<string>();
+    public string RoundTitleAt(int i) =>
+        i < RoundTitles.Count && !string.IsNullOrWhiteSpace(RoundTitles[i]) ? RoundTitles[i]
+        : (i < Rounds.Count ? Rounds[i].Title : "");
     // Wave A per-round countdown, index-aligned, 0 = untimed. Deliberately on the EVENT and
     // not on NightRound: NightRound is the wire type serialized to every joiner, Apple pins
     // its CodingKeys to {kind, count}, and there is golden coverage on it. The timer is a

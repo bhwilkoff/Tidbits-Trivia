@@ -24,6 +24,10 @@ final class LiveHostNet {
     private var rawTeams: [String: LiveRoom.Team] = [:]
     private(set) var names: [String: String] = [:]
     private(set) var scores: [String: Int] = [:]
+    /// A2.14: every table's joker pick (`jokers/{uid}`), live. The host locks a round's
+    /// picks when it starts (`LiveJoker.played`); this is only what the phones say now.
+    private(set) var jokers: [String: LiveRoom.Joker] = [:]
+    var jokerPicks: [String: Int] { jokers.mapValues(\.round) }
     /// Submissions for the CURRENT question (uid → answer), reset each question.
     private(set) var answers: [String: LiveRoom.Answer] = [:]
     private(set) var lastError: String?
@@ -137,7 +141,8 @@ final class LiveHostNet {
             try? await db.delete("\(LiveRoom.path(code))/answers")
             if !resuming {
                 try? await db.delete("\(LiveRoom.path(code))/scores")
-                scores = [:]
+                try? await db.delete("\(LiveRoom.path(code))/jokers")   // A2.14: last night's picks are not this night's
+                scores = [:]; jokers = [:]
             }
             publishedMedia = []
             self.code = code
@@ -145,6 +150,7 @@ final class LiveHostNet {
             watchTeams(code)
             watchNames(code)
             watchScores(code)
+            watchJokers(code)   // A2.14
             watchRemote(code)   // G6
             return code
         } catch {
@@ -291,6 +297,19 @@ final class LiveHostNet {
                 if !Task.isCancelled { try? await Task.sleep(for: .seconds(1.5)) }
             }
         })
+    }
+    private func watchJokers(_ code: String) {
+        streamTasks.append(Task { [weak self, db] in
+            while !Task.isCancelled {
+                if let stream = try? await db.stream("\(LiveRoom.path(code))/jokers") {
+                    do { for try await ev in stream { await self?.applyJokers(ev) } } catch { }
+                }
+                if !Task.isCancelled { try? await Task.sleep(for: .seconds(1.5)) }
+            }
+        })
+    }
+    private func applyJokers(_ ev: FirebaseRTDB.StreamEvent) {
+        Self.merge(ev, into: &jokers, as: LiveRoom.Joker.self)
     }
     private func watchAnswers(_ code: String, qid: String) {
         answersTask?.cancel()

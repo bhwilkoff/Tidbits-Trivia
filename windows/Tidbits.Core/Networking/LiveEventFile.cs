@@ -48,6 +48,7 @@ public static class LiveEventFile
         [JsonPropertyName("leadCaptureURL")] public string LeadCaptureUrl { get; init; } = "";
         [JsonPropertyName("brandHex")] public string BrandHex { get; init; } = "";
         [JsonPropertyName("weekday")] public int? Weekday { get; init; }
+        [JsonPropertyName("joker")] public bool? Joker { get; init; }   // A2.14: tables play a joker (absent = no)
         [JsonPropertyName("rounds")] public IReadOnlyList<PortableRound> Rounds { get; init; } = [];
     }
 
@@ -100,7 +101,7 @@ public static class LiveEventFile
             var qs = ev.QuestionsFor(i);
             rounds.Add(new PortableRound
             {
-                Title = r.Title,
+                Title = ev.RoundTitleAt(i),
                 Format = r.Kind.Id(),
                 // A Windows round has no per-round category — the night picks one —
                 // so the questions' own category is the honest answer, and "mixed"
@@ -136,6 +137,7 @@ public static class LiveEventFile
                 LeadCaptureUrl = ev.LeadCaptureUrl ?? "",
                 BrandHex = ev.BrandHex ?? "",
                 Weekday = ev.Weekday,
+                Joker = ev.Joker ? true : null,
                 Rounds = rounds,
             },
         };
@@ -188,6 +190,7 @@ public static class LiveEventFile
         var qNotes = new List<IReadOnlyList<string>>();
         var qPolls = new List<IReadOnlyList<bool>>();
         bool wagerFinal = false;
+        var titles = new List<string>();
 
         for (int i = 0; i < ev.Rounds.Count; i++)
         {
@@ -198,6 +201,7 @@ public static class LiveEventFile
             rounds.Add(new NightRound { Kind = GameModeExtensions.FromId(r.Format) ?? GameMode.Classic, Count = r.Questions.Count });
             questions.Add(r.Questions);
             notes.Add(r.HostNote ?? "");
+            titles.Add(r.Title ?? "");
             timers.Add(r.TimerSeconds ?? 0);
             roundPoints.Add(r.Points ?? 0);
             qTimers.Add(Stored(r.QuestionTimers));
@@ -216,6 +220,7 @@ public static class LiveEventFile
             Rounds = rounds,
             RoundQuestions = questions,
             RoundNotes = notes,
+            RoundTitles = titles,
             RoundTimers = timers,
             RoundPoints = roundPoints,
             RoundQuestionTimers = qTimers,
@@ -227,6 +232,7 @@ public static class LiveEventFile
             BrandHex = string.IsNullOrEmpty(ev.BrandHex) ? null : ev.BrandHex,
             LeadCaptureUrl = string.IsNullOrEmpty(ev.LeadCaptureUrl) ? null : ev.LeadCaptureUrl,
             Weekday = ev.Weekday,
+            Joker = ev.Joker == true,
         };
     }
 }

@@ -903,6 +903,7 @@ public partial class LiveView : UserControl
         LeadCaptureUrl = string.IsNullOrWhiteSpace(LeadUrlBox.Text) ? null : LeadUrlBox.Text!.Trim(),
         Weekday = WeekdayBox.SelectedIndex >= 1 ? WeekdayBox.SelectedIndex - 1 : (int?)null,
         WagerFinalRound = WagerFinalCheck.IsChecked == true,
+        Joker = JokerCheck.IsChecked == true,   // A2.14
         RoundNotes = new System.Collections.Generic.List<string>(_notes),
         RoundTimers = new System.Collections.Generic.List<int>(_timers),
         RoundPoints = new System.Collections.Generic.List<int>(_points),
@@ -930,6 +931,7 @@ public partial class LiveView : UserControl
         LeadUrlBox.Text = ev.LeadCaptureUrl ?? "";
         WeekdayBox.SelectedIndex = ev.Weekday is int w and >= 0 and <= 6 ? w + 1 : 0;
         WagerFinalCheck.IsChecked = ev.WagerFinalRound;
+        JokerCheck.IsChecked = ev.Joker;   // A2.14
         _rounds.Clear(); _notes.Clear(); _timers.Clear(); _points.Clear(); _questions.Clear(); _clips.Clear(); _expandedRounds.Clear(); _buzz.Clear(); _letters.Clear(); _boards.Clear();
         _qTimers.Clear(); _qPoints.Clear(); _qNotes.Clear(); _qPolls.Clear();
         for (int i = 0; i < ev.Rounds.Count; i++)

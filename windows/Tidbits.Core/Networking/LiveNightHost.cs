@@ -107,6 +107,8 @@ public sealed class LiveNightHost : ObservableObject
             Code = Net.Code, Title = Title, Index = Index, Revealed = Revealed, Total = Questions.Count,
             Questions = Questions.ToList(), Event = Branding, Plan = _plan,
             PaperTeams = PaperTeamsSnapshot(), Hidden = _hidden.ToList(), PointsPerCorrect = PointsPerCorrect,
+            JokersPlayed = JokersPlayed.ToDictionary(kv => kv.Key.ToString(), kv => (IReadOnlyList<string>)kv.Value.OrderBy(x => x, StringComparer.Ordinal).ToList()),
+            PaperJokers = _paperJokers.Where(kv => _paperNames.ContainsKey(kv.Key)).ToDictionary(kv => _paperNames[kv.Key], kv => kv.Value),
             WrongAnswerPenalty = WrongAnswerPenalty, AnswerLog = AnswerLog.ToList(),
             SavedAt = DateTimeOffset.Now,
         });
@@ -129,8 +131,15 @@ public sealed class LiveNightHost : ObservableObject
         {
             AddPaperTeam(t.Name);
             var uid = _paperNames.FirstOrDefault(kv => kv.Value == t.Name).Key;
-            if (uid is not null) _paperScores[uid] = t.Score;
+            if (uid is not null)
+            {
+                _paperScores[uid] = t.Score;
+                if (r.PaperJokers.TryGetValue(t.Name, out var jr)) _paperJokers[uid] = jr;   // A2.14
+            }
         }
+        JokersPlayed.Clear();
+        foreach (var kv in r.JokersPlayed)
+            if (int.TryParse(kv.Key, out var ri)) JokersPlayed[ri] = kv.Value.ToHashSet(StringComparer.Ordinal);
         Notify();
     }
 
@@ -246,6 +255,7 @@ public sealed class LiveNightHost : ObservableObject
 
     private async Task PublishCurrent()
     {
+        LockJokersIfRoundStart();   // A2.14: the picks for this round are final once its first question is out
         await Net.Publish(BuildPub());
         await SyncMedia();
     }
@@ -326,6 +336,7 @@ public sealed class LiveNightHost : ObservableObject
             var paper = _paperScores.Where(kv => !_removed.Contains(kv.Key))
                 .Select(kv => new LiveHostNet.Joined(kv.Key, _paperNames[kv.Key], kv.Value));
             return net.Concat(paper)
+                .Select(j => j with { Joker = JokerRoundOf(j.Id, j.Name) is int r ? $"JOKER \u00b7 R{r + 1}" : null })   // A2.14
                 .OrderByDescending(j => j.Score).ThenBy(j => j.Name, StringComparer.Ordinal).ToList();
         }
     }
@@ -416,9 +427,63 @@ public sealed class LiveNightHost : ObservableObject
     }
     public int RoundNumber => RoundIndex + 1;
     public int RoundCount => Math.Max(_plan.Rounds.Count, 1);
-    public string RoundTitle => RoundIndex < _plan.Rounds.Count ? _plan.Rounds[RoundIndex].Kind.NightRoundTitle() : "";
+    public string RoundTitle => RoundIndex < RoundTitles.Count ? RoundTitles[RoundIndex] : "";
+    /// The authored round titles (index-aligned; empty = the kind's name).
+    public IReadOnlyList<string> AuthoredRoundTitles { get; set; } = new List<string>();
 
     private readonly HashSet<string> _hidden = new(); // moderation gate (3.26)
+
+    // A2.14 — the joker. Mirrors the Mac's LiveHostSession.
+    public bool Joker { get; set; }
+    /// The jokers LOCKED per round (0-based) — team NAMES, because a table may be several phones.
+    public Dictionary<int, HashSet<string>> JokersPlayed { get; } = new();
+    private readonly Dictionary<string, int> _paperJokers = new();
+    public int? PaperJoker(string uid) => _paperJokers.TryGetValue(uid, out var r) ? r : null;
+    public void SetPaperJoker(string uid, int? round)
+    {
+        if (round is null) _paperJokers.Remove(uid); else _paperJokers[uid] = round.Value;
+        SaveResume(); Notify();
+    }
+    public IReadOnlyList<string> RoundTitles => _plan.Rounds.Select((r, i) =>
+        i < AuthoredRoundTitles.Count && !string.IsNullOrWhiteSpace(AuthoredRoundTitles[i]) ? AuthoredRoundTitles[i] : r.Title).ToList();
+    public IReadOnlyList<LiveRoom.JokerRound> JokerRoundsAhead =>
+        Joker && Current is not null ? LiveJoker.Playable(RoundIndex, RoundTitles, WagerRoundIndex) : Array.Empty<LiveRoom.JokerRound>();
+    /// The round's first question is out — its jokers are locked. Idempotent per round.
+    public void LockJokersIfRoundStart()
+    {
+        if (!Joker || Current is null || PositionInRound != 0) return;
+        var r = RoundIndex;
+        if (JokersPlayed.ContainsKey(r)) return;
+        var teamOf = Net.Members().GroupBy(m => m.Uid).ToDictionary(g => g.Key, g => g.First().TeamName);
+        var played = LiveJoker.Played(r, Net.JokerPicks(), uid => teamOf.GetValueOrDefault(uid));
+        foreach (var kv in _paperJokers)
+            if (kv.Value == r && _paperNames.TryGetValue(kv.Key, out var n)) played.Add(n);
+        JokersPlayed[r] = played;
+    }
+    public int JokerMultiplier(string uid)
+    {
+        var name = Net.Members().FirstOrDefault(m => m.Uid == uid)?.TeamName ?? "";
+        return LiveJoker.Multiplier(name, JokersPlayed.TryGetValue(RoundIndex, out var set) ? set : new HashSet<string>());
+    }
+    /// The round a team's joker is on, locked or still a pick — for the cockpit badge.
+    public int? JokerRoundOf(string id, string name)
+    {
+        foreach (var kv in JokersPlayed) if (kv.Value.Contains(name)) return kv.Key;
+        if (IsPaper(id)) return PaperJoker(id);
+        var picks = Net.JokerPicks();
+        foreach (var m in Net.Members()) if (m.TeamName == name && picks.TryGetValue(m.Uid, out var r)) return r;
+        return null;
+    }
+    /// The big-screen line on a round's first question; null when nobody played (A8.7).
+    public string? JokersLine
+    {
+        get
+        {
+            if (Current is null || PositionInRound != 0 || !JokersPlayed.TryGetValue(RoundIndex, out var set)) return null;
+            var hiddenNames = Net.JoinedTeams().Where(j => _hidden.Contains(j.Id)).Select(j => j.Name).ToHashSet(StringComparer.Ordinal);
+            return LiveJoker.Line(set.Where(n => !hiddenNames.Contains(n)));
+        }
+    }
 
     public bool IsHidden(string uid) => _hidden.Contains(uid);
 
@@ -889,7 +954,8 @@ public sealed class LiveNightHost : ObservableObject
         if (string.IsNullOrEmpty(uid)) return;
         if (IsPaper(uid))
         {
-            if (_paperScores.ContainsKey(uid)) _paperScores[uid] = Math.Max(0, _paperScores[uid] + delta);
+            var m = PaperJoker(uid) == RoundIndex ? 2 : 1;   // A2.14: a paper table's joker doubles the host's mark
+            if (_paperScores.ContainsKey(uid)) _paperScores[uid] = Math.Max(0, _paperScores[uid] + delta * m);
             Notify();
             return;
         }
@@ -988,6 +1054,7 @@ public sealed class LiveNightHost : ObservableObject
             Deadline = Revealed ? null : _deadline,
             Wager = IsWagerRound ? true : null,
             Buzz = IsBuzzRound ? true : null,          // G1: joiners show a BUZZ button
+            JokerRounds = JokerRoundsAhead is { Count: > 0 } jr ? jr : null,   // A2.14: the tables can still play a joker
             Media = CurrentMedia is { } m ? m with { StartedAt = MediaStartedAt } : null,   // Decision 060
         };
     }
@@ -1052,14 +1119,15 @@ public sealed class LiveNightHost : ObservableObject
 
         foreach (var e in baseScores)
         {
-            var total = e.pts + bonus.GetValueOrDefault(e.uid);
-            paid[e.uid] = total > 0 ? total : (WrongAnswerPenalty > 0 ? -WrongAnswerPenalty : 0);
+            var m = JokerMultiplier(e.uid);   // A2.14: a table's joker round counts double — points, and the penalty too
+            var total = (e.pts + bonus.GetValueOrDefault(e.uid)) * m;
+            paid[e.uid] = total > 0 ? total : (WrongAnswerPenalty > 0 ? -WrongAnswerPenalty * m : 0);
             if (total > 0) await Net.SetScore(e.uid, Net.ScoreOf(e.uid) + total);
             // G3: negative marking. `baseScores` is built from ANSWERS, so a team
             // that submitted nothing is not in this loop at all — which is exactly
             // the rule (silence is not a wrong answer).
             else if (WrongAnswerPenalty > 0)
-                await Net.SetScore(e.uid, Net.ScoreOf(e.uid) - WrongAnswerPenalty);
+                await Net.SetScore(e.uid, Net.ScoreOf(e.uid) - WrongAnswerPenalty * m);
         }
     }
 }

@@ -18,6 +18,9 @@ final class LivePlayerClient {
     private(set) var meta: LiveRoom.Meta?
     private(set) var score = 0
     var wager = 0   // Wave A: the player's stake for a wager question (UI-bound; clamped to score on send)
+    /// A2.14: the round this table's joker is on (0-based), or nil. Read back on join so
+    /// a reload keeps the pick; the host locks it when that round starts.
+    private(set) var jokerRound: Int?
     var blurred = false   // Wave C: set true if the player left the app during this question (attached to the answer)
     private(set) var submittedQid: String?
     private(set) var chosen: Int?
@@ -55,6 +58,7 @@ final class LivePlayerClient {
             let t = LiveRoom.Team(name: team, joinedAt: Self.nowMS())
             try await db.putJSON("\(LiveRoom.path(code))/teams/\(uid)", try JSONEncoder().encode(t))
             self.code = code; self.joined = true; self.joining = false
+            jokerRound = (try? await db.get("\(LiveRoom.path(code))/jokers/\(uid)", as: LiveRoom.Joker.self))?.round   // A2.14
             liveAnswered = 0; liveCorrect = 0; talliedQid = nil; recordedEnd = false
             Self.remember(code: code, team: team)   // easy one-tap rejoin after a restart
             watch(code, uid: uid)
@@ -86,6 +90,17 @@ final class LivePlayerClient {
         guard var obj = try JSONSerialization.jsonObject(with: data) as? [String: Any] else { return data }
         obj["sv"] = [".sv": "timestamp"]
         return try JSONSerialization.data(withJSONObject: obj)
+    }
+
+    /// A2.14: play (or move) the joker — the round this table doubles. The host only
+    /// honours a pick for a round that has not started, so the phone only offers those.
+    func playJoker(_ round: Int) async {
+        guard let uid, !code.isEmpty else { return }
+        let before = jokerRound
+        jokerRound = round
+        do { try await db.putJSON("\(LiveRoom.path(code))/jokers/\(uid)",
+                                  try JSONEncoder().encode(LiveRoom.Joker(round: round, ts: Int(Date().timeIntervalSince1970 * 1000)))) }
+        catch { jokerRound = before; errorText = "Joker didn't send — try again." }
     }
 
     private func send(_ ans: LiveRoom.Answer) async {

@@ -74,6 +74,15 @@
           "id": {
             ".read": "auth != null"
           }
+        },
+        "jokers": {
+          ".write": "auth != null && root.child('live').child($code).child('meta/host').val() === auth.uid",
+          ".read": "auth != null && root.child('live').child($code).child('meta/host').val() === auth.uid",
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid",
+            ".validate": "newData.hasChildren(['round']) && newData.child('round').isNumber()",
+            ".read": "auth != null && auth.uid === $uid"
+          }
         }
       }
     },

@@ -490,6 +490,14 @@ struct LiveBuilderView_macOS: View {
                     }
                 }
             }
+            field("Joker", help: "Each table doubles ONE round of its choice, picked from its phone before that round starts") {
+                Toggle("Teams play a joker", isOn: Binding(get: { working.joker ?? false },
+                                                           set: { working.joker = $0 ? true : nil }))
+                    .toggleStyle(.switch).labelsHidden()
+                    .accessibilityIdentifier("live.joker")
+                Text(working.joker == true ? "On — every point a table scores in its joker round counts double" : "Off")
+                    .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+            }
             field("Sponsor", help: "Shown as “brought to you by …” in the lobby and between rounds") {
                 TextField("", text: $working.sponsor, prompt: Text("optional"))
                     .textFieldStyle(.roundedBorder).frame(width: 320)

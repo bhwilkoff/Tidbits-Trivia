@@ -27,12 +27,20 @@ public sealed class LiveHostNet
     private readonly Dictionary<string, string> _names = new();
     private string NameOf(string uid, string wire) => _names.TryGetValue(uid, out var n) && !string.IsNullOrWhiteSpace(n) ? n.Trim() : wire;
     private readonly Dictionary<string, int> _scores = new();
+    /// A2.14: every table's joker pick (`jokers/{uid}`), live; the host locks a round's
+    /// picks when it starts (`LiveJoker.Played`).
+    private readonly Dictionary<string, LiveRoom.Joker> _jokers = new();
+    public IReadOnlyDictionary<string, int> JokerPicks() { lock (_lock) return _jokers.ToDictionary(kv => kv.Key, kv => kv.Value.Round); }
     private readonly Dictionary<string, LiveRoom.Answer> _answers = new();
 
     /// Fires (off the UI thread) after any roster/score/answer change — the consumer marshals.
     public event Action? Changed;
 
-    public readonly record struct Joined(string Id, string Name, int Score);
+    public readonly record struct Joined(string Id, string Name, int Score, string? Joker = null)
+    {
+        public bool HasJoker => Joker is not null;
+        public bool IsPaper => Id.StartsWith("paper:", StringComparison.Ordinal);
+    }
 
     /// A3.12: rename a joined team for the whole night — the projector, the standings,
     /// the answer sheet and the exports all read the merged name.
@@ -149,7 +157,8 @@ public sealed class LiveHostNet
             {
                 try { await _db.Delete($"{LiveRoom.Path(room)}/answers"); } catch { }
                 try { await _db.Delete($"{LiveRoom.Path(room)}/scores"); } catch { }
-                lock (_lock) _scores.Clear();
+                try { await _db.Delete($"{LiveRoom.Path(room)}/jokers"); } catch { }   // A2.14: last night's picks are not this night's
+                lock (_lock) { _scores.Clear(); _jokers.Clear(); }
             }
             Venue = venue;
             var meta = new LiveRoom.Meta { Host = host, CreatedAt = NowMs(), Name = name, Venue = venue, State = "lobby" };
@@ -162,6 +171,7 @@ public sealed class LiveHostNet
             _streamCts.Add(StartWatch($"{LiveRoom.Path(room)}/teams", _teams));
             _streamCts.Add(StartWatch($"{LiveRoom.Path(room)}/meta/names", _names));
             _streamCts.Add(StartWatch($"{LiveRoom.Path(room)}/scores", _scores));
+            _streamCts.Add(StartWatch($"{LiveRoom.Path(room)}/jokers", _jokers));   // A2.14
             _streamCts.Add(StartRemoteWatch($"{LiveRoom.Path(room)}/control"));   // G6
             return room;
         }

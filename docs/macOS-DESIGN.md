@@ -155,6 +155,23 @@ reveal, when it stops being news. Like every big-screen element it is a switch
 (A8.7); the text is one pure function shared with Windows, so the two projectors
 cannot word it differently.
 
+A2.14 **The joker — one round per table, named before it starts, worth double**
+(2026-09-10). The oldest trick in the pub quiz, and the one decision of the night
+the TABLE makes rather than the host. When the event's Joker switch is on, every
+phone offers "Your joker" with the rounds still ahead (never the one in play,
+never the wager round — a table already stakes its own points there); the pick
+can move until that round's first question goes out, when the host locks it and
+the big screen says who played ("Jokers played: Corner, The Bar" under the round
+line — a switch, A8.7, silent when nobody did). In that round every point the
+table scores counts double — and so does the penalty under negative marking,
+because a joker is a bet. A paper table has no phone, so the host plays its joker
+from the cockpit (the row's menu) and its ± marks double in that round. The
+cockpit badges every table's joker ("JOKER · R3", coral while it is the round in
+play) so the host can answer "did we play ours?" without asking. The pick rides
+its own node (`jokers/{uid}`, the table's like its answers); the rounds on offer
+ride `pub.jokerRounds`, absent once none are left so an older phone never sees
+it. A table with several phones (G7) plays one joker, whichever phone names it.
+
 A2.13 **A night the app died in the middle of can be picked back up** (2026-09-10).
 The room survives a host crash — the phones' scores live in `live/{code}/scores`
 and the joiners are still sitting there — but everything the HOST held died

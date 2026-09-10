@@ -53,6 +53,35 @@ final class LiveHostSession {
     var deadlineMs: Int? = nil   // Wave A: epoch-ms countdown deadline for the current timed question
     var locked = false           // Wave C: answers locked ("pencils down") — auto-set at the timer deadline or manually
     var blockedTeams: Set<String> = []   // Wave C: networked team uids the host hid from the big screen (a bad name)
+    /// A2.14: the jokers LOCKED per round (0-based) — team NAMES, because a table may
+    /// be several phones. Filled once, when the round's first question goes out.
+    var jokersPlayed: [Int: Set<String>] = [:]
+    /// A2.14: a paper team's joker, set by the host from the cockpit (the table has no phone).
+    var paperJokers: [LiveTeam.ID: Int] = [:]
+    var currentRoundIndex: Int { current?.roundIndex ?? 0 }
+    /// A2.14: lock the jokers for the round that is starting. Idempotent per round,
+    /// so a republish of the first question cannot re-read later picks.
+    func lockJokers(picks: [String: Int], teamName: (String) -> String?) {
+        guard event.joker == true, current != nil else { return }
+        let r = currentRoundIndex
+        guard jokersPlayed[r] == nil else { return }
+        var played = LiveJoker.played(on: r, picks: picks, teamOf: teamName)
+        for (id, pr) in paperJokers where pr == r { if let t = teams.first(where: { $0.id == id }) { played.insert(t.name) } }
+        jokersPlayed[r] = played
+    }
+    func jokerMultiplier(teamName: String) -> Int {
+        LiveJoker.multiplier(team: teamName, played: jokersPlayed[currentRoundIndex] ?? [])
+    }
+    /// A2.14: the round a team's joker is on, locked or still a pick — for the badge.
+    func jokerRound(teamName: String, picks: [String: Int], members: [LiveMember]) -> Int? {
+        if let r = jokersPlayed.first(where: { $0.value.contains(teamName) })?.key { return r }
+        return members.filter { $0.teamName == teamName }.compactMap { picks[$0.uid] }.first
+    }
+    var jokerRoundsAhead: [LiveRoom.JokerRound] {
+        guard event.joker == true, !finished else { return [] }
+        return LiveJoker.playable(current: currentRoundIndex, titles: event.rounds.map(\.title),
+                                  wager: event.rounds.firstIndex { $0.isWager == true })
+    }
     /// G1: teams that already buzzed this question and got it WRONG. They are
     /// skipped when resolving the next buzz, which is what "a wrong buzz reopens
     /// it to the rest" means in practice. Cleared with every question.
@@ -269,7 +298,9 @@ final class LiveHostSession {
     /// Manual score adjustment — the referee model (§A3.2). Never below 0.
     func adjust(_ id: LiveTeam.ID, by delta: Int) {
         guard let i = teams.firstIndex(where: { $0.id == id }) else { return }
-        teams[i].score = max(0, teams[i].score + delta)
+        // A2.14: a paper table's joker doubles the host's mark in its joker round.
+        let m = paperJokers[id] == currentRoundIndex ? 2 : 1
+        teams[i].score = max(0, teams[i].score + delta * m)
     }
     func reveal() { revealed = true; deadlineMs = nil }
     func next() {
@@ -432,6 +463,8 @@ final class LiveHostSession {
         if !revealed, locked { p.locked = true }              // Wave C: pencils down — no more answers
         if !revealed, currentRoundIsWager { p.wager = true }  // Wave A: wager round — joiners show a stake input
         if !revealed, currentRoundIsBuzz { p.buzz = true }    // G1: buzz round — joiners show a BUZZ button
+        let ahead = jokerRoundsAhead
+        if !ahead.isEmpty { p.jokerRounds = ahead }            // A2.14: the tables can still play a joker
         if let l = currentRoundLetter { p.letter = String(l) }   // G4: first-letter round — joiners see the rule
         if var m = currentMedia { m.startedAt = mediaStartedAt; p.media = m }   // Decision 060: the clip, offered to the phones
         if revealed {   // Wave A: the story behind the answer — the learning payoff, only at reveal
@@ -497,8 +530,15 @@ struct LiveHostContainer_macOS: View {
             s.pointsPerCorrect = r.pointsPerCorrect
             s.wrongAnswerPenalty = r.wrongAnswerPenalty
             s.answerLog = r.answerLog
+            s.jokersPlayed = Dictionary(uniqueKeysWithValues: (r.jokersPlayed ?? [:]).compactMap { k, v in Int(k).map { ($0, Set(v)) } })
+            for (name, round) in r.paperJokers ?? [:] { if let t = s.teams.first(where: { $0.name == name }) { s.paperJokers[t.id] = round } }
         }
         _session = State(initialValue: s)
+    }
+    /// A2.14: the round's first question is out — its jokers are locked.
+    private func lockJokersIfRoundStart() {
+        guard session.questionInRound.n == 1 else { return }
+        session.lockJokers(picks: net.jokerPicks, teamName: { net.teams[$0]?.name })
     }
     /// A2.13: write the recoverable snapshot of where this night is.
     private func saveResume() {
@@ -511,7 +551,10 @@ struct LiveHostContainer_macOS: View {
             blockedTeams: Array(session.blockedTeams),
             pointsPerCorrect: session.pointsPerCorrect,
             wrongAnswerPenalty: session.wrongAnswerPenalty,
-            answerLog: session.answerLog, savedAt: .now))
+            answerLog: session.answerLog, savedAt: .now,
+            jokersPlayed: Dictionary(uniqueKeysWithValues: session.jokersPlayed.map { (String($0.key), Array($0.value).sorted()) }),
+            paperJokers: Dictionary(uniqueKeysWithValues: session.paperJokers.compactMap { id, r in
+                session.teams.first { $0.id == id }.map { ($0.name, r) } })))
     }
 
     /// The single way a night ends. Extracted so the close button and the
@@ -711,6 +754,7 @@ struct LiveHostContainer_macOS: View {
             await net.open(name: event.name, venue: event.venue, code: resume?.code, resuming: resume != nil)
             await net.setState("live")
             await net.publish(session.currentPub())
+            lockJokersIfRoundStart()   // A2.14
             saveResume()   // A2.13: from the first question — a crash before any move is still a crash
             if let q = session.current { LivePlayedLog.shared.record([q.id], night: event.name) }   // A2.6: the room heard it
             await syncMedia()
@@ -719,6 +763,7 @@ struct LiveHostContainer_macOS: View {
         // Re-publish whenever the host advances or reveals; auto-score on reveal.
         .onChange(of: session.index) { _, _ in
             if let q = session.current { LivePlayedLog.shared.record([q.id], night: event.name) }
+            lockJokersIfRoundStart()   // A2.14: the picks for this round are final once its first question is out
             Task { await net.publish(session.currentPub()); await syncMedia() }
         }
         .onChange(of: session.onBreak) { _, _ in Task { await net.publish(session.currentPub()) } }   // A3.14
@@ -832,7 +877,7 @@ struct LiveHostContainer_macOS: View {
         let poll = session.currentIsPoll   // A2.10: the room voted; nobody is paid
         let wagerRound = session.currentRoundIsWager
         let speedRound = session.currentRoundIsSpeed
-        var speedCorrect: [(uid: String, ts: Int, pts: Int)] = []
+        var speedCorrect: [(uid: String, ts: Int, pts: Int, m: Int)] = []
         // G7: exactly one answer per TEAM reaches the scoreboard. Walking the
         // answers per uid is correct while a device IS a team, and awards a table
         // twice the moment two of its phones answer — or penalises it twice under
@@ -857,8 +902,10 @@ struct LiveHostContainer_macOS: View {
         }
         if poll { return }
         for (uid, ans) in net.answers where scorable.contains(uid) {
+            // A2.14: a table's joker round counts double — points, and the penalty too.
+            let m = session.jokerMultiplier(teamName: net.teams[uid]?.name ?? "")
             let pts = LiveNightHost.score(q, ans, shuffledOrder: session.shuffledOrder,
-                                          shuffledValues: session.shuffledValues, mcqPoints: session.currentPoints)
+                                          shuffledValues: session.shuffledValues, mcqPoints: session.currentPoints) * m
             if wagerRound {
                 // Wave A: stake clamped to the team's current score; correct +stake, wrong −stake.
                 let current = net.scores[uid] ?? 0
@@ -867,19 +914,20 @@ struct LiveHostContainer_macOS: View {
                 paid[uid] = pts > 0 ? stake : -stake
                 await net.setScore(uid, pts > 0 ? current + stake : current - stake)
             } else if pts > 0 {
-                if speedRound { speedCorrect.append((uid, ans.sv ?? ans.ts, pts)) }   // server clock; falls back for older clients
+                if speedRound { speedCorrect.append((uid, ans.sv ?? ans.ts, pts, m)) }   // server clock; falls back for older clients
                 else { paid[uid] = pts; await net.setScore(uid, (net.scores[uid] ?? 0) + pts) }
             } else if session.wrongAnswerPenalty > 0 {
                 // G3: negative marking. This team ANSWERED and got it wrong; a team
                 // that submitted nothing never reaches here, which is the whole point.
-                paid[uid] = -session.wrongAnswerPenalty
-                await net.setScore(uid, (net.scores[uid] ?? 0) - session.wrongAnswerPenalty)
+                paid[uid] = -session.wrongAnswerPenalty * m
+                await net.setScore(uid, (net.scores[uid] ?? 0) - session.wrongAnswerPenalty * m)
             }
         }
         // Wave B: speed round — base points + a fastest-first bonus (1st correct +3, 2nd +2, 3rd +1).
         for (rank, c) in speedCorrect.sorted(by: { $0.ts < $1.ts }).enumerated() {
-            paid[c.uid] = c.pts + max(0, 3 - rank)
-            await net.setScore(c.uid, (net.scores[c.uid] ?? 0) + c.pts + max(0, 3 - rank))
+            let total = c.pts + max(0, 3 - rank) * c.m   // pts already carries the joker
+            paid[c.uid] = total
+            await net.setScore(c.uid, (net.scores[c.uid] ?? 0) + total)
         }
     }
 }
@@ -1647,6 +1695,14 @@ struct LiveHostView_macOS: View {
                         }
                     }
                 }
+                if session.event.joker == true {   // A2.14: a paper table has no phone — the host plays its joker
+                    Menu(session.paperJokers[team.id].map { "Joker: round \($0 + 1)" } ?? "Joker…") {
+                        ForEach(session.jokerRoundsAhead, id: \.index) { r in
+                            Button("Round \(r.index + 1) — \(r.title)") { session.paperJokers[team.id] = r.index }
+                        }
+                        if session.paperJokers[team.id] != nil { Button("No joker") { session.paperJokers[team.id] = nil } }
+                    }
+                }
                 Button("Remove team", role: .destructive) { session.removeTeam(team.id) }
             } label: { Image(systemName: "ellipsis") }
                 .menuStyle(.borderlessButton).frame(width: 20)
@@ -1674,6 +1730,15 @@ struct LiveHostView_macOS: View {
                 }
                 Text(team.name).font(.headline).foregroundStyle(Tidbits.Palette.ink).lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
+                if let jr = session.jokerRound(teamName: team.name, picks: net.jokerPicks, members: net.members) {   // A2.14
+                    let live = jr == session.currentRoundIndex
+                    Text("JOKER · R\(jr + 1)").font(.system(size: 10, weight: .heavy))
+                        .foregroundStyle(live ? .white : Tidbits.Palette.inkSoft)
+                        .padding(.horizontal, 6).padding(.vertical, 2)
+                        .background(Capsule().fill(live ? Tidbits.Palette.coral : Tidbits.Palette.surface))
+                        .help(live ? "This table's joker round — every point counts double" : "Joker on round \(jr + 1)")
+                        .accessibilityIdentifier("live.jokerBadge")
+                }
                 if ans?.blurred == true {   // Wave C: left the app during the question — a soft cheat signal
                     Image(systemName: "eye.trianglebadge.exclamationmark.fill").font(.system(size: 13))
                         .foregroundStyle(Tidbits.Palette.coral).help("Left the app during this question")

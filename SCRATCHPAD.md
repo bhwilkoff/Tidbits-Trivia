@@ -7,6 +7,49 @@
 > `docs/ROADMAP.md`, `docs/DATA-CONTRACT.md`. Detailed per-round history is in
 > `ARCHIVE.md`.
 
+## Current state (2026-09-10b) — the joker: one round per table, named before it starts, worth double (A2.14 / 3.81)
+
+**Did:** the pub-quiz staple no other row covered. Event switch "Teams play a
+joker" (Mac field + Windows checkbox; `joker` in the file contract). Wire:
+`pub.jokerRounds` = the rounds still ahead minus the wager round (absent when
+none, so older phones never see it); a table writes `jokers/{uid} = {round}`
+(rules: its own, host reads all and clears on a fresh open — 8 new probe
+checks, deployed). Both hosts lock a round's picks when its first question goes
+out (`LiveJoker.played`, by TEAM name so several phones are one joker — G7),
+double points AND the penalty for that round, badge every row ("JOKER · R2",
+coral while live), let the host play a paper table's joker from the row menu
+(its ± doubles), keep the locks in the resume snapshot, and the projector says
+"Jokers played: …" under the round line — a switch (A8.7), silent otherwise.
+Joiners: web (native `<select>`, pick read back on reload) and iOS (a Menu
+card; dashed "Played on Round 3" once locked). tvOS / Android / Windows / Mac
+joiners ⏳ — the wire is done; each is a picker over `pub.jokerRounds`.
+`LiveJoker` is pure and byte-identical on Swift and C# (5 Swift Testing + 7
+xUnit incl. the wire keys and the file flag).
+
+**Verified on the REAL Mac and the REAL Windows box** (`scratchpad/e2e_joker.py`):
+a two-round night; Table 1 played its joker on round 2 from the wire, Table 2
+did not; both answered both questions right → final 3 vs 2 on both hosts; round
+1's pub offered `[{index:1, title:"Round 2 — Movies"}]`, round 2's offered
+nothing; the Mac cockpit badge (coral "JOKER · R2") and the wrap (Table 1 on 3)
+photographed; the Mac projector line read at 1080p and 720p via the offline
+snapshot sim (a new `jokers` frame). Found on the glass, fixed: the projector
+line first sat in the status block, which the live vote bars replace the moment
+anyone answers — moved under the round line; the Windows badge squeezed the
+team NAME out of its narrow column — stacked under the name.
+
+**Found on the way — a pre-existing Windows gap:** the Windows host published
+"Name It" (the round KIND) for every authored round; the event dropped the
+authored titles on import. `LiveEvent.RoundTitles` (additive, in the file
+contract both ways) now names the round on the wire, the cockpit and the joker
+picker.
+
+**Harness lesson:** the Mac `TIDBITS_LIVE_FINISH_AT` ends WITHOUT a reveal, so
+the last question is never scored by it — every prior night harness only ever
+scored questions the NEXT hook revealed. Reveal the last one with
+`TIDBITS_LIVE_ACCEPT_ALL=<no such text>` + `ACCEPT_AT` first. And read the
+answer key before typing the answer: the QA file's round-2 answer is "The
+Wachowskis", not "Keanu Reeves".
+
 ## Current state (2026-09-10a) — a night the app died in the middle of can be picked back up (A2.13 / 3.80)
 
 **Did:** both hosts snapshot the night on every host move AND at open (index,

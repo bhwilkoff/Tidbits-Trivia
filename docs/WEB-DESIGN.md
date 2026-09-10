@@ -81,6 +81,16 @@ native platform — every `tidbits://…` has an `https://…` twin
   silently kills it, pinning the popup to the top-left corner (the
   2026-07-03 "popups appear in the corner" bug).
 
+### The joker on the web joiner (rule R-JOIN-2, 2026-09-10)
+
+A2.14 on the phone's browser: while the pub carries `jokerRounds`, the play
+screen shows a "YOUR JOKER" box with a native `<select>` of the rounds still
+ahead (a native control before a custom one — CLAUDE.md); choosing one writes
+`jokers/{uid}` and the label reads "YOUR JOKER · Round 3". Once that round has
+begun the box turns into a dashed "Played on Round 3 — every point there counts
+double" and cannot move. The pick is read back on join so a reload keeps it. No
+box at all when there is nothing to play.
+
 ## §4 The chunky card (`.card`) — binding
 
 The 90s-sticker surface: thick ink border + a hard 5px offset shadow,

@@ -40,6 +40,7 @@ enum LiveEventFile {
         var leadCaptureURL: String
         var brandHex: String
         var weekday: Int?
+        var joker: Bool?            // A2.14: tables play a joker (absent = no)
         var rounds: [PortableRound]
     }
 
@@ -126,6 +127,7 @@ enum LiveEventFile {
                 leadCaptureURL: event.leadCaptureURL,
                 brandHex: event.brandHex,
                 weekday: event.weekday,
+                joker: event.joker == true ? true : nil,
                 rounds: event.rounds.map { r in
                     PortableRound(id: r.id.uuidString, title: r.title,
                                   format: r.format.rawValue, categoryID: r.categoryID,
@@ -167,6 +169,7 @@ enum LiveEventFile {
         event.leadCaptureURL = e.leadCaptureURL
         event.brandHex = e.brandHex
         event.weekday = e.weekday
+        event.joker = e.joker == true ? true : nil
         event.rounds = e.rounds.map { r in
             var round = LiveRound(id: UUID(uuidString: r.id) ?? UUID(),
                                   title: r.title,

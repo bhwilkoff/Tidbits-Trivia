@@ -31,6 +31,9 @@ public sealed record ResumedNight
     [JsonPropertyName("paperTeams")] public IReadOnlyList<Team> PaperTeams { get; init; } = new List<Team>();
     /// The networked uids the host hid from the big screen (3.26) — host-side only.
     [JsonPropertyName("hidden")] public IReadOnlyList<string> Hidden { get; init; } = new List<string>();
+    /// A2.14: the jokers locked per round (key = round index) and the paper tables' jokers by name.
+    [JsonPropertyName("jokersPlayed")] public IReadOnlyDictionary<string, IReadOnlyList<string>> JokersPlayed { get; init; } = new Dictionary<string, IReadOnlyList<string>>();
+    [JsonPropertyName("paperJokers")] public IReadOnlyDictionary<string, int> PaperJokers { get; init; } = new Dictionary<string, int>();
     [JsonPropertyName("pointsPerCorrect")] public int PointsPerCorrect { get; init; } = 1;
     [JsonPropertyName("wrongAnswerPenalty")] public int WrongAnswerPenalty { get; init; }
     [JsonPropertyName("answerLog")] public IReadOnlyList<LiveAnswerRecord> AnswerLog { get; init; } = new List<LiveAnswerRecord>();

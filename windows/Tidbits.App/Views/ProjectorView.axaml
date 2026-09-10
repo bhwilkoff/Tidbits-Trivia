@@ -156,6 +156,9 @@
                                    TextWrapping="Wrap" TextAlignment="Center" Text="{Binding RevealAnswer}"/>
                         <TextBlock IsVisible="{Binding ShowAnswersIn}" Text="{Binding AnswersInLine}" Foreground="#5B8CFF"
                                    FontSize="30" FontWeight="Black" HorizontalAlignment="Center" Margin="0,4"/>
+                        <!-- A2.14: jokers played on this round, on its first question. -->
+                        <TextBlock IsVisible="{Binding ShowJokers}" Text="{Binding JokersLine}" Foreground="#FF5C35"
+                                   FontSize="26" FontWeight="Black" HorizontalAlignment="Center" TextWrapping="Wrap" Margin="0,4"/>
                         <TextBlock IsVisible="{Binding ShowStatusLine}" Text="{Binding StatusLine}" Foreground="White" Opacity="0.6"
                                    FontSize="24" FontWeight="SemiBold" TextAlignment="Center"/>
                         <!-- The story behind the answer on reveal (3.42) — the room learns why. -->

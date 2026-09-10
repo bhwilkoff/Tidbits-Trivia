@@ -100,6 +100,9 @@ public static class LiveRoom
         /// buzz. Mirrors Swift `Pub.buzz`; null on every non-buzz question so an
         /// older client never sees it.
         [JsonPropertyName("buzz")] public bool? Buzz { get; init; }
+        /// A2.14: the rounds a table can still play its JOKER on. Present only while the
+        /// event has the joker and a round is still ahead; null otherwise.
+        [JsonPropertyName("jokerRounds")] public IReadOnlyList<JokerRound>? JokerRounds { get; init; }
         /// G4: this round's FIRST-LETTER theme — every answer in it begins with this
         /// letter. Published so a player who joined mid-round still knows the rule
         /// instead of relying on having heard the host say it once. Mirrors Swift
@@ -172,6 +175,19 @@ public static class LiveRoom
             ? url[(MediaScheme.Length + 1)..] : null;
 
     /// A team as the joining player writes it (`teams/{uid}`).
+    /// A2.14: one round a joker can be played on, as the phones list it.
+    public sealed record JokerRound
+    {
+        [JsonPropertyName("index")] public int Index { get; init; }
+        [JsonPropertyName("title")] public string Title { get; init; } = "";
+    }
+    /// A2.14: a table's joker (`jokers/{uid}`) — the round it doubles.
+    public sealed record Joker
+    {
+        [JsonPropertyName("round")] public int Round { get; init; }
+        [JsonPropertyName("ts")] public long? Ts { get; init; }
+    }
+
     public sealed record Team
     {
         [JsonPropertyName("name")] public string Name { get; init; } = "";

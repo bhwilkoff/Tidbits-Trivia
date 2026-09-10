@@ -70,6 +70,18 @@ public sealed class LiveHostViewModel : ObservableObject
     public bool ShowAnswersIn => !Host.Revealed && Elements.Shows("answersIn") && AnswersInLine.Length > 0;
     public string AnswersInLine => LiveProgress.AnswersIn(Host.AnsweredCount, Host.Net.JoinedTeams().Count) ?? "";
     public bool ShowStory => Elements.Shows("story") && HasRevealStory;
+    /// A2.14: who played their joker on this round — said once, on its first question.
+    public bool ShowJokers => Elements.Shows("jokers") && Host.JokersLine is not null;
+    public string JokersLine => Host.JokersLine ?? "";
+    public void CycleJoker(string uid)
+    {
+        var ahead = Host.JokerRoundsAhead.Select(r => r.Index).ToList();
+        var cur = Host.PaperJoker(uid);
+        int? next = null;
+        if (cur is null) next = ahead.Count > 0 ? ahead[0] : null;
+        else { var i = ahead.IndexOf(cur.Value); next = i >= 0 && i + 1 < ahead.Count ? ahead[i + 1] : null; }
+        Host.SetPaperJoker(uid, next);
+    }
     public bool ShowSource => Elements.Shows("story") && HasRevealSource;
     /// The answer capsule is for a NON-MCQ reveal; an MCQ's tally already lights the
     /// correct option, and saying it twice is the kind of clutter A8.7 exists to cut.

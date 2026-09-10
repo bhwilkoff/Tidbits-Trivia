@@ -501,6 +501,14 @@ public partial class LiveCockpitView : UserControl
     }
 
     // Name moderation gate — toggle a team's name off the big screen.
+    /// A2.14: a paper table has no phone — the host plays its joker. Each click moves
+    /// to the next round still ahead, then clears it.
+    private void OnCycleJoker(object? sender, RoutedEventArgs e)
+    {
+        if (Vm is { } vm && (sender as Control)?.Tag is string uid && uid.Length > 0)
+            vm.CycleJoker(uid);
+    }
+
     private void OnToggleHide(object? sender, RoutedEventArgs e)
     {
         if (Vm is { } vm && (sender as Control)?.Tag is string uid && uid.Length > 0)

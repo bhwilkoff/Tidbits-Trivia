@@ -185,6 +185,17 @@ join row as a second door; the card is the first.
 5.1c **A `…/live/{code}` link opens the join screen with the code filled
 in** (DEEP_LINKS.md). The player scanned; they do not type.
 
+### The joker is the table's one decision (rule R-JOIN-2, 2026-09-10)
+
+A2.14 on the phone. While the host's pub carries `jokerRounds`, the question
+card shows a "YOUR JOKER" panel with a menu of the rounds still ahead; picking
+one writes `jokers/{uid}` and the label reads "YOUR JOKER · ROUND 3". Once that
+round has started the panel turns into a quiet dashed note ("Played on Round 3
+— every point there counts double") and cannot move. The pick is read back on
+join so a reload keeps it. No panel at all when the event has no joker or no
+round is left — silence, not a disabled control. Same on every joiner (web,
+Android, Windows, Mac, tvOS names the round).
+
 ### Tidbits Club has exactly one door (rule R-CLUB-1, 2026-07-29)
 
 5.2a **The app shows AT MOST ONE Club entry point, and it lives on

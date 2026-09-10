@@ -53,7 +53,19 @@ def main() -> int:
     mr.http('PUT', f'{mr.DB}/live/{code}/answers/r0q0/{a_uid}.json?auth={a_tok}', {'text': 'A secret guess', 'ts': 1})
     mr.http('PUT', f'{mr.DB}/live/{code}/control.json?auth={a_tok}', {'id': 3, 'verb': 'reveal', 'pin': '246810'})
 
+    # A2.14: a table's joker is its own, like its answers; the host reads them all and
+    # may clear last night's on a reused code.
+    mr.http('PUT', f'{mr.DB}/live/{code}/jokers/{a_uid}.json?auth={a_tok}', {'round': 2, 'ts': 1})
+
     checks = [
+        ("a table plays its OWN joker",                True,  allowed('PUT', f'/jokers/{b_uid}', b_tok, {'round': 1})),
+        ("a table plays ANOTHER table's joker",        False, allowed('PUT', f'/jokers/{a_uid}', b_tok, {'round': 3})),
+        ("a table writes a joker with no round",       False, allowed('PUT', f'/jokers/{b_uid}', b_tok, {'ts': 1})),
+        ("a table reads ANOTHER table's joker",        False, allowed('GET', f'/jokers/{a_uid}', b_tok)),
+        ("a table reads its OWN joker",                True,  allowed('GET', f'/jokers/{a_uid}', a_tok)),
+        ("the host reads every joker",                 True,  allowed('GET', '/jokers', host_tok)),
+        ("a table reads every joker",                  False, allowed('GET', '/jokers', b_tok)),
+        ("the host clears the jokers",                 True,  allowed('DELETE', '/jokers', host_tok)),
         # No table may learn what another table said…
         ("a table reads ANOTHER table's answer",      False, allowed('GET', f'/answers/r0q0/{a_uid}', b_tok)),
         ("a table reads the whole answers node",      False, allowed('GET', '/answers/r0q0', b_tok)),

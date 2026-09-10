@@ -285,6 +285,7 @@ struct LiveJoinView: View {
                 .fixedSize(horizontal: false, vertical: true)
             if let d = p.deadline, !revealed { countdownView(d) }   // Wave A: on-screen timer
             if p.wager == true, !revealed { wagerStepper() }        // Wave A: wager round
+            jokerCard(p)                                             // A2.14: the joker
             answerSurface(p, revealed: revealed)
             statusNote(p, revealed: revealed)
             if revealed, let story = p.story, !story.isEmpty {   // Wave A: the story behind the answer
@@ -299,6 +300,48 @@ struct LiveJoinView: View {
                 LiveSourceLine(source: src)
             }
         }
+        }
+    }
+
+    /// A2.14: the joker — ONE round of the night this table doubles, named before it
+    /// starts. A menu of the rounds still ahead while the host offers any; once the
+    /// pick's round has begun it reads as played and cannot move.
+    @ViewBuilder private func jokerCard(_ p: LiveRoom.Pub) -> some View {
+        let rounds = p.jokerRounds ?? []
+        let cur = client.jokerRound
+        if let cur, !rounds.contains(where: { $0.index == cur }) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("YOUR JOKER").font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.coral)
+                Text("Played on Round \(cur + 1) — every point there counts double.")
+                    .font(Tidbits.TypeRamp.l5).foregroundStyle(Tidbits.Palette.inkSoft)
+            }
+            .padding(12).frame(maxWidth: .infinity, alignment: .leading)
+            .background(RoundedRectangle(cornerRadius: 12).stroke(Tidbits.Palette.border, style: StrokeStyle(lineWidth: 2, dash: [6])))
+            .accessibilityIdentifier("live.jokerPlayed")
+        } else if !rounds.isEmpty {
+            VStack(alignment: .leading, spacing: 6) {
+                Text(cur.map { "YOUR JOKER · ROUND \($0 + 1)" } ?? "YOUR JOKER").font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.coral)
+                Menu {
+                    ForEach(rounds, id: \.index) { r in
+                        Button("Round \(r.index + 1) — \(r.title)") { Task { await client.playJoker(r.index) } }
+                    }
+                } label: {
+                    HStack {
+                        Text(cur.flatMap { c in rounds.first { $0.index == c } }.map { "Round \($0.index + 1) — \($0.title)" } ?? "Pick a round to double…")
+                            .font(.system(size: 17, weight: .bold, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
+                        Spacer()
+                        Image(systemName: "chevron.up.chevron.down").foregroundStyle(Tidbits.Palette.inkSoft)
+                    }
+                    .padding(10)
+                    .background(RoundedRectangle(cornerRadius: 10).fill(.white))
+                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(Tidbits.Palette.ink, lineWidth: 2))
+                }
+                .accessibilityIdentifier("live.joker")
+                Text("Every point your table scores in that round counts double. Pick before it starts.")
+                    .font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.inkSoft)
+            }
+            .padding(12).frame(maxWidth: .infinity, alignment: .leading)
+            .background(RoundedRectangle(cornerRadius: 12).fill(Tidbits.Palette.yellow.opacity(0.25)))
         }
     }
 

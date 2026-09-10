@@ -82,6 +82,13 @@ public sealed class LiveHostViewModel : ObservableObject
     public bool IsEnded => Host.CurrentStage == LiveNightHost.Stage.Ended;
     public bool IsReveal => Host.Revealed;
     public bool IsWagerRound => Host.IsWagerRound;
+    /// A3.9: why the standings are up at the top of a wager round.
+    public string WagerLine => HoldStandings
+        ? "Wager round — the standings are on the big screen so the tables can stake; hide them when they are ready"
+        : "Wager round — teams stake points (correct +stake, wrong −stake)";
+    /// A9.2: the music bed is a quarter as loud while a clip plays.
+    public bool BedDucked => Services.GameData.Shared.Value.Av.BedDucked;
+    public void RefreshBed() { OnPropertyChanged(nameof(BedDucked)); }
 
     // Big-screen standings hold (3.39) — the host parks the current climbing
     // leaderboard on the projector between rounds; the question view yields to it.
@@ -96,7 +103,17 @@ public sealed class LiveHostViewModel : ObservableObject
     /// "SCORES AFTER ROUND 2", not a bare "STANDINGS". A host reading the scores
     /// out says which round they are for, and the Mac projector names it — this is
     /// the same slide on both desktops (COMPETITOR-SCAN G2).
-    public string StandingsHeadline => $"SCORES AFTER ROUND {Host.RoundNumber}";
+    public string StandingsHeadline
+    {
+        get
+        {
+            // The round the standings are AFTER: the current one once any of its questions
+            // has been revealed, else the previous one — a wager round opens on the
+            // standings before its first question (A3.9).
+            var n = Host.Revealed || Host.QuestionInRound.N > 1 ? Host.RoundNumber : Host.RoundNumber - 1;
+            return n <= 0 ? "STANDINGS" : $"SCORES AFTER ROUND {n}";
+        }
+    }
 
     /// The between-rounds slide with no teams was a TITLE OVER AN EMPTY SCREEN —
     /// the same blank wall the macOS final standings had. A host who holds the
@@ -365,7 +382,13 @@ public sealed class LiveHostViewModel : ObservableObject
     }
 
     public Task Reveal() => Host.Reveal();
-    public Task Next() => Host.Next();
+    public async Task Next()
+    {
+        await Host.Next();
+        // A3.9 (punch list 11): a wager round opens on the STANDINGS — a table stakes
+        // knowing where it stands. The host hides them when the tables are ready.
+        if (Host.CurrentStage == LiveNightHost.Stage.Playing && Host.IsWagerRound && Host.QuestionInRound.N == 1) HoldStandings = true;
+    }
     public Task Lock() => Host.Lock();
     public Task Skip() => Host.SkipNext();
     public Task Back() => Host.GoBack();

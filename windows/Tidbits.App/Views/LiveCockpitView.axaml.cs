@@ -579,10 +579,14 @@ public partial class LiveCockpitView : UserControl
         if (Vm?.CurrentClipPath is not { } path) return;
         Services.GameData.Shared.Value.Av.PlayClip(path);
         await Vm.CueMedia();   // Decision 060: cue the phones
+        await Task.Delay(600); Vm.RefreshBed();   // LibVLC reports Playing a beat later
     }
 
-    private void OnStopQuestionClip(object? sender, RoutedEventArgs e) =>
+    private void OnStopQuestionClip(object? sender, RoutedEventArgs e)
+    {
         Services.GameData.Shared.Value.Av.StopClip();
+        Vm?.RefreshBed();
+    }
 
     private ProjectorWindow? _projector;
 
@@ -656,6 +660,23 @@ public partial class LiveCockpitView : UserControl
         _scriptHooksRan = true;
         try
         {
+            if (Services.LaunchHooks.LiveBed is { Length: > 0 } bed)
+            {
+                await Task.Delay(1000);
+                Services.GameData.Shared.Value.Av.PlayBed(bed); Services.GameData.Shared.Value.Av.SetBedVolume(35);
+            }
+            if (Services.LaunchHooks.LivePlayClipAt is { } clipAt)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(clipAt));
+                Services.LaunchHooks.Diag($"playclip hook: path={Vm?.CurrentClipPath ?? "(none)"}");
+                OnPlayQuestionClip(this, new RoutedEventArgs());
+                await Task.Delay(1500); Vm?.RefreshBed();
+            }
+            if (Services.LaunchHooks.LiveNextAt is { } nextAt)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(nextAt));
+                if (Vm is { } v) { if (!v.Host.Revealed) { await v.Reveal(); await Task.Delay(2000); } await v.Next(); }
+            }
             if (Services.LaunchHooks.LiveEdit is { Length: > 0 } text)
             {
                 await Task.Delay(TimeSpan.FromSeconds(Services.LaunchHooks.LiveEditAt));

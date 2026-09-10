@@ -96,6 +96,12 @@ public static class LaunchHooks
 
     /// TIDBITS_LIVE_EXPORT_ANSWERS=<path> — write the answer sheet (3.62) there 5 s after the ACCEPT_ALL ruling.
     public static string? LiveExportAnswers => Env("TIDBITS_LIVE_EXPORT_ANSWERS");
+    /// TIDBITS_LIVE_BED=<path> — start the music bed 1 s after the cockpit is up (A9.2).
+    public static string? LiveBed => Env("TIDBITS_LIVE_BED");
+    /// TIDBITS_LIVE_PLAYCLIP_AT=<secs> — press Play on the question's clip.
+    public static double? LivePlayClipAt => double.TryParse(Env("TIDBITS_LIVE_PLAYCLIP_AT"), out var v) ? v : null;
+    /// TIDBITS_LIVE_NEXT_AT=<secs> — reveal if needed, then Next (A3.9's standings hold).
+    public static double? LiveNextAt => double.TryParse(Env("TIDBITS_LIVE_NEXT_AT"), out var v) ? v : null;
     /// TIDBITS_LIVE_TIEBREAK=1 — 3 s after the ACCEPT_ALL ruling, open the
     /// tie-break dialog (3.58) so it can be photographed with real tied teams.
     public static bool LiveTieBreak => Flag("TIDBITS_LIVE_TIEBREAK");

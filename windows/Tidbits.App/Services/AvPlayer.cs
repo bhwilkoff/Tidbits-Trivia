@@ -32,6 +32,10 @@ public sealed class AvPlayer : IDisposable
             _sfx = new MediaPlayer(_vlc);
             _bed = new MediaPlayer(_vlc);
             _clip = new MediaPlayer(_vlc);
+            _clip.EndReached += (_, _) => RestoreBed();   // LibVLC's thread; Volume is safe to set there
+            _clip.Stopped += (_, _) => RestoreBed();
+            _clip.Paused += (_, _) => RestoreBed();
+            _clip.Playing += (_, _) => DuckBed();
         }
         catch { _vlc = null; }
     }
@@ -42,7 +46,15 @@ public sealed class AvPlayer : IDisposable
     /// Start/replace the looping music bed.
     public void PlayBed(string path) => PlayOn(_bed, path, loop: true);
     public void StopBed() => _bed?.Stop();
-    public void SetBedVolume(int percent) { if (_bed is not null) _bed.Volume = Math.Clamp(percent, 0, 100); }
+    public void SetBedVolume(int percent) { _bedVolume = Math.Clamp(percent, 0, 100); if (_bed is not null) _bed.Volume = _ducked ? _bedVolume / 4 : _bedVolume; }
+
+    // A9.2 (punch list 14): the bed drops to a quarter under a clip and comes back
+    // when the clip ends — the host never reaches for the slider mid-show.
+    private int _bedVolume = 35;
+    private bool _ducked;
+    public bool BedDucked => _ducked;
+    private void DuckBed() { LaunchHooks.Diag($"duck? bed={(_bed is null ? "none" : _bed.IsPlaying ? "playing" : "idle")} ducked={_ducked}"); if (_bed is null || _ducked || !_bed.IsPlaying) return; _ducked = true; _bed.Volume = _bedVolume / 4; LaunchHooks.Diag($"bed ducked to {_bedVolume / 4}"); }
+    private void RestoreBed() { if (_bed is null || !_ducked) return; _ducked = false; _bed.Volume = _bedVolume; LaunchHooks.Diag($"bed restored to {_bedVolume}"); }
 
     // ---- Video picture (3.34) ----
 
@@ -137,10 +149,11 @@ public sealed class AvPlayer : IDisposable
         {
             var opts = loop ? new[] { "input-repeat=65535" } : Array.Empty<string>();
             var media = new Media(_vlc, new Uri(path), opts);
-            mp.Play(media);
+            var ok = mp.Play(media);
             media.Dispose();
+            LaunchHooks.Diag($"play {(ReferenceEquals(mp, _bed) ? "bed" : ReferenceEquals(mp, _clip) ? "clip" : "sfx")} ok={ok} loop={loop} {path}");
         }
-        catch { /* bad file / no device — never crash the show */ }
+        catch (Exception ex) { LaunchHooks.Diag($"play FAILED {path}: {ex.Message}"); /* bad file / no device — never crash the show */ }
     }
 
     /// Output devices for PA routing (3.31) — id + human name. Empty if unavailable.

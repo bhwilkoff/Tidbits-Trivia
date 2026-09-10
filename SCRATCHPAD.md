@@ -65,11 +65,12 @@ in both directions (see the last paragraph).
 9. ~~**"How did you know that?"**~~ — macOS solo results DONE 2026-09-09; the
    live-night wrap DONE 2026-09-09 on ALL SIX joiners (A3.7).
 10. ~~**Answer-level data export**~~ — DONE 2026-09-09 (A3.8 / 3.62).
-11. **Final-wager tie-break** (both partial). M.
+11. ~~**Final-wager tie-break**~~ — DONE 2026-09-09 as A3.9: the wager round
+    opens on the standings (the backlog's "standings shown, teams wager").
 12. ~~**Drag-to-reorder on Windows**~~ — DONE 2026-09-09 (3.63; the gesture
     is headless-tested, not driven on the box).
 13. ~~**Poll / no-answer question**~~ — DONE 2026-09-09 (A2.10 / 3.64).
-14. **Music-bed auto-duck** under a clip. S.
+14. ~~**Music-bed auto-duck**~~ — DONE 2026-09-09 (A3.10 / 3.66).
 15. **Per-event / per-venue analytics.** L.
 
 Backlog rows that were wrong: §F "tie-break engine ✅" is FALSE on Windows;
@@ -2354,3 +2355,19 @@ all six joiners drop the right/wrong tint and say "Thanks for voting".
 **Found on the way:** the "accept from everyone" ruling GREW an accepted list on a choice question (turning it into a typed one — the projector then hid the tally and never revealed); `learnAccepted` and `liveAcceptFromEveryone` now refuse a question without an accepted list (Windows already did). The Mac projector's persisted element switches had the tally off, which is exactly when a poll must still show it → a poll overrides the tally switch on both projectors. **Verified on the glass** (`scratchpad/e2e_poll.py`): the Mac projector's poll tally (Pizza 1 · Tacos 1, nothing lit as right), the real web and the real Android TV dongle saying "Thanks for voting" with no tint, the wire clean. The Windows box: the same, with its projector bars up. The iPhone 12 hit an iOS Screen Time limit on Tidbits ("You've reached your limit") — the owner needs to lift it on the QA phone; the Apple joiner code path compiled and shares the verdict logic with tvOS. Versions 1.9.17 / 147 / vc108 / MSIX 1.9.17.0. Next:
 punch list 14 (music-bed auto-duck under a clip) and 11 (final-wager
 tie-break), then 15 (analytics).
+
+**2026-09-09t — Live loop tick 20: the bed ducks; a wager round opens on the
+standings.** Punch list 14 + 11. Mac `LiveMusicBed.duck()/restore()` driven
+by `LiveAudioPlayer` (play / pause / completion / stop) and `LiveVideoPlayer`
+(play / pause / stop / AVPlayerItemDidPlayToEndTime); Windows `AvPlayer` on
+LibVLC's Playing / EndReached / Stopped / Paused. `LiveHostSession.next()` /
+`LiveHostViewModel.Next()` hold the standings when landing on a wager round's
+first question; the interim heading now names the round the scores are AFTER
+(`scoredRoundNumber` / `StandingsHeadline`) — the hold at the top of round 2
+had read "SCORES AFTER ROUND 2". Hooks: `TIDBITS_LIVE_BED`, `TIDBITS_LIVE_NEXT_AT`
+(both), `TIDBITS_LIVE_PLAYCLIP_AT` (box). **Verified on the glass**
+(`scratchpad/e2e_duck_wager.py`): Mac cockpit "ducked" beside the bed while
+the 4 s clip played and gone after; the projector on "SCORES AFTER ROUND 1"
+with the wire at r1 wager:true. The Windows box: the same standings hold and heading. The Windows duck is proven by the hook log (bed 35 → 8 on clip start → 35 on EndReached 6 s later); the screenshot moment was never the right one, the log was. Versions 1.9.18 / 148 /
+vc109 / MSIX 1.9.18.0. Next: punch list 15 (analytics) is L; before it, a
+polish pass on the cockpits and joiners from the nits collected this loop.

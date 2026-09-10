@@ -225,6 +225,19 @@ export: round, question, prompt, answer, team, submitted, points. A league,
 a venue that wants to see which questions a room found hard, or a host who
 wants to check a dispute after the night, all read the same file.
 
+A3.9 **A wager round opens on the standings** (2026-09-09). A table stakes
+knowing where it stands: when Next lands on the first question of a wager
+round, the big screen holds the standings ("SCORES AFTER ROUND N" — the round
+whose scores they are, not the one about to start) and the cockpit says why;
+the host hides them when the tables are ready. Same on Windows (3.65).
+
+A3.10 **The music bed ducks under a clip** (2026-09-09; punch list 14). While
+a question clip (audio or video) plays, the looping bed drops to a quarter of
+its level and comes back the moment the clip ends, pauses or is stopped — the
+host never reaches for the slider mid-show. The cockpit says "ducked" beside
+the bed while it is. Same on Windows through LibVLC's Playing / EndReached
+(3.66).
+
 ## §A4 — Player join & teams (serverless)
 
 A4.1 **Teams, not solo, are the unit.** Several phones join one team; the

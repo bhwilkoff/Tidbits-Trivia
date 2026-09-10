@@ -557,7 +557,7 @@ struct LiveBigScreen_macOS: View {
                 // Between rounds the headline is the POSITION, not a winner: naming
                 // a champion mid-night is wrong, and the celebration belongs to the
                 // final slide.
-                Text("SCORES AFTER ROUND \(s.roundNumber)")
+                Text(s.scoredRoundNumber == 0 ? "STANDINGS" : "SCORES AFTER ROUND \(s.scoredRoundNumber)")
                     .font(.system(size: 52, weight: .black, design: .rounded))
                     .foregroundStyle(Tidbits.Palette.ink)
             } else if let winner = rows.first, winner.score > 0 {

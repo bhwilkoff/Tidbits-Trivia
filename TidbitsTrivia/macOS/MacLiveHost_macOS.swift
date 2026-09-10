@@ -176,6 +176,12 @@ final class LiveHostSession {
     }
     var current: Question? { questions.indices.contains(index) ? questions[index] : nil }
     var roundNumber: Int { (current?.roundIndex ?? 0) + 1 }
+    /// The round the interim standings are "after": the current one once any of
+    /// its questions has been revealed, else the previous one — a wager round
+    /// opens on the standings BEFORE its first question (A3.9).
+    var scoredRoundNumber: Int {
+        (revealed || questionInRound.n > 1 || scoredIndices.contains(index)) ? roundNumber : max(0, roundNumber - 1)
+    }
     var roundCount: Int { max(event.rounds.count, 1) }
     var roundTitle: String {
         let ri = current?.roundIndex ?? 0
@@ -262,6 +268,9 @@ final class LiveHostSession {
         revealed = false
         locked = false   // Wave C: new question — answers reopen
         if index + 1 >= questions.count { finished = true } else { index += 1; prepare(); armTimer() }
+        // A3.9 (punch list 11): a wager round opens on the STANDINGS — a table stakes
+        // knowing where it stands. The host hides them when the tables are ready.
+        if !finished, currentRoundIsWager, questionInRound.n == 1 { showScores = true }
         LiveVideoPlayer.shared.stop()   // Wave B: clear the previous question's video + clip (the music bed keeps looping)
         LiveAudioPlayer.shared.stop()
     }
@@ -544,6 +553,25 @@ struct LiveHostContainer_macOS: View {
             let at = (Double(env["TIDBITS_LIVE_ACCEPT_AT"] ?? "") ?? 30) + 8
             try? await Task.sleep(for: .seconds(at))
             try? Data(LiveAnswerLog.csv(session.answerLog).utf8).write(to: URL(fileURLWithPath: path), options: .atomic)
+        }
+        // TIDBITS_LIVE_BED=<name in Documents> — start the music bed 1 s in (A9.2);
+        // TIDBITS_LIVE_NEXT_AT=<secs> — advance to the next question the way the host
+        // does (reveal first if needed), so a wager round's standings hold can be
+        // photographed (A3.9). No-ops in production.
+        .task {
+            let env = ProcessInfo.processInfo.environment
+            guard let name = env["TIDBITS_LIVE_BED"], !name.isEmpty else { return }
+            try? await Task.sleep(for: .seconds(1))
+            let url = name.contains("/") ? URL(fileURLWithPath: name)
+                : FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!.appendingPathComponent(name)
+            LiveMusicBed.shared.open(url); LiveMusicBed.shared.toggle()
+        }
+        .task {
+            let env = ProcessInfo.processInfo.environment
+            guard let raw = env["TIDBITS_LIVE_NEXT_AT"], let secs = Double(raw) else { return }
+            try? await Task.sleep(for: .seconds(secs))
+            if !session.revealed { session.reveal(); try? await Task.sleep(for: .seconds(2)) }
+            session.next()
         }
         // TIDBITS_LIVE_STATE=reveal|break|standings — put the PROJECTOR into one of
         // the states only a host's clicks can reach.
@@ -1004,7 +1032,8 @@ struct LiveHostView_macOS: View {
                     .accessibilityIdentifier("live.cockpitQuestionNote")
                 }
                 if session.currentRoundIsWager {   // Wave A: wager round indicator
-                    Label("Wager round — teams stake points (correct +stake, wrong −stake)", systemImage: "dollarsign.circle.fill")
+                    Label(session.showScores ? "Wager round — the standings are on the big screen so the tables can stake; hide them when they are ready"
+                                             : "Wager round — teams stake points (correct +stake, wrong −stake)", systemImage: "dollarsign.circle.fill")
                         .font(.callout).foregroundStyle(Tidbits.Palette.coral)
                 }
                 if session.currentRoundIsSpeed {   // Wave B: speed round indicator
@@ -1278,6 +1307,9 @@ struct LiveHostView_macOS: View {
         return HStack(spacing: 10) {
             Button { pickMusicBed() } label: { Label("Music bed…", systemImage: "music.quarternote.3") }
                 .buttonStyle(CompactButtonStyle())
+            if bed.ducked {   // A9.2: under a clip
+                Text("ducked").font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.coral).accessibilityIdentifier("live.bedDucked")
+            }
             if !bed.trackName.isEmpty {
                 Button { bed.toggle() } label: { Image(systemName: bed.isPlaying ? "pause.fill" : "play.fill") }
                     .buttonStyle(RoundIconButtonStyle(tint: Tidbits.Palette.blue))
@@ -1916,21 +1948,23 @@ final class LiveAudioPlayer {
     func togglePlay() {
         guard let file else { return }
         do {
-            if isPlaying { player.pause(); isPlaying = false; return }
+            if isPlaying { player.pause(); isPlaying = false; LiveMusicBed.shared.restore(); return }
             if !started { applyShowOutputDevice(to: engine); try engine.start(); started = true }
             if !scheduled {
                 player.scheduleFile(file, at: nil) { [weak self] in
-                    Task { @MainActor in self?.isPlaying = false; self?.scheduled = false }
+                    Task { @MainActor in self?.isPlaying = false; self?.scheduled = false; LiveMusicBed.shared.restore() }   // A9.2: the bed comes back
                 }
                 scheduled = true
             }
             player.play(); isPlaying = true
+            LiveMusicBed.shared.duck()   // A9.2: the bed ducks under the clip
         } catch { print("[Audio] play failed: \(error)") }
     }
 
     func stop() {
         player.stop(); if engine.isRunning { engine.stop() }
         isPlaying = false; started = false; scheduled = false
+        LiveMusicBed.shared.restore()
         if let u = accessedURL { u.stopAccessingSecurityScopedResource(); accessedURL = nil }
     }
 }
@@ -1950,7 +1984,13 @@ final class LiveMusicBed {
     private var started = false
     private(set) var trackName = ""
     private(set) var isPlaying = false
-    var volume: Float = 0.35 { didSet { engine.mainMixerNode.outputVolume = max(0, min(1, volume)) } }
+    var volume: Float = 0.35 { didSet { engine.mainMixerNode.outputVolume = max(0, min(1, ducked ? volume * Self.duckFactor : volume)) } }
+    /// A9.2 (punch list 14): the bed drops to a quarter under a clip and comes
+    /// back when the clip ends — the host never reaches for the slider mid-show.
+    static let duckFactor: Float = 0.25
+    private(set) var ducked = false
+    func duck() { guard isPlaying, !ducked else { return }; ducked = true; engine.mainMixerNode.outputVolume = max(0, min(1, volume * Self.duckFactor)) }
+    func restore() { guard ducked else { return }; ducked = false; engine.mainMixerNode.outputVolume = max(0, min(1, volume)) }
 
     private init() { engine.attach(player) }
 
@@ -2010,10 +2050,16 @@ final class LiveVideoPlayer {
     private(set) var hasVideo = false
     private var accessedURL: URL?
 
+    private var endObserver: NSObjectProtocol?
     func open(_ url: URL) {
         stop()
-        player = AVPlayer(url: url)
+        let p = AVPlayer(url: url)
+        player = p
         hasVideo = true
+        // A9.2: the bed comes back the moment the clip ends, not when the host notices.
+        endObserver = NotificationCenter.default.addObserver(forName: .AVPlayerItemDidPlayToEndTime, object: p.currentItem, queue: .main) { _ in
+            Task { @MainActor in LiveMusicBed.shared.restore() }
+        }
     }
 
     func openBookmark(_ data: Data) {
@@ -2024,11 +2070,13 @@ final class LiveVideoPlayer {
         open(url); accessedURL = url
     }
 
-    func play() { player?.seek(to: .zero); player?.play() }
-    func pause() { player?.pause() }
+    func play() { player?.seek(to: .zero); player?.play(); LiveMusicBed.shared.duck() }
+    func pause() { player?.pause(); LiveMusicBed.shared.restore() }
 
     func stop() {
         player?.pause(); player = nil; hasVideo = false
+        if let o = endObserver { NotificationCenter.default.removeObserver(o); endObserver = nil }
+        LiveMusicBed.shared.restore()
         if let u = accessedURL { u.stopAccessingSecurityScopedResource(); accessedURL = nil }
     }
 }

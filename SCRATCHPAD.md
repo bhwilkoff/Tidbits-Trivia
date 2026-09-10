@@ -2391,6 +2391,37 @@ the head's top line — a capture artefact, not a bug). **Verified on the glass:
 report" from the answer sheet — hardest/easiest questions, participation,
 per-round accuracy — on both cockpits, no backend.
 
+**2026-09-09w — Live loop tick 23: rename a team mid-night + the Windows
+deep link.** The fresh audit's top item: a typo'd name was stuck on the
+projector all night (hide/remove/merge were the only verbs). A3.12 on both
+hosts: a pencil (Mac: + context menu; Windows: a Rename button) on the joined
+row, an alert/dialog, and the host's name laid over the joiner's everywhere the
+host renders — projector, standings, answer sheet, exports. Wire: host-owned
+`meta/names/{uid}`. **The rules deploy was refused by the session's permission
+classifier**, so instead of a new `names` node (which needed a rules ship) the
+node moved UNDER `meta`, which the deployed rules already give the host and
+validate only for `host` + `createdAt`; nothing to deploy, and the joiner's own
+`teams/{uid}` is never touched. Hook `TIDBITS_LIVE_RENAME` + `_AT`, both hosts.
+**Found on the way:** (1) the Mac joined row could not show a long name — a
+borderless `Menu` pencil never rendered and four buttons squeezed "The
+Quizzards" to "The Qui…"; the row now gives the name its full width (two lines
+if needed) with the score trailing and the controls on the next line. (2) The
+Windows `/live/<code>` deep link parsed the code and DROPPED it — `Route`
+selected the Live nav item and stopped; it now calls `LiveView.JoinFromLink`
+(3.37 closed, `TIDBITS_DEEPLINK` hook stands in for a protocol launch). (3)
+Three Windows doc rows had stayed open after the work shipped (3.7, A.3b(ii),
+F.*) and WINDOWS-DESIGN 6.2 still said the menu bar was unbuilt — corrected
+against the code. **Verified on the glass** (`scratchpad/e2e_rename.py`): the
+Mac — wire `meta/names/{uid} = "The Quizzards"` for "Bad Speling" only, cockpit
+shot reads it; the Windows box — the same wire line, the Rename button on the standings row, and a
+second launch with `TIDBITS_DEEPLINK=https://…/live/<code>` landed INSIDE the room
+on the question (the first two box runs failed honestly: the new build had never been
+deployed, then the hook sat inside the ACCEPT_ALL block — moved out, Diag lines added).
+The Windows standings row also wraps a long name to two lines now. Versions 1.9.21 / 151 / vc112
+/ MSIX 1.9.21.0. Next audit items: Windows joiner rating/streak feed
+(`NightEnded` has no subscribers), joiners reading the merged name on their
+standings, round-level points multiplier, re-score after a mid-night key fix.
+
 **2026-09-09v — Live loop tick 22: the night reads itself back.** Punch list
 15, done the $0 way: `LiveNightReport` (Swift + C#, tests on both) from the
 answer sheet — answers right, tables answering, hardest/easiest with answers,

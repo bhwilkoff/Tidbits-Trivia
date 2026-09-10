@@ -1713,6 +1713,9 @@ public partial class LiveView : UserControl
     /// type. With a code, the harness path fills both fields and joins — the same
     /// code path a person drives, not a parallel one, so what it proves is what a
     /// person would get.
+    /// 3.37: a /live/<code> link lands here — join under the saved name (the join form's default).
+    public void JoinFromLink(string code) => JoinAsPlayer(code, Services.LaunchHooks.LiveName);
+
     private void JoinAsPlayer(string? code, string? name)
     {
         Setup.IsVisible = false;

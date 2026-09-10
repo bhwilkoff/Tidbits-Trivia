@@ -424,6 +424,7 @@ public sealed class LiveHostViewModel : ObservableObject
     public bool HasTie => Host.HasTie;
     public System.Collections.Generic.IReadOnlyList<LiveHostNet.Joined> TiedLeaders => Host.TiedLeaders;
     public Task BreakTie(string uid) => Host.BreakTie(uid);
+    public Task RenameTeam(string uid, string name) => Host.Net.Rename(uid, name);   // A3.12
     public Task BreakTieClosest(double target, System.Collections.Generic.IReadOnlyDictionary<string, double> guesses) => Host.BreakTieClosest(target, guesses);
     /// 3.59: "45 s · 3 pts for this one" when the builder set an override, else "".
     public string QuestionOverrideLine

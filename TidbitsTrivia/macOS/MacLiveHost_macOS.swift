@@ -573,6 +573,14 @@ struct LiveHostContainer_macOS: View {
             if !session.revealed { session.reveal(); try? await Task.sleep(for: .seconds(2)) }
             session.next()
         }
+        // TIDBITS_LIVE_RENAME=<name> (at TIDBITS_LIVE_RENAME_AT s, default 15) — rename the
+        // alphabetically first joined team the way the cockpit does (A3.12).
+        .task {
+            let env = ProcessInfo.processInfo.environment
+            guard let name = env["TIDBITS_LIVE_RENAME"], !name.isEmpty else { return }
+            try? await Task.sleep(for: .seconds(Double(env["TIDBITS_LIVE_RENAME_AT"] ?? "") ?? 15))
+            if let first = net.joined.sorted(by: { $0.name < $1.name }).first { await net.rename(first.id, to: name) }
+        }
         // TIDBITS_LIVE_STATE=reveal|break|standings — put the PROJECTOR into one of
         // the states only a host's clicks can reach.
         //
@@ -780,6 +788,8 @@ struct LiveHostView_macOS: View {
     @State private var showTieBreak = false
     @State private var tieGroup: [LiveTeam] = []
     @State private var editingCurrent: QuestionDraft?
+    @State private var renaming: LiveHostNet.Joined?   // A3.12
+    @State private var renameText = ""
 
     var body: some View {
         Group {
@@ -1501,20 +1511,22 @@ struct LiveHostView_macOS: View {
         let ans = net.teamAnswer(forTeamID: team.id)
         let q = session.current
         return VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 8) {
-                VStack(alignment: .leading, spacing: 1) {
-                    HStack(spacing: 5) {
-                        if ans != nil && !session.revealed {
-                            Circle().fill(Tidbits.Palette.mint).frame(width: 7, height: 7)
-                        }
-                        Text(team.name).font(.headline).foregroundStyle(Tidbits.Palette.ink).lineLimit(1)
-                        if ans?.blurred == true {   // Wave C: left the app during the question — a soft cheat signal
-                            Image(systemName: "eye.trianglebadge.exclamationmark.fill").font(.system(size: 13))
-                                .foregroundStyle(Tidbits.Palette.coral).help("Left the app during this question")
-                        }
-                    }
-                    Text("\(team.score)").font(.system(size: 22, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
+            // The name owns the row's width (a 40-char team reads in full, on two lines if it
+            // must); the score sits at the trailing edge and the controls take the next line.
+            HStack(alignment: .firstTextBaseline, spacing: 5) {
+                if ans != nil && !session.revealed {
+                    Circle().fill(Tidbits.Palette.mint).frame(width: 7, height: 7)
                 }
+                Text(team.name).font(.headline).foregroundStyle(Tidbits.Palette.ink).lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+                if ans?.blurred == true {   // Wave C: left the app during the question — a soft cheat signal
+                    Image(systemName: "eye.trianglebadge.exclamationmark.fill").font(.system(size: 13))
+                        .foregroundStyle(Tidbits.Palette.coral).help("Left the app during this question")
+                }
+                Spacer(minLength: 8)
+                Text("\(team.score)").font(.system(size: 22, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
+            }
+            HStack(spacing: 8) {
                 Spacer()
                 // Leniency: for a free-text answer the matcher REJECTED, let the host accept it —
                 // this team alone, or (the menu) everyone who typed the same thing (§A3.3).
@@ -1539,6 +1551,10 @@ struct LiveHostView_macOS: View {
                 }
                 Button { Task { await net.setScore(team.id, team.score - 1) } } label: { Image(systemName: "minus") }.buttonStyle(.bordered)
                 Button { Task { await net.setScore(team.id, team.score + 1) } } label: { Image(systemName: "plus") }.buttonStyle(.bordered)
+                Button { renameText = team.name; renaming = team } label: { Image(systemName: "pencil") }   // A3.12
+                    .buttonStyle(.bordered)
+                    .help("Rename this team on the big screen, the standings and the exports")
+                    .accessibilityIdentifier("live.renameTeam")
                 Button { session.toggleBlocked(team.id) } label: {   // Wave C: moderation gate — hide a bad name from the screen
                     Image(systemName: session.blockedTeams.contains(team.id) ? "eye.slash.fill" : "eye")
                 }
@@ -1560,6 +1576,7 @@ struct LiveHostView_macOS: View {
                 }
             }
         }
+        .contextMenu { Button("Rename team…") { renameText = team.name; renaming = team } }
         .padding(12).quietCard(fill: Tidbits.Palette.blue.opacity(0.08))
     }
 
@@ -1722,6 +1739,13 @@ struct LiveHostView_macOS: View {
                 .padding(.top, 8)
             }
             .padding(28).frame(maxWidth: 620).frame(maxWidth: .infinity)
+        }
+        .alert("Rename team", isPresented: Binding(get: { renaming != nil }, set: { if !$0 { renaming = nil } }), presenting: renaming) { team in
+            TextField("Team name", text: $renameText)
+            Button("Rename") { let uid = team.id, n = renameText; renaming = nil; Task { await net.rename(uid, to: n) } }
+            Button("Cancel", role: .cancel) { renaming = nil }
+        } message: { team in
+            Text("“\(team.name)” becomes the new name on the big screen, the standings and the exports for the rest of the night. The table's phone keeps what it typed.")
         }
         .sheet(item: $editingCurrent) { draft in
             LiveQuestionEditor_macOS(draft: draft, format: session.currentRoundMode,

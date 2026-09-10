@@ -510,6 +510,20 @@ public partial class LiveCockpitView : UserControl
         await writer.WriteAsync(vm.StandingsCsv());
     }
 
+    /// A3.12: a typo on the big screen, fixed by the host for the whole night.
+    private async void OnRenameTeam(object? sender, RoutedEventArgs e)
+    {
+        if (Vm is not { } vm || (sender as Control)?.Tag is not string uid || uid.Length == 0) return;
+        var current = vm.Host.Standings.Where(j => j.Id == uid).Select(j => j.Name).FirstOrDefault() ?? "";
+        var box = new TextBox { Text = current, Watermark = "Team name", MinWidth = 260 };
+        Avalonia.Automation.AutomationProperties.SetName(box, "New team name");
+        var panel = new StackPanel { Spacing = 8 };
+        panel.Children.Add(box);
+        panel.Children.Add(new TextBlock { Text = "The new name shows on the big screen, the standings and the exports for the rest of the night. The table's phone keeps what it typed.", Opacity = 0.7, TextWrapping = TextWrapping.Wrap, MaxWidth = 340 });
+        var dlg = new FAContentDialog { Title = "Rename team", Content = panel, PrimaryButtonText = "Rename", CloseButtonText = "Cancel" };
+        if (await dlg.ShowAsync() == FAContentDialogResult.Primary && !string.IsNullOrWhiteSpace(box.Text)) await vm.RenameTeam(uid, box.Text);
+    }
+
     /// A3.11 / 3.68: the night read back — the same numbers the Mac's final standings show.
     private async void OnNightReport(object? sender, RoutedEventArgs e)
     {
@@ -727,6 +741,13 @@ public partial class LiveCockpitView : UserControl
                 await Task.Delay(TimeSpan.FromSeconds(Services.LaunchHooks.LiveEditAt));
                 if (Vm?.Host.Current is { } q) await Vm.Host.ReplaceCurrent(q with { Prompt = text });
             }
+            if (Services.LaunchHooks.LiveRename is { Length: > 0 } newName && Services.LaunchHooks.LiveRenameAt is { } renameAt)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(renameAt));
+                var rows = Vm?.Host.Standings ?? Array.Empty<Tidbits.Core.Networking.LiveHostNet.Joined>();
+                Services.LaunchHooks.Diag($"rename hook: teams={rows.Count}");
+                if (Vm is { } rv && rows.Count > 0) { var first = rows.OrderBy(j => j.Name, StringComparer.Ordinal).First(); await rv.RenameTeam(first.Id, newName); Services.LaunchHooks.Diag($"rename hook: {first.Name} -> {newName}"); }
+            }
             if (Services.LaunchHooks.LiveAcceptAll is { Length: > 0 } ruling)
             {
                 await Task.Delay(TimeSpan.FromSeconds(Services.LaunchHooks.LiveAcceptAt));
@@ -734,7 +755,7 @@ public partial class LiveCockpitView : UserControl
                 if (!vm.Host.Revealed) { await vm.Reveal(); await Task.Delay(3000); }
                 await vm.AcceptTextForAll(ruling);
                 if (Services.LaunchHooks.LiveTieBreak) { await Task.Delay(3000); OnBreakTie(this, new RoutedEventArgs()); }
-                if (Services.LaunchHooks.LiveReportAt is { } reportAt)
+            if (Services.LaunchHooks.LiveReportAt is { } reportAt)
                 {
                     await Task.Delay(TimeSpan.FromSeconds(reportAt));
                     OnNightReport(this, new RoutedEventArgs());

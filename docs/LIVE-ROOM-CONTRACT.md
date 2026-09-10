@@ -96,6 +96,15 @@ before — the source names the answer). Joiners show "Learn more on Wikipedia �
 cannot open a browser); both projectors add "From Wikipedia · <title>" under
 the story, on the story's switch; the Mac cockpit links it for the host.
 
+**`meta/names/{uid}` (host renames, 2026-09-09).** A host-owned string (≤ 40
+chars) laid over `teams/{uid}/name` by the host's own clients (macOS + Windows
+cockpits, projectors, exports). It lives under `meta` because the deployed rules
+already give `meta` to the host and validate only `host` + `createdAt`; the
+joiner's `teams/{uid}` is never rewritten. Joiners decode `meta` as an object and
+ignore the child (a REST stream delivers a rename as a put at `/names/<uid>`,
+which the joiners' `applyMeta` path switch drops by design); reading the merged
+name on the phones' standings is a later, additive step.
+
 **`picture` (Decision 060, pictures).** A store-only picture whose ≤ 800 px JPEG is
 over ~30 KB is written ONCE to `live/{code}/media/{id}` (`kind: "image"`) and
 referenced from `pub.picture`; `imageURL` then carries a SMALL fallback (≤ 320 px,

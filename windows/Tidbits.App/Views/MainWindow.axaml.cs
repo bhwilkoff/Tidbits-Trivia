@@ -62,7 +62,7 @@ public partial class MainWindow : Window
                 Navigate((Nav.SelectedItem as FANavigationViewItem)?.Tag as string ?? "play");
             // Deep-link inbox: route a launch URL once shown (external entry points
             // never touch the nav directly — they land here and the root consumes them).
-            var target = Tidbits.Core.Networking.DeepLink.Parse(Program.LaunchUrl);
+            var target = Tidbits.Core.Networking.DeepLink.Parse(Program.LaunchUrl ?? Services.LaunchHooks.DeepLink);   // the hook stands in for a protocol launch
             Route(target);
             // TIDBITS_SETTINGS / TIDBITS_PAYWALL — open those surfaces on launch. Both
             // are reachable only by a click otherwise, so neither could be photographed
@@ -188,6 +188,15 @@ public partial class MainWindow : Window
         if (target.Kind == Tidbits.Core.Networking.DeepLinkKind.None) return;
         foreach (var item in Nav.MenuItems.OfType<FANavigationViewItem>())
             if (item.Tag as string == target.NavTag) { Nav.SelectedItem = item; break; }
+        // 3.37: a /live/<code> link JOINS that room — the code had been parsed and dropped,
+        // so a Windows player who tapped a shared link landed on the Live tab's form.
+        if (target.Kind == Tidbits.Core.Networking.DeepLinkKind.Live && target.Code is { Length: > 0 } code)
+        {
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                if (LiveSurface is { } lv) lv.JoinFromLink(code);
+            }, Avalonia.Threading.DispatcherPriority.Background);
+        }
     }
 
     private void OnNavSelectionChanged(object? sender, FANavigationViewSelectionChangedEventArgs e)

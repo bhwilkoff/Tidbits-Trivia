@@ -381,6 +381,10 @@ there is no regression baseline at all.
 - `scratchpad/e2e_poll.py <mac|windows> web,iphone,dongle` hosts a night whose first
   question is a poll and checks the wire (poll:true, no answer on reveal, nobody
   paid), the joiners' "Thanks for voting" and the projector's tally.
+- Both hosts: `TIDBITS_LIVE_RENAME=<name>` + `TIDBITS_LIVE_RENAME_AT=<secs>` rename the
+  alphabetically first joined team (A3.12); `scratchpad/e2e_rename.py <mac|windows>`
+  joins two wire tables and asserts `meta/names/{uid}` names ONLY the first, then
+  photographs the cockpit. The box run ends with `TIDBITS_DEEPLINK=<url>` (3.37).
 - Both hosts: `TIDBITS_LIVE_EXPORT_ANSWERS=<path>` writes the answer sheet (A3.8)
   8 s (Mac) / 5 s (box) after the ACCEPT_ALL ruling; `scratchpad/e2e_answers.py`
   reads it back and checks the credit column.

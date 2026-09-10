@@ -249,6 +249,17 @@ left out. **Found on the way:** the Mac's final standings listed paper teams
 only — a night of phones ended on "No teams were scored" — they now list
 phones and paper together like the projector and the CSV always did.
 
+A3.12 **Rename a team mid-night** (2026-09-09). A typo'd name used to be stuck
+on the projector all night — the host could hide, remove or merge a team, never
+fix its name. Each joined row has a pencil (and a context-menu "Rename team…"):
+an alert with the name, and the new name shows on the big screen, the standings,
+the answer sheet and every export for the rest of the night. It lives at
+`live/{code}/meta/names/{uid}` — under `meta`, which the deployed rules already
+hand the host, so no rules ship was needed — and the table's phone keeps what it
+typed (its own `teams/{uid}` is untouched; the host's copy is laid over it).
+Windows has the same verb as a Rename button on the row. Joined rows also let a
+name wrap to two lines, so "The Quizzards" no longer reads "The Qui…".
+
 ## §A4 — Player join & teams (serverless)
 
 A4.1 **Teams, not solo, are the unit.** Several phones join one team; the

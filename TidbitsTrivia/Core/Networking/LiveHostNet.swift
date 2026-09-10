@@ -18,6 +18,11 @@ final class LiveHostNet {
     private(set) var hostUid = ""
     /// Joined phone/web teams (uid → name+score), merged from `teams` + `scores`.
     private(set) var teams: [String: LiveRoom.Team] = [:]
+    /// A3.12: the host's renames (`live/{code}/meta/names/{uid}` — under `meta`, which the deployed rules already hand the host) — a joiner
+    /// owns its own `teams/{uid}` node, so a typo the host wants gone from the big
+    /// screen is corrected OVER it, not in it. `teams` is the merged view.
+    private var rawTeams: [String: LiveRoom.Team] = [:]
+    private(set) var names: [String: String] = [:]
     private(set) var scores: [String: Int] = [:]
     /// Submissions for the CURRENT question (uid → answer), reset each question.
     private(set) var answers: [String: LiveRoom.Answer] = [:]
@@ -130,6 +135,7 @@ final class LiveHostNet {
             self.code = code
             self.hostUid = host
             watchTeams(code)
+            watchNames(code)
             watchScores(code)
             watchRemote(code)   // G6
             return code
@@ -289,7 +295,37 @@ final class LiveHostNet {
     }
 
     private func applyTeams(_ ev: FirebaseRTDB.StreamEvent) {
-        Self.merge(ev, into: &teams, as: LiveRoom.Team.self)
+        Self.merge(ev, into: &rawTeams, as: LiveRoom.Team.self)
+        rebuildTeams()
+    }
+    private func applyNames(_ ev: FirebaseRTDB.StreamEvent) {
+        Self.merge(ev, into: &names, as: String.self)
+        rebuildTeams()
+    }
+    private func rebuildTeams() {
+        teams = rawTeams.reduce(into: [:]) { out, kv in
+            var t = kv.value
+            if let n = names[kv.key]?.trimmingCharacters(in: .whitespacesAndNewlines), !n.isEmpty { t.name = n }
+            out[kv.key] = t
+        }
+    }
+    private func watchNames(_ code: String) {
+        streamTasks.append(Task { [weak self, db] in
+            while !Task.isCancelled {
+                if let stream = try? await db.stream("\(LiveRoom.path(code))/meta/names") {
+                    do { for try await ev in stream { await self?.applyNames(ev) } } catch { }
+                }
+                if !Task.isCancelled { try? await Task.sleep(for: .seconds(1.5)) }
+            }
+        })
+    }
+    /// A3.12: rename a joined team for the whole night — the projector, the standings,
+    /// the answer sheet and the exports all read the merged name.
+    func rename(_ uid: String, to name: String) async {
+        let n = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !code.isEmpty, !uid.isEmpty, !n.isEmpty, let json = try? JSONEncoder().encode(String(n.prefix(40))) else { return }
+        try? await db.putJSON("\(LiveRoom.path(code))/meta/names/\(uid)", json)
+        names[uid] = String(n.prefix(40)); rebuildTeams()   // the stream echoes it; the cockpit should not wait
     }
     private func applyScores(_ ev: FirebaseRTDB.StreamEvent) {
         Self.merge(ev, into: &scores, as: Int.self)

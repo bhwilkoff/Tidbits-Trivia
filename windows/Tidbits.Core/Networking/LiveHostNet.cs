@@ -23,6 +23,9 @@ public sealed class LiveHostNet
     public bool IsOpen => Code.Length > 0;
 
     private readonly Dictionary<string, LiveRoom.Team> _teams = new();
+    /// A3.12: the host's renames (`meta/names/{uid}` — under `meta`, which the deployed rules already hand the host) laid over the joiner-owned team names.
+    private readonly Dictionary<string, string> _names = new();
+    private string NameOf(string uid, string wire) => _names.TryGetValue(uid, out var n) && !string.IsNullOrWhiteSpace(n) ? n.Trim() : wire;
     private readonly Dictionary<string, int> _scores = new();
     private readonly Dictionary<string, LiveRoom.Answer> _answers = new();
 
@@ -31,10 +34,22 @@ public sealed class LiveHostNet
 
     public readonly record struct Joined(string Id, string Name, int Score);
 
+    /// A3.12: rename a joined team for the whole night — the projector, the standings,
+    /// the answer sheet and the exports all read the merged name.
+    public async Task Rename(string uid, string name)
+    {
+        var n = name.Trim();
+        if (string.IsNullOrEmpty(Code) || string.IsNullOrEmpty(uid) || n.Length == 0) return;
+        if (n.Length > 40) n = n[..40];
+        try { await _db.Put($"{LiveRoom.Path(Code)}/meta/names/{uid}", n); } catch { return; }
+        lock (_lock) _names[uid] = n;   // the stream echoes it; the cockpit should not wait
+        Changed?.Invoke();
+    }
+
     public IReadOnlyList<Joined> JoinedList()
     {
         lock (_lock)
-            return _teams.Select(kv => new Joined(kv.Key, kv.Value.Name, _scores.GetValueOrDefault(kv.Key)))
+            return _teams.Select(kv => new Joined(kv.Key, NameOf(kv.Key, kv.Value.Name), _scores.GetValueOrDefault(kv.Key)))
                          .OrderByDescending(j => j.Score).ThenBy(j => j.Name, StringComparer.Ordinal).ToList();
     }
 
@@ -47,7 +62,7 @@ public sealed class LiveHostNet
         lock (_lock)
             return _teams.Select(kv => new LiveMember
             {
-                Uid = kv.Key, TeamName = kv.Value.Name, JoinedAt = kv.Value.JoinedAt,
+                Uid = kv.Key, TeamName = NameOf(kv.Key, kv.Value.Name), JoinedAt = kv.Value.JoinedAt,
             }).ToList();
     }
 
@@ -125,6 +140,7 @@ public sealed class LiveHostNet
             Code = code;
             HostUid = host;
             _streamCts.Add(StartWatch($"{LiveRoom.Path(code)}/teams", _teams));
+            _streamCts.Add(StartWatch($"{LiveRoom.Path(code)}/meta/names", _names));
             _streamCts.Add(StartWatch($"{LiveRoom.Path(code)}/scores", _scores));
             _streamCts.Add(StartRemoteWatch($"{LiveRoom.Path(code)}/control"));   // G6
             return code;

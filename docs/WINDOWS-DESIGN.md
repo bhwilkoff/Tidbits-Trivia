@@ -185,9 +185,8 @@ skip/jump, tie-break, CSV export, standings, the premium waves
 
 6.2 **The cockpit** (host laptop): a keyboard-run control surface.
 Space=reveal, ←/→=prev/next, digits=jump, Esc=big-screen hold; an
-Alt-mnemonic menu bar (File/Event/Show/View/Help — NOT yet built as of
-2026-09-08, and the Mac's §B2 equivalent now exists, so this is the parity
-gap); **taskbar progress =
+Alt-mnemonic menu bar (File/Event/Show/View/Help — built: `MainWindow.axaml`'s
+`AppMenu`, the Mac's §B2 twin, every cockpit verb reachable from it); **taskbar progress =
 the round timer / teams-answered** so a host with the cockpit
 minimized still sees state; **global hotkeys** (`RegisterHotKey`) so
 Reveal/Next fire even when the projector or a slideshow has focus.

@@ -104,6 +104,11 @@ public static class LaunchHooks
     public static double? LiveNextAt => double.TryParse(Env("TIDBITS_LIVE_NEXT_AT"), out var v) ? v : null;
     /// TIDBITS_LIVE_REPORT_AT=<secs> — open the Night report dialog (3.68) that many seconds after the ACCEPT_ALL ruling.
     public static double? LiveReportAt => double.TryParse(Env("TIDBITS_LIVE_REPORT_AT"), out var v) ? v : null;
+    /// TIDBITS_LIVE_RENAME=<name> at TIDBITS_LIVE_RENAME_AT=<secs> — rename the alphabetically first joined team (A3.12).
+    public static string? LiveRename => Env("TIDBITS_LIVE_RENAME");
+    public static double? LiveRenameAt => double.TryParse(Env("TIDBITS_LIVE_RENAME_AT"), out var v) ? v : null;
+    /// TIDBITS_DEEPLINK=<url> — route a link on launch exactly as a registered-protocol launch would (3.37).
+    public static string? DeepLink => Env("TIDBITS_DEEPLINK");
     /// TIDBITS_LIVE_TIEBREAK=1 — 3 s after the ACCEPT_ALL ruling, open the
     /// tie-break dialog (3.58) so it can be photographed with real tied teams.
     public static bool LiveTieBreak => Flag("TIDBITS_LIVE_TIEBREAK");

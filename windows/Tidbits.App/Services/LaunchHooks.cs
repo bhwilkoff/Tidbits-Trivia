@@ -111,6 +111,9 @@ public static class LaunchHooks
     /// question's accepted list with that answer, which re-scores the room (A3.13).
     public static string? LiveFixKey => Env("TIDBITS_LIVE_FIX_KEY");
     public static double? LiveFixAt => double.TryParse(Env("TIDBITS_LIVE_FIX_AT"), out var v) ? v : null;
+    /// TIDBITS_LIVE_RESUME=1 — pick the interrupted night back up on launch (A2.13); a crash
+    /// cannot be staged by hand.
+    public static bool LiveResume => Flag("TIDBITS_LIVE_RESUME");
     /// TIDBITS_DUELS=1 — open the Duels dialog on launch. Duels shipped with NO hook and no
     /// fleet coverage, so the surface could never be photographed and a rules change to
     /// `duels/$id` could not be re-verified in-app (DATA-SECURITY-AUDIT "known coverage gap").

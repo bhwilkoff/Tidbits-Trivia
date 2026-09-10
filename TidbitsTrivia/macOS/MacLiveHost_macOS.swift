@@ -475,6 +475,8 @@ func liveAcceptFromEveryone(_ typed: String, _ q: Question, session: LiveHostSes
 
 struct LiveHostContainer_macOS: View {
     let event: LiveEvent
+    /// A2.13: the night this container is picking back up after a crash, if any.
+    var resume: LiveNightSnapshot? = nil
     let onClose: () -> Void
     @Environment(LiveHostCoordinator.self) private var coordinator
     @Environment(\.openWindow) private var openWindow
@@ -483,14 +485,40 @@ struct LiveHostContainer_macOS: View {
     @State private var net = LiveHostNet()
     @State private var lockTask: Task<Void, Never>?   // Wave C: auto-lock at the timer deadline
 
-    init(event: LiveEvent, onClose: @escaping () -> Void) {
-        self.event = event; self.onClose = onClose
-        _session = State(initialValue: LiveHostSession(event: event))
+    init(event: LiveEvent, resume: LiveNightSnapshot? = nil, onClose: @escaping () -> Void) {
+        self.event = event; self.resume = resume; self.onClose = onClose
+        let s = LiveHostSession(event: resume?.event ?? event)
+        if let r = resume {   // A2.13: everything the host held that the wire does not
+            s.index = r.index
+            s.revealed = r.revealed
+            s.scoredIndices = Set(r.scoredIndices)
+            s.teams = r.paperTeams.map { LiveTeam(name: $0.name, score: $0.score) }
+            s.blockedTeams = Set(r.blockedTeams)
+            s.pointsPerCorrect = r.pointsPerCorrect
+            s.wrongAnswerPenalty = r.wrongAnswerPenalty
+            s.answerLog = r.answerLog
+        }
+        _session = State(initialValue: s)
     }
+    /// A2.13: write the recoverable snapshot of where this night is.
+    private func saveResume() {
+        let code = net.code
+        guard !code.isEmpty else { return }
+        LiveNightResume.shared.save(LiveNightSnapshot(
+            code: code, event: session.event, index: session.index, revealed: session.revealed,
+            scoredIndices: Array(session.scoredIndices),
+            paperTeams: session.teams.map { .init(name: $0.name, score: $0.score) },
+            blockedTeams: Array(session.blockedTeams),
+            pointsPerCorrect: session.pointsPerCorrect,
+            wrongAnswerPenalty: session.wrongAnswerPenalty,
+            answerLog: session.answerLog, savedAt: .now))
+    }
+
     /// The single way a night ends. Extracted so the close button and the
     /// TIDBITS_LIVE_AUTOCLOSE hook cannot drift apart — an exit path that only
     /// one of them takes is an exit path nothing tests.
     private func endNight() {
+        LiveNightResume.shared.clear()   // A2.13: a night that ended properly never offers to resume
         let net = self.net
         Task { await net.close() }
         coordinator.session = nil            // clear the projector
@@ -680,9 +708,10 @@ struct LiveHostContainer_macOS: View {
         }
         // Open the networked room and publish the first question.
         .task {
-            await net.open(name: event.name, venue: event.venue)
+            await net.open(name: event.name, venue: event.venue, code: resume?.code, resuming: resume != nil)
             await net.setState("live")
             await net.publish(session.currentPub())
+            saveResume()   // A2.13: from the first question — a crash before any move is still a crash
             if let q = session.current { LivePlayedLog.shared.record([q.id], night: event.name) }   // A2.6: the room heard it
             await syncMedia()
         }
@@ -693,6 +722,13 @@ struct LiveHostContainer_macOS: View {
             Task { await net.publish(session.currentPub()); await syncMedia() }
         }
         .onChange(of: session.onBreak) { _, _ in Task { await net.publish(session.currentPub()) } }   // A3.14
+        // A2.13: keep the night recoverable. Written on every move the host makes, so a
+        // crash costs at most the question they were on — never the paper teams, the
+        // hidden names, the adjustments or the answer sheet.
+        .onChange(of: session.index) { _, _ in saveResume() }
+        .onChange(of: session.revealed) { _, _ in saveResume() }
+        .onChange(of: session.teams) { _, _ in saveResume() }
+        .onChange(of: session.blockedTeams) { _, _ in saveResume() }
         .onChange(of: session.mediaEpoch) { _, _ in
             Task { await net.publish(session.currentPub()); await syncMedia() }
         }

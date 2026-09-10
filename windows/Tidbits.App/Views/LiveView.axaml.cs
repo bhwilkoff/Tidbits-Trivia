@@ -69,7 +69,14 @@ public partial class LiveView : UserControl
         // Index 0 = one-off; 1..7 = Sunday..Saturday (DayOfWeek 0..6 = index-1).
         WeekdayBox.ItemsSource = new[] { "One-off", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
         WeekdayBox.SelectedIndex = 0;
-        BuildSavedEvents(); BuildNightsRun();
+        BuildSavedEvents(); BuildNightsRun(); BuildResumeCard();
+        if (Services.LaunchHooks.LiveResume)
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                var pending = Tidbits.Core.Store.NightResume.Shared.Value.Pending();
+                Services.LaunchHooks.Diag($"resume hook: pending={(pending is null ? "(none)" : pending.Code + " @" + pending.Index)}");
+                if (pending is not null) OnResumeNight(this, new RoutedEventArgs());
+            }, Avalonia.Threading.DispatcherPriority.Background);
         if (Services.LaunchHooks.LiveNights)
             Avalonia.Threading.Dispatcher.UIThread.Post(async () =>
             {
@@ -997,7 +1004,7 @@ public partial class LiveView : UserControl
     {
         if (_rounds.Count == 0) { StatusText.Text = "Add at least one round first."; StatusText.IsVisible = true; return; }
         GameData.Shared.Value.LiveEvents.Save(CurrentEvent());
-        BuildSavedEvents(); BuildNightsRun();
+        BuildSavedEvents(); BuildNightsRun(); BuildResumeCard();
     }
 
     /// Build an audio or video round from picked clips — the Windows mirror of
@@ -1555,7 +1562,7 @@ public partial class LiveView : UserControl
         }
         LoadEvent(ev);
         GameData.Shared.Value.LiveEvents.Save(ev);
-        BuildSavedEvents(); BuildNightsRun();
+        BuildSavedEvents(); BuildNightsRun(); BuildResumeCard();
         ShowStatus(problems.Count == 0
             ? $"Imported \u201C{ev.Name}\u201D \u2014 {ev.TotalQuestions} questions across {ev.Rounds.Count} rounds."
             : $"Imported \u201C{ev.Name}\u201D with {problems.Count} problem(s): {string.Join("; ", problems.Take(3))}");
@@ -1700,6 +1707,29 @@ public partial class LiveView : UserControl
         }
     }
 
+    /// A2.13: offer the night the app died in the middle of. Everything the room can see
+    /// survives on the wire; everything the HOST held did not.
+    private void BuildResumeCard()
+    {
+        var pending = Tidbits.Core.Store.NightResume.Shared.Value.Pending();
+        ResumeCard.IsVisible = pending is not null;
+        if (pending is { } r) ResumeWhat.Text = $"{r.Title} — {r.PositionLine}, room {r.Code}";
+    }
+
+    private void OnResumeNight(object? sender, RoutedEventArgs e)
+    {
+        if (Tidbits.Core.Store.NightResume.Shared.Value.Pending() is not { } r) return;
+        var ev = r.Event ?? GameData.Shared.Value.LiveEvents.All.FirstOrDefault(x => x.Name == r.Title);
+        var plan = r.Plan ?? ev?.ToPlan() ?? NightPlan.Quick;
+        StartHosting(plan, r.Title, ev, resuming: r);
+    }
+
+    private void OnDiscardResume(object? sender, RoutedEventArgs e)
+    {
+        Tidbits.Core.Store.NightResume.Shared.Value.Clear();
+        BuildResumeCard();
+    }
+
     /// A2.12: the nights this machine has run, newest first. A pub host runs the same
     /// room every week and is asked "who won last time?" — the night used to vanish when
     /// the cockpit closed.
@@ -1822,7 +1852,8 @@ public partial class LiveView : UserControl
         await writer.WriteAsync(LiveExport.AnswersCsv(n.Log));
     }
 
-    private async void StartHosting(NightPlan plan, string title, LiveEvent? branding = null)
+    private async void StartHosting(NightPlan plan, string title, LiveEvent? branding = null,
+                                    Tidbits.Core.Store.ResumedNight? resuming = null)
     {
         var data = GameData.Shared.Value;
         var host = NightHostFactory.Create(
@@ -1834,6 +1865,7 @@ public partial class LiveView : UserControl
             HostPlaysCheck.IsChecked == true,
             HostNameBox.Text,
             branding, db: data.Rtdb);
+        host.Resuming = resuming;   // A2.13
         var vm = new LiveHostViewModel(host);
         Setup.IsVisible = false;
         CockpitHost.Content = new LiveCockpitView { DataContext = vm };

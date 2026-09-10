@@ -109,15 +109,21 @@ final class LiveHostNet {
     /// Open a room and start streaming joins. Returns the code. `name`/`venue`
     /// come from the host product (a Tidbits Live event, or a Trivia Night).
     @discardableResult
-    func open(name: String, venue: String = "") async -> String? {
+    /// Open the room. `resuming` is the ONE case where the previous scoreboard must
+    /// survive: the host's app died mid-night and is picking the same room back up, so
+    /// wiping scores would punish every table for a crash they did not cause (A2.13).
+    func open(name: String, venue: String = "", code forced: String? = nil, resuming: Bool = false) async -> String? {
         do {
             let host = try await db.ensureAuth()
             sessionStartMS = Self.nowMS()
             // TIDBITS_LIVE_CODE pins a known code for deterministic device/CI testing.
-            let code = ProcessInfo.processInfo.environment["TIDBITS_LIVE_CODE"] ?? FirebaseRTDB.newRoomCode()
+            let code = forced ?? ProcessInfo.processInfo.environment["TIDBITS_LIVE_CODE"] ?? FirebaseRTDB.newRoomCode()
             let meta = LiveRoom.Meta(host: host, createdAt: Self.nowMS(), name: name,
                                      venue: venue, state: "lobby")
-            try await db.putJSON("\(LiveRoom.path(code))/meta", try JSONEncoder().encode(meta))
+            // A resume PATCHes meta so the host's renames (meta/names, A3.12) survive the
+            // crash with the scores; a fresh night PUTs it and starts clean.
+            if resuming { try await db.patchJSON("\(LiveRoom.path(code))/meta", try JSONEncoder().encode(meta)) }
+            else { try await db.putJSON("\(LiveRoom.path(code))/meta", try JSONEncoder().encode(meta)) }
             // F-006/F-008: a room code reused across sessions (host
             // crash-recovery, or the QA loop's pinned code) inherits the
             // previous night's answers AND scores — a fresh night read
@@ -129,8 +135,10 @@ final class LiveHostNet {
             // in applyAnswers). teams/ persists deliberately (rejoin-safe:
             // the same anon uid keeps its name across a reload).
             try? await db.delete("\(LiveRoom.path(code))/answers")
-            try? await db.delete("\(LiveRoom.path(code))/scores")
-            scores = [:]
+            if !resuming {
+                try? await db.delete("\(LiveRoom.path(code))/scores")
+                scores = [:]
+            }
             publishedMedia = []
             self.code = code
             self.hostUid = host

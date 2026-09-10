@@ -10,6 +10,8 @@ import UniformTypeIdentifiers
 struct LiveBuilderView_macOS: View {
     let onPreview: (LiveEvent) -> Void
     let onHost: (LiveEvent) -> Void
+    /// A2.13: pick an interrupted night back up, in the SAME room, with its scores.
+    var onResume: (LiveNightSnapshot) -> Void = { _ in }
     /// Retained so the launch hook (`TIDBITS_LIVE_JOIN`) and any future Live-side
     /// entry can still reach the join sheet — but §A0.4.1 keeps the visible door on
     /// Play, because joining is a Trivia Night action.
@@ -22,6 +24,8 @@ struct LiveBuilderView_macOS: View {
     @State private var working = LiveEvent(name: "New Event")
     /// A2.12: the nights this Mac has actually run.
     @State private var showNights = false
+    /// A2.13: an interrupted night waiting to be picked back up.
+    @State private var resumable: LiveNightSnapshot?
     @State private var newFormat: GameMode = .classic
     @State private var newCategory: TriviaCategory = .named("mixed")
     @State private var newCount = 5
@@ -250,12 +254,50 @@ struct LiveBuilderView_macOS: View {
         // TIDBITS_LIVE_NIGHTS=1 — open the archive on launch (nothing else can reach it
         // without a click, so without this the surface is untestable on the glass).
         .task { if ProcessInfo.processInfo.environment["TIDBITS_LIVE_NIGHTS"] == "1" { showNights = true } }
+        .task {
+            resumable = LiveNightResume.shared.pending()   // A2.13
+            // TIDBITS_LIVE_RESUME=1 — pick the interrupted night back up on launch, the
+            // way the card's button does. A crash cannot be staged by hand.
+            if ProcessInfo.processInfo.environment["TIDBITS_LIVE_RESUME"] == "1", let r = resumable {
+                try? await Task.sleep(for: .seconds(2))
+                onResume(r)
+            }
+        }
     }
 
     // MARK: Event list
 
+    /// A2.13: a night that is still going. The host's app died — a crash, a closed lid,
+    /// a hand on the wrong key — and everything they held (where they were, the paper
+    /// teams, the hidden names, the answer sheet) died with it. The room did not: the
+    /// phones' scores are on the wire, so picking the SAME room back up costs the room
+    /// nothing.
+    @ViewBuilder private var resumeCard: some View {
+        if let r = resumable {
+            VStack(alignment: .leading, spacing: 6) {
+                Label("A night is still going", systemImage: "exclamationmark.arrow.circlepath")
+                    .font(.headline).foregroundStyle(Tidbits.Palette.coral)
+                Text("\(r.event.name) — \(r.positionLine), room \(r.code)")
+                    .font(.callout).foregroundStyle(Tidbits.Palette.ink)
+                Text("Picking it back up keeps the room's scores and your paper teams.")
+                    .font(.caption).foregroundStyle(Tidbits.Palette.inkSoft)
+                HStack(spacing: 8) {
+                    Button("Pick it back up") { onResume(r) }
+                        .buttonStyle(.borderedProminent).tint(Tidbits.Palette.coral)
+                        .accessibilityIdentifier("live.resume")
+                    Button("Discard") { LiveNightResume.shared.clear(); resumable = nil }
+                        .buttonStyle(.bordered)
+                }
+            }
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Tidbits.Palette.yellow.opacity(0.25))
+        }
+    }
+
     private var eventList: some View {
         VStack(alignment: .leading, spacing: 0) {
+            resumeCard
             HStack {
                 Text("Events").font(.headline).foregroundStyle(Tidbits.Palette.ink)
                 Spacer()

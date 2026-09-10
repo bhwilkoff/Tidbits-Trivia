@@ -93,6 +93,53 @@ public sealed class LiveNightHost : ObservableObject
         Notify();
     }
 
+    /// A2.13: where the night-in-progress is kept, so a crash is not the end of the
+    /// evening (null in tests that do not care).
+    public Store.NightResume? Resume { get; set; }
+
+    /// A2.13: write where this night is. Called on the host's deliberate moves — not on
+    /// every stream event, which would be a file write per answer.
+    public void SaveResume()
+    {
+        if (Resume is null || string.IsNullOrEmpty(Net.Code)) return;
+        Resume.Save(new Store.ResumedNight
+        {
+            Code = Net.Code, Title = Title, Index = Index, Revealed = Revealed, Total = Questions.Count,
+            Questions = Questions.ToList(), Event = Branding, Plan = _plan,
+            PaperTeams = PaperTeamsSnapshot(), Hidden = _hidden.ToList(), PointsPerCorrect = PointsPerCorrect,
+            WrongAnswerPenalty = WrongAnswerPenalty, AnswerLog = AnswerLog.ToList(),
+            SavedAt = DateTimeOffset.Now,
+        });
+    }
+
+    /// A2.13: pick a night back up — everything the host held that the wire does not.
+    /// The scores are already on the wire and the room never left.
+    public void RestoreFrom(Store.ResumedNight r)
+    {
+        if (r.Questions.Count > 0) Questions = r.Questions.ToList();
+        Index = Math.Max(0, Math.Min(r.Index, Math.Max(0, Questions.Count - 1)));
+        Revealed = r.Revealed;
+        PointsPerCorrect = r.PointsPerCorrect;
+        WrongAnswerPenalty = r.WrongAnswerPenalty;
+        AnswerLog.Clear();
+        AnswerLog.AddRange(r.AnswerLog);
+        _hidden.Clear();
+        foreach (var uid in r.Hidden) _hidden.Add(uid);
+        foreach (var t in r.PaperTeams)
+        {
+            AddPaperTeam(t.Name);
+            var uid = _paperNames.FirstOrDefault(kv => kv.Value == t.Name).Key;
+            if (uid is not null) _paperScores[uid] = t.Score;
+        }
+        Notify();
+    }
+
+    private List<Store.ResumedNight.Team> PaperTeamsSnapshot() =>
+        _paperScores.Select(kv => new Store.ResumedNight.Team
+        {
+            Name = _paperNames.GetValueOrDefault(kv.Key, ""), Score = kv.Value,
+        }).Where(t => t.Name.Length > 0).ToList();
+
     /// A2.12: where a finished night is kept (null in tests that do not care).
     public Store.NightArchive? Archive { get; set; }
     private bool _archived;
@@ -264,6 +311,7 @@ public sealed class LiveNightHost : ObservableObject
         var uid = "paper:" + Guid.NewGuid().ToString("N")[..8];
         _paperNames[uid] = n;
         _paperScores[uid] = 0;
+        SaveResume();   // A2.13: a paper team is host-side only — the wire never sees it
         Notify();
     }
 
@@ -381,6 +429,7 @@ public sealed class LiveNightHost : ObservableObject
     {
         if (string.IsNullOrEmpty(uid)) return;
         if (!_hidden.Add(uid)) _hidden.Remove(uid);
+        SaveResume();   // A2.13: a hidden name is host-side only — the wire never sees it
         Notify();
     }
 
@@ -608,9 +657,18 @@ public sealed class LiveNightHost : ObservableObject
     {
         if (Net.IsOpen || Opening) return;
         Opening = true; ErrorText = null; Notify();
-        if (await Net.Open(Title) is null) ErrorText = "Couldn't open a room. Check your connection.";
+        // A2.13: picking a night back up re-opens the SAME room and keeps its scoreboard.
+        var code = Resuming?.Code;
+        if (await Net.Open(Title, code: code, resuming: code is { Length: > 0 }) is null)
+            ErrorText = "Couldn't open a room. Check your connection.";
         Opening = false; Notify();
     }
+
+    /// A2.13: set before Start() to pick an interrupted night back up.
+    public Store.ResumedNight? Resuming { get; set; }
+    /// A2.13: the authored event this night was hosted from, kept in the snapshot so the
+    /// resume re-hosts the same branding and overrides without a lookup by title.
+    public LiveEvent? Branding { get; set; }
 
     /// Load the night's questions WITHOUT opening a room.
     ///
@@ -698,13 +756,16 @@ public sealed class LiveNightHost : ObservableObject
     {
         if (!Net.IsOpen) await OpenRoom();
         if (!Net.IsOpen) return;
-        Questions = await BuildNightQuestions();
+        // A2.13: a resumed night plays the questions it was already playing.
+        Questions = Resuming?.Questions is { Count: > 0 } kept ? kept.ToList() : await BuildNightQuestions();
         if (Questions.Count == 0) { ErrorText = "No questions available."; Notify(); return; }
         if (HostPlays) await Net.JoinAsHost(string.IsNullOrEmpty(HostName) ? "Host" : HostName);
         Index = 0; Revealed = false; HostChoice = null; Locked = false; CurrentStage = Stage.Playing;
+        if (Resuming is { } r) RestoreFrom(r);   // A2.13: back where the host was, with their paper teams
         PrepareQuestion();
         ArmRoundTimer();
         await Net.SetState("live");
+        SaveResume();   // A2.13: from the first question — a crash before any move is still a crash
         await PublishCurrent();
         Notify();
     }
@@ -741,6 +802,7 @@ public sealed class LiveNightHost : ObservableObject
         Revealed = true;
         await Net.Publish(BuildPub()); // answerIndex now included
         await AutoScore();
+        SaveResume();   // A2.13
         Notify();
     }
 
@@ -750,7 +812,7 @@ public sealed class LiveNightHost : ObservableObject
         Revealed = false; HostChoice = null; Locked = false; _deadline = null;
         Index++;
         if (Current is null) await End();
-        else { PrepareQuestion(); ArmRoundTimer(); await PublishCurrent(); }
+        else { PrepareQuestion(); ArmRoundTimer(); await PublishCurrent(); SaveResume(); }   // A2.13
         Notify();
     }
 
@@ -843,6 +905,7 @@ public sealed class LiveNightHost : ObservableObject
         if (!_archived)
         {
             _archived = true;
+            Resume?.Clear();   // A2.13: a night that ended properly never offers to resume
             Archive?.Record(Title, Net.Venue,
                 Standings.Select(j => new Store.ArchivedNight.Row { Name = j.Name, Score = j.Score, Paper = j.Id.StartsWith("paper:", StringComparison.Ordinal) }).ToList(),
                 AnswerLog);

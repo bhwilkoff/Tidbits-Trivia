@@ -132,23 +132,38 @@ public sealed class LiveHostNet
     /// under it (A2.12); it was only ever written into the wire meta.
     public string Venue { get; private set; } = "";
 
-    public async Task<string?> Open(string name, string venue = "")
+    /// `resuming` is the ONE case where the previous scoreboard must survive: the host's
+    /// app died mid-night and is picking the same room back up, so wiping scores would
+    /// punish every table for a crash they did not cause (A2.13).
+    public async Task<string?> Open(string name, string venue = "", string? code = null, bool resuming = false)
     {
         lock (_lock) _publishedMedia.Clear();
         try
         {
             var host = await _db.EnsureAuth();
-            var code = Environment.GetEnvironmentVariable("TIDBITS_LIVE_CODE") ?? FirebaseRtdb.NewRoomCode();
+            var room = code ?? Environment.GetEnvironmentVariable("TIDBITS_LIVE_CODE") ?? FirebaseRtdb.NewRoomCode();
+            // A fresh night on a REUSED code must not inherit the last one's ledger (the
+            // Mac hit this as F-006/F-008). A resume is the exception: that ledger is the
+            // room's own, mid-night.
+            if (!resuming)
+            {
+                try { await _db.Delete($"{LiveRoom.Path(room)}/answers"); } catch { }
+                try { await _db.Delete($"{LiveRoom.Path(room)}/scores"); } catch { }
+                lock (_lock) _scores.Clear();
+            }
             Venue = venue;
             var meta = new LiveRoom.Meta { Host = host, CreatedAt = NowMs(), Name = name, Venue = venue, State = "lobby" };
-            await _db.Put($"{LiveRoom.Path(code)}/meta", meta);
-            Code = code;
+            // A resume PATCHes meta so the host's renames (meta/names, A3.12) survive the
+            // crash with the scores; a fresh night PUTs it and starts clean.
+            if (resuming) await _db.Patch($"{LiveRoom.Path(room)}/meta", meta);
+            else await _db.Put($"{LiveRoom.Path(room)}/meta", meta);
+            Code = room;
             HostUid = host;
-            _streamCts.Add(StartWatch($"{LiveRoom.Path(code)}/teams", _teams));
-            _streamCts.Add(StartWatch($"{LiveRoom.Path(code)}/meta/names", _names));
-            _streamCts.Add(StartWatch($"{LiveRoom.Path(code)}/scores", _scores));
-            _streamCts.Add(StartRemoteWatch($"{LiveRoom.Path(code)}/control"));   // G6
-            return code;
+            _streamCts.Add(StartWatch($"{LiveRoom.Path(room)}/teams", _teams));
+            _streamCts.Add(StartWatch($"{LiveRoom.Path(room)}/meta/names", _names));
+            _streamCts.Add(StartWatch($"{LiveRoom.Path(room)}/scores", _scores));
+            _streamCts.Add(StartRemoteWatch($"{LiveRoom.Path(room)}/control"));   // G6
+            return room;
         }
         catch (Exception ex)
         {

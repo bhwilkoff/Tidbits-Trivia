@@ -156,6 +156,20 @@
                 <StackPanel x:Name="SavedEvents" Spacing="6"/>
                 <!-- A2.12: the nights this machine has actually run. Below the saved events,
                      because an event is a plan and a night is a thing that happened. -->
+                <!-- A2.13: a night the app died in the middle of. -->
+                <Border x:Name="ResumeCard" IsVisible="False" Background="#33FFC93C" CornerRadius="10"
+                        Padding="14,10" Margin="0,10,0,0">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="A night is still going" FontWeight="Bold" Foreground="#FF5C35"/>
+                        <TextBlock x:Name="ResumeWhat" TextWrapping="Wrap"/>
+                        <TextBlock Text="Picking it back up keeps the room&apos;s scores and your paper teams."
+                                   FontSize="12" Opacity="0.7" TextWrapping="Wrap"/>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button x:Name="ResumeButton" Content="Pick it back up" Classes="accent" Click="OnResumeNight" Padding="14,7"/>
+                            <Button Content="Discard" Click="OnDiscardResume" Padding="12,7"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
                 <TextBlock x:Name="NightsHeader" Text="Nights you&apos;ve run" Classes="section-header"
                            Margin="0,10,0,0" IsVisible="False"/>
                 <StackPanel x:Name="NightsRun" Spacing="6"/>

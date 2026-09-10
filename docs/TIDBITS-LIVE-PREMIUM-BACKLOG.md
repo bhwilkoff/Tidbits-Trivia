@@ -196,6 +196,7 @@ is a first-class format to design *for*, not a legacy fallback.
 | Join via the native Tidbits apps | iOS/tvOS/Android/web join the live room | **P (unique — consumer install base)** | ✅ |
 | Team mode (several phones → one team) | Multiple devices, one leaderboard row | D | 🔨 |
 | Rejoin/reconnect after drop | Re-scan the code to resume | D | ✅ |
+| Host crash recovery (same room, scores kept) | The cockpit dies mid-night; pick it back up where it was | D (hosts fear crashes) | ✅ (A2.13, 2026-09-10) |
 | Player/device cap for a full room (100s) | Handle a bar-sized crowd | TS(paid) | 🔨 (verify at scale) |
 | **Printable answer sheets (beautiful)** | Teams write answers; host grades — paper as a *first-class* output | P (paper is the fastest-growing segment) | 🔨 (basic print exists) |
 | Printable question/host pack | Questions + answer key + host script PDF | P | ✅ |

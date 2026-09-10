@@ -40,6 +40,8 @@ struct ContentView_macOS: View {
     @State private var livePreview: LiveEvent?
     /// A Tidbits Live event being HOSTED (the emcee cockpit) — replaces the root.
     @State private var liveHost: LiveEvent?
+    /// A2.13: the interrupted night this launch is picking back up, if the host said yes.
+    @State private var liveResume: LiveNightSnapshot?
     @AppStorage("tidbits.hasOnboarded") private var hasOnboarded = false
 
     var body: some View {
@@ -71,7 +73,7 @@ struct ContentView_macOS: View {
                 LivePreviewContainer_macOS(event: livePreview) { self.livePreview = nil }
                     .transition(.opacity)
             } else if let liveHost {
-                LiveHostContainer_macOS(event: liveHost) { self.liveHost = nil }
+                LiveHostContainer_macOS(event: liveHost, resume: liveResume) { self.liveHost = nil; self.liveResume = nil }
                     .transition(.opacity)
             } else if let expeditionLaunch {
                 GameContainerView_macOS(request: LaunchRequest(mode: .classic, category: .named(expeditionLaunch.stage.categoryID)),
@@ -225,7 +227,9 @@ struct ContentView_macOS: View {
                 case .records: RecordsView_macOS(onPlay: start)
                 case .leaderboard: LeaderboardView_macOS(onHostANight: { section = .live })
                 case .create:  CreateView_macOS { topic, qs in customGame = CustomLaunch(topic: topic, questions: qs) }
-                case .live:    LiveBuilderView_macOS(onPreview: { livePreview = $0 }, onHost: { liveHost = $0 })
+                case .live:    LiveBuilderView_macOS(onPreview: { livePreview = $0 },
+                                                     onHost: { liveHost = $0 },
+                                                     onResume: { snap in liveResume = snap; liveHost = snap.event })   // A2.13
                 }
             }
             }

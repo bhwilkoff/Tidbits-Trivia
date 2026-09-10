@@ -155,6 +155,22 @@ reveal, when it stops being news. Like every big-screen element it is a switch
 (A8.7); the text is one pure function shared with Windows, so the two projectors
 cannot word it differently.
 
+A2.13 **A night the app died in the middle of can be picked back up** (2026-09-10).
+The room survives a host crash — the phones' scores live in `live/{code}/scores`
+and the joiners are still sitting there — but everything the HOST held died
+with the app: where in the night they were, the paper teams and their scores,
+the names they hid from the big screen, the manual adjustments, the answer
+sheet. A host standing in front of sixty tables cannot reconstruct that, so the
+cockpit writes a recoverable snapshot on every move it makes (next, reveal, a
+paper team, a hidden name) and the Live landing offers it back: "A night is
+still going — <event>, question 4 of 12, room AB12 · Pick it back up /
+Discard". Picking it up re-opens the SAME room code (the phones never left),
+keeps the wire's scoreboard and the host's renames instead of wiping them the
+way a fresh night must (F-006/F-008), and puts the host back on the question
+they were on. A night that ends properly clears the snapshot, and one older than
+six hours is not offered — that is last week's, and its room has long left.
+The cost of a crash is at most the answers to the question that was open.
+
 A2.12 **The night is kept** (2026-09-10). A night used to exist only while it
 was happening: close the wrap and the final standings, the answer sheet and the
 A3.11 report were gone. A pub host runs the same room every week and is asked

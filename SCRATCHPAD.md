@@ -7,6 +7,42 @@
 > `docs/ROADMAP.md`, `docs/DATA-CONTRACT.md`. Detailed per-round history is in
 > `ARCHIVE.md`.
 
+## Current state (2026-09-10a) — a night the app died in the middle of can be picked back up (A2.13 / 3.80)
+
+**Did:** both hosts snapshot the night on every host move AND at open (index,
+reveal state, points, paper teams with scores, hidden names, the answer sheet;
+Windows also keeps the ACTUAL questions, event and plan, because a corpus round
+is drawn fresh on every Start and a resume from the plan would hand the room a
+different night). The Live landing offers "A night is still going — <event>,
+question N of M, room CODE · Pick it back up / Discard". Resuming re-opens the
+SAME room with `resuming: true`: `scores/` is kept instead of the fresh-night
+wipe, meta is PATCHed so `meta/names` (the host's renames) survives. Cleared on
+a proper end; six-hour shelf life. Hooks `TIDBITS_LIVE_RESUME=1` on both. 4
+Swift Testing + 7 xUnit. 1.9.35 (165), Android vc 126, Windows 1.9.35.
+
+**Verified on the REAL Mac and the REAL Windows box** (`scratchpad/e2e_resume.py`):
+host to q2 with a wire table scored on q1, force-kill the process (SIGKILL /
+Stop-Process -Force), relaunch with the hook — room DBCU (Mac) / 359V (Windows)
+came back on q2, the point still on the wire, both teams in, the cockpit
+photographed with the standings. The Mac offer card photographed after a crash
+on q1 ("question 1 of 2, room QAZR") — which only worked once the snapshot was
+also written at OPEN (a crash before any move had nothing to offer; found on
+the glass, fixed on both).
+
+**Owner, mid-tick, twice:** real devices only, and "this device is meant for
+light-weight testing only. All heavy testing should be done via Github and on
+real devices" — a full `dotnet test` had hung at 0% CPU for 14 min on the Mac
+head. Killed; rule saved (`heavy-testing-goes-to-github`): one filtered test
+locally at most, the suites run in CI on push, one `xcodebuild build` for the
+real Mac app is the only local build. `LiveControlsSmokeTest` now uses
+`IsEffectivelyVisible` (a button inside the collapsed resume card is not
+reachable and not meant to be).
+
+**Seen, not fixed:** the Mac Events list holds every QA event TWICE with
+distinct ids — the file importer mints a fresh id per import, so opening the
+same `.tidbitsevent.json` twice makes a twin. Decide whether import should
+upsert on the file's id (next tick).
+
 ## Current state (2026-09-09k) — the Wikipedia source on every reveal (punch list #1)
 
 **Did:** `pub.source {title, url}` beside `pub.story`, reveal only, from every

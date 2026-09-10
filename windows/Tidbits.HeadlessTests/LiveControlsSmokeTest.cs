@@ -114,7 +114,9 @@ public class LiveControlsSmokeTest
         Dispatcher.UIThread.RunJobs();
 
         var tiny = AppButtons(view)
-            .Where(b => b.IsVisible && (b.Bounds.Width < 8 || b.Bounds.Height < 8))
+            // IsEffectivelyVisible, not IsVisible: a button inside a collapsed card (the
+            // A2.13 resume offer) is not on screen and not meant to be reachable.
+            .Where(b => b.IsEffectivelyVisible && (b.Bounds.Width < 8 || b.Bounds.Height < 8))
             .Select(b => $"{b.Content} ({b.Bounds.Width:0}x{b.Bounds.Height:0})")
             .ToList();
         Assert.True(tiny.Count == 0, $"button(s) with no usable hit area: {string.Join(", ", tiny)}");

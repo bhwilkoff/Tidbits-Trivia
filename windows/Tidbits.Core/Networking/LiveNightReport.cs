@@ -50,5 +50,6 @@ public sealed class LiveNightReport
         return new LiveNightReport(qs, rounds, teams);
     }
 
-    public static string Percent(double x) => $"{(int)Math.Round(x * 100)}%";
+    // AwayFromZero: .NET rounds 62.5 to 62 (banker's), Swift's .rounded() to 63 — the two hosts must print the same number.
+    public static string Percent(double x) => $"{(int)Math.Round(x * 100, MidpointRounding.AwayFromZero)}%";
 }

@@ -178,7 +178,7 @@ function jokerHTML(p) {
   return `<div class="live-joker"><div class="live-joker-label">YOUR JOKER${cur != null ? ` · Round ${cur + 1}` : ''}</div>
     <select id="live-joker" aria-label="Play your joker on a round">
       <option value=""${cur == null ? ' selected' : ''}>Pick a round to double…</option>
-      ${rounds.map(r => `<option value="${r.index}"${r.index === cur ? ' selected' : ''}>Round ${r.index + 1} — ${esc(r.title)}</option>`).join('')}
+      ${rounds.map(r => `<option value="${r.index}"${r.index === cur ? ' selected' : ''}>${esc(r.title)}</option>`).join('')}
     </select>
     <div class="live-sub">Every point your table scores in that round counts double. Pick before it starts.</div></div>`;
 }

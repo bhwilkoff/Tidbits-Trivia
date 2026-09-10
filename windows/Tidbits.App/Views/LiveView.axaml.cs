@@ -199,6 +199,9 @@ public partial class LiveView : UserControl
     // The rounds being composed for a custom event (+ an index-aligned host note).
     private readonly System.Collections.Generic.List<NightRound> _rounds = new();
     private readonly System.Collections.Generic.List<string> _notes = new();
+    /// The authored round titles from an imported/saved event, index-aligned like _notes —
+    /// without this a hosted file published the round KIND for every round.
+    private readonly System.Collections.Generic.List<string> _roundTitles = new();
     private readonly System.Collections.Generic.List<int> _timers = new();   // per-round countdown, 0 = untimed
     private readonly System.Collections.Generic.List<int> _points = new();   // A2.11 per-round points per correct, 0 = the night's setting
     private static readonly int[] PointsChoices = { 0, 2, 3, 5, 10 };
@@ -252,6 +255,7 @@ public partial class LiveView : UserControl
         if (RoundModeBox.SelectedItem is not GameMode mode || RoundCountBox.SelectedItem is not int count) return;
         _rounds.Add(new NightRound { Kind = mode, Count = count });
         _notes.Add(RoundNoteBox.Text?.Trim() ?? "");
+        _roundTitles.Add("");
         _timers.Add(0);
         _points.Add(0);
         _buzz.Add(false);
@@ -270,6 +274,7 @@ public partial class LiveView : UserControl
         if (index < 0 || index >= _rounds.Count || target < 0 || target >= _rounds.Count) return;
         (_rounds[index], _rounds[target]) = (_rounds[target], _rounds[index]);
         (_notes[index], _notes[target]) = (_notes[target], _notes[index]);
+        if (index < _roundTitles.Count && target < _roundTitles.Count) (_roundTitles[index], _roundTitles[target]) = (_roundTitles[target], _roundTitles[index]);
         (_timers[index], _timers[target]) = (_timers[target], _timers[index]);
         while (_points.Count <= System.Math.Max(index, target)) _points.Add(0);
         (_points[index], _points[target]) = (_points[target], _points[index]);
@@ -441,6 +446,7 @@ public partial class LiveView : UserControl
             {
                 _rounds.RemoveAt(idx);
                 if (idx < _notes.Count) _notes.RemoveAt(idx);
+                if (idx < _roundTitles.Count) _roundTitles.RemoveAt(idx);
                 if (idx < _timers.Count) _timers.RemoveAt(idx);
                 if (idx < _points.Count) _points.RemoveAt(idx);
                 if (idx < _buzz.Count) _buzz.RemoveAt(idx);
@@ -905,6 +911,7 @@ public partial class LiveView : UserControl
         WagerFinalRound = WagerFinalCheck.IsChecked == true,
         Joker = JokerCheck.IsChecked == true,   // A2.14
         RoundNotes = new System.Collections.Generic.List<string>(_notes),
+        RoundTitles = new System.Collections.Generic.List<string>(_roundTitles),
         RoundTimers = new System.Collections.Generic.List<int>(_timers),
         RoundPoints = new System.Collections.Generic.List<int>(_points),
         BuzzRounds = new System.Collections.Generic.List<bool>(_buzz),
@@ -932,12 +939,13 @@ public partial class LiveView : UserControl
         WeekdayBox.SelectedIndex = ev.Weekday is int w and >= 0 and <= 6 ? w + 1 : 0;
         WagerFinalCheck.IsChecked = ev.WagerFinalRound;
         JokerCheck.IsChecked = ev.Joker;   // A2.14
-        _rounds.Clear(); _notes.Clear(); _timers.Clear(); _points.Clear(); _questions.Clear(); _clips.Clear(); _expandedRounds.Clear(); _buzz.Clear(); _letters.Clear(); _boards.Clear();
+        _rounds.Clear(); _notes.Clear(); _roundTitles.Clear(); _timers.Clear(); _points.Clear(); _questions.Clear(); _clips.Clear(); _expandedRounds.Clear(); _buzz.Clear(); _letters.Clear(); _boards.Clear();
         _qTimers.Clear(); _qPoints.Clear(); _qNotes.Clear(); _qPolls.Clear();
         for (int i = 0; i < ev.Rounds.Count; i++)
         {
             _rounds.Add(ev.Rounds[i]);
             _notes.Add(i < ev.RoundNotes.Count ? ev.RoundNotes[i] : "");
+            _roundTitles.Add(i < ev.RoundTitles.Count ? ev.RoundTitles[i] : "");
             _timers.Add(i < ev.RoundTimers.Count ? ev.RoundTimers[i] : 0);
             _points.Add(i < ev.RoundPoints.Count ? ev.RoundPoints[i] : 0);
             _buzz.Add(i < ev.BuzzRounds.Count && ev.BuzzRounds[i]);

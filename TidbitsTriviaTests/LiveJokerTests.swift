@@ -11,7 +11,10 @@ struct LiveJokerTests {
         #expect(LiveJoker.playable(current: 3, titles: titles).isEmpty)
         // The wager round stakes a table's own points already — no joker on top.
         #expect(LiveJoker.playable(current: 0, titles: titles, wager: 3).map(\.index) == [1, 2])
-        #expect(LiveJoker.playable(current: 0, titles: ["", "x"]).first?.title == "Round 2")
+        #expect(LiveJoker.playable(current: 0, titles: ["", ""]).first?.title == "Round 2")
+        #expect(LiveJoker.playable(current: 0, titles: ["", "Music"]).first?.title == "Round 2 — Music")
+        // A host who already numbered the round is not numbered twice.
+        #expect(LiveJoker.playable(current: 0, titles: ["", "Round 2 — Movies"]).first?.title == "Round 2 — Movies")
     }
 
     @Test func lockingARoundKeepsOnlyThePicksForThatRoundByTeam() {

@@ -14,8 +14,18 @@ nonisolated enum LiveJoker {
     static func playable(current: Int, titles: [String], wager: Int? = nil) -> [LiveRoom.JokerRound] {
         titles.enumerated().compactMap { i, t in
             guard i > current, i != wager else { return nil }
-            return LiveRoom.JokerRound(index: i, title: t.isEmpty ? "Round \(i + 1)" : t)
+            return LiveRoom.JokerRound(index: i, title: label(round: i, title: t))
         }
+    }
+
+    /// The display-ready name of a round, once: "Round 3 — Music" — and just the
+    /// title when the host already numbered it ("Round 3 — Music" stays as it is,
+    /// never "Round 3 — Round 3 — Music"). Every joiner shows `title` verbatim.
+    static func label(round i: Int, title: String) -> String {
+        let t = title.trimmingCharacters(in: .whitespaces)
+        if t.isEmpty { return "Round \(i + 1)" }
+        if t.lowercased().hasPrefix("round \(i + 1)") { return t }
+        return "Round \(i + 1) — \(t)"
     }
 
     /// Lock the picks for the round that is starting: the TEAMS (by name, because a

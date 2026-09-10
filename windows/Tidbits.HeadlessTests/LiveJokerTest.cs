@@ -20,6 +20,8 @@ public class LiveJokerTest
         Assert.Empty(LiveJoker.Playable(3, Titles));
         Assert.Equal(new[] { 1, 2 }, LiveJoker.Playable(0, Titles, wager: 3).Select(r => r.Index));   // no joker on the wager round
         Assert.Equal("Round 2", LiveJoker.Playable(0, new[] { "", "" }).Single().Title);
+        Assert.Equal("Round 2 \u2014 Music", LiveJoker.Playable(0, new[] { "", "Music" }).Single().Title);
+        Assert.Equal("Round 2 \u2014 Movies", LiveJoker.Playable(0, new[] { "", "Round 2 \u2014 Movies" }).Single().Title);   // never numbered twice
     }
 
     [Fact]

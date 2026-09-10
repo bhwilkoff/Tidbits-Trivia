@@ -323,11 +323,11 @@ struct LiveJoinView: View {
                 Text(cur.map { "YOUR JOKER · ROUND \($0 + 1)" } ?? "YOUR JOKER").font(Tidbits.TypeRamp.l6).foregroundStyle(Tidbits.Palette.coral)
                 Menu {
                     ForEach(rounds, id: \.index) { r in
-                        Button("Round \(r.index + 1) — \(r.title)") { Task { await client.playJoker(r.index) } }
+                        Button(r.title) { Task { await client.playJoker(r.index) } }
                     }
                 } label: {
                     HStack {
-                        Text(cur.flatMap { c in rounds.first { $0.index == c } }.map { "Round \($0.index + 1) — \($0.title)" } ?? "Pick a round to double…")
+                        Text(cur.flatMap { c in rounds.first { $0.index == c } }?.title ?? "Pick a round to double…")
                             .font(.system(size: 17, weight: .bold, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
                         Spacer()
                         Image(systemName: "chevron.up.chevron.down").foregroundStyle(Tidbits.Palette.inkSoft)

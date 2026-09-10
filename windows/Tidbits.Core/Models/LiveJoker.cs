@@ -18,9 +18,19 @@ public static class LiveJoker
         for (int i = 0; i < titles.Count; i++)
         {
             if (i <= current || i == wager) continue;
-            list.Add(new LiveRoom.JokerRound { Index = i, Title = string.IsNullOrEmpty(titles[i]) ? $"Round {i + 1}" : titles[i] });
+            list.Add(new LiveRoom.JokerRound { Index = i, Title = Label(i, titles[i]) });
         }
         return list;
+    }
+
+    /// The display-ready name of a round, once: "Round 3 — Music" — and just the title
+    /// when the host already numbered it. Every joiner shows `Title` verbatim.
+    public static string Label(int i, string title)
+    {
+        var t = (title ?? "").Trim();
+        if (t.Length == 0) return $"Round {i + 1}";
+        if (t.StartsWith($"Round {i + 1}", StringComparison.OrdinalIgnoreCase)) return t;
+        return $"Round {i + 1} \u2014 {t}";
     }
 
     /// Lock the picks for the round that is starting: the TEAMS (by name — G7) whose

@@ -1698,7 +1698,7 @@ struct LiveHostView_macOS: View {
                 if session.event.joker == true {   // A2.14: a paper table has no phone — the host plays its joker
                     Menu(session.paperJokers[team.id].map { "Joker: round \($0 + 1)" } ?? "Joker…") {
                         ForEach(session.jokerRoundsAhead, id: \.index) { r in
-                            Button("Round \(r.index + 1) — \(r.title)") { session.paperJokers[team.id] = r.index }
+                            Button(r.title) { session.paperJokers[team.id] = r.index }
                         }
                         if session.paperJokers[team.id] != nil { Button("No joker") { session.paperJokers[team.id] = nil } }
                     }

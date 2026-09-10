@@ -65,6 +65,9 @@ import kotlinx.coroutines.launch
 @Composable
 fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
     var pub by remember { mutableStateOf<FirebaseNet.LivePub?>(null) }
+    // Tick 33: how far this device's clock is behind the HOST's. Every deadline on the
+    // wire is absolute, so a skewed device counts down to the wrong moment.
+    var skewMs by remember { mutableStateOf(0L) }
     var meta by remember { mutableStateOf<FirebaseNet.LiveMeta?>(null) }
     var score by remember { mutableStateOf(0) }
     var wager by remember { mutableStateOf(0) }   // Wave A: the player's stake for a wager question
@@ -100,6 +103,7 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
                 }
                 unsubs += FirebaseNet.liveOnPub(code) { p ->
                     if (p != null && p.qid != pub?.qid) { submittedQid = null; chosen = null; blurred = false }   // Wave C: reset focus flag
+                    p?.now?.let { skewMs = it - System.currentTimeMillis() }
                     pub = p
                     recap.observe(p, score)
                 }
@@ -223,7 +227,7 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
             }
             // A3.14: on a break the question is GONE, not merely covered. A prompt still
             // on screen is a prompt a table answers late, and the host has to un-score it.
-            p.onBreak -> Centered { LiveBreakCard(p.breakUntil) }
+            p.onBreak -> Centered { LiveBreakCard(p.breakUntil, skewMs) }
             else -> {
                 val revealed = p.phase == "reveal"
                 Text("ROUND ${p.round} · ${p.roundTitle.uppercase()} — Q${p.qNum}/${p.qTotal}",
@@ -278,7 +282,7 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
                 Text(p.prompt, fontSize = 24.sp, fontWeight = FontWeight.Black, color = ink)
                 Spacer(Modifier.height(12.dp))
                 if (!revealed && p.deadline != null) {   // Wave A: on-screen timer
-                    Countdown(p.deadline)
+                    Countdown(p.deadline, skewMs)
                     Spacer(Modifier.height(12.dp))
                 }
                 if (!revealed && p.wager) {   // Wave A: wager input
@@ -377,10 +381,11 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
 }
 
 @Composable
-private fun Countdown(deadlineMs: Long) {   // Wave A: ticks to the host's deadline, coral at ≤5s
-    var now by remember { mutableStateOf(System.currentTimeMillis()) }
-    LaunchedEffect(deadlineMs) {
-        while (System.currentTimeMillis() < deadlineMs) { now = System.currentTimeMillis(); delay(500) }
+private fun Countdown(deadlineMs: Long, skewMs: Long = 0) {   // Wave A: ticks to the host's deadline, coral at ≤5s
+    // Tick 33: compare against the HOST's clock — this device's may be minutes off.
+    var now by remember { mutableStateOf(System.currentTimeMillis() + skewMs) }
+    LaunchedEffect(deadlineMs, skewMs) {
+        while (System.currentTimeMillis() + skewMs < deadlineMs) { now = System.currentTimeMillis() + skewMs; delay(500) }
         now = deadlineMs
     }
     val secs = (((deadlineMs - now).coerceAtLeast(0) + 999) / 1000).toInt()

@@ -6,7 +6,7 @@ import { FirebaseNet } from './firebase.js';
 import { Identity } from './identity.js';
 import { newRecap, observe as recapObserve, finish as recapFinish, tough as recapTough, toRemember as recapRemember, howDidYouKnowText } from './liverecap.js';
 
-const S = { code: '', team: '', joined: false, joining: false, pub: null, meta: null,
+const S = { skewMS: 0, code: '', team: '', joined: false, joining: false, pub: null, meta: null,
             score: 0, wager: 0, blurred: false, submittedQid: null, chosen: null, error: '', local: {},
             liveAnswered: 0, liveCorrect: 0, talliedQid: null, recorded: false, recap: newRecap() };
 
@@ -130,6 +130,9 @@ async function join() {
     }));   // a late score at the wrap still settles the last question
     unsubs.push(FirebaseNet.liveOnPub(code, (p) => {
       if (p && p.qid !== S.pub?.qid) { S.submittedQid = null; S.chosen = null; S.local = {}; S.blurred = false; }   // Wave C: reset focus flag
+      // Tick 33: speak in the HOST's clock. Every deadline on the wire is absolute, so a
+      // browser whose clock is off counts down to the wrong moment.
+      if (p && typeof p.now === 'number') S.skewMS = p.now - Date.now();
       S.pub = p;
       recapObserve(S.recap, p, S.score || 0);
       if (p && p.phase === 'reveal' && S.talliedQid !== p.qid) {   // tally MCQ accuracy at reveal
@@ -180,7 +183,7 @@ function ensureLiveTimer() {
   const tick = () => {
     const el = document.getElementById('live-timer');
     if (!el) { clearInterval(_liveTimerInt); _liveTimerInt = null; return; }
-    const secs = Math.max(0, Math.ceil((+el.dataset.dl - Date.now()) / 1000));
+    const secs = Math.max(0, Math.ceil((+el.dataset.dl - (Date.now() + S.skewMS)) / 1000));
     el.textContent = secs >= 60 ? `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}` : `${secs}s`;
     el.style.color = secs <= 5 ? '#FF5C35' : 'var(--color-text)';
   };
@@ -307,7 +310,7 @@ async function remotePair() {
   // refused forever once the host had run anything.
   S.remoteId = await FirebaseNet.liveRemoteLastId(code);
   S.remotePaired = true;
-  FirebaseNet.liveOnPub(code, (p) => { S.pub = p; draw(); });
+  FirebaseNet.liveOnPub(code, (p) => { if (p && typeof p.now === 'number') S.skewMS = p.now - Date.now(); S.pub = p; draw(); });
   draw();
 }
 
@@ -329,7 +332,7 @@ async function remoteSend(verb) {
 // ten is not immediately shown nine), and the clock time the room actually acts on.
 function breakMinutes(until) {
   if (!until) return null;
-  const secs = until / 1000 - Date.now() / 1000;
+  const secs = until / 1000 - (Date.now() + S.skewMS) / 1000;
   if (secs <= 0) return null;
   // Nearest minute, not up: rounding up turned every slightly-slow clock in the room
   // into a different number (the projector said 10 and a joiner said 11).

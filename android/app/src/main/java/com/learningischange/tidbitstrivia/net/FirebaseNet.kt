@@ -406,6 +406,8 @@ object FirebaseNet {
         /** A3.14: the room is on a break, and when the host promised to be back. */
         val onBreak: Boolean = false,
         val breakUntil: Long? = null,
+        /** The HOST's clock when it published this, epoch-ms (tick 33). */
+        val now: Long? = null,
         /** A2.10: a poll — the room votes, no right answer, nobody scores. */
         val poll: Boolean = false,
         /** Decision 060 (pictures): the full picture as a room node; `imageUrl` is
@@ -542,6 +544,7 @@ object FirebaseNet {
             points = snap.child("points").getValue(Long::class.java)?.toInt(),
             onBreak = snap.child("onBreak").getValue(Boolean::class.java) ?: false,
             breakUntil = snap.child("breakUntil").getValue(Long::class.java),
+            now = snap.child("now").getValue(Long::class.java),
             poll = snap.child("poll").getValue(Boolean::class.java) ?: false,
             deadline = snap.child("deadline").getValue(Long::class.java),
             wager = snap.child("wager").getValue(Boolean::class.java) ?: false,

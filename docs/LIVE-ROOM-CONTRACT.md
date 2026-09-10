@@ -164,14 +164,22 @@ in `LiveNightHost.score` (Swift), `liveScore` (Kotlin), `nhScore` (JS). Tidbits 
 > console). Until deployed, `live/*` writes are denied by default. The existing
 > `rooms/*` Quick Match rules are unchanged.
 
-## Clocks (open, tick 32)
+## `now` — the host's clock (2026-09-10)
 
-`pub.deadline` and `pub.breakUntil` are absolute epoch-ms, so every client
-evaluates them against ITS OWN clock. Measured 2026-09-10: the QA Windows box
-runs 101 s behind the Mac, and the same break read "10 minutes" on the web and
-"12 minutes" there. A per-question timer is affected the same way and by the same
-amount. The fix is to publish the host's clock with the pub and have each client
-correct by the offset it implies — tracked for the next tick.
+Every countdown the room shares is an ABSOLUTE epoch-ms deadline (`deadline`,
+`breakUntil`), so each client used to evaluate it against its own clock. Measured
+on the bench: the QA Windows box runs **101 seconds behind** the Mac, and the same
+10-minute break read "10 minutes" on the web and "12 minutes" there. A 30-second
+question timer is wrong by the same amount, which is not a wobble — it is nonsense.
+
+Every host now stamps **`pub.now`** — its own clock, epoch-ms, at publish. A client
+keeps the offset that implies (`LiveClock.offsetMS`) and evaluates every deadline
+against `localNow + offset`. The field is additive: a pub without it yields offset
+0, which is exactly the old behaviour, so an older host still works.
+
+`LiveClock` is pure and mirrored in Swift, C#, JS and Kotlin (5 tests per compiled
+stack, including the bench symptom itself: 12 → 10). Verified on the real box —
+with its clock still 101 s out, its break headline now matches the web's exactly.
 
 ## What a joiner can read (measured 2026-09-10)
 

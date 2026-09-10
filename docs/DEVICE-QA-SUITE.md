@@ -390,6 +390,10 @@ there is no regression baseline at all.
 - Windows box: `TIDBITS_PROFILE_NAME=<name>` renames the portable profile through the Settings
   path at launch; `scratchpad/e2e_name.py` photographs Settings, parses the `profile rename`
   Diag line for the profile id and reads `players/{id}.name` back from the wire.
+- Host-clock skew: the QA Windows box runs ~101 s behind the Mac, which makes it the
+  bench's best rig for `LiveClock` (tick 33). Any countdown check that compares the box
+  with the web is really checking the correction; if they ever disagree again, measure the
+  skew first (`winbox.ps` a UTC epoch and diff it) before suspecting the feature.
 - The break (A3.14): `TIDBITS_LIVE_BREAK=<minutes>` + `TIDBITS_LIVE_BREAK_AT=<secs>` on both
   hosts hold the show with a promised return. `scratchpad/e2e_break.py web,atv,dongle,windows`
   asserts `pub.onBreak` + `breakUntil` on the wire, reads the web's `.live-breakhead`, and

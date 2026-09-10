@@ -446,6 +446,7 @@ final class LiveHostSession {
         // A3.14: the room is on a break. Published so every phone says it too — a table
         // that stepped outside should not come back to a stale question and guess.
         if onBreak { p.onBreak = true; p.breakUntil = breakUntil }
+        p.now = Int(Date().timeIntervalSince1970 * 1000)   // tick 33: the host's clock, so a skewed device counts down correctly
         p.points = currentIsPoll ? nil : currentPoints   // A2.11: what a correct answer is worth right now
         if currentIsPoll { p.poll = true; p.answerIndex = nil; p.answer = nil }   // A2.10: there is no right answer to reveal
         return p

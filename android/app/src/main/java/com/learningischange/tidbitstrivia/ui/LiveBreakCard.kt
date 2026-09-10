@@ -19,12 +19,13 @@ import kotlin.math.ceil
  *  `LiveBreakCard` and the pure `LiveBreak` text: whole minutes rounded UP, and the
  *  clock time the room actually acts on. */
 @Composable
-fun LiveBreakCard(breakUntil: Long?) {
+fun LiveBreakCard(breakUntil: Long?, skewMs: Long = 0) {
     // Re-render every half second so a minute rolling over is visible here too,
     // rather than waiting for the host's next publish.
-    var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
-    LaunchedEffect(breakUntil) {
-        while (true) { now = System.currentTimeMillis(); delay(500) }
+    // Tick 33: the HOST's clock, not this device's.
+    var now by remember { mutableLongStateOf(System.currentTimeMillis() + skewMs) }
+    LaunchedEffect(breakUntil, skewMs) {
+        while (true) { now = System.currentTimeMillis() + skewMs; delay(500) }
     }
     // Nearest minute, not up: rounding up turned every slightly-slow clock in the room
     // into a different number (the projector said 10 and a joiner said 11).

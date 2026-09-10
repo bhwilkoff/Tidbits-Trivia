@@ -5,6 +5,8 @@ import SwiftUI
 /// it late; the countdown is the same `LiveBreak` text the big screen shows.
 struct LiveBreakCard: View {
     var until: Int?
+    /// Tick 33: this device's clock, corrected into the HOST's frame.
+    var offsetMS: Double = 0
     // tvOS is dark-first and iOS is the cream sticker — the SAME default foreground is
     // invisible on one of them (legibility-check-compositing). Say the color out loud.
     #if os(tvOS)
@@ -25,12 +27,12 @@ struct LiveBreakCard: View {
                 Image(systemName: "cup.and.saucer.fill")
                     .font(.system(size: headSize * 0.7, weight: .black))
                     .foregroundStyle(Tidbits.Palette.coral)
-                Text(LiveBreak.headline(until: until, now: ctx.date))
+                Text(LiveBreak.headline(until: until, now: LiveClock.hostNow(offsetMS: offsetMS, now: ctx.date)))
                     .font(.system(size: headSize, weight: .black, design: .rounded))
                     .foregroundStyle(ink)
                     .multilineTextAlignment(.center)
                     .accessibilityIdentifier("live.breakHeadline")
-                let clock = LiveBreak.clockLine(until: until, now: ctx.date)
+                let clock = LiveBreak.clockLine(until: until, now: LiveClock.hostNow(offsetMS: offsetMS, now: ctx.date))
                 Text(clock.isEmpty ? "Grab a drink — the next round is coming up." : "Grab a drink — \(clock).")
                     .font(.system(size: subSize, weight: .semibold, design: .rounded))
                     .foregroundStyle(ink)

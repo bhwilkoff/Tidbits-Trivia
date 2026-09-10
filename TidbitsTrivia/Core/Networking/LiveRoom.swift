@@ -97,6 +97,9 @@ enum LiveRoom {
         /// `breakUntil` is the epoch-ms the host promised to be back, when they set one.
         var onBreak: Bool? = nil
         var breakUntil: Int? = nil
+        /// The HOST's clock when it published this, epoch-ms (tick 33). Every deadline here
+        /// is absolute, so a client corrects by the offset this implies before counting down.
+        var now: Int? = nil
     }
 
     nonisolated struct Source: Codable, Equatable {

@@ -130,6 +130,8 @@ public static class LiveRoom
         /// A3.14: the room is ON A BREAK, and the epoch-ms the host promised to be back.
         [JsonPropertyName("onBreak")] public bool? OnBreak { get; init; }
         [JsonPropertyName("breakUntil")] public long? BreakUntil { get; init; }
+        /// The HOST's clock when it published this, epoch-ms (tick 33).
+        [JsonPropertyName("now")] public long? Now { get; init; }
     }
 
     public sealed record Source

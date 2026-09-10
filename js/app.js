@@ -3394,6 +3394,7 @@ function nhPub() {
   if (q.enumerate) p.enumTarget = q.enumerate.groups.length;
   if (NH.locked && !NH.revealed) p.locked = true;
   if (q.difficulty) p.difficulty = q.difficulty;
+  p.now = Date.now();   // tick 33: the host's clock, so a skewed device counts down correctly
   if (NH.revealed) {   // the learning payoff: the story and its Wikipedia source, reveal only
     if (q.explanation) p.story = q.explanation;
     if (q.sourceTitle) p.source = { title: q.sourceTitle, url: q.sourceURL || null };

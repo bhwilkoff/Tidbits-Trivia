@@ -187,6 +187,7 @@ final class LiveNightHost {
         if let e = q.enumerate { p.enumTarget = e.total }
         if locked && !revealed { p.locked = true }
         p.difficulty = q.difficulty
+        p.now = Int(Date().timeIntervalSince1970 * 1000)   // tick 33: the host's clock
         if revealed {   // the learning payoff: the story and its Wikipedia source, reveal only
             let s = q.explanation.trimmingCharacters(in: .whitespacesAndNewlines)
             if !s.isEmpty { p.story = s }

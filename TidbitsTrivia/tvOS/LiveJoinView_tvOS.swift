@@ -186,7 +186,7 @@ struct TVLivePlayerView: View {
         let locked = revealed || client.hasAnswered || p.locked == true
         // A3.14: on a break the question is GONE, not merely covered.
         if p.onBreak == true {
-            LiveBreakCard(until: p.breakUntil)
+            LiveBreakCard(until: p.breakUntil, offsetMS: client.hostOffsetMS)
         } else {
         VStack(alignment: .leading, spacing: 30) {
             Text("ROUND \(p.round) · \(p.roundTitle.uppercased()) — Q\(p.qNum)/\(p.qTotal)")
@@ -279,7 +279,7 @@ struct TVLivePlayerView: View {
     /// Wave A: the shared countdown on the TV (coral at ≤5s).
     @ViewBuilder private func tvCountdown(_ deadlineMs: Int) -> some View {
         TimelineView(.periodic(from: .now, by: 0.5)) { _ in
-            let remaining = max(0, deadlineMs - Int(Date().timeIntervalSince1970 * 1000))
+            let remaining = (LiveClock.secondsRemaining(deadlineMS: deadlineMs, offsetMS: client.hostOffsetMS) ?? 0) * 1000
             let secs = Int((Double(remaining) / 1000).rounded(.up))
             Text(secs >= 60 ? String(format: "%d:%02d", secs / 60, secs % 60) : "\(secs)")
                 .font(.system(size: 56, weight: .black, design: .rounded)).monospacedDigit()

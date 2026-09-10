@@ -913,6 +913,7 @@ public sealed class LiveNightHost : ObservableObject
             Answer = Revealed && !CurrentIsPoll ? LiveScoring.AnswerLine(q) : null,   // the answer as a line, every format — for the wrap
             Difficulty = q.Difficulty,
             Points = CurrentIsPoll ? null : CurrentPoints,   // A2.11: what a correct answer is worth right now
+            Now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),   // tick 33: the host's clock
             OnBreak = OnBreak ? true : null,                // A3.14: the room is at the bar
             BreakUntil = OnBreak ? BreakUntil : null,
             Numeric = q.Closest is { } c ? new LiveRoom.Numeric { Min = c.Min, Max = c.Max, Step = c.Step, Unit = c.Unit } : null,

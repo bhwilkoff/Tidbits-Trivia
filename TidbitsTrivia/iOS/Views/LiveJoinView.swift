@@ -250,7 +250,7 @@ struct LiveJoinView: View {
         // A3.14: on a break the question is GONE, not merely covered. A prompt still on
         // screen is a prompt a table answers late, and the host has to un-score it.
         if p.onBreak == true {
-            LiveBreakCard(until: p.breakUntil)
+            LiveBreakCard(until: p.breakUntil, offsetMS: client.hostOffsetMS)
         } else {
         VStack(alignment: .leading, spacing: 14) {
             Text("ROUND \(p.round) · \(p.roundTitle.uppercased()) — Q\(p.qNum)/\(p.qTotal)")
@@ -353,7 +353,7 @@ struct LiveJoinView: View {
     /// Wave A: the shared countdown, ticking to the host's deadline (coral at ≤5s).
     @ViewBuilder private func countdownView(_ deadlineMs: Int) -> some View {
         TimelineView(.periodic(from: .now, by: 0.5)) { _ in
-            let remaining = max(0, deadlineMs - Int(Date().timeIntervalSince1970 * 1000))
+            let remaining = (LiveClock.secondsRemaining(deadlineMS: deadlineMs, offsetMS: client.hostOffsetMS) ?? 0) * 1000
             let secs = Int((Double(remaining) / 1000).rounded(.up))
             Text(secs >= 60 ? String(format: "%d:%02d", secs / 60, secs % 60) : "\(secs)s")
                 .font(.system(size: 32, weight: .black, design: .rounded)).monospacedDigit()

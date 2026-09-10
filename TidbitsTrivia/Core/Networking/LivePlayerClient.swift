@@ -24,6 +24,8 @@ final class LivePlayerClient {
     private(set) var errorText: String?
     /// The wrap recap: one entry per revealed question, nailed decided by the score.
     private(set) var recap = LiveRecapBook()
+    /// How far this device's clock is behind the host's, in ms (tick 33).
+    private(set) var hostOffsetMS: Double = 0
     /// The night ended — STICKY. The host tears the room down when it closes the
     /// cockpit, and a joiner that only checked `meta`/`pub` fell back to "Waiting
     /// for the host to start…" and lost its wrap seconds after reading it.
@@ -128,6 +130,10 @@ final class LivePlayerClient {
     private func applyPub(_ ev: FirebaseRTDB.StreamEvent) {
         guard let d = ev.dataJSON, let p = try? JSONDecoder().decode(LiveRoom.Pub.self, from: d) else { pub = nil; return }
         if p.qid != pub?.qid { submittedQid = nil; chosen = nil; blurred = false }   // Wave C: reset the focus flag for the new question
+        // Tick 33: speak in the HOST's clock. Every deadline on the wire is absolute, so a
+        // device whose clock is off counts down to the wrong moment (a bench box 101 s
+        // behind showed a 10-minute break as 12).
+        hostOffsetMS = LiveClock.offsetMS(pubNow: p.now)
         pub = p
         recap.observe(p, score: score)
         // Tally MCQ accuracy once per question, at reveal (answerIndex is present then).

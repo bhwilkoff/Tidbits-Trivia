@@ -2392,6 +2392,24 @@ the head's top line — a capture artefact, not a bug). **Verified on the glass:
 report" from the answer sheet — hardest/easiest questions, participation,
 per-round accuracy — on both cockpits, no backend.
 
+**2026-09-10ag — Live loop tick 33: countdowns speak in the host's clock.** The
+defect tick 32 uncovered, fixed as a class. Every countdown the room shares is an
+ABSOLUTE epoch-ms deadline, evaluated on each device against its own clock — so
+the bench's Windows box, measured **101 seconds behind the Mac**, showed a
+10-minute break as 12 AND had been running `pub.deadline` (the per-question
+timer, shipped since Wave A) 101 s out the whole time. On a 30 s question that is
+not a wobble. Every host now stamps `pub.now`; each client keeps the offset
+(`LiveClock.offsetMS`) and evaluates deadlines and the break against
+`localNow + offset`. `LiveClock` is pure and mirrored in Swift, C#, JS and Kotlin
+— 5 tests per compiled stack, including the bench symptom as a literal assertion
+(uncorrected 12, corrected 10) and the older-host case (no `now` → offset 0 →
+exactly the previous behaviour). All five joiners corrected: web timer + break,
+iOS/tvOS countdown + break card, Android `Countdown`/`LiveBreakCard`, the Windows
+VM's `SecondsRemaining`/`BreakHeadline`. **Verified on the real box** with its
+clock still 101 s out: its break headline now reads "Back in 10 minutes",
+identical to the web's. Versions 1.9.31 / 161 / vc122 / MSIX 1.9.31.0. Next: PDF
+import, Windows host toasts.
+
 **2026-09-10af — Live loop tick 32: the break is announced to the room, and an
 answer-leak audit.** The Mac could park the show on a break slide; **Windows had
 no hold at all**, and NO joiner was ever told — the phones kept the last question

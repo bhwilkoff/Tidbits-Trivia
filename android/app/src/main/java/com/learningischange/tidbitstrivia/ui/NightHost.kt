@@ -117,6 +117,7 @@ fun NightHostScreen(rounds: List<Pair<String, Int>>, category: Category, store: 
         q.enumerate?.let { m["enumTarget"] = it.total }
         if (locked && !revealed) m["locked"] = true
         m["difficulty"] = q.difficulty
+        m["now"] = System.currentTimeMillis()   // tick 33: the host's clock
         if (revealed) {   // the learning payoff: the story and its Wikipedia source, reveal only
             if (q.explanation.isNotBlank()) m["story"] = q.explanation.trim()
             if (q.sourceTitle.isNotBlank()) m["source"] = mapOf("title" to q.sourceTitle.trim(), "url" to q.sourceUrl.ifBlank { null })

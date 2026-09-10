@@ -41,12 +41,12 @@ public sealed class LivePlayerViewModel : ObservableObject
     public string Prompt => Client.Pub?.Prompt ?? "";
     /// A3.14: the room is on a break — say so instead of leaving a stale question up.
     public bool IsOnBreak => Client.Pub?.OnBreak == true;
-    public string BreakHeadline => LiveBreak.Headline(Client.Pub?.BreakUntil);
+    public string BreakHeadline => LiveBreak.Headline(Client.Pub?.BreakUntil, LiveClock.HostNow(Client.HostOffsetMs));
     public string BreakSubline
     {
         get
         {
-            var clock = LiveBreak.ClockLine(Client.Pub?.BreakUntil);
+            var clock = LiveBreak.ClockLine(Client.Pub?.BreakUntil, LiveClock.HostNow(Client.HostOffsetMs));
             return clock.Length == 0 ? "Grab a drink — the next round is coming up." : $"Grab a drink — {clock}.";
         }
     }
@@ -169,9 +169,8 @@ public sealed class LivePlayerViewModel : ObservableObject
     {
         get
         {
-            if (!ShowQuestion || Client.Pub?.Deadline is not { } d) return null;
-            var now = System.DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            return (int)System.Math.Max(0, (d - now) / 1000);
+            if (!ShowQuestion) return null;
+            return LiveClock.SecondsRemaining(Client.Pub?.Deadline, Client.HostOffsetMs);
         }
     }
 

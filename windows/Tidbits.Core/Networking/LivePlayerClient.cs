@@ -21,6 +21,8 @@ public sealed class LivePlayerClient
     /// The join SURFACE is otherwise unreachable offline, and a surface nothing can
     /// drive is untested (hooks-are-coverage).
     public LiveRoom.Pub? PubForTesting { get => Pub; set => Pub = value; }
+    /// How far this device's clock is behind the host's, in ms (tick 33).
+    public double HostOffsetMs { get; private set; }
     /// Put the client in the JOINED state without a network, so a surface test can
     /// render the game screen (the join form hides it otherwise).
     public void JoinedForTesting(string code) { Code = code; Joined = true; Joining = false; Changed?.Invoke(); }
@@ -160,6 +162,8 @@ public sealed class LivePlayerClient
         if (ev.DataJson is not null) { try { p = JsonSerializer.Deserialize<LiveRoom.Pub>(ev.DataJson, Wire.Json); } catch { } }
         if (p is null) { Pub = null; Changed?.Invoke(); return; }
         if (p.Qid != Pub?.Qid) { SubmittedQid = null; Chosen = null; Blurred = false; Wager = 0; }
+        // Tick 33: speak in the HOST's clock — this box measured 101 s behind the Mac.
+        HostOffsetMs = LiveClock.OffsetMs(p.Now);
         Pub = p;
         Recap.Observe(p, Score);
         if (p.Phase == LiveRoom.Phase.Reveal && _talliedQid != p.Qid)

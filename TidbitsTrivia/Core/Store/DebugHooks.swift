@@ -379,6 +379,13 @@ enum DebugHooks {
     /// TIDBITS_LIVE_JOIN=<code> → open the JOIN surface on launch. iOS read this
     /// already; tvOS had no way to reach its join screen without a remote press,
     /// so the Apple TV could host a night but could never be driven to join one.
+    /// TIDBITS_LIVE_JOKER=<round index> — play the joker on that round right after
+    /// joining (A2.14). A joiner's pick is otherwise a menu nothing on the bench can
+    /// drive; with this the wire shows `jokers/{uid}` from every platform.
+    static var liveJoker: Int? {
+        guard let raw = ProcessInfo.processInfo.environment["TIDBITS_LIVE_JOKER"], let r = Int(raw) else { return nil }
+        return r
+    }
     static var openLiveJoin: String? {
         guard let c = ProcessInfo.processInfo.environment["TIDBITS_LIVE_JOIN"]?
                 .trimmingCharacters(in: .whitespaces), !c.isEmpty else { return nil }

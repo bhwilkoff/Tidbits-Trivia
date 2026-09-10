@@ -246,6 +246,7 @@ public partial class JoinPlayerView : UserControl
     {
         if (_vm is null) return;
         await _vm.Join(CodeBox.Text ?? "", TeamBox.Text ?? "");
+        if (Services.LaunchHooks.LiveJoker is int jr && _vm.Client.Joined) await _vm.Client.PlayJoker(jr);   // A2.14 harness
     }
 
     /// G7: look the room up as soon as the code is complete, so the tables are on

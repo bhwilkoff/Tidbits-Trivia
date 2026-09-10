@@ -57,6 +57,8 @@ object ScreenshotHooks {
      *  put an Android device in a host's room was blind tapping, so cross-platform
      *  multiplayer was the one feature no harness could actually exercise. */
     var liveJoin: Pair<String, String>? = null
+    /** tidbits_live_joker=<round index> — play the joker on that round right after joining (A2.14). */
+    var liveJoker: Int? = null
     /** tidbits_live_remote=<code> + tidbits_live_remote_pin=<pin> — open the phone REMOTE paired
      *  to that room (G6, native); tidbits_live_remote_verb at tidbits_live_remote_at seconds sends one. */
     var liveRemote: Pair<String, String>? = null
@@ -142,6 +144,7 @@ object ScreenshotHooks {
             liveRemoteVerb = intent.getStringExtra("tidbits_live_remote_verb")?.takeIf { it.isNotBlank() }
             liveRemoteAt = intent.getIntExtra("tidbits_live_remote_at", 15)
         }
+        liveJoker = intent.getStringExtra("tidbits_live_joker")?.trim()?.toIntOrNull()
         intent.getStringExtra("tidbits_live_join")?.takeIf { it.isNotBlank() }?.let { code ->
             liveJoin = code.trim().uppercase() to
                 (intent.getStringExtra("tidbits_live_name")?.takeIf { it.isNotBlank() } ?: "Android")

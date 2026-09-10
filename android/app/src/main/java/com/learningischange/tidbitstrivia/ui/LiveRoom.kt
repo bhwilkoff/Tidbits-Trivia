@@ -91,6 +91,9 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
                 FirebaseNet.liveJoin(code, team)
                 joined = true
                 jokerRound = runCatching { FirebaseNet.liveJokerGet(code) }.getOrNull()   // A2.14: a reload keeps the pick
+                com.learningischange.tidbitstrivia.data.ScreenshotHooks.liveJoker?.let { r ->   // A2.14 harness: the pick, from the launch
+                    jokerRound = r; runCatching { FirebaseNet.liveJoker(code, r) }
+                }
                 unsubs += FirebaseNet.liveOnMeta(code) {
                     // F-010: a host restart on the same code is a new session whose
                     // positional qids collide — reset qid-keyed submission state.

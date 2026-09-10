@@ -59,6 +59,7 @@ final class LivePlayerClient {
             try await db.putJSON("\(LiveRoom.path(code))/teams/\(uid)", try JSONEncoder().encode(t))
             self.code = code; self.joined = true; self.joining = false
             jokerRound = (try? await db.get("\(LiveRoom.path(code))/jokers/\(uid)", as: LiveRoom.Joker.self))?.round   // A2.14
+            if let r = DebugHooks.liveJoker { await playJoker(r) }   // A2.14 harness: the pick, from the launch
             liveAnswered = 0; liveCorrect = 0; talliedQid = nil; recordedEnd = false
             Self.remember(code: code, team: team)   // easy one-tap rejoin after a restart
             watch(code, uid: uid)

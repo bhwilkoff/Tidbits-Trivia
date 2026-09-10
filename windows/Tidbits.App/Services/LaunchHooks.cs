@@ -45,6 +45,9 @@ public static class LaunchHooks
     /// join, so "every platform joins every other platform's game" had been proven in
     /// every direction except one — nothing could ask Windows to join at all.
     public static string? LiveJoin => Env("TIDBITS_LIVE_JOIN");
+    /// TIDBITS_LIVE_JOKER=<round index> — play the joker on that round right after joining
+    /// (A2.14); a ComboBox nothing on the bench can drive otherwise.
+    public static int? LiveJoker => int.TryParse(Env("TIDBITS_LIVE_JOKER"), out var r) ? r : null;
 
     /// TIDBITS_LIVE_NAME=<name> — the display name to join under. Without it several
     /// devices join under one default name and the host cannot tell them apart, which

@@ -145,6 +145,15 @@ Nearest-Wins (numeric — also the tie-break unit), Ordering, Wager (Stake),
 Poll/Majority. Audio round and Fastest-Finger (speed scoring) are Phase B.
 Each format reuses the existing `GameMode`/question shapes where one maps.
 
+A2.11 **A round can be worth more** (2026-09-10). The classic "double points
+round": the builder's round bar gains a Points menu (the night's setting, 2, 3,
+5 or 10 a question) beside the Timer. A correct answer is worth the question's
+own override (A2.8), else the round's value, else the night's setting. The
+cockpit says "3 pts a question this round", the projector's round line adds
+"· 3 PTS A QUESTION", and the wire carries `pub.points` so every phone can show
+what a question is worth (joiners' display is a follow-up). In the event file as
+`rounds[i].points`, index-parallel to the round like `timerSeconds`.
+
 A2.10 **A question can be a poll** (2026-09-09). Not every question has a
 right answer: "what should the kitchen make next week", "which round did you
 enjoy most", the ice-breaker at the top of the night. From the question's

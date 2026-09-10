@@ -327,6 +327,7 @@ public sealed class LiveHostViewModel : ObservableObject
             var players = Host.PlayerCount;
             var chrome = $"Question {n} of {of} · {players} player{(players == 1 ? "" : "s")}";
             if (Host.Current is { } q) chrome += $" · {DifficultyLabel(q.Difficulty)}";
+            if (Host.RoundPointsPerCorrect is { } rp) chrome += $" · {rp} pts a question";   // A2.11
             return chrome;
         }
     }
@@ -441,4 +442,7 @@ public sealed class LiveHostViewModel : ObservableObject
         }
     }
     public bool HasQuestionOverride => QuestionOverrideLine.Length > 0;
+    /// A2.11: a double-points round, shown when no per-question override already names the points.
+    public string RoundPointsLine => Host.RoundPointsPerCorrect is { } p && Host.CurrentQuestionPoints is null ? $"{p} pts a question this round" : "";
+    public bool HasRoundPointsLine => RoundPointsLine.Length > 0;
 }

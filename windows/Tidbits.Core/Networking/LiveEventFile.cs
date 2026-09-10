@@ -58,6 +58,7 @@ public static class LiveEventFile
         [JsonPropertyName("format")] public string Format { get; init; } = "classic";
         [JsonPropertyName("categoryID")] public string CategoryId { get; init; } = "mixed";
         [JsonPropertyName("timerSeconds")] public int? TimerSeconds { get; init; }
+        [JsonPropertyName("points")] public int? Points { get; init; }   // A2.11: absent = the night's setting
         [JsonPropertyName("hostNote")] public string? HostNote { get; init; }
         [JsonPropertyName("isWager")] public bool? IsWager { get; init; }
         [JsonPropertyName("isSpeed")] public bool? IsSpeed { get; init; }
@@ -106,6 +107,7 @@ public static class LiveEventFile
                 // when the round has not been authored yet.
                 CategoryId = qs.Count > 0 ? MajorityCategory(qs) : "mixed",
                 TimerSeconds = i < ev.RoundTimers.Count && ev.RoundTimers[i] > 0 ? ev.RoundTimers[i] : null,
+                Points = i < ev.RoundPoints.Count && ev.RoundPoints[i] > 0 ? ev.RoundPoints[i] : null,
                 HostNote = i < ev.RoundNotes.Count && !string.IsNullOrWhiteSpace(ev.RoundNotes[i])
                     ? ev.RoundNotes[i] : null,
                 // WagerFinalRound is a single flag on the event; it means the LAST round.
@@ -180,6 +182,7 @@ public static class LiveEventFile
         var questions = new List<IReadOnlyList<Question>>();
         var notes = new List<string>();
         var timers = new List<int>();
+        var roundPoints = new List<int>();
         var qTimers = new List<IReadOnlyList<int>>();
         var qPoints = new List<IReadOnlyList<int>>();
         var qNotes = new List<IReadOnlyList<string>>();
@@ -196,6 +199,7 @@ public static class LiveEventFile
             questions.Add(r.Questions);
             notes.Add(r.HostNote ?? "");
             timers.Add(r.TimerSeconds ?? 0);
+            roundPoints.Add(r.Points ?? 0);
             qTimers.Add(Stored(r.QuestionTimers));
             qPoints.Add(Stored(r.QuestionPoints));
             qNotes.Add(r.QuestionNotes is { } qn && qn.Any(n => !string.IsNullOrWhiteSpace(n)) ? qn.Select(n => n ?? "").ToList() : new List<string>());
@@ -213,6 +217,7 @@ public static class LiveEventFile
             RoundQuestions = questions,
             RoundNotes = notes,
             RoundTimers = timers,
+            RoundPoints = roundPoints,
             RoundQuestionTimers = qTimers,
             RoundQuestionPoints = qPoints,
             RoundQuestionNotes = qNotes,

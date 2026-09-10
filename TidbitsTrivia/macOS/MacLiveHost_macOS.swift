@@ -69,8 +69,10 @@ final class LiveHostSession {
     /// A2.8: this question's own timer / points when the builder set one.
     var currentQuestionTimer: Int? { currentSlot.flatMap { LiveEvent.override(event.rounds[$0.ri].questionTimers, $0.qi) } }
     var currentQuestionPoints: Int? { currentSlot.flatMap { LiveEvent.override(event.rounds[$0.ri].questionPoints, $0.qi) } }
-    /// What a correct answer is worth right now — the question's override, else the night's setting.
-    var currentPoints: Int { currentQuestionPoints ?? pointsPerCorrect }
+    /// A2.11: this round's points per correct when the builder set one (a double-points round).
+    var currentRoundPoints: Int? { currentSlot.flatMap { event.rounds[$0.ri].points }.flatMap { $0 > 0 ? $0 : nil } }
+    /// What a correct answer is worth right now — the question's override, else the round's, else the night's setting.
+    var currentPoints: Int { currentQuestionPoints ?? currentRoundPoints ?? pointsPerCorrect }
     /// A2.9: the host's note for THIS question (cockpit only).
     var currentQuestionNote: String? { currentSlot.flatMap { LiveEvent.note(event.rounds[$0.ri].questionNotes, $0.qi) } }
     /// A2.10: this question is a poll — the room votes, nobody scores.
@@ -439,6 +441,7 @@ final class LiveHostSession {
             p.answer = LiveNightHost.answerLine(q)   // the answer as a line, every format — for the wrap
         }
         p.difficulty = q.difficulty
+        p.points = currentIsPoll ? nil : currentPoints   // A2.11: what a correct answer is worth right now
         if currentIsPoll { p.poll = true; p.answerIndex = nil; p.answer = nil }   // A2.10: there is no right answer to reveal
         return p
     }
@@ -1056,10 +1059,11 @@ struct LiveHostView_macOS: View {
                     .help("Fix this question for the room — wording, options, answer, clip (⌘E)")
                     .accessibilityIdentifier("live.editQuestion")
                 }
-                if session.currentQuestionTimer != nil || session.currentQuestionPoints != nil {   // A2.8
+                if session.currentQuestionTimer != nil || session.currentQuestionPoints != nil || session.currentRoundPoints != nil {   // A2.8 / A2.11
                     HStack(spacing: 10) {
                         if let t = session.currentQuestionTimer { Label("\(t) s for this one", systemImage: "timer") }
                         if let pts = session.currentQuestionPoints { Label("\(pts) pt\(pts == 1 ? "" : "s") for this one", systemImage: "star.fill") }
+                        else if let pts = session.currentRoundPoints { Label("\(pts) pts a question this round", systemImage: "star.fill").accessibilityIdentifier("live.roundPoints") }
                     }
                     .font(.callout).foregroundStyle(Tidbits.Palette.coral)
                 }

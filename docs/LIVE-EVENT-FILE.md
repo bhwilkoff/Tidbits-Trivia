@@ -114,6 +114,7 @@ must keep the clip arrays index-parallel on both platforms.
 | `rounds[i].format` | `LiveRound.format` | `NightRound.Kind` |
 | `rounds[i].hostNote` | `LiveRound.hostNote` | `LiveEvent.RoundNotes[i]` |
 | `rounds[i].timerSeconds` | `LiveRound.timerSeconds` | `LiveEvent.RoundTimers[i]` |
+| `rounds[i].points` (2026-09-10, additive; absent/0 = the night's points-per-correct — a double-points round) | `LiveRound.points` | `LiveEvent.RoundPoints[i]` |
 | `rounds[i].questionTimers` (2026-09-09, additive; `[Int?]` index-parallel to `questions`, null = the round default) | `LiveRound.questionTimers` | `LiveEvent.RoundQuestionTimers[i]` |
 | `rounds[i].questionPoints` (same shape; null = the night's points-per-correct) | `LiveRound.questionPoints` | `LiveEvent.RoundQuestionPoints[i]` |
 | `rounds[i].questionNotes` (`[String?]`, same shape; the host's cue for one question) | `LiveRound.questionNotes` | `LiveEvent.RoundQuestionNotes[i]` |

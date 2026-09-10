@@ -77,6 +77,8 @@
                     </Border>
                     <TextBlock IsVisible="{Binding IsPoll}" Text="Poll — the room votes, nobody scores" Classes="caption" Foreground="#FF5C35" FontWeight="Bold"/>
                     <TextBlock IsVisible="{Binding IsWagerRound}" Text="{Binding WagerLine}" Classes="caption" Foreground="#FF5C35" FontWeight="Bold" TextWrapping="Wrap"/>
+                    <TextBlock IsVisible="{Binding HasRoundPointsLine}" Text="{Binding RoundPointsLine}" Classes="caption" Foreground="#FF5C35" FontWeight="Bold"
+                               AutomationProperties.Name="Round points"/>
                     <!-- A3.13: a key fixed after reveal re-scores the question; say what it did. -->
                     <TextBlock IsVisible="{Binding HasRescoreNote}" Text="{Binding RescoreNote}" Classes="caption" Foreground="#FF5C35" FontWeight="Bold" TextWrapping="Wrap"
                                AutomationProperties.Name="Re-score result"/>

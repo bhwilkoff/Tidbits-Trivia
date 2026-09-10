@@ -55,6 +55,7 @@ public static class NightHostFactory
             WagerRoundIndex = branding?.WagerFinalRound == true ? System.Math.Max(0, plan.Rounds.Count - 1) : null,
             RoundNotes = branding?.RoundNotes ?? new List<string>(),
             RoundTimers = branding?.RoundTimers ?? new List<int>(),
+            RoundPoints = branding?.RoundPoints ?? new List<int>(),
         };
         return host;
     }

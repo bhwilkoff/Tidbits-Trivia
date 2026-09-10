@@ -63,7 +63,11 @@ public sealed class LiveNightHost : ObservableObject
     public int? CurrentQuestionTimer => Current?.RoundIndex is int ri ? LiveEvent.Override(QuestionTimers, ri, PositionInRound) : null;
     public int? CurrentQuestionPoints => Current?.RoundIndex is int ri ? LiveEvent.Override(QuestionPoints, ri, PositionInRound) : null;
     /// What a correct answer is worth right now — the question's override, else the night's setting.
-    public int CurrentPoints => CurrentQuestionPoints ?? PointsPerCorrect;
+    /// A2.11: this round's points per correct when the builder set one (a double-points round).
+    public int? RoundPointsPerCorrect =>
+        RoundIndex >= 0 && RoundIndex < RoundPoints.Count && RoundPoints[RoundIndex] > 0 ? RoundPoints[RoundIndex] : null;
+    /// What a correct answer is worth right now — the question's override, else the round's, else the night's setting.
+    public int CurrentPoints => CurrentQuestionPoints ?? RoundPointsPerCorrect ?? PointsPerCorrect;
     /// 3.56: what the room has heard — corpus draws skip it, and every question
     /// this night shows is written to it. Null in tests that never host.
     public Store.PlayedLog? Played { get; set; }
@@ -87,6 +91,7 @@ public sealed class LiveNightHost : ObservableObject
     public int? WagerRoundIndex { get; set; } // Wave A: which round is the final wager (RoundIndex), null = none
     public IReadOnlyList<string> RoundNotes { get; set; } = new List<string>(); // Wave A per-round host notes
     public IReadOnlyList<int> RoundTimers { get; set; } = new List<int>();      // Wave A per-round countdown (0 = untimed)
+    public IReadOnlyList<int> RoundPoints { get; set; } = new List<int>();      // A2.11 per-round points per correct (0 = the night's setting)
     /// The host's AUTHORED questions per round (index-aligned with the plan). A round
     /// with an empty list still comes from the corpus, so a half-authored event works.
     /// Without this the question editor would be theatre: the host edits a question,
@@ -878,6 +883,7 @@ public sealed class LiveNightHost : ObservableObject
             Source = Revealed && !string.IsNullOrWhiteSpace(q.SourceTitle) ? new LiveRoom.Source { Title = q.SourceTitle.Trim(), Url = q.SourceUrl } : null,
             Answer = Revealed && !CurrentIsPoll ? LiveScoring.AnswerLine(q) : null,   // the answer as a line, every format — for the wrap
             Difficulty = q.Difficulty,
+            Points = CurrentIsPoll ? null : CurrentPoints,   // A2.11: what a correct answer is worth right now
             Numeric = q.Closest is { } c ? new LiveRoom.Numeric { Min = c.Min, Max = c.Max, Step = c.Step, Unit = c.Unit } : null,
             OrderItems = q.Ordering is not null ? _shuffledOrder : null,
             MatchKeys = q.Matching?.Keys,

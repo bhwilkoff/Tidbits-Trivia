@@ -26,6 +26,9 @@ public sealed record LiveEvent
     // its CodingKeys to {kind, count}, and there is golden coverage on it. The timer is a
     // host authoring concern — joiners already learn the deadline from the published pub.
     [JsonPropertyName("roundTimers")] public IReadOnlyList<int> RoundTimers { get; init; } = new List<int>();
+    /// A2.11: points per correct answer per round (a double-points round), index-aligned like
+    /// RoundTimers; 0 = the night's setting. Mirrors Swift `LiveRound.points`.
+    [JsonPropertyName("roundPoints")] public IReadOnlyList<int> RoundPoints { get; init; } = new List<int>();
 
     /// G1: which rounds are BUZZ rounds — the room races to buzz and the FIRST team
     /// answers out loud; a wrong buzz reopens it to the rest (SpeedQuizzing's

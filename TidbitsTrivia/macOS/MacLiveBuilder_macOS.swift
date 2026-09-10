@@ -562,6 +562,13 @@ struct LiveBuilderView_macOS: View {
                     ForEach([30, 45, 60, 90, 120], id: \.self) { s in Button("\(s)s") { working.rounds[i].timerSeconds = s } }
                 } label: { Label(round.timerSeconds.map { "\($0)s" } ?? "Timer", systemImage: "timer") }
                     .menuStyle(.button).buttonStyle(CompactButtonStyle()).fixedSize()
+                Menu {   // A2.11: a double-points round — per round, over the night's setting
+                    Button("Night's setting") { working.rounds[i].points = nil }
+                    ForEach([2, 3, 5, 10], id: \.self) { p in Button("\(p) pts a question") { working.rounds[i].points = p } }
+                } label: { Label(round.points.map { "\($0) pts" } ?? "Points", systemImage: "star") }
+                    .menuStyle(.button).buttonStyle(CompactButtonStyle()).fixedSize()
+                    .help("Points per correct answer in this round — the night's setting unless you raise it here")
+                    .accessibilityIdentifier("live.roundPointsMenu")
                 roundFlagChip("Wager", systemImage: "dollarsign.circle",   // Wave A: wager round
                               isOn: Binding(get: { working.rounds[i].isWager ?? false },
                                             set: { working.rounds[i].isWager = $0 ? true : nil }),

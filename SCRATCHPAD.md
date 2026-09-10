@@ -2392,6 +2392,20 @@ the head's top line — a capture artefact, not a bug). **Verified on the glass:
 report" from the answer sheet — hardest/easiest questions, participation,
 per-round accuracy — on both cockpits, no backend.
 
+**2026-09-10aa — Live loop tick 27: a double-points round.** Audit item
+"round-level points multiplier", confirmed missing on both hosts (per-question
+overrides and a night default only). A2.11 / 3.73: `LiveRound.points` /
+`LiveEvent.RoundPoints` (file `rounds[i].points`, index-parallel like the
+timer), a Points menu beside Timer on both builders' round bars, resolution
+question → round → night on both hosts, the cockpit line, the projector's
+round chrome, and `pub.points` on the wire (LIVE-ROOM-CONTRACT) so phones can
+show what a question is worth — joiner display is the follow-up (PARITY ⏳ x4).
+Tests: 2 xUnit + the Swift golden expects an old file to decode with no round
+points. **Verified on the glass** (`e2e_points.py`): Mac — `pub.points 3` on the wire, "3 pts a question this round" on the cockpit, a correct
+wire answer paid 3; the Windows box — the same wire values and the cockpit line. Versions
+1.9.25 / 155 / vc116 / MSIX 1.9.25.0. Next: joiners show `pub.points`
+(web/iOS/Android/tvOS/Windows), event history, host toasts.
+
 **2026-09-10z — Live loop tick 26: a key fixed after reveal re-scores.** Audit
 item "re-score after a mid-night key fix", confirmed in the code: both hosts'
 edit-after-reveal republished the question and left the wrong teams paid.

@@ -96,6 +96,12 @@ before — the source names the answer). Joiners show "Learn more on Wikipedia �
 cannot open a browser); both projectors add "From Wikipedia · <title>" under
 the story, on the story's switch; the Mac cockpit links it for the host.
 
+**`points` (2026-09-10).** What a correct answer is worth right now — the
+question's override, else the round's value (a double-points round, A2.11),
+else the night's setting. Published on every question pub by the macOS and
+Windows hosts; absent from an older host and on a poll. Joiners may show it
+("3 pts"); none score from it — scoring stays on the host.
+
 **`meta/names/{uid}` (host renames, 2026-09-09).** A host-owned string (≤ 40
 chars) laid over `teams/{uid}/name` by the host's own clients (macOS + Windows
 cockpits, projectors, exports). It lives under `meta` because the deployed rules

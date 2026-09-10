@@ -49,6 +49,7 @@ enum LiveEventFile {
         var format: String          // GameMode raw value (§2.2)
         var categoryID: String
         var timerSeconds: Int?
+        var points: Int?            // A2.11: points per correct for the round (absent = the night's setting)
         var hostNote: String?
         var isWager: Bool?
         var isSpeed: Bool?
@@ -128,7 +129,7 @@ enum LiveEventFile {
                 rounds: event.rounds.map { r in
                     PortableRound(id: r.id.uuidString, title: r.title,
                                   format: r.format.rawValue, categoryID: r.categoryID,
-                                  timerSeconds: r.timerSeconds, hostNote: r.hostNote,
+                                  timerSeconds: r.timerSeconds, points: (r.points ?? 0) > 0 ? r.points : nil, hostNote: r.hostNote,
                                   isWager: r.isWager, isSpeed: r.isSpeed, isBuzz: r.isBuzz,
                                   questions: r.questions,
                                   questionTimers: r.questionTimers.map { $0.map { $0 > 0 ? $0 : nil } },
@@ -173,6 +174,7 @@ enum LiveEventFile {
                                   categoryID: r.categoryID,
                                   questions: r.questions,
                                   timerSeconds: r.timerSeconds,
+                                  points: (r.points ?? 0) > 0 ? r.points : nil,
                                   hostNote: r.hostNote,
                                   isWager: r.isWager,
                                   isSpeed: r.isSpeed,

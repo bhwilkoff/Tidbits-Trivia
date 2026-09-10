@@ -50,6 +50,7 @@ struct LiveEventFileGoldenTests {
         #expect(ev.rounds[1].isWager == true)
         #expect(ev.rounds[1].isSpeed == true)
         #expect(ev.rounds[1].timerSeconds == nil)
+        #expect(ev.rounds[0].points == nil)   // A2.11: an older file has no round points → the night's setting
         #expect(ev.rounds[1].questions.count == 1)
 
         let q = ev.rounds[0].questions[0]

@@ -186,6 +186,10 @@ public partial class LiveView : UserControl
     private readonly System.Collections.Generic.List<NightRound> _rounds = new();
     private readonly System.Collections.Generic.List<string> _notes = new();
     private readonly System.Collections.Generic.List<int> _timers = new();   // per-round countdown, 0 = untimed
+    private readonly System.Collections.Generic.List<int> _points = new();   // A2.11 per-round points per correct, 0 = the night's setting
+    private static readonly int[] PointsChoices = { 0, 2, 3, 5, 10 };
+    private static int PointsIndex(int pts) => System.Math.Max(0, System.Array.IndexOf(PointsChoices, pts));
+    private static int PointsValue(int index) => index >= 0 && index < PointsChoices.Length ? PointsChoices[index] : 0;
     /// G1: which rounds are BUZZ rounds. Index-aligned with _rounds like _notes
     /// and _timers — every add, move and delete below has to keep it that way, or
     /// a host's buzz flag silently lands on a different round.
@@ -235,6 +239,7 @@ public partial class LiveView : UserControl
         _rounds.Add(new NightRound { Kind = mode, Count = count });
         _notes.Add(RoundNoteBox.Text?.Trim() ?? "");
         _timers.Add(0);
+        _points.Add(0);
         _buzz.Add(false);
         _letters.Add("");
         _boards.Add(null);
@@ -252,6 +257,8 @@ public partial class LiveView : UserControl
         (_rounds[index], _rounds[target]) = (_rounds[target], _rounds[index]);
         (_notes[index], _notes[target]) = (_notes[target], _notes[index]);
         (_timers[index], _timers[target]) = (_timers[target], _timers[index]);
+        while (_points.Count <= System.Math.Max(index, target)) _points.Add(0);
+        (_points[index], _points[target]) = (_points[target], _points[index]);
         if (index < _buzz.Count && target < _buzz.Count)
             (_buzz[index], _buzz[target]) = (_buzz[target], _buzz[index]);
         if (index < _letters.Count && target < _letters.Count)
@@ -350,8 +357,23 @@ public partial class LiveView : UserControl
                 while (_timers.Count <= idx) _timers.Add(0);
                 _timers[idx] = TimerSeconds(timer.SelectedIndex);
             };
-            Grid.SetColumn(timer, 2);
-            row.Children.Add(timer);
+            // A2.11: a double-points round — per round, over the night's setting (macOS parity).
+            var points = new ComboBox
+            {
+                ItemsSource = new[] { "Night pts", "2 pts", "3 pts", "5 pts", "10 pts" },
+                SelectedIndex = PointsIndex(idx < _points.Count ? _points[idx] : 0),
+                MinWidth = 90, FontSize = 12,
+            };
+            Avalonia.Automation.AutomationProperties.SetName(points, $"Points per correct answer in round {idx + 1}");
+            points.SelectionChanged += (_, _) =>
+            {
+                while (_points.Count <= idx) _points.Add(0);
+                _points[idx] = PointsValue(points.SelectedIndex);
+            };
+            var perRound = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Spacing = 6 };
+            perRound.Children.Add(timer); perRound.Children.Add(points);
+            Grid.SetColumn(perRound, 2);
+            row.Children.Add(perRound);
 
             var up = new Button { Content = Icon(FluentAvalonia.UI.Controls.FASymbol.ChevronUp), Padding = new Avalonia.Thickness(7, 2), IsEnabled = idx > 0 };
             AutomationProperties.SetName(up, $"Move round {idx + 1} up");
@@ -406,6 +428,7 @@ public partial class LiveView : UserControl
                 _rounds.RemoveAt(idx);
                 if (idx < _notes.Count) _notes.RemoveAt(idx);
                 if (idx < _timers.Count) _timers.RemoveAt(idx);
+                if (idx < _points.Count) _points.RemoveAt(idx);
                 if (idx < _buzz.Count) _buzz.RemoveAt(idx);
                 if (idx < _letters.Count) _letters.RemoveAt(idx);
                 if (idx < _boards.Count) _boards.RemoveAt(idx);
@@ -868,6 +891,7 @@ public partial class LiveView : UserControl
         WagerFinalRound = WagerFinalCheck.IsChecked == true,
         RoundNotes = new System.Collections.Generic.List<string>(_notes),
         RoundTimers = new System.Collections.Generic.List<int>(_timers),
+        RoundPoints = new System.Collections.Generic.List<int>(_points),
         BuzzRounds = new System.Collections.Generic.List<bool>(_buzz),
         RoundLetters = new System.Collections.Generic.List<string>(_letters),
         RoundBoards = new System.Collections.Generic.List<LiveBoard?>(_boards),
@@ -892,13 +916,14 @@ public partial class LiveView : UserControl
         LeadUrlBox.Text = ev.LeadCaptureUrl ?? "";
         WeekdayBox.SelectedIndex = ev.Weekday is int w and >= 0 and <= 6 ? w + 1 : 0;
         WagerFinalCheck.IsChecked = ev.WagerFinalRound;
-        _rounds.Clear(); _notes.Clear(); _timers.Clear(); _questions.Clear(); _clips.Clear(); _expandedRounds.Clear(); _buzz.Clear(); _letters.Clear(); _boards.Clear();
+        _rounds.Clear(); _notes.Clear(); _timers.Clear(); _points.Clear(); _questions.Clear(); _clips.Clear(); _expandedRounds.Clear(); _buzz.Clear(); _letters.Clear(); _boards.Clear();
         _qTimers.Clear(); _qPoints.Clear(); _qNotes.Clear(); _qPolls.Clear();
         for (int i = 0; i < ev.Rounds.Count; i++)
         {
             _rounds.Add(ev.Rounds[i]);
             _notes.Add(i < ev.RoundNotes.Count ? ev.RoundNotes[i] : "");
             _timers.Add(i < ev.RoundTimers.Count ? ev.RoundTimers[i] : 0);
+            _points.Add(i < ev.RoundPoints.Count ? ev.RoundPoints[i] : 0);
             _buzz.Add(i < ev.BuzzRounds.Count && ev.BuzzRounds[i]);
             _letters.Add(i < ev.RoundLetters.Count ? ev.RoundLetters[i] : "");
             _boards.Add(ev.BoardFor(i));

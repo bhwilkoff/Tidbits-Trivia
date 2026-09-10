@@ -307,7 +307,7 @@ struct LiveBigScreen_macOS: View {
                 }
                 Spacer(minLength: 0)
                 if el.shows("roundLine") {
-                    Text("ROUND \(s.roundNumber)/\(s.roundCount) · \(s.roundTitle)")
+                    Text("ROUND \(s.roundNumber)/\(s.roundCount) · \(s.roundTitle)" + (s.currentRoundPoints.map { " · \($0) PTS A QUESTION" } ?? ""))   // A2.11
                         .font(.system(size: 22, weight: .heavy, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
                         .lineLimit(1).minimumScaleFactor(0.6)
                 }

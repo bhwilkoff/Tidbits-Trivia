@@ -85,6 +85,9 @@ enum LiveRoom {
         /// The question's difficulty (1…5), always published, so a joiner can tell
         /// "tough ones you nailed" from the rest at the wrap. nil from an older host.
         var difficulty: Int? = nil
+        /// A2.11 (2026-09-10): what a correct answer is worth right now — the question's
+        /// override, else the round's, else the night's setting. nil from an older host or on a poll.
+        var points: Int? = nil
         /// A2.10 (2026-09-09): a POLL — the room votes, there is no right answer and
         /// nobody scores. On reveal the host publishes NO answerIndex / answer; a
         /// joiner says "thanks for voting" instead of a verdict. Additive.

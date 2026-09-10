@@ -2392,6 +2392,39 @@ the head's top line — a capture artefact, not a bug). **Verified on the glass:
 report" from the answer sheet — hardest/easiest questions, participation,
 per-round accuracy — on both cockpits, no backend.
 
+**2026-09-10ah — Live loop tick 34: video on every joiner, and both read
+breaches closed.** Two halves, both owner-driven.
+
+**Video (the owner's named interest).** A video question broadcasts to every
+joining platform: the Mac hosts a `.tidbits` package whose question carries an
+mp4, the wire carries `pub.media` (kind=video) + the room node, and the WEB
+joiner builds a real `<video>` (readyState 4, 640x360, 8 s, currentTime
+advancing) — plus the iPhone playing inline, the Apple TV's focused "Watch the
+clip", the Android TV dongle with transport controls, and the Windows box's
+offer. Decision 060's rule holds everywhere: the host OFFERS, the player takes it
+up. **Found on the way:** `scratchpad/e2e_media.py` had been silently broken
+since the sandbox discovery — it passed an ABSOLUTE package path, which the
+sandboxed Mac reads with EPERM under a `try?`, so the app just opened on Play.
+Fixed to the container-Documents + bare-name pattern; a solo pass had only
+"worked" because the persistent Chrome profile still had the clip cached.
+
+**Security (owner: "No person/team should know what anyone else has responded
+with, nor should they ever know the right answer before it is revealed").** The
+right answer was already safe — tick 32 proved that. Two READ breaches were not,
+both from one cause: `live/$code` granted `.read` to any authenticated player and
+RTDB reads CASCADE. So any table could read (1) every other table's submission
+and (2) **the host's phone-remote PIN** in `control` — the keys to the show, which
+is worse than a peek at the answers. Rules restructured: no room-root read;
+`meta`/`pub`/`scores`/`teams`/`media` grant their own; `answers` host-only with a
+table's own slot readable by that table; `control` host-only with `control/id`
+readable so a remote can resume its counter. The web and iOS remotes now read
+only that id. **Deployed and proven against the LIVE database** by the new
+`tools/rules_probe.py` (18 checks, expected-vs-got per line). Every surface
+re-verified on real hardware AFTER the deploy: the leak sweep (room root now
+DENIED), a web + Windows joiner answering, the Android dongle, and the iPhone
+remote resuming from a host counter of 1 to send id 2 — the case that fails if a
+remote cannot read the id. Versions 1.9.32 / 162 / vc123 / MSIX 1.9.32.0.
+
 **2026-09-10ag — Live loop tick 33: countdowns speak in the host's clock.** The
 defect tick 32 uncovered, fixed as a class. Every countdown the room shares is an
 ABSOLUTE epoch-ms deadline, evaluated on each device against its own clock — so

@@ -370,9 +370,11 @@ export const FirebaseNet = {
   /// refuse forever, every id being <= what it has already run).
   async liveRemoteLastId(code) {
     const { db } = await ensure();
-    const snap = await db.get(db.ref(_db, `live/${code}/control`));
+    // ONLY the id. `control` also carries the host's remote PIN, and the rules now hand
+    // the whole node to the host alone — a readable control node was the keys to the show.
+    const snap = await db.get(db.ref(_db, `live/${code}/control/id`));
     const v = snap.exists() ? snap.val() : null;
-    return (v && typeof v.id === 'number') ? v.id : 0;
+    return typeof v === 'number' ? v : 0;
   },
 
   // --- HOST side (this device opens live/{code} and owns meta/pub/scores) ---

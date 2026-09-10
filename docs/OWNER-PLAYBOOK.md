@@ -16,7 +16,7 @@ Apple's in-review build is 1.6.73, and Android — which was 11 versions behind 
 1.6.62 — was brought up. Apple was deliberately NOT re-cut: introducing 1.6.74
 would pull three in-review platforms back out of the queue to change a number.
 
-## Outstanding — two, plus one optional hardening
+## Outstanding — exactly two
 
 1. **Lemon Squeezy store review.** The store is in test mode until they approve,
    so no real web charge can settle. Reply pack ready:
@@ -25,18 +25,6 @@ would pull three in-review platforms back out of the queue to change a number.
    `READY_TO_SUBMIT` — fully configured, never submitted — while
    `club.lifetime` is `WAITING_FOR_REVIEW`. Until they go in, the three-plan
    paywall has one purchasable plan on Apple.
-
-3. **Tighten the live-room read rule (optional, security).** Measured
-   2026-09-10: the correct answer is never published before a reveal (proven on
-   the real web app — see LIVE-ROOM-CONTRACT "What a joiner can read"), and a
-   table cannot tamper with another table's answer. But because `live/{code}`
-   grants `.read` at the room root and RTDB reads CASCADE, any joined player can
-   read every other table's submission for the current question. Closing it is a
-   rules restructure — narrow the room-root read and grant `meta`, `pub`,
-   `teams`, `scores`, `media` and `names` explicitly, with `answers/$qid/$uid`
-   readable by that uid or the host — then `firebase deploy --only database`.
-   It touches live rooms in flight, so it wants a quiet night and a smoke test,
-   which is why it is here rather than shipped.
 
 Everything else is done. Refund policy published at `/refunds.html` and linked
 from the paywall, apps footer, terms and support.

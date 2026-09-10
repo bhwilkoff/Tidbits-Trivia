@@ -154,7 +154,15 @@ in `LiveNightHost.score` (Swift), `liveScore` (Kotlin), `nhScore` (JS). Tidbits 
   cap — a node over 3 MB raw / 4.2M base64 chars is refused server-side, so a
   host build with a wrong cap cannot push the room over the free tier.
 - **Any player may write `control`** (the phone remote requests; the host
-  decides by PIN and command id — `LiveRemote.accepted`).
+  decides by PIN and command id — `LiveRemote.accepted`) — but only the HOST may
+  READ it, because the node carries the remote's PIN. A remote reads
+  `control/id` alone to resume its counter (RTDB reads cascade DOWN, never up).
+- **`answers` is host-only to read**; a table may read `answers/{qid}/{uid}`
+  only when that uid is its own. The host streams the whole node to score.
+- **There is NO blanket read on the room root.** `meta`, `pub`, `scores`,
+  `teams` and `media` each grant it for themselves. A read granted at the root
+  cascades to every child, which is exactly how one table could read another's
+  answers and the host's remote PIN (both closed 2026-09-10).
 - **Room teardown**: a `live/{code}` root write matches only the host deleting the
   whole subtree (`!newData.exists()`).
 - Everything requires anonymous auth (`auth != null`); no accounts, no PII.
@@ -201,14 +209,23 @@ corpus to look it up in. The pub a joiner holds mid-question is exactly:
 points`. After the reveal the same sweep finds it in the DOM and on the wire —
 the check can fire, so the clean result means something.
 
-**Open, and NOT the same thing: any joiner can read every other table's
-submission** for the current question (`answers/{qid}/{uid}`). Writes are locked
-to the owning uid — a table cannot tamper with another's answer (measured: 401) —
-but the room-level `.read` cascades, so a table with a laptop could see what
-another table typed before the reveal. Closing it means narrowing the room-level
-read and granting `meta`/`pub`/`teams`/`scores`/`media`/`names` explicitly, with
-`answers/$qid/$uid` readable by that uid or the host. That is a rules deploy on a
-live product, so it is OWNER-gated (see OWNER-PLAYBOOK).
+**Closed 2026-09-10 (owner: "No person/team should know what anyone else has
+responded with, nor should they ever know the right answer before it is
+revealed").** Two read breaches, both caused by the same thing — the room root
+granted `.read` to any authenticated player, and RTDB reads CASCADE:
+
+1. **Every table could read every other table's submission.** Writes were always
+   locked to the owning uid (a tamper attempt gets 401), but reads were open.
+2. **Every table could read the host's phone-remote PIN**, which lives in
+   `control` — the keys to the show, not just a peek at the answers.
+
+The room root read is gone. `meta`, `pub`, `scores`, `teams` and `media` grant
+their own; `answers` is host-only with each table's own slot readable by that
+table; `control` is host-only with `control/id` readable so a remote can still
+resume its counter. Deployed and PROVEN against the live database by
+`tools/rules_probe.py` — 18 checks, each stating what it expects and what it got,
+so a rule that silently loosens is a failing check rather than a quiet regression.
+Re-run it after every `firebase deploy --only database`.
 
 ## Verification
 

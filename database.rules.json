@@ -31,39 +31,49 @@
     },
     "live": {
       "$code": {
-        ".read": "auth != null",
         ".write": "auth != null && data.child('meta/host').val() === auth.uid && !newData.exists()",
         "meta": {
           ".write": "auth != null && (!data.exists() || data.child('host').val() === auth.uid)",
-          ".validate": "newData.hasChildren(['host','createdAt'])"
+          ".validate": "newData.hasChildren(['host','createdAt'])",
+          ".read": "auth != null"
         },
         "pub": {
-          ".write": "auth != null && root.child('live').child($code).child('meta/host').val() === auth.uid"
+          ".write": "auth != null && root.child('live').child($code).child('meta/host').val() === auth.uid",
+          ".read": "auth != null"
         },
         "scores": {
-          ".write": "auth != null && root.child('live').child($code).child('meta/host').val() === auth.uid"
+          ".write": "auth != null && root.child('live').child($code).child('meta/host').val() === auth.uid",
+          ".read": "auth != null"
         },
         "teams": {
           "$uid": {
             ".write": "auth != null && auth.uid === $uid",
             ".validate": "newData.hasChildren(['name'])"
-          }
+          },
+          ".read": "auth != null"
         },
         "answers": {
           "$qid": {
             "$uid": {
-              ".write": "auth != null && auth.uid === $uid"
+              ".write": "auth != null && auth.uid === $uid",
+              ".read": "auth != null && auth.uid === $uid"
             }
-          }
+          },
+          ".read": "auth != null && root.child('live').child($code).child('meta/host').val() === auth.uid"
         },
         "media": {
           "$id": {
             ".write": "auth != null && root.child('live').child($code).child('meta/host').val() === auth.uid",
             ".validate": "newData.hasChildren(['kind','mime','bytes','b64']) && newData.child('b64').isString() && newData.child('b64').val().length <= 4200000 && newData.child('bytes').isNumber() && newData.child('bytes').val() <= 3000000"
-          }
+          },
+          ".read": "auth != null"
         },
         "control": {
-          ".write": "auth != null"
+          ".write": "auth != null",
+          ".read": "auth != null && root.child('live').child($code).child('meta/host').val() === auth.uid",
+          "id": {
+            ".read": "auth != null"
+          }
         }
       }
     },

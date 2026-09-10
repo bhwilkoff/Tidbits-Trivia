@@ -398,6 +398,10 @@ there is no regression baseline at all.
   hosts hold the show with a promised return. `scratchpad/e2e_break.py web,atv,dongle,windows`
   asserts `pub.onBreak` + `breakUntil` on the wire, reads the web's `.live-breakhead`, and
   photographs every joiner — the question must be GONE on each, not merely covered.
+- Security rules: `python3 tools/rules_probe.py` opens a throwaway room with a host and two
+  tables and checks 18 reads/writes against the DEPLOYED rules, exiting non-zero if any
+  misbehaves. A rules file in the repo is not a rules file in production — run it after
+  every `firebase deploy --only database` and whenever a client starts reading a new path.
 - Answer leakage (owner question, 2026-09-10): `scratchpad/e2e_leak.py` sweeps the real web
   joiner mid-question — DOM, localStorage, sessionStorage, every `window` global, the
   resource list, and the room read with the JOINER's credentials — for the answer string,

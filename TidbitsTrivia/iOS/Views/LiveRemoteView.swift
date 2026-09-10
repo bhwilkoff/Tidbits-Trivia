@@ -118,8 +118,9 @@ struct LiveRemoteView: View {
         guard code.count == 4, pin.count == 6 else { error = pin.count < 6 ? "Enter the 6-digit PIN from your laptop." : "Enter the 4-letter room code."; return }
         error = nil
         _ = try? await db.ensureAuth()
-        let path = "\(LiveRoom.path(code))/control"
-        remoteID = ((try? await db.get(path, as: RemoteCommand.self)) ?? nil)?.id ?? 0
+        // ONLY the id: `control` also carries the PIN, and the rules hand that node to the
+        // host alone — a readable control node was the keys to the show.
+        remoteID = ((try? await db.get("\(LiveRoom.path(code))/control/id", as: Int.self)) ?? nil) ?? 0
         paired = true
         streamTask?.cancel()
         streamTask = Task { [db, code] in

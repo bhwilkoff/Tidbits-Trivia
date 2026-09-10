@@ -304,12 +304,25 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
                         }
                     }
                     p.numeric != null -> NumericAnswer(p.numeric, p.qid, locked) { submitFields(mapOf("number" to it)) }
-                    p.options != null -> p.options.forEachIndexed { i, opt ->
-                        val isChosen = chosen == i
-                        val correct = revealed && !p.poll && p.answerIndex == i
-                        val wrong = revealed && !p.poll && isChosen && p.answerIndex != i
-                        OptionRow(i, opt, isChosen, correct, wrong, enabled = !locked) { submit(i) }
-                        Spacer(Modifier.height(12.dp))
+                    p.options != null -> androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxWidth()) {
+                        // On a TV or a tablet four rows of buttons pushed the reveal's story and
+                        // source below the fold; two columns keep them on the glass.
+                        val columns = if (maxWidth > 720.dp) 2 else 1
+                        val rows = p.options.withIndex().chunked(columns)
+                        Column(Modifier.fillMaxWidth()) {
+                            rows.forEach { row ->
+                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    row.forEach { (i, opt) ->
+                                        val isChosen = chosen == i
+                                        val correct = revealed && !p.poll && p.answerIndex == i
+                                        val wrong = revealed && !p.poll && isChosen && p.answerIndex != i
+                                        Box(Modifier.weight(1f)) { OptionRow(i, opt, isChosen, correct, wrong, enabled = !locked) { submit(i) } }
+                                    }
+                                    if (row.size < columns) Spacer(Modifier.weight(1f))
+                                }
+                                Spacer(Modifier.height(12.dp))
+                            }
+                        }
                     }
                     p.orderItems != null -> OrderingAnswer(p.orderItems, p.qid, locked) { o -> submitFields(mapOf("order" to o.map { it.toLong() })) }
                     p.matchKeys != null && p.matchValues != null -> MatchingAnswer(p.matchKeys, p.matchValues, p.qid, locked) { pr -> submitFields(mapOf("pairs" to pr.map { it.toLong() })) }

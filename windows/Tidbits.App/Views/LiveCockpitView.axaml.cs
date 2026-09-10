@@ -164,7 +164,7 @@ public partial class LiveCockpitView : UserControl
     {
         OptionsTally.Children.Clear();
         var host = Vm?.Host;
-        if (host?.Current is not { } q || q.Options.Count == 0) return;
+        if (host?.Current is not { } q || q.Options.Count == 0 || !Tidbits.Core.Networking.LiveScoring.IsMcq(q)) return;   // a Name-It's `options` is its accepted list, not a ballot
         // G5: while the pick-a-category grid is up the room has not chosen a cell,
         // so there is no live question — and these bars were still listing the
         // OPTIONS of the one the host happens to be sitting on. A host reading

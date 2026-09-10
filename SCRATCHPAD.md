@@ -2371,3 +2371,20 @@ the 4 s clip played and gone after; the projector on "SCORES AFTER ROUND 1"
 with the wire at r1 wager:true. The Windows box: the same standings hold and heading. The Windows duck is proven by the hook log (bed 35 → 8 on clip start → 35 on EndReached 6 s later); the screenshot moment was never the right one, the log was. Versions 1.9.18 / 148 /
 vc109 / MSIX 1.9.18.0. Next: punch list 15 (analytics) is L; before it, a
 polish pass on the cockpits and joiners from the nits collected this loop.
+
+**2026-09-09u — Live loop tick 21: polish from the loop's nits.** Windows
+cockpit gains the reveal block (answer line for a non-MCQ, story, Wikipedia
+link) the Mac cockpit had; the vote tally is now an MCQ thing on the Windows
+cockpit and projector (`LiveScoring.IsMcq`) — a Name-It's `options` is its
+accepted list and both had drawn it as a one-bar ballot (found in the tick-12
+shots: "Keanu Reeves 0" as a tally). Android joiner: options in two columns
+when the screen is wider than 720 dp (the TV, tablets), so the reveal's story
+and Wikipedia line stay above the fold on the dongle (tick-12 nit). The Apple
+TV recap card text was brightened last tick and is re-photographed now. Not
+changed: the Mac cockpit title/commands (already two rows; the tick-12 note
+was stale), the Mac accept split button's grey (native), the web wrap header
+score (investigated: the DOM has "1" at 28.8 px in ink; the headless capture crops
+the head's top line — a capture artefact, not a bug). **Verified on the glass:** the Windows cockpit reveal (answer, story, Wikipedia link, no phantom bar); the Android TV dongle's poll with four options in two columns and the "Thanks for voting" line on screen; the Apple TV recap card legible. Versions 1.9.19 / 149 / vc110
+/ MSIX 1.9.19.0. Next: punch list 15 (analytics) as a host-side "night
+report" from the answer sheet — hardest/easiest questions, participation,
+per-round accuracy — on both cockpits, no backend.

@@ -130,6 +130,15 @@
                     <!-- Options with a live answer-distribution bar (built in code-behind
                          so each row can carry a proportional bar + reveal highlight). -->
                     <StackPanel x:Name="OptionsTally" Spacing="6"/>
+                    <!-- The reveal, for the host to read out: the answer (a non-MCQ's; an MCQ's
+                         tally lights it), the story, and where it came from. -->
+                    <StackPanel Spacing="4" Margin="0,6,0,0">
+                        <TextBlock IsVisible="{Binding ShowRevealAnswer}" Text="{Binding RevealAnswer, StringFormat='✓ {0}'}"
+                                   Classes="body-strong" Foreground="#1E9E6A" TextWrapping="Wrap"/>
+                        <TextBlock IsVisible="{Binding HasRevealStory}" Text="{Binding RevealStory}" Classes="body" Opacity="0.85" TextWrapping="Wrap"/>
+                        <HyperlinkButton IsVisible="{Binding HasRevealSource}" Content="{Binding RevealSource}" NavigateUri="{Binding RevealSourceUrl}"
+                                         Padding="0" FontWeight="Bold"/>
+                    </StackPanel>
                     <!-- Free-text review (Name-It rounds, on reveal): typed answers + Accept -->
                     <StackPanel x:Name="ReviewPanel" Spacing="6" Margin="0,10,0,0"/>
                 </StackPanel>

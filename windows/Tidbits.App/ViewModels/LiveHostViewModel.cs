@@ -46,7 +46,7 @@ public sealed class LiveHostViewModel : ObservableObject
     public string? PictureUrl => ShowPicture ? Host.Current!.ImageUrl : null;
     public double PictureHeight => Host.Revealed ? 190 : 300;
     public bool HasVotes => Host.Net.AnswersSnapshot().Count > 0;
-    public bool ShowTally => (Elements.Shows("tally") || Host.CurrentIsPoll) && Host.Current?.Options is { Count: > 0 } && (HasVotes || Host.Revealed);   // A2.10: a poll IS its tally
+    public bool ShowTally => (Elements.Shows("tally") || Host.CurrentIsPoll) && Host.Current is { } tq && tq.Options.Count > 0 && LiveScoring.IsMcq(tq) && (HasVotes || Host.Revealed);   // A2.10: a poll IS its tally; a Name-It has no ballot
     /// Votes per option, from the room's submissions.
     public IReadOnlyList<int> OptionTallies
     {
@@ -66,7 +66,7 @@ public sealed class LiveHostViewModel : ObservableObject
     public bool ShowSource => Elements.Shows("story") && HasRevealSource;
     /// The answer capsule is for a NON-MCQ reveal; an MCQ's tally already lights the
     /// correct option, and saying it twice is the kind of clutter A8.7 exists to cut.
-    public bool ShowRevealAnswer => Host.Revealed && !(Host.Current?.Options is { Count: > 0 });
+    public bool ShowRevealAnswer => Host.Revealed && !(Host.Current is { } rq && rq.Options.Count > 0 && LiveScoring.IsMcq(rq));
     public bool ShowTeams => Elements.Shows("teams");
     public IReadOnlyList<LiveStandingRow> TeamChips => RankedStandings.Take(5).ToList();
     public bool ShowJoinPanel => Elements.Shows("joinPanel") && Host.Net.IsOpen;
@@ -280,6 +280,7 @@ public sealed class LiveHostViewModel : ObservableObject
     public string? RevealSource => Host.Revealed && Host.Current is { } q && !string.IsNullOrWhiteSpace(q.SourceTitle)
         ? $"From Wikipedia · {q.SourceTitle.Trim()}" : null;
     public bool HasRevealSource => RevealSource is not null;
+    public System.Uri? RevealSourceUrl => Host.Revealed && Host.Current?.SourceUrl is { Length: > 0 } u && System.Uri.TryCreate(u, System.UriKind.Absolute, out var uri) ? uri : null;
 
     public bool CanGoBack => Host.CanGoBack;
     public int? SecondsRemaining => Host.SecondsRemaining;

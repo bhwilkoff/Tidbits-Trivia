@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using System.ComponentModel;
 using Avalonia;
@@ -61,7 +62,7 @@ public partial class JoinPlayerView : UserControl
         base.OnDataContextChanged(e);
         if (_vm is not null) _vm.Client.Changed -= OnClientChanged;
         _vm = DataContext as LivePlayerViewModel;
-        if (_vm is not null) _vm.Client.Changed += OnClientChanged;
+        if (_vm is not null) { _vm.Client.Changed += OnClientChanged; ArmAnswerHook(); }
         RebuildOptions();
         RebuildCoplayers();
     }
@@ -281,15 +282,43 @@ public partial class JoinPlayerView : UserControl
 
     /// Options: clickable MCQ buttons while answering; on reveal, colored (correct green /
     /// your-wrong-pick red / others dim). After answering, your pick shows in the brand color.
+    // 3.75: the answer UI is rebuilt only when what it depends on changes — the client
+    // fires Changed on every stream event (a team joining, a score echo), and a TextBox
+    // rebuilt mid-word loses the player's typing.
+    private string _answerKey = "";
+    private string _qid = "";
+    private string _typed = "";
+    private double? _number;
+    private System.Collections.Generic.List<int> _order = new();
+    private System.Collections.Generic.List<int> _pairs = new();
+    private readonly System.Collections.Generic.List<string> _named = new();
+
     private void RebuildOptions()
     {
-        OptionsPanel.Children.Clear();
         var c = _vm?.Client;
-        if (c?.Pub?.Options is not { } opts) return;
-
-        bool question = c.Pub.Phase == LiveRoom.Phase.Question;
-        bool reveal = c.Pub.Phase == LiveRoom.Phase.Reveal;
+        if (c?.Pub is not { } p) { OptionsPanel.Children.Clear(); _answerKey = ""; return; }
+        bool question = p.Phase == LiveRoom.Phase.Question;
+        bool reveal = p.Phase == LiveRoom.Phase.Reveal;
         bool answered = c.HasAnswered;
+        if (p.Qid != _qid) { _qid = p.Qid; _typed = ""; _number = null; _order = new(); _pairs = new(); _named.Clear(); }
+        var key = $"{p.Qid}|{p.Phase}|{answered}|{p.Locked == true}|{p.Wager == true}|{c.Score}";
+        if (key == _answerKey) return;
+        _answerKey = key;
+        OptionsPanel.Children.Clear();
+        if (p.Options is not { } opts)
+        {
+            // Every other format: typed, closest-number, ordering, matching, name-as-many.
+            // Until 2026-09-10 the Windows joiner drew nothing here — a Name-It question
+            // showed a prompt and no way to answer it.
+            bool locked = !question || answered || p.Locked == true;
+            if (p.Buzz == true || p.Board is not null) return;
+            if (p.Numeric is { } n) BuildNumeric(n, locked);
+            else if (p.OrderItems is { Count: > 0 } items) BuildOrdering(items, locked);
+            else if (p.MatchKeys is { Count: > 0 } keys && p.MatchValues is { } values) BuildMatching(keys, values, locked);
+            else if (p.EnumTarget is { } target) BuildEnumerate(target, locked);
+            else if (question || reveal) BuildText(locked);
+            return;
+        }
 
         // Final wager round: a stake stepper (0…your score) above the options.
         if (question && !answered && _vm is { IsWager: true } vm)
@@ -332,6 +361,146 @@ public partial class JoinPlayerView : UserControl
             }
             OptionsPanel.Children.Add(btn);
         }
+    }
+
+    // MARK: - 3.75 non-choice answer formats (macOS `LiveTextAnswer` … `LiveEnumerateAnswer` parity)
+
+    private Button SubmitButton(string text, System.Action onClick)
+    {
+        var b = new Button { Content = text, Classes = { "accent" }, HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Center, Padding = new Thickness(16, 12), FontSize = 16, Margin = new Thickness(0, 8, 0, 0) };
+        Avalonia.Automation.AutomationProperties.SetName(b, text);
+        b.Click += (_, _) => onClick();
+        return b;
+    }
+
+    private void BuildText(bool locked)
+    {
+        var box = new TextBox { Text = _typed, Watermark = "Type your answer", FontSize = 16, Padding = new Thickness(12), IsEnabled = !locked, Name = "AnswerText" };
+        Avalonia.Automation.AutomationProperties.SetName(box, "Your answer");
+        box.TextChanged += (_, _) => _typed = box.Text ?? "";
+        void Submit() { var t = (box.Text ?? "").Trim(); if (t.Length == 0 || _vm is null) return; _ = _vm.Client.SubmitText(t); }
+        box.KeyDown += (_, ev) => { if (ev.Key == Avalonia.Input.Key.Enter && !locked) { Submit(); ev.Handled = true; } };
+        OptionsPanel.Children.Add(box);
+        if (!locked) OptionsPanel.Children.Add(SubmitButton("Submit", Submit));
+        else if (_typed.Length > 0) OptionsPanel.Children.Add(new TextBlock { Text = $"You said: {_typed}", Opacity = 0.7, Margin = new Thickness(0, 6, 0, 0), TextWrapping = TextWrapping.Wrap });
+    }
+
+    private void BuildNumeric(LiveRoom.Numeric n, bool locked)
+    {
+        double step = n.Step > 0 ? n.Step : 1;
+        double value = _number ?? System.Math.Round((n.Min + n.Max) / 2 / step) * step;
+        string Fmt(double v) => (v == System.Math.Round(v) ? ((long)v).ToString() : v.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)) + (n.Unit.Length > 0 ? " " + n.Unit : "");
+        var label = new TextBlock { Text = Fmt(value), FontSize = 30, FontWeight = FontWeight.Black, HorizontalAlignment = HorizontalAlignment.Center, Name = "AnswerNumber" };
+        var slider = new Slider { Minimum = n.Min, Maximum = n.Max, Value = value, IsSnapToTickEnabled = true, TickFrequency = step, IsEnabled = !locked };
+        Avalonia.Automation.AutomationProperties.SetName(slider, "Your number");
+        slider.PropertyChanged += (_, ev) => { if (ev.Property == Slider.ValueProperty) { _number = slider.Value; label.Text = Fmt(slider.Value); } };
+        OptionsPanel.Children.Add(label); OptionsPanel.Children.Add(slider);
+        if (!locked) OptionsPanel.Children.Add(SubmitButton("Submit", () => { _number = slider.Value; _ = _vm?.Client.SubmitNumber(slider.Value); }));
+    }
+
+    private void BuildOrdering(System.Collections.Generic.IReadOnlyList<string> items, bool locked)
+    {
+        if (_order.Count != items.Count) _order = System.Linq.Enumerable.Range(0, items.Count).ToList();
+        var list = new StackPanel { Spacing = 4, Name = "AnswerOrder" };
+        void Draw()
+        {
+            list.Children.Clear();
+            for (int pos = 0; pos < _order.Count; pos++)
+            {
+                int at = pos;
+                var row = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto") };
+                var num = new TextBlock { Text = $"{pos + 1}.", FontWeight = FontWeight.Bold, Margin = new Thickness(0, 0, 8, 0), VerticalAlignment = VerticalAlignment.Center };
+                var name = new TextBlock { Text = items[_order[pos]], TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center };
+                Grid.SetColumn(name, 1);
+                row.Children.Add(num); row.Children.Add(name);
+                if (!locked)
+                {
+                    var up = new Button { Content = "▲", Padding = new Thickness(8, 4), IsEnabled = pos > 0, Margin = new Thickness(4, 0, 0, 0) };
+                    var down = new Button { Content = "▼", Padding = new Thickness(8, 4), IsEnabled = pos < _order.Count - 1, Margin = new Thickness(4, 0, 0, 0) };
+                    Avalonia.Automation.AutomationProperties.SetName(up, $"Move {items[_order[pos]]} up");
+                    Avalonia.Automation.AutomationProperties.SetName(down, $"Move {items[_order[pos]]} down");
+                    up.Click += (_, _) => { (_order[at - 1], _order[at]) = (_order[at], _order[at - 1]); Draw(); };
+                    down.Click += (_, _) => { (_order[at + 1], _order[at]) = (_order[at], _order[at + 1]); Draw(); };
+                    Grid.SetColumn(up, 2); Grid.SetColumn(down, 3);
+                    row.Children.Add(up); row.Children.Add(down);
+                }
+                list.Children.Add(row);
+            }
+        }
+        Draw();
+        OptionsPanel.Children.Add(list);
+        if (!locked) OptionsPanel.Children.Add(SubmitButton("Submit order", () => _ = _vm?.Client.SubmitOrder(_order.ToList())));
+    }
+
+    private void BuildMatching(System.Collections.Generic.IReadOnlyList<string> keys, System.Collections.Generic.IReadOnlyList<string> values, bool locked)
+    {
+        if (_pairs.Count != keys.Count) _pairs = System.Linq.Enumerable.Repeat(-1, keys.Count).ToList();
+        var list = new StackPanel { Spacing = 6, Name = "AnswerMatch" };
+        Button? submit = null;
+        void Refresh() { if (submit is not null) submit.IsEnabled = _pairs.All(x => x >= 0); }
+        for (int i = 0; i < keys.Count; i++)
+        {
+            int ki = i;
+            var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,*") };
+            var k = new TextBlock { Text = keys[i], FontWeight = FontWeight.SemiBold, TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 8, 0) };
+            var pick = new ComboBox { ItemsSource = new[] { "Choose…" }.Concat(values).ToList(), SelectedIndex = _pairs[i] + 1, IsEnabled = !locked, HorizontalAlignment = HorizontalAlignment.Stretch };
+            Avalonia.Automation.AutomationProperties.SetName(pick, $"Match for {keys[i]}");
+            pick.SelectionChanged += (_, _) => { _pairs[ki] = pick.SelectedIndex - 1; Refresh(); };
+            Grid.SetColumn(pick, 1);
+            row.Children.Add(k); row.Children.Add(pick);
+            list.Children.Add(row);
+        }
+        OptionsPanel.Children.Add(list);
+        if (!locked) { submit = SubmitButton("Submit matches", () => _ = _vm?.Client.SubmitPairs(_pairs.ToList())); Refresh(); OptionsPanel.Children.Add(submit); }
+    }
+
+    private void BuildEnumerate(int target, bool locked)
+    {
+        var head = new TextBlock { Opacity = 0.75, TextWrapping = TextWrapping.Wrap, Name = "AnswerEnumHead" };
+        var chips = new TextBlock { TextWrapping = TextWrapping.Wrap, FontWeight = FontWeight.SemiBold, Margin = new Thickness(0, 4, 0, 0) };
+        void Draw()
+        {
+            head.Text = $"Name as many as you can ({_named.Count}{(target > 0 ? "/" + target : "")})";
+            chips.Text = string.Join(" · ", _named);
+            chips.IsVisible = _named.Count > 0;
+        }
+        Draw();
+        OptionsPanel.Children.Add(head); OptionsPanel.Children.Add(chips);
+        if (locked) return;
+        var box = new TextBox { Watermark = "Add one…", FontSize = 16, Padding = new Thickness(12), Name = "AnswerEnumBox" };
+        Avalonia.Automation.AutomationProperties.SetName(box, "Add an answer");
+        void Add() { var t = (box.Text ?? "").Trim(); if (t.Length == 0) return; _named.Add(t); box.Text = ""; Draw(); }
+        box.KeyDown += (_, ev) => { if (ev.Key == Avalonia.Input.Key.Enter) { Add(); ev.Handled = true; } };
+        var add = new Button { Content = "Add", Padding = new Thickness(14, 8), Margin = new Thickness(6, 0, 0, 0) };
+        Avalonia.Automation.AutomationProperties.SetName(add, "Add");
+        add.Click += (_, _) => Add();
+        var addRow = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), Margin = new Thickness(0, 8, 0, 0) };
+        Grid.SetColumn(add, 1); addRow.Children.Add(box); addRow.Children.Add(add);
+        OptionsPanel.Children.Add(addRow);
+        OptionsPanel.Children.Add(SubmitButton("Done", () => { Add(); _ = _vm?.Client.SubmitList(_named.ToList()); }));
+    }
+
+    /// TIDBITS_LIVE_ANSWER=<text> (+_AT, default 75 s): type the answer into the SAME box a
+    /// player uses and press its Submit — a harness cannot type on the box, so the
+    /// hook drives the widget rather than the client (3.75).
+    private bool _answerHookArmed;
+    private void ArmAnswerHook()
+    {
+        if (_answerHookArmed || Services.LaunchHooks.LiveAnswer is not { Length: > 0 } text) return;
+        _answerHookArmed = true;
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(TimeSpan.FromSeconds(Services.LaunchHooks.LiveAnswerAt));
+            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                var box = System.Linq.Enumerable.OfType<TextBox>(OptionsPanel.Children).FirstOrDefault(b => b.Name == "AnswerText");
+                var submit = System.Linq.Enumerable.OfType<Button>(OptionsPanel.Children).FirstOrDefault(b => (b.Content as string) == "Submit");
+                Services.LaunchHooks.Diag($"answer hook: box={(box is null ? "none" : "found")} submit={(submit is null ? "none" : "found")}");
+                if (box is null || submit is null) return;
+                box.Text = text;
+                submit.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            });
+        });
     }
 
     /// Return to whichever surface opened this. Play owns joining now; Tidbits Live

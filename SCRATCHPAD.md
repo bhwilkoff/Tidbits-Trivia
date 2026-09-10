@@ -2392,6 +2392,21 @@ the head's top line — a capture artefact, not a bug). **Verified on the glass:
 report" from the answer sheet — hardest/easiest questions, participation,
 per-round accuracy — on both cockpits, no backend.
 
+**2026-09-10ac — Live loop tick 29: the Windows joiner answers every format.**
+Found while photographing tick 28: the Windows joiner drew answer buttons from
+`Pub.Options` and nothing else — a Name-It question (the QA night's own) showed
+a prompt and no way to answer; the client's `SubmitText/Number/Order/Pairs/List`
+had existed unused since the port, and no parity row had ever tracked it (a
+silent hole — the `hooks-are-coverage` class). 3.75: per-format inputs
+mirroring iOS/web (text + Submit, slider + unit, ▲/▼ ordering, a ComboBox per
+key, Add-row chips + Done), rebuilt only when qid/phase/answered/locked change
+so typing survives the stream's Changed storms; hook `TIDBITS_LIVE_ANSWER`
+drives the real widget. 6 headless tests. **Verified on the real box**
+(`e2e_wintype.py`): the joiner photographed with the text box and Submit under the Name-It prompt; the hook
+typed "Keanu Reeves" into that box and the wire's `answers/r0q0/{uid}.text` carried it
+(`blurred: true` rides along — the box's screenshot task takes focus, the cheat flag is honest). Versions 1.9.27 / 157 / vc118 / MSIX
+1.9.27.0. Next: event history, host toasts, native phone remote.
+
 **2026-09-10ab — Live loop tick 28: every joiner shows what a question is
 worth.** The follow-up to A2.11: `pub.points` now renders as a coral WORTH N
 PTS chip above the prompt on the web, iOS, tvOS, Android and Windows joiners —

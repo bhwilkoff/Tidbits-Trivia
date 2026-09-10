@@ -111,6 +111,9 @@ public static class LaunchHooks
     /// question's accepted list with that answer, which re-scores the room (A3.13).
     public static string? LiveFixKey => Env("TIDBITS_LIVE_FIX_KEY");
     public static double? LiveFixAt => double.TryParse(Env("TIDBITS_LIVE_FIX_AT"), out var v) ? v : null;
+    /// TIDBITS_LIVE_ANSWER=<text> at TIDBITS_LIVE_ANSWER_AT=<secs> (default 75) — the JOINER types and submits (3.75).
+    public static string? LiveAnswer => Env("TIDBITS_LIVE_ANSWER");
+    public static double LiveAnswerAt => double.TryParse(Env("TIDBITS_LIVE_ANSWER_AT"), out var v) ? v : 75;
     /// TIDBITS_PROFILE_NAME=<name> — rename the portable profile at launch through the Settings path (3.71).
     public static string? ProfileName => Env("TIDBITS_PROFILE_NAME");
     /// TIDBITS_DEEPLINK=<url> — route a link on launch exactly as a registered-protocol launch would (3.37).

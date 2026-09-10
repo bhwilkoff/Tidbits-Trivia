@@ -390,6 +390,10 @@ there is no regression baseline at all.
 - Windows box: `TIDBITS_PROFILE_NAME=<name>` renames the portable profile through the Settings
   path at launch; `scratchpad/e2e_name.py` photographs Settings, parses the `profile rename`
   Diag line for the profile id and reads `players/{id}.name` back from the wire.
+- Windows joiner: `TIDBITS_LIVE_ANSWER=<text>` + `TIDBITS_LIVE_ANSWER_AT` (≥110 on the box) type
+  into the joiner's own answer box and press its Submit; `scratchpad/e2e_wintype.py` hosts a
+  Name-It on the Mac, joins from the box, photographs the box, and reads the typed answer back
+  from `answers/{qid}/{uid}`.
 - Joiners: `scratchpad/e2e_points_join.py web,iphone,atv,dongle,windows` — the Mac hosts the 3-point
   night; asserts the web's `.live-worth` reads WORTH 3 PTS and photographs every other joiner on
   the question. Needs the tvOS/iOS builds installed (`tools/atv_install.sh`, the iOS devicectl

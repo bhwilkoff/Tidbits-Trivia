@@ -801,6 +801,8 @@ public sealed class LiveNightHost : ObservableObject
     /// board phase that never reaches a phone is a room answering the wrong
     /// question — so it is asserted rather than inferred from the UI.
     public LiveRoom.Pub BuildPubForTesting() => BuildPub();
+    /// Mark the current question revealed without a room (headless tests of the reveal state).
+    public void RevealForTesting() { Revealed = true; Notify(); }
 
     private LiveRoom.Pub BuildPub()
     {

@@ -100,10 +100,19 @@ public class ProjectorLongContentSnapshot
         Dispatcher.UIThread.RunJobs();
         win.CaptureRenderedFrame()!.Save(Path.Combine(ArtifactDir(), "projector-round-scores.png"));
 
-        Assert.Contains(VisibleText(win), t => t.StartsWith("SCORES AFTER ROUND "));
+        // A3.9 (2026-09-09): the heading names the round the scores are AFTER. Held
+        // before anything has been revealed there is no such round yet — a wager
+        // round opening on the standings must not say "AFTER ROUND 2" — so it is
+        // a bare STANDINGS until the first reveal, then "SCORES AFTER ROUND 1".
+        Assert.Contains(VisibleText(win), t => t == "STANDINGS");
         // With no teams the slide must SAY so rather than being a title over a blank
         // wall — the defect the macOS final standings had, found here by parity.
         Assert.True(vm.HasNoStandings, "expected the no-teams case — otherwise the next assertion cannot fire");
         Assert.Contains(VisibleText(win), t => t.Contains("No scores yet"));
+
+        host.RevealForTesting();
+        Dispatcher.UIThread.RunJobs();
+        win.CaptureRenderedFrame()!.Save(Path.Combine(ArtifactDir(), "projector-round-scores-revealed.png"));
+        Assert.Contains(VisibleText(win), t => t == "SCORES AFTER ROUND 1");
     }
 }

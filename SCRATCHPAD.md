@@ -2392,6 +2392,22 @@ the head's top line — a capture artefact, not a bug). **Verified on the glass:
 report" from the answer sheet — hardest/easiest questions, participation,
 per-round accuracy — on both cockpits, no backend.
 
+**2026-09-10aj — Live loop tick 36: the duel coverage gap, closed the same day
+it was named.** Tick 35 narrowed `duels/$id` to its two players and recorded an
+honest gap: the rule was proven with raw tokens, but the IN-APP flow had never
+been driven, because duels shipped with no launch hook and have never been in the
+fleet suite (`hooks-are-coverage` — a surface nothing can drive is untested and
+reads as a pass). Added `TIDBITS_DUELS=1` (open the Duels dialog) and
+`TIDBITS_DUEL_CHALLENGE=<uid>` (challenge that uid, Diag the new duel id), both
+no-ops in production, plus `scratchpad/e2e_duel.py`: **the box challenges a wire
+friend → that friend reads the duel with its OWN token (the thing the narrowed
+rule must still permit, and the thing that breaks if it is wrong) → a signed-in
+stranger is REFUSED → the friend plays and submits → the box reopens and shows
+"vs QA friend · Your turn" with Play.** All five steps verified on the real box;
+the duel carried its 6 questions to the challenged player and nobody else.
+Versions 1.9.33 / 163 / vc124 / MSIX 1.9.33.0. Next: PDF import, Windows host
+toasts.
+
 **2026-09-10ai — Live loop tick 35: every other root audited for the same
 cascade.** Tick 34 closed the live-room breaches; the owner's instruction was to
 close "all such" breaches, so every RTDB root was checked for the SAME mistake —

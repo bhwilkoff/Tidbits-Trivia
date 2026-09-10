@@ -398,6 +398,11 @@ there is no regression baseline at all.
   hosts hold the show with a promised return. `scratchpad/e2e_break.py web,atv,dongle,windows`
   asserts `pub.onBreak` + `breakUntil` on the wire, reads the web's `.live-breakhead`, and
   photographs every joiner — the question must be GONE on each, not merely covered.
+- Duels: `TIDBITS_DUEL_CHALLENGE=<uid>` challenges that uid on launch and writes the new
+  duel id to the Diag log; `TIDBITS_DUELS=1` opens the Duels dialog. `scratchpad/e2e_duel.py`
+  runs the whole loop on the box — challenge, the friend reads with its own token and plays,
+  a stranger is refused, the box shows the result. Until 2026-09-10 duels had NO hook, so the
+  surface was unphotographable and a `duels/$id` rules change could not be re-verified in-app.
 - Security rules: `python3 tools/rules_probe.py` opens a throwaway room with a host and two
   tables and checks 18 reads/writes against the DEPLOYED rules, exiting non-zero if any
   misbehaves. A rules file in the repo is not a rules file in production — run it after

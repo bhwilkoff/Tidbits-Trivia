@@ -58,9 +58,13 @@ Quick Match rooms stay readable by any signed-in player on purpose: a player is
 handed a room id by the queue and must read the room to decide whether to join,
 before they are in its roster.
 
-## Known coverage gap
+## Coverage (gap closed the same day)
 
-The duel read rule was proven with real participant tokens against the live
-database, exercising the same REST reads the apps make. The **in-app** duel flow
-was not re-driven on a device afterwards, because duels have never had a fleet
-harness or a launch hook. Worth adding before the next change to that rule.
+The duel read rule is proven twice over: `tools/rules_probe.py` checks it with raw
+participant tokens, and `scratchpad/e2e_duel.py` drives the real app — the Windows
+box challenges a wire "friend", that friend reads the duel with its OWN token
+(which the narrowed rule must permit, and which is the thing that would break),
+plays it and submits, a signed-in stranger is refused, and the box reopens its
+Duels dialog showing the duel. Duels shipped with no launch hook at all, so the
+surface had never been photographed; `TIDBITS_DUELS=1` and
+`TIDBITS_DUEL_CHALLENGE=<uid>` are that coverage (no-ops in production).

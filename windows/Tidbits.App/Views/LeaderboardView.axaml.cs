@@ -32,7 +32,11 @@ public partial class LeaderboardView : UserControl
     public LeaderboardView()
     {
         InitializeComponent();
-        Loaded += async (_, _) => { if (AutoLoad) await LoadAsync(); };
+        Loaded += async (_, _) =>
+        {
+            if (AutoLoad) await LoadAsync();
+            await RunDuelHooks();
+        };
     }
 
     private async System.Threading.Tasks.Task LoadAsync()
@@ -115,6 +119,25 @@ public partial class LeaderboardView : UserControl
         vm.Finished += () => { _ = g.Duels.Submit(g.Rtdb, id, g.PlayerName, vm.Summary.Correct); };
         DuelGameHost.Content = new GameView { DataContext = vm };
         engine.StartCustom(Tidbits.Core.Models.GameMode.Classic, TriviaCategory.Named("mixed"), questions);
+    }
+
+    /// Duels had no way in from a harness, so the surface was untested and the
+    /// `duels/$id` read rule could not be re-verified in-app. These two hooks are the
+    /// coverage (no-ops in production).
+    private bool _duelHooksRan;
+    private async System.Threading.Tasks.Task RunDuelHooks()
+    {
+        if (_duelHooksRan) return;
+        _duelHooksRan = true;
+        if (Services.LaunchHooks.DuelChallenge is { Length: > 0 } uid)
+        {
+            var g = Services.GameData.Shared.Value;
+            var id = await g.Duels.Challenge(g.Rtdb, new PlayerIdentity.Friend { Uid = uid, Name = "QA friend" },
+                                             g.PlayerName, await g.Provider.Questions(TriviaCategory.Named("mixed"), 6));
+            Services.LaunchHooks.Diag($"duel challenge: id={id ?? "(none)"} me={g.Rtdb.Uid ?? "(none)"} vs={uid}");
+        }
+        if (Services.LaunchHooks.Duels) await System.Threading.Tasks.Task.Delay(600).ContinueWith(_ =>
+            Avalonia.Threading.Dispatcher.UIThread.Post(() => OnDuels(this, new RoutedEventArgs())));
     }
 
     /// Challenge a friend to a fresh 6-question set.

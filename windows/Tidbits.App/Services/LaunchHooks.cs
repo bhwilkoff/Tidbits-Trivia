@@ -111,6 +111,13 @@ public static class LaunchHooks
     /// question's accepted list with that answer, which re-scores the room (A3.13).
     public static string? LiveFixKey => Env("TIDBITS_LIVE_FIX_KEY");
     public static double? LiveFixAt => double.TryParse(Env("TIDBITS_LIVE_FIX_AT"), out var v) ? v : null;
+    /// TIDBITS_DUELS=1 — open the Duels dialog on launch. Duels shipped with NO hook and no
+    /// fleet coverage, so the surface could never be photographed and a rules change to
+    /// `duels/$id` could not be re-verified in-app (DATA-SECURITY-AUDIT "known coverage gap").
+    public static bool Duels => Flag("TIDBITS_DUELS");
+    /// TIDBITS_DUEL_CHALLENGE=<uid> — challenge that uid to a fresh set on launch; the duel id
+    /// is written to the Diag log so a harness can play the other side from the wire.
+    public static string? DuelChallenge => Env("TIDBITS_DUEL_CHALLENGE");
     /// TIDBITS_LIVE_BREAK=<minutes> at TIDBITS_LIVE_BREAK_AT=<secs> — hold the show on a break
     /// with a promised return, the way the cockpit's Break command does (A3.14).
     public static int? LiveBreak => int.TryParse(Env("TIDBITS_LIVE_BREAK"), out var v) ? v : null;

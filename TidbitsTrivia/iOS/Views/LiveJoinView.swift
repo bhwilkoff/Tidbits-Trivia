@@ -260,6 +260,11 @@ struct LiveJoinView: View {
             }
             // 24pt is a phone size read at arm's length; a 12.9" iPad is held
             // further away and usually shared, so the clue carries at 34.
+            if let pts = p.points, pts > 1 {   // A2.11: a double-points round
+                Text("WORTH \(pts) PTS").font(.caption.weight(.heavy)).foregroundStyle(.white)
+                    .padding(.horizontal, 10).padding(.vertical, 3).background(Capsule().fill(Tidbits.Palette.coral))
+                    .accessibilityIdentifier("live.worth")
+            }
             Text(p.prompt)
                 .font(.system(size: isWide ? 34 : 24, weight: .black, design: .rounded))
                 .foregroundStyle(Tidbits.Palette.ink)

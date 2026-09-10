@@ -401,6 +401,8 @@ object FirebaseNet {
         /** The wrap recap: the answer as a line (reveal only) and the difficulty (always). Mirrors Swift `Pub.answer/difficulty`. */
         val answer: String? = null,
         val difficulty: Int? = null,
+        /** A2.11: what a correct answer is worth right now (null from an older host or on a poll). */
+        val points: Int? = null,
         /** A2.10: a poll — the room votes, no right answer, nobody scores. */
         val poll: Boolean = false,
         /** Decision 060 (pictures): the full picture as a room node; `imageUrl` is
@@ -525,6 +527,7 @@ object FirebaseNet {
             story = snap.child("story").getValue(String::class.java),
             answer = snap.child("answer").getValue(String::class.java),
             difficulty = snap.child("difficulty").getValue(Long::class.java)?.toInt(),
+            points = snap.child("points").getValue(Long::class.java)?.toInt(),
             poll = snap.child("poll").getValue(Boolean::class.java) ?: false,
             deadline = snap.child("deadline").getValue(Long::class.java),
             wager = snap.child("wager").getValue(Boolean::class.java) ?: false,

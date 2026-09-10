@@ -198,6 +198,10 @@ struct TVLivePlayerView: View {
             if let m = p.media {   // Decision 060: the host's clip, offered on the TV too
                 LiveClipView(media: m, code: client.code).id(p.qid + m.url)
             }
+            if let pts = p.points, pts > 1 {   // A2.11: a double-points round
+                Text("WORTH \(pts) PTS").font(.system(size: 26, weight: .heavy, design: .rounded)).foregroundStyle(.white)
+                    .padding(.horizontal, 16).padding(.vertical, 6).background(Capsule().fill(Tidbits.Palette.coral))
+            }
             Text(p.prompt).font(.system(size: 48, weight: .black, design: .rounded)).foregroundStyle(.white)
                 .fixedSize(horizontal: false, vertical: true)
             if let d = p.deadline, !revealed { tvCountdown(d) }              // Wave A: on-screen timer

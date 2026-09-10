@@ -267,6 +267,11 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
                     androidx.compose.runtime.key(p.qid, m.url) { LiveClipCard(m, code) }
                     Spacer(Modifier.height(12.dp))
                 }
+                p.points?.takeIf { it > 1 }?.let { pts ->   // A2.11: a double-points round
+                    Text("WORTH $pts PTS", fontSize = 12.sp, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.onPrimary,
+                         modifier = Modifier.background(MaterialTheme.colorScheme.primary, RoundedCornerShape(999.dp)).padding(horizontal = 10.dp, vertical = 3.dp))
+                    Spacer(Modifier.height(8.dp))
+                }
                 Text(p.prompt, fontSize = 24.sp, fontWeight = FontWeight.Black, color = ink)
                 Spacer(Modifier.height(12.dp))
                 if (!revealed && p.deadline != null) {   // Wave A: on-screen timer

@@ -2392,6 +2392,17 @@ the head's top line — a capture artefact, not a bug). **Verified on the glass:
 report" from the answer sheet — hardest/easiest questions, participation,
 per-round accuracy — on both cockpits, no backend.
 
+**2026-09-10ab — Live loop tick 28: every joiner shows what a question is
+worth.** The follow-up to A2.11: `pub.points` now renders as a coral WORTH N
+PTS chip above the prompt on the web, iOS, tvOS, Android and Windows joiners —
+only when a question is worth more than one point, so the ordinary night stays
+quiet. Android's `LivePub` gained `points`; the web's `sw.js` cache bumped to
+v134. **Verified on the real bench** (`e2e_points_join.py`): the web DOM read WORTH 3 PTS; the Apple TV, the Android TV dongle and the Windows box
+photographed the chip above the question; the iPhone hit its Screen Time limit again
+(OWNER-PLAYBOOK).
+Versions 1.9.26 / 156 / vc117 / MSIX 1.9.26.0. Next: event history, host
+toasts, native phone remote.
+
 **2026-09-10aa — Live loop tick 27: a double-points round.** Audit item
 "round-level points multiplier", confirmed missing on both hosts (per-question
 overrides and a night default only). A2.11 / 3.73: `LiveRound.points` /

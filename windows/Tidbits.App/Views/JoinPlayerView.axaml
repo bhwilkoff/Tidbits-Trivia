@@ -83,6 +83,9 @@
                         <views:VideoSurface x:Name="ClipVideo"/>
                     </Border>
                 </StackPanel>
+                <Border IsVisible="{Binding HasWorth}" Background="#FF5C35" CornerRadius="999" Padding="10,3" HorizontalAlignment="Left">
+                    <TextBlock Text="{Binding WorthLine}" Foreground="White" FontSize="12" FontWeight="Black" AutomationProperties.Name="Question worth"/>
+                </Border>
                 <TextBlock IsVisible="{Binding ShowQuestionOnly}" Text="{Binding Prompt}"
                            FontSize="21" FontWeight="Bold" TextWrapping="Wrap"/>
                 <!-- G1: on a buzz round the whole answer UI is ONE button. Big,

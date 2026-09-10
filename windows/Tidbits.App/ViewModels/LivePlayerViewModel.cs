@@ -39,6 +39,9 @@ public sealed class LivePlayerViewModel : ObservableObject
     // Measured on the real box: a joiner that showed the options and a BLANK band
     // where the question should be, and no room name, all night.
     public string Prompt => Client.Pub?.Prompt ?? "";
+    /// A2.11: what a question is worth on a double-points round (hidden at 1 pt).
+    public string WorthLine => Client.Pub?.Points is int p && p > 1 ? $"WORTH {p} PTS" : "";
+    public bool HasWorth => WorthLine.Length > 0 && ShowQuestion;
     public string RoomName => Client.Meta?.Name ?? "";
     public int Score => Client.Score;
     public string? ErrorText => Client.ErrorText;

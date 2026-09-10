@@ -390,6 +390,10 @@ there is no regression baseline at all.
 - Windows box: `TIDBITS_PROFILE_NAME=<name>` renames the portable profile through the Settings
   path at launch; `scratchpad/e2e_name.py` photographs Settings, parses the `profile rename`
   Diag line for the profile id and reads `players/{id}.name` back from the wire.
+- Joiners: `scratchpad/e2e_points_join.py web,iphone,atv,dongle,windows` — the Mac hosts the 3-point
+  night; asserts the web's `.live-worth` reads WORTH 3 PTS and photographs every other joiner on
+  the question. Needs the tvOS/iOS builds installed (`tools/atv_install.sh`, the iOS devicectl
+  install), the DEBUG apk, and the box deployed.
 - Both hosts: `scratchpad/e2e_points.py <mac|windows>` hosts `points-night.tidbitsevent.json`
   (round 1 worth 3 a question) and asserts `pub.points == 3` on the wire, then that a correct
   wire answer paid 3 after `TIDBITS_LIVE_NEXT_AT` revealed; photographs the cockpit line.

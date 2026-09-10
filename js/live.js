@@ -426,6 +426,7 @@ function playHTML() {
   return `<div class="live-play">${head}
     <div class="live-round">ROUND ${p.round} · ${esc(p.roundTitle)} — Q${p.qNum}/${p.qTotal}</div>
     ${p.letter ? `<div class="live-letter">EVERY ANSWER BEGINS WITH ${esc(String(p.letter).toUpperCase()[0])}</div>` : ''}
+    ${p.points > 1 ? `<div class="live-worth">WORTH ${p.points} PTS</div>` : ''}
     ${img}
     ${media}
     <div class="live-q">${esc(p.prompt)}</div>

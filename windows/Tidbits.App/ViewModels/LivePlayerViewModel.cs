@@ -35,7 +35,7 @@ public sealed class LivePlayerViewModel : ObservableObject
 
     // UI state
     public bool NotJoined => !Client.Joined;
-    public bool WaitingForStart => Client.Joined && Client.Pub is null;
+    public bool WaitingForStart => Client.Joined && Client.Pub is null && !Client.Ended;   // a torn-down room after the wrap is not a lobby
     public bool ShowQuestion => Client.Pub?.Phase == LiveRoom.Phase.Question;
     public bool ShowReveal => Client.Pub?.Phase == LiveRoom.Phase.Reveal;
     // Final wager round — stake 0…your score before answering.
@@ -49,7 +49,10 @@ public sealed class LivePlayerViewModel : ObservableObject
     public bool HasBuzzed => IsBuzz && Client.HasAnswered;
     public int MaxWager => Client.Score;
     public int Wager { get => Client.Wager; set => Client.Wager = value; }
-    public bool IsEnded => Client.Meta?.State == "ended" || Client.Pub?.Phase == LiveRoom.Phase.Ended;
+    public bool IsEnded => Client.Ended || Client.Meta?.State == "ended" || Client.Pub?.Phase == LiveRoom.Phase.Ended;
+    public string FinalScoreLine => $"Final score: {Client.Score}";
+    public System.Collections.Generic.IReadOnlyList<LiveRecapEntry> RecapTough => Client.Recap.Tough;
+    public System.Collections.Generic.IReadOnlyList<LiveRecapEntry> RecapToRemember => Client.Recap.ToRemember;
     public bool Answered => Client.HasAnswered;
     /// A buzz is an answer, but it has its own confirmation line, so the
     /// generic "Answer locked" must stand down or the player is told twice.

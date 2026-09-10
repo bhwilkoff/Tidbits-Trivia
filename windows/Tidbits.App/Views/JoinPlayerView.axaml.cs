@@ -6,6 +6,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Input.Platform;   // SetTextAsync is an extension method on IClipboard
 using Tidbits.App.ViewModels;
 using Tidbits.Core.Networking;
 
@@ -65,7 +66,7 @@ public partial class JoinPlayerView : UserControl
         RebuildCoplayers();
     }
 
-    private void OnClientChanged() => Avalonia.Threading.Dispatcher.UIThread.Post(() => { RebuildOptions(); RebuildCoplayers(); RefreshClip(); RefreshPicture(); });
+    private void OnClientChanged() => Avalonia.Threading.Dispatcher.UIThread.Post(() => { RebuildOptions(); RebuildCoplayers(); RebuildRecap(); RefreshClip(); RefreshPicture(); });
 
     // ---- Decision 060 (pictures) ----------------------------------------------
     private string _pictureKey = "";
@@ -166,6 +167,54 @@ public partial class JoinPlayerView : UserControl
             };
         }
         av.SetVideoSink(_clipSink);
+    }
+
+    /// The wrap's learning payoff: tough ones nailed (with a copyable "How did you
+    /// know that?"), and what to remember with the answer, story and source.
+    private void RebuildRecap()
+    {
+        RecapPanel.Children.Clear();
+        if (_vm is not { } vm || !vm.IsEnded) return;
+        var tough = vm.RecapTough; var remember = vm.RecapToRemember;
+        if (tough.Count == 0 && remember.Count == 0) return;
+        Border Card(Tidbits.Core.Networking.LiveRecapEntry e, bool nailed)
+        {
+            var body = new StackPanel { Spacing = 3 };
+            body.Children.Add(new TextBlock { Text = e.Prompt, FontWeight = FontWeight.Bold, TextWrapping = TextWrapping.Wrap });
+            body.Children.Add(new TextBlock { Text = (nailed ? "You got it: " : "Answer: ") + (e.Answer ?? ""), Opacity = 0.7, TextWrapping = TextWrapping.Wrap });
+            if (nailed)
+            {
+                var share = new Button { Content = "How did you know that? · Copy", Padding = new Thickness(0), Background = null, BorderThickness = new Thickness(0), Foreground = new SolidColorBrush(Color.Parse("#0047FF")), FontWeight = FontWeight.Bold };
+                share.Click += async (_, _) =>
+                {
+                    var clip = TopLevel.GetTopLevel(this)?.Clipboard;
+                    if (clip is not null) { await clip.SetTextAsync(Tidbits.Core.Networking.LiveRecapBook.HowDidYouKnowText(e)); share.Content = "Copied — paste it to a friend"; }
+                };
+                body.Children.Add(share);
+            }
+            else
+            {
+                if (!string.IsNullOrWhiteSpace(e.Story)) body.Children.Add(new TextBlock { Text = e.Story, Opacity = 0.85, TextWrapping = TextWrapping.Wrap });
+                if (!string.IsNullOrWhiteSpace(e.SourceTitle))
+                {
+                    if (e.SourceUrl is { } url)
+                        body.Children.Add(new HyperlinkButton { Content = "Learn more on Wikipedia · " + e.SourceTitle, NavigateUri = new System.Uri(url), Padding = new Thickness(0), FontWeight = FontWeight.Bold });
+                    else
+                        body.Children.Add(new TextBlock { Text = "From Wikipedia · " + e.SourceTitle, Opacity = 0.7, FontWeight = FontWeight.Bold });
+                }
+            }
+            return new Border { Child = body, Padding = new Thickness(12, 10), CornerRadius = new CornerRadius(10), Background = new SolidColorBrush(Color.Parse("#0F808080")) };
+        }
+        if (tough.Count > 0)
+        {
+            RecapPanel.Children.Add(new TextBlock { Text = "Tough ones you nailed", FontWeight = FontWeight.Bold, FontSize = 16, Margin = new Thickness(0, 6, 0, 0) });
+            foreach (var e in tough) RecapPanel.Children.Add(Card(e, true));
+        }
+        if (remember.Count > 0)
+        {
+            RecapPanel.Children.Add(new TextBlock { Text = "Tidbits to remember", FontWeight = FontWeight.Bold, FontSize = 16, Margin = new Thickness(0, 6, 0, 0) });
+            foreach (var e in remember) RecapPanel.Children.Add(Card(e, false));
+        }
     }
 
     /// At the wrap, list the people you played with, each with an Add / Added button.

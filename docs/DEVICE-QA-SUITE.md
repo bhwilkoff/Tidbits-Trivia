@@ -370,6 +370,8 @@ there is no regression baseline at all.
   at both moments — a wrap has to survive the second. Before a web run: purge
   the headless profile's service worker (it serves last week's `live.js`), and
   check `curl http://127.0.0.1:8080/js/live.js` — the local server dies quietly.
+  `e2e_wrap.py windows,dongle` adds the box and the Android TV dongle as joiners
+  (Android needs the DEBUG apk; the harness installs it).
 - Windows box: `TIDBITS_LIVE_TIEBREAK=1` opens the Break tie dialog 3 s after
   the `TIDBITS_LIVE_ACCEPT_ALL` ruling (needs two tied teams on the wire).
   `scratchpad/e2e_overrides.py` writes a night with `questionTimers` /

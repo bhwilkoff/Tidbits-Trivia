@@ -26,6 +26,10 @@ public sealed class LivePlayerClient
     public void JoinedForTesting(string code) { Code = code; Joined = true; Joining = false; Changed?.Invoke(); }
     public LiveRoom.Meta? Meta { get; private set; }
     public int Score { get; private set; }
+    /// The wrap recap, and a STICKY ended flag: the host tears the room down when
+    /// it closes the cockpit; a wrap keyed on the live frames alone vanished.
+    public LiveRecapBook Recap { get; private set; } = new();
+    public bool Ended { get; private set; }
     public int Wager { get; set; }
     public bool Blurred { get; set; }
     public string? SubmittedQid { get; private set; }
@@ -124,6 +128,7 @@ public sealed class LivePlayerClient
         _tasks.Clear();
         if (Joined && _uid is not null) { try { await _db.Delete($"{LiveRoom.Path(Code)}/teams/{_uid}"); } catch { } }
         Joined = false; Pub = null; Meta = null; Score = 0; Code = ""; SubmittedQid = null; Chosen = null;
+        Recap = new LiveRecapBook(); Ended = false; _recordedEnd = false;
         Changed?.Invoke();
     }
 
@@ -153,9 +158,10 @@ public sealed class LivePlayerClient
     {
         LiveRoom.Pub? p = null;
         if (ev.DataJson is not null) { try { p = JsonSerializer.Deserialize<LiveRoom.Pub>(ev.DataJson, Wire.Json); } catch { } }
-        if (p is null) { Pub = null; return; }
+        if (p is null) { Pub = null; Changed?.Invoke(); return; }
         if (p.Qid != Pub?.Qid) { SubmittedQid = null; Chosen = null; Blurred = false; Wager = 0; }
         Pub = p;
+        Recap.Observe(p, Score);
         if (p.Phase == LiveRoom.Phase.Reveal && _talliedQid != p.Qid)
         {
             _talliedQid = p.Qid;
@@ -200,7 +206,10 @@ public sealed class LivePlayerClient
 
     private void ApplyScore(FirebaseRtdb.StreamEvent ev)
     {
-        Score = ev.DataJson is not null && int.TryParse(ev.DataJson, out var v) ? v : 0;
+        var parsed = ev.DataJson is not null && int.TryParse(ev.DataJson, out var v) ? v : 0;
+        if (_recordedEnd && parsed <= 0) return;   // the room being deleted at the end is not a zero on the wrap
+        Score = parsed;
+        if (_recordedEnd) Recap.Finish(Score);     // a late score write still settles the last question
     }
 
     private void RecordIfEnded()
@@ -208,6 +217,8 @@ public sealed class LivePlayerClient
         if (!Joined || _recordedEnd) return;
         if (Meta?.State != "ended" && Pub?.Phase != LiveRoom.Phase.Ended) return;
         _recordedEnd = true;
+        Ended = true;
+        Recap.Finish(Score);
         NightEnded?.Invoke(_liveCorrect, _liveAnswered, Meta?.Venue ?? "", Score);
         _ = CaptureCoplayers();
         _ = RecordStanding(Meta?.Venue ?? "", Score);

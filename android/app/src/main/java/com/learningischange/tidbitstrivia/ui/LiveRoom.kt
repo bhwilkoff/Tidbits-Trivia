@@ -73,6 +73,9 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
     var error by remember { mutableStateOf<String?>(null) }
     var submittedQid by remember { mutableStateOf<String?>(null) }
     var chosen by remember { mutableStateOf<Int?>(null) }
+    val recap = remember { com.learningischange.tidbitstrivia.data.LiveRecapBook() }   // the wrap's learning payoff
+    var endedSticky by remember { mutableStateOf(false) }   // the host tears the room down after the wrap; the wrap stays
+    var finalVenue by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
 
     DisposableEffect(code) {
@@ -90,10 +93,15 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
                     }
                     meta = it
                 }
-                unsubs += FirebaseNet.liveOnScore(code) { score = it }
+                unsubs += FirebaseNet.liveOnScore(code) {
+                    if (endedSticky && it <= 0) return@liveOnScore   // the room being deleted at the end is not a zero on the wrap
+                    score = it
+                    if (endedSticky) recap.finish(it)                 // a late score write still settles the last question
+                }
                 unsubs += FirebaseNet.liveOnPub(code) { p ->
                     if (p != null && p.qid != pub?.qid) { submittedQid = null; chosen = null; blurred = false }   // Wave C: reset focus flag
                     pub = p
+                    recap.observe(p, score)
                 }
             } catch (e: Exception) {
                 error = "Couldn't join. Check the code and your connection."
@@ -132,7 +140,7 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
     val ink = MaterialTheme.colorScheme.onSurface
     val soft = ink.copy(alpha = 0.6f)
     val p = pub
-    val ended = meta?.state == "ended" || p?.phase == "ended"
+    val ended = endedSticky || meta?.state == "ended" || p?.phase == "ended"
 
     // Live→profile bridge: tally MCQ accuracy, feed the portable profile once at the end.
     var liveAnswered by remember { mutableStateOf(0) }
@@ -153,6 +161,7 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
     LaunchedEffect(ended) {
         if (ended && joined && !recordedEnd) {
             recordedEnd = true
+            endedSticky = true; finalVenue = meta?.venue ?: ""; recap.finish(score)
             com.learningischange.tidbitstrivia.data.PlayerIdentity.recordLiveGame(liveCorrect, liveAnswered)
             com.learningischange.tidbitstrivia.data.PlayerIdentity.recordStanding(meta?.venue ?: "", score)   // Wave E: per-venue season standing
             val me = com.learningischange.tidbitstrivia.net.FirebaseNet.uid()   // L5: capture co-players
@@ -189,6 +198,7 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
                 Badge("THAT'S A WRAP", Pops.coral)
                 Spacer(Modifier.height(12.dp))
                 Text("Final score: $score", fontSize = 26.sp, fontWeight = FontWeight.Black, color = ink)
+                LiveRecapSection(recap, ink, soft)   // the learning payoff, before the social one
                 if (coplayers.isNotEmpty()) {   // L5: "Add the people you played with"
                     Spacer(Modifier.height(16.dp))
                     Text("Add the people you played with", fontSize = 13.sp, color = soft)
@@ -511,5 +521,51 @@ private fun MatchingAnswer(keys: List<String>, values: List<String>, qid: String
         }
         if (!sent) Button(onClick = { sent = true; onSubmit(pairs) }, enabled = !locked && pairs.none { it < 0 }, modifier = Modifier.fillMaxWidth(),
             colors = ButtonDefaults.buttonColors(containerColor = Pops.coral, contentColor = Color.White)) { Text("Submit", fontWeight = FontWeight.Bold) }
+    }
+}
+
+/**
+ * The wrap's learning payoff (macOS-DESIGN A3.7, every joiner): "Tough ones you
+ * nailed" with the share line, and "Tidbits to remember" with the answer, the
+ * story and the Wikipedia source. The Android twin of Swift LiveRecapView.
+ */
+@Composable
+fun LiveRecapSection(book: com.learningischange.tidbitstrivia.data.LiveRecapBook, ink: androidx.compose.ui.graphics.Color, soft: androidx.compose.ui.graphics.Color) {
+    val tough = book.tough; val remember = book.toRemember
+    if (tough.isEmpty() && remember.isEmpty()) return
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
+    Column(Modifier.fillMaxWidth().padding(top = 16.dp), horizontalAlignment = Alignment.Start) {
+        if (tough.isNotEmpty()) {
+            Text("✨ Tough ones you nailed", fontSize = 18.sp, fontWeight = FontWeight.Black, color = ink)
+            tough.forEach { e ->
+                Column(Modifier.fillMaxWidth().padding(top = 8.dp).background(MaterialTheme.colorScheme.surfaceVariant, androidx.compose.foundation.shape.RoundedCornerShape(12.dp)).padding(12.dp)) {
+                    Text(e.prompt, fontWeight = FontWeight.Bold, color = ink)
+                    Text("You got it: ${e.answer ?: ""}", fontSize = 13.sp, color = soft)
+                    TextButton(onClick = {
+                        val send = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                            type = "text/plain"; putExtra(android.content.Intent.EXTRA_TEXT, com.learningischange.tidbitstrivia.data.LiveRecapBook.howDidYouKnowText(e))
+                        }
+                        runCatching { context.startActivity(android.content.Intent.createChooser(send, "How did you know that?")) }
+                    }, contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)) { Text("How did you know that? · Share", color = Pops.blue, fontWeight = FontWeight.Bold) }
+                }
+            }
+        }
+        if (remember.isNotEmpty()) {
+            Spacer(Modifier.height(12.dp))
+            Text("🧠 Tidbits to remember", fontSize = 18.sp, fontWeight = FontWeight.Black, color = ink)
+            remember.forEach { e ->
+                Column(Modifier.fillMaxWidth().padding(top = 8.dp).background(MaterialTheme.colorScheme.surfaceVariant, androidx.compose.foundation.shape.RoundedCornerShape(12.dp)).padding(12.dp)) {
+                    Text(e.prompt, fontWeight = FontWeight.Bold, color = ink)
+                    Text("Answer: ${e.answer ?: ""}", fontSize = 13.sp, color = soft)
+                    if (!e.story.isNullOrBlank()) Text(e.story, fontSize = 13.sp, color = ink.copy(alpha = 0.8f), modifier = Modifier.padding(top = 4.dp))
+                    if (!e.sourceTitle.isNullOrBlank()) {
+                        Text(if (e.sourceUrl != null) "Learn more on Wikipedia · ${e.sourceTitle} ↗" else "From Wikipedia · ${e.sourceTitle}",
+                            fontSize = 13.sp, fontWeight = FontWeight.Bold, color = if (e.sourceUrl != null) Pops.blue else soft,
+                            modifier = Modifier.padding(top = 4.dp).then(if (e.sourceUrl != null) Modifier.clickable { runCatching { uriHandler.openUri(e.sourceUrl) } } else Modifier))
+                    }
+                }
+            }
+        }
     }
 }

@@ -63,8 +63,7 @@ in both directions (see the last paragraph).
    3.59), in the file contract too.
 8. ~~**Per-question host note**~~ — DONE 2026-09-09 (A2.9 / 3.60).
 9. ~~**"How did you know that?"**~~ — macOS solo results DONE 2026-09-09; the
-   live-night wrap DONE 2026-09-09 on web/iPhone/Apple TV/Mac joiner (A3.7);
-   Android + Windows joiners ⏳ tick 17.
+   live-night wrap DONE 2026-09-09 on ALL SIX joiners (A3.7).
 10. **Answer-level data export** (standings only today). S.
 11. **Final-wager tie-break** (both partial). M.
 12. **Drag-to-reorder on Windows** (up/down buttons). S.
@@ -2309,3 +2308,19 @@ the room was up AND after the host tore it down. Nits left: the web wrap header 
 1.9.14 / 144 / vc105 / MSIX 1.9.14.0. Next: tick 17 = the same wrap on the
 Android and Windows joiners (+ the Windows meta fix is already in), then
 punch list 10 (answer-level export).
+
+**2026-09-09q — Live loop tick 17: the wrap on the Android and Windows
+joiners.** Closes punch list 9. Kotlin `data/LiveRecap.kt` (JUnit) and C#
+`LiveRecap.cs` (xUnit) mirror the Swift/JS books; both joiners gained the
+sticky ended flag, the post-delete-zero guard and the venue kept at the wrap;
+Compose `LiveRecapSection` (share via `ACTION_SEND`) and the Windows join
+view's RecapPanel ("How did you know that? · Copy" — the clipboard is the
+Windows idiom). Harness: `e2e_wrap.py windows,dongle` (the box's launch
+handshake needs ACCEPT_AT ≥ 110 s; `TIDBITS_WIN_HOST` must be set BEFORE any
+tools import — `winbox` reads it at import). **Verified on the glass:** the
+real Android TV dongle and the real Windows box, each showing "Tidbits to
+remember" with the answer, story and Wikipedia link, photographed after the
+Mac host tore the room down. The Pixel 8a was not driven this tick (same
+code; the dongle stands in). Versions 1.9.15 / 145 / vc106 / MSIX 1.9.15.0.
+Next: punch list 10 (answer-level export) and 11 (final-wager tie-break);
+re-photograph the brightened Apple TV recap card.

@@ -276,6 +276,12 @@
                                        ToolTip.Tip="Pair your phone to reveal and advance while you walk the room"/>
                 <ui:FACommandBarToggleButton Label="Standings on big screen"
                                              IsChecked="{Binding HoldStandings, Mode=OneWay}" Click="OnToggleHold"/>
+                <!-- A3.14: the break. Distinct from the standings hold above: this one
+                     tells the ROOM (big screen + every phone) that nobody is playing. -->
+                <ui:FACommandBarButton Label="{Binding BreakLabel}" Click="OnToggleBreak"
+                                       ToolTip.Tip="Hold the show for an interval — the big screen and every joined phone say the room is on a break"/>
+                <ui:FACommandBarButton Label="Break with a return time…" Click="OnBreakFor"
+                                       ToolTip.Tip="Promise the room a time — every phone counts it down"/>
                 <ui:FACommandBarButton Label="Show on projector" Click="OnProjector"/>
                 <ui:FACommandBarButton x:Name="ScreenButton" Label="{Binding ScreenMenuLabel}" Click="OnScreenMenu"
                                        ToolTip.Tip="What the room sees: switch each element of the big screen, and go full screen"/>

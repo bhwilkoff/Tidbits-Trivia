@@ -39,6 +39,18 @@ public sealed class LivePlayerViewModel : ObservableObject
     // Measured on the real box: a joiner that showed the options and a BLANK band
     // where the question should be, and no room name, all night.
     public string Prompt => Client.Pub?.Prompt ?? "";
+    /// A3.14: the room is on a break — say so instead of leaving a stale question up.
+    public bool IsOnBreak => Client.Pub?.OnBreak == true;
+    public string BreakHeadline => LiveBreak.Headline(Client.Pub?.BreakUntil);
+    public string BreakSubline
+    {
+        get
+        {
+            var clock = LiveBreak.ClockLine(Client.Pub?.BreakUntil);
+            return clock.Length == 0 ? "Grab a drink — the next round is coming up." : $"Grab a drink — {clock}.";
+        }
+    }
+
     /// A2.11: what a question is worth on a double-points round (hidden at 1 pt).
     public string WorthLine => Client.Pub?.Points is int p && p > 1 ? $"WORTH {p} PTS" : "";
     public bool HasWorth => WorthLine.Length > 0 && ShowQuestion;
@@ -114,9 +126,9 @@ public sealed class LivePlayerViewModel : ObservableObject
     /// The prompt only when a question is actually being asked.
     /// The prompt stays through the REVEAL (every other joiner keeps it; the room is
     /// still talking about the question) — only the board phase hides it.
-    public bool ShowQuestionOnly => (ShowQuestion || ShowReveal) && !IsBoard;
+    public bool ShowQuestionOnly => (ShowQuestion || ShowReveal) && !IsBoard && !IsOnBreak;
     /// Answer buttons: never on a buzz round, never while the grid is up.
-    public bool ShowOptions => !IsBuzz && !IsBoard;
+    public bool ShowOptions => !IsBuzz && !IsBoard && !IsOnBreak;
     public string BoardHeadline =>
         Client.Pub?.Board?.Chooser is { Length: > 0 } who ? $"{who} picks" : "Pick a category";
     public string BoardSummary =>

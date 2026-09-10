@@ -390,6 +390,15 @@ there is no regression baseline at all.
 - Windows box: `TIDBITS_PROFILE_NAME=<name>` renames the portable profile through the Settings
   path at launch; `scratchpad/e2e_name.py` photographs Settings, parses the `profile rename`
   Diag line for the profile id and reads `players/{id}.name` back from the wire.
+- The break (A3.14): `TIDBITS_LIVE_BREAK=<minutes>` + `TIDBITS_LIVE_BREAK_AT=<secs>` on both
+  hosts hold the show with a promised return. `scratchpad/e2e_break.py web,atv,dongle,windows`
+  asserts `pub.onBreak` + `breakUntil` on the wire, reads the web's `.live-breakhead`, and
+  photographs every joiner — the question must be GONE on each, not merely covered.
+- Answer leakage (owner question, 2026-09-10): `scratchpad/e2e_leak.py` sweeps the real web
+  joiner mid-question — DOM, localStorage, sessionStorage, every `window` global, the
+  resource list, and the room read with the JOINER's credentials — for the answer string,
+  then reveals through the control channel and asserts the sweep NOW finds it. The second
+  half is the point: without it the clean result proves nothing.
 - Night archive (A2.12): `TIDBITS_LIVE_NIGHTS=1` opens the archive on launch (the Mac's
   sheet, the box's newest-night dialog); the box also has `TIDBITS_LIVE_FINISH_AT=<secs>`
   (reveal, then END the night — the macOS twin). `scratchpad/e2e_nights.py <mac|windows>`

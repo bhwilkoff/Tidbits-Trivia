@@ -325,6 +325,22 @@ async function remoteSend(verb) {
   draw();
 }
 
+// A3.14 — the twin of Swift/C# `LiveBreak`: whole minutes rounded UP (a host who says
+// ten is not immediately shown nine), and the clock time the room actually acts on.
+function breakMinutes(until) {
+  if (!until) return null;
+  const secs = until / 1000 - Date.now() / 1000;
+  if (secs <= 0) return null;
+  // Nearest minute, not up: rounding up turned every slightly-slow clock in the room
+  // into a different number (the projector said 10 and a joiner said 11).
+  const mins = Math.round(secs / 60);
+  return mins > 0 ? mins : null;
+}
+function breakClock(until) {
+  if (!until || breakMinutes(until) == null) return '';
+  return 'back at ' + new Date(until).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+
 function joinHTML() {
   return `<div class="live-card">
     <button id="live-x" class="live-x" aria-label="Close">✕</button>
@@ -423,6 +439,17 @@ function playHTML() {
   // every state change would restart a playing clip.
   const media = p.media && p.phase !== 'ended' ? `<div id="live-media"></div>` : '';
 
+  // A3.14: the room is on a break. The question is NOT left up — a table that stepped
+  // outside should not come back to a stale prompt and answer it late.
+  if (p.onBreak) {
+    const mins = breakMinutes(p.breakUntil);
+    const clock = breakClock(p.breakUntil);
+    return `<div class="live-play">${head}
+      <div class="live-breakcard">
+        <div class="live-breakhead">${esc(mins == null ? 'Back in a moment' : mins === 1 ? 'Back in a minute' : `Back in ${mins} minutes`)}</div>
+        <p class="live-sub">${clock ? `Grab a drink — ${esc(clock)}.` : 'Grab a drink — the next round is coming up.'}</p>
+      </div></div>`;
+  }
   return `<div class="live-play">${head}
     <div class="live-round">ROUND ${p.round} · ${esc(p.roundTitle)} — Q${p.qNum}/${p.qTotal}</div>
     ${p.letter ? `<div class="live-letter">EVERY ANSWER BEGINS WITH ${esc(String(p.letter).toUpperCase()[0])}</div>` : ''}

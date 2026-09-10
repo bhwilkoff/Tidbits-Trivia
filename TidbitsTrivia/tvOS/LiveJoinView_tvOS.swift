@@ -184,6 +184,10 @@ struct TVLivePlayerView: View {
     @ViewBuilder private func questionView(_ p: LiveRoom.Pub) -> some View {
         let revealed = p.phase == LiveRoom.Phase.reveal
         let locked = revealed || client.hasAnswered || p.locked == true
+        // A3.14: on a break the question is GONE, not merely covered.
+        if p.onBreak == true {
+            LiveBreakCard(until: p.breakUntil)
+        } else {
         VStack(alignment: .leading, spacing: 30) {
             Text("ROUND \(p.round) · \(p.roundTitle.uppercased()) — Q\(p.qNum)/\(p.qTotal)")
                 .font(.system(size: 25, weight: .heavy, design: .rounded)).foregroundStyle(TVTheme.textSoft)
@@ -268,6 +272,7 @@ struct TVLivePlayerView: View {
                 Label("From Wikipedia · \(src.title)", systemImage: "book.closed")
                     .font(.system(size: 26, weight: .semibold)).foregroundStyle(TVTheme.textSoft)
             }
+        }
         }
     }
 

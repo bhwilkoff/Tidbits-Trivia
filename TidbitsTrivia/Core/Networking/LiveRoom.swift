@@ -92,6 +92,11 @@ enum LiveRoom {
         /// nobody scores. On reveal the host publishes NO answerIndex / answer; a
         /// joiner says "thanks for voting" instead of a verdict. Additive.
         var poll: Bool? = nil
+        /// A3.14 (2026-09-10): the room is ON A BREAK. The host holds the show; the big
+        /// screen and every joined phone say so instead of leaving a stale question up.
+        /// `breakUntil` is the epoch-ms the host promised to be back, when they set one.
+        var onBreak: Bool? = nil
+        var breakUntil: Int? = nil
     }
 
     nonisolated struct Source: Codable, Equatable {

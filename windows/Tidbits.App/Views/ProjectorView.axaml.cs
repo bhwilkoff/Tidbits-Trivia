@@ -57,8 +57,15 @@ public partial class ProjectorView : UserControl
 
     private void RefreshCountdown()
     {
-        var s = (DataContext as LiveHostViewModel)?.SecondsRemaining;
-        CountdownBig.Text = s is { } n ? $"{n}s" : "";
+        var vm = DataContext as LiveHostViewModel;
+        CountdownBig.Text = vm?.SecondsRemaining is { } n ? $"{n}s" : "";
+        // A3.14: the break counts down on the same second tick — a minute rolling over
+        // must be visible on the big screen, not wait for the host's next publish.
+        if (vm is not null && vm.IsOnBreak)
+        {
+            BreakHeadline.Text = vm.BreakHeadline;
+            BreakSubline.Text = vm.BreakSubline;
+        }
     }
 
     protected override void OnDataContextChanged(EventArgs e)

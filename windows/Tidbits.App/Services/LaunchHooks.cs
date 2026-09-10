@@ -111,6 +111,10 @@ public static class LaunchHooks
     /// question's accepted list with that answer, which re-scores the room (A3.13).
     public static string? LiveFixKey => Env("TIDBITS_LIVE_FIX_KEY");
     public static double? LiveFixAt => double.TryParse(Env("TIDBITS_LIVE_FIX_AT"), out var v) ? v : null;
+    /// TIDBITS_LIVE_BREAK=<minutes> at TIDBITS_LIVE_BREAK_AT=<secs> — hold the show on a break
+    /// with a promised return, the way the cockpit's Break command does (A3.14).
+    public static int? LiveBreak => int.TryParse(Env("TIDBITS_LIVE_BREAK"), out var v) ? v : null;
+    public static double LiveBreakAt => double.TryParse(Env("TIDBITS_LIVE_BREAK_AT"), out var v) ? v : 15;
     /// TIDBITS_LIVE_FINISH_AT=<secs> — reveal if needed, then END the night the way the host does
     /// (macOS parity). Without it a two-question night on the box could never be driven to its wrap.
     public static double? LiveFinishAt => double.TryParse(Env("TIDBITS_LIVE_FINISH_AT"), out var v) ? v : null;

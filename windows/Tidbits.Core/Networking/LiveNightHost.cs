@@ -77,6 +77,22 @@ public sealed class LiveNightHost : ObservableObject
     public HashSet<string> ManuallyAccepted { get; } = new();
     /// A3.8: the night's answer sheet, one record per revealed question.
     public List<LiveAnswerRecord> AnswerLog { get; } = new();
+    /// A3.14: the show is HELD on a break — the big screen and every joined phone say
+    /// so, instead of leaving a stale question up while the room is at the bar. The game
+    /// position is untouched; resuming carries on where it was.
+    public bool OnBreak { get; private set; }
+    public long? BreakUntil { get; private set; }
+
+    /// Hold or resume. Resuming clears any promised return time — a stale "back at 9:15"
+    /// is worse than none. Republishes so the phones learn immediately.
+    public async Task SetBreak(bool on, int? minutes = null)
+    {
+        OnBreak = on;
+        BreakUntil = on ? (minutes is { } m ? LiveBreak.Until(m) : BreakUntil) : null;
+        await PublishCurrent();
+        Notify();
+    }
+
     /// A2.12: where a finished night is kept (null in tests that do not care).
     public Store.NightArchive? Archive { get; set; }
     private bool _archived;
@@ -897,6 +913,8 @@ public sealed class LiveNightHost : ObservableObject
             Answer = Revealed && !CurrentIsPoll ? LiveScoring.AnswerLine(q) : null,   // the answer as a line, every format — for the wrap
             Difficulty = q.Difficulty,
             Points = CurrentIsPoll ? null : CurrentPoints,   // A2.11: what a correct answer is worth right now
+            OnBreak = OnBreak ? true : null,                // A3.14: the room is at the bar
+            BreakUntil = OnBreak ? BreakUntil : null,
             Numeric = q.Closest is { } c ? new LiveRoom.Numeric { Min = c.Min, Max = c.Max, Step = c.Step, Unit = c.Unit } : null,
             OrderItems = q.Ordering is not null ? _shuffledOrder : null,
             MatchKeys = q.Matching?.Keys,

@@ -96,7 +96,7 @@ public sealed class LiveHostViewModel : ObservableObject
     public bool HoldStandings
     {
         get => _holdStandings;
-        private set { _holdStandings = value; OnPropertyChanged(nameof(HoldStandings)); OnPropertyChanged(nameof(ShowBigScreenStandings)); OnPropertyChanged(nameof(ShowQuestionScreen)); }
+        private set { _holdStandings = value; OnPropertyChanged(nameof(HoldStandings)); OnPropertyChanged(nameof(ShowBigScreenStandings)); OnPropertyChanged(nameof(ShowQuestionScreen)); OnPropertyChanged(nameof(ShowBreakScreen)); }
     }
     public bool ShowBigScreenStandings => IsPlaying && HoldStandings;
 
@@ -123,8 +123,24 @@ public sealed class LiveHostViewModel : ObservableObject
     // ---- G5 pick-a-category board -------------------------------------------
     // The board is a PHASE of a live round, not an interruption, so it takes
     // precedence over the question screen but not over a standings hold.
-    public bool ShowBoardScreen => IsPlaying && !HoldStandings && Host.ShowBoard && Host.CurrentBoard is not null;
-    public bool ShowQuestionScreen => IsPlaying && !HoldStandings && !ShowBoardScreen;
+    // A3.14: a break takes the big screen over everything — the room is at the bar and
+    // a question left up is a question someone answers late.
+    public bool ShowBreakScreen => IsPlaying && Host.OnBreak;
+    public bool ShowBoardScreen => IsPlaying && !Host.OnBreak && !HoldStandings && Host.ShowBoard && Host.CurrentBoard is not null;
+    public bool ShowQuestionScreen => IsPlaying && !Host.OnBreak && !HoldStandings && !ShowBoardScreen;
+    public bool IsOnBreak => Host.OnBreak;
+    public string BreakHeadline => LiveBreak.Headline(Host.BreakUntil);
+    public string BreakSubline
+    {
+        get
+        {
+            var clock = LiveBreak.ClockLine(Host.BreakUntil);
+            return clock.Length == 0 ? "Grab a drink — the next round is coming up." : $"Grab a drink — {clock}.";
+        }
+    }
+    public string BreakLabel => Host.OnBreak ? "Resume the game" : "Hold — the room is on a break";
+    public Task ToggleBreak() => Host.SetBreak(!Host.OnBreak);
+    public Task BreakFor(int minutes) => Host.SetBreak(true, minutes);
     public bool IsBoardRound => Host.IsBoardRound;
     public string BoardHeadline =>
         string.IsNullOrWhiteSpace(Host.BoardChooser) ? "PICK A CATEGORY"

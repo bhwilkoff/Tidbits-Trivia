@@ -403,6 +403,9 @@ object FirebaseNet {
         val difficulty: Int? = null,
         /** A2.11: what a correct answer is worth right now (null from an older host or on a poll). */
         val points: Int? = null,
+        /** A3.14: the room is on a break, and when the host promised to be back. */
+        val onBreak: Boolean = false,
+        val breakUntil: Long? = null,
         /** A2.10: a poll — the room votes, no right answer, nobody scores. */
         val poll: Boolean = false,
         /** Decision 060 (pictures): the full picture as a room node; `imageUrl` is
@@ -537,6 +540,8 @@ object FirebaseNet {
             answer = snap.child("answer").getValue(String::class.java),
             difficulty = snap.child("difficulty").getValue(Long::class.java)?.toInt(),
             points = snap.child("points").getValue(Long::class.java)?.toInt(),
+            onBreak = snap.child("onBreak").getValue(Boolean::class.java) ?: false,
+            breakUntil = snap.child("breakUntil").getValue(Long::class.java),
             poll = snap.child("poll").getValue(Boolean::class.java) ?: false,
             deadline = snap.child("deadline").getValue(Long::class.java),
             wager = snap.child("wager").getValue(Boolean::class.java) ?: false,

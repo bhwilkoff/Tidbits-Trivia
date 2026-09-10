@@ -36,6 +36,8 @@ final class LiveHostSession {
     /// not move, and that is what the resync used to key on.
     var mediaEpoch = 0
     var onBreak = false                // adaptability: hold the big screen on an intermission slide (game position preserved)
+    /// A3.14: the epoch-ms the host promised to be back, when they set one.
+    var breakUntil: Int? = nil
     /// Show the standings SO FAR on the big screen, between rounds. A pub host
     /// reads the scores out after every round; the projector could show a vote
     /// tally per question and the FINAL table, and nothing in between
@@ -441,6 +443,9 @@ final class LiveHostSession {
             p.answer = LiveNightHost.answerLine(q)   // the answer as a line, every format — for the wrap
         }
         p.difficulty = q.difficulty
+        // A3.14: the room is on a break. Published so every phone says it too — a table
+        // that stepped outside should not come back to a stale question and guess.
+        if onBreak { p.onBreak = true; p.breakUntil = breakUntil }
         p.points = currentIsPoll ? nil : currentPoints   // A2.11: what a correct answer is worth right now
         if currentIsPoll { p.poll = true; p.answerIndex = nil; p.answer = nil }   // A2.10: there is no right answer to reveal
         return p
@@ -582,6 +587,15 @@ struct LiveHostContainer_macOS: View {
             session.next()
         }
         .task { if let pin = DebugHooks.hostRemotePIN { _ = net.startRemote(pin: pin) } }   // G6 harness: a known PIN
+        // TIDBITS_LIVE_BREAK=<minutes> (at TIDBITS_LIVE_BREAK_AT s, default 15) — hold the
+        // show on a break with a promised return, the way the Hold menu does (A3.14).
+        .task {
+            let env = ProcessInfo.processInfo.environment
+            guard let raw = env["TIDBITS_LIVE_BREAK"], let mins = Int(raw) else { return }
+            try? await Task.sleep(for: .seconds(Double(env["TIDBITS_LIVE_BREAK_AT"] ?? "") ?? 15))
+            session.breakUntil = mins > 0 ? LiveBreak.until(minutes: mins) : nil
+            session.onBreak = true
+        }
         // TIDBITS_LIVE_FIX_KEY=<answer> (at TIDBITS_LIVE_FIX_AT s, default 25) — reveal if
         // needed, then replace the current question's accepted list with that answer, the
         // way the editor's Save does — which re-scores the room (A3.13).
@@ -677,6 +691,7 @@ struct LiveHostContainer_macOS: View {
             if let q = session.current { LivePlayedLog.shared.record([q.id], night: event.name) }
             Task { await net.publish(session.currentPub()); await syncMedia() }
         }
+        .onChange(of: session.onBreak) { _, _ in Task { await net.publish(session.currentPub()) } }   // A3.14
         .onChange(of: session.mediaEpoch) { _, _ in
             Task { await net.publish(session.currentPub()); await syncMedia() }
         }
@@ -965,14 +980,34 @@ struct LiveHostView_macOS: View {
                 .help(net.remotePIN.isEmpty
                       ? "Pair your phone to reveal and advance while you walk the room"
                       : "Type this PIN into your phone. Click again to unpair.")
-                Button { session.onBreak.toggle() } label: {   // adaptability: intermission hold
+                Menu {   // A3.14: a break with a stated return time is what a host writes on a board
+                    ForEach(LiveBreak.choices, id: \.self) { m in
+                        Button("Back in \(m) minutes") {
+                            session.breakUntil = LiveBreak.until(minutes: m)
+                            if !session.onBreak { session.onBreak = true } else { Task { await net.publish(session.currentPub()) } }
+                        }
+                    }
+                    if session.onBreak, session.breakUntil != nil {
+                        Divider()
+                        Button("No return time") {
+                            session.breakUntil = nil
+                            Task { await net.publish(session.currentPub()) }
+                        }
+                    }
+                } label: {
                     Label(session.onBreak ? "Resume" : "Hold", systemImage: session.onBreak ? "play.fill" : "pause.fill")
+                } primaryAction: {
+                    session.onBreak.toggle()
+                    if !session.onBreak { session.breakUntil = nil }   // resuming clears the promise
                 }
                 // Filled only while the break is ACTIVE — the state has to be
                 // readable across a room, not inferred from a word.
+                .menuStyle(.button)
                 .buttonStyle(CompactButtonStyle(fill: session.onBreak ? Tidbits.Palette.mint : Tidbits.Palette.surface))
+                .fixedSize()
                 .keyboardShortcut("b", modifiers: .command)
-                .help(session.onBreak ? "Resume the game" : "Hold — show a 'Back in a moment' slide on the big screen (⌘B)")
+                .help(session.onBreak ? "Resume the game" : "Hold — the big screen and every phone say the room is on a break (⌘B); the menu promises a return time")
+                .accessibilityIdentifier("live.hold")
                 Menu {   // adaptability: jump to any round/question on the fly
                     ForEach(Array(session.event.rounds.enumerated()), id: \.offset) { ri, round in
                         Section(round.title) {

@@ -247,6 +247,11 @@ struct LiveJoinView: View {
 
     @ViewBuilder private func questionView(_ p: LiveRoom.Pub) -> some View {
         let revealed = p.phase == LiveRoom.Phase.reveal
+        // A3.14: on a break the question is GONE, not merely covered. A prompt still on
+        // screen is a prompt a table answers late, and the host has to un-score it.
+        if p.onBreak == true {
+            LiveBreakCard(until: p.breakUntil)
+        } else {
         VStack(alignment: .leading, spacing: 14) {
             Text("ROUND \(p.round) · \(p.roundTitle.uppercased()) — Q\(p.qNum)/\(p.qTotal)")
                 .font(isWide ? .system(size: 16, weight: .heavy, design: .rounded)
@@ -293,6 +298,7 @@ struct LiveJoinView: View {
             if revealed, let src = p.source, !src.title.isEmpty {   // the charter: where the fact came from
                 LiveSourceLine(source: src)
             }
+        }
         }
     }
 

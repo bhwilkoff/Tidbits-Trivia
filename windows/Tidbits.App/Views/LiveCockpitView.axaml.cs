@@ -272,6 +272,35 @@ public partial class LiveCockpitView : UserControl
     private async void OnLock(object? sender, RoutedEventArgs e) { if (Vm is { } vm) await vm.Lock(); }
     private async void OnSkip(object? sender, RoutedEventArgs e) { if (Vm is { } vm) await vm.Skip(); }
     private void OnToggleHold(object? sender, RoutedEventArgs e) => Vm?.ToggleHold();
+
+    /// A3.14: hold the show for an interval. Distinct from the standings hold — this one
+    /// tells the room, not just the big screen.
+    private async void OnToggleBreak(object? sender, RoutedEventArgs e)
+    {
+        if (Vm is { } vm) await vm.ToggleBreak();
+    }
+
+    /// A break with a stated return time is what a host writes on a board; here every
+    /// phone counts it down too.
+    private async void OnBreakFor(object? sender, RoutedEventArgs e)
+    {
+        if (Vm is not { } vm) return;
+        var picker = new ComboBox
+        {
+            ItemsSource = Tidbits.Core.Networking.LiveBreak.Choices.Select(m => $"{m} minutes").ToList(),
+            SelectedIndex = 1, MinWidth = 200,
+        };
+        Avalonia.Automation.AutomationProperties.SetName(picker, "How long is the break");
+        var dlg = new FAContentDialog
+        {
+            Title = "Break with a return time",
+            Content = picker,
+            PrimaryButtonText = "Start the break",
+            CloseButtonText = "Cancel",
+        };
+        if (await dlg.ShowAsync() == FAContentDialogResult.Primary)
+            await vm.BreakFor(Tidbits.Core.Networking.LiveBreak.Choices[Math.Max(0, picker.SelectedIndex)]);
+    }
     private void OnToggleRemote(object? sender, RoutedEventArgs e) => Vm?.ToggleRemote();
 
     /// G5: the host taps the cell the room called out.
@@ -735,6 +764,15 @@ public partial class LiveCockpitView : UserControl
             {
                 await Task.Delay(TimeSpan.FromSeconds(nextAt));
                 if (Vm is { } v) { if (!v.Host.Revealed) { await v.Reveal(); await Task.Delay(2000); } await v.Next(); }
+            }
+            if (Services.LaunchHooks.LiveBreak is { } breakMins)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(Services.LaunchHooks.LiveBreakAt));
+                if (Vm is { } bv)
+                {
+                    if (breakMins > 0) await bv.BreakFor(breakMins); else await bv.ToggleBreak();
+                    Services.LaunchHooks.Diag($"break hook: onBreak={bv.IsOnBreak} headline={bv.BreakHeadline}");
+                }
             }
             if (Services.LaunchHooks.LiveFinishAt is { } finishAt)
             {

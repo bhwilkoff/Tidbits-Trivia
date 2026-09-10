@@ -127,6 +127,9 @@ public static class LiveRoom
         [JsonPropertyName("points")] public int? Points { get; init; }
         /// A2.10: a poll — the room votes, no right answer, nobody scores. Mirrors Swift `Pub.poll`.
         [JsonPropertyName("poll")] public bool? Poll { get; init; }
+        /// A3.14: the room is ON A BREAK, and the epoch-ms the host promised to be back.
+        [JsonPropertyName("onBreak")] public bool? OnBreak { get; init; }
+        [JsonPropertyName("breakUntil")] public long? BreakUntil { get; init; }
     }
 
     public sealed record Source

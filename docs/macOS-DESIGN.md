@@ -286,6 +286,18 @@ typed (its own `teams/{uid}` is untouched; the host's copy is laid over it).
 Windows has the same verb as a Rename button on the row. Joined rows also let a
 name wrap to two lines, so "The Quizzards" no longer reads "The Qui…".
 
+A3.14 **The break is announced to the room, not just the screen** (2026-09-10).
+Every pub night has an interval. Holding the show used to change the projector
+only: the phones kept the last question up, so a table that stepped outside came
+back and answered it late. Now a break is a state of the ROOM — the big screen
+says it, and every joined phone REPLACES the question with the same words. The
+Hold button's menu promises a return ("Back in 10 minutes"), which counts down in
+whole minutes rounded UP (a host who said ten is never contradicted a second
+later), with the clock time under it because that is what a room acts on.
+Resuming clears the promise; a stale "back at 9:15" is worse than none. The
+countdown text is one pure function shared by the projector, the cockpit and all
+five joiners, so a break can never be announced two different ways.
+
 A3.13 **A key fixed after reveal re-scores the room** (2026-09-10). A3.6 let the
 host fix the question on screen; if the fix came after the reveal, the teams
 paid under the wrong key kept their points and the teams who were right got

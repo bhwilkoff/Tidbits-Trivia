@@ -5,6 +5,20 @@
              x:Class="Tidbits.App.Views.ProjectorView"
              x:DataType="vm:LiveHostViewModel">
     <Panel Background="#0A0A12">
+        <!-- A3.14: the break. Over everything — the room is at the bar, and a question
+             left up is a question someone answers late. -->
+        <Viewbox IsVisible="{Binding ShowBreakScreen}" Margin="120" Stretch="Uniform" ZIndex="10">
+            <StackPanel Spacing="20" Width="1000" HorizontalAlignment="Center">
+                <TextBlock Text="{Binding Host.Title}" Foreground="White" Opacity="0.55" FontSize="34" FontWeight="Bold"
+                           HorizontalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                <TextBlock x:Name="BreakHeadline" Text="{Binding BreakHeadline}" Foreground="White" FontSize="96" FontWeight="Black"
+                           HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center"/>
+                <TextBlock x:Name="BreakSubline" Text="{Binding BreakSubline}" Foreground="White" Opacity="0.7" FontSize="34"
+                           HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center"/>
+                <TextBlock IsVisible="{Binding ShowSponsor}" Text="{Binding SponsorLine}" Foreground="White" Opacity="0.55"
+                           FontSize="24" HorizontalAlignment="Center" Margin="0,12,0,0"/>
+            </StackPanel>
+        </Viewbox>
         <!-- Lobby: join info + QR -->
         <Viewbox IsVisible="{Binding IsLobby}" Margin="120" Stretch="Uniform">
             <StackPanel Spacing="18" Width="900" HorizontalAlignment="Center">

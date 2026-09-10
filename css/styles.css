@@ -528,3 +528,7 @@ body {
 
 /* A2.11: what a question is worth on a double-points round (hidden at 1 pt) */
 .live-worth { display: inline-block; margin: 0 0 8px; padding: 3px 10px; border-radius: 999px; background: var(--color-primary); color: #fff; font-size: 12px; font-weight: 900; letter-spacing: .06em; }
+
+/* A3.14: the room is on a break — the phone says so instead of a stale question */
+.live-breakcard { text-align: center; padding: 34px 18px; }
+.live-breakhead { font-size: 34px; font-weight: 900; line-height: 1.1; margin-bottom: 8px; }

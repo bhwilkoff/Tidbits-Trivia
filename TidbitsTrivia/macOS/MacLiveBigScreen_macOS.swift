@@ -263,8 +263,19 @@ struct LiveBigScreen_macOS: View {
             Image(systemName: "cup.and.saucer.fill").font(.system(size: 56, weight: .black)).foregroundStyle(Tidbits.Palette.coral)
             Text(s.event.name.isEmpty ? "TIDBITS LIVE" : s.event.name.uppercased())
                 .font(.system(size: 34, weight: .heavy, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
-            Text("Back in a moment").font(.system(size: 72, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
-            Text("Grab a drink — the next round is coming up.").font(.system(size: 28, weight: .semibold, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
+            // A3.14: a promised return time counts down here, in the room's own words.
+            // The same 0.5s timeline the question countdown uses, so a minute ticking
+            // over is visible rather than waiting on the next publish.
+            TimelineView(.periodic(from: .now, by: 0.5)) { ctx in
+                VStack(spacing: 20) {
+                    Text(LiveBreak.headline(until: s.breakUntil, now: ctx.date))
+                        .font(.system(size: 72, weight: .black, design: .rounded)).foregroundStyle(Tidbits.Palette.ink)
+                        .accessibilityIdentifier("big.breakHeadline")
+                    let clock = LiveBreak.clockLine(until: s.breakUntil, now: ctx.date)
+                    Text(clock.isEmpty ? "Grab a drink — the next round is coming up." : "Grab a drink — \(clock).")
+                        .font(.system(size: 28, weight: .semibold, design: .rounded)).foregroundStyle(Tidbits.Palette.inkSoft)
+                }
+            }
             sponsorLine(s).padding(.top, 20)
         }
     }

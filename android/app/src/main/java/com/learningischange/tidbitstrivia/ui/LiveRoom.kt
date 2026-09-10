@@ -221,6 +221,9 @@ fun LiveRoomScreen(code: String, team: String, onDone: () -> Unit) {
                 Spacer(Modifier.height(6.dp))
                 Text("Keep this open — questions appear here.", color = soft, textAlign = TextAlign.Center)
             }
+            // A3.14: on a break the question is GONE, not merely covered. A prompt still
+            // on screen is a prompt a table answers late, and the host has to un-score it.
+            p.onBreak -> Centered { LiveBreakCard(p.breakUntil) }
             else -> {
                 val revealed = p.phase == "reveal"
                 Text("ROUND ${p.round} · ${p.roundTitle.uppercase()} — Q${p.qNum}/${p.qTotal}",

@@ -2392,6 +2392,40 @@ the head's top line — a capture artefact, not a bug). **Verified on the glass:
 report" from the answer sheet — hardest/easiest questions, participation,
 per-round accuracy — on both cockpits, no backend.
 
+**2026-09-10af — Live loop tick 32: the break is announced to the room, and an
+answer-leak audit.** The Mac could park the show on a break slide; **Windows had
+no hold at all**, and NO joiner was ever told — the phones kept the last question
+up, so a table that stepped outside came back and answered it late. A3.14 / 3.77:
+`pub.onBreak` + `breakUntil` on the wire, `LiveBreak` pure text on both stacks (5
+tests each, identical semantics: minutes round UP so "ten" never reads nine, a
+passed promise falls back rather than counting negative), the Hold menu promising
+a return, the break slide on both projectors, and all five joiners REPLACING the
+question. **Found on the glass:** the tvOS break card was dark-on-dark
+(`legibility-check-compositing` again — the same default foreground is invisible
+on the dark-first TV theme), and iOS/tvOS/Android drew the card ABOVE a still
+answerable question; both fixed and re-shot. **Owner asked mid-tick** whether a
+web joiner can see the right answers in the HTML or console. Audited statically
+(all five hosts gate `answerIndex`/`answer`/`story`/`source` on reveal; accepted
+lists, correct orders, pairings, targets and sets are never published in any
+phase) and empirically (`e2e_leak.py`: DOM, storage, every window global, the
+resource list and the room read with the JOINER's own token — clean
+mid-question, and the same sweep finds it after the reveal, so the check can
+fire). Recorded in LIVE-ROOM-CONTRACT. **Adjacent finding, owner-gated:** any
+joiner can READ other tables' submissions (`answers/{qid}/{uid}`) because the
+room-level `.read` cascades; writes are properly locked (a tamper attempt got
+401). Closing it is a rules restructure on a live product, so it is in
+OWNER-PLAYBOOK rather than shipped undeployed. **Second finding, and the bigger one:** after the rounding fix the web still said
+"10 minutes" while the Windows box said "12". Not rounding — the BOX'S CLOCK IS
+101 SECONDS BEHIND THE MAC (measured directly over ssh). Every countdown we
+broadcast is an ABSOLUTE epoch-ms deadline, so it is evaluated against each
+device's own clock: the break, and `pub.deadline` — the per-question timer that
+has shipped for months — are both wrong by exactly a device's skew. On a 30 s
+question a 101 s skew is not a wobble, it is nonsense. Tick 33 fixes the class:
+publish the host's clock with the pub (`pub.now`), have each client keep the
+offset it implies, and evaluate every deadline against host time. Versions
+1.9.30 / 160 / vc121 / MSIX 1.9.30.0. Next (tick 33): host-clock skew
+correction for the break AND the question countdown, then PDF import.
+
 **2026-09-10ae — Live loop tick 31: the night is kept.** Audit item "event
 history feed", scoped to the surface the brief is about: a finished night
 existed only while it was happening — close the cockpit and the standings, the

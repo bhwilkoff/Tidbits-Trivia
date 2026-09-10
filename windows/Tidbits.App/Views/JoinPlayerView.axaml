@@ -83,6 +83,12 @@
                         <views:VideoSurface x:Name="ClipVideo"/>
                     </Border>
                 </StackPanel>
+                <!-- A3.14: the room is on a break. -->
+                <StackPanel IsVisible="{Binding IsOnBreak}" Spacing="6" Margin="0,20,0,0">
+                    <TextBlock Text="{Binding BreakHeadline}" FontSize="30" FontWeight="Black" TextWrapping="Wrap"
+                               AutomationProperties.Name="Break"/>
+                    <TextBlock Text="{Binding BreakSubline}" Opacity="0.75" TextWrapping="Wrap"/>
+                </StackPanel>
                 <Border IsVisible="{Binding HasWorth}" Background="#FF5C35" CornerRadius="999" Padding="10,3" HorizontalAlignment="Left">
                     <TextBlock Text="{Binding WorthLine}" Foreground="White" FontSize="12" FontWeight="Black" AutomationProperties.Name="Question worth"/>
                 </Border>

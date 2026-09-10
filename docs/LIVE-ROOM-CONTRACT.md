@@ -164,6 +164,44 @@ in `LiveNightHost.score` (Swift), `liveScore` (Kotlin), `nhScore` (JS). Tidbits 
 > console). Until deployed, `live/*` writes are denied by default. The existing
 > `rooms/*` Quick Match rules are unchanged.
 
+## Clocks (open, tick 32)
+
+`pub.deadline` and `pub.breakUntil` are absolute epoch-ms, so every client
+evaluates them against ITS OWN clock. Measured 2026-09-10: the QA Windows box
+runs 101 s behind the Mac, and the same break read "10 minutes" on the web and
+"12 minutes" there. A per-question timer is affected the same way and by the same
+amount. The fix is to publish the host's clock with the pub and have each client
+correct by the offset it implies — tracked for the next tick.
+
+## What a joiner can read (measured 2026-09-10)
+
+The owner asked whether a web player can find the RIGHT ANSWER in the page.
+**They cannot, and it is not a UI trick — the answer is never sent.** Every host
+(macOS, Windows, web, Android, Apple night) gates `answerIndex`, `answer`,
+`story` and `source` on `revealed`; a typed question's `accepted` list, an
+ordering's correct order, a matching's pairs, a closest's target and an
+enumerate's items are NEVER published in any phase — `orderItems`/`matchValues`
+ship SHUFFLED and `numeric`/`enumTarget` carry only the range and the count.
+Scoring happens on the host against its own local `Question`.
+
+Proven on the real web app (`scratchpad/e2e_leak.py`), during the question phase,
+against a Name-It whose answer is "Keanu Reeves": the rendered DOM, `localStorage`,
+`sessionStorage`, every enumerable `window` global, and the room node read with the
+JOINER's own credentials all contain no trace of it, and the live page fetches no
+corpus to look it up in. The pub a joiner holds mid-question is exactly:
+`qid · round · roundTitle · qNum · qTotal · phase · prompt · format · difficulty ·
+points`. After the reveal the same sweep finds it in the DOM and on the wire —
+the check can fire, so the clean result means something.
+
+**Open, and NOT the same thing: any joiner can read every other table's
+submission** for the current question (`answers/{qid}/{uid}`). Writes are locked
+to the owning uid — a table cannot tamper with another's answer (measured: 401) —
+but the room-level `.read` cascades, so a table with a laptop could see what
+another table typed before the reveal. Closing it means narrowing the room-level
+read and granting `meta`/`pub`/`teams`/`scores`/`media`/`names` explicitly, with
+`answers/$qid/$uid` readable by that uid or the host. That is a rules deploy on a
+live product, so it is OWNER-gated (see OWNER-PLAYBOOK).
+
 ## Verification
 
 `FirebaseRTDB` was proven end-to-end against the **live** project (swiftc
